@@ -1,5 +1,5 @@
 /* Profile header for simulators using common framework.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #define SIM_PROFILE_H
 
 #ifndef WITH_PROFILE
-Error, WITH_PROFILE not defined.
+#error "WITH_PROFILE not defined"
 #endif
 
 /* Standard profilable entities.  */
@@ -87,12 +87,12 @@ SIM_RC sim_profile_set_option (SIM_DESC sd_, const char *name_, int idx_,
 #define PROFILE_core   (1 << PROFILE_CORE_IDX)
 
 /* Preprocessor macros to simplify tests of WITH_PROFILE.  */
-#define WITH_PROFILE_INSN_P (WITH_PROFILE & PROFILE_insn)
-#define WITH_PROFILE_MEMORY_P (WITH_PROFILE & PROFILE_memory)
-#define WITH_PROFILE_MODEL_P (WITH_PROFILE & PROFILE_model)
-#define WITH_PROFILE_SCACHE_P (WITH_PROFILE & PROFILE_scache)
-#define WITH_PROFILE_PC_P (WITH_PROFILE & PROFILE_pc)
-#define WITH_PROFILE_CORE_P (WITH_PROFILE & PROFILE_core)
+#define WITH_PROFILE_INSN_P   ((WITH_PROFILE & PROFILE_insn) != 0)
+#define WITH_PROFILE_MEMORY_P ((WITH_PROFILE & PROFILE_memory) != 0)
+#define WITH_PROFILE_MODEL_P  ((WITH_PROFILE & PROFILE_model) != 0)
+#define WITH_PROFILE_SCACHE_P ((WITH_PROFILE & PROFILE_scache) != 0)
+#define WITH_PROFILE_PC_P     ((WITH_PROFILE & PROFILE_pc) != 0)
+#define WITH_PROFILE_CORE_P   ((WITH_PROFILE & PROFILE_core) != 0)
 
 /* If MAX_TARGET_MODES isn't defined, we can't do memory profiling.
    ??? It is intended that this is a temporary occurrence.  Normally
@@ -101,9 +101,6 @@ SIM_RC sim_profile_set_option (SIM_DESC sd_, const char *name_, int idx_,
 #undef WITH_PROFILE_MEMORY_P
 #define WITH_PROFILE_MEMORY_P 0
 #endif
-
-/* Profiling install handler.  */
-MODULE_INSTALL_FN profile_install;
 
 /* Output format macros.  */
 #ifndef PROFILE_HISTOGRAM_WIDTH

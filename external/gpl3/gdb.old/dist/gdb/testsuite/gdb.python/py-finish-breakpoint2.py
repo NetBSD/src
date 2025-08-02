@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,18 +16,19 @@
 # This file is part of the GDB testsuite.  It tests python Finish
 # Breakpoints.
 
+
 class ExceptionFinishBreakpoint(gdb.FinishBreakpoint):
     def __init__(self, frame):
-        gdb.FinishBreakpoint.__init__ (self, frame, internal=1)
+        gdb.FinishBreakpoint.__init__(self, frame, internal=1)
         self.silent = True
-        print ("init ExceptionFinishBreakpoint")
-        
+        print("init ExceptionFinishBreakpoint")
+
     def stop(self):
-        print ("stopped at ExceptionFinishBreakpoint")
-        return True 
-    
+        print("stopped at ExceptionFinishBreakpoint")
+        return True
+
     def out_of_scope(self):
-        print ("exception did not finish ...")
+        print("exception did not finish ...")
 
 
-print ("Python script imported")
+print("Python script imported")

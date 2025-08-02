@@ -1,5 +1,5 @@
 # Type printer commands.
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,43 +19,43 @@ import gdb
 
 """GDB commands for working with type-printers."""
 
+
 class InfoTypePrinter(gdb.Command):
     """GDB command to list all registered type-printers.
 
-Usage: info type-printers"""
+    Usage: info type-printers"""
 
-    def __init__ (self):
-        super(InfoTypePrinter, self).__init__("info type-printers",
-                                              gdb.COMMAND_DATA)
+    def __init__(self):
+        super(InfoTypePrinter, self).__init__("info type-printers", gdb.COMMAND_DATA)
 
     def list_type_printers(self, type_printers):
         """Print a list of type printers."""
         # A potential enhancement is to provide an option to list printers in
         # "lookup order" (i.e. unsorted).
-        sorted_type_printers = sorted (copy.copy(type_printers),
-                                       key = lambda x: x.name)
+        sorted_type_printers = sorted(copy.copy(type_printers), key=lambda x: x.name)
         for printer in sorted_type_printers:
             if printer.enabled:
-                enabled = ''
+                enabled = ""
             else:
                 enabled = " [disabled]"
-            print ("  %s%s" % (printer.name, enabled))
+            print("  %s%s" % (printer.name, enabled))
 
     def invoke(self, arg, from_tty):
         """GDB calls this to perform the command."""
-        sep = ''
+        sep = ""
         for objfile in gdb.objfiles():
             if objfile.type_printers:
-                print ("%sType printers for %s:" % (sep, objfile.filename))
+                print("%sType printers for %s:" % (sep, objfile.filename))
                 self.list_type_printers(objfile.type_printers)
-                sep = '\n'
+                sep = "\n"
         if gdb.current_progspace().type_printers:
-            print ("%sType printers for program space:" % sep)
+            print("%sType printers for program space:" % sep)
             self.list_type_printers(gdb.current_progspace().type_printers)
-            sep = '\n'
+            sep = "\n"
         if gdb.type_printers:
-            print ("%sGlobal type printers:" % sep)
+            print("%sGlobal type printers:" % sep)
             self.list_type_printers(gdb.type_printers)
+
 
 class _EnableOrDisableCommand(gdb.Command):
     def __init__(self, setting, name):
@@ -82,7 +82,7 @@ class _EnableOrDisableCommand(gdb.Command):
             if self.set_some(name, gdb.type_printers):
                 ok = True
             if not ok:
-                print ("No type printer named '%s'" % name)
+                print("No type printer named '%s'" % name)
 
     def add_some(self, result, word, printers):
         for p in printers:
@@ -97,25 +97,28 @@ class _EnableOrDisableCommand(gdb.Command):
         self.add_some(result, word, gdb.type_printers)
         return result
 
+
 class EnableTypePrinter(_EnableOrDisableCommand):
     """GDB command to enable the specified type printer.
 
-Usage: enable type-printer NAME
+    Usage: enable type-printer NAME
 
-NAME is the name of the type-printer."""
+    NAME is the name of the type-printer."""
 
     def __init__(self):
         super(EnableTypePrinter, self).__init__(True, "enable type-printer")
 
+
 class DisableTypePrinter(_EnableOrDisableCommand):
     """GDB command to disable the specified type-printer.
 
-Usage: disable type-printer NAME
+    Usage: disable type-printer NAME
 
-NAME is the name of the type-printer."""
+    NAME is the name of the type-printer."""
 
     def __init__(self):
         super(DisableTypePrinter, self).__init__(False, "disable type-printer")
+
 
 InfoTypePrinter()
 EnableTypePrinter()

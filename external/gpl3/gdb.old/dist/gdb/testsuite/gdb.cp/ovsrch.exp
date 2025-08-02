@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -52,7 +52,7 @@ proc test_class {class} {
     gdb_test "break ${class}::hibob if (a_param == 3)" "Breakpoint (\[0-9\]).*"
 }
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 # Test for c++/11734
 standard_testfile ovsrch1.cc ovsrch2.cc ovsrch3.cc ovsrch4.cc
@@ -63,8 +63,7 @@ if {[prepare_for_testing "failed to prepare" $testfile \
 }
 
 if {![runto_main]} {
-    perror "couldn't run to breakpoint"
-    continue
+    return
 }
 
 # Break in A::stop_here and run tests.

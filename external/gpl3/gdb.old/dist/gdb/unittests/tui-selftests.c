@@ -1,6 +1,6 @@
 /* Self tests for the TUI
 
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,13 +31,13 @@ static void
 run_tests ()
 {
   const char *text = "hello";
-  std::string result = tui_copy_source_line (&text, 0, 0, 50, 0);
+  std::string result = tui_copy_source_line (&text);
   SELF_CHECK (result == "hello");
   SELF_CHECK (*text == '\0');
 
   text = "hello\n";
-  result = tui_copy_source_line (&text, 0, 0, 3, 0);
-  SELF_CHECK (result == "hel");
+  result = tui_copy_source_line (&text);
+  SELF_CHECK (result == "hello");
   SELF_CHECK (*text == '\0');
 }
 

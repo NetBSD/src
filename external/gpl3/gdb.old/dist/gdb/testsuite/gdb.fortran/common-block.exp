@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,9 +27,8 @@ if {[prepare_for_testing "failed to prepare" ${testfile} \
     return -1
 }
 
-if ![fortran_runto_main] then {
-    perror "couldn't run to main"
-    continue
+if {![fortran_runto_main]} {
+    return
 }
 
 gdb_breakpoint [gdb_get_line_number "stop-here-out"]
@@ -54,8 +53,27 @@ gdb_test "whatis fo_o$suffix" "No symbol \"fo_o$suffix\" in current context."
 gdb_test "ptype fo_o$suffix" "No symbol \"fo_o$suffix\" in current context."
 gdb_test "p fo_o$suffix" "No symbol \"fo_o$suffix\" in current context."
 
-gdb_test "info locals" "ix_x = 11\r\niy_y = 22\r\niz_z = 33\r\nix = 1\r\niy = 2\r\niz = 3" "info locals out"
-gdb_test "info common" "Contents of F77 COMMON block 'fo_o':\r\nix_x = 11\r\niy_y = 22\r\niz_z = 33\r\n\r\nContents of F77 COMMON block 'foo':\r\nix = 1\r\niy = 2\r\niz = 3" "info common out"
+gdb_test_multiple "info locals" "info locals out" {
+    # gfortran
+    -re -wrap "ix_x = 11\r\niy_y = 22\r\niz_z = 33\r\nix = 1\r\niy = 2\r\niz = 3" {
+	pass $gdb_test_name
+    }
+    # ifx/ifort/flang
+    -re -wrap "ix = 1\r\niy = 2\r\niz = 3\r\nix_x = 11\r\niy_y = 22\r\niz_z = 33" {
+	pass $gdb_test_name
+    }
+}
+
+gdb_test_multiple "info common" "info common out" {
+    # gfortran
+    -re -wrap "Contents of F77 COMMON block 'fo_o':\r\nix_x = 11\r\niy_y = 22\r\niz_z = 33\r\n\r\nContents of F77 COMMON block 'foo':\r\nix = 1\r\niy = 2\r\niz = 3" {
+	pass $gdb_test_name
+    }
+    # ifx/ifort/flang
+    -re -wrap "Contents of F77 COMMON block 'foo_?':\r\nix = 1\r\niy = 2\r\niz = 3\r\n\r\nContents of F77 COMMON block 'fo_o_?':\r\nix_x = 11\r\niy_y = 22\r\niz_z = 33" {
+	pass $gdb_test_name
+    }
+}
 
 gdb_test "ptype ix" "type = $int4" "ptype ix out"
 gdb_test "ptype iy" "type = $real4" "ptype iy out"
@@ -81,7 +99,20 @@ gdb_test "whatis fo_o$suffix" "No symbol \"fo_o$suffix\" in current context." "w
 gdb_test "ptype fo_o$suffix" "No symbol \"fo_o$suffix\" in current context." "ptype fo_o$suffix in"
 gdb_test "p fo_o$suffix" "No symbol \"fo_o$suffix\" in current context." "p fo_o$suffix in"
 
-gdb_test "info locals" "ix = 11\r\niy2 = 22\r\niz = 33\r\nix_x = 1\r\niy_y = 2\r\niz_z2 = 3\r\niy = 5\r\niz_z = 55" "info locals in"
+gdb_test_multiple "info locals" "info locals in" {
+    # gfortran
+    -re -wrap "ix = 11\r\niy2 = 22\r\niz = 33\r\nix_x = 1\r\niy_y = 2\r\niz_z2 = 3\r\niy = 5\r\niz_z = 55" {
+	pass $gdb_test_name
+    }
+    # ifx
+    -re -wrap "ix = 11\r\niy2 = 22\r\niz = 33\r\nix_x = 1\r\niy_y = 2\r\niz_z2 = 3\r\niz_z = 55\r\niy = 5" {
+	pass $gdb_test_name
+    }
+    # ifort
+    -re -wrap "iz_z = 55\r\niy = 5\r\nix = 11\r\niy2 = 22\r\niz = 33\r\nix_x = 1\r\niy_y = 2\r\niz_z2 = 3" {
+	pass $gdb_test_name
+    }
+}
 gdb_test "info common" "Contents of F77 COMMON block 'fo_o':\r\nix = 11\r\niy2 = 22\r\niz = 33\r\n\r\nContents of F77 COMMON block 'foo':\r\nix_x = 1\r\niy_y = 2\r\niz_z2 = 3" "info common in"
 
 gdb_test "ptype ix" "type = $int4" "ptype ix in"

@@ -1,6 +1,6 @@
 /* Python interface to architecture
 
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,12 +23,13 @@
 #include "disasm.h"
 #include "python-internal.h"
 
-typedef struct arch_object_type_object {
+struct arch_object {
   PyObject_HEAD
   struct gdbarch *gdbarch;
-} arch_object;
+};
 
-static struct gdbarch_data *arch_object_data = NULL;
+static const registry<gdbarch>::key<PyObject, gdb::noop_deleter<PyObject>>
+     arch_object_data;
 
 /* Require a valid Architecture.  */
 #define ARCHPY_REQUIRE_VALID(arch_obj, arch)			\
@@ -48,7 +49,7 @@ extern PyTypeObject arch_object_type
 /* Associates an arch_object with GDBARCH as gdbarch_data via the gdbarch
    post init registration mechanism (gdbarch_data_register_post_init).  */
 
-static void *
+static PyObject *
 arch_object_data_init (struct gdbarch *gdbarch)
 {
   arch_object *arch_obj = PyObject_New (arch_object, &arch_object_type);
@@ -58,18 +59,27 @@ arch_object_data_init (struct gdbarch *gdbarch)
 
   arch_obj->gdbarch = gdbarch;
 
-  return (void *) arch_obj;
+  return (PyObject *) arch_obj;
 }
 
 /* Returns the struct gdbarch value corresponding to the given Python
-   architecture object OBJ.  */
+   architecture object OBJ, which must be a gdb.Architecture object.  */
 
 struct gdbarch *
 arch_object_to_gdbarch (PyObject *obj)
 {
-  arch_object *py_arch = (arch_object *) obj;
+  gdb_assert (gdbpy_is_architecture (obj));
 
+  arch_object *py_arch = (arch_object *) obj;
   return py_arch->gdbarch;
+}
+
+/* See python-internal.h.  */
+
+bool
+gdbpy_is_architecture (PyObject *obj)
+{
+  return PyObject_TypeCheck (obj, &arch_object_type);
 }
 
 /* Returns the Python architecture object corresponding to GDBARCH.
@@ -79,10 +89,14 @@ arch_object_to_gdbarch (PyObject *obj)
 PyObject *
 gdbarch_to_arch_object (struct gdbarch *gdbarch)
 {
-  PyObject *new_ref = (PyObject *) gdbarch_data (gdbarch, arch_object_data);
+  PyObject *new_ref = arch_object_data.get (gdbarch);
+  if (new_ref == nullptr)
+    {
+      new_ref = arch_object_data_init (gdbarch);
+      arch_object_data.set (gdbarch, new_ref);
+    }
 
-  /* new_ref could be NULL if registration of arch_object with GDBARCH failed
-     in arch_object_data_init.  */
+  /* new_ref could be NULL if creation failed.  */
   Py_XINCREF (new_ref);
 
   return new_ref;
@@ -100,7 +114,7 @@ archpy_name (PyObject *self, PyObject *args)
   ARCHPY_REQUIRE_VALID (self, gdbarch);
 
   name = (gdbarch_bfd_arch_info (gdbarch))->printable_name;
-  return PyString_FromString (name);
+  return PyUnicode_FromString (name);
 }
 
 /* Implementation of
@@ -113,66 +127,47 @@ static PyObject *
 archpy_disassemble (PyObject *self, PyObject *args, PyObject *kw)
 {
   static const char *keywords[] = { "start_pc", "end_pc", "count", NULL };
-  CORE_ADDR start, end = 0;
+  CORE_ADDR start = 0, end = 0;
   CORE_ADDR pc;
-  gdb_py_ulongest start_temp;
   long count = 0, i;
-  PyObject *end_obj = NULL, *count_obj = NULL;
+  PyObject *start_obj = nullptr, *end_obj = nullptr, *count_obj = nullptr;
   struct gdbarch *gdbarch = NULL;
 
   ARCHPY_REQUIRE_VALID (self, gdbarch);
 
-  if (!gdb_PyArg_ParseTupleAndKeywords (args, kw, GDB_PY_LLU_ARG "|OO",
-					keywords, &start_temp, &end_obj,
+  if (!gdb_PyArg_ParseTupleAndKeywords (args, kw, "O|OO",
+					keywords, &start_obj, &end_obj,
 					&count_obj))
     return NULL;
 
-  start = start_temp;
-  if (end_obj)
-    {
-      /* Make a long logic check first.  In Python 3.x, internally,
-	 all integers are represented as longs.  In Python 2.x, there
-	 is still a differentiation internally between a PyInt and a
-	 PyLong.  Explicitly do this long check conversion first. In
-	 GDB, for Python 3.x, we #ifdef PyInt = PyLong.  This check has
-	 to be done first to ensure we do not lose information in the
-	 conversion process.  */
-      if (PyLong_Check (end_obj))
-        end = PyLong_AsUnsignedLongLong (end_obj);
-#if PY_MAJOR_VERSION == 2
-      else if (PyInt_Check (end_obj))
-        /* If the end_pc value is specified without a trailing 'L', end_obj will
-           be an integer and not a long integer.  */
-        end = PyInt_AsLong (end_obj);
-#endif
-      else
-        {
-          PyErr_SetString (PyExc_TypeError,
-                           _("Argument 'end_pc' should be a (long) integer."));
+  if (get_addr_from_python (start_obj, &start) < 0)
+    return nullptr;
 
-          return NULL;
-        }
+  if (end_obj != nullptr)
+    {
+      if (get_addr_from_python (end_obj, &end) < 0)
+	return nullptr;
 
       if (end < start)
-        {
-          PyErr_SetString (PyExc_ValueError,
-                           _("Argument 'end_pc' should be greater than or "
-                             "equal to the argument 'start_pc'."));
+	{
+	  PyErr_SetString (PyExc_ValueError,
+			   _("Argument 'end_pc' should be greater than or "
+			     "equal to the argument 'start_pc'."));
 
-          return NULL;
-        }
+	  return NULL;
+	}
     }
   if (count_obj)
     {
-      count = PyInt_AsLong (count_obj);
+      count = PyLong_AsLong (count_obj);
       if (PyErr_Occurred () || count < 0)
-        {
-          PyErr_SetString (PyExc_TypeError,
-                           _("Argument 'count' should be an non-negative "
-                             "integer."));
+	{
+	  PyErr_SetString (PyExc_TypeError,
+			   _("Argument 'count' should be an non-negative "
+			     "integer."));
 
-          return NULL;
-        }
+	  return NULL;
+	}
     }
 
   gdbpy_ref<> result_list (PyList_New (0));
@@ -200,23 +195,31 @@ archpy_disassemble (PyObject *self, PyObject *args, PyObject *kw)
       string_file stb;
 
       try
-        {
-          insn_len = gdb_print_insn (gdbarch, pc, &stb, NULL);
-        }
+	{
+	  insn_len = gdb_print_insn (gdbarch, pc, &stb, NULL);
+	}
       catch (const gdb_exception &except)
-        {
+	{
 	  gdbpy_convert_exception (except);
 	  return NULL;
-        }
+	}
 
-      if (PyDict_SetItemString (insn_dict.get (), "addr",
-                                gdb_py_long_from_ulongest (pc))
-          || PyDict_SetItemString (insn_dict.get (), "asm",
-                                   PyString_FromString (!stb.empty ()
-							? stb.c_str ()
-							: "<unknown>"))
-          || PyDict_SetItemString (insn_dict.get (), "length",
-                                   PyInt_FromLong (insn_len)))
+      gdbpy_ref<> pc_obj = gdb_py_object_from_ulongest (pc);
+      if (pc_obj == nullptr)
+	return nullptr;
+
+      gdbpy_ref<> asm_obj
+	(PyUnicode_FromString (!stb.empty () ? stb.c_str () : "<unknown>"));
+      if (asm_obj == nullptr)
+	return nullptr;
+
+      gdbpy_ref<> len_obj = gdb_py_object_from_longest (insn_len);
+      if (len_obj == nullptr)
+	return nullptr;
+
+      if (PyDict_SetItemString (insn_dict.get (), "addr", pc_obj.get ())
+	  || PyDict_SetItemString (insn_dict.get (), "asm", asm_obj.get ())
+	  || PyDict_SetItemString (insn_dict.get (), "length", len_obj.get ()))
 	return NULL;
 
       pc += insn_len;
@@ -262,12 +265,88 @@ archpy_register_groups (PyObject *self, PyObject *args)
   return gdbpy_new_reggroup_iterator (gdbarch);
 }
 
+/* Implementation of gdb.integer_type.  */
+static PyObject *
+archpy_integer_type (PyObject *self, PyObject *args, PyObject *kw)
+{
+  static const char *keywords[] = { "size", "signed", NULL };
+  int size;
+  PyObject *is_signed_obj = nullptr;
+
+  if (!gdb_PyArg_ParseTupleAndKeywords (args, kw, "i|O", keywords,
+					&size, &is_signed_obj))
+    return nullptr;
+
+  /* Assume signed by default.  */
+  bool is_signed = (is_signed_obj == nullptr
+		    || PyObject_IsTrue (is_signed_obj));
+
+  struct gdbarch *gdbarch;
+  ARCHPY_REQUIRE_VALID (self, gdbarch);
+
+  const struct builtin_type *builtins = builtin_type (gdbarch);
+  struct type *type = nullptr;
+  switch (size)
+    {
+    case 0:
+      type = builtins->builtin_int0;
+      break;
+    case 8:
+      type = is_signed ? builtins->builtin_int8 : builtins->builtin_uint8;
+      break;
+    case 16:
+      type = is_signed ? builtins->builtin_int16 : builtins->builtin_uint16;
+      break;
+    case 24:
+      type = is_signed ? builtins->builtin_int24 : builtins->builtin_uint24;
+      break;
+    case 32:
+      type = is_signed ? builtins->builtin_int32 : builtins->builtin_uint32;
+      break;
+    case 64:
+      type = is_signed ? builtins->builtin_int64 : builtins->builtin_uint64;
+      break;
+    case 128:
+      type = is_signed ? builtins->builtin_int128 : builtins->builtin_uint128;
+      break;
+
+    default:
+      PyErr_SetString (PyExc_ValueError,
+		       _("no integer type of that size is available"));
+      return nullptr;
+    }
+
+  return type_to_type_object (type);
+}
+
+/* Implementation of gdb.architecture_names().  Return a list of all the
+   BFD architecture names that GDB understands.  */
+
+PyObject *
+gdbpy_all_architecture_names (PyObject *self, PyObject *args)
+{
+  gdbpy_ref<> list (PyList_New (0));
+  if (list == nullptr)
+    return nullptr;
+
+  std::vector<const char *> name_list = gdbarch_printable_names ();
+  for (const char *name : name_list)
+    {
+      gdbpy_ref <> py_name (PyUnicode_FromString (name));
+      if (py_name == nullptr)
+	return nullptr;
+      if (PyList_Append (list.get (), py_name.get ()) < 0)
+	return nullptr;
+    }
+
+ return list.release ();
+}
+
 /* Initializes the Architecture class in the gdb module.  */
 
 int
 gdbpy_initialize_arch (void)
 {
-  arch_object_data = gdbarch_data_register_post_init (arch_object_data_init);
   arch_object_type.tp_new = PyType_GenericNew;
   if (PyType_Ready (&arch_object_type) < 0)
     return -1;
@@ -285,6 +364,11 @@ Return the name of the architecture as a string value." },
     "disassemble (start_pc [, end_pc [, count]]) -> List.\n\
 Return a list of at most COUNT disassembled instructions from START_PC to\n\
 END_PC." },
+  { "integer_type", (PyCFunction) archpy_integer_type,
+    METH_VARARGS | METH_KEYWORDS,
+    "integer_type (size [, signed]) -> type\n\
+Return an integer Type corresponding to the given bitsize and signed-ness.\n\
+If not specified, the type defaults to signed." },
   { "registers", (PyCFunction) archpy_registers,
     METH_VARARGS | METH_KEYWORDS,
     "registers ([ group-name ]) -> Iterator.\n\

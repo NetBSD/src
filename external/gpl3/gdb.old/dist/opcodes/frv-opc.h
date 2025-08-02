@@ -3,7 +3,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2020 Free Software Foundation, Inc.
+Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -58,15 +58,15 @@ typedef struct
   const CGEN_INSN *      insn[FRV_VLIW_SIZE];
 } FRV_VLIW;
 
-int frv_is_branch_major (CGEN_ATTR_VALUE_ENUM_TYPE, unsigned long);
-int frv_is_float_major  (CGEN_ATTR_VALUE_ENUM_TYPE, unsigned long);
-int frv_is_media_major  (CGEN_ATTR_VALUE_ENUM_TYPE, unsigned long);
-int frv_is_branch_insn  (const CGEN_INSN *);
-int frv_is_float_insn   (const CGEN_INSN *);
-int frv_is_media_insn   (const CGEN_INSN *);
-void frv_vliw_reset     (FRV_VLIW *, unsigned long, unsigned long);
-int frv_vliw_add_insn   (FRV_VLIW *, const CGEN_INSN *);
-int spr_valid           (long);
+bool frv_is_branch_major (CGEN_ATTR_VALUE_ENUM_TYPE, unsigned long);
+bool frv_is_float_major  (CGEN_ATTR_VALUE_ENUM_TYPE, unsigned long);
+bool frv_is_media_major  (CGEN_ATTR_VALUE_ENUM_TYPE, unsigned long);
+bool frv_is_branch_insn  (const CGEN_INSN *);
+bool frv_is_float_insn   (const CGEN_INSN *);
+bool frv_is_media_insn   (const CGEN_INSN *);
+void frv_vliw_reset      (FRV_VLIW *, unsigned long, unsigned long);
+int  frv_vliw_add_insn   (FRV_VLIW *, const CGEN_INSN *);
+bool spr_valid           (long);
 /* -- */
 /* Enum declaration for frv instruction types.  */
 typedef enum cgen_insn_type {

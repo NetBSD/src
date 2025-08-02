@@ -1,6 +1,6 @@
 /* simulator.c -- Interface for the AArch64 simulator.
 
-   Copyright (C) 2015-2020 Free Software Foundation, Inc.
+   Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -19,7 +19,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,6 +33,8 @@
 #include "simulator.h"
 #include "cpustate.h"
 #include "memory.h"
+
+#include "sim-signal.h"
 
 #define NO_SP 0
 #define SP_OK 1
@@ -78,22 +82,6 @@
 	HALT_NYI;							\
     }									\
   while (0)
-
-/* Helper functions used by expandLogicalImmediate.  */
-
-/* for i = 1, ... N result<i-1> = 1 other bits are zero  */
-static inline uint64_t
-ones (int N)
-{
-  return (N == 64 ? (uint64_t)-1UL : ((1UL << N) - 1));
-}
-
-/* result<0> to val<N>  */
-static inline uint64_t
-pickbit (uint64_t val, int N)
-{
-  return pickbits64 (val, N, N);
-}
 
 static uint64_t
 expand_logical_immediate (uint32_t S, uint32_t R, uint32_t N)
@@ -1650,10 +1638,10 @@ set_flags_for_add32 (sim_cpu *cpu, int32_t value1, int32_t value2)
   if (result & (1 << 31))
     flags |= N;
 
-  if (uresult != (uint32_t)result)
+  if (uresult != (uint32_t)uresult)
     flags |= C;
 
-  if (sresult != result)
+  if (sresult != (int32_t)sresult)
     flags |= V;
 
   aarch64_set_CPSR (cpu, flags);
@@ -8420,7 +8408,7 @@ do_fcvtzu (sim_cpu *cpu)
 	  uint64_t value = (uint64_t) d;
 
 	  /* Do not raise an exception if we have reached ULONG_MAX.  */
-	  if (value != (1UL << 63))
+	  if (value != (1ULL << 63))
 	    RAISE_EXCEPTIONS (d, value, DOUBLE, ULONG);
 
 	  aarch64_set_reg_u64 (cpu, rd, NO_SP, value);
@@ -8431,7 +8419,7 @@ do_fcvtzu (sim_cpu *cpu)
 	  uint64_t value = (uint64_t) f;
 
 	  /* Do not raise an exception if we have reached ULONG_MAX.  */
-	  if (value != (1UL << 63))
+	  if (value != (1ULL << 63))
 	    RAISE_EXCEPTIONS (f, value, FLOAT, ULONG);
 
 	  aarch64_set_reg_u64 (cpu, rd, NO_SP, value);

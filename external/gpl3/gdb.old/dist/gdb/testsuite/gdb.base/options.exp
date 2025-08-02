@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 #  - thread apply
 #  - taas
 
+load_lib compile-support.exp
 load_lib completion-support.exp
 
 standard_testfile .c
@@ -45,6 +46,8 @@ if { ![readline_is_used] } {
     untested "no tab completion support without readline"
     return -1
 }
+
+set tui_supported_p [expr ![skip_tui_tests]]
 
 # Check the completion result, as returned by the "maintenance show
 # test-options-completion-result" command.  TEST is used as test name.
@@ -165,6 +168,8 @@ proc_with_prefix test-print {{prefix ""}} {
 	"-array-indexes"
 	"-elements"
 	"-max-depth"
+	"-memory-tag-violations"
+	"-nibbles"
 	"-null-stop"
 	"-object"
 	"-pretty"
@@ -180,7 +185,6 @@ proc_with_prefix test-print {{prefix ""}} {
     clean_restart $binfile
 
     if ![runto_main] {
-	fail "cannot run to main"
 	return
     }
 
@@ -293,7 +297,6 @@ proc_with_prefix test-backtrace {} {
     clean_restart $binfile
 
     if ![runto_main] {
-	fail "cannot run to main"
 	return
     }
 
@@ -319,6 +322,8 @@ proc_with_prefix test-backtrace {} {
 
 # Basic option-machinery + "frame apply" command integration tests.
 proc_with_prefix test-frame-apply {} {
+    global tui_supported_p
+
     test_gdb_complete_unique "frame apply all" "frame apply all"
 
     gdb_test "frame apply level 0-" \
@@ -375,12 +380,14 @@ proc_with_prefix test-frame-apply {} {
 	    test_gdb_completion_offers_commands "$cmd -- "
 	}
 
-	# '-' is a valid TUI command.
-	test_error_cmd2 $cmd " -- -" \
-	    "Cannot enable the TUI when output is not a terminal"
-	test_gdb_complete_unique \
-	    "$cmd -- -" \
-	    "$cmd -- -"
+	if { $tui_supported_p } {
+	    # '-' is a valid TUI command.
+	    test_error_cmd2 $cmd " -- -" \
+		"Cannot enable the TUI when output is not a terminal"
+	    test_gdb_complete_unique \
+		"$cmd -- -" \
+		"$cmd -- -"
+	}
 
 	test_error_cmd2 $cmd " -foo" \
 	    "Undefined command: \"-foo\".  Try \"help\"\\."
@@ -392,6 +399,7 @@ proc_with_prefix test-frame-apply {} {
 
 # Basic option-machinery + "thread apply" command integration tests.
 proc_with_prefix test-thread-apply {} {
+    global tui_supported_p
 
     test_gdb_complete_unique "thread apply all" "thread apply all"
     test_gdb_complete_unique "taas" "taas"
@@ -456,12 +464,14 @@ proc_with_prefix test-thread-apply {} {
 	    test_gdb_completion_offers_commands "$cmd -- "
 	}
 
-	# '-' is a valid TUI command.
-	test_invalid_cmd "$cmd" " -- -" \
-	    "Cannot enable the TUI when output is not a terminal"
-	test_gdb_complete_unique \
-	    "$cmd -- -" \
-	    "$cmd -- -"
+	if { $tui_supported_p } {
+	    # '-' is a valid TUI command.
+	    test_invalid_cmd "$cmd" " -- -" \
+		"Cannot enable the TUI when output is not a terminal"
+	    test_gdb_complete_unique \
+		"$cmd -- -" \
+		"$cmd -- -"
+	}
 
 	test_invalid_cmd $cmd " -foo" \
 	    "Undefined command: \"-foo\".  Try \"help\"\\."

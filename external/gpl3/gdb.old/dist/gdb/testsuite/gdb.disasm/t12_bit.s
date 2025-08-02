@@ -174,3 +174,4 @@ _start:
     bfst r3h,#0x34:8,@0x12345678:32           ;6a3812345678f334
 
 	.end
+	.section	.note.GNU-stack,"",@progbits

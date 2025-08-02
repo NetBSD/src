@@ -1,4 +1,4 @@
-#   Copyright 1993-2020 Free Software Foundation, Inc.
+#   Copyright 1993-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -83,7 +83,7 @@ proc gdb_load { arg } {
 	}
 	 -re "Remote target.*$gdb_prompt $" { }
 	 -re ".*SPARClite appears to be alive.*$gdb_prompt $"	{
-	    if $verbose>1 then {
+	    if {$verbose > 1} {
 		send_user "Set target to $targetname\n"
 	    }
 	}
@@ -119,12 +119,12 @@ proc gdb_load { arg } {
 		verbose "Timeout is now $timeout seconds" 2
 	    }
 	     -re "$gdb_prompt $"     {
-		if $verbose>1 then {
+		if {$verbose > 1} {
 		    perror "GDB couldn't load."
 		}
 	    }
 	     timeout {
-		if $verbose>1 then {
+		if {$verbose > 1} {
 		    perror "Timed out trying to load $arg."
 		}
 	    }
@@ -172,7 +172,7 @@ proc gdb_load { arg } {
 	}
     }
 
-    if [info exists expect_out(buffer)] then {
+    if {[info exists expect_out(buffer)]} {
 	send_log $expect_out(buffer)
     }
     return 0

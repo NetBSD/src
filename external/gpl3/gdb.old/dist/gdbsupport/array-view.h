@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,7 @@
 #define COMMON_ARRAY_VIEW_H
 
 #include "traits.h"
+#include <algorithm>
 #include <type_traits>
 
 /* An array_view is an abstraction that provides a non-owning view
@@ -139,9 +140,10 @@ public:
   template<typename Container,
 	   typename = Requires<gdb::Not<IsDecayedT<Container>>>,
 	   typename
-	     = Requires<std::is_convertible
-			<decltype (std::declval<Container> ().data ()),
-			 T *>>,
+	     = Requires<DecayedConvertible
+			<typename std::remove_pointer
+			 <decltype (std::declval<Container> ().data ())
+			 >::type>>,
 	   typename
 	     = Requires<std::is_convertible
 			<decltype (std::declval<Container> ().size ()),
@@ -162,9 +164,19 @@ public:
   constexpr const T *end () const noexcept { return m_array + m_size; }
 
   /*constexpr14*/ reference operator[] (size_t index) noexcept
-  { return m_array[index]; }
+  {
+#if defined(_GLIBCXX_DEBUG)
+    gdb_assert (index < m_size);
+#endif
+    return m_array[index];
+  }
   constexpr const_reference operator[] (size_t index) const noexcept
-  { return m_array[index]; }
+  {
+#if defined(_GLIBCXX_DEBUG) && __cplusplus >= 201402L
+    gdb_assert (index < m_size);
+#endif
+    return m_array[index];
+  }
 
   constexpr size_type size () const noexcept { return m_size; }
   constexpr bool empty () const noexcept { return m_size == 0; }
@@ -173,17 +185,41 @@ public:
 
   /* Return a new array view over SIZE elements starting at START.  */
   constexpr array_view<T> slice (size_type start, size_type size) const noexcept
-  { return {m_array + start, size}; }
+  {
+#if defined(_GLIBCXX_DEBUG) && __cplusplus >= 201402L
+    gdb_assert (start + size <= m_size);
+#endif
+    return {m_array + start, size};
+  }
 
   /* Return a new array view over all the elements after START,
      inclusive.  */
   constexpr array_view<T> slice (size_type start) const noexcept
-  { return {m_array + start, size () - start}; }
+  {
+#if defined(_GLIBCXX_DEBUG) && __cplusplus >= 201402L
+    gdb_assert (start <= m_size);
+#endif
+    return {m_array + start, size () - start};
+  }
 
 private:
   T *m_array;
   size_type m_size;
 };
+
+/* Copy the contents referenced by the array view SRC to the array view DEST.
+
+   The two array views must have the same length.  */
+
+template <typename U, typename T>
+void copy (gdb::array_view<U> src, gdb::array_view<T> dest)
+{
+  gdb_assert (dest.size () == src.size ());
+  if (dest.data () < src.data ())
+    std::copy (src.begin (), src.end (), dest.begin ());
+  else if (dest.data () > src.data ())
+    std::copy_backward (src.begin (), src.end (), dest.end ());
+}
 
 /* Compare LHS and RHS for (deep) equality.  That is, whether LHS and
    RHS have the same sizes, and whether each pair of elements of LHS

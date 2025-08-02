@@ -1,4 +1,4 @@
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,24 +69,36 @@ set srcfile_lib1 ${srcdir}/${subdir}/${lib1name}.c
 set binfile_lib1 [standard_output_file ${lib1name}.so]
 set lib1_flags [list debug shlib=${binfile_lib2}]
 
+if { [gdb_compile_shlib ${srcfile_lib2} ${binfile_lib2} $lib2_flags] != ""
+     || [gdb_compile_shlib ${srcfile_lib1} ${binfile_lib1} $lib1_flags] != "" } {
+    untested "failed to compile"
+    return -1
+}
+
 # Main program
 set testfile "solib-vanish-main"
 set srcfile ${srcdir}/${subdir}/${testfile}.c
 set executable ${testfile}
 set binfile [standard_output_file ${executable}]
-set bin_flags [list debug shlib_load additional_flags=-DVANISH_LIB=\"${binfile_lib1}\"]
+set bin_flags [list debug shlib_load]
+set binfile_lib1_target [gdb_download_shlib $binfile_lib1]
+lappend bin_flags additional_flags=-DVANISH_LIB=\"$binfile_lib1_target\"
 
-if { [gdb_compile_shlib ${srcfile_lib2} ${binfile_lib2} $lib2_flags] != ""
-     || [gdb_compile_shlib ${srcfile_lib1} ${binfile_lib1} $lib1_flags] != ""
-     || [gdb_compile ${srcfile} ${binfile} executable $bin_flags] != "" } {
+if {[is_remote target]} {
+    lappend cleanfiles_target $binfile_lib1_target.renamed
+}
+
+if { [gdb_compile ${srcfile} ${binfile} executable $bin_flags] != "" } {
     untested "failed to compile"
     return -1
 }
 
 clean_restart $testfile
 
+gdb_locate_shlib $binfile_lib1
+gdb_load_shlib $binfile_lib2
+
 if { ![runto_main] } {
-    fail "can't run to main"
     return
 }
 

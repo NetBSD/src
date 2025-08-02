@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,23 +23,40 @@
 /* An "unspecified" CORE_ADDR, for match_dll.  */
 #define UNSPECIFIED_CORE_ADDR (~(CORE_ADDR) 0)
 
-std::list<dll_info> all_dlls;
-int dlls_changed;
-
-/* Record a newly loaded DLL at BASE_ADDR.  */
+/* Record a newly loaded DLL at BASE_ADDR for the current process.  */
 
 void
 loaded_dll (const char *name, CORE_ADDR base_addr)
 {
-  all_dlls.emplace_back (name != NULL ? name : "", base_addr);
-  dlls_changed = 1;
+  loaded_dll (current_process (), name, base_addr);
 }
 
-/* Record that the DLL with NAME and BASE_ADDR has been unloaded.  */
+/* Record a newly loaded DLL at BASE_ADDR for PROC.  */
+
+void
+loaded_dll (process_info *proc, const char *name, CORE_ADDR base_addr)
+{
+  gdb_assert (proc != nullptr);
+  proc->all_dlls.emplace_back (name != nullptr ? name : "", base_addr);
+  proc->dlls_changed = true;
+}
+
+/* Record that the DLL with NAME and BASE_ADDR has been unloaded
+   from the current process.  */
 
 void
 unloaded_dll (const char *name, CORE_ADDR base_addr)
 {
+  unloaded_dll (current_process (), name, base_addr);
+}
+
+/* Record that the DLL with NAME and BASE_ADDR has been unloaded
+   from PROC.  */
+
+void
+unloaded_dll (process_info *proc, const char *name, CORE_ADDR base_addr)
+{
+  gdb_assert (proc != nullptr);
   auto pred = [&] (const dll_info &dll)
     {
       if (base_addr != UNSPECIFIED_CORE_ADDR
@@ -52,9 +69,10 @@ unloaded_dll (const char *name, CORE_ADDR base_addr)
       return false;
     };
 
-  auto iter = std::find_if (all_dlls.begin (), all_dlls.end (), pred);
+  auto iter = std::find_if (proc->all_dlls.begin (), proc->all_dlls.end (),
+			    pred);
 
-  if (iter == all_dlls.end ())
+  if (iter == proc->all_dlls.end ())
     /* For some inferiors we might get unloaded_dll events without having
        a corresponding loaded_dll.  In that case, the dll cannot be found
        in ALL_DLL, and there is nothing further for us to do.
@@ -67,14 +85,17 @@ unloaded_dll (const char *name, CORE_ADDR base_addr)
   else
     {
       /* DLL has been found so remove the entry and free associated
-         resources.  */
-      all_dlls.erase (iter);
-      dlls_changed = 1;
+	 resources.  */
+      proc->all_dlls.erase (iter);
+      proc->dlls_changed = true;
     }
 }
 
 void
 clear_dlls (void)
 {
-  all_dlls.clear ();
+  for_each_process ([] (process_info *proc)
+    {
+      proc->all_dlls.clear ();
+    });
 }

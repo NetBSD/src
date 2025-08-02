@@ -1,6 +1,6 @@
 /* cpu.h --- declarations for the RX core.
 
-Copyright (C) 2005-2020 Free Software Foundation, Inc.
+Copyright (C) 2005-2023 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -240,6 +240,6 @@ extern void reset_pipeline_stats (void);
 extern void halt_pipeline_stats (void);
 extern void pipeline_stats (void);
 
-extern void trace_register_changes ();
+extern void trace_register_changes (void);
 extern void generate_access_exception (void);
 extern jmp_buf decode_jmp_buf;

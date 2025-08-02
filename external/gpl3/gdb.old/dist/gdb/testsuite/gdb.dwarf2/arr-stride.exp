@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ if {![dwarf2_support]} {
     return 0
 }
 
-standard_testfile arr-stride.c arr-stride-dw.S
+standard_testfile main.c -dw.S
 
 # Make some DWARF for the test.
 set asm_file [standard_output_file $srcfile2]
@@ -31,7 +31,7 @@ Dwarf::assemble $asm_file {
                 {DW_AT_comp_dir /tmp}
         } {
 	    declare_labels integer_label array_elt_label array_label \
-                big_array_label
+                big_array_label struct_label
 
             integer_label: DW_TAG_base_type {
                 {DW_AT_byte_size 4 DW_FORM_sdata}
@@ -79,6 +79,34 @@ Dwarf::assemble $asm_file {
 		    {DW_AT_upper_bound 4 DW_FORM_data1}
 		}
 	    }
+
+	    struct_label: DW_TAG_structure_type {
+		{name struct_type}
+		{byte_size 16 DW_FORM_sdata}
+	    } {
+		member {
+		    {name intfield}
+		    {type :$integer_label}
+		    {data_member_location 0 DW_FORM_sdata}
+		}
+		member {
+		    {name arrayfield}
+		    {type :$array_label}
+		    {data_member_location 4 DW_FORM_sdata}
+		}
+	    }
+
+	    DW_TAG_variable {
+		{name the_struct}
+		{external 1 DW_FORM_flag}
+		{location {
+		    DW_OP_const1u 1
+		    DW_OP_stack_value
+		    DW_OP_piece 4
+		    DW_OP_piece 12
+		} SPECIAL_expr}
+		{type :$struct_label}
+	    }
 	}
     }
 }
@@ -95,3 +123,6 @@ gdb_test "ptype pck.table" \
 
 gdb_test "ptype pck.big_table" \
          "type = array \\(0 \\.\\. 4\\) of pck\\.item <packed: 8-bit elements>"
+
+gdb_test "print the_struct" \
+    "\\(intfield => 1, arrayfield => \\(0 => <optimized out>\\)\\)"

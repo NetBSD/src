@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Free Software Foundation, Inc.
+// Copyright (C) 2013-2023 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -17,7 +17,7 @@
 
 namespace assign_6 {
 
-int counter = 0;
+static int counter = 0;
 
 struct mixin_counter
 {

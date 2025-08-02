@@ -186,3 +186,4 @@ _start:
     divs.l er3,er1            ;01d25331
 
 	.end
+	.section	.note.GNU-stack,"",@progbits

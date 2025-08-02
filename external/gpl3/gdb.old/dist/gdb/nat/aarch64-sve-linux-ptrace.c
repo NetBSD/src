@@ -1,6 +1,6 @@
 /* Common target dependent for AArch64 systems.
 
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,6 +26,7 @@
 #include "arch/aarch64.h"
 #include "gdbsupport/common-regcache.h"
 #include "gdbsupport/byte-vector.h"
+#include <endian.h>
 
 /* See nat/aarch64-sve-linux-ptrace.h.  */
 
@@ -99,17 +100,17 @@ aarch64_sve_set_vq (int tid, struct reg_buffer_common *reg_buf)
      inferior function call, and the VG register comes after the Z
      registers.  */
   if (reg_buf->get_register_status (AARCH64_SVE_VG_REGNUM) != REG_VALID)
-  {
-    /* If vg is not available yet, fetch it from ptrace.  The VG value from
-       ptrace is likely the correct one.  */
-    uint64_t vq = aarch64_sve_get_vq (tid);
+    {
+      /* If vg is not available yet, fetch it from ptrace.  The VG value from
+	 ptrace is likely the correct one.  */
+      uint64_t vq = aarch64_sve_get_vq (tid);
 
-    /* If something went wrong, just bail out.  */
-    if (vq == 0)
-      return false;
+      /* If something went wrong, just bail out.  */
+      if (vq == 0)
+	return false;
 
-    reg_vg = sve_vg_from_vq (vq);
-  }
+      reg_vg = sve_vg_from_vq (vq);
+    }
   else
     reg_buf->raw_collect (AARCH64_SVE_VG_REGNUM, &reg_vg);
 
@@ -140,6 +141,24 @@ aarch64_sve_get_sveregs (int tid)
     perror_with_name (_("Unable to fetch SVE registers"));
 
   return buf;
+}
+
+/* If we are running in BE mode, byteswap the contents
+   of SRC to DST for SIZE bytes.  Other, just copy the contents
+   from SRC to DST.  */
+
+static void
+aarch64_maybe_swab128 (gdb_byte *dst, const gdb_byte *src, size_t size)
+{
+  gdb_assert (src != nullptr && dst != nullptr);
+  gdb_assert (size > 1);
+
+#if (__BYTE_ORDER == __BIG_ENDIAN)
+  for (int i = 0; i < size - 1; i++)
+    dst[i] = src[size - i];
+#else
+  memcpy (dst, src, size);
+#endif
 }
 
 /* See nat/aarch64-sve-linux-ptrace.h.  */
@@ -184,34 +203,50 @@ aarch64_sve_regs_copy_to_reg_buf (struct reg_buffer_common *reg_buf,
     }
   else
     {
+      /* WARNING: SIMD state is laid out in memory in target-endian format,
+	 while SVE state is laid out in an endianness-independent format (LE).
+
+	 So we have a couple cases to consider:
+
+	 1 - If the target is big endian, then SIMD state is big endian,
+	 requiring a byteswap.
+
+	 2 - If the target is little endian, then SIMD state is little endian,
+	 which matches the SVE format, so no byteswap is needed. */
+
       /* There is no SVE state yet - the register dump contains a fpsimd
 	 structure instead.  These registers still exist in the hardware, but
 	 the kernel has not yet initialised them, and so they will be null.  */
 
-      char *zero_reg = (char *) alloca (SVE_PT_SVE_ZREG_SIZE (vq));
+      gdb_byte *reg = (gdb_byte *) alloca (SVE_PT_SVE_ZREG_SIZE (vq));
       struct user_fpsimd_state *fpsimd
 	= (struct user_fpsimd_state *)(base + SVE_PT_FPSIMD_OFFSET);
+
+      /* Make sure we have a zeroed register buffer.  We will need the zero
+	 padding below.  */
+      memset (reg, 0, SVE_PT_SVE_ZREG_SIZE (vq));
 
       /* Copy across the V registers from fpsimd structure to the Z registers,
 	 ensuring the non overlapping state is set to null.  */
 
-      memset (zero_reg, 0, SVE_PT_SVE_ZREG_SIZE (vq));
-
       for (int i = 0; i < AARCH64_SVE_Z_REGS_NUM; i++)
 	{
-	  memcpy (zero_reg, &fpsimd->vregs[i], sizeof (__int128_t));
-	  reg_buf->raw_supply (AARCH64_SVE_Z0_REGNUM + i, zero_reg);
+	  /* Handle big endian/little endian SIMD/SVE conversion.  */
+	  aarch64_maybe_swab128 (reg, (const gdb_byte *) &fpsimd->vregs[i],
+				 V_REGISTER_SIZE);
+	  reg_buf->raw_supply (AARCH64_SVE_Z0_REGNUM + i, reg);
 	}
 
       reg_buf->raw_supply (AARCH64_FPSR_REGNUM, &fpsimd->fpsr);
       reg_buf->raw_supply (AARCH64_FPCR_REGNUM, &fpsimd->fpcr);
 
       /* Clear the SVE only registers.  */
+      memset (reg, 0, SVE_PT_SVE_ZREG_SIZE (vq));
 
       for (int i = 0; i < AARCH64_SVE_P_REGS_NUM; i++)
-	reg_buf->raw_supply (AARCH64_SVE_P0_REGNUM + i, zero_reg);
+	reg_buf->raw_supply (AARCH64_SVE_P0_REGNUM + i, reg);
 
-      reg_buf->raw_supply (AARCH64_SVE_FFR_REGNUM, zero_reg);
+      reg_buf->raw_supply (AARCH64_SVE_FFR_REGNUM, reg);
     }
 }
 
@@ -240,11 +275,11 @@ aarch64_sve_regs_copy_from_reg_buf (const struct reg_buffer_common *reg_buf,
 	 kernel, which is why we try to avoid it.  */
 
       bool has_sve_state = false;
-      char *zero_reg = (char *) alloca (SVE_PT_SVE_ZREG_SIZE (vq));
+      gdb_byte *reg = (gdb_byte *) alloca (SVE_PT_SVE_ZREG_SIZE (vq));
       struct user_fpsimd_state *fpsimd
 	= (struct user_fpsimd_state *)(base + SVE_PT_FPSIMD_OFFSET);
 
-      memset (zero_reg, 0, SVE_PT_SVE_ZREG_SIZE (vq));
+      memset (reg, 0, SVE_PT_SVE_ZREG_SIZE (vq));
 
       /* Check in the reg_buf if any of the Z registers are set after the
 	 first 128 bits, or if any of the other SVE registers are set.  */
@@ -252,7 +287,7 @@ aarch64_sve_regs_copy_from_reg_buf (const struct reg_buffer_common *reg_buf,
       for (int i = 0; i < AARCH64_SVE_Z_REGS_NUM; i++)
 	{
 	  has_sve_state |= reg_buf->raw_compare (AARCH64_SVE_Z0_REGNUM + i,
-						 zero_reg, sizeof (__int128_t));
+						 reg, sizeof (__int128_t));
 	  if (has_sve_state)
 	    break;
 	}
@@ -261,19 +296,31 @@ aarch64_sve_regs_copy_from_reg_buf (const struct reg_buffer_common *reg_buf,
 	for (int i = 0; i < AARCH64_SVE_P_REGS_NUM; i++)
 	  {
 	    has_sve_state |= reg_buf->raw_compare (AARCH64_SVE_P0_REGNUM + i,
-						   zero_reg, 0);
+						   reg, 0);
 	    if (has_sve_state)
 	      break;
 	  }
 
       if (!has_sve_state)
 	  has_sve_state |= reg_buf->raw_compare (AARCH64_SVE_FFR_REGNUM,
-						 zero_reg, 0);
+						 reg, 0);
 
       /* If no SVE state exists, then use the existing fpsimd structure to
 	 write out state and return.  */
       if (!has_sve_state)
 	{
+	  /* WARNING: SIMD state is laid out in memory in target-endian format,
+	     while SVE state is laid out in an endianness-independent format
+	     (LE).
+
+	     So we have a couple cases to consider:
+
+	     1 - If the target is big endian, then SIMD state is big endian,
+	     requiring a byteswap.
+
+	     2 - If the target is little endian, then SIMD state is little
+	     endian, which matches the SVE format, so no byteswap is needed. */
+
 	  /* The collects of the Z registers will overflow the size of a vreg.
 	     There is enough space in the structure to allow for this, but we
 	     cannot overflow into the next register as we might not be
@@ -284,8 +331,10 @@ aarch64_sve_regs_copy_from_reg_buf (const struct reg_buffer_common *reg_buf,
 	      if (REG_VALID
 		  == reg_buf->get_register_status (AARCH64_SVE_Z0_REGNUM + i))
 		{
-		  reg_buf->raw_collect (AARCH64_SVE_Z0_REGNUM + i, zero_reg);
-		  memcpy (&fpsimd->vregs[i], zero_reg, sizeof (__int128_t));
+		  reg_buf->raw_collect (AARCH64_SVE_Z0_REGNUM + i, reg);
+		  /* Handle big endian/little endian SIMD/SVE conversion.  */
+		  aarch64_maybe_swab128 ((gdb_byte *) &fpsimd->vregs[i], reg,
+					 V_REGISTER_SIZE);
 		}
 	    }
 

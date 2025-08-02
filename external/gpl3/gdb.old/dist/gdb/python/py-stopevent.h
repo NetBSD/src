@@ -1,6 +1,6 @@
 /* Python interface to inferior events.
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,8 +25,8 @@
 extern gdbpy_ref<> create_stop_event_object (PyTypeObject *py_type);
 extern void stop_evpy_dealloc (PyObject *self);
 
-extern int emit_stop_event (struct bpstats *bs,
-                            enum gdb_signal stop_signal);
+extern int emit_stop_event (struct bpstat *bs,
+			    enum gdb_signal stop_signal);
 
 extern gdbpy_ref<> create_breakpoint_event_object (PyObject *breakpoint_list,
 						   PyObject *first_bp);

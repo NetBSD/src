@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # This test only works on Linux
 if { ![isnative] || [is_remote host] || [use_gdb_stub]
      || ![istarget *-linux*] } {
-    continue
+    return
 }
 
 standard_testfile
@@ -37,10 +37,6 @@ proc corefunc { threadtype executable } {
 
 	set binfile [standard_output_file $executable]
 	set escapedbinfile [string_to_regexp ${binfile}]
-
-	if [get_compiler_info] {
-	    return -1
-	}
 
 	gdb_test "handle SIGALRM stop print pass" "Yes.*Yes.*Yes.*"
 
@@ -99,7 +95,7 @@ proc corefunc { threadtype executable } {
 		break
 	    }
 
-	    gdb_test "detach" "Detaching from.*" ""
+	    gdb_test -nopass "detach" "Detaching from.*"
 	}
 
 	if {$passes < 3} {

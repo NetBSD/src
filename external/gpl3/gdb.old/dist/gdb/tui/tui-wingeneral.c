@@ -1,6 +1,6 @@
 /* General window behavior.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -200,13 +200,9 @@ tui_win_info::make_visible (bool visible)
 void
 tui_refresh_all ()
 {
-  struct tui_locator_window *locator = tui_locator_win_info_ptr ();
-
   for (tui_win_info *win_info : all_tui_windows ())
     {
       if (win_info->is_visible ())
 	win_info->refresh_window ();
     }
-  if (locator->is_visible ())
-    locator->refresh_window ();
 }

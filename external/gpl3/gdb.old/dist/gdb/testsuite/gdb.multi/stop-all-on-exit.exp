@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile]} {
 }
 
 if {![runto_main]} {
-    fail "starting inferior 1"
     return -1
 }
 
@@ -42,7 +41,6 @@ gdb_test "add-inferior -exec $binfile" "Added inferior 2.*" \
     "add the second inferior"
 gdb_test "inferior 2" ".*Switching to inferior 2.*"
 if {![runto_main]} {
-    fail "starting inferior 2"
     return -1
 }
 gdb_test "print duration=10" "= 10"

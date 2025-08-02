@@ -1,4 +1,4 @@
-/* Copyright 2010-2020 Free Software Foundation, Inc.
+/* Copyright 2010-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -121,3 +121,4 @@ die221:
 	.string	"GNU Modula-2 0.78 (20100402) grafted onto GCC 4.1.2"
 .LASF2:
 	.string	""
+	.section	.note.GNU-stack,"",@progbits

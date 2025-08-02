@@ -23,14 +23,7 @@
 
 #include "device_table.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
@@ -96,7 +89,6 @@ static void
 hw_shm_init_data(device *me)
 {
   hw_shm_device *shm = (hw_shm_device*)device_data(me);
-  const device_unit *d;
   reg_property_spec reg;
   int i;
 
@@ -105,7 +97,7 @@ hw_shm_init_data(device *me)
     error("shm_init_data() required key property is missing\n");
 
   shm->key = (key_t) device_find_integer_property(me, "key");
-  DTRACE(shm, ("shm key (0x%08x)\n", shm->key) );
+  DTRACE(shm, ("shm key (0x%08jx)\n", (intmax_t)shm->key) );
   
   /* Figure out where this memory is in address space and how long it is */
   if ( !device_find_reg_array_property(me, "reg", 0, &reg) )
@@ -154,8 +146,6 @@ hw_shm_attach_address_callback(device *me,
 				access_type access,
 				device *client) /*callback/default*/
 {
-  hw_shm_device *shm = (hw_shm_device*)device_data(me);
-
   if (space != 0)
     error("shm_attach_address_callback() invalid address space\n");
 

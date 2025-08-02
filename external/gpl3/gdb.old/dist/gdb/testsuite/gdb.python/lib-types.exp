@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,8 +27,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -92,7 +91,7 @@ gdb_test_multiple "python print (str (basic_type_class1_ref_obj))" $test {
 # test nested typedef stripping
 gdb_test_no_output "python typedef_const_typedef_class1_obj = gdb.parse_and_eval ('typedef_const_typedef_class1_obj')"
 gdb_test_no_output "python basic_type_typedef_const_typedef_class1_obj = gdb.types.get_basic_type (typedef_const_typedef_class1_obj.type)"
-gdb_test "python print (str (typedef_class1_obj.type))" "typedef_class1"
+gdb_test "python print (str (typedef_const_typedef_class1_obj.type))" "typedef_class1"
 set test "nested typedef stripping"
 gdb_test_multiple "python print (str (basic_type_typedef_const_typedef_class1_obj))" $test {
     -re "\[\r\n\]+class1\[\r\n\]+$gdb_prompt $" {

@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,71 +20,70 @@ import itertools
 from gdb.FrameDecorator import FrameDecorator
 import copy
 
-class Reverse_Function (FrameDecorator):
 
+class Reverse_Function(FrameDecorator):
     def __init__(self, fobj):
         super(Reverse_Function, self).__init__(fobj)
         self.fobj = fobj
 
-    def function (self):
-        fname = str (self.fobj.function())
-        if (fname == None or fname == ""):
+    def function(self):
+        fname = str(self.fobj.function())
+        if not fname:
             return None
-        if fname == 'end_func':
-            extra = self.fobj.inferior_frame().read_var('str').string()
+        if fname == "end_func":
+            extra = self.fobj.inferior_frame().read_var("str").string()
         else:
-            extra = ''
+            extra = ""
         fname = fname[::-1] + extra
         return fname
 
-class Dummy (FrameDecorator):
 
+class Dummy(FrameDecorator):
     def __init__(self, fobj):
         super(Dummy, self).__init__(fobj)
         self.fobj = fobj
 
-    def function (self):
+    def function(self):
         return "Dummy function"
 
-    def address (self):
+    def address(self):
         return 0x123
 
-    def filename (self):
+    def filename(self):
         return "Dummy filename"
 
-    def frame_args (self):
-        return [("Foo",gdb.Value(12)),("Bar","Stuff"), ("FooBar",42)]
+    def frame_args(self):
+        return [("Foo", gdb.Value(12)), ("Bar", "Stuff"), ("FooBar", 42)]
 
-    def frame_locals (self):
+    def frame_locals(self):
         return []
 
-    def line (self):
+    def line(self):
         return 0
 
-    def elided (self):
+    def elided(self):
         return None
 
-class FrameFilter ():
 
-    def __init__ (self):
+class FrameFilter:
+    def __init__(self):
         self.name = "Reverse"
         self.priority = 100
         self.enabled = True
-        gdb.frame_filters [self.name] = self
+        gdb.frame_filters[self.name] = self
 
-    def filter (self, frame_iter):
+    def filter(self, frame_iter):
         # Python 3.x moved the itertools.imap functionality to map(),
         # so check if it is available.
         if hasattr(itertools, "imap"):
-            frame_iter = itertools.imap (Reverse_Function,
-                                         frame_iter)
+            frame_iter = itertools.imap(Reverse_Function, frame_iter)
         else:
             frame_iter = map(Reverse_Function, frame_iter)
 
         return frame_iter
 
-class ElidingFrameDecorator(FrameDecorator):
 
+class ElidingFrameDecorator(FrameDecorator):
     def __init__(self, frame, elided_frames):
         super(ElidingFrameDecorator, self).__init__(frame)
         self.elided_frames = elided_frames
@@ -92,11 +91,12 @@ class ElidingFrameDecorator(FrameDecorator):
     def elided(self):
         return iter(self.elided_frames)
 
-    def address (self):
+    def address(self):
         # Regression test for an overflow in the python layer.
-        bitsize = 8 * gdb.lookup_type('void').pointer().sizeof
+        bitsize = 8 * gdb.lookup_type("void").pointer().sizeof
         mask = (1 << bitsize) - 1
-        return 0xffffffffffffffff & mask
+        return 0xFFFFFFFFFFFFFFFF & mask
+
 
 class ElidingIterator:
     def __init__(self, ii):
@@ -107,7 +107,7 @@ class ElidingIterator:
 
     def next(self):
         frame = next(self.input_iterator)
-        if str(frame.function()) != 'func1':
+        if str(frame.function()) != "func1":
             return frame
 
         # Suppose we want to return the 'func1' frame but elide the
@@ -123,16 +123,17 @@ class ElidingIterator:
     def __next__(self):
         return self.next()
 
-class FrameElider ():
 
-    def __init__ (self):
+class FrameElider:
+    def __init__(self):
         self.name = "Elider"
         self.priority = 900
         self.enabled = True
-        gdb.frame_filters [self.name] = self
+        gdb.frame_filters[self.name] = self
 
-    def filter (self, frame_iter):
-        return ElidingIterator (frame_iter)
+    def filter(self, frame_iter):
+        return ElidingIterator(frame_iter)
+
 
 # This is here so the test can change the kind of error that is
 # thrown.
@@ -144,23 +145,25 @@ class ErrorInName(FrameDecorator):
         FrameDecorator.__init__(self, frame)
 
     def function(self):
-        raise name_error('whoops')
+        raise name_error("whoops")
+
 
 # A filter that supplies buggy frames.  Disabled by default.
-class ErrorFilter():
-    def __init__ (self):
+class ErrorFilter:
+    def __init__(self):
         self.name = "Error"
         self.priority = 1
         self.enabled = False
-        gdb.frame_filters [self.name] = self
+        gdb.frame_filters[self.name] = self
 
     def filter(self, frame_iter):
         # Python 3.x moved the itertools.imap functionality to map(),
         # so check if it is available.
         if hasattr(itertools, "imap"):
-            return itertools.imap (ErrorInName, frame_iter)
+            return itertools.imap(ErrorInName, frame_iter)
         else:
             return map(ErrorInName, frame_iter)
+
 
 FrameFilter()
 FrameElider()

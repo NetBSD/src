@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ set MIFLAGS "-i=mi"
 
 gdb_exit
 if [mi_gdb_start] {
-    continue
+    return
 }
 
 # First, verify that the debugger correctly advertises support
@@ -28,8 +28,7 @@ mi_gdb_test "-list-features" \
             "-list-features should include \"language-option\""
 
 mi_gdb_test "set lang ada" \
-            ".*=cmd-param-changed,param=\"language\",value=\"ada\".*" \
-            "set lang ada"
+            ".*=cmd-param-changed,param=\"language\",value=\"ada\".*"
 
 # Evaluate an expression that the Ada language is unable to parse.
 mi_gdb_test "-data-evaluate-expression \"sizeof (void*)\"" \
@@ -44,8 +43,7 @@ mi_gdb_test "-data-evaluate-expression --language c \"sizeof (void*)\"" \
 
 # Double-check that the current language has not changed.
 mi_gdb_test "show lang ada" \
-            ".*The current source language is \\\\\"ada\\\\\".*" \
-            "set lang ada"
+            ".*The current source language is \\\\\"ada\\\\\".*"
 
 # Test what happens when specifying an invalid language name...
 mi_gdb_test "-data-evaluate-expression --language invlang \"sizeof (void*)\"" \

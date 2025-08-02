@@ -1,4 +1,4 @@
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 standard_testfile
 
-if { ![istarget "x86_64-*linux*"] } then {
+if {![is_amd64_regs_target]} {
     verbose "Untested x86_64 fs_base and gs_base tests."
     return
 }
@@ -26,7 +26,6 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
 }
 
 if ![runto_main] {
-    untested "could not run to main"
     return -1
 }
 

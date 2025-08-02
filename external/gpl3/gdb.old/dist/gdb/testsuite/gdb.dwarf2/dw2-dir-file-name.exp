@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ if {![dwarf2_support]} {
 # This test has hard-wired assumptions that host and build filenames are
 # the same, and assumes POSIX pathname syntax.
 if { [is_remote host] || [ishost *-*-mingw*] } {
-    unsupported "dw2-dir-file-name.exp can only run on local host"
+    unsupported "can only run on local host"
     return 0
 }
 
@@ -34,6 +34,50 @@ if {[is_64_target]} {
 }
 
 standard_testfile
+
+set func_info_names {
+    compdir_missing__ldir_missing__file_basename
+    compdir_missing__ldir_missing__file_relative
+    compdir_missing__ldir_missing__file_absolute
+    compdir_missing__ldir_relative_file_basename
+    compdir_missing__ldir_relative_file_relative
+    compdir_missing__ldir_relative_file_absolute
+    compdir_missing__ldir_absolute_file_basename
+    compdir_missing__ldir_absolute_file_relative
+    compdir_missing__ldir_absolute_file_absolute_same
+    compdir_missing__ldir_absolute_file_absolute_different
+    compdir_relative_ldir_missing__file_basename
+    compdir_relative_ldir_missing__file_relative
+    compdir_relative_ldir_missing__file_absolute
+    compdir_relative_ldir_relative_file_basename
+    compdir_relative_ldir_relative_file_relative
+    compdir_relative_ldir_relative_file_absolute
+    compdir_relative_ldir_absolute_file_basename
+    compdir_relative_ldir_absolute_file_relative
+    compdir_relative_ldir_absolute_file_absolute_same
+    compdir_relative_ldir_absolute_file_absolute_different
+    compdir_absolute_ldir_missing__file_basename
+    compdir_absolute_ldir_missing__file_relative
+    compdir_absolute_ldir_missing__file_absolute_same
+    compdir_absolute_ldir_missing__file_absolute_different
+    compdir_absolute_ldir_relative_file_basename
+    compdir_absolute_ldir_relative_file_relative
+    compdir_absolute_ldir_relative_file_absolute_same
+    compdir_absolute_ldir_relative_file_absolute_different
+    compdir_absolute_ldir_absolute_file_basename_same
+    compdir_absolute_ldir_absolute_file_basename_different
+    compdir_absolute_ldir_absolute_file_relative_same
+    compdir_absolute_ldir_absolute_file_relative_different
+    compdir_absolute_ldir_absolute_file_absolute_same
+    compdir_absolute_ldir_absolute_file_absolute_different
+}
+
+with_shared_gdb {
+    foreach func_info_name $func_info_names {
+	get_func_info $func_info_name
+    }
+}
+
 set asmsrcfile [standard_output_file ${testfile}asm.S]
 set asmobjfile [standard_output_file ${testfile}asm.o]
 set srcabsdir [standard_output_file ${testfile}.d]
@@ -52,6 +96,11 @@ proc out_cu { name cu_dir cu_name line_dir line_name } {
     global f
     global addr_len
 
+    global ${name}_start
+    global ${name}_end
+    set name_start [set ${name}_start]
+    set name_end [set ${name}_end]
+
     puts -nonewline $f "\
 .L${name}_begin:
 	.4byte	.L${name}_end - .L${name}_start	/* Length of Compilation Unit */
@@ -69,8 +118,8 @@ proc out_cu { name cu_dir cu_name line_dir line_name } {
 	.ascii	\"GNU C\\0\"			/* DW_AT_producer */
 	.byte	2				/* DW_AT_language (DW_LANG_C) */
 	.4byte	.Lline_${name}_begin		/* DW_AT_stmt_list */
-	.${addr_len}byte ${name}_start		/* DW_AT_low_pc */
-	.${addr_len}byte ${name}_end		/* DW_AT_high_pc */
+	.${addr_len}byte $name_start		/* DW_AT_low_pc */
+	.${addr_len}byte $name_end		/* DW_AT_high_pc */
 "
     if { $cu_dir != "" } {
 	puts $f "  .ascii $cu_dir /* DW_AT_comp_dir */"
@@ -80,8 +129,8 @@ proc out_cu { name cu_dir cu_name line_dir line_name } {
 
 	.uleb128	3			/* Abbrev: DW_TAG_subprogram */
 	.asciz		\"${name}\"		/* DW_AT_name */
-	.${addr_len}byte ${name}_start		/* DW_AT_low_pc */
-	.${addr_len}byte ${name}_end		/* DW_AT_high_pc */
+	.${addr_len}byte $name_start		/* DW_AT_low_pc */
+	.${addr_len}byte $name_end		/* DW_AT_high_pc */
 
 	.byte		0			/* End of children of CU */
 .L${name}_end:
@@ -91,6 +140,11 @@ proc out_cu { name cu_dir cu_name line_dir line_name } {
 proc out_line { name cu_dir cu_name line_dir line_name } {
     global f
     global addr_len
+
+    global ${name}_start
+    global ${name}_end
+    set name_start [set ${name}_start]
+    set name_end [set ${name}_end]
 
     puts -nonewline $f "\
 .Lline_${name}_begin:
@@ -134,18 +188,25 @@ proc out_line { name cu_dir cu_name line_dir line_name } {
 
 .Lline_${name}_lines:
 	.byte		3	/* DW_LNS_advance_line */
-	.sleb128	998	/* ... to 999 */
+	.sleb128	997	/* ... to 998 */
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	${addr_len}+1
 	.byte		2
-	.${addr_len}byte ${name}_start
+	.${addr_len}byte $name_start
+	.byte		1	/* DW_LNS_copy */
+	.byte		3	/* DW_LNS_advance_line */
+	.sleb128	1	/* ... to 999 */
+	.byte		0	/* DW_LNE_set_address */
+	.uleb128	${addr_len}+1
+	.byte		2
+	.${addr_len}byte ${name}_label
 	.byte		1	/* DW_LNS_copy */
 	.byte		3	/* DW_LNS_advance_line */
 	.sleb128	1	/* ... to 1000 */
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	${addr_len}+1
 	.byte		2
-	.${addr_len}byte ${name}_end
+	.${addr_len}byte $name_end
 	.byte		1	/* DW_LNS_copy */
 	.byte		0	/* DW_LNE_end_of_sequence */
 	.uleb128	1
@@ -255,6 +316,22 @@ puts -nonewline $f "\
   .section .debug_info
 "
 out_compdir out_cu
+
+Dwarf::assemble { add_dummy_cus 0 file_id $f } {
+    global func_info_names
+
+    foreach name $func_info_names {
+	global ${name}_start
+	global ${name}_end
+	set name_start [set ${name}_start]
+	set name_end [set ${name}_end]
+
+	set cu_label .L${name}_begin
+	aranges {} cu_label {
+	    arange {} $name_start "$name_end - $name_start"
+	}
+    }
+}
 
 puts $f "  .section .debug_line"
 out_compdir out_line
@@ -396,20 +473,20 @@ proc test { func compdir filename } {
 	    error "not absolute"
 	}
 
-	gdb_breakpoint $func
-	gdb_continue_to_breakpoint $func "$func \\(\\) at .*"
+	gdb_breakpoint ${func}_label
+	gdb_test "continue" "$func \\(\\) at .*" "continue to $func"
 
 	gdb_test_no_output "set filename-display absolute"
 	verbose -log "expect: ${absolute}"
-	gdb_test "frame" " in $func \\(\\) at [string_to_regexp ${absolute}]:999" "absolute"
+	gdb_test "frame" "$func \\(\\) at [string_to_regexp ${absolute}]:999" "absolute"
 
 	gdb_test_no_output "set filename-display basename"
 	verbose -log "expect: [file tail $filename]"
-	gdb_test "frame" " in $func \\(\\) at [string_to_regexp [file tail $filename]]:999" "basename"
+	gdb_test "frame" "$func \\(\\) at [string_to_regexp [file tail $filename]]:999" "basename"
 
 	gdb_test_no_output "set filename-display relative"
 	verbose -log "expect: $filename"
-	gdb_test "frame" " in $func \\(\\) at [string_to_regexp $filename]:999" "relative"
+	gdb_test "frame" "$func \\(\\) at [string_to_regexp $filename]:999" "relative"
     }
 }
 

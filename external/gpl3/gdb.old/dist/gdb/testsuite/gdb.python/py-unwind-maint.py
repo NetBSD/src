@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Free Software Foundation, Inc.
+# Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ import re
 import gdb.types
 from gdb.unwinder import Unwinder, register_unwinder
 
+
 class TestGlobalUnwinder(Unwinder):
     def __init__(self):
         super(TestGlobalUnwinder, self).__init__("global_unwinder")
@@ -26,6 +27,7 @@ class TestGlobalUnwinder(Unwinder):
     def __call__(self, unwinder_info):
         print("%s called" % self.name)
         return None
+
 
 class TestProgspaceUnwinder(Unwinder):
     def __init__(self, name):
@@ -35,6 +37,7 @@ class TestProgspaceUnwinder(Unwinder):
         print("%s called" % self.name)
         return None
 
+
 class TestObjfileUnwinder(Unwinder):
     def __init__(self, name):
         super(TestObjfileUnwinder, self).__init__("%s_obj_unwinder" % name)
@@ -42,7 +45,6 @@ class TestObjfileUnwinder(Unwinder):
     def __call__(self, unwinder_info):
         print("%s called" % self.name)
         return None
-
 
 
 gdb.unwinder.register_unwinder(None, TestGlobalUnwinder())
@@ -54,6 +56,7 @@ except RuntimeError:
 if not saw_runtime_error:
     raise RuntimeError("Missing runtime error from register_unwinder.")
 gdb.unwinder.register_unwinder(None, TestGlobalUnwinder(), replace=True)
-gdb.unwinder.register_unwinder(gdb.current_progspace(),
-                               TestProgspaceUnwinder("py_unwind_maint"))
+gdb.unwinder.register_unwinder(
+    gdb.current_progspace(), TestProgspaceUnwinder("py_unwind_maint")
+)
 print("Python script imported")

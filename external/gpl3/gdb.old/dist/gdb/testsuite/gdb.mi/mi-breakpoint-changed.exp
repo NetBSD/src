@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,15 +46,13 @@ if { [gdb_compile $srcdir/$subdir/$srcfile $binfile executable $exec_opts] != ""
 proc test_insert_delete_modify { } {
     global mi_gdb_prompt
     global lib_sl1 lib_sl2
+    global binfile
 
-    gdb_exit
-    if [mi_gdb_start] {
-	continue
-    }
+    mi_clean_restart $binfile
 
     mi_load_shlibs $lib_sl1 $lib_sl2
 
-    mi_run_to_main
+    mi_runto_main
 
     mi_gdb_test "break marker" \
 	{(&.*)*.*~"Breakpoint 2 at.*\\n".*=breakpoint-created,bkpt=\{number="2",type="breakpoint".*\}.*\n\^done}
@@ -99,7 +97,7 @@ proc test_insert_delete_modify { } {
 	$test
     set test "dprintf marker, \"arg\" \""
     mi_gdb_test $test \
-	{.*=breakpoint-created,bkpt=\{number="6",type="dprintf".*,script=\{\"printf \\\"arg\\\" \\\"\"\}.*\}\r\n\^done} \
+	{.*=breakpoint-created,bkpt=\{number="6",type="dprintf".*,script=\[\"printf \\\"arg\\\" \\\"\"\].*\}\r\n\^done} \
 	$test
 
     # 2. when modifying condition
@@ -171,7 +169,7 @@ proc test_pending_resolved { } {
 
 	gdb_exit
 	if [mi_gdb_start] {
-	    continue
+	    return
 	}
 	mi_gdb_reinitialize_dir $srcdir/$subdir
 	mi_gdb_load ${binfile}
@@ -258,4 +256,45 @@ proc test_pending_resolved { } {
 
 with_test_prefix "test_pending_resolved" {
     test_pending_resolved
+}
+
+# Test auto-disable is effective when notifying breakpoint-modified.
+
+proc test_auto_disable { } {
+    global mi_gdb_prompt
+    global lib_sl1 lib_sl2
+    global binfile
+
+    mi_clean_restart $binfile
+
+    mi_load_shlibs $lib_sl1 $lib_sl2
+
+    mi_runto_main
+
+    # Set the breakpoint.
+    mi_gdb_test "-break-insert -f pendfunc1" \
+	{\^done,bkpt=\{number="2",type="breakpoint".*\}.*}
+
+    # Enable for one shot only.
+    mi_gdb_test "-break-enable count 1 2" \
+	{\^done}
+
+    mi_send_resuming_command "exec-continue" "continuing execution to breakpoint"
+
+    set test "breakpoint auto-disabling after enable count reached"
+    gdb_expect {
+	-re ".*=breakpoint-modified,bkpt=\{number=\"2\".*enabled=\"n\"" {
+	    pass $test
+	}
+	-re ".*${mi_gdb_prompt}$" {
+	    fail $test
+	}
+	timeout {
+	    fail "$test (timeout)"
+	}
+    }
+}
+
+with_test_prefix "test_auto_disable" {
+    test_auto_disable
 }

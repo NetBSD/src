@@ -1,6 +1,6 @@
 /* Simulator system call support.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    This file is part of simulators.
 
@@ -17,13 +17,16 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include <errno.h>
 
+#include "ansidecl.h"
+
 #include "sim-main.h"
 #include "sim-syscall.h"
-#include "targ-vals.h"
+#include "sim/callback.h"
 
 /* Read/write functions for system call interface.  */
 
@@ -71,8 +74,8 @@ sim_syscall_multi (SIM_CPU *cpu, int func, long arg1, long arg2, long arg3,
   sc.arg3 = arg3;
   sc.arg4 = arg4;
 
-  sc.p1 = (PTR) sd;
-  sc.p2 = (PTR) cpu;
+  sc.p1 = sd;
+  sc.p2 = cpu;
   sc.read_mem = sim_syscall_read_mem;
   sc.write_mem = sim_syscall_write_mem;
 
@@ -95,8 +98,20 @@ sim_syscall_multi (SIM_CPU *cpu, int func, long arg1, long arg2, long arg3,
     TRACE_SYSCALL (cpu, "%s[%i](%#lx, %#lx, %#lx) = %li",
 		   syscall, func, arg1, arg2, arg3, sc.result);
 
-  if (cb_target_to_host_syscall (cb, func) == CB_SYS_exit)
-    sim_engine_halt (sd, cpu, NULL, sim_pc_get (cpu), sim_exited, arg1);
+  /* Handle syscalls that affect engine behavior.  */
+  switch (cb_target_to_host_syscall (cb, func))
+    {
+    case CB_SYS_exit:
+      sim_engine_halt (sd, cpu, NULL, sim_pc_get (cpu), sim_exited, arg1);
+      break;
+
+    case CB_SYS_kill:
+      /* TODO: Need to translate target signal to sim signal, but the sim
+	 doesn't yet have such a mapping layer.  */
+      if (arg1 == (*cb->getpid) (cb))
+	sim_engine_halt (sd, cpu, NULL, sim_pc_get (cpu), sim_signalled, arg2);
+      break;
+    }
 
   *result = sc.result;
   *result2 = sc.result2;

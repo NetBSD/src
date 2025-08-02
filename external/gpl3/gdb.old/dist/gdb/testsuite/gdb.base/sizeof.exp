@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2000-2020 Free Software Foundation, Inc.
+# Copyright 2000-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,10 +21,6 @@
 
 standard_testfile
 
-if [get_compiler_info] {
-    return -1
-}
-
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
@@ -33,9 +29,8 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
 # set it up at a breakpoint so we can play with the variable values
 #
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 #
@@ -62,8 +57,10 @@ set sizeof_long_double [get_sizeof "long double" 8]
 #
 
 proc check_sizeof { type size } {
-    gdb_test "next" "" ""
-    gdb_test "p size" " = ${size}" "check sizeof \"$type\""
+    with_test_prefix "check sizeof \"$type\"" {
+	gdb_test "next"
+	gdb_test "p size" " = ${size}" "size matches"
+    }
 }
 
 check_sizeof "char" ${sizeof_char}
@@ -80,8 +77,10 @@ check_sizeof "double" ${sizeof_double}
 check_sizeof "long double" ${sizeof_long_double}
 
 proc check_valueof { exp val } {
-    gdb_test "next" "" ""
-    gdb_test "p /d value" " = ${val}" "check valueof \"$exp\""
+    with_test_prefix "check valueof \"$exp\"" {
+	gdb_test "next"
+	gdb_test "p /d value" " = ${val}" "value matches"
+    }
 }
 
 # Check that GDB and the target agree over the sign of a character.

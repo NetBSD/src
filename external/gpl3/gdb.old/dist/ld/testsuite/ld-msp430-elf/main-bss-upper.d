@@ -1,3 +1,0 @@
-#...
-Disassembly of section .upper.bss:
-#pass

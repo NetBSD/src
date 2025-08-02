@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1988-2020 Free Software Foundation, Inc.
+# Copyright 1988-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,12 +26,6 @@
 
 standard_testfile
 
-# Create and source the file that provides information about the compiler
-# used to compile the test case.
-if [get_compiler_info] {
-    return -1
-}
-
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
@@ -41,9 +35,8 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
 #
 gdb_test_no_output "set print sevenbit-strings" 
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 # Determine expected output for unsigned long variables,
@@ -74,20 +67,18 @@ proc test_set { args } {
 	    set arg [lindex $args $x]
 	    if { ($x == $final) || ([string first ".*" [lindex $args [expr $x + 1]]] >= 0) } {
 		set match [lindex $args [expr $x + 1]]
-		if { $count == 1 } {
-		    set mess "$message"
-		} else {
-		    set mess "$message (#$count)"
+		set mess "$message -- $match"
+		if { $count != 1 } {
+		    append mess " (#$count)"
 		}
 		incr count
 		incr x
 	    } else {
-		set mess ""
 		set match ""
+		set mess "$message -- $match"
 	    }
 	    verbose "doing $arg $match"
-	    if [gdb_test "$arg" "$match" "$mess"] {
-		fail "$message -- $match"
+	    if [gdb_test -nopass "$arg" "$match" "$mess"] {
 		return 1
 	    }
 	}
@@ -397,7 +388,7 @@ set timeout $prev_timeout
 # Test printing of enumeration bitfields.
 # GNU C supports them, some other compilers don't.
 
-if {$gcc_compiled} then {
+if {[is_c_compiler_gcc]} {
     gdb_test "print sef.field=sm1" ".*.\[0-9\]* = sm1"
     gdb_test "print sef.field" ".*.\[0-9\]* = sm1" "print sef.field (sm1)"
     gdb_test "print sef.field=s1" ".*.\[0-9\]* = s1"

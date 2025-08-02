@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # This test only works on GNU/Linux.
 if { ![isnative] || [is_remote host] || [use_gdb_stub]
      || ![istarget *-linux*] || [skip_shlib_tests]} {
-    continue
+    return
 }
 
 load_lib prelink-support.exp
@@ -29,10 +29,6 @@ set binfile_test ${test}-test
 set binfile_lib ${binprefix}.so
 set srcfile "${test}-main.c"
 set srcfile_lib "${test}-lib.c"
-
-if [get_compiler_info] {
-    return -1
-}
 
 # Use -soname so that the new library gets copied by build_executable_own_libs.
 
@@ -84,6 +80,19 @@ gdb_test_multiple $test $test {
 }
 
 set interp_system [section_get [standard_output_file $binfile_test] .interp]
+clean_restart $interp_system
+set dl_main_found 0
+gdb_test_multiple "info addr dl_main" "" {
+    -re -wrap "Symbol \"dl_main\" is a function at address $hex\\." {
+	set dl_main_found 1
+    }
+    -re -wrap "Symbol \"dl_main\" is at $hex in a file compiled without debugging\\." {
+	set dl_main_found 1
+    }
+    -re -wrap "No symbol \"dl_main\" in current context\\." {
+    }
+}
+
 set interp_system_debug [system_debug_get $interp_system]
 verbose -log "$interp_system has debug $interp_system_debug"
 
@@ -381,6 +390,7 @@ proc test_attach {file displacement {relink_args ""}} {
 
 proc test_ld {file ifmain trynosym displacement} {
     global srcdir subdir gdb_prompt expect_out inferior_exited_re solib_bp
+    global hex dl_main_found
 
     # First test normal `file'-command loaded $FILE with symbols.
 
@@ -413,7 +423,28 @@ proc test_ld {file ifmain trynosym displacement} {
 
     with_test_prefix "first backtrace" {
 	gdb_test_no_output "set verbose off"
-	gdb_test "bt" "#0 +\[^\r\n\]*\\m(__GI_)?$solib_bp\\M.*" "dl bt"
+	gdb_test_multiple "bt" "dl bt" {
+	    -re -wrap "#0 +\[^\r\n\]*\\m(__GI_)?$solib_bp\\M.*" {
+		pass $gdb_test_name
+	    }
+	    -re -wrap "#0  ($hex) .*" {
+		if { $dl_main_found } {
+		    fail $gdb_test_name
+		} else {
+		    set pc $expect_out(1,string)
+		    regsub "0x0*" $pc "" pc
+		    gdb_test "p /x 0x$pc" ".*" "p /x \$pc"
+		    gdb_test_multiple "info probes stap rtld" $gdb_test_name {
+			-re -wrap "(?:init_start|init_complete) +0x0*$pc .*" {
+			    pass $gdb_test_name
+			}
+			-re -wrap "" {
+			    fail $gdb_test_name
+			}
+		    }
+		}
+	    }
+	}
 	gdb_test_no_output "set verbose on"
     }
 

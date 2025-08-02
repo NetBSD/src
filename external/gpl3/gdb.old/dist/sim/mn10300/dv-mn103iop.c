@@ -1,6 +1,6 @@
 /*  This file is part of the program GDB, the GNU debugger.
     
-    Copyright (C) 1998-2020 Free Software Foundation, Inc.
+    Copyright (C) 1998-2023 Free Software Foundation, Inc.
     Contributed by Cygnus Solutions.
     
     This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
     */
+
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "hw-main.h"
@@ -84,7 +87,7 @@ enum {
 };
 
 typedef struct _mn10300_ioport {
-  unsigned8 output, output_mode, control, pin;
+  uint8_t output, output_mode, control, pin;
   struct hw_event *event;
 } mn10300_ioport;
 
@@ -93,7 +96,7 @@ typedef struct _mn10300_ioport {
 struct mn103iop {
   struct mn103iop_block block[NR_BLOCKS];
   mn10300_ioport port[NR_PORTS];
-  unsigned8      p2ss, p4ss;
+  uint8_t      p2ss, p4ss;
 };
 
 
@@ -212,7 +215,7 @@ read_output_reg (struct hw *me,
 {
   if ( nr_bytes == 1 )
     {
-      *(unsigned8 *)dest = io_port->port[io_port_reg].output;
+      *(uint8_t *)dest = io_port->port[io_port_reg].output;
     }
   else
     {
@@ -233,7 +236,7 @@ read_output_mode_reg (struct hw *me,
     {
       /* check if there are fields which can't be written and
 	 take appropriate action depending what bits are set */
-      *(unsigned8 *)dest = io_port->port[io_port_reg].output_mode;
+      *(uint8_t *)dest = io_port->port[io_port_reg].output_mode;
     }
   else
     {
@@ -252,7 +255,7 @@ read_control_reg (struct hw *me,
 {
   if ( nr_bytes == 1 )
     {
-      *(unsigned8 *)dest = io_port->port[io_port_reg].control;
+      *(uint8_t *)dest = io_port->port[io_port_reg].control;
     }
   else
     {
@@ -271,7 +274,7 @@ read_pin_reg (struct hw *me,
 {
   if ( nr_bytes == 1 )
     {
-      *(unsigned8 *)dest = io_port->port[io_port_reg].pin;
+      *(uint8_t *)dest = io_port->port[io_port_reg].pin;
     }
   else
     {
@@ -293,11 +296,11 @@ read_dedicated_control_reg (struct hw *me,
       /* select on io_port_reg: */
       if ( io_port_reg == P2SS )
 	{
-	  *(unsigned8 *)dest = io_port->p2ss;
+	  *(uint8_t *)dest = io_port->p2ss;
 	}
       else
 	{
-	  *(unsigned8 *)dest = io_port->p4ss;
+	  *(uint8_t *)dest = io_port->p4ss;
 	}
     }
   else
@@ -372,7 +375,7 @@ write_output_reg (struct hw *me,
 		  const void *source,
 		  unsigned  nr_bytes)
 {
-  unsigned8 buf = *(unsigned8 *)source;
+  uint8_t buf = *(uint8_t *)source;
   if ( nr_bytes == 1 )
     {
       if ( io_port_reg == 3 && (buf & 0xfc) != 0 )
@@ -399,7 +402,7 @@ write_output_mode_reg (struct hw *me,
 		       const void *source,
 		       unsigned  nr_bytes)
 {
-  unsigned8 buf = *(unsigned8 *)source;
+  uint8_t buf = *(uint8_t *)source;
   if ( nr_bytes == 1 )
     {
       /* check if there are fields which can't be written and
@@ -429,7 +432,7 @@ write_control_reg (struct hw *me,
 		   const void *source,
 		   unsigned  nr_bytes)
 {
-  unsigned8 buf = *(unsigned8 *)source;
+  uint8_t buf = *(uint8_t *)source;
   if ( nr_bytes == 1 )
     {
       if ( io_port_reg == 3 && (buf & 0xfc) != 0 )
@@ -456,7 +459,7 @@ write_dedicated_control_reg (struct hw *me,
 			     const void *source,
 			     unsigned  nr_bytes)
 {
-  unsigned8 buf = *(unsigned8 *)source;
+  uint8_t buf = *(uint8_t *)source;
   if ( nr_bytes == 1 )
     {
       /* select on io_port_reg: */

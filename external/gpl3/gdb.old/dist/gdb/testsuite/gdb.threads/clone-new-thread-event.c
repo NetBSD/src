@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2020 Free Software Foundation, Inc.
+   Copyright 2009-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <sys/wait.h>
 
 #include <features.h>
 #ifdef __UCLIBC__
@@ -59,7 +60,7 @@ int
 main (int argc, char **argv)
 {
   unsigned char *stack;
-  int new_pid;
+  int new_pid, status, ret;
 
   stack = malloc (STACK_SIZE);
   assert (stack != NULL);
@@ -70,6 +71,19 @@ main (int argc, char **argv)
 #endif /* defined(__UCLIBC__) && defined(HAS_NOMMU) */
 		   , NULL, NULL, NULL, NULL);
   assert (new_pid > 0);
+
+  /* Note the clone call above didn't use CLONE_THREAD, so it actually
+     put the new thread in a new thread group.  However, the new clone
+     is still reported with PTRACE_EVENT_CLONE to GDB, since we didn't
+     use CLONE_VFORK (results in PTRACE_EVENT_VFORK) nor set the
+     termination signal to SIGCHLD (results in PTRACE_EVENT_FORK), so
+     GDB thinks of it as a new thread of the same inferior.  It's a
+     bit of an odd setup, but it's not important for what we're
+     testing, and, it let's us conveniently use waitpid to wait for
+     the clone, which you can't with CLONE_THREAD.  */
+  ret = waitpid (new_pid, &status, __WALL);
+  assert (ret == new_pid);
+  assert (WIFSIGNALED (status) && WTERMSIG (status) == SIGUSR1);
 
   return 0;
 }

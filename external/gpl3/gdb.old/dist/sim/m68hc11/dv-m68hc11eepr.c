@@ -1,5 +1,5 @@
 /*  dv-m68hc11eepr.c -- Simulation of the 68HC11 Internal EEPROM.
-    Copyright (C) 1999-2020 Free Software Foundation, Inc.
+    Copyright (C) 1999-2023 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@nerim.fr)
     (From a driver model Contributed by Cygnus Solutions.)
     
@@ -18,11 +18,14 @@
     
     */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "hw-main.h"
 #include "sim-assert.h"
 #include "sim-events.h"
+#include "sim-signal.h"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -109,11 +112,11 @@ struct m68hc11eepr
      located at the end of the EEPROM (eeprom size + 1).  It is not mapped
      in memory but it's saved in the EEPROM file.  */
   unsigned long		eeprom_wcycle;
-  uint16		eeprom_waddr;
-  uint8			eeprom_wbyte;
-  uint8			eeprom_wmode;
+  uint16_t		eeprom_waddr;
+  uint8_t			eeprom_wbyte;
+  uint8_t			eeprom_wmode;
 
-  uint8*		eeprom;
+  uint8_t*		eeprom;
   
   /* Minimum time in CPU cycles for programming the EEPROM.  */
   unsigned long         eeprom_min_cycles;
@@ -336,10 +339,10 @@ static void
 m68hc11eepr_info (struct hw *me)
 {
   SIM_DESC sd;
-  uint16 base = 0;
+  uint16_t base = 0;
   sim_cpu *cpu;
   struct m68hc11eepr *controller;
-  uint8 val;
+  uint8_t val;
   
   sd         = hw_system (me);
   cpu        = STATE_CPU (sd, 0);
@@ -415,13 +418,13 @@ m68hc11eepr_io_read_buffer (struct hw *me,
             {
             case M6811_PPROG:
             case M6811_CONFIG:
-              *((uint8*) dest) = cpu->ios[base];
+              *((uint8_t*) dest) = cpu->ios[base];
               break;
 
             default:
               hw_abort (me, "reading wrong register 0x%04x", base);
             }
-          dest = (uint8*) (dest) + 1;
+          dest = (uint8_t*) (dest) + 1;
           base++;
           nr_bytes--;
           cnt++;
@@ -453,7 +456,7 @@ m68hc11eepr_io_write_buffer (struct hw *me,
   SIM_DESC sd;
   struct m68hc11eepr *controller;
   sim_cpu *cpu;
-  uint8 val;
+  uint8_t val;
 
   HW_TRACE ((me, "write 0x%08lx %d", (long) base, (int) nr_bytes));
 
@@ -472,13 +475,13 @@ m68hc11eepr_io_write_buffer (struct hw *me,
   if (nr_bytes != 1)
     hw_abort (me, "Cannot write more than 1 byte to EEPROM device at a time");
 
-  val = *((const uint8*) source);
+  val = *((const uint8_t*) source);
 
   /* Write to the EEPROM control register.  */
   if (space == io_map && base == M6811_PPROG)
     {
-      uint8 wrong_bits;
-      uint16 addr;
+      uint8_t wrong_bits;
+      uint16_t addr;
       
       addr = base + cpu_get_io_base (cpu);
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2020 Free Software Foundation, Inc.
+# Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,31 +22,33 @@ import gdb
 stop_handler_str = ""
 cont_handler_str = ""
 
-def signal_stop_handler (event):
+
+def signal_stop_handler(event):
     """Stop event handler"""
-    assert (isinstance (event, gdb.StopEvent))
+    assert isinstance(event, gdb.StopEvent)
     global stop_handler_str
     stop_handler_str = "stop_handler\n"
     stop_handler_str += gdb.execute("info break", False, True)
 
 
-def continue_handler (event):
+def continue_handler(event):
     """Continue event handler"""
-    assert (isinstance (event, gdb.ContinueEvent))
+    assert isinstance(event, gdb.ContinueEvent)
     global cont_handler_str
     cont_handler_str = "continue_handler\n"
     cont_handler_str += gdb.execute("info break", False, True)
 
 
-class test_events (gdb.Command):
+class test_events(gdb.Command):
     """Test events."""
 
-    def __init__ (self):
-        gdb.Command.__init__ (self, "test-events", gdb.COMMAND_STACK)
+    def __init__(self):
+        gdb.Command.__init__(self, "test-events", gdb.COMMAND_STACK)
 
-    def invoke (self, arg, from_tty):
-        gdb.events.stop.connect (signal_stop_handler)
-        gdb.events.cont.connect (continue_handler)
-        print ("Event testers registered.")
+    def invoke(self, arg, from_tty):
+        gdb.events.stop.connect(signal_stop_handler)
+        gdb.events.cont.connect(continue_handler)
+        print("Event testers registered.")
 
-test_events ()
+
+test_events()

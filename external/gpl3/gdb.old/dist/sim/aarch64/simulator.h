@@ -1,6 +1,6 @@
 /* simulator.h -- Prototypes for AArch64 simulator functions.
 
-   Copyright (C) 2015-2020 Free Software Foundation, Inc.
+   Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -22,7 +22,6 @@
 #ifndef _SIMULATOR_H
 #define _SIMULATOR_H
 
-#include "config.h"
 #include <sys/types.h>
 #include <setjmp.h>
 

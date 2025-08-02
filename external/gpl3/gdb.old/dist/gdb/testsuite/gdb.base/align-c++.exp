@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # compiler.
 
 # Only test C++ if we are able.
-if { [skip_cplus_tests] || [get_compiler_info "c++"] } {
+if { [skip_cplus_tests] } {
     return -1
 }
 set lang c++

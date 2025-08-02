@@ -1,4 +1,4 @@
-/* Copyright 2012-2020 Free Software Foundation, Inc.
+/* Copyright 2012-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,31 +34,31 @@ f (void)
 }
 
 static __attribute__((noinline, noclone)) int
-g0 (void)
+test_g0 (void)
 {
   return f ();
 }
 
 static __attribute__((noinline, noclone)) int
-g1 (int p1)
+test_g1 (int p1)
 {
   return f ();
 }
 
 static __attribute__((noinline, noclone)) int
-g2 (int p1, int p2)
+test_g2 (int p1, int p2)
 {
   return f ();
 }
 
 static __attribute__((noinline, noclone)) int
-g3 (int p1, int p2, int p3)
+test_g3 (int p1, int p2, int p3)
 {
   return f ();
 }
 
 static __attribute__((noinline, noclone)) int
-g4 (int p1, int p2, int p3, int p4)
+test_g4 (int p1, int p2, int p3, int p4)
 {
   return f ();
 }
@@ -66,5 +66,6 @@ g4 (int p1, int p2, int p3, int p4)
 int
 main (void)
 {
-  return g0 () + g1 (1) + g2 (1, 2) + g3 (1, 2, 3) + g4 (1, 2, 3, 4);
+  return (test_g0 () + test_g1 (1) + test_g2 (1, 2) + test_g3 (1, 2, 3)
+	  + test_g4 (1, 2, 3, 4);
 }

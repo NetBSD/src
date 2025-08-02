@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,15 +25,47 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
      return -1
 }
 
-if [get_compiler_info] {
-    return -1
-}
-
 clean_restart ${binfile}
 
-if ![runto_main] then {
-   fail "can't run to main"
+if {![runto_main]} {
    return 0
+}
+
+# With a libc with probes, all tests should pass.
+#
+# Without probes, we can still set a break on longjmp, but getting the longjmp
+# target may not work, in the following cases:
+# - gdbarch_get_longjmp_target_p (gdbarch) == 0: not implemented.
+# - gdbarch_get_longjmp_target (gdbarch) == 0: for instance on amd64 if
+#   tdep->jb_pc_offset == -1.
+# - gdbarch_get_longjmp_target (gdbarch) != 0: if we have a glibc with
+#   pointer mangling ( https://sourceware.org/glibc/wiki/PointerEncryption )
+#   then we retrieve a mangled longjmp target that needs to be demangled.
+#   For instance on amd64 with target board unix/-m32.
+#
+# Pointer demangling is currently not implemented for any target.
+# For the amd64 case, this would require copying for instance this:
+#   48 c1 ca 11             ror    $0x11,%rdx
+#   64 48 33 14 25 30 00    xor    %fs:0x30,%rdx
+# into a scratch space, save the register set, set %rdx to the mangled
+# longjmp target, displaced-step through the two insn and read the
+# demangled longjmp target from %rdx, and restore the register set.
+#
+# The failure mode in the first two cases is that the next degrades into a
+# continue.  The failure mode in the latter case is a failure to set a
+# breakpoint (matched by re_cannot_insert_bp) and a stop in longjmp.
+#
+# We detect the different failure modes and kfail these.
+
+set have_longjmp_probe 0
+gdb_test_multiple "info probes stap libc ^longjmp$" "" {
+    -re -wrap "No probes matched\\." {
+	pass $gdb_test_name
+    }
+    -re -wrap "\r\nstap\[ \t\]+libc\[ \t\]+longjmp\[ \t\]+.*" {
+	pass $gdb_test_name
+	set have_longjmp_probe 1
+    }
 }
 
 set bp_miss_step_1 [gdb_get_line_number "miss_step_1"]
@@ -43,34 +75,56 @@ set bp_start_test_1 [gdb_get_line_number "patt1"]
 set bp_start_test_2 [gdb_get_line_number "patt2"]
 set bp_start_test_3 [gdb_get_line_number "patt3"]
 
+set re_cannot_insert_bp \
+    [multi_line \
+	 "Warning:" \
+	 "Cannot insert breakpoint $decimal\\." \
+	 "Cannot access memory at address $hex"]
+
 #
 # Pattern 1 - simple longjmp.
 #
 
-delete_breakpoints
+with_test_prefix "pattern 1" {
 
-gdb_test "break $bp_start_test_1" \
-    "Breakpoint.*at.* file .*$srcfile, line.*$bp_start_test_1.*" \
-    "breakpoint at pattern 1 start"
-gdb_test "continue" "patt1.*" "continue to breakpoint at pattern 1 start"
+    with_test_prefix setup {
+	delete_breakpoints
 
-# set safe-net break
-gdb_test "break $bp_miss_step_1" \
-    "Breakpoint.*at.* file .*$srcfile, line.*$bp_miss_step_1.*" \
-    "breakpoint at miss_step_1"
+	gdb_test "break $bp_start_test_1" \
+	    "Breakpoint.*at.* file .*$srcfile, line.*$bp_start_test_1.*" \
+	    "breakpoint at pattern start"
+	gdb_test "continue" "patt1.*" "continue to breakpoint at pattern start"
 
-gdb_test "next" "longjmps\\+\\+;.*" "next over setjmp (1)"
-gdb_test "next" "longjmp \\(env, 1\\);.*" "next to longjmp (1)"
-
-set msg "next over longjmp(1)"
-gdb_test_multiple "next" $msg {
-    -re ".*patt1.*$gdb_prompt $" {
-	pass $msg
-	gdb_test "next" "resumes\\+\\+.*" "next into else block (1)"
-	gdb_test "next" "miss_step_1.*" "next into safety net (1)"
+	# set safe-net break
+	gdb_test "break $bp_miss_step_1" \
+	    "Breakpoint.*at.* file .*$srcfile, line.*$bp_miss_step_1.*" \
+	    "breakpoint at safety net"
     }
-    -re "miss_step_1.*$gdb_prompt $" {
-	fail $msg
+
+    gdb_test "next" "longjmps\\+\\+;.*" "next over setjmp"
+    gdb_test "next" "longjmp \\(env, 1\\);.*" "next to longjmp"
+
+    set msg "next over longjmp"
+    gdb_test_multiple "next" $msg {
+	-re ".*patt1.*$gdb_prompt $" {
+	    pass $msg
+	    gdb_test "next" "resumes\\+\\+.*" "next into else block"
+	    gdb_test "next" "miss_step_1.*" "next into safety net"
+	}
+	-re "miss_step_1.*$gdb_prompt $" {
+	    if { $have_longjmp_probe } {
+		fail $gdb_test_name
+	    } else {
+		kfail $gdb_test_name "gdb/26967"
+	    }
+	}
+	-re -wrap "\r\n$re_cannot_insert_bp\r\n.*" {
+	    if { $have_longjmp_probe } {
+		fail $gdb_test_name
+	    } else {
+		kfail $gdb_test_name "gdb/26967"
+	    }
+	}
     }
 }
 
@@ -78,30 +132,46 @@ gdb_test_multiple "next" $msg {
 # Pattern 2 - longjmp from an inner function.
 #
 
-delete_breakpoints
+with_test_prefix "pattern 2" {
 
-gdb_test "break $bp_start_test_2" \
-    "Breakpoint.*at.* file .*$srcfile, line.*$bp_start_test_2.*" \
-    "breakpoint at pattern 2 start"
-gdb_test "continue" "patt2.*" "continue to breakpoint at pattern 2 start"
+    with_test_prefix setup {
+	delete_breakpoints
 
-# set safe-net break
-gdb_test "break $bp_miss_step_2" \
-    "Breakpoint.*at.* file .*$srcfile, line.*$bp_miss_step_2.*" \
-    "breakpoint at miss_step_2"
+	gdb_test "break $bp_start_test_2" \
+	    "Breakpoint.*at.* file .*$srcfile, line.*$bp_start_test_2.*" \
+	    "breakpoint at pattern start"
+	gdb_test "continue" "patt2.*" "continue to breakpoint at pattern start"
 
-gdb_test "next" "call_longjmp.*" "next over setjmp (2)"
-
-set msg "next over call_longjmp (2)"
-gdb_test_multiple "next" $msg {
-    -re ".*patt2.*$gdb_prompt $" {
-	pass $msg
-
-	gdb_test "next" "resumes\\+\\+.*" "next into else block (2)"
-	gdb_test "next" "miss_step_2.*" "next into safety net (2)"
+	# set safe-net break
+	gdb_test "break $bp_miss_step_2" \
+	    "Breakpoint.*at.* file .*$srcfile, line.*$bp_miss_step_2.*" \
+	    "breakpoint at safety net"
     }
-    -re "miss_step_2.*$gdb_prompt $" {
-	fail $msg
+
+    gdb_test "next" "call_longjmp.*" "next over setjmp"
+
+    set msg "next over call_longjmp"
+    gdb_test_multiple "next" $msg {
+	-re ".*patt2.*$gdb_prompt $" {
+	    pass $msg
+
+	    gdb_test "next" "resumes\\+\\+.*" "next into else block"
+	    gdb_test "next" "miss_step_2.*" "next into safety net"
+	}
+	-re "miss_step_2.*$gdb_prompt $" {
+	    if { $have_longjmp_probe } {
+		fail $gdb_test_name
+	    } else {
+		kfail $gdb_test_name "gdb/26967"
+	    }
+	}
+	-re -wrap "\r\n$re_cannot_insert_bp\r\n.*" {
+	    if { $have_longjmp_probe } {
+		fail $gdb_test_name
+	    } else {
+		kfail $gdb_test_name "gdb/26967"
+	    }
+	}
     }
 }
 
@@ -109,11 +179,27 @@ gdb_test_multiple "next" $msg {
 # Pattern 3 - setjmp/longjmp inside stepped-over function.
 #
 
-delete_breakpoints
+with_test_prefix "pattern 3" {
 
-gdb_test "break $bp_start_test_3" \
-    "Breakpoint.*at.* file .*$srcfile, line.*$bp_start_test_3.*" \
-    "breakpoint at pattern 3 start"
-gdb_test "continue" "patt3.*" "continue to breakpoint at pattern 3 start"
+    with_test_prefix setup {
+	delete_breakpoints
 
-gdb_test "next" "longjmp caught.*" "next over patt3"
+	gdb_test "break $bp_start_test_3" \
+	    "Breakpoint.*at.* file .*$srcfile, line.*$bp_start_test_3.*" \
+	    "breakpoint at pattern start"
+	gdb_test "continue" "patt3.*" "continue to breakpoint at pattern start"
+    }
+
+    gdb_test_multiple "next" "next over pattern" {
+	-re -wrap "longjmp caught.*" {
+	    pass $gdb_test_name
+	}
+	-re -wrap "\r\n$re_cannot_insert_bp\r\n.*" {
+	    if { $have_longjmp_probe } {
+		fail $gdb_test_name
+	    } else {
+		kfail $gdb_test_name "gdb/26967"
+	    }
+	}
+    }
+}

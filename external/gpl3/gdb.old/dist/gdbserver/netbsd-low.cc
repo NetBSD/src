@@ -1,4 +1,4 @@
-/* Copyright (C) 2020 Free Software Foundation, Inc.
+/* Copyright (C) 2020-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,19 +42,6 @@
 #include "hostio.h"
 
 int using_threads = 1;
-
-const struct target_desc *netbsd_tdesc;
-
-/* Call add_process with the given parameters, and initialize
-   the process' private data.  */
-
-static void
-netbsd_add_process (int pid, int attached)
-{
-  struct process_info *proc = add_process (pid, attached);
-  proc->tdesc = netbsd_tdesc;
-  proc->priv = nullptr;
-}
 
 /* Callback used by fork_inferior to start tracing the inferior.  */
 
@@ -100,7 +87,7 @@ netbsd_process_target::create_inferior (const char *program,
 			     get_environ ()->envp (), netbsd_ptrace_fun,
 			     nullptr, nullptr, nullptr, nullptr);
 
-  netbsd_add_process (pid, 0);
+  add_process (pid, 0);
 
   post_fork_inferior (pid, program);
 
@@ -114,6 +101,8 @@ netbsd_process_target::post_create_inferior ()
 {
   pid_t pid = current_process ()->pid;
   netbsd_nat::enable_proc_events (pid);
+
+  low_arch_setup ();
 }
 
 /* Implement the attach target_ops method.  */
@@ -217,31 +206,24 @@ static void
 netbsd_store_waitstatus (struct target_waitstatus *ourstatus, int hoststatus)
 {
   if (WIFEXITED (hoststatus))
-    {
-      ourstatus->kind = TARGET_WAITKIND_EXITED;
-      ourstatus->value.integer = WEXITSTATUS (hoststatus);
-    }
+    ourstatus->set_exited (WEXITSTATUS (hoststatus));
   else if (!WIFSTOPPED (hoststatus))
-    {
-      ourstatus->kind = TARGET_WAITKIND_SIGNALLED;
-      ourstatus->value.sig = gdb_signal_from_host (WTERMSIG (hoststatus));
-    }
+    ourstatus->set_signalled (gdb_signal_from_host (WTERMSIG (hoststatus)));
   else
-    {
-      ourstatus->kind = TARGET_WAITKIND_STOPPED;
-      ourstatus->value.sig = gdb_signal_from_host (WSTOPSIG (hoststatus));
-    }
+    ourstatus->set_stopped (gdb_signal_from_host (WSTOPSIG (hoststatus)));
 }
 
 /* Implement a safe wrapper around waitpid().  */
 
 static pid_t
-netbsd_waitpid (ptid_t ptid, struct target_waitstatus *ourstatus, int options)
+netbsd_waitpid (ptid_t ptid, struct target_waitstatus *ourstatus,
+		target_wait_flags target_options)
 {
   int status;
+  int options = (target_options & TARGET_WNOHANG) ? WNOHANG : 0;
 
   pid_t pid
-    = gdb::handle_eintr<int> (-1, ::waitpid, ptid.pid (), &status, options);
+    = gdb::handle_eintr (-1, ::waitpid, ptid.pid (), &status, options);
 
   if (pid == -1)
     perror_with_name (_("Child process unexpectedly missing"));
@@ -259,7 +241,7 @@ netbsd_waitpid (ptid_t ptid, struct target_waitstatus *ourstatus, int options)
 
 static ptid_t
 netbsd_wait (ptid_t ptid, struct target_waitstatus *ourstatus,
-	     int target_options)
+	     target_wait_flags target_options)
 {
   pid_t pid = netbsd_waitpid (ptid, ourstatus, target_options);
   ptid_t wptid = ptid_t (pid);
@@ -267,14 +249,14 @@ netbsd_wait (ptid_t ptid, struct target_waitstatus *ourstatus,
   if (pid == 0)
     {
       gdb_assert (target_options & TARGET_WNOHANG);
-      ourstatus->kind = TARGET_WAITKIND_IGNORE;
+      ourstatus->set_ignore ();
       return null_ptid;
     }
 
   gdb_assert (pid != -1);
 
   /* If the child stopped, keep investigating its status.  */
-  if (ourstatus->kind != TARGET_WAITKIND_STOPPED)
+  if (ourstatus->kind () != TARGET_WAITKIND_STOPPED)
     return wptid;
 
   /* Extract the event and thread that received a signal.  */
@@ -316,12 +298,11 @@ netbsd_wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	 Ignore exited events for an unknown LWP.  */
       thread_info *thr = find_thread_ptid (wptid);
       if (thr == nullptr)
-	  ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
+	  ourstatus->set_spurious ();
       else
 	{
-	  ourstatus->kind = TARGET_WAITKIND_THREAD_EXITED;
 	  /* NetBSD does not store an LWP exit status.  */
-	  ourstatus->value.integer = 0;
+	  ourstatus->set_thread_exited (0);
 
 	  remove_thread (thr);
 	}
@@ -329,7 +310,7 @@ netbsd_wait (ptid_t ptid, struct target_waitstatus *ourstatus,
     }
 
   if (find_thread_ptid (ptid_t (pid)))
-    current_thread = find_thread_ptid (wptid);
+    switch_to_thread (find_thread_ptid (wptid));
 
   if (code == TRAP_LWP && pst.pe_report_event == PTRACE_LWP_CREATE)
     {
@@ -338,20 +319,19 @@ netbsd_wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	 not yet reported their PTRACE_LWP_CREATE event.  Ignore
 	 born events for an already-known LWP.  */
       if (find_thread_ptid (wptid))
-	  ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
+	ourstatus->set_spurious ();
       else
 	{
 	  add_thread (wptid, NULL);
-	  ourstatus->kind = TARGET_WAITKIND_THREAD_CREATED;
+	  ourstatus->set_thread_created ();
 	}
       return wptid;
     }
 
   if (code == TRAP_EXEC)
     {
-      ourstatus->kind = TARGET_WAITKIND_EXECD;
-      ourstatus->value.execd_pathname
-	= xstrdup (netbsd_nat::pid_to_exec_file (pid));
+      ourstatus->set_execd
+	(make_unique_xstrdup (netbsd_nat::pid_to_exec_file (pid)));
       return wptid;
     }
 
@@ -365,14 +345,15 @@ netbsd_wait (ptid_t ptid, struct target_waitstatus *ourstatus,
       if (!netbsd_catch_this_syscall(sysnum))
 	{
 	  /* If the core isn't interested in this event, ignore it.  */
-	  ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
+	  ourstatus->set_spurious ();
 	  return wptid;
 	}
 
-      ourstatus->kind
-	= ((code == TRAP_SCE) ? TARGET_WAITKIND_SYSCALL_ENTRY :
-	   TARGET_WAITKIND_SYSCALL_RETURN);
-      ourstatus->value.syscall_number = sysnum;
+      if (code == TRAP_SCE)
+	ourstatus->set_syscall_entry (sysnum);
+      else
+	ourstatus->set_syscall_return (sysnum);
+
       return wptid;
     }
 
@@ -390,7 +371,7 @@ netbsd_wait (ptid_t ptid, struct target_waitstatus *ourstatus,
     }
 
   /* Unclassified SIGTRAP event.  */
-  ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
+  ourstatus->set_spurious ();
   return wptid;
 }
 
@@ -398,7 +379,7 @@ netbsd_wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 
 ptid_t
 netbsd_process_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
-			     int target_options)
+			     target_wait_flags target_options)
 {
   while (true)
     {
@@ -410,10 +391,10 @@ netbsd_process_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	 This may also happen on attach, when an event is registered on a thread
 	 that was not fully initialized during the attach stage.  */
       if (wptid.lwp () != 0 && !find_thread_ptid (wptid)
-	  && ourstatus->kind != TARGET_WAITKIND_THREAD_EXITED)
+	  && ourstatus->kind () != TARGET_WAITKIND_THREAD_EXITED)
 	add_thread (wptid, nullptr);
 
-      switch (ourstatus->kind)
+      switch (ourstatus->kind ())
 	{
 	case TARGET_WAITKIND_EXITED:
 	case TARGET_WAITKIND_STOPPED:
@@ -452,7 +433,7 @@ netbsd_process_target::kill (process_info *process)
     return -1;
 
   int status;
-  if (gdb::handle_eintr<int> (-1, ::waitpid, pid, &status, 0) == -1)
+  if (gdb::handle_eintr (-1, ::waitpid, pid, &status, 0) == -1)
     return -1;
   mourn (process);
   return 0;
@@ -502,7 +483,7 @@ netbsd_process_target::thread_alive (ptid_t ptid)
 void
 netbsd_process_target::fetch_registers (struct regcache *regcache, int regno)
 {
-  struct netbsd_regset_info *regset = netbsd_target_regsets;
+  const netbsd_regset_info *regset = get_regs_info ();
   ptid_t inferior_ptid = ptid_of (current_thread);
 
   while (regset->size >= 0)
@@ -523,7 +504,7 @@ netbsd_process_target::fetch_registers (struct regcache *regcache, int regno)
 void
 netbsd_process_target::store_registers (struct regcache *regcache, int regno)
 {
-  struct netbsd_regset_info *regset = netbsd_target_regsets;
+  const netbsd_regset_info *regset = get_regs_info ();
   ptid_t inferior_ptid = ptid_of (current_thread);
 
   while (regset->size >= 0)
@@ -552,36 +533,8 @@ int
 netbsd_process_target::read_memory (CORE_ADDR memaddr, unsigned char *myaddr,
 				    int size)
 {
-  struct ptrace_io_desc io;
-  io.piod_op = PIOD_READ_D;
-  io.piod_len = size;
-
   pid_t pid = current_process ()->pid;
-
-  int bytes_read = 0;
-
-  if (size == 0)
-    {
-      /* Zero length write always succeeds.  */
-      return 0;
-    }
-  do
-    {
-      io.piod_offs = (void *)(memaddr + bytes_read);
-      io.piod_addr = myaddr + bytes_read;
-
-      int rv = ptrace (PT_IO, pid, &io, 0);
-      if (rv == -1)
-	return errno;
-      if (io.piod_len == 0)
-	return 0;
-
-      bytes_read += io.piod_len;
-      io.piod_len = size - bytes_read;
-    }
-  while (bytes_read < size);
-
-  return 0;
+  return netbsd_nat::read_memory (pid, myaddr, memaddr, size, nullptr);
 }
 
 /* Implement the write_memory target_ops method.  */
@@ -590,37 +543,8 @@ int
 netbsd_process_target::write_memory (CORE_ADDR memaddr,
 				     const unsigned char *myaddr, int size)
 {
-  struct ptrace_io_desc io;
-  io.piod_op = PIOD_WRITE_D;
-  io.piod_len = size;
-
   pid_t pid = current_process ()->pid;
-
-  int bytes_written = 0;
-
-  if (size == 0)
-    {
-      /* Zero length write always succeeds.  */
-      return 0;
-    }
-
-  do
-    {
-      io.piod_addr = (void *)(myaddr + bytes_written);
-      io.piod_offs = (void *)(memaddr + bytes_written);
-
-      int rv = ptrace (PT_IO, pid, &io, 0);
-      if (rv == -1)
-	return errno;
-      if (io.piod_len == 0)
-	return 0;
-
-      bytes_written += io.piod_len;
-      io.piod_len = size - bytes_written;
-    }
-  while (bytes_written < size);
-
-  return 0;
+  return netbsd_nat::write_memory (pid, myaddr, memaddr, size, nullptr);
 }
 
 /* Implement the request_interrupt target_ops method.  */
@@ -630,7 +554,7 @@ netbsd_process_target::request_interrupt ()
 {
   ptid_t inferior_ptid = ptid_of (get_first_thread ());
 
-  ::kill (inferior_ptid.pid(), SIGINT);
+  ::kill (inferior_ptid.pid (), SIGINT);
 }
 
 /* Read the AUX Vector for the specified PID, wrapping the ptrace(2) call
@@ -867,7 +791,7 @@ int get_phdr_phnum_from_proc_auxv (const pid_t pid,
 
 template <typename T>
 static CORE_ADDR
-get_dynamic (netbsd_process_target *target, const pid_t pid)
+get_dynamic (const pid_t pid)
 {
   typedef typename std::conditional<sizeof(T) == sizeof(int64_t),
 				    Elf64_Phdr, Elf32_Phdr>::type phdr_type;
@@ -881,7 +805,8 @@ get_dynamic (netbsd_process_target *target, const pid_t pid)
   std::vector<unsigned char> phdr_buf;
   phdr_buf.resize (num_phdr * phdr_size);
 
-  if (target->read_memory (phdr_memaddr, phdr_buf.data (), phdr_buf.size ()))
+  if (netbsd_nat::read_memory (pid, phdr_buf.data (), phdr_memaddr,
+			       phdr_buf.size (), nullptr))
     return 0;
 
   /* Compute relocation: it is expected to be 0 for "regular" executables,
@@ -889,7 +814,7 @@ get_dynamic (netbsd_process_target *target, const pid_t pid)
   CORE_ADDR relocation = -1;
   for (int i = 0; relocation == -1 && i < num_phdr; i++)
     {
-      phdr_type *const p = (phdr_type *) (phdr_buf.data() + i * phdr_size);
+      phdr_type *const p = (phdr_type *) (phdr_buf.data () + i * phdr_size);
 
       if (p->p_type == PT_PHDR)
 	relocation = phdr_memaddr - p->p_vaddr;
@@ -928,7 +853,7 @@ get_dynamic (netbsd_process_target *target, const pid_t pid)
 
 template <typename T>
 static CORE_ADDR
-get_r_debug (netbsd_process_target *target, const int pid)
+get_r_debug (const pid_t pid)
 {
   typedef typename std::conditional<sizeof(T) == sizeof(int64_t),
 				    Elf64_Dyn, Elf32_Dyn>::type dyn_type;
@@ -936,11 +861,12 @@ get_r_debug (netbsd_process_target *target, const int pid)
   unsigned char buf[sizeof (dyn_type)];  /* The larger of the two.  */
   CORE_ADDR map = -1;
 
-  CORE_ADDR dynamic_memaddr = get_dynamic<T> (target, pid);
+  CORE_ADDR dynamic_memaddr = get_dynamic<T> (pid);
   if (dynamic_memaddr == 0)
     return map;
 
-  while (target->read_memory (dynamic_memaddr, buf, dyn_size) == 0)
+  while (netbsd_nat::read_memory (pid, buf, dynamic_memaddr, dyn_size, nullptr)
+	 == 0)
     {
       dyn_type *const dyn = (dyn_type *) buf;
 #if defined DT_MIPS_RLD_MAP
@@ -953,8 +879,8 @@ get_r_debug (netbsd_process_target *target, const int pid)
 
       if (dyn->d_tag == DT_MIPS_RLD_MAP)
 	{
-	  if (read_memory (dyn->d_un.d_val,
-			   rld_map.buf, sizeof (rld_map.buf)) == 0)
+	  if (netbsd_nat::read_memory (pid, rld_map.buf, dyn->d_un.d_val,
+				       sizeof (rld_map.buf), nullptr) == 0)
 	    return rld_map.map;
 	  else
 	    break;
@@ -976,8 +902,7 @@ get_r_debug (netbsd_process_target *target, const int pid)
 /* Read one pointer from MEMADDR in the inferior.  */
 
 static int
-read_one_ptr (netbsd_process_target *target, CORE_ADDR memaddr, CORE_ADDR *ptr,
-	      int ptr_size)
+read_one_ptr (const pid_t pid, CORE_ADDR memaddr, CORE_ADDR *ptr, int ptr_size)
 {
   /* Go through a union so this works on either big or little endian
      hosts, when the inferior's pointer size is smaller than the size
@@ -991,7 +916,7 @@ read_one_ptr (netbsd_process_target *target, CORE_ADDR memaddr, CORE_ADDR *ptr,
     unsigned char uc;
   } addr;
 
-  int ret = target->read_memory (memaddr, &addr.uc, ptr_size);
+  int ret = netbsd_nat::read_memory (pid, &addr.uc, memaddr, ptr_size, nullptr);
   if (ret == 0)
     {
       if (ptr_size == sizeof (CORE_ADDR))
@@ -1008,8 +933,7 @@ read_one_ptr (netbsd_process_target *target, CORE_ADDR memaddr, CORE_ADDR *ptr,
 
 template <typename T>
 int
-netbsd_qxfer_libraries_svr4 (netbsd_process_target *target,
-			     const pid_t pid, const char *annex,
+netbsd_qxfer_libraries_svr4 (const pid_t pid, const char *annex,
 			     unsigned char *readbuf,
 			     unsigned const char *writebuf,
 			     CORE_ADDR offset, int len)
@@ -1095,7 +1019,7 @@ netbsd_qxfer_libraries_svr4 (netbsd_process_target *target,
 
   if (lm_addr == 0)
     {
-      CORE_ADDR r_debug = get_r_debug<T> (target, pid);
+      CORE_ADDR r_debug = get_r_debug<T> (pid);
 
       /* We failed to find DT_DEBUG.  Such situation will not change
 	 for this inferior - do not retry it.  Report it to GDB as
@@ -1106,7 +1030,7 @@ netbsd_qxfer_libraries_svr4 (netbsd_process_target *target,
       if (r_debug != 0)
 	{
 	  CORE_ADDR map_offset = r_debug + lmo->r_map_offset;
-	  if (read_one_ptr (target, map_offset, &lm_addr, ptr_size) != 0)
+	  if (read_one_ptr (pid, map_offset, &lm_addr, ptr_size) != 0)
 	    warning ("unable to read r_map from %s",
 		     core_addr_to_string (map_offset));
 	}
@@ -1115,15 +1039,15 @@ netbsd_qxfer_libraries_svr4 (netbsd_process_target *target,
   std::string document = "<library-list-svr4 version=\"1.0\"";
 
   while (lm_addr
-	 && read_one_ptr (target, lm_addr + lmo->l_name_offset,
+	 && read_one_ptr (pid, lm_addr + lmo->l_name_offset,
 			  &l_name, ptr_size) == 0
-	 && read_one_ptr (target, lm_addr + lmo->l_addr_offset,
+	 && read_one_ptr (pid, lm_addr + lmo->l_addr_offset,
 			  &l_addr, ptr_size) == 0
-	 && read_one_ptr (target, lm_addr + lmo->l_ld_offset,
+	 && read_one_ptr (pid, lm_addr + lmo->l_ld_offset,
 			  &l_ld, ptr_size) == 0
-	 && read_one_ptr (target, lm_addr + lmo->l_prev_offset,
+	 && read_one_ptr (pid, lm_addr + lmo->l_prev_offset,
 			  &l_prev, ptr_size) == 0
-	 && read_one_ptr (target, lm_addr + lmo->l_next_offset,
+	 && read_one_ptr (pid, lm_addr + lmo->l_next_offset,
 			  &l_next, ptr_size) == 0)
     {
       if (lm_prev != l_prev)
@@ -1149,7 +1073,8 @@ netbsd_qxfer_libraries_svr4 (netbsd_process_target *target,
 	  /* Not checking for error because reading may stop before
 	     we've got PATH_MAX worth of characters.  */
 	  libname[0] = '\0';
-	  target->read_memory (l_name, libname, sizeof (libname) - 1);
+	  netbsd_nat::read_memory (pid, libname, l_name, sizeof (libname) - 1,
+				   nullptr);
 	  libname[sizeof (libname) - 1] = '\0';
 	  if (libname[0] != '\0')
 	    {
@@ -1161,7 +1086,7 @@ netbsd_qxfer_libraries_svr4 (netbsd_process_target *target,
 		}
 
 	      string_appendf (document, "<library name=\"");
-	      xml_escape_text_append (&document, (char *) libname);
+	      xml_escape_text_append (document, (char *) libname);
 	      string_appendf (document, "\" lm=\"0x%lx\" "
 			      "l_addr=\"0x%lx\" l_ld=\"0x%lx\"/>",
 			      (unsigned long) lm_addr, (unsigned long) l_addr,
@@ -1201,15 +1126,15 @@ netbsd_qxfer_libraries_svr4 (netbsd_process_target *target,
 static bool
 elf_64_file_p (const char *file)
 {
-  int fd = gdb::handle_eintr<int> (-1, ::open, file, O_RDONLY);
+  int fd = gdb::handle_eintr (-1, ::open, file, O_RDONLY);
   if (fd < 0)
     perror_with_name (("open"));
 
   Elf64_Ehdr header;
-  ssize_t ret = gdb::handle_eintr<ssize_t> (-1, ::read, fd, &header, sizeof (header));
+  ssize_t ret = gdb::handle_eintr (-1, ::read, fd, &header, sizeof (header));
   if (ret == -1)
     perror_with_name (("read"));
-  gdb::handle_eintr<int> (-1, ::close, fd);
+  gdb::handle_eintr (-1, ::close, fd);
   if (ret != sizeof (header))
     error ("Cannot read ELF file header: %s", file);
 
@@ -1240,10 +1165,10 @@ netbsd_process_target::qxfer_libraries_svr4 (const char *annex,
   bool is_elf64 = elf_64_file_p (netbsd_nat::pid_to_exec_file (pid));
 
   if (is_elf64)
-    return netbsd_qxfer_libraries_svr4<int64_t> (this, pid, annex, readbuf,
+    return netbsd_qxfer_libraries_svr4<int64_t> (pid, annex, readbuf,
 						 writebuf, offset, len);
   else
-    return netbsd_qxfer_libraries_svr4<int32_t> (this, pid, annex, readbuf,
+    return netbsd_qxfer_libraries_svr4<int32_t> (pid, annex, readbuf,
 						 writebuf, offset, len);
 }
 
@@ -1258,10 +1183,10 @@ netbsd_process_target::supports_qxfer_libraries_svr4 ()
 /* Return the name of a file that can be opened to get the symbols for
    the child process identified by PID.  */
 
-char *
+const char *
 netbsd_process_target::pid_to_exec_file (pid_t pid)
 {
-  return const_cast<char *> (netbsd_nat::pid_to_exec_file (pid));
+  return netbsd_nat::pid_to_exec_file (pid);
 }
 
 /* Implementation of the target_ops method "supports_pid_to_exec_file".  */
@@ -1315,13 +1240,8 @@ netbsd_process_target::supports_read_auxv ()
   return true;
 }
 
-/* The NetBSD target ops object.  */
-
-static netbsd_process_target the_netbsd_target;
-
 void
 initialize_low ()
 {
-  set_target_ops (&the_netbsd_target);
-  the_low_target.arch_setup ();
+  set_target_ops (the_netbsd_target);
 }

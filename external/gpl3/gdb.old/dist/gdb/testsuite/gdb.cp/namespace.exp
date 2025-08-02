@@ -1,4 +1,4 @@
-# Copyright 1997-2020 Free Software Foundation, Inc.
+# Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,13 +25,9 @@
 
 
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 standard_testfile .cc namespace1.cc
-
-if [get_compiler_info c++] {
-    return -1
-}
 
 set xfail_class_types 0
 if {[test_compiler_info {gcc-[0-3]-*}]
@@ -50,14 +46,12 @@ gdb_test "show lang" "auto; currently c\\+\\+.*"
 #
 # set it up at a breakpoint so we can play with the variable values
 #
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
-if ![runto 'marker1'] then {
-    perror "couldn't run to marker1"
-    continue
+if {![runto 'marker1']} {
+    return
 }
 
 gdb_test "up" ".*main.*" "up from marker1"
@@ -196,9 +190,8 @@ gdb_test_multiple $test $test {
 # to print out stuff from within a function defined within a
 # namespace.
 
-if ![runto "C::D::marker2"] then {
-    perror "couldn't run to marker2"
-    continue
+if {![runto "C::D::marker2"]} {
+    return
 }
 
 gdb_test "print c" "\\$\[0-9\].* = 1"

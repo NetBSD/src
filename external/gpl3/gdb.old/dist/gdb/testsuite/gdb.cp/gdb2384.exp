@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,12 +28,6 @@ standard_testfile .cc gdb2384-base.cc
 
 set sofile [standard_output_file gdb2384-base.so]
 
-# Create and source the file that provides information about the compiler
-# used to compile the test case.
-if [get_compiler_info "c++"] {
-    return -1
-}
-
 if { [gdb_compile_shlib $srcdir/$subdir/$srcfile2 $sofile {debug c++}] != ""
      || [gdb_compile $srcdir/$subdir/$srcfile $binfile executable [list debug "c++" shlib=${sofile}]] != ""} {
     untested "failed to compile"
@@ -44,13 +38,12 @@ clean_restart ${binfile}
 gdb_load_shlib ${sofile}
 
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
+if {![runto_main]} {
     return -1
 }
 
-gdb_breakpoint [gdb_get_line_number "set breakpoint here"]
-gdb_continue_to_breakpoint "set breakpoint here"
+gdb_breakpoint [gdb_get_line_number "First breakpoint"]
+gdb_continue_to_breakpoint "run to 'First breakpoint', first time"
 
 gdb_test "print d1.meth ()" \
     ".*42.*"
@@ -58,25 +51,25 @@ gdb_test "print d1.meth ()" \
 # Now try again.  gdb's without the fix will hopefully segv here
 
 runto_main
-gdb_breakpoint [gdb_get_line_number "set breakpoint here"]
-gdb_continue_to_breakpoint "set breakpoint here"
+gdb_breakpoint [gdb_get_line_number "First breakpoint"]
+gdb_continue_to_breakpoint "run to 'First breakpoint', second time"
 gdb_test "print d1.meth ()" \
     ".*42.*" \
-    "gdb2384"
+    "gdb2384 at 'First breakpoint'"
 
 # second case
 
 runto_main
-gdb_breakpoint [gdb_get_line_number "set breakpoint here (second)"]
-gdb_continue_to_breakpoint "set breakpoint here (second)"
+gdb_breakpoint [gdb_get_line_number "Second breakpoint"]
+gdb_continue_to_breakpoint "run to 'Second breakpoint', first time"
 gdb_test "print d2.meth ()" \
     ".*24.*" \
     "print d2.meth()"
 
 runto_main
-gdb_breakpoint [gdb_get_line_number "set breakpoint here (second)"]
-gdb_continue_to_breakpoint "set breakpoint here (second)"
+gdb_breakpoint [gdb_get_line_number "Second breakpoint"]
+gdb_continue_to_breakpoint "run to 'Second breakpoint', second time"
 gdb_test "print d2.meth ()" \
     ".*24.*" \
-    "gdb2384 (second)"
+    "gdb2384 at 'Second breakpoint'"
 

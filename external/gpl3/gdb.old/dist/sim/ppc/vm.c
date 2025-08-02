@@ -32,6 +32,7 @@
 #endif
 
 #include "cpu.h"
+#include "symcat.h"
 
 /* OEA vs VEA
 
@@ -609,8 +610,8 @@ om_virtual_to_real(om_map *map,
        == segment_tlb_entry->masked_virtual_segment_id)
       && (page_tlb_entry->masked_page
 	  == om_ea_masked_page(ea))) {
-    TRACE(trace_vm, ("ea=0x%lx - tlb hit - tlb=0x%lx\n",
-	       (long)ea, (long)page_tlb_entry));
+    TRACE(trace_vm, ("ea=0x%lx - tlb hit - tlb=%p\n",
+		     (long)ea, page_tlb_entry));
     return page_tlb_entry;
   }
       
@@ -627,9 +628,9 @@ om_virtual_to_real(om_map *map,
       TRACE(trace_vm,
 	    ("ea=0x%lx - htab search %d - htab=0x%lx hash=0x%lx mask=0x%lx pteg=0x%lx\n",
 	     (long)ea, current_hash,
-	     map->real_address_of_page_table,
-	     page_hash,
-	     map->page_table_hash_mask,
+	     (long)map->real_address_of_page_table,
+	     (long)page_hash,
+	     (long)map->page_table_hash_mask,
 	     (long)real_address_of_pte_group));
       for (real_address_of_pte_0 = real_address_of_pte_group;
 	   real_address_of_pte_0 < (real_address_of_pte_group
@@ -661,13 +662,13 @@ om_virtual_to_real(om_map *map,
 			  pte_1 | BIT(55),
 			  processor, cia);
 	    TRACE(trace_vm,
-		  ("ea=0x%lx - htab hit - set ref - tlb=0x%lx &pte1=0x%lx\n",
-		   (long)ea, (long)page_tlb_entry, (long)real_address_of_pte_1));
+		  ("ea=0x%lx - htab hit - set ref - tlb=%p &pte1=0x%lx\n",
+		   (long)ea, page_tlb_entry, (long)real_address_of_pte_1));
 	  }
 	  else {
 	    TRACE(trace_vm,
-		  ("ea=0x%lx - htab hit - tlb=0x%lx &pte1=0x%lx\n",
-		   (long)ea, (long)page_tlb_entry, (long)real_address_of_pte_1));
+		  ("ea=0x%lx - htab hit - tlb=%p &pte1=0x%lx\n",
+		   (long)ea, page_tlb_entry, (long)real_address_of_pte_1));
 	  }
 	  return page_tlb_entry;
 	}
@@ -797,8 +798,8 @@ om_translate_effective_to_real(om_map *map,
 		  page_tlb_entry->real_address_of_pte_1,
 		  pte_1 | BIT(56),
 		  processor, cia);
-    TRACE(trace_vm, ("ea=0x%lx - set change bit - tlb=0x%lx &pte1=0x%lx\n",
-		     (long)ea, (long)page_tlb_entry,
+    TRACE(trace_vm, ("ea=0x%lx - set change bit - tlb=%p &pte1=0x%lx\n",
+		     (long)ea, page_tlb_entry,
 		     (long)page_tlb_entry->real_address_of_pte_1));
   }
 
@@ -973,8 +974,8 @@ vm_synchronize_context(vm *virtual,
   if (WITH_XOR_ENDIAN) {
     int i = 1;
     unsigned mask;
-    if ((little_endian && CURRENT_TARGET_BYTE_ORDER == LITTLE_ENDIAN)
-	|| (!little_endian && CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN))
+    if ((little_endian && CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_LITTLE)
+	|| (!little_endian && CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG))
       mask = 0;
     else
       mask = WITH_XOR_ENDIAN - 1;
@@ -987,8 +988,8 @@ vm_synchronize_context(vm *virtual,
   }
   else {
     /* don't allow the processor to change endian modes */
-    if ((little_endian && CURRENT_TARGET_BYTE_ORDER != LITTLE_ENDIAN)
-	|| (!little_endian && CURRENT_TARGET_BYTE_ORDER != BIG_ENDIAN))
+    if ((little_endian && CURRENT_TARGET_BYTE_ORDER != BFD_ENDIAN_LITTLE)
+	|| (!little_endian && CURRENT_TARGET_BYTE_ORDER != BFD_ENDIAN_BIG))
       cpu_error(processor, cia, "attempt to change hardwired byte order");
   }
 }

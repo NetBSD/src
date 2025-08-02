@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ if {![dwarf2_support]} {
     return 0
 }
 
-standard_testfile clang-debug-names.c clang-debug-names-debug.S
+standard_testfile .c -debug.S
 
 lassign [function_range main ${srcdir}/${subdir}/${srcfile}] \
     main_start main_length
@@ -31,6 +31,22 @@ source $srcdir/$subdir/clang-debug-names.exp.tcl
 if { [prepare_for_testing "failed to prepare" ${testfile} \
 	  [list $srcfile $asm_file] {nodebug}] } {
     return -1
+}
+
+set test "no file command warnings"
+if { [regexp "warning: " $gdb_file_cmd_msg] } {
+    set kfail_re \
+	[concat \
+	     "warning: Section .debug_aranges in \[^\r\n\]* entry" \
+	     "at offset 0 debug_info_offset 0 does not exists," \
+	     "ignoring \\.debug_aranges\\."]
+    if { [regexp $kfail_re $gdb_file_cmd_msg] } {
+	kfail symtab/25969 $test
+    } else {
+	fail $test
+    }
+} else {
+    pass $test
 }
 
 set cmd "ptype main"

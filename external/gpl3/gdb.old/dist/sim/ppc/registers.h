@@ -53,7 +53,7 @@ typedef signed_word gpreg;
  ** Floating Point Registers
  **/
 
-typedef unsigned64 fpreg;
+typedef uint64_t fpreg;
 
 
 
@@ -62,7 +62,7 @@ typedef unsigned64 fpreg;
  **
  **/
 
-typedef unsigned32 creg;
+typedef uint32_t creg;
 
 /* The following sub bits are defined for the condition register */
 enum {
@@ -106,7 +106,7 @@ enum {
  ** Floating-Point Status and Control Register
  **/
 
-typedef unsigned32 fpscreg;
+typedef uint32_t fpscreg;
 enum {
   fpscr_fx_bit = 0,
   fpscr_fx = BIT32(0),
@@ -170,7 +170,7 @@ enum {
  ** XER Register
  **/
 
-typedef unsigned32 xereg;
+typedef uint32_t xereg;
 
 enum {
   xer_summary_overflow = BIT32(0), xer_summary_overflow_bit = 0,
@@ -192,7 +192,7 @@ enum {
  ** Segment Registers
  **/
 
-typedef unsigned32 sreg;
+typedef uint32_t sreg;
 enum {
   nr_of_srs = 16
 };

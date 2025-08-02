@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2020 Free Software Foundation, Inc.
+Copyright 1996-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -30,6 +30,7 @@ extern const IDESC *crisv32f_decode (SIM_CPU *, IADDR,
 extern void crisv32f_init_idesc_table (SIM_CPU *);
 extern void crisv32f_sem_init_idesc_table (SIM_CPU *);
 extern void crisv32f_semf_init_idesc_table (SIM_CPU *);
+extern void crisv32f_specific_init (SIM_CPU *);
 
 /* Enum declaration for instructions in cpu family crisv32f.  */
 typedef enum crisv32f_insn_type {
@@ -126,6 +127,7 @@ extern int crisv32f_model_crisv32_u_exec_to_sr (SIM_CPU *, const IDESC *, int /*
 extern int crisv32f_model_crisv32_u_exec_movem (SIM_CPU *, const IDESC *, int /*unit_num*/, int /*referenced*/, INT /*Rs*/, INT /*Rd*/);
 extern int crisv32f_model_crisv32_u_exec (SIM_CPU *, const IDESC *, int /*unit_num*/, int /*referenced*/, INT /*Rd*/, INT /*Rs*/, INT /*Rd*/);
 extern int crisv32f_model_crisv32_u_skip4 (SIM_CPU *, const IDESC *, int /*unit_num*/, int /*referenced*/);
+extern int crisv32f_model_crisv32_u_stall (SIM_CPU *, const IDESC *, int /*unit_num*/, int /*referenced*/);
 extern int crisv32f_model_crisv32_u_const32 (SIM_CPU *, const IDESC *, int /*unit_num*/, int /*referenced*/);
 extern int crisv32f_model_crisv32_u_const16 (SIM_CPU *, const IDESC *, int /*unit_num*/, int /*referenced*/);
 extern int crisv32f_model_crisv32_u_jump (SIM_CPU *, const IDESC *, int /*unit_num*/, int /*referenced*/, INT /*Pd*/);

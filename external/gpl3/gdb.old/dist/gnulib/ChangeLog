@@ -1,3 +1,84 @@
+2021-06-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.gnulib.inc.in (GNULIB_BUILDDIR): Rename to ...
+	(GNULIB_PARENT_DIR): ... this.
+	(LIBGNU): Add "/gnulib" after $(GNULIB_PARENT_DIR).
+	(INCGNU): Likewise.  Replace .. with $(GNULIB_PARENT_DIR).
+
+2021-06-08  Mike Frysinger  <vapier@gentoo.org>
+
+	* update-gnulib.sh (IMPORTED_GNULIB_MODULES): Add netdb.
+	* aclocal.m4, config.in, configure, Makefile.gnulib.inc.in,
+	Makefile.in, import/Makefile.am, import/Makefile.in,
+	import/m4/gnulib-cache.m4, import/m4/gnulib-comp.m4: Regenerate.
+	* import/m4/select.m4, import/m4/socketlib.m4, import/m4/sockets.m4,
+	import/m4/sys_select_h.m4, import/select.c, import/sockets.c,
+	import/sockets.h, import/sys_select.in.h, import/w32sock.h: New files.
+
+2021-06-08  Mike Frysinger  <vapier@gentoo.org>
+
+	* update-gnulib.sh (IMPORTED_GNULIB_MODULES): Add netdb.
+	* aclocal.m4, configure, Makefile.in, import/Makefile.am,
+	import/Makefile.in, import/m4/gnulib-cache.m4,
+	import/m4/gnulib-comp.m4: Regenerate.
+	* import/m4/netdb_h.m4, import/netdb.in.h: New files.
+
+2021-06-08  Mike Frysinger  <vapier@gentoo.org>
+
+	* update-gnulib.sh (IMPORTED_GNULIB_MODULES): Add chown.
+	* aclocal.m4, config.in, configure, Makefile.in, import/Makefile.am,
+	import/Makefile.in, import/m4/gnulib-cache.m4,
+	import/m4/gnulib-comp.m4: Regenerate.
+	* import/chown.c, import/fchown-stub.c, import/m4/chown.m4: New files.
+
+2021-05-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* update-gnulib.sh (IMPORTED_GNULIB_MODULES): Add ffs.
+	* aclocal.m4, configure, Makefile.in, import/Makefile.am,
+	import/Makefile.in, import/m4/gnulib-cache.m4,
+	import/m4/gnulib-comp.m4: Regenerate.
+	* import/ffs.c, import/m4/ffs.m4, import/m4/strings_h.m4,
+	import/strings.in.h: New files.
+
+2021-05-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* update-gnulib.sh (IMPORTED_GNULIB_MODULES): Add gendocs.
+	* import/Makefile.am, import/Makefile.in, import/m4/gnulib-cache.m4,
+	import/m4/gnulib-comp.m4, update-gnulib.sh, configure: Regenerate.
+	* doc/gendocs_template, doc/gendocs_template_min,
+	import/extra/gendocs.sh: New files.
+
+2021-05-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* update-gnulib.sh (IMPORTED_GNULIB_MODULES): Add gnulib.
+	* Makefile.in, import/Makefile.am, import/Makefile.in,
+	import/m4/gnulib-cache.m4, import/m4/gnulib-comp.m4, aclocal.m4,
+	config.in, configure: Regenerate.
+	* import/getdelim.c, import/getline.c, import/m4/getdelim.m4,
+	import/m4/getline.m4: New files.
+
+2021-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* update-gnulib.sh (IMPORTED_GNULIB_MODULES): Add gitlog-to-changelog.
+	* Makefile.in, configure: Regenerate.
+	* import/Makefile.am, import/Makefile.in: Regenerate.
+	* import/m4/gnulib-cache.m4: Regenerate.
+	* import/m4/gnulib-comp.m4: Regenerate.
+	* import/extra/gitlog-to-changelog: New file.
+
+2021-02-05  Paul E. Murphy  <murphyp@linux.ibm.com>
+
+	* update-gnulib.sh (GNULIB_COMMIT_SHA1): Bump to
+	776af40e09b476a41073131a90022572f448c189.
+	* Makefile.in, config.in, configure, import/*: Re-generate.
+
+2020-10-09  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* Makefile.gnulib.inc.in: New file.
+	* Makefile.in: Regenerate.
+	* configure: Regenerate.
+	* configure.ac: Install the new file.
+
 2020-09-08  Tom Tromey  <tromey@adacore.com>
 
 	PR win32/25302:

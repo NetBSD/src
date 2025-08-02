@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # passed in registers.  This test passes so many structures it is
 # hoped that some will need to be placed onto the stack.
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 standard_testfile .cc
 
@@ -28,8 +28,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
 }
 
 if ![runto_main] {
-    perror "couldn't run to breakpoint"
-    continue
+    return
 }
 
 gdb_breakpoint [gdb_get_line_number "break-here"]

@@ -1,4 +1,4 @@
-/* Copyright 2014-2020 Free Software Foundation, Inc.
+/* Copyright 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,11 @@
 
 extern int v;
 
-asm (".world_start: .globl .world_start\n");
 void
 world (void)
 {
+asm ("world_label: .globl world_label\n");
 asm (".world0: .globl .world0\n");
   v++;
 asm (".world1: .globl .world1\n");
 }
-asm (".world_end: .globl .world_end\n");

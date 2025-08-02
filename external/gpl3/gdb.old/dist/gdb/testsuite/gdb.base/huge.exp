@@ -1,4 +1,4 @@
-# Copyright 2001-2020 Free Software Foundation, Inc.
+# Copyright 2001-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,8 +42,7 @@ clean_restart ${binfile}
 set prev_timeout $timeout
 set timeout 30
 
-if { ! [ runto_main ] } then {
-    untested "couldn't run to main"
+if {![runto_main]} {
     return -1
 }
 

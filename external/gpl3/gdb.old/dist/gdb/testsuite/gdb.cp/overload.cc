@@ -93,9 +93,14 @@ class A {};
 class B: public A {};
 class C: public B {};
 class D: C {};
+class E {};
+class F {};
 
 int bar (A) { return 11; }
 int bar (B) { return 22; }
+
+int bar2 (E &, A &) { return 33; }
+int bar2 (F &, B &) { return 44; }
 
 int intintfunc (int x) { return x; }
 
@@ -119,10 +124,15 @@ int main ()
     B b;
     C c;
     D d;
+    E e;
+    F f;
 
     bar (a);
     bar (b);
     bar (c);
+
+    bar2 (e, b);
+    bar2 (f, b);
 
     char *str = (char *) "A";
     foo foo_instance1(111);

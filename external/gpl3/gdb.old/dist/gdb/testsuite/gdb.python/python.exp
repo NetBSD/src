@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2020 Free Software Foundation, Inc.
+# Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -192,7 +192,7 @@ gdb_test "python print (a)" ".*aliases -- User-defined aliases of other commands
 # Test PR 12212, using InfThread.selected_thread() when no inferior is
 # loaded.
 gdb_py_test_silent_cmd "python nothread = gdb.selected_thread()" "Attempt to aquire thread with no inferior" 1
-gdb_test "python print (nothread == None)" "True" "ensure that no threads are returned"
+gdb_test "python print (nothread is None)" "True" "ensure that no threads are returned"
 
 gdb_test_multiline "register atexit function" \
     "python" "" \
@@ -217,8 +217,7 @@ clean_restart ${testfile}
 
 # The following tests require execution.
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -298,8 +297,8 @@ with_test_prefix "test decode_line" {
 }
 
 # gdb.write
-gdb_test "python print (sys.stderr)" ".*gdb._GdbOutputErrorFile (instance|object) at.*" "test stderr location"
-gdb_test "python print (sys.stdout)" ".*gdb._GdbOutputFile (instance|object) at.*" "test stdout location"
+gdb_test "python print (sys.stderr)" ".*gdb._GdbFile (instance|object) at.*" "test stderr location"
+gdb_test "python print (sys.stdout)" ".*gdb._GdbFile (instance|object) at.*" "test stdout location"
 gdb_test "python gdb.write(\"Foo\\n\")" "Foo" "test default write"
 gdb_test "python gdb.write(\"Error stream\\n\", stream=gdb.STDERR)" "Error stream" "test stderr write"
 gdb_test "python gdb.write(\"Normal stream\\n\", stream=gdb.STDOUT)" "Normal stream" "test stdout write"
@@ -432,8 +431,7 @@ clean_restart ${testfile}
 
 # The following tests require execution.
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -463,7 +461,7 @@ gdb_test_multiline "prompt substitution readline error_prompt" \
   "end" ""
 
 gdb_test_multiple "python gdb.prompt_hook = error_prompt" "set the hook error_prompt" {
-    -re "Python Exception (exceptions.RuntimeError|<(type 'exceptions.|class ')RuntimeError'>) Python exception called.*$gdb_prompt $" {
+    -re "Python Exception (exceptions.RuntimeError|<(type 'exceptions.|class ')RuntimeError'>): Python exception called\r\n$gdb_prompt $" {
 	pass $gdb_test_name
     }
 }
@@ -488,20 +486,37 @@ clean_restart ${testfile}
 
 # The following tests require execution.
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
 runto [gdb_get_line_number "Break at func2 call site."]
 
 gdb_py_test_silent_cmd "python line = gdb.selected_frame().find_sal().line" "Get line number of func2 call site" 1
+
+gdb_py_test_silent_cmd "python pc_call = gdb.selected_frame().pc()" \
+    "Get pc of func2 call site" 1
+
 gdb_test "python print (gdb.find_pc_line(gdb.selected_frame().pc()).line == line)" "True" "test find_pc_line at func2 call site"
 
 gdb_py_test_silent_cmd "step" "Step into func2" 1
 gdb_py_test_silent_cmd "up" "Step out of func2" 1
 
-gdb_test "python print (gdb.find_pc_line(gdb.selected_frame().pc()).line > line)" "True" "test find_pc_line with resume address"
+# The point of the following test is to see if gdb has advanced past the
+# location where the branch to a function was made.
+set test_name "test find_pc_line with resume address"
+
+gdb_py_test_silent_cmd "python pc_rtn = gdb.selected_frame().pc()" \
+    "Get pc at func2 return site" 1
+
+gdb_test "python print (pc_rtn > pc_call)" "True" \
+    "test resume address greater then call address"
+
+gdb_test "python print (gdb.find_pc_line(pc_rtn).line >= line)" "True" \
+    "test find_pc_line with resume address"
+gdb_test "python print (gdb.find_pc_line(pc_rtn).line == gdb.find_pc_line(gdb.Value(pc_rtn)).line)" \
+    "True" \
+    "test find_pc_line using Value"
 
 gdb_test_no_output "set variable \$cvar1 = 23" "set convenience variable"
 gdb_test "python print(gdb.convenience_variable('cvar1'))" "23"
@@ -526,3 +541,26 @@ gdb_test "print \$cvar3" "= void" \
 # Test PR 23669, the following would invoke the "commands" command instead of
 # "show commands".
 gdb_test "python gdb.execute(\"show commands\")" "$decimal  print \\\$cvar3.*"
+
+# Check if starti command is supported.
+if { [use_gdb_stub] == 0 } {
+    # Test that the from_tty argument to gdb.execute is effective. If
+    # False, the user is not prompted for decisions such as restarting the
+    # program, and "yes" is assumed. If True, the user is prompted.
+    # Case 1, from_tty=False.
+    gdb_test "python gdb.execute('starti', from_tty=False)" \
+	"Program stopped.*" \
+	"starti via gdb.execute, not from tty"
+
+    # Case 2, from_tty=True.
+    set test "starti via gdb.execute, from tty"
+    set question \
+	[multi_line \
+	     {The program being debugged has been started already\.} \
+	     {Start it from the beginning\? \(y or n\) $}]
+    gdb_test_multiple "python gdb.execute('starti', from_tty=True)" $test {
+	-re $question {
+	    gdb_test "y" "Starting program:.*" $gdb_test_name
+	}
+    }
+}

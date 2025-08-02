@@ -1,4 +1,4 @@
-# Copyright 1988-2020 Free Software Foundation, Inc.
+# Copyright 1988-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,11 +26,8 @@ if {[prepare_for_testing "failed to prepare" ${testfile} \
     return -1
 }
 
-# Create and source the file that provides information about the compiler
-# used to compile the test case.
-if [get_compiler_info] {
-    return -1
-}
+# Some tests require GCC.
+set gcc_compiled [is_c_compiler_gcc]
 
 # Test ptype of unnamed enumeration members before any action causes
 # the partial symbol table to be expanded to full symbols.  This fails
@@ -59,16 +56,16 @@ gdb_test "ptype struct t_struct" "type = struct t_struct \{.*\[\r\n\]    (unsign
 
 # Test the equivalence between '.' and '->' for struct member references.
 
-if [gdb_test "ptype v_struct1.v_float_member"	"type = float"]<0 then {
+if {[gdb_test "ptype v_struct1.v_float_member" "type = float"] < 0} {
     return -1
 }
-if [gdb_test "ptype v_struct1->v_float_member"	"type = float"]<0 then {
+if {[gdb_test "ptype v_struct1->v_float_member" "type = float"] < 0} {
     return -1
 }
-if [gdb_test "ptype v_t_struct_p.v_float_member"	"type = float"]<0 then {
+if {[gdb_test "ptype v_t_struct_p.v_float_member" "type = float"] < 0} {
     return -1
 }
-if [gdb_test "ptype v_t_struct_p->v_float_member"	"type = float"]<0 then {
+if {[gdb_test "ptype v_t_struct_p->v_float_member" "type = float"] < 0} {
     return -1
 }
 
@@ -116,7 +113,7 @@ if {!$gcc_compiled} {
 }
 
 # For get_debug_format to do its job, we need to have a current source file.
-gdb_test "list main" ".*"
+gdb_test "list -q main" ".*"
 get_debug_format
 gdb_test "whatis v_boolean" "type = (enum |)boolean" \
   "whatis unnamed typedef'd enum (compiler bug in IBM's xlc)"
@@ -349,7 +346,7 @@ gdb_test "ptype v_int" "type = int.*" "ptype int"
 #}
 #
 
-if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" "i*86-*-sysv4*" }
+if {!$gcc_compiled} { setup_xfail "rs6000-*-*" "i*86-*-sysv4*" }
 gdb_test "ptype t_char_array" "type = (|unsigned )char \\\[0?\\\]"
 
 gdb_test "ptype pv_char_array" "type = (|unsigned )char \\(\\*\\)\\\[0?\\\]"
@@ -509,7 +506,7 @@ gdb_test "ptype the_highest" \
 
 gdb_test "ptype the_highest.anonymous_level_1" \
          "type = struct \{.*\[\r\n\] *int b;.*\[\r\n\] *struct \{.*\[\r\n\] *int c;.*\[\r\n\] *\} anonymous_level_2;.*\[\r\n\]}.*" \
-         "ptype the_highest" 
+         "ptype the_highest.anonymous_level_1"
 
 get_debug_format
 
@@ -578,20 +575,20 @@ gdb_test "list intfoo" ".*"
 gdb_test "ptype foo" "type = int" "ptype foo typedef after first list of intfoo"
 gdb_test "list charfoo" ".*"
 gdb_test "ptype foo" "type = char" "ptype foo typedef after first list of charfoo"
-gdb_test "list intfoo" ".*"
+gdb_test "list intfoo" ".*" "second list intfoo"
 gdb_test "ptype foo" "type = int" "ptype foo typedef after second list of intfoo"
-gdb_test "list charfoo" ".*"
+gdb_test "list charfoo" ".*" "second list charfoo"
 gdb_test "ptype foo" "type = char" "ptype foo typedef after second list of charfoo"
 
 # Test printing type of string constants and array constants, but
 # requires a running process.  These call malloc, and can take a long
 # time to execute over a slow serial link, so increase the timeout.
 
-if [runto_main] then {
+if {[runto_main]} {
 
   if [target_info exists gdb,cannot_call_functions] {
     unsupported "this target can not call functions"
-    continue
+    return
   }
 
   # We need to up this because this can be really slow on some boards.

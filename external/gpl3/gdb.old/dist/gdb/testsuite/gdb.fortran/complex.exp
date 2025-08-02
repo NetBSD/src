@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,9 +22,8 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug f90 quiet
     return -1
 }
 
-if ![fortran_runto_main] then {
-    perror "Couldn't run to main"
-    continue
+if {![fortran_runto_main]} {
+    return
 }
 
 # Depending on the compiler being used, the type names can be printed differently.
@@ -41,17 +40,18 @@ gdb_test "print c8" " = \\(321,-22\\)"
 gdb_test "print dc" " = \\(321,-22\\)"
 
 gdb_test "print c16" " = \\(-874,19\\)"
+gdb_test "print ci" " = \\(-4,12\\)"
 
 gdb_test "whatis c" "type = $complex4"
 gdb_test "print \$_creal (c)" " = 1000"
 with_test_prefix "c" {
-    gdb_test "whatis \$" " = real"
+    gdb_test "whatis \$" " = real\\*4"
 }
 
 gdb_test "whatis c4" "type = $complex4"
 gdb_test "print \$_creal (c4)" " = 1000"
 with_test_prefix "c4" {
-    gdb_test "whatis \$" " = real"
+    gdb_test "whatis \$" " = real\\*4"
 }
 gdb_test "whatis c8" "type = $complex8"
 gdb_test "print \$_creal (c8)" " = 321"
@@ -70,3 +70,8 @@ with_test_prefix "c16" {
     gdb_test "whatis \$" " = real\\*16"
 }
 
+gdb_test "whatis ci" "type = $complex4"
+gdb_test "print \$_creal (ci)" " = -4"
+with_test_prefix "ci" {
+    gdb_test "whatis \$" " = real\\*4"
+}

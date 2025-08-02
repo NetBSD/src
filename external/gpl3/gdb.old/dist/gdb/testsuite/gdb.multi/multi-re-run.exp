@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,14 +31,14 @@ set srcfile2 multi-re-run-2.c
 set binfile2 [standard_output_file ${exec2}]
 
 with_test_prefix "exec1" {
-    if { [prepare_for_testing "failed to prepare" ${exec1} "${srcfile1}" \
+    if { [build_executable "failed to prepare" ${exec1} "${srcfile1}" \
 	      [list pthreads debug]] } {
 	return -1
     }
 }
 
 with_test_prefix "exec2" {
-    if { [prepare_for_testing "failed to prepare" ${exec2} "${srcfile2}" \
+    if { [build_executable "failed to prepare" ${exec2} "${srcfile2}" \
 	      [list pthreads debug]] } {
 	return -1
     }
@@ -80,8 +80,7 @@ proc test_re_run {re_run_inf} {
 
     # Run the steady inferior to a breakpoint, and let it stay stopped
     # there.
-    if ![runto all_started message] then {
-	untested "setup failed"
+    if {![runto all_started]} {
 	return 0
     }
 
@@ -95,7 +94,7 @@ proc test_re_run {re_run_inf} {
     foreach_with_prefix iter {1 2} {
 	delete_breakpoints
 
-	if ![runto all_started message] {
+	if ![runto all_started] {
 	    return 0
 	}
 

@@ -1,4 +1,4 @@
-/* Copyright 2016-2020 Free Software Foundation, Inc.
+/* Copyright 2016-2023 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of the PRU simulator.
@@ -19,7 +19,6 @@
 #ifndef PRU_H
 #define PRU_H
 
-#include "config.h"
 #include "opcode/pru.h"
 
 /* Needed for handling the dual PRU address space.  */
@@ -58,6 +57,8 @@
 
 #define XBBO_BASEREG (CPU.regs[GET_INSN_FIELD (RS1, inst)])
 
+#define RS1SEL GET_INSN_FIELD (RS1SEL, inst)
+#define RS1_WIDTH regsel_width (RS1SEL)
 #define RDSEL GET_INSN_FIELD (RDSEL, inst)
 #define RD_WIDTH regsel_width (RDSEL)
 #define RD_REGN GET_INSN_FIELD (RD, inst)

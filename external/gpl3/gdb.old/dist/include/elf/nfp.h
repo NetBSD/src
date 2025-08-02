@@ -1,5 +1,5 @@
 /* NFP ELF support for BFD.
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
    Contributed by Francois H. Theron <francois.theron@netronome.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -24,7 +24,7 @@
 #include "bfd.h"
 #include "elf/common.h"
 #include "elf/reloc-macros.h"
-#include "bfd_stdint.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -102,7 +102,7 @@ extern "C"
 #define SHF_NFP_INIT		0x80000000
 #define SHF_NFP_INIT2		0x40000000
 #define SHF_NFP_SCS(shf)	(((shf) >> 32) & 0xFF)
-#define SHF_NFP_SET_SCS(v)	(((BFD_HOST_U_64_BIT)((v) & 0xFF)) << 32)
+#define SHF_NFP_SET_SCS(v)	((uint64_t) ((v) & 0xFF) << 32)
 
 /* NFP Section Info
    For PROGBITS and NOBITS sections:

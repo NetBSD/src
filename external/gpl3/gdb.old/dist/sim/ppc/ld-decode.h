@@ -134,7 +134,7 @@ extern void force_decode_gen_type
 (const char *type);
 
 extern decode_table *load_decode_table
-(char *file_name,
+(const char *file_name,
  int hi_bit_nr);
 
 extern void dump_decode_rule

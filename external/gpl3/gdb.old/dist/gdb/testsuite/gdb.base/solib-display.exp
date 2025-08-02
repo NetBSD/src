@@ -1,4 +1,4 @@
-# Copyright 2009-2020 Free Software Foundation, Inc.
+# Copyright 2009-2023 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -61,10 +61,6 @@ set executable ${testfile}
 set binfile [standard_output_file ${executable}]
 set bin_flags [list debug shlib=${binfile_lib}]
 
-if [get_compiler_info] {
-    return -1
-}
-
 # SEP must be last for the possible `unsupported' error path.
 foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
 
@@ -89,8 +85,7 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
 
     clean_restart $executable
 
-    if ![runto_main] then {
-      fail "can't run to main"
+    if {![runto_main]} {
       return 0
     }
 
@@ -141,7 +136,7 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
     # are not cleared permaturely.
 
     gdb_test "break [gdb_get_line_number "break here" ${testfile}.c]" \
-	    ".*Breakpoint.* at .*" 
+	    ".*Breakpoint.* at .*"
 
     gdb_test "continue"
     gdb_test "display main_global" "4: main_global = 44"
@@ -154,11 +149,9 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
     }
 
     gdb_test "" "6: a_static = 46\\r\\n4: main_global = 44\\r\\n.*"
-    gdb_test "break [gdb_get_line_number "break here" ${testfile}.c]" \
-	    ".*Breakpoint.* at .*" 
     gdb_test "continue" [multi_line \
 			     "4: main_global = 44" \
 			     "5: a_local = 45" \
 			     "6: a_static = 46" \
-			    ]
+			    ] "continue two"
 }}

@@ -1,6 +1,6 @@
 /* Python event definitions -*- c++ -*-
 
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,7 @@ GDB_PY_DEFINE_EVENT(stop)
 GDB_PY_DEFINE_EVENT(cont)
 GDB_PY_DEFINE_EVENT(exited)
 GDB_PY_DEFINE_EVENT(new_objfile)
+GDB_PY_DEFINE_EVENT(free_objfile)
 GDB_PY_DEFINE_EVENT(clear_objfiles)
 GDB_PY_DEFINE_EVENT(new_inferior)
 GDB_PY_DEFINE_EVENT(inferior_deleted)
@@ -38,3 +39,5 @@ GDB_PY_DEFINE_EVENT(breakpoint_created)
 GDB_PY_DEFINE_EVENT(breakpoint_deleted)
 GDB_PY_DEFINE_EVENT(breakpoint_modified)
 GDB_PY_DEFINE_EVENT(before_prompt)
+GDB_PY_DEFINE_EVENT(gdb_exiting)
+GDB_PY_DEFINE_EVENT(connection_removed)

@@ -1,5 +1,5 @@
 /* Hardware event manager.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -20,6 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef HW_EVENTS_H
 #define HW_EVENTS_H
 
+#include <stdarg.h>
+
+#include "ansidecl.h"
+
 /* Event manager customized for hardware models.
 
    This interface is discussed further in sim-events.h. */
@@ -29,36 +33,36 @@ typedef void (hw_event_callback) (struct hw *me, void *data);
 
 struct hw_event *hw_event_queue_schedule
 (struct hw *me,
- signed64 delta_time,
+ int64_t delta_time,
  hw_event_callback *handler,
  void *data);
 
 struct hw_event *hw_event_queue_schedule_tracef
 (struct hw *me,
- signed64 delta_time,
+ int64_t delta_time,
  hw_event_callback *handler,
  void *data,
  const char *fmt,
- ...) __attribute__ ((format (printf, 5, 6)));
+ ...) ATTRIBUTE_NULL_PRINTF (5, 6);
 
 struct hw_event *hw_event_queue_schedule_vtracef
 (struct hw *me,
- signed64 delta_time,
+ int64_t delta_time,
  hw_event_callback *handler,
  void *data,
  const char *fmt,
- va_list ap);
+ va_list ap) ATTRIBUTE_NULL_PRINTF (5, 0);
 
 
 void hw_event_queue_deschedule
 (struct hw *me,
  struct hw_event *event_to_remove);
 
-signed64 hw_event_queue_time
+int64_t hw_event_queue_time
 (struct hw *me);
 
 /* Returns the time that remains before the event is raised. */
-signed64 hw_event_remain_time
+int64_t hw_event_remain_time
 (struct hw *me, struct hw_event *event);
 
 #endif

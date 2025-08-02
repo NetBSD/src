@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 Free Software Foundation, Inc.
+# Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,12 +41,12 @@ gdb_test "set endian auto" "$en_auto \\\(currently big endian\\\)\\." \
     "auto target endianness big"
 
 if { [build_executable ${testfile}.exp $testfile] } {
-    gdb_suppress_entire_file "$pf_prefix cannot build executable"
+    untested "failed to compile"
+    return
 }
 
-if { [gdb_file_cmd $binfile] } {
-    gdb_suppress_entire_file "$pf_prefix cannot select executable"
-}
+gdb_file_cmd $binfile
+
 set test "get target endianness"
 if { [gdb_test_multiple "show endian" "$test" {
     -re "$en_auto \\\(currently \(big\|little\) endian\\\)\\..*$gdb_prompt" {
@@ -54,41 +54,33 @@ if { [gdb_test_multiple "show endian" "$test" {
 	pass "$test"
     }
 }] } {
-    gdb_suppress_entire_file \
-	"$pf_prefix cannot determine executable endianness"
-    set endian ""
+    return
 }
 
 # Now check that the automatic endianness is updated
 # according to the executable selected.
-if { [gdb_unload] } {
-    gdb_suppress_entire_file "$pf_prefix cannot unselect executable"
-}
+gdb_unload "unload 1"
 gdb_test "set endian big" "$en_set big endian\\." \
     "override target endianness big"
 gdb_test "set endian auto" "$en_auto \\\(currently big endian\\\)\\." \
     "override auto target endianness big"
-if { [gdb_file_cmd $binfile] } {
-    gdb_suppress_entire_file "$pf_prefix cannot select executable"
-}
+
+gdb_file_cmd $binfile
 gdb_test "show endian" "$en_auto \\\(currently $endian endian\\\)\\." \
     "previously big default executable endianness"
-if { [gdb_unload] } {
-    gdb_suppress_entire_file "$pf_prefix cannot unselect executable"
-}
+
+gdb_unload "unload 2"
 gdb_test "show endian" "$en_auto \\\(currently $endian endian\\\)\\." \
     "previously big default no executable endianness"
 gdb_test "set endian little" "$en_set little endian\\." \
     "override target endianness little"
 gdb_test "set endian auto" "$en_auto \\\(currently little endian\\\)\\." \
     "override auto target endianness little"
-if { [gdb_file_cmd $binfile] } {
-    gdb_suppress_entire_file "$pf_prefix cannot select executable"
-}
+
+gdb_file_cmd $binfile
 gdb_test "show endian" "$en_auto \\\(currently $endian endian\\\)\\." \
     "previously little default executable endianness"
-if { [gdb_unload] } {
-    gdb_suppress_entire_file "$pf_prefix cannot unselect executable"
-}
+
+gdb_unload "unload 3"
 gdb_test "show endian" "$en_auto \\\(currently $endian endian\\\)\\." \
     "previously little default no executable endianness"

@@ -1,4 +1,4 @@
-# Copyright 2015-2020 Free Software Foundation, Inc.
+# Copyright 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
 }
 
 if ![fortran_runto_main] {
-    untested "could not run to main"
     return -1
 }
 
@@ -131,9 +130,8 @@ gdb_test "print vla1(9, 9, 9)" "no such vector element \\\(vector not allocated\
 # Try to assign VLA to user variable
 clean_restart ${testfile}
 
-if ![fortran_runto_main] then {
-    perror "couldn't run to main"
-    continue
+if {![fortran_runto_main]} {
+    return
 }
 gdb_breakpoint [gdb_get_line_number "vla2-allocated"]
 gdb_continue_to_breakpoint "vla2-allocated, second time"

@@ -1,6 +1,6 @@
 /* Python/gdb header for generic use in gdb
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,5 +27,11 @@ extern const struct extension_language_defn extension_language_python;
 
 /* Command element for the 'python' command.  */
 extern cmd_list_element *python_cmd_element;
+
+/* The "current" objfile.  This is set when gdb detects that a new
+   objfile has been loaded.  It is only set for the duration of a call to
+   gdbpy_source_objfile_script and gdbpy_execute_objfile_script; it is NULL
+   at other times.  */
+extern struct objfile *gdbpy_current_objfile;
 
 #endif /* PYTHON_PYTHON_H */

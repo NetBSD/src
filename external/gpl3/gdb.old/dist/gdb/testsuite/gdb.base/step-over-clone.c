@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2016-2020 Free Software Foundation, Inc.
+   Copyright 2016-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sched.h>
+#include <pthread.h>
 
 static void
 marker ()
@@ -26,9 +27,22 @@ marker ()
 
 #define STACK_SIZE 0x1000
 
+/* These are used to signal that the threads have started correctly.  The
+   GLOBAL_THREAD_COUNT is set to the number of threads in main, then
+   decremented (under a lock) in each new thread.  */
+pthread_mutex_t global_lock = PTHREAD_MUTEX_INITIALIZER;
+int global_thread_count = 0;
+
 static int
 clone_fn (void *unused)
 {
+  /* Signal that this thread has started correctly.  */
+  if (pthread_mutex_lock (&global_lock) != 0)
+    abort ();
+  global_thread_count--;
+  if (pthread_mutex_unlock (&global_lock) != 0)
+    abort ();
+
   return 0;
 }
 
@@ -38,8 +52,20 @@ main (void)
   int i, pid;
   unsigned char *stack[6];
 
+  /* Due to bug gdb/19675 the cloned thread _might_ try to reenter main
+     (this depends on where the displaced instruction is placed for
+     execution).  However, if we do reenter main then lets ensure we fail
+     hard rather then just silently executing the code below.  */
+  static int started = 0;
+  if (!started)
+    started = 1;
+  else
+    abort ();
+
   for (i = 0; i < (sizeof (stack) / sizeof (stack[0])); i++)
     stack[i] = malloc (STACK_SIZE);
+
+  global_thread_count = (sizeof (stack) / sizeof (stack[0]));
 
   for (i = 0; i < (sizeof (stack) / sizeof (stack[0])); i++)
     {
@@ -50,5 +76,18 @@ main (void)
   for (i = 0; i < (sizeof (stack) / sizeof (stack[0])); i++)
     free (stack[i]);
 
+  /* Set an alarm so we don't end up stuck waiting for threads that might
+     never start correctly.  */
+  alarm (120);
+
+  /* Now wait for all the threads to start up.  */
+  while (global_thread_count != 0)
+    {
+      /* Force memory barrier so GLOBAL_THREAD_COUNT will be refetched.  */
+      asm volatile ("" ::: "memory");
+      sleep (1);
+    }
+
+  /* Call marker, this is what GDB is waiting for.  */
   marker ();
 }

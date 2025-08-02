@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,3 +41,15 @@ if {[test_compiler_info {gcc-[0-3]-*}]
     setup_xfail "gcc/45997" "*-*-*"
 }
 gdb_test "ptype v_volatile_const_my_int" "type = const volatile int"
+
+gdb_test "ptype v2_const_my_int" "type = const int"
+gdb_test "whatis v2_const_my_int" "type = const my_int"
+
+gdb_test "ptype v2_volatile_my_int" "type = volatile int"
+gdb_test "whatis v2_volatile_my_int" "type = volatile my_int"
+
+gdb_test "ptype v2_const_volatile_my_int" "type = const volatile int"
+gdb_test "whatis v2_const_volatile_my_int" "type = const volatile my_int"
+
+gdb_test "ptype v2_volatile_const_my_int" "type = const volatile int"
+gdb_test "whatis v2_volatile_const_my_int" "type = const volatile my_int"

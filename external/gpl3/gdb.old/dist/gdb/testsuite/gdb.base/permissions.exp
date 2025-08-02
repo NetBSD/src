@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,10 +23,6 @@ standard_testfile start.c
 if {[build_executable $testfile.exp $testfile \
 	 $srcfile {debug nowarnings}] == -1} {
     untested "failed to compile"
-    return -1
-}
-
-if [get_compiler_info] {
     return -1
 }
 
@@ -85,9 +81,8 @@ gdb_test_no_output "set non-stop off"
 
 gdb_load ${binfile}
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 gdb_test "print x = 45" "$decimal = 45" "set a global"

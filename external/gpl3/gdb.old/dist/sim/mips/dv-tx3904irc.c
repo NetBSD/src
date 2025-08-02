@@ -1,8 +1,8 @@
 /*  This file is part of the program GDB, the GNU debugger.
-    
-    Copyright (C) 1998-2020 Free Software Foundation, Inc.
+
+    Copyright (C) 1998-2023 Free Software Foundation, Inc.
     Contributed by Cygnus Solutions.
-    
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 3 of the License, or
@@ -15,9 +15,11 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "hw-main.h"
@@ -25,13 +27,13 @@
 
 /* DEVICE
 
-   
+
    tx3904irc - tx3904 interrupt controller
 
-   
+
    DESCRIPTION
 
-   
+
    Implements the tx3904 interrupt controller described in the tx3904
    user guide.  It does not include the interrupt detection circuit
    that preprocesses the eight external interrupts, so assumes that
@@ -77,7 +79,7 @@
 
    External interrupts.  Level = 0 -> level interrupt cleared.
 
-   
+
    dmac0-3 (input)
 
    DMA internal interrupts, correspond to DMA channels 0-3.  Level = 0 -> level interrupt cleared.
@@ -176,11 +178,11 @@ static const struct hw_port_descriptor tx3904irc_ports[] = {
 struct tx3904irc {
   address_word base_address; /* control register base */
   unsigned_4 isr;
-#define ISR_SET(c,s) ((c)->isr &= ~ (1 << (s)))
+#define ISR_SET(c, s) ((c)->isr &= ~(1 << (s)))
   unsigned_4 imr;
 #define IMR_GET(c) ((c)->imr)
   unsigned_4 ilr[4];
-#define ILR_GET(c,s) LSEXTRACTED32((c)->ilr[(s)/4], (s) % 4 * 8 + 2, (s) % 4 * 8)
+#define ILR_GET(c, s) LSEXTRACTED32((c)->ilr[(s) / 4], (s) % 4 * 8 + 2, (s) % 4 * 8)
 };
 
 
@@ -262,7 +264,7 @@ tx3904irc_port_event (struct hw *me,
   struct tx3904irc *controller = hw_data (me);
 
   /* handle deactivated interrupt */
-  if(level == 0)
+  if (level == 0)
     {
       HW_TRACE ((me, "interrupt cleared on port %d", my_port));
       hw_port_event(me, IP_PORT, 0);
@@ -271,7 +273,7 @@ tx3904irc_port_event (struct hw *me,
 
   switch (my_port)
     {
-    case INT0_PORT: 
+    case INT0_PORT:
       {
 	int ip_number = 32; /* compute IP[5:0] */
 	HW_TRACE ((me, "port-event INT[0]"));
@@ -288,10 +290,10 @@ tx3904irc_port_event (struct hw *me,
 
 	HW_TRACE ((me, "interrupt asserted on port %d", source));
 	ISR_SET(controller, source);
-	if(ILR_GET(controller, source) > IMR_GET(controller))
+	if (ILR_GET(controller, source) > IMR_GET(controller))
 	  {
 	    int ip_number = 16 + source; /* compute IP[4:0] */
-	    HW_TRACE ((me, "interrupt level %d", ILR_GET(controller,source)));
+	    HW_TRACE ((me, "interrupt level %d", ILR_GET(controller, source)));
 	    hw_port_event(me, IP_PORT, ip_number);
 	  }
 	break;
@@ -358,7 +360,7 @@ tx3904irc_io_read_buffer (struct hw *me,
     }
 
   return nr_bytes;
-}     
+}
 
 
 
@@ -379,7 +381,7 @@ tx3904irc_io_write_buffer (struct hw *me,
       int reg_number = (address - controller->base_address) / 4;
       int reg_offset = (address - controller->base_address) % 4;
       unsigned_4* register_ptr;
-      unsigned_4 register_value;
+      unsigned_4 register_value = 0;
 
       /* fill in entire register_value word */
       switch (reg_number)
@@ -403,7 +405,7 @@ tx3904irc_io_write_buffer (struct hw *me,
       /* HW_TRACE ((me, "post: %08lx", (long) *register_ptr)); */
     }
   return nr_bytes;
-}     
+}
 
 
 const struct hw_descriptor dv_tx3904irc_descriptor[] = {

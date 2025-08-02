@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,6 @@ set found_gcc [find_gcc]
 set found_gxx [find_g++]
 set found_gnatmake [find_gnatmake]
 set found_f90 [find_gfortran]
-set found_f77 [find_g77]
 set_board_info compiler "$found_gcc"
 
 set opts [list]

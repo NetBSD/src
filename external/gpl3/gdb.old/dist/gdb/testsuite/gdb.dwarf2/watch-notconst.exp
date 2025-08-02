@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ if { [prepare_for_testing "failed to prepare" "${test}" \
 
 if { ![runto f] } {
     perror "Could not run to breakpoint `f'."
-    continue
+    return
 }
 
 gdb_test "watch x" ".*\[Ww\]atchpoint 2: x" "watch x"

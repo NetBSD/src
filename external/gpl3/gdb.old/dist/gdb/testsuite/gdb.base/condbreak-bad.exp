@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,7 +67,6 @@ with_test_prefix "with run" {
 # deletes the breakpoints.
 with_test_prefix "with continue 1" {
     if {![runto_main]} {
-	fail "could not run to main"
 	return -1
     }
 
@@ -88,7 +87,6 @@ with_test_prefix "with continue 1" {
 # Repeat with a condition that evaluates to false.
 with_test_prefix "with continue 2" {
     if {![runto_main]} {
-	fail "could not run to main"
 	return -1
     }
 
@@ -109,7 +107,6 @@ with_test_prefix "with continue 2" {
 # Repeat with a condition that contains junk at the end.
 with_test_prefix "with junk" {
     if {![runto_main]} {
-	fail "could not run to main"
 	return -1
     }
 

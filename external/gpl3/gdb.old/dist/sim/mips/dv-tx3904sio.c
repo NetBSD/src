@@ -1,8 +1,8 @@
 /*  This file is part of the program GDB, the GNU debugger.
-    
-    Copyright (C) 1998-2020 Free Software Foundation, Inc.
+
+    Copyright (C) 1998-2023 Free Software Foundation, Inc.
     Contributed by Cygnus Solutions.
-    
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 3 of the License, or
@@ -15,32 +15,35 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
     */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "hw-main.h"
 #include "dv-sockser.h"
 #include "sim-assert.h"
 
+#include <stdlib.h>
 
 /* DEVICE
 
-   
+
    tx3904sio - tx3904 serial I/O
 
-   
+
    DESCRIPTION
 
-   
+
    Implements one tx3904 serial I/O controller described in the tx3904
    user guide.  Three instances are required for SIO0 and SIO1 within
    the tx3904, at different base addresses.
 
    Both internal and system clocks are synthesized as divided versions
    of the simulator clock.
-   
+
    There is no support for:
     - CTS/RTS flow control
     - baud rate emulation - use infinite speed instead
@@ -100,7 +103,7 @@ static void tx3904sio_poll(struct hw*, void* data);
 
 
 /* register numbers; each is one word long */
-enum 
+enum
 {
   SLCR_REG = 0,
   SLSR_REG = 1,
@@ -123,7 +126,7 @@ enum
 };
 
 
-static const struct hw_port_descriptor tx3904sio_ports[] = 
+static const struct hw_port_descriptor tx3904sio_ports[] =
 {
   { "int", INT_PORT, 0, output_port, },
   { "reset", RESET_PORT, 0, input_port, },
@@ -133,7 +136,7 @@ static const struct hw_port_descriptor tx3904sio_ports[] =
 
 
 /* Generic FIFO */
-struct tx3904sio_fifo 
+struct tx3904sio_fifo
 {
   int size, used;
   unsigned_1 *buffer;
@@ -144,7 +147,7 @@ struct tx3904sio_fifo
 /* The timer/counter register internal state.  Note that we store
    state using the control register images, in host endian order. */
 
-struct tx3904sio 
+struct tx3904sio
 {
   address_word base_address; /* control register base */
   enum {sio_tcp, sio_stdio} backend; /* backend */
@@ -223,12 +226,12 @@ attach_tx3904sio_regs (struct hw *me,
 		     attach_space, attach_address, attach_size,
 		     me);
 
-  if(hw_find_property(me, "backend") != NULL)
+  if (hw_find_property(me, "backend") != NULL)
     {
       const char* value = hw_find_string_property(me, "backend");
-      if(! strcmp(value, "tcp"))
+      if (!strcmp(value, "tcp"))
 	controller->backend = sio_tcp;
-      else if(! strcmp(value, "stdio"))
+      else if (!strcmp(value, "stdio"))
 	controller->backend = sio_stdio;
       else
 	hw_abort(me, "illegal value for backend parameter `%s': use tcp or stdio", value);
@@ -340,7 +343,7 @@ tx3904sio_io_read_buffer (struct hw *me,
 	case TFIFO_REG: register_value = 0; break;
 	case SFIFO_REG:
 	  /* consume rx fifo for MS byte */
-	  if(reg_offset == 0 && tx3904sio_fifo_nonempty(me, & controller->rx_fifo))
+	  if (reg_offset == 0 && tx3904sio_fifo_nonempty(me, & controller->rx_fifo))
 	    register_value = (tx3904sio_fifo_pop(me, & controller->rx_fifo) << 24);
 	  else
 	    register_value = 0;
@@ -355,7 +358,7 @@ tx3904sio_io_read_buffer (struct hw *me,
     }
 
   return nr_bytes;
-}     
+}
 
 
 
@@ -391,7 +394,7 @@ tx3904sio_io_write_buffer (struct hw *me,
 	case SDICR_REG:
 	  {
 	    unsigned_4 last_int, next_int;
-	    
+
 	    /* deassert interrupt upon clear */
 	    last_int = controller->sdisr & controller->sdicr;
 	    /* HW_TRACE ((me, "sdicr - sdisr %08x sdicr %08x",
@@ -400,13 +403,13 @@ tx3904sio_io_write_buffer (struct hw *me,
 	    /* HW_TRACE ((me, "sdicr + sdisr %08x sdicr %08x",
 	       controller->sdisr, controller->sdicr)); */
 	    next_int = controller->sdisr & controller->sdicr;
-	    
-	    if(SDICR_GET_SDMAE(controller))
+
+	    if (SDICR_GET_SDMAE(controller))
 	      hw_abort(me, "Cannot support DMA-driven sio.");
 
-	    if(~last_int & next_int) /* any bits set? */
+	    if (~last_int & next_int) /* any bits set? */
 	      hw_port_event(me, INT_PORT, 1);
-	    if(last_int & ~next_int) /* any bits cleared? */
+	    if (last_int & ~next_int) /* any bits cleared? */
 	      hw_port_event(me, INT_PORT, 0);
 	  }
 	break;
@@ -417,41 +420,41 @@ tx3904sio_io_write_buffer (struct hw *me,
 
 	    /* deassert interrupt upon clear */
 	    last_int = controller->sdisr & controller->sdicr;
-	    /* HW_TRACE ((me, "sdisr - sdisr %08x sdicr %08x", 
+	    /* HW_TRACE ((me, "sdisr - sdisr %08x sdicr %08x",
 	       controller->sdisr, controller->sdicr)); */
 	    SDISR_CLEAR_FLAG_BYTE(controller, reg_offset, write_byte);
-	    /* HW_TRACE ((me, "sdisr + sdisr %08x sdicr %08x", 
+	    /* HW_TRACE ((me, "sdisr + sdisr %08x sdicr %08x",
 	       controller->sdisr, controller->sdicr)); */
 	    next_int = controller->sdisr & controller->sdicr;
 
-	    if(~last_int & next_int) /* any bits set? */
+	    if (~last_int & next_int) /* any bits set? */
 	      hw_port_event(me, INT_PORT, 1);
-	    if(last_int & ~next_int) /* any bits cleared? */
+	    if (last_int & ~next_int) /* any bits cleared? */
 	      hw_port_event(me, INT_PORT, 0);
 	  }
 	break;
-	
+
 	case SFCR_REG:
 	  SFCR_SET_BYTE(controller, reg_offset, write_byte);
-	  if(SFCR_GET_FRSTE(controller))
+	  if (SFCR_GET_FRSTE(controller))
 	    {
-	      if(SFCR_GET_TFRST(controller)) tx3904sio_fifo_reset(me, & controller->tx_fifo);
-	      if(SFCR_GET_RFRST(controller)) tx3904sio_fifo_reset(me, & controller->rx_fifo);
+	      if (SFCR_GET_TFRST(controller)) tx3904sio_fifo_reset(me, & controller->tx_fifo);
+	      if (SFCR_GET_RFRST(controller)) tx3904sio_fifo_reset(me, & controller->rx_fifo);
 	    }
 	  break;
-	  
+
 	case SBGR_REG:
 	  SBGR_SET_BYTE(controller, reg_offset, write_byte);
 	  break;
-	  
+
 	case SFIFO_REG: /* unwriteable */ break;
-	  
-	case TFIFO_REG: 
-	  if(reg_offset == 3) /* first byte */
+
+	case TFIFO_REG:
+	  if (reg_offset == 3) /* first byte */
 	    tx3904sio_fifo_push(me, & controller->tx_fifo, write_byte);
 	  break;
 
-	default: 
+	default:
 	  HW_TRACE ((me, "write to illegal register %d", reg_number));
 	}
     } /* loop over bytes */
@@ -460,7 +463,7 @@ tx3904sio_io_write_buffer (struct hw *me,
   tx3904sio_tickle(me);
 
   return nr_bytes;
-}     
+}
 
 
 
@@ -478,7 +481,7 @@ tx3904sio_tickle(struct hw *me)
   unsigned_4 last_int, next_int;
 
   /* HW_TRACE ((me, "tickle backend: %02x", controller->backend)); */
-  switch(controller->backend) 
+  switch (controller->backend)
     {
     case sio_tcp:
 
@@ -526,20 +529,20 @@ tx3904sio_tickle(struct hw *me)
   /* Update RDIS / TDIS flags */
   last_int = controller->sdisr & controller->sdicr;
   /* HW_TRACE ((me, "tickle - sdisr %08x sdicr %08x", controller->sdisr, controller->sdicr)); */
-  if(tx3904sio_fifo_nonempty(me, & controller->rx_fifo))
+  if (tx3904sio_fifo_nonempty(me, & controller->rx_fifo))
     SDISR_SET_RDIS(controller);
-  if(! tx3904sio_fifo_nonempty(me, & controller->tx_fifo))
+  if (!tx3904sio_fifo_nonempty(me, & controller->tx_fifo))
     SDISR_SET_TDIS(controller);
   next_int = controller->sdisr & controller->sdicr;
   /* HW_TRACE ((me, "tickle + sdisr %08x sdicr %08x", controller->sdisr, controller->sdicr)); */
 
-  if(~last_int & next_int) /* any bits set? */
+  if (~last_int & next_int) /* any bits set? */
     hw_port_event(me, INT_PORT, 1);
-  if(last_int & ~next_int) /* any bits cleared? */
+  if (last_int & ~next_int) /* any bits cleared? */
     hw_port_event(me, INT_PORT, 0);
 
   /* Add periodic polling for this port, if it's not already going. */
-  if(controller->poll_event == NULL)
+  if (controller->poll_event == NULL)
     {
       controller->poll_event = hw_event_queue_schedule (me, 1000,
 							tx3904sio_poll, NULL);
@@ -576,13 +579,13 @@ void
 tx3904sio_fifo_push(struct hw* me, struct tx3904sio_fifo* fifo, char it)
 {
   /* HW_TRACE ((me, "push %02x -> fifo", it)); */
-  if(fifo->size == fifo->used) /* full */
+  if (fifo->size == fifo->used) /* full */
     {
       int next_size = fifo->size * 2 + 16;
-      char* next_buf = zalloc(next_size);
+      unsigned_1* next_buf = zalloc(next_size);
       memcpy(next_buf, fifo->buffer, fifo->used);
 
-      if(fifo->buffer != NULL) free(fifo->buffer);
+      if (fifo->buffer != NULL) free(fifo->buffer);
       fifo->buffer = next_buf;
       fifo->size = next_size;
     }

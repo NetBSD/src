@@ -1,4 +1,4 @@
-# Copyright 1992-2020 Free Software Foundation, Inc.
+# Copyright 1992-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,16 @@ load_lib "cp-support.exp"
 
 standard_testfile .cc
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
+set flags [list debug c++]
+set clang_used false
+if { [test_compiler_info "clang-*" "c++"] } {
+    set clang_used true
+    if { [gcc_major_version "clang-*" "c++"] >= 11} {
+	lappend flags additional_flags=-Wno-non-c-typedef-for-linkage
+    }
+}
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile $flags]} {
     return -1
 }
 
@@ -319,6 +328,12 @@ proc test_ptype_class_objects {} {
 
     # Classes with typedefs of different access.
 
+    # Clang does not add access information for typedefs in classes.
+    # More information on: https://github.com/llvm/llvm-project/issues/57608
+    if {$::clang_used} {
+	setup_xfail "clang 57608" *-*-*
+    }
+
     cp_test_ptype_class \
 	"class class_with_typedefs" "" "class" "class_with_typedefs" \
 	{
@@ -339,6 +354,10 @@ proc test_ptype_class_objects {} {
 	    { typedef private "typedef int private_int;" }
 	}
 
+    if {$::clang_used} {
+	setup_xfail "clang 57608" *-*-*
+    }
+
     cp_test_ptype_class \
 	"class class_with_public_typedef" "" "class" \
 	"class_with_public_typedef" {
@@ -346,6 +365,11 @@ proc test_ptype_class_objects {} {
 	    { field public "class_with_public_typedef::INT b;" }
 	    { typedef public "typedef int INT;" }
 	}
+
+    if {$::clang_used} {
+	setup_xfail "clang 57608" *-*-*
+    }
+
     cp_test_ptype_class \
 	"class class_with_protected_typedef" "" "class" \
 	"class_with_protected_typedef" {
@@ -353,6 +377,11 @@ proc test_ptype_class_objects {} {
 	    { field protected "class_with_protected_typedef::INT b;" }
 	    { typedef protected "typedef int INT;" }
 	}
+
+    if {$::clang_used} {
+	setup_xfail "clang 57608" *-*-*
+    }
+
     cp_test_ptype_class \
 	"struct struct_with_protected_typedef" "" "struct" \
 	"struct_with_protected_typedef" {
@@ -360,6 +389,11 @@ proc test_ptype_class_objects {} {
 	    { field protected "struct_with_protected_typedef::INT b;" }
 	    { typedef protected "typedef int INT;" }
 	}
+
+    if {$::clang_used} {
+	setup_xfail "clang 57608" *-*-*
+    }
+
     cp_test_ptype_class \
 	"struct struct_with_private_typedef" "" "struct" \
 	"struct_with_private_typedef" {
@@ -617,8 +651,7 @@ proc do_tests {} {
     gdb_test_no_output "set language c++" ""
     gdb_test_no_output "set width 0" ""
 
-    if ![runto_main ] then {
-	perror "couldn't run to breakpoint"
+    if {![runto_main]} {
 	return
     }
 

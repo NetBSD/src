@@ -4,5 +4,6 @@ extern "C"
 int
 solib_main (int arg)
 {
-  return arg*arg;		/* HERE */
-}				/* STEP */
+  int ans = arg*arg;		/* HERE */
+  return ans;			/* STEP */
+}

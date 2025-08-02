@@ -1,4 +1,4 @@
-# Copyright 1988-2020 Free Software Foundation, Inc.
+# Copyright 1988-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -143,7 +143,7 @@ proc test_with_self { } {
     setup_xfail "i*86-pc-linuxaout-gnu"
     set description "backtrace through signal handler"
     gdb_test_multiple "backtrace" "$description" {
-	-re "#0.*(read|poll).*in main \\(.*\\) at .*gdb\\.c.*$gdb_prompt $" {
+	-re "#0.*(read|poll).* main \\(.*\\) at .*gdb\\.c.*$gdb_prompt $" {
 	    pass "$description"
 	}
     }

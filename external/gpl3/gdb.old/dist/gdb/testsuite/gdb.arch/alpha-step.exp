@@ -1,4 +1,4 @@
-# Copyright 2005-2020 Free Software Foundation, Inc.
+# Copyright 2005-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-if ![istarget "alpha*-*-*"] then {
+if {![istarget "alpha*-*-*"]} {
     verbose "Skipping alpha step tests."
     return
 }
@@ -37,8 +37,7 @@ proc test_stepi {function } {
     # Restart the program from scratch. If GDB got confused during one
     # of the previous tests, this makes sure that it doesn't affect
     # this series of tests.
-    if ![runto_main] then {
-        fail "can't run to main"
+    if {![runto_main]} {
         return 0
     }
 

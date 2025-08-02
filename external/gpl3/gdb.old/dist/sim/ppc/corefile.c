@@ -24,6 +24,7 @@
 #include "basics.h"
 #include "device_table.h"
 #include "corefile.h"
+#include "symcat.h"
 
 typedef struct _core_mapping core_mapping;
 struct _core_mapping {
@@ -226,7 +227,7 @@ core_attach(core *memory,
   if (attach == attach_raw_memory) {
     /* Padd out the raw buffer to ensure that ADDR starts on a
        correctly aligned boundary */
-    int padding = (addr % sizeof (unsigned64));
+    int padding = (addr % sizeof (uint64_t));
     free_buffer = zalloc(nr_bytes + padding);
     buffer = (char*)free_buffer + padding;
   }
@@ -291,8 +292,8 @@ core_map_find_mapping(core_map *map,
     mapping = mapping->next;
   }
   if (abort)
-    error("core_find_mapping() - access to unmaped address, attach a default map to handle this - addr=0x%x nr_bytes=0x%x processor=0x%x cia=0x%x\n",
-	  addr, nr_bytes, processor, cia);
+    error("core_find_mapping() - access to unmaped address, attach a default map to handle this - addr=0x%x nr_bytes=0x%x processor=%p cia=0x%x\n",
+	  addr, nr_bytes, (void *) processor, cia);
   return NULL;
 }
 

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2010-2020 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@ set testfile "gdb11479"
 
 proc do_test {version} {
     if ![runto_main] {
-        fail "can't run to main $version"
         return -1
     }
     gdb_test "rb test" "" "set breakpoints $version"
@@ -40,7 +39,7 @@ proc do_test {version} {
     gdb_test "print sizeof (*e)" "= \[1-9\]*" "sizeof (*e) in test $version"
 }
 
-if { [prepare_for_testing "failed to prepare" $testfile $testfile.c {debug additional_flags=-gstabs}] == 0 } {
+if { [prepare_for_testing "failed to prepare" $testfile $testfile.c {debug additional_flags=-gstabs quiet}] == 0 } {
     do_test forced_stabs
 }
 

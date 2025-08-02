@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Free Software Foundation, Inc.
+# Copyright 1999-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,11 +22,6 @@
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
-
-gdb_exit
-if [mi_gdb_start] {
-    continue
-}
 
 standard_testfile basics.c
 
@@ -52,21 +47,27 @@ proc test_disassembly_only {} {
 
 
     mi_gdb_test "print/x \$pc" "" ""
-    mi_gdb_test "111-data-disassemble -s \$pc -e \"\$pc + 12\" -- 0" \
-	    "111\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\},\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\}.*\]" \
-             "data-disassemble from pc to pc+12 assembly only"
 
-    mi_gdb_test "112-data-disassemble -a \$pc -- 0" \
-	    "112\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\},\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\}.*\]" \
-             "data-disassemble function around pc assembly only"
+    foreach { test_name option_string } [list "mode 0" "-- 0" \
+					     "default mode" "" ] {
+	with_test_prefix $test_name {
+	    mi_gdb_test "111-data-disassemble -s \$pc -e \"\$pc + 12\" ${option_string}" \
+		"111\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\},\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\}.*\]" \
+		"data-disassemble from pc to pc+12 assembly only"
 
-    mi_gdb_test "113-data-disassemble -a callee4 -- 0" \
-	    "113\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"callee4\",offset=\"$decimal\",inst=\".*\"\},\{address=\"$hex\",func-name=\"callee4\",offset=\"$decimal\",inst=\".*\"\}.*\]" \
-             "data-disassemble function callee4 assembly only"
+	    mi_gdb_test "112-data-disassemble -a \$pc ${option_string}" \
+		"112\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\},\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\}.*\]" \
+		"data-disassemble function around pc assembly only"
 
-    mi_gdb_test "222-data-disassemble  -f basics.c -l $line_main_body -- 0" \
-	    "222\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"0\",inst=\".*\"\},.*,\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\}\\\]" \
-              "data-disassemble file & line, assembly only"
+	    mi_gdb_test "113-data-disassemble -a callee4 ${option_string}" \
+		"113\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"callee4\",offset=\"$decimal\",inst=\".*\"\},\{address=\"$hex\",func-name=\"callee4\",offset=\"$decimal\",inst=\".*\"\}.*\]" \
+		"data-disassemble function callee4 assembly only"
+
+	    mi_gdb_test "222-data-disassemble  -f basics.c -l $line_main_body ${option_string}" \
+		"222\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"0\",inst=\".*\"\},.*,\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\}\\\]" \
+		"data-disassemble file & line, assembly only"
+	}
+    }
 }
 
 proc test_disassembly_with_opcodes {} {
@@ -83,13 +84,20 @@ proc test_disassembly_with_opcodes {} {
     # -data-disassembly -f basics.c -l $line_main_body -- 2
 
     mi_gdb_test "print/x \$pc" "" ""
-    mi_gdb_test "111-data-disassemble -s \$pc -e \"\$pc + 12\" -- 2" \
-           "111\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",opcodes=\".*\",inst=\".*\"\},\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",opcodes=\".*\",inst=\".*\"\}.*\]" \
-             "data-disassemble from pc to pc+12 assembly with opcodes"
 
-    mi_gdb_test "222-data-disassemble  -f basics.c -l $line_main_body -- 2" \
-           "222\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"0\",opcodes=\".*\",inst=\".*\"\},.*,\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",opcodes=\".*\",inst=\".*\"\}\\\]" \
-              "data-disassemble file & line, assembly with opcodes"
+    foreach { test_name option_string} [list "mode 2" "-- 2" \
+					    "mode 0 and --opcodes bytes" "--opcodes bytes -- 0" \
+					    "default mode and --opcodes bytes" "--opcodes bytes"] {
+	with_test_prefix $test_name {
+	    mi_gdb_test "111-data-disassemble -s \$pc -e \"\$pc + 12\" ${option_string}" \
+		"111\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",opcodes=\".*\",inst=\".*\"\},\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",opcodes=\".*\",inst=\".*\"\}.*\]" \
+		"data-disassemble from pc to pc+12 assembly"
+
+	    mi_gdb_test "222-data-disassemble  -f basics.c -l $line_main_body ${option_string}" \
+		"222\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"0\",opcodes=\".*\",inst=\".*\"\},.*,\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",opcodes=\".*\",inst=\".*\"\}\\\]" \
+		"data-disassemble file & line, assembly"
+	}
+    }
 }
 
 proc test_disassembly_lines_limit {} {
@@ -235,16 +243,110 @@ proc test_disassembly_bogus_args {} {
              "data-disassemble bogus address, -a"
 
     mi_gdb_test "456-data-disassemble -s \$pc -f basics.c -- 0" \
-             "456\\^error,msg=\"-data-disassemble: Usage: \\( .-f filename -l linenum .-n howmany.. \\| .-s startaddr -e endaddr. \\| .-a addr. \\) .--. mode.\"" \
-             "data-disassemble mix different args"
+	"456\\^error,msg=\"-data-disassemble: Usage: \\( -f filename -l linenum .-n howmany. \\| -s startaddr -e endaddr \\| -a addr \\) . --opcodes mode . . --source . . .--. mode .\\.\"" \
+	"data-disassemble mix different args"
 
     mi_gdb_test "789-data-disassemble -f basics.c -l $line_main_body -- 9" \
              "789\\^error,msg=\"-data-disassemble: Mode argument must be in the range 0-5.\"" \
-             "data-disassemble wrong mode arg"
+	"data-disassemble wrong mode arg"
 
+    foreach mode { 1 2 3 4 5 } {
+	foreach opcode_arg { none bytes display } {
+	    mi_gdb_test "801-data-disassemble -s \$pc -e \"\$pc + 12\" --opcodes ${opcode_arg} -- ${mode}" \
+		"801\\^error,msg=\"-data-disassemble: --opcodes and --source can only be used with mode 0\"" \
+		"data-disassemble use --opcode ${opcode_arg} with mode ${mode}"
+	}
+
+	mi_gdb_test "802-data-disassemble -s \$pc -e \"\$pc + 12\" --source -- ${mode}" \
+	    "802\\^error,msg=\"-data-disassemble: --opcodes and --source can only be used with mode 0\"" \
+	    "data-disassemble use --source with mode ${mode}"
+    }
 }
 
-mi_run_to_main
+# Check the format of the opcode bytes.
+proc test_disassembly_opcode_format {} {
+    # First, we need to find a multi-byte instruction that we can
+    # then disassemble using the MI command.
+    set longest_insn_bytes ""
+    set longest_insn_addr ""
+    gdb_test_multiple "disassemble /b main" "" -prompt "$::mi_gdb_prompt$" {
+	-re "^disassemble /b main\r\n" {
+	    exp_continue
+	}
+
+	-re "^&\"disassemble /b main.n\"\r\n" {
+	    exp_continue
+	}
+
+	-re "^~\"Dump of assembler code for function \[^\r\n\]+\r\n" {
+	    exp_continue
+	}
+
+	-re "^~\".. ($::hex) <\[^>\]+>:\\\\t(\[^\\\\\]+)\\\\t\[^\r\n\]+\r\n" {
+	    set addr $expect_out(1,string)
+	    set bytes [string trim $expect_out(2,string)]
+	    if { [string length $bytes] > [string length $longest_insn_bytes] } {
+		set longest_insn_addr $addr
+		set longest_insn_bytes $bytes
+	    }
+	    exp_continue
+	}
+
+	-re "^~\"End of assembler dump\[^\r\n\]+\r\n" {
+	    exp_continue
+	}
+
+	-re "^\\^done\r\n$::mi_gdb_prompt$" {
+	    gdb_assert { ![string equal $longest_insn_bytes ""] } \
+		"found the bytes string for a longest instruction"
+	    gdb_assert { ![string equal $longest_insn_addr ""] } \
+		"found the address for a longest instruction"
+	}
+    }
+
+    verbose -log "Longest instruction at ${longest_insn_addr} with bytes '${longest_insn_bytes}'"
+
+    # Check that the instruction bytes that we found above consists of
+    # a series of individual bytes separated by a whitespace.  Also,
+    # we check that the bytes reported match what can be found in the
+    # inferior memory.
+    set split_bytes [split $longest_insn_bytes " "]
+    set is_bad false
+    set addr $longest_insn_addr
+    set idx 0
+    foreach b $split_bytes {
+	if { [string length $b] != 2 } {
+	    set is_bad true
+	}
+
+	# Load the actual byte value from memory, and check it matches
+	# the opcode byte reported in the disassembler output.
+	set addr 0x[format %x [expr $longest_insn_addr + $idx]]
+	set actual [format %02x [mi_get_valueof "/x" "*((unsigned char *) $addr)" "XX"]]
+	gdb_assert [string equal $actual "$b"] \
+	    "byte at $addr matches"
+
+	incr idx
+    }
+    gdb_assert { !$is_bad } "check length of each byte"
+    set check_bytes [join $split_bytes " "]
+    gdb_assert { [string equal $check_bytes $longest_insn_bytes] } \
+	"bytes are separated by a single space"
+
+    # Figure out an end address at which to stop the disassembly.
+    set byte_count [llength $split_bytes]
+    set end_addr 0x[format %x [expr $longest_insn_addr + $byte_count]]
+    set start_addr $longest_insn_addr
+
+    verbose -log "Instruction is ${byte_count} bytes, end address ${end_addr}"
+
+    mi_gdb_test "321-data-disassemble -s $start_addr -e $end_addr -- 2" \
+	"321\\^done,asm_insns=\\\[\{address=\"$start_addr\",func-name=\"main\",offset=\"$::decimal\",opcodes=\"$longest_insn_bytes\",inst=\".*\"\}\]" \
+	"data-disassemble checking the opcodes bytes format"
+}
+
+mi_clean_restart $binfile
+mi_runto_main
 test_disassembly_only
 test_disassembly_with_opcodes
 test_disassembly_mixed
@@ -252,6 +354,7 @@ test_disassembly_mixed_with_opcodes
 test_disassembly_bogus_args
 test_disassembly_lines_limit
 test_disassembly_mixed_lines_limit
+test_disassembly_opcode_format
 
 mi_gdb_exit
 return 0

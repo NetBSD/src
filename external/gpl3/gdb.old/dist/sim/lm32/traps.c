@@ -1,7 +1,7 @@
 /* Lattice Mico32 exception and system call support.
    Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,13 +18,17 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #define WANT_CPU lm32bf
 #define WANT_CPU_LM32BF
 
 #include "sim-main.h"
+#include "sim-signal.h"
 #include "sim-syscall.h"
 #include "lm32-sim.h"
-#include "targ-vals.h"
+#include "target-newlib-syscall.h"
 
 /* Handle invalid instructions.  */
 
@@ -129,7 +133,7 @@ lm32bf_scall_insn (SIM_CPU * current_cpu, IADDR pc)
   host_callback *cb = STATE_CALLBACK (sd);
 
   if ((STATE_ENVIRONMENT (sd) != OPERATING_ENVIRONMENT)
-      || (GET_H_GR (8) == TARGET_SYS_exit))
+      || (GET_H_GR (8) == TARGET_NEWLIB_SYS_exit))
     {
       /* Delegate system call to host O/S.  */
       long result, result2;

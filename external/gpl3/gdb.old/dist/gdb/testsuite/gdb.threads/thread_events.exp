@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2020 Free Software Foundation, Inc.
+# Copyright (C) 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 # This test has only been verified with Linux targets, and would need
 # to be generalized to support other targets
-if ![istarget *-*-linux*] then {
+if {![istarget *-*-linux*]} {
     return
 }
 
@@ -112,8 +112,7 @@ proc test_thread_messages {enabled} {
 
   # The initial thread may log a 'New Thread' message, but we don't
   # check for it.
-  if ![runto_main] then {
-     fail "can't run to main $enabled_string"
+  if {![runto_main]} {
      return 1
   }
 

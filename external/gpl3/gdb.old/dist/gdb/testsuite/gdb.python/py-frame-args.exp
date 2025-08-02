@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,32 +38,36 @@ gdb_continue_to_breakpoint "break-here" ".* break-here .*"
 
 gdb_test_no_output "set print raw-frame-arguments off"
 
-gdb_test_no_output "set print frame-arguments none"
-gdb_test "frame" ".*foo \\(x=\[.\]{3}, ss=\[.\]{3}\\).*" \
-    "frame pretty,none"
+with_test_prefix "pretty frame args" {
+    gdb_test_no_output "set print frame-arguments none"
+    gdb_test "frame" ".*foo \\(x=\[.\]{3}, ss=\[.\]{3}\\).*" \
+	"none"
 
-gdb_test_no_output "set print frame-arguments scalars"
-gdb_test "frame" ".*foo \\(x=42, ss=super struct = {\[.\]{3}}\\).*" \
-    "frame pretty,scalars"
+    gdb_test_no_output "set print frame-arguments scalars"
+    gdb_test "frame" ".*foo \\(x=42, ss=super struct = {\[.\]{3}}\\).*" \
+	"scalars"
 
-gdb_test_no_output "set print frame-arguments all"
-gdb_test "frame" \
-    ".*foo \\(x=42, ss=super struct = {a = m=<1>, b = m=<2>}\\).*" \
-    "frame pretty,all"
+    gdb_test_no_output "set print frame-arguments all"
+    gdb_test "frame" \
+	".*foo \\(x=42, ss=super struct = {a = m=<1>, b = m=<2>}\\).*" \
+	"all"
+}
 
 # Test all combinations with raw on.
 
 gdb_test_no_output "set print raw-frame-arguments on"
 
-gdb_test_no_output "set print frame-arguments none"
-gdb_test "frame" ".*foo \\(x=\[.\]{3}, ss=\[.\]{3}\\).*" \
-    "frame raw,none"
+with_test_prefix "raw frame args" {
+    gdb_test_no_output "set print frame-arguments none"
+    gdb_test "frame" ".*foo \\(x=\[.\]{3}, ss=\[.\]{3}\\).*" \
+	"none"
 
-gdb_test_no_output "set print frame-arguments scalars"
-gdb_test "frame" ".*foo \\(x=42, ss=\[.\]{3}\\).*" \
-    "frame raw,scalars"
+    gdb_test_no_output "set print frame-arguments scalars"
+    gdb_test "frame" ".*foo \\(x=42, ss=\[.\]{3}\\).*" \
+	"scalars"
 
-gdb_test_no_output "set print frame-arguments all"
-gdb_test "frame" \
-    ".*foo \\(x=42, ss={a = {m = 1}, b = {m = 2}}\\).*" \
-    "frame raw,all"
+    gdb_test_no_output "set print frame-arguments all"
+    gdb_test "frame" \
+	".*foo \\(x=42, ss={a = {m = 1}, b = {m = 2}}\\).*" \
+	"all"
+}

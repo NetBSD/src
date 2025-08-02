@@ -1,4 +1,4 @@
-# Copyright 2002-2020 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,11 +24,6 @@ if { ![support_displaced_stepping] } {
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if {[mi_gdb_start]} {
-    continue
-}
-
 proc mi_nonstop_resume { command test } {
     if { [mi_send_resuming_command $command $test] != 0 } {
 	# If a resume fails, assume non-stop is broken or unsupported
@@ -49,15 +44,16 @@ if {[gdb_compile "$srcdir/$subdir/$srcfile" \
     return -1
 }
 
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load $binfile
+save_vars { GDBFLAGS } {
+    append GDBFLAGS " -ex \"set non-stop on\""
+    mi_clean_restart $binfile
+}
 
-mi_gdb_test "-gdb-set non-stop 1" ".*"
 mi_gdb_test "-gdb-set mi-async 1" ".*"
 mi_detect_async
 
-if { [mi_run_to_main] < 0 } {
-    continue
+if { [mi_runto_main] < 0 } {
+    return
 }
 
 # Check that register and stack info don't end up stale after resuming

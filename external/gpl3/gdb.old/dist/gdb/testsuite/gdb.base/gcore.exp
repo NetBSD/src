@@ -1,4 +1,4 @@
-# Copyright 2002-2020 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,8 +23,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
 
-if { ! [ runto_main ] } then {
-    untested "couldn't run to main"
+if {![runto_main]} {
     return -1
 }
 
@@ -82,21 +81,21 @@ gdb_test_sequence "where" "where in corefile" {
 }
 
 set post_corefile_regs [capture_command_output "info registers" ""]
-if ![string compare $pre_corefile_regs $post_corefile_regs] then {
+if {![string compare $pre_corefile_regs $post_corefile_regs]} {
     pass "corefile restored general registers"
 } else {
     fail "corefile restored general registers"
 }
 
 set post_corefile_allregs [capture_command_output "info all-reg" ""]
-if ![string compare $pre_corefile_allregs $post_corefile_allregs] then {
+if {![string compare $pre_corefile_allregs $post_corefile_allregs]} {
     pass "corefile restored all registers"
 } else {
     fail "corefile restored all registers"
 }
 
 set post_corefile_sysregs [capture_command_output "info reg system" ""]
-if ![string compare $pre_corefile_sysregs $post_corefile_sysregs] then {
+if {![string compare $pre_corefile_sysregs $post_corefile_sysregs]} {
     pass "corefile restored system registers"
 } else {
     fail "corefile restored system registers"

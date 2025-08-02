@@ -1,4 +1,4 @@
-#   Copyright 1997-2020 Free Software Foundation, Inc.
+#   Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,9 +26,7 @@ if  { [prepare_for_testing "failed to prepare" $testfile ${testfile}.c] } {
 }
 
 # Check target supports catch syscall or not.
-clean_restart $binfile
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return
 }
 
@@ -53,6 +51,9 @@ gdb_test_multiple "continue" $test {
       pass $test
     }
 }
+
+# Test-case for PR27313.  Verify that negative syscall numbers are refused.
+gdb_test "catch syscall -1" "Unknown syscall number '-1'\\."
 
 # All (but the last) syscalls from the example code.  It is filled in
 # proc setup_all_syscalls.
@@ -126,7 +127,28 @@ proc check_return_from_syscall { syscall { pattern "" } } {
     }
 
     set thistest "syscall $syscall has returned"
-    gdb_test "continue" "Catchpoint $decimal \\(returned from syscall ${pattern}\\).*" $thistest
+    if { $pattern eq "execve" } {
+	gdb_test_multiple "continue" $thistest {
+	    -re -wrap "Catchpoint $decimal \\(returned from syscall ${pattern}\\).*" {
+		pass $thistest
+		return 1
+	    }
+	    -re -wrap ".*Breakpoint $decimal, main .*" {
+		# On Powerpc the kernel does not report the returned from
+		# syscall as expected by the test.  GDB bugzilla 28623.
+		if { [istarget "powerpc64*-linux*"] } {
+		    xfail $thistest
+		} else {
+		    fail $thistest
+		}
+		return 0
+	    }
+	}
+
+    } else {
+	gdb_test "continue" "Catchpoint $decimal \\(returned from syscall ${pattern}\\).*" $thistest
+	return 1
+    }
 }
 
 # Internal procedure that performs two 'continue' commands and checks if
@@ -141,7 +163,7 @@ proc check_continue { syscall { pattern "" } } {
     # Testing if the inferior has called the syscall.
     check_call_to_syscall $syscall $pattern
     # And now, that the syscall has returned.
-    check_return_from_syscall $syscall $pattern
+    return [check_return_from_syscall $syscall $pattern]
 }
 
 # Inserts a syscall catchpoint with an argument.
@@ -347,11 +369,15 @@ proc test_catch_syscall_execve {} {
 	# Check for entry/return across the execve, making sure that the
 	# syscall_state isn't lost when turning into a new process.
 	insert_catch_syscall_with_arg "execve"
-	check_continue "execve"
+	if [check_continue "execve"] {
+	    # The check_continue test generates an XFAIL on Powerpc.  In
+	    # that case, gdb is already at main so don't do the continue.
 
-	# Continue to main so extended-remote can read files as needed.
-	# (Otherwise that "Reading" output confuses gdb_continue_to_end.)
-	gdb_continue "main"
+
+	    # Continue to main so extended-remote can read files as needed.
+	    # (Otherwise that "Reading" output confuses gdb_continue_to_end.)
+	    gdb_continue "main"
+	}
 
 	# Now can we finish?
 	check_for_program_end
@@ -438,40 +464,40 @@ proc do_syscall_tests {} {
 
     # Testing the 'catch syscall' command without arguments.
     # This test should catch any syscalls.
-    if [runto_main] then { test_catch_syscall_without_args }
+    if {[runto_main]} { test_catch_syscall_without_args }
 
     # Testing the 'catch syscall' command with arguments.
     # This test should only catch the specified syscall.
-    if [runto_main] then { test_catch_syscall_with_args }
+    if {[runto_main]} { test_catch_syscall_with_args }
 
     # Testing the 'catch syscall' command with many arguments.
     # This test should catch $all_syscalls.
-    if [runto_main] then { test_catch_syscall_with_many_args }
+    if {[runto_main]} { test_catch_syscall_with_many_args }
 
     # Testing the 'catch syscall' command with WRONG arguments.
     # This test should not trigger any catchpoints.
-    if [runto_main] then { test_catch_syscall_with_wrong_args }
+    if {[runto_main]} { test_catch_syscall_with_wrong_args }
 
     # Testing the 'catch syscall' command during a restart of
     # the inferior.
-    if [runto_main] then { test_catch_syscall_restarting_inferior }
+    if {[runto_main]} { test_catch_syscall_restarting_inferior }
 
     # Testing the 'catch syscall' command toggling off past a
     # syscall return, then resuming entry/return as normal.
-    if [runto_main] then { test_catch_syscall_skipping_return }
+    if {[runto_main]} { test_catch_syscall_skipping_return }
 
     # Testing the 'catch syscall' command starting mid-vfork.
-    if [runto_main] then { test_catch_syscall_mid_vfork }
+    if {[runto_main]} { test_catch_syscall_mid_vfork }
 
     # Testing that 'catch syscall' entry/return tracks across execve.
-    if [runto_main] then { test_catch_syscall_execve }
+    if {[runto_main]} { test_catch_syscall_execve }
 
     # Testing if the 'catch syscall' command works when switching to
     # different architectures on-the-fly (PR gdb/10737).
-    if [runto_main] then { test_catch_syscall_multi_arch }
+    if {[runto_main]} { test_catch_syscall_multi_arch }
 
     # Testing the 'catch' syscall command for a group of syscalls.
-    if [runto_main] then { test_catch_syscall_group }
+    if {[runto_main]} { test_catch_syscall_group }
 }
 
 proc test_catch_syscall_without_args_noxml {} {
@@ -539,58 +565,32 @@ proc test_catch_syscall_with_wrong_args_noxml {} {
     }
 }
 
-proc test_catch_syscall_multi_arch {} {
-    global decimal binfile
+proc test_catch_syscall_multi_arch_1 {
+  arch1 arch2 syscall1_name syscall2_name syscall_number
+} {
+    global decimal
 
-    if { [istarget "i*86-*-*"] || [istarget "x86_64-*-*"] } {
-	set arch1 "i386"
-	set arch2 "i386:x86-64"
-	set syscall1_name "exit"
-	set syscall2_name "write"
-	set syscall_number 1
-    } elseif { [istarget "powerpc-*-linux*"] \
-		   || [istarget "powerpc64-*-linux*"] } {
-	set arch1 "powerpc:common"
-	set arch2 "powerpc:common64"
-	set syscall1_name "openat"
-	set syscall2_name "unlinkat"
-	set syscall_number 286
-    } elseif { [istarget "sparc-*-linux*"] \
-		   || [istarget "sparc64-*-linux*"] } {
-	set arch1 "sparc"
-	set arch2 "sparc:v9"
-	set syscall1_name "setresuid32"
-	set syscall2_name "setresuid"
-	set syscall_number 108
-    } elseif { [istarget "mips*-linux*"] } {
-	# MIPS does not use the same numbers for syscalls on 32 and 64
-	# bits.
-	verbose "Not testing MIPS for multi-arch syscall support"
-	return
-    } elseif { [istarget "arm*-linux*"] } {
-	# catch syscall supports only 32-bit ARM for now.
-	verbose "Not testing ARM for multi-arch syscall support"
-	return
-    } elseif { [istarget "aarch64*-linux*"] } {
-	set arch1 "aarch64"
-	set arch2 "arm"
-	set syscall1_name "reboot"
-	set syscall2_name "_newselect"
-	set syscall_number 142
-    } elseif { [istarget "s390*-linux*"] } {
-	set arch1 "s390:31-bit"
-	set arch2 "s390:64-bit"
-	set syscall1_name "_newselect"
-	set syscall2_name "select"
-	set syscall_number 142
-    }
-
-    with_test_prefix "multiple targets" {
+    with_test_prefix "multiple targets: $arch1 vs $arch2" {
 	# We are not interested in loading any binary here, and in
 	# some systems (PowerPC, for example), if we load a binary
 	# there is no way to set other architecture.
 	gdb_exit
 	gdb_start
+
+	set supported 1
+	foreach arch [list $arch1 $arch2] {
+	    gdb_test_multiple "set architecture $arch" "" {
+		-re -wrap "Undefined item: \"$arch\"\\." {
+		    set supported 0
+		    unsupported $gdb_test_name
+		}
+		-re -wrap "The target architecture is set to \"$arch\"\\." {
+		}
+	    }
+	}
+	if { $supported == 0 } {
+	    return
+	}
 
 	gdb_test "set architecture $arch1" \
 	    "The target architecture is set to \"$arch1\"\\."
@@ -605,9 +605,53 @@ proc test_catch_syscall_multi_arch {} {
 	gdb_test "catch syscall $syscall_number" \
 	    "Catchpoint $decimal \\(syscall .${syscall2_name}. \\\[${syscall_number}\\\]\\)" \
 	    "insert catch syscall on syscall $syscall_number -- $syscall2_name on $arch2"
-
-	clean_restart $binfile
     }
+}
+
+proc test_catch_syscall_multi_arch {} {
+    global binfile
+
+    set arch1 "i386"
+    set arch2 "i386:x86-64"
+    set syscall1_name "exit"
+    set syscall2_name "write"
+    set syscall_number 1
+    test_catch_syscall_multi_arch_1 $arch1 $arch2 $syscall1_name \
+	$syscall2_name $syscall_number
+
+    set arch1 "powerpc:common"
+    set arch2 "powerpc:common64"
+    set syscall1_name "fstatat64"
+    set syscall2_name "newfstatat"
+    set syscall_number 291
+    test_catch_syscall_multi_arch_1 $arch1 $arch2 $syscall1_name \
+	$syscall2_name $syscall_number
+
+    set arch1 "sparc"
+    set arch2 "sparc:v9"
+    set syscall1_name "setresuid32"
+    set syscall2_name "setresuid"
+    set syscall_number 108
+    test_catch_syscall_multi_arch_1 $arch1 $arch2 $syscall1_name \
+	$syscall2_name $syscall_number
+
+    set arch1 "aarch64"
+    set arch2 "arm"
+    set syscall1_name "reboot"
+    set syscall2_name "_newselect"
+    set syscall_number 142
+    test_catch_syscall_multi_arch_1 $arch1 $arch2 $syscall1_name \
+	$syscall2_name $syscall_number
+
+    set arch1 "s390:31-bit"
+    set arch2 "s390:64-bit"
+    set syscall1_name "_newselect"
+    set syscall2_name "select"
+    set syscall_number 142
+    test_catch_syscall_multi_arch_1 $arch1 $arch2 $syscall1_name \
+	$syscall2_name $syscall_number
+
+    clean_restart $binfile
 }
 
 proc do_syscall_tests_without_xml {} {
@@ -618,16 +662,16 @@ proc do_syscall_tests_without_xml {} {
 
     # Let's test if we can catch syscalls without XML support.
     # We should succeed, but GDB is not supposed to print syscall names.
-    if [runto_main] then { test_catch_syscall_without_args_noxml }
+    if {[runto_main]} { test_catch_syscall_without_args_noxml }
 
     # The only valid argument "catch syscall" should accept is the
     # syscall number, and not the name (since it can't translate a
     # name to a number).
-    if [runto_main] then { test_catch_syscall_with_args_noxml }
+    if {[runto_main]} { test_catch_syscall_with_args_noxml }
 
     # Now, we'll try to provide a syscall name (valid or not) to the command,
     # and expect it to fail.
-    if [runto_main] then { test_catch_syscall_with_wrong_args_noxml }
+    if {[runto_main]} { test_catch_syscall_with_wrong_args_noxml }
 }
 
 # This procedure fills the vector "all_syscalls_numbers" with the proper
@@ -643,35 +687,94 @@ proc fill_all_syscalls_numbers {} {
     set unknown_syscall_number [get_integer_valueof "unknown_syscall" -1]
 }
 
-# Set up the vector all_syscalls.
+# Set up the vector all_syscalls.  Returns 1 upon success, 0 upon failure.
 
 proc setup_all_syscalls {} {
     global all_syscalls
     global gdb_prompt
+    global decimal
 
     # They are ordered according to the file, so do not change this.
     lappend all_syscalls "close"
     lappend all_syscalls "chroot"
 
+    if { ![runto_main] } {
+	return 0
+    }
+
     # SYS_pipe doesn't exist on aarch64 kernel.
     set test "check SYS_pipe"
+    set have_SYS_pipe 0
+    set SYS_pipe -1
     gdb_test_multiple "p pipe_syscall" $test {
-	-re " = .*$gdb_prompt $" {
+	-re -wrap " = ($decimal)" {
 	    pass $test
-	    lappend all_syscalls "pipe"
+	    set have_SYS_pipe 1
+	    set SYS_pipe $expect_out(1,string)
 	}
-	-re "No symbol .*$gdb_prompt $" {
+	-re -wrap "No symbol .*" {
 	    pass $test
-	    # SYS_pipe isn't defined, use SYS_pipe2 instead.
-	    lappend all_syscalls "pipe2"
+	}
+    }
+
+    set test "check SYS_pipe2"
+    set have_SYS_pipe2 0
+    set SYS_pipe2 -1
+    gdb_test_multiple "p pipe2_syscall" $test {
+	-re -wrap " = ($decimal)" {
+	    pass $test
+	    set have_SYS_pipe2 1
+	    set SYS_pipe2 $expect_out(1,string)
+	}
+	-re -wrap "No symbol .*" {
+	    pass $test
+	}
+    }
+
+    if { $have_SYS_pipe == 0 && $have_SYS_pipe2 == 0 } {
+	return 0
+    }
+
+    with_test_prefix "determine pipe syscall" {
+	set line [gdb_get_line_number "pipe (fd)"]
+	gdb_test "break $line"
+	gdb_continue_to_breakpoint "before pipe call"
+	if { $have_SYS_pipe } {
+	    gdb_test "catch syscall $SYS_pipe"
+	}
+	if { $have_SYS_pipe2 } {
+	    gdb_test "catch syscall $SYS_pipe2"
+	}
+	set ok 0
+	gdb_test_multiple "continue" "" {
+	    -re -wrap "Catchpoint $decimal \\(call to syscall (pipe|$SYS_pipe)\\).*" {
+		lappend all_syscalls pipe
+		pass $gdb_test_name
+		set ok 1
+	    }
+	    -re -wrap "Catchpoint $decimal \\(call to syscall (pipe2|$SYS_pipe)\\).*" {
+		lappend all_syscalls pipe2
+		pass $gdb_test_name
+		set ok 1
+	    }
+	    -re -wrap "" {
+		fail $gdb_test_name
+	    }
+	}
+	if { ! $ok } {
+	    return 0
 	}
     }
 
     lappend all_syscalls "write"
     lappend all_syscalls "read"
+
+    return 1
 }
 
-setup_all_syscalls
+if { ![setup_all_syscalls] } {
+    return -1
+}
 
 # Fill all the syscalls numbers before starting anything.
 fill_all_syscalls_numbers

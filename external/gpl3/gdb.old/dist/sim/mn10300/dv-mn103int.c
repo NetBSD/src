@@ -1,6 +1,6 @@
 /*  This file is part of the program GDB, the GNU debugger.
     
-    Copyright (C) 1998-2020 Free Software Foundation, Inc.
+    Copyright (C) 1998-2023 Free Software Foundation, Inc.
     Contributed by Cygnus Solutions.
     
     This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,8 @@
     
     */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "hw-main.h"
@@ -515,14 +517,14 @@ decode_group (struct hw *me,
   return &controller->group[gid];
 }
 
-static unsigned8
+static uint8_t
 read_icr (struct hw *me,
 	  struct mn103int *controller,
 	  unsigned_word base)
 {
   unsigned_word offset;
   struct mn103int_group *group = decode_group (me, controller, base, &offset);
-  unsigned8 val = 0;
+  uint8_t val = 0;
   switch (group->type)
     {
 
@@ -569,7 +571,7 @@ static void
 write_icr (struct hw *me,
 	   struct mn103int *controller,
 	   unsigned_word base,
-	   unsigned8 val)
+	   uint8_t val)
 {
   unsigned_word offset;
   struct mn103int_group *group = decode_group (me, controller, base, &offset);
@@ -630,12 +632,12 @@ write_icr (struct hw *me,
 
 /* Read the IAGR (Interrupt accepted group register) */
 
-static unsigned8
+static uint8_t
 read_iagr (struct hw *me,
 	   struct mn103int *controller,
 	   unsigned_word offset)
 {
-  unsigned8 val;
+  uint8_t val;
   switch (offset)
     {
     case 0:
@@ -685,13 +687,13 @@ external_group (struct mn103int *controller,
     }
 }
 
-static unsigned8
+static uint8_t
 read_extmd (struct hw *me,
 	    struct mn103int *controller,
 	    unsigned_word offset)
 {
   int gid;
-  unsigned8 val = 0;
+  uint8_t val = 0;
   struct mn103int_group *group = external_group (controller, offset);
   if (group != NULL)
     {
@@ -708,7 +710,7 @@ static void
 write_extmd (struct hw *me,
 	     struct mn103int *controller,
 	     unsigned_word offset,
-	     unsigned8 val)
+	     uint8_t val)
 {
   int gid;
   struct mn103int_group *group = external_group (controller, offset);
@@ -754,7 +756,7 @@ mn103int_io_read_buffer (struct hw *me,
 			 unsigned nr_bytes)
 {
   struct mn103int *controller = hw_data (me);
-  unsigned8 *buf = dest;
+  uint8_t *buf = dest;
   unsigned byte;
   /* HW_TRACE ((me, "read 0x%08lx %d", (long) base, (int) nr_bytes)); */
   for (byte = 0; byte < nr_bytes; byte++)
@@ -787,7 +789,7 @@ mn103int_io_write_buffer (struct hw *me,
 			  unsigned nr_bytes)
 {
   struct mn103int *controller = hw_data (me);
-  const unsigned8 *buf = source;
+  const uint8_t *buf = source;
   unsigned byte;
   /* HW_TRACE ((me, "write 0x%08lx %d", (long) base, (int) nr_bytes)); */
   for (byte = 0; byte < nr_bytes; byte++)

@@ -224,8 +224,8 @@ typedef struct _ide_drive {
 typedef struct _ide_controller {
   int nr;
   ide_states state;
-  unsigned8 reg[nr_ide_registers];
-  unsigned8 fifo[nr_fifo_entries];
+  uint8_t reg[nr_ide_registers];
+  uint8_t fifo[nr_fifo_entries];
   int fifo_pos;
   int fifo_size;
   ide_drive *current_drive;
@@ -235,7 +235,7 @@ typedef struct _ide_controller {
   device *me;
   event_entry_tag event_tag;
   int is_interrupting;
-  signed64 ready_delay;
+  int64_t ready_delay;
 } ide_controller;
 
 
@@ -488,7 +488,7 @@ do_command(device *me,
   }
 }
 
-static unsigned8
+static uint8_t
 get_status(device *me,
 	   ide_controller *controller)
 {
@@ -744,11 +744,11 @@ hw_ide_io_read_buffer(device *me,
     do_fifo_read(me, controller, dest, nr_bytes);
     break;
   case ide_status_reg:
-    *(unsigned8*)dest = get_status(me, controller);
+    *(uint8_t*)dest = get_status(me, controller);
     clear_interrupt(me, controller);
     break;
   case ide_alternate_status_reg:
-    *(unsigned8*)dest = get_status(me, controller);
+    *(uint8_t*)dest = get_status(me, controller);
     break;
   case ide_error_reg:
   case ide_sector_count_reg:
@@ -763,10 +763,10 @@ hw_ide_io_read_buffer(device *me,
   case ide_dma_prd_table_address_reg1:
   case ide_dma_prd_table_address_reg2:
   case ide_dma_prd_table_address_reg3:
-    *(unsigned8*)dest = controller->reg[reg];
+    *(uint8_t*)dest = controller->reg[reg];
     break;
   default:
-    device_error(me, "bus-error at address 0x%lx", addr);
+    device_error(me, "bus-error at address 0x%lx", (unsigned long)addr);
     break;
   }
   return nr_bytes;
@@ -797,10 +797,10 @@ hw_ide_io_write_buffer(device *me,
     do_fifo_write(me, controller, source, nr_bytes);
     break;
   case ide_command_reg:
-    do_command(me, controller, *(unsigned8*)source);
+    do_command(me, controller, *(uint8_t*)source);
     break;
   case ide_control_reg:
-    controller->reg[reg] = *(unsigned8*)source;
+    controller->reg[reg] = *(uint8_t*)source;
     /* possibly cancel interrupts */
     if ((controller->reg[reg] & 0x02) == 0x02)
       clear_interrupt(me, controller);
@@ -817,10 +817,10 @@ hw_ide_io_write_buffer(device *me,
   case ide_dma_prd_table_address_reg1:
   case ide_dma_prd_table_address_reg2:
   case ide_dma_prd_table_address_reg3:
-    controller->reg[reg] = *(unsigned8*)source;
+    controller->reg[reg] = *(uint8_t*)source;
     break;
   default:
-    device_error(me, "bus-error at 0x%lx", addr);
+    device_error(me, "bus-error at 0x%lx", (unsigned long)addr);
     break;
   }
   return nr_bytes;

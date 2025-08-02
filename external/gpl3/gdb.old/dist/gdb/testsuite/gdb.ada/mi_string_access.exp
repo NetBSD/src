@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,48 +19,44 @@ if { [skip_ada_tests] } { return -1 }
 
 standard_ada_testfile bar
 
-if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug]] != "" } {
-  return -1
-}
-
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    continue
+foreach_with_prefix scenario {all minimal} {
+    set flags [list debug additional_flags=-fgnat-encodings=$scenario]
+
+    if {[gdb_compile_ada "${srcfile}" "${binfile}-${scenario}" executable $flags] != ""} {
+	return -1
+    }
+
+    mi_clean_restart $binfile-$scenario
+
+    if {[mi_runto_main] < 0} {
+	return 0
+    }
+
+    set bp_location [gdb_get_line_number "STOP" ${testdir}/bar.adb]
+    mi_continue_to_line \
+	"bar.adb:$bp_location" \
+	"stop at start of main Ada procedure"
+
+    mi_gdb_test "-var-create var1 * Aos" \
+	"\\^done,name=\"var1\",numchild=\"2\",.*" \
+	"Create var1 varobj"
+
+    mi_gdb_test "-var-list-children 1 var1" \
+	"\\^done,numchild=\"2\",children=\\\[child={name=\"var1.1\",exp=\"1\",numchild=\"1\",value=\"$hex\",type=\"bar.string_access\",thread-id=\"$decimal\"},child={name=\"var1.2\",exp=\"2\",numchild=\"1\",value=\"$hex\",type=\"bar.string_access\",thread-id=\"$decimal\"}\\\],has_more=\"0\"" \
+	"list var1's children"
+
+    mi_gdb_test "-var-evaluate-expression var1" \
+	"\\^done,value=\"\\\[2\\\]\"" \
+	"Print var1"
+
+    mi_gdb_test "-var-evaluate-expression var1.1" \
+	"\\^done,value=\"$hex\"" \
+	"Print var1 first child"
+
+    mi_gdb_test "-var-evaluate-expression var1.2" \
+	"\\^done,value=\"$hex\"" \
+	"Print var1 second child"
 }
-
-mi_delete_breakpoints
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load ${binfile}
-
-if ![mi_run_to_main] then {
-   fail "cannot run to main, testcase aborted"
-   return 0
-}
-
-set bp_location [gdb_get_line_number "STOP" ${testdir}/bar.adb]
-mi_continue_to_line \
-    "bar.adb:$bp_location" \
-    "stop at start of main Ada procedure"
-
-mi_gdb_test "-var-create var1 * Aos" \
-    "\\^done,name=\"var1\",numchild=\"2\",.*" \
-    "Create var1 varobj"
-
-mi_gdb_test "-var-list-children 1 var1" \
-    "\\^done,numchild=\"2\",children=\\\[child={name=\"var1.1\",exp=\"1\",numchild=\"1\",value=\"$hex\",type=\"bar.string_access\",thread-id=\"$decimal\"},child={name=\"var1.2\",exp=\"2\",numchild=\"1\",value=\"$hex\",type=\"bar.string_access\",thread-id=\"$decimal\"}\\\],has_more=\"0\"" \
-    "list var1's children"
-
-mi_gdb_test "-var-evaluate-expression var1" \
-    "\\^done,value=\"\\\[2\\\]\"" \
-    "Print var1"
-
-mi_gdb_test "-var-evaluate-expression var1.1" \
-    "\\^done,value=\"$hex\"" \
-    "Print var1 first child"
-
-mi_gdb_test "-var-evaluate-expression var1.2" \
-    "\\^done,value=\"$hex\"" \
-    "Print var1 second child"

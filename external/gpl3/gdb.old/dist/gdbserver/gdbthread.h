@@ -1,5 +1,5 @@
 /* Multi-thread control defs for remote server for GDB.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,20 +29,29 @@ struct regcache;
 
 struct thread_info
 {
+  thread_info (ptid_t id, void *target_data)
+    : id (id), target_data (target_data)
+  {}
+
+  ~thread_info ()
+  {
+    free_register_cache (this->regcache_data);
+  }
+
   /* The id of this thread.  */
   ptid_t id;
 
   void *target_data;
-  struct regcache *regcache_data;
+  struct regcache *regcache_data = nullptr;
 
   /* The last resume GDB requested on this thread.  */
-  enum resume_kind last_resume_kind;
+  enum resume_kind last_resume_kind = resume_continue;
 
   /* The last wait status reported for this thread.  */
   struct target_waitstatus last_status;
 
   /* True if LAST_STATUS hasn't been reported to GDB yet.  */
-  int status_pending_p;
+  int status_pending_p = 0;
 
   /* Given `while-stepping', a thread may be collecting data for more
      than one tracepoint simultaneously.  E.g.:
@@ -67,10 +76,10 @@ struct thread_info
    tracepoint actions this thread is now collecting; NULL if empty.
    Each item in the list holds the current step of the while-stepping
    action.  */
-  struct wstep_state *while_stepping;
+  struct wstep_state *while_stepping = nullptr;
 
   /* Branch trace target information for this thread.  */
-  struct btrace_target_info *btrace;
+  struct btrace_target_info *btrace = nullptr;
 };
 
 extern std::list<thread_info *> all_threads;
@@ -223,5 +232,28 @@ lwpid_of (const thread_info *thread)
 {
   return thread->id.lwp ();
 }
+
+/* Switch the current thread.  */
+
+void switch_to_thread (thread_info *thread);
+
+/* Save/restore current thread.  */
+
+class scoped_restore_current_thread
+{
+public:
+  scoped_restore_current_thread ();
+  ~scoped_restore_current_thread ();
+
+  DISABLE_COPY_AND_ASSIGN (scoped_restore_current_thread);
+
+  /* Cancel restoring on scope exit.  */
+  void dont_restore () { m_dont_restore = true; }
+
+private:
+  bool m_dont_restore = false;
+  process_info *m_process;
+  thread_info *m_thread;
+};
 
 #endif /* GDBSERVER_GDBTHREAD_H */

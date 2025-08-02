@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2017-2020 Free Software Foundation, Inc.
+   Copyright 2017-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,7 +25,9 @@ test (void *arg)
 {
   /* Let's hope this is long enough for GDB to enable tracing and check that
      everything is working as expected.  */
-  sleep (10);
+  int unslept = 10;
+  while (unslept > 0)
+    unslept = sleep (unslept);
 
   return arg;
 }

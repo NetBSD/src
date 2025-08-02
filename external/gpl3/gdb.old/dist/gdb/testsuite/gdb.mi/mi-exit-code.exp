@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Free Software Foundation, Inc.
+# Copyright 1999-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,11 +16,6 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    continue
-}
-
 standard_testfile
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
@@ -31,6 +26,9 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debu
 proc test_list_thread_groups { } {
     global hex
     global decimal
+    global binfile
+
+    mi_clean_restart
 
     # Before any run, exit-code should not be present.
     mi_gdb_test \
@@ -38,8 +36,10 @@ proc test_list_thread_groups { } {
 	"122\\^done,groups=\\\[\{id=\"i1\",type=\"process\"\}\]" \
 	"-list-thread-groups before run shows no exit-code"
 
+    mi_clean_restart $binfile
+
     with_test_prefix "first run" {
-	mi_run_to_main
+	mi_runto_main
 
 	# During the run, exit-code should not be present.
 	mi_gdb_test \
@@ -59,7 +59,7 @@ proc test_list_thread_groups { } {
     }
 
     with_test_prefix "second run" {
-	mi_run_to_main
+	mi_runto_main
 
 	# Write the exit code we want in the global var
 	mi_gdb_test "set var exit_code = 8" ".*\\^done" "write exit code"

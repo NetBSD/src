@@ -30,7 +30,7 @@ int ival2 = -1;
 int ival3 = -1;
 int ival4 = -1;
 int ival5 = -1;
-char buf[30] = "testtesttesttesttesttesttestte";
+char buf[31] = "testtesttesttesttesttesttestte";
 struct foo
 {
   int val;
@@ -59,7 +59,7 @@ struct foo5
   struct { int x; } *p;
 };
 
-struct foo5 *nullptr;
+struct foo5 *null_ptr;
 
 void marker1 ()
 {

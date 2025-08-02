@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,28 +52,31 @@ global gdb_prompt
 # gdb_test expects it not to be there.
 set gdb_prompt "\[(\]Foo\[)\]"
 
-set GDBFLAGS [concat $tmp_gdbflags " -ex \"set editing on\""]
-prompt_gdb_start
-gdb_test "python x = len(p); print (gdb.execute(\"show prompt\", to_string = True))" \
-	 ".*prompt is \"$gdb_prompt \".*" \
-	 "show prompt gets the correct result"
-gdb_test "python print ('%d %d' % (x, len(p)))" "1 2" \
-	 "retrieving the prompt causes no extra prompt_hook calls"
-gdb_test "python print (\"'\" + str(p\[0\]) + \"'\")" "'$gdb_prompt_fail '" \
-	 "prompt_hook argument is default prompt."
-gdb_exit
+with_test_prefix "set editing on" {
+    set GDBFLAGS [concat $tmp_gdbflags " -ex \"set editing on\""]
+    prompt_gdb_start
+    gdb_test "python x = len(p); print (gdb.execute(\"show prompt\", to_string = True))" \
+	".*prompt is \"$gdb_prompt \".*" \
+	"show prompt gets the correct result"
+    gdb_test "python print ('%d %d' % (x, len(p)))" "1 2" \
+	"retrieving the prompt causes no extra prompt_hook calls"
+    gdb_test "python print (\"'\" + str(p\[0\]) + \"'\")" "'$gdb_prompt_fail '" \
+	"prompt_hook argument is default prompt."
+    gdb_exit
+}
 
-
-set GDBFLAGS [concat $tmp_gdbflags " -ex \"set editing off\""]
-prompt_gdb_start
-gdb_test "python x = len(p); print (gdb.execute(\"show prompt\", to_string = True))" \
-	 ".*prompt is \"$gdb_prompt \".*" \
-	 "show prompt gets the correct result 2"
-gdb_test "python print ('%d %d' % (x, len(p)))" "1 2" \
-	 "retrieving the prompt causes no extra prompt_hook calls 2"
-gdb_test "python print (\"'\" + str(p\[0\]) + \"'\")" "'$gdb_prompt_fail '" \
-	 "prompt_hook argument is default prompt. 2"
-gdb_exit
+with_test_prefix "set editing off" {
+    set GDBFLAGS [concat $tmp_gdbflags " -ex \"set editing off\""]
+    prompt_gdb_start
+    gdb_test "python x = len(p); print (gdb.execute(\"show prompt\", to_string = True))" \
+	".*prompt is \"$gdb_prompt \".*" \
+	"show prompt gets the correct result 2"
+    gdb_test "python print ('%d %d' % (x, len(p)))" "1 2" \
+	"retrieving the prompt causes no extra prompt_hook calls 2"
+    gdb_test "python print (\"'\" + str(p\[0\]) + \"'\")" "'$gdb_prompt_fail '" \
+	"prompt_hook argument is default prompt. 2"
+    gdb_exit
+}
 
 if {![can_spawn_for_attach]} {
     set GDBFLAGS $saved_gdbflags
@@ -89,15 +92,17 @@ set GDBFLAGS [concat $GDBFLAGS " -ex \"attach $testpid\""]
 set GDBFLAGS [concat $GDBFLAGS " -ex \"continue&\""]
 
 # sync_execution = 1 is_running = 1
-prompt_gdb_start
-gdb_test "python x = len(p); print (gdb.execute(\"show prompt\", to_string = True))" \
-	 ".*prompt is \"$gdb_prompt \".*" \
-	 "show prompt gets the correct result 3"
-gdb_test "python print ('%d %d' % (x, len(p)))" "1 2" \
-	 "retrieving the prompt causes no extra prompt_hook calls 3"
-gdb_test "python print (\"'\" + str(p\[0\]) + \"'\")" "'$gdb_prompt_fail '" \
-	 "prompt_hook argument is default prompt. 3"
-gdb_exit
+with_test_prefix "sync_execution = 1, is_running = 1" {
+    prompt_gdb_start
+    gdb_test "python x = len(p); print (gdb.execute(\"show prompt\", to_string = True))" \
+	".*prompt is \"$gdb_prompt \".*" \
+	"show prompt gets the correct result 3"
+    gdb_test "python print ('%d %d' % (x, len(p)))" "1 2" \
+	"retrieving the prompt causes no extra prompt_hook calls 3"
+    gdb_test "python print (\"'\" + str(p\[0\]) + \"'\")" "'$gdb_prompt_fail '" \
+	"prompt_hook argument is default prompt. 3"
+    gdb_exit
+}
 
 set GDBFLAGS [concat $tmp_gdbflags " -ex \"set pagination off\""]
 set GDBFLAGS [concat $GDBFLAGS " -ex \"set editing on\""]
@@ -105,15 +110,17 @@ set GDBFLAGS [concat $GDBFLAGS " -ex \"attach $testpid\""]
 set GDBFLAGS [concat $GDBFLAGS " -ex \"interrupt\""]
 
 # sync_execution = 1 is_running = 0
-prompt_gdb_start
-gdb_test "python x = len(p); print (gdb.execute(\"show prompt\", to_string = True))" \
-	 ".*prompt is \"$gdb_prompt \".*" \
-	 "show prompt gets the correct result 4"
-gdb_test "python print ('%d %d' % (x, len(p)))" "1 2" \
-	 "retrieving the prompt causes no extra prompt_hook calls 4"
-gdb_test "python print (\"'\" + str(p\[0\]) + \"'\")" "'$gdb_prompt_fail '" \
-	 "prompt_hook argument is default prompt. 4"
-gdb_exit
+with_test_prefix "sync_execution = 1, is_running = 0" {
+    prompt_gdb_start
+    gdb_test "python x = len(p); print (gdb.execute(\"show prompt\", to_string = True))" \
+	".*prompt is \"$gdb_prompt \".*" \
+	"show prompt gets the correct result 4"
+    gdb_test "python print ('%d %d' % (x, len(p)))" "1 2" \
+	"retrieving the prompt causes no extra prompt_hook calls 4"
+    gdb_test "python print (\"'\" + str(p\[0\]) + \"'\")" "'$gdb_prompt_fail '" \
+	"prompt_hook argument is default prompt. 4"
+    gdb_exit
+}
 
 set GDBFLAGS $saved_gdbflags
 kill_wait_spawned_process $test_spawn_id

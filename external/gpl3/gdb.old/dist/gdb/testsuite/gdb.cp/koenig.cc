@@ -305,6 +305,8 @@ main ()
   TTOA ttoa;
   foo (ttoa, 'a');
 
+  p_union = {0};
+
   P::Q q;
   q == 5;
   q == 5.0f;

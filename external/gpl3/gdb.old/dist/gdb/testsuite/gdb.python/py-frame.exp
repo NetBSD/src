@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2020 Free Software Foundation, Inc.
+# Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,8 +29,7 @@ if { [skip_python_tests] } { continue }
 
 # The following tests require execution.
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -70,6 +69,17 @@ gdb_test "up" ".*" ""
 
 gdb_py_test_silent_cmd "python f1 = gdb.selected_frame ()" "get second frame" 0
 gdb_py_test_silent_cmd "python f0 = f1.newer ()" "get first frame" 0
+gdb_py_test_silent_cmd "python f2 = f1.older ()" "get last frame" 0
+
+# Check the Frame.level method.
+gdb_test "python print ('bframe.level = %d' % bframe.level ())" \
+    "bframe\\.level = 0"
+gdb_test "python print ('f0.level = %d' % f0.level ())" \
+    "f0\\.level = 0"
+gdb_test "python print ('f1.level = %d' % f1.level ())" \
+    "f1\\.level = 1"
+gdb_test "python print ('f2.level = %d' % f2.level ())" \
+    "f2\\.level = 2"
 
 gdb_test "python print (f1 == gdb.newest_frame())" False \
     "selected frame -vs- newest frame"
@@ -83,7 +93,8 @@ gdb_test "python print ('result = %s' % (f0 != f0))" " = False" "test inequality
 gdb_test "python print ('result = %s' % f0.is_valid ())" " = True" "test Frame.is_valid"
 gdb_test "python print ('result = %s' % f0.name ())" " = f2" "test Frame.name"
 gdb_test "python print ('result = %s' % (f0.type () == gdb.NORMAL_FRAME))" " = True" "test Frame.type"
-gdb_test "python print ('result = %s' % (f0.unwind_stop_reason () == gdb.FRAME_UNWIND_NO_REASON))" " = True" "test Frame.type"
+gdb_test "python print ('result = %s' % (f0.unwind_stop_reason () == gdb.FRAME_UNWIND_NO_REASON))" \
+    " = True" "test Frame.unwind_stop_reason"
 gdb_test "python print ('result = %s' % gdb.frame_stop_reason_string (gdb.FRAME_UNWIND_INNER_ID))" " = previous frame inner to this frame \\(corrupt stack\\?\\)" "test gdb.frame_stop_reason_string"
 gdb_test "python print ('result = %s' % f0.pc ())" " = \[0-9\]+" "test Frame.pc"
 gdb_test "python print ('result = %s' % (f0.older () == f1))" " = True" "test Frame.older"
@@ -117,3 +128,15 @@ if { $pc != "" } {
 	" = True" \
 	"test Frame.read_register($pc)"
 }
+
+# Test language.
+gdb_test "python print(gdb.selected_frame().language())" "c"
+gdb_test "set language ada"
+gdb_test "python print(gdb.selected_frame().language())" "c" \
+    "frame language is not affected by global language"
+
+# This previously caused a crash -- the implementation was missing the
+# case where a register had an unexpected type.
+gdb_test "python print(gdb.selected_frame().read_register(list()))" \
+    ".*Invalid type for register.*" \
+    "test Frame.read_register with list"

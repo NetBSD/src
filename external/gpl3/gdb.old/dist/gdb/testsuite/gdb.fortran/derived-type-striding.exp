@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,16 +22,15 @@ standard_testfile ".f90"
 
 # Unfortunately recent versions of GCC broke the stride information in
 # the DEBUG so tests in this file will fail.
-set gcc_with_broken_stride [test_compiler_info {gcc-[89]-*}]
+set gcc_with_broken_stride [test_compiler_info {gfortran-[89]-*} f90]
 
 if {[prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} \
 	 {debug f90}]} {
     return -1
 }
 
-if {![runto [gdb_get_line_number "post_init"]]} then {
-    perror "couldn't run to breakpoint post_init"
-    continue
+if {![runto [gdb_get_line_number "post_init"]]} {
+    return
 }
 
 # Test homogeneous derived type.

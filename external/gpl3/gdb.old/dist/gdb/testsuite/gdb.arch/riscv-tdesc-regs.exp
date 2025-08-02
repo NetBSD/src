@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,6 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
 }
 
 if { ![runto_main] } {
-    untested "failed to runto main"
     return -1
 }
 
@@ -76,11 +75,32 @@ gdb_test_no_output "set tdesc filename $remote_file" \
 # Check that an alias for an unknown CSR will give a suitable error.
 gdb_test "info registers \$csr0" "Invalid register `csr0'"
 
-# Check we can access the dscratch register using either of its names.
-gdb_test "info registers \$dscratch0" "dscratch0\[ \t\]+.*"
-gdb_test "info registers \$dscratch" "dscratch\[ \t\]+.*"
+# Return the number of times REGISTER should appear in GROUP, this
+# will either be 0 or 1.
+proc get_expected_result { register group } {
 
-foreach rgroup {x_all all save restore} {
+    # Everything should appear once in the 'all' group.
+    if { $group == "all" || $group == "x_all" } {
+	return 1
+    }
+
+    if { $group == "save" || $group == "restore" } {
+	# Everything is in the save/restore groups except these two.
+	if { $register == "unknown_csr" || $register == "dscratch" } {
+	    return 0
+	}
+	return 1
+    }
+
+    if { $group == "system" || $group == "csr" } {
+	# All the registers we check should be in these groups.
+	return 1
+    }
+
+    return 0
+}
+
+foreach rgroup {x_all all save restore general system csr} {
     # Now use 'info registers all' to see how many times the floating
     # point status registers show up in the output.
     array set reg_counts {}
@@ -110,14 +130,46 @@ foreach rgroup {x_all all save restore} {
 	} else {
 	    set count 0
 	}
-	if {($reg == "unknown_csr" || $reg == "dscratch") \
-		&& $rgroup != "all" && $rgroup != "x_all"} {
-	    gdb_assert {$count == 0} \
-		"register $reg not seen in reggroup $rgroup"
-	} else {
-	    gdb_assert {$count == 1} \
-		"register $reg seen once in reggroup $rgroup"
-	}
+
+	set expected_count [ get_expected_result $reg $rgroup ]
+	gdb_assert {$count == $expected_count} \
+	    "register $reg seen in reggroup $rgroup $expected_count times"
     }
     array unset reg_counts
+}
+
+# Next load a target description that contains fcsr, but not fflags or
+# frm.  Then check that GDB provides an fflags and frm registers using
+# the pseudo-register mechanism.
+if { $xlen == 4 } {
+    set xml_tdesc "riscv-tdesc-fcsr-32.xml"
+} else {
+    set xml_tdesc "riscv-tdesc-fcsr-64.xml"
+}
+set xml_tdesc "${srcdir}/${subdir}/${xml_tdesc}"
+
+# Maybe copy the target over if we're remote testing.
+if {[is_remote host]} {
+    set remote_file [remote_download host $xml_tdesc]
+} else {
+    set remote_file $xml_tdesc
+}
+
+gdb_test_no_output "set tdesc filename $remote_file" \
+    "load the target description that lacks fflags and frm"
+
+foreach reg {fflags frm} {
+    gdb_test_multiple "info registers $reg" "" {
+	-re "^info registers $reg\r\n" {
+	    exp_continue
+	}
+
+	-wrap -re "^Invalid register `$reg`" {
+	    fail $gdb_test_name
+	}
+
+	-wrap -re "^$reg\\s+\[^\r\n\]+" {
+	    pass $gdb_test_name
+	}
+    }
 }

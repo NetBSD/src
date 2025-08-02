@@ -1,6 +1,6 @@
 /* TUI data manipulation routines.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -96,7 +96,13 @@ public:
   /* Return true if this window is visible.  */
   bool is_visible () const
   {
-    return handle != nullptr;
+    return handle != nullptr && tui_active;
+  }
+
+  /* Return true if this window can accept the focus.  */
+  virtual bool can_focus () const
+  {
+    return true;
   }
 
   /* Disable output until the next call to doupdate.  */
@@ -129,6 +135,13 @@ public:
   virtual bool can_scroll () const
   {
     return true;
+  }
+
+  /* Called for each mouse click inside this window.  Coordinates MOUSE_X
+     and MOUSE_Y are 0-based relative to the window, and MOUSE_BUTTON can
+     be 1 (left), 2 (middle), or 3 (right).  */
+  virtual void click (int mouse_x, int mouse_y, int mouse_button)
+  {
   }
 
   void check_and_display_highlight_if_needed ();
@@ -174,6 +187,7 @@ extern struct tui_win_info *tui_win_list[MAX_MAJOR_WINDOWS];
 #define TUI_DISASM_WIN	((tui_disasm_window *) tui_win_list[DISASSEM_WIN])
 #define TUI_DATA_WIN    ((tui_data_window *) tui_win_list[DATA_WIN])
 #define TUI_CMD_WIN     ((tui_cmd_window *) tui_win_list[CMD_WIN])
+#define TUI_STATUS_WIN  ((tui_locator_window *) tui_win_list[STATUS_WIN])
 
 /* All the windows that are currently instantiated, in layout
    order.  */
@@ -191,7 +205,6 @@ extern int tui_term_height (void);
 extern void tui_set_term_height_to (int);
 extern int tui_term_width (void);
 extern void tui_set_term_width_to (int);
-extern struct tui_locator_window *tui_locator_win_info_ptr (void);
 extern struct tui_win_info *tui_win_with_focus (void);
 extern bool tui_win_resized ();
 extern void tui_set_win_resized_to (bool);

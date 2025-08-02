@@ -1,5 +1,5 @@
 /* ia64.h -- Header file for ia64 opcode table
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-typedef BFD_HOST_U_64_BIT ia64_insn;
+typedef uint64_t ia64_insn;
 
 enum ia64_insn_type
   {

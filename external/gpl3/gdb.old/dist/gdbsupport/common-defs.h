@@ -1,6 +1,6 @@
 /* Common definitions.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -70,7 +70,9 @@
 
 /* We don't support Windows versions before XP, so we define
    _WIN32_WINNT correspondingly to ensure the Windows API headers
-   expose the required symbols.  */
+   expose the required symbols.
+
+   NOTE: this must be kept in sync with common.m4.  */
 #if defined (__MINGW32__) || defined (__CYGWIN__)
 # ifdef _WIN32_WINNT
 #  if _WIN32_WINNT < 0x0501
@@ -105,10 +107,10 @@
 /* This is defined by ansidecl.h, but we prefer gnulib's version.  On
    MinGW, gnulib might enable __USE_MINGW_ANSI_STDIO, which may or not
    require use of attribute gnu_printf instead of printf.  gnulib
-   checks that at configure time.  Since _GL_ATTRIBUTE_FORMAT_PRINTF
+   checks that at configure time.  Since _GL_ATTRIBUTE_FORMAT_PRINTF_STANDARD
    is compatible with ATTRIBUTE_PRINTF, simply use it.  */
 #undef ATTRIBUTE_PRINTF
-#define ATTRIBUTE_PRINTF _GL_ATTRIBUTE_FORMAT_PRINTF
+#define ATTRIBUTE_PRINTF _GL_ATTRIBUTE_FORMAT_PRINTF_STANDARD
 
 /* This is defined by ansidecl.h, but we disable the attribute.
 
@@ -191,6 +193,12 @@
 #define ATTRIBUTE_UNUSED_RESULT
 #endif
 
+#if (GCC_VERSION > 4000)
+#define ATTRIBUTE_USED __attribute__ ((__used__))
+#else
+#define ATTRIBUTE_USED
+#endif
+
 #include "libiberty.h"
 #include "pathmax.h"
 #include "gdb/signals.h"
@@ -212,9 +220,6 @@
 
 /* Pull in gdb::unique_xmalloc_ptr.  */
 #include "gdbsupport/gdb_unique_ptr.h"
-
-/* String containing the current directory (what getwd would return).  */
-extern char *current_directory;
 
 /* sbrk on macOS is not useful for our purposes, since sbrk(0) always
    returns the same value.  brk/sbrk on macOS is just an emulation

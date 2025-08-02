@@ -1,6 +1,6 @@
 /* cpu.h --- declarations for the RL78 core.
 
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2023 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of the GNU simulators.
@@ -39,7 +39,7 @@ extern int rl78_in_gdb;
 SI get_reg (RL78_Register);
 SI set_reg (RL78_Register, SI);
 
-SI pc;
+extern SI pc;
 
 
 extern const char * const reg_names[];

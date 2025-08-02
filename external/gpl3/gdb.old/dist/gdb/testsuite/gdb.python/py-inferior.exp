@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2020 Free Software Foundation, Inc.
+# Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,8 +37,7 @@ switch [get_endianness] {
 
 # The following tests require execution.
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -51,6 +50,9 @@ gdb_py_test_silent_cmd "python i0 = inferiors\[0\]" "get first inferior" 0
 
 gdb_test "python print ('result = %s' % (i0 == inferiors\[0\]))" " = True" "test equality comparison (true)"
 gdb_test "python print ('result = %s' % i0.num)" " = \[0-9\]+" "test Inferior.num"
+gdb_test "python print ('result = %s' % i0.connection_num)" " = \[0-9\]+" "test Inferior.connection_num"
+gdb_test "python print ('result = %s' % (i0.connection_num == i0.connection.num))" " = True" \
+    "Inferior.connection_num equals Inferior.connection.num"
 gdb_test "python print ('result = %s' % i0.pid)" " = \[0-9\]+" "test Inferior.pid"
 gdb_test "python print ('result = %s' % i0.was_attached)" " = False" "test Inferior.was_attached"
 gdb_test "python print (i0.threads ())" "\\(<gdb.InferiorThread object at 0x\[\[:xdigit:\]\]+>,\\)" "test Inferior.threads"
@@ -75,11 +77,7 @@ gdb_py_test_silent_cmd "python addr = gdb.selected_frame ().read_var ('str')" \
   "read str address" 0
 gdb_py_test_silent_cmd "python str = gdb.inferiors()\[0\].read_memory (addr, 5); print(str)" \
   "read str contents" 1
-if { $gdb_py_is_py3k == 0 } {
-  gdb_py_test_silent_cmd "python a = 'a'" "" 0
-} else {
-  gdb_py_test_silent_cmd "python a = bytes('a', 'ascii')" "" 0
-}
+gdb_py_test_silent_cmd "python a = bytes('a', 'ascii')" "" 0
 gdb_py_test_silent_cmd "python str\[1\] = a" "change str" 0
 gdb_py_test_silent_cmd "python gdb.inferiors()\[0\].write_memory (addr, str)" \
   "write str" 1
@@ -218,6 +216,7 @@ with_test_prefix "is_valid" {
     gdb_test "python print (inf_list\[0\].is_valid())" "True" \
 	"check inferior validity 1"
 
+    # The "dummy" line below used to cause a gdb crash.
     gdb_test_multiline "install new inferior event handler" \
 	"python" "" \
 	"my_inferior_count = 1" "" \
@@ -225,6 +224,7 @@ with_test_prefix "is_valid" {
 	"  global my_inferior_count" "" \
 	"  if evt.inferior is not None:" "" \
 	"    my_inferior_count = my_inferior_count + 1" "" \
+	"    dummy = gdb.Value(True)" "" \
 	"gdb.events.new_inferior.connect(new_inf_handler)" "" \
 	"end" ""
     gdb_test_multiline "install inferior deleted event handler" \
@@ -262,6 +262,10 @@ with_test_prefix "is_valid" {
     # correctly.
     gdb_test "python print (inf_list\[1\].num)" \
 	"RuntimeError: Inferior no longer exists.*"
+    gdb_test "python print (inf_list\[1\].connection_num)" \
+	"RuntimeError: Inferior no longer exists.*"
+    gdb_test "python print (inf_list\[1\].connection)" \
+	"RuntimeError: Inferior no longer exists.*"
     gdb_test "python print (inf_list\[1\].pid)" \
 	"RuntimeError: Inferior no longer exists.*"
     gdb_test "python print (inf_list\[1\].was_attached)" \
@@ -278,10 +282,42 @@ with_test_prefix "is_valid" {
 with_test_prefix "selected_inferior" {
     gdb_test "inferior 1" ".*" "switch to first inferior"
     gdb_test "py print (gdb.selected_inferior().num)" "1" "first inferior selected"
+    gdb_test "py print (gdb.selected_inferior().connection_num)" "1" \
+	"first inferior's connection number"
+    gdb_test "py print (gdb.selected_inferior().connection.num)" "1" \
+	"first inferior's connection number, though connection object"
+    # Figure out if inf 1 has a native target.
+    set inf_1_is_native [gdb_is_target_native]
 
-    gdb_test "add-inferior" "Added inferior 3 on connection .*" "create new inferior"
+    gdb_test "add-inferior -no-connection" "Added inferior 3" "create new inferior"
     gdb_test "inferior 3" ".*" "switch to third inferior"
     gdb_test "py print (gdb.selected_inferior().num)" "3" "third inferior selected"
+    gdb_test "py print (gdb.selected_inferior().connection_num)" "None" \
+	"third inferior's None connection number"
+    gdb_test "py print (gdb.selected_inferior().connection)" "None" \
+	"third inferior's None connection"
+    gdb_test "target native" "Done.  Use the \"run\" command to start a process." \
+	"target for the third inferior"
+
+    # If inf 1 has a native target, inf 3's target is shared with 1's.
+    # Otherwise, it must have created a new target with a new number.
+    if {$inf_1_is_native} {
+	set expected_connection_num 1
+    } else {
+	set expected_connection_num 2
+    }
+    gdb_test "py print (gdb.selected_inferior().connection_num)" \
+	"$expected_connection_num" \
+	"third inferior's native connection number"
+    gdb_test "py print (gdb.selected_inferior().connection.num)" \
+	"$expected_connection_num" \
+	"third inferior's native connection number, though connection object"
+
+    # Test printing of gdb.TargetConnection object.
+    gdb_test "py print (gdb.selected_inferior().connection)" \
+	"<gdb.TargetConnection num=${expected_connection_num}, what=\"\[^\"\]+\">" \
+	"print a connection object"
+
     gdb_test "inferior 1" ".*" "switch back to first inferior"
     gdb_test_no_output "remove-inferiors 3" "remove second inferior"
 }

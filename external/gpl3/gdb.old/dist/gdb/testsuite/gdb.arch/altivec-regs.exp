@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2020 Free Software Foundation, Inc.
+# Copyright (C) 2002-2023 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 #
 
 
-if {![istarget "powerpc*"] || [skip_altivec_tests]} then {
+if {![istarget "powerpc*"] || [skip_altivec_tests]} {
     verbose "Skipping altivec register tests."
     return
 }
@@ -30,11 +30,6 @@ if {![istarget "powerpc*"] || [skip_altivec_tests]} then {
 standard_testfile
 
 set compile_flags {debug nowarnings}
-if [get_compiler_info] {
-    warning "get_compiler failed"
-    return -1
-}
-
 if [test_compiler_info gcc*] {
     set compile_flags "$compile_flags additional_flags=-maltivec additional_flags=-mabi=altivec"
 } elseif [test_compiler_info xlc*] {
@@ -57,8 +52,7 @@ gdb_load ${binfile}
 # Run to `main' where we begin our tests.
 #
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 
@@ -85,9 +79,9 @@ set endianness [get_endianness]
 # b) the register read (below) also works.
 
 if {$endianness == "big"} {
-set vector_register ".uint128 = 0x1000000010000000100000001, v4_float = .0x0, 0x0, 0x0, 0x0., v4_int32 = .0x1, 0x1, 0x1, 0x1., v8_int16 = .0x0, 0x1, 0x0, 0x1, 0x0, 0x1, 0x0, 0x1., v16_int8 = .0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1.."
+set vector_register ".uint128 = 0x1000000010000000100000001, v4_float = .0x1, 0x1, 0x1, 0x1., v4_int32 = .0x1, 0x1, 0x1, 0x1., v8_int16 = .0x0, 0x1, 0x0, 0x1, 0x0, 0x1, 0x0, 0x1., v16_int8 = .0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1.."
 } else {
-set vector_register ".uint128 = 0x1000000010000000100000001, v4_float = .0x0, 0x0, 0x0, 0x0., v4_int32 = .0x1, 0x1, 0x1, 0x1., v8_int16 = .0x1, 0x0, 0x1, 0x0, 0x1, 0x0, 0x1, 0x0., v16_int8 = .0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0.."
+set vector_register ".uint128 = 0x1000000010000000100000001, v4_float = .0x1, 0x1, 0x1, 0x1., v4_int32 = .0x1, 0x1, 0x1, 0x1., v8_int16 = .0x1, 0x0, 0x1, 0x0, 0x1, 0x0, 0x1, 0x0., v16_int8 = .0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0.."
 }
 
 for {set i 0} {$i < 32} {incr i 1} {
@@ -105,9 +99,9 @@ gdb_test "info reg vscr" "vscr.*0x1\[ \t\]+1" "info reg vscr"
 # the way gdb works.
 
 if {$endianness == "big"} {
-     set decimal_vector ".uint128 = 79228162532711081671548469249, v4_float = .1.*e-45, 1.*e-45, 1.*e-45, 1.*e-45., v4_int32 = .1, 1, 1, 1., v8_int16 = .0, 1, 0, 1, 0, 1, 0, 1., v16_int8 = .0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1.."
+    set decimal_vector ".uint128 = 79228162532711081671548469249, v4_float = .1.*e-45, 1.*e-45, 1.*e-45, 1.*e-45., v4_int32 = .1, 1, 1, 1., v8_int16 = .0, 1, 0, 1, 0, 1, 0, 1., v16_int8 = .0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1.."
 } else {
-     set decimal_vector ".uint128 = 79228162532711081671548469249, v4_float = .1.*e-45, 1.*e-45, 1.*e-45, 1.*e-45., v4_int32 = .1, 1, 1, 1., v8_int16 = .1, 0, 1, 0, 1, 0, 1, 0., v16_int8 = .1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.."
+    set decimal_vector ".uint128 = 79228162532711081671548469249, v4_float = .1.*e-45, 1.*e-45, 1.*e-45, 1.*e-45., v4_int32 = .1, 1, 1, 1., v8_int16 = .1, 0, 1, 0, 1, 0, 1, 0., v16_int8 = .1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.."
 }
 
 for {set i 0} {$i < 32} {incr i 1} {

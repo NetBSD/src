@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,8 +33,17 @@ if { [is_remote target] } {
     return 0
 }
 
-if { [prepare_for_testing "failed to prepare" $testfile $srcfile debug] } {
-    return -1
+save_vars { GDBFLAGS } {
+    # If GDB and GDBserver are both running locally, set the sysroot to avoid
+    # reading files via the remote protocol (the `is_remote target` check is
+    # already done above).
+    if { ![is_remote host] } {
+	set GDBFLAGS "$GDBFLAGS -ex \"set sysroot\""
+    }
+
+    if { [prepare_for_testing "failed to prepare" $testfile $srcfile debug] } {
+	return -1
+    }
 }
 
 # Make sure we're disconnected, in case we're testing with an

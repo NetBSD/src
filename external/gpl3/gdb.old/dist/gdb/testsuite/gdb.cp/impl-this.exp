@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,13 +18,15 @@
 # Test expressions which assume an implicit "this" with a qualified
 # name.
 
-if {[skip_cplus_tests]} { continue }
+if {[skip_cplus_tests]} { return }
 
 standard_testfile .cc
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
+
+set gcc_used [test_compiler_info gcc-*-*]
 
 # First test expressions when there is no context.
 with_test_prefix "before run" {
@@ -50,8 +52,7 @@ with_test_prefix "before run" {
 
 # Run to D::f.
 if {![runto_main]} {
-    perror "couldn't run to main"
-    continue
+    return
 }
 
 gdb_breakpoint "D::f"
@@ -63,15 +64,23 @@ with_test_prefix "at D::f (valid expressions)" {
     gdb_test "print D::i" "= 4"
     gdb_test "print D::B<int>::i" "= 2"
     gdb_test "print B<int>::i" "= 2"
-    gdb_test "print D::Bint::i" \
-	"No type \"Bint\" within class or namespace \"D\"."
+
+    if {$gcc_used} {
+	setup_xfail *-*-* gcc/60833
+    }
+    gdb_test "print D::Bint::i" "= 2"
+
     gdb_test "print Bint::i" "= 2"
     gdb_test "print D::C::i" "= 3"
     gdb_test "print C::i" "= 3"
     gdb_test "print D::B<int>::A<int>::i" "= 1"
     gdb_test "print B<int>::A<int>::i" "= 1"
-    gdb_test "print D::Bint::A<int>::i" \
-	"No type \"Bint\" within class or namespace \"D\"."
+
+    if {$gcc_used} {
+	setup_xfail *-*-* gcc/60833
+    }
+    gdb_test "print D::Bint::A<int>::i" "= 1"
+
     gdb_test "print Bint::A<int>::i" "= 1"
     gdb_test "print A<int>::i" "= 1"
     gdb_test "print D::C::A<int>::i" "= 1"
@@ -88,11 +97,16 @@ with_test_prefix "at D::f (valid expressions)" {
 with_test_prefix "at D::f (invalid expressions)" {
     gdb_test "print D::B<int>::c" "There is no field named c"
     gdb_test "print D::B<int>::A<int>::c" "There is no field named c"
-    gdb_test "print D::Bint::c" \
-	"No type \"Bint\" within class or namespace \"D\"."
 
-    gdb_test "print D::Bint::A<int>::c" \
-	"No type \"Bint\" within class or namespace \"D\"."
+    if {$gcc_used} {
+	setup_xfail *-*-* gcc/60833
+    }
+    gdb_test "print D::Bint::c" "There is no field named c"
+    if {$gcc_used} {
+	setup_xfail *-*-* gcc/60833
+    }
+    gdb_test "print D::Bint::A<int>::c" "There is no field named c"
+
     gdb_test "print D::C::A<int>::c" "There is no field named c"
     gdb_test "print B<int>::c" "There is no field named c"
     gdb_test "print B<int>::A<int>::c" "There is no field named c"
@@ -101,10 +115,16 @@ with_test_prefix "at D::f (invalid expressions)" {
     gdb_test "print C::A<int>::c" "There is no field named c"
     gdb_test "print D::B<int>::x" "There is no field named x"
     gdb_test "print D::B<int>::A<int>::x" "There is no field named x"
-    gdb_test "print D::Bint::x" \
-	"No type \"Bint\" within class or namespace \"D\"."
-    gdb_test "print D::Bint::A<int>::x" \
-	"No type \"Bint\" within class or namespace \"D\"."
+
+    if {$gcc_used} {
+	setup_xfail *-*-* gcc/60833
+    }
+    gdb_test "print D::Bint::x" "There is no field named x"
+    if {$gcc_used} {
+	setup_xfail *-*-* gcc/60833
+    }
+    gdb_test "print D::Bint::A<int>::x" "There is no field named x"
+
     gdb_test "print B<int>::x" "There is no field named x"
     gdb_test "print B<int>::A<int>::x" "There is no field named x"
     gdb_test "print Bint::x" "There is no field named x"

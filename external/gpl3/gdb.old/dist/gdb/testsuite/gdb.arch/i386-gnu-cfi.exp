@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 # Test i386 unwinder.
 
 
-if { ![is_x86_like_target] } then {
+if {![is_x86_like_target]} {
     verbose "Skipping i386 unwinder tests."
     return
 }
@@ -58,23 +58,35 @@ gdb_test_multiple {} "continue to abort()" {
     }
 }
 
-# Backtrace would crash before.
-
-gdb_test "bt" \
-         "main \\(\\) at .*${testfile}.c.*" \
-         "backtrace"
+# Verify that the backtrace works (it would crash before).  Use the backtrace
+# output to find the frame number for function "gate".
+set gate_n ""
+set backtrace_re \
+    [multi_line \
+	 "" \
+	 "#($decimal) *$hex in gate \[^\r\n\]*" \
+	 "#$decimal *$hex in main \\(\\) at .*${testfile}.c.*"]
+gdb_test_multiple "backtrace" "" {
+    -re -wrap $backtrace_re {
+	set gate_n $expect_out(1,string)
+	pass $gdb_test_name
+    }
+}
+if { $gate_n == "" } {
+    return -1
+}
 
 # Check we see the inserted `DW_CFA_GNU_negative_offset_extended' CFI.
 # We see there the original CFI-stored filename `gate.c'.
 
-gdb_test "up 3" \
+gdb_test "frame $gate_n" \
          "gate \\(\[^()\]*\\) at .*gate.c.*" \
          "shift up to the modified frame"
 
 gdb_test_multiple "info frame" "existence of the CFI inserted register" {
-    -re "Stack level 3, frame at (0x\[0-9a-f\]+):.*Saved registers:.* ecx at (0x\[0-9a-f\]+),.*" {
+    -re "Stack level $gate_n, frame at (0x\[0-9a-f\]+):.*Saved registers:.* ecx at (0x\[0-9a-f\]+),.*" {
 	pass "existence of the CFI inserted register"
-	if { [string compare $expect_out(1,string) $expect_out(2,string)] } then {
+	if {[string compare $expect_out(1,string) $expect_out(2,string)]} {
 	    fail "value of the CFI inserted register"
 	} else {
 	    pass "value of the CFI inserted register"

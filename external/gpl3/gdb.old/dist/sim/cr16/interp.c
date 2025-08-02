@@ -1,5 +1,5 @@
 /* Simulation code for the CR16 processor.
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
    Contributed by M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
 
    This file is part of GDB, the GNU debugger.
@@ -17,37 +17,44 @@
    You should have received a copy of the GNU General Public License 
    along with this program. If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <inttypes.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bfd.h"
-#include "gdb/callback.h"
-#include "gdb/remote-sim.h"
+#include "sim/callback.h"
+#include "sim/sim.h"
 
 #include "sim-main.h"
 #include "sim-options.h"
+#include "sim-signal.h"
 
 #include "gdb/sim-cr16.h"
 #include "gdb/signals.h"
 #include "opcode/cr16.h"
 
+#include "target-newlib-syscall.h"
+
+struct _state State;
+
 int cr16_debug;
 
-uint32 OP[4];
-uint32 sign_flag;
+uint32_t OP[4];
+uint32_t sign_flag;
 
-static struct hash_entry *lookup_hash (SIM_DESC, SIM_CPU *, uint64 ins, int size);
-static void get_operands (operand_desc *s, uint64 mcode, int isize, int nops);
+static struct hash_entry *lookup_hash (SIM_DESC, SIM_CPU *, uint64_t ins, int size);
+static void get_operands (operand_desc *s, uint64_t mcode, int isize, int nops);
 
 #define MAX_HASH  16
 
 struct hash_entry
 {
   struct hash_entry *next;
-  uint32 opcode;
-  uint32 mask;
+  uint32_t opcode;
+  uint32_t mask;
   int format;
   int size;
   struct simops *ops;
@@ -70,9 +77,9 @@ hash(unsigned long long insn, int format)
 
 
 INLINE static struct hash_entry *
-lookup_hash (SIM_DESC sd, SIM_CPU *cpu, uint64 ins, int size)
+lookup_hash (SIM_DESC sd, SIM_CPU *cpu, uint64_t ins, int size)
 {
-  uint32 mask;
+  uint32_t mask;
   struct hash_entry *h;
 
   h = &hash_table[hash(ins,1)];
@@ -81,8 +88,7 @@ lookup_hash (SIM_DESC sd, SIM_CPU *cpu, uint64 ins, int size)
   mask = (((1 << (32 - h->mask)) -1) << h->mask);
 
  /* Adjuest mask for branch with 2 word instructions.  */
-  if ((h->ops->mnimonic != NULL) &&
-      ((streq(h->ops->mnimonic,"b") && h->size == 2)))
+  if (streq(h->ops->mnemonic,"b") && h->size == 2)
     mask = 0xff0f0000;
 
 
@@ -94,7 +100,7 @@ lookup_hash (SIM_DESC sd, SIM_CPU *cpu, uint64 ins, int size)
 
       mask = (((1 << (32 - h->mask)) -1) << h->mask);
      /* Adjuest mask for branch with 2 word instructions.  */
-     if ((streq(h->ops->mnimonic,"b")) && h->size == 2)
+     if ((streq(h->ops->mnemonic,"b")) && h->size == 2)
        mask = 0xff0f0000;
 
      }
@@ -102,10 +108,10 @@ lookup_hash (SIM_DESC sd, SIM_CPU *cpu, uint64 ins, int size)
 }
 
 INLINE static void
-get_operands (operand_desc *s, uint64 ins, int isize, int nops)
+get_operands (operand_desc *s, uint64_t ins, int isize, int nops)
 {
-  uint32 i, opn = 0, start_bit = 0, op_type = 0; 
-  int32 op_size = 0, mask = 0;
+  uint32_t i, opn = 0, start_bit = 0, op_type = 0; 
+  int32_t op_size = 0, mask = 0;
 
   if (isize == 1) /* Trunkcate the extra 16 bits of INS.  */
     ins = ins >> 16;
@@ -322,13 +328,13 @@ get_operands (operand_desc *s, uint64 ins, int isize, int nops)
 }
 
 static int
-do_run (SIM_DESC sd, SIM_CPU *cpu, uint64 mcode)
+do_run (SIM_DESC sd, SIM_CPU *cpu, uint64_t mcode)
 {
   struct hash_entry *h;
 
 #ifdef DEBUG
   if ((cr16_debug & DEBUG_INSTRUCTION) != 0)
-    sim_io_printf (sd, "do_long 0x%x\n", mcode);
+    sim_io_printf (sd, "do_long 0x%" PRIx64 "\n", mcode);
 #endif
 
    h = lookup_hash (sd, cpu, mcode, 1);
@@ -379,8 +385,8 @@ free_state (SIM_DESC sd)
   sim_state_free (sd);
 }
 
-static int cr16_reg_fetch (SIM_CPU *, int, unsigned char *, int);
-static int cr16_reg_store (SIM_CPU *, int, unsigned char *, int);
+static int cr16_reg_fetch (SIM_CPU *, int, void *, int);
+static int cr16_reg_store (SIM_CPU *, int, const void *, int);
 
 SIM_DESC
 sim_open (SIM_OPEN_KIND kind, struct host_callback_struct *cb,
@@ -394,8 +400,12 @@ sim_open (SIM_OPEN_KIND kind, struct host_callback_struct *cb,
   SIM_DESC sd = sim_state_alloc (kind, cb);
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
+  /* Set default options before parsing user options.  */
+  current_target_byte_order = BFD_ENDIAN_LITTLE;
+  cb->syscall_map = cb_cr16_syscall_map;
+
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1, /*cgen_cpu_max_extra_bytes ()*/0) != SIM_RC_OK)
+  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -415,10 +425,7 @@ sim_open (SIM_OPEN_KIND kind, struct host_callback_struct *cb,
     }
 
   /* Check for/establish the a reference program image.  */
-  if (sim_analyze_program (sd,
-			   (STATE_PROG_ARGV (sd) != NULL
-			    ? *STATE_PROG_ARGV (sd)
-			    : NULL), abfd) != SIM_RC_OK)
+  if (sim_analyze_program (sd, STATE_PROG_FILE (sd), abfd) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -541,8 +548,9 @@ sim_open (SIM_OPEN_KIND kind, struct host_callback_struct *cb,
                else 
                  h = &hash_table[hash(s->opcode, 0)];
                break;
+
             default:
-              break;
+              continue;
             }
       
           /* go to the last entry in the chain.  */
@@ -571,8 +579,8 @@ sim_open (SIM_OPEN_KIND kind, struct host_callback_struct *cb,
 static void
 step_once (SIM_DESC sd, SIM_CPU *cpu)
 {
-  uint32 curr_ins_size = 0;
-  uint64 mcode = RLW (PC);
+  uint32_t curr_ins_size = 0;
+  uint64_t mcode = RLW (PC);
 
   State.pc_changed = 0;
 
@@ -669,7 +677,8 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
     start_address = 0x0;
 #ifdef DEBUG
   if (cr16_debug)
-    sim_io_printf (sd, "sim_create_inferior:  PC=0x%lx\n", (long) start_address);
+    sim_io_printf (sd, "sim_create_inferior:  PC=0x%" PRIx64 "\n",
+		   (uint64_t) start_address);
 #endif
   {
     SIM_CPU *cpu = STATE_CPU (sd, 0);
@@ -680,10 +689,10 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
   return SIM_RC_OK;
 }
 
-static uint32
-cr16_extract_unsigned_integer (unsigned char *addr, int len)
+static uint32_t
+cr16_extract_unsigned_integer (const unsigned char *addr, int len)
 {
-  uint32 retval;
+  uint32_t retval;
   unsigned char * p;
   unsigned char * startaddr = (unsigned char *)addr;
   unsigned char * endaddr = startaddr + len;
@@ -697,7 +706,7 @@ cr16_extract_unsigned_integer (unsigned char *addr, int len)
 }
 
 static void
-cr16_store_unsigned_integer (unsigned char *addr, int len, uint32 val)
+cr16_store_unsigned_integer (unsigned char *addr, int len, uint32_t val)
 {
   unsigned char *p;
   unsigned char *startaddr = addr;
@@ -711,7 +720,7 @@ cr16_store_unsigned_integer (unsigned char *addr, int len, uint32 val)
 }
 
 static int
-cr16_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+cr16_reg_fetch (SIM_CPU *cpu, int rn, void *memory, int length)
 {
   int size;
   switch ((enum sim_cr16_regs) rn)
@@ -760,7 +769,7 @@ cr16_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
 }
 
 static int
-cr16_reg_store (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+cr16_reg_store (SIM_CPU *cpu, int rn, const void *memory, int length)
 {
   SIM_DESC sd = CPU_STATE (cpu);
   int size;

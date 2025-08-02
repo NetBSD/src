@@ -1,6 +1,6 @@
 /* Python interface to values.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,25 +35,28 @@
    GDB (which uses target arithmetic).  */
 
 /* Python's integer type corresponds to C's long type.  */
-#define builtin_type_pyint builtin_type (python_gdbarch)->builtin_long
+#define builtin_type_pyint \
+  builtin_type (gdbpy_enter::get_gdbarch ())->builtin_long
 
 /* Python's float type corresponds to C's double type.  */
-#define builtin_type_pyfloat builtin_type (python_gdbarch)->builtin_double
+#define builtin_type_pyfloat \
+  builtin_type (gdbpy_enter::get_gdbarch ())->builtin_double
 
 /* Python's long type corresponds to C's long long type.  */
-#define builtin_type_pylong builtin_type (python_gdbarch)->builtin_long_long
+#define builtin_type_pylong \
+  builtin_type (gdbpy_enter::get_gdbarch ())->builtin_long_long
 
 /* Python's long type corresponds to C's long long type.  Unsigned version.  */
 #define builtin_type_upylong builtin_type \
-  (python_gdbarch)->builtin_unsigned_long_long
+  (gdbpy_enter::get_gdbarch ())->builtin_unsigned_long_long
 
 #define builtin_type_pybool \
-  language_bool_type (python_language, python_gdbarch)
+  language_bool_type (current_language, gdbpy_enter::get_gdbarch ())
 
 #define builtin_type_pychar \
-  language_string_char_type (python_language, python_gdbarch)
+  language_string_char_type (current_language, gdbpy_enter::get_gdbarch ())
 
-typedef struct value_object {
+struct value_object {
   PyObject_HEAD
   struct value_object *next;
   struct value_object *prev;
@@ -61,7 +64,7 @@ typedef struct value_object {
   PyObject *address;
   PyObject *type;
   PyObject *dynamic_type;
-} value_object;
+};
 
 /* List of all values which are currently exposed to Python. It is
    maintained so that when an objfile is discarded, preserve_values
@@ -70,41 +73,64 @@ typedef struct value_object {
    work around a linker bug on MacOS.  */
 static value_object *values_in_python = NULL;
 
+/* Clear out an old GDB value stored within SELF, and reset the fields to
+   nullptr.  This should be called when a gdb.Value is deallocated, and
+   also if a gdb.Value is reinitialized with a new value.  */
+
+static void
+valpy_clear_value (value_object *self)
+{
+  /* Indicate we are no longer interested in the value object.  */
+  value_decref (self->value);
+  self->value = nullptr;
+
+  Py_CLEAR (self->address);
+  Py_CLEAR (self->type);
+  Py_CLEAR (self->dynamic_type);
+}
+
 /* Called by the Python interpreter when deallocating a value object.  */
 static void
 valpy_dealloc (PyObject *obj)
 {
   value_object *self = (value_object *) obj;
 
-  /* Remove SELF from the global list.  */
-  if (self->prev)
-    self->prev->next = self->next;
-  else
+  /* If SELF failed to initialize correctly then it may not have a value
+     contained within it.  */
+  if (self->value != nullptr)
     {
-      gdb_assert (values_in_python == self);
-      values_in_python = self->next;
+      /* Remove SELF from the global list of values.  */
+      if (self->prev != nullptr)
+	self->prev->next = self->next;
+      else
+	{
+	  gdb_assert (values_in_python == self);
+	  values_in_python = self->next;
+	}
+      if (self->next != nullptr)
+	self->next->prev = self->prev;
+
+      /* Release the value object and any cached Python objects.  */
+      valpy_clear_value (self);
     }
-  if (self->next)
-    self->next->prev = self->prev;
-
-  value_decref (self->value);
-
-  Py_XDECREF (self->address);
-  Py_XDECREF (self->type);
-  Py_XDECREF (self->dynamic_type);
 
   Py_TYPE (self)->tp_free (self);
 }
 
-/* Helper to push a Value object on the global list.  */
+/* Helper to push a gdb.Value object on to the global list of values.  If
+   VALUE_OBJ is already on the lit then this does nothing.  */
+
 static void
 note_value (value_object *value_obj)
 {
-  value_obj->next = values_in_python;
-  if (value_obj->next)
-    value_obj->next->prev = value_obj;
-  value_obj->prev = NULL;
-  values_in_python = value_obj;
+  if (value_obj->next == nullptr)
+    {
+      gdb_assert (value_obj->prev == nullptr);
+      value_obj->next = values_in_python;
+      if (value_obj->next != nullptr)
+	value_obj->next->prev = value_obj;
+      values_in_python = value_obj;
+    }
 }
 
 /* Convert a python object OBJ with type TYPE to a gdb value.  The
@@ -122,7 +148,7 @@ convert_buffer_and_type_to_value (PyObject *obj, struct type *type)
       && PyObject_GetBuffer (obj, &py_buf, PyBUF_SIMPLE) == 0)
     {
       /* Got a buffer, py_buf, out of obj.  Cause it to be released
-         when it goes out of scope.  */
+	 when it goes out of scope.  */
       buffer_up.reset (&py_buf);
     }
   else
@@ -132,7 +158,7 @@ convert_buffer_and_type_to_value (PyObject *obj, struct type *type)
       return nullptr;
     }
 
-  if (TYPE_LENGTH (type) > py_buf.len)
+  if (type->length () > py_buf.len)
     {
       PyErr_SetString (PyExc_ValueError,
 		       _("Size of type is larger than that of buffer object."));
@@ -142,60 +168,55 @@ convert_buffer_and_type_to_value (PyObject *obj, struct type *type)
   return value_from_contents (type, (const gdb_byte *) py_buf.buf);
 }
 
-/* Called when a new gdb.Value object needs to be allocated.  Returns NULL on
-   error, with a python exception set.  */
-static PyObject *
-valpy_new (PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
+/* Implement gdb.Value.__init__.  */
+
+static int
+valpy_init (PyObject *self, PyObject *args, PyObject *kwds)
 {
   static const char *keywords[] = { "val", "type", NULL };
   PyObject *val_obj = nullptr;
   PyObject *type_obj = nullptr;
 
-  if (!gdb_PyArg_ParseTupleAndKeywords (args, kwargs, "O|O", keywords,
+  if (!gdb_PyArg_ParseTupleAndKeywords (args, kwds, "O|O", keywords,
 					&val_obj, &type_obj))
-    return nullptr;
+    return -1;
 
   struct type *type = nullptr;
-
-  if (type_obj != nullptr)
+  if (type_obj != nullptr && type_obj != Py_None)
     {
       type = type_object_to_type (type_obj);
       if (type == nullptr)
-        {
+	{
 	  PyErr_SetString (PyExc_TypeError,
 			   _("type argument must be a gdb.Type."));
-	  return nullptr;
+	  return -1;
 	}
     }
 
-  value_object *value_obj = (value_object *) subtype->tp_alloc (subtype, 1);
-  if (value_obj == NULL)
-    {
-      PyErr_SetString (PyExc_MemoryError, _("Could not allocate memory to "
-					    "create Value object."));
-      return NULL;
-    }
-
   struct value *value;
-
   if (type == nullptr)
     value = convert_value_from_python (val_obj);
   else
     value = convert_buffer_and_type_to_value (val_obj, type);
-
   if (value == nullptr)
     {
-      subtype->tp_free (value_obj);
-      return NULL;
+      gdb_assert (PyErr_Occurred ());
+      return -1;
     }
 
+  /* There might be a previous value here.  */
+  value_object *value_obj = (value_object *) self;
+  if (value_obj->value != nullptr)
+    valpy_clear_value (value_obj);
+
+  /* Store the value into this Python object.  */
   value_obj->value = release_value (value).release ();
-  value_obj->address = NULL;
-  value_obj->type = NULL;
-  value_obj->dynamic_type = NULL;
+
+  /* Ensure that this gdb.Value is in the set of all gdb.Value objects.  If
+     we are already in the set then this is call does nothing.  */
   note_value (value_obj);
 
-  return (PyObject *) value_obj;
+  return 0;
 }
 
 /* Iterate over all the Value objects, calling preserve_one_value on
@@ -252,18 +273,18 @@ valpy_referenced_value (PyObject *self, PyObject *args)
 
       self_val = ((value_object *) self)->value;
       switch (check_typedef (value_type (self_val))->code ())
-        {
-        case TYPE_CODE_PTR:
-          res_val = value_ind (self_val);
-          break;
-        case TYPE_CODE_REF:
-        case TYPE_CODE_RVALUE_REF:
-          res_val = coerce_ref (self_val);
-          break;
-        default:
-          error(_("Trying to get the referenced value from a value which is "
-                  "neither a pointer nor a reference."));
-        }
+	{
+	case TYPE_CODE_PTR:
+	  res_val = value_ind (self_val);
+	  break;
+	case TYPE_CODE_REF:
+	case TYPE_CODE_RVALUE_REF:
+	  res_val = coerce_ref (self_val);
+	  break;
+	default:
+	  error(_("Trying to get the referenced value from a value which is "
+		  "neither a pointer nor a reference."));
+	}
 
       result = value_to_value_object (res_val);
     }
@@ -400,8 +421,8 @@ valpy_get_dynamic_type (PyObject *self, void *closure)
       type = value_type (val);
       type = check_typedef (type);
 
-      if (((type->code () == TYPE_CODE_PTR) || TYPE_IS_REFERENCE (type))
-	  && (TYPE_TARGET_TYPE (type)->code () == TYPE_CODE_STRUCT))
+      if (type->is_pointer_or_reference ()
+	  && (type->target_type ()->code () == TYPE_CODE_STRUCT))
 	{
 	  struct value *target;
 	  int was_pointer = type->code () == TYPE_CODE_PTR;
@@ -504,7 +525,7 @@ valpy_lazy_string (PyObject *self, PyObject *args, PyObject *kw)
 	      length = array_length;
 	    else if (array_length == -1)
 	      {
-		type = lookup_array_range_type (TYPE_TARGET_TYPE (realtype),
+		type = lookup_array_range_type (realtype->target_type (),
 						0, length - 1);
 	      }
 	    else if (length != array_length)
@@ -513,7 +534,7 @@ valpy_lazy_string (PyObject *self, PyObject *args, PyObject *kw)
 		   specified length.  */
 		if (length > array_length)
 		  error (_("Length is larger than array size."));
-		type = lookup_array_range_type (TYPE_TARGET_TYPE (realtype),
+		type = lookup_array_range_type (realtype->target_type (),
 						low_bound,
 						low_bound + length - 1);
 	      }
@@ -576,7 +597,7 @@ valpy_string (PyObject *self, PyObject *args, PyObject *kw)
 
   encoding = (user_encoding && *user_encoding) ? user_encoding : la_encoding;
   return PyUnicode_Decode ((const char *) buffer.get (),
-			   length * TYPE_LENGTH (char_type),
+			   length * char_type->length (),
 			   encoding, errors);
 }
 
@@ -617,6 +638,10 @@ valpy_format_string (PyObject *self, PyObject *args, PyObject *kw)
       "array_indexes",		/* See set print array-indexes on|off.  */
       "symbols",		/* See set print symbol on|off.  */
       "unions",			/* See set print union on|off.  */
+      "address",		/* See set print address on|off.  */
+      "styling",		/* Should we apply styling.  */
+      "nibbles",		/* See set print nibbles on|off.  */
+      "summary",		/* Summary mode for non-scalars.  */
       /* C++ options.  */
       "deref_refs",		/* No corresponding setting.  */
       "actual_objects",		/* See set print object on|off.  */
@@ -649,7 +674,7 @@ valpy_format_string (PyObject *self, PyObject *args, PyObject *kw)
     }
 
   struct value_print_options opts;
-  get_user_print_options (&opts);
+  gdbpy_get_print_options (&opts);
   opts.deref_ref = 0;
 
   /* We need objects for booleans as the "p" flag for bools is new in
@@ -660,13 +685,17 @@ valpy_format_string (PyObject *self, PyObject *args, PyObject *kw)
   PyObject *array_indexes_obj = NULL;
   PyObject *symbols_obj = NULL;
   PyObject *unions_obj = NULL;
+  PyObject *address_obj = NULL;
+  PyObject *styling_obj = Py_False;
+  PyObject *nibbles_obj = NULL;
   PyObject *deref_refs_obj = NULL;
   PyObject *actual_objects_obj = NULL;
   PyObject *static_members_obj = NULL;
+  PyObject *summary_obj = NULL;
   char *format = NULL;
   if (!gdb_PyArg_ParseTupleAndKeywords (args,
 					kw,
-					"|O!O!O!O!O!O!O!O!O!IIIs",
+					"|O!O!O!O!O!O!O!O!O!O!O!O!O!IIIs",
 					keywords,
 					&PyBool_Type, &raw_obj,
 					&PyBool_Type, &pretty_arrays_obj,
@@ -674,6 +703,10 @@ valpy_format_string (PyObject *self, PyObject *args, PyObject *kw)
 					&PyBool_Type, &array_indexes_obj,
 					&PyBool_Type, &symbols_obj,
 					&PyBool_Type, &unions_obj,
+					&PyBool_Type, &address_obj,
+					&PyBool_Type, &styling_obj,
+					&PyBool_Type, &nibbles_obj,
+					&PyBool_Type, &summary_obj,
 					&PyBool_Type, &deref_refs_obj,
 					&PyBool_Type, &actual_objects_obj,
 					&PyBool_Type, &static_members_obj,
@@ -696,12 +729,18 @@ valpy_format_string (PyObject *self, PyObject *args, PyObject *kw)
     return NULL;
   if (!copy_py_bool_obj (&opts.unionprint, unions_obj))
     return NULL;
+  if (!copy_py_bool_obj (&opts.addressprint, address_obj))
+    return NULL;
+  if (!copy_py_bool_obj (&opts.nibblesprint, nibbles_obj))
+    return NULL;
   if (!copy_py_bool_obj (&opts.deref_ref, deref_refs_obj))
     return NULL;
   if (!copy_py_bool_obj (&opts.objectprint, actual_objects_obj))
     return NULL;
   if (!copy_py_bool_obj (&opts.static_field_print, static_members_obj))
     return NULL;
+  if (!copy_py_bool_obj (&opts.summary, summary_obj))
+    return nullptr;
 
   /* Numeric arguments for which 0 means unlimited (which we represent as
      UINT_MAX).  Note that the max-depth numeric argument uses -1 as
@@ -726,12 +765,12 @@ valpy_format_string (PyObject *self, PyObject *args, PyObject *kw)
 	}
     }
 
-  string_file stb;
+  string_file stb (PyObject_IsTrue (styling_obj));
 
   try
     {
       common_val_print (((value_object *) self)->value, &stb, 0,
-			&opts, python_language);
+			&opts, current_language);
     }
   catch (const gdb_exception &except)
     {
@@ -846,8 +885,8 @@ value_has_field (struct value *v, PyObject *field)
     {
       val_type = value_type (v);
       val_type = check_typedef (val_type);
-      if (TYPE_IS_REFERENCE (val_type) || val_type->code () == TYPE_CODE_PTR)
-	val_type = check_typedef (TYPE_TARGET_TYPE (val_type));
+      if (val_type->is_pointer_or_reference ())
+	val_type = check_typedef (val_type->target_type ());
 
       type_code = val_type->code ();
       if ((type_code == TYPE_CODE_STRUCT || type_code == TYPE_CODE_UNION)
@@ -963,7 +1002,7 @@ valpy_getitem (PyObject *self, PyObject *key)
 		{
 		  PyErr_SetString (PyExc_AttributeError,
 				   _("gdb.Field object has no name and no "
-                                     "'bitpos' attribute."));
+				     "'bitpos' attribute."));
 
 		  return NULL;
 		}
@@ -987,7 +1026,7 @@ valpy_getitem (PyObject *self, PyObject *key)
       scoped_value_mark free_values;
 
       if (field)
-	res_val = value_struct_elt (&tmp, NULL, field.get (), NULL,
+	res_val = value_struct_elt (&tmp, {}, field.get (), NULL,
 				    "struct/class/union");
       else if (bitpos >= 0)
 	res_val = value_struct_elt_bitpos (&tmp, bitpos, field_type,
@@ -1001,10 +1040,10 @@ valpy_getitem (PyObject *self, PyObject *key)
 	    res_val = value_cast (lookup_pointer_type (base_class_type), tmp);
 	  else if (val_type->code () == TYPE_CODE_REF)
 	    res_val = value_cast (lookup_lvalue_reference_type (base_class_type),
-	                          tmp);
+				  tmp);
 	  else if (val_type->code () == TYPE_CODE_RVALUE_REF)
 	    res_val = value_cast (lookup_rvalue_reference_type (base_class_type),
-	                          tmp);
+				  tmp);
 	  else
 	    res_val = value_cast (base_class_type, tmp);
 	}
@@ -1129,7 +1168,7 @@ valpy_str (PyObject *self)
 {
   struct value_print_options opts;
 
-  get_user_print_options (&opts);
+  gdbpy_get_print_options (&opts);
   opts.deref_ref = 0;
 
   string_file stb;
@@ -1137,7 +1176,7 @@ valpy_str (PyObject *self)
   try
     {
       common_val_print (((value_object *) self)->value, &stb, 0,
-			&opts, python_language);
+			&opts, current_language);
     }
   catch (const gdb_exception &except)
     {
@@ -1235,7 +1274,7 @@ enum valpy_opcode
 
 /* If TYPE is a reference, return the target; otherwise return TYPE.  */
 #define STRIP_REFERENCE(TYPE) \
-  (TYPE_IS_REFERENCE (TYPE) ? (TYPE_TARGET_TYPE (TYPE)) : (TYPE))
+  (TYPE_IS_REFERENCE (TYPE) ? ((TYPE)->target_type ()) : (TYPE))
 
 /* Helper for valpy_binop.  Returns a value object which is the result
    of applying the operation specified by OPCODE to the given
@@ -1495,8 +1534,8 @@ valpy_nonzero (PyObject *self)
       if (is_integral_type (type) || type->code () == TYPE_CODE_PTR)
 	nonzero = !!value_as_long (self_value->value);
       else if (is_floating_value (self_value->value))
-	nonzero = !target_float_is_zero (value_contents (self_value->value),
-					 type);
+	nonzero = !target_float_is_zero
+	  (value_contents (self_value->value).data (), type);
       else
 	/* All other values are True.  */
 	nonzero = 1;
@@ -1666,41 +1705,6 @@ valpy_richcompare (PyObject *self, PyObject *other, int op)
   Py_RETURN_FALSE;
 }
 
-#ifndef IS_PY3K
-/* Implements conversion to int.  */
-static PyObject *
-valpy_int (PyObject *self)
-{
-  struct value *value = ((value_object *) self)->value;
-  struct type *type = value_type (value);
-  LONGEST l = 0;
-
-  try
-    {
-      if (is_floating_value (value))
-	{
-	  type = builtin_type_pylong;
-	  value = value_cast (type, value);
-	}
-
-      if (!is_integral_type (type)
-	  && type->code () != TYPE_CODE_PTR)
-	error (_("Cannot convert value to int."));
-
-      l = value_as_long (value);
-    }
-  catch (const gdb_exception &except)
-    {
-      GDB_PY_HANDLE_EXCEPTION (except);
-    }
-
-  if (TYPE_UNSIGNED (type))
-    return gdb_py_object_from_ulongest (l).release ();
-  else
-    return gdb_py_object_from_longest (l).release ();
-}
-#endif
-
 /* Implements conversion to long.  */
 static PyObject *
 valpy_long (PyObject *self)
@@ -1730,10 +1734,10 @@ valpy_long (PyObject *self)
       GDB_PY_HANDLE_EXCEPTION (except);
     }
 
-  if (TYPE_UNSIGNED (type))
-    return gdb_py_long_from_ulongest (l);
+  if (type->is_unsigned ())
+    return gdb_py_object_from_ulongest (l).release ();
   else
-    return gdb_py_long_from_longest (l);
+    return gdb_py_object_from_longest (l).release ();
 }
 
 /* Implements conversion to float.  */
@@ -1749,7 +1753,7 @@ valpy_float (PyObject *self)
       type = check_typedef (type);
 
       if (type->code () == TYPE_CODE_FLT && is_floating_value (value))
-	d = target_float_to_host_double (value_contents (value), type);
+	d = target_float_to_host_double (value_contents (value).data (), type);
       else if (type->code () == TYPE_CODE_INT)
 	{
 	  /* Note that valpy_long accepts TYPE_CODE_PTR and some
@@ -1779,6 +1783,8 @@ value_to_value_object (struct value *val)
   if (val_obj != NULL)
     {
       val_obj->value = release_value (val).release ();
+      val_obj->next = nullptr;
+      val_obj->prev = nullptr;
       val_obj->address = NULL;
       val_obj->type = NULL;
       val_obj->dynamic_type = NULL;
@@ -1800,6 +1806,8 @@ value_to_value_object_no_release (struct value *val)
     {
       value_incref (val);
       val_obj->value = val;
+      val_obj->next = nullptr;
+      val_obj->prev = nullptr;
       val_obj->address = NULL;
       val_obj->type = NULL;
       val_obj->dynamic_type = NULL;
@@ -1842,13 +1850,6 @@ convert_value_from_python (PyObject *obj)
 	  if (cmp >= 0)
 	    value = value_from_longest (builtin_type_pybool, cmp);
 	}
-      /* Make a long logic check first.  In Python 3.x, internally,
-	 all integers are represented as longs.  In Python 2.x, there
-	 is still a differentiation internally between a PyInt and a
-	 PyLong.  Explicitly do this long check conversion first. In
-	 GDB, for Python 3.x, we #ifdef PyInt = PyLong.  This check has
-	 to be done first to ensure we do not lose information in the
-	 conversion process.  */
       else if (PyLong_Check (obj))
 	{
 	  LONGEST l = PyLong_AsLongLong (obj);
@@ -1856,11 +1857,11 @@ convert_value_from_python (PyObject *obj)
 	  if (PyErr_Occurred ())
 	    {
 	      /* If the error was an overflow, we can try converting to
-	         ULONGEST instead.  */
+		 ULONGEST instead.  */
 	      if (PyErr_ExceptionMatches (PyExc_OverflowError))
 		{
 		  gdbpy_err_fetch fetched_error;
-		  gdbpy_ref<> zero (PyInt_FromLong (0));
+		  gdbpy_ref<> zero = gdb_py_object_from_longest (0);
 
 		  /* Check whether obj is positive.  */
 		  if (PyObject_RichCompareBool (obj, zero.get (), Py_GT) > 0)
@@ -1881,15 +1882,6 @@ convert_value_from_python (PyObject *obj)
 	  else
 	    value = value_from_longest (builtin_type_pylong, l);
 	}
-#if PY_MAJOR_VERSION == 2
-      else if (PyInt_Check (obj))
-	{
-	  long l = PyInt_AsLong (obj);
-
-	  if (! PyErr_Occurred ())
-	    value = value_from_longest (builtin_type_pyint, l);
-	}
-#endif
       else if (PyFloat_Check (obj))
 	{
 	  double d = PyFloat_AsDouble (obj);
@@ -1915,14 +1907,8 @@ convert_value_from_python (PyObject *obj)
 	  value = value_copy (((value_object *) result)->value);
 	}
       else
-#ifdef IS_PY3K
 	PyErr_Format (PyExc_TypeError,
 		      _("Could not convert Python object: %S."), obj);
-#else
-	PyErr_Format (PyExc_TypeError,
-		      _("Could not convert Python object: %s."),
-		      PyString_AsString (PyObject_Str (obj)));
-#endif
     }
   catch (const gdb_exception &except)
     {
@@ -1955,6 +1941,41 @@ gdbpy_history (PyObject *self, PyObject *args)
   return value_to_value_object (res_val);
 }
 
+/* Add a gdb.Value into GDB's history, and return (as an integer) the
+   position of the newly added value.  */
+PyObject *
+gdbpy_add_history (PyObject *self, PyObject *args)
+{
+  PyObject *value_obj;
+
+  if (!PyArg_ParseTuple (args, "O", &value_obj))
+    return nullptr;
+
+  struct value *value = convert_value_from_python (value_obj);
+  if (value == nullptr)
+    return nullptr;
+
+  try
+    {
+      int idx = record_latest_value (value);
+      return gdb_py_object_from_longest (idx).release ();
+    }
+  catch (const gdb_exception &except)
+    {
+      GDB_PY_HANDLE_EXCEPTION (except);
+    }
+
+  return nullptr;
+}
+
+/* Return an integer, the number of items in GDB's history.  */
+
+PyObject *
+gdbpy_history_count (PyObject *self, PyObject *args)
+{
+  return gdb_py_object_from_ulongest (value_history_count ()).release ();
+}
+
 /* Return the value of a convenience variable.  */
 PyObject *
 gdbpy_convenience_variable (PyObject *self, PyObject *args)
@@ -1971,7 +1992,7 @@ gdbpy_convenience_variable (PyObject *self, PyObject *args)
 
       if (var != NULL)
 	{
-	  res_val = value_of_internalvar (python_gdbarch, var);
+	  res_val = value_of_internalvar (gdbpy_enter::get_gdbarch (), var);
 	  if (value_type (res_val)->code () == TYPE_CODE_VOID)
 	    res_val = NULL;
 	}
@@ -2108,9 +2129,6 @@ static PyNumberMethods value_object_as_number = {
   valpy_add,
   valpy_subtract,
   valpy_multiply,
-#ifndef IS_PY3K
-  valpy_divide,
-#endif
   valpy_remainder,
   NULL,			      /* nb_divmod */
   valpy_power,		      /* nb_power */
@@ -2124,25 +2142,12 @@ static PyNumberMethods value_object_as_number = {
   valpy_and,		      /* nb_and */
   valpy_xor,		      /* nb_xor */
   valpy_or,		      /* nb_or */
-#ifdef IS_PY3K
   valpy_long,		      /* nb_int */
   NULL,			      /* reserved */
-#else
-  NULL,			      /* nb_coerce */
-  valpy_int,		      /* nb_int */
-  valpy_long,		      /* nb_long */
-#endif
   valpy_float,		      /* nb_float */
-#ifndef IS_PY3K
-  NULL,			      /* nb_oct */
-  NULL,                       /* nb_hex */
-#endif
   NULL,                       /* nb_inplace_add */
   NULL,                       /* nb_inplace_subtract */
   NULL,                       /* nb_inplace_multiply */
-#ifndef IS_PY3K
-  NULL,                       /* nb_inplace_divide */
-#endif
   NULL,                       /* nb_inplace_remainder */
   NULL,                       /* nb_inplace_power */
   NULL,                       /* nb_inplace_lshift */
@@ -2200,7 +2205,7 @@ PyTypeObject value_object_type = {
   0,				  /* tp_descr_get */
   0,				  /* tp_descr_set */
   0,				  /* tp_dictoffset */
-  0,				  /* tp_init */
+  valpy_init,			  /* tp_init */
   0,				  /* tp_alloc */
-  valpy_new			  /* tp_new */
+  PyType_GenericNew,		  /* tp_new */
 };

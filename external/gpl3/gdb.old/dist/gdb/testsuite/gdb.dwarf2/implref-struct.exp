@@ -1,4 +1,4 @@
-# Copyright 2016-2020 Free Software Foundation, Inc.
+# Copyright 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # The referenced value is a global struct whose location is a DW_OP_addr.
 
 if [skip_cplus_tests] {
-    continue
+    return
 }
 
 load_lib dwarf.exp

@@ -220,7 +220,7 @@ rrrrr,11111100000 + wwwww,01101000010:XII:::bsh
 *v850e3v5
 "bsh r<reg2>, r<reg3>"
 {
-  unsigned32 value;
+  uint32_t value;
   TRACE_ALU_INPUT1 (GR[reg2]);
 
   value = (MOVED32 (GR[reg2], 23, 16, 31, 24)
@@ -249,7 +249,7 @@ rrrrr,11111100000 + wwwww,01101000000:XII:::bsw
 "bsw r<reg2>, r<reg3>"
 {
 #define WORDHASNULLBYTE(x) (((x) - 0x01010101) & ~(x)&0x80808080)
-  unsigned32 value;
+  uint32_t value;
   TRACE_ALU_INPUT1 (GR[reg2]);
 
   value = GR[reg2];
@@ -279,8 +279,8 @@ rrrrr,11111100000 + wwwww,01101000000:XII:::bsw
 *v850e3v5
 "callt <imm6>"
 {
-  unsigned32 adr;
-  unsigned32 off;
+  uint32_t adr;
+  uint32_t off;
   CTPC  = cia + 2;
   CTPSW = PSW;
   adr = (CTBP & ~1) + (imm6 << 1);
@@ -299,8 +299,8 @@ rrrrr,111111,RRRRR + wwwww,00011101110:IX:::caxi
 "caxi [reg1], reg2, reg3"
 {
   unsigned int z,s,cy,ov;
-  unsigned32 addr;
-  unsigned32 token,result;
+  uint32_t addr;
+  uint32_t token,result;
 
   addr = GR[reg1];
 
@@ -486,7 +486,7 @@ rrrrr,111111,RRRRR + wwwww,01011000000:XI:::div
 rrrrr!0,000010,RRRRR!0:I:::divh
 "divh r<reg1>, r<reg2>"
 {
-  unsigned32 ov, s, z;
+  uint32_t ov, s, z;
   signed long int op0, op1, result;
 
   trace_input ("divh", OP_REG_REG, 0);
@@ -511,7 +511,7 @@ rrrrr!0,000010,RRRRR!0:I:::divh
     }
   else
     {
-      result = (signed32) op1 / op0;
+      result = (int32_t) op1 / op0;
       ov = 0;
 
       /* Compute the condition codes.  */
@@ -714,7 +714,7 @@ rrrrr,11111100000 + wwwww,01101000110:XII:::hsh
 *v850e3v5
 "hsh r<reg2>, r<reg3>"
 {
-  unsigned32 value;
+  uint32_t value;
   TRACE_ALU_INPUT1 (GR[reg2]);
 
   value = 0xffff & GR[reg2];
@@ -738,7 +738,7 @@ rrrrr,11111100000 + wwwww,01101000100:XII:::hsw
 *v850e3v5
 "hsw r<reg2>, r<reg3>"
 {
-  unsigned32 value;
+  uint32_t value;
   TRACE_ALU_INPUT1 (GR[reg2]);
 
   value = GR[reg2];
@@ -844,8 +844,8 @@ rrrrr,111000,RRRRR + dddddddddddddddd:VII:::ld.b
 *v850e2v3
 *v850e3v5
 {
-  unsigned32 addr = GR[reg1] + disp23;
-  unsigned32 result = EXTEND8 (load_data_mem (sd, addr, 1));
+  uint32_t addr = GR[reg1] + disp23;
+  uint32_t result = EXTEND8 (load_data_mem (sd, addr, 1));
   GR[reg3] = result;
   TRACE_LD (addr, result);
 }
@@ -861,8 +861,8 @@ rrrrr,111001,RRRRR + ddddddddddddddd,0:VII:::ld.h
 *v850e3v5
 "ld.h <disp23>[r<reg1>], r<reg3>"
 {
-  unsigned32 addr = GR[reg1] + disp23;
-  unsigned32 result = EXTEND16 (load_data_mem (sd, addr, 2));
+  uint32_t addr = GR[reg1] + disp23;
+  uint32_t result = EXTEND16 (load_data_mem (sd, addr, 2));
   GR[reg3] = result;
   TRACE_LD (addr, result);
 }
@@ -878,8 +878,8 @@ rrrrr,111001,RRRRR + ddddddddddddddd,1:VII:::ld.w
 *v850e3v5
 "ld.w <disp23>[r<reg1>], r<reg3>"
 {
-  unsigned32 addr = GR[reg1] + disp23;
-  unsigned32 result = load_data_mem (sd, addr, 4);
+  uint32_t addr = GR[reg1] + disp23;
+  uint32_t result = load_data_mem (sd, addr, 4);
   GR[reg3] = result;
   TRACE_LD (addr, result);
 }
@@ -888,8 +888,8 @@ rrrrr,111001,RRRRR + ddddddddddddddd,1:VII:::ld.w
 *v850e3v5
 "ld.dw <disp23>[r<reg1>], r<reg3>"
 {
-  unsigned32 addr = GR[reg1] + disp23;
-  unsigned32 result = load_data_mem (sd, addr, 4);
+  uint32_t addr = GR[reg1] + disp23;
+  uint32_t result = load_data_mem (sd, addr, 4);
   GR[reg3] = result;
   TRACE_LD (addr, result);
   result = load_data_mem (sd, addr + 4, 4);
@@ -913,8 +913,8 @@ rrrrr!0,11110,b,RRRRR + ddddddddddddddd,1:VII:::ld.bu
 *v850e3v5
 "ld.bu <disp23>[r<reg1>], r<reg3>"
 { 
-  unsigned32 addr = GR[reg1] + disp23;
-  unsigned32 result = load_data_mem (sd, addr, 1);
+  uint32_t addr = GR[reg1] + disp23;
+  uint32_t result = load_data_mem (sd, addr, 1);
   GR[reg3] = result;
   TRACE_LD (addr, result);
 }
@@ -935,8 +935,8 @@ rrrrr!0,111111,RRRRR + ddddddddddddddd,1:VII:::ld.hu
 *v850e3v5
 "ld.hu <disp23>[r<reg1>], r<reg3>"
 {
-  unsigned32 addr = GR[reg1] + disp23;
-  unsigned32 result = load_data_mem (sd, addr, 2);
+  uint32_t addr = GR[reg1] + disp23;
+  uint32_t result = load_data_mem (sd, addr, 2);
   GR[reg3] = result;
   TRACE_LD (addr, result);
 }
@@ -948,7 +948,7 @@ regID,111111,RRRRR + selID,00000100000:IX:::ldsr
 "ldsr r<reg1>, s<regID>":(selID == 0)
 "ldsr r<reg1>, s<regID>, <selID>"
 {
-  uint32 sreg = GR[reg1];
+  uint32_t sreg = GR[reg1];
   TRACE_ALU_INPUT1 (GR[reg1]);
 
   /* FIXME: For now we ignore the selID.  */
@@ -1911,8 +1911,8 @@ rrrrr,0110,ddddddd:IV:::sld.b
 "sld.bu <disp7>[ep], r<reg2>":(PSW & PSW_US)
 "sld.b <disp7>[ep], r<reg2>"
 {
-  unsigned32 addr = EP + disp7;
-  unsigned32 result = load_mem (addr, 1);
+  uint32_t addr = EP + disp7;
+  uint32_t result = load_mem (addr, 1);
   if (PSW & PSW_US)
     {
       GR[reg2] = result;
@@ -1930,8 +1930,8 @@ rrrrr,1000,ddddddd:IV:::sld.h
 "sld.hu <disp8>[ep], r<reg2>":(PSW & PSW_US)
 "sld.h <disp8>[ep], r<reg2>"
 {
-  unsigned32 addr = EP + disp8;
-  unsigned32 result = load_mem (addr, 2);
+  uint32_t addr = EP + disp8;
+  uint32_t result = load_mem (addr, 2);
   if (PSW & PSW_US)
     {
       GR[reg2] = result;
@@ -1948,8 +1948,8 @@ rrrrr,1000,ddddddd:IV:::sld.h
 rrrrr,1010,dddddd,0:IV:::sld.w
 "sld.w <disp8>[ep], r<reg2>"
 {
-  unsigned32 addr = EP + disp8;
-  unsigned32 result = load_mem (addr, 4);
+  uint32_t addr = EP + disp8;
+  uint32_t result = load_mem (addr, 4);
   GR[reg2] = result;
   TRACE_LD (addr, result);
 }
@@ -1963,8 +1963,8 @@ rrrrr!0,0000110,dddd:IV:::sld.bu
 "sld.b <disp4>[ep], r<reg2>":(PSW & PSW_US)
 "sld.bu <disp4>[ep], r<reg2>"
 {
-  unsigned32 addr = EP + disp4;
-  unsigned32 result = load_mem (addr, 1);
+  uint32_t addr = EP + disp4;
+  uint32_t result = load_mem (addr, 1);
   if (PSW & PSW_US)
     {
       result = EXTEND8 (result);
@@ -1987,8 +1987,8 @@ rrrrr!0,0000111,dddd:IV:::sld.hu
 "sld.h <disp5>[ep], r<reg2>":(PSW & PSW_US)
 "sld.hu <disp5>[ep], r<reg2>"
 {
-  unsigned32 addr = EP + disp5;
-  unsigned32 result = load_mem (addr, 2);
+  uint32_t addr = EP + disp5;
+  uint32_t result = load_mem (addr, 2);
   if (PSW & PSW_US)
     {
       result = EXTEND16 (result);
@@ -2035,7 +2035,7 @@ rrrrr,111010,RRRRR + dddddddddddddddd:VII:::st.b
 *v850e3v5
 "st.b r<reg3>, <disp23>[r<reg1>]"
 {
-  unsigned32 addr = GR[reg1] + disp23;
+  uint32_t addr = GR[reg1] + disp23;
   store_data_mem (sd, addr, 1, GR[reg3]);
   TRACE_ST (addr, GR[reg3]);
 }
@@ -2051,7 +2051,7 @@ rrrrr,111011,RRRRR + ddddddddddddddd,0:VII:::st.h
 *v850e3v5
 "st.h r<reg3>, <disp23>[r<reg1>]"
 {
-  unsigned32 addr = GR[reg1] + disp23;
+  uint32_t addr = GR[reg1] + disp23;
   store_data_mem (sd, addr, 2, GR[reg3]);
   TRACE_ST (addr, GR[reg3]);
 }
@@ -2067,7 +2067,7 @@ rrrrr,111011,RRRRR + ddddddddddddddd,1:VII:::st.w
 *v850e3v5
 "st.w r<reg3>, <disp23>[r<reg1>]"
 {
-  unsigned32 addr = GR[reg1] + disp23;
+  uint32_t addr = GR[reg1] + disp23;
   store_data_mem (sd, addr, 4, GR[reg3]);
   TRACE_ST (addr, GR[reg3]);
 }
@@ -2076,7 +2076,7 @@ rrrrr,111011,RRRRR + ddddddddddddddd,1:VII:::st.w
 *v850e3v5
 "st.dw r<reg3>, <disp23>[r<reg1>]"
 {
-  unsigned32 addr = GR[reg1] + disp23;
+  uint32_t addr = GR[reg1] + disp23;
   store_data_mem (sd, addr, 4, GR[reg3]);
   TRACE_ST (addr, GR[reg3]);
   store_data_mem (sd, addr + 4, 4, GR[reg3 + 1]);
@@ -2088,7 +2088,7 @@ rrrrr,111011,RRRRR + ddddddddddddddd,1:VII:::st.w
 rrrrr,111111,regID + 0000000001000000:IX:::stsr
 "stsr s<regID>, r<reg2>"
 {
-  uint32 sreg = 0;
+  uint32_t sreg = 0;
 
   if ((idecode_issue == idecode_v850e2_issue
        || idecode_issue == idecode_v850e3v5_issue
@@ -2561,7 +2561,7 @@ rrrr,011111100100 + wwww,010001010100:F_I:::cvtf_dl
 *v850e3v5
 "cvtf.dl r<reg2e>, r<reg3e>"
 {
-  signed64 ans;
+  int64_t ans;
   sim_fpu wop;
   sim_fpu_status status;
 
@@ -2604,7 +2604,7 @@ rrrr,011111100100 + wwwww,10001010000:F_I:::cvtf_dw
 *v850e3v5
 "cvtf.dw r<reg2e>, r<reg3>"
 {
-  int32 ans;
+  int32_t ans;
   sim_fpu wop;
   sim_fpu_status status;
 
@@ -2626,11 +2626,11 @@ rrrr,011111100001 + wwww,010001010010:F_I:::cvtf_ld
 *v850e3v5
 "cvtf.ld r<reg2e>, r<reg3e>"
 {
-  signed64 op;
+  int64_t op;
   sim_fpu wop;
   sim_fpu_status status;
 
-  op = ((signed64)GR[reg2e+1] << 32L) | GR[reg2e];
+  op = ((int64_t)GR[reg2e+1] << 32L) | GR[reg2e];
   TRACE_FP_INPUT_WORD2 (GR[reg2e], GR[reg2e+1]);
 
   sim_fpu_i64to (&wop, op, FPSR_GET_ROUND());
@@ -2648,11 +2648,11 @@ rrrr,011111100001 + wwwww,10001000010:F_I:::cvtf_ls
 *v850e3v5
 "cvtf.ls r<reg2e>, r<reg3>"
 {
-  signed64 op;
+  int64_t op;
   sim_fpu wop;
   sim_fpu_status status;
 
-  op = ((signed64)GR[reg2e+1] << 32L) | GR[reg2e];
+  op = ((int64_t)GR[reg2e+1] << 32L) | GR[reg2e];
   TRACE_FP_INPUT_WORD2 (GR[reg2e], GR[reg2e+1]);
 
   sim_fpu_i64to (&wop, op, FPSR_GET_ROUND());
@@ -2689,7 +2689,7 @@ rrrrr,11111100100 + wwww,010001000100:F_I:::cvtf_sl
 *v850e3v5
 "cvtf.sl r<reg2>, r<reg3e>"
 {
-  signed64 ans;
+  int64_t ans;
   sim_fpu wop;
   sim_fpu_status status;
 
@@ -2712,7 +2712,7 @@ rrrrr,11111100100 + wwwww,10001000000:F_I:::cvtf_sw
 *v850e3v5
 "cvtf.sw r<reg2>, r<reg3>"
 {
-  int32 ans;
+  int32_t ans;
   sim_fpu wop;
   sim_fpu_status status;
 
@@ -3449,7 +3449,7 @@ rrrr,011111100001 + wwww,010001010100:F_I:::trncf_dl
 *v850e3v5
 "trncf.dl r<reg2e>, r<reg3e>"
 {
-  signed64 ans;
+  int64_t ans;
   sim_fpu wop;
   sim_fpu_status status;
 
@@ -3471,7 +3471,7 @@ rrrr,011111110001 + wwww,010001010100:F_I:::trncf_dul
 *v850e3v5
 "trncf.dul r<reg2e>, r<reg3e>"
 {
-  unsigned64 ans;
+  uint64_t ans;
   sim_fpu wop;
   sim_fpu_status status;
 
@@ -3493,7 +3493,7 @@ rrrr,011111100001 + wwwww,10001010000:F_I:::trncf_dw
 *v850e3v5
 "trncf.dw r<reg2e>, r<reg3>"
 {
-  int32 ans;
+  int32_t ans;
   sim_fpu wop;
   sim_fpu_status status;
 
@@ -3514,7 +3514,7 @@ rrrr,011111110001 + wwwww,10001010000:F_I:::trncf_duw
 *v850e3v5
 "trncf.duw r<reg2e>, r<reg3>"
 {
-  uint32 ans;
+  uint32_t ans;
   sim_fpu wop;
   sim_fpu_status status;
 
@@ -3535,7 +3535,7 @@ rrrrr,11111100001 + wwww,010001000100:F_I:::trncf_sl
 *v850e3v5
 "trncf.sl r<reg2>, r<reg3e>"
 {
-  signed64 ans;
+  int64_t ans;
   sim_fpu wop;
   sim_fpu_status status;
 
@@ -3555,7 +3555,7 @@ rrrrr,11111110001 + wwww,010001000100:F_I:::trncf_sul
 *v850e3v5
 "trncf.sul r<reg2>, r<reg3e>"
 {
-  unsigned64 ans;
+  uint64_t ans;
   sim_fpu wop;
   sim_fpu_status status;
 
@@ -3575,7 +3575,7 @@ rrrrr,11111100001 + wwwww,10001000000:F_I:::trncf_sw
 *v850e3v5
 "trncf.sw r<reg2>, r<reg3>"
 {
-  int32 ans;
+  int32_t ans;
   sim_fpu wop;
   sim_fpu_status status;
 
@@ -3596,7 +3596,7 @@ rrrrr,11111110001 + wwwww,10001000000:F_I:::trncf_suw
 *v850e3v5
 "trncf.suw r<reg2>, r<reg3>"
 {
-  uint32 ans;
+  uint32_t ans;
   sim_fpu wop;
   sim_fpu_status status;
 
@@ -3808,7 +3808,7 @@ rrrr,011111100000+0000011011011000:C:::modadd
 "modadd r<reg2e>"
 {
   reg_t r;
-  int32 inc;
+  int32_t inc;
   reg_t max;
 
   TRACE_ALU_INPUT1 (GR[reg2e]);

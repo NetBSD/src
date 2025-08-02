@@ -25,17 +25,9 @@
 /* Note: this module is called via a table.  There is no benefit in
    making it inline */
 
-#include "emul_generic.h"
-#include "emul_netbsd.h"
+#include "defs.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -45,6 +37,9 @@
 #include <errno.h>
 #include <sys/param.h>
 #include <sys/time.h>
+
+#include "emul_generic.h"
+#include "emul_netbsd.h"
 
 #ifdef HAVE_GETRUSAGE
 #ifndef HAVE_SYS_RESOURCE_H
@@ -83,9 +78,7 @@ int getrusage();
 #include <unistd.h>
 #endif
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 
 #define WITH_NetBSD_HOST (NetBSD >= 199306)
 #if WITH_NetBSD_HOST /* here NetBSD as that is what we're emulating */
@@ -106,10 +99,6 @@ extern int getdirentries(int fd, char *buf, int nbytes, long *basep);
 /* If this is not netbsd, don't allow fstatfs or getdirentries at this time */
 #undef HAVE_FSTATFS
 #undef HAVE_GETDIRENTRIES
-#endif
-
-#if (BSD < 199306) /* here BSD as just a bug */
-extern int errno;
 #endif
 
 #ifndef STATIC_INLINE_EMUL_NETBSD
@@ -643,7 +632,7 @@ do_sigprocmask(os_emul_data *emul,
 	       cpu *processor,
 	       unsigned_word cia)
 {
-  natural_word how = cpu_registers(processor)->gpr[arg0];
+  signed_word how = cpu_registers(processor)->gpr[arg0];
   unsigned_word set = cpu_registers(processor)->gpr[arg0+1];
   unsigned_word oset = cpu_registers(processor)->gpr[arg0+2];
 #ifdef SYS_sigprocmask
@@ -651,7 +640,7 @@ do_sigprocmask(os_emul_data *emul,
 #endif
 
   if (WITH_TRACE && ppc_trace[trace_os_emul])
-    printf_filtered ("%ld, 0x%ld, 0x%ld", (long)how, (long)set, (long)oset);
+    printf_filtered ("%ld, 0x%lx, 0x%lx", (long)how, (long)set, (long)oset);
 
   emul_write_status(processor, 0, 0);
   cpu_registers(processor)->gpr[4] = set;
@@ -777,8 +766,7 @@ do_gettimeofday(os_emul_data *emul,
   unsigned_word tz_addr = cpu_registers(processor)->gpr[arg0+1];
   struct timeval t;
   struct timezone tz;
-  int status = gettimeofday((t_addr != 0 ? &t : NULL),
-			    (tz_addr != 0 ? &tz : NULL));
+  int status = gettimeofday(&t, (tz_addr != 0 ? &tz : NULL));
   int err = errno;
 
   if (WITH_TRACE && ppc_trace[trace_os_emul])
@@ -892,7 +880,7 @@ do_fstat(os_emul_data *emul,
 {
   int fd = cpu_registers(processor)->gpr[arg0];
   unsigned_word stat_buf_addr = cpu_registers(processor)->gpr[arg0+1];
-  struct stat buf;
+  struct stat buf = {};
   int status;
 #ifdef SYS_fstat
   SYS(fstat);
@@ -1023,12 +1011,12 @@ do___sysctl(os_emul_data *emul,
 {
   /* call the arguments by their real name */
   unsigned_word name = cpu_registers(processor)->gpr[arg0];
-  natural_word namelen = cpu_registers(processor)->gpr[arg0+1];
+  signed_word namelen = cpu_registers(processor)->gpr[arg0+1];
   unsigned_word oldp = cpu_registers(processor)->gpr[arg0+2];
   unsigned_word oldlenp = cpu_registers(processor)->gpr[arg0+3];
-  natural_word oldlen;
-  natural_word mib;
-  natural_word int_val;
+  signed_word oldlen;
+  signed_word mib;
+  signed_word int_val;
   SYS(__sysctl);
 
   /* pluck out the management information base id */
@@ -1062,7 +1050,7 @@ do___sysctl(os_emul_data *emul,
 				     oldlenp,
 				     processor,
 				     cia);
-      if (sizeof(natural_word) > oldlen)
+      if (sizeof(signed_word) > oldlen)
 	error("system_call()sysctl - CTL_HW.HW_PAGESIZE - to small\n");
       int_val = 8192;
       oldlen = sizeof(int_val);

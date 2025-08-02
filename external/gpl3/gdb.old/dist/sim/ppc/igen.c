@@ -17,9 +17,8 @@
  
     */
 
-
-
 #include <getopt.h>
+#include <stdlib.h>
 
 #include "misc.h"
 #include "lf.h"
@@ -183,7 +182,7 @@ gen_semantics_h(insn_table *table,
   lf_printf(file, "\n");
   if ((code & generate_calls)) {
     lf_printf(file, "extern int option_mpc860c0;\n");
-    lf_printf(file, "#define PAGE_SIZE 0x1000\n");
+    lf_printf(file, "#define MPC860C0_PAGE_SIZE 0x1000\n");
     lf_printf(file, "\n");
     lf_printf(file, "PSIM_EXTERN_SEMANTICS(void)\n");
     lf_printf(file, "semantic_init(device* root);\n");
@@ -219,6 +218,7 @@ gen_semantics_c(insn_table *table,
     lf_printf(file, "#include \"cpu.h\"\n");
     lf_printf(file, "#include \"idecode.h\"\n");
     lf_printf(file, "#include \"semantics.h\"\n");
+    lf_printf(file, "#include \"tree.h\"\n");
     lf_printf(file, "#ifdef HAVE_COMMON_FPU\n");
     lf_printf(file, "#include \"sim-inline.h\"\n");
     lf_printf(file, "#include \"sim-fpu.h\"\n");
@@ -351,6 +351,7 @@ main(int argc,
   filter *filters = NULL;
   insn_table *instructions = NULL;
   table_include *includes = NULL;
+  static const struct option longopts[] = { { 0 } };
   char *real_file_name = NULL;
   int is_header = 0;
   int ch;
@@ -390,10 +391,14 @@ main(int argc,
     printf("  -f <output-file>      output support functions\n");
   }
 
-  while ((ch = getopt(argc, argv,
-		      "F:EI:RSLJT:CB:H:N:o:k:i:n:hc:d:m:s:t:f:"))
-	 != -1) {
+  while (
+      (ch = getopt_long (argc, argv, "F:EI:RSLJT:CB:H:N:o:k:i:n:hc:d:m:s:t:f:",
+			 longopts, NULL))
+      != -1)
+  {
+#if 0  /* For debugging.  */
     fprintf(stderr, "\t-%c %s\n", ch, (optarg ? optarg : ""));
+#endif
     switch(ch) {
     case 'C':
       code |= generate_with_icache;
@@ -440,7 +445,7 @@ main(int argc,
 	        code |= generate_with_icache;
                 break;
               default:
-                error (NULL, "Expecting -Ggen-icache or -Ggen-icache=<N>\n");
+		error ("Expecting -Ggen-icache or -Ggen-icache=<N>\n");
               }
           }
 	}

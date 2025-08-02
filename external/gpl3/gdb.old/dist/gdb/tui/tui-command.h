@@ -1,6 +1,6 @@
 /* Specific command window processing.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -30,8 +30,6 @@ struct tui_cmd_window : public tui_win_info
   tui_cmd_window () = default;
 
   DISABLE_COPY_AND_ASSIGN (tui_cmd_window);
-
-  int max_height () const override;
 
   void refresh_window () override
   {

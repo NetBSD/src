@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2023 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -21,40 +21,7 @@
 
 #include "gdbsupport/break-common.h" /* For enum target_hw_bp_type.  */
 
-/* Macro definitions, data structures, and code for the hardware
-   breakpoint and hardware watchpoint support follow.  We use the
-   following abbreviations throughout the code:
-
-   hw - hardware
-   bp - breakpoint
-   wp - watchpoint  */
-
-/* Maximum number of hardware breakpoint and watchpoint registers.
-   Neither of these values may exceed the width of dr_changed_t
-   measured in bits.  */
-
-#define AARCH64_HBP_MAX_NUM 16
-#define AARCH64_HWP_MAX_NUM 16
-
-/* Alignment requirement in bytes for addresses written to
-   hardware breakpoint and watchpoint value registers.
-
-   A ptrace call attempting to set an address that does not meet the
-   alignment criteria will fail.  Limited support has been provided in
-   this port for unaligned watchpoints, such that from a GDB user
-   perspective, an unaligned watchpoint may be requested.
-
-   This is achieved by minimally enlarging the watched area to meet the
-   alignment requirement, and if necessary, splitting the watchpoint
-   over several hardware watchpoint registers.  */
-
-#define AARCH64_HBP_ALIGNMENT 4
-#define AARCH64_HWP_ALIGNMENT 8
-
-/* The maximum length of a memory region that can be watched by one
-   hardware watchpoint register.  */
-
-#define AARCH64_HWP_MAX_LEN_PER_REG 8
+#include "nat/aarch64-hw-point.h"
 
 /* ptrace hardware breakpoint resource info is formatted as follows:
 
@@ -67,23 +34,6 @@
 /* Macros to extract fields from the hardware debug information word.  */
 #define AARCH64_DEBUG_NUM_SLOTS(x) ((x) & 0xff)
 #define AARCH64_DEBUG_ARCH(x) (((x) >> 8) & 0xff)
-
-/* Macro for the expected version of the ARMv8-A debug architecture.  */
-#define AARCH64_DEBUG_ARCH_V8 0x6
-#define AARCH64_DEBUG_ARCH_V8_1 0x7
-#define AARCH64_DEBUG_ARCH_V8_2 0x8
-
-/* ptrace expects control registers to be formatted as follows:
-
-   31                             13          5      3      1     0
-   +--------------------------------+----------+------+------+----+
-   |         RESERVED (SBZ)         |   MASK   | TYPE | PRIV | EN |
-   +--------------------------------+----------+------+------+----+
-
-   The TYPE field is ignored for breakpoints.  */
-
-#define DR_CONTROL_ENABLED(ctrl)	(((ctrl) & 0x1) == 1)
-#define DR_CONTROL_MASK(ctrl)		(((ctrl) >> 5) & 0xff)
 
 /* Each bit of a variable of this type is used to indicate whether a
    hardware breakpoint or watchpoint setting has been changed since
@@ -132,29 +82,6 @@ typedef ULONGEST dr_changed_t;
 #define DR_HAS_CHANGED(x) ((x) != 0)
 #define DR_N_HAS_CHANGED(x, n) ((x) & ((dr_changed_t)1 << (n)))
 
-/* Structure for managing the hardware breakpoint/watchpoint resources.
-   DR_ADDR_* stores the address, DR_CTRL_* stores the control register
-   content, and DR_REF_COUNT_* counts the numbers of references to the
-   corresponding bp/wp, by which way the limited hardware resources
-   are not wasted on duplicated bp/wp settings (though so far gdb has
-   done a good job by not sending duplicated bp/wp requests).  */
-
-struct aarch64_debug_reg_state
-{
-  /* hardware breakpoint */
-  CORE_ADDR dr_addr_bp[AARCH64_HBP_MAX_NUM];
-  unsigned int dr_ctrl_bp[AARCH64_HBP_MAX_NUM];
-  unsigned int dr_ref_count_bp[AARCH64_HBP_MAX_NUM];
-
-  /* hardware watchpoint */
-  /* Address aligned down to AARCH64_HWP_ALIGNMENT.  */
-  CORE_ADDR dr_addr_wp[AARCH64_HWP_MAX_NUM];
-  /* Address as entered by user without any forced alignment.  */
-  CORE_ADDR dr_addr_orig_wp[AARCH64_HWP_MAX_NUM];
-  unsigned int dr_ctrl_wp[AARCH64_HWP_MAX_NUM];
-  unsigned int dr_ref_count_wp[AARCH64_HWP_MAX_NUM];
-};
-
 /* Per-thread arch-specific data we want to keep.  */
 
 struct arch_lwp_info
@@ -166,35 +93,20 @@ struct arch_lwp_info
   dr_changed_t dr_changed_wp;
 };
 
-extern int aarch64_num_bp_regs;
-extern int aarch64_num_wp_regs;
+/* True if this kernel does not have the bug described by PR
+   external/20207 (Linux >= 4.10).  A fixed kernel supports any
+   contiguous range of bits in 8-bit byte DR_CONTROL_MASK.  A buggy
+   kernel supports only 0x01, 0x03, 0x0f and 0xff.  We start by
+   assuming the bug is fixed, and then detect the bug at
+   PTRACE_SETREGSET time.  */
 
-unsigned int aarch64_watchpoint_offset (unsigned int ctrl);
-unsigned int aarch64_watchpoint_length (unsigned int ctrl);
-
-int aarch64_handle_breakpoint (enum target_hw_bp_type type, CORE_ADDR addr,
-			       int len, int is_insert,
-			       struct aarch64_debug_reg_state *state);
-int aarch64_handle_watchpoint (enum target_hw_bp_type type, CORE_ADDR addr,
-			       int len, int is_insert,
-			       struct aarch64_debug_reg_state *state);
+extern bool kernel_supports_any_contiguous_range;
 
 void aarch64_linux_set_debug_regs (struct aarch64_debug_reg_state *state,
 				   int tid, int watchpoint);
 
-/* Return TRUE if there are any hardware breakpoints.  If WATCHPOINT is TRUE,
-   check hardware watchpoints instead.  */
-bool aarch64_linux_any_set_debug_regs_state (aarch64_debug_reg_state *state,
-					     bool watchpoint);
-
-void aarch64_show_debug_reg_state (struct aarch64_debug_reg_state *state,
-				   const char *func, CORE_ADDR addr,
-				   int len, enum target_hw_bp_type type);
-
 void aarch64_linux_get_debug_reg_capacity (int tid);
 
 struct aarch64_debug_reg_state *aarch64_get_debug_reg_state (pid_t pid);
-
-int aarch64_linux_region_ok_for_watchpoint (CORE_ADDR addr, int len);
 
 #endif /* NAT_AARCH64_LINUX_HW_POINT_H */

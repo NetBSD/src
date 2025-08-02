@@ -1,5 +1,5 @@
 /* eBPF simulator support code
-   Copyright (C) 2020 Free Software Foundation, Inc.
+   Copyright (C) 2020-2023 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -16,24 +16,25 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #define WANT_CPU_BPFBF
 #define WANT_CPU bpfbf
 
 #include "sim-main.h"
 #include "sim-fpu.h"
+#include "sim-signal.h"
 #include "cgen-mem.h"
 #include "cgen-ops.h"
 #include "cpuall.h"
 #include "decode.h"
 
+#include "decode-be.h"
+#include "decode-le.h"
+
 #include "defs-le.h"  /* For SCACHE */
 #include "bpf-helpers.h"
-
-/* It is not possible to include both defs-le.h and defs-be.h due to
-   duplicated definitions, so we need a bunch of forward declarations
-   here.  */
-extern void bpfbf_ebpfle_init_idesc_table (SIM_CPU *);
-extern void bpfbf_ebpfbe_init_idesc_table (SIM_CPU *);
 
 uint64_t skb_data_offset;
 
@@ -44,7 +45,7 @@ IDESC *bpf_idesc_be;
 int
 bpfbf_fetch_register (SIM_CPU *current_cpu,
                       int rn,
-                      unsigned char *buf,
+                      void *buf,
                       int len)
 {
   if (rn == 11)
@@ -60,7 +61,7 @@ bpfbf_fetch_register (SIM_CPU *current_cpu,
 int
 bpfbf_store_register (SIM_CPU *current_cpu,
                       int rn,
-                      unsigned char *buf,
+                      const void *buf,
                       int len)
 {
   if (rn == 11)
@@ -80,7 +81,7 @@ bpfbf_model_insn_before (SIM_CPU *current_cpu, int first_p)
 }
 
 void
-bpfbf_model_insn_after (SIM_CPU *current_cpu, int first_p)
+bpfbf_model_insn_after (SIM_CPU *current_cpu, int first_p, int cycles)
 {
   /* XXX */
 }
@@ -185,7 +186,7 @@ bpfbf_exit (SIM_CPU *current_cpu)
   /*  r0 holds "return code" */
   DI r0 = GET_H_GPR (0);
 
-  printf ("exit %ld (0x%lx)\n", r0, r0);
+  printf ("exit %" PRId64 " (0x%" PRIx64 ")\n", r0, r0);
 
   sim_engine_halt (sd, current_cpu, NULL, CPU_PC_GET (current_cpu),
                    sim_exited, 0 /* sigrc */);
@@ -205,7 +206,7 @@ bpfbf_breakpoint (SIM_CPU *current_cpu)
    several ISAs.  This should be fixed in CGEN.  */
 
 static void
-bpf_def_model_init ()
+bpf_def_model_init (SIM_CPU *cpu)
 {
   /* Do nothing.  */
 }
@@ -216,10 +217,10 @@ bpfbf_prepare_run (SIM_CPU *cpu)
   /* Nothing.  */
 }
 
-void
+static void
 bpf_engine_run_full (SIM_CPU *cpu)
 {
-  if (current_target_byte_order == BFD_ENDIAN_LITTLE)
+  if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_LITTLE)
     {
       if (!bpf_idesc_le)
         {
@@ -250,7 +251,7 @@ bpf_engine_run_full (SIM_CPU *cpu)
 void
 bpf_engine_run_fast (SIM_CPU *cpu)
 {
-  if (current_target_byte_order == BFD_ENDIAN_LITTLE)
+  if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_LITTLE)
     {
       if (!bpf_idesc_le)
         {

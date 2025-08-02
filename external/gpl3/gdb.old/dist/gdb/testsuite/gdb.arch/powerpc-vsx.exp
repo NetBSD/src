@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 standard_testfile .s
 set objfile [standard_output_file ${testfile}.o]
 
-if {![istarget "powerpc*-*-*"]} then {
+if {![istarget "powerpc*-*-*"]} {
     verbose "Skipping PowerPC instructions disassembly."
     return
 }
@@ -124,9 +124,7 @@ func_check "xvcmpgtsp vs40,vs50,vs60"
 func_check "xvcmpgtsp. vs40,vs50,vs60"
 func_check "xvcpsgndp vs40,vs50,vs60"
 func_check "xvmovdp vs40,vs60"
-func_check "xvmovdp vs40,vs60"
 func_check "xvcpsgnsp vs40,vs50,vs60"
-func_check "xvmovsp vs40,vs60"
 func_check "xvmovsp vs40,vs60"
 func_check "xvcvdpsp vs40,vs60"
 func_check "xvcvdpsxds vs40,vs60"
@@ -208,18 +206,10 @@ func_check "xxpermdi vs40,vs50,vs60,1"
 func_check "xxpermdi vs40,vs50,vs60,2"
 func_check "xxmrgld vs40,vs50,vs60"
 func_check "xxspltd vs40,vs50,0"
-func_check "xxspltd vs40,vs50,0"
 func_check "xxspltd vs40,vs50,1"
-func_check "xxspltd vs40,vs50,1"
-func_check "xxmrghd vs40,vs50,vs60"
-func_check "xxmrghd vs40,vs50,vs60"
-func_check "xxmrgld vs40,vs50,vs60"
-func_check "xxswapd vs40,vs50"
 func_check "xxswapd vs40,vs50"
 func_check "xxsel   vs40,vs50,vs60,vs62"
 func_check "xxsldwi vs40,vs50,vs60,2"
 func_check "xxspltw vs40,vs60,2"
 func_check "lxvd2x  vs40,0,r20"
-func_check "lxvd2x  vs40,r10,r20"
 func_check "stxvd2x vs40,0,r20"
-func_check "stxvd2x vs40,r10,r20"

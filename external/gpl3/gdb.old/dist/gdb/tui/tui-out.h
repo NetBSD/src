@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2016-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -60,7 +60,5 @@ private:
   int m_line = 0;
   int m_start_of_line = 0;
 };
-
-extern tui_ui_out *tui_out_new (struct ui_file *stream);
 
 #endif /* TUI_TUI_OUT_H */

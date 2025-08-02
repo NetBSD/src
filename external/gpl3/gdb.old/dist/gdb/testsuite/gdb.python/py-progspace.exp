@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,7 +53,6 @@ gdb_test "python print (progspace.random_attribute)" "42" \
     "Verify set of random attribute in progspace"
 
 if {![runto_main]} {
-    fail "can't run to main"
     return
 }
 
@@ -61,6 +60,9 @@ if {![runto_main]} {
 set pc_val [get_integer_valueof "\$pc" 0]
 gdb_py_test_silent_cmd "python blk = gdb.current_progspace ().block_for_pc (${pc_val})" \
     "get block for the current \$pc" 1
+gdb_py_test_silent_cmd \
+    "python blk = gdb.current_progspace ().block_for_pc (gdb.Value(${pc_val}))" \
+    "get block for the current \$pc as value" 1
 gdb_test "python print (blk.start <= ${pc_val})" "True" \
     "block start is before \$pc"
 gdb_test "python print (blk.end >= ${pc_val})" "True" \

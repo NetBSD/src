@@ -1,5 +1,5 @@
 /* A safe iterator for GDB, the GNU debugger.
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,11 +48,11 @@ public:
   typedef typename Iterator::iterator_category iterator_category;
   typedef typename Iterator::difference_type difference_type;
 
-  /* Construct using the given argument; the end iterator is default
-     constructed.  */
-  template<typename Arg>
-  explicit basic_safe_iterator (Arg &&arg)
-    : m_it (std::forward<Arg> (arg)),
+  /* Construct the begin iterator using the given arguments; the end iterator is
+     default constructed.  */
+  template<typename... Args>
+  explicit basic_safe_iterator (Args &&...args)
+    : m_it (std::forward<Args> (args)...),
       m_next (m_it)
   {
     if (m_it != m_end)

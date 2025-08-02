@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Free Software Foundation, Inc.
+# Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,8 +16,13 @@
 import gdb
 from gdb.unwinder import Unwinder
 
-class FrameId(object):
 
+# These are set to test whether invalid register names cause an error.
+add_saved_register_error = False
+read_register_error = False
+
+
+class FrameId(object):
     def __init__(self, sp, pc):
         self._sp = sp
         self._pc = pc
@@ -29,6 +34,7 @@ class FrameId(object):
     @property
     def pc(self):
         return self._pc
+
 
 class TestUnwinder(Unwinder):
     AMD64_RBP = 6
@@ -42,9 +48,9 @@ class TestUnwinder(Unwinder):
         self._last_arch = None
 
     # Update the register descriptor AMD64_RIP based on ARCH.
-    def _update_register_descriptors (self, arch):
-        if (self._last_arch != arch):
-            TestUnwinder.AMD64_RIP = arch.registers ().find ("rip")
+    def _update_register_descriptors(self, arch):
+        if self._last_arch != arch:
+            TestUnwinder.AMD64_RIP = arch.registers().find("rip")
             self._last_arch = arch
 
     def _read_word(self, address):
@@ -79,12 +85,12 @@ class TestUnwinder(Unwinder):
         # Check that we can access the architecture of the pending
         # frame, and that this is the same architecture as for the
         # currently selected inferior.
-        inf_arch = gdb.selected_inferior ().architecture ()
-        frame_arch = pending_frame.architecture ()
-        if (inf_arch != frame_arch):
-            raise gdb.GdbError ("architecture mismatch")
+        inf_arch = gdb.selected_inferior().architecture()
+        frame_arch = pending_frame.architecture()
+        if inf_arch != frame_arch:
+            raise gdb.GdbError("architecture mismatch")
 
-        self._update_register_descriptors (frame_arch)
+        self._update_register_descriptors(frame_arch)
 
         try:
             # NOTE: the registers in Unwinder API can be referenced
@@ -100,17 +106,29 @@ class TestUnwinder(Unwinder):
             previous_ip = self._read_word(bp + 8)
             previous_sp = bp + 16
 
+            try:
+                pending_frame.read_register("nosuchregister")
+            except ValueError:
+                global read_register_error
+                read_register_error = True
+
             frame_id = FrameId(
                 pending_frame.read_register(TestUnwinder.AMD64_RSP),
-                pending_frame.read_register(TestUnwinder.AMD64_RIP))
+                pending_frame.read_register(TestUnwinder.AMD64_RIP),
+            )
             unwind_info = pending_frame.create_unwind_info(frame_id)
-            unwind_info.add_saved_register(TestUnwinder.AMD64_RBP,
-                                           previous_bp)
+            unwind_info.add_saved_register(TestUnwinder.AMD64_RBP, previous_bp)
             unwind_info.add_saved_register("rip", previous_ip)
             unwind_info.add_saved_register("rsp", previous_sp)
+            try:
+                unwind_info.add_saved_register("nosuchregister", previous_sp)
+            except ValueError:
+                global add_saved_register_error
+                add_saved_register_error = True
             return unwind_info
         except (gdb.error, RuntimeError):
             return None
+
 
 gdb.unwinder.register_unwinder(None, TestUnwinder(), True)
 print("Python script imported")

@@ -1,4 +1,4 @@
-# Copyright 1992-2020 Free Software Foundation, Inc.
+# Copyright 1992-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,10 +19,6 @@
 if { [skip_cplus_tests] } { continue }
 
 standard_testfile .cc
-
-if { [get_compiler_info "c++"] } {
-    return -1
-}
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
@@ -287,13 +283,16 @@ proc probe_demangler { } {
 #
 
 proc info_func_regexp { name demangled } {
-    global gdb_prompt
+    global srcfile decimal
 
     regsub {\\\(void\\\)} $demangled {\(\)} demangled
 
-    gdb_test "info function $name" \
-	"File .*:\t(class|)${demangled}.*" \
-	"info function for \"$name\""
+    set file_re "File .*[string_to_regexp $srcfile]:"
+
+    gdb_test_lines "info function $name" "info function for \"$name\"" \
+	[multi_line \
+	     "$file_re" \
+	     "$decimal:\t(class|)${demangled}.*"]
 }
 
 #
@@ -497,7 +496,7 @@ proc test_paddr_operator_functions {} {
 	" = .* $hex <foo::operator new\\\[\\\]\\(.*\\)(| static)>"    
 
     print_addr "foo::operator delete($dm_type_void_star)"
-    print_addr "foo::operator delete[]($dm_type_void_star)"
+    print_addr "foo::operator delete\[\]($dm_type_void_star)"
 
     print_addr "foo::operator int($dm_type_void)"
     print_addr "foo::operator $dm_operator_char_star\($dm_type_void)"
@@ -577,8 +576,6 @@ proc test_paddr_hairy_functions {} {
 proc do_tests {} {
     global binfile
     global dm_type_int_star
-
-    clean_restart $binfile
 
     gdb_test_no_output "set width 0"
 

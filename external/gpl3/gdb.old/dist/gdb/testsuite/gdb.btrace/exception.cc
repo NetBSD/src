@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2013-2020 Free Software Foundation, Inc.
+   Copyright 2013-2023 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -50,7 +50,11 @@ test (void)
 int
 main (void)
 {
+  int ret;
+
   test ();
   test (); /* bp.1  */
-  return 0; /* bp.2  */
+
+  ret = 0;
+  return ret; /* bp.2  */
 }

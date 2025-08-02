@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,3 +66,31 @@ set prop_list [lsort $prop_list]
 verbose -log "prop_list: $prop_list"
 gdb_test "gu (print (sort (map car (object-properties arch)) (lambda (a b) (string<? (symbol->string a) (symbol->string b)))))" \
     "= \\($prop_list\\)" "object-properties"
+
+# Check that smob classes are exported properly
+with_test_prefix "test exports" {
+    # Import (oop goops) for is-a? and <class>
+    gdb_scm_test_silent_cmd "gu (use-modules (oop goops))" "import goops"
+    gdb_test_no_output "gu (define-syntax-rule (gdb-exports-class? x) (is-a? (@ (gdb) x) <class>))"
+
+    gdb_test "gu (print (gdb-exports-class? <gdb:arch>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:block>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:block-symbols-iterator>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:breakpoint>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:command>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:exception>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:frame>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:iterator>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:lazy-string>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:objfile>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:parameter>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:pretty-printer>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:pretty-printer-worker>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:progspace>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:symbol>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:symtab>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:sal>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:type>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:field>))" "= #t"
+    gdb_test "gu (print (gdb-exports-class? <gdb:value>))" "= #t"
+}

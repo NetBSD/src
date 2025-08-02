@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -23,6 +23,9 @@
 #ifndef HW_DEVICE_H
 #define HW_DEVICE_H
 
+#include <stdarg.h>
+
+#include "ansidecl.h"
 
 /* Introduction:
 
@@ -432,17 +435,15 @@ int hw_ioctl
 void hw_abort
 (struct hw *me,
  const char *fmt,
- ...) __attribute__ ((format (printf, 2, 3), noreturn));
+ ...) ATTRIBUTE_PRINTF (2, 3) ATTRIBUTE_NORETURN;
 
-void hw_vabort
-(struct hw *me,
- const char *fmt,
- va_list ap) __attribute__ ((noreturn));
+extern void hw_vabort (struct hw *me, const char *fmt, va_list ap)
+  ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 0);
 
 void hw_halt
 (struct hw *me,
  int reason,
- int status) __attribute__ ((noreturn));
+ int status) ATTRIBUTE_NORETURN;
 
 
 #define hw_trace_p(hw) ((hw)->trace_of_hw_p + 0)
@@ -450,7 +451,7 @@ void hw_halt
 void hw_trace
 (struct hw *me,
  const char *fmt,
- ...) __attribute__ ((format (printf, 2, 3)));
+ ...) ATTRIBUTE_PRINTF (2, 3);
 
 #define HW_TRACE(ARGS) \
 do { \

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2013-2020 Free Software Foundation, Inc.
+   Copyright 2013-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -240,7 +240,7 @@ main:
 	.byte	0x5
 	.4byte	.Ldebug_ranges0	# DW_AT_GNU_ranges_base
 	.ascii "/tmp/src/gdb/testsuite\0"	# DW_AT_comp_dir
-	.ascii "fission-loclists.dwo\0"	# DW_AT_GNU_dwo_name
+	.asciz DWO	# DW_AT_GNU_dwo_name
 	.4byte	.Ldebug_pubnames0	# DW_AT_GNU_pubnames
 	.4byte	.Ldebug_pubtypes0	# DW_AT_GNU_pubtypes
 	.4byte	.Ldebug_addr0	# DW_AT_GNU_addr_base
@@ -523,20 +523,6 @@ main:
 	.quad	.LFE1-.LFB1	# Length
 	.quad	0
 	.quad	0
-	.section	.debug_aranges,"",@progbits
-	.4byte	0x3c	# Length of Address Ranges Info
-	.value	0x2	# DWARF Version
-	.4byte	.Lskeleton_debug_info0	# Offset of Compilation Unit Info
-	.byte	0x8	# Size of Address
-	.byte	0	# Size of Segment Descriptor
-	.value	0	# Pad to 16 byte boundary
-	.value	0
-	.8byte	.Ltext0	# Address
-	.8byte	.Letext0-.Ltext0	# Length
-	.8byte	.LFB1	# Address
-	.8byte	.LFE1-.LFB1	# Length
-	.8byte	0
-	.8byte	0
 	.section	.debug_ranges,"",@progbits
 .Ldebug_ranges0:
 	.8byte	.Ltext0 - .Ltext0	# Offset 0

@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,10 +33,10 @@ set libsrc [list "${srcdir}/${subdir}/ctxobj-v.c" \
 set libobj1 [standard_output_file libctxobj1.so]
 set libobj2 [standard_output_file libctxobj2.so]
 
-set libobj1_opts { debug additional_flags=-fPIC
+set libobj1_opts { debug
                    additional_flags=-DVERSION=104
                    additional_flags=-DGET_VERSION=get_version_1 }
-set libobj2_opts { debug additional_flags=-fPIC
+set libobj2_opts { debug
                    additional_flags=-DVERSION=203
                    additional_flags=-DGET_VERSION=get_version_2 }
 
@@ -59,7 +59,6 @@ gdb_load_shlib $libobj1
 gdb_load_shlib $libobj2
 
 if ![runto_main] {
-    untested "could not run to main"
     return -1
 }
 
@@ -68,9 +67,17 @@ gdb_test "break ctxobj-f.c:$bp_location" \
          "Breakpoint \[0-9\]+ at 0x\[0-9a-fA-F\]+: .*" \
          "break in get_version functions"
 
-gdb_test "continue" \
-         "Breakpoint $decimal, get_version_1 \\(\\).*" \
-         "continue to get_version_1"
+global expect_out
+set test "continue to get_version_1"
+gdb_test_multiple "continue" $test {
+    -re "Breakpoint ($bkptno_num_re), get_version_1 \\(\\).*\r\n.*$gdb_prompt $" {
+	set bpno $expect_out(1,string)
+	pass $test
+    }
+}
+# Verify $_hit_bpnum.$_hit_locno convenience variables are set to the hit bpno.
+gdb_test "printf \"%d.%d\\n\", \$_hit_bpnum, \$_hit_locno" "$bpno" \
+    "$test \$_hit_bpnum.\$_hit_locno is $bpno"
 
 # Try printing "this_version_num".  There are two global variables
 # with that name, and some systems such as GNU/Linux merge them
@@ -101,10 +108,16 @@ gdb_test "print this_version_num == v" \
         "print libctxobj1's this_version_num from symtab"
 
 # Do the same, but from get_version_2.
-
-gdb_test "continue" \
-         "Breakpoint $decimal, get_version_2 \\(\\).*" \
-         "continue to get_version_2"
+set test "continue to get_version_2"
+gdb_test_multiple "continue" $test {
+    -re "Breakpoint ($bkptno_num_re), get_version_2 \\(\\).*\r\n.*$gdb_prompt $" {
+	set bpno $expect_out(1,string)
+	pass $test
+    }
+}
+# Verify the $_hit_bpnum.$_hit_locno convenience variables are set to the hit bpno.
+gdb_test "printf \"%d.%d\\n\", \$_hit_bpnum, \$_hit_locno" "$bpno" \
+    "$test \$_hit_bpnum.\$_hit_locno is $bpno"
 
 gdb_test "print this_version_num == v" \
          " = 1" \

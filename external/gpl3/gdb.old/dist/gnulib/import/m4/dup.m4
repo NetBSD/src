@@ -1,5 +1,5 @@
-# dup.m4 serial 6
-dnl Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# dup.m4 serial 7
+dnl Copyright (C) 2011-2022 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -26,7 +26,8 @@ AC_DEFUN([gl_FUNC_DUP],
     [AC_RUN_IFELSE(
       [AC_LANG_PROGRAM([[#include <unistd.h>
                          #include <fcntl.h>
-                         #include <errno.h>]],
+                         #include <errno.h>
+                       ]GL_MDA_DEFINES],
          [[/* On OS/2 kLIBC, dup does not work on a directory fd.  */
            int fd = open (".", O_RDONLY);
            return fd < 0 ? 1 : dup (fd) < 0 ? 2 : 0;

@@ -1,6 +1,6 @@
 /* TUI display source window.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -37,6 +37,7 @@
 #include "tui/tui-win.h"
 #include "tui/tui-winsource.h"
 #include "tui/tui-source.h"
+#include "tui/tui-location.h"
 #include "gdb_curses.h"
 
 /* Function to display source in the source window.  */
@@ -50,12 +51,9 @@ tui_source_window::set_contents (struct gdbarch *arch,
   if (s == NULL)
     return false;
 
-  int line_width, nlines;
-
-  line_width = width - TUI_EXECINFO_SIZE - 1;
   /* Take hilite (window border) into account, when
      calculating the number of lines.  */
-  nlines = height - 2;
+  int nlines = height - 2;
 
   std::string srclines;
   const std::vector<off_t> *offsets;
@@ -65,8 +63,6 @@ tui_source_window::set_contents (struct gdbarch *arch,
     return false;
 
   int cur_line_no, cur_line;
-  struct tui_locator_window *locator
-    = tui_locator_win_info_ptr ();
   const char *s_filename = symtab_to_filename_for_display (s);
 
   title = s_filename;
@@ -74,19 +70,20 @@ tui_source_window::set_contents (struct gdbarch *arch,
   m_fullname = make_unique_xstrdup (symtab_to_fullname (s));
 
   cur_line = 0;
-  m_gdbarch = SYMTAB_OBJFILE (s)->arch ();
+  m_gdbarch = s->compunit ()->objfile ()->arch ();
   m_start_line_or_addr.loa = LOA_LINE;
   cur_line_no = m_start_line_or_addr.u.line_no = line_no;
 
-  int digits = 0;
+  m_digits = 7;
   if (compact_source)
     {
       /* Solaris 11+gcc 5.5 has ambiguous overloads of log10, so we
 	 cast to double to get the right one.  */
       double l = log10 ((double) offsets->size ());
-      digits = 1 + (int) l;
+      m_digits = 1 + (int) l;
     }
 
+  m_max_length = -1;
   const char *iter = srclines.c_str ();
   m_content.resize (nlines);
   while (cur_line < nlines)
@@ -95,18 +92,20 @@ tui_source_window::set_contents (struct gdbarch *arch,
 
       std::string text;
       if (*iter != '\0')
-	text = tui_copy_source_line (&iter, cur_line_no,
-				     m_horizontal_offset,
-				     line_width, digits);
+	{
+	  int line_len;
+	  text = tui_copy_source_line (&iter, &line_len);
+	  m_max_length = std::max (m_max_length, line_len);
+	}
 
       /* Set whether element is the execution point
 	 and whether there is a break point on it.  */
       element->line_or_addr.loa = LOA_LINE;
       element->line_or_addr.u.line_no = cur_line_no;
       element->is_exec_point
-	= (filename_cmp (locator->full_name.c_str (),
+	= (filename_cmp (tui_location.full_name ().c_str (),
 			 symtab_to_fullname (s)) == 0
-	   && cur_line_no == locator->line_no);
+	   && cur_line_no == tui_location.line_no ());
 
       m_content[cur_line].line = std::move (text);
 
@@ -124,7 +123,7 @@ bool
 tui_source_window::showing_source_p (const char *fullname) const
 {
   return (!m_content.empty ()
-	  && (filename_cmp (tui_locator_win_info_ptr ()->full_name.c_str (),
+	  && (filename_cmp (tui_location.full_name ().c_str (),
 			    fullname) == 0));
 }
 
@@ -141,7 +140,7 @@ tui_source_window::do_scroll_vertical (int num_to_scroll)
 
       if (cursal.symtab == NULL)
 	{
-	  struct frame_info *fi = get_selected_frame (NULL);
+	  frame_info_ptr fi = get_selected_frame (NULL);
 	  s = find_pc_line_symtab (get_frame_pc (fi));
 	  arch = get_frame_arch (fi);
 	}
@@ -192,7 +191,7 @@ tui_source_window::line_is_displayed (int line) const
 }
 
 void
-tui_source_window::maybe_update (struct frame_info *fi, symtab_and_line sal)
+tui_source_window::maybe_update (frame_info_ptr fi, symtab_and_line sal)
 {
   int start_line = (sal.line - ((height - 2) / 2)) + 1;
   if (start_line <= 0)
@@ -224,4 +223,17 @@ tui_source_window::display_start_addr (struct gdbarch **gdbarch_p,
 
   *gdbarch_p = m_gdbarch;
   find_line_pc (cursal.symtab, m_start_line_or_addr.u.line_no, addr_p);
+}
+
+/* See tui-winsource.h.  */
+
+void
+tui_source_window::show_line_number (int offset) const
+{
+  int lineno = m_content[0].line_or_addr.u.line_no + offset;
+  char text[20];
+  /* To completely overwrite the previous border when the source window height
+     is increased, both spaces after the line number have to be redrawn.  */
+  xsnprintf (text, sizeof (text), "%*d  ", m_digits - 1, lineno);
+  waddstr (handle.get (), text);
 }

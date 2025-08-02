@@ -1,4 +1,4 @@
-# Copyright 2015-2020 Free Software Foundation, Inc.
+# Copyright 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,10 +29,19 @@ if ![support_nested_function_tests] {
     return -1
 }
 
+set flags {}
+lappend flags debug
+lappend flags additional_flags=-std=gnu99
+
+set ld_flags ldflags=-Wl,--no-warn-execstack
+if { [gdb_can_simple_compile ld-flags {int main () { return 0; }} executable \
+	  $ld_flags] } {
+    lappend flags $ld_flags
+}
+
 if { [gdb_compile "${srcdir}/${subdir}/${testcase}.c" \
-                  [standard_output_file "${testcase}"] \
-                  executable \
-                  [list debug "additional_flags=-std=gnu99"]] != "" } {
+	  [standard_output_file "${testcase}"] \
+	  executable $flags] != "" } {
     return -1
 }
 
@@ -41,8 +50,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${testcase}.c" \
 
 clean_restart "${testcase}"
 if ![runto_main] {
-    perror "could not run to main"
-    continue
+    return
 }
 
 set bp_location [gdb_get_line_number "STOP" "${testcase}.c"]

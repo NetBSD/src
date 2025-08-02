@@ -1,5 +1,5 @@
 /* Interface to hashtable implementations.
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2022 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -138,15 +138,6 @@ ctf_hash_eq_type_id_key (const void *a, const void *b)
 
   return (key_a->ctii_input_num == key_b->ctii_input_num)
     && (key_a->ctii_type == key_b->ctii_type);
-}
-
-/* Hash and eq functions for the dynset.  Most of these can just use the
-   underlying hashtab functions directly.   */
-
-int
-ctf_dynset_eq_string (const void *a, const void *b)
-{
-  return !strcmp((const char *) a, (const char *) b);
 }
 
 /* The dynhash, used for hashes whose size is not known at creation time. */
@@ -476,6 +467,13 @@ ctf_dynhash_next (ctf_dynhash_t *h, ctf_next_t **it, void **key, void **value)
   return ECTF_NEXT_END;
 }
 
+int
+ctf_dynhash_sort_by_name (const ctf_next_hkv_t *one, const ctf_next_hkv_t *two,
+			  void *unused _libctf_unused_)
+{
+  return strcmp ((char *) one->hkv_key, (char *) two->hkv_key);
+}
+
 /* Traverse a sorted dynhash, in _next iterator form.
 
    See ctf_dynhash_next for notes on error returns, etc.
@@ -665,6 +663,12 @@ ctf_dynset_lookup (ctf_dynset_t *hp, const void *key)
   return NULL;
 }
 
+size_t
+ctf_dynset_elements (ctf_dynset_t *hp)
+{
+  return htab_elements ((struct htab *) hp);
+}
+
 /* TRUE/FALSE return.  */
 int
 ctf_dynset_exists (ctf_dynset_t *hp, const void *key, const void **orig_key)
@@ -781,7 +785,7 @@ ctf_hash_size (const ctf_hash_t *hp)
 }
 
 int
-ctf_hash_insert_type (ctf_hash_t *hp, ctf_file_t *fp, uint32_t type,
+ctf_hash_insert_type (ctf_hash_t *hp, ctf_dict_t *fp, uint32_t type,
 		      uint32_t name)
 {
   const char *str = ctf_strraw (fp, name);
@@ -811,7 +815,7 @@ ctf_hash_insert_type (ctf_hash_t *hp, ctf_file_t *fp, uint32_t type,
    this new official definition. If the key is not present, then call
    ctf_hash_insert_type and hash it in.  */
 int
-ctf_hash_define_type (ctf_hash_t *hp, ctf_file_t *fp, uint32_t type,
+ctf_hash_define_type (ctf_hash_t *hp, ctf_dict_t *fp, uint32_t type,
                       uint32_t name)
 {
   /* This matches the semantics of ctf_hash_insert_type in this
@@ -821,7 +825,7 @@ ctf_hash_define_type (ctf_hash_t *hp, ctf_file_t *fp, uint32_t type,
 }
 
 ctf_id_t
-ctf_hash_lookup_type (ctf_hash_t *hp, ctf_file_t *fp __attribute__ ((__unused__)),
+ctf_hash_lookup_type (ctf_hash_t *hp, ctf_dict_t *fp __attribute__ ((__unused__)),
 		      const char *key)
 {
   ctf_helem_t **slot;

@@ -1,5 +1,5 @@
 /* coff information for Zilog Z80
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This program is free software; you can redistribute it and/or modify
@@ -35,9 +35,10 @@
 #define COFF_ALIGN_IN_S_FLAGS 1
 #define F_ALGNMASK 0x0F00
 /* requires a power-of-two argument */
-#define COFF_ENCODE_ALIGNMENT(S,X) ((S).s_flags |= (((unsigned)(X)&0xF)<<8))
+#define COFF_ENCODE_ALIGNMENT(B,S,X) \
+  ((S).s_flags |= (((unsigned) (X) & 0xF) << 8), true)
 /* result is a power of two */
-#define COFF_DECODE_ALIGNMENT(X) (((X)>>8)&0xF)
+#define COFF_DECODE_ALIGNMENT(X) (((X) >> 8) & 0xF)
 
 #define	Z80MAGIC   0x805A
 
@@ -58,3 +59,19 @@ struct external_reloc
 
 #define RELOC struct external_reloc
 #define RELSZ 16
+
+/* Z80 relocations.  */
+#define R_IMM16   0x01		/* 16 bit abs */
+#define R_JR      0x02		/* jr  8 bit disp */
+#define R_IMM32   0x11		/* 32 bit abs */
+#define R_IMM8    0x22		/* 8 bit abs */
+
+#define R_OFF8    0x32		/* 8 bit signed abs, for (i[xy]+d) */
+#define R_IMM24   0x33		/* 24 bit abs */
+#define R_IMM16BE 0x3A		/* 16 bit abs, big endian */
+#define R_BYTE0   0x34		/* first (lowest) 8 bits of multibyte value */
+#define R_BYTE1   0x35		/* second 8 bits of multibyte value */
+#define R_BYTE2   0x36		/* third 8 bits of multibyte value */
+#define R_BYTE3   0x37		/* fourth (highest) 8 bits of multibyte value */
+#define R_WORD0   0x38		/* lowest 16 bits of 32 or 24 bit value */
+#define R_WORD1   0x39		/* highest 16 bits of 32 or 24 bit value */

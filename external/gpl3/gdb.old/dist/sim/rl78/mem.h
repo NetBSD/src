@@ -1,6 +1,6 @@
 /* mem.h --- interface to memory for RL78 simulator.
 
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2023 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of the GNU simulators.
@@ -28,6 +28,8 @@
 extern unsigned char memory[];
 
 void init_mem (void);
+
+void mem_set_mirror (int rom_base, int ram_base, int length);
 
 /* Pass the amount of bytes, like 2560 for 2.5k  */
 void mem_ram_size (int ram_bytes);

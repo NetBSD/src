@@ -1,5 +1,5 @@
 /* Tracepoint code for remote server for GDB.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -77,27 +77,20 @@ trace_vdebug (const char *fmt, ...)
   va_end (ap);
 }
 
-#define trace_debug_1(level, fmt, args...)	\
+#define trace_debug(fmt, args...)	\
   do {						\
-    if (level <= debug_threads)		\
+    if (debug_threads)				\
       trace_vdebug ((fmt), ##args);		\
   } while (0)
 
 #else
 
-#define trace_debug_1(level, fmt, args...)	\
+#define trace_debug(fmt, args...)	\
   do {						\
-    if (level <= debug_threads)			\
-      {						\
-	debug_printf ((fmt), ##args);		\
-	debug_printf ("\n");			\
-      }						\
+      threads_debug_printf ((fmt), ##args);	\
   } while (0)
 
 #endif
-
-#define trace_debug(FMT, args...)		\
-  trace_debug_1 (1, FMT, ##args)
 
 /* Prefix exported symbols, for good citizenship.  All the symbols
    that need exporting are defined in this module.  Note that all
@@ -327,8 +320,7 @@ tracepoint_look_up_symbols (void)
 
       if (look_up_one_symbol (symbol_list[i].name, addrp, 1) == 0)
 	{
-	  if (debug_threads)
-	    debug_printf ("symbol `%s' not found\n", symbol_list[i].name);
+	  threads_debug_printf ("symbol `%s' not found", symbol_list[i].name);
 	  return;
 	}
     }
@@ -402,11 +394,11 @@ tracepoint_handler (CORE_ADDR address)
 }
 
 /* Breakpoint at "stop_tracing" in the inferior lib.  */
-struct breakpoint *stop_tracing_bkpt;
+static struct breakpoint *stop_tracing_bkpt;
 static int stop_tracing_handler (CORE_ADDR);
 
 /* Breakpoint at "flush_trace_buffer" in the inferior lib.  */
-struct breakpoint *flush_trace_buffer_bkpt;
+static struct breakpoint *flush_trace_buffer_bkpt;
 static int flush_trace_buffer_handler (CORE_ADDR);
 
 static void download_trace_state_variables (void);
@@ -863,7 +855,7 @@ EXTERN_C_POP
 
 static struct tracepoint *last_tracepoint;
 
-static const char *eval_result_names[] =
+static const char * const eval_result_names[] =
   {
     "terror:in the attic",  /* this should never be reported */
     "terror:empty expression",
@@ -912,7 +904,7 @@ struct trace_state_variable
 /* Linked list of all trace state variables.  */
 
 #ifdef IN_PROCESS_AGENT
-struct trace_state_variable *alloced_trace_state_variables;
+static struct trace_state_variable *alloced_trace_state_variables;
 #endif
 
 IP_AGENT_EXPORT_VAR struct trace_state_variable *trace_state_variables;
@@ -1170,7 +1162,7 @@ IP_AGENT_EXPORT_VAR unsigned int trace_buffer_ctrl_curr;
    it doesn't need to sync with itself.  Define it as array anyway so
    that the rest of the code base doesn't need to care for the
    difference.  */
-struct trace_buffer_control trace_buffer_ctrl[1];
+static trace_buffer_control trace_buffer_ctrl[1];
 # define TRACE_BUFFER_CTRL_CURR 0
 #endif
 
@@ -1264,23 +1256,23 @@ static int tracing_stop_tpnum;
 /* 64-bit timestamps for the trace run's start and finish, expressed
    in microseconds from the Unix epoch.  */
 
-LONGEST tracing_start_time;
-LONGEST tracing_stop_time;
+static LONGEST tracing_start_time;
+static LONGEST tracing_stop_time;
 
 /* The (optional) user-supplied name of the user that started the run.
    This is an arbitrary string, and may be NULL.  */
 
-char *tracing_user_name;
+static char *tracing_user_name;
 
 /* Optional user-supplied text describing the run.  This is
    an arbitrary string, and may be NULL.  */
 
-char *tracing_notes;
+static char *tracing_notes;
 
 /* Optional user-supplied text explaining a tstop command.  This is an
    arbitrary string, and may be NULL.  */
 
-char *tracing_stop_note;
+static char *tracing_stop_note;
 
 #endif
 
@@ -2792,21 +2784,10 @@ cmd_qtenable_disable (char *own_buf, int enable)
 
       if (tp->type == fast_tracepoint || tp->type == static_tracepoint)
 	{
-	  int ret;
 	  int offset = offsetof (struct tracepoint, enabled);
 	  CORE_ADDR obj_addr = tp->obj_addr_on_target + offset;
 
-	  ret = prepare_to_access_memory ();
-	  if (ret)
-	    {
-	      trace_debug ("Failed to temporarily stop inferior threads");
-	      write_enn (own_buf);
-	      return;
-	    }
-
-	  ret = write_inferior_int8 (obj_addr, enable);
-	  done_accessing_memory ();
-	  
+	  int ret = write_inferior_int8 (obj_addr, enable);
 	  if (ret)
 	    {
 	      trace_debug ("Cannot write enabled flag into "
@@ -2940,8 +2921,7 @@ get_jump_space_head (void)
       if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_jump_pad_buffer,
 				      &gdb_jump_pad_head))
 	{
-	  internal_error (__FILE__, __LINE__,
-			  "error extracting jump_pad_buffer");
+	  internal_error ("error extracting jump_pad_buffer");
 	}
     }
 
@@ -2973,15 +2953,13 @@ claim_trampoline_space (ULONGEST used, CORE_ADDR *trampoline)
       if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_trampoline_buffer,
 				      &trampoline_buffer_tail))
 	{
-	  internal_error (__FILE__, __LINE__,
-			  "error extracting trampoline_buffer");
+	  internal_error ("error extracting trampoline_buffer");
 	}
 
       if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_trampoline_buffer_end,
 				      &trampoline_buffer_head))
 	{
-	  internal_error (__FILE__, __LINE__,
-			  "error extracting trampoline_buffer_end");
+	  internal_error ("error extracting trampoline_buffer_end");
 	}
     }
 
@@ -3016,8 +2994,7 @@ have_fast_tracepoint_trampoline_buffer (char *buf)
   if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_trampoline_buffer_end,
 				  &trampoline_end))
     {
-      internal_error (__FILE__, __LINE__,
-		      "error extracting trampoline_buffer_end");
+      internal_error ("error extracting trampoline_buffer_end");
     }
   
   if (buf)
@@ -3027,8 +3004,7 @@ have_fast_tracepoint_trampoline_buffer (char *buf)
       if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_trampoline_buffer_error,
 				  &errbuf))
 	{
-	  internal_error (__FILE__, __LINE__,
-			  "error extracting errbuf");
+	  internal_error ("error extracting errbuf");
 	}
 
       read_inferior_memory (errbuf, (unsigned char *) buf, 100);
@@ -3192,7 +3168,7 @@ install_tracepoint (struct tracepoint *tpoint, char *own_buf)
 
     }
   else
-    internal_error (__FILE__, __LINE__, "Unknown tracepoint type");
+    internal_error ("Unknown tracepoint type");
 
   if (tpoint->handle == NULL)
     {
@@ -3242,7 +3218,7 @@ cmd_qtstart (char *packet)
       /* Tell IPA about the correct tdesc.  */
       if (write_inferior_integer (ipa_sym_addrs.addr_ipa_tdesc_idx,
 				  target_get_ipa_tdesc_idx ()))
-        error ("Error setting ipa_tdesc_idx variable in lib");
+	error ("Error setting ipa_tdesc_idx variable in lib");
     }
 
   /* Start out empty.  */
@@ -3381,22 +3357,19 @@ cmd_qtstart (char *packet)
     {
       if (write_inferior_integer (ipa_sym_addrs.addr_tracing, 1))
 	{
-	  internal_error (__FILE__, __LINE__,
-			  "Error setting tracing variable in lib");
+	  internal_error ("Error setting tracing variable in lib");
 	}
 
       if (write_inferior_data_pointer (ipa_sym_addrs.addr_stopping_tracepoint,
 				       0))
 	{
-	  internal_error (__FILE__, __LINE__,
-			  "Error clearing stopping_tracepoint variable"
+	  internal_error ("Error clearing stopping_tracepoint variable"
 			  " in lib");
 	}
 
       if (write_inferior_integer (ipa_sym_addrs.addr_trace_buffer_is_full, 0))
 	{
-	  internal_error (__FILE__, __LINE__,
-			  "Error clearing trace_buffer_is_full variable"
+	  internal_error ("Error clearing trace_buffer_is_full variable"
 			  " in lib");
 	}
 
@@ -3448,8 +3421,7 @@ stop_tracing (void)
     {
       if (write_inferior_integer (ipa_sym_addrs.addr_tracing, 0))
 	{
-	  internal_error (__FILE__, __LINE__,
-			  "Error clearing tracing variable in lib");
+	  internal_error ("Error clearing tracing variable in lib");
 	}
     }
 
@@ -3975,18 +3947,14 @@ gdb_agent_about_to_close (int pid)
 
   if (!maybe_write_ipa_not_loaded (buf))
     {
-      struct thread_info *saved_thread;
-
-      saved_thread = current_thread;
+      scoped_restore_current_thread restore_thread;
 
       /* Find any thread which belongs to process PID.  */
-      current_thread = find_any_thread_of_pid (pid);
+      switch_to_thread (find_any_thread_of_pid (pid));
 
       strcpy (buf, "close");
 
       run_inferior_command (buf, strlen (buf) + 1);
-
-      current_thread = saved_thread;
     }
 }
 
@@ -4408,7 +4376,7 @@ tracepoint_finished_step (struct thread_info *tinfo, CORE_ADDR stop_pc)
   wstep_link = &tinfo->while_stepping;
 
   trace_debug ("Thread %s finished a single-step for tracepoint %d at 0x%s",
-	       target_pid_to_str (tinfo->id),
+	       target_pid_to_str (tinfo->id).c_str (),
 	       wstep->tp_number, paddress (wstep->tp_address));
 
   ctx.base.type = trap_tracepoint;
@@ -4421,7 +4389,7 @@ tracepoint_finished_step (struct thread_info *tinfo, CORE_ADDR stop_pc)
 	{
 	  trace_debug ("NO TRACEPOINT %d at 0x%s FOR THREAD %s!",
 		       wstep->tp_number, paddress (wstep->tp_address),
-		       target_pid_to_str (tinfo->id));
+		       target_pid_to_str (tinfo->id).c_str ());
 
 	  /* Unlink.  */
 	  *wstep_link = wstep->next;
@@ -4441,7 +4409,7 @@ tracepoint_finished_step (struct thread_info *tinfo, CORE_ADDR stop_pc)
 	{
 	  /* The requested numbers of steps have occurred.  */
 	  trace_debug ("Thread %s done stepping for tracepoint %d at 0x%s",
-		       target_pid_to_str (tinfo->id),
+		       target_pid_to_str (tinfo->id).c_str (),
 		       wstep->tp_number, paddress (wstep->tp_address));
 
 	  /* Unlink the wstep.  */
@@ -4526,15 +4494,14 @@ handle_tracepoint_bkpts (struct thread_info *tinfo, CORE_ADDR stop_pc)
 		   ipa_expr_eval_result,
 		   paddress (ipa_error_tracepoint));
 
-      if (debug_threads)
-	{
-	  if (ipa_trace_buffer_is_full)
-	    trace_debug ("lib stopped due to full buffer.");
-	  if (ipa_stopping_tracepoint)
-	    trace_debug ("lib stopped due to tpoint");
-	  if (ipa_error_tracepoint)
-	    trace_debug ("lib stopped due to error");
-	}
+      if (ipa_trace_buffer_is_full)
+	trace_debug ("lib stopped due to full buffer.");
+
+      if (ipa_stopping_tracepoint)
+	trace_debug ("lib stopped due to tpoint");
+
+      if (ipa_error_tracepoint)
+	trace_debug ("lib stopped due to error");
 
       if (ipa_stopping_tracepoint != 0)
 	{
@@ -4588,7 +4555,7 @@ tracepoint_was_hit (struct thread_info *tinfo, CORE_ADDR stop_pc)
 	  && tpoint->type != static_tracepoint)
 	{
 	  trace_debug ("Thread %s at address of tracepoint %d at 0x%s",
-		       target_pid_to_str (tinfo->id),
+		       target_pid_to_str (tinfo->id).c_str (),
 		       tpoint->number, paddress (tpoint->address));
 
 	  /* Test the condition if present, and collect if true.  */
@@ -5623,27 +5590,23 @@ fast_tracepoint_collecting (CORE_ADDR thread_area,
   if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_jump_pad_buffer,
 				  &ipa_gdb_jump_pad_buffer))
     {
-      internal_error (__FILE__, __LINE__,
-		      "error extracting `gdb_jump_pad_buffer'");
+      internal_error ("error extracting `gdb_jump_pad_buffer'");
     }
   if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_jump_pad_buffer_end,
 				  &ipa_gdb_jump_pad_buffer_end))
     {
-      internal_error (__FILE__, __LINE__,
-		      "error extracting `gdb_jump_pad_buffer_end'");
+      internal_error ("error extracting `gdb_jump_pad_buffer_end'");
     }
 
   if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_trampoline_buffer,
 				  &ipa_gdb_trampoline_buffer))
     {
-      internal_error (__FILE__, __LINE__,
-		      "error extracting `gdb_trampoline_buffer'");
+      internal_error ("error extracting `gdb_trampoline_buffer'");
     }
   if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_trampoline_buffer_end,
 				  &ipa_gdb_trampoline_buffer_end))
     {
-      internal_error (__FILE__, __LINE__,
-		      "error extracting `gdb_trampoline_buffer_end'");
+      internal_error ("error extracting `gdb_trampoline_buffer_end'");
     }
 
   if (ipa_gdb_jump_pad_buffer <= stop_pc
@@ -6002,8 +5965,7 @@ target_malloc (ULONGEST size)
       if (read_inferior_data_pointer (ipa_sym_addrs.addr_gdb_tp_heap_buffer,
 				      &target_tp_heap))
 	{
-	  internal_error (__FILE__, __LINE__,
-			  "couldn't get target heap head pointer");
+	  internal_error ("couldn't get target heap head pointer");
 	}
     }
 
@@ -6229,8 +6191,7 @@ download_tracepoint (struct tracepoint *tpoint)
 				      + offsetof (struct tracepoint, next),
 				      &tp_prev_target_next_addr))
 	{
-	  internal_error (__FILE__, __LINE__,
-			  "error reading `tp_prev->next'");
+	  internal_error ("error reading `tp_prev->next'");
 	}
 
       /* tpoint->next = tp_prev->next */
@@ -6482,8 +6443,7 @@ upload_fast_traceframes (void)
 
       if (ipa_tframe.tpnum == 0)
 	{
-	  internal_error (__FILE__, __LINE__,
-			  "Uploading: No (more) fast traceframes, but"
+	  internal_error ("Uploading: No (more) fast traceframes, but"
 			  " ipa_traceframe_count == %u??\n",
 			  ipa_traceframe_write_count
 			  - ipa_traceframe_read_count);
@@ -6899,8 +6859,13 @@ init_named_socket (const char *name)
 
   addr.sun_family = AF_UNIX;
 
-  strncpy (addr.sun_path, name, UNIX_PATH_MAX);
-  addr.sun_path[UNIX_PATH_MAX - 1] = '\0';
+  if (strlen (name) >= ARRAY_SIZE (addr.sun_path))
+    {
+      warning ("socket name too long for sockaddr_un::sun_path field: %s", name);
+      return -1;
+    }
+
+  strcpy (addr.sun_path, name);
 
   result = access (name, F_OK);
   if (result == 0)
@@ -6942,8 +6907,8 @@ gdb_agent_socket_init (void)
 {
   int result, fd;
 
-  result = xsnprintf (agent_socket_name, UNIX_PATH_MAX, "%s/gdb_ust%d",
-		      SOCK_DIR, getpid ());
+  result = snprintf (agent_socket_name, UNIX_PATH_MAX, "%s/gdb_ust%d",
+		     SOCK_DIR, getpid ());
   if (result >= UNIX_PATH_MAX)
     {
       trace_debug ("string overflow allocating socket name");

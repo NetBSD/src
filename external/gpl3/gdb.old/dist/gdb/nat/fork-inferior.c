@@ -1,6 +1,6 @@
 /* Fork a Unix child process, and set up to debug it, for GDB and GDBserver.
 
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -270,8 +270,8 @@ fork_inferior (const char *exec_file_arg, const std::string &allargs,
 	       gdb::function_view<void (int)> init_trace_fun,
 	       void (*pre_trace_fun) (),
 	       const char *shell_file_arg,
-               void (*exec_fun)(const char *file, char * const *argv,
-                                char * const *env))
+	       void (*exec_fun)(const char *file, char * const *argv,
+				char * const *env))
 {
   pid_t pid;
   /* Set debug_fork then attach to the child while it sleeps, to debug.  */
@@ -281,8 +281,6 @@ fork_inferior (const char *exec_file_arg, const std::string &allargs,
   char **save_our_env;
   int i;
   int save_errno;
-  const char *inferior_cwd;
-  std::string expanded_inferior_cwd;
 
   /* If no exec file handed to us, get it from the exec-file command
      -- with a good, common error message if none is specified.  */
@@ -326,14 +324,13 @@ fork_inferior (const char *exec_file_arg, const std::string &allargs,
 
   /* Check if the user wants to set a different working directory for
      the inferior.  */
-  inferior_cwd = get_inferior_cwd ();
+  std::string inferior_cwd = get_inferior_cwd ();
 
-  if (inferior_cwd != NULL)
+  if (!inferior_cwd.empty ())
     {
       /* Expand before forking because between fork and exec, the child
 	 process may only execute async-signal-safe operations.  */
-      expanded_inferior_cwd = gdb_tilde_expand (inferior_cwd);
-      inferior_cwd = expanded_inferior_cwd.c_str ();
+      inferior_cwd = gdb_tilde_expand (inferior_cwd.c_str ());
     }
 
   /* If there's any initialization of the target layers that must
@@ -373,10 +370,10 @@ fork_inferior (const char *exec_file_arg, const std::string &allargs,
 
       /* Change to the requested working directory if the user
 	 requested it.  */
-      if (inferior_cwd != NULL)
+      if (!inferior_cwd.empty ())
 	{
-	  if (chdir (inferior_cwd) < 0)
-	    trace_start_error_with_name (inferior_cwd);
+	  if (chdir (inferior_cwd.c_str ()) < 0)
+	    trace_start_error_with_name (inferior_cwd.c_str ());
 	}
 
       if (debug_fork)
@@ -386,38 +383,38 @@ fork_inferior (const char *exec_file_arg, const std::string &allargs,
       postfork_child_hook ();
 
       /* Changing the signal handlers for the inferior after
-         a vfork can also change them for the superior, so we don't mess
-         with signals here.  See comments in
-         initialize_signals for how we get the right signal handlers
-         for the inferior.  */
+	 a vfork can also change them for the superior, so we don't mess
+	 with signals here.  See comments in
+	 initialize_signals for how we get the right signal handlers
+	 for the inferior.  */
 
       /* "Trace me, Dr. Memory!"  */
       (*traceme_fun) ();
 
       /* The call above set this process (the "child") as debuggable
-        by the original gdb process (the "parent").  Since processes
-        (unlike people) can have only one parent, if you are debugging
-        gdb itself (and your debugger is thus _already_ the
-        controller/parent for this child), code from here on out is
-        undebuggable.  Indeed, you probably got an error message
-        saying "not parent".  Sorry; you'll have to use print
-        statements!  */
+	by the original gdb process (the "parent").  Since processes
+	(unlike people) can have only one parent, if you are debugging
+	gdb itself (and your debugger is thus _already_ the
+	controller/parent for this child), code from here on out is
+	undebuggable.  Indeed, you probably got an error message
+	saying "not parent".  Sorry; you'll have to use print
+	statements!  */
 
       restore_original_signals_state ();
 
       /* There is no execlpe call, so we have to set the environment
-         for our child in the global variable.  If we've vforked, this
-         clobbers the parent, but environ is restored a few lines down
-         in the parent.  By the way, yes we do need to look down the
-         path to find $SHELL.  Rich Pixley says so, and I agree.  */
+	 for our child in the global variable.  If we've vforked, this
+	 clobbers the parent, but environ is restored a few lines down
+	 in the parent.  By the way, yes we do need to look down the
+	 path to find $SHELL.  Rich Pixley says so, and I agree.  */
       environ = env;
 
       char **argv = child_argv.argv ();
 
       if (exec_fun != NULL)
-        (*exec_fun) (argv[0], &argv[0], env);
+	(*exec_fun) (argv[0], &argv[0], env);
       else
-        execvp (argv[0], &argv[0]);
+	execvp (argv[0], &argv[0]);
 
       /* If we get here, it's an error.  */
       save_errno = errno;
@@ -482,7 +479,6 @@ startup_inferior (process_stratum_target *proc_target, pid_t pid, int ntraps,
       ptid_t event_ptid;
 
       struct target_waitstatus ws;
-      memset (&ws, 0, sizeof (ws));
       event_ptid = target_wait (resume_ptid, &ws, 0);
 
       if (last_waitstatus != NULL)
@@ -490,11 +486,11 @@ startup_inferior (process_stratum_target *proc_target, pid_t pid, int ntraps,
       if (last_ptid != NULL)
 	*last_ptid = event_ptid;
 
-      if (ws.kind == TARGET_WAITKIND_IGNORE)
+      if (ws.kind () == TARGET_WAITKIND_IGNORE)
 	/* The inferior didn't really stop, keep waiting.  */
 	continue;
 
-      switch (ws.kind)
+      switch (ws.kind ())
 	{
 	  case TARGET_WAITKIND_SPURIOUS:
 	  case TARGET_WAITKIND_LOADED:
@@ -509,35 +505,31 @@ startup_inferior (process_stratum_target *proc_target, pid_t pid, int ntraps,
 	    target_terminal::ours ();
 	    target_mourn_inferior (event_ptid);
 	    error (_("During startup program terminated with signal %s, %s."),
-		   gdb_signal_to_name (ws.value.sig),
-		   gdb_signal_to_string (ws.value.sig));
+		   gdb_signal_to_name (ws.sig ()),
+		   gdb_signal_to_string (ws.sig ()));
 	    return resume_ptid;
 
 	  case TARGET_WAITKIND_EXITED:
 	    target_terminal::ours ();
 	    target_mourn_inferior (event_ptid);
-	    if (ws.value.integer)
+	    if (ws.exit_status ())
 	      error (_("During startup program exited with code %d."),
-		     ws.value.integer);
+		     ws.exit_status ());
 	    else
 	      error (_("During startup program exited normally."));
 	    return resume_ptid;
 
 	  case TARGET_WAITKIND_EXECD:
 	    /* Handle EXEC signals as if they were SIGTRAP signals.  */
-	    /* Free the exec'ed pathname, but only if this isn't the
-	       waitstatus we are returning to the caller.  */
-	    if (pending_execs != 1)
-	      xfree (ws.value.execd_pathname);
 	    resume_signal = GDB_SIGNAL_TRAP;
 	    switch_to_thread (proc_target, event_ptid);
 	    break;
 
 	  case TARGET_WAITKIND_STOPPED:
-	    resume_signal = ws.value.sig;
+	    resume_signal = ws.sig ();
 	    /* Ignore gracefully the !TRAP signals intercepted from the shell.  */
 	    if (resume_signal == GDB_SIGNAL_TRAP)
-	      switch_to_thread (proc_target, event_ptid);
+		switch_to_thread (proc_target, event_ptid);
 	    break;
 	}
 
@@ -552,12 +544,12 @@ startup_inferior (process_stratum_target *proc_target, pid_t pid, int ntraps,
 	  if (!terminal_initted)
 	    {
 	      /* Now that the child has exec'd we know it has already
-	         set its process group.  On POSIX systems, tcsetpgrp
-	         will fail with EPERM if we try it before the child's
-	         setpgid.  */
+		 set its process group.  On POSIX systems, tcsetpgrp
+		 will fail with EPERM if we try it before the child's
+		 setpgid.  */
 
 	      /* Set up the "saved terminal modes" of the inferior
-	         based on what modes we are starting it with.  */
+		 based on what modes we are starting it with.  */
 	      target_terminal::init ();
 
 	      /* Install inferior's terminal modes.  */

@@ -1,6 +1,6 @@
 /* MI Command Set - output generating routines.
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -27,6 +27,7 @@
 #include "interps.h"
 #include "ui-out.h"
 #include "utils.h"
+#include "gdbsupport/gdb-checked-static-cast.h"
 
 /* Mark beginning of a table.  */
 
@@ -132,11 +133,11 @@ mi_ui_out::do_field_string (int fldno, int width, ui_align align,
   field_separator ();
 
   if (fldname)
-    fprintf_unfiltered (stream, "%s=", fldname);
-  fprintf_unfiltered (stream, "\"");
+    gdb_printf (stream, "%s=", fldname);
+  gdb_printf (stream, "\"");
   if (string)
-    fputstr_unfiltered (string, '"', stream);
-  fprintf_unfiltered (stream, "\"");
+    stream->putstr (string, '"');
+  gdb_printf (stream, "\"");
 }
 
 void
@@ -148,11 +149,11 @@ mi_ui_out::do_field_fmt (int fldno, int width, ui_align align,
   field_separator ();
 
   if (fldname)
-    fprintf_unfiltered (stream, "%s=\"", fldname);
+    gdb_printf (stream, "%s=\"", fldname);
   else
-    fputs_unfiltered ("\"", stream);
-  vfprintf_unfiltered (stream, format, args);
-  fputs_unfiltered ("\"", stream);
+    gdb_puts ("\"", stream);
+  gdb_vprintf (stream, format, args);
+  gdb_puts ("\"", stream);
 }
 
 void
@@ -172,9 +173,9 @@ mi_ui_out::do_message (const ui_file_style &style,
 }
 
 void
-mi_ui_out::do_wrap_hint (const char *identstring)
+mi_ui_out::do_wrap_hint (int indent)
 {
-  wrap_here (identstring);
+  m_streams.back ()->wrap_here (indent);
 }
 
 void
@@ -199,7 +200,7 @@ mi_ui_out::field_separator ()
   if (m_suppress_field_separator)
     m_suppress_field_separator = false;
   else
-    fputc_unfiltered (',', m_streams.back ());
+    gdb_putc (',', m_streams.back ());
 }
 
 void
@@ -211,20 +212,20 @@ mi_ui_out::open (const char *name, ui_out_type type)
   m_suppress_field_separator = true;
 
   if (name)
-    fprintf_unfiltered (stream, "%s=", name);
+    gdb_printf (stream, "%s=", name);
 
   switch (type)
     {
     case ui_out_type_tuple:
-      fputc_unfiltered ('{', stream);
+      gdb_putc ('{', stream);
       break;
 
     case ui_out_type_list:
-      fputc_unfiltered ('[', stream);
+      gdb_putc ('[', stream);
       break;
 
     default:
-      internal_error (__FILE__, __LINE__, _("bad switch"));
+      internal_error (_("bad switch"));
     }
 }
 
@@ -236,15 +237,15 @@ mi_ui_out::close (ui_out_type type)
   switch (type)
     {
     case ui_out_type_tuple:
-      fputc_unfiltered ('}', stream);
+      gdb_putc ('}', stream);
       break;
 
     case ui_out_type_list:
-      fputc_unfiltered (']', stream);
+      gdb_putc (']', stream);
       break;
 
     default:
-      internal_error (__FILE__, __LINE__, _("bad switch"));
+      internal_error (_("bad switch"));
     }
 
   m_suppress_field_separator = false;
@@ -256,6 +257,38 @@ mi_ui_out::main_stream ()
   gdb_assert (m_streams.size () == 1);
 
   return (string_file *) m_streams.back ();
+}
+
+/* Initialize a progress update to be displayed with
+   mi_ui_out::do_progress_notify.  */
+
+void
+mi_ui_out::do_progress_start ()
+{
+  m_progress_info.emplace_back ();
+}
+
+/* Indicate that a task described by MSG is in progress.  */
+
+void
+mi_ui_out::do_progress_notify (const std::string &msg, const char *unit,
+			       double cur, double total)
+{
+  mi_progress_info &info (m_progress_info.back ());
+
+  if (info.state == progress_update::START)
+    {
+      gdb_printf ("%s...\n", msg.c_str ());
+      info.state = progress_update::WORKING;
+    }
+}
+
+/* Remove the most recent progress update from the progress_info stack.  */
+
+void
+mi_ui_out::do_progress_end ()
+{
+  m_progress_info.pop_back ();
 }
 
 /* Clear the buffer.  */
@@ -288,8 +321,7 @@ mi_ui_out::version ()
 /* Constructor for an `mi_out_data' object.  */
 
 mi_ui_out::mi_ui_out (int mi_version)
-: ui_out (mi_version >= 3
-	  ? fix_multi_location_breakpoint_output : (ui_out_flag) 0),
+: ui_out (make_flags (mi_version)),
   m_suppress_field_separator (false),
   m_suppress_output (false),
   m_mi_version (mi_version)
@@ -307,7 +339,10 @@ mi_ui_out::~mi_ui_out ()
 mi_ui_out *
 mi_out_new (const char *mi_version)
 {
-  if (streq (mi_version, INTERP_MI3) ||  streq (mi_version, INTERP_MI))
+  if (streq (mi_version, INTERP_MI4) ||  streq (mi_version, INTERP_MI))
+    return new mi_ui_out (4);
+
+  if (streq (mi_version, INTERP_MI3))
     return new mi_ui_out (3);
 
   if (streq (mi_version, INTERP_MI2))
@@ -325,11 +360,7 @@ mi_out_new (const char *mi_version)
 static mi_ui_out *
 as_mi_ui_out (ui_out *uiout)
 {
-  mi_ui_out *mi_uiout = dynamic_cast<mi_ui_out *> (uiout);
-
-  gdb_assert (mi_uiout != NULL);
-
-  return mi_uiout;
+  return gdb::checked_static_cast<mi_ui_out *> (uiout);
 }
 
 int

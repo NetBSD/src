@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,7 +52,6 @@ PerfTest::assemble {
     clean_restart $binfile
 
     if ![runto_main] {
-	fail "can't run to main"
 	return -1
     }
 
@@ -63,7 +62,7 @@ PerfTest::assemble {
 } {
     global BACKTRACE_DEPTH
 
-    gdb_test "python BackTrace\($BACKTRACE_DEPTH\).run()"
+    gdb_test_python_run "BackTrace\($BACKTRACE_DEPTH\)"
 
     return 0
 }

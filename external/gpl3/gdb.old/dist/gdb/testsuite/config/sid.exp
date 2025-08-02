@@ -1,5 +1,5 @@
 # Test Framework Driver for GDB driving an external simulator
-#   Copyright 1999-2020 Free Software Foundation, Inc.
+#   Copyright 1999-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ proc sid_start {} {
 	{ *big-endian* *-EB* *-meb* } { set sidendian "-EB" }
 	{ *little-endian* *-EL* *-mel* } { set sidendian "-EL" }
 	default { 
-	    if {[target_info exists sim,defaultendian]} then {
+	    if {[target_info exists sim,defaultendian]} {
 		set sidendian [target_info sim,defaultendian] 
 	    } else { 
                 # rely on endianness settings in sid configuration defaults
@@ -39,12 +39,12 @@ proc sid_start {} {
     # test to see whether to use use sid in build or install tree
     set use_build_tree [file exists ../../sid]
 
-    if {$use_build_tree} then {
+    if {$use_build_tree} {
 	set pre_spawn {
 	    global env
 	    set env(SID_LIBRARY_PATH) [join [glob "../../sid/component/*"] ":"]
 	    set env(SID) "../../sid/main/dynamic/sid"
-	    if {! [file exists $env(SID)]} then { error "Cannot find sid in build tree" }
+	    if {![file exists $env(SID)]} { error "Cannot find sid in build tree" }
 	}
 	if { [board_info target sim,protocol] == "sid" } {
 	    set spawncmd "[target_info sim] [target_info sim,options] $sidendian2 -e \"set cpu-gdb-socket sockaddr-local 0.0.0.0:$port\""
@@ -169,7 +169,7 @@ proc gdb_load { arg } {
     global retval
 
     if { $arg != "" } {
-	if [gdb_file_cmd $arg] then { return -1 }
+	if {[gdb_file_cmd $arg]} { return -1 }
     }
 
     gdb_target_sid
@@ -181,25 +181,25 @@ proc gdb_load { arg } {
     verbose "Timeout is now $timeout seconds" 2
     gdb_expect {
 	-re ".*\[Ee\]rror.*$gdb_prompt $" {
-	    if $verbose>1 then {
+	    if {$verbose > 1} {
 		perror "Error during download."
 	    }
 	    set retval -1
 	}
 	-re ".*$gdb_prompt $" {
-	    if $verbose>1 then {
+	    if {$verbose > 1} {
 		send_user "Loaded $arg into $GDB\n"
 	    }
 	    set retval 0
 	}
 	-re "$gdb_prompt $"     {
-	    if $verbose>1 then {
+	    if {$verbose > 1} {
 		perror "GDB couldn't load."
 	    }
 	    set retval -1
 	}
 	timeout {
-	    if $verbose>1 then {
+	    if {$verbose > 1} {
 		perror "Timed out trying to load $arg."
 	    }
 	    set retval -1

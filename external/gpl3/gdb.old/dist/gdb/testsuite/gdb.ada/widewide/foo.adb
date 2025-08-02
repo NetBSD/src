@@ -1,4 +1,4 @@
---  Copyright 2011-2020 Free Software Foundation, Inc.
+--  Copyright 2011-2023 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -19,9 +19,12 @@ procedure Foo is
    Some_Easy : Wide_Wide_Character := 'J';
    Some_Larger : Wide_Wide_Character := Wide_Wide_Character'Val(16#beef#);
    Some_Big : Wide_Wide_Character := Wide_Wide_Character'Val(16#00dabeef#);
+   My_Ws : Wide_String := "wide";
    My_WWS : Wide_Wide_String := " helo";
 begin
    Do_Nothing (Some_Easy'Address);  -- START
    Do_Nothing (Some_Larger'Address);
+   Do_Nothing (My_Ws);
+   Do_Nothing (My_WWS);
    Do_Nothing (Some_Big'Address);
 end Foo;

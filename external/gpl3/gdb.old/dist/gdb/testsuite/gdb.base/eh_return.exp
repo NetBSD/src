@@ -1,4 +1,4 @@
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,8 +18,42 @@
 
 standard_testfile
 
+# Set compiler flags.
+if {[istarget "powerpc*"]} {
+    # PowerPC generates a Traceback Table, as defined in the PPC64 ABI,
+    # following each function by default.  The Traceback Table information is
+    # typically interpreted by the disassembler as data represented with
+    # .long xxxx following the last instruction in the function.  For example:
+    #
+    #   Dump of assembler code for function eh2:
+    #   0x00000000100009e0 <+0>:     lis     r2,4098
+    #   ...
+    #   0x0000000010000b04 <+292>:   add     r1,r1,r10
+    #   0x0000000010000b08 <+296>:   blr
+    #   0x0000000010000b0c <+300>:   .long 0x0
+    #   0x0000000010000b10 <+304>:   .long 0x1000000
+    #   0x0000000010000b14 <+308>:   .long 0x1000180
+    #   End of assembler dump.
+    #
+    # Disable the Traceback Table generation, using the PowerPC specific
+    # compiler option, so the test gdb_test_multiple "disassemble eh2" will
+    # locate the address of the blr instruction not the last .long statement.
+    if { [test_compiler_info "gcc-*"] } {
+	set compile_flags {debug nopie additional_flags=-mtraceback=no}
+    } elseif { [test_compiler_info "xlc-*"] } {
+	set compile_flags {debug nopie additional_flags=-qtbtable=none}
+    } elseif { [test_compiler_info "clang-*"] } {
+	set compile_flags [list debug nopie additional_flags=-mllvm \
+			       additional_flags=-xcoff-traceback-table=false]
+    } else {
+	set compile_flags {debug nopie }
+    }
+} else {
+    set compile_flags {debug nopie}
+}
+
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
-	 {debug nopie}]} {
+	 $compile_flags]} {
     return -1
 }
 
@@ -39,7 +73,7 @@ if { $address == -1 } {
 
 clean_restart ${binfile}
 
-gdb_breakpoint "*$address" message
+gdb_assert [gdb_breakpoint "*$address" no-message] "set breakpoint on address"
 
 # The assert did not reproduce when running to main, and continuing to the
 # breakpoint, so instead, run to the breakpoint.

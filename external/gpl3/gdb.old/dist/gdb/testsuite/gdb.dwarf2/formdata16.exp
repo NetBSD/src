@@ -1,4 +1,4 @@
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ if {![dwarf2_support]} {
     return 0  
 }
 
-standard_testfile .c formdata16-dw.S
+standard_testfile main.c -dw.S
 
 # We need to know the endianess in order
 # to write some of the debugging info we'd like to generate.

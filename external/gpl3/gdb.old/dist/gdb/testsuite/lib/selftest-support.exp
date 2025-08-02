@@ -1,4 +1,4 @@
-# Copyright 2003-2020 Free Software Foundation, Inc.
+# Copyright 2003-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,12 +21,12 @@ proc find_gdb { arg } {
     # If the arg directly specifies an existing executable file, then
     # simply use it.
 
-    if [file executable $arg] then {
+    if {[file executable $arg]} {
 	return $arg
     }
 
     set result [which $arg]
-    if [string match "/" [ string range $result 0 0 ]] then {
+    if {[string match "/" [ string range $result 0 0 ]]} {
 	return $result
     }
 
@@ -40,52 +40,36 @@ proc find_gdb { arg } {
 # EXECUTABLE is the gdb to use.
 # FUNCTION is the function to break in, either captured_main
 # or captured_command_loop.
+# Return 0 in case of success, -1 in case of failure, and -2 in case of
+# skipping the test-case.
 
 proc selftest_setup { executable function } {
     global gdb_prompt
-    global timeout
     global INTERNAL_GDBFLAGS
 
     # load yourself into the debugger
-    # This can take a relatively long time, particularly for testing where
-    # the executable is being accessed over a network, or where gdb does not
-    # support partial symbols for a particular target and has to load the
-    # entire symbol table.  Set the timeout to 10 minutes, which should be
-    # adequate for most environments (it *has* timed out with 5 min on a
-    # SPARCstation SLC under moderate load, so this isn't unreasonable).
-    # After gdb is started, set the timeout to 30 seconds for the duration
-    # of this test, and then back to the original value.
-
-    set oldtimeout $timeout
-    set timeout 600
-    verbose "Timeout is now $timeout seconds" 2
 
     global gdb_file_cmd_debug_info
     set gdb_file_cmd_debug_info "unset"
 
     set result [gdb_load $executable]
-    set timeout $oldtimeout
-    verbose "Timeout is now $timeout seconds" 2
 
-    if { $result != 0 } then {
+    if {$result != 0} {
 	return -1
     }
 
-    if { $gdb_file_cmd_debug_info != "debug" } then {
+    if {$gdb_file_cmd_debug_info != "debug"} {
 	untested "no debug information, skipping testcase."
-	return -1
+	return -2
     }
 
-    # Set a breakpoint at main.  Allow more than one location, as
-    # workaround for PR26096 - "gdb sets breakpoint at cold clone".
-    gdb_test "break $function" \
-            "Breakpoint.*at.* (file.*, line|locations).*" \
-            "breakpoint in $function"
+    # Set a breakpoint at $function.
+    if { [gdb_breakpoint $function "no-message"] != 1 } {
+	untested "Cannot set breakpoint at $function, skipping testcase."
+	return -2
+    }
 
     # run yourself
-    # It may take a very long time for the inferior gdb to start (lynx),
-    # so we bump it back up for the duration of this command.
-    set timeout 600
 
     set description "run until breakpoint at $function"
     gdb_test_multiple "run $INTERNAL_GDBFLAGS" "$description" {
@@ -97,20 +81,13 @@ proc selftest_setup { executable function } {
         }
         -re "vfork: No more processes.*$gdb_prompt $" {
             fail "$description (out of virtual memory)"
-            set timeout $oldtimeout
-            verbose "Timeout is now $timeout seconds" 2
             return -1
         }
         -re ".*$gdb_prompt $" {
             fail "$description"
-            set timeout $oldtimeout
-            verbose "Timeout is now $timeout seconds" 2
             return -1
         }
     }
-
-    set timeout $oldtimeout
-    verbose "Timeout is now $timeout seconds" 2
 
     return 0
 }
@@ -157,15 +134,20 @@ proc do_self_tests {function body} {
     gdb_start
     set file [remote_download host $GDB_FULLPATH $xgdb]
 
-    set result [selftest_setup $file $function]
-    if {$result == 0} then {
-	set result [uplevel $body]
+    # When debugging GDB with GDB, some operations can take a relatively long
+    # time, especially if the build is non-optimized.  Bump the timeout for the
+    # duration of the test.
+    with_timeout_factor 10 {
+	set result [selftest_setup $file $function]
+	if {$result == 0} {
+	    set result [uplevel $body]
+	}
     }
 
     gdb_exit
     catch "remote_file host delete $file"
 
-    if {$result < 0} then {
+    if {$result == -1} {
 	warning "Couldn't test self"
     }
 }

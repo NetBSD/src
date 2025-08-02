@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2020 Free Software Foundation, Inc.
+Copyright (C) 1996-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -58,12 +58,4 @@ void
 bpfbf_h_pc_set (SIM_CPU *current_cpu, UDI newval)
 {
   SET_H_PC (newval);
-}
-
-/* Record trace results for INSN.  */
-
-void
-bpfbf_record_trace_results (SIM_CPU *current_cpu, CGEN_INSN *insn,
-			    int *indices, TRACE_RECORD *tr)
-{
 }

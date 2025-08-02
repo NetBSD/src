@@ -30,6 +30,7 @@ echo
 # XXX: nothing uses this ?
 echo '#include <signal.h>' | \
 bfin-uclinux-gcc -E -dD -P - | \
+grep -v SIGSTKSZ | \
 sed -r -n \
     -e '1istatic CB_TARGET_DEFS_MAP cb_linux_signal_map[] = {' \
     -e '$i\ \ { 0, -1, -1 }\n};' \
@@ -1987,10 +1988,6 @@ static CB_TARGET_DEFS_MAP cb_linux_signal_map[] =
 #ifdef SIG_SETMASK
 # define TARGET_LINUX_SIG_SETMASK 2
   { "SIG_SETMASK", SIG_SETMASK, TARGET_LINUX_SIG_SETMASK },
-#endif
-#ifdef SIGSTKSZ
-# define TARGET_LINUX_SIGSTKSZ 8192
-  { "SIGSTKSZ", SIGSTKSZ, TARGET_LINUX_SIGSTKSZ },
 #endif
   { 0, -1, -1 }
 };

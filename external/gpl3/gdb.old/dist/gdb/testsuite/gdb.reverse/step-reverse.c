@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2020 Free Software Foundation, Inc.
+   Copyright 2008-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,6 +25,20 @@ int myglob = 0;
 int callee() {		/* ENTER CALLEE */
   return myglob++;	/* ARRIVED IN CALLEE */
 }			/* RETURN FROM CALLEE */
+
+/* We need to make this function take more than a single instruction
+   to run, otherwise it could hide PR gdb/16678, as reverse execution can
+   step over a single-instruction function.  */
+int
+recursive_callee (int val)
+{
+  if (val == 0)
+    return 0;
+  val /= 2;
+  if (val > 1)
+    val++;
+  return recursive_callee (val);	/* RECURSIVE CALL */
+} /* EXIT RECURSIVE FUNCTION */
 
 /* A structure which, we hope, will need to be passed using memcpy.  */
 struct rhomboidal {
@@ -51,6 +65,9 @@ int main () {
    y = y + 4;
    z = z + 5;	/* STEP TEST 2 */
 
+   /* Test that next goes over recursive calls too */
+   recursive_callee (32); /* NEXT OVER THIS RECURSION */
+
    /* Test that "next" goes over a call */
    callee();	/* NEXT OVER THIS CALL */
 
@@ -60,7 +77,7 @@ int main () {
    /* Test "stepi" */
    a[5] = a[3] - a[4]; /* FINISH TEST */
    callee();	/* STEPI TEST */
-   
+
    /* Test "nexti" */
    callee();	/* NEXTI TEST */
 

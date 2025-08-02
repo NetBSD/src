@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -236,9 +236,9 @@ struct _decode_table
 };
 
 
-extern decode_table *load_decode_table (char *file_name);
+extern decode_table *load_decode_table (const char *file_name);
 
-extern int decode_table_max_word_nr (decode_table *rule);
+extern int decode_table_max_word_nr (const decode_table *rule);
 
 extern void dump_decode_rule
-  (lf *file, char *prefix, decode_table *rule, char *suffix);
+  (lf *file, const char *prefix, const decode_table *rule, const char *suffix);

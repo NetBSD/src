@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Free Software Foundation, Inc.
+/* Copyright 2019-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 static int global_i1;
-static float global_f1;
+static float __attribute__ ((used)) global_f1;
 int global_i2;
 int global_f2;
 
@@ -44,5 +44,5 @@ f3 (another_int_t arg)
 typedef char another_char_t;
 typedef short another_short_t;
 
-static another_char_t var1;
-static another_short_t var2;
+static another_char_t __attribute__ ((used)) var1;
+static another_short_t __attribute__ ((used)) var2;

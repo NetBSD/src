@@ -1,6 +1,6 @@
 /* Simulator Floating-point support.
 
-   Copyright 1997-2020 Free Software Foundation, Inc.
+   Copyright 1997-2023 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef SIM_FPU_H
 #define SIM_FPU_H
 
+
+#include <stdbool.h>
 
 
 /* The FPU intermediate type - this object, passed by reference,
@@ -91,7 +93,7 @@ typedef enum
 typedef struct _sim_fpu {
   sim_fpu_class class;
   int sign;
-  unsigned64 fraction;
+  uint64_t fraction;
   int normal_exp;
 } sim_fpu;
 
@@ -157,6 +159,24 @@ typedef enum
 
 
 
+/* State used by the FPU.
+
+   FIXME: This state is global, but should be moved to SIM_CPU.  */
+
+typedef enum
+{
+  sim_fpu_ieee754_1985,
+  sim_fpu_ieee754_2008,
+} sim_fpu_mode;
+
+typedef struct _sim_fpu_state {
+  bool quiet_nan_inverted; /* Toggle quiet NaN semantics.  */
+  sim_fpu_mode current_mode;
+} sim_fpu_state;
+
+
+
+
 /* Directly map between a 32/64 bit register and the sim_fpu internal
    type.
 
@@ -171,13 +191,13 @@ typedef enum
    emulating exact FPU behavior, sim_fpu_round_{32,64} should be
    called before packing the sim_fpu value.  */
 
-INLINE_SIM_FPU (void) sim_fpu_32to (sim_fpu *f, unsigned32 s);
-INLINE_SIM_FPU (void) sim_fpu_232to (sim_fpu *f, unsigned32 h, unsigned32 l);
-INLINE_SIM_FPU (void) sim_fpu_64to (sim_fpu *f, unsigned64 d);
+INLINE_SIM_FPU (void) sim_fpu_32to (sim_fpu *f, uint32_t s);
+INLINE_SIM_FPU (void) sim_fpu_232to (sim_fpu *f, uint32_t h, uint32_t l);
+INLINE_SIM_FPU (void) sim_fpu_64to (sim_fpu *f, uint64_t d);
 
-INLINE_SIM_FPU (void) sim_fpu_to32 (unsigned32 *s, const sim_fpu *f);
-INLINE_SIM_FPU (void) sim_fpu_to232 (unsigned32 *h, unsigned32 *l, const sim_fpu *f);
-INLINE_SIM_FPU (void) sim_fpu_to64 (unsigned64 *d, const sim_fpu *f);
+INLINE_SIM_FPU (void) sim_fpu_to32 (uint32_t *s, const sim_fpu *f);
+INLINE_SIM_FPU (void) sim_fpu_to232 (uint32_t *h, uint32_t *l, const sim_fpu *f);
+INLINE_SIM_FPU (void) sim_fpu_to64 (uint64_t *d, const sim_fpu *f);
 
 
 /* Create a sim_fpu struct using raw information.  (FRACTION & LSMASK
@@ -189,12 +209,12 @@ INLINE_SIM_FPU (void) sim_fpu_to64 (unsigned64 *d, const sim_fpu *f);
 
    You can not specify zero using this function. */
 
-INLINE_SIM_FPU (void) sim_fpu_fractionto (sim_fpu *f, int sign, int normal_exp, unsigned64 fraction, int precision);
+INLINE_SIM_FPU (void) sim_fpu_fractionto (sim_fpu *f, int sign, int normal_exp, uint64_t fraction, int precision);
 
 /* Reverse operation.  If S is a non-zero number, discards the implied
    leading one and returns PRECISION fraction bits.  No rounding is
    performed. */
-INLINE_SIM_FPU (unsigned64) sim_fpu_tofraction (const sim_fpu *s, int precision);
+INLINE_SIM_FPU (uint64_t) sim_fpu_tofraction (const sim_fpu *s, int precision);
 
 
 
@@ -248,39 +268,51 @@ INLINE_SIM_FPU (int) sim_fpu_sqrt (sim_fpu *f,
 
 
 
+/* NaN handling.
+
+   Assuming that at least one of the inputs is NAN choose the correct
+   NAN result for the binary operation.  */
+
+INLINE_SIM_FPU (int) sim_fpu_op_nan (sim_fpu *f,
+				     const sim_fpu *l, const sim_fpu *r);
+INLINE_SIM_FPU (int) sim_fpu_minmax_nan (sim_fpu *f,
+					 const sim_fpu *l, const sim_fpu *r);
+
+
+
 /* Conversion of integer <-> floating point. */
 
-INLINE_SIM_FPU (int) sim_fpu_i32to (sim_fpu *f, signed32 i,
+INLINE_SIM_FPU (int) sim_fpu_i32to (sim_fpu *f, int32_t i,
 				    sim_fpu_round round);
-INLINE_SIM_FPU (int) sim_fpu_u32to (sim_fpu *f, unsigned32 u,
+INLINE_SIM_FPU (int) sim_fpu_u32to (sim_fpu *f, uint32_t u,
 				    sim_fpu_round round);
-INLINE_SIM_FPU (int) sim_fpu_i64to (sim_fpu *f, signed64 i,
+INLINE_SIM_FPU (int) sim_fpu_i64to (sim_fpu *f, int64_t i,
 				    sim_fpu_round round);
-INLINE_SIM_FPU (int) sim_fpu_u64to (sim_fpu *f, unsigned64 u,
+INLINE_SIM_FPU (int) sim_fpu_u64to (sim_fpu *f, uint64_t u,
 				    sim_fpu_round round);
 #if 0
-INLINE_SIM_FPU (int) sim_fpu_i232to (sim_fpu *f, signed32 h, signed32 l,
+INLINE_SIM_FPU (int) sim_fpu_i232to (sim_fpu *f, int32_t h, int32_t l,
 				     sim_fpu_round round);
 #endif
 #if 0
-INLINE_SIM_FPU (int) sim_fpu_u232to (sim_fpu *f, unsigned32 h, unsigned32 l,
+INLINE_SIM_FPU (int) sim_fpu_u232to (sim_fpu *f, uint32_t h, uint32_t l,
 				     sim_fpu_round round);
 #endif
 
-INLINE_SIM_FPU (int) sim_fpu_to32i (signed32 *i, const sim_fpu *f,
+INLINE_SIM_FPU (int) sim_fpu_to32i (int32_t *i, const sim_fpu *f,
 				    sim_fpu_round round);
-INLINE_SIM_FPU (int) sim_fpu_to32u (unsigned32 *u, const sim_fpu *f,
+INLINE_SIM_FPU (int) sim_fpu_to32u (uint32_t *u, const sim_fpu *f,
 				    sim_fpu_round round);
-INLINE_SIM_FPU (int) sim_fpu_to64i (signed64 *i, const sim_fpu *f,
+INLINE_SIM_FPU (int) sim_fpu_to64i (int64_t *i, const sim_fpu *f,
 				    sim_fpu_round round);
-INLINE_SIM_FPU (int) sim_fpu_to64u (unsigned64 *u, const sim_fpu *f,
+INLINE_SIM_FPU (int) sim_fpu_to64u (uint64_t *u, const sim_fpu *f,
 				    sim_fpu_round round);
 #if 0
-INLINE_SIM_FPU (int) sim_fpu_to232i (signed64 *h, signed64 *l, const sim_fpu *f,
+INLINE_SIM_FPU (int) sim_fpu_to232i (int64_t *h, int64_t *l, const sim_fpu *f,
 				     sim_fpu_round round);
 #endif
 #if 0
-INLINE_SIM_FPU (int) sim_fpu_to232u (unsigned64 *h, unsigned64 *l, const sim_fpu *f,
+INLINE_SIM_FPU (int) sim_fpu_to232u (uint64_t *h, uint64_t *l, const sim_fpu *f,
 				     sim_fpu_round round);
 #endif
 
@@ -295,7 +327,8 @@ INLINE_SIM_FPU (double) sim_fpu_2d (const sim_fpu *d);
 /* INLINE_SIM_FPU (void) sim_fpu_f2 (sim_fpu *f, float s); */
 INLINE_SIM_FPU (void) sim_fpu_d2 (sim_fpu *f, double d);
 
-
+/* IEEE754-2008 classifiction function.  */
+INLINE_SIM_FPU (int) sim_fpu_classify (const sim_fpu *f);
 
 /* Specific number classes.
 
@@ -320,8 +353,8 @@ INLINE_SIM_FPU (int) sim_fpu_is_denorm (const sim_fpu *s); /* !zero */
 
 INLINE_SIM_FPU (int) sim_fpu_sign (const sim_fpu *s);
 INLINE_SIM_FPU (int) sim_fpu_exp (const sim_fpu *s);
-INLINE_SIM_FPU (unsigned64) sim_fpu_fraction (const sim_fpu *s);
-INLINE_SIM_FPU (unsigned64) sim_fpu_guard (const sim_fpu *s, int is_double);
+INLINE_SIM_FPU (uint64_t) sim_fpu_fraction (const sim_fpu *s);
+INLINE_SIM_FPU (uint64_t) sim_fpu_guard (const sim_fpu *s, int is_double);
 
 
 
@@ -344,7 +377,20 @@ INLINE_SIM_FPU (int) sim_fpu_is_ne (const sim_fpu *l, const sim_fpu *r);
 INLINE_SIM_FPU (int) sim_fpu_is_ge (const sim_fpu *l, const sim_fpu *r);
 INLINE_SIM_FPU (int) sim_fpu_is_gt (const sim_fpu *l, const sim_fpu *r);
 
+/* Unordered/ordered comparison operators.  */
 
+INLINE_SIM_FPU (int) sim_fpu_un (int *is, const sim_fpu *l, const sim_fpu *r);
+INLINE_SIM_FPU (int) sim_fpu_or (int *is, const sim_fpu *l, const sim_fpu *r);
+
+INLINE_SIM_FPU (int) sim_fpu_is_un (const sim_fpu *l, const sim_fpu *r);
+INLINE_SIM_FPU (int) sim_fpu_is_or (const sim_fpu *l, const sim_fpu *r);
+
+/* Changes the behaviour of the library to IEEE754-2008 or IEEE754-1985.
+   The default for the library is IEEE754-1985.  */
+
+INLINE_SIM_FPU (bool) sim_fpu_is_ieee754_1985 (void);
+INLINE_SIM_FPU (bool) sim_fpu_is_ieee754_2008 (void);
+INLINE_SIM_FPU (void) sim_fpu_set_mode (const sim_fpu_mode m);
 
 /* General number class and comparison operators.
 
@@ -375,7 +421,20 @@ enum {
 INLINE_SIM_FPU (int) sim_fpu_is (const sim_fpu *l);
 INLINE_SIM_FPU (int) sim_fpu_cmp (const sim_fpu *l, const sim_fpu *r);
 
+/* Global FPU state.  */
 
+extern sim_fpu_state _sim_fpu;
+
+
+/* IEEE 754-1985 specifies the top bit of the mantissa as an indicator
+   of signalling vs. quiet NaN, but does not specify the semantics.
+   Most architectures treat this bit as quiet NaN, but legacy (pre-R6)
+   MIPS goes the other way and treats it as signalling.  This variable
+   tracks the current semantics of the NaN bit and allows differentiation
+   between pre-R6 and R6 MIPS cores.  */
+
+#define sim_fpu_quiet_nan_inverted _sim_fpu.quiet_nan_inverted
+#define sim_fpu_current_mode _sim_fpu.current_mode
 
 /* A number of useful constants.  */
 

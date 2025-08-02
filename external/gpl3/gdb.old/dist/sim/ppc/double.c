@@ -22,17 +22,18 @@
 #define _DOUBLE_C_
 
 #include "basics.h"
+#include "ansidecls.h"
 
-#define SFtype unsigned32
-#define DFtype unsigned64
+#define SFtype uint32_t
+#define DFtype uint64_t
 
-#define HItype signed16
-#define SItype signed32
-#define DItype signed64
+#define HItype int16_t
+#define SItype int32_t
+#define DItype int64_t
 
-#define UHItype unsigned16
-#define USItype unsigned32
-#define UDItype unsigned64
+#define UHItype uint16_t
+#define USItype uint32_t
+#define UDItype uint64_t
 
 
 #define US_SOFTWARE_GOFAST

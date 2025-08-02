@@ -1,4 +1,4 @@
-# Copyright 2008-2020 Free Software Foundation, Inc.
+# Copyright 2008-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,3 +42,34 @@ gdb_test "ptype circle.pos" \
 
 gdb_test "ptype circle.pos.x" \
          "type = <\[0-9\]+-byte integer>"
+
+gdb_test "complete print my_circ" "print my_circle"
+gdb_test "complete print my_circle.r" "print my_circle\\.radius"
+gdb_test "complete print my_circle.po" "print my_circle\\.pos"
+gdb_test "complete print my_circle  .  po" "print my_circle  \\.  pos" \
+    "complete with spaces"
+gdb_test "complete print my_circle." \
+    [multi_line \
+	 "print my_circle\\.pos" \
+	 "print my_circle\\.radius"]
+gdb_test "complete print (my_circle).r" "print \\(my_circle\\)\\.radius"
+gdb_test "complete print (my_circle).po" "print \\(my_circle\\)\\.pos"
+gdb_test "complete print (my_circle)." \
+    [multi_line \
+	 "print \\(my_circle\\)\\.pos" \
+	 "print \\(my_circle\\)\\.radius"]
+
+gdb_test "complete ptype pck.pos" "ptype pck\\.position"
+gdb_test "complete ptype pck.c" "ptype pck\\.circle"
+
+# We can't query the members of a package yet, and this yields a bit
+# too much output, so comment out for now instead of kfailing.
+# gdb_test "complete ptype pck." \
+#     [multi_line \
+# 	 "ptype pck\\.circle" \
+# 	 "ptype pck\\.position"]
+
+gdb_test "complete ptype circle.pos." \
+    [multi_line \
+	 "ptype circle\\.pos\\.x" \
+	 "ptype circle\\.pos\\.y"]

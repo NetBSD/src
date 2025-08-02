@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2020 Free Software Foundation, Inc.
+# Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,10 +19,6 @@
 load_lib gdb-guile.exp
 
 standard_testfile
-
-if [get_compiler_info c++] {
-    return -1
-}
 
 # Build inferior to language specification.
 
@@ -55,7 +51,7 @@ proc restart_gdb {exefile} {
 	return 0
     }
     gdb_scm_test_silent_cmd "guile (use-modules (gdb iterator))" \
-	"load iterator module"
+	"load iterator module" 0
 
     return 1
 }
@@ -176,9 +172,9 @@ proc test_equality {lang} {
 	gdb_test "guile (print (eq? (value-type st) (value-type ar)))" \
 	    "= #f" "test type eq? on not-equal types"
 	gdb_test "guile (print (equal? (value-type st) (value-type st)))" \
-	    "= #t" "test type eq? on equal types"
+	    "= #t" "test type equal? on equal types"
 	gdb_test "guile (print (equal? (value-type st) (value-type ar)))" \
-	    "= #f" "test type eq? on not-equal types"
+	    "= #f" "test type equal? on not-equal types"
 
 	if {$lang == "c++"} {
 	    gdb_scm_test_silent_cmd "guile (define c (parse-and-eval \"c\"))" \
@@ -260,6 +256,18 @@ proc test_range {} {
 	    gdb_test "guile (print (type-range (value-type st)))" \
 		"ERROR: .*: Wrong type argument in position 1 \\(expecting ranged type\\): .*" \
 		"check range for non ranged type"
+	}
+
+	with_test_prefix "on flexible array member" {
+	    gdb_scm_test_silent_cmd "print f" "print value (f)"
+	    gdb_scm_test_silent_cmd "guile (define f (history-ref 0))" \
+		"get value (f) from history"
+	    gdb_test "guile (print (type-range (field-type (type-field (value-type (value-dereference f)) \"items\"))))" \
+		"= \\(0 (0|-1)\\)"
+	    gdb_test "guile (print (value-subscript (value-field (value-dereference f) \"items\") 0))" \
+		"= 111"
+	    gdb_test "guile (print (value-subscript (value-field (value-dereference f) \"items\") 1))" \
+		"= 222"
 	}
     }
 }

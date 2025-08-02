@@ -12,7 +12,7 @@ void bar (int x)
     long_line ();
 }
 
-static void
+static void __attribute__ ((used))
 unused ()
 {
     /* Not used for anything */

@@ -1,5 +1,5 @@
 /* -*- c -*- */
-/* Copyright (C) 2012-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2022 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -1106,8 +1106,8 @@ rx_decode_opcode (unsigned long pc AU,
 /** 1111 1101 0001 111i a m11 rdst	mvfacgu	#%2, %1, %0 */
   ID(mvfacgu); S2C(((i^1)<<1)|m); SR(a+32); DR(rdst); F_____;
 
-/** 1111 1101 0001 0111 a011 rdst	mvtacgu	%0, %1 */
-  ID(mvtacgu); DR(a+32); SR(rdst); F_____;
+/** 1111 1101 0001 0111 a011 rsrc	mvtacgu	%1, %0 */
+  ID(mvtacgu); SR(rsrc); DR(a+32); F_____;
 
 /** 1111 1101 0001 1001 a00i 0000	racl	#%1, %0 */
   ID(racl); SC(i+1); DR(a+32); F_____;

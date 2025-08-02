@@ -55,7 +55,7 @@ int main()
 
   char av = 'a';
   char *a = &av;       // pointer to..
-  B *bp;
+  B *bp = new B();
   foo1_1 (a);          // ..pointer
   foo1_2 (a);          // ..array
   foo1_3 ((int*)a);    // ..pointer of wrong type

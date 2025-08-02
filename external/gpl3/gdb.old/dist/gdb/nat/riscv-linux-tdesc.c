@@ -1,5 +1,5 @@
 /* GNU/Linux/RISC-V native target description support for GDB.
-   Copyright (C) 2020 Free Software Foundation, Inc.
+   Copyright (C) 2020-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 standard_testfile .cc
 
-if { ![supports_statement_frontiers] } {
+if {[test_compiler_info gcc*] && ![supports_statement_frontiers] } {
     return -1
 }
 
@@ -31,7 +31,10 @@ proc do_test { use_header } {
 	return
     }
 
-    set options {c++ debug nowarnings optimize=-O2\ -gstatement-frontiers}
+    set options {c++ debug nowarnings optimize=-O2}
+    if { [supports_statement_frontiers] } {
+	lappend options additional_flags=-gstatement-frontiers
+    }
     if { $use_header } {
 	lappend options additional_flags=-DUSE_NEXT_INLINE_H
 	set executable "$testfile-with-header"
@@ -50,8 +53,9 @@ proc do_test { use_header } {
 
     with_test_prefix $prefix {
 
-    if ![runto_main] {
-	fail "can't run to main"
+    set main_location [gdb_get_line_number "Beginning of main" $srcfile]
+
+    if ![runto $main_location qualified] {
 	return
     }
 
@@ -59,25 +63,100 @@ proc do_test { use_header } {
     gdb_test "step" ".*" "step into get_alias_set"
     gdb_test "bt" "\\s*\\#0\\s+get_alias_set\[^\r\]*${srcfile}:.*" \
 	"not in inline 1"
+
     # It's possible that this first failure (when not using a header
     # file) is GCC's fault, though the remaining failures would best
     # be fixed by adding location views support (though it could be
     # that some easier heuristic could be figured out).  Still, it is
     # not certain that the first failure wouldn't also be fixed by
     # having location view support, so for now it is tagged as such.
-    if {!$use_header} { setup_kfail "*-*-*" symtab/25507 }
-    gdb_test "next" ".*TREE_TYPE.*" "next step 1"
+    set have_kfail [expr [test_compiler_info gcc*] && !$use_header]
+
+    set ok 1
+    gdb_test_multiple "next" "next step 1" {
+	-re -wrap "if \\(t->x != i\\)" {
+	    set ok 0
+	    send_gdb "next\n"
+	    exp_continue
+	}
+	-re -wrap ".*TREE_TYPE.* != 1" {
+	    if { $ok } {
+		pass $gdb_test_name
+	    } else {
+		if { $have_kfail } {
+		    setup_kfail "*-*-*" symtab/25507
+		}
+		fail $gdb_test_name
+	    }
+	}
+    }
     gdb_test "bt" "\\s*\\#0\\s+get_alias_set\[^\r\]*${srcfile}:.*" \
 	"not in inline 2"
-    gdb_test "next" ".*TREE_TYPE.*" "next step 2"
+
+    set ok 1
+    gdb_test_multiple "next" "next step 2" {
+	-re -wrap "return x;" {
+	    set ok 0
+	    send_gdb "next\n"
+	    exp_continue
+	}
+	-re -wrap ".*TREE_TYPE.* != 2" {
+	    if { $ok } {
+		pass $gdb_test_name
+	    } else {
+		if { $have_kfail } {
+		    setup_kfail "*-*-*" symtab/25507
+		}
+		fail $gdb_test_name
+	    }
+	}
+    }
     gdb_test "bt" "\\s*\\#0\\s+get_alias_set\[^\r\]*${srcfile}:.*" \
 	"not in inline 3"
-    if {!$use_header} { setup_kfail "*-*-*" symtab/25507 }
-    gdb_test "next" ".*TREE_TYPE.*" "next step 3"
+
+    set ok 1
+    gdb_test_multiple "next" "next step 3" {
+	-re -wrap "return x;" {
+	    set ok 0
+	    send_gdb "next\n"
+	    exp_continue
+	}
+	-re -wrap ".*TREE_TYPE.* != 3\\)" {
+	    if { $ok } {
+		pass $gdb_test_name
+	    } else {
+		if { $have_kfail } {
+		    setup_kfail "*-*-*" symtab/25507
+		}
+		fail $gdb_test_name
+	    }
+	}
+    }
     gdb_test "bt" "\\s*\\#0\\s+get_alias_set\[^\r\]*${srcfile}:.*" \
 	"not in inline 4"
-    if {!$use_header} { setup_kfail "*-*-*" symtab/25507 }
-    gdb_test "next" "return 0.*" "next step 4"
+
+    set ok 1
+    gdb_test_multiple "next" "next step 4" {
+	-re -wrap "(if \\(t != NULL|\} // get_alias_set)" {
+	    send_gdb "next\n"
+	    exp_continue
+	}
+	-re -wrap "return x;" {
+	    set ok 0
+	    send_gdb "next\n"
+	    exp_continue
+	}
+	-re -wrap "return 0.*" {
+	    if { $ok } {
+		pass $gdb_test_name
+	    } else {
+		if { $have_kfail } {
+		    setup_kfail "*-*-*" symtab/25507
+		}
+		fail $gdb_test_name
+	    }
+	}
+    }
     gdb_test "bt" \
 	"\\s*\\#0\\s+(main|get_alias_set)\[^\r\]*${srcfile}:.*" \
 	"not in inline 5"
@@ -93,7 +172,6 @@ proc do_test { use_header } {
     clean_restart ${executable}
 
     if ![runto_main] {
-	fail "can't run to main pass 2"
 	return
     }
 

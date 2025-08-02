@@ -1,4 +1,4 @@
-#   Copyright 2001-2020 Free Software Foundation, Inc.
+#   Copyright 2001-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,17 +22,12 @@
 
 standard_testfile
 
-if [get_compiler_info] {
-    return -1
-}
-
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug nowarnings}]} {
     return -1
 }
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 set is_stmt [is_stmt_addresses $srcfile]
@@ -59,7 +54,7 @@ gdb_test "break \*$bp_addr" "Breakpoint $decimal at $bp_addr: file .*" \
 gdb_test_multiple "step" "stopped at bp, 2nd instr" {
     -re -wrap "Breakpoint $decimal, ($hex) in foo.*" {
 	set stop_addr $expect_out(1,string)
-	if [eval expr "$bp_addr == $stop_addr"] then {
+	if {[eval expr "$bp_addr == $stop_addr"]} {
 	    pass "stopped at bp, 2nd instr"
 	} else {
 	    fail "stopped at bp, 2nd instr (wrong address)"
@@ -68,9 +63,9 @@ gdb_test_multiple "step" "stopped at bp, 2nd instr" {
     -re -wrap "Breakpoint $decimal, foo.*" {
 	set stop_addr [get_valueof "/x" "\$pc" "" "value of pc"]
 	set stop_addr_is_stmt [hex_in_list $stop_addr $is_stmt]
-	if { ! $stop_addr_is_stmt } {
+	if {!$stop_addr_is_stmt} {
 	    fail "stopped at bp, 2nd instr (missing hex prefix)"
-	} elseif [eval expr "$bp_addr == $stop_addr"] then {
+	} elseif {[eval expr "$bp_addr == $stop_addr"]} {
 	    pass "stopped at bp, 2nd instr"
 	} else {
 	    fail "stopped at bp, 2nd instr (wrong address)"

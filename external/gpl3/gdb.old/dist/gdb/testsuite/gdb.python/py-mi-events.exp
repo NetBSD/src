@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2020 Free Software Foundation, Inc.
+# Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ set MIFLAGS "-i=mi2"
 
 gdb_exit
 if [mi_gdb_start] {
-    continue
+    return
 }
 
 standard_testfile
@@ -31,7 +31,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
     return -1
 }
 
-if { [mi_skip_python_tests] } { continue }
+if { [mi_skip_python_tests] } { return }
 
 set remote_python_file [gdb_remote_download host ${srcdir}/${subdir}/${pyfile}]
 
@@ -49,7 +49,8 @@ if [is_remote host] {
 }
 
 mi_gdb_test "-file-exec-and-symbols ${filename}"  ".*\\^done" "file-exec-and-symbols operation"
-mi_run_to_main
+mi_gdb_load ${binfile}
+mi_runto_main
 
 
 # register the python event handlers with test-events command

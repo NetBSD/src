@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <!DOCTYPE syscalls_info SYSTEM "gdb-syscalls.dtd">
-<!-- Copyright (C) 2009-2020 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
      notice and this notice are preserved.  -->
 <!-- This file was generated using the following file:
-     
-     /usr/src/linux/arch/x86/include/asm/unistd_64.h
+
+     arch/x86/entry/syscalls/syscall_64.tbl
 
      The file mentioned above belongs to the Linux Kernel.  -->
 <syscalls_info>
@@ -308,4 +308,69 @@
   <syscall name="inotify_init1" number="294" groups="descriptor"/>
   <syscall name="preadv" number="295" groups="descriptor"/>
   <syscall name="pwritev" number="296" groups="descriptor"/>
+  <syscall name="rt_tgsigqueueinfo" number="297" groups="process,signal"/>
+  <syscall name="perf_event_open" number="298" groups="descriptor"/>
+  <syscall name="recvmmsg" number="299" groups="network"/>
+  <syscall name="fanotify_init" number="300" groups="descriptor"/>
+  <syscall name="fanotify_mark" number="301" groups="descriptor,file"/>
+  <syscall name="prlimit64" number="302"/>
+  <syscall name="name_to_handle_at" number="303" groups="descriptor,file"/>
+  <syscall name="open_by_handle_at" number="304" groups="descriptor"/>
+  <syscall name="clock_adjtime" number="305"/>
+  <syscall name="syncfs" number="306" groups="descriptor"/>
+  <syscall name="sendmmsg" number="307" groups="network"/>
+  <syscall name="setns" number="308" groups="descriptor"/>
+  <syscall name="getcpu" number="309"/>
+  <syscall name="process_vm_readv" number="310"/>
+  <syscall name="process_vm_writev" number="311"/>
+  <syscall name="kcmp" number="312"/>
+  <syscall name="finit_module" number="313" groups="descriptor"/>
+  <syscall name="sched_setattr" number="314"/>
+  <syscall name="sched_getattr" number="315"/>
+  <syscall name="renameat2" number="316"/>
+  <syscall name="seccomp" number="317"/>
+  <syscall name="getrandom" number="318"/>
+  <syscall name="memfd_create" number="319"/>
+  <syscall name="kexec_file_load" number="320"/>
+  <syscall name="bpf" number="321"/>
+  <syscall name="execveat" number="322"/>
+  <syscall name="userfaultfd" number="323"/>
+  <syscall name="membarrier" number="324"/>
+  <syscall name="mlock2" number="325"/>
+  <syscall name="copy_file_range" number="326"/>
+  <syscall name="preadv2" number="327"/>
+  <syscall name="pwritev2" number="328"/>
+  <syscall name="pkey_mprotect" number="329"/>
+  <syscall name="pkey_alloc" number="330"/>
+  <syscall name="pkey_free" number="331"/>
+  <syscall name="statx" number="332"/>
+  <syscall name="io_pgetevents" number="333"/>
+  <syscall name="rseq" number="334"/>
+  <syscall name="pidfd_send_signal" number="424"/>
+  <syscall name="io_uring_setup" number="425"/>
+  <syscall name="io_uring_enter" number="426"/>
+  <syscall name="io_uring_register" number="427"/>
+  <syscall name="open_tree" number="428"/>
+  <syscall name="move_mount" number="429"/>
+  <syscall name="fsopen" number="430"/>
+  <syscall name="fsconfig" number="431"/>
+  <syscall name="fsmount" number="432"/>
+  <syscall name="fspick" number="433"/>
+  <syscall name="pidfd_open" number="434"/>
+  <syscall name="clone3" number="435"/>
+  <syscall name="close_range" number="436"/>
+  <syscall name="openat2" number="437"/>
+  <syscall name="pidfd_getfd" number="438"/>
+  <syscall name="faccessat2" number="439"/>
+  <syscall name="process_madvise" number="440"/>
+  <syscall name="epoll_pwait2" number="441"/>
+  <syscall name="mount_setattr" number="442"/>
+  <syscall name="quotactl_fd" number="443"/>
+  <syscall name="landlock_create_ruleset" number="444"/>
+  <syscall name="landlock_add_rule" number="445"/>
+  <syscall name="landlock_restrict_self" number="446"/>
+  <syscall name="memfd_secret" number="447"/>
+  <syscall name="process_mrelease" number="448"/>
+  <syscall name="futex_waitv" number="449"/>
+  <syscall name="set_mempolicy_home_node" number="450"/>
 </syscalls_info>

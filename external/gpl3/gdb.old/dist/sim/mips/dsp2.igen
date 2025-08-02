@@ -1,7 +1,7 @@
 // -*- C -*-
 
 // Simulator definition for the MIPS DSP REV 2 ASE.
-// Copyright (C) 2007-2020 Free Software Foundation, Inc.
+// Copyright (C) 2007-2023 Free Software Foundation, Inc.
 // Contributed by MIPS Technologies, Inc.
 // Written by Chao-ying Fu (fu@mips.com).
 //
@@ -26,20 +26,20 @@
 :function:::void:do_u_ph_op:int rd, int rs, int rt, int op, int sat
 {
   int i;
-  unsigned32 h0;
-  unsigned16 h1, h2;
-  unsigned32 v1 = GPR[rs];
-  unsigned32 v2 = GPR[rt];
-  unsigned32 result = 0;
+  uint32_t h0;
+  uint16_t h1, h2;
+  uint32_t v1 = GPR[rs];
+  uint32_t v2 = GPR[rt];
+  uint32_t result = 0;
   for (i = 0; i < 32; i += 16, v1 >>= 16, v2 >>= 16)
     {
-      h1 = (unsigned16)(v1 & 0xffff);
-      h2 = (unsigned16)(v2 & 0xffff);
+      h1 = (uint16_t)(v1 & 0xffff);
+      h2 = (uint16_t)(v2 & 0xffff);
       if (op == 0) // ADD
-	h0 = (unsigned32)h1 + (unsigned32)h2;
+	h0 = (uint32_t)h1 + (uint32_t)h2;
       else // SUB
-	h0 = (unsigned32)h1 - (unsigned32)h2;
-      if (op == 0 && (h0 > (unsigned32)0x0000ffff)) // ADD SAT
+	h0 = (uint32_t)h1 - (uint32_t)h2;
+      if (op == 0 && (h0 > (uint32_t)0x0000ffff)) // ADD SAT
 	{
 	  DSPCR |= DSPCR_OUFLAG4;
 	  if (sat == 1)
@@ -51,7 +51,7 @@
 	  if (sat == 1)
 	    h0 = 0x0;
 	}
-      result |= ((unsigned32)((unsigned16)h0) << i);
+      result |= ((uint32_t)((uint16_t)h0) << i);
     }
   GPR[rd] = EXTEND32 (result);
 }
@@ -61,24 +61,24 @@
 :function:::void:do_uh_qb_op:int rd, int rs, int rt, int op, int round
 {
   int i;
-  unsigned32 h0;
-  unsigned8 h1, h2;
-  unsigned32 v1 = GPR[rs];
-  unsigned32 v2 = GPR[rt];
-  unsigned32 result = 0;
+  uint32_t h0;
+  uint8_t h1, h2;
+  uint32_t v1 = GPR[rs];
+  uint32_t v2 = GPR[rt];
+  uint32_t result = 0;
   for (i = 0; i < 32; i += 8, v1 >>= 8, v2 >>= 8)
     {
-      h1 = (unsigned8)(v1 & 0xff);
-      h2 = (unsigned8)(v2 & 0xff);
+      h1 = (uint8_t)(v1 & 0xff);
+      h2 = (uint8_t)(v2 & 0xff);
       if (op == 0) // ADD
-	h0 = (unsigned32)h1 + (unsigned32)h2;
+	h0 = (uint32_t)h1 + (uint32_t)h2;
       else // SUB
-	h0 = (unsigned32)h1 - (unsigned32)h2;
+	h0 = (uint32_t)h1 - (uint32_t)h2;
       if (round == 1)
 	h0 = (h0 + 1) >> 1;
       else
 	h0 = h0 >> 1;
-      result |= ((unsigned32)((unsigned8)h0) << i);
+      result |= ((uint32_t)((uint8_t)h0) << i);
     }
   GPR[rd] = EXTEND32 (result);
 }
@@ -87,15 +87,15 @@
 :function:::void:do_qb_cmpgdu:int rd, int rs, int rt, int op
 {
   int i, j;
-  unsigned32 v1 = GPR[rs];
-  unsigned32 v2 = GPR[rt];
-  unsigned8 h1, h2;
-  unsigned32 result = 0;
-  unsigned32 mask;
+  uint32_t v1 = GPR[rs];
+  uint32_t v2 = GPR[rt];
+  uint8_t h1, h2;
+  uint32_t result = 0;
+  uint32_t mask;
   for (i = 0, j = 0; i < 32; i += 8, j++, v1 >>= 8, v2 >>= 8)
     {
-      h1 = (unsigned8)(v1 & 0xff);
-      h2 = (unsigned8)(v2 & 0xff);
+      h1 = (uint8_t)(v1 & 0xff);
+      h2 = (uint8_t)(v2 & 0xff);
       mask = ~(1 << (DSPCR_CCOND_SHIFT + j));
       DSPCR &= mask;
       if (op == 0) // EQ
@@ -121,22 +121,22 @@
 :function:::void:do_w_ph_dot_product:int ac, int rs, int rt, int op
 {
   int i;
-  unsigned32 v1 = GPR[rs];
-  unsigned32 v2 = GPR[rt];
-  signed16 h1, h2;
-  signed32 result;
-  unsigned32 lo = DSPLO(ac);
-  unsigned32 hi = DSPHI(ac);
-  signed64 prod = (signed64)((((unsigned64)hi) << 32) + (unsigned64)lo);
+  uint32_t v1 = GPR[rs];
+  uint32_t v2 = GPR[rt];
+  int16_t h1, h2;
+  int32_t result;
+  uint32_t lo = DSPLO(ac);
+  uint32_t hi = DSPHI(ac);
+  int64_t prod = (int64_t)((((uint64_t)hi) << 32) + (uint64_t)lo);
   for (i = 0; i < 32; i += 16, v1 >>= 16, v2 >>= 16)
     {
-      h1 = (signed16)(v1 & 0xffff);
-      h2 = (signed16)(v2 & 0xffff);
-      result = (signed32)h1 * (signed32)h2;
+      h1 = (int16_t)(v1 & 0xffff);
+      h2 = (int16_t)(v2 & 0xffff);
+      result = (int32_t)h1 * (int32_t)h2;
       if (op == 0) // DPA
-        prod += (signed64)result;
+        prod += (int64_t)result;
       else // DPS
-        prod -= (signed64)result;
+        prod -= (int64_t)result;
     }
   DSPLO(ac) = EXTEND32 (prod);
   DSPHI(ac) = EXTEND32 (prod >> 32);
@@ -145,37 +145,37 @@
 // round: 0 = no rounding, 1 = rounding
 :function:::void:do_w_mulq:int rd, int rs, int rt, int round
 {
-  unsigned32 v1 = GPR[rs];
-  unsigned32 v2 = GPR[rt];
-  signed32 w1, w2;
-  signed64 prod;
-  unsigned32 result;
-  w1 = (signed32) v1;
-  w2 = (signed32 )v2;
-  if (w1 == (signed32) 0x80000000 && w2 == (signed32) 0x80000000)
+  uint32_t v1 = GPR[rs];
+  uint32_t v2 = GPR[rt];
+  int32_t w1, w2;
+  int64_t prod;
+  uint32_t result;
+  w1 = (int32_t) v1;
+  w2 = (int32_t) v2;
+  if (w1 == (int32_t) 0x80000000 && w2 == (int32_t) 0x80000000)
     {
       DSPCR |= DSPCR_OUFLAG5;
       prod = 0x7fffffff;
     }
   else
     {
-      prod = ((signed64) w1 * (signed64) w2) << 1;
+      prod = ((int64_t) w1 * (int64_t) w2) << 1;
       if (round == 1)
 	prod += 0x0000000080000000LL;
       prod = prod >> 32;
     }
-  result = (unsigned32) prod;
+  result = (uint32_t) prod;
   GPR[rd] = EXTEND32 (result);
 }
 
 // round: 0 = no rounding, 1 = rounding
 :function:::void:do_precr_sra:int rt, int rs, int sa, int round
 {
-  unsigned32 v1 = GPR[rt];
-  unsigned32 v2 = GPR[rs];
-  signed32 w1 = (signed32) v1;
-  signed32 w2 = (signed32) v2;
-  signed32 result;
+  uint32_t v1 = GPR[rt];
+  uint32_t v2 = GPR[rs];
+  int32_t w1 = (int32_t) v1;
+  int32_t w2 = (int32_t) v2;
+  int32_t result;
   if (sa != 0)
     {
       if (round == 1 && (w1 & (1 << (sa - 1))))
@@ -196,12 +196,12 @@
 :function:::void:do_qb_shra:int rd, int rt, int shift, int round
 {
   int i, j;
-  signed8 q0;
-  unsigned32 v1 = GPR[rt];
-  unsigned32 result = 0;
+  int8_t q0;
+  uint32_t v1 = GPR[rt];
+  uint32_t result = 0;
   for (i = 0; i < 32; i += 8, v1 >>= 8)
     {
-      q0 = (signed8)(v1 & 0xff);
+      q0 = (int8_t)(v1 & 0xff);
       if (shift != 0)
  	{
 	  if (round == 1 && (q0 & (1 << (shift - 1))))
@@ -209,7 +209,7 @@
 	  else
 	    q0 = q0 >> shift;
  	}
-      result |= ((unsigned32)((unsigned8)q0) << i);
+      result |= ((uint32_t)((uint8_t)q0) << i);
     }
   GPR[rd] = EXTEND32 (result);
 }
@@ -217,14 +217,14 @@
 :function:::void:do_ph_shrl:int rd, int rt, int shift
 {
   int i, j;
-  unsigned16 h0;
-  unsigned32 v1 = GPR[rt];
-  unsigned32 result = 0;
+  uint16_t h0;
+  uint32_t v1 = GPR[rt];
+  uint32_t result = 0;
   for (i = 0; i < 32; i += 16, v1 >>= 16)
     {
-      h0 = (unsigned16)(v1 & 0xffff);
+      h0 = (uint16_t)(v1 & 0xffff);
       h0 = h0 >> shift;
-      result |= ((unsigned32)h0 << i);
+      result |= ((uint32_t)h0 << i);
     }
   GPR[rd] = EXTEND32 (result);
 }
@@ -234,24 +234,24 @@
 :function:::void:do_qh_ph_op:int rd, int rs, int rt, int op, int round
 {
   int i;
-  signed32 h0;
-  signed16 h1, h2;
-  unsigned32 v1 = GPR[rs];
-  unsigned32 v2 = GPR[rt];
-  unsigned32 result = 0;
+  int32_t h0;
+  int16_t h1, h2;
+  uint32_t v1 = GPR[rs];
+  uint32_t v2 = GPR[rt];
+  uint32_t result = 0;
   for (i = 0; i < 32; i += 16, v1 >>= 16, v2 >>= 16)
     {
-      h1 = (signed16)(v1 & 0xffff);
-      h2 = (signed16)(v2 & 0xffff);
+      h1 = (int16_t)(v1 & 0xffff);
+      h2 = (int16_t)(v2 & 0xffff);
       if (op == 0) // ADD
-	h0 = (signed32)h1 + (signed32)h2;
+	h0 = (int32_t)h1 + (int32_t)h2;
       else // SUB
-	h0 = (signed32)h1 - (signed32)h2;
+	h0 = (int32_t)h1 - (int32_t)h2;
       if (round == 1)
 	h0 = (h0 + 1) >> 1;
       else
 	h0 = h0 >> 1;
-      result |= ((unsigned32)((unsigned16)h0) << i);
+      result |= ((uint32_t)((uint16_t)h0) << i);
     }
   GPR[rd] = EXTEND32 (result);
 }
@@ -261,13 +261,13 @@
 :function:::void:do_qh_w_op:int rd, int rs, int rt, int op, int round
 {
   int i;
-  signed64 v0;
-  signed32 v1 = (signed32)GPR[rs];
-  signed32 v2 = (signed32)GPR[rt];
+  int64_t v0;
+  int32_t v1 = (int32_t)GPR[rs];
+  int32_t v2 = (int32_t)GPR[rt];
   if (op == 0) // ADD
-    v0 = (signed64)v1 + (signed64)v2;
+    v0 = (int64_t)v1 + (int64_t)v2;
   else // SUB
-    v0 = (signed64)v1 - (signed64)v2;
+    v0 = (int64_t)v1 - (int64_t)v2;
   if (round == 1)
     v0 = (v0 + 1) >> 1;
   else
@@ -279,22 +279,22 @@
 :function:::void:do_x_w_ph_dot_product:int ac, int rs, int rt, int op
 {
   int i;
-  unsigned32 v1 = GPR[rs];
-  unsigned32 v2 = GPR[rt];
-  signed16 h1, h2;
-  signed32 result;
-  unsigned32 lo = DSPLO(ac);
-  unsigned32 hi = DSPHI(ac);
-  signed64 prod = (signed64)((((unsigned64)hi) << 32) + (unsigned64)lo);
+  uint32_t v1 = GPR[rs];
+  uint32_t v2 = GPR[rt];
+  int16_t h1, h2;
+  int32_t result;
+  uint32_t lo = DSPLO(ac);
+  uint32_t hi = DSPHI(ac);
+  int64_t prod = (int64_t)((((uint64_t)hi) << 32) + (uint64_t)lo);
   for (i = 0; i < 32; i += 16, v1 >>= 16, v2 <<= 16)
     {
-      h1 = (signed16)(v1 & 0xffff);
-      h2 = (signed16)((v2 & 0xffff0000) >> 16);
-      result = (signed32)h1 * (signed32)h2;
+      h1 = (int16_t)(v1 & 0xffff);
+      h2 = (int16_t)((v2 & 0xffff0000) >> 16);
+      result = (int32_t)h1 * (int32_t)h2;
       if (op == 0) // DPAX
-        prod += (signed64)result;
+        prod += (int64_t)result;
       else // DPSX
-        prod -= (signed64)result;
+        prod -= (int64_t)result;
     }
   DSPLO(ac) = EXTEND32 (prod);
   DSPHI(ac) = EXTEND32 (prod >> 32);
@@ -305,35 +305,35 @@
 :function:::void:do_qx_w_ph_dot_product:int ac, int rs, int rt, int op, int sat
 {
   int i;
-  unsigned32 v1 = GPR[rs];
-  unsigned32 v2 = GPR[rt];
-  signed16 h1, h2;
-  signed32 result;
-  unsigned32 lo = DSPLO(ac);
-  unsigned32 hi = DSPHI(ac);
-  signed64 prod = (signed64)((((unsigned64)hi) << 32) + (unsigned64)lo);
-  signed64 max, min;
+  uint32_t v1 = GPR[rs];
+  uint32_t v2 = GPR[rt];
+  int16_t h1, h2;
+  int32_t result;
+  uint32_t lo = DSPLO(ac);
+  uint32_t hi = DSPHI(ac);
+  int64_t prod = (int64_t)((((uint64_t)hi) << 32) + (uint64_t)lo);
+  int64_t max, min;
   for (i = 0; i < 32; i += 16, v1 >>= 16, v2 <<= 16)
     {
-      h1 = (signed16)(v1 & 0xffff);
-      h2 = (signed16)((v2 & 0xffff0000) >> 16);
-      if (h1 == (signed16)0x8000 && h2 == (signed16)0x8000)
+      h1 = (int16_t)(v1 & 0xffff);
+      h2 = (int16_t)((v2 & 0xffff0000) >> 16);
+      if (h1 == (int16_t)0x8000 && h2 == (int16_t)0x8000)
 	{
 	  DSPCR |= (1 << (DSPCR_OUFLAG_SHIFT + ac));
 	  result = 0x7fffffff;
 	}
       else
-	result = ((signed32)h1 * (signed32)h2) << 1;
+	result = ((int32_t)h1 * (int32_t)h2) << 1;
       if (op == 0) // DPAQX
-        prod += (signed64)result;
+        prod += (int64_t)result;
       else // DPSQX
-        prod -= (signed64)result;
+        prod -= (int64_t)result;
     }
   // Saturation on the accumulator.
   if (sat == 1)
     {
-      max = (signed64) 0x7fffffffLL;
-      min = (signed64) 0xffffffff80000000LL;
+      max = (int64_t) 0x7fffffffLL;
+      min = (int64_t) 0xffffffff80000000LL;
       if (prod > max)
 	{
 	  DSPCR |= (1 << (DSPCR_OUFLAG_SHIFT + ac));

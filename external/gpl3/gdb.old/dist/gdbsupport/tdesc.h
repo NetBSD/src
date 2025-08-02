@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -328,7 +328,7 @@ struct target_desc_deleter
 typedef std::unique_ptr<target_desc, target_desc_deleter> target_desc_up;
 
 /* Allocate a new target_desc.  */
-target_desc *allocate_target_description (void);
+target_desc_up allocate_target_description (void);
 
 /* Set TARGET_DESC's architecture by NAME.  */
 void set_tdesc_architecture (target_desc *target_desc,

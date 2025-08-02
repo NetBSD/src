@@ -1,4 +1,4 @@
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ clean_restart ${testfile}
 # testcase is to generate this core file, so we can then exercise
 # task-switching when debugging from core files.
 
-if { ![runto request_for_crash ]} then {
+if {![runto request_for_crash]} {
     untested "couldn't run to Request_For_Crash"
     return -1
 }

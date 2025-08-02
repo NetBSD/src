@@ -1,4 +1,4 @@
-/* Copyright 2014-2020 Free Software Foundation, Inc.
+/* Copyright 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
 	.byte	0x1	/* DW_AT_language */
 	.ascii	"dw2-abs-hi-pc-world.c\0"     /* DW_AT_name */
 	.ascii  "/tmp\0"        /* DW_AT_comp_dir */
-	.4byte	.world_start	/* DW_AT_low_pc */
-	.4byte	.world_end	/* DW_AT_high_pc */
+	.4byte	WORLD_START	/* DW_AT_low_pc */
+	.4byte	WORLD_END	/* DW_AT_high_pc */
 	.4byte	.Ldebug_line0	/* DW_AT_stmt_list */
 	.uleb128 0x2	/* (DIE (0x2d) DW_TAG_subprogram) */
 	.byte	0x1	/* DW_AT_external */
@@ -33,8 +33,8 @@
 	.byte	0x1	/* DW_AT_decl_file (world.c) */
 	.byte	0x13	/* DW_AT_decl_line */
 	.byte	0x1	/* DW_AT_prototyped */
-	.4byte	.world_start	/* DW_AT_low_pc */
-	.4byte	.world_end	/* DW_AT_high_pc */
+	.4byte	WORLD_START	/* DW_AT_low_pc */
+	.4byte	WORLD_END	/* DW_AT_high_pc */
 	.byte	0	/* end of children of DIE 0xb */
 .Ledebug_info0:
 
@@ -114,7 +114,7 @@ LELTP:
         .byte   0        /* set address to .world_start */
         .uleb128 0x5
         .byte   0x2
-        .4byte  .world_start
+        .4byte  WORLD_START
         .byte   0x3      /* DW_LNS_advance_line */
         .sleb128 22      /* ... to 23 */
         .byte   0x5      /* column 0 */
@@ -144,8 +144,9 @@ LELTP:
         .byte   0        /* set address to .world_end */
         .uleb128 0x5
         .byte   0x2
-        .4byte  .world_end
+        .4byte  WORLD_END
         .byte   0        /* end sequence */
         .uleb128 0x1
         .byte   0x1
 LELT:
+	.section	.note.GNU-stack,"",@progbits

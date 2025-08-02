@@ -1,4 +1,4 @@
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -166,18 +166,14 @@ if { "${asm-arch}" == "" } {
 }
 
 # On NetBSD/ELF we need a special NetBSD-identifying note section.
-if { [istarget "*-*-netbsdelf*"]
-     || [istarget "alpha-*-netbsd*"]
-     || [istarget "mips*-*-netbsd*"]
-     || [istarget "powerpc-*-netbsd*"]
-     || [istarget "x86_64-*-netbsd*"] } then {
+if {[istarget "*-*-netbsd*"] && ![istarget "*-*-netbsdaout*"]} {
     set asm-note "netbsd"
 }
 
 # On OpenBSD/ELF we need a similar note section.  We make no attempt
 # of handing a.out here since most OpenBSD/a.out systems use a rather
 # outdated assembler that doesn't assemble this test's code anyway.
-if { [istarget "*-*-openbsd*"] } then {
+if {[istarget "*-*-openbsd*"]} {
     set asm-note "openbsd"
 }
 
@@ -216,7 +212,7 @@ if { [string equal ${debug-flags} ""] } {
 }
 
 # Allow the target board to override the debug flags.
-if { [board_info $dest exists debug_flags] } then {
+if {[board_info $dest exists debug_flags]} {
     set debug-flags "[board_info $dest debug_flags]"
 }
 
@@ -243,11 +239,11 @@ regsub "--" "-g\[0-9\]" "${debug-flags}" "" debug-flags
 set asm1obj [standard_output_file asmrc1.o]
 set asm2obj [standard_output_file asmrc2.o]
 
-if {[target_assemble ${srcdir}/${subdir}/${srcfile} $asm1obj "${asm-flags} ${debug-flags}"] != ""} then {
+if {[target_assemble ${srcdir}/${subdir}/${srcfile} $asm1obj "${asm-flags} ${debug-flags}"] != ""} {
      untested "failed to assemble"
      return -1
 }
-if {[target_assemble ${srcdir}/${subdir}/${srcfile2} $asm2obj "${asm-flags} ${debug-flags}"] != ""} then {
+if {[target_assemble ${srcdir}/${subdir}/${srcfile2} $asm2obj "${asm-flags} ${debug-flags}"] != ""} {
      untested "failed to assemble"
      return -1
 }
@@ -258,7 +254,7 @@ if {[target_assemble ${srcdir}/${subdir}/${srcfile2} $asm2obj "${asm-flags} ${de
 # code here that provides its own startup code.  Using target_link
 # also avoids a lot of problems on many systems, most notably on
 # *-*-*bsd* and *-*-solaris2*.
-if {[target_link [list $asm1obj $asm2obj] "${binfile}" ${link-flags}] != "" } then {
+if {[target_link [list $asm1obj $asm2obj] "${binfile}" ${link-flags}] != ""} {
      untested "failed to link"
      return -1
 }
@@ -288,8 +284,7 @@ gdb_load ${binfile}
 # Run to `main' where we begin our tests.
 #
 
-if ![runto_main] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return 0
 }
 

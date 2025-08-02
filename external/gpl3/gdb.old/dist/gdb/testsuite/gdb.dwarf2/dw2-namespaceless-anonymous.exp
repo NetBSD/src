@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ if {![dwarf2_support]} {
     return 0  
 }
 
-standard_testfile dw2-namespaceless-anonymous.c dw2-namespaceless-anonymous.S
+standard_testfile .c .S
 
 set asm_file [standard_output_file $srcfile2]
 Dwarf::assemble $asm_file {
@@ -30,7 +30,7 @@ Dwarf::assemble $asm_file {
     cu {} {
 	DW_TAG_compile_unit {
 	    {DW_AT_language @DW_LANG_C_plus_plus}
-	    {DW_AT_name     dw2-namespaceless-anonymous.c}
+	    {DW_AT_name     $srcfile}
 	    {DW_AT_comp_dir /tmp}
 	} {
 	    declare_labels myint

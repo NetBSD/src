@@ -1,6 +1,6 @@
 /* Test for inferior function calls MPX context.
 
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,33 +17,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "x86-cpuid.h"
 
 /* Defined size for arrays.  */
 #define ARRAY_LENGTH    5
-
-unsigned int
-have_mpx (void)
-{
-  unsigned int eax, ebx, ecx, edx;
-
-  if (!__get_cpuid (1, &eax, &ebx, &ecx, &edx))
-    return 0;
-
-  if ((ecx & bit_OSXSAVE) == bit_OSXSAVE)
-    {
-      if (__get_cpuid_max (0, NULL) < 7)
-	return 0;
-
-      __cpuid_count (7, 0, eax, ebx, ecx, edx);
-
-      if ((ebx & bit_MPX) == bit_MPX)
-	return 1;
-      else
-	return 0;
-    }
-  return 0;
-}
 
 
 int
@@ -99,33 +75,31 @@ char_lower (char *str, int length)
 int
 main (void)
 {
-  if (have_mpx ())
-    {
-      int sa[ARRAY_LENGTH];
-      int sb[ARRAY_LENGTH];
-      int sc[ARRAY_LENGTH];
-      int sd[ARRAY_LENGTH];
-      int *x, *a, *b, *c, *d;
-      char mchar;
-      char hello[] = "Hello";
+  int sa[ARRAY_LENGTH];
+  int sb[ARRAY_LENGTH];
+  int sc[ARRAY_LENGTH];
+  int sd[ARRAY_LENGTH];
+  int *x, *a, *b, *c, *d;
+  char mchar;
+  char hello[] = "Hello";
 
-      x = malloc (sizeof (int) * ARRAY_LENGTH);
-      a = malloc (sizeof (int) * ARRAY_LENGTH);
-      b = malloc (sizeof (int) * ARRAY_LENGTH);
-      c = malloc (sizeof (int) * ARRAY_LENGTH);
-      d = malloc (sizeof (int) * ARRAY_LENGTH);
+  x = malloc (sizeof (int) * ARRAY_LENGTH);
+  a = malloc (sizeof (int) * ARRAY_LENGTH);
+  b = malloc (sizeof (int) * ARRAY_LENGTH);
+  c = malloc (sizeof (int) * ARRAY_LENGTH);
+  d = malloc (sizeof (int) * ARRAY_LENGTH);
 
-      *x = upper (sa, sb, sc, sd, 0);  /* bkpt 1.  */
-      *x = lower (a, b, c, d, 0);
+  *x = upper (sa, sb, sc, sd, 0);  /* bkpt 1.  */
+  *x = lower (a, b, c, d, 0);
 
-      mchar = char_upper (hello, 10);
-      mchar = char_lower (hello, 10);
+  mchar = char_upper (hello, 10);
+  mchar = char_lower (hello, 10);
 
-      free (x);
-      free (a);
-      free (b);
-      free (c);
-      free (d);
-    }
+  free (x);
+  free (a);
+  free (b);
+  free (c);
+  free (d);
+
   return 0;
 }

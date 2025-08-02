@@ -1,5 +1,5 @@
 /* Declarations for C-SKY opcode table
-   Copyright (C) 2007-2020 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of the GNU opcodes library.
@@ -20,6 +20,7 @@
    02110-1301, USA.  */
 
 #include "opcode/csky.h"
+#include "safe-ctype.h"
 
 #define OP_TABLE_NUM    2
 #define MAX_OPRND_NUM   5
@@ -43,6 +44,7 @@ enum operand_type
   OPRND_TYPE_AREG_WITH_LSHIFT_FPU,
 
   OPRND_TYPE_FREG_WITH_INDEX,
+  OPRND_TYPE_VREG_WITH_INDEX,
   /* r1 only, for xtrb0(1)(2)(3) in csky v1 ISA.  */
   OPRND_TYPE_REG_r1a,
   /* r1 only, for divs/divu in csky v1 ISA.  */
@@ -128,8 +130,11 @@ enum operand_type
   /* OPRND_TYPE_IMM5b_a_b means: Immediate in (a, b).  */
   OPRND_TYPE_IMM5b_1_31,
   OPRND_TYPE_IMM5b_7_31,
+  /* OPRND_TYPE_IMM5b_LS means: Imm <= prev Imm.  */
+  OPRND_TYPE_IMM5b_LS,
   /* Operand type for rori and rotri.  */
   OPRND_TYPE_IMM5b_RORI,
+  OPRND_TYPE_IMM5b_VSH,
   OPRND_TYPE_IMM5b_POWER,
   OPRND_TYPE_IMM5b_7_31_POWER,
   OPRND_TYPE_IMM5b_BMASKI,
@@ -266,8 +271,8 @@ struct csky_opcode
   /* Encodings for 32-bit opcodes.  */
   struct csky_opcode_info op32[OP_TABLE_NUM];
   /* Instruction set flag.  */
-  BFD_HOST_U_64_BIT isa_flag16;
-  BFD_HOST_U_64_BIT isa_flag32;
+  uint64_t isa_flag16;
+  uint64_t isa_flag32;
   /* Whether this insn needs relocation, 0: no, !=0: yes.  */
   signed int reloc16;
   signed int reloc32;
@@ -275,7 +280,7 @@ struct csky_opcode
   signed int relax;
   /* Worker function to call when this instruction needs special assembler
      handling.  */
-  bfd_boolean (*work)(void);
+  bool (*work) (void);
 };
 
 /* The following are the opcodes used in relax/fix process.  */
@@ -624,110 +629,13 @@ struct csky_opcode
 #define V1_REG_SP              0
 #define V1_REG_LR             15
 
-struct csky_reg
-{
-  const char *name;
-  int  index;
-  int  flag;
-};
-
-const char *csky_general_reg[] =
-{
-  "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
-  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
-  "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
-  "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31",
-  NULL,
-};
-
-/* TODO: optimize.  */
-const char *cskyv2_general_alias_reg[] =
-{
-  "a0", "a1", "a2", "a3", "l0", "l1", "l2", "l3",
-  "l4", "l5", "l6", "l7", "t0", "t1", "sp", "lr",
-  "l8", "l9", "t2", "t3", "t4", "t5", "t6", "t7",
-  "t8", "t9", "r26", "r27", "rdb", "gb", "r30", "r31",
-  NULL,
-};
-
-/* TODO: optimize.  */
-const char *cskyv1_general_alias_reg[] =
-{
-  "sp", "r1", "a0", "a1", "a2", "a3", "a4", "a5",
-  "fp", "l0", "l1", "l2", "l3", "l4", "gb", "lr",
-  NULL,
-};
-
-/* TODO: optimize.  */
-const char *csky_fpu_reg[] =
-{
-  "fr0",  "fr1",  "fr2",  "fr3",  "fr4",  "fr5",  "fr6",  "fr7",
-  "fr8",  "fr9",  "fr10", "fr11", "fr12", "fr13", "fr14", "fr15",
-  "fr16", "fr17", "fr18", "fr19", "fr20", "fr21", "fr22", "fr23",
-  "fr24", "fr25", "fr26", "fr27", "fr28", "fr29", "fr30", "fr31",
-  NULL,
-};
-
-/* Control Registers.  */
-struct csky_reg csky_ctrl_regs[] =
-{
-  {"psr", 0, 0},  {"vbr", 1, 0},    {"epsr", 2, 0},  {"fpsr", 3, 0},
-  {"epc", 4, 0},  {"fpc", 5, 0},    {"ss0", 6, 0},   {"ss1", 7, 0},
-  {"ss2", 8, 0},  {"ss3", 9, 0},    {"ss4", 10, 0},  {"gcr", 11, 0},
-  {"gsr", 12, 0}, {"cpuidr", 13, 0}, {"dcsr", 14, 0}, {"cwr", 15, 0},
-  {"cfr", 16, 0}, {"ccr", 17, 0},   {"capr", 19, 0}, {"pacr", 20, 0},
-  {"rid", 21, 0}, {"sedcr", 8, CSKY_ISA_TRUST}, {"sepcr", 9, CSKY_ISA_TRUST},
-  {NULL, 0, 0}
-};
-
-const char *csky_cp_idx[] =
-{
-  "cp0", "cp1", "cp2", "cp3", "cp4", "cp5", "cp6", "cp7",
-  "cp8", "cp9", "cp10", "cp11", "cp12", "cp13", "cp14", "cp15",
-  "cp16", "cp17", "cp18", "cp19", "cp20",
-  NULL,
-};
-
-const char *csky_cp_reg[] =
-{
-  "cpr0",  "cpr1",  "cpr2",  "cpr3",  "cpr4",  "cpr5",  "cpr6",  "cpr7",
-  "cpr8",  "cpr9",  "cpr10", "cpr11", "cpr12", "cpr13", "cpr14", "cpr15",
-  "cpr16", "cpr17", "cpr18", "cpr19", "cpr20", "cpr21", "cpr22", "cpr23",
-  "cpr24", "cpr25", "cpr26", "cpr27", "cpr28", "cpr29", "cpr30", "cpr31",
-  "cpr32", "cpr33", "cpr34", "cpr35", "cpr36", "cpr37", "cpr38", "cpr39",
-  "cpr40", "cpr41", "cpr42", "cpr43", "cpr44", "cpr45", "cpr46", "cpr47",
-  "cpr48", "cpr49", "cpr50", "cpr51", "cpr52", "cpr53", "cpr54", "cpr55",
-  "cpr56", "cpr57", "cpr58", "cpr59", "cpr60", "cpr61", "cpr62", "cpr63",
-  NULL,
-};
-
-const char *csky_cp_creg[] =
-{
-  "cpcr0",  "cpcr1",  "cpcr2",  "cpcr3",
-  "cpcr4",  "cpcr5",  "cpcr6",  "cpcr7",
-  "cpcr8",  "cpcr9",  "cpcr10", "cpcr11",
-  "cpcr12", "cpcr13", "cpcr14", "cpcr15",
-  "cpcr16", "cpcr17", "cpcr18", "cpcr19",
-  "cpcr20", "cpcr21", "cpcr22", "cpcr23",
-  "cpcr24", "cpcr25", "cpcr26", "cpcr27",
-  "cpcr28", "cpcr29", "cpcr30", "cpcr31",
-  "cpcr32", "cpcr33", "cpcr34", "cpcr35",
-  "cpcr36", "cpcr37", "cpcr38", "cpcr39",
-  "cpcr40", "cpcr41", "cpcr42", "cpcr43",
-  "cpcr44", "cpcr45", "cpcr46", "cpcr47",
-  "cpcr48", "cpcr49", "cpcr50", "cpcr51",
-  "cpcr52", "cpcr53", "cpcr54", "cpcr55",
-  "cpcr56", "cpcr57", "cpcr58", "cpcr59",
-  "cpcr60", "cpcr61", "cpcr62", "cpcr63",
-  NULL,
-};
-
 struct psrbit
 {
   int value;
   int isa;
   const char *name;
 };
+
 const struct psrbit cskyv1_psr_bits[] =
 {
   {1,    0, "ie"},
@@ -736,6 +644,7 @@ const struct psrbit cskyv1_psr_bits[] =
   {8,    0, "af"},
   {0, 0, NULL},
 };
+
 const struct psrbit cskyv2_psr_bits[] =
 {
   {8, 0, "ee"},
@@ -746,6 +655,393 @@ const struct psrbit cskyv2_psr_bits[] =
   {0, 0, NULL},
 };
 
+#define GENERAL_REG_BANK      0x80000000
+#define REG_SUPPORT_ALL 0xffffffff
+
+/* CSKY register description.  */
+struct csky_reg_def
+{
+  /* The group number for control registers,
+     and set the bank of genaral registers to a special number.  */
+  int bank;
+  int regno;
+  /* The name displayed by serial number.  */
+  const char *name;
+  /* The name displayed by ABI infomation,
+     used when objdump add option -Mabi-names.  */
+  const char *abi_name;
+  /* The flags indicate which arches support the register.  */
+  int arch_flag;
+  /* Some registers depend on special features.  */
+  char *features;
+};
+
+/* Arch flag.  */
+#define ASH(a) (1 << CSKY_ARCH_##a)
+
+/* All arches exclued 801.  */
+#define REG_SUPPORT_A   (REG_SUPPORT_ALL & ~ASH(801))
+
+/* All arches exclued 801 and 802.  */
+#define REG_SUPPORT_B   (REG_SUPPORT_ALL & ~(ASH(801) | ASH(802)))
+
+/* All arches exclued 801, 802, 803, 805.*/
+#define REG_SUPPORT_C   (REG_SUPPORT_ALL & ~(ASH(801)			\
+		       	| ASH(802) | ASH(803) | ASH(805)))
+
+/* All arches exclued 801, 802, 803, 805, 807, 810.  */
+#define REG_SUPPORT_D   (REG_SUPPORT_C & ~(ASH(807) | ASH(810)))
+
+/* All arches exclued 807, 810, 860.  */
+#define REG_SUPPORT_E   (REG_SUPPORT_ALL & ~(ASH(807) | ASH(810) |	\
+		       	ASH(860)))
+
+/* C-SKY V1 general registers table.  */
+static struct csky_reg_def csky_abiv1_general_regs[] = 
+{
+#define DECLARE_REG(regno, abi_name, support)		\
+  {GENERAL_REG_BANK, regno, "r"#regno, abi_name, support, NULL}
+
+  DECLARE_REG (0, "sp", REG_SUPPORT_ALL),
+  DECLARE_REG (1, NULL, REG_SUPPORT_ALL),
+  DECLARE_REG (2, "a0", REG_SUPPORT_ALL),
+  DECLARE_REG (3, "a1", REG_SUPPORT_ALL),
+  DECLARE_REG (4, "a2", REG_SUPPORT_ALL),
+  DECLARE_REG (5, "a3", REG_SUPPORT_ALL),
+  DECLARE_REG (6, "a4", REG_SUPPORT_ALL),
+  DECLARE_REG (7, "a5", REG_SUPPORT_ALL),
+  DECLARE_REG (8, "fp", REG_SUPPORT_ALL),
+  DECLARE_REG (8, "l0", REG_SUPPORT_ALL),
+  DECLARE_REG (9, "l1", REG_SUPPORT_ALL),
+  DECLARE_REG (10, "l2", REG_SUPPORT_ALL),
+  DECLARE_REG (11, "l3", REG_SUPPORT_ALL),
+  DECLARE_REG (12, "l4", REG_SUPPORT_ALL),
+  DECLARE_REG (13, "l5", REG_SUPPORT_ALL),
+  DECLARE_REG (14, "gb", REG_SUPPORT_ALL),
+  DECLARE_REG (15, "lr", REG_SUPPORT_ALL),
+#undef DECLARE_REG
+  {-1, -1, NULL, NULL, 0, NULL},
+};
+
+/* C-SKY V1 control registers table.  */
+static struct csky_reg_def csky_abiv1_control_regs[] = 
+{
+#define DECLARE_REG(regno, abi_name, support)		\
+  {0, regno, "cr"#regno, abi_name, support, NULL}
+
+  DECLARE_REG (0, "psr", REG_SUPPORT_ALL),
+  DECLARE_REG (1, "vbr", REG_SUPPORT_ALL),
+  DECLARE_REG (2, "epsr", REG_SUPPORT_ALL),
+  DECLARE_REG (3, "fpsr", REG_SUPPORT_ALL),
+  DECLARE_REG (4, "epc", REG_SUPPORT_ALL),
+  DECLARE_REG (5, "fpc", REG_SUPPORT_ALL),
+  DECLARE_REG (6, "ss0", REG_SUPPORT_ALL),
+  DECLARE_REG (7, "ss1", REG_SUPPORT_ALL),
+  DECLARE_REG (8, "ss2", REG_SUPPORT_ALL),
+  DECLARE_REG (9, "ss3", REG_SUPPORT_ALL),
+  DECLARE_REG (10, "ss4", REG_SUPPORT_ALL),
+  DECLARE_REG (11, "gcr", REG_SUPPORT_ALL),
+  DECLARE_REG (12, "gsr", REG_SUPPORT_ALL),
+  DECLARE_REG (13, "cpid", REG_SUPPORT_ALL),
+  DECLARE_REG (14, "dcsr", REG_SUPPORT_ALL),
+  DECLARE_REG (15, "cwr", REG_SUPPORT_ALL),
+  DECLARE_REG (16, NULL, REG_SUPPORT_ALL),
+  DECLARE_REG (17, "cfr", REG_SUPPORT_ALL),
+  DECLARE_REG (18, "ccr", REG_SUPPORT_ALL),
+  DECLARE_REG (19, "capr", REG_SUPPORT_ALL),
+  DECLARE_REG (20, "pacr", REG_SUPPORT_ALL),
+  DECLARE_REG (21, "prsr", REG_SUPPORT_ALL),
+  DECLARE_REG (22, "mir", REG_SUPPORT_ALL),
+  DECLARE_REG (23, "mrr", REG_SUPPORT_ALL),
+  DECLARE_REG (24, "mel0", REG_SUPPORT_ALL),
+  DECLARE_REG (25, "mel1", REG_SUPPORT_ALL),
+  DECLARE_REG (26, "meh", REG_SUPPORT_ALL),
+  DECLARE_REG (27, "mcr", REG_SUPPORT_ALL),
+  DECLARE_REG (28, "mpr", REG_SUPPORT_ALL),
+  DECLARE_REG (29, "mwr", REG_SUPPORT_ALL),
+  DECLARE_REG (30, "mcir", REG_SUPPORT_ALL),
+#undef DECLARE_REG
+  {-1, -1, NULL, NULL, 0, NULL},
+};
+
+/* C-SKY V2 general registers table.  */
+static struct csky_reg_def csky_abiv2_general_regs[] = 
+{
+#ifdef DECLARE_REG
+#undef DECLARE_REG
+#endif
+#define DECLARE_REG(regno, abi_name, support)		\
+  {GENERAL_REG_BANK, regno, "r"#regno, abi_name, support, NULL}
+
+  DECLARE_REG (0, "a0", REG_SUPPORT_ALL),
+  DECLARE_REG (1, "a1", REG_SUPPORT_ALL),
+  DECLARE_REG (2, "a2", REG_SUPPORT_ALL),
+  DECLARE_REG (3, "a3", REG_SUPPORT_ALL),
+  DECLARE_REG (4, "l0", REG_SUPPORT_ALL),
+  DECLARE_REG (5, "l1", REG_SUPPORT_ALL),
+  DECLARE_REG (6, "l2", REG_SUPPORT_ALL),
+  DECLARE_REG (7, "l3", REG_SUPPORT_ALL),
+  DECLARE_REG (8, "l4", REG_SUPPORT_ALL),
+  DECLARE_REG (9, "l5", REG_SUPPORT_A),
+  DECLARE_REG (10, "l6", REG_SUPPORT_A),
+  DECLARE_REG (11, "l7", REG_SUPPORT_A),
+  DECLARE_REG (12, "t0", REG_SUPPORT_A),
+  DECLARE_REG (13, "t1", REG_SUPPORT_ALL),
+  DECLARE_REG (14, "sp", REG_SUPPORT_ALL),
+  DECLARE_REG (15, "lr", REG_SUPPORT_ALL),
+  DECLARE_REG (16, "l8", REG_SUPPORT_B),
+  DECLARE_REG (17, "l9", REG_SUPPORT_B),
+  DECLARE_REG (18, "t2", REG_SUPPORT_B),
+  DECLARE_REG (19, "t3", REG_SUPPORT_B),
+  DECLARE_REG (20, "t4", REG_SUPPORT_B),
+  DECLARE_REG (21, "t5", REG_SUPPORT_B),
+  DECLARE_REG (22, "t6", REG_SUPPORT_B),
+  DECLARE_REG (23, "t7", REG_SUPPORT_B),
+  DECLARE_REG (24, "t8", REG_SUPPORT_B),
+  DECLARE_REG (25, "t9", REG_SUPPORT_B),
+  DECLARE_REG (26, NULL, REG_SUPPORT_B),
+  DECLARE_REG (27, NULL, REG_SUPPORT_B),
+  DECLARE_REG (28, "gb", REG_SUPPORT_B),
+  DECLARE_REG (28, "rgb", REG_SUPPORT_B),
+  DECLARE_REG (28, "rdb", REG_SUPPORT_B),
+  DECLARE_REG (29, "tb", REG_SUPPORT_B),
+  DECLARE_REG (29, "rtb", REG_SUPPORT_B),
+  DECLARE_REG (30, "svbr", REG_SUPPORT_A),
+  DECLARE_REG (31, "tls", REG_SUPPORT_B),
+
+  /* The followings JAVA/BCTM's features.  */
+  DECLARE_REG (23, "fp", REG_SUPPORT_ALL),
+  DECLARE_REG (24, "top", REG_SUPPORT_ALL),
+  DECLARE_REG (25, "bsp", REG_SUPPORT_ALL),
+
+  {-1, -1, NULL, NULL, 0, NULL},
+};
+
+/* C-SKY V2 control registers table.  */
+static struct csky_reg_def csky_abiv2_control_regs[] = 
+{
+
+#ifdef DECLARE_REG
+#undef DECLARE_REG
+#endif
+  /* Bank0.  */
+#define DECLARE_REG(regno, abi_name)		\
+  {0, regno, "cr<"#regno", 0>", abi_name, REG_SUPPORT_ALL, NULL}
+  DECLARE_REG (0, "psr"),
+  DECLARE_REG (1, "vbr"),
+  DECLARE_REG (2, "epsr"),
+  DECLARE_REG (3, "fpsr"),
+  DECLARE_REG (4, "epc"),
+  DECLARE_REG (5, "fpc"),
+  DECLARE_REG (6, "ss0"),
+  DECLARE_REG (7, "ss1"),
+  DECLARE_REG (8, "ss2"),
+  DECLARE_REG (9, "ss3"),
+  DECLARE_REG (10, "ss4"),
+  DECLARE_REG (11, "gcr"),
+  DECLARE_REG (12, "gsr"),
+  DECLARE_REG (13, "cpid"),
+  DECLARE_REG (14, "dcsr"),
+  DECLARE_REG (15, NULL),
+  DECLARE_REG (16, NULL),
+  DECLARE_REG (17, "cfr"),
+  DECLARE_REG (18, "ccr"),
+  DECLARE_REG (19, "capr"),
+  DECLARE_REG (20, "pacr"),
+  DECLARE_REG (21, "prsr"),
+  DECLARE_REG (22, "cir"),
+  DECLARE_REG (23, "ccr2"),
+  DECLARE_REG (24, NULL),
+  DECLARE_REG (25, "cer2"),
+  DECLARE_REG (26, NULL),
+  DECLARE_REG (27, NULL),
+  DECLARE_REG (28, "rvbr"),
+  DECLARE_REG (29, "rmr"),
+  DECLARE_REG (30, "mpid"),
+
+#undef DECLARE_REG
+#define DECLARE_REG(regno, abi_name, support)		\
+  {0, regno, "cr<"#regno", 0>", abi_name, support, NULL}
+  DECLARE_REG (31, "chr", REG_SUPPORT_E),
+  DECLARE_REG (31, "hint", REG_SUPPORT_C),
+
+  /* Bank1.  */
+#undef DECLARE_REG
+#define DECLARE_REG(regno, abi_name)		\
+  {1, regno, "cr<"#regno", 1>", abi_name, REG_SUPPORT_ALL, NULL}
+
+  DECLARE_REG (14, "usp"),
+  DECLARE_REG (26, "cindex"),
+  DECLARE_REG (27, "cdata0"),
+  DECLARE_REG (28, "cdata1"),
+  DECLARE_REG (29, "cdata2"),
+  DECLARE_REG (30, "cdata3"),
+  DECLARE_REG (31, "cins"),
+
+  /* Bank2.  */
+#undef DECLARE_REG
+#define DECLARE_REG(regno, abi_name)		\
+  {2, regno, "cr<"#regno", 2>", abi_name, REG_SUPPORT_ALL, NULL}
+
+  DECLARE_REG (0, "fid"),
+  DECLARE_REG (1, "fcr"),
+  DECLARE_REG (2, "fesr"),
+
+  /* Bank3.  */
+#undef DECLARE_REG
+#define DECLARE_REG(regno, abi_name)		\
+  {3, regno, "cr<"#regno", 3>", abi_name, REG_SUPPORT_ALL, NULL}
+  DECLARE_REG (8, "dcr"),
+  DECLARE_REG (8, "sedcr"),
+  DECLARE_REG (9, "pcr"),
+  DECLARE_REG (9, "sepcr"),
+
+  /* Bank15.  */
+#undef DECLARE_REG
+#define DECLARE_REG(regno, abi_name)		\
+  {15, regno, "cr<"#regno", 15>", abi_name, REG_SUPPORT_ALL, NULL}
+
+  DECLARE_REG (0, "mir"),
+  DECLARE_REG (2, "mel0"),
+  DECLARE_REG (3, "mel1"),
+  DECLARE_REG (4, "meh"),
+  DECLARE_REG (6, "mpr"),
+  DECLARE_REG (8, "mcir"),
+  DECLARE_REG (28, "mpgd0"),
+  DECLARE_REG (29, "mpgd"),
+  DECLARE_REG (29, "mpgd1"),
+  DECLARE_REG (30, "msa0"),
+  DECLARE_REG (31, "msa1"),
+#undef DECLARE_REG
+  {-1, -1, NULL, NULL, 0, NULL},
+};
+
+/* Get register name according to giving parameters,
+   IS_ABI controls whether is ABI name or not.  */
+static inline const char *
+get_register_name (struct csky_reg_def *reg_table,
+		   int arch, int bank, int regno, int is_abi)
+{
+  static char regname[64] = {0};
+  unsigned int i = 0;
+  while (reg_table[i].name != NULL)
+    {
+      if (reg_table[i].bank == bank
+	  && reg_table[i].regno == regno
+	  && (reg_table[i].arch_flag & (1u << (arch & CSKY_ARCH_MASK))))
+	{
+	  if (is_abi && reg_table[i].abi_name)
+	    return reg_table[i].abi_name;
+	  else
+	    return reg_table[i].name;
+	}
+      i++;
+    }
+
+  if (bank & 0x80000000)
+    return "unkown register";
+
+  sprintf (regname, "cr<%d, %d>", regno, bank);
+
+  return regname;
+}
+
+/* Get register number according to giving parameters.
+   If not found, return -1.  */
+static inline int
+get_register_number (struct csky_reg_def *reg_table,
+		     int arch, char *s, char **end, int *bank)
+{
+  unsigned int i = 0;
+  int len = 0;
+  while (reg_table[i].name != NULL)
+    {
+      len = strlen (reg_table[i].name);
+      if ((strncasecmp (reg_table[i].name, s, len) == 0)
+	  && !(ISDIGIT (s[len]))
+	  && (reg_table[i].arch_flag & (1u << (arch & CSKY_ARCH_MASK))))
+	{
+	  *end = s + len;
+	  *bank = reg_table[i].bank;
+	  return reg_table[i].regno;
+	}
+
+      if (reg_table[i].abi_name == NULL)
+	{
+	  i++;
+	  continue;
+	}
+
+      len = strlen (reg_table[i].abi_name);
+      if ((strncasecmp (reg_table[i].abi_name, s, len) == 0)
+	  && !(ISALNUM (s[len]))
+	  && (reg_table[i].arch_flag & (1u << (arch & CSKY_ARCH_MASK))))
+	{
+	  *end = s + len;
+	  *bank = reg_table[i].bank;
+	  return reg_table[i].regno;
+	}
+      i++;
+    }
+  return -1;
+}
+
+/* Return general register's name.  */
+static inline const char *
+csky_get_general_reg_name (int arch, int regno, int is_abi)
+{
+  struct csky_reg_def *reg_table;
+
+  if (IS_CSKY_ARCH_V1 (arch))
+    reg_table = csky_abiv1_general_regs;
+  else
+    reg_table = csky_abiv2_general_regs;
+
+  return get_register_name (reg_table, arch, GENERAL_REG_BANK, regno, is_abi);
+}
+
+/* Return general register's number.  */
+static inline int
+csky_get_general_regno (int arch, char *s, char **end)
+{
+  struct csky_reg_def *reg_table;
+  int bank = 0;
+
+  if (IS_CSKY_ARCH_V1 (arch))
+    reg_table = csky_abiv1_general_regs;
+  else
+    reg_table = csky_abiv2_general_regs;
+
+  return get_register_number (reg_table, arch, s, end, &bank);
+}
+
+/* Return control register's name.  */
+static inline const char *
+csky_get_control_reg_name (int arch, int bank, int regno, int is_abi)
+{
+  struct csky_reg_def *reg_table;
+
+  if (IS_CSKY_ARCH_V1 (arch))
+    reg_table = csky_abiv1_control_regs;
+  else
+    reg_table = csky_abiv2_control_regs;
+
+  return get_register_name (reg_table, arch, bank, regno, is_abi);
+}
+
+/* Return control register's number.  */
+static inline int
+csky_get_control_regno (int arch, char *s, char **end, int *bank)
+{
+  struct csky_reg_def *reg_table;
+
+  if (IS_CSKY_ARCH_V1 (arch))
+    reg_table = csky_abiv1_control_regs;
+  else
+    reg_table = csky_abiv2_control_regs;
+
+  return get_register_number (reg_table, arch, s, end, bank);
+}
 
 /* C-SKY V1 opcodes.  */
 const struct csky_opcode csky_v1_opcodes[] =
@@ -3620,12 +3916,12 @@ const struct csky_opcode csky_v2_opcodes[] =
 #undef _TRANSFER
 #define _TRANSFER   0
     DOP16_DOP32 ("bclri",
+    		 OPCODE_INFO2 (0x3880,
+			       (8_10, GREG0_7, OPRND_SHIFT_0_BIT),
+			       (0_4, IMM5b, OPRND_SHIFT_0_BIT)),
 		 OPCODE_INFO3 (0x3880,
 			       (8_10, GREG0_7, OPRND_SHIFT_0_BIT),
 			       (NONE, DUMMY_REG, OPRND_SHIFT_0_BIT),
-			       (0_4, IMM5b, OPRND_SHIFT_0_BIT)),
-		 OPCODE_INFO2 (0x3880,
-			       (8_10, GREG0_7, OPRND_SHIFT_0_BIT),
 			       (0_4, IMM5b, OPRND_SHIFT_0_BIT)),
 		 CSKYV2_ISA_E1,
 		 OPCODE_INFO3 (0xc4002820,
@@ -3637,12 +3933,12 @@ const struct csky_opcode csky_v2_opcodes[] =
 			       (21_25, IMM5b, OPRND_SHIFT_0_BIT)),
 		 CSKYV2_ISA_1E2),
     DOP16_DOP32 ("bseti",
+    		 OPCODE_INFO2 (0x38a0,
+			       (8_10, GREG0_7, OPRND_SHIFT_0_BIT),
+			       (0_4, IMM5b, OPRND_SHIFT_0_BIT)),
 		 OPCODE_INFO3 (0x38a0,
 			       (8_10, GREG0_7, OPRND_SHIFT_0_BIT),
 			       (NONE, DUMMY_REG, OPRND_SHIFT_0_BIT),
-			       (0_4, IMM5b, OPRND_SHIFT_0_BIT)),
-		 OPCODE_INFO2 (0x38a0,
-			       (8_10, GREG0_7, OPRND_SHIFT_0_BIT),
 			       (0_4, IMM5b, OPRND_SHIFT_0_BIT)),
 		 CSKYV2_ISA_E1,
 		 OPCODE_INFO3 (0xc4002840,
@@ -3707,23 +4003,24 @@ const struct csky_opcode csky_v2_opcodes[] =
 			     (16_20, AREG, OPRND_SHIFT_0_BIT),
 			     (21_25, IMM5b, OPRND_SHIFT_0_BIT)),
 	       CSKYV2_ISA_1E2),
-    DOP16_DOP32 ("addc",
-		 OPCODE_INFO2 (0x6001,
-			       (6_9, GREG0_15, OPRND_SHIFT_0_BIT),
-			       (2_5, GREG0_15, OPRND_SHIFT_0_BIT)),
-		 OPCODE_INFO3 (0x6001,
-			       (6_9, GREG0_15, OPRND_SHIFT_0_BIT),
-			       (2_5, 2IN1_DUMMY, OPRND_SHIFT_0_BIT),
-			       (2_5, 2IN1_DUMMY, OPRND_SHIFT_0_BIT)),
-		 CSKYV2_ISA_E1,
-		 OPCODE_INFO3 (0xc4000040,
-			       (0_4, AREG, OPRND_SHIFT_0_BIT),
-			       (16_20, AREG, OPRND_SHIFT_0_BIT),
-			       (21_25, AREG, OPRND_SHIFT_0_BIT)),
-		 OPCODE_INFO2 (0xc4000040,
-			       (0_4or16_20, DUP_AREG, OPRND_SHIFT_0_BIT),
-			       (21_25, AREG, OPRND_SHIFT_0_BIT)),
-		 CSKYV2_ISA_1E2),
+    DOP16_DOP32_WITH_WORK ("addc",
+			   OPCODE_INFO2 (0x6001,
+					 (6_9, GREG0_15, OPRND_SHIFT_0_BIT),
+					 (2_5, GREG0_15, OPRND_SHIFT_0_BIT)),
+			   OPCODE_INFO3 (0x6001,
+					 (6_9, GREG0_15, OPRND_SHIFT_0_BIT),
+					 (2_5, GREG0_15, OPRND_SHIFT_0_BIT),
+					 (2_5, GREG0_15, OPRND_SHIFT_0_BIT)),
+			   CSKYV2_ISA_E1,
+			   OPCODE_INFO3 (0xc4000040,
+					 (0_4, AREG, OPRND_SHIFT_0_BIT),
+					 (16_20, AREG, OPRND_SHIFT_0_BIT),
+					 (21_25, AREG, OPRND_SHIFT_0_BIT)),
+			   OPCODE_INFO2 (0xc4000040,
+					 (0_4or16_20, AREG, OPRND_SHIFT_0_BIT),
+					 (21_25, AREG, OPRND_SHIFT_0_BIT)),
+			   CSKYV2_ISA_1E2,
+			   v2_work_addc),
     DOP16_DOP32 ("subc",
 		 OPCODE_INFO2 (0x6003,
 			       (6_9, GREG0_15, OPRND_SHIFT_0_BIT),
@@ -4015,14 +4312,14 @@ const struct csky_opcode csky_v2_opcodes[] =
 			(0_4, AREG, OPRND_SHIFT_0_BIT),
 			(16_20, AREG, OPRND_SHIFT_0_BIT),
 			(5_9, IMM5b, OPRND_SHIFT_0_BIT),
-			(21_25, IMM5b, OPRND_SHIFT_0_BIT)),
+			(21_25, IMM5b_LS, OPRND_SHIFT_0_BIT)),
 	  CSKYV2_ISA_2E3),
     OP32 ("sext",
 	  OPCODE_INFO4 (0xc4005800,
 			(0_4, AREG, OPRND_SHIFT_0_BIT),
 			(16_20, AREG, OPRND_SHIFT_0_BIT),
 			(5_9, IMM5b, OPRND_SHIFT_0_BIT),
-			(21_25, IMM5b, OPRND_SHIFT_0_BIT)),
+			(21_25, IMM5b_LS, OPRND_SHIFT_0_BIT)),
 	  CSKYV2_ISA_2E3),
 #undef _TRANSFER
 #define _TRANSFER   2
@@ -5485,7 +5782,7 @@ const struct csky_opcode csky_v2_opcodes[] =
 			(16_20, AREG, OPRND_SHIFT_0_BIT),
 			(21_25, OIMM4b, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_DSP_ENHANCE),
-    OP32 ("plsl.u16",
+    OP32 ("plsl.16",
 	  OPCODE_INFO3 (0xf800d440,
 			(0_4, AREG, OPRND_SHIFT_0_BIT),
 			(16_20, AREG, OPRND_SHIFT_0_BIT),
@@ -6121,200 +6418,215 @@ const struct csky_opcode csky_v2_opcodes[] =
     /* The followings are vdsp instructions for ck810.  */
     OP32 ("vdup.8",
 	  OPCODE_INFO2 (0xf8000e80,
-			(0_3, FREG, OPRND_SHIFT_0_BIT),
-			(16_19or21_24, FREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_VDSP),
     OP32 ("vdup.16",
 	  OPCODE_INFO2 (0xf8100e80,
-			(0_3, FREG, OPRND_SHIFT_0_BIT),
-			(16_19or21_24, FREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_VDSP),
     OP32 ("vdup.32",
 	  OPCODE_INFO2 (0xfa000e80,
-			(0_3, FREG, OPRND_SHIFT_0_BIT),
-			(16_19or21_24, FREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_VDSP),
     OP32 ("vmfvr.u8",
 	  OPCODE_INFO2 (0xf8001200,
 			(0_4, AREG, OPRND_SHIFT_0_BIT),
-			(16_19or21_24, FREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
+			(16_19or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_VDSP),
     OP32 ("vmfvr.u16",
 	  OPCODE_INFO2 (0xf8001220,
 			(0_4, AREG, OPRND_SHIFT_0_BIT),
-			(16_19or21_24, FREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
+			(16_19or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_VDSP),
     OP32 ("vmfvr.u32",
 	  OPCODE_INFO2 (0xf8001240,
 			(0_4, AREG, OPRND_SHIFT_0_BIT),
-			(16_19or21_24, FREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
+			(16_19or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_VDSP),
     OP32 ("vmfvr.s8",
 	  OPCODE_INFO2 (0xf8001280,
 			(0_4, AREG, OPRND_SHIFT_0_BIT),
-			(16_19or21_24, FREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
+			(16_19or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_VDSP),
     OP32 ("vmfvr.s16",
 	  OPCODE_INFO2 (0xf80012a0,
 			(0_4, AREG, OPRND_SHIFT_0_BIT),
-			(16_19or21_24, FREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
+			(16_19or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_VDSP),
     OP32 ("vmtvr.u8",
 	  OPCODE_INFO2 (0xf8001300,
-			(0_3or21_24, FREG_WITH_INDEX, OPRND_SHIFT_0_BIT),
+			(0_3or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT),
 			(16_20, AREG, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_VDSP),
     OP32 ("vmtvr.u16",
 	  OPCODE_INFO2 (0xf8001320,
-			(0_3or21_24, FREG_WITH_INDEX, OPRND_SHIFT_0_BIT),
+			(0_3or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT),
 			(16_20, AREG, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vins.8",
+	  OPCODE_INFO2 (0xf8001400,
+			(0_3or5_8, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT),
+			(16_19or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vins.16",
+	  OPCODE_INFO2 (0xf8101400,
+			(0_3or5_8, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT),
+			(16_19or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vins.32",
+	  OPCODE_INFO2 (0xfa001400,
+			(0_3or5_8, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT),
+			(16_19or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_VDSP),
     OP32 ("vmtvr.u32",
 	  OPCODE_INFO2 (0xf8001340,
-			(0_3or21_24, FREG_WITH_INDEX, OPRND_SHIFT_0_BIT),
+			(0_3or21_24, VREG_WITH_INDEX, OPRND_SHIFT_0_BIT),
 			(16_20, AREG, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_VDSP),
     OP32 ("vldd.8",
 	  SOPCODE_INFO2 (0xf8002000,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(4_7or21_24, IMM_FLDST, OPRND_SHIFT_3_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vldd.16",
 	  SOPCODE_INFO2 (0xf8002100,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(4_7or21_24, IMM_FLDST, OPRND_SHIFT_3_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vldd.32",
 	  SOPCODE_INFO2 (0xf8002200,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(4_7or21_24, IMM_FLDST, OPRND_SHIFT_3_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vldq.8",
 	  SOPCODE_INFO2 (0xf8002400,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(4_7or21_24, IMM_FLDST, OPRND_SHIFT_4_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vldq.16",
 	  SOPCODE_INFO2 (0xf8002500,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(4_7or21_24, IMM_FLDST, OPRND_SHIFT_4_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vldq.32",
 	  SOPCODE_INFO2 (0xf8002600,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(4_7or21_24, IMM_FLDST, OPRND_SHIFT_4_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vstd.8",
 	  SOPCODE_INFO2 (0xf8002800,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(4_7or21_24, IMM_FLDST, OPRND_SHIFT_3_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vstd.16",
 	  SOPCODE_INFO2 (0xf8002900,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(4_7or21_24, IMM_FLDST, OPRND_SHIFT_3_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vstd.32",
 	  SOPCODE_INFO2 (0xf8002a00,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(4_7or21_24, IMM_FLDST, OPRND_SHIFT_3_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vstq.8",
 	  SOPCODE_INFO2 (0xf8002c00,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(4_7or21_24, IMM_FLDST, OPRND_SHIFT_4_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vstq.16",
 	  SOPCODE_INFO2 (0xf8002d00,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(4_7or21_24, IMM_FLDST, OPRND_SHIFT_4_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vstq.32",
 	  SOPCODE_INFO2 (0xf8002e00,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(4_7or21_24, IMM_FLDST, OPRND_SHIFT_4_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vldrd.8",
 	  SOPCODE_INFO2 (0xf8003000,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(5_6or21_25, AREG_WITH_LSHIFT_FPU, OPRND_SHIFT_0_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vldrd.16",
 	  SOPCODE_INFO2 (0xf8003100,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(5_6or21_25, AREG_WITH_LSHIFT_FPU, OPRND_SHIFT_0_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vldrd.32",
 	  SOPCODE_INFO2 (0xf8003200,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(5_6or21_25, AREG_WITH_LSHIFT_FPU, OPRND_SHIFT_0_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vldrq.8",
 	  SOPCODE_INFO2 (0xf8003400,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(5_6or21_25, AREG_WITH_LSHIFT_FPU, OPRND_SHIFT_0_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vldrq.16",
 	  SOPCODE_INFO2 (0xf8003500,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(5_6or21_25, AREG_WITH_LSHIFT_FPU, OPRND_SHIFT_0_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vldrq.32",
 	  SOPCODE_INFO2 (0xf8003600,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(5_6or21_25, AREG_WITH_LSHIFT_FPU, OPRND_SHIFT_0_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vstrd.8",
 	  SOPCODE_INFO2 (0xf8003800,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(5_6or21_25, AREG_WITH_LSHIFT_FPU, OPRND_SHIFT_0_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vstrd.16",
 	  SOPCODE_INFO2 (0xf8003900,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(5_6or21_25, AREG_WITH_LSHIFT_FPU, OPRND_SHIFT_0_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vstrd.32",
 	  SOPCODE_INFO2 (0xf8003a00,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(5_6or21_25, AREG_WITH_LSHIFT_FPU, OPRND_SHIFT_0_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vstrq.8",
 	  SOPCODE_INFO2 (0xf8003c00,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(5_6or21_25, AREG_WITH_LSHIFT_FPU, OPRND_SHIFT_0_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vstrq.16",
 	  SOPCODE_INFO2 (0xf8003d00,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(5_6or21_25, AREG_WITH_LSHIFT_FPU, OPRND_SHIFT_0_BIT))),
 	  CSKY_ISA_VDSP),
     OP32 ("vstrq.32",
 	  SOPCODE_INFO2 (0xf8003e00,
-			 (0_3, FREG, OPRND_SHIFT_0_BIT),
+			 (0_3, VREG, OPRND_SHIFT_0_BIT),
 			 BRACKET_OPRND ((16_20, AREG, OPRND_SHIFT_0_BIT),
 					(5_6or21_25, AREG_WITH_LSHIFT_FPU, OPRND_SHIFT_0_BIT))),
 	  CSKY_ISA_VDSP),
@@ -7593,6 +7905,84 @@ const struct csky_opcode csky_v2_opcodes[] =
 			(16_19, VREG, OPRND_SHIFT_0_BIT),
 			(21_24, VREG, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_VDSP),
+    OP32 ("vshri.u8",
+	  OPCODE_INFO3 (0xf8000600,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshri.u16",
+	  OPCODE_INFO3 (0xf8100600,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshri.u32",
+	  OPCODE_INFO3 (0xfa000600,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshri.s8",
+	  OPCODE_INFO3 (0xf8000610,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshri.s16",
+	  OPCODE_INFO3 (0xf8100610,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshri.s32",
+	  OPCODE_INFO3 (0xfa000610,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshri.u8.r",
+	  OPCODE_INFO3 (0xf8000640,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshri.u16.r",
+	  OPCODE_INFO3 (0xf8100640,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshri.u32.r",
+	  OPCODE_INFO3 (0xfa000640,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshri.s8.r",
+	  OPCODE_INFO3 (0xf8000650,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshri.s16.r",
+	  OPCODE_INFO3 (0xf8100650,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshri.s32.r",
+	  OPCODE_INFO3 (0xfa000650,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshr.s32.r",
+	  OPCODE_INFO3 (0xfa0006d0,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(21_24, VREG, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
     OP32 ("vshr.s32.r",
 	  OPCODE_INFO3 (0xfa0006d0,
 			(0_3, VREG, OPRND_SHIFT_0_BIT),
@@ -7670,6 +8060,78 @@ const struct csky_opcode csky_v2_opcodes[] =
 			(0_3, VREG, OPRND_SHIFT_0_BIT),
 			(16_19, VREG, OPRND_SHIFT_0_BIT),
 			(21_24, VREG, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshli.u8",
+	  OPCODE_INFO3 (0xf8000700,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshli.u16",
+	  OPCODE_INFO3 (0xf8100700,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshli.u32",
+	  OPCODE_INFO3 (0xfa000700,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshli.s8",
+	  OPCODE_INFO3 (0xf8000710,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshli.s16",
+	  OPCODE_INFO3 (0xf8100710,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshli.s32",
+	  OPCODE_INFO3 (0xfa000710,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshli.u8.s",
+	  OPCODE_INFO3 (0xf8000740,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshli.u16.s",
+	  OPCODE_INFO3 (0xf8100740,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshli.u32.s",
+	  OPCODE_INFO3 (0xfa000740,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshli.s8.s",
+	  OPCODE_INFO3 (0xf8000750,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshli.s16.s",
+	  OPCODE_INFO3 (0xf8100750,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
+	  CSKY_ISA_VDSP),
+    OP32 ("vshli.s32.s",
+	  OPCODE_INFO3 (0xfa000750,
+			(0_3, VREG, OPRND_SHIFT_0_BIT),
+			(16_19, VREG, OPRND_SHIFT_0_BIT),
+			(5or21_24, IMM5b_VSH, OPRND_SHIFT_0_BIT)),
 	  CSKY_ISA_VDSP),
     OP32 ("vcmphs.u8",
 	  OPCODE_INFO3 (0xf8000800,

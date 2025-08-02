@@ -1,6 +1,6 @@
 /* Test program for bfloat16 of AVX 512 registers.
 
-   Copyright 2020 Free Software Foundation, Inc.
+   Copyright 2020-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

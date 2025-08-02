@@ -1,4 +1,4 @@
-# Copyright 1997-2020 Free Software Foundation, Inc.
+# Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +17,6 @@
 
 
 standard_testfile .c
-
-if [get_compiler_info] {
-    return -1
-}
 
 if [test_compiler_info "xlc-*"] {
     # By default, IBM'x xlc compiler doesn't add static variables into the symtab.
@@ -88,7 +84,7 @@ proc test_call_promotion {} {
     gdb_test "p /d ((uint8 (*) ()) add8_noproto)((uint8) 2, (uint8) 3)" " = 5"
 }
 
-if [nodebug_runto inner] then {
+if {[nodebug_runto inner]} {
     
     # Expect to find global/local symbols in each of text/data/bss.
     
@@ -174,6 +170,7 @@ if [nodebug_runto inner] then {
     set unk_type_re "has unknown type.*to its declared type"
     set ptr_math_re "Cannot perform pointer math on incomplete type \"$data_var_type\", try casting to a known type, or void \\*\\."
     set not_mem_re "Attempt to take address of value not located in memory\\."
+    set any_label_regexp "<\[^>\]+>"
 
     set dataglobal_unk_re "dataglobal.*$unk_type_re"
 
@@ -187,7 +184,7 @@ if [nodebug_runto inner] then {
 	{"dataglobal + 1"		""   $dataglobal_unk_re					$dataglobal_unk_re}
 	{"&dataglobal"			""   "\\($data_var_type \\*\\) $hex <dataglobal>"	" = $data_var_type \\*"}
 	{"&dataglobal + 1"		""   $ptr_math_re					$ptr_math_re}
-	{"(int *) &dataglobal + 1"	""   " = \\(int \\*\\) $hex <datalocal>"		"int \\*"}
+	{"(int *) &dataglobal + 1"	""   " = \\(int \\*\\) $hex $any_label_regexp"		"int \\*"}
 	{"&(int) dataglobal + 1"	""   $not_mem_re					$not_mem_re}
 	{"&dataglobal, &dataglobal"	""   "\\($data_var_type \\*\\) $hex <dataglobal>"	" = $data_var_type \\*"}
 	{"*dataglobal"			""   $dataglobal_unk_re					$dataglobal_unk_re}
@@ -218,7 +215,14 @@ if [nodebug_runto inner] then {
 	gdb_test "whatis $exp" $whatis
 	gdb_test "ptype $exp" $whatis
     }
-    
+
+    # Check that pointer arithmetic works as expected.
+    set addr1 [get_hexadecimal_valueof "&dataglobal" "*UNKNOWN*"]
+    set addr2 [get_hexadecimal_valueof "(int *) &dataglobal + 1" "*UNKNOWN*"]
+    set offset [expr $addr2 - $addr1]
+    set int_size [get_integer_valueof "sizeof (int)" "*UNKNOWN*"]
+    gdb_assert { $offset == $int_size }
+
     # The only symbol xcoff puts out for statics is for the TOC entry.
     # Possible, but hairy, for gdb to deal.  Right now it doesn't, it
     # doesn't know the variables exist at all.
@@ -260,12 +264,12 @@ if [nodebug_runto inner] then {
     gdb_test "ptype bsslocal" $data_var_type
 
     gdb_test "backtrace 10" "#0.*inner.*#1.*middle.*#2.*top.*#3.*main.*" \
-	"backtrace from inner in nodebug.exp"
+	"backtrace from inner"
     # Or if that doesn't work, at least hope for the external symbols
     # Commented out because if we aren't going to xfail the above test
     # ever, why bother with a weaker test?
     #gdb_test "backtrace 10" "#0.*inner.*#1.*#2.*top.*#3.*main.*" \
-	#    "backtrace from inner in nodebug.exp for externals"
+	#    "backtrace from inner for externals"
     
     # This test is not as obscure as it might look.  `p getenv ("TERM")'
     # is a real-world example, at least on many systems.
@@ -288,8 +292,8 @@ if [nodebug_runto inner] then {
 
     # Now, try that we can give names of file-local symbols which happen
     # to be unique, and have it still work
-    if [nodebug_runto middle] then {
+    if {[nodebug_runto middle]} {
 	gdb_test "backtrace 10" "#0.*middle.*#1.*top.*#2.*main.*" \
-	    "backtrace from middle in nodebug.exp"
+	    "backtrace from middle"
     }
 }

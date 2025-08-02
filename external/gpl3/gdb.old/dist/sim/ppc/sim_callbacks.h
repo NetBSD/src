@@ -21,17 +21,18 @@
 #ifndef _SIM_CALLBACKS_H_
 #define _SIM_CALLBACKS_H_
 
+#include "ansidecl.h"
+
 /* Simulator output:
 
    Functions to report diagnostic information to the user. */
 
 #define printf_filtered sim_io_printf_filtered
 void sim_io_printf_filtered
-(const char *msg, ...) __attribute__ ((format (printf, 1, 2)));
+(const char *msg, ...) ATTRIBUTE_PRINTF_1;
 
-void NORETURN error
-(const char *msg, ...);
-
+extern void error (const char *msg, ...)
+  ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (1, 2);
 
 /* External environment:
 
@@ -101,6 +102,13 @@ sim_io_read_stdin
 void sim_io_flush_stdoutput
 (void);
 
+/* TODO: Untangle this SIM_DESC forward decl someday. */
+typedef struct sim_state *SIM_DESC;
+void sim_io_error (SIM_DESC sd,
+		   const char *fmt,
+		   ...)
+  ATTRIBUTE_PRINTF (2, 3)
+  ATTRIBUTE_NORETURN;
 
 /* Simulator instance.  */
 extern psim *simulator;

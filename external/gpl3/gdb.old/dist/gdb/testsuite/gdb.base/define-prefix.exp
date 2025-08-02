@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2019-2020 Free Software Foundation, Inc.
+# Copyright 2019-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ gdb_test_multiple "define abc-prefix def-prefix ghi-prefix-cmd" \
     "define user command: abc-prefix def-prefix ghi-prefix-cmd" {
 	-re "Type commands for definition of \"abc-prefix def-prefix ghi-prefix-cmd\".\r\nEnd with a line saying just \"end\".\r\n>$" {
 	    gdb_test "end" "" \
-		"define user command: ghi-prefix-cmd"
+		"define empty user command: ghi-prefix-cmd"
 	}
     }
 gdb_test_no_output "define-prefix abc-prefix def-prefix ghi-prefix-cmd"

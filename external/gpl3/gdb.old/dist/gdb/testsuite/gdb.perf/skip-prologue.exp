@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Free Software Foundation, Inc.
+# Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,23 +56,12 @@ PerfTest::assemble {
     clean_restart $binfile
 
     if ![runto_main] {
-	fail "can't run to main"
 	return -1
     }
     return 0
 } {
     global SKIP_PROLOGUE_COUNT
 
-    set test "run"
-    gdb_test_multiple "python SkipPrologue\($SKIP_PROLOGUE_COUNT\).run()" $test {
-	-re "Breakpoint $decimal at \[^\n\]*\n" {
-	    # GDB prints some messages on breakpoint creation.
-	    # Consume the output to avoid internal buffer full.
-	    exp_continue
-	}
-	-re ".*$gdb_prompt $" {
-	    pass $test
-	}
-    }
+    gdb_test_python_run "SkipPrologue\($SKIP_PROLOGUE_COUNT\)" "run"
     return 0
 }

@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Free Software Foundation, Inc.
+# Copyright 1999-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ set line_callme_body   [expr $line_callme_head + 2]
 
 set fullname "fullname=\"${fullname_syntax}${srcfile}\""
 
-proc test_tbreak_creation_and_listing {} {
+proc_with_prefix test_tbreak_creation_and_listing {} {
     global srcfile
     global line_callee4_head
     global line_callee4_body
@@ -96,76 +96,7 @@ proc test_tbreak_creation_and_listing {} {
 	    "delete temp breakpoints"
 }
 
-proc test_rbreak_creation_and_listing {} {
-    global line_callee4_body
-    global line_callee3_body
-    global line_callee2_body
-    global line_callee1_body
-    global line_main_body
-
-    # Insert some breakpoints and list them
-    # Also, disable some so they do not interfere with other tests
-    # Tests:
-    # -break-insert -r main
-    # -break-insert -r callee2
-    # -break-insert -r callee
-    # -break-insert -r .*llee
-    # -break-list
-
-    setup_kfail "*-*-*" mi/14270
-    set bps {}
-    lappend bps [mi_make_breakpoint -number 5 -file ".*basics.c" \
-		     -line $line_main_body]
-    mi_gdb_test "122-break-insert -r main" \
-	"122\\^done,[lindex $bps end]" \
-	"break-insert -r operation"
-
-    setup_kfail "*-*-*" mi/14270
-    lappend bps [mi_make_breakpoint -number 6 -file ".*basics.c" \
-		     -line $line_callee2_body]
-    mi_gdb_test "133-break-insert -r callee2" \
-	"133\\^done,[lindex $bps end]" \
-	"insert breakpoint with regexp callee2"
-
-    setup_kfail "*-*-*" mi/14270
-    set start [llength $bps]
-    lappend bps [mi_make_breakpoint -number 7 -file ".*basics.c" \
-		     -line $line_callee1_body]
-    lappend bps [mi_make_breakpoint -number 8 -file ".*basics.c" \
-		     -line $line_callee2_body]
-    lappend bps [mi_make_breakpoint -number 9 -file ".*basics.c" \
-		     -line $line_callee3_body]
-    lappend bps [mi_make_breakpoint -number 10 -file ".*basics.c" \
-		     -line $line_callee4_body]
-    mi_gdb_test "144-break-insert -r callee" \
-	"144\\^done,[join [lrange $bps $start end] ,]" \
-	"insert breakpoint with regexp callee"
-
-    setup_kfail "*-*-*" mi/14270
-    set start [llength $bps]
-    lappend bps [mi_make_breakpoint -number 11 -file ".*basics.c" \
-		     -line $line_callee1_body]
-    lappend bps [mi_make_breakpoint -number 12 -file ".*basics.c" \
-		     -line $line_callee2_body]
-    lappend bps [mi_make_breakpoint -number 13 -file ".*basics.c" \
-		     -line $line_callee3_body]
-    lappend bps [mi_make_breakpoint -number 14 -file ".*basics.c" \
-		     -line $line_callee4_body]
-    mi_gdb_test "155-break-insert -r \.\*llee" \
-	"155\\^done,[join [lrange $bps $start end] ,]" \
-	"insert breakpoint with regexp .*llee"
-
-    setup_kfail "*-*-*" mi/14270
-    mi_gdb_test "166-break-list" \
-	"166\\^done,[mi_make_breakpoint_table $bps]" \
-	"list of breakpoints"
-
-    mi_gdb_test "177-break-delete" \
-	    "177\\^done" \
-	    "delete temp breakpoints"
-}
-
-proc test_abreak_creation {} {
+proc_with_prefix test_abreak_creation {} {
     mi_create_varobj tpnum \$tpnum "create local variable tpnum"
     # Test that $tpnum is not set before creating a tracepoint.
     mi_gdb_test "521-var-evaluate-expression tpnum" \
@@ -183,65 +114,78 @@ proc test_abreak_creation {} {
 	"524\\^done,value=\"10\"" "eval tpnum after tracepoint"
 }
 
-proc test_ignore_count {} {
+proc_with_prefix test_ignore_count {} {
     global line_callme_body
 
     mi_gdb_test "-break-insert -i 1 callme" \
-        "\\^done,[mi_make_breakpoint -ignore 1]" \
-        "insert breakpoint with ignore count at callme"
+	"\\^done,[mi_make_breakpoint -ignore 1]" \
+	"insert breakpoint with ignore count at callme"
 
     mi_run_cmd
 
     mi_expect_stop "breakpoint-hit" "callme" "\{name=\"i\",value=\"2\"\}" ".*basics.c" $line_callme_body \
-        {"" "disp=\"keep\"" } "run to breakpoint with ignore count"
+	{"" "disp=\"keep\"" } "run to breakpoint with ignore count"
 }
 
-proc test_error {} {
+proc_with_prefix test_error {} {
     mi_gdb_test "-break-insert function_that_does_not_exist" \
-        ".*\\^error,msg=\"Function \\\\\"function_that_does_not_exist\\\\\" not defined.\"" \
-        "breakpoint at nonexistent function"
+	".*\\^error,msg=\"Function \\\\\"function_that_does_not_exist\\\\\" not defined.\"" \
+	"breakpoint at nonexistent function"
 
     # We used to have a bug whereby -break-insert that failed would not
     # clear some event hooks.  As result, whenever we evaluate expression
     # containing function call, the internal breakpoint created to handle
     # function call would be reported, messing up MI output.
     mi_gdb_test "-var-create V * return_1()" \
-        "\\^done,name=\"V\",numchild=\"0\",value=\"1\",type=\"int\",has_more=\"0\"" \
-        "create varobj for function call"
+	"\\^done,name=\"V\",numchild=\"0\",value=\"1\",type=\"int\",has_more=\"0\"" \
+	"create varobj for function call"
 
     mi_gdb_test "-var-update *" \
-        "\\^done,changelist=\\\[\\\]" \
-        "update varobj for function call"    
+	"\\^done,changelist=\\\[\\\]" \
+	"update varobj for function call"
 
     # Try setting breakpoints with garbage after the location.
 
     # "if" only works in the CLI.  It's not supposed to be accepted by
     # MI.  The way to specify a condition is with -c.
     mi_gdb_test "-break-insert \"callme if i < 4\"" \
-        ".*\\^error,msg=\"Garbage 'if i < 4' at end of location\"" \
-        "breakpoint with garbage after location"
+	".*\\^error,msg=\"Garbage 'if i < 4' at end of location\"" \
+	"breakpoint with garbage after location"
 
     mi_gdb_test "-break-insert -c i==4 \"callme if i < 4\"" \
-        ".*\\^error,msg=\"Garbage 'if i < 4' at end of location\"" \
-        "conditional breakpoint with garbage after location"
+	".*\\^error,msg=\"Garbage 'if i < 4' at end of location\"" \
+	"conditional breakpoint with garbage after location"
+
+    # Try using an invalid condition.
+    mi_gdb_test "-break-insert -c bad callme" \
+	".*\\^error,msg=\"No symbol \\\\\"bad\\\\\" in current context.\"" \
+	"breakpoint with bad condition"
+
+    mi_gdb_test "-dprintf-insert -c bad callme \"Hello\"" \
+	".*\\^error,msg=\"No symbol \\\\\"bad\\\\\" in current context.\"" \
+	"dprintf with bad condition"
+
+    mi_gdb_test "-break-condition 5 bad" \
+	".*\\^error,msg=\"No symbol \\\\\"bad\\\\\" in current context.\"" \
+	"invalid condition"
 }
 
-proc test_disabled_creation {} {
+proc_with_prefix test_disabled_creation {} {
     global line_callee2_body
 
     set bp [mi_make_breakpoint -number 6 -type breakpoint -disp keep \
 		-enabled n -func callee2 -file ".*basics.c" \
 		-line $line_callee2_body]
     mi_gdb_test "-break-insert -d basics.c:callee2" \
-        "\\^done,$bp" \
+	"\\^done,$bp" \
 	"test disabled creation"
 
     mi_gdb_test "-break-delete" \
 	    "\\^done" \
-            "test disabled creation: cleanup"
+	"test disabled creation: cleanup"
 }
 
-proc test_breakpoint_commands {} {
+proc_with_prefix test_breakpoint_commands {} {
     global line_callee2_body
 
     set bp_no_script \
@@ -251,28 +195,28 @@ proc test_breakpoint_commands {} {
 	     -line $line_callee2_body]
 
     mi_gdb_test "-break-commands 7 \"print 10\" \"continue\"" \
-        "\\^done" \
-        "breakpoint commands: set commands"
+	"\\^done" \
+	"breakpoint commands: set commands"
 
     # Rebuild the breakpoint regexp instead of using the one returned
     # by mi_create_breakpoint.  Only in -break-info is the actual script
     # seen.
     set bp_script [mi_make_breakpoint -number 7 -disp keep -func callee2 \
 		       -file ".*basics.c" -line $line_callee2_body \
-		       -script {\{"print 10","continue"\}}]
+		       -script {\["print 10","continue"\]}]
     mi_gdb_test "-break-info 7" \
 	"\\^done,[mi_make_breakpoint_table [list $bp_script]]" \
-        "breakpoint commands: check that commands are set"
+	"breakpoint commands: check that commands are set"
 
     mi_gdb_test "-break-commands 7" \
-        "\\^done" \
-        "breakpoint commands: clear commands"
+	"\\^done" \
+	"breakpoint commands: clear commands"
 
     mi_gdb_test "-break-info" \
 	"\\^done,[mi_make_breakpoint_table [list $bp_no_script]]" \
-        "breakpoint commands: check that commands are cleared"
+	"breakpoint commands: check that commands are cleared"
 
-    mi_run_to_main
+    mi_runto_main
 
     mi_create_breakpoint "basics.c:callee2" \
 	"breakpoint commands: insert breakpoint at basics.c:callee2, again" \
@@ -280,8 +224,8 @@ proc test_breakpoint_commands {} {
 	-line $line_callee2_body
 
     mi_gdb_test "-break-commands 9 \"bt\" \"set \$i=0\" \"while \$i<10\" \"print \$i\" \"set \$i=\$i+1\" \"end\" \"continue\" " \
-        "\\^done" \
-        "breakpoint commands: set commands"
+	"\\^done" \
+	"breakpoint commands: set more commands"
 
     mi_send_resuming_command "exec-continue" "breakpoint commands: continue"
 
@@ -303,12 +247,12 @@ proc test_breakpoint_commands {} {
 
     set test "intermediate stop and continue, mi running"
     gdb_expect {
-        -re "\\*running" {
+	-re "\\*running" {
 	    pass $test
 	}
-        timeout {
+	timeout {
 	    fail $test
-        }
+	}
     }
 
     mi_expect_stop "exited-normally" "" "" "" "" "" "test hitting breakpoint with commands"
@@ -318,7 +262,7 @@ proc test_breakpoint_commands {} {
 # code.  In-depth testing of explicit breakpoints is accomplished in
 # gdb.linespec tests.
 
-proc test_explicit_breakpoints {} {
+proc_with_prefix test_explicit_breakpoints {} {
     global srcfile
     global line_callee3_head line_callee4_head
     global line_callee3_body line_callee4_body
@@ -328,7 +272,7 @@ proc test_explicit_breakpoints {} {
 
     # First check mixed explicit/parsed linespecs.
     mi_gdb_test "-break-insert --function main $srcfile:$line_callee3_head" \
-	".*Garbage following explicit linespec"
+	".*Garbage following explicit location.*"
 
     # Insert some breakpoints and list them
     # Also, disable some so they do not interfere with other tests
@@ -376,7 +320,7 @@ proc test_explicit_breakpoints {} {
     # linespecs.
     mi_gdb_test \
 	"-break-insert -c \"foo == 3\" --source $srcfile --function main --label label" \
-	".*No symbol \"foo\" in current context.*"
+	".*No label .*label.* defined in function .*main.*"
 
     mi_gdb_test \
 	"-break-insert --source foobar.c --line 3" \
@@ -384,15 +328,66 @@ proc test_explicit_breakpoints {} {
 
     mi_gdb_test \
 	"-break-insert --source $srcfile --function foobar" \
-	".*Function \"foobar\" not defined in \"$srcfile\".*"
+	".*Function .*foobar.* not defined in .*$srcfile.*"
 
     mi_gdb_test \
 	"-break-insert --source $srcfile --function main --label foobar" \
-	".*No label \"foobar\" defined in function \"main\".*"
+	".*No label .*foobar.* defined in function .*main.*"
 
     mi_gdb_test \
 	"-break-insert --source $srcfile" \
-	".*Source filename requires function, label, or line offset.*"
+	".*-break-insert: --source option requires --function, --label, or --line.*"
+}
+
+# Test forcing an invalid condition.
+
+proc_with_prefix test_forced_conditions {} {
+    set warning ".*warning: failed to validate condition .* disabling.*"
+
+    set loc [mi_make_breakpoint_loc -enabled "N"]
+    set args [list -cond "bad" -locations "\\\[$loc\\\]"]
+    set bp [eval mi_make_breakpoint_multi $args]
+
+    mi_gdb_test "-break-insert -c bad --force-condition callme" \
+	"${warning}\\^done,$bp" \
+	"breakpoint with forced condition"
+
+    mi_gdb_test "-dprintf-insert -c bad --force-condition callme \"Hello\"" \
+	"${warning}\\^done,$bp" \
+	"dprintf with forced condition"
+
+    # Define a plain breakpoint first, and a condition later.
+    mi_create_breakpoint "callme" "define a bp" ""
+    mi_gdb_test "-break-condition --force 16 bad == 42" \
+	"${warning}\\^done" \
+	"invalid condition is forced"
+    set args [list -cond "bad == 42" -locations "\\\[$loc\\\]"]
+    set bp [eval mi_make_breakpoint_multi $args]
+    mi_gdb_test "-break-info 16" \
+	"\\^done,[mi_make_breakpoint_table [list $bp]]" \
+	"invalid condition is defined"
+
+    # No cond argument should clear the condition.
+    mi_gdb_test "-break-condition 16" \
+	"~\"Breakpoint 16's condition is now valid at location 1, enabling.*\\^done" \
+	"clear the condition"
+    set bp [mi_make_breakpoint -number 16]
+    mi_gdb_test "-break-info 16" \
+	"\\^done,[mi_make_breakpoint_table [list $bp]]" \
+	"condition is cleared"
+
+    # Zero-argument is an error.
+    mi_gdb_test "-break-condition" \
+	"\\^error,msg=\"-break-condition: Missing the <number> argument\"" \
+	"no arguments to -break-condition"
+
+    # Passing --force with no condition should not crash or raise an error.
+    mi_gdb_test "-break-condition --force 16" \
+	"\\^done" \
+	"clear the condition with --force"
+    mi_gdb_test "-break-condition --force" \
+	"\\^error,msg=\"-break-condition: Missing the <number> argument\"" \
+	"no arguments with --force"
 }
 
 proc test_break {mi_mode} {
@@ -414,7 +409,6 @@ proc test_break {mi_mode} {
     mi_gdb_load ${binfile}
 
     test_tbreak_creation_and_listing
-    test_rbreak_creation_and_listing
 
     test_ignore_count
 
@@ -427,6 +421,8 @@ proc test_break {mi_mode} {
     test_abreak_creation
 
     test_explicit_breakpoints
+
+    test_forced_conditions
 }
 
 if [gdb_debug_enabled] {

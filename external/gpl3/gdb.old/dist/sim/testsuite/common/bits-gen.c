@@ -1,5 +1,5 @@
 /* Miscellaneous simulator utilities.
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -17,9 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-
 #include <stdio.h>
-
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 void
 gen_struct (void)
@@ -29,8 +30,8 @@ gen_struct (void)
   printf ("  int line;\n");
   printf ("  int row;\n");
   printf ("  int col;\n");
-  printf ("  long long val;\n");
-  printf ("  long long check;\n");
+  printf ("  uint64_t val;\n");
+  printf ("  uint64_t check;\n");
   printf ("} test_tuples;\n");
   printf ("\n");
   printf ("typedef struct _test_spec {\n");
@@ -62,13 +63,12 @@ gen_bit (int bitsize,
       else
 	bit <<= i;
       if (bitsize == 32)
-	bit = (unsigned) bit; /* truncate it! */
+	bit &= 0xffffffff; /* truncate it! */
       /* write it out */
       printf ("  { __LINE__, ");
       printf ("%d, %2d, ", -1, i);
       printf ("%s (%2d), ", macro, i);
-      printf ("UNSIGNED64 (0x%08lx%08lx), ",
-	      (long) (bit >> 32), (long) bit);
+      printf ("UNSIGNED64 (0x%016llx), ", bit);
       printf ("},\n");
     }
   printf ("};\n");
@@ -141,11 +141,10 @@ gen_mask (int bitsize,
 		  mask |= bit;
 		}
 	      if (bitsize == 32)
-		mask = (unsigned long) mask;
+		mask &= 0xffffffff;
 	      printf ("%d, %d, ", l, h);
 	      printf ("%s%s (%2d, %2d), ", msb, macro, l, h);
-	      printf ("UNSIGNED64 (0x%08lx%08lx), ",
-		      (long) (mask >> 32), (long) mask);
+	      printf ("UNSIGNED64 (0x%llx), ", mask);
 	    }
 	  else
 	    printf ("-1, -1, ");
@@ -184,7 +183,6 @@ usage (int reason)
     case 4:
       fprintf (stderr, "Invalid <byte-order> argument\n");
       break;
-    default:
     }
 
   exit (1);
@@ -232,13 +230,16 @@ main (int argc, char *argv[])
 
   printf ("#define WITH_TARGET_WORD_BITSIZE %d\n", bitsize);
   printf ("#define WITH_TARGET_WORD_MSB %d\n", msb);
-  printf ("#define WITH_HOST_WORD_BITSIZE %d\n", sizeof (int) * 8);
+  printf ("#define WITH_HOST_WORD_BITSIZE %zu\n", sizeof (int) * 8);
   printf ("#define WITH_TARGET_BYTE_ORDER %s\n", big_endian ? "BFD_ENDIAN_BIG" : "BFD_ENDIAN_LITTLE");
   printf ("\n");
   printf ("#define SIM_BITS_INLINE (ALL_H_INLINE)\n");
   printf ("\n");
   printf ("#define ASSERT(X) do { if (!(X)) abort(); } while (0)\n");
   printf ("\n");
+  printf ("#define PACKAGE \"sim\"\n");
+  printf ("#include <stdlib.h>\n");
+  printf ("#include <string.h>\n");
   printf ("#include \"sim-basics.h\"\n");
 
   gen_struct ();

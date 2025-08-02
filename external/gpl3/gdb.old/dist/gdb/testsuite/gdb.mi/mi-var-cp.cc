@@ -1,4 +1,4 @@
-/* Copyright 2006-2020 Free Software Foundation, Inc.
+/* Copyright 2006-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -104,7 +104,7 @@ int reference_to_struct ()
   S& r = s;
   /*:
     mi_create_varobj S s "create varobj for s"
-    mi_create_varobj R r "create varobj for s"
+    mi_create_varobj R r "create varobj for r"
     mi_gdb_test "-var-show-attributes S" \
 	"\\^done,attr=\"noneditable\"" \
 	"check attributes of S"

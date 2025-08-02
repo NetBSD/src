@@ -1,6 +1,6 @@
 /* Test resolving of an opaque type from the loaded shared library.
 
-   Copyright 2007-2020 Free Software Foundation, Inc.
+   Copyright 2007-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

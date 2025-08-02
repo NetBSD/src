@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -17,7 +17,7 @@
 
 # This file is part of the gdb testsuite.
 
-if {[skip_cplus_tests]} { continue }
+if {[skip_cplus_tests]} { return }
 
 standard_testfile .cc anon-ns2.cc
 
@@ -26,8 +26,7 @@ if {[prepare_for_testing "failed to prepare" $testfile "$srcfile $srcfile2" {c++
 }
 
 if {![runto_main]} {
-    perror "couldn't run to breakpoint"
-    continue
+    return
 }
 
 set ans {(anonymous namespace)}

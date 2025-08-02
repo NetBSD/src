@@ -1,4 +1,4 @@
-#   Copyright 2016-2020 Free Software Foundation, Inc.
+#   Copyright 2016-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,7 +40,6 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
 }
 
 if ![runto_main] {
-    fail "can't run to main to check for trace support"
     return -1
 }
 
@@ -56,7 +55,7 @@ set syscall_insn ""
 # Define the syscall instruction for each target.
 
 if { [istarget "i\[34567\]86-*-linux*"] || [istarget "x86_64-*-linux*"] } {
-    set syscall_insn "\[ \t\](int|syscall|sysenter)\[ \t\]"
+    set syscall_insn "\[ \t\](int|syscall|sysenter)"
 } elseif { [istarget "aarch64*-*-linux*"] || [istarget "arm*-*-linux*"] } {
     set syscall_insn "\[ \t\](swi|svc)\[ \t\]"
 } else {
@@ -67,7 +66,6 @@ if { [istarget "i\[34567\]86-*-linux*"] || [istarget "x86_64-*-linux*"] } {
 # Start with a fresh gdb.
 clean_restart ${testfile}
 if ![runto_main] {
-    fail "can't run to main"
     return -1
 }
 
@@ -127,7 +125,9 @@ delete_breakpoints
 gdb_breakpoint "start" qualified
 gdb_continue_to_breakpoint "continue to start"
 
-gdb_assert { 0 == [get_integer_valueof "counter" "1"] } "counter is zero"
+with_test_prefix "counter is zero" {
+    gdb_assert { 0 == [get_integer_valueof "counter" "1"] } "assert check"
+}
 
 delete_breakpoints
 
@@ -149,8 +149,10 @@ gdb_test_no_output "tstop"
 
 set iterations [get_integer_valueof "iterations" "0"]
 
-gdb_assert { $iterations == [get_integer_valueof "counter" "0"] } \
-    "iterations equals to counter"
+with_test_prefix "iterations equals to counter" {
+    gdb_assert { $iterations == [get_integer_valueof "counter" "0"] } \
+	"assert check"
+}
 
 # Record the hit times of each tracepoint in this array.
 array set tracepoint_hits { }

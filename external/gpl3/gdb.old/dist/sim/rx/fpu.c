@@ -1,6 +1,6 @@
 /* fpu.c --- FPU emulator for stand-alone RX simulator.
 
-Copyright (C) 2008-2020 Free Software Foundation, Inc.
+Copyright (C) 2008-2023 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -18,7 +18,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -354,7 +356,7 @@ static const char *ex_names[] = {
 /* This checks for all exceptional cases (not all FP exceptions) and
    returns TRUE if it is providing the result in *c.  If it returns
    FALSE, the caller should do the "normal" operation.  */
-int
+static int
 check_exceptions (FP_Parts *a, FP_Parts *b, fp_t *c,
 		  FP_ExceptionCases ex_tab[5][5], 
 		  FP_ExceptionCases *case_ret)
@@ -732,7 +734,7 @@ rxfp_itof (long fa, int round_mode)
   int sign = 0;
   unsigned int frac_bits;
   volatile unsigned int whole_bits;
-  FP_Parts a;
+  FP_Parts a = {0};
 
   if (fa == 0)
     return PLUS_ZERO;

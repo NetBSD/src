@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2020 Free Software Foundation, Inc.
+# Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,8 +43,7 @@ proc test_template_arg {exefile type} {
 	return -1
     }
     gdb_load ${exefile}
-    if ![runto_main ] then {
-	perror "couldn't run to breakpoint"
+    if {![runto_main]} {
 	return
     }
     # There is no executable code in main(), so we are where we want to be

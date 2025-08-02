@@ -14,10 +14,10 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, see <http://www.gnu.org/licenses/>. */
 
-#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <ansidecl.h>
 
 #define FALSE 0
 #define TRUE 1
@@ -415,5 +415,6 @@ extern unsigned ARMul_OSHandleSWI (ARMul_State * state, ARMword number);
 extern void ARMul_UndefInstr      (ARMul_State *, ARMword);
 extern void ARMul_FixCPSR         (ARMul_State *, ARMword, ARMword);
 extern void ARMul_FixSPSR         (ARMul_State *, ARMword, ARMword);
-extern void ARMul_ConsolePrint    (ARMul_State *, const char *, ...);
+extern void ARMul_ConsolePrint    (ARMul_State *, const char *, ...)
+    ATTRIBUTE_PRINTF (2, 3);
 extern void ARMul_SelectProcessor (ARMul_State *, unsigned);

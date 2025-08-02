@@ -1,6 +1,6 @@
 /* memory.c -- Memory accessor functions for the AArch64 simulator
 
-   Copyright (C) 2015-2020 Free Software Foundation, Inc.
+   Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -19,7 +19,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,6 +33,7 @@
 #include "simulator.h"
 
 #include "sim-core.h"
+#include "sim-signal.h"
 
 static inline void
 mem_error (sim_cpu *cpu, const char *message, uint64_t addr)

@@ -1,5 +1,5 @@
 /*  dv-m68hc11.c -- CPU 68HC11&68HC12 as a device.
-    Copyright (C) 1999-2020 Free Software Foundation, Inc.
+    Copyright (C) 1999-2023 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@nerim.fr)
     (From a driver model Contributed by Cygnus Solutions.)
     
@@ -18,6 +18,8 @@
     
     */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "sim-hw.h"
@@ -25,6 +27,7 @@
 #include "sim-options.h"
 #include "hw-base.h"
 #include <limits.h>
+#include <stdlib.h>
 
 /* DEVICE
 
@@ -119,14 +122,14 @@ static const OPTION m68hc11_options[] =
 
 struct input_osc
 {
-  signed64         on_time;
-  signed64         off_time;
-  signed64         repeat;
+  int64_t         on_time;
+  int64_t         off_time;
+  int64_t         repeat;
   struct hw_event *event;
   const char      *name;
-  uint8            mask;
-  uint8            value;
-  uint16           addr;
+  uint8_t            mask;
+  uint8_t            value;
+  uint16_t           addr;
 };
 
 #define NR_PORT_A_OSC (4)
@@ -141,7 +144,7 @@ struct m68hc11cpu {
   int              pending_level;
   struct hw_event  *event;
   unsigned_word    attach_address;
-  int              attach_size;
+  unsigned int     attach_size;
   int              attach_space;
   int              last_oscillator;
   struct input_osc oscillators[NR_OSC];
@@ -206,7 +209,7 @@ static hw_ioctl_method m68hc11_ioctl;
 static hw_port_event_method m68hc11cpu_port_event;
 
 static void make_oscillator (struct m68hc11cpu *controller,
-                             const char *id, uint16 addr, uint8 mask);
+                             const char *id, uint16_t addr, uint8_t mask);
 static struct input_osc *find_oscillator (struct m68hc11cpu *controller,
                                           const char *id);
 static void reset_oscillators (struct hw *me);
@@ -409,7 +412,7 @@ deliver_m68hc11cpu_interrupt (struct hw *me, void *data)
 
 static void
 make_oscillator (struct m68hc11cpu *controller, const char *name,
-                 uint16 addr, uint8 mask)
+                 uint16_t addr, uint8_t mask)
 {
   struct input_osc *osc;
 
@@ -442,8 +445,8 @@ oscillator_handler (struct hw *me, void *data)
   struct input_osc *osc = (struct input_osc*) data;
   SIM_DESC sd;
   sim_cpu *cpu;
-  signed64 dt;
-  uint8 val;
+  int64_t dt;
+  uint8_t val;
 
   sd = hw_system (me);
   cpu = STATE_CPU (sd, 0);
@@ -590,10 +593,10 @@ static void
 m68hc11_info (struct hw *me)
 {
   SIM_DESC sd;
-  uint16 base = 0;
+  uint16_t base = 0;
   sim_cpu *cpu;
   struct m68hc11sio *controller;
-  uint8 val;
+  uint8_t val;
   
   sd = hw_system (me);
   cpu = STATE_CPU (sd, 0);
@@ -631,8 +634,8 @@ m68hc11_info (struct hw *me)
   val = cpu->ios[M6811_INIT];
   print_io_byte (sd, "INIT  ", 0, val, base + M6811_INIT);
   sim_io_printf (sd, "Ram = 0x%04x IO = 0x%04x\n",
-		 (((uint16) (val & 0xF0)) << 8),
-		 (((uint16) (val & 0x0F)) << 12));
+		 (((uint16_t) (val & 0xF0)) << 8),
+		 (((uint16_t) (val & 0x0F)) << 12));
 
 
   cpu_info (sd, cpu);
@@ -659,7 +662,7 @@ m68hc11_ioctl (struct hw *me,
    stops.  */
 int
 m68hc11cpu_set_oscillator (SIM_DESC sd, const char *port,
-                           double ton, double toff, signed64 repeat)
+                           double ton, double toff, int64_t repeat)
 {
   sim_cpu *cpu;
   struct input_osc *osc;
@@ -674,13 +677,13 @@ m68hc11cpu_set_oscillator (SIM_DESC sd, const char *port,
 
   /* Compute the ON time in cpu cycles.  */
   f = (double) (cpu->cpu_frequency) * ton;
-  osc->on_time = (signed64) (f / 4.0);
+  osc->on_time = (int64_t) (f / 4.0);
   if (osc->on_time < 1)
     osc->on_time = 1;
 
   /* Compute the OFF time in cpu cycles.  */
   f = (double) (cpu->cpu_frequency) * toff;
-  osc->off_time = (signed64) (f / 4.0);
+  osc->off_time = (int64_t) (f / 4.0);
   if (osc->off_time < 1)
     osc->off_time = 1;
 
@@ -774,7 +777,7 @@ m68hc11_option_handler (SIM_DESC sd, sim_cpu *cpu,
     case OPTION_OSC_INFO:
       for (i = 0; i < controller->last_oscillator; i++)
         {
-          signed64 t;
+          int64_t t;
           struct input_osc *osc;
 
           osc = &controller->oscillators[i];
@@ -875,10 +878,10 @@ m68hc11cpu_io_read_buffer (struct hw *me,
 
 void
 m68hc11cpu_set_port (struct hw *me, sim_cpu *cpu,
-                     unsigned addr, uint8 val)
+                     unsigned addr, uint8_t val)
 {
-  uint8 mask;
-  uint8 delta;
+  uint8_t mask;
+  uint8_t delta;
   int check_interrupts = 0;
   int i;
   
@@ -922,11 +925,11 @@ m68hc11cpu_set_port (struct hw *me, sim_cpu *cpu,
       /* Scan IC3, IC2 and IC1.  Bit number is 3 - i.  */
       for (i = 0; i < 3; i++)
         {
-          uint8 mask = (1 << i);
+          uint8_t mask = (1 << i);
           
           if (delta & mask)
             {
-              uint8 edge;
+              uint8_t edge;
               int captured;
 
               edge = cpu->ios[M6811_TCTL2];
@@ -980,7 +983,7 @@ m68hc11cpu_set_port (struct hw *me, sim_cpu *cpu,
 
 static void
 m68hc11cpu_io_write (struct hw *me, sim_cpu *cpu,
-                     unsigned_word addr, uint8 val)
+                     unsigned_word addr, uint8_t val)
 {
   switch (addr)
     {
@@ -1019,7 +1022,7 @@ m68hc11cpu_io_write (struct hw *me, sim_cpu *cpu,
       /* Change the RAM and I/O mapping.  */
     case M6811_INIT:
       {
-	uint8 old_bank = cpu->ios[M6811_INIT];
+	uint8_t old_bank = cpu->ios[M6811_INIT];
 	
 	cpu->ios[M6811_INIT] = val;
 
@@ -1108,11 +1111,11 @@ m68hc11cpu_io_write_buffer (struct hw *me,
   byte = 0;
   while (nr_bytes)
     {
-      uint8 val;
+      uint8_t val;
       if (base >= controller->attach_size)
 	break;
 
-      val = *((uint8*) source);
+      val = *((uint8_t*) source);
       m68hc11cpu_io_write (me, cpu, base, val);
       source = (char*) source + 1;
       base++;

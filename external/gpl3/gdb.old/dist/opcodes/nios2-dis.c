@@ -1,5 +1,5 @@
 /* Altera Nios II disassemble routines
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2022 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -73,7 +73,7 @@ typedef struct _nios2_disassembler_state
   nios2_opcode_hash *hash[OPCODE_HASH_SIZE];
   nios2_opcode_hash *ps_hash[OPCODE_HASH_SIZE];
   const struct nios2_opcode *nop;
-  bfd_boolean init;
+  bool init;
 } nios2_disassembler_state;
 
 static nios2_disassembler_state
@@ -694,7 +694,7 @@ nios2_print_insn_arg (const char *argptr,
       switch (op->format)
 	{
 	case iw_I10_type:
-	  o = (((GET_IW_I10_IMM10 (opcode) & 0x3ff) ^ 0x400) - 0x400) * 2;
+	  o = (((GET_IW_I10_IMM10 (opcode) & 0x3ff) ^ 0x200) - 0x200) * 2;
 	  break;
 	default:
 	  bad_opcode (op);

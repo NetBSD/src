@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,13 +23,18 @@
 
 standard_testfile .c
 
-if [get_compiler_info] {
-    return -1
-}
-
 # Build executable with stripped startup code and text section starting at zero
 
-set opts {debug "additional_flags=-nostdlib -emain -Wl,-Ttext=0x00 -Wl,-N"}
+set opts {}
+lappend opts debug
+lappend opts "ldflags=-nostdlib -emain -Wl,-Ttext=0x00 -Wl,-N"
+lappend opts additional_flags=-static
+
+set ld_flags ldflags=-Wl,--no-warn-rwx-segments
+if { [gdb_can_simple_compile ld-flags {int main () { return 0; }} executable \
+	  $ld_flags] } {
+    lappend opts $ld_flags
+}
 
 if {[build_executable $testfile.exp $testfile $srcfile $opts] == -1} {
     untested "failed to compile"

@@ -1,6 +1,6 @@
 /* m32c.opc --- semantics for m32c opcodes.		        -*- mode: c -*-
 
-Copyright (C) 2005-2020 Free Software Foundation, Inc.
+Copyright (C) 2005-2023 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -18,16 +18,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ansidecl.h"
 #include "cpu.h"
 #include "mem.h"
 #include "misc.h"
 #include "int.h"
-
-#define AU  __attribute__((unused))
 
 #define tprintf if (trace) printf
 
@@ -1349,12 +1350,14 @@ next_opcode:
 
   /** 1101 sss1 ss01 1dst		MOVA src,dest */
 
+  {
   static reg_id map[8] = { r2r0, r3r1, a0, a1 };
   prefix (0, 0, 0);
   sc = decode_src23 (sss, ss, 1);
   if (!sc.mem || !map[dst])
     UNSUPPORTED();
   put_reg (map[dst], sc.u.addr);
+  }
 
   /** 0000 0001 1011 ddd0 dd hl 1110	MOVdir R0L,dest */
 
@@ -1563,6 +1566,7 @@ next_opcode:
 
   /** 1000 1110				POPM dest */
 
+  {
   static int map[] = { r0, r1, r2, r3, a0, a1, sb, fb };
   prefix (0, 0, 0);
   imm = IMM(1);
@@ -1581,18 +1585,22 @@ next_opcode:
 	put_reg (map[a], v);
 	put_reg (sp, get_reg (sp) + 4);
       }
+  }
 
   /** 1010 111w				PUSH.size #IMM */
 
+  {
+  int a;
   prefix (0, 0, 0);
   imm = IMM(w+1);
   tprintf("push%s: %x\n", w ? "hi" : "qi", imm);
-  int a = get_reg (sp) - 2;
+  a = get_reg (sp) - 2;
   if (w)
     mem_put_hi (a, imm);
   else
     mem_put_qi (a, imm);
   put_reg (sp, a);
+  }
 
   /** 1100 sss w ss00 1110		PUSH.size src */
 
@@ -1648,6 +1656,7 @@ next_opcode:
 
   /** 1000 1111				PUSHM src */
 
+  {
   static int map[] = { fb, sb, a1, a0, r3, r2, r1, r0 };
   imm = IMM(1);
   tprintf("pushm: %x\n", imm);
@@ -1665,6 +1674,7 @@ next_opcode:
 	v = get_reg (map[a]);
 	mem_put_hi (get_reg (sp), v);
       }
+  }
 
   /** 1001 1110				REIT */
 
@@ -1677,6 +1687,7 @@ next_opcode:
 
   /** 1011 1000 010w 0011		RMPA.size */
 
+  {
   int count = get_reg (r3);
   int list1 = get_reg (a0);
   int list2 = get_reg (a1);
@@ -1706,6 +1717,7 @@ next_opcode:
   put_reg (a1, list2);
   put_reg (r2r0, (int)(sum & 0xffffffffU));
   put_reg (r1, (int)(sum >> 32));
+  }
 
   /** 1011 ddd w dd10 1110		ROLC.size dest */
 

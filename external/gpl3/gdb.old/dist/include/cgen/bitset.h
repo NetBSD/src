@@ -1,5 +1,5 @@
 /* Header file the type CGEN_BITSET.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

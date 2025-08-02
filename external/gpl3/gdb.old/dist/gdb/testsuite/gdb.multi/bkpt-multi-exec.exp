@@ -1,4 +1,4 @@
-# Copyright 2009-2020 Free Software Foundation, Inc.
+# Copyright 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,13 +14,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 if ![target_can_use_run_cmd] {
-    continue
+    return
 }
 
 # Until "catch exec" is implemented on other targets...
 #
-if {![istarget "*-linux*"]} then {
-    continue
+if {![istarget "*-linux*"]} {
+    return
 }
 
 set testfile "bkpt-multi-exec"
@@ -49,8 +49,7 @@ clean_restart ${exec1}
 
 # Start the program running, and stop at main.
 #
-if ![runto_main] then {
-    perror "Couldn't run ${binfile1}"
+if {![runto_main]} {
     return
 }
 

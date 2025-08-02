@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2020 Free Software Foundation, Inc.
+# Copyright (C) 2016-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,13 +18,13 @@ import gdb
 
 class MyBP(gdb.Breakpoint):
     def stop(self):
-        print('MyBP.stop was invoked!')
+        print("MyBP.stop was invoked!")
         # Don't make this breakpoint stop
         return False
 
 
 try:
-    bp = MyBP('does_not_exist', gdb.BP_WATCHPOINT)
+    bp = MyBP("does_not_exist", gdb.BP_WATCHPOINT)
 except RuntimeError:
     pass
 else:

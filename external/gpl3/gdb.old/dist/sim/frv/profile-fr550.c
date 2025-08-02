@@ -1,6 +1,6 @@
 /* frv simulator fr550 dependent profiling code.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
    Contributed by Red Hat
 
 This file is part of the GNU simulators.
@@ -16,9 +16,11 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-*/
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #define WANT_CPU
 #define WANT_CPU_FRVBF
 
@@ -150,12 +152,14 @@ set_use_not_ccr_complex (SIM_CPU *cpu, INT ccr)
   d->cur_ccr_complex &= ~(((SI)1) << (ccr));
 }
 
+#if 0
 static int
 use_is_ccr_complex (SIM_CPU *cpu, INT ccr)
 {
   MODEL_FR550_DATA *d = CPU_MODEL_DATA (cpu);
   return d->prev_ccr_complex & (((SI)1) << (ccr));
 }
+#endif
 
 static void
 set_use_is_acc_mmac (SIM_CPU *cpu, INT acc)
@@ -221,10 +225,12 @@ adjust_float_register_busy (SIM_CPU *cpu,
       for (i = 0; i < iwidth; ++i)
 	{
 	  if (! REG_OVERLAP (in_FRi + i, 1, out_FRk, kwidth))
-	    if (use_is_fr_load (cpu, in_FRi + i))
-	      decrease_FR_busy (cpu, in_FRi + i, 1);
-	    else
-	      enforce_full_fr_latency (cpu, in_FRi + i);
+	    {
+	      if (use_is_fr_load (cpu, in_FRi + i))
+		decrease_FR_busy (cpu, in_FRi + i, 1);
+	      else
+		enforce_full_fr_latency (cpu, in_FRi + i);
+	    }
 	}
     }
 
@@ -234,10 +240,12 @@ adjust_float_register_busy (SIM_CPU *cpu,
 	{
 	  if (! REG_OVERLAP (in_FRj + i, 1, in_FRi, iwidth)
 	      && ! REG_OVERLAP (in_FRj + i, 1, out_FRk, kwidth))
-	    if (use_is_fr_load (cpu, in_FRj + i))
-	      decrease_FR_busy (cpu, in_FRj + i, 1);
-	    else
-	      enforce_full_fr_latency (cpu, in_FRj + i);
+	    {
+	      if (use_is_fr_load (cpu, in_FRj + i))
+		decrease_FR_busy (cpu, in_FRj + i, 1);
+	      else
+		enforce_full_fr_latency (cpu, in_FRj + i);
+	    }
 	}
     }
 

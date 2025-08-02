@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2020 Free Software Foundation, Inc.
+Copyright 1996-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -1809,10 +1809,10 @@ do_break (current_cpu, pc);
   ARGBUF *abuf = SEM_ARGBUF (sem_arg);
 #define FLD(f) abuf->fields.sfmt_empty.f
   int UNUSED written = 0;
-  IADDR UNUSED pc = abuf->addr;
+  IADDR pc = abuf->addr;
   vpc = SEM_NEXT_VPC (sem_arg, pc, 4);
 
-do_syscall (current_cpu);
+  do_syscall (current_cpu, pc);
 
 #undef FLD
 }

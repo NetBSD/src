@@ -241,14 +241,14 @@ interrupts. The following functions are available to the user-defined
 memory module:
 
 event(cfunc,arg,delta)
-void (*cfunc)();
-int arg;
+void (*cfunc)(int32_t);
+int32_t arg;
 unsigned int delta;
 
 set_int(level,callback,arg)
-int level;
-void (*callback)();
-int arg;
+int32_t level;
+void (*callback)(int32_t);
+int32_t arg;
 
 clear_int(level)
 int level;

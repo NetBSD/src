@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2020 Free Software Foundation, Inc.
+Copyright (C) 1996-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -10218,12 +10218,4 @@ void
 or1k32bf_h_roff1_set (SIM_CPU *current_cpu, BI newval)
 {
   CPU (h_roff1) = newval;
-}
-
-/* Record trace results for INSN.  */
-
-void
-or1k32bf_record_trace_results (SIM_CPU *current_cpu, CGEN_INSN *insn,
-			    int *indices, TRACE_RECORD *tr)
-{
 }

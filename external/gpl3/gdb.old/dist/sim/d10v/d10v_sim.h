@@ -1,9 +1,8 @@
-#include "config.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <limits.h>
 #include "ansidecl.h"
-#include "gdb/callback.h"
+#include "sim/callback.h"
 #include "opcode/d10v.h"
 #include "bfd.h"
 
@@ -21,20 +20,12 @@
 
 extern int d10v_debug;
 
-#include "gdb/remote-sim.h"
+#include "sim/sim.h"
 #include "sim-config.h"
 #include "sim-types.h"
 
-typedef unsigned8 uint8;
-typedef unsigned16 uint16;
-typedef signed16 int16;
-typedef unsigned32 uint32;
-typedef signed32 int32;
-typedef unsigned64 uint64;
-typedef signed64 int64;
-
 /* FIXME: D10V defines */
-typedef uint16 reg_t;
+typedef uint16_t reg_t;
 
 struct simops 
 {
@@ -223,9 +214,9 @@ enum
 
 struct d10v_memory
 {
-  uint8 *insn[IMEM_SEGMENTS];
-  uint8 *data[DMEM_SEGMENTS];
-  uint8 *unif[UMEM_SEGMENTS];
+  uint8_t *insn[IMEM_SEGMENTS];
+  uint8_t *data[DMEM_SEGMENTS];
+  uint8_t *unif[UMEM_SEGMENTS];
 };
 
 struct _state
@@ -234,8 +225,8 @@ struct _state
 #define GPR(N) (State.regs[(N)] + 0)
 #define SET_GPR(N,VAL) SLOT_PEND (State.regs[(N)], (VAL))
 
-#define GPR32(N) ((((uint32) State.regs[(N) + 0]) << 16) \
-		  | (uint16) State.regs[(N) + 1])
+#define GPR32(N) ((((uint32_t) State.regs[(N) + 0]) << 16) \
+		  | (uint16_t) State.regs[(N) + 1])
 #define SET_GPR32(N,VAL) do { SET_GPR (OP[0] + 0, (VAL) >> 16); SET_GPR (OP[0] + 1, (VAL)); } while (0)
 
   reg_t cregs[16];		/* control registers */
@@ -247,7 +238,7 @@ struct _state
 #define HELD_SP(N) (State.sp[(N)] + 0)
 #define SET_HELD_SP(N,VAL) SLOT_PEND (State.sp[(N)], (VAL))
 
-  int64 a[2];			/* accumulators */
+  int64_t a[2];			/* accumulators */
 #define ACC(N) (State.a[(N)] + 0)
 #define SET_ACC(N,VAL) SLOT_PEND (State.a[(N)], (VAL) & MASK40)
 
@@ -257,10 +248,10 @@ struct _state
 
   /* trace data */
   struct {
-    uint16 psw;
+    uint16_t psw;
   } trace;
 
-  uint8 exe;
+  uint8_t exe;
   int	pc_changed;
 
   /* NOTE: everything below this line is not reset by
@@ -270,10 +261,12 @@ struct _state
 
   enum _ins_type ins_type;
 
-} State;
+};
+
+extern struct _state State;
 
 
-extern uint16 OP[4];
+extern uint16_t OP[4];
 extern struct simops Simops[];
 
 enum
@@ -440,9 +433,8 @@ do \
   } \
 while (0)
 
-extern uint8 *dmem_addr (SIM_DESC, SIM_CPU *, uint16 offset);
-extern uint8 *imem_addr (SIM_DESC, SIM_CPU *, uint32);
-extern bfd_vma decode_pc (void);
+extern uint8_t *dmem_addr (SIM_DESC, SIM_CPU *, uint16_t offset);
+extern uint8_t *imem_addr (SIM_DESC, SIM_CPU *, uint32_t);
 
 #define	RB(x)	(*(dmem_addr (sd, cpu, x)))
 #define SB(addr,data)	( RB(addr) = (data & 0xff))
@@ -453,12 +445,12 @@ extern bfd_vma decode_pc (void);
 #undef ENDIAN_INLINE
 
 #else
-extern uint32 get_longword (uint8 *);
-extern uint16 get_word (uint8 *);
-extern int64 get_longlong (uint8 *);
-extern void write_word (uint8 *addr, uint16 data);
-extern void write_longword (uint8 *addr, uint32 data);
-extern void write_longlong (uint8 *addr, int64 data);
+extern uint32_t get_longword (const uint8_t *);
+extern uint16_t get_word (const uint8_t *);
+extern int64_t get_longlong (const uint8_t *);
+extern void write_word (uint8_t *addr, uint16_t data);
+extern void write_longword (uint8_t *addr, uint32_t data);
+extern void write_longlong (uint8_t *addr, int64_t data);
 #endif
 
 #define SW(addr,data)		write_word (dmem_addr (sd, cpu, addr), data)

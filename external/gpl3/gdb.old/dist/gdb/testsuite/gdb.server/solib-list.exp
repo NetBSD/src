@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,8 +31,7 @@ standard_testfile solib-list-main.c
 set srclibfile ${testfile}-lib.c
 set binlibfile [standard_output_file ${testfile}.so]
 
-if { [get_compiler_info]
-     || [gdb_compile_shlib "${srcdir}/${subdir}/${srclibfile}" "${binlibfile}" {debug}] != ""
+if { [gdb_compile_shlib "${srcdir}/${subdir}/${srclibfile}" "${binlibfile}" {debug}] != ""
      || [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "shlib=${binlibfile}"] != "" } {
     untested "failed to compile"
     return -1
@@ -42,12 +41,16 @@ set interp_system [section_get ${binfile} .interp]
 verbose -log "system interpreter is: $interp_system"
 
 foreach nonstop { 0 1 } { with_test_prefix "non-stop $nonstop" {
+    save_vars { GDBFLAGS } {
+	# If GDB and GDBserver are both running locally, set the sysroot to avoid
+	# reading files via the remote protocol.
+	if { ![is_remote host] && ![is_remote target] } {
+	    set GDBFLAGS "$GDBFLAGS -ex \"set sysroot\""
+	}
 
-    # clean_restart assumes ${objdir}/${subdir}/ which is not applicable
-    # for ${interp_system}.
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
+	clean_restart
+    }
+
     gdb_load_shlib ${binlibfile}
 
     set remote_binfile [gdb_remote_download target $binfile]
@@ -88,8 +91,7 @@ foreach nonstop { 0 1 } { with_test_prefix "non-stop $nonstop" {
     # but before "target remote" below so that qSymbol data get already
     # initialized from BINFILE (and not from ld.so first needing a change to
     # BINFILE later).
-    gdb_test "file ${binfile}" {Reading symbols from .*\.\.\..*} "file binfile" \
-	     {(Are you sure you want to change the file|Load new symbol table from ".*")\? \(y or n\) } "y"
+    gdb_test "file ${binfile}" {Reading symbols from .*\.\.\..*} "file binfile"
 
     set test "target $gdbserver_protocol"
     set ok 0

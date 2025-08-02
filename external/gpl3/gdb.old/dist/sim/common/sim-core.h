@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -248,7 +248,7 @@ extern void *sim_core_trans_addr
    order (including xor endian).  Should the transfer fail, the
    operation shall abort (no return).
 
-   ALIGNED assumes yhat the specified ADDRESS is correctly alligned
+   ALIGNED assumes that the specified ADDRESS is correctly aligned
    for an N byte transfer (no alignment checks are made).  Passing an
    incorrectly aligned ADDRESS is erroneous.
 
@@ -256,7 +256,7 @@ extern void *sim_core_trans_addr
    of an N byte transfer. Action, as defined by WITH_ALIGNMENT, being
    taken should the check fail.
 
-   MISSALIGNED transfers the data regardless.
+   MISALIGNED transfers the data regardless.
 
    Misaligned xor-endian accesses are broken into a sequence of
    transfers each <= WITH_XOR_ENDIAN bytes */

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2020 Free Software Foundation, Inc.
+# Copyright 2020-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,6 +27,11 @@ if { [skip_btrace_tests] } {
     return -1
 }
 
+if { [use_gdb_stub] } {
+    unsupported "test creates multiple inferiors"
+    return -1
+}
+
 standard_testfile
 if [prepare_for_testing "failed to prepare" $testfile {} {debug}] {
     return -1
@@ -34,7 +39,6 @@ if [prepare_for_testing "failed to prepare" $testfile {} {debug}] {
 
 with_test_prefix "inferior 1" {
     if ![runto_main] {
-	untested "failed to run to main"
 	return -1
     }
 }
@@ -45,7 +49,6 @@ with_test_prefix "inferior 2" {
     gdb_test "inferior 2" "Switching to inferior 2.*"
 
     if ![runto_main] {
-	untested "inferior 2: failed to run to main"
 	return -1
     }
 
@@ -55,7 +58,7 @@ with_test_prefix "inferior 2" {
 with_test_prefix "inferior 1" {
     gdb_test "inferior 1" "Switching to inferior 1.*"
 
-    gdb_test "info record" "No record target is currently active\\."
+    gdb_test "info record" "No recording is currently active\\."
     gdb_test_no_output "record btrace" "record btrace"
 }
 
@@ -65,10 +68,9 @@ with_test_prefix "inferior 3" {
     gdb_test "inferior 3" "Switching to inferior 3.*"
 
     if ![runto_main] {
-	untested "inferior 3: failed to run to main"
 	return -1
     }
 
-    gdb_test "info record" "No record target is currently active\\."
+    gdb_test "info record" "No recording is currently active\\."
     gdb_test_no_output "record btrace" "record btrace"
 }

@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -25,10 +25,6 @@ set libipa [get_in_proc_agent]
 
 set lib_opts debug
 
-if [get_compiler_info] {
-    return -1
-}
-
 set additional_flags [list quiet debug shlib=$libipa shlib_load \
 			  "additional_flags=-lust -lurcu-bp" ]
 
@@ -51,7 +47,6 @@ proc strace_remove_socket { action } {
     clean_restart $executable
     gdb_load_shlib $libipa
     if ![runto_main] {
-	fail "can't run to main"
 	return -1
     }
 
@@ -136,7 +131,6 @@ proc strace_info_marker { } {
 	clean_restart $executable
 	gdb_load_shlib $libipa
 	if ![runto_main] {
-	    fail "can't run to main"
 	    return -1
 	}
 
@@ -173,7 +167,6 @@ proc strace_probe_marker { } {
 	clean_restart $executable
 	gdb_load_shlib $libipa
 	if ![runto_main] {
-	    fail "can't run to main"
 	    return -1
 	}
 
@@ -213,7 +206,6 @@ proc strace_trace_on_same_addr { type } {
 	clean_restart $executable
 	gdb_load_shlib $libipa
 	if ![runto_main] {
-	    fail "can't run to main"
 	    return -1
 	}
 
@@ -317,7 +309,6 @@ proc strace_trace_on_diff_addr { } {
 	clean_restart $executable
 	gdb_load_shlib $libipa
 	if ![runto_main] {
-	    fail "can't run to main"
 	    return -1
 	}
 
@@ -377,10 +368,9 @@ if { [istarget "x86_64-*-linux*"] || [istarget "i\[34567\]86-*-linux*"] } {
 clean_restart $executable
 gdb_load_shlib $libipa
 if ![runto_main] {
-    fail "can't run to main to check for trace support"
     return -1
 }
-if { ![gdb_target_supports_trace] } then {
+if {![gdb_target_supports_trace]} {
     # At this point, the socket file has been created.  We must make sure it is
     # removed when we return here.  GDB detaches inferior so that the socket
     # file can be removed.  Note that GDB simply kill inferior doesn't remove

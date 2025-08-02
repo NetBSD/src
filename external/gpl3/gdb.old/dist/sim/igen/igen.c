@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2020 Free Software Foundation, Inc.
+   Copyright 2002-2023 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -19,14 +19,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-
-
 #include <getopt.h>
+#include <stdlib.h>
 
 #include "misc.h"
 #include "lf.h"
 #include "table.h"
-#include "config.h"
 #include "filter.h"
 
 #include "igen.h"
@@ -178,7 +176,7 @@ print_icache_function_type (lf *file)
 /* Function names */
 
 static int
-print_opcode_bits (lf *file, opcode_bits *bits)
+print_opcode_bits (lf *file, const opcode_bits *bits)
 {
   int nr = 0;
   if (bits == NULL)
@@ -229,7 +227,7 @@ print_function_name (lf *file,
 		     const char *basename,
 		     const char *format_name,
 		     const char *model_name,
-		     opcode_bits *expanded_bits,
+		     const opcode_bits *expanded_bits,
 		     lf_function_name_prefixes prefix)
 {
   int nr = 0;
@@ -284,7 +282,8 @@ print_function_name (lf *file,
 void
 print_my_defines (lf *file,
 		  const char *basename,
-		  const char *format_name, opcode_bits *expanded_bits)
+		  const char *format_name,
+		  const opcode_bits *expanded_bits)
 {
   /* #define MY_INDEX xxxxx */
   lf_indent_suppress (file);
@@ -341,7 +340,7 @@ print_itrace_prefix (lf *file)
 
 
 static void
-print_itrace_format (lf *file, insn_mnemonic_entry *assembler)
+print_itrace_format (lf *file, const insn_mnemonic_entry *assembler)
 {
   /* pass=1 is fmt string; pass=2 is arguments */
   int pass;
@@ -478,7 +477,7 @@ print_itrace_format (lf *file, insn_mnemonic_entry *assembler)
 
 
 void
-print_itrace (lf *file, insn_entry * insn, int idecode)
+print_itrace (lf *file, const insn_entry *insn, int idecode)
 {
   /* NB: Here we escape each EOLN. This is so that the the compiler
      treats a trace function call as a single line.  Consequently any
@@ -606,10 +605,10 @@ print_includes (lf *file)
 
 
 static void
-gen_semantics_h (lf *file, insn_list *semantics, int max_nr_words)
+gen_semantics_h (lf *file, const insn_list *semantics, int max_nr_words)
 {
   int word_nr;
-  insn_list *semantic;
+  const insn_list *semantic;
   for (word_nr = -1; word_nr <= max_nr_words; word_nr++)
     {
       lf_printf (file, "typedef ");
@@ -647,11 +646,11 @@ gen_semantics_h (lf *file, insn_list *semantics, int max_nr_words)
 
 
 static void
-gen_semantics_c (lf *file, insn_list *semantics, cache_entry *cache_rules)
+gen_semantics_c (lf *file, const insn_list *semantics, cache_entry *cache_rules)
 {
   if (options.gen.code == generate_calls)
     {
-      insn_list *semantic;
+      const insn_list *semantic;
       print_includes (file);
       print_include (file, options.module.semantics);
       lf_printf (file, "\n");
@@ -681,8 +680,8 @@ gen_semantics_c (lf *file, insn_list *semantics, cache_entry *cache_rules)
 
 static void
 gen_icache_h (lf *file,
-	      insn_list *semantic,
-	      function_entry * functions, int max_nr_words)
+	      const insn_list *semantic,
+	      const function_entry *functions, int max_nr_words)
 {
   int word_nr;
   for (word_nr = 0; word_nr <= max_nr_words; word_nr++)
@@ -718,8 +717,8 @@ gen_icache_h (lf *file,
 
 static void
 gen_icache_c (lf *file,
-	      insn_list *semantic,
-	      function_entry * functions, cache_entry *cache_rules)
+	      const insn_list *semantic,
+	      const function_entry *functions, cache_entry *cache_rules)
 {
   /* output `internal' invalid/floating-point unavailable functions
      where needed */
@@ -759,9 +758,11 @@ gen_icache_c (lf *file,
 
 static void
 gen_idecode_h (lf *file,
-	       gen_table *gen, insn_table *insns, cache_entry *cache_rules)
+	       const gen_table *gen,
+	       const insn_table *insns,
+	       cache_entry *cache_rules)
 {
-  lf_printf (file, "typedef unsigned%d %sinstruction_word;\n",
+  lf_printf (file, "typedef uint%d_t %sinstruction_word;\n",
 	     options.insn_bit_size, options.module.global.prefix.l);
   if (options.gen.delayed_branch)
     {
@@ -818,7 +819,9 @@ gen_idecode_h (lf *file,
 
 static void
 gen_idecode_c (lf *file,
-	       gen_table *gen, insn_table *isa, cache_entry *cache_rules)
+	       const gen_table *gen,
+	       const insn_table *isa,
+	       cache_entry *cache_rules)
 {
   /* the intro */
   print_includes (file);
@@ -871,7 +874,7 @@ gen_idecode_c (lf *file,
 
 
 static void
-gen_run_c (lf *file, gen_table *gen)
+gen_run_c (lf *file, const gen_table *gen)
 {
   gen_list *entry;
   lf_printf (file, "#include \"sim-main.h\"\n");
@@ -961,7 +964,7 @@ gen_run_c (lf *file, gen_table *gen)
 /****************************************************************/
 
 static gen_table *
-do_gen (insn_table *isa, decode_table *decode_rules)
+do_gen (const insn_table *isa, const decode_table *decode_rules)
 {
   gen_table *gen;
   if (decode_rules == NULL)
@@ -991,6 +994,7 @@ main (int argc, char **argv, char **envp)
   char *real_file_name = NULL;
   int is_header = 0;
   int ch;
+  static const struct option longopts[] = { { 0 } };
   lf *standard_out =
     lf_open ("-", "stdout", lf_omit_references, lf_is_text, "igen");
 
@@ -1164,14 +1168,17 @@ main (int argc, char **argv, char **envp)
       printf ("  -t <output-file>      output itable\n");
     }
 
-  while ((ch = getopt (argc, argv,
-		       "B:D:F:G:H:I:M:N:P:T:W:o:k:i:n:hc:d:e:m:r:s:t:f:x"))
+  while ((ch = getopt_long (argc, argv,
+			    "B:D:F:G:H:I:M:N:P:T:W:o:k:i:n:hc:d:e:m:r:s:t:f:x",
+			    longopts, NULL))
 	 != -1)
     {
+#if 0  /* For debugging.  */
       fprintf (stderr, "  -%c ", ch);
       if (optarg)
 	fprintf (stderr, "%s ", optarg);
       fprintf (stderr, "\\\n");
+#endif
 
       switch (ch)
 	{
@@ -1183,7 +1190,7 @@ main (int argc, char **argv, char **envp)
 	case 'D':
 	  if (strcmp (optarg, "processor-names"))
 	    {
-	      char *processor;
+	      const char *processor;
 	      for (processor = filter_next (options.model_filter, "");
 		   processor != NULL;
 		   processor = filter_next (options.model_filter, processor))

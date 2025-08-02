@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Free Software Foundation, Inc.
+# Copyright (C) 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,6 +53,30 @@ test_lookup_type "opencl" "ushort"
 
 test_lookup_type "objective-c" "char"
 
-test_lookup_type "opencl" "ushort"
-
 test_lookup_type "pascal" "char"
+
+gdb_test "show language" \
+    "The current source language is .pascal.." \
+    "show language before 'with'"
+gdb_test_multiline "look up type using set_parameter" \
+    "python" "" \
+    "with gdb.with_parameter('language', 'ada'):" "" \
+    "  print(gdb.lookup_type('character'))" "" \
+    "end" "character"
+gdb_test "show language" \
+    "The current source language is .pascal.." \
+    "show language after 'with'"
+
+
+# Ensure that the language can be changed from within Python and still
+# affect the results.
+gdb_test_multiline "look up ada type from another language" \
+    "python" "" \
+    "gdb.execute('set language ada')" "" \
+    "print(gdb.lookup_type('character'))" "" \
+    "end" "character"
+
+gdb_test_no_output "python gdb.set_parameter('language', 'rust')"
+gdb_test "show language" \
+    "The current source language is .rust.." \
+    "show language after 'set_parameter'"

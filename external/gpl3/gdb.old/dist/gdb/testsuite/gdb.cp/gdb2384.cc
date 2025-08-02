@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2020 Free Software Foundation, Inc.
+   Copyright 2008-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ main ()
 {
   derived1 d1 (42);
   derived2 d2 (24);
-  g = d1.meth (); // set breakpoint here
-  g = d2.meth (); // set breakpoint here (second)
+  g = d1.meth (); // First breakpoint
+  g = d2.meth (); // Second breakpoint
   return 0;
 }

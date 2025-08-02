@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,11 +20,11 @@ if ![dwarf2_support] {
     return 0  
 }
 
-standard_testfile fission-mix.c fission-mix2.c
+standard_testfile .c -2.c
 set objfile [standard_output_file ${testfile}.o]
 set objfile2 [standard_output_file ${testfile}2.o]
 
-# Compile fission-mix.c without Fission and fission-mix2.c with Fission.
+# Compile fission-mix.c without Fission and fission-mix-2.c with Fission.
 if { [gdb_compile ${srcdir}/${subdir}/${srcfile} $objfile object {debug}] != "" } {
     return -1
 }
@@ -37,7 +37,7 @@ if {[gdb_compile "$objfile $objfile2" $binfile executable {debug}] != "" } {
 
 clean_restart $binfile
 
-gdb_test "break main" "Breakpoint .*"
+gdb_test "break -q main" "Breakpoint .*"
 
 # Bug 15691: gdb would crash here on an assert violation.
 # The debug info for the TU for "struct s" has already been read,

@@ -1,5 +1,5 @@
 /* Xtensa ELF support for BFD.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
    Contributed by Bob Wilson (bwilson@tensilica.com) at Tensilica.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -221,7 +221,7 @@ xtensa_read_table_entries (bfd *abfd,
 			   asection *section,
 			   property_table_entry **table_p,
 			   const char *sec_name,
-			   bfd_boolean output_addr);
+			   bool output_addr);
 extern int
 xtensa_compute_fill_extra_space (property_table_entry *entry);
 

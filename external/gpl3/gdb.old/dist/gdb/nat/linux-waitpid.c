@@ -1,6 +1,6 @@
 /* Wrapper implementation for waitpid for GNU/Linux (LWP layer).
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,31 +22,29 @@
 #include "linux-nat.h"
 #include "linux-waitpid.h"
 #include "gdbsupport/gdb_wait.h"
+#include "gdbsupport/eintr.h"
 
-/* Convert wait status STATUS to a string.  Used for printing debug
-   messages only.  */
+/* See linux-waitpid.h.  */
 
-char *
+std::string
 status_to_str (int status)
 {
-  static char buf[64];
-
   if (WIFSTOPPED (status))
     {
       if (WSTOPSIG (status) == SYSCALL_SIGTRAP)
-	snprintf (buf, sizeof (buf), "%s (stopped at syscall)",
-		  strsignal (SIGTRAP));
+	return string_printf ("%s - %s (stopped at syscall)",
+			      strsigno (SIGTRAP), strsignal (SIGTRAP));
       else
-	snprintf (buf, sizeof (buf), "%s (stopped)",
-		  strsignal (WSTOPSIG (status)));
+	return string_printf ("%s - %s (stopped)",
+			      strsigno (WSTOPSIG (status)),
+			      strsignal (WSTOPSIG (status)));
     }
   else if (WIFSIGNALED (status))
-    snprintf (buf, sizeof (buf), "%s (terminated)",
-	      strsignal (WTERMSIG (status)));
+    return string_printf ("%s - %s (terminated)",
+			  strsigno (WTERMSIG (status)),
+			  strsignal (WTERMSIG (status)));
   else
-    snprintf (buf, sizeof (buf), "%d (exited)", WEXITSTATUS (status));
-
-  return buf;
+    return string_printf ("%d (exited)", WEXITSTATUS (status));
 }
 
 /* See linux-waitpid.h.  */
@@ -54,13 +52,5 @@ status_to_str (int status)
 int
 my_waitpid (int pid, int *status, int flags)
 {
-  int ret;
-
-  do
-    {
-      ret = waitpid (pid, status, flags);
-    }
-  while (ret == -1 && errno == EINTR);
-
-  return ret;
+  return gdb::handle_eintr (-1, ::waitpid, pid, status, flags);
 }

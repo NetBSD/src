@@ -1,5 +1,5 @@
 /* Disassembly routines for TMS320C30 architecture
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
    This file is part of the GNU opcodes library.
@@ -201,7 +201,7 @@ get_register_operand (unsigned char fragment, char *buffer)
     {
       if ((fragment & 0x1F) == current_reg->opcode)
 	{
-	  strncpy (buffer, current_reg->name, OPERAND_BUFFER_LEN);
+	  strncpy (buffer, current_reg->name, OPERAND_BUFFER_LEN - 1);
 	  buffer[OPERAND_BUFFER_LEN - 1] = 0;
 	  return 1;
 	}
@@ -695,13 +695,16 @@ print_insn_tic30 (bfd_vma pc, disassemble_info *info)
   struct instruction insn = { 0, NULL, NULL };
   bfd_vma bufaddr = pc - info->buffer_vma;
 
+  if (bufaddr + 3 >= info->buffer_length)
+    return -1;
+
   /* Obtain the current instruction word from the buffer.  */
   insn_word = (((unsigned) *(info->buffer + bufaddr) << 24)
 	       | (*(info->buffer + bufaddr + 1) << 16)
 	       | (*(info->buffer + bufaddr + 2) << 8)
 	       | *(info->buffer + bufaddr + 3));
   _pc = pc / 4;
-  /* Get the instruction refered to by the current instruction word
+  /* Get the instruction referred to by the current instruction word
      and print it out based on its type.  */
   if (!get_tic30_instruction (insn_word, &insn))
     return -1;

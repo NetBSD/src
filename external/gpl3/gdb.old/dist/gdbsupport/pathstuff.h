@@ -1,6 +1,6 @@
 /* Path manipulation routines for GDB and gdbserver.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,12 @@
 #define COMMON_PATHSTUFF_H
 
 #include "gdbsupport/byte-vector.h"
+#include "gdbsupport/array-view.h"
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <array>
 
 /* Path utilities.  */
 
@@ -35,8 +41,7 @@ extern gdb::unique_xmalloc_ptr<char> gdb_realpath (const char *filename);
 /* Return a copy of FILENAME, with its directory prefix canonicalized
    by gdb_realpath.  */
 
-extern gdb::unique_xmalloc_ptr<char>
-  gdb_realpath_keepfile (const char *filename);
+extern std::string gdb_realpath_keepfile (const char *filename);
 
 /* Return PATH in absolute form, performing tilde-expansion if necessary.
    PATH cannot be NULL or the empty string.
@@ -49,13 +54,35 @@ extern gdb::unique_xmalloc_ptr<char>
    If CURRENT_DIRECTORY is NULL, this function returns a copy of
    PATH.  */
 
-extern gdb::unique_xmalloc_ptr<char> gdb_abspath (const char *path);
+extern std::string gdb_abspath (const char *path);
 
 /* If the path in CHILD is a child of the path in PARENT, return a
    pointer to the first component in the CHILD's pathname below the
    PARENT.  Otherwise, return NULL.  */
 
 extern const char *child_path (const char *parent, const char *child);
+
+/* Join elements in PATHS into a single path.
+
+   The first element can be absolute or relative.  All the others must be
+   relative.  */
+
+extern std::string path_join (gdb::array_view<const char *> paths);
+
+/* Same as the above, but accept paths as distinct parameters.  */
+
+template<typename ...Args>
+std::string
+path_join (Args... paths)
+{
+  /* It doesn't make sense to join less than two paths.  */
+  gdb_static_assert (sizeof... (Args) >= 2);
+
+  std::array<const char *, sizeof... (Args)> path_array
+    { paths... };
+
+  return path_join (gdb::array_view<const char *> (path_array));
+}
 
 /* Return whether PATH contains a directory separator character.  */
 
@@ -85,6 +112,43 @@ extern std::string get_standard_cache_dir ();
 
 extern std::string get_standard_temp_dir ();
 
+/* Get the usual user config directory for the current platform.
+
+   On Linux, it follows the XDG Base Directory specification: use
+   $XDG_CONFIG_HOME/gdb if the XDG_CONFIG_HOME environment variable is
+   defined, otherwise $HOME/.config.
+
+   On macOS, it follows the local convention and uses
+   ~/Library/Preferences/gdb.
+
+  The return value is absolute and tilde-expanded.  Return an empty
+  string if neither XDG_CONFIG_HOME (on Linux) or HOME are defined.  */
+
+extern std::string get_standard_config_dir ();
+
+/* Look for FILENAME in the standard configuration directory as returned by
+   GET_STANDARD_CONFIG_DIR and return the path to the file.  No check is
+   performed that the file actually exists or not.
+
+   If FILENAME begins with a '.' then the path returned will remove the
+   leading '.' character, for example passing '.gdbinit' could return the
+   path '/home/username/.config/gdb/gdbinit'.  */
+
+extern std::string get_standard_config_filename (const char *filename);
+
+/* Look for a file called NAME in either the standard config directory or
+   in the users home directory.  If a suitable file is found then *BUF will
+   be filled with the contents of a call to 'stat' on the found file,
+   otherwise *BUF is undefined after this call.
+
+   If NAME starts with a '.' character then, when looking in the standard
+   config directory the file searched for has the '.' removed.  For
+   example, if NAME is '.gdbinit' then on a Linux target GDB might look for
+   '~/.config/gdb/gdbinit' and then '~/.gdbinit'.  */
+
+extern std::string find_gdb_home_config_file (const char *name,
+					      struct stat *buf);
+
 /* Return the file name of the user's shell.  Normally this comes from
    the SHELL environment variable.  */
 
@@ -94,5 +158,8 @@ extern const char *get_shell ();
    /tmp/foo -> /tmp/foo-XXXXXX).  */
 
 extern gdb::char_vector make_temp_filename (const std::string &f);
+
+/* String containing the current directory (what getwd would return).  */
+extern char *current_directory;
 
 #endif /* COMMON_PATHSTUFF_H */

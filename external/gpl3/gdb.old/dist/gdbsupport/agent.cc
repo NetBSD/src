@@ -1,6 +1,6 @@
 /* Shared utility routines for GDB to interact with agent.
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -190,7 +190,7 @@ agent_run_command (int pid, const char *cmd, int len)
 {
   int fd;
   int tid = agent_get_helper_thread_id ();
-  ptid_t ptid = ptid_t (pid, tid, 0);
+  ptid_t ptid = ptid_t (pid, tid);
 
   int ret = target_write_memory (ipa_sym_addrs.addr_cmd_buf,
 				 (gdb_byte *) cmd, len);

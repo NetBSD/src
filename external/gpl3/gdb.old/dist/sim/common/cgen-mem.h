@@ -1,5 +1,5 @@
 /* Memory ops header for CGEN-based simulators.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU Simulators.
@@ -33,8 +33,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
    floating point modes, only floating point operations (whose arguments
    and results are arrays of bits that we treat as integer modes).  */
 
+#define DECLARE_GETMEM_EXTERN(mode, size) \
+extern mode XCONCAT2 (GETMEM,mode) (SIM_CPU *, IADDR, ADDR);
+
 #if defined (__GNUC__) || defined (MEMOPS_DEFINE_INLINE)
 #define DECLARE_GETMEM(mode, size) \
+DECLARE_GETMEM_EXTERN (mode, size) \
 MEMOPS_INLINE mode \
 XCONCAT2 (GETMEM,mode) (SIM_CPU *cpu, IADDR pc, ADDR a) \
 { \
@@ -43,8 +47,7 @@ XCONCAT2 (GETMEM,mode) (SIM_CPU *cpu, IADDR pc, ADDR a) \
   return XCONCAT2 (sim_core_read_unaligned_,size) (cpu, pc, read_map, a); \
 }
 #else
-#define DECLARE_GETMEM(mode, size) \
-extern mode XCONCAT2 (GETMEM,mode) (SIM_CPU *, IADDR, ADDR);
+#define DECLARE_GETMEM(mode, size) DECLARE_GETMEM_EXTERN (mode, size)
 #endif
 
 DECLARE_GETMEM (QI, 1)  /* TAGS: GETMEMQI */
@@ -57,11 +60,16 @@ DECLARE_GETMEM (DI, 8)  /* TAGS: GETMEMDI */
 DECLARE_GETMEM (UDI, 8) /* TAGS: GETMEMUDI */
 
 #undef DECLARE_GETMEM
+#undef DECLARE_GETMEM_EXTERN
 
 /* Integer memory write support.  */
 
+#define DECLARE_SETMEM_EXTERN(mode, size) \
+extern void XCONCAT2 (SETMEM,mode) (SIM_CPU *, IADDR, ADDR, mode);
+
 #if defined (__GNUC__) || defined (MEMOPS_DEFINE_INLINE)
 #define DECLARE_SETMEM(mode, size) \
+DECLARE_SETMEM_EXTERN (mode, size) \
 MEMOPS_INLINE void \
 XCONCAT2 (SETMEM,mode) (SIM_CPU *cpu, IADDR pc, ADDR a, mode val) \
 { \
@@ -70,8 +78,7 @@ XCONCAT2 (SETMEM,mode) (SIM_CPU *cpu, IADDR pc, ADDR a, mode val) \
   XCONCAT2 (sim_core_write_unaligned_,size) (cpu, pc, write_map, a, val); \
 }
 #else
-#define DECLARE_SETMEM(mode, size) \
-extern void XCONCAT2 (SETMEM,mode) (SIM_CPU *, IADDR, ADDR, mode);
+#define DECLARE_SETMEM(mode, size) DECLARE_SETMEM_EXTERN (mode, size)
 #endif
 
 DECLARE_SETMEM (QI, 1)  /* TAGS: SETMEMQI */
@@ -84,11 +91,16 @@ DECLARE_SETMEM (DI, 8)  /* TAGS: SETMEMDI */
 DECLARE_SETMEM (UDI, 8) /* TAGS: SETMEMUDI */
 
 #undef DECLARE_SETMEM
+#undef DECLARE_SETMEM_EXTERN
 
 /* Instruction read support.  */
 
+#define DECLARE_GETIMEM_EXTERN(mode, size) \
+extern mode XCONCAT2 (GETIMEM,mode) (SIM_CPU *, ADDR);
+
 #if defined (__GNUC__) || defined (MEMOPS_DEFINE_INLINE)
 #define DECLARE_GETIMEM(mode, size) \
+DECLARE_GETIMEM_EXTERN (mode, size) \
 MEMOPS_INLINE mode \
 XCONCAT2 (GETIMEM,mode) (SIM_CPU *cpu, IADDR a) \
 { \
@@ -97,8 +109,7 @@ XCONCAT2 (GETIMEM,mode) (SIM_CPU *cpu, IADDR a) \
   return XCONCAT2 (sim_core_read_unaligned_,size) (cpu, a, exec_map, a); \
 }
 #else
-#define DECLARE_GETIMEM(mode, size) \
-extern mode XCONCAT2 (GETIMEM,mode) (SIM_CPU *, ADDR);
+#define DECLARE_GETIMEM(mode, size) DECLARE_GETIMEM_EXTERN (mode, size)
 #endif
 
 DECLARE_GETIMEM (UQI, 1) /* TAGS: GETIMEMUQI */
@@ -107,6 +118,7 @@ DECLARE_GETIMEM (USI, 4) /* TAGS: GETIMEMUSI */
 DECLARE_GETIMEM (UDI, 8) /* TAGS: GETIMEMUDI */
 
 #undef DECLARE_GETIMEM
+#undef DECLARE_GETIMEM_EXTERN
 
 /* Floating point support.
 
@@ -118,8 +130,12 @@ DECLARE_GETIMEM (UDI, 8) /* TAGS: GETIMEMUDI */
    that's a complication of its own (not that having these fns isn't).
    But for now, we do things this way.  */
 
+#define DECLARE_GETMEM_EXTERN(mode, size) \
+extern mode XCONCAT2 (GETMEM,mode) (SIM_CPU *, IADDR, ADDR);
+
 #if defined (__GNUC__) || defined (MEMOPS_DEFINE_INLINE)
 #define DECLARE_GETMEM(mode, size) \
+DECLARE_GETMEM_EXTERN (mode, size) \
 MEMOPS_INLINE mode \
 XCONCAT2 (GETMEM,mode) (SIM_CPU *cpu, IADDR pc, ADDR a) \
 { \
@@ -128,17 +144,21 @@ XCONCAT2 (GETMEM,mode) (SIM_CPU *cpu, IADDR pc, ADDR a) \
   return XCONCAT2 (sim_core_read_unaligned_,size) (cpu, pc, read_map, a); \
 }
 #else
-#define DECLARE_GETMEM(mode, size) \
-extern mode XCONCAT2 (GETMEM,mode) (SIM_CPU *, IADDR, ADDR);
+#define DECLARE_GETMEM(mode, size) DECLARE_GETMEM_EXTERN (mode, size)
 #endif
 
 DECLARE_GETMEM (SF, 4) /* TAGS: GETMEMSF */
 DECLARE_GETMEM (DF, 8) /* TAGS: GETMEMDF */
 
 #undef DECLARE_GETMEM
+#undef DECLARE_GETMEM_EXTERN
+
+#define DECLARE_SETMEM_EXTERN(mode, size) \
+extern void XCONCAT2 (SETMEM,mode) (SIM_CPU *, IADDR, ADDR, mode);
 
 #if defined (__GNUC__) || defined (MEMOPS_DEFINE_INLINE)
 #define DECLARE_SETMEM(mode, size) \
+DECLARE_SETMEM_EXTERN (mode, size) \
 MEMOPS_INLINE void \
 XCONCAT2 (SETMEM,mode) (SIM_CPU *cpu, IADDR pc, ADDR a, mode val) \
 { \
@@ -147,31 +167,34 @@ XCONCAT2 (SETMEM,mode) (SIM_CPU *cpu, IADDR pc, ADDR a, mode val) \
   XCONCAT2 (sim_core_write_unaligned_,size) (cpu, pc, write_map, a, val); \
 }
 #else
-#define DECLARE_SETMEM(mode, size) \
-extern void XCONCAT2 (SETMEM,mode) (SIM_CPU *, IADDR, ADDR, mode);
+#define DECLARE_SETMEM(mode, size) DECLARE_SETMEM_EXTERN (mode, size
 #endif
 
 DECLARE_SETMEM (SF, 4) /* TAGS: SETMEMSF */
 DECLARE_SETMEM (DF, 8) /* TAGS: SETMEMDF */
 
 #undef DECLARE_SETMEM
+#undef DECLARE_SETMEM_EXTERN
 
 /* GETT<mode>: translate target value at P to host value.
    This needn't be very efficient (i.e. can call memcpy) as this is
    only used when interfacing with the outside world (e.g. gdb).  */
 
+#define DECLARE_GETT_EXTERN(mode, size) \
+extern mode XCONCAT2 (GETT,mode) (const unsigned char *);
+
 #if defined (MEMOPS_DEFINE_INLINE)
 #define DECLARE_GETT(mode, size) \
+DECLARE_GETT_EXTERN (mode, size) \
 mode \
-XCONCAT2 (GETT,mode) (unsigned char *p) \
+XCONCAT2 (GETT,mode) (const unsigned char *p) \
 { \
   mode tmp; \
   memcpy (&tmp, p, sizeof (mode)); \
   return XCONCAT2 (T2H_,size) (tmp); \
 }
 #else
-#define DECLARE_GETT(mode, size) \
-extern mode XCONCAT2 (GETT,mode) (unsigned char *);
+#define DECLARE_GETT(mode, size) DECLARE_GETT_EXTERN (mode, size)
 #endif
 
 DECLARE_GETT (QI, 1)  /* TAGS: GETTQI */
@@ -190,13 +213,18 @@ DECLARE_GETT (TF, 16) /* TAGS: GETTTF */
 #endif
 
 #undef DECLARE_GETT
+#undef DECLARE_GETT_EXTERN
 
 /* SETT<mode>: translate host value to target value and store at P.
    This needn't be very efficient (i.e. can call memcpy) as this is
    only used when interfacing with the outside world (e.g. gdb).  */
 
+#define DECLARE_SETT_EXTERN(mode, size) \
+extern void XCONCAT2 (SETT,mode) (unsigned char *, mode);
+
 #if defined (MEMOPS_DEFINE_INLINE)
 #define DECLARE_SETT(mode, size) \
+DECLARE_SETT_EXTERN (mode, size) \
 void \
 XCONCAT2 (SETT,mode) (unsigned char *buf, mode val) \
 { \
@@ -205,8 +233,7 @@ XCONCAT2 (SETT,mode) (unsigned char *buf, mode val) \
   memcpy (buf, &tmp, sizeof (mode)); \
 }
 #else
-#define DECLARE_SETT(mode, size) \
-extern mode XCONCAT2 (SETT,mode) (unsigned char *, mode);
+#define DECLARE_SETT(mode, size) DECLARE_SETT_EXTERN (mode, size)
 #endif
 
 DECLARE_SETT (QI, 1)  /* TAGS: SETTQI */
@@ -225,5 +252,6 @@ DECLARE_SETT (TF, 16) /* TAGS: SETTTF */
 #endif
 
 #undef DECLARE_SETT
+#undef DECLARE_SETT_EXTERN
 
 #endif /* CGEN_MEM_H */

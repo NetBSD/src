@@ -1,6 +1,6 @@
 /* Blackfin System Interrupt Controller (SIC) model.
 
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2023 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -18,7 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
 
 #include "sim-main.h"
 #include "devices.h"
@@ -160,7 +161,7 @@ bfin_sic_52x_io_write_buffer (struct hw *me, const void *source, int space,
     value = dv_load_2 (source);
 
   mmr_off = addr - sic->base;
-  valuep = (void *)((unsigned long)sic + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)sic + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 
@@ -213,7 +214,7 @@ bfin_sic_52x_io_read_buffer (struct hw *me, void *dest, int space,
     return 0;
 
   mmr_off = addr - sic->base;
-  valuep = (void *)((unsigned long)sic + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)sic + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 
@@ -274,7 +275,7 @@ bfin_sic_537_io_write_buffer (struct hw *me, const void *source, int space,
     value = dv_load_2 (source);
 
   mmr_off = addr - sic->base;
-  valuep = (void *)((unsigned long)sic + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)sic + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 
@@ -326,7 +327,7 @@ bfin_sic_537_io_read_buffer (struct hw *me, void *dest, int space,
     return 0;
 
   mmr_off = addr - sic->base;
-  valuep = (void *)((unsigned long)sic + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)sic + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 
@@ -388,7 +389,7 @@ bfin_sic_54x_io_write_buffer (struct hw *me, const void *source, int space,
     value = dv_load_2 (source);
 
   mmr_off = addr - sic->base;
-  valuep = (void *)((unsigned long)sic + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)sic + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 
@@ -437,7 +438,7 @@ bfin_sic_54x_io_read_buffer (struct hw *me, void *dest, int space,
     return 0;
 
   mmr_off = addr - sic->base;
-  valuep = (void *)((unsigned long)sic + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)sic + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 
@@ -495,7 +496,7 @@ bfin_sic_561_io_write_buffer (struct hw *me, const void *source, int space,
     value = dv_load_2 (source);
 
   mmr_off = addr - sic->base;
-  valuep = (void *)((unsigned long)sic + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)sic + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 
@@ -548,7 +549,7 @@ bfin_sic_561_io_read_buffer (struct hw *me, void *dest, int space,
     return 0;
 
   mmr_off = addr - sic->base;
-  valuep = (void *)((unsigned long)sic + mmr_base() + mmr_off);
+  valuep = (void *)((uintptr_t)sic + mmr_base() + mmr_off);
   value16p = valuep;
   value32p = valuep;
 

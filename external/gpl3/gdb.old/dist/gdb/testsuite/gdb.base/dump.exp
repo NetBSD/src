@@ -1,4 +1,4 @@
-# Copyright 2002-2020 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,10 +24,12 @@ set options  {debug}
 set is64bitonly "no"
 set endian "auto"
 
-if [istarget "alpha*-*-*"] then {
+set formats {binary ihex srec tekhex  verilog}
+
+if {[istarget "alpha*-*-*"]} {
     # SREC etc cannot handle 64-bit addresses.  Force the test
     # program into the low 31 bits of the address space.
-    lappend options "additional_flags=-Wl,-taso"
+    lappend options "ldflags=-Wl,-taso"
 }
 
 # Runs the command 'print zero_all ()'.  Uses the PRINT_ZERO_ALL_COUNT
@@ -66,7 +68,7 @@ gdb_load ${binfile}
 # IHEX and TEKHEX.  We skip those tests then.
 set max_32bit_address "0xffffffff"
 set data_address [get_hexadecimal_valueof "&intarray" 0x100000000]
-if {${data_address} > ${max_32bit_address}} then {
+if {${data_address} > ${max_32bit_address}} {
     set is64bitonly "yes"
 }
 
@@ -103,7 +105,7 @@ remote_exec host "rm -f $filenames"
 
 # Run target program until data structs are initialized.
 
-if { ! [ runto checkpoint1 ] } then {
+if {![runto checkpoint1]} {
     untested "couldn't run to checkpoint"
     return -1
 }
@@ -281,7 +283,7 @@ proc test_restore_saved_value { restore_args msg oldval newval } {
     }
 }
 
-if ![string compare $is64bitonly "no"] then {
+if {![string compare $is64bitonly "no"]} {
 
 
   test_restore_saved_value "[set intarr1.srec]" "array as value, srec" \
@@ -363,7 +365,7 @@ set struct2_offset \
 print_zero_all
 
 
-if ![string compare $is64bitonly "no"] then {
+if {![string compare $is64bitonly "no"]} {
   test_restore_saved_value "[set intarr1.srec] $array2_offset" \
 	"array copy, srec" \
 	$array_val "intarray2"
@@ -419,7 +421,7 @@ set element3_offset \
 set element4_offset \
 	[capture_value "/x (char *) &intarray\[4\] - (char *) &intarray\[0\]"]
 
-if ![string compare $is64bitonly "no"] then {
+if {![string compare $is64bitonly "no"]} {
   print_zero_all
 
   test_restore_saved_value "[set intarr1.srec] 0 $element3_start $element4_start" \
@@ -454,7 +456,7 @@ test_restore_saved_value \
 gdb_test "print intarray\[2\] == 0" " = 1" "element 2 not changed - 4"
 gdb_test "print intarray\[4\] == 0" " = 1" "element 4 not changed - 4"
 
-if ![string compare $is64bitonly "no"] then {
+if {![string compare $is64bitonly "no"]} {
   print_zero_all
 
   # restore with expressions 
@@ -466,6 +468,14 @@ if ![string compare $is64bitonly "no"] then {
   gdb_test "print intarray2\[4\] == 0" " = 1" "element 4 not changed, == 4"
 }
 
+
+# Test writing a file of each format to a directory that does not exist.
+
+foreach_with_prefix format $formats {
+    gdb_test "dump $format memory /tmp/non/existent/directory/file $array_start $array_end" \
+	"/tmp/non/existent/directory/file: No such file or directory." \
+	"dump to non-existent directory"
+}
 
 # Now start a fresh gdb session, and reload the saved value files.
 
@@ -510,7 +520,7 @@ proc test_reload_saved_value { filename msg oldval newval } {
 }
 
 # srec format can not be loaded for 64-bit-only platforms
-if ![string compare $is64bitonly "no"] then {
+if {![string compare $is64bitonly "no"]} {
   test_reload_saved_value "[set intarr1.srec]" "reload array as value, srec" \
 	$array_val "\*$array_ptr_type"
   test_reload_saved_value "[set intstr1.srec]" "reload struct as value, srec" \
@@ -522,7 +532,7 @@ if ![string compare $is64bitonly "no"] then {
 }
 
 # ihex format can not be loaded for 64-bit-only platforms
-if ![string compare $is64bitonly "no"] then {
+if {![string compare $is64bitonly "no"]} {
 
   test_reload_saved_value "[set intarr1.ihex]" \
       "reload array as value, intel hex" \
@@ -539,7 +549,7 @@ if ![string compare $is64bitonly "no"] then {
 }
 
 # tekhex format can not be loaded for 64-bit-only platforms
-if ![string compare $is64bitonly "no"] then {
+if {![string compare $is64bitonly "no"]} {
   test_reload_saved_value "[set intarr1.tekhex]" \
       "reload array as value, tekhex" \
 	$array_val "\*$array_ptr_type"

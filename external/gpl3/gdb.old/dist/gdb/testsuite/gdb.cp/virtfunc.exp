@@ -1,4 +1,4 @@
-# Copyright 1992-2020 Free Software Foundation, Inc.
+# Copyright 1992-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -273,8 +273,7 @@ proc do_tests {} {
     gdb_test_no_output "set language c++" ""
     gdb_test_no_output "set width 0" ""
 
-    if ![runto_main] then {
-	perror "couldn't run to breakpoint"
+    if {![runto_main]} {
 	return
     }
     test_ptype_of_classes

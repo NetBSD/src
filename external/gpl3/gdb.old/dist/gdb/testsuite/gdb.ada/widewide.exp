@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,16 +26,15 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug ]] != "" }
 clean_restart ${testfile}
 
 set bp_location [gdb_get_line_number "START" ${testdir}/foo.adb]
-if ![runto "foo.adb:$bp_location" ] then {
-  perror "Couldn't run ${testfile}"
+if {![runto "foo.adb:$bp_location"]} {
   return
 }
 
 gdb_test "print some_easy" "= 74 'J'"
 
-gdb_test "print some_larger" "= 48879 '\\\[\"0000beef\"\\\]'"
+gdb_test "print some_larger" "= 48879 '\\\[\"00beef\"\\\]'"
 
-gdb_test "print some_big" "= 14335727 '\\\[\"00dabeef\"\\\]'"
+gdb_test "print some_big" "= 14335727 '\\\[\"dabeef\"\\\]'"
 
 gdb_test "print my_wws" "= \" helo\""
 
@@ -43,3 +42,22 @@ gdb_test "print my_wws(1)" "= 32 ' '"
 
 gdb_test "print my_wws(2)" "= 104 'h'"
 
+gdb_test "print my_wws = \" helo\"" " = true"
+
+gdb_test "print my_ws = \"wide\"" " = true"
+gdb_test "print my_ws = \"nope\"" " = false"
+
+gdb_test "print \"x\" & my_ws & \"y\"" " = \"xwidey\""
+
+gdb_test "print my_wws(1..3) := \"abc\"" " = \"abc\""
+gdb_test "print my_wws" " = \"abclo\"" \
+    "print my_wws after slice assignment"
+gdb_test "print my_wws(1..3) := my_wws(2..4)" " = \"bcl\""
+gdb_test "print my_wws" " = \"bcllo\"" \
+    "print my_wws after overlapping slice assignment"
+
+gdb_test "print 'x' & my_ws" " = \"xwide\""
+gdb_test "print my_ws & 'y'" " = \"widey\""
+
+gdb_test "ptype wide_wide_string'(\"wws\")" \
+    "array \\(1 \\.\\. 3\\) of wide_wide_character"

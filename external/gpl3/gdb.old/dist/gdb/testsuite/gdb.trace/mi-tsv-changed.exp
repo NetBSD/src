@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ proc test_create_delete_modify_tsv { } {
 	mi_gdb_load ${binfile}
 
 	mi_gdb_test "tvariable \$tvar1" \
-	    ".*=tsv-created,name=\"tvar1\",initial=\"0\"\\\\n.*\\^done" \
+	    ".*=tsv-created,name=\"tvar1\",initial=\"0\".*\\^done" \
 	    "tvariable \$tvar1"
 	mi_gdb_test "tvariable \$tvar1 = 1" \
 	    ".*=tsv-modified,name=\"tvar1\",initial=\"1\".*\\^done" \
@@ -53,25 +53,24 @@ proc test_create_delete_modify_tsv { } {
 	# No "=tsv-modified" notification is emitted, because the initial
 	# value is not changed.
 	mi_gdb_test "tvariable \$tvar1 = 1" \
-	    ".*\\\$tvar1 = 1\\\\n\"\r\n~\"Trace state .*\\\\n.*\\^done" \
+	    ".*\\\$tvar1 = 1\\\\n\"\r\n~\"Trace state .*.*\\^done" \
 	    "tvariable \$tvar1 modified without notification"
 	mi_gdb_test "tvariable \$tvar2 = 45" \
-	    ".*=tsv-created,name=\"tvar2\",initial=\"45\"\\\\n.*\\^done" \
+	    ".*=tsv-created,name=\"tvar2\",initial=\"45\".*\\^done" \
 	    "tvariable \$tvar2"
 
 	mi_gdb_test "delete tvariable \$tvar2" \
-	    ".*=tsv-deleted,name=\"tvar2\"\\\\n.*\\^done" \
+	    ".*=tsv-deleted,name=\"tvar2\".*\\^done" \
 	    "delete tvariable \$tvar2"
 
 	mi_gdb_test "delete tvariable" \
-	    ".*=tsv-deleted\\\\n.*\\^done" \
+	    ".*=tsv-deleted.*\\^done" \
 	    "delete all tvariables"
 
 	# Test target supports tracepoints or not.
 	clean_restart $testfile
 
 	if ![runto_main] {
-	    fail "can't run to main to check for trace support"
 	    return -1
 	}
 
@@ -81,7 +80,7 @@ proc test_create_delete_modify_tsv { } {
 	}
 	gdb_exit
 	if [mi_gdb_start] {
-	    continue
+	    return
 	}
 
 	mi_gdb_reinitialize_dir $srcdir/$subdir
@@ -152,8 +151,7 @@ proc test_upload_tsv { } {
 	}
 
 	clean_restart $testfile
-	if ![runto_main] then {
-	    fail "can't run to main"
+	if {![runto_main]} {
 	    return 0
 	}
 
@@ -239,7 +237,6 @@ proc test_upload_tsv { } {
 clean_restart $testfile
 
 if ![runto_main] {
-    fail "can't run to main to check for trace support"
     return -1
 }
 

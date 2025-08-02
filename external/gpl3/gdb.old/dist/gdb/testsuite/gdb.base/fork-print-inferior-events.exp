@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ if [gdb_debug_enabled] {
 
 standard_testfile
 
-if { [prepare_for_testing "failed to prepare" $testfile $srcfile debug] } {
+if { [build_executable "failed to prepare" $testfile $srcfile debug] } {
     return -1
 }
 
@@ -59,6 +59,7 @@ set detach_child_re "${reading_re}\\\[Detaching after fork from child .*\\\]\r\n
 set detach_parent_re "${reading_re}\\\[Detaching after fork from parent .*\\\]\r\n"
 set new_inf_re "${reading_re}\\\[New inferior $decimal \\(.*\\)\\\]\r\n"
 set inf_detached_re "${reading_re}\\\[Inferior $decimal \\(.*\\) detached\\\]\r\n"
+set thread_db_re "(?:\\\[Thread debugging using .*? enabled\\\]\r\nUsing .*? library .*?\\.\r\n)?"
 
 set expected_output [list \
 			 "${attach_child_re}${new_inf_re}${detach_parent_re}${inf_detached_re}" \
@@ -84,7 +85,7 @@ foreach_with_prefix print_inferior_events { "on" "off" } {
 	    set output [lindex $expected_output $i]
 	    # Always add the "Starting program..." string so that we
 	    # match exactly the lines we want.
-	    set output "Starting program: $binfile\\s*\r\n${output}${exited_normally_re}"
+	    set output "Starting program: $binfile\\s*\r\n${thread_db_re}${output}${thread_db_re}${exited_normally_re}"
 	    set i [expr $i + 1]
 	    gdb_test "run" $output
 	}

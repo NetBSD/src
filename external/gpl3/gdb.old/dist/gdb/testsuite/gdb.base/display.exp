@@ -1,4 +1,4 @@
-#   Copyright 1997-2020 Free Software Foundation, Inc.
+#   Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,15 @@
 # display.exp   Test display commands
 #               Also do some printing stuff for coverage's sake.
 #
+
+# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# processor.  On PowerPC, the check runs a small test program under gdb
+# to determine if the Power processor supports HW watchpoints.  The check
+# must be done before starting the test so as to not disrupt the execution
+# of the actual test.
+
+set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
+
 standard_testfile
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
@@ -51,13 +60,12 @@ if !$use_gdb_stub {
 
 # Ok, on to real life
 #
-if ![runto_main] then {
-    fail "could not run to main - other tests will fail."
-    continue
+if {![runto_main]} {
+    return
 }
 
 # Disable hardware watchpoints if necessary.
-if [target_info exists gdb,no_hardware_watchpoints] {
+if {$skip_hw_watchpoint_tests_p} {
     gdb_test_no_output "set can-use-hw-watchpoints 0" ""
 }
 
@@ -194,6 +202,9 @@ gdb_test "print j"   " = 0\[\\r\\n\]+"   "debug test output 3"
 
 # x/0 j doesn't produce any output and terminates PA64 process when testing
 gdb_test_no_output "x/0 j"
+
+# For when the test is built in C++ mode.
+gdb_test_no_output "set print asm-demangle on"
 
 gdb_test "print/0 j" ".*Item count other than 1 is meaningless.*"
 gdb_test "print/s sum" " = 1000" "ignored s"

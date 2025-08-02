@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Free Software Foundation, Inc.
+# Copyright 2018-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,8 +46,7 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable $options] != "" } {
 
 clean_restart ${testfile}
 
-if ![runto "foo_h731_021"] then {
-  perror "Couldn't run ${testfile}"
+if {![runto "foo_h731_021"]} {
   return
 }
 

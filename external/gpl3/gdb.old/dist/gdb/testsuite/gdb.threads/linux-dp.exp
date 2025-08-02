@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Free Software Foundation, Inc.
+# Copyright 1999-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 
 
 # This only works with Linux configurations.
-if ![istarget *-*-linux-gnu*] then {
+if {![istarget *-*-linux-gnu*]} {
     return
 }
 
@@ -226,7 +226,7 @@ gdb_continue_to_breakpoint "thread 5's print"
 # If you do have debug info, the output obviously depends more on the
 # exact library in use; under NPTL, you get:
 #    #2  0x0012b7fc in start_thread (arg=0x21) at pthread_create.c:264
-gdb_test "where" "print_philosopher.*philosopher.* \(from .*libpthread\|at pthread_create\|in pthread_create\).*" \
+gdb_test "where" "print_philosopher.*philosopher.* \(from .*libpthread\|at pthread_create\|in pthread_create\|in start_thread\|from .*libc\\.\).*" \
 	"first thread-specific breakpoint hit"
 
 # Make sure it's catching the right thread.  Try hitting the

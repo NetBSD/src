@@ -1,22 +1,18 @@
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include "sim-main.h"
 #include "sim-options.h"
 #include "v850_sim.h"
 #include "sim-assert.h"
 #include "itable.h"
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#endif
 
 #include "bfd.h"
+
+#include "target-newlib-syscall.h"
 
 static const char * get_insn_name (sim_cpu *, int);
 
@@ -174,7 +170,7 @@ get_insn_name (sim_cpu *cpu, int i)
 
 /* These default values correspond to expected usage for the chip.  */
 
-uint32 OP[4];
+uint32_t OP[4];
 
 static sim_cia
 v850_pc_get (sim_cpu *cpu)
@@ -188,8 +184,8 @@ v850_pc_set (sim_cpu *cpu, sim_cia pc)
   PC = pc;
 }
 
-static int v850_reg_fetch (SIM_CPU *, int, unsigned char *, int);
-static int v850_reg_store (SIM_CPU *, int, unsigned char *, int);
+static int v850_reg_fetch (SIM_CPU *, int, void *, int);
+static int v850_reg_store (SIM_CPU *, int, const void *, int);
 
 SIM_DESC
 sim_open (SIM_OPEN_KIND    kind,
@@ -203,16 +199,18 @@ sim_open (SIM_OPEN_KIND    kind,
 
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
+  /* Set default options before parsing user options.  */
+  current_target_byte_order = BFD_ENDIAN_LITTLE;
+  cb->syscall_map = cb_v850_syscall_map;
+
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1, /*cgen_cpu_max_extra_bytes ()*/0) != SIM_RC_OK)
+  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
     return 0;
 
   /* for compatibility */
   simulator = sd;
 
   /* FIXME: should be better way of setting up interrupts */
-  STATE_WATCHPOINTS (sd)->pc = &(PC);
-  STATE_WATCHPOINTS (sd)->sizeof_pc = sizeof (PC);
   STATE_WATCHPOINTS (sd)->interrupt_handler = do_interrupt;
   STATE_WATCHPOINTS (sd)->interrupt_names = interrupt_names;
 
@@ -226,9 +224,9 @@ sim_open (SIM_OPEN_KIND    kind,
   /* Allocate core managed memory */
 
   /* "Mirror" the ROM addresses below 1MB. */
-  sim_do_commandf (sd, "memory region 0,0x100000,0x%lx", V850_ROM_SIZE);
+  sim_do_commandf (sd, "memory region 0,0x100000,0x%x", V850_ROM_SIZE);
   /* Chunk of ram adjacent to rom */
-  sim_do_commandf (sd, "memory region 0x100000,0x%lx", V850_LOW_END-0x100000);
+  sim_do_commandf (sd, "memory region 0x100000,0x%x", V850_LOW_END-0x100000);
   /* peripheral I/O region - mirror 1K across 4k (0x1000) */
   sim_do_command (sd, "memory region 0xfff000,0x1000,1024");
   /* similarly if in the internal RAM region */
@@ -244,11 +242,7 @@ sim_open (SIM_OPEN_KIND    kind,
     }
 
   /* check for/establish the a reference program image */
-  if (sim_analyze_program (sd,
-			   (STATE_PROG_ARGV (sd) != NULL
-			    ? *STATE_PROG_ARGV (sd)
-			    : NULL),
-			   abfd) != SIM_RC_OK)
+  if (sim_analyze_program (sd, STATE_PROG_FILE (sd), abfd) != SIM_RC_OK)
     {
       sim_module_uninstall (sd);
       return 0;
@@ -319,15 +313,15 @@ sim_create_inferior (SIM_DESC      sd,
 }
 
 static int
-v850_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+v850_reg_fetch (SIM_CPU *cpu, int rn, void *memory, int length)
 {
-  *(unsigned32*)memory = H2T_4 (State.regs[rn]);
+  *(uint32_t*)memory = H2T_4 (State.regs[rn]);
   return -1;
 }
 
 static int
-v850_reg_store (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+v850_reg_store (SIM_CPU *cpu, int rn, const void *memory, int length)
 {
-  State.regs[rn] = T2H_4 (*(unsigned32 *) memory);
+  State.regs[rn] = T2H_4 (*(uint32_t *) memory);
   return length;
 }

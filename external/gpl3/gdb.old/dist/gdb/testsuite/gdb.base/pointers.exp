@@ -1,4 +1,4 @@
-# Copyright 1998-2020 Free Software Foundation, Inc.
+# Copyright 1998-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,10 +32,6 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
      return -1
     }
 
-if [get_compiler_info] {
-    return -1
-}
-
 clean_restart ${binfile}
 
 
@@ -43,10 +39,13 @@ clean_restart ${binfile}
 # set it up at a breakpoint so we can play with the variable values
 #
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
+
+# These are used as expected result values.
+set false 0
+set true 1
 
 gdb_test "next " "more_code.*;" "continuing after dummy()"
 
@@ -145,18 +144,20 @@ gdb_test "print v_int_pointer < v_int_pointer2" " = $true" \
 gdb_test "print v_int_pointer > v_int_pointer2" " = $false" \
     "pointer1>pointer2"
 
-gdb_test_no_output "set variable y = *v_int_pointer++" \
-    "set y = *v_int_pointer++"
-gdb_test "print y" " = 6" "pointer assignment"
-gdb_test "print *v_int_pointer" " = 18" "and post-increment"
+with_test_prefix "post-increment" {
+    gdb_test_no_output "set variable y = *v_int_pointer++" \
+	"set y = *v_int_pointer++"
+    gdb_test "print y" " = 6" "pointer assignment"
+    gdb_test "print *v_int_pointer" " = 18" "and post-increment"
+}
 
 
-
-gdb_test_no_output "set variable y = *--v_int_pointer2" \
-    "set y = *--v_int_pointer2"
-gdb_test "print y" " = 6" "pointer assignment"
-gdb_test "print *v_int_pointer2" " = 6" "and pre-decrement"
-
+with_test_prefix "pre-decrement" {
+    gdb_test_no_output "set variable y = *--v_int_pointer2" \
+	"set y = *--v_int_pointer2"
+    gdb_test "print y" " = 6" "pointer assignment"
+    gdb_test "print *v_int_pointer2" " = 6" "and pre-decrement"
+}
 
 
 gdb_test_no_output "set variable y =v_int_pointer-v_int_pointer2" \
@@ -207,7 +208,7 @@ gdb_test "print **ptr_to_ptr_to_float" " = 100" \
 
 gdb_test "break marker1" ".*" ""
 gdb_test "cont" "Break.* marker1 \\(\\) at .*:$decimal.*" \
-    continue to marker1"
+    "continue to marker1"
 gdb_test "up" "more_code.*" "up from marker1"
 
 gdb_test "print *pUC" " = 21 \'.025\'.*" "print value of *pUC"

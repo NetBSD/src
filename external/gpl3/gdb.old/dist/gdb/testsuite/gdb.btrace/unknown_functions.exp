@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -24,14 +24,16 @@ if { [skip_btrace_tests] } {
 
 standard_testfile
 
-# discard local symbols
-set ldflags "additional_flags=-Wl,-x"
-if [prepare_for_testing "failed to prepare" $testfile $srcfile $ldflags] {
+# We expect a specific function call history.  This gets messed up with
+# PIE on 32-bit.
+#
+# Also discard local symbols.
+if [prepare_for_testing "failed to prepare" $testfile $srcfile \
+	{ldflags=-Wl,-x nopie}] {
     return -1
 }
 
 if ![runto test] {
-    untested "failed to run to main"
     return -1
 }
 

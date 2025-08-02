@@ -522,3 +522,4 @@ dsp_autoincrement_tests:
 	mov_leq (r1+,4),r2
 	mov_lne (r1+,4),r2
 	mov_lra (r1+,4),r2
+	.section	.note.GNU-stack,"",@progbits

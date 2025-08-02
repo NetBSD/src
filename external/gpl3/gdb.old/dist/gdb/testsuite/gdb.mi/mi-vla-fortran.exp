@@ -1,4 +1,4 @@
-# Copyright 2015-2020 Free Software Foundation, Inc.
+# Copyright 2015-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,8 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Verify that, using the MI, we can evaluate a simple C Variable Length
-# Array (VLA).
+# Verify that, using the MI, we can evaluate a simple Fortran Variable
+# Length Array (VLA).
+
+if { [skip_fortran_tests] } { return -1 }
 
 load_lib mi-support.exp
 load_lib fortran.exp
@@ -22,7 +24,7 @@ set MIFLAGS "-i=mi"
 
 gdb_exit
 if [mi_gdb_start] {
-    continue
+    return
 }
 
 standard_testfile vla.f90
@@ -180,7 +182,7 @@ mi_run_cmd
 mi_expect_stop "breakpoint-hit" "vla" "" ".*vla.f90" "$bp_lineno" \
   { "" "disp=\"del\"" } "run to breakpoint at line $bp_lineno"
 mi_gdb_test "590-data-evaluate-expression pvla2" \
-  "590\\^done,value=\"\\(\\( 2, 2, 2, 2, 2\\) \\( 2, 2, 2, 2, 2\\) \\)\"" \
+  "590\\^done,value=\"\\(\\(2, 2, 2, 2, 2\\) \\(2, 2, 2, 2, 2\\)\\)\"" \
   "evaluate associated vla"
 
 mi_create_varobj_checked pvla2_associated pvla2 \

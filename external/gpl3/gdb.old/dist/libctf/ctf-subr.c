@@ -1,5 +1,5 @@
 /* Simple subrs.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -201,7 +201,7 @@ static ctf_list_t open_errors;
    debug stream instead of that recorded on fp.  */
 _libctf_printflike_ (4, 5)
 extern void
-ctf_err_warn (ctf_file_t *fp, int is_warning, int err,
+ctf_err_warn (ctf_dict_t *fp, int is_warning, int err,
 	      const char *format, ...)
 {
   va_list alist;
@@ -225,10 +225,12 @@ ctf_err_warn (ctf_file_t *fp, int is_warning, int err,
     }
   va_end (alist);
 
-  /* Include the error code only if there is one, and if this is not a warning.
+  /* Include the error code only if there is one; if this is not a warning,
+     only use the error code if it was explicitly passed and is nonzero.
      (Warnings may not have a meaningful error code, since the warning may not
      lead to unwinding up to the user.)  */
-  if (!is_warning && (err != 0 || (fp && ctf_errno (fp) != 0)))
+  if ((!is_warning && (err != 0 || (fp && ctf_errno (fp) != 0)))
+      || (is_warning && err != 0))
     ctf_dprintf ("%s: %s (%s)\n", is_warning ? _("error") : _("warning"),
 		 cew->cew_text, err != 0 ? ctf_errmsg (err)
 		 : ctf_errmsg (ctf_errno (fp)));
@@ -244,7 +246,7 @@ ctf_err_warn (ctf_file_t *fp, int is_warning, int err,
 
 /* Move all the errors/warnings from an fp into the open_errors.  */
 void
-ctf_err_warn_to_open (ctf_file_t *fp)
+ctf_err_warn_to_open (ctf_dict_t *fp)
 {
   ctf_list_splice (&open_errors, &fp->ctf_errs_warnings);
 }
@@ -266,7 +268,7 @@ ctf_err_warn_to_open (ctf_file_t *fp)
    means the end, and not an iterator error.  */
 
 char *
-ctf_errwarning_next (ctf_file_t *fp, ctf_next_t **it, int *is_warning,
+ctf_errwarning_next (ctf_dict_t *fp, ctf_next_t **it, int *is_warning,
 		     int *errp)
 {
   ctf_next_t *i = *it;
@@ -335,7 +337,7 @@ ctf_errwarning_next (ctf_file_t *fp, ctf_next_t **it, int *is_warning,
 }
 
 void
-ctf_assert_fail_internal (ctf_file_t *fp, const char *file, size_t line,
+ctf_assert_fail_internal (ctf_dict_t *fp, const char *file, size_t line,
 			  const char *exprstr)
 {
   ctf_err_warn (fp, 0, ECTF_INTERNAL, _("%s: %lu: libctf assertion failed: %s"),

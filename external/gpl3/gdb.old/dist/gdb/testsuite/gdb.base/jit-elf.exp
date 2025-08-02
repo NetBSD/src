@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,11 +18,6 @@ if {[skip_shlib_tests]} {
     return -1
 }
 
-if {[get_compiler_info]} {
-    untested "could not get compiler info"
-    return 1
-}
-
 load_lib jit-elf-helpers.exp
 
 # Increase this to see more detail.
@@ -38,6 +33,7 @@ set jit_solib_basename jit-elf-solib
 set jit_solib_srcfile ${srcdir}/${subdir}/${jit_solib_basename}.c
 
 # Detach, restart GDB, and re-attach to the program.
+# Return 0 if attach failed, otherwise return 1.
 proc clean_reattach {} {
     global decimal gdb_prompt
     global main_binfile main_srcfile
@@ -57,18 +53,18 @@ proc clean_reattach {} {
 
     clean_restart ${main_binfile}
 
-    set test "attach"
-    gdb_test_multiple "attach $testpid" "$test" {
-	-re "Attaching to program.*.*main.*at .*$main_srcfile:.*$gdb_prompt $" {
-	    pass "$test"
-	}
+    if { ![gdb_attach $testpid \
+	      -pattern "main.*at .*$::main_basename.c:.*"] } {
+	return 0
     }
 
     gdb_test_no_output "set var wait_for_gdb = 0"
+    return 1
 }
 
 # Continue to LOCATION in the program.  If REATTACH, detach and
 # re-attach to the program from scratch.
+# Return 0 if clean_reattach failed, otherwise return 1.
 proc continue_to_test_location {location reattach} {
     global main_srcfile
 
@@ -76,9 +72,12 @@ proc continue_to_test_location {location reattach} {
     gdb_continue_to_breakpoint $location
     if {$reattach} {
 	with_test_prefix "$location" {
-	    clean_reattach
+	    if { ![clean_reattach] } {
+		return 0
+	    }
 	}
     }
+    return 1
 }
 
 proc one_jit_test {jit_solibs_target match_str reattach} {
@@ -96,7 +95,6 @@ proc one_jit_test {jit_solibs_target match_str reattach} {
 	}
 
 	if { ![runto_main] } {
-	    fail "can't run to main"
 	    return
 	}
 
@@ -115,7 +113,9 @@ proc one_jit_test {jit_solibs_target match_str reattach} {
 	gdb_continue_to_breakpoint "break here 0"
 
 
-	continue_to_test_location "break here 1" $reattach
+	if { ![continue_to_test_location "break here 1" $reattach] } {
+	    return
+	}
 
 	gdb_test "info function ^jit_function" "$match_str"
 
@@ -125,7 +125,9 @@ proc one_jit_test {jit_solibs_target match_str reattach} {
 	    gdb_test "maintenance info break"
 	}
 
-	continue_to_test_location "break here 2" $reattach
+	if { ![continue_to_test_location "break here 2" $reattach] } {
+	    return
+	}
 
 	# All jit librares must have been unregistered
 	gdb_test "info function jit_function" \
@@ -158,8 +160,7 @@ if {[can_spawn_for_attach]} {
     }
 }
 
-if { [compile_jit_main ${main_srcfile} "${main_binfile}-pie" \
-	  {additional_flags=-fPIE ldflags=-pie}] == 0 } {
+if { [compile_jit_main ${main_srcfile} "${main_binfile}-pie" pie] == 0 } {
     with_test_prefix PIE {
 	one_jit_test [lindex $jit_solibs_target 0] "${hex}  jit_function_0001" 0
     }

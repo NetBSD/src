@@ -1,6 +1,6 @@
 # Altivec instruction set, for PSIM, the PowerPC simulator.
 
-# Copyright 2003-2020 Free Software Foundation, Inc.
+# Copyright 2003-2023 Free Software Foundation, Inc.
 
 # Contributed by Red Hat Inc; developed under contract from Motorola.
 # Written by matthew green <mrg@redhat.com>.
@@ -27,16 +27,16 @@
 
 :cache:av:::VS:VS:
 :cache:av::vreg *:vS:VS:(cpu_registers(processor)->altivec.vr + VS)
-:cache:av::unsigned32:VS_BITMASK:VS:(1 << VS)
+:cache:av::uint32_t:VS_BITMASK:VS:(1 << VS)
 :cache:av:::VA:VA:
 :cache:av::vreg *:vA:VA:(cpu_registers(processor)->altivec.vr + VA)
-:cache:av::unsigned32:VA_BITMASK:VA:(1 << VA)
+:cache:av::uint32_t:VA_BITMASK:VA:(1 << VA)
 :cache:av:::VB:VB:
 :cache:av::vreg *:vB:VB:(cpu_registers(processor)->altivec.vr + VB)
-:cache:av::unsigned32:VB_BITMASK:VB:(1 << VB)
+:cache:av::uint32_t:VB_BITMASK:VB:(1 << VB)
 :cache:av:::VC:VC:
 :cache:av::vreg *:vC:VC:(cpu_registers(processor)->altivec.vr + VC)
-:cache:av::unsigned32:VC_BITMASK:VC:(1 << VC)
+:cache:av::uint32_t:VC_BITMASK:VC:(1 << VC)
 
 # Flags for model.h
 ::model-macro:::
@@ -77,7 +77,7 @@
 		} while (0)
 
 # Trace waiting for AltiVec registers to become available
-void::model-static::model_trace_altivec_busy_p:model_data *model_ptr, unsigned32 vr_busy
+void::model-static::model_trace_altivec_busy_p:model_data *model_ptr, uint32_t vr_busy
 	int i;
 	if (vr_busy) {
 	  vr_busy &= model_ptr->vr_busy;
@@ -91,7 +91,7 @@ void::model-static::model_trace_altivec_busy_p:model_data *model_ptr, unsigned32
 	  TRACE(trace_model, ("Waiting for VSCR\n"));
 
 # Trace making AltiVec registers busy
-void::model-static::model_trace_altivec_make_busy:model_data *model_ptr, unsigned32 vr_mask, unsigned32 cr_mask
+void::model-static::model_trace_altivec_make_busy:model_data *model_ptr, uint32_t vr_mask, uint32_t cr_mask
 	int i;
 	if (vr_mask) {
 	  for(i = 0; i < 32; i++) {
@@ -109,9 +109,9 @@ void::model-static::model_trace_altivec_make_busy:model_data *model_ptr, unsigne
 	}
 
 # Schedule an AltiVec instruction that takes integer input registers and produces output registers
-void::model-function::ppc_insn_int_vr:itable_index index, model_data *model_ptr, const unsigned32 out_mask, const unsigned32 in_mask, const unsigned32 out_vmask, const unsigned32 in_vmask
-	const unsigned32 int_mask = out_mask | in_mask;
-	const unsigned32 vr_mask = out_vmask | in_vmask;
+void::model-function::ppc_insn_int_vr:itable_index index, model_data *model_ptr, const uint32_t out_mask, const uint32_t in_mask, const uint32_t out_vmask, const uint32_t in_vmask
+	const uint32_t int_mask = out_mask | in_mask;
+	const uint32_t vr_mask = out_vmask | in_vmask;
 	model_busy *busy_ptr;
 
 	if ((model_ptr->int_busy & int_mask) != 0 || (model_ptr->vr_busy & vr_mask)) {
@@ -146,8 +146,8 @@ void::model-function::ppc_insn_int_vr:itable_index index, model_data *model_ptr,
 	}
 
 # Schedule an AltiVec instruction that takes vector input registers and produces vector output registers
-void::model-function::ppc_insn_vr:itable_index index, model_data *model_ptr, const unsigned32 out_vmask, const unsigned32 in_vmask
-	const unsigned32 vr_mask = out_vmask | in_vmask;
+void::model-function::ppc_insn_vr:itable_index index, model_data *model_ptr, const uint32_t out_vmask, const uint32_t in_vmask
+	const uint32_t vr_mask = out_vmask | in_vmask;
 	model_busy *busy_ptr;
 
 	if (model_ptr->vr_busy & vr_mask) {
@@ -174,8 +174,8 @@ void::model-function::ppc_insn_vr:itable_index index, model_data *model_ptr, con
 	}
 
 # Schedule an AltiVec instruction that takes vector input registers and produces vector output registers, touches CR
-void::model-function::ppc_insn_vr_cr:itable_index index, model_data *model_ptr, const unsigned32 out_vmask, const unsigned32 in_vmask, const unsigned32 cr_mask
-	const unsigned32 vr_mask = out_vmask | in_vmask;
+void::model-function::ppc_insn_vr_cr:itable_index index, model_data *model_ptr, const uint32_t out_vmask, const uint32_t in_vmask, const uint32_t cr_mask
+	const uint32_t vr_mask = out_vmask | in_vmask;
 	model_busy *busy_ptr;
 
 	if ((model_ptr->vr_busy & vr_mask) || (model_ptr->cr_fpscr_busy & cr_mask)) {
@@ -208,8 +208,8 @@ void::model-function::ppc_insn_vr_cr:itable_index index, model_data *model_ptr, 
 	  model_trace_altivec_make_busy(model_ptr, vr_mask, cr_mask);
 
 # Schedule an AltiVec instruction that takes vector input registers and produces vector output registers, touches VSCR
-void::model-function::ppc_insn_vr_vscr:itable_index index, model_data *model_ptr, const unsigned32 out_vmask, const unsigned32 in_vmask
-	const unsigned32 vr_mask = out_vmask | in_vmask;
+void::model-function::ppc_insn_vr_vscr:itable_index index, model_data *model_ptr, const uint32_t out_vmask, const uint32_t in_vmask
+	const uint32_t vr_mask = out_vmask | in_vmask;
 	model_busy *busy_ptr;
 
 	if ((model_ptr->vr_busy & vr_mask) != 0 || model_ptr->vscr_busy != 0) {
@@ -231,13 +231,13 @@ void::model-function::ppc_insn_vr_vscr:itable_index index, model_data *model_ptr
 	busy_ptr->vscr_busy = 1;
 
 	if (out_vmask)
-	  busy_ptr->nr_writebacks = 1 + (PPC_ONE_BIT_SET_P(out_vmask)) ? 1 : 2;
+	  busy_ptr->nr_writebacks = 1 + (PPC_ONE_BIT_SET_P (out_vmask) ? 1 : 2);
 
 	if (WITH_TRACE && ppc_trace[trace_model])
 	  model_trace_altivec_make_busy(model_ptr, vr_mask, 0);
 
 # Schedule an MFVSCR instruction that VSCR input register and produces an AltiVec output register
-void::model-function::ppc_insn_from_vscr:itable_index index, model_data *model_ptr, const unsigned32 vr_mask
+void::model-function::ppc_insn_from_vscr:itable_index index, model_data *model_ptr, const uint32_t vr_mask
 	model_busy *busy_ptr;
 
 	while ((model_ptr->vr_busy & vr_mask) != 0 || model_ptr->vscr_busy != 0) {
@@ -259,7 +259,7 @@ void::model-function::ppc_insn_from_vscr:itable_index index, model_data *model_p
 	  model_trace_altivec_make_busy(model_ptr, vr_mask, 0);
 
 # Schedule an MTVSCR instruction that one AltiVec input register and produces a vscr output register
-void::model-function::ppc_insn_to_vscr:itable_index index, model_data *model_ptr, const unsigned32 vr_mask
+void::model-function::ppc_insn_to_vscr:itable_index index, model_data *model_ptr, const uint32_t vr_mask
 	model_busy *busy_ptr;
 
 	while ((model_ptr->vr_busy & vr_mask) != 0 || model_ptr->vscr_busy != 0) {
@@ -278,8 +278,8 @@ void::model-function::ppc_insn_to_vscr:itable_index index, model_data *model_ptr
 
 # The follow are AltiVec saturate operations
 
-signed8::model-function::altivec_signed_saturate_8:signed16 val, int *sat
-	  signed8 rv;
+int8_t::model-function::altivec_signed_saturate_8:int16_t val, int *sat
+	  int8_t rv;
 	  if (val > 127) {
 	    rv = 127;
 	    *sat = 1;
@@ -292,8 +292,8 @@ signed8::model-function::altivec_signed_saturate_8:signed16 val, int *sat
 	  }
 	  return rv;
 
-signed16::model-function::altivec_signed_saturate_16:signed32 val, int *sat
-	  signed16 rv;
+int16_t::model-function::altivec_signed_saturate_16:int32_t val, int *sat
+	  int16_t rv;
 	  if (val > 32767) {
 	    rv = 32767;
 	    *sat = 1;
@@ -306,8 +306,8 @@ signed16::model-function::altivec_signed_saturate_16:signed32 val, int *sat
 	  }
 	  return rv;
 
-signed32::model-function::altivec_signed_saturate_32:signed64 val, int *sat
-	  signed32 rv;
+int32_t::model-function::altivec_signed_saturate_32:int64_t val, int *sat
+	  int32_t rv;
 	  if (val > 2147483647) {
 	    rv = 2147483647;
 	    *sat = 1;
@@ -320,8 +320,8 @@ signed32::model-function::altivec_signed_saturate_32:signed64 val, int *sat
 	  }
 	  return rv;
 
-unsigned8::model-function::altivec_unsigned_saturate_8:signed16 val, int *sat
-	  unsigned8 rv;
+uint8_t::model-function::altivec_unsigned_saturate_8:int16_t val, int *sat
+	  uint8_t rv;
 	  if (val > 255) {
 	    rv = 255;
 	    *sat = 1;
@@ -334,8 +334,8 @@ unsigned8::model-function::altivec_unsigned_saturate_8:signed16 val, int *sat
 	  }
 	  return rv;
 
-unsigned16::model-function::altivec_unsigned_saturate_16:signed32 val, int *sat
-	  unsigned16 rv;
+uint16_t::model-function::altivec_unsigned_saturate_16:int32_t val, int *sat
+	  uint16_t rv;
 	  if (val > 65535) {
 	    rv = 65535;
 	    *sat = 1;
@@ -348,8 +348,8 @@ unsigned16::model-function::altivec_unsigned_saturate_16:signed32 val, int *sat
 	  }
 	  return rv;
 
-unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
-	  unsigned32 rv;
+uint32_t::model-function::altivec_unsigned_saturate_32:int64_t val, int *sat
+	  uint32_t rv;
 	  if (val > 4294967295LL) {
 	    rv = 4294967295LL;
 	    *sat = 1;
@@ -409,7 +409,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 	addr = b + *rB;
 	j = addr & 0xf;
 	for (i = 0; i < 16; i++)
-	  if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN)
+	  if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
 	    (*vS).b[AV_BINDEX(i)] = j++;
 	  else
 	    (*vS).b[AV_BINDEX(15 - i)] = j++;
@@ -424,7 +424,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 	addr = b + *rB;
 	j = 0x10 - (addr & 0xf);
 	for (i = 0; i < 16; i++)
-	  if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN)
+	  if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
 	    (*vS).b[AV_BINDEX(i)] = j++;
 	  else
 	    (*vS).b[AV_BINDEX(15 - i)] = j++;
@@ -437,7 +437,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = (b + *rB) & ~0xf;
-	if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN) {
+	if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG) {
 	  (*vS).w[0] = MEM(unsigned, EA + 0, 4);
 	  (*vS).w[1] = MEM(unsigned, EA + 4, 4);
 	  (*vS).w[2] = MEM(unsigned, EA + 8, 4);
@@ -456,7 +456,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = (b + *rB) & ~0xf;
-	if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN) {
+	if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG) {
 	  (*vS).w[0] = MEM(unsigned, EA + 0, 4);
 	  (*vS).w[1] = MEM(unsigned, EA + 4, 4);
 	  (*vS).w[2] = MEM(unsigned, EA + 8, 4);
@@ -496,7 +496,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 	else         b = *rA;
 	EA = b + *rB;
 	eb = EA & 0xf;
-	if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN)
+	if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
 	  STORE(EA, 1, (*vS).b[eb]);
 	else
 	  STORE(EA, 1, (*vS).b[15-eb]);
@@ -510,7 +510,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 	else         b = *rA;
 	EA = (b + *rB) & ~1;
 	eb = EA & 0xf;
-	if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN)
+	if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
 	  STORE(EA, 2, (*vS).h[eb/2]);
 	else
 	  STORE(EA, 2, (*vS).h[7-eb]);
@@ -524,7 +524,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 	else         b = *rA;
 	EA = (b + *rB) & ~3;
 	eb = EA & 0xf;
-	if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN)
+	if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
 	  STORE(EA, 4, (*vS).w[eb/4]);
 	else
 	  STORE(EA, 4, (*vS).w[3-(eb/4)]);
@@ -536,7 +536,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = (b + *rB) & ~0xf;
-	if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN) {
+	if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG) {
 	  STORE(EA + 0, 4, (*vS).w[0]);
 	  STORE(EA + 4, 4, (*vS).w[1]);
 	  STORE(EA + 8, 4, (*vS).w[2]);
@@ -555,7 +555,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 	if (RA_is_0) b = 0;
 	else         b = *rA;
 	EA = (b + *rB) & ~0xf;
-	if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN) {
+	if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG) {
 	  STORE(EA + 0, 4, (*vS).w[0]);
 	  STORE(EA + 4, 4, (*vS).w[1]);
 	  STORE(EA + 8, 4, (*vS).w[2]);
@@ -573,17 +573,17 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 #
 
 0.4,6.VS,11.VA,16.VB,21.384:VX:av:vaddcuw %VD, %VA, %VB:Vector Add Carryout Unsigned Word
-	unsigned64 temp;
+	uint64_t temp;
 	int i;
 	for (i = 0; i < 4; i++) {
-	  temp = (unsigned64)(*vA).w[i] + (unsigned64)(*vB).w[i];
+	  temp = (uint64_t)(*vA).w[i] + (uint64_t)(*vB).w[i];
 	  (*vS).w[i] = temp >> 32;
 	}
 	PPC_INSN_VR(VS_BITMASK, VA_BITMASK | VB_BITMASK);
 
 0.4,6.VS,11.VA,16.VB,21.10:VX:av:vaddfp %VD, %VA, %VB:Vector Add Floating Point
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu a, b, d;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&a, (*vA).w[i]);
@@ -596,9 +596,9 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 	
 0.4,6.VS,11.VA,16.VB,21.768:VX:av:vaddsbs %VD, %VA, %VB:Vector Add Signed Byte Saturate
 	int i, sat, tempsat;
-	signed16 temp;
+	int16_t temp;
 	for (i = 0; i < 16; i++) {
-	  temp = (signed16)(signed8)(*vA).b[i] + (signed16)(signed8)(*vB).b[i];
+	  temp = (int16_t)(int8_t)(*vA).b[i] + (int16_t)(int8_t)(*vB).b[i];
 	  (*vS).b[i] = altivec_signed_saturate_8(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -607,10 +607,10 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.832:VX:av:vaddshs %VD, %VA, %VB:Vector Add Signed Half Word Saturate
 	int i, sat, tempsat;
-	signed32 temp, a, b;
+	int32_t temp, a, b;
 	for (i = 0; i < 8; i++) {
-	  a = (signed32)(signed16)(*vA).h[i];
-	  b = (signed32)(signed16)(*vB).h[i];
+	  a = (int32_t)(int16_t)(*vA).h[i];
+	  b = (int32_t)(int16_t)(*vB).h[i];
 	  temp = a + b;
 	  (*vS).h[i] = altivec_signed_saturate_16(temp, &tempsat);
 	  sat |= tempsat;
@@ -620,9 +620,9 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.896:VX:av:vaddsws %VD, %VA, %VB:Vector Add Signed Word Saturate
 	int i, sat, tempsat;
-	signed64 temp;
+	int64_t temp;
 	for (i = 0; i < 4; i++) {
-	  temp = (signed64)(signed32)(*vA).w[i] + (signed64)(signed32)(*vB).w[i];
+	  temp = (int64_t)(int32_t)(*vA).w[i] + (int64_t)(int32_t)(*vB).w[i];
 	  (*vS).w[i] = altivec_signed_saturate_32(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -637,10 +637,10 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.512:VX:av:vaddubs %VD, %VA, %VB:Vector Add Unsigned Byte Saturate
 	int i, sat, tempsat;
-	signed16 temp;
+	int16_t temp;
 	sat = 0;
 	for (i = 0; i < 16; i++) {
-	  temp = (signed16)(unsigned8)(*vA).b[i] + (signed16)(unsigned8)(*vB).b[i];
+	  temp = (int16_t)(uint8_t)(*vA).b[i] + (int16_t)(uint8_t)(*vB).b[i];
 	  (*vS).b[i] = altivec_unsigned_saturate_8(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -655,9 +655,9 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.576:VX:av:vadduhs %VD, %VA, %VB:Vector Add Unsigned Half Word Saturate
 	int i, sat, tempsat;
-	signed32 temp;
+	int32_t temp;
 	for (i = 0; i < 8; i++) {
-	  temp = (signed32)(unsigned16)(*vA).h[i] + (signed32)(unsigned16)(*vB).h[i];
+	  temp = (int32_t)(uint16_t)(*vA).h[i] + (int32_t)(uint16_t)(*vB).h[i];
 	  (*vS).h[i] = altivec_unsigned_saturate_16(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -672,9 +672,9 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.640:VX:av:vadduws %VD, %VA, %VB:Vector Add Unsigned Word Saturate
 	int i, sat, tempsat;
-	signed64 temp;
+	int64_t temp;
 	for (i = 0; i < 4; i++) {
-	  temp = (signed64)(unsigned32)(*vA).w[i] + (signed64)(unsigned32)(*vB).w[i];
+	  temp = (int64_t)(uint32_t)(*vA).w[i] + (int64_t)(uint32_t)(*vB).w[i];
 	  (*vS).w[i] = altivec_unsigned_saturate_32(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -704,10 +704,10 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1282:VX:av:vavgsb %VD, %VA, %VB:Vector Average Signed Byte
 	int i;
-	signed16 temp, a, b;
+	int16_t temp, a, b;
 	for (i = 0; i < 16; i++) {
-	  a = (signed16)(signed8)(*vA).b[i];
-	  b = (signed16)(signed8)(*vB).b[i];
+	  a = (int16_t)(int8_t)(*vA).b[i];
+	  b = (int16_t)(int8_t)(*vB).b[i];
 	  temp = a + b + 1;
 	  (*vS).b[i] = (temp >> 1) & 0xff;
 	}
@@ -715,10 +715,10 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1346:VX:av:vavgsh %VD, %VA, %VB:Vector Average Signed Half Word
 	int i;
-	signed32 temp, a, b;
+	int32_t temp, a, b;
 	for (i = 0; i < 8; i++) {
-	  a = (signed32)(signed16)(*vA).h[i];
-	  b = (signed32)(signed16)(*vB).h[i];
+	  a = (int32_t)(int16_t)(*vA).h[i];
+	  b = (int32_t)(int16_t)(*vB).h[i];
 	  temp = a + b + 1;
 	  (*vS).h[i] = (temp >> 1) & 0xffff;
 	}
@@ -726,10 +726,10 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1410:VX:av:vavgsw %VD, %VA, %VB:Vector Average Signed Word
 	int i;
-	signed64 temp, a, b;
+	int64_t temp, a, b;
 	for (i = 0; i < 4; i++) {
-	  a = (signed64)(signed32)(*vA).w[i];
-	  b = (signed64)(signed32)(*vB).w[i];
+	  a = (int64_t)(int32_t)(*vA).w[i];
+	  b = (int64_t)(int32_t)(*vB).w[i];
 	  temp = a + b + 1;
 	  (*vS).w[i] = (temp >> 1) & 0xffffffff;
 	}
@@ -737,7 +737,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1026:VX:av:vavgub %VD, %VA, %VB:Vector Average Unsigned Byte
 	int i;
-	unsigned16 temp, a, b;
+	uint16_t temp, a, b;
 	for (i = 0; i < 16; i++) {
 	  a = (*vA).b[i];
 	  b = (*vB).b[i];
@@ -748,7 +748,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1090:VX:av:vavguh %VD, %VA, %VB:Vector Average Unsigned Half Word
 	int i;
-	unsigned32 temp, a, b;
+	uint32_t temp, a, b;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).h[i];
 	  b = (*vB).h[i];
@@ -759,7 +759,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1154:VX:av:vavguw %VD, %VA, %VB:Vector Average Unsigned Word
 	int i;
-	unsigned64 temp, a, b;
+	uint64_t temp, a, b;
 	for (i = 0; i < 4; i++) {
 	  a = (*vA).w[i];
 	  b = (*vB).w[i];
@@ -774,7 +774,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.UIMM,16.VB,21.842:VX:av:vcfsx %VD, %VB, %UIMM:Vector Convert From Signed Fixed-Point Word
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu b, div, d;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&b, (*vB).w[i]);
@@ -787,7 +787,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.UIMM,16.VB,21.778:VX:av:vcfux %VD, %VA, %UIMM:Vector Convert From Unsigned Fixed-Point Word
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu b, d, div;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&b, (*vB).w[i]);
@@ -896,7 +896,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.RC,22.774:VXR:av:vcmpgtsbx %VD, %VA, %VB:Vector Compare Greater-Than Signed Byte
 	int i;
-	signed8 a, b;
+	int8_t a, b;
 	for (i = 0; i < 16; i++) {
 	  a = (*vA).b[i];
 	  b = (*vB).b[i];
@@ -911,7 +911,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.RC,22.838:VXR:av:vcmpgtshx %VD, %VA, %VB:Vector Compare Greater-Than Signed Half Word
 	int i;
-	signed16 a, b;
+	int16_t a, b;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).h[i];
 	  b = (*vB).h[i];
@@ -926,7 +926,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.RC,22.902:VXR:av:vcmpgtswx %VD, %VA, %VB:Vector Compare Greater-Than Signed Word
 	int i;
-	signed32 a, b;
+	int32_t a, b;
 	for (i = 0; i < 4; i++) {
 	  a = (*vA).w[i];
 	  b = (*vB).w[i];
@@ -941,7 +941,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.RC,22.518:VXR:av:vcmpgtubx %VD, %VA, %VB:Vector Compare Greater-Than Unsigned Byte
 	int i;
-	unsigned8 a, b;
+	uint8_t a, b;
 	for (i = 0; i < 16; i++) {
 	  a = (*vA).b[i];
 	  b = (*vB).b[i];
@@ -956,7 +956,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.RC,22.582:VXR:av:vcmpgtuhx %VD, %VA, %VB:Vector Compare Greater-Than Unsigned Half Word
 	int i;
-	unsigned16 a, b;
+	uint16_t a, b;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).h[i];
 	  b = (*vB).h[i];
@@ -971,7 +971,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.RC,22.646:VXR:av:vcmpgtuwx %VD, %VA, %VB:Vector Compare Greater-Than Unsigned Word
 	int i;
-	unsigned32 a, b;
+	uint32_t a, b;
 	for (i = 0; i < 4; i++) {
 	  a = (*vA).w[i];
 	  b = (*vB).w[i];
@@ -990,7 +990,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.UIMM,16.VB,21.970:VX:av:vctsxs %VD, %VB, %UIMM:Vector Convert to Signed Fixed-Point Word Saturate
 	int i, sat, tempsat;
-	signed64 temp;
+	int64_t temp;
 	sim_fpu a, b, m;
 	sat = 0;
 	for (i = 0; i < 4; i++) {
@@ -1006,7 +1006,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.UIMM,16.VB,21.906:VX:av:vctuxs %VD, %VB, %UIMM:Vector Convert to Unsigned Fixed-Point Word Saturate
 	int i, sat, tempsat;
-	signed64 temp;
+	int64_t temp;
 	sim_fpu a, b, m;
 	sat = 0;
 	for (i = 0; i < 4; i++) {
@@ -1026,8 +1026,8 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.0,16.VB,21.394:VX:av:vexptefp %VD, %VB:Vector 2 Raised to the Exponent Estimate Floating Point
 	int i;
-	unsigned32 f;
-	signed32 bi;
+	uint32_t f;
+	int32_t bi;
 	sim_fpu b, d;
 	for (i = 0; i < 4; i++) {
 	  /*HACK!*/
@@ -1042,7 +1042,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.0,16.VB,21.458:VX:av:vlogefp %VD, %VB:Vector Log2 Estimate Floating Point
 	int i;
-	unsigned32 c, u, f;
+	uint32_t c, u, f;
 	sim_fpu b, cfpu, d;
 	for (i = 0; i < 4; i++) {
 	  /*HACK!*/
@@ -1063,7 +1063,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.VC,26.46:VAX:av:vmaddfp %VD, %VA, %VB, %VC:Vector Multiply Add Floating Point
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu a, b, c, d, e;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&a, (*vA).w[i]);
@@ -1083,7 +1083,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1034:VX:av:vmaxfp %VD, %VA, %VB:Vector Maximum Floating Point
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu a, b, d;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&a, (*vA).w[i]);
@@ -1096,7 +1096,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.258:VX:av:vmaxsb %VD, %VA, %VB:Vector Maximum Signed Byte
 	int i;
-	signed8 a, b;
+	int8_t a, b;
 	for (i = 0; i < 16; i++) {
 	  a = (*vA).b[i];
 	  b = (*vB).b[i];
@@ -1109,7 +1109,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.322:VX:av:vmaxsh %VD, %VA, %VB:Vector Maximum Signed Half Word
 	int i;
-	signed16 a, b;
+	int16_t a, b;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).h[i];
 	  b = (*vB).h[i];
@@ -1122,7 +1122,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.386:VX:av:vmaxsw %VD, %VA, %VB:Vector Maximum Signed Word
 	int i;
-	signed32 a, b;
+	int32_t a, b;
 	for (i = 0; i < 4; i++) {
 	  a = (*vA).w[i];
 	  b = (*vB).w[i];
@@ -1135,7 +1135,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.2:VX:av:vmaxub %VD, %VA, %VB:Vector Maximum Unsigned Byte
 	int i;
-	unsigned8 a, b;
+	uint8_t a, b;
 	for (i = 0; i < 16; i++) {
 	  a = (*vA).b[i];
 	  b = (*vB).b[i];
@@ -1148,7 +1148,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.66:VX:av:vmaxus %VD, %VA, %VB:Vector Maximum Unsigned Half Word
 	int i;
-	unsigned16 a, b;
+	uint16_t a, b;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).h[i];
 	  b = (*vB).h[i];
@@ -1161,7 +1161,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.130:VX:av:vmaxuw %VD, %VA, %VB:Vector Maximum Unsigned Word
 	int i;
-	unsigned32 a, b;
+	uint32_t a, b;
 	for (i = 0; i < 4; i++) {
 	  a = (*vA).w[i];
 	  b = (*vB).w[i];
@@ -1179,13 +1179,13 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.VC,26.32:VAX:av:vmhaddshs %VD, %VA, %VB, %VC:Vector Multiple High and Add Signed Half Word Saturate
 	int i, sat, tempsat;
-	signed16 a, b;
-	signed32 prod, temp, c;
+	int16_t a, b;
+	int32_t prod, temp, c;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).h[i];
 	  b = (*vB).h[i];
-	  c = (signed32)(signed16)(*vC).h[i];
-	  prod = (signed32)a * (signed32)b;
+	  c = (int32_t)(int16_t)(*vC).h[i];
+	  prod = (int32_t)a * (int32_t)b;
 	  temp = (prod >> 15) + c;
 	  (*vS).h[i] = altivec_signed_saturate_16(temp, &tempsat);
 	  sat |= tempsat;
@@ -1195,13 +1195,13 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.VC,26.33:VAX:av:vmhraddshs %VD, %VA, %VB, %VC:Vector Multiple High Round and Add Signed Half Word Saturate
 	int i, sat, tempsat;
-	signed16 a, b;
-	signed32 prod, temp, c;
+	int16_t a, b;
+	int32_t prod, temp, c;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).h[i];
 	  b = (*vB).h[i];
-	  c = (signed32)(signed16)(*vC).h[i];
-	  prod = (signed32)a * (signed32)b;
+	  c = (int32_t)(int16_t)(*vC).h[i];
+	  prod = (int32_t)a * (int32_t)b;
 	  prod += 0x4000;
 	  temp = (prod >> 15) + c;
 	  (*vS).h[i] = altivec_signed_saturate_16(temp, &tempsat);
@@ -1217,7 +1217,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1098:VX:av:vminfp %VD, %VA, %VB:Vector Minimum Floating Point
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu a, b, d;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&a, (*vA).w[i]);
@@ -1230,7 +1230,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.770:VX:av:vminsb %VD, %VA, %VB:Vector Minimum Signed Byte
 	int i;
-	signed8 a, b;
+	int8_t a, b;
 	for (i = 0; i < 16; i++) {
 	  a = (*vA).b[i];
 	  b = (*vB).b[i];
@@ -1243,7 +1243,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.834:VX:av:vminsh %VD, %VA, %VB:Vector Minimum Signed Half Word
 	int i;
-	signed16 a, b;
+	int16_t a, b;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).h[i];
 	  b = (*vB).h[i];
@@ -1256,7 +1256,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.898:VX:av:vminsw %VD, %VA, %VB:Vector Minimum Signed Word
 	int i;
-	signed32 a, b;
+	int32_t a, b;
 	for (i = 0; i < 4; i++) {
 	  a = (*vA).w[i];
 	  b = (*vB).w[i];
@@ -1269,7 +1269,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.514:VX:av:vminub %VD, %VA, %VB:Vector Minimum Unsigned Byte
 	int i;
-	unsigned8 a, b;
+	uint8_t a, b;
 	for (i = 0; i < 16; i++) {
 	  a = (*vA).b[i];
 	  b = (*vB).b[i];
@@ -1282,7 +1282,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.578:VX:av:vminuh %VD, %VA, %VB:Vector Minimum Unsigned Half Word
 	int i;
-	unsigned16 a, b;
+	uint16_t a, b;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).h[i];
 	  b = (*vB).h[i];
@@ -1295,7 +1295,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.642:VX:av:vminuw %VD, %VA, %VB:Vector Minimum Unsigned Word
 	int i;
-	unsigned32 a, b;
+	uint32_t a, b;
 	for (i = 0; i < 4; i++) {
 	  a = (*vA).w[i];
 	  b = (*vB).w[i];
@@ -1313,13 +1313,13 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.VC,26.34:VAX:av:vmladduhm %VD, %VA, %VB, %VC:Vector Multiply Low and Add Unsigned Half Word Modulo
 	int i;
-	unsigned16 a, b, c;
-	unsigned32 prod;
+	uint16_t a, b, c;
+	uint32_t prod;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).h[i];
 	  b = (*vB).h[i];
 	  c = (*vC).h[i];
-	  prod = (unsigned32)a * (unsigned32)b;
+	  prod = (uint32_t)a * (uint32_t)b;
 	  (*vS).h[i] = (prod + c) & 0xffff;
 	}
 	PPC_INSN_VR(VS_BITMASK, VA_BITMASK | VB_BITMASK | VC_BITMASK);
@@ -1384,16 +1384,16 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.VC,26.37:VAX:av:vmsummbm %VD, %VA, %VB, %VC:Vector Multiply Sum Mixed-Sign Byte Modulo
 	int i, j;
-	signed32 temp;
-	signed16 prod, a;
-	unsigned16 b;
+	int32_t temp;
+	int16_t prod, a;
+	uint16_t b;
 	for (i = 0; i < 4; i++) {
 	  temp = (*vC).w[i];
 	  for (j = 0; j < 4; j++) {
-	    a = (signed16)(signed8)(*vA).b[i*4+j]; 
+	    a = (int16_t)(int8_t)(*vA).b[i*4+j]; 
 	    b = (*vB).b[i*4+j];
 	    prod = a * b;
-	    temp += (signed32)prod;
+	    temp += (int32_t)prod;
 	  }
 	  (*vS).w[i] = temp;
 	}
@@ -1401,12 +1401,12 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.VC,26.40:VAX:av:vmsumshm %VD, %VA, %VB, %VC:Vector Multiply Sum Signed Half Word Modulo
 	int i, j;
-	signed32 temp, prod, a, b;
+	int32_t temp, prod, a, b;
 	for (i = 0; i < 4; i++) {
 	  temp = (*vC).w[i];
 	  for (j = 0; j < 2; j++) {
-	    a = (signed32)(signed16)(*vA).h[i*2+j]; 
-	    b = (signed32)(signed16)(*vB).h[i*2+j];
+	    a = (int32_t)(int16_t)(*vA).h[i*2+j]; 
+	    b = (int32_t)(int16_t)(*vB).h[i*2+j];
 	    prod = a * b;
 	    temp += prod;
 	  }
@@ -1416,16 +1416,16 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.VC,26.41:VAX:av:vmsumshs %VD, %VA, %VB, %VC:Vector Multiply Sum Signed Half Word Saturate
 	int i, j, sat, tempsat;
-	signed64 temp;
-	signed32 prod, a, b;
+	int64_t temp;
+	int32_t prod, a, b;
 	sat = 0;
 	for (i = 0; i < 4; i++) {
-	  temp = (signed64)(signed32)(*vC).w[i];
+	  temp = (int64_t)(int32_t)(*vC).w[i];
 	  for (j = 0; j < 2; j++) {
-	    a = (signed32)(signed16)(*vA).h[i*2+j]; 
-	    b = (signed32)(signed16)(*vB).h[i*2+j];
+	    a = (int32_t)(int16_t)(*vA).h[i*2+j]; 
+	    b = (int32_t)(int16_t)(*vB).h[i*2+j];
 	    prod = a * b;
-	    temp += (signed64)prod;
+	    temp += (int64_t)prod;
 	  }
 	  (*vS).w[i] = altivec_signed_saturate_32(temp, &tempsat);
 	  sat |= tempsat;
@@ -1435,8 +1435,8 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.VC,26.36:VAX:av:vmsumubm %VD, %VA, %VB, %VC:Vector Multiply Sum Unsigned Byte Modulo
 	int i, j;
-	unsigned32 temp;
-	unsigned16 prod, a, b;
+	uint32_t temp;
+	uint16_t prod, a, b;
 	for (i = 0; i < 4; i++) {
 	  temp = (*vC).w[i];
 	  for (j = 0; j < 4; j++) {
@@ -1451,7 +1451,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.VC,26.38:VAX:av:vmsumuhm %VD, %VA, %VB, %VC:Vector Multiply Sum Unsigned Half Word Modulo
 	int i, j;
-	unsigned32 temp, prod, a, b;
+	uint32_t temp, prod, a, b;
 	for (i = 0; i < 4; i++) {
 	  temp = (*vC).w[i];
 	  for (j = 0; j < 2; j++) {
@@ -1466,7 +1466,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.VC,26.39:VAX:av:vmsumuhs %VD, %VA, %VB, %VC:Vector Multiply Sum Unsigned Half Word Saturate
 	int i, j, sat, tempsat;
-	unsigned32 temp, prod, a, b;
+	uint32_t temp, prod, a, b;
 	sat = 0;
 	for (i = 0; i < 4; i++) {
 	  temp = (*vC).w[i];
@@ -1489,8 +1489,8 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.776:VX:av:vmulesb %VD, %VA, %VB:Vector Multiply Even Signed Byte
 	int i;
-	signed8 a, b;
-	signed16 prod;
+	int8_t a, b;
+	int16_t prod;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).b[AV_BINDEX(i*2)]; 
 	  b = (*vB).b[AV_BINDEX(i*2)];
@@ -1501,8 +1501,8 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.840:VX:av:vmulesh %VD, %VA, %VB:Vector Multiply Even Signed Half Word
 	int i;
-	signed16 a, b;
-	signed32 prod;
+	int16_t a, b;
+	int32_t prod;
 	for (i = 0; i < 4; i++) {
 	  a = (*vA).h[AV_HINDEX(i*2)]; 
 	  b = (*vB).h[AV_HINDEX(i*2)];
@@ -1513,8 +1513,8 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.520:VX:av:vmuleub %VD, %VA, %VB:Vector Multiply Even Unsigned Byte
 	int i;
-	unsigned8 a, b;
-	unsigned16 prod;
+	uint8_t a, b;
+	uint16_t prod;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).b[AV_BINDEX(i*2)]; 
 	  b = (*vB).b[AV_BINDEX(i*2)];
@@ -1525,8 +1525,8 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.584:VX:av:vmuleuh %VD, %VA, %VB:Vector Multiply Even Unsigned Half Word
 	int i;
-	unsigned16 a, b;
-	unsigned32 prod;
+	uint16_t a, b;
+	uint32_t prod;
 	for (i = 0; i < 4; i++) {
 	  a = (*vA).h[AV_HINDEX(i*2)]; 
 	  b = (*vB).h[AV_HINDEX(i*2)];
@@ -1537,8 +1537,8 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.264:VX:av:vmulosb %VD, %VA, %VB:Vector Multiply Odd Signed Byte
 	int i;
-	signed8 a, b;
-	signed16 prod;
+	int8_t a, b;
+	int16_t prod;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).b[AV_BINDEX((i*2)+1)]; 
 	  b = (*vB).b[AV_BINDEX((i*2)+1)];
@@ -1549,8 +1549,8 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.328:VX:av:vmulosh %VD, %VA, %VB:Vector Multiply Odd Signed Half Word
 	int i;
-	signed16 a, b;
-	signed32 prod;
+	int16_t a, b;
+	int32_t prod;
 	for (i = 0; i < 4; i++) {
 	  a = (*vA).h[AV_HINDEX((i*2)+1)]; 
 	  b = (*vB).h[AV_HINDEX((i*2)+1)];
@@ -1561,8 +1561,8 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.8:VX:av:vmuloub %VD, %VA, %VB:Vector Multiply Odd Unsigned Byte
 	int i;
-	unsigned8 a, b;
-	unsigned16 prod;
+	uint8_t a, b;
+	uint16_t prod;
 	for (i = 0; i < 8; i++) {
 	  a = (*vA).b[AV_BINDEX((i*2)+1)]; 
 	  b = (*vB).b[AV_BINDEX((i*2)+1)];
@@ -1573,8 +1573,8 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.72:VX:av:vmulouh %VD, %VA, %VB:Vector Multiply Odd Unsigned Half Word
 	int i;
-	unsigned16 a, b;
-	unsigned32 prod;
+	uint16_t a, b;
+	uint32_t prod;
 	for (i = 0; i < 4; i++) {
 	  a = (*vA).h[AV_HINDEX((i*2)+1)]; 
 	  b = (*vB).h[AV_HINDEX((i*2)+1)];
@@ -1590,7 +1590,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.VC,26.47:VX:av:vnmsubfp %VD, %VA, %VB, %VC:Vector Negative Multiply-Subtract Floating Point
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu a, b, c, d, i1, i2;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&a, (*vA).w[i]);
@@ -1667,7 +1667,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.398:VX:av:vpkshss %VD, %VA, %VB:Vector Pack Signed Half Word Signed Saturate
 	int i, sat, tempsat;
-	signed16 temp;
+	int16_t temp;
 	sat = 0;
 	for (i = 0; i < 16; i++) {
 	  if (i < 8)
@@ -1682,7 +1682,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.270:VX:av:vpkshus %VD, %VA, %VB:Vector Pack Signed Half Word Unsigned Saturate
 	int i, sat, tempsat;
-	signed16 temp;
+	int16_t temp;
 	sat = 0;
 	for (i = 0; i < 16; i++) {
 	  if (i < 8)
@@ -1697,7 +1697,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.462:VX:av:vpkswss %VD, %VA, %VB:Vector Pack Signed Word Signed Saturate
 	int i, sat, tempsat;
-	signed32 temp;
+	int32_t temp;
 	sat = 0;
 	for (i = 0; i < 8; i++) {
 	  if (i < 4)
@@ -1712,7 +1712,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.334:VX:av:vpkswus %VD, %VA, %VB:Vector Pack Signed Word Unsigned Saturate
 	int i, sat, tempsat;
-	signed32 temp;
+	int32_t temp;
 	sat = 0;
 	for (i = 0; i < 8; i++) {
 	  if (i < 4)
@@ -1736,14 +1736,14 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.142:VX:av:vpkuhus %VD, %VA, %VB:Vector Pack Unsigned Half Word Unsigned Saturate
 	int i, sat, tempsat;
-	signed16 temp;
+	int16_t temp;
 	sat = 0;
 	for (i = 0; i < 16; i++) {
 	  if (i < 8)
 	    temp = (*vA).h[AV_HINDEX(i)];
 	  else
 	    temp = (*vB).h[AV_HINDEX(i-8)];
-	  /* force positive in signed16, ok as we'll toss the bit away anyway */
+	  /* force positive in int16_t, ok as we'll toss the bit away anyway */
 	  temp &= ~0x8000;
 	  (*vS).b[AV_BINDEX(i)] = altivec_unsigned_saturate_8(temp, &tempsat);
 	  sat |= tempsat;
@@ -1762,14 +1762,14 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.206:VX:av:vpkuwus %VD, %VA, %VB:Vector Pack Unsigned Word Unsigned Saturate
 	int i, sat, tempsat;
-	signed32 temp;
+	int32_t temp;
 	sat = 0;
 	for (i = 0; i < 8; i++) {
 	  if (i < 4)
 	    temp = (*vA).w[i];
 	  else
 	    temp = (*vB).w[i-4];
-	  /* force positive in signed32, ok as we'll toss the bit away anyway */
+	  /* force positive in int32_t, ok as we'll toss the bit away anyway */
 	  temp &= ~0x80000000;
 	  (*vS).h[AV_HINDEX(i)] = altivec_unsigned_saturate_16(temp, &tempsat);
 	  sat |= tempsat;
@@ -1784,7 +1784,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.0,16.VB,21.266:VX:av:vrefp %VD, %VB:Vector Reciprocal Estimate Floating Point
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu op, d;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&op, (*vB).w[i]);
@@ -1796,7 +1796,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.0,16.VB,21.330:VX:av:vrsqrtefp %VD, %VB:Vector Reciprocal Square Root Estimate Floating Point
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu op, i1, one, d;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&op, (*vB).w[i]);
@@ -1814,7 +1814,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.0,16.VB,21.714:VX:av:vrfim %VD, %VB:Vector Round to Floating-Point Integer towards Minus Infinity
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu op;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&op, (*vB).w[i]);
@@ -1826,7 +1826,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.0,16.VB,21.522:VX:av:vrfin %VD, %VB:Vector Round to Floating-Point Integer Nearest
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu op;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&op, (*vB).w[i]);
@@ -1838,7 +1838,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.0,16.VB,21.650:VX:av:vrfip %VD, %VB:Vector Round to Floating-Point Integer towards Plus Infinity
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu op;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&op, (*vB).w[i]);
@@ -1850,7 +1850,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.0,16.VB,21.586:VX:av:vrfiz %VD, %VB:Vector Round to Floating-Point Integer towards Zero
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu op;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&op, (*vB).w[i]);
@@ -1867,27 +1867,27 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.4:VX:av:vrlb %VD, %VA, %VB:Vector Rotate Left Integer Byte
 	int i;
-	unsigned16 temp;
+	uint16_t temp;
 	for (i = 0; i < 16; i++) {
-	  temp = (unsigned16)(*vA).b[i] << (((*vB).b[i]) & 7);
+	  temp = (uint16_t)(*vA).b[i] << (((*vB).b[i]) & 7);
 	  (*vS).b[i] = (temp & 0xff) | ((temp >> 8) & 0xff);
 	}
 	PPC_INSN_VR(VS_BITMASK, VA_BITMASK | VB_BITMASK);
 
 0.4,6.VS,11.VA,16.VB,21.68:VX:av:vrlh %VD, %VA, %VB:Vector Rotate Left Integer Half Word
 	int i;
-	unsigned32 temp;
+	uint32_t temp;
 	for (i = 0; i < 8; i++) {
-	  temp = (unsigned32)(*vA).h[i] << (((*vB).h[i]) & 0xf);
+	  temp = (uint32_t)(*vA).h[i] << (((*vB).h[i]) & 0xf);
 	  (*vS).h[i] = (temp & 0xffff) | ((temp >> 16) & 0xffff);
 	}
 	PPC_INSN_VR(VS_BITMASK, VA_BITMASK | VB_BITMASK);
 
 0.4,6.VS,11.VA,16.VB,21.132:VX:av:vrlw %VD, %VA, %VB:Vector Rotate Left Integer Word
 	int i;
-	unsigned64 temp;
+	uint64_t temp;
 	for (i = 0; i < 4; i++) {
-	  temp = (unsigned64)(*vA).w[i] << (((*vB).w[i]) & 0x1f);
+	  temp = (uint64_t)(*vA).w[i] << (((*vB).w[i]) & 0x1f);
 	  (*vS).w[i] = (temp & 0xffffffff) | ((temp >> 32) & 0xffffffff);
 	}
 	PPC_INSN_VR(VS_BITMASK, VA_BITMASK | VB_BITMASK);
@@ -1899,7 +1899,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.VC,26.42:VAX:av:vsel %VD, %VA, %VB, %VC:Vector Conditional Select
 	int i;
-	unsigned32 c;
+	uint32_t c;
 	for (i = 0; i < 4; i++) {
 	  c = (*vC).w[i];
 	  (*vS).w[i] = ((*vB).w[i] & c) | ((*vA).w[i] & ~c);
@@ -1915,7 +1915,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 	sh = (*vB).b[0] & 7;	/* don't bother checking everything */
 	carry = 0;
 	for (j = 3; j >= 0; j--) {
-	  if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN)
+	  if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
 	    i = j;
 	  else
 	    i = (j + 2) % 4;
@@ -1951,7 +1951,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1036:VX:av:vslo %VD, %VA, %VB:Vector Shift Left by Octet
 	int i, sh;
-	if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN)
+	if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
 	  sh = ((*vB).b[AV_BINDEX(15)] >> 3) & 0xf;
 	else
 	  sh = ((*vB).b[AV_BINDEX(0)] >> 3) & 0xf;
@@ -1978,7 +1978,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.UIMM,16.VB,21.524:VX:av:vspltb %VD, %VB, %UIMM:Vector Splat Byte
 	int i;
-	unsigned8 b;
+	uint8_t b;
 	b = (*vB).b[AV_BINDEX(UIMM & 0xf)];
 	for (i = 0; i < 16; i++)
 	  (*vS).b[i] = b;
@@ -1986,7 +1986,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.UIMM,16.VB,21.588:VX:av:vsplth %VD, %VB, %UIMM:Vector Splat Half Word
 	int i;
-	unsigned16 h;
+	uint16_t h;
 	h = (*vB).h[AV_HINDEX(UIMM & 0x7)];
 	for (i = 0; i < 8; i++)
 	  (*vS).h[i] = h;
@@ -1994,7 +1994,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.SIMM,16.0,21.780:VX:av:vspltisb %VD, %SIMM:Vector Splat Immediate Signed Byte
 	int i;
-	signed8 b = SIMM;
+	int8_t b = SIMM;
 	/* manual 5-bit signed extension */
 	if (b & 0x10)
 	  b -= 0x20;
@@ -2004,7 +2004,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.SIMM,16.0,21.844:VX:av:vspltish %VD, %SIMM:Vector Splat Immediate Signed Half Word
 	int i;
-	signed16 h = SIMM;
+	int16_t h = SIMM;
 	/* manual 5-bit signed extension */
 	if (h & 0x10)
 	  h -= 0x20;
@@ -2014,7 +2014,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.SIMM,16.0,21.908:VX:av:vspltisw %VD, %SIMM:Vector Splat Immediate Signed Word
 	int i;
-	signed32 w = SIMM;
+	int32_t w = SIMM;
 	/* manual 5-bit signed extension */
 	if (w & 0x10)
 	  w -= 0x20;
@@ -2024,7 +2024,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.UIMM,16.VB,21.652:VX:av:vspltw %VD, %VB, %UIMM:Vector Splat Word
 	int i;
-	unsigned32 w;
+	uint32_t w;
 	w = (*vB).w[UIMM & 0x3];
 	for (i = 0; i < 4; i++)
 	  (*vS).w[i] = w;
@@ -2040,7 +2040,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 	sh = (*vB).b[0] & 7;	/* don't bother checking everything */
 	carry = 0;
 	for (j = 0; j < 4; j++) {
-	  if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN)
+	  if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
 	    i = j;
 	  else
 	    i = (j + 2) % 4;
@@ -2052,30 +2052,30 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.772:VX:av:vsrab %VD, %VA, %VB:Vector Shift Right Algebraic Byte
 	int i, sh;
-	signed16 a;
+	int16_t a;
 	for (i = 0; i < 16; i++) {
 	  sh = ((*vB).b[i]) & 7;
-	  a = (signed16)(signed8)(*vA).b[i];
+	  a = (int16_t)(int8_t)(*vA).b[i];
 	  (*vS).b[i] = (a >> sh) & 0xff;
 	}
 	PPC_INSN_VR(VS_BITMASK, VA_BITMASK | VB_BITMASK);
 
 0.4,6.VS,11.VA,16.VB,21.836:VX:av:vsrah %VD, %VA, %VB:Vector Shift Right Algebraic Half Word
 	int i, sh;
-	signed32 a;
+	int32_t a;
 	for (i = 0; i < 8; i++) {
 	  sh = ((*vB).h[i]) & 0xf;
-	  a = (signed32)(signed16)(*vA).h[i];
+	  a = (int32_t)(int16_t)(*vA).h[i];
 	  (*vS).h[i] = (a >> sh) & 0xffff;
 	}
 	PPC_INSN_VR(VS_BITMASK, VA_BITMASK | VB_BITMASK);
 
 0.4,6.VS,11.VA,16.VB,21.900:VX:av:vsraw %VD, %VA, %VB:Vector Shift Right Algebraic Word
 	int i, sh;
-	signed64 a;
+	int64_t a;
 	for (i = 0; i < 4; i++) {
 	  sh = ((*vB).w[i]) & 0xf;
-	  a = (signed64)(signed32)(*vA).w[i];
+	  a = (int64_t)(int32_t)(*vA).w[i];
 	  (*vS).w[i] = (a >> sh) & 0xffffffff;
 	}
 	PPC_INSN_VR(VS_BITMASK, VA_BITMASK | VB_BITMASK);
@@ -2098,7 +2098,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1100:VX:av:vsro %VD, %VA, %VB:Vector Shift Right Octet
 	int i, sh;
-	if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN)
+	if (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
 	  sh = ((*vB).b[AV_BINDEX(15)] >> 3) & 0xf;
 	else
 	  sh = ((*vB).b[AV_BINDEX(0)] >> 3) & 0xf;
@@ -2125,10 +2125,10 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1408:VX:av:vsubcuw %VD, %VA, %VB:Vector Subtract Carryout Unsigned Word
 	int i;
-	signed64 temp, a, b;
+	int64_t temp, a, b;
 	for (i = 0; i < 4; i++) {
-	  a = (signed64)(unsigned32)(*vA).w[i];
-	  b = (signed64)(unsigned32)(*vB).w[i];
+	  a = (int64_t)(uint32_t)(*vA).w[i];
+	  b = (int64_t)(uint32_t)(*vB).w[i];
 	  temp = a - b;
 	  (*vS).w[i] = ~(temp >> 32) & 1;
 	}
@@ -2136,7 +2136,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.74:VX:av:vsubfp %VD, %VA, %VB:Vector Subtract Floating Point
 	int i;
-	unsigned32 f;
+	uint32_t f;
 	sim_fpu a, b, d;
 	for (i = 0; i < 4; i++) {
 	  sim_fpu_32to (&a, (*vA).w[i]);
@@ -2149,10 +2149,10 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1792:VX:av:vsubsbs %VD, %VA, %VB:Vector Subtract Signed Byte Saturate
 	int i, sat, tempsat;
-	signed16 temp;
+	int16_t temp;
 	sat = 0;
 	for (i = 0; i < 16; i++) {
-	  temp = (signed16)(signed8)(*vA).b[i] - (signed16)(signed8)(*vB).b[i];
+	  temp = (int16_t)(int8_t)(*vA).b[i] - (int16_t)(int8_t)(*vB).b[i];
 	  (*vS).b[i] = altivec_signed_saturate_8(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -2161,10 +2161,10 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1856:VX:av:vsubshs %VD, %VA, %VB:Vector Subtract Signed Half Word Saturate
 	int i, sat, tempsat;
-	signed32 temp;
+	int32_t temp;
 	sat = 0;
 	for (i = 0; i < 8; i++) {
-	  temp = (signed32)(signed16)(*vA).h[i] - (signed32)(signed16)(*vB).h[i];
+	  temp = (int32_t)(int16_t)(*vA).h[i] - (int32_t)(int16_t)(*vB).h[i];
 	  (*vS).h[i] = altivec_signed_saturate_16(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -2173,10 +2173,10 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1920:VX:av:vsubsws %VD, %VA, %VB:Vector Subtract Signed Word Saturate
 	int i, sat, tempsat;
-	signed64 temp;
+	int64_t temp;
 	sat = 0;
 	for (i = 0; i < 4; i++) {
-	  temp = (signed64)(signed32)(*vA).w[i] - (signed64)(signed32)(*vB).w[i];
+	  temp = (int64_t)(int32_t)(*vA).w[i] - (int64_t)(int32_t)(*vB).w[i];
 	  (*vS).w[i] = altivec_signed_saturate_32(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -2191,10 +2191,10 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1536:VX:av:vsububs %VD, %VA, %VB:Vector Subtract Unsigned Byte Saturate
 	int i, sat, tempsat;
-	signed16 temp;
+	int16_t temp;
 	sat = 0;
 	for (i = 0; i < 16; i++) {
-	  temp = (signed16)(unsigned8)(*vA).b[i] - (signed16)(unsigned8)(*vB).b[i];
+	  temp = (int16_t)(uint8_t)(*vA).b[i] - (int16_t)(uint8_t)(*vB).b[i];
 	  (*vS).b[i] = altivec_unsigned_saturate_8(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -2209,9 +2209,9 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1600:VX:av:vsubuhs %VD, %VA, %VB:Vector Subtract Unsigned Half Word Saturate
 	int i, sat, tempsat;
-	signed32 temp;
+	int32_t temp;
 	for (i = 0; i < 8; i++) {
-	  temp = (signed32)(unsigned16)(*vA).h[i] - (signed32)(unsigned16)(*vB).h[i];
+	  temp = (int32_t)(uint16_t)(*vA).h[i] - (int32_t)(uint16_t)(*vB).h[i];
 	  (*vS).h[i] = altivec_unsigned_saturate_16(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -2226,9 +2226,9 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1664:VX:av:vsubuws %VD, %VA, %VB:Vector Subtract Unsigned Word Saturate
 	int i, sat, tempsat;
-	signed64 temp;
+	int64_t temp;
 	for (i = 0; i < 4; i++) {
-	  temp = (signed64)(unsigned32)(*vA).w[i] - (signed64)(unsigned32)(*vB).w[i];
+	  temp = (int64_t)(uint32_t)(*vA).w[i] - (int64_t)(uint32_t)(*vB).w[i];
 	  (*vS).w[i] = altivec_unsigned_saturate_32(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -2242,10 +2242,10 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1928:VX:av:vsumsws %VD, %VA, %VB:Vector Sum Across Signed Word Saturate
 	int i, sat;
-	signed64 temp;
-	temp = (signed64)(signed32)(*vB).w[3];
+	int64_t temp;
+	temp = (int64_t)(int32_t)(*vB).w[3];
 	for (i = 0; i < 4; i++)
-	  temp += (signed64)(signed32)(*vA).w[i];
+	  temp += (int64_t)(int32_t)(*vA).w[i];
 	(*vS).w[3] = altivec_signed_saturate_32(temp, &sat);
 	(*vS).w[0] = (*vS).w[1] = (*vS).w[2] = 0;
 	ALTIVEC_SET_SAT(sat);
@@ -2253,10 +2253,10 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1672:VX:av:vsum2sws %VD, %VA, %VB:Vector Sum Across Partial (1/2) Signed Word Saturate
 	int i, j, sat, tempsat;
-	signed64 temp;
+	int64_t temp;
 	for (j = 0; j < 4; j += 2) {
-	  temp = (signed64)(signed32)(*vB).w[j+1];
-	  temp += (signed64)(signed32)(*vA).w[j] + (signed64)(signed32)(*vA).w[j+1];
+	  temp = (int64_t)(int32_t)(*vB).w[j+1];
+	  temp += (int64_t)(int32_t)(*vA).w[j] + (int64_t)(int32_t)(*vA).w[j+1];
 	  (*vS).w[j+1] = altivec_signed_saturate_32(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -2266,11 +2266,11 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1800:VX:av:vsum4sbs %VD, %VA, %VB:Vector Sum Across Partial (1/4) Signed Byte Saturate
 	int i, j, sat, tempsat;
-	signed64 temp;
+	int64_t temp;
 	for (j = 0; j < 4; j++) {
-	  temp = (signed64)(signed32)(*vB).w[j];
+	  temp = (int64_t)(int32_t)(*vB).w[j];
 	  for (i = 0; i < 4; i++)
-	    temp += (signed64)(signed8)(*vA).b[i+(j*4)];
+	    temp += (int64_t)(int8_t)(*vA).b[i+(j*4)];
 	  (*vS).w[j] = altivec_signed_saturate_32(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -2279,11 +2279,11 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1608:VX:av:vsum4shs %VD, %VA, %VB:Vector Sum Across Partial (1/4) Signed Half Word Saturate
 	int i, j, sat, tempsat;
-	signed64 temp;
+	int64_t temp;
 	for (j = 0; j < 4; j++) {
-	  temp = (signed64)(signed32)(*vB).w[j];
+	  temp = (int64_t)(int32_t)(*vB).w[j];
 	  for (i = 0; i < 2; i++)
-	    temp += (signed64)(signed16)(*vA).h[i+(j*2)];
+	    temp += (int64_t)(int16_t)(*vA).h[i+(j*2)];
 	  (*vS).w[j] = altivec_signed_saturate_32(temp, &tempsat);
 	  sat |= tempsat;
 	}
@@ -2292,12 +2292,12 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.VA,16.VB,21.1544:VX:av:vsum4ubs %VD, %VA, %VB:Vector Sum Across Partial (1/4) Unsigned Byte Saturate
 	int i, j, sat, tempsat;
-	signed64 utemp;
-	signed64 temp;
+	int64_t utemp;
+	int64_t temp;
 	for (j = 0; j < 4; j++) {
-	  utemp = (signed64)(unsigned32)(*vB).w[j];
+	  utemp = (int64_t)(uint32_t)(*vB).w[j];
 	  for (i = 0; i < 4; i++)
-	    utemp += (signed64)(unsigned16)(*vA).b[i+(j*4)];
+	    utemp += (int64_t)(uint16_t)(*vA).b[i+(j*4)];
 	  temp = utemp;
 	  (*vS).w[j] = altivec_unsigned_saturate_32(temp, &tempsat);
 	  sat |= tempsat;
@@ -2312,7 +2312,7 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 
 0.4,6.VS,11.0,16.VB,21.846:VX:av:vupkhpx %VD, %VB:Vector Unpack High Pixel16
 	int i;
-	unsigned16 h;
+	uint16_t h;
 	for (i = 0; i < 4; i++) {
 	  h = (*vB).h[AV_HINDEX(i)];
 	  (*vS).w[i] = ((h & 0x8000) ? 0xff000000 : 0)
@@ -2325,18 +2325,18 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 0.4,6.VS,11.0,16.VB,21.526:VX:av:vupkhsb %VD, %VB:Vector Unpack High Signed Byte
 	int i;
 	for (i = 0; i < 8; i++)
-	  (*vS).h[AV_HINDEX(i)] = (signed16)(signed8)(*vB).b[AV_BINDEX(i)];
+	  (*vS).h[AV_HINDEX(i)] = (int16_t)(int8_t)(*vB).b[AV_BINDEX(i)];
 	PPC_INSN_VR(VS_BITMASK, VB_BITMASK);
 
 0.4,6.VS,11.0,16.VB,21.590:VX:av:vupkhsh %VD, %VB:Vector Unpack High Signed Half Word
 	int i;
 	for (i = 0; i < 4; i++)
-	  (*vS).w[i] = (signed32)(signed16)(*vB).h[AV_HINDEX(i)];
+	  (*vS).w[i] = (int32_t)(int16_t)(*vB).h[AV_HINDEX(i)];
 	PPC_INSN_VR(VS_BITMASK, VB_BITMASK);
 
 0.4,6.VS,11.0,16.VB,21.974:VX:av:vupklpx %VD, %VB:Vector Unpack Low Pixel16
 	int i;
-	unsigned16 h;
+	uint16_t h;
 	for (i = 0; i < 4; i++) {
 	  h = (*vB).h[AV_HINDEX(i + 4)];
 	  (*vS).w[i] = ((h & 0x8000) ? 0xff000000 : 0)
@@ -2349,11 +2349,11 @@ unsigned32::model-function::altivec_unsigned_saturate_32:signed64 val, int *sat
 0.4,6.VS,11.0,16.VB,21.654:VX:av:vupklsb %VD, %VB:Vector Unpack Low Signed Byte
 	int i;
 	for (i = 0; i < 8; i++)
-	  (*vS).h[AV_HINDEX(i)] = (signed16)(signed8)(*vB).b[AV_BINDEX(i + 8)];
+	  (*vS).h[AV_HINDEX(i)] = (int16_t)(int8_t)(*vB).b[AV_BINDEX(i + 8)];
 	PPC_INSN_VR(VS_BITMASK, VB_BITMASK);
 
 0.4,6.VS,11.0,16.VB,21.718:VX:av:vupklsh %VD, %VB:Vector Unpack Low Signed Half Word
 	int i;
 	for (i = 0; i < 4; i++)
-	  (*vS).w[i] = (signed32)(signed16)(*vB).h[AV_HINDEX(i + 4)];
+	  (*vS).w[i] = (int32_t)(int16_t)(*vB).h[AV_HINDEX(i + 4)];
 	PPC_INSN_VR(VS_BITMASK, VB_BITMASK);

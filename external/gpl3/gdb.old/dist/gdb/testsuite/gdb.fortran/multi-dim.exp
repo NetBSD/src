@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,8 +26,7 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} {debug f90}
 }
 
 if ![fortran_runto_main] {
-    perror "Couldn't run to main"
-    continue
+    return
 }
 
 # Depending on the compiler being used, the type names can be printed differently.
@@ -57,7 +56,7 @@ gdb_test "print foo(3,3,4)" \
     "print an invalid array index (3,3,4)"
 
 gdb_test "print foo" \
-    { = \(\( \( 10, 10\) \( 10, 10\) \( 10, 10\) \) \( \( 10, 10\) \( 10, 10\) \( 10, 10\) \) \( \( 10, 10\) \( 10, 10\) \( 10, 10\) \) \( \( 10, 10\) \( 10, 10\) \( 10, 20\) \) \)} \
+    { = \(\(\(10, 10\) \(10, 10\) \(10, 10\)\) \(\(10, 10\) \(10, 10\) \(10, 10\)\) \(\(10, 10\) \(10, 10\) \(10, 10\)\) \(\(10, 10\) \(10, 10\) \(10, 20\)\)\)} \
     "print full contents of the array"
 
 gdb_breakpoint [gdb_get_line_number "break-variable"]

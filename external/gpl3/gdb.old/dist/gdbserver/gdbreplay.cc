@@ -1,5 +1,5 @@
 /* Replay a remote debug session logfile for GDB.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2023 Free Software Foundation, Inc.
    Written by Fred Fish (fnf@cygnus.com) from pieces of gdbserver.
 
    This file is part of GDB.
@@ -66,58 +66,8 @@ typedef int socklen_t;
 /* Sort of a hack... */
 #define EOL (EOF - 1)
 
-static int remote_desc;
-
-#ifdef __MINGW32CE__
-
-#ifndef COUNTOF
-#define COUNTOF(STR) (sizeof (STR) / sizeof ((STR)[0]))
-#endif
-
-#define errno (GetLastError ())
-
-char *
-strerror (DWORD error)
-{
-  static char buf[1024];
-  WCHAR *msgbuf;
-  DWORD lasterr = GetLastError ();
-  DWORD chars = FormatMessageW (FORMAT_MESSAGE_FROM_SYSTEM
-				| FORMAT_MESSAGE_ALLOCATE_BUFFER,
-				NULL,
-				error,
-				0, /* Default language */
-				(LPVOID)&msgbuf,
-				0,
-				NULL);
-  if (chars != 0)
-    {
-      /* If there is an \r\n appended, zap it.  */
-      if (chars >= 2
-	  && msgbuf[chars - 2] == '\r'
-	  && msgbuf[chars - 1] == '\n')
-	{
-	  chars -= 2;
-	  msgbuf[chars] = 0;
-	}
-
-      if (chars > ((COUNTOF (buf)) - 1))
-	{
-	  chars = COUNTOF (buf) - 1;
-	  msgbuf [chars] = 0;
-	}
-
-      wcstombs (buf, msgbuf, chars + 1);
-      LocalFree (msgbuf);
-    }
-  else
-    sprintf (buf, "unknown win32 error (%ld)", error);
-
-  SetLastError (lasterr);
-  return buf;
-}
-
-#endif /* __MINGW32CE__ */
+static int remote_desc_in;
+static int remote_desc_out;
 
 static void
 sync_error (FILE *fp, const char *desc, int expect, int got)
@@ -141,9 +91,12 @@ static void
 remote_close (void)
 {
 #ifdef USE_WIN32API
-  closesocket (remote_desc);
+  gdb_assert (remote_desc_in == remote_desc_out);
+  closesocket (remote_desc_in);
 #else
-  close (remote_desc);
+  close (remote_desc_in);
+  if (remote_desc_in != remote_desc_out)
+    close (remote_desc_out);
 #endif
 }
 
@@ -151,9 +104,18 @@ remote_close (void)
    NAME is the filename used for communication.  */
 
 static void
-remote_open (char *name)
+remote_open (const char *name)
 {
-  char *last_colon = strrchr (name, ':');
+#ifndef USE_WIN32API
+  if (strcmp (name, "-") == 0)
+    {
+      remote_desc_in = 0;
+      remote_desc_out = 1;
+      return;
+    }
+#endif
+
+  const char *last_colon = strrchr (name, ':');
 
   if (last_colon == NULL)
     {
@@ -241,7 +203,7 @@ remote_open (char *name)
     perror_with_name ("Can't bind address");
 
   if (p->ai_socktype == SOCK_DGRAM)
-    remote_desc = tmp_desc;
+    remote_desc_in = tmp_desc;
   else
     {
       struct sockaddr_storage sockaddr;
@@ -251,10 +213,10 @@ remote_open (char *name)
       if (listen (tmp_desc, 1) != 0)
 	perror_with_name ("Can't listen on socket");
 
-      remote_desc = accept (tmp_desc, (struct sockaddr *) &sockaddr,
-			    &sockaddrsize);
+      remote_desc_in = accept (tmp_desc, (struct sockaddr *) &sockaddr,
+			       &sockaddrsize);
 
-      if (remote_desc == -1)
+      if (remote_desc_in == -1)
 	perror_with_name ("Accept failed");
 
       /* Enable TCP keep alive process. */
@@ -265,7 +227,7 @@ remote_open (char *name)
       /* Tell TCP not to delay small packets.  This greatly speeds up
 	 interactive response. */
       tmp = 1;
-      setsockopt (remote_desc, IPPROTO_TCP, TCP_NODELAY,
+      setsockopt (remote_desc_in, IPPROTO_TCP, TCP_NODELAY,
 		  (char *) &tmp, sizeof (tmp));
 
       if (getnameinfo ((struct sockaddr *) &sockaddr, sockaddrsize,
@@ -290,8 +252,9 @@ remote_open (char *name)
     }
 
 #if defined(F_SETFL) && defined (FASYNC)
-  fcntl (remote_desc, F_SETFL, FASYNC);
+  fcntl (remote_desc_in, F_SETFL, FASYNC);
 #endif
+  remote_desc_out = remote_desc_in;
 
   fprintf (stderr, "Replay logfile using %s\n", name);
   fflush (stderr);
@@ -306,8 +269,8 @@ logchar (FILE *fp)
   ch = fgetc (fp);
   if (ch != '\r')
     {
-      fputc (ch, stdout);
-      fflush (stdout);
+      fputc (ch, stderr);
+      fflush (stderr);
     }
   switch (ch)
     {
@@ -321,16 +284,16 @@ logchar (FILE *fp)
 	  ungetc (ch, fp);
 	  ch = '\r';
 	}
-      fputc (ch == EOL ? '\n' : '\r', stdout);
-      fflush (stdout);
+      fputc (ch == EOL ? '\n' : '\r', stderr);
+      fflush (stderr);
       break;
     case '\n':
       ch = EOL;
       break;
     case '\\':
       ch = fgetc (fp);
-      fputc (ch, stdout);
-      fflush (stdout);
+      fputc (ch, stderr);
+      fflush (stderr);
       switch (ch)
 	{
 	case '\\':
@@ -355,12 +318,12 @@ logchar (FILE *fp)
 	  break;
 	case 'x':
 	  ch2 = fgetc (fp);
-	  fputc (ch2, stdout);
-	  fflush (stdout);
+	  fputc (ch2, stderr);
+	  fflush (stderr);
 	  ch = fromhex (ch2) << 4;
 	  ch2 = fgetc (fp);
-	  fputc (ch2, stdout);
-	  fflush (stdout);
+	  fputc (ch2, stderr);
+	  fflush (stderr);
 	  ch |= fromhex (ch2);
 	  break;
 	default:
@@ -403,7 +366,7 @@ expect (FILE *fp)
       fromlog = logchar (fp);
       if (fromlog == EOL)
 	break;
-      fromgdb = gdbchar (remote_desc);
+      fromgdb = gdbchar (remote_desc_in);
       if (fromgdb < 0)
 	remote_error ("Error during read from gdb");
     }
@@ -433,7 +396,7 @@ play (FILE *fp)
   while ((fromlog = logchar (fp)) != EOL)
     {
       ch = fromlog;
-      if (write (remote_desc, &ch, 1) != 1)
+      if (write (remote_desc_out, &ch, 1) != 1)
 	remote_error ("Error during write to gdb");
     }
 }
@@ -442,7 +405,7 @@ static void
 gdbreplay_version (void)
 {
   printf ("GNU gdbreplay %s%s\n"
-	  "Copyright (C) 2020 Free Software Foundation, Inc.\n"
+	  "Copyright (C) 2023 Free Software Foundation, Inc.\n"
 	  "gdbreplay is free software, covered by "
 	  "the GNU General Public License.\n"
 	  "This gdbreplay was configured as \"%s\"\n",

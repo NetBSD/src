@@ -1,5 +1,5 @@
 /* C declarator syntax glue.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -72,7 +72,7 @@ ctf_decl_fini (ctf_decl_t *cd)
 }
 
 void
-ctf_decl_push (ctf_decl_t *cd, ctf_file_t *fp, ctf_id_t type)
+ctf_decl_push (ctf_decl_t *cd, ctf_dict_t *fp, ctf_id_t type)
 {
   ctf_decl_node_t *cdp;
   ctf_decl_prec_t prec;
@@ -117,9 +117,10 @@ ctf_decl_push (ctf_decl_t *cd, ctf_file_t *fp, ctf_id_t type)
       break;
 
     case CTF_K_SLICE:
+      /* Slices themselves have no print representation and should not appear in
+	 the decl stack.  */
       ctf_decl_push (cd, fp, ctf_type_reference (fp, type));
-      prec = CTF_PREC_BASE;
-      break;
+      return;
 
     case CTF_K_VOLATILE:
     case CTF_K_CONST:
@@ -152,11 +153,10 @@ ctf_decl_push (ctf_decl_t *cd, ctf_file_t *fp, ctf_id_t type)
   if (prec > cd->cd_qualp && prec < CTF_PREC_ARRAY)
     cd->cd_qualp = prec;
 
-  /* C array declarators are ordered inside out so prepend them.  Also by
-     convention qualifiers of base types precede the type specifier (e.g.
+  /* By convention qualifiers of base types precede the type specifier (e.g.
      const int vs. int const) even though the two forms are equivalent.  */
 
-  if (kind == CTF_K_ARRAY || (is_qual && prec == CTF_PREC_BASE))
+  if (is_qual && prec == CTF_PREC_BASE)
     ctf_list_prepend (&cd->cd_nodes[prec], cdp);
   else
     ctf_list_append (&cd->cd_nodes[prec], cdp);

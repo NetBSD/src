@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Free Software Foundation, Inc.
+/* Copyright 2019-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,6 +14,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "info-var.h"
+
+/* Some array variables.  */
+int * const foo_1[3];
+const int *foo_2[3];
+int *foo_3[3];
+int const foo_4[3];
+const int foo_5[3];
+int foo_6[3];
 
 static int f1_var = -3;
 

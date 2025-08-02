@@ -1,6 +1,6 @@
 /* trace.c --- tracing output for the RL78 simulator.
 
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2023 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of the GNU simulators.
@@ -19,8 +19,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/* This must come before any other includes.  */
+#include "defs.h"
 
-#include "config.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -36,6 +37,7 @@
 #include "cpu.h"
 #include "mem.h"
 #include "load.h"
+#include "trace.h"
 
 static disassembler_ftype rl78_disasm_fn = NULL;
 
@@ -76,7 +78,7 @@ remove_useless_symbols (asymbol ** symbols, long count)
 }
 
 static int
-compare_symbols (const PTR ap, const PTR bp)
+compare_symbols (const void *ap, const void *bp)
 {
   const asymbol *a = *(const asymbol **) ap;
   const asymbol *b = *(const asymbol **) bp;
@@ -90,8 +92,20 @@ compare_symbols (const PTR ap, const PTR bp)
 
 static char opbuf[1000];
 
-static int
+static int ATTRIBUTE_PRINTF (2, 3)
 op_printf (char *buf, char *fmt, ...)
+{
+  int ret;
+  va_list ap;
+
+  va_start (ap, fmt);
+  ret = vsprintf (opbuf + strlen (opbuf), fmt, ap);
+  va_end (ap);
+  return ret;
+}
+
+static int ATTRIBUTE_PRINTF (3, 4)
+op_styled_printf (char *buf, enum disassembler_style style, char *fmt, ...)
 {
   int ret;
   va_list ap;
@@ -138,6 +152,8 @@ load_file_and_line (const char *filename, int lineno)
       int i;
       struct stat s;
       const char *found_filename, *slash;
+      FILE *file;
+      size_t ret;
 
       found_filename = filename;
       while (1)
@@ -155,9 +171,9 @@ load_file_and_line (const char *filename, int lineno)
       files = f;
       f->filename = xstrdup (filename);
       f->data = (char *) xmalloc (s.st_size + 2);
-      FILE *file = fopen (found_filename, "rb");
-      fread (f->data, 1, s.st_size, file);
-      f->data[s.st_size] = 0;
+      file = fopen (found_filename, "rb");
+      ret = fread (f->data, 1, s.st_size, file);
+      f->data[ret] = 0;
       fclose (file);
 
       f->nlines = 1;
@@ -201,7 +217,7 @@ sim_get_current_source_location (const char **  pfilename,
 
       initted = 1;
       memset (& info, 0, sizeof (info));
-      INIT_DISASSEMBLE_INFO (info, stdout, op_printf);
+      INIT_DISASSEMBLE_INFO (info, stdout, op_printf, op_styled_printf);
       info.read_memory_func = sim_dis_read;
       info.arch = bfd_get_arch (current_bfd);
       info.mach = bfd_get_mach (current_bfd);

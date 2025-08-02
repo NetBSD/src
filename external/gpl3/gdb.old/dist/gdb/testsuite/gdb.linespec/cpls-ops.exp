@@ -1,4 +1,4 @@
-# Copyright 2017-2020 Free Software Foundation, Inc.
+# Copyright 2017-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -248,20 +248,6 @@ proc test_operator_ambiguous {class_name opn cls} {
 	test_gdb_complete_multiple \
 	    "$cmd_prefix " "$linespec_noparams" "" $location_list
 
-	# Setting the breakpoint doesn't create a breakpoint location
-	# for the template, because immediately after
-	# "operator()/operator[]" we have the template parameters, not
-	# the parameter list.
-	set location_list \
-	    [list \
-		 "${class_name}::operator${opn}${cls}(int)" \
-		 "${class_name}::operator${opn}${cls}(long)"]
-	if {$opn == "("} {
-	    set location_list \
-		[concat \
-		     [list "${class_name}::operator${opn}${cls}()"] \
-		     $location_list]
-	}
 	check_bp_locations_match_list "$cmd_prefix $linespec_noparams" \
 	    $location_list
 	check_bp_locations_match_list "$cmd_prefix $linespec_noparams<int>" \
@@ -269,26 +255,33 @@ proc test_operator_ambiguous {class_name opn cls} {
 
 	# Test the template version.  Test both with and without
 	# return type.
-	test_gdb_complete_unique \
-	    "$cmd_prefix ${class_name}::operator${opn}${cls}<int>(in" \
-	    "$cmd_prefix ${class_name}::operator${opn}${cls}<int>(int*)"
-	check_bp_locations_match_list \
-	    "$cmd_prefix ${class_name}::operator${opn}${cls}<int>(int*)" \
-	    [list "${class_name}::operator${opn}${cls}<int>(int*)"]
-	test_gdb_complete_unique \
-	    "$cmd_prefix void ${class_name}::operator${opn}${cls}<int>(in" \
-	    "$cmd_prefix void ${class_name}::operator${opn}${cls}<int>(int*)"
-	check_bp_locations_match_list \
-	    "$cmd_prefix void ${class_name}::operator${opn}${cls}<int>(int*)" \
-	    [list "${class_name}::operator${opn}${cls}<int>(int*)"]
+	set f "${class_name}::operator"
+	foreach ws1 {"" " "} {
+	    foreach ws2 {"" " "} {
+		foreach ws3 {"" " "} {
+		    test_gdb_complete_unique \
+			"$cmd_prefix ${f}${opn}${ws1}${cls}<${ws2}int${ws3}>(in" \
+			"$cmd_prefix ${f}${opn}${ws1}${cls}<${ws2}int${ws3}>(int*)"
+		    check_bp_locations_match_list \
+			"$cmd_prefix ${f}${opn}${ws1}${cls}<${ws2}int${ws3}>(int*)" \
+			[list "${f}${opn}${cls}<int>(int*)"]
+		    test_gdb_complete_unique \
+			"$cmd_prefix void ${f}${opn}${ws1}${cls}<${ws2}int${ws3}>(in" \
+			"$cmd_prefix void ${f}${opn}${ws1}${cls}<${ws2}int${ws3}>(int*)"
+		    check_bp_locations_match_list \
+			"$cmd_prefix void ${f}${opn}${ws1}${cls}<${ws2}int${ws3}>(int*)" \
+			[list "${f}${opn}${cls}<int>(int*)"]
+		}
+	    }
+	}
 
 	# Add extra spaces.
 	test_gdb_complete_unique \
-	    "$cmd_prefix ${class_name}::operator ${opn} ${cls} ( in" \
-	    "$cmd_prefix ${class_name}::operator ${opn} ${cls} ( int)"
+	    "$cmd_prefix ${class_name}::operator ${opn} ${cls} ( lo" \
+	    "$cmd_prefix ${class_name}::operator ${opn} ${cls} ( long)"
 	check_bp_locations_match_list \
-	    "$cmd_prefix ${class_name}::operator ${opn} ${cls} ( int )" \
-	    [list "${class_name}::operator${opn}${cls}(int)"]
+	    "$cmd_prefix ${class_name}::operator ${opn} ${cls} ( long )" \
+	    [list "${class_name}::operator${opn}${cls}(long)"]
     }
 }
 

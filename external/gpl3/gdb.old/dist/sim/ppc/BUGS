@@ -15,7 +15,7 @@ VEA:
 
 Missing VEA system calls.
 
-ppc-instructions:
+powerpc.igen:
 
 Missing or commented out instructions.
 

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2016-2020 Free Software Foundation, Inc.
+# Copyright 2016-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,8 +35,7 @@ if { [skip_python_tests] } {
     return -1
 }
 
-if ![runto_main ] then {
-    fail "can't run to main"
+if {![runto_main]} {
     return -1
 }
 
@@ -44,10 +43,13 @@ with_test_prefix "no or double record" {
     gdb_test "python print(gdb.current_recording())" "None"
 
     gdb_test_no_output "python gdb.start_recording(\"full\")"
-    gdb_test "python gdb.start_recording(\"full\")" ".*gdb\.error: The process is already being recorded\..*"
+    gdb_test "python gdb.start_recording(\"full\")" \
+	".*gdb\.error: The process is already being recorded\..*" \
+	"already recording"
 
     gdb_test_no_output "python gdb.stop_recording()" "first"
-    gdb_test "python gdb.stop_recording()" ".*gdb\.error: No record target is currently active\..*" "second"
+    gdb_test "python gdb.stop_recording()" \
+	".*gdb\.error: No recording is currently active\..*" "second"
 }
 
 with_test_prefix "preopened record full" {

@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,16 +28,19 @@ if { [file pathtype $objdir] == "relative" } {
     untested "objdir $objdir should be absolute"
     return
 }
-set saved_pwd [pwd]
-cd $srcdir/${subdir}/base/one
-set err1 [gdb_compile "thefile.cc" $objfile1 object $opts]
-cd $saved_pwd
-cd $srcdir/${subdir}/base/two
-set err2 [gdb_compile "thefile.cc" $objfile2 object $opts]
-cd $saved_pwd
-if { $err1 != "" || $err2 != "" } {
-    untested "compilation failed"
-    return -1
+
+with_cwd $srcdir/${subdir}/base/one {
+    if { [gdb_compile "thefile.cc" $objfile1 object $opts] != "" } {
+	untested "compilation failed"
+	return
+    }
+}
+
+with_cwd $srcdir/${subdir}/base/two {
+    if { [gdb_compile "thefile.cc" $objfile2 object $opts] != "" } {
+	untested "compilation failed"
+	return
+    }
 }
 
 if { [gdb_compile "$srcdir/${subdir}/$srcfile $objfile1 $objfile2" \

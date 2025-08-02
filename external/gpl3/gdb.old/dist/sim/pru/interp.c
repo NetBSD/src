@@ -1,5 +1,5 @@
 /* Simulator for the Texas Instruments PRU processor
-   Copyright 2009-2020 Free Software Foundation, Inc.
+   Copyright 2009-2023 Free Software Foundation, Inc.
    Inspired by the Microblaze simulator
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
@@ -18,17 +18,20 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
-#include "config.h"
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
 #include "bfd.h"
-#include "gdb/callback.h"
+#include "sim/callback.h"
 #include "libiberty.h"
-#include "gdb/remote-sim.h"
+#include "sim/sim.h"
 #include "sim-main.h"
 #include "sim-assert.h"
 #include "sim-options.h"
+#include "sim-signal.h"
 #include "sim-syscall.h"
 #include "pru.h"
 
@@ -42,12 +45,12 @@ enum {
 
 /* Extract (from PRU endianess) and return an integer in HOST's endianness.  */
 static uint32_t
-pru_extract_unsigned_integer (uint8_t *addr, size_t len)
+pru_extract_unsigned_integer (const uint8_t *addr, size_t len)
 {
   uint32_t retval;
-  uint8_t *p;
-  uint8_t *startaddr = addr;
-  uint8_t *endaddr = startaddr + len;
+  const uint8_t *p;
+  const uint8_t *startaddr = addr;
+  const uint8_t *endaddr = startaddr + len;
 
   /* Start at the most significant end of the integer, and work towards
      the least significant.  */
@@ -647,7 +650,7 @@ pru_pc_set (sim_cpu *cpu, sim_cia pc)
 
 /* Implement callback for standard CPU_REG_STORE routine.  */
 static int
-pru_store_register (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+pru_store_register (SIM_CPU *cpu, int rn, const void *memory, int length)
 {
   if (rn < NUM_REGS && rn >= 0)
     {
@@ -670,7 +673,7 @@ pru_store_register (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
 
 /* Implement callback for standard CPU_REG_FETCH routine.  */
 static int
-pru_fetch_register (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
+pru_fetch_register (SIM_CPU *cpu, int rn, void *memory, int length)
 {
   long ival;
 
@@ -743,8 +746,12 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
   SIM_DESC sd = sim_state_alloc (kind, cb);
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
+  /* Set default options before parsing user options.  */
+  current_alignment = STRICT_ALIGNMENT;
+  current_target_byte_order = BFD_ENDIAN_LITTLE;
+
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1, /*cgen_cpu_max_extra_bytes ()*/0) != SIM_RC_OK)
+  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -765,10 +772,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
     }
 
   /* Check for/establish a reference program image.  */
-  if (sim_analyze_program (sd,
-			   (STATE_PROG_ARGV (sd) != NULL
-			    ? *STATE_PROG_ARGV (sd)
-			    : NULL), abfd) != SIM_RC_OK)
+  if (sim_analyze_program (sd, STATE_PROG_FILE (sd), abfd) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -827,6 +831,7 @@ sim_create_inferior (SIM_DESC sd, struct bfd *prog_bfd,
 		     char * const *argv, char * const *env)
 {
   SIM_CPU *cpu = STATE_CPU (sd, 0);
+  host_callback *cb = STATE_CALLBACK (sd);
   SIM_ADDR addr;
 
   addr = bfd_get_start_address (prog_bfd);
@@ -843,6 +848,15 @@ sim_create_inferior (SIM_DESC sd, struct bfd *prog_bfd,
       freeargv (STATE_PROG_ARGV (sd));
       STATE_PROG_ARGV (sd) = dupargv (argv);
     }
+
+  if (STATE_PROG_ENVP (sd) != env)
+    {
+      freeargv (STATE_PROG_ENVP (sd));
+      STATE_PROG_ENVP (sd) = dupargv (env);
+    }
+
+  cb->argv = STATE_PROG_ARGV (sd);
+  cb->envp = STATE_PROG_ENVP (sd);
 
   return SIM_RC_OK;
 }

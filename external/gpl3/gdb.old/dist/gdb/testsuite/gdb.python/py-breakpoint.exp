@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2020 Free Software Foundation, Inc.
+# Copyright (C) 2010-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,14 @@
 
 # This file is part of the GDB testsuite.  It tests the mechanism
 # exposing breakpoints to Python.
+
+# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# processor.  On PowerPC, the check runs a small test program under gdb
+# to determine if the Power processor supports HW watchpoints.  The check
+# must be done before starting the test so as to not disrupt the execution
+# of the actual test.
+
+set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
 
 load_lib gdb-python.exp
 
@@ -38,8 +46,7 @@ proc_with_prefix test_bkpt_basic { } {
     # We should start with no breakpoints.
     gdb_test "python print (gdb.breakpoints())" "\\(\\)"
 
-    if ![runto_main] then {
-	fail "cannot run to main."
+    if {![runto_main]} {
 	return 0
     }
 
@@ -121,8 +128,7 @@ proc_with_prefix test_bkpt_deletion { } {
     # Start with a fresh gdb.
     clean_restart ${testfile}
 
-    if ![runto_main] then {
-	fail "cannot run to main."
+    if {![runto_main]} {
 	return 0
     }
 
@@ -157,8 +163,7 @@ proc_with_prefix test_bkpt_cond_and_cmds { } {
     # Start with a fresh gdb.
     clean_restart ${testfile}
 
-    if ![runto_main] then {
-	fail "cannot run to main."
+    if {![runto_main]} {
 	return 0
     }
 
@@ -215,8 +220,7 @@ proc_with_prefix test_bkpt_invisible { } {
     # Start with a fresh gdb.
     clean_restart ${testfile}
 
-    if ![runto_main] then {
-	fail "cannot run to main."
+    if {![runto_main]} {
 	return 0
     }
 
@@ -252,19 +256,44 @@ proc_with_prefix test_bkpt_invisible { } {
 	"Check maint info breakpoints shows invisible breakpoints"
 }
 
+proc_with_prefix test_hardware_breakpoints { } {
+    global srcfile testfile hex decimal
+
+    # Skip these tests if the HW does not support hardware breakpoints.
+    if { [skip_hw_breakpoint_tests] } { return 0 }
+
+    # Start with a fresh gdb.
+    clean_restart ${testfile}
+
+    if {![runto_main]} {
+	return 0
+    }
+
+    delete_breakpoints
+
+    gdb_test "python hbp1 = gdb.Breakpoint(\"add\", type=gdb.BP_HARDWARE_BREAKPOINT)" \
+	".*Hardware assisted breakpoint ($decimal)+ at .*$srcfile, line ($decimal)+\." \
+	"Set hardware breakpoint"
+    gdb_test "python print (gdb.breakpoints()\[0\].type == gdb.BP_HARDWARE_BREAKPOINT)" \
+	"True" "Check hardware breakpoint type"
+    gdb_test "continue" \
+	".*Breakpoint ($decimal)+, add.*" \
+	"Test hardware breakpoint stop"
+}
+
 proc_with_prefix test_watchpoints { } {
     global srcfile testfile hex decimal
+    global skip_hw_watchpoint_tests_p
 
     # Start with a fresh gdb.
     clean_restart ${testfile}
 
     # Disable hardware watchpoints if necessary.
-    if [target_info exists gdb,no_hardware_watchpoints] {
+    if {$skip_hw_watchpoint_tests_p} {
 	gdb_test_no_output "set can-use-hw-watchpoints 0" ""
     }
 
-    if ![runto_main] then {
-	fail "cannot run to main."
+    if {![runto_main]} {
 	return 0
     }
 
@@ -278,18 +307,38 @@ proc_with_prefix test_watchpoints { } {
 
 proc_with_prefix test_bkpt_internal { } {
     global srcfile testfile hex decimal
+    global skip_hw_watchpoint_tests_p
 
     # Start with a fresh gdb.
     clean_restart ${testfile}
 
     # Disable hardware watchpoints if necessary.
-    if [target_info exists gdb,no_hardware_watchpoints] {
+    if {$skip_hw_watchpoint_tests_p} {
 	gdb_test_no_output "set can-use-hw-watchpoints 0" ""
     }
-    if ![runto_main] then {
-	fail "cannot run to main."
+    if {![runto_main]} {
 	return 0
     }
+    delete_breakpoints
+    gdb_py_test_silent_cmd  "python bp1 = gdb.Breakpoint (\"main\", type=gdb.BP_BREAKPOINT, wp_class=gdb.WP_WRITE, internal=True )" \
+	"Set internal breakpoint" 0
+
+    set bp_num [get_python_valueof bp1.number "*DEFAULT*"]
+    set bp_addr [gdb_get_bp_addr $bp_num]
+
+    gdb_test "maint info break $bp_num" \
+	"$bp_num.*$bp_addr.*" \
+	"maint info breakpoint \$bp_num"
+
+    gdb_test "python gdb.execute(\'clear *$bp_addr\')" \
+	".*No breakpoint at \\*$bp_addr.*" \
+	"clear internal breakpoint"
+
+    # Check again, make sure that GDB really didn't delete the internal breakpoint.
+    gdb_test "maint info break $bp_num" \
+	"$bp_num.*$bp_addr.*" \
+	"maint info breakpoint \$bp_num after clear"
+
     delete_breakpoints
     gdb_py_test_silent_cmd  "python wp1 = gdb.Breakpoint (\"result\", type=gdb.BP_WATCHPOINT, wp_class=gdb.WP_WRITE, internal=True )" \
 	"Set watchpoint" 0
@@ -306,16 +355,16 @@ proc_with_prefix test_bkpt_internal { } {
 
 proc_with_prefix test_bkpt_eval_funcs { } {
     global srcfile testfile hex decimal
+    global skip_hw_watchpoint_tests_p
 
     # Start with a fresh gdb.
     clean_restart ${testfile}
 
     # Disable hardware watchpoints if necessary.
-    if [target_info exists gdb,no_hardware_watchpoints] {
+    if {$skip_hw_watchpoint_tests_p} {
 	gdb_test_no_output "set can-use-hw-watchpoints 0" ""
     }
-    if ![runto_main] then {
-	fail "cannot run to main."
+    if {![runto_main]} {
 	return 0
     }
     delete_breakpoints
@@ -428,8 +477,7 @@ proc_with_prefix test_bkpt_temporary { } {
     # Start with a fresh gdb.
     clean_restart ${testfile}
 
-    if ![runto_main] then {
-	fail "cannot run to main."
+    if {![runto_main]} {
 	return 0
     }
     delete_breakpoints
@@ -547,8 +595,7 @@ proc_with_prefix test_bkpt_explicit_loc {} {
     # Start with a fresh gdb.
     clean_restart ${testfile}
 
-    if ![runto_main] then {
-	fail "cannot run to main."
+    if {![runto_main]} {
 	return 0
     }
 
@@ -633,8 +680,7 @@ proc_with_prefix test_bkpt_qualified {} {
     set one_location_re "Breakpoint $decimal at $hex:.*line $decimal."
     set two_location_re "Breakpoint $decimal at $hex:.*2 locations."
 
-    if ![runto_main] then {
-	fail "cannot run to main."
+    if {![runto_main]} {
 	return 0
     }
 
@@ -703,8 +749,7 @@ proc_with_prefix test_bkpt_probe {} {
 	return -1
     }
 
-    if ![runto_main] then {
-	fail "cannot run to main."
+    if {![runto_main]} {
 	return 0
     }
 
@@ -714,10 +759,99 @@ proc_with_prefix test_bkpt_probe {} {
 	"-probe in spec string"
 }
 
+proc_with_prefix test_catchpoints {} {
+    global srcfile testfile
+    global gdb_prompt decimal
+
+    # Start with a fresh gdb.
+    clean_restart ${testfile}
+
+    if {![runto_main]} {
+	return 0
+    }
+
+    # Try to create a catchpoint, currently this isn't supported via
+    # the python api.
+    gdb_test "python gdb.Breakpoint (\"syscall\", type=gdb.BP_CATCHPOINT)" \
+	[multi_line \
+	     "gdb.error: BP_CATCHPOINT not supported" \
+	     "Error while executing Python code\\."] \
+	"create a catchpoint via the api"
+
+    # Setup a catchpoint.
+    set num "XXX"
+    gdb_test_multiple "catch throw" "" {
+	-re "The feature \'catch throw\' is not supported.*\r\n$gdb_prompt $" {
+	    unsupported "catch syscall isn't supported"
+	    return -1
+	}
+	-re "Catchpoint ($decimal) \\(throw\\)\r\n$gdb_prompt $" {
+	    set num $expect_out(1,string)
+	    pass $gdb_test_name
+	}
+    }
+
+    # Look for the catchpoint in the breakpoint list.
+    gdb_test_multiline "scan breakpoint list for BP_CATCHPOINT" \
+	"python" "" \
+	"def scan_bp_list ():" "" \
+	"  for b in gdb.breakpoints():" "" \
+	"    if b.type == gdb.BP_CATCHPOINT:" "" \
+	"      print(\"breakpoint #%d, type BP_CATCHPOINT\" % b.number)" "" \
+	"end" ""
+    gdb_test "python scan_bp_list ()" \
+	"breakpoint #${num}, type BP_CATCHPOINT" \
+	"scan breakpoint for BP_CATCHPOINT"
+
+    # Arrange to print something when GDB stops, then continue to the
+    # catchpoint and check we get the expected event.
+    gdb_test_multiline "setup stop event handler" \
+	"python" "" \
+	"def stop_handler (event):" "" \
+	"  if (isinstance (event, gdb.BreakpointEvent)" "" \
+	"      and isinstance (event.breakpoint, gdb.Breakpoint)" "" \
+	"      and event.breakpoint.type == gdb.BP_CATCHPOINT):" "" \
+	"    print (\"Stopped at catchpoint event: %d\" % event.breakpoint.number)" "" \
+	"end" "" \
+	"python gdb.events.stop.connect (stop_handler)" ""
+    gdb_test "continue" "Stopped at catchpoint event: ${num}"
+}
+
+# Test auto-disable is effective when notifying breakpoint_modified.
+
+proc_with_prefix test_bkpt_auto_disable { } {
+    global srcfile testfile hex decimal
+
+    # Start with a fresh gdb.
+    clean_restart ${testfile}
+
+    if {![runto_main]} {
+	return 0
+    }
+    delete_breakpoints
+
+    set mult_line [gdb_get_line_number "Break at multiply."]
+    gdb_breakpoint ${mult_line}
+    gdb_test_no_output "enable count 1 2" "one shot enable"
+    # Python 2 doesn't support print in lambda function, so use a named
+    # function instead.
+    gdb_test_multiline "Define print_bp_enabled" \
+	"python" "" \
+	"def print_bp_enabled (bp):" "" \
+	"    print (bp.enabled)" "" \
+	"end" ""
+    gdb_test_no_output \
+	"python gdb.events.breakpoint_modified.connect(print_bp_enabled)" \
+	"trap breakpoint_modified event"
+    gdb_test "continue" "False.*" "auto-disabling after enable count reached"
+}
+
 test_bkpt_basic
 test_bkpt_deletion
 test_bkpt_cond_and_cmds
 test_bkpt_invisible
+test_hardware_breakpoints
+test_catchpoints
 test_watchpoints
 test_bkpt_internal
 test_bkpt_eval_funcs
@@ -728,3 +862,4 @@ test_bkpt_events
 test_bkpt_explicit_loc
 test_bkpt_qualified
 test_bkpt_probe
+test_bkpt_auto_disable

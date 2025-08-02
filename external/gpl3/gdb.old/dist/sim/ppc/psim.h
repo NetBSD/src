@@ -23,7 +23,7 @@
 
 #include "basics.h"
 
-#include "gdb/remote-sim.h"
+#include "sim/sim.h"
 
 /* the system object */
 /* typedef struct _psim psim; */
@@ -47,14 +47,14 @@ typedef struct _psim_status {
 extern device *psim_tree
 (void);
 
-extern char **psim_options
+extern char * const *psim_options
 (device *root,
- char **argv,
+ char * const *argv,
  SIM_OPEN_KIND kind);
 
 extern void psim_command
 (device *root,
- char **argv);
+ char * const *argv);
 
 
 extern void psim_merge_device_file
@@ -79,8 +79,8 @@ extern void psim_init
 
 extern void psim_stack
 (psim *system,
- char **argv,
- char **envp);
+ char * const *argv,
+ char * const *envp);
 
 
 /* Run/stop the system */

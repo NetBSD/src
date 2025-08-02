@@ -1,6 +1,6 @@
 /* load.h --- interface to loading object files into the RX simulator.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of the GNU simulators.
@@ -23,7 +23,7 @@
 #define SIM_RL78_LOAD_H_
 
 #include "bfd.h"
-#include "gdb/callback.h"
+#include "sim/callback.h"
 
 void rl78_load (bfd *, host_callback *callbacks, const char * const simname);
 

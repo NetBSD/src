@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2020 Free Software Foundation, Inc.
+   Copyright 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -93,3 +93,4 @@
 .LASF0:
 	.string	"GNU C 4.8.2 20131212 (Red Hat 4.8.2-7) -mtune=generic -march=x86-64 -g"
 	.ident	"GCC: (GNU) 4.8.2 20131212 (Red Hat 4.8.2-7)"
+	.section	.note.GNU-stack,"",@progbits

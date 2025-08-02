@@ -1,5 +1,5 @@
 /* Simulator parallel routines for CGEN simulators (and maybe others).
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU instruction set simulator.
@@ -16,6 +16,11 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+/* This must come before any other includes.  */
+#include "defs.h"
+
+#include <stdlib.h>
 
 #include "sim-main.h"
 #include "cgen-mem.h"

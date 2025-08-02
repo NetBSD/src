@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2020 Free Software Foundation, Inc.
+# Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,7 +38,12 @@ proc do_test {type} {
 		"advance to marker"
 
 	    # And if it returned the full width of the result.
-	    gdb_test "print /d t" " = -1" "full width of the returned result"
+	    if {$type == "float" || $type == "double"} {
+		set flag ""
+	    } else {
+		set flag "/d"
+	    }
+	    gdb_test "print $flag t" " = -1" "full width of the returned result"
 	}
     }
 }
@@ -47,17 +52,23 @@ foreach type {{signed char} {short} {int} {long} {long long} {float} {double}} {
     if { $skip_float_test && ($type == "float" || $type == "double") } {
 	continue
     }
-    set typeesc [string map {{ } {\ }} $type]
-    set typenospace [string map {{ } -} $type]
+    set typenospace_dash \
+	[string map {{ } -} $type]
+    set typenospace_underscore \
+	[string map {{ } _} $type]
 
     standard_testfile .c return-nodebug1.c
 
-    set additional_flags "additional_flags=-DTYPE=$typeesc"
+    set additional_flags {}
+    lappend additional_flags \
+	additional_flags=-DTYPE_NOSPACE=$typenospace_underscore
+    lappend additional_flags \
+	additional_flags=-DTYPE_NOSPACE_$typenospace_underscore
 
     if {[prepare_for_testing_full "failed to prepare" \
-	     [list ${testfile}-${typenospace} debug \
-		  $srcfile [list debug $additional_flags] \
-		  $srcfile2 [list $additional_flags]]]} {
+	     [list ${testfile}-${typenospace_dash} debug \
+		  $srcfile [concat {debug} $additional_flags] \
+		  $srcfile2 $additional_flags]]} {
 	continue
     }
 

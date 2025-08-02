@@ -1,5 +1,5 @@
 /* General utility routines for the remote server for GDB.
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,13 +28,27 @@
 
 /* Generally useful subroutines used throughout the program.  */
 
+/* If in release mode, just exit.  This avoids potentially littering
+   the filesystem of small embedded targets with core files.  If in
+   development mode however, abort, producing core files to help with
+   debugging GDBserver.  */
+static void ATTRIBUTE_NORETURN
+abort_or_exit ()
+{
+#ifdef DEVELOPMENT
+  abort ();
+#else
+  exit (1);
+#endif
+}
+
 void
 malloc_failure (long size)
 {
   fprintf (stderr,
 	   PREFIX "ran out of memory while trying to allocate %lu bytes\n",
 	   (unsigned long) size);
-  exit (1);
+  abort_or_exit ();
 }
 
 /* Print the system error message for errno, and also mention STRING
@@ -82,7 +96,7 @@ vwarning (const char *string, va_list args)
   fprintf (stderr, "\n");
 }
 
-/* Report a problem internal to GDBserver, and exit.  */
+/* Report a problem internal to GDBserver, and abort/exit.  */
 
 void
 internal_verror (const char *file, int line, const char *fmt, va_list args)
@@ -91,7 +105,7 @@ internal_verror (const char *file, int line, const char *fmt, va_list args)
 %s:%d: A problem internal to " TOOLNAME " has been detected.\n", file, line);
   vfprintf (stderr, fmt, args);
   fprintf (stderr, "\n");
-  exit (1);
+  abort_or_exit ();
 }
 
 /* Report a problem internal to GDBserver.  */

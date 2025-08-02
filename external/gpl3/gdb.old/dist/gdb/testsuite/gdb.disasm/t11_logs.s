@@ -1175,3 +1175,4 @@ _start:
     rotr.l #2,@0x12345678:32         ;01046b281234567813f0
 
 	.end
+	.section	.note.GNU-stack,"",@progbits

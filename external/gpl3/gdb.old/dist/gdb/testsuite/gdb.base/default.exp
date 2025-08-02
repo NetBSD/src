@@ -1,4 +1,4 @@
-#   Copyright 1988-2020 Free Software Foundation, Inc.
+#   Copyright 1988-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,8 +66,6 @@ if !$use_gdb_stub {
     foreach i "bt ba bac" {
 	gdb_test $i "No stack." "backtrace \"$i\" abbreviation"
     }
-} else {
-    warning "Skipping backtrace and break tests because of GDB stub."
 }
 
 gdb_test "continue" "The program is not being run."
@@ -186,7 +184,7 @@ gdb_expect {
     }
     -re "exec-file.*A program is being debugged already.  Kill it. .y or n.*$" {
 	send_gdb "n\n"
-	if $verbose>1 then {
+	if {$verbose > 1} {
 	    send_user "\tDidn't kill program being debugged\n"
 	}
 	gdb_expect -re "$gdb_prompt $" { }
@@ -210,7 +208,7 @@ gdb_expect {
 	    { pass "file" }
     -re ".*A program is being debugged already.  Kill it. .y or n.*$" {
 	send_gdb "n\n"
-	if $verbose>1 then {
+	if {$verbose > 1} {
 	    send_user "\t\tDidn't kill program being debugged\n"
 	}
 	gdb_expect -re "$gdb_prompt $" { }
@@ -455,7 +453,7 @@ gdb_test "restore" "You can't do that without a process to debug\."
 #test return
 # The middle case accomodated the obsolete a29k, where doing the "ni"
 # above causes an initial stack to be created.
-gdb_test "return" "No selected frame..*" "return"  "Make .* return now.*y or n. $" "y"
+gdb_test "return" "No selected frame..*"
 
 
 #test reverse-search
@@ -525,7 +523,8 @@ gdb_test_no_output "set print asm-demangle" "set print asm-demangle"
 #test set print demangle
 gdb_test_no_output "set print demangle" "set print demangle"
 #test set print elements
-gdb_test "set print elements" "Argument required .integer to set it to.*"
+gdb_test "set print elements" \
+	 "Argument required \\(integer to set it to, or \"unlimited\"\\)\\."
 #test set print object
 gdb_test_no_output "set print object" "set print object"
 #test set print pretty
@@ -585,6 +584,7 @@ set show_conv_list \
 	{$_thread = 0} \
 	{$_gthread = 0} \
 	{$_inferior = 1} \
+	{$_inferior_thread_count = 0} \
 	{$_exception = <error: No frame selected>} \
 	{$_probe_argc = <error: No frame selected>} \
 	{$_probe_arg0 = <error: No frame selected>} \
@@ -606,8 +606,8 @@ set show_conv_list \
 	{$_gdb_maint_setting = <internal function _gdb_maint_setting>} \
 	{$_gdb_setting_str = <internal function _gdb_setting_str>} \
 	{$_gdb_setting = <internal function _gdb_setting>} \
-	{$_gdb_major = 11} \
-	{$_gdb_minor = 1} \
+	{$_gdb_major = 13} \
+	{$_gdb_minor = 2} \
 	{$_shell_exitsignal = void} \
 	{$_shell_exitcode = 0} \
     }
@@ -703,7 +703,7 @@ set show_confirm_seen 0
 set show_prompt_seen 0
 gdb_test_multiple "show" "show" {
     -re "confirm:  *Whether to confirm potentially dangerous operations is on.(\[^\r\n\]*\[\r\n\])+history filename:  *The filename in which to record the command history is (\[^\r\n\]*\[\r\n\])+history save:  *Saving of the history record on exit is on.(\[^\r\n\]*\[\r\n\])+history size:  *The size of the command history is(\[^\r\n\]*\[\r\n\])+listsize:  *Number of source lines gdb will list by default is 10(\[^\r\n]*\[\r\n\])+print elements:  *Limit on string chars or array elements to print is 200." {
-	verbose "Confirm dislayed"
+	verbose "Confirm displayed"
 	set show_confirm_seen 1
 	exp_continue
     }
@@ -748,7 +748,7 @@ gdb_expect {
     -re "No core file specified..*$gdb_prompt $" { pass "target core" }
     -re ".*A program is being debugged already.  Kill it. .y or n.*$" {
 	send_gdb "n\n"
-	if $verbose>1 then {
+	if {$verbose > 1} {
 	    send_user "\t\tDidn't kill program being debugged\n"
 	}
 	gdb_expect -re "$gdb_prompt $" { }
@@ -766,7 +766,7 @@ gdb_expect {
 			{ pass "target exec" }
 	-re ".*A program is being debugged already.  Kill it. .y or n.*$" {
 	    send_gdb "n\n"
-	    if $verbose>1 then {
+	    if {$verbose > 1} {
 		send_user "\t\tDidn't kill program being debugged\n"
 	    }
 	    gdb_expect -re "$gdb_prompt $" { }
@@ -783,7 +783,7 @@ gdb_expect {
 	{ pass "target remote" }
     -re ".*A program is being debugged already.  Kill it. .y or n.*$" {
 	send_gdb "n\n"
-	if $verbose>1 then {
+	if {$verbose > 1} {
 	    send_user "\t\tDidn't kill program being debugged\n"
 	}
 	gdb_expect -re "$gdb_prompt $" { }

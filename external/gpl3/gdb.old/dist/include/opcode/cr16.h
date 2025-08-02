@@ -1,5 +1,5 @@
 /* cr16.h -- Header file for CR16 opcode and register tables.
-   Copyright (C) 2007-2020 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
    Contributed by M R Swami Reddy
 
    This file is part of GAS, GDB and the GNU binutils.
@@ -425,7 +425,6 @@ extern const char * cr16_no_op_insn[];
 
 /* Utility macros for string comparison.  */
 #define streq(a, b)           (strcmp (a, b) == 0)
-#define strneq(a, b, c)       (strncmp (a, b, c) == 0)
 
 /* Long long type handling.  */
 /* Replace all appearances of 'long long int' with LONGLONG.  */

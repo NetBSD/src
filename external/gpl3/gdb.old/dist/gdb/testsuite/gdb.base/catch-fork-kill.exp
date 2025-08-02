@@ -1,4 +1,4 @@
-# Copyright 2016-2020 Free Software Foundation, Inc.
+# Copyright 2016-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,7 +58,6 @@ proc do_test {fork_kind exit_kind} {
 	clean_restart $testfile
 
 	if ![runto_main] {
-	    untested "could not run to main"
 	    return -1
 	}
 
@@ -75,8 +74,7 @@ proc do_test {fork_kind exit_kind} {
 	    "Catchpoint \[0-9\]* \\(${fork_kind}ed process \[0-9\]*\\),.*" \
 	    "continue to grandchild ${fork_kind}"
 
-	gdb_test "kill inferior 2" "" "kill child" \
-	    "Kill the program being debugged.*y or n. $" "y"
+	gdb_test "kill inferior 2" "" "kill child"
 
 	gdb_test "inferior 1" "Switching to inferior 1 .*" "switch to parent"
 

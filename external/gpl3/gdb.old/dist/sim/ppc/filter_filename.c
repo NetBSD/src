@@ -17,8 +17,6 @@
  
     */
 
-#include "config.h"
-#include "ppc-config.h"
 #include "filter_filename.h"
 
 /* Shorten traces by eliminating the directory component to filenames.  */

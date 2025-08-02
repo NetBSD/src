@@ -52,3 +52,4 @@ _fp_misc_tests:
 	sts	fpscr,r3
 	sts.l	fpscr,@-r3
 
+	.section	.note.GNU-stack,"",@progbits

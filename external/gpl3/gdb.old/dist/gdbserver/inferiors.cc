@@ -1,5 +1,5 @@
 /* Inferior process information for the remote server for GDB.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -26,26 +26,27 @@
 std::list<process_info *> all_processes;
 std::list<thread_info *> all_threads;
 
+/* The current process.  */
+static process_info *current_process_;
+
+/* The current thread.  This is either a thread of CURRENT_PROCESS, or
+   NULL.  */
 struct thread_info *current_thread;
 
-/* The current working directory used to start the inferior.  */
-static const char *current_inferior_cwd = NULL;
+/* The current working directory used to start the inferior.
+
+   Empty if not specified.  */
+static std::string current_inferior_cwd;
 
 struct thread_info *
 add_thread (ptid_t thread_id, void *target_data)
 {
-  struct thread_info *new_thread = XCNEW (struct thread_info);
-
-  new_thread->id = thread_id;
-  new_thread->last_resume_kind = resume_continue;
-  new_thread->last_status.kind = TARGET_WAITKIND_IGNORE;
+  thread_info *new_thread = new thread_info (thread_id, target_data);
 
   all_threads.push_back (new_thread);
 
   if (current_thread == NULL)
-    current_thread = new_thread;
-
-  new_thread->target_data = target_data;
+    switch_to_thread (new_thread);
 
   return new_thread;
 }
@@ -91,8 +92,7 @@ find_any_thread_of_pid (int pid)
 static void
 free_one_thread (thread_info *thread)
 {
-  free_register_cache (thread_regcache_data (thread));
-  free (thread);
+  delete thread;
 }
 
 void
@@ -103,9 +103,9 @@ remove_thread (struct thread_info *thread)
 
   discard_queued_stop_replies (ptid_of (thread));
   all_threads.remove (thread);
-  free_one_thread (thread);
   if (current_thread == thread)
-    current_thread = NULL;
+    switch_to_thread (nullptr);
+  free_one_thread (thread);
 }
 
 void *
@@ -134,7 +134,8 @@ clear_inferiors (void)
 
   clear_dlls ();
 
-  current_thread = NULL;
+  switch_to_thread (nullptr);
+  current_process_ = nullptr;
 }
 
 struct process_info *
@@ -158,6 +159,8 @@ remove_process (struct process_info *process)
   free_all_breakpoints (process);
   gdb_assert (find_thread_process (process) == NULL);
   all_processes.remove (process);
+  if (current_process () == process)
+    switch_to_process (nullptr);
   delete process;
 }
 
@@ -210,8 +213,7 @@ get_thread_process (const struct thread_info *thread)
 struct process_info *
 current_process (void)
 {
-  gdb_assert (current_thread != NULL);
-  return get_thread_process (current_thread);
+  return current_process_;
 }
 
 /* See gdbsupport/common-gdbthread.h.  */
@@ -220,7 +222,19 @@ void
 switch_to_thread (process_stratum_target *ops, ptid_t ptid)
 {
   gdb_assert (ptid != minus_one_ptid);
-  current_thread = find_thread_ptid (ptid);
+  switch_to_thread (find_thread_ptid (ptid));
+}
+
+/* See gdbthread.h.  */
+
+void
+switch_to_thread (thread_info *thread)
+{
+  if (thread != nullptr)
+    current_process_ = get_thread_process (thread);
+  else
+    current_process_ = nullptr;
+  current_thread = thread;
 }
 
 /* See inferiors.h.  */
@@ -228,27 +242,39 @@ switch_to_thread (process_stratum_target *ops, ptid_t ptid)
 void
 switch_to_process (process_info *proc)
 {
-  int pid = pid_of (proc);
-
-  current_thread = find_any_thread_of_pid (pid);
+  current_process_ = proc;
+  current_thread = nullptr;
 }
 
 /* See gdbsupport/common-inferior.h.  */
 
-const char *
+const std::string &
 get_inferior_cwd ()
 {
   return current_inferior_cwd;
 }
 
-/* See gdbsupport/common-inferior.h.  */
+/* See inferiors.h.  */
 
 void
-set_inferior_cwd (const char *cwd)
+set_inferior_cwd (std::string cwd)
 {
-  xfree ((void *) current_inferior_cwd);
-  if (cwd != NULL)
-    current_inferior_cwd = xstrdup (cwd);
+  current_inferior_cwd = std::move (cwd);
+}
+
+scoped_restore_current_thread::scoped_restore_current_thread ()
+{
+  m_process = current_process_;
+  m_thread = current_thread;
+}
+
+scoped_restore_current_thread::~scoped_restore_current_thread ()
+{
+  if (m_dont_restore)
+    return;
+
+  if (m_thread != nullptr)
+    switch_to_thread (m_thread);
   else
-    current_inferior_cwd = NULL;
+    switch_to_process (m_process);
 }

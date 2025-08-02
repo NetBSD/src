@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2020 Free Software Foundation, Inc.
+   Copyright 2008-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -230,7 +230,7 @@ struct nullstr
 struct string_repr string_1 = { { "one" } };
 struct string_repr string_2 = { { "two" } };
 
-static int
+static int __attribute__ ((used))
 eval_func (int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8)
 {
   return p1;

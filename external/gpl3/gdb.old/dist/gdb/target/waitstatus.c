@@ -1,6 +1,6 @@
 /* Target waitstatus implementations.
 
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,54 +20,51 @@
 #include "gdbsupport/common-defs.h"
 #include "waitstatus.h"
 
-/* Return a pretty printed form of target_waitstatus.  */
+/* See waitstatus.h.  */
 
 std::string
-target_waitstatus_to_string (const struct target_waitstatus *ws)
+target_waitstatus::to_string () const
 {
-  const char *kind_str = "status->kind = ";
+  std::string str = string_printf
+    ("status->kind = %s", target_waitkind_str (this->kind ()));
 
-  switch (ws->kind)
+/* Make sure the compiler warns if a new TARGET_WAITKIND enumerator is added
+   but not handled here.  */
+DIAGNOSTIC_PUSH
+DIAGNOSTIC_ERROR_SWITCH
+  switch (this->kind ())
     {
     case TARGET_WAITKIND_EXITED:
-      return string_printf ("%sexited, status = %d",
-			    kind_str, ws->value.integer);
-    case TARGET_WAITKIND_STOPPED:
-      return string_printf ("%sstopped, signal = %s",
-			    kind_str,
-			    gdb_signal_to_symbol_string (ws->value.sig));
-    case TARGET_WAITKIND_SIGNALLED:
-      return string_printf ("%ssignalled, signal = %s",
-			    kind_str,
-			    gdb_signal_to_symbol_string (ws->value.sig));
-    case TARGET_WAITKIND_LOADED:
-      return string_printf ("%sloaded", kind_str);
-    case TARGET_WAITKIND_FORKED:
-      return string_printf ("%sforked", kind_str);
-    case TARGET_WAITKIND_VFORKED:
-      return string_printf ("%svforked", kind_str);
-    case TARGET_WAITKIND_EXECD:
-      return string_printf ("%sexecd", kind_str);
-    case TARGET_WAITKIND_VFORK_DONE:
-      return string_printf ("%svfork-done", kind_str);
-    case TARGET_WAITKIND_SYSCALL_ENTRY:
-      return string_printf ("%sentered syscall", kind_str);
-    case TARGET_WAITKIND_SYSCALL_RETURN:
-      return string_printf ("%sexited syscall", kind_str);
-    case TARGET_WAITKIND_SPURIOUS:
-      return string_printf ("%sspurious", kind_str);
-    case TARGET_WAITKIND_IGNORE:
-      return string_printf ("%signore", kind_str);
-    case TARGET_WAITKIND_NO_HISTORY:
-      return string_printf ("%sno-history", kind_str);
-    case TARGET_WAITKIND_NO_RESUMED:
-      return string_printf ("%sno-resumed", kind_str);
-    case TARGET_WAITKIND_THREAD_CREATED:
-      return string_printf ("%sthread created", kind_str);
     case TARGET_WAITKIND_THREAD_EXITED:
-      return string_printf ("%sthread exited, status = %d",
-			    kind_str, ws->value.integer);
-    default:
-      return string_printf ("%sunknown???", kind_str);
+      return string_appendf (str, ", exit_status = %d", this->exit_status ());
+
+    case TARGET_WAITKIND_STOPPED:
+    case TARGET_WAITKIND_SIGNALLED:
+      return string_appendf (str, ", sig = %s",
+			     gdb_signal_to_symbol_string (this->sig ()));
+
+    case TARGET_WAITKIND_FORKED:
+    case TARGET_WAITKIND_VFORKED:
+      return string_appendf (str, ", child_ptid = %s",
+			     this->child_ptid ().to_string ().c_str ());
+
+    case TARGET_WAITKIND_EXECD:
+      return string_appendf (str, ", execd_pathname = %s",
+			     this->execd_pathname ());
+
+    case TARGET_WAITKIND_LOADED:
+    case TARGET_WAITKIND_VFORK_DONE:
+    case TARGET_WAITKIND_SPURIOUS:
+    case TARGET_WAITKIND_SYSCALL_ENTRY:
+    case TARGET_WAITKIND_SYSCALL_RETURN:
+    case TARGET_WAITKIND_IGNORE:
+    case TARGET_WAITKIND_NO_HISTORY:
+    case TARGET_WAITKIND_NO_RESUMED:
+    case TARGET_WAITKIND_THREAD_CREATED:
+      return str;
     }
+DIAGNOSTIC_POP
+
+  gdb_assert_not_reached ("invalid target_waitkind value: %d",
+			  (int) this->kind ());
 }

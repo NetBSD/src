@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@ if { [prepare_for_testing "failed to prepare" ${testfile} $srcfile] } {
 }
 
 if ![runto_main] {
-    untested "could not run to main"
     return -1
 }
 # Delete all breakpoints so that the "runto_main" breakpoint above
@@ -63,7 +62,6 @@ gdb_test "save breakpoint $bps" "" "save breakpoint bps"
 # Now start a new debugger session...
 clean_restart $testfile
 if ![runto_main] {
-    fail "cannot restart program"
     return -1
 }
 # Delete all breakpoints so that the "runto_main" breakpoint above

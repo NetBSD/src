@@ -1,4 +1,4 @@
-#   Copyright 2018-2020 Free Software Foundation, Inc.
+#   Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -85,6 +85,7 @@ proc test_file { file } {
 	    switch $procname {
 		"is_address_zero_readable" { set setup_gdb 1 }
 		"target_is_gdbserver" { set setup_gdb 1 }
+		"supports_memtag" { set setup_gdb 1 }
 		default {set setup_gdb 0 }
 	    }
 
@@ -94,9 +95,7 @@ proc test_file { file } {
 
 	    test_proc $procname
 
-	    if { $setup_gdb } {
-		gdb_exit
-	    }
+	    gdb_exit
 	}
     }
 }

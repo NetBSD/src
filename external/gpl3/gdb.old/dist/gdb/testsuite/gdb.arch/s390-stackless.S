@@ -1,4 +1,4 @@
-/* Copyright 2015-2020 Free Software Foundation, Inc.
+/* Copyright 2015-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,3 +31,4 @@ main:	la	%r15,3(0,0)
 	.byte	0,1
 1:	st	%r15,0(%r15)
 	br	%r14
+	.section	.note.GNU-stack,"",@progbits

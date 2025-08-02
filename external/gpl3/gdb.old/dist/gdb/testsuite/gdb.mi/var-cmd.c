@@ -1,4 +1,4 @@
-/* Copyright 1999-2020 Free Software Foundation, Inc.
+/* Copyright 1999-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -207,7 +207,8 @@ subroutine1 (int i, long *l)
 void
 do_block_tests ()
 {
-  int cb = 12;
+  int cb = 0;
+  cb = 12;
 
   {
     int foo;
@@ -566,7 +567,7 @@ do_anonymous_type_tests (void)
     };
   } v = {1, {2}, {3}};
 
-  anon = malloc (sizeof (struct anonymous));
+  anon = (struct anonymous *) malloc (sizeof (struct anonymous));
   anon->a = 1;
   anon->b = 2;
   anon->c = (char *) 3;

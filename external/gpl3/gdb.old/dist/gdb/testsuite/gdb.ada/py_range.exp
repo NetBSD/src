@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Free Software Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,3 +40,8 @@ gdb_test "python print(int(gdb.parse_and_eval('si')))" \
 
 gdb_test "python print(int(gdb.parse_and_eval('ir')))" \
          "974"
+
+gdb_test "python print(gdb.parse_and_eval('si').type)" \
+    "foo\\.small_integer" "print type"
+gdb_test "python print(gdb.parse_and_eval('si').type.name)" \
+    "foo\\.small_integer" "print type name"

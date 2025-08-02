@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2019-2020 Free Software Foundation, Inc.
+   Copyright 2019-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ tree_check (tree *t, int i)
     abort();
   tree *x = t;
   return x;
-}
+} // tree-check
 
 #endif	/* USE_NEXT_INLINE_H */
 
@@ -54,13 +54,13 @@ get_alias_set (tree *t)
       && TREE_TYPE (t).z != 3)
     return 0;
   return 1;
-}
+} // get_alias_set
 
 tree xx;
 
 int
 main()
 {
-  get_alias_set (&xx);
+  get_alias_set (&xx);  /* Beginning of main */
   return 0;
-}
+} // main

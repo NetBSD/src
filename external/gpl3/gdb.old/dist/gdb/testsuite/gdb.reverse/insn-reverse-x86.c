@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2017-2020 Free Software Foundation, Inc.
+   Copyright 2017-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -85,6 +85,7 @@ rdrand (void)
   __asm__ volatile ("rdrand %%sp;" : "=r" (number));
   __asm__ volatile ("mov %%ax, %%sp;" : "=r" (number));
 
+#ifdef __x86_64__
   __asm__ volatile ("rdrand %%r8w;" : "=r" (number));
   __asm__ volatile ("rdrand %%r9w;" : "=r" (number));
   __asm__ volatile ("rdrand %%r10w;" : "=r" (number));
@@ -93,6 +94,7 @@ rdrand (void)
   __asm__ volatile ("rdrand %%r13w;" : "=r" (number));
   __asm__ volatile ("rdrand %%r14w;" : "=r" (number));
   __asm__ volatile ("rdrand %%r15w;" : "=r" (number));
+#endif
 
   /* 32-bit random numbers.  */
   __asm__ volatile ("rdrand %%eax;" : "=r" (number));
@@ -100,6 +102,7 @@ rdrand (void)
   __asm__ volatile ("rdrand %%ecx;" : "=r" (number));
   __asm__ volatile ("rdrand %%edx;" : "=r" (number));
 
+#ifdef __x86_64__
   __asm__ volatile ("mov %%rdi, %%rax;" : "=r" (number));
   __asm__ volatile ("rdrand %%edi;" : "=r" (number));
   __asm__ volatile ("mov %%rax, %%rdi;" : "=r" (number));
@@ -155,6 +158,7 @@ rdrand (void)
   __asm__ volatile ("rdrand %%r13;" : "=r" (number));
   __asm__ volatile ("rdrand %%r14;" : "=r" (number));
   __asm__ volatile ("rdrand %%r15;" : "=r" (number));
+#endif
 }
 
 /* Test rdseed support for various output registers.  */
@@ -190,6 +194,7 @@ rdseed (void)
   __asm__ volatile ("rdseed %%sp;" : "=r" (seed));
   __asm__ volatile ("mov %%ax, %%sp;" : "=r" (seed));
 
+#ifdef __x86_64__
   __asm__ volatile ("rdseed %%r8w;" : "=r" (seed));
   __asm__ volatile ("rdseed %%r9w;" : "=r" (seed));
   __asm__ volatile ("rdseed %%r10w;" : "=r" (seed));
@@ -198,6 +203,7 @@ rdseed (void)
   __asm__ volatile ("rdseed %%r13w;" : "=r" (seed));
   __asm__ volatile ("rdseed %%r14w;" : "=r" (seed));
   __asm__ volatile ("rdseed %%r15w;" : "=r" (seed));
+#endif
 
   /* 32-bit random seeds.  */
   __asm__ volatile ("rdseed %%eax;" : "=r" (seed));
@@ -205,6 +211,7 @@ rdseed (void)
   __asm__ volatile ("rdseed %%ecx;" : "=r" (seed));
   __asm__ volatile ("rdseed %%edx;" : "=r" (seed));
 
+#ifdef __x86_64__
   __asm__ volatile ("mov %%rdi, %%rax;" : "=r" (seed));
   __asm__ volatile ("rdseed %%edi;" : "=r" (seed));
   __asm__ volatile ("mov %%rax, %%rdi;" : "=r" (seed));
@@ -260,6 +267,7 @@ rdseed (void)
   __asm__ volatile ("rdseed %%r13;" : "=r" (seed));
   __asm__ volatile ("rdseed %%r14;" : "=r" (seed));
   __asm__ volatile ("rdseed %%r15;" : "=r" (seed));
+#endif
 }
 
 /* Initialize arch-specific bits.  */

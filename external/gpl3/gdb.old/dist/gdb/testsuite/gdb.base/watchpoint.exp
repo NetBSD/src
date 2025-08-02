@@ -1,4 +1,4 @@
-# Copyright 1992-2020 Free Software Foundation, Inc.
+# Copyright 1992-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,12 +15,15 @@
 
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
+# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# processor.  On PowerPC, the check runs a small test program under gdb
+# to determine if the Power processor supports HW watchpoints.  The check
+# must be done before starting the test so as to not disrupt the execution
+# of the actual test.
+
+set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
 
 standard_testfile
-
-if [get_compiler_info] {
-    return -1
-}
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested "failed to compile"
@@ -62,7 +65,7 @@ proc initialize {} {
     }
 
 
-    if [gdb_test "info break" "1\[ \]*breakpoint.*marker1.*\r\n2\[ \]*breakpoint.*marker2.*" "info break in watchpoint.exp" ] { 
+    if [gdb_test "info break" "1\[ \]*breakpoint.*marker1.*\r\n2\[ \]*breakpoint.*marker2.*" "info break" ] {
       return 0
     }
 
@@ -269,7 +272,7 @@ proc test_disabling_watchpoints {} {
 proc test_stepping {} {
     global gdb_prompt
 
-    if [runto marker1] then {
+    if {[runto marker1]} {
 	gdb_test "watch ival2" ".*\[Ww\]atchpoint \[0-9\]*: ival2"
 
 	# Well, let's not be too mundane.  It should be a *bit* of a challenge
@@ -309,7 +312,7 @@ proc test_stepping {} {
 	    default { fail "back at main from marker1 (timeout)" ; return }
 	}
 
-	gdb_test "next" "for \\(count = 0.*" "next to `for' in watchpoint.exp"
+	gdb_test "next" "for \\(count = 0.*" "next to `for'"
 
 	# Now test that "until" works.  It's a bit tricky to test
 	# "until", because compilers don't always arrange the code
@@ -348,7 +351,7 @@ proc test_watchpoint_triggered_in_syscall {} {
     set x 0
     set y 0
     set testname "watch buffer passed to read syscall"
-    if [runto marker2] then {
+    if {[runto marker2]} {
 	gdb_test "watch buf\[0\]" ".*\[Ww\]atchpoint \[0-9\]*: buf\\\[0\\\]"
 	gdb_test "watch buf\[1\]" ".*\[Ww\]atchpoint \[0-9\]*: buf\\\[1\\\]"
 	gdb_test "watch buf\[2\]" ".*\[Ww\]atchpoint \[0-9\]*: buf\\\[2\\\]"
@@ -406,7 +409,7 @@ proc test_watchpoint_triggered_in_syscall {} {
 	}
 
 	# Did we find what we were looking for?  If not, flunk it.
-	if [expr $x==$y] then { pass $testname } else { fail "$testname (only triggered $x watchpoints, expected $y)"}
+	if {[expr $x==$y]} { pass $testname } else { fail "$testname (only triggered $x watchpoints, expected $y)"}
 
 	# Continue until we hit the finishing marker function.
 	# Make sure we hit no more watchpoints.
@@ -428,7 +431,7 @@ proc test_watchpoint_triggered_in_syscall {} {
 proc test_complex_watchpoint {} {
     global gdb_prompt
 
-    if [runto marker4] then {
+    if {[runto marker4]} {
 	gdb_test "watch ptr1->val" ".*\[Ww\]atchpoint \[0-9\]*: ptr1->val"
 	gdb_test "break marker5" ".*Breakpoint.*"
 
@@ -556,7 +559,7 @@ proc test_watchpoint_and_breakpoint {} {
     # This is a test for PR breakpoints/7143, which involves setting a
     # watchpoint right after you've reached a breakpoint.
 
-    if [runto func3] then {
+    if {[runto func3]} {
 	gdb_breakpoint [gdb_get_line_number "second x assignment"]
 	gdb_continue_to_breakpoint "second x assignment"
 	gdb_test "watch x" ".*atchpoint \[0-9\]+: x"
@@ -604,9 +607,9 @@ proc test_watch_location {} {
     gdb_continue_to_breakpoint "func5 breakpoint here"
 
     # Check first if a null pointer can be dereferenced on the target.
-    gdb_test_multiple "p *nullptr" "" {
+    gdb_test_multiple "p *null_ptr" "" {
 	-re "Cannot access memory at address 0x0.*$gdb_prompt $" {
-	    gdb_test "watch -location nullptr->p->x" \
+	    gdb_test "watch -location null_ptr->p->x" \
 		"Cannot access memory at address 0x0"
 	}
 	-re ".*$gdb_prompt $" {
@@ -628,13 +631,14 @@ proc test_watch_location {} {
 proc test_wide_location_1 {} {
     global no_hw
     global gdb_prompt
+    global skip_hw_watchpoint_tests_p
 
     # This test watches two words on most 32-bit ABIs, and one word on
     # most 64-bit ABIs.
 
     # Platforms where the target can't watch such a large region
     # should clear hw_expected below.
-    if { $no_hw || [target_info exists gdb,no_hardware_watchpoints]
+    if { $no_hw || $skip_hw_watchpoint_tests_p
          || [istarget arm*-*-*]
          || ([istarget powerpc*-*-*] && ![is_lp64_target])} {
 	set hw_expected 0
@@ -675,13 +679,14 @@ proc test_wide_location_1 {} {
 proc test_wide_location_2 {} {
     global no_hw
     global gdb_prompt
+    global skip_hw_watchpoint_tests_p
 
     # This test watches four words on most 32-bit ABIs, and two words
     # on 64-bit ABIs.
 
     # Platforms where the target can't watch such a large region
     # should clear hw_expected below.
-    if { $no_hw || [target_info exists gdb,no_hardware_watchpoints]
+    if { $no_hw || $skip_hw_watchpoint_tests_p
          || [istarget arm*-*-*]
          || [istarget powerpc*-*-*]} {
 	set hw_expected 0
@@ -725,7 +730,7 @@ proc test_inaccessible_watchpoint {} {
     # This is a test for watchpoints on currently inaccessible (but later
     # valid) memory.
 
-    if [runto func4] then {
+    if {[runto func4]} {
 	# Make sure we only allow memory access errors.
 	set msg "watchpoint refused to insert on nonexistent struct member"
 	gdb_test_multiple "watch struct1.nosuchmember" $msg {
@@ -798,6 +803,7 @@ proc test_inaccessible_watchpoint {} {
 
 proc test_no_hw_watchpoints {} {
     global testfile
+    global skip_hw_watchpoint_tests_p
 
     clean_restart $testfile
 
@@ -805,7 +811,9 @@ proc test_no_hw_watchpoints {} {
     # (This proves rather little on kernels that don't support
     # fast watchpoints, but still...)
     #
-    if ![runto_main] then { fail "watch tests suppressed" }
+    if {![runto_main]} {
+	return
+    }
 
     gdb_test_no_output "set can-use-hw-watchpoints 0" "disable fast watches"
 
@@ -841,7 +849,7 @@ proc test_no_hw_watchpoints {} {
 
 
     # Re-enable hardware watchpoints if necessary.
-    if ![target_info exists gdb,no_hardware_watchpoints] {
+    if {!$skip_hw_watchpoint_tests_p} {
         gdb_test_no_output "set can-use-hw-watchpoints 1" ""
     }
 }
@@ -893,8 +901,9 @@ proc test_watchpoint_in_big_blob {} {
 
 proc test_watch_register_location {} {
     global no_hw
+    global skip_hw_watchpoint_tests_p
 
-    if {!$no_hw && ![target_info exists gdb,no_hardware_watchpoints]} {
+    if {!$no_hw && !$skip_hw_watchpoint_tests_p} {
 	# Non-memory read/access watchpoints are not supported, they would
 	# require software read/access watchpoint support (which is not
 	# currently available).
@@ -918,14 +927,16 @@ test_no_hw_watchpoints
 proc do_tests {} {
     global testfile
     global no_hw
+    global skip_hw_watchpoint_tests_p
 
     clean_restart $testfile
 
-    if {$no_hw || [target_info exists gdb,no_hardware_watchpoints]} {
-	gdb_test_no_output "set can-use-hw-watchpoints 0" ""
+    if {$no_hw || $skip_hw_watchpoint_tests_p} {
+	gdb_test_no_output "set can-use-hw-watchpoints 0"\
+	    "disable fast watches, 1"
     }
 
-    if [initialize] then {
+    if {[initialize]} {
 
 	test_simple_watchpoint
 
@@ -940,15 +951,16 @@ proc do_tests {} {
     # `initialize' anymore.
     clean_restart $testfile
 
-    if {$no_hw || [target_info exists gdb,no_hardware_watchpoints]} {
-	gdb_test_no_output "set can-use-hw-watchpoints 0" ""
+    if {$no_hw || $skip_hw_watchpoint_tests_p} {
+	gdb_test_no_output "set can-use-hw-watchpoints 0" \
+	    "disable fast watches, 2"
     }
 
     # Only enabled for some targets merely because it has not been tested 
     # elsewhere.
     # On sparc-sun-sunos4.1.3, GDB was running all the way to the marker4 
     # breakpoint before stopping for the watchpoint.  I don't know why.
-    if {[istarget "hppa*-*-*"]} then {
+    if {[istarget "hppa*-*-*"]} {
 	test_watchpoint_triggered_in_syscall
     }
 
@@ -977,7 +989,7 @@ proc do_tests {} {
 # watchpoints force-disabled.
 
 do_tests
-if ![target_info exists gdb,no_hardware_watchpoints] {
+if {!$skip_hw_watchpoint_tests_p} {
     with_test_prefix "no-hw" {
 	set no_hw 1
 	do_tests

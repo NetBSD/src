@@ -15,6 +15,9 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include "armdefs.h"
 #include "armemu.h"
 #include "armos.h"
@@ -915,6 +918,68 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
       }
       return 1;
 
+    case 0x71:
+    case 0x73:
+      {
+	ARMword valn, valm;
+	/* SDIV<c> <Rd>,<Rn>,<Rm>
+	   UDIV<c> <Rd>,<Rn>,<Rm>
+	   instr[31,28] = cond
+	   instr[27,20] = 0111 0001 (SDIV), 0111 0011 (UDIV)
+	   instr[21,21] = sign
+	   instr[19,16] = Rn
+	   instr[15,12] = 1111
+	   instr[11, 8] = Rd
+	   instr[ 7, 4] = 1111
+	   instr[ 3, 0] = Rm	*/
+	/* These bit-positions are confusing!
+           instr[15,12] = Rd
+	   instr[11, 8] = 1111	*/
+
+#if 0	/* This is what I would expect:  */
+	Rn = BITS (16, 19);
+	Rd = BITS (8, 11);
+	Rm = BITS (0, 3);
+#else	/* This seem to work:  */
+	Rd = BITS (16, 19);
+	Rm = BITS (8, 11);
+	Rn = BITS (0, 3);
+#endif
+	if (Rn == 15 || Rd == 15 || Rm == 15
+	    || Rn == 13 || Rd == 13 || Rm == 13)
+	  {
+	    ARMul_UndefInstr (state, instr);
+	    state->Emulate = FALSE;
+	    break;
+	  }
+
+	valn = state->Reg[Rn];
+	valm = state->Reg[Rm];
+
+	if (valm == 0)
+	  {
+#if 0	
+	    /* Exceptions: UsageFault, address 20
+	       Note: UsageFault is for Cortex-M; I don't know what it would be on non-Cortex-M.  */
+	    ARMul_Abort (state, address);
+#endif
+	    printf ("Unhandled v6 insn: %cDIV divide by zero exception\n", "SU"[BIT(21)]);
+	  }
+	else
+	  {
+	    if(BIT(21))
+	      {
+		val = valn / valm;
+	      }
+	    else
+	      {
+		val = ((ARMsword)valn / (ARMsword)valm);
+	      }
+	    state->Reg[Rd] = val;
+	  }
+	return 1;
+      }
+
     case 0x7c:
     case 0x7d:
       {
@@ -963,7 +1028,6 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 	  }
 	return 1;
       }
-
     case 0x7b:
     case 0x7a: /* SBFX<c> <Rd>,<Rn>,#<lsb>,#<width>.  */
       {
@@ -5396,7 +5460,10 @@ Handle_Store_Double (ARMul_State * state, ARMword instr)
     addr = base;
 
   /* The address must be aligned on a 8 byte boundary.  */
-  if (addr & 0x7)
+  if (state->is_v6 && (addr & 0x3) == 0)
+    /* Word alignment is enough for v6.  */
+    ;
+  else if (addr & 0x7)
     {
 #ifdef ABORTS
       ARMul_DATAABORT (addr);

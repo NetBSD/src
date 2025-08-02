@@ -1,5 +1,5 @@
 /* ARC Auxiliary register definitions
-   Copyright (C) 2015-2020 Free Software Foundation, Inc.
+   Copyright (C) 2015-2022 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -207,7 +207,8 @@ DEF (0xac,  ARC_OPCODE_ARCALL,  NONE, se_dbg_data3)
 DEF (0xad,  ARC_OPCODE_ARCALL,  NONE, se_watch)
 DEF (0xc0,  ARC_OPCODE_ARCALL,  NONE, bpu_build)
 DEF (0xc1,  ARC_OPCODE_ARC600,  NONE, arc600_build_config)
-DEF (0xc2,  ARC_OPCODE_ARCALL,  NONE, isa_config)
+DEF (0xc1,  ARC_OPCODE_ARC700,  NONE, isa_config)
+DEF (0xc1,  ARC_OPCODE_ARCV2,   NONE, isa_config)
 DEF (0xf4,  ARC_OPCODE_ARCALL,  NONE, hwp_build)
 DEF (0xf5,  ARC_OPCODE_ARCALL,  NONE, pct_build)
 DEF (0xf6,  ARC_OPCODE_ARCALL,  NONE, cc_build)
@@ -346,8 +347,8 @@ DEF (0x452, ARC_OPCODE_ARC600,  NONE, dvfs_performance)
 DEF (0x453, ARC_OPCODE_ARC600,  NONE, pwr_ctrl)
 DEF (0x460, ARC_OPCODE_ARCv2HS, NONE, tlbpd0)
 DEF (0x461, ARC_OPCODE_ARCv2HS, NONE, tlbpd1)
-DEF (0x463, ARC_OPCODE_ARCv2HS, NONE, tlbindex)
-DEF (0x464, ARC_OPCODE_ARCv2HS, NONE, tlbcommand)
+DEF (0x464, ARC_OPCODE_ARCv2HS, NONE, tlbindex)
+DEF (0x465, ARC_OPCODE_ARCv2HS, NONE, tlbcommand)
 DEF (0x468, ARC_OPCODE_ARCv2HS, NONE, pid)
 DEF (0x46c, ARC_OPCODE_ARCv2HS, NONE, scratch_data0)
 DEF (0x500, ARC_OPCODE_ARC700,  NONE, aux_vlc_buf_idx)

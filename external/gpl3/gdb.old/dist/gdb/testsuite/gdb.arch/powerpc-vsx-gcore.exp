@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 Free Software Foundation, Inc.
+# Copyright (C) 2018-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 # This test checks that generating and loading a core file preserves
 # the correct VSX register state.
 
-if {![istarget "powerpc*-*-linux*"] || [skip_vsx_tests]} then {
+if {![istarget "powerpc*-*-linux*"] || [skip_vsx_tests]} {
     verbose "Skipping PowerPC test for corefiles with VSX registers."
     return
 }
@@ -39,8 +39,7 @@ if {[build_executable "compile" $binfile $gen_src] == -1} {
 
 clean_restart $binfile
 
-if ![runto_main] then {
-    fail "could not run to main"
+if {![runto_main]} {
     return -1
 }
 

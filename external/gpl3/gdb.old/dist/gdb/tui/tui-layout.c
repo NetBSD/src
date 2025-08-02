@@ -1,6 +1,6 @@
 /* TUI layout window management.
 
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -44,6 +44,7 @@
 #include "tui/tui-layout.h"
 #include "tui/tui-source.h"
 #include "gdb_curses.h"
+#include "safe-ctype.h"
 
 static void extract_display_start_addr (struct gdbarch **, CORE_ADDR *);
 
@@ -64,28 +65,21 @@ static tui_layout_split *asm_regs_layout;
 /* See tui-data.h.  */
 std::vector<tui_win_info *> tui_windows;
 
-/* When applying a layout, this is the list of all windows that were
-   in the previous layout.  This is used to re-use windows when
-   changing a layout.  */
-static std::vector<tui_win_info *> saved_tui_windows;
-
 /* See tui-layout.h.  */
 
 void
-tui_apply_current_layout ()
+tui_apply_current_layout (bool preserve_cmd_win_size_p)
 {
   struct gdbarch *gdbarch;
   CORE_ADDR addr;
 
   extract_display_start_addr (&gdbarch, &addr);
 
-  saved_tui_windows = std::move (tui_windows);
-  tui_windows.clear ();
-
-  for (tui_win_info *win_info : saved_tui_windows)
+  for (tui_win_info *win_info : tui_windows)
     win_info->make_visible (false);
 
-  applied_layout->apply (0, 0, tui_term_width (), tui_term_height ());
+  applied_layout->apply (0, 0, tui_term_width (), tui_term_height (),
+			 preserve_cmd_win_size_p);
 
   /* Keep the list of internal windows up-to-date.  */
   for (int win_type = SRC_WIN; (win_type < MAX_MAJOR_WINDOWS); win_type++)
@@ -94,25 +88,31 @@ tui_apply_current_layout ()
       tui_win_list[win_type] = nullptr;
 
   /* This should always be made visible by a layout.  */
+  gdb_assert (TUI_CMD_WIN != nullptr);
   gdb_assert (TUI_CMD_WIN->is_visible ());
+
+  /* Get the new list of currently visible windows.  */
+  std::vector<tui_win_info *> new_tui_windows;
+  applied_layout->get_windows (&new_tui_windows);
 
   /* Now delete any window that was not re-applied.  */
   tui_win_info *focus = tui_win_with_focus ();
-  for (tui_win_info *win_info : saved_tui_windows)
+  for (tui_win_info *win_info : tui_windows)
     {
       if (!win_info->is_visible ())
 	{
 	  if (focus == win_info)
-	    tui_set_win_focus_to (tui_windows[0]);
+	    tui_set_win_focus_to (new_tui_windows[0]);
 	  delete win_info;
 	}
     }
 
+  /* Replace the global list of active windows.  */
+  tui_windows = std::move (new_tui_windows);
+
   if (gdbarch == nullptr && TUI_DISASM_WIN != nullptr)
     tui_get_begin_asm_address (&gdbarch, &addr);
   tui_update_source_windows_with_addr (gdbarch, addr);
-
-  saved_tui_windows.clear ();
 }
 
 /* See tui-layout.  */
@@ -120,7 +120,15 @@ tui_apply_current_layout ()
 void
 tui_adjust_window_height (struct tui_win_info *win, int new_height)
 {
-  applied_layout->adjust_size (win->name (), new_height);
+  applied_layout->set_height (win->name (), new_height);
+}
+
+/* See tui-layout.  */
+
+void
+tui_adjust_window_width (struct tui_win_info *win, int new_width)
+{
+  applied_layout->set_width (win->name (), new_width);
 }
 
 /* Set the current layout to LAYOUT.  */
@@ -128,9 +136,18 @@ tui_adjust_window_height (struct tui_win_info *win, int new_height)
 static void
 tui_set_layout (tui_layout_split *layout)
 {
+  std::string old_fingerprint;
+  if (applied_layout != nullptr)
+    old_fingerprint = applied_layout->layout_fingerprint ();
+
   applied_skeleton = layout;
   applied_layout = layout->clone ();
-  tui_apply_current_layout ();
+
+  std::string new_fingerprint = applied_layout->layout_fingerprint ();
+  bool preserve_command_window_size
+    = (TUI_CMD_WIN != nullptr && old_fingerprint == new_fingerprint);
+
+  tui_apply_current_layout (preserve_command_window_size);
 }
 
 /* See tui-layout.h.  */
@@ -152,7 +169,7 @@ tui_add_win_to_layout (enum tui_win_type type)
 
   const char *name = type == SRC_WIN ? SRC_NAME : DISASSEM_NAME;
   applied_layout->replace_window (tui_win_list[other]->name (), name);
-  tui_apply_current_layout ();
+  tui_apply_current_layout (true);
 }
 
 /* Find LAYOUT in the "layouts" global and return its index.  */
@@ -165,17 +182,15 @@ find_layout (tui_layout_split *layout)
       if (layout == layouts[i].get ())
 	return i;
     }
-  gdb_assert_not_reached (_("layout not found!?"));
+  gdb_assert_not_reached ("layout not found!?");
 }
 
 /* Function to set the layout. */
 
 static void
-tui_apply_layout (struct cmd_list_element *command,
-		  const char *args, int from_tty)
+tui_apply_layout (const char *args, int from_tty, cmd_list_element *command)
 {
-  tui_layout_split *layout
-    = (tui_layout_split *) get_cmd_context (command);
+  tui_layout_split *layout = (tui_layout_split *) command->context ();
 
   /* Make sure the curses mode is enabled.  */
   tui_enable ();
@@ -267,7 +282,7 @@ tui_remove_some_windows ()
     }
 
   applied_layout->remove_windows (focus->name ());
-  tui_apply_current_layout ();
+  tui_apply_current_layout (true);
 }
 
 static void
@@ -329,15 +344,6 @@ make_standard_window (const char *)
   return tui_win_list[V];
 }
 
-/* Helper function to wrap tui_locator_win_info_ptr for
-   tui_get_window_by_name.  */
-
-static tui_win_info *
-get_locator_window (const char *)
-{
-  return tui_locator_win_info_ptr ();
-}
-
 /* A map holding all the known window types, keyed by name.  Note that
    this is heap-allocated and "leaked" at gdb exit.  This avoids
    ordering issues with destroying elements in the map at shutdown.
@@ -352,7 +358,7 @@ static std::unordered_map<std::string, window_factory> *known_window_types;
 static tui_win_info *
 tui_get_window_by_name (const std::string &name)
 {
-  for (tui_win_info *window : saved_tui_windows)
+  for (tui_win_info *window : tui_windows)
     if (name == window->name ())
       return window;
 
@@ -384,7 +390,9 @@ initialize_known_windows ()
   known_window_types->emplace (DISASSEM_NAME,
 			       make_standard_window<DISASSEM_WIN,
 						    tui_disasm_window>);
-  known_window_types->emplace (STATUS_NAME, get_locator_window);
+  known_window_types->emplace (STATUS_NAME,
+			       make_standard_window<STATUS_WIN,
+						    tui_locator_window>);
 }
 
 /* See tui-layout.h.  */
@@ -397,6 +405,18 @@ tui_register_window (const char *name, window_factory &&factory)
   if (name_copy == SRC_NAME || name_copy == CMD_NAME || name_copy == DATA_NAME
       || name_copy == DISASSEM_NAME || name_copy == STATUS_NAME)
     error (_("Window type \"%s\" is built-in"), name);
+
+  for (const char &c : name_copy)
+    {
+      if (ISSPACE (c))
+	error (_("invalid whitespace character in window name"));
+
+      if (!ISALNUM (c) && strchr ("-_.", c) == nullptr)
+	error (_("invalid character '%c' in window name"), c);
+    }
+
+  if (!ISALPHA (name_copy[0]))
+    error (_("window name must start with a letter, not '%c'"), name_copy[0]);
 
   known_window_types->emplace (std::move (name_copy),
 			       std::move (factory));
@@ -414,7 +434,8 @@ tui_layout_window::clone () const
 /* See tui-layout.h.  */
 
 void
-tui_layout_window::apply (int x_, int y_, int width_, int height_)
+tui_layout_window::apply (int x_, int y_, int width_, int height_,
+			  bool preserve_cmd_win_size_p)
 {
   x = x_;
   y = y_;
@@ -422,7 +443,6 @@ tui_layout_window::apply (int x_, int y_, int width_, int height_)
   height = height_;
   gdb_assert (m_window != nullptr);
   m_window->resize (height, width, x, y);
-  tui_windows.push_back (m_window);
 }
 
 /* See tui-layout.h.  */
@@ -430,8 +450,14 @@ tui_layout_window::apply (int x_, int y_, int width_, int height_)
 void
 tui_layout_window::get_sizes (bool height, int *min_value, int *max_value)
 {
+  TUI_SCOPED_DEBUG_ENTER_EXIT;
+
   if (m_window == nullptr)
     m_window = tui_get_window_by_name (m_contents);
+
+  tui_debug_printf ("window = %s, getting %s",
+		    m_window->name (), (height ? "height" : "width"));
+
   if (height)
     {
       *min_value = m_window->min_height ();
@@ -442,12 +468,14 @@ tui_layout_window::get_sizes (bool height, int *min_value, int *max_value)
       *min_value = m_window->min_width ();
       *max_value = m_window->max_width ();
     }
+
+  tui_debug_printf ("min = %d, max = %d", *min_value, *max_value);
 }
 
 /* See tui-layout.h.  */
 
 bool
-tui_layout_window::top_boxed_p () const
+tui_layout_window::first_edge_has_border_p () const
 {
   gdb_assert (m_window != nullptr);
   return m_window->can_box ();
@@ -456,7 +484,7 @@ tui_layout_window::top_boxed_p () const
 /* See tui-layout.h.  */
 
 bool
-tui_layout_window::bottom_boxed_p () const
+tui_layout_window::last_edge_has_border_p () const
 {
   gdb_assert (m_window != nullptr);
   return m_window->can_box ();
@@ -483,7 +511,18 @@ tui_layout_window::replace_window (const char *name, const char *new_window)
 void
 tui_layout_window::specification (ui_file *output, int depth)
 {
-  fputs_unfiltered (get_name (), output);
+  gdb_puts (get_name (), output);
+}
+
+/* See tui-layout.h.  */
+
+std::string
+tui_layout_window::layout_fingerprint () const
+{
+  if (strcmp (get_name (), "cmd") == 0)
+    return "C";
+  else
+    return "";
 }
 
 /* See tui-layout.h.  */
@@ -526,6 +565,8 @@ tui_layout_split::clone () const
 void
 tui_layout_split::get_sizes (bool height, int *min_value, int *max_value)
 {
+  TUI_SCOPED_DEBUG_ENTER_EXIT;
+
   *min_value = 0;
   *max_value = 0;
   bool first_time = true;
@@ -548,55 +589,98 @@ tui_layout_split::get_sizes (bool height, int *min_value, int *max_value)
 	}
       first_time = false;
     }
+
+  tui_debug_printf ("min_value = %d, max_value = %d", *min_value, *max_value);
 }
 
 /* See tui-layout.h.  */
 
 bool
-tui_layout_split::top_boxed_p () const
+tui_layout_split::first_edge_has_border_p () const
 {
   if (m_splits.empty ())
     return false;
-  return m_splits[0].layout->top_boxed_p ();
+  return m_splits[0].layout->first_edge_has_border_p ();
 }
 
 /* See tui-layout.h.  */
 
 bool
-tui_layout_split::bottom_boxed_p () const
+tui_layout_split::last_edge_has_border_p () const
 {
   if (m_splits.empty ())
     return false;
-  return m_splits.back ().layout->top_boxed_p ();
+  return m_splits.back ().layout->last_edge_has_border_p ();
 }
 
 /* See tui-layout.h.  */
 
 void
-tui_layout_split::set_weights_from_heights ()
+tui_layout_split::set_weights_from_sizes ()
 {
   for (int i = 0; i < m_splits.size (); ++i)
-    m_splits[i].weight = m_splits[i].layout->height;
+    m_splits[i].weight
+      = m_vertical ? m_splits[i].layout->height : m_splits[i].layout->width;
+}
+
+/* See tui-layout.h.  */
+
+std::string
+tui_layout_split::tui_debug_weights_to_string () const
+{
+  std::string str;
+
+  for (int i = 0; i < m_splits.size (); ++i)
+    {
+      if (i > 0)
+       str += ", ";
+      str += string_printf ("[%d] %d", i, m_splits[i].weight);
+    }
+
+  return str;
+}
+
+/* See tui-layout.h.  */
+
+void
+tui_layout_split::tui_debug_print_size_info
+  (const std::vector<tui_layout_split::size_info> &info)
+{
+  gdb_assert (debug_tui);
+
+  tui_debug_printf ("current size info data:");
+  for (int i = 0; i < info.size (); ++i)
+    tui_debug_printf ("  [%d] { size = %d, min = %d, max = %d, share_box = %d }",
+		      i, info[i].size, info[i].min_size,
+		      info[i].max_size, info[i].share_box);
 }
 
 /* See tui-layout.h.  */
 
 tui_adjust_result
-tui_layout_split::adjust_size (const char *name, int new_height)
+tui_layout_split::set_size (const char *name, int new_size, bool set_width_p)
 {
+  TUI_SCOPED_DEBUG_ENTER_EXIT;
+
+  tui_debug_printf ("this = %p, name = %s, new_size = %d",
+		    this, name, new_size);
+
   /* Look through the children.  If one is a layout holding the named
      window, we're done; or if one actually is the named window,
      update it.  */
   int found_index = -1;
   for (int i = 0; i < m_splits.size (); ++i)
     {
-      tui_adjust_result adjusted
-	= m_splits[i].layout->adjust_size (name, new_height);
+      tui_adjust_result adjusted;
+      if (set_width_p)
+	adjusted = m_splits[i].layout->set_width (name, new_size);
+      else
+	adjusted = m_splits[i].layout->set_height (name, new_size);
       if (adjusted == HANDLED)
 	return HANDLED;
       if (adjusted == FOUND)
 	{
-	  if (!m_vertical)
+	  if (set_width_p ? m_vertical : !m_vertical)
 	    return FOUND;
 	  found_index = i;
 	  break;
@@ -605,19 +689,36 @@ tui_layout_split::adjust_size (const char *name, int new_height)
 
   if (found_index == -1)
     return NOT_FOUND;
-  if (m_splits[found_index].layout->height == new_height)
+  int curr_size = (set_width_p
+		   ? m_splits[found_index].layout->width
+		   : m_splits[found_index].layout->height);
+  if (curr_size == new_size)
     return HANDLED;
 
-  set_weights_from_heights ();
-  int delta = m_splits[found_index].weight - new_height;
-  m_splits[found_index].weight = new_height;
+  tui_debug_printf ("found window %s at index %d", name, found_index);
 
-  /* Distribute the "delta" over the next window; but if the next
-     window cannot hold it all, keep going until we either find a
-     window that does, or until we loop all the way around.  */
-  for (int i = 0; delta != 0 && i < m_splits.size () - 1; ++i)
+  set_weights_from_sizes ();
+  int delta = m_splits[found_index].weight - new_size;
+  m_splits[found_index].weight = new_size;
+
+  tui_debug_printf ("before delta (%d) distribution, weights: %s",
+		    delta, tui_debug_weights_to_string ().c_str ());
+
+  /* Distribute the "delta" over all other windows, while respecting their
+     min/max sizes.  We grow each window by 1 line at a time continually
+     looping over all the windows.  However, skip the window that the user
+     just resized, obviously we don't want to readjust that window.  */
+  bool found_window_that_can_grow_p = true;
+  for (int i = 0; delta != 0; i = (i + 1) % m_splits.size ())
     {
       int index = (found_index + 1 + i) % m_splits.size ();
+      if (index == found_index)
+	{
+	  if (!found_window_that_can_grow_p)
+	    break;
+	  found_window_that_can_grow_p = false;
+	  continue;
+	}
 
       int new_min, new_max;
       m_splits[index].layout->get_sizes (m_vertical, &new_min, &new_max);
@@ -626,32 +727,48 @@ tui_layout_split::adjust_size (const char *name, int new_height)
 	{
 	  /* The primary window grew, so we are trying to shrink other
 	     windows.  */
-	  int available = m_splits[index].weight - new_min;
-	  int shrink_by = std::min (available, -delta);
-	  m_splits[index].weight -= shrink_by;
-	  delta += shrink_by;
+	  if (m_splits[index].weight > new_min)
+	    {
+	      m_splits[index].weight -= 1;
+	      delta += 1;
+	      found_window_that_can_grow_p = true;
+	    }
 	}
       else
 	{
 	  /* The primary window shrank, so we are trying to grow other
 	     windows.  */
-	  int available = new_max - m_splits[index].weight;
-	  int grow_by = std::min (available, delta);
-	  m_splits[index].weight += grow_by;
-	  delta -= grow_by;
+	  if (m_splits[index].weight < new_max)
+	    {
+	      m_splits[index].weight += 1;
+	      delta -= 1;
+	      found_window_that_can_grow_p = true;
+	    }
 	}
+
+      tui_debug_printf ("index = %d, weight now: %d",
+			index, m_splits[index].weight);
     }
+
+  tui_debug_printf ("after delta (%d) distribution, weights: %s",
+		    delta, tui_debug_weights_to_string ().c_str ());
 
   if (delta != 0)
     {
-      warning (_("Invalid window height specified"));
+      if (set_width_p)
+	warning (_("Invalid window width specified"));
+      else
+	warning (_("Invalid window height specified"));
       /* Effectively undo any modifications made here.  */
-      set_weights_from_heights ();
+      set_weights_from_sizes ();
     }
   else
     {
-      /* Simply re-apply the updated layout.  */
-      apply (x, y, width, height);
+      /* Simply re-apply the updated layout.  We pass false here so that
+	 the cmd window can be resized.  However, we should have already
+	 resized everything above to be "just right", so the apply call
+	 here should not end up changing the sizes at all.  */
+      apply (x, y, width, height, false);
     }
 
   return HANDLED;
@@ -660,24 +777,44 @@ tui_layout_split::adjust_size (const char *name, int new_height)
 /* See tui-layout.h.  */
 
 void
-tui_layout_split::apply (int x_, int y_, int width_, int height_)
+tui_layout_split::apply (int x_, int y_, int width_, int height_,
+			 bool preserve_cmd_win_size_p)
 {
+  TUI_SCOPED_DEBUG_ENTER_EXIT;
+
   x = x_;
   y = y_;
   width = width_;
   height = height_;
 
-  struct size_info
+  /* In some situations we fix the size of the cmd window.  However,
+     occasionally this turns out to be a mistake.  This struct is used to
+     hold the original information about the cmd window, so we can restore
+     it if needed.  */
+  struct old_size_info
   {
-    int size;
+    /* Constructor.  */
+    old_size_info (int index_, int min_size_, int max_size_)
+      : index (index_),
+	min_size (min_size_),
+	max_size (max_size_)
+    { /* Nothing.  */ }
+
+    /* The index in m_splits where the cmd window was found.  */
+    int index;
+
+    /* The previous min/max size.  */
     int min_size;
     int max_size;
-    /* True if this window will share a box border with the previous
-       window in the list.  */
-    bool share_box;
   };
 
+  /* This is given a value only if we fix the size of the cmd window.  */
+  gdb::optional<old_size_info> old_cmd_info;
+
   std::vector<size_info> info (m_splits.size ());
+
+  tui_debug_printf ("weights are: %s",
+		    tui_debug_weights_to_string ().c_str ());
 
   /* Step 1: Find the min and max size of each sub-layout.
      Fixed-sized layouts are given their desired size, and then the
@@ -696,11 +833,15 @@ tui_layout_split::apply (int x_, int y_, int width_, int height_)
       m_splits[i].layout->get_sizes (m_vertical, &info[i].min_size,
 				     &info[i].max_size);
 
-      if (!m_applied
+      if (preserve_cmd_win_size_p
 	  && cmd_win_already_exists
 	  && m_splits[i].layout->get_name () != nullptr
 	  && strcmp (m_splits[i].layout->get_name (), "cmd") == 0)
 	{
+	  /* Save the old cmd window information, in case we need to
+	     restore it later.  */
+          old_cmd_info.emplace (i, info[i].min_size, info[i].max_size);
+
 	  /* If this layout has never been applied, then it means the
 	     user just changed the layout.  In this situation, it's
 	     desirable to keep the size of the command window the
@@ -724,10 +865,16 @@ tui_layout_split::apply (int x_, int y_, int width_, int height_)
       /* Two adjacent boxed windows will share a border, making a bit
 	 more size available.  */
       if (i > 0
-	  && m_splits[i - 1].layout->bottom_boxed_p ()
-	  && m_splits[i].layout->top_boxed_p ())
+	  && m_splits[i - 1].layout->last_edge_has_border_p ()
+	  && m_splits[i].layout->first_edge_has_border_p ())
 	info[i].share_box = true;
     }
+
+  /* If last_index is set then we have a window that is not of a fixed
+     size.  This window will have its size calculated below, which requires
+     that the total_weight not be zero (we divide by total_weight, so don't
+     want a floating-point exception).  */
+  gdb_assert (last_index == -1 || total_weight > 0);
 
   /* Step 2: Compute the size of each sub-layout.  Fixed-sized items
      are given their fixed size, while others are resized according to
@@ -735,28 +882,127 @@ tui_layout_split::apply (int x_, int y_, int width_, int height_)
   int used_size = 0;
   for (int i = 0; i < m_splits.size (); ++i)
     {
-      /* Compute the height and clamp to the allowable range.  */
-      info[i].size = available_size * m_splits[i].weight / total_weight;
-      if (info[i].size > info[i].max_size)
-	info[i].size = info[i].max_size;
-      if (info[i].size < info[i].min_size)
-	info[i].size = info[i].min_size;
-      /* If there is any leftover size, just redistribute it to the
-	 last resizeable window, by dropping it from the allocated
-	 size.  We could try to be fancier here perhaps, by
-	 redistributing this size among all windows, not just the
-	 last window.  */
       if (info[i].min_size != info[i].max_size)
 	{
+	  /* Compute the height and clamp to the allowable range.  */
+	  info[i].size = available_size * m_splits[i].weight / total_weight;
+	  if (info[i].size > info[i].max_size)
+	    info[i].size = info[i].max_size;
+	  if (info[i].size < info[i].min_size)
+	    info[i].size = info[i].min_size;
+	  /* Keep a total of all the size we've used so far (we gain some
+	     size back if this window can share a border with a preceding
+	     window).  Any unused space will be distributed between all of
+	     the other windows (while respecting min/max sizes) later in
+	     this function.  */
 	  used_size += info[i].size;
 	  if (info[i].share_box)
 	    --used_size;
 	}
+      else
+	info[i].size = info[i].min_size;
     }
 
+  if (debug_tui)
+    {
+      tui_debug_printf ("after initial size calculation");
+      tui_debug_printf ("available_size = %d, used_size = %d",
+			available_size, used_size);
+      tui_debug_printf ("total_weight = %d, last_index = %d",
+			total_weight, last_index);
+      tui_debug_print_size_info (info);
+    }
+
+  /* If we didn't find any sub-layouts that were of a non-fixed size, but
+     we did find the cmd window, then we can consider that a sort-of
+     non-fixed size sub-layout.
+
+     The cmd window might, initially, be of a fixed size (see above), but,
+     we are willing to relax this constraint if required to correctly apply
+     this layout (see below).  */
+  if (last_index == -1 && old_cmd_info.has_value ())
+    last_index = old_cmd_info->index;
+
   /* Allocate any leftover size.  */
-  if (available_size >= used_size && last_index != -1)
-    info[last_index].size += available_size - used_size;
+  if (available_size != used_size && last_index != -1)
+    {
+      /* Loop over all windows until the amount of used space is equal to
+	 the amount of available space.  There's an escape hatch within
+	 the loop in case we can't find any sub-layouts to resize.  */
+      bool found_window_that_can_grow_p = true;
+      for (int idx = last_index;
+	   available_size != used_size;
+	   idx = (idx + 1) % m_splits.size ())
+	{
+	  /* Every time we get back to last_index, which is where the loop
+	     started, we check to make sure that we did assign some space
+	     to a window, bringing used_size closer to available_size.
+
+	     If we didn't, but the cmd window is of a fixed size, then we
+	     can make the console window non-fixed-size, and continue
+	     around the loop, hopefully, this will allow the layout to be
+	     applied correctly.
+
+	     If we still make it around the loop without moving used_size
+	     closer to available_size, then there's nothing more we can do,
+	     and we break out of the loop.  */
+	  if (idx == last_index)
+	    {
+	      /* If the used_size is greater than the available_size then
+		 this indicates that the fixed-sized sub-layouts claimed
+		 more space than is available.  This layout is not going to
+		 work.  Our only hope at this point is to make the cmd
+		 window non-fixed-size (if possible), and hope we can
+		 shrink this enough to fit the rest of the sub-layouts in.
+
+	         Alternatively, we've made it around the loop without
+	         adjusting any window's size.  This likely means all
+	         windows have hit their min or max size.  Again, our only
+	         hope is to make the cmd window non-fixed-size, and hope
+	         this fixes all our problems.  */
+	      if (old_cmd_info.has_value ()
+		  && ((available_size < used_size)
+		      || !found_window_that_can_grow_p))
+		{
+		  info[old_cmd_info->index].min_size = old_cmd_info->min_size;
+		  info[old_cmd_info->index].max_size = old_cmd_info->max_size;
+		  tui_debug_printf
+		    ("restoring index %d (cmd) size limits, min = %d, max = %d",
+		     old_cmd_info->index, old_cmd_info->min_size,
+		     old_cmd_info->max_size);
+		  old_cmd_info.reset ();
+		}
+	      else if (!found_window_that_can_grow_p)
+		break;
+	      found_window_that_can_grow_p = false;
+	    }
+
+	  if (available_size > used_size
+	      && info[idx].size < info[idx].max_size)
+	    {
+	      found_window_that_can_grow_p = true;
+	      info[idx].size += 1;
+	      used_size += 1;
+	    }
+	  else if (available_size < used_size
+		   && info[idx].size > info[idx].min_size)
+	    {
+	      found_window_that_can_grow_p = true;
+	      info[idx].size -= 1;
+	      used_size -= 1;
+	    }
+	}
+
+      if (debug_tui)
+	{
+	  tui_debug_printf ("after final size calculation");
+	  tui_debug_printf ("available_size = %d, used_size = %d",
+			    available_size, used_size);
+	  tui_debug_printf ("total_weight = %d, last_index = %d",
+			    total_weight, last_index);
+	  tui_debug_print_size_info (info);
+	}
+    }
 
   /* Step 3: Resize.  */
   int size_accum = 0;
@@ -770,13 +1016,13 @@ tui_layout_split::apply (int x_, int y_, int width_, int height_)
       else if (info[i].share_box)
 	--size_accum;
       if (m_vertical)
-	m_splits[i].layout->apply (x, y + size_accum, width, info[i].size);
+	m_splits[i].layout->apply (x, y + size_accum, width, info[i].size,
+				   preserve_cmd_win_size_p);
       else
-	m_splits[i].layout->apply (x + size_accum, y, info[i].size, height);
+	m_splits[i].layout->apply (x + size_accum, y, info[i].size, height,
+				   preserve_cmd_win_size_p);
       size_accum += info[i].size;
     }
-
-  m_applied = true;
 }
 
 /* See tui-layout.h.  */
@@ -818,23 +1064,38 @@ void
 tui_layout_split::specification (ui_file *output, int depth)
 {
   if (depth > 0)
-    fputs_unfiltered ("{", output);
+    gdb_puts ("{", output);
 
   if (!m_vertical)
-    fputs_unfiltered ("-horizontal ", output);
+    gdb_puts ("-horizontal ", output);
 
   bool first = true;
   for (auto &item : m_splits)
     {
       if (!first)
-	fputs_unfiltered (" ", output);
+	gdb_puts (" ", output);
       first = false;
       item.layout->specification (output, depth + 1);
-      fprintf_unfiltered (output, " %d", item.weight);
+      gdb_printf (output, " %d", item.weight);
     }
 
   if (depth > 0)
-    fputs_unfiltered ("}", output);
+    gdb_puts ("}", output);
+}
+
+/* See tui-layout.h.  */
+
+std::string
+tui_layout_split::layout_fingerprint () const
+{
+  for (auto &item : m_splits)
+    {
+      std::string fp = item.layout->layout_fingerprint ();
+      if (!fp.empty ())
+	return std::string (m_vertical ? "V" : "H") + fp;
+    }
+
+  return "";
 }
 
 /* Destroy the layout associated with SELF.  */
@@ -851,6 +1112,14 @@ destroy_layout (struct cmd_list_element *self, void *context)
 
 static struct cmd_list_element *layout_list;
 
+/* Called to implement 'tui layout'.  */
+
+static void
+tui_layout_command (const char *args, int from_tty)
+{
+  help_list (layout_list, "tui layout ", all_commands, gdb_stdout);
+}
+
 /* Add a "layout" command with name NAME that switches to LAYOUT.  */
 
 static struct cmd_list_element *
@@ -862,13 +1131,13 @@ add_layout_command (const char *name, tui_layout_split *layout)
   layout->specification (&spec, 0);
 
   gdb::unique_xmalloc_ptr<char> doc
-    (xstrprintf (_("Apply the \"%s\" layout.\n\
+    = xstrprintf (_("Apply the \"%s\" layout.\n\
 This layout was created using:\n\
   tui new-layout %s %s"),
-		 name, name, spec.c_str ()));
+		  name, name, spec.c_str ());
 
   cmd = add_cmd (name, class_tui, nullptr, doc.get (), &layout_list);
-  set_cmd_context (cmd, layout);
+  cmd->set_context (layout);
   /* There is no API to set this.  */
   cmd->func = tui_apply_layout;
   cmd->destroyer = destroy_layout;
@@ -1029,10 +1298,12 @@ void _initialize_tui_layout ();
 void
 _initialize_tui_layout ()
 {
-  add_basic_prefix_cmd ("layout", class_tui, _("\
+  struct cmd_list_element *layout_cmd
+    = add_prefix_cmd ("layout", class_tui, tui_layout_command, _("\
 Change the layout of windows.\n\
-Usage: layout prev | next | LAYOUT-NAME"),
-			&layout_list, "layout ", 0, &cmdlist);
+Usage: tui layout prev | next | LAYOUT-NAME"),
+		      &layout_list, 0, tui_get_cmd_list ());
+  add_com_alias ("layout", layout_cmd, class_tui, 0);
 
   add_cmd ("next", class_tui, tui_next_layout_command,
 	   _("Apply the next TUI layout."),

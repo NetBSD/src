@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Free Software Foundation, Inc.
+# Copyright 2014-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 # Test expressions in which variable names shadow tag names.
 
-if {[skip_cplus_tests]} { continue }
+if {[skip_cplus_tests]} { return }
 
 standard_testfile var-tag.cc var-tag-2.cc var-tag-3.cc var-tag-4.cc
 
@@ -82,8 +82,7 @@ with_test_prefix "before start" {
 
 # Run to main and test again.
 if {![runto_main]} {
-    perror "couldn't run to main"
-    continue
+    return
 }
 
 with_test_prefix "in main" {

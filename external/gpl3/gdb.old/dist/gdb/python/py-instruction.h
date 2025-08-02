@@ -1,6 +1,6 @@
 /* Python interface to instruction objects.
 
-   Copyright 2017-2020 Free Software Foundation, Inc.
+   Copyright 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,9 +22,14 @@
 
 #include "python-internal.h"
 
-/* Python type object for the abstract gdb.Instruction class.  This class
-   contains getters for four elements: "pc" (int), "data" (buffer), "decode"
-   (str) and "size" (int) that must be overridden by sub classes.  */
-extern PyTypeObject py_insn_type;
+/* Return a pointer to the py_insn_type object (see py-instruction.c), but
+   ensure that PyType_Ready has been called for the type first.  If the
+   PyType_Ready call is successful then subsequent calls to this function
+   will not call PyType_Ready, the type pointer will just be returned.
+
+   If the PyType_Ready call is not successful then nullptr is returned and
+   subsequent calls to this function will call PyType_Ready again.  */
+
+extern PyTypeObject *py_insn_get_insn_type ();
 
 #endif /* PYTHON_PY_INSTRUCTION_H */

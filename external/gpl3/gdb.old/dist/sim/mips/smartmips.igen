@@ -1,12 +1,12 @@
 // -*- C -*-
 //
 // Simulator definition for the SmartMIPS extensions.
-// Copyright (C) 2005-2020 Free Software Foundation, Inc.
-// Contributed by Nigel Stephens (nigel@mips.com) and 
+// Copyright (C) 2005-2023 Free Software Foundation, Inc.
+// Contributed by Nigel Stephens (nigel@mips.com) and
 //                David Ung (davidu@mips.com) of MIPS Technologies.
 //
 // This file is part of GDB, the GNU debugger.
-// 
+//
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
@@ -31,8 +31,8 @@
 "maddp r<RS>, r<RT>"
 *smartmips:
 {
-  unsigned64 res;
-  unsigned64 rs, rt;
+  uint64_t res;
+  uint64_t rs, rt;
   int i;
 
   check_mult_hilo (SD_, HIHISTORY, LOHISTORY);
@@ -83,8 +83,8 @@
 "multp r<RS>, r<RT>"
 *smartmips:
 {
-  unsigned64 res;
-  unsigned64 rs, rt;
+  uint64_t res;
+  uint64_t rs, rt;
   int i;
   check_mult_hilo (SD_, HIHISTORY, LOHISTORY);
   TRACE_ALU_INPUT2 (GPR[RS], GPR[RT]);

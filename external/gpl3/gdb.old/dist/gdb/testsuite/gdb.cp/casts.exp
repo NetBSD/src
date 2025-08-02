@@ -1,4 +1,4 @@
-# Copyright 2002-2020 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,25 +25,21 @@
 #
 
 
-if { [skip_cplus_tests] } { continue }
+if { [skip_cplus_tests] } { return }
 
 standard_testfile .cc casts03.cc
-
-if [get_compiler_info "c++"] {
-    return -1
-}
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 # Prevent symbol on address 0x0 being printed.
-gdb_test_no_output "set print symbol off"
+gdb_test_no_output "set print symbol off"  \
+    "turn of symbol printing for the first time"
 
 gdb_test "break [gdb_get_line_number "casts.exp: 1"]" \
     "Breakpoint.*at.* file .*" \
@@ -173,18 +169,24 @@ gdb_test "print dynamic_cast<Gamma *> (add)" \
     " = \\(Gamma \\*\\) $nonzero_hex" \
     "dynamic_cast to sibling"
 
+gdb_test "print (unsigned long long) &gd == gd_value" " = true"
+gdb_test "print (unsigned long long) (LeftRight *) (Right *) &gd == gd_value" \
+    " = true"
+gdb_test "print (unsigned long long) (LeftRight *) (Right *) r_value == gd_value" \
+    " = true"
+
 if {[prepare_for_testing "failed to prepare" ${testfile}03 $srcfile2 \
 			 {debug c++ additional_flags=-std=c++03}]} {
     return -1
 }
 
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+   return
 }
 
 # Prevent symbol on address 0x0 being printed.
-gdb_test_no_output "set print symbol off"
+gdb_test_no_output "set print symbol off" \
+    "turn of symbol printing for the second time"
 
 gdb_breakpoint [gdb_get_line_number "casts.exp: 1" $srcfile2]
 gdb_continue_to_breakpoint "end of casts03"

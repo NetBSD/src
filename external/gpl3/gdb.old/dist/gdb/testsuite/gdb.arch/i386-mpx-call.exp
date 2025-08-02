@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2020 Free Software Foundation, Inc.
+# Copyright (C) 2017-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,6 +25,11 @@ if { ![supports_mpx_check_pointer_bounds] } {
     return -1
 }
 
+if { ![have_mpx] } {
+    unsupported "processor does not support MPX"
+    return -1
+}
+
 set comp_flags "-mmpx -fcheck-pointer-bounds -I${srcdir}/../nat"
 
 if {[prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
@@ -33,19 +38,15 @@ if {[prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
 }
 
 if ![runto_main] {
-    untested "could not run to main"
     return -1
 }
 
-set test "check whether processor supports MPX"
-gdb_test_multiple "print have_mpx ()" $test {
-    -re ".*= 1\r\n$gdb_prompt " {
-        pass $test
+set bounds_table 0
+gdb_test_multiple "disassemble upper" "" {
+    -re -wrap "bndldx.*" {
+	set bounds_table 1
     }
-    -re ".*= 0\r\n$gdb_prompt " {
-        pass $test
-        untested "processor does not support MPX; skipping tests"
-        return
+    -re -wrap "" {
     }
 }
 
@@ -136,9 +137,25 @@ proc perform_a_call {func} {
 #
 proc check_bound_violation {parm parm_type is_positive} {
 
-    global u_fault
+    global u_fault bounds_table
 
-    gdb_test "continue" "$u_fault.*" "continue to a bnd violation"
+    set have_bnd_violation 0
+    gdb_test_multiple "continue" "continue to a bnd violation" {
+	-re -wrap "Continuing\." {
+	    if { $bounds_table } {
+		pass $gdb_test_name
+	    } else {
+		fail $gdb_test_name
+	    }
+	}
+	-re -wrap "$u_fault.*" {
+	    pass $gdb_test_name
+	    set have_bnd_violation 1
+	}
+    }
+    if { ! $have_bnd_violation } {
+	return
+    }
 
     set message "access only one position"
     if {$is_positive == 1} {

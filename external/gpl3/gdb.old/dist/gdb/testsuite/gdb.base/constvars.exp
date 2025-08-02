@@ -1,4 +1,4 @@
-# Copyright 1997-2020 Free Software Foundation, Inc.
+# Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,12 +29,6 @@
 
 standard_testfile .c
 
-# Create and source the file that provides information about the compiler
-# used to compile the test case.
-if [get_compiler_info] {
-    return -1
-}
-
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable debug ] != "" } {
     untested "failed to compile"
     return -1
@@ -46,9 +40,8 @@ clean_restart ${binfile}
 #
 # set it up at a breakpoint so we can play with the variable values
 #
-if ![runto_main] then {
-    perror "couldn't run to breakpoint"
-    continue
+if {![runto_main]} {
+    return
 }
 
 get_debug_format
@@ -57,9 +50,9 @@ get_debug_format
 # TODO: check out the hp side of this.
 
 proc local_compiler_xfail_check { } {
-    if { [test_compiler_info gcc-2-*] } then {
+    if {[test_compiler_info gcc-2-*]} {
 	if { ![test_debug_format "HP"] \
-		&& ![test_debug_format "DWARF 2"] } then {
+		&& ![test_debug_format "DWARF \[0-9\]"] } then {
 	    setup_xfail "*-*-*" 
 	}
     }

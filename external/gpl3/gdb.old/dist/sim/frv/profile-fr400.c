@@ -1,6 +1,6 @@
 /* frv simulator fr400 dependent profiling code.
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
    Contributed by Red Hat
 
 This file is part of the GNU simulators.
@@ -16,9 +16,11 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-*/
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #define WANT_CPU
 #define WANT_CPU_FRVBF
 
@@ -174,6 +176,7 @@ set_acc_use_not_media_p4 (SIM_CPU *cpu, INT acc)
     d->cur_acc_p4 &= ~(((DI)1) << acc);
 }
 
+#if 0
 static int
 acc_use_is_media_p4 (SIM_CPU *cpu, INT acc)
 {
@@ -182,6 +185,7 @@ acc_use_is_media_p4 (SIM_CPU *cpu, INT acc)
     return d->cur_acc_p4 & (((DI)1) << acc);
   return 0;
 }
+#endif
 
 static void
 set_use_is_media_p6 (SIM_CPU *cpu, INT fr)

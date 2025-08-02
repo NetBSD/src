@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2020 Free Software Foundation, Inc.
+Copyright 1996-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -73,12 +73,4 @@ void
 lm32bf_h_csr_set (SIM_CPU *current_cpu, UINT regno, SI newval)
 {
   CPU (h_csr[regno]) = newval;
-}
-
-/* Record trace results for INSN.  */
-
-void
-lm32bf_record_trace_results (SIM_CPU *current_cpu, CGEN_INSN *insn,
-			    int *indices, TRACE_RECORD *tr)
-{
 }

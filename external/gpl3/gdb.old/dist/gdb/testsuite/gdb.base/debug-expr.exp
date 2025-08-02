@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,23 +29,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug}]} {
 }
 
 if ![runto_main] {
-    fail "run to main"
     return -1
-}
-
-# Test whether the expression debug machinery accepts the expression.
-
-proc test_debug_expr { cmd output } {
-    global gdb_prompt
-
-    gdb_test_multiple $cmd "" {
-	-re ".*Invalid expression.*\r\n$gdb_prompt $" {
-	    fail $cmd
-	}
-	-re ".*\[\r\n\]$output\r\n$gdb_prompt $" {
-	    pass $cmd
-	}
-    }
 }
 
 for { set i 0 } { $i < 4 } { incr i } {
@@ -55,10 +39,15 @@ for { set i 0 } { $i < 4 } { incr i } {
 gdb_test_no_output "set debug expression 1"
 
 # This caused gdb to segfault.
-test_debug_expr "print /x {char\[4\]} array" \
+gdb_test_debug_expr "print /x {char\[4\]} array" \
     "\[$\]$decimal = \\{0x0, 0x1, 0x2, 0x3\\}"
 
 # This caused gdb to output garbage and possibly segfault
-gdb_test "print \"hello\"" \
-    ".*OP_STRING\[^\r\n\]*Language-specific string type: 0.*\[\r\n\]\\$$decimal = \"hello\"\[\r\n\].*" \
+gdb_test_debug_expr "print \"hello\"" \
+    ".*OP_STRING\[^\r\n\]*.*: ordinary string.*\[\r\n\]\\$$decimal = \"hello\"" \
     "string evaluation with debug expr"
+
+# An expression using a function call.
+gdb_test_debug_expr "print call_me ( &val )" \
+    ".*OP_FUNCALL\[^\r\n\]*.*UNOP_ADDR.*\[\r\n\]\\$$decimal = 0.*" \
+    "function call expression"

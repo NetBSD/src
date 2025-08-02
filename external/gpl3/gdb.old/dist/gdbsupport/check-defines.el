@@ -1,6 +1,6 @@
 ;; Verify that preprocessor symbols are defined in config.in.
 
-;; Copyright (C) 2020 Free Software Foundation, Inc.
+;; Copyright (C) 2020-2023 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GDB.
 ;;

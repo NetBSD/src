@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2020 Free Software Foundation, Inc.
+   Copyright 2008-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -176,3 +176,4 @@
 	.string		"hello world!\n"
 .Lemptyname:
 	.string		""
+	.section	.note.GNU-stack,"",@progbits

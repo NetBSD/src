@@ -1,4 +1,4 @@
-/* Copyright 2016-2020 Free Software Foundation, Inc.
+/* Copyright 2016-2023 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of the PRU simulator.
@@ -83,9 +83,4 @@ struct _sim_cpu {
   sim_cpu_base base;
 };
 
-struct sim_state {
-  sim_cpu *cpu[MAX_NR_PROCESSORS];
-
-  sim_state_base base;
-};
 #endif /* PRU_SIM_MAIN */

@@ -1,6 +1,6 @@
 /* General utility routines for GDB/Python.
 
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,14 +45,10 @@ python_string_to_unicode (PyObject *obj)
       unicode_str = obj;
       Py_INCREF (obj);
     }
-#ifndef IS_PY3K
-  else if (PyString_Check (obj))
-    unicode_str = PyUnicode_FromEncodedObject (obj, host_charset (), NULL);
-#endif
   else
     {
       PyErr_SetString (PyExc_TypeError,
-		       _("Expected a string or unicode object."));
+		       _("Expected a string object."));
       unicode_str = NULL;
     }
 
@@ -93,8 +89,9 @@ unicode_to_encoded_python_string (PyObject *unicode_str, const char *charset)
 gdb::unique_xmalloc_ptr<char>
 unicode_to_target_string (PyObject *unicode_str)
 {
-  return unicode_to_encoded_string (unicode_str,
-				    target_charset (python_gdbarch));
+  return (unicode_to_encoded_string
+	  (unicode_str,
+	   target_charset (gdbpy_enter::get_gdbarch ())));
 }
 
 /* Returns a PyObject with the contents of the given unicode string
@@ -104,8 +101,9 @@ unicode_to_target_string (PyObject *unicode_str)
 static gdbpy_ref<>
 unicode_to_target_python_string (PyObject *unicode_str)
 {
-  return unicode_to_encoded_python_string (unicode_str,
-					   target_charset (python_gdbarch));
+  return (unicode_to_encoded_python_string
+	  (unicode_str,
+	   target_charset (gdbpy_enter::get_gdbarch ())));
 }
 
 /* Converts a python string (8-bit or unicode) to a target string in
@@ -154,8 +152,8 @@ python_string_to_host_string (PyObject *obj)
 gdbpy_ref<>
 host_string_to_python_string (const char *str)
 {
-  return gdbpy_ref<> (PyString_Decode (str, strlen (str), host_charset (),
-				       NULL));
+  return gdbpy_ref<> (PyUnicode_Decode (str, strlen (str), host_charset (),
+					NULL));
 }
 
 /* Return true if OBJ is a Python string or unicode object, false
@@ -164,11 +162,7 @@ host_string_to_python_string (const char *str)
 int
 gdbpy_is_string (PyObject *obj)
 {
-#ifdef IS_PY3K
   return PyUnicode_Check (obj);
-#else
-  return PyString_Check (obj) || PyUnicode_Check (obj);
-#endif
 }
 
 /* Return the string representation of OBJ, i.e., str (obj).
@@ -180,17 +174,7 @@ gdbpy_obj_to_string (PyObject *obj)
   gdbpy_ref<> str_obj (PyObject_Str (obj));
 
   if (str_obj != NULL)
-    {
-      gdb::unique_xmalloc_ptr<char> msg;
-
-#ifdef IS_PY3K
-      msg = python_string_to_host_string (str_obj.get ());
-#else
-      msg.reset (xstrdup (PyString_AsString (str_obj.get ())));
-#endif
-
-      return msg;
-    }
+    return python_string_to_host_string (str_obj.get ());
 
   return NULL;
 }
@@ -210,10 +194,10 @@ gdbpy_err_fetch::to_string () const
      Using str (aka PyObject_Str) will fetch the error message from
      gdb.GdbError ("message").  */
 
-  if (m_error_value && m_error_value != Py_None)
-    return gdbpy_obj_to_string (m_error_value);
+  if (m_error_value.get () != nullptr && m_error_value.get () != Py_None)
+    return gdbpy_obj_to_string (m_error_value.get ());
   else
-    return gdbpy_obj_to_string (m_error_type);
+    return gdbpy_obj_to_string (m_error_type.get ());
 }
 
 /* See python-internal.h.  */
@@ -221,7 +205,7 @@ gdbpy_err_fetch::to_string () const
 gdb::unique_xmalloc_ptr<char>
 gdbpy_err_fetch::type_to_string () const
 {
-  return gdbpy_obj_to_string (m_error_type);
+  return gdbpy_obj_to_string (m_error_type.get ());
 }
 
 /* Convert a GDB exception to the appropriate Python exception.
@@ -294,20 +278,9 @@ get_addr_from_python (PyObject *obj, CORE_ADDR *addr)
 gdbpy_ref<>
 gdb_py_object_from_longest (LONGEST l)
 {
-#ifdef IS_PY3K
   if (sizeof (l) > sizeof (long))
     return gdbpy_ref<> (PyLong_FromLongLong (l));
   return gdbpy_ref<> (PyLong_FromLong (l));
-#else
-#ifdef HAVE_LONG_LONG		/* Defined by Python.  */
-  /* If we have 'long long', and the value overflows a 'long', use a
-     Python Long; otherwise use a Python Int.  */
-  if (sizeof (l) > sizeof (long)
-      && (l > PyInt_GetMax () || l < (- (LONGEST) PyInt_GetMax ()) - 1))
-    return gdbpy_ref<> (PyLong_FromLongLong (l));
-#endif
-  return gdbpy_ref<> (PyInt_FromLong (l));
-#endif
 }
 
 /* Convert a ULONGEST to the appropriate Python object -- either an
@@ -316,32 +289,18 @@ gdb_py_object_from_longest (LONGEST l)
 gdbpy_ref<>
 gdb_py_object_from_ulongest (ULONGEST l)
 {
-#ifdef IS_PY3K
   if (sizeof (l) > sizeof (unsigned long))
     return gdbpy_ref<> (PyLong_FromUnsignedLongLong (l));
   return gdbpy_ref<> (PyLong_FromUnsignedLong (l));
-#else
-#ifdef HAVE_LONG_LONG		/* Defined by Python.  */
-  /* If we have 'long long', and the value overflows a 'long', use a
-     Python Long; otherwise use a Python Int.  */
-  if (sizeof (l) > sizeof (unsigned long) && l > PyInt_GetMax ())
-    return gdbpy_ref<> (PyLong_FromUnsignedLongLong (l));
-#endif
-
-  if (l > PyInt_GetMax ())
-    return gdbpy_ref<> (PyLong_FromUnsignedLong (l));
-
-  return gdbpy_ref<> (PyInt_FromLong (l));
-#endif
 }
 
-/* Like PyInt_AsLong, but returns 0 on failure, 1 on success, and puts
+/* Like PyLong_AsLong, but returns 0 on failure, 1 on success, and puts
    the value into an out parameter.  */
 
 int
 gdb_py_int_as_long (PyObject *obj, long *result)
 {
-  *result = PyInt_AsLong (obj);
+  *result = PyLong_AsLong (obj);
   return ! (*result == -1 && PyErr_Occurred ());
 }
 
@@ -380,6 +339,23 @@ gdb_pymodule_addobject (PyObject *module, const char *name, PyObject *object)
   return result;
 }
 
+/* See python-internal.h.  */
+
+void
+gdbpy_error (const char *fmt, ...)
+{
+  va_list ap;
+  va_start (ap, fmt);
+  std::string str = string_vprintf (fmt, ap);
+  va_end (ap);
+
+  const char *msg = str.c_str ();
+  if (msg != nullptr && *msg != '\0')
+    error (_("Error occurred in Python: %s"), msg);
+  else
+    error (_("Error occurred in Python."));
+}
+
 /* Handle a Python exception when the special gdb.GdbError treatment
    is desired.  This should only be called when an exception is set.
    If the exception is a gdb.GdbError, throw a gdb exception with the
@@ -396,9 +372,9 @@ gdbpy_handle_exception ()
     {
       /* An error occurred computing the string representation of the
 	 error message.  This is rare, but we should inform the user.  */
-      printf_filtered (_("An error occurred in Python "
-			 "and then another occurred computing the "
-			 "error message.\n"));
+      gdb_printf (_("An error occurred in Python "
+		    "and then another occurred computing the "
+		    "error message.\n"));
       gdbpy_print_stack ();
     }
 
@@ -423,4 +399,198 @@ gdbpy_handle_exception ()
     }
   else
     error ("%s", msg.get ());
+}
+
+/* See python-internal.h.  */
+
+gdb::unique_xmalloc_ptr<char>
+gdbpy_fix_doc_string_indentation (gdb::unique_xmalloc_ptr<char> doc)
+{
+  /* A structure used to track the white-space information on each line of
+     DOC.  */
+  struct line_whitespace
+  {
+    /* Constructor.  OFFSET is the offset from the start of DOC, WS_COUNT
+       is the number of whitespace characters starting at OFFSET.  */
+    line_whitespace (size_t offset, int ws_count)
+      : m_offset (offset),
+	m_ws_count (ws_count)
+    { /* Nothing.  */ }
+
+    /* The offset from the start of DOC.  */
+    size_t offset () const
+    { return m_offset; }
+
+    /* The number of white-space characters at the start of this line.  */
+    int ws () const
+    { return m_ws_count; }
+
+  private:
+    /* The offset from the start of DOC to the first character of this
+       line.  */
+    size_t m_offset;
+
+    /* White space count on this line, the first character of this
+       whitespace is at OFFSET.  */
+    int m_ws_count;
+  };
+
+  /* Count the number of white-space character starting at TXT.  We
+     currently only count true single space characters, things like tabs,
+     newlines, etc are not counted.  */
+  auto count_whitespace = [] (const char *txt) -> int
+  {
+    int count = 0;
+
+    while (*txt == ' ')
+      {
+	++txt;
+	++count;
+      }
+
+    return count;
+  };
+
+  /* In MIN_WHITESPACE we track the smallest number of whitespace
+     characters seen at the start of a line (that has actual content), this
+     is the number of characters that we can delete off all lines without
+     altering the relative indentation of all lines in DOC.
+
+     The first line often has no indentation, but instead starts immediates
+     after the 3-quotes marker within the Python doc string, so, if the
+     first line has zero white-space then we just ignore it, and don't set
+     MIN_WHITESPACE to zero.
+
+     Lines without any content should (ideally) have no white-space at
+     all, but if they do then they might have an artificially low number
+     (user left a single stray space at the start of an otherwise blank
+     line), we don't consider lines without content when updating the
+     MIN_WHITESPACE value.  */
+  gdb::optional<int> min_whitespace;
+
+  /* The index into WS_INFO at which the processing of DOC can be
+     considered "all done", that is, after this point there are no further
+     lines with useful content and we should just stop.  */
+  gdb::optional<size_t> all_done_idx;
+
+  /* White-space information for each line in DOC.  */
+  std::vector<line_whitespace> ws_info;
+
+  /* Now look through DOC and collect the required information.  */
+  const char *tmp = doc.get ();
+  while (*tmp != '\0')
+    {
+      /* Add an entry for the offset to the start of this line, and how
+	 much white-space there is at the start of this line.  */
+      size_t offset = tmp - doc.get ();
+      int ws_count = count_whitespace (tmp);
+      ws_info.emplace_back (offset, ws_count);
+
+      /* Skip over the white-space.  */
+      tmp += ws_count;
+
+      /* Remember where the content of this line starts, and skip forward
+	 to either the end of this line (newline) or the end of the DOC
+	 string (null character), whichever comes first.  */
+      const char *content_start = tmp;
+      while (*tmp != '\0' && *tmp != '\n')
+	++tmp;
+
+      /* If this is not the first line, and if this line has some content,
+	 then update MIN_WHITESPACE, this reflects the smallest number of
+	 whitespace characters we can delete from all lines without
+	 impacting the relative indentation of all the lines of DOC.  */
+      if (offset > 0 && tmp > content_start)
+	{
+	  if (!min_whitespace.has_value ())
+	    min_whitespace = ws_count;
+	  else
+	    min_whitespace = std::min (*min_whitespace, ws_count);
+	}
+
+      /* Each time we encounter a line that has some content we update
+	 ALL_DONE_IDX to be the index of the next line.  If the last lines
+	 of DOC don't contain any content then ALL_DONE_IDX will be left
+	 pointing at an earlier line.  When we rewrite DOC, when we reach
+	 ALL_DONE_IDX then we can stop, the allows us to trim any blank
+	 lines from the end of DOC.  */
+      if (tmp > content_start)
+	all_done_idx = ws_info.size ();
+
+      /* If we reached a newline then skip forward to the start of the next
+	 line.  The other possibility at this point is that we're at the
+	 very end of the DOC string (null terminator).  */
+      if (*tmp == '\n')
+	++tmp;
+    }
+
+  /* We found no lines with content, fail safe by just returning the
+     original documentation string.  */
+  if (!all_done_idx.has_value () || !min_whitespace.has_value ())
+    return doc;
+
+  /* Setup DST and SRC, both pointing into the DOC string.  We're going to
+     rewrite DOC in-place, as we only ever make DOC shorter (by removing
+     white-space), thus we know this will not overflow.  */
+  char *dst = doc.get ();
+  char *src = doc.get ();
+
+  /* Array indices used with DST, SRC, and WS_INFO respectively.  */
+  size_t dst_offset = 0;
+  size_t src_offset = 0;
+  size_t ws_info_offset = 0;
+
+  /* Now, walk over the source string, this is the original DOC.  */
+  while (src[src_offset] != '\0')
+    {
+      /* If we are at the start of the next line (in WS_INFO), then we may
+	 need to skip some white-space characters.  */
+      if (src_offset == ws_info[ws_info_offset].offset ())
+	{
+	  /* If a line has leading white-space then we need to skip over
+	     some number of characters now.  */
+	  if (ws_info[ws_info_offset].ws () > 0)
+	    {
+	      /* If the line is entirely white-space then we skip all of
+		 the white-space, the next character to copy will be the
+		 newline or null character.  Otherwise, we skip the just
+		 some portion of the leading white-space.  */
+	      if (src[src_offset + ws_info[ws_info_offset].ws ()] == '\n'
+		  || src[src_offset + ws_info[ws_info_offset].ws ()] == '\0')
+		src_offset += ws_info[ws_info_offset].ws ();
+	      else
+		src_offset += std::min (*min_whitespace,
+					ws_info[ws_info_offset].ws ());
+
+	      /* If we skipped white-space, and are now at the end of the
+		 input, then we're done.  */
+	      if (src[src_offset] == '\0')
+		break;
+	    }
+	  if (ws_info_offset < (ws_info.size () - 1))
+	    ++ws_info_offset;
+	  if (ws_info_offset > *all_done_idx)
+	    break;
+	}
+
+      /* Don't copy a newline to the start of the DST string, this would
+	 result in a leading blank line.  But in all other cases, copy the
+	 next character into the destination string.  */
+      if ((dst_offset > 0 || src[src_offset] != '\n'))
+	{
+	  dst[dst_offset] = src[src_offset];
+	  ++dst_offset;
+	}
+
+      /* Move to the next source character.  */
+      ++src_offset;
+    }
+
+  /* Remove the trailing newline character(s), and ensure we have a null
+     terminator in place.  */
+  while (dst_offset > 1 && dst[dst_offset - 1] == '\n')
+    --dst_offset;
+  dst[dst_offset] = '\0';
+
+  return doc;
 }

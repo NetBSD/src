@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -446,33 +446,35 @@ gdb_test_multiple "explore type union ComplexUnion" "" {
     }
 }
 
-gdb_test_multiple "explore type cu" "" {
-    -re "'cu' is of type 'union ComplexUnion'.*[compound_type_description $CU {union}].*$CU_fields_types.*" {
-        pass "explore type union ComplexUnion"
-        gdb_test_multiple "0" "explore type union ComplexStruct field 0" {
-            -re ".*[child_compound_type_description $CU_field_0 $SS {struct/class}].*$SS_fields_types.*" {
-                pass "explore type union ComplexUnion field 0"
-                gdb_test_multiple "\0" "return to ComplexUnion from field 0" {
-                    -re ".*[compound_type_description $CU {union}].*$CU_fields_types.*" {
-                        pass "return to ComplexUnion from field 0"
-                    }
-                }
-            }
-        }
-        gdb_test_multiple "1" "explore type union ComplexUnion field 1" {
-            -re ".*[child_array_type_description $CU_field_1 $SS].*" {
-                pass "explore type union ComplexUnion field 1"
-                gdb_test_multiple "\0" "return to ComplexUnion array" {
-                    -re ".*[compound_type_description $CU {union}].*$CU_fields_types.*" {
-                        pass "return to ComplexUnion from field 1"
-                    }
-                }
-            }
-        }
-        gdb_test_multiple "\0" "return to GDB prompt from ComplexUnion type exploration" {
-            -re "$gdb_prompt" {
-                pass "return to GDB prompt from ComplexUnion type exploration"
-            }
-        }
+with_test_prefix "using 'cu'" {
+    gdb_test_multiple "explore type cu" "" {
+	-re "'cu' is of type 'union ComplexUnion'.*[compound_type_description $CU {union}].*$CU_fields_types.*" {
+	    pass "explore type union ComplexUnion"
+	    gdb_test_multiple "0" "explore type union ComplexStruct field 0" {
+		-re ".*[child_compound_type_description $CU_field_0 $SS {struct/class}].*$SS_fields_types.*" {
+		    pass "explore type union ComplexUnion field 0"
+		    gdb_test_multiple "\0" "return to ComplexUnion from field 0" {
+			-re ".*[compound_type_description $CU {union}].*$CU_fields_types.*" {
+			    pass "return to ComplexUnion from field 0"
+			}
+		    }
+		}
+	    }
+	    gdb_test_multiple "1" "explore type union ComplexUnion field 1" {
+		-re ".*[child_array_type_description $CU_field_1 $SS].*" {
+		    pass "explore type union ComplexUnion field 1"
+		    gdb_test_multiple "\0" "return to ComplexUnion array" {
+			-re ".*[compound_type_description $CU {union}].*$CU_fields_types.*" {
+			    pass "return to ComplexUnion from field 1"
+			}
+		    }
+		}
+	    }
+	    gdb_test_multiple "\0" "return to GDB prompt from ComplexUnion type exploration" {
+		-re "$gdb_prompt" {
+		    pass "return to GDB prompt from ComplexUnion type exploration"
+		}
+	    }
+	}
     }
 }

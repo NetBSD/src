@@ -40,7 +40,7 @@
 //     concatenation of the low 32 bits of HI and LO.
 :function:::void:do_vr_mul_op:int rd, int rs, int rt, int accumulate_p, int store_hi_p, int unsigned_p, int saturate_p, int subtract_p, int short_p, int double_p
 {
-  unsigned64 lhs, x, y, xcut, ycut, product, result;
+  uint64_t lhs, x, y, xcut, ycut, product, result;
 
   check_mult_hilo (SD_, HIHISTORY, LOHISTORY);
 
@@ -82,10 +82,10 @@
       /* Saturate the result to 32 bits.  An unsigned, unsaturated
 	 result is zero-extended to 64 bits, but unsigned overflow
 	 causes all 64 bits to be set.  */
-      if (!unsigned_p && (unsigned64) EXTEND32 (result) != result)
-	result = ((signed64) result < 0 ? -0x7fffffff - 1 : 0x7fffffff);
+      if (!unsigned_p && (uint64_t) EXTEND32 (result) != result)
+	result = ((int64_t) result < 0 ? -0x7fffffff - 1 : 0x7fffffff);
       else if (unsigned_p && (result >> 32) != 0)
-	result = (unsigned64) 0 - 1;
+	result = (uint64_t) 0 - 1;
     }
   TRACE_ALU_RESULT (result);
 

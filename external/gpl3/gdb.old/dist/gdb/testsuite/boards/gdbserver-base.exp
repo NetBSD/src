@@ -1,4 +1,4 @@
-# Copyright 2011-2020 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,8 @@ process_multilib_options ""
 set_board_info compiler "[find_gcc]"
 
 # Test the copy of gdbserver in the build directory.
-set_board_info gdb_server_prog "[pwd]/../../gdbserver/gdbserver"
+set_board_info gdb_server_prog \
+    "[file normalize [pwd]/../../gdbserver/gdbserver]"
 
 # gdbserver does not intercept target file operations and perform them
 # on the host.
@@ -31,4 +32,4 @@ set_board_info gdb,nofileio 1
 # The predefined TSVs in GDBserver.
 set_board_info gdb,predefined_tsv "\\\$trace_timestamp"
 
-set GDBFLAGS "${GDBFLAGS} -ex \"set auto-connect-native-target off\""
+set GDBFLAGS "${GDBFLAGS} -iex \"set auto-connect-native-target off\""

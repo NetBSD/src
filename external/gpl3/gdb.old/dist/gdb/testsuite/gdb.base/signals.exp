@@ -1,4 +1,4 @@
-# Copyright 1997-2020 Free Software Foundation, Inc.
+# Copyright 1997-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 if [target_info exists gdb,nosignals] {
     verbose "Skipping signals.exp because of nosignals."
-    continue
+    return
 }
 
 
@@ -23,12 +23,6 @@ standard_testfile .c
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
     untested "failed to compile"
-    return -1
-}
-
-# Create and source the file that provides information about the compiler
-# used to compile the test case.
-if [get_compiler_info] {
     return -1
 }
 
@@ -69,7 +63,7 @@ test_handle_all_print
 
 clean_restart $binfile
 
-if [runto_main] then {
+if {[runto_main]} {
 
     # Since count is a static variable outside main, runto_main is no
     # guarantee that count will be 0 at this point.

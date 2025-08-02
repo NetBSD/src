@@ -1,4 +1,4 @@
-# Copyright 1999-2020 Free Software Foundation, Inc.
+# Copyright 1999-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ set MIFLAGS "-i=mi"
 
 gdb_exit
 if [mi_gdb_start] {
-    continue
+    return
 }
 
 standard_testfile basics.c
@@ -65,7 +65,7 @@ proc test_breakpoints_creation_and_listing {} {
     # -break-info
 
     set bps {}
-    lappend bps [mi_create_breakpoint "main" \
+    lappend bps [mi_create_breakpoint "--qualified main" \
 		     "break-insert operation" \
 		     -number 1 -func main -file ".*basics.c" \
 		     -line $line_main_body]

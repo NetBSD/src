@@ -1,6 +1,6 @@
 /* This file is part of GDB, the GNU debugger.
 
-   Copyright 2017-2020 Free Software Foundation, Inc.
+   Copyright 2017-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -53,5 +53,11 @@ main (void)
     }
 
   sp1->i = 8765;
-  i = 1;
+  sp2->i = 4321;
+  sp1->i = 8765;
+  sp2->i = 4321;
+  *p1 = 1;
+  *p2 = 2;
+  *p1 = 1;
+  *p2 = 2;
 }

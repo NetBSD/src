@@ -22,6 +22,9 @@
    freed as they might be needed again. A single area of memory may be
    defined to generate aborts.  */
 
+/* This must come before any other includes.  */
+#include "defs.h"
+
 #include "armos.h"
 #include "armdefs.h"
 #include "ansidecl.h"
@@ -43,6 +46,7 @@
 
 #endif
 
+#undef PAGESIZE			/* Cleanup system headers.  */
 #define NUMPAGES 64 * 1024
 #define PAGESIZE 64 * 1024
 #define PAGEBITS 16

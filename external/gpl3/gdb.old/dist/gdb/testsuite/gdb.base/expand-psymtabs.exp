@@ -1,4 +1,4 @@
-# Copyright 2007-2020 Free Software Foundation, Inc.
+# Copyright 2007-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,11 +29,6 @@
 # successfully in either compilation unit.  
 
 standard_testfile
-
-# What compiler are we using?
-if [get_compiler_info] {
-    return -1
-}
 
 # We intentionally compile the source file in twice.
 if {[prepare_for_testing_full "failed to prepare" \

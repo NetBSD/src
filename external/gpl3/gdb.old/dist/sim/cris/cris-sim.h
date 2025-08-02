@@ -1,5 +1,5 @@
 /* Collection of junk for CRIS.
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2023 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -34,22 +34,22 @@ typedef struct {
 
   /* Static cycle count for all insns executed so far, including
      non-context-specific stall cycles, for example when adding to PC.  */
-  unsigned64 basic_cycle_count;
+  uint64_t basic_cycle_count;
 
   /* Stall cycles for unaligned access of memory operands.  FIXME:
      Should or should not include unaligned [PC+] operands?  */
-  unsigned64 unaligned_mem_dword_count;
+  uint64_t unaligned_mem_dword_count;
 
   /* Context-specific stall cycles.  */
-  unsigned64 memsrc_stall_count;
-  unsigned64 memraw_stall_count;
-  unsigned64 movemsrc_stall_count;
-  unsigned64 movemaddr_stall_count;
-  unsigned64 movemdst_stall_count;
-  unsigned64 mulsrc_stall_count;
-  unsigned64 jumpsrc_stall_count;
-  unsigned64 branch_stall_count;
-  unsigned64 jumptarget_stall_count;
+  uint64_t memsrc_stall_count;
+  uint64_t memraw_stall_count;
+  uint64_t movemsrc_stall_count;
+  uint64_t movemaddr_stall_count;
+  uint64_t movemdst_stall_count;
+  uint64_t mulsrc_stall_count;
+  uint64_t jumpsrc_stall_count;
+  uint64_t branch_stall_count;
+  uint64_t jumptarget_stall_count;
 
   /* What kind of target-specific trace to perform.  */
   int flags;
@@ -79,7 +79,6 @@ typedef struct {
 
 /* Handler prototypes for functions called from the CGEN description.  */
 
-extern USI cris_bmod_handler (SIM_CPU *, UINT, USI);
 extern void cris_flush_simulator_decode_cache (SIM_CPU *, USI);
 extern USI crisv10f_break_handler (SIM_CPU *, USI, USI);
 extern USI crisv32f_break_handler (SIM_CPU *, USI, USI);

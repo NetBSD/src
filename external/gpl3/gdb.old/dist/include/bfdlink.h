@@ -1,5 +1,5 @@
 /* bfdlink.h -- header file for BFD link routines
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
    Written by Steve Chamberlain and Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -114,6 +114,9 @@ struct bfd_link_hash_entry
      as distinct from a LTO IR object file.  */
   unsigned int non_ir_ref_dynamic : 1;
 
+  /* The symbol, SYM, is referenced by __real_SYM in an object file.  */
+  unsigned int ref_real : 1;
+
   /* Symbol is a built-in define.  These will be overridden by PROVIDE
      in a linker script.  */
   unsigned int linker_def : 1;
@@ -216,16 +219,15 @@ struct bfd_link_hash_table
    follows bfd_link_hash_indirect and bfd_link_hash_warning links to
    the real symbol.  */
 extern struct bfd_link_hash_entry *bfd_link_hash_lookup
-  (struct bfd_link_hash_table *, const char *, bfd_boolean create,
-   bfd_boolean copy, bfd_boolean follow);
+  (struct bfd_link_hash_table *, const char *, bool create,
+   bool copy, bool follow);
 
 /* Look up an entry in the main linker hash table if the symbol might
    be wrapped.  This should only be used for references to an
    undefined symbol, not for definitions of a symbol.  */
 
 extern struct bfd_link_hash_entry *bfd_wrapped_link_hash_lookup
-  (bfd *, struct bfd_link_info *, const char *, bfd_boolean,
-   bfd_boolean, bfd_boolean);
+  (bfd *, struct bfd_link_info *, const char *, bool, bool, bool);
 
 /* If H is a wrapped symbol, ie. the symbol name starts with "__wrap_"
    and the remainder is found in wrap_hash, return the real symbol.  */
@@ -236,7 +238,7 @@ extern struct bfd_link_hash_entry *unwrap_hash_lookup
 /* Traverse a link hash table.  */
 extern void bfd_link_hash_traverse
   (struct bfd_link_hash_table *,
-    bfd_boolean (*) (struct bfd_link_hash_entry *, void *),
+    bool (*) (struct bfd_link_hash_entry *, void *),
     void *);
 
 /* Add an entry to the undefs list.  */
@@ -248,12 +250,12 @@ extern void bfd_link_repair_undef_list
   (struct bfd_link_hash_table *table);
 
 /* Read symbols and cache symbol pointer array in outsymbols.  */
-extern bfd_boolean bfd_generic_link_read_symbols (bfd *);
+extern bool bfd_generic_link_read_symbols (bfd *);
 
 /* Check the relocs in the BFD.  Called after all the input
    files have been loaded, and garbage collection has tagged
    any unneeded sections.  */
-extern bfd_boolean bfd_link_check_relocs (bfd *,struct bfd_link_info *);
+extern bool bfd_link_check_relocs (bfd *,struct bfd_link_info *);
 
 struct bfd_sym_chain
 {
@@ -292,7 +294,7 @@ struct flag_info_list
 {
   flag_type with;
   const char *name;
-  bfd_boolean valid;
+  bool valid;
   struct flag_info_list *next;
 };
 
@@ -302,7 +304,7 @@ struct flag_info
   flagword only_with_flags;
   flagword not_with_flags;
   struct flag_info_list *flag_list;
-  bfd_boolean flags_initialized;
+  bool flags_initialized;
 };
 
 struct bfd_elf_dynamic_list;
@@ -335,10 +337,6 @@ struct bfd_link_info
 
   /* TRUE if BFD should pre-bind symbols in a shared object.  */
   unsigned int symbolic: 1;
-
-  /* TRUE if executable should not contain copy relocs.
-     Setting this true may result in a non-sharable text segment.  */
-  unsigned int nocopyreloc: 1;
 
   /* TRUE if BFD should export all symbols in the dynamic symbol table
      of an executable, rather than only those used.  */
@@ -418,6 +416,10 @@ struct bfd_link_info
   /* TRUE if PT_GNU_RELRO segment should be created.  */
   unsigned int relro: 1;
 
+  /* TRUE if DT_RELR should be enabled for compact relative
+     relocations.  */
+  unsigned int enable_dt_relr: 1;
+
   /* TRUE if separate code segment should be created.  */
   unsigned int separate_code: 1;
 
@@ -465,11 +467,15 @@ struct bfd_link_info
      statics.  */
   unsigned int task_link: 1;
 
-  /* TRUE if ok to have multiple definition.  */
+  /* TRUE if ok to have multiple definitions, without warning.  */
   unsigned int allow_multiple_definition: 1;
 
-  /* TRUE if ok to have prohibit multiple definition of absolute symbols.  */
+  /* TRUE if multiple definition of absolute symbols (eg. from -R) should
+     be reported.  */
   unsigned int prohibit_multiple_definition_absolute: 1;
+
+  /* TRUE if multiple definitions should only warn.  */
+  unsigned int warn_multiple_definition: 1;
 
   /* TRUE if ok to have version with no definition.  */
   unsigned int allow_undefined_version: 1;
@@ -486,6 +492,22 @@ struct bfd_link_info
      flags.  */
   unsigned int noexecstack: 1;
 
+  /* Tri-state variable:
+     0 => do not warn when creating an executable stack.
+     1 => always warn when creating an executable stack.
+     >1 => warn when creating an executable stack if execstack is 0.  */
+  unsigned int warn_execstack: 2;
+
+  /* TRUE if warnings should not be generated for TLS segments with eXecute
+     permission or LOAD segments with RWX permissions.  */
+  unsigned int no_warn_rwx_segments: 1;
+
+  /* TRUE if the stack can be made executable because of the absence of a
+     .note.GNU-stack section in an input file.  Note - even if this field
+     is set, some targets may choose to ignore the setting and not create
+     an executable stack.  */
+  unsigned int default_execstack : 1;
+  
   /* TRUE if we want to produced optimized output files.  This might
      need much more time and therefore must be explicitly selected.  */
   unsigned int optimize: 1;
@@ -526,6 +548,12 @@ struct bfd_link_info
   /* TRUE if all symbol names should be unique.  */
   unsigned int unique_symbol : 1;
 
+  /* TRUE if maxpagesize is set on command-line.  */
+  unsigned int maxpagesize_is_set : 1;
+
+  /* TRUE if commonpagesize is set on command-line.  */
+  unsigned int commonpagesize_is_set : 1;
+
   /* Char that may appear as the first char of a symbol, but should be
      skipped (like symbol_leading_char) when looking up symbols in
      wrap_hash.  Used by PowerPC Linux for 'dot' symbols.  */
@@ -533,9 +561,6 @@ struct bfd_link_info
 
   /* Separator between archive and filename in linker script filespecs.  */
   char path_separator;
-
-  /* Compress DWARF debug sections.  */
-  enum compressed_debug_section_type compress_debug;
 
   /* Default stack size.  Zero means default (often zero itself), -1
      means explicitly zero-sized.  */
@@ -649,14 +674,46 @@ struct bfd_link_info
   /* How many spare .dynamic DT_NULL entries should be added?  */
   unsigned int spare_dynamic_tags;
 
+  /* GNU_PROPERTY_1_NEEDED_INDIRECT_EXTERN_ACCESS control:
+       > 1: Turn on by -z indirect-extern-access or by backend.
+      == 1: Turn on by an input.
+         0: Turn off.
+       < 0: Turn on if it is set on any inputs or let backend to
+	    decide.  */
+  int indirect_extern_access;
+
+  /* Non-zero if executable should not contain copy relocs.
+       > 1: Implied by indirect_extern_access.
+      == 1: Turn on by -z nocopyreloc.
+         0: Turn off.
+    Setting this to non-zero may result in a non-sharable text
+    segment.  */
+  int nocopyreloc;
+
+  /* Pointer to the GNU_PROPERTY_1_NEEDED property in memory.  */
+  bfd_byte *needed_1_p;
+
   /* May be used to set DT_FLAGS for ELF. */
   bfd_vma flags;
 
   /* May be used to set DT_FLAGS_1 for ELF. */
   bfd_vma flags_1;
 
+  /* May be used to set DT_GNU_FLAGS_1 for ELF. */
+  bfd_vma gnu_flags_1;
+
+  /* TRUE if references to __start_/__stop_ synthesized symbols do not
+     specially retain C identifier named sections.  */
+  int start_stop_gc;
+
   /* May be used to set ELF visibility for __start_* / __stop_.  */
   unsigned int start_stop_visibility;
+
+  /* The maximum page size for ELF.  */
+  bfd_vma maxpagesize;
+
+  /* The common page size for ELF.  */
+  bfd_vma commonpagesize;
 
   /* Start and end of RELRO region.  */
   bfd_vma relro_start, relro_end;
@@ -666,12 +723,19 @@ struct bfd_link_info
 
   /* The version information.  */
   struct bfd_elf_version_tree *version_info;
+
+  /* Size of cache.  Backend can use it to keep strace cache size.   */
+  bfd_size_type cache_size;
+
+  /* The maximum cache size.  Backend can use cache_size and and
+     max_cache_size to decide if keep_memory should be honored.  */
+  bfd_size_type max_cache_size;
 };
 
 /* Some forward-definitions used by some callbacks.  */
 
 struct elf_strtab_hash;
-struct elf_sym_strtab;
+struct elf_internal_sym;
 
 /* This structures holds a set of callback functions.  These are called
    by the BFD linker routines.  */
@@ -685,7 +749,7 @@ struct bfd_link_callbacks
      BFD from which symbols should in fact be added in place of the
      original BFD's symbols.  Returns TRUE if the object should be
      added, FALSE if it should be skipped.  */
-  bfd_boolean (*add_archive_element)
+  bool (*add_archive_element)
     (struct bfd_link_info *, bfd *abfd, const char *name, bfd **subsbfd);
   /* A function which is called when a symbol is found with multiple
      definitions.  H is the symbol which is defined multiple times.
@@ -719,7 +783,7 @@ struct bfd_link_callbacks
      relocatable file.  NAME is the name of the symbol found.  ABFD,
      SECTION and VALUE are the value of the symbol.  */
   void (*constructor)
-    (struct bfd_link_info *, bfd_boolean constructor, const char *name,
+    (struct bfd_link_info *, bool constructor, const char *name,
      bfd *abfd, asection *sec, bfd_vma value);
   /* A function which is called to issue a linker warning.  For
      example, this is called when there is a reference to a warning
@@ -738,7 +802,7 @@ struct bfd_link_callbacks
      a fatal error or not. In some cases SECTION may be NULL.  */
   void (*undefined_symbol)
     (struct bfd_link_info *, const char *name, bfd *abfd,
-     asection *section, bfd_vma address, bfd_boolean is_fatal);
+     asection *section, bfd_vma address, bool is_fatal);
   /* A function which is called when a reloc overflow occurs. ENTRY is
      the link hash table entry for the symbol the reloc is against.
      NAME is the name of the local symbol or section the reloc is
@@ -774,7 +838,7 @@ struct bfd_link_callbacks
      if applicable.  ABFD, SECTION and ADDRESS are the (new) value of
      the symbol.  If SECTION is bfd_und_section, this is a reference.
      FLAGS are the symbol BSF_* flags.  */
-  bfd_boolean (*notice)
+  bool (*notice)
     (struct bfd_link_info *, struct bfd_link_hash_entry *h,
      struct bfd_link_hash_entry *inh,
      bfd *abfd, asection *section, bfd_vma address, flagword flags);
@@ -790,16 +854,22 @@ struct bfd_link_callbacks
   /* This callback provides a chance for users of the BFD library to
      override its decision about whether to place two adjacent sections
      into the same segment.  */
-  bfd_boolean (*override_segment_assignment)
+  bool (*override_segment_assignment)
     (struct bfd_link_info *, bfd * abfd,
      asection * current_section, asection * previous_section,
-     bfd_boolean new_segment);
+     bool new_segment);
   /* This callback provides a chance for callers of the BFD to examine the
-     ELF string table and symbol table once they are complete and indexes and
-     offsets assigned.  */
+     ELF (dynamic) string table once it is complete.  */
   void (*examine_strtab)
-    (struct elf_sym_strtab *syms, bfd_size_type symcount,
-     struct elf_strtab_hash *symstrtab);
+    (struct elf_strtab_hash *symstrtab);
+  /* This callback is called just before a symbol is swapped out, so that the
+     CTF machinery can look up symbols during construction.  The name is
+     already an external strtab offset at this point.  */
+  void (*ctf_new_symbol)
+    (int symidx, struct elf_internal_sym *sym);
+  /* Likewise, for dynamic symbols.  */
+  void (*ctf_new_dynsym)
+    (int symidx, struct elf_internal_sym *sym);
   /* This callback should emit the CTF section into a non-loadable section in
      the output BFD named .ctf or a name beginning with ".ctf.".  */
   void (*emit_ctf)
@@ -907,9 +977,9 @@ extern struct bfd_link_order *bfd_new_link_order (bfd *, asection *);
 
 struct bfd_section_already_linked;
 
-extern bfd_boolean bfd_section_already_linked_table_init (void);
+extern bool bfd_section_already_linked_table_init (void);
 extern void bfd_section_already_linked_table_free (void);
-extern bfd_boolean _bfd_handle_already_linked
+extern bool _bfd_handle_already_linked
   (struct bfd_section *, struct bfd_section_already_linked *,
    struct bfd_link_info *);
 

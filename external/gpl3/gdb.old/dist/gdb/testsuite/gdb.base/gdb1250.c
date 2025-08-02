@@ -1,6 +1,6 @@
 /* Test program for stack trace through noreturn function.
 
-   Copyright 2003-2020 Free Software Foundation, Inc.
+   Copyright 2003-2023 Free Software Foundation, Inc.
 
    This file is part of the gdb testsuite.
 

@@ -1,6 +1,6 @@
 /* Error reporting facilities.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,9 @@
 
 #include "common-defs.h"
 #include "errors.h"
+#if defined (USE_WIN32API) || defined(__CYGWIN__)
+#include <windows.h>
+#endif /* USE_WIN32API */
 
 /* See gdbsupport/errors.h.  */
 
@@ -47,7 +50,7 @@ error (const char *fmt, ...)
 /* See gdbsupport/errors.h.  */
 
 void
-internal_error (const char *file, int line, const char *fmt, ...)
+internal_error_loc (const char *file, int line, const char *fmt, ...)
 {
   va_list ap;
 
@@ -59,7 +62,7 @@ internal_error (const char *file, int line, const char *fmt, ...)
 /* See gdbsupport/errors.h.  */
 
 void
-internal_warning (const char *file, int line, const char *fmt, ...)
+internal_warning_loc (const char *file, int line, const char *fmt, ...)
 {
   va_list ap;
 
@@ -67,3 +70,54 @@ internal_warning (const char *file, int line, const char *fmt, ...)
   internal_vwarning (file, line, fmt, ap);
   va_end (ap);
 }
+
+#if defined (USE_WIN32API) || defined(__CYGWIN__)
+
+/* See errors.h.  */
+
+const char *
+strwinerror (ULONGEST error)
+{
+  static char buf[1024];
+  TCHAR *msgbuf;
+  DWORD lasterr = GetLastError ();
+  DWORD chars = FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM
+			       | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+			       NULL,
+			       error,
+			       0, /* Default language */
+			       (LPTSTR) &msgbuf,
+			       0,
+			       NULL);
+  if (chars != 0)
+    {
+      /* If there is an \r\n appended, zap it.  */
+      if (chars >= 2
+	  && msgbuf[chars - 2] == '\r'
+	  && msgbuf[chars - 1] == '\n')
+	{
+	  chars -= 2;
+	  msgbuf[chars] = 0;
+	}
+
+      if (chars > ARRAY_SIZE (buf) - 1)
+	{
+	  chars = ARRAY_SIZE (buf) - 1;
+	  msgbuf [chars] = 0;
+	}
+
+#ifdef UNICODE
+      wcstombs (buf, msgbuf, chars + 1);
+#else
+      strncpy (buf, msgbuf, chars + 1);
+#endif
+      LocalFree (msgbuf);
+    }
+  else
+    sprintf (buf, "unknown win32 error (%u)", (unsigned) error);
+
+  SetLastError (lasterr);
+  return buf;
+}
+
+#endif /* USE_WIN32API */

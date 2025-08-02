@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2007-2020 Free Software Foundation, Inc.
+   Copyright 2007-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@
 
 	/* CU die */
 	.uleb128 1				/* Abbrev: DW_TAG_compile_unit */
-	.4byte	cu_text_end			/* DW_AT_high_pc */
-	.4byte	cu_text_start			/* DW_AT_low_pc */
+	.4byte	FUNC_LOOPFB_END			/* DW_AT_high_pc */
+	.4byte	FUNC_NOFB_START			/* DW_AT_low_pc */
 	.ascii	"file1.txt\0"			/* DW_AT_name */
 	.ascii	"GNU C 3.3.3\0"			/* DW_AT_producer */
 	.byte	1				/* DW_AT_language (C) */
@@ -43,8 +43,8 @@
 	/* func_nofb */
 	.uleb128	5			/* Abbrev: DW_TAG_subprogram (no fb) */
 	.ascii		"func_nofb\0"		/* DW_AT_name */
-	.4byte		func_nofb_start		/* DW_AT_low_pc */
-	.4byte		func_nofb_end		/* DW_AT_high_pc */
+	.4byte          FUNC_NOFB_START         /* DW_AT_low_pc */
+	.4byte          FUNC_NOFB_END           /* DW_AT_high_pc */
 
 	.uleb128	7			/* Abbrev: DW_TAG_variable (location) */
 	.ascii		"func_nofb_var\0"	/* DW_AT_name */
@@ -58,8 +58,8 @@
 	/* func_loopfb */
 	.uleb128	6			/* Abbrev: DW_TAG_subprogram (loop fb) */
 	.ascii		"func_loopfb\0"		/* DW_AT_name */
-	.4byte		func_loopfb_start	/* DW_AT_low_pc */
-	.4byte		func_loopfb_end		/* DW_AT_high_pc */
+	.4byte		FUNC_LOOPFB_START	/* DW_AT_low_pc */
+	.4byte		FUNC_LOOPFB_END		/* DW_AT_high_pc */
 	.byte		2f - 1f			/* DW_AT_frame_base */
 1:	.byte		0x91			/*   DW_OP_fbreg */
 	.sleb128	0			/*   0 */
@@ -149,3 +149,4 @@
 
 	.byte		0x0			/* Terminator */
 	.byte		0x0			/* Terminator */
+	.section	.note.GNU-stack,"",@progbits

@@ -1,4 +1,4 @@
-#   Copyright 2018-2020 Free Software Foundation, Inc.
+#   Copyright 2018-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@
 
 standard_testfile
 
-if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
-	  {debug additional_flags=-Wl,--build-id}] } {
+if { [build_executable "failed to prepare" $testfile $srcfile \
+	  {debug ldflags=-Wl,--build-id}] } {
     return
 }
 
@@ -80,7 +80,7 @@ proc run_test_with_flags { cache_dir cache_enabled code } {
 
     save_vars { GDBFLAGS } {
 	set GDBFLAGS "$GDBFLAGS -iex \"set index-cache directory $cache_dir\""
-	set GDBFLAGS "$GDBFLAGS -iex \"set index-cache $cache_enabled\""
+	set GDBFLAGS "$GDBFLAGS -iex \"set index-cache enabled $cache_enabled\""
 
 	clean_restart ${testfile}
 
@@ -97,16 +97,29 @@ proc_with_prefix test_basic_stuff { } {
 
     # Check that the index cache is disabled by default.
     gdb_test \
-	"show index-cache" \
-	" is currently disabled." \
+	"show index-cache enabled" \
+	"The index cache is off." \
 	"index-cache is disabled by default"
 
-    # Test that we can enable it and "show index-cache" reflects that.
-    gdb_test_no_output "set index-cache on" "enable index cache"
+    # Test that we can enable it and "show index-cache enabled" reflects that.
+    gdb_test_no_output "set index-cache enabled on" "enable index cache"
     gdb_test \
-	"show index-cache" \
-	" is currently enabled." \
+	"show index-cache enabled" \
+	"The index cache is on." \
 	"index-cache is now enabled"
+
+    with_test_prefix "deprecated commands" {
+        gdb_test "set index-cache off" ".*is deprecated.*" "disable index cache"
+	gdb_test \
+	    "show index-cache enabled" \
+	    "The index cache is off." \
+	    "index-cache is now disabled"
+        gdb_test "set index-cache on" ".*is deprecated.*" "enable index cache"
+	gdb_test \
+	    "show index-cache enabled" \
+	    "The index cache is on." \
+	    "index-cache is now enabled"
+    }
 
     # Test the "set/show index-cache directory" commands.
     gdb_test "set index-cache directory" "Argument required.*" "set index-cache directory without arg"
@@ -226,3 +239,14 @@ test_cache_enabled_hit $cache_dir
 # Test again with the cache disabled, now that it is populated.
 test_cache_disabled $cache_dir "after populate"
 
+lassign [remote_exec host sh "-c \"rm $cache_dir/*.gdb-index\""] ret
+if { $ret != 0 && $expecting_index_cache_use } {
+    fail "couldn't remove files in temporary cache dir"
+    return
+}
+
+lassign [remote_exec host rmdir "$cache_dir"] ret
+if { $ret != 0 } {
+    fail "couldn't remove temporary cache dir"
+    return
+}

@@ -1,5 +1,5 @@
 /* interrupts.h -- 68HC11 Interrupts Emulation
-   Copyright 1999-2020 Free Software Foundation, Inc.
+   Copyright 1999-2023 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@worldnet.fr)
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -88,10 +88,10 @@ struct interrupt_history
   enum M6811_INT   type;
 
   /* CPU cycle when interrupt handler is called.  */
-  signed64         taken_cycle;   
+  int64_t         taken_cycle;   
 
   /* CPU cycle when the interrupt is first raised by the device.  */
-  signed64         raised_cycle;
+  int64_t         raised_cycle;
 };
 
 #define SIM_STOP_WHEN_RAISED 1
@@ -101,7 +101,7 @@ struct interrupt_history
 struct interrupt
 {
   /* CPU cycle when the interrupt is raised by the device.  */
-  signed64         cpu_cycle;
+  int64_t         cpu_cycle;
 
   /* Number of times the interrupt was raised.  */
   unsigned long    raised_count;
@@ -129,7 +129,7 @@ struct interrupts {
 
   /* Address of vector table.  This is set depending on the
      68hc11 init mode.  */
-  uint16            vectors_addr;
+  uint16_t            vectors_addr;
 
   /* Priority order of interrupts.  This is controlled by setting the HPRIO
      IO register.  */
@@ -139,16 +139,16 @@ struct interrupts {
   /* Simulator statistics to report useful debug information to users.  */
 
   /* - Max/Min number of CPU cycles executed with interrupts masked.  */
-  signed64          start_mask_cycle;
-  signed64          min_mask_cycles;
-  signed64          max_mask_cycles;
-  signed64          last_mask_cycles;
+  int64_t          start_mask_cycle;
+  int64_t          min_mask_cycles;
+  int64_t          max_mask_cycles;
+  int64_t          last_mask_cycles;
 
   /* - Same for XIRQ.  */
-  signed64          xirq_start_mask_cycle;
-  signed64          xirq_min_mask_cycles;
-  signed64          xirq_max_mask_cycles;
-  signed64          xirq_last_mask_cycles;
+  int64_t          xirq_start_mask_cycle;
+  int64_t          xirq_min_mask_cycles;
+  int64_t          xirq_max_mask_cycles;
+  int64_t          xirq_last_mask_cycles;
 
   /* - Total number of interrupts raised.  */
   unsigned long     nb_interrupts_raised;

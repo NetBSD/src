@@ -1,6 +1,6 @@
 /* Declarations for common target functions.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,8 @@
 #define TARGET_TARGET_H
 
 #include "target/waitstatus.h"
+#include "target/wait.h"
+
 /* This header is a stopgap until more code is shared.  */
 
 /* Read LEN bytes of target memory at address MEMADDR, placing the
@@ -45,6 +47,37 @@ extern int target_read_memory (CORE_ADDR memaddr, gdb_byte *myaddr,
    contents of the data at RESULT if any error occurs.  */
 
 extern int target_read_uint32 (CORE_ADDR memaddr, uint32_t *result);
+
+/* Read a string from target memory at address MEMADDR.  The string
+   will be at most LEN bytes long (note that excess bytes may be read
+   in some cases -- but these will not be returned).  Returns nullptr
+   on error.  */
+
+extern gdb::unique_xmalloc_ptr<char> target_read_string
+  (CORE_ADDR memaddr, int len, int *bytes_read = nullptr);
+
+/* Read a string from the inferior, at ADDR, with LEN characters of
+   WIDTH bytes each.  Fetch at most FETCHLIMIT characters.  BUFFER
+   will be set to a newly allocated buffer containing the string, and
+   BYTES_READ will be set to the number of bytes read.  Returns 0 on
+   success, or a target_xfer_status on failure.
+
+   If LEN > 0, reads the lesser of LEN or FETCHLIMIT characters
+   (including eventual NULs in the middle or end of the string).
+
+   If LEN is -1, stops at the first null character (not necessarily
+   the first null byte) up to a maximum of FETCHLIMIT characters.  Set
+   FETCHLIMIT to UINT_MAX to read as many characters as possible from
+   the string.
+
+   Unless an exception is thrown, BUFFER will always be allocated, even on
+   failure.  In this case, some characters might have been read before the
+   failure happened.  Check BYTES_READ to recognize this situation.  */
+
+extern int target_read_string (CORE_ADDR addr, int len, int width,
+			       unsigned int fetchlimit,
+			       gdb::unique_xmalloc_ptr<gdb_byte> *buffer,
+			       int *bytes_read);
 
 /* Write LEN bytes from MYADDR to target memory at address MEMADDR.
    Return zero for success, nonzero if any error occurs.  This
@@ -84,7 +117,7 @@ extern void target_continue (ptid_t ptid, enum gdb_signal signal);
    options.  */
 
 extern ptid_t target_wait (ptid_t ptid, struct target_waitstatus *status,
-			   int options);
+			   target_wait_flags options);
 
 /* The inferior process has died.  Do what is right.  */
 

@@ -1,4 +1,4 @@
-# Copyright 2012-2020 Free Software Foundation, Inc.
+# Copyright 2012-2023 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,9 +35,8 @@ if { [prepare_for_testing "failed to prepare" "${testfile}" $srcfile {nodebug no
     return -1
 }
 
-if ![runto_main] then {
-    fail "cannot run to main."
-    continue
+if {![runto_main]} {
+    return
 }
 
 set srcline [gdb_get_line_number "stepi line" $csrcfile]

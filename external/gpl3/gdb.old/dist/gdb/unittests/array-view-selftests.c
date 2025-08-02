@@ -1,6 +1,6 @@
 /* Self tests for array_view for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #include "gdbsupport/selftest.h"
 #include "gdbsupport/array-view.h"
 #include <array>
+#include <vector>
 
 namespace selftests {
 namespace array_view_tests {
@@ -86,8 +87,8 @@ struct A { int i; };
 struct B : A { int j; };
 struct C : A { int l; };
 
-/* Check that there's no array->view conversion for arrays of derived
-   types or subclasses.  */
+/* Check that there's no array->view conversion for arrays of derived types or
+   subclasses.  */
 static constexpr bool
 check ()
 {
@@ -116,9 +117,34 @@ check ()
 	  && !is_convertible <C, array_view<B>> ());
 }
 
+/* Check that there's no container->view conversion for containers of derived
+   types or subclasses.  */
+
+template<template<typename ...> class Container>
+static constexpr bool
+check_ctor_from_container ()
+{
+  using gdb::array_view;
+
+  return (    is_convertible <Container<A>, array_view<A>> ()
+	  && !is_convertible <Container<B>, array_view<A>> ()
+	  && !is_convertible <Container<C>, array_view<A>> ()
+
+	  && !is_convertible <Container<A>, array_view<B>> ()
+	  &&  is_convertible <Container<B>, array_view<B>> ()
+	  && !is_convertible <Container<C>, array_view<B>> ());
+}
+
 } /* namespace no_slicing */
 
+/* std::array with only one template argument, so we can pass it to
+   check_ctor_from_container.  */
+template<typename T> using StdArray1 = std::array<T, 1>;
+
 static_assert (no_slicing::check (), "");
+static_assert (no_slicing::check_ctor_from_container<std::vector> (), "");
+static_assert (no_slicing::check_ctor_from_container<StdArray1> (), "");
+static_assert (no_slicing::check_ctor_from_container<gdb::array_view> (), "");
 
 /* Check that array_view implicitly converts from std::vector.  */
 
@@ -520,6 +546,108 @@ run_tests ()
   }
 }
 
+template <typename T>
+void
+run_copy_test ()
+{
+  /* Test non-overlapping copy.  */
+  {
+    const std::vector<T> src_v = {1, 2, 3, 4};
+    std::vector<T> dest_v (4, -1);
+
+    SELF_CHECK (dest_v != src_v);
+    copy (gdb::array_view<const T> (src_v), gdb::array_view<T> (dest_v));
+    SELF_CHECK (dest_v == src_v);
+  }
+
+  /* Test overlapping copy, where the source is before the destination.  */
+  {
+    std::vector<T> vec = {1, 2, 3, 4, 5, 6, 7, 8};
+    gdb::array_view<T> v = vec;
+
+    copy (v.slice (1, 4),
+	  v.slice (2, 4));
+
+    std::vector<T> expected = {1, 2, 2, 3, 4, 5, 7, 8};
+    SELF_CHECK (vec == expected);
+  }
+
+  /* Test overlapping copy, where the source is after the destination.  */
+  {
+    std::vector<T> vec = {1, 2, 3, 4, 5, 6, 7, 8};
+    gdb::array_view<T> v = vec;
+
+    copy (v.slice (2, 4),
+	  v.slice (1, 4));
+
+    std::vector<T> expected = {1, 3, 4, 5, 6, 6, 7, 8};
+    SELF_CHECK (vec == expected);
+  }
+
+  /* Test overlapping copy, where the source is the same as the destination.  */
+  {
+    std::vector<T> vec = {1, 2, 3, 4, 5, 6, 7, 8};
+    gdb::array_view<T> v = vec;
+
+    copy (v.slice (2, 4),
+	  v.slice (2, 4));
+
+    std::vector<T> expected = {1, 2, 3, 4, 5, 6, 7, 8};
+    SELF_CHECK (vec == expected);
+  }
+}
+
+/* Class with a non-trivial copy assignment operator, used to test the
+   array_view copy function.  */
+struct foo
+{
+  /* Can be implicitly constructed from an int, such that we can use the same
+     templated test function to test against array_view<int> and
+     array_view<foo>.  */
+  foo (int n)
+    : n (n)
+  {}
+
+  /* Needed to avoid -Wdeprecated-copy-with-user-provided-copy error with
+     Clang.  */
+  foo (const foo &other) = default;
+
+  void operator= (const foo &other)
+  {
+    this->n = other.n;
+    this->n_assign_op_called++;
+  }
+
+  bool operator==(const foo &other) const
+  {
+    return this->n == other.n;
+  }
+
+  int n;
+
+  /* Number of times the assignment operator has been called.  */
+  static int n_assign_op_called;
+};
+
+int foo::n_assign_op_called = 0;
+
+/* Test the array_view copy free function.  */
+
+static void
+run_copy_tests ()
+{
+  /* Test with a trivial type.  */
+  run_copy_test<int> ();
+
+  /* Test with a non-trivial type.  */
+  foo::n_assign_op_called = 0;
+  run_copy_test<foo> ();
+
+  /* Make sure that for the non-trivial type foo, the assignment operator was
+     called an amount of times that makes sense.  */
+  SELF_CHECK (foo::n_assign_op_called == 12);
+}
+
 } /* namespace array_view_tests */
 } /* namespace selftests */
 
@@ -529,4 +657,6 @@ _initialize_array_view_selftests ()
 {
   selftests::register_test ("array_view",
 			    selftests::array_view_tests::run_tests);
+  selftests::register_test ("array_view-copy",
+			    selftests::array_view_tests::run_copy_tests);
 }
