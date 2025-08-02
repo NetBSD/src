@@ -1,4 +1,4 @@
-# $NetBSD: cond-func.mk,v 1.14 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: cond-func.mk,v 1.14.2.1 2025/08/02 05:58:31 perseant Exp $
 #
 # Tests for those parts of the functions in .if conditions that are common
 # among several functions.
@@ -33,7 +33,7 @@ ${VARNAME_UNBALANCED_BRACES}=	variable name with unbalanced braces
 .endif
 
 # The argument of a function must not directly contain whitespace.
-# expect+1: Missing closing parenthesis for defined()
+# expect+1: Missing ")" after argument "A" for "defined"
 .if !defined(A B)
 .  error
 .endif
@@ -49,11 +49,11 @@ ${VARNAME_UNBALANCED_BRACES}=	variable name with unbalanced braces
 #
 # It's not entirely clear why these characters are forbidden.
 # The most plausible reason seems to be typo detection.
-# expect+1: Missing closing parenthesis for defined()
+# expect+1: Missing ")" after argument "A" for "defined"
 .if !defined(A&B)
 .  error
 .endif
-# expect+1: Missing closing parenthesis for defined()
+# expect+1: Missing ")" after argument "A" for "defined"
 .if !defined(A|B)
 .  error
 .endif
@@ -83,19 +83,18 @@ ${VARNAME_UNBALANCED_BRACES}=	variable name with unbalanced braces
 .  error
 .endif
 
-# The following condition is interpreted as defined(A) && defined(B).
-# In lack of a function call expression, each kind of .if directive has a
+# Before cond.c 1.366 from 2024-07-06, the following condition was
+# interpreted as defined(A) && defined(B). Each kind of .if directive has a
 # default function that is called when a bare word is parsed.  For the plain
-# .if directive, this function is defined(); see "struct If ifs" in cond.c.
+# .if directive, this function is 'defined'; see "struct If ifs" in cond.c.
+# expect+1: Unknown operator "&"
 .if A&B
 .  error
 .endif
 
+# The empty variable is never defined.
 .if defined()
 .  error
-.else
-# expect+1: The empty variable is never defined.
-.  info The empty variable is never defined.
 .endif
 
 # The plain word 'defined' is interpreted as 'defined(defined)', see
@@ -135,8 +134,15 @@ defined-var=	# defined but empty
 .  error
 .endif
 
-# expect+1: Missing closing parenthesis for defined()
+# expect+1: Missing ")" after argument "" for "defined"
 .if defined(
+.  error
+.else
+.  error
+.endif
+
+# expect+1: Missing ")" after argument "${:UVARNAME}.param" for "defined"
+.if defined(${:UVARNAME}.param extra)
 .  error
 .else
 .  error

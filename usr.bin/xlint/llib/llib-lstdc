@@ -1,4 +1,4 @@
-/*	$NetBSD: llib-lstdc,v 1.3 1995/07/03 21:39:28 cgd Exp $	*/
+/*	$NetBSD: llib-lstdc,v 1.3.128.1 2025/08/02 05:58:46 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -80,7 +80,9 @@ int	(toupper)(int c);
 /*
  * errno.h
  */
+#ifndef errno
 int	(errno);
+#endif
 
 /*
  * locale.h

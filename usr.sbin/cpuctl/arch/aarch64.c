@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.23 2024/02/07 04:20:28 msaitoh Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.23.2.1 2025/08/02 05:58:48 perseant Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.23 2024/02/07 04:20:28 msaitoh Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.23.2.1 2025/08/02 05:58:48 perseant Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -83,16 +83,22 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEXA76R3 & CPU_PARTMASK, "Cortex-A76", "Arm", "v8.2-A+" },
 	{ CPU_ID_CORTEXA76AER1 & CPU_PARTMASK, "Cortex-A76AE", "Arm", "v8.2-A+" },
 	{ CPU_ID_CORTEXA77R0 & CPU_PARTMASK, "Cortex-A77", "Arm", "v8.2-A+" },
+	{ CPU_ID_CORTEXA710R2 & CPU_PARTMASK, "Cortex-A710", "Arm", "v9.0-A" },
 	{ CPU_ID_NVIDIADENVER2 & CPU_PARTMASK, "Denver2", "NVIDIA", "v8-A" },
 	{ CPU_ID_EMAG8180 & CPU_PARTMASK, "eMAG", "Ampere", "v8-A" },
 	{ CPU_ID_NEOVERSEE1R1 & CPU_PARTMASK, "Neoverse E1", "Arm", "v8.2-A+" },
 	{ CPU_ID_NEOVERSEN1R3 & CPU_PARTMASK, "Neoverse N1", "Arm", "v8.2-A+" },
+	{ CPU_ID_NEOVERSEV1R1 & CPU_PARTMASK, "Neoverse V1", "Arm", "v8.4-A+" },
+	{ CPU_ID_NEOVERSEN2R0 & CPU_PARTMASK, "Neoverse N2", "Arm", "v9.0-A" },
 	{ CPU_ID_THUNDERXRX, "ThunderX", "Cavium", "v8-A" },
 	{ CPU_ID_THUNDERX81XXRX, "ThunderX CN81XX", "Cavium", "v8-A" },
 	{ CPU_ID_THUNDERX83XXRX, "ThunderX CN83XX", "Cavium", "v8-A" },
 	{ CPU_ID_THUNDERX2RX, "ThunderX2", "Marvell", "v8.1-A" },
 	{ CPU_ID_APPLE_M1_ICESTORM & CPU_PARTMASK, "M1 Icestorm", "Apple", "Apple Silicon" },
 	{ CPU_ID_APPLE_M1_FIRESTORM & CPU_PARTMASK, "M1 Firestorm", "Apple", "Apple Silicon" },
+	{ CPU_ID_AMPERE1 & CPU_PARTMASK, "Ampere-1", "Ampere", "v8.6-A+" },
+	{ CPU_ID_AMPERE1A & CPU_PARTMASK, "Ampere-1A", "Ampere", "v8.6-A+" },
+	{ CPU_ID_A64FX & CPU_PARTMASK, "A64FX", "Fujitsu", "v8.2-A+" },
 };
 
 const struct impltab implids[] = {
@@ -100,6 +106,7 @@ const struct impltab implids[] = {
 	{ CPU_ID_BROADCOM,	"Broadcom Corporation"			},
 	{ CPU_ID_CAVIUM,	"Cavium Inc."				},
 	{ CPU_ID_DEC,		"Digital Equipment Corporation"		},
+	{ CPU_ID_FUJITSU,	"Fujitsu Ltd."				},
 	{ CPU_ID_INFINEON,	"Infineon Technologies AG"		},
 	{ CPU_ID_MOTOROLA,	"Motorola or Freescale Semiconductor Inc." },
 	{ CPU_ID_NVIDIA,	"NVIDIA Corporation"			},
@@ -110,7 +117,8 @@ const struct impltab implids[] = {
 	{ CPU_ID_MARVELL,	"Marvell International Ltd."		},
 	{ CPU_ID_APPLE,		"Apple Inc."				},
 	{ CPU_ID_FARADAY,	"Faraday Technology Corporation"	},
-	{ CPU_ID_INTEL,		"Intel Corporation"			}
+	{ CPU_ID_INTEL,		"Intel Corporation"			},
+	{ CPU_ID_AMPERE,	"Ampere"				},
 };
 
 #define FIELDNAME(_bitpos, _bitwidth, _name)	\

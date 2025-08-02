@@ -1,4 +1,4 @@
-# $NetBSD: varmod-order.mk,v 1.11 2023/06/01 20:56:35 rillig Exp $
+# $NetBSD: varmod-order.mk,v 1.11.2.1 2025/08/02 05:58:39 perseant Exp $
 #
 # Tests for the :O variable modifier and its variants, which either sort the
 # words of the value or shuffle them.
@@ -10,26 +10,23 @@ NUMBERS=	8 5 4 9 1 7 6 10 3 2	# in English alphabetical order
 .  error ${WORDS:O}
 .endif
 
-# Unknown modifier "OX"
-# FIXME: The error message is wrong.
-# expect+1: Undefined variable "${WORDS:OX"
+# expect+1: Unknown modifier ":OX"
 _:=	${WORDS:OX}
 
-# Unknown modifier "OxXX"
-# FIXME: The error message is wrong.
-# expect+1: Undefined variable "${WORDS:Ox"
+# expect+1: Unknown modifier ":OxXX"
 _:=	${WORDS:OxXX}
 
-# Missing closing brace, to cover the error handling code.
+# expect+1: Unclosed expression, expecting "}" for modifier "O"
 _:=	${WORDS:O
+# expect+1: Unclosed expression, expecting "}" for modifier "On"
 _:=	${NUMBERS:On
+# expect+1: Unclosed expression, expecting "}" for modifier "Onr"
 _:=	${NUMBERS:Onr
 
 # Shuffling numerically doesn't make sense, so don't allow 'x' and 'n' to be
 # combined.
 #
-# expect: make: Bad modifier ":Oxn" for variable "NUMBERS"
-# expect+1: Malformed conditional (${NUMBERS:Oxn})
+# expect+1: Unknown modifier ":Oxn"
 .if ${NUMBERS:Oxn}
 .  error
 .else
@@ -37,10 +34,8 @@ _:=	${NUMBERS:Onr
 .endif
 
 # Extra characters after ':On' are detected and diagnosed.
-# TODO: Add line number information to the "Bad modifier" diagnostic.
 #
-# expect: make: Bad modifier ":On_typo" for variable "NUMBERS"
-# expect+1: Malformed conditional (${NUMBERS:On_typo})
+# expect+1: Unknown modifier ":On_typo"
 .if ${NUMBERS:On_typo}
 .  error
 .else
@@ -49,8 +44,7 @@ _:=	${NUMBERS:Onr
 
 # Extra characters after ':Onr' are detected and diagnosed.
 #
-# expect: make: Bad modifier ":Onr_typo" for variable "NUMBERS"
-# expect+1: Malformed conditional (${NUMBERS:Onr_typo})
+# expect+1: Unknown modifier ":Onr_typo"
 .if ${NUMBERS:Onr_typo}
 .  error
 .else
@@ -59,8 +53,7 @@ _:=	${NUMBERS:Onr
 
 # Extra characters after ':Orn' are detected and diagnosed.
 #
-# expect: make: Bad modifier ":Orn_typo" for variable "NUMBERS"
-# expect+1: Malformed conditional (${NUMBERS:Orn_typo})
+# expect+1: Unknown modifier ":Orn_typo"
 .if ${NUMBERS:Orn_typo}
 .  error
 .else
@@ -71,8 +64,7 @@ _:=	${NUMBERS:Onr
 # criteria are fixed, not computed, therefore allowing this redundancy does
 # not make sense.
 #
-# expect: make: Bad modifier ":Onn" for variable "NUMBERS"
-# expect+1: Malformed conditional (${NUMBERS:Onn})
+# expect+1: Unknown modifier ":Onn"
 .if ${NUMBERS:Onn}
 .  error
 .else
@@ -81,8 +73,7 @@ _:=	${NUMBERS:Onr
 
 # Repeating the 'r' is not supported as well, for the same reasons as above.
 #
-# expect: make: Bad modifier ":Onrr" for variable "NUMBERS"
-# expect+1: Malformed conditional (${NUMBERS:Onrr})
+# expect+1: Unknown modifier ":Onrr"
 .if ${NUMBERS:Onrr}
 .  error
 .else
@@ -91,8 +82,7 @@ _:=	${NUMBERS:Onr
 
 # Repeating the 'r' is not supported as well, for the same reasons as above.
 #
-# expect: make: Bad modifier ":Orrn" for variable "NUMBERS"
-# expect+1: Malformed conditional (${NUMBERS:Orrn})
+# expect+1: Unknown modifier ":Orrn"
 .if ${NUMBERS:Orrn}
 .  error
 .else
@@ -101,16 +91,9 @@ _:=	${NUMBERS:Onr
 
 
 # If a modifier that starts with ':O' is not one of the known sort or shuffle
-# forms, it is a parse error.  Several other modifiers such as ':H' or ':u'
-# fall back to the SysV modifier, for example, ':H=new' is not the standard
-# ':H' modifier but instead replaces a trailing 'H' with 'new' in each word.
-# There is no such fallback for the ':O' modifiers.
+# forms, fall back to the SysV modifier.
 SWITCH=	On
-# expect: make: Bad modifier ":On=Off" for variable "SWITCH"
-# expect+1: Malformed conditional (${SWITCH:On=Off} != "Off")
 .if ${SWITCH:On=Off} != "Off"
-.  error
-.else
 .  error
 .endif
 

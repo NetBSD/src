@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.44 2023/08/03 14:56:36 rin Exp $
+#	$NetBSD: Makefile,v 1.44.2.1 2025/08/02 05:58:28 perseant Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
+
+.include "${NETBSDSRCDIR}/external/bsd/zstd/Makefile.zstd"
 
 USE_FORT?= yes	# data-driven bugs?
 
@@ -54,6 +56,7 @@ CPPFLAGS+=	-DCHARSET_SUPPORT
 
 LDADD+=		-lmagic -llzma -lbz2 -lz
 DPADD+=		${LIBMAGIC} ${LIBLZMA} ${LIBBZ2} ${LIBZ}
+PROGDPLIBS+=	${ZSTDDPLIBS}
 .endif
 .endif
 

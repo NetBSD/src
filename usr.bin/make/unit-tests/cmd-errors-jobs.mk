@@ -1,39 +1,106 @@
-# $NetBSD: cmd-errors-jobs.mk,v 1.4 2024/04/23 22:51:28 rillig Exp $
+# $NetBSD: cmd-errors-jobs.mk,v 1.4.2.1 2025/08/02 05:58:30 perseant Exp $
 #
 # Demonstrate how errors in expressions affect whether the commands
 # are actually executed in jobs mode.
 
-.MAKEFLAGS: -j1
+RUN=	@ run() {					\
+		echo "begin $$*"			\
+		&& ${MAKE} -f ${MAKEFILE} -j1 "$$*"	\
+		&& echo "end $$* with status $$?"	\
+		|| echo "end $$* with status $$?"	\
+		&& echo;				\
+	} && run
 
-all: undefined unclosed-expression unclosed-modifier unknown-modifier end
+all:
+	${RUN} undefined-direct
+	${RUN} undefined-indirect
+	${RUN} parse-error-direct
+	${RUN} parse-error-indirect
+	${RUN} begin-direct
+	${RUN} begin-indirect
+	${RUN} end-direct
+	${RUN} end-indirect
+
 
 # Undefined variables in expressions are not an error.  They expand to empty
 # strings.
-# expect: : undefined--eol
-undefined:
+# expect: : undefined-direct--eol
+# expect: end undefined-direct with status 0
+# expect: : undefined-direct--eol
+# expect: end undefined-indirect with status 0
+undefined-indirect: undefined-direct
+undefined-direct:
 	: $@-${UNDEFINED}-eol
 
-# XXX: This command is executed even though it contains parse errors.
-# expect: make: in target "unclosed-expression": Unclosed variable "UNCLOSED"
-# expect: : unclosed-expression-
-unclosed-expression:
-	: $@-${UNCLOSED
 
-# XXX: This command is executed even though it contains parse errors.
-# expect: make: Unclosed expression, expecting '}' for "UNCLOSED"
-# expect: : unclosed-modifier-
-unclosed-modifier:
-	: $@-${UNCLOSED:
+parse-error-indirect: parse-error-direct
+parse-error-direct: parse-error-unclosed-expression
+parse-error-direct: parse-error-unclosed-modifier
+parse-error-direct: parse-error-unknown-modifier
 
-# XXX: This command is executed even though it contains parse errors.
-# expect: make: in target "unknown-modifier": while evaluating variable "UNKNOWN": Unknown modifier "Z"
-# expect: : unknown-modifier--eol
-unknown-modifier:
-	: $@-${UNKNOWN:Z}-eol
+parse-error-unclosed-expression:
+	: unexpected $@-${UNCLOSED
 
-# expect: : end-eol
-end:
-	: $@-eol
+parse-error-unclosed-modifier:
+	: unexpected $@-${UNCLOSED:
 
-# XXX: Despite the parse errors, the exit status is 0.
-# expect: exit status 0
+parse-error-unknown-modifier:
+	: unexpected $@-${UNKNOWN:Z}-eol
+
+# expect-not-matches: ^: unexpected
+# expect: make: Unclosed variable "UNCLOSED"
+# expect: in command ": unexpected $@-${UNCLOSED"
+# expect: make: Unclosed expression, expecting "}"
+# expect: make: Unknown modifier ":Z"
+# expect: end parse-error-direct with status 2
+# expect: make: Unclosed variable "UNCLOSED"
+# expect: make: Unclosed expression, expecting "}"
+# expect: make: Unknown modifier ":Z"
+# expect: end parse-error-indirect with status 2
+
+
+.if make(begin-direct)
+begin-direct:
+.BEGIN:
+	(exit 13) # $@
+.endif
+# expect: begin begin-direct
+# expect: make: stopped making "begin-direct" in unit-tests
+# expect: end begin-direct with status 1
+
+
+.if make(begin-indirect)
+begin-indirect:
+.BEGIN: before-begin
+	: Making $@
+before-begin:
+	(exit 13) # $@
+.endif
+# expect: begin begin-indirect
+# expect: *** Error code 13 (continuing)
+# expect: make: stopped making "begin-indirect" in unit-tests
+# expect: end begin-indirect with status 1
+
+
+.if make(end-direct)
+end-direct:
+.END:
+	(exit 13) # $@
+.endif
+# expect: begin end-direct
+# expect: *** Error code 13 (continuing)
+# expect: Stop.
+# expect: make: stopped making "end-direct" in unit-tests
+# expect: end end-direct with status 1
+
+.if make(end-indirect)
+end-indirect:
+.END: before-end
+	: Making $@
+before-end:
+	(exit 13) # $@
+.endif
+# expect: begin end-indirect
+# expect: *** Error code 13 (continuing)
+# expect: make: stopped making "end-indirect" in unit-tests
+# expect: end end-indirect with status 1

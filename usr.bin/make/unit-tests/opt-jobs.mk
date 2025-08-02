@@ -1,4 +1,4 @@
-# $NetBSD: opt-jobs.mk,v 1.5 2023/09/10 16:25:32 sjg Exp $
+# $NetBSD: opt-jobs.mk,v 1.5.2.1 2025/08/02 05:58:36 perseant Exp $
 #
 # Tests for the -j command line option, which creates the targets in parallel.
 

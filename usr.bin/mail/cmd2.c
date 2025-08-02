@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.26 2017/11/09 20:27:50 christos Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.26.16.1 2025/08/02 05:58:29 perseant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.26 2017/11/09 20:27:50 christos Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.26.16.1 2025/08/02 05:58:29 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -421,7 +421,6 @@ core(void *v __unused)
 		return 1;
 	case 0:
 		abort();
-		_exit(1);
 	}
 	(void)printf("Okie dokie");
 	(void)fflush(stdout);

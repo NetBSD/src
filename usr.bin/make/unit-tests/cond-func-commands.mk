@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-commands.mk,v 1.5 2020/11/15 14:07:53 rillig Exp $
+# $NetBSD: cond-func-commands.mk,v 1.5.8.1 2025/08/02 05:58:31 perseant Exp $
 #
 # Tests for the commands() function in .if conditions.
 
@@ -30,6 +30,11 @@ target:
 
 # Finally the target has commands.
 .if !commands(target)
+.  error
+.endif
+
+# Expressions in the argument of a function call don't have to be defined.
+.if commands(${UNDEF})
 .  error
 .endif
 

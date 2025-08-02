@@ -79,10 +79,27 @@
  *	out of the group; if false, then jump "next".  At the end of the
  *	group, an addition failure path is appended and the JUMP_MAGIC
  *	uses within the group are patched to jump past the said path.
+ *
+ *	For multi-word comparisons (IPv6 addresses), there is another
+ *	layer of grouping:
+ *
+ *		A and B and ((C and D) or (E and F))
+ *
+ *	This strains the simple-minded JUMP_MAGIC logic, so for now,
+ *	when generating the jump-if-false targets for (C and D), we
+ *	simply count the number of instructions left to skip over.
+ *
+ *	A better architecture might be to create asm-type labels for
+ *	the jt and jf continuations in the first pass, and then, once
+ *	their offsets are determined, go back and fill them in in the
+ *	second pass.  This would simplify the logic (no need to compute
+ *	exactly how many instructions we're about to generate in a
+ *	chain of conditionals) and eliminate redundant RET #0
+ *	instructions which are currently generated after some groups.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.16 2020/05/30 14:16:56 rmind Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.16.8.1 2025/08/02 05:58:52 perseant Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -113,6 +130,7 @@ __RCSID("$NetBSD: npf_bpf_comp.c,v 1.16 2020/05/30 14:16:56 rmind Exp $");
 #define	FETCHED_L3		0x01
 #define	CHECKED_L4_PROTO	0x02
 #define	X_EQ_L4OFF		0x04
+#define	FETCHED_L2		0x08
 
 struct npf_bpf {
 	/*
@@ -124,6 +142,7 @@ struct npf_bpf {
 	unsigned		nblocks;
 	sa_family_t		af;
 	uint32_t		flags;
+	uint8_t			eth_type;
 
 	/*
 	 * Indicators whether we are inside the group and whether this
@@ -134,6 +153,7 @@ struct npf_bpf {
 	 */
 	unsigned		ingroup;
 	bool			invert;
+	bool			multiword;
 	unsigned		goff;
 	unsigned		gblock;
 
@@ -322,6 +342,7 @@ npfctl_bpf_group_enter(npf_bpf_t *ctx, bool invert)
 	ctx->goff = bp->bf_len;
 	ctx->gblock = ctx->nblocks;
 	ctx->invert = invert;
+	ctx->multiword = false;
 	ctx->ingroup++;
 }
 
@@ -334,8 +355,14 @@ npfctl_bpf_group_exit(npf_bpf_t *ctx)
 	assert(ctx->ingroup);
 	ctx->ingroup--;
 
-	/* If there are no blocks or only one - nothing to do. */
-	if (!ctx->invert && (ctx->nblocks - ctx->gblock) <= 1) {
+	/*
+	 * If we're not inverting, there were only zero or one options,
+	 * and the last comparison was not a multi-word comparison
+	 * requiring a fallthrough failure -- nothing to do.
+	 */
+	if (!ctx->invert &&
+	    (ctx->nblocks - ctx->gblock) <= 1 &&
+	    !ctx->multiword) {
 		ctx->goff = ctx->gblock = 0;
 		return;
 	}
@@ -443,8 +470,48 @@ fetch_l3(npf_bpf_t *ctx, sa_family_t af, unsigned flags)
 	}
 }
 
+void
+fetch_ether_type(npf_bpf_t *ctx, uint16_t type)
+{
+	if ((ctx->flags & FETCHED_L2) != 0 || (type && ctx->eth_type != 0))
+		return;
+
+	const uint8_t jt = type ? 0 : JUMP_MAGIC;
+	const uint8_t jf = type ? JUMP_MAGIC : 0;
+	const bool ingroup = ctx->ingroup != 0;
+	const bool invert = ctx->invert;
+	unsigned off = offsetof(struct ether_header, ether_type);
+
+	/*
+	 * L2 block cannot be inserted in the middle of a group.
+	 * Check and start the group after.
+	 */
+	if (ingroup) {
+		assert(ctx->nblocks == ctx->gblock);
+		npfctl_bpf_group_exit(ctx);
+	}
+
+	type = ntohs(type);
+
+	struct bpf_insn insns_et[] = {
+		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, off),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, type, jt, jf),
+	};
+	add_insns(ctx, insns_et, __arraycount(insns_et));
+	ctx->flags |= FETCHED_L2;
+	ctx->eth_type = type;
+
+ 	if (type) { /* bookmark ether type */
+		uint32_t mwords[] = { BM_ETHER_TYPE, 1, htons(type) };
+		add_bmarks(ctx, mwords, sizeof(mwords));
+	}
+	if (ingroup) {
+		npfctl_bpf_group_enter(ctx, invert);
+	}
+}
+
 static void
-bm_invert_checkpoint(npf_bpf_t *ctx, const unsigned opts)
+bm_invert_checkpoint(npf_bpf_t *ctx, const unsigned opts, uint32_t layer)
 {
 	uint32_t bm = 0;
 
@@ -452,10 +519,10 @@ bm_invert_checkpoint(npf_bpf_t *ctx, const unsigned opts)
 		const unsigned seen = ctx->invflags;
 
 		if ((opts & MATCH_SRC) != 0 && (seen & MATCH_SRC) == 0) {
-			bm = BM_SRC_NEG;
+			bm = (layer & NPF_RULE_LAYER_3) ? BM_SRC_NEG : BM_SRC_ENEG;
 		}
 		if ((opts & MATCH_DST) != 0 && (seen & MATCH_DST) == 0) {
-			bm = BM_DST_NEG;
+			bm = (layer & NPF_RULE_LAYER_3) ? BM_DST_NEG : BM_DST_ENEG;
 		}
 		ctx->invflags |= opts & (MATCH_SRC | MATCH_DST);
 	}
@@ -502,7 +569,7 @@ npfctl_bpf_cidr(npf_bpf_t *ctx, unsigned opts, sa_family_t af,
     const npf_addr_t *addr, const npf_netmask_t mask)
 {
 	const uint32_t *awords = (const uint32_t *)addr;
-	unsigned nwords, length, maxmask, off;
+	unsigned nwords, origlength, length, maxmask, off;
 
 	assert(((opts & MATCH_SRC) != 0) ^ ((opts & MATCH_DST) != 0));
 	assert((mask && mask <= NPF_MAX_NETMASK) || mask == NPF_NO_NETMASK);
@@ -529,7 +596,7 @@ npfctl_bpf_cidr(npf_bpf_t *ctx, unsigned opts, sa_family_t af,
 	/* Ensure address family. */
 	fetch_l3(ctx, af, 0);
 
-	length = (mask == NPF_NO_NETMASK) ? maxmask : mask;
+	length = origlength = (mask == NPF_NO_NETMASK) ? maxmask : mask;
 
 	/* CAUTION: BPF operates in host byte-order. */
 	for (unsigned i = 0; i < nwords; i++) {
@@ -563,18 +630,100 @@ npfctl_bpf_cidr(npf_bpf_t *ctx, unsigned opts, sa_family_t af,
 			add_insns(ctx, insns_mask, __arraycount(insns_mask));
 		}
 
+		/*
+		 * Determine how many instructions we have to jump
+		 * ahead if the match fails.
+		 *
+		 * - If this is the last word, we jump to the final
+                 *   failure, JUMP_MAGIC.
+		 *
+		 * - If this is not the last word, we jump past the
+		 *   remaining instructions to match this sequence.
+		 *   Each 32-bit word in the sequence takes two
+		 *   instructions (BPF_LD and BPF_JMP).  If there is a
+		 *   partial-word mask ahead, there will be one
+		 *   additional instruction (BPF_ALU).
+		 */
+		uint8_t jf;
+		if (i + 1 == (origlength + 31)/32) {
+			jf = JUMP_MAGIC;
+		} else {
+			jf = 2*((origlength + 31)/32 - i - 1);
+			if (origlength % 32 != 0 && wordmask == 0)
+				jf += 1;
+		}
+
 		/* A == expected-IP-word ? */
 		struct bpf_insn insns_cmp[] = {
-			BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, word, 0, JUMP_MAGIC),
+			BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, word, 0, jf),
 		};
 		add_insns(ctx, insns_cmp, __arraycount(insns_cmp));
 	}
+
+	/*
+	 * If we checked a chain of words in sequence, mark this as a
+	 * multi-word comparison so if this is in a group there will be
+	 * a fallthrough case.
+	 *
+	 * XXX This is a little silly; the compiler should really just
+	 * record holes where conditional jumps need success/failure
+	 * continuations, and go back to fill in the holes when the
+	 * locations of the continuations are determined later.  But
+	 * that requires restructuring this code a little more.
+	 */
+	ctx->multiword = (origlength + 31)/32 > 1;
 
 	uint32_t mwords[] = {
 		(opts & MATCH_SRC) ? BM_SRC_CIDR: BM_DST_CIDR, 6,
 		af, mask, awords[0], awords[1], awords[2], awords[3],
 	};
-	bm_invert_checkpoint(ctx, opts);
+	bm_invert_checkpoint(ctx, opts, NPF_RULE_LAYER_3);
+	done_block(ctx, mwords, sizeof(mwords));
+}
+
+/*
+ * for ether address, 6 octets(a word and halfword)
+ * just fetch directly using a word and halfword fetch
+ */
+void
+npfctl_bpf_ether(npf_bpf_t *ctx, unsigned opts, struct ether_addr *ether_addr)
+{
+	uint32_t mac_word;
+	uint16_t mac_hword;
+	unsigned off;
+	assert(((opts & MATCH_SRC) != 0) ^ ((opts & MATCH_DST) != 0));
+
+	off = (opts & MATCH_SRC) ? offsetof(struct ether_header, ether_shost) :
+	    offsetof(struct ether_header, ether_dhost);
+
+	memcpy(&mac_word, ether_addr, sizeof(mac_word));
+	mac_word = ntohl(mac_word);
+
+	/* copy the last two bytes of the 6 byte ether address */
+	memcpy(&mac_hword, (uint8_t *)ether_addr + sizeof(mac_word), sizeof(mac_hword));
+	mac_hword = ntohs(mac_hword);
+
+	/* load and compare first word then do same to last halfword */
+	struct bpf_insn insns_ether_w[] = {
+		BPF_STMT(BPF_LD+BPF_W+BPF_ABS, off),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, mac_word, 0, 2),
+	};
+	add_insns(ctx, insns_ether_w, __arraycount(insns_ether_w));
+
+	struct bpf_insn insns_ether_h[] = {
+		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, off + sizeof(mac_word)),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, mac_hword, 0, JUMP_MAGIC),
+	};
+	add_insns(ctx, insns_ether_h, __arraycount(insns_ether_h));
+
+	ctx->multiword = true;
+
+	uint32_t mwords[] = {
+		(opts & MATCH_SRC) ? BM_SRC_ETHER: BM_DST_ETHER, 2,
+		htonl(mac_word), htons(mac_hword)
+	};
+
+	bm_invert_checkpoint(ctx, opts, NPF_RULE_LAYER_2);
 	done_block(ctx, mwords, sizeof(mwords));
 }
 
@@ -747,6 +896,6 @@ npfctl_bpf_table(npf_bpf_t *ctx, unsigned opts, unsigned tid)
 	add_insns(ctx, insns_table, __arraycount(insns_table));
 
 	uint32_t mwords[] = { src ? BM_SRC_TABLE: BM_DST_TABLE, 1, tid };
-	bm_invert_checkpoint(ctx, opts);
+	bm_invert_checkpoint(ctx, opts, NPF_RULE_LAYER_3);
 	done_block(ctx, mwords, sizeof(mwords));
 }

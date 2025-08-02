@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.183 2024/05/25 21:07:48 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.183.2.1 2025/08/02 05:58:30 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.183 2024/05/25 21:07:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.183.2.1 2025/08/02 05:58:30 perseant Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -126,23 +126,24 @@ void
 Targ_Init(void)
 {
 	HashTable_Init(&allTargetsByName);
+	SCOPE_INTERNAL = GNode_New("Internal");
+	SCOPE_GLOBAL = GNode_New("Global");
+	SCOPE_CMDLINE = GNode_New("Command");
 }
 
+#ifdef CLEANUP
 void
 Targ_End(void)
 {
-#ifdef CLEANUP
 	GNodeListNode *ln;
-#endif
-	Targ_Stats();
-#ifdef CLEANUP
+
 	Lst_Done(&allTargets);
 	HashTable_Done(&allTargetsByName);
 	for (ln = allNodes.first; ln != NULL; ln = ln->next)
 		GNode_Free(ln->datum);
 	Lst_Done(&allNodes);
-#endif
 }
+#endif
 
 void
 Targ_Stats(void)
@@ -547,7 +548,8 @@ PrintOnlySources(void)
 void
 Targ_PrintGraph(int pass)
 {
-	debug_printf("#*** Input graph:\n");
+	debug_printf("#*** Begin input graph for pass %d in %s:\n",
+	    pass, curdir);
 	Targ_PrintNodes(&allTargets, pass);
 	debug_printf("\n");
 	debug_printf("\n");
@@ -567,6 +569,8 @@ Targ_PrintGraph(int pass)
 	debug_printf("\n");
 
 	Suff_PrintAll();
+	debug_printf("#*** End input graph for pass %d in %s:\n",
+	    pass, curdir);
 }
 
 /*

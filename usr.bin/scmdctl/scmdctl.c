@@ -1,4 +1,4 @@
-/*	$NetBSD: scmdctl.c,v 1.1 2021/12/07 17:39:55 brad Exp $	*/
+/*	$NetBSD: scmdctl.c,v 1.1.4.1 2025/08/02 05:58:42 perseant Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: scmdctl.c,v 1.1 2021/12/07 17:39:55 brad Exp $");
+__RCSID("$NetBSD: scmdctl.c,v 1.1.4.1 2025/08/02 05:58:42 perseant Exp $");
 #endif
 
 /* Main userland program that knows how to talk to the Sparkfun
@@ -166,8 +166,6 @@ main(int argc, char *argv[])
 	int lock_type = -1;
 	bool list_names = false;
 	struct function_block func_block;
-	extern char *optarg;
-	extern int optind;
 
 	while ((c = getopt(argc, argv, "db:s:lh")) != -1 ) {
 		switch (c) {
@@ -348,7 +346,6 @@ main(int argc, char *argv[])
 						fprintf(stderr,"Unhandled subcommand to motor: %s %d\n\n", argv[2], validsub);
 						usage();
 						exit(1);
-						break;
 					}
 				} else {
 					fprintf(stderr,"Unknown subcommand to motor: %s\n\n", argv[2]);
@@ -471,7 +468,6 @@ main(int argc, char *argv[])
 						fprintf(stderr,"Unhandled subcommand to updaterate: %s %d\n\n", argv[2], validsub);
 						usage();
 						exit(1);
-						break;
 					}
 				} else {
 					fprintf(stderr,"Unknown subcommand to updaterate: %s\n\n", argv[2]);
@@ -512,7 +508,6 @@ main(int argc, char *argv[])
 						fprintf(stderr,"Unhandled subcommand to expansion_bus: %s %d\n\n", argv[2], validsub);
 						usage();
 						exit(1);
-						break;
 					}
 				} else {
 					fprintf(stderr,"Unknown subcommand to expansion_bus: %s\n\n", argv[2]);
@@ -554,7 +549,6 @@ main(int argc, char *argv[])
 						fprintf(stderr,"Unhandled subcommand to lock: %s %d\n\n", argv[2], validsub);
 						usage();
 						exit(1);
-						break;
 					}
 				} else {
 					fprintf(stderr,"Unknown subcommand to lock: %s\n\n", argv[2]);
@@ -577,7 +571,6 @@ main(int argc, char *argv[])
 		default:
 			fprintf(stderr,"Unknown handling of command: %d\n",valid);
 			exit(2);
-			break;
 		}
 
 		if (! error) {
@@ -626,7 +619,6 @@ main(int argc, char *argv[])
 			default:
 				fprintf(stderr,"Unknown printing of command: %d\n",valid);
 				exit(2);
-				break;
 			}
 		} else {
 			fprintf(stderr,"Error: %d\n", error);

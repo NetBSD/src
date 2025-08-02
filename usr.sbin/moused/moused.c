@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.31 2024/03/29 06:13:40 rillig Exp $ */
+/* $NetBSD: moused.c,v 1.31.2.1 2025/08/02 05:58:51 perseant Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.31 2024/03/29 06:13:40 rillig Exp $");
+__RCSID("$NetBSD: moused.c,v 1.31.2.1 2025/08/02 05:58:51 perseant Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -2396,7 +2396,7 @@ pnpwakeup1(void)
     ioctl(rodent.mfd, TIOCMBIC, &i);
     usleep(240000);
 
-    /* wait for respose, 2nd phase (2.1.6) */
+    /* wait for response, 2nd phase (2.1.6) */
     i = FREAD;
     ioctl(rodent.mfd, TIOCFLUSH, &i);
     i = TIOCM_DTR | TIOCM_RTS;	/* DTR = 1, RTS = 1 */
@@ -2430,7 +2430,7 @@ pnpwakeup2(void)
 
     setmousespeed(1200, 1200, (CS7 | CREAD | CLOCAL | HUPCL));
 
-    /* wait for respose */
+    /* wait for response */
     i = FREAD;
     ioctl(rodent.mfd, TIOCFLUSH, &i);
     i = TIOCM_DTR | TIOCM_RTS;	/* DTR = 1, RTS = 1 */
@@ -2580,7 +2580,7 @@ pnpparse(pnpid_t *id, char *buf, int len)
     id->revision = ((buf[1] & 0x3f) << 6) | (buf[2] & 0x3f);
     debug("PnP rev %d.%02d", id->revision / 100, id->revision % 100);
 
-    /* EISA vender and product ID */
+    /* EISA vendor and product ID */
     id->eisaid = &buf[3];
     id->neisaid = 7;
 

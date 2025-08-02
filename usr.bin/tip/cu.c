@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.24 2019/08/18 14:16:02 christos Exp $	*/
+/*	$NetBSD: cu.c,v 1.24.10.1 2025/08/02 05:58:44 perseant Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.24 2019/08/18 14:16:02 christos Exp $");
+__RCSID("$NetBSD: cu.c,v 1.24.10.1 2025/08/02 05:58:44 perseant Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -58,8 +58,6 @@ cumain(int argc, char *argv[])
 	int useresc = '~';
 	static char sbuf[12];
 	int cmdlineBR;
-	extern char *optarg;
-	extern int optind;
 
 	static struct option longopts[] = {
 		{ "help",	no_argument,		&helpme,	1 },

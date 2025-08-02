@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.294 2024/05/31 05:50:11 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.294.2.1 2025/08/02 05:58:29 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -132,7 +132,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.294 2024/05/31 05:50:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.294.2.1 2025/08/02 05:58:29 perseant Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -492,7 +492,7 @@ Dir_InitDot(void)
 
 	dir = SearchPath_Add(NULL, ".");
 	if (dir == NULL) {
-		Error("Cannot open `.' (%s)", strerror(errno));
+		Error("Cannot open \".\": %s", strerror(errno));
 		exit(2);	/* Not 1 so -q can distinguish error */
 	}
 
@@ -511,13 +511,11 @@ FreeCachedTable(HashTable *tbl)
 		free(hi.entry->value);
 	HashTable_Done(tbl);
 }
-#endif
 
 /* Clean up the directories module. */
 void
 Dir_End(void)
 {
-#ifdef CLEANUP
 	CachedDir_Assign(&cur, NULL);
 	CachedDir_Assign(&dot, NULL);
 	CachedDir_Assign(&dotLast, NULL);
@@ -525,8 +523,8 @@ Dir_End(void)
 	OpenDirs_Done(&openDirs);
 	FreeCachedTable(&mtimes);
 	FreeCachedTable(&lmtimes);
-#endif
 }
+#endif
 
 /*
  * We want ${.PATH} to indicate the order in which we will actually
@@ -1367,7 +1365,7 @@ ResolveMovedDepends(GNode *gn)
 	gn->path = bmake_strdup(fullName);
 	if (!Job_RunTarget(".STALE", gn->fname))
 		fprintf(stdout,	/* XXX: Why stdout? */
-		    "%s: %s, %u: ignoring stale %s for %s, found %s\n",
+		    "%s: %s:%u: ignoring stale %s for %s, found %s\n",
 		    progname, gn->fname, gn->lineno,
 		    makeDependfile, gn->name, fullName);
 

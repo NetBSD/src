@@ -1,6 +1,6 @@
-.\"    $NetBSD: npf.conf.5,v 1.91 2020/05/30 14:16:56 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.91.8.1 2025/08/02 05:58:52 perseant Exp $
 .\"
-.\" Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 19, 2020
+.Dd July 2, 2025
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -76,9 +76,14 @@ Variables are defined by assigning a value to them as follows:
 .Dl $var1 = 10.0.0.1
 .Pp
 A variable may also be defined as a set:
+.Bd -literal -offset indent
+$var2 = {
+    10.0.0.1,   # First host
+    10.0.0.2,   # Second host
+}
+.Ed
 .Pp
-.Dl $var2 = { 10.0.0.1, 10.0.0.2 }
-.Pp
+Newlines within curly braces are ignored, and trailing commas are optional.
 Common variable definitions are for IP addresses, networks, ports,
 and interfaces.
 .Ss Tables
@@ -306,6 +311,101 @@ syntax, for example:
 .Pp
 Fragments are not selectable since NPF always reassembles packets
 before further processing.
+.Ss Layer 2 filtering
+.Pp
+NPF allows the filtering of frames at the data link layer.
+NPF also requires that the inspection rules are defined within groups.
+Groups containing rules to filter frames should be marked with a
+.Cm layer-2
+label.
+If layer 2 groups are defined in your NPF configuration, then a
+.Cm layer-2
+.Dv default
+group becomes mandatory.
+.Pp
+Example of configuration:
+.Bd -literal -offset indent
+group "my-name" in on wm0 layer-2 {
+	# List of rules, for frames received on wm0
+}
+group default layer-2 {
+	# List of rules, for the other frames
+}
+.Ed
+.Pp
+Rules for filtering at the data link layer are configured based on
+the interface name, direction, source and destination MAC addresses, and EtherType.
+Rules that are defined for the link layer should pass the
+.Cm ether
+keyword after the pass or block instruction.
+EtherType is passed on the rule by preceeding the four digit hexadecimal constant
+EtherType with "Ex".
+When a frame matches a rule with the
+.Cm final
+keyword, the rule is considered the last matching rule.
+.Pp
+A
+.Dq fully-featured
+rule would for example be:
+.Bd -literal -offset indent
+pass ether in final from $src_mac to $dest_mac type $ether_type
+.Ed
+.Pp
+Example of rule configuration:
+.Bd -literal -offset indent
+pass ether from 00:00:5E:00:53:00 to 00:00:5E:00:53:01 type Ex0800
+.Ed
+.Pp
+This passes frames with source MAC address 00:00:5E:00:53:00 and
+destination MAC address 00:00:5E:00:53:01 carrying IP packets(0800).
+Alternatively, layer 2 rules also support variables.
+.Pp
+.Dl block ether in final from $source_mac to $dest_mac type $ether_type
+.Pp
+Filtering at this layer is stateless and has no access to upper layer protocols.
+Block returns are not supported.
+MAC address tables are also not supported yet.
+.Ss User/group ID filtering
+.Pp
+NPF allows filtering by user or group identity.
+Packet filtering by user or group
+controls data packet flows based on the user or group identity of the process
+that generated the traffic, or is waiting to receive traffic,
+rather than just traditional parameters like IP address, port number, and protocol.
+.Pp
+There are many situations where this is useful:
+.Bl -bullet -hang
+.It Finer-grained access control
+One can allow specific destinations to be accessed only by certain users
+or groups.
+.It Application level security
+Two processes are using a specific port, but only one should be allowed to
+access packets originating from a particular host.
+.It Improves isolation in multi-tenant systems
+Prevent an untrusted user from making any network connections.
+.It Security hardening and containment
+A user application that has been exploited can be prevented from making
+network connections to a command-and-control server.
+.It Compliance and policy enforcement
+Can restrict access to particular networks to network administrators only.
+.El
+This filtering process can be achieved by passing the user or group ID on the rule.
+.Pp
+.Dl pass out from all user jack group < 1000
+.Pp
+The above rule only allows sockets of processes owned by user jack
+and belonging to a group with an ID value of less than 1000.
+.Pp
+.Dl block in from all user > 100 group wheel
+.Pp
+The above rule prevents all listening sockets bound by processes owned by any user
+with the ID value greater than 100 and belonging to the wheel group.
+.Pp
+A rule can have either a user ID or group ID set.
+If both are set, both must
+agree to be a match to the socket involved in communication.
+Numbers or names can be used for the identification of the user or group as they
+still resolve to a numeric ID of the user or group.
 .Ss Stateful
 NPF supports stateful packet inspection which can be used to bypass
 unnecessary rule processing as well as to complement NAT.
@@ -531,6 +631,8 @@ The backslash
 .Pq Sq \e
 character at the end of a line marks a continuation line,
 i.e., the next line is considered an extension of the present line.
+Additionally, within curly braces of variable definitions, newlines are
+allowed without continuation characters.
 .Sh GRAMMAR
 The following is a non-formal BNF-like definition of the grammar.
 The definition is simplified and is intended to be human readable,
@@ -547,7 +649,7 @@ syntax		= var-def | set-param | alg | table-def |
 
 var-name	= "$" . string
 interface	= interface-name | var-name
-var-def		= var "=" ( var-value | "{" value *[ "," value ] "}" )
+var-def		= var "=" ( var-value | "{" value *[ "," value ] [ "," ] "}" )
 
 # Parameter setting.
 set-param	= "set" param-value
@@ -613,11 +715,19 @@ proto-opts	= "flags" tcp-flags [ "/" tcp-flag-mask ] |
 		  "icmp-type" type [ "code" icmp-code ]
 proto		= "proto" protocol [ proto-opts ]
 
-filt-opts	= "from" filt-addr [ port-opts ] "to" filt-addr [ port-opts ]
+filt-opts	= "from" filt-addr [ port-opts ] "to" filt-addr [ port-opts ] user_id group_id
 filt-addr	= [ "!" ] [ interface | addr-mask | table-id | "any" ]
 
 port-opts	= "port" ( port-num | port-from "-" port-to | var-name )
 addr-mask	= addr [ "/" mask ]
+
+user_id		= "user" id_items
+group_id	= "group" id_items
+
+id_items	= [id] | [op_unary id] | [id op_binary id]
+
+op_unary	= ["="] | ["!="] | ["<="] | [">="] | [">"] | ["<"]
+op_binary	= ["<>"] | ["><"]
 .Ed
 .\" -----
 .Sh FILES
@@ -638,8 +748,15 @@ $int_if = { inet4(wm1) }
 table <blocklist> type ipset file "/etc/npf_blocklist"
 table <limited> type lpm
 
-$services_tcp = { http, https, smtp, domain, 6000, 9022 }
-$services_udp = { domain, ntp, 6000 }
+$services_tcp = {
+	http,    # Web traffic
+	https,   # Secure web traffic
+	smtp,    # Email sending
+	domain,  # DNS queries
+	6000,    # Custom service
+	9022,    # SSH forwarding
+}
+$services_udp = { domain, ntp, 6000, }
 $localnet = { 10.1.1.0/24 }
 
 alg "icmp"

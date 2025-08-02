@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.82 2021/03/23 18:13:07 christos Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.82.8.1 2025/08/02 05:58:55 perseant Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1683,7 +1683,7 @@ ra_output(struct rainfo *rai, bool solicited)
 			free(sol);
 		}
 
-		/* reset waiting conter */
+		/* reset waiting counter */
 		rai->waiting = 0;
 
 		/* disable timer */

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2021/07/07 11:51:46 martin Exp $
+# $NetBSD: Makefile,v 1.14.4.1 2025/08/02 05:58:52 perseant Exp $
 #
 # Public Domain
 #
@@ -18,7 +18,7 @@ DPADD+=		${LIBNPFTEST}/libnpftest.a
 LDADD+=		-L${LIBNPFTEST} -lnpftest
 
 LDADD+=		-lrump -lrumpvfs_nofifofs -lrumpvfs -lrumpuser
-LDADD+=		-lrumpnet -lrumpnet_net	-lrumpdev_bpf
+LDADD+=		-lrumpnet -lrumpnet_net	-lrumpdev_bpf -lrumpnet_netinet
 
 .if ${RUMP_SANITIZE:Uno} != "no"
 LDADD+=	-fsanitize=${RUMP_SANITIZE}

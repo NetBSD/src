@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.269 2024/05/09 20:53:13 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.269.2.1 2025/08/02 05:58:46 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.269 2024/05/09 20:53:13 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.269.2.1 2025/08/02 05:58:46 perseant Exp $");
 #endif
 
 #include <stdlib.h>
@@ -237,7 +237,7 @@ check_trad_no_auto_aggregate(const sym_t *sym)
 
 	if (has_automatic_storage_duration(sym) &&
 	    !is_scalar(sym->s_type->t_tspec)) {
-		/* no automatic aggregate initialization in traditional C */
+		/* automatic aggregate initialization requires C90 or later */
 		warning(188);
 	}
 }
@@ -259,11 +259,11 @@ check_init_expr(const type_t *ltp, sym_t *lsym, tnode_t *rn)
 
 	debug_step("typeok '%s', '%s'",
 	    type_name(ln->tn_type), type_name(rn->tn_type));
-	if (!typeok(INIT, 0, ln, rn))
+	if (!typeok(INIT, NULL, 0, ln, rn))
 		return;
 
 	memory_pool saved_mem = expr_save_memory();
-	expr(rn, true, false, true, false);
+	expr(rn, true, false, true, false, "init");
 	expr_restore_memory(saved_mem);
 
 	tspec_t lt = ln->tn_type->t_tspec;
@@ -681,7 +681,7 @@ initialization_lbrace(initialization *in)
 		check_trad_no_auto_aggregate(in->in_sym);
 
 	if (!allow_c90 && tp->t_tspec == UNION)
-		/* initialization of union is illegal in traditional C */
+		/* initialization of union requires C90 or later */
 		warning(238);
 
 	if (is_struct_or_union(tp->t_tspec) && tp->u.sou->sou_incomplete) {
@@ -833,7 +833,7 @@ initialization_expr_using_op(initialization *in, tnode_t *rn)
 	ln->tn_type = expr_unqualified_type(ln->tn_type);
 
 	tnode_t *tn = build_binary(ln, INIT, false /* XXX */, rn);
-	expr(tn, false, false, false, false);
+	expr(tn, false, false, false, false, "init");
 
 	return true;
 }
@@ -868,8 +868,10 @@ initialization_init_array_from_string(initialization *in, tnode_t *tn)
 	if (bl != NULL)
 		brace_level_advance(bl, &in->in_max_subscript);
 
-	if (tp->t_incomplete_array)
+	if (tp->t_incomplete_array) {
 		update_type_of_array_of_unknown_size(in->in_sym, len + 1);
+		in->in_sym->u.s_array_nonnull_dimension = len;
+	}
 
 	return true;
 }
@@ -892,6 +894,8 @@ initialization_expr(initialization *in, tnode_t *tn)
 		in->in_err = true;
 		goto done;
 	}
+	if (in->in_sym->s_type->t_tspec == AUTO_TYPE)
+		in->in_sym->s_type = block_dup_type(tn->tn_type);
 	if (initialization_expr_using_op(in, tn))
 		goto done;
 	if (initialization_init_array_from_string(in, tn))

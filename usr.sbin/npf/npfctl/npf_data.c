@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.30 2019/01/19 21:19:32 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.30.12.1 2025/08/02 05:58:52 perseant Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: npf_data.c,v 1.30 2019/01/19 21:19:32 rmind Exp $");
 #include <errno.h>
 #include <ifaddrs.h>
 #include <netdb.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "npfctl.h"
 
@@ -267,6 +269,50 @@ npfctl_parse_table_id(const char *name)
 	return npfvar_create_element(NPFVAR_TABLE, &tid, sizeof(u_int));
 }
 
+int
+npfctl_parse_user(const char *user, uint32_t *uid)
+{
+	if (!strcmp(user, "unknown"))
+		*uid = UID_MAX;
+	else {
+		struct passwd	*pw;
+
+		if ((pw = getpwnam(user)) == NULL) {
+			return -1;
+		}
+		*uid = pw->pw_uid;
+	}
+	return 0;
+}
+
+int
+npfctl_parse_group(const char *group, uint32_t *gid)
+{
+	if (!strcmp(group, "unknown"))
+		*gid = GID_MAX;
+	else {
+		struct group	*grp;
+
+		if ((grp = getgrnam(group)) == NULL) {
+			return -1;
+		}
+		*gid = grp->gr_gid;
+	}
+	return 0;
+}
+
+/*
+ * this function is called for both gid and uid init in parser
+ * both uid and gid are both uint32_t
+ */
+void
+npfctl_init_rid(rid_t *rid, uint32_t id1, uint32_t id2, uint8_t op)
+{
+	rid->id[0] = id1;
+	rid->id[1] = id2;
+	rid->op = op;
+}
+
 /*
  * npfctl_parse_port_range: create a port-range variable.  Note that the
  * passed port numbers should be in host byte order.
@@ -306,7 +352,7 @@ npfctl_parse_port_range_variable(const char *v, npfvar_t *vp)
 			    sizeof(*pr));
 			break;
 		case NPFVAR_NUM:
-			p = *(unsigned long *)data;
+			p = *(uint32_t *)data;
 			npfvar_add_elements(pvp, npfctl_parse_port_range(p, p));
 			break;
 		default:
@@ -627,6 +673,108 @@ npfctl_parse_icmp(int proto __unused, int type, int code)
 out:
 	npfvar_destroy(vp);
 	return NULL;
+}
+
+filt_opts_t
+npfctl_parse_l3filt_opt(npfvar_t *src_addr, npfvar_t *src_port, bool tnot,
+    npfvar_t *dst_addr, npfvar_t *dst_port, bool fnot, rid_t uid, rid_t gid)
+{
+	filt_opts_t fopts;
+
+	fopts.filt.opt3.fo_from.ap_netaddr = src_addr;
+	fopts.filt.opt3.fo_from.ap_portrange = src_port;
+	fopts.fo_finvert = tnot;
+	fopts.filt.opt3.fo_to.ap_netaddr = dst_addr;
+	fopts.filt.opt3.fo_to.ap_portrange = dst_port;
+	fopts.fo_tinvert = fnot;
+	fopts.uid = uid;
+	fopts.gid = gid;
+	fopts.layer = NPF_RULE_LAYER_3;
+
+	return fopts;
+}
+
+filt_opts_t
+npfctl_parse_l2filt_opt(npfvar_t *src_addr, bool fnot, npfvar_t *dst_addr,
+    bool tnot, uint16_t eth_type)
+{
+	filt_opts_t fopts;
+
+	fopts.filt.opt2.from_mac = src_addr;
+	fopts.fo_finvert = fnot;
+	fopts.filt.opt2.to_mac = dst_addr;
+	fopts.fo_tinvert = tnot;
+	fopts.filt.opt2.ether_type = eth_type;
+	fopts.layer = NPF_RULE_LAYER_2;
+
+	return fopts;
+}
+
+#define atox(c)	(((c) <= '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
+/*
+ * general function to parse ether type and mac address
+ */
+static void
+parse_ether_hex(uint8_t *dest, const char *str, int hexlength, const char *err)
+{
+	const uint8_t *cp = (const uint8_t *)str;
+	uint8_t *ep;
+
+	ep = dest + hexlength; /* check null terminated boundary */
+
+	while (*cp) {
+		if (!isxdigit(*cp))
+			yyerror("%s: %s", err, str);
+
+		*dest = atox(*cp);
+		cp++;
+		if (isxdigit(*cp)) {
+			*dest = (*dest << 4) | atox(*cp);
+			cp++;
+		}
+		dest++;
+
+		if (dest == ep) {
+			if (*cp == '\0')
+				return;
+			else
+				yyerror("%s: %s", err, str);
+		}
+
+		switch (*cp) {
+		case ':':
+		case '-':
+		case '.':
+			cp++;
+			break;
+		}
+	}
+}
+
+uint16_t
+npfctl_parse_ether_type(const char *str)
+{
+#define ETHER_LEN	4
+	const char *err = "invalid ether type format";
+	uint8_t etype[2];
+	parse_ether_hex(etype, str + 2, ETHER_LEN, err);
+
+	uint16_t *e_type = (uint16_t *)etype; /* fetch the whole two byte blocks */
+
+	return *e_type;
+}
+
+npfvar_t *
+npfctl_parse_mac_addr(const char *mac_addr)
+{
+	const char *err = "invalid mac address format";
+	struct ether_addr *ether;
+	uint8_t addr[ETHER_ADDR_LEN];
+
+	ether = (struct ether_addr *)addr;
+	parse_ether_hex(addr, mac_addr, ETHER_ADDR_LEN, err);
+
+	return npfvar_create_element(NPFVAR_MAC, ether, sizeof(*ether));
 }
 
 /*

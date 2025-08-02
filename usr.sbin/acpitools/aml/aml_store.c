@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_store.c,v 1.3 2021/09/03 22:33:18 andvar Exp $	*/
+/*	$NetBSD: aml_store.c,v 1.3.4.1 2025/08/02 05:58:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_store.c,v 1.3 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_store.c,v 1.3 2021/09/03 22:33:18 andvar Exp $");
+__RCSID("$NetBSD: aml_store.c,v 1.3.4.1 2025/08/02 05:58:47 perseant Exp $");
 
 #include <sys/param.h>
 
@@ -74,7 +74,7 @@ aml_store_to_fieldname(struct aml_environ *env, union aml_object *obj,
 		if (wname == NULL ||
 		    wname->property == NULL ||
 		    wname->property->type != aml_t_opregion) {
-			AML_DEBUGPRINT("Inappropreate Type\n");
+			AML_DEBUGPRINT("Inappropriate Type\n");
 			env->stat = aml_stat_panic;
 			env->curname = oname;
 			return;
@@ -115,7 +115,7 @@ aml_store_to_fieldname(struct aml_environ *env, union aml_object *obj,
 			break;
 		default:
 			AML_DEBUGPRINT("aml_store_to_fieldname: "
-				       "Inappropreate Type of src object\n");
+				       "Inappropriate Type of src object\n");
 			break;
 		}
 	} else if (field->f.ftype == f_t_index) {

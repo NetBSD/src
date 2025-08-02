@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_qop.h,v 1.8 2022/05/22 11:27:37 andvar Exp $	*/
+/*	$NetBSD: altq_qop.h,v 1.8.4.1 2025/08/02 05:58:47 perseant Exp $	*/
 /*	$KAME: altq_qop.h,v 1.5 2002/02/12 10:14:01 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -29,6 +29,7 @@
 #define _ALTQ_QOP_H_
 
 #include <sys/queue.h>
+#include <sys/types.h>
 #include <altq/altq.h>
 #include <altq/altq_red.h>
 
@@ -72,7 +73,7 @@ struct qdisc_ops {
 struct ifinfo {
 	LIST_ENTRY(ifinfo)	next;		/* next entry on iflist */
 	char			*ifname;	/* interface name */
-	u_int			bandwidth;	/* bandwidth in bps */
+	uint64_t		bandwidth;	/* bandwidth in bps */
 	u_int			ifmtu;		/* mtu of the interface */
 	u_int			ifindex;	/* interface index */
 	int			enabled;	/* hfsc on/off state */
@@ -141,13 +142,13 @@ int qcmd_add_filter(const char *ifname, const char *clname, const char *flname,
 		    const struct flow_filter *fltr);
 int qcmd_delete_filter(const char *ifname, const char *clname,
 		       const char *flname);
-int qcmd_tbr_register(const char *ifname, u_int rate, u_int size);
+int qcmd_tbr_register(const char *ifname, uint64_t rate, u_int size);
 int qop_enable(struct ifinfo *ifinfo);
 int qop_disable(struct ifinfo *ifinfo);
 int qop_delete_if(struct ifinfo *ifinfo);
 int qop_clear(struct ifinfo *ifinfo);
 
-int qop_add_if(struct ifinfo **rp, const char *ifname, u_int bandwidth,
+int qop_add_if(struct ifinfo **rp, const char *ifname, uint64_t bandwidth,
 	       struct qdisc_ops *qdisc_ops, void *if_private);
 int qop_delete_if(struct ifinfo *ifinfo);
 
@@ -178,7 +179,7 @@ const char *qoperror(int qoperrno);
 u_int get_ifindex(const char *ifname);
 struct classinfo *get_rootclass(struct ifinfo *ifinfo);
 struct classinfo *get_nextclass(struct classinfo *clinfo);
-u_long atobps(const char *s);
+uint64_t atobps(const char *s);
 u_long atobytes(const char *s);
 int qop_red_set_defaults(int th_min, int th_max, int inv_pmax);
 int qop_rio_set_defaults(struct redparams *params);

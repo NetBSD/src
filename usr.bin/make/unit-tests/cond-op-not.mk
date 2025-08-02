@@ -1,4 +1,4 @@
-# $NetBSD: cond-op-not.mk,v 1.8 2023/06/01 20:56:35 rillig Exp $
+# $NetBSD: cond-op-not.mk,v 1.8.2.1 2025/08/02 05:58:31 perseant Exp $
 #
 # Tests for the ! operator in .if conditions, which negates its argument.
 
@@ -61,7 +61,7 @@
 .endif
 
 # A single exclamation mark is a parse error.
-# expect+1: Malformed conditional (!)
+# expect+1: Malformed conditional "!"
 .if !
 .  error
 .else

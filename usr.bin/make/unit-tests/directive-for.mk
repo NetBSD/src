@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.25 2024/04/20 10:18:55 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.25.2.1 2025/08/02 05:58:34 perseant Exp $
 #
 # Tests for the .for directive.
 #
@@ -132,44 +132,44 @@ EXPANSION${plus}=	value
 # variable values have been replaced with expressions of the form ${:U...},
 # which are not interpreted as code anymore.
 .for path in a:\ a:\file.txt d:\\ d:\\file.txt
+# expect+3: a:\ a:\file.txt
+# expect+2: d:\\
+# expect+1: d:\\file.txt
 .  info ${path}
 .endfor
-# expect-2: a:\ a:\file.txt
-# expect-3: d:\\
-# expect-4: d:\\file.txt
 
 
 # Ensure that braces and parentheses are properly escaped by the .for loop.
 # Each line must print the same word 3 times.
 # See ForLoop_SubstBody.
 .for v in ( [ { ) ] } (()) [[]] {{}} )( ][ }{
+# expect+12: ( ( (
+# expect+11: [ [ [
+# expect+10: { { {
+# expect+9: ) ) )
+# expect+8: ] ] ]
+# expect+7: } } }
+# expect+6: (()) (()) (())
+# expect+5: [[]] [[]] [[]]
+# expect+4: {{}} {{}} {{}}
+# expect+3: )( )( )(
+# expect+2: ][ ][ ][
+# expect+1: }{ }{ }{
 .  info $v ${v} $(v)
 .endfor
-# expect-02: ( ( (
-# expect-03: [ [ [
-# expect-04: { { {
-# expect-05: ) ) )
-# expect-06: ] ] ]
-# expect-07: } } }
-# expect-08: (()) (()) (())
-# expect-09: [[]] [[]] [[]]
-# expect-10: {{}} {{}} {{}}
-# expect-11: )( )( )(
-# expect-12: ][ ][ ][
-# expect-13: }{ }{ }{
 
 # Before 2023-05-09, the variable names could contain arbitrary characters,
 # except for whitespace, allowing for creative side effects, as usual for
 # arbitrary code injection.
 var=	outer
-# expect+1: invalid character ':' in .for loop variable name
+# expect+1: Invalid character ":" in .for loop variable name
 .for var:Q in value "quoted"
 .  info <${var}> <${var:Q}> <${var:Q:Q}>
 .endfor
 
 # Before 2023-05-09, when variable names could contain '$', the short
 # expression '$$' was preserved, the long expressions were substituted.
-# expect+1: invalid character '$' in .for loop variable name
+# expect+1: Invalid character "$" in .for loop variable name
 .for $ in value
 .  info <$$> <${$}> <$($)>
 .endfor
@@ -181,7 +181,7 @@ var=	outer
 # possibility, therefore the variable names are restricted to using harmless
 # characters only.
 INDIRECT=	direct
-# expect+1: invalid character '$' in .for loop variable name
+# expect+1: Invalid character "$" in .for loop variable name
 .for $(INDIRECT) in value
 # If the variable name could be chosen dynamically, the iteration variable
 # might have been 'direct', thereby expanding the expression '${direct}'.
@@ -203,20 +203,9 @@ INDIRECT=	${DIRECT}
 .endfor
 
 
-# XXX: A parse error or evaluation error in the items of the .for loop
-# should skip the whole loop.  As of 2023-05-09, the loop is expanded as
-# usual.
-# expect+1: while evaluating "${:Uword2:Z}-after word3": Unknown modifier "Z"
-.for var in word1 before-${:Uword2:Z}-after word3
-.  info XXX: Should not reach ${var}
-.endfor
-# expect-2: XXX: Should not reach word1
-# expect-3: XXX: Should not reach before--after
-# expect-4: XXX: Should not reach word3
-
-
 # An empty list of variables to the left of the 'in' is a parse error.
-.for in value			# expect+0: no iteration variables in for
+# expect+1: Missing iteration variables in .for loop
+.for in value
 .  error
 .endfor
 
@@ -242,7 +231,8 @@ INDIRECT=	${DIRECT}
 # is processed.
 .for var in value
 .  if 0
-.endfor				# expect+0: 1 open conditional
+.endfor
+# expect-1: 1 open conditional
 
 # If there are no iteration values, the loop body is not processed, and the
 # check for mismatched conditionals is not performed.
@@ -258,8 +248,10 @@ INDIRECT=	${DIRECT}
 .if 0
 .  for var in value		# does not need a corresponding .endfor
 .endif
-.endfor				# expect+0: for-less endfor
-.endif				# expect+0: if-less endif
+# expect+1: for-less endfor
+.endfor
+# expect+1: if-less endif
+.endif
 
 
 # When a .for without the corresponding .endfor occurs in an active branch of
@@ -267,7 +259,8 @@ INDIRECT=	${DIRECT}
 # without looking at any other directives.
 .if 1
 .  for var in value
-.    endif			# expect+0: if-less endif
+# expect+1: if-less endif
+.    endif
 .  endfor			# no 'for-less endfor'
 .endif				# no 'if-less endif'
 
@@ -315,6 +308,6 @@ INDIRECT=	${DIRECT}
 # Back then, the .newline variable didn't exist, therefore it was unlikely
 # that a newline ever occurred.
 .for var in a${.newline}b${.newline}c
+# expect+1: newline-item=(a)
 .  info newline-item=(${var})
 .endfor
-# expect-2: newline-item=(a)

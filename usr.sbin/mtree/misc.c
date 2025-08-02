@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.34 2012/12/20 19:09:25 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.34.42.1 2025/08/02 05:58:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: misc.c,v 1.34 2012/12/20 19:09:25 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.34.42.1 2025/08/02 05:58:51 perseant Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -111,7 +111,7 @@ slist_t	excludetags, includetags;
 int	keys = KEYDEFAULT;
 
 
-int keycompare(const void *, const void *);
+static int keycompare(const void *, const void *);
 
 u_int
 parsekey(const char *name, int *needvaluep)
@@ -153,7 +153,7 @@ parsetype(const char *name)
 	return (k->val);
 }
 
-int
+static int
 keycompare(const void *a, const void *b)
 {
 
@@ -198,7 +198,7 @@ void
 parsetags(slist_t *list, char *args)
 {
 	char	*p, *e;
-	int	len;
+	size_t	len;
 
 	if (args == NULL) {
 		addtag(list, NULL);

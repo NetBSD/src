@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2024/04/26 22:07:32 christos Exp $
+#	$NetBSD: Makefile,v 1.51.2.1 2025/08/02 05:58:48 perseant Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -13,20 +13,24 @@ DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
 
 # some ddb kernel components need limited modifications.  for now,
 # punt if not noted as implemented here.
-.if    ${MACHINE} == "amd64" \
-    || ${MACHINE} == "hppa" \
-    || ${MACHINE} == "i386" \
-    || ${MACHINE} == "sparc" \
-    || ${MACHINE} == "sparc64" \
+.if \
+       ${MACHINE_CPU} == "aarch64" \
     || ${MACHINE_CPU} == "arm" \
-    || ${MACHINE_CPU} == "aarch64" \
     || ${MACHINE_CPU} == "mips" \
+    || ${MACHINE_CPU} == "riscv" \
     || ${MACHINE_ARCH} == "alpha" \
     || ${MACHINE_ARCH} == "m68k" \
     || ${MACHINE_ARCH} == "powerpc" \
-    || ${MACHINE_ARCH} == "powerpc64"
+    || ${MACHINE_ARCH} == "powerpc64" \
+    || ${MACHINE} == "amd64" \
+    || ${MACHINE} == "hppa" \
+    || ${MACHINE} == "i386" \
+    || ${MACHINE} == "sparc" \
+    || ${MACHINE} == "sparc64"
 SRCS+=	db_trace.c
-.if ${MACHINE_ARCH} == "alpha"
+.if \
+       ${MACHINE_ARCH} == "alpha" \
+    || ${MACHINE_CPU} == "riscv"
 SRCS+=	db_interface.c
 .elif ${MACHINE_CPU} == "mips"
 SRCS+=	db_interface.c mips_stacktrace.c

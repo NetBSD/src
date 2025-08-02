@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.33 2023/08/01 20:09:12 andvar Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.33.2.1 2025/08/02 05:58:52 perseant Exp $");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD
@@ -62,6 +62,11 @@ typedef struct {
 enum {
 	LIST_PROTO = 0, LIST_SADDR, LIST_DADDR, LIST_SPORT, LIST_DPORT,
 	LIST_COUNT,
+};
+
+enum {
+	LIST_E_SADDR = 0, LIST_E_DADDR, LIST_ETYPE,
+	LIST_E_COUNT,
 };
 
 typedef struct {
@@ -287,6 +292,34 @@ print_portrange(npf_conf_info_t *ctx __unused, const uint32_t *words)
 	return p;
 }
 
+static char *
+print_ether_address(npf_conf_info_t *ctx __unused, const uint32_t *nwords)
+{
+	const struct ether_addr* addr = (const struct ether_addr *)nwords;
+	char *a;
+
+	_DIAGASSERT(addr != NULL);
+
+	easprintf(&a, "%02x:%02x:%02x:%02x:%02x:%02x",
+	    addr->ether_addr_octet[0], addr->ether_addr_octet[1],
+	    addr->ether_addr_octet[2], addr->ether_addr_octet[3],
+	    addr->ether_addr_octet[4], addr->ether_addr_octet[5]);
+	return a;
+}
+
+static char *
+print_ether_type(npf_conf_info_t *ctx __unused, const uint32_t *words)
+{
+	const uint8_t *type = (const uint8_t *)words;
+	char *a;
+
+	_DIAGASSERT(type != NULL);
+
+	easprintf(&a, "Ex%02x%02x", type[0], type[1]);
+
+	return a;
+}
+
 /*
  * The main keyword mapping tables defining the syntax:
  * - Mapping of rule attributes (flags) to the keywords.
@@ -306,6 +339,8 @@ static const struct attr_keyword_mapent {
 	{ F(GROUP)|F(DYNAMIC),	F(GROUP)|F(DYNAMIC),	"ruleset"	},
 	{ F(GROUP)|F(PASS),	0,			"block"		},
 	{ F(GROUP)|F(PASS),	F(PASS),		"pass"		},
+	{ F(GROUP)|F(PASS)|F(LAYER_2),	F(LAYER_2),	"ether"		},
+	{ F(GROUP)|F(PASS)|F(LAYER_2),	F(LAYER_2)|F(PASS),	"ether"	},
 	{ F(RETRST)|F(RETICMP),	F(RETRST)|F(RETICMP),	"return"	},
 	{ F(RETRST)|F(RETICMP),	F(RETRST),		"return-rst"	},
 	{ F(RETRST)|F(RETICMP),	F(RETICMP),		"return-icmp"	},
@@ -338,6 +373,13 @@ static const struct mark_keyword_mapent {
 	{ BM_DST_CIDR,	NULL,		LIST_DADDR,	print_address,	6 },
 	{ BM_DST_TABLE,	NULL,		LIST_DADDR,	print_table,	1 },
 	{ BM_DST_PORTS,	NULL,		LIST_DPORT,	print_portrange,2 },
+}, mark_keyword_mapl2[] = {
+	{BM_SRC_ENEG,	NULL,		-1,		NULL,		0 },
+	{BM_SRC_ETHER,	NULL,		LIST_E_SADDR,	print_ether_address,	2 },
+
+	{BM_DST_ENEG,	NULL,		-1,		NULL,		0 },
+	{BM_DST_ETHER,	NULL,		LIST_E_DADDR,	print_ether_address,	2 },
+	{BM_ETHER_TYPE,	"type %s",	LIST_ETYPE,	print_ether_type,1 }
 };
 
 static const char * __attribute__((format_arg(2)))
@@ -378,7 +420,7 @@ scan_marks(npf_conf_info_t *ctx, const struct mark_keyword_mapent *mk,
 			 */
 			ctx->curmark = m;
 			assert(BM_COUNT < (sizeof(uint64_t) * CHAR_BIT));
-			ctx->seen_marks = UINT64_C(1) << m;
+			ctx->seen_marks |= UINT64_C(1) << m;
 			assert(mk->fwords == nwords);
 
 			if (mk->printfn) {
@@ -414,9 +456,10 @@ npfctl_print_id(npf_conf_info_t *ctx, nl_rule_t *rl)
 }
 
 static void
-npfctl_print_filter_generic(npf_conf_info_t *ctx)
+npfctl_print_filter_generic(npf_conf_info_t *ctx, uint32_t plist)
 {
-	elem_list_t *list = &ctx->list[LIST_PROTO];
+	assert(plist < LIST_COUNT);
+	elem_list_t *list = &ctx->list[plist];
 
 	if (list->count) {
 		char *elements = list_join_free(list, false, " ");
@@ -475,7 +518,43 @@ npfctl_print_filter_seg(npf_conf_info_t *ctx, unsigned which)
 }
 
 static bool
-npfctl_print_filter(npf_conf_info_t *ctx, nl_rule_t *rl)
+npfctl_print_l2filter_seg(npf_conf_info_t *ctx, unsigned which)
+{
+	static const struct {
+		const char *	keyword;
+		unsigned	alist;
+		unsigned	negbm;
+	} refs[] = {
+		[NPF_SRC] = {
+			.keyword	= "from",
+			.alist		= LIST_E_SADDR,
+			.negbm		= UINT64_C(1) << BM_SRC_ENEG,
+		},
+		[NPF_DST] = {
+			.keyword	= "to",
+			.alist		= LIST_E_DADDR,
+			.negbm		= UINT64_C(1) << BM_DST_ENEG,
+		}
+	};
+	const char *neg = !!(ctx->seen_marks & refs[which].negbm) ? "! " : "";
+	const char *kwd = refs[which].keyword;
+	bool seen_filter = false;
+	elem_list_t *list;
+	char *elements;
+
+	list = &ctx->list[refs[which].alist];
+	if (list->count != 0) {
+		seen_filter = true;
+		elements = list_join_free(list, true, ", ");
+		ctx->fpos += fprintf(ctx->fp, "%s %s%s ", kwd, neg, elements);
+		free(elements);
+	}
+
+	return seen_filter;
+}
+
+static bool
+npfctl_print_filter(npf_conf_info_t *ctx, nl_rule_t *rl, uint32_t attr)
 {
 	const void *marks;
 	size_t mlen, len;
@@ -499,22 +578,62 @@ npfctl_print_filter(npf_conf_info_t *ctx, nl_rule_t *rl)
 	/*
 	 * BPF filter criteria described by the byte-code marks.
 	 */
-	for (unsigned i = 0; i < __arraycount(mark_keyword_map); i++) {
-		const struct mark_keyword_mapent *mk = &mark_keyword_map[i];
-		scan_marks(ctx, mk, marks, mlen);
+	ctx->seen_marks = 0;
+	if (attr & NPF_RULE_LAYER_2) {
+		for (unsigned i = 0; i < __arraycount(mark_keyword_mapl2); i++) {
+			const struct mark_keyword_mapent *mk = &mark_keyword_mapl2[i];
+			scan_marks(ctx, mk, marks, mlen);
+		}
+		seenf |= npfctl_print_l2filter_seg(ctx, NPF_SRC);
+		seenf |= npfctl_print_l2filter_seg(ctx, NPF_DST);
+		npfctl_print_filter_generic(ctx, LIST_ETYPE);
+	} else if (attr & NPF_RULE_LAYER_3) {
+		for (unsigned i = 0; i < __arraycount(mark_keyword_map); i++) {
+			const struct mark_keyword_mapent *mk = &mark_keyword_map[i];
+			scan_marks(ctx, mk, marks, mlen);
+		}
+		npfctl_print_filter_generic(ctx, LIST_PROTO);
+		seenf |= npfctl_print_filter_seg(ctx, NPF_SRC);
+		seenf |= npfctl_print_filter_seg(ctx, NPF_DST);
+	} else {
+		yyerror("%s: layer not supported", __func__);
 	}
-	npfctl_print_filter_generic(ctx);
-	seenf |= npfctl_print_filter_seg(ctx, NPF_SRC);
-	seenf |= npfctl_print_filter_seg(ctx, NPF_DST);
 	return seenf;
 }
 
+static char *
+print_guid(char *buf, struct r_id id, int size)
+{
+	if (id.op == NPF_OP_XRG) {
+		snprintf(buf, size, "%u <> %u", id.id[0], id.id[1]);
+	} else if (id.op == NPF_OP_IRG) {
+		snprintf(buf, size, "%u >< %u", id.id[0], id.id[1]);
+	} else if (id.op == NPF_OP_EQ ) {
+		snprintf(buf, size, "%u", id.id[0]);
+	} else if (id.op == NPF_OP_NE) {
+		snprintf(buf, size, "!= %u", id.id[0]);
+	} else if (id.op == NPF_OP_LE) {
+		snprintf(buf, size, "<= %u", id.id[0]);
+	} else if (id.op == NPF_OP_LT) {
+		snprintf(buf, size, "< %u", id.id[0]);
+	} else if (id.op == NPF_OP_GE) {
+		snprintf(buf, size, ">= %u", id.id[0]);
+	} else if (id.op == NPF_OP_GT) {
+		snprintf(buf, size, "> %u", id.id[0]);
+	} else {
+		return NULL;
+	}
+	return buf;
+}
+#define BUF_SIZE	40
 static void
 npfctl_print_rule(npf_conf_info_t *ctx, nl_rule_t *rl, unsigned level)
 {
 	const uint32_t attr = npf_rule_getattr(rl);
 	const char *rproc, *ifname, *name;
 	bool dyn_ruleset;
+	struct r_id rid;
+	char buf[BUF_SIZE];
 
 	/* Rule attributes/flags. */
 	for (unsigned i = 0; i < __arraycount(attr_keyword_map); i++) {
@@ -530,9 +649,19 @@ npfctl_print_rule(npf_conf_info_t *ctx, nl_rule_t *rl, unsigned level)
 	if ((ifname = npf_rule_getinterface(rl)) != NULL) {
 		ctx->fpos += fprintf(ctx->fp, "on %s ", ifname);
 	}
-	if (attr == (NPF_RULE_GROUP | NPF_RULE_IN | NPF_RULE_OUT) && !ifname) {
+	if (attr == (NPF_RULE_GROUP | NPF_RULE_IN | NPF_RULE_OUT | NPF_RULE_LAYER_3) && !ifname) {
 		/* The default group is a special case. */
 		ctx->fpos += fprintf(ctx->fp, "default ");
+	}
+	if (attr == (NPF_RULE_GROUP | NPF_RULE_IN | NPF_RULE_OUT | NPF_RULE_LAYER_2) && !ifname) {
+		/* The default group is a special case. */
+		ctx->fpos += fprintf(ctx->fp, "default layer-2 ");
+	}
+	if (attr == (NPF_RULE_GROUP | NPF_RULE_IN | NPF_RULE_LAYER_2)) {
+		ctx->fpos += fprintf(ctx->fp, "layer-2 ");
+	}
+	if (attr == (NPF_RULE_GROUP | NPF_RULE_OUT | NPF_RULE_LAYER_2)) {
+		ctx->fpos += fprintf(ctx->fp, "layer-2 ");
 	}
 	if ((attr & NPF_DYNAMIC_GROUP) == NPF_RULE_GROUP) {
 		/* Group; done. */
@@ -543,8 +672,16 @@ npfctl_print_rule(npf_conf_info_t *ctx, nl_rule_t *rl, unsigned level)
 
 	/* Print filter criteria. */
 	dyn_ruleset = (attr & NPF_DYNAMIC_GROUP) == NPF_DYNAMIC_GROUP;
-	if (!npfctl_print_filter(ctx, rl) && !dyn_ruleset) {
+	if (!npfctl_print_filter(ctx, rl, attr) && !dyn_ruleset) {
 		ctx->fpos += fprintf(ctx->fp, "all ");
+	}
+
+	if (!npf_rule_getrid(&rid, rl, "r_user")) {
+		ctx->fpos += fprintf(ctx->fp, "user %s ", print_guid(buf, rid, BUF_SIZE));
+	}
+
+	if (!npf_rule_getrid(&rid, rl, "r_group")) {
+		ctx->fpos += fprintf(ctx->fp, "group %s ", print_guid(buf, rid, BUF_SIZE));
 	}
 
 	/* Rule procedure. */
@@ -568,13 +705,14 @@ npfctl_print_nat(npf_conf_info_t *ctx, nl_nat_t *nt)
 	size_t alen;
 	unsigned flags;
 	char *seg;
+	uint32_t attr = npf_rule_getattr(rl);
 
 	/* Get flags and the interface. */
 	flags = npf_nat_getflags(nt);
 	ifname = npf_rule_getinterface(rl);
 	assert(ifname != NULL);
 
-	if ((npf_rule_getattr(rl) & dynamic_natset) == dynamic_natset) {
+	if ((attr & dynamic_natset) == dynamic_natset) {
 		const char *name = npf_rule_getname(rl);
 		ctx->fpos += fprintf(ctx->fp,
 		    "map ruleset \"%s\" on %s\n", name, ifname);
@@ -641,7 +779,7 @@ npfctl_print_nat(npf_conf_info_t *ctx, nl_nat_t *nt)
 	    ifname, (flags & NPF_NAT_STATIC) ? "static" : "dynamic",
 	    algo, (flags & NPF_NAT_PORTS) ? "" : "no-ports ",
 	    seg1, arrow, seg2);
-	npfctl_print_filter(ctx, rl);
+	npfctl_print_filter(ctx, rl, attr);
 	npfctl_print_id(ctx, rl);
 	ctx->fpos += fprintf(ctx->fp, "\n");
 	free(seg);

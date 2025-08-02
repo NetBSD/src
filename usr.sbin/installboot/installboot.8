@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.110 2024/06/01 20:19:41 gutteridge Exp $
+.\"	$NetBSD: installboot.8,v 1.110.2.1 2025/08/02 05:58:49 perseant Exp $
 .\"
 .\" Copyright (c) 2002-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" Usage: \*(UB
 .ds UB U\(hyBoot
 .
-.Dd June 1, 2024
+.Dd December 29, 2024
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -384,7 +384,7 @@ and
 .Ic dtb
 options are specified,
 .Ic board
-takes precendence.
+takes precedence.
 .
 .It Ic ioaddr Ns Li = Ns Ar ioaddr
 .Sy [ amd64 ,
@@ -468,7 +468,7 @@ Use
 as the type of
 .Ar filesystem .
 The default operation is to attempt to auto-detect this setting.
-The following file system types are currently supported by:
+The following file system types are currently supported:
 .
 .Bl -tag -width Ic
 .

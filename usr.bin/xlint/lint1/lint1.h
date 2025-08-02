@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.227 2024/05/11 16:12:28 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.227.2.1 2025/08/02 05:58:46 perseant Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -78,6 +78,12 @@ typedef struct {
 	bool tq_atomic;
 } type_qualifiers;
 
+typedef struct {
+	bool used;
+	bool noreturn;
+	unsigned bit_width;
+} type_attributes;
+
 /* A bool, integer or floating-point value. */
 typedef struct {
 	tspec_t	v_tspec;
@@ -131,6 +137,7 @@ struct lint1_type {
 	bool	t_volatile:1;
 	bool	t_proto:1;	/* function prototype (u.params valid) */
 	bool	t_vararg:1;	/* prototype with '...' */
+	bool	t_noreturn:1;	/* function never returns normally */
 	bool	t_typedef:1;	/* type defined with typedef */
 	bool	t_typeof:1;	/* type defined with GCC's __typeof__ */
 	bool	t_bitfield:1;
@@ -245,6 +252,11 @@ struct sym {
 		} s_keyword;
 		sym_t	*s_old_style_params;	/* parameters in an old-style
 						 * function definition */
+		/*
+		 * Only for string initializers with automatic size.
+		 * Does not take '\0' characters in the middle into account.
+		 */
+		size_t s_array_nonnull_dimension;
 	} u;
 	sym_t	*s_symtab_next;	/* next symbol in the same symtab bucket */
 	sym_t	**s_symtab_ref;	/* pointer to s_symtab_next of the previous
@@ -362,6 +374,7 @@ typedef struct decl_level {
 	bool	d_asm:1;	/* set if d_ctx == AUTO and asm() present */
 	bool	d_packed:1;
 	bool	d_used:1;
+	bool	d_noreturn:1;	/* function never returns normally */
 	type_t	*d_tag_type;	/* during a member or enumerator declaration,
 				 * the tag type to which the member belongs */
 	sym_t	*d_func_params;	/* during a function declaration, the
@@ -380,6 +393,9 @@ typedef struct {
 	sym_t	*first;
 	bool	vararg:1;
 	bool	prototype:1;
+	bool	used:1;
+	bool	noreturn:1;
+	bool	identifier:1;
 } parameter_list;
 
 /*
@@ -485,7 +501,6 @@ typedef struct designation {
 typedef enum {
 	LC_ARGSUSED,
 	LC_BITFIELDTYPE,
-	LC_CONSTCOND,
 	LC_FALLTHROUGH,
 	LC_LINTLIBRARY,
 	LC_LINTED,
@@ -591,7 +606,7 @@ check_printf(const char *fmt, ...)
 
 #  define wrap_check_printf(func, cond, msgid, args...)			\
 	({								\
-		if (/* CONSTCOND */cond)				\
+		if (cond)						\
 			debug_step("%s:%d: %s %d '%s' in %s",		\
 			    __FILE__, __LINE__,	#func, msgid,		\
 			    __CONCAT(MSG_, msgid), __func__);		\
@@ -739,4 +754,20 @@ set_sym_kind(symbol_kind kind)
 		debug_step("%s: %s -> %s", __func__,
 		    symbol_kind_name(sym_kind), symbol_kind_name(kind));
 	sym_kind = kind;
+}
+
+static inline type_attributes
+merge_type_attributes(type_attributes a, type_attributes b)
+{
+	return (type_attributes){
+		.used = a.used || b.used,
+		.noreturn = a.noreturn || b.noreturn,
+		.bit_width = b.bit_width > 0 ? b.bit_width : a.bit_width,
+	};
+}
+
+static inline type_attributes
+no_type_attributes(void)
+{
+	return (type_attributes){ .used = false };
 }

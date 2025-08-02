@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2019/10/02 11:16:04 maya Exp $	*/
+/*	$NetBSD: md.h,v 1.3.10.1 2025/08/02 05:58:59 perseant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,12 +38,6 @@
 #include "mbr.h"
 
 /* Constants and defines */
-#define	PART_ROOT	PART_A
-#define	PART_SWAP	PART_B
-#define	PART_BSD	PART_C
-#define	PART_RAW	PART_D
-#define	PART_USR	PART_E	/* Can be after PART_FIRST_FREE */
-#define	PART_FIRST_FREE PART_F
 
 /* Megs for the /usr partition, if separate */
 #define	DEFUSRSIZE	980

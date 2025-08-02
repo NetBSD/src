@@ -1,4 +1,4 @@
-# $NetBSD: directive-include.mk,v 1.14 2024/04/20 10:18:55 rillig Exp $
+# $NetBSD: directive-include.mk,v 1.14.2.1 2025/08/02 05:58:34 perseant Exp $
 #
 # Tests for the .include directive, which includes another file.
 
@@ -51,8 +51,8 @@ DQUOT=	"
 # When the expression in a filename cannot be evaluated, the failing
 # expression is skipped and the file is included nevertheless.
 # FIXME: Add proper error handling, no file must be included here.
-# expect+2: Could not find nonexistent.mk
-# expect+1: while evaluating "${:U123:Z}.mk": Unknown modifier "Z"
+# expect+2: Unknown modifier ":Z"
+# expect+1: Could not find nonexistent.mk
 .include "nonexistent${:U123:Z}.mk"
 
 # The traditional include directive is seldom used.
@@ -62,7 +62,7 @@ include /nonexistent		# comment
 sinclude /nonexistent		# comment
 include ${:U/dev/null}		# comment
 include /dev/null /dev/null
-# expect+1: Invalid line 'include'
+# expect+1: Invalid line "include"
 include
 
 # XXX: trailing whitespace in diagnostic, missing quotes around filename
@@ -70,7 +70,7 @@ include
 # The following include directive behaves differently, depending on whether
 # the current file has a slash or is a relative filename.  In the first case,
 # make opens the directory of the current file and tries to read from it,
-# resulting in the error message """ line 1: Zero byte read from file".
+# resulting in the error message ":1: Zero byte read from file".
 # In the second case, the error message is "Could not find ", without quotes
 # or any other indicator for the empty filename at the end of the line.
 #include ${:U}

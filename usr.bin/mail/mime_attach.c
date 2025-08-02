@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.20 2019/02/01 08:29:04 mrg Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.20.12.1 2025/08/02 05:58:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.20 2019/02/01 08:29:04 mrg Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.20.12.1 2025/08/02 05:58:29 perseant Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -421,7 +421,7 @@ content_type(struct attachment *ap)
 		return content_type_by_name(ap->a_name);
 	case ATTACH_MSG:
 		/*
-		 * Note: the encapusulated message header must include
+		 * Note: the encapsulated message header must include
 		 * at least one of the "Date:", "From:", or "Subject:"
 		 * fields.  See rfc2046 Sec 5.2.1.
 		 * XXX - Should we really test for this?

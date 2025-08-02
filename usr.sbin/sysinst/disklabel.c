@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.52 2024/02/08 20:51:24 andvar Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.52.2.1 2025/08/02 05:58:55 perseant Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -1278,7 +1278,8 @@ disklabel_find_by_name(struct disk_partitions *arg, const char *name)
 {
 	const struct disklabel_disk_partitions *parts =
 	    (const struct disklabel_disk_partitions*)arg;
-	char *sl, part;
+	const char *sl;
+	char part;
 	ptrdiff_t n;
 	part_id pno, id, i;
 

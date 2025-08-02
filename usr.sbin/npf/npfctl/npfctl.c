@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.65 2021/07/14 09:15:01 christos Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.65.4.1 2025/08/02 05:58:52 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -139,11 +139,13 @@ npfctl_print_stats(int fd)
 		const char *	name;
 	} stats[] = {
 		{ -1, "Packets passed"					},
+		{ NPF_ETHER_STAT_PASS,		"ether pass"		},
 		{ NPF_STAT_PASS_DEFAULT,	"default pass"		},
 		{ NPF_STAT_PASS_RULESET,	"ruleset pass"		},
 		{ NPF_STAT_PASS_CONN,		"state pass"		},
 
 		{ -1, "Packets blocked"					},
+		{ NPF_ETHER_STAT_BLOCK,		"ether block"		},
 		{ NPF_STAT_BLOCK_DEFAULT,	"default block"		},
 		{ NPF_STAT_BLOCK_RULESET,	"ruleset block"		},
 

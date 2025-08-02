@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.390 2023/12/03 21:44:42 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.390.2.1 2025/08/02 05:58:28 perseant Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.390 2023/12/03 21:44:42 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.390.2.1 2025/08/02 05:58:28 perseant Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -155,10 +155,10 @@ diag(int level, const char *msg, ...)
 		found_err = true;
 
 	va_start(ap, msg);
-	fprintf(stderr, "%s: %s:%d: ",
+	(void)fprintf(stderr, "%s: %s:%d: ",
 	    level == 0 ? "warning" : "error", in_name, in.token_start_line);
-	vfprintf(stderr, msg, ap);
-	fprintf(stderr, "\n");
+	(void)vfprintf(stderr, msg, ap);
+	(void)fprintf(stderr, "\n");
 	va_end(ap);
 }
 
@@ -178,18 +178,6 @@ ind_add(int ind, const char *s, size_t len)
 			ind++;
 	}
 	return ind;
-}
-
-static void
-init_globals(void)
-{
-	ps_push(psym_stmt, false);	/* as a stop symbol */
-	ps.prev_lsym = lsym_semicolon;
-	ps.lbrace_kind = psym_lbrace_block;
-
-	const char *suffix = getenv("SIMPLE_BACKUP_SUFFIX");
-	if (suffix != NULL)
-		backup_suffix = suffix;
 }
 
 static void
@@ -243,7 +231,7 @@ copy_to_bak_file(void)
 	/* now the original input file will be the output */
 	output = fopen(in_name, "w");
 	if (output == NULL) {
-		remove(backup_name);
+		(void)remove(backup_name);
 		err(1, "%s", in_name);
 	}
 }
@@ -295,7 +283,7 @@ parse_command_line(int argc, char **argv)
 }
 
 static void
-set_initial_indentation(void)
+initialize_parser(void)
 {
 	inp_read_line();
 
@@ -310,12 +298,26 @@ set_initial_indentation(void)
 	}
 
 	ps.ind_level = ps.ind_level_follow = ind / opt.indent_size;
+	ps_psyms_push(psym_stmt, ps.ind_level);	/* as a stop symbol */
+	ps.prev_lsym = lsym_semicolon;
+	ps.lbrace_kind = psym_lbrace_block;
 }
 
 static bool
 should_break_line(lexer_symbol lsym)
 {
-	if (lsym == lsym_semicolon)
+	if (lsym == lsym_if && ps.prev_lsym == lsym_else
+	    && opt.else_if_in_same_line)
+		ps.newline = nl_no;
+	if (ps.newline == nl_unless_lbrace && lsym != lsym_lbrace)
+		ps.newline = nl_yes;
+	if (ps.newline == nl_unless_semicolon && lsym != lsym_semicolon)
+		ps.newline = nl_yes;
+	if (ps.newline == nl_unless_if && lsym != lsym_if)
+		ps.newline = nl_yes;
+	if (ps.newline != nl_yes)
+		return false;
+	if (lsym == lsym_semicolon && ps.prev_lsym == lsym_rbrace)
 		return false;
 	if (ps.prev_lsym == lsym_lbrace || ps.prev_lsym == lsym_semicolon)
 		return true;
@@ -493,7 +495,7 @@ parser_state_restore(const struct parser_state *src)
 {
 	struct paren_level *ps_paren_item = ps.paren.item;
 	size_t ps_paren_cap = ps.paren.cap;
-	enum parser_symbol *ps_psyms_sym = ps.psyms.sym;
+	parser_symbol *ps_psyms_sym = ps.psyms.sym;
 	int *ps_psyms_ind_level = ps.psyms.ind_level;
 	size_t ps_psyms_cap = ps.psyms.cap;
 
@@ -571,7 +573,12 @@ process_newline(void)
 	if (ps.psyms.sym[ps.psyms.len - 1] == psym_switch_expr
 	    && opt.brace_same_line
 	    && com.len == 0) {
-		ps.want_newline = true;
+		ps.newline = nl_unless_lbrace;
+		goto stay_in_line;
+	}
+	if (ps.psyms.sym[ps.psyms.len - 1] == psym_if_expr_stmt_else
+	    && opt.else_if_in_same_line) {
+		ps.newline = nl_unless_if;
 		goto stay_in_line;
 	}
 
@@ -665,10 +672,13 @@ process_rparen(void)
 	buf_add_buf(&code, &token);
 
 	if (ps.spaced_expr_psym != psym_0 && ps.paren.len == 0) {
+		bool is_do_while = ps.spaced_expr_psym == psym_while_expr
+		    && ps.psyms.sym[ps.psyms.len - 1] == psym_do_stmt;
 		parse(ps.spaced_expr_psym);
 		ps.spaced_expr_psym = psym_0;
 
-		ps.want_newline = true;
+		ps.newline = is_do_while
+		    ? nl_unless_semicolon : nl_unless_lbrace;
 		ps.next_unary = true;
 		ps.in_stmt_or_decl = false;
 		ps.want_blank = true;
@@ -721,7 +731,7 @@ process_lbrace(void)
 	if (ps.in_init)
 		ps.init_level++;
 	else
-		ps.want_newline = true;
+		ps.newline = nl_yes;
 
 	if (code.len > 0 && !ps.in_init) {
 		if (!opt.brace_same_line ||
@@ -812,7 +822,7 @@ process_rbrace(void)
 	if (!ps.in_var_decl
 	    && ps.psyms.sym[ps.psyms.len - 1] != psym_do_stmt
 	    && ps.psyms.sym[ps.psyms.len - 1] != psym_if_expr_stmt)
-		ps.want_newline = true;
+		ps.newline = nl_yes;
 }
 
 static void
@@ -868,7 +878,7 @@ process_comma(void)
 		if (ps.break_after_comma && (opt.break_after_comma ||
 			ind_add(compute_code_indent(), code.s, code.len)
 			>= opt.max_line_length - typical_varname_length))
-			ps.want_newline = true;
+			ps.newline = nl_yes;
 	}
 }
 
@@ -882,7 +892,7 @@ process_label_colon(void)
 	if (ps.seen_case)
 		out.line_kind = lk_case_or_default;
 	ps.in_stmt_or_decl = false;
-	ps.want_newline = ps.seen_case;
+	ps.newline = ps.seen_case ? nl_unless_semicolon : nl_no;
 	ps.seen_case = false;
 	ps.want_blank = false;
 }
@@ -936,7 +946,7 @@ process_semicolon(void)
 
 	if (ps.spaced_expr_psym == psym_0) {
 		parse(psym_stmt);
-		ps.want_newline = true;
+		ps.newline = nl_yes;
 	}
 }
 
@@ -1000,7 +1010,7 @@ process_word(lexer_symbol lsym)
 	} else if (ps.spaced_expr_psym != psym_0 && ps.paren.len == 0) {
 		parse(ps.spaced_expr_psym);
 		ps.spaced_expr_psym = psym_0;
-		ps.want_newline = true;
+		ps.newline = nl_unless_lbrace;
 		ps.in_stmt_or_decl = false;
 		ps.next_unary = true;
 	}
@@ -1016,7 +1026,7 @@ process_do(void)
 		output_line();
 
 	parse(psym_do);
-	ps.want_newline = true;
+	ps.newline = nl_unless_lbrace;
 }
 
 static void
@@ -1030,7 +1040,7 @@ process_else(void)
 		output_line();
 
 	parse(psym_else);
-	ps.want_newline = true;
+	ps.newline = opt.else_if_in_same_line ? nl_unless_if : nl_yes;
 }
 
 static void
@@ -1103,30 +1113,28 @@ indent(void)
 {
 	debug_parser_state();
 
-	for (;;) {		/* loop until we reach eof */
+	for (;;) {
 		lexer_symbol lsym = lexi();
 
 		debug_blank_line();
-		debug_printf("line %d: %s",
-		    in.token_start_line, lsym_name[lsym]);
-		debug_print_buf("token", &token);
-		debug_buffers();
+		debug_printf("line %s:%d: next token is %s",
+		    in_name, in.token_start_line, lsym_name[lsym]);
+		debug_print_buf("with text", &token);
+		debug_println("");
+		if (lab.len > 0 || code.len > 0 || com.len > 0)
+			debug_buffers("the buffers contain");
 		debug_blank_line();
 
 		if (lsym == lsym_eof)
 			return process_eof();
 
 		if (lsym == lsym_preprocessing || lsym == lsym_newline)
-			ps.want_newline = false;
+			ps.newline = nl_no;
 		else if (lsym == lsym_comment) {
 			/* no special processing */
 		} else {
-			if (lsym == lsym_if && ps.prev_lsym == lsym_else
-			    && opt.else_if_in_same_line)
-				ps.want_newline = false;
-
-			if (ps.want_newline && should_break_line(lsym)) {
-				ps.want_newline = false;
+			if (should_break_line(lsym)) {
+				ps.newline = nl_no;
 				output_line();
 			}
 			ps.in_stmt_or_decl = true;
@@ -1151,9 +1159,12 @@ indent(void)
 int
 main(int argc, char **argv)
 {
-	init_globals();
+	const char *suffix = getenv("SIMPLE_BACKUP_SUFFIX");
+	if (suffix != NULL)
+		backup_suffix = suffix;
+
 	load_profiles(argc, argv);
 	parse_command_line(argc, argv);
-	set_initial_indentation();
+	initialize_parser();
 	return indent();
 }

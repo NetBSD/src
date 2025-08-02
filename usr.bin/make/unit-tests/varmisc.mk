@@ -1,4 +1,4 @@
-# $NetBSD: varmisc.mk,v 1.33 2023/10/19 18:24:33 rillig Exp $
+# $NetBSD: varmisc.mk,v 1.33.2.1 2025/08/02 05:58:38 perseant Exp $
 #
 # Miscellaneous variable tests.
 
@@ -7,7 +7,7 @@ all: unmatched_var_paren D_true U_true D_false U_false Q_lhs Q_rhs NQ_none \
 all: save-dollars
 all: export-appended
 all: parse-dynamic
-all: varerror-unclosed
+all: varerror-unclosed-{1,2,3,4,5,6,7,8}
 
 unmatched_var_paren:
 	@echo ${foo::=foo-text}
@@ -188,16 +188,30 @@ target1-flags: target1.c
 target2-flags: target2.c
 	@echo $@: we have: ${FLAGS}
 
-varerror-unclosed:
+varerror-unclosed-1:
 	@echo $@:begin
+varerror-unclosed-2:
+# expect: make: Unclosed variable ""
 	@echo $(
+varerror-unclosed-3:
+# expect: make: Unclosed variable "UNCLOSED"
 	@echo $(UNCLOSED
+varerror-unclosed-4:
+# expect: make: Unclosed variable "UNCLOSED"
 	@echo ${UNCLOSED
+varerror-unclosed-5:
+# expect: make: Unclosed expression, expecting "}" for modifier "M${PATTERN"
 	@echo ${UNCLOSED:M${PATTERN
+varerror-unclosed-6:
+# expect: make: Unclosed variable "param"
+# expect: make: Unclosed variable "UNCLOSED."
 	@echo ${UNCLOSED.${param
+varerror-unclosed-7:
 	@echo $
 .for i in 1 2 3
+# expect: make: Unclosed variable "UNCLOSED.1"
 	@echo ${UNCLOSED.${i}
 .endfor
+varerror-unclosed-8:
 	@echo ${UNCLOSED_INDIR_2}
 	@echo $@:end

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -117,11 +117,13 @@ yyerror(const char *fmt, ...)
 %token			TDYNAMIC
 %token			TSTATIC
 %token			EQ
+%token			ETHER
 %token			EXCL_MARK
 %token			TFILE
 %token			FLAGS
 %token			FROM
 %token			GROUP
+%token			GT
 %token			HASH
 %token			ICMPTYPE
 %token			ID
@@ -133,8 +135,12 @@ yyerror(const char *fmt, ...)
 %token			INVALID
 %token			IPHASH
 %token			IPSET
+%token			IRG
 %token			LPM
+%token			L2
+%token			LT
 %token			MAP
+%token			NEWLINE
 %token			NO_PORTS
 %token			MINUS
 %token			NAME
@@ -158,7 +164,7 @@ yyerror(const char *fmt, ...)
 %token			RETURNRST
 %token			ROUNDROBIN
 %token			RULESET
-%token			SEPLINE
+%token			SEMICOLON
 %token			SET
 %token			SLASH
 %token			STATEFUL
@@ -168,13 +174,17 @@ yyerror(const char *fmt, ...)
 %token			TO
 %token			TREE
 %token			TYPE
+%token			USER
+%token			XRG
 %token	<num>		ICMP
 %token	<num>		ICMP6
 
 %token	<num>		HEX
+%token	<str>		ETHERHEX
 %token	<str>		IDENTIFIER
 %token	<str>		IPV4ADDR
 %token	<str>		IPV6ADDR
+%token	<str>		MACADDR
 %token	<num>		NUM
 %token	<fpnum>		FPNUM
 %token	<str>		STRING
@@ -187,28 +197,36 @@ yyerror(const char *fmt, ...)
 %type	<num>		port opt_final number afamily opt_family
 %type	<num>		block_or_pass rule_dir group_dir block_opts
 %type	<num>		maybe_not opt_stateful icmp_type table_type
-%type	<num>		map_sd map_algo map_flags map_type
-%type	<num>		param_val
+%type	<num>		map_sd map_algo map_flags map_type layer
+%type	<num>		param_val op_unary op_binary
+%type	<etype>		ether_type
+%type	<rid>		uid gid
 %type	<var>		static_ifaddrs filt_addr_element
 %type	<var>		filt_port filt_port_list port_range icmp_type_and_code
 %type	<var>		filt_addr addr_and_mask tcp_flags tcp_flags_and_mask
-%type	<var>		procs proc_call proc_param_list proc_param
-%type	<var>		element list_elems list value filt_addr_list
+%type	<var>		procs proc_call proc_param_list proc_param mac_addr
+%type	<var>		element list_elems list_trail list value filt_addr_list
 %type	<var>		opt_proto proto proto_elems
 %type	<addrport>	mapseg
-%type	<filtopts>	filt_opts all_or_filt_opts
+%type	<uid>		uids uid_item user_id
+%type	<gid>		gids gid_item group_id
+%type	<filtopts>	filt_opts all_or_filt_opts l2_filt_opts l2_all_of_filt_opts
 %type	<optproto>	rawproto
 %type	<rulegroup>	group_opts
 
 %union {
 	char *		str;
+	uint16_t	etype;
 	unsigned long	num;
+	uint32_t	rid;
 	double		fpnum;
 	npfvar_t *	var;
 	addr_port_t	addrport;
 	filt_opts_t	filtopts;
 	opt_proto_t	optproto;
 	rule_group_t	rulegroup;
+	struct r_id	uid;
+	struct r_id	gid;
 }
 
 %%
@@ -220,7 +238,7 @@ input
 	;
 
 lines
-	: lines SEPLINE line
+	: lines sepline line
 	| line
 	;
 
@@ -240,6 +258,11 @@ alg
 	{
 		npfctl_build_alg($2);
 	}
+	;
+
+sepline
+	: NEWLINE
+	| SEMICOLON
 	;
 
 param_val
@@ -272,18 +295,17 @@ value
 	;
 
 list
-	: CURLY_OPEN list_elems CURLY_CLOSE
+	: CURLY_OPEN opt_nl list_elems CURLY_CLOSE
 	{
-		$$ = $2;
+		$$ = $3;
 	}
 	;
 
 list_elems
-	: list_elems COMMA element
+	: element list_trail
 	{
-		npfvar_add_elements($1, $3);
+		$$ = npfvar_add_elements($1, $2);
 	}
-	| element
 	;
 
 element
@@ -301,7 +323,8 @@ element
 	}
 	| number
 	{
-		$$ = npfvar_create_element(NPFVAR_NUM, &$1, sizeof($1));
+		uint32_t val = $1;
+		$$ = npfvar_create_element(NPFVAR_NUM, &val, sizeof(val));
 	}
 	| VAR_ID
 	{
@@ -311,6 +334,25 @@ element
 	| dynamic_ifaddrs	{ $$ = npfctl_ifnet_table($1); }
 	| static_ifaddrs	{ $$ = $1; }
 	| addr_and_mask		{ $$ = $1; }
+	| mac_addr		{ $$ = $1; }
+	;
+
+list_trail
+	: element_sep element list_trail
+	{
+		$$ = npfvar_add_elements($2, $3);
+	}
+	| opt_nl 		{ $$ = NULL; }
+	| element_sep 		{ $$ = NULL; }
+	;
+
+element_sep
+	: opt_nl COMMA opt_nl
+	;
+
+opt_nl
+	: opt_nl NEWLINE
+	|
 	;
 
 /*
@@ -430,7 +472,7 @@ rproc
 	;
 
 procs
-	: procs SEPLINE proc_call
+	: procs sepline proc_call
 	{
 		$$ = npfvar_add_elements($1, $3);
 	}
@@ -512,18 +554,24 @@ group_dir
 	;
 
 group_opts
-	: DEFAULT
+	: DEFAULT layer
 	{
 		memset(&$$, 0, sizeof(rule_group_t));
 		$$.rg_default = true;
+		$$.rg_attr |= $2;
 	}
-	| STRING group_dir on_ifname
+	| STRING group_dir on_ifname layer
 	{
 		memset(&$$, 0, sizeof(rule_group_t));
 		$$.rg_name = $1;
-		$$.rg_attr = $2;
+		$$.rg_attr = $2 | $4;
 		$$.rg_ifname = $3;
 	}
+	;
+
+layer
+	: L2 { $$ = NPF_RULE_LAYER_2; }
+	| 	{ $$ =  NPF_RULE_LAYER_3; } /* ret layer3 by defualt */
 	;
 
 ruleset_block
@@ -531,7 +579,7 @@ ruleset_block
 	;
 
 ruleset_def
-	: ruleset_def SEPLINE rule_group
+	: ruleset_def sepline rule_group
 	| rule_group
 	;
 
@@ -558,6 +606,11 @@ rule
 	{
 		npfctl_build_rule($1 | $2 | $3 | $4, $5,
 		    AF_UNSPEC, NULL, NULL, $7, $8);
+	}
+	| block_or_pass ETHER rule_dir opt_final on_ifname
+		l2_all_of_filt_opts
+	{
+		npfctl_build_rule($1 | $3 | $4, $5, 0, NULL, &$6, NULL, NULL);
 	}
 	;
 
@@ -655,16 +708,19 @@ opt_proto
 	;
 
 all_or_filt_opts
-	: ALL
+	: ALL user_id group_id
 	{
-		$$.fo_finvert = false;
-		$$.fo_from.ap_netaddr = NULL;
-		$$.fo_from.ap_portrange = NULL;
-		$$.fo_tinvert = false;
-		$$.fo_to.ap_netaddr = NULL;
-		$$.fo_to.ap_portrange = NULL;
+		$$ = npfctl_parse_l3filt_opt(NULL, NULL, false, NULL, NULL, false, $2, $3);
 	}
 	| filt_opts	{ $$ = $1; }
+	;
+
+l2_all_of_filt_opts
+	: ALL
+	{
+		$$ = npfctl_parse_l2filt_opt(NULL, false, NULL, false, 0);
+	}
+	| l2_filt_opts { $$ = $1; }
 	;
 
 opt_stateful
@@ -687,32 +743,39 @@ block_opts
 
 filt_opts
 	: FROM maybe_not filt_addr filt_port TO maybe_not filt_addr filt_port
+	user_id group_id
 	{
-		$$.fo_finvert = $2;
-		$$.fo_from.ap_netaddr = $3;
-		$$.fo_from.ap_portrange = $4;
-		$$.fo_tinvert = $6;
-		$$.fo_to.ap_netaddr = $7;
-		$$.fo_to.ap_portrange = $8;
+		$$ = npfctl_parse_l3filt_opt($3, $4, $2, $7, $8, $6, $9, $10);
 	}
-	| FROM maybe_not filt_addr filt_port
+	| FROM maybe_not filt_addr filt_port user_id group_id
 	{
-		$$.fo_finvert = $2;
-		$$.fo_from.ap_netaddr = $3;
-		$$.fo_from.ap_portrange = $4;
-		$$.fo_tinvert = false;
-		$$.fo_to.ap_netaddr = NULL;
-		$$.fo_to.ap_portrange = NULL;
+		$$ = npfctl_parse_l3filt_opt($3, $4, $2, NULL, NULL, false, $5, $6);
 	}
-	| TO maybe_not filt_addr filt_port
+	| TO maybe_not filt_addr filt_port user_id group_id
 	{
-		$$.fo_finvert = false;
-		$$.fo_from.ap_netaddr = NULL;
-		$$.fo_from.ap_portrange = NULL;
-		$$.fo_tinvert = $2;
-		$$.fo_to.ap_netaddr = $3;
-		$$.fo_to.ap_portrange = $4;
+		$$ = npfctl_parse_l3filt_opt(NULL, NULL, false, $3, $4, $2, $5, $6);
 	}
+	;
+
+l2_filt_opts
+	: FROM maybe_not filt_addr TO maybe_not filt_addr ether_type
+	{
+		$$ = npfctl_parse_l2filt_opt($3, $2, $6, $5, $7);
+
+	}
+	| FROM maybe_not filt_addr ether_type
+	{
+		$$ = npfctl_parse_l2filt_opt($3, $2, NULL, false, $4);
+	}
+	| TO maybe_not filt_addr ether_type
+	{
+		$$ = npfctl_parse_l2filt_opt(NULL, false, $3, $2, $4);
+	}
+	;
+
+ether_type
+	: TYPE ETHERHEX { $$ = npfctl_parse_ether_type($2); }
+	|	{ $$ = 0; }
 	;
 
 filt_addr_list
@@ -747,8 +810,16 @@ addr_and_mask
 	}
 	;
 
+mac_addr
+	: MACADDR
+	{
+		$$ = npfctl_parse_mac_addr($1);
+	}
+	;
+
 filt_addr_element
 	: addr_and_mask		{ assert($1 != NULL); $$ = $1; }
+	| mac_addr		{ assert($1 != NULL); $$ = $1; }
 	| static_ifaddrs
 	{
 		if (npfvar_get_count($1) != 1)
@@ -772,6 +843,7 @@ again:
 			type = npfvar_get_type(vp, 0);
 			goto again;
 		case NPFVAR_FAM:
+		case NPFVAR_MAC:
 		case NPFVAR_TABLE:
 			$$ = vp;
 			break;
@@ -826,7 +898,9 @@ port_range
 	}
 	| VAR_ID
 	{
-		npfvar_t *vp = npfvar_lookup($1);
+		npfvar_t *vp;
+		if ((vp = npfvar_lookup($1)) == NULL)
+			yyerror("undefined port variable %s", $1);
 		$$ = npfctl_parse_port_range_variable($1, vp);
 	}
 	;
@@ -968,6 +1042,108 @@ ifref
 		npfctl_note_interface(ifna->ifna_name);
 		$$ = ifna->ifna_name;
 	}
+	;
+
+user_id
+	: /* empty */ { $$.op = NPF_OP_NONE; }
+	| USER uids	{ $$ = $2; }
+	;
+
+uids
+	: uid_item	{ $$ = $1; }
+	;
+
+uid_item
+	: uid
+	{
+		npfctl_init_rid(&$$, $1, $1, NPF_OP_EQ);
+	}
+	| op_unary uid
+	{
+		npfctl_init_rid(&$$, $2, $2, $1);
+	}
+	| uid op_binary uid
+	{
+		npfctl_init_rid(&$$, $1, $3, $2);
+	}
+	;
+
+uid
+	: NUM
+	{
+		if ($1 >= UID_MAX) {
+			yyerror("illegal uid value %lu", $1);
+		}
+		$$ = $1;
+	}
+	| IDENTIFIER
+	{
+		if (npfctl_parse_user($1, &$$) == -1) {
+			yyerror("unknown user %s", $1);
+		}
+	}
+	| VAR_ID
+	{
+		npf_var_rid($1, npfctl_parse_user, &$$, "user");
+	}
+	;
+
+group_id
+	: /* empty */ { $$.op = NPF_OP_NONE; }
+	| GROUP gids	{ $$ = $2; }
+	;
+
+gids
+	: gid_item	{ $$ = $1; }
+	;
+
+gid_item
+	: gid
+	{
+		npfctl_init_rid(&$$, $1, $1, NPF_OP_EQ);
+	}
+	| op_unary gid
+	{
+		npfctl_init_rid(&$$, $2, $2, $1);
+	}
+	| gid op_binary gid
+	{
+		npfctl_init_rid(&$$, $1, $3, $2);
+	}
+	;
+
+ gid
+	: NUM
+	{
+		if ($1 >= GID_MAX) {
+			yyerror("illegal gid value %lu", $1);
+		}
+		$$ = $1;
+	}
+	| IDENTIFIER
+	{
+		if (npfctl_parse_group($1, &$$) == -1) {
+			yyerror("unknown group %s", $1);
+		}
+	}
+	| VAR_ID
+	{
+		npf_var_rid($1, npfctl_parse_group, &$$, "group");
+	}
+	;
+
+op_unary
+	: EQ	{ $$ = NPF_OP_EQ; }
+	| EXCL_MARK EQ	{ $$ = NPF_OP_NE; }
+	| LT EQ { $$ = NPF_OP_LE; }
+	| LT	{ $$ = NPF_OP_LT; }
+	| GT EQ	{ $$ = NPF_OP_GE; }
+	| GT	{ $$ = NPF_OP_GT; }
+	;
+
+op_binary
+	: XRG	{ $$ = NPF_OP_XRG; }
+	| IRG	{ $$ = NPF_OP_IRG; }
 	;
 
 number

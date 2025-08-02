@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.103 2024/04/14 15:21:20 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.103.2.1 2025/08/02 05:58:29 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.103 2024/04/14 15:21:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.103.2.1 2025/08/02 05:58:29 perseant Exp $");
 
 
 static HashTable interned_strings;
@@ -356,13 +356,18 @@ match_fixed_length:
 				goto no_match;
 			while (*pat != ']' && *pat != '\0')
 				pat++;
-			if (*pat == '\0')
+			if (*pat == '\0') {
+				res.error = "Unfinished character list";
 				pat--;
+			}
 			continue;
 		}
 
-		if (*pat == '\\')	/* match the next character exactly */
+		if (*pat == '\\') {	/* match the next character exactly */
 			pat++;
+			if (*pat == '\0')
+				res.error = "Unfinished backslash at the end";
+		}
 		if (*pat != *str) {
 			if (asterisk && str == fixed_str) {
 				while (*str != '\0' && *str != *pat)
@@ -406,13 +411,13 @@ Str_Intern_Init(void)
 	HashTable_Init(&interned_strings);
 }
 
+#ifdef CLEANUP
 void
 Str_Intern_End(void)
 {
-#ifdef CLEANUP
 	HashTable_Done(&interned_strings);
-#endif
 }
+#endif
 
 /* Return a canonical instance of str, with unlimited lifetime. */
 const char *

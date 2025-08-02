@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.228 2024/05/12 18:49:36 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.228.2.1 2025/08/02 05:58:46 perseant Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.228 2024/05/12 18:49:36 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.228.2.1 2025/08/02 05:58:46 perseant Exp $");
 #endif
 
 #include <ctype.h>
@@ -81,7 +81,7 @@ bool in_system_header;
  * conflict with user-defined identifiers.
  */
 #define kwdef(name, token, detail,	since, gcc, deco) \
-	{ /* CONSTCOND */ \
+	{ \
 		name, token, detail, \
 		(since) == 90, \
 		(since) == 99 || (since) == 11, \
@@ -133,6 +133,7 @@ static const struct keyword {
 	kwdef_token(	"alignof",	T_ALIGNOF,		78,0,6),
 	kwdef_token(	"asm",		T_ASM,			78,1,7),
 	kwdef_token(	"_Atomic",	T_ATOMIC,		11,0,1),
+	kwdef("__auto_type", T_TYPE, .u.kw_tspec = AUTO_TYPE,	99,1,1),
 	kwdef_token(	"attribute",	T_ATTRIBUTE,		78,1,6),
 	kwdef_sclass(	"auto",		AUTO,			78,0,1),
 	kwdef_type(	"_Bool",	BOOL,			99),
@@ -148,7 +149,7 @@ static const struct keyword {
 	kwdef_keyword(	"do",		T_DO),
 	kwdef_type(	"double",	DOUBLE,			78),
 	kwdef_keyword(	"else",		T_ELSE),
-	// XXX: enum is not available in traditional C.
+	// XXX: enum requires C90 or later.
 	kwdef_keyword(	"enum",		T_ENUM),
 	kwdef_token(	"__extension__",T_EXTENSION,		78,1,1),
 	kwdef_sclass(	"extern",	EXTERN,			78,0,1),
@@ -193,7 +194,7 @@ static const struct keyword {
 #endif
 	kwdef("union",	T_STRUCT_OR_UNION, .u.kw_tspec = UNION,	78,0,1),
 	kwdef_type(	"unsigned",	UNSIGN,			78),
-	// XXX: void is not available in traditional C.
+	// XXX: void requires C90 or later.
 	kwdef_type(	"void",		VOID,			78),
 	kwdef_tqual(	"volatile",	tq_volatile,		90,0,7),
 	kwdef_keyword(	"while",	T_WHILE),
@@ -577,7 +578,7 @@ lex_integer_constant(const char *text, size_t len, int base)
 			u_suffix = 1;
 	}
 	if (!allow_c90 && u_suffix > 0)
-		/* suffix 'U' is illegal in traditional C */
+		/* suffix 'U' requires C90 or later */
 		warning(97);
 
 	bool warned = false;
@@ -591,7 +592,7 @@ lex_integer_constant(const char *text, size_t len, int base)
 		warned = true;
 	}
 
-	if (any_query_enabled && base == 8 && ui != 0)
+	if (base == 8 && len > 1)
 		/* octal number '%.*s' */
 		query_message(8, (int)len, cp);
 
@@ -646,7 +647,7 @@ lex_floating_constant(const char *text, size_t len)
 		t = imaginary ? DCOMPLEX : DOUBLE;
 
 	if (!allow_c90 && t != DOUBLE)
-		/* suffixes 'F' and 'L' are illegal in traditional C */
+		/* suffixes 'F' or 'L' require C90 or later */
 		warning(98);
 
 	errno = 0;
@@ -664,7 +665,7 @@ lex_floating_constant(const char *text, size_t len)
 			ld = ld > 0 ? FLT_MAX : -FLT_MAX;
 		}
 	} else if (t == DOUBLE
-	    || /* CONSTCOND */ LDOUBLE_SIZE == DOUBLE_SIZE) {
+	    || LDOUBLE_SIZE == DOUBLE_SIZE) {
 		ld = (double)ld;
 		if (isfinite(ld) == 0) {
 			/* floating-point constant out of range */
@@ -688,20 +689,20 @@ lex_operator(int t, op_t o)
 	return t;
 }
 
-static buffer *
+static buffer
 read_quoted(bool *complete, char delim, bool wide)
 {
-	buffer *buf = xcalloc(1, sizeof(*buf));
-	buf_init(buf);
+	buffer buf;
+	buf_init(&buf);
 	if (wide)
-		buf_add_char(buf, 'L');
-	buf_add_char(buf, delim);
+		buf_add_char(&buf, 'L');
+	buf_add_char(&buf, delim);
 
 	for (;;) {
 		int c = read_byte();
 		if (c <= 0)
 			break;
-		buf_add_char(buf, (char)c);
+		buf_add_char(&buf, (char)c);
 		if (c == '\n')
 			break;
 		if (c == delim) {
@@ -710,13 +711,13 @@ read_quoted(bool *complete, char delim, bool wide)
 		}
 		if (c == '\\') {
 			c = read_byte();
-			buf_add_char(buf, (char)(c <= 0 ? ' ' : c));
+			buf_add_char(&buf, (char)(c <= 0 ? ' ' : c));
 			if (c <= 0)
 				break;
 		}
 	}
 	*complete = false;
-	buf_add_char(buf, delim);
+	buf_add_char(&buf, delim);
 	return buf;
 }
 
@@ -875,7 +876,7 @@ check_quoted(const buffer *buf, bool complete, char delim)
 			/* no hex digits follow \x */
 			error(74);
 		if (it.hex_digits > 0 && !allow_c90)
-			/* \x undefined in traditional C */
+			/* \x requires C90 or later */
 			warning(82);
 		else if (!it.invalid_escape)
 			;
@@ -883,16 +884,16 @@ check_quoted(const buffer *buf, bool complete, char delim)
 			/* bad octal digit '%c' */
 			warning(77, (int)it.value);
 		else if (it.literal_escape && it.value == '?')
-			/* \? undefined in traditional C */
+			/* \? requires C90 or later */
 			warning(263);
 		else if (it.literal_escape && it.value == '"')
-			/* \" inside character constants undefined in ... */
+			/* \" inside a character constant requires C90 ... */
 			warning(262);
 		else if (it.named_escape && it.value == '\a')
-			/* \a undefined in traditional C */
+			/* \a requires C90 or later */
 			warning(81);
 		else if (it.named_escape && it.value == '\v')
-			/* \v undefined in traditional C */
+			/* \v requires C90 or later */
 			warning(264);
 		else {
 			unsigned char ch = buf->data[it.end - 1];
@@ -930,12 +931,12 @@ check_quoted(const buffer *buf, bool complete, char delim)
 		error(253);
 }
 
-static buffer *
+static buffer
 lex_quoted(char delim, bool wide)
 {
 	bool complete;
-	buffer *buf = read_quoted(&complete, delim, wide);
-	check_quoted(buf, complete, delim);
+	buffer buf = read_quoted(&complete, delim, wide);
+	check_quoted(&buf, complete, delim);
 	return buf;
 }
 
@@ -943,12 +944,12 @@ lex_quoted(char delim, bool wide)
 int
 lex_character_constant(void)
 {
-	buffer *buf = lex_quoted('\'', false);
+	buffer buf = lex_quoted('\'', false);
 
 	size_t n = 0;
 	uint64_t val = 0;
 	quoted_iterator it = { .end = 0 };
-	while (quoted_next(buf, &it)) {
+	while (quoted_next(&buf, &it)) {
 		val = (val << CHAR_SIZE) + it.value;
 		n++;
 	}
@@ -982,13 +983,13 @@ lex_character_constant(void)
 int
 lex_wide_character_constant(void)
 {
-	buffer *buf = lex_quoted('\'', true);
+	buffer buf = lex_quoted('\'', true);
 
 	static char wbuf[MB_LEN_MAX + 1];
 	size_t n = 0, nmax = MB_CUR_MAX;
 
 	quoted_iterator it = { .end = 0 };
-	while (quoted_next(buf, &it)) {
+	while (quoted_next(&buf, &it)) {
 		if (n < nmax)
 			wbuf[n] = (char)it.value;
 		n++;
@@ -1063,36 +1064,19 @@ set_csrc_pos(void)
 	outsrc(transform_filename(curr_pos.p_file, strlen(curr_pos.p_file)));
 }
 
-/*
- * Called for preprocessor directives. Currently implemented are:
- *	# pragma [argument...]
- *	# lineno
- *	# lineno "filename" [GCC-flag...]
- */
-void
-lex_directive(const char *text)
+/* # lineno ["filename" [GCC-flag...]] */
+static void
+set_location(const char *p)
 {
-	const char *p = text + 1;	/* skip '#' */
-
-	while (*p == ' ' || *p == '\t')
-		p++;
-
-	if (!ch_isdigit(*p)) {
-		if (strncmp(p, "pragma", 6) == 0
-		    && ch_isspace(p[6]))
-			return;
-		goto error;
-	}
-
 	char *end;
 	long ln = strtol(--p, &end, 10);
 	if (end == p)
 		goto error;
 	p = end;
 
-	if (*p != ' ' && *p != '\t' && *p != '\0')
+	if (*p != ' ' && *p != '\0')
 		goto error;
-	while (*p == ' ' || *p == '\t')
+	while (*p == ' ')
 		p++;
 
 	if (*p != '\0') {
@@ -1131,21 +1115,153 @@ error:
 	warning(255);
 }
 
+static void
+check_stmt_macro(const char *text)
+{
+	const char *p = text;
+	while (*p == ' ')
+		p++;
+
+	const char *name_start = p;
+	while (ch_isalnum(*p) || *p == '_')
+		p++;
+	const char *name_end = p;
+
+	if (*p == '(') {
+		while (*p != '\0' && *p != ')')
+			p++;
+		if (*p == ')')
+			p++;
+	}
+
+	while (*p == ' ')
+		p++;
+
+	if (strncmp(p, "do", 2) == 0 && !ch_isalnum(p[2]) && p[2] != '_')
+		/* do-while macro '%.*s' ends with semicolon */
+		warning(385, (int)(name_end - name_start), name_start);
+}
+
+// Between lex_pp_begin and lex_pp_end, the current preprocessing line,
+// with comments and whitespace converted to a single space.
+static buffer pp_line;
+
+void
+lex_pp_begin(void)
+{
+	if (pp_line.data == NULL)
+		buf_init(&pp_line);
+	debug_step("%s", __func__);
+	lint_assert(pp_line.len == 0);
+}
+
+void
+lex_pp_identifier(const char *text)
+{
+	debug_step("%s '%s'", __func__, text);
+	buf_add(&pp_line, text);
+}
+
+void
+lex_pp_number(const char *text)
+{
+	debug_step("%s '%s'", __func__, text);
+	buf_add(&pp_line, text);
+}
+
+void
+lex_pp_character_constant(void)
+{
+	buffer buf = lex_quoted('\'', false);
+	debug_step("%s '%s'", __func__, buf.data);
+	buf_add(&pp_line, buf.data);
+	free(buf.data);
+}
+
+void
+lex_pp_string_literal(void)
+{
+	buffer buf = lex_quoted('"', false);
+	debug_step("%s '%s'", __func__, buf.data);
+	buf_add(&pp_line, buf.data);
+	free(buf.data);
+}
+
+void
+lex_pp_punctuator(const char *text)
+{
+	debug_step("%s '%s'", __func__, text);
+	buf_add(&pp_line, text);
+}
+
+void
+lex_pp_comment(void)
+{
+	int lc = -1, c;
+
+	for (;;) {
+		if ((c = read_byte()) == EOF) {
+			/* unterminated comment */
+			error(256);
+			return;
+		}
+		if (lc == '*' && c == '/')
+			break;
+		lc = c;
+	}
+
+	buf_add_char(&pp_line, ' ');
+}
+
+void
+lex_pp_whitespace(void)
+{
+	buf_add_char(&pp_line, ' ');
+}
+
+void
+lex_pp_end(void)
+{
+	const char *text = pp_line.data;
+	size_t len = pp_line.len;
+	while (len > 0 && text[len - 1] == ' ')
+		len--;
+	debug_step("%s '%.*s'", __func__, (int)len, text);
+
+	const char *p = text;
+	while (*p == ' ')
+		p++;
+
+	if (ch_isdigit(*p))
+		set_location(p);
+	else if (strncmp(p, "pragma ", 7) == 0)
+		goto done;
+	else if (strncmp(p, "define ", 7) == 0) {
+		 if (text[len - 1] == ';')
+			check_stmt_macro(p + 7);
+	} else if (strncmp(p, "undef ", 6) == 0)
+		goto done;
+	else
+		/* undefined or invalid '#' directive */
+		warning(255);
+
+done:
+	pp_line.len = 0;
+	pp_line.data[0] = '\0';
+}
+
 /* Handle lint comments such as ARGSUSED. */
 void
 lex_comment(void)
 {
 	int c;
 	static const struct {
-		const	char name[18];
+		const	char name[13];
 		bool	arg;
 		lint_comment comment;
 	} keywtab[] = {
 		{ "ARGSUSED",		true,	LC_ARGSUSED	},
 		{ "BITFIELDTYPE",	false,	LC_BITFIELDTYPE	},
-		{ "CONSTCOND",		false,	LC_CONSTCOND	},
-		{ "CONSTANTCOND",	false,	LC_CONSTCOND	},
-		{ "CONSTANTCONDITION",	false,	LC_CONSTCOND	},
 		{ "FALLTHRU",		false,	LC_FALLTHROUGH	},
 		{ "FALLTHROUGH",	false,	LC_FALLTHROUGH	},
 		{ "FALL THROUGH",	false,	LC_FALLTHROUGH	},
@@ -1244,13 +1360,14 @@ reset_suppressions(void)
 
 	lwarn = LWARN_ALL;
 	suppress_longlong = false;
-	suppress_constcond = false;
 }
 
 int
 lex_string(void)
 {
-	yylval.y_string = lex_quoted('"', false);
+	buffer *buf = xmalloc(sizeof(*buf));
+	*buf = lex_quoted('"', false);
+	yylval.y_string = buf;
 	return T_STRING;
 }
 
@@ -1276,18 +1393,19 @@ wide_length(const buffer *buf)
 int
 lex_wide_string(void)
 {
-	buffer *buf = lex_quoted('"', true);
+	buffer buf = lex_quoted('"', true);
 
 	buffer str;
 	buf_init(&str);
 	quoted_iterator it = { .end = 0 };
-	while (quoted_next(buf, &it))
+	while (quoted_next(&buf, &it))
 		buf_add_char(&str, (char)it.value);
 
-	free(buf->data);
-	*buf = (buffer) { .len = wide_length(&str) };
+	free(buf.data);
 
-	yylval.y_string = buf;
+	buffer *len_buf = xcalloc(1, sizeof(*len_buf));
+	len_buf->len = wide_length(&str);
+	yylval.y_string = len_buf;
 	return T_STRING;
 }
 

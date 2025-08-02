@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.16 2023/12/11 14:00:47 mlelstv Exp $	*/
+/*	$NetBSD: crash.c,v 1.16.2.1 2025/08/02 05:58:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.16 2023/12/11 14:00:47 mlelstv Exp $");
+__RCSID("$NetBSD: crash.c,v 1.16.2.1 2025/08/02 05:58:48 perseant Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -115,7 +115,7 @@ db_vprintf(const char *fmt, va_list ap)
 	c = vsnprintf(buf, sizeof(buf), fmt, ap);
 	for (b = 0; b < c; b++) {
 		db_putchar(buf[b]);
-	} 
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.17 2020/10/27 17:16:24 abs Exp $	*/
+/*	$NetBSD: file.c,v 1.17.8.1 2025/08/02 05:58:50 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -24,9 +24,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "port.h"
+#if defined (HAVE_NBTOOL_CONFIG_H)
+# include "nbtool_config.h"
+#else
+# include "port.h"
+#endif /* defined (HAVE_NBTOOL_CONFIG_H) */
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.17 2020/10/27 17:16:24 abs Exp $");
+__RCSID("$NetBSD: file.c,v 1.17.8.1 2025/08/02 05:58:50 perseant Exp $");
 #endif
 
 #include "os.h"
@@ -36,7 +40,7 @@ __RCSID("$NetBSD: file.c,v 1.17 2020/10/27 17:16:24 abs Exp $");
 #include <stddef.h>
 
 #ifndef NOAOUT
-# if defined(__NetBSD__) || defined(__OpenBSD__)
+# if defined (HAVE_NBTOOL_CONFIG_H) || defined(__NetBSD__) || defined(__OpenBSD__)
 #  include <sys/exec_aout.h>
 # endif
 # if defined(__bsdi__)
@@ -54,7 +58,7 @@ __RCSID("$NetBSD: file.c,v 1.17 2020/10/27 17:16:24 abs Exp $");
 #endif /* NOAOUT */
 
 #ifndef NOELF
-# if defined(__NetBSD__)
+# if defined (HAVE_NBTOOL_CONFIG_H) || defined(__NetBSD__)
 #  include <sys/exec_elf.h>
 # else
 #  define NOELF
@@ -969,7 +973,8 @@ mopFileRead(struct dllist *dlslot, u_char *buf)
 		if (dlslot->e_curpos >= (dlslot->e_sections[sec].s_loff +
 					 dlslot->e_sections[sec].s_fsize +
 					 dlslot->e_sections[sec].s_pad))
-			dlslot->e_cursec++;
+			if (++dlslot->e_cursec >= dlslot->e_nsec)
+				return (0);
 		break;
 
 	case IMAGE_TYPE_AOUT:

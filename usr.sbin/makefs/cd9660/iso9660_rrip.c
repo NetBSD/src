@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.c,v 1.16 2023/04/18 23:02:51 christos Exp $	*/
+/*	$NetBSD: iso9660_rrip.c,v 1.16.2.1 2025/08/02 05:58:50 perseant Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: iso9660_rrip.c,v 1.16 2023/04/18 23:02:51 christos Exp $");
+__RCSID("$NetBSD: iso9660_rrip.c,v 1.16.2.1 2025/08/02 05:58:50 perseant Exp $");
 #endif  /* !__lint */
 
 static void cd9660_rrip_initialize_inode(cd9660node *);
@@ -740,7 +740,7 @@ cd9660_rrip_add_NM(cd9660node *node, const char *name)
 	struct ISO_SUSP_ATTRIBUTES *r;
 
 	/*
-	 * Each NM record has 254 byes to work with. This means that
+	 * Each NM record has 254 bytes to work with. This means that
 	 * the name data itself only has 249 bytes to work with. So, a
 	 * name with 251 characters would require two nm records.
 	 */

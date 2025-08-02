@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.92 2024/05/12 18:49:36 rillig Exp $ */
+/* $NetBSD: read.c,v 1.92.2.1 2025/08/02 05:58:46 perseant Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.92 2024/05/12 18:49:36 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.92.2.1 2025/08/02 05:58:46 perseant Exp $");
 #endif
 
 #include <ctype.h>
@@ -496,7 +496,7 @@ decldef(pos_t pos, const char *cp)
 			renamed = true;
 		} else if (hte = renamehte->h_hte,
 		    strcmp(hte->h_name, newname) != 0) {
-			/* %s renamed multiple times  \t%s  ::  %s */
+			/* %s is renamed multiple times in %s and %s */
 			msg(18, tname, mkpos(&renamehte->h_syms->s_pos),
 			    mkpos(&sym.s_pos));
 		}

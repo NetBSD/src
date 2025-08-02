@@ -1,4 +1,4 @@
-# $NetBSD: var-op-expand.mk,v 1.20 2024/04/20 10:18:55 rillig Exp $
+# $NetBSD: var-op-expand.mk,v 1.20.2.1 2025/08/02 05:58:38 perseant Exp $
 #
 # Tests for the := variable assignment operator, which expands its
 # right-hand side.
@@ -270,23 +270,26 @@ later=	lowercase-value
 .undef later
 INDIRECT:=	${LATER:S,value,replaced,} OK ${LATER:value=sysv}
 indirect:=	${INDIRECT:tl}
-# expect+1: while evaluating variable "indirect": while evaluating variable "later": Unknown modifier "s,value,replaced,"
+# expect+1: Unknown modifier ":s,value,replaced,"
 .if ${indirect} != " ok "
 .  error
 .else
-# expect+1: warning: XXX Neither branch should be taken.
-.  warning	XXX Neither branch should be taken.
+.  error
 .endif
 LATER=	uppercase-value
 later=	lowercase-value
-# expect+1: while evaluating variable "indirect": while evaluating variable "later": Unknown modifier "s,value,replaced,"
+# expect+1: Unknown modifier ":s,value,replaced,"
 .if ${indirect} != "uppercase-replaced ok uppercase-sysv"
-# expect+1: warning: XXX Neither branch should be taken.
-.  warning	XXX Neither branch should be taken.
+.  error
 .else
 .  error
 .endif
 
 
-all:
-	@:;
+# FIXME: The expression is evaluated twice, for no obvious reason.
+# expect+5: Bad condition
+# expect+4: Unknown modifier ":Z1"
+# expect+3: Unknown modifier ":Z2"
+# expect+2: Unknown modifier ":Z1"
+# expect+1: Unknown modifier ":Z2"
+_:=	${ < 0 :?${:Z1}:${:Z2}}

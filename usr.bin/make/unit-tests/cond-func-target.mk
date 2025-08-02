@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-target.mk,v 1.4 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: cond-func-target.mk,v 1.4.8.1 2025/08/02 05:58:31 perseant Exp $
 #
 # Tests for the target() function in .if conditions.
 
@@ -31,6 +31,11 @@ target:
 # Adding a command to an existing target does not change whether the target
 # is defined or not.
 .if !target(target)
+.  error
+.endif
+
+# Expressions in the argument of a function call don't have to be defined.
+.if target(${UNDEF})
 .  error
 .endif
 

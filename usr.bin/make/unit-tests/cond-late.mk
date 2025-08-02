@@ -1,4 +1,4 @@
-# $NetBSD: cond-late.mk,v 1.6.2.1 2024/07/01 01:01:15 perseant Exp $
+# $NetBSD: cond-late.mk,v 1.6.2.2 2025/08/02 05:58:31 perseant Exp $
 #
 # Using the :? modifier, expressions can contain conditional
 # expressions that are evaluated late, at expansion time.
@@ -23,6 +23,13 @@ parse-time: .PHONY
 COND.true=	"yes" == "yes"
 COND.false=	"yes" != "yes"
 
+.if make(do-parse-time)
+VAR=	${${UNDEF} != "no":?:}
+# expect+1: Bad condition
+.  if empty(VAR:Mpattern)
+.  endif
+.endif
+
 # If the order of evaluation were to change to first parse the condition
 # and then expand the variables, the output would change from the
 # current "yes no" to "yes yes", since both variables are non-empty.
@@ -31,10 +38,3 @@ COND.false=	"yes" != "yes"
 cond-literal:
 	@echo ${ ${COND.true} :?yes:no}
 	@echo ${ ${COND.false} :?yes:no}
-
-.if make(do-parse-time)
-VAR=	${${UNDEF} != "no":?:}
-# expect+1: while evaluating variable "VAR": while evaluating condition " != "no"": Bad condition
-.  if empty(VAR:Mpattern)
-.  endif
-.endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.27 2021/08/14 17:51:20 ryo Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.27.4.1 2025/08/02 05:58:49 perseant Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.27 2021/08/14 17:51:20 ryo Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.27.4.1 2025/08/02 05:58:49 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,7 @@ main(int argc, char **argv)
 }
 
 /*
- * Check that profiling is enabled and open any ncessary files.
+ * Check that profiling is enabled and open any necessary files.
  */
 static int
 openfiles(char *sys, char *kmemf, struct kvmvars *kvp)

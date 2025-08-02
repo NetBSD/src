@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.79 2024/05/11 16:12:28 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.79.2.1 2025/08/02 05:58:45 perseant Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.79 2024/05/11 16:12:28 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.79.2.1 2025/08/02 05:58:45 perseant Exp $");
 #endif
 
 #include <stdlib.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: debug.c,v 1.79 2024/05/11 16:12:28 rillig Exp $");
 
 #ifdef DEBUG
 
+bool debug_enabled;
 static int debug_indentation = 0;
 static bool did_indentation;
 
@@ -64,6 +65,9 @@ debug_file(void)
 static void
 debug_vprintf(const char *fmt, va_list va)
 {
+
+	if (!debug_enabled)
+		return;
 
 	if (!did_indentation) {
 		did_indentation = true;
@@ -351,6 +355,19 @@ type_qualifiers_string(type_qualifiers tq)
 }
 
 const char *
+type_attributes_string(type_attributes attrs)
+{
+	static char buf[32];
+
+	snprintf(buf, sizeof(buf), "%s%s%s",
+	    attrs.used ? " used" : "",
+	    attrs.noreturn ? " noreturn" : "",
+	    attrs.bit_width == 128 ? " 128bit" :
+	    attrs.bit_width == 64 ? " 64bit" : "");
+	return buf[0] != '\0' ? buf + 1 : "none";
+}
+
+const char *
 function_specifier_name(function_specifier spec)
 {
 	static const char *const name[] = {
@@ -444,6 +461,11 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 			    sym->u.s_keyword.u.function_specifier));
 	}
 
+	if (sym->s_type->t_tspec == ARRAY
+	    && sym->u.s_array_nonnull_dimension > 0)
+		debug_printf(" nonnull-dimension %zu",
+		    sym->u.s_array_nonnull_dimension);
+
 	debug_word(sym->s_osdef && sym->u.s_old_style_params != NULL,
 	    "old-style-params");
 
@@ -495,6 +517,7 @@ debug_decl_level(const decl_level *dl)
 	debug_word(dl->d_asm, "asm");
 	debug_word(dl->d_packed, "packed");
 	debug_word(dl->d_used, "used");
+	debug_word(dl->d_noreturn, "noreturn");
 
 	if (dl->d_tag_type != NULL)
 		debug_printf(" tag_type='%s'", type_name(dl->d_tag_type));

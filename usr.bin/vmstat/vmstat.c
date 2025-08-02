@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.258 2023/09/09 20:13:54 ad Exp $ */
+/* $NetBSD: vmstat.c,v 1.258.2.1 2025/08/02 05:58:44 perseant Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.258 2023/09/09 20:13:54 ad Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.258.2.1 2025/08/02 05:58:44 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -1304,7 +1304,7 @@ doevcnt(int verbose, int type)
 	counttotal = 0;
 	uptime = getuptime();
 
-	if (memf == NULL) do {
+	if (memf == NULL) {
 		const int mib[4] = { CTL_KERN, KERN_EVCNT, type,
 		    verbose ? KERN_EVCNT_COUNT_ANY : KERN_EVCNT_COUNT_NONZERO };
 		size_t buflen0, buflen = 0;
@@ -1357,17 +1357,34 @@ doevcnt(int verbose, int type)
 			if (rate_max < len)
 				rate_max = len;
 			buflen -= evs->ev_len;
+			counttotal += evs->ev_count;
 			evs = (const void *)
 			    ((const uint64_t *)evs + evs->ev_len);
 		}
+		if (type != EVCNT_TYPE_ANY) {
+			char cbuf[64];
+			size_t len;
 
-		(void)printf(type == EVCNT_TYPE_ANY ?
-		    "%-*s  %*s %*s %s\n" :
-		    "%-*s  %*s %*s\n",
-		    (int)evlen_max, "interrupt",
+			len = snprintf(cbuf, sizeof(cbuf), "%"PRIu64,
+			    counttotal);
+			if (total_max < len)
+				total_max = len;
+
+			len = snprintf(cbuf, sizeof(cbuf), "%"PRIu64,
+			    counttotal / uptime);
+			if (rate_max < len)
+				rate_max = len;
+		}
+		const char *evdesc = type == EVCNT_TYPE_ANY ?
+		    "event" : "interrupt";
+		const char *typedesc = type == EVCNT_TYPE_ANY ?
+		    " type" : "";
+
+		(void)printf("%-*s  %*s %*s%s\n",
+		    (int)evlen_max, evdesc,
 		    (int)total_max, "total",
 		    (int)rate_max, "rate",
-		    "type");
+		    typedesc);
 
 		buflen = buflen0;
 		evs = buf0;
@@ -1388,7 +1405,6 @@ doevcnt(int verbose, int type)
 			    (evs->ev_type < __arraycount(evtypes) ?
 			    evtypes[evs->ev_type] : "?"));
 			buflen -= evs->ev_len;
-			counttotal += evs->ev_count;
 			evs = (const void *)
 			    ((const uint64_t *)evs + evs->ev_len);
 		}
@@ -1399,7 +1415,7 @@ doevcnt(int verbose, int type)
 			    (int)total_max, counttotal,
 			    (int)rate_max, counttotal / uptime);
 		return;
-	} while (0);
+	}
 
 	if (type == EVCNT_TYPE_ANY)
 		(void)printf("%-34s %16s %8s %s\n", "event", "total", "rate",
@@ -2332,7 +2348,7 @@ hist_traverse_sysctl(int todo, const char *histname)
 		} else
 			err(EXIT_FAILURE, "nametomib kern.hist failed");
 	}
- 
+
 	/* get the list of nodenames below kern.hist */
 	mib[2] = CTL_QUERY;
 	memset(&query, 0, sizeof(query));
@@ -2347,12 +2363,12 @@ hist_traverse_sysctl(int todo, const char *histname)
  		warnx("No active kernel history logs.");
  		return;
  	}
- 
+
 	len = len / sizeof(histnode[0]);	/* get # of entries returned */
 
  	if (todo & HISTLIST)
  		(void)printf("Active kernel histories:");
- 
+
 	for (i = 0; i < len; i++) {
  		if (todo & HISTLIST)
 			(void)printf(" %s", histnode[i].sysctl_name);
@@ -2373,13 +2389,13 @@ hist_traverse_sysctl(int todo, const char *histname)
  			}
  		}
  	}
- 
+
  	if (todo & HISTLIST)
  		(void)putchar('\n');
 	else if (mib[2] == CTL_QUERY)
 		warnx("history %s not found", histname);
  }
- 
+
  /*
   * Actually dump the history buffer at the specified KVA.
   */
@@ -2393,7 +2409,7 @@ hist_dodump_sysctl(int mib[], unsigned int miblen)
 	char *strp;
  	unsigned i;
 	char *fmt = NULL, *fn = NULL;
- 
+
 	hist = NULL;
 	histsize = 0;
  	do {
@@ -2407,13 +2423,13 @@ hist_dodump_sysctl(int mib[], unsigned int miblen)
 	} while (errno == ENOMEM);
 	if (errno != 0)
 		err(1, "sysctl failed");
- 
+
 	strp = (char *)(&hist->sh_events[hist->sh_numentries]);
- 
+
 	(void)printf("%"PRIu32" entries, next is %"PRIu32"\n",
 	    hist->sh_numentries,
 	    hist->sh_nextfree);
- 
+
 	i = hist->sh_nextfree;
 
 	do {
@@ -2436,7 +2452,7 @@ hist_dodump_sysctl(int mib[], unsigned int miblen)
  		}
 		i = (i + 1) % hist->sh_numentries;
 	} while (i != hist->sh_nextfree);
- 
+
 	free(hist);
  }
 

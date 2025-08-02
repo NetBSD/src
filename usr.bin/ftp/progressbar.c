@@ -1,7 +1,7 @@
-/*	$NetBSD: progressbar.c,v 1.24 2021/01/06 04:43:14 lukem Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.24.8.1 2025/08/02 05:58:27 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1997-2021 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.24 2021/01/06 04:43:14 lukem Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.24.8.1 2025/08/02 05:58:27 perseant Exp $");
 #endif /* not lint */
 
 /*
@@ -76,7 +76,7 @@ static void updateprogressmeter(int);
  * SIGALRM handler to update the progress meter
  */
 static void
-updateprogressmeter(int dummy)
+updateprogressmeter(int dummy __unused)
 {
 	int oerrno = errno;
 
@@ -89,17 +89,17 @@ updateprogressmeter(int dummy)
  */
 #if !defined(NO_PROGRESS) || !defined(STANDALONE_PROGRESS)
 static const char * const suffixes[] = {
-	"",	/* 2^0  (byte) */
-	"KiB",	/* 2^10 Kibibyte */
-	"MiB",	/* 2^20 Mebibyte */
-	"GiB",	/* 2^30 Gibibyte */
-	"TiB",	/* 2^40 Tebibyte */
-	"PiB",	/* 2^50 Pebibyte */
-	"EiB",	/* 2^60 Exbibyte */
+	"",	/* 2^0, (byte) */
+	"KiB",	/* 2^10, Kibibyte */
+	"MiB",	/* 2^20, Mebibyte */
+	"GiB",	/* 2^30, Gibibyte */
+	"TiB",	/* 2^40, Tebibyte */
+	"PiB",	/* 2^50, Pebibyte */
+	"EiB",	/* 2^60, Exbibyte */
 #if 0
 		/* The following are not necessary for signed 64-bit off_t */
-	"ZiB",	/* 2^70 Zebibyte */
-	"YiB",	/* 2^80 Yobibyte */
+	"ZiB",	/* 2^70, Zebibyte */
+	"YiB",	/* 2^80, Yobibyte */
 #endif
 };
 #define NSUFFIXES	(int)(sizeof(suffixes) / sizeof(suffixes[0]))
@@ -123,12 +123,12 @@ static struct timeval lastupdate;
 void
 progressmeter(int flag)
 {
-	static off_t lastsize;
-	off_t cursize;
+	static uint64_t lastsize;
+	uint64_t cursize;
 	struct timeval now, wait;
 #ifndef NO_PROGRESS
 	struct timeval td;
-	off_t abbrevsize, bytespersec;
+	uint64_t abbrevsize, bytespersec;
 	double elapsed;
 	int ratio, i, remaining, barlength;
 
@@ -261,7 +261,7 @@ progressmeter(int flag)
 	    suffixes[i]);
 
 	if (filesize > 0) {
-		if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
+		if (bytes <= 0 || elapsed <= 0.0 || cursize > (uint64_t)filesize) {
 			len += snprintf(buf + len, BUFLEFT, "   --:-- ETA");
 		} else if (wait.tv_sec >= STALLTIME) {
 			len += snprintf(buf + len, BUFLEFT, " - stalled -");
@@ -376,7 +376,7 @@ ptransfer(int siginfo)
  * SIG{INFO,QUIT} handler to print transfer stats if a transfer is in progress
  */
 void
-psummary(int notused)
+psummary(int notused __unused)
 {
 	int oerrno = errno;
 

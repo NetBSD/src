@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.30 2023/08/08 06:31:58 mrg Exp $	*/
+/*	$NetBSD: timed.c,v 1.30.2.1 2025/08/02 05:58:59 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1993\
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.30 2023/08/08 06:31:58 mrg Exp $");
+__RCSID("$NetBSD: timed.c,v 1.30.2.1 2025/08/02 05:58:59 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,8 +133,6 @@ main(int argc, char *argv[])
 	struct sockaddr_in server;
 	uint16_t port;
 	int c;
-	extern char *optarg;
-	extern int optind, opterr;
 	struct ifaddrs *ifap, *ifa;
 
 #define	IN_MSG "-i and -n make no sense together\n"

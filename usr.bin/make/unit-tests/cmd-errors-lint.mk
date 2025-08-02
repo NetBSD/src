@@ -1,4 +1,4 @@
-# $NetBSD: cmd-errors-lint.mk,v 1.2 2024/04/23 22:51:28 rillig Exp $
+# $NetBSD: cmd-errors-lint.mk,v 1.2.2.1 2025/08/02 05:58:30 perseant Exp $
 #
 # Demonstrate how errors in expressions affect whether the commands
 # are actually executed.
@@ -10,24 +10,26 @@ all: undefined unclosed-expression unclosed-modifier unknown-modifier end
 # Undefined variables in expressions are not an error.  They expand to empty
 # strings.
 undefined:
+# expect: : undefined
 	: $@ ${UNDEFINED}
 
-# XXX: As of 2020-11-01, this obvious syntax error is not detected.
-# XXX: As of 2020-11-01, this command is executed even though it contains
-# parse errors.
 unclosed-expression:
+# expect: make: Unclosed variable "UNCLOSED"
+# expect-not: : unclosed-expression
 	: $@ ${UNCLOSED
 
-# XXX: As of 2020-11-01, this obvious syntax error is not detected.
-# XXX: As of 2020-11-01, this command is executed even though it contains
-# parse errors.
 unclosed-modifier:
+# expect: make: Unclosed expression, expecting "}"
+# expect-not: : unclosed-modifier
 	: $@ ${UNCLOSED:
 
-# XXX: As of 2020-11-01, this command is executed even though it contains
-# parse errors.
 unknown-modifier:
+# expect: make: Unknown modifier ":Z"
+# expect-not: : unknown-modifier
 	: $@ ${UNKNOWN:Z}
 
 end:
+# expect: : end
 	: $@
+
+# expect: exit status 2

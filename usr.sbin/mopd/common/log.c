@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.4 2016/06/08 01:11:49 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.4.28.1 2025/08/02 05:58:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -29,9 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "port.h"
+#if defined (HAVE_NBTOOL_CONFIG_H)
+# include "nbtool_config.h"
+#else
+# include "port.h"
+#endif /* defined (HAVE_NBTOOL_CONFIG_H) */
 #ifndef lint
-__RCSID("$NetBSD: log.c,v 1.4 2016/06/08 01:11:49 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.4.28.1 2025/08/02 05:58:51 perseant Exp $");
 #endif
 
 #include <err.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.27 2023/08/08 10:35:48 riastradh Exp $	*/
+/*	$NetBSD: npftest.c,v 1.27.2.1 2025/08/02 05:58:52 perseant Exp $	*/
 
 /*
  * NPF testing framework.
@@ -66,7 +66,10 @@ describe_tests(void)
 		"state\tstate handling and processing\n"
 		"gc\tconnection G/C\n"
 		"rule\trule processing\n"
-		"nat\tNAT rule processing\n");
+		"nat\tNAT rule processing\n"
+		"guid\tUser/group filtering\n"
+		"ether\tlayer 2 rule processing\n"
+		"l2defpass\tlayer 2 default pass on layer 3 rules\n");
 	exit(EXIT_SUCCESS);
 }
 
@@ -319,7 +322,25 @@ main(int argc, char **argv)
 	if (test && config) {
 		if (!testname || strcmp("rule", testname) == 0) {
 			ok = rumpns_npf_rule_test(verbose);
-			fail |= result("rule", ok);
+			fail |= result("rules - layer 3", ok);
+			tname_matched = true;
+		}
+
+		if (!testname || strcmp("ether", testname) == 0) {
+			ok = rumpns_npf_layer2_rule_test(verbose);
+			fail |= result("rules - layer 2", ok);
+			tname_matched = true;
+		}
+
+		if (!testname || strcmp("l2defpass", testname) == 0) {
+			ok = rumpns_npf_layer2only_test(verbose);
+			fail |= result(" layer 2 default pass", ok);
+			tname_matched = true;
+		}
+
+		if (!testname || strcmp("guid", testname) == 0) {
+			ok = rumpns_npf_guid_test(verbose);
+			fail |= result("guid", ok);
 			tname_matched = true;
 		}
 

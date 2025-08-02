@@ -1,4 +1,4 @@
-# $NetBSD: cond-cmp-numeric.mk,v 1.7 2023/03/04 08:07:29 rillig Exp $
+# $NetBSD: cond-cmp-numeric.mk,v 1.7.2.1 2025/08/02 05:58:31 perseant Exp $
 #
 # Tests for numeric comparisons in .if conditions.
 #
@@ -11,13 +11,13 @@
 
 # Even if strtod(3) parses "INF" as +Infinity, make does not accept this
 # since it is not really a number; see TryParseNumber.
-# expect+1: Comparison with '>' requires both operands 'INF' and '1e100' to be numeric
+# expect+1: Comparison with ">" requires both operands "INF" and "1e100" to be numeric
 .if !(${:UINF} > 1e100)
 .  error
 .endif
 
 # Neither is NaN a number; see TryParseNumber.
-# expect+1: Comparison with '>' requires both operands 'NaN' and 'NaN' to be numeric
+# expect+1: Comparison with ">" requires both operands "NaN" and "NaN" to be numeric
 .if ${:UNaN} > NaN
 .  error
 .endif
@@ -34,7 +34,7 @@
 # whether the operator is valid, leaving the rest of the work to the
 # evaluation functions EvalCompareNum and EvalCompareStr.  Ensure that this
 # parse error is properly reported.
-# expect+1: Malformed conditional (123 ! 123)
+# expect+1: Malformed conditional "123 ! 123"
 .if 123 ! 123
 .  error
 .else
@@ -50,7 +50,7 @@
 
 # Trailing spaces are NOT allowed for numbers.
 # See EvalCompare and TryParseNumber.
-# expect+1: Comparison with '<' requires both operands '123 ' and '124' to be numeric
+# expect+1: Comparison with "<" requires both operands "123 " and "124" to be numeric
 .if ${:U123 } < 124
 .  error
 .else

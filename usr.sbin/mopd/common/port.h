@@ -1,4 +1,4 @@
-/*	$NetBSD: port.h,v 1.1 2016/06/08 01:13:14 christos Exp $	*/
+/*	$NetBSD: port.h,v 1.1.28.1 2025/08/02 05:58:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -59,11 +59,15 @@
 #include <sys/types.h>
 
 extern char *__progname;
+
 static inline const char *
-getprogname(void) {
+getprogname(void)
+{
 	return __progname;
 }
 
+/* Commented out to fix vax tools build on Linux. */
+/*
 static inline char *
 strlcpy(char *d, const char *s, size_t l)
 {
@@ -73,4 +77,5 @@ strlcpy(char *d, const char *s, size_t l)
 	d[l - 1] = '\0';
 	return d;
 }
+*/
 #endif

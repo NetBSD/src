@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2020/11/12 17:53:43 nia Exp $
+# $NetBSD: Makefile,v 1.12.8.1 2025/08/02 05:58:50 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -31,6 +31,14 @@ DPADD.makemandb+=	${LIBCRYPTO}
 
 DPADD+=		${LIBSQLITE3} ${LIBM} ${LIBZ} ${LIBTERMLIB} ${LIBUTIL}
 LDADD+=		-lsqlite3 -lm -lz -ltermlib -lutil
+
+.include "${NETBSDSRCDIR}/external/bsd/zstd/Makefile.zstd"
+# XXX No PROGDPLIBS.${P} in <bsd.prog.mk>.
+#PROGDPLIBS.makemandb+=	${ZSTDDPLIBS}	# needed by libarchive
+ZSTD_OBJDIR!=		cd ${ZSTD:Q}/lib && ${PRINTOBJDIR}
+LDADD.makemandb+=	-L${ZSTD_OBJDIR} -lzstd
+DPADD.makemandb+=	${ZSTD_OBJDIR}/libzstd.a # XXX or libzstd_pic.a
+
 
 stopwords.c: stopwords.txt
 	( set -e; ${TOOL_NBPERF} -n stopwords_hash -s -p ${.ALLSRC};	\

@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.48 2023/12/02 13:34:48 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.48.2.1 2025/08/02 05:58:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.48 2023/12/02 13:34:48 christos Exp $");
+__RCSID("$NetBSD: verify.c,v 1.48.2.1 2025/08/02 05:58:52 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ vwalk(void)
 	argv[0] = dot;
 	argv[1] = NULL;
 
-	if ((t = fts_open(argv, ftsoptions, NULL)) == NULL)
+	if ((t = fts_open(argv, ftsoptions, dcmp)) == NULL)
 		mtree_err("fts_open: %s", strerror(errno));
 	level = root;
 	specdepth = rval = 0;
@@ -147,7 +147,8 @@ vwalk(void)
 			continue;
  extra:
 		if (!eflag && !(dflag && p->fts_info == FTS_SL)) {
-			printf("extra: %s", RP(p));
+			printf(flavor == F_FREEBSD9 ? "%s extra" : "extra: %s",
+			    RP(p));
 			if (rflag) {
 #if HAVE_STRUCT_STAT_ST_FLAGS
 				if (rflag > 1 &&
@@ -180,7 +181,7 @@ miss(NODE *p, char *tail)
 	int create;
 	char *tp;
 	const char *type;
-	uint32_t flags;
+	u_long flags;
 
 	for (; p; p = p->next) {
 		if (p->flags & F_OPT && !(p->flags & F_VISIT))

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.49 2024/04/22 14:41:26 nia Exp $
+#	$NetBSD: Makefile.inc,v 1.49.2.1 2025/08/02 05:58:55 perseant Exp $
 #
 # Makefile for sysinst
 
@@ -154,6 +154,7 @@ O0TRACKING=	-fvar-tracking-assignments -fvar-tracking
 .endif
 CPPFLAGS+=-DDEBUG
 DBG +=-g -O0 ${O0TRACKING}
+COPTS.net.c	+= -Wno-error=maybe-uninitialized
 .else
 .if defined(SMALLPROG)
 COPTS += -Os

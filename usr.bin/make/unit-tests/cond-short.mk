@@ -1,4 +1,4 @@
-# $NetBSD: cond-short.mk,v 1.23 2023/11/19 22:32:44 rillig Exp $
+# $NetBSD: cond-short.mk,v 1.23.2.1 2025/08/02 05:58:32 perseant Exp $
 #
 # Demonstrates that in conditions, the right-hand side of an && or ||
 # is only evaluated if it can actually influence the result.
@@ -227,7 +227,7 @@ VAR=	${VAR${:U1}}
 # Due to the quotes around the left-hand side of the '<', the operand is
 # marked as a string, thus preventing a numerical comparison.
 #
-# expect+1: Comparison with '<' requires both operands '' and '42' to be numeric
+# expect+1: Comparison with "<" requires both operands "" and "42" to be numeric
 .if "${INDIR_UNDEF}" < ${NUMBER}
 .  info yes
 .else

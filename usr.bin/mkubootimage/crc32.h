@@ -1,3 +1,5 @@
+/* $NetBSD: crc32.h,v 1.1.2.1 2025/08/02 05:58:41 perseant Exp $ */
+
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
  * All rights reserved.

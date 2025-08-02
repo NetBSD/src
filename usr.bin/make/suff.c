@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.380 2024/06/02 15:31:26 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.380.2.1 2025/08/02 05:58:30 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.380 2024/06/02 15:31:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.380.2.1 2025/08/02 05:58:30 perseant Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -979,7 +979,6 @@ Candidate_New(char *name, char *prefix, Suffix *suff, Candidate *parent,
 }
 
 /* Add a new candidate to the list. */
-/*ARGSUSED*/
 static void
 CandidateList_Add(CandidateList *list, char *srcName, Candidate *targ,
 		  Suffix *suff, const char *debug_tag MAKE_ATTR_UNUSED)
@@ -1028,16 +1027,16 @@ CandidateList_AddCandidatesFor(CandidateList *list, Candidate *cand)
  * Return whether a candidate was removed.
  */
 static bool
-RemoveCandidate(CandidateList *srcs)
+RemoveCandidate(CandidateList *sources)
 {
 	CandidateListNode *ln;
 
 #ifdef DEBUG_SRC
-	debug_printf("cleaning list %p:", srcs);
-	CandidateList_PrintAddrs(srcs);
+	debug_printf("cleaning list %p:", sources);
+	CandidateList_PrintAddrs(sources);
 #endif
 
-	for (ln = srcs->first; ln != NULL; ln = ln->next) {
+	for (ln = sources->first; ln != NULL; ln = ln->next) {
 		Candidate *src = ln->datum;
 
 		if (src->numChildren == 0) {
@@ -1057,10 +1056,10 @@ RemoveCandidate(CandidateList *srcs)
 			}
 #ifdef DEBUG_SRC
 			debug_printf("free: list %p src %p:%s children %d\n",
-			    srcs, src, src->file, src->numChildren);
+			    sources, src, src->file, src->numChildren);
 			Lst_Done(&src->childrenList);
 #endif
-			Lst_Remove(srcs, ln);
+			Lst_Remove(sources, ln);
 			free(src->file);
 			free(src);
 			return true;
@@ -1068,7 +1067,7 @@ RemoveCandidate(CandidateList *srcs)
 #ifdef DEBUG_SRC
 		else {
 			debug_printf("keep: list %p src %p:%s children %d:",
-			    srcs, src, src->file, src->numChildren);
+			    sources, src, src->file, src->numChildren);
 			CandidateList_PrintAddrs(&src->childrenList);
 		}
 #endif
@@ -1077,20 +1076,20 @@ RemoveCandidate(CandidateList *srcs)
 	return false;
 }
 
-/* Find the first existing file/target in srcs. */
+/* Find the first existing file/target in sources. */
 static Candidate *
-FindThem(CandidateList *srcs, CandidateSearcher *cs)
+FindThem(CandidateList *sources, CandidateSearcher *cs)
 {
 	HashSet seen;
 
 	HashSet_Init(&seen);
 
-	while (!Lst_IsEmpty(srcs)) {
-		Candidate *src = Lst_Dequeue(srcs);
+	while (!Lst_IsEmpty(sources)) {
+		Candidate *src = Lst_Dequeue(sources);
 
 #ifdef DEBUG_SRC
 		debug_printf("remove from list %p src %p:%s\n",
-		    srcs, src, src->file);
+		    sources, src, src->file);
 #endif
 		DEBUG1(SUFF, "\ttrying %s...", src->file);
 
@@ -1117,7 +1116,7 @@ FindThem(CandidateList *srcs, CandidateSearcher *cs)
 		DEBUG0(SUFF, "not there\n");
 
 		if (HashSet_Add(&seen, src->file))
-			CandidateList_AddCandidatesFor(srcs, src);
+			CandidateList_AddCandidatesFor(sources, src);
 		else {
 			DEBUG1(SUFF, "FindThem: skipping duplicate \"%s\"\n",
 			    src->file);
@@ -1344,7 +1343,7 @@ ExpandChildren(GNodeListNode *cln, GNode *pgn)
 	}
 
 	DEBUG1(SUFF, "Expanding \"%s\"...", cgn->name);
-	expanded = Var_Subst(cgn->name, pgn, VARE_EVAL_DEFINED);
+	expanded = Var_Subst(cgn->name, pgn, VARE_EVAL);
 	/* TODO: handle errors */
 
 	{
@@ -1651,7 +1650,7 @@ FindDepsLib(GNode *gn)
 
 static void
 FindDepsRegularKnown(const char *name, size_t nameLen, GNode *gn,
-		     CandidateList *srcs, CandidateList *targs)
+		     CandidateList *sources, CandidateList *targets)
 {
 	SuffixListNode *ln;
 	Candidate *targ;
@@ -1666,20 +1665,20 @@ FindDepsRegularKnown(const char *name, size_t nameLen, GNode *gn,
 		targ = Candidate_New(bmake_strdup(gn->name), pref, suff, NULL,
 		    gn);
 
-		CandidateList_AddCandidatesFor(srcs, targ);
+		CandidateList_AddCandidatesFor(sources, targ);
 
 		/* Record the target so we can nuke it. */
-		Lst_Append(targs, targ);
+		Lst_Append(targets, targ);
 	}
 }
 
 static void
 FindDepsRegularUnknown(GNode *gn, const char *sopref,
-		       CandidateList *srcs, CandidateList *targs)
+		       CandidateList *sources, CandidateList *targets)
 {
 	Candidate *targ;
 
-	if (!Lst_IsEmpty(targs) || nullSuff == NULL)
+	if (!Lst_IsEmpty(targets) || nullSuff == NULL)
 		return;
 
 	DEBUG1(SUFF, "\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
@@ -1694,14 +1693,14 @@ FindDepsRegularUnknown(GNode *gn, const char *sopref,
 	 * this anymore.
 	 */
 	if (Lst_IsEmpty(&gn->commands))
-		CandidateList_AddCandidatesFor(srcs, targ);
+		CandidateList_AddCandidatesFor(sources, targ);
 	else {
 		DEBUG0(SUFF, "not ");
 	}
 
 	DEBUG0(SUFF, "adding suffix rules\n");
 
-	Lst_Append(targs, targ);
+	Lst_Append(targets, targ);
 }
 
 /*
@@ -1763,12 +1762,12 @@ static void
 FindDepsRegular(GNode *gn, CandidateSearcher *cs)
 {
 	/* List of sources at which to look */
-	CandidateList srcs = LST_INIT;
+	CandidateList sources = LST_INIT;
 	/*
 	 * List of targets to which things can be transformed.
 	 * They all have the same file, but different suff and prefix fields.
 	 */
-	CandidateList targs = LST_INIT;
+	CandidateList targets = LST_INIT;
 	Candidate *bottom;	/* Start of found transformation path */
 	Candidate *src;
 	Candidate *targ;
@@ -1804,25 +1803,25 @@ FindDepsRegular(GNode *gn, CandidateSearcher *cs)
 
 	if (!(gn->type & OP_PHONY)) {
 
-		FindDepsRegularKnown(name, nameLen, gn, &srcs, &targs);
+		FindDepsRegularKnown(name, nameLen, gn, &sources, &targets);
 
 		/* Handle target of unknown suffix... */
-		FindDepsRegularUnknown(gn, name, &srcs, &targs);
+		FindDepsRegularUnknown(gn, name, &sources, &targets);
 
 		/*
 		 * Using the list of possible sources built up from the target
 		 * suffix(es), try and find an existing file/target that
 		 * matches.
 		 */
-		bottom = FindThem(&srcs, cs);
+		bottom = FindThem(&sources, cs);
 
 		if (bottom == NULL) {
 			/*
 			 * No known transformations -- use the first suffix
 			 * found for setting the local variables.
 			 */
-			if (targs.first != NULL)
-				targ = targs.first->datum;
+			if (targets.first != NULL)
+				targ = targets.first->datum;
 			else
 				targ = NULL;
 		} else {
@@ -1941,11 +1940,11 @@ sfnd_return:
 	if (bottom != NULL)
 		CandidateSearcher_AddIfNew(cs, bottom);
 
-	while (RemoveCandidate(&srcs) || RemoveCandidate(&targs))
+	while (RemoveCandidate(&sources) || RemoveCandidate(&targets))
 		continue;
 
-	CandidateSearcher_MoveAll(cs, &srcs);
-	CandidateSearcher_MoveAll(cs, &targs);
+	CandidateSearcher_MoveAll(cs, &sources);
+	CandidateSearcher_MoveAll(cs, &targets);
 }
 
 static void
@@ -2042,11 +2041,11 @@ Suff_Init(void)
 	Suff_ClearSuffixes();
 }
 
+#ifdef CLEANUP
 /* Clean up the suffixes module. */
 void
 Suff_End(void)
 {
-#ifdef CLEANUP
 	SuffixListNode *ln;
 
 	for (ln = sufflist.first; ln != NULL; ln = ln->next)
@@ -2058,8 +2057,8 @@ Suff_End(void)
 	if (nullSuff != NULL)
 		Suffix_Free(nullSuff);
 	Lst_Done(&transforms);
-#endif
 }
+#endif
 
 
 static void

@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.67 2022/11/21 21:24:02 brad Exp $
+.\"	$NetBSD: envstat.8,v 1.67.4.1 2025/08/02 05:58:49 perseant Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008, 2009, 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,17 +35,17 @@
 .Nd utility to handle environmental sensors
 .Sh SYNOPSIS
 .Nm
-.Op Fl DfIklnSTW
+.Op Fl DfIjklnSTtW
 .Op Fl c Ar file
 .Op Fl d Ar device
 .Op Fl i Ar interval
-.Op Fl s Ar "device:sensor,..."
+.Op Fl s Ar device Ns Cm \&: Ns Ar sensor Ns Cm \&, Ns Ar ...
 .Op Fl w Ar width
 .Nm
 .Fl x
 .Op Fl d Ar device
-.Op Fl s Ar "device:sensor,..."
-.Op Ar property...
+.Op Fl s Ar device Ns Cm \&: Ns Ar sensor Ns Cm \&, Ns Ar ...
+.Op Ar property ...
 .Sh DESCRIPTION
 .Nm
 is a utility that handles various aspects of the sensors
@@ -62,7 +62,7 @@ If critical limits were set previously, the display mode will show
 the critical limits in addition to the current values.
 .Pp
 The following options are available:
-.Bl -tag -width flag
+.Bl -tag -width Fl
 .It Fl c
 Accepts a file as argument to set properties for sensors in
 devices registered with the framework.
@@ -74,7 +74,7 @@ Display the names of the devices that are currently registered with
 the
 .Xr envsys 4
 framework, one per line, along with some properties for the device
-(for example, its refresh timeout value).
+.Pq for example, its refresh timeout value .
 .It Fl d Ar device
 Display only the sensors for the given
 .Ar device .
@@ -86,7 +86,7 @@ The default is to display temperature values in degrees Celsius.
 .It Fl I
 This flag skips the sensors with invalid state; these are normally
 shown using the
-.Qq N/A
+.Ql N/A
 string by default.
 .It Fl i Ar interval
 Repeat the display every
@@ -98,6 +98,16 @@ See the individual device's manual page for meaningful values for
 If not specified, or specified as 0,
 .Nm
 produces one round of values and exits.
+When the
+.Fl j
+flag is used to get JSON output the string
+.Ql #-------
+is placed between each JSON block.
+.It Fl j
+Output the results in JSON format.
+Each output will be a correct JSON object that consists of objects,
+arrays, integers, floats and strings included, as needed, for any particular
+sensor.
 .It Fl k
 Display temperature values in Kelvin.
 The default is to display temperature values in degrees Celsius.
@@ -122,19 +132,32 @@ the framework.
 This will remove all properties that were set in
 the configuration file to the setting that the devices use by
 default.
-.It Fl s Ar "device:sensor,..."
+.It Fl s Ar device Ns Cm \&: Ns Ar sensor Ns Cm \&, Ns Ar ...
 Restrict the display to the named devices and sensors.
-The pair device and sensor description must be supplied as a comma separated list.
+The pair
+.Ar device
+and
+.Ar sensor
+description must be supplied as a comma separated list.
 Device as well as sensor descriptions are case sensitive.
 Note that the order of the arguments given does not influence the order of output.
 .It Fl T
 Create and display max, min and average statistics for a sensor.
 Must be used with an
-.Ar interval ,
+.Fl i ,
 otherwise statistics cannot be collected up.
 Please note that to get realistic
-values a lower interval value should be used, but that will also increase
-overhead.
+values a lower
+.Ar interval
+value should be used, but that will also increase overhead.
+.It Fl t
+Output a time stamp along with the rest of the sensor data.
+When the
+.Fl j
+flag is not specified, the time stamp will be on the first line and
+be in human readable format.
+When the output is JSON, two objects will be included that contain the
+Julian Unix time and another with the time stamp in human readable format.
 .It Fl w Ar width
 Use
 .Ar width
@@ -165,78 +188,76 @@ of this sensor are returned, not a list of sensors.
 .Sh UNITS
 The display mode may show some values with abbreviated units;
 for example:
-.Bl -tag -width "12345678" -compact -offset indent
-.It A
-Amperes
-.It Ah
-Ampere-hours
-.It degC
-degrees Celsius
-.It degF
-degrees Fahrenheit
-.It K
-Kelvin
-.It Ohms
-Ohms
-.It RPM
-Revolutions per minute
-.It V
-Volts DC
-.It VAC
-Volts AC
-.It W
-Watts
-.It Wh
-Watt-hours
-.It %rH
-relative Humidity
-.It hPa
-Hectopascals
+
+.Bl -column -offset indent "degC" "..."
+.It Li A    Ta Amperes
+.It Li Ah   Ta Ampere-hours
+.It Li degC Ta degrees Celsius
+.It Li degF Ta degrees Fahrenheit
+.It Li K    Ta Kelvin
+.It Li Ohms Ta Ohms
+.It Li RPM  Ta Revolutions per minute
+.It Li V    Ta Volts DC
+.It Li VAC  Ta Volts AC
+.It Li W    Ta Watts
+.It Li Wh   Ta Watt-hours
+.It Li %rH  Ta relative Humidity
+.It Li hPa  Ta Hectopascals
 .El
 .Sh EXAMPLES
-To display the
-.Dq charge
-sensor of the device
-.Ar acpibat0
-in one line every ten seconds:
-.Pp
-.Dl $ envstat -s \*qacpibat0:charge\*q -i 10
-.Pp
 To list the devices that are currently registered with
 .Xr envsys 4 :
 .Pp
-.Dl $ envstat -D
+.Dl envstat -D
 .Pp
 To display the sensors of the device
-.Ar aibs0 :
+.Ql aibs0 :
 .Pp
-.Dl $ envstat -d aibs0
+.Dl envstat -d aibs0
+.Pp
+To display the
+.Ql charge
+sensor of the device
+.Ql acpibat0
+in one line every ten seconds:
+.Pp
+.Dl envstat -s acpibat0:charge -i 10
 .Pp
 To set all properties specified in the configuration file:
 .Pp
-.Dl $ envstat -c /etc/envsys.conf
+.Dl envstat -c /etc/envsys.conf
 .Pp
 To remove all properties that were set previously in the configuration
 file:
 .Pp
-.Dl $ envstat -S
+.Dl envstat -S
 .Pp
 To display statistics for all sensors and ignoring sensors with
 invalid states every second:
 .Pp
-.Dl $ envstat -ITi1
+.Dl envstat -ITi1
 .Pp
 To return a single temperature value:
 .Pp
-.Dl $ envstat -s vcmbox0:temperature -x /cur-value
+.Dl envstat -s vcmbox0:temperature -x /cur-value
 .Pp
 To return values of multiple temperature sensors from a single device
 .Pp
-.Dl $ envstat -s 'thinkpad0:temperature 0,thinkpad0:temperature 1' -x /thinkpad0/0/cur-value /thinkpad0/1/cur-value
+.Bd -literal -offset indent
+envstat -s \(aqthinkpad0:temperature 0,thinkpad0:temperature 1\(aq \e
+  -x /thinkpad0/0/cur-value /thinkpad0/1/cur-value
+.Ed
 .Pp
 To return values of temperature sensors from multiple devices:
 .Pp
-.Dl $ envstat -s 'coretemp0:cpu0 temperature,coretemp1:cpu 2 temperature' -x /coretemp0/0/cur-value /coretemp1/0/cur-value
+.Bd -literal -offset indent
+envstat -s \(aqcoretemp0:cpu0 temperature,coretemp1:cpu 2 temperature\(aq \e
+  -x /coretemp0/0/cur-value /coretemp1/0/cur-value
+.Ed
+.Pp
+To output the sensor data in JSON with a timestamp:
+.Pp
+.Dl envstat -d owtemp0 -jt
 .Sh SEE ALSO
 .Xr units 1 ,
 .Xr proplib 3 ,

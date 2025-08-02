@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2010/01/12 14:45:31 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.31.58.1 2025/08/02 05:58:29 perseant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.31 2010/01/12 14:45:31 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.31.58.1 2025/08/02 05:58:29 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -434,7 +434,6 @@ main(int argc, char *argv[])
 		 * why wait?
 		 */
 		exit(senderr);
-		break;	/* XXX - keep lint happy */
 
 	case mm_receiving:
 	case mm_hdrsonly:

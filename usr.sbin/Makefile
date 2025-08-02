@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.292.2.1 2024/06/29 19:43:26 perseant Exp $
+#	$NetBSD: Makefile,v 1.292.2.2 2025/08/02 05:58:47 perseant Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -7,7 +7,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	bad144 bootp bta2dpd btattach btconfig btdevctl bthcid btpand catman \
 	certctl chroot cnwctl cpuctl crash \
 	dev_mkdb diskpart dumpfs dumplfs \
-	edquota eeprom envstat etcupdate extattrctl \
+	edquota eeprom emcfanctl envstat etcupdate extattrctl \
 	flashctl fssconfig fstyp fusermount fwctl \
 	gpioctl grfconfig gspa \
 	hdaudioctl \
@@ -28,7 +28,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	sliplogin spray \
 	srtconfig sti sunlabel sysinst syslogd \
 	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl tprof traceroute trpt \
-	unlink usbdevs user \
+	umcpmioctl unlink usbdevs user \
 	videomode vipw veriexecgen vnconfig \
 	wakeonlan wg-keygen wg-userspace wgconfig wiconfig wlanctl \
 	wsconscfg wsfontload wsmoused wsmuxctl \

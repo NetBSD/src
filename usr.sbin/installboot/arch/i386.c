@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.43 2021/12/05 04:47:18 msaitoh Exp $ */
+/* $NetBSD: i386.c,v 1.43.4.1 2025/08/02 05:58:49 perseant Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.43 2021/12/05 04:47:18 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.43.4.1 2025/08/02 05:58:49 perseant Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -409,7 +409,7 @@ i386_setboot(ib_params *params)
 	 * To avoid this we check the number of 'reserved' sectors to ensure
 	 * there there is enough space.
 	 * Unfortunately newfs(8) doesn't (yet) splat the BPB (which is
-	 * effectively the FAT superblock) when a filesystem is initailised
+	 * effectively the FAT superblock) when a filesystem is initialised
 	 * so this code tends to complain rather too often,
 	 * Specifying 'installboot -f' will delete the old BPB info.
 	 */

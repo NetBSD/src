@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.29 2023/12/03 18:17:41 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.29.2.1 2025/08/02 05:58:46 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: hash.c,v 1.29 2023/12/03 18:17:41 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.29.2.1 2025/08/02 05:58:46 perseant Exp $");
 #endif
 
 #include <limits.h>
@@ -162,7 +162,7 @@ symtab_forall(void (*action)(hte_t *))
 
 /* Run the action for each name in the symbol table, in alphabetic order. */
 void
-symtab_forall_sorted(void (*action)(hte_t *))
+symtab_forall_sorted(void (*action)(const hte_t *))
 {
 	hte_t *hte;
 	struct hte_list sorted = { NULL, 0, 0 };

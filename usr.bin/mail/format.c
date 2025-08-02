@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.18 2023/09/08 14:34:02 shm Exp $	*/
+/*	$NetBSD: format.c,v 1.18.2.1 2025/08/02 05:58:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.18 2023/09/08 14:34:02 shm Exp $");
+__RCSID("$NetBSD: format.c,v 1.18.2.1 2025/08/02 05:58:29 perseant Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -138,7 +138,7 @@ sfmtdepth(char *str, int depth)
 static const char *
 sfmtfield(const char **fmtbeg, const char *fmtch, struct message *mp)
 {
-	char *q;
+	const char *q;
 	q = strchr(fmtch + 1, '?');
 	if (q) {
 		size_t len;
@@ -270,7 +270,7 @@ sfmtflag(const char **fmtbeg, const char *fmtch, struct message *mp)
 static const char *
 login_name(const char *addr)
 {
-	char *p;
+	const char *p;
 	p = strchr(addr, '@');
 	if (p) {
 		char *q;
@@ -283,26 +283,11 @@ login_name(const char *addr)
 	return addr;
 }
 
-/*
- * A simple routine to get around a lint warning.
- */
-static inline const char *
-skip_fmt(const char **src, const char *p)
-{
-	*src = p;
-	return NULL;
-}
-
 static const char *
 subformat(const char **src, struct message *mp, const char *addr,
     const char *user, const char *subj, int tm_isdst)
 {
-#if 0
-/* XXX - lint doesn't like this, hence skip_fmt(). */
 #define MP(a)	mp ? a : (*src = (p + 1), NULL)
-#else
-#define MP(a)	mp ? a : skip_fmt(src, p + 1);
-#endif
 	const char *p;
 
 	p = *src;

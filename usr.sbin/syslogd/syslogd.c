@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.141 2023/10/11 23:22:13 uwe Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.141.2.1 2025/08/02 05:58:59 perseant Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.141 2023/10/11 23:22:13 uwe Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.141.2.1 2025/08/02 05:58:59 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,6 +205,7 @@ bool	BSDOutputFormat = true;	/* if true emit traditional BSD Syslog lines,
 				 * this, it will only break some syslog-sign
 				 * configurations (e.g. with SG="0").
 				 */
+bool	KernXlat = true;	/* translate kern.* -> user.* */
 char	appname[]   = "syslogd";/* the APPNAME for own messages */
 char   *include_pid;		/* include PID in own messages */
 char	include_pid_buf[11];
@@ -315,11 +316,12 @@ main(int argc, char *argv[])
 	struct group   *gr;
 	struct passwd  *pw;
 	unsigned long l;
+	char pfpath[PATH_MAX];
 
 	/* should we set LC_TIME="C" to ensure correct timestamps&parsing? */
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "b:B:d::nsSf:m:o:p:P:ru:g:t:TUvX")) != -1)
+	while ((ch = getopt(argc, argv, "b:B:d::knsSf:m:o:p:P:ru:g:t:TUvX")) != -1)
 		switch(ch) {
 		case 'b':
 			bindhostname = optarg;
@@ -359,6 +361,9 @@ main(int argc, char *argv[])
 			group = optarg;
 			if (*group == '\0')
 				usage();
+			break;
+		case 'k':		/* pass-through (remote) kern.* */
+			KernXlat = false;
 			break;
 		case 'm':		/* mark interval */
 			MarkInterval = atoi(optarg) * 60;
@@ -557,11 +562,38 @@ getgroup:
 #if (IETF_NUM_PRIVALUES != (LOG_NFACILITIES<<3))
 	logerror("Warning: system defines %d priority values, but "
 	    "syslog-protocol/syslog-sign specify %d values",
-	    LOG_NFACILITIES, SIGN_NUM_PRIVALS);
+	    LOG_NFACILITIES, IETF_NUM_PRIVALUES>>3);
 #endif
 
+#ifdef __NetBSD_Version__
+	if ((uid != 0) || (gid != 0)) {
+		/* Create the pidfile here so we can chown it to the target
+		 * user/group and possibly report any error before daemonizing.
+		 * We then call pidfile(3) again to write the actual
+		 * daemon pid below.
+		 *
+		 * Note: this will likely leave the truncated pidfile in
+		 * place upon exit, since the effective user is unlikely
+		 * to have write permissions to _PATH_VARRUN. */
+		if (pidfile(NULL)) {
+			logerror("Failed to create pidfile");
+			die(0, 0, NULL);
+		}
+		j = sizeof(pfpath);
+		if (snprintf(pfpath, j, "%s%s.pid",
+					_PATH_VARRUN, getprogname()) >= j) {
+			logerror("Pidfile path `%s' too long.", pfpath);
+			die(0, 0, NULL);
+		}
+		if (chown(pfpath, uid, gid) < 0) {
+			logerror("Failed to chown pidfile `%s` to `%d:%d`", pfpath, uid, gid);
+			die(0, 0, NULL);
+		}
+	}
+#endif /* __NetBSD_Version__ */
+
 	/*
-	 * All files are open, we can drop privileges and chroot
+	 * All files are open, we can drop privileges and chroot.
 	 */
 	DPRINTF(D_MISC, "Attempt to chroot to `%s'\n", root);
 	if (chroot(root) == -1) {
@@ -582,12 +614,12 @@ getgroup:
 	 * We cannot detach from the terminal before we are sure we won't
 	 * have a fatal error, because error message would not go to the
 	 * terminal and would not be logged because syslogd dies.
-	 * All die() calls are behind us, we can call daemon()
+	 * All die() calls are behind us, we can call daemon().
 	 */
 	if (!Debug) {
 		(void)daemon(0, 0);
 		daemonized = 1;
-		/* tuck my process id away, if i'm not in debug mode */
+		/* Tuck my process id away, if I'm not in debug mode. */
 #ifdef __NetBSD_Version__
 		pidfile(NULL);
 #endif /* __NetBSD_Version__ */
@@ -686,7 +718,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-dnrSsTUvX] [-B buffer_length] [-b bind_address]\n"
+	    "usage: %s [-dknrSsTUvX] [-B buffer_length] [-b bind_address]\n"
 	    "\t[-f config_file] [-g group]\n"
 	    "\t[-m mark_interval] [-P file_list] [-p log_socket\n"
 	    "\t[-p log_socket2 ...]] [-t chroot_dir] [-u user]\n",
@@ -1549,12 +1581,12 @@ printline(const char *hname, char *msg, int flags)
 		pri = DEFUPRI;
 
 	/*
-	 * Don't allow users to log kernel messages.
+	 * Don't (usually) allow users to log kernel messages.
 	 * NOTE: Since LOG_KERN == 0, this will also match
 	 *	 messages with no facility specified.
 	 */
-	if ((pri & LOG_FACMASK) == LOG_KERN)
-		pri = LOG_MAKEPRI(LOG_USER, LOG_PRI(pri));
+	if ((pri & LOG_FACMASK) == LOG_KERN && KernXlat)
+		pri = LOG_USER | LOG_PRI(pri);
 
 	if (bsdsyslog) {
 		buffer = printline_bsdsyslog(hname, p, flags, pri);

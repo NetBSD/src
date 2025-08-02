@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.235 2023/12/03 21:44:42 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.235.2.1 2025/08/02 05:58:28 perseant Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,8 +38,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.235 2023/12/03 21:44:42 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.235.2.1 2025/08/02 05:58:28 perseant Exp $");
 
+#include <err.h>
 #include <stdio.h>
 
 #include "indent.h"
@@ -122,7 +123,8 @@ static void
 write_buffered_newlines(void)
 {
 	for (; buffered_newlines > 0; buffered_newlines--) {
-		fputc('\n', output);
+		if (fputc('\n', output) == EOF)
+			err(1, "cannot write output");
 		debug_println("write_newline");
 	}
 }
@@ -131,7 +133,8 @@ static void
 write_range(const char *s, size_t len)
 {
 	write_buffered_newlines();
-	fwrite(s, 1, len, output);
+	if (fwrite(s, 1, len, output) != len)
+		err(1, "cannot write output");
 	debug_printf("write_range ");
 	debug_vis_range(s, len);
 	debug_println("");
@@ -152,13 +155,15 @@ write_indent(int new_ind)
 		if (n > 0) {
 			ind = ind - ind % opt.tabsize + n * opt.tabsize;
 			while (n-- > 0)
-				fputc('\t', output);
+				if (fputc('\t', output) == EOF)
+					err(1, "cannot write output");
 			newlines = 0;
 		}
 	}
 
 	for (; ind < new_ind; ind++) {
-		fputc(' ', output);
+		if (fputc(' ', output) == EOF)
+			err(1, "cannot write output");
 		newlines = 0;
 	}
 
@@ -171,6 +176,7 @@ want_blank_line(void)
 {
 	debug_println("%s: %s -> %s", __func__,
 	    line_kind_name[out.prev_line_kind], line_kind_name[out.line_kind]);
+	debug_blank_line();
 
 	if (((ps.blank_line_after_decl && ps.declaration == decl_no)
 	    || ps.badp == badp_yes)
@@ -421,8 +427,7 @@ void
 output_line(void)
 {
 	debug_blank_line();
-	debug_printf("%s", __func__);
-	debug_buffers();
+	debug_buffers(__func__);
 
 	if (indent_enabled == indent_on)
 		output_indented_line();
@@ -447,5 +452,6 @@ finish_output(void)
 		indent_enabled = indent_last_off_line;
 		output_line();
 	}
-	fflush(output);
+	if (fflush(output) != 0)
+		err(1, "output file");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.207 2023/12/03 21:44:42 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.207.2.1 2025/08/02 05:58:28 perseant Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -67,6 +67,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 typedef enum lexer_symbol {
 	lsym_eof,
@@ -119,7 +120,7 @@ typedef enum lexer_symbol {
  * Structure of the source code, in terms of declarations, statements and
  * braces; used to determine the indentation level of these parts.
  */
-typedef enum parser_symbol {
+typedef enum {
 	psym_0,			/* a placeholder; not stored on the stack */
 	psym_lbrace_block,	/* '{' for a block of code */
 	psym_lbrace_struct,	/* '{' in 'struct ... { ... }' */
@@ -396,12 +397,16 @@ extern struct parser_state {
 	bool break_after_comma;	/* whether to add a newline after the next
 				 * comma; used in declarations but not in
 				 * initializer lists */
-	bool want_newline;	/* whether the next token should go to a new
-				 * line; used after 'if (expr)' and in similar
-				 * situations; tokens like '{' or ';' may
-				 * ignore this */
+	enum {
+		nl_no,
+		nl_unless_if,
+		nl_unless_lbrace,
+		nl_unless_semicolon,
+		nl_yes,
+	} newline;		/* decides whether to insert a line break
+				 * before the next token */
 
-	enum declaration {
+	enum {
 		decl_no,	/* no declaration anywhere nearby */
 		decl_begin,	/* collecting tokens of a declaration */
 		decl_end,	/* finished a declaration */
@@ -456,9 +461,9 @@ void debug_println(const char *, ...) __printflike(1, 2);
 void debug_blank_line(void);
 void debug_vis_range(const char *, size_t);
 void debug_parser_state(void);
-void debug_psyms_stack(const char *);
+void ps_psyms_to_string(struct buffer *, const struct parser_state *);
 void debug_print_buf(const char *, const struct buffer *);
-void debug_buffers(void);
+void debug_buffers(const char *);
 void parser_state_back_up(struct parser_state *);
 void parser_state_free(struct parser_state *);
 extern const char *const lsym_name[];
@@ -473,9 +478,8 @@ extern const char *const line_kind_name[];
 #define debug_blank_line() debug_noop()
 #define	debug_vis_range(s, len) debug_noop()
 #define	debug_parser_state() debug_noop()
-#define	debug_psyms_stack(situation) debug_noop()
 #define debug_print_buf(name, buf) debug_noop()
-#define	debug_buffers() debug_noop()
+#define	debug_buffers(descr) debug_noop()
 #define static_unless_debug static
 #endif
 
@@ -496,12 +500,18 @@ void parse(parser_symbol);
 void process_comment(void);
 void set_option(const char *, const char *);
 void load_profile_files(const char *);
-void ps_push(parser_symbol, bool);
+void ps_psyms_push(parser_symbol, int);
 
 void *nonnull(void *);
 
 void buf_add_char(struct buffer *, char);
 void buf_add_chars(struct buffer *, const char *, size_t);
+
+static inline void
+buf_add_str(struct buffer *buf, const char *str)
+{
+	buf_add_chars(buf, str, strlen(str));
+}
 
 static inline bool
 ch_isalnum(char ch)

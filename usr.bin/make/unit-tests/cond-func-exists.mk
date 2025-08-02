@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-exists.mk,v 1.7 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: cond-func-exists.mk,v 1.7.2.1 2025/08/02 05:58:31 perseant Exp $
 #
 # Tests for the exists() function in .if conditions.
 
@@ -35,6 +35,11 @@
 
 # Whitespace is trimmed on both sides of the function argument.
 .if !exists(	.	)
+.  error
+.endif
+
+# Expressions in the argument of a function call don't have to be defined.
+.if exists(${UNDEF})
 .  error
 .endif
 

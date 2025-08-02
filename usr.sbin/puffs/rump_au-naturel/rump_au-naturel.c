@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_au-naturel.c,v 1.1 2010/04/29 22:42:48 pooka Exp $	*/
+/*	$NetBSD: rump_au-naturel.c,v 1.1.58.1 2025/08/02 05:58:54 perseant Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	if (argc != 3)
 		usage();
-		
+
 	rv = p2k_run_fs(MOUNT_RUMPFS, argv[1], argv[2], 0, NULL, 0, 0);
 	if (rv == -1)
 		err(1, "p2k_run_fs");

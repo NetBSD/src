@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2022/06/16 14:03:38 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.3.4.1 2025/08/02 05:58:57 perseant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,15 +37,6 @@
 
 /* Constants and defines */
 
-/*
- * Symbolic names for disk partitions.
- */
-#define PART_ROOT	PART_A
-#define PART_SWAP	PART_B
-#define PART_RAW	PART_C
-#define PART_USR	PART_D	/* Can be after PART_FIRST_FREE */
-#define PART_FIRST_FREE	PART_E
-
 #define DEFROOTSIZE	64	/* Default root size */
 #define DEFSWAPSIZE	64	/* Default swap size */
 #define DEFVARSIZE	32	/* Default /var size, if created */
@@ -61,8 +52,6 @@
  * or upgrade.
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-
-#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11_NOSERVERS
 
 /*
  * Machine-specific command to write a new label to a disk.

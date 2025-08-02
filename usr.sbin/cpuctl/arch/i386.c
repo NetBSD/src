@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.144 2024/03/08 20:29:17 rillig Exp $	*/
+/*	$NetBSD: i386.c,v 1.144.2.1 2025/08/02 05:58:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.144 2024/03/08 20:29:17 rillig Exp $");
+__RCSID("$NetBSD: i386.c,v 1.144.2.1 2025/08/02 05:58:48 perseant Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1186,6 +1186,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	struct x86_cache_info *cai;
 	u_int descs[4];
 	u_int lfunc;
+	bool l2tlbx32 = false;
 
 	/* K5 model 0 has none of this info. */
 	if (ci->ci_family == 5 && ci->ci_model == 0)
@@ -1238,10 +1239,15 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		return;
 
 	/* Determine L2 cache/TLB info. */
+	if (lfunc >= 0x80000021) {
+		 x86_cpuid(0x80000021, descs);
+		 l2tlbx32 = descs[0] & CPUID_AMDEXT2_L2TLBSIZEX32;
+	}
 	x86_cpuid(0x80000006, descs);
 
 	cai = &ci->ci_cinfo[CAI_L2_ITLB];
-	cai->cai_totalsize = AMD_L2_EBX_IUTLB_ENTRIES(descs[1]);
+	cai->cai_totalsize =
+	    AMD_L2_EBX_IUTLB_ENTRIES(descs[1]) * (l2tlbx32 ? 32 : 1);
 	cai->cai_associativity = AMD_L2_EBX_IUTLB_ASSOC(descs[1]);
 	cai->cai_linesize = (4 * 1024);
 	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
@@ -1252,7 +1258,8 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 
 	cai = &ci->ci_cinfo[CAI_L2_ITLB2];
-	cai->cai_totalsize = AMD_L2_EAX_IUTLB_ENTRIES(descs[0]);
+	cai->cai_totalsize =
+	    AMD_L2_EAX_IUTLB_ENTRIES(descs[0]) * (l2tlbx32 ? 32 : 1);
 	cai->cai_associativity = AMD_L2_EAX_IUTLB_ASSOC(descs[0]);
 	cai->cai_linesize = largepagesize;
 	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
@@ -1263,7 +1270,8 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 
 	cai = &ci->ci_cinfo[CAI_L2_DTLB];
-	cai->cai_totalsize = AMD_L2_EBX_DTLB_ENTRIES(descs[1]);
+	cai->cai_totalsize =
+	    AMD_L2_EBX_DTLB_ENTRIES(descs[1]) * (l2tlbx32 ? 32 : 1);
 	cai->cai_associativity = AMD_L2_EBX_DTLB_ASSOC(descs[1]);
 	cai->cai_linesize = (4 * 1024);
 	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
@@ -1274,7 +1282,8 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 
 	cai = &ci->ci_cinfo[CAI_L2_DTLB2];
-	cai->cai_totalsize = AMD_L2_EAX_DTLB_ENTRIES(descs[0]);
+	cai->cai_totalsize =
+	    AMD_L2_EAX_DTLB_ENTRIES(descs[0]) * (l2tlbx32 ? 32 : 1);
 	cai->cai_associativity = AMD_L2_EAX_DTLB_ASSOC(descs[0]);
 	cai->cai_linesize = largepagesize;
 	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
@@ -1340,7 +1349,8 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 
 	cai = &ci->ci_cinfo[CAI_L2_1GBITLB];
-	cai->cai_totalsize = AMD_L2_1GB_EBX_IUTLB_ENTRIES(descs[1]);
+	cai->cai_totalsize =
+	    AMD_L2_1GB_EBX_IUTLB_ENTRIES(descs[1])  * (l2tlbx32 ? 32 : 1);
 	cai->cai_associativity = AMD_L2_1GB_EBX_IUTLB_ASSOC(descs[1]);
 	cai->cai_linesize = (1024 * 1024 * 1024);
 	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
@@ -1351,7 +1361,8 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 
 	cai = &ci->ci_cinfo[CAI_L2_1GBDTLB];
-	cai->cai_totalsize = AMD_L2_1GB_EBX_DUTLB_ENTRIES(descs[1]);
+	cai->cai_totalsize =
+	    AMD_L2_1GB_EBX_DUTLB_ENTRIES(descs[1]) * (l2tlbx32 ? 32 : 1);
 	cai->cai_associativity = AMD_L2_1GB_EBX_DUTLB_ASSOC(descs[1]);
 	cai->cai_linesize = (1024 * 1024 * 1024);
 	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
@@ -2129,7 +2140,7 @@ identifycpu(int fd, const char *cpuname)
 	    cpu_vendor == CPUVENDOR_INTEL ? CPUID_INTEL_FLAGS4
 		: CPUID_AMD_FLAGS4, ci->ci_feat_val[3]);
 
-	print_bits(cpuname, "padloack features", CPUID_FLAGS_PADLOCK,
+	print_bits(cpuname, "padlock features", CPUID_FLAGS_PADLOCK,
 	    ci->ci_feat_val[4]);
 	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
 		print_bits(cpuname, "features5", CPUID_SEF_FLAGS,
@@ -2303,6 +2314,14 @@ identifycpu(int fd, const char *cpuname)
 			    ncore, nnb, numc);
 			aprint_verbose("%s: Perfmon: LBR Stack %hhu entries\n",
 			    cpuname, nlbrs);
+		}
+		if (ci->ci_max_ext_cpuid >= 0x80000027) {
+			uint8_t classes;
+
+			x86_cpuid(0x80000027, descs);
+			classes = __SHIFTOUT(descs[0], CPUID_HWC_NWC);
+			aprint_verbose("%s: Hetero workload class: "
+			    "%hhu classes\n", cpuname, classes);
 		}
 	} else if (cpu_vendor == CPUVENDOR_INTEL) {
 		if (ci->ci_max_cpuid >= 0x0a) {

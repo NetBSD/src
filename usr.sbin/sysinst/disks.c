@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.95 2023/06/24 05:25:04 msaitoh Exp $ */
+/*	$NetBSD: disks.c,v 1.95.2.1 2025/08/02 05:58:55 perseant Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -991,7 +991,7 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 			w_menu_no = -1;
 			menu_no = new_menu(MSG_Available_disks,
 				dsk_menu, dno, -1,
-				 4, 0, 0, MC_SCROLL,
+				 7, 0, 0, MC_SCROLL,
 				NULL, NULL, NULL, NULL, MSG_exit_menu_generic);
 			if (menu_no == -1)
 				return -1;
@@ -1559,12 +1559,12 @@ make_fstab(struct install_partition_desc *install)
 		case FS_TMPFS:
 			if (ptn->size < 0)
 				scripting_fprintf(f,
-				    "tmpfs\t\t/tmp\ttmpfs\trw,-m=1777,"
-				    "-s=ram%%%" PRIu64 "\n", -ptn->size);
+				    "tmpfs\t\t/tmp\ttmpfs\trw,-m1777,"
+				    "-sram%%%" PRIu64 "\n", -ptn->size);
 			else
 				scripting_fprintf(f,
-				    "tmpfs\t\t/tmp\ttmpfs\trw,-m=1777,"
-				    "-s=%" PRIu64 "M\n", ptn->size);
+				    "tmpfs\t\t/tmp\ttmpfs\trw,-m1777,"
+				    "-s%" PRIu64 "M\n", ptn->size);
 			continue;
 #else
 		case FS_MFS:

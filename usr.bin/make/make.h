@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.339 2024/06/15 20:02:45 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.339.2.1 2025/08/02 05:58:29 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #define MAKE_GNUC_PREREQ(x, y)	0
 #endif
 
-#if MAKE_GNUC_PREREQ(2, 7)
+#if MAKE_GNUC_PREREQ(2, 7) || lint
 #define MAKE_ATTR_UNUSED	__attribute__((__unused__))
 #else
 #define MAKE_ATTR_UNUSED	/* delete */
@@ -176,6 +176,15 @@
 typedef unsigned char bool;
 #define true	1
 #define false	0
+#endif
+
+/*
+ * In code coverage mode with gcc>=12, calling vfork/exec does not mark any
+ * further code from the parent process as covered. gcc-10.5.0 is fine, as
+ * are fork/exec calls, as well as posix_spawn.
+ */
+#ifndef FORK_FUNCTION
+#define FORK_FUNCTION vfork
 #endif
 
 #include "lst.h"
@@ -485,7 +494,7 @@ typedef struct GNode {
 	struct GNode *centurion;
 
 	/* Last time (sequence number) we tried to make this node */
-	unsigned int checked_seqno;
+	unsigned checked_seqno;
 
 	/*
 	 * The "local" variables that are specific to this target and this
@@ -521,6 +530,7 @@ extern enum PosixState {
 	PS_NOT_YET,
 	PS_MAYBE_NEXT_LINE,
 	PS_NOW_OR_NEVER,
+	PS_SET,
 	PS_TOO_LATE
 } posix_state;
 
@@ -693,7 +703,7 @@ typedef struct CmdOpts {
 	 */
 	DebugFlags debug;
 
-	/* -df: debug output is written here - default stderr */
+	/* -dF: debug output is written here - default stderr */
 	FILE *debug_file;
 
 	/*
@@ -788,7 +798,9 @@ extern char **environ;
 
 /* arch.c */
 void Arch_Init(void);
+#ifdef CLEANUP
 void Arch_End(void);
+#endif
 
 bool Arch_ParseArchive(char **, GNodeList *, GNode *);
 void Arch_Touch(GNode *);
@@ -805,7 +817,7 @@ void Compat_MakeAll(GNodeList *);
 void Compat_Make(GNode *, GNode *);
 
 /* cond.c */
-extern unsigned int cond_depth;
+extern unsigned cond_depth;
 CondResult Cond_EvalCondition(const char *) MAKE_ATTR_USE;
 CondResult Cond_EvalLine(const char *) MAKE_ATTR_USE;
 Guard *Cond_ExtractGuard(const char *) MAKE_ATTR_USE;
@@ -843,14 +855,20 @@ void For_Break(struct ForLoop *);
 /* job.c */
 void JobReapChild(pid_t, int, bool);
 
+/* longer than this we use a temp file */
+#ifndef MAKE_CMDLEN_LIMIT
+# define MAKE_CMDLEN_LIMIT 1000
+#endif
 /* main.c */
 void Main_ParseArgLine(const char *);
+void Cmd_Argv(const char *, size_t, const char *[5], char *, size_t,
+    bool, bool);
 char *Cmd_Exec(const char *, char **) MAKE_ATTR_USE;
+void Var_ExportStackTrace(const char *, const char *);
 void Error(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 void Fatal(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2) MAKE_ATTR_DEAD;
 void Punt(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2) MAKE_ATTR_DEAD;
 void DieHorribly(void) MAKE_ATTR_DEAD;
-void Finish(int) MAKE_ATTR_DEAD;
 int unlink_file(const char *) MAKE_ATTR_USE;
 void execDie(const char *, const char *);
 char *getTmpdir(void) MAKE_ATTR_USE;
@@ -859,10 +877,15 @@ const char *cached_realpath(const char *, char *);
 bool GetBooleanExpr(const char *, bool);
 
 /* parse.c */
+extern int parseErrors;
 void Parse_Init(void);
+#ifdef CLEANUP
 void Parse_End(void);
+#endif
 
 void PrintLocation(FILE *, bool, const GNode *);
+const char *GetParentStackTrace(void);
+char *GetStackTrace(bool);
 void PrintStackTrace(bool);
 void Parse_Error(ParseErrorLevel, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
 bool Parse_VarAssign(const char *, bool, GNode *) MAKE_ATTR_USE;
@@ -870,15 +893,16 @@ void Parse_File(const char *, int);
 void Parse_PushInput(const char *, unsigned, unsigned, Buffer,
 		     struct ForLoop *);
 void Parse_MainName(GNodeList *);
-int Parse_NumErrors(void) MAKE_ATTR_USE;
-unsigned int CurFile_CondMinDepth(void) MAKE_ATTR_USE;
+unsigned CurFile_CondMinDepth(void) MAKE_ATTR_USE;
 void Parse_GuardElse(void);
 void Parse_GuardEndif(void);
 
 
 /* suff.c */
 void Suff_Init(void);
+#ifdef CLEANUP
 void Suff_End(void);
+#endif
 
 void Suff_ClearSuffixes(void);
 bool Suff_IsTransform(const char *) MAKE_ATTR_USE;
@@ -918,7 +942,6 @@ const char *GNodeMade_Name(GNodeMade) MAKE_ATTR_USE;
 #ifdef CLEANUP
 void Parse_RegisterCommand(char *);
 #else
-/* ARGSUSED */
 MAKE_INLINE
 void Parse_RegisterCommand(char *cmd MAKE_ATTR_UNUSED)
 {
@@ -926,8 +949,6 @@ void Parse_RegisterCommand(char *cmd MAKE_ATTR_UNUSED)
 #endif
 
 /* var.c */
-void Var_Init(void);
-void Var_End(void);
 
 typedef enum VarEvalMode {
 
@@ -952,6 +973,12 @@ typedef enum VarEvalMode {
 
 	/*
 	 * Parse and evaluate the expression.  It is an error if a
+	 * subexpression evaluates to undefined.
+	 */
+	VARE_EVAL_DEFINED_LOUD,
+
+	/*
+	 * Parse and evaluate the expression.  It is a silent error if a
 	 * subexpression evaluates to undefined.
 	 */
 	VARE_EVAL_DEFINED,
@@ -1033,7 +1060,9 @@ void Global_Append(const char *, const char *);
 void Global_Delete(const char *);
 void Global_Set_ReadOnly(const char *, const char *);
 
-const char *EvalStack_Details(void);
+void EvalStack_PushMakeflags(const char *);
+void EvalStack_Pop(void);
+bool EvalStack_Details(Buffer *buf) MAKE_ATTR_USE;
 
 /* util.c */
 typedef void (*SignalProc)(int);
@@ -1047,7 +1076,7 @@ time_t Make_Recheck(GNode *) MAKE_ATTR_USE;
 void Make_HandleUse(GNode *, GNode *);
 void Make_Update(GNode *);
 void GNode_SetLocalVars(GNode *);
-bool Make_Run(GNodeList *);
+bool Make_MakeParallel(GNodeList *);
 bool shouldDieQuietly(GNode *, int) MAKE_ATTR_USE;
 void PrintOnError(GNode *, const char *);
 void Main_ExportMAKEFLAGS(bool);
@@ -1056,6 +1085,7 @@ int mkTempFile(const char *, char *, size_t) MAKE_ATTR_USE;
 void AppendWords(StringList *, char *);
 void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
 bool GNode_ShouldExecute(GNode *gn) MAKE_ATTR_USE;
+char *GNodeType_ToString(GNodeType);
 
 /* See if the node was seen on the left-hand side of a dependency operator. */
 MAKE_INLINE bool MAKE_ATTR_USE
@@ -1155,6 +1185,8 @@ MAKE_INLINE bool MAKE_ATTR_USE
 ch_isdigit(char ch) { return isdigit((unsigned char)ch) != 0; }
 MAKE_INLINE bool MAKE_ATTR_USE
 ch_islower(char ch) { return islower((unsigned char)ch) != 0; }
+MAKE_INLINE bool MAKE_ATTR_USE
+ch_isprint(char ch) { return isprint((unsigned char)ch) != 0; }
 MAKE_INLINE bool MAKE_ATTR_USE
 ch_isspace(char ch) { return isspace((unsigned char)ch) != 0; }
 MAKE_INLINE bool MAKE_ATTR_USE

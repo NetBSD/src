@@ -1,4 +1,4 @@
-/* $NetBSD: avdtp_signal.h,v 1.1 2017/01/28 16:55:54 nat Exp $ */
+/* $NetBSD: avdtp_signal.h,v 1.1.28.1 2025/08/02 05:58:48 perseant Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -48,7 +48,9 @@
 #define	AVDTP_CLOSE			0x08
 #define	AVDTP_SUSPEND			0x09
 #define	AVDTP_ABORT			0x0a
-#define	AVDTP_SECUURITY_CONTROL		0x0b
+#define	AVDTP_SECURITY_CONTROL		0x0b
+#define	AVDTP_GET_ALL_CAPABILITIES	0x0c
+#define	AVDTP_DELAYREPORT		0x0d
 
 /* Signal Command & Response Header Masks. */
 

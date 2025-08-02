@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -48,6 +48,7 @@
 #define	NPFVAR_ICMP		10
 #define	NPFVAR_INTERFACE	11
 #define	NPFVAR_PROTO		12
+#define	NPFVAR_MAC		13
 
 #ifdef _NPFVAR_PRIVATE
 static const char *npfvar_types[ ] = {
@@ -64,11 +65,13 @@ static const char *npfvar_types[ ] = {
 	[NPFVAR_ICMP]		= "icmp",
 	[NPFVAR_INTERFACE]	= "interface-address",
 	[NPFVAR_PROTO]		= "proto",
+	[NPFVAR_MAC]		= "mac-address",
 };
 #endif
 
 struct npfvar;
 typedef struct npfvar npfvar_t;
+typedef int (*rid_parser)(const char *, uint32_t *);
 
 npfvar_t *	npfvar_create(void);
 npfvar_t *	npfvar_create_element(unsigned, const void *, size_t);
@@ -82,7 +85,9 @@ void		npfvar_destroy(npfvar_t *);
 
 char *		npfvar_expand_string(const npfvar_t *);
 size_t		npfvar_get_count(const npfvar_t *);
+uint32_t	npfvar_expand_number(const npfvar_t *);
 int		npfvar_get_type(const npfvar_t *, size_t);
 void *		npfvar_get_data(const npfvar_t *, unsigned, size_t);
+void		npf_var_rid(char *, rid_parser, uint32_t *, const char *);
 
 #endif
