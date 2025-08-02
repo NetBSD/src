@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_memfd.c,v 1.11 2023/08/12 23:22:49 christos Exp $	*/
+/*	$NetBSD: sys_memfd.c,v 1.12 2025/08/02 15:46:04 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.11 2023/08/12 23:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.12 2025/08/02 15:46:04 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -82,7 +82,7 @@ static const struct fileops memfd_fileops = {
 };
 
 /*
- * memfd_create(2).  Creat a file descriptor associated with anonymous
+ * memfd_create(2).  Create a file descriptor associated with anonymous
  * memory.
  */
 int
