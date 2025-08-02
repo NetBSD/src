@@ -1,15 +1,41 @@
-/* -*- Mode: C; tab-width: 4 -*-
- * 
- * Copyright (c) 2015 Apple Inc. All rights reserved.
+/*
+ * Copyright (c) 2015-2024 Apple Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #ifndef _DNS_SD_PRIVATE_H
 #define _DNS_SD_PRIVATE_H
 
+#include <dns_sd.h>
 
-// Private flags (kDNSServiceFlagsPrivateOne, kDNSServiceFlagsPrivateTwo, kDNSServiceFlagsPrivateThree, kDNSServiceFlagsPrivateFour) from dns_sd.h
+
+    #define DNS_SD_ENUM_SPI_AVAILABLE(...)
+
+#define DNS_SD_ENUM_SPI_AVAILABLE_FALL_2021 DNS_SD_ENUM_SPI_AVAILABLE(macos(12.0), ios(15.0), tvos(15.0), watchos(8.0))
+#define DNS_SD_ENUM_SPI_AVAILABLE_FALL_2022 DNS_SD_ENUM_SPI_AVAILABLE(macos(13.0), ios(16.0), tvos(16.0), watchos(9.0))
+
+__BEGIN_DECLS
+
+// Private flags (kDNSServiceFlagsPrivateOne, kDNSServiceFlagsPrivateTwo, kDNSServiceFlagsPrivateThree, kDNSServiceFlagsPrivateFour, kDNSServiceFlagsPrivateFive) from dns_sd.h
 enum
 {
+    kDNSServiceFlagsDenyConstrained        = 0x2000,
+    /*
+     * This flag is meaningful only for Unicast DNS queries. When set, the daemon will restrict
+     * DNS resolutions on interfaces defined as constrained for that request.
+     */
+
     kDNSServiceFlagsDenyCellular           = 0x8000000,
     /*
      * This flag is meaningful only for Unicast DNS queries. When set, the daemon will restrict
@@ -35,55 +61,22 @@ enum
      */
 };
 
+typedef enum
+{
+    kDNSServiceFailoverPolicyNone  DNS_SD_ENUM_SPI_AVAILABLE_FALL_2021 = 0,
+    kDNSServiceFailoverPolicyAllow DNS_SD_ENUM_SPI_AVAILABLE_FALL_2021 = 1
+} DNSServiceFailoverPolicy;
 
-#if !DNSSD_NO_CREATE_DELEGATE_CONNECTION
-/* DNSServiceCreateDelegateConnection()
- *
- * Parameters:
- *
- * sdRef:           A pointer to an uninitialized DNSServiceRef. Deallocating
- *                  the reference (via DNSServiceRefDeallocate()) severs the
- *                  connection and deregisters all records registered on this connection.
- *
- * pid :            Process ID of the delegate
- *
- * uuid:            UUID of the delegate
- *
- *                  Note that only one of the two arguments (pid or uuid) can be specified. If pid
- *                  is zero, uuid will be assumed to be a valid value; otherwise pid will be used.
- *
- * return value:    Returns kDNSServiceErr_NoError on success, otherwise returns
- *                  an error code indicating the specific failure that occurred (in which
- *                  case the DNSServiceRef is not initialized). kDNSServiceErr_NotAuth is
- *                  returned to indicate that the calling process does not have entitlements
- *                  to use this API.
- */
-DNSServiceErrorType DNSSD_API DNSServiceCreateDelegateConnection(DNSServiceRef *sdRef, int32_t pid, uuid_t uuid);
-#endif
+typedef enum
+{
+    kDNSServiceValidationPolicyNone     DNS_SD_ENUM_SPI_AVAILABLE_FALL_2022 = 0,
+    kDNSServiceValidationPolicyRequired DNS_SD_ENUM_SPI_AVAILABLE_FALL_2022 = 1
+} DNSServiceValidationPolicy;
 
-// Map the source port of the local UDP socket that was opened for sending the DNS query
-// to the process ID of the application that triggered the DNS resolution.
-//
-/* DNSServiceGetPID() Parameters:
- *
- * srcport:         Source port (in network byte order) of the UDP socket that was created by
- *                  the daemon to send the DNS query on the wire.
- *
- * pid:             Process ID of the application that started the name resolution which triggered
- *                  the daemon to send the query on the wire. The value can be -1 if the srcport
- *                  cannot be mapped.
- *
- * return value:    Returns kDNSServiceErr_NoError on success, or kDNSServiceErr_ServiceNotRunning
- *                  if the daemon is not running. The value of the pid is undefined if the return
- *                  value has error.
- */
-DNSServiceErrorType DNSSD_API DNSServiceGetPID
-(
-    uint16_t srcport,
-    int32_t *pid
-);
 
 #define kDNSServiceCompPrivateDNS   "PrivateDNS"
 #define kDNSServiceCompMulticastDNS "MulticastDNS"
 
-#endif
+__END_DECLS
+
+#endif  // _DNS_SD_PRIVATE_H

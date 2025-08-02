@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE syscalls_info SYSTEM "gdb-syscalls.dtd">
-<!-- Copyright (C) 2009-2023 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -36,7 +36,7 @@
   <syscall name="access" number="33" groups="file"/>
   <syscall name="nice" number="34"/>
   <syscall name="sync" number="36"/>
-  <syscall name="kill" number="37" groups="signal"/>
+  <syscall name="kill" number="37" groups="signal,process"/>
   <syscall name="rename" number="38" groups="file"/>
   <syscall name="mkdir" number="39" groups="file"/>
   <syscall name="rmdir" number="40" groups="file"/>
@@ -145,7 +145,7 @@
   <syscall name="rt_sigprocmask" number="175" groups="signal"/>
   <syscall name="rt_sigpending" number="176" groups="signal"/>
   <syscall name="rt_sigtimedwait" number="177" groups="signal"/>
-  <syscall name="rt_sigqueueinfo" number="178" groups="signal"/>
+  <syscall name="rt_sigqueueinfo" number="178" groups="signal,process"/>
   <syscall name="rt_sigsuspend" number="179" groups="signal"/>
   <syscall name="pread64" number="180" groups="descriptor"/>
   <syscall name="pwrite64" number="181" groups="descriptor"/>
@@ -154,8 +154,8 @@
   <syscall name="capset" number="185"/>
   <syscall name="sigaltstack" number="186" groups="signal"/>
   <syscall name="sendfile" number="187" groups="descriptor,network"/>
-  <syscall name="getpmsg" number="188"/>
-  <syscall name="putpmsg" number="189"/>
+  <syscall name="getpmsg" number="188" groups="network"/>
+  <syscall name="putpmsg" number="189" groups="network"/>
   <syscall name="vfork" number="190" groups="process"/>
   <syscall name="getrlimit" number="191"/>
   <syscall name="lchown" number="198" groups="file"/>
@@ -195,13 +195,13 @@
   <syscall name="lremovexattr" number="234" groups="file"/>
   <syscall name="fremovexattr" number="235" groups="descriptor"/>
   <syscall name="gettid" number="236"/>
-  <syscall name="tkill" number="237" groups="signal"/>
+  <syscall name="tkill" number="237" groups="signal,process"/>
   <syscall name="futex" number="238"/>
   <syscall name="sched_setaffinity" number="239"/>
   <syscall name="sched_getaffinity" number="240"/>
-  <syscall name="tgkill" number="241" groups="signal"/>
-  <syscall name="io_setup" number="243"/>
-  <syscall name="io_destroy" number="244"/>
+  <syscall name="tgkill" number="241" groups="signal,process"/>
+  <syscall name="io_setup" number="243" groups="memory"/>
+  <syscall name="io_destroy" number="244" groups="memory"/>
   <syscall name="io_getevents" number="245"/>
   <syscall name="io_submit" number="246"/>
   <syscall name="io_cancel" number="247"/>
@@ -226,12 +226,12 @@
   <syscall name="mbind" number="268" groups="memory"/>
   <syscall name="get_mempolicy" number="269" groups="memory"/>
   <syscall name="set_mempolicy" number="270" groups="memory"/>
-  <syscall name="mq_open" number="271"/>
+  <syscall name="mq_open" number="271" groups="descriptor"/>
   <syscall name="mq_unlink" number="272"/>
-  <syscall name="mq_timedsend" number="273"/>
-  <syscall name="mq_timedreceive" number="274"/>
-  <syscall name="mq_notify" number="275"/>
-  <syscall name="mq_getsetattr" number="276"/>
+  <syscall name="mq_timedsend" number="273" groups="descriptor"/>
+  <syscall name="mq_timedreceive" number="274" groups="descriptor"/>
+  <syscall name="mq_notify" number="275" groups="descriptor"/>
+  <syscall name="mq_getsetattr" number="276" groups="descriptor"/>
   <syscall name="kexec_load" number="277"/>
   <syscall name="add_key" number="278"/>
   <syscall name="request_key" number="279"/>
@@ -240,7 +240,7 @@
   <syscall name="ioprio_set" number="282"/>
   <syscall name="ioprio_get" number="283"/>
   <syscall name="inotify_init" number="284" groups="descriptor"/>
-  <syscall name="inotify_add_watch" number="285" groups="descriptor"/>
+  <syscall name="inotify_add_watch" number="285" groups="descriptor,file"/>
   <syscall name="inotify_rm_watch" number="286" groups="descriptor"/>
   <syscall name="migrate_pages" number="287" groups="memory"/>
   <syscall name="openat" number="288" groups="descriptor,file"/>
@@ -258,7 +258,7 @@
   <syscall name="faccessat" number="300" groups="descriptor,file"/>
   <syscall name="pselect6" number="301" groups="descriptor"/>
   <syscall name="ppoll" number="302" groups="descriptor"/>
-  <syscall name="unshare" number="303" groups="process"/>
+  <syscall name="unshare" number="303"/>
   <syscall name="set_robust_list" number="304"/>
   <syscall name="get_robust_list" number="305"/>
   <syscall name="splice" number="306" groups="descriptor"/>
@@ -302,15 +302,15 @@
   <syscall name="finit_module" number="344" groups="descriptor"/>
   <syscall name="sched_setattr" number="345"/>
   <syscall name="sched_getattr" number="346"/>
-  <syscall name="renameat2" number="347"/>
+  <syscall name="renameat2" number="347" groups="descriptor,file"/>
   <syscall name="seccomp" number="348"/>
   <syscall name="getrandom" number="349"/>
-  <syscall name="memfd_create" number="350"/>
-  <syscall name="bpf" number="351"/>
+  <syscall name="memfd_create" number="350" groups="descriptor"/>
+  <syscall name="bpf" number="351" groups="descriptor"/>
   <syscall name="s390_pci_mmio_write" number="352"/>
   <syscall name="s390_pci_mmio_read" number="353"/>
-  <syscall name="execveat" number="354"/>
-  <syscall name="userfaultfd" number="355"/>
+  <syscall name="execveat" number="354" groups="descriptor,file,process"/>
+  <syscall name="userfaultfd" number="355" groups="descriptor"/>
   <syscall name="membarrier" number="356"/>
   <syscall name="recvmmsg" number="357" groups="network"/>
   <syscall name="sendmmsg" number="358" groups="network"/>
@@ -329,17 +329,17 @@
   <syscall name="recvfrom" number="371" groups="network"/>
   <syscall name="recvmsg" number="372" groups="network"/>
   <syscall name="shutdown" number="373" groups="network"/>
-  <syscall name="mlock2" number="374"/>
-  <syscall name="copy_file_range" number="375"/>
-  <syscall name="preadv2" number="376"/>
-  <syscall name="pwritev2" number="377"/>
+  <syscall name="mlock2" number="374" groups="memory"/>
+  <syscall name="copy_file_range" number="375" groups="descriptor"/>
+  <syscall name="preadv2" number="376" groups="descriptor"/>
+  <syscall name="pwritev2" number="377" groups="descriptor"/>
   <syscall name="s390_guarded_storage" number="378"/>
-  <syscall name="statx" number="379"/>
+  <syscall name="statx" number="379" groups="descriptor,file"/>
   <syscall name="s390_sthyi" number="380"/>
-  <syscall name="kexec_file_load" number="381"/>
+  <syscall name="kexec_file_load" number="381" groups="descriptor"/>
   <syscall name="io_pgetevents" number="382"/>
   <syscall name="rseq" number="383"/>
-  <syscall name="pkey_mprotect" number="384"/>
+  <syscall name="pkey_mprotect" number="384" groups="memory"/>
   <syscall name="pkey_alloc" number="385"/>
   <syscall name="pkey_free" number="386"/>
   <syscall name="semtimedop" number="392" groups="ipc"/>
@@ -353,30 +353,42 @@
   <syscall name="msgsnd" number="400" groups="ipc"/>
   <syscall name="msgrcv" number="401" groups="ipc"/>
   <syscall name="msgctl" number="402" groups="ipc"/>
-  <syscall name="pidfd_send_signal" number="424"/>
-  <syscall name="io_uring_setup" number="425"/>
-  <syscall name="io_uring_enter" number="426"/>
-  <syscall name="io_uring_register" number="427"/>
-  <syscall name="open_tree" number="428"/>
-  <syscall name="move_mount" number="429"/>
-  <syscall name="fsopen" number="430"/>
-  <syscall name="fsconfig" number="431"/>
-  <syscall name="fsmount" number="432"/>
-  <syscall name="fspick" number="433"/>
-  <syscall name="pidfd_open" number="434"/>
-  <syscall name="clone3" number="435"/>
+  <syscall name="pidfd_send_signal" number="424" groups="descriptor,signal,process"/>
+  <syscall name="io_uring_setup" number="425" groups="descriptor"/>
+  <syscall name="io_uring_enter" number="426" groups="descriptor,signal"/>
+  <syscall name="io_uring_register" number="427" groups="descriptor,memory"/>
+  <syscall name="open_tree" number="428" groups="descriptor,file"/>
+  <syscall name="move_mount" number="429" groups="descriptor,file"/>
+  <syscall name="fsopen" number="430" groups="descriptor"/>
+  <syscall name="fsconfig" number="431" groups="descriptor,file"/>
+  <syscall name="fsmount" number="432" groups="descriptor"/>
+  <syscall name="fspick" number="433" groups="descriptor,file"/>
+  <syscall name="pidfd_open" number="434" groups="descriptor"/>
+  <syscall name="clone3" number="435" groups="process"/>
   <syscall name="close_range" number="436"/>
-  <syscall name="openat2" number="437"/>
-  <syscall name="pidfd_getfd" number="438"/>
-  <syscall name="faccessat2" number="439"/>
-  <syscall name="process_madvise" number="440"/>
-  <syscall name="epoll_pwait2" number="441"/>
-  <syscall name="mount_setattr" number="442"/>
-  <syscall name="quotactl_fd" number="443"/>
-  <syscall name="landlock_create_ruleset" number="444"/>
-  <syscall name="landlock_add_rule" number="445"/>
-  <syscall name="landlock_restrict_self" number="446"/>
-  <syscall name="process_mrelease" number="448"/>
+  <syscall name="openat2" number="437" groups="descriptor,file"/>
+  <syscall name="pidfd_getfd" number="438" groups="descriptor"/>
+  <syscall name="faccessat2" number="439" groups="descriptor,file"/>
+  <syscall name="process_madvise" number="440" groups="descriptor"/>
+  <syscall name="epoll_pwait2" number="441" groups="descriptor"/>
+  <syscall name="mount_setattr" number="442" groups="descriptor,file"/>
+  <syscall name="quotactl_fd" number="443" groups="descriptor"/>
+  <syscall name="landlock_create_ruleset" number="444" groups="descriptor"/>
+  <syscall name="landlock_add_rule" number="445" groups="descriptor"/>
+  <syscall name="landlock_restrict_self" number="446" groups="descriptor"/>
+  <syscall name="memfd_secret" number="447" groups="descriptor"/>
+  <syscall name="process_mrelease" number="448" groups="descriptor"/>
   <syscall name="futex_waitv" number="449"/>
-  <syscall name="set_mempolicy_home_node" number="450"/>
+  <syscall name="set_mempolicy_home_node" number="450" groups="memory"/>
+  <syscall name="cachestat" number="451" groups="descriptor"/>
+  <syscall name="fchmodat2" number="452" groups="descriptor,file"/>
+  <syscall name="map_shadow_stack" number="453" groups="memory"/>
+  <syscall name="futex_wake" number="454"/>
+  <syscall name="futex_wait" number="455"/>
+  <syscall name="futex_requeue" number="456"/>
+  <syscall name="statmount" number="457"/>
+  <syscall name="listmount" number="458"/>
+  <syscall name="lsm_get_self_attr" number="459"/>
+  <syscall name="lsm_set_self_attr" number="460"/>
+  <syscall name="lsm_list_modules" number="461"/>
 </syscalls_info>

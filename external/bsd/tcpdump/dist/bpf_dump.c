@@ -20,12 +20,10 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bpf_dump.c,v 1.6 2023/08/17 20:19:39 christos Exp $");
+__RCSID("$NetBSD: bpf_dump.c,v 1.6.2.1 2025/08/02 05:23:20 perseant Exp $");
 #endif
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

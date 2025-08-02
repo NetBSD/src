@@ -1,5 +1,5 @@
 /* VxWorks support for ELF
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -172,35 +172,39 @@ elf_vxworks_emit_relocs (bfd *output_bfd,
 	   irela += bed->s->int_rels_per_ext_rel,
 	     hash_ptr++)
 	{
-	  if (*hash_ptr
-	      && (*hash_ptr)->def_dynamic
-	      && !(*hash_ptr)->def_regular
-	      && ((*hash_ptr)->root.type == bfd_link_hash_defined
-		  || (*hash_ptr)->root.type == bfd_link_hash_defweak)
-	      && (*hash_ptr)->root.u.def.section->output_section != NULL)
+	  if (*hash_ptr)
 	    {
-	      /* This is a relocation from an executable or shared
-		 library against a symbol in a different shared
-		 library.  We are creating a definition in the output
-		 file but it does not come from any of our normal (.o)
-		 files. ie. a PLT stub.  Normally this would be a
-		 relocation against against SHN_UNDEF with the VMA of
-		 the PLT stub.  This upsets the VxWorks loader.
-		 Convert it to a section-relative relocation.  This
-		 gets some other symbols (for instance .dynbss), but
-		 is conservatively correct.  */
-	      for (j = 0; j < bed->s->int_rels_per_ext_rel; j++)
+	      (*hash_ptr)->has_reloc = 1;
+	      if ((*hash_ptr)->def_dynamic
+		  && !(*hash_ptr)->def_regular
+		  && ((*hash_ptr)->root.type == bfd_link_hash_defined
+		      || (*hash_ptr)->root.type == bfd_link_hash_defweak)
+		  && (*hash_ptr)->root.u.def.section->output_section != NULL)
 		{
-		  asection *sec = (*hash_ptr)->root.u.def.section;
-		  int this_idx = sec->output_section->target_index;
+		  /* This is a relocation from an executable or shared
+		     library against a symbol in a different shared
+		     library.  We are creating a definition in the output
+		     file but it does not come from any of our normal (.o)
+		     files. ie. a PLT stub.  Normally this would be a
+		     relocation against SHN_UNDEF with the VMA of
+		     the PLT stub.  This upsets the VxWorks loader.
+		     Convert it to a section-relative relocation.  This
+		     gets some other symbols (for instance .dynbss), but
+		     is conservatively correct.  */
+		  for (j = 0; j < bed->s->int_rels_per_ext_rel; j++)
+		    {
+		      asection *sec = (*hash_ptr)->root.u.def.section;
+		      int this_idx = sec->output_section->target_index;
 
-		  irela[j].r_info
-		    = ELF32_R_INFO (this_idx, ELF32_R_TYPE (irela[j].r_info));
-		  irela[j].r_addend += (*hash_ptr)->root.u.def.value;
-		  irela[j].r_addend += sec->output_offset;
+		      irela[j].r_info
+			= ELF32_R_INFO (this_idx,
+					ELF32_R_TYPE (irela[j].r_info));
+		      irela[j].r_addend += (*hash_ptr)->root.u.def.value;
+		      irela[j].r_addend += sec->output_offset;
+		    }
+		  /* Stop the generic routine adjusting this entry.  */
+		  *hash_ptr = NULL;
 		}
-	      /* Stop the generic routine adjusting this entry.  */
-	      *hash_ptr = NULL;
 	    }
 	}
     }

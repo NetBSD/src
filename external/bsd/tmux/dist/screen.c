@@ -110,8 +110,9 @@ screen_reinit(struct screen *s)
 	s->rlower = screen_size_y(s) - 1;
 
 	s->mode = MODE_CURSOR|MODE_WRAP|(s->mode & MODE_CRLF);
+
 	if (options_get_number(global_options, "extended-keys") == 2)
-		s->mode |= MODE_KEXTENDED;
+		s->mode = (s->mode & ~EXTENDED_KEY_MODES)|MODE_KEYS_EXTENDED;
 
 	if (s->saved_grid != NULL)
 		screen_alternate_off(s, NULL, 0);
@@ -308,12 +309,12 @@ screen_resize_cursor(struct screen *s, u_int sx, u_int sy, int reflow,
 	if (sy != screen_size_y(s))
 		screen_resize_y(s, sy, eat_empty, &cy);
 
-	if (reflow) {
 #ifdef ENABLE_SIXEL
-		image_free_all(s);
+	image_free_all(s);
 #endif
+
+	if (reflow)
 		screen_reflow(s, sx, &cx, &cy, cursor);
-	}
 
 	if (cy >= s->grid->hsize) {
 		s->cx = cx;
@@ -400,7 +401,7 @@ screen_resize_y(struct screen *s, u_int sy, int eat_empty, u_int *cy)
 
 		/*
 		 * Try to pull as much as possible out of scrolled history, if
-		 * is is enabled.
+		 * it is enabled.
 		 */
 		available = gd->hscrolled;
 		if (gd->flags & GRID_HISTORY && available > 0) {
@@ -730,8 +731,10 @@ screen_mode_to_string(int mode)
 		strlcat(tmp, "ORIGIN,", sizeof tmp);
 	if (mode & MODE_CRLF)
 		strlcat(tmp, "CRLF,", sizeof tmp);
-	if (mode & MODE_KEXTENDED)
-		strlcat(tmp, "KEXTENDED,", sizeof tmp);
+	if (mode & MODE_KEYS_EXTENDED)
+		strlcat(tmp, "KEYS_EXTENDED,", sizeof tmp);
+	if (mode & MODE_KEYS_EXTENDED_2)
+		strlcat(tmp, "KEYS_EXTENDED_2,", sizeof tmp);
 	tmp[strlen(tmp) - 1] = '\0';
 	return (tmp);
 }

@@ -13,23 +13,13 @@
 #include "common/ieee802_11_defs.h"
 #include "drivers/driver.h"
 #include "eap_peer/eap.h"
+#include "rsn_supp/wpa.h"
 #include "wpa_supplicant_i.h"
 #include "config.h"
 #include "notify.h"
 #include "scan.h"
+#include "bssid_ignore.h"
 #include "bss.h"
-
-
-#define WPA_BSS_FREQ_CHANGED_FLAG	BIT(0)
-#define WPA_BSS_SIGNAL_CHANGED_FLAG	BIT(1)
-#define WPA_BSS_PRIVACY_CHANGED_FLAG	BIT(2)
-#define WPA_BSS_MODE_CHANGED_FLAG	BIT(3)
-#define WPA_BSS_WPAIE_CHANGED_FLAG	BIT(4)
-#define WPA_BSS_RSNIE_CHANGED_FLAG	BIT(5)
-#define WPA_BSS_WPS_CHANGED_FLAG	BIT(6)
-#define WPA_BSS_RATES_CHANGED_FLAG	BIT(7)
-#define WPA_BSS_IES_CHANGED_FLAG	BIT(8)
-
 
 static void wpa_bss_set_hessid(struct wpa_bss *bss)
 {
@@ -195,9 +185,8 @@ static void wpa_bss_anqp_free(struct wpa_bss_anqp *anqp)
 }
 
 
-static void wpa_bss_update_pending_connect(struct wpa_supplicant *wpa_s,
-					   struct wpa_bss *old_bss,
-					   struct wpa_bss *new_bss)
+static struct wpa_connect_work *
+wpa_bss_check_pending_connect(struct wpa_supplicant *wpa_s, struct wpa_bss *bss)
 {
 	struct wpa_radio_work *work;
 	struct wpa_connect_work *cwork;
@@ -206,12 +195,19 @@ static void wpa_bss_update_pending_connect(struct wpa_supplicant *wpa_s,
 	if (!work)
 		work = radio_work_pending(wpa_s, "connect");
 	if (!work)
-		return;
+		return NULL;
 
 	cwork = work->ctx;
-	if (cwork->bss != old_bss)
-		return;
+	if (cwork->bss != bss)
+		return NULL;
 
+	return cwork;
+}
+
+
+static void wpa_bss_update_pending_connect(struct wpa_connect_work *cwork,
+					   struct wpa_bss *new_bss)
+{
 	wpa_printf(MSG_DEBUG,
 		   "Update BSS pointer for the pending connect radio work");
 	cwork->bss = new_bss;
@@ -223,6 +219,8 @@ static void wpa_bss_update_pending_connect(struct wpa_supplicant *wpa_s,
 void wpa_bss_remove(struct wpa_supplicant *wpa_s, struct wpa_bss *bss,
 		    const char *reason)
 {
+	struct wpa_connect_work *cwork;
+
 	if (wpa_s->last_scan_res) {
 		unsigned int i;
 		for (i = 0; i < wpa_s->last_scan_res_used; i++) {
@@ -236,7 +234,9 @@ void wpa_bss_remove(struct wpa_supplicant *wpa_s, struct wpa_bss *bss,
 			}
 		}
 	}
-	wpa_bss_update_pending_connect(wpa_s, bss, NULL);
+	cwork = wpa_bss_check_pending_connect(wpa_s, bss);
+	if (cwork)
+		wpa_bss_update_pending_connect(cwork, NULL);
 	dl_list_del(&bss->list);
 	dl_list_del(&bss->list_id);
 	wpa_s->num_bss--;
@@ -252,7 +252,7 @@ void wpa_bss_remove(struct wpa_supplicant *wpa_s, struct wpa_bss *bss,
 /**
  * wpa_bss_get - Fetch a BSS table entry based on BSSID and SSID
  * @wpa_s: Pointer to wpa_supplicant data
- * @bssid: BSSID
+ * @bssid: BSSID, or %NULL to match any BSSID
  * @ssid: SSID
  * @ssid_len: Length of @ssid
  * Returns: Pointer to the BSS entry or %NULL if not found
@@ -261,10 +261,11 @@ struct wpa_bss * wpa_bss_get(struct wpa_supplicant *wpa_s, const u8 *bssid,
 			     const u8 *ssid, size_t ssid_len)
 {
 	struct wpa_bss *bss;
-	if (!wpa_supplicant_filter_bssid_match(wpa_s, bssid))
+
+	if (bssid && !wpa_supplicant_filter_bssid_match(wpa_s, bssid))
 		return NULL;
 	dl_list_for_each(bss, &wpa_s->bss, struct wpa_bss, list) {
-		if (os_memcmp(bss->bssid, bssid, ETH_ALEN) == 0 &&
+		if ((!bssid || ether_addr_equal(bss->bssid, bssid)) &&
 		    bss->ssid_len == ssid_len &&
 		    os_memcmp(bss->ssid, ssid, ssid_len) == 0)
 			return bss;
@@ -297,12 +298,14 @@ static void wpa_bss_copy_res(struct wpa_bss *dst, struct wpa_scan_res *src,
 	dst->flags = src->flags;
 	os_memcpy(dst->bssid, src->bssid, ETH_ALEN);
 	dst->freq = src->freq;
+	dst->max_cw = src->max_cw;
 	dst->beacon_int = src->beacon_int;
 	dst->caps = src->caps;
 	dst->qual = src->qual;
 	dst->noise = src->noise;
 	dst->level = src->level;
 	dst->tsf = src->tsf;
+	dst->beacon_newer = src->beacon_newer;
 	dst->est_throughput = src->est_throughput;
 	dst->snr = src->snr;
 
@@ -351,9 +354,29 @@ static int wpa_bss_is_wps_candidate(struct wpa_supplicant *wpa_s,
 }
 
 
+static bool is_p2p_pending_bss(struct wpa_supplicant *wpa_s,
+			       struct wpa_bss *bss)
+{
+#ifdef CONFIG_P2P
+	u8 addr[ETH_ALEN];
+
+	if (ether_addr_equal(bss->bssid, wpa_s->pending_join_iface_addr))
+		return true;
+	if (!is_zero_ether_addr(wpa_s->pending_join_dev_addr) &&
+	    p2p_parse_dev_addr(wpa_bss_ie_ptr(bss), bss->ie_len, addr) == 0 &&
+	    ether_addr_equal(addr, wpa_s->pending_join_dev_addr))
+		return true;
+#endif /* CONFIG_P2P */
+	return false;
+}
+
+
 static int wpa_bss_known(struct wpa_supplicant *wpa_s, struct wpa_bss *bss)
 {
 	struct wpa_ssid *ssid;
+
+	if (is_p2p_pending_bss(wpa_s, bss))
+		return 1;
 
 	for (ssid = wpa_s->conf->ssid; ssid; ssid = ssid->next) {
 		if (ssid->ssid == NULL || ssid->ssid_len == 0)
@@ -369,8 +392,18 @@ static int wpa_bss_known(struct wpa_supplicant *wpa_s, struct wpa_bss *bss)
 
 static int wpa_bss_in_use(struct wpa_supplicant *wpa_s, struct wpa_bss *bss)
 {
+	int i;
+
 	if (bss == wpa_s->current_bss)
 		return 1;
+
+	if (bss == wpa_s->ml_connect_probe_bss)
+		return 1;
+
+#ifdef CONFIG_WNM
+	if (bss == wpa_s->wnm_target_bss)
+		return 1;
+#endif /* CONFIG_WNM */
 
 	if (wpa_s->current_bss &&
 	    (bss->ssid_len != wpa_s->current_bss->ssid_len ||
@@ -378,9 +411,20 @@ static int wpa_bss_in_use(struct wpa_supplicant *wpa_s, struct wpa_bss *bss)
 		       bss->ssid_len) != 0))
 		return 0; /* SSID has changed */
 
-	return !is_zero_ether_addr(bss->bssid) &&
-		(os_memcmp(bss->bssid, wpa_s->bssid, ETH_ALEN) == 0 ||
-		 os_memcmp(bss->bssid, wpa_s->pending_bssid, ETH_ALEN) == 0);
+	if (!is_zero_ether_addr(bss->bssid) &&
+	    (ether_addr_equal(bss->bssid, wpa_s->bssid) ||
+	     ether_addr_equal(bss->bssid, wpa_s->pending_bssid)))
+		return 1;
+
+	if (!wpa_s->valid_links)
+		return 0;
+
+	for_each_link(wpa_s->valid_links, i) {
+		if (ether_addr_equal(bss->bssid, wpa_s->links[i].bssid))
+			return 1;
+	}
+
+	return 0;
 }
 
 
@@ -431,7 +475,11 @@ static struct wpa_bss * wpa_bss_add(struct wpa_supplicant *wpa_s,
 				    struct os_reltime *fetch_time)
 {
 	struct wpa_bss *bss;
-	char extra[50];
+	char extra[100];
+	const u8 *ml_ie;
+	char *pos, *end;
+	int ret = 0;
+	const u8 *mld_addr;
 
 	bss = os_zalloc(sizeof(*bss) + res->ie_len + res->beacon_ie_len);
 	if (bss == NULL)
@@ -443,8 +491,16 @@ static struct wpa_bss * wpa_bss_add(struct wpa_supplicant *wpa_s,
 	bss->ssid_len = ssid_len;
 	bss->ie_len = res->ie_len;
 	bss->beacon_ie_len = res->beacon_ie_len;
-	os_memcpy(bss + 1, res + 1, res->ie_len + res->beacon_ie_len);
+	os_memcpy(bss->ies, res + 1, res->ie_len + res->beacon_ie_len);
 	wpa_bss_set_hessid(bss);
+
+	os_memset(bss->mld_addr, 0, ETH_ALEN);
+	ml_ie = wpa_scan_get_ml_ie(res, MULTI_LINK_CONTROL_TYPE_BASIC);
+	if (ml_ie) {
+		mld_addr = get_basic_mle_mld_addr(&ml_ie[3], ml_ie[1] - 1);
+		if (mld_addr)
+			os_memcpy(bss->mld_addr, mld_addr, ETH_ALEN);
+	}
 
 	if (wpa_s->num_bss + 1 > wpa_s->conf->bss_max_count &&
 	    wpa_bss_remove_oldest(wpa_s) != 0) {
@@ -457,11 +513,21 @@ static struct wpa_bss * wpa_bss_add(struct wpa_supplicant *wpa_s,
 	dl_list_add_tail(&wpa_s->bss, &bss->list);
 	dl_list_add_tail(&wpa_s->bss_id, &bss->list_id);
 	wpa_s->num_bss++;
+
+	extra[0] = '\0';
+	pos = extra;
+	end = pos + sizeof(extra);
 	if (!is_zero_ether_addr(bss->hessid))
-		os_snprintf(extra, sizeof(extra), " HESSID " MACSTR,
-			    MAC2STR(bss->hessid));
-	else
-		extra[0] = '\0';
+		ret = os_snprintf(pos, end - pos, " HESSID " MACSTR,
+				  MAC2STR(bss->hessid));
+
+	if (!is_zero_ether_addr(bss->mld_addr) &&
+	    !os_snprintf_error(end - pos, ret)) {
+		pos += ret;
+		ret = os_snprintf(pos, end - pos, " MLD ADDR " MACSTR,
+				  MAC2STR(bss->mld_addr));
+	}
+
 	wpa_dbg(wpa_s, MSG_DEBUG, "BSS: Add new id %u BSSID " MACSTR
 		" SSID '%s' freq %d%s",
 		bss->id, MAC2STR(bss->bssid), wpa_ssid_txt(ssid, ssid_len),
@@ -546,7 +612,7 @@ static u32 wpa_bss_compare_res(const struct wpa_bss *old,
 		changes |= WPA_BSS_MODE_CHANGED_FLAG;
 
 	if (old->ie_len == new_res->ie_len &&
-	    os_memcmp(old + 1, new_res + 1, old->ie_len) == 0)
+	    os_memcmp(wpa_bss_ie_ptr(old), new_res + 1, old->ie_len) == 0)
 		return changes;
 	changes |= WPA_BSS_IES_CHANGED_FLAG;
 
@@ -567,8 +633,8 @@ static u32 wpa_bss_compare_res(const struct wpa_bss *old,
 }
 
 
-static void notify_bss_changes(struct wpa_supplicant *wpa_s, u32 changes,
-			       const struct wpa_bss *bss)
+void notify_bss_changes(struct wpa_supplicant *wpa_s, u32 changes,
+			const struct wpa_bss *bss)
 {
 	if (changes & WPA_BSS_FREQ_CHANGED_FLAG)
 		wpas_notify_bss_freq_changed(wpa_s, bss->id);
@@ -654,7 +720,8 @@ wpa_bss_update(struct wpa_supplicant *wpa_s, struct wpa_bss *bss,
 	dl_list_del(&bss->list);
 #ifdef CONFIG_P2P
 	if (wpa_bss_get_vendor_ie(bss, P2P_IE_VENDOR_TYPE) &&
-	    !wpa_scan_get_vendor_ie(res, P2P_IE_VENDOR_TYPE)) {
+	    !wpa_scan_get_vendor_ie(res, P2P_IE_VENDOR_TYPE) &&
+	    !(changes & WPA_BSS_FREQ_CHANGED_FLAG)) {
 		/*
 		 * This can happen when non-P2P station interface runs a scan
 		 * without P2P IE in the Probe Request frame. P2P GO would reply
@@ -670,36 +737,61 @@ wpa_bss_update(struct wpa_supplicant *wpa_s, struct wpa_bss *bss,
 #endif /* CONFIG_P2P */
 	if (bss->ie_len + bss->beacon_ie_len >=
 	    res->ie_len + res->beacon_ie_len) {
-		os_memcpy(bss + 1, res + 1, res->ie_len + res->beacon_ie_len);
+		os_memcpy(bss->ies, res + 1, res->ie_len + res->beacon_ie_len);
 		bss->ie_len = res->ie_len;
 		bss->beacon_ie_len = res->beacon_ie_len;
 	} else {
 		struct wpa_bss *nbss;
 		struct dl_list *prev = bss->list_id.prev;
+		struct wpa_connect_work *cwork;
+		unsigned int i;
+		bool update_current_bss = wpa_s->current_bss == bss;
+		bool update_ml_probe_bss = wpa_s->ml_connect_probe_bss == bss;
+
+		cwork = wpa_bss_check_pending_connect(wpa_s, bss);
+
+		for (i = 0; i < wpa_s->last_scan_res_used; i++) {
+			if (wpa_s->last_scan_res[i] == bss)
+				break;
+		}
+
 		dl_list_del(&bss->list_id);
 		nbss = os_realloc(bss, sizeof(*bss) + res->ie_len +
 				  res->beacon_ie_len);
 		if (nbss) {
-			unsigned int i;
-			for (i = 0; i < wpa_s->last_scan_res_used; i++) {
-				if (wpa_s->last_scan_res[i] == bss) {
-					wpa_s->last_scan_res[i] = nbss;
-					break;
-				}
-			}
-			if (wpa_s->current_bss == bss)
+			if (i != wpa_s->last_scan_res_used)
+				wpa_s->last_scan_res[i] = nbss;
+
+			if (update_current_bss)
 				wpa_s->current_bss = nbss;
-			wpa_bss_update_pending_connect(wpa_s, bss, nbss);
+
+			if (update_ml_probe_bss)
+				wpa_s->ml_connect_probe_bss = nbss;
+
+			if (cwork)
+				wpa_bss_update_pending_connect(cwork, nbss);
+
 			bss = nbss;
-			os_memcpy(bss + 1, res + 1,
+			os_memcpy(bss->ies, res + 1,
 				  res->ie_len + res->beacon_ie_len);
 			bss->ie_len = res->ie_len;
 			bss->beacon_ie_len = res->beacon_ie_len;
 		}
 		dl_list_add(prev, &bss->list_id);
 	}
-	if (changes & WPA_BSS_IES_CHANGED_FLAG)
+	if (changes & WPA_BSS_IES_CHANGED_FLAG) {
+		const u8 *ml_ie, *mld_addr;
+
 		wpa_bss_set_hessid(bss);
+		os_memset(bss->mld_addr, 0, ETH_ALEN);
+		ml_ie = wpa_scan_get_ml_ie(res, MULTI_LINK_CONTROL_TYPE_BASIC);
+		if (ml_ie) {
+			mld_addr = get_basic_mle_mld_addr(&ml_ie[3],
+							  ml_ie[1] - 1);
+			if (mld_addr)
+				os_memcpy(bss->mld_addr, mld_addr, ETH_ALEN);
+		}
+	}
 	dl_list_add_tail(&wpa_s->bss, &bss->list);
 
 	notify_bss_changes(wpa_s, changes, bss);
@@ -906,7 +998,7 @@ void wpa_bss_update_end(struct wpa_supplicant *wpa_s, struct scan_info *info,
 		}
 	}
 
-	wpa_printf(MSG_DEBUG, "BSS: last_scan_res_used=%u/%u",
+	wpa_printf(MSG_DEBUG, "BSS: last_scan_res_used=%zu/%zu",
 		   wpa_s->last_scan_res_used, wpa_s->last_scan_res_size);
 }
 
@@ -927,10 +1019,22 @@ void wpa_bss_flush_by_age(struct wpa_supplicant *wpa_s, int age)
 		return;
 
 	os_get_reltime(&t);
+
+	if (t.sec < age)
+		return; /* avoid underflow; there can be no older entries */
+
 	t.sec -= age;
 
 	dl_list_for_each_safe(bss, n, &wpa_s->bss, struct wpa_bss, list) {
 		if (wpa_bss_in_use(wpa_s, bss))
+			continue;
+
+		if (wpa_s->reassoc_same_ess &&
+		    wpa_s->wpa_state != WPA_COMPLETED &&
+		    wpa_s->last_ssid &&
+		    bss->ssid_len == wpa_s->last_ssid->ssid_len &&
+		    os_memcmp(bss->ssid, wpa_s->last_ssid->ssid,
+			      bss->ssid_len) == 0)
 			continue;
 
 		if (os_reltime_before(&bss->last_update, &t)) {
@@ -1001,7 +1105,7 @@ struct wpa_bss * wpa_bss_get_bssid(struct wpa_supplicant *wpa_s,
 	if (!wpa_supplicant_filter_bssid_match(wpa_s, bssid))
 		return NULL;
 	dl_list_for_each_reverse(bss, &wpa_s->bss, struct wpa_bss, list) {
-		if (os_memcmp(bss->bssid, bssid, ETH_ALEN) == 0)
+		if (ether_addr_equal(bss->bssid, bssid))
 			return bss;
 	}
 	return NULL;
@@ -1026,7 +1130,7 @@ struct wpa_bss * wpa_bss_get_bssid_latest(struct wpa_supplicant *wpa_s,
 	if (!wpa_supplicant_filter_bssid_match(wpa_s, bssid))
 		return NULL;
 	dl_list_for_each_reverse(bss, &wpa_s->bss, struct wpa_bss, list) {
-		if (os_memcmp(bss->bssid, bssid, ETH_ALEN) != 0)
+		if (!ether_addr_equal(bss->bssid, bssid))
 			continue;
 		if (found == NULL ||
 		    os_reltime_before(&found->last_update, &bss->last_update))
@@ -1038,23 +1142,30 @@ struct wpa_bss * wpa_bss_get_bssid_latest(struct wpa_supplicant *wpa_s,
 
 #ifdef CONFIG_P2P
 /**
- * wpa_bss_get_p2p_dev_addr - Fetch a BSS table entry based on P2P Device Addr
+ * wpa_bss_get_p2p_dev_addr - Fetch the latest BSS table entry based on P2P Device Addr
  * @wpa_s: Pointer to wpa_supplicant data
  * @dev_addr: P2P Device Address of the GO
  * Returns: Pointer to the BSS entry or %NULL if not found
+ *
+ * This function tries to find the entry that has the most recent update. This
+ * can help in finding the correct entry in cases where the SSID of the P2P
+ * Device may have changed recently.
  */
 struct wpa_bss * wpa_bss_get_p2p_dev_addr(struct wpa_supplicant *wpa_s,
 					  const u8 *dev_addr)
 {
-	struct wpa_bss *bss;
+	struct wpa_bss *bss, *found = NULL;
 	dl_list_for_each_reverse(bss, &wpa_s->bss, struct wpa_bss, list) {
 		u8 addr[ETH_ALEN];
-		if (p2p_parse_dev_addr((const u8 *) (bss + 1), bss->ie_len,
-				       addr) == 0 &&
-		    os_memcmp(addr, dev_addr, ETH_ALEN) == 0)
-			return bss;
+		if (p2p_parse_dev_addr(wpa_bss_ie_ptr(bss), bss->ie_len,
+				       addr) != 0 ||
+		    !ether_addr_equal(addr, dev_addr))
+			continue;
+		if (!found ||
+		    os_reltime_before(&found->last_update, &bss->last_update))
+			found = bss;
 	}
-	return NULL;
+	return found;
 }
 #endif /* CONFIG_P2P */
 
@@ -1110,7 +1221,47 @@ struct wpa_bss * wpa_bss_get_id_range(struct wpa_supplicant *wpa_s,
  */
 const u8 * wpa_bss_get_ie(const struct wpa_bss *bss, u8 ie)
 {
-	return get_ie((const u8 *) (bss + 1), bss->ie_len, ie);
+	return get_ie(wpa_bss_ie_ptr(bss), bss->ie_len, ie);
+}
+
+
+/**
+ * wpa_bss_get_ie_beacon - Fetch a specified information element from a BSS entry
+ * @bss: BSS table entry
+ * @ie: Information element identitifier (WLAN_EID_*)
+ * Returns: Pointer to the information element (id field) or %NULL if not found
+ *
+ * This function returns the first matching information element in the BSS
+ * entry.
+ *
+ * This function is like wpa_bss_get_ie(), but uses IE buffer only from Beacon
+ * frames instead of either Beacon or Probe Response frames.
+ */
+const u8 * wpa_bss_get_ie_beacon(const struct wpa_bss *bss, u8 ie)
+{
+	const u8 *ies;
+
+	if (bss->beacon_ie_len == 0)
+		return NULL;
+
+	ies = wpa_bss_ie_ptr(bss);
+	ies += bss->ie_len;
+	return get_ie(ies, bss->beacon_ie_len, ie);
+}
+
+
+/**
+ * wpa_bss_get_ie_ext - Fetch a specified extended IE from a BSS entry
+ * @bss: BSS table entry
+ * @ext: Information element extension identifier (WLAN_EID_EXT_*)
+ * Returns: Pointer to the information element (id field) or %NULL if not found
+ *
+ * This function returns the first matching information element in the BSS
+ * entry.
+ */
+const u8 * wpa_bss_get_ie_ext(const struct wpa_bss *bss, u8 ext)
+{
+	return get_ie_ext(wpa_bss_ie_ptr(bss), bss->ie_len, ext);
 }
 
 
@@ -1125,18 +1276,15 @@ const u8 * wpa_bss_get_ie(const struct wpa_bss *bss, u8 ie)
  */
 const u8 * wpa_bss_get_vendor_ie(const struct wpa_bss *bss, u32 vendor_type)
 {
-	const u8 *end, *pos;
+	const u8 *ies;
+	const struct element *elem;
 
-	pos = (const u8 *) (bss + 1);
-	end = pos + bss->ie_len;
+	ies = wpa_bss_ie_ptr(bss);
 
-	while (end - pos > 1) {
-		if (2 + pos[1] > end - pos)
-			break;
-		if (pos[0] == WLAN_EID_VENDOR_SPECIFIC && pos[1] >= 4 &&
-		    vendor_type == WPA_GET_BE32(&pos[2]))
-			return pos;
-		pos += 2 + pos[1];
+	for_each_element_id(elem, WLAN_EID_VENDOR_SPECIFIC, ies, bss->ie_len) {
+		if (elem->datalen >= 4 &&
+		    vendor_type == WPA_GET_BE32(elem->data))
+			return &elem->id;
 	}
 
 	return NULL;
@@ -1158,22 +1306,20 @@ const u8 * wpa_bss_get_vendor_ie(const struct wpa_bss *bss, u32 vendor_type)
 const u8 * wpa_bss_get_vendor_ie_beacon(const struct wpa_bss *bss,
 					u32 vendor_type)
 {
-	const u8 *end, *pos;
+	const u8 *ies;
+	const struct element *elem;
 
 	if (bss->beacon_ie_len == 0)
 		return NULL;
 
-	pos = (const u8 *) (bss + 1);
-	pos += bss->ie_len;
-	end = pos + bss->beacon_ie_len;
+	ies = wpa_bss_ie_ptr(bss);
+	ies += bss->ie_len;
 
-	while (end - pos > 1) {
-		if (2 + pos[1] > end - pos)
-			break;
-		if (pos[0] == WLAN_EID_VENDOR_SPECIFIC && pos[1] >= 4 &&
-		    vendor_type == WPA_GET_BE32(&pos[2]))
-			return pos;
-		pos += 2 + pos[1];
+	for_each_element_id(elem, WLAN_EID_VENDOR_SPECIFIC, ies,
+			    bss->beacon_ie_len) {
+		if (elem->datalen >= 4 &&
+		    vendor_type == WPA_GET_BE32(elem->data))
+			return &elem->id;
 	}
 
 	return NULL;
@@ -1200,16 +1346,21 @@ struct wpabuf * wpa_bss_get_vendor_ie_multi(const struct wpa_bss *bss,
 	if (buf == NULL)
 		return NULL;
 
-	pos = (const u8 *) (bss + 1);
+	pos = wpa_bss_ie_ptr(bss);
 	end = pos + bss->ie_len;
 
 	while (end - pos > 1) {
-		if (2 + pos[1] > end - pos)
+		u8 ie, len;
+
+		ie = pos[0];
+		len = pos[1];
+		if (len > end - pos - 2)
 			break;
-		if (pos[0] == WLAN_EID_VENDOR_SPECIFIC && pos[1] >= 4 &&
-		    vendor_type == WPA_GET_BE32(&pos[2]))
-			wpabuf_put_data(buf, pos + 2 + 4, pos[1] - 4);
-		pos += 2 + pos[1];
+		pos += 2;
+		if (ie == WLAN_EID_VENDOR_SPECIFIC && len >= 4 &&
+		    vendor_type == WPA_GET_BE32(pos))
+			wpabuf_put_data(buf, pos + 4, len - 4);
+		pos += len;
 	}
 
 	if (wpabuf_len(buf) == 0) {
@@ -1244,17 +1395,21 @@ struct wpabuf * wpa_bss_get_vendor_ie_multi_beacon(const struct wpa_bss *bss,
 	if (buf == NULL)
 		return NULL;
 
-	pos = (const u8 *) (bss + 1);
+	pos = wpa_bss_ie_ptr(bss);
 	pos += bss->ie_len;
 	end = pos + bss->beacon_ie_len;
 
 	while (end - pos > 1) {
-		if (2 + pos[1] > end - pos)
+		u8 id, len;
+
+		id = *pos++;
+		len = *pos++;
+		if (len > end - pos)
 			break;
-		if (pos[0] == WLAN_EID_VENDOR_SPECIFIC && pos[1] >= 4 &&
-		    vendor_type == WPA_GET_BE32(&pos[2]))
-			wpabuf_put_data(buf, pos + 2 + 4, pos[1] - 4);
-		pos += 2 + pos[1];
+		if (id == WLAN_EID_VENDOR_SPECIFIC && len >= 4 &&
+		    vendor_type == WPA_GET_BE32(pos))
+			wpabuf_put_data(buf, pos + 4, len - 4);
+		pos += len;
 	}
 
 	if (wpabuf_len(buf) == 0) {
@@ -1330,7 +1485,7 @@ int wpa_bss_get_bit_rates(const struct wpa_bss *bss, u8 **rates)
 
 
 #ifdef CONFIG_FILS
-const u8 * wpa_bss_get_fils_cache_id(struct wpa_bss *bss)
+const u8 * wpa_bss_get_fils_cache_id(const struct wpa_bss *bss)
 {
 	const u8 *ie;
 
@@ -1347,6 +1502,367 @@ const u8 * wpa_bss_get_fils_cache_id(struct wpa_bss *bss)
 
 int wpa_bss_ext_capab(const struct wpa_bss *bss, unsigned int capab)
 {
+	if (!bss)
+		return 0;
 	return ieee802_11_ext_capab(wpa_bss_get_ie(bss, WLAN_EID_EXT_CAPAB),
 				    capab);
+}
+
+
+static void
+wpa_bss_parse_ml_rnr_ap_info(struct wpa_supplicant *wpa_s,
+			     struct wpa_bss *bss, u8 mbssid_idx,
+			     const struct ieee80211_neighbor_ap_info *ap_info,
+			     size_t len, u16 *seen, u16 *missing,
+			     struct wpa_ssid *ssid)
+{
+	const u8 *pos, *end;
+	const u8 *mld_params;
+	u8 count, mld_params_offset;
+	u8 i, type, link_id;
+
+	count = RNR_TBTT_INFO_COUNT_VAL(ap_info->tbtt_info_hdr) + 1;
+	type = ap_info->tbtt_info_hdr & RNR_TBTT_INFO_HDR_TYPE_MSK;
+
+	/* MLD information is at offset 13 or at start */
+	if (type == 0 && ap_info->tbtt_info_len >= RNR_TBTT_INFO_MLD_LEN) {
+		/* MLD info is appended */
+		mld_params_offset = RNR_TBTT_INFO_LEN;
+	} else {
+		/* TODO: Support NSTR AP */
+		return;
+	}
+
+	pos = (const u8 *) ap_info;
+	end = pos + len;
+	pos += sizeof(*ap_info);
+
+	for (i = 0; i < count; i++) {
+		u8 bss_params;
+
+		if (end - pos < ap_info->tbtt_info_len)
+			break;
+
+		bss_params = pos[1 + ETH_ALEN + 4];
+		mld_params = pos + mld_params_offset;
+
+		link_id = *(mld_params + 1) & EHT_ML_LINK_ID_MSK;
+		if (link_id >= MAX_NUM_MLD_LINKS)
+			return;
+
+		if (*mld_params != mbssid_idx) {
+			wpa_printf(MSG_DEBUG,
+				   "MLD: Reported link not part of MLD");
+		} else if (!(BIT(link_id) & *seen)) {
+			struct wpa_bss *neigh_bss;
+
+			if (ssid && ssid->ssid_len)
+				neigh_bss = wpa_bss_get(wpa_s, pos + 1,
+							ssid->ssid,
+							ssid->ssid_len);
+			else
+				neigh_bss = wpa_bss_get_bssid(wpa_s, pos + 1);
+
+			*seen |= BIT(link_id);
+			wpa_printf(MSG_DEBUG, "MLD: mld ID=%u, link ID=%u",
+				   *mld_params, link_id);
+
+			if (!neigh_bss) {
+				*missing |= BIT(link_id);
+			} else if ((!ssid ||
+				    (bss_params & (RNR_BSS_PARAM_SAME_SSID |
+						   RNR_BSS_PARAM_CO_LOCATED)) ||
+				    wpa_scan_res_match(wpa_s, 0, neigh_bss,
+						       ssid, 1, 0)) &&
+				   !wpa_bssid_ignore_is_listed(
+					   wpa_s, neigh_bss->bssid)) {
+				struct mld_link *l;
+
+				bss->valid_links |= BIT(link_id);
+				l = &bss->mld_links[link_id];
+				os_memcpy(l->bssid, pos + 1, ETH_ALEN);
+				l->freq = neigh_bss->freq;
+				l->disabled = mld_params[2] &
+					RNR_TBTT_INFO_MLD_PARAM2_LINK_DISABLED;
+			}
+		}
+
+		pos += ap_info->tbtt_info_len;
+	}
+}
+
+
+/**
+ * wpa_bss_parse_basic_ml_element - Parse the Basic Multi-Link element
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @bss: BSS table entry
+ * @mld_addr: AP MLD address (or %NULL)
+ * @link_info: Array to store link information (or %NULL),
+ *   should be initialized and #MAX_NUM_MLD_LINKS elements long
+ * @missing_links: Result bitmask of links that were not discovered (or %NULL)
+ * @ssid: Target SSID (or %NULL)
+ * @ap_mld_id: On return would hold the corresponding AP MLD ID (or %NULL)
+ * Returns: 0 on success or -1 for non-MLD or parsing failures
+ *
+ * Parses the Basic Multi-Link element of the BSS into @link_info using the scan
+ * information stored in the wpa_supplicant data to fill in information for
+ * links where possible. The @missing_links out parameter will contain any links
+ * for which no corresponding BSS was found.
+ */
+int wpa_bss_parse_basic_ml_element(struct wpa_supplicant *wpa_s,
+				   struct wpa_bss *bss,
+				   u8 *ap_mld_addr,
+				   u16 *missing_links,
+				   struct wpa_ssid *ssid,
+				   u8 *ap_mld_id)
+{
+	struct ieee802_11_elems elems;
+	struct wpabuf *mlbuf;
+	const struct element *elem;
+	u8 mbssid_idx = 0;
+	size_t ml_ie_len;
+	const struct ieee80211_eht_ml *eht_ml;
+	const struct eht_ml_basic_common_info *ml_basic_common_info;
+	u8 i, link_id;
+	const u16 control_mask =
+		MULTI_LINK_CONTROL_TYPE_MASK |
+		BASIC_MULTI_LINK_CTRL_PRES_LINK_ID |
+		BASIC_MULTI_LINK_CTRL_PRES_BSS_PARAM_CH_COUNT |
+		BASIC_MULTI_LINK_CTRL_PRES_MLD_CAPA;
+	const u16 control =
+		MULTI_LINK_CONTROL_TYPE_BASIC |
+		BASIC_MULTI_LINK_CTRL_PRES_LINK_ID |
+		BASIC_MULTI_LINK_CTRL_PRES_BSS_PARAM_CH_COUNT |
+		BASIC_MULTI_LINK_CTRL_PRES_MLD_CAPA;
+	u16 missing = 0;
+	u16 seen;
+	const u8 *ies_pos = wpa_bss_ie_ptr(bss);
+	size_t ies_len = bss->ie_len ? bss->ie_len : bss->beacon_ie_len;
+	int ret = -1;
+	struct mld_link *l;
+
+	if (ieee802_11_parse_elems(ies_pos, ies_len, &elems, 1) ==
+	    ParseFailed) {
+		wpa_dbg(wpa_s, MSG_DEBUG, "MLD: Failed to parse elements");
+		return ret;
+	}
+
+	mlbuf = ieee802_11_defrag(elems.basic_mle, elems.basic_mle_len, true);
+	if (!mlbuf) {
+		wpa_dbg(wpa_s, MSG_DEBUG, "MLD: No Multi-Link element");
+		return ret;
+	}
+
+	ml_ie_len = wpabuf_len(mlbuf);
+
+	if (ssid) {
+		struct wpa_ie_data ie;
+
+		if (!elems.rsn_ie ||
+		    wpa_parse_wpa_ie(elems.rsn_ie - 2, 2 + elems.rsn_ie_len,
+				     &ie)) {
+			wpa_dbg(wpa_s, MSG_DEBUG, "MLD: No RSN element");
+			goto out;
+		}
+
+		if (!(ie.capabilities & WPA_CAPABILITY_MFPC) ||
+		    wpas_get_ssid_pmf(wpa_s, ssid) == NO_MGMT_FRAME_PROTECTION) {
+			wpa_dbg(wpa_s, MSG_DEBUG,
+				"MLD: No management frame protection");
+			goto out;
+		}
+
+		ie.key_mgmt &= ~(WPA_KEY_MGMT_PSK | WPA_KEY_MGMT_FT_PSK |
+				 WPA_KEY_MGMT_PSK_SHA256);
+		if (!(ie.key_mgmt & ssid->key_mgmt)) {
+			wpa_dbg(wpa_s, MSG_DEBUG,
+				"MLD: No valid key management");
+			goto out;
+		}
+	}
+
+	/*
+	 * for ext ID + 2 control + common info len + MLD address +
+	 * link info
+	 */
+	if (ml_ie_len < 2UL + 1UL + ETH_ALEN + 1UL)
+		goto out;
+
+	eht_ml = (const struct ieee80211_eht_ml *) wpabuf_head(mlbuf);
+	if ((le_to_host16(eht_ml->ml_control) & control_mask) != control) {
+		wpa_printf(MSG_DEBUG,
+			   "MLD: Unexpected Multi-Link element control=0x%x (mask 0x%x expected 0x%x)",
+			   le_to_host16(eht_ml->ml_control), control_mask,
+			   control);
+		goto out;
+	}
+
+	ml_basic_common_info =
+		(const struct eht_ml_basic_common_info *) eht_ml->variable;
+
+	/* Common info length should be valid */
+	if (ml_basic_common_info->len < ETH_ALEN + 1UL)
+		goto out;
+
+	/* Get the MLD address and MLD link ID */
+	if (ap_mld_addr)
+		os_memcpy(ap_mld_addr, ml_basic_common_info->mld_addr,
+			  ETH_ALEN);
+
+	link_id = ml_basic_common_info->variable[0] & EHT_ML_LINK_ID_MSK;
+
+	bss->mld_link_id = link_id;
+	seen = bss->valid_links = BIT(link_id);
+
+	l = &bss->mld_links[link_id];
+	os_memcpy(l->bssid, bss->bssid, ETH_ALEN);
+	l->freq = bss->freq;
+
+
+	/*
+	 * The AP MLD ID in the RNR corresponds to the MBSSID index, see
+	 * IEEE P802.11be/D4.0, 9.4.2.169.2 (Neighbor AP Information field).
+	 *
+	 * For the transmitting BSSID it is clear that both the MBSSID index
+	 * and the AP MLD ID in the RNR are zero.
+	 *
+	 * For nontransmitted BSSIDs we will have a BSS generated from the
+	 * MBSSID element(s) using inheritance rules. Included in the elements
+	 * is the MBSSID Index Element. The RNR is copied from the Beacon/Probe
+	 * Response frame that was send by the transmitting BSSID. As such, the
+	 * reported AP MLD ID in the RNR will match the value in the MBSSID
+	 * Index Element.
+	 */
+	elem = (const struct element *)
+		wpa_bss_get_ie(bss, WLAN_EID_MULTIPLE_BSSID_INDEX);
+	if (elem && elem->datalen >= 1)
+		mbssid_idx = elem->data[0];
+
+	for_each_element_id(elem, WLAN_EID_REDUCED_NEIGHBOR_REPORT,
+			    wpa_bss_ie_ptr(bss),
+			    bss->ie_len ? bss->ie_len : bss->beacon_ie_len) {
+		const struct ieee80211_neighbor_ap_info *ap_info;
+		const u8 *pos = elem->data;
+		size_t len = elem->datalen;
+
+		/* RNR IE may contain more than one Neighbor AP Info */
+		while (sizeof(*ap_info) <= len) {
+			size_t ap_info_len = sizeof(*ap_info);
+			u8 count;
+
+			ap_info = (const struct ieee80211_neighbor_ap_info *)
+				pos;
+			count = RNR_TBTT_INFO_COUNT_VAL(ap_info->tbtt_info_hdr) + 1;
+			ap_info_len += count * ap_info->tbtt_info_len;
+
+			if (ap_info_len > len)
+				goto out;
+
+			wpa_bss_parse_ml_rnr_ap_info(wpa_s, bss, mbssid_idx,
+						     ap_info, len, &seen,
+						     &missing, ssid);
+
+			pos += ap_info_len;
+			len -= ap_info_len;
+		}
+	}
+
+	wpa_printf(MSG_DEBUG, "MLD: valid_links=%04hx (unresolved: 0x%04hx)",
+		   bss->valid_links, missing);
+
+	for_each_link(bss->valid_links, i) {
+		wpa_printf(MSG_DEBUG, "MLD: link=%u, bssid=" MACSTR,
+			   i, MAC2STR(bss->mld_links[i].bssid));
+	}
+
+	if (missing_links)
+		*missing_links = missing;
+
+	if (ap_mld_id)
+		*ap_mld_id = mbssid_idx;
+
+	ret = 0;
+out:
+	wpabuf_free(mlbuf);
+	return ret;
+}
+
+
+/*
+ * wpa_bss_parse_reconf_ml_element - Parse the Reconfiguration ML element
+ * @wpa_s: Pointer to wpa_supplicant data
+ * @bss: BSS table entry
+ * Returns: The bitmap of links that are going to be removed
+ */
+u16 wpa_bss_parse_reconf_ml_element(struct wpa_supplicant *wpa_s,
+				    struct wpa_bss *bss)
+{
+	struct ieee802_11_elems elems;
+	struct wpabuf *mlbuf;
+	const u8 *pos = wpa_bss_ie_ptr(bss);
+	size_t len = bss->ie_len ? bss->ie_len : bss->beacon_ie_len;
+	const struct ieee80211_eht_ml *ml;
+	u16 removed_links = 0;
+	u8 ml_common_len;
+
+	if (ieee802_11_parse_elems(pos, len, &elems, 1) == ParseFailed)
+		return 0;
+
+	if (!elems.reconf_mle || !elems.reconf_mle_len)
+		return 0;
+
+	mlbuf = ieee802_11_defrag(elems.reconf_mle, elems.reconf_mle_len, true);
+	if (!mlbuf)
+		return 0;
+
+	ml = (const struct ieee80211_eht_ml *) wpabuf_head(mlbuf);
+	len = wpabuf_len(mlbuf);
+
+	if (len < sizeof(*ml))
+		goto out;
+
+	ml_common_len = 1;
+	if (ml->ml_control & RECONF_MULTI_LINK_CTRL_PRES_MLD_MAC_ADDR)
+		ml_common_len += ETH_ALEN;
+
+	if (len < sizeof(*ml) + ml_common_len) {
+		wpa_printf(MSG_DEBUG,
+			   "MLD: Unexpected Reconfiguration ML element length: (%zu < %zu)",
+			   len, sizeof(*ml) + ml_common_len);
+		goto out;
+	}
+
+	pos = ml->variable + ml_common_len;
+	len -= sizeof(*ml) + ml_common_len;
+
+	while (len >= 2 + sizeof(struct ieee80211_eht_per_sta_profile)) {
+		size_t sub_elem_len = *(pos + 1);
+
+		if (2 + sub_elem_len > len) {
+			wpa_printf(MSG_DEBUG,
+				   "MLD: Invalid link info len: %zu %zu",
+				   2 + sub_elem_len, len);
+			goto out;
+		}
+
+		if  (*pos == EHT_ML_SUB_ELEM_PER_STA_PROFILE) {
+			const struct ieee80211_eht_per_sta_profile *sta_prof =
+				(const struct ieee80211_eht_per_sta_profile *)
+				(pos + 2);
+			u16 control = le_to_host16(sta_prof->sta_control);
+			u8 link_id;
+
+			link_id = control & EHT_PER_STA_RECONF_CTRL_LINK_ID_MSK;
+			removed_links |= BIT(link_id);
+		}
+
+		pos += 2 + sub_elem_len;
+		len -= 2 + sub_elem_len;
+	}
+
+	wpa_printf(MSG_DEBUG, "MLD: Reconfiguration: removed_links=0x%x",
+		   removed_links);
+out:
+	wpabuf_free(mlbuf);
+	return removed_links;
 }

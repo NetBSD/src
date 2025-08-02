@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="install" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+		<ProjectRootDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</ProjectRootDirectory>
+		<ProjectRootDirectory Condition="!HasTrailingSlash('$(ProjectRootDirectory)')">$(ProjectRootDirectory)\</ProjectRootDirectory>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    <Platform Condition="'$(Platform)' == ''">Win32;x64</Platform>
+  </PropertyGroup>
+
+  <Target Name="install" DependsOnTargets="mDNSResponder;PostBuild" />
+
+  <Target Name="mDNSResponder">
+
+    <PropertyGroup>
+      <SolutionFile>$(ProjectRootDirectory)mDNSWindows\mDNSResponder.sln</SolutionFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Platforms Include="$(Platform)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <SolutionTargets Include="dnssd;mDNSResponder;mDNSResponderDLL;dns-sd;mdnsNSP;DLLStub">
+        <Platform>%(Platforms.Identity)</Platform>
+      </SolutionTargets>
+    </ItemGroup>
+
+    <MSBuild Projects="$(SolutionFile)" Targets="%(SolutionTargets.Identity)" Properties="Configuration=$(Configuration);Platform=%(SolutionTargets.Platform)" />
+
+  </Target>
+
+  <Target Name="PostBuild" DependsOnTargets="mDNSResponder" Condition="'$(RC_XBS)' == 'YES'">
+
+    <!-- Use stub import library for dnssd.lib to match 2015 BonjourWin SDK [rdar://97023288]
+
+      In the BonjourWin SDK (Taman train), whether by accident or design, the dnssd.lib from
+      dnssd.vcxproj was overwritten by that from DLLStub.vcxproj. The DLLStub version uses
+      LoadLibrary/GetProcAddress rather than implicit linking, which allows clients to avoid
+      a loader error ("DLL not found") if Bonjour is absent. Clients of Bonjour like iTunes
+      and MobileDevice now depend on this configuration.
+
+    -->
+
+    <Error Text="DSTROOT not defined" Condition="'$(DSTROOT)' == ''" />
+
+    <PropertyGroup>
+      <OutputPrefix>$(DSTROOT)</OutputPrefix>
+      <OutputPrefix Condition="!HasTrailingSlash('$(OutputPrefix)')">$(OutputPrefix)\</OutputPrefix>
+      <!-- -->
+      <SDKOutputPrefix>$(OutputPrefix)AppleInternal\Bonjour SDK\</SDKOutputPrefix>
+    </PropertyGroup>
+
+    <!-- dnssd.vcxproj: dnssd.lib -> dnssd_imp.lib -->
+    <Move SourceFiles="$(SDKOutputPrefix)lib\%(Platforms.Identity)\dnssd.lib"
+          DestinationFiles="$(SDKOutputPrefix)lib\%(Platforms.Identity)\dnssd_imp.lib"
+          OverwriteReadOnlyFiles="true" />
+
+    <!-- DLLStub.vcxproj: dnssd_stub.lib -> dnssd.lib -->
+    <Move SourceFiles="$(SDKOutputPrefix)lib\%(Platforms.Identity)\dnssd_stub.lib"
+          DestinationFiles="$(SDKOutputPrefix)lib\%(Platforms.Identity)\dnssd.lib"
+          OverwriteReadOnlyFiles="true" />
+
+  </Target>
+
+</Project>

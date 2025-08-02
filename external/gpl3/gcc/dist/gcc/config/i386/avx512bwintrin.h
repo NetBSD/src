@@ -309,7 +309,7 @@ extern __inline __m512i
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm512_loadu_epi16 (void const *__P)
 {
-  return (__m512i) (*(__v32hi_u *) __P);
+  return (__m512i) (*(const __v32hi_u *) __P);
 }
 
 extern __inline __m512i
@@ -402,7 +402,7 @@ extern __inline __m512i
 __attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
 _mm512_loadu_epi8 (void const *__P)
 {
-  return (__m512i) (*(__v64qi_u *) __P);
+  return (__m512i) (*(const __v64qi_u *) __P);
 }
 
 extern __inline __m512i

@@ -1,4 +1,5 @@
-# $NetBSD: md.pmax,v 1.68 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.pmax,v 1.68.14.1 2025/08/02 05:20:29 perseant Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pmax				comp-c-include
 ./usr/include/pmax/_G_config.h			comp-obsolete		obsolete
@@ -38,6 +39,7 @@
 ./usr/include/pmax/limits.h			comp-c-include
 ./usr/include/pmax/lock.h			comp-c-include
 ./usr/include/pmax/locore.h			comp-c-include
+./usr/include/pmax/lwp_private.h		comp-c-include
 ./usr/include/pmax/math.h			comp-c-include
 ./usr/include/pmax/mcontext.h			comp-c-include
 ./usr/include/pmax/mips_opcode.h		comp-c-include

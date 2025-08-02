@@ -1,4 +1,5 @@
-# $NetBSD: module.md.evbarm,v 1.2 2020/09/10 04:56:00 martin Exp $
+# $NetBSD: module.md.evbarm,v 1.2.10.1 2025/08/02 05:20:32 perseant Exp $
+#
 ./usr/libdata/debug/@MODULEDIR@/if_iavf				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_iavf/if_iavf.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_ixl				modules-base-kernel	kmod,debug

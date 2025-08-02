@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.12 2024/06/11 09:26:57 wiz Exp $	*/
+/*	$NetBSD: license.c,v 1.12.2.1 2025/08/02 05:23:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -61,7 +61,7 @@ const char *default_acceptable_licenses =
     "cecill-b-v1 "
     "cecill-c-v1 "
     "cpl-1.0 "
-    "epl-v1.0 "
+    "epl-v1.0 epl-v2.0 "
     "eupl-v1.1 "
     "eupl-v1.2 "
     "gfsl "
@@ -95,6 +95,7 @@ const char *default_acceptable_licenses =
     "postgresql-license "
     "public-domain "
     "python-software-foundation "
+    "qhull "
     "qpl-v1.0 "
     "sgi-free-software-b-v2.0 "
     "sissl-1.1 "
@@ -102,6 +103,7 @@ const char *default_acceptable_licenses =
     "unicode "
     "unicode-v3 "
     "unlicense "
+    "upl-1.0 "
     "vera-ttf-license "
     "w3c "
     "x11 "

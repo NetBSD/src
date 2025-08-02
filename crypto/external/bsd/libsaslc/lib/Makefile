@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2023/11/24 18:45:46 christos Exp $
+# $NetBSD: Makefile,v 1.11.2.1 2025/08/02 05:18:42 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -54,13 +54,25 @@ EXTDIST=${.CURDIR}/../dist
 INCS+= saslc.h
 INCSDIR=/usr/include
 
-LIBDPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
-LIBDPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
+LIBDPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
+LIBDPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
 .if (${MKKERBEROS} != "no")
 LIBDPLIBS+= gssapi ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libgssapi
 
 .endif
 
 COPTS.crypto.c+=-Wno-error=deprecated-declarations
+
+EXPSYM_SRCS+=	saslc.common.expsym
+.if ${MKKERBEROS:Uno} != "no"
+EXPSYM_SRCS+=	saslc.kerberos.expsym
+.endif
+
+LIB_EXPSYM=	saslc.expsym
+saslc.expsym: ${EXPSYM_SRCS}
+	${_MKTARGET_CREATE}
+	LC_ALL=C sort -m ${.ALLSRC} >${.TARGET}.tmp && \
+	${MV} ${.TARGET}.tmp ${.TARGET}
+CLEANFILES+=	saslc.expsym saslc.expsym.tmp
 
 .include <bsd.lib.mk>

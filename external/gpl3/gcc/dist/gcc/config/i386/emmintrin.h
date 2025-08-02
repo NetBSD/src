@@ -124,14 +124,14 @@ _mm_move_sd (__m128d __A, __m128d __B)
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_load_pd (double const *__P)
 {
-  return *(__m128d *)__P;
+  return *(__m128d const *)__P;
 }
 
 /* Load two DPFP values from P.  The address need not be 16-byte aligned.  */
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadu_pd (double const *__P)
 {
-  return *(__m128d_u *)__P;
+  return *(__m128d_u const *)__P;
 }
 
 /* Create a vector with all two elements equal to *P.  */
@@ -709,25 +709,25 @@ _mm_loadu_si128 (__m128i_u const *__P)
 extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadl_epi64 (__m128i_u const *__P)
 {
-  return _mm_set_epi64 ((__m64)0LL, *(__m64_u *)__P);
+  return _mm_set_epi64 ((__m64)0LL, *(__m64_u const *)__P);
 }
 
 extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadu_si64 (void const *__P)
 {
-  return _mm_loadl_epi64 ((__m128i_u *)__P);
+  return _mm_loadl_epi64 ((__m128i_u const *)__P);
 }
 
 extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadu_si32 (void const *__P)
 {
-  return _mm_set_epi32 (0, 0, 0, (*(__m32_u *)__P)[0]);
+  return _mm_set_epi32 (0, 0, 0, (*(__m32_u const *)__P)[0]);
 }
 
 extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadu_si16 (void const *__P)
 {
-  return _mm_set_epi16 (0, 0, 0, 0, 0, 0, 0, (*(__m16_u *)__P)[0]);
+  return _mm_set_epi16 (0, 0, 0, 0, 0, 0, 0, (*(__m16_u const *)__P)[0]);
 }
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))

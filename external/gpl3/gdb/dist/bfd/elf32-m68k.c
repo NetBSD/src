@@ -1,5 +1,5 @@
 /* Motorola 68k series support for 32-bit ELF
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -2934,7 +2934,7 @@ elf_m68k_get_plt_info (bfd *output_bfd)
    It's a convenient place to determine the PLT style.  */
 
 static bool
-elf_m68k_always_size_sections (bfd *output_bfd, struct bfd_link_info *info)
+elf_m68k_early_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 {
   /* Bind input BFDs to GOTs and calculate sizes of .got and .rela.got
      sections.  */
@@ -3107,15 +3107,16 @@ elf_m68k_adjust_dynamic_symbol (struct bfd_link_info *info,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf_m68k_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				struct bfd_link_info *info)
+elf_m68k_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			     struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
   bool relocs;
 
   dynobj = elf_hash_table (info)->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -4628,12 +4629,11 @@ elf_m68k_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #define bfd_elf32_bfd_final_link	bfd_elf_final_link
 
 #define elf_backend_check_relocs	elf_m68k_check_relocs
-#define elf_backend_always_size_sections \
-					elf_m68k_always_size_sections
+#define elf_backend_early_size_sections \
+					elf_m68k_early_size_sections
 #define elf_backend_adjust_dynamic_symbol \
 					elf_m68k_adjust_dynamic_symbol
-#define elf_backend_size_dynamic_sections \
-					elf_m68k_size_dynamic_sections
+#define elf_backend_late_size_sections	elf_m68k_late_size_sections
 #define elf_backend_final_write_processing	elf_m68k_final_write_processing
 #define elf_backend_init_index_section	_bfd_elf_init_1_index_section
 #define elf_backend_relocate_section	elf_m68k_relocate_section

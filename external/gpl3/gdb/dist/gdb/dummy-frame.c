@@ -1,6 +1,6 @@
 /* Code dealing with dummy stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,14 +18,13 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#include "defs.h"
 #include "dummy-frame.h"
 #include "regcache.h"
 #include "frame.h"
 #include "inferior.h"
 #include "frame-unwind.h"
 #include "command.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "observable.h"
 #include "gdbthread.h"
 #include "infcall.h"
@@ -166,8 +165,8 @@ pop_dummy_frame (struct dummy_frame **dummy_ptr)
 
   restore_infcall_suspend_state (dummy->caller_state);
 
-  for (breakpoint *bp : all_breakpoints_safe ())
-    if (pop_dummy_frame_bpt (bp, dummy))
+  for (breakpoint &bp : all_breakpoints_safe ())
+    if (pop_dummy_frame_bpt (&bp, dummy))
       break;
 
   /* restore_infcall_control_state frees inf_state,
@@ -288,7 +287,7 @@ struct dummy_frame_cache
 
 static int
 dummy_frame_sniffer (const struct frame_unwind *self,
-		     frame_info_ptr this_frame,
+		     const frame_info_ptr &this_frame,
 		     void **this_prologue_cache)
 {
   /* When unwinding a normal frame, the stack structure is determined
@@ -334,7 +333,7 @@ dummy_frame_sniffer (const struct frame_unwind *self,
    register value is taken from the local copy of the register buffer.  */
 
 static struct value *
-dummy_frame_prev_register (frame_info_ptr this_frame,
+dummy_frame_prev_register (const frame_info_ptr &this_frame,
 			   void **this_prologue_cache,
 			   int regnum)
 {
@@ -348,13 +347,13 @@ dummy_frame_prev_register (frame_info_ptr this_frame,
 
   /* Describe the register's location.  Generic dummy frames always
      have the register value in an ``expression''.  */
-  reg_val = value_zero (register_type (gdbarch, regnum), not_lval);
+  reg_val = value::zero (register_type (gdbarch, regnum), not_lval);
 
   /* Use the regcache_cooked_read() method so that it, on the fly,
      constructs either a raw or pseudo register from the raw
      register cache.  */
   cache->prev_regcache->cooked_read
-    (regnum, value_contents_writeable (reg_val).data ());
+    (regnum, reg_val->contents_writeable ().data ());
   return reg_val;
 }
 
@@ -364,7 +363,7 @@ dummy_frame_prev_register (frame_info_ptr this_frame,
    dummy cache is located and saved in THIS_PROLOGUE_CACHE.  */
 
 static void
-dummy_frame_this_id (frame_info_ptr this_frame,
+dummy_frame_this_id (const frame_info_ptr &this_frame,
 		     void **this_prologue_cache,
 		     struct frame_id *this_id)
 {
@@ -390,7 +389,7 @@ const struct frame_unwind dummy_frame_unwind =
 /* See dummy-frame.h.  */
 
 struct frame_id
-default_dummy_id (struct gdbarch *gdbarch, frame_info_ptr this_frame)
+default_dummy_id (struct gdbarch *gdbarch, const frame_info_ptr &this_frame)
 {
   CORE_ADDR sp, pc;
 

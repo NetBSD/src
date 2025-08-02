@@ -1,3 +1,4 @@
-# $NetBSD: ad.sh3,v 1.2 2020/02/11 11:36:53 uki Exp $
+# $NetBSD: ad.sh3,v 1.2.12.1 2025/08/02 05:20:34 perseant Exp $
+#
 ./@MODULEDIR@/exec_elf32			modules-base-kernel	kmod
 ./@MODULEDIR@/exec_elf32/exec_elf32.kmod	modules-base-kernel	kmod

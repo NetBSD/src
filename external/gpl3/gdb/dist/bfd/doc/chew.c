@@ -1,5 +1,5 @@
 /* chew
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Contributed by steve chamberlain @cygnus
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -30,6 +30,9 @@
 
    You define new words thus:
    : <newword> <oldwords> ;
+
+   Variables are defined using:
+   variable NAME
 
 */
 
@@ -65,17 +68,18 @@
 	exit - fn chew_exit
 	swap
 	outputdots - strip out lines without leading dots
-	paramstuff - convert full declaration into "PARAMS" form if not already
 	maybecatstr - do catstr if internal_mode == internal_wanted, discard
 		value in any case
+	catstrif - do catstr if top of integer stack is nonzero
 	translatecomments - turn {* and *} into comment delimiters
 	kill_bogus_lines - get rid of extra newlines
 	indent
-	internalmode - pop from integer stack, set `internalmode' to that value
 	print_stack_level - print current stack depth to stderr
 	strip_trailing_newlines - go ahead, guess...
 	[quoted string] - push string onto string stack
 	[word starting with digit] - push atol(str) onto integer stack
+
+	internalmode - the internalmode variable (evaluates to address)
 
    A command must be all upper-case, and alone on a line.
 
@@ -86,6 +90,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 #define DEF_SIZE 5000
 #define STACK 50
@@ -106,7 +112,7 @@ typedef union
   void (*f) (void);
   struct dict_struct *e;
   char *s;
-  long l;
+  intptr_t l;
 } pcu;
 
 typedef struct dict_struct
@@ -119,7 +125,7 @@ typedef struct dict_struct
 } dict_type;
 
 int internal_wanted;
-int internal_mode;
+intptr_t *internal_mode;
 
 int warning;
 
@@ -129,8 +135,8 @@ string_type *tos;
 unsigned int idx = 0; /* Pos in input buffer */
 string_type *ptr; /* and the buffer */
 
-long istack[STACK];
-long *isp = &istack[0];
+intptr_t istack[STACK];
+intptr_t *isp = &istack[0];
 
 dict_type *root;
 
@@ -332,6 +338,23 @@ icheck_range (void)
 }
 
 static void
+drop (void)
+{
+  tos--;
+  check_range ();
+  delete_string (tos + 1);
+  pc++;
+}
+
+static void
+idrop (void)
+{
+  isp--;
+  icheck_range ();
+  pc++;
+}
+
+static void
 exec (dict_type *word)
 {
   pc = word->code;
@@ -359,9 +382,9 @@ remchar (void)
 static void
 strip_trailing_newlines (void)
 {
-  while ((isspace ((unsigned char) at (tos, tos->write_idx - 1))
-	  || at (tos, tos->write_idx - 1) == '\n')
-	 && tos->write_idx > 0)
+  while (tos->write_idx > 0
+	 && (isspace ((unsigned char) at (tos, tos->write_idx - 1))
+	     || at (tos, tos->write_idx - 1) == '\n'))
     tos->write_idx--;
   pc++;
 }
@@ -374,6 +397,14 @@ push_number (void)
   pc++;
   *isp = pc->l;
   pc++;
+}
+
+/* This is a wrapper for push_number just so we can correctly free the
+   variable at the end.  */
+static void
+push_variable (void)
+{
+  push_number ();
 }
 
 static void
@@ -453,84 +484,6 @@ print_stack_level (void)
   pc++;
 }
 
-/* turn:
-     foobar name(stuff);
-   into:
-     foobar
-     name PARAMS ((stuff));
-   and a blank line.
- */
-
-static void
-paramstuff (void)
-{
-  unsigned int openp;
-  unsigned int fname;
-  unsigned int idx;
-  unsigned int len;
-  string_type out;
-  init_string (&out);
-
-#define NO_PARAMS 1
-
-  /* Make sure that it's not already param'd or proto'd.  */
-  if (NO_PARAMS
-      || find (tos, "PARAMS") || find (tos, "PROTO") || !find (tos, "("))
-    {
-      catstr (&out, tos);
-    }
-  else
-    {
-      /* Find the open paren.  */
-      for (openp = 0; at (tos, openp) != '(' && at (tos, openp); openp++)
-	;
-
-      fname = openp;
-      /* Step back to the fname.  */
-      fname--;
-      while (fname && isspace ((unsigned char) at (tos, fname)))
-	fname--;
-      while (fname
-	     && !isspace ((unsigned char) at (tos,fname))
-	     && at (tos,fname) != '*')
-	fname--;
-
-      fname++;
-
-      /* Output type, omitting trailing whitespace character(s), if
-         any.  */
-      for (len = fname; 0 < len; len--)
-	{
-	  if (!isspace ((unsigned char) at (tos, len - 1)))
-	    break;
-	}
-      for (idx = 0; idx < len; idx++)
-	catchar (&out, at (tos, idx));
-
-      cattext (&out, "\n");	/* Insert a newline between type and fnname */
-
-      /* Output function name, omitting trailing whitespace
-         character(s), if any.  */
-      for (len = openp; 0 < len; len--)
-	{
-	  if (!isspace ((unsigned char) at (tos, len - 1)))
-	    break;
-	}
-      for (idx = fname; idx < len; idx++)
-	catchar (&out, at (tos, idx));
-
-      cattext (&out, " PARAMS (");
-
-      for (idx = openp; at (tos, idx) && at (tos, idx) != ';'; idx++)
-	catchar (&out, at (tos, idx));
-
-      cattext (&out, ");\n\n");
-    }
-  overwrite_string (tos, &out);
-  pc++;
-
-}
-
 /* turn {*
    and *} into comments */
 
@@ -565,6 +518,31 @@ translatecomments (void)
   pc++;
 }
 
+/* Wrap tos-1 as a C comment, indenting by tos.  */
+
+static void
+wrap_comment (void)
+{
+  string_type out;
+  init_string (&out);
+
+  catstr (&out, tos);
+  cattext (&out, "/* ");
+  for (unsigned int idx = 0; at (tos - 1, idx); idx++)
+    {
+      catchar (&out, at (tos - 1, idx));
+      if (at (tos - 1, idx) == '\n' && at (tos - 1, idx + 1) != '\n')
+	{
+	  catstr (&out, tos);
+	  cattext (&out, "   ");
+	}
+    }
+  cattext (&out, "  */");
+
+  overwrite_string (tos - 1, &out);
+  drop ();
+}
+
 /* Mod tos so that only lines with leading dots remain */
 static void
 outputdots (void)
@@ -579,11 +557,31 @@ outputdots (void)
       if (at (tos, idx) == '.')
 	{
 	  char c;
+	  int spaces;
 
 	  idx++;
-
+	  spaces = 0;
 	  while ((c = at (tos, idx)) && c != '\n')
 	    {
+	      if (spaces >= 0)
+		{
+		  if (c == ' ')
+		    {
+		      spaces++;
+		      idx++;
+		      continue;
+		    }
+		  else
+		    {
+		      while (spaces >= 8)
+			{
+			  catchar (&out, '\t');
+			  spaces -= 8;
+			}
+		      while (spaces-- > 0)
+			catchar (&out, ' ');
+		    }
+		}
 	      if (c == '{' && at (tos, idx + 1) == '*')
 		{
 		  cattext (&out, "/*");
@@ -859,9 +857,6 @@ icopy_past_newline (void)
   pc++;
 }
 
-/* indent
-   Take the string at the top of the stack, do some prettying.  */
-
 static void
 kill_bogus_lines (void)
 {
@@ -950,6 +945,41 @@ kill_bogus_lines (void)
 }
 
 static void
+collapse_whitespace (void)
+{
+  int last_was_ws = 0;
+  int idx;
+
+  string_type out;
+  init_string (&out);
+
+  for (idx = 0; at (tos, idx) != 0; ++idx)
+    {
+      char c = at (tos, idx);
+      if (isspace (c))
+	{
+	  if (!last_was_ws)
+	    {
+	      catchar (&out, ' ');
+	      last_was_ws = 1;
+	    }
+	}
+      else
+	{
+	  catchar (&out, c);
+	  last_was_ws = 0;
+	}
+    }
+
+  pc++;
+  delete_string (tos);
+  *tos = out;
+}
+
+/* indent
+   Take the string at the top of the stack, do some prettying.  */
+
+static void
 indent (void)
 {
   string_type out;
@@ -962,33 +992,42 @@ indent (void)
       switch (at (tos, idx))
 	{
 	case '\n':
-	  cattext (&out, "\n");
+	  catchar (&out, '\n');
 	  idx++;
 	  if (tab && at (tos, idx))
 	    {
-	      cattext (&out, "    ");
+	      int i;
+	      for (i = 0; i < tab - 1; i += 2)
+		catchar (&out, '\t');
+	      if (i < tab)
+		cattext (&out, "    ");
 	    }
 	  ol = 0;
 	  break;
 	case '(':
-	  tab++;
 	  if (ol == 0)
-	    cattext (&out, "   ");
+	    {
+	      int i;
+	      for (i = 1; i < tab - 1; i += 2)
+		catchar (&out, '\t');
+	      if (i < tab)
+		cattext (&out, "    ");
+	      cattext (&out, "   ");
+	    }
+	  tab++;
 	  idx++;
-	  cattext (&out, "(");
+	  catchar (&out, '(');
 	  ol = 1;
 	  break;
 	case ')':
 	  tab--;
-	  cattext (&out, ")");
+	  catchar (&out, ')');
 	  idx++;
 	  ol = 1;
-
 	  break;
 	default:
 	  catchar (&out, at (tos, idx));
 	  ol = 1;
-
 	  idx++;
 	  break;
 	}
@@ -1038,23 +1077,6 @@ other_dup (void)
 }
 
 static void
-drop (void)
-{
-  tos--;
-  check_range ();
-  delete_string (tos + 1);
-  pc++;
-}
-
-static void
-idrop (void)
-{
-  isp--;
-  icheck_range ();
-  pc++;
-}
-
-static void
 icatstr (void)
 {
   tos--;
@@ -1072,21 +1094,26 @@ skip_past_newline (void)
 }
 
 static void
-internalmode (void)
+maybecatstr (void)
 {
-  internal_mode = *(isp);
-  isp--;
-  icheck_range ();
+  if (internal_wanted == *internal_mode)
+    {
+      catstr (tos - 1, tos);
+    }
+  delete_string (tos);
+  tos--;
+  check_range ();
   pc++;
 }
 
 static void
-maybecatstr (void)
+catstrif (void)
 {
-  if (internal_wanted == internal_mode)
-    {
-      catstr (tos - 1, tos);
-    }
+  int cond = isp[0];
+  isp--;
+  icheck_range ();
+  if (cond)
+    catstr (tos - 1, tos);
   delete_string (tos);
   tos--;
   check_range ();
@@ -1216,6 +1243,11 @@ free_words (void)
 		free (ptr->code[i + 1].s - 1);
 		++i;
 	      }
+	    else if (ptr->code[i].f == push_variable)
+	      {
+		free ((void *) ptr->code[i + 1].l);
+		++i;
+	      }
 	  free (ptr->code);
 	}
       next = ptr->next;
@@ -1295,6 +1327,24 @@ add_intrinsic (char *name, void (*func) (void))
   add_to_definition (new_d, p);
 }
 
+static void
+add_variable (char *name, intptr_t *loc)
+{
+  dict_type *new_d = newentry (name);
+  pcu p = { push_variable };
+  add_to_definition (new_d, p);
+  p.l = (intptr_t) loc;
+  add_to_definition (new_d, p);
+  p.f = 0;
+  add_to_definition (new_d, p);
+}
+
+static void
+add_intrinsic_variable (const char *name, intptr_t *loc)
+{
+  add_variable (xstrdup (name), loc);
+}
+
 void
 compile (char *string)
 {
@@ -1368,6 +1418,17 @@ compile (char *string)
 	  free (word);
 	  string = nextword (string, &word);
 	}
+      else if (strcmp (word, "variable") == 0)
+	{
+	  free (word);
+	  string = nextword (string, &word);
+	  if (!string)
+	    continue;
+	  intptr_t *loc = xmalloc (sizeof (intptr_t));
+	  *loc = 0;
+	  add_variable (word, loc);
+	  string = nextword (string, &word);
+	}
       else
 	{
 	  fprintf (stderr, "syntax error at %s\n", string - 1);
@@ -1379,7 +1440,7 @@ compile (char *string)
 static void
 bang (void)
 {
-  *(long *) ((isp[0])) = isp[-1];
+  *(intptr_t *) ((isp[0])) = isp[-1];
   isp -= 2;
   icheck_range ();
   pc++;
@@ -1388,7 +1449,7 @@ bang (void)
 static void
 atsign (void)
 {
-  isp[0] = *(long *) (isp[0]);
+  isp[0] = *(intptr_t *) (isp[0]);
   pc++;
 }
 
@@ -1425,7 +1486,7 @@ print (void)
   else if (*isp == 2)
     write_buffer (tos, stderr);
   else
-    fprintf (stderr, "print: illegal print destination `%ld'\n", *isp);
+    fprintf (stderr, "print: illegal print destination `%" PRIdPTR "'\n", *isp);
   isp--;
   tos--;
   icheck_range ();
@@ -1504,14 +1565,19 @@ main (int ac, char *av[])
   add_intrinsic ("exit", chew_exit);
   add_intrinsic ("swap", swap);
   add_intrinsic ("outputdots", outputdots);
-  add_intrinsic ("paramstuff", paramstuff);
   add_intrinsic ("maybecatstr", maybecatstr);
+  add_intrinsic ("catstrif", catstrif);
   add_intrinsic ("translatecomments", translatecomments);
+  add_intrinsic ("wrap_comment", wrap_comment);
   add_intrinsic ("kill_bogus_lines", kill_bogus_lines);
   add_intrinsic ("indent", indent);
-  add_intrinsic ("internalmode", internalmode);
   add_intrinsic ("print_stack_level", print_stack_level);
   add_intrinsic ("strip_trailing_newlines", strip_trailing_newlines);
+  add_intrinsic ("collapse_whitespace", collapse_whitespace);
+
+  internal_mode = xmalloc (sizeof (intptr_t));
+  *internal_mode = 0;
+  add_intrinsic_variable ("internalmode", internal_mode);
 
   /* Put a nl at the start.  */
   catchar (&buffer, '\n');

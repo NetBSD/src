@@ -1,6 +1,6 @@
 /* Python interface to blocks.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "block.h"
 #include "dictionary.h"
 #include "symtab.h"
@@ -188,7 +187,7 @@ blpy_get_global_block (PyObject *self, void *closure)
 
   BLPY_REQUIRE_VALID (self, block);
 
-  global_block = block_global_block (block);
+  global_block = block->global_block ();
 
   return block_to_block_object (global_block,
 				self_obj->objfile);
@@ -210,7 +209,7 @@ blpy_get_static_block (PyObject *self, void *closure)
   if (block->superblock () == NULL)
     Py_RETURN_NONE;
 
-  static_block = block_static_block (block);
+  static_block = block->static_block ();
 
   return block_to_block_object (static_block, self_obj->objfile);
 }
@@ -265,24 +264,18 @@ blpy_getitem (PyObject *self, PyObject *key)
 
   lookup_name_info lookup_name (name.get(), symbol_name_match_type::FULL);
 
-  /* We use ALL_BLOCK_SYMBOLS_WITH_NAME instead of block_lookup_symbol so
-     that we can look up symbols irrespective of the domain, matching the
-     iterator. It would be confusing if the iterator returns symbols you
-     can't find via getitem.  */
-  struct block_iterator iter;
-  struct symbol *sym = nullptr;
-  ALL_BLOCK_SYMBOLS_WITH_NAME (block, lookup_name, iter, sym)
+  /* We use an iterator instead of block_lookup_symbol so that we can
+     look up symbols irrespective of the domain, matching the
+     iterator. It would be confusing if the iterator returns symbols
+     you can't find via getitem.  */
+  for (struct symbol *sym : block_iterator_range (block, &lookup_name))
     {
       /* Just stop at the first match */
-      break;
+      return symbol_to_symbol_object (sym);
     }
 
-  if (sym == nullptr)
-    {
-      PyErr_SetObject (PyExc_KeyError, key);
-      return nullptr;
-    }
-  return symbol_to_symbol_object (sym);
+  PyErr_SetObject (PyExc_KeyError, key);
+  return nullptr;
 }
 
 static void
@@ -424,7 +417,64 @@ blpy_iter_is_valid (PyObject *self, PyObject *args)
   Py_RETURN_TRUE;
 }
 
-int
+/* __repr__ implementation for gdb.Block.  */
+
+static PyObject *
+blpy_repr (PyObject *self)
+{
+  const auto block = block_object_to_block (self);
+  if (block == nullptr)
+    return gdb_py_invalid_object_repr (self);
+
+  const auto name = block->function () ?
+    block->function ()->print_name () : "<anonymous>";
+
+  std::string str;
+  unsigned int written_symbols = 0;
+  const int len = mdict_size (block->multidict ());
+  static constexpr int SYMBOLS_TO_SHOW = 5;
+  for (struct symbol *symbol : block_iterator_range (block))
+    {
+      if (written_symbols == SYMBOLS_TO_SHOW)
+	{
+	  const int remaining = len - SYMBOLS_TO_SHOW;
+	  if (remaining == 1)
+	    str += string_printf ("... (%d more symbol)", remaining);
+	  else
+	    str += string_printf ("... (%d more symbols)", remaining);
+	  break;
+	}
+      str += symbol->print_name ();
+      if (++written_symbols < len)
+	str += ", ";
+    }
+  return PyUnicode_FromFormat ("<%s %s {%s}>", Py_TYPE (self)->tp_name,
+			       name, str.c_str ());
+}
+
+/* Implements the equality comparison for Block objects.  All other
+   comparison operators will throw NotImplemented, as they aren't
+   valid for blocks.  */
+
+static PyObject *
+blpy_richcompare (PyObject *self, PyObject *other, int op)
+{
+  if (!PyObject_TypeCheck (other, &block_object_type)
+      || (op != Py_EQ && op != Py_NE))
+    {
+      Py_INCREF (Py_NotImplemented);
+      return Py_NotImplemented;
+    }
+
+  block_object *self_block = (block_object *) self;
+  block_object *other_block = (block_object *) other;
+
+  bool expected = self_block->block == other_block->block;
+  bool equal = op == Py_EQ;
+  return PyBool_FromLong (equal == expected);
+}
+
+static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_blocks (void)
 {
   block_object_type.tp_new = PyType_GenericNew;
@@ -442,6 +492,8 @@ gdbpy_initialize_blocks (void)
   return gdb_pymodule_addobject (gdb_module, "BlockIterator",
 				 (PyObject *) &block_syms_iterator_object_type);
 }
+
+GDBPY_INITIALIZE_FILE (gdbpy_initialize_blocks);
 
 
 
@@ -486,7 +538,7 @@ PyTypeObject block_object_type = {
   0,				  /*tp_getattr*/
   0,				  /*tp_setattr*/
   0,				  /*tp_compare*/
-  0,				  /*tp_repr*/
+  blpy_repr,                      /*tp_repr*/
   0,				  /*tp_as_number*/
   0,				  /*tp_as_sequence*/
   &block_object_as_mapping,	  /*tp_as_mapping*/
@@ -500,7 +552,7 @@ PyTypeObject block_object_type = {
   "GDB block object",		  /* tp_doc */
   0,				  /* tp_traverse */
   0,				  /* tp_clear */
-  0,				  /* tp_richcompare */
+  blpy_richcompare,		  /* tp_richcompare */
   0,				  /* tp_weaklistoffset */
   blpy_iter,			  /* tp_iter */
   0,				  /* tp_iternext */

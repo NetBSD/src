@@ -1,4 +1,5 @@
-# $NetBSD: md.cesfic,v 1.9 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.cesfic,v 1.9.14.1 2025/08/02 05:20:28 perseant Exp $
+#
 ./usr/include/cesfic				comp-c-include
 ./usr/include/cesfic/_G_config.h		comp-obsolete		obsolete
 ./usr/include/cesfic/ansi.h			comp-c-include
@@ -24,6 +25,7 @@
 ./usr/include/cesfic/intr.h			comp-c-include
 ./usr/include/cesfic/limits.h			comp-c-include
 ./usr/include/cesfic/lock.h			comp-c-include
+./usr/include/cesfic/lwp_private.h		comp-c-include
 ./usr/include/cesfic/math.h			comp-c-include
 ./usr/include/cesfic/mcontext.h			comp-c-include
 ./usr/include/cesfic/mutex.h			comp-c-include

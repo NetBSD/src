@@ -1,4 +1,4 @@
-/*	$NetBSD: backupsa.c,v 1.11 2018/05/19 19:47:47 maxv Exp $	*/
+/*	$NetBSD: backupsa.c,v 1.11.14.1 2025/08/02 05:18:36 perseant Exp $	*/
 
 /*	$KAME: backupsa.c,v 1.16 2001/12/31 20:13:40 thorpej Exp $	*/
 
@@ -77,27 +77,26 @@
  *    e_type e_keylen a_type a_keylen flags \
  *    l_alloc l_bytes l_addtime l_usetime seq keymat
  */
-static char *format = "%b %d %T %Y";	/* time format */
-static char *strmon[12] = {
+#define FORMAT "%b %d %T %Y"	/* time format */
+static const char *strmon[12] = {
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
 
-static char *str2tmx __P((char *, struct tm *));
-static int str2num __P((char *, int));
+static char *str2tmx(char *, struct tm *);
+static int str2num(char *, int);
 
 /*
  * output the sa parameter.
  */
 int
-backupsa_to_file(sa_args)
-	struct pfkey_send_sa_args *sa_args;
+backupsa_to_file(struct pfkey_send_sa_args *sa_args)
 {
 	char buf[1024];
 	struct tm *tm;
 	time_t t;
 	char *p, *k;
-	int len, l, i;
+	int i, l, len;
 	FILE *fp;
 
 	p = buf;
@@ -105,7 +104,7 @@ backupsa_to_file(sa_args)
 
 	t = time(NULL);
 	tm = localtime(&t);
-	l = strftime(p, len, format, tm);
+	l = strftime(p, len, FORMAT, tm);
 	p += l;
 	len -= l;
 	if (len < 0)
@@ -194,7 +193,7 @@ err:
 }
 
 int
-backupsa_from_file()
+backupsa_from_file(void)
 {
 	FILE *fp;
 	char buf[512];
@@ -237,31 +236,31 @@ backupsa_from_file()
 		created = mktime(&tm);
 		p++;
 
-		for (q = p; *q != '\0' && !isspace((int)*q); q++)
+		for (q = p; *q != '\0' && !isspace((unsigned char)*q); q++)
 			;
 		*q = '\0';
 		if ((sa_args.src = str2saddr(p, NULL)) == NULL)
 			goto next;
 		p = q + 1;
 
-		for (q = p; *q != '\0' && !isspace((int)*q); q++)
+		for (q = p; *q != '\0' && !isspace((unsigned char)*q); q++)
 			;
 		*q = '\0';
 		if ((sa_args.dst = str2saddr(p, NULL)) == NULL)
 			goto next;
 		p = q + 1;
 
-#define GETNEXTNUM(value, function) 				\
-do { 								\
-	char *y; 						\
-	for (q = p; *q != '\0' && !isspace((int)*q); q++) 	\
-		; 						\
-	*q = '\0'; 						\
-	(value) = function(p, &y, 10); 				\
-	if ((value) == 0 && *y != '\0') 			\
-		goto next; 					\
-	p = q + 1; 						\
-} while (/*CONSTCOND*/0);
+#define GETNEXTNUM(value, function) 					\
+do { 									\
+	char *y; 							\
+	for (q = p; *q != '\0' && !isspace((unsigned char )*q); q++) 	\
+		; 							\
+	*q = '\0'; 							\
+	(value) = function(p, &y, 10); 					\
+	if ((value) == 0 && *y != '\0') 				\
+		goto next; 						\
+	p = q + 1; 							\
+} while (/*CONSTCOND*/0)
 
 		GETNEXTNUM(sa_args.satype, strtoul);
 		GETNEXTNUM(sa_args.spi, strtoul);
@@ -335,7 +334,7 @@ next:
 }
 
 int
-backupsa_clean()
+backupsa_clean(void)
 {
 	FILE *fp;
 
@@ -357,12 +356,12 @@ backupsa_clean()
 /*
  * convert fixed string into the tm structure.
  * The fixed string is like 'Nov 24 18:22:48 1986'.
- * static char *format = "%b %d %T %Y";
  */
 static char *
 str2tmx(char *p, struct tm *tm)
 {
-	int i, len;
+	int len;
+	size_t i;
 
 	/* Month */
         for (i = 0; i < sizeof(strmon)/sizeof(strmon[0]); i++) {
@@ -425,15 +424,13 @@ str2tmx(char *p, struct tm *tm)
 }
 
 static int
-str2num(p, len)
-	char *p;
-	int len;
+str2num(char *p, int len)
 {
 	int res, i;
 
 	res = 0;
         for (i = len; i > 0; i--) {
-		if (!isdigit((int)*p))
+		if (!isdigit((unsigned char)*p))
 			return -1;
 		res *= 10;
 		res += *p - '0';
@@ -446,7 +443,7 @@ str2num(p, len)
 #ifdef TEST
 #include <stdio.h>
 int
-main()
+main(void)
 {
 	struct tm tm;
 	time_t t;

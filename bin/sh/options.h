@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.27 2017/05/28 00:38:01 kre Exp $	*/
+/*	$NetBSD: options.h,v 1.27.22.1 2025/08/02 05:18:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,4 +69,4 @@ void optschanged(void);
 void setparam(char **);
 void freeparam(volatile struct shparam *);
 int nextopt(const char *);
-void getoptsreset(const char *);
+void getoptsreset(char *, int);

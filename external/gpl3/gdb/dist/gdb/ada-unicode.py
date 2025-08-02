@@ -2,7 +2,7 @@
 
 # Generate Unicode case-folding table for Ada.
 
-# Copyright (C) 2022-2023 Free Software Foundation, Inc.
+# Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -25,41 +25,59 @@
 
 import gdbcopyright
 
-# The start of the current range of case-conversions we are
-# processing.  If RANGE_START is None, then we're outside of a range.
-range_start = None
-# End of the current range.
-range_end = None
-# The delta between RANGE_START and the upper-case variant of that
-# character.
-upper_delta = None
-# The delta between RANGE_START and the lower-case variant of that
-# character.
-lower_delta = None
+
+class Range:
+    def __init__(self, range_start: int, upper_delta: int, lower_delta: int):
+        self._range_start = range_start
+        self._range_end = range_start
+        self._upper_delta = upper_delta
+        self._lower_delta = lower_delta
+
+    # The start of the range.
+    @property
+    def range_start(self):
+        return self._range_start
+
+    # The end of the range.
+    @property
+    def range_end(self):
+        return self._range_end
+
+    @range_end.setter
+    def range_end(self, val: int):
+        self._range_end = val
+
+    # The delta between RANGE_START and the upper-case variant of that
+    # character.
+    @property
+    def upper_delta(self):
+        return self._upper_delta
+
+    # The delta between RANGE_START and the lower-case variant of that
+    # character.
+    @property
+    def lower_delta(self):
+        return self._lower_delta
+
+
+# The current range we are processing.  If None,  then we're outside of a range.
+current_range: Range | None = None
 
 # All the ranges found and completed so far.
-# Each entry is a tuple of the form (START, END, UPPER_DELTA, LOWER_DELTA).
-all_ranges = []
+all_ranges: list[Range] = []
 
 
 def finish_range():
-    global range_start
-    global range_end
-    global upper_delta
-    global lower_delta
-    if range_start is not None:
-        all_ranges.append((range_start, range_end, upper_delta, lower_delta))
-        range_start = None
-        range_end = None
-        upper_delta = None
-        lower_delta = None
+    global current_range
+
+    if current_range is not None:
+        all_ranges.append(current_range)
+        current_range = None
 
 
-def process_codepoint(val):
-    global range_start
-    global range_end
-    global upper_delta
-    global lower_delta
+def process_codepoint(val: int):
+    global current_range
+
     c = chr(val)
     low = c.lower()
     up = c.upper()
@@ -74,13 +92,16 @@ def process_codepoint(val):
         return
     updelta = ord(up) - val
     lowdelta = ord(low) - val
-    if range_start is not None and (updelta != upper_delta or lowdelta != lower_delta):
+
+    if current_range is not None and (
+        updelta != current_range.upper_delta or lowdelta != current_range.lower_delta
+    ):
         finish_range()
-    if range_start is None:
-        range_start = val
-        upper_delta = updelta
-        lower_delta = lowdelta
-    range_end = val
+
+    if current_range is None:
+        current_range = Range(val, updelta, lowdelta)
+
+    current_range.range_end = val
 
 
 for c in range(0, 0x10FFFF):
@@ -91,5 +112,9 @@ with open("ada-casefold.h", "w") as f:
         gdbcopyright.copyright("ada-unicode.py", "UTF-32 case-folding for GDB"),
         file=f,
     )
+    print("", file=f)
     for r in all_ranges:
-        print(f"   {{{r[0]}, {r[1]}, {r[2]}, {r[3]}}},", file=f)
+        print(
+            f"   {{{r.range_start}, {r.range_end}, {r.upper_delta}, {r.lower_delta}}},",
+            file=f,
+        )

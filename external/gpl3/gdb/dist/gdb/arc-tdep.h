@@ -1,6 +1,6 @@
 /* Target dependent code for ARC architecture, for GDB.
 
-   Copyright 2005-2023 Free Software Foundation, Inc.
+   Copyright 2005-2024 Free Software Foundation, Inc.
    Contributed by Synopsys Inc.
 
    This file is part of GDB.
@@ -131,10 +131,10 @@ struct arc_gdbarch_tdep : gdbarch_tdep_base
   bool has_hw_loops = false;
 
   /* Detect sigtramp.  */
-  bool (*is_sigtramp) (frame_info_ptr) = nullptr;
+  bool (*is_sigtramp) (const frame_info_ptr &) = nullptr;
 
   /* Get address of sigcontext for sigtramp.  */
-  CORE_ADDR (*sigcontext_addr) (frame_info_ptr) = nullptr;
+  CORE_ADDR (*sigcontext_addr) (const frame_info_ptr &) = nullptr;
 
   /* Offset of registers in `struct sigcontext'.  */
   const int *sc_reg_offset = nullptr;

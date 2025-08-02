@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: pam_u2f
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
-.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 11/01/2020
+.\" Generator: DocBook XSL Stylesheets v1.79.2 <http://docbook.sf.net/>
+.\"      Date: Version 1.3.1
 .\"    Manual: PAM U2F Module Manual
 .\"    Source: pam-u2f
 .\"  Language: English
 .\"
-.TH "PAM_U2F" "8" "11/01/2020" "pam\-u2f" "PAM U2F Module Manual"
+.TH "PAM_U2F" "8" "Version 1\&.3\&.1" "pam\-u2f" "PAM U2F Module Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -54,17 +54,28 @@ for anything getting logged to it\&. It is not created by pam\-u2f on purpose (f
 .PP
 \fBorigin\fR=\fIorigin\fR
 .RS 4
-Set the origin for the U2F authentication procedure\&. If no value is specified, the origin "pam://$HOSTNAME" is used\&.
+Set the relying party ID for the FIDO authentication procedure\&. If no value is specified, the identifier "pam://$HOSTNAME" is used\&.
 .RE
 .PP
 \fBappid\fR=\fIappid\fR
 .RS 4
-Set the application ID for the U2F authentication procedure\&. If no value is specified, the same value used for origin is taken ("pam://$HOSTNAME" if also origin is not specified)\&.
+Set the application ID for the U2F authentication procedure\&. If no value is specified, the same value used for origin is taken ("pam://$HOSTNAME" if also origin is not specified)\&. This setting is only applicable for U2F credentials created with pamu2fcfg versions v1\&.0\&.8 or earlier\&. Note that on v1\&.1\&.0 and v1\&.1\&.1 of pam\-u2f, handling of this setting was temporarily broken if the value was not the same as the value of origin\&.
 .RE
 .PP
 \fBauthfile\fR=\fIfile\fR
 .RS 4
-Set the location of the file that holds the mappings of user names to keyHandles and user keys\&. The format is username:keyHandle1,public_key1:keyHandle2,public_key2:\&... the default location of the file is $XDG_CONFIG_HOME/Yubico/u2f_keys\&. If the environment variable is not set, $HOME/\&.config/Yubico/u2f_keys is used\&. An individual (per user) file may be configured relative to the users\*(Aq home dirs, i\&.e\&. "\&.ssh/u2f_keys"\&.
+Set the location of the file that holds the mappings of user names to keyHandles and user keys\&. An individual (per user) file may be configured relative to the users\*(Aq home dirs, e\&.g\&. "\&.ssh/u2f_keys"\&. If not specified, the location defaults to $XDG_CONFIG_HOME/Yubico/u2f_keys\&. If $XDG_CONFIG_HOME is not set, $HOME/\&.config/Yubico/u2f_keys is used\&. The authfile format is <username>:<KeyHandle1>,<UserKey1>,<CoseType1>,<Options1>:<KeyHandle2>,<UserKey2>,<CoseType2>,<Options2>:\&...
+.RE
+.PP
+\fBexpand\fR
+.RS 4
+Enables variable expansion within the authfile path:
+%u
+is expanded to the local user name (PAM_USER) and
+%%
+is expanded to
+%\&. Unknown expansion sequences result in an authentication error\&. See also
+openasuser\&.
 .RE
 .PP
 \fBauthpending_file\fR=\fIfile\fR
@@ -79,7 +90,7 @@ Set to enable authentication attempts to succeed even if the user trying to auth
 .PP
 \fBopenasuser\fR
 .RS 4
-Setuid to the authenticating user when opening the authfile\&. Useful when the user\(cqs home is stored on an NFS volume mounted with the root_squash option (which maps root to nobody which will not be able to read the file)\&. Note that after release 1\&.0\&.8 this is done by default when no global authfile or XDG_CONFIG_HOME environment variable has been set\&.
+Setuid to the authenticating user when opening the authfile\&. Useful when the user\(cqs home is stored on an NFS volume mounted with the root_squash option (which maps root to nobody which will not be able to read the file)\&. Note that after release 1\&.0\&.8 this is done by default when no global authfile (path is absolute) or XDG_CONFIG_HOME environment variable has been set\&.
 .RE
 .PP
 \fBalwaysok\fR
@@ -89,7 +100,7 @@ Set to enable all authentication attempts to succeed (aka presentation mode)\&.
 .PP
 \fBmax_devices\fR=\fIn_devices\fR
 .RS 4
-Maximum number of devices allowed per user (default is 24)\&. Devices specified in the authentication file that exceed this value will be ignored\&.
+Maximum number of devices (credentials) allowed per user (default is 24)\&. Devices specified in the authorization mapping file that exceed this value will be ignored\&.
 .RE
 .PP
 \fBinteractive\fR
@@ -126,42 +137,104 @@ below\&.
 .PP
 \fBuserpresence\fR=\fIint\fR
 .RS 4
-If 1, require user presence during authentication\&. If 0, do not request user presence during authentication\&. Otherwise, fallback to the authenticator\(cqs default behaviour\&.
+If 1, require user presence during authentication\&. If 0, do not request user presence during authentication\&. If omitted, fallback to the authenticator\(cqs default behaviour\&.
 .RE
 .PP
 \fBuserverification\fR=\fIint\fR
 .RS 4
-If 1, require user verification during authentication\&. If 0, do not request user verification during authentication\&. Otherwise, fallback to the authenticator\(cqs default behaviour\&.
+If 1, require user verification during authentication (e\&.g\&. biometrics)\&. If 0, do not request user verification during authentication\&. If omitted, fallback to the authenticator\(cqs default behaviour\&. If enabled, an authenticator with support for FIDO2 user verification is required\&.
 .RE
 .PP
 \fBpinverification\fR=\fIint\fR
 .RS 4
-If 1, require PIN verification during authentication\&. If 0, do not request PIN verification during authentication\&. Otherwise, fallback to the authenticator\(cqs default behaviour\&.
+If 1, require PIN verification during authentication\&. If 0, do not request PIN verification during authentication\&. If omitted, fallback to the authenticator\(cqs default behaviour\&. If enabled, an authenticator with support for a FIDO2 PIN is required\&.
+.RE
+.PP
+\fBsshformat\fR
+.RS 4
+Use credentials produced by versions of OpenSSH that have support for FIDO devices\&. It is not possible to mix native credentials and SSH credentials\&. Once this option is enabled all credentials will be parsed as SSH\&.
 .RE
 .SH "EXAMPLES"
 .sp
-auth sufficient pam_u2f\&.so debug origin=pam://$HOSTNAME appid=pam://$HOSTNAME
+Second factor authentication deferring user verification configuration to the authorization mapping file\&.
 .sp
-auth required pam_u2f\&.so origin=http://example\&.com appid=http://example\&.com authfile=/etc/yubikey_mappings
+.if n \{\
+.RS 4
+.\}
+.nf
+auth required pam_u2f\&.so authfile=/etc/u2f_mappings cue
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Passwordless authentication enforcing PIN verification\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+auth sufficient pam_u2f\&.so authfile=/etc/u2f_mappings cue pinverification=1 userverification=0
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Passwordless authentication using built\-in UV (e\&.g\&. biometrics) with a fallback to PIN\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+auth sufficient pam_u2f\&.so authfile=/etc/u2f_mappings cue pinverification=0 userverification=1
+auth sufficient pam_u2f\&.so authfile=/etc/u2f_mappings cue pinverification=1 userverification=0
+.fi
+.if n \{\
+.RE
+.\}
 .SH "CAVEATS"
 .sp
-By default the mapping file inside a home directory will be opened as the target user, whereas the central file will be opened as "root"\&. If the "XDG_CONFIG_HOME" variable is set, privileges will not be dropped unless the "openasuser" configuration setting is set\&.
+By default, relative paths to the authfile will be opened as the target user, whereas absolute paths will be opened as "root"\&. If the "XDG_CONFIG_HOME" variable is set, privileges will not be dropped unless the "openasuser" configuration setting is set\&.
 .sp
 Using pam\-u2f to secure the login to a computer while storing the mapping file in an encrypted home directory, will result in the impossibility of logging into the system\&. The partition is decrypted after login and the mapping file can not be accessed\&.
 .SH "NOTES"
+.sp
+\fBNodetect\fR
 .sp
 The "nodetect" option should be used with caution\&. pam_u2f checks that a key configured for the user is inserted before performing the full tactile authentication\&. This detection is done by sending a "check\-only" authentication request to all inserted tokens to so see if at least one of them responds affirmatively to one or more of the keyhandles configured for the user\&. By doing this, pam_u2f can avoid emitting the "cue" prompt (if configured), which can cause some confusing UI issues if the cue is emitted followed by the underlying library immediately failing the tactile authentication\&. This option is also useful to avoid an unintended 1\-second delay prior to the tactile authentication caused by versions of libu2f\-host <= 1\&.1\&.5\&.
 .sp
 If pam_u2f is configured to "cue" and "nodetect", an attacker can determine that pam_u2f is part of the authentication stack by inserting any random U2F token and performing an authentication attempt\&. In this scenario, the attacker would see the cue message followed by an immediate failure, whereas with detection enabled, the U2F authentication will fail silently\&. Understand that an attacker could choose a U2F token that alerts him or her in some way to the "check\-only" authentication attempt, so this precaution only pushes the issue back a step\&.
 .sp
 In summary, the detection feature was added to avoid confusing UI issues and to prevent leaking information about the authentication stack in very specific scenario when "cue" is configured\&. The "nodetect" option was added to avoid buggy sleep behavior in older versions of libu2f\-host and for hypothetical tokens that do not tolerate the double authentication\&. Detection is performed, and likewise "nodetect" honored, regardless of whether "cue" is also specified\&.
+.sp
+\fBSELinux\fR
+.sp
+Due to an issue with Fedora Linux, and possibly with other distributions that use SELinux, a system configured with pam\-u2f may end up in a situation where access to the credentials file is denied\&. If the nouserok option is also set, this will result in a successful authentication within the module, without using the FIDO authenticator\&.
+.sp
+In order to correctly update the security context the command \fBfixfiles onboot\fR should be used on existing installations
+.sp
+Moreover, to allow read access to an authfile or directory placed in a non\-standard location, the command
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+# chcon \-R \-t auth_home_t /path/to/authfile
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+should be used\&.
+.sp
+For more information see https://access\&.redhat\&.com/security/cve/CVE\-2020\-24612\&.
 .SH "BUGS"
 .sp
-Report pam\-u2f bugs in the issue tracker: \m[blue]\fBhttps://github\&.com/Yubico/pam\-u2f/issues\fR\m[]
+Report pam\-u2f bugs in the issue tracker: https://github\&.com/Yubico/pam\-u2f/issues
 .SH "SEE ALSO"
 .sp
 \fBpam\fR(7)
 .sp
-The pam\-u2f home page: \m[blue]\fBhttps://developers\&.yubico\&.com/pam\-u2f/\fR\m[]
+The pam\-u2f home page: https://developers\&.yubico\&.com/pam\-u2f/
 .sp
-YubiKeys can be obtained from Yubico: \m[blue]\fBhttp://www\&.yubico\&.com/\fR\m[]
+YubiKeys can be obtained from Yubico: http://www\&.yubico\&.com/

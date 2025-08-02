@@ -1,10 +1,10 @@
-#	$NetBSD: shl.mi,v 1.58 2024/05/13 14:59:31 christos Exp $
+#	$NetBSD: shl.mi,v 1.58.2.1 2025/08/02 05:20:36 perseant Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
-./usr/X11R7/lib/libEGL.a				xcomp-libEGL-lib	xorg,xorg_glamor
-./usr/X11R7/lib/libEGL_p.a				xcomp-libEGL-lib	profile,xorg,xorg_glamor
-./usr/X11R7/lib/libEGL_pic.a				xcomp-libEGL-lib	xorg,picinstall,compatx11file,xorg_glamor
+./usr/X11R7/lib/libEGL.a				xcomp-libEGL-lib	xorg,xorg_egl
+./usr/X11R7/lib/libEGL_p.a				xcomp-libEGL-lib	profile,xorg,xorg_egl
+./usr/X11R7/lib/libEGL_pic.a				xcomp-libEGL-lib	xorg,picinstall,compatx11file,xorg_egl
 ./usr/X11R7/lib/libFS_pic.a				xcomp-libFS-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libGLU_pic.a				xcomp-libGLU-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libGL_pic.a				xcomp-libGL-lib	xorg,picinstall,compatx11file
@@ -63,17 +63,17 @@
 ./usr/X11R7/lib/libglapi_pic.a				xcomp-libglapi-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libglut_pic.a				xcomp-obsolete	obsolete
 ./usr/X11R7/lib/liblbxutil_pic.a			xcomp-obsolete	obsolete
-./usr/X11R7/lib/libxcvt_pic.a				xcomp-libxcvt-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/liblisp_pic.a				xcomp-obsolete	obsolete
 ./usr/X11R7/lib/libmp_pic.a				xcomp-obsolete	obsolete
 ./usr/X11R7/lib/libpciaccess_pic.a			xcomp-libpciaccess-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libpixman-1_pic.a			xcomp-pixman-lib	xorg,picinstall,compatx11file
-./usr/X11R7/lib/libpthread-stubs_pic.a			xcomp-libpthread-stubs-lib	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libpthread-stubs_pic.a			xcomp-obsolete		obsolete
 ./usr/X11R7/lib/libre_pic.a				xcomp-obsolete	obsolete
 ./usr/X11R7/lib/libxcb-atom_pic.a			xcomp-xcb-util-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-aux_pic.a			xcomp-xcb-util-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-composite_pic.a			xcomp-libxcb-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-damage_pic.a			xcomp-libxcb-lib	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libxcb-dbe_pic.a			xcomp-libxcb-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-dpms_pic.a			xcomp-libxcb-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-dri2_pic.a			xcomp-libxcb-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-dri3_pic.a			xcomp-libxcb-lib	xorg,picinstall,compatx11file
@@ -104,6 +104,7 @@
 ./usr/X11R7/lib/libxcb-xv_pic.a				xcomp-libxcb-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-xvmc_pic.a			xcomp-libxcb-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb_pic.a				xcomp-libxcb-lib	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libxcvt_pic.a				xcomp-libxcvt-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxkbfile_pic.a			xcomp-libxkbfile-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxkbui_pic.a				xcomp-libxkbui-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxshmfence_pic.a			xcomp-libxshmfence-lib	xorg,picinstall,compatx11file

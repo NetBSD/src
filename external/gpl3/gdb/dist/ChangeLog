@@ -1,3 +1,111 @@
+2024-03-20  Simon Marchi  <simon.marchi@efficios.com>
+
+	* .pre-commit-config.yaml: Bump black hook to 24.3.0
+
+2024-03-20  Simon Marchi  <simon.marchi@efficios.com>
+
+	* .pre-commit-config.yaml: New.
+
+2024-03-14  Simon Marchi  <simon.marchi@efficios.com>
+
+	* Makefile.def: Add configure-gdbserver and all-gdbserver
+	dependencies on all-libiconv.
+	* Makefile.in: Re-generate.
+
+2024-01-15  Nick Clifton  <nickc@redhat.com>
+
+	* 2.42 branch point.
+
+2023-11-15  Arsen Arsenović  <arsen@aarsen.me>
+
+	* intl: Remove directory.  Replaced with out-of-tree GNU
+	gettext.
+	* .gitignore: Add '/gettext*'.
+	* configure.ac (host_libs): Replace intl with gettext.
+	(hbaseargs, bbaseargs, baseargs): Split baseargs into
+	{h,b}baseargs.
+	(skip_barg): New flag.  Skips appending current flag to
+	bbaseargs.
+	<library exemptions>: Exempt --with-libintl-{type,prefix} from
+	target and build machine argument passing.
+	* configure: Regenerate.
+	* Makefile.def (host_modules): Replace intl module with gettext
+	module.
+	(configure-ld): Depend on configure-gettext.
+	* Makefile.in: Regenerate.
+	* src-release.sh: Remove references to the intl/ directory.
+
+2023-07-03  Nick Clifton  <nickc@redhat.com>
+
+	2.41 Branch Point.
+
+2023-06-26  Nick Clifton  <nickc@redhat.com>
+
+	* Import these updates to the config scripts
+
+	commit 4ad4bb7c30aca1e705448ba8d51a210bbd47bb52
+	Author: Paul Eggert <eggert@cs.ucla.edu>
+	Date:   Fri Jun 23 09:55:10 2023 -0700
+
+		Quote 'like this', not `like this'.
+
+	commit 63acb96f92473ceb5e21d873d7c0aee266b3d6d3
+	Author: Paul Eggert <eggert@cs.ucla.edu>
+	Date:   Sat Jan 21 00:15:01 2023 -0600
+
+		Fix config.sub spelling typo for "athlon"
+
+	commit 4ce12a5c9125cedc0d0ba584444a6865396923ec
+	Author: Dmitry V. Levin <ldv@altlinux.org>
+	Date:   Sun Jan 1 08:00:00 2023 +0000
+
+		Update copyright years
+
+	commit c397e2c040bce50bcdccb131f90115ba7e8bfc19
+	Author: Arsen Arsenovi <arsen@aarsen.me>
+	Date:   Sat Sep 17 23:34:48 2022 +0200
+
+		config.sub: add linux-mlibc targets
+
+	commit 9f9f9b0b13197269848c76e3e057a3ed0680b4bf
+	Author: Arsen Arsenovi <arsen@aarsen.me>
+	Date:   Sat Sep 17 23:34:47 2022 +0200
+
+		config.guess: support running on Managarm systems
+
+	commit 87e6687749da7bb2ab158a79fa83721c19ed9246
+	Author: Arsen Arsenovi <arsen@aarsen.me>
+	Date:   Sat Sep 17 23:34:46 2022 +0200
+
+		config.sub: add managarm-{mlibc,kernel} targets
+
+	commit 20403c5701973a4cbd7e0b4bbeb627fcd424a0f1
+	Author: Xiaotian Wu <wuxiaotian@loongson.cn>
+	Date:   Mon Aug 1 16:05:29 2022 +0800
+
+		Remove loongarchx32
+
+	commit 02ba26b218d3d3db6c56e014655faf463cefa983
+	Author: Alexander von Gluck IV <kallisti5@unixzen.com>
+	Date:   Wed May 25 15:43:13 2022 -0500
+
+		config.guess: Update Haiku guesses
+
+	commit f56a7140386d08a531bcfd444d632b28c61a6329
+	Author: Bruno Haible <bruno@clisp.org>
+	Date:   Sun May 8 19:08:08 2022 +0200
+
+		config.guess (x86_64:Linux:*:*): Detect 32-bit ABI.
+
+2023-04-20  Nick Clifton  <nickc@redhat.com>
+
+	* SECURITY.txt: New file.
+	* src-release.sh (DEVO_SUPPORT): Add SECURITY.txt.
+
+2022-12-31  Nick Clifton  <nickc@redhat.com>
+
+	* 2.40 binutils branch created.
+
 2022-10-10  Nick Clifton  <nickc@redhat.com>
 
 	* src-release.sh: Add "-r <date>" option to create reproducible

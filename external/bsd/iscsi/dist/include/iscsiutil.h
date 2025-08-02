@@ -284,10 +284,11 @@ int             iscsi_sock_connect(int , char *, int);
 int             iscsi_sock_accept(int , int *);
 int             iscsi_sock_shutdown(int , int);
 int             iscsi_sock_close(int);
-int             iscsi_sock_msg(int , int , unsigned , void *, int);
+int             iscsi_sock_msg(int , int , unsigned , void *, int, int);
 int		iscsi_sock_send_header_and_data(int ,
 				void *, unsigned ,
-				const void *, unsigned , int);
+				const void *, unsigned , int,
+				int, int);
 int             iscsi_sock_getsockname(int , struct sockaddr * , unsigned *);
 int             iscsi_sock_getpeername(int , struct sockaddr * , unsigned *);
 int             modify_iov(struct iovec ** , int *, uint32_t , uint32_t);
@@ -445,6 +446,8 @@ uint32_t iscsi_atoi(char *);
 int HexTextToData(const char *, uint32_t , uint8_t *, uint32_t);
 int HexDataToText(uint8_t *, uint32_t , char *, uint32_t);
 void GenRandomData(uint8_t *, uint32_t);
+uint32_t gen_digest(const void *, int, uint32_t);
+
 
 /* this is the maximum number of iovecs which we can use in
 * iscsi_sock_send_header_and_data */

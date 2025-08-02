@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.23 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.23.8.1 2025/08/02 05:22:34 perseant Exp $	*/
 
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
@@ -28,8 +28,6 @@
 #include "ntp_crypto.h"
 #include "ntp_assert.h"
 #include "ntp_leapsec.h"
-#include "ntp_md5.h"	/* provides OpenSSL digest API */
-#include "lib_strbuf.h"
 #include "timexsup.h"
 
 #include <rc_cmdlength.h>
@@ -101,10 +99,16 @@ static	void	send_random_tag_value(int);
 static	void	read_mru_list	(struct recvbuf *, int);
 static	void	send_ifstats_entry(endpt *, u_int);
 static	void	read_ifstats	(struct recvbuf *);
-static	void	sockaddrs_from_restrict_u(sockaddr_u *,	sockaddr_u *,
-					  restrict_u *, int);
-static	void	send_restrict_entry(restrict_u *, int, u_int);
-static	void	send_restrict_list(restrict_u *, int, u_int *);
+static	void	sockaddrs_from_struct_restrict_4(sockaddr_u *,	sockaddr_u *,
+					  struct restrict_4 *);
+static	void	sockaddrs_from_struct_restrict_6(sockaddr_u *,	sockaddr_u *,
+					  struct restrict_6 *);
+static	void	send_restrict_entry(struct restrict_info *, sockaddr_u *,
+					  sockaddr_u *, u_int);
+static	void	send_restrict4_entry(struct restrict_4 *, u_int);
+static	void	send_restrict6_entry(struct restrict_6 *, u_int);
+static	void	send_restrict4_list(struct restrict_4 *, u_int *);
+static	void	send_restrict6_list(struct restrict_6 *, u_int *);
 static	void	read_addr_restrictions(struct recvbuf *);
 static	void	read_ordlist	(struct recvbuf *, int);
 static	u_int32	derive_nonce	(sockaddr_u *, u_int32, u_int32);
@@ -113,7 +117,7 @@ static	int	validate_nonce	(const char *, struct recvbuf *);
 static	void	req_nonce	(struct recvbuf *, int);
 static	void	unset_trap	(struct recvbuf *, int);
 static	struct ctl_trap *ctlfindtrap(sockaddr_u *,
-				     struct interface *);
+				     endpt *);
 
 int/*BOOL*/ is_safe_filename(const char * name);
 
@@ -807,7 +811,7 @@ static int	datalinelen;
 static int	datasent;	/* flag to avoid initial ", " */
 static int	datanotbinflag;
 static sockaddr_u *rmt_addr;
-static struct interface *lcl_inter;
+static endpt *lcl_inter;
 
 static u_char	res_authenticate;
 static u_char	res_authokay;
@@ -822,10 +826,6 @@ static u_char	res_async;	/* sending async trap response? */
  */
 static	char *reqpt;
 static	char *reqend;
-
-#ifndef MIN
-#define MIN(a, b) (((a) <= (b)) ? (a) : (b))
-#endif
 
 /*
  * init_control - initialize request data
@@ -3190,8 +3190,8 @@ ctl_getitem(
 	    if (quiet_until <= current_time) {
 		    quiet_until = current_time + 300;
 		    msyslog(LOG_WARNING,
-			    "Possible 'ntpdx' exploit from %s#%u (possibly spoofed)",
-			    stoa(rmt_addr), SRCPORT(rmt_addr));
+			    "Possible 'ntpdx' exploit from %s (possibly spoofed)",
+			    sptoa(rmt_addr));
 	    }
 	reqpt = reqend; /* never again for this packet! */
 	return NULL;
@@ -3645,8 +3645,13 @@ static void configure(
 
 
 /*
- * derive_nonce - generate client-address-specific nonce value
- *		  associated with a given timestamp.
+ * derive_nonce - generate 32-bit nonce value derived from the client
+ *		  address and a request-specific timestamp.
+ *
+ * This uses MD5 for a non-authentication purpose -- the nonce is used
+ * analogous to the TCP 3-way handshake to confirm the UDP client can
+ * receive traffic from which it claims to originate, that is, to
+ * prevent spoofed requests leading to reflected amplification.
  */
 static u_int32 derive_nonce(
 	sockaddr_u *	addr,
@@ -3656,12 +3661,11 @@ static u_int32 derive_nonce(
 {
 	static u_int32	salt[4];
 	static u_long	last_salt_update;
+	MD5_CTX		ctx;
 	union d_tag {
-		u_char	digest[EVP_MAX_MD_SIZE];
+		u_char	digest[MD5_DIGEST_LENGTH];
 		u_int32 extract;
 	}		d;
-	EVP_MD_CTX	*ctx;
-	u_int		len;
 
 	while (!salt[0] || current_time - last_salt_update >= 3600) {
 		salt[0] = ntp_random();
@@ -3671,27 +3675,18 @@ static u_int32 derive_nonce(
 		last_salt_update = current_time;
 	}
 
-	ctx = EVP_MD_CTX_new();
-#   if defined(OPENSSL) && defined(EVP_MD_CTX_FLAG_NON_FIPS_ALLOW)
-	/* [Bug 3457] set flags and don't kill them again */
-	EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-	EVP_DigestInit_ex(ctx, EVP_get_digestbynid(NID_md5), NULL);
-#   else
-	EVP_DigestInit(ctx, EVP_get_digestbynid(NID_md5));
-#   endif
-	EVP_DigestUpdate(ctx, salt, sizeof(salt));
-	EVP_DigestUpdate(ctx, &ts_i, sizeof(ts_i));
-	EVP_DigestUpdate(ctx, &ts_f, sizeof(ts_f));
-	if (IS_IPV4(addr))
-		EVP_DigestUpdate(ctx, &SOCK_ADDR4(addr),
-			         sizeof(SOCK_ADDR4(addr)));
-	else
-		EVP_DigestUpdate(ctx, &SOCK_ADDR6(addr),
-			         sizeof(SOCK_ADDR6(addr)));
-	EVP_DigestUpdate(ctx, &NSRCPORT(addr), sizeof(NSRCPORT(addr)));
-	EVP_DigestUpdate(ctx, salt, sizeof(salt));
-	EVP_DigestFinal(ctx, d.digest, &len);
-	EVP_MD_CTX_free(ctx);
+	MD5Init(&ctx);
+	MD5Update(&ctx, __UNCONST(salt), sizeof(salt));
+	MD5Update(&ctx, __UNCONST(&ts_i), sizeof(ts_i));
+	MD5Update(&ctx, __UNCONST(&ts_f), sizeof(ts_f));
+	if (IS_IPV4(addr)) {
+		MD5Update(&ctx, __UNCONST(&SOCK_ADDR4(addr)), sizeof(SOCK_ADDR4(addr)));
+	} else {
+		MD5Update(&ctx, __UNCONST(&SOCK_ADDR6(addr)), sizeof(SOCK_ADDR6(addr)));
+	}
+	MD5Update(&ctx, __UNCONST(&NSRCPORT(addr)), sizeof(NSRCPORT(addr)));
+	MD5Update(&ctx, __UNCONST(salt), sizeof(salt));
+	MD5Final(d.digest, &ctx);
 
 	return d.extract;
 }
@@ -3991,7 +3986,7 @@ static void read_mru_list(
 	int			mincount;
 	u_int			maxlstint;
 	sockaddr_u		laddr;
-	struct interface *	lcladr;
+	endpt *			lcladr;
 	u_int			count;
 	u_int			ui;
 	u_int			uf;
@@ -4383,30 +4378,36 @@ read_ifstats(
 }
 
 static void
-sockaddrs_from_restrict_u(
+sockaddrs_from_struct_restrict_4(
 	sockaddr_u *	psaA,
 	sockaddr_u *	psaM,
-	restrict_u *	pres,
-	int		ipv6
+	struct restrict_4 *	pres
 	)
 {
 	ZERO(*psaA);
 	ZERO(*psaM);
-	if (!ipv6) {
-		psaA->sa.sa_family = AF_INET;
-		psaA->sa4.sin_addr.s_addr = htonl(pres->u.v4.addr);
-		psaM->sa.sa_family = AF_INET;
-		psaM->sa4.sin_addr.s_addr = htonl(pres->u.v4.mask);
-	} else {
-		psaA->sa.sa_family = AF_INET6;
-		memcpy(&psaA->sa6.sin6_addr, &pres->u.v6.addr,
-		       sizeof(psaA->sa6.sin6_addr));
-		psaM->sa.sa_family = AF_INET6;
-		memcpy(&psaM->sa6.sin6_addr, &pres->u.v6.mask,
-		       sizeof(psaA->sa6.sin6_addr));
-	}
+	psaA->sa.sa_family = AF_INET;
+	psaA->sa4.sin_addr.s_addr = htonl(pres->v4.addr);
+	psaM->sa.sa_family = AF_INET;
+	psaM->sa4.sin_addr.s_addr = htonl(pres->v4.mask);
 }
 
+static void
+sockaddrs_from_struct_restrict_6(
+	sockaddr_u *	psaA,
+	sockaddr_u *	psaM,
+	struct restrict_6 *	pres
+	)
+{
+	ZERO(*psaA);
+	ZERO(*psaM);
+	psaA->sa.sa_family = AF_INET6;
+	memcpy(&psaA->sa6.sin6_addr, &pres->v6.addr,
+	       sizeof(psaA->sa6.sin6_addr));
+	psaM->sa.sa_family = AF_INET6;
+	memcpy(&psaM->sa6.sin6_addr, &pres->v6.mask,
+	       sizeof(psaA->sa6.sin6_addr));
+}
 
 /*
  * Send a restrict entry in response to a "ntpq -c reslist" request.
@@ -4418,8 +4419,9 @@ sockaddrs_from_restrict_u(
  */
 static void
 send_restrict_entry(
-	restrict_u *	pres,
-	int		ipv6,
+	struct restrict_info *ri,
+	sockaddr_u *addr,
+	sockaddr_u *mask,
 	u_int		idx
 	)
 {
@@ -4433,14 +4435,11 @@ send_restrict_entry(
 	u_int32		noise;
 	u_int		which;
 	u_int		remaining;
-	sockaddr_u	addr;
-	sockaddr_u	mask;
 	const char *	pch;
 	char *		buf;
 	const char *	match_str;
 	const char *	access_str;
 
-	sockaddrs_from_restrict_u(&addr, &mask, pres, ipv6);
 	remaining = COUNTOF(sent);
 	ZERO(sent);
 	noise = 0;
@@ -4462,25 +4461,25 @@ send_restrict_entry(
 
 		case 0:
 			snprintf(tag, sizeof(tag), addr_fmtu, idx);
-			pch = stoa(&addr);
+			pch = stoa(addr);
 			ctl_putunqstr(tag, pch, strlen(pch));
 			break;
 
 		case 1:
 			snprintf(tag, sizeof(tag), mask_fmtu, idx);
-			pch = stoa(&mask);
+			pch = stoa(mask);
 			ctl_putunqstr(tag, pch, strlen(pch));
 			break;
 
 		case 2:
 			snprintf(tag, sizeof(tag), hits_fmt, idx);
-			ctl_putuint(tag, pres->count);
+			ctl_putuint(tag, ri->count);
 			break;
 
 		case 3:
 			snprintf(tag, sizeof(tag), flags_fmt, idx);
-			match_str = res_match_flags(pres->mflags);
-			access_str = res_access_flags(pres->rflags);
+			match_str = res_match_flags(ri->mflags);
+			access_str = res_access_flags(ri->rflags);
 			if ('\0' == match_str[0]) {
 				pch = access_str;
 			} else {
@@ -4498,20 +4497,51 @@ send_restrict_entry(
 	send_random_tag_value((int)idx);
 }
 
+static void
+send_restrict4_entry(
+	struct restrict_4 *	pres,
+	u_int 		pidx)
+{
+	sockaddr_u	addr;
+	sockaddr_u	mask;
+	sockaddrs_from_struct_restrict_4(&addr, &mask, pres);
+	send_restrict_entry(&pres->ri, &addr, &mask, pidx);
+}
 
 static void
-send_restrict_list(
-	restrict_u *	pres,
-	int		ipv6,
+send_restrict6_entry(
+	struct restrict_6 *	pres,
+	u_int 		pidx)
+{
+	sockaddr_u	addr;
+	sockaddr_u	mask;
+	sockaddrs_from_struct_restrict_6(&addr, &mask, pres);
+	send_restrict_entry(&pres->ri, &addr, &mask, pidx);
+}
+
+static void
+send_restrict4_list(
+	struct restrict_4 *	pres,
 	u_int *		pidx
 	)
 {
 	for ( ; pres != NULL; pres = pres->link) {
-		send_restrict_entry(pres, ipv6, *pidx);
+		send_restrict4_entry(pres, *pidx);
 		(*pidx)++;
 	}
 }
 
+static void
+send_restrict6_list(
+	struct restrict_6 *	pres,
+	u_int *		pidx
+	)
+{
+	for ( ; pres != NULL; pres = pres->link) {
+		send_restrict6_entry(pres, *pidx);
+		(*pidx)++;
+	}
+}
 
 /*
  * read_addr_restrictions - returns IPv4 and IPv6 access control lists
@@ -4524,8 +4554,8 @@ read_addr_restrictions(
 	u_int idx;
 
 	idx = 0;
-	send_restrict_list(restrictlist4, FALSE, &idx);
-	send_restrict_list(restrictlist6, TRUE, &idx);
+	send_restrict4_list(restrictlist4, &idx);
+	send_restrict6_list(restrictlist6, &idx);
 	ctl_flushpkt(0);
 }
 
@@ -4792,7 +4822,7 @@ unset_trap(
 int
 ctlsettrap(
 	sockaddr_u *raddr,
-	struct interface *linter,
+	endpt *linter,
 	int traptype,
 	int version
 	)
@@ -4915,7 +4945,7 @@ ctlsettrap(
 int
 ctlclrtrap(
 	sockaddr_u *raddr,
-	struct interface *linter,
+	endpt *linter,
 	int traptype
 	)
 {
@@ -4940,7 +4970,7 @@ ctlclrtrap(
 static struct ctl_trap *
 ctlfindtrap(
 	sockaddr_u *raddr,
-	struct interface *linter
+	endpt *linter
 	)
 {
 	size_t	n;

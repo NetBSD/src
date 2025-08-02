@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,11 +20,14 @@
 #ifndef FBSD_NAT_H
 #define FBSD_NAT_H
 
+#include <optional>
 #include "inf-ptrace.h"
 #include "regcache.h"
 #include "regset.h"
 #include <osreldate.h>
 #include <sys/proc.h>
+
+#include <list>
 
 /* FreeBSD kernels 11.3 and later report valid si_code values for
    SIGTRAP on all architectures.  Older FreeBSD kernels that supported
@@ -76,6 +79,14 @@ public:
   void create_inferior (const char *, const std::string &,
 			char **, int) override;
 
+  void attach (const char *, int) override;
+
+  void detach (inferior *, int) override;
+
+  void kill () override;
+
+  void mourn_inferior () override;
+
   void resume (ptid_t, int, enum gdb_signal) override;
 
   ptid_t wait (ptid_t, struct target_waitstatus *, target_wait_flags) override;
@@ -86,6 +97,8 @@ public:
   bool supports_stopped_by_sw_breakpoint () override;
   bool stopped_by_sw_breakpoint () override;
 #endif
+
+  void follow_exec (inferior *, ptid_t, const char *) override;
 
 #ifdef TDP_RFPPWAIT
   void follow_fork (inferior *, ptid_t, target_waitkind, bool, bool) override;
@@ -129,6 +142,10 @@ protected:
 
 private:
   ptid_t wait_1 (ptid_t, struct target_waitstatus *, target_wait_flags);
+
+  void resume_one_process (ptid_t, int, enum gdb_signal);
+
+  void stop_process (inferior *);
 
   /* Helper routines for use in fetch_registers and store_registers in
      subclasses.  These routines fetch and store a single set of
@@ -217,6 +234,51 @@ protected:
     return store_regset (regcache, regnum, note, regset, regbase, &regs,
 			 sizeof (regs));
   }
+
+private:
+  /* If an event is triggered asynchronously (fake vfork_done events)
+     or occurs when the core is not expecting it, a pending event is
+     created.  This event is then returned by a future call to the
+     target wait method.  */
+
+  struct pending_event
+  {
+    pending_event (const ptid_t &_ptid, const target_waitstatus &_status) :
+      ptid (_ptid), status (_status) {}
+
+    ptid_t ptid;
+    target_waitstatus status;
+  };
+
+  /* Add a new pending event to the list.  */
+
+  void add_pending_event (const ptid_t &ptid, const target_waitstatus &status);
+
+  /* Return true if there is a pending event matching FILTER.  */
+
+  bool have_pending_event (ptid_t filter);
+
+  /* Check if there is a pending event for a resumed process matching
+     FILTER.  If there is a matching event, the event is removed from
+     the pending list and returned.  */
+
+  std::optional<pending_event> take_pending_event (ptid_t filter);
+
+  /* List of pending events.  */
+
+  std::list<pending_event> m_pending_events;
+
+  /* If this thread has a pending fork event, there is a child process
+     GDB is attached to that the core of GDB doesn't know about.
+     Detach from it.  */
+
+  void detach_fork_children (thread_info *tp);
+
+  /* Detach from any child processes associated with pending fork events
+     for a stopped process.  Returns true if the process has terminated
+     and false if it is still alive.  */
+
+  bool detach_fork_children (inferior *inf);
 };
 
 /* Fetch the signal information for PTID and store it in *SIGINFO.

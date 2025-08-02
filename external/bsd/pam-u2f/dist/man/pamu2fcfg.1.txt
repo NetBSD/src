@@ -48,19 +48,18 @@ Require user verification during authentication. Defaults to off.
 *--version*:
 *Print version and exit*
 
-Group: user (mutually exclusive)
-
 *-u*, *--username*=_STRING_::
-The name of the user registering the device. Defaults to the current user name
+The name of the user registering the device. Defaults to the current user name.
 
 *-n*, *--nouser*::
-Print only registration information (keyHandle and public key). Useful for appending
+Print only registration information (key handle, public key, and options).
+Useful for appending.
 
 == BUGS
 Report pamu2fcfg bugs in the issue tracker: https://github.com/Yubico/pam-u2f/issues
 
 == SEE ALSO
-*pam_u2f*(8), *pam*(7)
+*pam_u2f*(8), *pam*(7), *fido2-token*(1)
 
 The pam-u2f home page: https://developers.yubico.com/pam-u2f/
 

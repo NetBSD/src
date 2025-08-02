@@ -1,5 +1,5 @@
 /* Build symbol tables in GDB's internal format.
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,6 @@
 
 struct objfile;
 struct symbol;
-struct addrmap;
 struct compunit_symtab;
 enum language;
 
@@ -131,6 +130,10 @@ enum linetable_entry_flag : unsigned
   /* Indicates this PC is a good location to place a breakpoint at the first
      instruction past a function prologue.  */
   LEF_PROLOGUE_END = 1 << 2,
+
+  /* Indicated that this PC is part of the epilogue of a function, making
+     software watchpoints unreliable.  */
+  LEF_EPILOGUE_BEGIN = 1 << 3,
 };
 DEF_ENUM_FLAGS_TYPE (enum linetable_entry_flag, linetable_entry_flags);
 
@@ -239,7 +242,7 @@ struct buildsym_compunit
 
   const char *pop_subfile ();
 
-  void record_line (struct subfile *subfile, int line, CORE_ADDR pc,
+  void record_line (struct subfile *subfile, int line, unrelocated_addr pc,
 		    linetable_entry_flags flags);
 
   struct compunit_symtab *get_compunit_symtab ()
@@ -327,12 +330,11 @@ struct buildsym_compunit
     (CORE_ADDR end_addr, int expandable, int required);
 
   struct compunit_symtab *end_compunit_symtab_from_static_block
-    (struct block *static_block, int section, int expandable);
+    (struct block *static_block, int expandable);
 
-  struct compunit_symtab *end_compunit_symtab (CORE_ADDR end_addr, int section);
+  struct compunit_symtab *end_compunit_symtab (CORE_ADDR end_addr);
 
-  struct compunit_symtab *end_expandable_symtab (CORE_ADDR end_addr,
-						 int section);
+  struct compunit_symtab *end_expandable_symtab (CORE_ADDR end_addr);
 
   void augment_type_symtab ();
 
@@ -352,7 +354,7 @@ private:
   void watch_main_source_file_lossage ();
 
   struct compunit_symtab *end_compunit_symtab_with_blockvector
-    (struct block *static_block, int section, int expandable);
+    (struct block *static_block, int expandable);
 
   /* The objfile we're reading debug info from.  */
   struct objfile *m_objfile;

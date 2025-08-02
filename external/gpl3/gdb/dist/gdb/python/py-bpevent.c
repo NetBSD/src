@@ -1,6 +1,6 @@
 /* Python interface to inferior breakpoint stop events.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,17 +17,17 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "py-stopevent.h"
 
 /* Create and initialize a BreakpointEvent object.  This acquires new
    references to BREAKPOINT_LIST and FIRST_BP.  */
 
 gdbpy_ref<>
-create_breakpoint_event_object (PyObject *breakpoint_list, PyObject *first_bp)
+create_breakpoint_event_object (const gdbpy_ref<> &dict,
+				PyObject *breakpoint_list, PyObject *first_bp)
 {
   gdbpy_ref<> breakpoint_event_obj
-    = create_stop_event_object (&breakpoint_event_object_type);
+    = create_stop_event_object (&breakpoint_event_object_type, dict);
 
   if (breakpoint_event_obj == NULL)
     return NULL;

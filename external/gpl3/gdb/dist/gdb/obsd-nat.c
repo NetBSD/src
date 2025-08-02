@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbthread.h"
 #include "inferior.h"
 #include "target.h"
@@ -127,7 +126,7 @@ obsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	}
 
       /* Ensure the ptid is updated with an LWP id on the first stop
-         of a process.  */
+	 of a process.  */
       if (!in_thread_list (this, wptid))
 	{
 	  if (in_thread_list (this, ptid_t (pid)))

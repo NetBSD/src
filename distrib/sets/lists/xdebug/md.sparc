@@ -1,4 +1,5 @@
-# $NetBSD: md.sparc,v 1.22 2024/01/26 13:06:36 tsutsui Exp $
+# $NetBSD: md.sparc,v 1.22.2.1 2025/08/02 05:20:37 perseant Exp $
+#
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
@@ -60,7 +61,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmach64_drv.so.6.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmga_drv.so.2.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmouse_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libpnozz_drv.so.0.debug	xdebug-obsolete	xorg,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libpnozz_drv.so.0.debug	xdebug-obsolete	xorg,obsolete,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libr128_drv.so.6.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libradeon_drv.so.6.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libsuncg14_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
@@ -73,8 +74,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mach64_drv.so.6.debug	xdebug-xf86-video-mach64-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mga_drv.so.2.debug		xdebug-xf86-video-mga-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	xdebug-xf86-input-mouse-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/pnozz_drv.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/pnozz_drv.so.0.debug	xdebug-obsolete	xorg,obsolete,xorg_server_ver=120
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/pnozz_drv.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/r128_drv.so.6.debug	xdebug-xf86-video-r128-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.6.debug	xdebug-xf86-video-radeon-kms-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/suncg14_drv.so.1.debug	xdebug-xf86-video-suncg14-debug	xorg,debug

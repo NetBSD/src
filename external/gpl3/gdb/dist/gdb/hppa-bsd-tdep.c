@@ -1,6 +1,6 @@
 /* Target-dependent code for HP PA-RISC BSD's.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "objfiles.h"
 #include "target.h"
 #include "value.h"
@@ -54,48 +54,45 @@ hppabsd_find_global_pointer (struct gdbarch *gdbarch, struct value *function)
   faddr_sec = find_pc_section (faddr);
   if (faddr_sec != NULL)
     {
-      struct obj_section *sec;
-
-      ALL_OBJFILE_OSECTIONS (faddr_sec->objfile, sec)
+      for (struct obj_section *sec : faddr_sec->objfile->sections ())
 	{
 	  if (strcmp (sec->the_bfd_section->name, ".dynamic") == 0)
-	    break;
-	}
-
-      if (sec < faddr_sec->objfile->sections_end)
-	{
-	  CORE_ADDR addr = sec->addr ();
-	  CORE_ADDR endaddr = sec->endaddr ();
-
-	  while (addr < endaddr)
 	    {
-	      gdb_byte buf[4];
-	      LONGEST tag;
+	      CORE_ADDR addr = sec->addr ();
+	      CORE_ADDR endaddr = sec->endaddr ();
 
-	      if (target_read_memory (addr, buf, sizeof buf) != 0)
-		break;
-
-	      tag = extract_signed_integer (buf, byte_order);
-	      if (tag == DT_PLTGOT)
+	      while (addr < endaddr)
 		{
-		  CORE_ADDR pltgot;
+		  gdb_byte buf[4];
+		  LONGEST tag;
 
-		  if (target_read_memory (addr + 4, buf, sizeof buf) != 0)
+		  if (target_read_memory (addr, buf, sizeof buf) != 0)
 		    break;
 
-		  /* The NetBSD/OpenBSD ld.so doesn't relocate DT_PLTGOT, so
-		     we have to do it ourselves.  */
-		  pltgot = extract_unsigned_integer (buf, sizeof buf,
-						     byte_order);
-		  pltgot += sec->objfile->text_section_offset ();
+		  tag = extract_signed_integer (buf, byte_order);
+		  if (tag == DT_PLTGOT)
+		    {
+		      CORE_ADDR pltgot;
 
-		  return pltgot;
+		      if (target_read_memory (addr + 4, buf, sizeof buf) != 0)
+			break;
+
+		      /* The NetBSD/OpenBSD ld.so doesn't relocate
+			 DT_PLTGOT, so we have to do it ourselves.  */
+		      pltgot = extract_unsigned_integer (buf, sizeof buf,
+							 byte_order);
+		      pltgot += sec->objfile->text_section_offset ();
+
+		      return pltgot;
+		    }
+
+		  if (tag == DT_NULL)
+		    break;
+
+		  addr += 8;
 		}
 
-	      if (tag == DT_NULL)
-		break;
-
-	      addr += 8;
+	      break;
 	    }
 	}
     }
@@ -107,7 +104,7 @@ hppabsd_find_global_pointer (struct gdbarch *gdbarch, struct value *function)
 static void
 hppabsd_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
 			       struct dwarf2_frame_state_reg *reg,
-			       frame_info_ptr this_frame)
+			       const frame_info_ptr &this_frame)
 {
   if (regnum == HPPA_PCOQ_HEAD_REGNUM)
     reg->how = DWARF2_FRAME_REG_RA;

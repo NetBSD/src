@@ -1,4 +1,4 @@
-/*	$NetBSD: algorithm.c,v 1.10 2021/08/09 19:57:57 andvar Exp $	*/
+/*	$NetBSD: algorithm.c,v 1.10.4.1 2025/08/02 05:18:36 perseant Exp $	*/
 
 /* Id: algorithm.c,v 1.15 2006/05/23 20:23:09 manubsd Exp */
 
@@ -290,21 +290,19 @@ static struct dh_algorithm oakley_dhdef[] = {
 		&dh_modp8192, },
 };
 
-static struct hash_algorithm *alg_oakley_hashdef __P((int));
-static struct hmac_algorithm *alg_oakley_hmacdef __P((int));
-static struct enc_algorithm *alg_oakley_encdef __P((int));
-static struct enc_algorithm *alg_ipsec_encdef __P((int));
-static struct hmac_algorithm *alg_ipsec_hmacdef __P((int));
-static struct dh_algorithm *alg_oakley_dhdef __P((int));
+static struct hash_algorithm *alg_oakley_hashdef(int);
+static struct hmac_algorithm *alg_oakley_hmacdef(int);
+static struct enc_algorithm *alg_oakley_encdef(int);
+static struct enc_algorithm *alg_ipsec_encdef(int);
+static struct hmac_algorithm *alg_ipsec_hmacdef(int);
+static struct dh_algorithm *alg_oakley_dhdef(int);
 
 /* oakley hash algorithm */
 static struct hash_algorithm *
-alg_oakley_hashdef(doi)
-	int doi;
+alg_oakley_hashdef(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(oakley_hashdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_hashdef); i++)
 		if (doi == oakley_hashdef[i].doi) {
 			plog(LLV_DEBUG, LOCATION, NULL, "hash(%s)\n",
 				oakley_hashdef[i].name);
@@ -314,8 +312,7 @@ alg_oakley_hashdef(doi)
 }
 
 int
-alg_oakley_hashdef_ok(doi)
-	int doi;
+alg_oakley_hashdef_ok(int doi)
 {
 	struct hash_algorithm *f;
 
@@ -327,12 +324,11 @@ alg_oakley_hashdef_ok(doi)
 }
 
 int
-alg_oakley_hashdef_doi(type)
-	int type;
+alg_oakley_hashdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(oakley_hashdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_hashdef); i++)
 		if (type == oakley_hashdef[i].type) {
 			res = oakley_hashdef[i].doi;
 			break;
@@ -341,8 +337,7 @@ alg_oakley_hashdef_doi(type)
 }
 
 int
-alg_oakley_hashdef_hashlen(doi)
-	int doi;
+alg_oakley_hashdef_hashlen(int doi)
 {
 	struct hash_algorithm *f;
 
@@ -354,8 +349,7 @@ alg_oakley_hashdef_hashlen(doi)
 }
 
 const char *
-alg_oakley_hashdef_name (doi)
-	int doi;
+alg_oakley_hashdef_name(int doi)
 {
 	struct hash_algorithm *f;
 
@@ -367,9 +361,7 @@ alg_oakley_hashdef_name (doi)
 }
 
 vchar_t *
-alg_oakley_hashdef_one(doi, buf)
-	int doi;
-	vchar_t *buf;
+alg_oakley_hashdef_one(int doi, vchar_t *buf)
 {
 	struct hash_algorithm *f;
 
@@ -382,12 +374,10 @@ alg_oakley_hashdef_one(doi, buf)
 
 /* oakley hmac algorithm */
 static struct hmac_algorithm *
-alg_oakley_hmacdef(doi)
-	int doi;
+alg_oakley_hmacdef(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(oakley_hmacdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_hmacdef); i++)
 		if (doi == oakley_hmacdef[i].doi) {
 			plog(LLV_DEBUG, LOCATION, NULL, "hmac(%s)\n",
 				oakley_hmacdef[i].name);
@@ -397,12 +387,11 @@ alg_oakley_hmacdef(doi)
 }
 
 int
-alg_oakley_hmacdef_doi(type)
-	int type;
+alg_oakley_hmacdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(oakley_hmacdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_hmacdef); i++)
 		if (type == oakley_hmacdef[i].type) {
 			res = oakley_hmacdef[i].doi;
 			break;
@@ -411,9 +400,7 @@ alg_oakley_hmacdef_doi(type)
 }
 
 vchar_t *
-alg_oakley_hmacdef_one(doi, key, buf)
-	int doi;
-	vchar_t *key, *buf;
+alg_oakley_hmacdef_one(int doi, vchar_t *key, vchar_t *buf)
 {
 	struct hmac_algorithm *f;
 	vchar_t *res;
@@ -442,12 +429,10 @@ alg_oakley_hmacdef_one(doi, key, buf)
 
 /* oakley encryption algorithm */
 static struct enc_algorithm *
-alg_oakley_encdef(doi)
-	int doi;
+alg_oakley_encdef(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(oakley_encdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_encdef); i++)
 		if (doi == oakley_encdef[i].doi) {
 			plog(LLV_DEBUG, LOCATION, NULL, "encryption(%s)\n",
 				oakley_encdef[i].name);
@@ -457,8 +442,7 @@ alg_oakley_encdef(doi)
 }
 
 int
-alg_oakley_encdef_ok(doi)
-	int doi;
+alg_oakley_encdef_ok(int doi)
 {
 	struct enc_algorithm *f;
 
@@ -470,12 +454,11 @@ alg_oakley_encdef_ok(doi)
 }
 
 int
-alg_oakley_encdef_doi(type)
-	int type;
+alg_oakley_encdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(oakley_encdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_encdef); i++)
 		if (type == oakley_encdef[i].type) {
 			res = oakley_encdef[i].doi;
 			break;
@@ -484,8 +467,7 @@ alg_oakley_encdef_doi(type)
 }
 
 int
-alg_oakley_encdef_keylen(doi, len)
-	int doi, len;
+alg_oakley_encdef_keylen(int doi, int len)
 {
 	struct enc_algorithm *f;
 
@@ -497,8 +479,7 @@ alg_oakley_encdef_keylen(doi, len)
 }
 
 int
-alg_oakley_encdef_blocklen(doi)
-	int doi;
+alg_oakley_encdef_blocklen(int doi)
 {
 	struct enc_algorithm *f;
 
@@ -510,8 +491,7 @@ alg_oakley_encdef_blocklen(doi)
 }
 
 const char *
-alg_oakley_encdef_name (doi)
-	int doi;
+alg_oakley_encdef_name(int doi)
 {
 	struct enc_algorithm *f;
 
@@ -523,9 +503,7 @@ alg_oakley_encdef_name (doi)
 }
 
 vchar_t *
-alg_oakley_encdef_decrypt(doi, buf, key, iv)
-	int doi;
-	vchar_t *buf, *key, *iv;
+alg_oakley_encdef_decrypt(int doi, vchar_t *buf, vchar_t *key, vchar_t *iv)
 {
 	vchar_t *res;
 	struct enc_algorithm *f;
@@ -552,9 +530,7 @@ alg_oakley_encdef_decrypt(doi, buf, key, iv)
 }
 
 vchar_t *
-alg_oakley_encdef_encrypt(doi, buf, key, iv)
-	int doi;
-	vchar_t *buf, *key, *iv;
+alg_oakley_encdef_encrypt(int doi, vchar_t *buf, vchar_t *key, vchar_t *iv)
 {
 	vchar_t *res;
 	struct enc_algorithm *f;
@@ -582,12 +558,10 @@ alg_oakley_encdef_encrypt(doi, buf, key, iv)
 
 /* ipsec encryption algorithm */
 static struct enc_algorithm *
-alg_ipsec_encdef(doi)
-	int doi;
+alg_ipsec_encdef(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(ipsec_encdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(ipsec_encdef); i++)
 		if (doi == ipsec_encdef[i].doi) {
 			plog(LLV_DEBUG, LOCATION, NULL, "encryption(%s)\n",
 				ipsec_encdef[i].name);
@@ -597,12 +571,11 @@ alg_ipsec_encdef(doi)
 }
 
 int
-alg_ipsec_encdef_doi(type)
-	int type;
+alg_ipsec_encdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(ipsec_encdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(ipsec_encdef); i++)
 		if (type == ipsec_encdef[i].type) {
 			res = ipsec_encdef[i].doi;
 			break;
@@ -611,8 +584,7 @@ alg_ipsec_encdef_doi(type)
 }
 
 int
-alg_ipsec_encdef_keylen(doi, len)
-	int doi, len;
+alg_ipsec_encdef_keylen(int doi, int len)
 {
 	struct enc_algorithm *f;
 
@@ -625,12 +597,10 @@ alg_ipsec_encdef_keylen(doi, len)
 
 /* ipsec hmac algorithm */
 static struct hmac_algorithm *
-alg_ipsec_hmacdef(doi)
-	int doi;
+alg_ipsec_hmacdef(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(ipsec_hmacdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(ipsec_hmacdef); i++)
 		if (doi == ipsec_hmacdef[i].doi) {
 			plog(LLV_DEBUG, LOCATION, NULL, "hmac(%s)\n",
 				ipsec_hmacdef[i].name);
@@ -640,12 +610,11 @@ alg_ipsec_hmacdef(doi)
 }
 
 int
-alg_ipsec_hmacdef_doi(type)
-	int type;
+alg_ipsec_hmacdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(ipsec_hmacdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(ipsec_hmacdef); i++)
 		if (type == ipsec_hmacdef[i].type) {
 			res = ipsec_hmacdef[i].doi;
 			break;
@@ -654,8 +623,7 @@ alg_ipsec_hmacdef_doi(type)
 }
 
 int
-alg_ipsec_hmacdef_hashlen(doi)
-	int doi;
+alg_ipsec_hmacdef_hashlen(int doi)
 {
 	struct hmac_algorithm *f;
 
@@ -668,12 +636,11 @@ alg_ipsec_hmacdef_hashlen(doi)
 
 /* ip compression */
 int
-alg_ipsec_compdef_doi(type)
-	int type;
+alg_ipsec_compdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(ipsec_compdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(ipsec_compdef); i++)
 		if (type == ipsec_compdef[i].type) {
 			res = ipsec_compdef[i].doi;
 			break;
@@ -683,12 +650,10 @@ alg_ipsec_compdef_doi(type)
 
 /* dh algorithm */
 static struct dh_algorithm *
-alg_oakley_dhdef(doi)
-	int doi;
+alg_oakley_dhdef(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(oakley_dhdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_dhdef); i++)
 		if (doi == oakley_dhdef[i].doi) {
 			plog(LLV_DEBUG, LOCATION, NULL, "hmac(%s)\n",
 				oakley_dhdef[i].name);
@@ -698,8 +663,7 @@ alg_oakley_dhdef(doi)
 }
 
 int
-alg_oakley_dhdef_ok(doi)
-	int doi;
+alg_oakley_dhdef_ok(int doi)
 {
 	struct dh_algorithm *f;
 
@@ -711,12 +675,11 @@ alg_oakley_dhdef_ok(doi)
 }
 
 int
-alg_oakley_dhdef_doi(type)
-	int type;
+alg_oakley_dhdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(oakley_dhdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_dhdef); i++)
 		if (type == oakley_dhdef[i].type) {
 			res = oakley_dhdef[i].doi;
 			break;
@@ -725,8 +688,7 @@ alg_oakley_dhdef_doi(type)
 }
 
 struct dhgroup *
-alg_oakley_dhdef_group(doi)
-	int doi;
+alg_oakley_dhdef_group(int doi)
 {
 	struct dh_algorithm *f;
 
@@ -738,8 +700,7 @@ alg_oakley_dhdef_group(doi)
 }
 
 const char *
-alg_oakley_dhdef_name (doi)
-	int doi;
+alg_oakley_dhdef_name(int doi)
 {
 	struct dh_algorithm *f;
 	
@@ -751,12 +712,11 @@ alg_oakley_dhdef_name (doi)
 
 /* authentication method */
 int
-alg_oakley_authdef_doi(type)
-	int type;
+alg_oakley_authdef_doi(int type)
 {
-	int i, res = -1;
+	int res = -1;
 
-	for (i = 0; i < ARRAYLEN(oakley_authdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_authdef); i++)
 		if (type == oakley_authdef[i].type) {
 			res = oakley_authdef[i].doi;
 			break;
@@ -765,12 +725,10 @@ alg_oakley_authdef_doi(type)
 }
 
 const char *
-alg_oakley_authdef_name (doi)
-	int doi;
+alg_oakley_authdef_name(int doi)
 {
-	int i;
 
-	for (i = 0; i < ARRAYLEN(oakley_authdef); i++)
+	for (size_t i = 0; i < ARRAYLEN(oakley_authdef); i++)
 		if (doi == oakley_authdef[i].doi) {
 			return oakley_authdef[i].name;
 		}
@@ -784,8 +742,7 @@ alg_oakley_authdef_name (doi)
  *	positive:	default key length
  */
 int
-default_keylen(class, type)
-	int class, type;
+default_keylen(int class, int type)
 {
 
 	switch (class) {
@@ -816,8 +773,7 @@ default_keylen(class, type)
  *	0:	OK
  */
 int
-check_keylen(class, type, len)
-	int class, type, len;
+check_keylen(int class, int type, int len)
 {
 	int badrange;
 
@@ -903,8 +859,7 @@ check_keylen(class, type, len)
  *	other: converted.
  */
 int
-algtype2doi(class, type)
-	int class, type;
+algtype2doi(int class, int type)
 {
 	int res = -1;
 
@@ -940,8 +895,7 @@ algtype2doi(class, type)
  *	other: converted.
  */
 int
-algclass2doi(class)
-	int class;
+algclass2doi(int class)
 {
 	switch (class) {
 	case algclass_ipsec_enc:

@@ -1,6 +1,6 @@
 /* GDB/Scheme support for math operations on values.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,12 +20,11 @@
 /* See README file in this directory for implementation notes, coding
    conventions, et.al.  */
 
-#include "defs.h"
 #include "arch-utils.h"
 #include "charset.h"
 #include "cp-abi.h"
 #include "target-float.h"
-#include "symtab.h" /* Needed by language.h.  */
+#include "symtab.h"
 #include "language.h"
 #include "valprint.h"
 #include "value.h"
@@ -109,7 +108,7 @@ vlscm_unop_gdbthrow (enum valscm_unary_opcode opcode, SCM x,
       res_val = arg1;
       break;
     case VALSCM_ABS:
-      if (value_less (arg1, value_zero (value_type (arg1), not_lval)))
+      if (value_less (arg1, value::zero (arg1->type (), not_lval)))
 	res_val = value_neg (arg1);
       else
 	res_val = arg1;
@@ -160,8 +159,8 @@ vlscm_binop_gdbthrow (enum valscm_binary_opcode opcode, SCM x, SCM y,
     {
     case VALSCM_ADD:
       {
-	struct type *ltype = value_type (arg1);
-	struct type *rtype = value_type (arg2);
+	struct type *ltype = arg1->type ();
+	struct type *rtype = arg2->type ();
 
 	ltype = check_typedef (ltype);
 	ltype = STRIP_REFERENCE (ltype);
@@ -180,8 +179,8 @@ vlscm_binop_gdbthrow (enum valscm_binary_opcode opcode, SCM x, SCM y,
       break;
     case VALSCM_SUB:
       {
-	struct type *ltype = value_type (arg1);
-	struct type *rtype = value_type (arg2);
+	struct type *ltype = arg1->type ();
+	struct type *rtype = arg2->type ();
 
 	ltype = check_typedef (ltype);
 	ltype = STRIP_REFERENCE (ltype);
@@ -562,7 +561,7 @@ vlscm_convert_typed_number (const char *func_name, int obj_arg_pos, SCM obj,
 	{
 	  *except_scmp
 	    = gdbscm_make_out_of_range_error
-	        (func_name, obj_arg_pos, obj,
+		(func_name, obj_arg_pos, obj,
 		 _("value out of range for type"));
 	  return NULL;
 	}
@@ -744,7 +743,7 @@ vlscm_convert_typed_value_from_scheme (const char *func_name,
 	      value = NULL;
 	    }
 	  else
-	    value = value_copy (vlscm_scm_to_value (obj));
+	    value = vlscm_scm_to_value (obj)->copy ();
 	}
       else if (gdbscm_is_true (scm_bytevector_p (obj)))
 	{
@@ -803,9 +802,7 @@ vlscm_convert_typed_value_from_scheme (const char *func_name,
 					0 /*non-strict*/,
 					&except_scm);
 	      if (s != NULL)
-		value = value_cstring (s.get (), len,
-				       language_string_char_type (language,
-								  gdbarch));
+		value = language->value_string (gdbarch, s.get (), len);
 	      else
 		value = NULL;
 	    }

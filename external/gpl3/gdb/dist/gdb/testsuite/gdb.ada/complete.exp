@@ -1,4 +1,4 @@
-# Copyright 2005-2023 Free Software Foundation, Inc.
+# Copyright 2005-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 load_lib "ada.exp"
 
-if { [skip_ada_tests] } { return -1 }
+require allow_ada_tests
 
 standard_ada_testfile foo
 
@@ -28,7 +28,7 @@ clean_restart ${testfile}
 set bp_location [gdb_get_line_number "START" ${testdir}/foo.adb]
 runto "foo.adb:$bp_location"
 
-set eol "\[\r\n\]*"
+set eol "\r\n"
 
 # A convenience function that verifies that the "complete EXPR" command
 # returns the EXPECTED_OUTPUT.
@@ -160,6 +160,7 @@ test_gdb_complete "pck" \
                               "p pck.ambiguous_func" \
                               "p pck.external_identical_one" \
                               "p pck.inner.inside_variable" \
+			      "p pck.internal_capitalized" \
                               "p pck.local_identical_one" \
                               "p pck.local_identical_two" \
                               "p pck.my_global_variable" \
@@ -172,6 +173,7 @@ test_gdb_complete "pck." \
                               "p pck.ambiguous_func" \
                               "p pck.external_identical_one" \
                               "p pck.inner.inside_variable" \
+			      "p pck.internal_capitalized" \
                               "p pck.local_identical_one" \
                               "p pck.local_identical_two" \
                               "p pck.my_global_variable" \
@@ -225,11 +227,20 @@ test_gdb_complete "ambiguous_func" \
 gdb_test_no_output "set max-completions unlimited"
 
 set test "complete break ada"
-gdb_test_multiple "$test" $test {
-    -re "^$test$eol\(break ada\[\]\[a-z0-9._@/-\]*$eol\)+$gdb_prompt $" {
-        pass $test
+gdb_test_multiple $test "" {
+    -re "^($test$eol)" {
+	exp_continue
     }
+
+    -re "^(break ada\[\]\[a-z0-9._@/-\]*$eol)" {
+	exp_continue
+    }
+
+    -re "^$gdb_prompt $" {
+	pass $gdb_test_name
+    }
+
     -re "\[A-Z\].*$gdb_prompt $" {
-	fail "$test (gdb/22670)"
+	fail "$gdb_test_name (gdb/22670)"
     }
 }

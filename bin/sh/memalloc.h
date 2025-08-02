@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.h,v 1.20 2021/10/26 10:07:20 kre Exp $	*/
+/*	$NetBSD: memalloc.h,v 1.20.4.1 2025/08/02 05:18:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,6 @@ struct stackmark {
 extern char *stacknxt;
 extern int stacknleft;
 extern int sstrnleft;
-extern int herefd;
 
 pointer ckmalloc(size_t);
 pointer ckrealloc(pointer, int);

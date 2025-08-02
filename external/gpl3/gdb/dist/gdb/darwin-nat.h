@@ -1,5 +1,5 @@
 /* Common things used by the various darwin files
-   Copyright (C) 1995-2023 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -126,7 +126,7 @@ private:
   void stop_inferior (inferior *inf);
   void init_thread_list (inferior *inf);
   void ptrace_him (int pid);
-  int cancel_breakpoint (ptid_t ptid);
+  int cancel_breakpoint (inferior *inf, ptid_t ptid);
 };
 
 /* Describe the mach exception handling state for a task.  This state is saved

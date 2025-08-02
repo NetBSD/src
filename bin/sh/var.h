@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.39 2022/09/18 06:03:19 kre Exp $	*/
+/*	$NetBSD: var.h,v 1.39.4.1 2025/08/02 05:18:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,6 +48,9 @@
 #define VSTRFIXED	0x0010	/* variable struct is statically allocated */
 #define VTEXTFIXED	0x0020	/* text is statically allocated */
 #define VSTACK		0x0040	/* text is allocated on the stack */
+
+#define VUNSAFE		0x0080	/* variable value imported from environment */
+
 #define VNOFUNC		0x0100	/* don't call the callback function */
 #define VFUNCREF	0x0200	/* the function is called on ref, not set */
 
@@ -59,7 +62,7 @@
 struct var;
 
 union var_func_union {		/* function to be called when:  */
-	void (*set_func)(const char *);		/* variable gets set/unset */
+	void (*set_func)(char *, int);		/* variable gets set/unset */
 	char*(*ref_func)(struct var *);		/* variable is referenced */
 };
 
@@ -96,6 +99,8 @@ extern struct var line_num;
 extern struct var editrc;
 extern struct var vterm;
 extern struct var vtermcap;
+extern struct var vhistappend;
+extern struct var vhistfile;
 extern struct var vhistsize;
 extern struct var ps_lit;
 extern struct var euname;
@@ -124,6 +129,11 @@ extern int funclineabs;
 #define optindval()	(voptind.text + 7)
 #ifndef SMALL
 #define histsizeval()	(vhistsize.text + 9)
+#define histsizeflags()	(vhistsize.flags)
+#define histfileval()	(vhistfile.text + 9)
+#define histfileflags()	(vhistfile.flags)
+#define histappval()	(vhistappend.text + 11)
+#define histappflags()	(vhistappend.flags)
 #define termval()	(vterm.text + 5)
 #endif
 
@@ -146,6 +156,7 @@ int unsetvar(const char *, int);
 void choose_ps1(void);
 void setvar_invocation(int, char **);
 int setvarsafe(const char *, const char *, int);
+void setvareqsafe(char *, int);
 void print_quoted(const char *);
 int validname(const char *, int, int *);
 

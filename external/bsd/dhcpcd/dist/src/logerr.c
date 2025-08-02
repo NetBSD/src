@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * logerr: errx with logging
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -163,7 +163,7 @@ vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
 			pid = getpid();
 		else
 			pid = ctx->log_pid;
-		if ((e = fprintf(stream, "[%d]", pid)) == -1)
+		if ((e = fprintf(stream, "[%d]", (int)pid)) == -1)
 			return -1;
 		len += e;
 	}
@@ -427,6 +427,8 @@ logsetopts(unsigned int opts)
 
 	ctx->log_opts = opts;
 	setlogmask(LOG_UPTO(opts & LOGERR_DEBUG ? LOG_DEBUG : LOG_INFO));
+	if (!(ctx->log_opts & LOGERR_LOG))
+		closelog();
 }
 
 #ifdef LOGERR_TAG
@@ -447,7 +449,7 @@ int
 logopen(const char *path)
 {
 	struct logctx *ctx = &_logctx;
-	int opts = 0;
+	int opts = LOG_NDELAY; /* Ensure openlog gets a fd */
 
 	/* Cache timezone */
 	tzset();
@@ -463,7 +465,8 @@ logopen(const char *path)
 
 	if (ctx->log_opts & LOGERR_LOG_PID)
 		opts |= LOG_PID;
-	openlog(getprogname(), opts, LOGERR_SYSLOG_FACILITY);
+	if (ctx->log_opts & LOGERR_LOG)
+		openlog(getprogname(), opts, LOGERR_SYSLOG_FACILITY);
 	if (path == NULL)
 		return 1;
 

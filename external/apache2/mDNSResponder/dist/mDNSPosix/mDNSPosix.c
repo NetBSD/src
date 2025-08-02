@@ -1,12 +1,12 @@
-/* -*- Mode: C; tab-width: 4 -*-
+/* -*- Mode: C; tab-width: 4; c-file-style: "bsd"; c-basic-offset: 4; fill-column: 108; indent-tabs-mode: nil; -*-
  *
- * Copyright (c) 2002-2015 Apple Inc. All rights reserved.
+ * Copyright (c) 2002-2024 Apple Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,9 +19,8 @@
 #include "mDNSEmbeddedAPI.h"           // Defines the interface provided to the client layer above
 #include "DNSCommon.h"
 #include "mDNSPosix.h"               // Defines the specific types needed to run mDNS on this platform
+#include "PlatformCommon.h"
 #include "dns_sd.h"
-#include "dnssec.h"
-#include "nsec.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -40,6 +39,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <time.h>                   // platform support for UTC time
+#include <ifaddrs.h>
 
 #if USES_NETLINK
 #include <asm/types.h>
@@ -49,23 +49,22 @@
 #include <net/route.h>
 #include <net/if.h>
 #endif // USES_NETLINK
+#if defined(TARGET_OS_MAC) && TARGET_OS_MAC
+#include <netinet/in_var.h>
+#include <net/if_dl.h>
+#endif
+#if defined(TARGET_OS_LINUX) && TARGET_OS_LINUX
+#include <net/if_arp.h>
+#include <sys/ioctl.h>
+#include <linux/sockios.h>
+#endif
 
 #include "mDNSUNP.h"
 #include "GenLinkedList.h"
-#include "dnsproxy.h"
+#include "mdns_strict.h"
 
 // ***************************************************************************
 // Structures
-
-// We keep a list of client-supplied event sources in PosixEventSource records
-struct PosixEventSource
-{
-    mDNSPosixEventCallback Callback;
-    void                        *Context;
-    int fd;
-    struct  PosixEventSource    *Next;
-};
-typedef struct PosixEventSource PosixEventSource;
 
 // Context record for interface change callback
 struct IfChangeRec
@@ -76,9 +75,7 @@ struct IfChangeRec
 typedef struct IfChangeRec IfChangeRec;
 
 // Note that static data is initialized to zero in (modern) C.
-static fd_set gEventFDs;
-static int gMaxFD;                              // largest fd in gEventFDs
-static GenLinkedList gEventSources;             // linked list of PosixEventSource's
+static PosixEventSource *gEventSources;             // linked list of PosixEventSource's
 static sigset_t gEventSignalSet;                // Signals which event loop listens for
 static sigset_t gEventSignals;                  // Signals which were received while inside loop
 
@@ -92,7 +89,32 @@ static int num_pkts_accepted = 0;
 static int num_pkts_rejected = 0;
 
 // ***************************************************************************
+// Locals
+mDNSlocal void requestReadEvents(PosixEventSource *eventSource,
+                                    const char *taskName, mDNSPosixEventCallback callback, void *context);
+mDNSlocal mStatus stopReadOrWriteEvents(int fd, mDNSBool freeSource, mDNSBool removeSource, int flags);
+mDNSlocal void requestWriteEvents(PosixEventSource *eventSource,
+                                     const char *taskName, mDNSPosixEventCallback callback, void *context);
+mDNSlocal void UDPReadCallback(int fd, void *context);
+mDNSlocal int SetupIPv4Socket(int fd);
+mDNSlocal int SetupIPv6Socket(int fd);
+
+// ***************************************************************************
+// Constants
+
+static const int kOn = 1;
+static const int kIntTwoFiveFive = 255;
+static const unsigned char kByteTwoFiveFive = 255;
+
+// ***************************************************************************
 // Functions
+
+#if MDNS_MALLOC_DEBUGGING
+mDNSexport void mDNSPlatformValidateLists(void)
+{
+    // This should validate gEventSources and any other Posix-specific stuff that gets allocated.
+}
+#endif
 
 int gMDNSPlatformPosixVerboseLevel = 0;
 
@@ -146,8 +168,8 @@ mDNSexport mStatus mDNSPlatformSendUDP(const mDNS *const m, const void *const ms
     struct sockaddr_storage to;
     PosixNetworkInterface * thisIntf = (PosixNetworkInterface *)(InterfaceID);
     int sendingsocket = -1;
+    struct sockaddr *sa = (struct sockaddr *)&to;
 
-    (void)src;  // Will need to use this parameter once we implement mDNSPlatformUDPSocket/mDNSPlatformUDPClose
     (void) useBackgroundTrafficClass;
 
     assert(m != NULL);
@@ -186,6 +208,78 @@ mDNSexport mStatus mDNSPlatformSendUDP(const mDNS *const m, const void *const ms
         sendingsocket             = thisIntf ? thisIntf->multicastSocket6 : m->p->unicastSocket6;
     }
 #endif
+    // In case we get some other address family, return an error, since it's not supported.
+    else
+    {
+        return kDNSServiceErr_BadParam;
+    }
+
+    // We don't open the socket until we get a send, because we don't know whether it's IPv4 or IPv6.
+    if (src)
+    {
+        if (src->events.fd == -1)
+        {
+            int sock = socket(sa->sa_family, SOCK_DGRAM, IPPROTO_UDP);
+            struct sockaddr_storage from;
+            socklen_t fromlen;
+            int times = 0;
+            uint16_t *pport;
+
+            if (sock < 0)
+            {
+                LogMsg("Can't create UDP socket: %s", strerror(errno));
+                return PosixErrorToStatus(errno);
+            }
+
+            // Randomize the port.
+            if (src->randomizePort)
+            {
+                memset(&from, 0, sizeof from);
+                if (sa->sa_family == AF_INET)
+                {
+                    ((struct sockaddr_in *)&from)->sin_family = AF_INET;
+                    fromlen = sizeof (struct sockaddr_in);
+                    pport = &((struct sockaddr_in *)&from)->sin_port;
+                    err = SetupIPv4Socket(sock);
+                    if (err) { return err; }
+                }
+                else
+                {
+                    ((struct sockaddr_in6 *)&from)->sin6_family = AF_INET6;
+                    fromlen = sizeof (struct sockaddr_in6);
+                    pport = &((struct sockaddr_in6 *)&from)->sin6_port;
+                    err = SetupIPv6Socket(sock);
+                    if (err) { return err; }
+                }
+#ifndef NOT_HAVE_SA_LEN
+                ((struct sockaddr *)&from)->sa_len = fromlen;
+#endif
+
+                while (times++ < 1000)
+                {
+                    *pport = 0xC000 + mDNSRandom(0x3FFF);
+                    if (bind(sock, (struct sockaddr *)&from, fromlen) >= 0)
+                    {
+                        src->port.NotAnInteger = *pport;
+                        src->events.fd = sock;
+                        break;
+                    }
+                    if (errno != EADDRINUSE)
+                    {
+                        LogMsg("Can't get randomized port: %s", strerror(errno));
+                        return PosixErrorToStatus(errno);
+                    }
+                }
+                if (src->events.fd == -1)
+                {
+                    LogMsg("Unable to get random port: too many tries.");
+                    return PosixErrorToStatus(EADDRINUSE);
+                }
+                requestReadEvents(&src->events, "mDNSPosix::UDPReadCallback", UDPReadCallback, src);
+            }
+        }
+        sendingsocket = src->events.fd;
+    }
 
     if (sendingsocket >= 0)
         err = sendto(sendingsocket, msg, (char*)end - (char*)msg, 0, (struct sockaddr *)&to, GET_SA_LEN(to));
@@ -213,11 +307,116 @@ mDNSexport mStatus mDNSPlatformSendUDP(const mDNS *const m, const void *const ms
     return PosixErrorToStatus(err);
 }
 
+mDNSlocal void TCPReadCallback(int fd, void *context)
+{
+    TCPSocket *sock = context;
+    (void)fd;
+
+    // TLS reading is handled in mDNSPlatformTCPRead().
+        sock->callback(sock, sock->context, mDNSfalse, sock->err);
+}
+
+mDNSlocal void tcpConnectCallback(int fd, void *context)
+{
+    TCPSocket *sock = context;
+    mDNSBool c = !sock->connected;
+    int result;
+    socklen_t len = sizeof result;
+
+    sock->connected = mDNStrue;
+
+    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &result, &len) < 0)
+    {
+        LogInfo("ERROR: TCPConnectCallback - unable to get connect error: socket %d: Error %d (%s)",
+               sock->events.fd, result, strerror(result));
+        sock->err = mStatus_ConnFailed;
+    }
+    else
+    {
+        if (result != 0)
+        {
+            sock->err = mStatus_ConnFailed;
+            if (result == EHOSTUNREACH || result == EADDRNOTAVAIL || result == ENETDOWN)
+            {
+                LogInfo("ERROR: TCPConnectCallback - connect failed: socket %d: Error %d (%s)",
+                        sock->events.fd, result, strerror(result));
+            }
+            else
+            {
+                LogMsg("ERROR: TCPConnectCallback - connect failed: socket %d: Error %d (%s)",
+                       sock->events.fd, result, strerror(result));
+            }
+        }
+        else
+        {
+            if (sock->flags & kTCPSocketFlags_UseTLS) {
+#ifdef POSIX_HAS_TLS
+                sock->tls = mDNSPosixTLSClientStateCreate(sock);
+                if (sock->tls == mDNSNULL) {
+                    LogMsg("ERROR: TCPConnectCallback: TLS context state create failed");
+                    sock->err = mStatus_NoMemoryErr;
+                } else {
+                    if (!mDNSPosixTLSStart(sock)) {
+                        LogMsg("ERROR: TCPConnectCallback: TLS start failed");
+                        sock->err = mStatus_ConnFailed;
+                    }
+                }
+#else
+                // We shouldn't ever get here, because we should have already gotten an error when we created the
+                // socket.
+                LogMsg("Error: TCPSocketConnectCallback reached on TLS socket with no TLS support.");
+                sock->err = mStatus_ConnFailed;
+#endif
+            }
+            if (sock->err == 0) {
+            // The connection succeeded.
+            sock->connected = mDNStrue;
+            // Select for read events.
+            sock->events.fd = fd;
+            requestReadEvents(&sock->events, "mDNSPosix::tcpConnectCallback", TCPReadCallback, sock);
+        }
+    }
+    }
+
+    if (sock->callback)
+    {
+        sock->callback(sock, sock->context, c, sock->err);
+        // Here sock must be assumed to be invalid, in case the callback freed it.
+        return;
+    }
+}
+
+// Searches the interface list looking for the named interface.
+// Returns a pointer to if it found, or NULL otherwise.
+mDNSlocal PosixNetworkInterface *SearchForInterfaceByName(mDNS *const m, const char *const intfName)
+{
+    PosixNetworkInterface *intf;
+
+    assert(m != NULL);
+    assert(intfName != NULL);
+
+    intf = (PosixNetworkInterface*)(m->HostInterfaces);
+    while ((intf != NULL) && (strcmp(intf->intfName, intfName) != 0))
+        intf = (PosixNetworkInterface *)(intf->coreIntf.next);
+
+    return intf;
+}
+
+mDNSlocal PosixNetworkInterface *SearchForInterfaceByIndex(mDNS *const m, const mDNSu32 index)
+{
+    PosixNetworkInterface *intf = (PosixNetworkInterface*)(m->HostInterfaces);
+    while (intf && (((mDNSu32)intf->index) != index))
+    {
+        intf = (PosixNetworkInterface *)(intf->coreIntf.next);
+    }
+    return intf;
+}
+
 // This routine is called when the main loop detects that data is available on a socket.
-mDNSlocal void SocketDataReady(mDNS *const m, PosixNetworkInterface *intf, int skt)
+mDNSlocal void SocketDataReady(mDNS *const m, const PosixNetworkInterface *intf, const int skt, UDPSocket *const sock)
 {
     mDNSAddr senderAddr, destAddr;
-    mDNSIPPort senderPort;
+    mDNSIPPort senderPort, destPort;
     ssize_t packetLen;
     DNSMessage packet;
     struct my_in_pktinfo packetInfo;
@@ -226,7 +425,6 @@ mDNSlocal void SocketDataReady(mDNS *const m, PosixNetworkInterface *intf, int s
     int flags;
     mDNSu8 ttl;
     mDNSBool reject;
-    const mDNSInterfaceID InterfaceID = intf ? intf->coreIntf.InterfaceID : NULL;
 
     assert(m    != NULL);
     assert(skt  >= 0);
@@ -238,7 +436,7 @@ mDNSlocal void SocketDataReady(mDNS *const m, PosixNetworkInterface *intf, int s
     if (packetLen >= 0)
     {
         SockAddrTomDNSAddr((struct sockaddr*)&from, &senderAddr, &senderPort);
-        SockAddrTomDNSAddr((struct sockaddr*)&packetInfo.ipi_addr, &destAddr, NULL);
+        SockAddrTomDNSAddr((struct sockaddr*)&packetInfo.ipi_addr, &destAddr, &destPort);
 
         // If we have broken IP_RECVDSTADDR functionality (so far
         // I've only seen this on OpenBSD) then apply a hack to
@@ -283,6 +481,29 @@ mDNSlocal void SocketDataReady(mDNS *const m, PosixNetworkInterface *intf, int s
             if      (packetInfo.ipi_ifname[0] != 0) reject = (strcmp(packetInfo.ipi_ifname, intf->intfName) != 0);
             else if (packetInfo.ipi_ifindex != -1) reject = (packetInfo.ipi_ifindex != intf->index);
 
+            // In case a unicast packet was received on an unexpected socket, i.e., a socket associated with an
+            // interface that doesn't match the interface on which the unicast packet was actually received, then
+            // instead of immediately rejecting it, pass the message to mDNSCoreReceive() with the actual interface ID
+            // instead of the ID of the interface with which the socket is associated.
+            if (reject && !mDNSAddrIsDNSMulticast(&destAddr))
+            {
+                const PosixNetworkInterface *realIntf = mDNSNULL;
+                if (packetInfo.ipi_ifname[0] != '\0')
+                {
+                    realIntf = SearchForInterfaceByName(m, packetInfo.ipi_ifname);
+                }
+                else if (packetInfo.ipi_ifindex != -1)
+                {
+                    realIntf = SearchForInterfaceByIndex(m, (mDNSu32)packetInfo.ipi_ifindex);
+                }
+                if (realIntf)
+                {
+                    debugf("SocketDataReady correcting receive interface from %s/%u to %s/%u",
+                        intf->intfName, intf->index, realIntf->intfName, realIntf->index);
+                    intf = realIntf;
+                    reject = mDNSfalse;
+                }
+            }
             if (reject)
             {
                 verbosedebugf("SocketDataReady ignored a packet from %#a to %#a on interface %s/%d expecting %#a/%s/%d/%d",
@@ -309,75 +530,356 @@ mDNSlocal void SocketDataReady(mDNS *const m, PosixNetworkInterface *intf, int s
     }
 
     if (packetLen >= 0)
+    {
+        const mDNSInterfaceID InterfaceID = intf ? intf->coreIntf.InterfaceID : NULL;
         mDNSCoreReceive(m, &packet, (mDNSu8 *)&packet + packetLen,
-                        &senderAddr, senderPort, &destAddr, MulticastDNSPort, InterfaceID);
+                        &senderAddr, senderPort, &destAddr, sock == mDNSNULL ? MulticastDNSPort : sock->port, InterfaceID);
+    }
 }
 
-mDNSexport TCPSocket *mDNSPlatformTCPSocket(TCPSocketFlags flags, mDNSIPPort * port, mDNSBool useBackgroundTrafficClass)
+mDNSlocal void UDPReadCallback(int fd, void *context)
 {
-    (void)flags;        // Unused
-    (void)port;         // Unused
-    (void)useBackgroundTrafficClass; // Unused
-    return NULL;
+    extern mDNS mDNSStorage;
+    SocketDataReady(&mDNSStorage, NULL, fd, (UDPSocket *)context);
 }
 
-mDNSexport TCPSocket *mDNSPlatformTCPAccept(TCPSocketFlags flags, int sd)
+mDNSexport TCPSocket *mDNSPlatformTCPSocket(TCPSocketFlags flags, mDNSAddr_Type addrType, mDNSIPPort * port,
+                                            domainname *hostname, mDNSBool useBackgroundTrafficClass)
 {
-    (void)flags;        // Unused
-    (void)sd;           // Unused
-    return NULL;
+    TCPSocket *sock;
+    int len = sizeof (TCPSocket);
+
+    (void)useBackgroundTrafficClass;
+
+    if (hostname)
+    {
+        len += sizeof (domainname);
+    }
+    sock = mdns_malloc(len);
+
+    if (sock == NULL)
+    {
+        LogMsg("mDNSPlatformTCPSocket: no memory for socket");
+        return NULL;
+    }
+    memset(sock, 0, sizeof *sock);
+
+    if (hostname)
+    {
+        sock->hostname = (domainname *)(sock + 1);
+        LogMsg("mDNSPlatformTCPSocket: hostname %##s", hostname->c);
+        AssignDomainName(sock->hostname, hostname);
+    }
+
+    sock->events.fd = -1;
+    if (!mDNSPosixTCPSocketSetup(&sock->events.fd, addrType, port, &sock->port))
+    {
+        if (sock->events.fd != -1) close(sock->events.fd);
+        mdns_free(sock);
+        return mDNSNULL;
+    }
+
+    // Set up the other fields in the structure.
+    sock->flags = flags;
+    sock->err = mStatus_NoError;
+    sock->setup = mDNSfalse;
+    sock->connected = mDNSfalse;
+    return sock;
+}
+
+mDNSexport mStatus mDNSPlatformTCPSocketSetCallback(TCPSocket *sock, TCPConnectionCallback callback, void *context)
+{
+    sock->callback = callback;
+    sock->context = context;
+    return mStatus_NoError;
+}
+
+mDNSexport TCPSocket *mDNSPlatformTCPAccept(TCPSocketFlags flags, int fd)
+{
+    TCPSocket *sock;
+
+    // In order to receive a TLS connection, use mDNSPlatformTCPListen().
+    if (flags & kTCPSocketFlags_UseTLS)
+    {
+        return mDNSNULL;
+    }
+
+    sock = mDNSPlatformMemAllocateClear(sizeof(*sock));
+    if (!sock)
+    {
+        return mDNSNULL;
+    }
+
+    sock->events.fd = fd;
+    sock->flags = flags;
+    sock->connected = mDNStrue;
+
+    return sock;
+}
+
+
+mDNSlocal void tcpListenCallback(int fd, void *context)
+{
+    TCPListener *listener = context;
+    TCPSocket *sock;
+
+    sock = mDNSPosixDoTCPListenCallback(fd, listener->addressType, listener->socketFlags,
+                                 listener->callback, listener->context);
+    if (sock != NULL)
+    {
+        requestReadEvents(&sock->events, "mDNSPosix::tcpListenCallback", TCPReadCallback, sock);
+    }
+}
+
+mDNSexport TCPListener *mDNSPlatformTCPListen(mDNSAddr_Type addrType, mDNSIPPort *port, mDNSAddr *addr,
+                                              TCPSocketFlags socketFlags, mDNSBool reuseAddr, int queueLength,
+                                              TCPAcceptedCallback callback, void *context)
+{
+    TCPListener *ret;
+    int fd = -1;
+
+    if (!mDNSPosixTCPListen(&fd, addrType, port, addr, reuseAddr, queueLength))
+    {
+        if (fd != -1)
+        {
+            close(fd);
+        }
+        return mDNSNULL;
+    }
+
+    // Allocate a listener structure
+    ret = (TCPListener *)mDNSPlatformMemAllocateClear(sizeof *ret);
+    if (ret == NULL)
+    {
+        LogMsg("mDNSPlatformTCPListen: no memory for TCPListener struct.");
+        close(fd);
+        return mDNSNULL;
+    }
+    ret->events.fd = fd;
+    ret->callback = callback;
+    ret->context = context;
+    ret->addressType = addrType;
+    ret->socketFlags = socketFlags;
+
+    // When we get a connection, mDNSPosixListenCallback will be called, and it will invoke the
+    // callback we were passed.
+    requestReadEvents(&ret->events, "tcpListenCallback", tcpListenCallback, ret);
+    return ret;
 }
 
 mDNSexport int mDNSPlatformTCPGetFD(TCPSocket *sock)
 {
-    (void)sock;         // Unused
-    return -1;
+    return sock->events.fd;
 }
 
-mDNSexport mStatus mDNSPlatformTCPConnect(TCPSocket *sock, const mDNSAddr *dst, mDNSOpaque16 dstport, domainname *hostname, mDNSInterfaceID InterfaceID,
-                                          TCPConnectionCallback callback, void *context)
+mDNSexport mStatus mDNSPlatformTCPConnect(TCPSocket *sock, const mDNSAddr *dst, mDNSOpaque16 dstport,
+                                          mDNSInterfaceID InterfaceID, TCPConnectionCallback callback, void *context)
 {
-    (void)sock;         // Unused
-    (void)dst;          // Unused
-    (void)dstport;      // Unused
-    (void)hostname;     // Unused
-    (void)InterfaceID;  // Unused
-    (void)callback;     // Unused
-    (void)context;      // Unused
-    return(mStatus_UnsupportedErr);
+    int result;
+    union {
+        struct sockaddr sa;
+        struct sockaddr_in sin;
+        struct sockaddr_in6 sin6;
+    } addr;
+    socklen_t len;
+
+    sock->callback = callback;
+    sock->context = context;
+    sock->setup = mDNSfalse;
+    sock->connected = mDNSfalse;
+    sock->err = mStatus_NoError;
+
+    result = fcntl(sock->events.fd, F_GETFL, 0);
+    if (result < 0)
+    {
+        LogMsg("mDNSPlatformTCPConnect: F_GETFL failed: %s", strerror(errno));
+        return mStatus_UnknownErr;
+    }
+
+    result = fcntl(sock->events.fd, F_SETFL, result | O_NONBLOCK);
+    if (result < 0)
+    {
+        LogMsg("mDNSPlatformTCPConnect: F_SETFL failed: %s", strerror(errno));
+        return mStatus_UnknownErr;
+    }
+
+    // If we've been asked to bind to a single interface, do it.  See comment in mDNSMacOSX.c for more info.
+    if (InterfaceID)
+    {
+        PosixNetworkInterface *iface = (PosixNetworkInterface *)InterfaceID;
+#if defined(SO_BINDTODEVICE)
+        result = setsockopt(sock->events.fd,
+                            SOL_SOCKET, SO_BINDTODEVICE, iface->intfName, strlen(iface->intfName));
+        if (result < 0)
+        {
+            LogMsg("mDNSPlatformTCPConnect: SO_BINDTODEVICE failed on %s: %s", iface->intfName, strerror(errno));
+            return mStatus_BadParamErr;
+        }
+#else
+        if (dst->type == mDNSAddrType_IPv4)
+        {
+#if defined(IP_BOUND_IF)
+            result = setsockopt(sock->events.fd, IPPROTO_IP, IP_BOUND_IF, &iface->index, sizeof iface->index);
+            if (result < 0)
+            {
+                LogMsg("mDNSPlatformTCPConnect: IP_BOUND_IF failed on %s (%d): %s",
+                       iface->intfName, iface->index, strerror(errno));
+                return mStatus_BadParamErr;
+            }
+#else
+            (void)iface;
+#endif // IP_BOUND_IF
+        }
+        else
+        { // IPv6
+#if defined(IPV6_BOUND_IF)
+            result = setsockopt(sock->events.fd, IPPROTO_IPV6, IPV6_BOUND_IF, &iface->index, sizeof iface->index);
+            if (result < 0)
+            {
+                LogMsg("mDNSPlatformTCPConnect: IP_BOUND_IF failed on %s (%d): %s",
+                       iface->intfName, iface->index, strerror(errno));
+                return mStatus_BadParamErr;
+            }
+#else
+            (void)iface;
+#endif // IPV6_BOUND_IF
+        }
+#endif // SO_BINDTODEVICE
+    }
+
+    memset(&addr, 0, sizeof addr);
+    if (dst->type == mDNSAddrType_IPv4)
+    {
+        addr.sa.sa_family = AF_INET;
+        addr.sin.sin_port = dstport.NotAnInteger;
+        len = sizeof (struct sockaddr_in);
+        addr.sin.sin_addr.s_addr = dst->ip.v4.NotAnInteger;
+    }
+    else
+    {
+        addr.sa.sa_family = AF_INET6;
+        len = sizeof (struct sockaddr_in6);
+        addr.sin6.sin6_port = dstport.NotAnInteger;
+        memcpy(&addr.sin6.sin6_addr.s6_addr, &dst->ip.v6, sizeof addr.sin6.sin6_addr.s6_addr);
+    }
+#ifndef NOT_HAVE_SA_LEN
+    addr.sa.sa_len = len;
+#endif
+
+    result = connect(sock->events.fd, (struct sockaddr *)&addr, len);
+    if (result < 0)
+    {
+        if (errno == EINPROGRESS)
+        {
+            requestWriteEvents(&sock->events, "mDNSPlatformConnect", tcpConnectCallback, sock);
+            return mStatus_ConnPending;
+        }
+        if (errno == EHOSTUNREACH || errno == EADDRNOTAVAIL || errno == ENETDOWN)
+        {
+            LogInfo("ERROR: mDNSPlatformTCPConnect - connect failed: socket %d: Error %d (%s)",
+                    sock->events.fd, errno, strerror(errno));
+        }
+        else
+        {
+            LogMsg("ERROR: mDNSPlatformTCPConnect - connect failed: socket %d: Error %d (%s) length %d",
+                   sock->events.fd, errno, strerror(errno), len);
+        }
+        return mStatus_ConnFailed;
+    }
+
+    LogMsg("NOTE: mDNSPlatformTCPConnect completed synchronously");
+    return mStatus_NoError;
 }
 
 mDNSexport void mDNSPlatformTCPCloseConnection(TCPSocket *sock)
 {
-    (void)sock;         // Unused
+    if (sock)
+    { // can sock really be NULL when this is called?
+        shutdown(sock->events.fd, SHUT_RDWR);
+        stopReadOrWriteEvents(sock->events.fd, mDNSfalse, mDNStrue,
+                              PosixEventFlag_Read | PosixEventFlag_Write);
+        close(sock->events.fd);
+        mdns_free(sock);
+    }
 }
 
-mDNSexport long mDNSPlatformReadTCP(TCPSocket *sock, void *buf, unsigned long buflen, mDNSBool * closed)
+mDNSexport long mDNSPlatformReadTCP(TCPSocket *sock, void *buf, unsigned long buflen, mDNSBool *closed)
 {
-    (void)sock;         // Unused
-    (void)buf;          // Unused
-    (void)buflen;       // Unused
-    (void)closed;       // Unused
-    return 0;
+    ssize_t nread;
+
+    *closed = mDNSfalse;
+    if (sock->flags & kTCPSocketFlags_UseTLS)
+    {
+#ifdef POSIX_HAS_TLS
+        nread = mDNSPosixTLSRead(sock, buf, buflen, closed);
+#else
+        nread = mStatus_ConnFailed;
+        *closed = mDNStrue;
+#endif
+    } else {
+        nread = mDNSPosixReadTCP(sock->events.fd, buf, buflen, closed);
+    }
+    return nread;
+}
+
+mDNSexport mDNSBool mDNSPlatformTCPWritable(TCPSocket *sock)
+{
+    fd_set w;
+    int nfds = sock->events.fd + 1;
+    int count;
+    struct timeval tv;
+
+    if (nfds > FD_SETSIZE)
+    {
+        LogMsg("ERROR: mDNSPlatformTCPWritable called on an fd that won't fit in an fd_set.");
+        return mDNStrue; // hope for the best?
+    }
+    FD_SET(sock->events.fd, &w);
+    tv.tv_sec = tv.tv_usec = 0;
+    count = select(nfds, NULL, &w, NULL, &tv);
+    if (count > 0)
+    {
+        return mDNStrue;
+    }
+    return mDNSfalse;
 }
 
 mDNSexport long mDNSPlatformWriteTCP(TCPSocket *sock, const char *msg, unsigned long len)
 {
-    (void)sock;         // Unused
-    (void)msg;          // Unused
-    (void)len;          // Unused
-    return 0;
+    if (sock->flags & kTCPSocketFlags_UseTLS)
+    {
+#ifdef POSIX_HAS_TLS
+        return mDNSPosixTLSWrite(sock, msg, len);
+#else
+        return mStatus_ConnFailed;
+#endif
+    }
+    else
+    {
+        return mDNSPosixWriteTCP(sock->events.fd, msg, len);
+    }
 }
 
 mDNSexport UDPSocket *mDNSPlatformUDPSocket(mDNSIPPort port)
 {
-    (void)port;         // Unused
-    return NULL;
+    mDNSBool randomizePort = mDNSIPPortIsZero(port);
+    UDPSocket *p = callocL("UDPSocket", sizeof(UDPSocket));
+    if (!p) { LogMsg("mDNSPlatformUDPSocket: memory exhausted"); return(mDNSNULL); }
+    p->randomizePort = randomizePort;
+    p->port = port;
+    p->events.fd = -1;
+    return(p);
 }
 
-mDNSexport void           mDNSPlatformUDPClose(UDPSocket *sock)
+mDNSexport void mDNSPlatformUDPClose(UDPSocket *sock)
 {
-    (void)sock;         // Unused
+    if (sock && sock->events.fd != -1)
+    {
+        stopReadOrWriteEvents(sock->events.fd, mDNSfalse, mDNStrue,
+                              PosixEventFlag_Read | PosixEventFlag_Write);
+        close(sock->events.fd);
+        mdns_free(sock);
+    }
 }
 
 mDNSexport void mDNSPlatformUpdateProxyList(const mDNSInterfaceID InterfaceID)
@@ -435,11 +937,12 @@ mDNSexport mDNSBool mDNSPlatformSetDNSConfig(mDNSBool setservers, mDNSBool setse
     DNameListElem **BrowseDomains, mDNSBool ackConfig)
 {
     (void) setservers;
-    (void) fqdn;
     (void) setsearch;
-    (void) RegDomains;
-    (void) BrowseDomains;
     (void) ackConfig;
+
+    if (fqdn         ) fqdn->c[0]      = 0;
+    if (RegDomains   ) *RegDomains     = NULL;
+    if (BrowseDomains) *BrowseDomains  = NULL;
 
     return mDNStrue;
 }
@@ -496,41 +999,17 @@ mDNSexport int ParseDNSServers(mDNS *m, const char *filePath)
         line[255]='\0';     // just to be safe
         if (sscanf(line,"%10s %15s", keyword, nameserver) != 2) continue;   // it will skip whitespaces
         if (strncasecmp(keyword,"nameserver",10)) continue;
-	if (inet_pton(AF_INET, nameserver, &ina) == 1)
-	{
-	    mDNSAddr DNSAddr;
-	    DNSAddr.type = mDNSAddrType_IPv4;
-	    DNSAddr.ip.v4.NotAnInteger = ina.s_addr;
-            mDNS_AddDNSServer(m, NULL, mDNSInterface_Any, 0, &DNSAddr, UnicastDNSPort, kScopeNone, 0, mDNSfalse, mDNSfalse, 0, mDNStrue, mDNStrue, mDNSfalse);
-	    numOfServers++;
-	}
-	else if (inet_pton(AF_INET6, nameserver, &ina6) == 1)
-	{
-	    mDNSAddr DNSAddr;
-	    DNSAddr.type = mDNSAddrType_IPv6;
-	    DNSAddr.ip.v6 = *(mDNSv6Addr *)&ina6;
-            mDNS_AddDNSServer(m, NULL, mDNSInterface_Any, 0, &DNSAddr, UnicastDNSPort, kScopeNone, 0, mDNSfalse, mDNSfalse, 0, mDNStrue, mDNStrue, mDNSfalse);
-	    numOfServers++;
-	}
+        if (inet_aton(nameserver, (struct in_addr *)&ina) != 0)
+        {
+            mDNSAddr DNSAddr;
+            DNSAddr.type = mDNSAddrType_IPv4;
+            DNSAddr.ip.v4.NotAnInteger = ina.s_addr;
+            mDNS_AddDNSServer(m, NULL, mDNSInterface_Any, 0, &DNSAddr, UnicastDNSPort, kScopeNone, 0, mDNSfalse, mDNSfalse, mDNSfalse, mDNSfalse, 0, mDNStrue, mDNStrue, mDNSfalse);
+            numOfServers++;
+        }
     }
     fclose(fp);
     return (numOfServers > 0) ? 0 : -1;
-}
-
-// Searches the interface list looking for the named interface.
-// Returns a pointer to if it found, or NULL otherwise.
-mDNSlocal PosixNetworkInterface *SearchForInterfaceByName(mDNS *const m, const char *intfName)
-{
-    PosixNetworkInterface *intf;
-
-    assert(m != NULL);
-    assert(intfName != NULL);
-
-    intf = (PosixNetworkInterface*)(m->HostInterfaces);
-    while ((intf != NULL) && (strcmp(intf->intfName, intfName) != 0))
-        intf = (PosixNetworkInterface *)(intf->coreIntf.next);
-
-    return intf;
 }
 
 mDNSexport mDNSInterfaceID mDNSPlatformInterfaceIDfromInterfaceIndex(mDNS *const m, mDNSu32 index)
@@ -543,10 +1022,7 @@ mDNSexport mDNSInterfaceID mDNSPlatformInterfaceIDfromInterfaceIndex(mDNS *const
     if (index == kDNSServiceInterfaceIndexP2P      ) return(mDNSInterface_P2P);
     if (index == kDNSServiceInterfaceIndexAny      ) return(mDNSInterface_Any);
 
-    intf = (PosixNetworkInterface*)(m->HostInterfaces);
-    while ((intf != NULL) && (mDNSu32) intf->index != index)
-        intf = (PosixNetworkInterface *)(intf->coreIntf.next);
-
+    intf = (PosixNetworkInterface*)SearchForInterfaceByIndex(m, index);
     return (mDNSInterfaceID) intf;
 }
 
@@ -581,7 +1057,7 @@ mDNSlocal void FreePosixNetworkInterface(PosixNetworkInterface *intf)
 {
     int rv;
     assert(intf != NULL);
-    if (intf->intfName != NULL) free((void *)intf->intfName);
+    if (intf->intfName != NULL) mdns_free(intf->intfName);
     if (intf->multicastSocket4 != -1)
     {
         rv = close(intf->multicastSocket4);
@@ -618,15 +1094,50 @@ mDNSlocal void ClearInterfaceList(mDNS *const m)
     num_pkts_rejected = 0;
 }
 
+mDNSlocal int SetupIPv6Socket(int fd)
+{
+    int err;
+
+    #if defined(IPV6_PKTINFO)
+    err = setsockopt(fd, IPPROTO_IPV6, IPV6_2292_PKTINFO, &kOn, sizeof(kOn));
+    if (err < 0) { err = errno; perror("setsockopt - IPV6_PKTINFO"); }
+    #else
+        #warning This platform has no way to get the destination interface information for IPv6 -- will only work for single-homed hosts
+    #endif
+    return err;
+}
+
+mDNSlocal int SetupIPv4Socket(int fd)
+{
+    int err;
+
+#if defined(IP_PKTINFO)                                 // Linux
+    err = setsockopt(fd, IPPROTO_IP, IP_PKTINFO, &kOn, sizeof(kOn));
+    if (err < 0) { err = errno; perror("setsockopt - IP_PKTINFO"); }
+#elif defined(IP_RECVDSTADDR) || defined(IP_RECVIF)     // BSD and Solaris
+#if defined(IP_RECVDSTADDR)
+    err = setsockopt(fd, IPPROTO_IP, IP_RECVDSTADDR, &kOn, sizeof(kOn));
+    if (err < 0) { err = errno; perror("setsockopt - IP_RECVDSTADDR"); }
+#endif
+#if defined(IP_RECVIF)
+    if (err == 0)
+    {
+        err = setsockopt(fd, IPPROTO_IP, IP_RECVIF, &kOn, sizeof(kOn));
+        if (err < 0) { err = errno; perror("setsockopt - IP_RECVIF"); }
+    }
+#endif
+#else
+#warning This platform has no way to get the destination interface information -- will only work for single-homed hosts
+#endif
+    return err;
+}
+
 // Sets up a send/receive socket.
 // If mDNSIPPort port is non-zero, then it's a multicast socket on the specified interface
 // If mDNSIPPort port is zero, then it's a randomly assigned port number, used for sending unicast queries
 mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interfaceIndex, int *sktPtr)
 {
     int err = 0;
-    static const int kOn = 1;
-    static const int kIntTwoFiveFive = 255;
-    static const unsigned char kByteTwoFiveFive = 255;
     const mDNSBool JoinMulticastGroup = (port.NotAnInteger != 0);
 
     (void) interfaceIndex;  // This parameter unused on plaforms that don't have IPv6
@@ -646,7 +1157,7 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
     // ... with a shared UDP port, if it's for multicast receiving
     if (err == 0 && port.NotAnInteger)
     {
-        // <rdar://problem/20946253>
+        // <rdar://problem/20946253> Suggestions from Jonny Törnbom at Axis Communications
         // We test for SO_REUSEADDR first, as suggested by Jonny Törnbom from Axis Communications
         // Linux kernel versions 3.9 introduces support for socket option
         // SO_REUSEPORT, however this is not implemented the same as on *BSD
@@ -667,7 +1178,7 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
         #endif
         if (err < 0) { err = errno; perror("setsockopt - SO_REUSExxxx"); }
 
-#ifndef __NetBSD__
+#if TARGET_OS_MAC
         // Enable inbound packets on IFEF_AWDL interface.
         // Only done for multicast sockets, since we don't expect unicast socket operations
         // on the IFEF_AWDL interface. Operation is a no-op for other interface types.
@@ -685,24 +1196,7 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
         struct sockaddr_in bindAddr;
         if (err == 0)
         {
-            #if defined(IP_PKTINFO)                                 // Linux
-            err = setsockopt(*sktPtr, IPPROTO_IP, IP_PKTINFO, &kOn, sizeof(kOn));
-            if (err < 0) { err = errno; perror("setsockopt - IP_PKTINFO"); }
-            #elif defined(IP_RECVDSTADDR) || defined(IP_RECVIF)     // BSD and Solaris
-                #if defined(IP_RECVDSTADDR)
-            err = setsockopt(*sktPtr, IPPROTO_IP, IP_RECVDSTADDR, &kOn, sizeof(kOn));
-            if (err < 0) { err = errno; perror("setsockopt - IP_RECVDSTADDR"); }
-                #endif
-                #if defined(IP_RECVIF)
-            if (err == 0)
-            {
-                err = setsockopt(*sktPtr, IPPROTO_IP, IP_RECVIF, &kOn, sizeof(kOn));
-                if (err < 0) { err = errno; perror("setsockopt - IP_RECVIF"); }
-            }
-                #endif
-            #else
-                #warning This platform has no way to get the destination interface information -- will only work for single-homed hosts
-            #endif
+            err = SetupIPv4Socket(*sktPtr);
         }
     #if defined(IP_RECVTTL)                                 // Linux
         if (err == 0)
@@ -765,15 +1259,9 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
     {
         struct ipv6_mreq imr6;
         struct sockaddr_in6 bindAddr6;
-    #if defined(IPV6_PKTINFO)
-        if (err == 0)
-        {
-            err = setsockopt(*sktPtr, IPPROTO_IPV6, IPV6_2292_PKTINFO, &kOn, sizeof(kOn));
-            if (err < 0) { err = errno; perror("setsockopt - IPV6_PKTINFO"); }
+        if (err == 0) {
+            err = SetupIPv6Socket(*sktPtr);
         }
-    #else
-        #warning This platform has no way to get the destination interface information for IPv6 -- will only work for single-homed hosts
-    #endif
     #if defined(IPV6_HOPLIMIT)
         if (err == 0)
         {
@@ -874,7 +1362,8 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
 
 // Creates a PosixNetworkInterface for the interface whose IP address is
 // intfAddr and whose name is intfName and registers it with mDNS core.
-mDNSlocal int SetupOneInterface(mDNS *const m, struct sockaddr *intfAddr, struct sockaddr *intfMask, const char *intfName, int intfIndex)
+mDNSlocal int SetupOneInterface(mDNS *const m, struct sockaddr *intfAddr, struct sockaddr *intfMask,
+    const mDNSu8 *intfHaddr, mDNSu16 intfHlen, const char *intfName, int intfIndex)
 {
     int err = 0;
     PosixNetworkInterface *intf;
@@ -883,17 +1372,36 @@ mDNSlocal int SetupOneInterface(mDNS *const m, struct sockaddr *intfAddr, struct
     assert(m != NULL);
     assert(intfAddr != NULL);
     assert(intfName != NULL);
+    assert(intfHaddr != NULL || intfHlen == 0);
     assert(intfMask != NULL);
 
     // Allocate the interface structure itself.
-    intf = (PosixNetworkInterface*)calloc(1, sizeof(*intf));
+    intf = (PosixNetworkInterface*)mdns_calloc(1, sizeof(*intf));
     if (intf == NULL) { assert(0); err = ENOMEM; }
 
     // And make a copy of the intfName.
     if (err == 0)
     {
-        intf->intfName = strdup(intfName);
+#ifdef LINUX
+        char *s;
+        int len;
+        s = strchr(intfName, ':');
+        if (s != NULL)
+        {
+            len = (s - intfName) + 1;
+        }
+        else
+        {
+            len = strlen(intfName) + 1;
+        }
+        intf->intfName = malloc(len);
         if (intf->intfName == NULL) { assert(0); err = ENOMEM; }
+        memcpy(intf->intfName, intfName, len - 1);
+        intfName[len - 1] = 0;
+#else
+        intf->intfName = mdns_strdup(intfName);
+        if (intf->intfName == NULL) { assert(0); err = ENOMEM; }
+#endif
     }
 
     if (err == 0)
@@ -901,10 +1409,21 @@ mDNSlocal int SetupOneInterface(mDNS *const m, struct sockaddr *intfAddr, struct
         // Set up the fields required by the mDNS core.
         SockAddrTomDNSAddr(intfAddr, &intf->coreIntf.ip, NULL);
         SockAddrTomDNSAddr(intfMask, &intf->coreIntf.mask, NULL);
+        if (intfHlen == sizeof(intf->coreIntf.MAC.b))
+        {
+            mDNSPlatformMemCopy(intf->coreIntf.MAC.b, intfHaddr, sizeof(intf->coreIntf.MAC.b));
+
+            // Configure primary MAC address.
+            // Ideally, we would pick the default route interface with the lowest metric (see mDNSWin32).
+            // For now, simply assume the first one that we find is the primary one (see mDNSMacOSX).
+            if (mDNSSameEthAddress(&m->PrimaryMAC, &zeroEthAddr))
+                mDNSPlatformMemCopy(&m->PrimaryMAC, &intf->coreIntf.MAC, sizeof(m->PrimaryMAC));
+        }
 
         //LogMsg("SetupOneInterface: %#a %#a",  &intf->coreIntf.ip,  &intf->coreIntf.mask);
-        strncpy(intf->coreIntf.ifname, intfName, sizeof(intf->coreIntf.ifname));
+        mDNSPlatformStrLCopy(intf->coreIntf.ifname, intfName, sizeof(intf->coreIntf.ifname));
         intf->coreIntf.ifname[sizeof(intf->coreIntf.ifname)-1] = 0;
+
         intf->coreIntf.Advertise = m->AdvertiseLocalAddresses;
         intf->coreIntf.McastTxRx = mDNStrue;
 
@@ -972,49 +1491,98 @@ mDNSlocal int SetupInterfaceList(mDNS *const m)
 {
     mDNSBool foundav4       = mDNSfalse;
     int err            = 0;
-    struct ifi_info *intfList      = get_ifi_info(AF_INET, mDNStrue);
-    struct ifi_info *firstLoopback = NULL;
+    struct ifaddrs *intfList;
+    struct ifaddrs *firstLoopback = NULL;
+    int firstLoopbackIndex = 0;
 
     assert(m != NULL);
     debugf("SetupInterfaceList");
 
-#if 0
-    if (intfList == NULL) err = ENOENT;
-#endif
-
-#if HAVE_IPV6
-    if (err == 0)       /* Link the IPv6 list to the end of the IPv4 list */
+    if (getifaddrs(&intfList) < 0)
     {
-        struct ifi_info **p = &intfList;
-        while (*p) p = &(*p)->ifi_next;
-        *p = get_ifi_info(AF_INET6, mDNStrue);
+        err = errno;
     }
-#endif
+    if (intfList == NULL) err = ENOENT;
 
     if (err == 0)
     {
-        struct ifi_info *i = intfList;
+        struct ifaddrs *i = intfList;
         while (i)
         {
-            if (     ((i->ifi_addr->sa_family == AF_INET)
+            if (     i->ifa_addr != NULL &&
+                     ((i->ifa_addr->sa_family == AF_INET)
 #if HAVE_IPV6
-                      || (i->ifi_addr->sa_family == AF_INET6)
+                      || (i->ifa_addr->sa_family == AF_INET6)
 #endif
-                      ) &&  (i->ifi_flags & IFF_UP) && !(i->ifi_flags & IFF_POINTOPOINT))
+                      ) &&  (i->ifa_flags & IFF_UP) && !(i->ifa_flags & IFF_POINTOPOINT))
             {
-                if (i->ifi_flags & IFF_LOOPBACK)
+                int ifIndex = if_nametoindex(i->ifa_name);
+                if (ifIndex == 0)
+                {
+                    continue;
+                }
+                if (i->ifa_flags & IFF_LOOPBACK)
                 {
                     if (firstLoopback == NULL)
+                    {
                         firstLoopback = i;
+                        firstLoopbackIndex = ifIndex;
+                    }
                 }
                 else
                 {
-                    if (SetupOneInterface(m, i->ifi_addr, i->ifi_netmask, i->ifi_name, i->ifi_index) == 0)
-                        if (i->ifi_addr->sa_family == AF_INET)
+#define ethernet_addr_len 6
+                    uint8_t hwaddr[ethernet_addr_len];
+                    int hwaddr_len = 0;
+
+#if defined(TARGET_OS_LINUX) && TARGET_OS_LINUX
+                    struct ifreq ifr;
+                    int sockfd = socket(AF_INET6, SOCK_DGRAM, 0);
+                    if (sockfd >= 0)
+                    {
+                        /* Add hardware address */
+                        memcpy(ifr.ifr_name, i->ifa_name, IFNAMSIZ);
+                        if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) != -1)
+                        {
+                            if (ifr.ifr_hwaddr.sa_family == ARPHRD_ETHER)
+                            {
+                                memcpy(hwaddr, ifr.ifr_hwaddr.sa_data, ethernet_addr_len);
+                                hwaddr_len = ethernet_addr_len;
+                            }
+                        }
+                        close(sockfd);
+                    }
+                    else
+                    {
+                        memset(hwaddr, 0, sizeof(hwaddr));
+                    }
+#endif // TARGET_OS_LINUX
+
+#if defined(TARGET_OS_MAC) && TARGET_OS_MAC
+                    for (struct ifaddrs *hw_scan = intfList; hw_scan != NULL; hw_scan = hw_scan->ifa_next)
+                    {
+                        if (hw_scan->ifa_addr != NULL &&
+                            hw_scan->ifa_addr->sa_family == AF_LINK && !strcmp(hw_scan->ifa_name, i->ifa_name))
+                        {
+                            struct sockaddr_dl *sdl = (struct sockaddr_dl *)hw_scan->ifa_addr;
+                            if (sdl->sdl_alen == ethernet_addr_len)
+                            {
+                                hwaddr_len = ethernet_addr_len;
+                                memcpy(hwaddr, LLADDR(sdl), hwaddr_len);
+                            }
+                            break;
+                        }
+                    }
+#endif
+                    if (SetupOneInterface(m, i->ifa_addr, i->ifa_netmask,
+                                          hwaddr, hwaddr_len, i->ifa_name, ifIndex) == 0)
+                    {
+                        if (i->ifa_addr->sa_family == AF_INET)
                             foundav4 = mDNStrue;
+                    }
                 }
             }
-            i = i->ifi_next;
+            i = i->ifa_next;
         }
 
         // If we found no normal interfaces but we did find a loopback interface, register the
@@ -1023,11 +1591,12 @@ mDNSlocal int SetupInterfaceList(mDNS *const m)
         // In the interim, we skip loopback interface only if we found at least one v4 interface to use
         // if ((m->HostInterfaces == NULL) && (firstLoopback != NULL))
         if (!foundav4 && firstLoopback)
-            (void) SetupOneInterface(m, firstLoopback->ifi_addr, firstLoopback->ifi_netmask, firstLoopback->ifi_name, firstLoopback->ifi_index);
+            (void) SetupOneInterface(m, firstLoopback->ifa_addr, firstLoopback->ifa_netmask,
+                NULL, 0, firstLoopback->ifa_name, firstLoopbackIndex);
     }
 
     // Clean up.
-    if (intfList != NULL) free_ifi_info(intfList);
+    if (intfList != NULL) freeifaddrs(intfList);
 
     // Clean up any interfaces that have been hanging around on the RecentInterfaces list for more than a minute
     PosixNetworkInterface **ri = &gRecentInterfaces;
@@ -1036,7 +1605,7 @@ mDNSlocal int SetupInterfaceList(mDNS *const m)
     {
         PosixNetworkInterface *pi = *ri;
         if (utc - pi->LastSeen < 60) ri = (PosixNetworkInterface **)&pi->coreIntf.next;
-        else { *ri = (PosixNetworkInterface *)pi->coreIntf.next; free(pi); }
+        else { *ri = (PosixNetworkInterface *)pi->coreIntf.next; mdns_free(pi); }
     }
 
     return err;
@@ -1067,7 +1636,7 @@ mDNSlocal mStatus OpenIfNotifySocket(int *pFD)
     snl.nl_len    = sizeof(snl);
 #endif
     snl.nl_family = AF_NETLINK;
-    snl.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR;
+    snl.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
     ret = bind(sock, (struct sockaddr *) &snl, sizeof snl);
     if (0 == ret)
         *pFD = sock;
@@ -1226,7 +1795,7 @@ mDNSlocal mDNSu32       ProcessRoutingNotification(int sd)
 #endif // USES_NETLINK
 
 // Called when data appears on interface change notification socket
-mDNSlocal void InterfaceChangeCallback(int fd, short filter, void *context)
+mDNSlocal void InterfaceChangeCallback(int fd, void *context)
 {
     IfChangeRec     *pChgRec = (IfChangeRec*) context;
     fd_set readFDs;
@@ -1234,7 +1803,6 @@ mDNSlocal void InterfaceChangeCallback(int fd, short filter, void *context)
     struct timeval zeroTimeout = { 0, 0 };
 
     (void)fd; // Unused
-    (void)filter; // Unused
 
     FD_ZERO(&readFDs);
     FD_SET(pChgRec->NotifySD, &readFDs);
@@ -1258,7 +1826,7 @@ mDNSlocal mStatus WatchForInterfaceChange(mDNS *const m)
     mStatus err;
     IfChangeRec *pChgRec;
 
-    pChgRec = (IfChangeRec*) mDNSPlatformMemAllocate(sizeof *pChgRec);
+    pChgRec = (IfChangeRec*) mDNSPlatformMemAllocateClear(sizeof *pChgRec);
     if (pChgRec == NULL)
         return mStatus_NoMemoryErr;
 
@@ -1355,6 +1923,11 @@ mDNSexport mStatus mDNSPlatformInit(mDNS *const m)
         }
     }
 
+#if POSIX_HAS_TLS
+    // Use the SRP TLS shim.
+    mDNSPosixTLSInit();
+#endif
+
     // We don't do asynchronous initialization on the Posix platform, so by the time
     // we get here the setup will already have succeeded or failed.  If it succeeded,
     // we should just call mDNSCoreInitComplete() immediately.
@@ -1424,33 +1997,9 @@ mDNSexport void    mDNSPlatformUnlock (const mDNS *const m)
 #pragma mark ***** Strings
 #endif
 
-// mDNS core calls this routine to copy C strings.
-// On the Posix platform this maps directly to the ANSI C strcpy.
-mDNSexport void    mDNSPlatformStrCopy(void *dst, const void *src)
+mDNSexport void    mDNSPlatformStrLCopy(void *dst, const void *src, mDNSu32 len)
 {
-    strcpy((char *)dst, (const char *)src);
-}
-
-mDNSexport mDNSu32  mDNSPlatformStrLCopy(void *dst, const void *src, mDNSu32 len)
-{
-#if HAVE_STRLCPY
-    return ((mDNSu32)strlcpy((char *)dst, (const char *)src, len));
-#else
-    size_t srcLen;
-
-    srcLen = strlen((const char *)src);
-    if (srcLen < len)
-    {
-        memcpy(dst, src, srcLen + 1);
-    }
-    else if (len > 0)
-    {
-        memcpy(dst, src, len - 1);
-        ((char *)dst)[len - 1] = '\0';
-    }
-
-    return ((mDNSu32)srcLen);
-#endif
+    mdns_strlcpy((char *)dst, (const char *)src, len);
 }
 
 // mDNS core calls this routine to get the length of a C string.
@@ -1486,31 +2035,6 @@ mDNSexport void mDNSPlatformQsort(void *base, int nel, int width, int (*compar)(
     qsort(base, nel, width, compar);
 }
 
-// DNSSEC stub functions
-mDNSexport void VerifySignature(mDNS *const m, DNSSECVerifier *dv, DNSQuestion *q)
-{
-    (void)m;
-    (void)dv;
-    (void)q;
-}
-
-mDNSexport mDNSBool AddNSECSForCacheRecord(mDNS *const m, CacheRecord *crlist, CacheRecord *negcr, mDNSu8 rcode)
-{
-    (void)m;
-    (void)crlist;
-    (void)negcr;
-    (void)rcode;
-    return mDNSfalse;
-}
-
-mDNSexport void BumpDNSSECStats(mDNS *const m, DNSSECStatsAction action, DNSSECStatsType type, mDNSu32 value)
-{
-    (void)m;
-    (void)action;
-    (void)type;
-    (void)value;
-}
-
 // Proxy stub functions
 mDNSexport mDNSu8 *DNSProxySetAttributes(DNSQuestion *q, DNSMessageHeader *h, DNSMessage *msg, mDNSu8 *ptr, mDNSu8 *limit)
 {
@@ -1523,30 +2047,23 @@ mDNSexport mDNSu8 *DNSProxySetAttributes(DNSQuestion *q, DNSMessageHeader *h, DN
     return ptr;
 }
 
-mDNSexport void DNSProxyInit(mDNSu32 IpIfArr[], mDNSu32 OpIf)
-{
-    (void) IpIfArr;
-    (void) OpIf;
-}
-
-mDNSexport void DNSProxyTerminate(void)
-{
-}
-
 // mDNS core calls this routine to clear blocks of memory.
 // On the Posix platform this is a simple wrapper around ANSI C memset.
-mDNSexport void    mDNSPlatformMemZero(void *dst, mDNSu32 len)
+mDNSexport void  mDNSPlatformMemZero(void *dst, mDNSu32 len)
 {
     memset(dst, 0, len);
 }
 
-mDNSexport void *  mDNSPlatformMemAllocate(mDNSu32 len) { return(malloc(len)); }
-mDNSexport void    mDNSPlatformMemFree    (void *mem)   { free(mem); }
+#if !MDNS_MALLOC_DEBUGGING
+mDNSexport void *mDNSPlatformMemAllocate(mDNSu32 len)      { return(mallocL("mDNSPlatformMemAllocate", len)); }
+mDNSexport void *mDNSPlatformMemAllocateClear(mDNSu32 len) { return(callocL("mDNSPlatformMemAllocateClear", len)); }
+mDNSexport void  mDNSPlatformMemFree    (void *mem)        {          freeL("mDNSPlatformMemFree", mem); }
+#endif
 
 #if _PLATFORM_HAS_STRONG_PRNG_
 mDNSexport mDNSu32 mDNSPlatformRandomNumber(void)
 {
-	return(arc4random());
+    return(arc4random());
 }
 #else
 mDNSexport mDNSu32 mDNSPlatformRandomSeed(void)
@@ -1567,28 +2084,46 @@ mDNSexport mStatus mDNSPlatformTimeInit(void)
     return(mStatus_NoError);
 }
 
-mDNSexport mDNSs32  mDNSPlatformRawTime()
+mDNSexport mDNSs32 mDNSPlatformRawTime(void)
 {
-#ifdef CLOCK_MONOTONIC
-    struct timespec tv;
-    clock_gettime(CLOCK_MONOTONIC, &tv);
-    return((tv.tv_sec << 10) | ((tv.tv_nsec / 1000) * 16 / 15625));
-#else
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    // tv.tv_sec is seconds since 1st January 1970 (GMT, with no adjustment for daylight savings time)
-    // tv.tv_usec is microseconds since the start of this second (i.e. values 0 to 999999)
-    // We use the lower 22 bits of tv.tv_sec for the top 22 bits of our result
-    // and we multiply tv.tv_usec by 16 / 15625 to get a value in the range 0-1023 to go in the bottom 10 bits.
+    struct timespec tm;
+    int ret = clock_gettime(CLOCK_MONOTONIC, &tm);
+    assert(ret == 0); // This call will only fail if the number of seconds does not fit in an object of type time_t.
+
+    // tm.tv_sec is seconds since some unspecified starting point (it is usually the system start up time)
+    // tm.tv_nsec is nanoseconds since the start of this second (i.e. values 0 to 999999999)
+    // We use the lower 22 bits of tm.tv_sec for the top 22 bits of our result
+    // and we multiply tm.tv_nsec by 2 / 1953125 to get a value in the range 0-1023 to go in the bottom 10 bits.
     // This gives us a proper modular (cyclic) counter that has a resolution of roughly 1ms (actually 1/1024 second)
     // and correctly cycles every 2^22 seconds (4194304 seconds = approx 48 days).
-    return((tv.tv_sec << 10) | (tv.tv_usec * 16 / 15625));
-#endif
+
+    return (mDNSs32)(((tm.tv_sec << 10) | (tm.tv_nsec * 2 / 1953125)));
 }
 
 mDNSexport mDNSs32 mDNSPlatformUTC(void)
 {
     return time(NULL);
+}
+
+// This should return elapsed time in seconds since boot. Posix doesn't have an API for this, so we currently assume
+// that time() doesn't get adjusted, which isn't the case.
+mDNSexport mDNSs32 mDNSPlatformContinuousTimeSeconds(void)
+{
+#ifdef CLOCK_BOOTTIME
+    // CLOCK_BOOTTIME is a Linux-specific constant that indicates a monotonic time that includes time asleep
+    const int clockid = CLOCK_BOOTTIME;
+#else
+    // On MacOS, CLOCK_MONOTONIC is a monotonic time that includes time asleep. However, this may not be the case
+    // on other Posix systems, since the POSIX specification doesn't say one way or the other. E.g. on Linux
+    // time asleep is not accounted for, which is why we prefer CLOCK_BOOTTIME on Linux.
+    const int clockid = CLOCK_MONOTONIC;
+#endif
+    struct timespec tm;
+    int ret = clock_gettime(clockid, &tm);
+    assert(ret == 0); // This call will only fail if the number of seconds does not fit in an object of type time_t.
+
+    // We are only accurate to the second.
+    return (mDNSs32)tm.tv_sec;
 }
 
 mDNSexport void mDNSPlatformSendWakeupPacket(mDNSInterfaceID InterfaceID, char *EthAddr, char *IPAddr, int iteration)
@@ -1607,7 +2142,7 @@ mDNSexport mDNSBool mDNSPlatformValidRecordForInterface(const AuthRecord *rr, mD
     return 1;
 }
 
-mDNSexport mDNSBool mDNSPlatformValidQuestionForInterface(DNSQuestion *q, const NetworkInterfaceInfo *intf)
+mDNSexport mDNSBool mDNSPlatformValidQuestionForInterface(const DNSQuestion *const q, const NetworkInterfaceInfo *const intf)
 {
     (void) q;
     (void) intf;
@@ -1694,7 +2229,7 @@ mDNSexport void mDNSPlatformSetSocktOpt(void *sock, mDNSTransport_Type transType
     (void) q;
 }
 
-mDNSexport mDNSs32 mDNSPlatformGetPID()
+mDNSexport mDNSs32 mDNSPlatformGetPID(void)
 {
     return 0;
 }
@@ -1705,28 +2240,47 @@ mDNSlocal void mDNSPosixAddToFDSet(int *nfds, fd_set *readfds, int s)
     FD_SET(s, readfds);
 }
 
-mDNSexport void mDNSPosixGetFDSet(mDNS *m, int *nfds, fd_set *readfds, struct timeval *timeout)
+mDNSlocal void mDNSPosixGetFDSetForSelect(mDNS *m, int *nfds, fd_set *readfds, fd_set *writefds)
+{
+    int numFDs = *nfds;
+    PosixEventSource *iSource;
+
+    // 2. Build our list of active file descriptors
+    PosixNetworkInterface *info = (PosixNetworkInterface *)(m->HostInterfaces);
+    if (m->p->unicastSocket4 != -1) mDNSPosixAddToFDSet(&numFDs, readfds, m->p->unicastSocket4);
+#if HAVE_IPV6
+    if (m->p->unicastSocket6 != -1) mDNSPosixAddToFDSet(&numFDs, readfds, m->p->unicastSocket6);
+#endif
+    while (info)
+    {
+        if (info->multicastSocket4 != -1) mDNSPosixAddToFDSet(&numFDs, readfds, info->multicastSocket4);
+#if HAVE_IPV6
+        if (info->multicastSocket6 != -1) mDNSPosixAddToFDSet(&numFDs, readfds, info->multicastSocket6);
+#endif
+        info = (PosixNetworkInterface *)(info->coreIntf.next);
+    }
+
+    // Copy over the event fds.   We have to do it this way because client-provided event loops expect
+    // to initialize their FD sets first and then call mDNSPosixGetFDSet()
+    for (iSource = gEventSources; iSource; iSource = iSource->next)
+    {
+        if (iSource->readCallback != NULL)
+            FD_SET(iSource->fd, readfds);
+        if (iSource->writeCallback != NULL)
+            FD_SET(iSource->fd, writefds);
+        if (numFDs <= iSource->fd)
+            numFDs = iSource->fd + 1;
+    }
+    *nfds = numFDs;
+}
+
+mDNSexport void mDNSPosixGetFDSet(mDNS *m, int *nfds, fd_set *readfds, fd_set *writefds, struct timeval *timeout)
 {
     mDNSs32 ticks;
     struct timeval interval;
 
     // 1. Call mDNS_Execute() to let mDNSCore do what it needs to do
     mDNSs32 nextevent = mDNS_Execute(m);
-
-    // 2. Build our list of active file descriptors
-    PosixNetworkInterface *info = (PosixNetworkInterface *)(m->HostInterfaces);
-    if (m->p->unicastSocket4 != -1) mDNSPosixAddToFDSet(nfds, readfds, m->p->unicastSocket4);
-#if HAVE_IPV6
-    if (m->p->unicastSocket6 != -1) mDNSPosixAddToFDSet(nfds, readfds, m->p->unicastSocket6);
-#endif
-    while (info)
-    {
-        if (info->multicastSocket4 != -1) mDNSPosixAddToFDSet(nfds, readfds, info->multicastSocket4);
-#if HAVE_IPV6
-        if (info->multicastSocket6 != -1) mDNSPosixAddToFDSet(nfds, readfds, info->multicastSocket6);
-#endif
-        info = (PosixNetworkInterface *)(info->coreIntf.next);
-    }
 
     // 3. Calculate the time remaining to the next scheduled event (in struct timeval format)
     ticks = nextevent - mDNS_TimeNow(m);
@@ -1738,11 +2292,14 @@ mDNSexport void mDNSPosixGetFDSet(mDNS *m, int *nfds, fd_set *readfds, struct ti
     if (timeout->tv_sec > interval.tv_sec ||
         (timeout->tv_sec == interval.tv_sec && timeout->tv_usec > interval.tv_usec))
         *timeout = interval;
+
+    mDNSPosixGetFDSetForSelect(m, nfds, readfds, writefds);
 }
 
-mDNSexport void mDNSPosixProcessFDSet(mDNS *const m, fd_set *readfds)
+mDNSexport void mDNSPosixProcessFDSet(mDNS *const m, fd_set *readfds, fd_set *writefds)
 {
     PosixNetworkInterface *info;
+    PosixEventSource    *iSource;
     assert(m       != NULL);
     assert(readfds != NULL);
     info = (PosixNetworkInterface *)(m->HostInterfaces);
@@ -1750,13 +2307,13 @@ mDNSexport void mDNSPosixProcessFDSet(mDNS *const m, fd_set *readfds)
     if (m->p->unicastSocket4 != -1 && FD_ISSET(m->p->unicastSocket4, readfds))
     {
         FD_CLR(m->p->unicastSocket4, readfds);
-        SocketDataReady(m, NULL, m->p->unicastSocket4);
+        SocketDataReady(m, NULL, m->p->unicastSocket4, NULL);
     }
 #if HAVE_IPV6
     if (m->p->unicastSocket6 != -1 && FD_ISSET(m->p->unicastSocket6, readfds))
     {
         FD_CLR(m->p->unicastSocket6, readfds);
-        SocketDataReady(m, NULL, m->p->unicastSocket6);
+        SocketDataReady(m, NULL, m->p->unicastSocket6, NULL);
     }
 #endif
 
@@ -1765,76 +2322,160 @@ mDNSexport void mDNSPosixProcessFDSet(mDNS *const m, fd_set *readfds)
         if (info->multicastSocket4 != -1 && FD_ISSET(info->multicastSocket4, readfds))
         {
             FD_CLR(info->multicastSocket4, readfds);
-            SocketDataReady(m, info, info->multicastSocket4);
+            SocketDataReady(m, info, info->multicastSocket4, NULL);
         }
 #if HAVE_IPV6
         if (info->multicastSocket6 != -1 && FD_ISSET(info->multicastSocket6, readfds))
         {
             FD_CLR(info->multicastSocket6, readfds);
-            SocketDataReady(m, info, info->multicastSocket6);
+            SocketDataReady(m, info, info->multicastSocket6, NULL);
         }
 #endif
         info = (PosixNetworkInterface *)(info->coreIntf.next);
     }
+
+    // Now process routing socket events, discovery relay events and anything else of that ilk.
+    for (iSource = gEventSources; iSource; iSource = iSource->next)
+    {
+        if (iSource->readCallback != NULL && FD_ISSET(iSource->fd, readfds))
+        {
+            iSource->readCallback(iSource->fd, iSource->readContext);
+            break;  // in case callback removed elements from gEventSources
+        }
+        else if (iSource->writeCallback != NULL && FD_ISSET(iSource->fd, writefds))
+        {
+            mDNSPosixEventCallback writeCallback = iSource->writeCallback;
+            // Write events are one-shot: to get another event, the consumer has to put in a new request.
+            // We reset this before calling the callback just in case the callback requests another write
+            // callback, or deletes the event context from the list.
+            iSource->writeCallback = NULL;
+            writeCallback(iSource->fd, iSource->writeContext);
+            break;  // in case callback removed elements from gEventSources
+        }
+    }
 }
 
-// update gMaxFD
-mDNSlocal void  DetermineMaxEventFD(void)
+mDNSu32 mDNSPlatformEventContextSize = sizeof (PosixEventSource);
+
+mDNSlocal void requestIOEvents(PosixEventSource *newSource, const char *taskName,
+                                  mDNSPosixEventCallback callback, void *context, int flag)
 {
-    PosixEventSource    *iSource;
+    PosixEventSource **epp = &gEventSources;
 
-    gMaxFD = 0;
-    for (iSource=(PosixEventSource*)gEventSources.Head; iSource; iSource = iSource->Next)
-        if (gMaxFD < iSource->fd)
-            gMaxFD = iSource->fd;
-}
-
-// Add a file descriptor to the set that mDNSPosixRunEventLoopOnce() listens to.
-mStatus mDNSPosixAddFDToEventLoop(int fd, mDNSPosixEventCallback callback, void *context)
-{
-    PosixEventSource    *newSource;
-
-    if (gEventSources.LinkOffset == 0)
-        InitLinkedList(&gEventSources, offsetof(PosixEventSource, Next));
-
-    if (fd >= (int) FD_SETSIZE || fd < 0)
-        return mStatus_UnsupportedErr;
+    if (newSource->fd >= (int) FD_SETSIZE || newSource->fd < 0)
+    {
+        LogMsg("requestIOEvents called with fd %d > FD_SETSIZE %d.", newSource->fd, FD_SETSIZE);
+        assert(0);
+    }
     if (callback == NULL)
-        return mStatus_BadParamErr;
+    {
+        LogMsg("requestIOEvents called no callback.", newSource->fd, FD_SETSIZE);
+        assert(0);
+    }
 
-    newSource = (PosixEventSource*) malloc(sizeof *newSource);
-    if (NULL == newSource)
-        return mStatus_NoMemoryErr;
+    // See if this event context is already on the list; if it is, no need to scan the list.
+    if (!(newSource->flags & PosixEventFlag_OnList))
+    {
+        while (*epp)
+        {
+            // This should never happen.
+            if (newSource == *epp)
+            {
+                LogMsg("Event context marked not on list but is on list.");
+                assert(0);
+            }
+            epp = &(*epp)->next;
+        }
+        if (*epp == NULL)
+        {
+            *epp = newSource;
+            newSource->next = NULL;
+            newSource->flags = PosixEventFlag_OnList;
+        }
+    }
 
-    newSource->Callback = callback;
-    newSource->Context = context;
-    newSource->fd = fd;
+    if (flag & PosixEventFlag_Read)
+    {
+        newSource->readCallback = callback;
+        newSource->readContext = context;
+        newSource->flags |= PosixEventFlag_Read;
+        newSource->readTaskName = taskName;
+    }
+    if (flag & PosixEventFlag_Write)
+    {
+        newSource->writeCallback = callback;
+        newSource->writeContext = context;
+        newSource->flags |= PosixEventFlag_Write;
+        newSource->writeTaskName = taskName;
+    }
+}
 
-    AddToTail(&gEventSources, newSource);
-    FD_SET(fd, &gEventFDs);
+mDNSlocal void requestReadEvents(PosixEventSource *eventSource,
+                                    const char *taskName, mDNSPosixEventCallback callback, void *context)
+{
+    requestIOEvents(eventSource, taskName, callback, context, PosixEventFlag_Read);
+}
 
-    DetermineMaxEventFD();
-
-    return mStatus_NoError;
+mDNSlocal void requestWriteEvents(PosixEventSource *eventSource,
+                                     const char *taskName, mDNSPosixEventCallback callback, void *context)
+{
+    requestIOEvents(eventSource, taskName, callback, context, PosixEventFlag_Write);
 }
 
 // Remove a file descriptor from the set that mDNSPosixRunEventLoopOnce() listens to.
-mStatus mDNSPosixRemoveFDFromEventLoop(int fd)
+mDNSlocal mStatus stopReadOrWriteEvents(int fd, mDNSBool freeContext, mDNSBool removeContext, int flags)
 {
-    PosixEventSource    *iSource;
+    PosixEventSource *iSource, **epp = &gEventSources;
 
-    for (iSource=(PosixEventSource*)gEventSources.Head; iSource; iSource = iSource->Next)
+    while (*epp)
     {
+        iSource = *epp;
         if (fd == iSource->fd)
         {
-            FD_CLR(fd, &gEventFDs);
-            RemoveFromList(&gEventSources, iSource);
-            free(iSource);
-            DetermineMaxEventFD();
+            if (flags & PosixEventFlag_Read)
+            {
+                iSource->readCallback = NULL;
+                iSource->readContext = NULL;
+            }
+            if (flags & PosixEventFlag_Write)
+            {
+                iSource->writeCallback = NULL;
+                iSource->writeContext = NULL;
+            }
+            if (iSource->writeCallback == NULL && iSource->readCallback == NULL)
+            {
+                if (removeContext || freeContext)
+                    *epp = iSource->next;
+                if (freeContext)
+                    mdns_free(iSource);
+            }
             return mStatus_NoError;
         }
+        epp = &(*epp)->next;
     }
     return mStatus_NoSuchNameErr;
+}
+
+// Some of the mDNSPosix client code relies on being able to add FDs to the event loop without
+// providing storage for the event-related info.   mDNSPosixAddFDToEventLoop and
+// mDNSPosixRemoveFDFromEventLoop handle the event structure storage automatically.
+mStatus mDNSPosixAddFDToEventLoop(int fd, mDNSPosixEventCallback callback, void *context)
+{
+    PosixEventSource *newSource;
+
+    newSource = (PosixEventSource*) mdns_malloc(sizeof *newSource);
+    if (NULL == newSource)
+        return mStatus_NoMemoryErr;
+    memset(newSource, 0, sizeof *newSource);
+    newSource->fd = fd;
+
+    requestReadEvents(newSource, "mDNSPosixAddFDToEventLoop", callback, context);
+    return mStatus_NoError;
+}
+
+mStatus mDNSPosixRemoveFDFromEventLoop(int fd)
+{
+    return stopReadOrWriteEvents(fd, mDNStrue, mDNStrue, PosixEventFlag_Read | PosixEventFlag_Write);
 }
 
 // Simply note the received signal in gEventSignals.
@@ -1878,33 +2519,39 @@ mStatus mDNSPosixIgnoreSignalInEventLoop(int signum)
 mStatus mDNSPosixRunEventLoopOnce(mDNS *m, const struct timeval *pTimeout,
                                   sigset_t *pSignalsReceived, mDNSBool *pDataDispatched)
 {
-    fd_set listenFDs = gEventFDs;
-    int fdMax = 0, numReady;
+    fd_set listenFDs;
+    fd_set writeFDs;
+    int numFDs = 0, numReady;
     struct timeval timeout = *pTimeout;
 
+    // 1. Set up the fd_set as usual here.
+    // This example client has no file descriptors of its own,
+    // but a real application would call FD_SET to add them to the set here
+    FD_ZERO(&listenFDs);
+    FD_ZERO(&writeFDs);
+
+    // 2. Set up the timeout.
+    // MainLoop has already called mDNS_Execute and udsserver_idle, so the timeout we
+    // were passed is already set up.
+
     // Include the sockets that are listening to the wire in our select() set
-    mDNSPosixGetFDSet(m, &fdMax, &listenFDs, &timeout); // timeout may get modified
-    if (fdMax < gMaxFD)
-        fdMax = gMaxFD;
+    mDNSPosixGetFDSetForSelect(m, &numFDs, &listenFDs, &writeFDs);
+    numReady = select(numFDs, &listenFDs, &writeFDs, (fd_set*) NULL, &timeout);
 
-    numReady = select(fdMax + 1, &listenFDs, (fd_set*) NULL, (fd_set*) NULL, &timeout);
-
-    // If any data appeared, invoke its callback
     if (numReady > 0)
     {
-        PosixEventSource    *iSource;
-
-        (void) mDNSPosixProcessFDSet(m, &listenFDs);    // call this first to process wire data for clients
-
-        for (iSource=(PosixEventSource*)gEventSources.Head; iSource; iSource = iSource->Next)
-        {
-            if (FD_ISSET(iSource->fd, &listenFDs))
-            {
-                iSource->Callback(iSource->fd, 0, iSource->Context);
-                break;  // in case callback removed elements from gEventSources
-            }
-        }
+        mDNSPosixProcessFDSet(m, &listenFDs, &writeFDs);
         *pDataDispatched = mDNStrue;
+    }
+    else if (numReady < 0)
+    {
+	if (errno != EINTR) {
+            // This should never happen, represents a coding error, and is not recoverable, since
+            // we'll just sit here spinning and never receive another event.   The usual reason for
+            // it to happen is that an FD was closed but not removed from the event list.
+            LogMsg("select failed: %s", strerror(errno));
+            abort();
+        }
     }
     else
         *pDataDispatched = mDNSfalse;

@@ -1,4 +1,5 @@
-# $NetBSD: md.cats,v 1.72.2.1 2024/07/01 00:59:49 perseant Exp $
+# $NetBSD: md.cats,v 1.72.2.2 2025/08/02 05:20:38 perseant Exp $
+#
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg

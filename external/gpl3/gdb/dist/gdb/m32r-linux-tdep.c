@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux m32r.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "gdbcore.h"
 #include "frame.h"
 #include "value.h"
@@ -85,7 +85,7 @@ static const gdb_byte linux_sigtramp_code[] = {
    the routine.  Otherwise, return 0.  */
 
 static CORE_ADDR
-m32r_linux_sigtramp_start (CORE_ADDR pc, frame_info_ptr this_frame)
+m32r_linux_sigtramp_start (CORE_ADDR pc, const frame_info_ptr &this_frame)
 {
   gdb_byte buf[4];
 
@@ -133,7 +133,7 @@ static const gdb_byte linux_rt_sigtramp_code[] = {
    of the routine.  Otherwise, return 0.  */
 
 static CORE_ADDR
-m32r_linux_rt_sigtramp_start (CORE_ADDR pc, frame_info_ptr this_frame)
+m32r_linux_rt_sigtramp_start (CORE_ADDR pc, const frame_info_ptr &this_frame)
 {
   gdb_byte buf[4];
 
@@ -173,7 +173,7 @@ m32r_linux_rt_sigtramp_start (CORE_ADDR pc, frame_info_ptr this_frame)
 
 static int
 m32r_linux_pc_in_sigtramp (CORE_ADDR pc, const char *name,
-			   frame_info_ptr this_frame)
+			   const frame_info_ptr &this_frame)
 {
   /* If we have NAME, we can optimize the search.  The trampolines are
      named __restore and __restore_rt.  However, they aren't dynamically
@@ -223,7 +223,7 @@ struct m32r_frame_cache
 };
 
 static struct m32r_frame_cache *
-m32r_linux_sigtramp_frame_cache (frame_info_ptr this_frame,
+m32r_linux_sigtramp_frame_cache (const frame_info_ptr &this_frame,
 				 void **this_cache)
 {
   struct m32r_frame_cache *cache;
@@ -266,7 +266,7 @@ m32r_linux_sigtramp_frame_cache (frame_info_ptr this_frame,
 }
 
 static void
-m32r_linux_sigtramp_frame_this_id (frame_info_ptr this_frame,
+m32r_linux_sigtramp_frame_this_id (const frame_info_ptr &this_frame,
 				   void **this_cache,
 				   struct frame_id *this_id)
 {
@@ -277,7 +277,7 @@ m32r_linux_sigtramp_frame_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-m32r_linux_sigtramp_frame_prev_register (frame_info_ptr this_frame,
+m32r_linux_sigtramp_frame_prev_register (const frame_info_ptr &this_frame,
 					 void **this_cache, int regnum)
 {
   struct m32r_frame_cache *cache =
@@ -288,7 +288,7 @@ m32r_linux_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 
 static int
 m32r_linux_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				   frame_info_ptr this_frame,
+				   const frame_info_ptr &this_frame,
 				   void **this_cache)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);

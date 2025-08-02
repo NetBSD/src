@@ -1,4 +1,5 @@
-# $NetBSD: md.mipsco,v 1.25 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.mipsco,v 1.25.14.1 2025/08/02 05:20:29 perseant Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mipsco				comp-c-include
 ./usr/include/mipsco/_G_config.h		comp-obsolete		obsolete
@@ -34,6 +35,7 @@
 ./usr/include/mipsco/limits.h			comp-c-include
 ./usr/include/mipsco/lock.h			comp-c-include
 ./usr/include/mipsco/locore.h			comp-c-include
+./usr/include/mipsco/lwp_private.h		comp-c-include
 ./usr/include/mipsco/mainboard.h		comp-c-include
 ./usr/include/mipsco/math.h			comp-c-include
 ./usr/include/mipsco/mcontext.h			comp-c-include

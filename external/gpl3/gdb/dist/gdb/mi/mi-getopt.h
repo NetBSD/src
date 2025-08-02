@@ -1,5 +1,5 @@
 /* MI Option Parser.
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -50,11 +50,13 @@ struct mi_opt
    ``error("%s: Unknown option %c", prefix, option)'' while
    mi_getopt_allow_unknown returns -1.  */
 
-extern int mi_getopt (const char *prefix, int argc, char **argv,
-		      const struct mi_opt *opt, int *optind, char **optarg);
+extern int mi_getopt (const char *prefix, int argc, const char *const *argv,
+		      const struct mi_opt *opt, int *optind,
+		      const char **optarg);
 extern int mi_getopt_allow_unknown (const char *prefix, int argc,
-				    char **argv, const struct mi_opt *opts,
-				    int *oind, char **oarg);
+				    const char *const *argv,
+				    const struct mi_opt *opts,
+				    int *oind, const char **oarg);
 
 /* mi_valid_noargs determines if ARGC/ARGV are a valid set of
    parameters to satisfy an MI function that is not supposed to
@@ -73,6 +75,7 @@ extern int mi_getopt_allow_unknown (const char *prefix, int argc,
    for an MI function that takes no arguments. Otherwise, it returns 0
    and the appropriate error message is displayed by mi_getopt.  */
 
-extern int mi_valid_noargs (const char *prefix, int argc, char **argv);
+extern int mi_valid_noargs (const char *prefix, int argc,
+			    const char *const *argv);
 
 #endif /* MI_MI_GETOPT_H */

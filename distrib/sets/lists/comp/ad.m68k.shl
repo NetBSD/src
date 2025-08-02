@@ -1,2 +1,3 @@
-# $NetBSD: ad.m68k.shl,v 1.10 2014/01/02 12:54:36 tho Exp $
+# $NetBSD: ad.m68k.shl,v 1.10.40.1 2025/08/02 05:20:27 perseant Exp $
+#
 ./usr/lib/libm68k_pic.a				comp-c-piclib	picinstall

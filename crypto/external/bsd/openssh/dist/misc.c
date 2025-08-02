@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.36 2024/06/25 16:36:54 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.190 2024/03/04 02:16:11 djm Exp $ */
+/*	$NetBSD: misc.c,v 1.36.2.1 2025/08/02 05:18:46 perseant Exp $	*/
+/* $OpenBSD: misc.c,v 1.198 2024/10/24 03:14:37 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -20,7 +20,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.36 2024/06/25 16:36:54 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.36.2.1 2025/08/02 05:18:46 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -90,6 +90,27 @@ rtrim(char *s)
 		if (isspace((unsigned char)s[i]))
 			s[i] = '\0';
 	}
+}
+
+/*
+ * returns pointer to character after 'prefix' in 's' or otherwise NULL
+ * if the prefix is not present.
+ */
+const char *
+strprefix(const char *s, const char *prefix, int ignorecase)
+{
+	size_t prefixlen;
+
+	if ((prefixlen = strlen(prefix)) == 0)
+		return s;
+	if (ignorecase) {
+		if (strncasecmp(s, prefix, prefixlen) != 0)
+			return NULL;
+	} else {
+		if (strncmp(s, prefix, prefixlen) != 0)
+			return NULL;
+	}
+	return s + prefixlen;
 }
 
 /* set/unset filedescriptor to non-blocking */
@@ -524,6 +545,14 @@ a2tun(const char *s, int *remote)
 #define DAYS		(HOURS * 24)
 #define WEEKS		(DAYS * 7)
 
+static char *
+scandigits(char *s)
+{
+	while (isdigit((unsigned char)*s))
+		s++;
+	return s;
+}
+
 /*
  * Convert a time string into seconds; format is
  * a sequence of:
@@ -548,28 +577,31 @@ a2tun(const char *s, int *remote)
 int
 convtime(const char *s)
 {
-	long total, secs, multiplier;
-	const char *p;
-	char *endp;
+	int secs, total = 0, multiplier;
+	char *p, *os, *np, c = 0;
+	const char *errstr;
 
-	errno = 0;
-	total = 0;
-	p = s;
-
-	if (p == NULL || *p == '\0')
+	if (s == NULL || *s == '\0')
+		return -1;
+	p = os = strdup(s);	/* deal with const */
+	if (os == NULL)
 		return -1;
 
 	while (*p) {
-		secs = strtol(p, &endp, 10);
-		if (p == endp ||
-		    (errno == ERANGE && (secs == INT_MIN || secs == INT_MAX)) ||
-		    secs < 0)
-			return -1;
+		np = scandigits(p);
+		if (np) {
+			c = *np;
+			*np = '\0';
+		}
+		secs = (int)strtonum(p, 0, INT_MAX, &errstr);
+		if (errstr)
+			goto fail;
+		*np = c;
 
 		multiplier = 1;
-		switch (*endp++) {
+		switch (c) {
 		case '\0':
-			endp--;
+			np--;	/* back up */
 			break;
 		case 's':
 		case 'S':
@@ -591,20 +623,23 @@ convtime(const char *s)
 			multiplier = WEEKS;
 			break;
 		default:
-			return -1;
+			goto fail;
 		}
 		if (secs > INT_MAX / multiplier)
-			return -1;
+			goto fail;
 		secs *= multiplier;
 		if  (total > INT_MAX - secs)
-			return -1;
+			goto fail;
 		total += secs;
 		if (total < 0)
-			return -1;
-		p = endp;
+			goto fail;
+		p = ++np;
 	}
-
+	free(os);
 	return total;
+fail:
+	free(os);
+	return -1;
 }
 
 #define TF_BUFS	8
@@ -1806,9 +1841,9 @@ static const struct {
 int
 parse_ipqos(const char *cp)
 {
+	const char *errstr;
 	u_int i;
-	char *ep;
-	long val;
+	int val;
 
 	if (cp == NULL)
 		return -1;
@@ -1817,8 +1852,8 @@ parse_ipqos(const char *cp)
 			return ipqos[i].value;
 	}
 	/* Try parsing as an integer */
-	val = strtol(cp, &ep, 0);
-	if (*cp == '\0' || *ep != '\0' || val < 0 || val > 255)
+	val = (int)strtonum(cp, 0, 255, &errstr);
+	if (errstr)
 		return -1;
 	return val;
 }
@@ -1923,6 +1958,19 @@ forward_equals(const struct Forward *a, const struct Forward *b)
 		return 0;
 	/* allocated_port and handle are not checked */
 	return 1;
+}
+
+/* returns port number, FWD_PERMIT_ANY_PORT or -1 on error */
+int
+permitopen_port(const char *p)
+{
+	int port;
+
+	if (strcmp(p, "*") == 0)
+		return FWD_PERMIT_ANY_PORT;
+	if ((port = a2port(p)) > 0)
+		return port;
+	return -1;
 }
 
 /* returns 1 if process is already daemonized, 0 otherwise */
@@ -2281,7 +2329,8 @@ valid_domain(char *name, int makelower, const char **errstr)
 		strlcpy(errbuf, "empty domain name", sizeof(errbuf));
 		goto bad;
 	}
-	if (!isalpha((u_char)name[0]) && !isdigit((u_char)name[0])) {
+	if (!isalpha((u_char)name[0]) && !isdigit((u_char)name[0]) &&
+	   name[0] != '_' /* technically invalid, but common */) {
 		snprintf(errbuf, sizeof(errbuf), "domain name \"%.100s\" "
 		    "starts with invalid character", name);
 		goto bad;
@@ -2337,13 +2386,10 @@ const char *
 atoi_err(const char *nptr, int *val)
 {
 	const char *errstr = NULL;
-	long long num;
 
 	if (nptr == NULL || *nptr == '\0')
 		return "missing";
-	num = strtonum(nptr, 0, INT_MAX, &errstr);
-	if (errstr == NULL)
-		*val = (int)num;
+	*val = strtonum(nptr, 0, INT_MAX, &errstr);
 	return errstr;
 }
 
@@ -2958,4 +3004,20 @@ lib_contains_symbol(const char *path, const char *s)
  out:
 	free(name);
 	return ret;
+}
+
+int
+signal_is_crash(int sig)
+{
+	switch (sig) {
+	case SIGSEGV:
+	case SIGBUS:
+	case SIGTRAP:
+	case SIGSYS:
+	case SIGFPE:
+	case SIGILL:
+	case SIGABRT:
+		return 1;
+	}
+	return 0;
 }

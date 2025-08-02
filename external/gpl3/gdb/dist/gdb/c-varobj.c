@@ -1,6 +1,6 @@
 /* varobj support for C and C++.
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +15,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "value.h"
 #include "varobj.h"
 #include "gdbthread.h"
@@ -192,7 +191,7 @@ c_number_of_children (const struct varobj *var)
     {
     case TYPE_CODE_ARRAY:
       if (type->length () > 0 && target->length () > 0
-	  && (type->bounds ()->high.kind () != PROP_UNDEFINED))
+	  && type->bounds ()->high.is_available ())
 	children = type->length () / target->length ();
       else
 	/* If we don't know how many elements there are, don't display
@@ -245,7 +244,7 @@ static struct value *
 value_struct_element_index (struct value *value, int type_index)
 {
   struct value *result = NULL;
-  struct type *type = value_type (value);
+  struct type *type = value->type ();
 
   type = check_typedef (type);
 
@@ -254,10 +253,10 @@ value_struct_element_index (struct value *value, int type_index)
 
   try
     {
-      if (field_is_static (&type->field (type_index)))
+      if (type->field (type_index).is_static ())
 	result = value_static_field (type, type_index);
       else
-	result = value_primitive_field (value, 0, type_index, type);
+	result = value->primitive_field (0, type_index, type);
     }
   catch (const gdb_exception_error &e)
     {
@@ -506,14 +505,14 @@ c_value_of_variable (const struct varobj *var,
 	  }
 	else
 	  {
-	    if (var->not_fetched && value_lazy (var->value.get ()))
+	    if (var->not_fetched && var->value->lazy ())
 	      /* Frozen variable and no value yet.  We don't
 		 implicitly fetch the value.  MI response will
 		 use empty string for the value, which is OK.  */
 	      return std::string ();
 
 	    gdb_assert (varobj_value_is_changeable_p (var));
-	    gdb_assert (!value_lazy (var->value.get ()));
+	    gdb_assert (!var->value->lazy ());
 	    
 	    /* If the specified format is the current one,
 	       we can reuse print_value.  */
@@ -647,16 +646,18 @@ cplus_class_num_children (struct type *type, int children[3])
   vptr_fieldno = get_vptr_fieldno (type, &basetype);
   for (i = TYPE_N_BASECLASSES (type); i < type->num_fields (); i++)
     {
+      field &fld = type->field (i);
+
       /* If we have a virtual table pointer, omit it.  Even if virtual
 	 table pointers are not specifically marked in the debug info,
 	 they should be artificial.  */
       if ((type == basetype && i == vptr_fieldno)
-	  || TYPE_FIELD_ARTIFICIAL (type, i))
+	  || fld.is_artificial ())
 	continue;
 
-      if (TYPE_FIELD_PROTECTED (type, i))
+      if (fld.is_protected ())
 	children[v_protected]++;
-      else if (TYPE_FIELD_PRIVATE (type, i))
+      else if (fld.is_private ())
 	children[v_private]++;
       else
 	children[v_public]++;
@@ -667,25 +668,6 @@ static std::string
 cplus_name_of_variable (const struct varobj *parent)
 {
   return c_name_of_variable (parent);
-}
-
-enum accessibility { private_field, protected_field, public_field };
-
-/* Check if field INDEX of TYPE has the specified accessibility.
-   Return 0 if so and 1 otherwise.  */
-
-static int 
-match_accessibility (struct type *type, int index, enum accessibility acc)
-{
-  if (acc == private_field && TYPE_FIELD_PRIVATE (type, index))
-    return 1;
-  else if (acc == protected_field && TYPE_FIELD_PROTECTED (type, index))
-    return 1;
-  else if (acc == public_field && !TYPE_FIELD_PRIVATE (type, index)
-	   && !TYPE_FIELD_PROTECTED (type, index))
-    return 1;
-  else
-    return 0;
 }
 
 static void
@@ -737,25 +719,25 @@ cplus_describe_child (const struct varobj *parent, int index,
 	     have the access control we are looking for to properly
 	     find the indexed field.  */
 	  int type_index = TYPE_N_BASECLASSES (type);
-	  enum accessibility acc = public_field;
+	  enum accessibility acc = accessibility::PUBLIC;
 	  int vptr_fieldno;
 	  struct type *basetype = NULL;
 	  const char *field_name;
 
 	  vptr_fieldno = get_vptr_fieldno (type, &basetype);
 	  if (parent->name == "private")
-	    acc = private_field;
+	    acc = accessibility::PRIVATE;
 	  else if (parent->name == "protected")
-	    acc = protected_field;
+	    acc = accessibility::PROTECTED;
 
 	  while (index >= 0)
 	    {
 	      if ((type == basetype && type_index == vptr_fieldno)
-		  || TYPE_FIELD_ARTIFICIAL (type, type_index))
+		  || type->field (type_index).is_artificial ())
 		; /* ignore vptr */
-	      else if (match_accessibility (type, type_index, acc))
-		    --index;
-		  ++type_index;
+	      else if (type->field (type_index).accessibility () == acc)
+		--index;
+	      ++type_index;
 	    }
 	  --type_index;
 
@@ -815,7 +797,7 @@ cplus_describe_child (const struct varobj *parent, int index,
 	      /* Cast the parent to the base' type.  Note that in gdb,
 		 expression like 
 			 (Base1)d
-		 will create an lvalue, for all appearences, so we don't
+		 will create an lvalue, for all appearances, so we don't
 		 need to use more fancy:
 			 *(Base1*)(&d)
 		 construct.

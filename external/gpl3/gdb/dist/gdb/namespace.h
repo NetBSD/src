@@ -1,5 +1,5 @@
 /* Code dealing with "using" directives for GDB.
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,8 @@
    string representing the alias.  Otherwise, ALIAS is NULL.
    DECLARATION is the name of the imported declaration, if this import
    statement represents one.  Otherwise DECLARATION is NULL and this
-   import statement represents a namespace.
+   import statement represents a namespace.  DECL_LINE is the line
+   where the using directive is written in the source code.
 
    C++:      using namespace A;
    Fortran:  use A
@@ -96,6 +97,11 @@ struct using_direct
 
   struct using_direct *next;
 
+  /* The line where the using directive was declared on the source file.
+     This is used to check if the using directive is already active at the
+     point where the inferior is stopped.  */
+  unsigned int decl_line;
+
   /* Used during import search to temporarily mark this node as
      searched.  */
   int searched;
@@ -103,6 +109,13 @@ struct using_direct
   /* USING_DIRECT has variable allocation size according to the number of
      EXCLUDES entries, the last entry is NULL.  */
   const char *excludes[1];
+
+  /* Returns true if the using_directive USING_DIR is valid in CURR_LINE.
+     Because current GCC (at least version 12.2) sets the decl_line as
+     the last line in the current block, we need to take this into
+     consideration when checking the validity, by comparing it to
+     BOUNDARY, the last line of the current block.  */
+  bool valid_line (unsigned int boundary) const;
 };
 
 extern void add_using_directive (struct using_direct **using_directives,
@@ -111,7 +124,7 @@ extern void add_using_directive (struct using_direct **using_directives,
 				 const char *alias,
 				 const char *declaration,
 				 const std::vector<const char *> &excludes,
-				 int copy_names,
+				 const unsigned int decl_line,
 				 struct obstack *obstack);
 
 #endif /* NAMESPACE_H */

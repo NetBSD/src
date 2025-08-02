@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_dictionary.c,v 1.46 2023/06/14 00:35:18 rin Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.46.6.1 2025/08/02 05:18:34 perseant Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2020, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -101,6 +101,24 @@ _PROP_POOL_INIT(_prop_dictionary_pool, sizeof(struct _prop_dictionary),
 _PROP_MALLOC_DEFINE(M_PROP_DICT, "prop dictionary",
 		    "property dictionary container object")
 
+static const struct _prop_object_type_tags _prop_dictionary_type_tags = {
+	.xml_tag		=	"dict",
+	.json_open_tag		=	"{",
+	.json_close_tag		=	"}",
+	.json_empty_sep		=	" ",
+};
+
+static const struct _prop_object_type_tags _prop_dict_key_type_tags = {
+	.xml_tag		=	"key",
+	.json_open_tag		=	"\"",
+	.json_close_tag		=	"\"",
+};
+
+struct _prop_dictionary_iterator {
+	struct _prop_object_iterator pdi_base;
+	unsigned int		pdi_index;
+};
+
 static _prop_object_free_rv_t
 		_prop_dictionary_free(prop_stack_t, prop_object_t *);
 static void	_prop_dictionary_emergency_free(prop_object_t);
@@ -112,7 +130,7 @@ static _prop_object_equals_rv_t
 				        void **, void **,
 					prop_object_t *, prop_object_t *);
 static void	_prop_dictionary_equals_finish(prop_object_t, prop_object_t);
-static prop_object_iterator_t
+static struct _prop_dictionary_iterator *
 		_prop_dictionary_iterator_locked(prop_dictionary_t);
 static prop_object_t
 		_prop_dictionary_iterator_next_object_locked(void *);
@@ -160,11 +178,6 @@ static const struct _prop_object_type _prop_object_type_dict_keysym = {
 
 #define	prop_dictionary_is_immutable(x)		\
 				(((x)->pd_flags & PD_F_IMMUTABLE) != 0)
-
-struct _prop_dictionary_iterator {
-	struct _prop_object_iterator pdi_base;
-	unsigned int		pdi_index;
-};
 
 /*
  * Dictionary key symbols are immutable, and we are likely to have many
@@ -252,13 +265,8 @@ _prop_dict_keysym_externalize(struct _prop_object_externalize_context *ctx,
 
 	_PROP_ASSERT(pdk->pdk_key[0] != '\0');
 
-	if (_prop_object_externalize_start_tag(ctx, "string") == false ||
-	    _prop_object_externalize_append_encoded_cstring(ctx,
-						pdk->pdk_key) == false ||
-	    _prop_object_externalize_end_tag(ctx, "string") == false)
-		return (false);
-
-	return (true);
+	return _prop_string_externalize_internal(ctx, &_prop_dict_key_type_tags,
+	    pdk->pdk_key);
 }
 
 /* ARGSUSED */
@@ -424,57 +432,94 @@ _prop_dictionary_emergency_free(prop_object_t obj)
 }
 
 static bool
+_prop_dictionary_externalize_one(struct _prop_object_externalize_context *ctx,
+    prop_dictionary_keysym_t pdk, struct _prop_object *po)
+{
+	if (po == NULL) {
+		return false;
+	}
+
+	if (_prop_string_externalize_internal(ctx,
+					&_prop_dict_key_type_tags,
+					pdk->pdk_key) == false) {
+		return false;
+	}
+
+	switch (ctx->poec_format) {
+	case PROP_FORMAT_JSON:
+		if (_prop_extern_append_cstring(ctx, ": ") == false) {
+			return false;
+		}
+		break;
+	
+	default:		/* XML */
+		if (_prop_extern_end_line(ctx, NULL) == false ||
+		    _prop_extern_start_line(ctx) == false) {
+			return false;
+		}
+		break;
+	}
+
+	return (*po->po_type->pot_extern)(ctx, po);
+}
+
+static bool
 _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 			     void *v)
 {
 	prop_dictionary_t pd = v;
 	prop_dictionary_keysym_t pdk;
 	struct _prop_object *po;
-	prop_object_iterator_t pi;
-	unsigned int i;
+	struct _prop_dictionary_iterator *pdi;
 	bool rv = false;
+	const char * const sep =
+	    ctx->poec_format == PROP_FORMAT_JSON ? "," : NULL;
+
+	_PROP_ASSERT(ctx->poec_format == PROP_FORMAT_XML ||
+		     ctx->poec_format == PROP_FORMAT_JSON);
 
 	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
 
 	if (pd->pd_count == 0) {
 		_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
-		return (_prop_object_externalize_empty_tag(ctx, "dict"));
+		return (_prop_extern_append_empty_tag(ctx,
+					&_prop_dictionary_type_tags));
 	}
 
-	if (_prop_object_externalize_start_tag(ctx, "dict") == false ||
-	    _prop_object_externalize_append_char(ctx, '\n') == false)
+	if (_prop_extern_append_start_tag(ctx,
+			&_prop_dictionary_type_tags, NULL) == false ||
+	    _prop_extern_end_line(ctx, NULL) == false)
 		goto out;
 
-	pi = _prop_dictionary_iterator_locked(pd);
-	if (pi == NULL)
+	pdi = _prop_dictionary_iterator_locked(pd);
+	if (pdi == NULL)
 		goto out;
 
 	ctx->poec_depth++;
 	_PROP_ASSERT(ctx->poec_depth != 0);
 
-	while ((pdk = _prop_dictionary_iterator_next_object_locked(pi))
+	while ((pdk = _prop_dictionary_iterator_next_object_locked(pdi))
 	    != NULL) {
 		po = _prop_dictionary_get_keysym(pd, pdk, true);
-		if (po == NULL ||
-		    _prop_object_externalize_start_tag(ctx, "key") == false ||
-		    _prop_object_externalize_append_encoded_cstring(ctx,
-						   pdk->pdk_key) == false ||
-		    _prop_object_externalize_end_tag(ctx, "key") == false ||
-		    (*po->po_type->pot_extern)(ctx, po) == false) {
-			prop_object_iterator_release(pi);
+		if (_prop_extern_start_line(ctx) == false ||
+		    _prop_dictionary_externalize_one(ctx, pdk, po) == false ||
+		    _prop_extern_end_line(ctx,
+				pdi->pdi_index < pd->pd_count ?
+						sep : NULL) == false) {
+			prop_object_iterator_release(&pdi->pdi_base);
 			goto out;
 		}
 	}
 
-	prop_object_iterator_release(pi);
+	prop_object_iterator_release(&pdi->pdi_base);
 
 	ctx->poec_depth--;
-	for (i = 0; i < ctx->poec_depth; i++) {
-		if (_prop_object_externalize_append_char(ctx, '\t') == false)
-			goto out;
-	}
-	if (_prop_object_externalize_end_tag(ctx, "dict") == false)
+	if (_prop_extern_start_line(ctx) == false ||
+	    _prop_extern_append_end_tag(ctx,
+				&_prop_dictionary_type_tags) == false) {
+
 		goto out;
+	}
 
 	rv = true;
 
@@ -667,7 +712,7 @@ _prop_dictionary_iterator_reset(void *v)
  * prop_dictionary_create --
  *	Create a dictionary.
  */
-prop_dictionary_t
+_PROP_EXPORT prop_dictionary_t
 prop_dictionary_create(void)
 {
 
@@ -678,7 +723,7 @@ prop_dictionary_create(void)
  * prop_dictionary_create_with_capacity --
  *	Create a dictionary with the capacity to store N objects.
  */
-prop_dictionary_t
+_PROP_EXPORT prop_dictionary_t
 prop_dictionary_create_with_capacity(unsigned int capacity)
 {
 
@@ -692,7 +737,7 @@ prop_dictionary_create_with_capacity(unsigned int capacity)
  *	dictionary contains references to the original dictionary's objects,
  *	not copies of those objects (i.e. a shallow copy).
  */
-prop_dictionary_t
+_PROP_EXPORT prop_dictionary_t
 prop_dictionary_copy(prop_dictionary_t opd)
 {
 	prop_dictionary_t pd;
@@ -729,7 +774,7 @@ prop_dictionary_copy(prop_dictionary_t opd)
  *	Like prop_dictionary_copy(), but the resulting dictionary is
  *	mutable.
  */
-prop_dictionary_t
+_PROP_EXPORT prop_dictionary_t
 prop_dictionary_copy_mutable(prop_dictionary_t opd)
 {
 	prop_dictionary_t pd;
@@ -748,7 +793,7 @@ prop_dictionary_copy_mutable(prop_dictionary_t opd)
  * prop_dictionary_make_immutable --
  *	Set the immutable flag on that dictionary.
  */
-void
+_PROP_EXPORT void
 prop_dictionary_make_immutable(prop_dictionary_t pd)
 {
 
@@ -762,7 +807,7 @@ prop_dictionary_make_immutable(prop_dictionary_t pd)
  * prop_dictionary_count --
  *	Return the number of objects stored in the dictionary.
  */
-unsigned int
+_PROP_EXPORT unsigned int
 prop_dictionary_count(prop_dictionary_t pd)
 {
 	unsigned int rv;
@@ -783,7 +828,7 @@ prop_dictionary_count(prop_dictionary_t pd)
  *	total number of objects (including the objects already stored in
  *	the dictionary).
  */
-bool
+_PROP_EXPORT bool
 prop_dictionary_ensure_capacity(prop_dictionary_t pd, unsigned int capacity)
 {
 	bool rv;
@@ -800,7 +845,7 @@ prop_dictionary_ensure_capacity(prop_dictionary_t pd, unsigned int capacity)
 	return (rv);
 }
 
-static prop_object_iterator_t
+static struct _prop_dictionary_iterator *
 _prop_dictionary_iterator_locked(prop_dictionary_t pd)
 {
 	struct _prop_dictionary_iterator *pdi;
@@ -817,7 +862,7 @@ _prop_dictionary_iterator_locked(prop_dictionary_t pd)
 	pdi->pdi_base.pi_obj = pd;
 	_prop_dictionary_iterator_reset_locked(pdi);
 
-	return (&pdi->pdi_base);
+	return pdi;
 }
 
 /*
@@ -825,15 +870,15 @@ _prop_dictionary_iterator_locked(prop_dictionary_t pd)
  *	Return an iterator for the dictionary.  The dictionary is retained by
  *	the iterator.
  */
-prop_object_iterator_t
+_PROP_EXPORT prop_object_iterator_t
 prop_dictionary_iterator(prop_dictionary_t pd)
 {
-	prop_object_iterator_t pi;
+	struct _prop_dictionary_iterator *pdi;
 
 	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
-	pi = _prop_dictionary_iterator_locked(pd);
+	pdi = _prop_dictionary_iterator_locked(pd);
 	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
-	return (pi);
+	return &pdi->pdi_base;
 }
 
 /*
@@ -841,7 +886,7 @@ prop_dictionary_iterator(prop_dictionary_t pd)
  *	Return an array containing a snapshot of all of the keys
  *	in the dictionary.
  */
-prop_array_t
+_PROP_EXPORT prop_array_t
 prop_dictionary_all_keys(prop_dictionary_t pd)
 {
 	prop_array_t array;
@@ -932,7 +977,7 @@ _prop_dictionary_get(prop_dictionary_t pd, const char *key, bool locked)
  * prop_dictionary_get --
  *	Return the object stored with specified key.
  */
-prop_object_t
+_PROP_EXPORT prop_object_t
 prop_dictionary_get(prop_dictionary_t pd, const char *key)
 {
 	prop_object_t po = NULL;
@@ -962,7 +1007,7 @@ _prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk,
  * prop_dictionary_get_keysym --
  *	Return the object stored at the location encoded by the keysym.
  */
-prop_object_t
+_PROP_EXPORT prop_object_t
 prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk)
 {
 
@@ -974,7 +1019,7 @@ prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk)
  *	Store a reference to an object at with the specified key.
  *	If the key already exist, the original object is released.
  */
-bool
+_PROP_EXPORT bool
 prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
 {
 	struct _prop_dict_entry *pde;
@@ -1070,7 +1115,7 @@ prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
  *	Replace the object in the dictionary at the location encoded by
  *	the keysym.
  */
-bool
+_PROP_EXPORT bool
 prop_dictionary_set_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk,
 			   prop_object_t po)
 {
@@ -1114,7 +1159,7 @@ _prop_dictionary_remove(prop_dictionary_t pd, struct _prop_dict_entry *pde,
  *	Remove the reference to an object with the specified key from
  *	the dictionary.
  */
-void
+_PROP_EXPORT void
 prop_dictionary_remove(prop_dictionary_t pd, const char *key)
 {
 	struct _prop_dict_entry *pde;
@@ -1144,7 +1189,7 @@ prop_dictionary_remove(prop_dictionary_t pd, const char *key)
  *	Remove a reference to an object stored in the dictionary at the
  *	location encoded by the keysym.
  */
-void
+_PROP_EXPORT void
 prop_dictionary_remove_keysym(prop_dictionary_t pd,
 			      prop_dictionary_keysym_t pdk)
 {
@@ -1161,7 +1206,7 @@ prop_dictionary_remove_keysym(prop_dictionary_t pd,
  *	Return true if the two dictionaries are equivalent.  Note we do a
  *	by-value comparison of the objects in the dictionary.
  */
-bool
+_PROP_EXPORT bool
 prop_dictionary_equals(prop_dictionary_t dict1, prop_dictionary_t dict2)
 {
 	if (!prop_object_is_dictionary(dict1) ||
@@ -1175,7 +1220,7 @@ prop_dictionary_equals(prop_dictionary_t dict1, prop_dictionary_t dict2)
  * prop_dictionary_keysym_value --
  *	Return a reference to the keysym's value.
  */
-const char *
+_PROP_EXPORT const char *
 prop_dictionary_keysym_value(prop_dictionary_keysym_t pdk)
 {
 
@@ -1188,7 +1233,7 @@ prop_dictionary_keysym_value(prop_dictionary_keysym_t pdk)
 _PROP_DEPRECATED(prop_dictionary_keysym_cstring_nocopy,
     "this program uses prop_dictionary_keysym_cstring_nocopy(), "
     "which is deprecated; use prop_dictionary_keysym_value() instead.")
-const char *
+_PROP_EXPORT const char *
 prop_dictionary_keysym_cstring_nocopy(prop_dictionary_keysym_t pdk)
 {
 
@@ -1203,7 +1248,7 @@ prop_dictionary_keysym_cstring_nocopy(prop_dictionary_keysym_t pdk)
  *	Return true if the two dictionary key symbols are equivalent.
  *	Note: We do not compare the object references.
  */
-bool
+_PROP_EXPORT bool
 prop_dictionary_keysym_equals(prop_dictionary_keysym_t pdk1,
 			      prop_dictionary_keysym_t pdk2)
 {
@@ -1216,33 +1261,12 @@ prop_dictionary_keysym_equals(prop_dictionary_keysym_t pdk1,
 
 /*
  * prop_dictionary_externalize --
- *	Externalize a dictionary, returning a NUL-terminated buffer
- *	containing the XML-style representation.  The buffer is allocated
- *	with the M_TEMP memory type.
+ *	Externalize a dictionary in XML format.
  */
-char *
+_PROP_EXPORT char *
 prop_dictionary_externalize(prop_dictionary_t pd)
 {
-	struct _prop_object_externalize_context *ctx;
-	char *cp;
-
-	ctx = _prop_object_externalize_context_alloc();
-	if (ctx == NULL)
-		return (NULL);
-
-	if (_prop_object_externalize_header(ctx) == false ||
-	    (*pd->pd_obj.po_type->pot_extern)(ctx, pd) == false ||
-	    _prop_object_externalize_footer(ctx) == false) {
-		/* We are responsible for releasing the buffer. */
-		_PROP_FREE(ctx->poec_buf, M_TEMP);
-		_prop_object_externalize_context_free(ctx);
-		return (NULL);
-	}
-
-	cp = ctx->poec_buf;
-	_prop_object_externalize_context_free(ctx);
-
-	return (cp);
+	return _prop_object_externalize(&pd->pd_obj, PROP_FORMAT_XML);
 }
 
 /*
@@ -1318,8 +1342,30 @@ _prop_dictionary_internalize_continue(prop_stack_t stack, prop_object_t *obj,
 
 	/*
 	 * key, value was added, now continue looking for the next key
-	 * or the closing tag.
+	 * or the closing tag.  For JSON, we'll skip the comma separator,
+	 * if present.
+	 *
+	 * By doing this here, we correctly error out if a separator
+	 * is found other than after an element, but this does mean
+	 * that we do allow a trailing comma after the final element
+	 * which isn't allowed in the JSON spec, but seems pretty
+	 * harmless (and there are other JSON parsers that also allow
+	 * it).
+	 *
+	 * Conversely, we don't want to *require* the separator if the
+	 * spec doesn't require it, and we don't know what's next in
+	 * the buffer, so we basically treat the separator as completely
+	 * optional.  Since there does not appear to be any ambiguity,
+	 * this also seems pretty harmless.
+	 *
+	 * (FWIW, RFC 8259 section 9 seems to specifically allow this.)
 	 */
+	if (ctx->poic_format == PROP_FORMAT_JSON) {
+		ctx->poic_cp = _prop_intern_skip_whitespace(ctx->poic_cp);
+		if (*ctx->poic_cp == ',') {
+			ctx->poic_cp++;
+		}
+	}
 	return _prop_dictionary_internalize_body(stack, obj, ctx, tmpkey);
 }
 
@@ -1330,39 +1376,78 @@ _prop_dictionary_internalize_body(prop_stack_t stack, prop_object_t *obj,
 	prop_dictionary_t dict = *obj;
 	size_t keylen;
 
-	/* Fetch the next tag. */
-	if (_prop_object_internalize_find_tag(ctx, NULL, _PROP_TAG_TYPE_EITHER) == false)
-		goto bad;
+	if (ctx->poic_format == PROP_FORMAT_JSON) {
+		ctx->poic_cp = _prop_intern_skip_whitespace(ctx->poic_cp);
 
-	/* Check to see if this is the end of the dictionary. */
-	if (_PROP_TAG_MATCH(ctx, "dict") &&
-	    ctx->poic_tag_type == _PROP_TAG_TYPE_END) {
-		_PROP_FREE(tmpkey, M_TEMP);
-		return (true);
+		/* Check to see if this is the end of the dictionary. */
+		if (*ctx->poic_cp == '}') {
+			/* It is, so don't iterate any further. */
+			ctx->poic_cp++;
+			return true;
+		}
+
+		/* It must be the key. */
+		if (*ctx->poic_cp != '"') {
+			goto bad;
+		}
+		ctx->poic_cp++;
+
+		/* Empty keys are not allowed. */
+		if (*ctx->poic_cp == '"') {
+			goto bad;
+		}
+	} else {
+		/* Fetch the next tag. */
+		if (_prop_xml_intern_find_tag(ctx, NULL,
+					_PROP_TAG_TYPE_EITHER) == false)
+			goto bad;
+
+		/* Check to see if this is the end of the dictionary. */
+		if (_PROP_TAG_MATCH(ctx, "dict") &&
+		    ctx->poic_tag_type == _PROP_TAG_TYPE_END) {
+			_PROP_FREE(tmpkey, M_TEMP);
+			return (true);
+		}
+
+		/* Ok, it must be a non-empty key start tag. */
+		if (!_PROP_TAG_MATCH(ctx, "key") ||
+		    ctx->poic_tag_type != _PROP_TAG_TYPE_START ||
+		    ctx->poic_is_empty_element)
+		    	goto bad;
 	}
 
-	/* Ok, it must be a non-empty key start tag. */
-	if (!_PROP_TAG_MATCH(ctx, "key") ||
-	    ctx->poic_tag_type != _PROP_TAG_TYPE_START ||
-	    ctx->poic_is_empty_element)
-	    	goto bad;
-
-	if (_prop_object_internalize_decode_string(ctx,
-					tmpkey, PDK_MAXKEY, &keylen,
-					&ctx->poic_cp) == false)
+	if (_prop_intern_decode_string(ctx, tmpkey, PDK_MAXKEY, &keylen,
+				       &ctx->poic_cp) == false)
 		goto bad;
 
 	_PROP_ASSERT(keylen <= PDK_MAXKEY);
 	tmpkey[keylen] = '\0';
 
-	if (_prop_object_internalize_find_tag(ctx, "key",
-				_PROP_TAG_TYPE_END) == false)
-		goto bad;
+	if (ctx->poic_format == PROP_FORMAT_JSON) {
+		if (*ctx->poic_cp != '"') {
+			goto bad;
+		}
+		ctx->poic_cp++;
 
-	/* ..and now the beginning of the value. */
-	if (_prop_object_internalize_find_tag(ctx, NULL,
-				_PROP_TAG_TYPE_START) == false)
-		goto bad;
+		/*
+		 * Next thing we counter needs to be the key/value
+		 * separator.
+		 */
+		ctx->poic_cp = _prop_intern_skip_whitespace(ctx->poic_cp);
+		if (*ctx->poic_cp != ':') {
+			goto bad;
+		}
+		ctx->poic_cp++;
+	} else {
+		if (_prop_xml_intern_find_tag(ctx, "key",
+					_PROP_TAG_TYPE_END) == false)
+			goto bad;
+
+		/* ..and now the beginning of the value. */
+		if (_prop_xml_intern_find_tag(ctx, NULL,
+					_PROP_TAG_TYPE_START) == false)
+			goto bad;
+	}
 
 	/*
 	 * Key is found, now wait for value to be parsed.
@@ -1381,13 +1466,12 @@ _prop_dictionary_internalize_body(prop_stack_t stack, prop_object_t *obj,
 
 /*
  * prop_dictionary_internalize --
- *	Create a dictionary by parsing the NUL-terminated XML-style
- *	representation.
+ *	Create a dictionary by parsing the external representation.
  */
-prop_dictionary_t
-prop_dictionary_internalize(const char *xml)
+_PROP_EXPORT prop_dictionary_t
+prop_dictionary_internalize(const char *data)
 {
-	return _prop_generic_internalize(xml, "dict");
+	return _prop_object_internalize(data, &_prop_dictionary_type_tags);
 }
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -1395,42 +1479,21 @@ prop_dictionary_internalize(const char *xml)
  * prop_dictionary_externalize_to_file --
  *	Externalize a dictionary to the specified file.
  */
-bool
+_PROP_EXPORT bool
 prop_dictionary_externalize_to_file(prop_dictionary_t dict, const char *fname)
 {
-	char *xml;
-	bool rv;
-	int save_errno = 0;	/* XXXGCC -Wuninitialized [mips, ...] */
-
-	xml = prop_dictionary_externalize(dict);
-	if (xml == NULL)
-		return (false);
-	rv = _prop_object_externalize_write_file(fname, xml, strlen(xml));
-	if (rv == false)
-		save_errno = errno;
-	_PROP_FREE(xml, M_TEMP);
-	if (rv == false)
-		errno = save_errno;
-
-	return (rv);
+	return _prop_object_externalize_to_file(&dict->pd_obj, fname,
+	    PROP_FORMAT_XML);
 }
 
 /*
  * prop_dictionary_internalize_from_file --
  *	Internalize a dictionary from a file.
  */
-prop_dictionary_t
+_PROP_EXPORT prop_dictionary_t
 prop_dictionary_internalize_from_file(const char *fname)
 {
-	struct _prop_object_internalize_mapped_file *mf;
-	prop_dictionary_t dict;
-
-	mf = _prop_object_internalize_map_file(fname);
-	if (mf == NULL)
-		return (NULL);
-	dict = prop_dictionary_internalize(mf->poimf_xml);
-	_prop_object_internalize_unmap_file(mf);
-
-	return (dict);
+	return _prop_object_internalize_from_file(fname,
+	    &_prop_dictionary_type_tags);
 }
 #endif /* !_KERNEL && !_STANDALONE */

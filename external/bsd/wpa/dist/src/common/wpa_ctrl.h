@@ -87,14 +87,35 @@ extern "C" {
 #define WPA_EVENT_BEACON_LOSS "CTRL-EVENT-BEACON-LOSS "
 /** Regulatory domain channel */
 #define WPA_EVENT_REGDOM_CHANGE "CTRL-EVENT-REGDOM-CHANGE "
+/** Regulatory beacon hint */
+#define WPA_EVENT_REGDOM_BEACON_HINT "CTRL-EVENT-REGDOM-BEACON-HINT "
 /** Channel switch started (followed by freq=<MHz> and other channel parameters)
  */
 #define WPA_EVENT_CHANNEL_SWITCH_STARTED "CTRL-EVENT-STARTED-CHANNEL-SWITCH "
 /** Channel switch (followed by freq=<MHz> and other channel parameters) */
 #define WPA_EVENT_CHANNEL_SWITCH "CTRL-EVENT-CHANNEL-SWITCH "
+/** MLO link channel switch started (followed by freq=<MHz> and other channel
+ * parameters)
+ */
+#define WPA_EVENT_LINK_CHANNEL_SWITCH_STARTED \
+	"CTRL-EVENT-STARTED-LINK-CHANNEL-SWITCH "
+/** MLO link channel switch (followed by freq=<MHz> and other channel
+ * parameters)
+ */
+#define WPA_EVENT_LINK_CHANNEL_SWITCH "CTRL-EVENT-LINK-CHANNEL-SWITCH "
 /** SAE authentication failed due to unknown password identifier */
 #define WPA_EVENT_SAE_UNKNOWN_PASSWORD_IDENTIFIER \
 	"CTRL-EVENT-SAE-UNKNOWN-PASSWORD-IDENTIFIER "
+/** Unprotected Beacon frame dropped */
+#define WPA_EVENT_UNPROT_BEACON "CTRL-EVENT-UNPROT-BEACON "
+/** Decision made to do a within-ESS roam */
+#define WPA_EVENT_DO_ROAM "CTRL-EVENT-DO-ROAM "
+/** Decision made to skip a within-ESS roam */
+#define WPA_EVENT_SKIP_ROAM "CTRL-EVENT-SKIP-ROAM "
+/** TID-to-link mapping response event */
+#define WPA_EVENT_T2LM_UPDATE "CTRL-EVENT-T2LM-UPDATE "
+/** MLO link reconfiguration event */
+#define WPA_EVENT_LINK_RECONFIG "CTRL-EVENT-LINK-RECONFIG "
 
 /** IP subnet status change notification
  *
@@ -120,6 +141,12 @@ extern "C" {
 #define WPA_EVENT_FREQ_CONFLICT "CTRL-EVENT-FREQ-CONFLICT "
 /** Frequency ranges that the driver recommends to avoid */
 #define WPA_EVENT_AVOID_FREQ "CTRL-EVENT-AVOID-FREQ "
+/** A new network profile was added (followed by network entry id) */
+#define WPA_EVENT_NETWORK_ADDED "CTRL-EVENT-NETWORK-ADDED "
+/** A network profile was removed (followed by prior network entry id) */
+#define WPA_EVENT_NETWORK_REMOVED "CTRL-EVENT-NETWORK-REMOVED "
+/** Result of MSCS setup */
+#define WPA_EVENT_MSCS_RESULT "CTRL-EVENT-MSCS-RESULT "
 /** WPS overlap detected in PBC mode */
 #define WPS_EVENT_OVERLAP "WPS-OVERLAP-DETECTED "
 /** Available WPS AP with active PBC found in scan results */
@@ -149,6 +176,10 @@ extern "C" {
 #define WPS_EVENT_ENROLLEE_SEEN "WPS-ENROLLEE-SEEN "
 
 #define WPS_EVENT_OPEN_NETWORK "WPS-OPEN-NETWORK "
+/** Result of SCS setup */
+#define WPA_EVENT_SCS_RESULT "CTRL-EVENT-SCS-RESULT "
+/* Event indicating DSCP policy */
+#define WPA_EVENT_DSCP_POLICY "CTRL-EVENT-DSCP-POLICY "
 
 /* WPS ER events */
 #define WPS_EVENT_ER_AP_ADD "WPS-ER-AP-ADD "
@@ -168,15 +199,22 @@ extern "C" {
 #define DPP_EVENT_CONF_RECEIVED "DPP-CONF-RECEIVED "
 #define DPP_EVENT_CONF_SENT "DPP-CONF-SENT "
 #define DPP_EVENT_CONF_FAILED "DPP-CONF-FAILED "
+#define DPP_EVENT_CONN_STATUS_RESULT "DPP-CONN-STATUS-RESULT "
 #define DPP_EVENT_CONFOBJ_AKM "DPP-CONFOBJ-AKM "
 #define DPP_EVENT_CONFOBJ_SSID "DPP-CONFOBJ-SSID "
+#define DPP_EVENT_CONFOBJ_SSID_CHARSET "DPP-CONFOBJ-SSID-CHARSET "
 #define DPP_EVENT_CONFOBJ_PASS "DPP-CONFOBJ-PASS "
 #define DPP_EVENT_CONFOBJ_PSK "DPP-CONFOBJ-PSK "
 #define DPP_EVENT_CONNECTOR "DPP-CONNECTOR "
 #define DPP_EVENT_C_SIGN_KEY "DPP-C-SIGN-KEY "
+#define DPP_EVENT_PP_KEY "DPP-PP-KEY "
 #define DPP_EVENT_NET_ACCESS_KEY "DPP-NET-ACCESS-KEY "
+#define DPP_EVENT_SERVER_NAME "DPP-SERVER-NAME "
+#define DPP_EVENT_CERTBAG "DPP-CERTBAG "
+#define DPP_EVENT_CACERT "DPP-CACERT "
 #define DPP_EVENT_MISSING_CONNECTOR "DPP-MISSING-CONNECTOR "
 #define DPP_EVENT_NETWORK_ID "DPP-NETWORK-ID "
+#define DPP_EVENT_CONFIGURATOR_ID "DPP-CONFIGURATOR-ID "
 #define DPP_EVENT_RX "DPP-RX "
 #define DPP_EVENT_TX "DPP-TX "
 #define DPP_EVENT_TX_STATUS "DPP-TX-STATUS "
@@ -184,6 +222,22 @@ extern "C" {
 #define DPP_EVENT_PKEX_T_LIMIT "DPP-PKEX-T-LIMIT "
 #define DPP_EVENT_INTRO "DPP-INTRO "
 #define DPP_EVENT_CONF_REQ_RX "DPP-CONF-REQ-RX "
+#define DPP_EVENT_CHIRP_STOPPED "DPP-CHIRP-STOPPED "
+#define DPP_EVENT_MUD_URL "DPP-MUD-URL "
+#define DPP_EVENT_BAND_SUPPORT "DPP-BAND-SUPPORT "
+#define DPP_EVENT_CSR "DPP-CSR "
+#define DPP_EVENT_CHIRP_RX "DPP-CHIRP-RX "
+#define DPP_EVENT_CONF_NEEDED "DPP-CONF-NEEDED "
+#define DPP_EVENT_PB_STATUS "DPP-PB-STATUS "
+#define DPP_EVENT_PB_RESULT "DPP-PB-RESULT "
+#define DPP_EVENT_RELAY_NEEDS_CONTROLLER "DPP-RELAY-NEEDS-CONTROLLER "
+
+/* Wi-Fi Aware (NAN USD) events */
+#define NAN_DISCOVERY_RESULT "NAN-DISCOVERY-RESULT "
+#define NAN_REPLIED "NAN-REPLIED "
+#define NAN_PUBLISH_TERMINATED "NAN-PUBLISH-TERMINATED "
+#define NAN_SUBSCRIBE_TERMINATED "NAN-SUBSCRIBE-TERMINATED "
+#define NAN_RECEIVE "NAN-RECEIVE "
 
 /* MESH events */
 #define MESH_GROUP_STARTED "MESH-GROUP-STARTED "
@@ -251,7 +305,7 @@ extern "C" {
 #define P2P_EVENT_P2PS_PROVISION_DONE "P2PS-PROV-DONE "
 
 #define INTERWORKING_AP "INTERWORKING-AP "
-#define INTERWORKING_BLACKLISTED "INTERWORKING-BLACKLISTED "
+#define INTERWORKING_EXCLUDED "INTERWORKING-BLACKLISTED "
 #define INTERWORKING_NO_MATCH "INTERWORKING-NO-MATCH "
 #define INTERWORKING_ALREADY_CONNECTED "INTERWORKING-ALREADY-CONNECTED "
 #define INTERWORKING_SELECTED "INTERWORKING-SELECTED "
@@ -299,6 +353,8 @@ extern "C" {
 #define WPS_EVENT_AP_SETUP_UNLOCKED "WPS-AP-SETUP-UNLOCKED "
 #define WPS_EVENT_AP_PIN_ENABLED "WPS-AP-PIN-ENABLED "
 #define WPS_EVENT_AP_PIN_DISABLED "WPS-AP-PIN-DISABLED "
+#define WPS_EVENT_PIN_ACTIVE "WPS-PIN-ACTIVE "
+#define WPS_EVENT_CANCEL "WPS-CANCEL "
 #define AP_STA_CONNECTED "AP-STA-CONNECTED "
 #define AP_STA_DISCONNECTED "AP-STA-DISCONNECTED "
 #define AP_STA_POSSIBLE_PSK_MISMATCH "AP-STA-POSSIBLE-PSK-MISMATCH "
@@ -312,6 +368,7 @@ extern "C" {
 
 #define AP_EVENT_ENABLED "AP-ENABLED "
 #define AP_EVENT_DISABLED "AP-DISABLED "
+#define AP_EVENT_NO_IR "AP-NO_IR"
 
 #define INTERFACE_ENABLED "INTERFACE-ENABLED "
 #define INTERFACE_DISABLED "INTERFACE-DISABLED "
@@ -331,6 +388,9 @@ extern "C" {
 
 #define P2P_EVENT_LISTEN_OFFLOAD_STOP "P2P-LISTEN-OFFLOAD-STOPPED "
 #define P2P_LISTEN_OFFLOAD_STOP_REASON "P2P-LISTEN-OFFLOAD-STOP-REASON "
+
+/* BSS Transition Management Query frame received */
+#define BSS_TM_QUERY "BSS-TM-QUERY "
 
 /* BSS Transition Management Response frame received */
 #define BSS_TM_RESP "BSS-TM-RESP "
@@ -353,6 +413,9 @@ extern "C" {
 /* parameters: <STA address> <dialog token> <report mode> <beacon report> */
 #define BEACON_RESP_RX "BEACON-RESP-RX "
 
+/* parameters: <STA address> <dialog token> <link measurement report> */
+#define LINK_MSR_RESP_RX "LINK-MSR-RESP-RX "
+
 /* PMKSA cache entry added; parameters: <BSSID> <network_id> */
 #define PMKSA_CACHE_ADDED "PMKSA-CACHE-ADDED "
 /* PMKSA cache entry removed; parameters: <BSSID> <network_id> */
@@ -374,6 +437,23 @@ extern "C" {
 /* New interface addition or removal for 4addr WDS SDA */
 #define WDS_STA_INTERFACE_ADDED "WDS-STA-INTERFACE-ADDED "
 #define WDS_STA_INTERFACE_REMOVED "WDS-STA-INTERFACE-REMOVED "
+
+/* Transition mode disabled indication - followed by bitmap */
+#define TRANSITION_DISABLE "TRANSITION-DISABLE "
+
+/* OCV validation failure; parameters: addr=<src addr>
+ * frame=<saqueryreq/saqueryresp> error=<error string> */
+#define OCV_FAILURE "OCV-FAILURE "
+
+/* Event triggered for received management frame */
+#define AP_MGMT_FRAME_RECEIVED "AP-MGMT-FRAME-RECEIVED "
+
+#ifndef BIT
+#define BIT(x) (1U << (x))
+#endif
+
+/* PASN authentication status */
+#define PASN_AUTH_STATUS "PASN-AUTH-STATUS "
 
 /* BSS command information masks */
 
@@ -403,6 +483,9 @@ extern "C" {
 #define WPA_BSS_MASK_UPDATE_IDX		BIT(22)
 #define WPA_BSS_MASK_BEACON_IE		BIT(23)
 #define WPA_BSS_MASK_FILS_INDICATION	BIT(24)
+#define WPA_BSS_MASK_RNR		BIT(25)
+#define WPA_BSS_MASK_ML			BIT(26)
+#define WPA_BSS_MASK_AP_MLD_ADDR	BIT(27)
 
 
 /* VENDOR_ELEM_* frame id values */

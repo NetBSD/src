@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.1 2024/07/01 01:01:06 perseant Exp $
+#	$NetBSD: Makefile,v 1.8.2.2 2025/08/02 05:26:04 perseant Exp $
 
 PROG=		gcc
 SRCS=		gccspec.cc ${G_GCC_OBJS:.o=.cc}
@@ -25,9 +25,6 @@ ${SRCS}: ${GCCARCH}/defs.mk
 .include <bsd.info.mk>
 
 COPTS.gcc.cc=	-Wno-error=stack-protector
-.if ${MACHINE_ARCH} == "vax" && 0
-COPTS.dse.c=	-O1
-.endif
 
 .PATH: ${DIST}/gcc ${DIST}/gcc/doc ${DIST}/gcc/c
 

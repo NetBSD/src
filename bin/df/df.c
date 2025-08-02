@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.102 2023/12/18 08:27:24 kre Exp $ */
+/*	$NetBSD: df.c,v 1.102.2.1 2025/08/02 05:18:23 perseant Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.102 2023/12/18 08:27:24 kre Exp $");
+__RCSID("$NetBSD: df.c,v 1.102.2.1 2025/08/02 05:18:23 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ static void	 prthumanval(int64_t, int);
 static void	 prthuman(const struct statvfs *, int64_t, int64_t);
 
 static int	 aflag, cflag, fflag, gflag, hflag, iflag, lflag;
-static int	 Nflag, nflag, Pflag, Wflag;
+static int	 Mflag, Nflag, nflag, Pflag, qflag, Wflag;
 static long	 usize;
 static char	**typelist;
 static size_t	 mntcount;
@@ -87,6 +87,9 @@ static size_t	 mntcount;
 static int blksize_width = WIDTH_BLKSIZE;
 
 static int fudgeunits = 0;
+
+#define	streq(a, b)	(strcmp((a), (b)) == 0)
+#define	warnq(args)	do { if (!qflag) warnx args; } while (0)
 
 int
 main(int argc, char *argv[])
@@ -100,7 +103,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "abcfGgHhiklmNnPt:W")) != -1)
+	while ((ch = getopt(argc, argv, "abcfGgHhiklMmNnPqt:W")) != -1)
 		switch (ch) {
 		case 'a':
 			aflag = 1;
@@ -139,6 +142,9 @@ main(int argc, char *argv[])
 		case 'l':
 			lflag = 1;
 			break;
+		case 'M':
+			Mflag = 1;
+			break;
 		case 'm':
 			hflag = 0;
 			usize = 1024 * 1024;
@@ -151,6 +157,9 @@ main(int argc, char *argv[])
 			break;
 		case 'P':
 			Pflag = 1;
+			break;
+		case 'q':
+			qflag = 1;
 			break;
 		case 'W':
 			Wflag = 1;
@@ -203,7 +212,8 @@ main(int argc, char *argv[])
 		for (/*EMPTY*/; *argv != NULL; argv++) {
 			if (stat(*argv, &stbuf) < 0) {
 				if ((mntpt = getmntpt(*argv)) == 0) {
-					warn("%s", *argv);
+					if (!qflag)
+						warn("%s", *argv);
 					continue;
 				}
 			} else if (S_ISBLK(stbuf.st_mode)) {
@@ -211,25 +221,30 @@ main(int argc, char *argv[])
 					mntpt = *argv;
 			} else
 				mntpt = *argv;
+
 			/*
 			 * Statfs does not take a `wait' flag, so we cannot
 			 * implement nflag here.
 			 */
-			if (!statvfs(mntpt, &mntbuf[mntcount]))
-				if (lflag &&
+			if (!statvfs(mntpt, &mntbuf[mntcount])) {
+				if (Mflag &&
+				    !streq(mntpt, mntbuf[mntcount].f_mntonname))
+					warnq(("%s is not a mount point",
+					    mntpt));
+				else if (lflag &&
 				    (mntbuf[mntcount].f_flag & MNT_LOCAL) == 0)
-					warnx("Warning: %s is not a local %s",
-					    *argv, "file system");
+					warnq(("Warning: %s is not a local %s",
+					    *argv, "file system"));
 				else if
 				    (!selected(mntbuf[mntcount].f_fstypename,
 					sizeof(mntbuf[mntcount].f_fstypename)))
-					warnx("Warning: %s mounted as a %s %s",
+					warnq(("Warning: %s mounted as a %s %s",
 					    *argv,
 					    mntbuf[mntcount].f_fstypename,
-					    "file system");
+					    "file system"));
 				else
 					++mntcount;
-			else
+			} else if (!qflag)
 				warn("%s", *argv);
 		}
 	}
@@ -277,7 +292,7 @@ getmntpt(const char *name)
 	if (count == 0)
 		err(EXIT_FAILURE, "Can't get mount information");
 	for (i = 0; i < count; i++) {
-		if (!strcmp(mntbuf[i].f_mntfromname, name))
+		if (streq(mntbuf[i].f_mntfromname, name))
 			return mntbuf[i].f_mntonname;
 	}
 	return 0;
@@ -477,7 +492,7 @@ prtstat(const struct statvfs *sfsp, int maxwidth)
 		    (uint64_t)sfsp->f_bavail);
 		(void)printf("%10" PRId64 " total files  %10" PRId64
 		    " free files %12lx filesys id\n",
-		    (uint64_t)sfsp->f_ffree, (uint64_t)sfsp->f_files,
+		    (uint64_t)sfsp->f_files, (uint64_t)sfsp->f_ffree,
 		    sfsp->f_fsid);
 		(void)printf("%10s fstype  %#15lx flag  %17ld filename "
 		    "length\n", sfsp->f_fstypename, sfsp->f_flag,
@@ -628,7 +643,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-aclnW] [-G|-bkP|-bfgHhikmN] [-t type] [file | "
+	    "Usage: %s [-aclMnqW] [-G|-bkP|-bfgHhikmN] [-t type] [file | "
 	    "file_system]...\n",
 	    getprogname());
 	exit(1);

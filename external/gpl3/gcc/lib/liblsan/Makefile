@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2023/08/03 01:36:55 mrg Exp $
+# $NetBSD: Makefile,v 1.9.2.1 2025/08/02 05:25:55 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -20,11 +20,6 @@ LSAN_SRCS+= \
 	lsan_thread.cpp \
 	lsan_posix.cpp
 
-.if ${MACHINE_ARCH} == "vax"
-#COPTS.lsan_allocator.cpp += -O1
-#COPTS.sanitizer_file.cpp += -O1
-.endif
-
 LIB=	lsan
 SRCS+=	${LSAN_SRCS}
 LIBDPLIBS+= m ${NETBSDSRCDIR}/lib/libm
@@ -32,5 +27,7 @@ LIBDPLIBS+= rt ${NETBSDSRCDIR}/lib/librt
 LIBDPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
 
 CWARNFLAGS.clang+=	-Wno-error=unused-private-field
+
+.include "../preinit.mk"
 
 .include <bsd.lib.mk>

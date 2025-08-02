@@ -1,4 +1,5 @@
-# $NetBSD: md.mvmeppc,v 1.19 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.mvmeppc,v 1.19.14.1 2025/08/02 05:20:29 perseant Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mvmeppc				comp-c-include
 ./usr/include/mvmeppc/_G_config.h		comp-obsolete		obsolete
@@ -34,6 +35,7 @@
 ./usr/include/mvmeppc/kgdb.h			comp-obsolete		obsolete
 ./usr/include/mvmeppc/limits.h			comp-c-include
 ./usr/include/mvmeppc/lock.h			comp-c-include
+./usr/include/mvmeppc/lwp_private.h		comp-c-include
 ./usr/include/mvmeppc/math.h			comp-c-include
 ./usr/include/mvmeppc/mcontext.h		comp-c-include
 ./usr/include/mvmeppc/mutex.h			comp-c-include

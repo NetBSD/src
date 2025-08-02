@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.29 2022/07/30 14:11:00 riastradh Exp $	*/
+/*	$NetBSD: atomic.S,v 1.29.8.1 2025/08/02 05:18:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,6 +36,13 @@
 #define	ALIAS(f, t)	STRONG_ALIAS(f,t)
 #else
 #define	ALIAS(f, t)	WEAK_ALIAS(f,t)
+#endif
+
+#ifdef _HARDKERNEL
+#include <machine/frameasm.h>
+#define	LOCK		HOTPATCH(HP_NAME_NOLOCK, 1); lock
+#else
+#define	LOCK		lock
 #endif
 
 	.text
@@ -279,6 +286,8 @@ ENTRY(_membar_sync)
 	 * https://pvk.ca/Blog/2014/10/19/performance-optimisation-~-writing-an-essay/
 	 * https://shipilev.net/blog/2014/on-the-fence-with-dependencies/
 	 * https://www.agner.org/optimize/instruction_tables.pdf
+	 *
+	 * Sync with xen_mb in sys/arch/amd64/amd64/cpufunc.S.
 	 */
 	LOCK
 	addq	$0, -8(%rsp)

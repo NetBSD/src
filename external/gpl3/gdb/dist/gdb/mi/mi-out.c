@@ -1,6 +1,6 @@
 /* MI Command Set - output generating routines.
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -19,7 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "mi-out.h"
 
 #include <vector>
@@ -336,20 +335,17 @@ mi_ui_out::~mi_ui_out ()
 
 /* See mi/mi-out.h.  */
 
-mi_ui_out *
+std::unique_ptr<mi_ui_out>
 mi_out_new (const char *mi_version)
 {
   if (streq (mi_version, INTERP_MI4) ||  streq (mi_version, INTERP_MI))
-    return new mi_ui_out (4);
+    return std::make_unique<mi_ui_out> (4);
 
   if (streq (mi_version, INTERP_MI3))
-    return new mi_ui_out (3);
+    return std::make_unique<mi_ui_out> (3);
 
   if (streq (mi_version, INTERP_MI2))
-    return new mi_ui_out (2);
-
-  if (streq (mi_version, INTERP_MI1))
-    return new mi_ui_out (1);
+    return std::make_unique<mi_ui_out> (2);
 
   return nullptr;
 }
@@ -361,12 +357,6 @@ static mi_ui_out *
 as_mi_ui_out (ui_out *uiout)
 {
   return gdb::checked_static_cast<mi_ui_out *> (uiout);
-}
-
-int
-mi_version (ui_out *uiout)
-{
-  return as_mi_ui_out (uiout)->version ();
 }
 
 void

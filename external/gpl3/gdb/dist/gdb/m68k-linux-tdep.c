@@ -1,6 +1,6 @@
 /* Motorola m68k target-dependent support for GNU/Linux.
 
-   Copyright (C) 1996-2023 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "gdbcore.h"
 #include "frame.h"
 #include "target.h"
@@ -61,7 +61,7 @@
    non-RT and RT signal trampolines.  */
 
 static int
-m68k_linux_pc_in_sigtramp (frame_info_ptr this_frame)
+m68k_linux_pc_in_sigtramp (const frame_info_ptr &this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -219,7 +219,7 @@ m68k_linux_inferior_created (inferior *inf)
 }
 
 static struct m68k_linux_sigtramp_info
-m68k_linux_get_sigtramp_info (frame_info_ptr this_frame)
+m68k_linux_get_sigtramp_info (const frame_info_ptr &this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -248,7 +248,7 @@ m68k_linux_get_sigtramp_info (frame_info_ptr this_frame)
 /* Signal trampolines.  */
 
 static struct trad_frame_cache *
-m68k_linux_sigtramp_frame_cache (frame_info_ptr this_frame,
+m68k_linux_sigtramp_frame_cache (const frame_info_ptr &this_frame,
 				 void **this_cache)
 {
   struct frame_id this_id;
@@ -286,7 +286,7 @@ m68k_linux_sigtramp_frame_cache (frame_info_ptr this_frame,
 }
 
 static void
-m68k_linux_sigtramp_frame_this_id (frame_info_ptr this_frame,
+m68k_linux_sigtramp_frame_this_id (const frame_info_ptr &this_frame,
 				   void **this_cache,
 				   struct frame_id *this_id)
 {
@@ -296,7 +296,7 @@ m68k_linux_sigtramp_frame_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-m68k_linux_sigtramp_frame_prev_register (frame_info_ptr this_frame,
+m68k_linux_sigtramp_frame_prev_register (const frame_info_ptr &this_frame,
 					 void **this_cache,
 					 int regnum)
 {
@@ -308,7 +308,7 @@ m68k_linux_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 
 static int
 m68k_linux_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				   frame_info_ptr this_frame,
+				   const frame_info_ptr &this_frame,
 				   void **this_prologue_cache)
 {
   return m68k_linux_pc_in_sigtramp (this_frame);

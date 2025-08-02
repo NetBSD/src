@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.8 2022/12/21 17:20:07 wiz Exp $
+# $NetBSD: Makefile.inc,v 1.8.2.1 2025/08/02 05:22:07 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -19,10 +19,11 @@ CPPFLAGS+=	-DOPENSSL_API_COMPAT=0x10100000L
 .endif
 
 DPLIBS+= event ${NETBSDSRCDIR}/external/bsd/libevent/lib/libevent
-DPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
-DPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
+DPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
+DPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 DPLIBS+= crypt ${NETBSDSRCDIR}/lib/libcrypt
 DPLIBS+= util ${NETBSDSRCDIR}/lib/libutil
+DPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
 
 __subst: .USE
 	${TOOL_SED} \

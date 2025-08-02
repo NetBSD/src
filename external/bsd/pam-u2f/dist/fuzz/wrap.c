@@ -1,21 +1,25 @@
-/* Copyright (C) 2021 Yubico AB - See COPYING */
-#include <assert.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <pwd.h>
-#include <errno.h>
+/* Copyright (C) 2021-2022 Yubico AB - See COPYING */
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <openssl/bio.h>
 #include <openssl/ec.h>
 #include <fido.h>
 
+#include "debug.h"
 #include "drop_privs.h"
 #include "fuzz/fuzz.h"
+
+extern int prng_up;
 
 #ifdef HAVE_PAM_MODUTIL_DROP_PRIV
 typedef struct pam_modutil_privs fuzz_privs_t;
@@ -39,7 +43,7 @@ static char env[] = "value";
   extern type __wrap_##name args;                                              \
   extern type __real_##name args;                                              \
   type __wrap_##name args {                                                    \
-    if (uniform_random(400) < 1) {                                             \
+    if (prng_up && uniform_random(400) < 1) {                                  \
       return (retval);                                                         \
     }                                                                          \
                                                                                \
@@ -59,9 +63,9 @@ WRAP(void *, strdup, (const char *s), NULL, (s))
 WRAP(void *, calloc, (size_t nmemb, size_t size), NULL, (nmemb, size))
 WRAP(void *, malloc, (size_t size), NULL, (size))
 WRAP(int, gethostname, (char *name, size_t len), -1, (name, len))
+WRAP(ssize_t, getline, (char **s, size_t *n, FILE *fp), -1, (s, n, fp))
 WRAP(FILE *, fdopen, (int fd, const char *mode), NULL, (fd, mode))
 WRAP(int, fstat, (int fd, struct stat *st), -1, (fd, st))
-WRAP(ssize_t, read, (int fd, void *buf, size_t count), -1, (fd, buf, count))
 WRAP(BIO *, BIO_new, (const BIO_METHOD *type), NULL, (type))
 WRAP(int, BIO_write, (BIO * b, const void *data, int len), -1, (b, data, len))
 WRAP(int, BIO_read, (BIO * b, void *data, int len), -1, (b, data, len))
@@ -71,6 +75,32 @@ WRAP(BIO *, BIO_new_mem_buf, (const void *buf, int len), NULL, (buf, len))
 WRAP(EC_KEY *, EC_KEY_new_by_curve_name, (int nid), NULL, (nid))
 WRAP(const EC_GROUP *, EC_KEY_get0_group, (const EC_KEY *key), NULL, (key))
 
+extern ssize_t __real_read(int fildes, void *buf, size_t nbyte);
+extern ssize_t __wrap_read(int fildes, void *buf, size_t nbyte);
+extern ssize_t __wrap_read(int fildes, void *buf, size_t nbyte) {
+  assert(fildes >= 0);
+  assert(buf != NULL);
+  return __real_read(fildes, buf, nbyte);
+}
+
+extern int __wrap_asprintf(char **strp, const char *fmt, ...)
+  ATTRIBUTE_FORMAT(printf, 2, 3);
+extern int __wrap_asprintf(char **strp, const char *fmt, ...) {
+  va_list ap;
+  int r;
+
+  if (uniform_random(400) < 1) {
+    *strp = (void *) 0xdeadbeef;
+    return -1;
+  }
+
+  va_start(ap, fmt);
+  r = vasprintf(strp, fmt, ap);
+  va_end(ap);
+
+  return r;
+}
+
 extern uid_t __wrap_geteuid(void);
 extern uid_t __wrap_geteuid(void) {
   return (uniform_random(10) < 1) ? 0 : 1008;
@@ -79,7 +109,7 @@ extern uid_t __wrap_geteuid(void) {
 extern int __real_open(const char *pathname, int flags);
 extern int __wrap_open(const char *pathname, int flags);
 extern int __wrap_open(const char *pathname, int flags) {
-  if (uniform_random(400) < 1)
+  if (prng_up && uniform_random(400) < 1)
     return -1;
   /* open write-only files as /dev/null */
   if ((flags & O_ACCMODE) == O_WRONLY)

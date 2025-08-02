@@ -261,7 +261,7 @@ option and the file
 
 The
 @CO{#}
- command increments or decrements the number referenced by the cursor.
+ command increments or decrements the number under the cursor.
 @IP{Previous file}
 
 The

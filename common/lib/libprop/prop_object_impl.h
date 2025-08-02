@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_object_impl.h,v 1.36 2020/06/12 00:02:26 thorpej Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.36.12.1 2025/08/02 05:18:35 perseant Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2020, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,40 +44,54 @@
 
 #include "prop_stack.h"
 
+struct _prop_object;
+
 struct _prop_object_externalize_context {
 	char *		poec_buf;		/* string buffer */
 	size_t		poec_capacity;		/* capacity of buffer */
 	size_t		poec_len;		/* current length of string */
 	unsigned int	poec_depth;		/* nesting depth */
+	prop_format_t	poec_format;		/* output format */
 };
 
-bool		_prop_object_externalize_start_tag(
-				struct _prop_object_externalize_context *,
-				const char *);
-bool		_prop_object_externalize_end_tag(
-				struct _prop_object_externalize_context *,
-				const char *);
-bool		_prop_object_externalize_empty_tag(
-				struct _prop_object_externalize_context *,
-				const char *);
-bool		_prop_object_externalize_append_cstring(
-				struct _prop_object_externalize_context *,
-				const char *);
-bool		_prop_object_externalize_append_encoded_cstring(
-				struct _prop_object_externalize_context *,
-				const char *);
-bool		_prop_object_externalize_append_char(
+struct _prop_object_type_tags {
+	const char	*xml_tag;
+	const char	*json_open_tag;
+	const char	*json_close_tag;
+	const char	*json_empty_sep;
+};
+
+bool		_prop_extern_append_char(
 				struct _prop_object_externalize_context *,
 				unsigned char);
-bool		_prop_object_externalize_header(
+bool		_prop_extern_append_cstring(
+				struct _prop_object_externalize_context *,
+				const char *);
+bool		_prop_extern_start_line(
 				struct _prop_object_externalize_context *);
-bool		_prop_object_externalize_footer(
-				struct _prop_object_externalize_context *);
+bool		_prop_extern_end_line(
+				struct _prop_object_externalize_context *,
+				const char *);
 
-struct _prop_object_externalize_context *
-	_prop_object_externalize_context_alloc(void);
-void	_prop_object_externalize_context_free(
-				struct _prop_object_externalize_context *);
+bool		_prop_extern_append_start_tag(
+				struct _prop_object_externalize_context *,
+				const struct _prop_object_type_tags *,
+				const char *);
+bool		_prop_extern_append_end_tag(
+				struct _prop_object_externalize_context *,
+				const struct _prop_object_type_tags *);
+bool		_prop_extern_append_empty_tag(
+				struct _prop_object_externalize_context *,
+				const struct _prop_object_type_tags *);
+
+bool		_prop_extern_append_encoded_cstring(
+				struct _prop_object_externalize_context *,
+				const char *);
+
+bool		_prop_object_externalize_to_file(struct _prop_object *,
+				const char *, prop_format_t);
+char *		_prop_object_externalize(struct _prop_object *,
+				prop_format_t fmt);
 
 typedef enum {
 	_PROP_TAG_TYPE_START,			/* e.g. <dict> */
@@ -86,7 +100,9 @@ typedef enum {
 } _prop_tag_type_t;
 
 struct _prop_object_internalize_context {
-	const char *poic_xml;
+	prop_format_t poic_format;
+
+	const char *poic_data;
 	const char *poic_cp;
 
 	const char *poic_tag_start;
@@ -118,52 +134,36 @@ typedef enum {
 #define	_PROP_ISSPACE(c)	\
 	((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
 
-#define	_PROP_TAG_MATCH(ctx, t)					\
-	_prop_object_internalize_match((ctx)->poic_tagname,	\
-				       (ctx)->poic_tagname_len,	\
-				       (t), strlen(t))
+#define	_PROP_TAG_MATCH(ctx, t)				\
+	_prop_intern_match((ctx)->poic_tagname,		\
+			   (ctx)->poic_tagname_len,	\
+			   (t), strlen(t))
 
-#define	_PROP_TAGATTR_MATCH(ctx, a)				\
-	_prop_object_internalize_match((ctx)->poic_tagattr,	\
-				       (ctx)->poic_tagattr_len,	\
-				       (a), strlen(a))
+#define	_PROP_TAGATTR_MATCH(ctx, a)			\
+	_prop_intern_match((ctx)->poic_tagattr,		\
+			   (ctx)->poic_tagattr_len,	\
+			   (a), strlen(a))
 
-#define	_PROP_TAGATTRVAL_MATCH(ctx, a)				  \
-	_prop_object_internalize_match((ctx)->poic_tagattrval,	  \
-				       (ctx)->poic_tagattrval_len,\
-				       (a), strlen(a))
+#define	_PROP_TAGATTRVAL_MATCH(ctx, a)			\
+	_prop_intern_match((ctx)->poic_tagattrval,	\
+			   (ctx)->poic_tagattrval_len,	\
+			   (a), strlen(a))
 
-bool		_prop_object_internalize_find_tag(
-				struct _prop_object_internalize_context *,
-				const char *, _prop_tag_type_t);
-bool		_prop_object_internalize_match(const char *, size_t,
-					       const char *, size_t);
-prop_object_t	_prop_object_internalize_by_tag(
-				struct _prop_object_internalize_context *);
-bool		_prop_object_internalize_decode_string(
+const char *	_prop_intern_skip_whitespace(const char *);
+bool		_prop_intern_match(const char *, size_t, const char *, size_t);
+
+bool		_prop_intern_decode_string(
 				struct _prop_object_internalize_context *,
 				char *, size_t, size_t *, const char **);
-prop_object_t	_prop_generic_internalize(const char *, const char *);
 
-struct _prop_object_internalize_context *
-		_prop_object_internalize_context_alloc(const char *);
-void		_prop_object_internalize_context_free(
-				struct _prop_object_internalize_context *);
+bool		_prop_xml_intern_find_tag(
+				struct _prop_object_internalize_context *,
+				const char *, _prop_tag_type_t);
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-bool		_prop_object_externalize_write_file(const char *,
-						    const char *, size_t);
-
-struct _prop_object_internalize_mapped_file {
-	char *	poimf_xml;
-	size_t	poimf_mapsize;
-};
-
-struct _prop_object_internalize_mapped_file *
-		_prop_object_internalize_map_file(const char *);
-void		_prop_object_internalize_unmap_file(
-				struct _prop_object_internalize_mapped_file *);
-#endif /* !_KERNEL && !_STANDALONE */
+prop_object_t	_prop_object_internalize(const char *,
+				const struct _prop_object_type_tags *);
+prop_object_t	_prop_object_internalize_from_file(const char *,
+				const struct _prop_object_type_tags *);
 
 typedef bool (*prop_object_internalizer_t)(prop_stack_t, prop_object_t *,
 				struct _prop_object_internalize_context *);
@@ -185,6 +185,11 @@ bool		_prop_number_internalize(prop_stack_t, prop_object_t *,
 				struct _prop_object_internalize_context *);
 bool		_prop_string_internalize(prop_stack_t, prop_object_t *,
 				struct _prop_object_internalize_context *);
+
+bool		_prop_string_externalize_internal(
+				struct _prop_object_externalize_context *,
+				const struct _prop_object_type_tags *,
+				const char *);
 
 struct _prop_object_type {
 	/* type indicator */
@@ -405,6 +410,8 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define _PROP_ATOMIC_INC32_NV(x, v)	v = atomic_inc_32_nv(x)
 #define _PROP_ATOMIC_DEC32_NV(x, v)	v = atomic_dec_32_nv(x)
 
+#define	_PROP_EXPORT			__attribute__((visibility("default")))
+
 #elif defined(HAVE_NBTOOL_CONFIG_H)
 /*
  * None of NetBSD's build tools are multi-threaded.
@@ -486,6 +493,10 @@ do {									\
 #endif
 #endif /* _KERNEL */
 
+#ifndef _PROP_EXPORT
+#define	_PROP_EXPORT			/* nothing */
+#endif
+
 /*
  * Language features.
  */
@@ -497,9 +508,11 @@ do {									\
 #else /* ! __clang__ */
 #define	_PROP_DEPRECATED(s, m)		__warn_references(s, m)
 #endif /* __clang__ */
+#define	_PROP_UNCONST(x)		__UNCONST(x)
 #else
 #define	_PROP_ARG_UNUSED		/* delete */
 #define	_PROP_DEPRECATED(s, m)		/* delete */
+#define	_PROP_UNCONST(x)	((void *)(unsigned long)(const void *)(x))
 #endif /* __NetBSD__ */
 
 #endif /* _PROPLIB_PROP_OBJECT_IMPL_H_ */

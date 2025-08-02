@@ -36,7 +36,8 @@ atomic_fence(atomic_memory_order_t mo) {
 	__atomic_thread_fence(atomic_enum_to_builtin(mo));
 }
 
-#define JEMALLOC_GENERATE_ATOMICS(type, short_type, lg_size)		\
+#define JEMALLOC_GENERATE_ATOMICS(type, short_type,			\
+    /* unused */ lg_size)						\
 typedef struct {							\
 	type repr;							\
 } atomic_##short_type##_t;						\
@@ -66,7 +67,8 @@ atomic_exchange_##short_type(atomic_##short_type##_t *a, type val,	\
 									\
 ATOMIC_INLINE bool							\
 atomic_compare_exchange_weak_##short_type(atomic_##short_type##_t *a,	\
-    type *expected, type desired, atomic_memory_order_t success_mo,	\
+    UNUSED type *expected, type desired,				\
+    atomic_memory_order_t success_mo,					\
     atomic_memory_order_t failure_mo) {					\
 	return __atomic_compare_exchange(&a->repr, expected, &desired,	\
 	    true, atomic_enum_to_builtin(success_mo),			\
@@ -75,7 +77,8 @@ atomic_compare_exchange_weak_##short_type(atomic_##short_type##_t *a,	\
 									\
 ATOMIC_INLINE bool							\
 atomic_compare_exchange_strong_##short_type(atomic_##short_type##_t *a,	\
-    type *expected, type desired, atomic_memory_order_t success_mo,	\
+    UNUSED type *expected, type desired,				\
+    atomic_memory_order_t success_mo,					\
     atomic_memory_order_t failure_mo) {					\
 	return __atomic_compare_exchange(&a->repr, expected, &desired,	\
 	    false,							\
@@ -84,7 +87,8 @@ atomic_compare_exchange_strong_##short_type(atomic_##short_type##_t *a,	\
 }
 
 
-#define JEMALLOC_GENERATE_INT_ATOMICS(type, short_type,	lg_size)	\
+#define JEMALLOC_GENERATE_INT_ATOMICS(type, short_type,			\
+    /* unused */ lg_size)						\
 JEMALLOC_GENERATE_ATOMICS(type, short_type, /* unused */ lg_size)	\
 									\
 ATOMIC_INLINE type							\

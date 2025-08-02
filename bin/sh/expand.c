@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.144 2023/12/29 15:49:23 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.144.2.1 2025/08/02 05:18:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.144 2023/12/29 15:49:23 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.144.2.1 2025/08/02 05:18:25 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -630,7 +630,6 @@ expbackq(union node *cmd, int quoted, int flag)
 	struct nodelist *saveargbackq;
 	char lastc;
 	int startloc = dest - stackblock();
-	int saveherefd;
 	const int quotes = flag & EXP_QNEEDED;
 	int nnl;
 	struct stackmark smark;
@@ -641,8 +640,6 @@ expbackq(union node *cmd, int quoted, int flag)
 	saveifs = ifsfirst;
 	savelastp = ifslastp;
 	saveargbackq = argbackq;
-	saveherefd = herefd;
-	herefd = -1;
 
 	setstackmark(&smark);	/* preserve the stack */
 	p = grabstackstr(dest);	/* save what we have there currently */
@@ -652,7 +649,6 @@ expbackq(union node *cmd, int quoted, int flag)
 	ifsfirst = saveifs;
 	ifslastp = savelastp;
 	argbackq = saveargbackq;
-	herefd = saveherefd;
 
 	p = in.buf;		/* now extract the results */
 	nnl = 0;		/* dropping trailing \n's */
@@ -737,16 +733,13 @@ subevalvar(const char *p, const char *str, int subtype, int startloc,
     int varflags)
 {
 	char *startp;
-	int saveherefd = herefd;
 	struct nodelist *saveargbackq = argbackq;
 	int amount;
 
-	herefd = -1;
 	VTRACE(DBG_EXPAND, ("subevalvar(%d) \"%.20s\" ${%.*s} sloc=%d vf=%x\n",
 	    subtype, p, p-str, str, startloc, varflags));
 	argstr(p, subtype == VSASSIGN ? EXP_VARTILDE : EXP_TILDE);
 	STACKSTRNUL(expdest);
-	herefd = saveherefd;
 	argbackq = saveargbackq;
 	startp = stackblock() + startloc;
 
@@ -783,11 +776,9 @@ subevalvar_trim(const char *p, int strloc, int subtype, int startloc,
 	char *loc = NULL;
 	char *q;
 	int c = 0;
-	int saveherefd = herefd;
 	struct nodelist *saveargbackq = argbackq;
 	int amount;
 
-	herefd = -1;
 	switch (subtype) {
 	case VSTRIMLEFT:
 	case VSTRIMLEFTMAX:
@@ -805,7 +796,6 @@ subevalvar_trim(const char *p, int strloc, int subtype, int startloc,
 
 	argstr(p, (varflags & (VSQUOTE|VSPATQ)) == VSQUOTE ? 0 : EXP_CASE);
 	STACKSTRNUL(expdest);
-	herefd = saveherefd;
 	argbackq = saveargbackq;
 	startp = stackblock() + startloc;
 	str = stackblock() + strloc;
@@ -913,12 +903,12 @@ evalvar(const char *p, int flag)
 	varflags = (unsigned char)*p++;
 	subtype = varflags & VSTYPE;
 	var = p;
-	special = !is_name(*p);
+	special = subtype != VSUNKNOWN && !is_name(*p);
 	p = strchr(p, '=') + 1;
 
 	CTRACE(DBG_EXPAND,
 	    ("evalvar \"%.*s\", flag=%#X quotes=%#X vf=%#X subtype=%X\n",
-	    p - var - 1, var, flag, quotes, varflags, subtype));
+	    (int)(p - var - 1), var, flag, quotes, varflags, subtype));
 
  again: /* jump here after setting a variable with ${var=text} */
 	if (varflags & VSLINENO) {
@@ -1105,6 +1095,26 @@ evalvar(const char *p, int flag)
 		}
 		apply_ifs = 0;		/* never executed */
 		break;
+
+	case VSUNKNOWN:
+		VTRACE(DBG_EXPAND,
+	    	   ("evalvar \"%.*s\", unknown [%p %p] \"%.3s\" (%#2x %#2x)\n",
+		    (int)(p - var - 1), var, var, p, p, p[0] & 0xFF, p[1] & 0xFF));
+
+		if ((p - var) <= 1)
+			error("%d: unknown expansion type", line_number);
+		else {
+			if (*p == '#')	/* only VSUNKNOWN as a ${#var:...} */
+				error("%d: ${#%.*s%c..}: unknown modifier",
+				     line_number, (int)(p - var - 1),
+				     var, p[1]&0xFF);
+
+			if (*p == CTLESC)
+				p++;
+			error("%d: ${%.*s%c..}: unknown modifier",
+			    line_number, (int)(p - var - 1), var, (*p & 0xFF));
+		}
+		/* NOTREACHED */
 
 	default:
 		abort();
@@ -1816,7 +1826,7 @@ static int
 match_charclass(const char *p, wchar_t chr, const char **end)
 {
 	char name[20];
-	char *nameend;
+	const char *nameend;
 	wctype_t cclass;
 	char *q;
 

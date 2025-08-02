@@ -134,7 +134,7 @@ hx509_ca_tbs_add_eku (
  * Add a Subject Alternative Name hostname to to-be-signed certificate
  * object. A domain match starts with ., an exact match does not.
  *
- * Example of a an domain match: .domain.se matches the hostname
+ * Example of a domain match: .domain.se matches the hostname
  * host.domain.se.
  *
  * @param context A hx509 context.
@@ -261,8 +261,8 @@ void
 hx509_ca_tbs_free (hx509_ca_tbs */*tbs*/);
 
 /**
- * Allocate an to-be-signed certificate object that will be converted
- * into an certificate.
+ * Allocate a to-be-signed certificate object that will be converted
+ * into a certificate.
  *
  * @param context A hx509 context.
  * @param tbs returned to-be-signed certicate object, free with
@@ -870,7 +870,7 @@ hx509_cert_init (
 
 /**
  * Just like hx509_cert_init(), but instead of a decode certificate
- * takes an pointer and length to a memory region that contains a
+ * takes a pointer and length to a memory region that contains a
  * DER/BER encoded certificate.
  *
  * If the memory region doesn't contain just the certificate and
@@ -2425,7 +2425,7 @@ int
 hx509_prompt_hidden (hx509_prompt_type /*type*/);
 
 /**
- * Allocate an query controller. Free using hx509_query_free().
+ * Allocate a query controller. Free using hx509_query_free().
  *
  * @param context A hx509 context.
  * @param q return pointer to a hx509_query.
@@ -3009,7 +3009,7 @@ hx509_verify_hostname (
 	int /*sa_size*/);
 
 /**
- * Allocate an verification context that is used fo control the
+ * Allocate a verification context that is used to control the
  * verification process.
  *
  * @param context A hx509 context.
@@ -3111,7 +3111,7 @@ hx509_verify_set_time (
 	time_t /*t*/);
 
 /**
- * Verify a signature made using the private key of an certificate.
+ * Verify a signature made using the private key of a certificate.
  *
  * @param context A hx509 context.
  * @param signer the certificate that made the signature.

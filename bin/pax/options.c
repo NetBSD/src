@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.120 2023/07/20 20:09:49 lukem Exp $	*/
+/*	$NetBSD: options.c,v 1.120.2.1 2025/08/02 05:18:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.120 2023/07/20 20:09:49 lukem Exp $");
+__RCSID("$NetBSD: options.c,v 1.120.2.1 2025/08/02 05:18:25 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ FSUB fsub[] = {
  */
 int ford[] = {F_USTAR, F_TAR,
 #ifndef NO_CPIO
-    F_SV4CRC, F_SV4CPIO, F_CPIO, F_BCPIO, 
+    F_SV4CRC, F_SV4CPIO, F_CPIO, F_BCPIO,
 #endif
     -1};
 
@@ -428,7 +428,6 @@ pax_options(int argc, char **argv)
 					tty_warn(1, "Invalid -p string: %c",
 					    *pt);
 					pax_usage();
-					break;
 				}
 			}
 			flg |= PF;
@@ -443,10 +442,8 @@ pax_options(int argc, char **argv)
 			/*
 			 * file name substitution name pattern
 			 */
-			if (rep_add(optarg) < 0) {
+			if (rep_add(optarg) < 0)
 				pax_usage();
-				break;
-			}
 			flg |= SF;
 			break;
 		case 't':
@@ -493,7 +490,6 @@ pax_options(int argc, char **argv)
 				(void)fprintf(stderr, " %s", fsub[i].name);
 			(void)fputs("\n\n", stderr);
 			pax_usage();
-			break;
 		case 'z':
 			/*
 			 * use gzip.  Non standard option.
@@ -549,10 +545,8 @@ pax_options(int argc, char **argv)
 			 * non-standard option for selecting files within an
 			 * archive by group (gid or name)
 			 */
-			if (grp_add(optarg) < 0) {
+			if (grp_add(optarg) < 0)
 				pax_usage();
-				break;
-			}
 			flg |= CGF;
 			break;
 		case 'H':
@@ -613,10 +607,8 @@ pax_options(int argc, char **argv)
 			 * non-standard option for selecting files within an
 			 * archive by modification time range (lower,upper)
 			 */
-			if (trng_add(optarg) < 0) {
+			if (trng_add(optarg) < 0)
 				pax_usage();
-				break;
-			}
 			flg |= CTF;
 			break;
 		case 'U':
@@ -624,10 +616,8 @@ pax_options(int argc, char **argv)
 			 * non-standard option for selecting files within an
 			 * archive by user (uid or name)
 			 */
-			if (usr_add(optarg) < 0) {
+			if (usr_add(optarg) < 0)
 				pax_usage();
-				break;
-			}
 			flg |= CUF;
 			break;
 		case 'V':
@@ -686,7 +676,6 @@ pax_options(int argc, char **argv)
 		case '?':
 		default:
 			pax_usage();
-			break;
 		}
 	}
 
@@ -1017,10 +1006,8 @@ tar_options(int argc, char **argv)
 			/*
 			 * file name substitution name pattern
 			 */
-			if (rep_add(optarg) < 0) {
+			if (rep_add(optarg) < 0)
 				tar_usage();
-				break;
-			}
 			break;
 		case 't':
 			/*
@@ -1178,7 +1165,6 @@ tar_options(int argc, char **argv)
 #endif
 		default:
 			tar_usage();
-			break;
 		}
 	}
 	argc -= optind;
@@ -1721,7 +1707,6 @@ cpio_options(int argc, char **argv)
 				(void)fprintf(stderr, " %s", fsub[i].name);
 			(void)fputs("\n\n", stderr);
 			cpio_usage();
-			break;
 		case 'F':
 		case 'I':
 		case 'O':
@@ -1795,7 +1780,6 @@ cpio_options(int argc, char **argv)
 			break;
 		default:
 			cpio_usage();
-			break;
 		}
 	}
 
@@ -1872,7 +1856,6 @@ cpio_options(int argc, char **argv)
 		break;
 	default:
 		cpio_usage();
-		break;
 	}
 }
 #endif
@@ -1953,7 +1936,6 @@ bad_opt(void)
 #endif
 	else
 		pax_usage();
-	return 0;
 }
 
 /*
@@ -2144,7 +2126,7 @@ set_tstamp(const char *b, struct stat *st)
 	}
 
 	st->st_ino = 1;
-#if HAVE_STRUCT_STAT_BIRTHTIME 
+#if HAVE_STRUCT_STAT_BIRTHTIME
 	st->st_birthtime =
 #endif
 	st->st_mtime = st->st_ctime = st->st_atime = when;

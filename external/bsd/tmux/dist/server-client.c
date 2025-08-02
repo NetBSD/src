@@ -222,6 +222,17 @@ server_client_set_key_table(struct client *c, const char *name)
 	key_bindings_unref_table(c->keytable);
 	c->keytable = key_bindings_get_table(name, 1);
 	c->keytable->references++;
+	if (gettimeofday(&c->keytable->activity_time, NULL) != 0)
+		fatal("gettimeofday failed");
+}
+
+static uint64_t
+server_client_key_table_activity_diff(struct client *c)
+{
+	struct timeval	diff;
+
+	timersub(&c->activity_time, &c->keytable->activity_time, &diff);
+	return ((diff.tv_sec * 1000ULL) + (diff.tv_usec / 1000ULL));
 }
 
 /* Get default key table. */
@@ -622,6 +633,8 @@ server_client_check_mouse(struct client *c, struct key_event *event)
 	} else if (MOUSE_RELEASE(m->b)) {
 		type = UP;
 		x = m->x, y = m->y, b = m->lb;
+		if (m->sgr_type == 'm')
+			b = m->sgr_b;
 		log_debug("up at %u,%u", x, y);
 	} else {
 		if (c->flags & CLIENT_DOUBLECLICK) {
@@ -642,7 +655,10 @@ server_client_check_mouse(struct client *c, struct key_event *event)
 				log_debug("triple-click at %u,%u", x, y);
 				goto have_event;
 			}
-		} else {
+		}
+
+		/* DOWN is the only remaining event type. */
+		if (type == NOTYPE) {
 			type = DOWN;
 			x = m->x, y = m->y, b = m->b;
 			log_debug("down at %u,%u", x, y);
@@ -774,8 +790,7 @@ have_event:
 			log_debug("mouse on pane %%%u border", wp->id);
 		m->wp = wp->id;
 		m->w = wp->window->id;
-	} else
-		m->wp = -1;
+	}
 
 	/* Stop dragging if needed. */
 	if (type != DRAG && type != WHEEL && c->tty.mouse_drag_flag != 0) {
@@ -1861,7 +1876,8 @@ server_client_key_callback(struct cmdq_item *item, void *data)
 	struct timeval			 tv;
 	struct key_table		*table, *first;
 	struct key_binding		*bd;
-	int				 xtimeout, flags;
+	int				 xtimeout;
+	uint64_t			 flags, prefix_delay;
 	struct cmd_find_state		 fs;
 	key_code			 key0, prefix, prefix2;
 
@@ -1956,8 +1972,34 @@ try_again:
 	if (c->flags & CLIENT_REPEAT)
 		log_debug("currently repeating");
 
-	/* Try to see if there is a key binding in the current table. */
 	bd = key_bindings_get(table, key0);
+
+	/*
+	 * If prefix-timeout is enabled and we're in the prefix table, see if
+	 * the timeout has been exceeded. Revert to the root table if so.
+	 */
+	prefix_delay = options_get_number(global_options, "prefix-timeout");
+	if (prefix_delay > 0 &&
+	    strcmp(table->name, "prefix") == 0 &&
+	    server_client_key_table_activity_diff(c) > prefix_delay) {
+		/*
+		 * If repeating is active and this is a repeating binding,
+		 * ignore the timeout.
+		 */
+		if (bd != NULL &&
+		    (c->flags & CLIENT_REPEAT) &&
+		    (bd->flags & KEY_BINDING_REPEAT)) {
+			log_debug("prefix timeout ignored, repeat is active");
+		} else {
+			log_debug("prefix timeout exceeded");
+			server_client_set_key_table(c, NULL);
+			first = table = c->keytable;
+			server_status_client(c);
+			goto table_changed;
+		}
+	}
+
+	/* Try to see if there is a key binding in the current table. */
 	if (bd != NULL) {
 		/*
 		 * Key was matched in this table. If currently repeating but a
@@ -2015,7 +2057,19 @@ try_again:
 	}
 
 	/*
-	 * No match in this table. If not in the root table or if repeating,
+	 * Binding movement keys is useless since we only turn them on when the
+	 * application requests, so don't let them exit the prefix table.
+	 */
+	if (key == KEYC_MOUSEMOVE_PANE ||
+	    key == KEYC_MOUSEMOVE_STATUS ||
+	    key == KEYC_MOUSEMOVE_STATUS_LEFT ||
+	    key == KEYC_MOUSEMOVE_STATUS_RIGHT ||
+	    key == KEYC_MOUSEMOVE_STATUS_DEFAULT ||
+	    key == KEYC_MOUSEMOVE_BORDER)
+		goto forward_key;
+
+	/*
+	 * No match in this table. If not in the root table or if repeating
 	 * switch the client back to the root table and try again.
 	 */
 	log_debug("not found in key table %s", table->name);
@@ -2560,7 +2614,8 @@ server_client_check_redraw(struct client *c)
 	struct tty		*tty = &c->tty;
 	struct window		*w = c->session->curw->window;
 	struct window_pane	*wp;
-	int			 needed, flags, mode = tty->mode, new_flags = 0;
+	int			 needed, tty_flags, mode = tty->mode;
+	uint64_t		 client_flags = 0;
 	int			 redraw;
 	u_int			 bit = 0;
 	struct timeval		 tv = { .tv_usec = 1000 };
@@ -2594,7 +2649,7 @@ server_client_check_redraw(struct client *c)
 			}
 		}
 		if (needed)
-			new_flags |= CLIENT_REDRAWPANES;
+			client_flags |= CLIENT_REDRAWPANES;
 	}
 	if (needed && (left = EVBUFFER_LENGTH(tty->out)) != 0) {
 		log_debug("%s: redraw deferred (%zu left)", c->name, left);
@@ -2617,20 +2672,20 @@ server_client_check_redraw(struct client *c)
 					 * If more that 64 panes, give up and
 					 * just redraw the window.
 					 */
-					new_flags &= CLIENT_REDRAWPANES;
-					new_flags |= CLIENT_REDRAWWINDOW;
+					client_flags &= CLIENT_REDRAWPANES;
+					client_flags |= CLIENT_REDRAWWINDOW;
 					break;
 				}
 			}
 			if (c->redraw_panes != 0)
 				c->flags |= CLIENT_REDRAWPANES;
 		}
-		c->flags |= new_flags;
+		c->flags |= client_flags;
 		return;
 	} else if (needed)
 		log_debug("%s: redraw needed", c->name);
 
-	flags = tty->flags & (TTY_BLOCK|TTY_FREEZE|TTY_NOCURSOR);
+	tty_flags = tty->flags & (TTY_BLOCK|TTY_FREEZE|TTY_NOCURSOR);
 	tty->flags = (tty->flags & ~(TTY_BLOCK|TTY_FREEZE))|TTY_NOCURSOR;
 
 	if (~c->flags & CLIENT_REDRAWWINDOW) {
@@ -2662,9 +2717,10 @@ server_client_check_redraw(struct client *c)
 		screen_redraw_screen(c);
 	}
 
-	tty->flags = (tty->flags & ~TTY_NOCURSOR)|(flags & TTY_NOCURSOR);
+	tty->flags = (tty->flags & ~TTY_NOCURSOR)|(tty_flags & TTY_NOCURSOR);
 	tty_update_mode(tty, mode, NULL);
-	tty->flags = (tty->flags & ~(TTY_BLOCK|TTY_FREEZE|TTY_NOCURSOR))|flags;
+	tty->flags = (tty->flags & ~(TTY_BLOCK|TTY_FREEZE|TTY_NOCURSOR))|
+	    tty_flags;
 
 	c->flags &= ~(CLIENT_ALLREDRAWFLAGS|CLIENT_STATUSFORCE);
 

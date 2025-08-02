@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_strerror.c,v 1.5 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: bsd_strerror.c,v 1.5.8.1 2025/08/02 05:22:30 perseant Exp $	*/
 
 #include <config.h>
 
@@ -47,5 +47,5 @@ strerror(
 	return ebuf;
 }
 #else
-int strerror_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif

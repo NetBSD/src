@@ -39,7 +39,13 @@ class MUTEX StaticSpinMutex {
   void Unlock() RELEASE() { atomic_store(&state_, 0, memory_order_release); }
 
   void CheckLocked() const CHECK_LOCKED() {
-    CHECK_EQ(atomic_load(&state_, memory_order_relaxed), 1);
+    // __sync_lock_test_and_set (as used under the hood of the bespoke
+    // atomic_exchange here) does not always store the value we asked
+    // to store -- it just stores some nonzero value.  On sparc, this
+    // is 0xff.  On vax, this is whatever was there before but with the
+    // low-order bit set.  So test for a nonzero value, rather than for
+    // the specific value 1.
+    CHECK_NE(atomic_load(&state_, memory_order_relaxed), 0);
   }
 
  private:

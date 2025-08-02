@@ -32,6 +32,12 @@ noipdefault
 # enable this on a server that already has a permanent default route
 #nodefaultroute
 
+# Default IPv6 route is automatically configured by kernel based on
+# received ICMPv6 Router Advertisement packets.
+# pppd should not touch default IPv6 route to prevent breaking IPv6 setup.
+# Enabling defaultroute6 is needed only for broken IPv6 setup.
+nodefaultroute6
+
 # Run the executable or shell command specified after pppd has terminated
 # the link.  This script could, for example, issue commands to the modem
 # to cause it to hang up if hardware modem control signals were not
@@ -146,8 +152,5 @@ lcp-echo-failure 4
 
 # Specifies that pppd should disconnect if the link is idle for n seconds.
 idle 600
-
-# Disable the IPXCP and IPX protocols.
-noipx
 
 # ---<End of File>---

@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.h,v 1.6 2009/04/21 18:38:32 tteras Exp $	*/
+/*	$NetBSD: grabmyaddr.h,v 1.6.62.1 2025/08/02 05:18:36 perseant Exp $	*/
 
 /* Id: grabmyaddr.h,v 1.5 2004/06/11 16:00:16 ludvigm Exp */
 
@@ -34,15 +34,15 @@
 #ifndef _GRABMYADDR_H
 #define _GRABMYADDR_H
 
-extern void myaddr_init_lists __P((void));
-extern int myaddr_init __P((void));
-extern void myaddr_close __P((void));
+extern void myaddr_init_lists(void);
+extern int myaddr_init(void);
+extern void myaddr_close(void);
 
-extern void myaddr_flush __P((void));
-extern int myaddr_listen __P((struct sockaddr *, int));
-extern void myaddr_sync __P((void));
+extern void myaddr_flush(void);
+extern int myaddr_listen(struct sockaddr *, int);
+extern void myaddr_sync(void);
 
-extern int myaddr_getfd __P((struct sockaddr *));
-extern int myaddr_getsport __P((struct sockaddr *));
+extern int myaddr_getfd(struct sockaddr *);
+extern int myaddr_getsport(struct sockaddr *);
 
 #endif /* _GRABMYADDR_H */

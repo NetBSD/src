@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.49 2019/04/24 17:27:08 cheusov Exp $	*/
+/*	$NetBSD: pax.c,v 1.49.12.1 2025/08/02 05:18:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.49 2019/04/24 17:27:08 cheusov Exp $");
+__RCSID("$NetBSD: pax.c,v 1.49.12.1 2025/08/02 05:18:25 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,7 @@ sigset_t s_mask;		/* signal mask for cleanup critical sect */
 FILE	*listf;			/* file pointer to print file list to */
 char	*tempfile;		/* tempfile to use for mkstemp(3) */
 char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
-int	forcelocal;		/* force local operation even if the name 
+int	forcelocal;		/* force local operation even if the name
 				 * contains a :
 				 */
 int	secure = 1;		/* don't extract names that contain .. */
@@ -260,15 +260,24 @@ main(int argc, char **argv)
 		return exit_val;
 
 	/*
-	 * Keep a reference to cwd, so we can always come back home.
+	 * For any actions other than LIST, keep a reference to cwd, so
+	 * we can always come back home.
+	 *
+	 * For EXTRACT (pax -r) without --insecure, also save the path
+	 * to cwd to check for escape attempts.
 	 */
-	cwdfd = open(".", O_RDONLY);
-	if (cwdfd < 0) {
-		syswarn(1, errno, "Can't open current working directory.");
-		return exit_val;
+	if (act != LIST) {
+		cwdfd = open(".", O_RDONLY);
+		if (cwdfd < 0) {
+			syswarn(1, errno,
+			    "Can't open current working directory.");
+			return exit_val;
+		}
+		if (act == EXTRACT && secure) {
+			if (updatepath() == -1)
+				return exit_val;
+		}
 	}
-	if (updatepath() == -1)
-		return exit_val;
 
 	/*
 	 * Where should we put temporary files?
@@ -306,7 +315,7 @@ main(int argc, char **argv)
 		if (gzip_program != NULL)
 			err(1, "cannot gzip while appending");
 		rval = append();
-		/* 
+		/*
 		 * Check if we tried to append on an empty file and
 		 * turned into ARCHIVE mode.
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.6.8.1 2025/08/02 05:22:32 perseant Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/parse.c,v 4.20 2005/08/06 17:39:40 kardel RELEASE_20050806_A
@@ -877,7 +877,7 @@ parse_setcs(
 }
 
 #else /* not (REFCLOCK && CLOCK_PARSE) */
-int parse_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* not (REFCLOCK && CLOCK_PARSE) */
 
 /*

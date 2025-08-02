@@ -1,0 +1,14 @@
+HEIMDAL_COM_ERR_1.0
+_et_list@@HEIMDAL_COM_ERR_1.0
+add_to_error_table@@HEIMDAL_COM_ERR_1.0
+com_err@@HEIMDAL_COM_ERR_1.0
+com_err_va@@HEIMDAL_COM_ERR_1.0
+com_right@@HEIMDAL_COM_ERR_1.0
+com_right_r@@HEIMDAL_COM_ERR_1.0
+error_message@@HEIMDAL_COM_ERR_1.0
+error_table_name@@HEIMDAL_COM_ERR_1.0
+free_error_table@@HEIMDAL_COM_ERR_1.0
+init_error_table@@HEIMDAL_COM_ERR_1.0
+initialize_error_table_r@@HEIMDAL_COM_ERR_1.0
+reset_com_err_hook@@HEIMDAL_COM_ERR_1.0
+set_com_err_hook@@HEIMDAL_COM_ERR_1.0

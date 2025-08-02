@@ -1,4 +1,4 @@
-##Copyright (C) 1991-2023 Free Software Foundation, Inc.
+##Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
 # Makefile for GDB documentation.
 # This file is part of GDB.
@@ -24,6 +24,7 @@ prefix = @prefix@
 infodir = @infodir@
 datarootdir = @datarootdir@
 docdir = @docdir@
+dvidir = @dvidir@
 pdfdir = @pdfdir@
 htmldir = @htmldir@
 mandir = @mandir@
@@ -31,6 +32,8 @@ man1dir = $(mandir)/man1
 man5dir = $(mandir)/man5
 
 transform = @program_transform_name@
+
+include $(srcdir)/../silent-rules.mk
 
 SHELL = @SHELL@
 
@@ -87,6 +90,8 @@ SET_TEXINPUTS = \
 # Files which should be generated via 'info' and installed by 'install-info'
 INFO_DEPS = gdb.info stabs.info annotate.info
 
+# Files which should be generated via 'dvi' and installed by 'install-dvi'
+DVIFILES = gdb.dvi stabs.dvi refcard.dvi annotate.dvi
 # Files which should be generated via 'pdf' and installed by 'install-pdf'
 PDFFILES = gdb.pdf stabs.pdf refcard.pdf annotate.pdf
 # Files which should be generated via 'html' and installed by 'install-html'
@@ -183,6 +188,11 @@ MAN1S = gdb.1 gdbserver.1 gcore.1 gdb-add-index.1
 MAN5S = gdbinit.5
 MANS = $(MAN1S) $(MAN5S)
 
+# The pod files that are generated as a side effect of creating the
+# man pages.
+POD_FILE_TMPS = $(patsubst %.1,%.pod,$(MAN1S)) \
+		$(patsubst %.5,%.pod,$(MAN5S))
+
 HAVE_NATIVE_GCORE_TARGET = @HAVE_NATIVE_GCORE_TARGET@
 HAVE_NATIVE_GCORE_HOST = @HAVE_NATIVE_GCORE_HOST@
 
@@ -190,8 +200,9 @@ HAVE_NATIVE_GCORE_HOST = @HAVE_NATIVE_GCORE_HOST@
 
 all: info
 
-info: $(INFO_DEPS)
-dvi: gdb.dvi stabs.dvi refcard.dvi annotate.dvi
+info:
+NetBSD_DISABLED_info: $(INFO_DEPS)
+dvi: $(DVIFILES)
 ps: gdb.ps stabs.ps refcard.ps annotate.ps
 html: $(HTMLFILES)
 pdf: $(PDFFILES)
@@ -233,9 +244,8 @@ Doxyfile-gdb-xref:	$(srcdir)/Doxyfile-gdb-xref.in
 Doxyfile-gdbserver:	$(srcdir)/Doxyfile-gdbserver.in
 	$(doxyedit) $(srcdir)/Doxyfile-gdbserver.in >Doxyfile-gdbserver
 
-all-doc: info dvi ps # pdf
+all-doc: info dvi ps pdf
 diststuff: info man
-	rm -f gdb-cfg.texi
 
 install-info: $(INFO_DEPS)
 	$(SHELL) $(srcdir)/../../mkinstalldirs $(DESTDIR)$(infodir)
@@ -291,6 +301,18 @@ install-html: $(HTMLFILES)
 	    echo " $(INSTALL_DATA) '$$d$$p' '$(DESTDIR)$(htmldir)/$$f'"; \
 	    $(INSTALL_DATA) "$$d$$p" "$(DESTDIR)$(htmldir)/$$f"; \
 	  fi; \
+	done
+
+dvi__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
+
+install-dvi: $(DVIFILES)
+	@$(NORMAL_INSTALL)
+	test -z "$(dvidir)" || $(mkinstalldirs) "$(DESTDIR)$(dvidir)"
+	@list='$(DVIFILES)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(dvi__strip_dir) \
+	  echo " $(INSTALL_DATA) '$$d$$p' '$(DESTDIR)$(dvidir)/$$f'"; \
+	  $(INSTALL_DATA) "$$d$$p" "$(DESTDIR)$(dvidir)/$$f"; \
 	done
 
 pdf__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
@@ -391,29 +413,29 @@ de-stage3: force
 
 # GDB QUICK REFERENCE (dvi output)
 refcard.dvi : refcard.tex $(REFEDITS)
-	echo > tmp.sed
-	for f in x $(REFEDITS) ; do \
+	$(SILENCE) echo > tmp.sed
+	$(SILENCE) for f in x $(REFEDITS) ; do \
 		test x$$f = xx && continue ; \
 		cat $(srcdir)/$$f >>tmp.sed ; \
 	done
-	sed -f tmp.sed $(srcdir)/refcard.tex >sedref.tex
-	$(SET_TEXINPUTS) $(TEX) sedref.tex
-	mv sedref.dvi refcard.dvi
-	rm -f sedref.log sedref.tex tmp.sed
+	$(SILENCE) sed -f tmp.sed $(srcdir)/refcard.tex >sedref.tex
+	$(ECHO_TEX) $(SET_TEXINPUTS) $(TEX) sedref.tex
+	$(SILENCE) mv sedref.dvi refcard.dvi
+	$(SILENCE) rm -f sedref.log sedref.tex tmp.sed
 
 refcard.ps : refcard.dvi
-	$(DVIPS) -t landscape -o $@ $?
+	$(ECHO_DVIPS) $(DVIPS) $(SILENT_Q_FLAG) -t landscape -o $@ $?
 
 refcard.pdf : refcard.tex $(REFEDITS)
-	echo > tmp.sed
-	for f in x $(REFEDITS) ; do \
+	$(SILENCE) echo > tmp.sed
+	$(SILENCE) for f in x $(REFEDITS) ; do \
 		test x$$f = xx && continue ; \
 		cat $(srcdir)/$$f >>tmp.sed ; \
 	done
-	sed -f tmp.sed $(srcdir)/refcard.tex >sedref.tex
-	$(SET_TEXINPUTS) $(PDFTEX) sedref.tex
-	mv sedref.pdf refcard.pdf
-	rm -f sedref.log sedref.tex tmp.sed
+	$(SILENCE) sed -f tmp.sed $(srcdir)/refcard.tex >sedref.tex
+	$(ECHO_PDFTEX) $(SET_TEXINPUTS) $(PDFTEX) sedref.tex
+	$(SILENCE) mv sedref.pdf refcard.pdf
+	$(SILENCE) rm -f sedref.log sedref.tex tmp.sed
 
 # File to record current GDB version number.
 GDBvn.texi : version.subst
@@ -421,25 +443,30 @@ GDBvn.texi : version.subst
 NetBSD_DISABLED_GDBvn.texi:
 	echo "@set GDBVN `sed q version.subst`" > ./GDBvn.new
 	if [ -n "$(PKGVERSION)" ]; then \
+	$(ECHO_GEN)
+	$(SILENCE) echo "@set GDBVN `sed q version.subst`" > ./GDBvn.new
+	$(SILENCE) if [ -n "$(PKGVERSION)" ]; then \
 	  echo "@set VERSION_PACKAGE $(PKGVERSION)" >> ./GDBvn.new; \
 	fi
-	echo "@set BUGURL $(BUGURL_TEXI)" >> ./GDBvn.new
-	if [ "$(BUGURL_TEXI)" = "@uref{http://www.gnu.org/software/gdb/bugs/}" ]; then \
+	$(SILENCE) echo "@set BUGURL $(BUGURL_TEXI)" >> ./GDBvn.new
+	$(SILENCE) if [ "$(BUGURL_TEXI)" = "@uref{http://www.gnu.org/software/gdb/bugs/}" ]; then \
 	  echo "@set BUGURL_DEFAULT" >> ./GDBvn.new; \
 	fi
-	if test -z "$(READLINE_TEXI_INCFLAG)"; then \
+	$(SILENCE) if test -z "$(READLINE_TEXI_INCFLAG)"; then \
 	  echo "@set SYSTEM_READLINE" >> ./GDBvn.new; \
 	fi
-	if [ -n "$(SYSTEM_GDBINIT)" ]; then \
-	  echo "@set SYSTEM_GDBINIT $(SYSTEM_GDBINIT)" >> ./GDBvn.new; \
+	$(SILENCE) if [ -n "$(SYSTEM_GDBINIT)" ]; then \
+	  escaped_system_gdbinit=`echo $(SYSTEM_GDBINIT) | sed 's/@/@@/g'`; \
+	  echo "@set SYSTEM_GDBINIT $$escaped_system_gdbinit" >> ./GDBvn.new; \
 	fi
-	if [ -n "$(SYSTEM_GDBINIT_DIR)" ]; then \
-	  echo "@set SYSTEM_GDBINIT_DIR $(SYSTEM_GDBINIT_DIR)" >> ./GDBvn.new; \
+	$(SILENCE) if [ -n "$(SYSTEM_GDBINIT_DIR)" ]; then \
+	  escaped_system_gdbinit_dir=`echo $(SYSTEM_GDBINIT_DIR) | sed 's/@/@@/g'`; \
+	  echo "@set SYSTEM_GDBINIT_DIR $$escaped_system_gdbinit_dir" >> ./GDBvn.new; \
 	fi
-	mv GDBvn.new GDBvn.texi
+	$(SILENCE) mv GDBvn.new GDBvn.texi
 
 version.subst: $(gdbdir)/version.in $(gdbdir)/../bfd/version.h
-	date=`sed -n -e 's/^.* BFD_VERSION_DATE \(.*\)$$/\1/p' $(gdbdir)/../bfd/version.h`; \
+	$(ECHO_GEN) date=`sed -n -e 's/^.* BFD_VERSION_DATE \(.*\)$$/\1/p' $(gdbdir)/../bfd/version.h`; \
 	sed -e "s/DATE/$$date/" < $(gdbdir)/version.in > version.subst
 
 # Updated atomically
@@ -450,7 +477,7 @@ version.subst: $(gdbdir)/version.in $(gdbdir)/../bfd/version.h
 # not one for their binary config---which may not be specifically
 # defined anyways).
 gdb-cfg.texi: ${srcdir}/${DOC_CONFIG}-cfg.texi
-	(test "$(LN_S)" = "ln -s" && \
+	$(ECHO_GEN) (test "$(LN_S)" = "ln -s" && \
 	  ln -s ${srcdir}/${DOC_CONFIG}-cfg.texi gdb-cfg.texi) || \
 	ln ${srcdir}/${DOC_CONFIG}-cfg.texi gdb-cfg.texi || \
 	cp ${srcdir}/${DOC_CONFIG}-cfg.texi gdb-cfg.texi
@@ -472,29 +499,30 @@ GDB_TEX_TMPS = gdb.aux gdb.cp* gdb.fn* gdb.ky* gdb.log gdb.pg* gdb.toc \
 
 # GDB MANUAL: TeX dvi file
 gdb.dvi: ${GDB_DOC_FILES}
-	if [ ! -f ./GDBvn.texi ]; then \
+	$(SILENCE) if [ ! -f ./GDBvn.texi ]; then \
 		(test "$(LN_S)" = "ln -s" && ln -s $(srcdir)/GDBvn.texi .) || \
 		ln $(srcdir)/GDBvn.texi . || \
 		cp $(srcdir)/GDBvn.texi . ; else true; fi
-	rm -f $(GDB_TEX_TMPS)
-	$(TEXI2DVI) $(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) \
-		$(srcdir)/gdb.texinfo
+	$(SILENCE) rm -f $(GDB_TEX_TMPS)
+	$(ECHO_TEXI2DVI) $(TEXI2DVI) $(SILENT_Q_FLAG) $(READLINE_TEXI_INCFLAG) \
+		-I ${GDBMI_DIR} -I $(srcdir) $(srcdir)/gdb.texinfo
 
 gdb.ps: gdb.dvi
-	$(DVIPS) -o $@ $?
+	$(ECHO_DVIPS) $(DVIPS) $(SILENT_Q_FLAG) -o $@ $?
 
 gdb.pdf: ${GDB_DOC_FILES}
-	if [ ! -f ./GDBvn.texi ]; then \
+	$(SILENCE) if [ ! -f ./GDBvn.texi ]; then \
 		(test "$(LN_S)" = "ln -s" && ln -s $(srcdir)/GDBvn.texi .) || \
 		ln $(srcdir)/GDBvn.texi . || \
 		cp $(srcdir)/GDBvn.texi . ; else true; fi
-	rm -f $(GDB_TEX_TMPS)
-	$(TEXI2DVI) --pdf $(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) \
+	$(SILENCE) rm -f $(GDB_TEX_TMPS)
+	$(ECHO_TEXI2DVI) $(TEXI2DVI) $(SILENT_Q_FLAG) --pdf \
+		$(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) \
 		$(srcdir)/gdb.texinfo
 
 # GDB MANUAL: info file
 gdb.info: ${GDB_DOC_FILES}
-	$(MAKEINFO_CMD) $(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) \
+	$(ECHO_MAKEINFO) $(MAKEINFO_CMD) $(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) \
 		-o gdb.info $(srcdir)/gdb.texinfo
 
 # GDB MANUAL: roff translations
@@ -512,16 +540,16 @@ gdb.info: ${GDB_DOC_FILES}
 # it out for gdb manual's include files---but only if not configured
 # in main sourcedir.
 links2roff: $(GDB_DOC_SOURCE_INCLUDES)
-	if [ ! -f gdb.texinfo ]; then \
+	$(ECHO_GEN) if [ ! -f gdb.texinfo ]; then \
 		(test "$(LN_S)" = "ln -s" && ln -s $(GDB_DOC_SOURCE_INCLUDES) .) || \
 		ln $(GDB_DOC_SOURCE_INCLUDES)    . || \
 		cp $(GDB_DOC_SOURCE_INCLUDES)    . ; \
 	fi
-	touch links2roff
+	$(SILENCE) touch links2roff
 
 # gdb manual suitable for [gtn]roff -me
 gdb.me: $(GDB_DOC_FILES) links2roff
-	sed -e '/\\input texinfo/d' \
+	$(ECHO_GEN) sed -e '/\\input texinfo/d' \
 		-e '/@c TEXI2ROFF-KILL/,/@c END TEXI2ROFF-KILL/d' \
 		-e '/^@ifinfo/,/^@end ifinfo/d' \
 		-e '/^@c /d' \
@@ -536,7 +564,7 @@ gdb.me: $(GDB_DOC_FILES) links2roff
 
 # gdb manual suitable for [gtn]roff -ms
 gdb.ms: $(GDB_DOC_FILES) links2roff
-	sed -e '/\\input texinfo/d' \
+	$(ECHO_GEN) sed -e '/\\input texinfo/d' \
 		-e '/@c TEXI2ROFF-KILL/,/@c END TEXI2ROFF-KILL/d' \
 		-e '/^@ifinfo/,/^@end ifinfo/d' \
 		-e '/^@c /d' \
@@ -553,7 +581,7 @@ gdb.ms: $(GDB_DOC_FILES) links2roff
 # '@noindent's removed due to texi2roff-2 mm bug; if yours is newer, 
 #   try leaving them in
 gdb.mm: $(GDB_DOC_FILES) links2roff
-	sed -e '/\\input texinfo/d' \
+	$(ECHO_GEN) sed -e '/\\input texinfo/d' \
 		-e '/@c TEXI2ROFF-KILL/,/@c END TEXI2ROFF-KILL/d' \
 		-e '/^@ifinfo/,/^@end ifinfo/d' \
 		-e '/^@c /d' \
@@ -570,15 +598,21 @@ gdb.mm: $(GDB_DOC_FILES) links2roff
 # GDB MANUAL: HTML file
 
 gdb/index.html: ${GDB_DOC_FILES}
-	$(MAKEHTML) $(MAKEHTMLFLAGS) $(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) $(srcdir)/gdb.texinfo
+	$(ECHO_GEN) $(MAKEHTML) $(MAKEHTMLFLAGS) \
+		-o gdb \
+		$(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) \
+		$(srcdir)/gdb.texinfo
 
 stabs.info: $(STABS_DOC_FILES)
-	$(MAKEINFO_CMD) -I $(srcdir) -o stabs.info $(srcdir)/stabs.texinfo
+	$(ECHO_MAKEINFO) $(MAKEINFO_CMD) -I $(srcdir) -o stabs.info $(srcdir)/stabs.texinfo
 
 # STABS DOCUMENTATION: HTML file
 
 stabs/index.html: $(STABS_DOC_FILES)
-	$(MAKEHTML) $(MAKEHTMLFLAGS) -I $(srcdir) $(srcdir)/stabs.texinfo
+	$(ECHO_GEN) $(MAKEHTML) $(MAKEHTMLFLAGS) \
+		-o stabs \
+		-I $(srcdir) \
+		$(srcdir)/stabs.texinfo
 
 # Clean these up before each run.  Avoids a catch 22 with not being
 # able to re-generate these files (to fix a corruption) because these
@@ -588,15 +622,17 @@ STABS_TEX_TMPS = stabs.aux stabs.cp* stabs.fn* stabs.ky* \
 
 # STABS DOCUMENTATION: TeX dvi file
 stabs.dvi : $(STABS_DOC_FILES)
-	rm -f $(STABS_TEX_TMPS)
-	$(TEXI2DVI) -I $(srcdir) $(srcdir)/stabs.texinfo
+	$(SILENCE) rm -f $(STABS_TEX_TMPS)
+	$(ECHO_TEXI2DVI) $(TEXI2DVI) $(SILENT_Q_FLAG) -I $(srcdir) \
+		$(srcdir)/stabs.texinfo
 
 stabs.ps: stabs.dvi
-	$(DVIPS) -o $@ $?
+	$(ECHO_DVIPS) $(DVIPS) $(SILENT_Q_FLAG) -o $@ $?
 
 stabs.pdf: $(STABS_DOC_FILES)
-	rm -f $(STABS_TEX_TMPS)
-	$(TEXI2DVI) --pdf -I $(srcdir) $(srcdir)/stabs.texinfo
+	$(SILENCE) rm -f $(STABS_TEX_TMPS)
+	$(ECHO_TEXI2DVI) $(TEXI2DVI) $(SILENT_Q_FLAG) --pdf -I $(srcdir) \
+		$(srcdir)/stabs.texinfo
 
 # Clean these up before each run.  Avoids a catch 22 with not being
 # able to re-generate these files (to fix a corruption) because these
@@ -606,62 +642,60 @@ ANNOTATE_TEX_TMPS = annotate.aux annotate.cp* annotate.fn* annotate.ky* \
 
 # ANNOTATE DOCUMENTATION: TeX dvi file
 annotate.dvi : $(ANNOTATE_DOC_FILES)
-	rm -f $(ANNOTATE_TEX_TMPS)
-	$(TEXI2DVI) -I $(srcdir) $(srcdir)/annotate.texinfo
+	$(SILENCE) rm -f $(ANNOTATE_TEX_TMPS)
+	$(ECHO_TEXI2DVI) $(TEXI2DVI) $(SILENT_Q_FLAG) -I $(srcdir) \
+		$(srcdir)/annotate.texinfo
 
 annotate.ps: annotate.dvi
-	$(DVIPS) -o $@ $?
+	$(ECHO_DVIPS) $(DVIPS) $(SILENT_Q_FLAG) -o $@ $?
 
 annotate.pdf: $(ANNOTATE_DOC_FILES)
-	rm -f $(ANNOTATE_TEX_TMPS)
-	$(TEXI2DVI) --pdf -I $(srcdir) $(srcdir)/annotate.texinfo
+	$(SILENCE) rm -f $(ANNOTATE_TEX_TMPS)
+	$(ECHO_TEXI2DVI) $(TEXI2DVI) $(SILENT_Q_FLAG) --pdf -I $(srcdir) \
+		$(srcdir)/annotate.texinfo
 
 annotate.info: $(ANNOTATE_DOC_FILES)
-	$(MAKEINFO_CMD) -I $(srcdir) -o annotate.info $(srcdir)/annotate.texinfo
+	$(ECHO_MAKEINFO) $(MAKEINFO_CMD) -I $(srcdir) -o annotate.info $(srcdir)/annotate.texinfo
 
 annotate/index.html: $(ANNOTATE_DOC_FILES)
-	$(MAKEHTML) $(MAKEHTMLFLAGS) -I $(srcdir) $(srcdir)/annotate.texinfo
+	$(ECHO_MAKEHTML) $(MAKEHTML) $(MAKEHTMLFLAGS) \
+		-o annotate \
+		-I $(srcdir) \
+		$(srcdir)/annotate.texinfo
 
-# Man pages
-gdb.1: $(GDB_DOC_FILES)
-	touch $@
-	-$(TEXI2POD) $(MANCONF) -Dgdb < $(srcdir)/gdb.texinfo > gdb.pod
-	-($(POD2MAN1) gdb.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+# Man pages.  The TEXI2POD and TEXI2MAN steps are performed within a
+# single recipe to support how we distribute GDB releases.  A release
+# includes the .1 and .5 man pages in the source tree, but not the
+# .pod files.
+#
+# When building and installing a release of GDB it should not be
+# necessary to rebuild the .1 or .5 man page files, nor should it be
+# necessary to rebuild the .pod files.
+#
+# If we split the .pod creation from the creation of the .1 and .5
+# pages, then the .pod files must become a dependency, this will
+# trigger an attempt to rebuild these files while building and
+# installing a release of GDB, which is something we don't want.
+$(MAN1S) : %.1 : $(GDB_DOC_FILES)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_MAN1S:
+	$(ECHO_TEXI2POD) $(TEXI2POD) $(MANCONF) -D$* < $(srcdir)/gdb.texinfo > $*.pod
+	$(ECHO_TEXI2MAN) ($(POD2MAN1) $*.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
-	rm -f gdb.pod
+	$(SILENCE) rm -f $*.pod
 
-gdbserver.1: $(GDB_DOC_FILES)
-	touch $@
-	-$(TEXI2POD) $(MANCONF) -Dgdbserver < $(srcdir)/gdb.texinfo > gdbserver.pod
-	-($(POD2MAN1) gdbserver.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+$(MAN5S) : %.5 : $(GDB_DOC_FILES)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_MAN5S:
+	$(ECHO_TEXI2POD) $(TEXI2POD) $(MANCONF) -D$* < $(srcdir)/gdb.texinfo > $*.pod
+	$(ECHO_TEXI2MAN) ($(POD2MAN5) $*.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
-	rm -f gdbserver.pod
-
-gcore.1: $(GDB_DOC_FILES)
-	touch $@
-	-$(TEXI2POD) $(MANCONF) -Dgcore < $(srcdir)/gdb.texinfo > gcore.pod
-	-($(POD2MAN1) gcore.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
-		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
-	rm -f gcore.pod
-
-gdb-add-index.1: $(GDB_DOC_FILES)
-	touch $@
-	-$(TEXI2POD) $(MANCONF) -Dgdb-add-index < $(srcdir)/gdb.texinfo > gdb-add-index.pod
-	-($(POD2MAN1) gdb-add-index.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
-		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
-	rm -f gdb-add-index.pod
-
-gdbinit.5: $(GDB_DOC_FILES)
-	touch $@
-	-$(TEXI2POD) $(MANCONF) -Dgdbinit < $(srcdir)/gdb.texinfo > gdbinit.pod
-	-($(POD2MAN5) gdbinit.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
-		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
-	rm -f gdbinit.pod
+	$(SILENCE) rm -f $*.pod
 
 force:
 
 Makefile: Makefile.in $(host_makefile_frag) ../config.status
-	cd .. && $(SHELL) ./config.status doc/Makefile
+	$(ECHO_GEN) cd .. && $(SHELL) ./config.status $(SILENT_FLAG) doc/Makefile
 
 
 # The "least clean" level of cleaning.  Get rid of files which are
@@ -672,7 +706,8 @@ mostlyclean:
 	rm -f $(GDB_TEX_TMPS)
 	rm -f $(STABS_TEX_TMPS)
 	rm -f $(ANNOTATE_TEX_TMPS)
-	rm -f sedref.dvi sedref.tex tmp.sed
+	rm -f sedref.dvi sedref.tex tmp.sed sedref.log
+	rm -f $(POD_FILE_TMPS)
 
 clean: mostlyclean
 	rm -f gdb-cfg.texi
@@ -687,7 +722,8 @@ distclean: clean
 maintainer-clean realclean: distclean
 	rm -f GDBvn.texi version.subst *.info* *.dvi *.ps *.html *.pdf $(MANS)
 
-install: install-info install-man
+install: install-man
+NetBSD_DISABLED_install: install-info install
 
 uninstall: uninstall-info uninstall-man
 

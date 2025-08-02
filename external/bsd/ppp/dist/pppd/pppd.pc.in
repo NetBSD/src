@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+plugindir=@PPPD_PLUGIN_DIR@
+
+Name: pppd
+Description: Point-to-Point Protocol (PPP) daemon
+Version: @PACKAGE_VERSION@
+Cflags: -I${includedir}

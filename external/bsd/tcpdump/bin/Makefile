@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2023/08/18 12:55:50 tnn Exp $	
+#	$NetBSD: Makefile,v 1.27.2.1 2025/08/02 05:23:19 perseant Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -211,8 +211,8 @@ CPPFLAGS+=-DHAVE_OS_IPV6_SUPPORT=1
 .endif
 
 CPPFLAGS+=-DHAVE_LIBCRYPTO=1 -DHAVE_OPENSSL_EVP_H 
-LDADD+=	-lcrypto -lcrypt
-DPADD+=	${LIBCRYPTO} ${LIBCRYPT}
+LDADD+=	-lcrypto -lcrypt -lpthread
+DPADD+=	${LIBCRYPTO} ${LIBCRYPT} ${LIBPTHREAD}
 
 CLEANFILES+=	version.c tcpdump.8
 

@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.10 2018/03/01 06:12:09 snj Exp $
+#	$NetBSD: dot.profile,v 1.10.16.1 2025/08/02 05:20:45 perseant Exp $
 #
 # This is the default .profile file.
 # Users are expected to edit it to meet their own needs.
@@ -9,10 +9,11 @@
 # See sh(1) for details.
 #
 
-# Set your editor. Default to explicitly setting vi, as otherwise some
-# software will run ed and other software will fail. Can be set to
-# emacs or nano or whatever other editor you may prefer, but of course
-# those editors must be installed before you can use them.
+# Set your editor.  Can be set to emacs or nano or whatever other
+# editor you may prefer, but of course those editors must be installed
+# before you can use them.  Default to explicitly setting vi, as
+# otherwise some software (including sh's own fc) will run ed and
+# other software will fail.
 export EDITOR=vi
 
 # vi settings: set show-match auto-indent always-redraw shift-width=4
@@ -26,7 +27,14 @@ export EDITOR=vi
 # Set the pager. This is used by, among other things, man(1) for
 # showing man pages. The default is "more". Another reasonable choice
 # (included with the system by default) is "less".
-#export PAGER=more
+#export PAGER=less
+
+# Many modern terminal emulators don't provide a way to disable
+# alternate screen switching (like xterm's titeInhibit).  less(1) has
+# its own option (-X) for that that you can use to alleviate the pain,
+# as PAGER is the most common scenario for hitting this.  Add other
+# flags according to taste.
+#export LESS='-i -M -X'
 
 # Set your default printer, if desired.
 #export PRINTER=change-this-to-a-printer

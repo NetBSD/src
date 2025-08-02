@@ -142,7 +142,7 @@ typedef signed long long sptr;
 #  if (SANITIZER_WORDSIZE == 64) || SANITIZER_MAC || SANITIZER_WINDOWS || \
       (SANITIZER_NETBSD && \
        (defined(__sparc__) || defined(__hppa__) || defined(__arm__) || \
-	(defined(__mips__) && !defined(__mips_o32))))
+	(defined(__mips__) && !defined(__mips_o32)) || defined(__vax__)))
 typedef unsigned long uptr;
 typedef signed long sptr;
 #  else

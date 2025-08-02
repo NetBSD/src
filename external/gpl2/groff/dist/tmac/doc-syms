@@ -545,8 +545,8 @@
 .as doc-str-St--isoC-99        " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^99\*[doc-str-St]\*[Rq])
 .ds doc-str-St--isoC-2011      \*[doc-Tn-font-size]ISO/IEC\*[doc-str-St] 9899:2011
 .as doc-str-St--isoC-2011      " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^11\*[doc-str-St]\*[Rq])
-.ds doc-str-St--isoC-2018      \*[doc-Tn-font-size]ISO/IEC\*[doc-str-St] 9899:2018
-.as doc-str-St--isoC-2018      " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^18\*[doc-str-St]\*[Rq])
+.ds doc-str-St--isoC-2023      \*[doc-Tn-font-size]ISO/IEC\*[doc-str-St] 9899:2024
+.as doc-str-St--isoC-2023      " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^23\*[doc-str-St]\*[Rq])
 .
 .\" POSIX Part 1: System API
 .ds doc-str-St--p1003.1        \*[doc-Tn-font-size]\%IEEE\*[doc-str-St] Std 1003.1
@@ -573,6 +573,8 @@
 .as doc-str-St--p1003.1-2004   " (\*[Lq]\)\*[Px]\*[doc-str-St].1\*[Rq])
 .ds doc-str-St--p1003.1-2008   \*[doc-Tn-font-size]\%IEEE\*[doc-str-St] Std 1003.1-2008
 .as doc-str-St--p1003.1-2008   " (\*[Lq]\)\*[Px]\*[doc-str-St].1\*[Rq])
+.ds doc-str-St--p1003.1-2024   \*[doc-Tn-font-size]\%IEEE\*[doc-str-St] Std 1003.1-2024
+.as doc-str-St--p1003.1-2024   " (\*[Lq]\)\*[Px]\*[doc-str-St].1\*[Rq])
 .
 .\" POSIX Part 2: Shell and Utilities
 .ds doc-str-St--p1003.2        \*[doc-Tn-font-size]\%IEEE\*[doc-str-St] Std 1003.2

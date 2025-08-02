@@ -1,5 +1,5 @@
 /* IBM S/390-specific support for 64-bit ELF
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1301,7 +1301,7 @@ elf_s390_gc_mark_hook (asection *sec,
    entry but we found we will not create any.  Called when we find we will
    not have any PLT for this symbol, by for example
    elf_s390_adjust_dynamic_symbol when we're doing a proper dynamic link,
-   or elf_s390_size_dynamic_sections if no dynamic sections will be
+   or elf_s390_late_size_sections if no dynamic sections will be
    created (we're only linking static objects).  */
 
 static void
@@ -1714,8 +1714,8 @@ allocate_dynrelocs (struct elf_link_hash_entry *h,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf_s390_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				struct bfd_link_info *info)
+elf_s390_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			     struct bfd_link_info *info)
 {
   struct elf_s390_link_hash_table *htab;
   bfd *dynobj;
@@ -1729,7 +1729,7 @@ elf_s390_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   dynobj = htab->elf.dynobj;
   if (dynobj == NULL)
-    abort ();
+    return true;
 
   if (htab->elf.dynamic_sections_created)
     {
@@ -2475,6 +2475,61 @@ elf_s390_relocate_section (bfd *output_bfd,
 			    + h->plt.offset);
 	      goto do_relocation;
 	    }
+
+	  /* Replace relative long addressing instructions of weak
+	     symbols, which will definitely resolve to zero, with
+	     either a load address of 0, a NOP, or a trapping insn.
+	     This prevents the PC32DBL relocation from overflowing in
+	     case the binary will be loaded at 4GB or more.  */
+	  if (h != NULL
+	      && h->root.type == bfd_link_hash_undefweak
+	      && !h->root.linker_def
+	      && (bfd_link_executable (info)
+		  || ELF_ST_VISIBILITY (h->other) != STV_DEFAULT)
+	      && r_type == R_390_PC32DBL
+	      && rel->r_offset >= 2)
+	    {
+	      void *insn_start = contents + rel->r_offset - 2;
+	      uint16_t op = bfd_get_16 (input_bfd, insn_start) & 0xff0f;
+	      uint8_t reg = bfd_get_8 (input_bfd, insn_start + 1) & 0xf0;
+
+	      /* NOTE: The order of the if's is important!  */
+	      /* Replace load address relative long (larl) with load
+		 address (lay) */
+	      if (op == 0xc000)
+		{
+		  /* larl rX,<weak sym> -> lay rX,0(0)  */
+		  bfd_put_16 (output_bfd, 0xe300 | reg, insn_start);
+		  bfd_put_32 (output_bfd, 0x71, insn_start + 2);
+		  continue;
+		}
+	      /* Replace prefetch data relative long (pfdrl) with a NOP  */
+	      else if (op == 0xc602)
+		{
+		  /* Emit a 6-byte NOP: jgnop .  */
+		  bfd_put_16 (output_bfd, 0xc004, insn_start);
+		  bfd_put_32 (output_bfd, 0x0, insn_start + 2);
+		  continue;
+		}
+	      /* Replace the following instructions with a trap:
+		 - branch relative and save long (brasl)
+		 - load (logical) relative long (lrl, lgrl, lgfrl, llgfrl)
+		 - load (logical) halfword relative long (lhrl, lghrl, llhrl, llghrl)
+		 - store relative long (strl, stgrl)
+		 - store halfword relative long (sthrl)
+		 - execute relative long (exrl)
+		 - compare (logical) relative long (crl, clrl, cgrl, clgrl, cgfrl, clgfrl)
+		 - compare (logical) halfword relative long (chrl, cghrl, clhrl, clghrl)
+		 - branch relative on count high (brcth)  */
+	      else if (op == 0xc005 || (op & 0xff00) == 0xc400
+		       || (op & 0xff00) == 0xc600 || op == 0xcc06)
+		{
+		  /* Emit a 6-byte trap: jg .+2  */
+		  bfd_put_16 (output_bfd, 0xc0f4, insn_start);
+		  bfd_put_32 (output_bfd, 0x1, insn_start + 2);
+		  continue;
+		}
+	    }
 	  /* Fall through.  */
 
 	case R_390_8:
@@ -2714,7 +2769,7 @@ elf_s390_relocate_section (bfd *output_bfd,
 	      /* This relocation gets optimized away by the local exec
 		 access optimization.  */
 	      BFD_ASSERT (! unresolved_reloc);
-	      bfd_put_64 (output_bfd, -tpoff (info, relocation),
+	      bfd_put_64 (output_bfd, -tpoff (info, relocation) + rel->r_addend,
 			  contents + rel->r_offset);
 	      continue;
 	    }
@@ -2907,7 +2962,7 @@ elf_s390_relocate_section (bfd *output_bfd,
 	  else
 	    {
 	      BFD_ASSERT (! unresolved_reloc);
-	      bfd_put_64 (output_bfd, -tpoff (info, relocation),
+	      bfd_put_64 (output_bfd, -tpoff (info, relocation) + rel->r_addend,
 			  contents + rel->r_offset);
 	    }
 	  continue;
@@ -3225,8 +3280,6 @@ elf_s390_finish_dynamic_symbol (bfd *output_bfd,
   struct elf_s390_link_hash_entry *eh = (struct elf_s390_link_hash_entry*)h;
 
   htab = elf_s390_hash_table (info);
-  if (htab == NULL)
-    return false;
 
   if (h->plt.offset != (bfd_vma) -1)
     {
@@ -3912,7 +3965,7 @@ const struct elf_size_info s390_elf64_size_info =
 #define elf_backend_gc_mark_hook	      elf_s390_gc_mark_hook
 #define elf_backend_reloc_type_class	      elf_s390_reloc_type_class
 #define elf_backend_relocate_section	      elf_s390_relocate_section
-#define elf_backend_size_dynamic_sections     elf_s390_size_dynamic_sections
+#define elf_backend_late_size_sections	      elf_s390_late_size_sections
 #define elf_backend_init_index_section	      _bfd_elf_init_1_index_section
 #define elf_backend_grok_prstatus	      elf_s390_grok_prstatus
 #define elf_backend_grok_psinfo		      elf_s390_grok_psinfo

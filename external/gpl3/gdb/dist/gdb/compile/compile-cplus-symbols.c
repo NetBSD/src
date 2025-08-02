@@ -1,6 +1,6 @@
 /* Convert symbols from GDB to GCC
 
-   Copyright (C) 2014-2023 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#include "defs.h"
 #include "compile-internal.h"
 #include "compile-cplus.h"
 #include "gdbsupport/gdb_assert.h"
@@ -32,8 +31,9 @@
 #include "gdbtypes.h"
 #include "dwarf2/loc.h"
 #include "cp-support.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "compile-c.h"
+#include "inferior.h"
 
 /* Convert a given symbol, SYM, to the compiler's representation.
    INSTANCE is the compiler instance.  IS_GLOBAL is true if the
@@ -49,7 +49,7 @@ convert_one_symbol (compile_cplus_instance *instance,
   /* Squash compiler warning.  */
   gcc_type sym_type = 0;
   const char *filename = sym.symbol->symtab ()->filename;
-  unsigned short line = sym.symbol->line ();
+  unsigned int line = sym.symbol->line ();
 
   instance->error_symbol_once (sym.symbol);
 
@@ -89,7 +89,8 @@ convert_one_symbol (compile_cplus_instance *instance,
 	    kind = GCC_CP_SYMBOL_FUNCTION;
 	    addr = sym.symbol->value_block()->start ();
 	    if (is_global && sym.symbol->type ()->is_gnu_ifunc ())
-	      addr = gnu_ifunc_resolve_addr (target_gdbarch (), addr);
+	      addr = gnu_ifunc_resolve_addr (current_inferior ()->arch (),
+					     addr);
 	  }
 	  break;
 
@@ -130,7 +131,7 @@ convert_one_symbol (compile_cplus_instance *instance,
 		     "be referenced from the current thread in "
 		     "compiled code."),
 		   sym.symbol->print_name ());
-	  /* FALLTHROUGH */
+	  [[fallthrough]];
 	case LOC_UNRESOLVED:
 	  /* 'symbol_name' cannot be used here as that one is used only for
 	     local variables from compile_dwarf_expr_to_c.
@@ -150,13 +151,13 @@ convert_one_symbol (compile_cplus_instance *instance,
 	      }
 
 	    val = read_var_value (sym.symbol, sym.block, frame);
-	    if (VALUE_LVAL (val) != lval_memory)
+	    if (val->lval () != lval_memory)
 	      error (_("Symbol \"%s\" cannot be used for compilation "
 		       "evaluation as its address has not been found."),
 		     sym.symbol->print_name ());
 
 	    kind = GCC_CP_SYMBOL_VARIABLE;
-	    addr = value_address (val);
+	    addr = val->address ();
 	  }
 	  break;
 
@@ -225,7 +226,7 @@ convert_one_symbol (compile_cplus_instance *instance,
 static void
 convert_symbol_sym (compile_cplus_instance *instance,
 		    const char *identifier, struct block_symbol sym,
-		    domain_enum domain)
+		    domain_search_flags domain)
 {
   /* If we found a symbol and it is not in the  static or global
      scope, then we should first convert any static or global scope
@@ -239,7 +240,9 @@ convert_symbol_sym (compile_cplus_instance *instance,
      }
   */
 
-  const struct block *static_block = block_static_block (sym.block);
+  const struct block *static_block = nullptr;
+  if (sym.block != nullptr)
+    static_block = sym.block->static_block ();
   /* STATIC_BLOCK is NULL if FOUND_BLOCK is the global block.  */
   bool is_local_symbol = (sym.block != static_block && static_block != nullptr);
   if (is_local_symbol)
@@ -250,7 +253,7 @@ convert_symbol_sym (compile_cplus_instance *instance,
       /* If the outer symbol is in the static block, we ignore it, as
 	 it cannot be referenced.  */
       if (global_sym.symbol != nullptr
-	  && global_sym.block != block_static_block (global_sym.block))
+	  && global_sym.block != global_sym.block->static_block ())
 	{
 	  if (compile_debug)
 	    gdb_printf (gdb_stdlog,
@@ -289,33 +292,33 @@ convert_symbol_bmsym (compile_cplus_instance *instance,
     case mst_text:
     case mst_file_text:
     case mst_solib_trampoline:
-      type = objfile_type (objfile)->nodebug_text_symbol;
+      type = builtin_type (objfile)->nodebug_text_symbol;
       kind = GCC_CP_SYMBOL_FUNCTION;
       break;
 
     case mst_text_gnu_ifunc:
       /* nodebug_text_gnu_ifunc_symbol would cause:
 	 function return type cannot be function  */
-      type = objfile_type (objfile)->nodebug_text_symbol;
+      type = builtin_type (objfile)->nodebug_text_symbol;
       kind = GCC_CP_SYMBOL_FUNCTION;
-      addr = gnu_ifunc_resolve_addr (target_gdbarch (), addr);
+      addr = gnu_ifunc_resolve_addr (current_inferior ()->arch (), addr);
       break;
 
     case mst_data:
     case mst_file_data:
     case mst_bss:
     case mst_file_bss:
-      type = objfile_type (objfile)->nodebug_data_symbol;
+      type = builtin_type (objfile)->nodebug_data_symbol;
       kind = GCC_CP_SYMBOL_VARIABLE;
       break;
 
     case mst_slot_got_plt:
-      type = objfile_type (objfile)->nodebug_got_plt_symbol;
+      type = builtin_type (objfile)->nodebug_got_plt_symbol;
       kind = GCC_CP_SYMBOL_FUNCTION;
       break;
 
     default:
-      type = objfile_type (objfile)->nodebug_unknown_symbol;
+      type = builtin_type (objfile)->nodebug_unknown_symbol;
       kind = GCC_CP_SYMBOL_VARIABLE;
       break;
     }
@@ -351,12 +354,12 @@ gcc_cplus_convert_symbol (void *datum,
 	 This will find variables in the current scope.  */
 
       struct block_symbol sym
-	= lookup_symbol (identifier, instance->block (), VAR_DOMAIN, nullptr);
+	= lookup_symbol (identifier, instance->block (), SEARCH_VFT, nullptr);
 
       if (sym.symbol != nullptr)
 	{
 	  found = true;
-	  convert_symbol_sym (instance, identifier, sym, VAR_DOMAIN);
+	  convert_symbol_sym (instance, identifier, sym, SEARCH_VFT);
 	}
 
       /* Then use linespec.c's multi-symbol search.  This should find
@@ -364,7 +367,7 @@ gcc_cplus_convert_symbol (void *datum,
 
       symbol_searcher searcher;
       searcher.find_all_symbols (identifier, current_language,
-				 ALL_DOMAIN, nullptr, nullptr);
+				 SEARCH_ALL_DOMAINS, nullptr, nullptr);
 
       /* Convert any found symbols.  */
       for (const auto &it : searcher.matching_symbols ())
@@ -374,7 +377,7 @@ gcc_cplus_convert_symbol (void *datum,
 	    {
 	      found = true;
 	      convert_symbol_sym (instance, identifier, it,
-				  it.symbol->domain ());
+				  to_search_flags (it.symbol->domain ()));
 	    }
 	}
 
@@ -433,9 +436,10 @@ gcc_cplus_symbol_address (void *datum, struct gcc_cp_context *gcc_context,
   try
     {
       struct symbol *sym
-	= lookup_symbol (identifier, nullptr, VAR_DOMAIN, nullptr).symbol;
+	= lookup_symbol (identifier, nullptr, SEARCH_FUNCTION_DOMAIN,
+			 nullptr).symbol;
 
-      if (sym != nullptr && sym->aclass () == LOC_BLOCK)
+      if (sym != nullptr)
 	{
 	  if (compile_debug)
 	    gdb_printf (gdb_stdlog,
@@ -443,7 +447,8 @@ gcc_cplus_symbol_address (void *datum, struct gcc_cp_context *gcc_context,
 			identifier);
 	  result = sym->value_block ()->start ();
 	  if (sym->type ()->is_gnu_ifunc ())
-	    result = gnu_ifunc_resolve_addr (target_gdbarch (), result);
+	    result = gnu_ifunc_resolve_addr (current_inferior ()->arch (),
+					     result);
 	  found = 1;
 	}
       else
@@ -460,7 +465,8 @@ gcc_cplus_symbol_address (void *datum, struct gcc_cp_context *gcc_context,
 			    identifier);
 	      result = msym.value_address ();
 	      if (msym.minsym->type () == mst_text_gnu_ifunc)
-		result = gnu_ifunc_resolve_addr (target_gdbarch (), result);
+		result = gnu_ifunc_resolve_addr (current_inferior ()->arch (),
+						 result);
 	      found = 1;
 	    }
 	}

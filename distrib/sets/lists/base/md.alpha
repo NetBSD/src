@@ -1,4 +1,5 @@
-# $NetBSD: md.alpha,v 1.44 2022/01/10 06:00:00 skrll Exp $
+# $NetBSD: md.alpha,v 1.44.4.1 2025/08/02 05:20:24 perseant Exp $
+#
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/libalpha.so				base-sys-shlib
 ./usr/lib/libalpha.so.0				base-sys-shlib

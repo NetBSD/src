@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic.c,v 1.9 2020/05/08 22:10:08 ad Exp $	*/
+/*	$NetBSD: cyclic.c,v 1.9.8.1 2025/08/02 05:24:31 perseant Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -1002,7 +1002,7 @@ cyclic_omni_stop(cyc_id_t *idp, cyc_cpu_t *cpu)
 	}
 
 	/*
-	 * We _must_ have found an cyc_omni_cpu which corresponds to this
+	 * We _must_ have found a cyc_omni_cpu which corresponds to this
 	 * CPU -- the definition of an omnipresent cyclic is that it runs
 	 * on all online CPUs.
 	 */

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2016-2023 Free Software Foundation, Inc.
+# Copyright (C) 2016-2024 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -29,9 +29,9 @@
 # This program is invoked when the user runs "make check" and
 # specifies the RACY_ITER environment variable.
 
-import sys
 import os
 import re
+import sys
 
 # The (global) dictionary that stores the associations between a *.sum
 # file and its results.  The data inside it will be stored as:

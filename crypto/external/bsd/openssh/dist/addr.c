@@ -1,5 +1,5 @@
-/*	$NetBSD: addr.c,v 1.6 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: addr.c,v 1.7 2023/03/27 03:31:05 djm Exp $ */
+/*	$NetBSD: addr.c,v 1.6.4.1 2025/08/02 05:18:44 perseant Exp $	*/
+/* $OpenBSD: addr.c,v 1.9 2024/10/18 04:30:09 djm Exp $ */
 
 /*
  * Copyright (c) 2004-2008 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: addr.c,v 1.6 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: addr.c,v 1.6.4.1 2025/08/02 05:18:44 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -29,12 +29,13 @@ __RCSID("$NetBSD: addr.c,v 1.6 2023/10/25 20:19:57 christos Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include "addr.h"
 
 #define _SA(x)	((struct sockaddr *)(x))
 
-int
+static int
 addr_unicast_masklen(int af)
 {
 	switch (af) {
@@ -60,7 +61,7 @@ masklen_valid(int af, u_int masklen)
 	}
 }
 
-int
+static int
 addr_xaddr_to_sa(const struct xaddr *xa, struct sockaddr *sa, socklen_t *len,
     u_int16_t port)
 {
@@ -137,7 +138,7 @@ addr_sa_to_xaddr(struct sockaddr *sa, socklen_t slen, struct xaddr *xa)
 	return 0;
 }
 
-int
+static int
 addr_invert(struct xaddr *n)
 {
 	int i;
@@ -192,7 +193,7 @@ addr_netmask(int af, u_int l, struct xaddr *n)
 	}
 }
 
-int
+static int
 addr_hostmask(int af, u_int l, struct xaddr *n)
 {
 	if (addr_netmask(af, l, n) == -1 || addr_invert(n) == -1)
@@ -227,7 +228,7 @@ addr_and(struct xaddr *dst, const struct xaddr *a, const struct xaddr *b)
 	}
 }
 
-int
+static int
 addr_or(struct xaddr *dst, const struct xaddr *a, const struct xaddr *b)
 {
 	int i;
@@ -282,7 +283,7 @@ addr_cmp(const struct xaddr *a, const struct xaddr *b)
 	}
 }
 
-int
+static int
 addr_is_all0s(const struct xaddr *a)
 {
 	int i;
@@ -329,7 +330,7 @@ addr_increment(struct xaddr *a)
  * Returns 0 if host portion of address is all-zeros,
  * -1 if not all zeros or on failure.
  */
-int
+static int
 addr_host_is_all0s(const struct xaddr *a, u_int masklen)
 {
 	struct xaddr tmp_addr, tmp_mask, tmp_result;
@@ -343,7 +344,7 @@ addr_host_is_all0s(const struct xaddr *a, u_int masklen)
 }
 
 #if 0
-int
+static int
 addr_host_to_all0s(struct xaddr *a, u_int masklen)
 {
 	struct xaddr tmp_mask;
@@ -401,7 +402,8 @@ addr_pton(const char *p, struct xaddr *n)
 	return 0;
 }
 
-int
+#if 0
+static int
 addr_sa_pton(const char *h, const char *s, struct sockaddr *sa, socklen_t slen)
 {
 	struct addrinfo hints, *ai;
@@ -431,6 +433,7 @@ addr_sa_pton(const char *h, const char *s, struct sockaddr *sa, socklen_t slen)
 	freeaddrinfo(ai);
 	return 0;
 }
+#endif
 
 int
 addr_ntop(const struct xaddr *n, char *p, size_t len)
@@ -457,8 +460,9 @@ int
 addr_pton_cidr(const char *p, struct xaddr *n, u_int *l)
 {
 	struct xaddr tmp;
-	long unsigned int masklen = 999;
-	char addrbuf[64], *mp, *cp;
+	u_int masklen = 999;
+	char addrbuf[64], *mp;
+	const char *errstr;
 
 	/* Don't modify argument */
 	if (p == NULL || strlcpy(addrbuf, p, sizeof(addrbuf)) >= sizeof(addrbuf))
@@ -467,8 +471,8 @@ addr_pton_cidr(const char *p, struct xaddr *n, u_int *l)
 	if ((mp = strchr(addrbuf, '/')) != NULL) {
 		*mp = '\0';
 		mp++;
-		masklen = strtoul(mp, &cp, 10);
-		if (*mp < '0' || *mp > '9' || *cp != '\0' || masklen > 128)
+		masklen = (u_int)strtonum(mp, 0, INT_MAX, &errstr);
+		if (errstr)
 			return -1;
 	}
 

@@ -1,4 +1,5 @@
-# $NetBSD: md.evbarm,v 1.16 2020/01/19 00:58:13 jmcneill Exp $
+# $NetBSD: md.evbarm,v 1.16.12.1 2025/08/02 05:20:36 perseant Exp $
+#
 ./usr/X11R7/include/libdrm/nouveau/nvif/cl0080.h	xcomp-libdrm-include	xorg
 ./usr/X11R7/include/libdrm/nouveau/nvif/cl9097.h	xcomp-libdrm-include	xorg
 ./usr/X11R7/include/libdrm/nouveau/nvif/class.h		xcomp-libdrm-include	xorg

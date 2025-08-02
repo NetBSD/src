@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.159 2023/08/27 13:20:09 kardel Exp $
+# $NetBSD: mi,v 1.159.2.1 2025/08/02 05:20:35 perseant Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -143,6 +143,10 @@
 ./@MODULEDIR@/dm/dm.kmod			modules-base-kernel	lvm,kmod
 ./@MODULEDIR@/drvctl				modules-base-kernel	kmod
 ./@MODULEDIR@/drvctl/drvctl.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/ds2482ow				modules-base-kernel	kmod
+./@MODULEDIR@/ds2482ow/ds2482ow.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/ds28e17iic			modules-base-kernel	kmod
+./@MODULEDIR@/ds28e17iic/ds28e17iic.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/dtrace				modules-base-kernel	kmod,dtrace
 ./@MODULEDIR@/dtrace/dtrace.kmod		modules-base-kernel	kmod,dtrace
 ./@MODULEDIR@/dtrace_fbt				modules-base-kernel	kmod,dtrace
@@ -161,6 +165,8 @@
 ./@MODULEDIR@/dtv_math/dtv_math.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/efs				modules-base-kernel	kmod
 ./@MODULEDIR@/efs/efs.kmod			modules-base-kernel	kmod
+./@MODULEDIR@/emcfan				modules-base-kernel	kmod
+./@MODULEDIR@/emcfan/emcfan.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/exec_script			modules-base-kernel	kmod
 ./@MODULEDIR@/exec_script/exec_script.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/ext2fs				modules-base-kernel	kmod
@@ -231,6 +237,8 @@
 ./@MODULEDIR@/if_mpls/if_mpls.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/if_mue				modules-base-kernel	kmod
 ./@MODULEDIR@/if_mue/if_mue.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/if_ncm				modules-base-kernel	kmod
+./@MODULEDIR@/if_ncm/if_ncm.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/if_npflog				modules-base-kernel	kmod
 ./@MODULEDIR@/if_npflog/if_npflog.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/if_ppp				modules-base-kernel	kmod
@@ -273,8 +281,8 @@
 ./@MODULEDIR@/iic/iic.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/ip_ecn				modules-base-kernel	kmod
 ./@MODULEDIR@/ip_ecn/ip_ecn.kmod 		modules-base-kernel	kmod
-./@MODULEDIR@/ipl				modules-base-kernel	kmod
-./@MODULEDIR@/ipl/ipl.kmod 			modules-base-kernel	kmod
+./@MODULEDIR@/ipl				modules-base-kernel	kmod,ipfilter
+./@MODULEDIR@/ipl/ipl.kmod 			modules-base-kernel	kmod,ipfilter
 ./@MODULEDIR@/iscsi				modules-base-kernel	kmod,iscsi
 ./@MODULEDIR@/iscsi/iscsi.kmod			modules-base-kernel	kmod,iscsi
 ./@MODULEDIR@/kernfs				modules-base-kernel	kmod

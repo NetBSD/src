@@ -27,16 +27,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ahcp.c,v 1.6 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-ahcp.c,v 1.6.2.1 2025/08/02 05:23:21 perseant Exp $");
 #endif
 
 /* \summary: Ad Hoc Configuration Protocol (AHCP) printer */
 
 /* Based on draft-chroboczek-ahcp-00 and source code of ahcpd-0.53 */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

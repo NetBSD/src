@@ -1,14 +1,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ipnet.c,v 1.5 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-ipnet.c,v 1.5.2.1 2025/08/02 05:23:24 perseant Exp $");
 #endif
 
 /* \summary: Solaris DLT_IPNET printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

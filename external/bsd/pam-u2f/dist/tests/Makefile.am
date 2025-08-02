@@ -1,15 +1,22 @@
-#  Copyright (C) 2014-2018 Yubico AB - See COPYING
-#
+#  Copyright (C) 2014-2022 Yubico AB - See COPYING
 
-AUTOMAKE_OPTIONS = serial-tests
+AM_TESTS_ENVIRONMENT = PAM_U2F_MODULE='$(top_builddir)/.libs/pam_u2f.so'
 
-AM_CFLAGS = $(WARN_CFLAGS)
-AM_CPPFLAGS=-I$(srcdir)/.. -I$(builddir)/..
+AM_CFLAGS = $(CWFLAGS) $(CSFLAGS)
+AM_CPPFLAGS = -I$(srcdir)/..
 
 AM_LDFLAGS = -no-install
 
-LDADD = $(top_builddir)/pam_u2f.la
+check_PROGRAMS = dlsym_check
+dlsym_check_LDFLAGS = -ldl $(AM_LDFLAGS)
 
-check_PROGRAMS = basic get_devices
+# XXX move openbsd-compat
+check_PROGRAMS += get_devices
+get_devices_SOURCES = get_devices.c ../pamu2fcfg/strlcpy.c
+get_devices_CPPFLAGS = -I$(srcdir)/../pamu2fcfg
+get_devices_LDADD = $(top_builddir)/libmodule.la
+
+check_PROGRAMS += expand
+expand_LDADD = $(top_builddir)/libmodule.la
 
 TESTS = $(check_PROGRAMS)

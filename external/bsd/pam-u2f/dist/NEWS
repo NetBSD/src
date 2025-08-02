@@ -1,6 +1,27 @@
-Copyright (c) 2014-2021 Yubico AB - See COPYING
+Copyright (c) 2014-2025 Yubico AB - See COPYING
 
 pam-u2f NEWS -- History of user-visible changes.          -*- outline -*-
+
+* Version 1.3.1 (released 2025-01-14)
+** Fix incorrect usage of PAM_IGNORE (YSA-2025-01, CVE-2025-23013).
+** Changed return value when nouserok is enabled and the user has no
+credentials, PAM_IGNORE is used instead of PAM_SUCCESS.
+** Hardened checks of authfile permissions.
+** Hardened checks for nouserok.
+** Improved debug messages.
+** Improved documentation.
+
+* Version 1.3.0 (released 2023-03-14)
+** Add sanity checking of UV options to pamu2fcfg.
+** Add support for username expansion in the authfile path.
+** Improvements to the documentation.
+
+* Version 1.2.1 (released 2022-05-11)
+** Fixed an issue where native credentials could be truncated, resulting in
+failure to authenticate or successful authentication with missing options.
+** Stricter parsing of sshformat credentials.
+** pamu2fcfg now allows a combination of the --username and --nouser options.
+** Improved documentation on FIDO2 options.
 
 * Version 1.2.0 (released 2021-09-22)
 ** Added support for EdDSA keys.

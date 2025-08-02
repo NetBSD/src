@@ -1,4 +1,4 @@
-/*	$NetBSD: kmpstat.c,v 1.7 2010/11/12 09:08:26 tteras Exp $	*/
+/*	$NetBSD: kmpstat.c,v 1.7.62.1 2025/08/02 05:18:37 perseant Exp $	*/
 
 /*	$KAME: kmpstat.c,v 1.33 2004/08/16 08:20:28 itojun Exp $	*/
 
@@ -89,14 +89,14 @@
 #include "admin_var.h"
 #include "ipsec_doi.h"
 
-u_int32_t racoonctl_interface = RACOONCTL_INTERFACE;
-u_int32_t racoonctl_interface_major = RACOONCTL_INTERFACE_MAJOR;
+uint32_t racoonctl_interface = RACOONCTL_INTERFACE;
+uint32_t racoonctl_interface_major = RACOONCTL_INTERFACE_MAJOR;
 
 static int so;
-u_int32_t loglevel = 0;
+uint32_t loglevel = 0;
 
 int
-com_init()
+com_init(void)
 {
 	struct sockaddr_un name;
 
@@ -118,12 +118,9 @@ com_init()
 }
 
 int
-com_send(combuf)
-	vchar_t *combuf;
+com_send(vchar_t *combuf)
 {
-	int len;
-
-	if ((len = send(so, combuf->v, combuf->l, 0)) == -1) {
+	if (send(so, combuf->v, combuf->l, 0) == -1) {
 		perror("send");
 		(void)close(so);
 		return -1;
@@ -133,12 +130,10 @@ com_send(combuf)
 }
 
 int
-com_recv(combufp) 
-	vchar_t **combufp;
+com_recv(vchar_t **combufp)
 {
-	struct admin_com h, *com;
-	caddr_t buf;
-	int len, rlen;
+	struct admin_com h;
+	ssize_t len, rlen;
 	int l = 0;
 	caddr_t p;
 
@@ -160,7 +155,7 @@ com_recv(combufp)
 
 	/* real length */
 	if (h.ac_cmd & ADMIN_FLAG_LONG_REPLY)
-		rlen = ((u_int32_t)h.ac_len) + (((u_int32_t)h.ac_len_high) << 16);
+		rlen = ((uint32_t)h.ac_len) + (((uint32_t)h.ac_len_high) << 16);
 	else
 		rlen = h.ac_len;
 
@@ -191,8 +186,9 @@ bad1:
 /*
  * Dumb plog functions (used by sockmisc.c) 
  */
+/*ARGSUSED*/
 void
-_plog(int pri, const char *func, struct sockaddr *sa, const char *fmt, ...)
+_plog(int pri __unused, const char *func __unused, struct sockaddr *sa __unused, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -201,19 +197,14 @@ _plog(int pri, const char *func, struct sockaddr *sa, const char *fmt, ...)
 	va_end(ap);
 }
 
+/*ARGSUSED*/
 void
-plogdump(pri, data, len) 
-	int pri;
-	void *data;
-	size_t len;
+plogdump(int pri __unused, const void *data __unused, size_t len __unused)
 {
-	return;
 }
 
 struct sockaddr *
-get_sockaddr(family, name, port)
-	int family;
-	char *name, *port;
+get_sockaddr(int family, char *name, char *port)
 {
 	struct addrinfo hint, *ai;
 	int error;

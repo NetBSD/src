@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2023/06/20 00:30:16 mrg Exp $
+# $NetBSD: Makefile,v 1.10.2.1 2025/08/02 05:18:40 perseant Exp $
 
 NOLINT=		# defined
 
@@ -9,7 +9,7 @@ NOLINT=		# defined
 
 LIB=		hx509
 
-SSLBASE=	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}
+SSLBASE=	${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}
 
 LIBDPLIBS+=	asn1	${HEIMBASE}/lib/libasn1		\
 		com_err	${HEIMBASE}/lib/libcom_err	\

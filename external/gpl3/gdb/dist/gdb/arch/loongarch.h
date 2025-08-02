@@ -1,6 +1,6 @@
 /* Common target-dependent functionality for LoongArch
 
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,14 +33,25 @@ enum loongarch_regnum
   LOONGARCH_ORIG_A0_REGNUM = 32,	/* Syscall's original arg0.  */
   LOONGARCH_PC_REGNUM = 33,		/* Program Counter.  */
   LOONGARCH_BADV_REGNUM = 34,		/* Bad Vaddr for Addressing Exception.  */
+  LOONGARCH_USED_NUM_GREGSET = 35,	/* 32 GPR, ORIG_A0, PC, BADV.  */
   LOONGARCH_LINUX_NUM_GREGSET = 45,	/* 32 GPR, ORIG_A0, PC, BADV, RESERVED 10.  */
   LOONGARCH_ARG_REGNUM = 8,            /* r4-r11: general-purpose argument registers.
 					  f0-f7: floating-point argument registers.  */
-  LOONGARCH_FIRST_FP_REGNUM = LOONGARCH_LINUX_NUM_GREGSET,
+  LOONGARCH_FIRST_FP_REGNUM = LOONGARCH_USED_NUM_GREGSET,
   LOONGARCH_LINUX_NUM_FPREGSET = 32,
   LOONGARCH_FIRST_FCC_REGNUM = LOONGARCH_FIRST_FP_REGNUM + LOONGARCH_LINUX_NUM_FPREGSET,
   LOONGARCH_LINUX_NUM_FCC = 8,
   LOONGARCH_FCSR_REGNUM = LOONGARCH_FIRST_FCC_REGNUM + LOONGARCH_LINUX_NUM_FCC,
+  LOONGARCH_FIRST_LSX_REGNUM = LOONGARCH_FCSR_REGNUM + 1,
+  LOONGARCH_LINUX_NUM_LSXREGSET = 32,
+  LOONGARCH_FIRST_LASX_REGNUM = LOONGARCH_FIRST_LSX_REGNUM + LOONGARCH_LINUX_NUM_LSXREGSET,
+  LOONGARCH_LINUX_NUM_LASXREGSET = 32,
+
+  LOONGARCH_FIRST_SCR_REGNUM = LOONGARCH_FIRST_LASX_REGNUM + LOONGARCH_LINUX_NUM_LASXREGSET,
+  LOONGARCH_LINUX_NUM_SCR = 4,
+  LOONGARCH_LAST_SCR_REGNUM = LOONGARCH_FIRST_SCR_REGNUM + LOONGARCH_LINUX_NUM_SCR - 1,
+  LOONGARCH_EFLAGS_REGNUM = LOONGARCH_LAST_SCR_REGNUM + 1,
+  LOONGARCH_FTOP_REGNUM = LOONGARCH_EFLAGS_REGNUM + 1,
 };
 
 enum loongarch_fputype
@@ -48,6 +59,8 @@ enum loongarch_fputype
   SINGLE_FLOAT = 1,
   DOUBLE_FLOAT = 2,
 };
+
+ #define LOONGARCH_LBT_REGS_SIZE (8 * LOONGARCH_LINUX_NUM_SCR + 4 + 4)
 
 /* The set of LoongArch architectural features that we track that impact how
    we configure the actual gdbarch instance.  We hold one of these in the

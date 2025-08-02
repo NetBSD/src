@@ -64,7 +64,7 @@ enum eap_erp_cryptosuite {
  * EAP Method Types as allocated by IANA:
  * http://www.iana.org/assignments/eap-numbers
  */
-typedef enum {
+enum eap_type {
 	EAP_TYPE_NONE = 0,
 	EAP_TYPE_IDENTITY = 1 /* RFC 3748 */,
 	EAP_TYPE_NOTIFICATION = 2 /* RFC 3748 */,
@@ -72,7 +72,7 @@ typedef enum {
 	EAP_TYPE_MD5 = 4, /* RFC 3748 */
 	EAP_TYPE_OTP = 5 /* RFC 3748 */,
 	EAP_TYPE_GTC = 6, /* RFC 3748 */
-	EAP_TYPE_TLS = 13 /* RFC 2716 */,
+	EAP_TYPE_TLS = 13 /* RFC 5216 */,
 	EAP_TYPE_LEAP = 17 /* Cisco proprietary */,
 	EAP_TYPE_SIM = 18 /* RFC 4186 */,
 	EAP_TYPE_TTLS = 21 /* RFC 5281 */,
@@ -94,7 +94,7 @@ typedef enum {
 	EAP_TYPE_EKE = 53 /* RFC 6124 */,
 	EAP_TYPE_TEAP = 55 /* RFC 7170 */,
 	EAP_TYPE_EXPANDED = 254 /* RFC 3748 */
-} EapType;
+};
 
 
 /* SMI Network Management Private Enterprise Code for vendor specific types */

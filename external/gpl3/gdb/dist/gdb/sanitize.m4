@@ -1,5 +1,5 @@
 dnl Sanitization-related configure macro for GDB
-dnl Copyright (C) 2018-2023 Free Software Foundation, Inc.
+dnl Copyright (C) 2018-2024 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl

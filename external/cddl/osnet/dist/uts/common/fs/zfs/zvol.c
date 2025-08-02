@@ -3594,6 +3594,10 @@ zvol_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 	error = 0;
 
 	switch(cmd) {
+	case DIOCCACHESYNC:
+		zil_commit(zv->zv_zilog, ZVOL_OBJ);
+		break;
+
 	case DIOCGWEDGEINFO:
 	{
 		struct dkwedge_info *dkw = (void *) arg;

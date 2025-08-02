@@ -1,5 +1,5 @@
 /* MI Command Set - target commands.
-   Copyright (C) 2007-2023 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "mi-cmds.h"
 #include "mi-getopt.h"
 #include "remote.h"
@@ -24,10 +23,10 @@
 /* Get a file from the target.  */
 
 void
-mi_cmd_target_file_get (const char *command, char **argv, int argc)
+mi_cmd_target_file_get (const char *command, const char *const *argv, int argc)
 {
   int oind = 0;
-  char *oarg;
+  const char *oarg;
   const char *remote_file, *local_file;
   static const struct mi_opt opts[] =
     {
@@ -48,10 +47,10 @@ mi_cmd_target_file_get (const char *command, char **argv, int argc)
 /* Send a file to the target.  */
 
 void
-mi_cmd_target_file_put (const char *command, char **argv, int argc)
+mi_cmd_target_file_put (const char *command, const char *const *argv, int argc)
 {
   int oind = 0;
-  char *oarg;
+  const char *oarg;
   const char *remote_file, *local_file;
   static const struct mi_opt opts[] =
     {
@@ -72,10 +71,11 @@ mi_cmd_target_file_put (const char *command, char **argv, int argc)
 /* Delete a file on the target.  */
 
 void
-mi_cmd_target_file_delete (const char *command, char **argv, int argc)
+mi_cmd_target_file_delete (const char *command, const char *const *argv,
+			   int argc)
 {
   int oind = 0;
-  char *oarg;
+  const char *oarg;
   const char *remote_file;
   static const struct mi_opt opts[] =
     {

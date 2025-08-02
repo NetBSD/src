@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,7 +15,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "gdbsupport/break-common.h"
 #include "gdbsupport/common-regcache.h"
 #include "aarch64-hw-point.h"
@@ -71,6 +70,31 @@ aarch64_watchpoint_length (unsigned int ctrl)
 	   DR_CONTROL_MASK (ctrl));
 
   return retval;
+}
+
+/* Utility function that returns the type of a watchpoint according to the
+   content of a hardware debug control register CTRL.  */
+
+enum target_hw_bp_type
+aarch64_watchpoint_type (unsigned int ctrl)
+{
+  unsigned int type = DR_CONTROL_TYPE (ctrl);
+
+  switch (type)
+    {
+    case 1:
+      return hw_read;
+    case 2:
+      return hw_write;
+    case 3:
+      return hw_access;
+    case 0:
+      /* Reserved for a watchpoint.  It must behave as if the watchpoint is
+	 disabled.  */
+      return hw_execute;
+    default:
+      gdb_assert_not_reached ("");
+    }
 }
 
 /* Given the hardware breakpoint or watchpoint type TYPE and its
@@ -137,8 +161,7 @@ aarch64_point_is_aligned (ptid_t ptid, int is_watchpoint, CORE_ADDR addr,
     alignment = AARCH64_HWP_ALIGNMENT;
   else
     {
-      struct regcache *regcache
-	= get_thread_regcache_for_ptid (ptid);
+      reg_buffer_common *regcache = get_thread_regcache_for_ptid (ptid);
 
       /* Set alignment to 2 only if the current process is 32-bit,
 	 since thumb instruction can be 2-byte aligned.  Otherwise, set
@@ -314,7 +337,7 @@ aarch64_dr_state_insert_one_point (ptid_t ptid,
 	{
 	  gdb_assert (dr_ref_count[i] == 0);
 	  idx = i;
-	  /* no break; continue hunting for an exising one.  */
+	  /* no break; continue hunting for an existing one.  */
 	}
       else if (dr_addr_p[i] == addr
 	       && (dr_addr_orig_p == nullptr || dr_addr_orig_p[i] == addr_orig)
@@ -621,4 +644,119 @@ aarch64_region_ok_for_watchpoint (CORE_ADDR addr, int len)
      Ideally we should check the cached debug register state, however
      the checking is costly.  */
   return 1;
+}
+
+/* See nat/aarch64-hw-point.h.  */
+
+bool
+aarch64_stopped_data_address (const struct aarch64_debug_reg_state *state,
+			      CORE_ADDR addr_trap, CORE_ADDR *addr_p)
+{
+  bool found = false;
+  for (int phase = 0; phase <= 1; ++phase)
+    for (int i = aarch64_num_wp_regs - 1; i >= 0; --i)
+      {
+	if (!(state->dr_ref_count_wp[i]
+	      && DR_CONTROL_ENABLED (state->dr_ctrl_wp[i])))
+	  {
+	    /* Watchpoint disabled.  */
+	    continue;
+	  }
+
+	const enum target_hw_bp_type type
+	  = aarch64_watchpoint_type (state->dr_ctrl_wp[i]);
+	if (type == hw_execute)
+	  {
+	    /* Watchpoint disabled.  */
+	    continue;
+	  }
+
+	if (phase == 0)
+	  {
+	    /* Phase 0: No hw_write.  */
+	    if (type == hw_write)
+	      continue;
+	  }
+	else
+	  {
+	    /* Phase 1: Only hw_write.  */
+	    if (type != hw_write)
+	      continue;
+	  }
+
+	const unsigned int offset
+	  = aarch64_watchpoint_offset (state->dr_ctrl_wp[i]);
+	const unsigned int len
+	  = aarch64_watchpoint_length (state->dr_ctrl_wp[i]);
+	const CORE_ADDR addr_watch = state->dr_addr_wp[i] + offset;
+	const CORE_ADDR addr_watch_aligned
+	  = align_down (state->dr_addr_wp[i], AARCH64_HWP_MAX_LEN_PER_REG);
+	const CORE_ADDR addr_orig = state->dr_addr_orig_wp[i];
+
+	/* ADDR_TRAP reports the first address of the memory range
+	   accessed by the CPU, regardless of what was the memory
+	   range watched.  Thus, a large CPU access that straddles
+	   the ADDR_WATCH..ADDR_WATCH+LEN range may result in an
+	   ADDR_TRAP that is lower than the
+	   ADDR_WATCH..ADDR_WATCH+LEN range.  E.g.:
+
+	   addr: |   4	 |   5	 |   6	 |   7	 |   8	 |
+				 |---- range watched ----|
+		 |----------- range accessed ------------|
+
+	   In this case, ADDR_TRAP will be 4.
+
+	   The access size also can be larger than that of the watchpoint
+	   itself.  For instance, the access size of an stp instruction is 16.
+	   So, if we use stp to store to address p, and set a watchpoint on
+	   address p + 8, the reported ADDR_TRAP can be p + 8 (observed on
+	   RK3399 SOC). But it also can be p (observed on M1 SOC).  Checking
+	   for this situation introduces the possibility of false positives,
+	   so we only do this for hw_write watchpoints.  */
+	const CORE_ADDR max_access_size = type == hw_write ? 16 : 8;
+	const CORE_ADDR addr_watch_base = addr_watch_aligned -
+	  (max_access_size - AARCH64_HWP_MAX_LEN_PER_REG);
+	if (!(addr_trap >= addr_watch_base
+	      && addr_trap < addr_watch + len))
+	  {
+	    /* Not a match.  */
+	    continue;
+	  }
+
+	/* To match a watchpoint known to GDB core, we must never
+	   report *ADDR_P outside of any ADDR_WATCH..ADDR_WATCH+LEN
+	   range.  ADDR_WATCH <= ADDR_TRAP < ADDR_ORIG is a false
+	   positive on kernels older than 4.10.  See PR
+	   external/20207.  */
+	if (addr_p != nullptr)
+	  *addr_p = addr_orig;
+
+	if (phase == 0)
+	  {
+	    /* Phase 0: Return first match.  */
+	    return true;
+	  }
+
+	/* Phase 1.  */
+	if (addr_p == nullptr)
+	  {
+	    /* First match, and we don't need to report an address.  No need
+	       to look for other matches.  */
+	    return true;
+	  }
+
+	if (!found)
+	  {
+	    /* First match, and we need to report an address.  Look for other
+	       matches.  */
+	    found = true;
+	    continue;
+	  }
+
+	/* More than one match, and we need to return an address.  No need to
+	   look for further matches.  */
+	return false;
+      }
+
+  return found;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2023/08/18 19:00:11 christos Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2025/08/02 05:21:04 perseant Exp $
 #
 
 USE_FORT?= yes	# data driven bugs?
@@ -10,6 +10,12 @@ USE_FORT?= yes	# data driven bugs?
 LIB=		magic
 LIBDPLIBS+=	${DPLIBS}
 CPPFLAGS+=-I.
+
+# XXX Avoid exporting symbols of statically linked deps like zstd.
+# XXX Should do this in bsd.lib.mk, perhaps.
+.for _lib _dir in ${LIBDPLIBS}
+LDADD+=		-Wl,--exclude-libs,lib${_lib}
+.endfor
 
 .if ${MACHINE_ARCH} == "i386"
 # Set lint to exit on warnings
@@ -37,6 +43,7 @@ INCSDIR=	/usr/include
 
 COPTS.softmagic.c+=	-Wno-format-nonliteral
 COPTS.readelf.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
+CPPFLAGS+= ${ZSTDCPPFLAGS}
 
 magic.c:	magic.h
 magic.h:        magic.h.in

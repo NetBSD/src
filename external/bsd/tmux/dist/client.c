@@ -452,11 +452,12 @@ client_send_identify(const char *ttynam, const char *termname, char **caps,
 {
 	char	**ss;
 	size_t	  sslen;
-	int	  fd, flags = client_flags;
+	int	  fd;
+	uint64_t  flags = client_flags;
 	pid_t	  pid;
 	u_int	  i;
 
-	proc_send(client_peer, MSG_IDENTIFY_FLAGS, -1, &flags, sizeof flags);
+	proc_send(client_peer, MSG_IDENTIFY_LONGFLAGS, -1, &flags, sizeof flags);
 	proc_send(client_peer, MSG_IDENTIFY_LONGFLAGS, -1, &client_flags,
 	    sizeof client_flags);
 
@@ -497,20 +498,10 @@ client_send_identify(const char *ttynam, const char *termname, char **caps,
 static __dead void
 client_exec(const char *shell, const char *shellcmd)
 {
-	const char	*name, *ptr;
-	char		*argv0;
+	char	*argv0;
 
 	log_debug("shell %s, command %s", shell, shellcmd);
-
-	ptr = strrchr(shell, '/');
-	if (ptr != NULL && *(ptr + 1) != '\0')
-		name = ptr + 1;
-	else
-		name = shell;
-	if (client_flags & CLIENT_LOGIN)
-		xasprintf(&argv0, "-%s", name);
-	else
-		xasprintf(&argv0, "%s", name);
+	argv0 = shell_argv0(shell, !!(client_flags & CLIENT_LOGIN));
 	setenv("SHELL", shell, 1);
 
 	proc_clear_signals(client_proc, 1);

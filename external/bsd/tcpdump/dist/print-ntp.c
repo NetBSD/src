@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ntp.c,v 1.9 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-ntp.c,v 1.9.2.1 2025/08/02 05:23:25 perseant Exp $");
 #endif
 
 /*
@@ -37,13 +37,9 @@ __RCSID("$NetBSD: print-ntp.c,v 1.9 2023/08/17 20:19:40 christos Exp $");
  * RFC 5905 - NTPv4
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
-
-#include <time.h>
 
 #include "netdissect.h"
 #include "addrtoname.h"

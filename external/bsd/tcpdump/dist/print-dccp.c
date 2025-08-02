@@ -9,16 +9,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-dccp.c,v 1.9 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-dccp.c,v 1.9.2.1 2025/08/02 05:23:22 perseant Exp $");
 #endif
 
 /* \summary: Datagram Congestion Control Protocol (DCCP) printer */
 
 /* specification: RFC 4340 */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

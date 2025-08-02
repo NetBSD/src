@@ -1,4 +1,5 @@
-# $NetBSD: ad.arm,v 1.19 2022/12/20 04:10:11 pgoyette Exp $
+# $NetBSD: ad.arm,v 1.19.2.1 2025/08/02 05:20:34 perseant Exp $
+#
 ./@MODULEDIR@/compat_netbsd32			modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_09		modules-base-kernel	kmod

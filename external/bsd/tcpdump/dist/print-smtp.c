@@ -13,14 +13,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-smtp.c,v 1.4 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-smtp.c,v 1.4.2.1 2025/08/02 05:23:26 perseant Exp $");
 #endif
 
 /* \summary: Simple Mail Transfer Protocol (SMTP) printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

@@ -1,4 +1,5 @@
-# $NetBSD: md.x68k,v 1.62 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.x68k,v 1.62.14.1 2025/08/02 05:20:29 perseant Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/x68k				comp-c-include
 ./usr/include/x68k/_G_config.h			comp-obsolete		obsolete
@@ -36,6 +37,7 @@
 ./usr/include/x68k/kcore.h			comp-c-include
 ./usr/include/x68k/limits.h			comp-c-include
 ./usr/include/x68k/lock.h			comp-c-include
+./usr/include/x68k/lwp_private.h		comp-c-include
 ./usr/include/x68k/math.h			comp-c-include
 ./usr/include/x68k/mcontext.h			comp-c-include
 ./usr/include/x68k/mutex.h			comp-c-include

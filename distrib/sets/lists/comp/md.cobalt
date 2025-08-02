@@ -1,4 +1,5 @@
-# $NetBSD: md.cobalt,v 1.29 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.cobalt,v 1.29.14.1 2025/08/02 05:20:28 perseant Exp $
+#
 ./usr/include/cobalt				comp-c-include
 ./usr/include/cobalt/_G_config.h		comp-obsolete		obsolete
 ./usr/include/cobalt/ansi.h			comp-c-include
@@ -32,6 +33,7 @@
 ./usr/include/cobalt/limits.h			comp-c-include
 ./usr/include/cobalt/lock.h			comp-c-include
 ./usr/include/cobalt/locore.h			comp-c-include
+./usr/include/cobalt/lwp_private.h		comp-c-include
 ./usr/include/cobalt/math.h			comp-c-include
 ./usr/include/cobalt/mcontext.h			comp-c-include
 ./usr/include/cobalt/mips_opcode.h		comp-c-include

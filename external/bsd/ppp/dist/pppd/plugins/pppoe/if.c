@@ -13,12 +13,13 @@
 *
 ***********************************************************************/
 
-static char const RCSID[] =
-"Id: if.c,v 1.2 2008/06/09 08:34:23 paulus Exp ";
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #define _GNU_SOURCE 1
 #include "pppoe.h"
-#include "pppd/pppd.h"
+#include <pppd/pppd.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -95,6 +96,7 @@ openInterface(char const *ifname, UINT16_t type, unsigned char *hwaddr)
     int fd;
     struct ifreq ifr;
     int domain, stype;
+    size_t maxlen;
 
 #ifdef HAVE_STRUCT_SOCKADDR_LL
     struct sockaddr_ll sa;
@@ -107,10 +109,17 @@ openInterface(char const *ifname, UINT16_t type, unsigned char *hwaddr)
 #ifdef HAVE_STRUCT_SOCKADDR_LL
     domain = PF_PACKET;
     stype = SOCK_RAW;
+    maxlen = IFNAMSIZ;
 #else
     domain = PF_INET;
     stype = SOCK_PACKET;
+    maxlen = sizeof(sa.sa_data);
 #endif
+
+    if (strlen(ifname) >= maxlen) {
+	error("Can't use interface %.16s: name is too long", ifname);
+	return -1;
+    }
 
     if ((fd = socket(domain, stype, htons(type))) < 0) {
 	/* Give a more helpful message for the common error case */
@@ -171,7 +180,7 @@ openInterface(char const *ifname, UINT16_t type, unsigned char *hwaddr)
     sa.sll_ifindex = ifr.ifr_ifindex;
 
 #else
-    strcpy(sa.sa_data, ifname);
+    strlcpy(sa.sa_data, ifname, sizeof(sa.sa_data));
 #endif
 
     /* We're only interested in packets on specified interface */
@@ -201,14 +210,14 @@ sendPacket(PPPoEConnection *conn, int sock, PPPoEPacket *pkt, int size)
 {
     int err;
 
-    if (debug)
+    if (debug_on())
 	pppoe_log_packet("Send ", pkt);
 #if defined(HAVE_STRUCT_SOCKADDR_LL)
     err = send(sock, pkt, size, 0);
 #else
     struct sockaddr sa;
 
-    strcpy(sa.sa_data, conn->ifName);
+    strlcpy(sa.sa_data, conn->ifName, sizeof(sa.sa_data));
     err = sendto(sock, pkt, size, 0, &sa, sizeof(sa));
 #endif
     if (err < 0) {
@@ -236,7 +245,7 @@ receivePacket(int sock, PPPoEPacket *pkt, int *size)
 	error("error receiving pppoe packet: %m");
 	return -1;
     }
-    if (debug)
+    if (debug_on())
 	pppoe_log_packet("Recv ", pkt);
     return 0;
 }

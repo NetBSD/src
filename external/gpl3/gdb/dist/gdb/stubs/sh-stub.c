@@ -1293,7 +1293,7 @@ static __inline__ void code_for_catch_exception(int n)
 
       if (n == CPU_BUS_ERROR_VEC)
 	{
-	  /* Exception 9 (bus errors) are disasbleable - so that you
+	  /* Exception 9 (bus errors) are disableable - so that you
 	     can probe memory and get zero instead of a fault.
 	     Because the vector table may be in ROM we don't revector
 	     the interrupt like all the other stubs, we check in here

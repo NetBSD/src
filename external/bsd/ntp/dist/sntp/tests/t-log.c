@@ -1,11 +1,10 @@
-/*	$NetBSD: t-log.c,v 1.2 2020/05/25 20:47:35 christos Exp $	*/
+/*	$NetBSD: t-log.c,v 1.2.8.1 2025/08/02 05:23:02 perseant Exp $	*/
 
 #include "config.h"
 #include "unity.h"
 #include "ntp_types.h"
 
 
-//#include "log.h"
 #include "log.c"
 
 void setUp(void);

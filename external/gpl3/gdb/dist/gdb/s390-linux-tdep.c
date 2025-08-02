@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on s390.
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    Contributed by D.J. Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com)
    for IBM Deutschland Entwicklung GmbH, IBM Corporation.
@@ -20,7 +20,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 
 #include "auxv.h"
 #include "elf/common.h"
@@ -332,7 +331,7 @@ s390_core_read_description (struct gdbarch *gdbarch,
 			    struct target_ops *target, bfd *abfd)
 {
   asection *section = bfd_get_section_by_name (abfd, ".reg");
-  gdb::optional<gdb::byte_vector> auxv = target_read_auxv_raw (target);
+  std::optional<gdb::byte_vector> auxv = target_read_auxv_raw (target);
   CORE_ADDR hwcap = linux_get_hwcap (auxv, target, gdbarch);
   bool high_gprs, v1, v2, te, vx, gs;
 
@@ -387,7 +386,7 @@ struct s390_sigtramp_unwind_cache {
    s390_sigtramp_frame_unwind.  */
 
 static struct s390_sigtramp_unwind_cache *
-s390_sigtramp_frame_unwind_cache (frame_info_ptr this_frame,
+s390_sigtramp_frame_unwind_cache (const frame_info_ptr &this_frame,
 				  void **this_prologue_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
@@ -497,7 +496,7 @@ s390_sigtramp_frame_unwind_cache (frame_info_ptr this_frame,
 /* Implement this_id frame_unwind method for s390_sigtramp_frame_unwind.  */
 
 static void
-s390_sigtramp_frame_this_id (frame_info_ptr this_frame,
+s390_sigtramp_frame_this_id (const frame_info_ptr &this_frame,
 			     void **this_prologue_cache,
 			     struct frame_id *this_id)
 {
@@ -509,7 +508,7 @@ s390_sigtramp_frame_this_id (frame_info_ptr this_frame,
 /* Implement prev_register frame_unwind method for sigtramp frames.  */
 
 static struct value *
-s390_sigtramp_frame_prev_register (frame_info_ptr this_frame,
+s390_sigtramp_frame_prev_register (const frame_info_ptr &this_frame,
 				   void **this_prologue_cache, int regnum)
 {
   struct s390_sigtramp_unwind_cache *info
@@ -521,7 +520,7 @@ s390_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 
 static int
 s390_sigtramp_frame_sniffer (const struct frame_unwind *self,
-			     frame_info_ptr this_frame,
+			     const frame_info_ptr &this_frame,
 			     void **this_prologue_cache)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
@@ -572,12 +571,21 @@ s390_linux_get_syscall_number (struct gdbarch *gdbarch,
      don't currently support SVC via EXECUTE. */
   regcache_cooked_read_unsigned (regs, tdep->pc_regnum, &pc);
   pc -= 2;
-  opcode = read_memory_unsigned_integer ((CORE_ADDR) pc, 1, byte_order);
+
+  ULONGEST val;
+  if (!safe_read_memory_unsigned_integer ((CORE_ADDR) pc, 1, byte_order,
+					  &val))
+    return -1;
+  opcode = val;
+
   if (opcode != op_svc)
     return -1;
 
-  svc_number = read_memory_unsigned_integer ((CORE_ADDR) pc + 1, 1,
-					     byte_order);
+  if (!safe_read_memory_unsigned_integer ((CORE_ADDR) pc + 1, 1, byte_order,
+					  &val))
+    return -1;
+  svc_number = val;
+
   if (svc_number == 0)
     regcache_cooked_read_unsigned (regs, S390_R1_REGNUM, &svc_number);
 

@@ -1,6 +1,6 @@
 /* Target-dependent code for FT32.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,13 +17,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "frame-base.h"
 #include "symtab.h"
 #include "gdbtypes.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "gdbcore.h"
 #include "value.h"
 #include "inferior.h"
@@ -40,7 +40,7 @@
 #include "opcode/ft32.h"
 
 #include "ft32-tdep.h"
-#include "gdb/sim-ft32.h"
+#include "sim/sim-ft32.h"
 #include <algorithm>
 
 #define RAM_BIAS  0x800000  /* Bias added to RAM addresses.  */
@@ -96,7 +96,7 @@ static const char *const ft32_register_names[] =
 static const char *
 ft32_register_name (struct gdbarch *gdbarch, int reg_nr)
 {
-  gdb_static_assert (ARRAY_SIZE (ft32_register_names) == FT32_NUM_REGS);
+  static_assert (ARRAY_SIZE (ft32_register_names) == FT32_NUM_REGS);
   return ft32_register_names[reg_nr];
 }
 
@@ -297,7 +297,8 @@ ft32_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 	  plg_end = ft32_analyze_prologue (func_addr,
 					   func_end, &cache, gdbarch);
 	  /* Found a function.  */
-	  sym = lookup_symbol (func_name, NULL, VAR_DOMAIN, NULL).symbol;
+	  sym = lookup_symbol (func_name, nullptr, SEARCH_FUNCTION_DOMAIN,
+			       nullptr).symbol;
 	  /* Don't use line number debug info for assembly source files.  */
 	  if ((sym != NULL) && sym->language () != language_asm)
 	    {
@@ -449,7 +450,7 @@ ft32_alloc_frame_cache (void)
 /* Populate a ft32_frame_cache object for this_frame.  */
 
 static struct ft32_frame_cache *
-ft32_frame_cache (frame_info_ptr this_frame, void **this_cache)
+ft32_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct ft32_frame_cache *cache;
   CORE_ADDR current_pc;
@@ -489,7 +490,7 @@ ft32_frame_cache (frame_info_ptr this_frame, void **this_cache)
    frame.  This will be used to create a new GDB frame struct.  */
 
 static void
-ft32_frame_this_id (frame_info_ptr this_frame,
+ft32_frame_this_id (const frame_info_ptr &this_frame,
 		    void **this_prologue_cache, struct frame_id *this_id)
 {
   struct ft32_frame_cache *cache = ft32_frame_cache (this_frame,
@@ -505,7 +506,7 @@ ft32_frame_this_id (frame_info_ptr this_frame,
 /* Get the value of register regnum in the previous stack frame.  */
 
 static struct value *
-ft32_frame_prev_register (frame_info_ptr this_frame,
+ft32_frame_prev_register (const frame_info_ptr &this_frame,
 			  void **this_prologue_cache, int regnum)
 {
   struct ft32_frame_cache *cache = ft32_frame_cache (this_frame,
@@ -537,7 +538,7 @@ static const struct frame_unwind ft32_frame_unwind =
 /* Return the base address of this_frame.  */
 
 static CORE_ADDR
-ft32_frame_base_address (frame_info_ptr this_frame, void **this_cache)
+ft32_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct ft32_frame_cache *cache = ft32_frame_cache (this_frame,
 						     this_cache);
@@ -558,7 +559,6 @@ static const struct frame_base ft32_frame_base =
 static struct gdbarch *
 ft32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  struct gdbarch *gdbarch;
   struct type *void_type;
   struct type *func_void_type;
 
@@ -568,14 +568,16 @@ ft32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     return arches->gdbarch;
 
   /* Allocate space for the new architecture.  */
-  ft32_gdbarch_tdep *tdep = new ft32_gdbarch_tdep;
-  gdbarch = gdbarch_alloc (&info, tdep);
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info, gdbarch_tdep_up (new ft32_gdbarch_tdep));
+  ft32_gdbarch_tdep *tdep = gdbarch_tdep<ft32_gdbarch_tdep> (gdbarch);
 
   /* Create a type for PC.  We can't use builtin types here, as they may not
      be defined.  */
-  void_type = arch_type (gdbarch, TYPE_CODE_VOID, TARGET_CHAR_BIT, "void");
+  type_allocator alloc (gdbarch);
+  void_type = alloc.new_type (TYPE_CODE_VOID, TARGET_CHAR_BIT, "void");
   func_void_type = make_function_type (void_type, NULL);
-  tdep->pc_type = arch_pointer_type (gdbarch, 4 * TARGET_CHAR_BIT, NULL,
+  tdep->pc_type = init_pointer_type (alloc, 4 * TARGET_CHAR_BIT, NULL,
 				     func_void_type);
   tdep->pc_type->set_instance_flags (tdep->pc_type->instance_flags ()
 				     | TYPE_INSTANCE_FLAG_ADDRESS_CLASS_1);

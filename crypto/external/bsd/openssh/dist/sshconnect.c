@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.c,v 1.38 2024/06/25 16:36:54 christos Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.366 2024/01/11 01:45:36 djm Exp $ */
+/*	$NetBSD: sshconnect.c,v 1.38.2.1 2025/08/02 05:18:48 perseant Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.369 2024/12/06 16:21:48 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.38 2024/06/25 16:36:54 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.38.2.1 2025/08/02 05:18:48 perseant Exp $");
 
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: sshconnect.c,v 1.38 2024/06/25 16:36:54 christos Exp $");
 #include "sshconnect.h"
 #include "hostfile.h"
 #include "log.h"
+#include "match.h"
 #include "misc.h"
 #include "readconf.h"
 #include "atomicio.h"
@@ -683,7 +684,7 @@ get_hostfile_hostname_ipaddr(char *hostname, struct sockaddr *hostaddr,
 		if (options.proxy_command == NULL) {
 			if (getnameinfo(hostaddr, hostaddr->sa_len,
 			    ntop, sizeof(ntop), NULL, 0, NI_NUMERICHOST) != 0)
-			fatal_f("getnameinfo failed");
+				fatal_f("getnameinfo failed");
 			*hostfile_ipaddr = put_host_port(ntop, port);
 		} else {
 			*hostfile_ipaddr = xstrdup("<no hostip for proxy "
@@ -751,6 +752,29 @@ try_tilde_unexpand(const char *path)
 		l++;
 	xasprintf(&ret, "~/%s", path + l);
 	return ret;
+}
+
+/*
+ * Returns non-zero if the key is accepted by HostkeyAlgorithms.
+ * Made slightly less trivial by the multiple RSA signature algorithm names.
+ */
+int
+hostkey_accepted_by_hostkeyalgs(const struct sshkey *key)
+{
+	const char *ktype = sshkey_ssh_name(key);
+	const char *hostkeyalgs = options.hostkeyalgorithms;
+
+	if (key->type == KEY_UNSPEC)
+		return 0;
+	if (key->type == KEY_RSA &&
+	    (match_pattern_list("rsa-sha2-256", hostkeyalgs, 0) == 1 ||
+	    match_pattern_list("rsa-sha2-512", hostkeyalgs, 0) == 1))
+		return 1;
+	if (key->type == KEY_RSA_CERT &&
+	    (match_pattern_list("rsa-sha2-512-cert-v01@openssh.com", hostkeyalgs, 0) == 1 ||
+	    match_pattern_list("rsa-sha2-256-cert-v01@openssh.com", hostkeyalgs, 0) == 1))
+		return 1;
+	return match_pattern_list(ktype, hostkeyalgs, 0) == 1;
 }
 
 static int
@@ -1053,6 +1077,12 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 	}
 
  retry:
+	if (!hostkey_accepted_by_hostkeyalgs(host_key)) {
+		error("host key %s not permitted by HostkeyAlgorithms",
+		    sshkey_ssh_name(host_key));
+		goto fail;
+	}
+
 	/* Reload these as they may have changed on cert->key downgrade */
 	want_cert = sshkey_is_cert(host_key);
 	type = sshkey_type(host_key);
@@ -1610,7 +1640,8 @@ ssh_login(struct ssh *ssh, Sensitive *sensitive, const char *orighost,
 	lowercase(host);
 
 	/* Exchange protocol version identification strings with the server. */
-	if ((r = kex_exchange_identification(ssh, timeout_ms, NULL)) != 0)
+	if ((r = kex_exchange_identification(ssh, timeout_ms,
+	    options.version_addendum)) != 0)
 		sshpkt_fatal(ssh, r, "banner exchange");
 
 	/* Put the connection into non-blocking mode. */

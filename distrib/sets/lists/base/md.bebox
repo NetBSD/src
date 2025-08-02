@@ -1,4 +1,5 @@
-# $NetBSD: md.bebox,v 1.24 2022/09/08 05:16:45 rillig Exp $
+# $NetBSD: md.bebox,v 1.24.4.1 2025/08/02 05:20:24 perseant Exp $
+#
 ./dev/pms0					base-obsolete		obsolete
 ./usr/mdec/boot					base-sysutil-root
 ./usr/mdec/boot_com0				base-sysutil-root

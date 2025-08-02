@@ -22,8 +22,9 @@ The ietf task group has decided to recommend that the LCP sequence be
 extended to permit the callback operation. For this reason, these
 patches are not 'part' of pppd but are an adjunct to the code.
 
-To enable CBCP support, all that is required is to uncomment the line
-in Makefile.linux that sets CBCP=y and recompile pppd.
+CBCP support is enabled or disabled in pppd at configure time using the
+--enable-cbcp and --disable-cbcp arguments to ./configure.  The default
+is disabled.
 
 I use such script to make a callback:
 

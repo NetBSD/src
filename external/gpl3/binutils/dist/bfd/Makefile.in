@@ -2436,7 +2436,7 @@ pe-loongarch64igen.c: peXXigen.c
 
 pe-riscv64igen.c: peXXigen.c
 	$(AM_V_at)echo "#line 1 \"peXXigen.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/XX/peAArch64/g < $> >> $@
+	$(AM_V_GEN)$(SED) -e s/XX/peRiscV64/g < $> >> $@
 
 host-aout.lo: Makefile
 

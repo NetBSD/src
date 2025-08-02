@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_conf.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: parse_conf.c,v 1.6.8.1 2025/08/02 05:22:32 perseant Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/parse_conf.c,v 4.9 2005/04/16 17:32:10 kardel RELEASE_20050508_A
@@ -150,7 +150,7 @@ clockformat_t *clockformats[] =
 unsigned short nformats = sizeof(clockformats) / sizeof(clockformats[0]) - 1;
 
 #else /* not (REFCLOCK && CLOCK_PARSE) */
-int parse_conf_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* not (REFCLOCK && CLOCK_PARSE) */
 
 /*

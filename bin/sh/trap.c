@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.56 2021/11/10 15:26:34 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.56.4.1 2025/08/02 05:18:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.56 2021/11/10 15:26:34 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.56.4.1 2025/08/02 05:18:26 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,9 @@ __RCSID("$NetBSD: trap.c,v 1.56 2021/11/10 15:26:34 kre Exp $");
 #include "mystring.h"
 #include "var.h"
 
+#ifndef SMALL
+#include "myhistedit.h"
+#endif
 
 /*
  * Sigmode records the current value of the signal handlers for the various
@@ -105,7 +108,7 @@ void printsignals(struct output *, int);
  * or -1 if it isn't one
  */
 
-static int
+int
 signame_to_signum(const char *p)
 {
 	int i;
@@ -884,6 +887,11 @@ exitshell_savedstatus(void)
 	}
 
 	INTOFF;			/*  we're done, no more interrupts. */
+
+#ifndef SMALL
+	if (rootshell)
+		save_sh_history();
+#endif
 
 	if (!setjmp(loc.loc)) {
 		handler = &loc;		/* probably unnecessary */

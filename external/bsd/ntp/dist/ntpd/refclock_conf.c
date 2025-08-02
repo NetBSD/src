@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_conf.c,v 1.5 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_conf.c,v 1.5.8.1 2025/08/02 05:22:37 perseant Exp $	*/
 
 /*
  * refclock_conf.c - reference clock configuration
@@ -324,5 +324,5 @@ struct refclock * const refclock_conf[] = {
 u_char num_refclock_conf = sizeof(refclock_conf)/sizeof(struct refclock *);
 
 #else
-int refclock_conf_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif

@@ -1,0 +1,7 @@
+Copyrights:
+***********
+
+All of the code can be freely used and redistributed.  The individual
+source files each have their own copyright and permission notice.
+Pppd, pppstats and pppdump are under BSD-style notices.  Some of the
+pppd plugins are GPL'd.  Chat is public domain.

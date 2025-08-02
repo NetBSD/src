@@ -1,4 +1,4 @@
-/*	$NetBSD: clocktypes.c,v 1.5 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: clocktypes.c,v 1.5.8.1 2025/08/02 05:22:30 perseant Exp $	*/
 
 /*
  * Data for pretty printing clock types
@@ -8,7 +8,6 @@
 
 #include "ntp_fp.h"
 #include "ntp.h"
-#include "lib_strbuf.h"
 #include "ntp_refclock.h"
 #include "ntp_stdlib.h"
 

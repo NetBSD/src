@@ -1,6 +1,6 @@
 /* Python interface to inferior stop events.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,14 +17,83 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "py-stopevent.h"
+#include "py-uiout.h"
+#include "thread-fsm.h"
 
 gdbpy_ref<>
-create_stop_event_object (PyTypeObject *py_type)
+create_stop_event_object (PyTypeObject *py_type, const gdbpy_ref<> &dict)
 {
   gdbpy_ref<> thread = py_get_event_thread (inferior_ptid);
-  return create_thread_event_object (py_type, thread.get ());
+  if (thread == nullptr)
+    return nullptr;
+
+  gdbpy_ref<> result = create_thread_event_object (py_type, thread.get ());
+  if (result == nullptr)
+    return nullptr;
+
+  if (evpy_add_attribute (result.get (), "details", dict.get ()) < 0)
+    return nullptr;
+
+  return result;
+}
+
+/* Print BPSTAT to a new Python dictionary.  Returns the dictionary,
+   or null if a Python exception occurred.  */
+
+static gdbpy_ref<>
+py_print_bpstat (bpstat *bs, enum gdb_signal stop_signal)
+{
+  py_ui_out uiout;
+  struct value *return_value = nullptr;
+
+  try
+    {
+      scoped_restore save_uiout = make_scoped_restore (&current_uiout, &uiout);
+
+      thread_info *tp = inferior_thread ();
+      if (tp->thread_fsm () != nullptr && tp->thread_fsm ()->finished_p ())
+	{
+	  async_reply_reason reason = tp->thread_fsm ()->async_reply_reason ();
+	  uiout.field_string ("reason", async_reason_lookup (reason));
+
+	  return_value_info *rvinfo = tp->thread_fsm ()->return_value ();
+	  if (rvinfo != nullptr && rvinfo->value != nullptr)
+	    return_value = rvinfo->value;
+	}
+
+      if (stop_signal != GDB_SIGNAL_0 && stop_signal != GDB_SIGNAL_TRAP)
+	print_signal_received_reason (&uiout, stop_signal);
+      else
+	{
+	  struct target_waitstatus last;
+	  get_last_target_status (nullptr, nullptr, &last);
+
+	  bpstat_print (bs, last.kind ());
+	}
+    }
+  catch (const gdb_exception &except)
+    {
+      gdbpy_convert_exception (except);
+      return nullptr;
+    }
+
+  gdbpy_ref<> dict = uiout.result ();
+  if (dict == nullptr)
+    return nullptr;
+
+  /* This has to be done separately to avoid error issues, and because
+     there's no API to add generic Python objects to a py_ui_out.  */
+  if (return_value != nullptr)
+    {
+      gdbpy_ref<> val (value_to_value_object (return_value));
+      if (val == nullptr)
+	return nullptr;
+      if (PyDict_SetItemString (dict.get (), "finish-value", val.get ()) < 0)
+	return nullptr;
+    }
+
+  return dict;
 }
 
 /* Callback observers when a stop event occurs.  This function will create a
@@ -44,6 +113,10 @@ emit_stop_event (struct bpstat *bs, enum gdb_signal stop_signal)
 
   if (evregpy_no_listeners_p (gdb_py_events.stop))
     return 0;
+
+  gdbpy_ref<> dict = py_print_bpstat (bs, stop_signal);
+  if (dict == nullptr)
+    return -1;
 
   /* Add any breakpoint set at this location to the list.  */
   for (current_bs = bs; current_bs != NULL; current_bs = current_bs->next)
@@ -71,7 +144,8 @@ emit_stop_event (struct bpstat *bs, enum gdb_signal stop_signal)
 
   if (list != NULL)
     {
-      stop_event_obj = create_breakpoint_event_object (list.get (),
+      stop_event_obj = create_breakpoint_event_object (dict,
+						       list.get (),
 						       first_bp);
       if (stop_event_obj == NULL)
 	return -1;
@@ -81,7 +155,7 @@ emit_stop_event (struct bpstat *bs, enum gdb_signal stop_signal)
   if (stop_signal != GDB_SIGNAL_0
       && stop_signal != GDB_SIGNAL_TRAP)
     {
-      stop_event_obj = create_signal_event_object (stop_signal);
+      stop_event_obj = create_signal_event_object (dict, stop_signal);
       if (stop_event_obj == NULL)
 	return -1;
     }
@@ -90,7 +164,8 @@ emit_stop_event (struct bpstat *bs, enum gdb_signal stop_signal)
      be known and this should eventually be unused.  */
   if (stop_event_obj == NULL)
     {
-      stop_event_obj = create_stop_event_object (&stop_event_object_type);
+      stop_event_obj = create_stop_event_object (&stop_event_object_type,
+						 dict);
       if (stop_event_obj == NULL)
 	return -1;
     }

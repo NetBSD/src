@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2023/06/03 21:30:21 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.23.2.1 2025/08/02 05:22:07 perseant Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -22,9 +22,9 @@ LOCALSTATEDIR=/var
 CPPFLAGS+=-DHAVE_CONFIG_H
 CPPFLAGS+=-I${NTP_SRCDIR}/include \
 	  -I${IDIST}/include \
-	  -I${IDIST}/lib/isc/include \
-	  -I${IDIST}/lib/isc/unix/include \
-	  -I${IDIST}/lib/isc/nothreads/include
+	  -I${IDIST}/libntp/lib/isc/include \
+	  -I${IDIST}/libntp/lib/isc/unix/include \
+	  -I${IDIST}/libntp/lib/isc/nothreads/include
 
 .if defined(PROG)
 LIBNTP!=	cd ${.CURDIR}/../../lib/libntp && ${PRINTOBJDIR}
@@ -35,8 +35,8 @@ LIBPARSE!=	cd ${.CURDIR}/../../lib/libparse && ${PRINTOBJDIR}
 LDADD+=		-L${LIBNTP} -lntp -L${LIBOPTS} -lopts
 DPADD+=		${LIBNTP}/libntp.a ${LIBOPTS}/libopts.a
 
-LDADD+=		-lcrypto -lcrypt
-DPADD+=		${LIBCRYPTO} ${LIBCRYPT}
+LDADD+=		-lcrypto -lcrypt -lpthread
+DPADD+=		${LIBCRYPTO} ${LIBCRYPT} ${LIBPTHREAD}
 
 .if ${MKMDNS:Uno} != "no"
 CPPFLAGS+=-DHAVE_DNSREGISTRATION=1

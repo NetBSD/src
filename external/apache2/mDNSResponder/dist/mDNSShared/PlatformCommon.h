@@ -1,4 +1,4 @@
-/* -*- Mode: C; tab-width: 4 -*-
+/* -*- Mode: C; tab-width: 4; c-file-style: "bsd"; c-basic-offset: 4; fill-column: 108; indent-tabs-mode: nil; -*-
  *
  * Copyright (c) 2004 Apple Computer, Inc. All rights reserved.
  *
@@ -15,4 +15,36 @@
  * limitations under the License.
  */
 
-extern void ReadDDNSSettingsFromConfFile(mDNS *const m, const char *const filename, domainname *const hostname, domainname *const domain, mDNSBool *DomainDiscoveryDisabled);
+#ifndef __PLATFORM_COMMON_H
+#define __PLATFORM_COMMON_H
+
+#ifndef NSEC_PER_SEC
+    #define NSEC_PER_SEC 1000000000ull
+#endif
+#ifndef USEC_PER_SEC
+    #define USEC_PER_SEC 1000000ull
+#endif
+#ifndef MSEC_PER_SEC
+    #define MSEC_PER_SEC 1000ull
+#endif
+#ifndef NSEC_PER_USEC
+    #define NSEC_PER_USEC 1000ull
+#endif
+#ifndef NSEC_PER_MSEC
+    #define NSEC_PER_MSEC 1000000ull
+#endif
+#ifndef USEC_PER_MSEC
+    #define USEC_PER_MSEC (NSEC_PER_MSEC / NSEC_PER_USEC)
+#endif
+
+extern void ReadDDNSSettingsFromConfFile(mDNS *const m, const char *const filename,
+										 domainname *const hostname, domainname *const domain,
+										 mDNSBool *DomainDiscoveryDisabled);
+extern mDNSBool mDNSPosixTCPSocketSetup(int *fd, mDNSAddr_Type addrType, mDNSIPPort *port, mDNSIPPort *outTcpPort);
+extern TCPSocket *mDNSPosixDoTCPListenCallback(int fd, mDNSAddr_Type addressType, TCPSocketFlags socketFlags,
+                     TCPAcceptedCallback callback, void *context);
+extern mDNSBool mDNSPosixTCPListen(int *fd, mDNSAddr_Type addrtype, mDNSIPPort *port, mDNSAddr *addr,
+                   mDNSBool reuseAddr, int queueLength);
+extern long mDNSPosixReadTCP(int fd, void *buf, unsigned long buflen, mDNSBool *closed);
+extern long mDNSPosixWriteTCP(int fd, const char *msg, unsigned long len);
+#endif

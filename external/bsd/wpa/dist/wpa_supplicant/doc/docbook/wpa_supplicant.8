@@ -3,18 +3,18 @@
 .\" <http://shell.ipoline.com/~elmert/comp/docbook2X/> 
 .\" Please send any bug reports, improvements, comments, patches, 
 .\" etc. to Steve Cheng <steve@ggi-project.org>.
-.TH "WPA_SUPPLICANT" "8" "07 August 2019" "" ""
+.TH "WPA_SUPPLICANT" "8" "1 February 2023" "" ""
 
 .SH NAME
 wpa_supplicant \- Wi-Fi Protected Access client and IEEE 802.1X supplicant
 .SH SYNOPSIS
 
-\fBwpa_supplicant\fR [ \fB-BddfhKLqqsTtuvW\fR ] [ \fB-i\fIifname\fB\fR ] [ \fB-c\fIconfig file\fB\fR ] [ \fB-D\fIdriver\fB\fR ] [ \fB-P\fIPID_file\fB\fR ] [ \fB-f\fIoutput file\fB\fR ]
+\fBwpa_supplicant\fR [ \fB-BddfhKLqqsTtuvW\fR ] [ \fB-i\fIifname\fB\fR ] [ \fB-c\fIconfig file\fB\fR ] [ \fB-D\fIdriver\fB\fR ] [ \fB-P\fIPID_file\fB\fR ] [ \fB-f\fIoutput file\fB\fR ] [ \fB-I\fIadditional config file\fB\fR ]
 
 .SH "OVERVIEW"
 .PP
 Wireless networks do not require physical access to the network equipment
-in the same way as wired networks. This makes it easier for unauthorized
+in the same way that wired networks do. This makes it easier for unauthorized
 users to passively monitor a network and capture all transmitted frames.
 In addition, unauthorized use of the network is much easier. In many cases,
 this can happen even without user's explicit knowledge since the wireless
@@ -24,14 +24,14 @@ network.
 Link-layer encryption can be used to provide a layer of security for
 wireless networks. The original wireless LAN standard, IEEE 802.11,
 included a simple encryption mechanism, WEP. However, that proved to
-be flawed in many areas and network protected with WEP cannot be consider
+be flawed in many areas and networks protected with WEP cannot be considered
 secure. IEEE 802.1X authentication and frequently changed dynamic WEP keys
 can be used to improve the network security, but even that has inherited
 security issues due to the use of WEP for encryption. Wi-Fi Protected
-Access and IEEE 802.11i amendment to the wireless LAN standard introduce
-a much improvement mechanism for securing wireless networks. IEEE 802.11i
-enabled networks that are using CCMP (encryption mechanism based on strong
-cryptographic algorithm AES) can finally be called secure used for
+Access and the IEEE 802.11i amendment to the wireless LAN standard introduce
+a much improved mechanism for securing wireless networks. IEEE 802.11i
+enabled networks that are using CCMP (an encryption mechanism based on the strong
+cryptographic algorithm AES) can finally be called secure and used for
 applications which require efficient protection against unauthorized
 access.
 .PP
@@ -51,13 +51,13 @@ frontend programs and an example text-based frontend,
 wpa_supplicant.
 .PP
 Before wpa_supplicant can do its work, the network interface
-must be available.  That means that the physical device must be
+must be available. That means that the physical device must be
 present and enabled, and the driver for the device must be
 loaded. The daemon will exit immediately if the device is not already
 available.
 .PP
 After \fBwpa_supplicant\fR has configured the
-network device, higher level configuration such as DHCP may
+network device, higher level configuration of the device, such as DHCP, may
 proceed.  There are a variety of ways to integrate wpa_supplicant
 into a machine's networking scripts, a few of which are described
 in sections below.
@@ -67,7 +67,7 @@ using WPA:
 .TP 0.2i
 \(bu
 \fBwpa_supplicant\fR requests the kernel
-driver to scan neighboring BSSes
+driver to scan neighboring BSSes (Basic Service Set)
 .TP 0.2i
 \(bu
 \fBwpa_supplicant\fR selects a BSS based on
@@ -228,8 +228,14 @@ interface (older hardware/drivers).
 \fBwired\fR
 wpa_supplicant wired Ethernet driver
 .TP
+\fBmacsec_linux\fR
+MACsec Ethernet driver for Linux
+.TP
 \fBroboswitch\fR
 wpa_supplicant Broadcom switch driver
+.TP
+\fBnone\fR
+no driver (RADIUS server/WPS ER only)
 .TP
 \fBbsd\fR
 BSD 802.11 support (Atheros, etc.).
@@ -260,6 +266,9 @@ Path to ctrl_interface socket (Per interface. Only used if
 Interface to listen on. Multiple instances of this option can
 be present, one per interface, separated by \fB-N\fR
 option (see below).
+.TP
+\fB-I filename\fR
+Path to additional configuration file.
 .TP
 \fB-d\fR
 Increase debugging verbosity (\fB-dd\fR even
@@ -352,10 +361,10 @@ wpa_supplicant -B -c/etc/wpa_supplicant.conf -iwlan0
 .fi
 .RE
 .PP
-This makes the process fork into background.
+This makes the process fork into the background.
 .PP
-The easiest way to debug problems, and to get debug log for
-bug reports, is to start \fBwpa_supplicant\fR on
+The easiest way to debug problems, and to get a debug log for
+bug reports, is to start \fBwpa_supplicant\fR in the
 foreground with debugging enabled:
 .sp
 .RS
@@ -500,7 +509,7 @@ to specify which interface to use by including -D<driver
 name> option on the command line.
 .SH "INTERFACE TO PCMCIA-CS/CARDMRG"
 .PP
-For example, following small changes to pcmcia-cs scripts
+For example, the following small changes to pcmcia-cs scripts
 can be used to enable WPA support:
 .PP
 Add MODE="Managed" and WPA="y" to the network scheme in
@@ -544,7 +553,7 @@ in.
 \fBwpa_passphrase\fR(8)
 .SH "LEGAL"
 .PP
-wpa_supplicant is copyright (c) 2003-2019,
+wpa_supplicant is copyright (c) 2003-2022,
 Jouni Malinen <j@w1.fi> and
 contributors.
 All Rights Reserved.

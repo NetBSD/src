@@ -1,4 +1,4 @@
-/*	$NetBSD: ok_syntax1.y,v 1.1.1.3 2016/01/09 21:59:45 christos Exp $	*/
+/*	$NetBSD: ok_syntax1.y,v 1.1.1.3.28.1 2025/08/02 05:20:55 perseant Exp $	*/
 
 %pure_parser
 
@@ -42,7 +42,7 @@ static void YYERROR_DECL();
 %token TAB  '\t'
 %token VT   '\v'
 
-%union
+%union CalcData
 {
     char *	cval;
     int		ival;

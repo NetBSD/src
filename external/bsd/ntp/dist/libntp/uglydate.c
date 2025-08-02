@@ -1,4 +1,4 @@
-/*	$NetBSD: uglydate.c,v 1.5 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: uglydate.c,v 1.5.8.1 2025/08/02 05:22:31 perseant Exp $	*/
 
 /*
  * uglydate - convert a time stamp to something barely readable
@@ -9,7 +9,6 @@
 
 #include "ntp_fp.h"
 #include "ntp_unixtime.h"
-#include "lib_strbuf.h"
 #include "ntp_stdlib.h"
 
 

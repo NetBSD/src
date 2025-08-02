@@ -1,4 +1,5 @@
-# $NetBSD: md.mvme68k,v 1.39 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.mvme68k,v 1.39.14.1 2025/08/02 05:20:29 perseant Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mvme68k				comp-c-include
 ./usr/include/mvme68k/_G_config.h		comp-obsolete		obsolete
@@ -28,6 +29,7 @@
 ./usr/include/mvme68k/kcore.h			comp-c-include
 ./usr/include/mvme68k/limits.h			comp-c-include
 ./usr/include/mvme68k/lock.h			comp-c-include
+./usr/include/mvme68k/lwp_private.h		comp-c-include
 ./usr/include/mvme68k/math.h			comp-c-include
 ./usr/include/mvme68k/mcontext.h		comp-c-include
 ./usr/include/mvme68k/mutex.h			comp-c-include

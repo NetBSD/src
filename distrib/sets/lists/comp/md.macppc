@@ -1,4 +1,5 @@
-# $NetBSD: md.macppc,v 1.42 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.macppc,v 1.42.14.1 2025/08/02 05:20:29 perseant Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/macppc				comp-c-include
 ./usr/include/macppc/_G_config.h		comp-obsolete		obsolete
@@ -37,6 +38,7 @@
 ./usr/include/macppc/keyboard.h			comp-c-include
 ./usr/include/macppc/limits.h			comp-c-include
 ./usr/include/macppc/lock.h			comp-c-include
+./usr/include/macppc/lwp_private.h		comp-c-include
 ./usr/include/macppc/machine_type.h		comp-obsolete		obsolete
 ./usr/include/macppc/math.h			comp-c-include
 ./usr/include/macppc/mcontext.h			comp-c-include

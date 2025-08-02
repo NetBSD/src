@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.h,v 1.8 2009/08/17 12:00:53 vanhu Exp $	*/
+/*	$NetBSD: schedule.h,v 1.8.62.1 2025/08/02 05:18:38 perseant Exp $	*/
 
 /* Id: schedule.h,v 1.5 2006/05/03 21:53:42 vanhu Exp */
 
@@ -61,21 +61,21 @@
 #ifndef container_of
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-        (type *)( (char *)__mptr - offsetof(type,member) );})
+        (type *)( (char *)(intptr_t)__mptr - offsetof(type,member) );})
 #endif
 
 
 /* scheduling table */
 /* the head is the nearest event. */
 struct sched {
-	void (*func) __P((struct sched *));	/* callback on timeout */
+	void (*func)(struct sched *);	/* callback on timeout */
 	struct timeval xtime;			/* expiration time */
 	struct timeval tick;			/* relative timeout */
 	TAILQ_ENTRY(sched) chain;
 	long id;				/* for debug */
 };
 
-#define SCHED_INITIALIZER() { NULL, }
+#define SCHED_INITIALIZER() { .func = NULL, }
 
 struct scheddump {
 	time_t xtime;
@@ -84,16 +84,14 @@ struct scheddump {
 	time_t tick;
 };
 
-time_t sched_monotonic_to_time_t __P((struct timeval *tv,
-				      struct timeval *now));
-void sched_get_monotonic_time __P((struct timeval *tv));
+time_t sched_monotonic_to_time_t(struct timeval *tv, struct timeval *now);
+void sched_get_monotonic_time(struct timeval *tv);
 
-struct timeval *schedular __P((void));
-void sched_schedule __P((struct sched *, time_t,
-			 void (*func) __P((struct sched *))));
-void sched_cancel __P((struct sched *));
+struct timeval *schedular(void);
+void sched_schedule(struct sched *, time_t, void (*func)(struct sched *));
+void sched_cancel(struct sched *);
 
-int sched_dump __P((caddr_t *, int *));
-void sched_init __P((void));
+int sched_dump(caddr_t *, int *);
+void sched_init(void);
 
 #endif /* _SCHEDULE_H */

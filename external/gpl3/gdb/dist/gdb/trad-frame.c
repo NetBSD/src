@@ -1,6 +1,6 @@
 /* Traditional frame unwind support, for GDB the GNU Debugger.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "trad-frame.h"
 #include "regcache.h"
@@ -36,7 +36,7 @@ struct trad_frame_cache
 };
 
 struct trad_frame_cache *
-trad_frame_cache_zalloc (frame_info_ptr this_frame)
+trad_frame_cache_zalloc (const frame_info_ptr &this_frame)
 {
   struct trad_frame_cache *this_trad_cache;
 
@@ -61,9 +61,7 @@ trad_frame_reset_saved_regs (struct gdbarch *gdbarch,
 trad_frame_saved_reg *
 trad_frame_alloc_saved_regs (struct gdbarch *gdbarch)
 {
-#ifdef HAVE_IS_TRIVIALLY_CONSTRUCTIBLE
-  gdb_static_assert (std::is_trivially_constructible<trad_frame_saved_reg>::value);
-#endif
+  static_assert (std::is_trivially_constructible<trad_frame_saved_reg>::value);
 
   int numregs = gdbarch_num_cooked_regs (gdbarch);
   trad_frame_saved_reg *this_saved_regs
@@ -83,7 +81,7 @@ trad_frame_alloc_saved_regs (struct gdbarch *gdbarch)
    for all potential instruction sequences).  */
 
 trad_frame_saved_reg *
-trad_frame_alloc_saved_regs (frame_info_ptr this_frame)
+trad_frame_alloc_saved_regs (const frame_info_ptr &this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
 
@@ -184,7 +182,7 @@ trad_frame_set_reg_value_bytes (struct trad_frame_cache *this_trad_cache,
 
 
 struct value *
-trad_frame_get_prev_register (frame_info_ptr this_frame,
+trad_frame_get_prev_register (const frame_info_ptr &this_frame,
 			      trad_frame_saved_reg this_saved_regs[],
 			      int regnum)
 {
@@ -209,7 +207,7 @@ trad_frame_get_prev_register (frame_info_ptr this_frame,
 
 struct value *
 trad_frame_get_register (struct trad_frame_cache *this_trad_cache,
-			 frame_info_ptr this_frame,
+			 const frame_info_ptr &this_frame,
 			 int regnum)
 {
   return trad_frame_get_prev_register (this_frame, this_trad_cache->prev_regs,

@@ -1,4 +1,5 @@
-# $NetBSD: md.sun3,v 1.65 2024/01/14 18:22:02 thorpej Exp $
+# $NetBSD: md.sun3,v 1.65.2.1 2025/08/02 05:20:29 perseant Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sun3				comp-c-include
 ./usr/include/sun3/_G_config.h			comp-obsolete		obsolete
@@ -38,6 +39,7 @@
 ./usr/include/sun3/leds.h			comp-c-include
 ./usr/include/sun3/limits.h			comp-c-include
 ./usr/include/sun3/lock.h			comp-c-include
+./usr/include/sun3/lwp_private.h		comp-c-include
 ./usr/include/sun3/math.h			comp-c-include
 ./usr/include/sun3/mc68851.h			comp-c-include
 ./usr/include/sun3/mcontext.h			comp-c-include

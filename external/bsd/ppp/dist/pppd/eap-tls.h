@@ -30,9 +30,10 @@
  *
  */
 
-#ifndef __EAP_TLS_H__
-#define __EAP_TLS_H__
+#ifndef PPP_EAP_TLS_H
+#define PPP_EAP_TLS_H
 
+#include "pppdconf.h"
 #include "eap.h"
 
 #include <openssl/ssl.h>
@@ -43,6 +44,8 @@
 #define EAP_TLS_FLAGS_START     32     /* start flag */
 
 #define EAP_TLS_MAX_LEN         65536  /* max eap tls packet size */
+
+struct tls_info;
 
 struct eaptls_session
 {
@@ -56,7 +59,6 @@ struct eaptls_session
     SSL *ssl;                   /* ssl connection */
     BIO *from_ssl;
     BIO *into_ssl;
-    char peer[MAXWORDLEN];      /* peer name */
     char peercertfile[MAXWORDLEN];
     bool alert_sent;
     u_char alert_sent_desc;
@@ -65,11 +67,12 @@ struct eaptls_session
     char rtx[EAP_TLS_MAX_LEN];  /* retransmission buffer */
     int rtx_len;
     int mtu;                    /* unit mtu */
+    struct tls_info *info;
 };
 
 
 SSL_CTX *eaptls_init_ssl(int init_server, char *cacertfile, char *capath,
-            char *certfile, char *peer_certfile, char *privkeyfile);
+            char *certfile, char *privkeyfile, char *pkcs12);
 int eaptls_init_ssl_server(eap_state * esp);
 int eaptls_init_ssl_client(eap_state * esp);
 void eaptls_free_session(struct eaptls_session *ets);
@@ -82,14 +85,9 @@ void eaptls_retransmit(struct eaptls_session *ets, u_char ** outp);
 
 int get_eaptls_secret(int unit, char *client, char *server,
               char *clicertfile, char *servcertfile, char *cacertfile,
-              char *capath, char *pkfile, int am_server);
+              char *capath, char *pkfile, char *pkcs12, int am_server);
 
-#ifdef MPPE
-#include "mppe.h"   /* MPPE_MAX_KEY_LEN */
-extern u_char mppe_send_key[MPPE_MAX_KEY_LEN];
-extern u_char mppe_recv_key[MPPE_MAX_KEY_LEN];
-extern int mppe_keys_set;
-
+#ifdef PPP_WITH_MPPE
 void eaptls_gen_mppe_keys(struct eaptls_session *ets, int client);
 #endif
 

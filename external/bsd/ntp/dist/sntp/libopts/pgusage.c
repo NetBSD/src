@@ -1,4 +1,4 @@
-/*	$NetBSD: pgusage.c,v 1.7 2020/05/25 20:47:35 christos Exp $	*/
+/*	$NetBSD: pgusage.c,v 1.7.8.1 2025/08/02 05:22:59 perseant Exp $	*/
 
 
 /**
@@ -15,7 +15,7 @@
  *
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2018 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control

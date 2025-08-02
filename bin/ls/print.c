@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.57 2020/05/17 23:34:11 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.57.8.1 2025/08/02 05:18:24 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.57 2020/05/17 23:34:11 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.57.8.1 2025/08/02 05:18:24 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -231,6 +231,8 @@ printcol(DISPLAY *dp)
 
 	colwidth += 1;
 
+	printtotal(dp);				/* "total: %u\n" */
+
 	if (termwidth < 2 * colwidth) {
 		printscol(dp);
 		return;
@@ -261,8 +263,6 @@ printcol(DISPLAY *dp)
 	numrows = num / numcols;
 	if (num % numcols)
 		++numrows;
-
-	printtotal(dp);				/* "total: %u\n" */
 
 	for (row = 0; row < numrows; ++row) {
 		for (base = row, chcnt = col = 0; col < numcols; ++col) {
@@ -298,6 +298,8 @@ printacol(DISPLAY *dp)
 
 	colwidth += 1;
 
+	printtotal(dp);				/* "total: %u\n" */
+
 	if (termwidth < 2 * colwidth) {
 		printscol(dp);
 		return;
@@ -305,8 +307,6 @@ printacol(DISPLAY *dp)
 
 	numcols = termwidth / colwidth;
 	colwidth = termwidth / numcols;		/* spread out if possible */
-
-	printtotal(dp);				/* "total: %u\n" */
 
 	chcnt = col = 0;
 	for (p = dp->list; p; p = p->fts_link) {
@@ -440,7 +440,8 @@ printtotal(DISPLAY *dp)
 	
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size)) {
 		if (f_humanize) {
-			if ((humanize_number(szbuf, sizeof(szbuf), (int64_t)dp->stotal,
+			if ((humanize_number(szbuf, sizeof(szbuf),
+			    dp->btotal * POSIX_BLOCK_SIZE,
 			    "", HN_AUTOSCALE,
 			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 				err(1, "humanize_number");

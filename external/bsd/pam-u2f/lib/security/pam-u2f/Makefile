@@ -1,13 +1,14 @@
-# $NetBSD: Makefile,v 1.6 2023/05/09 15:02:59 christos Exp $
+# $NetBSD: Makefile,v 1.6.2.1 2025/08/02 05:23:12 perseant Exp $
 
 .include <bsd.own.mk>
+.include "${.PARSEDIR}/../../../Makefile.inc"
 .PATH: ${NETBSDSRCDIR}/external/bsd/pam-u2f/dist
 
 CPPFLAGS+= -DHAVE_SECURITY_PAM_APPL_H #-DHAVE_SECURITY_PAM_MODULES_H
 #CPPFLAGS+= -DPAM_DEBUG -DDEBUG_PAM
 
 LIB=	pam_u2f
-SRCS=	pam-u2f.c drop_privs.c util.c b64.c explicit_bzero.c
+SRCS=	pam-u2f.c util.c b64.c explicit_bzero.c expand.c debug.c
 MAN=	pam_u2f.8
 
 COPTS.util.c += -Wno-error=stack-protector -Wno-error=deprecated-declarations
@@ -15,7 +16,7 @@ COPTS.util.c += -Wno-error=stack-protector -Wno-error=deprecated-declarations
 LIBDPLIBS+= \
 	fido2	${NETBSDSRCDIR}/external/bsd/libfido2/lib \
 	cbor	${NETBSDSRCDIR}/external/mit/libcbor/lib \
-	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
+	crypto	${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
 	m	${NETBSDSRCDIR}/lib/libm
 
 pam_u2f.8:

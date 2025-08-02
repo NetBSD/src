@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2018/05/19 19:23:15 maxv Exp $	*/
+/*	$NetBSD: main.c,v 1.15.14.1 2025/08/02 05:18:37 perseant Exp $	*/
 
 /* Id: main.c,v 1.25 2006/06/20 20:31:34 manubsd Exp */
 
@@ -164,8 +164,6 @@ usage(void)
 static void
 parse(int ac, char **av)
 {
-	extern char *optarg;
-	extern int optind;
 	int c;
 #ifdef YYDEBUG
 	extern int yydebug;

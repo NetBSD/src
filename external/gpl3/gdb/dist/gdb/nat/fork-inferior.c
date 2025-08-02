@@ -1,6 +1,6 @@
 /* Fork a Unix child process, and set up to debug it, for GDB and GDBserver.
 
-   Copyright (C) 1990-2023 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "fork-inferior.h"
 #include "target/waitstatus.h"
 #include "gdbsupport/filestuff.h"
@@ -27,6 +26,7 @@
 #include "gdbsupport/pathstuff.h"
 #include "gdbsupport/signals-state-save-restore.h"
 #include "gdbsupport/gdb_tilde_expand.h"
+#include "gdbsupport/gdb_signals.h"
 #include <vector>
 
 extern char **environ;
@@ -266,12 +266,9 @@ execv_argv::init_for_shell (const char *exec_file,
 
 pid_t
 fork_inferior (const char *exec_file_arg, const std::string &allargs,
-	       char **env, void (*traceme_fun) (),
-	       gdb::function_view<void (int)> init_trace_fun,
-	       void (*pre_trace_fun) (),
-	       const char *shell_file_arg,
-	       void (*exec_fun)(const char *file, char * const *argv,
-				char * const *env))
+	       char **env, traceme_ftype traceme_fun,
+	       init_trace_ftype init_trace_fun, pre_trace_ftype pre_trace_fun,
+	       const char *shell_file_arg, exec_ftype exec_fun)
 {
   pid_t pid;
   /* Set debug_fork then attach to the child while it sleeps, to debug.  */
@@ -337,7 +334,7 @@ fork_inferior (const char *exec_file_arg, const std::string &allargs,
      happen to prepare to handle the child we're about fork, do it
      now...  */
   if (pre_trace_fun != NULL)
-    (*pre_trace_fun) ();
+    pre_trace_fun ();
 
   /* Create the child process.  Since the child process is going to
      exec(3) shortly afterwards, try to reduce the overhead by
@@ -389,7 +386,7 @@ fork_inferior (const char *exec_file_arg, const std::string &allargs,
 	 for the inferior.  */
 
       /* "Trace me, Dr. Memory!"  */
-      (*traceme_fun) ();
+      traceme_fun ();
 
       /* The call above set this process (the "child") as debuggable
 	by the original gdb process (the "parent").  Since processes
@@ -412,7 +409,7 @@ fork_inferior (const char *exec_file_arg, const std::string &allargs,
       char **argv = child_argv.argv ();
 
       if (exec_fun != NULL)
-	(*exec_fun) (argv[0], &argv[0], env);
+	exec_fun (argv[0], &argv[0], env);
       else
 	execvp (argv[0], &argv[0]);
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.82 2024/04/09 15:17:24 nia Exp $
+# $NetBSD: mkimage,v 1.82.2.1 2025/08/02 05:20:40 perseant Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,14 +34,14 @@
 
 #
 # Makes a bootable image for the host architecture given.
-# The host specific functions are pulled in from a /bin/sh script in the
-# "conf" directory, and is expected to provide the following shell
+# The host-specific functions are pulled in from a /bin/sh script in the
+# "conf" directory, which is expected to provide the following shell
 # functions, which are called in the following order:
 #
 #  - make_fstab: Creates the host's /etc/fstab with / on ${rootdev}.
 #    If -m is given, a number of directories are put on a tmpfs RAM disk
 #  - customize: After unpacking the sets, this gets the system to
-#    a working state, e. g. by setting up /etc/rc.conf and /dev
+#    a working state, e.g., by setting up /etc/rc.conf and /dev
 #  - populate: Add common goods like kernel and bootloader
 #  - make_label: Prints disklabel to stdout
 #
@@ -60,10 +60,15 @@ MTREE=${TOOL_MTREE:-mtree}
 INSTALLBOOT=${TOOL_INSTALLBOOT:-installboot}
 MKUBOOTIMAGE=${TOOL_MKUBOOTIMAGE:-mkubootimage}
 GZIP_CMD=${TOOL_GZIP:-gzip} # ${GZIP} is special to gzip(1)
+SED=${TOOL_SED:-sed}
+PWD_MKDB=${TOOL_PWD_MKDB:-pwd_mkdb}
+
+postfix=false
+[ "${MKPOSTFIX:-yes}" = no ] || postfix=true
 
 src="/usr/src"
 sets="base comp etc games gpufw man manhtml misc modules rescue tests text"
-xsets="xbase xcomp xetc xfont xserver" 
+xsets="xbase xcomp xetc xfont xserver"
 minfree="10%"
 bar="==="
 
@@ -112,6 +117,76 @@ getsectors() {
 	echo $((m * v / 512))
 }
 
+minwrites_fstab_entries() {
+	$minwrites || return 0
+	cat << EOF
+tmpfs		/var/log		tmpfs	rw,union,-s32M
+tmpfs		/var/run		tmpfs	rw,union,-s1M
+tmpfs		/var/mail		tmpfs	rw,union,-s10M
+tmpfs		/var/chroot		tmpfs	rw,union,-s10M
+EOF
+	if $postfix; then
+	cat << EOF
+tmpfs		/var/spool/postfix	tmpfs	rw,union,-s20M
+tmpfs		/var/db/postfix		tmpfs	rw,union,-s1M
+EOF
+	fi
+}
+
+make_fstab_gpt() {
+	local boot=$1
+	local rootopts=
+	if $minwrites; then
+		rootopts=,log,nodevmtime
+	fi
+
+	cat > ${mnt}/etc/fstab << EOF
+# NetBSD /etc/fstab
+# See /usr/share/examples/fstab/ for more examples.
+NAME=${gpt_label_ffs:-netbsd-root}	/		ffs	rw,noatime${rootopts}	1 1
+NAME=${gpt_label_boot:-$boot}		/boot		msdos	rw	1 1
+ptyfs		/dev/pts	ptyfs	rw
+procfs		/proc		procfs	rw
+tmpfs		/var/shm	tmpfs	rw,-m1777,-sram%25
+EOF
+	minwrites_fstab_entries >> ${mnt}/etc/fstab
+}
+
+# From Richard Neswold's:
+# http://rich-tbp.blogspot.com/2013/03/netbsd-on-rpi-minimizing-disk-writes.html
+# Also for the postfix stuff below
+make_fstab_normal() {
+	local rootopts=
+	if $minwrites; then
+		rootopts=,nodevmtime
+	fi
+	cat > ${mnt}/etc/fstab << EOF
+# NetBSD /etc/fstab
+# See /usr/share/examples/fstab/ for more examples.
+ROOT.a		/			ffs	rw,noatime${rootopts}	1 1
+ROOT.e		/boot			msdos	rw				1 1
+ptyfs		/dev/pts		ptyfs	rw
+procfs		/proc			procfs	rw
+tmpfs		/tmp			tmpfs	rw,-s32M
+tmpfs		/var/shm		tmpfs	rw,-m1777,-sram%25
+EOF
+	minwrites_fstab_entries >> ${mnt}/etc/fstab
+}
+
+make_fstab_default() {
+	if $gpt; then
+		make_fstab_gpt "$@"
+	else
+		make_fstab_normal
+	fi
+	echo "./etc/fstab type=file uname=root gname=wheel mode=0644" \
+	    >> "$tmp/selected_sets"
+
+	# Missing mount points from fstab
+	echo "./proc type=dir uname=root gname=wheel mode=0755" \
+	    >> "$tmp/selected_sets"
+}
+
 usage() {
 	cat << EOF 1>&2
 Usage: $PROG -h <host-arch> [-bdmx] [-B <byte-order>] [-K <kerneldir>] [-S <srcdir>] [-D <destdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
@@ -150,6 +225,9 @@ fi
 resize=false
 gpt=false
 gpt_hybrid=false
+fsize=8192
+bsize=65536
+ffsversion=1
 
 . "${DIR}/conf/${h}.conf"
 release="/usr/obj/${MACHINE}/release"
@@ -259,7 +337,7 @@ if [ -z "${bootonly}" ]; then
 	echo ${bar} Populating ffs filesystem ${bar}
 	${MAKEFS} -rx ${endian} -N ${release}/etc -t ffs \
 	    -O ${ffsoffset} ${timestamp_opt} \
-	    -o d=4096,f=8192,b=65536 -b $((${extra}))m \
+	    -o d=4096,f=${fsize},b=${bsize},v=${ffsversion} -b $((${extra}))m \
 	    -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
 fi
 
@@ -336,5 +414,9 @@ if $compress; then
 	${GZIP_CMD} -n -9 ${image}
 	image="${image}.gz"
 fi
+
+cd "${IMAGEDIR}"
+${CKSUM} -a MD5 "$(basename "${image}")" > MD5
+${CKSUM} -a SHA512 "$(basename "${image}")" > SHA512
 
 echo ${bar} Image is ${image} ${bar}

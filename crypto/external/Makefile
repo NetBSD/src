@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2017/05/21 15:28:37 riastradh Exp $
+#	$NetBSD: Makefile,v 1.4.22.1 2025/08/02 05:18:39 perseant Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+= bsd cpl
+SUBDIR+= apache2 bsd cpl
 
 .include <bsd.subdir.mk>

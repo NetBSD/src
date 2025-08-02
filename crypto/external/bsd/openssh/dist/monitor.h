@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.h,v 1.13 2023/07/28 04:37:37 rin Exp $	*/
-/* $OpenBSD: monitor.h,v 1.23 2019/01/19 21:43:56 djm Exp $ */
+/*	$NetBSD: monitor.h,v 1.13.2.1 2025/08/02 05:18:46 perseant Exp $	*/
+/* $OpenBSD: monitor.h,v 1.25 2024/10/14 01:57:50 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -57,11 +57,7 @@ enum monitor_reqtype {
 	MONITOR_REQ_GSSUSEROK = 46, MONITOR_ANS_GSSUSEROK = 47,
 	MONITOR_REQ_GSSCHECKMIC = 48, MONITOR_ANS_GSSCHECKMIC = 49,
 	MONITOR_REQ_TERM = 50,
-	MONITOR_REQ_JPAKE_STEP1 = 52, MONITOR_ANS_JPAKE_STEP1 = 53,
-	MONITOR_REQ_JPAKE_GET_PWDATA = 54, MONITOR_ANS_JPAKE_GET_PWDATA = 55,
-	MONITOR_REQ_JPAKE_STEP2 = 56, MONITOR_ANS_JPAKE_STEP2 = 57,
-	MONITOR_REQ_JPAKE_KEY_CONFIRM = 58, MONITOR_ANS_JPAKE_KEY_CONFIRM = 59,
-	MONITOR_REQ_JPAKE_CHECK_CONFIRM = 60, MONITOR_ANS_JPAKE_CHECK_CONFIRM = 61,
+	MONITOR_REQ_STATE = 51, MONITOR_ANS_STATE = 52,
 
 	MONITOR_REQ_PAM_START = 100,
 	MONITOR_REQ_PAM_ACCOUNT = 102, MONITOR_ANS_PAM_ACCOUNT = 103,
@@ -73,10 +69,10 @@ enum monitor_reqtype {
 
 	MONITOR_REQ_KRB4 = 200, MONITOR_ANS_KRB4 = 201,
 	MONITOR_REQ_KRB5 = 202, MONITOR_ANS_KRB5 = 203,
-
 };
 
 struct ssh;
+struct sshbuf;
 
 struct monitor {
 	int			 m_recvfd;
@@ -103,5 +99,10 @@ void mm_request_send(int, enum monitor_reqtype, struct sshbuf *);
 void mm_request_receive(int, struct sshbuf *);
 void mm_request_receive_expect(int, enum monitor_reqtype, struct sshbuf *);
 void mm_get_keystate(struct ssh *, struct monitor *);
+
+/* XXX: should be returned via a monitor call rather than config_fd */
+void mm_encode_server_options(struct sshbuf *);
+
+struct sshbuf *pack_hostkeys(void);
 
 #endif /* _MONITOR_H_ */

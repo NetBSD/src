@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 
 #include "netbsd-nat.h"
 #include "nat/netbsd-nat.h"
@@ -250,7 +249,7 @@ nbsd_nat_target::find_memory_regions (find_memory_region_ftype func,
 	{
 	  gdb_printf ("Save segment, %ld bytes at %s (%c%c%c)\n",
 		      (long) size,
-		      paddress (target_gdbarch (), kve->kve_start),
+		      paddress (current_inferior ()->arch  (), kve->kve_start),
 		      kve->kve_protection & KVME_PROT_READ ? 'r' : '-',
 		      kve->kve_protection & KVME_PROT_WRITE ? 'w' : '-',
 		      kve->kve_protection & KVME_PROT_EXEC ? 'x' : '-');
@@ -318,7 +317,7 @@ nbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
       if (pid == 0)
 	error (_("No current process: you must name one."));
     }
-  else if (built_argv.count () == 1 && isdigit (built_argv[0][0]))
+  else if (built_argv.count () == 1 && isdigit ((unsigned char)built_argv[0][0]))
     pid = strtol (built_argv[0], NULL, 10);
   else
     error (_("Invalid arguments."));
@@ -510,7 +509,7 @@ nbsd_resume(nbsd_nat_target *target, ptid_t ptid, int step,
 	  perror_with_name (("ptrace"));
     }
 
-  if (catch_syscall_enabled () > 0)
+  if (catch_syscall_enabled ())
     request = PT_SYSCALL;
   else
     request = PT_CONTINUE;
@@ -581,6 +580,7 @@ ptid_t
 nbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 		       target_wait_flags target_options)
 {
+again:
   pid_t pid = nbsd_wait (ptid, ourstatus, target_options);
   ptid_t wptid = ptid_t (pid);
 
@@ -627,7 +627,7 @@ nbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	 threads might be skipped during post_attach that
 	 have not yet reported their PTRACE_LWP_EXIT event.
 	 Ignore exited events for an unknown LWP.  */
-      thread_info *thr = find_thread_ptid (this, wptid);
+      thread_info *thr = this->find_thread (wptid);
       if (thr == nullptr)
 	  ourstatus->set_spurious ();
       else
@@ -635,17 +635,13 @@ nbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	  /* NetBSD does not store an LWP exit status.  */
 	  ourstatus->set_thread_exited (0);
 
-	  if (print_thread_events)
-	    gdb_printf (_("[%s exited]\n"),
-			target_pid_to_str (wptid).c_str ());
 	  delete_thread (thr);
 	}
 
       /* The GDB core expects that the rest of the threads are running.  */
       if (ptrace (PT_CONTINUE, pid, (void *) 1, 0) == -1)
 	perror_with_name (("ptrace"));
-
-      return wptid;
+      goto again;
     }
 
   if (in_thread_list (this, ptid_t (pid)))

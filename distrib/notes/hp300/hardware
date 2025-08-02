@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.28 2024/05/01 19:40:56 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.28.2.1 2025/08/02 05:20:22 perseant Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -144,7 +144,7 @@ Built-in Apollo 4-port on Series 400 workstations
 .bullet)
 .(Note
 See the FAQ for more detailed specs and information on configuring:
-.Lk http://www.NetBSD.org/ports/hp300/faq.html#serialinfo
+.Lk https://www.NetBSD.org/ports/hp300/faq.html#serialinfo
 .Note)
 .It
 Network interfaces
@@ -193,9 +193,7 @@ A1659A CRX (1280x1024 @ 72 hz, 8 bits, SGC)
 .br
 .Em "Untested"
 .It
-internal video on models 362/382 (A1474-69511 and A147x-69510)
-.br
-.Em "No X server support"
+362 and 382 built-in EVRX framebuffer
 .It
 425e built-in EVRX framebuffer
 .bullet)
@@ -245,7 +243,7 @@ Each serial interface has its own quirks, and some of them use
 non-standard pins.
 The FAQ describes how to configure and connect serial
 consoles to \*M systems.
-.Lk http://www.NetBSD.org/ports/hp300/faq.html#serialconsole
+.Lk https://www.NetBSD.org/ports/hp300/faq.html#serialconsole
 .Pp
 When you try booting from a system with a framebuffer that is not
 supported by
@@ -268,7 +266,7 @@ Graphics Devices
 .It
 Miscellaneous boards/interfaces
 .(bullet -compact
-parallel port, on 345, 362, 375, 380, 382, 382, and Series 400 workstations
+parallel port, on 345, 362, 375, 380, 382, 385, and Series 400 workstations
 .It
 EISA support, on Series 400 workstations
 .It

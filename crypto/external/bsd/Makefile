@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile,v 1.14 2018/02/04 16:22:48 christos Exp $
+#	$NetBSD: Makefile,v 1.14.16.1 2025/08/02 05:18:39 perseant Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+= ${EXTERNAL_OPENSSL_SUBDIR} .WAIT heimdal netpgp .WAIT openssh libsaslc
+.if ${HAVE_OPENSSL} < 35
+SUBDIR+= ${EXTERNAL_OPENSSL_SUBDIR:T} 
+.endif
+SUBDIR+= .WAIT heimdal netpgp .WAIT openssh libsaslc
 
 .include <bsd.subdir.mk>

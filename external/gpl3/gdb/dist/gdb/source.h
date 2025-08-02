@@ -1,5 +1,5 @@
 /* List lines of source files for GDB, the GNU debugger.
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -67,7 +67,8 @@ extern void init_source_path (void);
      The caller is responsible for freeing FULLNAME.
 
    On Failure
-     An invalid file descriptor is returned (the return value is negative).
+     An invalid file descriptor is returned.  The value of this file
+     descriptor is a negative errno indicating the reason for the failure.
      FULLNAME is set to NULL.  */
 extern scoped_fd find_and_open_source (const char *filename,
 				       const char *dirname,
@@ -81,7 +82,7 @@ extern gdb::unique_xmalloc_ptr<char> find_source_or_rewrite
      (const char *filename, const char *dirname);
 
 /* Open a source file given a symtab S.  Returns a file descriptor or
-   negative number for error.  */
+   negative errno indicating the reason for the failure.  */
 extern scoped_fd open_source_file (struct symtab *s);
 
 extern gdb::unique_xmalloc_ptr<char> rewrite_source_path (const char *path);
@@ -191,27 +192,28 @@ private:
   int m_stopline;
 };
 
+/* Get the number of the last line in the given symtab.  */
+extern int last_symtab_line (struct symtab *s);
+
+/* Check if the line LINE can be found in the symtab S, so that it can be
+   printed.  */
+extern bool can_print_line (struct symtab *s, int line);
+
 /* Variation of previous print_source_lines that takes a range instead of a
    start and end line number.  */
 extern void print_source_lines (struct symtab *s, source_lines_range r,
 				print_source_lines_flags flags);
-
-/* Forget line positions and file names for the symtabs in a
-   particular objfile.  */
-extern void forget_cached_source_info_for_objfile (struct objfile *);
 
 /* Forget what we learned about line positions in source files, and
    which directories contain them; must check again now since files
    may be found in a different directory now.  */
 extern void forget_cached_source_info (void);
 
-/* Set the source file default for the "list" command to be S.
-
-   If S is NULL, and we don't have a default, find one.  This
-   should only be called when the user actually tries to use the
-   default, since we produce an error if we can't find a reasonable
-   default.  Also, since this can cause symbols to be read, doing it
-   before we need to would make things slower than necessary.  */
-extern void select_source_symtab (struct symtab *s);
+/* Find a source file default for the "list" command.  This should
+   only be called when the user actually tries to use the default,
+   since we produce an error if we can't find a reasonable default.
+   Also, since this can cause symbols to be read, doing it before we
+   need to would make things slower than necessary.  */
+extern void select_source_symtab ();
 
 #endif

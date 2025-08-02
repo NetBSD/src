@@ -1,0 +1,14 @@
+NETPGPVERIFY_5_0
+pgpv_close@@NETPGPVERIFY_5_0
+pgpv_cursor_close@@NETPGPVERIFY_5_0
+pgpv_dump@@NETPGPVERIFY_5_0
+pgpv_get_cursor_element@@NETPGPVERIFY_5_0
+pgpv_get_cursor_num@@NETPGPVERIFY_5_0
+pgpv_get_cursor_str@@NETPGPVERIFY_5_0
+pgpv_get_entry@@NETPGPVERIFY_5_0
+pgpv_get_verified@@NETPGPVERIFY_5_0
+pgpv_new@@NETPGPVERIFY_5_0
+pgpv_new_cursor@@NETPGPVERIFY_5_0
+pgpv_read_pubring@@NETPGPVERIFY_5_0
+pgpv_read_ssh_pubkeys@@NETPGPVERIFY_5_0
+pgpv_verify@@NETPGPVERIFY_5_0

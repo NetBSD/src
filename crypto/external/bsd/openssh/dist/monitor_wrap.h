@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.h,v 1.23 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.h,v 1.49 2022/06/15 16:08:25 djm Exp $ */
+/*	$NetBSD: monitor_wrap.h,v 1.23.4.1 2025/08/02 05:18:46 perseant Exp $	*/
+/* $OpenBSD: monitor_wrap.h,v 1.52 2024/10/14 01:57:50 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -28,9 +28,6 @@
 
 #ifndef _MM_WRAP_H_
 #define _MM_WRAP_H_
-
-extern int use_privsep;
-#define PRIVSEP(x)	(use_privsep ? mm_##x : x)
 
 enum mm_keytype { MM_NOKEY, MM_HOSTKEY, MM_USERKEY };
 
@@ -62,6 +59,8 @@ int mm_hostbased_key_allowed(struct ssh *, struct passwd *, const char *,
 int mm_sshkey_verify(const struct sshkey *, const u_char *, size_t,
     const u_char *, size_t, const char *, u_int, struct sshkey_sig_details **);
 
+void mm_decode_activate_server_options(struct ssh *ssh, struct sshbuf *m);
+
 #ifdef GSSAPI
 OM_uint32 mm_ssh_gssapi_server_ctx(Gssctxt **, gss_OID);
 OM_uint32 mm_ssh_gssapi_accept_ctx(Gssctxt *,
@@ -84,11 +83,13 @@ void mm_terminate(void);
 int mm_pty_allocate(int *, int *, char *, size_t);
 void mm_session_pty_cleanup2(struct Session *);
 
-/* Key export functions */
-struct newkeys *mm_newkeys_from_blob(u_char *, int);
-int mm_newkeys_to_blob(int, u_char **, u_int *);
-
 void mm_send_keystate(struct ssh *, struct monitor*);
+
+/* state */
+struct include_list;
+void mm_get_state(struct ssh *, struct include_list *, struct sshbuf *,
+    struct sshbuf **, uint64_t *, struct sshbuf **, struct sshbuf **,
+    u_char **, struct sshbuf **, struct sshbuf **);
 
 /* bsdauth */
 int mm_bsdauth_query(void *, char **, char **, u_int *, char ***, u_int **);
@@ -104,4 +105,11 @@ int mm_skey_respond(void *, u_int, char **);
  * include all of the krb5 headers here */
 int mm_auth_krb5(void *authctxt, void *auth, char **client, void *reply);
 #endif
+
+/* config / channels glue */
+void	 server_process_permitopen(struct ssh *);
+void	 server_process_channel_timeouts(struct ssh *ssh);
+struct connection_info *
+	 server_get_connection_info(struct ssh *, int, int);
+
 #endif /* _MM_WRAP_H_ */

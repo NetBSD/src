@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.82 2022/09/18 17:11:33 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.82.4.1 2025/08/02 05:18:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.82 2022/09/18 17:11:33 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.82.4.1 2025/08/02 05:18:27 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,8 @@ struct localvar *localvars;
 
 #ifndef SMALL
 struct var vhistsize;
+struct var vhistfile;
+struct var vhistappend;
 struct var vterm;
 struct var editrc;
 struct var ps_lit;
@@ -142,6 +144,10 @@ const struct varinit varinit[] = {
 #ifndef SMALL
 	{ &vhistsize,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTSIZE=",
 	   { .set_func= sethistsize } },
+	{ &vhistfile,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTFILE=",
+	   { .set_func= sethistfile } },
+	{ &vhistappend,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTAPPEND=",
+	   { .set_func= sethistappend } },
 #endif
 	{ &vifs,	VSTRFIXED|VTEXTFIXED,		"IFS= \t\n",
 	   { NULL } },
@@ -207,6 +213,7 @@ INCLUDE <time.h>
 INCLUDE "var.h"
 INCLUDE "version.h"
 MKINIT char **environ;
+MKINIT void setvareqsafe(char *, int);
 INIT {
 	char **envp;
 	char buf[64];
@@ -221,11 +228,11 @@ INIT {
 
 	/*
 	 * Import variables from the environment, which will
-	 * override anything initialised just previously.
+	 * if permitted, override anything initialised just previously.
 	 */
 	for (envp = environ ; *envp ; envp++) {
 		if (strchr(*envp, '=')) {
-			setvareq(*envp, VEXPORT|VTEXTFIXED);
+			setvareqsafe(*envp, VEXPORT|VTEXTFIXED|VUNSAFE);
 		}
 	}
 
@@ -282,6 +289,12 @@ INIT {
 #endif
 #ifdef BOGUS_NOT_COMMAND
 		" BOGUS_NOT"
+#endif
+#ifdef REJECT_NULS
+		" REJECT_NULS"
+#endif
+#ifdef RESCUEDIR
+		" RESCUE"
 #endif
 		    , VTEXTFIXED|VREADONLY|VNOEXPORT);
 
@@ -396,6 +409,22 @@ setvarsafe(const char *name, const char *val, int flags)
 	return err;
 }
 
+void
+setvareqsafe(char *s, int flags)
+{
+	struct jmploc jmploc;
+	struct jmploc * const savehandler = handler;
+	volatile int e_s = errors_suppressed;
+
+	if (!setjmp(jmploc.loc)) {
+		handler = &jmploc;
+		errors_suppressed = 1;
+		setvareq(s, flags);
+	}
+	handler = savehandler;
+	errors_suppressed = e_s;
+}
+
 /*
  * Set the value of a variable.  The flags argument is ored with the
  * flags of the variable.  If val is NULL, the variable is unset.
@@ -477,7 +506,7 @@ setvareq(char *s, int flags)
 		INTOFF;
 
 		if (vp->func && !(vp->flags & VFUNCREF) && !(flags & VNOFUNC))
-			(*vp->func)(s + vp->name_len + 1);
+			(*vp->func)(s + vp->name_len + 1, flags);
 
 		if ((vp->flags & (VTEXTFIXED|VSTACK)) == 0)
 			ckfree(vp->text);
@@ -489,7 +518,7 @@ setvareq(char *s, int flags)
 		if (vp->rfunc && (vp->flags & (VFUNCREF|VSPECIAL)) == VFUNCREF)
 			vp->rfunc = NULL;
 
-		vp->flags &= ~(VTEXTFIXED|VSTACK|VUNSET);
+		vp->flags &= ~(VTEXTFIXED|VSTACK|VUNSET|VUNSAFE);
 		if (flags & VNOEXPORT)
 			vp->flags &= ~VEXPORT;
 		if (flags & VDOEXPORT)
@@ -1178,7 +1207,8 @@ poplocalvars(void)
 			(void)unsetvar(vp->text, 0);
 		} else {
 			if (lvp->func && (lvp->flags & (VNOFUNC|VFUNCREF)) == 0)
-				(*lvp->func)(lvp->text + vp->name_len + 1);
+				(*lvp->func)(lvp->text + vp->name_len + 1, 
+				    lvp->flags);
 			if ((vp->flags & VTEXTFIXED) == 0)
 				ckfree(vp->text);
 			vp->flags = lvp->flags;
@@ -1268,8 +1298,8 @@ unsetvar(const char *s, int unexport)
 	if (unexport & 1) {
 		vp->flags &= ~VEXPORT;
 	} else {
-		if (vp->text[vp->name_len + 1] != '\0')
-			setvar(s, nullstr, 0);
+		if (vp->text[vp->name_len + 1] != '\0' || !(vp->flags & VUNSET))
+			setvar(s, nullstr, VUNSET);
 		if (!(unexport & 2))
 			vp->flags &= ~VEXPORT;
 		vp->flags |= VUNSET;
@@ -1325,6 +1355,9 @@ find_var(const char *name, struct var ***vppp, int *lenp)
 	len = p - name;
 	if (lenp)
 		*lenp = len;
+
+	if (len == 0)
+		return NULL;
 
 	vpp = &vartab[hashval % VTABSIZE];
 	if (vppp)
@@ -1518,14 +1551,19 @@ get_tod(struct var *vp)
 			len = vp->name_len + 4 + sizeof t_err - 1;
 			continue;
 		}
-		if (strftime_z(zone, buf.b + vp->name_len + 1,
-		     buf.len - vp->name_len - 2, fmt, tmp)) {
-			if (zone && zone != last_zone) {
-				tzfree(zone);
-				INTON;
+		if (zone != NULL) {
+			if (strftime_z(zone, buf.b + vp->name_len + 1,
+			     buf.len - vp->name_len - 2, fmt, tmp)) {
+				if (zone != last_zone) {
+					tzfree(zone);
+					INTON;
+				}
+				return buf.b;
 			}
-			return buf.b;
-		}
+		} else if (strftime(buf.b + vp->name_len + 1,
+			    buf.len - vp->name_len - 2, fmt, tmp))
+				return buf.b;
+
 		if (len >= 4096)	/* Let's be reasonable */
 			break;
 		len <<= 1;

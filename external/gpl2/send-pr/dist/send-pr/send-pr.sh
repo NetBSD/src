@@ -155,8 +155,8 @@ if [ -z "$ARCH" -a -f /bin/arch ]; then
   ARCH=`/bin/arch`
 fi
 MACHINE=`$UNAME -m`
-if [ -z "$ARCH" -a -f /bin/machine ]; then
-  ARCH=`/bin/arch`
+if [ -z "$MACHINE" -a -f /bin/machine ]; then
+  MACHINE=`/bin/machine`
 fi
 
 COMMAND=`echo $0 | sed -e 's,.*/,,'`
@@ -499,7 +499,7 @@ while [ -z "$REQUEST_ID" ]; do
 
   while true; do
     if [ -z "$BATCH" ]; then
-      $ECHON1 "a)bort, e)dit or s)end? $ECHON2"
+      $ECHON1 "a)bort and save, e)dit or s)end? $ECHON2"
       read input
     else
       if [ $CNT -eq 6 ]; then

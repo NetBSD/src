@@ -1,5 +1,5 @@
 /* 32-bit ELF support for Nios II.
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -1878,8 +1878,6 @@ nios2_elf32_install_imm16 (asection *sec, bfd_vma offset, bfd_vma value)
 {
   bfd_vma word = bfd_get_32 (sec->owner, sec->contents + offset);
 
-  BFD_ASSERT (value <= 0xffff || ((bfd_signed_vma) value) >= -0xffff);
-
   bfd_put_32 (sec->owner, word | ((value & 0xffff) << 6),
 	      sec->contents + offset);
 }
@@ -2491,7 +2489,7 @@ nios2_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg ATTRIBUTE_U
      section.  The user should fix his linker script.  */
   if (hsh->target_section->output_section == NULL
       && info->non_contiguous_regions)
-    info->callbacks->einfo (_("%F%P: Could not assign '%pA' to an output section. "
+    info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output section. "
 			      "Retry without --enable-non-contiguous-regions.\n"),
 			    hsh->target_section);
 
@@ -2518,7 +2516,7 @@ nios2_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg ATTRIBUTE_U
       nios2_elf32_install_imm16 (stub_sec, hsh->stub_offset,
 				 hiadj (sym_value));
       nios2_elf32_install_imm16 (stub_sec, hsh->stub_offset + 4,
-				 (sym_value & 0xffff));
+				 sym_value);
       stub_sec->size += 12;
       break;
     default:
@@ -3724,7 +3722,6 @@ nios2_elf32_relocate_section (bfd *output_bfd,
       const char *name = NULL;
       int r_type;
       const char *format;
-      char *msgbuf = NULL;
       char *msg = NULL;
       bool unresolved_reloc;
       bfd_vma off;
@@ -3825,10 +3822,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 
 		  format = _("global pointer relative relocation at address "
 			     "%#" PRIx64 " when _gp not defined\n");
-		  if (asprintf (&msgbuf, format,
-				(uint64_t) reloc_address) == -1)
-		    msgbuf = NULL;
-		  msg = msgbuf;
+		  msg = bfd_asprintf (format, (uint64_t) reloc_address);
 		  r = bfd_reloc_dangerous;
 		}
 	      else
@@ -3857,11 +3851,10 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 				 "the global pointer (at %#" PRIx64 ") "
 				 "because the offset (%" PRId64 ") is out of "
 				 "the allowed range, -32678 to 32767\n" );
-		      if (asprintf (&msgbuf, format, name,
-				    (uint64_t) symbol_address, (uint64_t) gp,
-				    (int64_t) relocation) == -1)
-			msgbuf = NULL;
-		      msg = msgbuf;
+		      msg = bfd_asprintf (format, name,
+					  (uint64_t) symbol_address,
+					  (uint64_t) gp,
+					  (int64_t) relocation);
 		      r = bfd_reloc_outofrange;
 		    }
 		  else
@@ -4531,7 +4524,6 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 	    {
 	      (*info->callbacks->warning) (info, msg, name, input_bfd,
 					   input_section, rel->r_offset);
-	      free (msgbuf);
 	      return false;
 	    }
 	}
@@ -4992,16 +4984,28 @@ nios2_elf32_finish_dynamic_symbol (bfd *output_bfd,
       /* Emit the PLT entry.  */
       if (bfd_link_pic (info))
 	{
+	  bfd_vma br_offset;
+
 	  nios2_elf32_install_data (splt, nios2_so_plt_entry, h->plt.offset,
 				    3);
 	  plt_index = (h->plt.offset - 24) / 12;
 	  got_offset = (plt_index + 3) * 4;
 	  nios2_elf32_install_imm16 (splt, h->plt.offset,
-				     hiadj(plt_index * 4));
+				     hiadj (plt_index * 4));
 	  nios2_elf32_install_imm16 (splt, h->plt.offset + 4,
-				     (plt_index * 4) & 0xffff);
-	  nios2_elf32_install_imm16 (splt, h->plt.offset + 8,
-				     0xfff4 - h->plt.offset);
+				     plt_index * 4);
+	  br_offset = -(h->plt.offset + 12);
+	  /* If this plt entry is too far away from the start of .plt
+	     for the "br" to reach .PLTresolve, bounce through one or
+	     more of the previous "br" instructions.  */
+	  if (br_offset < (bfd_vma) -32768)
+	    {
+	      br_offset += 32768 / 12 * 12 - 4;
+	      while (br_offset < (bfd_vma) -32768)
+		br_offset += 32768 / 12 * 12;
+	    }
+	  nios2_elf32_install_imm16 (splt, h->plt.offset + 8, br_offset);
+
 	  got_address = (sgotplt->output_section->vma + sgotplt->output_offset
 			 + got_offset);
 
@@ -5020,9 +5024,8 @@ nios2_elf32_finish_dynamic_symbol (bfd *output_bfd,
 	  nios2_elf32_install_data (splt, nios2_plt_entry, h->plt.offset, 3);
 	  got_address = (sgotplt->output_section->vma + sgotplt->output_offset
 			 + got_offset);
-	  nios2_elf32_install_imm16 (splt, h->plt.offset, hiadj(got_address));
-	  nios2_elf32_install_imm16 (splt, h->plt.offset + 4,
-				     got_address & 0xffff);
+	  nios2_elf32_install_imm16 (splt, h->plt.offset, hiadj (got_address));
+	  nios2_elf32_install_imm16 (splt, h->plt.offset + 4, got_address);
 
 	  /* Fill in the entry in the global offset table.  */
 	  bfd_put_32 (output_bfd,
@@ -5223,8 +5226,8 @@ nios2_elf32_finish_dynamic_sections (bfd *output_bfd,
 	      BFD_ASSERT ((got_pcrel & 0xf) == 0);
 	      nios2_elf32_install_data (splt, nios2_so_plt0_entry, 0, 6);
 	      nios2_elf32_install_imm16 (splt, 4, hiadj (got_pcrel));
-	      nios2_elf32_install_imm16 (splt, 12, got_pcrel & 0xffff);
-	      nios2_elf32_install_imm16 (splt, 16, (got_pcrel + 4) & 0xffff);
+	      nios2_elf32_install_imm16 (splt, 12, got_pcrel);
+	      nios2_elf32_install_imm16 (splt, 16, got_pcrel + 4);
 	    }
 	  else
 	    {
@@ -5246,14 +5249,13 @@ nios2_elf32_finish_dynamic_sections (bfd *output_bfd,
 
 	      nios2_elf32_install_data (splt, nios2_plt0_entry, res_size, 7);
 	      nios2_elf32_install_imm16 (splt, res_size, hiadj (res_start));
-	      nios2_elf32_install_imm16 (splt, res_size + 4,
-					 res_start & 0xffff);
+	      nios2_elf32_install_imm16 (splt, res_size + 4, res_start);
 	      nios2_elf32_install_imm16 (splt, res_size + 12,
 					 hiadj (got_address));
 	      nios2_elf32_install_imm16 (splt, res_size + 16,
-					 (got_address + 4) & 0xffff);
+					 got_address + 4);
 	      nios2_elf32_install_imm16 (splt, res_size + 20,
-					 (got_address + 8) & 0xffff);
+					 got_address + 8);
 	    }
 	}
     }
@@ -5411,7 +5413,7 @@ nios2_elf32_adjust_dynamic_symbol (struct bfd_link_info *info,
   return true;
 }
 
-/* Worker function for nios2_elf32_size_dynamic_sections.  */
+/* Worker function for nios2_elf32_late_size_sections.  */
 static bool
 adjust_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 {
@@ -5438,7 +5440,7 @@ adjust_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   return true;
 }
 
-/* Another worker function for nios2_elf32_size_dynamic_sections.
+/* Another worker function for nios2_elf32_late_size_sections.
    Allocate space in .plt, .got and associated reloc sections for
    dynamic relocs.  */
 static bool
@@ -5673,11 +5675,11 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   return true;
 }
 
-/* Implement elf_backend_size_dynamic_sections:
+/* Implement elf_backend_late_size_sections:
    Set the sizes of the dynamic sections.  */
 static bool
-nios2_elf32_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				   struct bfd_link_info *info)
+nios2_elf32_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+				struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
@@ -5687,7 +5689,8 @@ nios2_elf32_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   htab = elf32_nios2_hash_table (info);
   dynobj = htab->root.dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   htab->res_n_size = 0;
   if (htab->root.dynamic_sections_created)
@@ -6058,7 +6061,7 @@ const struct bfd_elf_special_section elf32_nios2_special_sections[] =
 					  nios2_elf32_finish_dynamic_sections
 #define elf_backend_adjust_dynamic_symbol nios2_elf32_adjust_dynamic_symbol
 #define elf_backend_reloc_type_class	  nios2_elf32_reloc_type_class
-#define elf_backend_size_dynamic_sections nios2_elf32_size_dynamic_sections
+#define elf_backend_late_size_sections	  nios2_elf32_late_size_sections
 #define elf_backend_add_symbol_hook	  nios2_elf_add_symbol_hook
 #define elf_backend_copy_indirect_symbol  nios2_elf32_copy_indirect_symbol
 #define elf_backend_object_p		  nios2_elf32_object_p

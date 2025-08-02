@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2009/10/01 09:35:08 tron Exp $
+#	$NetBSD: Makefile,v 1.2.60.1 2025/08/02 05:20:50 perseant Exp $
 
 .include <bsd.init.mk>
 
 LIB=	dns_sd
 
 SRCS=	dnssd_clientlib.c dnssd_clientstub.c dnssd_ipc.c  
-CPPFLAGS+=-I${DIST}/mDNSShared
+CPPFLAGS+=-I${DIST}/mDNSShared -I${DIST}/mDNSCore -DmDNSResponderVersion=2559
 
 COPTS.dnssd_clientstub.c += -Wno-stack-protector
 
@@ -14,7 +14,4 @@ INCSDIR=/usr/include
 
 .PATH:	${DIST}/mDNSShared
 
-zoot:
-	ls ${DIST}/mDNSShared/dnssd_clientlib.c
-	
 .include <bsd.lib.mk>

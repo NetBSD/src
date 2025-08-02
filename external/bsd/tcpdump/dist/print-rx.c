@@ -37,12 +37,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-rx.c,v 1.10 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-rx.c,v 1.10.2.1 2025/08/02 05:23:26 perseant Exp $");
 #endif
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -804,7 +802,7 @@ rx_cache_find(netdissect_options *ndo, const struct rx_header *rxh,
 			bp += sizeof(int32_t); \
 			ND_PRINT(" %s", \
 			    nd_format_time(str, sizeof(str), \
-			      "%Y/%m/%d %H:%M:%S", localtime(&_t))); \
+			      "%Y-%m-%d %H:%M:%S", localtime(&_t))); \
 		}
 
 #define STOREATTROUT() { uint32_t mask, _i; \

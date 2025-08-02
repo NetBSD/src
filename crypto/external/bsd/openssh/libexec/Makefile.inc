@@ -1,7 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2020/02/27 00:24:40 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.1.12.1 2025/08/02 05:18:51 perseant Exp $
 
-CPPFLAGS+=-DWITH_OPENSSL
-LDADD+=	-lssh -lcrypto -lcrypt -lz
-DPADD+=	${LIBSSH} ${LIBCRYPTO} ${LIBCRYPT} ${LIBZ}
-
+.include "${.PARSEDIR}/../bin/Makefile.inc"
 .include "${.PARSEDIR}/../Makefile.inc"

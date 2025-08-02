@@ -1,6 +1,6 @@
 /* Definitions for C expressions
 
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -138,7 +138,7 @@ public:
     value *lhs
       = std::get<0> (this->m_storage)->evaluate (nullptr, exp, noside);
     value *rhs
-      = std::get<1> (this->m_storage)->evaluate (value_type (lhs), exp,
+      = std::get<1> (this->m_storage)->evaluate (lhs->type (), exp,
 						 noside);
     return FUNC (expect_type, exp, noside, OP, lhs, rhs);
   }

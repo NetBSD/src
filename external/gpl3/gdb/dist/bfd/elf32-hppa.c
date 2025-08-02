@@ -1,5 +1,5 @@
 /* BFD back-end for HP PA-RISC ELF files.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    Original code by
 	Center for Software Science
@@ -729,7 +729,7 @@ hppa_build_one_stub (struct bfd_hash_entry *bh, void *in_arg)
 	 section.  The user should fix his linker script.  */
       if (hsh->target_section->output_section == NULL
 	  && info->non_contiguous_regions)
-	info->callbacks->einfo (_("%F%P: Could not assign '%pA' to an output "
+	info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output "
 				  "section. Retry without "
 				  "--enable-non-contiguous-regions.\n"),
 				hsh->target_section);
@@ -758,7 +758,7 @@ hppa_build_one_stub (struct bfd_hash_entry *bh, void *in_arg)
 	 section.  The user should fix his linker script.  */
       if (hsh->target_section->output_section == NULL
 	  && info->non_contiguous_regions)
-	info->callbacks->einfo (_("%F%P: Could not assign %pA to an output "
+	info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output "
 				  "section. Retry without "
 				  "--enable-non-contiguous-regions.\n"),
 				hsh->target_section);
@@ -839,7 +839,7 @@ hppa_build_one_stub (struct bfd_hash_entry *bh, void *in_arg)
 	 section.  The user should fix his linker script.  */
       if (hsh->target_section->output_section == NULL
 	  && info->non_contiguous_regions)
-	info->callbacks->einfo (_("%F%P: Could not assign %pA to an output "
+	info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output "
 				  "section. Retry without "
 				  "--enable-non-contiguous-regions.\n"),
 				hsh->target_section);
@@ -2042,8 +2042,8 @@ clobber_millicode_symbols (struct elf_link_hash_entry *eh,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf32_hppa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				  struct bfd_link_info *info)
+elf32_hppa_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			       struct bfd_link_info *info)
 {
   struct elf32_hppa_link_hash_table *htab;
   bfd *dynobj;
@@ -2057,7 +2057,7 @@ elf32_hppa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   dynobj = htab->etab.dynobj;
   if (dynobj == NULL)
-    abort ();
+    return true;
 
   if (htab->etab.dynamic_sections_created)
     {
@@ -3110,7 +3110,7 @@ final_link_relocate (asection *input_section,
   unsigned int r_type = ELF32_R_TYPE (rela->r_info);
   unsigned int orig_r_type = r_type;
   reloc_howto_type *howto = elf_hppa_howto_table + r_type;
-  int r_format = howto->bitsize;
+  int r_format;
   enum hppa_reloc_field_selector_type_alt r_field;
   bfd *input_bfd = input_section->owner;
   bfd_vma offset = rela->r_offset;
@@ -3432,6 +3432,50 @@ final_link_relocate (asection *input_section,
       break;
     }
 
+  r_format = bfd_hppa_insn2fmt (input_bfd, insn);
+  switch (r_format)
+    {
+    case 10:
+    case -10:
+      if (val & 7)
+	{
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%pB(%pA+%#" PRIx64 "): displacement %#x for insn %#x "
+	       "is not a multiple of 8 (gp %#x)"),
+	     input_bfd,
+	     input_section,
+	     (uint64_t) offset,
+	     val,
+	     insn,
+	     (unsigned int) elf_gp (input_section->output_section->owner));
+	  bfd_set_error (bfd_error_bad_value);
+	  return bfd_reloc_notsupported;
+	}
+      break;
+
+    case -11:
+    case -16:
+      if (val & 3)
+	{
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%pB(%pA+%#" PRIx64 "): displacement %#x for insn %#x "
+	       "is not a multiple of 4 (gp %#x)"),
+	     input_bfd,
+	     input_section,
+	     (uint64_t) offset,
+	     val,
+	     insn,
+	     (unsigned int) elf_gp (input_section->output_section->owner));
+	  bfd_set_error (bfd_error_bad_value);
+	  return bfd_reloc_notsupported;
+	}
+      break;
+
+    default:
+      break;
+    }
   insn = hppa_rebuild_insn (insn, val, r_format);
 
   /* Update the instruction word.  */
@@ -4139,8 +4183,6 @@ elf32_hppa_finish_dynamic_symbol (bfd *output_bfd,
   bfd_byte *loc;
 
   htab = hppa_link_hash_table (info);
-  if (htab == NULL)
-    return false;
 
   if (eh->plt.offset != (bfd_vma) -1)
     {
@@ -4216,7 +4258,9 @@ elf32_hppa_finish_dynamic_symbol (bfd *output_bfd,
 	     file, we just want to emit a RELATIVE reloc.  The entry
 	     in the global offset table will already have been
 	     initialized in the relocate_section function.  */
-	  if (!is_dyn)
+	  if (!is_dyn
+	      && (eh->root.type == bfd_link_hash_defined
+		  || eh->root.type == bfd_link_hash_defweak))
 	    {
 	      rela.r_info = ELF32_R_INFO (0, R_PARISC_DIR32);
 	      rela.r_addend = (eh->root.u.def.value
@@ -4450,7 +4494,7 @@ elf32_hppa_elf_get_symbol_type (Elf_Internal_Sym *elf_sym, int type)
 #define elf_backend_hide_symbol		     elf32_hppa_hide_symbol
 #define elf_backend_finish_dynamic_symbol    elf32_hppa_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_sections  elf32_hppa_finish_dynamic_sections
-#define elf_backend_size_dynamic_sections    elf32_hppa_size_dynamic_sections
+#define elf_backend_late_size_sections	     elf32_hppa_late_size_sections
 #define elf_backend_init_index_section	     _bfd_elf_init_1_index_section
 #define elf_backend_gc_mark_hook	     elf32_hppa_gc_mark_hook
 #define elf_backend_grok_prstatus	     elf32_hppa_grok_prstatus

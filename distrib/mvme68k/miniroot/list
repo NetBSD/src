@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.24 2015/04/22 19:25:18 christos Exp $
+#	$NetBSD: list,v 1.24.28.1 2025/08/02 05:20:22 perseant Exp $
 
 # mvme68k's extras
 PROG	sbin/disklabel

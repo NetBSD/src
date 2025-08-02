@@ -1,4 +1,5 @@
-# $NetBSD: md.ofppc,v 1.17 2022/09/08 05:16:45 rillig Exp $
+# $NetBSD: md.ofppc,v 1.17.4.1 2025/08/02 05:20:25 perseant Exp $
+#
 ./usr/mdec/mkbootinfo				base-sysutil-bin
 ./usr/mdec/netbsd.chrp				base-sysutil-bin
 ./usr/mdec/ofwboot				base-sysutil-bin

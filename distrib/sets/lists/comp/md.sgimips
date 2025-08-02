@@ -1,4 +1,5 @@
-# $NetBSD: md.sgimips,v 1.23 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.sgimips,v 1.23.14.1 2025/08/02 05:20:29 perseant Exp $
+#
 ./usr/include/dev/crmfbreg.h			comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sgimips				comp-c-include
@@ -33,6 +34,7 @@
 ./usr/include/sgimips/limits.h			comp-c-include
 ./usr/include/sgimips/lock.h			comp-c-include
 ./usr/include/sgimips/locore.h			comp-c-include
+./usr/include/sgimips/lwp_private.h		comp-c-include
 ./usr/include/sgimips/math.h			comp-c-include
 ./usr/include/sgimips/mcontext.h		comp-c-include
 ./usr/include/sgimips/mips_opcode.h		comp-c-include

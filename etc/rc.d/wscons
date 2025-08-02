@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: wscons,v 1.13 2011/08/09 08:08:10 mbalmer Exp $
+# $NetBSD: wscons,v 1.13.56.1 2025/08/02 05:20:45 perseant Exp $
 #
 
 # PROVIDE: wscons
@@ -163,7 +163,7 @@ wscons_start()
 				val=$arg3
 
 				case $dev in
-				    ttyE*)
+				    ttyE*|constty|console)
 					cmdmod="-d"
 					;;
 				    wskbd*)

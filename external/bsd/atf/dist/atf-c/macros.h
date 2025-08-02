@@ -133,25 +133,25 @@
 
 #define ATF_REQUIRE_MSG(x, fmt, ...) \
     do { \
-        if (!(x)) \
+        if (x) {} else \
             atf_tc_fail_requirement(__FILE__, __LINE__, fmt, ##__VA_ARGS__); \
     } while(0)
 
 #define ATF_CHECK_MSG(x, fmt, ...) \
     do { \
-        if (!(x)) \
+        if (x) {} else \
             atf_tc_fail_check(__FILE__, __LINE__, fmt, ##__VA_ARGS__); \
     } while(0)
 
 #define ATF_REQUIRE(x) \
     do { \
-        if (!(x)) \
+        if (x) {} else \
             atf_tc_fail_requirement(__FILE__, __LINE__, "%s", #x " not met"); \
     } while(0)
 
 #define ATF_CHECK(x) \
     do { \
-        if (!(x)) \
+        if (x) {} else \
             atf_tc_fail_check(__FILE__, __LINE__, "%s", #x " not met"); \
     } while(0)
 

@@ -1,4 +1,6 @@
 #include "DNSCommon.h"                  // Defines general DNS utility routines
+#include "unittest_common.h"
+#include "mDNSMacOSX.h"
 
 // To match *either* a v4 or v6 instance of this interface
 mDNSlocal mDNSInterfaceID SearchForInterfaceByAddr(mDNSAddr* addr)
@@ -44,12 +46,12 @@ mDNSexport void SetInterfaces_ut(mDNSInterfaceID* pri_id, mDNSAddr *pri_v4, mDNS
 		addr = (pri_v4->type == mDNSAddrType_IPv4) ? pri_v4 : pri_v6;
 		*pri_id = SearchForInterfaceByAddr(addr);
 
-		CFRelease(NetworkChangedKey_IPv4);
-		CFRelease(NetworkChangedKey_IPv6);
-		CFRelease(NetworkChangedKey_Hostnames);
-		CFRelease(NetworkChangedKey_Computername);
-		CFRelease(NetworkChangedKey_DNS);
-		CFRelease(NetworkChangedKey_StateInterfacePrefix);
+        MDNS_DISPOSE_CF_OBJECT(NetworkChangedKey_IPv4);
+        MDNS_DISPOSE_CF_OBJECT(NetworkChangedKey_IPv6);
+        MDNS_DISPOSE_CF_OBJECT(NetworkChangedKey_Hostnames);
+        MDNS_DISPOSE_CF_OBJECT(NetworkChangedKey_Computername);
+        MDNS_DISPOSE_CF_OBJECT(NetworkChangedKey_DNS);
+        MDNS_DISPOSE_CF_OBJECT(NetworkChangedKey_StateInterfacePrefix);
 	}
 }
 
@@ -63,4 +65,15 @@ mDNSexport void UpdateEtcHosts_ut(void *context)
 	mDNS_Lock(&mDNSStorage);
 	UpdateEtcHosts(&mDNSStorage, context);
 	mDNS_Unlock(&mDNSStorage);
+}
+
+mDNSexport void mDNSDomainLabelFromCFString_ut(CFStringRef cfs, domainlabel *const namelabel)
+{
+    mDNSDomainLabelFromCFString(cfs, namelabel);
+}
+
+mDNSexport mDNSu32 IndexForInterfaceByName_ut(const char *ifname)
+{
+    NetworkInterfaceInfoOSX * i = SearchForInterfaceByName(ifname, AF_UNSPEC);
+    return (i ? i->scope_id : 0);
 }

@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 1997-2004 Apple Computer, Inc. All rights reserved.
+ * Copyright (c) 1997-2023 Apple Computer, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 //---------------------------------------------------------------------------------------------------------------------------
 /*!	@header		CommonServices
 
-    Common Services for Mac OS X, Linux, Palm, VxWorks, Windows, and Windows CE.
+    Common Services for Mac OS X, Linux, Palm, Windows, and Windows CE.
  */
 
 #ifndef __COMMON_SERVICES__
@@ -39,7 +39,7 @@ extern "C" {
 // Macintosh
 
 #if ( !defined( TARGET_OS_MAC ) )
-    #if ( ( macintosh || __MACH__ ) && !KERNEL )
+    #if ( ( macintosh || __MACH__ ) && (!defined(KERNEL) || !KERNEL) )
 // ConditionalMacros.h in CoreServices will define this TARGET_* flag.
     #else
         #define TARGET_OS_MAC           0
@@ -47,20 +47,20 @@ extern "C" {
 #endif
 
 #if ( !defined( TARGET_API_MAC_OSX_KERNEL ) )
-    #if ( __MACH__ && KERNEL )
+    #if ( __MACH__ && defined(KERNEL) && KERNEL )
         #define TARGET_API_MAC_OSX_KERNEL       1
     #else
         #define TARGET_API_MAC_OSX_KERNEL       0
     #endif
 #endif
 
-// FreeBSD
+// FreeBSD || NetBSD
 
-#if ( !defined( TARGET_OS_FREEBSD ) )
-    #if ( defined( __FreeBSD__ ) )
-        #define TARGET_OS_FREEBSD       1
+#if ( !defined( TARGET_OS_BSD ) )
+    #if ( defined( __FreeBSD__ )  || defined( __NetBSD__ ))
+        #define TARGET_OS_BSD       1
     #else
-        #define TARGET_OS_FREEBSD       0
+        #define TARGET_OS_BSD       0
     #endif
 #endif
 
@@ -94,24 +94,11 @@ extern "C" {
     #endif
 #endif
 
-// VxWorks
-
-#if ( !defined( TARGET_OS_VXWORKS ) )
-
-// No predefined macro for VxWorks so just assume VxWorks if nothing else is set.
-
-    #if ( !macintosh && !__MACH__  && !defined( __FreeBSD__ ) && !defined( __linux__ ) && !defined ( __SVR4 ) && !defined ( __sun ) && !defined( __PALMOS_TRAPS__ ) && !defined( __PALMOS_ARMLET__ ) && !defined( _WIN32 ) )
-        #define TARGET_OS_VXWORKS       1
-    #else
-        #define TARGET_OS_VXWORKS       0
-    #endif
-#endif
-
 // Windows
 
 #if ( !defined( TARGET_OS_WIN32 ) )
     #if ( macintosh || __MACH__ )
-// ConditionalMacros.h in CoreServices will define this TARGET_* flag.
+        #define TARGET_OS_WIN32         0
     #else
         #if ( defined( _WIN32 ) )
             #define TARGET_OS_WIN32     1
@@ -139,14 +126,14 @@ extern "C" {
 //	 Includes
 //===========================================================================================================================
 
-#if ( !KERNEL )
+#if ( !defined(KERNEL) || !KERNEL )
     #if defined(WIN32) && !defined(_WSPIAPI_COUNTOF)
         #define _WSPIAPI_COUNTOF(_Array) (sizeof(_Array) / sizeof(_Array[0]))
     #endif
     #include    <stddef.h>
 #endif
 
-#if ( ( macintosh || __MACH__ ) && !KERNEL )
+#if ( ( (defined(macintosh) && macintosh) || __MACH__ ) && (!defined(KERNEL) || !KERNEL) )
 
     #if ( defined( __MWERKS__ ) )
         #if ( __option( c9x ) )
@@ -166,6 +153,7 @@ extern "C" {
         #include    <netinet/in.h>
         #include    <arpa/inet.h>
         #include    <fcntl.h>
+        #include    <MacTypes.h>
         #include    <pthread.h>
         #include    <sys/ioctl.h>
         #include    <sys/socket.h>
@@ -189,9 +177,9 @@ extern "C" {
     #include    <libkern/OSTypes.h>
     #include    <sys/types.h>
 
-#elif ( TARGET_OS_FREEBSD )
+#elif ( TARGET_OS_BSD )
 
-// FreeBSD
+// BSD
     #include    <stdint.h>
     #include    <pthread.h>
     #include    <netinet/in.h>
@@ -225,12 +213,6 @@ extern "C" {
 
 // Palm (no special includes yet).
 
-#elif ( TARGET_OS_VXWORKS )
-
-// VxWorks
-
-    #include    "vxWorks.h"
-
 #elif ( TARGET_OS_WIN32 )
 
 // Windows
@@ -257,6 +239,13 @@ extern "C" {
 
     #elif ( defined( _MSC_VER ) )
 
+    #include    "VisualStudioSupport.h"
+
+        #if ( _MSC_VER >= 1900 )
+            #include    <stdint.h>
+            #include    <stdbool.h>
+        #endif
+
         #pragma warning( disable:4127 ) // Disable "conditional expression is constant" warning for debug macros.
         #pragma warning( disable:4706 ) // Disable "assignment within conditional expression" for Microsoft headers.
 
@@ -275,15 +264,7 @@ extern "C" {
 #endif
 
 #if ( !defined( TARGET_BUILD_MAIN ) )
-    #if ( !TARGET_OS_VXWORKS )
-        #define TARGET_BUILD_MAIN       1
-    #endif
-#endif
-
-#if ( __GNUC__ || !TARGET_OS_VXWORKS )
-    #define TARGET_LANGUAGE_C_LIKE      1
-#else
-    #define TARGET_LANGUAGE_C_LIKE      0
+    #define TARGET_BUILD_MAIN       1
 #endif
 
 #if 0
@@ -439,9 +420,7 @@ extern "C" {
     #define ENOTCONN_compat         WSAENOTCONN
     #define IsValidSocket( X )      ( ( X ) != INVALID_SOCKET )
     #define kInvalidSocketRef       INVALID_SOCKET
-    #if ( TARGET_LANGUAGE_C_LIKE )
 typedef SOCKET SocketRef;
-    #endif
 #else
     #define close_compat( X )       close( X )
     #define errno_compat()          errno
@@ -451,21 +430,16 @@ typedef SOCKET SocketRef;
     #define ENOTCONN_compat         ENOTCONN
     #define IsValidSocket( X )      ( ( X ) >= 0 )
     #define kInvalidSocketRef       -1
-    #if ( TARGET_LANGUAGE_C_LIKE )
 typedef int SocketRef;
-    #endif
 #endif
 
 // socklen_t is not defined on the following platforms so emulate it if not defined:
 //
 // - Pre-Panther Mac OS X. Panther defines SO_NOADDRERR so trigger off that.
 // - Windows SDK prior to 2003. 2003+ SDK's define EAI_AGAIN so trigger off that.
-// - VxWorks
 
-#if ( TARGET_LANGUAGE_C_LIKE )
-    #if ( ( TARGET_OS_MAC && !defined( SO_NOADDRERR ) ) || ( TARGET_OS_WIN32 && !defined( EAI_AGAIN ) ) || TARGET_OS_VXWORKS )
+#if ( ( TARGET_OS_MAC && !defined( SO_NOADDRERR ) ) || ( TARGET_OS_WIN32 && !defined( EAI_AGAIN ) ) )
 typedef int socklen_t;
-    #endif
 #endif
 
 // ssize_t is not defined on the following platforms so emulate it if not defined:
@@ -473,19 +447,15 @@ typedef int socklen_t;
 // - Mac OS X when not building with BSD headers
 // - Windows
 
-#if ( TARGET_LANGUAGE_C_LIKE )
-    #if ( !defined(_SSIZE_T) && ( TARGET_OS_WIN32 || !defined( _BSD_SSIZE_T_DEFINED_ ) ) && !TARGET_OS_FREEBSD && !TARGET_OS_LINUX && !TARGET_OS_VXWORKS && !TARGET_OS_MAC)
+#if ( !defined(_SSIZE_T) && ( TARGET_OS_WIN32 || !defined( _BSD_SSIZE_T_DEFINED_ ) ) && !TARGET_OS_BSD && !TARGET_OS_LINUX && !TARGET_OS_MAC)
 typedef int ssize_t;
-    #endif
 #endif
 
 // sockaddr_storage is not supported on non-IPv6 machines so alias it to an IPv4-compatible structure.
 
-#if ( TARGET_LANGUAGE_C_LIKE )
-    #if ( !defined( AF_INET6 ) )
+#if ( !defined( AF_INET6 ) )
         #define sockaddr_storage        sockaddr_in
         #define ss_family               sin_family
-    #endif
 #endif
 
 //---------------------------------------------------------------------------------------------------------------------------
@@ -738,7 +708,6 @@ typedef int ssize_t;
 #pragma mark == Types ==
 #endif
 
-#if ( TARGET_LANGUAGE_C_LIKE )
 //===========================================================================================================================
 //	 Standard Types
 //===========================================================================================================================
@@ -759,10 +728,6 @@ typedef INT32 int32_t;
 typedef UINT32 uint32_t;
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
-
-    #elif ( TARGET_OS_VXWORKS && ( TORNADO_VERSION < 220 ) )
-typedef long long int64_t;
-typedef unsigned long long uint64_t;
     #endif
 
 typedef int8_t int_least8_t;
@@ -879,7 +844,11 @@ typedef unsigned long int uintptr_t;
         #define false   0
     #endif
 #else
-    #define COMMON_SERVICES_NEEDS_BOOL          ( !defined( __cplusplus ) && !__bool_true_false_are_defined )
+    #if ( !defined( __cplusplus ) && !__bool_true_false_are_defined )
+        #define COMMON_SERVICES_NEEDS_BOOL      1
+    #else
+        #define COMMON_SERVICES_NEEDS_BOOL      0
+    #endif
 #endif
 
 #if ( COMMON_SERVICES_NEEDS_BOOL )
@@ -908,11 +877,7 @@ typedef int bool;
     @abstract	255 character null-terminated (C-style) string.
  */
 
-#if ( TARGET_LANGUAGE_C_LIKE )
 typedef char CStr255[ 256 ];
-#endif
-
-#endif  // TARGET_LANGUAGE_C_LIKE
 
 //---------------------------------------------------------------------------------------------------------------------------
 /*!	@defined	TYPE_LONGLONG_NATIVE
@@ -921,11 +886,7 @@ typedef char CStr255[ 256 ];
  */
 
 #if ( !defined( TYPE_LONGLONG_NATIVE ) )
-    #if ( !TARGET_OS_VXWORKS )
-        #define TYPE_LONGLONG_NATIVE            1
-    #else
-        #define TYPE_LONGLONG_NATIVE            0
-    #endif
+    #define TYPE_LONGLONG_NATIVE            1
 #endif
 
 //---------------------------------------------------------------------------------------------------------------------------
@@ -939,14 +900,12 @@ typedef char CStr255[ 256 ];
     "__int64" and "unsigned __int64" equivalents so map to those types if the real long long is not supported.
  */
 
-#if ( TARGET_LANGUAGE_C_LIKE )
-    #if ( TARGET_OS_WIN32 )
+#if ( TARGET_OS_WIN32 )
 typedef __int64 long_long_compat;
 typedef unsigned __int64 unsigned_long_long_compat;
-    #else
+#else
 typedef signed long long long_long_compat;
 typedef unsigned long long unsigned_long_long_compat;
-    #endif
 #endif
 
 #if 0
@@ -1026,10 +985,8 @@ typedef unsigned long long unsigned_long_long_compat;
     @constant	kNoSpaceErr					-6763 Not enough space to perform operation.
  */
 
-#if ( TARGET_LANGUAGE_C_LIKE )
-    #if ( !TARGET_OS_MAC && !TARGET_API_MAC_OSX_KERNEL )
+#if ( !TARGET_OS_MAC && !TARGET_API_MAC_OSX_KERNEL )
 typedef int32_t OSStatus;
-    #endif
 #endif
 
 #define kNoErr                      0
@@ -1134,10 +1091,8 @@ typedef int32_t OSStatus;
     to wait for 5 seconds you would use "5 * kDurationSecond".
  */
 
-#if ( TARGET_LANGUAGE_C_LIKE )
-    #if ( !TARGET_OS_MAC )
+#if ( !TARGET_OS_MAC )
 typedef int32_t Duration;
-    #endif
 #endif
 
 #define kDurationImmediate              0L
@@ -1209,9 +1164,7 @@ typedef int32_t Duration;
         left = right ->  0
  */
 
-#if ( TARGET_LANGUAGE_C_LIKE )
 int NumVersionCompare( uint32_t inLeft, uint32_t inRight );
-#endif
 
 #if 0
 #pragma mark == Binary Constants ==
@@ -1530,10 +1483,8 @@ int NumVersionCompare( uint32_t inLeft, uint32_t inRight );
     @abstract	Unit test.
  */
 
-#if ( DEBUG )
-    #if ( TARGET_LANGUAGE_C_LIKE )
+#if ( defined( DEBUG ) && DEBUG )
 OSStatus    CommonServicesTest( void );
-    #endif
 #endif
 
 #ifdef  __cplusplus

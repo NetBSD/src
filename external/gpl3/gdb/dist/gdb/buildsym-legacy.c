@@ -1,5 +1,5 @@
 /* Legacy support routines for building symbol tables in GDB's internal format.
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "buildsym-legacy.h"
 #include "symtab.h"
 
@@ -171,11 +170,11 @@ free_buildsym_compunit (void)
 }
 
 struct compunit_symtab *
-end_compunit_symtab (CORE_ADDR end_addr, int section)
+end_compunit_symtab (CORE_ADDR end_addr)
 {
   gdb_assert (buildsym_compunit != nullptr);
   struct compunit_symtab *result
-    = buildsym_compunit->end_compunit_symtab (end_addr, section);
+    = buildsym_compunit->end_compunit_symtab (end_addr);
   free_buildsym_compunit ();
   return result;
 }
@@ -205,7 +204,7 @@ finish_block (struct symbol *symbol, struct pending_block *old_blocks,
 }
 
 void
-record_line (struct subfile *subfile, int line, CORE_ADDR pc)
+record_line (struct subfile *subfile, int line, unrelocated_addr pc)
 {
   gdb_assert (buildsym_compunit != nullptr);
   /* Assume every line entry is a statement start, that is a good place to

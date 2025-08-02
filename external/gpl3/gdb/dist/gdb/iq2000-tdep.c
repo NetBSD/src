@@ -1,7 +1,7 @@
 /* Target-dependent code for the IQ2000 architecture, for GDB, the GNU
    Debugger.
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -20,7 +20,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
@@ -135,7 +135,7 @@ iq2000_register_name (struct gdbarch *gdbarch, int regnum)
       "r30", "r31",
       "pc"
     };
-  gdb_static_assert (ARRAY_SIZE (names) == E_NUM_REGS);
+  static_assert (ARRAY_SIZE (names) == E_NUM_REGS);
   return names[regnum];
 }
 
@@ -198,7 +198,7 @@ static CORE_ADDR
 iq2000_scan_prologue (struct gdbarch *gdbarch,
 		      CORE_ADDR scan_start,
 		      CORE_ADDR scan_end,
-		      frame_info_ptr fi,
+		      const frame_info_ptr &fi,
 		      struct iq2000_frame_cache *cache)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -358,7 +358,7 @@ iq2000_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 }
 
 static struct iq2000_frame_cache *
-iq2000_frame_cache (frame_info_ptr this_frame, void **this_cache)
+iq2000_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct iq2000_frame_cache *cache;
@@ -391,7 +391,7 @@ iq2000_frame_cache (frame_info_ptr this_frame, void **this_cache)
 }
 
 static struct value *
-iq2000_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
+iq2000_frame_prev_register (const frame_info_ptr &this_frame, void **this_cache,
 			    int regnum)
 {
   struct iq2000_frame_cache *cache = iq2000_frame_cache (this_frame,
@@ -411,7 +411,7 @@ iq2000_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
 }
 
 static void
-iq2000_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+iq2000_frame_this_id (const frame_info_ptr &this_frame, void **this_cache,
 		      struct frame_id *this_id)
 {
   struct iq2000_frame_cache *cache = iq2000_frame_cache (this_frame,
@@ -435,7 +435,7 @@ static const struct frame_unwind iq2000_frame_unwind = {
 };
 
 static CORE_ADDR
-iq2000_frame_base_address (frame_info_ptr this_frame, void **this_cache)
+iq2000_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct iq2000_frame_cache *cache = iq2000_frame_cache (this_frame,
 							 this_cache);
@@ -643,7 +643,7 @@ iq2000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
        i < nargs;
        i++)
     {
-      type = value_type (args[i]);
+      type = args[i]->type ();
       typelen = type->length ();
       if (typelen <= 4)
 	{
@@ -709,9 +709,9 @@ iq2000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   for (i = 0; i < nargs; i++)
     {
-      type = value_type (args[i]);
+      type = args[i]->type ();
       typelen = type->length ();
-      val = value_contents (args[i]).data ();
+      val = args[i]->contents ().data ();
       if (typelen <= 4)
 	{
 	  /* Char, short, int, float, pointer, and structs <= four bytes.  */

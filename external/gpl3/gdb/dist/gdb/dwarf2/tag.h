@@ -1,6 +1,6 @@
 /* Tag attributes
 
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #define GDB_DWARF2_TAG_H
 
 #include "dwarf2.h"
+#include "symtab.h"
 
 /* Return true if TAG represents a type, false otherwise.  */
 
@@ -62,6 +63,84 @@ tag_is_type (dwarf_tag tag)
     default:
       return false;
     }
+}
+
+/* Return true if the given DWARF tag matches the specified search
+   domain flags.  LANG may affect the result, due to the "C++ tag
+   hack".  */
+
+static inline bool
+tag_matches_domain (dwarf_tag tag, domain_search_flags search, language lang)
+{
+  domain_search_flags flags = 0;
+  switch (tag)
+    {
+    case DW_TAG_variable:
+    case DW_TAG_enumerator:
+    case DW_TAG_constant:
+      flags = SEARCH_VAR_DOMAIN;
+      break;
+
+    case DW_TAG_subprogram:
+    case DW_TAG_entry_point:
+      flags = SEARCH_FUNCTION_DOMAIN;
+      break;
+
+    case DW_TAG_structure_type:
+    case DW_TAG_class_type:
+    case DW_TAG_union_type:
+    case DW_TAG_enumeration_type:
+      {
+	if (lang == language_c
+	    || lang == language_objc
+	    || lang == language_opencl
+	    || lang == language_minimal)
+	  flags = SEARCH_STRUCT_DOMAIN;
+	else if (lang == language_cplus)
+	  flags = SEARCH_STRUCT_DOMAIN | SEARCH_TYPE_DOMAIN;
+	else
+	  flags = SEARCH_TYPE_DOMAIN;
+      }
+      break;
+
+    case DW_TAG_padding:
+    case DW_TAG_array_type:
+    case DW_TAG_pointer_type:
+    case DW_TAG_reference_type:
+    case DW_TAG_string_type:
+    case DW_TAG_subroutine_type:
+    case DW_TAG_ptr_to_member_type:
+    case DW_TAG_set_type:
+    case DW_TAG_subrange_type:
+    case DW_TAG_base_type:
+    case DW_TAG_const_type:
+    case DW_TAG_packed_type:
+    case DW_TAG_template_type_param:
+    case DW_TAG_volatile_type:
+    case DW_TAG_restrict_type:
+    case DW_TAG_interface_type:
+    case DW_TAG_namespace:
+    case DW_TAG_unspecified_type:
+    case DW_TAG_shared_type:
+    case DW_TAG_rvalue_reference_type:
+    case DW_TAG_coarray_type:
+    case DW_TAG_dynamic_type:
+    case DW_TAG_atomic_type:
+    case DW_TAG_immutable_type:
+    case DW_TAG_typedef:
+      flags = SEARCH_TYPE_DOMAIN;
+      break;
+
+    case DW_TAG_label:
+      flags = SEARCH_LABEL_DOMAIN;
+      break;
+
+    case DW_TAG_module:
+      flags = SEARCH_MODULE_DOMAIN;
+      break;
+    }
+
+  return (flags & search) != 0;
 }
 
 #endif /* GDB_DWARF2_TAG_H */

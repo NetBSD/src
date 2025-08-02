@@ -866,7 +866,7 @@ _mm256_insert_epi64 (__m256i __X, long long __D, int const __N)
 extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_load_pd (double const *__P)
 {
-  return *(__m256d *)__P;
+  return *(const __m256d *)__P;
 }
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -878,7 +878,7 @@ _mm256_store_pd (double *__P, __m256d __A)
 extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_load_ps (float const *__P)
 {
-  return *(__m256 *)__P;
+  return *(const __m256 *)__P;
 }
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -890,7 +890,7 @@ _mm256_store_ps (float *__P, __m256 __A)
 extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_loadu_pd (double const *__P)
 {
-  return *(__m256d_u *)__P;
+  return *(const __m256d_u *)__P;
 }
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -902,7 +902,7 @@ _mm256_storeu_pd (double *__P, __m256d __A)
 extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm256_loadu_ps (float const *__P)
 {
-  return *(__m256_u *)__P;
+  return *(const __m256_u *)__P;
 }
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))

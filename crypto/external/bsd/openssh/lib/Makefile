@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2023/10/07 12:15:49 rin Exp $
+#	$NetBSD: Makefile,v 1.38.2.1 2025/08/02 05:18:50 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -33,11 +33,13 @@ hash.c \
 hmac.c \
 hostfile.c \
 kex.c \
+kex-names.c \
 kexdh.c \
 kexecdh.c \
 kexgen.c \
 kexgex.c \
 kexgexc.c \
+kexmlkem768x25519.c \
 kexsntrup761x25519.c \
 krl.c \
 log.c \
@@ -106,7 +108,7 @@ CPPFLAGS+= -DHAVE_BLF_H
 CPPFLAGS+=	-I${SSHDIST}
 .PATH:		${SSHDIST}
 
-LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
+LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
 		crypt	${NETBSDSRCDIR}/lib/libcrypt \
 		z	${NETBSDSRCDIR}/lib/libz
 
@@ -134,5 +136,8 @@ COPTS.sshbuf-getput-crypto.c+=	-Wno-error=deprecated-declarations
 COPTS.sshkey.c+=	-Wno-error=deprecated-declarations
 COPTS.umac.c+=		-Wno-error=deprecated-declarations
 COPTS.umac128.c+=	-Wno-error=deprecated-declarations
+COPTS.kexmlkem768x25519.c+=${${ACTIVE_CC} == "clang":? -Wno-error=missing-noreturn:}
+
+
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2024/04/21 17:19:52 rillig Exp $
+#	$NetBSD: Makefile,v 1.36.2.1 2025/08/02 05:23:07 perseant Exp $
 
 LIBISPRIVATE=yes
 
@@ -8,7 +8,7 @@ LIB=ntp
 
 .include "${.CURDIR}/../Makefile.inc"
 
-DIST=	${IDIST}/libntp 
+DIST=	${IDIST}/libntp
 
 .PATH.c:	${DIST}
 
@@ -56,10 +56,10 @@ ntp_intres.c \
 ntp_libopts.c \
 ntp_lineedit.c \
 ntp_random.c \
+ntp_realpath.c \
 ntp_rfc2553.c \
 ntp_worker.c \
 numtoa.c \
-numtohost.c \
 octtoint.c \
 prettydate.c \
 recvbuff.c \

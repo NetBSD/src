@@ -1,0 +1,16 @@
+dallocx
+mallctl
+mallctlbymib
+mallctlnametomib
+malloc_conf_get
+malloc_conf_set
+malloc_message_get
+malloc_message_set
+malloc_stats_print
+malloc_usable_size
+mallocx
+nallocx
+rallocx
+sallocx
+sdallocx
+xallocx

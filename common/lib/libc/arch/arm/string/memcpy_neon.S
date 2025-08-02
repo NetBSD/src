@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: memcpy_neon.S,v 1.2 2023/01/19 18:03:03 mlelstv Exp $")
+RCSID("$NetBSD: memcpy_neon.S,v 1.2.6.1 2025/08/02 05:18:33 perseant Exp $")
 
 	.text
 ENTRY(memcpy)
@@ -190,7 +190,7 @@ ENTRY(memcpy)
 	vmov	d1, d2			/* prepare for next dword */
 	beq	.Ldone
 	vld1.64 {d2}, [r1:64]!		/* load a dword */
-	b	.Lincongruent_finish	/* write last partial dowrd */
+	b	.Lincongruent_finish	/* write last partial dword */
 #endif
 
 .Lcongruent_main:

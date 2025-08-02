@@ -239,7 +239,7 @@ ctf_fdopen(int fd, int *errp)
 	if (fstat64(fd, &st) == -1)
 		return (ctf_set_open_errno(errp, errno));
 
-	if ((nbytes = pread64(fd, &hdr.ctf, sizeof (hdr), 0)) <= 0)
+	if ((nbytes = pread64(fd, &hdr, sizeof (hdr), 0)) <= 0)
 		return (ctf_set_open_errno(errp, nbytes < 0? errno : ECTF_FMT));
 
 	/*
@@ -248,7 +248,8 @@ ctf_fdopen(int fd, int *errp)
 	 */
 	if (nbytes >= (ssize_t) sizeof (ctf_preamble_t) &&
 	    hdr.ctf.ctp_magic == CTF_MAGIC) {
-		if (hdr.ctf.ctp_version > CTF_VERSION)
+		if (hdr.ctf.ctp_version != CTF_VERSION_2 &&
+		    hdr.ctf.ctp_version != CTF_VERSION_3)
 			return (ctf_set_open_errno(errp, ECTF_CTFVERS));
 
 		ctfsect.cts_data = mmap64(NULL, st.st_size, PROT_READ,

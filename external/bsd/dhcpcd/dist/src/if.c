@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -158,18 +158,6 @@ if_ioctl(struct dhcpcd_ctx *ctx, ioctl_request_t req, void *data, size_t len)
 }
 
 int
-if_getflags(struct interface *ifp)
-{
-	struct ifreq ifr = { .ifr_flags = 0 };
-
-	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
-	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGIFFLAGS, &ifr) == -1)
-		return -1;
-	ifp->flags = (unsigned int)ifr.ifr_flags;
-	return 0;
-}
-
-int
 if_setflag(struct interface *ifp, short setflag, short unsetflag)
 {
 	struct ifreq ifr = { .ifr_flags = 0 };
@@ -250,7 +238,7 @@ if_hasconf(struct dhcpcd_ctx *ctx, const char *ifname)
 	int i;
 
 	for (i = 0; i < ctx->ifcc; i++) {
-		if (strcmp(ctx->ifcv[i], ifname) == 0)
+		if (fnmatch(ctx->ifcv[i], ifname, 0) == 0)
 			return 1;
 	}
 	return 0;
@@ -281,7 +269,7 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 	const struct sockaddr_in *addr, *net, *brd;
 #endif
 #ifdef INET6
-	struct sockaddr_in6 *sin6, *net6;
+	struct sockaddr_in6 *addr6, *net6, *dstaddr6;
 #endif
 	int addrflags;
 
@@ -325,24 +313,25 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 #endif
 #ifdef INET6
 		case AF_INET6:
-			sin6 = (void *)ifa->ifa_addr;
+			addr6 = (void *)ifa->ifa_addr;
+			dstaddr6 = (void *)ifa->ifa_dstaddr;
 			net6 = (void *)ifa->ifa_netmask;
 
 #ifdef __KAME__
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+			if (IN6_IS_ADDR_LINKLOCAL(&addr6->sin6_addr))
 				/* Remove the scope from the address */
-				sin6->sin6_addr.s6_addr[2] =
-				    sin6->sin6_addr.s6_addr[3] = '\0';
+				addr6->sin6_addr.s6_addr[2] =
+				    addr6->sin6_addr.s6_addr[3] = '\0';
 #endif
 #ifndef HAVE_IFADDRS_ADDRFLAGS
-			addrflags = if_addrflags6(ifp, &sin6->sin6_addr,
+			addrflags = if_addrflags6(ifp, &addr6->sin6_addr,
 			    ifa->ifa_name);
 			if (addrflags == -1) {
 				if (errno != EEXIST && errno != EADDRNOTAVAIL) {
 					char dbuf[INET6_ADDRSTRLEN];
 					const char *dbp;
 
-					dbp = inet_ntop(AF_INET6, &sin6->sin6_addr,
+					dbp = inet_ntop(AF_INET6, &addr6->sin6_addr,
 					    dbuf, sizeof(dbuf));
 					logerr("%s: if_addrflags6: %s%%%s",
 					    __func__, dbp, ifp->name);
@@ -351,8 +340,10 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 			}
 #endif
 			ipv6_handleifa(ctx, RTM_NEWADDR, ifs,
-			    ifa->ifa_name, &sin6->sin6_addr,
-			    ipv6_prefixlen(&net6->sin6_addr), addrflags, 0);
+			    ifa->ifa_name, &addr6->sin6_addr,
+			    ipv6_prefixlen(&net6->sin6_addr),
+			    dstaddr6 ? &dstaddr6->sin6_addr : NULL,
+			    addrflags, 0);
 			break;
 #endif
 		}
@@ -697,6 +688,7 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			}
 		}
 
+		ifp->mtu = if_getmtu(ifp);
 		ifp->vlanid = if_vlanid(ifp);
 
 #ifdef SIOCGIFPRIORITY
@@ -852,27 +844,18 @@ if_loopback(struct dhcpcd_ctx *ctx)
 }
 
 int
-if_domtu(const struct interface *ifp, short int mtu)
+if_getmtu(const struct interface *ifp)
 {
-	int r;
-	struct ifreq ifr;
-
 #ifdef __sun
-	if (mtu == 0)
-		return if_mtu_os(ifp);
-#endif
+	return if_mtu_os(ifp);
+#else
+	struct ifreq ifr = { .ifr_mtu = 0 };
 
-	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
-	ifr.ifr_mtu = mtu;
-	if (mtu != 0)
-		r = if_ioctl(ifp->ctx, SIOCSIFMTU, &ifr, sizeof(ifr));
-	else
-		r = pioctl(ifp->ctx, SIOCGIFMTU, &ifr, sizeof(ifr));
-
-	if (r == -1)
+	if (pioctl(ifp->ctx, SIOCGIFMTU, &ifr, sizeof(ifr)) == -1)
 		return -1;
 	return ifr.ifr_mtu;
+#endif
 }
 
 #ifdef ALIAS_ADDR

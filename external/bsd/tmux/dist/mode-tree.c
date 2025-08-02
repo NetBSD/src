@@ -25,6 +25,11 @@
 
 #include "tmux.h"
 
+enum mode_tree_search_dir {
+	MODE_TREE_SEARCH_FORWARD,
+	MODE_TREE_SEARCH_BACKWARD
+};
+
 struct mode_tree_item;
 TAILQ_HEAD(mode_tree_list, mode_tree_item);
 
@@ -68,6 +73,7 @@ struct mode_tree_data {
 	char			 *search;
 	char			 *filter;
 	int			  no_matches;
+	enum mode_tree_search_dir search_dir;
 };
 
 struct mode_tree_item {
@@ -255,19 +261,21 @@ mode_tree_up(struct mode_tree_data *mtd, int wrap)
 	}
 }
 
-void
+int
 mode_tree_down(struct mode_tree_data *mtd, int wrap)
 {
 	if (mtd->current == mtd->line_size - 1) {
 		if (wrap) {
 			mtd->current = 0;
 			mtd->offset = 0;
-		}
+		} else
+			return (0);
 	} else {
 		mtd->current++;
 		if (mtd->current > mtd->offset + mtd->height - 1)
 			mtd->offset++;
 	}
+	return (1);
 }
 
 void *
@@ -786,7 +794,49 @@ done:
 }
 
 static struct mode_tree_item *
-mode_tree_search_for(struct mode_tree_data *mtd)
+mode_tree_search_backward(struct mode_tree_data *mtd)
+{
+    struct mode_tree_item	*mti, *last, *prev;
+
+    if (mtd->search == NULL)
+	    return (NULL);
+
+    mti = last = mtd->line_list[mtd->current].item;
+    for (;;) {
+        if ((prev = TAILQ_PREV(mti, mode_tree_list, entry)) != NULL) {
+		/* Point to the last child in the previous subtree. */
+		while (!TAILQ_EMPTY(&prev->children))
+			prev = TAILQ_LAST(&prev->children, mode_tree_list);
+		mti = prev;
+        } else {
+		/* If prev is NULL, jump to the parent. */
+		mti = mti->parent;
+        }
+
+	if (mti == NULL) {
+		/* Point to the last child in the last root subtree. */
+		prev = TAILQ_LAST(&mtd->children, mode_tree_list);
+		while (!TAILQ_EMPTY(&prev->children))
+			prev = TAILQ_LAST(&prev->children, mode_tree_list);
+		mti = prev;
+	}
+	if (mti == last)
+		break;
+
+	if (mtd->searchcb == NULL) {
+		if (strstr(mti->name, mtd->search) != NULL)
+			return (mti);
+		continue;
+	}
+	if (mtd->searchcb(mtd->modedata, mti->itemdata, mtd->search))
+		return (mti);
+    }
+    return (NULL);
+}
+
+
+static struct mode_tree_item *
+mode_tree_search_forward(struct mode_tree_data *mtd)
 {
 	struct mode_tree_item	*mti, *last, *next;
 
@@ -832,7 +882,10 @@ mode_tree_search_set(struct mode_tree_data *mtd)
 	struct mode_tree_item	*mti, *loop;
 	uint64_t		 tag;
 
-	mti = mode_tree_search_for(mtd);
+	if (mtd->search_dir == MODE_TREE_SEARCH_FORWARD)
+		mti = mode_tree_search_forward(mtd);
+	else
+		mti = mode_tree_search_backward(mtd);
 	if (mti == NULL)
 		return;
 	tag = mti->tag;
@@ -1035,22 +1088,22 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 	switch (*key) {
 	case 'q':
 	case '\033': /* Escape */
-	case '\007': /* C-g */
+	case 'g'|KEYC_CTRL:
 		return (1);
 	case KEYC_UP:
 	case 'k':
 	case KEYC_WHEELUP_PANE:
-	case '\020': /* C-p */
+	case 'p'|KEYC_CTRL:
 		mode_tree_up(mtd, 1);
 		break;
 	case KEYC_DOWN:
 	case 'j':
 	case KEYC_WHEELDOWN_PANE:
-	case '\016': /* C-n */
+	case 'n'|KEYC_CTRL:
 		mode_tree_down(mtd, 1);
 		break;
 	case KEYC_PPAGE:
-	case '\002': /* C-b */
+	case 'b'|KEYC_CTRL:
 		for (i = 0; i < mtd->height; i++) {
 			if (mtd->current == 0)
 				break;
@@ -1058,7 +1111,7 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 		}
 		break;
 	case KEYC_NPAGE:
-	case '\006': /* C-f */
+	case 'f'|KEYC_CTRL:
 		for (i = 0; i < mtd->height; i++) {
 			if (mtd->current == mtd->line_size - 1)
 				break;
@@ -1102,7 +1155,7 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 		for (i = 0; i < mtd->line_size; i++)
 			mtd->line_list[i].item->tagged = 0;
 		break;
-	case '\024': /* C-t */
+	case 't'|KEYC_CTRL:
 		for (i = 0; i < mtd->line_size; i++) {
 			if ((mtd->line_list[i].item->parent == NULL &&
 			    !mtd->line_list[i].item->no_tag) ||
@@ -1158,13 +1211,18 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 		break;
 	case '?':
 	case '/':
-	case '\023': /* C-s */
+	case 's'|KEYC_CTRL:
 		mtd->references++;
 		status_prompt_set(c, NULL, "(search) ", "",
 		    mode_tree_search_callback, mode_tree_search_free, mtd,
 		    PROMPT_NOFORMAT, PROMPT_TYPE_SEARCH);
 		break;
 	case 'n':
+		mtd->search_dir = MODE_TREE_SEARCH_FORWARD;
+		mode_tree_search_set(mtd);
+		break;
+	case 'N':
+		mtd->search_dir = MODE_TREE_SEARCH_BACKWARD;
 		mode_tree_search_set(mtd);
 		break;
 	case 'f':

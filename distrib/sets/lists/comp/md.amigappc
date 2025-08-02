@@ -1,4 +1,5 @@
-# $NetBSD: md.amigappc,v 1.15 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.amigappc,v 1.15.14.1 2025/08/02 05:20:28 perseant Exp $
+#
 ./usr/include/amigappc				comp-c-include
 ./usr/include/amigappc/_G_config.h		comp-obsolete		obsolete
 ./usr/include/amigappc/ansi.h			comp-c-include
@@ -31,6 +32,7 @@
 ./usr/include/amigappc/kcore.h			comp-c-include
 ./usr/include/amigappc/limits.h			comp-c-include
 ./usr/include/amigappc/lock.h			comp-c-include
+./usr/include/amigappc/lwp_private.h		comp-c-include
 ./usr/include/amigappc/machine_type.h		comp-obsolete		obsolete
 ./usr/include/amigappc/math.h			comp-c-include
 ./usr/include/amigappc/mcontext.h		comp-c-include

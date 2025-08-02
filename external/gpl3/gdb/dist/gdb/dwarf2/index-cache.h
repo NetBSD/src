@@ -1,6 +1,6 @@
 /* Caching of GDB/DWARF index files.
 
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,9 @@
 #include "gdbsupport/array-view.h"
 #include "symfile.h"
 
+class dwarf2_per_bfd;
+class index_cache;
+
 /* Base of the classes used to hold the resources of the indices loaded from
    the cache (e.g. mmapped files).  */
 
@@ -32,10 +35,38 @@ struct index_cache_resource
   virtual ~index_cache_resource () = 0;
 };
 
+/* Information to be captured in the main thread, and to be used by worker
+   threads during store ().  */
+
+struct index_cache_store_context
+{
+  index_cache_store_context (const index_cache &ic, dwarf2_per_bfd *per_bfd);
+
+  /* Store the index in the cache.  */
+  void store () const;
+
+private:
+  /* Captured value of enabled ().  */
+  bool m_enabled;
+
+  /* Captured value of index cache directory.  */
+  std::string m_dir;
+
+  /* The per-bfd object that we're caching.  */
+  dwarf2_per_bfd *m_per_bfd;
+
+  /* Captured value of build id.  */
+  std::string m_build_id_str;
+
+  /* Captured value of dwz build id.  */
+  std::optional<std::string> m_dwz_build_id_str;
+};
+
 /* Class to manage the access to the DWARF index cache.  */
 
 class index_cache
 {
+  friend struct index_cache_store_context;
 public:
   /* Change the directory used to save/load index files.  */
   void set_directory (std::string dir);
@@ -51,9 +82,6 @@ public:
 
   /* Disable the cache.  */
   void disable ();
-
-  /* Store an index for the specified object file in the cache.  */
-  void store (dwarf2_per_objfile *per_objfile);
 
   /* Look for an index file matching BUILD_ID.  If found, return the contents
      as an array_view and store the underlying resources (allocated memory,

@@ -11,15 +11,12 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs7.h>
-#include <openssl/rsa.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/opensslv.h>
-#ifdef OPENSSL_IS_BORINGSSL
-#include <openssl/buf.h>
-#endif /* OPENSSL_IS_BORINGSSL */
+#include <openssl/buffer.h>
 
 #include "common.h"
 #include "utils/base64.h"
@@ -158,7 +155,7 @@ int est_load_cacerts(struct hs20_osu_client *ctx, const char *url)
 		return -1;
 	}
 
-	pkcs7 = base64_decode((unsigned char *) resp, resp_len, &pkcs7_len);
+	pkcs7 = base64_decode(resp, resp_len, &pkcs7_len);
 	if (pkcs7 && pkcs7_len < resp_len / 2) {
 		wpa_printf(MSG_INFO, "Too short base64 decode (%u bytes; downloaded %u bytes) - assume this was binary",
 			   (unsigned int) pkcs7_len, (unsigned int) resp_len);
@@ -220,7 +217,7 @@ typedef struct {
 	} d;
 } AttrOrOID;
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(OPENSSL_IS_BORINGSSL)
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 DEFINE_STACK_OF(AttrOrOID)
 #endif
 
@@ -340,30 +337,13 @@ static void add_csrattrs(struct hs20_osu_client *ctx, CsrAttrs *csrattrs,
 	if (!csrattrs || ! csrattrs->attrs)
 		return;
 
-#ifdef OPENSSL_IS_BORINGSSL
-	num = sk_num(CHECKED_CAST(_STACK *, STACK_OF(AttrOrOID) *,
-				  csrattrs->attrs));
-	for (i = 0; i < num; i++) {
-		AttrOrOID *ao = sk_value(
-			CHECKED_CAST(_STACK *, const STACK_OF(AttrOrOID) *,
-				     csrattrs->attrs), i);
-		switch (ao->type) {
-		case 0:
-			add_csrattrs_oid(ctx, ao->d.oid, exts);
-			break;
-		case 1:
-			add_csrattrs_attr(ctx, ao->d.attribute, exts);
-			break;
-		}
-	}
-#else /* OPENSSL_IS_BORINGSSL */
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(OPENSSL_IS_BORINGSSL)
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	num = sk_AttrOrOID_num(csrattrs->attrs);
 #else
 	num = SKM_sk_num(AttrOrOID, csrattrs->attrs);
 #endif
 	for (i = 0; i < num; i++) {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(OPENSSL_IS_BORINGSSL)
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 		AttrOrOID *ao = sk_AttrOrOID_value(csrattrs->attrs, i);
 #else
 		AttrOrOID *ao = SKM_sk_value(AttrOrOID, csrattrs->attrs, i);
@@ -377,7 +357,6 @@ static void add_csrattrs(struct hs20_osu_client *ctx, CsrAttrs *csrattrs,
 			break;
 		}
 	}
-#endif /* OPENSSL_IS_BORINGSSL */
 }
 
 
@@ -387,7 +366,6 @@ static int generate_csr(struct hs20_osu_client *ctx, char *key_pem,
 {
 	EVP_PKEY_CTX *pctx = NULL;
 	EVP_PKEY *pkey = NULL;
-	RSA *rsa;
 	X509_REQ *req = NULL;
 	int ret = -1;
 	unsigned int val;
@@ -415,16 +393,11 @@ static int generate_csr(struct hs20_osu_client *ctx, char *key_pem,
 	EVP_PKEY_CTX_free(pctx);
 	pctx = NULL;
 
-	rsa = EVP_PKEY_get1_RSA(pkey);
-	if (rsa == NULL)
-		goto fail;
-
 	if (key_pem) {
 		FILE *f = fopen(key_pem, "wb");
 		if (f == NULL)
 			goto fail;
-		if (!PEM_write_RSAPrivateKey(f, rsa, NULL, NULL, 0, NULL,
-					     NULL)) {
+		if (!PEM_write_PrivateKey(f, pkey, NULL, NULL, 0, NULL, NULL)) {
 			wpa_printf(MSG_INFO, "Could not write private key: %s",
 				   ERR_error_string(ERR_get_error(), NULL));
 			fclose(f);
@@ -639,8 +612,7 @@ int est_build_csr(struct hs20_osu_client *ctx, const char *url)
 			return -1;
 		}
 
-		attrs = base64_decode((unsigned char *) resp, resp_len,
-				      &attrs_len);
+		attrs = base64_decode(resp, resp_len, &attrs_len);
 		os_free(resp);
 
 		if (attrs == NULL) {
@@ -734,7 +706,7 @@ int est_simple_enroll(struct hs20_osu_client *ctx, const char *url,
 	}
 	wpa_printf(MSG_DEBUG, "EST simpleenroll response: %s", resp);
 
-	pkcs7 = base64_decode((unsigned char *) resp, resp_len, &pkcs7_len);
+	pkcs7 = base64_decode(resp, resp_len, &pkcs7_len);
 	if (pkcs7 == NULL) {
 		wpa_printf(MSG_INFO, "EST workaround - Could not decode base64, assume this is DER encoded PKCS7");
 		pkcs7 = os_malloc(resp_len);

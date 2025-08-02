@@ -28,14 +28,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-msnlb.c,v 1.5 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-msnlb.c,v 1.5.2.1 2025/08/02 05:23:25 perseant Exp $");
 #endif
 
 /* \summary: MS Network Load Balancing's (NLB) heartbeat printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

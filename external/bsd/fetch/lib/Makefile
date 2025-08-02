@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2023/06/03 09:09:03 lukem Exp $
+# $NetBSD: Makefile,v 1.18.2.1 2025/08/02 05:21:04 perseant Exp $
 
 LIB=		fetch
 SRCS=		fetch.c common.c ftp.c http.c file.c
@@ -17,8 +17,8 @@ CPPFLAGS+=	-DINET6
 
 CPPFLAGS+=	-DWITH_SSL
 
-LIBDPLIBS+=	ssl	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl \
-		crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
+LIBDPLIBS+=	ssl	${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl \
+		crypto	${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 
 CLEANFILES+=	ftperr.h httperr.h
 

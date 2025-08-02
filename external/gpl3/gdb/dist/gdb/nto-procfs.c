@@ -1,7 +1,7 @@
 /* Machine independent support for QNX Neutrino /proc (process file system)
    for GDB.  Written by Colin Burgess at QNX Software Systems Limited.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -20,7 +20,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 
 #include <fcntl.h>
 #include <spawn.h>
@@ -275,8 +274,9 @@ nto_procfs_target::open (const char *arg, int from_tty)
 	  else
 	    {
 	      if (sysinfo->type !=
-		  nto_map_arch_to_cputype (gdbarch_bfd_arch_info
-					   (target_gdbarch ())->arch_name))
+		  nto_map_arch_to_cputype
+		    (gdbarch_bfd_arch_info
+		     (current_inferior ()->arch ())->arch_name))
 		error (_("Invalid target CPU."));
 	    }
 	}
@@ -409,7 +409,7 @@ nto_procfs_target::update_thread_list ()
 	   (e.g. thread exited).  */
 	continue;
       ptid = ptid_t (pid, 0, tid);
-      new_thread = find_thread_ptid (this, ptid);
+      new_thread = this->find_thread (ptid);
       if (!new_thread)
 	new_thread = add_thread (ptid);
       update_thread_private_data (new_thread, tid, status.state, 0);
@@ -658,7 +658,7 @@ nto_procfs_target::files_info ()
 
   gdb_printf ("\tUsing the running image of %s %s via %s.\n",
 	      inf->attach_flag ? "attached" : "child",
-	      target_pid_to_str (inferior_ptid).c_str (),
+	      target_pid_to_str (ptid_t (inf->pid)).c_str (),
 	      (nodestr != NULL) ? nodestr : "local node");
 }
 
@@ -713,7 +713,7 @@ nto_procfs_target::attach (const char *args, int from_tty)
 
   update_thread_list ();
 
-  switch_to_thread (find_thread_ptid (this, ptid));
+  switch_to_thread (this->find_thread (ptid));
 }
 
 void
@@ -1282,7 +1282,7 @@ nto_procfs_target::create_inferior (const char *exec_file,
 
   ptid_t ptid = do_attach (ptid_t (pid));
   update_thread_list ();
-  switch_to_thread (find_thread_ptid (this, ptid));
+  switch_to_thread (this->find_thread (ptid));
 
   inf = current_inferior ();
   inferior_appeared (inf, pid);

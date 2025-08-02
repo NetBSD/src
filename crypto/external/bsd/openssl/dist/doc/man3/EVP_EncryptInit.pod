@@ -268,6 +268,7 @@ Increments the reference count for an B<EVP_CIPHER> structure.
 
 Decrements the reference count for the fetched B<EVP_CIPHER> structure.
 If the reference count drops to 0 then the structure is freed.
+If the argument is NULL, nothing is done.
 
 =item EVP_CIPHER_CTX_new()
 
@@ -276,9 +277,9 @@ Allocates and returns a cipher context.
 =item EVP_CIPHER_CTX_free()
 
 Clears all information from a cipher context and frees any allocated memory
-associated with it, including I<ctx> itself. This function should be called after
-all operations using a cipher are complete so sensitive information does not
-remain in memory.
+associated with it, including I<ctx> itself. This function should be called
+after all operations using a cipher are complete so sensitive information does
+not remain in memory. If the argument is NULL, nothing is done.
 
 =item EVP_CIPHER_CTX_ctrl()
 
@@ -360,9 +361,13 @@ exists.
 
 Encrypts I<inl> bytes from the buffer I<in> and writes the encrypted version to
 I<out>. The pointers I<out> and I<in> may point to the same location, in which
-case the encryption will be done in-place. If I<out> and I<in> point to different
-locations, the two buffers must be disjoint, otherwise the operation might fail
-or the outcome might be undefined.
+case the encryption will be done in-place. However, in-place encryption is
+guaranteed to work only if the encryption context (I<ctx>) has processed data in
+multiples of the block size. If the context contains an incomplete data block
+from previous operations, in-place encryption will fail.
+
+If I<out> and I<in> point to different locations, the two buffers must be
+disjoint, otherwise the operation might fail or the outcome might be undefined.
 
 This function can be called multiple times to encrypt successive blocks
 of data. The amount of data written depends on the block alignment of the
@@ -1279,6 +1284,15 @@ indicates whether the operation was successful. If it does not indicate success,
 the authentication operation has failed and any output data B<MUST NOT> be used
 as it is corrupted.
 
+Please note that the number of authenticated bytes returned by
+EVP_CipherUpdate() depends on the cipher used. Stream ciphers, such as ChaCha20
+or ciphers in GCM mode, can handle 1 byte at a time, resulting in an effective
+"block" size of 1. Conversely, ciphers in OCB mode must process data one block
+at a time, and the block size is returned.
+
+Regardless of the returned size, it is safe to pass unpadded data to an
+EVP_CipherUpdate() call in a single operation.
+
 =head2 GCM and OCB Modes
 
 The following I<ctrl>s are supported in GCM and OCB modes.
@@ -1314,10 +1328,9 @@ For GCM, this call is only valid when decrypting data.
 For OCB, this call is valid when decrypting data to set the expected tag,
 and when encrypting to set the desired tag length.
 
-In OCB mode, calling this when encrypting with C<tag> set to C<NULL> sets the
-tag length. The tag length can only be set before specifying an IV. If this is
-not called prior to setting the IV during encryption, then a default tag length
-is used.
+In OCB mode, calling this with C<tag> set to C<NULL> sets the tag length.
+The tag length can only be set before specifying an IV. If this is not called
+prior to setting the IV, then a default tag length is used.
 
 For OCB AES, the default tag length is 16 (i.e. 128 bits).  It is also the
 maximum tag length for OCB.
@@ -1733,7 +1746,7 @@ The EVP_CIPHER_CTX_flags() macro was deprecated in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

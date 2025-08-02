@@ -1,2 +1,3 @@
-# $NetBSD: module.mi,v 1.13 2009/12/11 15:22:33 he Exp $
+# $NetBSD: module.mi,v 1.13.62.1 2025/08/02 05:20:26 perseant Exp $
+#
 ./var/db/obsolete/modules			base-sys-root

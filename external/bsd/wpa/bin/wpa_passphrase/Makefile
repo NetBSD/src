@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2023/05/09 21:05:24 christos Exp $
+# $NetBSD: Makefile,v 1.6.2.1 2025/08/02 05:23:58 perseant Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -14,8 +14,8 @@ wpabuf.c
 
 .if !defined(NO_CRYPT) && !defined(NO_OPENSSL) && !defined(RELEASE_CRUNCH)
 SRCS+= crypto_openssl.c
-DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBDES}
-LDADD+= -lssl -lcrypto -ldes
+DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBDES} ${LIBPTHREAD}
+LDADD+= -lssl -lcrypto -ldes -lpthread
 .else
 CPPFLAGS+= -DINTERNAL_AES -DINTERNAL_MD5 -DINTERNAL_SHA1
 CPPFLAGS+= -DCONFIG_CRYPTO_INTERNAL

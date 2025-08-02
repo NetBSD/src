@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39.2.1 2024/07/01 01:00:42 perseant Exp $
+#	$NetBSD: Makefile,v 1.39.2.2 2025/08/02 05:25:15 perseant Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
@@ -69,6 +69,7 @@ CLEANFILES+=	.depend.${f} e${f}.c
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 	${_MKTARGET_CREATE}
 	unset MACHINE || true; \
+	mkdir -p ldscripts && \
 	NATIVE=yes ${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld \
 		${LIBDIR} "/usr" "/usr/bin" \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \

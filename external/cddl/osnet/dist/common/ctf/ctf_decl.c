@@ -58,7 +58,7 @@ ctf_decl_init(ctf_decl_t *cd, char *buf, size_t len)
 {
 	int i;
 
-	bzero(cd, sizeof (ctf_decl_t));
+	memset(cd, 0, sizeof (ctf_decl_t));
 
 	for (i = CTF_PREC_BASE; i < CTF_PREC_MAX; i++)
 		cd->cd_order[i] = CTF_PREC_BASE - 1;
@@ -91,10 +91,10 @@ ctf_decl_push(ctf_decl_t *cd, ctf_file_t *fp, ctf_id_t type)
 {
 	ctf_decl_node_t *cdp;
 	ctf_decl_prec_t prec;
-	uint_t kind, n = 1;
+	uint_t ctype, kind, n = 1;
 	int is_qual = 0;
 
-	const ctf_type_t *tp;
+	const void *tp;
 	ctf_arinfo_t ar;
 
 	if ((tp = ctf_lookup_by_id(&fp, type)) == NULL) {
@@ -102,7 +102,10 @@ ctf_decl_push(ctf_decl_t *cd, ctf_file_t *fp, ctf_id_t type)
 		return;
 	}
 
-	switch (kind = LCTF_INFO_KIND(fp, tp->ctt_info)) {
+	ctf_get_ctt_info(fp, tp, &kind, NULL, NULL);
+	ctf_get_ctt_index(fp, tp, NULL, &ctype, NULL);
+
+	switch (kind) {
 	case CTF_K_ARRAY:
 		(void) ctf_array_info(fp, type, &ar);
 		ctf_decl_push(cd, fp, ar.ctr_contents);
@@ -111,27 +114,27 @@ ctf_decl_push(ctf_decl_t *cd, ctf_file_t *fp, ctf_id_t type)
 		break;
 
 	case CTF_K_TYPEDEF:
-		if (ctf_strptr(fp, tp->ctt_name)[0] == '\0') {
-			ctf_decl_push(cd, fp, tp->ctt_type);
+		if (ctf_type_rname(fp, tp)[0] == '\0') {
+			ctf_decl_push(cd, fp, ctype);
 			return;
 		}
 		prec = CTF_PREC_BASE;
 		break;
 
 	case CTF_K_FUNCTION:
-		ctf_decl_push(cd, fp, tp->ctt_type);
+		ctf_decl_push(cd, fp, ctype);
 		prec = CTF_PREC_FUNCTION;
 		break;
 
 	case CTF_K_POINTER:
-		ctf_decl_push(cd, fp, tp->ctt_type);
+		ctf_decl_push(cd, fp, ctype);
 		prec = CTF_PREC_POINTER;
 		break;
 
 	case CTF_K_VOLATILE:
 	case CTF_K_CONST:
 	case CTF_K_RESTRICT:
-		ctf_decl_push(cd, fp, tp->ctt_type);
+		ctf_decl_push(cd, fp, ctype);
 		prec = cd->cd_qualp;
 		is_qual++;
 		break;

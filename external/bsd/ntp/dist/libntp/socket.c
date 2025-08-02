@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.6 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.6.8.1 2025/08/02 05:22:31 perseant Exp $	*/
 
 /*
  * socket.c - low-level socket operations
@@ -197,11 +197,11 @@ open_socket(
 	)
 void
 sendpkt(
-	sockaddr_u *		dest,
-	struct interface *	ep,
-	int			ttl,
-	struct pkt *		pkt,
-	int			len
+	sockaddr_u *	dest,
+	endpt *		ep,
+	int		ttl,
+	struct pkt *	pkt,
+	int		len
 	)
 
 static inline int
@@ -209,9 +209,9 @@ read_refclock_packet(SOCKET fd, struct refclockio *rp, l_fp ts)
 
 static inline int
 read_network_packet(
-	SOCKET			fd,
-	struct interface *	itf,
-	l_fp			ts
+	SOCKET	fd,
+	endpt *	itf,
+	l_fp	ts
 	)
 
 void

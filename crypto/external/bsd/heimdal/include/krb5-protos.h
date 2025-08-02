@@ -55,7 +55,7 @@ extern "C" {
  * @param in_cred the credential to convert
  * @param v4creds the converted credential
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5_v4compat
@@ -77,7 +77,7 @@ krb524_convert_creds_kdc (
  * @param in_cred the credential to convert
  * @param v4creds the converted credential
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5_v4compat
@@ -212,7 +212,7 @@ krb5_acl_match_string (
  * @param context A kerberos context.
  * @param func The generated com_err et function.
  *
- * @return Returns 0 to indicate success.  Otherwise an kerberos et
+ * @return Returns 0 to indicate success.  Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -230,7 +230,7 @@ krb5_add_et_list (
  * @param context Kerberos 5 context.
  * @param addresses addreses to add
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -248,7 +248,7 @@ krb5_add_extra_addresses (
  * @param context Kerberos 5 context.
  * @param addresses addreses to ignore
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -517,7 +517,7 @@ krb5_auth_con_addflags (
  * @param context      A kerberos context.
  * @param auth_context The authentication context to be deallocated.
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -529,7 +529,7 @@ krb5_auth_con_free (
  * Update the authentication context \a auth_context with the local
  * and remote addresses from socket \a fd, according to \a flags.
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -632,7 +632,7 @@ krb5_auth_con_getsendsubkey (
  *
  * Use krb5_auth_con_free() to release the memory when done using the context.
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -763,7 +763,7 @@ krb5_build_ap_req (
  * @param realm realm name
  * @param ... a list of components ended with NULL.
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -2324,7 +2324,7 @@ krb5_copy_checksum (
  * @param context the Kerberos context to copy
  * @param out the copy of the Kerberos, set to NULL error.
  *
- * @return Returns 0 to indicate success.  Otherwise an kerberos et
+ * @return Returns 0 to indicate success.  Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -2342,7 +2342,7 @@ krb5_copy_context (
  * @param incred source credential
  * @param outcred destination credential, free with krb5_free_creds().
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -2361,7 +2361,7 @@ krb5_copy_creds (
  * @param incred source credential
  * @param c destination credential, free with krb5_free_cred_contents().
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -2380,7 +2380,7 @@ krb5_copy_creds_contents (
  * @param indata the krb5_data data to copy
  * @param outdata new krb5_date to copy too. Free with krb5_free_data().
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned.
  *
  * @ingroup krb5
@@ -2399,7 +2399,7 @@ krb5_copy_data (
  * @param from list of realms to copy from.
  * @param to list of realms to copy to, free list of krb5_free_host_realm().
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -2456,7 +2456,7 @@ krb5_copy_keyblock_contents (
  * @param inprinc principal to copy
  * @param outprinc copied principal, free with krb5_free_principal()
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -2474,7 +2474,7 @@ krb5_copy_principal (
  * @param from ticket to copy
  * @param to new copy of ticket, free with krb5_free_ticket()
  *
- * @return Returns 0 to indicate success.  Otherwise an kerberos et
+ * @return Returns 0 to indicate success.  Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -2716,7 +2716,7 @@ krb5_crypto_prf_length (
  * @param p krb5_data to allocate.
  * @param len size to allocate.
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned.
  *
  * @ingroup krb5
@@ -2750,7 +2750,7 @@ krb5_data_cmp (
  * @param data data to copy..
  * @param len new size.
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned.
  *
  * @ingroup krb5
@@ -2798,7 +2798,7 @@ krb5_data_free (krb5_data */*p*/);
  * @param p krb5_data to free.
  * @param len new size.
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned.
  *
  * @ingroup krb5
@@ -3577,9 +3577,9 @@ krb5_free_checksum_contents (
  * Free a list of configuration files.
  *
  * @param filenames list, terminated with a NULL pointer, to be
- * freed. NULL is an valid argument.
+ * freed. NULL is a valid argument.
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -3605,7 +3605,7 @@ krb5_free_context (krb5_context /*context*/);
  * @param context Kerberos 5 context.
  * @param c krb5_creds to free.
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -3622,7 +3622,7 @@ krb5_free_cred_contents (
  * @param context Kerberos 5 context.
  * @param c krb5_creds to free.
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -3801,7 +3801,7 @@ krb5_free_name_canon_iterator (
  * @param context A Kerberos context.
  * @param p a principal to free.
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -3822,7 +3822,7 @@ krb5_free_salt (
  * @param context a Kerberos 5 context
  * @param ticket ticket to free
  *
- * @return Returns 0 to indicate success.  Otherwise an kerberos et
+ * @return Returns 0 to indicate success.  Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -4076,7 +4076,7 @@ krb5_get_creds_opt_set_ticket (
  *
  * @param pfilenames return array of filenames, should be freed with krb5_free_config_files().
  *
- * @return Returns 0 to indicate success.  Otherwise an kerberos et
+ * @return Returns 0 to indicate success.  Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -4094,7 +4094,7 @@ krb5_get_default_config_files (char ***/*pfilenames*/);
  * @param etypes Encryption types, array terminated with
  * ETYPE_NULL(0), caller should free array with krb5_xfree():
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -4195,7 +4195,7 @@ krb5_get_error_string (krb5_context /*context*/)
  * @param context Kerberos 5 context.
  * @param addresses addreses to set
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -4212,7 +4212,7 @@ krb5_get_extra_addresses (
  * @param context Kerberos 5 context.
  * @param version version number.
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -4273,7 +4273,7 @@ krb5_get_host_realm (
  * @param context Kerberos 5 context.
  * @param addresses list addreses ignored
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -4882,7 +4882,7 @@ krb5_init_creds_get (
  * @param ctx
  * @param cred credentials, free with krb5_free_cred_contents().
  *
- * @return 0 for sucess or An Kerberos error code, see krb5_get_error_message().
+ * @return 0 for sucess or a kerberos error code, see krb5_get_error_message().
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -4918,7 +4918,7 @@ krb5_init_creds_get_error (
  * @param options a options structure, can be NULL for default options.
  * @param rctx A new allocated free with krb5_init_creds_free().
  *
- * @return 0 for success or an Kerberos 5 error code, see krb5_get_error_message().
+ * @return 0 for success or a kerberos 5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_credential
  */
@@ -4958,7 +4958,7 @@ krb5_init_creds_set_keyblock (
  * @param ctx ctx krb5_init_creds_context context.
  * @param keytab the keytab to read the key from.
  *
- * @return 0 for success, or an Kerberos 5 error code, see krb5_get_error_message().
+ * @return 0 for success, or a kerberos 5 error code, see krb5_get_error_message().
  * @ingroup krb5_credential
  */
 
@@ -4975,7 +4975,7 @@ krb5_init_creds_set_keytab (
  * @param ctx ctx krb5_init_creds_context context.
  * @param password the password to use.
  *
- * @return 0 for success, or an Kerberos 5 error code, see krb5_get_error_message().
+ * @return 0 for success, or a kerberos 5 error code, see krb5_get_error_message().
  * @ingroup krb5_credential
  */
 
@@ -4995,7 +4995,7 @@ krb5_init_creds_set_password (
  *        "kadmind/admin". If NULL, the default krbtgt in the clients
  *        realm is set.
  *
- * @return 0 for success, or an Kerberos 5 error code, see krb5_get_error_message().
+ * @return 0 for success, or a kerberos 5 error code, see krb5_get_error_message().
  * @ingroup krb5_credential
  */
 
@@ -5020,7 +5020,7 @@ krb5_init_creds_set_service (
  * @param flags status of the round, if
  *        KRB5_INIT_CREDS_STEP_FLAG_CONTINUE is set, continue one more round.
  *
- * @return 0 for success, or an Kerberos 5 error code, see
+ * @return 0 for success, or a kerberos 5 error code, see
  *     krb5_get_error_message().
  *
  * @ingroup krb5_credential
@@ -5291,9 +5291,9 @@ krb5_krbhst_free (
 	krb5_krbhst_handle /*handle*/);
 
 /**
- * Return an `struct addrinfo *' for a KDC host.
+ * Return a `struct addrinfo *' for a KDC host.
  *
- * Returns an the struct addrinfo in in that corresponds to the
+ * Returns a struct addrinfo in `ai' that corresponds to the
  * information in `host'.  free:ing is handled by krb5_krbhst_free, so
  * the returned ai must not be released.
  *
@@ -5833,7 +5833,7 @@ krb5_make_addrport (
  * @param realm realm name
  * @param ... a list of components ended with NULL.
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -6138,7 +6138,7 @@ krb5_pac_free (
  * @param type type of buffer to get
  * @param data return data, free with krb5_data_free().
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5_pac
@@ -6180,7 +6180,7 @@ krb5_pac_parse (
  * @param server The service key, most always be given.
  * @param privsvr The KDC key, may be given.
 
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5_pac
@@ -6229,7 +6229,7 @@ krb5_parse_address (
  * @param name name to parse into a Kerberos principal
  * @param principal returned principal, free with krb5_free_principal().
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -6248,7 +6248,7 @@ krb5_parse_name (
  * @param flags flags to control the behavior
  * @param principal returned principal, free with krb5_free_principal().
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -6331,7 +6331,7 @@ krb5_prepend_config_files (
  * @param filelist a filename to add to the default list of filename
  * @param pfilenames return array of filenames, should be freed with krb5_free_config_files().
  *
- * @return Returns 0 to indicate success.  Otherwise an kerberos et
+ * @return Returns 0 to indicate success.  Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -6587,7 +6587,7 @@ krb5_principal_set_comp_string (
  * @param principal principal set the realm for
  * @param realm the new realm to set
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -6605,7 +6605,7 @@ krb5_principal_set_realm (
  * @param principal principal to set the type for
  * @param type the new type
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -7541,7 +7541,7 @@ krb5_sendto_set_hostname (
  * @param context context to add configuration too.
  * @param filenames array of filenames, end of list is indicated with a NULL filename.
  *
- * @return Returns 0 to indicate success.  Otherwise an kerberos et
+ * @return Returns 0 to indicate success.  Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -7567,7 +7567,7 @@ krb5_set_debug_dest (
  * A value of NULL resets the encryption types to the defaults set in the
  * configuration file.
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -7646,7 +7646,7 @@ krb5_set_error_string (
  * @param context Kerberos 5 context.
  * @param addresses addreses to set
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -7663,7 +7663,7 @@ krb5_set_extra_addresses (
  * @param context Kerberos 5 context.
  * @param version version number.
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -7702,7 +7702,7 @@ krb5_set_home_dir_access (
  * @param context Kerberos 5 context.
  * @param addresses addreses to ignore
  *
- * @return Returns 0 to indicate success. Otherwise an kerberos et
+ * @return Returns 0 to indicate success. Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -7855,7 +7855,7 @@ krb5_set_warn_dest (
  * @param type name type of principal, use KRB5_NT_SRV_HST or KRB5_NT_UNKNOWN.
  * @param ret_princ return principal, free with krb5_free_principal().
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -7882,7 +7882,7 @@ krb5_sock_to_principal (
  *
  * @param context a Keberos context
  * @param sa a struct sockaddr to extract the address from
- * @param addr an Kerberos 5 address to store the address in.
+ * @param addr a kerberos 5 address to store the address in.
  *
  * @return Return an error code or 0.
  *
@@ -7977,7 +7977,7 @@ krb5_storage_emem (void);
  *
  * @param sp the storage to free.
  *
- * @return An Kerberos 5 error code.
+ * @return A Kerberos 5 error code.
  *
  * @ingroup krb5_storage
  */
@@ -8243,7 +8243,7 @@ krb5_storage_to_data (
  * @param sp the storage buffer to truncate.
  * @param offset the offset to truncate too.
  *
- * @return An Kerberos 5 error code.
+ * @return A Kerberos 5 error code.
  *
  * @ingroup krb5_storage
  */
@@ -8706,7 +8706,7 @@ krb5_ticket_get_authorization_data_type (
  * @param ticket ticket to copy
  * @param client client principal, free with krb5_free_principal()
  *
- * @return Returns 0 to indicate success.  Otherwise an kerberos et
+ * @return Returns 0 to indicate success.  Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -8757,7 +8757,7 @@ krb5_ticket_get_flags (
  * @param ticket ticket to copy
  * @param server server principal, free with krb5_free_principal()
  *
- * @return Returns 0 to indicate success.  Otherwise an kerberos et
+ * @return Returns 0 to indicate success.  Otherwise a kerberos et
  * error code is returned, see krb5_get_error_message().
  *
  * @ingroup krb5
@@ -8786,7 +8786,7 @@ krb5_timeofday (
  * @param principal principal to query
  * @param name resulting string, free with krb5_xfree()
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -8805,7 +8805,7 @@ krb5_unparse_name (
  * @param name buffer to write name to
  * @param len length of buffer
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -8826,7 +8826,7 @@ krb5_unparse_name_fixed (
  * @param name buffer to write name to
  * @param len length of buffer
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -8848,7 +8848,7 @@ krb5_unparse_name_fixed_flags (
  * @param name buffer to write name to
  * @param len length of buffer
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -8868,7 +8868,7 @@ krb5_unparse_name_fixed_short (
  * @param flags flag to determine the behavior
  * @param name resulting string, free with krb5_xfree()
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */
@@ -8888,7 +8888,7 @@ krb5_unparse_name_flags (
  * @param principal principal to unparse
  * @param name returned buffer, free with krb5_xfree()
  *
- * @return An krb5 error code, see krb5_get_error_message().
+ * @return A krb5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_principal
  */

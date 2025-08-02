@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sh.
 
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -19,7 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbcore.h"
 #include "regset.h"
 #include "value.h"
@@ -127,9 +126,9 @@ static const int shnbsd_mc_reg_offset[] =
 
 static void
 shnbsd_sigtramp_cache_init (const struct tramp_frame *,
-			     frame_info_ptr,
-			     struct trad_frame_cache *,
-			     CORE_ADDR);
+			    const frame_info_ptr &,
+			    struct trad_frame_cache *,
+			    CORE_ADDR);
 
 /* The siginfo signal trampoline for NetBSD/sh3 versions 2.0 and later */
 static const struct tramp_frame shnbsd_sigtramp_si2 =
@@ -162,7 +161,7 @@ static const struct tramp_frame shnbsd_sigtramp_si2 =
 
 static void
 shnbsd_sigtramp_cache_init (const struct tramp_frame *self,
-			    frame_info_ptr next_frame,
+			    const frame_info_ptr& next_frame,
 			    struct trad_frame_cache *this_cache,
 			    CORE_ADDR func)
 {

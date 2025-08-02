@@ -62,6 +62,8 @@ list(APPEND MAN_ALIAS
 	fido_assert_allow_cred fido_assert_empty_allow_list
 	fido_assert_new fido_assert_authdata_len
 	fido_assert_new fido_assert_authdata_ptr
+	fido_assert_new fido_assert_authdata_raw_len
+	fido_assert_new fido_assert_authdata_raw_ptr
 	fido_assert_new fido_assert_blob_len
 	fido_assert_new fido_assert_blob_ptr
 	fido_assert_new fido_assert_clientdata_hash_len
@@ -95,6 +97,7 @@ list(APPEND MAN_ALIAS
 	fido_assert_set_authdata fido_assert_set_sig
 	fido_assert_set_authdata fido_assert_set_up
 	fido_assert_set_authdata fido_assert_set_uv
+	fido_assert_set_authdata fido_assert_set_winhello_appid
 	fido_bio_dev_get_info fido_bio_dev_enroll_begin
 	fido_bio_dev_get_info fido_bio_dev_enroll_cancel
 	fido_bio_dev_get_info fido_bio_dev_enroll_continue
@@ -162,6 +165,7 @@ list(APPEND MAN_ALIAS
 	fido_cred_new fido_cred_clientdata_hash_len
 	fido_cred_new fido_cred_clientdata_hash_ptr
 	fido_cred_new fido_cred_display_name
+	fido_cred_new fido_cred_entattest
 	fido_cred_new fido_cred_flags
 	fido_cred_new fido_cred_fmt
 	fido_cred_new fido_cred_free
@@ -183,6 +187,9 @@ list(APPEND MAN_ALIAS
 	fido_cred_new fido_cred_user_id_ptr
 	fido_cred_new fido_cred_user_name
 	fido_cred_new fido_cred_x5c_len
+	fido_cred_new fido_cred_x5c_list_count
+	fido_cred_new fido_cred_x5c_list_len
+	fido_cred_new fido_cred_x5c_list_ptr
 	fido_cred_new fido_cred_x5c_ptr
 	fido_cred_verify fido_cred_verify_self
 	fido_credman_metadata_new fido_credman_del_dev_rk
@@ -205,10 +212,12 @@ list(APPEND MAN_ALIAS
 	fido_credman_metadata_new fido_credman_rp_new
 	fido_credman_metadata_new fido_credman_set_dev_rk
 	fido_cred_set_authdata fido_cred_set_attstmt
+	fido_cred_set_authdata fido_cred_set_attobj
 	fido_cred_set_authdata fido_cred_set_authdata_raw
 	fido_cred_set_authdata fido_cred_set_blob
 	fido_cred_set_authdata fido_cred_set_clientdata
 	fido_cred_set_authdata fido_cred_set_clientdata_hash
+	fido_cred_set_authdata fido_cred_set_entattest
 	fido_cred_set_authdata fido_cred_set_extensions
 	fido_cred_set_authdata fido_cred_set_fmt
 	fido_cred_set_authdata fido_cred_set_id
@@ -390,7 +399,7 @@ if(GZIP_PATH)
 		install(FILES ${PROJECT_BINARY_DIR}/man/${DST}.3.gz
 			DESTINATION "${CMAKE_INSTALL_MANDIR}/man3")
 	endforeach()
-elseif(NOT MSVC)
+else()
 	add_dependencies(man man_symlink)
 	foreach(f ${MAN_SOURCES})
 		if (${f} MATCHES ".1$")

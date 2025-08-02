@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.55 2023/04/07 10:34:13 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.55.2.1 2025/08/02 05:18:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.55 2023/04/07 10:34:13 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.55.2.1 2025/08/02 05:18:26 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,7 @@ opentrace(void)
 	 */
 	if (tracefile)
 		(void) fclose(tracefile);	/* also closes tfd */
-	tracefile = fdopen(fd, "a");	/* don't care if it is NULL */
+	tracefile = fdopen(fd, "ae");	/* don't care if it is NULL */
 	if (tracefile)			/* except here... */
 		setlinebuf(tracefile);
 
@@ -645,7 +645,7 @@ sharg(union node *arg, TFILE *fp)
 	for (p = arg->narg.text ; *p ; p++) {
 		switch (*p) {
 		case CTLESC:
-			if (BASESYNTAX[p[1]] != CCTL)
+			if (BASESYNTAX[(int)p[1]] != CCTL)
 				trace_putc('\\', fp);
 			trace_putc(*++p, fp);
 			break;

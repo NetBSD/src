@@ -1,6 +1,6 @@
 /* Implementation of the GDB variable objects API.
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,12 +15,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "value.h"
 #include "expression.h"
 #include "frame.h"
 #include "language.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "block.h"
 #include "valprint.h"
 #include "gdbsupport/gdb_regex.h"
@@ -164,8 +163,6 @@ create_child_with_value (struct varobj *parent, int index,
 
 /* Utility routines */
 
-static enum varobj_display_formats variable_default_display (struct varobj *);
-
 static bool update_type_if_necessary (struct varobj *var,
 				      struct value *new_value);
 
@@ -261,7 +258,7 @@ varobj_create (const char *objname,
 	       const char *expression, CORE_ADDR frame, enum varobj_type type)
 {
   /* Fill out a varobj structure for the (root) variable being constructed.  */
-  std::unique_ptr<varobj> var (new varobj (new varobj_root));
+  auto var = std::make_unique<varobj> (new varobj_root);
 
   if (expression != NULL)
     {
@@ -336,7 +333,7 @@ varobj_create (const char *objname,
 	  return NULL;
 	}
 
-      var->format = variable_default_display (var.get ());
+      var->format = FORMAT_NATURAL;
       var->root->valid_block =
 	var->root->floating ? NULL : tracker.block ();
       var->root->global
@@ -364,20 +361,20 @@ varobj_create (const char *objname,
 	  select_frame (fi);	 
 	}
 
-      /* We definitely need to catch errors here.
-	 If evaluate_expression succeeds we got the value we wanted.
-	 But if it fails, we still go on with a call to evaluate_type().  */
+      /* We definitely need to catch errors here.  If evaluation of
+	 the expression succeeds, we got the value we wanted.  But if
+	 it fails, we still go on with a call to evaluate_type().  */
       try
 	{
-	  value = evaluate_expression (var->root->exp.get ());
+	  value = var->root->exp->evaluate ();
 	}
       catch (const gdb_exception_error &except)
 	{
 	  /* Error getting the value.  Try to at least get the
 	     right type.  */
-	  struct value *type_only_value = evaluate_type (var->root->exp.get ());
+	  struct value *type_only_value = var->root->exp->evaluate_type ();
 
-	  var->type = value_type (type_only_value);
+	  var->type = type_only_value->type ();
 	}
 
       if (value != NULL)
@@ -488,23 +485,10 @@ enum varobj_display_formats
 varobj_set_display_format (struct varobj *var,
 			   enum varobj_display_formats format)
 {
-  switch (format)
-    {
-    case FORMAT_NATURAL:
-    case FORMAT_BINARY:
-    case FORMAT_DECIMAL:
-    case FORMAT_HEXADECIMAL:
-    case FORMAT_OCTAL:
-    case FORMAT_ZHEXADECIMAL:
-      var->format = format;
-      break;
-
-    default:
-      var->format = variable_default_display (var);
-    }
+  var->format = format;
 
   if (varobj_value_is_changeable_p (var) 
-      && var->value != nullptr && !value_lazy (var->value.get ()))
+      && var->value != nullptr && !var->value->lazy ())
     {
       var->print_value = varobj_value_get_print_value (var->value.get (),
 						       var->format, var);
@@ -651,21 +635,6 @@ install_dynamic_child (struct varobj *var,
 	unchanged->push_back (existing);
     }
 }
-
-#if HAVE_PYTHON
-
-static bool
-dynamic_varobj_has_child_method (const struct varobj *var)
-{
-  PyObject *printer = var->dynamic->pretty_printer;
-
-  if (!gdb_python_initialized)
-    return false;
-
-  gdbpy_enter_varobj enter_py (var);
-  return PyObject_HasAttr (printer, gdbpy_children_cst);
-}
-#endif
 
 /* A factory for creating dynamic varobj's iterators.  Returns an
    iterator object suitable for iterating over VAR's children.  */
@@ -985,16 +954,16 @@ varobj_set_value (struct varobj *var, const char *expression)
      We need to first construct a legal expression for this -- ugh!  */
   /* Does this cover all the bases?  */
   struct value *value = NULL; /* Initialize to keep gcc happy.  */
-  int saved_input_radix = input_radix;
   const char *s = expression;
 
   gdb_assert (varobj_editable_p (var));
 
-  input_radix = 10;		/* ALWAYS reset to decimal temporarily.  */
+  /* ALWAYS reset to decimal temporarily.  */
+  auto save_input_radix = make_scoped_restore (&input_radix, 10);
   expression_up exp = parse_exp_1 (&s, 0, 0, 0);
   try
     {
-      value = evaluate_expression (exp.get ());
+      value = exp->evaluate ();
     }
 
   catch (const gdb_exception_error &except)
@@ -1007,7 +976,7 @@ varobj_set_value (struct varobj *var, const char *expression)
   gdb_assert (varobj_value_is_changeable_p (var));
 
   /* The value of a changeable variable object must not be lazy.  */
-  gdb_assert (!value_lazy (var->value.get ()));
+  gdb_assert (!var->value->lazy ());
 
   /* Need to coerce the input.  We want to check if the
      value of the variable object will be different
@@ -1037,7 +1006,6 @@ varobj_set_value (struct varobj *var, const char *expression)
      'updated' flag.  There's no need to optimize that, because return value
      of -var-update should be considered an approximation.  */
   var->updated = install_new_value (var, val, false /* Compare values.  */);
-  input_radix = saved_input_radix;
   return true;
 }
 
@@ -1247,7 +1215,7 @@ install_new_value (struct varobj *var, struct value *value, bool initial)
      that is we'll be comparing values of this type, fetch the
      value now.  Otherwise, on the next update the old value
      will be lazy, which means we've lost that old value.  */
-  if (need_to_fetch && value && value_lazy (value))
+  if (need_to_fetch && value && value->lazy ())
     {
       const struct varobj *parent = var->parent;
       bool frozen = var->frozen;
@@ -1268,7 +1236,7 @@ install_new_value (struct varobj *var, struct value *value, bool initial)
 
 	  try
 	    {
-	      value_fetch_lazy (value);
+	      value->fetch_lazy ();
 	    }
 
 	  catch (const gdb_exception_error &except)
@@ -1292,7 +1260,7 @@ install_new_value (struct varobj *var, struct value *value, bool initial)
      lazy -- if it is, the code above has decided that the value
      should not be fetched.  */
   std::string print_value;
-  if (value != NULL && !value_lazy (value)
+  if (value != NULL && !value->lazy ()
       && var->dynamic->pretty_printer == NULL)
     print_value = varobj_value_get_print_value (value, var->format, var);
 
@@ -1312,7 +1280,7 @@ install_new_value (struct varobj *var, struct value *value, bool initial)
 	{
 	  /* Try to compare the values.  That requires that both
 	     values are non-lazy.  */
-	  if (var->not_fetched && value_lazy (var->value.get ()))
+	  if (var->not_fetched && var->value->lazy ())
 	    {
 	      /* This is a frozen varobj and the value was never read.
 		 Presumably, UI shows some "never read" indicator.
@@ -1330,8 +1298,8 @@ install_new_value (struct varobj *var, struct value *value, bool initial)
 	    }
 	  else
 	    {
-	      gdb_assert (!value_lazy (var->value.get ()));
-	      gdb_assert (!value_lazy (value));
+	      gdb_assert (!var->value->lazy ());
+	      gdb_assert (!value->lazy ());
 
 	      gdb_assert (!var->print_value.empty () && !print_value.empty ());
 	      if (var->print_value != print_value)
@@ -1351,7 +1319,7 @@ install_new_value (struct varobj *var, struct value *value, bool initial)
 
   /* We must always keep the new value, since children depend on it.  */
   var->value = value_holder;
-  if (value && value_lazy (value) && intentionally_not_fetched)
+  if (value && value->lazy () && intentionally_not_fetched)
     var->not_fetched = true;
   else
     var->not_fetched = false;
@@ -1370,7 +1338,7 @@ install_new_value (struct varobj *var, struct value *value, bool initial)
     }
   var->print_value = print_value;
 
-  gdb_assert (var->value == nullptr || value_type (var->value.get ()));
+  gdb_assert (var->value == nullptr || var->value->type ());
 
   return changed;
 }
@@ -1424,6 +1392,9 @@ varobj_set_visualizer (struct varobj *var, const char *visualizer)
   /* If there are any children now, wipe them.  */
   varobj_delete (var, 1 /* children only */);
   var->num_children = -1;
+
+  /* Also be sure to reset the print value.  */
+  varobj_set_display_format (var, var->format);
 #else
   error (_("Python support required"));
 #endif
@@ -1550,7 +1521,7 @@ varobj_update (struct varobj **varp, bool is_explicit)
 	  if (update_type_if_necessary (v, newobj))
 	    r.type_changed = true;
 	  if (newobj)
-	    new_type = value_type (newobj);
+	    new_type = newobj->type ();
 	  else
 	    new_type = v->root->lang_ops->type_of_child (v->parent, v->index);
 
@@ -1886,7 +1857,7 @@ varobj_get_value_type (const struct varobj *var)
   struct type *type;
 
   if (var->value != nullptr)
-    type = value_type (var->value.get ());
+    type = var->value->type ();
   else
     type = var->type;
 
@@ -1898,14 +1869,6 @@ varobj_get_value_type (const struct varobj *var)
   type = check_typedef (type);
 
   return type;
-}
-
-/* What is the default display for this variable? We assume that
-   everything is "natural".  Any exceptions?  */
-static enum varobj_display_formats
-variable_default_display (struct varobj *var)
-{
-  return FORMAT_NATURAL;
 }
 
 /*
@@ -2011,7 +1974,7 @@ value_of_root_1 (struct varobj **var_handle)
 	 expression fails we want to just return NULL.  */
       try
 	{
-	  new_val = evaluate_expression (var->root->exp.get ());
+	  new_val = var->root->exp->evaluate ();
 	}
       catch (const gdb_exception_error &except)
 	{
@@ -2098,7 +2061,7 @@ value_of_root (struct varobj **var_handle, bool *type_changed)
 	/* For root varobj-s, a NULL value indicates a scoping issue.
 	   So, nothing to do in terms of checking for mutations.  */
       }
-    else if (varobj_value_has_mutated (var, value, value_type (value)))
+    else if (varobj_value_has_mutated (var, value, value->type ()))
       {
 	/* The type has mutated, so the children are no longer valid.
 	   Just delete them, and tell our caller that the type has
@@ -2133,6 +2096,9 @@ my_value_of_variable (struct varobj *var, enum varobj_display_formats format)
       if (var->dynamic->pretty_printer != NULL)
 	return varobj_value_get_print_value (var->value.get (), var->format,
 					     var);
+      else if (var->parent != nullptr && varobj_is_dynamic_p (var->parent))
+	return var->print_value;
+
       return (*var->root->lang_ops->value_of_variable) (var, format);
     }
   else
@@ -2144,7 +2110,7 @@ varobj_formatted_print_options (struct value_print_options *opts,
 				enum varobj_display_formats format)
 {
   get_formatted_print_options (opts, format_code[(int) format]);
-  opts->deref_ref = 0;
+  opts->deref_ref = false;
   opts->raw = !pretty_printing;
 }
 
@@ -2178,11 +2144,6 @@ varobj_value_get_print_value (struct value *value,
 
       if (value_formatter)
 	{
-	  /* First check to see if we have any children at all.  If so,
-	     we simply return {...}.  */
-	  if (dynamic_varobj_has_child_method (var))
-	    return "{...}";
-
 	  if (PyObject_HasAttr (value_formatter, gdbpy_to_string_cst))
 	    {
 	      struct value *replacement;
@@ -2193,7 +2154,7 @@ varobj_value_get_print_value (struct value *value,
 								&opts);
 
 	      /* If we have string like output ...  */
-	      if (output != NULL)
+	      if (output != nullptr && output != Py_None)
 		{
 		  /* If this is a lazy string, extract it.  For lazy
 		     strings we always print as a string, so set
@@ -2229,7 +2190,7 @@ varobj_value_get_print_value (struct value *value,
 
 			  thevalue = std::string (s.get ());
 			  len = thevalue.size ();
-			  gdbarch = value_type (value)->arch ();
+			  gdbarch = value->type ()->arch ();
 			  type = builtin_type (gdbarch)->builtin_char;
 
 			  if (!string_print)
@@ -2245,6 +2206,19 @@ varobj_value_get_print_value (struct value *value,
 	      if (replacement)
 		value = replacement;
 	    }
+	  else
+	    {
+	      /* No to_string method, so if there is a 'children'
+		 method, return the default.  */
+	      if (PyObject_HasAttr (value_formatter, gdbpy_children_cst))
+		return "{...}";
+	    }
+	}
+      else
+	{
+	  /* If we've made it here, we don't want a pretty-printer --
+	     if we had one, it would already have been used.  */
+	  opts.raw = true;
 	}
     }
 #endif
@@ -2270,7 +2244,7 @@ varobj_editable_p (const struct varobj *var)
   struct type *type;
 
   if (!(var->root->is_valid && var->value != nullptr
-	&& VALUE_LVAL (var->value.get ())))
+	&& var->value->lval ()))
     return false;
 
   type = varobj_get_value_type (var);
@@ -2397,7 +2371,7 @@ varobj_invalidate_if_uses_objfile (struct objfile *objfile)
     {
       if (var->root->valid_block != nullptr)
 	{
-	  struct objfile *bl_objfile = block_objfile (var->root->valid_block);
+	  struct objfile *bl_objfile = var->root->valid_block->objfile ();
 	  if (bl_objfile->separate_debug_objfile_backlink != nullptr)
 	    bl_objfile = bl_objfile->separate_debug_objfile_backlink;
 
@@ -2405,15 +2379,14 @@ varobj_invalidate_if_uses_objfile (struct objfile *objfile)
 	    {
 	      /* The varobj is tied to a block which is going away.  There is
 		 no way to reconstruct something later, so invalidate the
-		 varobj completly and drop the reference to the block which is
+		 varobj completely and drop the reference to the block which is
 		 being freed.  */
 	      var->root->is_valid = false;
 	      var->root->valid_block = nullptr;
 	    }
 	}
 
-      if (var->root->exp != nullptr
-	  && exp_uses_objfile (var->root->exp.get (), objfile))
+      if (var->root->exp != nullptr && var->root->exp->uses_objfile (objfile))
 	{
 	  /* The varobj's current expression references the objfile.  For
 	     globals and floating, it is possible that when we try to
@@ -2429,7 +2402,7 @@ varobj_invalidate_if_uses_objfile (struct objfile *objfile)
 
       /* var->value->type and var->type might also reference the objfile.
 	 This is taken care of in value.c:preserve_values which deals with
-	 making sure that objfile-owend types are replaced with
+	 making sure that objfile-owned types are replaced with
 	 gdbarch-owned equivalents.  */
     });
 }

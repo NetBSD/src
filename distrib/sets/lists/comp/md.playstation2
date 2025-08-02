@@ -1,4 +1,5 @@
-# $NetBSD: md.playstation2,v 1.15 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.playstation2,v 1.15.14.1 2025/08/02 05:20:29 perseant Exp $
+#
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/playstation2			comp-c-include
 ./usr/include/playstation2/_G_config.h		comp-obsolete		obsolete
@@ -29,6 +30,7 @@
 ./usr/include/playstation2/limits.h		comp-c-include
 ./usr/include/playstation2/lock.h		comp-c-include
 ./usr/include/playstation2/locore.h		comp-c-include
+./usr/include/playstation2/lwp_private.h		comp-c-include
 ./usr/include/playstation2/math.h		comp-c-include
 ./usr/include/playstation2/mcontext.h		comp-c-include
 ./usr/include/playstation2/mips_opcode.h	comp-c-include

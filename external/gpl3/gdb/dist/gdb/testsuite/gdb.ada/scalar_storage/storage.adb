@@ -1,4 +1,4 @@
---  Copyright 2019-2023 Free Software Foundation, Inc.
+--  Copyright 2019-2024 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -20,14 +20,19 @@ procedure Storage is
    subtype Some_Range is Natural range 0..127;
    subtype Another_Range is Natural range 0..15;
 
+   type Colors is (Red, Green, Blue);
+   for Colors use (Red => 0, Green => 1, Blue => 2);
+
    type Rec is record
       Value : Some_Range;
       Another_Value : Another_Range;
+      Color : Colors;
    end record;
    
    for Rec use record
       Value at 0 range 0..6;
       Another_Value at 0 range 7..10;
+      Color at 0 range 11..13;
    end record;
 
    type Rec_LE is new Rec;
@@ -42,8 +47,8 @@ procedure Storage is
    V_BE : Rec_BE;
 
 begin
-   V_LE := (126, 12);
-   V_BE := (126, 12);
+   V_LE := (126, 12, Green);
+   V_BE := (126, 12, Green);
 
    Do_Nothing (V_LE'Address);  --  START
    Do_Nothing (V_BE'Address);

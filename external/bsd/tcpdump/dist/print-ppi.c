@@ -4,7 +4,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ppi.c,v 1.5 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-ppi.c,v 1.5.2.1 2025/08/02 05:23:25 perseant Exp $");
 #endif
 
 /* \summary: Per-Packet Information (DLT_PPI) printer */
@@ -14,9 +14,7 @@ __RCSID("$NetBSD: print-ppi.c,v 1.5 2023/08/17 20:19:40 christos Exp $");
  * https://web.archive.org/web/20160328114748/http://www.cacetech.com/documents/PPI%20Header%20format%201.0.7.pdf
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

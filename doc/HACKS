@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.246 2024/06/18 18:55:32 riastradh Exp $
+# $NetBSD: HACKS,v 1.246.2.1 2025/08/02 05:20:41 perseant Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -420,6 +420,40 @@ descr
 	still broken.
 kcah
 
+hack	xorg warnings
+cdate	30 July 2008, 3 June, 2013
+who	mrg
+file	external/mit/xorg/lib/libSM/Makefile : 1.2
+	external/mit/xorg/lib/libX11/Makefile.libx11 : 1.10
+	external/mit/xorg/lib/libXext/Makefile : 1.2
+	external/mit/xorg/lib/libXfont/Makefile : 1.2
+descr
+	Disable several warnings or use -Wno-error across Xorg sources
+	while we get them working
+kcah
+
+hack	32 bit time leftovers
+cdate	11 January 2009
+who	christos
+file	lib/libc/time/localtime.c : 1.41
+	lib/libc/time/zic.c : 1.23
+descr
+	The timezone compiled files still contain 32 bit time_t
+	quantities. I did not want to version the files because
+	the ``parser'' is too ugly for words. What needs to be
+	done, is to rewrite the parser from scratch also to avoid
+	potential core-dumps from parsing invalid files.
+kcah
+
+hack	32 bit time leftovers
+cdate	11 January 2009
+who	christos
+file	various
+descr
+	Many filesystem on-disk formats have 32 bit times.
+kcah
+
+
 port	vax
 
 	hack	gcc10/vax ICE
@@ -428,24 +462,6 @@ port	vax
 	file	external/mit/xorg/lib/fontconfig/src/Makefile : 1.28
 	descr
 		Disable optimization on some files
-	kcah
-
-	hack	gcc4/vax ICE
-	cdate	Sat Dec 22 08:17:57 2007 UTC
-	who	tsutsui
-	file	sys/arch/vax/conf/Makefile.vax : 1.79
-	descr
-		GCC4 on vax gets ICE on compiling sys/ddb/db_command.c.
-		-fno-tree-ter prevents it so add it to COPTS.
-	kcah
-
-	hack	gcc4/vax compiler crash
-	cdate	Fri Jun 30 22:39:12 PDT 2006
-	who	mrg
-	file	bin/csh/Makefile	: 1.27
-	file	lib/i18n_module/UTF7/Makefile	: 1.2
-	descr
-		GCC4 on vax crashes.  -O0 stops it happening so far...
 	kcah
 
 	hack	declare boolean_t in two IPF user-mode programs
@@ -476,136 +492,20 @@ port	vax
 		file in ELF section.
 	kcah
 
-	hack	xorg warnings
-	cdat	30 July 2008, 3 June, 2013
-	who	mrg
-	file	external/mit/xorg/lib/libSM/Makefile : 1.2
-		external/mit/xorg/lib/libX11/Makefile.libx11 : 1.10
-		external/mit/xorg/lib/libXext/Makefile : 1.2
-		external/mit/xorg/lib/libXfont/Makefile : 1.2
+	hack	Sprinkle -O0 to avoid ICE for GCC10/12
+	cdate	Mon Sep 30 02:55:44 UTC 2024
+	mdate	Sun Apr 13 08:29:42 UTC 2025
+	mdate	2025/04/13 08:31:12
+	who	kalvisd, rin
+	file	external/mit/xorg/lib/gallium/Makefile : 1.57 -
+	file	external/mit/xorg/lib/gallium.old/Makefile : 1.10 -
 	descr
-		Disable several warnings or use -Wno-error across Xorg sources
-		while we get them working
-	kcah
+		We have ICE for -O[21] even for GCC10/12.
+		Affected files varies b/w GCC and gallium versions.
 
-	hack	32 bit time leftovers
-	cdat	11 January 2009
-	who	christos
-	file	lib/libc/time/localtime.c : 1.41
-		lib/libc/time/zic.c : 1.23
-	descr
-		The timezone compiled files still contain 32 bit time_t
-		quantities. I did not want to version the files because
-		the ``parser'' is too ugly for words. What needs to be
-		done, is to rewrite the parser from scratch also to avoid
-		potential core-dumps from parsing invalid files.
-	kcah
-
-	hack	32 bit time leftovers
-	cdat	11 January 2009
-	who	christos
-	file	various
-	descr
-		Many filesystem on-disk formats have 32 bit times.
-	kcah
-
-	hack	gcc 4.5 fsdb miscompile
-	date	Sat Nov  9 11:03:02 EST 2013
-	who	christos
-	file	src/sbin/fsdb/Makefile : 1.36 (and earlier)
-	descr
-		src/sbin/fsdb/fsdb.c: In function 'findblk':
-		src/sbin/fsdb/fsdb.c:610:1: error: unrecognizable insn:
-		(insn 941 940 942 134 src/sbin/fsdb/fsdb.c:589 (set (reg:SI 604)
-		    (subreg:SI (mem/s/j:DI (plus:SI (mult:SI (reg:SI 602)
-                        (const_int 8 [0x8]))
-                    (reg/f:SI 601)) [0 curinode.99_378->dp2.di_ib S8 A32]) 4)) \
-			-1 (nil))
-		src/sbin/fsdb/fsdb.c:610:1: internal compiler error: in \
-		extract_insn, at recog.c:2103
-	kcah
-
-	hack	gcc 4.8 gcc miscompiles
-	date	Sat Nov  9 16:35:18 EST 2013
-	who	christos
-	file	distrib/utils/x_ping/Makefile : 1.8
-	file	distrib/vax/miniroot/Makefile.inc : ?
-	file	distrib/vax/ramdisk/Makefile : ?
-	file	external/gpl3/gdb/lib/libdecnumber/Makefile : 1.3
-	file	sbin/fsdb/Makefile : 1.36
-	file	sbin/newfs_ext2fs/Makefile : 1.6
-	file	sbin/ping/Makefile : 1.17
-	file	usr.sbin/mtrace/Makefile : 1.11
-	descr
-		external/gpl3/gcc/dist/gcc/expmed.c:2781:1:
-		internal compiler error: in change_address_1, at emit-rtl.c:2019
-		external/gpl3/gcc/dist/gcc/recog.c:770:1:
-		internal compiler error: in change_address_1, at emit-rtl.c:2019
-		external/gpl3/gcc/dist/libdecnumber/decNumber.c:7214:3:
-		internal compiler error: in change_address_1, at emit-rtl.c:2019
-		sbin/ping/ping.c:679:1:
-		internal compiler error: in change_address_1, at emit-rtl.c:2019
-		sbin/newfs_ext2fs/mke2fs.c:681:1:
-		internal compiler error: in reload_combine_note_use,
-		at postreload.c:1561
-		external/gpl3/gdb/dist/libdecnumber/decNumber.c:7214:3:
-		internal compiler error: in change_address_1, at emit-rtl.c:2019
-		usr.sbin/mtrace/mtrace.c:1655:1:
-		internal compiler error: in change_address_1, at emit-rtl.c:2019
-	kcah
-
-	hack	gcc 5.4 cc1 miscompile
-	date	Tue Feb 14 07:19:57 JST 2017
-	who	rin
-	pr	port-vax/51967
-	file	external/gpl3/gcc/usr.bin/backend/Makefile : 1.35
-	descr
-		cc1 aborts due to SIGILL when compiling the sample code attached
-		to the PR. As a workaround, compile dse.c with -O0.
-	kcah
-
-	hack	libssh miscompile
-	cdate	Tue Feb 14 17:58:06 JST 2017
-	mdate	Tue Feb 14 18:57:39 JST 2017
-	who	rin
-	file	crypto/external/bsd/openssh/lib/Makefile : 1.20
-	descr
-		poly1305.c and umac.c are miscompiled, which results in login
-		failure to/from external hosts via ssh.
-	kcah
-
-	hack	mandoc miscompile
-	date	Tue Feb 14 18:03:05 JST 2017
-	who	rin
-	file	external/bsd/mdocml/lib/libmandoc/Makefile : 1.8
-	descr
-		mandoc(1) receives SIGILL in in_line_argn() from mdoc_macro.c.
-	kcah
-
-	hack	libX11 miscompile
-	date	Thu Feb 16 10:00:22 JST 2017
-	who	rin
-	file	src/external/mit/xorg/lib/libX11/Makefile.libx11 : 1.18
-	descr
-		lcWrap.c is miscompiled, which results in input failure via XIM.
-		Besides, some clients, e.g., pkgsrc/x11/kterm, receive SIGSEGV.
-	kcah
-
-	hack	gomoku compiler crash
-	date	Tue May 31 15:11:39 EDT 2022
-	who	christos
-	file	src/games/gomoku/Makefile : 1.12
-	descr
-		pickmove.c crashes with -O2, warns about ovi.o_intersect being
-		uninitialized with -O1, works with -O0
-	kcah
-
-	hack	gdtoa/misc.c miscompile
-	cdate	Sun Dec  4 22:27:26 UTC 2022
-	who	jakllsch
-	file	src/lib/libc/gdtoa/Makefile.inc : 1.11
-	descr
-		some doubles print as garbage if gdtoa/misc.c isn't compiled at -O0
+		Note that compiled binary does not work anyway on vax;
+		they manipulate floating-point numbers as binary, assuming
+		IEEE 754 format.
 	kcah
 
 port	arm
@@ -682,12 +582,16 @@ port	m68k,sh3,vax
 
 	hack	gcc-4.8.1
 	cdate	Wed Nov  6 20:41:35 EST 2013
+	mdate	2014/05/16 09:36:51
 	who	christos
-	file	src/external/gpl3/gcc/libstdc++-v3/Makefile : 1.6
+	file	src/external/gpl3/gcc/lib/libstdc++-v3/Makefile : 1.11
 	descr
-		compile hashtable_c++0x.cc with -O2 instead of -Os to
+		compile the followings with -fimplicit-templates to
 		produce missing instantiation of std::lower_bound expansion
-		for unsigned long.
+		for unsigned long:
+		- concept-inst.cc
+		- hashtable_c++0x.cc
+		- bitmap_allocator.cc
 	kcah
 
 port	sparc
@@ -913,22 +817,6 @@ descr	workaround for n32 gcc doing unaligned 64bit accesses when optimizing
 pr	48696
 kcah
 
-port	vax
-hack	compile boot with -O1
-cdate	Sat May 24 09:40:58 CEST 2014
-who	martin
-file	src/sys/arch/vax/boot/boot/Makefile: 1.41
-descr	/boot does not work when compiled with -O2 and gcc 4.8
-kcah
-
-port	vax
-hack	compile nir.c in gallium with -O1
-cdate	Mon Oct 28 14:39:35 EDT 2019
-who	christos
-file	/cvsroot/src/external/mit/xorg/lib/gallium/Makefile 1.36
-descr	gallium does not compile.
-kcah
-
 port	sh3
 hack	compile parse.c in battlestar with -Wno-restrict
 cdate	Mon Oct 28 14:39:35 EDT 2019
@@ -974,15 +862,6 @@ desc
 	ski emulator crashes during acpi detection.  Added a check for
 	uninitialized index.  Submitted a request for change with upstream
 	mailing list, but never got a response
-kcah
-
-port	vax
-hack	compile rtld.c with -O0
-cdate	Wed Apr  3 17:38:38 EDT 2019
-who	christos
-file	src/libexec/ld.elf_so/Makefile: 1.141
-descr	Disable optimization for rtld.c on the vax with gcc-7. Crashes on the
-	second pass loop with elm == 0xffffffff
 kcah
 
 port	powerpc
@@ -1034,16 +913,6 @@ port	sh3
 		https://gcc.gnu.org/bugzilla/show_bug.cgi?id=101177
 kcah
 
-port	vax
-hack	compile blake2b.c with -O0 for vax
-cdate	Wed Oct 13 14:28:32 UTC 2021
-mdate	Wed Oct 13 14:28:32 UTC 2021
-who	nia
-file	src/lib/libcrypt/Makefile: 1.200
-descr	GCC 10 fails to build blake2b.c with an internal compiler
-	error unless optimization is disabled.
-kcah
-
 port	arm
 hack	compile t_sig_backtrace with -fno-omit-frame-pointer for arm
 cdate	Tue Nov 23 23:24:37 UTC 2021
@@ -1078,17 +947,6 @@ file	sys/arch/powerpc/ibm4xx/trap.c: 1.99
 descr
 	clang 13.0.0 miscompiles copy{in,out}() with -O[12]. As a result,
 	kernel cannot execute /sbin/init.
-kcah
-
-hack	Disable secure PLT for alpha
-cdate	Fri Jul  7 08:33:25 UTC 2023
-who	rin
-port	alpha
-file	src/external/gpl3/binutils/dist/bfd/elf64-alpha.c: 1.11
-pr	port-alpha/57511
-descr
-	Temporally disable secure PLT support, introduced by
-	binutils 2.39 for us. We need its support to ld.elf_so(1).
 kcah
 
 hack	openssl: Disable ec_nistp_64_gcc_128 on aarch64eb
@@ -1138,17 +996,22 @@ kcah
 
 hack	m68k: work around stack protector m68k compiler bug
 cdate	Thu Jun  6 15:53:21 PDT 2024
+udate	Tue May  6 13:00:40 UTC 2025
 port	m68k
-who	mrg
+who	mrg, rin
 file	lib/libc/stdlib/strsuftoll.c : 1.10
 file	lib/libc/citrus/citrus_module.c : 1.14
 file	crypto/external/bsd/openssl/lib/libcrypto/blake2.inc : 1.3
+file	crypto/external/bsd/openssl/lib/libcrypto/sha.inc : 1.8
+file	external/mit/xorg/lib/freetype/Makefile : 1.26
+file	external/mit/xorg/lib/gallium/Makefile : 1.56
+file	external/mit/xorg/lib/libXfont2/Makefile : 1.13
 descr
 	With GCC 12, strsuftoll() triggers an stack protector issue
 	that does not appear to be valid.  _citrus_find_getops() does
 	the same.  They both have minimal stack usage themselves and
 	I suspect a GCC bug.
-	The blake2 version is less well studied.
+	Other cases are less well studied.
 kcah
 
 hack	gcc: work around alignment limitations in ld.elf_so

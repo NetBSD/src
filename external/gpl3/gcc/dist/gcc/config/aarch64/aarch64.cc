@@ -4229,10 +4229,11 @@ aarch64_hard_regno_caller_save_mode (unsigned regno, unsigned,
      unnecessarily significant.  */
   if (PR_REGNUM_P (regno))
     return mode;
-  if (known_ge (GET_MODE_SIZE (mode), 4))
-    return mode;
-  else
+  if (known_lt (GET_MODE_SIZE (mode), 4)
+      && REG_CAN_CHANGE_MODE_P (regno, mode, SImode)
+      && REG_CAN_CHANGE_MODE_P (regno, SImode, mode))
     return SImode;
+  return mode;
 }
 
 /* Return true if I's bits are consecutive ones from the MSB.  */
@@ -9391,13 +9392,16 @@ aarch64_stack_clash_protection_alloca_probe_range (void)
 
 
 /* Allocate POLY_SIZE bytes of stack space using TEMP1 and TEMP2 as scratch
-   registers.  If POLY_SIZE is not large enough to require a probe this function
-   will only adjust the stack.  When allocating the stack space
-   FRAME_RELATED_P is then used to indicate if the allocation is frame related.
-   FINAL_ADJUSTMENT_P indicates whether we are allocating the area below
-   the saved registers.  If we are then we ensure that any allocation
-   larger than the ABI defined buffer needs a probe so that the
-   invariant of having a 1KB buffer is maintained.
+   registers, given that the stack pointer is currently BYTES_BELOW_SP bytes
+   above the bottom of the static frame.
+
+   If POLY_SIZE is not large enough to require a probe this function will only
+   adjust the stack.  When allocating the stack space FRAME_RELATED_P is then
+   used to indicate if the allocation is frame related.  FINAL_ADJUSTMENT_P
+   indicates whether we are allocating the area below the saved registers.
+   If we are then we ensure that any allocation larger than the ABI defined
+   buffer needs a probe so that the invariant of having a 1KB buffer is
+   maintained.
 
    We emit barriers after each stack adjustment to prevent optimizations from
    breaking the invariant that we never drop the stack more than a page.  This
@@ -9410,6 +9414,7 @@ aarch64_stack_clash_protection_alloca_probe_range (void)
 static void
 aarch64_allocate_and_probe_stack_space (rtx temp1, rtx temp2,
 					poly_int64 poly_size,
+					poly_int64 bytes_below_sp,
 					bool frame_related_p,
 					bool final_adjustment_p)
 {
@@ -9470,8 +9475,8 @@ aarch64_allocate_and_probe_stack_space (rtx temp1, rtx temp2,
       aarch64_add_offset (Pmode, temp1, CONST0_RTX (Pmode),
 			  poly_size, temp1, temp2, false, true);
 
-      rtx_insn *insn = get_last_insn ();
-
+      auto initial_cfa_offset = frame.frame_size - bytes_below_sp;
+      auto final_cfa_offset = initial_cfa_offset + poly_size;
       if (frame_related_p)
 	{
 	  /* This is done to provide unwinding information for the stack
@@ -9481,28 +9486,31 @@ aarch64_allocate_and_probe_stack_space (rtx temp1, rtx temp2,
 	     The tie will expand to nothing but the optimizers will not touch
 	     the instruction.  */
 	  rtx stack_ptr_copy = gen_rtx_REG (Pmode, STACK_CLASH_SVE_CFA_REGNUM);
-	  emit_move_insn (stack_ptr_copy, stack_pointer_rtx);
+	  auto *insn = emit_move_insn (stack_ptr_copy, stack_pointer_rtx);
 	  emit_insn (gen_stack_tie (stack_ptr_copy, stack_pointer_rtx));
 
 	  /* We want the CFA independent of the stack pointer for the
 	     duration of the loop.  */
-	  add_reg_note (insn, REG_CFA_DEF_CFA, stack_ptr_copy);
+	  add_reg_note (insn, REG_CFA_DEF_CFA,
+			plus_constant (Pmode, stack_ptr_copy,
+				       initial_cfa_offset));
 	  RTX_FRAME_RELATED_P (insn) = 1;
 	}
 
       rtx probe_const = gen_int_mode (min_probe_threshold, Pmode);
       rtx guard_const = gen_int_mode (guard_size, Pmode);
 
-      insn = emit_insn (gen_probe_sve_stack_clash (Pmode, stack_pointer_rtx,
-						   stack_pointer_rtx, temp1,
-						   probe_const, guard_const));
+      auto *insn
+	= emit_insn (gen_probe_sve_stack_clash (Pmode, stack_pointer_rtx,
+						stack_pointer_rtx, temp1,
+						probe_const, guard_const));
 
       /* Now reset the CFA register if needed.  */
       if (frame_related_p)
 	{
 	  add_reg_note (insn, REG_CFA_DEF_CFA,
-			gen_rtx_PLUS (Pmode, stack_pointer_rtx,
-				      gen_int_mode (poly_size, Pmode)));
+			plus_constant (Pmode, stack_pointer_rtx,
+				       final_cfa_offset));
 	  RTX_FRAME_RELATED_P (insn) = 1;
 	}
 
@@ -9548,12 +9556,13 @@ aarch64_allocate_and_probe_stack_space (rtx temp1, rtx temp2,
 	 We can determine which allocation we are doing by looking at
 	 the value of FRAME_RELATED_P since the final allocations are not
 	 frame related.  */
+      auto cfa_offset = frame.frame_size - (bytes_below_sp - rounded_size);
       if (frame_related_p)
 	{
 	  /* We want the CFA independent of the stack pointer for the
 	     duration of the loop.  */
 	  add_reg_note (insn, REG_CFA_DEF_CFA,
-			plus_constant (Pmode, temp1, rounded_size));
+			plus_constant (Pmode, temp1, cfa_offset));
 	  RTX_FRAME_RELATED_P (insn) = 1;
 	}
 
@@ -9575,7 +9584,7 @@ aarch64_allocate_and_probe_stack_space (rtx temp1, rtx temp2,
       if (frame_related_p)
 	{
 	  add_reg_note (insn, REG_CFA_DEF_CFA,
-			plus_constant (Pmode, stack_pointer_rtx, rounded_size));
+			plus_constant (Pmode, stack_pointer_rtx, cfa_offset));
 	  RTX_FRAME_RELATED_P (insn) = 1;
 	}
 
@@ -9791,17 +9800,21 @@ aarch64_expand_prologue (void)
      code below does not handle it for -fstack-clash-protection.  */
   gcc_assert (known_eq (initial_adjust, 0) || callee_adjust == 0);
 
+  /* The offset of the current SP from the bottom of the static frame.  */
+  poly_int64 bytes_below_sp = frame_size;
+
   /* Will only probe if the initial adjustment is larger than the guard
      less the amount of the guard reserved for use by the caller's
      outgoing args.  */
   aarch64_allocate_and_probe_stack_space (tmp0_rtx, tmp1_rtx, initial_adjust,
-					  true, false);
+					  bytes_below_sp, true, false);
+  bytes_below_sp -= initial_adjust;
 
   if (callee_adjust != 0)
-    aarch64_push_regs (reg1, reg2, callee_adjust);
-
-  /* The offset of the current SP from the bottom of the static frame.  */
-  poly_int64 bytes_below_sp = frame_size - initial_adjust - callee_adjust;
+    {
+      aarch64_push_regs (reg1, reg2, callee_adjust);
+      bytes_below_sp -= callee_adjust;
+    }
 
   if (emit_frame_chain)
     {
@@ -9863,6 +9876,7 @@ aarch64_expand_prologue (void)
 		  || known_eq (initial_adjust, 0));
       aarch64_allocate_and_probe_stack_space (tmp1_rtx, tmp0_rtx,
 					      sve_callee_adjust,
+					      bytes_below_sp,
 					      !frame_pointer_needed, false);
       bytes_below_sp -= sve_callee_adjust;
     }
@@ -9874,9 +9888,11 @@ aarch64_expand_prologue (void)
 
   /* We may need to probe the final adjustment if it is larger than the guard
      that is assumed by the called.  */
-  gcc_assert (known_eq (bytes_below_sp, final_adjust));
   aarch64_allocate_and_probe_stack_space (tmp1_rtx, tmp0_rtx, final_adjust,
+					  bytes_below_sp,
 					  !frame_pointer_needed, true);
+  bytes_below_sp -= final_adjust;
+  gcc_assert (known_eq (bytes_below_sp, 0));
   if (emit_frame_chain && maybe_ne (final_adjust, 0))
     emit_insn (gen_stack_tie (stack_pointer_rtx, hard_frame_pointer_rtx));
 }
@@ -10047,12 +10063,12 @@ aarch64_expand_epilogue (bool for_sibcall)
 	1) Sibcalls don't return in a normal way, so if we're about to call one
 	   we must authenticate.
 
-	2) The RETAA instruction is not available before ARMv8.3-A, so if we are
-	   generating code for !TARGET_ARMV8_3 we can't use it and must
+	2) The RETAA instruction is not available without FEAT_PAuth, so if we
+	   are generating code for !TARGET_PAUTH we can't use it and must
 	   explicitly authenticate.
     */
   if (aarch64_return_address_signing_enabled ()
-      && (for_sibcall || !TARGET_ARMV8_3))
+      && (for_sibcall || !TARGET_PAUTH))
     {
       switch (aarch64_ra_sign_key)
 	{
@@ -24782,27 +24798,23 @@ aarch64_expand_cpymem (rtx *operands)
   int mode_bits;
   rtx dst = operands[0];
   rtx src = operands[1];
+  unsigned align = UINTVAL (operands[3]);
   rtx base;
   machine_mode cur_mode = BLKmode;
-
-  /* Variable-sized memcpy can go through the MOPS expansion if available.  */
-  if (!CONST_INT_P (operands[2]))
-    return aarch64_expand_cpymem_mops (operands);
-
-  unsigned HOST_WIDE_INT size = INTVAL (operands[2]);
-
-  /* Try to inline up to 256 bytes or use the MOPS threshold if available.  */
-  unsigned HOST_WIDE_INT max_copy_size
-    = TARGET_MOPS ? aarch64_mops_memcpy_size_threshold : 256;
-
   bool size_p = optimize_function_for_size_p (cfun);
 
-  /* Large constant-sized cpymem should go through MOPS when possible.
-     It should be a win even for size optimization in the general case.
-     For speed optimization the choice between MOPS and the SIMD sequence
-     depends on the size of the copy, rather than number of instructions,
-     alignment etc.  */
-  if (size > max_copy_size)
+  /* Variable-sized or strict-align copies may use the MOPS expansion.  */
+  if (!CONST_INT_P (operands[2]) || (STRICT_ALIGNMENT && align < 16))
+    return aarch64_expand_cpymem_mops (operands);
+
+  unsigned HOST_WIDE_INT size = UINTVAL (operands[2]);
+
+  /* Try to inline up to 256 bytes.  */
+  unsigned max_copy_size = 256;
+  unsigned mops_threshold = aarch64_mops_memcpy_size_threshold;
+
+  /* Large copies use MOPS when available or a library call.  */
+  if (size > max_copy_size || (TARGET_MOPS && size > mops_threshold))
     return aarch64_expand_cpymem_mops (operands);
 
   int copy_bits = 256;
@@ -24966,12 +24978,13 @@ aarch64_expand_setmem (rtx *operands)
   unsigned HOST_WIDE_INT len;
   rtx dst = operands[0];
   rtx val = operands[2], src;
+  unsigned align = UINTVAL (operands[3]);
   rtx base;
   machine_mode cur_mode = BLKmode, next_mode;
 
-  /* If we don't have SIMD registers or the size is variable use the MOPS
-     inlined sequence if possible.  */
-  if (!CONST_INT_P (operands[1]) || !TARGET_SIMD)
+  /* Variable-sized or strict-align memset may use the MOPS expansion.  */
+  if (!CONST_INT_P (operands[1]) || !TARGET_SIMD
+      || (STRICT_ALIGNMENT && align < 16))
     return aarch64_expand_setmem_mops (operands);
 
   bool size_p = optimize_function_for_size_p (cfun);
@@ -24979,10 +24992,13 @@ aarch64_expand_setmem (rtx *operands)
   /* Default the maximum to 256-bytes when considering only libcall vs
      SIMD broadcast sequence.  */
   unsigned max_set_size = 256;
+  unsigned mops_threshold = aarch64_mops_memset_size_threshold;
 
-  len = INTVAL (operands[1]);
-  if (len > max_set_size && !TARGET_MOPS)
-    return false;
+  len = UINTVAL (operands[1]);
+
+  /* Large memset uses MOPS when available or a library call.  */
+  if (len > max_set_size || (TARGET_MOPS && len > mops_threshold))
+    return aarch64_expand_setmem_mops (operands);
 
   int cst_val = !!(CONST_INT_P (val) && (INTVAL (val) != 0));
   /* The MOPS sequence takes:
@@ -24994,12 +25010,6 @@ aarch64_expand_setmem (rtx *operands)
   /* A libcall to memset in the worst case takes 3 instructions to prepare
      the arguments + 1 for the call.  */
   unsigned libcall_cost = 4;
-
-  /* Upper bound check.  For large constant-sized setmem use the MOPS sequence
-     when available.  */
-  if (TARGET_MOPS
-      && len >= (unsigned HOST_WIDE_INT) aarch64_mops_memset_size_threshold)
-    return aarch64_expand_setmem_mops (operands);
 
   /* Attempt a sequence with a vector broadcast followed by stores.
      Count the number of operations involved to see if it's worth it
@@ -25042,10 +25052,8 @@ aarch64_expand_setmem (rtx *operands)
       simd_ops++;
       n -= mode_bits;
 
-      /* Do certain trailing copies as overlapping if it's going to be
-	 cheaper.  i.e. less instructions to do so.  For instance doing a 15
-	 byte copy it's more efficient to do two overlapping 8 byte copies than
-	 8 + 4 + 2 + 1.  Only do this when -mstrict-align is not supplied.  */
+      /* Emit trailing writes using overlapping unaligned accesses
+	(when !STRICT_ALIGNMENT) - this is smaller and faster.  */
       if (n > 0 && n < copy_limit / 2 && !STRICT_ALIGNMENT)
 	{
 	  next_mode = smallest_mode_for_size (n, MODE_INT);
@@ -27548,6 +27556,16 @@ aarch64_test_fractional_cost ()
   ASSERT_EQ (cf (1, 2).as_double (), 0.5);
 }
 
+/* Test SVE arithmetic folding.  */
+
+static void
+aarch64_test_sve_folding ()
+{
+  tree res = fold_unary (BIT_NOT_EXPR, ssizetype,
+			 ssize_int (poly_int64 (1, 1)));
+  ASSERT_TRUE (operand_equal_p (res, ssize_int (poly_int64 (-2, -1))));
+}
+
 /* Run all target-specific selftests.  */
 
 static void
@@ -27555,6 +27573,7 @@ aarch64_run_selftests (void)
 {
   aarch64_test_loading_full_dump ();
   aarch64_test_fractional_cost ();
+  aarch64_test_sve_folding ();
 }
 
 } // namespace selftest

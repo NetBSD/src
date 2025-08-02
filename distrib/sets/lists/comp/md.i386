@@ -1,4 +1,5 @@
-# $NetBSD: md.i386,v 1.208.2.1 2024/07/01 00:59:48 perseant Exp $
+# $NetBSD: md.i386,v 1.208.2.2 2025/08/02 05:20:28 perseant Exp $
+#
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -1231,6 +1232,7 @@
 ./usr/include/i386/limits.h			comp-c-include
 ./usr/include/i386/loadfile_machdep.h		comp-obsolete		obsolete
 ./usr/include/i386/lock.h			comp-c-include
+./usr/include/i386/lwp_private.h		comp-c-include
 ./usr/include/i386/math.h			comp-c-include
 ./usr/include/i386/mcontext.h			comp-c-include
 ./usr/include/i386/mouse.h			comp-obsolete		obsolete
@@ -1295,6 +1297,7 @@
 ./usr/include/x86/intr.h			comp-c-include
 ./usr/include/x86/intrdefs.h			comp-c-include
 ./usr/include/x86/lock.h			comp-c-include
+./usr/include/x86/lwp_private.h			comp-c-include
 ./usr/include/x86/math.h			comp-c-include
 ./usr/include/x86/mtrr.h			comp-c-include
 ./usr/include/x86/mutex.h			comp-c-include

@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.26 2023/12/20 17:15:21 christos Exp $	*/
-/* $OpenBSD: packet.h,v 1.96 2023/12/18 14:45:17 djm Exp $ */
+/*	$NetBSD: packet.h,v 1.26.2.1 2025/08/02 05:18:47 perseant Exp $	*/
+/* $OpenBSD: packet.h,v 1.99 2024/08/15 00:51:51 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -26,10 +26,12 @@
 #include <openssl/bn.h>
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
+#include <openssl/evp.h>
 #else /* OPENSSL */
 #define BIGNUM		void
 #define EC_GROUP	void
 #define EC_POINT	void
+#define EVP_PKEY	void
 #endif /* WITH_OPENSSL */
 
 struct kex;
@@ -121,14 +123,12 @@ int	 ssh_packet_authentication_state(struct ssh *);
 void	 ssh_packet_request_rekeying(void);
 
 int      ssh_packet_read(struct ssh *);
-int      ssh_packet_read_poll(struct ssh *);
 int ssh_packet_read_poll2(struct ssh *, u_char *, u_int32_t *seqnr_p);
 int	 ssh_packet_process_incoming(struct ssh *, const char *buf, u_int len);
 int	 ssh_packet_process_read(struct ssh *, int);
 int      ssh_packet_read_seqnr(struct ssh *, u_char *, u_int32_t *seqnr_p);
 int      ssh_packet_read_poll_seqnr(struct ssh *, u_char *, u_int32_t *seqnr_p);
 
-const void *ssh_packet_get_string_ptr(struct ssh *, u_int *length_ptr);
 void     ssh_packet_disconnect(struct ssh *, const char *fmt, ...)
 	__attribute__((format(printf, 2, 3)))
 	__attribute__((noreturn));
@@ -162,6 +162,7 @@ int	 ssh_remote_port(struct ssh *);
 const char *ssh_local_ipaddr(struct ssh *);
 int	 ssh_local_port(struct ssh *);
 const char *ssh_packet_rdomain_in(struct ssh *);
+char	*ssh_remote_hostname(struct ssh *);
 
 void	 ssh_packet_set_rekey_limits(struct ssh *, u_int64_t, u_int32_t);
 time_t	 ssh_packet_get_rekey_timeout(struct ssh *);
@@ -190,6 +191,7 @@ int	sshpkt_put_string(struct ssh *ssh, const void *v, size_t len);
 int	sshpkt_put_cstring(struct ssh *ssh, const void *v);
 int	sshpkt_put_stringb(struct ssh *ssh, const struct sshbuf *v);
 int	sshpkt_put_ec(struct ssh *ssh, const EC_POINT *v, const EC_GROUP *g);
+int	sshpkt_put_ec_pkey(struct ssh *ssh, EVP_PKEY *pkey);
 int	sshpkt_put_bignum2(struct ssh *ssh, const BIGNUM *v);
 
 int	sshpkt_get(struct ssh *ssh, void *valp, size_t len);

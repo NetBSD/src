@@ -1484,7 +1484,13 @@ general_operand (rtx op, machine_mode mode)
 	 ??? This is a kludge.  */
       if (!reload_completed
 	  && maybe_ne (SUBREG_BYTE (op), 0)
-	  && MEM_P (sub))
+	  && MEM_P (sub)
+#ifdef NB_FIX_VAX_BACKEND
+	  && (maybe_gt (SUBREG_BYTE (op), GET_MODE_SIZE (GET_MODE (sub)))
+	      || !multiple_p (SUBREG_BYTE (op), GET_MODE_SIZE (mode))
+	      )
+#endif /* NB_FIX_VAX_BACKEND */
+	  )
 	return false;
 
       if (REG_P (sub)

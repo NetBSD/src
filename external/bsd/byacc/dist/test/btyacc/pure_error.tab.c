@@ -1,4 +1,4 @@
-/*	$NetBSD: pure_error.tab.c,v 1.5 2021/02/20 22:57:57 christos Exp $	*/
+/*	$NetBSD: pure_error.tab.c,v 1.5.8.1 2025/08/02 05:20:58 perseant Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -174,7 +174,7 @@ typedef int YYSTYPE;
 extern int YYPARSE_DECL();
 
 #define YYERRCODE 256
-typedef short YYINT;
+typedef int YYINT;
 static const YYINT error_lhs[] = {                       -1,
     0,
 };
@@ -562,7 +562,7 @@ YYPARSE_DECL()
     yyps->save = 0;
 #endif /* YYBTYACC */
     yym = 0;
-    yyn = 0;
+    /* yyn is set below */
     yynerrs = 0;
     yyerrflag = 0;
     yychar = YYEMPTY;

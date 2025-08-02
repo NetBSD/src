@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.39 2023/04/07 10:42:28 kre Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.39.2.1 2025/08/02 05:18:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.39 2023/04/07 10:42:28 kre Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.39.2.1 2025/08/02 05:18:26 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,6 @@ struct stackmark *markp;
 char *stacknxt = stackbase.space;
 int stacknleft = MINSIZE;
 int sstrnleft;
-int herefd = -1;
 
 pointer
 stalloc(int nbytes)
@@ -294,11 +293,7 @@ char *
 growstackstr(void)
 {
 	int len = stackblocksize();
-	if (herefd >= 0 && len >= 1024) {
-		xwrite(herefd, stackblock(), len);
-		sstrnleft = len - 1;
-		return stackblock();
-	}
+
 	growstackblock();
 	sstrnleft = stackblocksize() - len - 1;
 	return stackblock() + len;

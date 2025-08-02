@@ -28,14 +28,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-mpls.c,v 1.9 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-mpls.c,v 1.9.2.1 2025/08/02 05:23:24 perseant Exp $");
 #endif
 
 /* \summary: Multi-Protocol Label Switching (MPLS) printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

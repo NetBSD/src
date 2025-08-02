@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.25 2019/10/29 16:19:59 joerg Exp $	*/
+/*	$NetBSD: misc.c,v 1.25.10.1 2025/08/02 05:18:24 perseant Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.25 2019/10/29 16:19:59 joerg Exp $");
+__RCSID("$NetBSD: misc.c,v 1.25.10.1 2025/08/02 05:18:24 perseant Exp $");
 #endif
 
 
@@ -978,7 +978,7 @@ ksh_getopt(argv, go, options)
 	const char *options;
 {
 	char c;
-	char *o;
+	const char *o;
 
 	if (go->p == 0 || (c = argv[go->optind - 1][go->p]) == '\0') {
 		char *arg = argv[go->optind], flag = arg ? *arg : '\0';

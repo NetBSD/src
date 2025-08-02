@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_data.c,v 1.18 2022/08/03 21:13:46 riastradh Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.18.8.1 2025/08/02 05:18:34 perseant Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2020, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -59,9 +59,12 @@ struct _prop_data {
 #define	PD_F_MUTABLE		0x02
 
 _PROP_POOL_INIT(_prop_data_pool, sizeof(struct _prop_data), "propdata")
-
 _PROP_MALLOC_DEFINE(M_PROP_DATA, "prop data",
 		    "property data container object")
+
+static const struct _prop_object_type_tags _prop_data_type_tags = {
+	.xml_tag		=	"data",
+};
 
 static _prop_object_free_rv_t
 		_prop_data_free(prop_stack_t, prop_object_t *);
@@ -109,10 +112,22 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 	uint8_t output[4];
 	uint8_t input[3];
 
-	if (pd->pd_size == 0)
-		return (_prop_object_externalize_empty_tag(ctx, "data"));
+	_PROP_ASSERT(ctx->poec_format == PROP_FORMAT_XML ||
+		     ctx->poec_format == PROP_FORMAT_JSON);
 
-	if (_prop_object_externalize_start_tag(ctx, "data") == false)
+	/*
+	 * JSON does not have a syntax for serialized binary data.
+	 */
+	if (ctx->poec_format == PROP_FORMAT_JSON) {
+		return false;
+	}
+
+	if (pd->pd_size == 0)
+		return (_prop_extern_append_empty_tag(ctx,
+		    &_prop_data_type_tags));
+
+	if (_prop_extern_append_start_tag(ctx,
+				&_prop_data_type_tags, NULL) == false)
 		return (false);
 
 	for (src = pd->pd_immutable, srclen = pd->pd_size;
@@ -132,13 +147,13 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 		_PROP_ASSERT(output[2] < 64);
 		_PROP_ASSERT(output[3] < 64);
 
-		if (_prop_object_externalize_append_char(ctx,
+		if (_prop_extern_append_char(ctx,
 				_prop_data_base64[output[0]]) == false ||
-		    _prop_object_externalize_append_char(ctx,
+		    _prop_extern_append_char(ctx,
 		    		_prop_data_base64[output[1]]) == false ||
-		    _prop_object_externalize_append_char(ctx,
+		    _prop_extern_append_char(ctx,
 		    		_prop_data_base64[output[2]]) == false ||
-		    _prop_object_externalize_append_char(ctx,
+		    _prop_extern_append_char(ctx,
 		    		_prop_data_base64[output[3]]) == false)
 			return (false);
 	}
@@ -157,19 +172,20 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 		_PROP_ASSERT(output[1] < 64);
 		_PROP_ASSERT(output[2] < 64);
 
-		if (_prop_object_externalize_append_char(ctx,
+		if (_prop_extern_append_char(ctx,
 				_prop_data_base64[output[0]]) == false ||
-		    _prop_object_externalize_append_char(ctx,
+		    _prop_extern_append_char(ctx,
 		    		_prop_data_base64[output[1]]) == false ||
-		    _prop_object_externalize_append_char(ctx,
+		    _prop_extern_append_char(ctx,
 		    		srclen == 1 ? _prop_data_pad64
 				: _prop_data_base64[output[2]]) == false ||
-		    _prop_object_externalize_append_char(ctx,
+		    _prop_extern_append_char(ctx,
 		    		_prop_data_pad64) == false)
 			return (false);
 	}
 
-	if (_prop_object_externalize_end_tag(ctx, "data") == false)
+	if (_prop_extern_append_end_tag(ctx,
+					&_prop_data_type_tags) == false)
 		return (false);
 
 	return (true);
@@ -234,7 +250,7 @@ _prop_data_instantiate(int const flags, const void * const data,
 _PROP_DEPRECATED(prop_data_create_data,
     "this program uses prop_data_create_data(); all functions "
     "supporting mutable prop_data objects are deprecated.")
-prop_data_t
+_PROP_EXPORT prop_data_t
 prop_data_create_data(const void *v, size_t size)
 {
 	prop_data_t pd;
@@ -257,7 +273,7 @@ prop_data_create_data(const void *v, size_t size)
 _PROP_DEPRECATED(prop_data_create_data_nocopy,
     "this program uses prop_data_create_data_nocopy(), "
     "which is deprecated; use prop_data_create_nocopy() instead.")
-prop_data_t
+_PROP_EXPORT prop_data_t
 prop_data_create_data_nocopy(const void *v, size_t size)
 {
 	return prop_data_create_nocopy(v, size);
@@ -267,7 +283,7 @@ prop_data_create_data_nocopy(const void *v, size_t size)
  * prop_data_create_copy --
  *	Create a data object with a copy of the provided data.
  */
-prop_data_t
+_PROP_EXPORT prop_data_t
 prop_data_create_copy(const void *v, size_t size)
 {
 	prop_data_t pd;
@@ -296,7 +312,7 @@ prop_data_create_copy(const void *v, size_t size)
  * prop_data_create_nocopy --
  *	Create a data object using the provided external data reference.
  */
-prop_data_t
+_PROP_EXPORT prop_data_t
 prop_data_create_nocopy(const void *v, size_t size)
 {
 
@@ -314,7 +330,7 @@ prop_data_create_nocopy(const void *v, size_t size)
  *	Copy a data container.  If the original data is external, then
  *	the copy is also references the same external data.
  */
-prop_data_t
+_PROP_EXPORT prop_data_t
 prop_data_copy(prop_data_t opd)
 {
 	prop_data_t pd;
@@ -342,7 +358,7 @@ prop_data_copy(prop_data_t opd)
  * prop_data_size --
  *	Return the size of the data.
  */
-size_t
+_PROP_EXPORT size_t
 prop_data_size(prop_data_t pd)
 {
 
@@ -357,7 +373,7 @@ prop_data_size(prop_data_t pd)
  *	Returns a pointer to the data object's value.  This pointer
  *	remains valid only as long as the data object.
  */
-const void *
+_PROP_EXPORT const void *
 prop_data_value(prop_data_t pd)
 {
 
@@ -371,7 +387,7 @@ prop_data_value(prop_data_t pd)
  * prop_data_copy_value --
  *	Copy the data object's value into the supplied buffer.
  */
-bool
+_PROP_EXPORT bool
 prop_data_copy_value(prop_data_t pd, void *buf, size_t buflen)
 {
 
@@ -393,7 +409,7 @@ prop_data_copy_value(prop_data_t pd, void *buf, size_t buflen)
 _PROP_DEPRECATED(prop_data_data,
     "this program uses prop_data_data(), "
     "which is deprecated; use prop_data_copy_value() instead.")
-void *
+_PROP_EXPORT void *
 prop_data_data(prop_data_t pd)
 {
 	void *v;
@@ -418,7 +434,7 @@ prop_data_data(prop_data_t pd)
 _PROP_DEPRECATED(prop_data_data_nocopy,
     "this program uses prop_data_data_nocopy(), "
     "which is deprecated; use prop_data_value() instead.")
-const void *
+_PROP_EXPORT const void *
 prop_data_data_nocopy(prop_data_t pd)
 {
 	return prop_data_value(pd);
@@ -428,7 +444,7 @@ prop_data_data_nocopy(prop_data_t pd)
  * prop_data_equals --
  *	Return true if two data objects are equivalent.
  */
-bool
+_PROP_EXPORT bool
 prop_data_equals(prop_data_t pd1, prop_data_t pd2)
 {
 	if (!prop_object_is_data(pd1) || !prop_object_is_data(pd2))
@@ -442,7 +458,7 @@ prop_data_equals(prop_data_t pd1, prop_data_t pd2)
  *	Return true if the contained data is equivalent to the specified
  *	external data.
  */
-bool
+_PROP_EXPORT bool
 prop_data_equals_data(prop_data_t pd, const void *v, size_t size)
 {
 
@@ -621,6 +637,11 @@ _prop_data_internalize(prop_stack_t stack, prop_object_t *obj,
 	uint8_t *buf;
 	size_t len, alen;
 
+	/* No JSON binary data object representation. */
+	if (ctx->poic_format == PROP_FORMAT_JSON) {
+		return true;
+	}
+
 	/*
 	 * We don't accept empty elements.
 	 * This actually only checks for the node to be <data/>
@@ -673,8 +694,8 @@ _prop_data_internalize(prop_stack_t stack, prop_object_t *obj,
 		return (true);
 	}
 
-	if (_prop_object_internalize_find_tag(ctx, "data",
-					      _PROP_TAG_TYPE_END) == false) {
+	if (_prop_xml_intern_find_tag(ctx, "data",
+				      _PROP_TAG_TYPE_END) == false) {
 		_PROP_FREE(buf, M_PROP_DATA);
 		return (true);
 	}

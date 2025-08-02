@@ -1,6 +1,6 @@
 /* Common Linux target-dependent definitions for AArch64 MTE
 
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,6 @@
 #ifndef ARCH_AARCH64_MTE_LINUX_H
 #define ARCH_AARCH64_MTE_LINUX_H
 
-#include "gdbsupport/common-defs.h"
 
 /* Feature check for Memory Tagging Extension.  */
 #ifndef HWCAP2_MTE

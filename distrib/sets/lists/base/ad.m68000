@@ -1,2 +1,3 @@
-# $NetBSD: ad.m68000,v 1.3 2017/01/05 13:45:50 wiz Exp $
+# $NetBSD: ad.m68000,v 1.3.28.1 2025/08/02 05:20:24 perseant Exp $
+#
 ./sbin/edlabel					base-obsolete	obsolete

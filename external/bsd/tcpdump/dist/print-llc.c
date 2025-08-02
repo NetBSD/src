@@ -24,14 +24,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-llc.c,v 1.10 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-llc.c,v 1.10.2.1 2025/08/02 05:23:24 perseant Exp $");
 #endif
 
 /* \summary: IEEE 802.2 LLC printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

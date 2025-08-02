@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_local.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_local.c,v 1.6.8.1 2025/08/02 05:22:37 perseant Exp $	*/
 
 
 /*
@@ -215,5 +215,5 @@ local_poll(
 	refclock_receive(peer);
 }
 #else
-int refclock_local_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

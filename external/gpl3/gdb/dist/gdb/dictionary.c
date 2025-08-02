@@ -1,6 +1,6 @@
 /* Routines for name->symbol lookups in GDB.
    
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    Contributed by David Carlton <carlton@bactrian.org> and by Kealia,
    Inc.
@@ -20,13 +20,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include <ctype.h>
 #include "gdbsupport/gdb_obstack.h"
 #include "symtab.h"
 #include "buildsym.h"
 #include "dictionary.h"
-#include "safe-ctype.h"
+#include "gdbsupport/gdb-safe-ctype.h"
 #include <unordered_map>
 #include "language.h"
 
@@ -650,7 +649,18 @@ insert_symbol_hashed (struct dictionary *dict,
 static int
 size_hashed (const struct dictionary *dict)
 {
-  return DICT_HASHED_NBUCKETS (dict);
+  int nbuckets = DICT_HASHED_NBUCKETS (dict);
+  int total = 0;
+
+  for (int i = 0; i < nbuckets; ++i)
+    {
+      for (struct symbol *sym = DICT_HASHED_BUCKET (dict, i);
+	   sym != nullptr;
+	   sym = sym->hash_next)
+	total++;
+    }
+
+  return total;
 }
 
 /* Functions only for DICT_HASHED_EXPANDABLE.  */

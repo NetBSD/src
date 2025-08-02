@@ -1,4 +1,5 @@
-# $NetBSD: md.ibmnws,v 1.15 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.ibmnws,v 1.15.14.1 2025/08/02 05:20:28 perseant Exp $
+#
 ./usr/include/ibmnws				comp-c-include
 ./usr/include/ibmnws/_G_config.h		comp-obsolete		obsolete
 ./usr/include/ibmnws/ansi.h			comp-c-include
@@ -33,6 +34,7 @@
 ./usr/include/ibmnws/kgdb.h			comp-obsolete		obsolete
 ./usr/include/ibmnws/limits.h			comp-c-include
 ./usr/include/ibmnws/lock.h			comp-c-include
+./usr/include/ibmnws/lwp_private.h		comp-c-include
 ./usr/include/ibmnws/math.h			comp-c-include
 ./usr/include/ibmnws/mcontext.h			comp-c-include
 ./usr/include/ibmnws/mutex.h			comp-c-include

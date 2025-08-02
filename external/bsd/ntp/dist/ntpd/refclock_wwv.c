@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_wwv.c,v 1.8 2020/05/25 20:47:26 christos Exp $	*/
+/*	$NetBSD: refclock_wwv.c,v 1.8.8.1 2025/08/02 05:22:38 perseant Exp $	*/
 
 /*
  * refclock_wwv - clock driver for NIST WWV/H time/frequency station
@@ -2709,5 +2709,5 @@ wwv_gain(
 
 
 #else
-int refclock_wwv_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

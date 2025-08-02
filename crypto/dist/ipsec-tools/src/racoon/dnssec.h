@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.h,v 1.5 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.5.62.1 2025/08/02 05:18:36 perseant Exp $	*/
 
 /* Id: dnssec.h,v 1.3 2004/06/11 16:00:16 ludvigm Exp */
 
@@ -34,6 +34,6 @@
 #ifndef _DNSSEC_H
 #define _DNSSEC_H
 
-extern vchar_t *dnssec_getcert __P((vchar_t *));
+extern vchar_t *dnssec_getcert(vchar_t *);
 
 #endif /* _DNSSEC_H */

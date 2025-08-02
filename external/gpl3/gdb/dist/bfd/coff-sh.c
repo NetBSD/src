@@ -1,5 +1,5 @@
 /* BFD back-end for Renesas Super-H COFF binaries.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
    Relaxing code written by Ian Lance Taylor, <ian@cygnus.com>.
@@ -544,7 +544,8 @@ sh_coff_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
       cache_ptr->addend = 0;					\
     else if (ptr && bfd_asymbol_bfd (ptr) == abfd		\
 	     && ptr->section != (asection *) NULL)		\
-      cache_ptr->addend = - (ptr->section->vma + ptr->value);	\
+      cache_ptr->addend = - (ptr->section->vma			\
+			     + COFF_PE_ADDEND_BIAS (ptr));	\
     else							\
       cache_ptr->addend = 0;					\
     if ((reloc).r_type == R_SH_SWITCH8				\
@@ -717,6 +718,7 @@ sh_relax_section (bfd *abfd,
   *again = false;
 
   if (bfd_link_relocatable (link_info)
+      || (sec->flags & SEC_HAS_CONTENTS) == 0
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0)
     return true;
@@ -905,12 +907,7 @@ sh_relax_section (bfd *abfd,
 	 the linker is run.  */
 
       coff_section_data (abfd, sec)->relocs = internal_relocs;
-      coff_section_data (abfd, sec)->keep_relocs = true;
-
       coff_section_data (abfd, sec)->contents = contents;
-      coff_section_data (abfd, sec)->keep_contents = true;
-
-      obj_coff_keep_syms (abfd) = true;
 
       /* Replace the jsr with a bsr.  */
 
@@ -1027,12 +1024,7 @@ sh_relax_section (bfd *abfd,
       if (swapped)
 	{
 	  coff_section_data (abfd, sec)->relocs = internal_relocs;
-	  coff_section_data (abfd, sec)->keep_relocs = true;
-
 	  coff_section_data (abfd, sec)->contents = contents;
-	  coff_section_data (abfd, sec)->keep_contents = true;
-
-	  obj_coff_keep_syms (abfd) = true;
 	}
     }
 
@@ -1374,6 +1366,7 @@ sh_relax_delete_bytes (bfd *abfd,
       bfd_byte *ocontents;
 
       if (o == sec
+	  || (o->flags & SEC_HAS_CONTENTS) == 0
 	  || (o->flags & SEC_RELOC) == 0
 	  || o->reloc_count == 0)
 	continue;
@@ -1435,8 +1428,6 @@ sh_relax_delete_bytes (bfd *abfd,
 	      if (val > addr && val < toaddr)
 		bfd_put_32 (abfd, val - count,
 			    ocontents + irelscan->r_vaddr - o->vma);
-
-	      coff_section_data (abfd, o)->keep_contents = true;
 	    }
 	}
     }
@@ -2876,7 +2867,12 @@ sh_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	      name = NULL;
 	    else if (sym->_n._n_n._n_zeroes == 0
 		     && sym->_n._n_n._n_offset != 0)
-	      name = obj_coff_strings (input_bfd) + sym->_n._n_n._n_offset;
+	      {
+		if (sym->_n._n_n._n_offset < obj_coff_strings_len (input_bfd))
+		  name = obj_coff_strings (input_bfd) + sym->_n._n_n._n_offset;
+		else
+		  name = "?";
+	      }
 	    else
 	      {
 		strncpy (buf, sym->_n._n_name, SYMNMLEN);
@@ -3079,7 +3075,7 @@ coff_small_new_section_hook (bfd *abfd, asection *section)
 /* This is copied from bfd_coff_std_swap_table so that we can change
    the default section alignment power.  */
 
-static bfd_coff_backend_data bfd_coff_small_swap_table =
+static const bfd_coff_backend_data bfd_coff_small_swap_table =
 {
   coff_swap_aux_in, coff_swap_sym_in, coff_swap_lineno_in,
   coff_swap_aux_out, coff_swap_sym_out,
@@ -3123,8 +3119,6 @@ static bfd_coff_backend_data bfd_coff_small_swap_table =
   coff_bfd_free_cached_info
 #define coff_small_get_section_contents \
   coff_get_section_contents
-#define coff_small_get_section_contents_in_window \
-  coff_get_section_contents_in_window
 
 extern const bfd_target sh_coff_small_le_vec;
 

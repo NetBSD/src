@@ -1,4 +1,5 @@
-# $NetBSD: md.evbppc,v 1.2 2022/05/30 15:06:54 rin Exp $
+# $NetBSD: md.evbppc,v 1.2.4.1 2025/08/02 05:20:25 perseant Exp $
+#
 ./lib/libc_aligned.so		base-sys-shlib	dynamicroot,!machine_arch=powerpc64
 ./lib/libc_aligned.so.0		base-sys-shlib	dynamicroot,!machine_arch=powerpc64
 ./lib/libc_aligned.so.0.0	base-sys-shlib	dynamicroot,!machine_arch=powerpc64

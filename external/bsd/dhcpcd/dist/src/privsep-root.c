@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd, privileged proxy
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -251,8 +251,7 @@ ps_root_doioctl(unsigned long req, void *data, size_t len)
 	case SIOCGIFPRIORITY:	/* FALLTHROUGH */
 #endif
 	case SIOCSIFFLAGS:	/* FALLTHROUGH */
-	case SIOCGIFMTU:	/* FALLTHROUGH */
-	case SIOCSIFMTU:
+	case SIOCGIFMTU:
 		break;
 	default:
 		errno = EPERM;
@@ -610,11 +609,6 @@ ps_root_recvmsgcb(void *arg, struct ps_msghdr *psm, struct msghdr *msg)
 		err = ps_root_dogetifaddrs(&rdata, &rlen);
 		free_rdata = true;
 		break;
-#endif
-#if defined(INET6) && (defined(__linux__) || defined(HAVE_PLEDGE))
-	case PS_IP6FORWARDING:
-		 err = ip6_forwarding(data);
-		 break;
 #endif
 #ifdef PLUGIN_DEV
 	case PS_DEV_INITTED:
@@ -1170,18 +1164,6 @@ err:
 	*ifahead = NULL;
 	errno = EINVAL;
 	return -1;
-}
-#endif
-
-#if defined(__linux__) || defined(HAVE_PLEDGE)
-ssize_t
-ps_root_ip6forwarding(struct dhcpcd_ctx *ctx, const char *ifname)
-{
-
-	if (ps_sendcmd(ctx, PS_ROOT_FD(ctx), PS_IP6FORWARDING, 0,
-	    ifname, ifname != NULL ? strlen(ifname) + 1 : 0) == -1)
-		return -1;
-	return ps_root_readerror(ctx, NULL, 0);
 }
 #endif
 

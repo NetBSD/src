@@ -59,7 +59,6 @@ static int	tty_keys_device_attributes2(struct tty *, const char *, size_t,
 		    size_t *);
 static int	tty_keys_extended_device_attributes(struct tty *, const char *,
 		    size_t, size_t *);
-static int	tty_keys_colours(struct tty *, const char *, size_t, size_t *);
 
 /* A key tree entry. */
 struct tty_key {
@@ -665,7 +664,7 @@ tty_keys_next(struct tty *tty)
 	size_t			 len, size;
 	cc_t			 bspace;
 	int			 delay, expired = 0, n;
-	key_code		 key;
+	key_code		 key, onlykey;
 	struct mouse_event	 m = { 0 };
 	struct key_event	*event;
 
@@ -721,7 +720,7 @@ tty_keys_next(struct tty *tty)
 	}
 
 	/* Is this a colours response? */
-	switch (tty_keys_colours(tty, buf, len, &size)) {
+	switch (tty_keys_colours(tty, buf, len, &size, &tty->fg, &tty->bg)) {
 	case 0:		/* yes */
 		key = KEYC_UNKNOWN;
 		goto complete_key;
@@ -802,6 +801,27 @@ first_key:
 		key = (u_char)buf[0];
 		size = 1;
 	}
+
+	/* C-Space is special. */
+	if ((key & KEYC_MASK_KEY) == C0_NUL)
+		key = ' ' | KEYC_CTRL | (key & KEYC_META);
+
+	/*
+	 * Fix up all C0 control codes that don't have a dedicated key into
+	 * corresponding Ctrl keys. Convert characters in the A-Z range into
+	 * lowercase, so ^A becomes a|CTRL.
+	 */
+	onlykey = key & KEYC_MASK_KEY;
+	if (onlykey < 0x20 &&
+	    onlykey != C0_HT &&
+	    onlykey != C0_CR &&
+	    onlykey != C0_ESC) {
+		onlykey |= 0x40;
+		if (onlykey >= 'A' && onlykey <= 'Z')
+			onlykey |= 0x20;
+		key = onlykey | KEYC_CTRL | (key & KEYC_META);
+	}
+
 	goto complete_key;
 
 partial_key:
@@ -910,8 +930,9 @@ tty_keys_extended_key(struct tty *tty, const char *buf, size_t len,
 	u_int		 number, modifiers;
 	char		 tmp[64];
 	cc_t		 bspace;
-	key_code	 nkey;
-	key_code	 onlykey;
+	key_code	 nkey, onlykey;
+	struct utf8_data ud;
+	utf8_char        uc;
 
 	*size = 0;
 
@@ -961,6 +982,15 @@ tty_keys_extended_key(struct tty *tty, const char *buf, size_t len,
 	else
 		nkey = number;
 
+	/* Convert UTF-32 codepoint into internal representation. */
+	if (nkey != KEYC_BSPACE && nkey & ~0x7f) {
+		if (utf8_fromwc(nkey, &ud) == UTF8_DONE &&
+		    utf8_from_data(&ud, &uc) == UTF8_DONE)
+			nkey = uc;
+		else
+			return (-1);
+	}
+
 	/* Update the modifiers. */
 	if (modifiers > 0) {
 		modifiers--;
@@ -974,34 +1004,35 @@ tty_keys_extended_key(struct tty *tty, const char *buf, size_t len,
 			nkey |= (KEYC_META|KEYC_IMPLIED_META); /* Meta */
 	}
 
+	/* Convert S-Tab into Backtab. */
+	if ((nkey & KEYC_MASK_KEY) == '\011' && (nkey & KEYC_SHIFT))
+		nkey = KEYC_BTAB | (nkey & ~KEYC_MASK_KEY & ~KEYC_SHIFT);
+
 	/*
-	 * Don't allow both KEYC_CTRL and as an implied modifier. Also convert
-	 * C-X into C-x and so on.
+	 * Deal with the Shift modifier when present alone. The problem is that
+	 * in mode 2 some terminals would report shifted keys, like S-a, as
+	 * just A, and some as S-A.
+	 *
+	 * Because we need an unambiguous internal representation, and because
+	 * restoring the Shift modifier when it's missing would require knowing
+	 * the keyboard layout, and because S-A would cause a lot of issues
+	 * downstream, we choose to lose the Shift for all printable
+	 * characters.
+	 *
+	 * That still leaves some ambiguity, such as C-S-A vs. C-A, but that's
+	 * OK, and applications can handle that.
 	 */
-	if (nkey & KEYC_CTRL) {
-		onlykey = (nkey & KEYC_MASK_KEY);
-		if (onlykey < 32 &&
-		    onlykey != 9 &&
-		    onlykey != 13 &&
-		    onlykey != 27)
-			/* nothing */;
-		else if (onlykey >= 97 && onlykey <= 122)
-			onlykey -= 96;
-		else if (onlykey >= 64 && onlykey <= 95)
-			onlykey -= 64;
-		else if (onlykey == 32)
-			onlykey = 0;
-		else if (onlykey == 63)
-			onlykey = 127;
-		else
-			onlykey |= KEYC_CTRL;
-		nkey = onlykey|((nkey & KEYC_MASK_MODIFIERS) & ~KEYC_CTRL);
-	}
+	onlykey = nkey & KEYC_MASK_KEY;
+	if (((onlykey > 0x20 && onlykey < 0x7f) ||
+	    KEYC_IS_UNICODE(nkey)) &&
+	    (nkey & KEYC_MASK_MODIFIERS) == KEYC_SHIFT)
+		nkey &= ~KEYC_SHIFT;
 
 	if (log_get_level() != 0) {
 		log_debug("%s: extended key %.*s is %llx (%s)", c->name,
 		    (int)*size, buf, nkey, key_string_lookup_key(nkey, 1));
 	}
+
 	*key = nkey;
 	return (0);
 }
@@ -1203,7 +1234,7 @@ tty_keys_clipboard(struct tty *tty, const char *buf, size_t len, size_t *size)
 	}
 	if (end == len)
 		return (1);
-	*size = end + terminator;
+	*size = end + 1;
 
 	/* Skip the initial part. */
 	buf += 5;
@@ -1315,26 +1346,21 @@ tty_keys_device_attributes(struct tty *tty, const char *buf, size_t len,
 			break;
 	}
 
-	/*
-	 * Add terminal features. Hardware level 5 does not offer SIXEL but
-	 * some terminal emulators report it anyway and it does not harm
-	 * to check it here.
-	 *
-	 * DECSLRM and DECFRA should be supported by level 5 as well as level
-	 * 4, but VTE has rather ruined it by advertising level 5 despite not
-	 * supporting them.
-	 */
+	/* Add terminal features. */
 	switch (p[0]) {
-	case 64: /* level 4 */
-		tty_add_features(features, "margins,rectfill", ",");
-		/* FALLTHROUGH */
+	case 61: /* level 1 */
 	case 62: /* level 2 */
 	case 63: /* level 3 */
+	case 64: /* level 4 */
 	case 65: /* level 5 */
 		for (i = 1; i < n; i++) {
 			log_debug("%s: DA feature: %d", c->name, p[i]);
 			if (p[i] == 4)
 				tty_add_features(features, "sixel", ",");
+			if (p[i] == 21)
+				tty_add_features(features, "margins", ",");
+			if (p[i] == 28)
+				tty_add_features(features, "rectfill", ",");
 		}
 		break;
 	}
@@ -1406,11 +1432,6 @@ tty_keys_device_attributes2(struct tty *tty, const char *buf, size_t len,
 	 * we can't use level 5 from DA because of VTE.
 	 */
 	switch (p[0]) {
-	case 41: /* VT420 */
-	case 61: /* VT510 */
-	case 64: /* VT520 */
-		tty_add_features(features, "margins,rectfill", ",");
-		break;
 	case 'M': /* mintty */
 		tty_default_features(features, "mintty", 0);
 		break;
@@ -1501,8 +1522,9 @@ tty_keys_extended_device_attributes(struct tty *tty, const char *buf,
  * Handle foreground or background input. Returns 0 for success, -1 for
  * failure, 1 for partial.
  */
-static int
-tty_keys_colours(struct tty *tty, const char *buf, size_t len, size_t *size)
+int
+tty_keys_colours(struct tty *tty, const char *buf, size_t len, size_t *size,
+    int *fg, int *bg)
 {
 	struct client	*c = tty->client;
 	u_int		 i;
@@ -1553,11 +1575,17 @@ tty_keys_colours(struct tty *tty, const char *buf, size_t len, size_t *size)
 
 	n = colour_parseX11(tmp);
 	if (n != -1 && buf[3] == '0') {
-		log_debug("%s: foreground is %s", c->name, colour_tostring(n));
-		tty->fg = n;
+		if (c != NULL)
+			log_debug("%s fg is %s", c->name, colour_tostring(n));
+		else
+			log_debug("fg is %s", colour_tostring(n));
+		*fg = n;
 	} else if (n != -1) {
-		log_debug("%s: background is %s", c->name, colour_tostring(n));
-		tty->bg = n;
+		if (c != NULL)
+			log_debug("%s bg is %s", c->name, colour_tostring(n));
+		else
+			log_debug("bg is %s", colour_tostring(n));
+		*bg = n;
 	}
 
 	return (0);

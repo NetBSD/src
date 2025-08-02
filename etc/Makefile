@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.473 2024/06/23 00:37:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.473.2.1 2025/08/02 05:20:42 perseant Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -638,15 +638,12 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 				if [ ${KERNEL_DIR} = "yes" ]; then \
 					newname=$$(echo $${kernel} | \
 					    ${TOOL_SED} -e s/netbsd/kernel/); \
-					ln ../$${kernel} ./netbsd/$${newname}; \
+					ln -f ../$${kernel} ./netbsd/$${newname}; \
 				else \
 					newname=$${kernel}; \
 				fi; \
 				echo "$${d}/$${newname} type=file"; \
 			done ) | eval $${pax_cmd}; \
-			if [ ${KERNEL_DIR} = "yes" ]; then \
-				mv $${kern_tgz} ..; \
-			fi; \
 		} \
 	}
 .endif
@@ -716,7 +713,7 @@ snap_md_post: .PHONY check_DESTDIR check_RELEASEDIR snap_post
 clean:
 	-rm -rf ${CDROM.dir} ${CDROM.pathlist} ${OBSOLETE.dir}
 
-SUBDIR=	defaults rc.d mtree
+SUBDIR=	defaults rc.d pam.d mtree
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

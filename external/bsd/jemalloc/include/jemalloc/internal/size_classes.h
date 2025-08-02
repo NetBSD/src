@@ -35,7 +35,24 @@
  */
 
 #define LG_SIZE_CLASS_GROUP	2
+
+#ifdef __NetBSD__
+#if defined(__hppa__)
+/*
+ * This case would also be needed for aarch64 but NetBSD's gcc config overrides it:
+ * gcc/config/aarch64/aarch64-netbsd.h:#define MALLOC_ABI_ALIGNMENT  64
+ * The NetBSD hppa config is non-standard too and always uses 128 bit (not only
+ * for 64bit code and 64bit alignment for 32bit code).
+ */
+#define LG_TINY_MIN		5
+#elif defined(_LP64) || defined(__arm__)
+#define LG_TINY_MIN		4
+#else
 #define LG_TINY_MIN		3
+#endif
+#else
+#define LG_TINY_MIN		3
+#endif
 
 #if (LG_SIZEOF_PTR == 2 && LG_TINY_MIN == 3 && LG_QUANTUM == 3 && LG_PAGE == 12)
 #define SIZE_CLASSES \

@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_string.c,v 1.18 2023/11/17 21:29:33 thorpej Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.18.2.1 2025/08/02 05:18:35 perseant Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2020, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,9 +56,14 @@ struct _prop_string {
 #define	PS_F_MUTABLE		0x02
 
 _PROP_POOL_INIT(_prop_string_pool, sizeof(struct _prop_string), "propstng")
-
 _PROP_MALLOC_DEFINE(M_PROP_STRING, "prop string",
 		    "property string container object")
+
+static const struct _prop_object_type_tags _prop_string_type_tags = {
+	.xml_tag		=	"string",
+	.json_open_tag		=	"\"",
+	.json_close_tag		=	"\"",
+};
 
 static _prop_object_free_rv_t
 		_prop_string_free(prop_stack_t, prop_object_t *);
@@ -167,22 +172,33 @@ _prop_string_free(prop_stack_t stack, prop_object_t *obj)
 	return (_PROP_OBJECT_FREE_DONE);
 }
 
+bool
+_prop_string_externalize_internal(struct _prop_object_externalize_context *ctx,
+				  const struct _prop_object_type_tags *tags,
+				  const char *str)
+{
+	if (_prop_extern_append_start_tag(ctx, tags, NULL) == false ||
+	    _prop_extern_append_encoded_cstring(ctx, str) == false ||
+	    _prop_extern_append_end_tag(ctx, tags) == false) {
+		return false;
+	}
+
+	return true;
+}
+
 static bool
 _prop_string_externalize(struct _prop_object_externalize_context *ctx,
 			 void *v)
 {
 	prop_string_t ps = v;
 
-	if (ps->ps_size == 0)
-		return (_prop_object_externalize_empty_tag(ctx, "string"));
+	if (ps->ps_size == 0) {
+		return _prop_extern_append_empty_tag(ctx,
+		    &_prop_string_type_tags);
+	}
 
-	if (_prop_object_externalize_start_tag(ctx, "string") == false ||
-	    _prop_object_externalize_append_encoded_cstring(ctx,
-	    					ps->ps_immutable) == false ||
-	    _prop_object_externalize_end_tag(ctx, "string") == false)
-		return (false);
-
-	return (true);
+	return _prop_string_externalize_internal(ctx, &_prop_string_type_tags,
+	    ps->ps_immutable);
 }
 
 /* ARGSUSED */
@@ -258,7 +274,7 @@ _prop_string_instantiate(int const flags, const char * const str,
 			}
 		}
 	} else if ((flags & PS_F_NOCOPY) == 0) {
-		_PROP_FREE(__UNCONST(str), M_PROP_STRING);
+		_PROP_FREE(_PROP_UNCONST(str), M_PROP_STRING);
 	}
 
 	return (ps);
@@ -267,7 +283,7 @@ _prop_string_instantiate(int const flags, const char * const str,
 _PROP_DEPRECATED(prop_string_create,
     "this program uses prop_string_create(); all functions "
     "supporting mutable prop_strings are deprecated.")
-prop_string_t
+_PROP_EXPORT prop_string_t
 prop_string_create(void)
 {
 
@@ -277,7 +293,7 @@ prop_string_create(void)
 _PROP_DEPRECATED(prop_string_create_cstring,
     "this program uses prop_string_create_cstring(); all functions "
     "supporting mutable prop_strings are deprecated.")
-prop_string_t
+_PROP_EXPORT prop_string_t
 prop_string_create_cstring(const char *str)
 {
 	prop_string_t ps;
@@ -304,7 +320,7 @@ prop_string_create_cstring(const char *str)
 _PROP_DEPRECATED(prop_string_create_cstring_nocopy,
     "this program uses prop_string_create_cstring_nocopy(), "
     "which is deprecated; use prop_string_create_nocopy() instead.")
-prop_string_t
+_PROP_EXPORT prop_string_t
 prop_string_create_cstring_nocopy(const char *str)
 {
 	return prop_string_create_nocopy(str);
@@ -314,7 +330,7 @@ prop_string_create_cstring_nocopy(const char *str)
  * prop_string_create_format --
  *	Create a string object using the provided format string.
  */
-prop_string_t __printflike(1, 2)
+_PROP_EXPORT prop_string_t __printflike(1, 2)
 prop_string_create_format(const char *fmt, ...)
 {
 	char *str = NULL;
@@ -347,7 +363,7 @@ prop_string_create_format(const char *fmt, ...)
  * prop_string_create_copy --
  *	Create a string object by coping the provided constant string.
  */
-prop_string_t
+_PROP_EXPORT prop_string_t
 prop_string_create_copy(const char *str)
 {
 	return prop_string_create_format("%s", str);
@@ -358,7 +374,7 @@ prop_string_create_copy(const char *str)
  *	Create a string object using the provided external constant
  *	string.
  */
-prop_string_t
+_PROP_EXPORT prop_string_t
 prop_string_create_nocopy(const char *str)
 {
 
@@ -372,7 +388,7 @@ prop_string_create_nocopy(const char *str)
  *	Copy a string.  This reduces to a retain in the common case.
  *	Deprecated mutable string objects must be copied.
  */
-prop_string_t
+_PROP_EXPORT prop_string_t
 prop_string_copy(prop_string_t ops)
 {
 	char *cp;
@@ -397,7 +413,7 @@ prop_string_copy(prop_string_t ops)
 _PROP_DEPRECATED(prop_string_copy_mutable,
     "this program uses prop_string_copy_mutable(); all functions "
     "supporting mutable prop_strings are deprecated.")
-prop_string_t
+_PROP_EXPORT prop_string_t
 prop_string_copy_mutable(prop_string_t ops)
 {
 	char *cp;
@@ -418,7 +434,7 @@ prop_string_copy_mutable(prop_string_t ops)
  * prop_string_size --
  *	Return the size of the string, not including the terminating NUL.
  */
-size_t
+_PROP_EXPORT size_t
 prop_string_size(prop_string_t ps)
 {
 
@@ -433,7 +449,7 @@ prop_string_size(prop_string_t ps)
  *	Returns a pointer to the string object's value.  This pointer
  *	remains valid only as long as the string object.
  */
-const char *
+_PROP_EXPORT const char *
 prop_string_value(prop_string_t ps)
 {
 
@@ -450,7 +466,7 @@ prop_string_value(prop_string_t ps)
  * prop_string_copy_value --
  *	Copy the string object's value into the supplied buffer.
  */
-bool
+_PROP_EXPORT bool
 prop_string_copy_value(prop_string_t ps, void *buf, size_t buflen)
 {
 
@@ -468,7 +484,7 @@ prop_string_copy_value(prop_string_t ps, void *buf, size_t buflen)
 _PROP_DEPRECATED(prop_string_mutable,
     "this program uses prop_string_mutable(); all functions "
     "supporting mutable prop_strings are deprecated.")
-bool
+_PROP_EXPORT bool
 prop_string_mutable(prop_string_t ps)
 {
 
@@ -481,7 +497,7 @@ prop_string_mutable(prop_string_t ps)
 _PROP_DEPRECATED(prop_string_cstring,
     "this program uses prop_string_cstring(), "
     "which is deprecated; use prop_string_copy_value() instead.")
-char *
+_PROP_EXPORT char *
 prop_string_cstring(prop_string_t ps)
 {
 	char *cp;
@@ -499,7 +515,7 @@ prop_string_cstring(prop_string_t ps)
 _PROP_DEPRECATED(prop_string_cstring_nocopy,
     "this program uses prop_string_cstring_nocopy(), "
     "which is deprecated; use prop_string_value() instead.")
-const char *
+_PROP_EXPORT const char *
 prop_string_cstring_nocopy(prop_string_t ps)
 {
 
@@ -512,7 +528,7 @@ prop_string_cstring_nocopy(prop_string_t ps)
 _PROP_DEPRECATED(prop_string_append,
     "this program uses prop_string_append(); all functions "
     "supporting mutable prop_strings are deprecated.")
-bool
+_PROP_EXPORT bool
 prop_string_append(prop_string_t dst, prop_string_t src)
 {
 	char *ocp, *cp;
@@ -543,7 +559,7 @@ prop_string_append(prop_string_t dst, prop_string_t src)
 _PROP_DEPRECATED(prop_string_append_cstring,
     "this program uses prop_string_append_cstring(); all functions "
     "supporting mutable prop_strings are deprecated.")
-bool
+_PROP_EXPORT bool
 prop_string_append_cstring(prop_string_t dst, const char *src)
 {
 	char *ocp, *cp;
@@ -575,7 +591,7 @@ prop_string_append_cstring(prop_string_t dst, const char *src)
  * prop_string_equals --
  *	Return true if two strings are equivalent.
  */
-bool
+_PROP_EXPORT bool
 prop_string_equals(prop_string_t str1, prop_string_t str2)
 {
 	if (!prop_object_is_string(str1) || !prop_object_is_string(str2))
@@ -589,7 +605,7 @@ prop_string_equals(prop_string_t str1, prop_string_t str2)
  *	Return true if the string object is equivalent to the specified
  *	C string.
  */
-bool
+_PROP_EXPORT bool
 prop_string_equals_string(prop_string_t ps, const char *cp)
 {
 
@@ -602,7 +618,7 @@ prop_string_equals_string(prop_string_t ps, const char *cp)
 _PROP_DEPRECATED(prop_string_equals_cstring,
     "this program uses prop_string_equals_cstring(), "
     "which is deprecated; prop_string_equals_string() instead.")
-bool
+_PROP_EXPORT bool
 prop_string_equals_cstring(prop_string_t ps, const char *cp)
 {
 	return prop_string_equals_string(ps, cp);
@@ -612,7 +628,7 @@ prop_string_equals_cstring(prop_string_t ps, const char *cp)
  * prop_string_compare --
  *	Compare two string objects, using strcmp() semantics.
  */
-int
+_PROP_EXPORT int
 prop_string_compare(prop_string_t ps1, prop_string_t ps2)
 {
 	if (!prop_object_is_string(ps1) || !prop_object_is_string(ps2))
@@ -627,7 +643,7 @@ prop_string_compare(prop_string_t ps1, prop_string_t ps2)
  *	Compare a string object to the specified C string, using
  *	strcmp() semantics.
  */
-int
+_PROP_EXPORT int
 prop_string_compare_string(prop_string_t ps, const char *cp)
 {
 	if (!prop_object_is_string(ps))
@@ -649,6 +665,10 @@ _prop_string_internalize(prop_stack_t stack, prop_object_t *obj,
 	char *str;
 	size_t len, alen;
 
+	/*
+	 * N.B. for empty JSON strings, the layer above us has made it
+	 * look like XML.
+	 */
 	if (ctx->poic_is_empty_element) {
 		*obj = prop_string_create();
 		return (true);
@@ -659,26 +679,33 @@ _prop_string_internalize(prop_stack_t stack, prop_object_t *obj,
 		return (true);
 
 	/* Compute the length of the result. */
-	if (_prop_object_internalize_decode_string(ctx, NULL, 0, &len,
-						   NULL) == false)
+	if (_prop_intern_decode_string(ctx, NULL, 0, &len, NULL) == false)
 		return (true);
 
 	str = _PROP_MALLOC(len + 1, M_PROP_STRING);
 	if (str == NULL)
 		return (true);
 
-	if (_prop_object_internalize_decode_string(ctx, str, len, &alen,
-						   &ctx->poic_cp) == false ||
+	if (_prop_intern_decode_string(ctx, str, len, &alen,
+				       &ctx->poic_cp) == false ||
 	    alen != len) {
 		_PROP_FREE(str, M_PROP_STRING);
 		return (true);
 	}
 	str[len] = '\0';
 
-	if (_prop_object_internalize_find_tag(ctx, "string",
+	if (ctx->poic_format == PROP_FORMAT_JSON) {
+		if (*ctx->poic_cp != '"') {
+			_PROP_FREE(str, M_PROP_STRING);
+			return (true);
+		}
+		ctx->poic_cp++;
+	} else {
+		if (_prop_xml_intern_find_tag(ctx, "string",
 					      _PROP_TAG_TYPE_END) == false) {
-		_PROP_FREE(str, M_PROP_STRING);
-		return (true);
+			_PROP_FREE(str, M_PROP_STRING);
+			return (true);
+		}
 	}
 
 	*obj = _prop_string_instantiate(0, str, len);

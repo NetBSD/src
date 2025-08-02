@@ -1,6 +1,6 @@
 /* Self tests for gdbarch for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbsupport/selftest.h"
 #include "selftest-arch.h"
 #include "target.h"
@@ -165,6 +164,21 @@ register_name_test (struct gdbarch *gdbarch)
     }
 }
 
+/* Test gdbarch_stack_grows_down.  Stacks must either grow down or up.  */
+
+static void
+check_stack_growth (struct gdbarch *gdbarch)
+{
+  /* We don't call gdbarch_stack_grows_down here, instead we're testing the
+     implementation by calling gdbarch_inner_than.  GDB assumes that stacks
+     either grow down or up (see uses of gdbarch_stack_grows_down), so exactly
+     one of these needs to be true.  */
+  bool stack_grows_down = gdbarch_inner_than (gdbarch, 1, 2);
+  bool stack_grows_up = gdbarch_inner_than (gdbarch, 2, 1);
+
+  SELF_CHECK (stack_grows_up != stack_grows_down);
+}
+
 } // namespace selftests
 
 void _initialize_gdbarch_selftests ();
@@ -176,4 +190,7 @@ _initialize_gdbarch_selftests ()
 
   selftests::register_test_foreach_arch ("register_name",
 					 selftests::register_name_test);
+
+  selftests::register_test_foreach_arch ("stack_growth",
+					 selftests::check_stack_growth);
 }

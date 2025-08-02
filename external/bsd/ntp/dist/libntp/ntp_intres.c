@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.c,v 1.12 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: ntp_intres.c,v 1.12.8.1 2025/08/02 05:22:31 perseant Exp $	*/
 
 /*
  * ntp_intres.c - Implements a generic blocking worker child or thread,
@@ -86,12 +86,6 @@
 #  include <netdb.h>
 # endif
 # include <resolv.h>
-# ifdef HAVE_INT32_ONLY_WITH_DNS
-#  define HAVE_INT32
-# endif
-# ifdef HAVE_U_INT32_ONLY_WITH_DNS
-#  define HAVE_U_INT32
-# endif
 #endif
 
 #include "ntp.h"

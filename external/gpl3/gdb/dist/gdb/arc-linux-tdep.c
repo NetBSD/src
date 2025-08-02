@@ -1,6 +1,6 @@
 /* Target dependent code for GNU/Linux ARC.
 
-   Copyright 2020-2023 Free Software Foundation, Inc.
+   Copyright 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* GDB header files.  */
-#include "defs.h"
 #include "linux-tdep.h"
 #include "objfiles.h"
 #include "opcode/arc.h"
@@ -159,7 +158,7 @@ static const int arc_linux_core_reg_offsets[] = {
    Returns TRUE if this is a sigtramp frame.  */
 
 static bool
-arc_linux_is_sigtramp (frame_info_ptr this_frame)
+arc_linux_is_sigtramp (const frame_info_ptr &this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   CORE_ADDR pc = get_frame_pc (this_frame);
@@ -174,6 +173,9 @@ arc_linux_is_sigtramp (frame_info_ptr this_frame)
     0x20, 0x8a, 0x12, 0xc2,	/* mov  r8,nr_rt_sigreturn */
     0x22, 0x6f, 0x00, 0x3f	/* swi */
   };
+
+  constexpr size_t max_insn_sz = std::max (sizeof (insns_be_hs),
+					   sizeof (insns_be_700));
 
   gdb_byte arc_sigtramp_insns[sizeof (insns_be_700)];
   size_t insns_sz;
@@ -201,7 +203,8 @@ arc_linux_is_sigtramp (frame_info_ptr this_frame)
 	std::swap (arc_sigtramp_insns[i], arc_sigtramp_insns[i+1]);
     }
 
-  gdb_byte buf[insns_sz];
+  gdb_assert (insns_sz <= max_insn_sz);
+  gdb_byte buf[max_insn_sz];
 
   /* Read the memory at the PC.  Since we are stopped, any breakpoint must
      have been removed.  */
@@ -257,7 +260,7 @@ arc_linux_is_sigtramp (frame_info_ptr this_frame)
    etc) in GDB hardcode values.  */
 
 static CORE_ADDR
-arc_linux_sigcontext_addr (frame_info_ptr this_frame)
+arc_linux_sigcontext_addr (const frame_info_ptr &this_frame)
 {
   const int ucontext_offset = 0x80;
   const int sigcontext_offset = 0x14;
@@ -377,23 +380,23 @@ handle_atomic_sequence (arc_instruction insn, disassemble_info *di)
 		       di, arc_delayed_print_insn, &insn);
 
       if (insn.insn_class == BRCC)
-        {
-          /* If more than one conditional branch is found, this is not
-             the pattern we are interested in.  */
-          if (found_bc)
+	{
+	  /* If more than one conditional branch is found, this is not
+	     the pattern we are interested in.  */
+	  if (found_bc)
 	    break;
 	  found_bc = true;
 	  continue;
-        }
+	}
 
       /* This is almost a happy ending.  */
       if (insn.insn_class == SCOND)
-        {
+	{
 	  /* SCOND should match the LLOCK's data size.  */
 	  if (insn.data_size_mode == llock_data_size_mode)
 	    is_pattern_valid = true;
 	  break;
-        }
+	}
     }
 
   if (is_pattern_valid)
@@ -549,7 +552,7 @@ arc_linux_supply_gregset (const struct regset *regset,
 			  struct regcache *regcache,
 			  int regnum, const void *gregs, size_t size)
 {
-  gdb_static_assert (ARC_LAST_REGNUM
+  static_assert (ARC_LAST_REGNUM
 		     < ARRAY_SIZE (arc_linux_core_reg_offsets));
 
   const bfd_byte *buf = (const bfd_byte *) gregs;
@@ -612,7 +615,7 @@ arc_linux_collect_gregset (const struct regset *regset,
 			   const struct regcache *regcache,
 			   int regnum, void *gregs, size_t size)
 {
-  gdb_static_assert (ARC_LAST_REGNUM
+  static_assert (ARC_LAST_REGNUM
 		     < ARRAY_SIZE (arc_linux_core_reg_offsets));
 
   gdb_byte *buf = (gdb_byte *) gregs;

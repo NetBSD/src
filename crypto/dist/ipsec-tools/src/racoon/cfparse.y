@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.53 2020/11/25 18:11:00 bouyer Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.53.8.1 2025/08/02 05:18:36 perseant Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -143,16 +143,16 @@ static struct sainfo *cur_sainfo = NULL;
 static int cur_algclass = 0;
 static int oldloglevel = LLV_BASE;
 
-static struct secprotospec *newspspec __P((void));
-static void insspspec __P((struct remoteconf *, struct secprotospec *));
-void dupspspec_list __P((struct remoteconf *dst, struct remoteconf *src));
-void flushspspec __P((struct remoteconf *));
-static void adminsock_conf __P((vchar_t *, vchar_t *, vchar_t *, int));
+static struct secprotospec *newspspec(void);
+static void insspspec(struct remoteconf *, struct secprotospec *);
+void dupspspec_list(struct remoteconf *dst, struct remoteconf *src);
+void flushspspec(struct remoteconf *);
+static void adminsock_conf(vchar_t *, vchar_t *, vchar_t *, int);
 
-static int set_isakmp_proposal __P((struct remoteconf *));
-static void clean_tmpalgtype __P((void));
-static int expand_isakmpspec __P((int, int, int *,
-	int, int, time_t, int, int, int, char *, struct remoteconf *));
+static int set_isakmp_proposal(struct remoteconf *);
+static void clean_tmpalgtype(void);
+static int expand_isakmpspec(int, int, int *,
+    int, int, time_t, int, int, int, char *, struct remoteconf *);
 
 void freeetypes (struct etypes **etypes);
 
@@ -244,11 +244,21 @@ static int process_rmconf(void)
 }
 
 /* some frequently used warning texts */
+#ifndef ENABLE_HYBRID
 static const char error_message_hybrid_config_not_configured[] = "racoon not configured with --enable-hybrid\n";
+#endif
+#ifndef HAVE_LIBLDAP
 static const char error_message_ldap_config_not_configured[]   = "racoon not configured with --with-libldap\n";
+#endif
+#ifndef ENABLE_ADMINPORT
 static const char error_message_admin_port_not_compiled_in[] = "admin port support not compiled in\n";
+#endif
+#ifndef ENABLE_NATT
 static const char error_message_natt_not_compiled_in[] = "NAT-T support not compiled in\n";
+#endif
+#ifndef ENABLE_DPD
 static const char error_message_dpd_not_compiled_in[] = "DPD support not compiled in\n";
+#endif
 
 /* macros for aborting the parsing with freeing up allocated memory */
 #define ABORT_CLEANUP {delrmconf(cur_rmconf); delsainfo(cur_sainfo); YYABORT;}
@@ -1546,7 +1556,7 @@ sainfo_id
 					return -1;
 				}
 				$$ = ipsecdoi_sockaddr2id(saddr,
-										  $3 == ~0 ? (sizeof(struct in_addr) << 3): $3,
+										  $3 == ~0u ? (sizeof(struct in_addr) << 3): $3,
 										  $5);
 				break;
 #ifdef INET6
@@ -1557,7 +1567,7 @@ sainfo_id
 					return -1;
 				}
 				$$ = ipsecdoi_sockaddr2id(saddr, 
-										  $3 == ~0 ? (sizeof(struct in6_addr) << 3): $3,
+										  $3 == ~0u ? (sizeof(struct in6_addr) << 3): $3,
 										  $5);
 				break;
 #endif
@@ -2429,7 +2439,7 @@ dh_group_num
 	:	ALGORITHMTYPE
 		{
 			$$ = algtype2doi(algclass_isakmp_dh, $1);
-			if ($$ == -1) {
+			if ($$ == (unsigned)-1) {
 				yyerror("must be DH group\n");
 				ABORT();
 			}
@@ -2605,7 +2615,7 @@ unittype_byte
 %%
 
 static struct secprotospec *
-newspspec()
+newspspec(void)
 {
 	struct secprotospec *new;
 
@@ -2631,9 +2641,7 @@ newspspec()
  * insert into head of list.
  */
 static void
-insspspec(rmconf, spspec)
-	struct remoteconf *rmconf;
-	struct secprotospec *spspec;
+insspspec(struct remoteconf *rmconf, struct secprotospec *spspec)
 {
 	if (rmconf->spspec != NULL)
 		rmconf->spspec->prev = spspec;
@@ -2675,8 +2683,7 @@ dupspspec(struct secprotospec *spspec)
  * copy the whole list
  */
 void
-dupspspec_list(dst, src)
-	struct remoteconf *dst, *src;
+dupspspec_list(struct remoteconf *dst, struct remoteconf *src)
 {
 	struct secprotospec *p, *new, *last;
 
@@ -2700,8 +2707,7 @@ dupspspec_list(dst, src)
  * delete the whole list
  */
 void
-flushspspec(rmconf)
-	struct remoteconf *rmconf;
+flushspspec(struct remoteconf *rmconf)
 {
 	struct secprotospec *p;
 
@@ -2722,8 +2728,7 @@ flushspspec(rmconf)
 
 /* set final acceptable proposal */
 static int
-set_isakmp_proposal(rmconf)
-	struct remoteconf *rmconf;
+set_isakmp_proposal(struct remoteconf *rmconf)
 {
 	struct secprotospec *s;
 	int prop_no = 1; 
@@ -2770,7 +2775,7 @@ set_isakmp_proposal(rmconf)
 		plog(LLV_DEBUG2, LOCATION, NULL,
 			"encklen=%d\n", s->encklen);
 
-		memset(types, 0, ARRAYLEN(types));
+		memset(types, 0, sizeof(types));
 		types[algclass_isakmp_enc] = s->algclass[algclass_isakmp_enc];
 		types[algclass_isakmp_hash] = s->algclass[algclass_isakmp_hash];
 		types[algclass_isakmp_dh] = s->algclass[algclass_isakmp_dh];
@@ -2804,7 +2809,7 @@ set_isakmp_proposal(rmconf)
 }
 
 static void
-clean_tmpalgtype()
+clean_tmpalgtype(void)
 {
 	int i;
 	for (i = 0; i < MAXALGCLASS; i++)
@@ -2812,17 +2817,9 @@ clean_tmpalgtype()
 }
 
 static int
-expand_isakmpspec(prop_no, trns_no, types,
-		class, last, lifetime, lifebyte, encklen, vendorid, gssid,
-		rmconf)
-	int prop_no, trns_no;
-	int *types, class, last;
-	time_t lifetime;
-	int lifebyte;
-	int encklen;
-	int vendorid;
-	char *gssid;
-	struct remoteconf *rmconf;
+expand_isakmpspec(int prop_no, int trns_no, int *types, int class, int last,
+    time_t lifetime, int lifebyte, int encklen, int vendorid, char *gssid,
+    struct remoteconf *rmconf)
 {
 	struct isakmpsa *new;
 
@@ -2909,8 +2906,7 @@ expand_isakmpspec(prop_no, trns_no, types,
  * That is defined RFC2407.
  */
 static int
-fix_lifebyte(t)
-	unsigned long t;
+fix_lifebyte(unsigned long t)
 {
 	if (t < 1024) {
 		yyerror("byte size should be more than 1024B.");
@@ -2922,7 +2918,7 @@ fix_lifebyte(t)
 #endif
 
 int
-cfparse()
+cfparse(void)
 {
 	int error;
 
@@ -2964,7 +2960,7 @@ cfparse()
 }
 
 int
-cfreparse()
+cfreparse(void)
 {
 	flushph2();
 	flushph1();
@@ -2976,11 +2972,7 @@ cfreparse()
 
 #ifdef ENABLE_ADMINPORT
 static void
-adminsock_conf(path, owner, group, mode_dec)
-	vchar_t *path;
-	vchar_t *owner;
-	vchar_t *group;
-	int mode_dec;
+adminsock_conf(vchar_t *path, vchar_t *owner, vchar_t *group, int mode_dec)
 {
 	struct passwd *pw = NULL;
 	struct group *gr = NULL;

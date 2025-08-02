@@ -1,4 +1,5 @@
-# $NetBSD: md.hppa,v 1.8 2020/09/04 13:39:50 rillig Exp $
+# $NetBSD: md.hppa,v 1.8.10.1 2025/08/02 05:20:35 perseant Exp $
+#
 ./@MODULEDIR@/cac_eisa				base-obsolete		obsolete
 ./@MODULEDIR@/cac_eisa/cac_eisa.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/exec_elf32			modules-base-kernel	kmod

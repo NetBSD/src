@@ -1,11 +1,12 @@
-/* $NetBSD: expr.y,v 1.46 2020/06/11 13:08:07 kamil Exp $ */
+/* $NetBSD: expr.y,v 1.46.8.1 2025/08/02 05:18:24 perseant Exp $ */
 
-/*_
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2000, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jaromir Dolecek <jdolecek@NetBSD.org> and J.T. Conklin <jtc@NetBSD.org>.
+ * by Jaromir Dolecek <jdolecek@NetBSD.org>, J.T. Conklin <jtc@NetBSD.org>
+ * and Roland Illig <rillig@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,9 +32,7 @@
 
 %{
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.46 2020/06/11 13:08:07 kamil Exp $");
-#endif /* not lint */
+__RCSID("$NetBSD: expr.y,v 1.46.8.1 2025/08/02 05:18:24 perseant Exp $");
 
 #include <sys/types.h>
 
@@ -46,348 +45,295 @@ __RCSID("$NetBSD: expr.y,v 1.46 2020/06/11 13:08:07 kamil Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 static const char * const *av;
+static unsigned skip_level;
 
 static void yyerror(const char *, ...) __dead;
 static int yylex(void);
-static int is_zero_or_null(const char *);
+static int is_empty_or_zero(const char *);
 static int is_integer(const char *);
-static int64_t perform_arith_op(const char *, const char *, const char *);
+static const char *eval_arith(const char *, const char *, const char *);
+static int eval_compare(const char *, const char *, const char *);
+static const char *eval_match(const char *, const char *);
+static size_t mbs_len(const char *, const char *);
 
 #define YYSTYPE	const char *
 
 %}
-%token STRING
+
+%expect 0
+
+%token STRING LPAREN RPAREN
 %left SPEC_OR
 %left SPEC_AND
-%left COMPARE 
+%left COMPARE
 %left ADD_SUB_OPERATOR
 %left MUL_DIV_MOD_OPERATOR
 %left SPEC_REG
 %left LENGTH
-%left LEFT_PARENT RIGHT_PARENT
 
 %%
 
-exp:	expr = {
-		(void) printf("%s\n", $1);
-		return (is_zero_or_null($1));
-		}
-	;
+exp:	expr {
+		(void)printf("%s\n", $1);
+		return is_empty_or_zero($1);
+	}
+;
 
-expr:	item { $$ = $1; }
-	| expr SPEC_OR expr = {
-		/*
-		 * Return evaluation of first expression if it is neither
-		 * an empty string nor zero; otherwise, returns the evaluation
-		 * of second expression.
-		 */
-		if (!is_zero_or_null($1))
-			$$ = $1;
-		else
-			$$ = $3;
-		}
-	| expr SPEC_AND expr = {
-		/*
-		 * Returns the evaluation of first expr if neither expression
-		 * evaluates to an empty string or zero; otherwise, returns
-		 * zero.
-		 */
-		if (!is_zero_or_null($1) && !is_zero_or_null($3))
-			$$ = $1;
-		else
-			$$ = "0";
-		}
-	| expr SPEC_REG expr = {
-		/*
-		 * The ``:'' operator matches first expr against the second,
-		 * which must be a regular expression.
-		 */
-		regex_t rp;
-		regmatch_t rm[2];
-		int eval;
-
-		/* compile regular expression */
-		if ((eval = regcomp(&rp, $3, REG_BASIC)) != 0) {
-			char errbuf[256];
-			(void)regerror(eval, &rp, errbuf, sizeof(errbuf));
-			yyerror("%s", errbuf);
-			/* NOT REACHED */
-		}
-		
-		/* compare string against pattern --  remember that patterns 
-		   are anchored to the beginning of the line */
-		if (regexec(&rp, $1, 2, rm, 0) == 0 && rm[0].rm_so == 0) {
-			char *val;
-			if (rm[1].rm_so >= 0) {
-				(void) asprintf(&val, "%.*s",
-					(int) (rm[1].rm_eo - rm[1].rm_so),
-					$1 + rm[1].rm_so);
-			} else {
-				(void) asprintf(&val, "%d",
-					(int)(rm[0].rm_eo - rm[0].rm_so));
-			}
-			if (val == NULL)
-				err(1, NULL);
-			$$ = val;
-		} else {
-			if (rp.re_nsub == 0) {
-				$$ = "0";
-			} else {
-				$$ = "";
-			}
-		}
-
-		}
-	| expr ADD_SUB_OPERATOR expr = {
-		/* Returns the results of addition, subtraction */
-		char *val;
-		int64_t res;
-		
-		res = perform_arith_op($1, $2, $3);
-		(void) asprintf(&val, "%lld", (long long int) res);
-		if (val == NULL)
-			err(1, NULL);
-		$$ = val;
-                }
-
-	| expr MUL_DIV_MOD_OPERATOR expr = {
-		/* 
-		 * Returns the results of multiply, divide or remainder of 
-		 * numeric-valued arguments.
-		 */
-		char *val;
-		int64_t res;
-
-		res = perform_arith_op($1, $2, $3);
-		(void) asprintf(&val, "%lld", (long long int) res);
-		if (val == NULL)
-			err(1, NULL);
-		$$ = val;
-
-		}
-	| expr COMPARE expr = {
-		/*
-		 * Returns the results of integer comparison if both arguments
-		 * are integers; otherwise, returns the results of string
-		 * comparison using the locale-specific collation sequence.
-		 * The result of each comparison is 1 if the specified relation
-		 * is true, or 0 if the relation is false.
-		 */
-
-		int64_t l, r;
-		int res;
-
-		res = 0;
-
-		/*
-		 * Slight hack to avoid differences in the compare code
-		 * between string and numeric compare.
-		 */
-		if (is_integer($1) && is_integer($3)) {
-			/* numeric comparison */
-			l = strtoll($1, NULL, 10);
-			r = strtoll($3, NULL, 10);
-		} else {
-			/* string comparison */
-			l = strcoll($1, $3);
-			r = 0;
-		}
-
-		switch($2[0]) {	
-		case '=': /* equal */
-			res = (l == r);
-			break;
-		case '>': /* greater or greater-equal */
-			if ($2[1] == '=')
-				res = (l >= r);
-			else
-				res = (l > r);
-			break;
-		case '<': /* lower or lower-equal */
-			if ($2[1] == '=')
-				res = (l <= r);
-			else
-				res = (l < r);
-			break;
-		case '!': /* not equal */
-			/* the check if this is != was done in yylex() */
-			res = (l != r);
-		}
-
-		$$ = (res) ? "1" : "0";
-
-		}
-	| LEFT_PARENT expr RIGHT_PARENT { $$ = $2; }
-	| LENGTH expr {
-		/*
-		 * Return length of 'expr' in bytes.
-		 */
+expr:	item
+|	LPAREN expr RPAREN {
+		$$ = $2;
+	}
+|	expr SPEC_OR {
+		$$ = is_empty_or_zero($1) ? NULL : "1";
+		if ($$)
+			skip_level++;
+	} expr {
+		$$ = $3 ? $1 : $4[0] != '\0' ? $4 : "0";
+		if ($3)
+			skip_level--;
+	}
+|	expr SPEC_AND {
+		$$ = is_empty_or_zero($1) ? NULL : "1";
+		if (!$$)
+			skip_level++;
+	} expr {
+		$$ = $3 && !is_empty_or_zero($4) ? $1 : "0";
+		if (!$3)
+			skip_level--;
+	}
+|	expr COMPARE expr {
+		$$ = skip_level == 0 && eval_compare($1, $2, $3) ? "1" : "0";
+	}
+|	expr ADD_SUB_OPERATOR expr {
+		$$ = skip_level == 0 ? eval_arith($1, $2, $3) : "";
+	}
+|	expr MUL_DIV_MOD_OPERATOR expr {
+		$$ = skip_level == 0 ? eval_arith($1, $2, $3) : "";
+	}
+|	expr SPEC_REG expr {
+		$$ = skip_level == 0 ? eval_match($1, $3) : "";
+	}
+|	LENGTH expr {
 		char *ln;
 
-		asprintf(&ln, "%ld", (long) strlen($2));
+		asprintf(&ln, "%zu", mbs_len($2, $2 + strlen($2)));
 		if (ln == NULL)
 			err(1, NULL);
 		$$ = ln;
-		}
-	;
+	}
+;
 
 item:	STRING
-	| ADD_SUB_OPERATOR
-	| MUL_DIV_MOD_OPERATOR
-	| COMPARE
-	| SPEC_OR
-	| SPEC_AND
-	| SPEC_REG
-	| LENGTH
-	;
+|	SPEC_OR
+|	SPEC_AND
+|	COMPARE
+|	ADD_SUB_OPERATOR
+|	MUL_DIV_MOD_OPERATOR
+|	SPEC_REG
+|	LENGTH
+;
+
 %%
 
-/*
- * Returns 1 if the string is empty or contains only numeric zero.
- */
 static int
-is_zero_or_null(const char *str)
+is_empty_or_zero(const char *str)
 {
 	char *endptr;
 
 	return str[0] == '\0'
-		|| ( strtoll(str, &endptr, 10) == 0LL
-			&& endptr[0] == '\0');
+		|| (strtoll(str, &endptr, 10) == 0 && endptr[0] == '\0');
 }
 
-/*
- * Returns 1 if the string is an integer.
- */
 static int
 is_integer(const char *str)
 {
 	char *endptr;
 
-	(void) strtoll(str, &endptr, 10);
+	(void)strtoll(str, &endptr, 10);
 	/* note we treat empty string as valid number */
-	return (endptr[0] == '\0');
+	return endptr[0] == '\0';
 }
 
 static int64_t
-perform_arith_op(const char *left, const char *op, const char *right)
+to_integer(const char *str)
+{
+	errno = 0;
+	int64_t num = strtoll(str, NULL, 10);
+	if (errno == ERANGE) {
+		yyerror("value '%s' is too %s is %lld", str,
+		    num > 0 ? "big, maximum" : "small, minimum",
+		    num > 0 ? LLONG_MAX : LLONG_MIN);
+	}
+	return num;
+}
+
+static const char *
+eval_arith(const char *left, const char *op, const char *right)
 {
 	int64_t res, l, r;
 
 	res = 0;
 
-	if (!is_integer(left)) {
+	if (!is_integer(left))
 		yyerror("non-integer argument '%s'", left);
-		/* NOTREACHED */
-	}
-	if (!is_integer(right)) {
+	if (!is_integer(right))
 		yyerror("non-integer argument '%s'", right);
-		/* NOTREACHED */
-	}
 
-	errno = 0;
-	l = strtoll(left, NULL, 10);
-	if (errno == ERANGE) {
-		yyerror("value '%s' is %s is %lld", left,
-		    (l > 0) ? "too big, maximum" : "too small, minimum",
-		    (l > 0) ? LLONG_MAX : LLONG_MIN);
-		/* NOTREACHED */
-	}
+	l = to_integer(left);
+	r = to_integer(right);
 
-	errno = 0;
-	r = strtoll(right, NULL, 10);
-	if (errno == ERANGE) {
-		yyerror("value '%s' is %s is %lld", right,
-		    (l > 0) ? "too big, maximum" : "too small, minimum",
-	  	    (l > 0) ? LLONG_MAX : LLONG_MIN);
-		/* NOTREACHED */
-	}
-
-	switch(op[0]) {
+	switch (op[0]) {
 	case '+':
-		/*
-		 * Check for over-& underflow.
-		 */
-		if ((l >= 0 && r <= INT64_MAX - l) ||
-		    (l <= 0 && r >= INT64_MIN - l)) {
-			res = l + r;
-		} else {
-			yyerror("integer overflow or underflow occurred for "
-                            "operation '%s %s %s'", left, op, right);
-		}
+		if ((r > 0 && l > INT64_MAX - r) ||
+		    (r < 0 && l < INT64_MIN - r))
+			goto integer_overflow;
+		res = l + r;
 		break;
 	case '-':
-		/*
-		 * Check for over-& underflow.
-		 */
 		if ((r > 0 && l < INT64_MIN + r) ||
-		    (r < 0 && l > INT64_MAX + r)) {
-			yyerror("integer overflow or underflow occurred for "
-			    "operation '%s %s %s'", left, op, right);
-		} else {
-			res = l - r;
-		}
+		    (r < 0 && l > INT64_MAX + r))
+			goto integer_overflow;
+		res = l - r;
 		break;
 	case '/':
 		if (r == 0)
-			yyerror("second argument to '%s' must not be zero", op);
+			goto invalid_zero;
 		if (l == INT64_MIN && r == -1)
-			yyerror("integer overflow or underflow occurred for "
-			    "operation '%s %s %s'", left, op, right);
+			goto integer_overflow;
 		res = l / r;
-			
 		break;
 	case '%':
 		if (r == 0)
-			yyerror("second argument to '%s' must not be zero", op);
+			goto invalid_zero;
 		if (l == INT64_MIN && r == -1)
-			yyerror("integer overflow or underflow occurred for "
-			    "operation '%s %s %s'", left, op, right);
+			goto integer_overflow;
 		res = l % r;
 		break;
 	case '*':
-		/*
-		 * Check for over-& underflow.
-		 */
-
-		/*
-		 * Simplify the conditions:
-		 *  - remove the case of both negative arguments
-		 *    unless the operation will cause an overflow
-		 */
 		if (l < 0 && r < 0 && l != INT64_MIN && r != INT64_MIN) {
 			l = -l;
 			r = -r;
 		}
 
-		/* - remove the case of negative l and positive r */
 		if (l < 0 && r >= 0) {
-			/* Use res as a temporary variable */
-			res = l;
+			int64_t tmp = l;
 			l = r;
-			r = res;
+			r = tmp;
 		}
 
 		if ((l < 0 && r < 0) ||
 		    (r > 0 && l > INT64_MAX / r) ||
-		    (r <= 0 && l != 0 && r < INT64_MIN / l)) {
-			yyerror("integer overflow or underflow occurred for "
-			    "operation '%s %s %s'", left, op, right);
-			/* NOTREACHED */
-		} else {
-			res = l * r;
-		}
+		    (r <= 0 && l != 0 && r < INT64_MIN / l))
+			goto integer_overflow;
+		res = l * r;
 		break;
 	}
-	return res;
+
+	char *val;
+	(void)asprintf(&val, "%lld", (long long int)res);
+	if (val == NULL)
+		err(1, NULL);
+	return val;
+
+integer_overflow:
+	yyerror("integer overflow or underflow occurred for "
+	    "operation '%s %s %s'", left, op, right);
+
+invalid_zero:
+	yyerror("second argument to '%s' must not be zero", op);
 }
 
-static const char *x = "|&=<>+-*/%:()";
+static int
+eval_compare(const char *left, const char *op, const char *right)
+{
+	int64_t l, r;
+
+	if (is_integer(left) && is_integer(right)) {
+		l = strtoll(left, NULL, 10);
+		r = strtoll(right, NULL, 10);
+	} else {
+		l = strcoll(left, right);
+		r = 0;
+	}
+
+	switch (op[0]) {
+	case '=':
+		return l == r;
+	case '>':
+		if (op[1] == '=')
+			return l >= r;
+		else
+			return l > r;
+	case '<':
+		if (op[1] == '=')
+			return l <= r;
+		else
+			return l < r;
+	default:
+		return l != r;
+	}
+}
+
+static size_t
+mbs_len(const char *s, const char *e)
+{
+	int len = 0;
+	size_t m = MB_CUR_MAX;
+	mbstate_t st;
+
+	memset(&st, 0, sizeof(st));
+	for (const char *p = s; p < e;) {
+		size_t n = mbrlen(p, (size_t)(e - p), &st);
+		if (n > m)
+			return strlen(s);
+		len++;
+		p += n;
+	}
+	return len;
+}
+
+static const char *
+eval_match(const char *str, const char *re)
+{
+	regex_t rp;
+	regmatch_t rm[2];
+	int rc;
+
+	if ((rc = regcomp(&rp, re, REG_BASIC)) != 0) {
+		char errbuf[256];
+		(void)regerror(rc, &rp, errbuf, sizeof(errbuf));
+		yyerror("%s", errbuf);
+	}
+
+	if (regexec(&rp, str, 2, rm, 0) == 0 && rm[0].rm_so == 0) {
+		char *val;
+		if (rm[1].rm_so >= 0) {
+			(void)asprintf(&val, "%.*s",
+				(int)(rm[1].rm_eo - rm[1].rm_so),
+				str + rm[1].rm_so);
+		} else {
+			(void)asprintf(&val, "%zu",
+			    mbs_len(str + rm[0].rm_so, str + rm[0].rm_eo));
+		}
+		if (val == NULL)
+			err(1, NULL);
+		return val;
+	}
+
+	if (rp.re_nsub == 0)
+		return "0";
+	else
+		return "";
+}
+
+static const char x[] = "|&=<>+-*/%:()";
 static const int x_token[] = {
 	SPEC_OR, SPEC_AND, COMPARE, COMPARE, COMPARE, ADD_SUB_OPERATOR,
 	ADD_SUB_OPERATOR, MUL_DIV_MOD_OPERATOR, MUL_DIV_MOD_OPERATOR, 
-	MUL_DIV_MOD_OPERATOR, SPEC_REG, LEFT_PARENT, RIGHT_PARENT
+	MUL_DIV_MOD_OPERATOR, SPEC_REG, LPAREN, RPAREN
 };
 
 static int handle_ddash = 1;
@@ -398,33 +344,25 @@ yylex(void)
 	const char *p = *av++;
 	int retval;
 
-	if (!p)
+	if (p == NULL)
 		retval = 0;
+	else if (p[0] == '\0')
+		retval = STRING;
 	else if (p[1] == '\0') {
 		const char *w = strchr(x, p[0]);
-		if (w) {
-			retval = x_token[w-x];
-		} else {
-			retval = STRING;
-		}
+		retval = w != NULL ? x_token[w - x] : STRING;
 	} else if (p[1] == '=' && p[2] == '\0'
-			&& (p[0] == '>' || p[0] == '<' || p[0] == '!'))
+		    && (p[0] == '>' || p[0] == '<' || p[0] == '!'))
 		retval = COMPARE;
-	else if (handle_ddash && p[0] == '-' && p[1] == '-' && p[2] == '\0') {
-		/* ignore "--" if passed as first argument and isn't followed
-		 * by another STRING */
+	else if (handle_ddash && strcmp(p, "--") == 0) {
+		handle_ddash = 0;
 		retval = yylex();
-		if (retval != STRING && retval != LEFT_PARENT
-		    && retval != RIGHT_PARENT) {
-			/* is not followed by string or parenthesis, use as
-			 * STRING */
+		if (retval != STRING && retval != LPAREN && retval != RPAREN) {
 			retval = STRING;
 			av--;	/* was increased in call to yylex() above */
 			p = "--";
-		} else {
-			/* "--" is to be ignored */
+		} else
 			p = yylval;
-		}
 	} else if (strcmp(p, "length") == 0)
 		retval = LENGTH;
 	else

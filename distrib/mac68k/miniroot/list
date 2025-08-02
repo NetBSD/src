@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.15 2015/04/22 19:25:18 christos Exp $
+#	$NetBSD: list,v 1.15.28.1 2025/08/02 05:20:21 perseant Exp $
 
 # mac68k extra's
 PROG	sbin/dmesg

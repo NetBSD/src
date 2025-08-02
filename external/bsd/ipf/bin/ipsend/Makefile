@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2023/06/03 21:31:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2025/08/02 05:21:05 perseant Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -37,7 +37,7 @@ iplang_y.h: iplang_y.c
 # We have a problem with make and linking ipsend
 # cc   -o /home/source/src/usr.sbin/ipf/ipsend/../../../dist/ipf/ipsend .....
 # isn't correct.
-# Use .NOPATH as an workaround for that problem
+# Use .NOPATH as a workaround for that problem
 .NOPATH: ipsend
 
 .include <bsd.prog.mk>

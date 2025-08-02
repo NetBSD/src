@@ -1,5 +1,5 @@
 /* Support for printing Modula 2 types for GDB, the GNU debugger.
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,9 +16,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "event-top.h"
+#include "language.h"
 #include "gdbsupport/gdb_obstack.h"
-#include "bfd.h"		/* Binary File Description */
+#include "bfd.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
@@ -226,7 +227,7 @@ static void m2_array (struct type *type, struct ui_file *stream,
 {
   gdb_printf (stream, "ARRAY [");
   if (type->target_type ()->length () > 0
-      && type->bounds ()->high.kind () != PROP_UNDEFINED)
+      && type->bounds ()->high.is_constant ())
     {
       if (type->index_type () != 0)
 	{
@@ -388,7 +389,7 @@ m2_get_discrete_bounds (struct type *type, LONGEST *lowp, LONGEST *highp)
 	      return 0;
 	    }
 	}
-      /* fall through */
+      [[fallthrough]];
     default:
       return get_discrete_bounds (type, lowp, highp);
     }
@@ -569,15 +570,14 @@ m2_record_fields (struct type *type, struct ui_file *stream, int show,
 	  m2_print_type (type->field (i).type (),
 			 "",
 			 stream, 0, level + 4, flags);
-	  if (TYPE_FIELD_PACKED (type, i))
+	  if (type->field (i).is_packed ())
 	    {
 	      /* It is a bitfield.  This code does not attempt
 		 to look at the bitpos and reconstruct filler,
 		 unnamed fields.  This would lead to misleading
 		 results if the compiler does not put out fields
 		 for such things (I don't know what it does).  */
-	      gdb_printf (stream, " : %d",
-			  TYPE_FIELD_BITSIZE (type, i));
+	      gdb_printf (stream, " : %d", type->field (i).bitsize ());
 	    }
 	  gdb_printf (stream, ";\n");
 	}

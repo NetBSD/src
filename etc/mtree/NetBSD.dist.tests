@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.205.2.1 2024/06/29 19:43:25 perseant Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.205.2.2 2025/08/02 05:20:44 perseant Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -382,6 +382,7 @@
 ./usr/tests/net/if_lagg
 ./usr/tests/net/if_loop
 ./usr/tests/net/if_pppoe
+./usr/tests/net/if_shmif
 ./usr/tests/net/if_tap
 ./usr/tests/net/if_tun
 ./usr/tests/net/if_vether
@@ -452,6 +453,8 @@
 ./usr/tests/usr.bin/error
 ./usr/tests/usr.bin/find
 ./usr/tests/usr.bin/fstat
+./usr/tests/usr.bin/ftp
+./usr/tests/usr.bin/gcov
 ./usr/tests/usr.bin/gdb
 ./usr/tests/usr.bin/grep
 ./usr/tests/usr.bin/gzip
@@ -479,6 +482,7 @@
 ./usr/tests/usr.bin/sdiff
 ./usr/tests/usr.bin/sed
 ./usr/tests/usr.bin/shmif_dumpbus
+./usr/tests/usr.bin/shmif_pcapin
 ./usr/tests/usr.bin/sort
 ./usr/tests/usr.bin/stat
 ./usr/tests/usr.bin/tar
@@ -501,6 +505,7 @@
 ./usr/tests/usr.sbin/cpuctl
 ./usr/tests/usr.sbin/execsnoop
 ./usr/tests/usr.sbin/inetd
+./usr/tests/usr.sbin/makefs
 ./usr/tests/usr.sbin/mtree
 ./usr/tests/usr.sbin/opensnoop
 ./usr/tests/usr.sbin/stdethers

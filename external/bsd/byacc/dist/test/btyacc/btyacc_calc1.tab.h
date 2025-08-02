@@ -1,4 +1,4 @@
-/*	$NetBSD: btyacc_calc1.tab.h,v 1.1.1.4 2018/12/23 15:26:13 christos Exp $	*/
+/*	$NetBSD: btyacc_calc1.tab.h,v 1.1.1.4.12.1 2025/08/02 05:20:56 perseant Exp $	*/
 
 #ifndef _calc1__defines_h_
 #define _calc1__defines_h_
@@ -13,7 +13,7 @@
 #endif
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
-typedef union
+typedef union YYSTYPE
 {
 	int ival;
 	double dval;

@@ -1,7 +1,6 @@
 /* THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi:set ro:
   Original: powerpc-altivec32l.xml */
 
-#include "defs.h"
 #include "osabi.h"
 #include "target-descriptions.h"
 

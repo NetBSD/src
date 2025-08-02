@@ -1,6 +1,6 @@
 /* Signal trampoline unwinder.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +20,9 @@
 #ifndef TRAMP_FRAME_H
 #define TRAMP_FRAME_H
 
-#include "frame.h"		/* For "enum frame_type".  */
+#include "frame.h"
+#include "frame-unwind.h"	/* For frame_prev_arch_ftype.  */
 
-struct trad_frame;
 class frame_info_ptr;
 struct trad_frame_cache;
 
@@ -66,7 +66,7 @@ struct tramp_frame
   /* Initialize a trad-frame cache corresponding to the tramp-frame.
      FUNC is the address of the instruction TRAMP[0] in memory.  */
   void (*init) (const struct tramp_frame *self,
-		frame_info_ptr this_frame,
+		const frame_info_ptr &this_frame,
 		struct trad_frame_cache *this_cache,
 		CORE_ADDR func);
   /* Return non-zero if the tramp-frame is valid for the PC requested.
@@ -74,8 +74,12 @@ struct tramp_frame
      sequence against if required.  If this is NULL, then the tramp-frame
      is valid for any PC.  */
   int (*validate) (const struct tramp_frame *self,
-		   frame_info_ptr this_frame,
+		   const frame_info_ptr &this_frame,
 		   CORE_ADDR *pc);
+
+  /* Given the current frame in THIS_FRAME and a frame cache in FRAME_CACHE,
+     return the architecture of the previous frame.  */
+  frame_prev_arch_ftype *prev_arch;
 };
 
 void tramp_frame_prepend_unwinder (struct gdbarch *gdbarch,

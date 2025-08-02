@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.9 2023/08/17 20:19:40 christos Exp $	*/
+/*	$NetBSD: interface.h,v 1.9.2.1 2025/08/02 05:23:21 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988-2002
@@ -65,7 +65,7 @@ struct bpf_program;
  * With Capsicum bpf_dump() may be not declared even if HAVE_BPF_DUMP is set.
  */
 #if !defined(HAVE_BPF_DUMP) || \
-    (defined(HAVE_BPF_DUMP) && HAVE_CAPSICUM && !defined(bpf_dump))
+    (defined(HAVE_BPF_DUMP) && defined(HAVE_CAPSICUM) && !defined(bpf_dump))
 extern void bpf_dump(const struct bpf_program *, int);
 
 #endif

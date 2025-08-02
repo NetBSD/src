@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2024/01/20 21:35:59 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.15.2.1 2025/08/02 05:20:43 perseant Exp $
 #
 #	etc.evbppc/Makefile.inc -- evbppc-specific etc Makefile targets
 #
@@ -51,17 +51,22 @@ __mkimage: .USE
 	TOOL_PAX=${TOOL_PAX} \
 	TOOL_MKUBOOTIMAGE=${TOOL_MKUBOOTIMAGE} \
 	TOOL_MTREE=${TOOL_MTREE} \
+	TOOL_SED=${TOOL_SED} \
+	TOOL_PWD_MKDB=${TOOL_PWD_MKDB} \
 	HOST_SH=${HOST_SH} \
 	KERNOBJDIR=${KERNOBJDIR} \
 	MACHINE=${MACHINE} \
 	MKDTB=${MKDTB} \
+	MKPOSTFIX=${MKPOSTFIX} \
+	CKSUM=${CKSUM} \
+	IMAGEDIR=${IMAGE.dir} \
 	${HOST_SH} -x ${MKIMAGE} -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
             -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
             ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
 
 .if ${MACHINE_ARCH} == "powerpc"
 smp_wii: __mkimage
-MKI_OPTS.smp_wii=	-K ${IMAGE.kern}
+MKI_OPTS.smp_wii=	-K ${IMAGE.kern} -x
 SNAP_MD_POST_DEPS+=	smp_wii
 INSTALLATION_DIRS+=	binary/gzimg
 .endif

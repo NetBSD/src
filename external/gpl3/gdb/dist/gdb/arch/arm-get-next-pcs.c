@@ -1,6 +1,6 @@
 /* Common code for ARM software single stepping support.
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "gdbsupport/gdb_vecs.h"
 #include "gdbsupport/common-regcache.h"
 #include "arm.h"
@@ -32,7 +31,7 @@ arm_get_next_pcs_ctor (struct arm_get_next_pcs *self,
 		       int byte_order,
 		       int byte_order_for_code,
 		       int has_thumb2_breakpoint,
-		       struct regcache *regcache)
+		       reg_buffer_common *regcache)
 {
   self->ops = ops;
   self->byte_order = byte_order;
@@ -268,12 +267,12 @@ thumb_get_next_pcs_raw (struct arm_get_next_pcs *self)
 {
   int byte_order = self->byte_order;
   int byte_order_for_code = self->byte_order_for_code;
+  reg_buffer_common *regcache = self->regcache;
   CORE_ADDR pc = regcache_read_pc (self->regcache);
   unsigned long pc_val = ((unsigned long) pc) + 4;	/* PC after prefetch */
   unsigned short inst1;
   CORE_ADDR nextpc = pc + 2;		/* Default is next instruction.  */
   ULONGEST status, itstate;
-  struct regcache *regcache = self->regcache;
   std::vector<CORE_ADDR> next_pcs;
 
   nextpc = MAKE_THUMB_ADDR (nextpc);
@@ -653,8 +652,8 @@ arm_get_next_pcs_raw (struct arm_get_next_pcs *self)
   unsigned long this_instr = 0;
   unsigned long status;
   CORE_ADDR nextpc;
-  struct regcache *regcache = self->regcache;
-  CORE_ADDR pc = regcache_read_pc (self->regcache);
+  reg_buffer_common *regcache = self->regcache;
+  CORE_ADDR pc = regcache_read_pc (regcache);
   std::vector<CORE_ADDR> next_pcs;
 
   pc_val = (unsigned long) pc;

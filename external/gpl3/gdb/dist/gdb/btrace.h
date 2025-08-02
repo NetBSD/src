@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2023 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>.
 
@@ -27,7 +27,7 @@
    list of sequential control-flow blocks, one such list per thread.  */
 
 #include "gdbsupport/btrace-common.h"
-#include "target/waitstatus.h" /* For enum target_stop_reason.  */
+#include "target/waitstatus.h"
 #include "gdbsupport/enum-flags.h"
 
 #if defined (HAVE_LIBIPT)
@@ -392,12 +392,6 @@ extern void btrace_clear (struct thread_info *);
 
 /* Clear the branch trace for all threads when an object file goes away.  */
 extern void btrace_free_objfile (struct objfile *);
-
-/* Parse a branch trace xml document XML into DATA.  */
-extern void parse_xml_btrace (struct btrace_data *data, const char *xml);
-
-/* Parse a branch trace configuration xml document XML into CONF.  */
-extern void parse_xml_btrace_conf (struct btrace_config *conf, const char *xml);
 
 /* Dereference a branch trace instruction iterator.  Return a pointer to the
    instruction the iterator points to.

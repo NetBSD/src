@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.1.1.1 2020/06/15 01:52:54 christos Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.1.1.1.8.1 2025/08/02 05:20:53 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -27,9 +27,11 @@
 #include "config.h"
 #endif
 
+#ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.1.1.1 2020/06/15 01:52:54 christos Exp $");
+__RCSID("$NetBSD: fparseln.c,v 1.1.1.1.8.1 2025/08/02 05:20:53 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>

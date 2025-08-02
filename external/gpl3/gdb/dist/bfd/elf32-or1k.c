@@ -1,5 +1,5 @@
 /* Or1k-specific support for 32-bit ELF.
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
    Contributed for OR32 by Johan Rydberg, jrydberg@opencores.org
 
    PIC parts added by Stefan Kristiansson, stefan.kristiansson@saunalahti.fi,
@@ -1341,6 +1341,17 @@ or1k_elf_relocate_section (bfd *output_bfd,
   sym_hashes = elf_sym_hashes (input_bfd);
   relend = relocs + input_section->reloc_count;
 
+  /* Make a full scan for R_OR1K_GOT_AHI16, since it could be AFTER R_OR1K_GOT16.  */
+  for (rel = relocs; rel < relend; rel++)
+    {
+      int r_type = ELF32_R_TYPE (rel->r_info);
+      if (r_type==R_OR1K_GOT_AHI16)
+        {
+	  saw_gotha = true;
+	  break;
+        }
+    }
+
   for (rel = relocs; rel < relend; rel++)
     {
       reloc_howto_type *howto;
@@ -1519,9 +1530,6 @@ or1k_elf_relocate_section (bfd *output_bfd,
 	    if (r_type == R_OR1K_GOT16
 		|| r_type == R_OR1K_GOT_AHI16)
 	      relocation -= got_sym_value;
-
-	    if (r_type == R_OR1K_GOT_AHI16)
-	      saw_gotha = true;
 
 	    /* If we have a R_OR1K_GOT16 following a R_OR1K_GOT_AHI16
 	       relocation we assume the code is doing the right thing to avoid
@@ -2443,8 +2451,6 @@ or1k_elf_finish_dynamic_symbol (bfd *output_bfd,
   bfd_byte *loc;
 
   htab = or1k_elf_hash_table (info);
-  if (htab == NULL)
-    return false;
 
   if (h->plt.offset != (bfd_vma) -1)
     {
@@ -3039,8 +3045,8 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-or1k_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				struct bfd_link_info *info)
+or1k_elf_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			     struct bfd_link_info *info)
 {
   struct elf_or1k_link_hash_table *htab;
   bfd *dynobj;
@@ -3053,7 +3059,8 @@ or1k_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
     return false;
 
   dynobj = htab->root.dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (htab->root.dynamic_sections_created)
     {
@@ -3406,7 +3413,7 @@ or1k_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #define elf_backend_copy_indirect_symbol	or1k_elf_copy_indirect_symbol
 #define elf_backend_create_dynamic_sections	_bfd_elf_create_dynamic_sections
 #define elf_backend_finish_dynamic_sections	or1k_elf_finish_dynamic_sections
-#define elf_backend_size_dynamic_sections	or1k_elf_size_dynamic_sections
+#define elf_backend_late_size_sections		or1k_elf_late_size_sections
 #define elf_backend_adjust_dynamic_symbol	or1k_elf_adjust_dynamic_symbol
 #define elf_backend_finish_dynamic_symbol	or1k_elf_finish_dynamic_symbol
 

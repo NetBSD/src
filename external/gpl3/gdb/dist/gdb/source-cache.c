@@ -1,5 +1,5 @@
 /* Cache of styled source file text
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,13 +16,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "source-cache.h"
 #include "gdbsupport/scoped_fd.h"
 #include "source.h"
 #include "cli/cli-style.h"
 #include "symtab.h"
-#include "gdbsupport/selftest.h"
 #include "objfiles.h"
 #include "exec.h"
 #include "cli/cli-cmds.h"
@@ -37,6 +35,11 @@
 #include <sstream>
 #include <srchilite/sourcehighlight.h>
 #include <srchilite/langmap.h>
+#include <srchilite/settings.h>
+#endif
+
+#if GDB_SELF_TEST
+#include "gdbsupport/selftest.h"
 #endif
 
 /* The number of source files we'll cache.  */
@@ -95,7 +98,7 @@ source_cache::get_plain_source_lines (struct symtab *s,
 {
   scoped_fd desc (open_source_file (s));
   if (desc.get () < 0)
-    perror_with_name (symtab_to_filename_for_display (s));
+    perror_with_name (symtab_to_filename_for_display (s), -desc.get ());
 
   struct stat st;
   if (fstat (desc.get (), &st) < 0)
@@ -191,6 +194,109 @@ get_language_name (enum language lang)
 
 #endif /* HAVE_SOURCE_HIGHLIGHT */
 
+/* Try to highlight CONTENTS from file FULLNAME in language LANG using
+   the GNU source-higlight library.  Return true if highlighting
+   succeeded.  */
+
+static bool
+try_source_highlight (std::string &contents ATTRIBUTE_UNUSED,
+		      enum language lang ATTRIBUTE_UNUSED,
+		      const std::string &fullname ATTRIBUTE_UNUSED)
+{
+#ifdef HAVE_SOURCE_HIGHLIGHT
+  if (!use_gnu_source_highlight)
+    return false;
+
+  const char *lang_name = get_language_name (lang);
+
+  /* The global source highlight object, or null if one was
+     never constructed.  This is stored here rather than in
+     the class so that we don't need to include anything or do
+     conditional compilation in source-cache.h.  */
+  static srchilite::SourceHighlight *highlighter;
+
+  /* The global source highlight language map object.  */
+  static srchilite::LangMap *langmap;
+
+  bool styled = false;
+  try
+    {
+      if (highlighter == nullptr)
+	{
+	  highlighter = new srchilite::SourceHighlight ("esc.outlang");
+	  highlighter->setStyleFile ("esc.style");
+
+	  const std::string &datadir = srchilite::Settings::retrieveDataDir ();
+	  langmap = new srchilite::LangMap (datadir, "lang.map");
+	}
+
+      std::string detected_lang;
+      if (lang_name == nullptr)
+	{
+	  detected_lang = langmap->getMappedFileNameFromFileName (fullname);
+	  if (detected_lang.empty ())
+	    return false;
+	  lang_name = detected_lang.c_str ();
+	}
+
+      std::istringstream input (contents);
+      std::ostringstream output;
+      highlighter->highlight (input, output, lang_name, fullname);
+      contents = std::move (output).str ();
+      styled = true;
+    }
+  catch (...)
+    {
+      /* Source Highlight will throw an exception if
+	 highlighting fails.  One possible reason it can fail
+	 is if the language is unknown -- which matters to gdb
+	 because Rust support wasn't added until after 3.1.8.
+	 Ignore exceptions here.  */
+    }
+
+  return styled;
+#else
+  return false;
+#endif /* HAVE_SOURCE_HIGHLIGHT */
+}
+
+#ifdef HAVE_SOURCE_HIGHLIGHT
+#if GDB_SELF_TEST
+namespace selftests
+{
+static void gnu_source_highlight_test ()
+{
+  const std::string prog
+    = ("int\n"
+       "foo (void)\n"
+       "{\n"
+       "  return 0;\n"
+       "}\n");
+  const std::string fullname = "test.c";
+  std::string styled_prog;
+
+  bool res = false;
+  bool saw_exception = false;
+  styled_prog = prog;
+  try
+    {
+      res = try_source_highlight (styled_prog, language_c, fullname);
+    }
+  catch (...)
+    {
+      saw_exception = true;
+    }
+
+  SELF_CHECK (!saw_exception);
+  if (res)
+    SELF_CHECK (prog.size () < styled_prog.size ());
+  else
+    SELF_CHECK (prog == styled_prog);
+}
+}
+#endif /* GDB_SELF_TEST */
+#endif /* HAVE_SOURCE_HIGHLIGHT */
+
 /* See source-cache.h.  */
 
 bool
@@ -228,51 +334,37 @@ source_cache::ensure (struct symtab *s)
       return false;
     }
 
-  if (source_styling && gdb_stdout->can_emit_style_escape ())
+  if (source_styling && gdb_stdout->can_emit_style_escape ()
+      && m_no_styling_files.count (fullname) == 0)
     {
-#ifdef HAVE_SOURCE_HIGHLIGHT
-      bool already_styled = false;
-      const char *lang_name = get_language_name (s->language ());
-      if (lang_name != nullptr && use_gnu_source_highlight)
+      bool already_styled
+	= try_source_highlight (contents, s->language (), fullname);
+
+      if (!already_styled)
 	{
-	  /* The global source highlight object, or null if one was
-	     never constructed.  This is stored here rather than in
-	     the class so that we don't need to include anything or do
-	     conditional compilation in source-cache.h.  */
-	  static srchilite::SourceHighlight *highlighter;
-
-	  try
+	  std::optional<std::string> ext_contents;
+	  ext_contents = ext_lang_colorize (fullname, contents);
+	  if (ext_contents.has_value ())
 	    {
-	      if (highlighter == nullptr)
-		{
-		  highlighter = new srchilite::SourceHighlight ("esc.outlang");
-		  highlighter->setStyleFile ("esc.style");
-		}
-
-	      std::istringstream input (contents);
-	      std::ostringstream output;
-	      highlighter->highlight (input, output, lang_name, fullname);
-	      contents = output.str ();
+	      contents = std::move (*ext_contents);
 	      already_styled = true;
-	    }
-	  catch (...)
-	    {
-	      /* Source Highlight will throw an exception if
-		 highlighting fails.  One possible reason it can fail
-		 is if the language is unknown -- which matters to gdb
-		 because Rust support wasn't added until after 3.1.8.
-		 Ignore exceptions here and fall back to
-		 un-highlighted text. */
 	    }
 	}
 
       if (!already_styled)
-#endif /* HAVE_SOURCE_HIGHLIGHT */
 	{
-	  gdb::optional<std::string> ext_contents;
-	  ext_contents = ext_lang_colorize (fullname, contents);
-	  if (ext_contents.has_value ())
-	    contents = std::move (*ext_contents);
+	  /* Styling failed.  Styling can fail for instance for these
+	     reasons:
+	     - the language is not supported.
+	     - the language cannot not be auto-detected from the file name.
+	     - no stylers available.
+
+	     Since styling failed, don't try styling the file again after it
+	     drops from the cache.
+
+	     Note that clearing the source cache also clears
+	     m_no_styling_files.  */
+	  m_no_styling_files.insert (fullname);
 	}
     }
 
@@ -436,5 +528,9 @@ styling to source code lines that are shown."),
 
 #if GDB_SELF_TEST
   selftests::register_test ("source-cache", selftests::extract_lines_test);
+#ifdef HAVE_SOURCE_HIGHLIGHT
+  selftests::register_test ("gnu-source-highlight",
+			    selftests::gnu_source_highlight_test);
+#endif
 #endif
 }

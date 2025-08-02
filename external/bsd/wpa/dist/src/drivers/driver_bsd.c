@@ -139,7 +139,9 @@ bsd_get80211(void *priv, struct ieee80211req *ireq, int op, void *arg,
 	ireq->i_data = arg;
 
 	if (ioctl(drv->global->sock, SIOCG80211, ireq) < 0) {
-		wpa_printf(MSG_ERROR, "ioctl[SIOCG80211, op=%u, "
+		int level = drv->if_removed ? MSG_DEBUG : MSG_ERROR;
+
+		wpa_printf(level, "ioctl[SIOCG80211, op=%u, "
 			   "arg_len=%u]: %s", op, arg_len, strerror(errno));
 		return -1;
 	}
@@ -310,14 +312,20 @@ bsd_get_iface_flags(struct bsd_driver_data *drv)
 }
 
 static int
-bsd_set_key(const char *ifname, void *priv, enum wpa_alg alg,
-	    const unsigned char *addr, int key_idx, int set_tx, const u8 *seq,
-	    size_t seq_len, const u8 *key, size_t key_len)
+bsd_set_key(void *priv, struct wpa_driver_set_key_params *params)
 {
 	struct ieee80211req_key wk;
 #ifdef IEEE80211_KEY_NOREPLAY
 	struct bsd_driver_data *drv = priv;
 #endif /* IEEE80211_KEY_NOREPLAY */
+	enum wpa_alg alg = params->alg;
+	const u8 *addr = params->addr;
+	int key_idx = params->key_idx;
+	int set_tx = params->set_tx;
+	const u8 *seq = params->seq;
+	size_t seq_len = params->seq_len;
+	const u8 *key = params->key;
+	size_t key_len = params->key_len;
 
 	wpa_printf(MSG_DEBUG, "%s: alg=%d addr=%p key_idx=%d set_tx=%d "
 		   "seq_len=%zu key_len=%zu", __func__, alg, addr, key_idx,
@@ -547,12 +555,12 @@ bsd_new_sta(void *priv, void *ctx, u8 addr[IEEE80211_ADDR_LEN])
 		ielen += 2;
 
 no_ie:
-	drv_event_assoc(ctx, addr, iebuf, ielen, 0);
+	drv_event_assoc(ctx, addr, iebuf, ielen, NULL, 0, NULL, -1, 0);
 }
 
 static int
 bsd_send_eapol(void *priv, const u8 *addr, const u8 *data, size_t data_len,
-	       int encrypt, const u8 *own_addr, u32 flags)
+	       int encrypt, const u8 *own_addr, u32 flags, int link_id)
 {
 	struct bsd_driver_data *drv = priv;
 
@@ -574,17 +582,13 @@ bsd_set_freq(void *priv, struct hostapd_freq_params *freq)
 
 	if (channel < 14) {
 		mode =
-#ifdef CONFIG_IEEE80211N
 			freq->ht_enabled ? IFM_IEEE80211_11NG :
-#endif /* CONFIG_IEEE80211N */
-		        IFM_IEEE80211_11G;
+			IFM_IEEE80211_11G;
 	} else if (channel == 14) {
 		mode = IFM_IEEE80211_11B;
 	} else {
 		mode =
-#ifdef CONFIG_IEEE80211N
 			freq->ht_enabled ? IFM_IEEE80211_11NA :
-#endif /* CONFIG_IEEE80211N */
 			IFM_IEEE80211_11A;
 	}
 	if (bsd_set_mediaopt(drv, IFM_MMASK, mode) < 0) {
@@ -635,7 +639,7 @@ bsd_route_overflow(int sock, void *ctx, struct bsd_driver_global *global)
 	if (getifaddrs(&ifaddrs) == -1) {
 		wpa_printf(MSG_ERROR, "%s getifaddrs() failed: %s",
 			   __func__, strerror(errno));
-			   return;
+		return;
 	}
 
 	/* add or update existing interfaces */
@@ -643,31 +647,31 @@ bsd_route_overflow(int sock, void *ctx, struct bsd_driver_global *global)
 		if (ifa->ifa_addr == NULL ||
 		    ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
-		sdl = (struct sockaddr_dl *)(void *)ifa->ifa_addr;
+		sdl = (struct sockaddr_dl *) (void *) ifa->ifa_addr;
 		drv = bsd_get_drvname(global, ifa->ifa_name);
 		if (drv != NULL &&
 		    (drv->ifindex != sdl->sdl_index || drv->if_removed)) {
 			wpa_printf(MSG_DEBUG,
-			    "RTM_IFANNOUNCE: Interface '%s' added",
-			    drv->ifname);
+				   "RTM_IFANNOUNCE: Interface '%s' added",
+				   drv->ifname);
 			drv->ifindex = sdl->sdl_index;
 			drv->if_removed = 0;
 			event.interface_status.ievent = EVENT_INTERFACE_ADDED;
 			os_strlcpy(event.interface_status.ifname, ifa->ifa_name,
-			    sizeof(event.interface_status.ifname));
+				   sizeof(event.interface_status.ifname));
 			wpa_supplicant_event(drv->ctx, EVENT_INTERFACE_STATUS,
 					     &event);
 		}
-		if (drv == NULL &&
+		if (!drv &&
 		    (drv = bsd_get_drvindex(global, sdl->sdl_index)) != NULL) {
 			/* Driver name is invalid */
 			wpa_printf(MSG_DEBUG,
-			    "RTM_IFANNOUNCE: Interface '%s' removed",
-			    drv->ifname);
+				   "RTM_IFANNOUNCE: Interface '%s' removed",
+				   drv->ifname);
 			drv->if_removed = 1;
 			event.interface_status.ievent = EVENT_INTERFACE_REMOVED;
 			os_strlcpy(event.interface_status.ifname, drv->ifname,
-			    sizeof(event.interface_status.ifname));
+				   sizeof(event.interface_status.ifname));
 			wpa_supplicant_event(drv->ctx, EVENT_INTERFACE_STATUS,
 					     &event);
 		}
@@ -679,22 +683,22 @@ bsd_route_overflow(int sock, void *ctx, struct bsd_driver_global *global)
 			if (ifa->ifa_addr == NULL ||
 			    ifa->ifa_addr->sa_family != AF_LINK)
 				continue;
-			sdl = (struct sockaddr_dl *)(void *)ifa->ifa_addr;
+			sdl = (struct sockaddr_dl *) (void *) ifa->ifa_addr;
 			if (os_strcmp(drv->ifname, ifa->ifa_name) == 0)
 				break;
 		}
 		if (ifa == NULL && !drv->if_removed) {
 			wpa_printf(MSG_DEBUG,
-			    "RTM_IFANNOUNCE: Interface '%s' removed",
-			    drv->ifname);
+				   "RTM_IFANNOUNCE: Interface '%s' removed",
+				   drv->ifname);
 			drv->if_removed = 1;
 			event.interface_status.ievent = EVENT_INTERFACE_REMOVED;
 			os_strlcpy(event.interface_status.ifname, drv->ifname,
-			    sizeof(event.interface_status.ifname));
+				   sizeof(event.interface_status.ifname));
 			wpa_supplicant_event(drv->ctx, EVENT_INTERFACE_STATUS,
 					     &event);
 		}
-		if (ifa == NULL)
+		if (!ifa)
 			continue;
 
 		if ((ifa->ifa_flags & IFF_UP) == 0 &&
@@ -704,7 +708,7 @@ bsd_route_overflow(int sock, void *ctx, struct bsd_driver_global *global)
 			wpa_supplicant_event(drv->ctx, EVENT_INTERFACE_DISABLED,
 					     NULL);
 		} else if ((ifa->ifa_flags & IFF_UP) != 0 &&
-		    (drv->flags & IFF_UP) == 0) {
+			   (drv->flags & IFF_UP) == 0) {
 			wpa_printf(MSG_DEBUG, "RTM_IFINFO: Interface '%s' UP",
 				   drv->ifname);
 			wpa_supplicant_event(drv->ctx, EVENT_INTERFACE_ENABLED,
@@ -715,7 +719,7 @@ bsd_route_overflow(int sock, void *ctx, struct bsd_driver_global *global)
 
 	freeifaddrs(ifaddrs);
 }
-#endif
+#endif /* SO_RERROR */
 
 static void
 bsd_wireless_event_receive(int sock, void *ctx, void *sock_ctx)
@@ -740,7 +744,7 @@ bsd_wireless_event_receive(int sock, void *ctx, void *sock_ctx)
 #ifdef SO_RERROR
 		if (errno == ENOBUFS)
 			bsd_route_overflow(sock, ctx, sock_ctx);
-#endif
+#endif /* SO_RERROR */
 		return;
 	}
 
@@ -880,7 +884,7 @@ bsd_wireless_event_receive(int sock, void *ctx, void *sock_ctx)
 #undef WPA_OUI_TYPE
 
 static int bsd_sta_deauth(void *priv, const u8 *own_addr, const u8 *addr,
-			  u16 reason_code);
+			  u16 reason_code, int link_id);
 
 static const char *
 ether_sprintf(const u8 *addr)
@@ -904,7 +908,7 @@ bsd_set_privacy(void *priv, int enabled)
 
 static int
 bsd_get_seqnum(const char *ifname, void *priv, const u8 *addr, int idx,
-	       u8 *seq)
+	       int link_id, u8 *seq)
 {
 	struct ieee80211req_key wk;
 
@@ -944,12 +948,13 @@ bsd_get_seqnum(const char *ifname, void *priv, const u8 *addr, int idx,
 
 
 static int
-bsd_flush(void *priv)
+bsd_flush(void *priv, int link_id)
 {
 	u8 allsta[IEEE80211_ADDR_LEN];
 
 	memset(allsta, 0xff, IEEE80211_ADDR_LEN);
-	return bsd_sta_deauth(priv, NULL, allsta, IEEE80211_REASON_AUTH_LEAVE);
+	return bsd_sta_deauth(priv, NULL, allsta, IEEE80211_REASON_AUTH_LEAVE,
+			      -1);
 }
 
 
@@ -972,7 +977,8 @@ bsd_read_sta_driver_data(void *priv, struct hostap_sta_driver_data *data,
 }
 
 static int
-bsd_sta_deauth(void *priv, const u8 *own_addr, const u8 *addr, u16 reason_code)
+bsd_sta_deauth(void *priv, const u8 *own_addr, const u8 *addr, u16 reason_code,
+	       int link_id)
 {
 	return bsd_send_mlme_param(priv, IEEE80211_MLME_DEAUTH, reason_code,
 				   addr);
@@ -1309,7 +1315,7 @@ wpa_driver_bsd_scan(void *priv, struct wpa_driver_scan_params *params)
 	/* NB: interface must be marked UP to do a scan */
 	if (!(drv->flags & IFF_UP)) {
 		wpa_printf(MSG_DEBUG, "%s: interface is not up, cannot scan",
-		           __func__);
+			   __func__);
 		return -1;
 	}
 
@@ -1559,6 +1565,7 @@ wpa_driver_bsd_init(void *ctx, const char *ifname, void *priv)
 #define	GETPARAM(drv, param, v) \
 	(((v) = get80211param(drv, param)) != -1)
 	struct bsd_driver_data *drv;
+	int i;
 
 	drv = os_zalloc(sizeof(*drv));
 	if (drv == NULL)
@@ -1596,6 +1603,10 @@ wpa_driver_bsd_init(void *ctx, const char *ifname, void *priv)
 
 	if (wpa_driver_bsd_capa(drv))
 		goto fail;
+
+	/* Update per interface supported AKMs */
+	for (i = 0; i < WPA_IF_MAX; i++)
+		drv->capa.key_mgmt_iftype[i] = drv->capa.key_mgmt;
 
 	/* Down interface during setup. */
 	if (bsd_get_iface_flags(drv) < 0)
@@ -1652,11 +1663,14 @@ static void *
 bsd_global_init(void *ctx)
 {
 	struct bsd_driver_global *global;
-#ifdef RO_MSGFILTER
+#if defined(RO_MSGFILTER) || defined(ROUTE_MSGFILTER)
 	unsigned char msgfilter[] = {
 		RTM_IEEE80211,
 		RTM_IFINFO, RTM_IFANNOUNCE,
 	};
+#endif
+#ifdef ROUTE_MSGFILTER
+	unsigned int i, msgfilter_mask;
 #endif
 
 	global = os_zalloc(sizeof(*global));
@@ -1666,24 +1680,33 @@ bsd_global_init(void *ctx)
 	global->ctx = ctx;
 	dl_list_init(&global->ifaces);
 
-	global->sock = socket(PF_INET, SOCK_DGRAM|SOCK_CLOEXEC, 0);
+	global->sock = socket(PF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
 	if (global->sock < 0) {
 		wpa_printf(MSG_ERROR, "socket[PF_INET,SOCK_DGRAM]: %s",
 			   strerror(errno));
 		goto fail1;
 	}
 
-	global->route = socket(PF_ROUTE, SOCK_RAW|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
+	global->route = socket(PF_ROUTE,
+			       SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
 	if (global->route < 0) {
 		wpa_printf(MSG_ERROR, "socket[PF_ROUTE,SOCK_RAW]: %s",
 			   strerror(errno));
 		goto fail;
 	}
 
-#ifdef RO_MSGFILTER
+#if defined(RO_MSGFILTER)
 	if (setsockopt(global->route, PF_ROUTE, RO_MSGFILTER,
 	    &msgfilter, sizeof(msgfilter)) < 0)
 		wpa_printf(MSG_ERROR, "socket[PF_ROUTE,RO_MSGFILTER]: %s",
+			   strerror(errno));
+#elif defined(ROUTE_MSGFILTER)
+	msgfilter_mask = 0;
+	for (i = 0; i < (sizeof(msgfilter) / sizeof(msgfilter[0])); i++)
+		msgfilter_mask |= ROUTE_FILTER(msgfilter[i]);
+	if (setsockopt(global->route, PF_ROUTE, ROUTE_MSGFILTER,
+	    &msgfilter_mask, sizeof(msgfilter_mask)) < 0)
+		wpa_printf(MSG_ERROR, "socket[PF_ROUTE,ROUTE_MSGFILTER]: %s",
 			   strerror(errno));
 #endif
 

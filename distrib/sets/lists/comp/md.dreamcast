@@ -1,4 +1,5 @@
-# $NetBSD: md.dreamcast,v 1.19 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.dreamcast,v 1.19.14.1 2025/08/02 05:20:28 perseant Exp $
+#
 ./usr/include/dreamcast				comp-c-include
 ./usr/include/dreamcast/_G_config.h		comp-obsolete		obsolete
 ./usr/include/dreamcast/ansi.h			comp-c-include
@@ -29,6 +30,7 @@
 ./usr/include/dreamcast/intr.h			comp-c-include
 ./usr/include/dreamcast/limits.h		comp-c-include
 ./usr/include/dreamcast/lock.h			comp-c-include
+./usr/include/dreamcast/lwp_private.h		comp-c-include
 ./usr/include/dreamcast/math.h			comp-c-include
 ./usr/include/dreamcast/mcontext.h		comp-c-include
 ./usr/include/dreamcast/mutex.h			comp-c-include

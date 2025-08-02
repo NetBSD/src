@@ -17,14 +17,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-geneve.c,v 1.4 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-geneve.c,v 1.4.2.1 2025/08/02 05:23:23 perseant Exp $");
 #endif
 
 /* \summary: Generic Network Virtualization Encapsulation (Geneve) printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

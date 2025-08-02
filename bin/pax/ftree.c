@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.43 2023/05/28 17:01:46 lukem Exp $	*/
+/*	$NetBSD: ftree.c,v 1.43.2.1 2025/08/02 05:18:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -71,7 +71,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.43 2023/05/28 17:01:46 lukem Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.43.2.1 2025/08/02 05:18:25 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,12 +165,12 @@ ftree_start(void)
 	 * set up the operation mode of fts, open the first file arg. We must
 	 * use FTS_NOCHDIR, as the user may have to open multiple archives and
 	 * if fts did a chdir off into the boondocks, we may create an archive
-	 * volume in an place where the user did not expect to.
+	 * volume in a place where the user did not expect to.
 	 */
 	ftsopts = FTS_NOCHDIR;
 
 	/*
-	 * optional user flags that effect file traversal
+	 * optional user flags that affect file traversal
 	 * -H command line symlink follow only (half follow)
 	 * -L follow sylinks (logical)
 	 * -P do not follow sylinks (physical). This is the default.
@@ -495,7 +495,7 @@ next_file(ARCHD *arcn)
 		 * override settings with those from specfile
 		 */
 		if (ftnode->flags & F_MODE) {
-			statbuf.st_mode &= ~ALLPERMS; 
+			statbuf.st_mode &= ~ALLPERMS;
 			statbuf.st_mode |= (ftnode->st_mode & ALLPERMS);
 		}
 		if (ftnode->flags & (F_GID | F_GNAME))

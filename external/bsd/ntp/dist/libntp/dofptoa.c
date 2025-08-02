@@ -1,4 +1,4 @@
-/*	$NetBSD: dofptoa.c,v 1.5 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: dofptoa.c,v 1.5.8.1 2025/08/02 05:22:30 perseant Exp $	*/
 
 /*
  * dofptoa - do the grunge work to convert an fp number to ascii
@@ -7,8 +7,6 @@
 #include <stdio.h>
 
 #include "ntp_fp.h"
-#include "lib_strbuf.h"
-#include "ntp_string.h"
 #include "ntp_stdlib.h"
 
 char *

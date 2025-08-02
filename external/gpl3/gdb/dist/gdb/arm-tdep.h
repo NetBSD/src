@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on ARM systems.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -279,7 +279,7 @@ extern void
 		       arm_displaced_step_copy_insn_closure *dsc, int regno,
 		       ULONGEST val, enum pc_write_style write_pc);
 
-CORE_ADDR arm_skip_stub (frame_info_ptr, CORE_ADDR);
+CORE_ADDR arm_skip_stub (const frame_info_ptr &, CORE_ADDR);
 
 ULONGEST arm_get_next_pcs_read_memory_unsigned_integer (CORE_ADDR memaddr,
 							int len,
@@ -292,11 +292,12 @@ int arm_get_next_pcs_is_thumb (struct arm_get_next_pcs *self);
 
 std::vector<CORE_ADDR> arm_software_single_step (struct regcache *);
 int arm_is_thumb (struct regcache *regcache);
-int arm_frame_is_thumb (frame_info_ptr frame);
+int arm_frame_is_thumb (const frame_info_ptr &frame);
 
 extern void arm_displaced_step_fixup (struct gdbarch *,
 				      displaced_step_copy_insn_closure *,
-				      CORE_ADDR, CORE_ADDR, struct regcache *);
+				      CORE_ADDR, CORE_ADDR,
+				      struct regcache *, bool);
 
 /* Return the bit mask in ARM_PS_REGNUM that indicates Thumb mode.  */
 extern int arm_psr_thumb_bit (struct gdbarch *);

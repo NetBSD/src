@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.192 2024/06/15 05:18:48 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.192.2.1 2025/08/02 05:18:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.192 2024/06/15 05:18:48 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.192.2.1 2025/08/02 05:18:25 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,7 +213,7 @@ evalcmd(int argc, char **argv)
  */
 
 void
-evalstring(char *s, int flag)
+evalstring(const char *s, int flag)
 {
 	union node *n;
 	struct stackmark smark;
@@ -658,7 +658,7 @@ evalredir(union node *n, int flags)
 
 		handler = savehandler;
 		e = exception;
-		popredir();
+		popredir(POPREDIR_UNDO);
 		if (PS4 != NULL) {
 			outxstr(PS4);
 			/* { */ outxstr("} failed\n");
@@ -681,7 +681,7 @@ evalredir(union node *n, int flags)
 	}
 	INTOFF;
 	handler = savehandler;
-	popredir();
+	popredir(POPREDIR_UNDO);
 	INTON;
 
 	if (PS4 != NULL) {
@@ -1223,12 +1223,13 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	switch (cmdentry.cmdtype) {
 		volatile int saved;
 		struct funcdef * volatile savefunc;
+		const char * volatile savectx;
 
 	case CMDFUNCTION:
 		VXTRACE(DBG_EVAL, ("Shell function%s:  ",vforked?" VF":""),
 		    trargs(argv));
-		redirect(cmd->ncmd.redirect, saved =
-			!(flags & EV_EXIT) || have_traps() ? REDIR_PUSH : 0);
+		redirect(cmd->ncmd.redirect, REDIR_KEEP | (saved =
+			!(flags & EV_EXIT) || have_traps() ? REDIR_PUSH : 0));
 		saveparam = shellparam;
 		shellparam.malloc = 0;
 		shellparam.reset = 1;
@@ -1237,6 +1238,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		shellparam.optnext = NULL;
 		INTOFF;
 		savelocalvars = localvars;
+		savectx = currentcontext;
 		localvars = NULL;
 		reffunc(savefunc = cmdentry.u.func);
 		INTON;
@@ -1249,12 +1251,13 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 				shellparam = saveparam;
 			}
 			if (saved)
-				popredir();
+				popredir(POPREDIR_UNDO);
 			unreffunc(savefunc);
 			poplocalvars();
 			localvars = savelocalvars;
 			funclinebase = savefuncline;
 			funclineabs = savefuncabs;
+			currentcontext = savectx;
 			handler = savehandler;
 			longjmp(handler->loc, 1);
 		}
@@ -1266,6 +1269,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			else
 				funclinebase = 0;
 			funclineabs = cmdentry.lineno;
+			currentcontext = argv[0];
 
 			VTRACE(DBG_EVAL,
 			  ("function: node: %d '%s' # %d%s; funclinebase=%d\n",
@@ -1287,11 +1291,12 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		localvars = savelocalvars;
 		funclinebase = savefuncline;
 		funclineabs = savefuncabs;
+		currentcontext = savectx;
 		freeparam(&shellparam);
 		shellparam = saveparam;
 		handler = savehandler;
 		if (saved)
-			popredir();
+			popredir(POPREDIR_UNDO);
 		INTON;
 		if (evalskip == SKIPFUNC) {
 			evalskip = SKIPNONE;
@@ -1306,18 +1311,100 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	case CMDBUILTIN:
 		VXTRACE(DBG_EVAL, ("builtin command [%d]%s:  ", argc,
 		    vforked ? " VF" : ""), trargs(argv));
-		mode = (cmdentry.u.bltin == execcmd) ? 0 : REDIR_PUSH;
+
+		if (cmdentry.u.bltin == execcmd) {
+			char **ap;
+
+			/*
+			 * Work out how we should process redirections
+			 * on the "exec" command.   We need REDIR_KEEP
+			 * if we must not set close-on-exec, and REDIR_PUSH
+			 * if we need to be able to undo them (in the
+			 * exec command, only on  some kind of error).
+			 *
+			 * Skip "exec" (argv[0]) then examine args.
+			 *
+			 * This must be done manually, as nextopt()
+			 * hasn't been init'd for this command yet.
+			 * And it won't be until after redirections are done.
+			 *
+			 * "exec" currently takes no options (except "--"),
+			 * but might one day, and this needs to keep working,
+			 * so do it, kind of, properly.
+			 *
+			 * Note in the common cases argv[1] will be NULL
+			 * (for exec just setting up redirectons) or will
+			 * not start with a '-' ("exec cmd") so normally
+			 * this loop will either never start or will break
+			 * at the first test of the first iteration.
+			 */
+			for (ap = argv + 1; *ap != NULL; ap++) {
+
+				if (ap[0][0] != '-')
+					break;
+
+				if (ap[0][1] == '\0')	/* "exec -" */
+					break;		/* or continue ?? */
+
+				if (ap[0][1] == '-' && ap[0][2] == '\0') {
+					ap++;
+					break;
+				}
+
+#if defined(DUMMY_EXAMPLE_CODE) && 0
+				/*
+				 * if options are added to "exec" then
+				 * any which take an arg (like the common
+				 * in other shells "-a cmdname") need to
+				 * be recognised here, lest "cmdname" be
+				 * thought to be the cmd to exec
+				 */
+
+				for (char *op = ap[0] + 1; *op; op++) {
+					switch (*op) {
+					case 'a':
+					case any others similar:
+						/* options needing an optarg */
+						if (op[1] == '\0' && ap[1])
+							ap++;
+						break;
+
+					default:
+						/* options with no optarg */
+						continue;
+					}
+					break;
+				}
+#endif /* DUMMY EXAMPLE CODE */
+			}
+
+			if (*ap != NULL)
+				mode = REDIR_KEEP;	/* exec cmd <... */
+			else
+				mode = 0;		/* exec < .... */
+
+			/*
+			 * always save old fd setup in case of error()
+			 * execcmd() will undo this if no error occurs
+			 * (that is, in the case the shell has not vanished)
+			 */
+			mode |= REDIR_PUSH;
+		} else			/* any builtin execpt "exec" */
+			mode = REDIR_PUSH | REDIR_KEEP;
+
 		if (flags == EV_BACKCMD) {
 			memout.nleft = 0;
 			memout.nextc = memout.buf;
 			memout.bufsize = 64;
 			mode |= REDIR_BACKQ;
 		}
+
 		e = -1;
 		savecmdname = commandname;
 		savetopfile = getcurrentfile();
 		savehandler = handler;
 		temp_path = 0;
+
 		if (!setjmp(jmploc.loc)) {
 			handler = &jmploc;
 
@@ -1390,8 +1477,10 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			popfilesupto(savetopfile);
 			FORCEINTON;
 		}
+
 		if (cmdentry.u.bltin != execcmd)
-			popredir();
+			popredir(POPREDIR_UNDO);
+
 		if (flags == EV_BACKCMD) {
 			backcmd->buf = memout.buf;
 			backcmd->nleft = memout.nextc - memout.buf;
@@ -1694,7 +1783,13 @@ truecmd(int argc, char **argv)
 int
 execcmd(int argc, char **argv)
 {
-	(void) nextopt(NULL);		/* ignore a leading "--" */
+	/*
+	 * BEWARE: if any options are added here, they must
+	 * also be added in evalcommand(), look for "DUMMY_EXAMPLE_CODE"
+	 * for example code for there.   Here the options would be
+	 * processed completely normally.
+	 */
+	(void) nextopt("");		/* ignore a leading "--" */
 
 	if (*argptr) {
 		struct strlist *sp;
@@ -1705,7 +1800,9 @@ execcmd(int argc, char **argv)
 		for (sp = cmdenviron; sp; sp = sp->next)
 			setvareq(sp->text, VDOEXPORT|VEXPORT|VSTACK);
 		shellexec(argptr, environment(), pathval(), 0, 0);
+		/* NOTREACHED */
 	}
+	popredir(POPREDIR_PERMANENT);	/* make any redirections permanent */
 	return 0;
 }
 

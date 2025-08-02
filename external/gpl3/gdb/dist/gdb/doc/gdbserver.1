@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GDBSERVER 1"
-.TH GDBSERVER 1 "2023-05-27" "gdb-13.2" "GNU Development Tools"
+.TH GDBSERVER 1 "2024-07-07" "gdb-15.1" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -320,17 +320,27 @@ the program you want to debug.  The syntax is:
 .Vb 1
 \&        target> gdbserver \-\-multi <comm>
 .Ve
-.IP "\fB\-\-debug\fR" 4
-.IX Item "--debug"
-Instruct \f(CW\*(C`gdbserver\*(C'\fR to display extra status information about the debugging
-process.
-This option is intended for \f(CW\*(C`gdbserver\*(C'\fR development and for bug reports to
-the developers.
-.IP "\fB\-\-remote\-debug\fR" 4
-.IX Item "--remote-debug"
-Instruct \f(CW\*(C`gdbserver\*(C'\fR to display remote protocol debug output.
-This option is intended for \f(CW\*(C`gdbserver\*(C'\fR development and for bug reports to
-the developers.
+.IP "\fB\-\-debug\fR[\fB=option1,option2,...\fR]" 4
+.IX Item "--debug[=option1,option2,...]"
+Instruct \f(CW\*(C`gdbserver\*(C'\fR to display extra status information about
+the debugging process.  This option is intended for \f(CW\*(C`gdbserver\*(C'\fR
+development and for bug reports to the developers.
+.Sp
+Each \fIoption\fR is the name of a component for which debugging
+should be enabled.  The list of possible options is \fBall\fR,
+\&\fBthreads\fR, \fBevent-loop\fR, \fBremote\fR.  The special
+option \fBall\fR enables all components.  The option list is
+processed left to right, and an option can be prefixed with the
+\&\f(CW\*(C`\-\*(C'\fR character to disable output for that component, so you could write:
+.Sp
+.Vb 1
+\&        target> gdbserver \-\-debug=all,\-event\-loop
+.Ve
+.Sp
+to turn on debug output for all components except \fBevent-loop\fR.
+If no options are passed to \fB\-\-debug\fR then this is treated as
+equivalent to \fB\-\-debug=threads\fR.  This could change in future
+releases of \f(CW\*(C`gdbserver\*(C'\fR.
 .IP "\fB\-\-debug\-file=\fR\fIfilename\fR" 4
 .IX Item "--debug-file=filename"
 Instruct \f(CW\*(C`gdbserver\*(C'\fR to send any debug output to the given \fIfilename\fR.
@@ -368,7 +378,7 @@ should give you access to the complete manual.
 Richard M. Stallman and Roland H. Pesch, July 1991.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1988\-2023 Free Software Foundation, Inc.
+Copyright (c) 1988\-2024 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or

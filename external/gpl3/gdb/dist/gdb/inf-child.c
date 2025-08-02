@@ -1,6 +1,6 @@
 /* Base/prototype target for default child (native) targets.
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,6 @@
    new prototype target and then overriding target methods as
    necessary.  */
 
-#include "defs.h"
 #include "regcache.h"
 #include "memattr.h"
 #include "symtab.h"
@@ -352,7 +351,7 @@ inf_child_target::fileio_unlink (struct inferior *inf, const char *filename,
 
 /* Implementation of to_fileio_readlink.  */
 
-gdb::optional<std::string>
+std::optional<std::string>
 inf_child_target::fileio_readlink (struct inferior *inf, const char *filename,
 				   fileio_error *target_errno)
 {
@@ -405,7 +404,7 @@ inf_child_target::follow_exec (inferior *follow_inf, ptid_t ptid,
   if (orig_inf != follow_inf)
     {
       /* If the target was implicitly push in the original inferior, unpush
-         it.  */
+	 it.  */
       scoped_restore_current_thread restore_thread;
       switch_to_inferior_no_thread (orig_inf);
       maybe_unpush_target ();

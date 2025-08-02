@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.h,v 1.17 2023/12/20 17:15:21 christos Exp $	*/
-/* $OpenBSD: sshconnect.h,v 1.47 2023/10/12 02:18:18 djm Exp $ */
+/*	$NetBSD: sshconnect.h,v 1.17.2.1 2025/08/02 05:18:48 perseant Exp $	*/
+/* $OpenBSD: sshconnect.h,v 1.49 2025/03/01 06:11:26 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,6 +24,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+struct sshkey;
 
 typedef struct Sensitive Sensitive;
 struct Sensitive {
@@ -51,9 +53,8 @@ struct ssh;
 struct hostkeys;
 struct ssh_conn_info;
 
-/* default argument for client percent expansions */
-#define DEFAULT_CLIENT_PERCENT_EXPAND_ARGS(conn_info) \
-	"C", conn_info->conn_hash_hex, \
+/* default argument for client percent expansions, minus remote user */
+#define DEFAULT_CLIENT_PERCENT_EXPAND_ARGS_NOUSER(conn_info) \
 	"L", conn_info->shorthost, \
 	"i", conn_info->uidstr, \
 	"k", conn_info->keyalias, \
@@ -62,9 +63,14 @@ struct ssh_conn_info;
 	"p", conn_info->portstr, \
 	"d", conn_info->homedir, \
 	"h", conn_info->remhost, \
-	"r", conn_info->remuser, \
 	"u", conn_info->locuser, \
 	"j", conn_info->jmphost
+
+/* same plus remote user and hash which has user as a component */
+#define DEFAULT_CLIENT_PERCENT_EXPAND_ARGS(conn_info) \
+	DEFAULT_CLIENT_PERCENT_EXPAND_ARGS_NOUSER(conn_info), \
+	"C", conn_info->conn_hash_hex, \
+	"r", conn_info->remuser
 
 int	 ssh_connect(struct ssh *, const char *, const char *,
 	    struct addrinfo *, struct sockaddr_storage *, u_short,
@@ -95,3 +101,5 @@ void	 maybe_add_key_to_agent(const char *, struct sshkey *,
 void	 load_hostkeys_command(struct hostkeys *, const char *,
     const char *, const struct ssh_conn_info *,
     const struct sshkey *, const char *);
+
+int hostkey_accepted_by_hostkeyalgs(const struct sshkey *);

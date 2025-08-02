@@ -715,8 +715,7 @@ static int wps_process_cred_e(struct wps_data *wps, const u8 *cred,
 	    wps_process_cred(&attr, &wps->cred))
 		return -1;
 
-	if (os_memcmp(wps->cred.mac_addr, wps->wps->dev.mac_addr, ETH_ALEN) !=
-	    0) {
+	if (!ether_addr_equal(wps->cred.mac_addr, wps->wps->dev.mac_addr)) {
 		wpa_printf(MSG_DEBUG, "WPS: MAC Address in the Credential ("
 			   MACSTR ") does not match with own address (" MACSTR
 			   ")", MAC2STR(wps->cred.mac_addr),
@@ -815,8 +814,7 @@ static int wps_process_ap_settings_e(struct wps_data *wps,
 	wpa_printf(MSG_INFO, "WPS: Received new AP configuration from "
 		   "Registrar");
 
-	if (os_memcmp(cred.mac_addr, wps->wps->dev.mac_addr, ETH_ALEN) !=
-	    0) {
+	if (!ether_addr_equal(cred.mac_addr, wps->wps->dev.mac_addr)) {
 		wpa_printf(MSG_DEBUG, "WPS: MAC Address in the AP Settings ("
 			   MACSTR ") does not match with own address (" MACSTR
 			   ")", MAC2STR(cred.mac_addr),
@@ -879,6 +877,17 @@ static int wps_process_ap_settings_e(struct wps_data *wps,
 			   "WPAPSK+WPA2PSK");
 		cred.auth_type |= WPS_AUTH_WPA2PSK;
 	}
+
+#ifdef CONFIG_NO_TKIP
+	if (cred.encr_type & WPS_ENCR_TKIP) {
+		wpa_printf(MSG_DEBUG, "WPS: Disable encr_type TKIP");
+		cred.encr_type &= ~WPS_ENCR_TKIP;
+	}
+	if (cred.auth_type & WPS_AUTH_WPAPSK) {
+		wpa_printf(MSG_DEBUG, "WPS: Disable auth_type WPAPSK");
+		cred.auth_type &= ~WPS_AUTH_WPAPSK;
+	}
+#endif /* CONFIG_NO_TKIP */
 
 	if (wps->wps->cred_cb) {
 		cred.cred_attr = wpabuf_head(attrs);

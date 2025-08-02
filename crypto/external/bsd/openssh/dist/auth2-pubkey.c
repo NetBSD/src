@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.34 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: auth2-pubkey.c,v 1.119 2023/07/27 22:25:17 djm Exp $ */
+/*	$NetBSD: auth2-pubkey.c,v 1.34.2.1 2025/08/02 05:18:45 perseant Exp $	*/
+/* $OpenBSD: auth2-pubkey.c,v 1.122 2024/12/12 09:09:09 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,13 +27,14 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.34 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.34.2.1 2025/08/02 05:18:45 perseant Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
 #include <errno.h>
 #include <paths.h>
 #include <pwd.h>
+#include <glob.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -78,6 +79,7 @@ __RCSID("$NetBSD: auth2-pubkey.c,v 1.34 2023/10/25 20:19:57 christos Exp $");
 
 /* import */
 extern ServerOptions options;
+extern struct authmethod_cfg methodcfg_pubkey;
 
 static char *
 format_key(const struct sshkey *key)
@@ -225,11 +227,11 @@ userauth_pubkey(struct ssh *ssh, const char *method)
 #endif
 		/* test for correct signature */
 		authenticated = 0;
-		if (PRIVSEP(user_key_allowed(ssh, pw, key, 1, &authopts)) &&
-		    PRIVSEP(sshkey_verify(key, sig, slen,
+		if (mm_user_key_allowed(ssh, pw, key, 1, &authopts) &&
+		    mm_sshkey_verify(key, sig, slen,
 		    sshbuf_ptr(b), sshbuf_len(b),
 		    (ssh->compat & SSH_BUG_SIGTYPE) == 0 ? pkalg : NULL,
-		    ssh->compat, &sig_details)) == 0) {
+		    ssh->compat, &sig_details) == 0) {
 			authenticated = 1;
 		}
 		if (authenticated == 1 && sig_details != NULL) {
@@ -287,7 +289,7 @@ userauth_pubkey(struct ssh *ssh, const char *method)
 		 * if a user is not allowed to login. is this an
 		 * issue? -markus
 		 */
-		if (PRIVSEP(user_key_allowed(ssh, pw, key, 0, NULL))) {
+		if (mm_user_key_allowed(ssh, pw, key, 0, NULL)) {
 			if ((r = sshpkt_start(ssh, SSH2_MSG_USERAUTH_PK_OK))
 			    != 0 ||
 			    (r = sshpkt_put_cstring(ssh, pkalg)) != 0 ||
@@ -324,20 +326,51 @@ match_principals_file(struct passwd *pw, char *file,
     struct sshkey_cert *cert, struct sshauthopt **authoptsp)
 {
 	FILE *f;
-	int success;
+	int r, success = 0;
+	size_t i;
+	glob_t gl;
+	struct sshauthopt *opts = NULL;
 
 	if (authoptsp != NULL)
 		*authoptsp = NULL;
 
 	temporarily_use_uid(pw);
-	debug("trying authorized principals file %s", file);
-	if ((f = auth_openprincipals(file, pw, options.strict_modes)) == NULL) {
-		restore_uid();
-		return 0;
-	}
-	success = auth_process_principals(f, file, cert, authoptsp);
-	fclose(f);
+	r = glob(file, 0, NULL, &gl);
 	restore_uid();
+	if (r != 0) {
+		if (r != GLOB_NOMATCH) {
+			logit_f("glob \"%s\" failed", file);
+		}
+		return 0;
+	} else if (gl.gl_pathc > INT_MAX) {
+		fatal_f("too many glob results for \"%s\"", file);
+	} else if (gl.gl_pathc > 1) {
+		debug2_f("glob \"%s\" returned %zu matches", file,
+		    gl.gl_pathc);
+	}
+	for (i = 0; !success && i < gl.gl_pathc; i++) {
+		temporarily_use_uid(pw);
+		debug("trying authorized principals file %s", file);
+		if ((f = auth_openprincipals(gl.gl_pathv[i], pw,
+		    options.strict_modes)) == NULL) {
+			restore_uid();
+			continue;
+		}
+		success = auth_process_principals(f, gl.gl_pathv[i],
+		    cert, &opts);
+		fclose(f);
+		restore_uid();
+		if (!success) {
+			sshauthopt_free(opts);
+			opts = NULL;
+		}
+	}
+	globfree(&gl);
+	if (success && authoptsp != NULL) {
+		*authoptsp = opts;
+		opts = NULL;
+	}
+	sshauthopt_free(opts);
 	return success;
 }
 
@@ -758,8 +791,8 @@ int
 user_key_allowed(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
     int auth_attempt, struct sshauthopt **authoptsp)
 {
-	u_int success = 0, i;
-	char *file, *conn_id;
+	u_int success = 0, i, j;
+	char *file = NULL, *conn_id;
 	struct sshauthopt *opts = NULL;
 	const char *rdomain, *remote_ip, *remote_host;
 
@@ -781,17 +814,40 @@ user_key_allowed(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 	    remote_ip, ssh_remote_port(ssh));
 
 	for (i = 0; !success && i < options.num_authkeys_files; i++) {
+		int r;
+		glob_t gl;
+
 		if (strcasecmp(options.authorized_keys_files[i], "none") == 0)
 			continue;
 		file = expand_authorized_keys(
 		    options.authorized_keys_files[i], pw);
-		success = user_key_allowed2(pw, key, file,
-		    remote_ip, remote_host, &opts);
-		free(file);
-		if (!success) {
-			sshauthopt_free(opts);
-			opts = NULL;
+		temporarily_use_uid(pw);
+		r = glob(file, 0, NULL, &gl);
+		restore_uid();
+		if (r != 0) {
+			if (r != GLOB_NOMATCH) {
+				logit_f("glob \"%s\" failed", file);
+			}
+			free(file);
+			file = NULL;
+			continue;
+		} else if (gl.gl_pathc > INT_MAX) {
+			fatal_f("too many glob results for \"%s\"", file);
+		} else if (gl.gl_pathc > 1) {
+			debug2_f("glob \"%s\" returned %zu matches", file,
+			    gl.gl_pathc);
 		}
+		for (j = 0; !success && j < gl.gl_pathc; j++) {
+			success = user_key_allowed2(pw, key, gl.gl_pathv[j],
+			    remote_ip, remote_host, &opts);
+			if (!success) {
+				sshauthopt_free(opts);
+				opts = NULL;
+			}
+		}
+		free(file);
+		file = NULL;
+		globfree(&gl);
 	}
 	if (success)
 		goto out;
@@ -819,8 +875,6 @@ user_key_allowed(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 }
 
 Authmethod method_pubkey = {
-	"publickey",
-	"publickey-hostbound-v00@openssh.com",
+	&methodcfg_pubkey,
 	userauth_pubkey,
-	&options.pubkey_authentication
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: _strtoi.h,v 1.3 2024/01/20 16:13:39 christos Exp $	*/
+/*	$NetBSD: _strtoi.h,v 1.3.2.1 2025/08/02 05:18:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -83,6 +83,20 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char * __restrict nptr,
 	if (rstatus == NULL)
 		rstatus = &rep;
 
+	*rstatus = 0;		/* assume there will be no errors */
+
+	if (base != 0 && (base < 2 || base > 36)) {
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+		*rstatus = EINVAL;
+		if (endptr != NULL)
+			/* LINTED interface specification */
+			*endptr = __UNCONST(nptr);
+		return 0;
+#else
+		panic("%s: invalid base %d", __func__, base);
+#endif
+	}
+
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 	serrno = errno;
 	errno = 0;
@@ -96,7 +110,9 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char * __restrict nptr,
 #endif
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
-	*rstatus = errno;
+	/* EINVAL here can only mean "nothing converted" */
+	if (errno != EINVAL)
+		*rstatus = errno;
 	errno = serrno;
 #endif
 

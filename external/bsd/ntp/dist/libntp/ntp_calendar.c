@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_calendar.c,v 1.11 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: ntp_calendar.c,v 1.11.8.1 2025/08/02 05:22:31 perseant Exp $	*/
 
 /*
  * ntp_calendar.c - calendar and helper functions
@@ -58,7 +58,6 @@
 #include "ntp_unixtime.h"
 
 #include "ntpd.h"
-#include "lib_strbuf.h"
 
 /* For now, let's take the conservative approach: if the target property
  * macros are not defined, check a few well-known compiler/architecture

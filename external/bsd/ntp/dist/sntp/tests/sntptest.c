@@ -1,9 +1,7 @@
-/*	$NetBSD: sntptest.c,v 1.2 2020/05/25 20:47:35 christos Exp $	*/
+/*	$NetBSD: sntptest.c,v 1.2.8.1 2025/08/02 05:23:02 perseant Exp $	*/
 
 
 #include "config.h"
-#include "ntp_stdlib.h"
-#include "sntp-opts.h"
 #include "sntptest.h"
 
 void
@@ -30,6 +28,6 @@ ActivateOption(const char* option, const char* argument) {
 	opts[2] = estrdup(argument);
 	opts[3] = estrdup("127.0.0.1");
 
-	optionProcess(&sntpOptions, ARGV_SIZE, opts);
+	optionProcess(&sntpOptions, COUNTOF(opts), opts);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.h,v 1.6 2020/05/25 20:47:19 christos Exp $	*/
+/*	$NetBSD: ntp_control.h,v 1.6.8.1 2025/08/02 05:22:20 perseant Exp $	*/
 
 #ifndef NTP_CONTROL_H
 #define NTP_CONTROL_H
@@ -161,7 +161,7 @@ struct ntp_control {
  */
 struct ctl_trap {
 	sockaddr_u tr_addr;		/* address of trap recipient */
-	struct interface *tr_localaddr;	/* interface to send this through */
+	endpt *tr_localaddr;		/* interface to send this through */
 	u_long tr_settime;		/* time trap was set */
 	u_long tr_count;		/* async messages sent to this guy */
 	u_long tr_origtime;		/* time trap was originally set */

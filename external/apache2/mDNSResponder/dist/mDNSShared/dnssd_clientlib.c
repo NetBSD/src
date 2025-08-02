@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 2004-2011 Apple Inc. All rights reserved.
+ * Copyright (c) 2004-2018 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,10 +30,7 @@
 #include <string.h>
 
 #include "dns_sd.h"
-
-#if MDNS_BUILDINGSHAREDLIBRARY || MDNS_BUILDINGSTUBLIBRARY
-#pragma export on
-#endif
+#include "mdns_strict.h"
 
 #if defined(_WIN32)
 // disable warning "conversion from <data> to uint16_t"
@@ -68,7 +65,7 @@ static int DomainEndsInDot(const char *dom)
     return (dom[0] == '.');
 }
 
-static uint8_t *InternalTXTRecordSearch
+static const uint8_t *InternalTXTRecordSearch
 (
     uint16_t txtLen,
     const void       *txtRecord,
@@ -76,14 +73,14 @@ static uint8_t *InternalTXTRecordSearch
     unsigned long    *keylen
 )
 {
-    uint8_t *p = (uint8_t*)txtRecord;
-    uint8_t *e = p + txtLen;
+    const uint8_t *p = (const uint8_t*)txtRecord;
+    const uint8_t *e = p + txtLen;
     *keylen = (unsigned long) strlen(key);
     while (p<e)
     {
-        uint8_t *x = p;
+        const uint8_t *x = p;
         p += 1 + p[0];
-        if (p <= e && *keylen <= x[0] && !strncasecmp(key, (char*)x+1, *keylen))
+        if (p <= e && *keylen <= x[0] && !strncasecmp(key, (const char*)x+1, *keylen))
             if (*keylen == x[0] || x[1+*keylen] == '=') return(x);
     }
     return(NULL);
@@ -195,7 +192,7 @@ void DNSSD_API TXTRecordCreate
 
 void DNSSD_API TXTRecordDeallocate(TXTRecordRef *txtRecord)
 {
-    if (txtRec->malloced) free(txtRec->buffer);
+    if (txtRec->malloced) mdns_free(txtRec->buffer);
 }
 
 DNSServiceErrorType DNSSD_API TXTRecordSetValue
@@ -220,10 +217,10 @@ DNSServiceErrorType DNSSD_API TXTRecordSetValue
         unsigned char *newbuf;
         unsigned long newlen = txtRec->datalen + keyvalsize;
         if (newlen > 0xFFFF) return(kDNSServiceErr_Invalid);
-        newbuf = malloc((size_t)newlen);
+        newbuf = mdns_malloc((size_t)newlen);
         if (!newbuf) return(kDNSServiceErr_NoMemory);
         memcpy(newbuf, txtRec->buffer, txtRec->datalen);
-        if (txtRec->malloced) free(txtRec->buffer);
+        if (txtRec->malloced) mdns_free(txtRec->buffer);
         txtRec->buffer = newbuf;
         txtRec->buflen = (uint16_t)(newlen);
         txtRec->malloced = 1;
@@ -250,7 +247,7 @@ DNSServiceErrorType DNSSD_API TXTRecordRemoveValue
 )
 {
     unsigned long keylen, itemlen, remainder;
-    uint8_t *item = InternalTXTRecordSearch(txtRec->datalen, txtRec->buffer, key, &keylen);
+    uint8_t *item = (uint8_t *)InternalTXTRecordSearch(txtRec->datalen, txtRec->buffer, key, &keylen);
     if (!item) return(kDNSServiceErr_NoSuchKey);
     itemlen   = (unsigned long)(1 + item[0]);
     remainder = (unsigned long)((txtRec->buffer + txtRec->datalen) - (item + itemlen));
@@ -260,8 +257,8 @@ DNSServiceErrorType DNSSD_API TXTRecordRemoveValue
     return(kDNSServiceErr_NoError);
 }
 
-uint16_t DNSSD_API TXTRecordGetLength  (const TXTRecordRef *txtRecord) { return(txtRec->datalen); }
-const void * DNSSD_API TXTRecordGetBytesPtr(const TXTRecordRef *txtRecord) { return(txtRec->buffer); }
+uint16_t DNSSD_API TXTRecordGetLength(const TXTRecordRef *txtRecord) { return(((const TXTRecordRefRealType*)txtRecord)->datalen); }
+const void * DNSSD_API TXTRecordGetBytesPtr(const TXTRecordRef *txtRecord) { return(((const TXTRecordRefRealType*)txtRecord)->buffer); }
 
 /*********************************************************************************************
 *
@@ -289,7 +286,7 @@ const void * DNSSD_API TXTRecordGetValuePtr
 )
 {
     unsigned long keylen;
-    uint8_t *item = InternalTXTRecordSearch(txtLen, txtRecord, key, &keylen);
+    const uint8_t *item = InternalTXTRecordSearch(txtLen, txtRecord, key, &keylen);
     if (!item || item[0] <= keylen) return(NULL);   // If key not found, or found with no value, return NULL
     *valueLen = (uint8_t)(item[0] - (keylen + 1));
     return (item + 1 + keylen + 1);
@@ -302,8 +299,8 @@ uint16_t DNSSD_API TXTRecordGetCount
 )
 {
     uint16_t count = 0;
-    uint8_t *p = (uint8_t*)txtRecord;
-    uint8_t *e = p + txtLen;
+    const uint8_t *p = (const uint8_t*)txtRecord;
+    const uint8_t *e = p + txtLen;
     while (p<e) { p += 1 + p[0]; count++; }
     return((p>e) ? (uint16_t)0 : count);
 }
@@ -320,12 +317,12 @@ DNSServiceErrorType DNSSD_API TXTRecordGetItemAtIndex
 )
 {
     uint16_t count = 0;
-    uint8_t *p = (uint8_t*)txtRecord;
-    uint8_t *e = p + txtLen;
+    const uint8_t *p = (const uint8_t*)txtRecord;
+    const uint8_t *e = p + txtLen;
     while (p<e && count<itemIndex) { p += 1 + p[0]; count++; }  // Find requested item
     if (p<e && p + 1 + p[0] <= e)   // If valid
     {
-        uint8_t *x = p+1;
+        const uint8_t *x = p+1;
         unsigned long len = 0;
         e = p + 1 + p[0];
         while (x+len<e && x[len] != '=') len++;
@@ -361,12 +358,25 @@ DNSServiceErrorType DNSSD_API TXTRecordGetItemAtIndex
 #define STRINGIFY_ARGUMENT_WITHOUT_EXPANSION(s) # s
 #define STRINGIFY(s) STRINGIFY_ARGUMENT_WITHOUT_EXPANSION(s)
 
+// The "used" variable attribute prevents a non-exported variable from being stripped, even if its visibility is hidden,
+// e.g., when compiling with -fvisibility=hidden.
+#if defined(__GNUC__)
+#define DNSSD_USED __attribute__((used))
+#else
+#define DNSSD_USED
+#endif
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdate-time"
+#endif
 // NOT static -- otherwise the compiler may optimize it out
 // The "@(#) " pattern is a special prefix the "what" command looks for
-const char VersionString_SCCS_libdnssd[] = "@(#) libdns_sd "
-    STRINGIFY(mDNSResponderVersion)
+const char VersionString_SCCS_libdnssd[] DNSSD_USED = "@(#) libdns_sd " STRINGIFY(mDNSResponderVersion)
 #ifndef MDNS_VERSIONSTR_NODTS
     " (" __DATE__ " " __TIME__ ")" 
 #endif 
 ;
-
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

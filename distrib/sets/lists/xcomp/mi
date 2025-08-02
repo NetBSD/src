@@ -1,15 +1,15 @@
-#	 $NetBSD: mi,v 1.244 2024/06/15 12:38:15 wiz Exp $
+#	 $NetBSD: mi,v 1.244.2.1 2025/08/02 05:20:36 perseant Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/mtree/set.xcomp					xcomp-sys-root
 ./usr/X11R7/bin/freetype-config				xcomp-freetype-lib	xorg
 ./usr/X11R7/bin/xft-config				xcomp-obsolete	obsolete
-./usr/X11R7/include/EGL/egl.h				xcomp-EGL-include	xorg,xorg_glamor
-./usr/X11R7/include/EGL/eglext.h			xcomp-EGL-include	xorg,xorg_glamor
-./usr/X11R7/include/EGL/eglextchromium.h		xcomp-EGL-include	xorg,xorg_glamor
-./usr/X11R7/include/EGL/eglmesaext.h			xcomp-EGL-include	xorg,xorg_glamor
-./usr/X11R7/include/EGL/eglplatform.h			xcomp-EGL-include	xorg,xorg_glamor
+./usr/X11R7/include/EGL/egl.h				xcomp-EGL-include	xorg,xorg_egl
+./usr/X11R7/include/EGL/eglext.h			xcomp-EGL-include	xorg,xorg_egl
+./usr/X11R7/include/EGL/eglextchromium.h		xcomp-EGL-include	xorg,xorg_egl
+./usr/X11R7/include/EGL/eglmesaext.h			xcomp-EGL-include	xorg,xorg_egl
+./usr/X11R7/include/EGL/eglplatform.h			xcomp-EGL-include	xorg,xorg_egl
 ./usr/X11R7/include/GL/GLwDrawA.h			xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/GLwDrawAP.h			xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/GLwMDrawA.h			xcomp-xorgproto-include	xorg
@@ -740,6 +740,7 @@
 ./usr/X11R7/include/xcb/bigreq.h			xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xcb/composite.h			xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xcb/damage.h			xcomp-libxcb-include	xorg
+./usr/X11R7/include/xcb/dbe.h				xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xcb/dpms.h				xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xcb/dri2.h				xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xcb/dri3.h				xcomp-libxcb-include	xorg
@@ -1122,8 +1123,8 @@
 ./usr/X11R7/lib/X11/config/xorg.cf			xcomp-xorg-cf-files-lib	xorg
 ./usr/X11R7/lib/X11/config/xorgsite.def			xcomp-xorg-cf-files-lib	xorg
 ./usr/X11R7/lib/X11/config/xorgversion.def		xcomp-xorg-cf-files-lib	xorg
-./usr/X11R7/lib/libEGL.a				xcomp-libEGL-lib	xorg,compatx11file,xorg_glamor
-./usr/X11R7/lib/libEGL_p.a				xcomp-libEGL-lib	profile,xorg,compatx11file,xorg_glamor
+./usr/X11R7/lib/libEGL.a				xcomp-libEGL-lib	xorg,compatx11file,xorg_egl
+./usr/X11R7/lib/libEGL_p.a				xcomp-libEGL-lib	profile,xorg,compatx11file,xorg_egl
 ./usr/X11R7/lib/libFS.a					xcomp-libFS-lib	xorg,compatx11file
 ./usr/X11R7/lib/libFS_p.a				xcomp-libFS-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libGL.a					xcomp-libGL-lib	xorg,compatx11file
@@ -1250,8 +1251,8 @@
 ./usr/X11R7/lib/libpciaccess_p.a			xcomp-libpciaccess-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libpixman-1.a				xcomp-pixman-lib	xorg,compatx11file
 ./usr/X11R7/lib/libpixman-1_p.a				xcomp-pixman-lib	profile,xorg,compatx11file
-./usr/X11R7/lib/libpthread-stubs.a			xcomp-libpthread-stubs-lib	xorg,compatx11file
-./usr/X11R7/lib/libpthread-stubs_p.a			xcomp-libpthread-stubs-lib	profile,xorg,compatx11file
+./usr/X11R7/lib/libpthread-stubs.a			xcomp-obsolete		obsolete
+./usr/X11R7/lib/libpthread-stubs_p.a			xcomp-obsolete		obsolete
 ./usr/X11R7/lib/libre.a					xcomp-obsolete	obsolete
 ./usr/X11R7/lib/libre_p.a				xcomp-obsolete	obsolete
 ./usr/X11R7/lib/libxcb-atom.a				xcomp-xcb-util-lib	xorg,compatx11file
@@ -1262,6 +1263,8 @@
 ./usr/X11R7/lib/libxcb-composite_p.a			xcomp-libxcb-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-damage.a				xcomp-libxcb-lib	xorg,compatx11file
 ./usr/X11R7/lib/libxcb-damage_p.a			xcomp-libxcb-lib	profile,xorg,compatx11file
+./usr/X11R7/lib/libxcb-dbe.a				xcomp-libxcb-lib	xorg,compatx11file
+./usr/X11R7/lib/libxcb-dbe_p.a				xcomp-libxcb-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-dpms.a				xcomp-libxcb-lib	xorg,compatx11file
 ./usr/X11R7/lib/libxcb-dpms_p.a				xcomp-libxcb-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-dri2.a				xcomp-libxcb-lib	xorg,compatx11file
@@ -1365,7 +1368,7 @@
 ./usr/X11R7/lib/pkgconfig/pixman-1.pc			xcomp-pixman-lib	xorg
 ./usr/X11R7/lib/pkgconfig/presentproto.pc		xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/printproto.pc			xcomp-obsolete	obsolete
-./usr/X11R7/lib/pkgconfig/pthread-stubs.pc		xcomp-pthread-stubs-lib	xorg
+./usr/X11R7/lib/pkgconfig/pthread-stubs.pc		xcomp-obsolete		obsolete
 ./usr/X11R7/lib/pkgconfig/randrproto.pc			xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/recordproto.pc		xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/renderproto.pc		xcomp-xorgproto-lib	xorg
@@ -1385,6 +1388,7 @@
 ./usr/X11R7/lib/pkgconfig/xcb-aux.pc			xcomp-xcb-util-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-composite.pc		xcomp-libxcb-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-damage.pc			xcomp-libxcb-lib	xorg
+./usr/X11R7/lib/pkgconfig/xcb-dbe.pc			xcomp-libxcb-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-dpms.pc			xcomp-libxcb-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-dri2.pc			xcomp-libxcb-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-dri3.pc			xcomp-libxcb-lib	xorg
@@ -5979,10 +5983,11 @@
 ./usr/libdata/lint/llib-llisp.ln			xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lmp.ln				xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lpciaccess.ln			xcomp-libpciaccess-lintlib	lint,xorg
-./usr/libdata/lint/llib-lpthread-stubs.ln		xcomp-libpthread-stubs-lintlib	lint,xorg
+./usr/libdata/lint/llib-lpthread-stubs.ln		xcomp-obsolete		obsolete
 ./usr/libdata/lint/llib-lre.ln				xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lxcb-composite.ln		xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lxcb-damage.ln			xcomp-libxcb-lintlib	lint,xorg
+./usr/libdata/lint/llib-lxcb-dbe.ln			xcomp-libxcb-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lxcb-dpms.ln			xcomp-libxcb-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lxcb-dri2.ln			xcomp-libxcb-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lxcb-dri3.ln			xcomp-libxcb-lintlib	lint,xorg

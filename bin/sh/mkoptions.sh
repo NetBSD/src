@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkoptions.sh,v 1.8 2024/04/16 23:30:19 christos Exp $
+# $NetBSD: mkoptions.sh,v 1.8.2.1 2025/08/02 05:18:26 perseant Exp $
 
 #
 # It would be more sensible to generate 2 .h files, one which
@@ -95,6 +95,7 @@ do
 
 	case "${chr}" in
 	-)	chr= set= dflt="$4";;
+	+)	chr= ;;
 	''|?)	;;
 	*)	printf >&2 'flag "%s": Not a character\n' "${chr}"; continue;;
 	esac

@@ -28,8 +28,9 @@ requesting MS-CHAP:
   rcvd [LCP ConfReq id=0x2 <asyncmap 0x0> <auth MS> <magic 0x46a3>]
                                            ^^^^^^^
 
-MS-CHAP is enabled by default under Linux in pppd/Makefile.linux by
-the line "CHAPMS=y".
+MS-CHAP support in pppd (along with MPPE support) can be enabled or
+disabled at configure time using the --enable-microsoft-extensions and
+--disable-microsoft-extensions arguments.  The default is enabled.
 
 
 CONFIGURATION

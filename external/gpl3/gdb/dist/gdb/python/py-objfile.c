@@ -1,6 +1,6 @@
 /* Python interface to objfiles.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "python-internal.h"
 #include "charset.h"
 #include "objfiles.h"
@@ -25,6 +24,7 @@
 #include "build-id.h"
 #include "symtab.h"
 #include "python.h"
+#include "inferior.h"
 
 struct objfile_object
 {
@@ -478,8 +478,9 @@ objfpy_lookup_global_symbol (PyObject *self, PyObject *args, PyObject *kw)
 
   try
     {
+      domain_search_flags flags = from_scripting_domain (domain);
       struct symbol *sym = lookup_global_symbol_from_objfile
-	(obj->objfile, GLOBAL_BLOCK, symbol_name, (domain_enum) domain).symbol;
+	(obj->objfile, GLOBAL_BLOCK, symbol_name, flags).symbol;
       if (sym == nullptr)
 	Py_RETURN_NONE;
 
@@ -512,8 +513,9 @@ objfpy_lookup_static_symbol (PyObject *self, PyObject *args, PyObject *kw)
 
   try
     {
+      domain_search_flags flags = from_scripting_domain (domain);
       struct symbol *sym = lookup_global_symbol_from_objfile
-	(obj->objfile, STATIC_BLOCK, symbol_name, (domain_enum) domain).symbol;
+	(obj->objfile, STATIC_BLOCK, symbol_name, flags).symbol;
       if (sym == nullptr)
 	Py_RETURN_NONE;
 
@@ -536,7 +538,7 @@ objfpy_repr (PyObject *self_)
   objfile *obj = self->objfile;
 
   if (obj == nullptr)
-    return PyUnicode_FromString ("<gdb.Objfile (invalid)>");
+    return gdb_py_invalid_object_repr (self_);
 
   return PyUnicode_FromFormat ("<gdb.Objfile filename=%s>",
 			       objfile_name (obj));
@@ -618,7 +620,7 @@ gdbpy_lookup_objfile (PyObject *self, PyObject *args, PyObject *kw)
   struct objfile *objfile = nullptr;
   if (by_build_id)
     gdbarch_iterate_over_objfiles_in_search_order
-      (target_gdbarch (),
+      (current_inferior ()->arch (),
        [&objfile, name] (struct objfile *obj)
 	 {
 	   /* Don't return separate debug files.  */
@@ -641,7 +643,7 @@ gdbpy_lookup_objfile (PyObject *self, PyObject *args, PyObject *kw)
 	 }, gdbpy_current_objfile);
   else
     gdbarch_iterate_over_objfiles_in_search_order
-      (target_gdbarch (),
+      (current_inferior ()->arch (),
        [&objfile, name] (struct objfile *obj)
 	 {
 	   /* Don't return separate debug files.  */
@@ -704,7 +706,7 @@ objfile_to_objfile_object (struct objfile *objfile)
   return gdbpy_ref<>::new_reference (result);
 }
 
-int
+static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_objfile (void)
 {
   if (PyType_Ready (&objfile_object_type) < 0)
@@ -713,6 +715,8 @@ gdbpy_initialize_objfile (void)
   return gdb_pymodule_addobject (gdb_module, "Objfile",
 				 (PyObject *) &objfile_object_type);
 }
+
+GDBPY_INITIALIZE_FILE (gdbpy_initialize_objfile);
 
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tinytest.h,v 1.6 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: tinytest.h,v 1.6.8.1 2025/08/02 05:22:57 perseant Exp $	*/
 
 /* tinytest.h -- Copyright 2009-2012 Nick Mathewson
  *
@@ -36,8 +36,11 @@
 #define TT_ENABLED_  (1<<2)
 /** Flag for a test that's off by default. */
 #define TT_OFF_BY_DEFAULT  (1<<3)
+/** Flag for a test that should be runned again in case of failure (but not
+ * more then 3 times). */
+#define TT_RETRIABLE	(1<<4)
 /** If you add your own flags, make them start at this point. */
-#define TT_FIRST_USER_FLAG (1<<4)
+#define TT_FIRST_USER_FLAG (1<<5)
 
 typedef void (*testcase_fn)(void *);
 

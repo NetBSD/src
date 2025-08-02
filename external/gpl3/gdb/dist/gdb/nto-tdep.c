@@ -1,6 +1,6 @@
 /* nto-tdep.c - general QNX Neutrino target functionality.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -19,9 +19,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include <sys/stat.h>
 #include "nto-tdep.h"
+#include "extract-store-integer.h"
 #include "top.h"
 #include "inferior.h"
 #include "infrun.h"
@@ -102,14 +102,15 @@ nto_find_and_open_solib (const char *solib, unsigned o_flags,
   "%s/lib:%s/usr/lib:%s/usr/photon/lib:%s/usr/photon/dll:%s/lib/dll"
 
   nto_root = nto_target ();
-  if (strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name, "i386") == 0)
+  gdbarch *gdbarch = current_inferior ()->arch ();
+  if (strcmp (gdbarch_bfd_arch_info (gdbarch)->arch_name, "i386") == 0)
     {
       arch = "x86";
       endian = "";
     }
-  else if (strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name,
+  else if (strcmp (gdbarch_bfd_arch_info (gdbarch)->arch_name,
 		   "rs6000") == 0
-	   || strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name,
+	   || strcmp (gdbarch_bfd_arch_info (gdbarch)->arch_name,
 		   "powerpc") == 0)
     {
       arch = "ppc";
@@ -117,8 +118,8 @@ nto_find_and_open_solib (const char *solib, unsigned o_flags,
     }
   else
     {
-      arch = gdbarch_bfd_arch_info (target_gdbarch ())->arch_name;
-      endian = gdbarch_byte_order (target_gdbarch ())
+      arch = gdbarch_bfd_arch_info (gdbarch)->arch_name;
+      endian = gdbarch_byte_order (gdbarch)
 	       == BFD_ENDIAN_BIG ? "be" : "le";
     }
 
@@ -162,14 +163,15 @@ nto_init_solib_absolute_prefix (void)
   const char *arch;
 
   nto_root = nto_target ();
-  if (strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name, "i386") == 0)
+  gdbarch *gdbarch = current_inferior ()->arch ();
+  if (strcmp (gdbarch_bfd_arch_info (gdbarch)->arch_name, "i386") == 0)
     {
       arch = "x86";
       endian = "";
     }
-  else if (strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name,
+  else if (strcmp (gdbarch_bfd_arch_info (gdbarch)->arch_name,
 		   "rs6000") == 0
-	   || strcmp (gdbarch_bfd_arch_info (target_gdbarch ())->arch_name,
+	   || strcmp (gdbarch_bfd_arch_info (gdbarch)->arch_name,
 		   "powerpc") == 0)
     {
       arch = "ppc";
@@ -177,8 +179,8 @@ nto_init_solib_absolute_prefix (void)
     }
   else
     {
-      arch = gdbarch_bfd_arch_info (target_gdbarch ())->arch_name;
-      endian = gdbarch_byte_order (target_gdbarch ())
+      arch = gdbarch_bfd_arch_info (gdbarch)->arch_name;
+      endian = gdbarch_byte_order (gdbarch)
 	       == BFD_ENDIAN_BIG ? "be" : "le";
     }
 
@@ -243,9 +245,9 @@ nto_parse_redirection (char *pargv[], const char **pin, const char **pout,
 }
 
 static CORE_ADDR
-lm_addr (struct so_list *so)
+lm_addr (const solib &so)
 {
-  lm_info_svr4 *li = (lm_info_svr4 *) so->lm_info;
+  auto *li = gdb::checked_static_cast<const lm_info_svr4 *> (so.lm_info.get ());
 
   return li->l_addr;
 }
@@ -253,12 +255,13 @@ lm_addr (struct so_list *so)
 static CORE_ADDR
 nto_truncate_ptr (CORE_ADDR addr)
 {
-  if (gdbarch_ptr_bit (target_gdbarch ()) == sizeof (CORE_ADDR) * 8)
+  gdbarch *gdbarch = current_inferior ()->arch ();
+  if (gdbarch_ptr_bit (gdbarch) == sizeof (CORE_ADDR) * 8)
     /* We don't need to truncate anything, and the bit twiddling below
        will fail due to overflow problems.  */
     return addr;
   else
-    return addr & (((CORE_ADDR) 1 << gdbarch_ptr_bit (target_gdbarch ())) - 1);
+    return addr & (((CORE_ADDR) 1 << gdbarch_ptr_bit (gdbarch)) - 1);
 }
 
 static Elf_Internal_Phdr *
@@ -280,7 +283,7 @@ find_load_phdr (bfd *abfd)
 }
 
 void
-nto_relocate_section_addresses (struct so_list *so, struct target_section *sec)
+nto_relocate_section_addresses (solib &so, target_section *sec)
 {
   /* Neutrino treats the l_addr base address field in link.h as different than
      the base address in the System V ABI and so the offset needs to be
@@ -455,7 +458,7 @@ nto_read_auxv_from_initial_stack (CORE_ADDR initial_stack, gdb_byte *readbuf,
   if (target_read_memory (initial_stack + data_ofs, targ32, 4) != 0)
     return 0;
 
-  byte_order = gdbarch_byte_order (target_gdbarch ());
+  byte_order = gdbarch_byte_order (current_inferior ()->arch ());
 
   anint = extract_unsigned_integer (targ32, sizeof (targ32), byte_order);
 

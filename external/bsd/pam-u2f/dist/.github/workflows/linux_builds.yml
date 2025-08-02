@@ -9,20 +9,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-20.04
-            cc: gcc-10
-          - os: ubuntu-20.04
-            cc: clang-11
-          - os: ubuntu-18.04
-            cc: gcc-10
-          - os: ubuntu-18.04
-            cc: clang-10
+          - { os: ubuntu-24.04, cc: gcc-13 }
+          - { os: ubuntu-24.04, cc: clang-18 }
+          - { os: ubuntu-22.04, cc: gcc-12 }
+          - { os: ubuntu-22.04, cc: clang-15 }
+          - { os: ubuntu-20.04, cc: gcc-10 }
+          - { os: ubuntu-20.04, cc: clang-11 }
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup
-      if: ${{ matrix.os == 'ubuntu-18.04' }}
-      run: |
-        sudo add-apt-repository -y ppa:yubico/stable
+    - uses: actions/checkout@v4
     - name: dependencies
       env:
         CC: ${{ matrix.cc }}
@@ -30,7 +24,7 @@ jobs:
         sudo apt -q update
         sudo apt install --no-install-recommends -q -y \
           autoconf automake libtool pkg-config libfido2-dev libpam-dev \
-          gengetopt git2cl asciidoc-base xsltproc
+          git2cl asciidoc-base xsltproc docbook-xsl
         if [ "${CC%-*}" == "clang" ]; then
           sudo apt install -q -y ${CC%-*}-tools-${CC#clang-}
         else

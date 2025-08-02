@@ -26,6 +26,10 @@
 
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -36,37 +40,12 @@
 
 /*LINTLIBRARY*/
 
-static const char *pname;
-
-#pragma init(getpname)
-const char *
-getpname(void)
-{
-	const char *p, *q;
-
-	if (pname != NULL)
-		return (pname);
-
-	if ((p = getexecname()) != NULL)
-		q = strrchr(p, '/');
-	else
-		q = NULL;
-
-	if (q == NULL)
-		pname = p;
-	else
-		pname = q + 1;
-
-	return (pname);
-}
-
 void
 vwarn(const char *format, va_list alist)
 {
 	int err = errno;
 
-	if (pname != NULL)
-		(void) fprintf(stderr, "%s: ", pname);
+	(void) fprintf(stderr, "%s: ", getprogname());
 
 	(void) vfprintf(stderr, format, alist);
 

@@ -2,7 +2,7 @@
 # Wrapper around gcc to tweak the output in various ways when running
 # the testsuite.
 
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -43,6 +43,7 @@
 # -z compress using dwz
 # -m compress using dwz -m
 # -i make an index (.gdb_index)
+# -c make an index (currently .gdb_index) in a cache dir
 # -n make a dwarf5 index (.debug_names)
 # -p create .dwp files (Fission), you need to also use gcc option -gsplit-dwarf
 # -l creates separate debuginfo files linked to using .gnu_debuglink
@@ -85,6 +86,7 @@ output_file=a.out
 
 want_index=false
 index_options=""
+want_index_cache=false
 want_dwz=false
 want_multi=false
 want_dwp=false
@@ -97,6 +99,7 @@ while [ $# -gt 0 ]; do
 	-z) want_dwz=true ;;
 	-i) want_index=true ;;
 	-n) want_index=true; index_options=-dwarf-5;;
+	-c) want_index_cache=true ;;
 	-m) want_multi=true ;;
 	-p) want_dwp=true ;;
 	-l) want_gnu_debuglink=true ;;
@@ -207,6 +210,33 @@ if [ "$want_index" = true ]; then
     mv "$tmpfile" "$output_file"
     rm -f "$tmpdir"/*.dwo
     [ $rc != 0 ] && exit $rc
+fi
+
+if [ "$want_index_cache" = true ]; then
+    $GDB -q -batch \
+	-ex "set index-cache directory $INDEX_CACHE_DIR" \
+	-ex "set index-cache enabled on" \
+	-ex "file $output_file"
+    rc=$?
+    [ $rc != 0 ] && exit $rc
+fi
+
+if [ "$want_dwz" = true ] || [ "$want_multi" = true ]; then
+    # Require dwz version with PR dwz/24468 fixed.
+    dwz_version_major_required=0
+    dwz_version_minor_required=13
+    dwz_version_line=$($DWZ --version 2>&1 | head -n 1)
+    dwz_version=${dwz_version_line//dwz version /}
+    dwz_version_major=${dwz_version//\.*/}
+    dwz_version_minor=${dwz_version//*\./}
+    if [ "$dwz_version_major" -lt "$dwz_version_major_required" ] \
+	   || { [ "$dwz_version_major" -eq "$dwz_version_major_required" ] \
+		    && [ "$dwz_version_minor" -lt "$dwz_version_minor_required" ]; }; then
+	detected="$dwz_version_major.$dwz_version_minor"
+	required="$dwz_version_major_required.$dwz_version_minor_required"
+	echo "$myname: dwz version $detected detected, version $required or higher required"
+	exit 1
+    fi
 fi
 
 if [ "$want_dwz" = true ]; then

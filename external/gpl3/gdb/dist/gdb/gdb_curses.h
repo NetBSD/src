@@ -1,6 +1,6 @@
 /* Portable <curses.h>.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -60,7 +60,7 @@
    of the termcap functions will be built from stub-termcap.c.  Readline
    provides its own extern declarations when there's no termcap.h; do the
    same here for the termcap functions used in GDB.  */
-EXTERN_C int tgetnum (const char *);
+extern "C" int tgetnum (const char *);
 #endif
 
 /* SunOS's curses.h has a '#define reg register' in it.  Thank you Sun.  */

@@ -443,7 +443,7 @@ rpcap_setfilter_common(pcap_t *handle, struct bpf_program *prog)
 	unsigned char *buf_setfilter;
 
 	/* update local filter */
-	if (install_bpf_program(handle, prog) == -1)
+	if (pcapint_install_bpf_program(handle, prog) == -1)
 		return -1;
 
 	/* update remote filter */
@@ -547,7 +547,7 @@ rpcap_cleanup(pcap_t *handle)
 			close(fd);
 		}
 	}
-	pcap_cleanup_live_common(handle);
+	pcapint_cleanup_live_common(handle);
 }
 
 static int
@@ -664,8 +664,8 @@ rpcap_activate(pcap_t *handle)
 	handle->inject_op = rpcap_inject_common;
 	handle->setdirection_op = NULL;
 	handle->set_datalink_op = NULL;	/* not possible */
-	handle->getnonblock_op = pcap_getnonblock_fd;
-	handle->setnonblock_op = pcap_setnonblock_fd;
+	handle->getnonblock_op = pcapint_getnonblock_fd;
+	handle->setnonblock_op = pcapint_setnonblock_fd;
 	handle->stats_op = rpcap_stats_common;
 	handle->cleanup_op = rpcap_cleanup;
 
@@ -754,7 +754,7 @@ rpcap_create(const char *device, char *err_str, int *is_ours)
 
 	*is_ours = 1;
 
-	p = pcap_create_common(__UNCONST(device), 16384, 0);
+	p = pcapint_create_common(__UNCONST(device), 16384, 0);
 	if (p == NULL)
 		return NULL;
 

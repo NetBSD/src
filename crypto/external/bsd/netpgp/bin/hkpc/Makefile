@@ -1,21 +1,11 @@
-# $NetBSD: Makefile,v 1.3 2014/12/05 04:52:01 agc Exp $
+# $NetBSD: Makefile,v 1.3.28.1 2025/08/02 05:18:43 perseant Exp $
 
 .include <bsd.own.mk>
+.include "${.CURDIR}/../Makefile.inc"
 
 PROG=hkpc
 BINDIR=/usr/bin
 SRCS=hkpc.c main.c
-
-LIBNETPGPDIR!=	cd ${.CURDIR}/../../lib/netpgp && ${PRINTOBJDIR}
-LDADD+=		-L${LIBNETPGPDIR} -lnetpgp
-DPADD+=		${LIBNETPGPDIR}/libnetpgp.a
-
-LIBMJDIR!=	cd ${.CURDIR}/../../libmj && ${PRINTOBJDIR}
-LDADD+=		-L${LIBMJDIR} -lmj
-DPADD+=		${LIBMJDIR}/libmj.a
-
-LDADD+=		-lcrypto -lz -lbz2
-DPADD+=		${LIBCRYPTO} ${LIBZ} ${LIBBZ2}
 
 WARNS=0
 MAN=hkpc.1

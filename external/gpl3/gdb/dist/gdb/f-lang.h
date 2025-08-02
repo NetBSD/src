@@ -1,6 +1,6 @@
 /* Fortran language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C definitions by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -23,6 +23,7 @@
 #ifndef F_LANG_H
 #define F_LANG_H
 
+#include "language.h"
 #include "valprint.h"
 
 struct type_print_options;
@@ -141,7 +142,7 @@ public:
 
   struct block_symbol lookup_symbol_nonlocal
 	(const char *name, const struct block *block,
-	 const domain_enum domain) const override;
+	 const domain_search_flags domain) const override;
 
   /* See language.h.  */
 
@@ -199,6 +200,11 @@ public:
 	    || (type->code () == TYPE_CODE_ARRAY
 		&& type->target_type ()->code () == TYPE_CODE_CHAR));
   }
+
+  /* See language.h.  */
+
+  struct value *value_string (struct gdbarch *gdbarch,
+			      const char *ptr, ssize_t len) const override;
 
   /* See language.h.  */
 

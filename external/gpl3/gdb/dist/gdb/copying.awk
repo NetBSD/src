@@ -6,9 +6,8 @@ BEGIN	{
 	  print "   It is created automatically by copying.awk.";
 	  print "   Modify copying.awk instead.  <== */";
 	  print ""
-	  print "#include \"defs.h\""
 	  print "#include \"command.h\""
-	  print "#include \"gdbcmd.h\""
+	  print "#include \"cli/cli-cmds.h\""
 	  print ""
 	  print "static void show_copying_command (const char *, int);"
 	  print ""

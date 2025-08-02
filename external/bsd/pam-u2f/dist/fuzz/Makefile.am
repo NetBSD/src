@@ -12,4 +12,4 @@ fuzz_auth_LDADD = -lpam $(LIBFIDO2_LIBS) $(LIBCRYPTO_LIBS) ../pam_u2f.la
 
 noinst_PROGRAMS = fuzz_format_parsers fuzz_auth
 
-EXTRA_DIST = coverage.sh make_seed.py
+EXTRA_DIST = coverage.sh make_seed.py export.sym

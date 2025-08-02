@@ -1,5 +1,5 @@
 /* BFD back-end for verilog hex memory dump files.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Written by Anthony Green <green@moxielogic.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -200,7 +200,7 @@ verilog_write_address (bfd *abfd, bfd_vma address)
   *dst++ = '\n';
   wrlen = dst - buffer;
 
-  return bfd_bwrite ((void *) buffer, wrlen, abfd) == wrlen;
+  return bfd_write (buffer, wrlen, abfd) == wrlen;
 }
 
 /* Write a record of type, of the supplied number of bytes. The
@@ -288,7 +288,7 @@ verilog_write_record (bfd *abfd,
   *dst++ = '\n';
   wrlen = dst - buffer;
 
-  return bfd_bwrite ((void *) buffer, wrlen, abfd) == wrlen;
+  return bfd_write (buffer, wrlen, abfd) == wrlen;
 }
 
 static bool
@@ -391,7 +391,6 @@ verilog_mkobject (bfd *abfd)
 #define verilog_bfd_make_debug_symbol		     _bfd_nosymbols_bfd_make_debug_symbol
 #define verilog_read_minisymbols		     _bfd_generic_read_minisymbols
 #define verilog_minisymbol_to_symbol		     _bfd_generic_minisymbol_to_symbol
-#define verilog_get_section_contents_in_window	     _bfd_generic_get_section_contents_in_window
 #define verilog_bfd_get_relocated_section_contents   bfd_generic_get_relocated_section_contents
 #define verilog_bfd_relax_section		     bfd_generic_relax_section
 #define verilog_bfd_gc_sections			     bfd_generic_gc_sections

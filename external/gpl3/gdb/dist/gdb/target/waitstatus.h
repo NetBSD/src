@@ -1,6 +1,6 @@
 /* Target waitstatus definitions and prototypes.
 
-   Copyright (C) 1990-2023 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #define TARGET_WAITSTATUS_H
 
 #include "diagnostics.h"
-#include "gdbsupport/gdb_signals.h"
+#include "gdb/signals.h"
 
 /* Stuff for target_wait.  */
 
@@ -77,7 +77,7 @@ enum target_waitkind
      should be resuming the inferior.  */
   TARGET_WAITKIND_SPURIOUS,
 
-  /* An event has occured, but we should wait again.
+  /* An event has occurred, but we should wait again.
      Remote_async_wait() returns this when there is an event
      on the inferior, but the rest of the world is not interested in
      it.  The inferior has not stopped, but has just sent some output
@@ -95,12 +95,30 @@ enum target_waitkind
   /* There are no resumed children left in the program.  */
   TARGET_WAITKIND_NO_RESUMED,
 
+  /* The thread was cloned.  The event's ptid corresponds to the
+     cloned parent.  The cloned child is held stopped at its entry
+     point, and its ptid is in the event's m_child_ptid.  The target
+     must not add the cloned child to GDB's thread list until
+     target_ops::follow_clone() is called.  */
+  TARGET_WAITKIND_THREAD_CLONED,
+
   /* The thread was created.  */
   TARGET_WAITKIND_THREAD_CREATED,
 
   /* The thread has exited.  The exit status is in value.integer.  */
   TARGET_WAITKIND_THREAD_EXITED,
 };
+
+/* Determine if KIND represents an event with a new child - a fork,
+   vfork, or clone.  */
+
+static inline bool
+is_new_child_status (target_waitkind kind)
+{
+  return (kind == TARGET_WAITKIND_FORKED
+	  || kind == TARGET_WAITKIND_VFORKED
+	  || kind == TARGET_WAITKIND_THREAD_CLONED);
+}
 
 /* Return KIND as a string.  */
 
@@ -125,6 +143,8 @@ DIAGNOSTIC_ERROR_SWITCH
       return "FORKED";
     case TARGET_WAITKIND_VFORKED:
       return "VFORKED";
+    case TARGET_WAITKIND_THREAD_CLONED:
+      return "THREAD_CLONED";
     case TARGET_WAITKIND_EXECD:
       return "EXECD";
     case TARGET_WAITKIND_VFORK_DONE:
@@ -325,6 +345,14 @@ struct target_waitstatus
     return *this;
   }
 
+  target_waitstatus &set_thread_cloned (ptid_t child_ptid)
+  {
+    this->reset ();
+    m_kind = TARGET_WAITKIND_THREAD_CLONED;
+    m_value.child_ptid = child_ptid;
+    return *this;
+  }
+
   target_waitstatus &set_thread_created ()
   {
     this->reset ();
@@ -369,8 +397,7 @@ struct target_waitstatus
 
   ptid_t child_ptid () const
   {
-    gdb_assert (m_kind == TARGET_WAITKIND_FORKED
-		|| m_kind == TARGET_WAITKIND_VFORKED);
+    gdb_assert (is_new_child_status (m_kind));
     return m_value.child_ptid;
   }
 

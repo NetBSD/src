@@ -9,9 +9,9 @@ ntpsnmpd_SOURCES= netsnmp_daemonize.c ntpsnmpd.c ntpSnmpSubagentObject.c \
 		ntpsnmpd-opts.c ntpsnmpd-opts.h ntpSnmpSubagentObject.h \
 		ntp_snmp.h
 # HMS: we probably want a version.o file here, too.
-LDADD  = ../ntpq/libntpq.a ../libntp/libntp.a
-LDADD += $(SNMP_LIBS) $(LDADD_LIBNTP) $(LIBM)
-LDADD += $(PTHREAD_LIBS) $(LDADD_NTP) $(LIBOPTS_LDADD)
+ntpsnmpd_LDADD  = ../ntpq/libntpq.a ../libntp/libntp.a
+ntpsnmpd_LDADD += $(LDADD_LIBNTP) $(LIBM) $(PTHREAD_LIBS)
+ntpsnmpd_LDADD += $(LDADD_NTP) $(LIBOPTS_LDADD) $(SNMP_LIBS)
 
 AM_CFLAGS  = $(SNMP_CFLAGS) $(CFLAGS_NTP)
 AM_CFLAGS += $(NTP_HARD_CFLAGS)
@@ -19,8 +19,8 @@ AM_CFLAGS += $(NTP_HARD_CFLAGS)
 AM_CPPFLAGS  = -I$(top_srcdir)/ntpq
 AM_CPPFLAGS += $(NTP_INCS)
 AM_CPPFLAGS += $(LIBOPTS_CFLAGS)
-AM_CPPFLAGS += $(SNMP_CPPFLAGS)
 AM_CPPFLAGS += $(CPPFLAGS_NTP)
+AM_CPPFLAGS += $(SNMP_CPPFLAGS)
 AM_CPPFLAGS += $(NTP_HARD_CPPFLAGS)
 
 AM_LDFLAGS  = $(LDFLAGS_NTP)
@@ -75,12 +75,12 @@ $(srcdir)/ntpsnmpd-opts.h: $(srcdir)/ntpsnmpd-opts.c
 	@: do-nothing action to avoid default SCCS get, .h built with .c
 	
 $(srcdir)/ntpsnmpd-opts.c: $(srcdir)/ntpsnmpd-opts.def $(std_def_list)
-	$(run_ag) ntpsnmpd-opts.def
+	$(AM_V_GEN)$(run_ag) ntpsnmpd-opts.def
 
 ###
 
 $(srcdir)/ntpsnmpd.1ntpsnmpdman: $(srcdir)/ntpsnmpd-opts.def $(std_def_list)
-	$(run_ag) -DMAN_SECTION=1ntpsnmpdman -Tagman-cmd.tpl ntpsnmpd-opts.def
+	$(AM_V_GEN)$(run_ag) -DMAN_SECTION=1ntpsnmpdman -Tagman-cmd.tpl ntpsnmpd-opts.def
 
 $(srcdir)/ntpsnmpd.man.in: $(srcdir)/ntpsnmpd.1ntpsnmpdman $(top_srcdir)/sntp/scripts/mansec2subst.sed
 	sed -f $(top_srcdir)/sntp/scripts/mansec2subst.sed $(srcdir)/ntpsnmpd.1ntpsnmpdman > $(srcdir)/ntpsnmpd.man.in+
@@ -89,7 +89,7 @@ $(srcdir)/ntpsnmpd.man.in: $(srcdir)/ntpsnmpd.1ntpsnmpdman $(top_srcdir)/sntp/sc
 ###
 
 $(srcdir)/ntpsnmpd.1ntpsnmpdmdoc: $(srcdir)/ntpsnmpd-opts.def $(std_def_list)
-	$(run_ag) -DMAN_SECTION=1ntpsnmpdmdoc -Tagmdoc-cmd.tpl ntpsnmpd-opts.def
+	$(AM_V_GEN)$(run_ag) -DMAN_SECTION=1ntpsnmpdmdoc -Tagmdoc-cmd.tpl ntpsnmpd-opts.def
 
 $(srcdir)/ntpsnmpd.mdoc.in: $(srcdir)/ntpsnmpd.1ntpsnmpdmdoc $(top_srcdir)/sntp/scripts/mansec2subst.sed
 	sed -f $(top_srcdir)/sntp/scripts/mansec2subst.sed $(srcdir)/ntpsnmpd.1ntpsnmpdmdoc > $(srcdir)/ntpsnmpd.mdoc.in+
@@ -107,14 +107,14 @@ $(srcdir)/invoke-ntpsnmpd.menu: $(srcdir)/invoke-ntpsnmpd.texi
 	@: do-nothing action to avoid default SCCS get, .menu built with .texi
 	
 $(srcdir)/invoke-ntpsnmpd.texi: $(srcdir)/ntpsnmpd-opts.def $(std_def_list)
-	$(run_ag) -Tagtexi-cmd.tpl -DLEVEL=section ntpsnmpd-opts.def
+	$(AM_V_GEN)$(run_ag) -Tagtexi-cmd.tpl -DLEVEL=section ntpsnmpd-opts.def
 	$(top_srcdir)/scripts/build/check--help $@
 
-$(srcdir)/ntpsnmpd.html: $(srcdir)/ntpsnmpd.texi $(top_srcdir)/sntp/include/version.texi
+$(srcdir)/ntpsnmpd.html: $(srcdir)/invoke-ntpsnmpd.texi $(srcdir)/ntpsnmpd.texi $(top_srcdir)/sntp/include/version.texi
 	cd $(srcdir) && ( makeinfo --force --html --no-split -o ntpsnmpd.html ntpsnmpd.texi || true )
 
 include $(top_srcdir)/bincheck.mf
-include $(top_srcdir)/sntp/check-libntp.mf
+include $(top_srcdir)/check-libntp.mf
 include $(top_srcdir)/check-libopts.mf
 include $(top_srcdir)/depsver.mf
 include $(top_srcdir)/includes.mf

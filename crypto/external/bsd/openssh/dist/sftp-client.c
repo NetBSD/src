@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.c,v 1.35 2023/12/20 17:15:21 christos Exp $	*/
-/* $OpenBSD: sftp-client.c,v 1.175 2023/11/13 09:18:19 tobhe Exp $ */
+/*	$NetBSD: sftp-client.c,v 1.35.2.1 2025/08/02 05:18:47 perseant Exp $	*/
+/* $OpenBSD: sftp-client.c,v 1.177 2025/03/11 07:48:51 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -23,7 +23,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.35 2023/12/20 17:15:21 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.35.2.1 2025/08/02 05:18:47 perseant Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -2073,6 +2073,7 @@ sftp_upload(struct sftp_conn *conn, const char *local_path,
 			close(local_fd);
 			return -1;
 		}
+		highwater = c.size;
 	}
 
 	openmode = SSH2_FXF_WRITE|SSH2_FXF_CREAT;
@@ -2421,7 +2422,7 @@ handle_dest_replies(struct sftp_conn *to, const char *to_path, int synchronous,
 		 * server not to have reordered replies that could have
 		 * inserted holes where none existed in the source file.
 		 *
-		 * XXX we could get a more accutate progress bar if we updated
+		 * XXX we could get a more accurate progress bar if we updated
 		 * the counter based on the reply from the destination...
 		 */
 		(*nreqsp)--;

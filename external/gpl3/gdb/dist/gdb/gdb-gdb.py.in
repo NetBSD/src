@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2023 Free Software Foundation, Inc.
+# Copyright (C) 2009-2024 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import gdb
 import os.path
+
+import gdb
 
 
 class TypeFlag:
@@ -172,13 +173,13 @@ class StructMainTypePrettyPrinter:
         """Return an image of the main_type field number FIELDNO."""
         f = self.val["flds_bnds"]["fields"][fieldno]
         label = "flds_bnds.fields[%d]:" % fieldno
-        if f["artificial"]:
+        if f["m_artificial"]:
             label += " (artificial)"
         fields = []
         fields.append("m_name = %s" % f["m_name"])
         fields.append("m_type = %s" % f["m_type"])
         fields.append("m_loc_kind = %s" % f["m_loc_kind"])
-        fields.append("bitsize = %d" % f["bitsize"])
+        fields.append("bitsize = %d" % f["m_bitsize"])
         fields.append(self.struct_field_location_img(f))
         return label + "\n" + "  {" + ",\n   ".join(fields) + "}"
 
@@ -261,8 +262,8 @@ class StructMainTypePrettyPrinter:
         fields.append("flags = [%s]" % self.flags_to_string())
         fields.append("owner = %s" % self.owner_to_string())
         fields.append("target_type = %s" % self.val["m_target_type"])
-        if self.val["nfields"] > 0:
-            for fieldno in range(self.val["nfields"]):
+        if self.val["m_nfields"] > 0:
+            for fieldno in range(self.val["m_nfields"]):
                 fields.append(self.struct_field_img(fieldno))
         if self.val["code"] == gdb.TYPE_CODE_RANGE:
             fields.append(self.bounds_img())
@@ -369,6 +370,35 @@ class IntrusiveListPrinter:
         return self._children_generator()
 
 
+class HtabPrinter:
+    """Pretty-printer for htab_t hash tables."""
+
+    def __init__(self, val):
+        self._val = val
+
+    def display_hint(self):
+        return "array"
+
+    def to_string(self):
+        n = int(self._val["n_elements"]) - int(self._val["n_deleted"])
+        return "htab_t with {} elements".format(n)
+
+    def children(self):
+        size = int(self._val["size"])
+        entries = self._val["entries"]
+
+        child_i = 0
+        for entries_i in range(size):
+            entry = entries[entries_i]
+            # 0 (NULL pointer) means there's nothing, 1 (HTAB_DELETED_ENTRY)
+            # means there was something, but is now deleted.
+            if int(entry) in (0, 1):
+                continue
+
+            yield (str(child_i), entry)
+            child_i += 1
+
+
 def type_lookup_function(val):
     """A routine that returns the correct pretty printer for VAL
     if appropriate.  Returns None otherwise.
@@ -383,6 +413,8 @@ def type_lookup_function(val):
         return CoreAddrPrettyPrinter(val)
     elif tag is not None and tag.startswith("intrusive_list<"):
         return IntrusiveListPrinter(val)
+    elif name == "htab_t":
+        return HtabPrinter(val)
     return None
 
 

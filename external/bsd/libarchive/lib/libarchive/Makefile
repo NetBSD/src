@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2024/06/09 19:47:56 christos Exp $
+#	$NetBSD: Makefile,v 1.17.2.1 2025/08/02 05:21:49 perseant Exp $
 
 .include <bsd.init.mk>
 
@@ -8,10 +8,21 @@ LIB=		archive
 
 
 LIBDPLIBS+=	bz2	${NETBSDSRCDIR}/lib/libbz2 \
-		crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
+		crypto	${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
 		expat	${NETBSDSRCDIR}/external/mit/expat/lib/libexpat \
+		${ZSTDDPLIBS} \
 		lzma	${NETBSDSRCDIR}/external/public-domain/xz/lib \
 		z	${NETBSDSRCDIR}/lib/libz
+
+# XXX Avoid exporting symbols of statically linked deps like zstd.
+# XXX Should do this in bsd.lib.mk, perhaps.
+.for _lib _dir in ${LIBDPLIBS}
+LDADD+=		-Wl,--exclude-libs,lib${_lib}
+.endfor
+
+# Avoid exporting private libarchive symbols.
+COPTS+=		-fvisibility=hidden
+CPPFLAGS+=	-D__LIBARCHIVE_ENABLE_VISIBILITY
 
 SRCS=		archive_acl.c \
 		archive_blake2sp_ref.c \

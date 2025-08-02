@@ -20,14 +20,12 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ap1394.c,v 1.7 2023/08/17 20:19:40 christos Exp $");
+__RCSID("$NetBSD: print-ap1394.c,v 1.7.2.1 2025/08/02 05:23:21 perseant Exp $");
 #endif
 
 /* \summary: Apple IP-over-IEEE 1394 printer */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include "netdissect-stdinc.h"
 

@@ -1,6 +1,6 @@
 /* C/C++ language support for compilation.
 
-   Copyright (C) 2014-2023 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "compile-internal.h"
 #include "compile-c.h"
 #include "compile-cplus.h"
@@ -118,7 +117,7 @@ get_compile_context (const char *fe_libcc, const char *fe_context,
     error (_("The loaded version of GCC does not support the required version "
 	     "of the API."));
 
-  return std::unique_ptr<compile_instance> (new INSTTYPE (context));
+  return std::make_unique<INSTTYPE> (context);
 }
 
 /* A C-language implementation of get_compile_context.  */
@@ -267,7 +266,7 @@ generate_register_struct (struct ui_file *stream, struct gdbarch *gdbarch,
 		    }
 		}
 
-		/* Fall through.  */
+		[[fallthrough]];
 
 	      default:
 		gdb_printf (stream,

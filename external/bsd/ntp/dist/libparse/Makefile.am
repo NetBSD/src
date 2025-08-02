@@ -1,6 +1,7 @@
 NULL=
 BUILT_SOURCES = $(VPHACK) info_trimble.c $(VPHACK_AFTER)
 CLEANFILES =
+DISTCLEANFILES =
 noinst_LIBRARIES = @MAKE_LIBPARSE@ @MAKE_LIBPARSE_KERNEL@
 EXTRA_LIBRARIES = libparse.a libparse_kernel.a
 EXTRA_PROGRAMS = parsestreams parsesolaris
@@ -27,10 +28,10 @@ VPHACK_AFTER=
 endif
 
 vphack:
-	test -e info_trimble.c || ln -s $(srcdir)/info_trimble.c .
+	$(AM_V_at)test -e info_trimble.c || ln -s $(srcdir)/info_trimble.c .
 
 vphack_after:
-	test -L info_trimble.c || ( \
+	$(AM_V_at)test -L info_trimble.c || ( \
 		mv info_trimble.c $(srcdir)/info_trimble.c && \
 		ln -s $(srcdir)/info_trimble.c . \
 		)
@@ -93,14 +94,9 @@ AM_LDFLAGS = $(NTP_HARD_LDFLAGS)
 EXTRA_DIST = parsesolaris.c parsestreams.c mkinfo_scmd.sed mkinfo_rcmd.sed info_trimble.c
 
 info_trimble.c: $(top_srcdir)/include/trimble.h $(srcdir)/Makefile.am $(srcdir)/mkinfo_scmd.sed $(srcdir)/mkinfo_rcmd.sed
-	sed -n -f $(srcdir)/mkinfo_scmd.sed $(top_srcdir)/include/trimble.h  > info_trimble.new
-	sed -n -f $(srcdir)/mkinfo_rcmd.sed $(top_srcdir)/include/trimble.h >> info_trimble.new
-	mv -f info_trimble.new $@
-
-#$(srcdir)/info_trimble.c: $(top_srcdir)/include/trimble.h $(srcdir)/Makefile.am $(srcdir)/mkinfo_scmd.sed $(srcdir)/mkinfo_rcmd.sed
-#	sed -n -f $(srcdir)/mkinfo_scmd.sed $(top_srcdir)/include/trimble.h  > info_trimble.new
-#	sed -n -f $(srcdir)/mkinfo_rcmd.sed $(top_srcdir)/include/trimble.h >> info_trimble.new
-#	mv -f info_trimble.new $@
+	$(AM_V_at)$(SED) -n -f $(srcdir)/mkinfo_scmd.sed $(top_srcdir)/include/trimble.h  > info_trimble.new
+	$(AM_V_at)$(SED) -n -f $(srcdir)/mkinfo_rcmd.sed $(top_srcdir)/include/trimble.h >> info_trimble.new
+	$(AM_V_at)mv -f info_trimble.new $@
 
 kieee754io.o: $(srcdir)/ieee754io.c
 	 $(COMPILE) $(K_CFLAGS) -c $(srcdir)/ieee754io.c -o $@
@@ -164,16 +160,16 @@ parse: $(parsesolaris_OBJECTS) libparse_kernel.a ../libntp/libntp.a
 
 parsesolaris.o: sys/systm.h
 
-# [Bug3608] Solaris has inconsistent definitions of ffs() and fls(). Drop the
+# [Bug 3608] Solaris has inconsistent definitions of ffs() and fls(). Drop the
 # ones from 'systm.h'.
 sys/systm.h:
 	-mkdir sys
-	sed -e '/f[fl]s(.*)/d' < /usr/include/sys/systm.h > sys/systm.h
+	$(SED) -e '/f[fl]s(.*)/d' < /usr/include/sys/systm.h > sys/systm.h
 
 ## check-libparse is invoked by ntpd/Makefile.am
 check-libparse: $(noinst_LIBRARIES)
 	@: do-nothing action to avoid default SCCS get
 
-include $(top_srcdir)/sntp/check-libntp.mf
+include $(top_srcdir)/check-libntp.mf
 include $(top_srcdir)/depsver.mf
 include $(top_srcdir)/includes.mf

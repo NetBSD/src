@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <fnmatch.h>
 #include <getopt.h>
 #include <grp.h>
 #include <inttypes.h>
@@ -87,6 +88,8 @@ const struct option cf_options[] = {
 #ifndef SMALL
 	{"msuserclass",     required_argument, NULL, O_MSUSERCLASS},
 #endif
+	{"vsio",            required_argument, NULL, O_VSIO},
+	{"vsio6",           required_argument, NULL, O_VSIO6},
 	{"vendor",          required_argument, NULL, 'v'},
 	{"waitip",          optional_argument, NULL, 'w'},
 	{"exit",            no_argument,       NULL, 'x'},
@@ -172,6 +175,7 @@ const struct option cf_options[] = {
 	{"request_time",    required_argument, NULL, O_REQUEST_TIME},
 	{"fallback_time",   required_argument, NULL, O_FALLBACK_TIME},
 	{"ipv4ll_time",     required_argument, NULL, O_IPV4LL_TIME},
+	{"nosyslog",        no_argument,       NULL, O_NOSYSLOG},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -648,12 +652,10 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	ssize_t s;
 	struct in_addr addr, addr2;
 	in_addr_t *naddr;
-	struct rt *rt;
 	const struct dhcp_opt *d, *od;
 	uint8_t *request, *require, *no, *reject;
 	struct dhcp_opt **dop, *ndop;
 	size_t *dop_len, dl, odl;
-	struct vivco *vivco;
 	struct group *grp;
 #ifdef AUTH
 	struct token *token;
@@ -661,13 +663,26 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 #ifdef _REENTRANT
 	struct group grpbuf;
 #endif
+#ifdef INET
+	struct rt *rt;
+#endif
 #ifdef DHCP6
-	size_t sl;
 	struct if_ia *ia;
 	uint8_t iaid[4];
+#endif
+#if defined(DHCP6) || ((defined(INET) || defined(INET6)) && !defined(SMALL))
+	size_t sl;
+#endif
 #ifndef SMALL
+#ifdef DHCP6
 	struct if_sla *sla, *slap;
 #endif
+	struct vivco *vivco;
+	const struct vivco *vivco_endp = ifo->vivco + ifo->vivco_len;
+	struct in6_addr in6addr;
+	struct vsio **vsiop = NULL, *vsio;
+	size_t *vsio_lenp = NULL, opt_max, opt_header;
+	struct vsio_so *vsio_so;
 #endif
 
 	dop = NULL;
@@ -727,7 +742,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		break;
 	case 'd':
-		ifo->options |= DHCPCD_DEBUG;
+		logsetopts(loggetopts() | LOGERR_DEBUG);
 		break;
 	case 'e':
 		ARG_REQUIRED;
@@ -755,7 +770,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	case 'i':
 		if (arg)
 			s = parse_string((char *)ifo->vendorclassid + 1,
-			    VENDORCLASSID_MAX_LEN, arg);
+			    sizeof(ifo->vendorclassid) - 1, arg);
 		else
 			s = 0;
 		if (s == -1) {
@@ -897,6 +912,139 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		ifo->userclass[0] = (uint8_t)s;
 		break;
 #endif
+
+	case O_VSIO:
+#ifndef SMALL
+		vsiop = &ifo->vsio;
+		vsio_lenp = &ifo->vsio_len;
+		opt_max = UINT8_MAX;
+		opt_header = sizeof(uint8_t) + sizeof(uint8_t);
+#endif
+		/* FALLTHROUGH */
+	case O_VSIO6:
+#ifndef SMALL
+		if (vsiop == NULL) {
+			vsiop = &ifo->vsio6;
+			vsio_lenp = &ifo->vsio6_len;
+			opt_max = UINT16_MAX;
+			opt_header = sizeof(uint16_t) + sizeof(uint16_t);
+		}
+#endif
+		ARG_REQUIRED;
+#ifdef SMALL
+		logwarnx("%s: vendor options not compiled in", ifname);
+		return -1;
+#else
+		fp = strwhite(arg);
+		if (fp)
+			*fp++ = '\0';
+		u = (uint32_t)strtou(arg, NULL, 0, 0, UINT32_MAX, &e);
+		if (e) {
+			logerrx("invalid code: %s", arg);
+			return -1;
+		}
+
+		fp = strskipwhite(fp);
+		p = strchr(fp, ',');
+		if (!p || !p[1]) {
+			logerrx("invalid vendor format: %s", arg);
+			return -1;
+		}
+
+		/* Strip and preserve the comma */
+		*p = '\0';
+		i = (int)strtoi(fp, NULL, 0, 1, (intmax_t)opt_max, &e);
+		*p = ',';
+		if (e) {
+			logerrx("vendor option should be between"
+			    " 1 and %zu inclusive", opt_max);
+			return -1;
+		}
+
+		fp = p + 1;
+
+		if (fp) {
+			if (inet_pton(AF_INET, fp, &addr) == 1) {
+				s = sizeof(addr.s_addr);
+				dl = (size_t)s;
+				np = malloc(dl);
+				if (np == NULL) {
+					logerr(__func__);
+					return -1;
+				}
+				memcpy(np, &addr.s_addr, dl);
+			} else if (inet_pton(AF_INET6, fp, &in6addr) == 1) {
+				s = sizeof(in6addr.s6_addr);
+				dl = (size_t)s;
+				np = malloc(dl);
+				if (np == NULL) {
+					logerr(__func__);
+					return -1;
+				}
+				memcpy(np, &in6addr.s6_addr, dl);
+			} else {
+				s = parse_string(NULL, 0, fp);
+				if (s == -1) {
+					logerr(__func__);
+					return -1;
+				}
+				dl = (size_t)s;
+				np = malloc(dl);
+				if (np == NULL) {
+					logerr(__func__);
+					return -1;
+				}
+				parse_string(np, dl, fp);
+			}
+		} else {
+			dl = 0;
+			np = NULL;
+		}
+
+		for (sl = 0, vsio = *vsiop; sl < *vsio_lenp; sl++, vsio++) {
+			if (vsio->en == (uint32_t)u)
+				break;
+		}
+		if (sl == *vsio_lenp) {
+			vsio = reallocarray(*vsiop, *vsio_lenp + 1,
+			    sizeof(**vsiop));
+			if (vsio == NULL) {
+				logerr("%s: reallocarray vsio", __func__);
+				free(np);
+				return -1;
+			}
+			*vsiop = vsio;
+			vsio = &(*vsiop)[(*vsio_lenp)++];
+			vsio->en = (uint32_t)u;
+			vsio->so = NULL;
+			vsio->so_len = 0;
+		}
+
+		for (sl = 0, vsio_so = vsio->so;
+		    sl < vsio->so_len;
+		    sl++, vsio_so++)
+			opt_max -= opt_header + vsio_so->len;
+		if (opt_header + dl > opt_max) {
+			logerrx("vsio is too big: %s", fp);
+			free(np);
+			return -1;
+		}
+
+		vsio_so = reallocarray(vsio->so, vsio->so_len + 1,
+		    sizeof(*vsio_so));
+		if (vsio_so == NULL) {
+			logerr("%s: reallocarray vsio_so", __func__);
+			free(np);
+			return -1;
+		}
+
+		vsio->so = vsio_so;
+		vsio_so = &vsio->so[vsio->so_len++];
+		vsio_so->opt = (uint16_t)i;
+		vsio_so->len = (uint16_t)dl;
+		vsio_so->data = np;
+		break;
+#endif
 	case 'v':
 		ARG_REQUIRED;
 		p = strchr(arg, ',');
@@ -909,7 +1057,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		if (p == arg) {
 			arg++;
 			s = parse_string((char *)ifo->vendor + 1,
-			    VENDOR_MAX_LEN, arg);
+			    sizeof(ifo->vendor) - 1, arg);
 			if (s == -1) {
 				logerr("vendor");
 				return -1;
@@ -936,7 +1084,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 
 		arg = p + 1;
-		s = VENDOR_MAX_LEN - ifo->vendor[0] - 2;
+		s = (ssize_t)sizeof(ifo->vendor) - 1 - ifo->vendor[0] - 2;
 		if (inet_aton(arg, &addr) == 1) {
 			if (s < 6) {
 				s = -1;
@@ -1063,11 +1211,13 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		ifo->options |= DHCPCD_XID_HWADDR;
 		break;
 	case 'I':
-		/* Strings have a type of 0 */;
-		ifo->clientid[1] = 0;
 		if (arg)
+			/* If parse_hwaddr cannot decoded arg as a
+			 * hardware address then the first byte
+			 * in the clientid will be zero to indicate
+			 * a string value. */
 			s = parse_hwaddr((char *)ifo->clientid + 1,
-			    CLIENTID_MAX_LEN, arg);
+			    sizeof(ifo->clientid) - 1, arg);
 		else
 			s = 0;
 		if (s == -1) {
@@ -1166,6 +1316,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		    strncmp(arg, "ms_classless_static_routes=",
 		        strlen("ms_classless_static_routes=")) == 0)
 		{
+#ifdef INET
 			struct in_addr addr3;
 
 			if (p == NULL) {
@@ -1195,7 +1346,12 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			sa_in_init(&rt->rt_gateway, &addr3);
 			if (rt_proto_add_ctx(&ifo->routes, rt, ctx))
 				add_environ(&ifo->config, arg, 0);
+#else
+			logerrx("no inet support for option: %s", arg);
+			return -1;
+#endif
 		} else if (strncmp(arg, "routers=", strlen("routers=")) == 0) {
+#ifdef INET
 			if (p == NULL) {
 				rt_headclear(&ifo->routes, AF_INET);
 				add_environ(&ifo->config, arg, 1);
@@ -1211,6 +1367,10 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			sa_in_init(&rt->rt_gateway, &addr);
 			if (rt_proto_add_ctx(&ifo->routes, rt, ctx))
 				add_environ(&ifo->config, arg, 0);
+#else
+			logerrx("no inet support for option: %s", arg);
+			return -1;
+#endif
 		} else if (strncmp(arg, "interface_mtu=",
 		    strlen("interface_mtu=")) == 0 ||
 		    strncmp(arg, "mtu=", strlen("mtu=")) == 0)
@@ -1218,12 +1378,13 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			if (p == NULL)
 				break;
 			ifo->mtu = (unsigned int)strtou(p, NULL, 0,
-			    MTU_MIN, MTU_MAX, &e);
+			    IPV4_MMTU, UINT_MAX, &e);
 			if (e) {
 				logerrx("invalid MTU %s", p);
 				return -1;
 			}
 		} else if (strncmp(arg, "ip6_address=", strlen("ip6_address=")) == 0) {
+#ifdef INET6
 			if (p == NULL) {
 				memset(&ifo->req_addr6, 0,
 				    sizeof(ifo->req_addr6));
@@ -1254,6 +1415,10 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				    sizeof(ifo->req_addr6));
 				return -1;
 			}
+#else
+			logerrx("no inet6 support for option: %s", arg);
+			return -1;
+#endif
 		} else
 			add_environ(&ifo->config, arg, p == NULL ? 1 : 0);
 		break;
@@ -1972,6 +2137,10 @@ err_sla:
 		break;
 	case O_VENDCLASS:
 		ARG_REQUIRED;
+#ifdef SMALL
+			logwarnx("%s: vendor options not compiled in", ifname);
+			return -1;
+#else
 		fp = strwhite(arg);
 		if (fp)
 			*fp++ = '\0';
@@ -1979,6 +2148,12 @@ err_sla:
 		if (e) {
 			logerrx("invalid code: %s", arg);
 			return -1;
+		}
+		for (vivco = ifo->vivco; vivco != vivco_endp; vivco++) {
+			if (vivco->en == (uint32_t)u) {
+				logerrx("vendor class option for enterprise number %u already defined", vivco->en);
+				return -1;
+			}
 		}
 		fp = strskipwhite(fp);
 		if (fp) {
@@ -2010,11 +2185,12 @@ err_sla:
 			return -1;
 		}
 		ifo->vivco = vivco;
-		ifo->vivco_en = (uint32_t)u;
 		vivco = &ifo->vivco[ifo->vivco_len++];
+		vivco->en = (uint32_t)u;
 		vivco->len = dl;
 		vivco->data = (uint8_t *)np;
 		break;
+#endif
 	case O_AUTHPROTOCOL:
 		ARG_REQUIRED;
 #ifdef AUTH
@@ -2318,7 +2494,8 @@ invalid_token:
 		break;
 	case O_MUDURL:
 		ARG_REQUIRED;
-		s = parse_string((char *)ifo->mudurl + 1, MUDURL_MAX_LEN, arg);
+		s = parse_string((char *)ifo->mudurl + 1,
+		    sizeof(ifo->mudurl) - 1, arg);
 		if (s == -1) {
 			logerr("mudurl");
 			return -1;
@@ -2373,6 +2550,14 @@ invalid_token:
 		}
 		break;
 #endif
+	case O_NOSYSLOG:
+		{
+			unsigned int logopts = loggetopts();
+
+			logopts &= ~LOGERR_LOG;
+			logsetopts(logopts);
+		}
+		break;
 	default:
 		return 0;
 	}
@@ -2691,7 +2876,7 @@ read_config(struct dhcpcd_ctx *ctx,
 				skip = 1;
 				continue;
 			}
-			if (ifname && strcmp(line, ifname) == 0)
+			if (ifname && fnmatch(line, ifname, 0) == 0)
 				skip = 0;
 			else
 				skip = 1;
@@ -2797,9 +2982,13 @@ free_options(struct dhcpcd_ctx *ctx, struct if_options *ifo)
 	struct rt *rt;
 #endif
 	struct dhcp_opt *opt;
-	struct vivco *vo;
 #ifdef AUTH
 	struct token *token;
+#endif
+#ifndef SMALL
+	struct vivco *vo;
+	struct vsio *vsio;
+	struct vsio_so *vsio_so;
 #endif
 
 	if (ifo == NULL)
@@ -2851,11 +3040,35 @@ free_options(struct dhcpcd_ctx *ctx, struct if_options *ifo)
 	    opt++, ifo->dhcp6_override_len--)
 		free_dhcp_opt_embenc(opt);
 	free(ifo->dhcp6_override);
+#ifndef SMALL
 	for (vo = ifo->vivco;
 	    ifo->vivco_len > 0;
 	    vo++, ifo->vivco_len--)
 		free(vo->data);
 	free(ifo->vivco);
+	for (vsio = ifo->vsio;
+	    ifo->vsio_len > 0;
+	    vsio++, ifo->vsio_len--)
+	{
+		for (vsio_so = vsio->so;
+		    vsio->so_len > 0;
+		    vsio_so++, vsio->so_len--)
+			free(vsio_so->data);
+		free(vsio->so);
+	}
+	free(ifo->vsio);
+	for (vsio = ifo->vsio6;
+	    ifo->vsio6_len > 0;
+	    vsio++, ifo->vsio6_len--)
+	{
+		for (vsio_so = vsio->so;
+		    vsio->so_len > 0;
+		    vsio_so++, vsio->so_len--)
+			free(vsio_so->data);
+		free(vsio->so);
+	}
+	free(ifo->vsio6);
+#endif
 	for (opt = ifo->vivso_override;
 	    ifo->vivso_override_len > 0;
 	    opt++, ifo->vivso_override_len--)

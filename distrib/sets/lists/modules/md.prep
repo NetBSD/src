@@ -1,4 +1,5 @@
-# $NetBSD: md.prep,v 1.2 2016/09/27 20:52:43 pgoyette Exp $
+# $NetBSD: md.prep,v 1.2.30.1 2025/08/02 05:20:35 perseant Exp $
+#
 ./@MODULEDIR@/cac_eisa				base-obsolete		obsolete
 ./@MODULEDIR@/cac_eisa/cac_eisa.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/mlx_eisa				base-obsolete		obsolete

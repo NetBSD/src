@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_bool.c,v 1.19 2020/06/06 21:25:59 thorpej Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.19.12.1 2025/08/02 05:18:34 perseant Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,11 +34,23 @@
 
 struct _prop_bool {
 	struct _prop_object	pb_obj;
-	bool		pb_value;
+	bool			pb_value;
 };
 
 static struct _prop_bool _prop_bool_true;
 static struct _prop_bool _prop_bool_false;
+
+static const char truestr[] = "true";
+static const char falsestr[] = "false";
+
+static const struct _prop_object_type_tags _prop_bool_true_type_tags = {
+	.xml_tag	=	truestr,
+	.json_open_tag	=	truestr,
+};
+static const struct _prop_object_type_tags _prop_bool_false_type_tags = {
+	.xml_tag	=	falsestr,
+	.json_open_tag	=	falsestr,
+};
 
 static _prop_object_free_rv_t
 		_prop_bool_free(prop_stack_t, prop_object_t *);
@@ -78,9 +90,11 @@ _prop_bool_externalize(struct _prop_object_externalize_context *ctx,
 		       void *v)
 {
 	prop_bool_t pb = v;
+	const struct _prop_object_type_tags *tags =
+	    pb->pb_value ? &_prop_bool_true_type_tags
+			 : &_prop_bool_false_type_tags;
 
-	return (_prop_object_externalize_empty_tag(ctx,
-	    pb->pb_value ? "true" : "false"));
+	return _prop_extern_append_empty_tag(ctx, tags);
 }
 
 /* ARGSUSED */
@@ -140,7 +154,7 @@ _prop_bool_alloc(bool val)
  *	Create a prop_bool_t and initialize it with the
  *	provided boolean value.
  */
-prop_bool_t
+_PROP_EXPORT prop_bool_t
 prop_bool_create(bool val)
 {
 
@@ -151,7 +165,7 @@ prop_bool_create(bool val)
  * prop_bool_copy --
  *	Copy a prop_bool_t.
  */
-prop_bool_t
+_PROP_EXPORT prop_bool_t
 prop_bool_copy(prop_bool_t opb)
 {
 
@@ -170,7 +184,7 @@ prop_bool_copy(prop_bool_t opb)
  * prop_bool_value --
  *	Get the value of a prop_bool_t.
  */
-bool
+_PROP_EXPORT bool
 prop_bool_value(prop_bool_t pb)
 {
 
@@ -184,7 +198,7 @@ prop_bool_value(prop_bool_t pb)
  * prop_bool_true --
  *	Historical alias for prop_bool_value().
  */
-bool
+_PROP_EXPORT bool
 prop_bool_true(prop_bool_t pb)
 {
 	return prop_bool_value(pb);
@@ -194,7 +208,7 @@ prop_bool_true(prop_bool_t pb)
  * prop_bool_equals --
  *	Return true if the boolean values are equivalent.
  */
-bool
+_PROP_EXPORT bool
 prop_bool_equals(prop_bool_t b1, prop_bool_t b2)
 {
 	if (!prop_object_is_bool(b1) || !prop_object_is_bool(b2))
@@ -216,15 +230,20 @@ _prop_bool_internalize(prop_stack_t stack, prop_object_t *obj,
 {
 	bool val;
 
+	/*
+	 * N.B. For internalizing JSON, the layer above us has
+	 * made it look like XML for this object type.
+	 */
+
 	/* No attributes, and it must be an empty element. */
 	if (ctx->poic_tagattr != NULL ||
 	    ctx->poic_is_empty_element == false)
 	    	return (true);
 
-	if (_PROP_TAG_MATCH(ctx, "true"))
+	if (_PROP_TAG_MATCH(ctx, truestr))
 		val = true;
 	else {
-		_PROP_ASSERT(_PROP_TAG_MATCH(ctx, "false"));
+		_PROP_ASSERT(_PROP_TAG_MATCH(ctx, falsestr));
 		val = false;
 	}
 	*obj = prop_bool_create(val);

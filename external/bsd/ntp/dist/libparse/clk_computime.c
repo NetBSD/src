@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_computime.c,v 1.6 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: clk_computime.c,v 1.6.8.1 2025/08/02 05:22:32 perseant Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -184,7 +184,7 @@ inp_computime(
 }
 
 #else /* not (REFCLOCK && CLOCK_PARSE && CLOCK_COMPUTIME) */
-int clk_computime_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* not (REFCLOCK && CLOCK_PARSE && CLOCK_COMPUTIME) */
 
 /*

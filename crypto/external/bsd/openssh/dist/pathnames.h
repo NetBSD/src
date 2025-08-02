@@ -1,5 +1,5 @@
-/*	$NetBSD: pathnames.h,v 1.15 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: pathnames.h,v 1.31 2019/11/12 19:33:08 markus Exp $ */
+/*	$NetBSD: pathnames.h,v 1.15.10.1 2025/08/02 05:18:47 perseant Exp $	*/
+/* $OpenBSD: pathnames.h,v 1.33 2024/10/14 01:57:50 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,6 +39,10 @@
 #define _PATH_DH_MODULI			ETCDIR "/moduli"
 
 #define _PATH_SSH_PROGRAM		"/usr/bin/ssh"
+
+/* Binary paths for the sshd components */
+#define _PATH_SSHD_SESSION		"/usr/libexec/sshd-session"
+#define _PATH_SSHD_AUTH			"/usr/libexec/sshd-auth"
 
 /*
  * The process id of the daemon listening for connections is saved here to

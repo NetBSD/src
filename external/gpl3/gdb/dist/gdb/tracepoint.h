@@ -1,5 +1,5 @@
 /* Data structures associated with tracepoints in GDB.
-   Copyright (C) 1997-2023 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -342,8 +342,6 @@ private:
   int m_traceframe_number;
 };
 
-void free_actions (struct breakpoint *);
-
 extern const char *decode_agent_options (const char *exp, int *trace_string);
 
 extern void encode_actions (struct bp_location *tloc,
@@ -354,7 +352,7 @@ extern void encode_actions_rsp (struct bp_location *tloc,
 				std::vector<std::string> *tdp_actions,
 				std::vector<std::string> *stepping_actions);
 
-extern void validate_actionline (const char *, struct breakpoint *);
+extern void validate_actionline (const char *, tracepoint *);
 extern void validate_trace_state_variable_name (const char *name);
 
 extern struct trace_state_variable *find_trace_state_variable (const char *name);
@@ -369,7 +367,7 @@ extern int encode_source_string (int num, ULONGEST addr,
 
 extern void parse_trace_status (const char *line, struct trace_status *ts);
 
-extern void parse_tracepoint_status (const char *p, struct breakpoint *tp,
+extern void parse_tracepoint_status (const char *p, tracepoint *tp,
 				     struct uploaded_tp *utp);
 
 extern void parse_tracepoint_definition (const char *line,

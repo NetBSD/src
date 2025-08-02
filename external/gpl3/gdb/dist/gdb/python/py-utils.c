@@ -1,6 +1,6 @@
 /* General utility routines for GDB/Python.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "top.h"
 #include "charset.h"
 #include "value.h"
 #include "python-internal.h"
@@ -194,10 +194,11 @@ gdbpy_err_fetch::to_string () const
      Using str (aka PyObject_Str) will fetch the error message from
      gdb.GdbError ("message").  */
 
-  if (m_error_value.get () != nullptr && m_error_value.get () != Py_None)
-    return gdbpy_obj_to_string (m_error_value.get ());
+  gdbpy_ref<> value = this->value ();
+  if (value.get () != nullptr && value.get () != Py_None)
+    return gdbpy_obj_to_string (value.get ());
   else
-    return gdbpy_obj_to_string (m_error_type.get ());
+    return gdbpy_obj_to_string (this->type ().get ());
 }
 
 /* See python-internal.h.  */
@@ -205,7 +206,7 @@ gdbpy_err_fetch::to_string () const
 gdb::unique_xmalloc_ptr<char>
 gdbpy_err_fetch::type_to_string () const
 {
-  return gdbpy_obj_to_string (m_error_type.get ());
+  return gdbpy_obj_to_string (this->type ().get ());
 }
 
 /* Convert a GDB exception to the appropriate Python exception.
@@ -219,6 +220,8 @@ gdbpy_convert_exception (const struct gdb_exception &exception)
 
   if (exception.reason == RETURN_QUIT)
     exc_class = PyExc_KeyboardInterrupt;
+  else if (exception.reason == RETURN_FORCED_QUIT)
+    quit_force (NULL, 0);
   else if (exception.error == MEMORY_ERROR)
     exc_class = gdbpy_gdb_memory_error;
   else
@@ -466,12 +469,12 @@ gdbpy_fix_doc_string_indentation (gdb::unique_xmalloc_ptr<char> doc)
      (user left a single stray space at the start of an otherwise blank
      line), we don't consider lines without content when updating the
      MIN_WHITESPACE value.  */
-  gdb::optional<int> min_whitespace;
+  std::optional<int> min_whitespace;
 
   /* The index into WS_INFO at which the processing of DOC can be
      considered "all done", that is, after this point there are no further
      lines with useful content and we should just stop.  */
-  gdb::optional<size_t> all_done_idx;
+  std::optional<size_t> all_done_idx;
 
   /* White-space information for each line in DOC.  */
   std::vector<line_whitespace> ws_info;
@@ -593,4 +596,12 @@ gdbpy_fix_doc_string_indentation (gdb::unique_xmalloc_ptr<char> doc)
   dst[dst_offset] = '\0';
 
   return doc;
+}
+
+/* See python-internal.h.  */
+
+PyObject *
+gdb_py_invalid_object_repr (PyObject *self)
+{
+  return PyUnicode_FromFormat ("<%s (invalid)>", Py_TYPE (self)->tp_name);
 }

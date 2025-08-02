@@ -1,6 +1,6 @@
 /* Target-dependent code for the Tilera TILE-Gx processor.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
@@ -25,7 +25,7 @@
 #include "trad-frame.h"
 #include "symtab.h"
 #include "gdbtypes.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "gdbcore.h"
 #include "value.h"
 #include "dis-asm.h"
@@ -155,7 +155,7 @@ tilegx_register_name (struct gdbarch *gdbarch, int regnum)
       "pc",   "faultnum",
     };
 
-  gdb_static_assert (TILEGX_NUM_REGS == ARRAY_SIZE (register_names));
+  static_assert (TILEGX_NUM_REGS == ARRAY_SIZE (register_names));
   return register_names[regnum];
 }
 
@@ -298,13 +298,13 @@ tilegx_push_dummy_call (struct gdbarch *gdbarch,
   for (i = 0; i < nargs && argreg <= TILEGX_R9_REGNUM; i++)
     {
       const gdb_byte *val;
-      typelen = value_enclosing_type (args[i])->length ();
+      typelen = args[i]->enclosing_type ()->length ();
 
       if (typelen > (TILEGX_R9_REGNUM - argreg + 1) * tilegx_reg_size)
 	break;
 
       /* Put argument into registers wordwise.	*/
-      val = value_contents (args[i]).data ();
+      val = args[i]->contents ().data ();
       for (j = 0; j < typelen; j += tilegx_reg_size)
 	{
 	  /* ISSUE: Why special handling for "typelen = 4x + 1"?
@@ -323,9 +323,9 @@ tilegx_push_dummy_call (struct gdbarch *gdbarch,
      the stack, word aligned.  */
   for (j = nargs - 1; j >= i; j--)
     {
-      const gdb_byte *contents = value_contents (args[j]).data ();
+      const gdb_byte *contents = args[j]->contents ().data ();
 
-      typelen = value_enclosing_type (args[j])->length ();
+      typelen = args[j]->enclosing_type ()->length ();
       slacklen = align_up (typelen, 8) - typelen;
       gdb::byte_vector val (typelen + slacklen);
       memcpy (val.data (), contents, typelen);
@@ -362,7 +362,7 @@ static CORE_ADDR
 tilegx_analyze_prologue (struct gdbarch* gdbarch,
 			 CORE_ADDR start_addr, CORE_ADDR end_addr,
 			 struct tilegx_frame_cache *cache,
-			 frame_info_ptr next_frame)
+			 const frame_info_ptr &next_frame)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR next_addr;
@@ -774,7 +774,7 @@ tilegx_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 /* This is the implementation of gdbarch method get_longjmp_target.  */
 
 static int
-tilegx_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
+tilegx_get_longjmp_target (const frame_info_ptr &frame, CORE_ADDR *pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -833,7 +833,7 @@ typedef BP_MANIPULATION (tilegx_break_insn) tilegx_breakpoint;
 /* Normal frames.  */
 
 static struct tilegx_frame_cache *
-tilegx_frame_cache (frame_info_ptr this_frame, void **this_cache)
+tilegx_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct tilegx_frame_cache *cache;
@@ -864,7 +864,7 @@ tilegx_frame_cache (frame_info_ptr this_frame, void **this_cache)
 /* Retrieve the value of REGNUM in FRAME.  */
 
 static struct value*
-tilegx_frame_prev_register (frame_info_ptr this_frame,
+tilegx_frame_prev_register (const frame_info_ptr &this_frame,
 			    void **this_cache,
 			    int regnum)
 {
@@ -878,7 +878,7 @@ tilegx_frame_prev_register (frame_info_ptr this_frame,
 /* Build frame id.  */
 
 static void
-tilegx_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+tilegx_frame_this_id (const frame_info_ptr &this_frame, void **this_cache,
 		      struct frame_id *this_id)
 {
   struct tilegx_frame_cache *info =
@@ -892,7 +892,7 @@ tilegx_frame_this_id (frame_info_ptr this_frame, void **this_cache,
 }
 
 static CORE_ADDR
-tilegx_frame_base_address (frame_info_ptr this_frame, void **this_cache)
+tilegx_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct tilegx_frame_cache *cache =
     tilegx_frame_cache (this_frame, this_cache);

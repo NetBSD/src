@@ -1,6 +1,10 @@
-#  Copyright (C) 2014-2018 Yubico AB - See COPYING
+#  Copyright (C) 2014-2022 Yubico AB - See COPYING
 
 SUBDIRS = . pamu2fcfg tests
+
+if ENABLE_MAN
+SUBDIRS += man
+endif
 
 if ENABLE_FUZZING
 SUBDIRS += fuzz
@@ -14,21 +18,28 @@ if ENABLE_FUZZING
 AM_CPPFLAGS += -fsanitize=fuzzer-no-link
 endif
 
+noinst_LTLIBRARIES = libmodule.la
+libmodule_la_SOURCES = pam-u2f.c
+libmodule_la_SOURCES += b64.c b64.h
+libmodule_la_SOURCES += debug.c debug.h
+libmodule_la_SOURCES += drop_privs.h
+libmodule_la_SOURCES += expand.c
+libmodule_la_SOURCES += explicit_bzero.c
+libmodule_la_SOURCES += util.c util.h
+libmodule_la_LIBADD = -lpam $(LIBFIDO2_LIBS) $(LIBCRYPTO_LIBS)
+
 pampluginexecdir = $(PAMDIR)
 pampluginexec_LTLIBRARIES = pam_u2f.la
-
-pam_u2f_la_SOURCES = pam-u2f.c
-pam_u2f_la_SOURCES += util.c util.h
-pam_u2f_la_SOURCES += drop_privs.h
-pam_u2f_la_SOURCES += b64.c b64.h
-pam_u2f_la_SOURCES += explicit_bzero.c
-
-pam_u2f_la_LIBADD = -lpam
-pam_u2f_la_LIBADD += $(LIBFIDO2_LIBS) $(LIBCRYPTO_LIBS)
+pam_u2f_la_SOURCES =
+pam_u2f_la_LIBADD = libmodule.la
 pam_u2f_la_LDFLAGS = -module -avoid-version
 
-if ENABLE_FUZZING
+if !ENABLE_FUZZING
+pam_u2f_la_LDFLAGS += -export-symbols $(srcdir)/export.sym
+else
+pam_u2f_la_LDFLAGS += -export-symbols $(srcdir)/fuzz/export.sym
 pam_u2f_la_SOURCES += fuzz/wrap.c
+pam_u2f_la_LDFLAGS += -Wl,--wrap=asprintf
 pam_u2f_la_LDFLAGS += -Wl,--wrap=strdup
 pam_u2f_la_LDFLAGS += -Wl,--wrap=calloc
 pam_u2f_la_LDFLAGS += -Wl,--wrap=malloc
@@ -38,6 +49,7 @@ pam_u2f_la_LDFLAGS += -Wl,--wrap=fdopen
 pam_u2f_la_LDFLAGS += -Wl,--wrap=fstat
 pam_u2f_la_LDFLAGS += -Wl,--wrap=read
 pam_u2f_la_LDFLAGS += -Wl,--wrap=gethostname
+pam_u2f_la_LDFLAGS += -Wl,--wrap=getline
 pam_u2f_la_LDFLAGS += -Wl,--wrap=getpwnam_r
 pam_u2f_la_LDFLAGS += -Wl,--wrap=getpwuid_r
 pam_u2f_la_LDFLAGS += -Wl,--wrap=geteuid
@@ -59,18 +71,7 @@ endif
 
 DEFS = -DDEBUG_PAM -DPAM_DEBUG @DEFS@
 
-if ENABLE_MAN
-dist_man8_MANS = $(top_builddir)/man/pam_u2f.8
-DISTCLEANFILES = $(dist_man8_MANS)
-
-MANSOURCES = $(top_builddir)/man/pam_u2f.8.txt
-EXTRA_DIST = $(MANSOURCES)
-
-SUFFIXES = .8.txt .8
-
-.8.txt.8:
-	$(A2X) --format=manpage -L -a revdate="Version $(VERSION)" $<
-endif
+EXTRA_DIST = export.sym
 
 # Release
 

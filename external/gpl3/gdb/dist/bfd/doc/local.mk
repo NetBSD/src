@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 ##
-##   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+##   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 ##
 ## This file is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@ DOCFILES = \
 	%D%/bfdio.texi \
 	%D%/bfdt.texi \
 	%D%/bfdver.texi \
-	%D%/bfdwin.texi \
 	%D%/cache.texi \
 	%D%/coffcode.texi \
 	%D%/corefile.texi \
@@ -32,7 +31,6 @@ DOCFILES = \
 	%D%/elf.texi \
 	%D%/format.texi \
 	%D%/hash.texi \
-	%D%/init.texi \
 	%D%/libbfd.texi \
 	%D%/linker.texi \
 	%D%/mmo.texi \
@@ -48,7 +46,6 @@ DOCFILES = \
 SRCDOC = \
 	$(srcdir)/aoutx.h $(srcdir)/archive.c \
 	$(srcdir)/archures.c $(srcdir)/bfd.c \
-	$(srcdir)/bfdio.c $(srcdir)/bfdwin.c \
 	$(srcdir)/cache.c $(srcdir)/coffcode.h \
 	$(srcdir)/corefile.c $(srcdir)/elf.c \
 	$(srcdir)/elfcode.h $(srcdir)/format.c \
@@ -61,16 +58,14 @@ SRCDOC = \
 SRCPROT = $(srcdir)/archive.c $(srcdir)/archures.c \
 	$(srcdir)/bfd.c $(srcdir)/coffcode.h $(srcdir)/corefile.c \
 	$(srcdir)/format.c $(srcdir)/libbfd.c \
-	$(srcdir)/bfdio.c $(srcdir)/bfdwin.c \
 	$(srcdir)/opncls.c $(srcdir)/reloc.c \
 	$(srcdir)/section.c $(srcdir)/syms.c \
-	$(srcdir)/targets.c $(srcdir)/init.c
+	$(srcdir)/targets.c
 
 SRCIPROT = $(srcdir)/cache.c $(srcdir)/libbfd.c \
-	$(srcdir)/bfdio.c $(srcdir)/bfdwin.c \
+	$(srcdir)/bfdio.c \
 	$(srcdir)/reloc.c $(srcdir)/cpu-h8300.c \
-	$(srcdir)/cpu-i960.c $(srcdir)/archures.c \
-	$(srcdir)/init.c
+	$(srcdir)/archures.c
 
 TEXIDIR = $(srcdir)/../texinfo/fsf
 
@@ -85,7 +80,7 @@ MKDOC = %D%/chew$(EXEEXT_FOR_BUILD)
 $(MKDOC): %D%/chew.stamp ; @true
 %D%/chew.stamp: $(srcdir)/%D%/chew.c %D%/$(am__dirstamp)
 	$(AM_V_CCLD)$(CC_FOR_BUILD) -o %D%/chw$$$$$(EXEEXT_FOR_BUILD) $(CFLAGS_FOR_BUILD) \
-	  $(LDFLAGS_FOR_BUILD) $(H_CFLAGS) \
+	  $(CPPFLAGS_FOR_BUILD) $(LDFLAGS_FOR_BUILD) \
 	  -I. -I$(srcdir) -I%D% -I$(srcdir)/../include -I$(srcdir)/../intl -I../intl \
 	  $(srcdir)/%D%/chew.c && \
 	$(SHELL) $(srcdir)/../move-if-change \
@@ -113,9 +108,9 @@ REGEN_TEXI = \
 
 .PRECIOUS: %D%/%.stamp
 %D%/%.texi: %D%/%.stamp ; @true
-%D%/%.stamp: $(srcdir)/%.h $(srcdir)/%D%/doc.str $(MKDOC) %D%/$(am__dirstamp)
-	$(AM_V_GEN)$(REGEN_TEXI)
 %D%/%.stamp: $(srcdir)/%.c $(srcdir)/%D%/doc.str $(MKDOC) %D%/$(am__dirstamp)
+	$(AM_V_GEN)$(REGEN_TEXI)
+%D%/%.stamp: $(srcdir)/%.h $(srcdir)/%D%/doc.str $(MKDOC) %D%/$(am__dirstamp)
 	$(AM_V_GEN)$(REGEN_TEXI)
 
 # Avoid the %.stamp generating a builddir/bfd.texi that overrides the

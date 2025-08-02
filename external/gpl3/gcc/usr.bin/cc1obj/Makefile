@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19.2.1 2024/07/01 01:01:06 perseant Exp $
+#	$NetBSD: Makefile,v 1.19.2.2 2025/08/02 05:26:04 perseant Exp $
 
 MYOBJS=		${G_OBJC_OBJS} ${G_C_AND_OBJC_OBJS} 
 PROG=		cc1obj
@@ -47,14 +47,14 @@ COPTS.objc-gnu-runtime-abi-01.cc+=	-Wno-error=stack-protector
 COPTS.objc-next-runtime-abi-01.cc+=	-Wno-error=stack-protector
 
 .if ${MACHINE_ARCH} == "vax" && 0
-COPTS.c-decl.c+=-O0
-COPTS.c-typeck.c+=-O0
-COPTS.c-array-notation.c+=-O0
-COPTS.c-common.c+=-O0
-COPTS.c-ada-spec.c+=-O0
-COPTS.cilk.c+=-O0
-COPTS.c-ubsan.c+=-O0
-COPTS.cc1obj-checksum.c+=-O0
+#COPTS.c-decl.c+=-O0
+#COPTS.c-typeck.c+=-O0
+#COPTS.c-array-notation.c+=-O0
+#COPTS.c-common.c+=-O0
+#COPTS.c-ada-spec.c+=-O0
+#COPTS.cilk.c+=-O0
+#COPTS.c-ubsan.c+=-O0
+#COPTS.cc1obj-checksum.c+=-O0
 .endif
 
 .if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"

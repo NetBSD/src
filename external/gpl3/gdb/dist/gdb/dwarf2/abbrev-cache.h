@@ -1,6 +1,6 @@
 /* DWARF abbrev table cache
 
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,6 @@
 #define GDB_DWARF2_ABBREV_CACHE_H
 
 #include "dwarf2/abbrev.h"
-#include "gdbtypes.h"
 
 /* An abbrev cache holds abbrev tables for easier reuse.  */
 class abbrev_cache

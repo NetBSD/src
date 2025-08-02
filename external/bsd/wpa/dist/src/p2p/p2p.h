@@ -12,6 +12,8 @@
 #include "common/ieee802_11_defs.h"
 #include "wps/wps.h"
 
+struct weighted_pcl;
+
 /* P2P ASP Setup Capability */
 #define P2PS_SETUP_NONE 0
 #define P2PS_SETUP_NEW BIT(0)
@@ -36,7 +38,7 @@
 /**
  * P2P_MAX_REG_CLASS_CHANNELS - Maximum number of channels per regulatory class
  */
-#define P2P_MAX_REG_CLASS_CHANNELS 20
+#define P2P_MAX_REG_CLASS_CHANNELS 60
 
 /**
  * struct p2p_channels - List of supported channels
@@ -98,6 +100,8 @@ struct p2p_go_neg_results {
 	int ht40;
 
 	int vht;
+
+	int edmg;
 
 	u8 max_oper_chwidth;
 
@@ -499,6 +503,11 @@ struct p2p_config {
 	struct p2p_channel *pref_chan;
 
 	/**
+	 * p2p_6ghz_disable - Disable 6GHz for P2P operations
+	 */
+	bool p2p_6ghz_disable;
+
+	/**
 	 * pri_dev_type - Primary Device Type (see WPS)
 	 */
 	u8 pri_dev_type[8];
@@ -605,6 +614,7 @@ struct p2p_config {
 	 * @req_dev_types: Array containing requested device types
 	 * @dev_id: Device ID to search for or %NULL to find all devices
 	 * @pw_id: Device Password ID
+	 * @include_6ghz: Include 6 GHz channels in P2P scan
 	 * Returns: 0 on success, -1 on failure
 	 *
 	 * This callback function is used to request a P2P scan or search
@@ -628,7 +638,8 @@ struct p2p_config {
 	 */
 	int (*p2p_scan)(void *ctx, enum p2p_scan_type type, int freq,
 			unsigned int num_req_dev_types,
-			const u8 *req_dev_types, const u8 *dev_id, u16 pw_id);
+			const u8 *req_dev_types, const u8 *dev_id, u16 pw_id,
+			bool include_6ghz);
 
 	/**
 	 * send_probe_resp - Transmit a Probe Response frame
@@ -1123,7 +1134,8 @@ struct p2p_config {
 	 * the driver specific to a particular interface type.
 	 */
 	int (*get_pref_freq_list)(void *ctx, int go,
-				  unsigned int *len, unsigned int *freq_list);
+				  unsigned int *len,
+				  struct weighted_pcl *freq_list);
 };
 
 
@@ -1236,13 +1248,15 @@ enum p2p_discovery_type {
  *	P2P_FIND_START_WITH_FULL behavior. 0 = Use normal full scan.
  *	If p2p_find is already in progress, this parameter is ignored and full
  *	scan will be executed.
+ * @include_6ghz: Include 6 GHz channels in P2P find
  * Returns: 0 on success, -1 on failure
  */
 int p2p_find(struct p2p_data *p2p, unsigned int timeout,
 	     enum p2p_discovery_type type,
 	     unsigned int num_req_dev_types, const u8 *req_dev_types,
 	     const u8 *dev_id, unsigned int search_delay,
-	     u8 seek_count, const char **seek_string, int freq);
+	     u8 seek_count, const char **seek_string, int freq,
+	     bool include_6ghz);
 
 /**
  * p2p_notify_scan_trigger_status - Indicate scan trigger status
@@ -1618,6 +1632,7 @@ int p2p_scan_res_handler(struct p2p_data *p2p, const u8 *bssid, int freq,
 /**
  * p2p_scan_res_handled - Indicate end of scan results
  * @p2p: P2P module context from p2p_init()
+ * @delay: Search delay for next scan in ms
  *
  * This function is called to indicate that all P2P scan results from a scan
  * have been reported with zero or more calls to p2p_scan_res_handler(). This
@@ -1625,7 +1640,7 @@ int p2p_scan_res_handler(struct p2p_data *p2p, const u8 *bssid, int freq,
  * struct p2p_config::p2p_scan() call if none of the p2p_scan_res_handler()
  * calls stopped iteration.
  */
-void p2p_scan_res_handled(struct p2p_data *p2p);
+void p2p_scan_res_handled(struct p2p_data *p2p, unsigned int delay);
 
 enum p2p_send_action_result {
 	P2P_SEND_ACTION_SUCCESS /* Frame was send and acknowledged */,
@@ -2098,6 +2113,8 @@ void p2p_update_channel_list(struct p2p_data *p2p,
 			     const struct p2p_channels *chan,
 			     const struct p2p_channels *cli_chan);
 
+bool is_p2p_6ghz_disabled(struct p2p_data *p2p);
+
 /**
  * p2p_set_best_channels - Update best channel information
  * @p2p: P2P module context from p2p_init()
@@ -2324,6 +2341,8 @@ struct wpabuf * p2p_build_nfc_handover_sel(struct p2p_data *p2p,
 					   const u8 *go_dev_addr,
 					   const u8 *ssid, size_t ssid_len);
 
+bool p2p_pref_freq_allowed(const struct weighted_pcl *freq_list, bool go);
+
 struct p2p_nfc_params {
 	int sel;
 	const u8 *wsc_attr;
@@ -2383,7 +2402,7 @@ struct p2ps_advertisement * p2p_get_p2ps_adv_list(struct p2p_data *p2p);
 void p2p_expire_peers(struct p2p_data *p2p);
 
 void p2p_set_own_pref_freq_list(struct p2p_data *p2p,
-				const unsigned int *pref_freq_list,
+				const struct weighted_pcl *pref_freq_list,
 				unsigned int size);
 void p2p_set_override_pref_op_chan(struct p2p_data *p2p, u8 op_class,
 				   u8 chan);
@@ -2400,5 +2419,15 @@ int p2p_group_get_common_freqs(struct p2p_group *group, int *common_freqs,
 
 struct wpabuf * p2p_build_probe_resp_template(struct p2p_data *p2p,
 					      unsigned int freq);
+
+void p2p_set_6ghz_dev_capab(struct p2p_data *p2p, bool allow_6ghz);
+bool is_p2p_6ghz_capable(struct p2p_data *p2p);
+bool p2p_is_peer_6ghz_capab(struct p2p_data *p2p, const u8 *addr);
+bool p2p_peer_wfd_enabled(struct p2p_data *p2p, const u8 *peer_addr);
+bool p2p_wfd_enabled(struct p2p_data *p2p);
+bool is_p2p_allow_6ghz(struct p2p_data *p2p);
+void set_p2p_allow_6ghz(struct p2p_data *p2p, bool value);
+int p2p_remove_6ghz_channels(struct weighted_pcl *pref_freq_list, int size);
+int p2p_channel_to_freq(int op_class, int channel);
 
 #endif /* P2P_H */

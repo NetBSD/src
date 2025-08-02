@@ -1,4 +1,5 @@
-# $NetBSD: md.amd64,v 1.300.2.1 2024/07/01 00:59:48 perseant Exp $
+# $NetBSD: md.amd64,v 1.300.2.2 2025/08/02 05:20:28 perseant Exp $
+#
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -37,6 +38,7 @@
 ./usr/include/amd64/limits.h			comp-c-include
 ./usr/include/amd64/linux32_machdep.h		comp-c-include
 ./usr/include/amd64/lock.h			comp-c-include
+./usr/include/amd64/lwp_private.h		comp-c-include
 ./usr/include/amd64/math.h			comp-c-include
 ./usr/include/amd64/mcontext.h			comp-c-include
 ./usr/include/amd64/mtrr.h			comp-c-include
@@ -1302,6 +1304,7 @@
 ./usr/include/i386/kcore.h			comp-c-include
 ./usr/include/i386/limits.h			comp-c-include
 ./usr/include/i386/lock.h			comp-c-include
+./usr/include/i386/lwp_private.h		comp-c-include
 ./usr/include/i386/math.h			comp-c-include
 ./usr/include/i386/mcontext.h			comp-c-include
 ./usr/include/i386/mtrr.h			comp-c-include
@@ -1422,6 +1425,7 @@
 ./usr/include/x86/intr.h			comp-c-include
 ./usr/include/x86/intrdefs.h			comp-c-include
 ./usr/include/x86/lock.h			comp-c-include
+./usr/include/x86/lwp_private.h			comp-c-include
 ./usr/include/x86/math.h			comp-c-include
 ./usr/include/x86/mtrr.h			comp-c-include
 ./usr/include/x86/mutex.h			comp-c-include
@@ -1609,9 +1613,10 @@
 ./usr/lib/i386/libi386.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libi386_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libi386_pic.a			comp-c-piclib		compat,pic,picinstall
-./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcc
-./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcc
-./usr/lib/libtsan_pic.a				comp-c-piclib		compat,picinstall,cxx,gcc
+./usr/lib/libtsan_preinit.o			comp-c-lib		arch64,cxx,gcccmds,gcc
+./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcccmds,gcc
+./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcccmds,gcc
+./usr/lib/libtsan_pic.a				comp-c-piclib		compat,picinstall,cxx,gcccmds,gcc
 ./usr/lib/libx86_64.a				comp-c-lib
 ./usr/lib/libx86_64_p.a				comp-c-proflib		profile
 ./usr/lib/libx86_64_pic.a			comp-c-piclib		pic,picinstall
@@ -1664,7 +1669,6 @@
 ./usr/libdata/ldscripts/elf_k1om.xbn		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xbn		comp-util-bin		binutils=234
 ./usr/libdata/ldscripts/elf_k1om.xc		comp-obsolete	obsolete,binutils=239
-./usr/libdata/ldscripts/elf_k1om.xc		comp-util-bin		binutils=234
 ./usr/libdata/ldscripts/elf_k1om.xc		comp-util-bin		binutils=234
 ./usr/libdata/ldscripts/elf_k1om.xd		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xd		comp-util-bin		binutils=234

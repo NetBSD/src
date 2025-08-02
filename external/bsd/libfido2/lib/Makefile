@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2023/08/11 23:02:08 christos Exp $
+# $NetBSD: Makefile,v 1.11.2.1 2025/08/02 05:21:54 perseant Exp $
 
 NOLINT=
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ CPPFLAGS+= -D_FIDO_INTERNAL -I${DIST}/src
 LDADD+=-lusbhid -lcbor -lz
 DPADD+=${LIBUSBHID} ${LIBCBOR} ${LIBZ}
 
-LDFLAGS+=-Wl,--version-script=${DIST}/src/export.gnu
+VERSION_MAP=	export.gnu
 
 LIB=    fido2
 
@@ -105,7 +105,7 @@ fido_strerr.3 \
 rs256_pk_new.3
 
 SHLIB_MAJOR=5
-SHLIB_MINOR=0
+SHLIB_MINOR=1
 
 .SUFFIXES: .in
 .in:

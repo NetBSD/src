@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.13 2020/05/25 20:47:24 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.13.8.1 2025/08/02 05:22:30 perseant Exp $	*/
 
 /*
  * audio.c - audio interface for reference clock audio drivers
@@ -519,5 +519,5 @@ audio_show(void)
 #endif /* not PCM_STYLE_SOUND */
 }
 #else
-int audio_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* HAVE_{SYS_AUDIOIO,SUN_AUDIOIO,MACHINE_SOUNDCARD,SYS_SOUNDCARD}_H */

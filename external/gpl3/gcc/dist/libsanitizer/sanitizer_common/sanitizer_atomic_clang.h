@@ -94,10 +94,16 @@ inline bool atomic_compare_exchange_weak(volatile T *a,
 }  // namespace __sanitizer
 
 // This include provides explicit template instantiations for atomic_uint64_t
-// on MIPS32, which does not directly support 8 byte atomics. It has to
+// on platforms, which do not directly support 8 byte atomics. It has to
 // proceed the template definitions above.
 #if defined(_MIPS_SIM) && defined(_ABIO32) && _MIPS_SIM == _ABIO32
 #  include "sanitizer_atomic_clang_mips.h"
+#endif
+#if SANITIZER_NETBSD
+#  include <machine/types.h>
+#  ifndef __HAVE_ATOMIC64_OPS
+#    include "sanitizer_atomic_clang_mips.h"
+#  endif
 #endif
 
 #undef ATOMIC_ORDER

@@ -1,6 +1,6 @@
 /* Common target-dependent functionality for AArch64.
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,15 +27,30 @@
 struct aarch64_features
 {
   /* A non zero VQ value indicates both the presence of SVE and the
-     Vector Quotient - the number of 128bit chunks in an SVE Z
-     register.  */
-  uint64_t vq = 0;
+     Vector Quotient - the number of 128-bit chunks in an SVE Z
+     register.
 
+     The maximum value for VQ is 16 (5 bits).  */
+  uint64_t vq = 0;
   bool pauth = false;
   bool mte = false;
 
   /* A positive TLS value indicates the number of TLS registers available.  */
   uint8_t tls = 0;
+  /* The allowed values for SVQ are the following:
+
+     0 - SME is not supported/available.
+     1 - SME is available, SVL is 16 bytes / 128-bit.
+     2 - SME is available, SVL is 32 bytes / 256-bit.
+     4 - SME is available, SVL is 64 bytes / 512-bit.
+     8 - SME is available, SVL is 128 bytes / 1024-bit.
+     16 - SME is available, SVL is 256 bytes / 2048-bit.
+
+     These use at most 5 bits to represent.  */
+  uint8_t svq = 0;
+
+  /* Whether SME2 is supported.  */
+  bool sme2 = false;
 };
 
 inline bool operator==(const aarch64_features &lhs, const aarch64_features &rhs)
@@ -43,7 +58,9 @@ inline bool operator==(const aarch64_features &lhs, const aarch64_features &rhs)
   return lhs.vq == rhs.vq
     && lhs.pauth == rhs.pauth
     && lhs.mte == rhs.mte
-    && lhs.tls == rhs.tls;
+    && lhs.tls == rhs.tls
+    && lhs.svq == rhs.svq
+    && lhs.sme2 == rhs.sme2;
 }
 
 namespace std
@@ -61,6 +78,14 @@ namespace std
       /* Shift by two bits for now.  We may need to increase this in the future
 	 if more TLS registers get added.  */
       h = h << 2 | features.tls;
+
+      /* Make sure the SVQ values are within the limits.  */
+      gdb_assert (features.svq >= 0);
+      gdb_assert (features.svq <= 16);
+      h = h << 5 | (features.svq & 0x5);
+
+      /* SME2 feature.  */
+      h = h << 1 | features.sme2;
       return h;
     }
   };
@@ -132,6 +157,12 @@ enum aarch64_regnum
 
 #define AARCH64_PAUTH_DMASK_REGNUM(pauth_reg_base) (pauth_reg_base)
 #define AARCH64_PAUTH_CMASK_REGNUM(pauth_reg_base) (pauth_reg_base + 1)
+/* The high versions of these masks are used for bare metal/kernel-mode pointer
+   authentication support.  */
+#define AARCH64_PAUTH_DMASK_HIGH_REGNUM(pauth_reg_base) (pauth_reg_base + 2)
+#define AARCH64_PAUTH_CMASK_HIGH_REGNUM(pauth_reg_base) (pauth_reg_base + 3)
+
+/* This size is only meant for Linux, not bare metal.  QEMU exposes 4 masks.  */
 #define AARCH64_PAUTH_REGS_SIZE (16)
 
 #define AARCH64_X_REGS_NUM 31
@@ -164,5 +195,39 @@ enum aarch64_regnum
 
 /* Maximum supported VQ value.  Increase if required.  */
 #define AARCH64_MAX_SVE_VQ  16
+
+/* SME definitions
+
+   Some of these definitions are not found in the Architecture Reference
+   Manual, but we use them so we can keep a similar standard compared to the
+   SVE definitions that the Linux Kernel uses.  Otherwise it can get
+   confusing.
+
+   SVL : Streaming Vector Length.
+	 Although the documentation handles SVL in bits, we do it in
+	 bytes to match what we do for SVE.
+
+	 The streaming vector length dictates the size of the ZA register and
+	 the size of the SVE registers when in streaming mode.
+
+   SVQ : Streaming Vector Quotient.
+	 The number of 128-bit chunks in an SVE Z register or the size of
+	 each dimension of the SME ZA matrix.
+
+   SVG : Streaming Vector Granule.
+	 The number of 64-bit chunks in an SVE Z register or the size of
+	 half a SME ZA matrix dimension.  The SVG definition was added so
+	 we keep a familiar definition when dealing with SVE registers in
+	 streaming mode.  */
+
+/* The total number of tiles.  This is always fixed regardless of the
+   streaming vector length (svl).  */
+#define AARCH64_ZA_TILES_NUM 31
+/* svl limits for SME.  */
+#define AARCH64_SME_MIN_SVL 128
+#define AARCH64_SME_MAX_SVL 2048
+
+/* Size of the SME2 ZT0 register in bytes.  */
+#define AARCH64_SME2_ZT0_SIZE 64
 
 #endif /* ARCH_AARCH64_H */

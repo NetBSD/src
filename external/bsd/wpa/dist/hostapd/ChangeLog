@@ -1,5 +1,85 @@
 ChangeLog for hostapd
 
+2024-07-20 - v2.11
+	* Wi-Fi Easy Connect
+	  - add support for DPP release 3
+	  - allow Configurator parameters to be provided during config exchange
+	* HE/IEEE 802.11ax/Wi-Fi 6
+	  - various fixes
+	* EHT/IEEE 802.11be/Wi-Fi 7
+	  - add preliminary support
+	* SAE: add support for fetching the password from a RADIUS server
+	* support OpenSSL 3.0 API changes
+	* support background radar detection and CAC with some additional
+	  drivers
+	* support RADIUS ACL/PSK check during 4-way handshake (wpa_psk_radius=3)
+	* EAP-SIM/AKA: support IMSI privacy
+	* improve 4-way handshake operations
+	  - use Secure=1 in message 3 during PTK rekeying
+	* OCV: do not check Frequency Segment 1 Channel Number for 160 MHz cases
+	  to avoid interoperability issues
+	* support new SAE AKM suites with variable length keys
+	* support new AKM for 802.1X/EAP with SHA384
+	* extend PASN support for secure ranging
+	* FT: Use SHA256 to derive PMKID for AKM 00-0F-AC:3 (FT-EAP)
+	  - this is based on additional details being added in the IEEE 802.11
+	    standard
+	  - the new implementation is not backwards compatible
+	* improved ACS to cover additional channel types/bandwidths
+	* extended Multiple BSSID support
+	* fix beacon protection with FT protocol (incorrect BIGTK was provided)
+	* support unsynchronized service discovery (USD)
+	* add preliminary support for RADIUS/TLS
+	* add support for explicit SSID protection in 4-way handshake
+	  (a mitigation for CVE-2023-52424; disabled by default for now, can be
+	  enabled with ssid_protection=1)
+	* fix SAE H2E rejected groups validation to avoid downgrade attacks
+	* use stricter validation for some RADIUS messages
+	* a large number of other fixes, cleanup, and extensions
+
+2022-01-16 - v2.10
+	* SAE changes
+	  - improved protection against side channel attacks
+	    [https://w1.fi/security/2022-1/]
+	  - added option send SAE Confirm immediately (sae_config_immediate=1)
+	    after SAE Commit
+	  - added support for the hash-to-element mechanism (sae_pwe=1 or
+	    sae_pwe=2)
+	  - fixed PMKSA caching with OKC
+	  - added support for SAE-PK
+	* EAP-pwd changes
+	  - improved protection against side channel attacks
+	    [https://w1.fi/security/2022-1/]
+	* fixed WPS UPnP SUBSCRIBE handling of invalid operations
+	  [https://w1.fi/security/2020-1/]
+	* fixed PMF disconnection protection bypass
+	  [https://w1.fi/security/2019-7/]
+	* added support for using OpenSSL 3.0
+	* fixed various issues in experimental support for EAP-TEAP server
+	* added configuration (max_auth_rounds, max_auth_rounds_short) to
+	  increase the maximum number of EAP message exchanges (mainly to
+	  support cases with very large certificates) for the EAP server
+	* added support for DPP release 2 (Wi-Fi Device Provisioning Protocol)
+	* extended HE (IEEE 802.11ax) support, including 6 GHz support
+	* removed obsolete IAPP functionality
+	* fixed EAP-FAST server with TLS GCM/CCM ciphers
+	* dropped support for libnl 1.1
+	* added support for nl80211 control port for EAPOL frame TX/RX
+	* fixed OWE key derivation with groups 20 and 21; this breaks backwards
+	  compatibility for these groups while the default group 19 remains
+	  backwards compatible; owe_ptk_workaround=1 can be used to enabled a
+	  a workaround for the group 20/21 backwards compatibility
+	* added support for Beacon protection
+	* added support for Extended Key ID for pairwise keys
+	* removed WEP support from the default build (CONFIG_WEP=y can be used
+	  to enable it, if really needed)
+	* added a build option to remove TKIP support (CONFIG_NO_TKIP=y)
+	* added support for Transition Disable mechanism to allow the AP to
+	  automatically disable transition mode to improve security
+	* added support for PASN
+	* added EAP-TLS server support for TLS 1.3 (disabled by default for now)
+	* a large number of other fixes, cleanup, and extensions
+
 2019-08-07 - v2.9
 	* SAE changes
 	  - disable use of groups using Brainpool curves
@@ -362,7 +442,7 @@ ChangeLog for hostapd
 	* RADIUS server functionality
 	  - add minimal RADIUS accounting server support (hostapd-as-server);
 	    this is mainly to enable testing coverage with hwsim scripts
-	  - allow authentication log to be written into SQLite databse
+	  - allow authentication log to be written into SQLite database
 	  - added option for TLS protocol testing of an EAP peer by simulating
 	    various misbehaviors/known attacks
 	  - MAC ACL support for testing purposes
@@ -668,7 +748,7 @@ ChangeLog for hostapd
 	* fixed HT Capabilities IE with nl80211 drivers
 	* moved generic AP functionality code into src/ap
 	* WPS: handle Selected Registrar as union of info from all Registrars
-	* remove obsolte Prism54.org driver wrapper
+	* remove obsolete Prism54.org driver wrapper
 	* added internal debugging mechanism with backtrace support and memory
 	  allocation/freeing validation, etc. tests (CONFIG_WPA_TRACE=y)
 	* EAP-FAST server: piggyback Phase 2 start with the end of Phase 1

@@ -35,14 +35,16 @@ implements a `minconnect' option, which specifies a minimum connect
 time before the idle timeout applies.
 
 Plugins can access global variables within pppd, so it is useful for
-them to #include "pppd.h" from the pppd source directory.
+them to #include "pppd.h" from the pppd source directory. Other
+header files can be included such as chap.h, mppe.h, and upap.h as
+needed per project.
 
 Every plugin must contain a global procedure called `plugin_init'.
 This procedure will get called (with no arguments) immediately after
 the plugin is loaded.  Every plugin should also contain a variable
 called pppd_version declared as follows:
 
-char pppd_version[] = VERSION;
+char pppd_version[] = PPPD_VERSION;
 
 If this declaration is included, pppd will not load the module if its
 version number differs from that compiled into the plugin binary.
@@ -50,7 +52,7 @@ version number differs from that compiled into the plugin binary.
 Plugins can affect the behaviour of pppd in at least four ways:
 
 1. They can add extra options which pppd will then recognize.  This is
-   done by calling the add_options() procedure with a pointer to an
+   done by calling the ppp_add_options() procedure with a pointer to an
    array of option_t structures.  The last entry in the array must
    have its name field set to NULL.
 
@@ -241,12 +243,15 @@ the bundle, if we are doing multilink.
 A plugin registers itself with a notifier by declaring a procedure of
 the form:
 
-void my_notify_proc(void *opaque, int arg);
+void (ppp_notify_fn)(void *opaque, int arg);
 
 and then registering the procedure with the appropriate notifier with
 a call of the form
 
-	add_notifier(&interesting_notifier, my_notify_proc, opaque);
+	ppp_add_notify(ppp_notify_t, ppp_notify_fn, opaque);
+
+The ppp_notify_t is an enumerated type that describes which notifier
+to attach the function to. Example: NF_EXIT, NF_SIGNALED, NF_IP_UP
 
 The `opaque' parameter in the add_notifier call will be passed to
 my_notify_proc every time it is called.  The `arg' parameter to
@@ -255,33 +260,70 @@ my_notify_proc depends on the notifier.
 A notify procedure can be removed from the list for a notifier with a
 call of the form
 
-	remove_notifier(&interesting_notifier, my_notify_proc, opaque);
+	ppp_del_notify(ppp_notify_t, ppp_notify_fn, opaque);
 
 Here is a list of the currently-implemented notifiers in pppd.
 
-* pidchange.  This notifier is called in the parent when pppd has
+* NF_PID_CHANGE.  This notifier is called in the parent when pppd has
   forked and the child is continuing pppd's processing, i.e. when pppd
   detaches from its controlling terminal.  The argument is the pid of
   the child.
 
-* phasechange.  This is called when pppd moves from one phase of
+* NF_PHASE_CHANGE.  This is called when pppd moves from one phase of
   operation to another.  The argument is the new phase number.
 
-* exitnotify.  This is called just before pppd exits.  The argument is
+* NF_EXIT.  This is called just before pppd exits.  The argument is
   the status with which pppd will exit (i.e. the argument to exit()).
 
-* sigreceived.  This is called when a signal is received, from within
+* NF_SIGNALED.  This is called when a signal is received, from within
   the signal handler.  The argument is the signal number.
 
-* ip_up_notifier.  This is called when IPCP has come up.
+* NF_IP_UP.  This is called when IPCP has come up.
 
-* ip_down_notifier.  This is called when IPCP goes down.
+* NF_IP_DOWN.  This is called when IPCP goes down.
 
-* auth_up_notifier.  This is called when the peer has successfully
+* NF_IPV6_UP.  This is called when IP6CP has come up.
+
+* NF_IPV6_DOWN.  This is called when IP6CP goes down.
+
+* NF_AUTH_UP.  This is called when the peer has successfully
   authenticated itself.
 
-* link_down_notifier.  This is called when the link goes down.
+* NF_LINK_DOWN.  This is called when the link goes down.
+
+* NF_FORK.  Called for each time pppd exists as a new process (child). 
 
 
+Regarding MPPE keys and key-material for 2.5.0 release
 
-## Id: PLUGINS,v 1.8 2008/06/15 07:02:18 paulus Exp  ##
+Sometimes it is necessary for a plugin to access details related to
+the authentication process. The NF_AUTH_UP callback notifier (client only)
+allows a plugin to inspect e.g. key details after authentication has been
+completed, but before the key material is cleared from memory for security
+reasons.
+
+There are in particularly 3 functions that allow one to inspect these
+keys:
+
+* bool mppe_keys_isset()
+* int mppe_get_recv_key(unsigned char *key, int length)
+* int mppe_get_send_key(unsigned char *key, int length)
+
+The first function indicates whether or not the key material is set and
+is valid. The two latter functions will allow one to obtain a copy
+of the respective receive and send keys. The return value of these
+functions is the length of the valid key material. For security reasons,
+one should take care to clear these copies when work is complete. The
+max length of MPPE receive ands send keys are up to 32 bytes long, or
+of MPPE_MAX_KEY_SIZE length.
+
+The previous definitions of MPPE_MAX_KEY_LEN is the maximum length in
+which the Linux kernel will accept for MPPE key lengths. Plugins would
+access the MPPE keys directly via the:
+
+  extern u_char mppe_send_key[MPPE_MAX_KEY_LEN]
+  extern u_char mppe_recv_key[MPPE_MAX_KEY_LEN]
+
+variables. The 2.5.0 release prohibits the direct access of these
+variables by making them static and private in favor of using the new
+API.

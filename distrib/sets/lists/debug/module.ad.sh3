@@ -1,3 +1,4 @@
-# $NetBSD: module.ad.sh3,v 1.1 2020/05/01 22:21:11 christos Exp $
+# $NetBSD: module.ad.sh3,v 1.1.10.1 2025/08/02 05:20:32 perseant Exp $
+#
 ./usr/libdata/debug/@MODULEDIR@/exec_elf32			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/exec_elf32/exec_elf32.kmod.debug	modules-base-kernel	kmod,debug

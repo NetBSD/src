@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_testutils.h,v 1.5 2020/05/25 20:47:34 christos Exp $	*/
+/*	$NetBSD: regress_testutils.h,v 1.5.8.1 2025/08/02 05:22:57 perseant Exp $	*/
 
 /*
  * Copyright (c) 2010-2012 Niels Provos and Nick Mathewson
@@ -36,6 +36,7 @@ struct regress_dns_server_table {
 	const char *anstype;
 	const char *ans;
 	int seen;
+	int lower;
 };
 
 struct evdns_server_port *

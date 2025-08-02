@@ -44,8 +44,6 @@ extern void warn(const char *, ...) __printflike(1, 2);
 extern void vdie(const char  *, va_list) __printflike(1, 0) __dead;
 extern void die(const char *, ...) __printflike(1, 2) __dead;
 
-extern const char *getpname(void);
-
 #ifdef	__cplusplus
 }
 #endif

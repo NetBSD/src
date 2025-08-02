@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.181 2023/10/20 22:08:52 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.181.2.1 2025/08/02 05:18:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.181 2023/10/20 22:08:52 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.181.2.1 2025/08/02 05:18:26 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -601,7 +601,7 @@ command(void)
 		n1->nredir.redirect = redir;
 	}
 
- checkneg:
+ checkneg:;
 #ifdef BOGUS_NOT_COMMAND
 	if (negate) {
 		VTRACE(DBG_PARSE, ("bogus %snegate command\n",
@@ -710,7 +710,7 @@ simplecmd(union node **rpp, union node *redir)
 	n->ncmd.redirect = redir;
 	n->ncmd.lineno = startlinno;
 
- checkneg:
+ checkneg:;
 #ifdef BOGUS_NOT_COMMAND
 	if (negate) {
 		VTRACE(DBG_PARSE, ("bogus %snegate simplecmd\n",
@@ -1021,7 +1021,7 @@ readtoken(void)
 #endif
 	struct alias *ap;
 
- top:
+ top:;
 	t = xxreadtoken();
 
 	if (checkkwd & CHKNL) {
@@ -1058,7 +1058,7 @@ readtoken(void)
 			goto top;
 		}
 	}
- out:
+ out:;
 	if (t != TNOT)
 		checkkwd = 0;
 
@@ -1742,7 +1742,7 @@ readcstyleesc(char *out)
 		goto hexval;
 	case 'U':
 		n = 8;
-	hexval:
+	hexval:;
 		v = 0;
 		for (i = 0; i < n; i++) {
 			c = pgetc();
@@ -2215,8 +2215,8 @@ parsesub: {
 	int subtype;
 	int typeloc;
 	int flags;
-	char *p;
-	static const char types[] = "}-+?=";
+	const char *p;
+	static const char types[] = "}-+?=";	/* see parser.h VSXYZ defs */
 
 	c = pgetc_linecont();
 	VTRACE(DBG_LEXER, ("\"$%c\"(%#.2x)", c&0xFF, c&0x1FF));
@@ -2323,10 +2323,8 @@ parsesub: {
 			c = pgetc_linecont();
 		}
 		else {
-			VTRACE(DBG_LEXER, ("\"$%c(%#.2x)??\n", c&0xFF,c&0x1FF));
- badsub:
-			cleanup_state_stack(stack);
-			synerror("Bad substitution");
+			VTRACE(DBG_LEXER, ("\"$%c(%#.2x)??", c&0xFF, c&0xFF));
+			subtype = VSUNKNOWN;
 		}
 
 		STPUTC('=', out);
@@ -2338,9 +2336,29 @@ parsesub: {
 				/*FALLTHROUGH*/
 			default:
 				p = strchr(types, c);
-				if (p == NULL)
-					goto badsub;
-				subtype = p - types + VSNORMAL;
+				if (__predict_false(p == NULL)) {
+					subtype = VSUNKNOWN;
+						/*
+						 * keep the unknown modifier
+						 * for the error message.
+						 *
+						 * Note that if we came from
+						 * the case ':' above, that
+						 * is the unknown modifier,
+						 * not the following character
+						 *
+						 * It is not important that
+						 * we keep the remaining word
+						 * intact, it will never be
+						 * used.
+						 */
+					if (flags & VSNUL)
+						/* (ie: lose c) */
+						STPUTC(':', out);
+					else
+						STPUTC(c, out);
+				} else
+					subtype = p - types + VSNORMAL;
 				break;
 			case '%':
 			case '#':
@@ -2357,8 +2375,10 @@ parsesub: {
 				}
 			}
 		} else {
-			if (subtype == VSLENGTH && c != /*{*/ '}')
-				synerror("no modifiers allowed with ${#var}");
+			if (subtype == VSLENGTH && c != /*{*/ '}') {
+				STPUTC('#', out);
+				subtype = VSUNKNOWN;
+			}
 			pungetc();
 		}
 		if (quoted || arinest)
@@ -2707,7 +2727,7 @@ expandonstack(char *ps, int cmdsub, int lineno)
 		if (backquotelist != NULL) {
 			if (!cmdsub)
 				result = ps;
-			else if (!promptcmds)
+			else if (cmdsub == 1 && !promptcmds)
 				result = "-o promptcmds not set: ";
 		}
 		if (result == NULL) {
@@ -2813,6 +2833,81 @@ expandstr(char *ps, int lineno)
 
 	return result;
 }
+
+#ifndef SMALL
+/*
+ * A version of the above which isn't tailored to expanding prompts,
+ * but can be used for expanding other expandable variables when
+ * they need to be used.   ${LINENO} will always expand to 0 in this case.
+ */
+
+const char *
+expandvar(char *var, int flags)
+{
+	const char *result = NULL;
+	struct stackmark smark;
+	static char *buffer = NULL;	/* storage for result */
+	static size_t bufferlen = 0;
+
+	setstackmark(&smark);
+	/*
+	 * At this point we anticipate that there may be a string
+	 * growing on the stack, [...]   [see expandstr() above].
+	 */
+	(void) stalloc(stackblocksize());
+
+	result = expandonstack(var, (flags & VUNSAFE ? 0 : 2), 0);
+	if (__predict_false(result == NULL || *result == '\0')) {
+		result = NULL;
+		goto getout;
+	}
+
+	if (__predict_true(result == stackblock())) {
+		size_t len = strlen(result) + 1;
+
+		/*
+		 * the result is on the stack, so we
+		 * need to move it somewhere safe first.
+		 */
+
+		if (__predict_false(len > bufferlen)) {
+			char *new;
+			size_t newlen = bufferlen;
+
+			if (__predict_false(len > (SIZE_MAX >> 4))) {
+				result = "";
+				goto getout;
+			}
+
+			if (__predict_false(newlen == 0))
+				newlen = 32;
+			while (newlen <= len)
+				newlen <<= 1;
+
+			new = (char *)realloc(buffer, newlen);
+
+			if (__predict_false(new == NULL)) {
+				/*
+				 * this should rarely (if ever) happen
+				 * but we must do something when it does...
+				 */
+				result = "";
+				goto getout;
+			} else {
+				buffer = new;
+				bufferlen = newlen;
+			}
+		}
+		(void)memcpy(buffer, result, len);
+		result = buffer;
+	}
+
+  getout:;
+	popstackmark(&smark);
+
+	return result;
+}
+#endif
 
 /*
  * and a simpler version, which does no $( ) expansions, for

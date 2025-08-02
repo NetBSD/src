@@ -1,4 +1,5 @@
-# $NetBSD: module.mi,v 1.25 2023/08/27 13:20:09 kardel Exp $
+# $NetBSD: module.mi,v 1.25.2.1 2025/08/02 05:20:32 perseant Exp $
+#
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
@@ -124,6 +125,10 @@
 ./usr/libdata/debug/@MODULEDIR@/dm/dm.kmod.debug			modules-base-kernel	lvm,kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/drvctl				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/drvctl/drvctl.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/ds2482ow				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/ds2482ow/ds2482ow.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/ds28e17iic				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/ds28e17iic/ds28e17iic.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/dtrace				modules-base-kernel	kmod,dtrace,debug
 ./usr/libdata/debug/@MODULEDIR@/dtrace/dtrace.kmod.debug		modules-base-kernel	kmod,dtrace,debug
 ./usr/libdata/debug/@MODULEDIR@/dtrace_fbt				modules-base-kernel	kmod,dtrace,debug
@@ -142,6 +147,8 @@
 ./usr/libdata/debug/@MODULEDIR@/dtv_math/dtv_math.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/efs				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/efs/efs.kmod.debug			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/emcfan				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/emcfan/emcfan.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/exec_script			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/exec_script/exec_script.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ext2fs				modules-base-kernel	kmod,debug
@@ -208,6 +215,8 @@
 ./usr/libdata/debug/@MODULEDIR@/if_mpls/if_mpls.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_mue				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_mue/if_mue.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/if_ncm				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/if_ncm/if_ncm.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_npflog				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_npflog/if_npflog.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_ppp				modules-base-kernel	kmod,debug
@@ -246,8 +255,8 @@
 ./usr/libdata/debug/@MODULEDIR@/iic/iic.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ip_ecn				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ip_ecn/ip_ecn.kmod.debug 		modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/ipl				modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/ipl/ipl.kmod.debug 			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/ipl				modules-base-kernel	kmod,debug,ipfilter
+./usr/libdata/debug/@MODULEDIR@/ipl/ipl.kmod.debug 			modules-base-kernel	kmod,debug,ipfilter
 ./usr/libdata/debug/@MODULEDIR@/iscsi				modules-base-kernel	kmod,iscsi,debug
 ./usr/libdata/debug/@MODULEDIR@/iscsi/iscsi.kmod.debug			modules-base-kernel	kmod,iscsi,debug
 ./usr/libdata/debug/@MODULEDIR@/kernfs				modules-base-kernel	kmod,debug
@@ -440,6 +449,8 @@
 ./usr/libdata/debug/@MODULEDIR@/zlib/zlib.kmod.debug			modules-base-kernel     kmod,debug
 ./usr/libdata/debug/stand/@MACHINE@				modules-base-kernel	kmod,!kernel_dir,debug
 ./usr/libdata/debug/stand/@MACHINE@/@OSRELEASE@			modules-base-kernel	kmod,!kernel_dir,debug
+./usr/libdata/debug/usr/tests/kernel/setjmp_tester		tests-sys-debug	atf,debug
+./usr/libdata/debug/usr/tests/kernel/setjmp_tester/setjmp_tester.kmod.debug		tests-sys-debug	atf,debug
 ./usr/libdata/debug/usr/tests/modules/k_helper				tests-sys-debug	atf,debug,rump
 ./usr/libdata/debug/usr/tests/modules/k_helper/k_helper.kmod.debug			tests-sys-debug	atf,debug,rump
 ./usr/libdata/debug/usr/tests/modules/k_helper2				tests-sys-debug	atf,debug,rump

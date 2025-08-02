@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.41 2023/12/20 17:15:21 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.260 2023/10/11 05:42:08 djm Exp $ */
+/*	$NetBSD: scp.c,v 1.41.2.1 2025/08/02 05:18:47 perseant Exp $	*/
+/* $OpenBSD: scp.c,v 1.263 2025/03/28 06:04:07 dtucker Exp $ */
 
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -74,7 +74,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.41 2023/12/20 17:15:21 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.41.2.1 2025/08/02 05:18:47 perseant Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -207,9 +207,11 @@ suspone(int pid, int signo)
 static void
 suspchild(int signo)
 {
+	int save_errno = errno;
 	suspone(do_cmd_pid, signo);
 	suspone(do_cmd_pid2, signo);
 	kill(getpid(), SIGSTOP);
+	errno = save_errno;
 }
 
 static int
@@ -458,6 +460,7 @@ main(int argc, char **argv)
 	addargs(&args, "-oClearAllForwardings=yes");
 	addargs(&args, "-oRemoteCommand=none");
 	addargs(&args, "-oRequestTTY=no");
+	addargs(&args, "-oControlMaster=no");
 
 	fflag = Tflag = tflag = 0;
 	while ((ch = getopt(argc, argv,
@@ -1037,7 +1040,7 @@ toremote(int argc, char **argv, enum scp_mode_e mode, char *sftp_direct)
 		}
 		if (host && throughlocal) {	/* extended remote to remote */
 			if (mode == MODE_SFTP) {
-				if (remin == -1) {
+				if (remin == -1 || conn == NULL) {
 					/* Connect to dest now */
 					conn = do_sftp_connect(thost, tuser,
 					    tport, sftp_direct,

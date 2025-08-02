@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp.c,v 1.40 2024/06/25 16:36:54 christos Exp $	*/
-/* $OpenBSD: sftp.c,v 1.237 2024/02/01 02:37:33 djm Exp $ */
+/*	$NetBSD: sftp.c,v 1.40.2.1 2025/08/02 05:18:47 perseant Exp $	*/
+/* $OpenBSD: sftp.c,v 1.240 2025/03/28 06:04:07 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.40 2024/06/25 16:36:54 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.40.2.1 2025/08/02 05:18:47 perseant Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -222,12 +222,14 @@ killchild(int signo)
 static void
 suspchild(int signo)
 {
+	int save_errno = errno;
 	if (sshpid > 1) {
 		kill(sshpid, signo);
 		while (waitpid(sshpid, NULL, WUNTRACED) == -1 && errno == EINTR)
 			continue;
 	}
 	kill(getpid(), SIGSTOP);
+	errno = save_errno;
 }
 
 static void
@@ -2317,8 +2319,10 @@ interactive_loop(struct sftp_conn *conn, const char *file1, const char *file2)
 			break;
 		}
 		if (el == NULL) {
-			if (interactive)
+			if (interactive) {
 				printf("sftp> ");
+				fflush(stdout);
+			}
 			if (fgets(cmd, sizeof(cmd), infile) == NULL) {
 				if (interactive)
 					printf("\n");
@@ -2455,6 +2459,7 @@ main(int argc, char **argv)
 	addargs(&args, "-oForwardX11 no");
 	addargs(&args, "-oPermitLocalCommand no");
 	addargs(&args, "-oClearAllForwardings yes");
+	addargs(&args, "-oControlMaster no");
 
 	ll = SYSLOG_LEVEL_INFO;
 	infile = stdin;

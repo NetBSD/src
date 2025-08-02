@@ -30,6 +30,8 @@
 			    ; insn in the code.
   VUNSPEC_SYNC_ISTREAM      ; sequence of insns to sync the I-stream
   VUNSPEC_PEM		    ; 'procedure_entry_mask' insn.
+
+  VUNSPEC_EH_RETURN
 ])
 
 ;; UNSPEC usage:
@@ -271,6 +273,28 @@
     }
 #endif
 }")
+
+;; Split a store of the upper half of a 64 bit value in memory into
+;; two operations.
+(define_split
+  [(set (match_operand:SI 0 "nonimmediate_operand" "")
+        (subreg:SI
+	  (match_operand:DI 1 "indexed_memory_operand" "")
+	  4
+	  )
+    )
+   (clobber (match_scratch:DI 2 ""))
+   ]
+  ""
+  [
+   (set (match_dup 2)
+        (match_dup 1)
+	)
+   (set (match_dup 0)
+        (subreg:SI (match_dup 2) 4)
+	)
+  ]
+)
 
 (define_insn_and_split "movsi_2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
@@ -932,7 +956,7 @@
   "vax_expand_addsub_di_operands (operands, MINUS); DONE;")
 
 (define_insn_and_split "sbcdi3"
-  [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=Rr,Rr")
+  [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=&Rr,&Rr")
 	(minus:DI (match_operand:DI 1 "general_addsub_di_operand" "0,I")
 		  (match_operand:DI 2 "general_addsub_di_operand" "nRr,Rr")))]
   "TARGET_QMATH"
@@ -946,7 +970,7 @@
   "")
 
 (define_insn "*sbcdi3<ccn>"
-  [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=Rr,Rr")
+  [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=&Rr,&Rr")
 	(minus:DI (match_operand:DI 1 "general_addsub_di_operand" "0,I")
 		  (match_operand:DI 2 "general_addsub_di_operand" "nRr,Rr")))
    (clobber (reg:CC VAX_PSL_REGNUM))]
@@ -1998,7 +2022,14 @@
   if (INTVAL (operands[3]) & 31)
     return \"rotl %R3,%1,%0\;bicl2 %M2,%0\";
   if (rtx_equal_p (operands[0], operands[1]))
-    return \"bicl2 %M2,%0\";
+    {
+      if (INTVAL (operands[2]) == 32)
+	return \"\";  /* no-op */
+      else
+	return \"bicl2 %M2,%0\";
+    }
+  if (INTVAL (operands[2]) == 32)
+    return \"movl %1,%0\";
   return \"bicl3 %M2,%1,%0\";
 }")
 
@@ -2830,6 +2861,36 @@
   DONE;
 }")
 
+;; Exception handling
+;; This is used when compiling the stack unwinding routines.
+(define_expand "eh_return"
+  [(use (match_operand 0 "general_operand"))]
+  ""
+{
+  if (GET_MODE (operands[0]) != word_mode)
+    operands[0] = convert_to_mode (word_mode, operands[0], 0);
+  emit_insn (gen_eh_set_retaddr (operands[0]));
+  DONE;
+})
+
+(define_insn_and_split "eh_set_retaddr"
+  [(unspec [(match_operand:SI 0 "general_operand")] VUNSPEC_EH_RETURN)
+   (clobber (match_scratch:SI 1 "=&r"))
+   ]
+  ""
+  "#"
+  "reload_completed"
+  [(const_int 0)]
+{
+  rtx tmp = RETURN_ADDR_RTX(0, frame_pointer_rtx);
+  MEM_VOLATILE_P(tmp) = 1;
+  tmp = gen_rtx_SET(tmp, operands[0]);
+  emit_insn(tmp);
+  DONE;
+})
+
+
+
 (define_insn "nop"
   [(const_int 0)]
   ""
@@ -2909,7 +2970,7 @@
   "#"
   "reload_completed"
   [(parallel
-     [(match_dup 1)
+     [(use (match_dup 1))
       (set (pc)
 	   (plus:SI (sign_extend:SI
 		      (mem:HI (plus:SI
@@ -2918,11 +2979,13 @@
 				  (const_int 2))
 				(pc))))
 		    (label_ref:SI (match_dup 2))))
-      (clobber (reg:CC VAX_PSL_REGNUM))])]
+      (clobber (reg:CC VAX_PSL_REGNUM))
+      (use (label_ref:SI (match_dup 2)))
+     ])]
   "")
 
 (define_insn "*casesi1"
-  [(match_operand:SI 1 "const_int_operand" "n")
+  [(use (match_operand:SI 1 "const_int_operand" "n"))
    (set (pc)
 	(plus:SI (sign_extend:SI
 		   (mem:HI (plus:SI
@@ -2931,7 +2994,9 @@
 			       (const_int 2))
 			     (pc))))
 		 (label_ref:SI (match_operand 2 "" ""))))
-   (clobber (reg:CC VAX_PSL_REGNUM))]
+   (clobber (reg:CC VAX_PSL_REGNUM))
+   (use (label_ref:SI (match_dup 2)))
+   ]
   "reload_completed"
   "casel %0,$0,%1")
 

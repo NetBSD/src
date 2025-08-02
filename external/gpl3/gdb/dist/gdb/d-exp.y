@@ -1,6 +1,6 @@
 /* YACC parser for D expressions, for GDB.
 
-   Copyright (C) 2014-2023 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,7 +38,6 @@
 
 %{
 
-#include "defs.h"
 #include <ctype.h>
 #include "expression.h"
 #include "value.h"
@@ -46,9 +45,6 @@
 #include "language.h"
 #include "c-lang.h"
 #include "d-lang.h"
-#include "bfd.h" /* Required by objfiles.h.  */
-#include "symfile.h" /* Required by objfiles.h.  */
-#include "objfiles.h" /* For have_full_symbols and have_partial_symbols */
 #include "charset.h"
 #include "block.h"
 #include "type-stack.h"
@@ -447,7 +443,7 @@ PrimaryExpression:
 		  /* Handle VAR, which could be local or global.  */
 		  sym = lookup_symbol (copy.c_str (),
 				       pstate->expression_context_block,
-				       VAR_DOMAIN, &is_a_field_of_this);
+				       SEARCH_VFT, &is_a_field_of_this);
 		  if (sym.symbol && sym.symbol->aclass () != LOC_TYPEDEF)
 		    {
 		      if (symbol_read_needs_frame (sym.symbol))
@@ -496,7 +492,7 @@ PrimaryExpression:
 			      sym =
 				lookup_symbol (name.c_str (),
 					       (const struct block *) NULL,
-					       VAR_DOMAIN, NULL);
+					       SEARCH_VFT, NULL);
 			      pstate->push_symbol (name.c_str (), sym);
 			    }
 			  else
@@ -939,21 +935,21 @@ parse_string_or_char (const char *tokptr, const char **outptr,
   return quote == '\'' ? CHARACTER_LITERAL : STRING_LITERAL;
 }
 
-struct token
+struct d_token
 {
   const char *oper;
   int token;
   enum exp_opcode opcode;
 };
 
-static const struct token tokentab3[] =
+static const struct d_token tokentab3[] =
   {
     {"^^=", ASSIGN_MODIFY, BINOP_EXP},
     {"<<=", ASSIGN_MODIFY, BINOP_LSH},
     {">>=", ASSIGN_MODIFY, BINOP_RSH},
   };
 
-static const struct token tokentab2[] =
+static const struct d_token tokentab2[] =
   {
     {"+=", ASSIGN_MODIFY, BINOP_ADD},
     {"-=", ASSIGN_MODIFY, BINOP_SUB},
@@ -978,7 +974,7 @@ static const struct token tokentab2[] =
   };
 
 /* Identifier-like tokens.  */
-static const struct token ident_tokens[] =
+static const struct d_token ident_tokens[] =
   {
     {"is", IDENTITY, OP_NULL},
     {"!is", NOTIDENTITY, OP_NULL},
@@ -1106,7 +1102,7 @@ lex_one_token (struct parser_state *par_state)
 	    last_was_structop = 1;
 	  goto symbol;		/* Nope, must be a symbol.  */
 	}
-      /* FALL THRU.  */
+      [[fallthrough]];
 
     case '0':
     case '1':
@@ -1158,13 +1154,8 @@ lex_one_token (struct parser_state *par_state)
 	toktype = parse_number (par_state, tokstart, p - tokstart,
 				got_dot|got_e, &yylval);
 	if (toktype == ERROR)
-	  {
-	    char *err_copy = (char *) alloca (p - tokstart + 1);
-
-	    memcpy (err_copy, tokstart, p - tokstart);
-	    err_copy[p - tokstart] = 0;
-	    error (_("Invalid number \"%s\"."), err_copy);
-	  }
+	  error (_("Invalid number \"%.*s\"."), (int) (p - tokstart),
+		 tokstart);
 	pstate->lexptr = p;
 	return toktype;
       }
@@ -1183,7 +1174,7 @@ lex_one_token (struct parser_state *par_state)
 	    return ENTRY;
 	  }
       }
-      /* FALLTHRU */
+      [[fallthrough]];
     case '+':
     case '-':
     case '*':
@@ -1310,7 +1301,7 @@ lex_one_token (struct parser_state *par_state)
 }
 
 /* An object of this type is pushed on a FIFO by the "outer" lexer.  */
-struct token_and_value
+struct d_token_and_value
 {
   int token;
   YYSTYPE value;
@@ -1319,7 +1310,7 @@ struct token_and_value
 
 /* A FIFO of tokens that have been read but not yet returned to the
    parser.  */
-static std::vector<token_and_value> token_fifo;
+static std::vector<d_token_and_value> token_fifo;
 
 /* Non-zero if the lexer should return tokens from the FIFO.  */
 static int popping;
@@ -1340,7 +1331,7 @@ classify_name (struct parser_state *par_state, const struct block *block)
 
   std::string copy = copy_name (yylval.sval);
 
-  sym = lookup_symbol (copy.c_str (), block, VAR_DOMAIN, &is_a_field_of_this);
+  sym = lookup_symbol (copy.c_str (), block, SEARCH_VFT, &is_a_field_of_this);
   if (sym.symbol && sym.symbol->aclass () == LOC_TYPEDEF)
     {
       yylval.tsym.type = sym.symbol->type ();
@@ -1349,9 +1340,11 @@ classify_name (struct parser_state *par_state, const struct block *block)
   else if (sym.symbol == NULL)
     {
       /* Look-up first for a module name, then a type.  */
-      sym = lookup_symbol (copy.c_str (), block, MODULE_DOMAIN, NULL);
+      sym = lookup_symbol (copy.c_str (), block, SEARCH_MODULE_DOMAIN,
+			   nullptr);
       if (sym.symbol == NULL)
-	sym = lookup_symbol (copy.c_str (), block, STRUCT_DOMAIN, NULL);
+	sym = lookup_symbol (copy.c_str (), block, SEARCH_STRUCT_DOMAIN,
+			     nullptr);
 
       if (sym.symbol != NULL)
 	{
@@ -1407,7 +1400,7 @@ classify_inner_name (struct parser_state *par_state,
 static int
 yylex (void)
 {
-  token_and_value current;
+  d_token_and_value current;
   int last_was_dot;
   struct type *context_type = NULL;
   int last_to_examine, next_to_examine, checkpoint;
@@ -1470,7 +1463,7 @@ yylex (void)
 
       while (next_to_examine <= last_to_examine)
 	{
-	  token_and_value next;
+	  d_token_and_value next;
 
 	  next = token_fifo[next_to_examine];
 	  ++next_to_examine;
@@ -1534,7 +1527,7 @@ yylex (void)
 
   while (next_to_examine <= last_to_examine)
     {
-      token_and_value next;
+      d_token_and_value next;
 
       next = token_fifo[next_to_examine];
       ++next_to_examine;
@@ -1610,7 +1603,7 @@ d_parse (struct parser_state *par_state)
   pstate = par_state;
 
   scoped_restore restore_yydebug = make_scoped_restore (&yydebug,
-							parser_debug);
+							par_state->debug);
 
   struct type_stack stack;
   scoped_restore restore_type_stack = make_scoped_restore (&type_stack,
@@ -1634,9 +1627,6 @@ d_parse (struct parser_state *par_state)
 static void
 yyerror (const char *msg)
 {
-  if (pstate->prev_lexptr)
-    pstate->lexptr = pstate->prev_lexptr;
-
-  error (_("A %s in expression, near `%s'."), msg, pstate->lexptr);
+  pstate->parse_error (msg);
 }
 

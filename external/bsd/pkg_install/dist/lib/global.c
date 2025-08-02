@@ -1,4 +1,4 @@
-/*	$NetBSD: global.c,v 1.3 2021/04/10 19:49:59 nia Exp $	*/
+/*	$NetBSD: global.c,v 1.3.8.1 2025/08/02 05:23:13 perseant Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: global.c,v 1.3 2021/04/10 19:49:59 nia Exp $");
+__RCSID("$NetBSD: global.c,v 1.3.8.1 2025/08/02 05:23:13 perseant Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -36,3 +36,4 @@ __RCSID("$NetBSD: global.c,v 1.3 2021/04/10 19:49:59 nia Exp $");
 Boolean Verbose = FALSE;
 Boolean Fake = FALSE;
 Boolean Force = FALSE;
+Boolean HideStdout = FALSE;

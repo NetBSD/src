@@ -1,0 +1,61 @@
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that we can print values of parameters of type 'pointer
+# (access) to tagged type'.  See PR gdb/22670.
+
+load_lib "ada.exp"
+
+require allow_ada_tests
+
+standard_ada_testfile foo
+
+if {[gdb_compile_ada "${srcfile}" "${binfile}" executable {debug}] != ""} {
+  return -1
+}
+
+clean_restart ${testfile}
+
+set bp_location [gdb_get_line_number "STOP" ${testdir}/foo.adb]
+if {![runto "foo.adb:$bp_location"]} {
+    return
+}
+
+gdb_test_no_output "set debug symtab-create 1"
+
+# The idea here is that just a single CU should be expanded while
+# searching for the tsd type.
+set found_pck 0
+set found_pck2 0
+gdb_test_multiple "print *the_local_var" "only one CU expanded" -lbl {
+    -re ".symtab-create. start_subfile: name = \[^,\]*pck\\.adb, name_for_id = \[^\r\n\]*\r\n" {
+	set found_pck 1
+	exp_continue
+    }
+    -re ".symtab-create. start_subfile: name = \[^,\]*pck2\\.adb, name_for_id = \[^\r\n\]*\r\n" {
+	set found_pck2 1
+	exp_continue
+    }
+    -re ".symtab-create. start_subfile: name = \[^,\]*, name_for_id = \[^\r\n\]*\r\n" {
+	exp_continue
+    }
+    -re -wrap ".* = \\\(n => $decimal\\\)" {
+	if {$found_pck + $found_pck2 <= 1} {
+	    pass $gdb_test_name
+	} else {
+	    fail $gdb_test_name
+	}
+    }
+}

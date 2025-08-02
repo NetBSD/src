@@ -1,4 +1,5 @@
-# $NetBSD: md.amiga,v 1.2 2013/01/16 21:11:06 christos Exp $
+# $NetBSD: md.amiga,v 1.2.50.1 2025/08/02 05:20:31 perseant Exp $
+#
 ./usr/libdata/debug/sbin/binpatch.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/grfconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/iteconfig.debug	comp-sysutil-debug	debug

@@ -1,7 +1,7 @@
 
 /* Internal type definitions for GDB.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -47,7 +47,7 @@
 #include "hashtab.h"
 #include "gdbsupport/array-view.h"
 #include "gdbsupport/gdb-hashtab.h"
-#include "gdbsupport/gdb_optional.h"
+#include <optional>
 #include "gdbsupport/offset-type.h"
 #include "gdbsupport/enum-flags.h"
 #include "gdbsupport/underlying.h"
@@ -56,7 +56,6 @@
 #include "dwarf2.h"
 #include "gdbsupport/gdb_obstack.h"
 #include "gmp-utils.h"
-#include "frame-info.h"
 
 /* Forward declarations for prototypes.  */
 struct field;
@@ -65,32 +64,7 @@ struct value_print_options;
 struct language_defn;
 struct dwarf2_per_cu_data;
 struct dwarf2_per_objfile;
-
-/* These declarations are DWARF-specific as some of the gdbtypes.h data types
-   are already DWARF-specific.  */
-
-/* * Offset relative to the start of its containing CU (compilation
-   unit).  */
-DEFINE_OFFSET_TYPE (cu_offset, unsigned int);
-
-/* * Offset relative to the start of its .debug_info or .debug_types
-   section.  */
-DEFINE_OFFSET_TYPE (sect_offset, uint64_t);
-
-static inline char *
-sect_offset_str (sect_offset offset)
-{
-  return hex_string (to_underlying (offset));
-}
-
-/* Some macros for char-based bitfields.  */
-
-#define B_SET(a,x)	((a)[(x)>>3] |= (1 << ((x)&7)))
-#define B_CLR(a,x)	((a)[(x)>>3] &= ~(1 << ((x)&7)))
-#define B_TST(a,x)	((a)[(x)>>3] & (1 << ((x)&7)))
-#define B_TYPE		unsigned char
-#define	B_BYTES(x)	( 1 + ((x)>>3) )
-#define	B_CLRALL(a,x)	memset ((a), 0, B_BYTES(x))
+struct dwarf2_property_baton;
 
 /* * Different kinds of data types are distinguished by the `code'
    field.  */
@@ -237,7 +211,7 @@ struct variant_part;
    control other variant parts as well.  This struct corresponds to
    DW_TAG_variant in DWARF.  */
 
-struct variant : allocate_on_obstack
+struct variant : allocate_on_obstack<variant>
 {
   /* * The discriminant ranges for this variant.  */
   gdb::array_view<discriminant_range> discriminants;
@@ -269,7 +243,7 @@ struct variant : allocate_on_obstack
    and holds an array of variants.  This struct corresponds to
    DW_TAG_variant_part in DWARF.  */
 
-struct variant_part : allocate_on_obstack
+struct variant_part : allocate_on_obstack<variant_part>
 {
   /* * The index of the discriminant field in the outer type.  This is
      an index into the type's array of fields.  If this is -1, there
@@ -297,6 +271,7 @@ enum dynamic_prop_kind
   PROP_VARIANT_PARTS, /* Variant parts.  */
   PROP_TYPE,	   /* Type.  */
   PROP_VARIABLE_NAME, /* Variable name.  */
+  PROP_OPTIMIZED_OUT, /* Optimized out.  */
 };
 
 union dynamic_prop_data
@@ -307,7 +282,7 @@ union dynamic_prop_data
 
   /* Storage for dynamic property.  */
 
-  void *baton;
+  const dwarf2_property_baton *baton;
 
   /* Storage of variant parts for a type.  A type with variant parts
      has all its fields "linearized" -- stored in a single field
@@ -344,6 +319,18 @@ struct dynamic_prop
     m_kind = PROP_UNDEFINED;
   }
 
+  void set_optimized_out ()
+  {
+    m_kind = PROP_OPTIMIZED_OUT;
+  }
+
+  /* Return true if this property is "available", at least in theory
+     -- meaning it is neither undefined nor optimized out.  */
+  bool is_available () const
+  {
+    return m_kind != PROP_UNDEFINED && m_kind != PROP_OPTIMIZED_OUT;
+  }
+
   LONGEST const_val () const
   {
     gdb_assert (m_kind == PROP_CONST);
@@ -357,7 +344,12 @@ struct dynamic_prop
     m_data.const_val = const_val;
   }
 
-  void *baton () const
+  /* Return true if this property has a constant value, false
+     otherwise.  */
+  bool is_constant () const
+  { return m_kind == PROP_CONST; }
+
+  const dwarf2_property_baton *baton () const
   {
     gdb_assert (m_kind == PROP_LOCEXPR
 		|| m_kind == PROP_LOCLIST
@@ -366,19 +358,19 @@ struct dynamic_prop
     return m_data.baton;
   }
 
-  void set_locexpr (void *baton)
+  void set_locexpr (const dwarf2_property_baton *baton)
   {
     m_kind = PROP_LOCEXPR;
     m_data.baton = baton;
   }
 
-  void set_loclist (void *baton)
+  void set_loclist (const dwarf2_property_baton *baton)
   {
     m_kind = PROP_LOCLIST;
     m_data.baton = baton;
   }
 
-  void set_addr_offset (void *baton)
+  void set_addr_offset (const dwarf2_property_baton *baton)
   {
     m_kind = PROP_ADDR_OFFSET;
     m_data.baton = baton;
@@ -554,6 +546,16 @@ union field_location
   struct dwarf2_locexpr_baton *dwarf_block;
 };
 
+/* Accessibility of a member.  */
+enum class accessibility : unsigned char
+{
+  /* It's important that this be 0 so that fields default to
+     public.  */
+  PUBLIC = 0,
+  PROTECTED = 1,
+  PRIVATE = 2,
+};
+
 struct field
 {
   struct type *type () const
@@ -574,6 +576,43 @@ struct field
   void set_name (const char *name)
   {
     m_name = name;
+  }
+
+  bool is_artificial () const
+  {
+    return m_artificial;
+  }
+
+  void set_is_artificial (bool is_artificial)
+  {
+    m_artificial = is_artificial;
+  }
+
+  unsigned int bitsize () const
+  {
+    return m_bitsize;
+  }
+
+  void set_bitsize (unsigned int bitsize)
+  {
+    m_bitsize = bitsize;
+  }
+
+  bool is_packed () const
+  {
+    return m_bitsize != 0;
+  }
+
+  /* Return true if this field is static; false if not.  */
+  bool is_static () const
+  {
+    /* "static" fields are the fields whose location is not relative
+       to the address of the enclosing struct.  It would be nice to
+       have a dedicated flag that would be set for static fields when
+       the type is being created.  But in practice, checking the field
+       loc_kind should give us an accurate answer.  */
+    return (m_loc_kind == FIELD_LOC_KIND_PHYSNAME
+	    || m_loc_kind == FIELD_LOC_KIND_PHYSADDR);
   }
 
   /* Location getters / setters.  */
@@ -643,6 +682,45 @@ struct field
     m_loc.dwarf_block = dwarf_block;
   }
 
+  /* Set the field's accessibility.  */
+  void set_accessibility (accessibility acc)
+  { m_accessibility = acc; }
+
+  /* Fetch the field's accessibility.  */
+  enum accessibility accessibility () const
+  { return m_accessibility; }
+
+  /* True if this field is 'public'.  */
+  bool is_public () const
+  { return m_accessibility == accessibility::PUBLIC; }
+
+  /* True if this field is 'private'.  */
+  bool is_private () const
+  { return m_accessibility == accessibility::PRIVATE; }
+
+  /* True if this field is 'protected'.  */
+  bool is_protected () const
+  { return m_accessibility == accessibility::PROTECTED; }
+
+  /* True if this field is 'virtual'.  */
+  bool is_virtual () const
+  { return m_virtual; }
+
+  /* Set the field's "virtual" flag.  */
+  void set_virtual ()
+  { m_virtual = true; }
+
+  /* True if this field is 'ignored'.  */
+  bool is_ignored () const
+  { return m_ignored; }
+
+  /* Set the field's "ignored" flag.  Note that the 'ignored' bit is
+     deprecated.  It was used by some unknown stabs generator, and has
+     been replaced by the optimized-out approach -- however, it
+     remains because the stabs reader was never updated.  */
+  void set_ignored ()
+  { m_ignored = true; }
+
   union field_location m_loc;
 
   /* * For a function or member type, this is 1 if the argument is
@@ -650,11 +728,19 @@ struct field
      to the user.  For TYPE_CODE_RANGE it is set if the specific
      bound is not defined.  */
 
-  unsigned int artificial : 1;
+  unsigned int m_artificial : 1;
+
+  /* Whether the field is 'virtual'.  */
+  bool m_virtual : 1;
+  /* Whether the field is 'ignored'.  */
+  bool m_ignored : 1;
 
   /* * Discriminant for union field_location.  */
 
   ENUM_BITFIELD(field_loc_kind) m_loc_kind : 3;
+
+  /* Accessibility of the field.  */
+  enum accessibility m_accessibility;
 
   /* * Size of this field, in bits, or zero if not packed.
      If non-zero in an array type, indicates the element size in
@@ -662,7 +748,7 @@ struct field
      For an unpacked field, the field's type's length
      says how many bytes the field occupies.  */
 
-  unsigned int bitsize : 28;
+  unsigned int m_bitsize;
 
   /* * In a struct or union type, type of this field.
      - In a function or member type, type of this argument.
@@ -685,6 +771,13 @@ struct range_bounds
       return this->stride.const_val () * 8;
     else
       return this->stride.const_val ();
+  }
+
+  /* Return true if either bounds is optimized out.  */
+  bool optimized_out () const
+  {
+    return (low.kind () == PROP_OPTIMIZED_OUT
+	    || high.kind () == PROP_OPTIMIZED_OUT);
   }
 
   /* * Low bound of range.  */
@@ -833,10 +926,14 @@ struct main_type
 
   ENUM_BITFIELD(type_specific_kind) type_specific_field : 3;
 
+  /* The language for this type.  */
+
+  ENUM_BITFIELD(language) m_lang : LANGUAGE_BITS;
+
   /* * Number of fields described for this type.  This field appears
      at this location because it packs nicely here.  */
 
-  short nfields;
+  unsigned int m_nfields;
 
   /* * Name of this type, or NULL if none.
 
@@ -949,8 +1046,8 @@ struct type
 
   /* Note that if thistype is a TYPEDEF type, you have to call check_typedef.
      But check_typedef does set the TYPE_LENGTH of the TYPEDEF type,
-     so you only have to call check_typedef once.  Since allocate_value
-     calls check_typedef, VALUE_TYPE (X)->length () is safe.  */
+     so you only have to call check_typedef once.  Since value::allocate
+     calls check_typedef, X->type ()->length () is safe.  */
   ULONGEST length () const
   {
     return this->m_length;
@@ -962,15 +1059,15 @@ struct type
   }
 
   /* Get the number of fields of this type.  */
-  int num_fields () const
+  unsigned int num_fields () const
   {
-    return this->main_type->nfields;
+    return this->main_type->m_nfields;
   }
 
   /* Set the number of fields of this type.  */
-  void set_num_fields (int num_fields)
+  void set_num_fields (unsigned int num_fields)
   {
-    this->main_type->nfields = num_fields;
+    this->main_type->m_nfields = num_fields;
   }
 
   /* Get the fields array of this type.  */
@@ -991,6 +1088,14 @@ struct type
   {
     this->main_type->flds_bnds.fields = fields;
   }
+
+  /* Allocate the fields array of this type, with NFIELDS elements.  If INIT,
+     zero-initialize the allocated memory.  */
+  void alloc_fields (unsigned int nfields, bool init = true);
+
+  /* Allocate the fields array of this type, and copy the fields from SRC.  */
+  void copy_fields (struct type *src);
+  void copy_fields (std::vector<struct field> &src);
 
   type *index_type () const
   {
@@ -1050,10 +1155,16 @@ struct type
     this->main_type->flds_bnds.bounds = bounds;
   }
 
+  /* Return true if this type's bounds were optimized out.  */
+  bool bound_optimized_out () const
+  {
+    return bounds ()->optimized_out ();
+  }
+
   ULONGEST bit_stride () const
   {
-    if (this->code () == TYPE_CODE_ARRAY && this->field (0).bitsize != 0)
-      return this->field (0).bitsize;
+    if (this->code () == TYPE_CODE_ARRAY && this->field (0).bitsize () != 0)
+      return this->field (0).bitsize ();
     return this->bounds ()->bit_stride ();
   }
 
@@ -1396,6 +1507,19 @@ struct type
     return this->code () == TYPE_CODE_PTR || TYPE_IS_REFERENCE (this);
   }
 
+  /* Return true if this type is "string-like", according to its
+     defining language.  */
+  bool is_string_like ();
+
+  /* Return true if this type is "array-like".  This includes arrays,
+     but also some forms of structure type that are recognized as
+     representations of arrays by the type's language.  */
+  bool is_array_like ();
+
+  /* Return the language that this type came from.  */
+  enum language language () const
+  { return main_type->m_lang; }
+
   /* * Type that is a pointer to this type.
      NULL if no such pointer-to type is known yet.
      The debugger may add the address of such a type
@@ -1514,8 +1638,6 @@ struct fn_field
 
   unsigned int is_const:1;
   unsigned int is_volatile:1;
-  unsigned int is_private:1;
-  unsigned int is_protected:1;
   unsigned int is_artificial:1;
 
   /* * A stub method only has some fields valid (but they are enough
@@ -1536,9 +1658,8 @@ struct fn_field
 
   ENUM_BITFIELD (dwarf_defaulted_attribute) defaulted : 2;
 
-  /* * Unused.  */
-
-  unsigned int dummy:6;
+  /* Accessibility of the field.  */
+  enum accessibility accessibility;
 
   /* * Index into that baseclass's virtual function table, minus 2;
      else if static: VOFFSET_STATIC; else: 0.  */
@@ -1560,11 +1681,8 @@ struct decl_field
 
   struct type *type;
 
-  /* * True if this field was declared protected, false otherwise.  */
-  unsigned int is_protected : 1;
-
-  /* * True if this field was declared private, false otherwise.  */
-  unsigned int is_private : 1;
+  /* Accessibility of the field.  */
+  enum accessibility accessibility;
 };
 
 /* * C++ language-specific information for TYPE_CODE_STRUCT and
@@ -1621,42 +1739,6 @@ struct cplus_struct_type
     /* * The base class which defined the virtual function table pointer.  */
 
     struct type *vptr_basetype;
-
-    /* * For derived classes, the number of base classes is given by
-       n_baseclasses and virtual_field_bits is a bit vector containing
-       one bit per base class.  If the base class is virtual, the
-       corresponding bit will be set.
-       I.E, given:
-
-       class A{};
-       class B{};
-       class C : public B, public virtual A {};
-
-       B is a baseclass of C; A is a virtual baseclass for C.
-       This is a C++ 2.0 language feature.  */
-
-    B_TYPE *virtual_field_bits;
-
-    /* * For classes with private fields, the number of fields is
-       given by nfields and private_field_bits is a bit vector
-       containing one bit per field.
-
-       If the field is private, the corresponding bit will be set.  */
-
-    B_TYPE *private_field_bits;
-
-    /* * For classes with protected fields, the number of fields is
-       given by nfields and protected_field_bits is a bit vector
-       containing one bit per field.
-
-       If the field is private, the corresponding bit will be set.  */
-
-    B_TYPE *protected_field_bits;
-
-    /* * For classes with fields to be ignored, either this is
-       optimized out or this field has length 0.  */
-
-    B_TYPE *ignore_field_bits;
 
     /* * For classes, structures, and unions, a description of each
        field, which consists of an overloaded name, followed by the
@@ -1749,217 +1831,6 @@ struct func_type
        contains the method.  */
 
     struct type *self_type;
-  };
-
-/* struct call_site_parameter can be referenced in callees by several ways.  */
-
-enum call_site_parameter_kind
-{
-  /* * Use field call_site_parameter.u.dwarf_reg.  */
-  CALL_SITE_PARAMETER_DWARF_REG,
-
-  /* * Use field call_site_parameter.u.fb_offset.  */
-  CALL_SITE_PARAMETER_FB_OFFSET,
-
-  /* * Use field call_site_parameter.u.param_offset.  */
-  CALL_SITE_PARAMETER_PARAM_OFFSET
-};
-
-struct call_site_target
-{
-  /* The kind of location held by this call site target.  */
-  enum kind
-  {
-    /* An address.  */
-    PHYSADDR,
-    /* A name.  */
-    PHYSNAME,
-    /* A DWARF block.  */
-    DWARF_BLOCK,
-    /* An array of addresses.  */
-    ADDRESSES,
-  };
-
-  void set_loc_physaddr (CORE_ADDR physaddr)
-  {
-    m_loc_kind = PHYSADDR;
-    m_loc.physaddr = physaddr;
-  }
-
-  void set_loc_physname (const char *physname)
-    {
-      m_loc_kind = PHYSNAME;
-      m_loc.physname = physname;
-    }
-
-  void set_loc_dwarf_block (dwarf2_locexpr_baton *dwarf_block)
-    {
-      m_loc_kind = DWARF_BLOCK;
-      m_loc.dwarf_block = dwarf_block;
-    }
-
-  void set_loc_array (unsigned length, const CORE_ADDR *data)
-  {
-    m_loc_kind = ADDRESSES;
-    m_loc.addresses.length = length;
-    m_loc.addresses.values = data;
-  }
-
-  /* Callback type for iterate_over_addresses.  */
-
-  using iterate_ftype = gdb::function_view<void (CORE_ADDR)>;
-
-  /* Call CALLBACK for each DW_TAG_call_site's DW_AT_call_target
-     address.  CALLER_FRAME (for registers) can be NULL if it is not
-     known.  This function always may throw NO_ENTRY_VALUE_ERROR.  */
-
-  void iterate_over_addresses (struct gdbarch *call_site_gdbarch,
-			       const struct call_site *call_site,
-			       frame_info_ptr caller_frame,
-			       iterate_ftype callback) const;
-
-private:
-
-  union
-  {
-    /* Address.  */
-    CORE_ADDR physaddr;
-    /* Mangled name.  */
-    const char *physname;
-    /* DWARF block.  */
-    struct dwarf2_locexpr_baton *dwarf_block;
-    /* Array of addresses.  */
-    struct
-    {
-      unsigned length;
-      const CORE_ADDR *values;
-    } addresses;
-  } m_loc;
-
-  /* * Discriminant for union field_location.  */
-  enum kind m_loc_kind;
-};
-
-union call_site_parameter_u
-{
-  /* * DW_TAG_formal_parameter's DW_AT_location's DW_OP_regX
-     as DWARF register number, for register passed
-     parameters.  */
-
-  int dwarf_reg;
-
-  /* * Offset from the callee's frame base, for stack passed
-     parameters.  This equals offset from the caller's stack
-     pointer.  */
-
-  CORE_ADDR fb_offset;
-
-  /* * Offset relative to the start of this PER_CU to
-     DW_TAG_formal_parameter which is referenced by both
-     caller and the callee.  */
-
-  cu_offset param_cu_off;
-};
-
-struct call_site_parameter
-{
-  ENUM_BITFIELD (call_site_parameter_kind) kind : 2;
-
-  union call_site_parameter_u u;
-
-  /* * DW_TAG_formal_parameter's DW_AT_call_value.  It is never NULL.  */
-
-  const gdb_byte *value;
-  size_t value_size;
-
-  /* * DW_TAG_formal_parameter's DW_AT_call_data_value.
-     It may be NULL if not provided by DWARF.  */
-
-  const gdb_byte *data_value;
-  size_t data_value_size;
-};
-
-/* * A place where a function gets called from, represented by
-   DW_TAG_call_site.  It can be looked up from symtab->call_site_htab.  */
-
-struct call_site
-  {
-    call_site (CORE_ADDR pc, dwarf2_per_cu_data *per_cu,
-	       dwarf2_per_objfile *per_objfile)
-      : per_cu (per_cu), per_objfile (per_objfile), m_unrelocated_pc (pc)
-    {}
-
-    static int
-    eq (const call_site *a, const call_site *b)
-    {
-      return a->m_unrelocated_pc == b->m_unrelocated_pc;
-    }
-
-    static hashval_t
-    hash (const call_site *a)
-    {
-      return a->m_unrelocated_pc;
-    }
-
-    static int
-    eq (const void *a, const void *b)
-    {
-      return eq ((const call_site *)a, (const call_site *)b);
-    }
-
-    static hashval_t
-    hash (const void *a)
-    {
-      return hash ((const call_site *)a);
-    }
-
-    /* Return the address of the first instruction after this call.  */
-
-    CORE_ADDR pc () const;
-
-    /* Call CALLBACK for each target address.  CALLER_FRAME (for
-       registers) can be NULL if it is not known.  This function may
-       throw NO_ENTRY_VALUE_ERROR.  */
-
-    void iterate_over_addresses (struct gdbarch *call_site_gdbarch,
-				 frame_info_ptr caller_frame,
-				 call_site_target::iterate_ftype callback)
-      const
-    {
-      return target.iterate_over_addresses (call_site_gdbarch, this,
-					    caller_frame, callback);
-    }
-
-    /* * List successor with head in FUNC_TYPE.TAIL_CALL_LIST.  */
-
-    struct call_site *tail_call_next = nullptr;
-
-    /* * Describe DW_AT_call_target.  Missing attribute uses
-       FIELD_LOC_KIND_DWARF_BLOCK with FIELD_DWARF_BLOCK == NULL.  */
-
-    struct call_site_target target {};
-
-    /* * Size of the PARAMETER array.  */
-
-    unsigned parameter_count = 0;
-
-    /* * CU of the function where the call is located.  It gets used
-       for DWARF blocks execution in the parameter array below.  */
-
-    dwarf2_per_cu_data *const per_cu = nullptr;
-
-    /* objfile of the function where the call is located.  */
-
-    dwarf2_per_objfile *const per_objfile = nullptr;
-
-  private:
-    /* Unrelocated address of the first instruction after this call.  */
-    const CORE_ADDR m_unrelocated_pc;
-
-  public:
-    /* * Describe DW_TAG_call_site's DW_TAG_formal_parameter.  */
-
-    struct call_site_parameter parameter[];
   };
 
 /* The type-specific info for TYPE_CODE_FIXED_POINT types.  */
@@ -2109,48 +1980,11 @@ extern void set_type_vptr_basetype (struct type *, struct type *);
 #define TYPE_BASECLASS_NAME(thistype,index) (thistype->field (index).name ())
 #define TYPE_BASECLASS_BITPOS(thistype,index) (thistype->field (index).loc_bitpos ())
 #define BASETYPE_VIA_PUBLIC(thistype, index) \
-  ((!TYPE_FIELD_PRIVATE(thistype, index)) && (!TYPE_FIELD_PROTECTED(thistype, index)))
+  ((thistype)->field (index).is_public ())
 #define TYPE_CPLUS_DYNAMIC(thistype) TYPE_CPLUS_SPECIFIC (thistype)->is_dynamic
 
 #define BASETYPE_VIA_VIRTUAL(thistype, index) \
-  (TYPE_CPLUS_SPECIFIC(thistype)->virtual_field_bits == NULL ? 0 \
-    : B_TST(TYPE_CPLUS_SPECIFIC(thistype)->virtual_field_bits, (index)))
-
-#define FIELD_ARTIFICIAL(thisfld) ((thisfld).artificial)
-#define FIELD_BITSIZE(thisfld) ((thisfld).bitsize)
-
-#define TYPE_FIELD_ARTIFICIAL(thistype, n) FIELD_ARTIFICIAL((thistype)->field (n))
-#define TYPE_FIELD_BITSIZE(thistype, n) FIELD_BITSIZE((thistype)->field (n))
-#define TYPE_FIELD_PACKED(thistype, n) (FIELD_BITSIZE((thistype)->field (n))!=0)
-
-#define TYPE_FIELD_PRIVATE_BITS(thistype) \
-  TYPE_CPLUS_SPECIFIC(thistype)->private_field_bits
-#define TYPE_FIELD_PROTECTED_BITS(thistype) \
-  TYPE_CPLUS_SPECIFIC(thistype)->protected_field_bits
-#define TYPE_FIELD_IGNORE_BITS(thistype) \
-  TYPE_CPLUS_SPECIFIC(thistype)->ignore_field_bits
-#define TYPE_FIELD_VIRTUAL_BITS(thistype) \
-  TYPE_CPLUS_SPECIFIC(thistype)->virtual_field_bits
-#define SET_TYPE_FIELD_PRIVATE(thistype, n) \
-  B_SET (TYPE_CPLUS_SPECIFIC(thistype)->private_field_bits, (n))
-#define SET_TYPE_FIELD_PROTECTED(thistype, n) \
-  B_SET (TYPE_CPLUS_SPECIFIC(thistype)->protected_field_bits, (n))
-#define SET_TYPE_FIELD_IGNORE(thistype, n) \
-  B_SET (TYPE_CPLUS_SPECIFIC(thistype)->ignore_field_bits, (n))
-#define SET_TYPE_FIELD_VIRTUAL(thistype, n) \
-  B_SET (TYPE_CPLUS_SPECIFIC(thistype)->virtual_field_bits, (n))
-#define TYPE_FIELD_PRIVATE(thistype, n) \
-  (TYPE_CPLUS_SPECIFIC(thistype)->private_field_bits == NULL ? 0 \
-    : B_TST(TYPE_CPLUS_SPECIFIC(thistype)->private_field_bits, (n)))
-#define TYPE_FIELD_PROTECTED(thistype, n) \
-  (TYPE_CPLUS_SPECIFIC(thistype)->protected_field_bits == NULL ? 0 \
-    : B_TST(TYPE_CPLUS_SPECIFIC(thistype)->protected_field_bits, (n)))
-#define TYPE_FIELD_IGNORE(thistype, n) \
-  (TYPE_CPLUS_SPECIFIC(thistype)->ignore_field_bits == NULL ? 0 \
-    : B_TST(TYPE_CPLUS_SPECIFIC(thistype)->ignore_field_bits, (n)))
-#define TYPE_FIELD_VIRTUAL(thistype, n) \
-  (TYPE_CPLUS_SPECIFIC(thistype)->virtual_field_bits == NULL ? 0 \
-    : B_TST(TYPE_CPLUS_SPECIFIC(thistype)->virtual_field_bits, (n)))
+  ((thistype)->field (index).is_virtual ())
 
 #define TYPE_FN_FIELDLISTS(thistype) TYPE_CPLUS_SPECIFIC(thistype)->fn_fieldlists
 #define TYPE_FN_FIELDLIST(thistype, n) TYPE_CPLUS_SPECIFIC(thistype)->fn_fieldlists[n]
@@ -2171,8 +2005,10 @@ extern void set_type_vptr_basetype (struct type *, struct type *);
 #define TYPE_FN_FIELD_ARGS(thisfn, n) (((thisfn)[n].type)->fields ())
 #define TYPE_FN_FIELD_CONST(thisfn, n) ((thisfn)[n].is_const)
 #define TYPE_FN_FIELD_VOLATILE(thisfn, n) ((thisfn)[n].is_volatile)
-#define TYPE_FN_FIELD_PRIVATE(thisfn, n) ((thisfn)[n].is_private)
-#define TYPE_FN_FIELD_PROTECTED(thisfn, n) ((thisfn)[n].is_protected)
+#define TYPE_FN_FIELD_PRIVATE(thisfn, n) \
+  ((thisfn)[n].accessibility == accessibility::PRIVATE)
+#define TYPE_FN_FIELD_PROTECTED(thisfn, n) \
+  ((thisfn)[n].accessibility == accessibility::PROTECTED)
 #define TYPE_FN_FIELD_ARTIFICIAL(thisfn, n) ((thisfn)[n].is_artificial)
 #define TYPE_FN_FIELD_STUB(thisfn, n) ((thisfn)[n].is_stub)
 #define TYPE_FN_FIELD_CONSTRUCTOR(thisfn, n) ((thisfn)[n].is_constructor)
@@ -2195,9 +2031,9 @@ extern void set_type_vptr_basetype (struct type *, struct type *);
 #define TYPE_TYPEDEF_FIELD_COUNT(thistype) \
   TYPE_CPLUS_SPECIFIC (thistype)->typedef_field_count
 #define TYPE_TYPEDEF_FIELD_PROTECTED(thistype, n) \
-  TYPE_TYPEDEF_FIELD (thistype, n).is_protected
+  (TYPE_TYPEDEF_FIELD (thistype, n).accessibility == accessibility::PROTECTED)
 #define TYPE_TYPEDEF_FIELD_PRIVATE(thistype, n)        \
-  TYPE_TYPEDEF_FIELD (thistype, n).is_private
+  (TYPE_TYPEDEF_FIELD (thistype, n).accessibility == accessibility::PRIVATE)
 
 #define TYPE_NESTED_TYPES_ARRAY(thistype)	\
   TYPE_CPLUS_SPECIFIC (thistype)->nested_types
@@ -2210,9 +2046,11 @@ extern void set_type_vptr_basetype (struct type *, struct type *);
 #define TYPE_NESTED_TYPES_COUNT(thistype) \
   TYPE_CPLUS_SPECIFIC (thistype)->nested_types_count
 #define TYPE_NESTED_TYPES_FIELD_PROTECTED(thistype, n) \
-  TYPE_NESTED_TYPES_FIELD (thistype, n).is_protected
+  (TYPE_NESTED_TYPES_FIELD (thistype, n).accessibility \
+   == accessibility::PROTECTED)
 #define TYPE_NESTED_TYPES_FIELD_PRIVATE(thistype, n)	\
-  TYPE_NESTED_TYPES_FIELD (thistype, n).is_private
+  (TYPE_NESTED_TYPES_FIELD (thistype, n).accessibility \
+   == accessibility::PRIVATE)
 
 #define TYPE_IS_OPAQUE(thistype) \
   ((((thistype)->code () == TYPE_CODE_STRUCT) \
@@ -2326,53 +2164,30 @@ struct builtin_type
 
   /* * This type is used to represent an xmethod.  */
   struct type *xmethod = nullptr;
+
+  /* * This type is used to represent symbol addresses.  */
+  struct type *builtin_core_addr = nullptr;
+
+  /* * This type represents a type that was unrecognized in symbol
+     read-in.  */
+  struct type *builtin_error = nullptr;
+
+  /* * Types used for symbols with no debug information.  */
+  struct type *nodebug_text_symbol = nullptr;
+  struct type *nodebug_text_gnu_ifunc_symbol = nullptr;
+  struct type *nodebug_got_plt_symbol = nullptr;
+  struct type *nodebug_data_symbol = nullptr;
+  struct type *nodebug_unknown_symbol = nullptr;
+  struct type *nodebug_tls_symbol = nullptr;
 };
 
 /* * Return the type table for the specified architecture.  */
 
 extern const struct builtin_type *builtin_type (struct gdbarch *gdbarch);
 
-/* * Per-objfile types used by symbol readers.  */
-
-struct objfile_type
-{
-  /* Basic types based on the objfile architecture.  */
-  struct type *builtin_void;
-  struct type *builtin_char;
-  struct type *builtin_short;
-  struct type *builtin_int;
-  struct type *builtin_long;
-  struct type *builtin_long_long;
-  struct type *builtin_signed_char;
-  struct type *builtin_unsigned_char;
-  struct type *builtin_unsigned_short;
-  struct type *builtin_unsigned_int;
-  struct type *builtin_unsigned_long;
-  struct type *builtin_unsigned_long_long;
-  struct type *builtin_half;
-  struct type *builtin_float;
-  struct type *builtin_double;
-  struct type *builtin_long_double;
-
-  /* * This type is used to represent symbol addresses.  */
-  struct type *builtin_core_addr;
-
-  /* * This type represents a type that was unrecognized in symbol
-     read-in.  */
-  struct type *builtin_error;
-
-  /* * Types used for symbols with no debug information.  */
-  struct type *nodebug_text_symbol;
-  struct type *nodebug_text_gnu_ifunc_symbol;
-  struct type *nodebug_got_plt_symbol;
-  struct type *nodebug_data_symbol;
-  struct type *nodebug_unknown_symbol;
-  struct type *nodebug_tls_symbol;
-};
-
 /* * Return the type table for the specified objfile.  */
 
-extern const struct objfile_type *objfile_type (struct objfile *objfile);
+extern const struct builtin_type *builtin_type (struct objfile *objfile);
  
 /* Explicit floating-point formats.  See "floatformat.h".  */
 extern const struct floatformat *floatformats_ieee_half[BFD_ENDIAN_UNKNOWN];
@@ -2414,15 +2229,6 @@ extern const struct floatformat *floatformats_bfloat16[BFD_ENDIAN_UNKNOWN];
 
 #define TYPE_ZALLOC(t,size) (memset (TYPE_ALLOC (t, size), 0, size))
 
-/* Use alloc_type to allocate a type owned by an objfile.  Use
-   alloc_type_arch to allocate a type owned by an architecture.  Use
-   alloc_type_copy to allocate a type with the same owner as a
-   pre-existing template type, no matter whether objfile or
-   gdbarch.  */
-extern struct type *alloc_type (struct objfile *);
-extern struct type *alloc_type_arch (struct gdbarch *);
-extern struct type *alloc_type_copy (const struct type *);
-
 /* * This returns the target type (or NULL) of TYPE, also skipping
    past typedefs.  */
 
@@ -2433,41 +2239,163 @@ extern struct type *get_target_type (struct type *type);
 
 extern unsigned int type_length_units (struct type *type);
 
-/* * Helper function to construct objfile-owned types.  */
+/* An object of this type is passed when allocating certain types.  It
+   determines where the new type is allocated.  Ultimately a type is
+   either allocated on a on an objfile obstack or on a gdbarch
+   obstack.  However, it's also possible to request that a new type be
+   allocated on the same obstack as some existing type, or that a
+   "new" type instead overwrite a supplied type object.  */
 
-extern struct type *init_type (struct objfile *, enum type_code, int,
-			       const char *);
-extern struct type *init_integer_type (struct objfile *, int, int,
-				       const char *);
-extern struct type *init_character_type (struct objfile *, int, int,
-					 const char *);
-extern struct type *init_boolean_type (struct objfile *, int, int,
-				       const char *);
-extern struct type *init_float_type (struct objfile *, int, const char *,
-				     const struct floatformat **,
-				     enum bfd_endian = BFD_ENDIAN_UNKNOWN);
-extern struct type *init_decfloat_type (struct objfile *, int, const char *);
+class type_allocator
+{
+public:
+
+  /* Create new types on OBJFILE.  */
+  type_allocator (objfile *objfile, enum language lang)
+    : m_is_objfile (true),
+      m_lang (lang)
+  {
+    m_data.objfile = objfile;
+  }
+
+  /* Create new types on GDBARCH.  */
+  explicit type_allocator (gdbarch *gdbarch)
+    : m_lang (language_minimal)
+  {
+    m_data.gdbarch = gdbarch;
+  }
+
+  /* This determines whether a passed-in type should be rewritten in
+     place, or whether it should simply determine where the new type
+     is created.  */
+  enum type_allocator_kind
+  {
+    /* Allocate on same obstack as existing type.  */
+    SAME = 0,
+    /* Smash the existing type.  */
+    SMASH = 1,
+  };
+
+  /* Create new types either on the same obstack as TYPE; or if SMASH
+     is passed, overwrite TYPE.  */
+  explicit type_allocator (struct type *type,
+			   type_allocator_kind kind = SAME)
+    : m_lang (type->language ())
+  {
+    if (kind == SAME)
+      {
+	if (type->is_objfile_owned ())
+	  {
+	    m_data.objfile = type->objfile_owner ();
+	    m_is_objfile = true;
+	  }
+	else
+	  m_data.gdbarch = type->arch_owner ();
+      }
+    else
+      {
+	m_smash = true;
+	m_data.type = type;
+      }
+  }
+
+  /* Create new types on the same obstack as TYPE.  */
+  explicit type_allocator (const struct type *type)
+    : m_is_objfile (type->is_objfile_owned ()),
+      m_lang (type->language ())
+  {
+    if (type->is_objfile_owned ())
+      m_data.objfile = type->objfile_owner ();
+    else
+      m_data.gdbarch = type->arch_owner ();
+  }
+
+  /* Create a new type on the desired obstack.  Note that a "new" type
+     is not created if type-smashing was selected at construction.  */
+  type *new_type ();
+
+  /* Create a new type on the desired obstack, and fill in its code,
+     length, and name.  If NAME is non-null, it is copied to the
+     destination obstack first.  Note that a "new" type is not created
+     if type-smashing was selected at construction.  */
+  type *new_type (enum type_code code, int bit, const char *name);
+
+  /* Return the architecture associated with this allocator.  This
+     comes from whatever object was supplied to the constructor.  */
+  gdbarch *arch ();
+
+private:
+
+  /* Where the type should wind up.  */
+  union
+  {
+    struct objfile *objfile;
+    struct gdbarch *gdbarch;
+    struct type *type;
+  } m_data {};
+
+  /* True if this allocator uses the objfile field above.  */
+  bool m_is_objfile = false;
+  /* True if this allocator uses the type field above, indicating that
+     the "allocation" should be done in-place.  */
+  bool m_smash = false;
+  /* The language for types created by this allocator.  */
+  enum language m_lang;
+};
+
+/* Allocate a TYPE_CODE_INT type structure using ALLOC.  BIT is the
+   type size in bits.  If UNSIGNED_P is non-zero, set the type's
+   TYPE_UNSIGNED flag.  NAME is the type name.  */
+
+extern struct type *init_integer_type (type_allocator &alloc, int bit,
+				       int unsigned_p, const char *name);
+
+/* Allocate a TYPE_CODE_CHAR type structure using ALLOC.  BIT is the
+   type size in bits.  If UNSIGNED_P is non-zero, set the type's
+   TYPE_UNSIGNED flag.  NAME is the type name.  */
+
+extern struct type *init_character_type (type_allocator &alloc, int bit,
+					 int unsigned_p, const char *name);
+
+/* Allocate a TYPE_CODE_BOOL type structure using ALLOC.  BIT is the
+   type size in bits.  If UNSIGNED_P is non-zero, set the type's
+   TYPE_UNSIGNED flag.  NAME is the type name.  */
+
+extern struct type *init_boolean_type (type_allocator &alloc, int bit,
+				       int unsigned_p, const char *name);
+
+/* Allocate a TYPE_CODE_FLT type structure using ALLOC.
+   BIT is the type size in bits; if BIT equals -1, the size is
+   determined by the floatformat.  NAME is the type name.  Set the
+   TYPE_FLOATFORMAT from FLOATFORMATS.  BYTE_ORDER is the byte order
+   to use.  If it is BFD_ENDIAN_UNKNOWN (the default), then the byte
+   order of the objfile's architecture is used.  */
+
+extern struct type *init_float_type
+     (type_allocator &alloc, int bit, const char *name,
+      const struct floatformat **floatformats,
+      enum bfd_endian byte_order = BFD_ENDIAN_UNKNOWN);
+
+/* Allocate a TYPE_CODE_DECFLOAT type structure using ALLOC.
+   BIT is the type size in bits.  NAME is the type name.  */
+
+extern struct type *init_decfloat_type (type_allocator &alloc, int bit,
+					const char *name);
+
 extern bool can_create_complex_type (struct type *);
 extern struct type *init_complex_type (const char *, struct type *);
-extern struct type *init_pointer_type (struct objfile *, int, const char *,
-				       struct type *);
-extern struct type *init_fixed_point_type (struct objfile *, int, int,
-					   const char *);
 
-/* Helper functions to construct architecture-owned types.  */
-extern struct type *arch_type (struct gdbarch *, enum type_code, int,
-			       const char *);
-extern struct type *arch_integer_type (struct gdbarch *, int, int,
-				       const char *);
-extern struct type *arch_character_type (struct gdbarch *, int, int,
-					 const char *);
-extern struct type *arch_boolean_type (struct gdbarch *, int, int,
-				       const char *);
-extern struct type *arch_float_type (struct gdbarch *, int, const char *,
-				     const struct floatformat **);
-extern struct type *arch_decfloat_type (struct gdbarch *, int, const char *);
-extern struct type *arch_pointer_type (struct gdbarch *, int, const char *,
-				       struct type *);
+/* Allocate a TYPE_CODE_PTR type structure using ALLOC.
+   BIT is the pointer type size in bits.  NAME is the type name.
+   TARGET_TYPE is the pointer target type.  Always sets the pointer type's
+   TYPE_UNSIGNED flag.  */
+
+extern struct type *init_pointer_type (type_allocator &alloc, int bit,
+				       const char *name,
+				       struct type *target_type);
+
+extern struct type *init_fixed_point_type (type_allocator &, int, int,
+					   const char *);
 
 /* Helper functions to construct a struct or record type.  An
    initially empty type is created using arch_composite_type().
@@ -2540,8 +2468,6 @@ extern void smash_to_memberptr_type (struct type *, struct type *,
 
 extern void smash_to_methodptr_type (struct type *, struct type *);
 
-extern struct type *allocate_stub_method (struct type *);
-
 extern const char *type_name_or_error (struct type *type);
 
 struct struct_elt
@@ -2558,7 +2484,7 @@ struct struct_elt
 
    TYPE can be either a struct or union, or a pointer or reference to
    a struct or union.  If it is a pointer or reference, its target
-   type is automatically used.  Thus '.' and '->' are interchangable,
+   type is automatically used.  Thus '.' and '->' are interchangeable,
    as specified for the definitions of the expression element types
    STRUCTOP_STRUCT and STRUCTOP_PTR.
 
@@ -2575,7 +2501,7 @@ extern struct_elt lookup_struct_elt (struct type *, const char *, int);
 
    TYPE can be either a struct or union, or a pointer or reference to
    a struct or union.  If it is a pointer or reference, its target
-   type is automatically used.  Thus '.' and '->' are interchangable,
+   type is automatically used.  Thus '.' and '->' are interchangeable,
    as specified for the definitions of the expression element types
    STRUCTOP_STRUCT and STRUCTOP_PTR.
 
@@ -2596,39 +2522,82 @@ extern struct type *lookup_function_type_with_arguments (struct type *,
 							 int,
 							 struct type **);
 
-extern struct type *create_static_range_type (struct type *, struct type *,
-					      LONGEST, LONGEST);
+/* Create a range type using ALLOC.
 
+   Indices will be of type INDEX_TYPE, and will range from LOW_BOUND
+   to HIGH_BOUND, inclusive.  */
+
+extern struct type *create_static_range_type (type_allocator &alloc,
+					      struct type *index_type,
+					      LONGEST low_bound,
+					      LONGEST high_bound);
+
+/* Create an array type using ALLOC.
+
+   Elements will be of type ELEMENT_TYPE, the indices will be of type
+   RANGE_TYPE.
+
+   BYTE_STRIDE_PROP, when not NULL, provides the array's byte stride.
+   This byte stride property is added to the resulting array type
+   as a DYN_PROP_BYTE_STRIDE.  As a consequence, the BYTE_STRIDE_PROP
+   argument can only be used to create types that are objfile-owned
+   (see add_dyn_prop), meaning that either this function must be called
+   with an objfile-owned RESULT_TYPE, or an objfile-owned RANGE_TYPE.
+
+   BIT_STRIDE is taken into account only when BYTE_STRIDE_PROP is NULL.
+   If BIT_STRIDE is not zero, build a packed array type whose element
+   size is BIT_STRIDE.  Otherwise, ignore this parameter.  */
 
 extern struct type *create_array_type_with_stride
-  (struct type *, struct type *, struct type *,
-   struct dynamic_prop *, unsigned int);
+     (type_allocator &alloc, struct type *element_type,
+      struct type *range_type, struct dynamic_prop *byte_stride_prop,
+      unsigned int bit_stride);
 
-extern struct type *create_range_type (struct type *, struct type *,
-				       const struct dynamic_prop *,
-				       const struct dynamic_prop *,
-				       LONGEST);
+/* Create a range type using ALLOC with a dynamic range from LOW_BOUND
+   to HIGH_BOUND, inclusive.  INDEX_TYPE is the underlying type.  BIAS
+   is the bias to be applied when storing or retrieving values of this
+   type.  */
+
+extern struct type *create_range_type (type_allocator &alloc,
+				       struct type *index_type,
+				       const struct dynamic_prop *low_bound,
+				       const struct dynamic_prop *high_bound,
+				       LONGEST bias);
 
 /* Like CREATE_RANGE_TYPE but also sets up a stride.  When BYTE_STRIDE_P
    is true the value in STRIDE is a byte stride, otherwise STRIDE is a bit
    stride.  */
 
-extern struct type * create_range_type_with_stride
-  (struct type *result_type, struct type *index_type,
+extern struct type *create_range_type_with_stride
+  (type_allocator &alloc, struct type *index_type,
    const struct dynamic_prop *low_bound,
    const struct dynamic_prop *high_bound, LONGEST bias,
    const struct dynamic_prop *stride, bool byte_stride_p);
 
-extern struct type *create_array_type (struct type *, struct type *,
-				       struct type *);
+/* Same as create_array_type_with_stride but with no bit_stride
+   (BIT_STRIDE = 0), thus building an unpacked array.  */
+
+extern struct type *create_array_type (type_allocator &alloc,
+				       struct type *element_type,
+				       struct type *range_type);
 
 extern struct type *lookup_array_range_type (struct type *, LONGEST, LONGEST);
 
-extern struct type *create_string_type (struct type *, struct type *,
-					struct type *);
+/* Create a string type using ALLOC.  String types are similar enough
+   to array of char types that we can use create_array_type to build
+   the basic type and then bash it into a string type.
+
+   For fixed length strings, the range type contains 0 as the lower
+   bound and the length of the string minus one as the upper bound.  */
+
+extern struct type *create_string_type (type_allocator &alloc,
+					struct type *string_char_type,
+					struct type *range_type);
+
 extern struct type *lookup_string_range_type (struct type *, LONGEST, LONGEST);
 
-extern struct type *create_set_type (struct type *, struct type *);
+extern struct type *create_set_type (type_allocator &alloc,
+				     struct type *domain_type);
 
 extern struct type *lookup_unsigned_typename (const struct language_defn *,
 					      const char *);
@@ -2647,6 +2616,10 @@ extern CORE_ADDR get_pointer_type_max (struct type *);
    If TYPE has no dynamic properties return TYPE; otherwise a new type with
    static properties is returned.
 
+   If FRAME is given, it is used when evaluating dynamic properties.
+   This can be important when a static link is seen.  If not given,
+   the selected frame is used.
+
    For an array type, if the element type is dynamic, then that will
    not be resolved.  This is done because each individual element may
    have a different type when resolved (depending on the contents of
@@ -2654,13 +2627,13 @@ extern CORE_ADDR get_pointer_type_max (struct type *);
    true for the return value of this function.  */
 extern struct type *resolve_dynamic_type
   (struct type *type, gdb::array_view<const gdb_byte> valaddr,
-   CORE_ADDR addr);
+   CORE_ADDR addr, const frame_info_ptr *frame = nullptr);
 
 /* * Predicate if the type has dynamic values, which are not resolved yet.
    See the caveat in 'resolve_dynamic_type' to understand a scenario
    where an apparently-resolved type may still be considered
    "dynamic".  */
-extern int is_dynamic_type (struct type *type);
+extern bool is_dynamic_type (struct type *type);
 
 extern struct type *check_typedef (struct type *);
 
@@ -2668,8 +2641,18 @@ extern void check_stub_method_group (struct type *, int);
 
 extern char *gdb_mangle_name (struct type *, int, int);
 
-extern struct type *lookup_typename (const struct language_defn *,
-				     const char *, const struct block *, int);
+/* Lookup a typedef or primitive type named NAME, visible in lexical block
+   BLOCK.  If NOERR is nonzero, return zero if NAME is not suitably
+   defined.
+
+   If this function finds a suitable type then check_typedef is called on
+   the type, this ensures that if the type being returned is a typedef
+   then the length of the type will be correct.  The original typedef will
+   still be returned, not the result of calling check_typedef.  */
+
+extern struct type *lookup_typename (const struct language_defn *language,
+				     const char *name,
+				     const struct block *block, int noerr);
 
 extern struct type *lookup_template_type (const char *, struct type *,
 					  const struct block *);
@@ -2686,11 +2669,11 @@ extern bool get_discrete_bounds (struct type *type, LONGEST *lowp,
 
 /* If TYPE's low bound is a known constant, return it, else return nullopt.  */
 
-extern gdb::optional<LONGEST> get_discrete_low_bound (struct type *type);
+extern std::optional<LONGEST> get_discrete_low_bound (struct type *type);
 
 /* If TYPE's high bound is a known constant, return it, else return nullopt.  */
 
-extern gdb::optional<LONGEST> get_discrete_high_bound (struct type *type);
+extern std::optional<LONGEST> get_discrete_high_bound (struct type *type);
 
 /* Assuming TYPE is a simple, non-empty array type, compute its upper
    and lower bound.  Save the low bound into LOW_BOUND if not NULL.
@@ -2702,7 +2685,7 @@ extern gdb::optional<LONGEST> get_discrete_high_bound (struct type *type);
 extern bool get_array_bounds (struct type *type, LONGEST *low_bound,
 			      LONGEST *high_bound);
 
-extern gdb::optional<LONGEST> discrete_position (struct type *type,
+extern std::optional<LONGEST> discrete_position (struct type *type,
 						 LONGEST val);
 
 extern int class_types_same_p (const struct type *, const struct type *);
@@ -2778,14 +2761,13 @@ extern int compare_badness (const badness_vector &,
 			    const badness_vector &);
 
 extern badness_vector rank_function (gdb::array_view<type *> parms,
-				     gdb::array_view<value *> args);
+				     gdb::array_view<value *> args,
+				     bool varargs = false);
 
 extern struct rank rank_one_type (struct type *, struct type *,
 				  struct value *);
 
 extern void recursive_dump_type (struct type *, int);
-
-extern int field_is_static (struct field *);
 
 /* printcmd.c */
 

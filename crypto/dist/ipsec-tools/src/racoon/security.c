@@ -66,7 +66,7 @@ get_security_context(sa, p)
 {
 	int len = 0;
 	int flag, type = 0;
-	u_int16_t lorv;
+	uint16_t lorv;
 	caddr_t bp;
 	vchar_t *pbuf = NULL;
 	vchar_t *tbuf = NULL;

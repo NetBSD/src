@@ -62,10 +62,12 @@ isqualifier(const char *s, size_t len)
 	};
 
 	int h = s[len - 1] + (int)len - 105;
-	const struct qual *qp = &qhash[h];
+	const struct qual *qp;
 
-	return (h >= 0 && h < sizeof (qhash) / sizeof (qhash[0]) &&
-	    len == qp->q_len && strncmp(qp->q_name, s, qp->q_len) == 0);
+	if (h < 0 || h >= sizeof (qhash) / sizeof (qhash[0]))
+		return (0);
+	qp = &qhash[h];
+	return (len == qp->q_len && strncmp(qp->q_name, s, qp->q_len) == 0);
 }
 
 /*
@@ -112,17 +114,17 @@ ctf_lookup_by_name(ctf_file_t *fp, const char *name)
 			 * data includes "struct foo *" but not "foo_t *" and
 			 * the user tries to access "foo_t *" in the debugger.
 			 */
-			ntype = fp->ctf_ptrtab[CTF_TYPE_TO_INDEX(type)];
+			ntype = fp->ctf_ptrtab[LCTF_TYPE_TO_INDEX(fp, type)];
 			if (ntype == 0) {
 				ntype = ctf_type_resolve(fp, type);
 				if (ntype == CTF_ERR || (ntype = fp->ctf_ptrtab[
-				    CTF_TYPE_TO_INDEX(ntype)]) == 0) {
+				    LCTF_TYPE_TO_INDEX(fp, ntype)]) == 0) {
 					(void) ctf_set_errno(fp, ECTF_NOTYPE);
 					goto err;
 				}
 			}
 
-			type = CTF_INDEX_TO_TYPE(ntype,
+			type = LCTF_INDEX_TO_TYPE(fp, ntype,
 			    (fp->ctf_flags & LCTF_CHILD));
 
 			q = p + 1;
@@ -134,7 +136,8 @@ ctf_lookup_by_name(ctf_file_t *fp, const char *name)
 
 		for (lp = fp->ctf_lookups; lp->ctl_prefix != NULL; lp++) {
 			if (lp->ctl_prefix[0] == '\0' ||
-			    strncmp(p, lp->ctl_prefix, (size_t)(q - p)) == 0) {
+			    ((size_t)(q - p) >= lp->ctl_len && strncmp(p,
+			    lp->ctl_prefix, (size_t)(q - p)) == 0)) {
 				for (p += lp->ctl_len; isspace((unsigned char)*p); p++)
 					continue; /* skip prefix and next ws */
 
@@ -203,7 +206,7 @@ ctf_lookup_by_symbol(ctf_file_t *fp, ulong_t symidx)
 	if (fp->ctf_sxlate[symidx] == -1u)
 		return (ctf_set_errno(fp, ECTF_NOTYPEDAT));
 
-	type = *(ushort_t *)((uintptr_t)fp->ctf_buf + fp->ctf_sxlate[symidx]);
+	type = *(uint_t *)((uintptr_t)fp->ctf_buf + fp->ctf_sxlate[symidx]);
 	if (type == 0)
 		return (ctf_set_errno(fp, ECTF_NOTYPEDAT));
 
@@ -215,18 +218,24 @@ ctf_lookup_by_symbol(ctf_file_t *fp, ulong_t symidx)
  * given type ID.  If the ID is invalid, the function returns NULL.
  * This function is not exported outside of the library.
  */
-const ctf_type_t *
+const void *
 ctf_lookup_by_id(ctf_file_t **fpp, ctf_id_t type)
 {
 	ctf_file_t *fp = *fpp; /* caller passes in starting CTF container */
 
-	if ((fp->ctf_flags & LCTF_CHILD) && CTF_TYPE_ISPARENT(type) &&
-	    (fp = fp->ctf_parent) == NULL) {
-		(void) ctf_set_errno(*fpp, ECTF_NOPARENT);
-		return (NULL);
+	if ((fp->ctf_flags & LCTF_CHILD) && LCTF_TYPE_ISPARENT(fp, type)) {
+		if (fp->ctf_parent == NULL) {
+			(void) ctf_set_errno(*fpp, ECTF_NOPARENT);
+			return (NULL);
+		}
+
+		/* The parent may be using a different CTF version. */
+		type = LCTF_TYPE_TO_INDEX(fp, type);
+		fp = fp->ctf_parent;
+	} else {
+		type = LCTF_TYPE_TO_INDEX(fp, type);
 	}
 
-	type = CTF_TYPE_TO_INDEX(type);
 	if (type > 0 && type <= fp->ctf_typemax) {
 		*fpp = fp; /* function returns ending CTF container */
 		return (LCTF_INDEX_TO_TYPEPTR(fp, type));
@@ -244,8 +253,8 @@ int
 ctf_func_info(ctf_file_t *fp, ulong_t symidx, ctf_funcinfo_t *fip)
 {
 	const ctf_sect_t *sp = &fp->ctf_symtab;
-	const ushort_t *dp;
-	ushort_t info, kind, n;
+	const uint_t *dp;
+	uint_t info, kind, n;
 
 	if (sp->cts_data == NULL)
 		return (ctf_set_errno(fp, ECTF_NOSYMTAB));
@@ -266,7 +275,7 @@ ctf_func_info(ctf_file_t *fp, ulong_t symidx, ctf_funcinfo_t *fip)
 	if (fp->ctf_sxlate[symidx] == -1u)
 		return (ctf_set_errno(fp, ECTF_NOFUNCDAT));
 
-	dp = (ushort_t *)((uintptr_t)fp->ctf_buf + fp->ctf_sxlate[symidx]);
+	dp = (uint_t *)((uintptr_t)fp->ctf_buf + fp->ctf_sxlate[symidx]);
 
 	info = *dp++;
 	kind = LCTF_INFO_KIND(fp, info);
@@ -297,17 +306,17 @@ ctf_func_info(ctf_file_t *fp, ulong_t symidx, ctf_funcinfo_t *fip)
 int
 ctf_func_args(ctf_file_t *fp, ulong_t symidx, uint_t argc, ctf_id_t *argv)
 {
-	const ushort_t *dp;
+	const uint_t *dp;
 	ctf_funcinfo_t f;
 
 	if (ctf_func_info(fp, symidx, &f) == CTF_ERR)
 		return (CTF_ERR); /* errno is set for us */
 
 	/*
-	 * The argument data is two ushort_t's past the translation table
+	 * The argument data is two uint_t's past the translation table
 	 * offset: one for the function info, and one for the return type.
 	 */
-	dp = (ushort_t *)((uintptr_t)fp->ctf_buf + fp->ctf_sxlate[symidx]) + 2;
+	dp = (uint_t *)((uintptr_t)fp->ctf_buf + fp->ctf_sxlate[symidx]) + 2;
 
 	for (argc = MIN(argc, f.ctc_argc); argc != 0; argc--)
 		*argv++ = *dp++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.31 2019/03/20 02:50:50 gutteridge Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.31.12.1 2025/08/02 05:18:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.31 2019/03/20 02:50:50 gutteridge Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.31.12.1 2025/08/02 05:18:25 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -678,7 +678,7 @@ mod_name(ARCHD *arcn, int flags)
 		 * we have replacement strings, modify the name and the link
 		 * name if any.
 		 */
-		if ((res = rep_name(arcn->name, sizeof(arcn->name), 
+		if ((res = rep_name(arcn->name, sizeof(arcn->name),
 			&(arcn->nlen), flags)) != 0)
 			return res;
 
