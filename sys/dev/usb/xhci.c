@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.188 2025/01/30 10:51:39 jmcneill Exp $	*/
+/*	$NetBSD: xhci.c,v 1.189 2025/08/02 22:53:47 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.188 2025/01/30 10:51:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.189 2025/08/02 22:53:47 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -129,9 +129,10 @@ fail:
 struct xhci_pipe {
 	struct usbd_pipe xp_pipe;
 	struct usb_task xp_async_task;
-	int16_t xp_isoc_next; /* next frame */
+	int16_t xp_isoc_next; /* next micro frame */
 	uint8_t xp_maxb; /* max burst */
 	uint8_t xp_mult;
+	uint8_t xp_ival;
 };
 
 #define XHCI_COMMAND_RING_TRBS 256
@@ -1566,6 +1567,19 @@ xhci_init(struct xhci_softc *sc)
 		    sizeof(uint64_t) * sc->sc_maxspbuf, BUS_DMASYNC_PREWRITE);
 	}
 
+	sc->sc_isthresh = XHCI_HCS2_IST(hcs2);
+	aprint_debug_dev(sc->sc_dev, "sc_isthresh %d\n", sc->sc_isthresh);
+
+	/*
+	 * xHI 5.3.4
+	 * If bit[3] is 0, IST is number of microframes in bit[2:0]
+	 * If bit[3] is 1, IST is number of frames in bit[2:0]
+	 */
+	if (sc->sc_isthresh & 0x8) {
+		sc->sc_isthresh = (sc->sc_isthresh & 0x7) *
+		    USB_UFRAMES_PER_FRAME;
+	}
+
 	config = xhci_op_read_4(sc, XHCI_CONFIG);
 	config &= ~0xFF;
 	config |= sc->sc_maxslots & 0xFF;
@@ -2330,7 +2344,8 @@ xhci_pipe_restart_async_task(void *cookie)
 		 */
 		KASSERT(xfer->ux_status != USBD_NOT_STARTED);
 		if (xfer->ux_status == USBD_IN_PROGRESS) {
-			(*pipe->up_methods->upm_start)(xfer);
+			if (pipe->up_methods->upm_start != NULL)
+				(*pipe->up_methods->upm_start)(xfer);
 		} else {
 			DPRINTF("pipe restart race xfer=%#jx status=%jd",
 			    (uintptr_t)xfer, xfer->ux_status, 0, 0);
@@ -3983,6 +3998,7 @@ xhci_setup_maxburst(struct usbd_pipe *pipe, uint32_t *cp)
 		break;
 	}
 
+	xpipe->xp_ival = ival;
 	xpipe->xp_maxb = maxb + 1;
 	xpipe->xp_mult = mult + 1;
 
@@ -4604,20 +4620,23 @@ xhci_device_isoc_enter(struct usbd_xfer *xfer)
 		usb_syncmem(dma, 0, xfer->ux_length,
 		    isread ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
-	ival = xfer->ux_pipe->up_endpoint->ue_edesc->bInterval;
-	if (ival >= 1 && ival <= 16)
-		ival = 1 << (ival - 1);
+	ival = xpipe->xp_ival;
+	if (ival >= 0 && ival <= 15)
+		ival = 1 << ival;
 	else
 		ival = 1; /* fake something up */
+
+	const unsigned mfmask = XHCI_MFINDEX_GET(~(uint32_t)0);
 
 	if (xpipe->xp_isoc_next == -1) {
 		uint32_t mfindex = xhci_rt_read_4(sc, XHCI_MFINDEX);
 
 		DPRINTF("mfindex %jx", (uintmax_t)mfindex, 0, 0, 0);
-		mfindex = XHCI_MFINDEX_GET(mfindex + 1);
-		mfindex /= USB_UFRAMES_PER_FRAME;
-		mfindex += 7; /* 7 frames is max possible IST */
-		xpipe->xp_isoc_next = roundup2(mfindex, ival);
+		mfindex = XHCI_MFINDEX_GET(mfindex);
+
+		/* Start Frame = MFINDEX + IST + 1 */
+		mfindex += sc->sc_isthresh + 1;
+		xpipe->xp_isoc_next = roundup2(mfindex, ival) & mfmask;
 	}
 
 	offs = 0;
@@ -4627,6 +4646,8 @@ xhci_device_isoc_enter(struct usbd_xfer *xfer)
 		const unsigned tbc = howmany(tdpc, maxb) - 1;
 		const unsigned tlbpc1 = tdpc % maxb;
 		const unsigned tlbpc = tlbpc1 ? tlbpc1 - 1 : maxb - 1;
+		const unsigned frid = xpipe->xp_isoc_next /
+		    USB_UFRAMES_PER_FRAME;
 
 		KASSERTMSG(len <= 0x10000, "len %d", len);
 		parameter = DMAADDR(dma, offs);
@@ -4639,10 +4660,10 @@ xhci_device_isoc_enter(struct usbd_xfer *xfer)
 		    XHCI_TRB_3_TLBPC_SET(tlbpc) |
 		    XHCI_TRB_3_IOC_BIT;
 		if (XHCI_HCC_CFC(sc->sc_hcc)) {
-			control |= XHCI_TRB_3_FRID_SET(xpipe->xp_isoc_next);
+			control |= XHCI_TRB_3_FRID_SET(frid);
 #if 0
 		} else if (xpipe->xp_isoc_next == -1) {
-			control |= XHCI_TRB_3_FRID_SET(xpipe->xp_isoc_next);
+			control |= XHCI_TRB_3_FRID_SET(frid);
 #endif
 		} else {
 			control |= XHCI_TRB_3_ISO_SIA_BIT;
@@ -4653,7 +4674,7 @@ xhci_device_isoc_enter(struct usbd_xfer *xfer)
 #endif
 		xhci_xfer_put_trb(xx, i, parameter, status, control);
 
-		xpipe->xp_isoc_next += ival;
+		xpipe->xp_isoc_next = (xpipe->xp_isoc_next + ival) & mfmask;
 		offs += len;
 	}
 
