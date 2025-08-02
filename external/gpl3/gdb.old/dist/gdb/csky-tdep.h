@@ -1,6 +1,6 @@
 /* Target-dependent code for the CSKY architecture, for GDB.
 
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,8 @@
 #ifndef CSKY_TDEP_H
 #define CSKY_TDEP_H
 
+#include "gdbarch.h"
+
 /* How to interpret the contents of the link register.  */
 enum lr_type_t
 {
@@ -29,9 +31,16 @@ enum lr_type_t
 };
 
 /* Target-dependent structure in gdbarch.  */
-struct gdbarch_tdep
+struct csky_gdbarch_tdep : gdbarch_tdep_base
 {
-  /* This is Unused.  */
+  /* Save FPU, VDSP ABI.  */
+  unsigned int fpu_abi;
+  unsigned int fpu_hardfp;
+  unsigned int vdsp_version;
+
+  /* Save fv_pseudo_registers_count.  */
+  unsigned int has_vr0;
+  unsigned int fv_pseudo_registers_count;
 };
 
 /* Instruction sizes.  */
@@ -46,9 +55,10 @@ enum csky_regnum
 {
   CSKY_R0_REGNUM = 0, /* General registers.  */
   CSKY_R15_REGNUM = 15,
+  CSKY_HI_REGNUM = 36,
+  CSKY_LO_REGNUM = 37,
   CSKY_PC_REGNUM = 72,
-  CSKY_HI_REGNUM = 20,
-  CSKY_LO_REGNUM = 21,
+  CSKY_AR0_REGNUM = 73,
   CSKY_CR0_REGNUM = 89,
   CSKY_VBR_REGNUM = CSKY_CR0_REGNUM + 1,
   CSKY_EPSR_REGNUM = CSKY_CR0_REGNUM + 2,
@@ -58,7 +68,8 @@ enum csky_regnum
 
   /* Float register 0.  */
   CSKY_FR0_REGNUM = 40,
-  CSKY_VCR0_REGNUM = 121,
+  CSKY_FR16_REGNUM = 1172,
+  CSKY_FCR_REGNUM = 121,
   CSKY_MMU_REGNUM = 128,
   CSKY_PROFCR_REGNUM = 140,
   CSKY_PROFGR_REGNUM = 144,
@@ -82,11 +93,27 @@ enum csky_regnum
   CSKY_PSR_REGNUM = CSKY_CR0_REGNUM,
 
   CSKY_MAX_REGISTER_SIZE = 16,
+
+  /* Actually, the max regs number should be 1187. But if the
+     gdb stub does not send a tdesc-xml file to gdb, 253 works. */
   CSKY_MAX_REGS = 253
 };
 
 /* ICE registers.  */
 #define CSKY_CRBANK_NUM_REGS 32
+
+/* Tdesc registers essential check.  */
+#define CSKY_TDESC_REGS_PC_NUMBERED             (1 << 0)
+#define CSKY_TDESC_REGS_SP_NUMBERED             (1 << 1)
+#define CSKY_TDESC_REGS_LR_NUMBERED             (1 << 2)
+#define CSKY_TDESC_REGS_ESSENTIAL_VALUE         (7)
+
+/* For fr0~fr15, fr16~fr31, vr0~vr15 check.  */
+#define CSKY_FULL16_ONEHOT_VALUE   0xffff
+
+/* Define for CSKY FV pseudo regs for dwarf regs. */
+#define FV_PSEUDO_REGNO_FIRST  74
+#define FV_PSEUDO_REGNO_LAST   201
 
 /* Number of processor registers w/o ICE registers.  */
 #define CSKY_NUM_REGS (CSKY_MAX_REGS - CSKY_CRBANK_NUM_REGS)
@@ -351,5 +378,16 @@ enum csky_regnum
 
 #define CSKY_MOVI_R7_173 0x00adea07
 #define CSKY_TRAP_0 0x2020c000
+
+/* Sizeof (tls) */
+#define CSKY_SIGCONTEXT_PT_REGS_TLS  4
+
+/* Macro for kernel 4.x  */
+#define CSKY_MOVI_R7_139 0x008bea07
+
+/* Macro for check long branch.  */
+#define CSKY_JMPI_PC_4      0x1eac0
+#define CSKY_LRW_T1_PC_8    0x2ea8d
+#define CSKY_JMP_T1_VS_NOP  0x6c037834
 
 #endif

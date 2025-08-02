@@ -1,5 +1,5 @@
 /* BFD support for the FRV processor.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -41,26 +41,26 @@
 }
 
 static const bfd_arch_info_type arch_info_300
-  = FRV_ARCH (bfd_mach_fr300,   "fr300",   FALSE, (bfd_arch_info_type *)0);
+  = FRV_ARCH (bfd_mach_fr300,   "fr300",   false, (bfd_arch_info_type *)0);
 
 static const bfd_arch_info_type arch_info_400
-  = FRV_ARCH (bfd_mach_fr400, "fr400", FALSE, &arch_info_300);
+  = FRV_ARCH (bfd_mach_fr400, "fr400", false, &arch_info_300);
 
 static const bfd_arch_info_type arch_info_450
-  = FRV_ARCH (bfd_mach_fr450, "fr450", FALSE, &arch_info_400);
+  = FRV_ARCH (bfd_mach_fr450, "fr450", false, &arch_info_400);
 
 static const bfd_arch_info_type arch_info_500
-  = FRV_ARCH (bfd_mach_fr500, "fr500", FALSE, &arch_info_450);
+  = FRV_ARCH (bfd_mach_fr500, "fr500", false, &arch_info_450);
 
 static const bfd_arch_info_type arch_info_550
-  = FRV_ARCH (bfd_mach_fr550, "fr550", FALSE, &arch_info_500);
+  = FRV_ARCH (bfd_mach_fr550, "fr550", false, &arch_info_500);
 
 static const bfd_arch_info_type arch_info_simple
-  = FRV_ARCH (bfd_mach_frvsimple, "simple", FALSE, &arch_info_550);
+  = FRV_ARCH (bfd_mach_frvsimple, "simple", false, &arch_info_550);
 
 static const bfd_arch_info_type arch_info_tomcat
-  = FRV_ARCH (bfd_mach_frvtomcat, "tomcat", FALSE, &arch_info_simple);
+  = FRV_ARCH (bfd_mach_frvtomcat, "tomcat", false, &arch_info_simple);
 
 const bfd_arch_info_type bfd_frv_arch
-  = FRV_ARCH (bfd_mach_frv, "frv", TRUE, &arch_info_tomcat);
+  = FRV_ARCH (bfd_mach_frv, "frv", true, &arch_info_tomcat);
 

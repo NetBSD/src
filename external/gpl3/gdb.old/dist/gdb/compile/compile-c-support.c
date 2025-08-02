@@ -1,6 +1,6 @@
 /* C/C++ language support for compilation.
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -53,7 +53,7 @@ c_get_mode_for_size (int size)
       mode = "DI";
       break;
     default:
-      internal_error (__FILE__, __LINE__, _("Invalid GCC mode size %d."), size);
+      internal_error (_("Invalid GCC mode size %d."), size);
     }
 
   return mode;
@@ -99,7 +99,7 @@ load_libcompile (const char *fe_libcc, const char *fe_context)
 
 template <typename INSTTYPE, typename FUNCTYPE, typename CTXTYPE,
 	  typename BASE_VERSION_TYPE, typename API_VERSION_TYPE>
-compile_instance *
+std::unique_ptr<compile_instance>
 get_compile_context (const char *fe_libcc, const char *fe_context,
 		     BASE_VERSION_TYPE base_version,
 		     API_VERSION_TYPE api_version)
@@ -118,12 +118,12 @@ get_compile_context (const char *fe_libcc, const char *fe_context,
     error (_("The loaded version of GCC does not support the required version "
 	     "of the API."));
 
-  return new INSTTYPE (context);
+  return std::unique_ptr<compile_instance> (new INSTTYPE (context));
 }
 
 /* A C-language implementation of get_compile_context.  */
 
-compile_instance *
+std::unique_ptr<compile_instance>
 c_get_compile_context ()
 {
   return get_compile_context
@@ -135,7 +135,7 @@ c_get_compile_context ()
 
 /* A C++-language implementation of get_compile_context.  */
 
-compile_instance *
+std::unique_ptr<compile_instance>
 cplus_get_compile_context ()
 {
   return get_compile_context
@@ -161,23 +161,23 @@ print_one_macro (const char *name, const struct macro_definition *macro,
 
   /* None of -Wno-builtin-macro-redefined, #undef first
      or plain #define of the same value would avoid a warning.  */
-  fprintf_filtered (file, "#ifndef %s\n# define %s", name, name);
+  gdb_printf (file, "#ifndef %s\n# define %s", name, name);
 
   if (macro->kind == macro_function_like)
     {
       int i;
 
-      fputs_filtered ("(", file);
+      gdb_puts ("(", file);
       for (i = 0; i < macro->argc; i++)
 	{
-	  fputs_filtered (macro->argv[i], file);
+	  gdb_puts (macro->argv[i], file);
 	  if (i + 1 < macro->argc)
-	    fputs_filtered (", ", file);
+	    gdb_puts (", ", file);
 	}
-      fputs_filtered (")", file);
+      gdb_puts (")", file);
     }
 
-  fprintf_filtered (file, " %s\n#endif\n", macro->replacement);
+  gdb_printf (file, " %s\n#endif\n", macro->replacement);
 }
 
 /* Write macro definitions at PC to FILE.  */
@@ -213,15 +213,15 @@ write_macro_definitions (const struct block *block, CORE_ADDR pc,
 
 static void
 generate_register_struct (struct ui_file *stream, struct gdbarch *gdbarch,
-			  const unsigned char *registers_used)
+			  const std::vector<bool> &registers_used)
 {
   int i;
   int seen = 0;
 
-  fputs_unfiltered ("struct " COMPILE_I_SIMPLE_REGISTER_STRUCT_TAG " {\n",
-		    stream);
+  gdb_puts ("struct " COMPILE_I_SIMPLE_REGISTER_STRUCT_TAG " {\n",
+	    stream);
 
-  if (registers_used != NULL)
+  if (!registers_used.empty ())
     for (i = 0; i < gdbarch_num_regs (gdbarch); ++i)
       {
 	if (registers_used[i])
@@ -241,28 +241,28 @@ generate_register_struct (struct ui_file *stream, struct gdbarch *gdbarch,
 	       register types (typically flags or vectors), emit a
 	       maximally-aligned array of the correct size.  */
 
-	    fputs_unfiltered ("  ", stream);
+	    gdb_puts ("  ", stream);
 	    switch (regtype->code ())
 	      {
 	      case TYPE_CODE_PTR:
-		fprintf_filtered (stream, "__gdb_uintptr %s",
-				  regname.c_str ());
+		gdb_printf (stream, "__gdb_uintptr %s",
+			    regname.c_str ());
 		break;
 
 	      case TYPE_CODE_INT:
 		{
 		  const char *mode
-		    = c_get_mode_for_size (TYPE_LENGTH (regtype));
+		    = c_get_mode_for_size (regtype->length ());
 
 		  if (mode != NULL)
 		    {
-		      if (TYPE_UNSIGNED (regtype))
-			fputs_unfiltered ("unsigned ", stream);
-		      fprintf_unfiltered (stream,
-					  "int %s"
-					  " __attribute__ ((__mode__(__%s__)))",
-					  regname.c_str (),
-					  mode);
+		      if (regtype->is_unsigned ())
+			gdb_puts ("unsigned ", stream);
+		      gdb_printf (stream,
+				  "int %s"
+				  " __attribute__ ((__mode__(__%s__)))",
+				  regname.c_str (),
+				  mode);
 		      break;
 		    }
 		}
@@ -270,22 +270,22 @@ generate_register_struct (struct ui_file *stream, struct gdbarch *gdbarch,
 		/* Fall through.  */
 
 	      default:
-		fprintf_unfiltered (stream,
-				    "  unsigned char %s[%s]"
-				    " __attribute__((__aligned__("
-				    "__BIGGEST_ALIGNMENT__)))",
-				    regname.c_str (),
-				    pulongest (TYPE_LENGTH (regtype)));
+		gdb_printf (stream,
+			    "  unsigned char %s[%s]"
+			    " __attribute__((__aligned__("
+			    "__BIGGEST_ALIGNMENT__)))",
+			    regname.c_str (),
+			    pulongest (regtype->length ()));
 	      }
-	    fputs_unfiltered (";\n", stream);
+	    gdb_puts (";\n", stream);
 	  }
       }
 
   if (!seen)
-    fputs_unfiltered ("  char " COMPILE_I_SIMPLE_REGISTER_DUMMY ";\n",
-		      stream);
+    gdb_puts ("  char " COMPILE_I_SIMPLE_REGISTER_DUMMY ";\n",
+	      stream);
 
-  fputs_unfiltered ("};\n\n", stream);
+  gdb_puts ("};\n\n", stream);
 }
 
 /* C-language policy to emit a push user expression pragma into BUF.  */
@@ -294,7 +294,7 @@ struct c_push_user_expression
 {
   void push_user_expression (struct ui_file *buf)
   {
-    fputs_unfiltered ("#pragma GCC user_expression\n", buf);
+    gdb_puts ("#pragma GCC user_expression\n", buf);
   }
 };
 
@@ -320,39 +320,39 @@ struct c_add_code_header
     switch (type)
       {
       case COMPILE_I_SIMPLE_SCOPE:
-	fputs_unfiltered ("void "
-			  GCC_FE_WRAPPER_FUNCTION
-			  " (struct "
-			  COMPILE_I_SIMPLE_REGISTER_STRUCT_TAG
-			  " *"
-			  COMPILE_I_SIMPLE_REGISTER_ARG_NAME
-			  ") {\n",
-			  buf);
+	gdb_puts ("void "
+		  GCC_FE_WRAPPER_FUNCTION
+		  " (struct "
+		  COMPILE_I_SIMPLE_REGISTER_STRUCT_TAG
+		  " *"
+		  COMPILE_I_SIMPLE_REGISTER_ARG_NAME
+		  ") {\n",
+		  buf);
 	break;
 
       case COMPILE_I_PRINT_ADDRESS_SCOPE:
       case COMPILE_I_PRINT_VALUE_SCOPE:
 	/* <string.h> is needed for a memcpy call below.  */
-	fputs_unfiltered ("#include <string.h>\n"
-			  "void "
-			  GCC_FE_WRAPPER_FUNCTION
-			  " (struct "
-			  COMPILE_I_SIMPLE_REGISTER_STRUCT_TAG
-			  " *"
-			  COMPILE_I_SIMPLE_REGISTER_ARG_NAME
-			  ", "
-			  COMPILE_I_PRINT_OUT_ARG_TYPE
-			  " "
-			  COMPILE_I_PRINT_OUT_ARG
-			  ") {\n",
-			  buf);
+	gdb_puts ("#include <string.h>\n"
+		  "void "
+		  GCC_FE_WRAPPER_FUNCTION
+		  " (struct "
+		  COMPILE_I_SIMPLE_REGISTER_STRUCT_TAG
+		  " *"
+		  COMPILE_I_SIMPLE_REGISTER_ARG_NAME
+		  ", "
+		  COMPILE_I_PRINT_OUT_ARG_TYPE
+		  " "
+		  COMPILE_I_PRINT_OUT_ARG
+		  ") {\n",
+		  buf);
 	break;
 
       case COMPILE_I_RAW_SCOPE:
 	break;
 
       default:
-	gdb_assert_not_reached (_("Unknown compiler scope reached."));
+	gdb_assert_not_reached ("Unknown compiler scope reached.");
       }
   }
 };
@@ -369,14 +369,14 @@ struct c_add_code_footer
       case COMPILE_I_SIMPLE_SCOPE:
       case COMPILE_I_PRINT_ADDRESS_SCOPE:
       case COMPILE_I_PRINT_VALUE_SCOPE:
-	fputs_unfiltered ("}\n", buf);
+	gdb_puts ("}\n", buf);
 	break;
 
       case COMPILE_I_RAW_SCOPE:
 	break;
 
       default:
-	gdb_assert_not_reached (_("Unknown compiler scope reached."));
+	gdb_assert_not_reached ("Unknown compiler scope reached.");
       }
   }
 };
@@ -393,22 +393,22 @@ struct c_add_input
       {
       case COMPILE_I_PRINT_ADDRESS_SCOPE:
       case COMPILE_I_PRINT_VALUE_SCOPE:
-	fprintf_unfiltered (buf,
-			    "__auto_type " COMPILE_I_EXPR_VAL " = %s;\n"
-			    "typeof (%s) *" COMPILE_I_EXPR_PTR_TYPE ";\n"
-			    "memcpy (" COMPILE_I_PRINT_OUT_ARG ", %s"
-			    COMPILE_I_EXPR_VAL ",\n"
-			    "sizeof (*" COMPILE_I_EXPR_PTR_TYPE "));\n"
-			    , input, input,
-			    (type == COMPILE_I_PRINT_ADDRESS_SCOPE
-			     ? "&" : ""));
+	gdb_printf (buf,
+		    "__auto_type " COMPILE_I_EXPR_VAL " = %s;\n"
+		    "typeof (%s) *" COMPILE_I_EXPR_PTR_TYPE ";\n"
+		    "memcpy (" COMPILE_I_PRINT_OUT_ARG ", %s"
+		    COMPILE_I_EXPR_VAL ",\n"
+		    "sizeof (*" COMPILE_I_EXPR_PTR_TYPE "));\n"
+		    , input, input,
+		    (type == COMPILE_I_PRINT_ADDRESS_SCOPE
+		     ? "&" : ""));
 	break;
 
       default:
-	fputs_unfiltered (input, buf);
+	gdb_puts (input, buf);
 	break;
       }
-    fputs_unfiltered ("\n", buf);
+    gdb_puts ("\n", buf);
   }
 };
 
@@ -419,7 +419,7 @@ struct cplus_push_user_expression
 {
   void push_user_expression (struct ui_file *buf)
   {
-    fputs_unfiltered ("#pragma GCC push_user_expression\n", buf);
+    gdb_puts ("#pragma GCC push_user_expression\n", buf);
   }
 };
 
@@ -429,7 +429,7 @@ struct cplus_pop_user_expression
 {
   void pop_user_expression (struct ui_file *buf)
   {
-    fputs_unfiltered ("#pragma GCC pop_user_expression\n", buf);
+    gdb_puts ("#pragma GCC pop_user_expression\n", buf);
   }
 };
 
@@ -444,40 +444,40 @@ struct cplus_add_code_header
   switch (type)
     {
     case COMPILE_I_SIMPLE_SCOPE:
-      fputs_unfiltered ("void "
-			GCC_FE_WRAPPER_FUNCTION
-			" (struct "
-			COMPILE_I_SIMPLE_REGISTER_STRUCT_TAG
-			" *"
-			COMPILE_I_SIMPLE_REGISTER_ARG_NAME
-			") {\n",
-			buf);
+      gdb_puts ("void "
+		GCC_FE_WRAPPER_FUNCTION
+		" (struct "
+		COMPILE_I_SIMPLE_REGISTER_STRUCT_TAG
+		" *"
+		COMPILE_I_SIMPLE_REGISTER_ARG_NAME
+		") {\n",
+		buf);
       break;
 
     case COMPILE_I_PRINT_ADDRESS_SCOPE:
     case COMPILE_I_PRINT_VALUE_SCOPE:
-      fputs_unfiltered (
-			"#include <cstring>\n"
-			"#include <bits/move.h>\n"
-			"void "
-			GCC_FE_WRAPPER_FUNCTION
-			" (struct "
-			COMPILE_I_SIMPLE_REGISTER_STRUCT_TAG
-			" *"
-			COMPILE_I_SIMPLE_REGISTER_ARG_NAME
-			", "
-			COMPILE_I_PRINT_OUT_ARG_TYPE
-			" "
-			COMPILE_I_PRINT_OUT_ARG
-			") {\n",
-			buf);
+      gdb_puts (
+		"#include <cstring>\n"
+		"#include <bits/move.h>\n"
+		"void "
+		GCC_FE_WRAPPER_FUNCTION
+		" (struct "
+		COMPILE_I_SIMPLE_REGISTER_STRUCT_TAG
+		" *"
+		COMPILE_I_SIMPLE_REGISTER_ARG_NAME
+		", "
+		COMPILE_I_PRINT_OUT_ARG_TYPE
+		" "
+		COMPILE_I_PRINT_OUT_ARG
+		") {\n",
+		buf);
       break;
 
     case COMPILE_I_RAW_SCOPE:
       break;
 
     default:
-      gdb_assert_not_reached (_("Unknown compiler scope reached."));
+      gdb_assert_not_reached ("Unknown compiler scope reached.");
     }
   }
 };
@@ -494,7 +494,7 @@ struct cplus_add_input
       {
       case COMPILE_I_PRINT_VALUE_SCOPE:
       case COMPILE_I_PRINT_ADDRESS_SCOPE:
-	fprintf_unfiltered
+	gdb_printf
 	  (buf,
 	   /* "auto" strips ref- and cv- qualifiers, so we need to also strip
 	      those from COMPILE_I_EXPR_PTR_TYPE.  */
@@ -512,10 +512,10 @@ struct cplus_add_input
 	break;
 
       default:
-	fputs_unfiltered (input, buf);
+	gdb_puts (input, buf);
 	break;
       }
-    fputs_unfiltered ("\n", buf);
+    gdb_puts ("\n", buf);
   }
 };
 
@@ -572,7 +572,7 @@ public:
 	   before generating the function header, so we can define the
 	   register struct before the function body.  This requires a
 	   temporary stream.  */
-	gdb::unique_xmalloc_ptr<unsigned char> registers_used
+	std::vector<bool> registers_used
 	  = generate_c_for_variable_locations (m_instance, &var_stream, m_arch,
 					       expr_block, expr_pc);
 
@@ -595,7 +595,7 @@ public:
 			mode, mode);
 	  }
 
-	generate_register_struct (&buf, m_arch, registers_used.get ());
+	generate_register_struct (&buf, m_arch, registers_used);
       }
 
     AddCodeHeaderPolicy::add_code_header (m_instance->scope (), &buf);
@@ -635,7 +635,7 @@ public:
       PopUserExpressionPolicy::pop_user_expression (&buf);
 
     AddCodeFooterPolicy::add_code_footer (m_instance->scope (), &buf);
-    return buf.string ();
+    return buf.release ();
   }
 
 private:

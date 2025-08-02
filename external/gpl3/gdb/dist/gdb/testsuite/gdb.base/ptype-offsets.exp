@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2017-2023 Free Software Foundation, Inc.
+# Copyright 2017-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,6 @@ if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
 gdb_test "ptype /o struct abc" \
     [string_to_regexp [multi_line \
 "/* offset      |    size */  type = struct abc \{" \
-"                             public:" \
 "/*      8      |       8 */    void *field1;" \
 "/*     16: 0   |       4 */    unsigned int field2 : 1;" \
 "/* XXX  7-bit hole       */" \
@@ -61,7 +60,6 @@ gdb_test "ptype /o struct abc" \
 gdb_test "ptype /ox struct abc" \
     [string_to_regexp [multi_line \
 "/* offset      |    size */  type = struct abc {" \
-"                             public:" \
 "/* 0x0008      |  0x0008 */    void *field1;" \
 "/* 0x0010: 0x0 |  0x0004 */    unsigned int field2 : 1;" \
 "/* XXX  7-bit hole       */" \
@@ -86,7 +84,6 @@ gdb_test "ptype /ox struct abc" \
 gdb_test "ptype /oTM struct abc" \
     [string_to_regexp [multi_line \
 "/* offset      |    size */  type = struct abc \{" \
-"                             public:" \
 "/*      8      |       8 */    void *field1;" \
 "/*     16: 0   |       4 */    unsigned int field2 : 1;" \
 "/* XXX  7-bit hole       */" \
@@ -116,7 +113,6 @@ gdb_test "ptype /oTM struct abc" \
 gdb_test "ptype /TMo struct abc" \
     [string_to_regexp [multi_line \
 "/* offset      |    size */  type = struct abc \{" \
-"                             public:" \
 "/*      8      |       8 */    void *field1;" \
 "/*     16: 0   |       4 */    unsigned int field2 : 1;" \
 "/* XXX  7-bit hole       */" \
@@ -421,7 +417,6 @@ with_test_prefix "with_hex_default" {
   gdb_test "ptype /o struct abc" \
       [string_to_regexp [multi_line \
   "/* offset      |    size */  type = struct abc \{" \
-  "                             public:" \
   "/* 0x0008      |  0x0008 */    void *field1;" \
   "/* 0x0010: 0x0 |  0x0004 */    unsigned int field2 : 1;" \
   "/* XXX  7-bit hole       */" \
@@ -445,7 +440,6 @@ with_test_prefix "with_hex_default" {
   gdb_test "ptype /od struct abc" \
       [string_to_regexp [multi_line \
   "/* offset      |    size */  type = struct abc \{" \
-  "                             public:" \
   "/*      8      |       8 */    void *field1;" \
   "/*     16: 0   |       4 */    unsigned int field2 : 1;" \
   "/* XXX  7-bit hole       */" \

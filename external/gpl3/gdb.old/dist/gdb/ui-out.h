@@ -1,6 +1,6 @@
 /* Output generating routines for GDB.
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -53,12 +53,10 @@ enum ui_out_flag
 {
   ui_source_list = (1 << 0),
   fix_multi_location_breakpoint_output = (1 << 1),
-  /* For CLI output, this flag is set if unfiltered output is desired.
-     This should only be used by low-level formatting functions.  */
-  unfiltered_output = (1 << 2),
   /* This indicates that %pF should be disallowed in a printf format
      string.  */
-  disallow_ui_out_field = (1 << 3)
+  disallow_ui_out_field = (1 << 2),
+  fix_breakpoint_script_output = (1 << 3),
 };
 
 DEF_ENUM_FLAGS_TYPE (ui_out_flag, ui_out_flags);
@@ -191,7 +189,11 @@ class ui_out
 			CORE_ADDR address);
   void field_string (const char *fldname, const char *string,
 		     const ui_file_style &style = ui_file_style ());
-  void field_string (const char *fldname, const std::string &string);
+  void field_string (const char *fldname, const std::string &string,
+		     const ui_file_style &style = ui_file_style ())
+  {
+    field_string (fldname, string.c_str (), style);
+  }
   void field_stream (const char *fldname, string_file &stream,
 		     const ui_file_style &style = ui_file_style ());
   void field_skip (const char *fldname);
@@ -203,6 +205,7 @@ class ui_out
 
   void spaces (int numspaces);
   void text (const char *string);
+  void text (const std::string &string) { text (string.c_str ()); }
 
   /* Output a printf-style formatted string.  In addition to the usual
      printf format specs, this supports a few GDB-specific
@@ -216,10 +219,10 @@ class ui_out
        uiout->field_signed(), uiout_>field_string() etc. calls when
        the formatted message is translatable.  E.g.:
 
-         uiout->message (_("\nWatchpoint %pF deleted because the program has "
-                         "left the block in\n"
-                         "which its expression is valid.\n"),
-                         signed_field ("wpnum", b->number));
+	 uiout->message (_("\nWatchpoint %pF deleted because the program has "
+			 "left the block in\n"
+			 "which its expression is valid.\n"),
+			 signed_field ("wpnum", b->number));
 
      - '%p[' - output the following text in a specified style.
        '%p]' - output the following text in the default style.
@@ -252,7 +255,7 @@ class ui_out
   void vmessage (const ui_file_style &in_style,
 		 const char *format, va_list args) ATTRIBUTE_PRINTF (3, 0);
 
-  void wrap_hint (const char *identstring);
+  void wrap_hint (int indent);
 
   void flush ();
 
@@ -274,6 +277,56 @@ class ui_out
   /* Return true if this stream is prepared to handle style
      escapes.  */
   virtual bool can_emit_style_escape () const = 0;
+
+  /* An object that starts and finishes displaying progress updates.  */
+  class progress_update
+  {
+  public:
+    /* Represents the printing state of a progress update.  */
+    enum state
+    {
+      /* Printing will start with the next update.  */
+      START,
+      /* Printing has already started.  */
+      WORKING,
+      /* Progress bar printing has already started.  */
+      BAR
+    };
+
+    /* SHOULD_PRINT indicates whether something should be printed for a tty.  */
+    progress_update ()
+    {
+      m_uiout = current_uiout;
+      m_uiout->do_progress_start ();
+    }
+
+    ~progress_update ()
+    {
+
+    }
+
+    progress_update (const progress_update &) = delete;
+    progress_update &operator= (const progress_update &) = delete;
+
+    /* Emit some progress for this progress meter.  Includes current
+       amount of progress made and total amount in the display.  */
+    void update_progress (const std::string& msg, const char *unit,
+			  double cur, double total)
+    {
+      m_uiout->do_progress_notify (msg, unit, cur, total);
+    }
+
+    /* Emit some progress for this progress meter.  */
+    void update_progress (const std::string& msg)
+    {
+      m_uiout->do_progress_notify (msg, "", -1, -1);
+    }
+  private:
+
+    struct ui_out *m_uiout;
+  };
+
+  virtual void do_progress_end () = 0;
 
  protected:
 
@@ -305,9 +358,13 @@ class ui_out
   virtual void do_message (const ui_file_style &style,
 			   const char *format, va_list args)
     ATTRIBUTE_PRINTF (3,0) = 0;
-  virtual void do_wrap_hint (const char *identstring) = 0;
+  virtual void do_wrap_hint (int indent) = 0;
   virtual void do_flush () = 0;
   virtual void do_redirect (struct ui_file *outstream) = 0;
+
+  virtual void do_progress_start () = 0;
+  virtual void do_progress_notify (const std::string &, const char *,
+				   double, double) = 0;
 
   /* Set as not MI-like by default.  It is overridden in subclasses if
      necessary.  */
@@ -388,15 +445,17 @@ private:
   struct ui_out *m_uiout;
 };
 
-/* On destruction, pop the last redirection by calling the uiout's
+/* On construction, redirect a uiout to a given stream.  On
+   destruction, pop the last redirection by calling the uiout's
    redirect method with a NULL parameter.  */
 class ui_out_redirect_pop
 {
 public:
 
-  ui_out_redirect_pop (ui_out *uiout)
+  ui_out_redirect_pop (ui_out *uiout, ui_file *stream)
     : m_uiout (uiout)
   {
+    m_uiout->redirect (stream);
   }
 
   ~ui_out_redirect_pop ()

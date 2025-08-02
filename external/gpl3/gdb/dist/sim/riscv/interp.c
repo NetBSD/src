@@ -1,6 +1,6 @@
 /* RISC-V simulator.
 
-   Copyright (C) 2005-2023 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by Mike Frysinger.
 
    This file is part of simulators.
@@ -21,10 +21,14 @@
 /* This must come before any other includes.  */
 #include "defs.h"
 
+#include "bfd.h"
+
 #include "sim/callback.h"
 #include "sim-main.h"
 #include "sim-options.h"
 #include "target-newlib-syscall.h"
+
+#include "riscv-sim.h"
 
 void
 sim_engine_run (SIM_DESC sd,
@@ -73,7 +77,8 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback,
   callback->syscall_map = cb_riscv_syscall_map;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct riscv_sim_cpu))
+      != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -138,7 +143,7 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
 {
   SIM_CPU *cpu = STATE_CPU (sd, 0);
   host_callback *cb = STATE_CALLBACK (sd);
-  SIM_ADDR addr;
+  bfd_vma addr;
 
   /* Set the PC.  */
   if (abfd != NULL)

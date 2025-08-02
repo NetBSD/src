@@ -1,6 +1,6 @@
 /* Block-related functions for the GNU debugger, GDB.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #include "block.h"
 #include "symtab.h"
 #include "symfile.h"
-#include "gdb_obstack.h"
+#include "gdbsupport/gdb_obstack.h"
 #include "cp-support.h"
 #include "addrmap.h"
 #include "gdbtypes.h"
@@ -47,11 +47,11 @@ block_objfile (const struct block *block)
 {
   const struct global_block *global_block;
 
-  if (BLOCK_FUNCTION (block) != NULL)
-    return symbol_objfile (BLOCK_FUNCTION (block));
+  if (block->function () != nullptr)
+    return block->function ()->objfile ();
 
   global_block = (struct global_block *) block_global_block (block);
-  return COMPUNIT_OBJFILE (global_block->compunit_symtab);
+  return global_block->compunit_symtab->objfile ();
 }
 
 /* See block.  */
@@ -59,8 +59,8 @@ block_objfile (const struct block *block)
 struct gdbarch *
 block_gdbarch (const struct block *block)
 {
-  if (BLOCK_FUNCTION (block) != NULL)
-    return symbol_arch (BLOCK_FUNCTION (block));
+  if (block->function () != nullptr)
+    return block->function ()->arch ();
 
   return block_objfile (block)->arch ();
 }
@@ -79,10 +79,10 @@ contained_in (const struct block *a, const struct block *b,
       if (a == b)
 	return true;
       /* If A is a function block, then A cannot be contained in B,
-         except if A was inlined.  */
-      if (!allow_nested && BLOCK_FUNCTION (a) != NULL && !block_inlined_p (a))
-        return false;
-      a = BLOCK_SUPERBLOCK (a);
+	 except if A was inlined.  */
+      if (!allow_nested && a->function () != NULL && !block_inlined_p (a))
+	return false;
+      a = a->superblock ();
     }
   while (a != NULL);
 
@@ -98,11 +98,11 @@ contained_in (const struct block *a, const struct block *b,
 struct symbol *
 block_linkage_function (const struct block *bl)
 {
-  while ((BLOCK_FUNCTION (bl) == NULL || block_inlined_p (bl))
-	 && BLOCK_SUPERBLOCK (bl) != NULL)
-    bl = BLOCK_SUPERBLOCK (bl);
+  while ((bl->function () == NULL || block_inlined_p (bl))
+	 && bl->superblock () != NULL)
+    bl = bl->superblock ();
 
-  return BLOCK_FUNCTION (bl);
+  return bl->function ();
 }
 
 /* Return the symbol for the function which contains a specified
@@ -113,10 +113,10 @@ block_linkage_function (const struct block *bl)
 struct symbol *
 block_containing_function (const struct block *bl)
 {
-  while (BLOCK_FUNCTION (bl) == NULL && BLOCK_SUPERBLOCK (bl) != NULL)
-    bl = BLOCK_SUPERBLOCK (bl);
+  while (bl->function () == NULL && bl->superblock () != NULL)
+    bl = bl->superblock ();
 
-  return BLOCK_FUNCTION (bl);
+  return bl->function ();
 }
 
 /* Return one if BL represents an inlined function.  */
@@ -124,7 +124,7 @@ block_containing_function (const struct block *bl)
 int
 block_inlined_p (const struct block *bl)
 {
-  return BLOCK_FUNCTION (bl) != NULL && SYMBOL_INLINED (BLOCK_FUNCTION (bl));
+  return bl->function () != NULL && bl->function ()->is_inlined ();
 }
 
 /* A helper function that checks whether PC is in the blockvector BL.
@@ -138,8 +138,8 @@ find_block_in_blockvector (const struct blockvector *bl, CORE_ADDR pc)
 
   /* If we have an addrmap mapping code addresses to blocks, then use
      that.  */
-  if (BLOCKVECTOR_MAP (bl))
-    return (const struct block *) addrmap_find (BLOCKVECTOR_MAP (bl), pc);
+  if (bl->map ())
+    return (const struct block *) bl->map ()->find (pc);
 
   /* Otherwise, use binary search to find the last block that starts
      before PC.
@@ -147,15 +147,15 @@ find_block_in_blockvector (const struct blockvector *bl, CORE_ADDR pc)
      They both have the same START,END values.
      Historically this code would choose STATIC_BLOCK over GLOBAL_BLOCK but the
      fact that this choice was made was subtle, now we make it explicit.  */
-  gdb_assert (BLOCKVECTOR_NBLOCKS (bl) >= 2);
+  gdb_assert (bl->blocks ().size () >= 2);
   bot = STATIC_BLOCK;
-  top = BLOCKVECTOR_NBLOCKS (bl);
+  top = bl->blocks ().size ();
 
   while (top - bot > 1)
     {
       half = (top - bot + 1) >> 1;
-      b = BLOCKVECTOR_BLOCK (bl, bot + half);
-      if (BLOCK_START (b) <= pc)
+      b = bl->block (bot + half);
+      if (b->start () <= pc)
 	bot += half;
       else
 	top = bot + half;
@@ -165,8 +165,10 @@ find_block_in_blockvector (const struct blockvector *bl, CORE_ADDR pc)
 
   while (bot >= STATIC_BLOCK)
     {
-      b = BLOCKVECTOR_BLOCK (bl, bot);
-      if (BLOCK_END (b) > pc)
+      b = bl->block (bot);
+      if (!(b->start () <= pc))
+	return NULL;
+      if (b->end () > pc)
 	return b;
       bot--;
     }
@@ -195,7 +197,7 @@ blockvector_for_pc_sect (CORE_ADDR pc, struct obj_section *section,
 	return 0;
     }
 
-  bl = COMPUNIT_BLOCKVECTOR (cust);
+  bl = cust->blockvector ();
 
   /* Then search that symtab for the smallest block that wins.  */
   b = find_block_in_blockvector (bl, pc);
@@ -223,15 +225,15 @@ struct call_site *
 call_site_for_pc (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   struct compunit_symtab *cust;
-  void **slot = NULL;
+  call_site *cs = nullptr;
 
   /* -1 as tail call PC can be already after the compilation unit range.  */
   cust = find_pc_compunit_symtab (pc - 1);
 
-  if (cust != NULL && COMPUNIT_CALL_SITE_HTAB (cust) != NULL)
-    slot = htab_find_slot (COMPUNIT_CALL_SITE_HTAB (cust), &pc, NO_INSERT);
+  if (cust != nullptr)
+    cs = cust->find_call_site (pc);
 
-  if (slot == NULL)
+  if (cs == nullptr)
     {
       struct bound_minimal_symbol msym = lookup_minimal_symbol_by_pc (pc);
 
@@ -245,7 +247,7 @@ call_site_for_pc (struct gdbarch *gdbarch, CORE_ADDR pc)
 		    : msym.minsym->print_name ()));
     }
 
-  return (struct call_site *) *slot;
+  return cs;
 }
 
 /* Return the blockvector immediately containing the innermost lexical block
@@ -293,11 +295,11 @@ block_for_pc (CORE_ADDR pc)
 const char *
 block_scope (const struct block *block)
 {
-  for (; block != NULL; block = BLOCK_SUPERBLOCK (block))
+  for (; block != NULL; block = block->superblock ())
     {
-      if (BLOCK_NAMESPACE (block) != NULL
-	  && BLOCK_NAMESPACE (block)->scope != NULL)
-	return BLOCK_NAMESPACE (block)->scope;
+      if (block->namespace_info () != NULL
+	  && block->namespace_info ()->scope != NULL)
+	return block->namespace_info ()->scope;
     }
 
   return "";
@@ -313,7 +315,7 @@ block_set_scope (struct block *block, const char *scope,
 {
   block_initialize_namespace (block, obstack);
 
-  BLOCK_NAMESPACE (block)->scope = scope;
+  block->namespace_info ()->scope = scope;
 }
 
 /* This returns the using directives list associated with BLOCK, if
@@ -322,10 +324,10 @@ block_set_scope (struct block *block, const char *scope,
 struct using_direct *
 block_using (const struct block *block)
 {
-  if (block == NULL || BLOCK_NAMESPACE (block) == NULL)
+  if (block == NULL || block->namespace_info () == NULL)
     return NULL;
   else
-    return BLOCK_NAMESPACE (block)->using_decl;
+    return block->namespace_info ()->using_decl;
 }
 
 /* Set BLOCK's using member to USING; if needed, allocate memory via
@@ -339,17 +341,17 @@ block_set_using (struct block *block,
 {
   block_initialize_namespace (block, obstack);
 
-  BLOCK_NAMESPACE (block)->using_decl = using_decl;
+  block->namespace_info ()->using_decl = using_decl;
 }
 
-/* If BLOCK_NAMESPACE (block) is NULL, allocate it via OBSTACK and
+/* If block->namespace_info () is NULL, allocate it via OBSTACK and
    initialize its members to zero.  */
 
 static void
 block_initialize_namespace (struct block *block, struct obstack *obstack)
 {
-  if (BLOCK_NAMESPACE (block) == NULL)
-    BLOCK_NAMESPACE (block) = new (obstack) struct block_namespace_info ();
+  if (block->namespace_info () == NULL)
+    block->set_namespace_info (new (obstack) struct block_namespace_info ());
 }
 
 /* Return the static block associated to BLOCK.  Return NULL if block
@@ -358,11 +360,11 @@ block_initialize_namespace (struct block *block, struct obstack *obstack)
 const struct block *
 block_static_block (const struct block *block)
 {
-  if (block == NULL || BLOCK_SUPERBLOCK (block) == NULL)
+  if (block == NULL || block->superblock () == NULL)
     return NULL;
 
-  while (BLOCK_SUPERBLOCK (BLOCK_SUPERBLOCK (block)) != NULL)
-    block = BLOCK_SUPERBLOCK (block);
+  while (block->superblock ()->superblock () != NULL)
+    block = block->superblock ();
 
   return block;
 }
@@ -376,8 +378,8 @@ block_global_block (const struct block *block)
   if (block == NULL)
     return NULL;
 
-  while (BLOCK_SUPERBLOCK (block) != NULL)
-    block = BLOCK_SUPERBLOCK (block);
+  while (block->superblock () != NULL)
+    block = block->superblock ();
 
   return block;
 }
@@ -416,7 +418,7 @@ set_block_compunit_symtab (struct block *block, struct compunit_symtab *cu)
 {
   struct global_block *gb;
 
-  gdb_assert (BLOCK_SUPERBLOCK (block) == NULL);
+  gdb_assert (block->superblock () == NULL);
   gb = (struct global_block *) block;
   gdb_assert (gb->compunit_symtab == NULL);
   gb->compunit_symtab = cu;
@@ -431,7 +433,7 @@ block_static_link (const struct block *block)
 
   /* Only objfile-owned blocks that materialize top function scopes can have
      static links.  */
-  if (objfile == NULL || BLOCK_FUNCTION (block) == NULL)
+  if (objfile == NULL || block->function () == NULL)
     return NULL;
 
   return (struct dynamic_prop *) objfile_lookup_static_link (objfile, block);
@@ -444,7 +446,7 @@ get_block_compunit_symtab (const struct block *block)
 {
   struct global_block *gb;
 
-  gdb_assert (BLOCK_SUPERBLOCK (block) == NULL);
+  gdb_assert (block->superblock () == NULL);
   gb = (struct global_block *) block;
   gdb_assert (gb->compunit_symtab != NULL);
   return gb->compunit_symtab;
@@ -465,15 +467,15 @@ initialize_block_iterator (const struct block *block,
 
   iter->idx = -1;
 
-  if (BLOCK_SUPERBLOCK (block) == NULL)
+  if (block->superblock () == NULL)
     {
       which = GLOBAL_BLOCK;
       cu = get_block_compunit_symtab (block);
     }
-  else if (BLOCK_SUPERBLOCK (BLOCK_SUPERBLOCK (block)) == NULL)
+  else if (block->superblock ()->superblock () == NULL)
     {
       which = STATIC_BLOCK;
-      cu = get_block_compunit_symtab (BLOCK_SUPERBLOCK (block));
+      cu = get_block_compunit_symtab (block->superblock ());
     }
   else
     {
@@ -541,9 +543,8 @@ block_iterator_step (struct block_iterator *iterator, int first)
 	  if (cust == NULL)
 	    return  NULL;
 
-	  block = BLOCKVECTOR_BLOCK (COMPUNIT_BLOCKVECTOR (cust),
-				     iterator->which);
-	  sym = mdict_iterator_first (BLOCK_MULTIDICT (block),
+	  block = cust->blockvector ()->block (iterator->which);
+	  sym = mdict_iterator_first (block->multidict (),
 				      &iterator->mdict_iter);
 	}
       else
@@ -569,7 +570,7 @@ block_iterator_first (const struct block *block,
   initialize_block_iterator (block, iterator);
 
   if (iterator->which == FIRST_LOCAL_BLOCK)
-    return mdict_iterator_first (block->multidict, &iterator->mdict_iter);
+    return mdict_iterator_first (block->multidict (), &iterator->mdict_iter);
 
   return block_iterator_step (iterator, 1);
 }
@@ -610,9 +611,8 @@ block_iter_match_step (struct block_iterator *iterator,
 	  if (cust == NULL)
 	    return  NULL;
 
-	  block = BLOCKVECTOR_BLOCK (COMPUNIT_BLOCKVECTOR (cust),
-				     iterator->which);
-	  sym = mdict_iter_match_first (BLOCK_MULTIDICT (block), name,
+	  block = cust->blockvector ()->block (iterator->which);
+	  sym = mdict_iter_match_first (block->multidict (), name,
 					&iterator->mdict_iter);
 	}
       else
@@ -639,7 +639,7 @@ block_iter_match_first (const struct block *block,
   initialize_block_iterator (block, iterator);
 
   if (iterator->which == FIRST_LOCAL_BLOCK)
-    return mdict_iter_match_first (block->multidict, name,
+    return mdict_iter_match_first (block->multidict (), name,
 				   &iterator->mdict_iter);
 
   return block_iter_match_step (iterator, name, 1);
@@ -662,8 +662,8 @@ block_iter_match_next (const lookup_name_info &name,
 bool
 best_symbol (struct symbol *a, const domain_enum domain)
 {
-  return (SYMBOL_DOMAIN (a) == domain
-	  && SYMBOL_CLASS (a) != LOC_UNRESOLVED);
+  return (a->domain () == domain
+	  && a->aclass () != LOC_UNRESOLVED);
 }
 
 /* See block.h.  */
@@ -676,18 +676,16 @@ better_symbol (struct symbol *a, struct symbol *b, const domain_enum domain)
   if (b == NULL)
     return a;
 
-  if (SYMBOL_DOMAIN (a) == domain
-      && SYMBOL_DOMAIN (b) != domain)
+  if (a->domain () == domain && b->domain () != domain)
     return a;
-  if (SYMBOL_DOMAIN (b) == domain
-      && SYMBOL_DOMAIN (a) != domain)
+
+  if (b->domain () == domain && a->domain () != domain)
     return b;
 
-  if (SYMBOL_CLASS (a) != LOC_UNRESOLVED
-      && SYMBOL_CLASS (b) == LOC_UNRESOLVED)
+  if (a->aclass () != LOC_UNRESOLVED && b->aclass () == LOC_UNRESOLVED)
     return a;
-  if (SYMBOL_CLASS (b) != LOC_UNRESOLVED
-      && SYMBOL_CLASS (a) == LOC_UNRESOLVED)
+
+  if (b->aclass () != LOC_UNRESOLVED && a->aclass () == LOC_UNRESOLVED)
     return b;
 
   return a;
@@ -714,7 +712,7 @@ block_lookup_symbol (const struct block *block, const char *name,
 
   lookup_name_info lookup_name (name, match_type);
 
-  if (!BLOCK_FUNCTION (block))
+  if (!block->function ())
     {
       struct symbol *other = NULL;
 
@@ -729,7 +727,7 @@ block_lookup_symbol (const struct block *block, const char *name,
 	     make sure there is no "better" matching symbol, i.e., one with
 	     exactly the same domain.  PR 16253.  */
 	  if (symbol_matches_domain (sym->language (),
-				     SYMBOL_DOMAIN (sym), domain))
+				     sym->domain (), domain))
 	    other = better_symbol (other, sym, domain);
 	}
       return other;
@@ -750,10 +748,10 @@ block_lookup_symbol (const struct block *block, const char *name,
       ALL_BLOCK_SYMBOLS_WITH_NAME (block, lookup_name, iter, sym)
 	{
 	  if (symbol_matches_domain (sym->language (),
-				     SYMBOL_DOMAIN (sym), domain))
+				     sym->domain (), domain))
 	    {
 	      sym_found = sym;
-	      if (!SYMBOL_IS_ARGUMENT (sym))
+	      if (!sym->is_argument ())
 		{
 		  break;
 		}
@@ -775,12 +773,12 @@ block_lookup_symbol_primary (const struct block *block, const char *name,
   lookup_name_info lookup_name (name, symbol_name_match_type::FULL);
 
   /* Verify BLOCK is STATIC_BLOCK or GLOBAL_BLOCK.  */
-  gdb_assert (BLOCK_SUPERBLOCK (block) == NULL
-	      || BLOCK_SUPERBLOCK (BLOCK_SUPERBLOCK (block)) == NULL);
+  gdb_assert (block->superblock () == NULL
+	      || block->superblock ()->superblock () == NULL);
 
   other = NULL;
-  for (sym
-	 = mdict_iter_match_first (block->multidict, lookup_name, &mdict_iter);
+  for (sym = mdict_iter_match_first (block->multidict (), lookup_name,
+				     &mdict_iter);
        sym != NULL;
        sym = mdict_iter_match_next (lookup_name, &mdict_iter))
     {
@@ -818,7 +816,7 @@ block_lookup_symbol_primary (const struct block *block, const char *name,
 	 STRUCT vs VAR domain symbols.  So if a matching symbol is found,
 	 make sure there is no "better" matching symbol, i.e., one with
 	 exactly the same domain.  PR 16253.  */
-      if (symbol_matches_domain (sym->language (), SYMBOL_DOMAIN (sym), domain))
+      if (symbol_matches_domain (sym->language (), sym->domain (), domain))
 	other = better_symbol (other, sym, domain);
     }
 
@@ -838,14 +836,14 @@ block_find_symbol (const struct block *block, const char *name,
   lookup_name_info lookup_name (name, symbol_name_match_type::FULL);
 
   /* Verify BLOCK is STATIC_BLOCK or GLOBAL_BLOCK.  */
-  gdb_assert (BLOCK_SUPERBLOCK (block) == NULL
-	      || BLOCK_SUPERBLOCK (BLOCK_SUPERBLOCK (block)) == NULL);
+  gdb_assert (block->superblock () == NULL
+	      || block->superblock ()->superblock () == NULL);
 
   ALL_BLOCK_SYMBOLS_WITH_NAME (block, lookup_name, iter, sym)
     {
       /* MATCHER is deliberately called second here so that it never sees
 	 a non-domain-matching symbol.  */
-      if (symbol_matches_domain (sym->language (), SYMBOL_DOMAIN (sym), domain)
+      if (symbol_matches_domain (sym->language (), sym->domain (), domain)
 	  && matcher (sym, data))
 	return sym;
     }
@@ -857,7 +855,7 @@ block_find_symbol (const struct block *block, const char *name,
 int
 block_find_non_opaque_type (struct symbol *sym, void *data)
 {
-  return !TYPE_IS_OPAQUE (SYMBOL_TYPE (sym));
+  return !TYPE_IS_OPAQUE (sym->type ());
 }
 
 /* See block.h.  */
@@ -867,7 +865,7 @@ block_find_non_opaque_type_preferred (struct symbol *sym, void *data)
 {
   struct symbol **best = (struct symbol **) data;
 
-  if (!TYPE_IS_OPAQUE (SYMBOL_TYPE (sym)))
+  if (!TYPE_IS_OPAQUE (sym->type ()))
     return 1;
   *best = sym;
   return 0;
@@ -877,14 +875,14 @@ block_find_non_opaque_type_preferred (struct symbol *sym, void *data)
 
 struct blockranges *
 make_blockranges (struct objfile *objfile,
-                  const std::vector<blockrange> &rangevec)
+		  const std::vector<blockrange> &rangevec)
 {
   struct blockranges *blr;
   size_t n = rangevec.size();
 
   blr = (struct blockranges *)
     obstack_alloc (&objfile->objfile_obstack,
-                   sizeof (struct blockranges)
+		   sizeof (struct blockranges)
 		   + (n - 1) * sizeof (struct blockrange));
 
   blr->nranges = n;

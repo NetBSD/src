@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,11 +16,11 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2.
-if ![dwarf2_support] {
-    return 0  
-}
+require dwarf2_support
 
 standard_testfile .c -2.c
+include_file fission-mix.h
+
 set objfile [standard_output_file ${testfile}.o]
 set objfile2 [standard_output_file ${testfile}2.o]
 

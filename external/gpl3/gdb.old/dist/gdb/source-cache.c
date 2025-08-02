@@ -1,5 +1,5 @@
 /* Cache of styled source file text
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,7 @@
 #include "gdbsupport/selftest.h"
 #include "objfiles.h"
 #include "exec.h"
+#include "cli/cli-cmds.h"
 
 #ifdef HAVE_SOURCE_HIGHLIGHT
 /* If Gnulib redirects 'open' and 'close' to its replacements
@@ -46,6 +47,46 @@
 
 source_cache g_source_cache;
 
+/* When this is true we will use the GNU Source Highlight to add styling to
+   source code (assuming the library is available).  This is initialized to
+   true (if appropriate) in _initialize_source_cache below.  */
+
+static bool use_gnu_source_highlight;
+
+/* The "maint show gnu-source-highlight enabled" command. */
+
+static void
+show_use_gnu_source_highlight_enabled  (struct ui_file *file, int from_tty,
+					struct cmd_list_element *c,
+					const char *value)
+{
+  gdb_printf (file,
+	      _("Use of GNU Source Highlight library is \"%s\".\n"),
+	      value);
+}
+
+/* The "maint set gnu-source-highlight enabled" command.  */
+
+static void
+set_use_gnu_source_highlight_enabled (const char *ignore_args,
+				      int from_tty,
+				      struct cmd_list_element *c)
+{
+#ifndef HAVE_SOURCE_HIGHLIGHT
+  /* If the library is not available and the user tried to enable use of
+     the library, then disable use of the library, and give an error.  */
+  if (use_gnu_source_highlight)
+    {
+      use_gnu_source_highlight = false;
+      error (_("the GNU Source Highlight library is not available"));
+    }
+#else
+  /* We (might) have just changed how we style source code, discard any
+     previously cached contents.  */
+  forget_cached_source_info ();
+#endif
+}
+
 /* See source-cache.h.  */
 
 std::string
@@ -66,10 +107,11 @@ source_cache::get_plain_source_lines (struct symtab *s,
     perror_with_name (symtab_to_filename_for_display (s));
 
   time_t mtime = 0;
-  if (SYMTAB_OBJFILE (s) != NULL && SYMTAB_OBJFILE (s)->obfd != NULL)
-    mtime = SYMTAB_OBJFILE (s)->mtime;
-  else if (exec_bfd)
-    mtime = exec_bfd_mtime;
+  if (s->compunit ()->objfile () != NULL
+      && s->compunit ()->objfile ()->obfd != NULL)
+    mtime = s->compunit ()->objfile ()->mtime;
+  else if (current_program_space->exec_bfd ())
+    mtime = current_program_space->ebfd_mtime;
 
   if (mtime && mtime < st.st_mtime)
     warning (_("Source file is more recent than executable."));
@@ -161,9 +203,8 @@ source_cache::ensure (struct symtab *s)
     {
       if (m_source_map[i].fullname == fullname)
 	{
-	  /* This should always hold, because we create the file
-	     offsets when reading the file, and never free them
-	     without also clearing the contents cache.  */
+	  /* This should always hold, because we create the file offsets
+	     when reading the file.  */
 	  gdb_assert (m_offset_cache.find (fullname)
 		      != m_offset_cache.end ());
 	  /* Not strictly LRU, but at least ensure that the most
@@ -191,8 +232,8 @@ source_cache::ensure (struct symtab *s)
     {
 #ifdef HAVE_SOURCE_HIGHLIGHT
       bool already_styled = false;
-      const char *lang_name = get_language_name (SYMTAB_LANGUAGE (s));
-      if (lang_name != nullptr)
+      const char *lang_name = get_language_name (s->language ());
+      if (lang_name != nullptr && use_gnu_source_highlight)
 	{
 	  /* The global source highlight object, or null if one was
 	     never constructed.  This is stored here rather than in
@@ -239,7 +280,11 @@ source_cache::ensure (struct symtab *s)
   m_source_map.push_back (std::move (result));
 
   if (m_source_map.size () > MAX_ENTRIES)
-    m_source_map.erase (m_source_map.begin ());
+    {
+      auto iter = m_source_map.begin ();
+      m_offset_cache.erase (iter->fullname);
+      m_source_map.erase (iter);
+    }
 
   return true;
 }
@@ -323,6 +368,15 @@ source_cache::get_source_lines (struct symtab *s, int first_line,
 			first_line, last_line, lines);
 }
 
+/* Implement 'maint flush source-cache' command.  */
+
+static void
+source_cache_flush_command (const char *command, int from_tty)
+{
+  forget_cached_source_info ();
+  gdb_printf (_("Source cache flushed.\n"));
+}
+
 #if GDB_SELF_TEST
 namespace selftests
 {
@@ -346,6 +400,40 @@ void _initialize_source_cache ();
 void
 _initialize_source_cache ()
 {
+  add_cmd ("source-cache", class_maintenance, source_cache_flush_command,
+	   _("Force gdb to flush its source code cache."),
+	   &maintenanceflushlist);
+
+  /* All the 'maint set|show gnu-source-highlight' sub-commands.  */
+  static struct cmd_list_element *maint_set_gnu_source_highlight_cmdlist;
+  static struct cmd_list_element *maint_show_gnu_source_highlight_cmdlist;
+
+  /* Adds 'maint set|show gnu-source-highlight'.  */
+  add_setshow_prefix_cmd ("gnu-source-highlight", class_maintenance,
+			  _("Set gnu-source-highlight specific variables."),
+			  _("Show gnu-source-highlight specific variables."),
+			  &maint_set_gnu_source_highlight_cmdlist,
+			  &maint_show_gnu_source_highlight_cmdlist,
+			  &maintenance_set_cmdlist,
+			  &maintenance_show_cmdlist);
+
+  /* Adds 'maint set|show gnu-source-highlight enabled'.  */
+  add_setshow_boolean_cmd ("enabled", class_maintenance,
+			   &use_gnu_source_highlight, _("\
+Set whether the GNU Source Highlight library should be used."), _("\
+Show whether the GNU Source Highlight library is being used."),_("\
+When enabled, GDB will use the GNU Source Highlight library to apply\n\
+styling to source code lines that are shown."),
+			   set_use_gnu_source_highlight_enabled,
+			   show_use_gnu_source_highlight_enabled,
+			   &maint_set_gnu_source_highlight_cmdlist,
+			   &maint_show_gnu_source_highlight_cmdlist);
+
+  /* Enable use of GNU Source Highlight library, if we have it.  */
+#ifdef HAVE_SOURCE_HIGHLIGHT
+  use_gnu_source_highlight = true;
+#endif
+
 #if GDB_SELF_TEST
   selftests::register_test ("source-cache", selftests::extract_lines_test);
 #endif

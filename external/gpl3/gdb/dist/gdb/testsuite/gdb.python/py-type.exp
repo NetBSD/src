@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2023 Free Software Foundation, Inc.
+# Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,12 +34,7 @@ proc build_inferior {exefile lang} {
 
 # Restart GDB.
 proc restart_gdb {exefile} { 
-  global srcdir subdir srcfile testfile hex
-
-  gdb_exit
-  gdb_start
-  gdb_reinitialize_dir $srcdir/$subdir
-  gdb_load ${exefile}
+  clean_restart $exefile
 
   if {![runto_main]} {
       return
@@ -90,6 +85,12 @@ proc test_fields {lang} {
       gdb_test "python print (gdb.parse_and_eval ('C::a_static_method').type.fields ()\[0\].type)" "int"
       gdb_test "python print (gdb.parse_and_eval ('C::a_static_method').type.fields ()\[1\].type)" "char"
       gdb_test "python print (gdb.parse_and_eval ('c')\['a_static_method'\].type.fields ()\[0\].type)" "int"
+
+      # Test function-local types.
+      gdb_test "python print (gdb.lookup_type ('main()::Local'))" "Local"
+      gdb_test "python print (gdb.lookup_type ('main()::Local').fields ()\[0\].type)" "int"
+      gdb_test "python print (gdb.lookup_type ('main()::IntType'))" "IntType"
+      gdb_test "python print (gdb.lookup_type ('main()::IntType').target ())" "int"
     }
 
     # Test normal fields usage in structs.
@@ -126,10 +127,10 @@ proc test_fields {lang} {
     gdb_test "python print (not not st.type)" "True" "check conversion to bool"
 
     # Test rejection of mapping operations on scalar types
-    gdb_test "python print (len (st.type\['a'\].type))" "TypeError: Type is not a structure, union, enum, or function type.*"
-    gdb_test "python print (st.type\['a'\].type.has_key ('x'))" "TypeError: Type is not a structure, union, enum, or function type.*"
-    gdb_test "python print (st.type\['a'\].type\['x'\])" "TypeError: Type is not a structure, union, enum, or function type.*"
-    gdb_test "python print (st.type\['a'\].type.keys ())" "TypeError: Type is not a structure, union, enum, or function type.*"
+    gdb_test "python print (len (st.type\['a'\].type))" "TypeError.*: Type is not a structure, union, enum, or function type.*"
+    gdb_test "python print (st.type\['a'\].type.has_key ('x'))" "TypeError.*: Type is not a structure, union, enum, or function type.*"
+    gdb_test "python print (st.type\['a'\].type\['x'\])" "TypeError.*: Type is not a structure, union, enum, or function type.*"
+    gdb_test "python print (st.type\['a'\].type.keys ())" "TypeError.*: Type is not a structure, union, enum, or function type.*"
 
     # Test conversion to bool on scalar types
     gdb_test "python print (not not st.type\['a'\].type)" "True"
@@ -172,7 +173,7 @@ proc test_fields {lang} {
     gdb_test "python print (gdb.parse_and_eval ('a_function').type.fields ()\[1\].type)" "char"
 
     # Test calling `fields` on a non-aggregate type.
-    gdb_test "python gdb.lookup_type('int').fields()" "TypeError: Type is not a structure, union, enum, or function type.*"
+    gdb_test "python gdb.lookup_type('int').fields()" "TypeError.*: Type is not a structure, union, enum, or function type.*"
   }
 }
 
@@ -229,7 +230,7 @@ proc test_range {} {
       # Test where a range does not exist.
       gdb_py_test_silent_cmd "print (st)" "print value (st)" 1
       gdb_py_test_silent_cmd "python st = gdb.history (0)" "get value (st) from history" 1
-      gdb_test "python print (st.type.range())" "RuntimeError: This type does not have a range.*" "check range for non ranged type."
+      gdb_test "python print (st.type.range())" "RuntimeError.*: This type does not have a range.*" "check range for non ranged type."
     }
   }
 }
@@ -269,7 +270,7 @@ proc test_template {} {
 proc test_is_signed {lang} {
     if {$lang == "c++"} {
 	gdb_test "python print(gdb.parse_and_eval ('c').type.is_signed)"  \
-	"ValueError: Type must be a scalar type.*"
+	"ValueError.*: Type must be a scalar type.*"
 	gdb_test "python print(gdb.parse_and_eval ('&c').type.is_signed == False)" "True"
     }
 
@@ -279,13 +280,13 @@ proc test_is_signed {lang} {
 
     gdb_test "python print(gdb.parse_and_eval ('ss.x').type.is_signed == True)" "True"
     gdb_test "python print(gdb.parse_and_eval ('ss').type.is_signed)" \
-	"ValueError: Type must be a scalar type.*"
+	"ValueError.*: Type must be a scalar type.*"
     gdb_test "python print(gdb.parse_and_eval ('uu').type.is_signed)"  \
-	"ValueError: Type must be a scalar type.*"
+	"ValueError.*: Type must be a scalar type.*"
     gdb_test "python print(gdb.parse_and_eval ('uu.i').type.is_signed == True)" "True"
     gdb_test "python print(gdb.parse_and_eval ('uu.f').type.is_signed == True)" "True"
     gdb_test "python print(gdb.parse_and_eval ('uu.a').type.is_signed)"  \
-	"ValueError: Type must be a scalar type.*"
+	"ValueError.*: Type must be a scalar type.*"
 
     gdb_test "python print(gdb.parse_and_eval ('&ss.x').type.is_signed == False)" "True"
     gdb_test "python print(gdb.parse_and_eval ('&uu').type.is_signed == False)" "True"
@@ -351,7 +352,7 @@ if { [build_inferior "${binfile}" "c"] == 0 } {
   restart_gdb "${binfile}"
 
   # Skip all tests if Python scripting is not enabled.
-  if { [skip_python_tests] } { continue }
+  if { ![allow_python_tests] } { continue }
 
   gdb_test "python print (gdb.lookup_type ('char').objfile)" "None"
 
@@ -393,3 +394,7 @@ if { [build_inferior "${binfile}-cxx" "c++"] == 0 } {
       test_type_equality
   }
 }
+
+# Test __repr__().
+gdb_test "python print (repr (gdb.lookup_type ('char')))" \
+      "<gdb.Type code=TYPE_CODE_INT name=char>" "test __repr__()"

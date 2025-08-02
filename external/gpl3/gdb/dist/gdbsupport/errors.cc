@@ -1,6 +1,6 @@
 /* Error reporting facilities.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
 #include "errors.h"
 #if defined (USE_WIN32API) || defined(__CYGWIN__)
 #include <windows.h>
@@ -71,6 +70,30 @@ internal_warning_loc (const char *file, int line, const char *fmt, ...)
   va_end (ap);
 }
 
+/* See errors.h.  */
+
+std::string
+perror_string (const char *prefix, int errnum)
+{
+  const char *err;
+
+  if (errnum != 0)
+    err = safe_strerror (errnum);
+  else
+    err = safe_strerror (errno);
+  return std::string (prefix) + ": " + err;
+}
+
+/* See errors.h.  */
+
+void
+perror_with_name (const char *string, int errnum)
+{
+  std::string combined = perror_string (string, errnum);
+
+  error (_("%s."), combined.c_str ());
+}
+
 #if defined (USE_WIN32API) || defined(__CYGWIN__)
 
 /* See errors.h.  */
@@ -118,6 +141,14 @@ strwinerror (ULONGEST error)
 
   SetLastError (lasterr);
   return buf;
+}
+
+/* See errors.h.  */
+
+void
+throw_winerror_with_name (const char *string, ULONGEST err)
+{
+  error (_("%s (error %u): %s"), string, (unsigned) err, strwinerror (err));
 }
 
 #endif /* USE_WIN32API */

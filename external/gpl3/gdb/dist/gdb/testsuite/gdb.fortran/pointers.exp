@@ -1,0 +1,115 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+standard_testfile "pointers.f90"
+load_lib fortran.exp
+
+if {[prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} \
+    {debug f90 quiet}]} {
+    return -1
+}
+
+if {![fortran_runto_main]} {
+    untested "could not run to main"
+    return -1
+}
+
+# Depending on the compiler being used, the type names can be printed
+# differently.
+set logical [fortran_logical4]
+set real [fortran_real4]
+set int [fortran_int4]
+set complex [fortran_complex4]
+
+gdb_breakpoint [gdb_get_line_number "Before pointer assignment"]
+gdb_continue_to_breakpoint "Before pointer assignment"
+gdb_test "print logp" "= \\(PTR TO -> \\( $logical \\)\\) 0x0" \
+    "print logp, not associated"
+gdb_test "print *logp" "Cannot access memory at address 0x0" \
+    "print *logp, not associated"
+gdb_test "print comp" "= \\(PTR TO -> \\( $complex \\)\\) 0x0" \
+    "print comp, not associated"
+gdb_test "print *comp" "Cannot access memory at address 0x0" \
+    "print *comp, not associated"
+gdb_test "print charp" "= \\(PTR TO -> \\( character\\*1 \\)\\) 0x0" \
+    "print charp, not associated"
+gdb_test "print *charp" "Cannot access memory at address 0x0" \
+    "print *charp, not associated"
+gdb_test "print charap" "= \\(PTR TO -> \\( character\\*3 \\)\\) 0x0" \
+    "print charap, not associated"
+gdb_test "print *charap" "Cannot access memory at address 0x0" \
+    "print *charap, not associated"
+gdb_test "print intp" "= \\(PTR TO -> \\( $int \\)\\) 0x0" \
+    "print intp, not associated"
+gdb_test "print *intp" "Cannot access memory at address 0x0" \
+    "print *intp, not associated"
+gdb_test "print intap" " = <not associated>" "print intap, not associated"
+gdb_test "print realp" "= \\(PTR TO -> \\( $real \\)\\) 0x0" \
+    "print realp, not associated"
+gdb_test "print *realp" "Cannot access memory at address 0x0" \
+    "print *realp, not associated"
+gdb_test "print \$my_var = intp" "= \\(PTR TO -> \\( $int \\)\\) 0x0"
+gdb_test "print cyclicp1" "= \\( i = -?\\d+, p = 0x0 \\)" \
+    "print cyclicp1, not associated"
+gdb_test "print cyclicp1%p" \
+    "= \\(PTR TO -> \\( Type typewithpointer \\)\\) 0x0" \
+    "print cyclicp1%p, not associated"
+
+gdb_breakpoint [gdb_get_line_number "Before value assignment"]
+gdb_continue_to_breakpoint "Before value assignment"
+gdb_test "print *(twop)%ivla2" "= <not allocated>"
+
+gdb_breakpoint [gdb_get_line_number "After value assignment"]
+gdb_continue_to_breakpoint "After value assignment"
+gdb_test "print logp" "= \\(PTR TO -> \\( $logical \\)\\) $hex\( <.*>\)?"
+gdb_test "print *logp" "= \\.TRUE\\."
+gdb_test "print comp" "= \\(PTR TO -> \\( $complex \\)\\) $hex\( <.*>\)?"
+gdb_test "print *comp" "= \\(1,2\\)"
+gdb_test "print charp" "= \\(PTR TO -> \\( character\\*1 \\)\\) $hex\( <.*>\)?"
+gdb_test "print *charp" "= 'a'"
+gdb_test "print charap" "= \\(PTR TO -> \\( character\\*3 \\)\\) $hex\( <.*>\)?"
+gdb_test "print *charap" "= 'abc'"
+gdb_test "print intp" "= \\(PTR TO -> \\( $int \\)\\) $hex\( <.*>\)?"
+gdb_test "print *intp" "= 10"
+gdb_test "print intap" "= \\(\\(1, 1, 3(, 1){7}\\) \\(1(, 1){9}\\)\\)" \
+    "print intap, associated"
+gdb_test "print intvlap" "= \\(2, 2, 2, 4(, 2){6}\\)" \
+    "print intvlap, associated"
+gdb_test "print realp" "= \\(PTR TO -> \\( $real \\)\\) $hex\( <.*>\)?"
+gdb_test "print *realp" "= 3\\.14000\\d+"
+gdb_test "print arrayOfPtr(2)%p" "= \\(PTR TO -> \\( Type two \\)\\) $hex\( <.*>\)?"
+gdb_test "print *(arrayOfPtr(2)%p)" \
+    "= \\( ivla1 = \\(11, 12, 13\\), ivla2 = \\(\\(211, 221\\) \\(212, 222\\)\\) \\)"
+gdb_test "print arrayOfPtr(3)%p" "= \\(PTR TO -> \\( Type two \\)\\) 0x0" \
+    "print arrayOfPtr(3)%p"
+
+gdb_test_multiple "print *(arrayOfPtr(3)%p)" \
+    "print *(arrayOfPtr(3)%p), associated" {
+    # gfortran
+    -re -wrap "Cannot access memory at address 0x0" {
+	pass $gdb_test_name
+    }
+    # ifx
+    -re -wrap "Location address is not set." {
+	pass $gdb_test_name
+    }
+}
+
+gdb_test "print cyclicp1" "= \\( i = 1, p = $hex\( <.*>\)? \\)"
+gdb_test "print cyclicp1%p" "= \\(PTR TO -> \\( Type typewithpointer \\)\\) $hex\( <.*>\)?"
+gdb_test "print *((integer*) &inta + 2)" "= 3" "print temporary pointer, array"
+gdb_test "print *((integer*) &intvla + 3)" "= 4" "print temporary pointer, allocated vla"
+gdb_test "print \$pc" "\\(PTR TO -> \\( void \\(\\) \\(\\) \\)\\) $hex <pointers\\+\\d+>" \
+    "Print program counter"

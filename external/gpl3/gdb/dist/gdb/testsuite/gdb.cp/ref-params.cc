@@ -1,6 +1,6 @@
 /* This test script is part of GDB, the GNU debugger.
 
-   Copyright 2006-2023 Free Software Foundation, Inc.
+   Copyright 2006-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -36,6 +36,11 @@ int f2(Child& C)
   return f1(C);			/* Set breakpoint marker2 here.  */
 }
 
+int f3(const int &i)
+{
+  return i;
+}
+
 struct OtherParent {
   OtherParent (int other_id0) : other_id(other_id0) { }
   int other_id;
@@ -64,6 +69,7 @@ int main(void)
 
   f2(Q);
   f2(QR);
+  f3(Q.id);
 
   MultiChild MQ(53);
   MultiChild& MQR = MQ;

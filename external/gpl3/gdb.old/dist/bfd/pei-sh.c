@@ -1,5 +1,5 @@
 /* BFD back-end for SH PE IMAGE COFF files.
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -26,7 +26,7 @@
 #define IMAGE_BASE NT_IMAGE_BASE
 #define COFF_IMAGE_WITH_PE
 #define COFF_WITH_PE
-#define PCRELOFFSET TRUE
+#define PCRELOFFSET true
 #define TARGET_UNDERSCORE '_'
 /* Long section names not allowed in executable images, only object files.  */
 #define COFF_LONG_SECTION_NAMES 0

@@ -1,5 +1,5 @@
 /* BFD back-end for ARM PECOFF files.
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -29,7 +29,7 @@
 #endif
 
 #define COFF_WITH_PE
-#define PCRELOFFSET	     TRUE
+#define PCRELOFFSET	     true
 #define COFF_LONG_SECTION_NAMES
 
 #define COFF_SECTION_ALIGNMENT_ENTRIES \

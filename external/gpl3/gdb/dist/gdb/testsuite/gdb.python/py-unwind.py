@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2023 Free Software Foundation, Inc.
+# Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,26 +14,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gdb
-from gdb.unwinder import Unwinder
-
+from gdb.unwinder import FrameId, Unwinder
 
 # These are set to test whether invalid register names cause an error.
-add_saved_register_error = False
+add_saved_register_errors = {}
 read_register_error = False
-
-
-class FrameId(object):
-    def __init__(self, sp, pc):
-        self._sp = sp
-        self._pc = pc
-
-    @property
-    def sp(self):
-        return self._sp
-
-    @property
-    def pc(self):
-        return self._pc
 
 
 class TestUnwinder(Unwinder):
@@ -108,27 +93,178 @@ class TestUnwinder(Unwinder):
 
             try:
                 pending_frame.read_register("nosuchregister")
-            except ValueError:
+            except ValueError as ve:
                 global read_register_error
-                read_register_error = True
+                read_register_error = str(ve)
 
             frame_id = FrameId(
-                pending_frame.read_register(TestUnwinder.AMD64_RSP),
+                pending_frame.read_register(register=TestUnwinder.AMD64_RSP),
                 pending_frame.read_register(TestUnwinder.AMD64_RIP),
             )
             unwind_info = pending_frame.create_unwind_info(frame_id)
             unwind_info.add_saved_register(TestUnwinder.AMD64_RBP, previous_bp)
-            unwind_info.add_saved_register("rip", previous_ip)
-            unwind_info.add_saved_register("rsp", previous_sp)
+            unwind_info.add_saved_register(value=previous_ip, register="rip")
+            unwind_info.add_saved_register(register="rsp", value=previous_sp)
+
+            global add_saved_register_errors
             try:
                 unwind_info.add_saved_register("nosuchregister", previous_sp)
-            except ValueError:
-                global add_saved_register_error
-                add_saved_register_error = True
+            except ValueError as ve:
+                add_saved_register_errors["unknown_name"] = str(ve)
+
+            try:
+                unwind_info.add_saved_register(999, previous_sp)
+            except ValueError as ve:
+                add_saved_register_errors["unknown_number"] = str(ve)
+
+            try:
+                unwind_info.add_saved_register("rsp", 1234)
+            except TypeError as ve:
+                add_saved_register_errors["bad_value"] = str(ve)
+
             return unwind_info
         except (gdb.error, RuntimeError):
             return None
 
 
-gdb.unwinder.register_unwinder(None, TestUnwinder(), True)
+global_test_unwinder = TestUnwinder()
+gdb.unwinder.register_unwinder(None, global_test_unwinder, True)
+
+# These are filled in by the simple_unwinder class.
+captured_pending_frame = None
+captured_pending_frame_repr = None
+captured_unwind_info = None
+captured_unwind_info_repr = None
+
+
+class simple_unwinder(Unwinder):
+    def __init__(self, name, sp=0x123, pc=0x456):
+        super().__init__(name)
+        self._sp = sp
+        self._pc = pc
+
+    def __call__(self, pending_frame):
+        global captured_pending_frame
+        global captured_pending_frame_repr
+        global captured_unwind_info
+        global captured_unwind_info_repr
+
+        assert pending_frame.is_valid()
+
+        if captured_pending_frame is None:
+            captured_pending_frame = pending_frame
+            captured_pending_frame_repr = repr(pending_frame)
+            fid = FrameId(self._sp, self._pc)
+            uw = pending_frame.create_unwind_info(frame_id=fid)
+            uw.add_saved_register("rip", gdb.Value(0x123))
+            uw.add_saved_register("rbp", gdb.Value(0x456))
+            uw.add_saved_register("rsp", gdb.Value(0x789))
+            captured_unwind_info = uw
+            captured_unwind_info_repr = repr(uw)
+        return None
+
+
+# Return a dictionary of information about FRAME.
+def capture_frame_information(frame):
+    name = frame.name()
+    level = frame.level()
+    language = frame.language()
+    function = frame.function()
+    architecture = frame.architecture()
+    pc = frame.pc()
+    sal = frame.find_sal()
+    try:
+        block = frame.block()
+        assert isinstance(block, gdb.Block)
+    except RuntimeError as rte:
+        assert str(rte) == "Cannot locate block for frame."
+        block = "RuntimeError: " + str(rte)
+
+    return {
+        "name": name,
+        "level": level,
+        "language": language,
+        "function": function,
+        "architecture": architecture,
+        "pc": pc,
+        "sal": sal,
+        "block": block,
+    }
+
+
+# List of information about each frame.  The index into this list is
+# the frame level.  This is populated by
+# capture_all_frame_information.
+all_frame_information = []
+
+
+# Fill in the global ALL_FRAME_INFORMATION list.
+def capture_all_frame_information():
+    global all_frame_information
+
+    all_frame_information = []
+
+    gdb.newest_frame().select()
+    frame = gdb.selected_frame()
+    count = 0
+
+    while frame is not None:
+        frame.select()
+        info = capture_frame_information(frame)
+        level = info["level"]
+        info["matched"] = False
+
+        while len(all_frame_information) <= level:
+            all_frame_information.append(None)
+
+        assert all_frame_information[level] is None
+        all_frame_information[level] = info
+
+        if frame.name == "main" or count > 10:
+            break
+
+        count += 1
+        frame = frame.older()
+
+
+# Assert that every entry in the global ALL_FRAME_INFORMATION list was
+# matched by the validating_unwinder.
+def check_all_frame_information_matched():
+    global all_frame_information
+    for entry in all_frame_information:
+        assert entry["matched"]
+
+
+# An unwinder that doesn't match any frames.  What it does do is
+# lookup information from the PendingFrame object and compare it
+# against information stored in the global ALL_FRAME_INFORMATION list.
+class validating_unwinder(Unwinder):
+    def __init__(self):
+        super().__init__("validating_unwinder")
+
+    def __call__(self, pending_frame):
+        info = capture_frame_information(pending_frame)
+        level = info["level"]
+
+        global all_frame_information
+        old_info = all_frame_information[level]
+
+        assert old_info is not None
+        assert not old_info["matched"]
+
+        for key, value in info.items():
+            assert key in old_info, key + " not in old_info"
+            assert type(value) == type(old_info[key])
+            if isinstance(value, gdb.Block):
+                assert value.start == old_info[key].start
+                assert value.end == old_info[key].end
+                assert value.is_static == old_info[key].is_static
+                assert value.is_global == old_info[key].is_global
+            else:
+                assert str(value) == str(old_info[key])
+
+        old_info["matched"] = True
+        return None
+
+
 print("Python script imported")

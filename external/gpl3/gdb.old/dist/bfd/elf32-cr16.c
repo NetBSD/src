@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CR16 ELF
-   Copyright (C) 2007-2020 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
    Written by M R Swami Reddy.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -116,467 +116,467 @@ static reloc_howto_type cr16_elf_howto_table[] =
 {
   HOWTO (R_CR16_NONE,		   /* type */
 	 0,			   /* rightshift */
-	 3,			   /* size */
+	 0,			   /* size */
 	 0,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_dont,   /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_NONE",		   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0,			   /* src_mask */
 	 0,			   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_NUM8,		   /* type */
 	 0,			   /* rightshift */
-	 0,			   /* size */
+	 1,			   /* size */
 	 8,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_NUM8",		   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xff,			   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_NUM16,		   /* type */
 	 0,			   /* rightshift */
-	 1,			   /* size */
+	 2,			   /* size */
 	 16,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_NUM16",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_NUM32,		   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size */
+	 4,			   /* size */
 	 32,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_NUM32",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xffffffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_NUM32a,		   /* type */
 	 1,			   /* rightshift */
-	 2,			   /* size */
+	 4,			   /* size */
 	 32,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_NUM32a",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xffffffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_REGREL4,	   /* type */
 	 0,			   /* rightshift */
-	 0,			   /* size */
+	 1,			   /* size */
 	 4,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_REGREL4",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xf,			   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_REGREL4a,	   /* type */
 	 0,			   /* rightshift */
-	 0,			   /* size */
+	 1,			   /* size */
 	 4,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_REGREL4a",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xf,			   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_REGREL14,	   /* type */
 	 0,			   /* rightshift */
-	 1,			   /* size */
+	 2,			   /* size */
 	 14,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_REGREL14",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0x3fff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_REGREL14a,	   /* type */
 	 0,			   /* rightshift */
-	 1,			   /* size */
+	 2,			   /* size */
 	 14,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_REGREL14a",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0x3fff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_REGREL16,	   /* type */
 	 0,			   /* rightshift */
-	 1,			   /* size */
+	 2,			   /* size */
 	 16,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_REGREL16",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_REGREL20,	   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size */
+	 4,			   /* size */
 	 20,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_REGREL20",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xfffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_REGREL20a,	   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size */
+	 4,			   /* size */
 	 20,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_REGREL20a",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xfffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_ABS20,		   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size */
+	 4,			   /* size */
 	 20,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_ABS20",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xfffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_ABS24,		   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size */
+	 4,			   /* size */
 	 24,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_ABS24",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xffffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_IMM4,		   /* type */
 	 0,			   /* rightshift */
-	 0,			   /* size */
+	 1,			   /* size */
 	 4,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_IMM4",		   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xf,			   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_IMM8,		   /* type */
 	 0,			   /* rightshift */
-	 0,			   /* size */
+	 1,			   /* size */
 	 8,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_IMM8",		   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xff,			   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_IMM16,		   /* type */
 	 0,			   /* rightshift */
-	 1,			   /* size */
+	 2,			   /* size */
 	 16,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_IMM16",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_IMM20,		   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size */
+	 4,			   /* size */
 	 20,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_IMM20",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xfffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_IMM24,		   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size */
+	 4,			   /* size */
 	 24,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_IMM24",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xffffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_IMM32,		   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size */
+	 4,			   /* size */
 	 32,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_IMM32",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xffffffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_IMM32a,		   /* type */
 	 1,			   /* rightshift */
-	 2,			   /* size */
+	 4,			   /* size */
 	 32,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_IMM32a",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xffffffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_DISP4,		   /* type */
 	 1,			   /* rightshift */
-	 0,			   /* size (0 = byte, 1 = short, 2 = long) */
+	 1,			   /* size */
 	 4,			   /* bitsize */
-	 TRUE,			   /* pc_relative */
+	 true,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_DISP4",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xf,			   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_DISP8,		   /* type */
 	 1,			   /* rightshift */
-	 0,			   /* size (0 = byte, 1 = short, 2 = long) */
+	 1,			   /* size */
 	 8,			   /* bitsize */
-	 TRUE,			   /* pc_relative */
+	 true,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_DISP8",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0x1ff,			   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_DISP16,		   /* type */
 	 0,			   /* rightshift REVIITS: To sync with WinIDEA*/
-	 1,			   /* size (0 = byte, 1 = short, 2 = long) */
+	 2,			   /* size */
 	 16,			   /* bitsize */
-	 TRUE,			   /* pc_relative */
+	 true,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_DISP16",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0x1ffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
   /* REVISIT: DISP24 should be left-shift by 2 as per ISA doc
      but its not done, to sync with WinIDEA and CR16 4.1 tools */
   HOWTO (R_CR16_DISP24,		   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size (0 = byte, 1 = short, 2 = long) */
+	 4,			   /* size */
 	 24,			   /* bitsize */
-	 TRUE,			   /* pc_relative */
+	 true,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_DISP24",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0x1ffffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_DISP24a,	   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size (0 = byte, 1 = short, 2 = long) */
+	 4,			   /* size */
 	 24,			   /* bitsize */
-	 TRUE,			   /* pc_relative */
+	 true,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_DISP24a",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xffffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   /* An 8 bit switch table entry.  This is generated for an expression
      such as ``.byte L1 - L2''.  The offset holds the difference
      between the reloc address and L2.  */
   HOWTO (R_CR16_SWITCH8,	   /* type */
 	 0,			   /* rightshift */
-	 0,			   /* size (0 = byte, 1 = short, 2 = long) */
+	 1,			   /* size */
 	 8,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_SWITCH8",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xff,			   /* dst_mask */
-	 TRUE),			   /* pcrel_offset */
+	 true),			   /* pcrel_offset */
 
   /* A 16 bit switch table entry.  This is generated for an expression
      such as ``.word L1 - L2''.  The offset holds the difference
      between the reloc address and L2.  */
   HOWTO (R_CR16_SWITCH16,	   /* type */
 	 0,			   /* rightshift */
-	 1,			   /* size (0 = byte, 1 = short, 2 = long) */
+	 2,			   /* size */
 	 16,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_SWITCH16",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xffff,		   /* dst_mask */
-	 TRUE),			   /* pcrel_offset */
+	 true),			   /* pcrel_offset */
 
   /* A 32 bit switch table entry.  This is generated for an expression
      such as ``.long L1 - L2''.  The offset holds the difference
      between the reloc address and L2.  */
   HOWTO (R_CR16_SWITCH32,	   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size (0 = byte, 1 = short, 2 = long) */
+	 4,			   /* size */
 	 32,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_SWITCH32",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xffffffff,		   /* dst_mask */
-	 TRUE),			   /* pcrel_offset */
+	 true),			   /* pcrel_offset */
 
   HOWTO (R_CR16_GOT_REGREL20,	   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size */
+	 4,			   /* size */
 	 20,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_GOT_REGREL20",	   /* name */
-	 TRUE,			   /* partial_inplace */
+	 true,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xfffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_GOTC_REGREL20,	   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size */
+	 4,			   /* size */
 	 20,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_bitfield,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_GOTC_REGREL20",   /* name */
-	 TRUE,			   /* partial_inplace */
+	 true,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xfffff,		   /* dst_mask */
-	 FALSE),		   /* pcrel_offset */
+	 false),		   /* pcrel_offset */
 
   HOWTO (R_CR16_GLOB_DAT,	   /* type */
 	 0,			   /* rightshift */
-	 2,			   /* size (0 = byte, 1 = short, 2 = long) */
+	 4,			   /* size */
 	 32,			   /* bitsize */
-	 FALSE,			   /* pc_relative */
+	 false,			   /* pc_relative */
 	 0,			   /* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	   /* special_function */
 	 "R_CR16_GLOB_DAT",	   /* name */
-	 FALSE,			   /* partial_inplace */
+	 false,			   /* partial_inplace */
 	 0x0,			   /* src_mask */
 	 0xffffffff,		   /* dst_mask */
-	 TRUE)			   /* pcrel_offset */
+	 true)			   /* pcrel_offset */
 };
 
 
 /* Create the GOT section.  */
 
-static bfd_boolean
+static bool
 _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
 {
   flagword   flags;
@@ -588,7 +588,7 @@ _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
 
   /* This function may be called more than once.  */
   if (htab->sgot != NULL)
-    return TRUE;
+    return true;
 
   switch (bed->s->arch_size)
     {
@@ -602,7 +602,7 @@ _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
 
     default:
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
 
   flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS | SEC_IN_MEMORY
@@ -612,7 +612,7 @@ _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
   htab->sgot= s;
   if (s == NULL
       || !bfd_set_section_alignment (s, ptralign))
-    return FALSE;
+    return false;
 
   if (bed->want_got_plt)
     {
@@ -620,7 +620,7 @@ _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
       htab->sgotplt = s;
       if (s == NULL
 	  || !bfd_set_section_alignment (s, ptralign))
-	return FALSE;
+	return false;
     }
 
   /* Define the symbol _GLOBAL_OFFSET_TABLE_ at the start of the .got
@@ -630,12 +630,12 @@ _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
   h = _bfd_elf_define_linkage_sym (abfd, info, s, "_GLOBAL_OFFSET_TABLE_");
   htab->hgot = h;
   if (h == NULL)
-    return FALSE;
+    return false;
 
   /* The first bit of the global offset table is the header.  */
   s->size += bed->got_header_size;
 
-  return TRUE;
+  return true;
 }
 
 
@@ -672,7 +672,7 @@ elf_cr16_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Retrieve a howto ptr using an internal relocation entry.  */
 
-static bfd_boolean
+static bool
 elf_cr16_info_to_howto (bfd *abfd, arelent *cache_ptr,
 			Elf_Internal_Rela *dst)
 {
@@ -684,23 +684,23 @@ elf_cr16_info_to_howto (bfd *abfd, arelent *cache_ptr,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
   cache_ptr->howto = cr16_elf_howto_table + r_type;
-  return TRUE;
+  return true;
 }
 
 /* Look through the relocs for a section during the first phase.
    Since we don't do .gots or .plts, we just need to consider the
    virtual table relocs for gc.  */
 
-static bfd_boolean
+static bool
 cr16_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 		       const Elf_Internal_Rela *relocs)
 {
   Elf_Internal_Shdr *symtab_hdr;
   Elf_Internal_Sym * isymbuf = NULL;
-  struct elf_link_hash_entry **sym_hashes, **sym_hashes_end;
+  struct elf_link_hash_entry **sym_hashes;
   const Elf_Internal_Rela *rel;
   const Elf_Internal_Rela *rel_end;
   bfd *      dynobj;
@@ -710,16 +710,13 @@ cr16_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 
   sgot    = NULL;
   srelgot = NULL;
-  bfd_boolean result = FALSE;
+  bool result = false;
 
   if (bfd_link_relocatable (info))
-    return TRUE;
+    return true;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
-  sym_hashes_end = sym_hashes + symtab_hdr->sh_size/sizeof (Elf32_External_Sym);
-  if (!elf_bad_symtab (abfd))
-    sym_hashes_end -= symtab_hdr->sh_info;
 
   dynobj = elf_hash_table (info)->dynobj;
   local_got_offsets = elf_local_got_offsets (abfd);
@@ -824,7 +821,7 @@ cr16_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	}
     }
 
-  result = TRUE;
+  result = true;
  fail:
   free (isymbuf);
 
@@ -854,56 +851,56 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
 
   switch (r_type)
     {
-     case R_CR16_IMM4:
-     case R_CR16_IMM20:
-     case R_CR16_ABS20:
-       break;
+    case R_CR16_IMM4:
+    case R_CR16_IMM20:
+    case R_CR16_ABS20:
+      break;
 
-     case R_CR16_IMM8:
-     case R_CR16_IMM16:
-     case R_CR16_IMM32:
-     case R_CR16_IMM32a:
-     case R_CR16_REGREL4:
-     case R_CR16_REGREL4a:
-     case R_CR16_REGREL14:
-     case R_CR16_REGREL14a:
-     case R_CR16_REGREL16:
-     case R_CR16_REGREL20:
-     case R_CR16_REGREL20a:
-     case R_CR16_GOT_REGREL20:
-     case R_CR16_GOTC_REGREL20:
-     case R_CR16_ABS24:
-     case R_CR16_DISP16:
-     case R_CR16_DISP24:
-       /* 'hit_data' is relative to the start of the instruction, not the
-	   relocation offset. Advance it to account for the exact offset.  */
-       hit_data += 2;
-       break;
+    case R_CR16_IMM8:
+    case R_CR16_IMM16:
+    case R_CR16_IMM32:
+    case R_CR16_IMM32a:
+    case R_CR16_REGREL4:
+    case R_CR16_REGREL4a:
+    case R_CR16_REGREL14:
+    case R_CR16_REGREL14a:
+    case R_CR16_REGREL16:
+    case R_CR16_REGREL20:
+    case R_CR16_REGREL20a:
+    case R_CR16_GOT_REGREL20:
+    case R_CR16_GOTC_REGREL20:
+    case R_CR16_ABS24:
+    case R_CR16_DISP16:
+    case R_CR16_DISP24:
+      /* 'hit_data' is relative to the start of the instruction, not the
+	 relocation offset.  Advance it to account for the exact offset.  */
+      hit_data += 2;
+      break;
 
-     case R_CR16_NONE:
-       return bfd_reloc_ok;
-       break;
+    case R_CR16_NONE:
+      return bfd_reloc_ok;
+      break;
 
-     case R_CR16_DISP4:
-       if (is_local)
+    case R_CR16_DISP4:
+      if (is_local)
 	Rvalue += -1;
-       break;
+      break;
 
-     case R_CR16_DISP8:
-     case R_CR16_DISP24a:
-       if (is_local)
+    case R_CR16_DISP8:
+    case R_CR16_DISP24a:
+      if (is_local)
 	Rvalue -= -1;
-       break;
+      break;
 
-     case R_CR16_SWITCH8:
-     case R_CR16_SWITCH16:
-     case R_CR16_SWITCH32:
-       /* We only care about the addend, where the difference between
-	  expressions is kept.  */
-       Rvalue = 0;
+    case R_CR16_SWITCH8:
+    case R_CR16_SWITCH16:
+    case R_CR16_SWITCH32:
+      /* We only care about the addend, where the difference between
+	 expressions is kept.  */
+      Rvalue = 0;
 
-     default:
-       break;
+    default:
+      break;
     }
 
   if (howto->pc_relative)
@@ -926,24 +923,23 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
 
   /* For GOT and GOTC relocs no boundary checks applied.  */
   if (!((r_type == R_CR16_GOT_REGREL20)
-      || (r_type == R_CR16_GOTC_REGREL20)))
+	|| (r_type == R_CR16_GOTC_REGREL20)))
     {
       if (((bfd_vma) check & ~reloc_bits) != 0
 	  && (((bfd_vma) check & ~reloc_bits)
-	  != (-(bfd_vma) 1 & ~reloc_bits)))
+	      != (-(bfd_vma) 1 & ~reloc_bits)))
 	{
 	  /* The above right shift is incorrect for a signed
 	     value.  See if turning on the upper bits fixes the
 	     overflow.  */
 	  if (howto->rightshift && (bfd_signed_vma) Rvalue < 0)
 	    {
-	      check |= ((bfd_vma) - 1
-			& ~((bfd_vma) - 1
-			 >> howto->rightshift));
+	      check |= ((bfd_vma) -1
+			& ~((bfd_vma) -1 >> howto->rightshift));
 
 	      if (((bfd_vma) check & ~reloc_bits)
 		  != (-(bfd_vma) 1 & ~reloc_bits))
-		 return bfd_reloc_overflow;
+		return bfd_reloc_overflow;
 	    }
 	  else
 	    return bfd_reloc_overflow;
@@ -956,278 +952,250 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
       Rvalue &= howto->dst_mask;
     }
 
-  switch (howto->size)
+  switch (bfd_get_reloc_size (howto))
     {
-      case 0:
-	if (r_type == R_CR16_DISP8)
-	  {
-	     Rvalue1 = bfd_get_16 (input_bfd, hit_data);
-	     Rvalue = ((Rvalue1 & 0xf000) | ((Rvalue << 4) & 0xf00)
-		       | (Rvalue1 & 0x00f0) | (Rvalue & 0xf));
-	     bfd_put_16 (input_bfd, Rvalue, hit_data);
-	  }
-	else if (r_type == R_CR16_IMM4)
-	  {
-	     Rvalue1 = bfd_get_16 (input_bfd, hit_data);
-	     Rvalue = (((Rvalue1 & 0xff) << 8) | ((Rvalue << 4) & 0xf0)
-		       | ((Rvalue1 & 0x0f00) >> 8));
-	     bfd_put_16 (input_bfd, Rvalue, hit_data);
-	  }
-	else if (r_type == R_CR16_DISP4)
-	  {
-	     Rvalue1 = bfd_get_16 (input_bfd, hit_data);
-	     Rvalue = (Rvalue1 | ((Rvalue & 0xf) << 4));
-	     bfd_put_16 (input_bfd, Rvalue, hit_data);
-	  }
-	else
-	  {
-	     bfd_put_8 (input_bfd, (unsigned char) Rvalue, hit_data);
-	  }
-	break;
+    case 1:
+      if (r_type == R_CR16_DISP8)
+	{
+	  Rvalue1 = bfd_get_16 (input_bfd, hit_data);
+	  Rvalue = ((Rvalue1 & 0xf000) | ((Rvalue << 4) & 0xf00)
+		    | (Rvalue1 & 0x00f0) | (Rvalue & 0xf));
+	  bfd_put_16 (input_bfd, Rvalue, hit_data);
+	}
+      else if (r_type == R_CR16_IMM4)
+	{
+	  Rvalue1 = bfd_get_16 (input_bfd, hit_data);
+	  Rvalue = (((Rvalue1 & 0xff) << 8) | ((Rvalue << 4) & 0xf0)
+		    | ((Rvalue1 & 0x0f00) >> 8));
+	  bfd_put_16 (input_bfd, Rvalue, hit_data);
+	}
+      else if (r_type == R_CR16_DISP4)
+	{
+	  Rvalue1 = bfd_get_16 (input_bfd, hit_data);
+	  Rvalue = (Rvalue1 | ((Rvalue & 0xf) << 4));
+	  bfd_put_16 (input_bfd, Rvalue, hit_data);
+	}
+      else
+	{
+	  bfd_put_8 (input_bfd, (unsigned char) Rvalue, hit_data);
+	}
+      break;
 
-      case 1:
-	if (r_type == R_CR16_DISP16)
-	  {
-	    Rvalue |= (bfd_get_16 (input_bfd, hit_data));
-	    Rvalue = ((Rvalue & 0xfffe) | ((Rvalue >> 16) & 0x1));
-	  }
-	if (r_type == R_CR16_IMM16)
-	  {
-	    Rvalue1 = bfd_get_16 (input_bfd, hit_data);
+    case 2:
+      if (r_type == R_CR16_DISP16)
+	{
+	  Rvalue |= (bfd_get_16 (input_bfd, hit_data));
+	  Rvalue = ((Rvalue & 0xfffe) | ((Rvalue >> 16) & 0x1));
+	}
+      if (r_type == R_CR16_IMM16)
+	{
+	  Rvalue1 = bfd_get_16 (input_bfd, hit_data);
 
-	    /* Add or subtract the offset value.  */
-	    if (Rvalue1 & 0x8000)
-	      Rvalue -= (~Rvalue1 + 1) & 0xffff;
-	    else
+	  Rvalue1 = (Rvalue1 ^ 0x8000) - 0x8000;
+	  Rvalue += Rvalue1;
+
+	  /* Check for range.  */
+	  if (Rvalue > 0xffff)
+	    return bfd_reloc_overflow;
+	}
+
+      bfd_put_16 (input_bfd, Rvalue, hit_data);
+      break;
+
+    case 4:
+      if ((r_type == R_CR16_ABS20) || (r_type == R_CR16_IMM20))
+	{
+	  Rvalue1 = (bfd_get_16 (input_bfd, hit_data + 2)
+		     | (((bfd_get_16 (input_bfd, hit_data) & 0xf) << 16)));
+
+	  Rvalue1 = (Rvalue1 ^ 0x80000) - 0x80000;
+	  Rvalue += Rvalue1;
+
+	  /* Check for range.  */
+	  if (Rvalue > 0xfffff)
+	    return bfd_reloc_overflow;
+
+	  bfd_put_16 (input_bfd, ((bfd_get_16 (input_bfd, hit_data) & 0xfff0)
+				  | ((Rvalue >> 16) & 0xf)), hit_data);
+	  bfd_put_16 (input_bfd, (Rvalue) & 0xffff, hit_data + 2);
+	}
+      else if (r_type == R_CR16_GOT_REGREL20)
+	{
+	  asection *sgot = elf_hash_table (info)->sgot;
+	  bfd_vma off;
+
+	  if (h != NULL)
+	    {
+	      off = h->got.offset;
+	      BFD_ASSERT (off != (bfd_vma) -1);
+
+	      if (! elf_hash_table (info)->dynamic_sections_created
+		  || SYMBOL_REFERENCES_LOCAL (info, h))
+		/* This is actually a static link, or it is a
+		   -Bsymbolic link and the symbol is defined
+		   locally, or the symbol was forced to be local
+		   because of a version file.  We must initialize
+		   this entry in the global offset table.
+		   When doing a dynamic link, we create a .rela.got
+		   relocation entry to initialize the value.  This
+		   is done in the finish_dynamic_symbol routine.  */
+		bfd_put_32 (output_bfd, Rvalue, sgot->contents + off);
+	    }
+	  else
+	    {
+	      off = elf_local_got_offsets (input_bfd)[symndx];
+	      bfd_put_32 (output_bfd, Rvalue, sgot->contents + off);
+	    }
+
+	  Rvalue = sgot->output_offset + off;
+	  Rvalue += addend;
+
+	  /* REVISIT: if ((long) Rvalue > 0xffffff ||
+	     (long) Rvalue < -0x800000).  */
+	  if (Rvalue > 0xffffff)
+	    return bfd_reloc_overflow;
+
+
+	  bfd_put_16 (input_bfd, (bfd_get_16 (input_bfd, hit_data))
+		      | (((Rvalue >> 16) & 0xf) << 8), hit_data);
+	  bfd_put_16 (input_bfd, (Rvalue) & 0xffff, hit_data + 2);
+
+	}
+      else if (r_type == R_CR16_GOTC_REGREL20)
+	{
+	  asection *sgot = elf_hash_table (info)->sgot;
+	  bfd_vma off;
+
+	  if (h != NULL)
+	    {
+	      off = h->got.offset;
+	      BFD_ASSERT (off != (bfd_vma) -1);
+
+	      Rvalue >>= 1; /* For code symbols.  */
+
+	      if (! elf_hash_table (info)->dynamic_sections_created
+		  || SYMBOL_REFERENCES_LOCAL (info, h))
+		/* This is actually a static link, or it is a
+		   -Bsymbolic link and the symbol is defined
+		   locally, or the symbol was forced to be local
+		   because of a version file.  We must initialize
+		   this entry in the global offset table.
+		   When doing a dynamic link, we create a .rela.got
+		   relocation entry to initialize the value.  This
+		   is done in the finish_dynamic_symbol routine.  */
+		bfd_put_32 (output_bfd, Rvalue, sgot->contents + off);
+	    }
+	  else
+	    {
+	      off = elf_local_got_offsets (input_bfd)[symndx];
+	      Rvalue >>= 1;
+	      bfd_put_32 (output_bfd, Rvalue, sgot->contents + off);
+	    }
+
+	  Rvalue = sgot->output_offset + off;
+	  Rvalue += addend;
+
+	  /* Check if any value in DISP.  */
+	  Rvalue1 = bfd_get_32 (input_bfd, hit_data);
+	  Rvalue1 = ((Rvalue1 >> 16) | ((Rvalue1 & 0xfff) >> 8 << 16));
+
+	  Rvalue1 = (Rvalue1 ^ 0x80000) - 0x80000;
+	  Rvalue += Rvalue1;
+
+	  /* Check for range.  */
+	  /* REVISIT: if ((long) Rvalue > 0xffffff
+	     || (long) Rvalue < -0x800000).  */
+	  if (Rvalue > 0xffffff)
+	    return bfd_reloc_overflow;
+
+	  bfd_put_16 (input_bfd, (bfd_get_16 (input_bfd, hit_data))
+		      | (((Rvalue >> 16) & 0xf) << 8), hit_data);
+	  bfd_put_16 (input_bfd, (Rvalue) & 0xffff, hit_data + 2);
+	}
+      else
+	{
+	  if (r_type == R_CR16_ABS24)
+	    {
+	      Rvalue1 = bfd_get_32 (input_bfd, hit_data);
+	      Rvalue1 = ((Rvalue1 >> 16)
+			 | ((Rvalue1 & 0xfff) >> 8 << 16)
+			 | ((Rvalue1 & 0xf) << 20));
+
+	      Rvalue1 = (Rvalue1 ^ 0x800000) - 0x800000;
 	      Rvalue += Rvalue1;
 
-	     /* Check for range.  */
-	     if ((long) Rvalue > 0xffff || (long) Rvalue < 0x0)
-	      return bfd_reloc_overflow;
-	  }
+	      /* Check for Range.  */
+	      if (Rvalue > 0xffffff)
+		return bfd_reloc_overflow;
 
-	bfd_put_16 (input_bfd, Rvalue, hit_data);
-	break;
+	      Rvalue = ((((Rvalue >> 20) & 0xf) | (((Rvalue >> 16) & 0xf)<<8)
+			 | (bfd_get_32 (input_bfd, hit_data) & 0xf0f0))
+			| ((Rvalue & 0xffff) << 16));
+	    }
+	  else if (r_type == R_CR16_DISP24)
+	    {
+	      Rvalue = ((((Rvalue >> 20)& 0xf) | (((Rvalue >>16) & 0xf)<<8)
+			 | (bfd_get_16 (input_bfd, hit_data)))
+			| (((Rvalue & 0xfffe) | ((Rvalue >> 24) & 0x1)) << 16));
+	    }
+	  else if ((r_type == R_CR16_IMM32) || (r_type == R_CR16_IMM32a))
+	    {
+	      Rvalue1 = bfd_get_32 (input_bfd, hit_data);
+	      Rvalue1 = (((Rvalue1 >> 16) & 0xffff)
+			 | ((Rvalue1 & 0xffff) << 16));
 
-      case 2:
-	if ((r_type == R_CR16_ABS20) || (r_type == R_CR16_IMM20))
-	  {
-	     Rvalue1 = (bfd_get_16 (input_bfd, hit_data + 2)
-			| (((bfd_get_16 (input_bfd, hit_data) & 0xf) <<16)));
-
-	     /* Add or subtract the offset value.  */
-	     if (Rvalue1 & 0x80000)
-		Rvalue -= (~Rvalue1 + 1) & 0xfffff;
-	      else
-		Rvalue += Rvalue1;
-
-	      /* Check for range.  */
-	      if ((long) Rvalue > 0xfffff || (long) Rvalue < 0x0)
-	       return bfd_reloc_overflow;
-
-	    bfd_put_16 (input_bfd, ((bfd_get_16 (input_bfd, hit_data) & 0xfff0)
-			| ((Rvalue >> 16) & 0xf)), hit_data);
-	    bfd_put_16 (input_bfd, (Rvalue) & 0xffff, hit_data + 2);
-	  }
-	else if (r_type == R_CR16_GOT_REGREL20)
-	  {
-	    asection *sgot = elf_hash_table (info)->sgot;
-
-	    if (h != NULL)
-	      {
-		bfd_vma off;
-
-		off = h->got.offset;
-		BFD_ASSERT (off != (bfd_vma) -1);
-
-		if (! elf_hash_table (info)->dynamic_sections_created
-		     || SYMBOL_REFERENCES_LOCAL (info, h))
-		    /* This is actually a static link, or it is a
-		       -Bsymbolic link and the symbol is defined
-		       locally, or the symbol was forced to be local
-		       because of a version file.  We must initialize
-		       this entry in the global offset table.
-		       When doing a dynamic link, we create a .rela.got
-		       relocation entry to initialize the value.  This
-		       is done in the finish_dynamic_symbol routine.  */
-		  bfd_put_32 (output_bfd, Rvalue, sgot->contents + off);
-
-		  Rvalue = sgot->output_offset + off;
-		}
-	      else
-		{
-		   bfd_vma off;
-
-		   off = elf_local_got_offsets (input_bfd)[symndx];
-		   bfd_put_32 (output_bfd,Rvalue, sgot->contents + off);
-
-		   Rvalue = sgot->output_offset + off;
-		}
-
-	     Rvalue += addend;
-
-	     /* REVISIT: if ((long) Rvalue > 0xffffff ||
-				    (long) Rvalue < -0x800000).  */
-	     if ((long) Rvalue > 0xffffff || (long) Rvalue < 0)
-	       return bfd_reloc_overflow;
-
-
-	     bfd_put_16 (input_bfd, (bfd_get_16 (input_bfd, hit_data))
-			 | (((Rvalue >> 16) & 0xf) << 8), hit_data);
-	     bfd_put_16 (input_bfd, (Rvalue) & 0xffff, hit_data + 2);
-
-	  }
-	else if (r_type == R_CR16_GOTC_REGREL20)
-	  {
-	     asection *sgot = elf_hash_table (info)->sgot;
-
-	     if (h != NULL)
-	       {
-		 bfd_vma off;
-
-		 off = h->got.offset;
-		 BFD_ASSERT (off != (bfd_vma) -1);
-
-		  Rvalue >>=1; /* For code symbols.  */
-
-		 if (! elf_hash_table (info)->dynamic_sections_created
-		      || SYMBOL_REFERENCES_LOCAL (info, h))
-		 /* This is actually a static link, or it is a
-		    -Bsymbolic link and the symbol is defined
-		     locally, or the symbol was forced to be local
-		     because of a version file.  We must initialize
-		     this entry in the global offset table.
-		     When doing a dynamic link, we create a .rela.got
-		     relocation entry to initialize the value.  This
-		     is done in the finish_dynamic_symbol routine.  */
-		  bfd_put_32 (output_bfd, Rvalue, sgot->contents + off);
-
-		  Rvalue = sgot->output_offset + off;
-	       }
-	     else
-	       {
-		  bfd_vma off;
-
-		  off = elf_local_got_offsets (input_bfd)[symndx];
-		  Rvalue >>= 1;
-		  bfd_put_32 (output_bfd,Rvalue, sgot->contents + off);
-		  Rvalue = sgot->output_offset + off;
-	       }
-
-	     Rvalue += addend;
-
-	     /* Check if any value in DISP.  */
-	     Rvalue1 =((bfd_get_32 (input_bfd, hit_data) >>16)
-		       | (((bfd_get_32 (input_bfd, hit_data) & 0xfff) >> 8) <<16));
-
-	     /* Add or subtract the offset value.  */
-	     if (Rvalue1 & 0x80000)
-	       Rvalue -= (~Rvalue1 + 1) & 0xfffff;
-	     else
-	       Rvalue += Rvalue1;
+	      Rvalue1 = (Rvalue1 ^ 0x80000000) - 0x80000000;
+	      Rvalue += Rvalue1;
 
 	      /* Check for range.  */
-	     /* REVISIT: if ((long) Rvalue > 0xffffff
-			     || (long) Rvalue < -0x800000).  */
-	     if ((long) Rvalue > 0xffffff || (long) Rvalue < 0)
-	       return bfd_reloc_overflow;
+	      if (Rvalue > 0xffffffff)
+		return bfd_reloc_overflow;
 
-	     bfd_put_16 (input_bfd, (bfd_get_16 (input_bfd, hit_data))
-			 | (((Rvalue >> 16) & 0xf) << 8), hit_data);
-	     bfd_put_16 (input_bfd, (Rvalue) & 0xffff, hit_data + 2);
-	  }
-	else
-	  {
-	     if (r_type == R_CR16_ABS24)
-	       {
-		  Rvalue1 = ((bfd_get_32 (input_bfd, hit_data) >> 16)
-			     | (((bfd_get_32 (input_bfd, hit_data) & 0xfff) >> 8) <<16)
-			     | (((bfd_get_32 (input_bfd, hit_data) & 0xf) <<20)));
+	      Rvalue = (((Rvalue >> 16) & 0xffff) | (Rvalue & 0xffff) << 16);
+	    }
+	  else if (r_type == R_CR16_DISP24a)
+	    {
+	      Rvalue = (((Rvalue & 0xfffffe) | (Rvalue >> 23)));
+	      Rvalue = (((Rvalue >> 16) & 0xff) | ((Rvalue & 0xffff) << 16)
+			| bfd_get_32 (input_bfd, hit_data));
+	    }
+	  else if ((r_type == R_CR16_REGREL20)
+		   || (r_type == R_CR16_REGREL20a))
+	    {
+	      Rvalue1 = bfd_get_32 (input_bfd, hit_data);
+	      Rvalue1 = (((Rvalue1 >> 16) & 0xffff)
+			 | ((Rvalue1 & 0xfff) >> 8 << 16));
 
-		  /* Add or subtract the offset value.  */
-		  if (Rvalue1 & 0x800000)
-		    Rvalue -= (~Rvalue1 + 1) & 0xffffff;
-		  else
-		    Rvalue += Rvalue1;
+	      Rvalue1 = (Rvalue1 ^ 0x80000) - 0x80000;
+	      Rvalue += Rvalue1;
 
-		 /* Check for Range.  */
-		 if ((long) Rvalue > 0xffffff || (long) Rvalue < 0x0)
-		   return bfd_reloc_overflow;
+	      /* Check for range.  */
+	      if (Rvalue > 0xfffff)
+		return bfd_reloc_overflow;
 
-		 Rvalue = ((((Rvalue >> 20) & 0xf) | (((Rvalue >> 16) & 0xf)<<8)
-			   | (bfd_get_32 (input_bfd, hit_data) & 0xf0f0))
-			   | ((Rvalue & 0xffff) << 16));
-	       }
-	     else if (r_type == R_CR16_DISP24)
-	       {
-		  Rvalue = ((((Rvalue >> 20)& 0xf) | (((Rvalue >>16) & 0xf)<<8)
-			    | (bfd_get_16 (input_bfd, hit_data)))
-			    | (((Rvalue & 0xfffe) | ((Rvalue >> 24) & 0x1)) << 16));
-	       }
-	     else if ((r_type == R_CR16_IMM32) || (r_type == R_CR16_IMM32a))
-	       {
-		  Rvalue1 =((((bfd_get_32 (input_bfd, hit_data)) >> 16) &0xffff)
-			    | (((bfd_get_32 (input_bfd, hit_data)) &0xffff)) << 16);
+	      Rvalue = (((((Rvalue >> 20) & 0xf) | (((Rvalue >> 16) & 0xf) << 8)
+			  | ((Rvalue & 0xffff) << 16)))
+			| (bfd_get_32 (input_bfd, hit_data) & 0xf0ff));
 
-		 /* Add or subtract the offset value.  */
-		 if (Rvalue1 & 0x80000000)
-		   Rvalue -= (~Rvalue1 + 1) & 0xffffffff;
-		 else
-		   Rvalue += Rvalue1;
+	    }
+	  else if (r_type == R_CR16_NUM32)
+	    {
+	      Rvalue1 = (bfd_get_32 (input_bfd, hit_data));
 
-		 /* Check for range.  */
-		 if (Rvalue > 0xffffffff || (long) Rvalue < 0x0)
-		   return bfd_reloc_overflow;
+	      Rvalue1 = (Rvalue1 ^ 0x80000000) - 0x80000000;
+	      Rvalue += Rvalue1;
 
-		 Rvalue = (((Rvalue >> 16)& 0xffff) | (Rvalue & 0xffff) << 16);
-	       }
-	     else if (r_type == R_CR16_DISP24a)
-	       {
-		  Rvalue = (((Rvalue & 0xfffffe) | (Rvalue >> 23)));
-		  Rvalue = ((Rvalue >> 16) & 0xff) | ((Rvalue & 0xffff) << 16)
-			    | (bfd_get_32 (input_bfd, hit_data));
-	       }
-	     else if ((r_type == R_CR16_REGREL20)
-		      || (r_type == R_CR16_REGREL20a))
-	       {
-		  Rvalue1 = ((bfd_get_32 (input_bfd, hit_data) >> 16)
-			     | (((bfd_get_32 (input_bfd, hit_data) & 0xfff) >> 8) <<16));
-		  /* Add or subtract the offset value.  */
-		  if (Rvalue1 & 0x80000)
-		     Rvalue -= (~Rvalue1 + 1) & 0xfffff;
-		  else
-		     Rvalue += Rvalue1;
+	      /* Check for Range.  */
+	      if (Rvalue > 0xffffffff)
+		return bfd_reloc_overflow;
+	    }
 
-		  /* Check for range.  */
-		  if ((long) Rvalue > 0xfffff || (long) Rvalue < 0x0)
-		    return bfd_reloc_overflow;
+	  bfd_put_32 (input_bfd, Rvalue, hit_data);
+	}
+      break;
 
-		  Rvalue = (((((Rvalue >> 20)& 0xf) | (((Rvalue >>16) & 0xf)<<8)
-			    | ((Rvalue & 0xffff) << 16)))
-			    | (bfd_get_32 (input_bfd, hit_data) & 0xf0ff));
-
-	      }
-	    else if (r_type == R_CR16_NUM32)
-	      {
-		 Rvalue1 = (bfd_get_32 (input_bfd, hit_data));
-
-		 /* Add or subtract the offset value */
-		 if (Rvalue1 & 0x80000000)
-		   Rvalue -= (~Rvalue1 + 1) & 0xffffffff;
-		 else
-		   Rvalue += Rvalue1;
-
-		/* Check for Ranga */
-		if (Rvalue > 0xffffffff)
-		  return bfd_reloc_overflow;
-	      }
-
-	    bfd_put_32 (input_bfd, Rvalue, hit_data);
-	  }
-	break;
-
-      default:
-	return bfd_reloc_notsupported;
+    default:
+      return bfd_reloc_notsupported;
     }
 
   return bfd_reloc_ok;
@@ -1235,7 +1203,7 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
 
 /* Delete some bytes from a section while relaxing.  */
 
-static bfd_boolean
+static bool
 elf32_cr16_relax_delete_bytes (struct bfd_link_info *link_info, bfd *abfd,
 			       asection *sec, bfd_vma addr, int count)
 {
@@ -1269,7 +1237,7 @@ elf32_cr16_relax_delete_bytes (struct bfd_link_info *link_info, bfd *abfd,
   for (irel = elf_section_data (sec)->relocs; irel < irelend; irel++)
     /* Get the new reloc address.  */
     if ((irel->r_offset > addr && irel->r_offset < toaddr))
-	irel->r_offset -= count;
+      irel->r_offset -= count;
 
   /* Adjust the local symbols defined in this section.  */
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
@@ -1293,7 +1261,7 @@ elf32_cr16_relax_delete_bytes (struct bfd_link_info *link_info, bfd *abfd,
 	      if (ELF32_R_TYPE (irel->r_info) != (int) R_CR16_SWITCH8
 		  && ELF32_R_TYPE (irel->r_info) != (int) R_CR16_SWITCH16
 		  && ELF32_R_TYPE (irel->r_info) != (int) R_CR16_SWITCH32)
-		 continue;
+		continue;
 
 	      r_symndx = ELF32_R_SYM (irel->r_info);
 	      rsym = (Elf_Internal_Sym *) symtab_hdr->contents + r_symndx;
@@ -1319,7 +1287,7 @@ elf32_cr16_relax_delete_bytes (struct bfd_link_info *link_info, bfd *abfd,
 
   /* Now adjust the global symbols defined in this section.  */
   symcount = (symtab_hdr->sh_size / sizeof (Elf32_External_Sym)
-	       - symtab_hdr->sh_info);
+	      - symtab_hdr->sh_info);
   sym_hashes = start_hashes = elf_sym_hashes (abfd);
   end_hashes = sym_hashes + symcount;
 
@@ -1352,19 +1320,19 @@ elf32_cr16_relax_delete_bytes (struct bfd_link_info *link_info, bfd *abfd,
 	}
 
       if ((sym_hash->root.type == bfd_link_hash_defined
-	  || sym_hash->root.type == bfd_link_hash_defweak)
+	   || sym_hash->root.type == bfd_link_hash_defweak)
 	  && sym_hash->root.u.def.section == sec
 	  && sym_hash->root.u.def.value > addr
 	  && sym_hash->root.u.def.value < toaddr)
 	sym_hash->root.u.def.value -= count;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Relocate a CR16 ELF section.  */
 
-static bfd_boolean
+static int
 elf32_cr16_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 			     bfd *input_bfd, asection *input_section,
 			     bfd_byte *contents, Elf_Internal_Rela *relocs,
@@ -1406,7 +1374,7 @@ elf32_cr16_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned, ignored;
+	  bool unresolved_reloc, warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -1446,42 +1414,42 @@ elf32_cr16_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	  switch (r)
 	    {
-	     case bfd_reloc_overflow:
-	       (*info->callbacks->reloc_overflow)
-		 (info, (h ? &h->root : NULL), name, howto->name,
-		  (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
-	       break;
+	    case bfd_reloc_overflow:
+	      (*info->callbacks->reloc_overflow)
+		(info, (h ? &h->root : NULL), name, howto->name,
+		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
+	      break;
 
-	     case bfd_reloc_undefined:
-	       (*info->callbacks->undefined_symbol)
-		 (info, name, input_bfd, input_section, rel->r_offset, TRUE);
-	       break;
+	    case bfd_reloc_undefined:
+	      (*info->callbacks->undefined_symbol)
+		(info, name, input_bfd, input_section, rel->r_offset, true);
+	      break;
 
-	     case bfd_reloc_outofrange:
-	       msg = _("internal error: out of range error");
-	       goto common_error;
+	    case bfd_reloc_outofrange:
+	      msg = _("internal error: out of range error");
+	      goto common_error;
 
-	     case bfd_reloc_notsupported:
-	       msg = _("internal error: unsupported relocation error");
-	       goto common_error;
+	    case bfd_reloc_notsupported:
+	      msg = _("internal error: unsupported relocation error");
+	      goto common_error;
 
-	     case bfd_reloc_dangerous:
-	       msg = _("internal error: dangerous error");
-	       goto common_error;
+	    case bfd_reloc_dangerous:
+	      msg = _("internal error: dangerous error");
+	      goto common_error;
 
-	     default:
-	       msg = _("internal error: unknown error");
-	       /* Fall through.  */
+	    default:
+	      msg = _("internal error: unknown error");
+	      /* Fall through.  */
 
-	     common_error:
-	       (*info->callbacks->warning) (info, msg, name, input_bfd,
-					    input_section, rel->r_offset);
-	       break;
+	    common_error:
+	      (*info->callbacks->warning) (info, msg, name, input_bfd,
+					   input_section, rel->r_offset);
+	      break;
 	    }
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* This is a version of bfd_generic_get_relocated_section_contents
@@ -1492,7 +1460,7 @@ elf32_cr16_get_relocated_section_contents (bfd *output_bfd,
 					   struct bfd_link_info *link_info,
 					   struct bfd_link_order *link_order,
 					   bfd_byte *data,
-					   bfd_boolean relocatable,
+					   bool relocatable,
 					   asymbol **symbols)
 {
   Elf_Internal_Shdr *symtab_hdr;
@@ -1513,6 +1481,13 @@ elf32_cr16_get_relocated_section_contents (bfd *output_bfd,
 
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
 
+  bfd_byte *orig_data = data;
+  if (data == NULL)
+    {
+      data = bfd_malloc (input_section->size);
+      if (data == NULL)
+	return NULL;
+    }
   memcpy (data, elf_section_data (input_section)->this_hdr.contents,
 	  (size_t) input_section->size);
 
@@ -1525,7 +1500,7 @@ elf32_cr16_get_relocated_section_contents (bfd *output_bfd,
       bfd_size_type amt;
 
       internal_relocs = _bfd_elf_link_read_relocs (input_bfd, input_section,
-						   NULL, NULL, FALSE);
+						   NULL, NULL, false);
       if (internal_relocs == NULL)
 	goto error_return;
 
@@ -1564,8 +1539,8 @@ elf32_cr16_get_relocated_section_contents (bfd *output_bfd,
 	}
 
       if (! elf32_cr16_relocate_section (output_bfd, link_info, input_bfd,
-				     input_section, data, internal_relocs,
-				     isymbuf, sections))
+					 input_section, data, internal_relocs,
+					 isymbuf, sections))
 	goto error_return;
 
       free (sections);
@@ -1583,6 +1558,8 @@ elf32_cr16_get_relocated_section_contents (bfd *output_bfd,
     free (isymbuf);
   if (elf_section_data (input_section)->relocs != internal_relocs)
     free (internal_relocs);
+  if (orig_data == NULL)
+    free (data);
   return NULL;
 }
 
@@ -1655,8 +1632,8 @@ elf_cr16_mach (flagword flags)
 {
   switch (flags)
     {
-      case EM_CR16:
-      default:
+    case EM_CR16:
+    default:
       return bfd_mach_cr16;
     }
 }
@@ -1665,51 +1642,51 @@ elf_cr16_mach (flagword flags)
    file.  This gets the CR16 architecture right based on the machine
    number.  */
 
-static bfd_boolean
+static bool
 _bfd_cr16_elf_final_write_processing (bfd *abfd)
 {
   unsigned long val;
   switch (bfd_get_mach (abfd))
     {
-     default:
-     case bfd_mach_cr16:
-	val = EM_CR16;
-	break;
+    default:
+    case bfd_mach_cr16:
+      val = EM_CR16;
+      break;
     }
   elf_elfheader (abfd)->e_flags |= val;
   return _bfd_elf_final_write_processing (abfd);
 }
 
 
-static bfd_boolean
+static bool
 _bfd_cr16_elf_object_p (bfd *abfd)
 {
   bfd_default_set_arch_mach (abfd, bfd_arch_cr16,
 			     elf_cr16_mach (elf_elfheader (abfd)->e_flags));
-  return TRUE;
+  return true;
 }
 
 /* Merge backend specific data from an object file to the output
    object file when linking.  */
 
-static bfd_boolean
+static bool
 _bfd_cr16_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
   bfd *obfd = info->output_bfd;
 
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
+    return true;
 
   if (bfd_get_arch (obfd) == bfd_get_arch (ibfd)
       && bfd_get_mach (obfd) < bfd_get_mach (ibfd))
     {
       if (! bfd_set_arch_mach (obfd, bfd_get_arch (ibfd),
 			       bfd_get_mach (ibfd)))
-	 return FALSE;
-     }
+	return false;
+    }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -1724,9 +1701,9 @@ _bfd_cr16_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 
    Symbol- and reloc-reading infrastructure copied from elf-m10200.c.  */
 
-static bfd_boolean
+static bool
 elf32_cr16_relax_section (bfd *abfd, asection *sec,
-			  struct bfd_link_info *link_info, bfd_boolean *again)
+			  struct bfd_link_info *link_info, bool *again)
 {
   Elf_Internal_Shdr *symtab_hdr;
   Elf_Internal_Rela *internal_relocs;
@@ -1735,7 +1712,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
   Elf_Internal_Sym *isymbuf = NULL;
 
   /* Assume nothing changes.  */
-  *again = FALSE;
+  *again = false;
 
   /* We don't have to do anything for a relocatable link, if
      this section does not have relocs, or if this is not a
@@ -1744,7 +1721,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
       || (sec->flags & SEC_CODE) == 0)
-    return TRUE;
+    return true;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
 
@@ -1861,11 +1838,13 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 	      unsigned int code;
 
 	      /* Get the opcode.  */
-	      code = (unsigned int) bfd_get_32 (abfd, contents + irel->r_offset);
+	      code = (unsigned int) bfd_get_32 (abfd,
+						contents + irel->r_offset);
 
 	      /* Verify it's a 'bcond' and fix the opcode.  */
 	      if ((code  & 0xffff) == 0x0010)
-		bfd_put_16 (abfd, 0x1800 | ((0xf & (code >> 20)) << 4), contents + irel->r_offset);
+		bfd_put_16 (abfd, 0x1800 | ((0xf & (code >> 20)) << 4),
+			    contents + irel->r_offset);
 	      else
 		continue;
 
@@ -1880,12 +1859,12 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 
 	      /* Delete two bytes of data.  */
 	      if (!elf32_cr16_relax_delete_bytes (link_info, abfd, sec,
-						   irel->r_offset + 2, 2))
+						  irel->r_offset + 2, 2))
 		goto error_return;
 
 	      /* That will change things, so, we should relax again.
 		 Note that this is not required, and it may be slow.  */
-	      *again = TRUE;
+	      *again = true;
 	    }
 	}
 
@@ -1909,7 +1888,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 	      unsigned short code;
 
 	      /* Get the opcode.  */
-	      code = (unsigned short) bfd_get_16 (abfd, contents + irel->r_offset);
+	      code = bfd_get_16 (abfd, contents + irel->r_offset);
 
 	      /* Verify it's a 'bcond' and fix the opcode.  */
 	      if ((code & 0xff0f) == 0x1800)
@@ -1928,12 +1907,12 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 
 	      /* Delete two bytes of data.  */
 	      if (!elf32_cr16_relax_delete_bytes (link_info, abfd, sec,
-						   irel->r_offset + 2, 2))
+						  irel->r_offset + 2, 2))
 		goto error_return;
 
 	      /* That will change things, so, we should relax again.
 		 Note that this is not required, and it may be slow.  */
-	      *again = TRUE;
+	      *again = true;
 	    }
 	}
 
@@ -1945,8 +1924,8 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 	  bfd_vma value1 = 0;
 
 	  /* Get the existing value from the mcode */
-	  value1 = ((bfd_get_32 (abfd, contents + irel->r_offset + 2) >> 16)
-		   |(((bfd_get_32 (abfd, contents + irel->r_offset + 2) & 0xffff) << 16)));
+	  value1 = bfd_get_32 (abfd, contents + irel->r_offset + 2);
+	  value1 = (value1 >> 16) | ((value1 & 0xffff) << 16);
 
 	  /* See if the value will fit in 20 bits.  */
 	  if ((long) (value + value1) < 0xfffff && (long) (value + value1) > 0)
@@ -1954,13 +1933,13 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 	      unsigned short code;
 
 	      /* Get the opcode.  */
-	      code = (unsigned short) bfd_get_16 (abfd, contents + irel->r_offset);
+	      code = bfd_get_16 (abfd, contents + irel->r_offset);
 
 	      /* Verify it's a 'arithmetic ADDD or MOVD instruction'.
 		 For ADDD and MOVD only, convert to IMM32 -> IMM20.  */
 
 	      if (((code & 0xfff0) == 0x0070) || ((code & 0xfff0) == 0x0020))
-		 is_add_mov = 1;
+		is_add_mov = 1;
 
 	      if (is_add_mov)
 		{
@@ -1982,9 +1961,16 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 		     place the 16-20bits (ie 4 bit) in new opcode,
 		     as the 0xffffxxxx, the higher 2 byte values removed. */
 		  if (value1 & 0x80000000)
-		    bfd_put_8 (abfd, (0x0f | (bfd_get_8(abfd, contents + irel->r_offset))), contents + irel->r_offset);
+		    bfd_put_8 (abfd,
+			       (0x0f | (bfd_get_8 (abfd,
+						   contents + irel->r_offset))),
+			       contents + irel->r_offset);
 		  else
-		    bfd_put_8 (abfd, (((value1 >> 16)&0xf) | (bfd_get_8(abfd, contents + irel->r_offset))), contents + irel->r_offset);
+		    bfd_put_8 (abfd,
+			       (((value1 >> 16) & 0xf)
+				| (bfd_get_8 (abfd,
+					      contents + irel->r_offset))),
+			       contents + irel->r_offset);
 
 		  /* Fix the relocation's type.  */
 		  irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
@@ -1997,7 +1983,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 
 		  /* That will change things, so, we should relax again.
 		     Note that this is not required, and it may be slow.  */
-		  *again = TRUE;
+		  *again = true;
 		}
 	    }
 
@@ -2008,7 +1994,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 	      unsigned short code;
 
 	      /* Get the opcode.  */
-	      code = (unsigned short) bfd_get_16 (abfd, contents + irel->r_offset);
+	      code = bfd_get_16 (abfd, contents + irel->r_offset);
 
 	      /* Note that we've changed the relocs, section contents, etc.  */
 	      elf_section_data (sec)->relocs = internal_relocs;
@@ -2031,7 +2017,10 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 		 place the 12-16bits (ie 4 bit) in new opcode,
 		 as the 0xfffffxxx, the higher 2 byte values removed. */
 	      if (value1 & 0x80000000)
-		bfd_put_8 (abfd, (0x0f | (bfd_get_8(abfd, contents + irel->r_offset))), contents + irel->r_offset);
+		bfd_put_8 (abfd,
+			   (0x0f | (bfd_get_8 (abfd,
+					       contents + irel->r_offset))),
+			   contents + irel->r_offset);
 	      else
 		bfd_put_16 (abfd, value1, contents + irel->r_offset + 2);
 
@@ -2047,7 +2036,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 
 	      /* That will change things, so, we should relax again.
 		 Note that this is not required, and it may be slow.  */
-	      *again = TRUE;
+	      *again = true;
 	    }
 	}
 
@@ -2065,7 +2054,8 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 
 	  if (ELF32_R_TYPE (irel->r_info) == (int) R_CR16_IMM20)
 	    {
-	      value1 |= ((bfd_get_16 (abfd, contents + irel->r_offset + 1) & 0xf000) << 0x4);
+	      value1 |= ((bfd_get_16 (abfd, contents + irel->r_offset + 1)
+			  & 0xf000) << 0x4);
 	    }
 
 	  /* See if the value will fit in 4 bits.  */
@@ -2075,7 +2065,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 	      unsigned short code;
 
 	      /* Get the opcode.  */
-	      code = (unsigned short) bfd_get_16 (abfd, contents + irel->r_offset);
+	      code = bfd_get_16 (abfd, contents + irel->r_offset);
 
 	      /* Note that we've changed the relocs, section contents, etc.  */
 	      elf_section_data (sec)->relocs = internal_relocs;
@@ -2089,7 +2079,8 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 		    bfd_put_8 (abfd, 0x60, contents + irel->r_offset);
 		  else				      /* For addd imm20.  */
 		    bfd_put_8 (abfd, 0x54, contents + irel->r_offset);
-		  bfd_put_8 (abfd, (code & 0xf0) >> 4, contents + irel->r_offset + 1);
+		  bfd_put_8 (abfd, (code & 0xf0) >> 4,
+			     contents + irel->r_offset + 1);
 		}
 	      else
 		{
@@ -2138,7 +2129,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 
 	      /* That will change things, so, we should relax again.
 		 Note that this is not required, and it may be slow.  */
-	      *again = TRUE;
+	      *again = true;
 	    }
 	}
 #endif
@@ -2150,8 +2141,8 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
       if (! link_info->keep_memory)
 	free (isymbuf);
       else
-       /* Cache the symbols for elf_link_input_bfd.  */
-       symtab_hdr->contents = (unsigned char *) isymbuf;
+	/* Cache the symbols for elf_link_input_bfd.  */
+	symtab_hdr->contents = (unsigned char *) isymbuf;
     }
 
   if (contents != NULL
@@ -2160,15 +2151,15 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
       if (! link_info->keep_memory)
 	free (contents);
       else
-       /* Cache the section contents for elf_link_input_bfd.  */
-       elf_section_data (sec)->this_hdr.contents = contents;
+	/* Cache the section contents for elf_link_input_bfd.  */
+	elf_section_data (sec)->this_hdr.contents = contents;
 
     }
 
   if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
-  return TRUE;
+  return true;
 
  error_return:
   if (symtab_hdr->contents != (unsigned char *) isymbuf)
@@ -2178,7 +2169,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
   if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
-  return FALSE;
+  return false;
 }
 
 static asection *
@@ -2193,7 +2184,7 @@ elf32_cr16_gc_mark_hook (asection *sec,
 
 /* Create dynamic sections when linking against a dynamic object.  */
 
-static bfd_boolean
+static bool
 _bfd_cr16_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 {
   flagword   flags;
@@ -2214,7 +2205,7 @@ _bfd_cr16_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 
     default:
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
 
   /* We need to create .plt, .rel[a].plt, .got, .got.plt, .dynbss, and
@@ -2230,10 +2221,10 @@ _bfd_cr16_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
   htab->srelplt = s;
   if (s == NULL
       || !bfd_set_section_alignment (s, ptralign))
-    return FALSE;
+    return false;
 
   if (! _bfd_cr16_elf_create_got_section (abfd, info))
-    return FALSE;
+    return false;
 
   if (bed->want_dynbss)
     {
@@ -2246,7 +2237,7 @@ _bfd_cr16_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
       s = bfd_make_section_anyway_with_flags (abfd, ".dynbss",
 					      SEC_ALLOC | SEC_LINKER_CREATED);
       if (s == NULL)
-	return FALSE;
+	return false;
 
       /* The .rel[a].bss section holds copy relocs.  This section is not
 	 normally needed.  We need to create it here, though, so that the
@@ -2267,11 +2258,11 @@ _bfd_cr16_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 						  flags | SEC_READONLY);
 	  if (s == NULL
 	      || !bfd_set_section_alignment (s, ptralign))
-	    return FALSE;
+	    return false;
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Adjust a symbol defined by a dynamic object and referenced by a
@@ -2280,7 +2271,7 @@ _bfd_cr16_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
    change the definition to something the rest of the link can
    understand.  */
 
-static bfd_boolean
+static bool
 _bfd_cr16_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
 				     struct elf_link_hash_entry * h)
 {
@@ -2313,14 +2304,14 @@ _bfd_cr16_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
 	     a procedure linkage table, and we can just do a REL32
 	     reloc instead.  */
 	  BFD_ASSERT (h->needs_plt);
-	  return TRUE;
+	  return true;
 	}
 
       /* Make sure this symbol is output as a dynamic symbol.  */
       if (h->dynindx == -1)
 	{
 	  if (! bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
+	    return false;
 	}
 
       /* We also need to make an entry in the .got.plt section, which
@@ -2336,7 +2327,7 @@ _bfd_cr16_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
       BFD_ASSERT (s != NULL);
       s->size += sizeof (Elf32_External_Rela);
 
-      return TRUE;
+      return true;
     }
 
   /* If this is a weak symbol, and there is a real definition, the
@@ -2348,7 +2339,7 @@ _bfd_cr16_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
       BFD_ASSERT (def->root.type == bfd_link_hash_defined);
       h->root.u.def.section = def->root.u.def.section;
       h->root.u.def.value = def->root.u.def.value;
-      return TRUE;
+      return true;
     }
 
   /* This is a reference to a symbol defined by a dynamic object which
@@ -2359,12 +2350,12 @@ _bfd_cr16_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
   if (bfd_link_executable (info))
-    return TRUE;
+    return true;
 
   /* If there are no references to this symbol that do not use the
      GOT, we don't need to generate a copy reloc.  */
   if (!h->non_got_ref)
-    return TRUE;
+    return true;
 
   /* We must allocate the symbol in our .dynbss section, which will
      become part of the .bss section of the executable.  There will be
@@ -2398,13 +2389,13 @@ _bfd_cr16_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
 
 /* Set the sizes of the dynamic sections.  */
 
-static bfd_boolean
+static bool
 _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
 				     struct bfd_link_info * info)
 {
   bfd * dynobj;
   asection * s;
-  bfd_boolean relocs;
+  bool relocs;
 
   dynobj = elf_hash_table (info)->dynobj;
   BFD_ASSERT (dynobj != NULL);
@@ -2437,7 +2428,7 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
   /* The check_relocs and adjust_dynamic_symbol entry points have
      determined the sizes of the various dynamic sections.  Allocate
      memory for them.  */
-  relocs = FALSE;
+  relocs = false;
   for (s = dynobj->sections; s != NULL; s = s->next)
     {
       const char * name;
@@ -2454,21 +2445,21 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
 	  /* Remember whether there is a PLT.  */
 	  ;
 	}
-      else if (CONST_STRNEQ (name, ".rela"))
+      else if (startswith (name, ".rela"))
 	{
 	  if (s->size != 0)
 	    {
 	      /* Remember whether there are any reloc sections other
 		 than .rela.plt.  */
 	      if (strcmp (name, ".rela.plt") != 0)
-		relocs = TRUE;
+		relocs = true;
 
 	      /* We use the reloc_count field as a counter if we need
 		 to copy relocs into the output file.  */
 	      s->reloc_count = 0;
 	    }
 	}
-      else if (! CONST_STRNEQ (name, ".got")
+      else if (! startswith (name, ".got")
 	       && strcmp (name, ".dynbss") != 0)
 	/* It's not one of our sections, so don't allocate space.  */
 	continue;
@@ -2488,8 +2479,8 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
 	  continue;
 	}
 
-	if ((s->flags & SEC_HAS_CONTENTS) == 0)
-	  continue;
+      if ((s->flags & SEC_HAS_CONTENTS) == 0)
+	continue;
 
       /* Allocate memory for the section contents.  We use bfd_zalloc
 	 here in case unused entries are not reclaimed before the
@@ -2498,7 +2489,7 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
 	 instead of garbage.  */
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
-	return FALSE;
+	return false;
     }
 
   return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
@@ -2507,7 +2498,7 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
 /* Finish up dynamic symbol handling.  We set the contents of various
    dynamic sections here.  */
 
-static bfd_boolean
+static bool
 _bfd_cr16_elf_finish_dynamic_symbol (bfd * output_bfd,
 				     struct bfd_link_info * info,
 				     struct elf_link_hash_entry * h,
@@ -2581,7 +2572,7 @@ _bfd_cr16_elf_finish_dynamic_symbol (bfd * output_bfd,
       bfd_elf32_swap_reloca_out (output_bfd, &rel,
 				 (bfd_byte *) ((Elf32_External_Rela *) s->contents
 					       + s->reloc_count));
-     ++ s->reloc_count;
+      ++ s->reloc_count;
     }
 
   /* Mark _DYNAMIC and _GLOBAL_OFFSET_TABLE_ as absolute.  */
@@ -2589,12 +2580,12 @@ _bfd_cr16_elf_finish_dynamic_symbol (bfd * output_bfd,
       || h == elf_hash_table (info)->hgot)
     sym->st_shndx = SHN_ABS;
 
-  return TRUE;
+  return true;
 }
 
 /* Finish up the dynamic sections.  */
 
-static bfd_boolean
+static bool
 _bfd_cr16_elf_finish_dynamic_sections (bfd * output_bfd,
 				       struct bfd_link_info * info)
 {
@@ -2664,7 +2655,7 @@ _bfd_cr16_elf_finish_dynamic_sections (bfd * output_bfd,
 
   elf_section_data (sgot->output_section)->this_hdr.sh_entsize = 4;
 
-  return TRUE;
+  return true;
 }
 
 /* Given a .data.rel section and a .emreloc in-memory section, store
@@ -2674,7 +2665,7 @@ _bfd_cr16_elf_finish_dynamic_sections (bfd * output_bfd,
    after the add_symbols entry point has been called for all the
    objects, and before the final_link entry point is called.  */
 
-bfd_boolean
+bool
 bfd_cr16_elf32_create_embedded_relocs (bfd *abfd,
 				       struct bfd_link_info *info,
 				       asection *datasec,
@@ -2693,7 +2684,7 @@ bfd_cr16_elf32_create_embedded_relocs (bfd *abfd,
   *errmsg = NULL;
 
   if (datasec->reloc_count == 0)
-    return TRUE;
+    return true;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
 
@@ -2716,14 +2707,14 @@ bfd_cr16_elf32_create_embedded_relocs (bfd *abfd,
       asection *targetsec;
 
       /* We are going to write a four byte longword into the runtime
-       reloc section.  The longword will be the address in the data
-       section which must be relocated.  It is followed by the name
-       of the target section NUL-padded or truncated to 8
-       characters.  */
+	 reloc section.  The longword will be the address in the data
+	 section which must be relocated.  It is followed by the name
+	 of the target section NUL-padded or truncated to 8
+	 characters.  */
 
       /* We can only relocate absolute longword relocs at run time.  */
       if (!((ELF32_R_TYPE (irel->r_info) == (int) R_CR16_NUM32a)
-	  || (ELF32_R_TYPE (irel->r_info) == (int) R_CR16_NUM32)))
+	    || (ELF32_R_TYPE (irel->r_info) == (int) R_CR16_NUM32)))
 	{
 	  *errmsg = _("unsupported relocation type");
 	  bfd_set_error (bfd_error_bad_value);
@@ -2771,21 +2762,21 @@ bfd_cr16_elf32_create_embedded_relocs (bfd *abfd,
       memset (p + 4, 0, 4);
       if ((ELF32_R_TYPE (irel->r_info) == (int) R_CR16_NUM32a)
 	  && (targetsec != NULL) )
-	 strncpy ((char *) p + 4, targetsec->output_section->name, 4);
+	strncpy ((char *) p + 4, targetsec->output_section->name, 4);
     }
 
   if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
   if (elf_section_data (datasec)->relocs != internal_relocs)
     free (internal_relocs);
-  return TRUE;
+  return true;
 
  error_return:
   if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
   if (elf_section_data (datasec)->relocs != internal_relocs)
     free (internal_relocs);
-  return FALSE;
+  return false;
 }
 
 

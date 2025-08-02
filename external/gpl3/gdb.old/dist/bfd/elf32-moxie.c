@@ -1,8 +1,8 @@
 /* moxie-specific support for 32-bit ELF.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    Copied from elf32-fr30.c which is..
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -34,47 +34,47 @@ static reloc_howto_type moxie_elf_howto_table [] =
   /* This reloc does nothing.  */
   HOWTO (R_MOXIE_NONE,		/* type */
 	 0,			/* rightshift */
-	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MOXIE_NONE",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 32 bit absolute relocation.  */
   HOWTO (R_MOXIE_32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MOXIE_32",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00000000,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 10 bit PC-relative relocation.  */
   HOWTO (R_MOXIE_PCREL10,	/* type.  */
 	 1,			/* rightshift.  */
-	 1,			/* size (0 = byte, 1 = short, 2 = long).  */
+	 2,			/* size.  */
 	 10,			/* bitsize.  */
-	 TRUE,			/* pc_relative.  */
+	 true,			/* pc_relative.  */
 	 0,			/* bitpos.  */
 	 complain_overflow_signed, /* complain_on_overflow.  */
 	 bfd_elf_generic_reloc,	/* special_function.  */
 	 "R_MOXIE_PCREL10",		/* name.  */
-	 FALSE,			/* partial_inplace.  */
+	 false,			/* partial_inplace.  */
 	 0,			/* src_mask.  */
 	 0x000003FF,		/* dst_mask.  */
-	 TRUE),			/* pcrel_offset.  */
+	 true),			/* pcrel_offset.  */
 };
 
 /* Map BFD reloc types to MOXIE ELF reloc types.  */
@@ -123,7 +123,7 @@ moxie_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name)
 
 /* Set the howto pointer for an MOXIE ELF reloc.  */
 
-static bfd_boolean
+static bool
 moxie_info_to_howto_rela (bfd *abfd,
 			  arelent *cache_ptr,
 			  Elf_Internal_Rela *dst)
@@ -137,10 +137,10 @@ moxie_info_to_howto_rela (bfd *abfd,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
   cache_ptr->howto = & moxie_elf_howto_table [r_type];
-  return TRUE;
+  return true;
 }
 
 /* Perform a single relocation.  By default we use the standard BFD
@@ -197,7 +197,7 @@ moxie_final_link_relocate (reloc_howto_type *howto,
    section, which means that the addend must be adjusted
    accordingly.  */
 
-static bfd_boolean
+static int
 moxie_elf_relocate_section (bfd *output_bfd,
 			    struct bfd_link_info *info,
 			    bfd *input_bfd,
@@ -247,7 +247,7 @@ moxie_elf_relocate_section (bfd *output_bfd,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned, ignored;
+	  bool unresolved_reloc, warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -281,7 +281,7 @@ moxie_elf_relocate_section (bfd *output_bfd,
 
 	    case bfd_reloc_undefined:
 	      (*info->callbacks->undefined_symbol)
-		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
+		(info, name, input_bfd, input_section, rel->r_offset, true);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -307,7 +307,7 @@ moxie_elf_relocate_section (bfd *output_bfd,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Return the section that should be marked against GC for a given
@@ -327,7 +327,7 @@ moxie_elf_gc_mark_hook (asection *sec,
    Since we don't do .gots or .plts, we just need to consider the
    virtual table relocs for gc.  */
 
-static bfd_boolean
+static bool
 moxie_elf_check_relocs (bfd *abfd,
 			struct bfd_link_info *info,
 			asection *sec,
@@ -339,7 +339,7 @@ moxie_elf_check_relocs (bfd *abfd,
   const Elf_Internal_Rela *rel_end;
 
   if (bfd_link_relocatable (info))
-    return TRUE;
+    return true;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
@@ -362,7 +362,7 @@ moxie_elf_check_relocs (bfd *abfd,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 #define ELF_ARCH		bfd_arch_moxie

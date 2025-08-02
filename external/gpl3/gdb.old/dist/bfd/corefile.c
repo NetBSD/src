@@ -1,5 +1,5 @@
 /* Core file generic interface routines for BFD.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -111,7 +111,7 @@ FUNCTION
 	core_file_matches_executable_p
 
 SYNOPSIS
-	bfd_boolean core_file_matches_executable_p
+	bool core_file_matches_executable_p
 	  (bfd *core_bfd, bfd *exec_bfd);
 
 DESCRIPTION
@@ -120,13 +120,13 @@ DESCRIPTION
 	@var{exec_bfd}, <<FALSE>> otherwise.
 */
 
-bfd_boolean
+bool
 core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
 {
   if (core_bfd->format != bfd_core || exec_bfd->format != bfd_object)
     {
       bfd_set_error (bfd_error_wrong_format);
-      return FALSE;
+      return false;
     }
 
   return BFD_SEND (core_bfd, _core_file_matches_executable_p,
@@ -138,7 +138,7 @@ FUNCTION
 	generic_core_file_matches_executable_p
 
 SYNOPSIS
-	bfd_boolean generic_core_file_matches_executable_p
+	bool generic_core_file_matches_executable_p
 	  (bfd *core_bfd, bfd *exec_bfd);
 
 DESCRIPTION
@@ -154,7 +154,7 @@ DESCRIPTION
 	where we really don't know whether they match or not.
 */
 
-bfd_boolean
+bool
 generic_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
 {
   const char *exec;
@@ -162,7 +162,7 @@ generic_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
   const char *last_slash;
 
   if (exec_bfd == NULL || core_bfd == NULL)
-    return TRUE;
+    return true;
 
   /* The cast below is to avoid a compiler warning due to the assignment
      of the const char * returned by bfd_core_file_failing_command to a
@@ -171,11 +171,11 @@ generic_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
 
   core = bfd_core_file_failing_command (core_bfd);
   if (core == NULL)
-    return TRUE;
+    return true;
 
   exec = bfd_get_filename (exec_bfd);
   if (exec == NULL)
-    return TRUE;
+    return true;
 
   last_slash = strrchr (core, '/');
   if (last_slash != NULL)

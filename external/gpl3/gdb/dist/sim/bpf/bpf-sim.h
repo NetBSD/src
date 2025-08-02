@@ -1,5 +1,7 @@
-/* eBPF simulator support code header
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+/* BPF simulator support code header
+   Copyright (C) 2023-2024 Free Software Foundation, Inc.
+
+   Contributed by Oracle Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -19,13 +21,13 @@
 #ifndef BPF_SIM_H
 #define BPF_SIM_H
 
-void bpfbf_insn_before (sim_cpu* current_cpu, SEM_PC vpc, const IDESC *idesc);
-void bpfbf_insn_after (sim_cpu* current_cpu, SEM_PC vpc, const IDESC *idesc);
+/* The following struct determines the state of the simulator.  */
 
-DI bpfbf_endbe (SIM_CPU *, DI, UINT);
-DI bpfbf_endle (SIM_CPU *, DI, UINT);
-DI bpfbf_skb_data_offset (SIM_CPU *);
-VOID bpfbf_call (SIM_CPU *, INT, UINT);
-VOID bpfbf_exit (SIM_CPU *);
+struct bpf_sim_state
+{
+
+};
+
+#define BPF_SIM_STATE(sd) ((struct bpf_sim_state *) STATE_ARCH_DATA (sd))
 
 #endif /* ! BPF_SIM_H */

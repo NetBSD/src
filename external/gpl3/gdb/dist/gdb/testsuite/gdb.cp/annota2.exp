@@ -1,4 +1,4 @@
-#   Copyright 1999-2023 Free Software Foundation, Inc.
+#   Copyright 1999-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 # test running programs
 #
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests
 
 standard_testfile .cc
 
@@ -32,9 +32,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
 # This testcase cannot use runto_main because of the different prompt
 # we get when using annotation level 2.
 #
-if ![target_can_use_run_cmd] {
-    return 0
-}
+require target_can_use_run_cmd
 
 set breakpoints_invalid "\r\n\032\032breakpoints-invalid\r\n"
 set frames_invalid "\r\n\032\032frames-invalid\r\n"
@@ -128,13 +126,24 @@ gdb_test_multiple "print a" "print class" {
 # `a.x is 1' is asynchronous regarding to `frames-invalid'.
 #
 
+if { $gdb_spawn_id == $inferior_spawn_id } {
+    set match_output \
+	[multi_line \
+	     "\($frames_invalid\)*a.x is 1" \
+	     "\($frames_invalid\)*"]
+} else {
+    # Usually we'd handle this using gdb_test_stdio, but that looks too
+    # complicated in combination with annotations, so just ignore the inferior
+    # output.
+    set match_output "\($frames_invalid\)*"
+}
+
 set pat [multi_line "" \
 	     "\032\032post-prompt" \
 	     "Continuing." \
 	     "" \
 	     "\032\032starting" \
-	     "\(${frames_invalid}\)*a.x is 1" \
-	     "\(${frames_invalid}\)*"\
+	     $match_output \
 	     "\032\032exited 0" \
 	     "$inferior_exited_re normally." \
 	     "" \
@@ -149,11 +158,11 @@ gdb_test_multiple "continue" "continue until exit" {
 }
 
 #
-# delete all breakpoints
+# delete all breakpoints, watchpoints, tracepoints, and catchpoints
 #
 send_gdb "delete\n"
 gdb_expect {
-  -re ".*Delete all breakpoints. \\(y or n\\) \r\n\032\032query.*$" {
+  -re ".*Delete all breakpoints, watchpoints, tracepoints, and catchpoints. \\(y or n\\) \r\n\032\032query.*$" {
            send_gdb "y\n"
            gdb_expect {
 	     -re "\r\n\032\032post-query\r\n${breakpoints_invalid}$gdb_prompt$" { pass "delete bps" }

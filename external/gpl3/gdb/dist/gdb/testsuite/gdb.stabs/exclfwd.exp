@@ -1,4 +1,4 @@
-#   Copyright 2004-2023 Free Software Foundation, Inc.
+#   Copyright 2004-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
 
 standard_testfile exclfwd1.c exclfwd2.c
 
+include_file exclfwd.h
+
 if {[prepare_for_testing "failed to prepare" $testfile \
 	 [list $srcfile $srcfile2] debug]} {
     return -1
@@ -33,19 +35,21 @@ if {![runto_main]} {
 
 get_debug_format
 
-set eol "\[ \t\]*\[\n\r\]+"
-
-gdb_test "ptype v1" "type = struct a {$eol
-    int x;$eol
-    int y;$eol
-}$eol"
+gdb_test "ptype v1" \
+    [multi_line \
+	 "type = struct a {" \
+	 "    int x;" \
+	 "    int y;" \
+	 "}"]
 
 if {[test_debug_format "stabs"]} {
     setup_kfail "gdb/1602" *-*-*
 }
-gdb_test "ptype v2" "type = struct a {$eol
-    const char .c;$eol
-}$eol"
+gdb_test "ptype v2" \
+    [multi_line \
+	 "type = struct a {" \
+	 "    const char .c;" \
+	 "}"]
 
 if {[test_debug_format "stabs"]} {
     setup_kfail "gdb/1603" *-*-*

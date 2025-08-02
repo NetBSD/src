@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,18 +34,34 @@
 
 load_lib dwarf.exp
 
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 standard_testfile .c -dw.S
 
-if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
+set flags {}
+lappend flags debug
+lappend_include_file flags $srcdir/lib/attributes.h
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $flags] } {
     return -1
+}
+
+with_shared_gdb {
+    set func_info_vars [get_func_info main $flags]
+
+    set int_size [get_sizeof "int" "UNKNOWN"]
+    set voidp_size [get_sizeof "void *" "UNKNOWN"]
 }
 
 set asm_file [standard_output_file $srcfile2]
 Dwarf::assemble $asm_file {
+    global func_info_vars
+    foreach var $func_info_vars {
+       global $var
+    }
+    global int_size
+    global voidp_size
+
     cu {} {
 	global srcfile
 
@@ -56,9 +72,6 @@ Dwarf::assemble $asm_file {
             {low_pc 0 addr}
         } {
 	    declare_labels array_type_label integer_type_label
-
-	    set int_size [get_sizeof "int" "UNKNOWN"]
-	    set voidp_size [get_sizeof "void *" "UNKNOWN"]
 
             integer_type_label: DW_TAG_base_type {
                 {DW_AT_byte_size $int_size DW_FORM_sdata}
@@ -97,16 +110,22 @@ Dwarf::assemble $asm_file {
 		{name "dyn_object"}
 		{type :$array_type_label}
 	    }
-            subprogram {
-                {external 1 flag}
-                {MACRO_AT_func {main}}
-            }
+	   subprogram {
+	       {external 1 flag}
+	       {DW_AT_name main}
+	       {DW_AT_low_pc $main_start DW_FORM_addr}
+	       {DW_AT_high_pc $main_end DW_FORM_addr}
+	   }
         }
     }
 }
 
+set flags {}
+lappend flags {nodebug}
+lappend_include_file flags $srcdir/lib/attributes.h
+
 if { [prepare_for_testing "failed to prepare" "${testfile}" \
-	  [list $srcfile $asm_file] {nodebug}] } {
+	  [list $srcfile $asm_file] $flags] } {
     return -1
 }
 

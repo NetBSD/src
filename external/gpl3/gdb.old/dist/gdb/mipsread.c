@@ -1,6 +1,6 @@
 /* Read a symbol table in MIPS' format (Third-Eye).
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    Contributed by Alessandro Forin (af@cs.cmu.edu) at CMU.  Major work
    by Per Bothner, John Gilmore and Ian Lance Taylor at Cygnus Support.
@@ -67,7 +67,7 @@ mipscoff_symfile_init (struct objfile *objfile)
 static void
 mipscoff_symfile_read (struct objfile *objfile, symfile_add_flags symfile_flags)
 {
-  bfd *abfd = objfile->obfd;
+  bfd *abfd = objfile->obfd.get ();
 
   minimal_symbol_reader reader (objfile);
 
@@ -175,7 +175,7 @@ static void
 read_alphacoff_dynamic_symtab (minimal_symbol_reader &reader,
 			       struct objfile *objfile)
 {
-  bfd *abfd = objfile->obfd;
+  bfd *abfd = objfile->obfd.get ();
   struct alphacoff_dynsecinfo si;
   int sym_count;
   int i;
@@ -369,14 +369,12 @@ static const struct sym_fns ecoff_sym_fns =
   mipscoff_new_init,		/* init anything gbl to entire symtab */
   mipscoff_symfile_init,	/* read initial info, setup for sym_read() */
   mipscoff_symfile_read,	/* read a symbol file into symtab */
-  NULL,				/* sym_read_psymbols */
   mipscoff_symfile_finish,	/* finished with file, cleanup */
   default_symfile_offsets,	/* dummy FIXME til implem sym reloc */
   default_symfile_segments,	/* Get segment information from a file.  */
   NULL,
   default_symfile_relocate,	/* Relocate a debug section.  */
   NULL,				/* sym_probe_fns */
-  &psym_functions
 };
 
 void _initialize_mipsread ();

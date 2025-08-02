@@ -1,5 +1,5 @@
 /* LoongArch64 COFF support for BFD.
-   Copyright (C) 2022 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -16,6 +16,9 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
+
+#ifndef COFF_LOONGARCH64_H
+#define COFF_LOONGARCH64_H
 
 #define COFFLOONGARCH64 1
 
@@ -59,3 +62,5 @@ struct external_reloc
 
 #define RELOC struct external_reloc
 #define RELSZ 14
+
+#endif /* COFF_LOONGARCH64_H */

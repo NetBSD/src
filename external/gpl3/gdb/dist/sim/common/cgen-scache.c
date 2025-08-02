@@ -1,5 +1,5 @@
 /* Simulator cache routines for CGEN simulators (and maybe others).
-   Copyright (C) 1996-2023 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -276,7 +276,10 @@ scache_flush (SIM_DESC sd)
 void
 scache_flush_cpu (SIM_CPU *cpu)
 {
-  int i,n;
+  int i;
+#if WITH_SCACHE_PBB
+  int n;
+#endif
 
   /* Don't bother if cache not in use.  */
   if (CPU_SCACHE_SIZE (cpu) == 0)
@@ -420,15 +423,12 @@ scache_lookup_or_alloc (SIM_CPU *cpu, IADDR pc, int n, SCACHE **bufp)
 /* Print cache access statics for CPU.  */
 
 void
-scache_print_profile (SIM_CPU *cpu, int verbose)
+scache_print_profile (SIM_CPU *cpu, bool verbose)
 {
   SIM_DESC sd = CPU_STATE (cpu);
   unsigned long hits = CPU_SCACHE_HITS (cpu);
   unsigned long misses = CPU_SCACHE_MISSES (cpu);
   char buf[20];
-  unsigned long max_val;
-  unsigned long *lengths;
-  int i;
 
   if (CPU_SCACHE_SIZE (cpu) == 0)
     return;
@@ -460,6 +460,10 @@ scache_print_profile (SIM_CPU *cpu, int verbose)
 
   if (verbose)
     {
+      unsigned long max_val;
+      unsigned long *lengths;
+      int i;
+
       sim_io_printf (sd, "  Insn chain lengths:\n\n");
       max_val = 0;
       lengths = CPU_SCACHE_CHAIN_LENGTHS (cpu);

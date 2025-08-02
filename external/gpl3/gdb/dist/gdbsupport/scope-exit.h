@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -69,16 +69,7 @@ public:
       }
   }
 
-  /* This is needed for make_scope_exit because copy elision isn't
-     guaranteed until C++17.  An optimizing compiler will usually skip
-     calling this, but it must exist.  */
-  scope_exit_base (const scope_exit_base &other)
-    : m_released (other.m_released)
-  {
-    other.m_released = true;
-  }
-
-  void operator= (const scope_exit_base &) = delete;
+  DISABLE_COPY_AND_ASSIGN (scope_exit_base);
 
   /* If this is called, then the wrapped function will not be called
      on destruction.  */
@@ -132,16 +123,7 @@ public:
     rhs.release ();
   }
 
-  /* This is needed for make_scope_exit because copy elision isn't
-     guaranteed until C++17.  An optimizing compiler will usually skip
-     calling this, but it must exist.  */
-  scope_exit (const scope_exit &other)
-    : scope_exit_base<scope_exit<EF>> (other),
-      m_exit_function (other.m_exit_function)
-  {
-  }
-
-  void operator= (const scope_exit &) = delete;
+  DISABLE_COPY_AND_ASSIGN (scope_exit);
   void operator= (scope_exit &&) = delete;
 
 private:

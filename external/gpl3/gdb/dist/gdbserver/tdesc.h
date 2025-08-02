@@ -1,5 +1,5 @@
 /* Target description definitions for remote server for GDB.
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,9 +40,9 @@ struct target_desc final : tdesc_element
   std::vector<tdesc_feature_up> features;
 
 #ifndef IN_PROCESS_AGENT
-  /* An array of register names.  These are the "expedite" registers:
+  /* A vector of register names.  These are the "expedite" registers:
      registers whose values are sent along with stop replies.  */
-  const char **expedite_regs = NULL;
+  std::vector<std::string> expedite_regs;
 
   /* Defines what to return when looking for the "target.xml" file in
      response to qXfer:features:read.  Its contents can either be

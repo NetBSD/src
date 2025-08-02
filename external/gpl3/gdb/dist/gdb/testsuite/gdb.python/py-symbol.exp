@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 
 load_lib gdb-python.exp
 
+require allow_python_tests
+
 standard_testfile py-symbol.c py-symbol-2.c
 
 set opts { debug additional_flags=-DUSE_TWO_FILES }
@@ -25,9 +27,6 @@ if {[prepare_for_testing "failed to prepare" $testfile \
 	 [list $srcfile $srcfile2] $opts]} {
     return -1
 }
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 set readnow_p [readnow]
 
@@ -44,6 +43,8 @@ clean_restart ${binfile}
 # point where we don't have a current frame, and we don't want to
 # require one.
 gdb_py_test_silent_cmd "python main_func = gdb.lookup_global_symbol(\"main\")" "Lookup main" 1
+gdb_test "python print (repr (main_func))" "<gdb.Symbol print_name=main>" \
+    "test main_func.__repr__"
 gdb_test "python print (main_func.is_function)" "True" "test main_func.is_function"
 gdb_test "python print (gdb.lookup_global_symbol(\"junk\"))" "None" "test lookup_global_symbol(\"junk\")"
 

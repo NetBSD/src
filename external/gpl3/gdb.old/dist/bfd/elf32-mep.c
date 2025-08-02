@@ -1,5 +1,5 @@
 /* MeP-specific support for 32-bit ELF.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -30,7 +30,7 @@
 /* Private relocation functions.  */
 
 #define MEPREL(type, size, bits, right, left, pcrel, overflow, mask) \
-  HOWTO (type, right, size, bits, pcrel, left, overflow, bfd_elf_generic_reloc, #type, FALSE, 0, mask, 0)
+  HOWTO (type, right, size, bits, pcrel, left, overflow, bfd_elf_generic_reloc, #type, false, 0, mask, 0)
 
 #define N complain_overflow_dont
 #define S complain_overflow_signed
@@ -39,30 +39,30 @@
 static reloc_howto_type mep_elf_howto_table [] =
 {
   /* type, size, bits, leftshift, rightshift, pcrel, OD/OS/OU, mask.  */
-  MEPREL (R_MEP_NONE,	  3,  0, 0, 0, 0, N, 0),
+  MEPREL (R_MEP_NONE,	  0,  0, 0, 0, 0, N, 0),
   MEPREL (R_RELC,	  0,  0, 0, 0, 0, N, 0),
   /* MEPRELOC:HOWTO */
     /* This section generated from bfd/mep-relocs.pl from include/elf/mep.h.  */
-  MEPREL (R_MEP_8,        0,  8, 0, 0, 0, U, 0xff),
-  MEPREL (R_MEP_16,       1, 16, 0, 0, 0, U, 0xffff),
-  MEPREL (R_MEP_32,       2, 32, 0, 0, 0, U, 0xffffffff),
-  MEPREL (R_MEP_PCREL8A2, 1,  8, 1, 1, 1, S, 0x00fe),
-  MEPREL (R_MEP_PCREL12A2,1, 12, 1, 1, 1, S, 0x0ffe),
-  MEPREL (R_MEP_PCREL17A2,2, 17, 0, 1, 1, S, 0x0000ffff),
-  MEPREL (R_MEP_PCREL24A2,2, 24, 0, 1, 1, S, 0x07f0ffff),
-  MEPREL (R_MEP_PCABS24A2,2, 24, 0, 1, 0, U, 0x07f0ffff),
-  MEPREL (R_MEP_LOW16,    2, 16, 0, 0, 0, N, 0x0000ffff),
-  MEPREL (R_MEP_HI16U,    2, 32, 0,16, 0, N, 0x0000ffff),
-  MEPREL (R_MEP_HI16S,    2, 32, 0,16, 0, N, 0x0000ffff),
-  MEPREL (R_MEP_GPREL,    2, 16, 0, 0, 0, S, 0x0000ffff),
-  MEPREL (R_MEP_TPREL,    2, 16, 0, 0, 0, S, 0x0000ffff),
-  MEPREL (R_MEP_TPREL7,   1,  7, 0, 0, 0, U, 0x007f),
-  MEPREL (R_MEP_TPREL7A2, 1,  7, 1, 1, 0, U, 0x007e),
-  MEPREL (R_MEP_TPREL7A4, 1,  7, 2, 2, 0, U, 0x007c),
-  MEPREL (R_MEP_UIMM24,   2, 24, 0, 0, 0, U, 0x00ffffff),
-  MEPREL (R_MEP_ADDR24A4, 2, 24, 0, 2, 0, U, 0x00fcffff),
-  MEPREL (R_MEP_GNU_VTINHERIT,1,  0,16,32, 0, N, 0x0000),
-  MEPREL (R_MEP_GNU_VTENTRY,1,  0,16,32, 0, N, 0x0000),
+  MEPREL (R_MEP_8,        1,  8, 0, 0, 0, U, 0xff),
+  MEPREL (R_MEP_16,       2, 16, 0, 0, 0, U, 0xffff),
+  MEPREL (R_MEP_32,       4, 32, 0, 0, 0, U, 0xffffffff),
+  MEPREL (R_MEP_PCREL8A2, 2,  8, 1, 1, 1, S, 0x00fe),
+  MEPREL (R_MEP_PCREL12A2,2, 12, 1, 1, 1, S, 0x0ffe),
+  MEPREL (R_MEP_PCREL17A2,4, 17, 0, 1, 1, S, 0x0000ffff),
+  MEPREL (R_MEP_PCREL24A2,4, 24, 0, 1, 1, S, 0x07f0ffff),
+  MEPREL (R_MEP_PCABS24A2,4, 24, 0, 1, 0, U, 0x07f0ffff),
+  MEPREL (R_MEP_LOW16,    4, 16, 0, 0, 0, N, 0x0000ffff),
+  MEPREL (R_MEP_HI16U,    4, 32, 0,16, 0, N, 0x0000ffff),
+  MEPREL (R_MEP_HI16S,    4, 32, 0,16, 0, N, 0x0000ffff),
+  MEPREL (R_MEP_GPREL,    4, 16, 0, 0, 0, S, 0x0000ffff),
+  MEPREL (R_MEP_TPREL,    4, 16, 0, 0, 0, S, 0x0000ffff),
+  MEPREL (R_MEP_TPREL7,   2,  7, 0, 0, 0, U, 0x007f),
+  MEPREL (R_MEP_TPREL7A2, 2,  7, 1, 1, 0, U, 0x007e),
+  MEPREL (R_MEP_TPREL7A4, 2,  7, 2, 2, 0, U, 0x007c),
+  MEPREL (R_MEP_UIMM24,   4, 24, 0, 0, 0, U, 0x00ffffff),
+  MEPREL (R_MEP_ADDR24A4, 4, 24, 0, 2, 0, U, 0x00fcffff),
+  MEPREL (R_MEP_GNU_VTINHERIT,2,  0,16,32, 0, N, 0x0000),
+  MEPREL (R_MEP_GNU_VTENTRY,2,  0,16,32, 0, N, 0x0000),
   /* MEPRELOC:END */
 };
 
@@ -185,7 +185,7 @@ mep_lookup_global
   if (*cache || *warn)
     return *cache;
 
-  h = bfd_link_hash_lookup (mep_info->hash, name, FALSE, FALSE, TRUE);
+  h = bfd_link_hash_lookup (mep_info->hash, name, false, false, true);
   if (h == 0 || h->type != bfd_link_hash_defined)
     {
       *warn = ofs + 1;
@@ -371,7 +371,7 @@ mep_final_link_relocate
 
 /* Set the howto pointer for a MEP ELF reloc.  */
 
-static bfd_boolean
+static bool
 mep_info_to_howto_rela (bfd *		    abfd,
 			arelent *	    cache_ptr,
 			Elf_Internal_Rela * dst)
@@ -385,10 +385,10 @@ mep_info_to_howto_rela (bfd *		    abfd,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
   cache_ptr->howto = & mep_elf_howto_table [r_type];
-  return TRUE;
+  return true;
 }
 
 /* Relocate a MEP ELF section.
@@ -424,7 +424,7 @@ mep_info_to_howto_rela (bfd *		    abfd,
    section, which means that the addend must be adjusted
    accordingly.  */
 
-static bfd_boolean
+static int
 mep_elf_relocate_section
     (bfd *		     output_bfd ATTRIBUTE_UNUSED,
      struct bfd_link_info *  info,
@@ -477,7 +477,7 @@ mep_elf_relocate_section
 	}
       else
 	{
-	  bfd_boolean warned, unresolved_reloc, ignored;
+	  bool warned, unresolved_reloc, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL(info, input_bfd, input_section, rel,
 				  r_symndx, symtab_hdr, sym_hashes,
@@ -515,7 +515,7 @@ mep_elf_relocate_section
 
 	    case bfd_reloc_undefined:
 	      (*info->callbacks->undefined_symbol)
-		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
+		(info, name, input_bfd, input_section, rel->r_offset, true);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -543,31 +543,31 @@ mep_elf_relocate_section
 
   if (warn_tp)
     info->callbacks->undefined_symbol
-      (info, "__tpbase", input_bfd, input_section, warn_tp-1, TRUE);
+      (info, "__tpbase", input_bfd, input_section, warn_tp-1, true);
   if (warn_sda)
     info->callbacks->undefined_symbol
-      (info, "__sdabase", input_bfd, input_section, warn_sda-1, TRUE);
+      (info, "__sdabase", input_bfd, input_section, warn_sda-1, true);
   if (warn_sda || warn_tp)
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 /* Function to set the ELF flag bits.  */
 
-static bfd_boolean
+static bool
 mep_elf_set_private_flags (bfd *    abfd,
 			   flagword flags)
 {
   elf_elfheader (abfd)->e_flags = flags;
-  elf_flags_init (abfd) = TRUE;
-  return TRUE;
+  elf_flags_init (abfd) = true;
+  return true;
 }
 
 /* Merge backend specific data from an object file to the output
    object file when linking.  */
 
-static bfd_boolean
+static bool
 mep_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
   bfd *obfd = info->output_bfd;
@@ -577,7 +577,7 @@ mep_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 
   /* Check if we have the same endianness.  */
   if (!_bfd_generic_verify_endian_match (ibfd, info))
-    return FALSE;
+    return false;
 
   new_flags = elf_elfheader (ibfd)->e_flags;
   old_flags = elf_elfheader (obfd)->e_flags;
@@ -590,7 +590,7 @@ mep_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
     /* First call, no flags set.  */
     if (!elf_flags_init (obfd))
     {
-      elf_flags_init (obfd) = TRUE;
+      elf_flags_init (obfd) = true;
       old_flags = new_flags;
     }
   else if ((new_flags | old_flags) & EF_MEP_LIBRARY)
@@ -618,7 +618,7 @@ mep_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	  _bfd_error_handler (_("%pB and %pB are for different cores"),
 			      last_ibfd, ibfd);
 	  bfd_set_error (bfd_error_invalid_target);
-	  return FALSE;
+	  return false;
 	}
 
       /* Make sure they're for the same me_module.  Allow basic config to
@@ -637,13 +637,13 @@ mep_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	  _bfd_error_handler (_("%pB and %pB are for different configurations"),
 			      last_ibfd, ibfd);
 	  bfd_set_error (bfd_error_invalid_target);
-	  return FALSE;
+	  return false;
 	}
     }
 
   elf_elfheader (obfd)->e_flags = old_flags;
   last_ibfd = ibfd;
-  return TRUE;
+  return true;
 }
 
 /* This will be edited by the MeP configration tool.  */
@@ -660,7 +660,7 @@ static const char * core_names[] =
   "MeP", "MeP-c2", "MeP-c3", "MeP-h1"
 };
 
-static bfd_boolean
+static bool
 mep_elf_print_private_bfd_data (bfd * abfd, void * ptr)
 {
   FILE *   file = (FILE *) ptr;
@@ -684,7 +684,7 @@ mep_elf_print_private_bfd_data (bfd * abfd, void * ptr)
 
   fputc ('\n', file);
 
-  return TRUE;
+  return true;
 }
 
 /* Return the machine subcode from the ELF e_flags header.  */
@@ -705,29 +705,29 @@ elf32_mep_machine (bfd * abfd)
   return bfd_mach_mep;
 }
 
-static bfd_boolean
+static bool
 mep_elf_object_p (bfd * abfd)
 {
   bfd_default_set_arch_mach (abfd, bfd_arch_mep, elf32_mep_machine (abfd));
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 mep_elf_section_flags (const Elf_Internal_Shdr *hdr)
 {
   if (hdr->sh_flags & SHF_MEP_VLIW)
     hdr->bfd_section->flags |= SEC_MEP_VLIW;
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 mep_elf_fake_sections (bfd *		   abfd ATTRIBUTE_UNUSED,
 		       Elf_Internal_Shdr * hdr,
 		       asection *	   sec)
 {
   if (sec->flags & SEC_MEP_VLIW)
     hdr->sh_flags |= SHF_MEP_VLIW;
-  return TRUE;
+  return true;
 }
 
 

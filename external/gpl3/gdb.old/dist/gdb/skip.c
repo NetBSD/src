@@ -1,6 +1,6 @@
 /* Skipping uninteresting files and functions while stepping.
 
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,10 +33,11 @@
 #include "source.h"
 #include "filenames.h"
 #include "fnmatch.h"
-#include "gdb_regex.h"
+#include "gdbsupport/gdb_regex.h"
 #include "gdbsupport/gdb_optional.h"
 #include <list>
 #include "cli/cli-style.h"
+#include "gdbsupport/buildargv.h"
 
 /* True if we want to print debug printouts related to file/function
    skipping. */
@@ -139,14 +140,8 @@ skiplist_entry::skiplist_entry (bool file_is_glob,
   if (m_function_is_regexp)
     {
       gdb_assert (!m_function.empty ());
-
-      int flags = REG_NOSUB;
-#ifdef REG_EXTENDED
-      flags |= REG_EXTENDED;
-#endif
-
-      gdb_assert (!m_function.empty ());
-      m_compiled_function_regexp.emplace (m_function.c_str (), flags,
+      m_compiled_function_regexp.emplace (m_function.c_str (),
+					  REG_NOSUB | REG_EXTENDED,
 					  _("regexp"));
     }
 }
@@ -189,7 +184,7 @@ skip_file_command (const char *arg, int from_tty)
   skiplist_entry::add_entry (false, std::string (filename),
 			     false, std::string ());
 
-  printf_filtered (_("File %s will be skipped when stepping.\n"), filename);
+  gdb_printf (_("File %s will be skipped when stepping.\n"), filename);
 }
 
 /* Create a skiplist entry for the given function NAME and add it to the
@@ -200,7 +195,7 @@ skip_function (const char *name)
 {
   skiplist_entry::add_entry (false, std::string (), false, std::string (name));
 
-  printf_filtered (_("Function %s will be skipped when stepping.\n"), name);
+  gdb_printf (_("Function %s will be skipped when stepping.\n"), name);
 }
 
 static void
@@ -209,7 +204,7 @@ skip_function_command (const char *arg, int from_tty)
   /* Default to the current function if no argument is given.  */
   if (arg == NULL)
     {
-      frame_info *fi = get_selected_frame (_("No default function now."));
+      frame_info_ptr fi = get_selected_frame (_("No default function now."));
       struct symbol *sym = get_frame_function (fi);
       const char *name = NULL;
 
@@ -336,20 +331,20 @@ skip_command (const char *arg, int from_tty)
 
     if (function_to_print == NULL)
       {
-	printf_filtered (_("%s %s will be skipped when stepping.\n"),
-			 file_text, file_to_print);
+	gdb_printf (_("%s %s will be skipped when stepping.\n"),
+		    file_text, file_to_print);
       }
     else if (file_to_print == NULL)
       {
-	printf_filtered (_("%s %s will be skipped when stepping.\n"),
-			 function_text, function_to_print);
+	gdb_printf (_("%s %s will be skipped when stepping.\n"),
+		    function_text, function_to_print);
       }
     else
       {
-	printf_filtered (_("%s %s in %s %s will be skipped"
-			   " when stepping.\n"),
-			 function_text, function_to_print,
-			 lower_file_text, file_to_print);
+	gdb_printf (_("%s %s in %s %s will be skipped"
+		      " when stepping.\n"),
+		    function_text, function_to_print,
+		    lower_file_text, file_to_print);
       }
   }
 }
@@ -491,9 +486,9 @@ bool
 skiplist_entry::do_skip_file_p (const symtab_and_line &function_sal) const
 {
   if (debug_skip)
-    fprintf_unfiltered (gdb_stdlog,
-			"skip: checking if file %s matches non-glob %s...",
-			function_sal.symtab->filename, m_file.c_str ());
+    gdb_printf (gdb_stdlog,
+		"skip: checking if file %s matches non-glob %s...",
+		function_sal.symtab->filename, m_file.c_str ());
 
   bool result;
 
@@ -518,7 +513,7 @@ skiplist_entry::do_skip_file_p (const symtab_and_line &function_sal) const
     }
 
   if (debug_skip)
-    fprintf_unfiltered (gdb_stdlog, result ? "yes.\n" : "no.\n");
+    gdb_printf (gdb_stdlog, result ? "yes.\n" : "no.\n");
 
   return result;
 }
@@ -527,9 +522,9 @@ bool
 skiplist_entry::do_skip_gfile_p (const symtab_and_line &function_sal) const
 {
   if (debug_skip)
-    fprintf_unfiltered (gdb_stdlog,
-			"skip: checking if file %s matches glob %s...",
-			function_sal.symtab->filename, m_file.c_str ());
+    gdb_printf (gdb_stdlog,
+		"skip: checking if file %s matches glob %s...",
+		function_sal.symtab->filename, m_file.c_str ());
 
   bool result;
 
@@ -558,7 +553,7 @@ skiplist_entry::do_skip_gfile_p (const symtab_and_line &function_sal) const
     }
 
   if (debug_skip)
-    fprintf_unfiltered (gdb_stdlog, result ? "yes.\n" : "no.\n");
+    gdb_printf (gdb_stdlog, result ? "yes.\n" : "no.\n");
 
   return result;
 }
@@ -589,9 +584,9 @@ skiplist_entry::skip_function_p (const char *function_name) const
   if (m_function_is_regexp)
     {
       if (debug_skip)
-        fprintf_unfiltered (gdb_stdlog,
-			    "skip: checking if function %s matches regex %s...",
-			    function_name, m_function.c_str ());
+	gdb_printf (gdb_stdlog,
+		    "skip: checking if function %s matches regex %s...",
+		    function_name, m_function.c_str ());
 
       gdb_assert (m_compiled_function_regexp);
       result
@@ -600,15 +595,15 @@ skiplist_entry::skip_function_p (const char *function_name) const
   else
     {
       if (debug_skip)
-        fprintf_unfiltered (gdb_stdlog,
-			    ("skip: checking if function %s matches non-regex "
-			     "%s..."),
-			    function_name, m_function.c_str ());
+	gdb_printf (gdb_stdlog,
+		    ("skip: checking if function %s matches non-regex "
+		     "%s..."),
+		    function_name, m_function.c_str ());
       result = (strcmp_iw (function_name, m_function.c_str ()) == 0);
     }
 
   if (debug_skip)
-    fprintf_unfiltered (gdb_stdlog, result ? "yes.\n" : "no.\n");
+    gdb_printf (gdb_stdlog, result ? "yes.\n" : "no.\n");
 
   return result;
 }
@@ -656,7 +651,7 @@ complete_skip_number (cmd_list_element *cmd,
 
   for (const skiplist_entry &entry : skiplist_entries)
     {
-      gdb::unique_xmalloc_ptr<char> name (xstrprintf ("%d", entry.number ()));
+      gdb::unique_xmalloc_ptr<char> name = xstrprintf ("%d", entry.number ());
       if (strncmp (word, name.get (), word_len) == 0)
 	completer.add_completion (std::move (name));
     }
@@ -682,7 +677,7 @@ FILE-SPEC is one of:\n\
 FUNCTION-SPEC is one of:\n\
        -fu|-function FUNCTION-NAME\n\
        -rfu|-rfunction FUNCTION-NAME-REGULAR-EXPRESSION"),
-                  &skiplist, "skip ", 1, &cmdlist);
+		  &skiplist, 1, &cmdlist);
 
   c = add_cmd ("file", class_breakpoint, skip_file_command, _("\
 Ignore a file while stepping.\n\

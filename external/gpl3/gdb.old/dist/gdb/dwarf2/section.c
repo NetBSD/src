@@ -1,6 +1,6 @@
 /* DWARF 2 low-level section code
 
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2023 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -54,6 +54,7 @@ dwarf2_section_info::get_bfd_owner () const
       section = get_containing_section ();
       gdb_assert (!section->is_virtual);
     }
+  gdb_assert (section->s.section != nullptr);
   return section->s.section->owner;
 }
 
@@ -83,6 +84,7 @@ dwarf2_section_info::get_file_name () const
 {
   bfd *abfd = get_bfd_owner ();
 
+  gdb_assert (abfd != nullptr);
   return bfd_get_filename (abfd);
 }
 
@@ -194,8 +196,14 @@ dwarf2_section_info::read_string (struct objfile *objfile, LONGEST str_offset,
 {
   read (objfile);
   if (buffer == NULL)
-    error (_("%s used without %s section [in module %s]"),
-	   form_name, get_name (), get_file_name ());
+    {
+      if (get_bfd_section () == nullptr)
+	error (_("Dwarf Error: %s used without required section"),
+	       form_name);
+      else
+	error (_("Dwarf Error: %s used without %s section [in module %s]"),
+	       form_name, get_name (), get_file_name ());
+    }
   if (str_offset >= size)
     error (_("%s pointing outside of %s section [in module %s]"),
 	   form_name, get_name (), get_file_name ());

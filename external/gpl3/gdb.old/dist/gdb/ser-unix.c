@@ -1,6 +1,6 @@
 /* Serial interface for local (hardwired) serial ports on Un*x like systems
 
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+   Copyright (C) 1992-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,7 @@
 #include "gdbcmd.h"
 #include "gdbsupport/filestuff.h"
 #include <termios.h>
-#include "inflow.h"
+#include "gdbsupport/scoped_ignore_sigttou.h"
 
 struct hardwire_ttystate
   {
@@ -46,7 +46,7 @@ static void
 show_serial_hwflow (struct ui_file *file, int from_tty,
 		    struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file, _("Hardware flow control is %s.\n"), value);
+  gdb_printf (file, _("Hardware flow control is %s.\n"), value);
 }
 #endif
 
@@ -75,7 +75,7 @@ static int hardwire_setstopbits (struct serial *, int);
 static int
 hardwire_open (struct serial *scb, const char *name)
 {
-  scb->fd = gdb_open_cloexec (name, O_RDWR, 0);
+  scb->fd = gdb_open_cloexec (name, O_RDWR, 0).release ();
   if (scb->fd < 0)
     return -1;
 
@@ -142,21 +142,21 @@ hardwire_print_tty_state (struct serial *scb,
   struct hardwire_ttystate *state = (struct hardwire_ttystate *) ttystate;
   int i;
 
-  fprintf_filtered (stream, "c_iflag = 0x%x, c_oflag = 0x%x,\n",
-		    (int) state->termios.c_iflag,
-		    (int) state->termios.c_oflag);
-  fprintf_filtered (stream, "c_cflag = 0x%x, c_lflag = 0x%x\n",
-		    (int) state->termios.c_cflag,
-		    (int) state->termios.c_lflag);
+  gdb_printf (stream, "c_iflag = 0x%x, c_oflag = 0x%x,\n",
+	      (int) state->termios.c_iflag,
+	      (int) state->termios.c_oflag);
+  gdb_printf (stream, "c_cflag = 0x%x, c_lflag = 0x%x\n",
+	      (int) state->termios.c_cflag,
+	      (int) state->termios.c_lflag);
 #if 0
   /* This not in POSIX, and is not really documented by those systems
      which have it (at least not Sun).  */
-  fprintf_filtered (stream, "c_line = 0x%x.\n", state->termios.c_line);
+  gdb_printf (stream, "c_line = 0x%x.\n", state->termios.c_line);
 #endif
-  fprintf_filtered (stream, "c_cc: ");
+  gdb_printf (stream, "c_cc: ");
   for (i = 0; i < NCCS; i += 1)
-    fprintf_filtered (stream, "0x%x ", state->termios.c_cc[i]);
-  fprintf_filtered (stream, "\n");
+    gdb_printf (stream, "0x%x ", state->termios.c_cc[i]);
+  gdb_printf (stream, "\n");
 }
 
 /* Wait for the output to drain away, as opposed to flushing
@@ -197,8 +197,8 @@ hardwire_raw (struct serial *scb)
   struct hardwire_ttystate state;
 
   if (get_tty_state (scb, &state))
-    fprintf_unfiltered (gdb_stderr, "get_tty_state failed: %s\n",
-			safe_strerror (errno));
+    gdb_printf (gdb_stderr, "get_tty_state failed: %s\n",
+		safe_strerror (errno));
 
   state.termios.c_iflag = 0;
   state.termios.c_oflag = 0;
@@ -222,8 +222,8 @@ hardwire_raw (struct serial *scb)
   state.termios.c_cc[VTIME] = 0;
 
   if (set_tty_state (scb, &state))
-    fprintf_unfiltered (gdb_stderr, "set_tty_state failed: %s\n",
-			safe_strerror (errno));
+    gdb_printf (gdb_stderr, "set_tty_state failed: %s\n",
+		safe_strerror (errno));
 }
 
 #ifndef B19200
@@ -343,31 +343,31 @@ rate_to_code (int rate)
     {
       /* test for perfect macth.  */
       if (rate == baudtab[i].rate)
-        return baudtab[i].code;
+	return baudtab[i].code;
       else
-        {
+	{
 	  /* check if it is in between valid values.  */
-          if (rate < baudtab[i].rate)
+	  if (rate < baudtab[i].rate)
 	    {
 	      if (i)
-	        {
-	          warning (_("Invalid baud rate %d.  "
+		{
+		  warning (_("Invalid baud rate %d.  "
 			     "Closest values are %d and %d."),
 			   rate, baudtab[i - 1].rate, baudtab[i].rate);
 		}
 	      else
-	        {
-	          warning (_("Invalid baud rate %d.  Minimum value is %d."),
+		{
+		  warning (_("Invalid baud rate %d.  Minimum value is %d."),
 			   rate, baudtab[0].rate);
 		}
 	      return -1;
 	    }
-        }
+	}
     }
  
   /* The requested speed was too large.  */
   warning (_("Invalid baud rate %d.  Maximum value is %d."),
-            rate, baudtab[i - 1].rate);
+	    rate, baudtab[i - 1].rate);
   return -1;
 }
 
@@ -380,7 +380,7 @@ hardwire_setbaudrate (struct serial *scb, int rate)
   if (baud_code < 0)
     {
       /* The baud rate was not valid.
-         A warning has already been issued.  */
+	 A warning has already been issued.  */
       errno = EINVAL;
       return -1;
     }
@@ -447,8 +447,7 @@ hardwire_setparity (struct serial *scb, int parity)
       newparity = PARENB;
       break;
     default:
-      internal_warning (__FILE__, __LINE__,
-			"Incorrect parity value: %d", parity);
+      internal_warning ("Incorrect parity value: %d", parity);
       return -1;
     }
 

@@ -1,6 +1,6 @@
 /* Target-dependent code for the NDS32 architecture, for GDB.
 
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2023 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of GDB.
@@ -265,7 +265,7 @@ static const struct
    register.  */
 
 static struct value *
-value_of_nds32_reg (struct frame_info *frame, const void *baton)
+value_of_nds32_reg (frame_info_ptr frame, const void *baton)
 {
   return value_of_register ((int) (intptr_t) baton, frame);
 }
@@ -289,7 +289,7 @@ typedef BP_MANIPULATION (nds32_break_insn) nds32_breakpoint;
 static int
 nds32_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int num)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nds32_gdbarch_tdep *tdep = gdbarch_tdep<nds32_gdbarch_tdep> (gdbarch);
   const int FSR = 38;
   const int FDR = FSR + 32;
 
@@ -314,16 +314,16 @@ nds32_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int num)
 }
 
 /* NDS32 register groups.  */
-static struct reggroup *nds32_cr_reggroup;
-static struct reggroup *nds32_ir_reggroup;
-static struct reggroup *nds32_mr_reggroup;
-static struct reggroup *nds32_dr_reggroup;
-static struct reggroup *nds32_pfr_reggroup;
-static struct reggroup *nds32_hspr_reggroup;
-static struct reggroup *nds32_dmar_reggroup;
-static struct reggroup *nds32_racr_reggroup;
-static struct reggroup *nds32_idr_reggroup;
-static struct reggroup *nds32_secur_reggroup;
+static const reggroup *nds32_cr_reggroup;
+static const reggroup *nds32_ir_reggroup;
+static const reggroup *nds32_mr_reggroup;
+static const reggroup *nds32_dr_reggroup;
+static const reggroup *nds32_pfr_reggroup;
+static const reggroup *nds32_hspr_reggroup;
+static const reggroup *nds32_dmar_reggroup;
+static const reggroup *nds32_racr_reggroup;
+static const reggroup *nds32_idr_reggroup;
+static const reggroup *nds32_secur_reggroup;
 
 static void
 nds32_init_reggroups (void)
@@ -343,14 +343,6 @@ nds32_init_reggroups (void)
 static void
 nds32_add_reggroups (struct gdbarch *gdbarch)
 {
-  /* Add pre-defined register groups.  */
-  reggroup_add (gdbarch, general_reggroup);
-  reggroup_add (gdbarch, float_reggroup);
-  reggroup_add (gdbarch, system_reggroup);
-  reggroup_add (gdbarch, all_reggroup);
-  reggroup_add (gdbarch, save_reggroup);
-  reggroup_add (gdbarch, restore_reggroup);
-
   /* Add NDS32 register groups.  */
   reggroup_add (gdbarch, nds32_cr_reggroup);
   reggroup_add (gdbarch, nds32_ir_reggroup);
@@ -368,7 +360,7 @@ nds32_add_reggroups (struct gdbarch *gdbarch)
 
 static int
 nds32_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
-			   struct reggroup *reggroup)
+			   const struct reggroup *reggroup)
 {
   const char *reg_name;
   const char *group_name;
@@ -398,7 +390,7 @@ nds32_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
   /* The NDS32 reggroup contains registers whose name is prefixed
      by reggroup name.  */
   reg_name = gdbarch_register_name (gdbarch, regnum);
-  group_name = reggroup_name (reggroup);
+  group_name = reggroup->name ();
   return !strncmp (reg_name, group_name, strlen (group_name));
 }
 
@@ -426,11 +418,8 @@ nds32_pseudo_register_name (struct gdbarch *gdbarch, int regnum)
   regnum -= gdbarch_num_regs (gdbarch);
 
   /* Currently, only FSRs could be defined as pseudo registers.  */
-  if (regnum < gdbarch_num_pseudo_regs (gdbarch))
-    return nds32_fsr_register_names[regnum];
-
-  warning (_("Unknown nds32 pseudo register %d."), regnum);
-  return NULL;
+  gdb_assert (regnum < gdbarch_num_pseudo_regs (gdbarch));
+  return nds32_fsr_register_names[regnum];
 }
 
 /* Implement the "pseudo_register_read" gdbarch method.  */
@@ -440,7 +429,7 @@ nds32_pseudo_register_read (struct gdbarch *gdbarch,
 			    readable_regcache *regcache, int regnum,
 			    gdb_byte *buf)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nds32_gdbarch_tdep *tdep = gdbarch_tdep<nds32_gdbarch_tdep> (gdbarch);
   gdb_byte reg_buf[8];
   int offset, fdr_regnum;
   enum register_status status;
@@ -479,7 +468,7 @@ nds32_pseudo_register_write (struct gdbarch *gdbarch,
 			     struct regcache *regcache, int regnum,
 			     const gdb_byte *buf)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nds32_gdbarch_tdep *tdep = gdbarch_tdep<nds32_gdbarch_tdep> (gdbarch);
   gdb_byte reg_buf[8];
   int offset, fdr_regnum;
 
@@ -616,7 +605,7 @@ static CORE_ADDR
 nds32_analyze_prologue (struct gdbarch *gdbarch, CORE_ADDR pc,
 			CORE_ADDR limit_pc, struct nds32_frame_cache *cache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nds32_gdbarch_tdep *tdep = gdbarch_tdep<nds32_gdbarch_tdep> (gdbarch);
   int abi_use_fpr = nds32_abi_use_fpr (tdep->elf_abi);
   /* Current scanning status.  */
   int in_prologue_bb = 0;
@@ -909,7 +898,7 @@ nds32_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
    a pointer to the current nds32_frame_cache in *THIS_CACHE.  */
 
 static struct nds32_frame_cache *
-nds32_frame_cache (struct frame_info *this_frame, void **this_cache)
+nds32_frame_cache (frame_info_ptr this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct nds32_frame_cache *cache;
@@ -960,7 +949,7 @@ nds32_frame_cache (struct frame_info *this_frame, void **this_cache)
    PC and the caller's SP when we were called.  */
 
 static void
-nds32_frame_this_id (struct frame_info *this_frame,
+nds32_frame_this_id (frame_info_ptr this_frame,
 		     void **this_cache, struct frame_id *this_id)
 {
   struct nds32_frame_cache *cache = nds32_frame_cache (this_frame, this_cache);
@@ -975,7 +964,7 @@ nds32_frame_this_id (struct frame_info *this_frame,
 /* Implement the "prev_register" frame_unwind method.  */
 
 static struct value *
-nds32_frame_prev_register (struct frame_info *this_frame, void **this_cache,
+nds32_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
 			   int regnum)
 {
   struct nds32_frame_cache *cache = nds32_frame_cache (this_frame, this_cache);
@@ -997,6 +986,7 @@ nds32_frame_prev_register (struct frame_info *this_frame, void **this_cache,
 
 static const struct frame_unwind nds32_frame_unwind =
 {
+  "nds32 prologue",
   NORMAL_FRAME,
   default_frame_unwind_stop_reason,
   nds32_frame_this_id,
@@ -1008,7 +998,7 @@ static const struct frame_unwind nds32_frame_unwind =
 /* Return the frame base address of *THIS_FRAME.  */
 
 static CORE_ADDR
-nds32_frame_base_address (struct frame_info *this_frame, void **this_cache)
+nds32_frame_base_address (frame_info_ptr this_frame, void **this_cache)
 {
   struct nds32_frame_cache *cache = nds32_frame_cache (this_frame, this_cache);
 
@@ -1176,7 +1166,7 @@ static int
 nds32_analyze_epilogue (struct gdbarch *gdbarch, CORE_ADDR pc,
 			struct nds32_frame_cache *cache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nds32_gdbarch_tdep *tdep = gdbarch_tdep<nds32_gdbarch_tdep> (gdbarch);
   int abi_use_fpr = nds32_abi_use_fpr (tdep->elf_abi);
   CORE_ADDR limit_pc;
   uint32_t insn, insn_len;
@@ -1227,7 +1217,7 @@ nds32_analyze_epilogue (struct gdbarch *gdbarch, CORE_ADDR pc,
 static int
 nds32_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR addr)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nds32_gdbarch_tdep *tdep = gdbarch_tdep<nds32_gdbarch_tdep> (gdbarch);
   int abi_use_fpr = nds32_abi_use_fpr (tdep->elf_abi);
   int insn_type = INSN_NORMAL;
   int ret_found = 0;
@@ -1294,7 +1284,7 @@ nds32_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR addr)
 
 static int
 nds32_epilogue_frame_sniffer (const struct frame_unwind *self,
-			      struct frame_info *this_frame, void **this_cache)
+			      frame_info_ptr this_frame, void **this_cache)
 {
   if (frame_relative_level (this_frame) == 0)
     return nds32_stack_frame_destroyed_p (get_frame_arch (this_frame),
@@ -1309,7 +1299,7 @@ nds32_epilogue_frame_sniffer (const struct frame_unwind *self,
    *THIS_CACHE.  */
 
 static struct nds32_frame_cache *
-nds32_epilogue_frame_cache (struct frame_info *this_frame, void **this_cache)
+nds32_epilogue_frame_cache (frame_info_ptr this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct nds32_frame_cache *cache;
@@ -1341,7 +1331,7 @@ nds32_epilogue_frame_cache (struct frame_info *this_frame, void **this_cache)
 /* Implement the "this_id" frame_unwind method.  */
 
 static void
-nds32_epilogue_frame_this_id (struct frame_info *this_frame,
+nds32_epilogue_frame_this_id (frame_info_ptr this_frame,
 			      void **this_cache, struct frame_id *this_id)
 {
   struct nds32_frame_cache *cache
@@ -1357,7 +1347,7 @@ nds32_epilogue_frame_this_id (struct frame_info *this_frame,
 /* Implement the "prev_register" frame_unwind method.  */
 
 static struct value *
-nds32_epilogue_frame_prev_register (struct frame_info *this_frame,
+nds32_epilogue_frame_prev_register (frame_info_ptr this_frame,
 				    void **this_cache, int regnum)
 {
   struct nds32_frame_cache *cache
@@ -1380,6 +1370,7 @@ nds32_epilogue_frame_prev_register (struct frame_info *this_frame,
 
 static const struct frame_unwind nds32_epilogue_frame_unwind =
 {
+  "nds32 epilogue",
   NORMAL_FRAME,
   default_frame_unwind_stop_reason,
   nds32_epilogue_frame_this_id,
@@ -1430,7 +1421,7 @@ nds32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   int i;
   ULONGEST regval;
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nds32_gdbarch_tdep *tdep = gdbarch_tdep<nds32_gdbarch_tdep> (gdbarch);
   struct type *func_type = value_type (function);
   int abi_use_fpr = nds32_abi_use_fpr (tdep->elf_abi);
   int abi_split = nds32_abi_split (tdep->elf_abi);
@@ -1459,7 +1450,7 @@ nds32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       if (align == 0)
 	continue;
 
-      sp -= TYPE_LENGTH (type);
+      sp -= type->length ();
       sp = align_down (sp, align);
     }
 
@@ -1477,9 +1468,9 @@ nds32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
       type = value_type (args[i]);
       calling_use_fpr = nds32_check_calling_use_fpr (type);
-      len = TYPE_LENGTH (type);
+      len = type->length ();
       align = type_align (type);
-      val = value_contents (args[i]);
+      val = value_contents (args[i]).data ();
 
       /* The size of a composite type larger than 4 bytes will be rounded
 	 up to the nearest multiple of 4.  */
@@ -1495,7 +1486,7 @@ nds32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	 For ABI2FP+, the caller pushes only named arguments in registers
 	 and pushes all unnamed arguments in stack.  */
 
-      if (abi_use_fpr && TYPE_VARARGS (func_type)
+      if (abi_use_fpr && func_type->has_varargs ()
 	  && i >= func_type->num_fields ())
 	goto use_stack;
 
@@ -1527,8 +1518,7 @@ nds32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		  break;
 		default:
 		  /* Long double?  */
-		  internal_error (__FILE__, __LINE__,
-				  "Do not know how to handle %d-byte double.\n",
+		  internal_error ("Do not know how to handle %d-byte double.\n",
 				  len);
 		  break;
 		}
@@ -1658,13 +1648,13 @@ nds32_extract_return_value (struct gdbarch *gdbarch, struct type *type,
 			    struct regcache *regcache, gdb_byte *valbuf)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nds32_gdbarch_tdep *tdep = gdbarch_tdep<nds32_gdbarch_tdep> (gdbarch);
   int abi_use_fpr = nds32_abi_use_fpr (tdep->elf_abi);
   int calling_use_fpr;
   int len;
 
   calling_use_fpr = nds32_check_calling_use_fpr (type);
-  len = TYPE_LENGTH (type);
+  len = type->length ();
 
   if (abi_use_fpr && calling_use_fpr)
     {
@@ -1673,8 +1663,7 @@ nds32_extract_return_value (struct gdbarch *gdbarch, struct type *type,
       else if (len == 8)
 	regcache->cooked_read (NDS32_FD0_REGNUM, valbuf);
       else
-	internal_error (__FILE__, __LINE__,
-			_("Cannot extract return value of %d bytes "
+	internal_error (_("Cannot extract return value of %d bytes "
 			  "long floating-point."), len);
     }
   else
@@ -1748,13 +1737,13 @@ nds32_store_return_value (struct gdbarch *gdbarch, struct type *type,
 			  struct regcache *regcache, const gdb_byte *valbuf)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nds32_gdbarch_tdep *tdep = gdbarch_tdep<nds32_gdbarch_tdep> (gdbarch);
   int abi_use_fpr = nds32_abi_use_fpr (tdep->elf_abi);
   int calling_use_fpr;
   int len;
 
   calling_use_fpr = nds32_check_calling_use_fpr (type);
-  len = TYPE_LENGTH (type);
+  len = type->length ();
 
   if (abi_use_fpr && calling_use_fpr)
     {
@@ -1763,8 +1752,7 @@ nds32_store_return_value (struct gdbarch *gdbarch, struct type *type,
       else if (len == 8)
 	regcache->cooked_write (NDS32_FD0_REGNUM, valbuf);
       else
-	internal_error (__FILE__, __LINE__,
-			_("Cannot store return value of %d bytes "
+	internal_error (_("Cannot store return value of %d bytes "
 			  "long floating-point."), len);
     }
   else
@@ -1815,7 +1803,7 @@ nds32_return_value (struct gdbarch *gdbarch, struct value *func_type,
 		    struct type *type, struct regcache *regcache,
 		    gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  if (TYPE_LENGTH (type) > 8)
+  if (type->length () > 8)
     {
       return RETURN_VALUE_STRUCT_CONVENTION;
     }
@@ -1833,7 +1821,7 @@ nds32_return_value (struct gdbarch *gdbarch, struct value *func_type,
 /* Implement the "get_longjmp_target" gdbarch method.  */
 
 static int
-nds32_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
+nds32_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
 {
   gdb_byte buf[4];
   CORE_ADDR jb_addr;
@@ -1953,9 +1941,8 @@ static struct gdbarch *
 nds32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
   struct gdbarch_list *best_arch;
-  struct tdesc_arch_data *tdesc_data = NULL;
+  tdesc_arch_data_up tdesc_data;
   const struct target_desc *tdesc = info.target_desc;
   int elf_abi = E_NDS_ABI_AABI;
   int fpu_freg = -1;
@@ -1971,7 +1958,8 @@ nds32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
        best_arch != NULL;
        best_arch = gdbarch_list_lookup_by_info (best_arch->next, &info))
     {
-      struct gdbarch_tdep *idep = gdbarch_tdep (best_arch->gdbarch);
+      nds32_gdbarch_tdep *idep
+	= gdbarch_tdep<nds32_gdbarch_tdep> (best_arch->gdbarch);
 
       if (idep->elf_abi != elf_abi)
 	continue;
@@ -1988,14 +1976,12 @@ nds32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   tdesc_data = tdesc_data_alloc ();
 
-  if (!nds32_validate_tdesc_p (tdesc, tdesc_data, &fpu_freg, &use_pseudo_fsrs))
-    {
-      tdesc_data_cleanup (tdesc_data);
-      return NULL;
-    }
+  if (!nds32_validate_tdesc_p (tdesc, tdesc_data.get (), &fpu_freg,
+			       &use_pseudo_fsrs))
+    return NULL;
 
   /* Allocate space for the new architecture.  */
-  tdep = XCNEW (struct gdbarch_tdep);
+  nds32_gdbarch_tdep *tdep = new nds32_gdbarch_tdep;
   tdep->fpu_freg = fpu_freg;
   tdep->use_pseudo_fsrs = use_pseudo_fsrs;
   tdep->fs0_regnum = -1;
@@ -2022,7 +2008,7 @@ nds32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     num_regs = NDS32_NUM_REGS + num_fdr_map[fpu_freg] + num_fsr_map[fpu_freg];
 
   set_gdbarch_num_regs (gdbarch, num_regs);
-  tdesc_use_registers (gdbarch, tdesc, tdesc_data);
+  tdesc_use_registers (gdbarch, tdesc, std::move (tdesc_data));
 
   /* Cache the register number of fs0.  */
   if (fpu_freg != -1)
@@ -2041,8 +2027,7 @@ nds32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	{
 	  const char *regname = gdbarch_register_name (gdbarch, j);
 
-	  if (regname != NULL
-	      && strcmp (regname, nds32_register_aliases[i].name) == 0)
+	  if (strcmp (regname, nds32_register_aliases[i].name) == 0)
 	    {
 	      regnum = j;
 	      break;
@@ -2061,7 +2046,7 @@ nds32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   nds32_add_reggroups (gdbarch);
 
   /* Hook in ABI-specific overrides, if they have been registered.  */
-  info.tdesc_data = tdesc_data;
+  info.tdesc_data = tdesc_data.get ();
   gdbarch_init_osabi (info, gdbarch);
 
   /* Override tdesc_register callbacks for system registers.  */
@@ -2101,7 +2086,7 @@ void
 _initialize_nds32_tdep ()
 {
   /* Initialize gdbarch.  */
-  register_gdbarch_init (bfd_arch_nds32, nds32_gdbarch_init);
+  gdbarch_register (bfd_arch_nds32, nds32_gdbarch_init);
 
   initialize_tdesc_nds32 ();
   nds32_init_reggroups ();

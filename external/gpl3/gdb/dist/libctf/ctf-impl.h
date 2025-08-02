@@ -1,5 +1,5 @@
 /* Implementation header.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -123,17 +123,11 @@ typedef struct ctf_dmodel
   size_t ctd_long;		/* Size of long in bytes.  */
 } ctf_dmodel_t;
 
-typedef struct ctf_names
-{
-  ctf_hash_t *ctn_readonly;	/* Hash table when readonly.  */
-  ctf_dynhash_t *ctn_writable;	/* Hash table when writable.  */
-} ctf_names_t;
-
 typedef struct ctf_lookup
 {
   const char *ctl_prefix;	/* String prefix for this lookup.  */
   size_t ctl_len;		/* Length of prefix string in bytes.  */
-  ctf_names_t *ctl_hash;	/* Pointer to hash table for lookup.  */
+  ctf_dynhash_t *ctl_hash;	/* Pointer to hash table for lookup.  */
 } ctf_lookup_t;
 
 typedef struct ctf_dictops
@@ -205,21 +199,25 @@ typedef struct ctf_err_warning
 } ctf_err_warning_t;
 
 /* Atoms associate strings with a list of the CTF items that reference that
-   string, so that ctf_update() can instantiate all the strings using the
+   string, so that ctf_serialize() can instantiate all the strings using the
    ctf_str_atoms and then reassociate them with the real string later.
 
    Strings can be interned into ctf_str_atom without having refs associated
    with them, for values that are returned to callers, etc.  Items are only
-   removed from this table on ctf_close(), but on every ctf_update(), all the
-   csa_refs in all entries are purged.  */
+   removed from this table on ctf_close(), but on every ctf_serialize(), all
+   the csa_refs in all entries are purged.  */
+
+#define CTF_STR_ATOM_FREEABLE	0x1
+#define CTF_STR_ATOM_MOVABLE	0x2
 
 typedef struct ctf_str_atom
 {
-  const char *csa_str;		/* Backpointer to string (hash key).  */
+  char *csa_str;		/* Pointer to string (also used as hash key).  */
   ctf_list_t csa_refs;		/* This string's refs.  */
   uint32_t csa_offset;		/* Strtab offset, if any.  */
   uint32_t csa_external_offset;	/* External strtab offset, if any.  */
   unsigned long csa_snapshot_id; /* Snapshot ID at time of creation.  */
+  int csa_flags;		 /* CTF_STR_ATOM_* flags. */
 } ctf_str_atom_t;
 
 /* The refs of a single string in the atoms table.  */
@@ -229,6 +227,15 @@ typedef struct ctf_str_atom_ref
   ctf_list_t caf_list;		/* List forward/back pointers.  */
   uint32_t *caf_ref;		/* A single ref to this string.  */
 } ctf_str_atom_ref_t;
+
+  /* Like a ctf_str_atom_ref_t, but specific to movable refs.  */
+
+typedef struct ctf_str_atom_ref_movable
+{
+  ctf_list_t caf_list;		/* List forward/back pointers.  */
+  uint32_t *caf_ref;		/* A single ref to this string.  */
+  ctf_dynhash_t *caf_movable_refs; /* Backpointer to ctf_str_movable_refs for this dict. */  
+} ctf_str_atom_ref_movable_t;
 
 /* A single linker-provided symbol, during symbol addition, possibly before we
    have been given external strtab refs.  */
@@ -357,14 +364,7 @@ typedef struct ctf_dedup
    clients, who see it only as an opaque pointer.  Modifications can therefore
    be made freely to this structure without regard to client versioning.  The
    ctf_dict_t typedef appears in <ctf-api.h> and declares a forward tag.
-   (A ctf_file_t typedef also appears there, for historical reasons.)
-
-   NOTE: ctf_serialize requires that everything inside of ctf_dict either be an
-   immediate value, a pointer to dynamically allocated data *outside* of the
-   ctf_dict itself, a pointer to statically allocated data, or specially handled
-   in ctf_serialize.  If you add a pointer to ctf_dict that points to something
-   within the ctf_dict itself, you must make corresponding changes to
-   ctf_serialize.  */
+   (A ctf_file_t typedef also appears there, for historical reasons.)  */
 
 struct ctf_dict
 {
@@ -372,25 +372,26 @@ struct ctf_dict
   struct ctf_header *ctf_header;    /* The header from this CTF dict.  */
   unsigned char ctf_openflags;	    /* Flags the dict had when opened.  */
   ctf_sect_t ctf_data;		    /* CTF data from object file.  */
-  ctf_sect_t ctf_symtab;	    /* Symbol table from object file.  */
-  ctf_sect_t ctf_strtab;	    /* String table from object file.  */
-  int ctf_symsect_little_endian;    /* Endianness of the ctf_symtab.  */
-  ctf_dynhash_t *ctf_symhash;       /* (partial) hash, symsect name -> idx. */
+  ctf_sect_t ctf_ext_symtab;	    /* Symbol table from object file.  */
+  ctf_sect_t ctf_ext_strtab;	    /* String table from object file.  */
+  int ctf_symsect_little_endian;    /* Endianness of the ctf_ext_symtab.  */
+  ctf_dynhash_t *ctf_symhash_func;  /* (partial) hash, symsect name -> idx. */
+  ctf_dynhash_t *ctf_symhash_objt;  /* ditto, for object symbols.  */
   size_t ctf_symhash_latest;	    /* Amount of symsect scanned so far.  */
   ctf_dynhash_t *ctf_prov_strtab;   /* Maps provisional-strtab offsets
 				       to names.  */
   ctf_dynhash_t *ctf_syn_ext_strtab; /* Maps ext-strtab offsets to names.  */
   void *ctf_data_mmapped;	    /* CTF data we mmapped, to free later.  */
   size_t ctf_data_mmapped_len;	    /* Length of CTF data we mmapped.  */
-  ctf_names_t ctf_structs;	    /* Hash table of struct types.  */
-  ctf_names_t ctf_unions;	    /* Hash table of union types.  */
-  ctf_names_t ctf_enums;	    /* Hash table of enum types.  */
-  ctf_names_t ctf_names;	    /* Hash table of remaining type names.  */
+  ctf_dynhash_t *ctf_structs;	    /* Hash table of struct types.  */
+  ctf_dynhash_t *ctf_unions;	    /* Hash table of union types.  */
+  ctf_dynhash_t *ctf_enums;	    /* Hash table of enum types.  */
+  ctf_dynhash_t *ctf_names;	    /* Hash table of remaining type names.  */
   ctf_lookup_t ctf_lookups[5];	    /* Pointers to nametabs for name lookup.  */
   ctf_strs_t ctf_str[2];	    /* Array of string table base and bounds.  */
-  ctf_dynhash_t *ctf_str_atoms;	    /* Hash table of ctf_str_atoms_t.  */
-  ctf_dynset_t *ctf_str_pending_ref; /* Locations awaiting ref addition.  */
-  uint64_t ctf_str_num_refs;	  /* Number of refs to cts_str_atoms.  */
+  ctf_strs_writable_t *ctf_dynstrtab; /* Dynamically allocated string table, if any. */
+  ctf_dynhash_t *ctf_str_atoms;	  /* Hash table of ctf_str_atoms_t.  */
+  ctf_dynhash_t *ctf_str_movable_refs; /* Hash table of void * -> ctf_str_atom_ref_t.  */
   uint32_t ctf_str_prov_offset;	  /* Latest provisional offset assigned so far.  */
   unsigned char *ctf_base;	  /* CTF file pointer.  */
   unsigned char *ctf_dynbase;	  /* Freeable CTF file pointer. */
@@ -412,8 +413,8 @@ struct ctf_dict
   uint32_t *ctf_funcidx_sxlate;	  /* Offsets into funcinfo for a given funcidx.  */
   uint32_t *ctf_objtidx_sxlate;	  /* Likewise, for ctf_objtidx.  */
   size_t ctf_nobjtidx;		  /* Number of objtidx entries.  */
-  ctf_dynhash_t *ctf_objthash;	  /* name -> type ID.  */
-  ctf_dynhash_t *ctf_funchash;	  /* name -> CTF_K_FUNCTION type ID.  */
+  ctf_dynhash_t *ctf_objthash;	  /* Dynamic: name -> type ID.  */
+  ctf_dynhash_t *ctf_funchash;	  /* Dynamic: name -> CTF_K_FUNCTION type ID.  */
 
   /* The next three are linker-derived state found in ctf_link targets only.  */
 
@@ -424,6 +425,7 @@ struct ctf_dict
   struct ctf_varent *ctf_vars;	  /* Sorted variable->type mapping.  */
   unsigned long ctf_nvars;	  /* Number of variables in ctf_vars.  */
   unsigned long ctf_typemax;	  /* Maximum valid type ID number.  */
+  unsigned long ctf_stypes;	  /* Number of static (non-dynamic) types.  */
   const ctf_dmodel_t *ctf_dmodel; /* Data model pointer (see above).  */
   const char *ctf_cuname;	  /* Compilation unit name (if any).  */
   char *ctf_dyncuname;		  /* Dynamically allocated name of CU.  */
@@ -581,7 +583,7 @@ struct ctf_next
 					   (id))
 
 #define LCTF_INDEX_TO_TYPEPTR(fp, i) \
-    ((fp->ctf_flags & LCTF_RDWR) ?					\
+  ((i > fp->ctf_stypes) ?							\
      &(ctf_dtd_lookup (fp, LCTF_INDEX_TO_TYPE				\
 		       (fp, i, fp->ctf_flags & LCTF_CHILD))->dtd_data) : \
      (ctf_type_t *)((uintptr_t)(fp)->ctf_buf + (fp)->ctf_txlate[(i)]))
@@ -593,15 +595,18 @@ struct ctf_next
   ((fp)->ctf_dictops->ctfo_get_vbytes(fp, kind, size, vlen))
 
 #define LCTF_CHILD	0x0001	/* CTF dict is a child.  */
-#define LCTF_RDWR	0x0002	/* CTF dict is writable.  */
-#define LCTF_DIRTY	0x0004	/* CTF dict has been modified.  */
-#define LCTF_LINKING	0x0008  /* CTF link is underway: respect ctf_link_flags.  */
+#define LCTF_LINKING	0x0002  /* CTF link is underway: respect ctf_link_flags.  */
 
-extern ctf_names_t *ctf_name_table (ctf_dict_t *, int);
+extern ctf_dynhash_t *ctf_name_table (ctf_dict_t *, int);
 extern const ctf_type_t *ctf_lookup_by_id (ctf_dict_t **, ctf_id_t);
+extern ctf_id_t ctf_lookup_variable_here (ctf_dict_t *fp, const char *name);
+extern ctf_id_t ctf_lookup_by_sym_or_name (ctf_dict_t *, unsigned long symidx,
+					   const char *symname, int try_parent,
+					   int is_function);
 extern ctf_id_t ctf_lookup_by_rawname (ctf_dict_t *, int, const char *);
-extern ctf_id_t ctf_lookup_by_rawhash (ctf_dict_t *, ctf_names_t *, const char *);
 extern void ctf_set_ctl_hashes (ctf_dict_t *);
+extern ctf_id_t ctf_symbol_next_static (ctf_dict_t *, ctf_next_t **,
+					const char **, int);
 
 extern int ctf_symtab_skippable (ctf_link_sym_t *sym);
 extern int ctf_add_funcobjt_sym (ctf_dict_t *, int is_function,
@@ -629,19 +634,19 @@ typedef int (*ctf_hash_iter_find_f) (void *key, void *value, void *arg);
 typedef int (*ctf_hash_sort_f) (const ctf_next_hkv_t *, const ctf_next_hkv_t *,
 				void *arg);
 
-extern ctf_hash_t *ctf_hash_create (unsigned long, ctf_hash_fun, ctf_hash_eq_fun);
-extern int ctf_hash_insert_type (ctf_hash_t *, ctf_dict_t *, uint32_t, uint32_t);
-extern int ctf_hash_define_type (ctf_hash_t *, ctf_dict_t *, uint32_t, uint32_t);
-extern ctf_id_t ctf_hash_lookup_type (ctf_hash_t *, ctf_dict_t *, const char *);
-extern uint32_t ctf_hash_size (const ctf_hash_t *);
-extern void ctf_hash_destroy (ctf_hash_t *);
-
 extern ctf_dynhash_t *ctf_dynhash_create (ctf_hash_fun, ctf_hash_eq_fun,
 					  ctf_hash_free_fun, ctf_hash_free_fun);
+extern ctf_dynhash_t *ctf_dynhash_create_sized (unsigned long, ctf_hash_fun,
+						ctf_hash_eq_fun,
+						ctf_hash_free_fun,
+						ctf_hash_free_fun);
+
 extern int ctf_dynhash_insert (ctf_dynhash_t *, void *, void *);
 extern void ctf_dynhash_remove (ctf_dynhash_t *, const void *);
 extern size_t ctf_dynhash_elements (ctf_dynhash_t *);
 extern void ctf_dynhash_empty (ctf_dynhash_t *);
+extern int ctf_dynhash_insert_type (ctf_dict_t *, ctf_dynhash_t *, uint32_t, uint32_t);
+extern ctf_id_t ctf_dynhash_lookup_type (ctf_dynhash_t *, const char *);
 extern void *ctf_dynhash_lookup (ctf_dynhash_t *, const void *);
 extern int ctf_dynhash_lookup_kv (ctf_dynhash_t *, const void *key,
 				  const void **orig_key, void **value);
@@ -665,7 +670,6 @@ extern int ctf_dynset_insert (ctf_dynset_t *, void *);
 extern void ctf_dynset_remove (ctf_dynset_t *, const void *);
 extern void ctf_dynset_destroy (ctf_dynset_t *);
 extern void *ctf_dynset_lookup (ctf_dynset_t *, const void *);
-extern size_t ctf_dynset_elements (ctf_dynset_t *);
 extern int ctf_dynset_exists (ctf_dynset_t *, const void *key,
 			      const void **orig_key);
 extern int ctf_dynset_next (ctf_dynset_t *, ctf_next_t **, void **key);
@@ -697,6 +701,9 @@ extern ctf_id_t ctf_add_encoded (ctf_dict_t *, uint32_t, const char *,
 				 const ctf_encoding_t *, uint32_t kind);
 extern ctf_id_t ctf_add_reftype (ctf_dict_t *, uint32_t, ctf_id_t,
 				 uint32_t kind);
+extern int ctf_add_variable_forced (ctf_dict_t *, const char *, ctf_id_t);
+extern int ctf_add_funcobjt_sym_forced (ctf_dict_t *, int is_function,
+					const char *, ctf_id_t);
 
 extern int ctf_dedup_atoms_init (ctf_dict_t *);
 extern int ctf_dedup (ctf_dict_t *, ctf_dict_t **, uint32_t ninputs,
@@ -720,17 +727,19 @@ extern const char *ctf_strptr (ctf_dict_t *, uint32_t);
 extern const char *ctf_strraw (ctf_dict_t *, uint32_t);
 extern const char *ctf_strraw_explicit (ctf_dict_t *, uint32_t,
 					ctf_strs_t *);
+extern const char *ctf_strptr_validate (ctf_dict_t *, uint32_t);
 extern int ctf_str_create_atoms (ctf_dict_t *);
 extern void ctf_str_free_atoms (ctf_dict_t *);
 extern uint32_t ctf_str_add (ctf_dict_t *, const char *);
 extern uint32_t ctf_str_add_ref (ctf_dict_t *, const char *, uint32_t *ref);
-extern uint32_t ctf_str_add_pending (ctf_dict_t *, const char *, uint32_t *);
-extern int ctf_str_move_pending (ctf_dict_t *, uint32_t *, ptrdiff_t);
+extern uint32_t ctf_str_add_movable_ref (ctf_dict_t *, const char *,
+					 uint32_t *ref);
+extern int ctf_str_move_refs (ctf_dict_t *fp, void *src, size_t len, void *dest);
 extern int ctf_str_add_external (ctf_dict_t *, const char *, uint32_t offset);
 extern void ctf_str_remove_ref (ctf_dict_t *, const char *, uint32_t *ref);
 extern void ctf_str_rollback (ctf_dict_t *, ctf_snapshot_id_t);
 extern void ctf_str_purge_refs (ctf_dict_t *);
-extern ctf_strs_writable_t ctf_str_write_strtab (ctf_dict_t *);
+extern const ctf_strs_writable_t *ctf_str_write_strtab (ctf_dict_t *);
 
 extern struct ctf_archive_internal *
 ctf_new_archive_internal (int is_archive, int unmap_on_close,
@@ -741,26 +750,16 @@ extern struct ctf_archive *ctf_arc_open_internal (const char *, int *);
 extern void ctf_arc_close_internal (struct ctf_archive *);
 extern const ctf_preamble_t *ctf_arc_bufpreamble (const ctf_sect_t *);
 extern void *ctf_set_open_errno (int *, int);
-extern unsigned long ctf_set_errno (ctf_dict_t *, int);
 extern void ctf_flip_header (ctf_header_t *);
 extern int ctf_flip (ctf_dict_t *, ctf_header_t *, unsigned char *, int);
 
-extern ctf_dict_t *ctf_simple_open_internal (const char *, size_t, const char *,
-					     size_t, size_t,
-					     const char *, size_t,
-					     ctf_dynhash_t *, int, int *);
-extern ctf_dict_t *ctf_bufopen_internal (const ctf_sect_t *, const ctf_sect_t *,
-					 const ctf_sect_t *, ctf_dynhash_t *,
-					 int, int *);
 extern int ctf_import_unref (ctf_dict_t *fp, ctf_dict_t *pfp);
-extern int ctf_serialize (ctf_dict_t *);
 
 _libctf_malloc_
 extern void *ctf_mmap (size_t length, size_t offset, int fd);
 extern void ctf_munmap (void *, size_t);
 extern ssize_t ctf_pread (int fd, void *buf, ssize_t count, off_t offset);
 
-extern void *ctf_realloc (ctf_dict_t *, void *, size_t);
 extern char *ctf_str_append (char *, const char *);
 extern char *ctf_str_append_noerr (char *, const char *);
 

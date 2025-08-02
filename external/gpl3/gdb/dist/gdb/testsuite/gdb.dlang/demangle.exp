@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2023 Free Software Foundation, Inc.
+# Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 load_lib "d-support.exp"
 
-if { [skip_d_tests] } { continue }
+require allow_d_tests
 
 ### Utility function for test_demangling and test_demangling_exact.
 proc test_demangling {test result} {
@@ -195,10 +195,7 @@ proc test_d_demangling {} {
     test_demangling "_D3std6socket23UnknownAddressReference6__ctorMFPS4core3sys5posix3sys6socket8sockaddrkZC3std6socket23UnknownAddressReference" "std.socket.UnknownAddressReference.this(core.sys.posix.sys.socket.sockaddr*, uint)"
 }
 
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
+clean_restart
 
 if [set_lang_d] {
     gdb_test_no_output "set width 0"

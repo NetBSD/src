@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,12 +20,11 @@ set testfile "py-error"
 
 load_lib gdb-python.exp
 
+require allow_python_tests
+
 # Start with a fresh gdb.
 gdb_exit
 gdb_start
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 set charset "IBM1047"
 
@@ -51,7 +50,12 @@ if {$test2 == ""} {
 set remote_python_file [gdb_remote_download host \
 			    ${srcdir}/${subdir}/${testfile}.py]
 
-# argc=LookupError: unknown encoding: IBM1047
-gdb_test "source $remote_python_file" "Traceback.*ClassName.*\r\nLookupError: unknown encoding: $charset" $test2
+# With the new way that "source" works, it isn't really possible for
+# this to fail "correctly".  Converting the filename to a Python
+# unicode object will fail -- and, mysteriously, without setting a
+# real exception.
+gdb_test "source $remote_python_file" \
+    "An error occurred in Python.*" \
+    $test2
 
 gdb_test "p 1" " = 1" "no delayed error"

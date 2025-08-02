@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2021-2023 Free Software Foundation, Inc.
+   Copyright 2021-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,6 +17,10 @@
 
 #include <unistd.h>
 
+#include <string.h>
+#include <limits.h>
+#include <stdio.h>
+
 static volatile int unblock_parent = 0;
 
 static void
@@ -25,7 +29,7 @@ break_parent (void)
 }
 
 int
-main (void)
+main (int argc, char **argv)
 {
   alarm (30);
 
@@ -40,7 +44,28 @@ main (void)
       break_parent ();
     }
   else
-    _exit (0);
+    {
+#if defined TEST_EXEC
+      char prog[PATH_MAX];
+      int len;
+
+      strcpy (prog, argv[0]);
+      len = strlen (prog);
+      for (; len > 0; --len)
+	{
+	  if (prog[len - 1] == '/')
+	    break;
+	}
+      strcpy (&prog[len], "vforked-prog");
+      execlp (prog, prog, (char *) 0);
+      perror ("exec failed");
+      _exit (1);
+#elif defined TEST_EXIT
+      _exit (0);
+#else
+#error Define TEST_EXEC or TEST_EXIT
+#endif
+    }
 
   return 0;
 }

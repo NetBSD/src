@@ -1,6 +1,6 @@
 /* Common target dependent code for GNU/Linux on PPC systems.
 
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,7 +46,7 @@ ppc_linux_has_isa205 (CORE_ADDR hwcap)
 const struct target_desc *
 ppc_linux_match_description (struct ppc_linux_features features)
 {
-  struct target_desc *tdesc = NULL;
+  const struct target_desc *tdesc = NULL;
 
   if (features.wordsize == 8)
     {

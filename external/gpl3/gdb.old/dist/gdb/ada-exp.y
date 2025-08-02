@@ -1,5 +1,5 @@
 /* YACC parser for Ada expressions, for GDB.
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -47,6 +47,7 @@
 #include "objfiles.h" /* For have_full_symbols and have_partial_symbols */
 #include "frame.h"
 #include "block.h"
+#include "ada-exp.h"
 
 #define parse_type(ps) builtin_type (ps->gdbarch ())
 
@@ -67,11 +68,8 @@ struct name_info {
 
 static struct parser_state *pstate = NULL;
 
-static struct stoken empty_stoken = { "", 0 };
-
-/* If expression is in the context of TYPE'(...), then TYPE, else
- * NULL.  */
-static struct type *type_qualifier;
+/* The original expression string.  */
+static const char *original_expr;
 
 int yyparse (void);
 
@@ -87,18 +85,16 @@ static void write_object_renaming (struct parser_state *,
 
 static struct type* write_var_or_type (struct parser_state *,
 				       const struct block *, struct stoken);
+static struct type *write_var_or_type_completion (struct parser_state *,
+						  const struct block *,
+						  struct stoken);
 
 static void write_name_assoc (struct parser_state *, struct stoken);
 
-static void write_exp_op_with_string (struct parser_state *, enum exp_opcode,
-				      struct stoken);
-
 static const struct block *block_lookup (const struct block *, const char *);
 
-static LONGEST convert_char_literal (struct type *, LONGEST);
-
 static void write_ambiguous_var (struct parser_state *,
-				 const struct block *, char *, int);
+				 const struct block *, const char *, int);
 
 static struct type *type_int (struct parser_state *);
 
@@ -108,11 +104,324 @@ static struct type *type_long_long (struct parser_state *);
 
 static struct type *type_long_double (struct parser_state *);
 
-static struct type *type_char (struct parser_state *);
+static struct type *type_for_char (struct parser_state *, ULONGEST);
 
 static struct type *type_boolean (struct parser_state *);
 
 static struct type *type_system_address (struct parser_state *);
+
+static std::string find_completion_bounds (struct parser_state *);
+
+using namespace expr;
+
+/* Handle Ada type resolution for OP.  DEPROCEDURE_P and CONTEXT_TYPE
+   are passed to the resolve method, if called.  */
+static operation_up
+resolve (operation_up &&op, bool deprocedure_p, struct type *context_type)
+{
+  operation_up result = std::move (op);
+  ada_resolvable *res = dynamic_cast<ada_resolvable *> (result.get ());
+  if (res != nullptr)
+    return res->replace (std::move (result),
+			 pstate->expout.get (),
+			 deprocedure_p,
+			 pstate->parse_completion,
+			 pstate->block_tracker,
+			 context_type);
+  return result;
+}
+
+/* Like parser_state::pop, but handles Ada type resolution.
+   DEPROCEDURE_P and CONTEXT_TYPE are passed to the resolve method, if
+   called.  */
+static operation_up
+ada_pop (bool deprocedure_p = true, struct type *context_type = nullptr)
+{
+  /* Of course it's ok to call parser_state::pop here... */
+  return resolve (pstate->pop (), deprocedure_p, context_type);
+}
+
+/* Like parser_state::wrap, but use ada_pop to pop the value.  */
+template<typename T>
+void
+ada_wrap ()
+{
+  operation_up arg = ada_pop ();
+  pstate->push_new<T> (std::move (arg));
+}
+
+/* Create and push an address-of operation, as appropriate for Ada.
+   If TYPE is not NULL, the resulting operation will be wrapped in a
+   cast to TYPE.  */
+static void
+ada_addrof (struct type *type = nullptr)
+{
+  operation_up arg = ada_pop (false);
+  operation_up addr = make_operation<unop_addr_operation> (std::move (arg));
+  operation_up wrapped
+    = make_operation<ada_wrapped_operation> (std::move (addr));
+  if (type != nullptr)
+    wrapped = make_operation<unop_cast_operation> (std::move (wrapped), type);
+  pstate->push (std::move (wrapped));
+}
+
+/* Handle operator overloading.  Either returns a function all
+   operation wrapping the arguments, or it returns null, leaving the
+   caller to construct the appropriate operation.  If RHS is null, a
+   unary operator is assumed.  */
+static operation_up
+maybe_overload (enum exp_opcode op, operation_up &lhs, operation_up &rhs)
+{
+  struct value *args[2];
+
+  int nargs = 1;
+  args[0] = lhs->evaluate (nullptr, pstate->expout.get (),
+			   EVAL_AVOID_SIDE_EFFECTS);
+  if (rhs == nullptr)
+    args[1] = nullptr;
+  else
+    {
+      args[1] = rhs->evaluate (nullptr, pstate->expout.get (),
+			       EVAL_AVOID_SIDE_EFFECTS);
+      ++nargs;
+    }
+
+  block_symbol fn = ada_find_operator_symbol (op, pstate->parse_completion,
+					      nargs, args);
+  if (fn.symbol == nullptr)
+    return {};
+
+  if (symbol_read_needs_frame (fn.symbol))
+    pstate->block_tracker->update (fn.block, INNERMOST_BLOCK_FOR_SYMBOLS);
+  operation_up callee = make_operation<ada_var_value_operation> (fn);
+
+  std::vector<operation_up> argvec;
+  argvec.push_back (std::move (lhs));
+  if (rhs != nullptr)
+    argvec.push_back (std::move (rhs));
+  return make_operation<ada_funcall_operation> (std::move (callee),
+						std::move (argvec));
+}
+
+/* Like parser_state::wrap, but use ada_pop to pop the value, and
+   handle unary overloading.  */
+template<typename T>
+void
+ada_wrap_overload (enum exp_opcode op)
+{
+  operation_up arg = ada_pop ();
+  operation_up empty;
+
+  operation_up call = maybe_overload (op, arg, empty);
+  if (call == nullptr)
+    call = make_operation<T> (std::move (arg));
+  pstate->push (std::move (call));
+}
+
+/* A variant of parser_state::wrap2 that uses ada_pop to pop both
+   operands, and then pushes a new Ada-wrapped operation of the
+   template type T.  */
+template<typename T>
+void
+ada_un_wrap2 (enum exp_opcode op)
+{
+  operation_up rhs = ada_pop ();
+  operation_up lhs = ada_pop ();
+
+  operation_up wrapped = maybe_overload (op, lhs, rhs);
+  if (wrapped == nullptr)
+    {
+      wrapped = make_operation<T> (std::move (lhs), std::move (rhs));
+      wrapped = make_operation<ada_wrapped_operation> (std::move (wrapped));
+    }
+  pstate->push (std::move (wrapped));
+}
+
+/* A variant of parser_state::wrap2 that uses ada_pop to pop both
+   operands.  Unlike ada_un_wrap2, ada_wrapped_operation is not
+   used.  */
+template<typename T>
+void
+ada_wrap2 (enum exp_opcode op)
+{
+  operation_up rhs = ada_pop ();
+  operation_up lhs = ada_pop ();
+  operation_up call = maybe_overload (op, lhs, rhs);
+  if (call == nullptr)
+    call = make_operation<T> (std::move (lhs), std::move (rhs));
+  pstate->push (std::move (call));
+}
+
+/* A variant of parser_state::wrap2 that uses ada_pop to pop both
+   operands.  OP is also passed to the constructor of the new binary
+   operation.  */
+template<typename T>
+void
+ada_wrap_op (enum exp_opcode op)
+{
+  operation_up rhs = ada_pop ();
+  operation_up lhs = ada_pop ();
+  operation_up call = maybe_overload (op, lhs, rhs);
+  if (call == nullptr)
+    call = make_operation<T> (op, std::move (lhs), std::move (rhs));
+  pstate->push (std::move (call));
+}
+
+/* Pop three operands using ada_pop, then construct a new ternary
+   operation of type T and push it.  */
+template<typename T>
+void
+ada_wrap3 ()
+{
+  operation_up rhs = ada_pop ();
+  operation_up mid = ada_pop ();
+  operation_up lhs = ada_pop ();
+  pstate->push_new<T> (std::move (lhs), std::move (mid), std::move (rhs));
+}
+
+/* Pop NARGS operands, then a callee operand, and use these to
+   construct and push a new Ada function call operation.  */
+static void
+ada_funcall (int nargs)
+{
+  /* We use the ordinary pop here, because we're going to do
+     resolution in a separate step, in order to handle array
+     indices.  */
+  std::vector<operation_up> args = pstate->pop_vector (nargs);
+  /* Call parser_state::pop here, because we don't want to
+     function-convert the callee slot of a call we're already
+     constructing.  */
+  operation_up callee = pstate->pop ();
+
+  ada_var_value_operation *vvo
+    = dynamic_cast<ada_var_value_operation *> (callee.get ());
+  int array_arity = 0;
+  struct type *callee_t = nullptr;
+  if (vvo == nullptr
+      || vvo->get_symbol ()->domain () != UNDEF_DOMAIN)
+    {
+      struct value *callee_v = callee->evaluate (nullptr,
+						 pstate->expout.get (),
+						 EVAL_AVOID_SIDE_EFFECTS);
+      callee_t = ada_check_typedef (value_type (callee_v));
+      array_arity = ada_array_arity (callee_t);
+    }
+
+  for (int i = 0; i < nargs; ++i)
+    {
+      struct type *subtype = nullptr;
+      if (i < array_arity)
+	subtype = ada_index_type (callee_t, i + 1, "array type");
+      args[i] = resolve (std::move (args[i]), true, subtype);
+    }
+
+  std::unique_ptr<ada_funcall_operation> funcall
+    (new ada_funcall_operation (std::move (callee), std::move (args)));
+  funcall->resolve (pstate->expout.get (), true, pstate->parse_completion,
+		    pstate->block_tracker, nullptr);
+  pstate->push (std::move (funcall));
+}
+
+/* The components being constructed during this parse.  */
+static std::vector<ada_component_up> components;
+
+/* Create a new ada_component_up of the indicated type and arguments,
+   and push it on the global 'components' vector.  */
+template<typename T, typename... Arg>
+void
+push_component (Arg... args)
+{
+  components.emplace_back (new T (std::forward<Arg> (args)...));
+}
+
+/* Examine the final element of the 'components' vector, and return it
+   as a pointer to an ada_choices_component.  The caller is
+   responsible for ensuring that the final element is in fact an
+   ada_choices_component.  */
+static ada_choices_component *
+choice_component ()
+{
+  ada_component *last = components.back ().get ();
+  return gdb::checked_static_cast<ada_choices_component *> (last);
+}
+
+/* Pop the most recent component from the global stack, and return
+   it.  */
+static ada_component_up
+pop_component ()
+{
+  ada_component_up result = std::move (components.back ());
+  components.pop_back ();
+  return result;
+}
+
+/* Pop the N most recent components from the global stack, and return
+   them in a vector.  */
+static std::vector<ada_component_up>
+pop_components (int n)
+{
+  std::vector<ada_component_up> result (n);
+  for (int i = 1; i <= n; ++i)
+    result[n - i] = pop_component ();
+  return result;
+}
+
+/* The associations being constructed during this parse.  */
+static std::vector<ada_association_up> associations;
+
+/* Create a new ada_association_up of the indicated type and
+   arguments, and push it on the global 'associations' vector.  */
+template<typename T, typename... Arg>
+void
+push_association (Arg... args)
+{
+  associations.emplace_back (new T (std::forward<Arg> (args)...));
+}
+
+/* Pop the most recent association from the global stack, and return
+   it.  */
+static ada_association_up
+pop_association ()
+{
+  ada_association_up result = std::move (associations.back ());
+  associations.pop_back ();
+  return result;
+}
+
+/* Pop the N most recent associations from the global stack, and
+   return them in a vector.  */
+static std::vector<ada_association_up>
+pop_associations (int n)
+{
+  std::vector<ada_association_up> result (n);
+  for (int i = 1; i <= n; ++i)
+    result[n - i] = pop_association ();
+  return result;
+}
+
+/* Expression completer for attributes.  */
+struct ada_tick_completer : public expr_completion_base
+{
+  explicit ada_tick_completer (std::string &&name)
+    : m_name (std::move (name))
+  {
+  }
+
+  bool complete (struct expression *exp,
+		 completion_tracker &tracker) override;
+
+private:
+
+  std::string m_name;
+};
+
+/* Make a new ada_tick_completer and wrap it in a unique pointer.  */
+static std::unique_ptr<expr_completion_base>
+make_tick_completer (struct stoken tok)
+{
+  return (std::unique_ptr<expr_completion_base>
+	  (new ada_tick_completer (std::string (tok.ptr, tok.length))));
+}
 
 %}
 
@@ -135,19 +444,15 @@ static struct type *type_system_address (struct parser_state *);
 
 %type <lval> positional_list component_groups component_associations
 %type <lval> aggregate_component_list 
-%type <tval> var_or_type
+%type <tval> var_or_type type_prefix opt_type_prefix
 
 %token <typed_val> INT NULL_PTR CHARLIT
 %token <typed_val_float> FLOAT
 %token TRUEKEYWORD FALSEKEYWORD
 %token COLONCOLON
-%token <sval> STRING NAME DOT_ID 
+%token <sval> STRING NAME DOT_ID TICK_COMPLETE DOT_COMPLETE NAME_COMPLETE
 %type <bval> block
 %type <lval> arglist tick_arglist
-
-%type <tval> save_qualifier
-
-%token DOT_ALL
 
 /* Special type cases, put in to allow the parser to distinguish different
    legal basetypes.  */
@@ -172,10 +477,11 @@ static struct type *type_system_address (struct parser_state *);
 %right TICK_ACCESS TICK_ADDRESS TICK_FIRST TICK_LAST TICK_LENGTH
 %right TICK_MAX TICK_MIN TICK_MODULUS
 %right TICK_POS TICK_RANGE TICK_SIZE TICK_TAG TICK_VAL
+%right TICK_COMPLETE
  /* The following are right-associative only so that reductions at this
     precedence have lower precedence than '.' and '('.  The syntax still
     forces a.b.c, e.g., to be LEFT-associated.  */
-%right '.' '(' '[' DOT_ID DOT_ALL
+%right '.' '(' '[' DOT_ID DOT_COMPLETE
 
 %token NEW OTHERS
 
@@ -188,67 +494,84 @@ start   :	exp1
 /* Expressions, including the sequencing operator.  */
 exp1	:	exp
 	|	exp1 ';' exp
-			{ write_exp_elt_opcode (pstate, BINOP_COMMA); }
+			{ ada_wrap2<comma_operation> (BINOP_COMMA); }
 	| 	primary ASSIGN exp   /* Extension for convenience */
-			{ write_exp_elt_opcode (pstate, BINOP_ASSIGN); }
+			{
+			  operation_up rhs = pstate->pop ();
+			  operation_up lhs = ada_pop ();
+			  value *lhs_val
+			    = lhs->evaluate (nullptr, pstate->expout.get (),
+					     EVAL_AVOID_SIDE_EFFECTS);
+			  rhs = resolve (std::move (rhs), true,
+					 value_type (lhs_val));
+			  pstate->push_new<ada_assign_operation>
+			    (std::move (lhs), std::move (rhs));
+			}
 	;
 
 /* Expressions, not including the sequencing operator.  */
-primary :	primary DOT_ALL
-			{ write_exp_elt_opcode (pstate, UNOP_IND); }
-	;
 
 primary :	primary DOT_ID
-			{ write_exp_op_with_string (pstate, STRUCTOP_STRUCT,
-						    $2); }
+			{
+			  if (strcmp ($2.ptr, "all") == 0)
+			    ada_wrap<ada_unop_ind_operation> ();
+			  else
+			    {
+			      operation_up arg = ada_pop ();
+			      pstate->push_new<ada_structop_operation>
+				(std::move (arg), copy_name ($2));
+			    }
+			}
+	;
+
+primary :	primary DOT_COMPLETE
+			{
+			  /* This is done even for ".all", because
+			     that might be a prefix.  */
+			  operation_up arg = ada_pop ();
+			  ada_structop_operation *str_op
+			    = (new ada_structop_operation
+			       (std::move (arg), copy_name ($2)));
+			  str_op->set_prefix (find_completion_bounds (pstate));
+			  pstate->push (operation_up (str_op));
+			  pstate->mark_struct_expression (str_op);
+			}
 	;
 
 primary :	primary '(' arglist ')'
-			{
-			  write_exp_elt_opcode (pstate, OP_FUNCALL);
-			  write_exp_elt_longcst (pstate, $3);
-			  write_exp_elt_opcode (pstate, OP_FUNCALL);
-		        }
+			{ ada_funcall ($3); }
 	|	var_or_type '(' arglist ')'
 			{
 			  if ($1 != NULL)
 			    {
 			      if ($3 != 1)
 				error (_("Invalid conversion"));
-			      write_exp_elt_opcode (pstate, UNOP_CAST);
-			      write_exp_elt_type (pstate, $1);
-			      write_exp_elt_opcode (pstate, UNOP_CAST);
+			      operation_up arg = ada_pop ();
+			      pstate->push_new<unop_cast_operation>
+				(std::move (arg), $1);
 			    }
 			  else
-			    {
-			      write_exp_elt_opcode (pstate, OP_FUNCALL);
-			      write_exp_elt_longcst (pstate, $3);
-			      write_exp_elt_opcode (pstate, OP_FUNCALL);
-			    }
+			    ada_funcall ($3);
 			}
 	;
 
-primary :	var_or_type '\'' save_qualifier { type_qualifier = $1; } 
-		   '(' exp ')'
+primary :	var_or_type '\'' '(' exp ')'
 			{
 			  if ($1 == NULL)
 			    error (_("Type required for qualification"));
-			  write_exp_elt_opcode (pstate, UNOP_QUAL);
-			  write_exp_elt_type (pstate, $1);
-			  write_exp_elt_opcode (pstate, UNOP_QUAL);
-			  type_qualifier = $3;
+			  operation_up arg = ada_pop (true,
+						      check_typedef ($1));
+			  pstate->push_new<ada_qual_operation>
+			    (std::move (arg), $1);
 			}
-	;
-
-save_qualifier : 	{ $$ = type_qualifier; }
 	;
 
 primary :
 		primary '(' simple_exp DOTDOT simple_exp ')'
-			{ write_exp_elt_opcode (pstate, TERNOP_SLICE); }
+			{ ada_wrap3<ada_ternop_slice_operation> (); }
 	|	var_or_type '(' simple_exp DOTDOT simple_exp ')'
 			{ if ($1 == NULL) 
-                            write_exp_elt_opcode (pstate, TERNOP_SLICE);
+			    ada_wrap3<ada_ternop_slice_operation> ();
 			  else
 			    error (_("Cannot slice a type"));
 			}
@@ -267,38 +590,53 @@ primary :	'(' exp1 ')'	{ }
 
 primary :	var_or_type	%prec VAR
 			{ if ($1 != NULL)
-			    {
-			      write_exp_elt_opcode (pstate, OP_TYPE);
-			      write_exp_elt_type (pstate, $1);
-			      write_exp_elt_opcode (pstate, OP_TYPE);
-			    }
+			    pstate->push_new<type_operation> ($1);
 			}
 	;
 
 primary :	DOLLAR_VARIABLE /* Various GDB extensions */
-			{ write_dollar_variable (pstate, $1); }
+			{ pstate->push_dollar ($1); }
 	;
 
 primary :     	aggregate
-        ;        
+			{
+			  pstate->push_new<ada_aggregate_operation>
+			    (pop_component ());
+			}
+	;        
 
 simple_exp : 	primary
 	;
 
 simple_exp :	'-' simple_exp    %prec UNARY
-			{ write_exp_elt_opcode (pstate, UNOP_NEG); }
+			{ ada_wrap_overload<ada_neg_operation> (UNOP_NEG); }
 	;
 
 simple_exp :	'+' simple_exp    %prec UNARY
-			{ write_exp_elt_opcode (pstate, UNOP_PLUS); }
+			{
+			  operation_up arg = ada_pop ();
+			  operation_up empty;
+
+			  /* If an overloaded operator was found, use
+			     it.  Otherwise, unary + has no effect and
+			     the argument can be pushed instead.  */
+			  operation_up call = maybe_overload (UNOP_PLUS, arg,
+							      empty);
+			  if (call != nullptr)
+			    arg = std::move (call);
+			  pstate->push (std::move (arg));
+			}
 	;
 
 simple_exp :	NOT simple_exp    %prec UNARY
-			{ write_exp_elt_opcode (pstate, UNOP_LOGICAL_NOT); }
+			{
+			  ada_wrap_overload<unary_logical_not_operation>
+			    (UNOP_LOGICAL_NOT);
+			}
 	;
 
 simple_exp :    ABS simple_exp	   %prec UNARY
-			{ write_exp_elt_opcode (pstate, UNOP_ABS); }
+			{ ada_wrap_overload<ada_abs_operation> (UNOP_ABS); }
 	;
 
 arglist	:		{ $$ = 0; }
@@ -319,111 +657,114 @@ primary :	'{' var_or_type '}' primary  %prec '.'
 			{ 
 			  if ($2 == NULL)
 			    error (_("Type required within braces in coercion"));
-			  write_exp_elt_opcode (pstate, UNOP_MEMVAL);
-			  write_exp_elt_type (pstate, $2);
-			  write_exp_elt_opcode (pstate, UNOP_MEMVAL);
+			  operation_up arg = ada_pop ();
+			  pstate->push_new<unop_memval_operation>
+			    (std::move (arg), $2);
 			}
 	;
 
 /* Binary operators in order of decreasing precedence.  */
 
 simple_exp 	: 	simple_exp STARSTAR simple_exp
-			{ write_exp_elt_opcode (pstate, BINOP_EXP); }
+			{ ada_wrap2<ada_binop_exp_operation> (BINOP_EXP); }
 	;
 
 simple_exp	:	simple_exp '*' simple_exp
-			{ write_exp_elt_opcode (pstate, BINOP_MUL); }
+			{ ada_wrap2<ada_binop_mul_operation> (BINOP_MUL); }
 	;
 
 simple_exp	:	simple_exp '/' simple_exp
-			{ write_exp_elt_opcode (pstate, BINOP_DIV); }
+			{ ada_wrap2<ada_binop_div_operation> (BINOP_DIV); }
 	;
 
 simple_exp	:	simple_exp REM simple_exp /* May need to be fixed to give correct Ada REM */
-			{ write_exp_elt_opcode (pstate, BINOP_REM); }
+			{ ada_wrap2<ada_binop_rem_operation> (BINOP_REM); }
 	;
 
 simple_exp	:	simple_exp MOD simple_exp
-			{ write_exp_elt_opcode (pstate, BINOP_MOD); }
+			{ ada_wrap2<ada_binop_mod_operation> (BINOP_MOD); }
 	;
 
 simple_exp	:	simple_exp '@' simple_exp	/* GDB extension */
-			{ write_exp_elt_opcode (pstate, BINOP_REPEAT); }
+			{ ada_wrap2<repeat_operation> (BINOP_REPEAT); }
 	;
 
 simple_exp	:	simple_exp '+' simple_exp
-			{ write_exp_elt_opcode (pstate, BINOP_ADD); }
+			{ ada_wrap_op<ada_binop_addsub_operation> (BINOP_ADD); }
 	;
 
 simple_exp	:	simple_exp '&' simple_exp
-			{ write_exp_elt_opcode (pstate, BINOP_CONCAT); }
+			{ ada_wrap2<ada_concat_operation> (BINOP_CONCAT); }
 	;
 
 simple_exp	:	simple_exp '-' simple_exp
-			{ write_exp_elt_opcode (pstate, BINOP_SUB); }
+			{ ada_wrap_op<ada_binop_addsub_operation> (BINOP_SUB); }
 	;
 
 relation :	simple_exp
 	;
 
 relation :	simple_exp '=' simple_exp
-			{ write_exp_elt_opcode (pstate, BINOP_EQUAL); }
+			{ ada_wrap_op<ada_binop_equal_operation> (BINOP_EQUAL); }
 	;
 
 relation :	simple_exp NOTEQUAL simple_exp
-			{ write_exp_elt_opcode (pstate, BINOP_NOTEQUAL); }
+			{ ada_wrap_op<ada_binop_equal_operation> (BINOP_NOTEQUAL); }
 	;
 
 relation :	simple_exp LEQ simple_exp
-			{ write_exp_elt_opcode (pstate, BINOP_LEQ); }
+			{ ada_un_wrap2<leq_operation> (BINOP_LEQ); }
 	;
 
 relation :	simple_exp IN simple_exp DOTDOT simple_exp
-			{ write_exp_elt_opcode (pstate, TERNOP_IN_RANGE); }
-        |       simple_exp IN primary TICK_RANGE tick_arglist
-			{ write_exp_elt_opcode (pstate, BINOP_IN_BOUNDS);
-			  write_exp_elt_longcst (pstate, (LONGEST) $5);
-			  write_exp_elt_opcode (pstate, BINOP_IN_BOUNDS);
+			{ ada_wrap3<ada_ternop_range_operation> (); }
+	|       simple_exp IN primary TICK_RANGE tick_arglist
+			{
+			  operation_up rhs = ada_pop ();
+			  operation_up lhs = ada_pop ();
+			  pstate->push_new<ada_binop_in_bounds_operation>
+			    (std::move (lhs), std::move (rhs), $5);
 			}
  	|	simple_exp IN var_or_type	%prec TICK_ACCESS
 			{ 
 			  if ($3 == NULL)
 			    error (_("Right operand of 'in' must be type"));
-			  write_exp_elt_opcode (pstate, UNOP_IN_RANGE);
-		          write_exp_elt_type (pstate, $3);
-		          write_exp_elt_opcode (pstate, UNOP_IN_RANGE);
+			  operation_up arg = ada_pop ();
+			  pstate->push_new<ada_unop_range_operation>
+			    (std::move (arg), $3);
 			}
 	|	simple_exp NOT IN simple_exp DOTDOT simple_exp
-			{ write_exp_elt_opcode (pstate, TERNOP_IN_RANGE);
-		          write_exp_elt_opcode (pstate, UNOP_LOGICAL_NOT);
-			}
-        |       simple_exp NOT IN primary TICK_RANGE tick_arglist
-			{ write_exp_elt_opcode (pstate, BINOP_IN_BOUNDS);
-			  write_exp_elt_longcst (pstate, (LONGEST) $6);
-			  write_exp_elt_opcode (pstate, BINOP_IN_BOUNDS);
-		          write_exp_elt_opcode (pstate, UNOP_LOGICAL_NOT);
+			{ ada_wrap3<ada_ternop_range_operation> ();
+			  ada_wrap<unary_logical_not_operation> (); }
+	|       simple_exp NOT IN primary TICK_RANGE tick_arglist
+			{
+			  operation_up rhs = ada_pop ();
+			  operation_up lhs = ada_pop ();
+			  pstate->push_new<ada_binop_in_bounds_operation>
+			    (std::move (lhs), std::move (rhs), $6);
+			  ada_wrap<unary_logical_not_operation> ();
 			}
  	|	simple_exp NOT IN var_or_type	%prec TICK_ACCESS
 			{ 
 			  if ($4 == NULL)
 			    error (_("Right operand of 'in' must be type"));
-			  write_exp_elt_opcode (pstate, UNOP_IN_RANGE);
-		          write_exp_elt_type (pstate, $4);
-		          write_exp_elt_opcode (pstate, UNOP_IN_RANGE);
-		          write_exp_elt_opcode (pstate, UNOP_LOGICAL_NOT);
+			  operation_up arg = ada_pop ();
+			  pstate->push_new<ada_unop_range_operation>
+			    (std::move (arg), $4);
+			  ada_wrap<unary_logical_not_operation> ();
 			}
 	;
 
 relation :	simple_exp GEQ simple_exp
-			{ write_exp_elt_opcode (pstate, BINOP_GEQ); }
+			{ ada_un_wrap2<geq_operation> (BINOP_GEQ); }
 	;
 
 relation :	simple_exp '<' simple_exp
-			{ write_exp_elt_opcode (pstate, BINOP_LESS); }
+			{ ada_un_wrap2<less_operation> (BINOP_LESS); }
 	;
 
 relation :	simple_exp '>' simple_exp
-			{ write_exp_elt_opcode (pstate, BINOP_GTR); }
+			{ ada_un_wrap2<gtr_operation> (BINOP_GTR); }
 	;
 
 exp	:	relation
@@ -436,37 +777,45 @@ exp	:	relation
 
 and_exp :
 		relation _AND_ relation 
-			{ write_exp_elt_opcode (pstate, BINOP_BITWISE_AND); }
+			{ ada_wrap2<ada_bitwise_and_operation>
+			    (BINOP_BITWISE_AND); }
 	|	and_exp _AND_ relation
-			{ write_exp_elt_opcode (pstate, BINOP_BITWISE_AND); }
+			{ ada_wrap2<ada_bitwise_and_operation>
+			    (BINOP_BITWISE_AND); }
 	;
 
 and_then_exp :
 	       relation _AND_ THEN relation
-			{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_AND); }
+			{ ada_wrap2<logical_and_operation>
+			    (BINOP_LOGICAL_AND); }
 	|	and_then_exp _AND_ THEN relation
-			{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_AND); }
-        ;
+			{ ada_wrap2<logical_and_operation>
+			    (BINOP_LOGICAL_AND); }
+	;
 
 or_exp :
 		relation OR relation 
-			{ write_exp_elt_opcode (pstate, BINOP_BITWISE_IOR); }
+			{ ada_wrap2<ada_bitwise_ior_operation>
+			    (BINOP_BITWISE_IOR); }
 	|	or_exp OR relation
-			{ write_exp_elt_opcode (pstate, BINOP_BITWISE_IOR); }
+			{ ada_wrap2<ada_bitwise_ior_operation>
+			    (BINOP_BITWISE_IOR); }
 	;
 
 or_else_exp :
 	       relation OR ELSE relation
-			{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_OR); }
+			{ ada_wrap2<logical_or_operation> (BINOP_LOGICAL_OR); }
 	|      or_else_exp OR ELSE relation
-			{ write_exp_elt_opcode (pstate, BINOP_LOGICAL_OR); }
-        ;
+			{ ada_wrap2<logical_or_operation> (BINOP_LOGICAL_OR); }
+	;
 
 xor_exp :       relation XOR relation
-			{ write_exp_elt_opcode (pstate, BINOP_BITWISE_XOR); }
+			{ ada_wrap2<ada_bitwise_xor_operation>
+			    (BINOP_BITWISE_XOR); }
 	|	xor_exp XOR relation
-			{ write_exp_elt_opcode (pstate, BINOP_BITWISE_XOR); }
-        ;
+			{ ada_wrap2<ada_bitwise_xor_operation>
+			    (BINOP_BITWISE_XOR); }
+	;
 
 /* Primaries can denote types (OP_TYPE).  In cases such as 
    primary TICK_ADDRESS, where a type would be invalid, it will be
@@ -477,37 +826,55 @@ xor_exp :       relation XOR relation
    aType'access evaluates to a type that evaluate_subexp attempts to 
    evaluate. */
 primary :	primary TICK_ACCESS
-			{ write_exp_elt_opcode (pstate, UNOP_ADDR); }
+			{ ada_addrof (); }
 	|	primary TICK_ADDRESS
-			{ write_exp_elt_opcode (pstate, UNOP_ADDR);
-			  write_exp_elt_opcode (pstate, UNOP_CAST);
-			  write_exp_elt_type (pstate,
-					      type_system_address (pstate));
-			  write_exp_elt_opcode (pstate, UNOP_CAST);
+			{ ada_addrof (type_system_address (pstate)); }
+	|	primary TICK_COMPLETE
+			{
+			  pstate->mark_completion (make_tick_completer ($2));
 			}
 	|	primary TICK_FIRST tick_arglist
-			{ write_int (pstate, $3, type_int (pstate));
-			  write_exp_elt_opcode (pstate, OP_ATR_FIRST); }
+			{
+			  operation_up arg = ada_pop ();
+			  pstate->push_new<ada_unop_atr_operation>
+			    (std::move (arg), OP_ATR_FIRST, $3);
+			}
 	|	primary TICK_LAST tick_arglist
-			{ write_int (pstate, $3, type_int (pstate));
-			  write_exp_elt_opcode (pstate, OP_ATR_LAST); }
+			{
+			  operation_up arg = ada_pop ();
+			  pstate->push_new<ada_unop_atr_operation>
+			    (std::move (arg), OP_ATR_LAST, $3);
+			}
 	| 	primary TICK_LENGTH tick_arglist
-			{ write_int (pstate, $3, type_int (pstate));
-			  write_exp_elt_opcode (pstate, OP_ATR_LENGTH); }
-        |       primary TICK_SIZE
-			{ write_exp_elt_opcode (pstate, OP_ATR_SIZE); }
+			{
+			  operation_up arg = ada_pop ();
+			  pstate->push_new<ada_unop_atr_operation>
+			    (std::move (arg), OP_ATR_LENGTH, $3);
+			}
+	|       primary TICK_SIZE
+			{ ada_wrap<ada_atr_size_operation> (); }
 	|	primary TICK_TAG
-			{ write_exp_elt_opcode (pstate, OP_ATR_TAG); }
-        |       opt_type_prefix TICK_MIN '(' exp ',' exp ')'
-			{ write_exp_elt_opcode (pstate, OP_ATR_MIN); }
-        |       opt_type_prefix TICK_MAX '(' exp ',' exp ')'
-			{ write_exp_elt_opcode (pstate, OP_ATR_MAX); }
+			{ ada_wrap<ada_atr_tag_operation> (); }
+	|       opt_type_prefix TICK_MIN '(' exp ',' exp ')'
+			{ ada_wrap2<ada_binop_min_operation> (BINOP_MIN); }
+	|       opt_type_prefix TICK_MAX '(' exp ',' exp ')'
+			{ ada_wrap2<ada_binop_max_operation> (BINOP_MAX); }
 	| 	opt_type_prefix TICK_POS '(' exp ')'
-			{ write_exp_elt_opcode (pstate, OP_ATR_POS); }
+			{ ada_wrap<ada_pos_operation> (); }
 	|	type_prefix TICK_VAL '(' exp ')'
-			{ write_exp_elt_opcode (pstate, OP_ATR_VAL); }
+			{
+			  operation_up arg = ada_pop ();
+			  pstate->push_new<ada_atr_val_operation>
+			    ($1, std::move (arg));
+			}
 	|	type_prefix TICK_MODULUS
-			{ write_exp_elt_opcode (pstate, OP_ATR_MODULUS); }
+			{
+			  struct type *type_arg = check_typedef ($1);
+			  if (!ada_is_modular_type (type_arg))
+			    error (_("'modulus must be applied to modular type"));
+			  write_int (pstate, ada_modulus (type_arg),
+				     type_arg->target_type ());
+			}
 	;
 
 tick_arglist :			%prec '('
@@ -517,22 +884,19 @@ tick_arglist :			%prec '('
 	;
 
 type_prefix :
-                var_or_type
+		var_or_type
 			{ 
 			  if ($1 == NULL)
 			    error (_("Prefix must be type"));
-			  write_exp_elt_opcode (pstate, OP_TYPE);
-			  write_exp_elt_type (pstate, $1);
-			  write_exp_elt_opcode (pstate, OP_TYPE); }
+			  $$ = $1;
+			}
 	;
 
 opt_type_prefix :
 		type_prefix
+			{ $$ = $1; }
 	| 	/* EMPTY */
-			{ write_exp_elt_opcode (pstate, OP_TYPE);
-			  write_exp_elt_type (pstate,
-					  parse_type (pstate)->builtin_void);
-			  write_exp_elt_opcode (pstate, OP_TYPE); }
+			{ $$ = parse_type (pstate)->builtin_void; }
 	;
 
 
@@ -541,34 +905,40 @@ primary	:	INT
 	;
 
 primary	:	CHARLIT
-                  { write_int (pstate,
-			       convert_char_literal (type_qualifier, $1.val),
-			       (type_qualifier == NULL) 
-			       ? $1.type : type_qualifier);
-		  }
+			{
+			  pstate->push_new<ada_char_operation> ($1.type, $1.val);
+			}
 	;
 
 primary	:	FLOAT
-			{ write_exp_elt_opcode (pstate, OP_FLOAT);
-			  write_exp_elt_type (pstate, $1.type);
-			  write_exp_elt_floatcst (pstate, $1.val);
-			  write_exp_elt_opcode (pstate, OP_FLOAT);
+			{
+			  float_data data;
+			  std::copy (std::begin ($1.val), std::end ($1.val),
+				     std::begin (data));
+			  pstate->push_new<float_const_operation>
+			    ($1.type, data);
+			  ada_wrap<ada_wrapped_operation> ();
 			}
 	;
 
 primary	:	NULL_PTR
-			{ write_int (pstate, 0, type_int (pstate)); }
+			{
+			  struct type *null_ptr_type
+			    = lookup_pointer_type (parse_type (pstate)->builtin_int0);
+			  write_int (pstate, 0, null_ptr_type);
+			}
 	;
 
 primary	:	STRING
 			{ 
-			  write_exp_op_with_string (pstate, OP_STRING, $1);
+			  pstate->push_new<ada_string_operation>
+			    (copy_name ($1));
 			}
 	;
 
 primary :	TRUEKEYWORD
 			{ write_int (pstate, 1, type_boolean (pstate)); }
-        |	FALSEKEYWORD
+	|	FALSEKEYWORD
 			{ write_int (pstate, 0, type_boolean (pstate)); }
 	;
 
@@ -578,13 +948,25 @@ primary	: 	NEW NAME
 
 var_or_type:	NAME   	    %prec VAR
 				{ $$ = write_var_or_type (pstate, NULL, $1); }
+	|	NAME_COMPLETE %prec VAR
+				{
+				  $$ = write_var_or_type_completion (pstate,
+								     NULL,
+								     $1);
+				}
 	|	block NAME  %prec VAR
-                                { $$ = write_var_or_type (pstate, $1, $2); }
+				{ $$ = write_var_or_type (pstate, $1, $2); }
+	|	block NAME_COMPLETE  %prec VAR
+				{
+				  $$ = write_var_or_type_completion (pstate,
+								     $1,
+								     $2);
+				}
 	|       NAME TICK_ACCESS 
 			{ 
 			  $$ = write_var_or_type (pstate, NULL, $1);
 			  if ($$ == NULL)
-			    write_exp_elt_opcode (pstate, UNOP_ADDR);
+			    ada_addrof ();
 			  else
 			    $$ = lookup_pointer_type ($$);
 			}
@@ -592,7 +974,7 @@ var_or_type:	NAME   	    %prec VAR
 			{ 
 			  $$ = write_var_or_type (pstate, $1, $2);
 			  if ($$ == NULL)
-			    write_exp_elt_opcode (pstate, UNOP_ADDR);
+			    ada_addrof ();
 			  else
 			    $$ = lookup_pointer_type ($$);
 			}
@@ -608,18 +990,20 @@ block   :       NAME COLONCOLON
 aggregate :
 		'(' aggregate_component_list ')'  
 			{
-			  write_exp_elt_opcode (pstate, OP_AGGREGATE);
-			  write_exp_elt_longcst (pstate, $2);
-			  write_exp_elt_opcode (pstate, OP_AGGREGATE);
-		        }
+			  std::vector<ada_component_up> components
+			    = pop_components ($2);
+
+			  push_component<ada_aggregate_component>
+			    (std::move (components));
+			}
 	;
 
 aggregate_component_list :
 		component_groups	 { $$ = $1; }
 	|	positional_list exp
-			{ write_exp_elt_opcode (pstate, OP_POSITIONAL);
-			  write_exp_elt_longcst (pstate, $1);
-			  write_exp_elt_opcode (pstate, OP_POSITIONAL);
+			{
+			  push_component<ada_positional_component>
+			    ($1, ada_pop ());
 			  $$ = $1 + 1;
 			}
 	|	positional_list component_groups
@@ -628,15 +1012,15 @@ aggregate_component_list :
 
 positional_list :
 		exp ','
-			{ write_exp_elt_opcode (pstate, OP_POSITIONAL);
-			  write_exp_elt_longcst (pstate, 0);
-			  write_exp_elt_opcode (pstate, OP_POSITIONAL);
+			{
+			  push_component<ada_positional_component>
+			    (0, ada_pop ());
 			  $$ = 1;
 			} 
 	|	positional_list exp ','
-			{ write_exp_elt_opcode (pstate, OP_POSITIONAL);
-			  write_exp_elt_longcst (pstate, $1);
-			  write_exp_elt_opcode (pstate, OP_POSITIONAL);
+			{
+			  push_component<ada_positional_component>
+			    ($1, ada_pop ());
 			  $$ = $1 + 1; 
 			}
 	;
@@ -649,16 +1033,17 @@ component_groups:
 	;
 
 others 	:	OTHERS ARROW exp
-			{ write_exp_elt_opcode (pstate, OP_OTHERS); }
+			{
+			  push_component<ada_others_component> (ada_pop ());
+			}
 	;
 
 component_group :
 		component_associations
 			{
-			  write_exp_elt_opcode (pstate, OP_CHOICES);
-			  write_exp_elt_longcst (pstate, $1);
-			  write_exp_elt_opcode (pstate, OP_CHOICES);
-		        }
+			  ada_choices_component *choices = choice_component ();
+			  choices->set_associations (pop_associations ($1));
+			}
 	;
 
 /* We use this somewhat obscure definition in order to handle NAME => and
@@ -667,36 +1052,60 @@ component_group :
    decisions until after the => or '|', we convert the ambiguity to a 
    resolved shift/reduce conflict. */
 component_associations :
-		NAME ARROW 
-			{ write_name_assoc (pstate, $1); }
-		    exp	{ $$ = 1; }
-	|	simple_exp ARROW exp
-			{ $$ = 1; }
-	|	simple_exp DOTDOT simple_exp ARROW 
-			{ write_exp_elt_opcode (pstate, OP_DISCRETE_RANGE);
-			  write_exp_op_with_string (pstate, OP_NAME,
-						    empty_stoken);
+		NAME ARROW exp
+			{
+			  push_component<ada_choices_component> (ada_pop ());
+			  write_name_assoc (pstate, $1);
+			  $$ = 1;
 			}
-		    exp { $$ = 1; }
-	|	NAME '|' 
-		        { write_name_assoc (pstate, $1); }
-		    component_associations  { $$ = $4 + 1; }
-	|	simple_exp '|'  
-	            component_associations  { $$ = $3 + 1; }
-	|	simple_exp DOTDOT simple_exp '|'
-			{ write_exp_elt_opcode (pstate, OP_DISCRETE_RANGE); }
-		    component_associations  { $$ = $6 + 1; }
+	|	simple_exp ARROW exp
+			{
+			  push_component<ada_choices_component> (ada_pop ());
+			  push_association<ada_name_association> (ada_pop ());
+			  $$ = 1;
+			}
+	|	simple_exp DOTDOT simple_exp ARROW exp
+			{
+			  push_component<ada_choices_component> (ada_pop ());
+			  operation_up rhs = ada_pop ();
+			  operation_up lhs = ada_pop ();
+			  push_association<ada_discrete_range_association>
+			    (std::move (lhs), std::move (rhs));
+			  $$ = 1;
+			}
+	|	NAME '|' component_associations
+			{
+			  write_name_assoc (pstate, $1);
+			  $$ = $3 + 1;
+			}
+	|	simple_exp '|' component_associations
+			{
+			  push_association<ada_name_association> (ada_pop ());
+			  $$ = $3 + 1;
+			}
+	|	simple_exp DOTDOT simple_exp '|' component_associations
+
+			{
+			  operation_up rhs = ada_pop ();
+			  operation_up lhs = ada_pop ();
+			  push_association<ada_discrete_range_association>
+			    (std::move (lhs), std::move (rhs));
+			  $$ = $5 + 1;
+			}
 	;
 
 /* Some extensions borrowed from C, for the benefit of those who find they
    can't get used to Ada notation in GDB.  */
 
 primary	:	'*' primary		%prec '.'
-			{ write_exp_elt_opcode (pstate, UNOP_IND); }
+			{ ada_wrap<ada_unop_ind_operation> (); }
 	|	'&' primary		%prec '.'
-			{ write_exp_elt_opcode (pstate, UNOP_ADDR); }
+			{ ada_addrof (); }
 	|	primary '[' exp ']'
-			{ write_exp_elt_opcode (pstate, BINOP_SUBSCRIPT); }
+			{
+			  ada_wrap2<subscript_operation> (BINOP_SUBSCRIPT);
+			  ada_wrap<ada_wrapped_operation> ();
+			}
 	;
 
 %%
@@ -732,13 +1141,26 @@ ada_parse (struct parser_state *par_state)
   scoped_restore pstate_restore = make_scoped_restore (&pstate);
   gdb_assert (par_state != NULL);
   pstate = par_state;
+  original_expr = par_state->lexptr;
+
+  scoped_restore restore_yydebug = make_scoped_restore (&yydebug,
+							parser_debug);
 
   lexer_init (yyin);		/* (Re-)initialize lexer.  */
-  type_qualifier = NULL;
   obstack_free (&temp_parse_space, NULL);
   obstack_init (&temp_parse_space);
+  components.clear ();
+  associations.clear ();
 
-  return yyparse ();
+  int result = yyparse ();
+  if (!result)
+    {
+      struct type *context_type = nullptr;
+      if (par_state->void_context_p)
+	context_type = parse_type (par_state)->builtin_void;
+      pstate->set_operation (ada_pop (true, context_type));
+    }
+  return result;
 }
 
 static void
@@ -751,17 +1173,12 @@ yyerror (const char *msg)
    non-NULL).  */
 
 static void
-write_var_from_sym (struct parser_state *par_state,
-		    const struct block *block,
-		    struct symbol *sym)
+write_var_from_sym (struct parser_state *par_state, block_symbol sym)
 {
-  if (symbol_read_needs_frame (sym))
-    par_state->block_tracker->update (block, INNERMOST_BLOCK_FOR_SYMBOLS);
+  if (symbol_read_needs_frame (sym.symbol))
+    par_state->block_tracker->update (sym.block, INNERMOST_BLOCK_FOR_SYMBOLS);
 
-  write_exp_elt_opcode (par_state, OP_VAR_VALUE);
-  write_exp_elt_block (par_state, block);
-  write_exp_elt_sym (par_state, sym);
-  write_exp_elt_opcode (par_state, OP_VAR_VALUE);
+  par_state->push_new<ada_var_value_operation> (sym);
 }
 
 /* Write integer or boolean constant ARG of type TYPE.  */
@@ -769,32 +1186,20 @@ write_var_from_sym (struct parser_state *par_state,
 static void
 write_int (struct parser_state *par_state, LONGEST arg, struct type *type)
 {
-  write_exp_elt_opcode (par_state, OP_LONG);
-  write_exp_elt_type (par_state, type);
-  write_exp_elt_longcst (par_state, arg);
-  write_exp_elt_opcode (par_state, OP_LONG);
+  pstate->push_new<long_const_operation> (type, arg);
+  ada_wrap<ada_wrapped_operation> ();
 }
 
-/* Write an OPCODE, string, OPCODE sequence to the current expression.  */
-static void
-write_exp_op_with_string (struct parser_state *par_state,
-			  enum exp_opcode opcode, struct stoken token)
-{
-  write_exp_elt_opcode (par_state, opcode);
-  write_exp_string (par_state, token);
-  write_exp_elt_opcode (par_state, opcode);
-}
-  
 /* Emit expression corresponding to the renamed object named 
- * designated by RENAMED_ENTITY[0 .. RENAMED_ENTITY_LEN-1] in the
- * context of ORIG_LEFT_CONTEXT, to which is applied the operations
- * encoded by RENAMING_EXPR.  MAX_DEPTH is the maximum number of
- * cascaded renamings to allow.  If ORIG_LEFT_CONTEXT is null, it
- * defaults to the currently selected block. ORIG_SYMBOL is the 
- * symbol that originally encoded the renaming.  It is needed only
- * because its prefix also qualifies any index variables used to index
- * or slice an array.  It should not be necessary once we go to the
- * new encoding entirely (FIXME pnh 7/20/2007).  */
+   designated by RENAMED_ENTITY[0 .. RENAMED_ENTITY_LEN-1] in the
+   context of ORIG_LEFT_CONTEXT, to which is applied the operations
+   encoded by RENAMING_EXPR.  MAX_DEPTH is the maximum number of
+   cascaded renamings to allow.  If ORIG_LEFT_CONTEXT is null, it
+   defaults to the currently selected block. ORIG_SYMBOL is the 
+   symbol that originally encoded the renaming.  It is needed only
+   because its prefix also qualifies any index variables used to index
+   or slice an array.  It should not be necessary once we go to the
+   new encoding entirely (FIXME pnh 7/20/2007).  */
 
 static void
 write_object_renaming (struct parser_state *par_state,
@@ -817,7 +1222,7 @@ write_object_renaming (struct parser_state *par_state,
   ada_lookup_encoded_symbol (name, orig_left_context, VAR_DOMAIN, &sym_info);
   if (sym_info.symbol == NULL)
     error (_("Could not find renamed variable: %s"), ada_decode (name).c_str ());
-  else if (SYMBOL_CLASS (sym_info.symbol) == LOC_TYPEDEF)
+  else if (sym_info.symbol->aclass () == LOC_TYPEDEF)
     /* We have a renaming of an old-style renaming symbol.  Don't
        trust the block information.  */
     sym_info.block = orig_left_context;
@@ -832,7 +1237,7 @@ write_object_renaming (struct parser_state *par_state,
 				&inner_renaming_expr))
       {
       case ADA_NOT_RENAMING:
-	write_var_from_sym (par_state, sym_info.block, sym_info.symbol);
+	write_var_from_sym (par_state, sym_info);
 	break;
       case ADA_OBJECT_RENAMING:
 	write_object_renaming (par_state, sym_info.block,
@@ -851,9 +1256,9 @@ write_object_renaming (struct parser_state *par_state,
 
       switch (*renaming_expr) {
       case 'A':
-        renaming_expr += 1;
-        write_exp_elt_opcode (par_state, UNOP_IND);
-        break;
+	renaming_expr += 1;
+	ada_wrap<ada_unop_ind_operation> ();
+	break;
       case 'L':
 	slice_state = LOWER_BOUND;
 	/* FALLTHROUGH */
@@ -866,10 +1271,7 @@ write_object_renaming (struct parser_state *par_state,
 	    if (next == renaming_expr)
 	      goto BadEncoding;
 	    renaming_expr = next;
-	    write_exp_elt_opcode (par_state, OP_LONG);
-	    write_exp_elt_type (par_state, type_int (par_state));
-	    write_exp_elt_longcst (par_state, (LONGEST) val);
-	    write_exp_elt_opcode (par_state, OP_LONG);
+	    write_int (par_state, val, type_int (par_state));
 	  }
 	else
 	  {
@@ -889,32 +1291,25 @@ write_object_renaming (struct parser_state *par_state,
 				       VAR_DOMAIN, &index_sym_info);
 	    if (index_sym_info.symbol == NULL)
 	      error (_("Could not find %s"), index_name);
-	    else if (SYMBOL_CLASS (index_sym_info.symbol) == LOC_TYPEDEF)
+	    else if (index_sym_info.symbol->aclass () == LOC_TYPEDEF)
 	      /* Index is an old-style renaming symbol.  */
 	      index_sym_info.block = orig_left_context;
-	    write_var_from_sym (par_state, index_sym_info.block,
-				index_sym_info.symbol);
+	    write_var_from_sym (par_state, index_sym_info);
 	  }
 	if (slice_state == SIMPLE_INDEX)
-	  {
-	    write_exp_elt_opcode (par_state, OP_FUNCALL);
-	    write_exp_elt_longcst (par_state, (LONGEST) 1);
-	    write_exp_elt_opcode (par_state, OP_FUNCALL);
-	  }
+	  ada_funcall (1);
 	else if (slice_state == LOWER_BOUND)
 	  slice_state = UPPER_BOUND;
 	else if (slice_state == UPPER_BOUND)
 	  {
-	    write_exp_elt_opcode (par_state, TERNOP_SLICE);
+	    ada_wrap3<ada_ternop_slice_operation> ();
 	    slice_state = SIMPLE_INDEX;
 	  }
 	break;
 
       case 'R':
 	{
-	  struct stoken field_name;
 	  const char *end;
-	  char *buf;
 
 	  renaming_expr += 1;
 
@@ -923,13 +1318,12 @@ write_object_renaming (struct parser_state *par_state,
 	  end = strchr (renaming_expr, 'X');
 	  if (end == NULL)
 	    end = renaming_expr + strlen (renaming_expr);
-	  field_name.length = end - renaming_expr;
-	  buf = (char *) malloc (end - renaming_expr + 1);
-	  field_name.ptr = buf;
-	  strncpy (buf, renaming_expr, end - renaming_expr);
-	  buf[end - renaming_expr] = '\000';
+
+	  operation_up arg = ada_pop ();
+	  pstate->push_new<ada_structop_operation>
+	    (std::move (arg), std::string (renaming_expr,
+					   end - renaming_expr));
 	  renaming_expr = end;
-	  write_exp_op_with_string (par_state, STRUCTOP_STRUCT, field_name);
 	  break;
 	}
 
@@ -948,30 +1342,33 @@ static const struct block*
 block_lookup (const struct block *context, const char *raw_name)
 {
   const char *name;
-  std::vector<struct block_symbol> syms;
-  int nsyms;
   struct symtab *symtab;
   const struct block *result = NULL;
 
+  std::string name_storage;
   if (raw_name[0] == '\'')
     {
       raw_name += 1;
       name = raw_name;
     }
   else
-    name = ada_encode (raw_name);
+    {
+      name_storage = ada_encode (raw_name);
+      name = name_storage.c_str ();
+    }
 
-  nsyms = ada_lookup_symbol_list (name, context, VAR_DOMAIN, &syms);
+  std::vector<struct block_symbol> syms
+    = ada_lookup_symbol_list (name, context, VAR_DOMAIN);
 
   if (context == NULL
-      && (nsyms == 0 || SYMBOL_CLASS (syms[0].symbol) != LOC_BLOCK))
+      && (syms.empty () || syms[0].symbol->aclass () != LOC_BLOCK))
     symtab = lookup_symtab (name);
   else
     symtab = NULL;
 
   if (symtab != NULL)
-    result = BLOCKVECTOR_BLOCK (SYMTAB_BLOCKVECTOR (symtab), STATIC_BLOCK);
-  else if (nsyms == 0 || SYMBOL_CLASS (syms[0].symbol) != LOC_BLOCK)
+    result = symtab->compunit ()->blockvector ()->static_block ();
+  else if (syms.empty () || syms[0].symbol->aclass () != LOC_BLOCK)
     {
       if (context == NULL)
 	error (_("No file or function \"%s\"."), raw_name);
@@ -980,9 +1377,9 @@ block_lookup (const struct block *context, const char *raw_name)
     }
   else
     {
-      if (nsyms > 1)
+      if (syms.size () > 1)
 	warning (_("Function name \"%s\" ambiguous here"), raw_name);
-      result = SYMBOL_BLOCK_VALUE (syms[0].symbol);
+      result = syms[0].symbol->value_block ();
     }
 
   return result;
@@ -997,13 +1394,13 @@ select_possible_type_sym (const std::vector<struct block_symbol> &syms)
 	  
   preferred_index = -1; preferred_type = NULL;
   for (i = 0; i < syms.size (); i += 1)
-    switch (SYMBOL_CLASS (syms[i].symbol))
+    switch (syms[i].symbol->aclass ())
       {
       case LOC_TYPEDEF:
-	if (ada_prefer_type (SYMBOL_TYPE (syms[i].symbol), preferred_type))
+	if (ada_prefer_type (syms[i].symbol->type (), preferred_type))
 	  {
 	    preferred_index = i;
-	    preferred_type = SYMBOL_TYPE (syms[i].symbol);
+	    preferred_type = syms[i].symbol->type ();
 	  }
 	break;
       case LOC_REGISTER:
@@ -1022,7 +1419,7 @@ select_possible_type_sym (const std::vector<struct block_symbol> &syms)
 }
 
 static struct type*
-find_primitive_type (struct parser_state *par_state, char *name)
+find_primitive_type (struct parser_state *par_state, const char *name)
 {
   struct type *type;
   type = language_lookup_primitive_type (par_state->language (),
@@ -1041,15 +1438,15 @@ find_primitive_type (struct parser_state *par_state, char *name)
       strcpy (expanded_name, "standard__");
       strcat (expanded_name, name);
       sym = ada_lookup_symbol (expanded_name, NULL, VAR_DOMAIN).symbol;
-      if (sym != NULL && SYMBOL_CLASS (sym) == LOC_TYPEDEF)
-	type = SYMBOL_TYPE (sym);
+      if (sym != NULL && sym->aclass () == LOC_TYPEDEF)
+	type = sym->type ();
     }
 
   return type;
 }
 
 static int
-chop_selector (char *name, int end)
+chop_selector (const char *name, int end)
 {
   int i;
   for (i = end - 1; i > 0; i -= 1)
@@ -1062,8 +1459,8 @@ chop_selector (char *name, int end)
    '.'), chop this separator and return the result; else, return
    NAME.  */
 
-static char *
-chop_separator (char *name)
+static const char *
+chop_separator (const char *name)
 {
   if (*name == '.')
    return name + 1;
@@ -1076,22 +1473,25 @@ chop_separator (char *name)
 
 /* Given that SELS is a string of the form (<sep><identifier>)*, where
    <sep> is '__' or '.', write the indicated sequence of
-   STRUCTOP_STRUCT expression operators. */
-static void
-write_selectors (struct parser_state *par_state, char *sels)
+   STRUCTOP_STRUCT expression operators.  Returns a pointer to the
+   last operation that was pushed.  */
+static ada_structop_operation *
+write_selectors (struct parser_state *par_state, const char *sels)
 {
+  ada_structop_operation *result = nullptr;
   while (*sels != '\0')
     {
-      struct stoken field_name;
-      char *p = chop_separator (sels);
+      const char *p = chop_separator (sels);
       sels = p;
       while (*sels != '\0' && *sels != '.' 
 	     && (sels[0] != '_' || sels[1] != '_'))
 	sels += 1;
-      field_name.length = sels - p;
-      field_name.ptr = p;
-      write_exp_op_with_string (par_state, STRUCTOP_STRUCT, field_name);
+      operation_up arg = ada_pop ();
+      result = new ada_structop_operation (std::move (arg),
+					   std::string (p, sels - p));
+      pstate->push (operation_up (result));
     }
+  return result;
 }
 
 /* Write a variable access (OP_VAR_VALUE) to ambiguous encoded name
@@ -1100,18 +1500,16 @@ write_selectors (struct parser_state *par_state, char *sels)
    */
 static void
 write_ambiguous_var (struct parser_state *par_state,
-		     const struct block *block, char *name, int len)
+		     const struct block *block, const char *name, int len)
 {
   struct symbol *sym = new (&temp_parse_space) symbol ();
 
-  SYMBOL_DOMAIN (sym) = UNDEF_DOMAIN;
+  sym->set_domain (UNDEF_DOMAIN);
   sym->set_linkage_name (obstack_strndup (&temp_parse_space, name, len));
   sym->set_language (language_ada, nullptr);
 
-  write_exp_elt_opcode (par_state, OP_VAR_VALUE);
-  write_exp_elt_block (par_state, block);
-  write_exp_elt_sym (par_state, sym);
-  write_exp_elt_opcode (par_state, OP_VAR_VALUE);
+  block_symbol bsym { sym, block };
+  par_state->push_new<ada_var_value_operation> (bsym);
 }
 
 /* A convenient wrapper around ada_get_field_index that takes
@@ -1120,7 +1518,7 @@ write_ambiguous_var (struct parser_state *par_state,
 
 static int
 ada_nget_field_index (const struct type *type, const char *field_name0,
-                      int field_name_len, int maybe_missing)
+		      int field_name_len, int maybe_missing)
 {
   char *field_name = (char *) alloca ((field_name_len + 1) * sizeof (char));
 
@@ -1141,11 +1539,11 @@ ada_nget_field_index (const struct type *type, const char *field_name0,
    In case of failure, we return NULL.  */
 
 static struct type *
-get_symbol_field_type (struct symbol *sym, char *encoded_field_name)
+get_symbol_field_type (struct symbol *sym, const char *encoded_field_name)
 {
-  char *field_name = encoded_field_name;
-  char *subfield_name;
-  struct type *type = SYMBOL_TYPE (sym);
+  const char *field_name = encoded_field_name;
+  const char *subfield_name;
+  struct type *type = sym->type ();
   int fieldno;
 
   if (type == NULL || field_name == NULL)
@@ -1158,7 +1556,7 @@ get_symbol_field_type (struct symbol *sym, char *encoded_field_name)
 
       fieldno = ada_get_field_index (type, field_name, 1);
       if (fieldno >= 0)
-        return type->field (fieldno).type ();
+	return type->field (fieldno).type ();
 
       subfield_name = field_name;
       while (*subfield_name != '\0' && *subfield_name != '.' 
@@ -1166,12 +1564,12 @@ get_symbol_field_type (struct symbol *sym, char *encoded_field_name)
 	subfield_name += 1;
 
       if (subfield_name[0] == '\0')
-        return NULL;
+	return NULL;
 
       fieldno = ada_nget_field_index (type, field_name,
-                                      subfield_name - field_name, 1);
+				      subfield_name - field_name, 1);
       if (fieldno < 0)
-        return NULL;
+	return NULL;
 
       type = type->field (fieldno).type ();
       field_name = subfield_name;
@@ -1201,9 +1599,10 @@ write_var_or_type (struct parser_state *par_state,
   if (block == NULL)
     block = par_state->expression_context_block;
 
-  encoded_name = ada_encode (name0.ptr);
-  name_len = strlen (encoded_name);
-  encoded_name = obstack_strndup (&temp_parse_space, encoded_name, name_len);
+  std::string name_storage = ada_encode (name0.ptr);
+  name_len = name_storage.size ();
+  encoded_name = obstack_strndup (&temp_parse_space, name_storage.c_str (),
+				  name_len);
   for (depth = 0; depth < MAX_RENAMING_CHAIN_LENGTH; depth += 1)
     {
       int tail_index;
@@ -1211,8 +1610,6 @@ write_var_or_type (struct parser_state *par_state,
       tail_index = name_len;
       while (tail_index > 0)
 	{
-	  int nsyms;
-	  std::vector<struct block_symbol> syms;
 	  struct symbol *type_sym;
 	  struct symbol *renaming_sym;
 	  const char* renaming;
@@ -1221,15 +1618,19 @@ write_var_or_type (struct parser_state *par_state,
 	  int terminator = encoded_name[tail_index];
 
 	  encoded_name[tail_index] = '\0';
-	  nsyms = ada_lookup_symbol_list (encoded_name, block,
-					  VAR_DOMAIN, &syms);
+	  /* In order to avoid double-encoding, we want to only pass
+	     the decoded form to lookup functions.  */
+	  std::string decoded_name = ada_decode (encoded_name);
 	  encoded_name[tail_index] = terminator;
+
+	  std::vector<struct block_symbol> syms
+	    = ada_lookup_symbol_list (decoded_name.c_str (), block, VAR_DOMAIN);
 
 	  type_sym = select_possible_type_sym (syms);
 
 	  if (type_sym != NULL)
 	    renaming_sym = type_sym;
-	  else if (nsyms == 1)
+	  else if (syms.size () == 1)
 	    renaming_sym = syms[0].symbol;
 	  else 
 	    renaming_sym = NULL;
@@ -1243,7 +1644,7 @@ write_var_or_type (struct parser_state *par_state,
 	    case ADA_EXCEPTION_RENAMING:
 	    case ADA_SUBPROGRAM_RENAMING:
 	      {
-	        int alloc_len = renaming_len + name_len - tail_index + 1;
+		int alloc_len = renaming_len + name_len - tail_index + 1;
 		char *new_name
 		  = (char *) obstack_alloc (&temp_parse_space, alloc_len);
 		strncpy (new_name, renaming, renaming_len);
@@ -1258,29 +1659,28 @@ write_var_or_type (struct parser_state *par_state,
 	      write_selectors (par_state, encoded_name + tail_index);
 	      return NULL;
 	    default:
-	      internal_error (__FILE__, __LINE__,
-			      _("impossible value from ada_parse_renaming"));
+	      internal_error (_("impossible value from ada_parse_renaming"));
 	    }
 
 	  if (type_sym != NULL)
 	    {
-              struct type *field_type;
-              
-              if (tail_index == name_len)
-		return SYMBOL_TYPE (type_sym);
+	      struct type *field_type;
+	      
+	      if (tail_index == name_len)
+		return type_sym->type ();
 
-              /* We have some extraneous characters after the type name.
-                 If this is an expression "TYPE_NAME.FIELD0.[...].FIELDN",
-                 then try to get the type of FIELDN.  */
-              field_type
-                = get_symbol_field_type (type_sym, encoded_name + tail_index);
-              if (field_type != NULL)
+	      /* We have some extraneous characters after the type name.
+		 If this is an expression "TYPE_NAME.FIELD0.[...].FIELDN",
+		 then try to get the type of FIELDN.  */
+	      field_type
+		= get_symbol_field_type (type_sym, encoded_name + tail_index);
+	      if (field_type != NULL)
 		return field_type;
 	      else 
 		error (_("Invalid attempt to select from type: \"%s\"."),
-                       name0.ptr);
+		       name0.ptr);
 	    }
-	  else if (tail_index == name_len && nsyms == 0)
+	  else if (tail_index == name_len && syms.empty ())
 	    {
 	      struct type *type = find_primitive_type (par_state,
 						       encoded_name);
@@ -1289,19 +1689,23 @@ write_var_or_type (struct parser_state *par_state,
 		return type;
 	    }
 
-	  if (nsyms == 1)
+	  if (syms.size () == 1)
 	    {
-	      write_var_from_sym (par_state, syms[0].block, syms[0].symbol);
+	      write_var_from_sym (par_state, syms[0]);
 	      write_selectors (par_state, encoded_name + tail_index);
 	      return NULL;
 	    }
-	  else if (nsyms == 0) 
+	  else if (syms.empty ())
 	    {
+	      struct objfile *objfile = nullptr;
+	      if (block != nullptr)
+		objfile = block_objfile (block);
+
 	      struct bound_minimal_symbol msym
-		= ada_lookup_simple_minsym (encoded_name);
+		= ada_lookup_simple_minsym (decoded_name.c_str (), objfile);
 	      if (msym.minsym != NULL)
 		{
-		  write_exp_msymbol (par_state, msym);
+		  par_state->push_new<ada_var_msym_value_operation> (msym);
 		  /* Maybe cause error here rather than later? FIXME? */
 		  write_selectors (par_state, encoded_name + tail_index);
 		  return NULL;
@@ -1337,6 +1741,72 @@ write_var_or_type (struct parser_state *par_state,
 
 }
 
+/* Because ada_completer_word_break_characters does not contain '.' --
+   and it cannot easily be added, this breaks other completions -- we
+   have to recreate the completion word-splitting here, so that we can
+   provide a prefix that is then used when completing field names.
+   Without this, an attempt like "complete print abc.d" will give a
+   result like "print def" rather than "print abc.def".  */
+
+static std::string
+find_completion_bounds (struct parser_state *par_state)
+{
+  const char *end = pstate->lexptr;
+  /* First the end of the prefix.  Here we stop at the token start or
+     at '.' or space.  */
+  for (; end > original_expr && end[-1] != '.' && !isspace (end[-1]); --end)
+    {
+      /* Nothing.  */
+    }
+  /* Now find the start of the prefix.  */
+  const char *ptr = end;
+  /* Here we allow '.'.  */
+  for (;
+       ptr > original_expr && (ptr[-1] == '.'
+			       || ptr[-1] == '_'
+			       || (ptr[-1] >= 'a' && ptr[-1] <= 'z')
+			       || (ptr[-1] >= 'A' && ptr[-1] <= 'Z')
+			       || (ptr[-1] & 0xff) >= 0x80);
+       --ptr)
+    {
+      /* Nothing.  */
+    }
+  /* ... except, skip leading spaces.  */
+  ptr = skip_spaces (ptr);
+
+  return std::string (ptr, end);
+}
+
+/* A wrapper for write_var_or_type that is used specifically when
+   completion is requested for the last of a sequence of
+   identifiers.  */
+
+static struct type *
+write_var_or_type_completion (struct parser_state *par_state,
+			      const struct block *block, struct stoken name0)
+{
+  int tail_index = chop_selector (name0.ptr, name0.length);
+  /* If there's no separator, just defer to ordinary symbol
+     completion.  */
+  if (tail_index == -1)
+    return write_var_or_type (par_state, block, name0);
+
+  std::string copy (name0.ptr, tail_index);
+  struct type *type = write_var_or_type (par_state, block,
+					 { copy.c_str (),
+					   (int) copy.length () });
+  /* For completion purposes, it's enough that we return a type
+     here.  */
+  if (type != nullptr)
+    return type;
+
+  ada_structop_operation *op = write_selectors (par_state,
+						name0.ptr + tail_index);
+  op->set_prefix (find_completion_bounds (par_state));
+  par_state->mark_struct_expression (op);
+  return nullptr;
+}
+
 /* Write a left side of a component association (e.g., NAME in NAME =>
    exp).  If NAME has the form of a selected component, write it as an
    ordinary expression.  If it is a simple variable that unambiguously
@@ -1357,56 +1827,21 @@ write_name_assoc (struct parser_state *par_state, struct stoken name)
 {
   if (strchr (name.ptr, '.') == NULL)
     {
-      std::vector<struct block_symbol> syms;
-      int nsyms = ada_lookup_symbol_list (name.ptr,
-					  par_state->expression_context_block,
-					  VAR_DOMAIN, &syms);
+      std::vector<struct block_symbol> syms
+	= ada_lookup_symbol_list (name.ptr,
+				  par_state->expression_context_block,
+				  VAR_DOMAIN);
 
-      if (nsyms != 1 || SYMBOL_CLASS (syms[0].symbol) == LOC_TYPEDEF)
-	write_exp_op_with_string (par_state, OP_NAME, name);
+      if (syms.size () != 1 || syms[0].symbol->aclass () == LOC_TYPEDEF)
+	pstate->push_new<ada_string_operation> (copy_name (name));
       else
-	write_var_from_sym (par_state, syms[0].block, syms[0].symbol);
+	write_var_from_sym (par_state, syms[0]);
     }
   else
     if (write_var_or_type (par_state, NULL, name) != NULL)
       error (_("Invalid use of type."));
-}
 
-/* Convert the character literal whose ASCII value would be VAL to the
-   appropriate value of type TYPE, if there is a translation.
-   Otherwise return VAL.  Hence, in an enumeration type ('A', 'B'),
-   the literal 'A' (VAL == 65), returns 0.  */
-
-static LONGEST
-convert_char_literal (struct type *type, LONGEST val)
-{
-  char name[7];
-  int f;
-
-  if (type == NULL)
-    return val;
-  type = check_typedef (type);
-  if (type->code () != TYPE_CODE_ENUM)
-    return val;
-
-  if ((val >= 'a' && val <= 'z') || (val >= '0' && val <= '9'))
-    xsnprintf (name, sizeof (name), "Q%c", (int) val);
-  else
-    xsnprintf (name, sizeof (name), "QU%02x", (int) val);
-  size_t len = strlen (name);
-  for (f = 0; f < type->num_fields (); f += 1)
-    {
-      /* Check the suffix because an enum constant in a package will
-	 have a name like "pkg__QUxx".  This is safe enough because we
-	 already have the correct type, and because mangling means
-	 there can't be clashes.  */
-      const char *ename = TYPE_FIELD_NAME (type, f);
-      size_t elen = strlen (ename);
-
-      if (elen >= len && strcmp (name, ename + elen - len) == 0)
-	return TYPE_FIELD_ENUMVAL (type, f);
-    }
-  return val;
+  push_association<ada_name_association> (ada_pop ());
 }
 
 static struct type *
@@ -1434,10 +1869,18 @@ type_long_double (struct parser_state *par_state)
 }
 
 static struct type *
-type_char (struct parser_state *par_state)
+type_for_char (struct parser_state *par_state, ULONGEST value)
 {
-  return language_string_char_type (par_state->language (),
-				    par_state->gdbarch ());
+  if (value <= 0xff)
+    return language_string_char_type (par_state->language (),
+				      par_state->gdbarch ());
+  else if (value <= 0xffff)
+    return language_lookup_primitive_type (par_state->language (),
+					   par_state->gdbarch (),
+					   "wide_character");
+  return language_lookup_primitive_type (par_state->language (),
+					 par_state->gdbarch (),
+					 "wide_wide_character");
 }
 
 static struct type *

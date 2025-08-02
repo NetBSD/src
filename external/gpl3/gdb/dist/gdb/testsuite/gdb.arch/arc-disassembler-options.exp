@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +15,7 @@
 
 # Test ARC disassembler options.
 
-if {![istarget "arc-*-*"]} {
-    verbose "Skipping ARC disassembler option test."
-    return
-}
+require {istarget "arc-*-*"}
 
 standard_testfile .s
 set objfile [standard_output_file ${testfile}.o]
@@ -31,10 +28,11 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${objfile}" object {}] \
 clean_restart ${objfile}
 
 proc arc_disassemble_test { func insn mesg } {
-    gdb_test "disassemble $func" \
-	"Dump of assembler code for function $func:\r\n\
-	\[^:\]+:\t$insn\r\nEnd of assembler dump\." \
-	$mesg
+    set pass_re [multi_line \
+			"Dump of assembler code for function $func:" \
+			"\[^:\]+:\t$insn" \
+			"End of assembler dump\\."]
+    gdb_test "disassemble $func" $pass_re $mesg
 }
 
 # Verify defaults.

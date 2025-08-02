@@ -1,6 +1,6 @@
 /* Helper routines for parsing XML using Expat.
 
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -183,11 +183,11 @@ gdb_xml_parser::vdebug (const char *format, va_list ap)
 
   std::string message = string_vprintf (format, ap);
   if (line)
-    fprintf_unfiltered (gdb_stderr, "%s (line %d): %s\n",
-			m_name, line, message.c_str ());
+    gdb_printf (gdb_stderr, "%s (line %d): %s\n",
+		m_name, line, message.c_str ());
   else
-    fprintf_unfiltered (gdb_stderr, "%s: %s\n",
-			m_name, message.c_str ());
+    gdb_printf (gdb_stderr, "%s: %s\n",
+		m_name, message.c_str ());
 }
 
 void
@@ -521,8 +521,7 @@ gdb_xml_fetch_external_entity (XML_Parser expat_parser,
 
       text = fetch_xml_builtin (parser->dtd_name ());
       if (text == NULL)
-	internal_error (__FILE__, __LINE__,
-			_("could not locate built-in DTD %s"),
+	internal_error (_("could not locate built-in DTD %s"),
 			parser->dtd_name ());
     }
   else
@@ -564,8 +563,7 @@ gdb_xml_parser::use_dtd (const char *dtd_name)
   /* Even if no DTD is provided, use the built-in DTD anyway.  */
   err = XML_UseForeignDTD (m_expat_parser, XML_TRUE);
   if (err != XML_ERROR_NONE)
-    internal_error (__FILE__, __LINE__,
-		    _("XML_UseForeignDTD failed: %s"),
+    internal_error (_("XML_UseForeignDTD failed: %s"),
 		    XML_ErrorString (err));
 }
 
@@ -745,13 +743,12 @@ gdb_xml_parse_attr_enum (struct gdb_xml_parser *parser,
 struct xinclude_parsing_data
 {
   xinclude_parsing_data (std::string &output_,
-			 xml_fetch_another fetcher_, void *fetcher_baton_,
+			 xml_fetch_another fetcher_,
 			 int include_depth_)
     : output (output_),
       skip_depth (0),
       include_depth (include_depth_),
-      fetcher (fetcher_),
-      fetcher_baton (fetcher_baton_)
+      fetcher (fetcher_)
   {}
 
   /* Where the output goes.  */
@@ -770,7 +767,6 @@ struct xinclude_parsing_data
   /* A function to call to obtain additional features, and its
      baton.  */
   xml_fetch_another fetcher;
-  void *fetcher_baton;
 };
 
 static void
@@ -789,14 +785,12 @@ xinclude_start_include (struct gdb_xml_parser *parser,
     gdb_xml_error (parser, _("Maximum XInclude depth (%d) exceeded"),
 		   MAX_XINCLUDE_DEPTH);
 
-  gdb::optional<gdb::char_vector> text
-    = data->fetcher (href, data->fetcher_baton);
+  gdb::optional<gdb::char_vector> text = data->fetcher (href);
   if (!text)
     gdb_xml_error (parser, _("Could not load XML document \"%s\""), href);
 
   if (!xml_process_xincludes (data->output, parser->name (),
 			      text->data (), data->fetcher,
-			      data->fetcher_baton,
 			      data->include_depth + 1))
     gdb_xml_error (parser, _("Parsing \"%s\" failed"), href);
 
@@ -878,10 +872,9 @@ const struct gdb_xml_element xinclude_elements[] = {
 bool
 xml_process_xincludes (std::string &result,
 		       const char *name, const char *text,
-		       xml_fetch_another fetcher, void *fetcher_baton,
-		       int depth)
+		       xml_fetch_another fetcher, int depth)
 {
-  xinclude_parsing_data data (result, fetcher, fetcher_baton, depth);
+  xinclude_parsing_data data (result, fetcher, depth);
 
   gdb_xml_parser parser (name, xinclude_elements, &data);
   parser.set_is_xinclude (true);
@@ -964,21 +957,20 @@ static void
 show_debug_xml (struct ui_file *file, int from_tty,
 		struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file, _("XML debugging is %s.\n"), value);
+  gdb_printf (file, _("XML debugging is %s.\n"), value);
 }
 
 gdb::optional<gdb::char_vector>
-xml_fetch_content_from_file (const char *filename, void *baton)
+xml_fetch_content_from_file (const char *filename, const char *dirname)
 {
-  const char *dirname = (const char *) baton;
   gdb_file_up file;
 
-  if (dirname && *dirname)
+  if (dirname != nullptr && *dirname != '\0')
     {
-      char *fullname = concat (dirname, "/", filename, (char *) NULL);
+      gdb::unique_xmalloc_ptr<char> fullname
+	(concat (dirname, "/", filename, (char *) NULL));
 
-      file = gdb_fopen_cloexec (fullname, FOPEN_RB);
-      xfree (fullname);
+      file = gdb_fopen_cloexec (fullname.get (), FOPEN_RB);
     }
   else
     file = gdb_fopen_cloexec (filename, FOPEN_RB);

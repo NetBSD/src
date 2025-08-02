@@ -1,6 +1,6 @@
 /* Core dump and executable file functions below target vector, for GDB.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,9 +46,13 @@
 #include "gdbsupport/filestuff.h"
 #include "build-id.h"
 #include "gdbsupport/pathstuff.h"
+#include "gdbsupport/scoped_fd.h"
+#include "debuginfod-support.h"
 #include <unordered_map>
 #include <unordered_set>
 #include "gdbcmd.h"
+#include "xml-tdesc.h"
+#include "memtag.h"
 
 #ifndef O_LARGEFILE
 #define O_LARGEFILE 0
@@ -67,7 +71,6 @@ class core_target final : public process_stratum_target
 {
 public:
   core_target ();
-  ~core_target () override;
 
   const target_info &info () const override
   { return core_target_info; }
@@ -99,6 +102,13 @@ public:
 
   bool info_proc (const char *, enum info_proc_what) override;
 
+  bool supports_memory_tagging () override;
+
+  /* Core file implementation of fetch_memtags.  Fetch the memory tags from
+     core file notes.  */
+  bool fetch_memtags (CORE_ADDR address, size_t len,
+		      gdb::byte_vector &tags, int type) override;
+
   /* A few helpers.  */
 
   /* Getter, see variable definition.  */
@@ -120,17 +130,20 @@ public:
 
 private: /* per-core data */
 
+  /* Get rid of the core inferior.  */
+  void clear_core ();
+
   /* The core's section table.  Note that these target sections are
      *not* mapped in the current address spaces' set of target
      sections --- those should come only from pure executable or
      shared library bfds.  The core bfd sections are an implementation
      detail of the core target, just like ptrace is for unix child
      targets.  */
-  target_section_table m_core_section_table {};
+  target_section_table m_core_section_table;
 
   /* File-backed address space mappings: some core files include
      information about memory mapped files.  */
-  target_section_table m_core_file_mappings {};
+  target_section_table m_core_file_mappings;
 
   /* Unavailable mappings.  These correspond to pathnames which either
      weren't found or could not be opened.  Knowing these addresses can
@@ -154,7 +167,21 @@ private: /* per-core data */
 
 core_target::core_target ()
 {
+  /* Find a first arch based on the BFD.  We need the initial gdbarch so
+     we can setup the hooks to find a target description.  */
   m_core_gdbarch = gdbarch_from_bfd (core_bfd);
+
+  /* If the arch is able to read a target description from the core, it
+     could yield a more specific gdbarch.  */
+  const struct target_desc *tdesc = read_description ();
+
+  if (tdesc != nullptr)
+    {
+      struct gdbarch_info info;
+      info.abfd = core_bfd;
+      info.target_desc = tdesc;
+      m_core_gdbarch = gdbarch_find_by_info (info);
+    }
 
   if (!m_core_gdbarch
       || !gdbarch_iterate_over_regset_sections_p (m_core_gdbarch))
@@ -162,19 +189,9 @@ core_target::core_target ()
 	   bfd_get_filename (core_bfd));
 
   /* Find the data section */
-  if (build_section_table (core_bfd,
-			   &m_core_section_table.sections,
-			   &m_core_section_table.sections_end))
-    error (_("\"%s\": Can't find sections: %s"),
-	   bfd_get_filename (core_bfd), bfd_errmsg (bfd_get_error ()));
+  m_core_section_table = build_section_table (core_bfd);
 
   build_file_mappings ();
-}
-
-core_target::~core_target ()
-{
-  xfree (m_core_section_table.sections);
-  xfree (m_core_file_mappings.sections);
 }
 
 /* Construct the target_section_table for file-backed mappings if
@@ -202,18 +219,15 @@ core_target::build_file_mappings ()
   gdbarch_read_core_file_mappings (m_core_gdbarch, core_bfd,
 
     /* After determining the number of mappings, read_core_file_mappings
-       will invoke this lambda which allocates target_section storage for
-       the mappings.  */
-    [&] (ULONGEST count)
+       will invoke this lambda.  */
+    [&] (ULONGEST)
       {
-	m_core_file_mappings.sections = XNEWVEC (struct target_section, count);
-	m_core_file_mappings.sections_end = m_core_file_mappings.sections;
       },
 
     /* read_core_file_mappings will invoke this lambda for each mapping
        that it finds.  */
     [&] (int num, ULONGEST start, ULONGEST end, ULONGEST file_ofs,
-         const char *filename, const void *other)
+	 const char *filename, const bfd_build_id *build_id)
       {
 	/* Architecture-specific read_core_mapping methods are expected to
 	   weed out non-file-backed mappings.  */
@@ -228,6 +242,11 @@ core_target::build_file_mappings ()
 	       canonical) pathname will be provided.  */
 	    gdb::unique_xmalloc_ptr<char> expanded_fname
 	      = exec_file_find (filename, NULL);
+
+	    if (expanded_fname == nullptr && build_id != nullptr)
+	      debuginfod_exec_query (build_id->data, build_id->size,
+				     filename, &expanded_fname);
+
 	    if (expanded_fname == nullptr)
 	      {
 		m_core_unavailable_mappings.emplace_back (start, end - start);
@@ -240,7 +259,7 @@ core_target::build_file_mappings ()
 	      }
 
 	    bfd = bfd_map[filename] = bfd_openr (expanded_fname.get (),
-	                                         "binary");
+						 "binary");
 
 	    if (bfd == nullptr || !bfd_check_format (bfd, bfd_object))
 	      {
@@ -280,25 +299,28 @@ core_target::build_file_mappings ()
 	bfd_set_section_alignment (sec, 2);
 
 	/* Set target_section fields.  */
-	struct target_section *ts = m_core_file_mappings.sections_end++;
-	ts->addr = start;
-	ts->endaddr = end;
-	ts->owner = nullptr;
-	ts->the_bfd_section = sec;
+	m_core_file_mappings.emplace_back (start, end, sec);
+
+	/* If this is a bfd of a shared library, record its soname
+	   and build id.  */
+	if (build_id != nullptr)
+	  {
+	    gdb::unique_xmalloc_ptr<char> soname
+	      = gdb_bfd_read_elf_soname (bfd->filename);
+	    if (soname != nullptr)
+	      set_cbfd_soname_build_id (current_program_space->cbfd,
+					soname.get (), build_id);
+	  }
       });
 
   normalize_mem_ranges (&m_core_unavailable_mappings);
 }
 
-static void add_to_thread_list (bfd *, asection *, void *);
-
 /* An arbitrary identifier for the core inferior.  */
 #define CORELOW_PID 1
 
-/* Close the core target.  */
-
 void
-core_target::close ()
+core_target::clear_core ()
 {
   if (core_bfd)
     {
@@ -307,11 +329,19 @@ core_target::close ()
       exit_inferior_silent (current_inferior ());
 
       /* Clear out solib state while the bfd is still open.  See
-         comments in clear_solib in solib.c.  */
+	 comments in clear_solib in solib.c.  */
       clear_solib ();
 
       current_program_space->cbfd.reset (nullptr);
     }
+}
+
+/* Close the core target.  */
+
+void
+core_target::close ()
+{
+  clear_core ();
 
   /* Core targets are heap-allocated (see core_target_open), so here
      we delete ourselves.  */
@@ -322,11 +352,10 @@ core_target::close ()
    extract the list of threads in a core file.  */
 
 static void
-add_to_thread_list (bfd *abfd, asection *asect, void *reg_sect_arg)
+add_to_thread_list (asection *asect, asection *reg_sect)
 {
   int core_tid;
   int pid, lwpid;
-  asection *reg_sect = (asection *) reg_sect_arg;
   bool fake_pid_p = false;
   struct inferior *inf;
 
@@ -368,7 +397,7 @@ static void
 maybe_say_no_core_file_now (int from_tty)
 {
   if (from_tty)
-    printf_filtered (_("No core file now.\n"));
+    gdb_printf (_("No core file now.\n"));
 }
 
 /* Backward compatibility with old way of specifying core files.  */
@@ -405,6 +434,27 @@ locate_exec_from_corefile_build_id (bfd *abfd, int from_tty)
   gdb_bfd_ref_ptr execbfd
     = build_id_to_exec_bfd (build_id->size, build_id->data);
 
+  if (execbfd == nullptr)
+    {
+      /* Attempt to query debuginfod for the executable.  */
+      gdb::unique_xmalloc_ptr<char> execpath;
+      scoped_fd fd = debuginfod_exec_query (build_id->data, build_id->size,
+					    abfd->filename, &execpath);
+
+      if (fd.get () >= 0)
+	{
+	  execbfd = gdb_bfd_open (execpath.get (), gnutarget);
+
+	  if (execbfd == nullptr)
+	    warning (_("\"%s\" from debuginfod cannot be opened as bfd: %s"),
+		     execpath.get (),
+		     gdb_bfd_errmsg (bfd_get_error (), nullptr).c_str ());
+	  else if (!build_id_verify (execbfd.get (), build_id->size,
+				     build_id->data))
+	    execbfd.reset (nullptr);
+	}
+    }
+
   if (execbfd != nullptr)
     {
       exec_file_attach (bfd_get_filename (execbfd.get ()), from_tty);
@@ -434,15 +484,16 @@ core_target_open (const char *arg, int from_tty)
     }
 
   gdb::unique_xmalloc_ptr<char> filename (tilde_expand (arg));
-  if (!IS_ABSOLUTE_PATH (filename.get ()))
-    filename = gdb_abspath (filename.get ());
+  if (strlen (filename.get ()) != 0
+      && !IS_ABSOLUTE_PATH (filename.get ()))
+    filename = make_unique_xstrdup (gdb_abspath (filename.get ()).c_str ());
 
   flags = O_BINARY | O_LARGEFILE;
   if (write_files)
     flags |= O_RDWR;
   else
     flags |= O_RDONLY;
-  scratch_chan = gdb_open_cloexec (filename.get (), flags, 0);
+  scratch_chan = gdb_open_cloexec (filename.get (), flags, 0).release ();
   if (scratch_chan < 0)
     perror_with_name (filename.get ());
 
@@ -456,8 +507,8 @@ core_target_open (const char *arg, int from_tty)
     {
       /* Do it after the err msg */
       /* FIXME: should be checking for errors from bfd_close (for one
-         thing, on error it does not free all the storage associated
-         with the bfd).  */
+	 thing, on error it does not free all the storage associated
+	 with the bfd).  */
       error (_("\"%s\" is not a core dump: %s"),
 	     filename.get (), bfd_errmsg (bfd_get_error ()));
     }
@@ -475,10 +526,10 @@ core_target_open (const char *arg, int from_tty)
      core file.  We don't do this unconditionally since an exec file
      typically contains more information that helps us determine the
      architecture than a core file.  */
-  if (!exec_bfd)
+  if (!current_program_space->exec_bfd ())
     set_gdbarch_from_file (core_bfd);
 
-  push_target (std::move (target_holder));
+  current_inferior ()->push_target (std::move (target_holder));
 
   switch_to_no_thread ();
 
@@ -493,8 +544,9 @@ core_target_open (const char *arg, int from_tty)
   /* Build up thread list from BFD sections, and possibly set the
      current thread to the .reg/NN section matching the .reg
      section.  */
-  bfd_map_over_sections (core_bfd, add_to_thread_list,
-			 bfd_get_section_by_name (core_bfd, ".reg"));
+  asection *reg_sect = bfd_get_section_by_name (core_bfd, ".reg");
+  for (asection *sect : gdb_bfd_sections (core_bfd))
+    add_to_thread_list (sect, reg_sect);
 
   if (inferior_ptid == null_ptid)
     {
@@ -515,10 +567,10 @@ core_target_open (const char *arg, int from_tty)
       switch_to_thread (thread);
     }
 
-  if (exec_bfd == nullptr)
+  if (current_program_space->exec_bfd () == nullptr)
     locate_exec_from_corefile_build_id (core_bfd, from_tty);
 
-  post_create_inferior (target, from_tty);
+  post_create_inferior (from_tty);
 
   /* Now go through the target stack looking for threads since there
      may be a thread_stratum target loaded on top of target core by
@@ -536,7 +588,7 @@ core_target_open (const char *arg, int from_tty)
 
   p = bfd_core_file_failing_command (core_bfd);
   if (p)
-    printf_filtered (_("Core was generated by `%s'.\n"), p);
+    gdb_printf (_("Core was generated by `%s'.\n"), p);
 
   /* Clearing any previous state of convenience variables.  */
   clear_exit_convenience_vars ();
@@ -558,11 +610,11 @@ core_target_open (const char *arg, int from_tty)
 							       siggy)
 			     : gdb_signal_from_host (siggy));
 
-      printf_filtered (_("Program terminated with signal %s, %s"),
-		       gdb_signal_to_name (sig), gdb_signal_to_string (sig));
+      gdb_printf (_("Program terminated with signal %s, %s"),
+		  gdb_signal_to_name (sig), gdb_signal_to_string (sig));
       if (gdbarch_report_signal_info_p (core_gdbarch))
 	gdbarch_report_signal_info (core_gdbarch, current_uiout, sig);
-      printf_filtered (_(".\n"));
+      gdb_printf (_(".\n"));
 
       /* Set the value of the internal variable $_exitsignal,
 	 which holds the signal uncaught by the inferior.  */
@@ -596,10 +648,16 @@ core_target_open (const char *arg, int from_tty)
 void
 core_target::detach (inferior *inf, int from_tty)
 {
-  /* Note that 'this' is dangling after this call.  unpush_target
-     closes the target, and our close implementation deletes
-     'this'.  */
-  unpush_target (this);
+  /* Get rid of the core.  Don't rely on core_target::close doing it,
+     because target_detach may be called with core_target's refcount > 1,
+     meaning core_target::close may not be called yet by the
+     unpush_target call below.  */
+  clear_core ();
+
+  /* Note that 'this' may be dangling after this call.  unpush_target
+     closes the target if the refcount reaches 0, and our close
+     implementation deletes 'this'.  */
+  inf->unpush_target (this);
 
   /* Clear the register cache and the frame cache.  */
   registers_changed ();
@@ -725,8 +783,8 @@ core_target::fetch_registers (struct regcache *regcache, int regno)
   if (!(m_core_gdbarch != nullptr
 	&& gdbarch_iterate_over_regset_sections_p (m_core_gdbarch)))
     {
-      fprintf_filtered (gdb_stderr,
-		     "Can't fetch registers from this type of core file\n");
+      gdb_printf (gdb_stderr,
+		  "Can't fetch registers from this type of core file\n");
       return;
     }
 
@@ -761,8 +819,7 @@ core_target::xfer_memory_via_mappings (gdb_byte *readbuf,
   xfer_status = (section_table_xfer_memory_partial
 		   (readbuf, writebuf,
 		    offset, len, xfered_len,
-		    m_core_file_mappings.sections,
-		    m_core_file_mappings.sections_end));
+		    m_core_file_mappings));
 
   if (xfer_status == TARGET_XFER_OK || m_core_unavailable_mappings.empty ())
     return xfer_status;
@@ -781,7 +838,7 @@ core_target::xfer_memory_via_mappings (gdb_byte *readbuf,
   for (const auto &mr : m_core_unavailable_mappings)
     {
       if (address_in_mem_range (memaddr, &mr))
-        {
+	{
 	  if (!address_in_mem_range (memend, &mr))
 	    len = mr.start + mr.length - memaddr;
 
@@ -820,8 +877,7 @@ core_target::xfer_partial (enum target_object object, const char *annex,
 	xfer_status = section_table_xfer_memory_partial
 			(readbuf, writebuf,
 			 offset, len, xfered_len,
-			 m_core_section_table.sections,
-			 m_core_section_table.sections_end,
+			 m_core_section_table,
 			 has_contents_cb);
 	if (xfer_status == TARGET_XFER_OK)
 	  return TARGET_XFER_OK;
@@ -830,10 +886,16 @@ core_target::xfer_partial (enum target_object object, const char *annex,
 	   core file provided mappings (e.g. from .note.linuxcore.file
 	   or the like) as this should provide a more accurate
 	   result.  If not, check the stratum beneath us, which should
-	   be the file stratum.  */
-	if (m_core_file_mappings.sections != nullptr)
-	  xfer_status = xfer_memory_via_mappings (readbuf, writebuf, offset,
-						  len, xfered_len);
+	   be the file stratum.
+
+	   We also check unavailable mappings due to Docker/AUFS driver
+	   issues.  */
+	if (!m_core_file_mappings.empty ()
+	    || !m_core_unavailable_mappings.empty ())
+	  {
+	    xfer_status = xfer_memory_via_mappings (readbuf, writebuf, offset,
+						    len, xfered_len);
+	  }
 	else
 	  xfer_status = this->beneath ()->xfer_partial (object, annex, readbuf,
 							writebuf, offset, len,
@@ -851,10 +913,10 @@ core_target::xfer_partial (enum target_object object, const char *annex,
 	xfer_status = section_table_xfer_memory_partial
 			(readbuf, writebuf,
 			 offset, len, xfered_len,
-			 m_core_section_table.sections,
-			 m_core_section_table.sections_end,
+			 m_core_section_table,
 			 no_contents_cb);
 #endif
+
 	return xfer_status;
       }
     case TARGET_OBJECT_AUXV:
@@ -945,7 +1007,7 @@ core_target::xfer_partial (enum target_object object, const char *annex,
 		return TARGET_XFER_OK;
 	    }
 	}
-      /* FALL THROUGH */
+      return TARGET_XFER_E_IO;
 
     case TARGET_OBJECT_LIBRARIES_AIX:
       if (m_core_gdbarch != nullptr
@@ -966,7 +1028,7 @@ core_target::xfer_partial (enum target_object object, const char *annex,
 		return TARGET_XFER_OK;
 	    }
 	}
-      /* FALL THROUGH */
+      return TARGET_XFER_E_IO;
 
     case TARGET_OBJECT_SIGNAL_INFO:
       if (readbuf)
@@ -1018,6 +1080,29 @@ core_target::thread_alive (ptid_t ptid)
 const struct target_desc *
 core_target::read_description ()
 {
+  /* If the core file contains a target description note then we will use
+     that in preference to anything else.  */
+  bfd_size_type tdesc_note_size = 0;
+  struct bfd_section *tdesc_note_section
+    = bfd_get_section_by_name (core_bfd, ".gdb-tdesc");
+  if (tdesc_note_section != nullptr)
+    tdesc_note_size = bfd_section_size (tdesc_note_section);
+  if (tdesc_note_size > 0)
+    {
+      gdb::char_vector contents (tdesc_note_size + 1);
+      if (bfd_get_section_contents (core_bfd, tdesc_note_section,
+				    contents.data (), (file_ptr) 0,
+				    tdesc_note_size))
+	{
+	  /* Ensure we have a null terminator.  */
+	  contents[tdesc_note_size] = '\0';
+	  const struct target_desc *result
+	    = string_read_description_xml (contents.data ());
+	  if (result != nullptr)
+	    return result;
+	}
+    }
+
   if (m_core_gdbarch && gdbarch_core_read_description_p (m_core_gdbarch))
     {
       const struct target_desc *result;
@@ -1102,6 +1187,60 @@ core_target::info_proc (const char *args, enum info_proc_what request)
   return true;
 }
 
+/* Implementation of the "supports_memory_tagging" target_ops method.  */
+
+bool
+core_target::supports_memory_tagging ()
+{
+  /* Look for memory tag sections.  If they exist, that means this core file
+     supports memory tagging.  */
+
+  return (bfd_get_section_by_name (core_bfd, "memtag") != nullptr);
+}
+
+/* Implementation of the "fetch_memtags" target_ops method.  */
+
+bool
+core_target::fetch_memtags (CORE_ADDR address, size_t len,
+			    gdb::byte_vector &tags, int type)
+{
+  struct gdbarch *gdbarch = target_gdbarch ();
+
+  /* Make sure we have a way to decode the memory tag notes.  */
+  if (!gdbarch_decode_memtag_section_p (gdbarch))
+    error (_("gdbarch_decode_memtag_section not implemented for this "
+	     "architecture."));
+
+  memtag_section_info info;
+  info.memtag_section = nullptr;
+
+  while (get_next_core_memtag_section (core_bfd, info.memtag_section,
+				       address, info))
+  {
+    size_t adjusted_length
+      = (address + len < info.end_address) ? len : (info.end_address - address);
+
+    /* Decode the memory tag note and return the tags.  */
+    gdb::byte_vector tags_read
+      = gdbarch_decode_memtag_section (gdbarch, info.memtag_section, type,
+				       address, adjusted_length);
+
+    /* Transfer over the tags that have been read.  */
+    tags.insert (tags.end (), tags_read.begin (), tags_read.end ());
+
+    /* ADDRESS + LEN may cross the boundaries of a particular memory tag
+       segment.  Check if we need to fetch tags from a different section.  */
+    if (!tags_read.empty () && (address + len) < info.end_address)
+      return true;
+
+    /* There are more tags to fetch.  Update ADDRESS and LEN.  */
+    len -= (info.end_address - address);
+    address = info.end_address;
+  }
+
+  return false;
+}
+
 /* Get a pointer to the current core target.  If not connected to a
    core target, return NULL.  */
 
@@ -1117,48 +1256,46 @@ get_current_core_target ()
 void
 core_target::info_proc_mappings (struct gdbarch *gdbarch)
 {
-  if (m_core_file_mappings.sections != m_core_file_mappings.sections_end)
+  if (!m_core_file_mappings.empty ())
     {
-      printf_filtered (_("Mapped address spaces:\n\n"));
+      gdb_printf (_("Mapped address spaces:\n\n"));
       if (gdbarch_addr_bit (gdbarch) == 32)
 	{
-	  printf_filtered ("\t%10s %10s %10s %10s %s\n",
-			   "Start Addr",
-			   "  End Addr",
-			   "      Size", "    Offset", "objfile");
+	  gdb_printf ("\t%10s %10s %10s %10s %s\n",
+		      "Start Addr",
+		      "  End Addr",
+		      "      Size", "    Offset", "objfile");
 	}
       else
 	{
-	  printf_filtered ("  %18s %18s %10s %10s %s\n",
-			   "Start Addr",
-			   "  End Addr",
-			   "      Size", "    Offset", "objfile");
+	  gdb_printf ("  %18s %18s %10s %10s %s\n",
+		      "Start Addr",
+		      "  End Addr",
+		      "      Size", "    Offset", "objfile");
 	}
     }
 
-  for (const struct target_section *tsp = m_core_file_mappings.sections;
-       tsp < m_core_file_mappings.sections_end;
-       tsp++)
+  for (const target_section &tsp : m_core_file_mappings)
     {
-      ULONGEST start = tsp->addr;
-      ULONGEST end = tsp->endaddr;
-      ULONGEST file_ofs = tsp->the_bfd_section->filepos;
-      const char *filename = bfd_get_filename (tsp->the_bfd_section->owner);
+      ULONGEST start = tsp.addr;
+      ULONGEST end = tsp.endaddr;
+      ULONGEST file_ofs = tsp.the_bfd_section->filepos;
+      const char *filename = bfd_get_filename (tsp.the_bfd_section->owner);
 
       if (gdbarch_addr_bit (gdbarch) == 32)
-	printf_filtered ("\t%10s %10s %10s %10s %s\n",
-			 paddress (gdbarch, start),
-			 paddress (gdbarch, end),
-			 hex_string (end - start),
-			 hex_string (file_ofs),
-			 filename);
+	gdb_printf ("\t%10s %10s %10s %10s %s\n",
+		    paddress (gdbarch, start),
+		    paddress (gdbarch, end),
+		    hex_string (end - start),
+		    hex_string (file_ofs),
+		    filename);
       else
-	printf_filtered ("  %18s %18s %10s %10s %s\n",
-			 paddress (gdbarch, start),
-			 paddress (gdbarch, end),
-			 hex_string (end - start),
-			 hex_string (file_ofs),
-			 filename);
+	gdb_printf ("  %18s %18s %10s %10s %s\n",
+		    paddress (gdbarch, start),
+		    paddress (gdbarch, end),
+		    hex_string (end - start),
+		    hex_string (file_ofs),
+		    filename);
     }
 }
 
@@ -1187,7 +1324,7 @@ _initialize_corelow ()
 {
   add_target (core_target_info, core_target_open, filename_completer);
   add_cmd ("core-file-backed-mappings", class_maintenance,
-           maintenance_print_core_file_backed_mappings,
+	   maintenance_print_core_file_backed_mappings,
 	   _("Print core file's file-backed mappings."),
 	   &maintenanceprintlist);
 }

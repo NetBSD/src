@@ -43,6 +43,9 @@
    language is requested. */
 #undef ENABLE_NLS
 
+/* The .gdbearlyinit filename. */
+#undef GDBEARLYINIT
+
 /* The .gdbinit filename. */
 #undef GDBINIT
 
@@ -163,6 +166,12 @@
 /* Define to 1 if your system has the etext variable. */
 #undef HAVE_ETEXT
 
+/* Define to 1 if execinfo.h backtrace functions are available. */
+#undef HAVE_EXECINFO_BACKTRACE
+
+/* Define to 1 if you have the <execinfo.h> header file. */
+#undef HAVE_EXECINFO_H
+
 /* Define to 1 if you have the `fdwalk' function. */
 #undef HAVE_FDWALK
 
@@ -211,11 +220,8 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if your system has the kinfo_getfile function. */
+/* Define to 1 if you have the `kinfo_getfile' function. */
 #undef HAVE_KINFO_GETFILE
-
-/* Define to 1 if your system has the kinfo_getvmmap function. */
-#undef HAVE_KINFO_GETVMMAP
 
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
 #undef HAVE_LANGINFO_CODESET
@@ -226,11 +232,17 @@
 /* Define if you have the babeltrace library. */
 #undef HAVE_LIBBABELTRACE
 
+/* Define if libbacktrace is being used. */
+#undef HAVE_LIBBACKTRACE
+
 /* Define to 1 if debuginfod is enabled. */
 #undef HAVE_LIBDEBUGINFOD
 
 /* Define if you have the expat library. */
 #undef HAVE_LIBEXPAT
+
+/* Define if you have the gmp library. */
+#undef HAVE_LIBGMP
 
 /* Define to 1 if you have the `libiconvlist' function. */
 #undef HAVE_LIBICONVLIST
@@ -298,9 +310,6 @@
 /* Define to 1 if you have the <nlist.h> header file. */
 #undef HAVE_NLIST_H
 
-/* Define if you support the personality syscall. */
-#undef HAVE_PERSONALITY
-
 /* Define to 1 if you have the `pipe' function. */
 #undef HAVE_PIPE
 
@@ -361,9 +370,6 @@
 /* Define if sys/ptrace.h defines the PT_GETDBREGS request. */
 #undef HAVE_PT_GETDBREGS
 
-/* Define if sys/ptrace.h defines the PT_GETXMMREGS request. */
-#undef HAVE_PT_GETXMMREGS
-
 /* Define to 1 if you have the `pt_insn_event' function. */
 #undef HAVE_PT_INSN_EVENT
 
@@ -372,6 +378,9 @@
 
 /* Define if Python interpreter is being linked in. */
 #undef HAVE_PYTHON
+
+/* Define to 1 if you have the <readline/readline.h> header file. */
+#undef HAVE_READLINE_READLINE_H
 
 /* Define to 1 if you have the `resize_term' function. */
 #undef HAVE_RESIZE_TERM
@@ -417,6 +426,9 @@
 
 /* Define to 1 if you have the `sigsetmask' function. */
 #undef HAVE_SIGSETMASK
+
+/* Define to 1 if you have the `sigtimedwait' function. */
+#undef HAVE_SIGTIMEDWAIT
 
 /* Define to 1 if you have the `socketpair' function. */
 #undef HAVE_SOCKETPAIR
@@ -489,6 +501,9 @@
 
 /* Define to 1 if you have the <sys/poll.h> header file. */
 #undef HAVE_SYS_POLL_H
+
+/* Define to 1 if you have the <sys/procctl.h> header file. */
+#undef HAVE_SYS_PROCCTL_H
 
 /* Define to 1 if you have the <sys/procfs.h> header file. */
 #undef HAVE_SYS_PROCFS_H
@@ -574,6 +589,9 @@
 /* Define to 1 if you have the `XML_StopParser' function. */
 #undef HAVE_XML_STOPPARSER
 
+/* Define to 1 if zstd is enabled. */
+#undef HAVE_ZSTD
+
 /* Define to 1 if your system has the _etext variable. */
 #undef HAVE__ETEXT
 
@@ -595,6 +613,10 @@
 /* Define if the jit-reader-dir directory should be relocated when GDB is
    moved. */
 #undef JIT_READER_DIR_RELOCATABLE
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
 
 /* Name of this package. */
 #undef PACKAGE
@@ -667,9 +689,6 @@
 /* Define to 1 if the `setpgrp' function takes no argument. */
 #undef SETPGRP_VOID
 
-/* The size of `long', as computed by sizeof. */
-#undef SIZEOF_LONG
-
 /* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
 
@@ -681,6 +700,9 @@
 
 /* The size of `unsigned __int128', as computed by sizeof. */
 #undef SIZEOF_UNSIGNED___INT128
+
+/* The size of `void *', as computed by sizeof. */
+#undef SIZEOF_VOID_P
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
@@ -722,9 +744,6 @@
 /* Define if <thread_db.h> has the TD_VERSION error code. */
 #undef THREAD_DB_HAS_TD_VERSION
 
-/* Define to 1 if the regex included in libiberty should be used. */
-#undef USE_INCLUDED_REGEX
-
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
 # undef _ALL_SOURCE
@@ -762,9 +781,6 @@
 /* Define if --with-python provides a path, either directly or via
    python-config.py --exec-prefix. */
 #undef WITH_PYTHON_PATH
-
-/* Define if the simulator is being linked in. */
-#undef WITH_SIM
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

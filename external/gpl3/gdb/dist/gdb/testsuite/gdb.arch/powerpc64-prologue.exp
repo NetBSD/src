@@ -1,4 +1,4 @@
-# Copyright 2006-2023 Free Software Foundation, Inc.
+# Copyright 2006-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +17,7 @@
 
 # Do not run on AIX (where we won't be able to build the tests without
 # some surgery) or on PowerPC64 (ditto, dot symbols).
-if {[istarget *-*-aix*] || ![istarget "powerpc*-*-*"]} {
-    verbose "Skipping PowerPC prologue tests."
-    return
-}
+require {!istarget *-*-aix*} {istarget "powerpc*-*-*"}
 
 standard_testfile .c
 

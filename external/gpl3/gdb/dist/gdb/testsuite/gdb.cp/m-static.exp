@@ -1,4 +1,4 @@
-# Copyright 2002-2023 Free Software Foundation, Inc.
+# Copyright 2002-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,13 +19,15 @@
 
 # This file is part of the gdb testsuite
 
-if { [skip_cplus_tests] } { return }
+require allow_cplus_tests
 
 #
 # test running programs
 #
 
 standard_testfile .cc m-static1.cc
+
+include_file m-static.h
 
 set flags [list debug c++]
 if { [test_compiler_info gcc-*] && [gcc_major_version] >= 10 } {
@@ -77,14 +79,14 @@ if { [is_aarch32_target] } {
 	"simple object class, ptype constructor"
 
     gdb_test "print test1.~gnu_obj_1" \
-	{ = {void \*\(gnu_obj_1 \* const, int\)} 0x[0-9a-f]+ <gnu_obj_1::~gnu_obj_1\(\)>} \
+	{ = {void \*\(gnu_obj_1 \* const(, int)?\)} 0x[0-9a-f]+ <gnu_obj_1::~gnu_obj_1\(\)>} \
 	"simple object instance, print destructor"
     gdb_test "ptype test1.~gnu_obj_1" \
-	{type = void \*\(gnu_obj_1 \* const, int\)} \
+	{type = void \*\(gnu_obj_1 \* const(, int)?\)} \
 	"simple object instance, ptype destructor"
 
     gdb_test "print test1.'~gnu_obj_1'" \
-	{ = {void \*\(gnu_obj_1 \*( const)?, int\)} 0x[0-9a-f]+ <gnu_obj_1::~gnu_obj_1\(\)>} \
+	{ = {void \*\(gnu_obj_1 \*( const)?(, int)?\)} 0x[0-9a-f]+ <gnu_obj_1::~gnu_obj_1\(\)>} \
 	"simple object instance, print quoted destructor"
 
     gdb_test "ptype gnu_obj_1::'~gnu_obj_1'" \
@@ -181,7 +183,12 @@ gdb_test "print test4.somewhere" "\\$\[0-9\].* = 3.14\[0-9\]*" "static const flo
 
 # Also make sure static const members can be found via "info var".
 if { $non_dwarf } { setup_xfail *-*-* }
-gdb_test "info variable everywhere" "File .*/m-static\[.\]h.*const int gnu_obj_4::everywhere;"
+gdb_test "info variable everywhere" \
+    [multi_line \
+	 {All variables matching regular expression "everywhere":} \
+	 "" \
+	 "File (.*/)?m-static\[.\]h:" \
+	 "$decimal:\tconst int gnu_obj_4::everywhere;"]
 
 # Perhaps at some point test4 should also include a test for a static
 # const int that was initialized in the header file.  But I'm not sure
@@ -194,4 +201,3 @@ gdb_test "step" "gnu_obj_1::method.*"
 gdb_test "print svar" " = true"
 
 gdb_exit
-return 0

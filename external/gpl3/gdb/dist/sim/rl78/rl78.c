@@ -1,6 +1,6 @@
 /* rl78.c --- opcode semantics for stand-alone RL78 simulator.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of the GNU simulators.
@@ -499,6 +499,7 @@ decode_opcode (void)
 	CLOCKS (3); /* note: adds two clocks, total 5 clocks */
       else
 	CLOCKS (2); /* note: adds one clock, total 4 clocks */
+      ATTRIBUTE_FALLTHROUGH;
     case RLO_branch:
       tprintf ("BRANCH: ");
       v = GPC ();

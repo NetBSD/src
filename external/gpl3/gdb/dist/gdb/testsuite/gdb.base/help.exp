@@ -1,4 +1,4 @@
-#   Copyright 1988-2023 Free Software Foundation, Inc.
+#   Copyright 1988-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -89,7 +89,8 @@ set expected_help_delete {
     "Delete all or some breakpoints\.\[\r\n\]+"
     "Usage: delete \\\[BREAKPOINTNUM\\\]...\[\r\n\]+"
     "Arguments are breakpoint numbers with spaces in between\.\[\r\n\]+"
-    "To delete all breakpoints, give no argument\.\[\r\n\]+"
+    "To delete all breakpoints, watchpoints, tracepoints, and catchpoints,\.\[\r\n\]+"
+    "give no argument\.\[\r\n\]+"
     "Also a prefix command for deletion of other GDB objects\.\[\r\n\]+"
 }
 test_prefix_command_help {"d" "delete"} $expected_help_delete "help delete \"d\" abbreviation"
@@ -121,7 +122,7 @@ gdb_test "help info bogus-gdb-command" "Undefined info command: \"bogus-gdb-comm
 gdb_test "help gotcha" "Undefined command: \"gotcha\"\.  Try \"help\"\."
 
 # Test apropos regex.
-gdb_test "apropos \\\(print\[\^\[ bsiedf\\\".-\]\\\)" "handle -- Specify how to handle signals\."
+gdb_test "apropos \\\(print\[\^\[ bsiedf\\\"'.-\]\\\)" "handle -- Specify how to handle signals\."
 # Test apropos >1 word string.
 gdb_test "apropos handle signal" "handle -- Specify how to handle signals\."
 # Test apropos apropos.

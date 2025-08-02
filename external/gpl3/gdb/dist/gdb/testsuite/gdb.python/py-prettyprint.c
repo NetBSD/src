@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2023 Free Software Foundation, Inc.
+   Copyright 2008-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -110,6 +110,14 @@ class Fake
   {
   }
 };
+
+struct has_static_member
+{
+  static s global;
+};
+
+s has_static_member::global;
+
 #endif
 
 struct to_string_returns_value_inner
@@ -356,6 +364,9 @@ main ()
   Derived derived;
   
   Fake fake (42);
+
+  init_s (&has_static_member::global, 23);
+  has_static_member has_member;
 #endif
 
   add_item (&c, 23);		/* MI breakpoint here */

@@ -1,5 +1,5 @@
 /* Target-dependent mdebug code for the ALPHA architecture.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,10 +34,10 @@
 /* *INDENT-OFF* */
 /* Layout of a stack frame on the alpha:
 
-                |				|
+		|				|
  pdr members:	|  7th ... nth arg,		|
-                |  `pushed' by caller.		|
-                |				|
+		|  `pushed' by caller.		|
+		|				|
 ----------------|-------------------------------|<--  old_sp == vfp
    ^  ^  ^  ^	|				|
    |  |  |  |	|				|
@@ -72,7 +72,7 @@
    |            |  called procedure.		|
    v            |  				|
    -------------|-------------------------------|<-- sp
-                |				|
+		|				|
 */
 /* *INDENT-ON* */
 
@@ -102,7 +102,7 @@ find_proc_desc (CORE_ADDR pc)
       CORE_ADDR startaddr;
       find_pc_partial_function (pc, &sh_name, &startaddr, NULL);
 
-      if (startaddr > BLOCK_START (b))
+      if (startaddr > b->start ())
 	/* This is the "pathological" case referred to in a comment in
 	   print_frame_info.  It might be better to move this check into
 	   symbol reading.  */
@@ -114,10 +114,10 @@ find_proc_desc (CORE_ADDR pc)
 
   if (sym)
     {
-      proc_desc = (struct mdebug_extra_func_info *) SYMBOL_VALUE_BYTES (sym);
+      proc_desc = (struct mdebug_extra_func_info *) sym->value_bytes ();
 
       /* Correct incorrect setjmp procedure descriptor from the library
-         to make backtrace through setjmp work.  */
+	 to make backtrace through setjmp work.  */
       if (proc_desc->pdr.pcreg == 0
 	  && strcmp (sh_name, "setjmp") == 0)
 	{
@@ -154,7 +154,7 @@ alpha_mdebug_after_prologue (CORE_ADDR pc,
   if (proc_desc)
     {
       /* If function is frameless, then we need to do it the hard way.  I
-         strongly suspect that frameless always means prologueless...  */
+	 strongly suspect that frameless always means prologueless...  */
       if (alpha_mdebug_frameless (proc_desc))
 	return 0;
     }
@@ -180,14 +180,14 @@ struct alpha_mdebug_unwind_cache
 {
   struct mdebug_extra_func_info *proc_desc;
   CORE_ADDR vfp;
-  struct trad_frame_saved_reg *saved_regs;
+  trad_frame_saved_reg *saved_regs;
 };
 
 /* Extract all of the information about the frame from PROC_DESC
    and store the resulting register save locations in the structure.  */
 
 static struct alpha_mdebug_unwind_cache *
-alpha_mdebug_frame_unwind_cache (struct frame_info *this_frame, 
+alpha_mdebug_frame_unwind_cache (frame_info_ptr this_frame, 
 				 void **this_prologue_cache)
 {
   struct alpha_mdebug_unwind_cache *info;
@@ -231,14 +231,14 @@ alpha_mdebug_frame_unwind_cache (struct frame_info *this_frame,
       /* Clear bit for RA so we don't save it again later.  */
       mask &= ~(1 << returnreg);
 
-      info->saved_regs[returnreg].addr = reg_position;
+      info->saved_regs[returnreg].set_addr (reg_position);
       reg_position += 8;
     }
 
   for (ireg = 0; ireg <= 31; ++ireg)
     if (mask & (1 << ireg))
       {
-	info->saved_regs[ireg].addr = reg_position;
+	info->saved_regs[ireg].set_addr (reg_position);
 	reg_position += 8;
       }
 
@@ -248,14 +248,14 @@ alpha_mdebug_frame_unwind_cache (struct frame_info *this_frame,
   for (ireg = 0; ireg <= 31; ++ireg)
     if (mask & (1 << ireg))
       {
-	info->saved_regs[ALPHA_FP0_REGNUM + ireg].addr = reg_position;
+	info->saved_regs[ALPHA_FP0_REGNUM + ireg].set_addr (reg_position);
 	reg_position += 8;
       }
 
   /* The stack pointer of the previous frame is computed by popping
      the current stack frame.  */
-  if (!trad_frame_addr_p (info->saved_regs, ALPHA_SP_REGNUM))
-   trad_frame_set_value (info->saved_regs, ALPHA_SP_REGNUM, vfp);
+  if (!info->saved_regs[ALPHA_SP_REGNUM].is_addr ())
+    info->saved_regs[ALPHA_SP_REGNUM].set_value (vfp);
 
   return info;
 }
@@ -264,7 +264,7 @@ alpha_mdebug_frame_unwind_cache (struct frame_info *this_frame,
    frame.  This will be used to create a new GDB frame struct.  */
 
 static void
-alpha_mdebug_frame_this_id (struct frame_info *this_frame,
+alpha_mdebug_frame_this_id (frame_info_ptr this_frame,
 			    void **this_prologue_cache,
 			    struct frame_id *this_id)
 {
@@ -277,7 +277,7 @@ alpha_mdebug_frame_this_id (struct frame_info *this_frame,
 /* Retrieve the value of REGNUM in FRAME.  Don't give up!  */
 
 static struct value *
-alpha_mdebug_frame_prev_register (struct frame_info *this_frame,
+alpha_mdebug_frame_prev_register (frame_info_ptr this_frame,
 				  void **this_prologue_cache, int regnum)
 {
   struct alpha_mdebug_unwind_cache *info
@@ -308,8 +308,8 @@ alpha_mdebug_max_frame_size_exceeded (struct mdebug_extra_func_info *proc_desc)
 
 static int
 alpha_mdebug_frame_sniffer (const struct frame_unwind *self,
-                            struct frame_info *this_frame,
-                            void **this_cache)
+			    frame_info_ptr this_frame,
+			    void **this_cache)
 {
   CORE_ADDR pc = get_frame_address_in_block (this_frame);
   struct mdebug_extra_func_info *proc_desc;
@@ -333,7 +333,9 @@ alpha_mdebug_frame_sniffer (const struct frame_unwind *self,
   return 1;
 }
 
-static const struct frame_unwind alpha_mdebug_frame_unwind = {
+static const struct frame_unwind alpha_mdebug_frame_unwind =
+{
+  "alpha mdebug",
   NORMAL_FRAME,
   default_frame_unwind_stop_reason,
   alpha_mdebug_frame_this_id,
@@ -343,7 +345,7 @@ static const struct frame_unwind alpha_mdebug_frame_unwind = {
 };
 
 static CORE_ADDR
-alpha_mdebug_frame_base_address (struct frame_info *this_frame,
+alpha_mdebug_frame_base_address (frame_info_ptr this_frame,
 				 void **this_prologue_cache)
 {
   struct alpha_mdebug_unwind_cache *info
@@ -353,7 +355,7 @@ alpha_mdebug_frame_base_address (struct frame_info *this_frame,
 }
 
 static CORE_ADDR
-alpha_mdebug_frame_locals_address (struct frame_info *this_frame,
+alpha_mdebug_frame_locals_address (frame_info_ptr this_frame,
 				   void **this_prologue_cache)
 {
   struct alpha_mdebug_unwind_cache *info
@@ -363,7 +365,7 @@ alpha_mdebug_frame_locals_address (struct frame_info *this_frame,
 }
 
 static CORE_ADDR
-alpha_mdebug_frame_args_address (struct frame_info *this_frame,
+alpha_mdebug_frame_args_address (frame_info_ptr this_frame,
 				 void **this_prologue_cache)
 {
   struct alpha_mdebug_unwind_cache *info
@@ -380,7 +382,7 @@ static const struct frame_base alpha_mdebug_frame_base = {
 };
 
 static const struct frame_base *
-alpha_mdebug_frame_base_sniffer (struct frame_info *this_frame)
+alpha_mdebug_frame_base_sniffer (frame_info_ptr this_frame)
 {
   CORE_ADDR pc = get_frame_address_in_block (this_frame);
   struct mdebug_extra_func_info *proc_desc;

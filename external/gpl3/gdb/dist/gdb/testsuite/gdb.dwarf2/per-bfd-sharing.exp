@@ -1,4 +1,4 @@
-#   Copyright 2020-2023 Free Software Foundation, Inc.
+#   Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ if { [build_executable "failed to prepare" $testfile $srcfile \
 	  {debug ldflags=-Wl,--build-id}] == -1 } {
     return
 }
+set host_binfile [gdb_remote_download host $binfile]
 
 set has_index_section [exec_has_index_section $binfile]
 set uses_readnow [expr [string first "-readnow" $GDBFLAGS] != -1]
@@ -46,7 +47,8 @@ with_test_prefix "populate index cache" {
     gdb_test_no_output "set index-cache directory $cache_dir" \
 	"set index-cache directory"
     gdb_test_no_output "set index-cache enabled on"
-    gdb_test "file $binfile" "Reading symbols from .*" "file"
+    gdb_test "file $host_binfile" "Reading symbols from .*" "file"
+    gdb_test_no_output "maint wait-for-index-cache"
 }
 
 proc load_binary { method } {
@@ -54,13 +56,13 @@ proc load_binary { method } {
     global hex
 
     if { $method == "standard" } {
-	gdb_test "file $binfile" "Reading symbols from .*" "file"
+	gdb_test "file $::host_binfile" "Reading symbols from .*" "file"
     } elseif { $method == "index" } {
 	gdb_test_no_output "set index-cache enabled on"
-	gdb_test "file $binfile" "Reading symbols from .*" "file index"
+	gdb_test "file $::host_binfile" "Reading symbols from .*" "file index"
 	gdb_test_no_output "set index-cache enabled off"
     } elseif { $method == "readnow" } {
-	gdb_test "file -readnow $binfile" \
+	gdb_test "file -readnow $::host_binfile" \
 	    "Reading symbols from .*Expanding full symbols from .*" \
 	    "file readnow"
     } else {
@@ -96,7 +98,7 @@ foreach_with_prefix first $methods {
     }
 }
 
-lassign [remote_exec host sh "-c \"rm $cache_dir/*.gdb-index\""] ret
+lassign [remote_exec host "sh -c" [quote_for_host rm $cache_dir/*.gdb-index]] ret
 if { $ret != 0 && $expecting_index_cache_use } {
     fail "couldn't remove files in temporary cache dir"
     return

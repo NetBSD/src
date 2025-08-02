@@ -1,5 +1,5 @@
 /* ELF strtab with GC and suffix merging support.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
    Written by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -141,7 +141,7 @@ _bfd_elf_strtab_free (struct elf_strtab_hash *tab)
 size_t
 _bfd_elf_strtab_add (struct elf_strtab_hash *tab,
 		     const char *str,
-		     bfd_boolean copy)
+		     bool copy)
 {
   register struct elf_strtab_hash_entry *entry;
 
@@ -152,7 +152,7 @@ _bfd_elf_strtab_add (struct elf_strtab_hash *tab,
 
   BFD_ASSERT (tab->sec_size == 0);
   entry = (struct elf_strtab_hash_entry *)
-	  bfd_hash_lookup (&tab->table, str, TRUE, copy);
+	  bfd_hash_lookup (&tab->table, str, true, copy);
 
   if (entry == NULL)
     return (size_t) -1;
@@ -299,22 +299,24 @@ _bfd_elf_strtab_str (struct elf_strtab_hash *tab, size_t idx,
 		     bfd_size_type *offset)
 {
   if (idx == 0)
-    return 0;
+    return NULL;
   BFD_ASSERT (idx < tab->size);
   BFD_ASSERT (tab->sec_size);
+  if (tab->array[idx]->refcount == 0)
+    return NULL;
   if (offset)
     *offset = tab->array[idx]->u.index;
   return tab->array[idx]->root.string;
 }
 
-bfd_boolean
+bool
 _bfd_elf_strtab_emit (register bfd *abfd, struct elf_strtab_hash *tab)
 {
   bfd_size_type off = 1;
   size_t i;
 
   if (bfd_bwrite ("", 1, abfd) != 1)
-    return FALSE;
+    return false;
 
   for (i = 1; i < tab->size; ++i)
     {
@@ -328,13 +330,13 @@ _bfd_elf_strtab_emit (register bfd *abfd, struct elf_strtab_hash *tab)
 
       str = tab->array[i]->root.string;
       if (bfd_bwrite (str, len, abfd) != len)
-	return FALSE;
+	return false;
 
       off += len;
     }
 
   BFD_ASSERT (off == tab->sec_size);
-  return TRUE;
+  return true;
 }
 
 /* Compare two elf_strtab_hash_entry structures.  Called via qsort.

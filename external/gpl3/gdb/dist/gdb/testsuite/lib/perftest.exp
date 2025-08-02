@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2023 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -129,9 +129,9 @@ namespace eval PerfTest {
     }
 }
 
-# Return true if performance tests are skipped.
+# Return true if performance tests are to be run.
 
-proc skip_perf_tests { } {
+proc allow_perf_tests { } {
     global GDB_PERFTEST_MODE
 
     if [info exists GDB_PERFTEST_MODE] {
@@ -139,13 +139,13 @@ proc skip_perf_tests { } {
 	     && "$GDB_PERFTEST_MODE" != "run"
 	     && "$GDB_PERFTEST_MODE" != "both" } {
 	    error "Unknown value of GDB_PERFTEST_MODE."
-	    return 1
+	    return 0
 	}
 
-	return 0
+	return 1
     }
 
-    return 1
+    return 0
 }
 
 # Given a list of tcl strings, return the same list as the text form of a

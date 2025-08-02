@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +15,7 @@
 
 standard_testfile
 
-if { ![istarget i?86-*-*] && ![istarget x86_64-*-* ] } {
-    unsupported "skipping x86 PKEYS tests."
-    return
-}
+require {is_any_target i?86-*-* x86_64-*-*}
 
 set default_pkru_re 0x0
 if { [istarget *-*-linux*] } {
@@ -58,6 +55,18 @@ if { !$supports_pkru } {
     return
 }
 
+# Linux kernel versions 5.14.0 to 6.1.x contain a regression related to writing
+# the PKRU using ptrace, see commit 4a804c4f8356 ("x86/fpu: Allow PKRU to be
+# (once again) written by ptrace.").
+set have_xfail 0
+set v [linux_kernel_version]
+if { $v != {} } {
+    set have_xfail \
+	[expr \
+	     [version_compare [list 5 14 0] <= $v] \
+	     && [version_compare $v < [list 6 2 0]]]
+}
+
 # Test pkru register at startup
 gdb_test "print /x \$pkru" "= $default_pkru_re" "pkru register"
 
@@ -65,11 +74,37 @@ gdb_test "print /x \$pkru" "= $default_pkru_re" "pkru register"
 gdb_breakpoint [ gdb_get_line_number "break here 1" ]
 gdb_continue_to_breakpoint "break here 1" ".*break here 1.*"
 
-gdb_test "info register pkru" ".*pkru.*0x12345678.*" "read pkru register"
-gdb_test "print /x \$pkru = 0x44444444" "= 0x44444444" "set pkru value"
-gdb_test "info register pkru" ".*pkru.*0x44444444.*" "read value after setting value"
+set val1 0x12345678
+gdb_test "info register pkru" ".*pkru.*$val1.*" "read pkru register"
+
+set val2 0x44444444
+gdb_test "print /x \$pkru = $val2" "= $val2" "set pkru value"
+
+gdb_test_multiple "info register pkru" "read value after setting value" {
+    -re -wrap ".*pkru.*$val2.*" {
+	pass $gdb_test_name
+    }
+    -re -wrap ".*pkru.*$val1.*" {
+	if { $have_xfail } {
+	    xfail $gdb_test_name
+	} else {
+	    fail $gdb_test_name
+	}
+    }
+}
 
 gdb_breakpoint [ gdb_get_line_number "break here 2" ]
 gdb_continue_to_breakpoint "break here 2" ".*break here 2.*"
 
-gdb_test "print /x rd_value" "= 0x44444444" "variable after reading pkru"
+gdb_test_multiple "print /x rd_value" "variable after reading pkru" {
+    -re -wrap "= $val2" {
+	pass $gdb_test_name
+    }
+    -re -wrap "= $val1" {
+	if { $have_xfail } {
+	    xfail $gdb_test_name
+	} else {
+	    fail $gdb_test_name
+	}
+    }
+}

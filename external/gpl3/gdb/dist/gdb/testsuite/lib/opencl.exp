@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,27 +27,26 @@ proc gdb_compile_opencl_hostapp {clsource executable options} {
     return [gdb_compile ${src} ${binfile} "executable" ${options_opencl}]
 }
 
-# Run a test on the target to check if it supports OpenCL. Return 0 if so, 1 if
+# Run a test on the target to check if it supports OpenCL. Return 1 if so, 0 if
 # it does not.
-gdb_caching_proc skip_opencl_tests {
+gdb_caching_proc allow_opencl_tests {} {
     global srcdir objdir subdir gdb_prompt
     global inferior_exited_re
 
-    set me "skip_opencl_tests"
+    set me "allow_opencl_tests"
 
     # Set up, compile, and execute an OpenCL program.  Include the current
     # process ID in the file name of the executable to prevent conflicts with
     # invocations for multiple testsuites.
-    set clprogram [remote_download target ${srcdir}/lib/opencl_kernel.cl]
+    set clprogram [gdb_remote_download target ${srcdir}/lib/opencl_kernel.cl]
     set executable opencltest[pid].x
 
     verbose "$me:  compiling OpenCL test app" 2
     set compile_flags {debug nowarnings quiet}
 
     if { [gdb_compile_opencl_hostapp "${clprogram}" "${executable}" "${compile_flags}" ] != "" } {
-	remote_file target delete ${clprogram}
-        verbose "$me:  compiling OpenCL binary failed, returning 1" 2
-	return 1
+	verbose "$me:  compiling OpenCL binary failed, returning 0" 2
+	return 0
     }
 
     # Compilation succeeded so now run it via gdb.
@@ -56,22 +55,19 @@ gdb_caching_proc skip_opencl_tests {
     gdb_expect 30 {
         -re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
             verbose -log "\n$me: OpenCL support detected"
-            set result 0
+	    set result 1
         }
         -re ".*$inferior_exited_re with code.*${gdb_prompt} $" {
             verbose -log "\n$me: OpenCL support not detected"
-            set result 1
+	    set result 0
         }
         default {
             verbose -log "\n$me OpenCL support not detected (default case)"
-            set result 1
+	    set result 0
         }
     }
     gdb_exit
     remote_file build delete $executable
-
-    # Delete the OpenCL program source file.
-    remote_file target delete ${clprogram}
 
     verbose "$me:  returning $result" 2
     return $result

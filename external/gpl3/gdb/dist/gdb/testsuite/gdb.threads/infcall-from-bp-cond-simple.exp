@@ -1,0 +1,235 @@
+# Copyright 2022-2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Some simple tests of inferior function calls from breakpoint
+# conditions, in multi-threaded inferiors.
+#
+# This test sets up a multi-threaded inferior, and places a breakpoint
+# at a location that many of the threads will reach.  We repeat the
+# test with different conditions, sometimes a single thread should
+# stop at the breakpoint, sometimes multiple threads should stop, and
+# sometimes no threads should stop.
+
+standard_testfile
+
+if { [build_executable "failed to prepare" ${binfile} "${srcfile}" \
+	  {debug pthreads}] == -1 } {
+    return
+}
+
+set cond_bp_line [gdb_get_line_number "Breakpoint here"]
+set stop_bp_line [gdb_get_line_number "Stop marker"]
+set nested_bp_line [gdb_get_line_number "Nested breakpoint"]
+set segv_line [gdb_get_line_number "Segfault happens here"]
+
+# Start GDB based on TARGET_ASYNC and TARGET_NON_STOP, and then runto main.
+proc start_gdb_and_runto_main { target_async target_non_stop } {
+    save_vars { ::GDBFLAGS } {
+	append ::GDBFLAGS \
+	    " -ex \"maint set target-non-stop $target_non_stop\""
+	append ::GDBFLAGS \
+	    " -ex \"maintenance set target-async ${target_async}\""
+
+	clean_restart ${::binfile}
+    }
+
+    if { ![runto_main] } {
+	return -1
+    }
+
+    return 0
+}
+
+# Run a test of GDB's conditional breakpoints, where the conditions include
+# inferior function calls.
+#
+# CONDITION is the expression to be used as the breakpoint condition.
+#
+# N_EXPECTED_HITS is the number of threads that we expect to stop due to
+# CONDITON.
+#
+# MESSAGE is used as a test name prefix.
+proc run_condition_test { message n_expected_hits condition \
+			      target_async target_non_stop } {
+    with_test_prefix $message {
+
+	if { [start_gdb_and_runto_main $target_async \
+		  $target_non_stop] == -1 } {
+	    return
+	}
+
+	# Use this convenience variable to track how often the
+	# breakpoint condition has been evaluated.  This should be
+	# once per thread.
+	gdb_test "set \$n_cond_eval = 0"
+
+	# Setup the conditional breakpoint.
+	gdb_breakpoint \
+	    "${::srcfile}:${::cond_bp_line} if ((++\$n_cond_eval) && (${condition}))"
+
+	# And a breakpoint that we hit when the test is over, this one is
+	# not conditional.  Only the main thread gets here once all the
+	# other threads have finished.
+	gdb_breakpoint "${::srcfile}:${::stop_bp_line}"
+
+	# The number of times we stop at the conditional breakpoint.
+	set n_hit_condition 0
+
+	# Now keep 'continue'-ing GDB until all the threads have finished
+	# and we reach the stop_marker breakpoint.
+	gdb_test_multiple "continue" "spot all breakpoint hits" {
+	    -re " worker_func \[^\r\n\]+${::srcfile}:${::cond_bp_line}\r\n${::decimal}\\s+\[^\r\n\]+Breakpoint here\[^\r\n\]+\r\n${::gdb_prompt} $" {
+		incr n_hit_condition
+		send_gdb "continue\n"
+		exp_continue
+	    }
+
+	    -re " stop_marker \[^\r\n\]+${::srcfile}:${::stop_bp_line}\r\n${::decimal}\\s+\[^\r\n\]+Stop marker\[^\r\n\]+\r\n${::gdb_prompt} $" {
+		pass $gdb_test_name
+	    }
+	}
+
+	gdb_assert { $n_hit_condition == $n_expected_hits } \
+	    "stopped at breakpoint the expected number of times"
+
+	# Ensure the breakpoint condition was evaluated once per thread.
+	gdb_test "print \$n_cond_eval" "= 3" \
+	    "condition was evaluated in each thread"
+    }
+}
+
+# Check that after handling a conditional breakpoint (where the condition
+# includes an inferior call), it is still possible to kill the running
+# inferior, and then restart the inferior.
+#
+# At once point doing this would result in GDB giving an assertion error.
+proc_with_prefix run_kill_and_restart_test { target_async target_non_stop } {
+    # This test relies on the 'start' command, which is not possible with
+    # the plain 'remote' target.
+    if { [target_info gdb_protocol] == "remote" } {
+	return
+    }
+
+    if { [start_gdb_and_runto_main $target_async \
+	      $target_non_stop] == -1 } {
+	return
+    }
+
+    # Setup the conditional breakpoint.
+    gdb_breakpoint \
+	"${::srcfile}:${::cond_bp_line} if (is_matching_tid (arg, 1))"
+    gdb_continue_to_breakpoint "worker_func"
+
+    # Now kill the program being debugged.
+    gdb_test "kill" "" "kill process" \
+	"Kill the program being debugged.*y or n. $" "y"
+
+    # Check we can restart the inferior.  At one point this would trigger an
+    # assertion.
+    gdb_start_cmd
+}
+
+# Create a conditional breakpoint which includes a call to a function that
+# segfaults.  Run GDB and check what happens when the inferior segfaults
+# during the inferior call.
+proc_with_prefix run_bp_cond_segfaults { target_async target_non_stop } {
+    if { [start_gdb_and_runto_main $target_async \
+	      $target_non_stop] == -1 } {
+	return
+    }
+
+    # This test relies on the inferior segfaulting when trying to
+    # access address zero.
+    if { [is_address_zero_readable] } {
+	return
+    }
+
+    # Setup the conditional breakpoint, include a call to
+    # 'function_that_segfaults', which triggers the segfault.
+    gdb_breakpoint \
+	"${::srcfile}:${::cond_bp_line} if (is_matching_tid (arg, 0) && function_that_segfaults ())"
+    set bp_1_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+		      "get number of conditional breakpoint"]
+
+    gdb_test "continue" \
+	[multi_line \
+	     "Continuing\\." \
+	     ".*" \
+	     "Thread ${::decimal} \"infcall-from-bp\" received signal SIGSEGV, Segmentation fault\\." \
+	     "${::hex} in function_that_segfaults \\(\\) at \[^\r\n\]+:${::segv_line}" \
+	     "${::decimal}\\s+\[^\r\n\]+Segfault happens here\[^\r\n\]+" \
+	     "Error in testing condition for breakpoint ${bp_1_num}:" \
+	     "The program being debugged was signaled while in a function called from GDB\\." \
+	     "GDB remains in the frame where the signal was received\\." \
+	     "To change this behavior use \"set unwind-on-signal on\"\\." \
+	     "Evaluation of the expression containing the function" \
+	     "\\(function_that_segfaults\\) will be abandoned\\." \
+	     "When the function is done executing, GDB will silently stop\\."]
+}
+
+# Create a conditional breakpoint which includes a call to a function that
+# itself has a breakpoint set within it.  Run GDB and check what happens
+# when GDB hits the nested breakpoint.
+proc_with_prefix run_bp_cond_hits_breakpoint { target_async target_non_stop } {
+    if { [start_gdb_and_runto_main $target_async \
+	      $target_non_stop] == -1 } {
+	return
+    }
+
+    # Setup the conditional breakpoint, include a call to
+    # 'function_with_breakpoint' in which we will shortly place a
+    # breakpoint.
+    gdb_breakpoint \
+	"${::srcfile}:${::cond_bp_line} if (is_matching_tid (arg, 0) && function_with_breakpoint ())"
+    set bp_1_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+		      "get number of conditional breakpoint"]
+
+    gdb_breakpoint "${::srcfile}:${::nested_bp_line}"
+    set bp_2_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+		      "get number of nested breakpoint"]
+
+    gdb_test "continue" \
+	[multi_line \
+	     "Continuing\\." \
+	     ".*" \
+	     "Thread ${::decimal} \"infcall-from-bp\" hit Breakpoint ${bp_2_num}, function_with_breakpoint \\(\\) at \[^\r\n\]+:${::nested_bp_line}" \
+	     "${::decimal}\\s+\[^\r\n\]+Nested breakpoint\[^\r\n\]+" \
+	     "Error in testing condition for breakpoint ${bp_1_num}:" \
+	     "The program being debugged stopped while in a function called from GDB\\." \
+	     "Evaluation of the expression containing the function" \
+	     "\\(function_with_breakpoint\\) will be abandoned\\." \
+	     "When the function is done executing, GDB will silently stop\\."]
+}
+
+foreach_with_prefix target_async { "on" "off" } {
+    foreach_with_prefix target_non_stop { "on" "off" } {
+	run_condition_test "exactly one thread is hit" \
+	    1 "is_matching_tid (arg, 1)" \
+	    $target_async $target_non_stop
+	run_condition_test "exactly two threads are hit" \
+	    2 "(is_matching_tid (arg, 0) || is_matching_tid (arg, 2))" \
+	    $target_async $target_non_stop
+	run_condition_test "all three threads are hit" \
+	    3 "return_true ()" \
+	    $target_async $target_non_stop
+	run_condition_test "no thread is hit" \
+	    0 "return_false ()" \
+	    $target_async $target_non_stop
+
+	run_kill_and_restart_test $target_async $target_non_stop
+	run_bp_cond_segfaults $target_async $target_non_stop
+	run_bp_cond_hits_breakpoint $target_async $target_non_stop
+    }
+}

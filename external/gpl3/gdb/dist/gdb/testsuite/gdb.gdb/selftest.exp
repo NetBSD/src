@@ -1,4 +1,4 @@
-# Copyright 1988-2023 Free Software Foundation, Inc.
+# Copyright 1988-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -74,6 +74,12 @@ proc test_with_self { } {
 			"$gdb_prompt $"]
 	set test "xgdb is at prompt"
 	gdb_test_multiple "continue" $test {
+	    -re "received signal SIGSEGV.* in GC_.*$gdb_prompt" {
+		# Some versions of the GC used by Guile cause a SEGV
+		# during stack probing.  Ignore this and carry on.
+		send_gdb "continue\n"
+		exp_continue
+	    }
 	    -i "$inferior_spawn_id"
 	    -re "$banner" {
 		pass $test
@@ -108,11 +114,18 @@ proc test_with_self { } {
 	    }
 	}
     }
-    
+
     set description "send SIGINT signal to child process"
-    gdb_test_multiple "signal SIGINT" "$description" {
-	-re "^signal SIGINT\r\nContinuing with signal SIGINT.\r\nQuit\r\n.* $" {
-	    pass "$description"
+    gdb_test_multiple "signal SIGINT" "$description, top GDB message" {
+	-re "^signal SIGINT\r\nContinuing with signal SIGINT.\r\n" {
+	    pass $gdb_test_name
+	}
+    }
+
+    gdb_test_multiple "" "$description, bottom GDB message" {
+	-i $inferior_spawn_id
+	-re "Quit\r\n\\(xgdb\\) $" {
+	    pass $gdb_test_name
 	}
     }
 
@@ -152,4 +165,7 @@ proc test_with_self { } {
     return 0
 }
 
-do_self_tests captured_main test_with_self
+save_vars { INTERNAL_GDBFLAGS } {
+    set INTERNAL_GDBFLAGS [string map {"-q" ""} $INTERNAL_GDBFLAGS]
+    do_self_tests captured_main test_with_self
+}

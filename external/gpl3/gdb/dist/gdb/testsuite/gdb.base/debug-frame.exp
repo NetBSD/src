@@ -1,0 +1,57 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test relies on checking gdb debug output. Do not run if gdb debug is
+# enabled as any debug will be redirected to the log.
+require !gdb_debug_enabled
+
+standard_testfile .c -2.c
+set srcfiles [list $srcfile $srcfile2]
+if {[prepare_for_testing "failed to prepare" $testfile $srcfiles]} {
+    return -1
+}
+
+if ![runto_main] {
+    return -1
+}
+
+# Redirect debug output to file.
+set logfile [host_standard_output_file gdb.txt]
+gdb_test_no_output "set logging file $logfile" \
+    "set logging file [file tail $logfile]"
+gdb_test_no_output "set logging debugredirect on"
+gdb_test "set logging enabled on"
+
+# Enable debug frame.
+gdb_test "set debug frame 1"
+
+# Check that calling info frame doesn't trigger an exception that escapes to
+# the CLI.
+set re_locals " Locals at \[^\r\n\]*"
+set re_regs1 " Saved registers:"
+set re_reg "\[^ \]+ at $hex"
+set re_regs2 "  $re_reg,( $re_reg,)*"
+set re_regs3 "  ${re_reg}(, $re_reg)*"
+
+set re1 $re_locals
+set re2 \
+    [multi_line \
+	 $re_locals\
+	 $re_regs1 \
+	 ($re_regs2\r\n)*$re_regs3]
+gdb_test "info frame" "\r\n($re1|$re2)"
+
+gdb_test_no_output "set debug frame 0"
+gdb_test "set logging enabled off"

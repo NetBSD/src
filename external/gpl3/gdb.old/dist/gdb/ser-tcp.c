@@ -1,6 +1,6 @@
 /* Serial interface for raw TCP connections on Un*x like systems.
 
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+   Copyright (C) 1992-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -144,7 +144,7 @@ wait_for_connect (int sock, unsigned int *polls)
   else
     /* Use gdb_select here, since we have no file descriptors, and on
        Windows, plain select doesn't work in that case.  */
-    n = gdb_select (0, NULL, NULL, NULL, &t);
+    n = interruptible_select (0, NULL, NULL, NULL, &t);
 
   /* If we didn't time out, only count it as one poll.  */
   if (n > 0 || *polls < POLL_INTERVAL)
@@ -296,8 +296,8 @@ net_open (struct serial *scb, const char *name)
 
   if (r != 0)
     {
-      fprintf_unfiltered (gdb_stderr, _("%s: cannot resolve name: %s\n"),
-			  name, gai_strerror (r));
+      gdb_printf (gdb_stderr, _("%s: cannot resolve name: %s\n"),
+		  name, gai_strerror (r));
       errno = ENOENT;
       return -1;
     }
@@ -466,16 +466,15 @@ _initialize_ser_tcp ()
   serial_add_interface (&tcp_ops);
 #endif /* USE_WIN32API */
 
-  add_basic_prefix_cmd ("tcp", class_maintenance, _("\
+  add_setshow_prefix_cmd ("tcp", class_maintenance,
+			  _("\
 TCP protocol specific variables.\n\
 Configure variables specific to remote TCP connections."),
-			&tcp_set_cmdlist, "set tcp ",
-			0 /* allow-unknown */, &setlist);
-  add_show_prefix_cmd ("tcp", class_maintenance, _("\
+			  _("\
 TCP protocol specific variables.\n\
 Configure variables specific to remote TCP connections."),
-		       &tcp_show_cmdlist, "show tcp ",
-		       0 /* allow-unknown */, &showlist);
+			  &tcp_set_cmdlist, &tcp_show_cmdlist,
+			  &setlist, &showlist);
 
   add_setshow_boolean_cmd ("auto-retry", class_obscure,
 			   &tcp_auto_retry, _("\

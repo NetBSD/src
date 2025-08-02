@@ -1,7 +1,7 @@
 # Check that loop insn works if register value is zero.
 # mach: pru
 
-# Copyright (C) 2022-2023 Free Software Foundation, Inc.
+# Copyright (C) 2022-2024 Free Software Foundation, Inc.
 # Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 #
 # This file is part of the GNU simulators.

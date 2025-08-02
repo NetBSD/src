@@ -1,5 +1,5 @@
 /* IQ2000 simulator support code
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of the GNU simulators.
@@ -58,7 +58,6 @@ do_syscall (SIM_CPU *current_cpu, PCADDR pc)
   int syscall = H2T_4 (iq2000bf_h_gr_get (current_cpu, 11));
 #endif
   int syscall_function = iq2000bf_h_gr_get (current_cpu, 4);
-  int i;
   char *buf;
   int PARM1 = iq2000bf_h_gr_get (current_cpu, 5);
   int PARM2 = iq2000bf_h_gr_get (current_cpu, 6);
@@ -78,6 +77,9 @@ do_syscall (SIM_CPU *current_cpu, PCADDR pc)
 	  /* Fail.  */
 	  puts ("fail");
 	  exit (1);
+	default:
+	  puts ("unknown exit");
+	  exit (2);
 	}
 
     case TARGET_NEWLIB_SYS_write:

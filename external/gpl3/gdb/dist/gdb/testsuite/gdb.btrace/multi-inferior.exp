@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,20 +22,16 @@
 #
 # Each inferior can be recorded separately.
 
-if { [skip_btrace_tests] } {
-    unsupported "target does not support record-btrace"
-    return -1
-}
+require allow_btrace_tests
 
-if { [use_gdb_stub] } {
-    unsupported "test creates multiple inferiors"
-    return -1
-}
+require !use_gdb_stub
 
 standard_testfile
 if [prepare_for_testing "failed to prepare" $testfile {} {debug}] {
     return -1
 }
+
+set host_binfile [gdb_remote_download host $binfile]
 
 with_test_prefix "inferior 1" {
     if ![runto_main] {
@@ -44,7 +40,7 @@ with_test_prefix "inferior 1" {
 }
 
 with_test_prefix "inferior 2" {
-    gdb_test "add-inferior -exec ${binfile}" "Added inferior 2.*" \
+    gdb_test "add-inferior -exec $host_binfile" "Added inferior 2.*" \
 	"add second inferior"
     gdb_test "inferior 2" "Switching to inferior 2.*"
 
@@ -63,7 +59,7 @@ with_test_prefix "inferior 1" {
 }
 
 with_test_prefix "inferior 3" {
-    gdb_test "add-inferior -exec ${binfile}" "Added inferior 3.*" \
+    gdb_test "add-inferior -exec ${host_binfile}" "Added inferior 3.*" \
 	"add third inferior"
     gdb_test "inferior 3" "Switching to inferior 3.*"
 

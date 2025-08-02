@@ -1,7 +1,7 @@
 /* Blackfin Universal Asynchronous Receiver/Transmitter (UART) model.
    For "new style" UARTs on BF50x/BF54x parts.
 
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -158,6 +158,7 @@ bfin_uart_io_read_buffer (struct hw *me, void *dest,
     case mmr_offset(lsr):
       uart->lsr &= ~(DR | THRE | TEMT);
       uart->lsr |= bfin_uart_get_status (me);
+      ATTRIBUTE_FALLTHROUGH;
     case mmr_offset(thr):
     case mmr_offset(msr):
     case mmr_offset(dll):

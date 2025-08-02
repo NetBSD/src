@@ -39,7 +39,7 @@ You can build GDB right in the source directory:
 
 However, we recommend that an empty directory be used instead.
 This way you do not clutter your source tree with binary files
-and will be able to create different builds with different 
+and will be able to create different builds with different
 configuration options.
 
 You can build GDB in any empty build directory:
@@ -141,7 +141,7 @@ use depends on your system; `lpr -d' is common; another (for PostScript
 devices) is `dvips'.  The DVI print command may require a file name
 without any extension or a `.dvi' extension.
 
-   TeX also requires a macro definitions file called `texinfo.tex'. 
+   TeX also requires a macro definitions file called `texinfo.tex'.
 This file tells TeX how to typeset a document written in Texinfo
 format.  On its own, TeX cannot read, much less typeset a Texinfo file.
  `texinfo.tex' is distributed with GDB and is located in the
@@ -318,7 +318,7 @@ three pieces of information in the following pattern:
 `sparc-sun-sunos4'.
 
    The `configure' script accompanying GDB does not provide any query
-facility to list all supported host and target names or aliases. 
+facility to list all supported host and target names or aliases.
 `configure' calls the Bourne shell script `config.sub' to map
 abbreviations to full names; you can read the script, if you wish, or
 you can use it to test your guesses on abbreviations--for example:
@@ -484,6 +484,11 @@ more obscure GDB `configure' options are not listed here.
      not have liblzma installed, you can get the latest version from
      `https://tukaani.org/xz/'.
 
+`--with-libgmp-prefix=DIR'
+     Build GDB using the GMP library installed at the directory DIR.
+     If your host does not have GMP installed, you can get the latest
+     version at `https://gmplib.org/'.
+
 `--with-mpfr'
      Build GDB with GNU MPFR, a library for multiple-precision
      floating-point computation with correct rounding.  (Done by
@@ -493,7 +498,7 @@ more obscure GDB `configure' options are not listed here.
      floating-point formats than the host.  If GNU MPFR is not
      available, GDB will fall back to using host floating-point
      arithmetic.  If your host does not have GNU MPFR installed, you
-     can get the latest version from `http://www.mpfr.org'.
+     can get the latest version from `https://www.mpfr.org/'.
 
 `--with-python[=PYTHON]'
      Build GDB with Python scripting support.  (Done by default if
@@ -501,7 +506,7 @@ more obscure GDB `configure' options are not listed here.
      GDB scripting much more powerful than the restricted CLI
      scripting language.  If your host does not have Python installed,
      you can find it on `http://www.python.org/download/'.  The oldest
-     version of Python supported by GDB is 2.6.  The optional argument
+     version of Python supported by GDB is 3.2.  The optional argument
      PYTHON is used to find the Python headers and libraries.  It can
      be either the name of a Python executable, or the name of the
      directory in which Python is installed.
@@ -545,7 +550,7 @@ more obscure GDB `configure' options are not listed here.
      FILE should be an absolute file name.  If FILE is in a directory
      under the configured prefix, and GDB is moved to another location
      after being built, the location of the system-wide init file will
-     be adjusted accordingly. 
+     be adjusted accordingly.
 
 `--with-system-gdbinit-dir=DIR'
      Configure GDB to automatically load system-wide init files from

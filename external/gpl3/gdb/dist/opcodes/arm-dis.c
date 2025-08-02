@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARM
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    Modification by James G. Smith (jsmith@cygnus.co.uk)
 
@@ -1040,180 +1040,6 @@ static const struct sopcode32 coprocessor_opcodes[] =
     0x0e800a00, 0x0fb00f50, "vdiv%c.f32\t%y1, %y2, %y0"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e800b00, 0x0fb00f50, "vdiv%c.f64\t%z1, %z2, %z0"},
-
-  /* Cirrus coprocessor instructions.  */
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d100400, 0x0f500f00, "cfldrs%c\t%{R:mvf%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c100400, 0x0f500f00, "cfldrs%c\t%{R:mvf%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d500400, 0x0f500f00, "cfldrd%c\t%{R:mvd%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c500400, 0x0f500f00, "cfldrd%c\t%{R:mvd%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d100500, 0x0f500f00, "cfldr32%c\t%{R:mvfx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c100500, 0x0f500f00, "cfldr32%c\t%{R:mvfx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d500500, 0x0f500f00, "cfldr64%c\t%{R:mvdx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c500500, 0x0f500f00, "cfldr64%c\t%{R:mvdx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d000400, 0x0f500f00, "cfstrs%c\t%{R:mvf%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c000400, 0x0f500f00, "cfstrs%c\t%{R:mvf%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d400400, 0x0f500f00, "cfstrd%c\t%{R:mvd%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c400400, 0x0f500f00, "cfstrd%c\t%{R:mvd%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d000500, 0x0f500f00, "cfstr32%c\t%{R:mvfx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c000500, 0x0f500f00, "cfstr32%c\t%{R:mvfx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d400500, 0x0f500f00, "cfstr64%c\t%{R:mvdx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c400500, 0x0f500f00, "cfstr64%c\t%{R:mvdx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000450, 0x0ff00ff0, "cfmvsr%c\t%{R:mvf%16-19d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100450, 0x0ff00ff0, "cfmvrs%c\t%12-15r, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000410, 0x0ff00ff0, "cfmvdlr%c\t%{R:mvd%16-19d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100410, 0x0ff00ff0, "cfmvrdl%c\t%12-15r, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000430, 0x0ff00ff0, "cfmvdhr%c\t%{R:mvd%16-19d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100430, 0x0ff00fff, "cfmvrdh%c\t%12-15r, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000510, 0x0ff00fff, "cfmv64lr%c\t%{R:mvdx%16-19d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100510, 0x0ff00fff, "cfmvr64l%c\t%12-15r, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000530, 0x0ff00fff, "cfmv64hr%c\t%{R:mvdx%16-19d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100530, 0x0ff00fff, "cfmvr64h%c\t%12-15r, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200440, 0x0ff00fff, "cfmval32%c\t%{R:mvax%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100440, 0x0ff00fff, "cfmv32al%c\t%{R:mvfx%12-15d%}, %{R:mvax%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200460, 0x0ff00fff, "cfmvam32%c\t%{R:mvax%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100460, 0x0ff00fff, "cfmv32am%c\t%{R:mvfx%12-15d%}, %{R:mvax%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200480, 0x0ff00fff, "cfmvah32%c\t%{R:mvax%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100480, 0x0ff00fff, "cfmv32ah%c\t%{R:mvfx%12-15d%}, %{R:mvax%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e2004a0, 0x0ff00fff, "cfmva32%c\t%{R:mvax%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1004a0, 0x0ff00fff, "cfmv32a%c\t%{R:mvfx%12-15d%}, %{R:mvax%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e2004c0, 0x0ff00fff, "cfmva64%c\t%{R:mvax%12-15d%}, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1004c0, 0x0ff00fff, "cfmv64a%c\t%{R:mvdx%12-15d%}, %{R:mvax%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e2004e0, 0x0fff0fff, "cfmvsc32%c\t%{R:dspsc%}, %{R:mvdx%12-15d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1004e0, 0x0fff0fff, "cfmv32sc%c\t%{R:mvdx%12-15d%}, %{R:dspsc%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000400, 0x0ff00fff, "cfcpys%c\t%{R:mvf%12-15d%}, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000420, 0x0ff00fff, "cfcpyd%c\t%{R:mvd%12-15d%}, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000460, 0x0ff00fff, "cfcvtsd%c\t%{R:mvd%12-15d%}, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000440, 0x0ff00fff, "cfcvtds%c\t%{R:mvf%12-15d%}, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000480, 0x0ff00fff, "cfcvt32s%c\t%{R:mvf%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e0004a0, 0x0ff00fff, "cfcvt32d%c\t%{R:mvd%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e0004c0, 0x0ff00fff, "cfcvt64s%c\t%{R:mvf%12-15d%}, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e0004e0, 0x0ff00fff, "cfcvt64d%c\t%{R:mvd%12-15d%}, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100580, 0x0ff00fff, "cfcvts32%c\t%{R:mvfx%12-15d%}, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1005a0, 0x0ff00fff, "cfcvtd32%c\t%{R:mvfx%12-15d%}, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1005c0, 0x0ff00fff, "cftruncs32%c\t%{R:mvfx%12-15d%}, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1005e0, 0x0ff00fff, "cftruncd32%c\t%{R:mvfx%12-15d%}, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000550, 0x0ff00ff0, "cfrshl32%c\t%{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000570, 0x0ff00ff0, "cfrshl64%c\t%{R:mvdx%16-19d%}, %{R:mvdx%0-3d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000500, 0x0ff00f10, "cfsh32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{I:#%I%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200500, 0x0ff00f10, "cfsh64%c\t%{R:mvdx%12-15d%}, %{R:mvdx%16-19d%}, %{I:#%I%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100490, 0x0ff00ff0, "cfcmps%c\t%12-15r, %{R:mvf%16-19d%}, %{R:mvf%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1004b0, 0x0ff00ff0, "cfcmpd%c\t%12-15r, %{R:mvd%16-19d%}, %{R:mvd%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100590, 0x0ff00ff0, "cfcmp32%c\t%12-15r, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1005b0, 0x0ff00ff0, "cfcmp64%c\t%12-15r, %{R:mvdx%16-19d%}, %{R:mvdx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300400, 0x0ff00fff, "cfabss%c\t%{R:mvf%12-15d%}, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300420, 0x0ff00fff, "cfabsd%c\t%{R:mvd%12-15d%}, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300440, 0x0ff00fff, "cfnegs%c\t%{R:mvf%12-15d%}, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300460, 0x0ff00fff, "cfnegd%c\t%{R:mvd%12-15d%}, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300480, 0x0ff00ff0, "cfadds%c\t%{R:mvf%12-15d%}, %{R:mvf%16-19d%}, %{R:mvf%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3004a0, 0x0ff00ff0, "cfaddd%c\t%{R:mvd%12-15d%}, %{R:mvd%16-19d%}, %{R:mvd%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3004c0, 0x0ff00ff0, "cfsubs%c\t%{R:mvf%12-15d%}, %{R:mvf%16-19d%}, %{R:mvf%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3004e0, 0x0ff00ff0, "cfsubd%c\t%{R:mvd%12-15d%}, %{R:mvd%16-19d%}, %{R:mvd%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100400, 0x0ff00ff0, "cfmuls%c\t%{R:mvf%12-15d%}, %{R:mvf%16-19d%}, %{R:mvf%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100420, 0x0ff00ff0, "cfmuld%c\t%{R:mvd%12-15d%}, %{R:mvd%16-19d%}, %{R:mvd%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300500, 0x0ff00fff, "cfabs32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300520, 0x0ff00fff, "cfabs64%c\t%{R:mvdx%12-15d%}, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300540, 0x0ff00fff, "cfneg32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300560, 0x0ff00fff, "cfneg64%c\t%{R:mvdx%12-15d%}, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300580, 0x0ff00ff0, "cfadd32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3005a0, 0x0ff00ff0, "cfadd64%c\t%{R:mvdx%12-15d%}, %{R:mvdx%16-19d%}, %{R:mvdx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3005c0, 0x0ff00ff0, "cfsub32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3005e0, 0x0ff00ff0, "cfsub64%c\t%{R:mvdx%12-15d%}, %{R:mvdx%16-19d%}, %{R:mvdx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100500, 0x0ff00ff0, "cfmul32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100520, 0x0ff00ff0, "cfmul64%c\t%{R:mvdx%12-15d%}, %{R:mvdx%16-19d%}, %{R:mvdx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100540, 0x0ff00ff0, "cfmac32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100560, 0x0ff00ff0, "cfmsc32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000600, 0x0ff00f10,
-    "cfmadd32%c\t%{R:mvax%5-7d%}, %{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100600, 0x0ff00f10,
-    "cfmsub32%c\t%{R:mvax%5-7d%}, %{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200600, 0x0ff00f10,
-    "cfmadda32%c\t%{R:mvax%5-7d%}, %{R:mvax%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300600, 0x0ff00f10,
-    "cfmsuba32%c\t%{R:mvax%5-7d%}, %{R:mvax%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
 
   /* VFP Fused multiply add instructions.  */
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
@@ -2763,7 +2589,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VMLA,
    0xee010e40, 0xef811f70,
-   "vmla%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+   "vmla%v.i%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
 
   /* Vector VMLALDAV.  Note must appear before VMLADAV due to instruction
      opcode aliasing.  */
@@ -3828,11 +3654,11 @@ static const struct opcode32 arm_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0xf1080000, 0xfffffe3f, "cpsie\t%{B:%8'a%7'i%6'f%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0xf10a0000, 0xfffffe20, "cpsie\t%{B:%8'a%7'i%6'f%},%{I:#%0-4d%}"},
+    0xf10a0000, 0xfffffe20, "cpsie\t%{B:%8'a%7'i%6'f%}, %{I:#%0-4d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0xf10C0000, 0xfffffe3f, "cpsid\t%{B:%8'a%7'i%6'f%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0xf10e0000, 0xfffffe20, "cpsid\t%{B:%8'a%7'i%6'f%},%{I:#%0-4d%}"},
+    0xf10e0000, 0xfffffe20, "cpsid\t%{B:%8'a%7'i%6'f%}, %{I:#%0-4d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0xf1000000, 0xfff1fe20, "cps\t%{I:#%0-4d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
@@ -7965,6 +7791,34 @@ print_mve_size (struct disassemble_info *info,
     }
 }
 
+/* Return true if INSN is a shift insn with an immediate shift amount
+   which needs decoding as per print_mve_shift_n.  */
+
+static bool
+mve_shift_insn_p (enum mve_instructions insn)
+{
+  switch (insn)
+    {
+    case MVE_VQSHL_T2:
+    case MVE_VQSHLU_T3:
+    case MVE_VQSHRN:
+    case MVE_VQSHRUN:
+    case MVE_VQRSHRN:
+    case MVE_VQRSHRUN:
+    case MVE_VRSHR:
+    case MVE_VRSHRN:
+    case MVE_VSHL_T1:
+    case MVE_VSHLL_T1:
+    case MVE_VSHR:
+    case MVE_VSHRN:
+    case MVE_VSLI:
+    case MVE_VSRI:
+      return true;
+    default:
+      return false;
+    }
+}
+
 static void
 print_mve_shift_n (struct disassemble_info *info, long given,
 		   enum mve_instructions matched_insn)
@@ -10225,16 +10079,7 @@ print_insn_mve (struct disassemble_info *info, long given)
 				  arm_regnames[value]);
 			    break;
 			  case 'd':
-			    if (insn->mve_op == MVE_VQSHL_T2
-				|| insn->mve_op == MVE_VQSHLU_T3
-				|| insn->mve_op == MVE_VRSHR
-				|| insn->mve_op == MVE_VRSHRN
-				|| insn->mve_op == MVE_VSHL_T1
-				|| insn->mve_op == MVE_VSHLL_T1
-				|| insn->mve_op == MVE_VSHR
-				|| insn->mve_op == MVE_VSHRN
-				|| insn->mve_op == MVE_VSLI
-				|| insn->mve_op == MVE_VSRI)
+			    if (mve_shift_insn_p (insn->mve_op))
 			      print_mve_shift_n (info, given, insn->mve_op);
 			    else if (insn->mve_op == MVE_VSHLL_T2)
 			      {
@@ -12400,13 +12245,14 @@ find_ifthen_state (bfd_vma pc,
    mapping symbol.  */
 
 static int
-is_mapping_symbol (struct disassemble_info *info, int n,
+is_mapping_symbol (struct disassemble_info *info,
+		   int n,
 		   enum map_type *map_type)
 {
-  const char *name;
+  const char *name = bfd_asymbol_name (info->symtab[n]);
 
-  name = bfd_asymbol_name (info->symtab[n]);
-  if (name[0] == '$' && (name[1] == 'a' || name[1] == 't' || name[1] == 'd')
+  if (name[0] == '$'
+      && (name[1] == 'a' || name[1] == 't' || name[1] == 'd')
       && (name[2] == 0 || name[2] == '.'))
     {
       *map_type = ((name[1] == 'a') ? MAP_ARM
@@ -12443,12 +12289,18 @@ get_sym_code_type (struct disassemble_info *info,
 {
   elf_symbol_type *es;
   unsigned int type;
+  asymbol * sym;
 
   /* If the symbol is in a different section, ignore it.  */
   if (info->section != NULL && info->section != info->symtab[n]->section)
     return false;
 
-  es = *(elf_symbol_type **)(info->symtab + n);
+  /* PR 30230: Reject non-ELF symbols, eg synthetic ones.  */
+  sym = info->symtab[n];
+  if (bfd_asymbol_flavour (sym) != bfd_target_elf_flavour)
+    return false;
+
+  es = (elf_symbol_type *) sym;
   type = ELF_ST_TYPE (es->internal_elf_sym.st_info);
 
   /* If the symbol has function type then use that.  */
@@ -12624,15 +12476,12 @@ select_arm_features (unsigned long mach,
     case bfd_mach_arm_3:	 ARM_SET_FEATURES (ARM_ARCH_V3); break;
     case bfd_mach_arm_3M:	 ARM_SET_FEATURES (ARM_ARCH_V3M); break;
     case bfd_mach_arm_4:	 ARM_SET_FEATURES (ARM_ARCH_V4); break;
+    case bfd_mach_arm_ep9312:
     case bfd_mach_arm_4T:	 ARM_SET_FEATURES (ARM_ARCH_V4T); break;
     case bfd_mach_arm_5:	 ARM_SET_FEATURES (ARM_ARCH_V5); break;
     case bfd_mach_arm_5T:	 ARM_SET_FEATURES (ARM_ARCH_V5T); break;
     case bfd_mach_arm_5TE:	 ARM_SET_FEATURES (ARM_ARCH_V5TE); break;
     case bfd_mach_arm_XScale:	 ARM_SET_FEATURES (ARM_ARCH_XSCALE); break;
-    case bfd_mach_arm_ep9312:
-	ARM_SET_FEATURES (ARM_FEATURE_LOW (ARM_AEXT_V4T,
-					   ARM_CEXT_MAVERICK | FPU_MAVERICK));
-       break;
     case bfd_mach_arm_iWMMXt:	 ARM_SET_FEATURES (ARM_ARCH_IWMMXT); break;
     case bfd_mach_arm_iWMMXt2:	 ARM_SET_FEATURES (ARM_ARCH_IWMMXT2); break;
     case bfd_mach_arm_5TEJ:	 ARM_SET_FEATURES (ARM_ARCH_V5TEJ); break;

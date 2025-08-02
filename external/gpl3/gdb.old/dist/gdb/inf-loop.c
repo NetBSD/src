@@ -1,5 +1,5 @@
 /* Handling of inferior events for the event loop for GDB, the GNU debugger.
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
    This file is part of GDB.
@@ -26,7 +26,6 @@
 #include "remote.h"
 #include "language.h"
 #include "gdbthread.h"
-#include "continuations.h"
 #include "interps.h"
 #include "top.h"
 #include "observable.h"
@@ -48,14 +47,14 @@ inferior_event_handler (enum inferior_event_type event_type)
 	  /* Unregister the inferior from the event loop.  This is done
 	     so that when the inferior is not running we don't get
 	     distracted by spurious inferior output.  */
-	  if (target_has_execution && target_can_async_p ())
-	    target_async (0);
+	  if (target_has_execution () && target_can_async_p ())
+	    target_async (false);
 	}
 
       /* Do all continuations associated with the whole inferior (not
 	 a particular thread).  */
       if (inferior_ptid != null_ptid)
-	do_all_inferior_continuations (0);
+	current_inferior ()->do_all_continuations ();
 
       /* When running a command list (from a user command, say), these
 	 are only run when the command list is all done.  */
@@ -86,7 +85,7 @@ inferior_event_handler (enum inferior_event_type event_type)
       break;
 
     default:
-      printf_unfiltered (_("Event type not recognized.\n"));
+      gdb_printf (gdb_stderr, _("Event type not recognized.\n"));
       break;
     }
 }

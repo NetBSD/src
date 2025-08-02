@@ -1,6 +1,6 @@
 /* Work with executable files, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,26 +30,15 @@ struct target_ops;
 struct bfd;
 struct objfile;
 
-#define exec_bfd current_program_space->ebfd
-#define exec_bfd_mtime current_program_space->ebfd_mtime
-#define exec_filename current_program_space->pspace_exec_filename
+/* Builds a section table, given args BFD.  */
 
-/* Builds a section table, given args BFD, SECTABLE_PTR, SECEND_PTR.
-   Returns 0 if OK, 1 on error.  */
+extern target_section_table build_section_table (struct bfd *);
 
-extern int build_section_table (struct bfd *, struct target_section **,
-				struct target_section **);
+/* VFORK_CHILD is a child vforked and its program space is shared with its
+   parent.  This pushes the exec target on that inferior's target stack if
+   there are sections in the program space's section table.  */
 
-/* Remove all entries from TABLE.  */
-
-extern void clear_section_table (struct target_section_table *table);
-
-/* The current inferior is a child vforked and its program space is
-   shared with its parent.  This pushes the exec target on the
-   current/child inferior's target stack if there are sections in the
-   program space's section table.  */
-
-extern void exec_on_vfork ();
+extern void exec_on_vfork (inferior *vfork_child);
 
 /* Read from mappable read-only sections of BFD executable files.
    Return TARGET_XFER_OK, if read is successful.  Return
@@ -86,11 +75,10 @@ extern enum target_xfer_status
   section_table_xfer_memory_partial (gdb_byte *,
 				     const gdb_byte *,
 				     ULONGEST, ULONGEST, ULONGEST *,
-				     struct target_section *,
-				     struct target_section *,
+				     const target_section_table &,
 				     gdb::function_view<bool
 				       (const struct target_section *)> match_cb
-				         = nullptr);
+					 = nullptr);
 
 /* Read from mappable read-only sections of BFD executable files.
    Similar to exec_read_partial_read_only, but return
@@ -103,30 +91,12 @@ extern enum target_xfer_status
 /* Set the loaded address of a section.  */
 extern void exec_set_section_address (const char *, int, CORE_ADDR);
 
-/* Remove all target sections owned by OWNER.  */
-
-extern void remove_target_sections (void *owner);
-
-/* Add the sections array defined by [SECTIONS..SECTIONS_END[ to the
-   current set of target sections.  */
-
-extern void add_target_sections (void *owner,
-				 struct target_section *sections,
-				 struct target_section *sections_end);
-
-/* Add the sections of OBJFILE to the current set of target sections.
- * OBJFILE owns the new target sections.  */
-
-extern void add_target_sections_of_objfile (struct objfile *objfile);
-
 /* Prints info about all sections defined in the TABLE.  ABFD is
    special cased --- it's filename is omitted; if it is the executable
    file, its entry point is printed.  */
 
-extern void print_section_info (struct target_section_table *table,
+extern void print_section_info (const target_section_table *table,
 				bfd *abfd);
-
-extern void exec_close (void);
 
 /* Helper function that attempts to open the symbol file at EXEC_FILE_HOST.
    If successful, it proceeds to add the symbol file as the main symbol file.

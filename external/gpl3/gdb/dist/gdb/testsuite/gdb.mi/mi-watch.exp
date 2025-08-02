@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Free Software Foundation, Inc.
+# Copyright 1999-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,18 +20,16 @@
 # The goal is not to test gdb functionality, which is done by other
 # tests, but to verify the correct output response to MI operations.
 
-# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# The allow_hw_watchpoint_tests checks if watchpoints are supported by the
 # processor.  On PowerPC, the check runs a small test program under gdb
 # to determine if the Power processor supports HW watchpoints.  The check
 # must be done before starting the test so as to not disrupt the execution
 # of the actual test.
 
-set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
+set allow_hw_watchpoint_tests_p [allow_hw_watchpoint_tests]
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
-
-gdb_exit
 
 standard_testfile basics.c
 
@@ -146,20 +144,18 @@ proc test_watchpoint_all {mi_mode type} {
     upvar srcdir srcdir
     upvar subdir subdir
     upvar binfile binfile
-    global skip_hw_watchpoint_tests_p
+    global allow_hw_watchpoint_tests_p
 
-    if {$type == "hw" && $skip_hw_watchpoint_tests_p } {
+    if {$type == "hw" && !$allow_hw_watchpoint_tests_p } {
 	return
     }
-
-    mi_gdb_exit
 
     if {$mi_mode == "separate"} {
 	set start_ops "separate-mi-tty"
     } else {
 	set start_ops ""
     }
-    if [mi_gdb_start $start_ops] {
+    if [mi_clean_restart ${binfile} $start_ops] {
 	return
     }
 
@@ -172,10 +168,6 @@ proc test_watchpoint_all {mi_mode type} {
 	"567\\^done" \
 	"hw watchpoints toggle"
 
-    mi_delete_breakpoints
-    mi_gdb_reinitialize_dir $srcdir/$subdir
-    mi_gdb_load ${binfile}
-
     mi_runto callee4
     test_watchpoint_creation_and_listing
     #test_rwatch_creation_and_listing
@@ -183,16 +175,9 @@ proc test_watchpoint_all {mi_mode type} {
     test_watchpoint_triggering
 }
 
-if [gdb_debug_enabled] {
-  # gdb debug doesn't work for separate-mi-tty.
-  set modes {"main"}
-} else {
-  set modes {"main" "separate"}
-}
-
 # Run the tests twice, once using software watchpoints, and another
 # with hardware watchpoints.
-foreach_with_prefix mi-mode $modes {
+foreach_mi_ui_mode mi-mode {
     foreach_with_prefix wp-type {"sw" "hw"} {
 	test_watchpoint_all ${mi-mode} ${wp-type}
     }

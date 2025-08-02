@@ -18,14 +18,20 @@ main ()
   vector unsigned int y; 
   vector unsigned int x; 
   vector unsigned int z; 
-  int a;
+  int a = 0;
+
+  #ifdef _AIX
+  /* On AIX, the debugger cannot access vector registers before they
+     are first used by the inferior.  Perform such an access here.  */
+  x = ((vector unsigned int) vec_splat_u8 (0));
+  #endif
 
   /* This line may look unnecessary but we do need it, because we want to
      have a line to do a next over (so that gdb refetches the registers)
      and we don't want the code to change any vector registers.
      The splat operations below modify the VRs,i
      so we don't want to execute them yet.  */
-  a = 9;
+  a = 9; /* start here */
   x = ((vector unsigned int) vec_splat_u8 (-2));
   y = ((vector unsigned int) vec_splat_u8 (1));
 	

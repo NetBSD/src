@@ -1,4 +1,4 @@
-# Copyright 2009-2023 Free Software Foundation, Inc.
+# Copyright 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,7 @@
 set testfile "multi-arch-exec"
 
 # The plain remote target can't do multiple inferiors.
-if [use_gdb_stub] {
-    return
-}
+require !use_gdb_stub
 
 # The 64-bit compile may succeed for i386-linux, but gdb won't be able
 # to load the file.
@@ -168,7 +166,7 @@ proc do_test { first_arch mode selected_thread } {
 
 	gdb_test_no_output "set follow-exec-mode $mode"
 
-	# Test that GDB updates the target description / arch successfuly
+	# Test that GDB updates the target description / arch successfully
 	# after the exec.
 	gdb_test "continue" "Breakpoint $bkptno_numopt_re, main.*" "continue across exec that changes architecture"
 }

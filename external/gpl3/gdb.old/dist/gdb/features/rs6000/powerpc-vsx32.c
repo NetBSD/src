@@ -5,16 +5,16 @@
 #include "osabi.h"
 #include "target-descriptions.h"
 
-struct target_desc *tdesc_powerpc_vsx32;
+const struct target_desc *tdesc_powerpc_vsx32;
 static void
 initialize_tdesc_powerpc_vsx32 (void)
 {
-  struct target_desc *result = allocate_target_description ();
-  set_tdesc_architecture (result, bfd_scan_arch ("powerpc:common"));
+  target_desc_up result = allocate_target_description ();
+  set_tdesc_architecture (result.get (), bfd_scan_arch ("powerpc:common"));
 
   struct tdesc_feature *feature;
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.core");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.core");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "r1", 1, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "r2", 2, 1, NULL, 32, "uint32");
@@ -54,7 +54,7 @@ initialize_tdesc_powerpc_vsx32 (void)
   tdesc_create_reg (feature, "ctr", 68, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "xer", 69, 1, NULL, 32, "uint32");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.fpu");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.fpu");
   tdesc_create_reg (feature, "f0", 32, 1, NULL, 64, "ieee_double");
   tdesc_create_reg (feature, "f1", 33, 1, NULL, 64, "ieee_double");
   tdesc_create_reg (feature, "f2", 34, 1, NULL, 64, "ieee_double");
@@ -89,7 +89,7 @@ initialize_tdesc_powerpc_vsx32 (void)
   tdesc_create_reg (feature, "f31", 63, 1, NULL, 64, "ieee_double");
   tdesc_create_reg (feature, "fpscr", 70, 1, "float", 32, "int");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.altivec");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.altivec");
   tdesc_type *element_type;
   element_type = tdesc_named_type (feature, "ieee_single");
   tdesc_create_vector (feature, "v4f", element_type, 4);
@@ -152,7 +152,7 @@ initialize_tdesc_powerpc_vsx32 (void)
   tdesc_create_reg (feature, "vscr", 103, 1, "vector", 32, "int");
   tdesc_create_reg (feature, "vrsave", 104, 1, "vector", 32, "int");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.vsx");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.vsx");
   tdesc_create_reg (feature, "vs0h", 105, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "vs1h", 106, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "vs2h", 107, 1, NULL, 64, "uint64");
@@ -186,5 +186,5 @@ initialize_tdesc_powerpc_vsx32 (void)
   tdesc_create_reg (feature, "vs30h", 135, 1, NULL, 64, "uint64");
   tdesc_create_reg (feature, "vs31h", 136, 1, NULL, 64, "uint64");
 
-  tdesc_powerpc_vsx32 = result;
+  tdesc_powerpc_vsx32 = result.release ();
 }

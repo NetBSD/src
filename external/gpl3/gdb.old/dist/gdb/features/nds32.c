@@ -5,16 +5,16 @@
 #include "osabi.h"
 #include "target-descriptions.h"
 
-struct target_desc *tdesc_nds32;
+const struct target_desc *tdesc_nds32;
 static void
 initialize_tdesc_nds32 (void)
 {
-  struct target_desc *result = allocate_target_description ();
-  set_tdesc_architecture (result, bfd_scan_arch ("n1h"));
+  target_desc_up result = allocate_target_description ();
+  set_tdesc_architecture (result.get (), bfd_scan_arch ("n1"));
 
   struct tdesc_feature *feature;
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.nds32.core");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.nds32.core");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "r1", 1, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "r2", 2, 1, NULL, 32, "int");
@@ -49,7 +49,7 @@ initialize_tdesc_nds32 (void)
   tdesc_create_reg (feature, "sp", 31, 1, NULL, 32, "data_ptr");
   tdesc_create_reg (feature, "pc", 32, 1, NULL, 32, "code_ptr");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.nds32.fpu");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.nds32.fpu");
   tdesc_create_reg (feature, "fd0", 33, 1, "float", 64, "ieee_double");
   tdesc_create_reg (feature, "fd1", 34, 1, "float", 64, "ieee_double");
   tdesc_create_reg (feature, "fd2", 35, 1, "float", 64, "ieee_double");
@@ -83,10 +83,10 @@ initialize_tdesc_nds32 (void)
   tdesc_create_reg (feature, "fd30", 63, 1, "float", 64, "ieee_double");
   tdesc_create_reg (feature, "fd31", 64, 1, "float", 64, "ieee_double");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.nds32.system");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.nds32.system");
   tdesc_create_reg (feature, "ir0", 65, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "itb", 66, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "ifc_lp", 67, 1, NULL, 32, "int");
 
-  tdesc_nds32 = result;
+  tdesc_nds32 = result.release ();
 }

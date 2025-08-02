@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2023 Free Software Foundation, Inc.
+# Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,7 @@
 
 # Test stepping over permanent breakpoints on i386.
 
-if {![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"]} {
-    verbose "Skipping skip over permanent breakpoint on i386 tests."
-    return
-}
+require {is_any_target "i?86-*-*" "x86_64-*-*"}
 
 standard_testfile
 
@@ -36,10 +33,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list
 }
 
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart $binfile
 
 #
 # Run to `main' where we begin our tests.

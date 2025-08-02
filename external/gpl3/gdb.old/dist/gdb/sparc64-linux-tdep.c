@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux UltraSPARC.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -52,7 +52,7 @@
 /* Signal trampoline support.  */
 
 static void sparc64_linux_sigframe_init (const struct tramp_frame *self,
-					 struct frame_info *this_frame,
+					 frame_info_ptr this_frame,
 					 struct trad_frame_cache *this_cache,
 					 CORE_ADDR func);
 
@@ -73,7 +73,7 @@ static const struct tramp_frame sparc64_linux_rt_sigframe =
 
 static void
 sparc64_linux_sigframe_init (const struct tramp_frame *self,
-			     struct frame_info *this_frame,
+			     frame_info_ptr this_frame,
 			     struct trad_frame_cache *this_cache,
 			     CORE_ADDR func)
 {
@@ -137,7 +137,7 @@ sparc64_linux_report_signal_info (struct gdbarch *gdbarch, struct ui_out *uiout,
       si_code = parse_and_eval_long ("$_siginfo.si_code\n");
 
       if (si_code >= SEGV_ACCADI && si_code <= SEGV_ADIPERR)
-        addr = parse_and_eval_long ("$_siginfo._sifields._sigfault.si_addr");
+	addr = parse_and_eval_long ("$_siginfo._sifields._sigfault.si_addr");
     }
   catch (const gdb_exception &exception)
     {
@@ -176,7 +176,7 @@ sparc64_linux_report_signal_info (struct gdbarch *gdbarch, struct ui_out *uiout,
    address.  */
 
 static CORE_ADDR
-sparc64_linux_step_trap (struct frame_info *frame, unsigned long insn)
+sparc64_linux_step_trap (frame_info_ptr frame, unsigned long insn)
 {
   /* __NR_rt_sigreturn is 101  */
   if ((insn == 0x91d0206d)
@@ -261,7 +261,8 @@ sparc64_linux_collect_core_fpregset (const struct regset *regset,
 static void
 sparc64_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (regcache->arch ());
+  gdbarch *arch = regcache->arch ();
+  sparc_gdbarch_tdep *tdep = gdbarch_tdep<sparc_gdbarch_tdep> (arch);
   ULONGEST state;
 
   regcache_cooked_write_unsigned (regcache, tdep->pc_regnum, pc);
@@ -305,7 +306,7 @@ sparc64_linux_get_syscall_number (struct gdbarch *gdbarch,
 /* Implement the "get_longjmp_target" gdbarch method.  */
 
 static int
-sparc64_linux_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
+sparc64_linux_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   CORE_ADDR jb_addr;
@@ -363,9 +364,9 @@ static const struct regset sparc64_linux_fpregset =
 static void
 sparc64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  sparc_gdbarch_tdep *tdep = gdbarch_tdep<sparc_gdbarch_tdep> (gdbarch);
 
-  linux_init_abi (info, gdbarch);
+  linux_init_abi (info, gdbarch, 0);
 
   tdep->gregset = &sparc64_linux_gregset;
   tdep->sizeof_gregset = 288;
@@ -383,7 +384,7 @@ sparc64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* GNU/Linux has SVR4-style shared libraries...  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
   set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_lp64_fetch_link_map_offsets);
+    (gdbarch, linux_lp64_fetch_link_map_offsets);
 
   /* ...which means that we need some special handling when doing
      prologue analysis.  */
@@ -391,7 +392,7 @@ sparc64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-                                             svr4_fetch_objfile_link_map);
+					     svr4_fetch_objfile_link_map);
 
   /* Make sure we can single-step over signal return system calls.  */
   tdep->step_trap = sparc64_linux_step_trap;
@@ -404,7 +405,7 @@ sparc64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Functions for 'catch syscall'.  */
   set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_SPARC64);
   set_gdbarch_get_syscall_number (gdbarch,
-                                  sparc64_linux_get_syscall_number);
+				  sparc64_linux_get_syscall_number);
   set_gdbarch_report_signal_info (gdbarch, sparc64_linux_report_signal_info);
 }
 

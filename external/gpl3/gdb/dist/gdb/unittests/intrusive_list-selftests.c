@@ -1,5 +1,5 @@
 /* Tests fpr intrusive double linked list for GDB, the GNU debugger.
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 
 #include "gdbsupport/intrusive_list.h"
 #include "gdbsupport/selftest.h"
@@ -87,13 +86,13 @@ struct intrusive_list_test
       {
 	const item_type &item = *it;
 
-	gdb_assert (i < expected.size ());
-	gdb_assert (&item == expected[i]);
+	SELF_CHECK (i < expected.size ());
+	SELF_CHECK (&item == expected[i]);
 
 	++i;
       }
 
-    gdb_assert (i == expected.size ());
+    SELF_CHECK (i == expected.size ());
 
     for (typename ListType::reverse_iterator it = list.rbegin ();
 	 it != list.rend ();
@@ -103,11 +102,11 @@ struct intrusive_list_test
 
 	--i;
 
-	gdb_assert (i >= 0);
-	gdb_assert (&item == expected[i]);
+	SELF_CHECK (i >= 0);
+	SELF_CHECK (&item == expected[i]);
       }
 
-    gdb_assert (i == 0);
+    SELF_CHECK (i == 0);
   }
 
   static void
@@ -384,10 +383,10 @@ struct intrusive_list_test
     list.push_back (b);
     list.push_back (c);
 
-    gdb_assert (&list.front () == &a);
-    gdb_assert (&clist.front () == &a);
-    gdb_assert (&list.back () == &c);
-    gdb_assert (&clist.back () == &c);
+    SELF_CHECK (&list.front () == &a);
+    SELF_CHECK (&clist.front () == &a);
+    SELF_CHECK (&list.back () == &c);
+    SELF_CHECK (&clist.back () == &c);
   }
 
   static void
@@ -701,14 +700,14 @@ struct intrusive_list_test
 
     expected = {};
     verify_items (list, expected);
-    gdb_assert (disposer_calls == 3);
-    gdb_assert (disposer_seen.find (&a) != disposer_seen.end ());
-    gdb_assert (disposer_seen.find (&b) != disposer_seen.end ());
-    gdb_assert (disposer_seen.find (&c) != disposer_seen.end ());
+    SELF_CHECK (disposer_calls == 3);
+    SELF_CHECK (disposer_seen.find (&a) != disposer_seen.end ());
+    SELF_CHECK (disposer_seen.find (&b) != disposer_seen.end ());
+    SELF_CHECK (disposer_seen.find (&c) != disposer_seen.end ());
 
     /* Verify idempotency.  */
     list.clear_and_dispose (disposer);
-    gdb_assert (disposer_calls == 3);
+    SELF_CHECK (disposer_calls == 3);
   }
 
   static void
@@ -717,11 +716,11 @@ struct intrusive_list_test
     item_type a ("a");
     ListType list;
 
-    gdb_assert (list.empty ());
+    SELF_CHECK (list.empty ());
     list.push_back (a);
-    gdb_assert (!list.empty ());
+    SELF_CHECK (!list.empty ());
     list.erase (list.iterator_to (a));
-    gdb_assert (list.empty ());
+    SELF_CHECK (list.empty ());
   }
 
   static void
@@ -735,12 +734,12 @@ struct intrusive_list_test
     list.push_back (b);
     list.push_back (c);
 
-    gdb_assert (&*list.begin () == &a);
-    gdb_assert (&*list.cbegin () == &a);
-    gdb_assert (&*clist.begin () == &a);
-    gdb_assert (&*list.rbegin () == &c);
-    gdb_assert (&*list.crbegin () == &c);
-    gdb_assert (&*clist.rbegin () == &c);
+    SELF_CHECK (&*list.begin () == &a);
+    SELF_CHECK (&*list.cbegin () == &a);
+    SELF_CHECK (&*clist.begin () == &a);
+    SELF_CHECK (&*list.rbegin () == &c);
+    SELF_CHECK (&*list.crbegin () == &c);
+    SELF_CHECK (&*clist.rbegin () == &c);
 
     /* At least check that they compile.  */
     list.end ();
@@ -782,22 +781,22 @@ test_node_is_linked ()
     item_with_base a ("a");
     item_with_base_list list;
 
-    gdb_assert (!a.is_linked ());
+    SELF_CHECK (!a.is_linked ());
     list.push_back (a);
-    gdb_assert (a.is_linked ());
+    SELF_CHECK (a.is_linked ());
     list.pop_back ();
-    gdb_assert (!a.is_linked ());
+    SELF_CHECK (!a.is_linked ());
   }
 
   {
     item_with_member a ("a");
     item_with_member_list list;
 
-    gdb_assert (!a.node.is_linked ());
+    SELF_CHECK (!a.node.is_linked ());
     list.push_back (a);
-    gdb_assert (a.node.is_linked ());
+    SELF_CHECK (a.node.is_linked ());
     list.pop_back ();
-    gdb_assert (!a.node.is_linked ());
+    SELF_CHECK (!a.node.is_linked ());
   }
 }
 

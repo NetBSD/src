@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,10 @@
 # This file was updated by Jan Kratochvil <jan.kratochvil@redhat.com>.
 
 # This test only works on Linux
-if { ![isnative] || [is_remote host] || [use_gdb_stub]
-     || ![istarget *-linux*] } {
-    return
-}
+require can_spawn_for_attach
+require isnative
+require {!is_remote host}
+require {istarget *-linux*}
 
 standard_testfile
 set escapedbinfile  [string_to_regexp $binfile]
@@ -33,11 +33,8 @@ remote_exec build "rm -f ${binfile}"
 #log_user 1
 
 proc corefunc { threadtype } {
-    global srcfile
     global binfile
     global escapedbinfile
-    global srcdir
-    global subdir
     global gdb_prompt
 
     set test_spawn_id [spawn_wait_for_attach $binfile]
@@ -46,11 +43,7 @@ proc corefunc { threadtype } {
     # Stop the program 
     remote_exec build "kill -s STOP ${testpid}"
 
-    # Start with clean gdb
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load ${binfile}
+    clean_restart $binfile
 
     # Verify that we can attach to the stopped process.
        
@@ -62,10 +55,12 @@ proc corefunc { threadtype } {
     }
 
     # ".*sleep.*clone.*" would fail on s390x as bt stops at START_THREAD there.
+    set test "$threadtype: attach2 to stopped bt"
     if {[string equal $threadtype threaded]} {
-	gdb_test "thread apply all bt" ".*sleep.*start_thread.*" "$threadtype: attach2 to stopped bt"
+	gdb_test "thread apply all bt" \
+	    ".*sleep.*(start_thread| in \\?\\? \\(\\) from ).*" $test
     } else {
-	gdb_test "bt" ".*sleep.*main.*" "$threadtype: attach2 to stopped bt"
+	gdb_test "bt" ".*sleep.*main.*" $test
     }
 
     gdb_exit
@@ -97,5 +92,3 @@ if  { [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" execut
 }
 
 corefunc threaded
-
-return 0

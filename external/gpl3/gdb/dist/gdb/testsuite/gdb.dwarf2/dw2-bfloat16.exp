@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,11 +19,9 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
-standard_testfile main.c -dw.S
+standard_testfile .c -dw.S
 
 # Make some DWARF for the test.
 # 0x4049 is the equivalent of 3.141 for bfloat16.
@@ -80,3 +78,24 @@ if ![runto_main] {
 # Make sure we can print both types correctly.
 gdb_test "print bf16_1" " = 3.141"
 gdb_test "print fp16_1" " = 3.1406"
+
+#
+# Test that 'x/hf' correctly handles "half float".
+#
+
+set bytes {0x48 0x42}
+set endian [get_endianness]
+if {$endian == "big"} {
+    set bytes [lreverse $bytes]
+}
+
+gdb_test_no_output "set var \$s = (unsigned char *) &storage" \
+    "set convenience variable"
+gdb_test "print/x \$s\[0\] = [lindex $bytes 0]" \
+    " = $hex" "set first element"
+gdb_test "print/x \$s\[1\] = [lindex $bytes 1]" \
+    " = $hex" "set second element"
+gdb_test "print *(__fp16 *) \$s" " = 3\\.1406" \
+    "print float16 value"
+gdb_test "x/hf \$s" "$hex <storage>:\[ \t\]*3\\.1406" \
+    "examine float16 value"

@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2023 Free Software Foundation, Inc.
+# Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,6 @@
 load_lib perftest.exp
 load_lib gen-perf-test.exp
 
-if [skip_perf_tests] {
-    return 0
-}
+require allow_perf_tests
 
 GenPerfTest::standard_run_driver gmonster2.exp make_testcase_config gmonster-print-cerr.py PrintCerr

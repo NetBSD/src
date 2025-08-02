@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2023 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -21,6 +21,32 @@
 
 extern bool aarch64_debug;
 
+/* Print an "aarch64" debug statement.  */
+
+#define aarch64_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (aarch64_debug, "aarch64", fmt, ##__VA_ARGS__)
+
+/* Support routines for instruction parsing.  */
+
+/* Create a mask of X bits.  */
+#define submask(x) ((1L << ((x) + 1)) - 1)
+
+/* Extract the bitfield from OBJ starting at bit ST and ending at bit FN.  */
+#define bits(obj,st,fn) (((obj) >> (st)) & submask ((fn) - (st)))
+
+/* Extract bit ST from OBJ.  */
+#define bit(obj,st) (((obj) >> (st)) & 1)
+
+/* Extract the signed bitfield from OBJ starting at bit ST and ending at
+   bit FN.  The result is sign-extended.  */
+#define sbits(obj,st,fn) \
+  ((long) (bits(obj,st,fn) | ((long) bit(obj,fn) * ~ submask (fn - st))))
+
+/* Prologue analyzer helper macros.  */
+
+/* Is the instruction "bti"?  */
+#define IS_BTI(instruction) ((instruction & 0xffffff3f) == 0xd503241f)
+
 /* List of opcodes that we need for building the jump pad and relocating
    an instruction.  */
 
@@ -40,7 +66,9 @@ enum aarch64_opcodes
   CBNZ            = 0x21000000 | B,
   TBZ             = 0x36000000 | B,
   TBNZ            = 0x37000000 | B,
+  /* BR             1101 0110 0001 1111 0000 00rr rrr0 0000 */
   /* BLR            1101 0110 0011 1111 0000 00rr rrr0 0000 */
+  BR              = 0xd61f0000,
   BLR             = 0xd63f0000,
   /* RET            1101 0110 0101 1111 0000 00rr rrr0 0000 */
   RET             = 0xd65f0000,
@@ -105,6 +133,13 @@ enum aarch64_opcodes
   SEVL            = (5 << 5) | HINT,
   WFE             = (2 << 5) | HINT,
   NOP             = (0 << 5) | HINT,
+};
+
+/* List of useful masks.  */
+enum aarch64_masks
+{
+  /* Used for masking out an Rn argument from an opcode.  */
+  CLEAR_Rn_MASK = 0xfffffc1f,
 };
 
 /* Representation of a general purpose register of the form xN or wN.

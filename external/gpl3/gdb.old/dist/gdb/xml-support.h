@@ -1,6 +1,6 @@
 /* Helper routines for parsing XML using Expat.
 
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,10 +21,11 @@
 #ifndef XML_SUPPORT_H
 #define XML_SUPPORT_H
 
-#include "gdb_obstack.h"
+#include "gdbsupport/gdb_obstack.h"
 #include "gdbsupport/xml-utils.h"
 #include "gdbsupport/byte-vector.h"
 #include "gdbsupport/gdb_optional.h"
+#include "gdbsupport/function-view.h"
 
 struct gdb_xml_parser;
 struct gdb_xml_element;
@@ -48,12 +49,12 @@ LONGEST xml_builtin_xfer_partial (const char *filename,
 
 /* Callback to fetch a new XML file, based on the provided HREF.  */
 
-typedef gdb::optional<gdb::char_vector> (*xml_fetch_another) (const char *href,
-							      void *baton);
+using xml_fetch_another = gdb::function_view<gdb::optional<gdb::char_vector>
+					     (const char * /* href */)>;
 
 /* Append the expansion of TEXT after processing <xi:include> tags in
-   RESULT.  FETCHER will be called (with FETCHER_BATON) to retrieve
-   any new files.  DEPTH should be zero on the initial call.
+   RESULT.  FETCHER will be called to retrieve any new files.  DEPTH
+   should be zero on the initial call.
 
    On failure, this function uses NAME in a warning and returns false.
    It may throw an exception, but does not for XML parsing
@@ -61,8 +62,7 @@ typedef gdb::optional<gdb::char_vector> (*xml_fetch_another) (const char *href,
 
 bool xml_process_xincludes (std::string &result,
 			    const char *name, const char *text,
-			    xml_fetch_another fetcher, void *fetcher_baton,
-			    int depth);
+			    xml_fetch_another fetcher, int depth);
 
 /* Simplified XML parser infrastructure.  */
 
@@ -231,6 +231,6 @@ ULONGEST gdb_xml_parse_ulongest (struct gdb_xml_parser *parser,
    and warn.  */
 
 extern gdb::optional<gdb::char_vector> xml_fetch_content_from_file
-    (const char *filename, void *baton);
+    (const char *filename, const char *dirname);
 
 #endif

@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2022 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -95,8 +95,6 @@ extern int elf32_nds32_check_relax_group (bfd *, asection *);
 extern int elf32_nds32_unify_relax_group (bfd *, asection *);
 extern int nds32_elf_unify_tls_model (bfd *, asection *, bfd_byte *,
 				      struct bfd_link_info *);
-extern void nds32_insertion_sort
-(void *, size_t, size_t, int (*) (const void *, const void *));
 
 extern int	   nds32_convert_32_to_16 (bfd *, uint32_t, uint16_t *, int *);
 extern int	   nds32_convert_16_to_32 (bfd *, uint16_t, uint32_t *);
@@ -126,7 +124,7 @@ struct elf_nds32_link_hash_table
   int relax_fp_as_gp;		/* --mrelax-omit-fp.  */
   int eliminate_gc_relocs;	/* --meliminate-gc-relocs.  */
   FILE *sym_ld_script;		/* --mgen-symbol-ld-script=<file>.  */
-  bfd_boolean hyper_relax;	/* Relax for symbol not in RW sections.  */
+  int hyper_relax;		/* Relax for symbol not in RW sections.  */
   int tls_desc_trampoline;	/* --m[no-]tlsdesc-trampoline.  */
   /* Disable if linking a dynamically linked executable.  */
   int load_store_relax;

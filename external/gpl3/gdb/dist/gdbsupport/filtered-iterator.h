@@ -1,5 +1,5 @@
 /* A forward filtered iterator for GDB, the GNU debugger.
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,8 @@
 
 #ifndef COMMON_FILTERED_ITERATOR_H
 #define COMMON_FILTERED_ITERATOR_H
+
+#include <type_traits>
 
 /* A filtered iterator.  This wraps BaseIterator and automatically
    skips elements that FilterFunc filters out.  Requires that
@@ -54,7 +56,10 @@ public:
     : filtered_iterator (static_cast<const filtered_iterator &> (other))
   {}
 
-  value_type operator* () const { return *m_it; }
+  typename std::invoke_result<decltype(&BaseIterator::operator*),
+			      BaseIterator>::type
+    operator* () const
+  { return *m_it; }
 
   self_type &operator++ ()
   {

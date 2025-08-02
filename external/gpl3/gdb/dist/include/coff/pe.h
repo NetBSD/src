@@ -1,6 +1,6 @@
 /* pe.h  -  PE COFF header information
 
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -138,12 +138,14 @@
 #define IMAGE_FILE_MACHINE_AMD64             0x8664
 #define IMAGE_FILE_MACHINE_ARM               0x01c0
 #define IMAGE_FILE_MACHINE_ARM64             0xaa64
+#define IMAGE_FILE_MACHINE_ARMNT             0x01c4
 #define IMAGE_FILE_MACHINE_AXP64             IMAGE_FILE_MACHINE_ALPHA64
 #define IMAGE_FILE_MACHINE_CEE               0xc0ee
 #define IMAGE_FILE_MACHINE_CEF               0x0cef
 #define IMAGE_FILE_MACHINE_EBC               0x0ebc
 #define IMAGE_FILE_MACHINE_I386              0x014c
 #define IMAGE_FILE_MACHINE_IA64              0x0200
+#define IMAGE_FILE_MACHINE_LOONGARCH64       0x6264
 #define IMAGE_FILE_MACHINE_M32R              0x9041
 #define IMAGE_FILE_MACHINE_M68K              0x0268
 #define IMAGE_FILE_MACHINE_MIPS16            0x0266
@@ -154,6 +156,8 @@
 #define IMAGE_FILE_MACHINE_R10000            0x0168
 #define IMAGE_FILE_MACHINE_R3000             0x0162
 #define IMAGE_FILE_MACHINE_R4000             0x0166
+#define IMAGE_FILE_MACHINE_RISCV32           0x5032
+#define IMAGE_FILE_MACHINE_RISCV64           0x5064
 #define IMAGE_FILE_MACHINE_SH3               0x01a2
 #define IMAGE_FILE_MACHINE_SH3DSP            0x01a3
 #define IMAGE_FILE_MACHINE_SH3E              0x01a4
@@ -162,8 +166,6 @@
 #define IMAGE_FILE_MACHINE_THUMB             0x01c2
 #define IMAGE_FILE_MACHINE_TRICORE           0x0520
 #define IMAGE_FILE_MACHINE_WCEMIPSV2         0x0169
-#define IMAGE_FILE_MACHINE_AMD64             0x8664
-#define IMAGE_FILE_MACHINE_LOONGARCH64       0x6264
 
 #define IMAGE_SUBSYSTEM_UNKNOWN			 0
 #define IMAGE_SUBSYSTEM_NATIVE			 1
@@ -218,7 +220,7 @@ struct external_PEI_filehdr
   char e_oeminfo[2];		/* OEM information; e_oemid specific, 0x0.  */
   char e_res2[10][2];		/* Reserved words, all 0x0.  */
   char e_lfanew[4];		/* File address of new exe header, usually 0x80.  */
-  char dos_message[16][4];	/* Other stuff, always follow DOS header.  */
+  char dos_message[64];		/* Other stuff, always follow DOS header.  */
 
   /* Note: additional bytes may be inserted before the signature.  Use
    the e_lfanew field to find the actual location of the NT signature.  */

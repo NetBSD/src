@@ -1,6 +1,6 @@
 /* mem.c --- memory for RX simulator.
 
-Copyright (C) 2005-2023 Free Software Foundation, Inc.
+Copyright (C) 2005-2024 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -324,6 +324,7 @@ mem_put_byte (unsigned int address, unsigned char value)
 	  halt_pipeline_stats ();
 	else
 	  reset_pipeline_stats ();
+	break;
       }
 #endif
 

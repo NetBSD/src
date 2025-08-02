@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,9 +25,9 @@
 #include "../features/i386/64bit-core.c"
 #include "../features/i386/64bit-linux.c"
 #include "../features/i386/64bit-mpx.c"
-#include "../features/i386/64bit-pkeys.c"
 #include "../features/i386/64bit-segments.c"
 #include "../features/i386/64bit-sse.c"
+#include "../features/i386/pkeys.c"
 
 #include "../features/i386/x32-core.c"
 
@@ -40,39 +40,40 @@ target_desc *
 amd64_create_target_description (uint64_t xcr0, bool is_x32, bool is_linux,
 				 bool segments)
 {
-  target_desc *tdesc = allocate_target_description ();
+  target_desc_up tdesc = allocate_target_description ();
 
 #ifndef IN_PROCESS_AGENT
-  set_tdesc_architecture (tdesc, is_x32 ? "i386:x64-32" : "i386:x86-64");
+  set_tdesc_architecture (tdesc.get (),
+			  is_x32 ? "i386:x64-32" : "i386:x86-64");
 
   if (is_linux)
-    set_tdesc_osabi (tdesc, "GNU/Linux");
+    set_tdesc_osabi (tdesc.get (), "GNU/Linux");
 #endif
 
   long regnum = 0;
 
   if (is_x32)
-    regnum = create_feature_i386_x32_core (tdesc, regnum);
+    regnum = create_feature_i386_x32_core (tdesc.get (), regnum);
   else
-    regnum = create_feature_i386_64bit_core (tdesc, regnum);
+    regnum = create_feature_i386_64bit_core (tdesc.get (), regnum);
 
-  regnum = create_feature_i386_64bit_sse (tdesc, regnum);
+  regnum = create_feature_i386_64bit_sse (tdesc.get (), regnum);
   if (is_linux)
-    regnum = create_feature_i386_64bit_linux (tdesc, regnum);
+    regnum = create_feature_i386_64bit_linux (tdesc.get (), regnum);
   if (segments)
-    regnum = create_feature_i386_64bit_segments (tdesc, regnum);
+    regnum = create_feature_i386_64bit_segments (tdesc.get (), regnum);
 
   if (xcr0 & X86_XSTATE_AVX)
-    regnum = create_feature_i386_64bit_avx (tdesc, regnum);
+    regnum = create_feature_i386_64bit_avx (tdesc.get (), regnum);
 
   if ((xcr0 & X86_XSTATE_MPX) && !is_x32)
-    regnum = create_feature_i386_64bit_mpx (tdesc, regnum);
+    regnum = create_feature_i386_64bit_mpx (tdesc.get (), regnum);
 
   if (xcr0 & X86_XSTATE_AVX512)
-    regnum = create_feature_i386_64bit_avx512 (tdesc, regnum);
+    regnum = create_feature_i386_64bit_avx512 (tdesc.get (), regnum);
 
-  if ((xcr0 & X86_XSTATE_PKRU) && !is_x32)
-    regnum = create_feature_i386_64bit_pkeys (tdesc, regnum);
+  if (xcr0 & X86_XSTATE_PKRU)
+    regnum = create_feature_i386_pkeys (tdesc.get (), regnum);
 
-  return tdesc;
+  return tdesc.release ();
 }

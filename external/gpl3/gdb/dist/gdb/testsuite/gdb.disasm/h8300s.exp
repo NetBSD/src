@@ -1,4 +1,4 @@
-# Copyright (C) 2000-2023 Free Software Foundation, Inc.
+# Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +15,7 @@
 
 # This file was written by Kazu Hirata. (kazu@hxi.com)
 
-if ![istarget "h8300*-*-*"] {
-    verbose "Tests ignored for all but h8300s based targets."
-    return
-}
+require {istarget "h8300*-*-*"}
 
 
 set testfile "h8300s"
@@ -643,9 +640,7 @@ proc all_block_data_transfer_tests { } {
     }
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 all_set_machine_h8300s
 gdb_load $binfile
 

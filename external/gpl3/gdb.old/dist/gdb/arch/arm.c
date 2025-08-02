@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on ARM systems.
 
-   Copyright (C) 1988-2020 Free Software Foundation, Inc.
+   Copyright (C) 1988-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,11 +22,14 @@
 #include "arm.h"
 
 #include "../features/arm/arm-core.c"
+#include "../features/arm/arm-tls.c"
 #include "../features/arm/arm-vfpv2.c"
 #include "../features/arm/arm-vfpv3.c"
 #include "../features/arm/xscale-iwmmxt.c"
 #include "../features/arm/arm-m-profile.c"
 #include "../features/arm/arm-m-profile-with-fpa.c"
+#include "../features/arm/arm-m-profile-mve.c"
+#include "../features/arm/arm-m-system.c"
 
 /* See arm.h.  */
 
@@ -119,7 +122,7 @@ arm_instruction_changes_pc (uint32_t this_instr)
       case 0xd:
       case 0xe:
 	/* Coprocessor register transfer.  */
-        if (bits (this_instr, 12, 15) == 15)
+	if (bits (this_instr, 12, 15) == 15)
 	  error (_("Invalid update to pc in instruction"));
 	return 0;
       default:
@@ -191,7 +194,7 @@ arm_instruction_changes_pc (uint32_t this_instr)
 	return 0;
 
       default:
-	internal_error (__FILE__, __LINE__, _("bad value in switch"));
+	internal_error (_("bad value in switch"));
       }
 }
 
@@ -372,20 +375,20 @@ shifted_reg_val (struct regcache *regcache, unsigned long inst,
 /* See arch/arm.h.  */
 
 target_desc *
-arm_create_target_description (arm_fp_type fp_type)
+arm_create_target_description (arm_fp_type fp_type, bool tls)
 {
-  target_desc *tdesc = allocate_target_description ();
+  target_desc_up tdesc = allocate_target_description ();
 
 #ifndef IN_PROCESS_AGENT
   if (fp_type == ARM_FP_TYPE_IWMMXT)
-    set_tdesc_architecture (tdesc, "iwmmxt");
+    set_tdesc_architecture (tdesc.get (), "iwmmxt");
   else
-    set_tdesc_architecture (tdesc, "arm");
+    set_tdesc_architecture (tdesc.get (), "arm");
 #endif
 
   long regnum = 0;
 
-  regnum = create_feature_arm_arm_core (tdesc, regnum);
+  regnum = create_feature_arm_arm_core (tdesc.get (), regnum);
 
   switch (fp_type)
     {
@@ -393,22 +396,25 @@ arm_create_target_description (arm_fp_type fp_type)
       break;
 
     case ARM_FP_TYPE_VFPV2:
-      regnum = create_feature_arm_arm_vfpv2 (tdesc, regnum);
+      regnum = create_feature_arm_arm_vfpv2 (tdesc.get (), regnum);
       break;
 
     case ARM_FP_TYPE_VFPV3:
-      regnum = create_feature_arm_arm_vfpv3 (tdesc, regnum);
+      regnum = create_feature_arm_arm_vfpv3 (tdesc.get (), regnum);
       break;
 
     case ARM_FP_TYPE_IWMMXT:
-      regnum = create_feature_arm_xscale_iwmmxt (tdesc, regnum);
+      regnum = create_feature_arm_xscale_iwmmxt (tdesc.get (), regnum);
       break;
 
     default:
       error (_("Invalid Arm FP type: %d"), fp_type);
     }
 
-  return tdesc;
+  if (tls)
+    regnum = create_feature_arm_arm_tls (tdesc.get (), regnum);
+
+  return tdesc.release ();
 }
 
 /* See arch/arm.h.  */
@@ -416,7 +422,7 @@ arm_create_target_description (arm_fp_type fp_type)
 target_desc *
 arm_create_mprofile_target_description (arm_m_profile_type m_type)
 {
-  target_desc *tdesc = allocate_target_description ();
+  target_desc *tdesc = allocate_target_description ().release ();
 
 #ifndef IN_PROCESS_AGENT
   set_tdesc_architecture (tdesc, "arm");
@@ -437,6 +443,17 @@ arm_create_mprofile_target_description (arm_m_profile_type m_type)
 
     case ARM_M_TYPE_WITH_FPA:
       regnum = create_feature_arm_arm_m_profile_with_fpa (tdesc, regnum);
+      break;
+
+    case ARM_M_TYPE_MVE:
+      regnum = create_feature_arm_arm_m_profile (tdesc, regnum);
+      regnum = create_feature_arm_arm_vfpv2 (tdesc, regnum);
+      regnum = create_feature_arm_arm_m_profile_mve (tdesc, regnum);
+      break;
+
+    case ARM_M_TYPE_SYSTEM:
+      regnum = create_feature_arm_arm_m_profile (tdesc, regnum);
+      regnum = create_feature_arm_arm_m_system (tdesc, regnum);
       break;
 
     default:

@@ -1,0 +1,40 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test that using the command "list" in a file with no debug information
+# will not crash GDB and will give reasonable output.
+
+standard_testfile .c -2.c
+
+if { [prepare_for_testing_full "failed to prepare" \
+	  [list \
+	       $testfile {} \
+	       $srcfile {nodebug} \
+	       $srcfile2 {debug}]] } {
+    return -1
+}
+
+if {![runto_main]} {
+    untested "couldn't run to main"
+    return
+}
+
+# Check that GDB doesn't crash when we use list . on an inferior with
+# no debug information
+gdb_test "list ." "Insufficient debug.*" "first 'list .'"
+# This should be called twice because the first list invocation since
+# printing a frame may take a different codepath, which wouldn't
+# trigger the crash.
+gdb_test "list ." "Insufficient debug.*" "second 'list .'"

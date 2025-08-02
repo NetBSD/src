@@ -1,6 +1,6 @@
 /* DTrace probe support for GDB.
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    Contributed by Oracle, Inc.
 
@@ -32,6 +32,7 @@
 #include "language.h"
 #include "parser-defs.h"
 #include "inferior.h"
+#include "expop.h"
 
 /* The type of the ELF sections where we will find the DOF programs
    with information about probes.  */
@@ -128,7 +129,7 @@ public:
 
   /* See probe.h.  */
   struct value *evaluate_argument (unsigned n,
-				   struct frame_info *frame) override;
+				   frame_info_ptr frame) override;
 
   /* See probe.h.  */
   void compile_to_ax (struct agent_expr *aexpr,
@@ -462,8 +463,8 @@ dtrace_process_dof_probe (struct objfile *objfile,
       int probe_argc = DOF_UINT (dof, probe->dofpr_nargc);
 
       /* Store argument type descriptions.  A description of the type
-         of the argument is in the (J+1)th null-terminated string
-         starting at 'strtab' + 'probe->dofpr_nargv'.  */
+	 of the argument is in the (J+1)th null-terminated string
+	 starting at 'strtab' + 'probe->dofpr_nargv'.  */
       std::vector<struct dtrace_probe_arg> args;
       p = strtab + DOF_UINT (dof, probe->dofpr_nargv);
       for (j = 0; j < probe_argc; j++)
@@ -481,7 +482,7 @@ dtrace_process_dof_probe (struct objfile *objfile,
 	  /* Try to parse a type expression from the type string.  If
 	     this does not work then we set the type to `long
 	     int'.  */
-          struct type *type = builtin_type (gdbarch)->builtin_long;
+	  struct type *type = builtin_type (gdbarch)->builtin_long;
 
 	  try
 	    {
@@ -492,8 +493,8 @@ dtrace_process_dof_probe (struct objfile *objfile,
 	    {
 	    }
 
-	  if (expr != NULL && expr.get ()->elts[0].opcode == OP_TYPE)
-	    type = expr.get ()->elts[1].type;
+	  if (expr != NULL && expr->first_opcode () == OP_TYPE)
+	    type = value_type (evaluate_type (expr.get ()));
 
 	  args.emplace_back (type, std::move (type_str), std::move (expr));
 	}
@@ -629,20 +630,18 @@ dtrace_probe::build_arg_exprs (struct gdbarch *gdbarch)
 
       /* The argument value, which is ABI dependent and casted to
 	 `long int'.  */
-      gdbarch_dtrace_parse_probe_argument (gdbarch, &builder, argc);
+      expr::operation_up op = gdbarch_dtrace_parse_probe_argument (gdbarch,
+								   argc);
 
       /* Casting to the expected type, but only if the type was
 	 recognized at probe load time.  Otherwise the argument will
 	 be evaluated as the long integer passed to the probe.  */
       if (arg.type != NULL)
-	{
-	  write_exp_elt_opcode (&builder, UNOP_CAST);
-	  write_exp_elt_type (&builder, arg.type);
-	  write_exp_elt_opcode (&builder, UNOP_CAST);
-	}
+	op = expr::make_operation<expr::unop_cast_operation> (std::move (op),
+							      arg.type);
 
+      builder.set_operation (std::move (op));
       arg.expr = builder.release ();
-      prefixify_expression (arg.expr.get ());
       ++argc;
     }
 }
@@ -656,8 +655,7 @@ dtrace_probe::get_arg_by_number (unsigned n, struct gdbarch *gdbarch)
     this->build_arg_exprs (gdbarch);
 
   if (n > m_args.size ())
-    internal_error (__FILE__, __LINE__,
-		    _("Probe '%s' has %d arguments, but GDB is requesting\n"
+    internal_error (_("Probe '%s' has %d arguments, but GDB is requesting\n"
 		      "argument %u.  This should not happen.  Please\n"
 		      "report this bug."),
 		    this->get_name ().c_str (),
@@ -685,7 +683,7 @@ dtrace_probe::is_enabled () const
 CORE_ADDR
 dtrace_probe::get_relocated_address (struct objfile *objfile)
 {
-  return this->get_address () + objfile->data_section_offset ();
+  return this->get_address () + objfile->text_section_offset ();
 }
 
 /* Implementation of the get_argument_count method.  */
@@ -710,15 +708,13 @@ dtrace_probe::can_evaluate_arguments () const
 
 struct value *
 dtrace_probe::evaluate_argument (unsigned n,
-				 struct frame_info *frame)
+				 frame_info_ptr frame)
 {
   struct gdbarch *gdbarch = this->get_gdbarch ();
   struct dtrace_probe_arg *arg;
-  int pos = 0;
 
   arg = this->get_arg_by_number (n, gdbarch);
-  return evaluate_subexp_standard (arg->type, arg->expr.get (), &pos,
-				   EVAL_NORMAL);
+  return evaluate_expression (arg->expr.get (), arg->type);
 }
 
 /* Implementation of the compile_to_ax method.  */
@@ -728,12 +724,9 @@ dtrace_probe::compile_to_ax (struct agent_expr *expr, struct axs_value *value,
 			     unsigned n)
 {
   struct dtrace_probe_arg *arg;
-  union exp_element *pc;
 
   arg = this->get_arg_by_number (n, expr->gdbarch);
-
-  pc = arg->expr->elts;
-  gen_expr (arg->expr.get (), &pc, expr, value);
+  arg->expr->op->generate_ax (arg->expr.get (), expr, value);
 
   require_rvalue (expr, value);
   value->type = arg->type;
@@ -836,7 +829,7 @@ dtrace_static_probe_ops::get_probes
   (std::vector<std::unique_ptr<probe>> *probesp,
    struct objfile *objfile) const
 {
-  bfd *abfd = objfile->obfd;
+  bfd *abfd = objfile->obfd.get ();
   asection *sect = NULL;
 
   /* Do nothing in case this is a .debug file, instead of the objfile
@@ -856,8 +849,8 @@ dtrace_static_probe_ops::get_probes
 	     extract the information of any probe defined into it.  */
 	  if (bfd_malloc_and_get_section (abfd, sect, &dof) && dof != NULL)
 	    dtrace_process_dof (sect, objfile, probesp,
-			        (struct dtrace_dof_hdr *) dof);
-         else
+				(struct dtrace_dof_hdr *) dof);
+	  else
 	    complaint (_("could not obtain the contents of"
 			 "section '%s' in objfile `%s'."),
 		       bfd_section_name (sect), bfd_get_filename (abfd));

@@ -1,6 +1,6 @@
 /* Simulator for FTDI FT32 processor.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Contributed by FTDI <support@ftdichip.com>
 
    This file is part of simulators.
@@ -23,17 +23,5 @@
 
 #include "sim-basics.h"
 #include "sim-base.h"
-#include "bfd.h"
-
-#include "ft32-sim.h"
-
-struct _sim_cpu {
-
-  /* The following are internal simulator state variables: */
-
-  struct ft32_cpu_state state;
-
-  sim_cpu_base base;
-};
 
 #endif

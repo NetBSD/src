@@ -1,6 +1,6 @@
 /* Call module for 'compile' command.
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,26 +32,20 @@
 
 struct do_module_cleanup
 {
+  do_module_cleanup (int *ptr, compile_module_up &&mod)
+    : executedp (ptr),
+      module (std::move (mod))
+  {
+  }
+
+  DISABLE_COPY_AND_ASSIGN (do_module_cleanup);
+
   /* Boolean to set true upon a call of do_module_cleanup.
      The pointer may be NULL.  */
   int *executedp;
 
-  /* .c file OBJFILE was built from.  It needs to be xfree-d.  */
-  char *source_file;
-
-  /* Copy from struct compile_module.  */
-  enum compile_i_scope_types scope;
-  void *scope_data;
-
-  /* Copy from struct compile_module.  */
-  struct type *out_value_type;
-  CORE_ADDR out_value_addr;
-
-  /* Copy from struct compile_module.  */
-  struct munmap_list *munmap_list_head;
-
-  /* objfile_name of our objfile.  */
-  char objfile_name_string[1];
+  /* The compile module.  */
+  compile_module_up module;
 };
 
 /* Cleanup everything after the inferior function dummy frame gets
@@ -69,40 +63,52 @@ do_module_cleanup (void *arg, int registers_valid)
 
       /* This code cannot be in compile_object_run as OUT_VALUE_TYPE
 	 no longer exists there.  */
-      if (data->scope == COMPILE_I_PRINT_ADDRESS_SCOPE
-	  || data->scope == COMPILE_I_PRINT_VALUE_SCOPE)
+      if (data->module->scope == COMPILE_I_PRINT_ADDRESS_SCOPE
+	  || data->module->scope == COMPILE_I_PRINT_VALUE_SCOPE)
 	{
 	  struct value *addr_value;
-	  struct type *ptr_type = lookup_pointer_type (data->out_value_type);
+	  struct type *ptr_type
+	    = lookup_pointer_type (data->module->out_value_type);
 
-	  addr_value = value_from_pointer (ptr_type, data->out_value_addr);
+	  addr_value = value_from_pointer (ptr_type,
+					   data->module->out_value_addr);
 
 	  /* SCOPE_DATA would be stale unless EXECUTEDP != NULL.  */
-	  compile_print_value (value_ind (addr_value), data->scope_data);
+	  compile_print_value (value_ind (addr_value),
+			       data->module->scope_data);
 	}
     }
 
-  for (objfile *objfile : current_program_space->objfiles ())
-    if ((objfile->flags & OBJF_USERLOADED) == 0
-        && (strcmp (objfile_name (objfile), data->objfile_name_string) == 0))
-      {
-	objfile->unlink ();
+  objfile *objfile = data->module->objfile;
+  gdb_assert (objfile != nullptr);
 
-	/* It may be a bit too pervasive in this dummy_frame dtor callback.  */
-	clear_symtab_users (0);
+  /* We have to make a copy of the name so that we can unlink the
+     underlying file -- removing the objfile will cause the name to be
+     freed, so we can't simply keep a reference to it.  */
+  std::string objfile_name_s = objfile_name (objfile);
 
-	break;
-      }
+  objfile->unlink ();
+
+  /* It may be a bit too pervasive in this dummy_frame dtor callback.  */
+  clear_symtab_users (0);
 
   /* Delete the .c file.  */
-  unlink (data->source_file);
-  xfree (data->source_file);
-
-  delete data->munmap_list_head;
+  unlink (data->module->source_file.c_str ());
 
   /* Delete the .o file.  */
-  unlink (data->objfile_name_string);
-  xfree (data);
+  unlink (objfile_name_s.c_str ());
+
+  delete data;
+}
+
+/* Create a copy of FUNC_TYPE that is independent of OBJFILE.  */
+
+static type *
+create_copied_type_recursive (objfile *objfile, type *func_type)
+{
+  htab_up copied_types = create_copied_types_hash ();
+  func_type = copy_type_recursive (func_type, copied_types.get ());
+  return func_type;
 }
 
 /* Perform inferior call of MODULE.  This function may throw an error.
@@ -112,46 +118,31 @@ do_module_cleanup (void *arg, int registers_valid)
    longer touch MODULE's memory after this function has been called.  */
 
 void
-compile_object_run (struct compile_module *module)
+compile_object_run (compile_module_up &&module)
 {
   struct value *func_val;
   struct do_module_cleanup *data;
-  const char *objfile_name_s = objfile_name (module->objfile);
   int dtor_found, executed = 0;
   struct symbol *func_sym = module->func_sym;
   CORE_ADDR regs_addr = module->regs_addr;
   struct objfile *objfile = module->objfile;
 
-  data = (struct do_module_cleanup *) xmalloc (sizeof (*data)
-					       + strlen (objfile_name_s));
-  data->executedp = &executed;
-  data->source_file = xstrdup (module->source_file);
-  strcpy (data->objfile_name_string, objfile_name_s);
-  data->scope = module->scope;
-  data->scope_data = module->scope_data;
-  data->out_value_type = module->out_value_type;
-  data->out_value_addr = module->out_value_addr;
-  data->munmap_list_head = module->munmap_list_head;
-
-  xfree (module->source_file);
-  xfree (module);
-  module = NULL;
+  data = new struct do_module_cleanup (&executed, std::move (module));
 
   try
     {
-      struct type *func_type = SYMBOL_TYPE (func_sym);
-      htab_t copied_types;
+      struct type *func_type = func_sym->type ();
       int current_arg = 0;
       struct value **vargs;
 
-      /* OBJFILE may disappear while FUNC_TYPE still will be in use.  */
-      copied_types = create_copied_types_hash (objfile);
-      func_type = copy_type_recursive (objfile, func_type, copied_types);
-      htab_delete (copied_types);
+      /* OBJFILE may disappear while FUNC_TYPE is still in use as a
+	 result of the call to DO_MODULE_CLEANUP below, so we need a copy
+	 that does not depend on the objfile in anyway.  */
+      func_type = create_copied_type_recursive (objfile, func_type);
 
       gdb_assert (func_type->code () == TYPE_CODE_FUNC);
       func_val = value_from_pointer (lookup_pointer_type (func_type),
-				   BLOCK_ENTRY_PC (SYMBOL_BLOCK_VALUE (func_sym)));
+				   func_sym->value_block ()->entry_pc ());
 
       vargs = XALLOCAVEC (struct value *, func_type->num_fields ());
       if (func_type->num_fields () >= 1)
@@ -163,9 +154,10 @@ compile_object_run (struct compile_module *module)
 	}
       if (func_type->num_fields () >= 2)
 	{
-	  gdb_assert (data->out_value_addr != 0);
+	  gdb_assert (data->module->out_value_addr != 0);
 	  vargs[current_arg] = value_from_pointer
-	       (func_type->field (current_arg).type (), data->out_value_addr);
+	       (func_type->field (current_arg).type (),
+		data->module->out_value_addr);
 	  ++current_arg;
 	}
       gdb_assert (current_arg == func_type->num_fields ());

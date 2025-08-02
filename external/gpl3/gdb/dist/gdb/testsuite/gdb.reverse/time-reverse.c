@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2023 Free Software Foundation, Inc.
+   Copyright 2008-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,6 +20,12 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#ifdef USE_SYSCALL
+# define my_time(TLOC) syscall (SYS_time, TLOC)
+#else
+# define my_time(TLOC) time (TLOC)
+#endif
+
 void
 marker1 (void)
 {
@@ -36,7 +42,7 @@ int
 main (void)
 {
   marker1 ();
-  syscall (SYS_time, &time_global);
+  my_time (&time_global);
   marker2 ();
   return 0;
 }

@@ -1,6 +1,6 @@
 /* libthread_db assisted debugging support, generic parts.
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -92,16 +92,17 @@ public:
   strata stratum () const override { return thread_stratum; }
 
   void detach (inferior *, int) override;
-  ptid_t wait (ptid_t, struct target_waitstatus *, int) override;
+  ptid_t wait (ptid_t, struct target_waitstatus *, target_wait_flags) override;
   void resume (ptid_t, int, enum gdb_signal) override;
   void mourn_inferior () override;
+  void follow_exec (inferior *, ptid_t, const char *) override;
   void update_thread_list () override;
   std::string pid_to_str (ptid_t) override;
   CORE_ADDR get_thread_local_address (ptid_t ptid,
 				      CORE_ADDR load_module_addr,
 				      CORE_ADDR offset) override;
   const char *extra_thread_info (struct thread_info *) override;
-  ptid_t get_ada_task_ptid (long lwp, long thread) override;
+  ptid_t get_ada_task_ptid (long lwp, ULONGEST thread) override;
 
   thread_info *thread_handle_to_thread_info (const gdb_byte *thread_handle,
 					     int handle_len,
@@ -109,7 +110,7 @@ public:
   gdb::byte_vector thread_info_to_thread_handle (struct thread_info *) override;
 };
 
-static char *libthread_db_search_path;
+static std::string libthread_db_search_path = LIBTHREAD_DB_SEARCH_PATH;
 
 /* Set to true if thread_db auto-loading is enabled
    by the "set auto-load libthread-db" command.  */
@@ -125,20 +126,17 @@ static void
 show_auto_load_thread_db (struct ui_file *file, int from_tty,
 			  struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file, _("Auto-loading of inferior specific libthread_db "
-			    "is %s.\n"),
-		    value);
+  gdb_printf (file, _("Auto-loading of inferior specific libthread_db "
+		      "is %s.\n"),
+	      value);
 }
 
 static void
 set_libthread_db_search_path (const char *ignored, int from_tty,
 			      struct cmd_list_element *c)
 {
-  if (*libthread_db_search_path == '\0')
-    {
-      xfree (libthread_db_search_path);
-      libthread_db_search_path = xstrdup (LIBTHREAD_DB_SEARCH_PATH);
-    }
+  if (libthread_db_search_path.empty ())
+    libthread_db_search_path = LIBTHREAD_DB_SEARCH_PATH;
 }
 
 /* If non-zero, print details of libthread_db processing.  */
@@ -149,7 +147,7 @@ static void
 show_libthread_db_debug (struct ui_file *file, int from_tty,
 			 struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file, _("libthread-db debugging is %s.\n"), value);
+  gdb_printf (file, _("libthread-db debugging is %s.\n"), value);
 }
 
 /* If we're running on GNU/Linux, we must explicitly attach to any new
@@ -161,8 +159,6 @@ static thread_db_target the_thread_db_target;
 /* Non-zero if we have determined the signals used by the threads
    library.  */
 static int thread_signals;
-static sigset_t thread_stop_set;
-static sigset_t thread_print_set;
 
 struct thread_db_info
 {
@@ -209,7 +205,7 @@ struct thread_db_info
 
 /* List of known processes using thread_db, and the required
    bookkeeping.  */
-struct thread_db_info *thread_db_list;
+static thread_db_info *thread_db_list;
 
 static void thread_db_find_new_threads_1 (thread_info *stopped);
 static void thread_db_find_new_threads_2 (thread_info *stopped,
@@ -237,7 +233,7 @@ add_thread_db_info (void *handle)
 
   /* The workaround works by reading from /proc/pid/status, so it is
      disabled for core files.  */
-  if (target_has_execution)
+  if (target_has_execution ())
     info->need_stale_parent_threads_check = 1;
 
   info->next = thread_db_list;
@@ -321,7 +317,7 @@ struct thread_db_thread_info : public private_thread_info
 static thread_db_thread_info *
 get_thread_db_thread_info (thread_info *thread)
 {
-  return static_cast<thread_db_thread_info *> (thread->priv.get ());
+  return gdb::checked_static_cast<thread_db_thread_info *> (thread->priv.get ());
 }
 
 static const char *
@@ -478,7 +474,7 @@ inferior_has_bug (const char *ver_symbol, int ver_major_min, int ver_minor_min)
   if (version_msym.minsym == NULL)
     return 0;
 
-  version_addr = BMSYMBOL_VALUE_ADDRESS (version_msym);
+  version_addr = version_msym.value_address ();
   gdb::unique_xmalloc_ptr<char> version
     = target_read_string (version_addr, 32, &got);
   if (version != nullptr
@@ -531,7 +527,7 @@ thread_db_find_new_threads_silently (thread_info *stopped)
 	 corrupted.  For core files it does not apply, no 'later enumeration'
 	 is possible.  */
 
-      if (!target_has_execution || !inferior_has_bug ("nptl_version", 2, 7))
+      if (!target_has_execution () || !inferior_has_bug ("nptl_version", 2, 7))
 	{
 	  exception_fprintf (gdb_stderr, except,
 			     _("Warning: couldn't activate thread debugging "
@@ -658,7 +654,7 @@ check_thread_db_callback (const td_thrhandle_t *th, void *arg)
   memset (&th2, 23, sizeof (td_thrhandle_t));
   CALL_UNCHECKED (td_ta_map_lwp2thr, th->th_ta_p, ti.ti_lid, &th2);
 
-  if (tdb_testinfo->last_result == TD_ERR && !target_has_execution)
+  if (tdb_testinfo->last_result == TD_ERR && !target_has_execution ())
     {
       /* Some platforms require execution for td_ta_map_lwp2thr.  */
       LOG (_("; can't map_lwp2thr"));
@@ -688,7 +684,7 @@ check_thread_db_callback (const td_thrhandle_t *th, void *arg)
      calls are made, we just assume they were; future changes
      to how GDB accesses TLS could result in this passing
      without exercising the calls it's supposed to.  */
-  ptid_t ptid = ptid_t (tdb_testinfo->info->pid, ti.ti_lid, 0);
+  ptid_t ptid = ptid_t (tdb_testinfo->info->pid, ti.ti_lid);
   thread_info *thread_info = find_thread_ptid (linux_target, ptid);
   if (thread_info != NULL && thread_info->priv != NULL)
     {
@@ -782,7 +778,7 @@ check_thread_db (struct thread_db_info *info, bool log_progress)
   catch (const gdb_exception_error &except)
     {
       if (warning_pre_print)
-	fputs_unfiltered (warning_pre_print, gdb_stderr);
+	gdb_puts (warning_pre_print, gdb_stderr);
 
       exception_fprintf (gdb_stderr, except,
 			 _("libthread_db integrity checks failed: "));
@@ -798,6 +794,24 @@ check_thread_db (struct thread_db_info *info, bool log_progress)
   linux_unstop_all_lwps ();
 
   return test_passed;
+}
+
+/* Predicate which tests whether objfile OBJ refers to the library
+   containing pthread related symbols.  Historically, this library has
+   been named in such a way that looking for "libpthread" in the name
+   was sufficient to identify it.  As of glibc-2.34, the C library
+   (libc) contains the thread library symbols.  Therefore we check
+   that the name matches a possible thread library, but we also check
+   that it contains at least one of the symbols (pthread_create) that
+   we'd expect to find in the thread library.  */
+
+static bool
+libpthread_objfile_p (objfile *obj)
+{
+  return (libpthread_name_p (objfile_name (obj))
+          && lookup_minimal_symbol ("pthread_create",
+	                            NULL,
+				    obj).minsym != NULL);
 }
 
 /* Attempt to initialize dlopen()ed libthread_db, described by INFO.
@@ -847,22 +861,22 @@ try_thread_db_load_1 (struct thread_db_info *info)
   if (err != TD_OK)
     {
       if (libthread_db_debug)
-	fprintf_unfiltered (gdb_stdlog, _("td_ta_new failed: %s\n"),
-			    thread_db_err_str (err));
+	gdb_printf (gdb_stdlog, _("td_ta_new failed: %s\n"),
+		    thread_db_err_str (err));
       else
-        switch (err)
-          {
-            case TD_NOLIBTHREAD:
+	switch (err)
+	  {
+	    case TD_NOLIBTHREAD:
 #ifdef THREAD_DB_HAS_TD_VERSION
-            case TD_VERSION:
+	    case TD_VERSION:
 #endif
-              /* The errors above are not unexpected and silently ignored:
-                 they just mean we haven't found correct version of
-                 libthread_db yet.  */
-              break;
-            default:
-              warning (_("td_ta_new failed: %s"), thread_db_err_str (err));
-          }
+	      /* The errors above are not unexpected and silently ignored:
+		 they just mean we haven't found correct version of
+		 libthread_db yet.  */
+	      break;
+	    default:
+	      warning (_("td_ta_new failed: %s"), thread_db_err_str (err));
+	  }
       return false;
     }
 
@@ -884,7 +898,7 @@ try_thread_db_load_1 (struct thread_db_info *info)
 
      td_ta_map_lwp2thr uses ps_get_thread_area, but we can't use that
      currently on core targets, as it uses ptrace directly.  */
-  if (target_has_execution
+  if (target_has_execution ()
       && linux_proc_task_list_dir_exists (inferior_ptid.pid ()))
     info->td_ta_thr_iter_p = NULL;
   else
@@ -903,13 +917,12 @@ try_thread_db_load_1 (struct thread_db_info *info)
 
   if (info->td_ta_thr_iter_p == NULL)
     {
-      struct lwp_info *lp;
       int pid = inferior_ptid.pid ();
       thread_info *curr_thread = inferior_thread ();
 
       linux_stop_and_wait_all_lwps ();
 
-      ALL_LWPS (lp)
+      for (const lwp_info *lp : all_lwps ())
 	if (lp->ptid.pid () == pid)
 	  thread_from_lwp (curr_thread, lp->ptid);
 
@@ -918,35 +931,28 @@ try_thread_db_load_1 (struct thread_db_info *info)
   else if (thread_db_find_new_threads_silently (inferior_thread ()) != 0)
     {
       /* Even if libthread_db initializes, if the thread list is
-         corrupted, we'd not manage to list any threads.  Better reject this
-         thread_db, and fall back to at least listing LWPs.  */
+	 corrupted, we'd not manage to list any threads.  Better reject this
+	 thread_db, and fall back to at least listing LWPs.  */
       return false;
     }
 
-  printf_unfiltered (_("[Thread debugging using libthread_db enabled]\n"));
+  gdb_printf (_("[Thread debugging using libthread_db enabled]\n"));
 
-  if (*libthread_db_search_path || libthread_db_debug)
+  if (!libthread_db_search_path.empty () || libthread_db_debug)
     {
-      struct ui_file *file;
       const char *library;
 
       library = dladdr_to_soname ((const void *) *info->td_ta_new_p);
       if (library == NULL)
 	library = LIBTHREAD_DB_SO;
 
-      /* If we'd print this to gdb_stdout when debug output is
-	 disabled, still print it to gdb_stdout if debug output is
-	 enabled.  User visible output should not depend on debug
-	 settings.  */
-      file = *libthread_db_search_path != '\0' ? gdb_stdout : gdb_stdlog;
-      fprintf_unfiltered (file,
-			  _("Using host libthread_db library \"%ps\".\n"),
-			  styled_string (file_name_style.style (), library));
+      gdb_printf (_("Using host libthread_db library \"%ps\".\n"),
+		  styled_string (file_name_style.style (), library));
     }
 
   /* The thread library was detected.  Activate the thread_db target
      for this process.  */
-  push_target (&the_thread_db_target);
+  current_inferior ()->push_target (&the_thread_db_target);
   return true;
 }
 
@@ -960,9 +966,9 @@ try_thread_db_load (const char *library, bool check_auto_load_safe)
   struct thread_db_info *info;
 
   if (libthread_db_debug)
-    fprintf_unfiltered (gdb_stdlog,
-			_("Trying host libthread_db library: %s.\n"),
-			library);
+    gdb_printf (gdb_stdlog,
+		_("Trying host libthread_db library: %s.\n"),
+		library);
 
   if (check_auto_load_safe)
     {
@@ -971,15 +977,16 @@ try_thread_db_load (const char *library, bool check_auto_load_safe)
 	  /* Do not print warnings by file_is_auto_load_safe if the library does
 	     not exist at this place.  */
 	  if (libthread_db_debug)
-	    fprintf_unfiltered (gdb_stdlog, _("open failed: %s.\n"),
-				safe_strerror (errno));
+	    gdb_printf (gdb_stdlog, _("open failed: %s.\n"),
+			safe_strerror (errno));
 	  return false;
 	}
 
-      if (!file_is_auto_load_safe (library, _("auto-load: Loading libthread-db "
-					      "library \"%s\" from explicit "
-					      "directory.\n"),
-				   library))
+      auto_load_debug_printf
+	("Loading libthread-db library \"%s\" from explicit directory.",
+	 library);
+
+      if (!file_is_auto_load_safe (library))
 	return false;
     }
 
@@ -987,7 +994,7 @@ try_thread_db_load (const char *library, bool check_auto_load_safe)
   if (handle == NULL)
     {
       if (libthread_db_debug)
-	fprintf_unfiltered (gdb_stdlog, _("dlopen failed: %s.\n"), dlerror ());
+	gdb_printf (gdb_stdlog, _("dlopen failed: %s.\n"), dlerror ());
       return false;
     }
 
@@ -997,13 +1004,13 @@ try_thread_db_load (const char *library, bool check_auto_load_safe)
 
       td_init = dlsym (handle, "td_init");
       if (td_init != NULL)
-        {
-          const char *const libpath = dladdr_to_soname (td_init);
+	{
+	  const char *const libpath = dladdr_to_soname (td_init);
 
-          if (libpath != NULL)
-            fprintf_unfiltered (gdb_stdlog, _("Host %s resolved to: %s.\n"),
-                               library, libpath);
-        }
+	  if (libpath != NULL)
+	    gdb_printf (gdb_stdlog, _("Host %s resolved to: %s.\n"),
+			library, libpath);
+	}
     }
 
   info = add_thread_db_info (handle);
@@ -1012,8 +1019,17 @@ try_thread_db_load (const char *library, bool check_auto_load_safe)
   if (strchr (library, '/') != NULL)
     info->filename = gdb_realpath (library).release ();
 
-  if (try_thread_db_load_1 (info))
-    return true;
+  try
+    {
+      if (try_thread_db_load_1 (info))
+	return true;
+    }
+  catch (const gdb_exception_error &except)
+    {
+      if (libthread_db_debug)
+	exception_fprintf (gdb_stdlog, except,
+			   "Warning: While trying to load libthread_db: ");
+    }
 
   /* This library "refused" to work on current inferior.  */
   delete_thread_db_info (current_inferior ()->process_target (),
@@ -1063,7 +1079,7 @@ try_thread_db_load_from_pdir (const char *subdir)
     return false;
 
   for (objfile *obj : current_program_space->objfiles ())
-    if (libpthread_name_p (objfile_name (obj)))
+    if (libpthread_objfile_p (obj))
       {
 	if (try_thread_db_load_from_pdir_1 (obj, subdir))
 	  return true;
@@ -1116,7 +1132,7 @@ thread_db_load_search (void)
   bool rc = false;
 
   std::vector<gdb::unique_xmalloc_ptr<char>> dir_vec
-    = dirnames_to_char_ptr_vec (libthread_db_search_path);
+    = dirnames_to_char_ptr_vec (libthread_db_search_path.c_str ());
 
   for (const gdb::unique_xmalloc_ptr<char> &this_dir_up : dir_vec)
     {
@@ -1161,8 +1177,8 @@ thread_db_load_search (void)
     }
 
   if (libthread_db_debug)
-    fprintf_unfiltered (gdb_stdlog,
-			_("thread_db_load_search returning %d\n"), rc);
+    gdb_printf (gdb_stdlog,
+		_("thread_db_load_search returning %d\n"), rc);
   return rc;
 }
 
@@ -1172,7 +1188,7 @@ static bool
 has_libpthread (void)
 {
   for (objfile *obj : current_program_space->objfiles ())
-    if (libpthread_name_p (objfile_name (obj)))
+    if (libpthread_objfile_p (obj))
       return true;
 
   return false;
@@ -1184,17 +1200,22 @@ has_libpthread (void)
 static bool
 thread_db_load (void)
 {
-  struct thread_db_info *info;
+  inferior *inf = current_inferior ();
 
-  info = get_thread_db_info (current_inferior ()->process_target (),
-			     inferior_ptid.pid ());
+  /* When attaching / handling fork child, don't try loading libthread_db
+     until we know about all shared libraries.  */
+  if (inf->in_initial_library_scan)
+    return false;
+
+  thread_db_info *info = get_thread_db_info (inf->process_target (),
+					     inferior_ptid.pid ());
 
   if (info != NULL)
     return true;
 
   /* Don't attempt to use thread_db on executables not running
      yet.  */
-  if (!target_has_registers)
+  if (!target_has_registers ())
     return false;
 
   /* Don't attempt to use thread_db for remote targets.  */
@@ -1224,23 +1245,14 @@ check_thread_signals (void)
 {
   if (!thread_signals)
     {
-      sigset_t mask;
       int i;
 
-      lin_thread_get_thread_signals (&mask);
-      sigemptyset (&thread_stop_set);
-      sigemptyset (&thread_print_set);
-
-      for (i = 1; i < NSIG; i++)
+      for (i = 0; i < lin_thread_get_thread_signal_num (); i++)
 	{
-	  if (sigismember (&mask, i))
-	    {
-	      if (signal_stop_update (gdb_signal_from_host (i), 0))
-		sigaddset (&thread_stop_set, i);
-	      if (signal_print_update (gdb_signal_from_host (i), 0))
-		sigaddset (&thread_print_set, i);
-	      thread_signals = 1;
-	    }
+	  int sig = lin_thread_get_thread_signal (i);
+	  signal_stop_update (gdb_signal_from_host (sig), 0);
+	  signal_print_update (gdb_signal_from_host (sig), 0);
+	  thread_signals = 1;
 	}
     }
 }
@@ -1249,7 +1261,7 @@ check_thread_signals (void)
    an inferior is created (or otherwise acquired, e.g. attached to)
    and when new shared libraries are loaded into a running process.  */
 
-void
+static void
 check_for_thread_db (void)
 {
   /* Do nothing if we couldn't load libthread_db.so.1.  */
@@ -1281,12 +1293,12 @@ thread_db_new_objfile (struct objfile *objfile)
 	 of the list of shared libraries to load, and in an app of several
 	 thousand shared libraries, this can otherwise be painful.  */
       && ((objfile->flags & OBJF_MAINLINE) != 0
-	  || libpthread_name_p (objfile_name (objfile))))
+	  || libpthread_objfile_p (objfile)))
     check_for_thread_db ();
 }
 
 static void
-check_pid_namespace_match (void)
+check_pid_namespace_match (inferior *inf)
 {
   /* Check is only relevant for local targets targets.  */
   if (target_can_run ())
@@ -1296,7 +1308,7 @@ check_pid_namespace_match (void)
 	 child's thread list, we'll mistakenly think it has no threads
 	 since the thread PID fields won't match the PID we give to
 	 libthread_db.  */
-      if (!linux_ns_same (inferior_ptid.pid (), LINUX_NS_PID))
+      if (!linux_ns_same (inf->pid, LINUX_NS_PID))
 	{
 	  warning (_ ("Target and debugger are in different PID "
 		      "namespaces; thread lists and other data are "
@@ -1310,9 +1322,9 @@ check_pid_namespace_match (void)
    This handles the case of debugging statically linked executables.  */
 
 static void
-thread_db_inferior_created (struct target_ops *target, int from_tty)
+thread_db_inferior_created (inferior *inf)
 {
-  check_pid_namespace_match ();
+  check_pid_namespace_match (inf);
   check_for_thread_db ();
 }
 
@@ -1358,7 +1370,7 @@ record_thread (struct thread_db_info *info,
   else
     tp->priv.reset (priv);
 
-  if (target_has_execution)
+  if (target_has_execution ())
     check_thread_signals ();
 
   return tp;
@@ -1374,12 +1386,12 @@ thread_db_target::detach (inferior *inf, int from_tty)
   /* NOTE: From this point on, inferior_ptid is null_ptid.  */
 
   /* Detach the thread_db target from this inferior.  */
-  unpush_target (this);
+  inf->unpush_target (this);
 }
 
 ptid_t
 thread_db_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
-			int options)
+			target_wait_flags options)
 {
   struct thread_db_info *info;
 
@@ -1388,12 +1400,13 @@ thread_db_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 
   ptid = beneath->wait (ptid, ourstatus, options);
 
-  switch (ourstatus->kind)
+  switch (ourstatus->kind ())
     {
     case TARGET_WAITKIND_IGNORE:
     case TARGET_WAITKIND_EXITED:
     case TARGET_WAITKIND_THREAD_EXITED:
     case TARGET_WAITKIND_SIGNALLED:
+    case TARGET_WAITKIND_EXECD:
       return ptid;
     }
 
@@ -1402,16 +1415,6 @@ thread_db_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
   /* If this process isn't using thread_db, we're done.  */
   if (info == NULL)
     return ptid;
-
-  if (ourstatus->kind == TARGET_WAITKIND_EXECD)
-    {
-      /* New image, it may or may not end up using thread_db.  Assume
-	 not unless we find otherwise.  */
-      delete_thread_db_info (beneath, ptid.pid ());
-      unpush_target (this);
-
-      return ptid;
-    }
 
   /* Fill in the thread's user-level thread id and status.  */
   thread_from_lwp (find_thread_ptid (beneath, ptid), ptid);
@@ -1430,7 +1433,20 @@ thread_db_target::mourn_inferior ()
   target_beneath->mourn_inferior ();
 
   /* Detach the thread_db target from this inferior.  */
-  unpush_target (this);
+  current_inferior ()->unpush_target (this);
+}
+
+void
+thread_db_target::follow_exec (inferior *follow_inf, ptid_t ptid,
+			       const char *execd_pathname)
+{
+  process_stratum_target *beneath
+    = as_process_stratum_target (this->beneath ());
+
+  delete_thread_db_info (beneath, ptid.pid ());
+
+  current_inferior ()->unpush_target (this);
+  beneath->follow_exec (follow_inf, ptid, execd_pathname);
 }
 
 struct callback_data
@@ -1462,10 +1478,10 @@ find_new_threads_callback (const td_thrhandle_t *th_p, void *data)
 	 terminated and joined threads with kernel thread ID -1.  See
 	 glibc PR17707.  */
       if (libthread_db_debug)
-	fprintf_unfiltered (gdb_stdlog,
-			    "thread_db: skipping exited and "
-			    "joined thread (0x%lx)\n",
-			    (unsigned long) ti.ti_tid);
+	gdb_printf (gdb_stdlog,
+		    "thread_db: skipping exited and "
+		    "joined thread (0x%lx)\n",
+		    (unsigned long) ti.ti_tid);
       return 0;
     }
 
@@ -1540,9 +1556,9 @@ find_new_threads_once (struct thread_db_info *info, int iteration,
 
   if (libthread_db_debug)
     {
-      fprintf_unfiltered (gdb_stdlog,
-			  _("Found %d new threads in iteration %d.\n"),
-			  data.new_threads, iteration);
+      gdb_printf (gdb_stdlog,
+		  _("Found %d new threads in iteration %d.\n"),
+		  data.new_threads, iteration);
     }
 
   if (errp != NULL)
@@ -1602,8 +1618,6 @@ thread_db_target::update_thread_list ()
 {
   struct thread_db_info *info;
 
-  prune_threads ();
-
   for (inferior *inf : all_inferiors ())
     {
       if (inf->pid == 0)
@@ -1614,7 +1628,7 @@ thread_db_target::update_thread_list ()
 	continue;
 
       thread_info *thread = any_live_thread_of_inferior (inf);
-      if (thread == NULL || thread->executing)
+      if (thread == NULL || thread->executing ())
 	continue;
 
       /* It's best to avoid td_ta_thr_iter if possible.  That walks
@@ -1701,7 +1715,7 @@ thread_db_target::thread_handle_to_thread_info (const gdb_byte *thread_handle,
       thread_db_thread_info *priv = get_thread_db_thread_info (tp);
 
       if (priv != NULL && handle_tid == priv->tid)
-        return tp;
+	return tp;
     }
 
   return NULL;
@@ -1789,19 +1803,19 @@ thread_db_target::get_thread_local_address (ptid_t ptid,
 	  /* Now, if libthread_db provided the initialization image's
 	     address, we *could* try to build a non-lvalue value from
 	     the initialization image.  */
-        throw_error (TLS_NOT_ALLOCATED_YET_ERROR,
-                     _("TLS not allocated yet"));
+	throw_error (TLS_NOT_ALLOCATED_YET_ERROR,
+		     _("TLS not allocated yet"));
 #endif
 
       /* Something else went wrong.  */
       if (err != TD_OK)
-        throw_error (TLS_GENERIC_ERROR,
-                     (("%s")), thread_db_err_str (err));
+	throw_error (TLS_GENERIC_ERROR,
+		     (("%s")), thread_db_err_str (err));
 
       /* Cast assuming host == target.  Joy.  */
       /* Do proper sign extension for the target.  */
-      gdb_assert (exec_bfd);
-      return (bfd_get_sign_extend_vma (exec_bfd) > 0
+      gdb_assert (current_program_space->exec_bfd ());
+      return (bfd_get_sign_extend_vma (current_program_space->exec_bfd ()) > 0
 	      ? (CORE_ADDR) (intptr_t) address
 	      : (CORE_ADDR) (uintptr_t) address);
     }
@@ -1812,10 +1826,10 @@ thread_db_target::get_thread_local_address (ptid_t ptid,
 /* Implement the to_get_ada_task_ptid target method for this target.  */
 
 ptid_t
-thread_db_target::get_ada_task_ptid (long lwp, long thread)
+thread_db_target::get_ada_task_ptid (long lwp, ULONGEST thread)
 {
   /* NPTL uses a 1:1 model, so the LWP id suffices.  */
-  return ptid_t (inferior_ptid.pid (), lwp, 0);
+  return ptid_t (inferior_ptid.pid (), lwp);
 }
 
 void
@@ -1928,7 +1942,8 @@ info_auto_load_libthread_db (const char *args, int from_tty)
 	ui_out_emit_tuple tuple_emitter (uiout, NULL);
 
 	info = array[i];
-	uiout->field_string ("filename", info->filename);
+	uiout->field_string ("filename", info->filename,
+			     file_name_style.style ());
 
 	std::string pids;
 	while (i < array.size () && strcmp (info->filename,
@@ -1940,7 +1955,7 @@ info_auto_load_libthread_db (const char *args, int from_tty)
 	    i++;
 	  }
 
-	uiout->field_string ("pids", pids.c_str ());
+	uiout->field_string ("pids", pids);
 
 	uiout->text ("\n");
       }
@@ -1978,8 +1993,6 @@ _initialize_thread_db ()
      executable -- there could be multiple versions of glibc,
      and until there is a running inferior, we can't tell which
      libthread_db is the correct one to load.  */
-
-  libthread_db_search_path = xstrdup (LIBTHREAD_DB_SEARCH_PATH);
 
   add_setshow_optional_filename_cmd ("libthread-db-search-path",
 				     class_support,
@@ -2038,10 +2051,11 @@ as they are loaded."),
 			   &maintenance_show_cmdlist);
 
   /* Add ourselves to objfile event chain.  */
-  gdb::observers::new_objfile.attach (thread_db_new_objfile);
+  gdb::observers::new_objfile.attach (thread_db_new_objfile, "linux-thread-db");
 
   /* Add ourselves to inferior_created event chain.
      This is needed to handle debugging statically linked programs where
      the new_objfile observer won't get called for libpthread.  */
-  gdb::observers::inferior_created.attach (thread_db_inferior_created);
+  gdb::observers::inferior_created.attach (thread_db_inferior_created,
+					   "linux-thread-db");
 }

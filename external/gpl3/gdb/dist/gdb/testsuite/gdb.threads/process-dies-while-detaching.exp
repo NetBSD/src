@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -127,7 +127,7 @@ proc detach_and_expect_exit {inf_output_re test} {
 
 proc continue_to_exit_bp {} {
     gdb_breakpoint "_exit" temporary
-    gdb_continue_to_breakpoint "_exit" ".*_exit.*"
+    return [gdb_continue_to_breakpoint "_exit" ".*_exit.*"]
 }
 
 # If testing single-process, simply detach from the process.
@@ -226,7 +226,7 @@ proc test_detach {multi_process cmd} {
 	}
 
 	# Run to _exit in the child.
-	continue_to_exit_bp
+	return_if_fail [continue_to_exit_bp]
 
 	do_detach $multi_process $cmd "normal"
     }
@@ -235,7 +235,7 @@ proc test_detach {multi_process cmd} {
 # Same as test_detach, except set a watchpoint before detaching.
 
 proc test_detach_watch {wp multi_process cmd} {
-    if { $wp == "hw" && [skip_hw_watchpoint_tests] } {
+    if { $wp == "hw" && ![allow_hw_watchpoint_tests] } {
 	unsupported "hw watchpoint"
 	return
     }
@@ -265,13 +265,13 @@ proc test_detach_watch {wp multi_process cmd} {
 	    # them out, and handle the case of the thread disappearing
 	    # while doing that (on targets that need to detach from each
 	    # thread individually).
-	    continue_to_exit_bp
+	    return_if_fail [continue_to_exit_bp]
 	} else {
 	    # Force software watchpoints.
 	    gdb_test_no_output "set can-use-hw-watchpoints 0"
 
 	    # As above, but flip order, other wise things take too long.
-	    continue_to_exit_bp
+	    return_if_fail [continue_to_exit_bp]
 	    gdb_test "watch globalvar" "Watchpoint $decimal: globalvar"
 
 	    if { $multi_process == 0 && $cmd == "continue" } {
@@ -304,7 +304,7 @@ proc test_detach_killed_outside {multi_process cmd} {
 	}
 
 	# Run to _exit in the child.
-	continue_to_exit_bp
+	return_if_fail [continue_to_exit_bp]
 
 	set childpid [get_integer_valueof "mypid" -1]
 	if { $childpid == -1 } {

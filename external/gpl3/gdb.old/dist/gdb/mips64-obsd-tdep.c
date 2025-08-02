@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/mips64.
 
-   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+   Copyright (C) 2004-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,10 +28,6 @@
 #include "obsd-tdep.h"
 #include "mips-tdep.h"
 #include "solib-svr4.h"
-
-/* The MIPS64 Floating-Point Quad-Precision format is similar to
-   big-endian IA-64 Quad-Precision format.  */
-#define floatformats_mips64_quad floatformats_ia64_quad
 
 #define MIPS64OBSD_NUM_REGS 73
 
@@ -81,7 +77,7 @@ mips64obsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
 static void
 mips64obsd_sigframe_init (const struct tramp_frame *self,
-			  struct frame_info *this_frame,
+			  frame_info_ptr this_frame,
 			  struct trad_frame_cache *cache,
 			  CORE_ADDR func)
 {
@@ -150,7 +146,7 @@ mips64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tramp_frame_prepend_unwinder (gdbarch, &mips64obsd_sigframe);
 
   set_gdbarch_long_double_bit (gdbarch, 128);
-  set_gdbarch_long_double_format (gdbarch, floatformats_mips64_quad);
+  set_gdbarch_long_double_format (gdbarch, floatformats_ieee_quad);
 
   obsd_init_abi(info, gdbarch);
 

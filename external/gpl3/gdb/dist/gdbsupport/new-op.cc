@@ -1,6 +1,6 @@
 /* Replace operator new/new[], for GDB, the GNU debugger.
 
-   Copyright (C) 2016-2023 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,12 +23,11 @@
 #endif
 
 #if !__has_feature(address_sanitizer) && !defined(__SANITIZE_ADDRESS__)
-#include "common-defs.h"
 #include "host-defs.h"
 #include <new>
 
-/* These are declared in <new> starting C++14.  Add these here to enable
-   compilation using C++11. */
+/* These are declared in <new> starting C++14, but removing them
+   caused a build failure with clang.  See PR build/31141.  */
 extern void operator delete (void *p, std::size_t) noexcept;
 extern void operator delete[] (void *p, std::size_t) noexcept;
 

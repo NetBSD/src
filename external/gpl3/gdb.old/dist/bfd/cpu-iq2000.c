@@ -1,5 +1,5 @@
 /* BFD support for the Vitesse IQ2000 processor.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -41,8 +41,8 @@
   }
 
 static const bfd_arch_info_type arch_info_struct =
-  N (bfd_mach_iq10, "iq10", FALSE, NULL);
+  N (bfd_mach_iq10, "iq10", false, NULL);
 
 const bfd_arch_info_type bfd_iq2000_arch =
-  N (bfd_mach_iq2000, "iq2000", TRUE, &arch_info_struct);
+  N (bfd_mach_iq2000, "iq2000", true, &arch_info_struct);
 

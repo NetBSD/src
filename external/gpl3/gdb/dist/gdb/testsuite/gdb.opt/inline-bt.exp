@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -65,3 +65,4 @@ gdb_test "up" "#1  .*func1.*" "up from bar (4)"
 gdb_test "info frame" ".*in func1.*" "info frame still works"
 # Verify the user visible limit works as expected.
 gdb_test "up" "Initial frame selected; you cannot go up." "up hits limit"
+gdb_test "backtrace" "#0  bar.*#1  .*func1.*" "backtrace hits limit"

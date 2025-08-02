@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,12 +16,7 @@
 # Test the flags within GDB that can be used to control how Python is
 # initialized.
 
-gdb_start
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
-
-gdb_exit
+require allow_python_tests
 
 # Return a list containing two directory paths for newly created home
 # directories.
@@ -102,10 +97,7 @@ proc test_python_settings { exp_state } {
     gdb_exit
 }
 
-save_vars { env(TERM) } {
-    # We need an ANSI-capable terminal to get the output.
-    setenv TERM ansi
-
+with_ansi_styling_terminal {
     # Check the features are off by default.
     test_python_settings "off"
 

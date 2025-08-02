@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,13 +15,8 @@
 
 load_lib trace-support.exp
 
-if {[skip_shlib_tests]} {
-    return 0
-}
-if ![gdb_trace_common_supports_arch] {
-    unsupported "no trace-common.h support for arch"
-    return -1
-}
+require allow_shlib_tests
+require gdb_trace_common_supports_arch
 
 standard_testfile pending.c
 set libfile1 "pendshr1"
@@ -94,18 +89,11 @@ proc test_reconnect { } {
 	    }
 	}
 
-	gdb_exit
-
-	if [mi_gdb_start] {
-	    return
-	}
-
-	global srcdir
-	global subdir
 	global binfile
 
-	mi_gdb_reinitialize_dir $srcdir/$subdir
-	mi_gdb_load ${binfile}
+	if {[mi_clean_restart $binfile]} {
+	    return
+	}
 
 	global gdbserver_protocol
 	global gdbserver_gdbport
@@ -167,19 +155,13 @@ proc test_pending_resolved { } {
     with_test_prefix "pending resolved" {
 	global decimal hex
 	global executable
-	global srcdir
-	global subdir
 	global binfile
 	global lib_sl1 lib_sl2
 	global mi_gdb_prompt
 
-	gdb_exit
-	if [mi_gdb_start] {
+	if {[mi_clean_restart $binfile]} {
 	    return
 	}
-
-	mi_gdb_reinitialize_dir $srcdir/$subdir
-	mi_gdb_load ${binfile}
 	mi_load_shlibs $lib_sl1 $lib_sl2
 
 	# Create a pending tracepoint on pendfunc2
@@ -263,5 +245,3 @@ gdb_exit
 test_reconnect
 
 test_pending_resolved
-
-return 0

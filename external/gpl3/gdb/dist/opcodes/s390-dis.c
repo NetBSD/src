@@ -1,5 +1,5 @@
 /* s390-dis.c -- Disassemble S390 instructions
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of the GNU opcodes library.
@@ -26,10 +26,12 @@
 #include "opintl.h"
 #include "opcode/s390.h"
 #include "libiberty.h"
+#include "dis-asm.h"
 
 static int opc_index[256];
 static int current_arch_mask = 0;
 static int option_use_insn_len_bits_p = 0;
+static int option_print_insn_desc = 0;
 
 typedef struct
 {
@@ -40,9 +42,11 @@ typedef struct
 static const s390_options_t options[] =
 {
   { "esa" ,       N_("Disassemble in ESA architecture mode") },
+  /* TRANSLATORS: Please do not translate 'z/Architecture' as this is a technical name.  */
   { "zarch",      N_("Disassemble in z/Architecture mode") },
   { "insnlength", N_("Print unknown instructions according to "
-		     "length from first two bits") }
+		     "length from first two bits") },
+  { "insndesc",   N_("Print instruction description as comment") },
 };
 
 /* Set up index table for first opcode byte.  */
@@ -62,6 +66,7 @@ disassemble_init_s390 (struct disassemble_info *info)
 
   current_arch_mask = 1 << S390_OPCODE_ZARCH;
   option_use_insn_len_bits_p = 0;
+  option_print_insn_desc = 0;
 
   for (p = info->disassembler_options; p != NULL; )
     {
@@ -71,6 +76,8 @@ disassemble_init_s390 (struct disassemble_info *info)
 	current_arch_mask = 1 << S390_OPCODE_ZARCH;
       else if (startswith (p, "insnlength"))
 	option_use_insn_len_bits_p = 1;
+      else if (startswith (p, "insndesc"))
+	option_print_insn_desc = 1;
       else
 	/* xgettext:c-format */
 	opcodes_error_handler (_("unknown S/390 disassembler option: %s"), p);
@@ -197,10 +204,11 @@ s390_print_insn_with_opcode (bfd_vma memaddr,
       union operand_value val = s390_extract_operand (buffer, operand);
       unsigned long flags = operand->flags;
 
+      /* Omit index register 0.  */
       if ((flags & S390_OPERAND_INDEX) && val.u == 0)
 	continue;
-      if ((flags & S390_OPERAND_BASE) &&
-	  val.u == 0 && separator == '(')
+      /* Omit base register 0, if no or omitted index register 0.  */
+      if ((flags & S390_OPERAND_BASE) && val.u == 0 && separator == '(')
 	{
 	  separator = ',';
 	  continue;
@@ -226,8 +234,13 @@ s390_print_insn_with_opcode (bfd_vma memaddr,
 	{
 	  info->fprintf_styled_func (info->stream, dis_style_text,
 				     "%c", separator);
-	  info->fprintf_styled_func (info->stream, dis_style_register,
-				     "%%r%u", val.u);
+	  if ((flags & (S390_OPERAND_BASE | S390_OPERAND_INDEX))
+	      && val.u == 0)
+	    info->fprintf_styled_func (info->stream, dis_style_register,
+				       "%u", val.u);
+	  else
+	    info->fprintf_styled_func (info->stream, dis_style_register,
+				       "%%r%u", val.u);
 	}
       else if (flags & S390_OPERAND_FPR)
 	{
@@ -240,8 +253,12 @@ s390_print_insn_with_opcode (bfd_vma memaddr,
 	{
 	  info->fprintf_styled_func (info->stream, dis_style_text,
 				     "%c", separator);
-	  info->fprintf_styled_func (info->stream, dis_style_register,
-				     "%%v%i", val.u);
+	  if ((flags & S390_OPERAND_INDEX) && val.u == 0)
+	    info->fprintf_styled_func (info->stream, dis_style_register,
+				       "%u", val.u);
+	  else
+	    info->fprintf_styled_func (info->stream, dis_style_register,
+				       "%%v%i", val.u);
 	}
       else if (flags & S390_OPERAND_AR)
 	{
@@ -259,9 +276,14 @@ s390_print_insn_with_opcode (bfd_vma memaddr,
 	}
       else if (flags & S390_OPERAND_PCREL)
 	{
+	  bfd_vma target = memaddr + val.i + val.i;
+
+	  /* Provide info for jump visualization.  May be evaluated by p_a_f().  */
+	  info->target = target;
+
 	  info->fprintf_styled_func (info->stream, dis_style_text,
 				     "%c", separator);
-	  info->print_address_func (memaddr + val.i + val.i, info);
+	  info->print_address_func (target, info);
 	}
       else if (flags & S390_OPERAND_SIGNED)
 	{
@@ -305,6 +327,12 @@ s390_print_insn_with_opcode (bfd_vma memaddr,
       else
 	separator = ',';
     }
+
+  /* Optional: instruction name.  */
+  if (option_print_insn_desc && opcode->description
+      && opcode->description[0] != '\0')
+    info->fprintf_styled_func (info->stream, dis_style_comment_start, "\t# %s",
+			       opcode->description);
 }
 
 /* Check whether opcode A's mask is more specific than that of B.  */
@@ -331,6 +359,14 @@ print_insn_s390 (bfd_vma memaddr, struct disassemble_info *info)
 
   /* The output looks better if we put 6 bytes on a line.  */
   info->bytes_per_line = 6;
+
+  /* Set some defaults for the insn info.  */
+  info->insn_info_valid    = 0;
+  info->branch_delay_insns = 0;
+  info->data_size          = 0;
+  info->insn_type          = dis_nonbranch;
+  info->target             = 0;
+  info->target2            = 0;
 
   /* Every S390 instruction is max 6 bytes long.  */
   memset (buffer, 0, 6);
@@ -373,6 +409,23 @@ print_insn_s390 (bfd_vma memaddr, struct disassemble_info *info)
 
       if (opcode != NULL)
 	{
+	  /* Provide info for jump visualization.  Must be done before print.  */
+	  switch (opcode->flags & S390_INSTR_FLAG_CLASS_MASK)
+	    {
+	    case S390_INSTR_FLAGS_CLASS_JUMP:
+	      info->insn_type = dis_branch;
+	      break;
+	    case S390_INSTR_FLAGS_CLASS_CONDJUMP:
+	      info->insn_type = dis_condbranch;
+	      break;
+	    case S390_INSTR_FLAGS_CLASS_JUMPSR:
+	      info->insn_type = dis_jsr;
+	      break;
+	    default:
+	      info->insn_type = dis_nonbranch;
+	    }
+	  info->insn_info_valid = 1;
+
 	  /* The instruction is valid.  Print it and return its size.  */
 	  s390_print_insn_with_opcode (memaddr, info, buffer, opcode);
 	  return opsize;
@@ -393,6 +446,9 @@ print_insn_s390 (bfd_vma memaddr, struct disassemble_info *info)
 
   if (bytes_to_dump == 0)
     return 0;
+
+  info->insn_type = dis_noninsn;
+  info->insn_info_valid = 1;
 
   /* Fall back to hex print.  */
   switch (bytes_to_dump)

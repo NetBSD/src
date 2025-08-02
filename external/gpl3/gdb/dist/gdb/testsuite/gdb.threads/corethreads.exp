@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,8 @@
 
 # Are we on a target board?  And non-Linux targets seem to identify the thread
 # differently.
-if {![isnative] || ![istarget "*-*-linux*"]} {
+require isnative
+if {![istarget "*-*-linux*"]} {
     return
 }
 

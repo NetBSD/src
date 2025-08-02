@@ -1,4 +1,4 @@
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +15,7 @@
 
 # Test that an early warning does not cause a crash.
 
-if {[is_remote host]} {
-    unsupported "warning.exp can only run on local host"
-    return
-}
+require {!is_remote host}
 
 set tname [standard_temp_file warning]
 set fd [open $tname w]

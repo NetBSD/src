@@ -1,6 +1,6 @@
 /* FreeBSD/riscv target support, prototypes.
 
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

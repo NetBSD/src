@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2023 Free Software Foundation, Inc.
+# Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,11 +21,9 @@
 # messages are printed and can be disabled) is dependent on the target
 # thread support code.
 
-# This test has only been verified with Linux targets, and would need
+# This test has been verified with Linux targets and AIX target, and would need
 # to be generalized to support other targets
-if {![istarget *-*-linux*]} {
-    return
-}
+require {is_any_target "*-*-linux*" "*-*-aix*"}
 
 # When using the RSP, we don't get notifications about new threads.
 # This is expected, so don't test for that.

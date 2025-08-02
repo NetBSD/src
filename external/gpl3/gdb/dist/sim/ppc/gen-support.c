@@ -19,8 +19,10 @@
 
 #include "misc.h"
 #include "lf.h"
+#include "lf-ppc.h"
 #include "table.h"
 #include "filter.h"
+#include "filter-ppc.h"
 
 #include "ld-decode.h"
 #include "ld-cache.h"
@@ -37,7 +39,7 @@ print_support_function_name(lf *file,
 			    int is_function_definition)
 {
   if (it_is("internal", function->fields[insn_flags])) {
-    lf_print_function_type(file, SEMANTIC_FUNCTION_TYPE, "PSIM_INLINE_SUPPORT",
+    lf_print__function_type(file, SEMANTIC_FUNCTION_TYPE, "PSIM_INLINE_SUPPORT",
 			   (is_function_definition ? "\n" : " "));
     print_function_name(file,
 			function->fields[function_name],
@@ -49,7 +51,7 @@ print_support_function_name(lf *file,
     lf_printf(file, "\n");
   }
   else {
-    lf_print_function_type(file,
+    lf_print__function_type(file,
 			   function->fields[function_type],
 			   "PSIM_INLINE_SUPPORT",
 			   (is_function_definition ? "\n" : " "));
@@ -110,7 +112,7 @@ support_c_function(insn_table *table,
   }
   lf_indent(file, -2);
   lf_printf(file, "}\n");
-  lf_print__internal_reference(file);
+  lf_print__internal_ref(file);
   lf_printf(file, "\n");
 }
 

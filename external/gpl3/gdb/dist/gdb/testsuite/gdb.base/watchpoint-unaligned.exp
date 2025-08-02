@@ -1,4 +1,4 @@
-# Copyright 2017-2023 Free Software Foundation, Inc.
+# Copyright 2017-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@
 
 # Test inserting read watchpoints on unaligned addresses.
 
-if {[skip_hw_watchpoint_tests]} {
-    return 0
-}
+require allow_hw_watchpoint_tests
 
 standard_testfile
 if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {
@@ -105,6 +103,8 @@ foreach wpcount {4 7} {
     for {set wpoffset 1} {$wpoffset <= $wpcount} {incr wpoffset} {
 	set test "$rwatch data.u.size1\[$wpoffset\]"
 	set wpnum ""
+	# Initialize the result incase the test fails.
+	set wpoffset_to_wpnum($wpoffset) 0
 	gdb_test_multiple $test $test {
 	    -re "$rwatch_exp (\[0-9\]+): .*\r\n$gdb_prompt $" {
 		set wpoffset_to_wpnum($wpoffset) $expect_out(1,string)
@@ -115,7 +115,6 @@ foreach wpcount {4 7} {
 		    setup_xfail breakpoints/23131 "arm*-*-*"
 		}
 		fail $test
-		set wpoffset_to_wpnum($wpoffset) 0
 	    }
 	}
     }
@@ -152,38 +151,56 @@ foreach wpcount {4 7} {
     gdb_assert $got_hit $test
 }
 
-if ![runto_main] {
-    return -1
-}
-gdb_breakpoint [gdb_get_line_number "final_return"] "Breakpoint $decimal at $hex" "final_return"
-set test {watch data.u.size8twice[1]}
-set wpnum 0
-gdb_test_multiple $test $test {
-    -re "Hardware watchpoint (\[0-9\]+): .*\r\n$gdb_prompt $" {
-	set wpnum $expect_out(1,string)
-	pass $gdb_test_name
-    }
-    -re "Watchpoint (\[0-9\]+): .*\r\n$gdb_prompt $" {
-	if {[istarget "arm*-*-*"]} {
-	    untested $gdb_test_name
-	} else {
-	    fail $gdb_test_name
+# We've got an array with 3 8-byte elements.  Do a store of 16 bytes,
+# to:
+# - elements 0 and 1 (offset == 0), and
+# - elements 1 and 2 (offset == 1).
+# For each case, check setting a watchpoint at:
+# - the first written element (index == 0), and
+# - the second element (index == 1).
+foreach_with_prefix offset { 0 1 } {
+    foreach_with_prefix index { 0 1 } {
+
+	clean_restart $binfile
+
+	if ![runto_main] {
+	    return -1
+	}
+
+	gdb_test_no_output "set var offset = $offset"
+	gdb_breakpoint [gdb_get_line_number "final_return"] \
+	    "Breakpoint $decimal at $hex" "final_return"
+	set watch_index [expr $offset + $index]
+	set test "watch data.u.size8twice\[$watch_index\]"
+	set wpnum 0
+	gdb_test_multiple $test $test {
+	    -re "Hardware watchpoint (\[0-9\]+): .*\r\n$gdb_prompt $" {
+		set wpnum $expect_out(1,string)
+		pass $gdb_test_name
+	    }
+	    -re "Watchpoint (\[0-9\]+): .*\r\n$gdb_prompt $" {
+		if {[istarget "arm*-*-*"]} {
+		    untested $gdb_test_name
+		} else {
+		    fail $gdb_test_name
+		}
+	    }
+	}
+	if {$wpnum} {
+	    set test "continue"
+	    set got_hit 0
+	    gdb_test_multiple $test $test {
+		-re "\r\nCould not insert hardware watchpoint .*\r\n$gdb_prompt $" {
+		}
+		-re "Hardware watchpoint $wpnum:.*New value = .*\r\n$gdb_prompt $" {
+		    set got_hit 1
+		    send_gdb "continue\n"
+		    exp_continue
+		}
+		-re " final_return .*\r\n$gdb_prompt $" {
+		}
+	    }
+	    gdb_assert $got_hit "size8twice write"
 	}
     }
-}
-if {$wpnum} {
-    set test "continue"
-    set got_hit 0
-    gdb_test_multiple $test $test {
-	-re "\r\nCould not insert hardware watchpoint .*\r\n$gdb_prompt $" {
-	}
-	-re "Hardware watchpoint $wpnum:.*New value = .*\r\n$gdb_prompt $" {
-	    set got_hit 1
-	    send_gdb "continue\n"
-	    exp_continue
-	}
-	-re " final_return .*\r\n$gdb_prompt $" {
-	}
-    }
-    gdb_assert $got_hit "size8twice write"
 }

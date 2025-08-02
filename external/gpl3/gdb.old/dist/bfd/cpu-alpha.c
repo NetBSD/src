@@ -1,5 +1,5 @@
 /* BFD support for the Alpha architecture.
-   Copyright (C) 1992-2020 Free Software Foundation, Inc.
+   Copyright (C) 1992-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -45,10 +45,10 @@
 /* These exist only so that we can reasonably disassemble PALcode.  */
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (64, 64, bfd_mach_alpha_ev4, "alpha:ev4", FALSE, NN(1)),
-  N (64, 64, bfd_mach_alpha_ev5, "alpha:ev5", FALSE, NN(2)),
-  N (64, 64, bfd_mach_alpha_ev6, "alpha:ev6", FALSE, 0),
+  N (64, 64, bfd_mach_alpha_ev4, "alpha:ev4", false, NN(1)),
+  N (64, 64, bfd_mach_alpha_ev5, "alpha:ev5", false, NN(2)),
+  N (64, 64, bfd_mach_alpha_ev6, "alpha:ev6", false, 0),
 };
 
 const bfd_arch_info_type bfd_alpha_arch =
-  N (64, 64, 0, "alpha", TRUE, NN(0));
+  N (64, 64, 0, "alpha", true, NN(0));

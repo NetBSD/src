@@ -1,6 +1,6 @@
 /* Parse a printf-style format string.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #ifndef COMMON_FORMAT_H
 #define COMMON_FORMAT_H
 
-#include "gdbsupport/gdb_string_view.h"
+#include <string_view>
 
 #if defined(__MINGW32__) && !defined(PRINTF_HAS_LONG_LONG)
 # define USE_PRINTF_I64 1
@@ -41,7 +41,8 @@ enum argclass
     int_arg, long_arg, long_long_arg, size_t_arg, ptr_arg,
     string_arg, wide_string_arg, wide_char_arg,
     double_arg, long_double_arg,
-    dec32float_arg, dec64float_arg, dec128float_arg
+    dec32float_arg, dec64float_arg, dec128float_arg,
+    value_arg
   };
 
 /* A format piece is a section of the format string that may include a
@@ -55,12 +56,13 @@ struct format_piece
       argclass (argc),
       n_int_args (n)
   {
+    gdb_assert (str != nullptr);
   }
 
   bool operator== (const format_piece &other) const
   {
     return (this->argclass == other.argclass
-	    && gdb::string_view (this->string) == other.string);
+	    && std::string_view (this->string) == other.string);
   }
 
   const char *string;
@@ -75,7 +77,8 @@ class format_pieces
 {
 public:
 
-  format_pieces (const char **arg, bool gdb_extensions = false);
+  format_pieces (const char **arg, bool gdb_extensions = false,
+		 bool value_extension = false);
   ~format_pieces () = default;
 
   DISABLE_COPY_AND_ASSIGN (format_pieces);

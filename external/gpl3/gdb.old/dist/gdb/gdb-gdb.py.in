@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2020 Free Software Foundation, Inc.
+# Copyright (C) 2009-2023 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -39,7 +39,7 @@ class TypeFlag:
     def __init__(self, name, value):
         self.name = name
         self.value = value
-        self.short_name = name.replace("TYPE_INSTANCE_FLAG_", '')
+        self.short_name = name.replace("TYPE_INSTANCE_FLAG_", "")
 
     def __lt__(self, other):
         """Sort by value order."""
@@ -73,8 +73,9 @@ class TypeFlagsPrinter:
         if not self.val:
             return "0"
         if TYPE_FLAGS:
-            flag_list = [flag.short_name for flag in TYPE_FLAGS
-                         if self.val & flag.value]
+            flag_list = [
+                flag.short_name for flag in TYPE_FLAGS if self.val & flag.value
+            ]
         else:
             flag_list = ["???"]
         return "0x%x [%s]" % (self.val, "|".join(flag_list))
@@ -96,8 +97,7 @@ class TypeFlagsPrinter:
             print("Warning: Cannot find enum type_instance_flag_value type.")
             print("         `struct type' pretty-printer will be degraded")
             return
-        TYPE_FLAGS = [TypeFlag(field.name, field.enumval)
-                      for field in iflags.fields()]
+        TYPE_FLAGS = [TypeFlag(field.name, field.enumval) for field in iflags.fields()]
         TYPE_FLAGS.sort()
 
 
@@ -109,13 +109,14 @@ class StructTypePrettyPrinter:
 
     def to_string(self):
         fields = []
-        fields.append("pointer_type = %s" % self.val['pointer_type'])
-        fields.append("reference_type = %s" % self.val['reference_type'])
-        fields.append("chain = %s" % self.val['reference_type'])
-        fields.append("instance_flags = %s"
-                      % TypeFlagsPrinter(self.val['instance_flags']))
-        fields.append("length = %d" % self.val['length'])
-        fields.append("main_type = %s" % self.val['main_type'])
+        fields.append("pointer_type = %s" % self.val["pointer_type"])
+        fields.append("reference_type = %s" % self.val["reference_type"])
+        fields.append("chain = %s" % self.val["reference_type"])
+        fields.append(
+            "instance_flags = %s" % TypeFlagsPrinter(self.val["m_instance_flags"])
+        )
+        fields.append("length = %d" % self.val["m_length"])
+        fields.append("main_type = %s" % self.val["main_type"])
         return "\n{" + ",\n ".join(fields) + "}"
 
 
@@ -134,77 +135,77 @@ class StructMainTypePrettyPrinter:
         flag_unsigned and flag_static are the only components set to 1,
         this function will return "unsigned|static".
         """
-        fields = [field.name.replace("flag_", "")
-                  for field in self.val.type.fields()
-                  if field.name.startswith("flag_") and self.val[field.name]]
+        fields = [
+            field.name.replace("flag_", "")
+            for field in self.val.type.fields()
+            if field.name.startswith("flag_") and self.val[field.name]
+        ]
         return "|".join(fields)
 
     def owner_to_string(self):
-        """Return an image of component "owner".
-        """
-        if self.val['flag_objfile_owned'] != 0:
-            return "%s (objfile)" % self.val['owner']['objfile']
+        """Return an image of component "owner"."""
+        if self.val["m_flag_objfile_owned"] != 0:
+            return "%s (objfile)" % self.val["m_owner"]["objfile"]
         else:
-            return "%s (gdbarch)" % self.val['owner']['gdbarch']
+            return "%s (gdbarch)" % self.val["m_owner"]["gdbarch"]
 
     def struct_field_location_img(self, field_val):
         """Return an image of the loc component inside the given field
         gdb.Value.
         """
-        loc_val = field_val['loc']
-        loc_kind = str(field_val['loc_kind'])
+        loc_val = field_val["m_loc"]
+        loc_kind = str(field_val["m_loc_kind"])
         if loc_kind == "FIELD_LOC_KIND_BITPOS":
-            return 'bitpos = %d' % loc_val['bitpos']
+            return "bitpos = %d" % loc_val["bitpos"]
         elif loc_kind == "FIELD_LOC_KIND_ENUMVAL":
-            return 'enumval = %d' % loc_val['enumval']
+            return "enumval = %d" % loc_val["enumval"]
         elif loc_kind == "FIELD_LOC_KIND_PHYSADDR":
-            return 'physaddr = 0x%x' % loc_val['physaddr']
+            return "physaddr = 0x%x" % loc_val["physaddr"]
         elif loc_kind == "FIELD_LOC_KIND_PHYSNAME":
-            return 'physname = %s' % loc_val['physname']
+            return "physname = %s" % loc_val["physname"]
         elif loc_kind == "FIELD_LOC_KIND_DWARF_BLOCK":
-            return 'dwarf_block = %s' % loc_val['dwarf_block']
+            return "dwarf_block = %s" % loc_val["dwarf_block"]
         else:
-            return 'loc = ??? (unsupported loc_kind value)'
+            return "m_loc = ??? (unsupported m_loc_kind value)"
 
     def struct_field_img(self, fieldno):
-        """Return an image of the main_type field number FIELDNO.
-        """
-        f = self.val['flds_bnds']['fields'][fieldno]
+        """Return an image of the main_type field number FIELDNO."""
+        f = self.val["flds_bnds"]["fields"][fieldno]
         label = "flds_bnds.fields[%d]:" % fieldno
-        if f['artificial']:
+        if f["artificial"]:
             label += " (artificial)"
         fields = []
-        fields.append("name = %s" % f['name'])
-        fields.append("type = %s" % f['type'])
-        fields.append("loc_kind = %s" % f['loc_kind'])
-        fields.append("bitsize = %d" % f['bitsize'])
+        fields.append("m_name = %s" % f["m_name"])
+        fields.append("m_type = %s" % f["m_type"])
+        fields.append("m_loc_kind = %s" % f["m_loc_kind"])
+        fields.append("bitsize = %d" % f["bitsize"])
         fields.append(self.struct_field_location_img(f))
         return label + "\n" + "  {" + ",\n   ".join(fields) + "}"
 
     def bound_img(self, bound_name):
         """Return an image of the given main_type's bound."""
-        b = self.val['flds_bnds']['bounds'].dereference()[bound_name]
-        bnd_kind = str(b['kind'])
-        if bnd_kind == 'PROP_CONST':
-            return str(b['data']['const_val'])
-        elif bnd_kind == 'PROP_UNDEFINED':
-            return '(undefined)'
+        bounds = self.val["flds_bnds"]["bounds"].dereference()
+        b = bounds[bound_name]
+        bnd_kind = str(b["m_kind"])
+        if bnd_kind == "PROP_CONST":
+            return str(b["m_data"]["const_val"])
+        elif bnd_kind == "PROP_UNDEFINED":
+            return "(undefined)"
         else:
             info = [bnd_kind]
-            if bound_name == 'high' and b['flag_upper_bound_is_count']:
-                info.append('upper_bound_is_count')
-            return '{} ({})'.format(str(b['data']['baton']), ','.join(info))
+            if bound_name == "high" and bounds["flag_upper_bound_is_count"]:
+                info.append("upper_bound_is_count")
+            return "{} ({})".format(str(b["m_data"]["baton"]), ",".join(info))
 
     def bounds_img(self):
-        """Return an image of the main_type bounds.
-        """
-        b = self.val['flds_bnds']['bounds'].dereference()
-        low = self.bound_img('low')
-        high = self.bound_img('high')
+        """Return an image of the main_type bounds."""
+        b = self.val["flds_bnds"]["bounds"].dereference()
+        low = self.bound_img("low")
+        high = self.bound_img("high")
 
         img = "flds_bnds.bounds = {%s, %s}" % (low, high)
-        if b['flag_bound_evaluated']:
-            img += ' [evaluated]'
+        if b["flag_bound_evaluated"]:
+            img += " [evaluated]"
         return img
 
     def type_specific_img(self):
@@ -212,41 +213,58 @@ class StructMainTypePrettyPrinter:
         Only the relevant component of that union is printed (based on
         the value of the type_specific_kind field.
         """
-        type_specific_kind = str(self.val['type_specific_field'])
-        type_specific = self.val['type_specific']
+        type_specific_kind = str(self.val["type_specific_field"])
+        type_specific = self.val["type_specific"]
         if type_specific_kind == "TYPE_SPECIFIC_NONE":
-            img = 'type_specific_field = %s' % type_specific_kind
+            img = "type_specific_field = %s" % type_specific_kind
         elif type_specific_kind == "TYPE_SPECIFIC_CPLUS_STUFF":
-            img = "cplus_stuff = %s" % type_specific['cplus_stuff']
+            img = "cplus_stuff = %s" % type_specific["cplus_stuff"]
         elif type_specific_kind == "TYPE_SPECIFIC_GNAT_STUFF":
-            img = ("gnat_stuff = {descriptive_type = %s}"
-                   % type_specific['gnat_stuff']['descriptive_type'])
+            img = (
+                "gnat_stuff = {descriptive_type = %s}"
+                % type_specific["gnat_stuff"]["descriptive_type"]
+            )
         elif type_specific_kind == "TYPE_SPECIFIC_FLOATFORMAT":
-            img = "floatformat[0..1] = %s" % type_specific['floatformat']
+            img = "floatformat[0..1] = %s" % type_specific["floatformat"]
         elif type_specific_kind == "TYPE_SPECIFIC_FUNC":
-            img = ("calling_convention = %d"
-                   % type_specific['func_stuff']['calling_convention'])
+            img = (
+                "calling_convention = %d"
+                % type_specific["func_stuff"]["calling_convention"]
+            )
             # tail_call_list is not printed.
         elif type_specific_kind == "TYPE_SPECIFIC_SELF_TYPE":
-            img = "self_type = %s" % type_specific['self_type']
+            img = "self_type = %s" % type_specific["self_type"]
+        elif type_specific_kind == "TYPE_SPECIFIC_FIXED_POINT":
+            # The scaling factor is an opaque structure, so we cannot
+            # decode its value from Python (not without insider knowledge).
+            img = (
+                "scaling_factor: <opaque> (call __gmpz_dump with "
+                " _mp_num and _mp_den fields if needed)"
+            )
+        elif type_specific_kind == "TYPE_SPECIFIC_INT":
+            img = "int_stuff = { bit_size = %d, bit_offset = %d }" % (
+                type_specific["int_stuff"]["bit_size"],
+                type_specific["int_stuff"]["bit_offset"],
+            )
         else:
-            img = ("type_specific = ??? (unknown type_secific_kind: %s)"
-                   % type_specific_kind)
+            img = (
+                "type_specific = ??? (unknown type_specific_kind: %s)"
+                % type_specific_kind
+            )
         return img
 
     def to_string(self):
-        """Return a pretty-printed image of our main_type.
-        """
+        """Return a pretty-printed image of our main_type."""
         fields = []
-        fields.append("name = %s" % self.val['name'])
-        fields.append("code = %s" % self.val['code'])
+        fields.append("name = %s" % self.val["name"])
+        fields.append("code = %s" % self.val["code"])
         fields.append("flags = [%s]" % self.flags_to_string())
         fields.append("owner = %s" % self.owner_to_string())
-        fields.append("target_type = %s" % self.val['target_type'])
-        if self.val['nfields'] > 0:
-            for fieldno in range(self.val['nfields']):
+        fields.append("target_type = %s" % self.val["m_target_type"])
+        if self.val["nfields"] > 0:
+            for fieldno in range(self.val["nfields"]):
                 fields.append(self.struct_field_img(fieldno))
-        if self.val['code'] == gdb.TYPE_CODE_RANGE:
+        if self.val["code"] == gdb.TYPE_CODE_RANGE:
             fields.append(self.bounds_img())
         fields.append(self.type_specific_img())
 
@@ -263,22 +281,113 @@ class CoreAddrPrettyPrinter:
         return hex(int(self._val))
 
 
+class IntrusiveListPrinter:
+    """Print a struct intrusive_list."""
+
+    def __init__(self, val):
+        self._val = val
+
+        # Type of linked items.
+        self._item_type = self._val.type.template_argument(0)
+        self._node_ptr_type = gdb.lookup_type(
+            "intrusive_list_node<{}>".format(self._item_type.tag)
+        ).pointer()
+
+        # Type of value -> node converter.
+        self._conv_type = self._val.type.template_argument(1)
+
+        if self._uses_member_node():
+            # The second template argument of intrusive_member_node is a member
+            # pointer value.  Its value is the offset of the node member in the
+            # enclosing type.
+            member_node_ptr = self._conv_type.template_argument(1)
+            member_node_ptr = member_node_ptr.cast(gdb.lookup_type("int"))
+            self._member_node_offset = int(member_node_ptr)
+
+            # This is only needed in _as_node_ptr if using a member node.  Look it
+            # up here so we only do it once.
+            self._char_ptr_type = gdb.lookup_type("char").pointer()
+
+    def display_hint(self):
+        return "array"
+
+    def _uses_member_node(self):
+        """Return True if the list items use a node as a member, False if
+        they use a node as a base class.
+        """
+
+        if self._conv_type.name.startswith("intrusive_member_node<"):
+            return True
+        elif self._conv_type.name.startswith("intrusive_base_node<"):
+            return False
+        else:
+            raise RuntimeError(
+                "Unexpected intrusive_list value -> node converter type: {}".format(
+                    self._conv_type.name
+                )
+            )
+
+    def to_string(self):
+        s = "intrusive list of {}".format(self._item_type)
+
+        if self._uses_member_node():
+            node_member = self._conv_type.template_argument(1)
+            s += ", linked through {}".format(node_member)
+
+        return s
+
+    def _as_node_ptr(self, elem_ptr):
+        """Given ELEM_PTR, a pointer to a list element, return a pointer to the
+        corresponding intrusive_list_node.
+        """
+
+        assert elem_ptr.type.code == gdb.TYPE_CODE_PTR
+
+        if self._uses_member_node():
+            # Node as a member: add the member node offset from to the element's
+            # address to get the member node's address.
+            elem_char_ptr = elem_ptr.cast(self._char_ptr_type)
+            node_char_ptr = elem_char_ptr + self._member_node_offset
+            return node_char_ptr.cast(self._node_ptr_type)
+        else:
+            # Node as a base: just casting from node pointer to item pointer
+            # will adjust the pointer value.
+            return elem_ptr.cast(self._node_ptr_type)
+
+    def _children_generator(self):
+        """Generator that yields one tuple per list item."""
+
+        elem_ptr = self._val["m_front"]
+        idx = 0
+        while elem_ptr != 0:
+            yield (str(idx), elem_ptr.dereference())
+            node_ptr = self._as_node_ptr(elem_ptr)
+            elem_ptr = node_ptr["next"]
+            idx += 1
+
+    def children(self):
+        return self._children_generator()
+
+
 def type_lookup_function(val):
     """A routine that returns the correct pretty printer for VAL
     if appropriate.  Returns None otherwise.
     """
-    if val.type.tag == "type":
+    tag = val.type.tag
+    name = val.type.name
+    if tag == "type":
         return StructTypePrettyPrinter(val)
-    elif val.type.tag == "main_type":
+    elif tag == "main_type":
         return StructMainTypePrettyPrinter(val)
-    elif val.type.name == 'CORE_ADDR':
+    elif name == "CORE_ADDR":
         return CoreAddrPrettyPrinter(val)
+    elif tag is not None and tag.startswith("intrusive_list<"):
+        return IntrusiveListPrinter(val)
     return None
 
 
 def register_pretty_printer(objfile):
-    """A routine to register a pretty-printer against the given OBJFILE.
-    """
+    """A routine to register a pretty-printer against the given OBJFILE."""
     objfile.pretty_printers.append(type_lookup_function)
 
 

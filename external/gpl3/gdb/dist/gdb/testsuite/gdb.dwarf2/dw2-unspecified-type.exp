@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 standard_testfile .c -foo.c dwz.S
 
@@ -29,10 +27,26 @@ lassign $foo_res \
     foo_start foo_len
 set foo_end "$foo_start + $foo_len"
 
+set bar_res \
+    [function_range bar \
+	 [list ${srcdir}/${subdir}/$srcfile ${srcdir}/${subdir}/$srcfile2]]
+lassign $bar_res \
+    bar_start bar_len
+set bar_end "$bar_start + $bar_len"
+
+set foo2_res \
+    [function_range foo2 \
+	 [list ${srcdir}/${subdir}/$srcfile ${srcdir}/${subdir}/$srcfile2]]
+lassign $foo2_res \
+    foo2_start foo2_len
+set foo2_end "$foo2_start + $foo2_len"
+
 # Create the DWARF.
 set asm_file [standard_output_file $srcfile3]
 Dwarf::assemble $asm_file {
     global foo_start foo_end
+    global bar_start bar_end
+    global foo2_start foo2_end
     declare_labels unspecified_type_label
 
     cu {} {
@@ -47,7 +61,32 @@ Dwarf::assemble $asm_file {
 		{high_pc $foo_end addr}
 		{type :$unspecified_type_label}
 	    }
+	}
+    }
 
+    cu {} {
+	compile_unit {
+	    {language @DW_LANG_Mips_Assembler}
+	    {producer "GNU AS 2.39.0"}
+	} {
+	    DW_TAG_subprogram {
+		{name bar}
+		{low_pc $bar_start addr}
+		{high_pc $bar_end addr}
+	    }
+	}
+    }
+
+    cu { version 2 } {
+	compile_unit {
+	    {language @DW_LANG_Mips_Assembler}
+	    {producer "GNU AS 2.40.0"}
+	} {
+	    DW_TAG_subprogram {
+		{name foo2}
+		{low_pc $foo2_start addr}
+		{high_pc $foo2_end addr}
+	    }
 	}
     }
 }
@@ -61,12 +100,14 @@ if ![runto_main] {
     return -1
 }
 
-# Print the function type.  Return type should be stub type, which is printed
-# as void.
-gdb_test "ptype foo" "type = void \\(void\\)"
+foreach f {foo bar foo2} {
+    # Print the function type.  Return type should be stub type, which is printed
+    # as void.
+    gdb_test "ptype $f" "type = void \\(void\\)"
 
-# Call the function, casting the function to the correct function type.
-gdb_test "p ((int (*) ()) foo) ()" " = 0"
+    # Call the function, casting the function to the correct function type.
+    gdb_test "p ((int (*) ()) $f) ()" " = 0"
 
-# Call the function, casting the function result to the correct type.
-gdb_test "p (int) foo ()" " = 0"
+    # Call the function, casting the function result to the correct type.
+    gdb_test "p (int) $f ()" " = 0"
+}

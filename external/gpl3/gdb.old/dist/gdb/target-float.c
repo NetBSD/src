@@ -1,6 +1,6 @@
 /* Floating point routines for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -189,9 +189,9 @@ get_field (const bfd_byte *data, enum floatformat_byteorders order,
       int excess = FLOATFORMAT_CHAR_BIT - (total_len % FLOATFORMAT_CHAR_BIT);
 
       cur_byte = (total_len / FLOATFORMAT_CHAR_BIT)
-                 - ((start + len + excess) / FLOATFORMAT_CHAR_BIT);
+		 - ((start + len + excess) / FLOATFORMAT_CHAR_BIT);
       cur_bitshift = ((start + len + excess) % FLOATFORMAT_CHAR_BIT)
-                     - FLOATFORMAT_CHAR_BIT;
+		     - FLOATFORMAT_CHAR_BIT;
     }
   else
     {
@@ -249,9 +249,9 @@ put_field (unsigned char *data, enum floatformat_byteorders order,
       int excess = FLOATFORMAT_CHAR_BIT - (total_len % FLOATFORMAT_CHAR_BIT);
 
       cur_byte = (total_len / FLOATFORMAT_CHAR_BIT)
-                 - ((start + len + excess) / FLOATFORMAT_CHAR_BIT);
+		 - ((start + len + excess) / FLOATFORMAT_CHAR_BIT);
       cur_bitshift = ((start + len + excess) % FLOATFORMAT_CHAR_BIT)
-                     - FLOATFORMAT_CHAR_BIT;
+		     - FLOATFORMAT_CHAR_BIT;
     }
   else
     {
@@ -481,7 +481,7 @@ floatformat_mantissa (const struct floatformat *fmt,
    floating-point number of format FMT.  */
 static std::string
 floatformat_printf_format (const struct floatformat *fmt,
-                           const char *format, char length)
+			   const char *format, char length)
 {
   std::string host_format;
   char conversion;
@@ -508,7 +508,7 @@ floatformat_printf_format (const struct floatformat *fmt,
   else
     {
       /* Use the specified format, stripping out the conversion character
-         and length modifier, if present.  */
+	 and length modifier, if present.  */
       size_t len = strlen (format);
       gdb_assert (len > 1);
       conversion = format[--len];
@@ -878,23 +878,23 @@ host_float_ops<T>::to_target (const struct floatformat *fmt,
       mant -= mant_long;
 
       /* If the integer bit is implicit, then we need to discard it.
-         If we are discarding a zero, we should be (but are not) creating
-         a denormalized number which means adjusting the exponent
-         (I think).  */
+	 If we are discarding a zero, we should be (but are not) creating
+	 a denormalized number which means adjusting the exponent
+	 (I think).  */
       if (mant_bits_left == fmt->man_len
 	  && fmt->intbit == floatformat_intbit_no)
 	{
 	  mant_long <<= 1;
 	  mant_long &= 0xffffffffL;
-          /* If we are processing the top 32 mantissa bits of a doublest
-             so as to convert to a float value with implied integer bit,
-             we will only be putting 31 of those 32 bits into the
-             final value due to the discarding of the top bit.  In the
-             case of a small float value where the number of mantissa
-             bits is less than 32, discarding the top bit does not alter
-             the number of bits we will be adding to the result.  */
-          if (mant_bits == 32)
-            mant_bits -= 1;
+	  /* If we are processing the top 32 mantissa bits of a doublest
+	     so as to convert to a float value with implied integer bit,
+	     we will only be putting 31 of those 32 bits into the
+	     final value due to the discarding of the top bit.  In the
+	     case of a small float value where the number of mantissa
+	     bits is less than 32, discarding the top bit does not alter
+	     the number of bits we will be adding to the result.  */
+	  if (mant_bits == 32)
+	    mant_bits -= 1;
 	}
 
       if (mant_bits < 32)
@@ -921,7 +921,7 @@ host_float_ops<T>::to_target (const struct type *type,
 			      const T *from, gdb_byte *to) const
 {
   /* Ensure possible padding bytes in the target buffer are zeroed out.  */
-  memset (to, 0, TYPE_LENGTH (type));
+  memset (to, 0, type->length ());
 
   to_target (floatformat_from_type (type), from, to);
 }
@@ -1191,7 +1191,7 @@ public:
 	       const gdb_byte *y, const struct type *type_y) const override;
 
 private:
-  /* Local wrapper class to handle mpfr_t initalization and cleanup.  */
+  /* Local wrapper class to handle mpfr_t initialization and cleanup.  */
   class gdb_mpfr
   {
   public:
@@ -1456,23 +1456,23 @@ mpfr_float_ops::to_target (const struct floatformat *fmt,
       mpfr_sub_ui (tmp.val, tmp.val, mant_long, MPFR_RNDZ);
 
       /* If the integer bit is implicit, then we need to discard it.
-         If we are discarding a zero, we should be (but are not) creating
-         a denormalized number which means adjusting the exponent
-         (I think).  */
+	 If we are discarding a zero, we should be (but are not) creating
+	 a denormalized number which means adjusting the exponent
+	 (I think).  */
       if (mant_bits_left == fmt->man_len
 	  && fmt->intbit == floatformat_intbit_no)
 	{
 	  mant_long <<= 1;
 	  mant_long &= 0xffffffffL;
-          /* If we are processing the top 32 mantissa bits of a doublest
-             so as to convert to a float value with implied integer bit,
-             we will only be putting 31 of those 32 bits into the
-             final value due to the discarding of the top bit.  In the
-             case of a small float value where the number of mantissa
-             bits is less than 32, discarding the top bit does not alter
-             the number of bits we will be adding to the result.  */
-          if (mant_bits == 32)
-            mant_bits -= 1;
+	  /* If we are processing the top 32 mantissa bits of a doublest
+	     so as to convert to a float value with implied integer bit,
+	     we will only be putting 31 of those 32 bits into the
+	     final value due to the discarding of the top bit.  In the
+	     case of a small float value where the number of mantissa
+	     bits is less than 32, discarding the top bit does not alter
+	     the number of bits we will be adding to the result.  */
+	  if (mant_bits == 32)
+	    mant_bits -= 1;
 	}
 
       if (mant_bits < 32)
@@ -1499,7 +1499,7 @@ mpfr_float_ops::to_target (const struct type *type,
 			   const gdb_mpfr &from, gdb_byte *to) const
 {
   /* Ensure possible padding bytes in the target buffer are zeroed out.  */
-  memset (to, 0, TYPE_LENGTH (type));
+  memset (to, 0, type->length ());
 
   to_target (floatformat_from_type (type), from, to);
 }
@@ -1744,7 +1744,7 @@ match_endianness (const gdb_byte *from, const struct type *type, gdb_byte *to)
 {
   gdb_assert (type->code () == TYPE_CODE_DECFLOAT);
 
-  int len = TYPE_LENGTH (type);
+  int len = type->length ();
   int i;
 
 #if WORDS_BIGENDIAN
@@ -1770,7 +1770,7 @@ set_decnumber_context (decContext *ctx, const struct type *type)
 {
   gdb_assert (type->code () == TYPE_CODE_DECFLOAT);
 
-  switch (TYPE_LENGTH (type))
+  switch (type->length ())
     {
       case 4:
 	decContextDefault (ctx, DEC_INIT_DECIMAL32);
@@ -1808,7 +1808,7 @@ decimal_check_errors (decContext *ctx)
    for computation to each size of decimal float.  */
 static void
 decimal_from_number (const decNumber *from,
-                     gdb_byte *to, const struct type *type)
+		     gdb_byte *to, const struct type *type)
 {
   gdb_byte dec[16];
 
@@ -1816,7 +1816,7 @@ decimal_from_number (const decNumber *from,
 
   set_decnumber_context (&set, type);
 
-  switch (TYPE_LENGTH (type))
+  switch (type->length ())
     {
       case 4:
 	decimal32FromNumber ((decimal32 *) dec, from, &set);
@@ -1839,12 +1839,12 @@ decimal_from_number (const decNumber *from,
    appropriate representation for computation.  */
 static void
 decimal_to_number (const gdb_byte *addr, const struct type *type,
-                   decNumber *to)
+		   decNumber *to)
 {
   gdb_byte dec[16];
   match_endianness (addr, type, dec);
 
-  switch (TYPE_LENGTH (type))
+  switch (type->length ())
     {
       case 4:
 	decimal32ToNumber ((decimal32 *) dec, to);
@@ -1940,7 +1940,7 @@ decimal_float_ops::to_string (const gdb_byte *addr, const struct type *type,
   std::string result;
   result.resize (MAX_DECIMAL_STRING);
 
-  switch (TYPE_LENGTH (type))
+  switch (type->length ())
     {
       case 4:
 	decimal32ToString ((decimal32 *) dec, &result[0]);
@@ -1971,7 +1971,7 @@ decimal_float_ops::from_string (gdb_byte *addr, const struct type *type,
 
   set_decnumber_context (&set, type);
 
-  switch (TYPE_LENGTH (type))
+  switch (type->length ())
     {
       case 4:
 	decimal32FromString ((decimal32 *) dec, string.c_str (), &set);
@@ -2032,7 +2032,7 @@ decimal_float_ops::from_ulongest (gdb_byte *addr, const struct type *type,
 /* Converts a decimal float of LEN bytes to a LONGEST.  */
 LONGEST
 decimal_float_ops::to_longest (const gdb_byte *addr,
-                               const struct type *type) const
+			       const struct type *type) const
 {
   /* libdecnumber has a function to convert from decimal to integer, but
      it doesn't work when the decimal number has a fractional part.  */
@@ -2100,7 +2100,7 @@ decimal_float_ops::compare (const gdb_byte *x, const struct type *type_x,
   decimal_to_number (y, type_y, &number2);
 
   /* Perform the comparison in the larger of the two sizes.  */
-  type_result = TYPE_LENGTH (type_x) > TYPE_LENGTH (type_y) ? type_x : type_y;
+  type_result = type_x->length () > type_y->length () ? type_x : type_y;
   set_decnumber_context (&set, type_result);
 
   decNumberCompare (&result, &number1, &number2, &set);
@@ -2159,7 +2159,7 @@ target_float_same_format_p (const struct type *type1,
 	return floatformat_from_type (type1) == floatformat_from_type (type2);
 
       case TYPE_CODE_DECFLOAT:
-	return (TYPE_LENGTH (type1) == TYPE_LENGTH (type2)
+	return (type1->length () == type2->length ()
 		&& (type_byte_order (type1)
 		    == type_byte_order (type2)));
 
@@ -2179,7 +2179,7 @@ target_float_format_length (const struct type *type)
 	return floatformat_totalsize_bytes (floatformat_from_type (type));
 
       case TYPE_CODE_DECFLOAT:
-	return TYPE_LENGTH (type);
+	return type->length ();
 
       default:
 	gdb_assert_not_reached ("unexpected type code");
@@ -2208,7 +2208,7 @@ get_target_float_ops_kind (const struct type *type)
   switch (type->code ())
     {
       case TYPE_CODE_FLT:
-        {
+	{
 	  const struct floatformat *fmt = floatformat_from_type (type);
 
 	  /* Binary floating-point formats matching a host format.  */
@@ -2234,7 +2234,7 @@ get_target_float_ops_kind (const struct type *type)
     }
 }
 
-/* Return target_float_ops to peform operations for KIND.  */
+/* Return target_float_ops to perform operations for KIND.  */
 static const target_float_ops *
 get_target_float_ops (enum target_float_ops_kind kind)
 {
@@ -2243,29 +2243,29 @@ get_target_float_ops (enum target_float_ops_kind kind)
       /* If the type format matches one of the host floating-point
 	 types, use that type as intermediate format.  */
       case target_float_ops_kind::host_float:
-        {
+	{
 	  static host_float_ops<float> host_float_ops_float;
 	  return &host_float_ops_float;
 	}
 
       case target_float_ops_kind::host_double:
-        {
+	{
 	  static host_float_ops<double> host_float_ops_double;
 	  return &host_float_ops_double;
 	}
 
       case target_float_ops_kind::host_long_double:
-        {
+	{
 	  static host_float_ops<long double> host_float_ops_long_double;
 	  return &host_float_ops_long_double;
 	}
 
       /* For binary floating-point formats that do not match any host format,
-         use mpfr_t as intermediate format to provide precise target-floating
-         point emulation.  However, if the MPFR library is not available,
-         use the largest host floating-point type as intermediate format.  */
+	 use mpfr_t as intermediate format to provide precise target-floating
+	 point emulation.  However, if the MPFR library is not available,
+	 use the largest host floating-point type as intermediate format.  */
       case target_float_ops_kind::binary:
-        {
+	{
 #ifdef HAVE_LIBMPFR
 	  static mpfr_float_ops binary_float_ops;
 #else
@@ -2451,15 +2451,15 @@ target_float_convert (const gdb_byte *from, const struct type *from_type,
 
   /* Convert between two different formats in the same category.  */
   if (!target_float_same_format_p (from_type, to_type))
-  {
-    const target_float_ops *ops = get_target_float_ops (from_type, to_type);
-    ops->convert (from, from_type, to, to_type);
-    return;
-  }
+    {
+      const target_float_ops *ops = get_target_float_ops (from_type, to_type);
+      ops->convert (from, from_type, to, to_type);
+      return;
+    }
 
   /* The floating-point formats match, so we simply copy the data, ensuring
      possible padding bytes in the target buffer are zeroed out.  */
-  memset (to, 0, TYPE_LENGTH (to_type));
+  memset (to, 0, to_type->length ());
   memcpy (to, from, target_float_format_length (to_type));
 }
 

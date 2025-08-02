@@ -1,6 +1,6 @@
 /* Self tests for gdbarch for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,6 +26,8 @@
 #include "gdbsupport/def-vector.h"
 #include "gdbarch.h"
 #include "scoped-mock-context.h"
+
+#include <map>
 
 namespace selftests {
 
@@ -71,7 +73,7 @@ register_to_value_test (struct gdbarch *gdbarch)
 
   scoped_mock_context<test_target_ops> mockctx (gdbarch);
 
-  struct frame_info *frame = get_current_frame ();
+  frame_info_ptr frame = get_current_frame ();
   const int num_regs = gdbarch_num_cooked_regs (gdbarch);
 
   /* Test gdbarch methods register_to_value and value_to_register with
@@ -82,7 +84,7 @@ register_to_value_test (struct gdbarch *gdbarch)
 	{
 	  if (gdbarch_convert_register_p (gdbarch, regnum, type))
 	    {
-	      std::vector<gdb_byte> expected (TYPE_LENGTH (type), 0);
+	      std::vector<gdb_byte> expected (type->length (), 0);
 
 	      if (type->code () == TYPE_CODE_FLT)
 		{
@@ -99,12 +101,12 @@ register_to_value_test (struct gdbarch *gdbarch)
 					 expected.data ());
 
 	      /* Allocate two bytes more for overflow check.  */
-	      std::vector<gdb_byte> buf (TYPE_LENGTH (type) + 2, 0);
+	      std::vector<gdb_byte> buf (type->length () + 2, 0);
 	      int optim, unavail, ok;
 
 	      /* Set the fingerprint in the last two bytes.  */
-	      buf [TYPE_LENGTH (type)]= 'w';
-	      buf [TYPE_LENGTH (type) + 1]= 'l';
+	      buf [type->length ()]= 'w';
+	      buf [type->length () + 1]= 'l';
 	      ok = gdbarch_register_to_value (gdbarch, frame, regnum, type,
 					      buf.data (), &optim, &unavail);
 
@@ -112,12 +114,53 @@ register_to_value_test (struct gdbarch *gdbarch)
 	      SELF_CHECK (!optim);
 	      SELF_CHECK (!unavail);
 
-	      SELF_CHECK (buf[TYPE_LENGTH (type)] == 'w');
-	      SELF_CHECK (buf[TYPE_LENGTH (type) + 1] == 'l');
+	      SELF_CHECK (buf[type->length ()] == 'w');
+	      SELF_CHECK (buf[type->length () + 1] == 'l');
 
-	      for (auto k = 0; k < TYPE_LENGTH(type); k++)
+	      for (auto k = 0; k < type->length (); k++)
 		SELF_CHECK (buf[k] == expected[k]);
 	    }
+	}
+    }
+}
+
+/* Test function gdbarch_register_name.  */
+
+static void
+register_name_test (struct gdbarch *gdbarch)
+{
+  scoped_mock_context<test_target_ops> mockctx (gdbarch);
+
+  /* Track the number of times each register name appears.  */
+  std::map<const std::string, int> name_counts;
+
+  const int num_regs = gdbarch_num_cooked_regs (gdbarch);
+  for (auto regnum = 0; regnum < num_regs; regnum++)
+    {
+      /* If a register is to be hidden from the user then we should get
+	 back an empty string, not nullptr.  Every other register should
+	 return a non-empty string.  */
+      const char *name = gdbarch_register_name (gdbarch, regnum);
+
+      if (run_verbose() && name == nullptr)
+	debug_printf ("arch: %s, register: %d returned nullptr\n",
+		      gdbarch_bfd_arch_info (gdbarch)->printable_name,
+		      regnum);
+      SELF_CHECK (name != nullptr);
+
+      /* Every register name, that is not the empty string, should be
+	 unique.  If this is not the case then the user will see duplicate
+	 copies of the register in e.g. 'info registers' output, but will
+	 only be able to interact with one of the copies.  */
+      if (*name != '\0')
+	{
+	  std::string s (name);
+	  name_counts[s]++;
+	  if (run_verbose() && name_counts[s] > 1)
+	    debug_printf ("arch: %s, register: %d (%s) is a duplicate\n",
+			  gdbarch_bfd_arch_info (gdbarch)->printable_name,
+			  regnum, name);
+	  SELF_CHECK (name_counts[s] == 1);
 	}
     }
 }
@@ -130,4 +173,7 @@ _initialize_gdbarch_selftests ()
 {
   selftests::register_test_foreach_arch ("register_to_value",
 					 selftests::register_to_value_test);
+
+  selftests::register_test_foreach_arch ("register_name",
+					 selftests::register_name_test);
 }

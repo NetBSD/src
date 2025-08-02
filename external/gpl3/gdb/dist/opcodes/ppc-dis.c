@@ -1,5 +1,5 @@
 /* ppc-dis.c -- Disassemble PowerPC instructions
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support
 
    This file is part of the GNU opcodes library.
@@ -208,6 +208,11 @@ struct ppc_mopt ppc_opts[] = {
 		| PPC_OPCODE_POWER7 | PPC_OPCODE_POWER8 | PPC_OPCODE_POWER9
 		| PPC_OPCODE_POWER10 | PPC_OPCODE_ALTIVEC | PPC_OPCODE_VSX),
     0 },
+  { "power11", (PPC_OPCODE_PPC | PPC_OPCODE_ISEL | PPC_OPCODE_64
+		| PPC_OPCODE_POWER4 | PPC_OPCODE_POWER5 | PPC_OPCODE_POWER6
+		| PPC_OPCODE_POWER7 | PPC_OPCODE_POWER8 | PPC_OPCODE_POWER9
+		| PPC_OPCODE_POWER10 | PPC_OPCODE_ALTIVEC | PPC_OPCODE_VSX),
+    0 },
   { "libresoc",(PPC_OPCODE_PPC | PPC_OPCODE_ISEL | PPC_OPCODE_64
 		| PPC_OPCODE_POWER4 | PPC_OPCODE_POWER5 | PPC_OPCODE_POWER6
 		| PPC_OPCODE_POWER7 | PPC_OPCODE_POWER8 | PPC_OPCODE_POWER9
@@ -263,6 +268,11 @@ struct ppc_mopt ppc_opts[] = {
 		| PPC_OPCODE_ALTIVEC | PPC_OPCODE_VSX),
     0 },
   { "pwr10",   (PPC_OPCODE_PPC | PPC_OPCODE_ISEL | PPC_OPCODE_64
+		| PPC_OPCODE_POWER4 | PPC_OPCODE_POWER5 | PPC_OPCODE_POWER6
+		| PPC_OPCODE_POWER7 | PPC_OPCODE_POWER8 | PPC_OPCODE_POWER9
+		| PPC_OPCODE_POWER10 | PPC_OPCODE_ALTIVEC | PPC_OPCODE_VSX),
+    0 },
+  { "pwr11",   (PPC_OPCODE_PPC | PPC_OPCODE_ISEL | PPC_OPCODE_64
 		| PPC_OPCODE_POWER4 | PPC_OPCODE_POWER5 | PPC_OPCODE_POWER6
 		| PPC_OPCODE_POWER7 | PPC_OPCODE_POWER8 | PPC_OPCODE_POWER9
 		| PPC_OPCODE_POWER10 | PPC_OPCODE_ALTIVEC | PPC_OPCODE_VSX),
@@ -348,7 +358,7 @@ powerpc_init_dialect (struct disassemble_info *info)
 {
   ppc_cpu_t dialect = 0;
   ppc_cpu_t sticky = 0;
-  struct dis_private *priv = calloc (sizeof (*priv), 1);
+  struct dis_private *priv = calloc (1, sizeof (*priv));
 
   if (priv == NULL)
     return;
@@ -396,7 +406,7 @@ powerpc_init_dialect (struct disassemble_info *info)
       break;
     default:
       if (info->arch == bfd_arch_powerpc)
-	dialect = ppc_parse_cpu (dialect, &sticky, "power10") | PPC_OPCODE_ANY;
+	dialect = ppc_parse_cpu (dialect, &sticky, "power11") | PPC_OPCODE_ANY;
       else
 	dialect = ppc_parse_cpu (dialect, &sticky, "pwr");
       break;

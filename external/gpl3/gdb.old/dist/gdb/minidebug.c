@@ -1,6 +1,6 @@
 /* Read MiniDebugInfo data from an objfile.
 
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +28,7 @@
 
 /* We stash a reference to the .gnu_debugdata BFD on the enclosing
    BFD.  */
-static const bfd_key<gdb_bfd_ref_ptr> gnu_debug_key;
+static const registry<bfd>::key<gdb_bfd_ref_ptr> gnu_debug_key;
 
 #include <lzma.h>
 
@@ -96,7 +96,7 @@ lzma_open (struct bfd *nbfd, void *open_closure)
   if (size < LZMA_STREAM_HEADER_SIZE
       || bfd_seek (section->owner, offset, SEEK_SET) != 0
       || bfd_bread (footer, LZMA_STREAM_HEADER_SIZE, section->owner)
-         != LZMA_STREAM_HEADER_SIZE
+	 != LZMA_STREAM_HEADER_SIZE
       || lzma_stream_footer_decode (&options, footer) != LZMA_OK
       || offset < options.backward_size)
     {
@@ -110,10 +110,10 @@ lzma_open (struct bfd *nbfd, void *open_closure)
   pos = 0;
   if (bfd_seek (section->owner, offset, SEEK_SET) != 0
       || bfd_bread (indexdata, options.backward_size, section->owner)
-         != options.backward_size
+	 != options.backward_size
       || lzma_index_buffer_decode (&index, &memlimit, &gdb_lzma_allocator,
 				   indexdata, &pos, options.backward_size)
-         != LZMA_OK
+	 != LZMA_OK
       || lzma_index_size (index) != options.backward_size)
     {
       xfree (indexdata);
@@ -268,12 +268,12 @@ find_separate_debug_file_in_section (struct objfile *objfile)
   if (objfile->obfd == NULL)
     return NULL;
 
-  section = bfd_get_section_by_name (objfile->obfd, ".gnu_debugdata");
+  section = bfd_get_section_by_name (objfile->obfd.get (), ".gnu_debugdata");
   if (section == NULL)
     return NULL;
 
 #ifdef HAVE_LIBLZMA
-  gdb_bfd_ref_ptr *shared = gnu_debug_key.get (objfile->obfd);
+  gdb_bfd_ref_ptr *shared = gnu_debug_key.get (objfile->obfd.get ());
   if (shared != nullptr)
     return *shared;
 
@@ -291,7 +291,7 @@ find_separate_debug_file_in_section (struct objfile *objfile)
       return NULL;
     }
 
-  gnu_debug_key.emplace (objfile->obfd, abfd);
+  gnu_debug_key.emplace (objfile->obfd.get (), abfd);
 
 #else
   warning (_("Cannot parse .gnu_debugdata section; LZMA support was "

@@ -1,6 +1,6 @@
 /* This file is part of SIS (SPARC instruction simulator)
 
-   Copyright (C) 1995-2023 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
    Contributed by Jiri Gaisler, European Space Agency
 
    This program is free software; you can redistribute it and/or modify
@@ -614,7 +614,9 @@ reset_stat(struct pstate *sregs)
 void
 show_stat(struct pstate *sregs)
 {
+#ifdef STAT
     uint32_t          iinst;
+#endif
     uint32_t          stime;
 
     if (sregs->tottime == 0.0)
@@ -687,18 +689,15 @@ int_handler(int32_t sig)
 void
 init_signals(void)
 {
-    typedef void    (*PFI) ();
-    static PFI      int_tab[2];
-
-    int_tab[0] = signal(SIGTERM, int_handler);
-    int_tab[1] = signal(SIGINT, int_handler);
+    signal(SIGTERM, int_handler);
+    signal(SIGINT, int_handler);
 }
 
 
 extern struct disassemble_info dinfo;
 
 struct estate   ebase;
-struct evcell   evbuf[EVENT_MAX];
+struct evcell   evbuf[MAX_EVENTS];
 struct irqcell  irqarr[16];
 
 static int
@@ -706,7 +705,6 @@ disp_fpu(struct pstate *sregs)
 {
 
     int         i;
-    float	t;
 
     printf("\n fsr: %08X\n\n", sregs->fsr);
 
@@ -716,7 +714,6 @@ disp_fpu(struct pstate *sregs)
 #endif
 
     for (i = 0; i < 32; i++) {
-	t = sregs->fs[i];
 	printf(" f%02d  %08x  %14e  ", i, sregs->fsi[i], sregs->fs[i]);
 	if (!(i & 1))
 	    printf("%14e\n", sregs->fd[i >> 1]);
@@ -867,10 +864,10 @@ init_event(void)
 
     ebase.eq.nxt = NULL;
     ebase.freeq = evbuf;
-    for (i = 0; i < EVENT_MAX; i++) {
+    for (i = 0; i < MAX_EVENTS; i++) {
 	evbuf[i].nxt = &evbuf[i + 1];
     }
-    evbuf[EVENT_MAX - 1].nxt = NULL;
+    evbuf[MAX_EVENTS - 1].nxt = NULL;
 }
 
 void
@@ -1006,7 +1003,6 @@ bfd_load (const char *fname)
 {
     asection       *section;
     bfd            *pbfd;
-    const bfd_arch_info_type *arch;
     int            i;
 
     pbfd = bfd_openr(fname, 0);
@@ -1020,7 +1016,6 @@ bfd_load (const char *fname)
 	return -1;
     }
 
-    arch = bfd_get_arch_info (pbfd);
     if (sis_verbose)
 	printf("loading %s:", fname);
     for (section = pbfd->sections; section; section = section->next) {

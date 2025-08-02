@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2023 Free Software Foundation, Inc.
+# Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,13 @@
 
 load_lib gdb-guile.exp
 
+require allow_guile_tests
+
 standard_testfile
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
     return
 }
-
-# Skip all tests if Guile scripting is not enabled.
-if { [skip_guile_tests] } { continue }
 
 if ![gdb_guile_runto_main] {
    return
@@ -84,73 +83,67 @@ foreach variation $port_variations {
 
 # Test read/write of memory ports.
 
-proc test_mem_port_rw { kind } {
-    if { "$kind" == "buffered" } {
-	set buffered 1
+proc test_mem_port_rw { buffered } {
+    if $buffered {
+	set mode "r+"
     } else {
-	set buffered 0
+	set mode "r+0"
     }
-    with_test_prefix $kind {
-	if $buffered {
-	    set mode "r+"
-	} else {
-	    set mode "r+0"
-	}
-	gdb_test_no_output "guile (define rw-mem-port (open-memory #:mode \"$mode\"))" \
-	    "create r/w memory port"
-	gdb_test "guile (print rw-mem-port)" \
-	    "#<input-output: gdb:memory-port 0x0-0xf+>"
-	gdb_test_no_output "guile (define sp-reg (parse-and-eval \"\$sp\"))" \
-	    "get sp reg"
-	# Note: Only use $sp_reg for gdb_test result matching, don't use it in
-	# gdb commands.  Otherwise transcript.N becomes unusable.
-	set sp_reg [get_valueof /u "\$sp" 0]
-	gdb_test_no_output "guile (define byte-at-sp (parse-and-eval \"*(char*) \$sp\"))" \
-	    "save current value at sp"
-	# Pass the result of parse-and-eval through value-fetch-lazy!,
-	# otherwise the value gets left as a lazy reference to memory, which
-	# when re-evaluated after we flush the write will yield the newly
-	# written value.  PR 18175
-	gdb_test_no_output "guile (value-fetch-lazy! byte-at-sp)" \
-	    "un-lazyify byte-at-sp"
-	gdb_test "guile (print (seek rw-mem-port (value->integer sp-reg) SEEK_SET))" \
-	    "= $sp_reg" \
-	    "seek to \$sp"
-	gdb_test_no_output "guile (define old-value (value->integer byte-at-sp))" \
-	    "define old-value"
-	gdb_test_no_output "guile (define new-value (logxor old-value 1))" \
-	    "define new-value"
-	gdb_test "guile (print (put-bytevector rw-mem-port (make-bytevector 1 new-value)))" \
-	    "= #<unspecified>"
-	if $buffered {
-	    # Value shouldn't be in memory yet.
-	    gdb_test "guile (print (value=? (parse-and-eval \"*(char*) \$sp\") byte-at-sp))" \
-		"= #t" \
-		"test byte at sp, before flush"
-	    gdb_test_no_output "guile (force-output rw-mem-port)" \
-		"flush port"
-	}
-	# Value should be in memory now.
-	gdb_test "guile (print (value=? (parse-and-eval \"*(char*) \$sp\") byte-at-sp))" \
-	    "= #f" \
-	    "test byte at sp, after flush"
-	# Restore the value for cleanliness sake, and to verify close-port
-	# flushes the buffer.
-	gdb_test "guile (print (seek rw-mem-port (value->integer sp-reg) SEEK_SET))" \
-	    "= $sp_reg" \
-	    "seek to \$sp for restore"
-	gdb_test "guile (print (put-bytevector rw-mem-port (make-bytevector 1 old-value)))" \
-	    "= #<unspecified>"
-	gdb_test "guile (print (close-port rw-mem-port))" \
-	    "= #t"
+    gdb_test_no_output "guile (define rw-mem-port (open-memory #:mode \"$mode\"))" \
+	"create r/w memory port"
+    gdb_test "guile (print rw-mem-port)" \
+	"#<input-output: gdb:memory-port 0x0-0xf+>"
+    gdb_test_no_output "guile (define sp-reg (parse-and-eval \"\$sp\"))" \
+	"get sp reg"
+    # Note: Only use $sp_reg for gdb_test result matching, don't use it in
+    # gdb commands.  Otherwise transcript.N becomes unusable.
+    set sp_reg [get_valueof /u "\$sp" 0]
+    gdb_test_no_output "guile (define byte-at-sp (parse-and-eval \"*(char*) \$sp\"))" \
+	"save current value at sp"
+    # Pass the result of parse-and-eval through value-fetch-lazy!,
+    # otherwise the value gets left as a lazy reference to memory, which
+    # when re-evaluated after we flush the write will yield the newly
+    # written value.  PR 18175
+    gdb_test_no_output "guile (value-fetch-lazy! byte-at-sp)" \
+	"un-lazyify byte-at-sp"
+    gdb_test "guile (print (seek rw-mem-port (value->integer sp-reg) SEEK_SET))" \
+	"= $sp_reg" \
+	"seek to \$sp"
+    gdb_test_no_output "guile (define old-value (value->integer byte-at-sp))" \
+	"define old-value"
+    gdb_test_no_output "guile (define new-value (logxor old-value 1))" \
+	"define new-value"
+    gdb_test "guile (print (put-bytevector rw-mem-port (make-bytevector 1 new-value)))" \
+	"= #<unspecified>"
+    if $buffered {
+	# Value shouldn't be in memory yet.
 	gdb_test "guile (print (value=? (parse-and-eval \"*(char*) \$sp\") byte-at-sp))" \
 	    "= #t" \
-	    "test byte at sp, after close"
+	    "test byte at sp, before flush"
+	gdb_test_no_output "guile (force-output rw-mem-port)" \
+	    "flush port"
     }
+    # Value should be in memory now.
+    gdb_test "guile (print (value=? (parse-and-eval \"*(char*) \$sp\") byte-at-sp))" \
+	"= #f" \
+	"test byte at sp, after flush"
+    # Restore the value for cleanliness sake, and to verify close-port
+    # flushes the buffer.
+    gdb_test "guile (print (seek rw-mem-port (value->integer sp-reg) SEEK_SET))" \
+	"= $sp_reg" \
+	"seek to \$sp for restore"
+    gdb_test "guile (print (put-bytevector rw-mem-port (make-bytevector 1 old-value)))" \
+	"= #<unspecified>"
+    gdb_test "guile (print (close-port rw-mem-port))" \
+	"= #t"
+    gdb_test "guile (print (value=? (parse-and-eval \"*(char*) \$sp\") byte-at-sp))" \
+	"= #t" \
+	"test byte at sp, after close"
 }
 
-test_mem_port_rw buffered
-test_mem_port_rw unbuffered
+foreach_with_prefix buffered {1 0} {
+    test_mem_port_rw $buffered
+}
 
 # Test zero-length memory ports.
 

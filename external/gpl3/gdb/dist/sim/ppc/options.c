@@ -155,10 +155,6 @@ print_options (void)
   printf_filtered ("IGEN_FLAGS               = %s\n", IGEN_FLAGS);
 #endif
 
-#ifdef DGEN_FLAGS
-  printf_filtered ("DGEN_FLAGS               = %s\n", DGEN_FLAGS);
-#endif
-
   {
     static const char *const defines[] = {
 #ifdef __GNUC__

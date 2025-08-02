@@ -1,6 +1,6 @@
 /* Manages interpreters for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    Written by Jim Ingham <jingham@apple.com> of Apple Computer, Inc.
 
@@ -78,23 +78,21 @@ public:
 
   const char *name () const
   {
-    return m_name;
+    return m_name.get ();
   }
 
-  /* This is the name in "-i=" and "set interpreter".  */
 private:
-  char *m_name;
+  /* This is the name in "-i=" and "set interpreter".  */
+  gdb::unique_xmalloc_ptr<char> m_name;
 
+public:
   /* Interpreters are stored in a linked list, this is the next
      one...  */
-public:
   struct interp *next;
 
   /* Has the init method been run?  */
-  bool inited;
+  bool inited = false;
 };
-
-extern void interp_add (struct ui *ui, struct interp *interp);
 
 /* Look up the interpreter for NAME, creating one if none exists yet.
    If NAME is not a interpreter type previously registered with
@@ -180,6 +178,7 @@ extern void interpreter_completer (struct cmd_list_element *ignore,
 #define INTERP_MI1             "mi1"
 #define INTERP_MI2             "mi2"
 #define INTERP_MI3             "mi3"
+#define INTERP_MI4             "mi4"
 #define INTERP_MI		"mi"
 #define INTERP_TUI		"tui"
 #define INTERP_INSIGHT		"insight"

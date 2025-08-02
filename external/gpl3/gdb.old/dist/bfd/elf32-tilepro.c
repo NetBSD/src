@@ -1,5 +1,5 @@
 /* TILEPro-specific support for 32-bit ELF.
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -34,275 +34,275 @@ static reloc_howto_type tilepro_elf_howto_table [] =
   /* This reloc does nothing.  */
   HOWTO (R_TILEPRO_NONE,	/* type */
 	 0,			/* rightshift */
-	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_NONE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 32 bit absolute relocation.  */
   HOWTO (R_TILEPRO_32,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_32",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 16 bit absolute relocation.  */
   HOWTO (R_TILEPRO_16,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* An 8 bit absolute relocation.  */
   HOWTO (R_TILEPRO_8,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_unsigned, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_8",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 32 bit pc-relative relocation.  */
   HOWTO (R_TILEPRO_32_PCREL,/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_32_PCREL", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A 16 bit pc-relative relocation.  */
   HOWTO (R_TILEPRO_16_PCREL,/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_16_PCREL",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* An 8 bit pc-relative relocation.  */
   HOWTO (R_TILEPRO_8_PCREL,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_8_PCREL",/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A 16 bit relocation without overflow.  */
   HOWTO (R_TILEPRO_LO16,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_LO16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* The high order 16 bits of an address.  */
   HOWTO (R_TILEPRO_HI16,	/* type */
 	 16,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_HI16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* The high order 16 bits of an address, plus 1 if the contents of
      the low 16 bits, treated as a signed number, is negative.  */
   HOWTO (R_TILEPRO_HA16,	/* type */
 	 16,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_TILEPRO_HA16",  /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
-  HOWTO (R_TILEPRO_COPY,		/* type */
+  HOWTO (R_TILEPRO_COPY,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_COPY",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEPRO_GLOB_DAT,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_GLOB_DAT",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEPRO_JMP_SLOT,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_JMP_SLOT",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEPRO_RELATIVE,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_RELATIVE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEPRO_BROFF_X1, /* type */
 	 TILEPRO_LOG2_BUNDLE_ALIGNMENT_IN_BYTES, /* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 17,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_TILEPRO_BROFF_X1", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEPRO_JOFFLONG_X1, /* type */
 	 TILEPRO_LOG2_BUNDLE_ALIGNMENT_IN_BYTES, /* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 29,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_TILEPRO_JOFFLONG_X1", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEPRO_JOFFLONG_X1_PLT, /* type */
 	 TILEPRO_LOG2_BUNDLE_ALIGNMENT_IN_BYTES, /* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 29,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_TILEPRO_JOFFLONG_X1_PLT", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
 #define TILEPRO_IMM_HOWTO(name, size, bitsize) \
-  HOWTO (name, 0, size, bitsize, FALSE, 0, \
+  HOWTO (name, 0, size, bitsize, false, 0, \
 	 complain_overflow_signed, bfd_elf_generic_reloc, \
-	 #name, FALSE, 0, -1, FALSE)
+	 #name, false, 0, -1, false)
 
 #define TILEPRO_UIMM_HOWTO(name, size, bitsize) \
-  HOWTO (name, 0, size, bitsize, FALSE, 0, \
+  HOWTO (name, 0, size, bitsize, false, 0, \
 	 complain_overflow_unsigned, bfd_elf_generic_reloc, \
-	 #name, FALSE, 0, -1, FALSE)
+	 #name, false, 0, -1, false)
 
-  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_X0,  0,  8),
-  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_Y0,  0,  8),
-  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_X1,  0,  8),
-  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_Y1,  0,  8),
-  TILEPRO_UIMM_HOWTO(R_TILEPRO_MT_IMM15_X1, 1,  15),
-  TILEPRO_UIMM_HOWTO(R_TILEPRO_MF_IMM15_X1, 1,  15),
-  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM16_X0, 1, 16),
-  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM16_X1, 1, 16),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_X0,  1,  8),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_Y0,  1,  8),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_X1,  1,  8),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_Y1,  1,  8),
+  TILEPRO_UIMM_HOWTO(R_TILEPRO_MT_IMM15_X1, 2,  15),
+  TILEPRO_UIMM_HOWTO(R_TILEPRO_MF_IMM15_X1, 2,  15),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM16_X0, 2, 16),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM16_X1, 2, 16),
 
 #define TILEPRO_IMM16_HOWTO(name, rshift) \
-  HOWTO (name, rshift, 1, 16, FALSE, 0, \
+  HOWTO (name, rshift, 2, 16, false, 0, \
 	 complain_overflow_dont, bfd_elf_generic_reloc, \
-	 #name, FALSE, 0, 0xffff, FALSE)
+	 #name, false, 0, 0xffff, false)
 
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X0_LO,  0),
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X1_LO,  0),
@@ -315,36 +315,36 @@ static reloc_howto_type tilepro_elf_howto_table [] =
 
   HOWTO (R_TILEPRO_IMM16_X0_PCREL,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_IMM16_X0_PCREL",/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEPRO_IMM16_X1_PCREL,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_IMM16_X1_PCREL",/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
 #define TILEPRO_IMM16_HOWTO_PCREL(name, rshift) \
-  HOWTO (name, rshift, 1, 16, TRUE, 0, \
+  HOWTO (name, rshift, 2, 16, true, 0, \
 	 complain_overflow_dont, bfd_elf_generic_reloc, \
-	 #name, FALSE, 0, 0xffff, TRUE)
+	 #name, false, 0, 0xffff, true)
 
   TILEPRO_IMM16_HOWTO_PCREL (R_TILEPRO_IMM16_X0_LO_PCREL,  0),
   TILEPRO_IMM16_HOWTO_PCREL (R_TILEPRO_IMM16_X1_LO_PCREL,  0),
@@ -354,8 +354,8 @@ static reloc_howto_type tilepro_elf_howto_table [] =
   TILEPRO_IMM16_HOWTO_PCREL (R_TILEPRO_IMM16_X1_HA_PCREL, 16),
 
   /* Byte offset into GOT for a particular symbol. */
-  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM16_X0_GOT, 1, 16),
-  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM16_X1_GOT, 1, 16),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM16_X0_GOT, 2, 16),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM16_X1_GOT, 2, 16),
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X0_GOT_LO,  0),
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X1_GOT_LO,  0),
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X0_GOT_HI, 16),
@@ -363,17 +363,17 @@ static reloc_howto_type tilepro_elf_howto_table [] =
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X0_GOT_HA, 16),
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X1_GOT_HA, 16),
 
-  TILEPRO_UIMM_HOWTO(R_TILEPRO_MMSTART_X0, 0, 5),
-  TILEPRO_UIMM_HOWTO(R_TILEPRO_MMEND_X0,   0, 5),
-  TILEPRO_UIMM_HOWTO(R_TILEPRO_MMSTART_X1, 0, 5),
-  TILEPRO_UIMM_HOWTO(R_TILEPRO_MMEND_X1,   0, 5),
+  TILEPRO_UIMM_HOWTO(R_TILEPRO_MMSTART_X0, 1, 5),
+  TILEPRO_UIMM_HOWTO(R_TILEPRO_MMEND_X0,   1, 5),
+  TILEPRO_UIMM_HOWTO(R_TILEPRO_MMSTART_X1, 1, 5),
+  TILEPRO_UIMM_HOWTO(R_TILEPRO_MMEND_X1,   1, 5),
 
-  TILEPRO_UIMM_HOWTO(R_TILEPRO_SHAMT_X0, 0, 5),
-  TILEPRO_UIMM_HOWTO(R_TILEPRO_SHAMT_X1, 0, 5),
-  TILEPRO_UIMM_HOWTO(R_TILEPRO_SHAMT_Y0, 0, 5),
-  TILEPRO_UIMM_HOWTO(R_TILEPRO_SHAMT_Y1, 0, 5),
+  TILEPRO_UIMM_HOWTO(R_TILEPRO_SHAMT_X0, 1, 5),
+  TILEPRO_UIMM_HOWTO(R_TILEPRO_SHAMT_X1, 1, 5),
+  TILEPRO_UIMM_HOWTO(R_TILEPRO_SHAMT_Y0, 1, 5),
+  TILEPRO_UIMM_HOWTO(R_TILEPRO_SHAMT_Y1, 1, 5),
 
-  TILEPRO_IMM_HOWTO(R_TILEPRO_DEST_IMM8_X1, 0, 8),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_DEST_IMM8_X1, 1, 8),
 
   /* These relocs are currently not defined.  */
   EMPTY_HOWTO (56),
@@ -383,53 +383,53 @@ static reloc_howto_type tilepro_elf_howto_table [] =
 
   HOWTO (R_TILEPRO_TLS_GD_CALL, /* type */
 	 TILEPRO_LOG2_BUNDLE_ALIGNMENT_IN_BYTES, /* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 29,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed,/* complain_on_overflow */
 	 bfd_elf_generic_reloc, /* special_function */
 	 "R_TILEPRO_TLS_GD_CALL", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
-  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_X0_TLS_GD_ADD,  0,  8),
-  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_X1_TLS_GD_ADD,  0,  8),
-  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_Y0_TLS_GD_ADD,  0,  8),
-  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_Y1_TLS_GD_ADD,  0,  8),
-  TILEPRO_IMM_HOWTO(R_TILEPRO_TLS_IE_LOAD,  0,  8),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_X0_TLS_GD_ADD,  1,  8),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_X1_TLS_GD_ADD,  1,  8),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_Y0_TLS_GD_ADD,  1,  8),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_IMM8_Y1_TLS_GD_ADD,  1,  8),
+  TILEPRO_IMM_HOWTO(R_TILEPRO_TLS_IE_LOAD,  1,  8),
 
   /* Offsets into the GOT of TLS Descriptors. */
 
   HOWTO (R_TILEPRO_IMM16_X0_TLS_GD,/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_IMM16_X0_TLS_GD",/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_TILEPRO_IMM16_X1_TLS_GD,/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_IMM16_X1_TLS_GD",/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X0_TLS_GD_LO,  0),
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X1_TLS_GD_LO,  0),
@@ -442,31 +442,31 @@ static reloc_howto_type tilepro_elf_howto_table [] =
 
   HOWTO (R_TILEPRO_IMM16_X0_TLS_IE,/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_IMM16_X0_TLS_IE",/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEPRO_IMM16_X1_TLS_IE,/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_IMM16_X1_TLS_IE",/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X0_TLS_IE_LO,  0),
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X1_TLS_IE_LO,  0),
@@ -476,43 +476,43 @@ static reloc_howto_type tilepro_elf_howto_table [] =
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X1_TLS_IE_HA, 16),
 
   /* These are common with the Solaris TLS implementation. */
-  HOWTO(R_TILEPRO_TLS_DTPMOD32, 0, 0, 0, FALSE, 0, complain_overflow_dont,
+  HOWTO(R_TILEPRO_TLS_DTPMOD32, 0, 0, 0, false, 0, complain_overflow_dont,
 	bfd_elf_generic_reloc, "R_TILEPRO_TLS_DTPMOD32",
-	FALSE, 0, 0, TRUE),
-  HOWTO(R_TILEPRO_TLS_DTPOFF32, 0, 2, 32, FALSE, 0, complain_overflow_bitfield,
+	false, 0, 0, true),
+  HOWTO(R_TILEPRO_TLS_DTPOFF32, 0, 4, 32, false, 0, complain_overflow_bitfield,
 	bfd_elf_generic_reloc, "R_TILEPRO_TLS_DTPOFF32",
-	FALSE, 0, 0xFFFFFFFF, TRUE),
-  HOWTO(R_TILEPRO_TLS_TPOFF32, 0, 0, 0, FALSE, 0, complain_overflow_dont,
+	false, 0, 0xFFFFFFFF, true),
+  HOWTO(R_TILEPRO_TLS_TPOFF32, 0, 0, 0, false, 0, complain_overflow_dont,
 	bfd_elf_generic_reloc, "R_TILEPRO_TLS_TPOFF32",
-	FALSE, 0, 0, TRUE),
+	false, 0, 0, true),
 
   HOWTO (R_TILEPRO_IMM16_X0_TLS_LE,/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_IMM16_X0_TLS_LE",/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_TILEPRO_IMM16_X1_TLS_LE,/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_TILEPRO_IMM16_X1_TLS_LE",/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 -1,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X0_TLS_LE_LO,  0),
   TILEPRO_IMM16_HOWTO (R_TILEPRO_IMM16_X1_TLS_LE_LO,  0),
@@ -527,32 +527,32 @@ static reloc_howto_type tilepro_elf_howto_table2 [] =
   /* GNU extension to record C++ vtable hierarchy */
   HOWTO (R_TILEPRO_GNU_VTINHERIT, /* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 NULL,			/* special_function */
 	 "R_TILEPRO_GNU_VTINHERIT", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* GNU extension to record C++ vtable member usage */
   HOWTO (R_TILEPRO_GNU_VTENTRY,	    /* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 _bfd_elf_rel_vtable_reloc_fn,	/* special_function */
 	 "R_TILEPRO_GNU_VTENTRY",   /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
 };
 
@@ -716,7 +716,7 @@ struct _bfd_tilepro_elf_obj_tdata
 
 /* Allocate TILEPro ELF private object data.  */
 
-static bfd_boolean
+static bool
 tilepro_elf_mkobject (bfd *abfd)
 {
   return bfd_elf_allocate_object (abfd,
@@ -772,7 +772,7 @@ tilepro_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Set the howto pointer for an TILEPro ELF reloc.  */
 
-static bfd_boolean
+static bool
 tilepro_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
 			    arelent * cache_ptr,
 			    Elf_Internal_Rela * dst)
@@ -792,9 +792,9 @@ tilepro_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
-  return TRUE;
+  return true;
 }
 
 typedef tilepro_bundle_bits (*tilepro_create_func)(int);
@@ -907,14 +907,14 @@ static const tilepro_create_func reloc_to_create_func[] =
 
 /* Support for core dump NOTE sections.  */
 
-static bfd_boolean
+static bool
 tilepro_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 {
   int offset;
   size_t size;
 
   if (note->descsz != TILEPRO_PRSTATUS_SIZEOF)
-    return FALSE;
+    return false;
 
   /* pr_cursig */
   elf_tdata (abfd)->core->signal =
@@ -933,11 +933,11 @@ tilepro_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 					  size, note->descpos + offset);
 }
 
-static bfd_boolean
+static bool
 tilepro_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 {
   if (note->descsz != TILEPRO_PRPSINFO_SIZEOF)
-    return FALSE;
+    return false;
 
   elf_tdata (abfd)->core->program
     = _bfd_elfcore_strndup (abfd,
@@ -960,7 +960,7 @@ tilepro_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
       command[n - 1] = '\0';
   }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -1105,7 +1105,7 @@ tilepro_plt_entry_build (asection *splt, asection *sgotplt, bfd_vma offset,
   bfd_signed_vma dist_got0 = dist_got_entry - got_offset;
 
   /* Check whether we can use the short plt entry with 16-bit offset.  */
-  bfd_boolean short_plt_entry =
+  bool short_plt_entry =
     (dist_got_entry <= 0x7fff && dist_got0 >= -0x8000);
 
   /* Copy the plt entry template.  */
@@ -1196,7 +1196,7 @@ tilepro_elf_link_hash_table_create (bfd *abfd)
 
 /* Create the .got section.  */
 
-static bfd_boolean
+static bool
 tilepro_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
 {
   flagword flags;
@@ -1207,7 +1207,7 @@ tilepro_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
 
   /* This function may be called more than once.  */
   if (htab->sgot != NULL)
-    return TRUE;
+    return true;
 
   flags = bed->dynamic_sec_flags;
 
@@ -1218,13 +1218,13 @@ tilepro_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
 				    | SEC_READONLY));
   if (s == NULL
       || !bfd_set_section_alignment (s, bed->s->log_file_align))
-    return FALSE;
+    return false;
   htab->srelgot = s;
 
   s = s_got = bfd_make_section_with_flags (abfd, ".got", flags);
   if (s == NULL
       || !bfd_set_section_alignment (s, bed->s->log_file_align))
-    return FALSE;
+    return false;
   htab->sgot = s;
 
   /* The first bit of the global offset table is the header.  */
@@ -1235,7 +1235,7 @@ tilepro_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
       s = bfd_make_section_with_flags (abfd, ".got.plt", flags);
       if (s == NULL
 	  || !bfd_set_section_alignment (s, bed->s->log_file_align))
-	return FALSE;
+	return false;
       htab->sgotplt = s;
 
       /* Reserve room for the header.  */
@@ -1252,22 +1252,22 @@ tilepro_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
 				       "_GLOBAL_OFFSET_TABLE_");
       elf_hash_table (info)->hgot = h;
       if (h == NULL)
-	return FALSE;
+	return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Create .plt, .rela.plt, .got, .got.plt, .rela.got, .dynbss, and
    .rela.bss sections in DYNOBJ, and set up shortcuts to them in our
    hash table.  */
 
-static bfd_boolean
+static bool
 tilepro_elf_create_dynamic_sections (bfd *dynobj,
 				     struct bfd_link_info *info)
 {
   if (!tilepro_elf_create_got_section (dynobj, info))
-    return FALSE;
+    return false;
 
   return _bfd_elf_create_dynamic_sections (dynobj, info);
 }
@@ -1390,7 +1390,7 @@ tilepro_elf_tls_transition (struct bfd_link_info *info, int r_type,
    allocate space in the global offset table or procedure linkage
    table.  */
 
-static bfd_boolean
+static bool
 tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 			  asection *sec, const Elf_Internal_Rela *relocs)
 {
@@ -1403,7 +1403,7 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
   int num_relocs;
 
   if (bfd_link_relocatable (info))
-    return TRUE;
+    return true;
 
   htab = tilepro_elf_hash_table (info);
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
@@ -1434,7 +1434,7 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  /* xgettext:c-format */
 	  _bfd_error_handler (_("%pB: bad symbol index: %d"),
 			      abfd, r_symndx);
-	  return FALSE;
+	  return false;
 	}
 
       if (r_symndx < symtab_hdr->sh_info)
@@ -1523,7 +1523,7 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		    local_got_refcounts = ((bfd_signed_vma *)
 					   bfd_zalloc (abfd, size));
 		    if (local_got_refcounts == NULL)
-		      return FALSE;
+		      return false;
 		    elf_local_got_refcounts (abfd) = local_got_refcounts;
 		    _bfd_tilepro_elf_local_got_tls_type (abfd)
 		      = (char *) (local_got_refcounts + symtab_hdr->sh_info);
@@ -1547,7 +1547,7 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		      /* xgettext:c-format */
 		      (_("%pB: `%s' accessed both as normal and thread local symbol"),
 		       abfd, h ? h->root.root.string : "<local>");
-		    return FALSE;
+		    return false;
 		  }
 	      }
 
@@ -1564,7 +1564,7 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  if (htab->sgot == NULL)
 	    {
 	      if (!tilepro_elf_create_got_section (htab->dynobj, info))
-		return FALSE;
+		return false;
 	    }
 	  break;
 
@@ -1577,9 +1577,9 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      if (! _bfd_generic_link_add_one_symbol (info, abfd,
 						      "__tls_get_addr", 0,
 						      bfd_und_section_ptr, 0,
-						      NULL, FALSE, FALSE,
+						      NULL, false, false,
 						      &bh))
-		return FALSE;
+		return false;
 	      h = (struct elf_link_hash_entry *) bh;
 	    }
 	  else
@@ -1708,10 +1708,10 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      if (sreloc == NULL)
 		{
 		  sreloc = _bfd_elf_make_dynamic_reloc_section
-		    (sec, htab->dynobj, 2, abfd, /*rela?*/ TRUE);
+		    (sec, htab->dynobj, 2, abfd, /*rela?*/ true);
 
 		  if (sreloc == NULL)
-		    return FALSE;
+		    return false;
 		}
 
 	      /* If this is a global symbol, we count the number of
@@ -1731,7 +1731,7 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		  isym = bfd_sym_from_r_symndx (&htab->sym_cache,
 						abfd, r_symndx);
 		  if (isym == NULL)
-		    return FALSE;
+		    return false;
 
 		  s = bfd_section_from_elf_index (abfd, isym->st_shndx);
 		  if (s == NULL)
@@ -1748,7 +1748,7 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		  p = ((struct elf_dyn_relocs *)
 		       bfd_alloc (htab->dynobj, amt));
 		  if (p == NULL)
-		    return FALSE;
+		    return false;
 		  p->next = *head;
 		  *head = p;
 		  p->sec = sec;
@@ -1765,12 +1765,12 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 
 	case R_TILEPRO_GNU_VTINHERIT:
 	  if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
-	    return FALSE;
+	    return false;
 	  break;
 
 	case R_TILEPRO_GNU_VTENTRY:
 	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
-	    return FALSE;
+	    return false;
 	  break;
 
 	default:
@@ -1778,7 +1778,7 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -1817,8 +1817,8 @@ tilepro_elf_gc_mark_hook (asection *sec,
 	  if (! _bfd_generic_link_add_one_symbol (info, sec->owner,
 						  "__tls_get_addr", 0,
 						  bfd_und_section_ptr,
-						  0, NULL, FALSE,
-						  FALSE, &bh))
+						  0, NULL, false,
+						  false, &bh))
 	    return NULL;
 	  h = (struct elf_link_hash_entry *) bh;
 	  BFD_ASSERT (h != NULL);
@@ -1838,7 +1838,7 @@ tilepro_elf_gc_mark_hook (asection *sec,
    change the definition to something the rest of the link can
    understand.  */
 
-static bfd_boolean
+static bool
 tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 				   struct elf_link_hash_entry *h)
 {
@@ -1876,7 +1876,7 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 	  h->needs_plt = 0;
 	}
 
-      return TRUE;
+      return true;
     }
   else
     h->plt.offset = (bfd_vma) -1;
@@ -1890,7 +1890,7 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
       BFD_ASSERT (def->root.type == bfd_link_hash_defined);
       h->root.u.def.section = def->root.u.def.section;
       h->root.u.def.value = def->root.u.def.value;
-      return TRUE;
+      return true;
     }
 
   /* This is a reference to a symbol defined by a dynamic object which
@@ -1901,18 +1901,18 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
   if (bfd_link_pic (info))
-    return TRUE;
+    return true;
 
   /* If there are no references to this symbol that do not use the
      GOT, we don't need to generate a copy reloc.  */
   if (!h->non_got_ref)
-    return TRUE;
+    return true;
 
   /* If -z nocopyreloc was given, we won't generate them either.  */
   if (info->nocopyreloc)
     {
       h->non_got_ref = 0;
-      return TRUE;
+      return true;
     }
 
   /* If we don't find any dynamic relocs in read-only sections, then
@@ -1920,7 +1920,7 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   if (!_bfd_elf_readonly_dynrelocs (h))
     {
       h->non_got_ref = 0;
-      return TRUE;
+      return true;
     }
 
   /* We must allocate the symbol in our .dynbss section, which will
@@ -1959,7 +1959,7 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 /* Allocate space in .plt, .got and associated reloc sections for
    dynamic relocs.  */
 
-static bfd_boolean
+static bool
 allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 {
   struct bfd_link_info *info;
@@ -1967,7 +1967,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   struct elf_dyn_relocs *p;
 
   if (h->root.type == bfd_link_hash_indirect)
-    return TRUE;
+    return true;
 
   info = (struct bfd_link_info *) inf;
   htab = tilepro_elf_hash_table (info);
@@ -1982,7 +1982,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	  && !h->forced_local)
 	{
 	  if (! bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
+	    return false;
 	}
 
       if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (1, bfd_link_pic (info), h))
@@ -2040,7 +2040,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   else if (h->got.refcount > 0)
     {
       asection *s;
-      bfd_boolean dyn;
+      bool dyn;
       int tls_type = tilepro_elf_hash_entry(h)->tls_type;
 
       /* Make sure this symbol is output as a dynamic symbol.
@@ -2049,7 +2049,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	  && !h->forced_local)
 	{
 	  if (! bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
+	    return false;
 	}
 
       s = htab->sgot;
@@ -2073,7 +2073,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
     h->got.offset = (bfd_vma) -1;
 
   if (h->dyn_relocs == NULL)
-    return TRUE;
+    return true;
 
   /* In the shared -Bsymbolic case, discard space allocated for
      dynamic pc-relative relocs against symbols which turn out to be
@@ -2113,7 +2113,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 		   && !h->forced_local)
 	    {
 	      if (! bfd_elf_link_record_dynamic_symbol (info, h))
-		return FALSE;
+		return false;
 	    }
 	}
     }
@@ -2136,7 +2136,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	      && !h->forced_local)
 	    {
 	      if (! bfd_elf_link_record_dynamic_symbol (info, h))
-		return FALSE;
+		return false;
 	    }
 
 	  /* If that succeeded, we know we'll be keeping all the
@@ -2157,13 +2157,13 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
       sreloc->size += p->count * TILEPRO_ELF_RELA_BYTES;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Return true if the dynamic symbol for a given section should be
    omitted when creating a shared library.  */
 
-static bfd_boolean
+static bool
 tilepro_elf_omit_section_dynsym (bfd *output_bfd,
 				    struct bfd_link_info *info,
 				    asection *p)
@@ -2172,7 +2172,7 @@ tilepro_elf_omit_section_dynsym (bfd *output_bfd,
      against the _GLOBAL_OFFSET_TABLE_ symbol emitted in PIC mode
      can be turned into relocations against the .got symbol.  */
   if (strcmp (p->name, ".got") == 0)
-    return FALSE;
+    return false;
 
   return _bfd_elf_omit_section_dynsym_default (output_bfd, info, p);
 }
@@ -2181,7 +2181,7 @@ tilepro_elf_omit_section_dynsym (bfd *output_bfd,
 
 #define ELF32_DYNAMIC_INTERPRETER "/lib/ld.so.1"
 
-static bfd_boolean
+static bool
 tilepro_elf_size_dynamic_sections (bfd *output_bfd,
 				      struct bfd_link_info *info)
 {
@@ -2299,7 +2299,7 @@ tilepro_elf_size_dynamic_sections (bfd *output_bfd,
       struct elf_link_hash_entry *got;
       got = elf_link_hash_lookup (elf_hash_table (info),
 				  "_GLOBAL_OFFSET_TABLE_",
-				  FALSE, FALSE, FALSE);
+				  false, false, false);
 
       /* Don't allocate .got.plt section if there are no GOT nor PLT
 	 entries and there is no refeence to _GLOBAL_OFFSET_TABLE_.  */
@@ -2332,7 +2332,7 @@ tilepro_elf_size_dynamic_sections (bfd *output_bfd,
 	  /* Strip this section if we don't need it; see the
 	     comment below.  */
 	}
-      else if (strncmp (s->name, ".rela", 5) == 0)
+      else if (startswith (s->name, ".rela"))
 	{
 	  if (s->size != 0)
 	    {
@@ -2370,10 +2370,10 @@ tilepro_elf_size_dynamic_sections (bfd *output_bfd,
 	 at the beginning, and we don't want garbage.  */
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
-	return FALSE;
+	return false;
     }
 
-  return _bfd_elf_add_dynamic_tags (output_bfd, info, TRUE);
+  return _bfd_elf_add_dynamic_tags (output_bfd, info, true);
 }
 
 /* Return the base VMA address which should be subtracted from real addresses
@@ -2512,7 +2512,7 @@ static const bfd_byte insn_tls_gd_add_Y0Y1[] = {
    section, which means that the addend must be adjusted
    accordingly.  */
 
-static bfd_boolean
+static int
 tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 			      bfd *input_bfd, asection *input_section,
 			      bfd_byte *contents, Elf_Internal_Rela *relocs,
@@ -2548,7 +2548,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
   for (; rel < relend; rel++)
     {
       int r_type, tls_type;
-      bfd_boolean is_tls_iele, is_tls_le;
+      bool is_tls_iele, is_tls_le;
       reloc_howto_type *howto;
       unsigned long r_symndx;
       struct elf_link_hash_entry *h;
@@ -2559,9 +2559,9 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
       bfd_reloc_status_type r;
       const char *name;
       bfd_vma off;
-      bfd_boolean is_plt = FALSE;
-      bfd_boolean resolved_to_zero;
-      bfd_boolean unresolved_reloc;
+      bool is_plt = false;
+      bool resolved_to_zero;
+      bool unresolved_reloc;
 
       r_type = ELF32_R_TYPE (rel->r_info);
       if (r_type == R_TILEPRO_GNU_VTINHERIT
@@ -2578,7 +2578,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
       h = NULL;
       sym = NULL;
       sec = NULL;
-      unresolved_reloc = FALSE;
+      unresolved_reloc = false;
       if (r_symndx < symtab_hdr->sh_info)
 	{
 	  sym = local_syms + r_symndx;
@@ -2587,8 +2587,8 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	}
       else
 	{
-	  bfd_boolean warned ATTRIBUTE_UNUSED;
-	  bfd_boolean ignored ATTRIBUTE_UNUSED;
+	  bool warned ATTRIBUTE_UNUSED;
+	  bool ignored ATTRIBUTE_UNUSED;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -2664,8 +2664,8 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	      /* GD -> GD */
 	      h = (struct elf_link_hash_entry *)
-		bfd_link_hash_lookup (info->hash, "__tls_get_addr", FALSE,
-				      FALSE, TRUE);
+		bfd_link_hash_lookup (info->hash, "__tls_get_addr", false,
+				      false, true);
 	      BFD_ASSERT (h != NULL);
 	      r_type = R_TILEPRO_JOFFLONG_X1_PLT;
 	      howto = tilepro_elf_howto_table + r_type;
@@ -2755,7 +2755,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	  if (h != NULL)
 	    {
-	      bfd_boolean dyn;
+	      bool dyn;
 
 	      off = h->got.offset;
 	      BFD_ASSERT (off != (bfd_vma) -1);
@@ -2789,7 +2789,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		    }
 		}
 	      else
-		unresolved_reloc = FALSE;
+		unresolved_reloc = false;
 	    }
 	  else
 	    {
@@ -2848,7 +2848,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  relocation = (htab->splt->output_section->vma
 			+ htab->splt->output_offset
 			+ h->plt.offset);
-	  unresolved_reloc = FALSE;
+	  unresolved_reloc = false;
 	  break;
 
 	case R_TILEPRO_32_PCREL:
@@ -2921,7 +2921,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		      || h->root.type == bfd_link_hash_undefined)))
 	    {
 	      Elf_Internal_Rela outrel;
-	      bfd_boolean skip, relocate = FALSE;
+	      bool skip, relocate = false;
 
 	      /* When generating a shared object, these relocations
 		 are copied into the output file to be resolved at run
@@ -2929,15 +2929,15 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	      BFD_ASSERT (sreloc != NULL);
 
-	      skip = FALSE;
+	      skip = false;
 
 	      outrel.r_offset =
 		_bfd_elf_section_offset (output_bfd, info, input_section,
 					 rel->r_offset);
 	      if (outrel.r_offset == (bfd_vma) -1)
-		skip = TRUE;
+		skip = true;
 	      else if (outrel.r_offset == (bfd_vma) -2)
-		skip = TRUE, relocate = TRUE;
+		skip = true, relocate = true;
 	      outrel.r_offset += (input_section->output_section->vma
 				  + input_section->output_offset);
 
@@ -2952,7 +2952,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		     FIXME: Add code tracking needed dynamic relocs as
 		     e.g. i386 has.  */
 		  if (h->dynindx == -1)
-		    skip = TRUE, relocate = TRUE;
+		    skip = true, relocate = true;
 		  break;
 		}
 
@@ -2992,7 +2992,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		      else if (sec == NULL || sec->owner == NULL)
 			{
 			  bfd_set_error (bfd_error_bad_value);
-			  return FALSE;
+			  return false;
 			}
 		      else
 			{
@@ -3021,7 +3021,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 				(_("%pB: probably compiled without -fPIC?"),
 				 input_bfd);
 			      bfd_set_error (bfd_error_bad_value);
-			      return FALSE;
+			      return false;
 			    }
 			}
 
@@ -3049,17 +3049,17 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  if (!bfd_link_executable (info))
 	    {
 	      Elf_Internal_Rela outrel;
-	      bfd_boolean skip;
+	      bool skip;
 
 	      BFD_ASSERT (sreloc != NULL);
-	      skip = FALSE;
+	      skip = false;
 	      outrel.r_offset =
 		_bfd_elf_section_offset (output_bfd, info, input_section,
 					 rel->r_offset);
 	      if (outrel.r_offset == (bfd_vma) -1)
-		skip = TRUE;
+		skip = true;
 	      else if (outrel.r_offset == (bfd_vma) -2)
-		skip = TRUE;
+		skip = true;
 	      outrel.r_offset += (input_section->output_section->vma
 				  + input_section->output_offset);
 	      if (skip)
@@ -3143,14 +3143,14 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    {
 	      Elf_Internal_Rela outrel;
 	      int indx = 0;
-	      bfd_boolean need_relocs = FALSE;
+	      bool need_relocs = false;
 
 	      if (htab->srelgot == NULL)
 		abort ();
 
 	      if (h != NULL)
 	      {
-		bfd_boolean dyn;
+		bool dyn;
 		dyn = htab->dynamic_sections_created;
 
 		if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn,
@@ -3169,7 +3169,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		  && (h == NULL
 		      || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
 		      || h->root.type != bfd_link_hash_undefweak))
-		    need_relocs = TRUE;
+		    need_relocs = true;
 
 	      switch (r_type)
 		{
@@ -3254,7 +3254,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	    abort ();
 
 	  relocation = off - got_base;
-	  unresolved_reloc = FALSE;
+	  unresolved_reloc = false;
 	  howto = tilepro_elf_howto_table + r_type;
 	  break;
 
@@ -3365,7 +3365,7 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
 	    case bfd_reloc_undefined:
 	      (*info->callbacks->undefined_symbol)
-		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
+		(info, name, input_bfd, input_section, rel->r_offset, true);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -3391,13 +3391,13 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Finish up dynamic symbol handling.  We set the contents of various
    dynamic sections here.  */
 
-static bfd_boolean
+static bool
 tilepro_elf_finish_dynamic_symbol (bfd *output_bfd,
 				   struct bfd_link_info *info,
 				   struct elf_link_hash_entry *h,
@@ -3532,12 +3532,12 @@ tilepro_elf_finish_dynamic_symbol (bfd *output_bfd,
       || (h == htab->hgot || h == htab->hplt))
     sym->st_shndx = SHN_ABS;
 
-  return TRUE;
+  return true;
 }
 
 /* Finish up the dynamic sections.  */
 
-static bfd_boolean
+static bool
 tilepro_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 		    bfd *dynobj, asection *sdyn,
 		    asection *splt ATTRIBUTE_UNUSED)
@@ -3576,10 +3576,10 @@ tilepro_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 
       bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
     }
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 tilepro_elf_finish_dynamic_sections (bfd *output_bfd,
 				     struct bfd_link_info *info)
 {
@@ -3596,7 +3596,7 @@ tilepro_elf_finish_dynamic_sections (bfd *output_bfd,
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       asection *splt;
-      bfd_boolean ret;
+      bool ret;
 
       splt = htab->splt;
       BFD_ASSERT (splt != NULL && sdyn != NULL);
@@ -3625,7 +3625,7 @@ tilepro_elf_finish_dynamic_sections (bfd *output_bfd,
 	{
 	  _bfd_error_handler
 	    (_("discarded output section: `%pA'"), htab->sgotplt);
-	  return FALSE;
+	  return false;
 	}
 
       if (htab->sgotplt->size > 0)
@@ -3658,7 +3658,7 @@ tilepro_elf_finish_dynamic_sections (bfd *output_bfd,
 	= GOT_ENTRY_SIZE;
     }
 
-  return TRUE;
+  return true;
 }
 
 

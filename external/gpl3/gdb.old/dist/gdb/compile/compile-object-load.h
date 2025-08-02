@@ -1,5 +1,5 @@
 /* Header file to load module for 'compile' command.
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,6 +29,9 @@ public:
 
   DISABLE_COPY_AND_ASSIGN (munmap_list);
 
+  munmap_list &operator= (munmap_list &&) = default;
+  munmap_list (munmap_list &&) = default;
+
   /* Add a region to the list.  */
   void add (CORE_ADDR addr, CORE_ADDR size);
 
@@ -46,11 +49,18 @@ private:
 
 struct compile_module
 {
+  compile_module () = default;
+
+  DISABLE_COPY_AND_ASSIGN (compile_module);
+
+  compile_module &operator= (compile_module &&other) = default;
+  compile_module (compile_module &&other) = default;
+
   /* objfile for the compiled module.  */
   struct objfile *objfile;
 
-  /* .c file OBJFILE was built from.  It needs to be xfree-d.  */
-  char *source_file;
+  /* .c file OBJFILE was built from.  */
+  std::string source_file;
 
   /* Inferior function GCC_FE_WRAPPER_FUNCTION.  */
   struct symbol *func_sym;
@@ -74,10 +84,13 @@ struct compile_module
   CORE_ADDR out_value_addr;
 
   /* Track inferior memory reserved by inferior mmap.  */
-  struct munmap_list *munmap_list_head;
+  struct munmap_list munmap_list;
 };
 
-extern struct compile_module *compile_object_load
+/* A unique pointer for a compile_module.  */
+typedef std::unique_ptr<compile_module> compile_module_up;
+
+extern compile_module_up compile_object_load
   (const compile_file_names &fnames,
    enum compile_i_scope_types scope, void *scope_data);
 

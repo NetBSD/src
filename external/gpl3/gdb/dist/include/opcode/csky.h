@@ -1,5 +1,5 @@
 /* C-SKY assembler/disassembler support.
-   Copyright (C) 2004-2022 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of GDB and GAS.

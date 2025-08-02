@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2020 Free Software Foundation, Inc.
+# Copyright (c) 2016-2023 Free Software Foundation, Inc.
 #
 # Originally based on the AX_CXX_COMPILE_STDCXX macro found at the url
 # below.
@@ -94,6 +94,10 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
          CXX="$ac_save_CXX"])
       if eval test x\$$cachevar = xyes; then
         CXX_DIALECT="$switch"
+        CXX="$CXX $switch"
+        if test -n "$CXXCPP" ; then
+          CXXCPP="$CXXCPP $switch"
+        fi
         ac_success=yes
         break
       fi
@@ -118,6 +122,10 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
            CXX="$ac_save_CXX"])
         if eval test x\$$cachevar = xyes; then
           CXX_DIALECT="$switch"
+          CXX="$CXX $switch"
+          if test -n "$CXXCPP" ; then
+            CXXCPP="$CXXCPP $switch"
+          fi
           ac_success=yes
           break
         fi

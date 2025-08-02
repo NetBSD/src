@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,7 @@
 # Test proper disassembling of ARM thumb instructions when reloading a symbol
 # file.
 
-if {![is_aarch32_target]} {
-    verbose "Skipping ARM tests."
-    return
-}
+require is_aarch32_target
 
 standard_testfile .S
 
@@ -28,12 +25,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable debug
     return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-
-# Load the symbol file the first time.
-gdb_load ${binfile}
+clean_restart $binfile
 
 # Check if the disassemble ouput is correct.
 gdb_test "x /i main+8" \

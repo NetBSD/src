@@ -1,7 +1,7 @@
 /* Private implementation details of interface between gdb and its
    extension languages.
 
-   Copyright (C) 2014-2020 Free Software Foundation, Inc.
+   Copyright (C) 2014-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -92,7 +92,7 @@ struct extension_language_script_ops
 
   /* Return non-zero if auto-loading scripts in this extension language
      is enabled.  */
-  int (*auto_load_enabled) (const struct extension_language_defn *);
+  bool (*auto_load_enabled) (const struct extension_language_defn *);
 };
 
 /* The interface for making calls from GDB to an external extension
@@ -109,10 +109,11 @@ struct extension_language_script_ops
 
 struct extension_language_ops
 {
-  /* Called at the end of gdb initialization to give the extension language
-     an opportunity to finish up.  This is useful for things like adding
-     new commands where one has to wait until gdb itself is initialized.  */
-  void (*finish_initialization) (const struct extension_language_defn *);
+  /* Called after GDB has processed the early initialization settings
+     files.  This is when the extension language should be initialized.  By
+     the time this is called all of the earlier initialization functions
+     have already been called.  */
+  void (*initialize) (const struct extension_language_defn *);
 
   /* Return non-zero if the extension language successfully initialized.
      This method is required.  */
@@ -178,7 +179,7 @@ struct extension_language_ops
      or SCR_BT_COMPLETED on success.  */
   enum ext_lang_bt_status (*apply_frame_filter)
     (const struct extension_language_defn *,
-     struct frame_info *frame, frame_filter_flags flags,
+     frame_info_ptr frame, frame_filter_flags flags,
      enum ext_lang_frame_args args_type,
      struct ui_out *out, int frame_low, int frame_high);
 
@@ -256,6 +257,27 @@ struct extension_language_ops
      or an empty option.  */
   gdb::optional<std::string> (*colorize) (const std::string &name,
 					  const std::string &contents);
+
+  /* Colorize a single line of disassembler output, CONTENT.  This should
+     either return colorized (using ANSI terminal escapes) version of the
+     contents, or an empty optional.  */
+  gdb::optional<std::string> (*colorize_disasm) (const std::string &content,
+						 gdbarch *gdbarch);
+
+  /* Print a single instruction from ADDRESS in architecture GDBARCH.  INFO
+     is the standard libopcodes disassembler_info structure.  Bytes for the
+     instruction being printed should be read using INFO->read_memory_func
+     as the actual instruction bytes might be in a buffer.
+
+     Use INFO->fprintf_func to print the results of the disassembly, and
+     return the length of the instruction.
+
+     If no instruction can be disassembled then return an empty value and
+     other extension languages will get a chance to perform the
+     disassembly.  */
+  gdb::optional<int> (*print_insn) (struct gdbarch *gdbarch,
+				    CORE_ADDR address,
+				    struct disassemble_info *info);
 };
 
 /* State necessary to restore a signal handler to its previous value.  */

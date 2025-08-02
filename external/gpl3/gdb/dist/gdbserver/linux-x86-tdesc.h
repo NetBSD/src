@@ -1,7 +1,7 @@
 /* Low level support for x86 (i386 and x86-64), shared between gdbserver
    and IPA.
 
-   Copyright (C) 2016-2023 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

@@ -1,4 +1,4 @@
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,18 +30,18 @@
 
 # This test is only for extended remote targets.
 if {[target_info gdb_protocol] != "extended-remote"} {
+    unsupported "requires extended-remote"
     return
 }
 
 # This test also makes use of 'detach-on-fork' which is not supported
 # on all platforms.
-if {![istarget "*-*-linux*"] && ![istarget "*-*-openbsd*"]} {
-    return
-}
+require {is_any_target "*-*-linux*" "*-*-openbsd*"}
 
 # And we need to be able to reconnect to gdbserver.
 set gdbserver_reconnect_p 1
 if { [info proc gdb_reconnect] == "" } {
+    unsupported "requires gdbserver reconnect"
     return 0
 }
 

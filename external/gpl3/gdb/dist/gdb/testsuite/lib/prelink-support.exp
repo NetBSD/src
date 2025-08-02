@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ proc symlink_resolve {file} {
 }
 
 # Copy SRC to DEST, resolving any symlinks in SRC.  Return nonzero iff
-# the copy was succesful.
+# the copy was successful.
 #
 # This function is guaranteed to never raise any exception, even when the copy
 # fails.
@@ -107,7 +107,7 @@ proc file_copy {src dest} {
 # depend on system libraries.  To properly prelink an executable, all
 # of its dynamically linked libraries must be prelinked as well.  If
 # the executable depends on some system libraries, we may not have
-# sufficient write priviledges on these files to perform the prelink.
+# sufficient write privileges on these files to perform the prelink.
 # This is why we make a copy of these shared libraries, and link the
 # executable against these copies instead.
 #

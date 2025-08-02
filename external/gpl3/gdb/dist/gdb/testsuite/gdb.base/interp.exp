@@ -1,4 +1,4 @@
-# Copyright 2004-2023 Free Software Foundation, Inc.
+# Copyright 2004-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,15 +45,6 @@ gdb_test_multiple "interpreter-exec mi \"-break-insert --thread a\"" \
 
 gdb_test_multiple "interpreter-exec mi \"-stack-info-frame\"" "" {
     -re ".error,msg=.No registers\..\r\n$gdb_prompt " {
-	pass $gdb_test_name
-	gdb_expect 1 {
-	    -re "\r\n$gdb_prompt $" { }
-	}
-    }
-}
-
-gdb_test_multiple "interpreter-exec mi1 \"-break-insert main\"" "" {
-    -re ".done.bkpt=.number=.\[0-9\]\[^\n\]+\r\n$gdb_prompt " {
 	pass $gdb_test_name
 	gdb_expect 1 {
 	    -re "\r\n$gdb_prompt $" { }

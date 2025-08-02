@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,21 +18,12 @@
 
 load_lib gdb-python.exp
 
-if { [skip_cplus_tests] } {
-    untested "skipping C++ tests"
-    return
-}
+require allow_cplus_tests allow_python_tests
 
 standard_testfile py-xmethods.cc
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
-}
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } {
-    untested "skipping Python tests"
-    return
 }
 
 if ![runto_main] {
@@ -61,6 +52,9 @@ gdb_test "p a_geta" ".* = 1" "before: a_geta 1"
 gdb_test "p ++a1" "No symbol.*" "before: ++a1"
 gdb_test "p a1.getarrayind(5)" "Couldn't find method.*" \
   "before: a1.getarrayind(5)"
+gdb_test "ptype a1.getarrayind" \
+    "There is no member or method named getarrayind\\." \
+    "before: ptype a1.getarrayind"
 
 gdb_test "p a_ptr->geta()" ".* = 60" "before: a_ptr->geta()"
 gdb_test "p b_geta" ".* = 1" "before: b_geta 1"
@@ -106,6 +100,10 @@ gdb_test "p a1.geta()" "From Python <A_geta>.*5" "after: a1.geta()"
 gdb_test "p ++a1" "From Python <plus_plus_A>.*6" "after: ++a1"
 gdb_test "p a1.getarrayind(5)" "From Python <A_getarrayind>.*5" \
   "after: a1.getarrayind(5)"
+gdb_test "ptype a1.getarrayind" \
+  "There is no member or method named getarrayind\\." \
+  "after: ptype a1.getarrayind"
+
 gdb_test "p a1\[6\]" ".*int &.*6" "after a1\[\]"
 gdb_test "p b1\[7\]" ".*const int &.*7" "after b1\[\]"
 # Note the following test.  Xmethods on dynamc types are not looked up
@@ -169,3 +167,20 @@ gdb_test_no_output "enable xmethod progspace E_methods;method_int"
 gdb_test "pt e.method('a')" "type = void"
 gdb_test "pt e.method(10)" \
     "NotImplementedError.*Error while fetching result type of an xmethod worker defined in Python."
+
+# Verify `max-value-size' obedience with `gdb.Value.const_value'.
+gdb_test "p a1.getarray()" \
+  "From Python <A_getarray>.* = \\{0, 1, 2, 3, 4, 5, 6, 7, 8, 9\\}" \
+  "after: a1.getarray"
+gdb_test "p b1.getarray()" \
+  "From Python <B_getarray>.* = \\{0, 1, 2, 3, 4, 5, 6, 7, 8, 9\\}" \
+  "after: b1.getarray"
+gdb_test_no_output "python gdb.set_parameter('max-value-size', 16)"
+gdb_test "p a1.getarray()" \
+  "From Python <A_getarray>.*value requires $decimal bytes,\
+   which is more than max-value-size" \
+  "after: a1.getarray (max-value-size)"
+gdb_test "p b1.getarray()" \
+  "From Python <B_getarray>.*value requires $decimal bytes,\
+   which is more than max-value-size" \
+  "after: b1.getarray (max-value-size)"

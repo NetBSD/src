@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,18 +19,10 @@
 load_lib dwarf.exp
 
 # Do not run in environments which do not support C++.
-if {[skip_cplus_tests]} {
-    return
-}
-
 # This test can only be run on x86-like targets which support DWARF.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support allow_cplus_tests
 
-if {![istarget "x86_64-*-*"] || ![is_lp64_target]} {
-    return 0
-}
+require is_x86_64_m64_target
 
 standard_testfile .S
 set csrcfile "${testfile}.cc"

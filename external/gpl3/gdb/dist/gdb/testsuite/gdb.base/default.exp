@@ -1,4 +1,4 @@
-#   Copyright 1988-2023 Free Software Foundation, Inc.
+#   Copyright 1988-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -265,15 +265,95 @@ gdb_test "info args" "No frame selected."
 #test info bogus-gdb-command
 gdb_test "info bogus-gdb-command" "Undefined info command: \"bogus-gdb-command\".  Try \"help info\".*"
 #test info breakpoints
-gdb_test "info breakpoints" "No breakpoints or watchpoints."
+gdb_test "info breakpoints" "No breakpoints, watchpoints, tracepoints, or catchpoints."
 #test info copying
-# FIXME -- doesn't work worth a shit
-#send_gdb "info copying"
-#	-re "GNU GENERAL PUBLIC LICENSE.*#of preserving the free status of all derivatives of our free software and.*#of promoting the sharing and reuse of software generally."# 
-gdb_test "info copying"
-#	}
-#
-#
+# The license text is very big, so it may overwhelm Expect's output buffer
+# and cause the test to fail occasionally.  To avoid this problem, verify
+# the command's output in small chunks.
+set saw_header 0
+set saw_terms 0
+set saw_section5 0
+set saw_section7 0
+set saw_section10 0
+set saw_section14 0
+set saw_last_para 0
+# These excerpts were chosen for no particular reason, except that they
+# occur at the beginning, middle and end of the license text.
+set re_header [multi_line \
+		   "\\s+GNU GENERAL PUBLIC LICENSE" \
+		   "\\s+Version 3, 29 June 2007" \
+		   "" \
+		   " Copyright \\(C\\) 2007 Free Software Foundation, Inc. <http://fsf.org/>" \
+		   " Everyone is permitted to copy and distribute verbatim copies" \
+		   " of this license document, but changing it is not allowed." \
+		   "" \
+		   "\\s+Preamble" \
+		   "" \
+		   "  The GNU General Public License is a free, copyleft license for" \
+		   "software and other kinds of works.\r\n"]
+set re_terms [multi_line \
+		  "\\s+TERMS AND CONDITIONS" \
+		  "" \
+		  "  0. Definitions." \
+		  "" \
+		  "  \"This License\" refers to version 3 of the GNU General Public License.\r\n"]
+set re_section5 [multi_line \
+		     "  5. Conveying Modified Source Versions." \
+		     "" \
+		     "  You may convey a work based on the Program, or the modifications to\r\n"]
+set re_section7 [multi_line \
+		     "  7. Additional Terms." \
+		     "" \
+		     "  \"Additional permissions\" are terms that supplement the terms of this\r\n"]
+set re_section10 [multi_line \
+		      "  10. Automatic Licensing of Downstream Recipients." \
+		      "" \
+		      "  Each time you convey a covered work, the recipient automatically\r\n"]
+set re_section14 [multi_line \
+		      "  14. Revised Versions of this License." \
+		      "" \
+		      "  The Free Software Foundation may publish revised and/or new versions of\r\n"]
+set re_last_para [multi_line \
+		      "  Later license versions may give you additional or different" \
+		      "permissions.  However, no additional obligations are imposed on any" \
+		      "author or copyright holder as a result of your choosing to follow a" \
+		      "later version.\r\n"]
+set test "info copying"
+gdb_test_multiple $test $test {
+    -re $re_header {
+	set saw_header 1
+	exp_continue
+    }
+    -re $re_terms {
+	set saw_terms 1
+	exp_continue
+    }
+    -re $re_section5 {
+	set saw_section5 1
+	exp_continue
+    }
+    -re $re_section7 {
+	set saw_section7 1
+	exp_continue
+    }
+    -re $re_section10 {
+	set saw_section10 1
+	exp_continue
+    }
+    -re $re_section14 {
+	set saw_section14 1
+	exp_continue
+    }
+    -re $re_last_para {
+	set saw_last_para 1
+	exp_continue
+    }
+    -re "$gdb_prompt \$" {
+	gdb_assert { $saw_header && $saw_terms && $saw_section5 \
+			 && $saw_section7 && $saw_section10 \
+			 && $saw_section14 && $saw_last_para } $test
+    }
+}
 #test info display
 gdb_test "info display" "There are no auto-display expressions now."
 #test info frame "f" abbreviation
@@ -386,8 +466,8 @@ gdb_test "overlay list"   "No sections are mapped."
 gdb_test "overlay map"    "Overlay debugging not enabled.*" "overlay map #1"
 gdb_test "overlay unmap"  "Overlay debugging not enabled.*" "overlay unmap #1"
 gdb_test_no_output "overlay manual" "overlay manual #2"
-gdb_test "overlay map"    "Argument required: name of an overlay section." "overlay map #2"
-gdb_test "overlay unmap"  "Argument required: name of an overlay section." "overlay unmap #2"
+gdb_test "overlay map"    "Argument required: name of an overlay section" "overlay map #2"
+gdb_test "overlay unmap"  "Argument required: name of an overlay section" "overlay unmap #2"
 
 #test print "p" abbreviation
 gdb_test "p" "The history is empty." "print \"p\" abbreviation"
@@ -451,7 +531,7 @@ gdb_test "rbreak" "rbreak"
 gdb_test "restore" "You can't do that without a process to debug\."
 
 #test return
-# The middle case accomodated the obsolete a29k, where doing the "ni"
+# The middle case accommodated the obsolete a29k, where doing the "ni"
 # above causes an initial stack to be created.
 gdb_test "return" "No selected frame..*"
 
@@ -520,6 +600,10 @@ gdb_test_no_output "set print address" "set print address"
 gdb_test_no_output "set print array" "set print array"
 #test set print asm-demangle
 gdb_test_no_output "set print asm-demangle" "set print asm-demangle"
+#test set print characters
+gdb_test "set print characters" \
+	 "Argument required \\(integer to set it to, or one of:\
+	  \"elements\", \"unlimited\"\\)\\."
 #test set print demangle
 gdb_test_no_output "set print demangle" "set print demangle"
 #test set print elements
@@ -602,16 +686,17 @@ set show_conv_list \
 	{$_cimag = <internal function _cimag>} \
 	{$_creal = <internal function _creal>} \
 	{$_isvoid = <internal function _isvoid>} \
+	{$_shell = <internal function _shell>} \
 	{$_gdb_maint_setting_str = <internal function _gdb_maint_setting_str>} \
 	{$_gdb_maint_setting = <internal function _gdb_maint_setting>} \
 	{$_gdb_setting_str = <internal function _gdb_setting_str>} \
 	{$_gdb_setting = <internal function _gdb_setting>} \
-	{$_gdb_major = 13} \
-	{$_gdb_minor = 2} \
+	{$_gdb_major = 15} \
+	{$_gdb_minor = 1} \
 	{$_shell_exitsignal = void} \
 	{$_shell_exitcode = 0} \
     }
-if ![skip_python_tests] {
+if [allow_python_tests] {
     append show_conv_list \
 	{
 	    {$_memeq = <internal function _memeq>} \
@@ -664,6 +749,9 @@ gdb_test "show print address" "Printing of addresses is on."
 gdb_test "show print array" "Pretty formatting of arrays is on."
 #test show print asm-demangle
 gdb_test "show print asm-demangle" "Demangling of C\[+\]+/ObjC names in disassembly listings is on."
+#test show print characters
+gdb_test "show print characters" \
+	 "Limit on string characters to print is elements\\."
 #test show print demangle
 gdb_test "show print demangle" "Demangling of encoded C\[+\]+/ObjC names when displaying symbols is on."
 #test show print elements

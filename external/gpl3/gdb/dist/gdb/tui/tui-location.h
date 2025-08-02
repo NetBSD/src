@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 
 #include "tui/tui.h"
 #include "tui/tui.h"
-#include "gdb_curses.h"	/* For WINDOW.  */
+#include "gdb_curses.h"
 #include "observable.h"
 
 /* Class used to track the current location that the TUI is displaying.  An
@@ -32,9 +32,9 @@
 
 struct tui_location_tracker
 {
-  /* Update the current location with the provided arguments.  Returns true
-     if any of the locator's fields were actually changed, and false
-     otherwise.  */
+  /* Update the current location with the provided arguments.  Returns
+     true if any of the status window's fields were actually changed,
+     and false otherwise.  */
   bool set_location (struct gdbarch *gdbarch,
 		     const struct symtab_and_line &sal,
 		     const char *procname);

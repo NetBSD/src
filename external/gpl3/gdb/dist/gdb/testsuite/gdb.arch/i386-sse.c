@@ -1,6 +1,6 @@
 /* Test program for SSE registers.
 
-   Copyright 2004-2023 Free Software Foundation, Inc.
+   Copyright 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -65,7 +65,7 @@ have_sse (void)
     return 0;
 }
 
-#include "../lib/precise-aligned-alloc.c"
+#include "precise-aligned-alloc.c"
 
 int
 main (int argc, char **argv)

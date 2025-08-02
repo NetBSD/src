@@ -1,5 +1,5 @@
 /* Build symbol tables in GDB's internal format.
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,9 @@
 #if !defined (BUILDSYM_H)
 #define BUILDSYM_H 1
 
-#include "gdb_obstack.h"
+#include "gdbsupport/gdb_obstack.h"
+#include "symtab.h"
+#include "addrmap.h"
 
 struct objfile;
 struct symbol;
@@ -45,17 +47,26 @@ struct dynamic_prop;
 
 struct subfile
 {
-  struct subfile *next;
-  /* Space for this is malloc'd.  */
-  char *name;
-  /* Space for this is malloc'd.  */
-  struct linetable *line_vector;
-  int line_vector_length;
-  /* The "containing" compunit.  */
-  struct buildsym_compunit *buildsym_compunit;
-  enum language language;
-  struct symtab *symtab;
+  subfile () = default;
+
+  /* There's nothing wrong with copying a subfile, but we don't need to, so use
+     this to avoid copying one by mistake.  */
+  DISABLE_COPY_AND_ASSIGN (subfile);
+
+  struct subfile *next = nullptr;
+  std::string name;
+
+  /* This field is analoguous in function to symtab::filename_for_id.
+
+     It is used to look up existing subfiles in calls to start_subfile.  */
+  std::string name_for_id;
+
+  std::vector<linetable_entry> line_vector_entries;
+  enum language language = language_unknown;
+  struct symtab *symtab = nullptr;
 };
+
+using subfile_up = std::unique_ptr<subfile>;
 
 /* Record the symbols defined for each context in a list.  We don't
    create a struct block for the context until we know how long to
@@ -110,18 +121,44 @@ struct context_stack
 
   };
 
+/* Flags associated with a linetable entry.  */
+
+enum linetable_entry_flag : unsigned
+{
+  /* Indicates this PC is a good location to place a breakpoint at LINE.  */
+  LEF_IS_STMT = 1 << 1,
+
+  /* Indicates this PC is a good location to place a breakpoint at the first
+     instruction past a function prologue.  */
+  LEF_PROLOGUE_END = 1 << 2,
+};
+DEF_ENUM_FLAGS_TYPE (enum linetable_entry_flag, linetable_entry_flags);
+
+
 /* Buildsym's counterpart to struct compunit_symtab.  */
 
 struct buildsym_compunit
 {
   /* Start recording information about a primary source file (IOW, not an
      included source file).
+
      COMP_DIR is the directory in which the compilation unit was compiled
-     (or NULL if not known).  */
+     (or NULL if not known).
+
+     NAME and NAME_FOR_ID have the same purpose as for the start_subfile
+     method.  */
+
+  buildsym_compunit (struct objfile *objfile_, const char *name,
+		     const char *comp_dir_, const char *name_for_id,
+		     enum language language_, CORE_ADDR last_addr);
+
+  /* Same as above, but passes NAME for NAME_FOR_ID.  */
 
   buildsym_compunit (struct objfile *objfile_, const char *name,
 		     const char *comp_dir_, enum language language_,
-		     CORE_ADDR last_addr);
+		     CORE_ADDR last_addr)
+    : buildsym_compunit (objfile_, name, comp_dir_, name, language_, last_addr)
+  {}
 
   /* Reopen an existing compunit_symtab so that additional symbols can
      be added to it.  Arguments are as for the main constructor.  CUST
@@ -132,7 +169,7 @@ struct buildsym_compunit
 		     CORE_ADDR last_addr, struct compunit_symtab *cust)
     : m_objfile (objfile_),
       m_last_source_file (name == nullptr ? nullptr : xstrdup (name)),
-      m_comp_dir (comp_dir_ == nullptr ? nullptr : xstrdup (comp_dir_)),
+      m_comp_dir (comp_dir_ == nullptr ? "" : comp_dir_),
       m_compunit_symtab (cust),
       m_language (language_),
       m_last_source_start_addr (last_addr)
@@ -179,7 +216,22 @@ struct buildsym_compunit
   void record_block_range (struct block *block,
 			   CORE_ADDR start, CORE_ADDR end_inclusive);
 
-  void start_subfile (const char *name);
+  /* Start recording information about source code that comes from a source
+     file.  This sets the current subfile, creating it if necessary.
+
+     NAME is the user-visible name of the subfile.
+
+     NAME_FOR_ID is a name that must be stable between the different calls to
+     start_subfile referring to the same file (it is used for looking up
+     existing subfiles).  It can be equal to NAME if NAME follows that rule.  */
+  void start_subfile (const char *name, const char *name_for_id);
+
+  /* Same as above, but passes NAME for NAME_FOR_ID.  */
+
+  void start_subfile (const char *name)
+  {
+    return start_subfile (name, name);
+  }
 
   void patch_subfile_names (struct subfile *subfile, const char *name);
 
@@ -188,7 +240,7 @@ struct buildsym_compunit
   const char *pop_subfile ();
 
   void record_line (struct subfile *subfile, int line, CORE_ADDR pc,
-		    bool is_stmt);
+		    linetable_entry_flags flags);
 
   struct compunit_symtab *get_compunit_symtab ()
   {
@@ -271,13 +323,13 @@ struct buildsym_compunit
 
   struct context_stack pop_context ();
 
-  struct block *end_symtab_get_static_block (CORE_ADDR end_addr,
-					     int expandable, int required);
+  struct block *end_compunit_symtab_get_static_block
+    (CORE_ADDR end_addr, int expandable, int required);
 
-  struct compunit_symtab *end_symtab_from_static_block
-      (struct block *static_block, int section, int expandable);
+  struct compunit_symtab *end_compunit_symtab_from_static_block
+    (struct block *static_block, int section, int expandable);
 
-  struct compunit_symtab *end_symtab (CORE_ADDR end_addr, int section);
+  struct compunit_symtab *end_compunit_symtab (CORE_ADDR end_addr, int section);
 
   struct compunit_symtab *end_expandable_symtab (CORE_ADDR end_addr,
 						 int section);
@@ -299,8 +351,8 @@ private:
 
   void watch_main_source_file_lossage ();
 
-  struct compunit_symtab *end_symtab_with_blockvector
-      (struct block *static_block, int section, int expandable);
+  struct compunit_symtab *end_compunit_symtab_with_blockvector
+    (struct block *static_block, int section, int expandable);
 
   /* The objfile we're reading debug info from.  */
   struct objfile *m_objfile;
@@ -320,7 +372,7 @@ private:
   gdb::unique_xmalloc_ptr<char> m_last_source_file;
 
   /* E.g., DW_AT_comp_dir if DWARF.  Space for this is malloc'd.  */
-  gdb::unique_xmalloc_ptr<char> m_comp_dir;
+  std::string m_comp_dir;
 
   /* Space for this is not malloc'd, and is assumed to have at least
      the same lifetime as objfile.  */
@@ -367,12 +419,7 @@ private:
   /* The mutable address map for the compilation unit whose symbols
      we're currently reading.  The symtabs' shared blockvector will
      point to a fixed copy of this.  */
-  struct addrmap *m_pending_addrmap = nullptr;
-
-  /* The obstack on which we allocate pending_addrmap.
-     If pending_addrmap is NULL, this is uninitialized; otherwise, it is
-     initialized (and holds pending_addrmap).  */
-  auto_obstack m_pending_addrmap_obstack;
+  struct addrmap_mutable m_pending_addrmap;
 
   /* True if we recorded any ranges in the addrmap that are different
      from those in the blockvector already.  We set this to false when

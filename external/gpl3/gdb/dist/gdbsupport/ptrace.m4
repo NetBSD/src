@@ -1,4 +1,4 @@
-dnl Copyright (C) 2012-2023 Free Software Foundation, Inc.
+dnl Copyright (C) 2012-2024 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl

@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,9 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
 load_lib mi-support.exp
 
@@ -167,12 +165,9 @@ proc test_pending_resolved { } {
 	global lib_sl1 lib_sl2
 	global mi_gdb_prompt
 
-	gdb_exit
-	if [mi_gdb_start] {
+	if {[mi_clean_restart $binfile]} {
 	    return
 	}
-	mi_gdb_reinitialize_dir $srcdir/$subdir
-	mi_gdb_load ${binfile}
 	mi_load_shlibs $lib_sl1 $lib_sl2
 
 	# Create a pending breakpoint on pendfunc1

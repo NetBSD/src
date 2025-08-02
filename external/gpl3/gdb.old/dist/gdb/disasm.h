@@ -1,5 +1,5 @@
 /* Disassemble support for GDB.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,70 +20,307 @@
 #define DISASM_H
 
 #include "dis-asm.h"
-#include "gdbsupport/enum-flags.h"
-
-enum gdb_disassembly_flag
-  {
-    DISASSEMBLY_SOURCE_DEPRECATED = (0x1 << 0),
-    DISASSEMBLY_RAW_INSN = (0x1 << 1),
-    DISASSEMBLY_OMIT_FNAME = (0x1 << 2),
-    DISASSEMBLY_FILENAME = (0x1 << 3),
-    DISASSEMBLY_OMIT_PC = (0x1 << 4),
-    DISASSEMBLY_SOURCE = (0x1 << 5),
-    DISASSEMBLY_SPECULATIVE = (0x1 << 6),
-  };
-DEF_ENUM_FLAGS_TYPE (enum gdb_disassembly_flag, gdb_disassembly_flags);
+#include "disasm-flags.h"
 
 struct gdbarch;
 struct ui_out;
 struct ui_file;
 
-class gdb_disassembler
+#if __cplusplus >= 201703L
+#define LIBOPCODE_CALLBACK_NOEXCEPT noexcept
+#else
+#define LIBOPCODE_CALLBACK_NOEXCEPT
+#endif
+
+/* A wrapper around a disassemble_info and a gdbarch.  This is the core
+   set of data that all disassembler sub-classes will need.  This class
+   doesn't actually implement the disassembling process, that is something
+   that sub-classes will do, with each sub-class doing things slightly
+   differently.
+
+   The constructor of this class is protected, you should not create
+   instances of this class directly, instead create an instance of an
+   appropriate sub-class.  */
+
+struct gdb_disassemble_info
 {
-  using di_read_memory_ftype = decltype (disassemble_info::read_memory_func);
+  DISABLE_COPY_AND_ASSIGN (gdb_disassemble_info);
 
-public:
-  gdb_disassembler (struct gdbarch *gdbarch, struct ui_file *file)
-    : gdb_disassembler (gdbarch, file, dis_asm_read_memory)
-  {}
-
-  ~gdb_disassembler ();
-
-  DISABLE_COPY_AND_ASSIGN (gdb_disassembler);
-
-  int print_insn (CORE_ADDR memaddr, int *branch_delay_insns = NULL);
-
-  /* Return the gdbarch of gdb_disassembler.  */
+  /* Return the gdbarch we are disassembling for.  */
   struct gdbarch *arch ()
   { return m_gdbarch; }
 
+  /* Return a pointer to the disassemble_info, this will be needed for
+     passing into the libopcodes disassembler.  */
+  struct disassemble_info *disasm_info ()
+  { return &m_di; }
+
 protected:
-  gdb_disassembler (struct gdbarch *gdbarch, struct ui_file *file,
-		    di_read_memory_ftype func);
 
-  struct ui_file *stream ()
-  { return (struct ui_file *) m_di.stream; }
+  /* Types for the function callbacks within m_di.  The actual function
+     signatures here are taken from include/dis-asm.h.  The noexcept macro
+     expands to 'noexcept' for C++17 and later, otherwise, it expands to
+     nothing.  This is because including noexcept was ignored for function
+     types before C++17, but both GCC and Clang warn that the noexcept
+     will become relevant when you switch to C++17, and this warning
+     causes the build to fail.  */
+  using read_memory_ftype
+    = int (*) (bfd_vma, bfd_byte *, unsigned int, struct disassemble_info *)
+	LIBOPCODE_CALLBACK_NOEXCEPT;
+  using memory_error_ftype
+    = void (*) (int, bfd_vma, struct disassemble_info *)
+	LIBOPCODE_CALLBACK_NOEXCEPT;
+  using print_address_ftype
+    = void (*) (bfd_vma, struct disassemble_info *)
+	LIBOPCODE_CALLBACK_NOEXCEPT;
+  using fprintf_ftype
+    = int (*) (void *, const char *, ...)
+	LIBOPCODE_CALLBACK_NOEXCEPT;
+  using fprintf_styled_ftype
+    = int (*) (void *, enum disassembler_style, const char *, ...)
+	LIBOPCODE_CALLBACK_NOEXCEPT;
 
-private:
-  struct gdbarch *m_gdbarch;
+  /* Constructor, many fields in m_di are initialized from GDBARCH.  The
+     remaining arguments are function callbacks that are written into m_di.
+     Of these function callbacks FPRINTF_FUNC and FPRINTF_STYLED_FUNC must
+     not be nullptr.  If READ_MEMORY_FUNC, MEMORY_ERROR_FUNC, or
+     PRINT_ADDRESS_FUNC are nullptr, then that field within m_di is left
+     with its default value (see the libopcodes function
+     init_disassemble_info for the defaults).  */
+  gdb_disassemble_info (struct gdbarch *gdbarch,
+			read_memory_ftype read_memory_func,
+			memory_error_ftype memory_error_func,
+			print_address_ftype print_address_func,
+			fprintf_ftype fprintf_func,
+			fprintf_styled_ftype fprintf_styled_func);
+
+  /* Destructor.  */
+  virtual ~gdb_disassemble_info ();
 
   /* Stores data required for disassembling instructions in
      opcodes.  */
   struct disassemble_info m_di;
 
+private:
+  /* The architecture we are disassembling for.  */
+  struct gdbarch *m_gdbarch;
+
   /* If we own the string in `m_di.disassembler_options', we do so
      using this field.  */
   std::string m_disassembler_options_holder;
+};
 
-  CORE_ADDR m_err_memaddr;
+/* A wrapper around gdb_disassemble_info.  This class adds default
+   print functions that are supplied to the disassemble_info within the
+   parent class.  These default print functions write to the stream, which
+   is also contained in the parent class.
 
+   As with the parent class, the constructor for this class is protected,
+   you should not create instances of this class, but create an
+   appropriate sub-class instead.  */
+
+struct gdb_printing_disassembler : public gdb_disassemble_info
+{
+  DISABLE_COPY_AND_ASSIGN (gdb_printing_disassembler);
+
+protected:
+
+  /* The stream that disassembler output is being written too.  */
+  struct ui_file *stream ()
+  { return m_stream; }
+
+  /* Constructor.  All the arguments are just passed to the parent class.
+     We also add the two print functions to the arguments passed to the
+     parent.  See gdb_disassemble_info for a description of how the
+     arguments are handled.  */
+  gdb_printing_disassembler (struct gdbarch *gdbarch,
+			     struct ui_file *stream,
+			     read_memory_ftype read_memory_func,
+			     memory_error_ftype memory_error_func,
+			     print_address_ftype print_address_func)
+    : gdb_disassemble_info (gdbarch, read_memory_func,
+			    memory_error_func, print_address_func,
+			    fprintf_func, fprintf_styled_func),
+      m_stream (stream)
+  {
+    gdb_assert (stream != nullptr);
+  }
+
+  /* Callback used as the disassemble_info's fprintf_func callback.  The
+     DIS_INFO pointer is a pointer to a gdb_printing_disassembler object.
+     Content is written to the m_stream extracted from DIS_INFO.  */
+  static int fprintf_func (void *dis_info, const char *format, ...) noexcept
+    ATTRIBUTE_PRINTF(2,3);
+
+  /* Callback used as the disassemble_info's fprintf_styled_func callback.
+     The DIS_INFO pointer is a pointer to a gdb_printing_disassembler
+     object.  Content is written to the m_stream extracted from DIS_INFO.  */
+  static int fprintf_styled_func (void *dis_info,
+				  enum disassembler_style style,
+				  const char *format, ...) noexcept
+    ATTRIBUTE_PRINTF(3,4);
+
+  /* Return true if the disassembler is considered inside a comment, false
+     otherwise.  */
+  bool in_comment_p () const
+  { return m_in_comment; }
+
+  /* Set whether the disassembler should be considered as within comment
+     text or not.  */
+  void set_in_comment (bool c)
+  { m_in_comment = c; }
+
+private:
+
+  /* When libopcodes calls the fprintf_func and fprintf_styled_func
+     callbacks, a 'void *' argument is passed.  We arrange, through our
+     call to init_disassemble_info that this argument will be a pointer to
+     a gdb_disassemble_info sub-class, specifically, a
+     gdb_printing_disassembler pointer.  This helper function casts
+     DIS_INFO to the correct type (with some asserts), and then returns the
+     m_stream member variable.  */
+  static ui_file *stream_from_gdb_disassemble_info (void *dis_info);
+
+  /* The stream to which output should be sent.  */
+  struct ui_file *m_stream;
+
+  /* Are we inside a comment?  This will be set true if the disassembler
+     uses styled output and emits a start of comment character.  It is up
+     to the code that uses this disassembler class to reset this flag back
+     to false at a suitable time (e.g. at the end of every line).  */
+  bool m_in_comment = false;
+};
+
+/* A basic disassembler that doesn't actually print anything.  */
+
+struct gdb_non_printing_disassembler : public gdb_disassemble_info
+{
+  gdb_non_printing_disassembler (struct gdbarch *gdbarch,
+				 read_memory_ftype read_memory_func)
+    : gdb_disassemble_info (gdbarch,
+			    read_memory_func,
+			    nullptr /* memory_error_func */,
+			    nullptr /* print_address_func */,
+			    null_fprintf_func,
+			    null_fprintf_styled_func)
+  { /* Nothing.  */ }
+
+private:
+
+  /* Callback used as the disassemble_info's fprintf_func callback, this
+     doesn't write anything to STREAM, but just returns 0.  */
+  static int null_fprintf_func (void *stream, const char *format, ...) noexcept
+    ATTRIBUTE_PRINTF(2,3);
+
+  /* Callback used as the disassemble_info's fprintf_styled_func callback,
+     , this doesn't write anything to STREAM, but just returns 0.  */
+  static int null_fprintf_styled_func (void *stream,
+				       enum disassembler_style style,
+				       const char *format, ...) noexcept
+    ATTRIBUTE_PRINTF(3,4);
+};
+
+/* This is a helper class, for use as an additional base-class, by some of
+   the disassembler classes below.  This class just defines a static method
+   for reading from target memory, which can then be used by the various
+   disassembler sub-classes.  */
+
+struct gdb_disassembler_memory_reader
+{
+  /* Implements the read_memory_func disassemble_info callback.  */
   static int dis_asm_read_memory (bfd_vma memaddr, gdb_byte *myaddr,
 				  unsigned int len,
-				  struct disassemble_info *info);
+				  struct disassemble_info *info) noexcept;
+};
+
+/* A non-printing disassemble_info management class.  The disassemble_info
+   setup by this class will not print anything to the output stream (there
+   is no output stream), and the instruction to be disassembled will be
+   read from target memory.  */
+
+struct gdb_non_printing_memory_disassembler
+  : public gdb_non_printing_disassembler,
+    private gdb_disassembler_memory_reader
+{
+  /* Constructor.  GDBARCH is the architecture to disassemble for.  */
+  gdb_non_printing_memory_disassembler (struct gdbarch *gdbarch)
+    :gdb_non_printing_disassembler (gdbarch, dis_asm_read_memory)
+  { /* Nothing.  */ }
+};
+
+/* A dissassembler class that provides 'print_insn', a method for
+   disassembling a single instruction to the output stream.  */
+
+struct gdb_disassembler : public gdb_printing_disassembler,
+			  private gdb_disassembler_memory_reader
+{
+  gdb_disassembler (struct gdbarch *gdbarch, struct ui_file *file)
+    : gdb_disassembler (gdbarch, file, dis_asm_read_memory)
+  { /* Nothing.  */ }
+
+  DISABLE_COPY_AND_ASSIGN (gdb_disassembler);
+
+  /* Disassemble a single instruction at MEMADDR to the ui_file* that was
+     passed to the constructor.  If a memory error occurs while
+     disassembling this instruction then an error will be thrown.  */
+  int print_insn (CORE_ADDR memaddr, int *branch_delay_insns = NULL);
+
+protected:
+  gdb_disassembler (struct gdbarch *gdbarch, struct ui_file *file,
+		    read_memory_ftype func);
+
+private:
+  /* This member variable is given a value by calling dis_asm_memory_error.
+     If after calling into the libopcodes disassembler we get back a
+     negative value (which indicates an error), then, if this variable has
+     a value, we report a memory error to the user, otherwise, we report a
+     non-memory error.  */
+  gdb::optional<CORE_ADDR> m_err_memaddr;
+
+  /* The stream to which disassembler output will be written.  */
+  ui_file *m_dest;
+
+  /* Disassembler output is built up into this buffer.  Whether this
+     string_file is created with styling support or not depends on the
+     value of use_ext_lang_colorization_p, as well as whether disassembler
+     styling in general is turned on, and also, whether *m_dest supports
+     styling or not.  */
+  string_file m_buffer;
+
+  /* When true, m_buffer will be created without styling support,
+     otherwise, m_buffer will be created with styling support.
+
+     This field will initially be true, but will be set to false if
+     ext_lang_colorize_disasm fails to add styling at any time.
+
+     If the extension language is going to add the styling then m_buffer
+     should be created without styling support, the extension language will
+     then add styling at the end of the disassembly process.
+
+     If the extension language is not going to add the styling, then we
+     create m_buffer with styling support, and GDB will add minimal styling
+     (currently just to addresses and symbols) as it goes.  */
+  static bool use_ext_lang_colorization_p;
+
   static void dis_asm_memory_error (int err, bfd_vma memaddr,
-				    struct disassemble_info *info);
+				    struct disassemble_info *info) noexcept;
   static void dis_asm_print_address (bfd_vma addr,
-				     struct disassemble_info *info);
+				     struct disassemble_info *info) noexcept;
+
+  /* Return true if we should use the extension language to apply
+     disassembler styling.  This requires disassembler styling to be on
+     (i.e. 'set style disassembler enabled on'), the output stream needs to
+     support styling, and libopcode styling needs to be either off, or not
+     supported for the current architecture (libopcodes is used in
+     preference to the extension language method).  */
+  bool use_ext_lang_for_styling () const;
+
+  /* Return true if we should use libopcodes to apply disassembler styling.
+     This requires disassembler styling to be on (i.e. 'set style
+     disassembler enabled on'), the output stream needs to support styling,
+     and libopcodes styling needs to be supported for the current
+     architecture, and not disabled by the user.  */
+  bool use_libopcodes_for_styling () const;
 };
 
 /* An instruction to be disassembled.  */
@@ -144,6 +381,9 @@ private:
 
   /* The buffer used to build the raw opcodes string.  */
   string_file m_opcode_stb;
+
+  /* The buffer used to hold the opcode bytes (if required).  */
+  gdb::byte_vector m_opcode_data;
 };
 
 /* Return the length in bytes of the instruction at address MEMADDR in
@@ -164,6 +404,6 @@ extern char *get_disassembler_options (struct gdbarch *gdbarch);
 
 /* Sets the active gdbarch's disassembler options to OPTIONS.  */
 
-extern void set_disassembler_options (char *options);
+extern void set_disassembler_options (const char *options);
 
 #endif

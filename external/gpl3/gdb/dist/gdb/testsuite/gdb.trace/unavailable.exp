@@ -1,4 +1,4 @@
-# Copyright 1998-2023 Free Software Foundation, Inc.
+# Copyright 1998-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
 }
 
 set ws "\[\r\n\t \]+"
-set cr "\[\r\n\]+"
 
 #
 # Utility procs
@@ -33,13 +32,12 @@ set cr "\[\r\n\]+"
 proc test_register { reg } {
     global gdb_prompt
     global hex
-    global cr
 
     gdb_test_multiple "print /x $reg" "collected $reg" {
-	-re "\\$\[0-9\]+ = \[x0\]+$cr$gdb_prompt $" {
+	-re "\\$\[0-9\]+ = \[x0\]+\r\n$gdb_prompt $" {
 	    fail "collected $reg (zero)"
 	}
-	-re "\\$\[0-9\]+ = $hex$cr$gdb_prompt $" {
+	-re "\\$\[0-9\]+ = $hex\r\n$gdb_prompt $" {
 	    pass "collected $reg"
 	}
 	-re "\[Ee\]rror.*$gdb_prompt $" {
@@ -77,8 +75,7 @@ proc run_trace_experiment { test_func } {
     gdb_test "continue" \
 	    "Continuing.*Breakpoint \[0-9\]+, end.*" \
 	    "run trace experiment"
-    gdb_test "tstop" \
-	    "\[\r\n\]+" \
+    gdb_test_no_output "tstop" \
 	    "stop trace experiment"
     gdb_test "tfind start" \
 	    "#0  $test_func .*" \
@@ -120,8 +117,6 @@ proc test_maybe_regvar_display { var } {
 #
 
 proc gdb_collect_args_test_1 {} {
-    global cr
-
     # Test printing the variables, and also their addresses.  We
     # haven't collected any stack, so there's no way GDB can figure
     # out the latter.
@@ -159,13 +154,13 @@ proc gdb_collect_args_test_1 {} {
     gdb_test "print argarray\[0\]" "value is not available"
 
     # Test "info args"
-    set r ""
-    set r "${r}argc = <unavailable>${cr}"
-    set r "${r}argi = <unavailable>${cr}"
-    set r "${r}argf = <unavailable>${cr}"
-    set r "${r}argd = <unavailable>${cr}"
-    set r "${r}argstruct = <unavailable>${cr}"
-    set r "${r}argarray = <unavailable>${cr}"
+    set r [multi_line \
+	       "argc = <unavailable>" \
+	       "argi = <unavailable>" \
+	       "argf = <unavailable>" \
+	       "argd = <unavailable>" \
+	       "argstruct = <unavailable>" \
+	       "argarray = <unavailable>"]
     gdb_test "info args" "$r" "info args"
 
     test_maybe_regvar_display "argc"
@@ -194,17 +189,15 @@ proc gdb_collect_args_test {} {
 
 	set tracefile [standard_output_file ${testfile}]
 	gdb_test "tsave ${tracefile}.args.tfile" \
-	    "Trace data saved to file '${tracefile}.args.tfile'\.\\r" \
+	    "Trace data saved to file '${tracefile}.args.tfile'\\." \
 	    "tsave ${testfile}.args.tfile"
 	gdb_test "tsave -ctf ${tracefile}.args.ctf" \
-	    "Trace data saved to directory '${tracefile}.args.ctf'\.\\r" \
+	    "Trace data saved to directory '${tracefile}.args.ctf'\\." \
 	    "save ctf trace file"
 
 	foreach target_name ${trace_file_targets} {
 	    # Restart GDB and read the trace data in ${TARGET_NAME} target.
-	    gdb_exit
-	    gdb_start
-	    gdb_reinitialize_dir $srcdir/$subdir
+	    clean_restart
 	    gdb_file_cmd $binfile
 	    gdb_test "target ${target_name} ${tracefile}.args.${target_name}" ".*" \
 		"change to ${target_name} target"
@@ -219,8 +212,6 @@ proc gdb_collect_args_test {} {
 }
 
 proc gdb_collect_locals_test_1 { func } {
-    global cr
-
     gdb_test "print locc" " = <unavailable>"
     gdb_test "print loci" " = <unavailable>"
     gdb_test "print locf" " = <unavailable>"
@@ -238,16 +229,16 @@ proc gdb_collect_locals_test_1 { func } {
 
     # Test "info locals"
     set r ""
-    set r "${r}locf = <unavailable>${cr}"
-    set r "${r}locd = <unavailable>${cr}"
-    set r "${r}locst = <unavailable>${cr}"
-    set r "${r}locar = <unavailable>${cr}"
-    set r "${r}i = <unavailable>${cr}"
+    set r "${r}locf = <unavailable>"
+    set r "${r}locd = <unavailable>"
+    set r "${r}locst = <unavailable>"
+    set r "${r}locar = <unavailable>"
+    set r "${r}i = <unavailable>"
     if { $func == "local_test_func" } {
-	set r "${r}locdefst = <unavailable>${cr}"
+	set r "${r}locdefst = <unavailable>"
     }
-    set r "${r}locc = <unavailable>${cr}"
-    set r "${r}loci = <unavailable>${cr}"
+    set r "${r}locc = <unavailable>"
+    set r "${r}loci = <unavailable>"
     gdb_test "info locals" "$r" "info locals"
 
     test_maybe_regvar_display "loci"
@@ -278,17 +269,15 @@ proc gdb_collect_locals_test { func msg } {
 
 	set tracefile [standard_output_file ${testfile}]
 	gdb_test "tsave ${tracefile}.locals.tfile" \
-	    "Trace data saved to file '${tracefile}.locals.tfile'\.\\r" \
+	    "Trace data saved to file '${tracefile}.locals.tfile'\\." \
 	    "tsave ${testfile}.locals.tfile"
 	gdb_test "tsave -ctf ${tracefile}.locals.ctf" \
-	    "Trace data saved to directory '${tracefile}.locals.ctf'\.\\r" \
+	    "Trace data saved to directory '${tracefile}.locals.ctf'\\." \
 	    "save ctf trace file"
 
 	foreach target_name ${trace_file_targets} {
 	    # Restart GDB and read the trace data in ${TARGET_NAME} target.
-	    gdb_exit
-	    gdb_start
-	    gdb_reinitialize_dir $srcdir/$subdir
+	    clean_restart
 	    gdb_file_cmd $binfile
 	    gdb_test "target ${target_name} ${tracefile}.locals.${target_name}" ".*" \
 		"change to ${target_name} target"
@@ -361,17 +350,15 @@ proc gdb_unavailable_registers_test { } {
 
 	set tracefile [standard_output_file ${testfile}]
 	gdb_test "tsave ${tracefile}.registers.tfile" \
-	    "Trace data saved to file '${tracefile}.registers.tfile'\.\\r" \
+	    "Trace data saved to file '${tracefile}.registers.tfile'\\." \
 	    "tsave ${testfile}.registers.tfile"
 	gdb_test "tsave -ctf ${tracefile}.registers.ctf" \
-	    "Trace data saved to directory '${tracefile}.registers.ctf'\.\\r" \
+	    "Trace data saved to directory '${tracefile}.registers.ctf'\\." \
 	    "save ctf trace file"
 
 	foreach target_name ${trace_file_targets} {
 	    # Restart GDB and read the trace data in ${TARGET_NAME} target.
-	    gdb_exit
-	    gdb_start
-	    gdb_reinitialize_dir $srcdir/$subdir
+	    clean_restart
 	    gdb_file_cmd $binfile
 	    gdb_test "target ${target_name} ${tracefile}.registers.${target_name}" ".*" \
 		"change to ${target_name} target"
@@ -425,17 +412,15 @@ proc gdb_unavailable_floats { } {
 
 	set tracefile [standard_output_file ${testfile}]
 	gdb_test "tsave ${tracefile}.floats.tfile" \
-	    "Trace data saved to file '${tracefile}.floats.tfile'\.\\r" \
+	    "Trace data saved to file '${tracefile}.floats.tfile'\\." \
 	    "tsave ${testfile}.floats.tfile"
 	gdb_test "tsave -ctf ${tracefile}.floats.ctf" \
-	    "Trace data saved to directory '${tracefile}.floats.ctf'\.\\r" \
+	    "Trace data saved to directory '${tracefile}.floats.ctf'\\." \
 	    "save ctf trace file"
 
 	foreach target_name ${trace_file_targets} {
 	    # Restart GDB and read the trace data in ${TARGET_NAME} target.
-	    gdb_exit
-	    gdb_start
-	    gdb_reinitialize_dir $srcdir/$subdir
+	    clean_restart
 	    gdb_file_cmd $binfile
 	    gdb_test "target ${target_name} ${tracefile}.floats.${target_name}" ".*" \
 		"change to ${target_name} target"
@@ -451,7 +436,6 @@ proc gdb_unavailable_floats { } {
 
 proc gdb_collect_globals_test_1 { } {
     global ws
-    global cr
     global gdb_prompt
     global hex
 
@@ -530,7 +514,7 @@ proc gdb_collect_globals_test_1 { } {
 	"global reference shows address but not value"
 
     gdb_test "print *&g_ref" \
-	"\\$\[0-9\]+ = <unavailable>$cr" \
+	"\\$\[0-9\]+ = <unavailable>" \
 	"referenced integer was not collected (taking address of reference)"
 
     gdb_test "print *g_structref_p" " = <unavailable>"
@@ -539,7 +523,7 @@ proc gdb_collect_globals_test_1 { } {
 
     # Const string is always available, even when not collected.
     gdb_test "print g_const_string" \
-	" = \"hello world\"$cr" \
+	" = \"hello world\"" \
 	"non collected const string is still printable"
 
     gdb_test "print g_string_p" \
@@ -560,7 +544,7 @@ proc gdb_collect_globals_test_1 { } {
     # variable being set to <unavailable> without error.
     set msg "examining partially collected object"
     gdb_test_multiple "x /10x &struct_b" "$msg" {
-	-re "$hex <struct_b>:${ws}<unavailable>${ws}<unavailable>${ws}<unavailable>${ws}<unavailable>$cr$hex <struct_b\\+16>:${ws}<unavailable>${ws}<unavailable>${ws}0xaaaaaaaa${ws}<unavailable>$cr$hex <struct_b\\+32>:${ws}<unavailable>${ws}<unavailable>$cr$gdb_prompt $" {
+	-re "$hex <struct_b>:${ws}<unavailable>${ws}<unavailable>${ws}<unavailable>${ws}<unavailable>\r\n$hex <struct_b\\+16>:${ws}<unavailable>${ws}<unavailable>${ws}0xaaaaaaaa${ws}<unavailable>\r\n$hex <struct_b\\+32>:${ws}<unavailable>${ws}<unavailable>\r\n$gdb_prompt $" {
 	    pass "$msg"
 	}
 	-re "value is not available" {
@@ -693,17 +677,15 @@ proc gdb_collect_globals_test { } {
 
 	set tracefile [standard_output_file ${testfile}]
 	gdb_test "tsave ${tracefile}.globals.tfile" \
-	    "Trace data saved to file '${tracefile}.globals.tfile'\.\\r" \
+	    "Trace data saved to file '${tracefile}.globals.tfile'\\." \
 	    "tsave ${testfile}.globals.tfile"
 	gdb_test "tsave -ctf ${tracefile}.globals.ctf" \
-	    "Trace data saved to directory '${tracefile}.globals.ctf'\.\\r" \
+	    "Trace data saved to directory '${tracefile}.globals.ctf'\\." \
 	    "save ctf trace file"
 
 	foreach target_name ${trace_file_targets} {
 	    # Restart GDB and read the trace data in ${TARGET_NAME} target.
-	    gdb_exit
-	    gdb_start
-	    gdb_reinitialize_dir $srcdir/$subdir
+	    clean_restart
 	    gdb_file_cmd $binfile
 	    gdb_test "target ${target_name} ${tracefile}.globals.${target_name}" ".*" \
 		"change to ${target_name} target"

@@ -1,5 +1,5 @@
 /* FRV simulator memory option handling.
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
 This file is part of GDB, the GNU debugger.
@@ -212,9 +212,9 @@ frv_option_handler (SIM_DESC sd, sim_cpu *current_cpu, int opt,
 	  }
 	for (i = 0; i < MAX_NR_PROCESSORS; ++i)
 	  {
-	    SIM_CPU *current_cpu = STATE_CPU (sd, i);
-	    FRV_CACHE *insn_cache = CPU_INSN_CACHE (current_cpu);
-	    FRV_CACHE *data_cache = CPU_DATA_CACHE (current_cpu);
+	    SIM_CPU *cpu = STATE_CPU (sd, i);
+	    FRV_CACHE *insn_cache = CPU_INSN_CACHE (cpu);
+	    FRV_CACHE *data_cache = CPU_DATA_CACHE (cpu);
 	    insn_cache->memory_latency = cycles;
 	    data_cache->memory_latency = cycles;
 	  }

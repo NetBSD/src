@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2023 Free Software Foundation, Inc.
+Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -17,7 +17,8 @@ This file is part of the GNU simulators.
    License for more details.
 
    You should have received a copy of the GNU General Public License along
-   with this program; if not, see <http://www.gnu.org/licenses/>.
+   with this program; if not, write to the Free Software Foundation, Inc.,
+   51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
 
 */
 
@@ -61,7 +62,7 @@ CPU (h_gr[(index)]) = (x);\
 }\
 ;} while (0)
   } hardware;
-#define CPU_CGEN_HW(cpu) (& (cpu)->cpu_data.hardware)
+#define CPU_CGEN_HW(cpu) (& IQ2000_SIM_CPU (cpu)->cpu_data.hardware)
 } IQ2000BF_CPU_DATA;
 
 /* Cover fns for register access.  */
@@ -277,7 +278,7 @@ struct scache {
   f_opcode = EXTRACT_LSB0_UINT (insn, 32, 31, 6); \
   f_rs = EXTRACT_LSB0_UINT (insn, 32, 25, 5); \
   f_rt = EXTRACT_LSB0_UINT (insn, 32, 20, 5); \
-  f_offset = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) << (2))) + (((pc) + (4)))); \
+  f_offset = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) * (4))) + (((pc) + (4)))); \
 
 #define EXTRACT_IFMT_BBV_VARS \
   UINT f_opcode; \
@@ -290,7 +291,7 @@ struct scache {
   f_opcode = EXTRACT_LSB0_UINT (insn, 32, 31, 6); \
   f_rs = EXTRACT_LSB0_UINT (insn, 32, 25, 5); \
   f_rt = EXTRACT_LSB0_UINT (insn, 32, 20, 5); \
-  f_offset = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) << (2))) + (((pc) + (4)))); \
+  f_offset = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) * (4))) + (((pc) + (4)))); \
 
 #define EXTRACT_IFMT_BGEZ_VARS \
   UINT f_opcode; \
@@ -303,7 +304,7 @@ struct scache {
   f_opcode = EXTRACT_LSB0_UINT (insn, 32, 31, 6); \
   f_rs = EXTRACT_LSB0_UINT (insn, 32, 25, 5); \
   f_rt = EXTRACT_LSB0_UINT (insn, 32, 20, 5); \
-  f_offset = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) << (2))) + (((pc) + (4)))); \
+  f_offset = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) * (4))) + (((pc) + (4)))); \
 
 #define EXTRACT_IFMT_JALR_VARS \
   UINT f_opcode; \
@@ -436,7 +437,7 @@ struct scache {
   f_opcode = EXTRACT_LSB0_UINT (insn, 32, 31, 6); \
   f_rs = EXTRACT_LSB0_UINT (insn, 32, 25, 5); \
   f_rt = EXTRACT_LSB0_UINT (insn, 32, 20, 5); \
-  f_offset = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) << (2))) + (((pc) + (4)))); \
+  f_offset = ((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) * (4))) + (((pc) + (4)))); \
 
 #define EXTRACT_IFMT_CFC0_VARS \
   UINT f_opcode; \

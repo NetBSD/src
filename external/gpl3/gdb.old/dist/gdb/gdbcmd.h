@@ -6,7 +6,7 @@
    fnasser@redhat.com    */
 
 /* Header file for GDB-specific command-line stuff.
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -27,124 +27,46 @@
 #include "command.h"
 #include "ui-out.h"
 #include "cli/cli-script.h"
-
-/* Chain containing all defined commands.  */
-
-extern struct cmd_list_element *cmdlist;
-
-/* Chain containing all defined info subcommands.  */
-
-extern struct cmd_list_element *infolist;
-
-/* Chain containing all defined enable subcommands.  */
-
-extern struct cmd_list_element *enablelist;
-
-/* Chain containing all defined disable subcommands.  */
-
-extern struct cmd_list_element *disablelist;
-
-/* Chain containing all defined delete subcommands.  */
-
-extern struct cmd_list_element *deletelist;
-
-/* Chain containing all defined detach subcommands.  */
-
-extern struct cmd_list_element *detachlist;
-
-/* Chain containing all defined kill subcommands.  */
-
-extern struct cmd_list_element *killlist;
-
-/* Chain containing all defined stop subcommands.  */
-
-extern struct cmd_list_element *stoplist;
-
-/* Chain containing all defined set subcommands.  */
-
-extern struct cmd_list_element *setlist;
-
-/* Chain containing all defined unset subcommands.  */
-
-extern struct cmd_list_element *unsetlist;
-
-/* Chain containing all defined show subcommands.  */
-
-extern struct cmd_list_element *showlist;
-
-/* Chain containing all defined \"set history\".  */
-
-extern struct cmd_list_element *sethistlist;
-
-/* Chain containing all defined \"show history\".  */
-
-extern struct cmd_list_element *showhistlist;
-
-/* Chain containing all defined \"unset history\".  */
-
-extern struct cmd_list_element *unsethistlist;
-
-/* Chain containing all defined maintenance subcommands.  */
-
-extern struct cmd_list_element *maintenancelist;
-
-/* Chain containing all defined "maintenance info" subcommands.  */
-
-extern struct cmd_list_element *maintenanceinfolist;
-
-/* Chain containing all defined "maintenance print" subcommands.  */
-
-extern struct cmd_list_element *maintenanceprintlist;
-
-/* Chain containing all defined "maintenance check" subcommands.  */
-
-extern struct cmd_list_element *maintenancechecklist;
-
-/* Chain containing all defined "maintenance set" subcommands.  */
-
-extern struct cmd_list_element *maintenance_set_cmdlist;
-
-/* Chain containing all defined "maintenance show" subcommands.  */
-
-extern struct cmd_list_element *maintenance_show_cmdlist;
-
-extern struct cmd_list_element *setprintlist;
-
-extern struct cmd_list_element *showprintlist;
-
-extern struct cmd_list_element *setprintrawlist;
-
-extern struct cmd_list_element *showprintrawlist;
-
-extern struct cmd_list_element *setprinttypelist;
-
-extern struct cmd_list_element *showprinttypelist;
-
-extern struct cmd_list_element *setdebuglist;
-
-extern struct cmd_list_element *showdebuglist;
-
-extern struct cmd_list_element *setchecklist;
-
-extern struct cmd_list_element *showchecklist;
-
-/* Chain containing all defined "save" subcommands.  */
-
-extern struct cmd_list_element *save_cmdlist;
+#include "cli/cli-cmds.h"
 
 extern void execute_command (const char *, int);
 
-/* Execute command P and returns its output.  If TERM_OUT,
-   the output is built using terminal output behaviour such
-   as cli_styling.  */
-extern std::string execute_command_to_string (const char *p, int from_tty,
-					      bool term_out);
+/* Run FN.  Sends its output to FILE, do not display it to the screen.
+   The global BATCH_FLAG will be temporarily set to true.  */
+
+extern void execute_fn_to_ui_file (struct ui_file *file, std::function<void(void)> fn);
+
+/* Run FN.  Capture its output into the returned string, do not display it
+   to the screen.  The global BATCH_FLAG will temporarily be set to true.
+   When TERM_OUT is true the output is collected with terminal behaviour
+   (e.g. with styling).  When TERM_OUT is false raw output will be collected
+   (e.g. no styling).  */
+
+extern void execute_fn_to_string (std::string &res,
+				  std::function<void(void)> fn, bool term_out);
+
+/* As execute_fn_to_ui_file, but run execute_command for P and FROM_TTY.  */
+
 extern void execute_command_to_ui_file (struct ui_file *file,
 					const char *p, int from_tty);
+
+/* As execute_fn_to_string, but run execute_command for P and FROM_TTY.  */
+
+extern void execute_command_to_string (std::string &res, const char *p,
+				       int from_tty, bool term_out);
+
+/* As execute_command_to_string, but ignore resulting string.  */
+
+extern void execute_command_to_string (const char *p,
+				       int from_tty, bool term_out);
 
 extern void print_command_line (struct command_line *, unsigned int,
 				struct ui_file *);
 extern void print_command_lines (struct ui_out *,
 				 struct command_line *, unsigned int);
+
+/* Chains containing all defined "set/show style" subcommands.  */
+extern struct cmd_list_element *style_set_list;
+extern struct cmd_list_element *style_show_list;
 
 #endif /* !defined (GDBCMD_H) */

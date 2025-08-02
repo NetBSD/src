@@ -1,5 +1,5 @@
 /* ELF STT_GNU_IFUNC support.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -30,7 +30,7 @@
 
 /* Create sections needed by STT_GNU_IFUNC symbol.  */
 
-bfd_boolean
+bool
 _bfd_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 {
   flagword flags, pltflags;
@@ -39,7 +39,7 @@ _bfd_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
   struct elf_link_hash_table *htab = elf_hash_table (info);
 
   if (htab->irelifunc != NULL || htab->iplt != NULL)
-    return TRUE;
+    return true;
 
   flags = bed->dynamic_sec_flags;
   pltflags = flags;
@@ -63,7 +63,7 @@ _bfd_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 				       flags | SEC_READONLY);
       if (s == NULL
 	  || !bfd_set_section_alignment (s, bed->s->log_file_align))
-	return FALSE;
+	return false;
       htab->irelifunc = s;
     }
   else
@@ -73,7 +73,7 @@ _bfd_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
       s = bfd_make_section_with_flags (abfd, ".iplt", pltflags);
       if (s == NULL
 	  || !bfd_set_section_alignment (s, bed->plt_alignment))
-	return FALSE;
+	return false;
       htab->iplt = s;
 
       s = bfd_make_section_with_flags (abfd,
@@ -82,7 +82,7 @@ _bfd_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 				       flags | SEC_READONLY);
       if (s == NULL
 	  || !bfd_set_section_alignment (s, bed->s->log_file_align))
-	return FALSE;
+	return false;
       htab->irelplt = s;
 
       /* We don't need the .igot section if we have the .igot.plt
@@ -93,24 +93,24 @@ _bfd_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 	s = bfd_make_section_with_flags (abfd, ".igot", flags);
       if (s == NULL
 	  || !bfd_set_section_alignment (s, bed->s->log_file_align))
-	return FALSE;
+	return false;
       htab->igotplt = s;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Allocate space in .plt, .got and associated reloc sections for
    dynamic relocs against a STT_GNU_IFUNC symbol definition.  */
 
-bfd_boolean
+bool
 _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
 				    struct elf_link_hash_entry *h,
 				    struct elf_dyn_relocs **head,
 				    unsigned int plt_entry_size,
 				    unsigned int plt_header_size,
 				    unsigned int got_entry_size,
-				    bfd_boolean avoid_plt)
+				    bool avoid_plt)
 {
   asection *plt, *gotplt, *relplt;
   struct elf_dyn_relocs *p;
@@ -118,8 +118,8 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
   const struct elf_backend_data *bed;
   struct elf_link_hash_table *htab;
   /* If AVOID_PLT is TRUE, don't use PLT if possible.  */
-  bfd_boolean use_plt = !avoid_plt || h->plt.refcount > 0;
-  bfd_boolean need_dynreloc = !use_plt || bfd_link_pic (info);
+  bool use_plt = !avoid_plt || h->plt.refcount > 0;
+  bool need_dynreloc = !use_plt || bfd_link_pic (info);
 
   /* When a PIC object references a STT_GNU_IFUNC symbol defined
      in executable or it isn't referenced via PLT, the address of
@@ -147,7 +147,7 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
 	 h->root.root.string,
 	 h->root.u.def.section->owner);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
 
   htab = elf_hash_table (info);
@@ -158,17 +158,17 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
      reference.  */
   if (need_dynreloc && h->ref_regular)
     {
-      bfd_boolean keep = FALSE;
+      bool keep = false;
       for (p = *head; p != NULL; p = p->next)
 	if (p->count)
 	  {
 	    h->non_got_ref = 1;
 	    /* Need dynamic relocations for non-GOT reference.  */
-	    keep = TRUE;
+	    keep = true;
 	    if (p->pc_count)
 	      {
 		/* Must use PLT for PC-relative reference.  */
-		use_plt = TRUE;
+		use_plt = true;
 		need_dynreloc = bfd_link_pic (info);
 		break;
 	      }
@@ -183,7 +183,7 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
       h->got = htab->init_got_offset;
       h->plt = htab->init_plt_offset;
       *head = NULL;
-      return TRUE;
+      return true;
     }
 
   /* Return and discard space for dynamic relocations against it if
@@ -196,7 +196,7 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
       h->got = htab->init_got_offset;
       h->plt = htab->init_plt_offset;
       *head = NULL;
-      return TRUE;
+      return true;
     }
 
  keep:
@@ -346,5 +346,5 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
 	}
     }
 
-  return TRUE;
+  return true;
 }

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2015-2023 Free Software Foundation, Inc.
+   Copyright 2015-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -32,15 +32,12 @@ literals.  The content of each array is the same as followings:
   };
 */
 
-/* This is here just to ensure we have a null character before
-   TestStrings, to avoid showing garbage when we look for strings
-   backwards from TestStrings.  */
+unsigned char TestStringsBase[] = {
+  /* This is here just to ensure we have a null character before
+     TestStrings, to avoid showing garbage when we look for strings
+     backwards from TestStrings.  */
+  0x0,
 
-const unsigned char Barrier[] = {
-  0x00,
-};
-
-const unsigned char TestStrings[] = {
   0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48,
   0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50,
   0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58,
@@ -54,7 +51,14 @@ const unsigned char TestStrings[] = {
   0x00
 };
 
-const short TestStringsH[] = {
+unsigned char *TestStrings = &TestStringsBase[1];
+
+short TestStringsHBase[] = {
+  /* This is here just to ensure we have a null character before
+     TestStringsH, to avoid showing garbage when we look for strings
+     backwards from TestStringsH.  */
+  0x0,
+
   0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047, 0x0048,
   0x0049, 0x004a, 0x004b, 0x004c, 0x004d, 0x004e, 0x004f, 0x0050,
   0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057, 0x0058,
@@ -67,7 +71,14 @@ const short TestStringsH[] = {
   0x0000
 };
 
-const int TestStringsW[] = {
+short *TestStringsH = &TestStringsHBase[1];
+
+int TestStringsWBase[] = {
+  /* This is here just to ensure we have a null character before
+     TestStringsW, to avoid showing garbage when we look for strings
+     backwards from TestStringsW.  */
+  0x0,
+
   0x00000041, 0x00000042, 0x00000043, 0x00000044,
   0x00000045, 0x00000046, 0x00000047, 0x00000048,
   0x00000049, 0x0000004a, 0x0000004b, 0x0000004c,
@@ -89,11 +100,13 @@ const int TestStringsW[] = {
   0x00000000
 };
 
+int *TestStringsW = &TestStringsWBase[1];
+
 int
 main (void)
 {
   /* Clang++ eliminates the variables if nothing references them.  */
-  int dummy = Barrier[0] + TestStrings[0] + TestStringsH[0] + TestStringsW[0];
+  int dummy = TestStrings[0] + TestStringsH[0] + TestStringsW[0];
 
   /* Backward disassemble test requires at least 20 instructions in
      this function.  Adding a simple bubble sort.  */

@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,19 +24,17 @@ clean_restart
 # expected error.  If WARNING_OR_ERROR is empty, it is expected that
 # GDB prints no text other than the print result.
 proc test_shift {lang cmd result_re {warning_or_error ""}} {
-    set cmd_re [string_to_regexp $cmd]
-
     if {$lang == "go"} {
 	if {$warning_or_error != ""} {
 	    set error_re "[string_to_regexp $warning_or_error]"
 	    gdb_test_multiple $cmd "" {
-		-re -wrap "^$cmd_re\r\n$error_re" {
+		-re -wrap "^$error_re" {
 		    pass $gdb_test_name
 		}
 	    }
 	} else {
 	    gdb_test_multiple $cmd "" {
-		-re -wrap "^$cmd_re\r\n\\$$::decimal$result_re" {
+		-re -wrap "^\\$$::decimal$result_re" {
 		    pass $gdb_test_name
 		}
 	    }
@@ -49,7 +47,7 @@ proc test_shift {lang cmd result_re {warning_or_error ""}} {
 	}
 
 	gdb_test_multiple $cmd "" {
-	    -re -wrap "^$cmd_re\r\n$warning_re\\$$::decimal$result_re" {
+	    -re -wrap "^$warning_re\\$$::decimal$result_re" {
 		pass $gdb_test_name
 	    }
 	}
@@ -125,10 +123,12 @@ proc make_val_cast {lang signed bits val} {
 	return "$val as ${sign_prefix}$bits"
     } else {
 	# C-like cast.
-	if {$signed} {
+	if {!$signed} {
+	    set sign_prefix "unsigned "
+	} elseif {$lang == "opencl"} {
 	    set sign_prefix ""
 	} else {
-	    set sign_prefix "un"
+	    set sign_prefix "signed "
 	}
 	if {$bits == 8} {
 	    set type "char"
@@ -145,7 +145,7 @@ proc make_val_cast {lang signed bits val} {
 	} else {
 	    error "$lang: unsupported bits"
 	}
-	return "(${sign_prefix}signed $type) $val"
+	return "(${sign_prefix}$type) $val"
     }
 }
 
@@ -180,7 +180,7 @@ proc test_shifts {} {
 	    "unknown" "ada" "modula-2" "pascal" "fortran"
 	}
 	if {[lsearch -exact $skip_langs $lang] >= 0} {
-	    return
+	    continue
 	}
 
 	gdb_test_no_output "set language $lang"
@@ -346,8 +346,11 @@ proc test_shifts {} {
 	with_test_prefix "rsh neg lhs" {
 	    test_shift $lang "print -1 >> 0" " = -1"
 	    test_shift $lang "print -1 >> 1" " = -1"
+	    test_shift $lang "print -2 >> 1" " = -1"
+	    test_shift $lang "print -3 >> 1" " = -2"
 	    test_shift $lang "print -8 >> 1" " = -4"
 	    test_shift $lang "print [make_int64 $lang -8] >> 1" " = -4"
+	    test_rshift_tl $lang "print -8 >> 100" " = -1"
 	}
 
 	# Make sure an unsigned 64-bit value with high bit set isn't
@@ -361,6 +364,18 @@ proc test_shifts {} {
 		"print -1 << [make_uint64 $lang 0xffffffffffffffff]" " = 0"
 	    test_rshift_tl $lang \
 		"print -1 >> [make_uint64 $lang 0xffffffffffffffff]" " = -1"
+	}
+
+	# Check if shift value isn't silently truncated to 32bit.
+	with_test_prefix "lower-32bit-zero" {
+	    test_lshift_tl $lang \
+		"print 1 << [make_uint64 $lang 0x100000000]" " = 0"
+	    test_rshift_tl $lang \
+		"print 1 >> [make_uint64 $lang 0x100000000]" " = 0"
+	    test_lshift_tl $lang \
+		"print -1 << [make_uint64 $lang 0x100000000]" " = 0"
+	    test_rshift_tl $lang \
+		"print -1 >> [make_uint64 $lang 0x100000000]" " = -1"
 	}
     }
 }

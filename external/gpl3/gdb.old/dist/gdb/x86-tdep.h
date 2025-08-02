@@ -1,6 +1,6 @@
 /* Target-dependent code for X86-based targets.
 
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
    REGISTER_NAMES[LO] (inclusive) to REGISTER_NAMES[HI] (exclusive).  */
 
 extern bool x86_in_indirect_branch_thunk (CORE_ADDR pc,
-					  const char **register_names,
+					  const char * const *register_names,
 					  int lo, int hi);
 
 #endif /* x86-tdep.h */

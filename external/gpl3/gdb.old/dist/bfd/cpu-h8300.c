@@ -1,5 +1,5 @@
 /* BFD library support routines for the Renesas H8/300 architecture.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -24,28 +24,28 @@
 #include "libbfd.h"
 #include "cpu-h8300.h"
 
-static bfd_boolean
+static bool
 h8300_scan (const struct bfd_arch_info *info, const char *string)
 {
   if (*string != 'h' && *string != 'H')
-    return FALSE;
+    return false;
 
   string++;
   if (*string != '8')
-    return FALSE;
+    return false;
 
   string++;
   if (*string == '/')
     string++;
 
   if (*string != '3')
-    return FALSE;
+    return false;
   string++;
   if (*string != '0')
-    return FALSE;
+    return false;
   string++;
   if (*string != '0')
-    return FALSE;
+    return false;
   string++;
   if (*string == '-')
     string++;
@@ -119,25 +119,25 @@ compatible (const bfd_arch_info_type *in, const bfd_arch_info_type *out)
     compatible, h8300_scan, bfd_arch_default_fill, next, 0 }
 
 static const bfd_arch_info_type h8300sxn_info_struct =
-  N (32, 16, bfd_mach_h8300sxn, "h8300sxn", "h8300sxn", FALSE, NULL);
+  N (32, 16, bfd_mach_h8300sxn, "h8300sxn", "h8300sxn", false, NULL);
 
 static const bfd_arch_info_type h8300sx_info_struct =
-  N (32, 32, bfd_mach_h8300sx, "h8300sx", "h8300sx", FALSE, &h8300sxn_info_struct);
+  N (32, 32, bfd_mach_h8300sx, "h8300sx", "h8300sx", false, &h8300sxn_info_struct);
 
 static const bfd_arch_info_type h8300sn_info_struct =
-  N (32, 16, bfd_mach_h8300sn, "h8300sn", "h8300sn", FALSE, &h8300sx_info_struct);
+  N (32, 16, bfd_mach_h8300sn, "h8300sn", "h8300sn", false, &h8300sx_info_struct);
 
 static const bfd_arch_info_type h8300hn_info_struct =
-  N (32, 16, bfd_mach_h8300hn, "h8300hn", "h8300hn", FALSE, &h8300sn_info_struct);
+  N (32, 16, bfd_mach_h8300hn, "h8300hn", "h8300hn", false, &h8300sn_info_struct);
 
 static const bfd_arch_info_type h8300s_info_struct =
-  N (32, 32, bfd_mach_h8300s, "h8300s", "h8300s", FALSE, & h8300hn_info_struct);
+  N (32, 32, bfd_mach_h8300s, "h8300s", "h8300s", false, & h8300hn_info_struct);
 
 static const bfd_arch_info_type h8300h_info_struct =
-  N (32, 32, bfd_mach_h8300h, "h8300h", "h8300h", FALSE, &h8300s_info_struct);
+  N (32, 32, bfd_mach_h8300h, "h8300h", "h8300h", false, &h8300s_info_struct);
 
 const bfd_arch_info_type bfd_h8300_arch =
-  N (16, 16, bfd_mach_h8300, "h8300", "h8300", TRUE, &h8300h_info_struct);
+  N (16, 16, bfd_mach_h8300, "h8300", "h8300", true, &h8300h_info_struct);
 
 /* Pad the given address to 32 bits, converting 16-bit and 24-bit
    addresses into the values they would have had on a h8s target.  */

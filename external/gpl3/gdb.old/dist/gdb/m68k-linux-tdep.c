@@ -1,6 +1,6 @@
 /* Motorola m68k target-dependent support for GNU/Linux.
 
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -61,7 +61,7 @@
    non-RT and RT signal trampolines.  */
 
 static int
-m68k_linux_pc_in_sigtramp (struct frame_info *this_frame)
+m68k_linux_pc_in_sigtramp (frame_info_ptr this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -69,7 +69,7 @@ m68k_linux_pc_in_sigtramp (struct frame_info *this_frame)
   unsigned long insn0, insn1, insn2;
   CORE_ADDR pc = get_frame_pc (this_frame);
 
-  if (!safe_frame_unwind_memory (this_frame, pc - 4, buf, sizeof (buf)))
+  if (!safe_frame_unwind_memory (this_frame, pc - 4, {buf, sizeof (buf)}))
     return 0;
   insn1 = extract_unsigned_integer (buf + 4, 4, byte_order);
   insn2 = extract_unsigned_integer (buf + 8, 4, byte_order);
@@ -211,7 +211,7 @@ struct m68k_linux_sigtramp_info
 static int target_is_uclinux;
 
 static void
-m68k_linux_inferior_created (struct target_ops *objfile, int from_tty)
+m68k_linux_inferior_created (inferior *inf)
 {
   /* Record that we will need to re-evaluate whether we are running on a
      uClinux or normal GNU/Linux target (see m68k_linux_get_sigtramp_info).  */
@@ -219,7 +219,7 @@ m68k_linux_inferior_created (struct target_ops *objfile, int from_tty)
 }
 
 static struct m68k_linux_sigtramp_info
-m68k_linux_get_sigtramp_info (struct frame_info *this_frame)
+m68k_linux_get_sigtramp_info (frame_info_ptr this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -248,7 +248,7 @@ m68k_linux_get_sigtramp_info (struct frame_info *this_frame)
 /* Signal trampolines.  */
 
 static struct trad_frame_cache *
-m68k_linux_sigtramp_frame_cache (struct frame_info *this_frame,
+m68k_linux_sigtramp_frame_cache (frame_info_ptr this_frame,
 				 void **this_cache)
 {
   struct frame_id this_id;
@@ -286,7 +286,7 @@ m68k_linux_sigtramp_frame_cache (struct frame_info *this_frame,
 }
 
 static void
-m68k_linux_sigtramp_frame_this_id (struct frame_info *this_frame,
+m68k_linux_sigtramp_frame_this_id (frame_info_ptr this_frame,
 				   void **this_cache,
 				   struct frame_id *this_id)
 {
@@ -296,7 +296,7 @@ m68k_linux_sigtramp_frame_this_id (struct frame_info *this_frame,
 }
 
 static struct value *
-m68k_linux_sigtramp_frame_prev_register (struct frame_info *this_frame,
+m68k_linux_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 					 void **this_cache,
 					 int regnum)
 {
@@ -308,7 +308,7 @@ m68k_linux_sigtramp_frame_prev_register (struct frame_info *this_frame,
 
 static int
 m68k_linux_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				   struct frame_info *this_frame,
+				   frame_info_ptr this_frame,
 				   void **this_prologue_cache)
 {
   return m68k_linux_pc_in_sigtramp (this_frame);
@@ -316,6 +316,7 @@ m68k_linux_sigtramp_frame_sniffer (const struct frame_unwind *self,
 
 static const struct frame_unwind m68k_linux_sigtramp_frame_unwind =
 {
+  "m68k linux sigtramp",
   SIGTRAMP_FRAME,
   default_frame_unwind_stop_reason,
   m68k_linux_sigtramp_frame_this_id,
@@ -383,9 +384,9 @@ m68k_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 static void
 m68k_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  m68k_gdbarch_tdep *tdep = gdbarch_tdep<m68k_gdbarch_tdep> (gdbarch);
 
-  linux_init_abi (info, gdbarch);
+  linux_init_abi (info, gdbarch, 0);
 
   tdep->jb_pc = M68K_LINUX_JB_PC;
   tdep->jb_elt_size = M68K_LINUX_JB_ELEMENT_SIZE;
@@ -407,7 +408,7 @@ m68k_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 svr4_ilp32_fetch_link_map_offsets);
+					 linux_ilp32_fetch_link_map_offsets);
 
   /* GNU/Linux uses the dynamic linker included in the GNU C Library.  */
   set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
@@ -420,7 +421,7 @@ m68k_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-                                             svr4_fetch_objfile_link_map);
+					     svr4_fetch_objfile_link_map);
 }
 
 void _initialize_m68k_linux_tdep ();
@@ -429,5 +430,6 @@ _initialize_m68k_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_m68k, 0, GDB_OSABI_LINUX,
 			  m68k_linux_init_abi);
-  gdb::observers::inferior_created.attach (m68k_linux_inferior_created);
+  gdb::observers::inferior_created.attach (m68k_linux_inferior_created,
+					   "m68k-linux-tdep");
 }

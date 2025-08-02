@@ -1,5 +1,5 @@
 /* BFD support for the Intel MCU architecture.
-   Copyright (C) 2015-2020 Free Software Foundation, Inc.
+   Copyright (C) 2015-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -22,11 +22,10 @@
 #include "bfd.h"
 #include "libbfd.h"
 
-extern void * bfd_arch_i386_short_nop_fill (bfd_size_type, bfd_boolean,
-					    bfd_boolean);
+extern void *bfd_arch_i386_short_nop_fill (bfd_size_type, bool, bool);
 
 #define N(number, name, print, next)			     \
-  { 32, 32, 8, bfd_arch_iamcu, number, name, print, 3, TRUE, \
+  { 32, 32, 8, bfd_arch_iamcu, number, name, print, 3, true, \
     bfd_default_compatible, bfd_default_scan,		     \
     bfd_arch_i386_short_nop_fill, next, 0 }
 

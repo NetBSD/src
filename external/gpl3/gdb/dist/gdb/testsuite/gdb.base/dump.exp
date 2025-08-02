@@ -1,4 +1,4 @@
-# Copyright 2002-2023 Free Software Foundation, Inc.
+# Copyright 2002-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,11 +52,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable ${op
      return -1
 }
 
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart $binfile
 
 gdb_test "dump mem /dev/null 0x10 0x20" "Cannot access memory at address 0x10" \
 	 "inaccessible memory is reported"
@@ -145,11 +141,14 @@ make_dump_file "dump srec val [set intarr1.srec] intarray" \
 make_dump_file "dump srec val [set intstr1.srec] intstruct" \
 	"dump struct as value, srec"
 
-make_dump_file "dump ihex val [set intarr1.ihex] intarray" \
-	"dump array as value, intel hex"
+# 64-bit address out of range for Intel Hex file
+if {![string compare $is64bitonly "no"]} {
+    make_dump_file "dump ihex val [set intarr1.ihex] intarray" \
+	    "dump array as value, intel hex"
 
-make_dump_file "dump ihex val [set intstr1.ihex] intstruct" \
-	"dump struct as value, intel hex"
+    make_dump_file "dump ihex val [set intstr1.ihex] intstruct" \
+	    "dump struct as value, intel hex"
+}
 
 make_dump_file "dump tekhex val [set intarr1.tekhex] intarray" \
 	"dump array as value, tekhex"
@@ -246,11 +245,14 @@ make_dump_file "dump srec mem [set intarr2.srec] $array_start $array_end" \
 make_dump_file "dump srec mem [set intstr2.srec] $struct_start $struct_end" \
 	"dump struct as memory, srec"
 
-make_dump_file "dump ihex mem [set intarr2.ihex] $array_start $array_end" \
-	"dump array as memory, ihex"
+# 64-bit address out of range for Intel Hex file
+if {![string compare $is64bitonly "no"]} {
+    make_dump_file "dump ihex mem [set intarr2.ihex] $array_start $array_end" \
+	    "dump array as memory, ihex"
 
-make_dump_file "dump ihex mem [set intstr2.ihex] $struct_start $struct_end" \
-	"dump struct as memory, ihex"
+    make_dump_file "dump ihex mem [set intstr2.ihex] $struct_start $struct_end" \
+	    "dump struct as memory, ihex"
+}
 
 make_dump_file "dump tekhex mem [set intarr2.tekhex] $array_start $array_end" \
 	"dump array as memory, tekhex"
@@ -479,8 +481,7 @@ foreach_with_prefix format $formats {
 
 # Now start a fresh gdb session, and reload the saved value files.
 
-gdb_exit
-gdb_start
+clean_restart
 gdb_file_cmd ${binfile}
 
 # Now fix the endianness at the correct state.

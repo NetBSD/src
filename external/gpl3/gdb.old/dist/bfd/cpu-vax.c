@@ -1,5 +1,5 @@
 /* bfd back-end for vax support
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -33,7 +33,7 @@ const bfd_arch_info_type bfd_vax_arch =
   "vax",
   "vax",
   3,
-  TRUE, /* The one and only.  */
+  true, /* The one and only.  */
   bfd_default_compatible,
   bfd_default_scan,
   bfd_arch_default_fill,

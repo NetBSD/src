@@ -1,5 +1,5 @@
 /* Styling for ui_file
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,12 +18,12 @@
 
 #include "defs.h"
 #include "ui-style.h"
-#include "gdb_regex.h"
+#include "gdbsupport/gdb_regex.h"
 
 /* A regular expression that is used for matching ANSI terminal escape
    sequences.  */
 
-static const char *ansi_regex_text =
+static const char ansi_regex_text[] =
   /* Introduction.  */
   "^\033\\["
 #define DATA_SUBEXP 1
@@ -169,7 +169,7 @@ ui_file_style::to_ansi () const
    characters read and put the number into *NUM.  */
 
 static bool
-read_semi_number (const char *string, int *idx, long *num)
+read_semi_number (const char *string, regoff_t *idx, long *num)
 {
   if (string[*idx] != ';')
     return false;
@@ -186,7 +186,7 @@ read_semi_number (const char *string, int *idx, long *num)
    sequence; that is, and 8- or 24- bit color.  */
 
 static bool
-extended_color (const char *str, int *idx, ui_file_style::color *color)
+extended_color (const char *str, regoff_t *idx, ui_file_style::color *color)
 {
   long value;
 

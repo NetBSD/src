@@ -5,7 +5,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-asm.in isn't
 
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -305,6 +305,7 @@ parse_lo16 (CGEN_CPU_DESC cd,
     }
 
   if (**strp == '%')
+    /* xgettext:no-c-format */
     return _("invalid %function() here");
 
   return cgen_parse_signed_integer (cd, strp, opindex, valuep);
@@ -501,6 +502,7 @@ parse_unsigned7 (CGEN_CPU_DESC cd, const char **strp,
     }
 
   if (**strp == '%')
+    /* xgettext:no-c-format */
     return _("invalid %function() here");
 
   return parse_mep_alignu (cd, strp, opindex, valuep);
@@ -638,10 +640,10 @@ expand_macro (arg *args, int narg, const macro *mac)
   /*  printf("expanding macro %s with %d args\n", mac->name, narg + 1); */
   while (*e)
     {
-      if (*e == '`' &&
-	  (*e+1) &&
-	  ((*(e + 1) - '1') <= MAXARGS) &&
-	  ((*(e + 1) - '1') <= narg))
+      if (*e == '`'
+	  && (*e+1)
+	  && ((*(e + 1) - '1') <= MAXARGS)
+	  && ((*(e + 1) - '1') <= narg))
 	{
 	  result = str_append (result, mark, e - mark);
 	  mac_arg = (*(e + 1) - '1');
@@ -759,7 +761,6 @@ expand_string (const char *in, int first_only)
 	      if (narg > -1)
 		args[narg].len++;
 	    }
-
 	}
       ++in;
     }

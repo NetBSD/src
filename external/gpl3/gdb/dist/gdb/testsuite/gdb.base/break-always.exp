@@ -1,4 +1,4 @@
-#   Copyright 2008-2023 Free Software Foundation, Inc.
+#   Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ gdb_test "p /x \$shadow = *(char *) $bp_address" \
 # Overwrite memory where the breakpoint is planted.  GDB should update
 # its memory breakpoint's shadows, to account for the new contents,
 # and still leave the breakpoint insn planted.  Try twice with
-# different values, in case we happen to be writting exactly what was
+# different values, in case we happen to be writing exactly what was
 # there already.
 foreach test_value {0 1} {
     set write_test "write $test_value to breakpoint's address"

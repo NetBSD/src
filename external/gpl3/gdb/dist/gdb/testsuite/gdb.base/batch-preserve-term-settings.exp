@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2023 Free Software Foundation, Inc.
+# Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -139,7 +139,6 @@ proc test_terminal_settings_preserved {} {
 
     set test "gdb -batch -ex run"
     append EXTRA_GDBFLAGS "-batch"
-    append EXTRA_GDBFLAGS " -ex \"set height unlimited\""
     append EXTRA_GDBFLAGS " -ex \"start\""
     append EXTRA_GDBFLAGS " --args \"$file_arg\""
     send_gdb "$GDB $INTERNAL_GDBFLAGS $GDBFLAGS $EXTRA_GDBFLAGS [host_info gdb_opts]\n"
@@ -229,8 +228,6 @@ proc test_terminal_settings_preserved_after_cli_exit { cmds } {
 	return
     }
 
-    set saved_gdbflags $GDBFLAGS
-
     set stty_supported [run_stty "stty before" stty_before]
 
     set test "start gdb"
@@ -296,8 +293,6 @@ proc test_terminal_settings_preserved_after_sigterm { } {
     if ![spawn_shell] {
 	return
     }
-
-    set saved_gdbflags $GDBFLAGS
 
     set stty_supported [run_stty "stty before" stty_before]
 

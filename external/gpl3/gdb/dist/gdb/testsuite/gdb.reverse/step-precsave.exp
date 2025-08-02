@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,9 +21,7 @@
 #
 
 # This test suitable only for process record-replay
-if ![supports_process_record] {
-    return
-}
+require supports_process_record
 
 standard_testfile step-reverse.c
 set precsave [standard_output_file step.precsave]
@@ -34,10 +32,8 @@ if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
 
 runto_main
 
-if [supports_process_record] {
-    # Activate process record/replay
-    gdb_test_no_output "record" "turn on process record"
-}
+# Activate process record/replay
+gdb_test_no_output "record" "turn on process record"
 
 set end_of_main [gdb_get_line_number "end of main" ]
 gdb_test "break $end_of_main" \
@@ -55,6 +51,9 @@ with_timeout_factor 20 {
 	}
 	-re -wrap "Process record does not support instruction 0xfae64 at.*" {
 	    kfail "record/25038" $gdb_test_name
+	}
+	-re -wrap "Process record does not support instruction 0x62 at.*" {
+	    kfail "record/30807" $gdb_test_name
 	}
     }
 }
@@ -213,11 +212,19 @@ gdb_test_multiple "stepi" "$test_message" {
 
 # stepi backward out of a function call
 
+set start_pc [get_hexadecimal_valueof "\$pc" 0 "getting PC at start of stepi backwards"]
+set step_count 0
 set stepi_location  [gdb_get_line_number "STEPI TEST" "$srcfile"]
 set test_message "reverse stepi from a function call"
 gdb_test_multiple "stepi" "$test_message" {
     -re "ARRIVED IN CALLEE.*$gdb_prompt $" {
-	fail "$test_message (start statement)"
+	incr step_count
+	if { [get_hexadecimal_valueof "\$pc" 0 "getting PC after $step_count steps"] == $start_pc } {
+	    fail "$test_message (start statement)"
+	} else {
+	    send_gdb "stepi\n"
+	    exp_continue
+	}
     }
     -re "ENTER CALLEE.*$gdb_prompt $" {
 	send_gdb "stepi\n" 

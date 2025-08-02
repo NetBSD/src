@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ proc gdb_compile_rust {sources dest options} {
 # Return the version of LLVM used by the Rust compiler.  Note that
 # older versions of rustc don't print this -- in this case the
 # returned version is "0.0".
-gdb_caching_proc rust_llvm_version {
+gdb_caching_proc rust_llvm_version {} {
     set rustc [find_rustc]
     if {$rustc == ""} {
 	verbose "could not find rustc"
@@ -97,7 +97,7 @@ gdb_caching_proc rust_llvm_version {
 }
 
 # Return the version of the Rust compiler.
-gdb_caching_proc rust_compiler_version {
+gdb_caching_proc rust_compiler_version {} {
     set rustc [find_rustc]
     if {$rustc == ""} {
 	verbose "could not find rustc"
@@ -111,4 +111,11 @@ gdb_caching_proc rust_compiler_version {
 	verbose "could not match rustc version output: $output"
     }
     return 0.0
+}
+
+# A helper that checks that the rust compiler is at least the given
+# version.  This is handy for use with 'require'.
+proc rust_at_least {atleast} {
+    return [version_compare  [split $atleast .] \
+		<= [split [rust_compiler_version] .]]
 }

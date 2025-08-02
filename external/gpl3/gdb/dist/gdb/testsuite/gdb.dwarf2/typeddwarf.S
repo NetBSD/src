@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2023 Free Software Foundation, Inc.
+   Copyright 2011-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -212,9 +212,9 @@ f4:
 	.size	f4, .-f4
 	.section	.text.startup,"ax",@progbits
 	.p2align 4,,15
-	.globl	_start
-	.type	_start, @function
-_start:
+	.globl	main
+	.type	main, @function
+main:
 .LFB4:
 	# typeddwarf.c:87
 .LM37:
@@ -314,7 +314,7 @@ _start:
 # SUCC: EXIT [100.0%] 
 	ret
 .LFE4:
-	.size	_start, .-_start
+	.size	main, .-main
 	.comm	vv,4,4
 	.section	.rodata.cst4,"aM",@progbits,4
 	.align 4

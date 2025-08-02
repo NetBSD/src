@@ -1,4 +1,4 @@
-# Copyright 1992-2023 Free Software Foundation, Inc.
+# Copyright 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # This file was written by Sue Kimura (sue_kimura@hp.com)
 # Rewritten by Michael Chastain (mec.gnu@mindspring.com)
 
-if { [skip_stl_tests] } { return }
+require allow_stl_tests
 
 standard_testfile .cc
 
@@ -50,35 +50,3 @@ gdb_test "print s\[0\]"			"\\$\[0-9\]+ =.* 'I'"
 gdb_test "print s\[s.length()-1\]"	"\\$\[0-9\]+ =.* 'g'"
 gdb_test "print (const char *) s" \
     "\\$\[0-9\]+ = $hex \"I am a short stringand now a longer string\""
-
-# TODO: tests that do not work with gcc 2.95.3
-# -- chastain 2004-01-07
-# 
-# gdb_test "print s.compare(s)"		"\\$\[0-9\]+ = 0"
-# gdb_test "print s.compare(\"AAA\")"     "\\$\[0-9\]+ = 1"
-# gdb_test "print s.compare(\"ZZZ\")"     "\\$\[0-9\]+ = -1"
-
-# TODO: tests that do not work with gcc 2.95.3 and gcc 3.3.2.
-# cannot call overloaded non-member operator.  -- chastain 2004-01-07
-# 
-# gdb_test "print s == s"			"\\$\[0-9\]+ = true"
-# gdb_test "print s > "AAA"			"\\$\[0-9\]+ = true"
-# gdb_test "print s < "ZZZ"			"\\$\[0-9\]+ = true"
-
-# TODO: GDB doesn't know to convert the string to a const char *, and
-# instead tries to use the string as a structure initializer.
-# 
-# gdb_test "print s == \"I am a short stringand now a longer string\"" \
-#     "\\$\[0-9\]+ = true"
-
-gdb_test "print (const char *) s.substr(0,4)"	"\\$\[0-9\]+ = $hex \"I am\""
-gdb_test "print (const char *) (s=s.substr(0,4))" \
-    "\\$\[0-9\]+ = $hex \"I am\""
-
-# TODO: cannot call overloaded non-member operator again.
-# -- chastain 2004-01-07
-# 
-# gdb_test "print (const char *) (s + s)" \
-#    "\\$\[0-9\]+ = $hex \"I amI am\""
-# gdb_test "print (const char *) (s + \" \" + s)" \
-#    "\\$\[0-9\]+ = $hex \"I am I am\""

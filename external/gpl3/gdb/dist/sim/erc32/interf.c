@@ -1,6 +1,6 @@
 /* This file is part of SIS (SPARC instruction simulator)
 
-   Copyright (C) 1995-2023 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
    Contributed by Jiri Gaisler, European Space Agency
 
    This program is free software; you can redistribute it and/or modify
@@ -329,32 +329,32 @@ sim_fetch_register(SIM_DESC sd, int regno, void *buf, int length)
     return -1;
 }
 
-int
-sim_write (SIM_DESC sd, SIM_ADDR mem, const void *buffer, int length)
+uint64_t
+sim_write (SIM_DESC sd, uint64_t addr, const void *buffer, uint64_t length)
 {
-    int i, len;
+    int i;
     const unsigned char *data = buffer;
 
     for (i = 0; i < length; i++) {
-	sis_memory_write ((mem + i) ^ EBT, &data[i], 1);
+	sis_memory_write ((addr + i) ^ EBT, &data[i], 1);
     }
     return length;
 }
 
-int
-sim_read (SIM_DESC sd, SIM_ADDR mem, void *buffer, int length)
+uint64_t
+sim_read (SIM_DESC sd, uint64_t addr, void *buffer, uint64_t length)
 {
-    int i, len;
+    int i;
     unsigned char *data = buffer;
 
     for (i = 0; i < length; i++) {
-	sis_memory_read ((mem + i) ^ EBT, &data[i], 1);
+	sis_memory_read ((addr + i) ^ EBT, &data[i], 1);
     }
     return length;
 }
 
 void
-sim_info(SIM_DESC sd, int verbose)
+sim_info(SIM_DESC sd, bool verbose)
 {
     show_stat(&sregs);
 }

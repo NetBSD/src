@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,14 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 load_lib gdb-python.exp
+require allow_python_tests
 standard_testfile
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
     return -1
 }
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 if ![runto_main] {
    return -1
@@ -29,6 +27,8 @@ if ![runto_main] {
 # Test python/15461.  Invalid architectures should not trigger an
 # internal GDB assert.
 gdb_py_test_silent_cmd "python empty = gdb.Architecture()" "get empty arch" 0
+gdb_test "python print(repr (empty))" "<gdb\\.Architecture \\(invalid\\)>" \
+    "Test empty achitecture __repr__ does not trigger an assert"
 gdb_test "python print(empty.name())" ".*Architecture is invalid.*" \
     "Test empty architecture.name does not trigger an assert"
 gdb_test "python print(empty.disassemble())" ".*Architecture is invalid.*" \
@@ -45,6 +45,10 @@ gdb_py_test_silent_cmd "python insn_list3 = arch.disassemble(pc, count=1)" \
   "disassemble no end" 0
 gdb_py_test_silent_cmd "python insn_list4 = arch.disassemble(gdb.Value(pc))" \
   "disassemble no end no count" 0
+
+gdb_test "python print (repr (arch))" \
+    "<gdb.Architecture arch_name=.* printable_name=.*>" \
+    "test __repr__ for architecture"
 
 gdb_test "python print (len(insn_list1))" "1" "test number of instructions 1"
 gdb_test "python print (len(insn_list2))" "1" "test number of instructions 2"
@@ -87,7 +91,7 @@ foreach size {0 1 2 3 4 8 16} {
 }
 
 gdb_test "python arch.integer_type(95)" \
-    ".*ValueError: no integer type of that size is available.*" \
+    ".*ValueError.* no integer type of that size is available.*" \
     "call integer_type with invalid size"
 
 # Test for gdb.architecture_names().  First we're going to grab the

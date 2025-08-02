@@ -1,6 +1,6 @@
 /* DWARF 2 location expression support for GDB.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -53,16 +53,35 @@ extern void func_get_frame_base_dwarf_block (struct symbol *framefunc,
 					     const gdb_byte **start,
 					     size_t *length);
 
+/* A helper function to find the definition of NAME and compute its
+   value.  Returns nullptr if the name is not found.  */
+
+value *compute_var_value (const char *name);
+
+/* Fetch call_site_parameter from caller matching KIND and KIND_U.
+   FRAME is for callee.
+
+   Function always returns non-NULL, it throws NO_ENTRY_VALUE_ERROR
+   otherwise.  */
+
+struct call_site_parameter *dwarf_expr_reg_to_entry_parameter
+  (frame_info_ptr frame, enum call_site_parameter_kind kind,
+   union call_site_parameter_u kind_u, dwarf2_per_cu_data **per_cu_return,
+   dwarf2_per_objfile **per_objfile_return);
+
+
 /* Evaluate a location description, starting at DATA and with length
    SIZE, to find the current location of variable of TYPE in the context
-   of FRAME.  */
+   of FRAME.  AS_LVAL defines if the resulting struct value is expected to
+   be a value or a location description.  */
 
 struct value *dwarf2_evaluate_loc_desc (struct type *type,
-					struct frame_info *frame,
+					frame_info_ptr frame,
 					const gdb_byte *data,
 					size_t size,
 					dwarf2_per_cu_data *per_cu,
-					dwarf2_per_objfile *per_objfile);
+					dwarf2_per_objfile *per_objfile,
+					bool as_lval = true);
 
 /* A chain of addresses that might be needed to resolve a dynamic
    property.  */
@@ -95,14 +114,16 @@ struct property_addr_info
    Returns true if PROP could be converted and the static value is passed
    back into VALUE, otherwise returns false.
 
-   If PUSH_INITIAL_VALUE is true, then the top value of ADDR_STACK
-   will be pushed before evaluating a location expression.  */
+   Any values in PUSH_VALUES will be pushed before evaluating the location
+   expression, PUSH_VALUES[0] will be pushed first, then PUSH_VALUES[1],
+   etc.  This means the during evaluation PUSH_VALUES[0] will be at the
+   bottom of the stack.  */
 
 bool dwarf2_evaluate_property (const struct dynamic_prop *prop,
-			       struct frame_info *frame,
+			       frame_info_ptr frame,
 			       const struct property_addr_info *addr_stack,
 			       CORE_ADDR *value,
-			       bool push_initial_value = false);
+			       gdb::array_view<CORE_ADDR> push_values = {});
 
 /* A helper for the compiler interface that compiles a single dynamic
    property to C code.
@@ -120,7 +141,7 @@ bool dwarf2_evaluate_property (const struct dynamic_prop *prop,
 void dwarf2_compile_property_to_c (string_file *stream,
 				   const char *result_name,
 				   struct gdbarch *gdbarch,
-				   unsigned char *registers_used,
+				   std::vector<bool> &registers_used,
 				   const struct dynamic_prop *prop,
 				   CORE_ADDR address,
 				   struct symbol *sym);
@@ -243,7 +264,6 @@ struct call_site_chain
     struct call_site *call_site[1];
   };
 
-struct call_site_stuff;
 extern gdb::unique_xmalloc_ptr<call_site_chain> call_site_find_chain
   (struct gdbarch *gdbarch, CORE_ADDR caller_pc, CORE_ADDR callee_pc);
 
@@ -264,4 +284,27 @@ extern int dwarf_reg_to_regnum (struct gdbarch *arch, int dwarf_reg);
 extern int dwarf_reg_to_regnum_or_error (struct gdbarch *arch,
 					 ULONGEST dwarf_reg);
 
-#endif /* dwarf2loc.h */
+/* Helper function which throws an error if a synthetic pointer is
+   invalid.  */
+
+extern void invalid_synthetic_pointer ();
+
+/* Fetch the value pointed to by a synthetic pointer.  */
+
+extern struct value *indirect_synthetic_pointer
+  (sect_offset die, LONGEST byte_offset, dwarf2_per_cu_data *per_cu,
+   dwarf2_per_objfile *per_objfile, frame_info_ptr frame,
+   struct type *type, bool resolve_abstract_p = false);
+
+/* Read parameter of TYPE at (callee) FRAME's function entry.  KIND and KIND_U
+   are used to match DW_AT_location at the caller's
+   DW_TAG_call_site_parameter.
+
+   Function always returns non-NULL value.  It throws NO_ENTRY_VALUE_ERROR if
+   it cannot resolve the parameter for any reason.  */
+
+extern struct value *value_of_dwarf_reg_entry (struct type *type,
+					       struct frame_info_ptr frame,
+					       enum call_site_parameter_kind kind,
+					       union call_site_parameter_u kind_u);
+#endif /* DWARF2LOC_H */

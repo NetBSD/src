@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,10 +37,7 @@ standard_testfile
 set gen_src record_test_isa_3_1.c
 set executable record_test_isa_3_1
 
-if {![istarget "powerpc*"] || [skip_power_isa_3_1_tests]}  {
-    verbose "Skipping PowerPC ISA 3.1 instruction record_test."
-    return
-}
+require {istarget "powerpc*"} allow_power_isa_3_1_tests
 
 set options [list additional_flags=-mcpu=power10 debug]
 if {[build_executable "failed to prepare" $executable $srcfile $options] == -1} {
@@ -108,7 +105,7 @@ gdb_test_no_output "set exec-direction forward" "start forward test3"
 gdb_test "record stop" ".*Process record is stopped.*" "stopped recording 2"
 set test_del_bkpts "delete breakpoints, answer prompt 2"
 
-# Delete all breakpoints and catchpoints.
+# Delete all breakpoints, watchpoints, tracepoints, and catchpoints.
 delete_breakpoints
 
 gdb_test_no_output "record" "start recording test2"

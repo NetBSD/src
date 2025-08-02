@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -15,13 +15,11 @@
 load_lib "trace-support.exp"
 
 standard_testfile insn-reloc.c
-set executable $testfile
-set expfile $testfile.exp
 
 # Some targets have leading underscores on assembly symbols.
 set additional_flags [gdb_target_symbol_prefix_flags]
 
-if [prepare_for_testing "failed to prepare" $executable $srcfile \
+if [prepare_for_testing "failed to prepare" $testfile-no-ipa $srcfile \
 	[list debug $additional_flags]] {
     return -1
 }
@@ -36,7 +34,6 @@ if ![gdb_target_supports_trace] {
 }
 
 set libipa [get_in_proc_agent]
-set remote_libipa [gdb_load_shlib $libipa]
 
 # Can't use prepare_for_testing, because that splits compiling into
 # building objects and then linking, and we'd fail with "linker input
@@ -47,7 +44,8 @@ if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
     untested "failed to compile"
     return -1
 }
-clean_restart ${executable}
+clean_restart $testfile
+set remote_libipa [gdb_load_shlib $libipa]
 
 if ![runto_main] {
     return 0
@@ -55,7 +53,7 @@ if ![runto_main] {
 
 gdb_reinitialize_dir $srcdir/$subdir
 
-if { [gdb_test "info sharedlibrary" ".*${remote_libipa}.*" "IPA loaded"] != 0 } {
+if { [gdb_test "info sharedlibrary" ".*[file tail $libipa].*" "IPA loaded"] != 0 } {
     untested "could not find IPA lib loaded"
     return 1
 }

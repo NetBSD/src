@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2023 Free Software Foundation, Inc.
+# Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,13 @@
 
 load_lib gdb-python.exp
 
+require allow_python_tests
+
 standard_testfile
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
     return -1
 }
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 if ![runto_main ] {
     return -1
@@ -41,13 +40,13 @@ gdb_test "python print (nullstr.length)" "0" "null lazy string length"
 gdb_test "python print (nullstr.address)" "0" "null lazy string address"
 gdb_test "python print (nullstr.type)" "const char \\*" "null lazy string type"
 gdb_test "python print(nullstr.value())" \
-    "gdb.MemoryError: Cannot create a value from NULL.*Error while executing Python code." \
+    "gdb.MemoryError.*: Cannot create a value from NULL.*Error occurred in Python.*" \
     "create value from NULL"
 gdb_test "python print(null.lazy_string(length=3).value())" \
-    "gdb.MemoryError: Cannot create a lazy string with address 0x0, and a non-zero length.*Error while executing Python code." \
+    "gdb.MemoryError.*: Cannot create a lazy string with address 0x0, and a non-zero length.*Error occurred in Python.*" \
     "null lazy string with non-zero length"
 gdb_test "python print(null.lazy_string(length=-2))" \
-    "ValueError: Invalid length.*Error while executing Python code." \
+    "ValueError.*: Invalid length.*Error occurred in Python.*" \
     "bad length"
 
 foreach var_spec { { "ptr" "pointer" "const char \\*" -1 } \

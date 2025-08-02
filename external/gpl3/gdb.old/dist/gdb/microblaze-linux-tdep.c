@@ -1,6 +1,6 @@
 /* Target-dependent code for Xilinx MicroBlaze.
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -62,7 +62,7 @@ microblaze_linux_memory_remove_breakpoint (struct gdbarch *gdbarch,
 }
 
 static void
-microblaze_linux_sigtramp_cache (struct frame_info *next_frame,
+microblaze_linux_sigtramp_cache (frame_info_ptr next_frame,
 				 struct trad_frame_cache *this_cache,
 				 CORE_ADDR func, LONGEST offset,
 				 int bias)
@@ -90,7 +90,7 @@ microblaze_linux_sigtramp_cache (struct frame_info *next_frame,
 
 static void
 microblaze_linux_sighandler_cache_init (const struct tramp_frame *self,
-					struct frame_info *next_frame,
+					frame_info_ptr next_frame,
 					struct trad_frame_cache *this_cache,
 					CORE_ADDR func)
 {
@@ -117,14 +117,14 @@ static void
 microblaze_linux_init_abi (struct gdbarch_info info,
 			   struct gdbarch *gdbarch)
 {
-  linux_init_abi (info, gdbarch);
+  linux_init_abi (info, gdbarch, 0);
 
   set_gdbarch_memory_remove_breakpoint (gdbarch,
 					microblaze_linux_memory_remove_breakpoint);
 
   /* Shared library handling.  */
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 svr4_ilp32_fetch_link_map_offsets);
+					 linux_ilp32_fetch_link_map_offsets);
 
   /* Trampolines.  */
   tramp_frame_prepend_unwinder (gdbarch,

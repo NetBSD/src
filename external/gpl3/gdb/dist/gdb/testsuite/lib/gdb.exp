@@ -1,4 +1,4 @@
-# Copyright 1992-2023 Free Software Foundation, Inc.
+# Copyright 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,9 +45,9 @@ proc cond_wrap { cond wrap body } {
     }
 }
 
-# Add VAR_ID=VAL to ENV_VAR, unless ENV_VAR already contains a VAR_ID setting.
+# Helper function for set_sanitizer/set_sanitizer_default.
 
-proc set_sanitizer_default { env_var var_id val } {
+proc set_sanitizer_1 { env_var var_id val default} {
     global env
 
     if { ![info exists env($env_var) ]
@@ -57,7 +57,7 @@ proc set_sanitizer_default { env_var var_id val } {
 	return
     }
 
-    if { [regexp $var_id= $env($env_var)] } {
+    if { $default && [regexp $var_id= $env($env_var)] } {
 	# Don't set var_id.  It's already set by the user, leave as is.
 	# Note that we could probably get the same result by unconditionally
 	# prepending it, but this way is less likely to cause confusion.
@@ -68,8 +68,28 @@ proc set_sanitizer_default { env_var var_id val } {
     append env($env_var) : $var_id=$val
 }
 
+# Add VAR_ID=VAL to ENV_VAR.
+
+proc set_sanitizer { env_var var_id val } {
+    set_sanitizer_1 $env_var $var_id $val 0
+}
+
+# Add VAR_ID=VAL to ENV_VAR, unless ENV_VAR already contains a VAR_ID setting.
+
+proc set_sanitizer_default { env_var var_id val } {
+    set_sanitizer_1 $env_var $var_id $val 1
+}
+
 set_sanitizer_default TSAN_OPTIONS suppressions \
     $srcdir/../tsan-suppressions.txt
+
+# When using ThreadSanitizer we may run into the case that a race is detected,
+# but we see the full stack trace only for one of the two accesses, and the
+# other one is showing "failed to restore the stack".
+# Try to prevent this by setting history_size to the maximum (7) by default.
+# See also the ThreadSanitizer docs (
+# https://github.com/google/sanitizers/wiki/ThreadSanitizerFlags ).
+set_sanitizer_default TSAN_OPTIONS history_size 7
 
 # If GDB is built with ASAN (and because there are leaks), it will output a
 # leak report when exiting as well as exit with a non-zero (failure) status.
@@ -174,9 +194,9 @@ verbose "using GDB = $GDB" 2
 
 # The data directory the testing GDB will use.  By default, assume
 # we're testing a non-installed GDB in the build directory.  Users may
-# also explictly override the -data-directory from the command line.
+# also explicitly override the -data-directory from the command line.
 if ![info exists GDB_DATA_DIRECTORY] {
-    set GDB_DATA_DIRECTORY "[pwd]/../data-directory"
+    set GDB_DATA_DIRECTORY [file normalize "[pwd]/../data-directory"]
 }
 verbose "using GDB_DATA_DIRECTORY = $GDB_DATA_DIRECTORY" 2
 
@@ -216,8 +236,20 @@ if ![info exists INTERNAL_GDBFLAGS] {
 	[join [list \
 		   "-nw" \
 		   "-nx" \
+		   "-q" \
 		   {-iex "set height 0"} \
 		   {-iex "set width 0"}]]
+
+    # If DEBUGINFOD_URLS is set, gdb will try to download sources and
+    # debug info for f.i. system libraries.  Prevent this.
+    if { [is_remote host] } {
+	# Setting environment variables on build has no effect on remote host,
+	# so handle this using "set debuginfod enabled off" instead.
+	set INTERNAL_GDBFLAGS \
+	    "$INTERNAL_GDBFLAGS -iex \"set debuginfod enabled off\""
+    } else {
+	# See default_gdb_init.
+    }
 
     set INTERNAL_GDBFLAGS [append_gdb_data_directory_option $INTERNAL_GDBFLAGS]
 }
@@ -268,6 +300,10 @@ if ![info exists env(EXEEXT)] {
 set octal "\[0-7\]+"
 
 set inferior_exited_re "(?:\\\[Inferior \[0-9\]+ \\(\[^\n\r\]*\\) exited)"
+
+# A regular expression that matches the first word of a thread
+# description after the thread number info 'info threads'
+set tdlabel_re "(process|Thread|LWP)"
 
 # A regular expression that matches a value history number.
 # E.g., $1, $2, etc.
@@ -353,10 +389,10 @@ proc delete_breakpoints {} {
     #
     set timeout 100
 
-    set msg "delete all breakpoints in delete_breakpoints"
+    set msg "delete all breakpoints, watchpoints, tracepoints, and catchpoints in delete_breakpoints"
     set deleted 0
     gdb_test_multiple "delete breakpoints" "$msg" {
-	-re "Delete all breakpoints.*y or n.*$" {
+	-re "Delete all breakpoints, watchpoints, tracepoints, and catchpoints.*y or n.*$" {
 	    send_gdb "y\n" answer
 	    exp_continue
 	}
@@ -370,7 +406,7 @@ proc delete_breakpoints {} {
 	set deleted 0
 	set msg "info breakpoints"
 	gdb_test_multiple $msg $msg {
-	    -re "No breakpoints or watchpoints..*$gdb_prompt $" {
+	    -re "No breakpoints, watchpoints, tracepoints, or catchpoints..*$gdb_prompt $" {
 		set deleted 1
 	    }
 	    -re "$gdb_prompt $" {
@@ -385,10 +421,30 @@ proc delete_breakpoints {} {
 
 # Returns true iff the target supports using the "run" command.
 
-proc target_can_use_run_cmd {} {
+proc target_can_use_run_cmd { {target_description ""} } {
+    if { $target_description == "" } {
+	set have_core 0
+    } elseif { $target_description == "core" } {
+	# We could try to figure this out by issuing an "info target" and
+	# checking for "Local core dump file:", but it would mean the proc
+	# would start requiring a current target. Also, uses while gdb
+	# produces non-standard output due to, say annotations would
+	# have to be moved around or eliminated, which would further limit
+	# usability.
+	set have_core 1
+    } else {
+	error "invalid argument: $target_description"
+    }
+
     if [target_info exists use_gdb_stub] {
 	# In this case, when we connect, the inferior is already
 	# running.
+	return 0
+    }
+
+    if { $have_core && [target_info gdb_protocol] == "extended-remote" } {
+	# In this case, when we connect, the inferior is not running but
+	# cannot be made to run.
 	return 0
     }
 
@@ -640,17 +696,15 @@ proc gdb_breakpoint { linespec args } {
     }
 
     set test_name "gdb_breakpoint: set breakpoint at $linespec"
-
-    send_gdb "$break_command $linespec\n"
     # The first two regexps are what we get with -g, the third is without -g.
-    gdb_expect 30 {
+    gdb_test_multiple "$break_command $linespec" $test_name {
 	-re "$break_message \[0-9\]* at .*: file .*, line $decimal.\r\n$gdb_prompt $" {}
 	-re "$break_message \[0-9\]*: file .*, line $decimal.\r\n$gdb_prompt $" {}
 	-re "$break_message \[0-9\]* at .*$gdb_prompt $" {}
 	-re "$break_message \[0-9\]* \\(.*\\) pending.*$gdb_prompt $" {
 		if {$pending_response == "n"} {
 			if { $print_fail } {
-				fail $test_name
+				fail $gdb_test_name
 			}
 			return 0
 		}
@@ -659,34 +713,11 @@ proc gdb_breakpoint { linespec args } {
 		send_gdb "$pending_response\n"
 		exp_continue
 	}
-	-re "A problem internal to GDB has been detected" {
-		if { $print_fail } {
-		    fail "$test_name (GDB internal error)"
-		}
-		gdb_internal_error_resync
-		return 0
-	}
 	-re "$gdb_prompt $" {
-		if { $print_fail } {
-			fail $test_name
-		}
-		return 0
-	}
-	eof {
-		perror "GDB process no longer exists"
-		global gdb_spawn_id
-		set wait_status [wait -i $gdb_spawn_id]
-		verbose -log "GDB process exited with wait status $wait_status"
-		if { $print_fail } {
-			fail "$test_name (eof)"
-		}
-		return 0
-	}
-	timeout {
-		if { $print_fail } {
-			fail "$test_name (timeout)"
-		}
-		return 0
+	    if { $print_fail } {
+		fail $test_name
+	    }
+	    return 0
 	}
     }
     if { $print_pass } {
@@ -729,12 +760,7 @@ proc runto { linespec args } {
 
     set test_name "runto: run to $linespec"
 
-    # We need to use eval here to pass our varargs args to gdb_breakpoint
-    # which is also a varargs function.
-    # But we also have to be careful because $linespec may have multiple
-    # elements, and we don't want Tcl to move the remaining elements after
-    # the first to $args.  That is why $linespec is wrapped in {}.
-    if ![eval gdb_breakpoint {$linespec} $args] {
+    if {![gdb_breakpoint $linespec {*}$args]} {
 	return 0
     }
 
@@ -742,14 +768,14 @@ proc runto { linespec args } {
     
     # the "at foo.c:36" output we get with -g.
     # the "in func" output we get without -g.
-    gdb_expect 30 {
-	-re "Break.* at .*:$decimal.*$gdb_prompt $" {
+    gdb_expect {
+	-re "(?:Break|Temporary break).* at .*:$decimal.*$gdb_prompt $" {
 	    if { $print_pass } {
 		pass $test_name
 	    }
 	    return 1
 	}
-	-re "Breakpoint $bkptno_numopt_re, \[0-9xa-f\]* in .*$gdb_prompt $" {
+	-re "(?:Breakpoint|Temporary breakpoint) $bkptno_numopt_re, \[0-9xa-f\]* in .*$gdb_prompt $" {
 	    if { $print_pass } {
 		pass $test_name
 	    }
@@ -812,16 +838,54 @@ proc gdb_continue_to_breakpoint {name {location_pattern .*}} {
     set full_name "continue to breakpoint: $name"
 
     set kfail_pattern "Process record does not support instruction 0xfae64 at.*"
-    gdb_test_multiple "continue" $full_name {
+    return [gdb_test_multiple "continue" $full_name {
 	-re "(?:Breakpoint|Temporary breakpoint) .* (at|in) $location_pattern\r\n$gdb_prompt $" {
 	    pass $full_name
 	}
-	-re "\[\r\n\]*(?:$kfail_pattern)\[\r\n\]+$gdb_prompt $" {
+	-re "(?:$kfail_pattern)\r\n$gdb_prompt $" {
 	    kfail "gdb/25038" $full_name
 	}
-    }
+    }]
 }
 
+# Check whether GDB is stopped at the given instruction.
+# INSTRUCTION should be just its mnemonic, without any arguments.
+
+proc is_at_instruction { instruction } {
+    global gdb_prompt hex
+
+    set test "pc points to $instruction"
+    gdb_test_multiple {x/i $pc} $test {
+	-re -wrap "=> $hex \[^\r\n\]+:\t$instruction\t\[^\r\n\]+" {
+	    return 1
+	}
+	-re "\r\n$gdb_prompt $" {
+	    return 0
+	}
+    }
+
+    return 0
+}
+
+# Single-steps GDB until it arrives at the given instruction.
+# INSTRUCTION should be just its mnemonic, without any arguments.
+
+proc arrive_at_instruction { instruction } {
+    set count 0
+
+    while { [is_at_instruction $instruction] != 1 } {
+	gdb_test -nopass "stepi" "\[^\r\n\]+" \
+	    "stepi #$count to reach $instruction"
+	incr count
+
+	if { $count > 50 } {
+	    fail "didn't reach $instruction"
+	    return 0
+	}
+    }
+
+    return 1
+}
 
 # gdb_internal_error_resync:
 #
@@ -978,6 +1042,8 @@ proc fill_in_default_prompt {prompt_regexp with_anchor} {
 #           pass $gdb_test_name
 #       }
 #   }
+# The special handling of '^' that is available in gdb_test is also
+# supported in gdb_test_multiple when -wrap is used.
 #
 # In EXPECT_ARGUMENTS, a pattern flag -early can be used.  It makes sure the
 # pattern is inserted before any implicit pattern added by gdb_test_multiple.
@@ -1123,8 +1189,21 @@ proc gdb_test_multiple { command message args } {
 	set expecting_action 1
 	if { $wrap_pattern } {
 	    # Wrap subst_item as is done for the gdb_test PATTERN argument.
+	    if {[string range $subst_item 0 0] eq "^"} {
+		if {$command ne ""} {
+		    set command_regex [string_to_regexp $command]
+		    set subst_item [string range $subst_item 1 end]
+		    if {[string length "$subst_item"] > 0} {
+			# We have an output pattern (other than the '^'),
+			# add a newline at the start, this will eventually
+			# sit between the command and the output pattern.
+			set subst_item "\r\n${subst_item}"
+		    }
+		    set subst_item "^${command_regex}${subst_item}"
+		}
+	    }
 	    lappend $current_list \
-		"\[\r\n\]*(?:$subst_item)\[\r\n\]+$gdb_prompt $"
+		"(?:$subst_item)\r\n$prompt_regexp"
 	    set wrap_pattern 0
 	} else {
 	    lappend $current_list $subst_item
@@ -1382,7 +1461,7 @@ proc gdb_test_multiline { name args } {
     foreach {input result} $args {
 	incr inputnr
 	if {[gdb_test_multiple $input "$name: input $inputnr: $input" {
-	    -re "\[\r\n\]*($result)\[\r\n\]+($gdb_prompt | *>)$" {
+	    -re "($result)\r\n($gdb_prompt | *>)$" {
 		pass $gdb_test_name
 	    }
 	}]} {
@@ -1399,10 +1478,12 @@ proc gdb_test_multiline { name args } {
 #
 # COMMAND is the command to execute, send to GDB with send_gdb.  If
 #   this is the null string no command is sent.
-# PATTERN is the pattern to match for a PASS, and must NOT include
-#   the \r\n sequence immediately before the gdb prompt.  This argument
-#   may be omitted to just match the prompt, ignoring whatever output 
-#   precedes it.
+# PATTERN is the pattern to match for a PASS, and must NOT include the
+#   \r\n sequence immediately before the gdb prompt (see -nonl below).
+#   This argument may be omitted to just match the prompt, ignoring
+#   whatever output precedes it.  If PATTERN starts with '^' then
+#   PATTERN will be anchored such that it should match all output from
+#   COMMAND.
 # MESSAGE is an optional message to be printed.  If this is
 #   omitted, then the pass/fail messages use the command string as the
 #   message.  (If this is the empty string, then sometimes we don't
@@ -1420,6 +1501,8 @@ proc gdb_test_multiline { name args } {
 #   have any effect if -prompt is specified.
 # -lbl specifies that line-by-line matching will be used.
 # -nopass specifies that a PASS should not be issued.
+# -nonl specifies that no \r\n sequence is expected between PATTERN
+#   and the gdb prompt.
 #
 # Returns:
 #    1 if the test failed,
@@ -1435,6 +1518,7 @@ proc gdb_test { args } {
 	{no-prompt-anchor}
 	{lbl}
 	{nopass}
+	{nonl}
     }
 
     lassign $args command pattern message question response
@@ -1449,12 +1533,31 @@ proc gdb_test { args } {
     }
 
     set prompt [fill_in_default_prompt $prompt [expr !${no-prompt-anchor}]]
+    set nl [expr ${nonl} ? {""} : {"\r\n"}]
 
     set saw_question 0
 
+    # If the pattern starts with a '^' then we want to match all the
+    # output from COMMAND.  To support this, here we inject an
+    # additional pattern that matches the command immediately after
+    # the '^'.
+    if {[string range $pattern 0 0] eq "^"} {
+	if {$command ne ""} {
+	    set command_regex [string_to_regexp $command]
+	    set pattern [string range $pattern 1 end]
+	    if {[string length "$pattern"] > 0} {
+		# We have an output pattern (other than the '^'), add a
+		# newline at the start, this will eventually sit between the
+		# command and the output pattern.
+		set pattern "\r\n$pattern"
+	    }
+	    set pattern "^${command_regex}${pattern}"
+	}
+    }
+
     set user_code {}
     lappend user_code {
-	-re "\[\r\n\]*(?:$pattern)\[\r\n\]+$prompt" {
+	-re "(?:$pattern)$nl$prompt" {
 	    if { $question != "" & !$saw_question} {
 		fail $message
 	    } elseif {!$nopass} {
@@ -1484,16 +1587,24 @@ proc gdb_test { args } {
     return [gdb_test_multiple $command $message {*}$opts $user_code]
 }
 
-# Return 1 if version MAJOR.MINOR is at least AT_LEAST_MAJOR.AT_LEAST_MINOR.
-proc version_at_least { major minor at_least_major at_least_minor} {
-    if { $major > $at_least_major } {
-        return 1
-    } elseif { $major == $at_least_major \
-		   && $minor >= $at_least_minor } {
-        return 1
-    } else {
-        return 0
+# Return 1 if python version used is at least MAJOR.MINOR
+proc python_version_at_least { major minor } {
+    set python_script {print (sys.version_info\[0\], sys.version_info\[1\])}
+
+    set res [remote_exec host $::GDB \
+		 "$::INTERNAL_GDBFLAGS -batch -ex \"python $python_script\""]
+    if { [lindex $res 0] != 0 } {
+	error "Couldn't get python version"
     }
+
+    set python_version [lindex $res 1]
+    set python_version [string trim $python_version]
+
+    regexp {^([0-9]+) ([0-9]+)$} $python_version \
+	dummy python_version_major python_version_minor
+
+    return [version_compare [list $major $minor] \
+		<= [list $python_version_major $python_version_minor]]
 }
 
 # Return 1 if tcl version used is at least MAJOR.MINOR
@@ -1501,8 +1612,8 @@ proc tcl_version_at_least { major minor } {
     global tcl_version
     regexp {^([0-9]+)\.([0-9]+)$} $tcl_version \
 	dummy tcl_version_major tcl_version_minor
-    return [version_at_least $tcl_version_major $tcl_version_minor \
-		$major $minor]
+    return [version_compare [list $major $minor] \
+		<= [list $tcl_version_major $tcl_version_minor]]
 }
 
 if { [tcl_version_at_least 8 5] == 0 } {
@@ -1522,11 +1633,31 @@ if { [tcl_version_at_least 8 5] == 0 } {
     }
 }
 
+if { [tcl_version_at_least 8 6] == 0 } {
+    # lmap was added in tcl 8.6.  Only add if missing.
+
+    # Note that we only implement the simple variant for now.
+    proc lmap { varname list body } {
+	set res {}
+	foreach val $list {
+	    uplevel 1 "set $varname $val"
+	    lappend res [uplevel 1 $body]
+	}
+
+	return $res
+    }
+}
+
 # gdb_test_no_output [-prompt PROMPT_REGEXP] [-nopass] COMMAND [MESSAGE]
 # Send a command to GDB and verify that this command generated no output.
 #
 # See gdb_test for a description of the -prompt, -no-prompt-anchor, -nopass,
 # COMMAND, and MESSAGE parameters.
+#
+# Returns:
+#    1 if the test failed,
+#    0 if the test passes,
+#   -1 if there was an internal error.
 
 proc gdb_test_no_output { args } {
     global gdb_prompt
@@ -1542,13 +1673,13 @@ proc gdb_test_no_output { args } {
     set prompt [fill_in_default_prompt $prompt [expr !${no-prompt-anchor}]]
 
     set command_regex [string_to_regexp $command]
-    gdb_test_multiple $command $message -prompt $prompt {
+    return [gdb_test_multiple $command $message -prompt $prompt {
 	-re "^$command_regex\r\n$prompt" {
 	    if {!$nopass} {
 		pass $gdb_test_name
 	    }
 	}
-    }
+    }]
 }
 
 # Send a command and then wait for a sequence of outputs.
@@ -1845,7 +1976,7 @@ proc gdb_test_list_exact { cmd name elm_find_regexp elm_extract_regexp result_ma
 #
 # Both inferior and gdb patterns must match for a PASS.
 #
-# If MESSAGE is ommitted, then COMMAND will be used as the message.
+# If MESSAGE is omitted, then COMMAND will be used as the message.
 #
 # Returns:
 #    1 if the test failed,
@@ -1968,7 +2099,7 @@ proc gdb_assert { condition {message ""} } {
 	set message $condition
     }
 
-    set code [catch {uplevel 1 expr $condition} res]
+    set code [catch {uplevel 1 [list expr $condition]} res]
     if {$code == 1} {
 	# If code is 1 (TCL_ERROR), it means evaluation failed and res contains
 	# an error message.  Print the error message, and set res to 0 since we
@@ -2069,6 +2200,9 @@ proc default_gdb_exit {} {
 # Load a file into the debugger.
 # The return value is 0 for success, -1 for failure.
 #
+# ARG is the file name.
+# KILL_FLAG, if given, indicates whether a "kill" command should be used.
+#
 # This procedure also set the global variable GDB_FILE_CMD_DEBUG_INFO
 # to one of these values:
 #
@@ -2088,7 +2222,7 @@ proc default_gdb_exit {} {
 # TODO: gdb.base/sepdebug.exp and gdb.stabs/weird.exp might be able to use
 # this if they can get more information set.
 
-proc gdb_file_cmd { arg } {
+proc gdb_file_cmd { arg {kill_flag 1} } {
     global gdb_prompt
     global GDB
     global last_loaded_file
@@ -2117,15 +2251,17 @@ proc gdb_file_cmd { arg } {
     # The file command used to kill the remote target.  For the benefit
     # of the testsuite, preserve this behavior.  Mark as optional so it doesn't
     # get written to the stdin log.
-    send_gdb "kill\n" optional
-    gdb_expect 120 {
-	-re "Kill the program being debugged. .y or n. $" {
-	    send_gdb "y\n" answer
-	    verbose "\t\tKilling previous program being debugged"
-	    exp_continue
-	}
-	-re "$gdb_prompt $" {
-	    # OK.
+    if {$kill_flag} {
+	send_gdb "kill\n" optional
+	gdb_expect 120 {
+	    -re "Kill the program being debugged. .y or n. $" {
+		send_gdb "y\n" answer
+		verbose "\t\tKilling previous program being debugged"
+		exp_continue
+	    }
+	    -re "$gdb_prompt $" {
+		# OK.
+	    }
 	}
     }
 
@@ -2309,6 +2445,14 @@ proc default_gdb_start { } {
 	    # that case, this case is hit.
 	    verbose "GDB initialized."
 	}
+	-re "^$gdb_prompt $" {
+	    # Output with -q.
+	    verbose "GDB initialized."
+	}
+	-re "^\033\\\[.2004h$gdb_prompt $" {
+	    # Output with -q, and bracketed paste mode enabled, see above.
+	    verbose "GDB initialized."
+	}
 	-re "$gdb_prompt $"	{
 	    perror "GDB never initialized."
 	    unset gdb_spawn_id
@@ -2404,106 +2548,149 @@ proc gdb_compile_test {src output} {
     fail "$msg"
 }
 
-# Return a 1 for configurations for which we don't even want to try to
-# test C++.
+# Return a 1 for configurations for which we want to try to test C++.
 
-proc skip_cplus_tests {} {
+proc allow_cplus_tests {} {
     if { [istarget "h8300-*-*"] } {
-	return 1
+	return 0
     }
 
     # The C++ IO streams are too large for HC11/HC12 and are thus not
     # available.  The gdb C++ tests use them and don't compile.
     if { [istarget "m6811-*-*"] } {
-	return 1
+	return 0
     }
     if { [istarget "m6812-*-*"] } {
-	return 1
+	return 0
     }
-    return 0
+    return 1
 }
 
-# Return a 1 for configurations for which don't have both C++ and the STL.
+# Return a 0 for configurations which are missing either C++ or the STL.
 
-proc skip_stl_tests {} {
-    return [skip_cplus_tests]
+proc allow_stl_tests {} {
+    return [allow_cplus_tests]
 }
 
-# Return a 1 if I don't even want to try to test FORTRAN.
+# Return a 1 if I want to try to test FORTRAN.
 
-proc skip_fortran_tests {} {
-    return 0
+proc allow_fortran_tests {} {
+    return 1
 }
 
-# Return a 1 if I don't even want to try to test ada.
+# Return a 1 if I want to try to test ada.
 
-proc skip_ada_tests {} {
-    return 0
-}
-
-# Return a 1 if I don't even want to try to test GO.
-
-proc skip_go_tests {} {
-    return 0
-}
-
-# Return a 1 if I don't even want to try to test D.
-
-proc skip_d_tests {} {
-    return 0
-}
-
-# Return 1 to skip Rust tests, 0 to try them.
-proc skip_rust_tests {} {
-    if { ![isnative] } {
-	return 1
+proc allow_ada_tests {} {
+    if { [is_remote host] } {
+	# Currently gdb_ada_compile doesn't support remote host.
+	return 0
     }
+    return 1
+}
 
-    # The rust compiler does not support "-m32", skip.
-    global board board_info
-    set board [target_info name]
-    if {[board_info $board exists multilib_flags]} {
-	foreach flag [board_info $board multilib_flags] {
-	    if { $flag == "-m32" } {
-		return 1
-	    }
-	}
+# Return a 1 if I want to try to test GO.
+
+proc allow_go_tests {} {
+    return 1
+}
+
+# Return a 1 if I even want to try to test D.
+
+proc allow_d_tests {} {
+    return 1
+}
+
+# Return a 1 if we can compile source files in LANG.
+
+gdb_caching_proc can_compile { lang } {
+
+    if { $lang == "d" } {
+	set src { void main() {} }
+	return [gdb_can_simple_compile can_compile_$lang $src executable {d}]
     }
 
-    return 0
-}
-
-# Return a 1 for configurations that do not support Python scripting.
-# PROMPT_REGEXP is the expected prompt.
-
-proc skip_python_tests_prompt { prompt_regexp } {
-    gdb_test_multiple "python print ('test')" "verify python support" \
-	-prompt "$prompt_regexp" {
-	    -re "not supported.*$prompt_regexp" {
-		unsupported "Python support is disabled."
-		return 1
-	    }
-	    -re "$prompt_regexp" {}
+    if { $lang == "rust" } {
+	if { ![isnative] } {
+	    return 0
 	}
 
-    return 0
+	if { [is_remote host] } {
+	    # Proc find_rustc returns "" for remote host.
+	    return 0
+	}
+
+	# The rust compiler does not support "-m32", skip.
+	global board board_info
+	set board [target_info name]
+	if {[board_info $board exists multilib_flags]} {
+	    foreach flag [board_info $board multilib_flags] {
+		if { $flag == "-m32" } {
+		    return 0
+		}
+	    }
+	}
+
+	set src { fn main() {} }
+	# Drop nowarnings in default_compile_flags, it translates to -w which
+	# rustc doesn't support.
+	return [gdb_can_simple_compile can_compile_$lang $src executable \
+		    {rust} {debug quiet}]
+    }
+
+    error "can_compile doesn't support lang: $lang"
 }
 
-# Return a 1 for configurations that do not support Python scripting.
-# Note: This also sets various globals that specify which version of Python
-# is in use.  See skip_python_tests_prompt.
-
-proc skip_python_tests {} {
-    global gdb_prompt
-    return [skip_python_tests_prompt "$gdb_prompt $"]
+# Return 1 to try Rust tests, 0 to skip them.
+proc allow_rust_tests {} {
+    return 1
 }
 
-# Return a 1 if we should skip shared library tests.
+# Return a 1 for configurations that support Python scripting.
 
-proc skip_shlib_tests {} {
+gdb_caching_proc allow_python_tests {} {
+    set output [remote_exec host $::GDB "$::INTERNAL_GDBFLAGS --configuration"]
+    return [expr {[string first "--with-python" $output] != -1}]
+}
+
+# Return a 1 for configurations that use system readline rather than the
+# in-repo copy.
+
+gdb_caching_proc with_system_readline {} {
+    set output [remote_exec host $::GDB "$::INTERNAL_GDBFLAGS --configuration"]
+    return [expr {[string first "--with-system-readline" $output] != -1}]
+}
+
+gdb_caching_proc allow_dap_tests {} {
+    if { ![allow_python_tests] } {
+	return 0
+    }
+
+    # The dap code uses module typing, available starting python 3.5.
+    if { ![python_version_at_least 3 5] } {
+	return 0
+    }
+
+    # ton.tcl uses "string is entier", supported starting tcl 8.6.
+    if { ![tcl_version_at_least 8 6] } {
+	return 0
+    }
+
+    # With set auto-connect-native-target off, we run into:
+    # +++ run
+    # Traceback (most recent call last):
+    #   File "startup.py", line <n>, in exec_and_log
+    #     output = gdb.execute(cmd, from_tty=True, to_string=True)
+    # gdb.error: Don't know how to run.  Try "help target".
+    set gdb_flags [join $::GDBFLAGS $::INTERNAL_GDBFLAGS]
+    return [expr {[string first "set auto-connect-native-target off" $gdb_flags] == -1}]
+}
+
+# Return a 1 if we should run shared library tests.
+
+proc allow_shlib_tests {} {
     # Run the shared library tests on native systems.
     if {[isnative]} {
-	return 0
+	return 1
     }
 
     # An abbreviated list of remote targets where we should be able to
@@ -2514,23 +2701,23 @@ proc skip_shlib_tests {} {
 	 || [istarget *-*-mingw*]
 	 || [istarget *-*-cygwin*]
 	 || [istarget *-*-pe*])} {
-	return 0
-    }
-
-    return 1
-}
-
-# Return 1 if we should skip dlmopen tests, 0 if we should not.
-
-gdb_caching_proc skip_dlmopen_tests {
-    global srcdir subdir gdb_prompt inferior_exited_re
-
-    # We need shared library support.
-    if { [skip_shlib_tests] } {
 	return 1
     }
 
-    set me "skip_dlmopen_tests"
+    return 0
+}
+
+# Return 1 if we should run dlmopen tests, 0 if we should not.
+
+gdb_caching_proc allow_dlmopen_tests {} {
+    global srcdir subdir gdb_prompt inferior_exited_re
+
+    # We need shared library support.
+    if { ![allow_shlib_tests] } {
+	return 0
+    }
+
+    set me "allow_dlmopen_tests"
     set lib {
 	int foo (void) {
 	    return 42;
@@ -2580,13 +2767,13 @@ gdb_caching_proc skip_dlmopen_tests {
 
     if { [gdb_compile_shlib $libsrc $libout {debug}] != "" } {
 	verbose -log "failed to build library"
-	return 1
+	return 0
     }
     if { ![gdb_simple_compile $me $src executable \
 	       [list shlib_load debug \
 		    additional_flags=-DDSO_NAME=\"$libout\"]] } {
 	verbose -log "failed to build executable"
-        return 1
+	return 0
     }
 
     gdb_exit
@@ -2596,40 +2783,31 @@ gdb_caching_proc skip_dlmopen_tests {
 
     if { [gdb_run_cmd] != 0 } {
 	verbose -log "failed to start skip test"
-	return 1
+	return 0
     }
     gdb_expect {
         -re "$inferior_exited_re normally.*${gdb_prompt} $" {
-            set skip_dlmopen_tests 0
+	    set allow_dlmopen_tests 1
         }
         -re "$inferior_exited_re with code.*${gdb_prompt} $" {
-            set skip_dlmopen_tests 1
+	    set allow_dlmopen_tests 0
         }
         default {
 	    warning "\n$me: default case taken"
-            set skip_dlmopen_tests 1
+	    set allow_dlmopen_tests 0
         }
     }
     gdb_exit
 
-    verbose "$me:  returning $skip_dlmopen_tests" 2
-    return $skip_dlmopen_tests
+    verbose "$me:  returning $allow_dlmopen_tests" 2
+    return $allow_dlmopen_tests
 }
 
-# Return 1 if we should skip tui related tests.
+# Return 1 if we should allow TUI-related tests.
 
-proc skip_tui_tests {} {
-    global gdb_prompt
-
-    gdb_test_multiple "help layout" "verify tui support" {
-	-re "Undefined command: \"layout\".*$gdb_prompt $" {
-	    return 1
-	}
-	-re "$gdb_prompt $" {
-	}
-    }
-
-    return 0
+gdb_caching_proc allow_tui_tests {} {
+    set output [remote_exec host $::GDB "$::INTERNAL_GDBFLAGS --configuration"]
+    return [expr {[string first "--enable-tui" $output] != -1}]
 }
 
 # Test files shall make sure all the test result lines in gdb.sum are
@@ -3106,6 +3284,36 @@ proc with_target_charset { target_charset body } {
     }
 }
 
+# Run tests in BODY with max-value-size set to SIZE.  When BODY is
+# finished restore max-value-size.
+
+proc with_max_value_size { size body } {
+    global gdb_prompt
+
+    set saved ""
+    gdb_test_multiple "show max-value-size" "" {
+	-re -wrap "Maximum value size is ($::decimal) bytes\\." {
+	    set saved $expect_out(1,string)
+	}
+	-re ".*$gdb_prompt " {
+	    fail "get max-value-size"
+	}
+    }
+
+    gdb_test_no_output -nopass "set max-value-size $size"
+
+    set code [catch {uplevel 1 $body} result]
+
+    gdb_test_no_output -nopass "set max-value-size $saved"
+
+    if {$code == 1} {
+	global errorInfo errorCode
+	return -code $code -errorinfo $errorInfo -errorcode $errorCode $result
+    } else {
+	return -code $code $result
+    }
+}
+
 # Switch the default spawn id to SPAWN_ID, so that gdb_test,
 # mi_gdb_test etc. default to using it.
 
@@ -3153,6 +3361,20 @@ proc with_spawn_id { spawn_id body } {
 	return -code $code -errorinfo $errorInfo -errorcode $errorCode $result
     } else {
 	return -code $code $result
+    }
+}
+
+# DejaGNU records spawn ids in a global array and tries to wait for
+# them when exiting.  Sometimes this caused problems if gdb's test
+# suite has already waited for the particular spawn id.  And, dejagnu
+# only seems to allow a single spawn id per "machine".  This proc can
+# be used to clean up after a spawn id has been closed.
+proc clean_up_spawn_id {host id} {
+    global board_info
+    set name [board_info $host name]
+    if {[info exists board_info($name,fileid)]
+	&& $board_info($name,fileid) == $id} {
+	unset -nocomplain board_info($name,fileid)
     }
 }
 
@@ -3218,9 +3440,9 @@ proc with_read1_timeout_factor { factor body } {
 
 # Return 1 if _Complex types are supported, otherwise, return 0.
 
-gdb_caching_proc support_complex_tests {
+gdb_caching_proc support_complex_tests {} {
 
-    if { [gdb_skip_float_test] } {
+    if { ![allow_float_test] } {
 	# If floating point is not supported, _Complex is not
 	# supported.
 	return 0
@@ -3239,7 +3461,7 @@ gdb_caching_proc support_complex_tests {
 }
 
 # Return 1 if compiling go is supported.
-gdb_caching_proc support_go_compile {
+gdb_caching_proc support_go_compile {} {
 
     return [gdb_can_simple_compile go-hello {
 	package main
@@ -3263,7 +3485,7 @@ proc supports_get_siginfo_type {} {
 
 # Return 1 if memory tagging is supported at runtime, otherwise return 0.
 
-gdb_caching_proc supports_memtag {
+gdb_caching_proc supports_memtag {} {
     global gdb_prompt
 
     gdb_test_multiple "memory-tag check" "" {
@@ -3355,7 +3577,7 @@ proc readline_is_used { } {
 }
 
 # Return 1 if target is ELF.
-gdb_caching_proc is_elf_target {
+gdb_caching_proc is_elf_target {} {
     set me "is_elf_target"
 
     set src { int foo () {return 0;} }
@@ -3383,7 +3605,7 @@ gdb_caching_proc is_elf_target {
 
 # Return 1 if the memory at address zero is readable.
 
-gdb_caching_proc is_address_zero_readable {
+gdb_caching_proc is_address_zero_readable {} {
     global gdb_prompt
 
     set ret 0
@@ -3412,7 +3634,7 @@ proc gdb_produce_source { name sources } {
 # Return 1 if target is ILP32.
 # This cannot be decided simply from looking at the target string,
 # as it might depend on externally passed compiler options like -m64.
-gdb_caching_proc is_ilp32_target {
+gdb_caching_proc is_ilp32_target {} {
     return [gdb_can_simple_compile is_ilp32_target {
 	int dummy[sizeof (int) == 4
 		  && sizeof (void *) == 4
@@ -3423,7 +3645,7 @@ gdb_caching_proc is_ilp32_target {
 # Return 1 if target is LP64.
 # This cannot be decided simply from looking at the target string,
 # as it might depend on externally passed compiler options like -m64.
-gdb_caching_proc is_lp64_target {
+gdb_caching_proc is_lp64_target {} {
     return [gdb_can_simple_compile is_lp64_target {
 	int dummy[sizeof (int) == 4
 		  && sizeof (void *) == 8
@@ -3434,8 +3656,8 @@ gdb_caching_proc is_lp64_target {
 # Return 1 if target has 64 bit addresses.
 # This cannot be decided simply from looking at the target string,
 # as it might depend on externally passed compiler options like -m64.
-gdb_caching_proc is_64_target {
-    return [gdb_can_simple_compile is_64_target {
+gdb_caching_proc is_64_target {} {
+    return [gdb_can_simple_compile_nodebug is_64_target {
 	int function(void) { return 3; }
 	int dummy[sizeof (&function) == 8 ? 1 : -1];
     }]
@@ -3444,7 +3666,7 @@ gdb_caching_proc is_64_target {
 # Return 1 if target has x86_64 registers - either amd64 or x32.
 # x32 target identifies as x86_64-*-linux*, therefore it cannot be determined
 # just from the target string.
-gdb_caching_proc is_amd64_regs_target {
+gdb_caching_proc is_amd64_regs_target {} {
     if {![istarget "x86_64-*-*"] && ![istarget "i?86-*"]} {
 	return 0
     }
@@ -3467,9 +3689,14 @@ proc is_x86_like_target {} {
     return [expr [is_ilp32_target] && ![is_amd64_regs_target]]
 }
 
+# Return 1 if this target is an x86_64 with -m64.
+proc is_x86_64_m64_target {} {
+    return [expr [istarget x86_64-*-* ] && [is_lp64_target]]
+}
+
 # Return 1 if this target is an arm or aarch32 on aarch64.
 
-gdb_caching_proc is_aarch32_target {
+gdb_caching_proc is_aarch32_target {} {
     if { [istarget "arm*-*-*"] } {
 	return 1
     }
@@ -3510,18 +3737,78 @@ proc support_displaced_stepping {} {
     return 0
 }
 
-# Run a test on the target to see if it supports vmx hardware.  Return 0 if so, 
-# 1 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
-
-gdb_caching_proc skip_altivec_tests {
+# Return 0 and a reason string if GDB can determine that libc doesn't have
+# debug info, and 1 otherwise.  This procedure is meant to be called by the
+# require procedure.
+gdb_caching_proc libc_has_debug_info {} {
     global srcdir subdir gdb_prompt inferior_exited_re
 
-    set me "skip_altivec_tests"
+    set me "libc_has_debug_info"
+
+    # Compile a test program.
+    set src {
+	#include <stdio.h>
+
+	int main (void) {
+	    printf ("Hello, world!\n");
+	    return 0;
+	}
+    }
+    if {![gdb_simple_compile $me $src executable {debug}]} {
+	return [list 0 "failed to compile test program"]
+    }
+
+    # No error message, compilation succeeded so now run it via gdb.
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_load "$obj"
+    runto_main
+    set libc_has_debug_info 1
+    set message "unable to get information on libc.so"
+    set test "info sharedlibrary"
+    gdb_test_multiple $test $test {
+	-re ".*\(\\*\)\[^\r\n\]*/libc\.so.*$gdb_prompt $" {
+	    # Matched the "(*)" in the "Syms Read" columns which means:
+	    # "(*): Shared library is missing debugging information."
+	    set libc_has_debug_info 0
+	    set message "libc doesn't have debug info"
+	}
+	-re ".*$gdb_prompt $" {
+	    # The default pattern for the GDB prompt in gdb_test_multiple
+	    # causes a FAIL if it matches, but in our case we should just
+	    # assume that there is libc debug info.
+	}
+    }
+    gdb_exit
+    remote_file build delete $obj
+
+    verbose "$me: returning $libc_has_debug_info" 2
+    if { $libc_has_debug_info } {
+	return $libc_has_debug_info
+    } else {
+	return [list $libc_has_debug_info $message]
+    }
+}
+
+# Run a test on the target to see if it supports vmx hardware.  Return 1 if so, 
+# 0 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
+
+gdb_caching_proc allow_altivec_tests {} {
+    global srcdir subdir gdb_prompt inferior_exited_re
+
+    set me "allow_altivec_tests"
 
     # Some simulators are known to not support VMX instructions.
     if { [istarget powerpc-*-eabi] || [istarget powerpc*-*-eabispe] } {
-        verbose "$me:  target known to not support VMX, returning 1" 2
-        return 1
+	verbose "$me:  target known to not support VMX, returning 0" 2
+	return 0
+    }
+
+    if {![istarget powerpc*]} {
+	verbose "$me: PPC target required, returning 0" 2
+	return 0
     }
 
     # Make sure we have a compiler that understands altivec.
@@ -3530,8 +3817,8 @@ gdb_caching_proc skip_altivec_tests {
     } elseif [test_compiler_info xlc*] {
         set compile_flags "additional_flags=-qaltivec"
     } else {
-        verbose "Could not compile with altivec support, returning 1" 2
-        return 1
+	verbose "Could not compile with altivec support, returning 0" 2
+	return 0
     }
 
     # Compile a test program containing VMX instructions.
@@ -3546,7 +3833,7 @@ gdb_caching_proc skip_altivec_tests {
 	}
     }
     if {![gdb_simple_compile $me $src executable $compile_flags]} {
-        return 1
+	return 0
     }
 
     # Compilation succeeded so now run it via gdb.
@@ -3559,29 +3846,29 @@ gdb_caching_proc skip_altivec_tests {
     gdb_expect {
         -re ".*Illegal instruction.*${gdb_prompt} $" {
             verbose -log "\n$me altivec hardware not detected" 
-            set skip_vmx_tests 1
+	    set allow_vmx_tests 0
         }
         -re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
             verbose -log "\n$me: altivec hardware detected" 
-            set skip_vmx_tests 0
+	    set allow_vmx_tests 1
         }
         default {
           warning "\n$me: default case taken"
-            set skip_vmx_tests 1
+	    set allow_vmx_tests 0
         }
     }
     gdb_exit
     remote_file build delete $obj
 
-    verbose "$me:  returning $skip_vmx_tests" 2
-    return $skip_vmx_tests
+    verbose "$me:  returning $allow_vmx_tests" 2
+    return $allow_vmx_tests
 }
 
 # Run a test on the power target to see if it supports ISA 3.1 instructions
-gdb_caching_proc skip_power_isa_3_1_tests {
+gdb_caching_proc allow_power_isa_3_1_tests {} {
     global srcdir subdir gdb_prompt inferior_exited_re
 
-    set me "skip_power_isa_3_1_tests"
+    set me "allow_power_isa_3_1_tests"
 
     # Compile a test program containing ISA 3.1 instructions.
     set src {
@@ -3593,7 +3880,7 @@ gdb_caching_proc skip_power_isa_3_1_tests {
 	}
 
     if {![gdb_simple_compile $me $src executable ]} {
-        return 1
+	return 0
     }
 
     # No error message, compilation succeeded so now run it via gdb.
@@ -3606,37 +3893,37 @@ gdb_caching_proc skip_power_isa_3_1_tests {
     gdb_expect {
         -re ".*Illegal instruction.*${gdb_prompt} $" {
             verbose -log "\n$me Power ISA 3.1 hardware not detected"
-            set skip_power_isa_3_1_tests 1
+	    set allow_power_isa_3_1_tests 0
         }
         -re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
             verbose -log "\n$me: Power ISA 3.1 hardware detected"
-            set skip_power_isa_3_1_tests 0
+	    set allow_power_isa_3_1_tests 1
         }
         default {
-          warning "\n$me: default case taken"
-            set skip_power_isa_3_1_tests 1
+	    warning "\n$me: default case taken"
+	    set allow_power_isa_3_1_tests 0
         }
     }
     gdb_exit
     remote_file build delete $obj
 
-    verbose "$me:  returning $skip_power_isa_3_1_tests" 2
-    return $skip_power_isa_3_1_tests
+    verbose "$me:  returning $allow_power_isa_3_1_tests" 2
+    return $allow_power_isa_3_1_tests
 }
 
-# Run a test on the target to see if it supports vmx hardware.  Return 0 if so,
-# 1 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
+# Run a test on the target to see if it supports vmx hardware.  Return 1 if so,
+# 0 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
 
-gdb_caching_proc skip_vsx_tests {
+gdb_caching_proc allow_vsx_tests {} {
     global srcdir subdir gdb_prompt inferior_exited_re
 
-    set me "skip_vsx_tests"
+    set me "allow_vsx_tests"
 
     # Some simulators are known to not support Altivec instructions, so
     # they won't support VSX instructions as well.
     if { [istarget powerpc-*-eabi] || [istarget powerpc*-*-eabispe] } {
-        verbose "$me:  target known to not support VSX, returning 1" 2
-        return 1
+	verbose "$me:  target known to not support VSX, returning 0" 2
+	return 0
     }
 
     # Make sure we have a compiler that understands altivec.
@@ -3645,8 +3932,8 @@ gdb_caching_proc skip_vsx_tests {
     } elseif [test_compiler_info xlc*] {
         set compile_flags "additional_flags=-qasm=gcc"
     } else {
-        verbose "Could not compile with vsx support, returning 1" 2
-        return 1
+	verbose "Could not compile with vsx support, returning 0" 2
+	return 0
     }
 
     # Compile a test program containing VSX instructions.
@@ -3662,7 +3949,7 @@ gdb_caching_proc skip_vsx_tests {
 	}
     }
     if {![gdb_simple_compile $me $src executable $compile_flags]} {
-        return 1
+	return 0
     }
 
     # No error message, compilation succeeded so now run it via gdb.
@@ -3675,31 +3962,31 @@ gdb_caching_proc skip_vsx_tests {
     gdb_expect {
         -re ".*Illegal instruction.*${gdb_prompt} $" {
             verbose -log "\n$me VSX hardware not detected"
-            set skip_vsx_tests 1
+	    set allow_vsx_tests 0
         }
         -re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
             verbose -log "\n$me: VSX hardware detected"
-            set skip_vsx_tests 0
+	    set allow_vsx_tests 1
         }
         default {
           warning "\n$me: default case taken"
-            set skip_vsx_tests 1
+	    set allow_vsx_tests 0
         }
     }
     gdb_exit
     remote_file build delete $obj
 
-    verbose "$me:  returning $skip_vsx_tests" 2
-    return $skip_vsx_tests
+    verbose "$me:  returning $allow_vsx_tests" 2
+    return $allow_vsx_tests
 }
 
-# Run a test on the target to see if it supports TSX hardware.  Return 0 if so,
-# 1 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
+# Run a test on the target to see if it supports TSX hardware.  Return 1 if so,
+# 0 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
 
-gdb_caching_proc skip_tsx_tests {
+gdb_caching_proc allow_tsx_tests {} {
     global srcdir subdir gdb_prompt inferior_exited_re
 
-    set me "skip_tsx_tests"
+    set me "allow_tsx_tests"
 
     # Compile a test program.
     set src {
@@ -3711,7 +3998,7 @@ gdb_caching_proc skip_tsx_tests {
         }
     }
     if {![gdb_simple_compile $me $src executable]} {
-        return 1
+	return 0
     }
 
     # No error message, compilation succeeded so now run it via gdb.
@@ -3724,34 +4011,34 @@ gdb_caching_proc skip_tsx_tests {
     gdb_expect {
         -re ".*Illegal instruction.*${gdb_prompt} $" {
             verbose -log "$me:  TSX hardware not detected."
-            set skip_tsx_tests 1
+	    set allow_tsx_tests 0
         }
         -re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
             verbose -log "$me:  TSX hardware detected."
-            set skip_tsx_tests 0
+	    set allow_tsx_tests 1
         }
         default {
             warning "\n$me:  default case taken."
-            set skip_tsx_tests 1
+	    set allow_tsx_tests 0
         }
     }
     gdb_exit
     remote_file build delete $obj
 
-    verbose "$me:  returning $skip_tsx_tests" 2
-    return $skip_tsx_tests
+    verbose "$me:  returning $allow_tsx_tests" 2
+    return $allow_tsx_tests
 }
 
-# Run a test on the target to see if it supports avx512bf16.  Return 0 if so,
-# 1 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
+# Run a test on the target to see if it supports avx512bf16.  Return 1 if so,
+# 0 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
 
-gdb_caching_proc skip_avx512bf16_tests {
+gdb_caching_proc allow_avx512bf16_tests {} {
     global srcdir subdir gdb_prompt inferior_exited_re
 
-    set me "skip_avx512bf16_tests"
+    set me "allow_avx512bf16_tests"
     if { ![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"] } {
-        verbose "$me:  target does not support avx512bf16, returning 1" 2
-        return 1
+	verbose "$me:  target does not support avx512bf16, returning 0" 2
+	return 0
     }
 
     # Compile a test program.
@@ -3762,7 +4049,7 @@ gdb_caching_proc skip_avx512bf16_tests {
         }
     }
     if {![gdb_simple_compile $me $src executable]} {
-        return 1
+	return 0
     }
 
     # No error message, compilation succeeded so now run it via gdb.
@@ -3775,34 +4062,34 @@ gdb_caching_proc skip_avx512bf16_tests {
     gdb_expect {
         -re ".*Illegal instruction.*${gdb_prompt} $" {
             verbose -log "$me:  avx512bf16 hardware not detected."
-            set skip_avx512bf16_tests 1
+	    set allow_avx512bf16_tests 0
         }
         -re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
             verbose -log "$me:  avx512bf16 hardware detected."
-            set skip_avx512bf16_tests 0
+	    set allow_avx512bf16_tests 1
         }
         default {
             warning "\n$me:  default case taken."
-            set skip_avx512bf16_tests 1
+	    set allow_avx512bf16_tests 0
         }
     }
     gdb_exit
     remote_file build delete $obj
 
-    verbose "$me:  returning $skip_avx512bf16_tests" 2
-    return $skip_avx512bf16_tests
+    verbose "$me:  returning $allow_avx512bf16_tests" 2
+    return $allow_avx512bf16_tests
 }
 
-# Run a test on the target to see if it supports avx512fp16.  Return 0 if so,
-# 1 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
+# Run a test on the target to see if it supports avx512fp16.  Return 1 if so,
+# 0 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
 
-gdb_caching_proc skip_avx512fp16_tests {
+gdb_caching_proc allow_avx512fp16_tests {} {
     global srcdir subdir gdb_prompt inferior_exited_re
 
-    set me "skip_avx512fp16_tests"
+    set me "allow_avx512fp16_tests"
     if { ![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"] } {
-        verbose "$me:  target does not support avx512fp16, returning 1" 2
-        return 1
+	verbose "$me:  target does not support avx512fp16, returning 0" 2
+	return 0
     }
 
     # Compile a test program.
@@ -3813,7 +4100,7 @@ gdb_caching_proc skip_avx512fp16_tests {
         }
     }
     if {![gdb_simple_compile $me $src executable]} {
-        return 1
+	return 0
     }
 
     # No error message, compilation succeeded so now run it via gdb.
@@ -3826,40 +4113,40 @@ gdb_caching_proc skip_avx512fp16_tests {
     gdb_expect {
         -re ".*Illegal instruction.*${gdb_prompt} $" {
             verbose -log "$me:  avx512fp16 hardware not detected."
-            set skip_avx512fp16_tests 1
+	    set allow_avx512fp16_tests 0
         }
         -re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
             verbose -log "$me:  avx512fp16 hardware detected."
-            set skip_avx512fp16_tests 0
+	    set allow_avx512fp16_tests 1
         }
         default {
             warning "\n$me:  default case taken."
-            set skip_avx512fp16_tests 1
+	    set allow_avx512fp16_tests 0
         }
     }
     gdb_exit
     remote_file build delete $obj
 
-    verbose "$me:  returning $skip_avx512fp16_tests" 2
-    return $skip_avx512fp16_tests
+    verbose "$me:  returning $allow_avx512fp16_tests" 2
+    return $allow_avx512fp16_tests
 }
 
-# Run a test on the target to see if it supports btrace hardware.  Return 0 if so,
-# 1 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
+# Run a test on the target to see if it supports btrace hardware.  Return 1 if so,
+# 0 if it does not.  Based on 'check_vmx_hw_available' from the GCC testsuite.
 
-gdb_caching_proc skip_btrace_tests {
+gdb_caching_proc allow_btrace_tests {} {
     global srcdir subdir gdb_prompt inferior_exited_re
 
-    set me "skip_btrace_tests"
+    set me "allow_btrace_tests"
     if { ![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"] } {
-        verbose "$me:  target does not support btrace, returning 1" 2
-        return 1
+	verbose "$me:  target does not support btrace, returning 0" 2
+	return 0
     }
 
     # Compile a test program.
     set src { int main() { return 0; } }
     if {![gdb_simple_compile $me $src executable]} {
-        return 1
+	return 0
     }
 
     # No error message, compilation succeeded so now run it via gdb.
@@ -3869,48 +4156,48 @@ gdb_caching_proc skip_btrace_tests {
     gdb_reinitialize_dir $srcdir/$subdir
     gdb_load $obj
     if ![runto_main] {
-        return 1
+	return 0
     }
     # In case of an unexpected output, we return 2 as a fail value.
-    set skip_btrace_tests 2
+    set allow_btrace_tests 2
     gdb_test_multiple "record btrace" "check btrace support" {
         -re "You can't do that when your target is.*\r\n$gdb_prompt $" {
-            set skip_btrace_tests 1
+	    set allow_btrace_tests 0
         }
         -re "Target does not support branch tracing.*\r\n$gdb_prompt $" {
-            set skip_btrace_tests 1
+	    set allow_btrace_tests 0
         }
         -re "Could not enable branch tracing.*\r\n$gdb_prompt $" {
-            set skip_btrace_tests 1
+	    set allow_btrace_tests 0
         }
         -re "^record btrace\r\n$gdb_prompt $" {
-            set skip_btrace_tests 0
+	    set allow_btrace_tests 1
         }
     }
     gdb_exit
     remote_file build delete $obj
 
-    verbose "$me:  returning $skip_btrace_tests" 2
-    return $skip_btrace_tests
+    verbose "$me:  returning $allow_btrace_tests" 2
+    return $allow_btrace_tests
 }
 
 # Run a test on the target to see if it supports btrace pt hardware.
-# Return 0 if so, 1 if it does not.  Based on 'check_vmx_hw_available'
+# Return 1 if so, 0 if it does not.  Based on 'check_vmx_hw_available'
 # from the GCC testsuite.
 
-gdb_caching_proc skip_btrace_pt_tests {
+gdb_caching_proc allow_btrace_pt_tests {} {
     global srcdir subdir gdb_prompt inferior_exited_re
 
-    set me "skip_btrace_tests"
+    set me "allow_btrace_pt_tests"
     if { ![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"] } {
-        verbose "$me:  target does not support btrace, returning 1" 2
-        return 1
+	verbose "$me:  target does not support btrace, returning 1" 2
+	return 0
     }
 
     # Compile a test program.
     set src { int main() { return 0; } }
     if {![gdb_simple_compile $me $src executable]} {
-        return 1
+	return 0
     }
 
     # No error message, compilation succeeded so now run it via gdb.
@@ -3920,44 +4207,44 @@ gdb_caching_proc skip_btrace_pt_tests {
     gdb_reinitialize_dir $srcdir/$subdir
     gdb_load $obj
     if ![runto_main] {
-        return 1
+	return 0
     }
     # In case of an unexpected output, we return 2 as a fail value.
-    set skip_btrace_tests 2
+    set allow_btrace_pt_tests 2
     gdb_test_multiple "record btrace pt" "check btrace pt support" {
         -re "You can't do that when your target is.*\r\n$gdb_prompt $" {
-            set skip_btrace_tests 1
+	    set allow_btrace_pt_tests 0
         }
         -re "Target does not support branch tracing.*\r\n$gdb_prompt $" {
-            set skip_btrace_tests 1
+	    set allow_btrace_pt_tests 0
         }
         -re "Could not enable branch tracing.*\r\n$gdb_prompt $" {
-            set skip_btrace_tests 1
+	    set allow_btrace_pt_tests 0
         }
         -re "support was disabled at compile time.*\r\n$gdb_prompt $" {
-            set skip_btrace_tests 1
+	    set allow_btrace_pt_tests 0
         }
         -re "^record btrace pt\r\n$gdb_prompt $" {
-            set skip_btrace_tests 0
+	    set allow_btrace_pt_tests 1
         }
     }
     gdb_exit
     remote_file build delete $obj
 
-    verbose "$me:  returning $skip_btrace_tests" 2
-    return $skip_btrace_tests
+    verbose "$me:  returning $allow_btrace_pt_tests" 2
+    return $allow_btrace_pt_tests
 }
 
 # Run a test on the target to see if it supports Aarch64 SVE hardware.
-# Return 0 if so, 1 if it does not.  Note this causes a restart of GDB.
+# Return 1 if so, 0 if it does not.  Note this causes a restart of GDB.
 
-gdb_caching_proc skip_aarch64_sve_tests {
+gdb_caching_proc allow_aarch64_sve_tests {} {
     global srcdir subdir gdb_prompt inferior_exited_re
 
-    set me "skip_aarch64_sve_tests"
+    set me "allow_aarch64_sve_tests"
 
     if { ![is_aarch64_target]} {
-	return 1
+	return 0
     }
 
     set compile_flags "{additional_flags=-march=armv8-a+sve}"
@@ -3970,7 +4257,7 @@ gdb_caching_proc skip_aarch64_sve_tests {
 	}
     }
     if {![gdb_simple_compile $me $src executable $compile_flags]} {
-        return 1
+        return 0
     }
 
     # Compilation succeeded so now run it via gdb.
@@ -3979,24 +4266,334 @@ gdb_caching_proc skip_aarch64_sve_tests {
     gdb_expect {
         -re ".*Illegal instruction.*${gdb_prompt} $" {
             verbose -log "\n$me sve hardware not detected"
-            set skip_sve_tests 1
+            set allow_sve_tests 0
         }
         -re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
             verbose -log "\n$me: sve hardware detected"
-            set skip_sve_tests 0
+            set allow_sve_tests 1
         }
         default {
           warning "\n$me: default case taken"
-            set skip_sve_tests 1
+            set allow_sve_tests 0
         }
     }
     gdb_exit
     remote_file build delete $obj
 
-    verbose "$me:  returning $skip_sve_tests" 2
-    return $skip_sve_tests
+    # While testing for SVE support, also discover all the supported vector
+    # length values.
+    aarch64_initialize_sve_information
+
+    verbose "$me:  returning $allow_sve_tests" 2
+    return $allow_sve_tests
 }
 
+# Assuming SVE is supported by the target, run some checks to determine all
+# the supported vector length values and return an array containing all of those
+# values.  Since this is a gdb_caching_proc, this proc will only be executed
+# once.
+#
+# To check if a particular SVE vector length is supported, the following code
+# can be used. For instance, for vl == 16:
+#
+# if {[aarch64_supports_sve_vl 16]} {
+#     verbose -log "SVE vector length 16 is supported."
+# }
+#
+# This procedure should NEVER be called by hand, as it reinitializes the GDB
+# session and will derail a test.  This should be called automatically as part
+# of the SVE support test routine allow_aarch64_sve_tests.  Users should
+# restrict themselves to calling the helper proc aarch64_supports_sve_vl.
+
+gdb_caching_proc aarch64_initialize_sve_information { } {
+    global srcdir
+
+    set src "${srcdir}/lib/aarch64-test-sve.c"
+    set test_exec [standard_temp_file "aarch64-test-sve.x"]
+    set compile_flags "{additional_flags=-march=armv8-a+sve}"
+    array set supported_vl {}
+
+    # Compile the SVE vector length test.
+    set result [gdb_compile $src $test_exec executable [list debug ${compile_flags} nowarnings]]
+
+    if {$result != ""} {
+	verbose -log "Failed to compile SVE information gathering test."
+	return [array get supported_vl]
+    }
+
+    clean_restart $test_exec
+
+    if {![runto_main]} {
+	return [array get supported_vl]
+    }
+
+    set stop_breakpoint "stop here"
+    gdb_breakpoint [gdb_get_line_number $stop_breakpoint $src]
+    gdb_continue_to_breakpoint $stop_breakpoint
+
+    # Go through the data and extract the supported SVE vector lengths.
+    set vl_count [get_valueof "" "supported_vl_count" "0" \
+			      "fetch value of supported_vl_count"]
+    verbose -log "Found $vl_count supported SVE vector length values"
+
+    for {set vl_index 0} {$vl_index < $vl_count} {incr vl_index} {
+	set test_vl [get_valueof "" "supported_vl\[$vl_index\]" "0" \
+				 "fetch value of supported_vl\[$vl_index\]"]
+
+	# Mark this vector length as supported.
+	if {$test_vl != 0} {
+	    verbose -log "Found supported SVE vector length $test_vl"
+	    set supported_vl($test_vl) 1
+	}
+    }
+
+    gdb_exit
+    verbose -log "Cleaning up"
+    remote_file build delete $test_exec
+
+    verbose -log "Done gathering information about AArch64 SVE vector lengths."
+
+    # Return the array containing all of the supported SVE vl values.
+    return [array get supported_vl]
+}
+
+#
+# Return 1 if the target supports SVE vl LENGTH
+# Return 0 otherwise.
+#
+
+proc aarch64_supports_sve_vl { length } {
+
+    # Fetch the cached array of supported SVE vl values.
+    array set supported_vl [aarch64_initialize_sve_information]
+
+    # Do we have the global values cached?
+    if {![info exists supported_vl($length)]} {
+	verbose -log "Target does not support SVE vl $length"
+	return 0
+    }
+
+    # The target supports SVE vl LENGTH.
+    return 1
+}
+
+# Run a test on the target to see if it supports Aarch64 SME extensions.
+# Return 0 if so, 1 if it does not.  Note this causes a restart of GDB.
+
+gdb_caching_proc allow_aarch64_sme_tests {} {
+    global srcdir subdir gdb_prompt inferior_exited_re
+
+    set me "allow_aarch64_sme_tests"
+
+    if { ![is_aarch64_target]} {
+	return 0
+    }
+
+    set compile_flags "{additional_flags=-march=armv8-a+sme}"
+
+    # Compile a test program containing SME instructions.
+    set src {
+	int main() {
+	    asm volatile ("smstart za");
+	    return 0;
+	}
+    }
+    if {![gdb_simple_compile $me $src executable $compile_flags]} {
+	# Try again, but with a raw hex instruction so we don't rely on
+	# assembler support for SME.
+
+	set compile_flags "{additional_flags=-march=armv8-a}"
+
+	# Compile a test program containing SME instructions.
+	set src {
+	    int main() {
+		asm volatile (".word 0xD503457F");
+		return 0;
+	    }
+	}
+
+	if {![gdb_simple_compile $me $src executable $compile_flags]} {
+	    return 0
+	}
+    }
+
+    # Compilation succeeded so now run it via gdb.
+    clean_restart $obj
+    gdb_run_cmd
+    gdb_expect {
+	-re ".*Illegal instruction.*${gdb_prompt} $" {
+	    verbose -log "\n$me sme support not detected"
+	    set allow_sme_tests 0
+	}
+	-re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
+	    verbose -log "\n$me: sme support detected"
+	    set allow_sme_tests 1
+	}
+	default {
+	  warning "\n$me: default case taken"
+	    set allow_sme_tests 0
+	}
+    }
+    gdb_exit
+    remote_file build delete $obj
+
+    # While testing for SME support, also discover all the supported vector
+    # length values.
+    aarch64_initialize_sme_information
+
+    verbose "$me:  returning $allow_sme_tests" 2
+    return $allow_sme_tests
+}
+
+# Assuming SME is supported by the target, run some checks to determine all
+# the supported streaming vector length values and return an array containing
+# all of those values.  Since this is a gdb_caching_proc, this proc will only
+# be executed once.
+#
+# To check if a particular SME streaming vector length is supported, the
+# following code can be used. For instance, for svl == 32:
+#
+# if {[aarch64_supports_sme_svl 32]} {
+#     verbose -log "SME streaming vector length 32 is supported."
+# }
+#
+# This procedure should NEVER be called by hand, as it reinitializes the GDB
+# session and will derail a test.  This should be called automatically as part
+# of the SME support test routine allow_aarch64_sme_tests.  Users should
+# restrict themselves to calling the helper proc aarch64_supports_sme_svl.
+
+gdb_caching_proc aarch64_initialize_sme_information { } {
+    global srcdir
+
+    set src "${srcdir}/lib/aarch64-test-sme.c"
+    set test_exec [standard_temp_file "aarch64-test-sme.x"]
+    set compile_flags "{additional_flags=-march=armv8-a+sme}"
+    array set supported_svl {}
+
+    # Compile the SME vector length test.
+    set result [gdb_compile $src $test_exec executable [list debug ${compile_flags} nowarnings]]
+
+    if {$result != ""} {
+	verbose -log "Failed to compile SME information gathering test."
+	return [array get supported_svl]
+    }
+
+    clean_restart $test_exec
+
+    if {![runto_main]} {
+	return [array get supported_svl]
+    }
+
+    set stop_breakpoint "stop here"
+    gdb_breakpoint [gdb_get_line_number $stop_breakpoint $src]
+    gdb_continue_to_breakpoint $stop_breakpoint
+
+    # Go through the data and extract the supported SME vector lengths.
+    set svl_count [get_valueof "" "supported_svl_count" "0" \
+			       "fetch value of supported_svl_count"]
+    verbose -log "Found $svl_count supported SME vector length values"
+
+    for {set svl_index 0} {$svl_index < $svl_count} {incr svl_index} {
+	set test_svl [get_valueof "" "supported_svl\[$svl_index\]" "0" \
+				  "fetch value of supported_svl\[$svl_index\]"]
+
+	# Mark this streaming vector length as supported.
+	if {$test_svl != 0} {
+	    verbose -log "Found supported SME vector length $test_svl"
+	    set supported_svl($test_svl) 1
+	}
+    }
+
+    gdb_exit
+    verbose -log "Cleaning up"
+    remote_file build delete $test_exec
+
+    verbose -log "Done gathering information about AArch64 SME vector lengths."
+
+    # Return the array containing all of the supported SME svl values.
+    return [array get supported_svl]
+}
+
+#
+# Return 1 if the target supports SME svl LENGTH
+# Return 0 otherwise.
+#
+
+proc aarch64_supports_sme_svl { length } {
+
+    # Fetch the cached array of supported SME svl values.
+    array set supported_svl [aarch64_initialize_sme_information]
+
+    # Do we have the global values cached?
+    if {![info exists supported_svl($length)]} {
+	verbose -log "Target does not support SME svl $length"
+	return 0
+    }
+
+    # The target supports SME svl LENGTH.
+    return 1
+}
+
+# Run a test on the target to see if it supports AArch64 MOPS (Memory
+# Operations) extensions.  Return 1 if so, 0 if it does not.  Note this
+# causes a restart of GDB.
+
+gdb_caching_proc allow_aarch64_mops_tests {} {
+    global srcdir subdir gdb_prompt inferior_exited_re
+
+    set me "allow_aarch64_mops_tests"
+
+    if { ![is_aarch64_target]} {
+	return 0
+    }
+
+    # ARMv9.3-A contains the MOPS extension.  The test program doesn't use it,
+    # but take the opportunity to check whether the toolchain knows about MOPS.
+    set compile_flags "{additional_flags=-march=armv9.3-a}"
+
+    # Compile a program that tests the MOPS feature.
+    set src {
+	#include <stdbool.h>
+	#include <sys/auxv.h>
+
+	#ifndef HWCAP2_MOPS
+	#define HWCAP2_MOPS (1UL << 43)
+	#endif
+
+	int main() {
+	    bool mops_supported = getauxval (AT_HWCAP2) & HWCAP2_MOPS;
+
+	    return !mops_supported;
+	}
+    }
+
+    if {![gdb_simple_compile $me $src executable $compile_flags]} {
+	return 0
+    }
+
+    # Compilation succeeded so now run it via gdb.
+    clean_restart $obj
+    gdb_run_cmd
+    gdb_expect {
+	-re ".*$inferior_exited_re with code 01.*${gdb_prompt} $" {
+	    verbose -log "\n$me mops support not detected"
+	    set allow_mops_tests 0
+	}
+	-re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
+	    verbose -log "\n$me: mops support detected"
+	    set allow_mops_tests 1
+	}
+	default {
+	  warning "\n$me: default case taken"
+	    set allow_mops_tests 0
+	}
+    }
+    gdb_exit
+    remote_file build delete $obj
+
+    verbose "$me:  returning $allow_mops_tests" 2
+    return $allow_mops_tests
+}
 
 # A helper that compiles a test case to see if __int128 is supported.
 proc gdb_int128_helper {lang} {
@@ -4007,26 +4604,26 @@ proc gdb_int128_helper {lang} {
 }
 
 # Return true if the C compiler understands the __int128 type.
-gdb_caching_proc has_int128_c {
+gdb_caching_proc has_int128_c {} {
     return [gdb_int128_helper c]
 }
 
 # Return true if the C++ compiler understands the __int128 type.
-gdb_caching_proc has_int128_cxx {
+gdb_caching_proc has_int128_cxx {} {
     return [gdb_int128_helper c++]
 }
 
-# Return true if the IFUNC feature is unsupported.
-gdb_caching_proc skip_ifunc_tests {
+# Return true if the IFUNC feature is supported.
+gdb_caching_proc allow_ifunc_tests {} {
     if [gdb_can_simple_compile ifunc {
 	extern void f_ ();
 	typedef void F (void);
 	F* g (void) { return &f_; }
 	void f () __attribute__ ((ifunc ("g")));
     } object] {
-	return 0
-    } else {
 	return 1
+    } else {
+	return 0
     }
 }
 
@@ -4061,13 +4658,13 @@ proc skip_inline_var_tests {} {
     return 0
 }
 
-# Return a 1 if we should skip tests that require hardware breakpoints
+# Return a 1 if we should run tests that require hardware breakpoints
 
-proc skip_hw_breakpoint_tests {} {
+proc allow_hw_breakpoint_tests {} {
     # Skip tests if requested by the board (note that no_hardware_watchpoints
     # disables both watchpoints and breakpoints)
     if { [target_info exists gdb,no_hardware_watchpoints]} {
-	return 1
+	return 0
     }
 
     # These targets support hardware breakpoints natively
@@ -4077,18 +4674,18 @@ proc skip_hw_breakpoint_tests {} {
 	 || [istarget "arm*-*-*"]
 	 || [istarget "aarch64*-*-*"]
 	 || [istarget "s390*-*-*"] } {
-	return 0
+	return 1
     }
 
-    return 1
+    return 0
 }
 
-# Return a 1 if we should skip tests that require hardware watchpoints
+# Return a 1 if we should run tests that require hardware watchpoints
 
-proc skip_hw_watchpoint_tests {} {
+proc allow_hw_watchpoint_tests {} {
     # Skip tests if requested by the board
     if { [target_info exists gdb,no_hardware_watchpoints]} {
-	return 1
+	return 0
     }
 
     # These targets support hardware watchpoints natively
@@ -4102,42 +4699,42 @@ proc skip_hw_watchpoint_tests {} {
 	 || [istarget "aarch64*-*-*"]
 	 || ([istarget "powerpc*-*-linux*"] && [has_hw_wp_support])
 	 || [istarget "s390*-*-*"] } {
+	return 1
+    }
+
+    return 0
+}
+
+# Return a 1 if we should run tests that require *multiple* hardware
+# watchpoints to be active at the same time
+
+proc allow_hw_watchpoint_multi_tests {} {
+    if { ![allow_hw_watchpoint_tests] } {
+	return 0
+    }
+
+    # These targets support just a single hardware watchpoint
+    if { [istarget "arm*-*-*"]
+	 || [istarget "powerpc*-*-linux*"] } {
 	return 0
     }
 
     return 1
 }
 
-# Return a 1 if we should skip tests that require *multiple* hardware
-# watchpoints to be active at the same time
+# Return a 1 if we should run tests that require read/access watchpoints
 
-proc skip_hw_watchpoint_multi_tests {} {
-    if { [skip_hw_watchpoint_tests] } {
-	return 1
-    }
-
-    # These targets support just a single hardware watchpoint
-    if { [istarget "arm*-*-*"]
-	 || [istarget "powerpc*-*-linux*"] } {
-	return 1
-    }
-
-    return 0
-}
-
-# Return a 1 if we should skip tests that require read/access watchpoints
-
-proc skip_hw_watchpoint_access_tests {} {
-    if { [skip_hw_watchpoint_tests] } {
-	return 1
+proc allow_hw_watchpoint_access_tests {} {
+    if { ![allow_hw_watchpoint_tests] } {
+	return 0
     }
 
     # These targets support just write watchpoints
     if { [istarget "s390*-*-*"] } {
-	return 1
+	return 0
     }
 
-    return 0
+    return 1
 }
 
 # Return 1 if we should skip tests that require the runtime unwinder
@@ -4195,63 +4792,48 @@ proc skip_libstdcxx_probe_tests {} {
     return [skip_libstdcxx_probe_tests_prompt "$gdb_prompt $"]
 }
 
-# Helper for gdb_is_target_* procs.  TARGET_NAME is the name of the target
-# we're looking for (used to build the test name).  TARGET_STACK_REGEXP
-# is a regexp that will match the output of "maint print target-stack" if
-# the target in question is currently pushed.  PROMPT_REGEXP is a regexp
-# matching the expected prompt after the command output.
-#
-# NOTE: GDB must be running BEFORE this procedure is called!
+# Return 1 if libc supports the longjmp probe.  Note that we're not using
+# gdb_caching_proc because the probe may have been disabled.
 
-proc gdb_is_target_1 { target_name target_stack_regexp prompt_regexp } {
-    global gdb_spawn_id
-
-    # Throw a Tcl error if gdb isn't already started.
-    if {![info exists gdb_spawn_id]} {
-	error "gdb_is_target_1 called with no running gdb instance"
-    }
-
-    set test "probe for target ${target_name}"
-    gdb_test_multiple "maint print target-stack" $test \
-	-prompt "$prompt_regexp" {
-	    -re "${target_stack_regexp}${prompt_regexp}" {
-		pass $test
-		return 1
-	    }
-	    -re "$prompt_regexp" {
-		pass $test
-	    }
+proc have_longjmp_probe {} {
+    set have_probe -1
+    gdb_test_multiple "info probes stap libc ^longjmp$" "" {
+	-re -wrap "No probes matched\\." {
+	    set have_probe 0
 	}
+	-re -wrap "\r\nstap\[ \t\]+libc\[ \t\]+longjmp\[ \t\]+.*" {
+	    set have_probe 1
+	}
+    }
+    if { $have_probe == -1 } {
+	error "failed to get libc longjmp probe status"
+    }
+    return $have_probe
+}
+
+# Returns true if gdb_protocol is empty, indicating use of the native
+# target.
+
+proc gdb_protocol_is_native { } {
+    return [expr {[target_info gdb_protocol] == ""}]
+}
+
+# Returns true if gdb_protocol is either "remote" or
+# "extended-remote".
+
+proc gdb_protocol_is_remote { } {
+    return [expr {[target_info gdb_protocol] == "remote"
+		  || [target_info gdb_protocol] == "extended-remote"}]
+}
+
+# Like istarget, but checks a list of targets.
+proc is_any_target {args} {
+    foreach targ $args {
+	if {[istarget $targ]} {
+	    return 1
+	}
+    }
     return 0
-}
-
-# Helper for gdb_is_target_remote where the expected prompt is variable.
-#
-# NOTE: GDB must be running BEFORE this procedure is called!
-
-proc gdb_is_target_remote_prompt { prompt_regexp } {
-    return [gdb_is_target_1 "remote" ".*emote target using gdb-specific protocol.*" $prompt_regexp]
-}
-
-# Check whether we're testing with the remote or extended-remote
-# targets.
-#
-# NOTE: GDB must be running BEFORE this procedure is called!
-
-proc gdb_is_target_remote { } {
-    global gdb_prompt
-
-    return [gdb_is_target_remote_prompt "$gdb_prompt $"]
-}
-
-# Check whether we're testing with the native target.
-#
-# NOTE: GDB must be running BEFORE this procedure is called!
-
-proc gdb_is_target_native { } {
-    global gdb_prompt
-
-    return [gdb_is_target_1 "native" ".*native \\(Native process\\).*" "$gdb_prompt $"]
 }
 
 # Return the effective value of use_gdb_stub.
@@ -4280,7 +4862,7 @@ proc use_gdb_stub {} {
 # Return 1 if the current remote target is an instance of our GDBserver, 0
 # otherwise.  Return -1 if there was an error and we can't tell.
 
-gdb_caching_proc target_is_gdbserver {
+gdb_caching_proc target_is_gdbserver {} {
     global gdb_prompt
 
     set is_gdbserver -1
@@ -4398,7 +4980,7 @@ proc get_compiler_info {{language "c"}} {
     if [is_remote host] {
 	# We have to use -E and -o together, despite the comments
 	# above, because of how DejaGnu handles remote host testing.
-	set ppout "$outdir/compiler.i"
+	set ppout [standard_temp_file compiler.i]
 	gdb_compile "${ifile}" "$ppout" preprocess [list "$language" quiet getting_compiler_info]
 	set file [open $ppout r]
 	set cppout [read $file]
@@ -4425,10 +5007,13 @@ proc get_compiler_info {{language "c"}} {
 	    # eval this line
 	    verbose "get_compiler_info: $cppline" 2
 	    eval "$cppline"
-	} elseif { [ regexp "flang.*warning.*'-fdiagnostics-color=never'" "$cppline"] } {
+	} elseif { [ regexp {[fc]lang.*warning.*'-fdiagnostics-color=never'} "$cppline"] } {
 	    # Both flang preprocessors (llvm flang and classic flang) print a
 	    # warning for the unused -fdiagnostics-color=never, so we skip this
 	    # output line here.
+	    # The armflang preprocessor has been observed to output the
+	    # warning prefixed with "clang", so the regex also accepts
+	    # this.
 	} else {
 	    # unknown line
 	    verbose -log "get_compiler_info: $cppline"
@@ -4559,16 +5144,8 @@ proc gdb_wrapper_init { args } {
 }
 
 # Determine options that we always want to pass to the compiler.
-gdb_caching_proc universal_compile_options {
-    set me "universal_compile_options"
+proc universal_compile_options {src obj} {
     set options {}
-
-    set src [standard_temp_file ccopts[pid].c]
-    set obj [standard_temp_file ccopts[pid].o]
-
-    gdb_produce_source $src {
-	int foo(void) { return 0; }
-    }
 
     # Try an option for disabling colored diagnostics.  Some compilers
     # yield colored diagnostics by default (when run from a tty) unless
@@ -4579,6 +5156,23 @@ gdb_caching_proc universal_compile_options {
 	# Seems to have worked; use the option.
 	lappend options $opt
     }
+
+    return $options
+}
+
+# Determine options that we always want to pass to the C compiler.
+gdb_caching_proc universal_compile_options_c {} {
+    set me "universal_compile_options_c"
+
+    set src [standard_temp_file ccopts.c]
+    set obj [standard_temp_file ccopts.o]
+
+    gdb_produce_source $src {
+	int foo(void) { return 0; }
+    }
+
+    set options [universal_compile_options $src $obj]
+
     file delete $src
     file delete $obj
 
@@ -4586,12 +5180,32 @@ gdb_caching_proc universal_compile_options {
     return $options
 }
 
+# Determine options that we always want to pass to the compiler for
+# assembly source files with the extension ".s".
+gdb_caching_proc universal_compile_options_assembly {} {
+    set me "universal_compile_options_assembly"
+
+    set src [standard_temp_file ccopts.s]
+    set obj [standard_temp_file csymbol.o]
+
+    gdb_produce_source $src {
+	main:
+    }
+
+    set options [universal_compile_options $src $obj]
+    file delete $obj
+
+    verbose "$me:  returning $options" 2
+    return $options
+}
+
 # Compile the code in $code to a file based on $name, using the flags
-# $compile_flag as well as debug, nowarning and quiet.
+# $compile_flag as well as debug, nowarning and quiet  (unless otherwise
+# specified in default_compile_flags).
 # Return 1 if code can be compiled
 # Leave the file name of the resulting object in the upvar object.
 
-proc gdb_simple_compile {name code {type object} {compile_flags {}} {object obj}} {
+proc gdb_simple_compile {name code {type object} {compile_flags {}} {object obj} {default_compile_flags {}}} {
     upvar $object obj
 
     switch -regexp -- $type {
@@ -4614,10 +5228,22 @@ proc gdb_simple_compile {name code {type object} {compile_flags {}} {object obj}
 	    set ext "go"
 	    break
 	}
+	if { "$flag" eq "hip" } {
+	    set ext "cpp"
+	    break
+	}
+	if { "$flag" eq "d" } {
+	    set ext "d"
+	    break
+	}
     }
-    set src [standard_temp_file $name-[pid].$ext]
-    set obj [standard_temp_file $name-[pid].$postfix]
-    set compile_flags [concat $compile_flags {debug nowarnings quiet}]
+    set src [standard_temp_file $name.$ext]
+    set obj [standard_temp_file $name.$postfix]
+    if { $default_compile_flags == "" } {
+	set compile_flags [concat $compile_flags {debug nowarnings quiet}]
+    } else {
+	set compile_flags [concat $compile_flags $default_compile_flags]
+    }
 
     gdb_produce_source $src $code
 
@@ -4634,19 +5260,57 @@ proc gdb_simple_compile {name code {type object} {compile_flags {}} {object obj}
 }
 
 # Compile the code in $code to a file based on $name, using the flags
-# $compile_flag as well as debug, nowarning and quiet.
+# $compile_flag as well as debug, nowarning and quiet (unless otherwise
+# specified in default_compile_flags).
 # Return 1 if code can be compiled
 # Delete all created files and objects.
 
-proc gdb_can_simple_compile {name code {type object} {compile_flags ""}} {
-    set ret [gdb_simple_compile $name $code $type $compile_flags temp_obj]
+proc gdb_can_simple_compile {name code {type object} {compile_flags ""} {default_compile_flags ""}} {
+    set ret [gdb_simple_compile $name $code $type $compile_flags temp_obj \
+		 $default_compile_flags]
     file delete $temp_obj
     return $ret
+}
+
+# As gdb_can_simple_compile, but defaults to using nodebug instead of debug.
+proc gdb_can_simple_compile_nodebug {name code {type object} {compile_flags ""}
+				     {default_compile_flags "nodebug nowarning quiet"}} {
+    return [gdb_can_simple_compile $name $code $type $compile_flags \
+		$default_compile_flags]
 }
 
 # Some targets need to always link a special object in.  Save its path here.
 global gdb_saved_set_unbuffered_mode_obj
 set gdb_saved_set_unbuffered_mode_obj ""
+
+# Escape STR sufficiently for use on host commandline.
+
+proc escape_for_host { str } {
+    if { [is_remote host] } {
+	set map {
+	    {$} {\\$}
+       }
+    } else {
+	set map {
+	    {$} {\$}
+	}
+    }
+
+    return [string map $map $str]
+}
+
+# Add double quotes around ARGS, sufficiently escaped for use on host
+# commandline.
+
+proc quote_for_host { args } {
+    set str [join $args]
+    if { [is_remote host] } {
+	set str [join [list {\"} $str {\"}] ""]
+    } else {
+	set str [join [list {"} $str {"}] ""]
+    }
+    return $str
+}
 
 # Compile source files specified by SOURCE into a binary of type TYPE at path
 # DEST.  gdb_compile is implemented using DejaGnu's target_compile, so the type
@@ -4673,6 +5337,8 @@ set gdb_saved_set_unbuffered_mode_obj ""
 #     debug information
 #   - text_segment=addr: Tell the linker to place the text segment at ADDR.
 #   - build-id: Ensure the final binary includes a build-id.
+#   - column-info/no-column-info: Enable/Disable generation of column table
+#     information.
 #
 # And here are some of the not too obscure options understood by DejaGnu that
 # influence the compilation:
@@ -4712,26 +5378,65 @@ proc gdb_compile {source dest type options} {
     if {[lsearch -exact $options rust] != -1} {
 	# -fdiagnostics-color is not a rustcc option.
     } else {
-	set new_options [universal_compile_options]
+	# icx/clang compilers support the -fdiagnostics-color option for
+	# ".S" files and only it is not supported for ".s" files.
+	if {[string match *.s $source] != 0} {
+	    set new_options [universal_compile_options_assembly]
+	} else {
+	    set new_options [universal_compile_options_c]
+	}
     }
 
-    # Some C/C++ testcases unconditionally pass -Wno-foo as additional
-    # options to disable some warning.  That is OK with GCC, because
-    # by design, GCC accepts any -Wno-foo option, even if it doesn't
-    # support -Wfoo.  Clang however warns about unknown -Wno-foo by
-    # default, unless you pass -Wno-unknown-warning-option as well.
-    # We do that here, so that individual testcases don't have to
-    # worry about it.
+    # C/C++ specific settings.
     if {!$getting_compiler_info
 	&& [lsearch -exact $options rust] == -1
 	&& [lsearch -exact $options ada] == -1
 	&& [lsearch -exact $options f90] == -1
 	&& [lsearch -exact $options go] == -1} {
+
+	# Some C/C++ testcases unconditionally pass -Wno-foo as additional
+	# options to disable some warning.  That is OK with GCC, because
+	# by design, GCC accepts any -Wno-foo option, even if it doesn't
+	# support -Wfoo.  Clang however warns about unknown -Wno-foo by
+	# default, unless you pass -Wno-unknown-warning-option as well.
+	# We do that here, so that individual testcases don't have to
+	# worry about it.
 	if {[test_compiler_info "clang-*"] || [test_compiler_info "icx-*"]} {
 	    lappend new_options "additional_flags=-Wno-unknown-warning-option"
 	} elseif {[test_compiler_info "icc-*"]} {
 	    # This is the equivalent for the icc compiler.
 	    lappend new_options "additional_flags=-diag-disable=10148"
+	}
+
+	# icpx/icx give the following warning if '-g' is used without '-O'.
+	#
+	#   icpx: remark: Note that use of '-g' without any
+	#   optimization-level option will turn off most compiler
+	#   optimizations similar to use of '-O0'
+	#
+	# The warning makes dejagnu think that compilation has failed.
+	#
+	# Furthermore, if no -O flag is passed, icx and icc optimize
+	# the code by default.  This breaks assumptions in many GDB
+	# tests that the code is unoptimized by default.
+	#
+	# To fix both problems, pass the -O0 flag explicitly, if no
+	# optimization option is given.
+	if {[test_compiler_info "icx-*"] || [test_compiler_info "icc-*"]} {
+	    if {[lsearch $options optimize=*] == -1
+		&& [lsearch $options additional_flags=-O*] == -1} {
+		lappend new_options "optimize=-O0"
+	    }
+	}
+
+	# Starting with 2021.7.0 (recognized as icc-20-21-7 by GDB) icc and
+	# icpc are marked as deprecated and both compilers emit the remark
+	# #10441.  To let GDB still compile successfully, we disable these
+	# warnings here.
+	if {([lsearch -exact $options c++] != -1
+	     && [test_compiler_info {icc-20-21-[7-9]} c++])
+	    || [test_compiler_info {icc-20-21-[7-9]}]} {
+	    lappend new_options "additional_flags=-diag-disable=10441"
 	}
     }
 
@@ -4768,6 +5473,21 @@ proc gdb_compile {source dest type options} {
     # option is not supported so instead use the -module flag.
     # Additionally, Intel compilers need the -debug-parameters flag set to
     # emit debug info for all parameters in modules.
+    #
+    # ifx gives the following warning if '-g' is used without '-O'.
+    #
+    #   ifx: remark #10440: Note that use of a debug option
+    #   without any optimization-level option will turnoff most
+    #   compiler optimizations similar to use of '-O0'
+    #
+    # The warning makes dejagnu think that compilation has failed.
+    #
+    # Furthermore, if no -O flag is passed, Intel compilers optimize
+    # the code by default.  This breaks assumptions in many GDB
+    # tests that the code is unoptimized by default.
+    #
+    # To fix both problems, pass the -O0 flag explicitly, if no
+    # optimization option is given.
     if { !$getting_compiler_info && [lsearch -exact $options f90] != -1 } {
 	# Fortran compile.
 	set mod_path [standard_output_file ""]
@@ -4777,6 +5497,11 @@ proc gdb_compile {source dest type options} {
 		   || [test_compiler_info {ifx-*} f90] } {
 	    lappend new_options "additional_flags=-module ${mod_path}"
 	    lappend new_options "additional_flags=-debug-parameters all"
+
+	    if {[lsearch $options optimize=*] == -1
+		&& [lsearch $options additional_flags=-O*] == -1} {
+		lappend new_options "optimize=-O0"
+	    }
 	}
     }
 
@@ -4829,6 +5554,38 @@ proc gdb_compile {source dest type options} {
             } else {
                 error "Don't know how to handle text_segment option."
             }
+	} elseif { $opt == "column-info" } {
+	    # If GCC or clang does not support column-info, compilation
+	    # will fail and the usupported column-info option will be
+	    # reported as such.
+	    if {[test_compiler_info {gcc-*}]} {
+		lappend new_options "additional_flags=-gcolumn-info"
+
+	    } elseif {[test_compiler_info {clang-*}]} {
+		lappend new_options "additional_flags=-gcolumn-info"
+
+	    } else {
+		error "Option gcolumn-info not supported by compiler."
+	    }
+
+	} elseif { $opt == "no-column-info" } {
+	    if {[test_compiler_info {gcc-*}]} {
+		if {[test_compiler_info {gcc-[1-6]-*}]} {
+		    # In this case, don't add the compile line option and
+		    # the result will be the same as using no-column-info
+		    # on a version that supports the option.
+		    warning "gdb_compile option no-column-info not supported, ignoring."
+		} else {
+		    lappend new_options "additional_flags=-gno-column-info"
+		}
+
+	    } elseif {[test_compiler_info {clang-*}]} {
+		lappend new_options "additional_flags=-gno-column-info"
+
+	    } else {
+		error "Option gno-column-info not supported by compiler."
+	    }
+
         } else {
             lappend new_options $opt
         }
@@ -4847,6 +5604,13 @@ proc gdb_compile {source dest type options} {
         lappend new_options "early_flags=-fno-stack-protector"
     }
 
+    # hipcc defaults to -O2, so add -O0 to early flags for the hip language.
+    # If "optimize" is also requested, another -O flag (e.g. -O2) will be added
+    # to the flags, overriding this -O0.
+    if {[lsearch -exact $options hip] != -1} {
+	lappend new_options "early_flags=-O0"
+    }
+
     # Because we link with libraries using their basename, we may need
     # (depending on the platform) to set a special rpath value, to allow
     # the executable to find the libraries it depends on.
@@ -4861,7 +5625,7 @@ proc gdb_compile {source dest type options} {
 	    if { $shlib_load } {
 		lappend new_options "libs=-ldl"
 	    }
-	    lappend new_options "ldflags=-Wl,-rpath,\\\$ORIGIN"
+	    lappend new_options [escape_for_host {ldflags=-Wl,-rpath,$ORIGIN}]
 	}
     }
     set options $new_options
@@ -4961,10 +5725,20 @@ proc gdb_compile {source dest type options} {
 	    #  which is time consuming, especially if we're remote
 	    #  host testing.
 	    #
+	    # Note the special care for GDB_PARALLEL.  In that
+	    # scenario, multiple expect instances will potentially try
+	    # to compile the object file at the same time.  The result
+	    # should be identical for every one of them, so we just
+	    # need to make sure that the final objfile is written to
+	    # atomically.
+
 	    if { $gdb_saved_set_unbuffered_mode_obj == "" } {
 		verbose "compiling gdb_saved_set_unbuffered_obj"
 		set unbuf_src ${srcdir}/lib/set_unbuffered_mode.c
-		set unbuf_obj ${objdir}/set_unbuffered_mode.o
+		# This gives us a per-expect-instance unique filename,
+		# which is important for GDB_PARALLEL.  See comments
+		# above.
+		set unbuf_obj [standard_temp_file set_unbuffered_mode.o]
 
 		set result [gdb_compile "${unbuf_src}" "${unbuf_obj}" object {nowarnings}]
 		if { $result != "" } {
@@ -4977,7 +5751,14 @@ proc gdb_compile {source dest type options} {
 		}
 		# Link a copy of the output object, because the
 		# original may be automatically deleted.
-		remote_download host $unbuf_obj $gdb_saved_set_unbuffered_mode_obj
+		if {[info exists ::GDB_PARALLEL]} {
+		    # Make sure to write the .o file atomically.
+		    # (Note GDB_PARALLEL mode does not support remote
+		    # host testing.)
+		    file rename -force -- $unbuf_obj $gdb_saved_set_unbuffered_mode_obj
+		} else {
+		    remote_download host $unbuf_obj $gdb_saved_set_unbuffered_mode_obj
+		}
 	    } else {
 		verbose "gdb_saved_set_unbuffered_obj already compiled"
 	    }
@@ -5001,6 +5782,17 @@ proc gdb_compile {source dest type options} {
 
     # Prune uninteresting compiler (and linker) output.
     regsub "Creating library file: \[^\r\n\]*\[\r\n\]+" $result "" result
+
+    # Starting with 2021.7.0 icc and icpc are marked as deprecated and both
+    # compilers emit a remark #10441.  To let GDB still compile successfully,
+    # we disable these warnings.  When $getting_compiler_info is true however,
+    # we do not yet know the compiler (nor its version) and instead prune these
+    # lines from the compiler output to let the get_compiler_info pass.
+    if {$getting_compiler_info} {
+	regsub \
+	    "(icc|icpc): remark #10441: The Intel\\(R\\) C\\+\\+ Compiler Classic \\(ICC\\) is deprecated\[^\r\n\]*" \
+	    "$result" "" result
+    }
 
     regsub "\[\r\n\]*$" "$result" "" result
     regsub "^\[\r\n\]*" "$result" "" result
@@ -5468,16 +6260,14 @@ proc gdb_spawn { } {
 proc gdb_spawn_with_cmdline_opts { cmdline_flags } {
     global GDBFLAGS
 
-    set saved_gdbflags $GDBFLAGS
+    save_vars { GDBFLAGS } {
+	if {$GDBFLAGS != ""} {
+	    append GDBFLAGS " "
+	}
+	append GDBFLAGS $cmdline_flags
 
-    if {$GDBFLAGS != ""} {
-	append GDBFLAGS " "
+	set res [gdb_spawn]
     }
-    append GDBFLAGS $cmdline_flags
-
-    set res [gdb_spawn]
-
-    set GDBFLAGS $saved_gdbflags
 
     return $res
 }
@@ -5495,8 +6285,61 @@ proc gdb_exit { } {
     catch default_gdb_exit
 }
 
+# Helper function for can_spawn_for_attach.  Try to spawn and attach, and
+# return 0 only if we cannot attach because it's unsupported.
+
+gdb_caching_proc can_spawn_for_attach_1 {} {
+    # For the benefit of gdb-caching-proc-consistency.exp, which
+    # calls can_spawn_for_attach_1 directly.  Keep in sync with
+    # can_spawn_for_attach.
+    if { [is_remote target] || [target_info exists use_gdb_stub] } {
+	return 0
+    }
+
+    # Assume yes.
+    set res 1
+
+    set me "can_spawn_for_attach"
+    set src {
+	#include <unistd.h>
+
+	int
+	main (void)
+	{
+	    sleep (600);
+	    return 0;
+	}
+    }
+    if {![gdb_simple_compile $me $src executable]} {
+	return $res
+    }
+
+    set test_spawn_id [spawn_wait_for_attach_1 $obj]
+    remote_file build delete $obj
+
+    gdb_start
+
+    set test_pid [spawn_id_get_pid $test_spawn_id]
+    set attaching_re "Attaching to process $test_pid"
+    gdb_test_multiple "attach $test_pid" "can spawn for attach" {
+	-re -wrap "$attaching_re\r\n.*ptrace: Operation not permitted\\." {
+	    # Not permitted.
+	    set res 0
+	}
+	-re -wrap "" {
+	    # Don't know, keep assuming yes.
+	}
+    }
+
+    gdb_exit
+
+    kill_wait_spawned_process $test_spawn_id
+
+    return $res
+}
+
 # Return true if we can spawn a program on the target and attach to
-# it.
+# it.  Calls gdb_exit for the first call in a test-case.
 
 proc can_spawn_for_attach { } {
     # We use exp_pid to get the inferior's pid, assuming that gives
@@ -5515,8 +6358,39 @@ proc can_spawn_for_attach { } {
 	return 0
     }
 
-    # Assume yes.
-    return 1
+    # The normal sequence to use for a runtime test like
+    # can_spawn_for_attach_1 is:
+    # - gdb_exit (don't use a running gdb, we don't know what state it is in),
+    # - gdb_start (start a new gdb), and
+    # - gdb_exit (cleanup).
+    #
+    # By making can_spawn_for_attach_1 a gdb_caching_proc, we make it
+    # unpredictable which test-case will call it first, and consequently a
+    # test-case may pass in say a full test run, but fail when run
+    # individually, due to a can_spawn_for_attach call in a location where a
+    # gdb_exit (as can_spawn_for_attach_1 does) breaks things.
+    # To avoid this, we move the initial gdb_exit out of
+    # can_spawn_for_attach_1, guaranteeing that we end up in the same state
+    # regardless of whether can_spawn_for_attach_1 is called.  However, that
+    # is only necessary for the first call in a test-case, so cache the result
+    # in a global (which should be reset after each test-case) to keep track
+    # of that.
+    #
+    # In summary, we distinguish between three cases:
+    # - first call in first test-case.  Executes can_spawn_for_attach_1.
+    #   Calls gdb_exit, gdb_start, gdb_exit.
+    # - first call in following test-cases.  Uses cached result of
+    #   can_spawn_for_attach_1.  Calls gdb_exit.
+    # - rest.  Use cached result in cache_can_spawn_for_attach_1. Calls no
+    #   gdb_start or gdb_exit.
+    global cache_can_spawn_for_attach_1
+    if { [info exists cache_can_spawn_for_attach_1] } {
+	return $cache_can_spawn_for_attach_1
+    }
+    gdb_exit
+
+    set cache_can_spawn_for_attach_1 [can_spawn_for_attach_1]
+    return $cache_can_spawn_for_attach_1
 }
 
 # Centralize the failure checking of "attach" command.
@@ -5612,6 +6486,7 @@ proc kill_wait_spawned_process { proc_spawn_id } {
     # wait for the PID in the background.  That's fine because we
     # don't care about the exit status.  */
     wait -nowait -i $proc_spawn_id
+    clean_up_spawn_id target $proc_spawn_id
 }
 
 # Returns the process id corresponding to the given spawn id.
@@ -5628,19 +6503,11 @@ proc spawn_id_get_pid { spawn_id } {
     return $testpid
 }
 
-# Start a set of programs running and then wait for a bit, to be sure
-# that they can be attached to.  Return a list of processes spawn IDs,
-# one element for each process spawned.  It's a test error to call
-# this when [can_spawn_for_attach] is false.
+# Helper function for spawn_wait_for_attach and can_spawn_for_attach_1.  As
+# spawn_wait_for_attach, but doesn't check for can_spawn_for_attach.
 
-proc spawn_wait_for_attach { executable_list } {
+proc spawn_wait_for_attach_1 { executable_list } {
     set spawn_id_list {}
-
-    if ![can_spawn_for_attach] {
-	# The caller should have checked can_spawn_for_attach itself
-	# before getting here.
-	error "can't spawn for attach with this target/board"
-    }
 
     foreach {executable} $executable_list {
 	# Note we use Expect's spawn, not Tcl's exec, because with
@@ -5653,6 +6520,21 @@ proc spawn_wait_for_attach { executable_list } {
     sleep 2
 
     return $spawn_id_list
+}
+
+# Start a set of programs running and then wait for a bit, to be sure
+# that they can be attached to.  Return a list of processes spawn IDs,
+# one element for each process spawned.  It's a test error to call
+# this when [can_spawn_for_attach] is false.
+
+proc spawn_wait_for_attach { executable_list } {
+    if ![can_spawn_for_attach] {
+	# The caller should have checked can_spawn_for_attach itself
+	# before getting here.
+	error "can't spawn for attach with this target/board"
+    }
+
+    return [spawn_wait_for_attach_1 $executable_list]
 }
 
 #
@@ -5688,7 +6570,7 @@ proc gdb_load_cmd { args } {
 	    return 0
 	}
 	-re "(.*)\r\n$gdb_prompt " {
-	    perror "Unexpected reponse from 'load' -- $expect_out(1,string)"
+	    perror "Unexpected response from 'load' -- $expect_out(1,string)"
 	    return -1
 	}
 	timeout {
@@ -5825,6 +6707,21 @@ proc gdb_touch_execfile { binfile } {
     }
 }
 
+# Override of dejagnu's remote_upload, which doesn't handle remotedir.
+
+rename remote_upload dejagnu_remote_upload
+proc remote_upload { dest srcfile args } {
+    if { [is_remote $dest] && [board_info $dest exists remotedir] } {
+	set remotedir [board_info $dest remotedir]
+	if { ![string match "$remotedir*" $srcfile] } {
+	    # Use hardcoded '/' as separator, as in dejagnu's remote_download.
+	    set srcfile $remotedir/$srcfile
+	}
+    }
+
+    return [dejagnu_remote_upload $dest $srcfile {*}$args]
+}
+
 # Like remote_download but provides a gdb-specific behavior.
 #
 # If the destination board is remote, the local file FROMFILE is transferred as
@@ -5875,7 +6772,11 @@ proc gdb_remote_download {dest fromfile {tofile {}}} {
 # Copy shlib FILE to the target.
 
 proc gdb_download_shlib { file } {
-    return [gdb_remote_download target [shlib_target_file $file]]
+    set target_file [shlib_target_file $file]
+    if { [is_remote host] } {
+	remote_download host $target_file
+    }
+    return [gdb_remote_download target $target_file]
 }
 
 # Set solib-search-path to allow gdb to locate shlib FILE.
@@ -5887,16 +6788,26 @@ proc gdb_locate_shlib { file } {
 	perror "gdb_load_shlib: GDB is not running"
     }
 
-    # If the target is remote, we need to tell gdb where to find the
-    # libraries.
-    if { ![is_remote target] } {
+    if { [is_remote target] || [is_remote host] } {
+	# If the target or host is remote, we need to tell gdb where to find
+	# the libraries.
+    } else {
 	return
     }
 
     # We could set this even when not testing remotely, but a user
     # generally won't set it unless necessary.  In order to make the tests
     # more like the real-life scenarios, we don't set it for local testing.
-    gdb_test "set solib-search-path [file dirname $file]" "" \
+    if { [is_remote host] } {
+	set solib_search_path [board_info host remotedir]
+	if { $solib_search_path == "" } {
+	    set solib_search_path .
+	}
+    } else {
+	set solib_search_path [file dirname $file]
+    }
+
+    gdb_test_no_output "set solib-search-path $solib_search_path" \
 	"set solib-search-path for [file tail $file]"
 }
 
@@ -5946,9 +6857,8 @@ proc with_set { var val body } {
 	perror "Did not manage to set $var"
     } else {
 	# Set var.
-	set cmd "set $var $val"
-	gdb_test_multiple $cmd "" {
-	    -re -wrap "^$cmd" {
+	gdb_test_multiple "set $var $val" "" {
+	    -re -wrap "^" {
 	    }
 	    -re -wrap " is set to \"?$val\"?\\." {
 	    }
@@ -5959,9 +6869,8 @@ proc with_set { var val body } {
 
     # Restore saved setting.
     if { $save != "" } {
-	set cmd "set $var $save"
-	gdb_test_multiple $cmd "" {
-	    -re -wrap "^$cmd" {
+	gdb_test_multiple "set $var $save" "" {
+	    -re -wrap "^" {
 	    }
 	    -re -wrap "is set to \"?$save\"?( \\(\[^)\]*\\))?\\." {
 	    }
@@ -6026,6 +6935,45 @@ proc gdb_continue { function } {
     global decimal
 
     return [gdb_test "continue" ".*Breakpoint $decimal, $function .*" "continue to $function"]
+}
+
+# Clean the directory containing the standard output files.
+
+proc clean_standard_output_dir {} {
+    if { [info exists ::GDB_PERFTEST_MODE] && $::GDB_PERFTEST_MODE == "run" } {
+	# Don't clean, use $GDB_PERFTEST_MODE == compile results.
+	return
+    }
+
+    # Directory containing the standard output files.
+    set standard_output_dir [file normalize [standard_output_file ""]]
+
+    # Ensure that standard_output_dir is clean, or only contains
+    # gdb.log / gdb.sum.
+    set log_file_info [split [log_file -info]]
+    set log_file [file normalize [lindex $log_file_info end]]
+    if { $log_file == [file normalize [standard_output_file gdb.log]] } {
+	# Dir already contains active gdb.log.  Don't remove the dir, but
+	# check that it's clean otherwise.
+	set res [glob -directory $standard_output_dir -tails *]
+	set ok 1
+	foreach f $res {
+	    if { $f == "gdb.log" } {
+		continue
+	    }
+	    if { $f == "gdb.sum" } {
+		continue
+	    }
+	    set ok 0
+	}
+	if { !$ok } {
+	    error "standard output dir not clean"
+	}
+    } else {
+	# Start with a clean dir.
+	remote_exec build "rm -rf $standard_output_dir"
+    }
+
 }
 
 # Default implementation of gdb_init.
@@ -6108,11 +7056,22 @@ proc default_gdb_init { test_file_name } {
 
     # This disables style output, which would interfere with many
     # tests.
-    setenv TERM "dumb"
+    setenv NO_COLOR sorry
+
+    # This setting helps detect bugs in the Python code and doesn't
+    # seem to have a significant downside for the tests.
+    setenv PYTHONMALLOC malloc_debug
 
     # If DEBUGINFOD_URLS is set, gdb will try to download sources and
     # debug info for f.i. system libraries.  Prevent this.
-    unset -nocomplain ::env(DEBUGINFOD_URLS)
+    if { [is_remote host] } {
+	# See initialization of INTERNAL_GDBFLAGS.
+    } else {
+	# Using "set debuginfod enabled off" in INTERNAL_GDBFLAGS interferes
+	# with the gdb.debuginfod test-cases, so use the unsetenv method for
+	# non-remote host.
+	unset -nocomplain ::env(DEBUGINFOD_URLS)
+    }
 
     # Ensure that GDBHISTFILE and GDBHISTSIZE are removed from the
     # environment, we don't want these modifications to the history
@@ -6154,6 +7113,8 @@ proc default_gdb_init { test_file_name } {
     set cleanfiles_host {}
 
     set gdb_test_file_name [file rootname [file tail $test_file_name]]
+
+    clean_standard_output_dir
 
     # Make sure that the wrapper is rebuilt
     # with the appropriate multilib option.
@@ -6198,6 +7159,15 @@ proc default_gdb_init { test_file_name } {
 	    return [uplevel 1 ::gdb_tcl_unknown $args]
 	}
     }
+
+    # Dejagnu version 1.6.3 and later produce an unresolved at the end of a
+    # testcase if an error triggered, resetting errcnt and warncnt to 0, in
+    # order to avoid errors in one test-case influencing the following
+    # test-case.  Do this manually here, to support older versions.
+    global errcnt
+    global warncnt
+    set errcnt 0
+    set warncnt 0
 }
 
 # Return a path using GDB_PARALLEL.
@@ -6234,6 +7204,24 @@ proc standard_output_file {basename} {
         set dir [exec sh -c "cd ${dir} && pwd -W"]
     }
     return [file join $dir $basename]
+}
+
+# Turn BASENAME into a file name on host.
+
+proc host_standard_output_file { basename } {
+    if { [is_remote host] } {
+	set remotedir [board_info host remotedir]
+	if { $remotedir == "" } {
+	    if { $basename == "" } {
+		return "."
+	    }
+	    return $basename
+	} else {
+	    return [join [list $remotedir $basename] "/"]
+	}
+    } else {
+	return [standard_output_file $basename]
+    }
 }
 
 # Turn BASENAME into a full file name in the standard output directory.  If
@@ -6706,8 +7694,23 @@ proc gdb_continue_to_end {{mssg ""} {command continue} {allow_extra 0}} {
   } else {
       set text "continue until exit at $mssg"
   }
+
   if {$allow_extra} {
       set extra ".*"
+  } elseif {[istarget *-*-cygwin*] || [istarget *-*-mingw*]} {
+      # On Windows, even on supposedly single-threaded programs, we
+      # may see thread exit output when running to end, for threads
+      # spawned by the runtime.  E.g.:
+      #
+      #  (gdb) continue
+      #  Continuing.
+      #  [Thread 14364.0x21d4 exited with code 0]
+      #  [Thread 14364.0x4374 exited with code 0]
+      #  [Thread 14364.0x3aec exited with code 0]
+      #  [Thread 14364.0x3368 exited with code 0]
+      #  [Inferior 1 (process 14364) exited normally]
+      #
+      set extra "(\\\[Thread \[^\r\n\]+ exited with code $::decimal\\\]\r\n)*"
   } else {
       set extra ""
   }
@@ -6780,7 +7783,7 @@ proc exec_has_index_section { executable } {
 }
 
 # Return list with major and minor version of readelf, or an empty list.
-gdb_caching_proc readelf_version {
+gdb_caching_proc readelf_version {} {
     set readelf_program [gdb_find_readelf]
     set res [catch {exec $readelf_program --version} output]
     if { $res != 0 } {
@@ -6808,7 +7811,7 @@ proc readelf_prints_pie { } {
     # flag is printed by readelf, but we cannot reliably construct a PIE
     # executable if the multilib_flags dictate otherwise
     # (--target_board=unix/-no-pie/-fno-PIE).
-    return [version_at_least $major $minor 2 26]
+    return [version_compare {2 26} <= [list $major $minor]]
 }
 
 # Return 1 if EXECUTABLE is a Position Independent Executable, 0 if it is not,
@@ -6835,13 +7838,13 @@ proc exec_is_pie { executable } {
     return 0
 }
 
-# Return true if a test should be skipped due to lack of floating
+# Return false if a test should be skipped due to lack of floating
 # point support or GDB can't fetch the contents from floating point
 # registers.
 
-gdb_caching_proc gdb_skip_float_test {
+gdb_caching_proc allow_float_test {} {
     if [target_info exists gdb,skip_float_tests] {
-	return 1
+	return 0
     }
 
     # There is an ARM kernel ptrace bug that hardware VFP registers
@@ -6858,8 +7861,8 @@ gdb_caching_proc gdb_skip_float_test {
 
 	# Set up, compile, and execute a test program having VFP
 	# operations.
-	set src [standard_temp_file arm_vfp[pid].c]
-	set exe [standard_temp_file arm_vfp[pid].x]
+	set src [standard_temp_file arm_vfp.c]
+	set exe [standard_temp_file arm_vfp.x]
 
 	gdb_produce_source $src {
 	    int main() {
@@ -6890,13 +7893,13 @@ gdb_caching_proc gdb_skip_float_test {
 
 	if {![string match "" $lines]} {
 	    verbose "testfile compilation failed, returning 1" 2
-	    return 0
+	    return 1
 	}
 
 	# No error message, compilation succeeded so now run it via gdb.
 	# Run the test up to 5 times to detect whether ptrace can
 	# correctly update VFP registers or not.
-	set skip_vfp_test 0
+	set allow_vfp_test 1
 	for {set i 0} {$i < 5} {incr i} {
 	    global gdb_prompt srcdir subdir
 
@@ -6920,7 +7923,7 @@ gdb_caching_proc gdb_skip_float_test {
 		-re "exited normally.*$gdb_prompt $" {
 		    # However, the exit code is 0.  That means something
 		    # wrong in setting VFP registers.
-		    set skip_vfp_test 1
+		    set allow_vfp_test 0
 		    break
 		}
 	    }
@@ -6929,9 +7932,9 @@ gdb_caching_proc gdb_skip_float_test {
 	gdb_exit
 	remote_file build delete $exe
 
-	return $skip_vfp_test
+	return $allow_vfp_test
     }
-    return 0
+    return 1
 }
 
 # Print a message and return true if a test should be skipped
@@ -6949,17 +7952,16 @@ proc gdb_skip_bogus_test { msg } {
     return 0
 }
 
-# Return true if a test should be skipped due to lack of XML support
-# in the host GDB.
+# Return true if XML support is enabled in the host GDB.
 # NOTE: This must be called while gdb is *not* running.
 
-gdb_caching_proc gdb_skip_xml_test {
+gdb_caching_proc allow_xml_test {} {
     global gdb_spawn_id
     global gdb_prompt
     global srcdir
 
     if { [info exists gdb_spawn_id] } {
-        error "GDB must not be running in gdb_skip_xml_tests."
+	error "GDB must not be running in allow_xml_tests."
     }
 
     set xml_file [gdb_remote_download host "${srcdir}/gdb.xml/trivial.xml"]
@@ -6973,12 +7975,12 @@ gdb_caching_proc gdb_skip_xml_test {
 	-re ".*$gdb_prompt $" { }
     }
     gdb_exit
-    return $xml_missing
+    return [expr {!$xml_missing}]
 }
 
 # Return true if argv[0] is available.
 
-gdb_caching_proc gdb_has_argv0 {
+gdb_caching_proc gdb_has_argv0 {} {
     set result 0
 
     # Compile and execute a test program to check whether argv[0] is available.
@@ -7153,9 +8155,19 @@ proc build_id_debug_filename_get { filename } {
     return ".build-id/${data}.debug"
 }
 
-# Create stripped files for DEST, replacing it.  If ARGS is passed, it is a
-# list of optional flags.  The only currently supported flag is no-main,
-# which removes the symbol entry for main from the separate debug file.
+# DEST should be a file compiled with debug information.  This proc
+# creates two new files DEST.debug which contains the debug
+# information extracted from DEST, and DEST.stripped, which is a copy
+# of DEST with the debug information removed.  A '.gnu_debuglink'
+# section will be added to DEST.stripped that points to DEST.debug.
+#
+# If ARGS is passed, it is a list of optional flags.  The currently
+# supported flags are:
+#
+#   - no-main : remove the symbol entry for main from the separate
+#               debug file DEST.debug,
+#   - no-debuglink : don't add the '.gnu_debuglink' section to
+#                    DEST.stripped.
 #
 # Function returns zero on success.  Function will return non-zero failure code
 # on some targets not supporting separate debug info (such as i386-msdos).
@@ -7200,7 +8212,7 @@ proc gdb_gnu_strip_debug { dest args } {
     # leaves the symtab in the original file only.  There's no way to get
     # objcopy or strip to remove the symbol table without also removing the
     # debugging sections, so this is as close as we can get.
-    if { [llength $args] == 1 && [lindex $args 0] == "no-main" } {
+    if {[lsearch -exact $args "no-main"] != -1} {
 	set result [catch "exec $objcopy_program -N main ${debug_file} ${debug_file}-tmp" output]
 	verbose "result is $result"
 	verbose "output is $output"
@@ -7211,15 +8223,17 @@ proc gdb_gnu_strip_debug { dest args } {
 	file rename "${debug_file}-tmp" "${debug_file}"
     }
 
-    # Link the two previous output files together, adding the .gnu_debuglink
-    # section to the stripped_file, containing a pointer to the debug_file,
-    # save the new file in dest.
-    # This will be the regular executable filename, in the usual location.
-    set result [catch "exec $objcopy_program --add-gnu-debuglink=${debug_file} ${stripped_file} ${dest}" output]
-    verbose "result is $result"
-    verbose "output is $output"
-    if {$result == 1} {
-      return 1
+    # Unless the "no-debuglink" flag is passed, then link the two
+    # previous output files together, adding the .gnu_debuglink
+    # section to the stripped_file, containing a pointer to the
+    # debug_file, save the new file in dest.
+    if {[lsearch -exact $args "no-debuglink"] == -1} {
+	set result [catch "exec $objcopy_program --add-gnu-debuglink=${debug_file} ${stripped_file} ${dest}" output]
+	verbose "result is $result"
+	verbose "output is $output"
+	if {$result == 1} {
+	    return 1
+	}
     }
 
     # Workaround PR binutils/10802:
@@ -7407,19 +8421,15 @@ proc build_executable { testname executable {sources ""} {options {debug}} } {
 }
 
 # Starts fresh GDB binary and loads an optional executable into GDB.
-# Usage: clean_restart [executable]
+# Usage: clean_restart [EXECUTABLE]
 # EXECUTABLE is the basename of the binary.
 # Return -1 if starting gdb or loading the executable failed.
 
-proc clean_restart { args } {
+proc clean_restart {{executable ""}} {
     global srcdir
     global subdir
     global errcnt
     global warncnt
-
-    if { [llength $args] > 1 } {
-	error "bad number of args: [llength $args]"
-    }
 
     gdb_exit
 
@@ -7440,8 +8450,7 @@ proc clean_restart { args } {
 
     gdb_reinitialize_dir $srcdir/$subdir
 
-    if { [llength $args] >= 1 } {
-	set executable [lindex $args 0]
+    if {$executable != ""} {
 	set binfile [standard_output_file ${executable}]
 	return [gdb_load ${binfile}]
     }
@@ -7494,7 +8503,7 @@ proc get_valueof { fmt exp default {test ""} } {
 
     set val ${default}
     gdb_test_multiple "print${fmt} ${exp}" "$test" {
-	-re "\\$\[0-9\]* = (\[^\r\n\]*)\[\r\n\]*$gdb_prompt $" {
+	-re -wrap "^\\$\[0-9\]* = (\[^\r\n\]*)" {
 	    set val $expect_out(1,string)
 	    pass "$test"
 	}
@@ -7518,7 +8527,7 @@ proc get_local_valueof { exp default {test ""} } {
 
     set val ${default}
     gdb_test_multiple "info locals ${exp}" "$test" {
-	-re "$exp = (\[^\r\n\]*)\[\r\n\]*$gdb_prompt $" {
+	-re "$exp = (\[^\r\n\]*)\r\n$gdb_prompt $" {
 	    set val $expect_out(1,string)
 	    pass "$test"
 	}
@@ -7543,7 +8552,7 @@ proc get_integer_valueof { exp default {test ""} } {
 
     set val ${default}
     gdb_test_multiple "print /d ${exp}" "$test" {
-	-re "\\$\[0-9\]* = (\[-\]*\[0-9\]*).*$gdb_prompt $" {
+	-re -wrap "^\\$\[0-9\]* = (\[-\]*\[0-9\]*).*" {
 	    set val $expect_out(1,string)
 	    pass "$test"
 	}
@@ -7682,7 +8691,7 @@ proc get_endianness { } {
 }
 
 # Get the target's default endianness and return it.
-gdb_caching_proc target_endianness {
+gdb_caching_proc target_endianness {} {
     global gdb_prompt
 
     set me "target_endianness"
@@ -7891,7 +8900,7 @@ proc core_find {binfile {deletefiles {}} {arg ""}} {
 # the output from objdump to determine the prefix (such as underscore)
 # for linker symbol prefixes.
 
-gdb_caching_proc gdb_target_symbol_prefix {
+gdb_caching_proc gdb_target_symbol_prefix {} {
     # Compile a simple test program...
     set src { int main() { return 0; } }
     if {![gdb_simple_compile target_symbol_prefix $src executable]} {
@@ -7916,7 +8925,7 @@ gdb_caching_proc gdb_target_symbol_prefix {
 
 # Return 1 if target supports scheduler locking, otherwise return 0.
 
-gdb_caching_proc target_supports_scheduler_locking {
+gdb_caching_proc target_supports_scheduler_locking {} {
     global gdb_prompt
 
     set me "gdb_target_supports_scheduler_locking"
@@ -7975,7 +8984,7 @@ gdb_caching_proc target_supports_scheduler_locking {
 # Return 1 if compiler supports use of nested functions.  Otherwise,
 # return 0.
 
-gdb_caching_proc support_nested_function_tests {
+gdb_caching_proc support_nested_function_tests {} {
     # Compile a test program containing a nested function
     return [gdb_can_simple_compile nested_func {
 	int main () {
@@ -8286,7 +9295,7 @@ proc gdb_define_cmd {command command_list} {
     set test "define $command"
 
     gdb_test_multiple "define $command" $test {
-	-re "End with"  {
+	-re "End with \[^\r\n\]*\r\n *>$"  {
 	    gdb_test_multiple $input $test {
 		-re "\r\n$gdb_prompt " {
 		}
@@ -8332,11 +9341,29 @@ proc cd { dir } {
 }
 
 # Return a list of all languages supported by GDB, suitable for use in
-# 'set language NAME'.  This doesn't include either the 'local' or
-# 'auto' keywords.
-proc gdb_supported_languages {} {
-    return [list c objective-c c++ d go fortran modula-2 asm pascal \
-		opencl rust minimal ada]
+# 'set language NAME'.  This doesn't include the languages auto,
+# local, or unknown.
+gdb_caching_proc gdb_supported_languages {} {
+    # The extra space after 'complete set language ' in the command below is
+    # critical.  Only with that space will GDB complete the next level of
+    # the command, i.e. fill in the actual language names.
+    set output [remote_exec host $::GDB "$::INTERNAL_GDBFLAGS -batch -ex \"complete set language \""]
+
+    if {[lindex $output 0] != 0} {
+	error "failed to get list of supported languages"
+    }
+
+    set langs {}
+    foreach line [split [lindex $output 1] \n] {
+	if {[regexp "set language (\[^\r\]+)" $line full_match lang]} {
+	    # If LANG is not one of the languages that we ignore, then
+	    # add it to our list of languages.
+	    if {[lsearch -exact {auto local unknown} $lang] == -1} {
+		lappend langs $lang
+	    }
+	}
+    }
+    return $langs
 }
 
 # Check if debugging is enabled for gdb.
@@ -8503,11 +9530,11 @@ proc cmp_binary_files { file1 file2 } {
 # flag?  If not then we should skip these tests.  We should also
 # skip them if libctf was explicitly disabled.
 
-gdb_caching_proc skip_ctf_tests {
+gdb_caching_proc allow_ctf_tests {} {
     global enable_libctf
 
     if {$enable_libctf eq "no"} {
-	return 1
+	return 0
     }
 
     set can_ctf [gdb_can_simple_compile ctfdebug {
@@ -8516,13 +9543,13 @@ gdb_caching_proc skip_ctf_tests {
 	}
     } executable "additional_flags=-gctf"]
 
-    return [expr {!$can_ctf}]
+    return $can_ctf
 }
 
 # Return 1 if compiler supports -gstatement-frontiers.  Otherwise,
 # return 0.
 
-gdb_caching_proc supports_statement_frontiers {
+gdb_caching_proc supports_statement_frontiers {} {
     return [gdb_can_simple_compile supports_statement_frontiers {
 	int main () {
 	    return 0;
@@ -8533,7 +9560,7 @@ gdb_caching_proc supports_statement_frontiers {
 # Return 1 if compiler supports -mmpx -fcheck-pointer-bounds.  Otherwise,
 # return 0.
 
-gdb_caching_proc supports_mpx_check_pointer_bounds {
+gdb_caching_proc supports_mpx_check_pointer_bounds {} {
     set flags "additional_flags=-mmpx additional_flags=-fcheck-pointer-bounds"
     return [gdb_can_simple_compile supports_mpx_check_pointer_bounds {
 	int main () {
@@ -8545,7 +9572,7 @@ gdb_caching_proc supports_mpx_check_pointer_bounds {
 # Return 1 if compiler supports -fcf-protection=.  Otherwise,
 # return 0.
 
-gdb_caching_proc supports_fcf_protection {
+gdb_caching_proc supports_fcf_protection {} {
     return [gdb_can_simple_compile supports_fcf_protection {
 	int main () {
 	    return 0;
@@ -8561,32 +9588,27 @@ proc readnow { } {
 		  || [lsearch -exact $::GDBFLAGS --readnow] != -1}]
 }
 
-# Return index name if symbols were read in using an index.
-# Otherwise, return "".
+# Return 'gdb_index' if the symbols from OBJFILE were read using a
+# .gdb_index index.  Return 'debug_names' if the symbols were read
+# using a DWARF-5 style .debug_names index.  Otherwise, return an
+# empty string.
 
 proc have_index { objfile } {
 
-    set res ""
-    set cmd "maint print objfiles $objfile"
-    gdb_test_multiple $cmd "" -lbl {
-	-re "\r\n.gdb_index: faked for \"readnow\"" {
-	    set res ""
-	    exp_continue
-	}
-	-re "\r\n.gdb_index:" {
-	    set res "gdb_index"
-	    exp_continue
-	}
-	-re "\r\n.debug_names:" {
-	    set res "debug_names"
-	    exp_continue
-	}
-	-re -wrap "" {
-	    # We don't care about any other input.
-	}
-    }
+    # This proc is mostly used with $binfile, but that gives problems with
+    # remote host, while using $testfile would work.
+    # Fix this by reducing $binfile to $testfile.
+    set objfile [file tail $objfile]
 
-    return $res
+    set index_type [get_index_type $objfile]
+
+    if { $index_type eq "gdb" } {
+	return "gdb_index"
+    } elseif { $index_type eq "dwarf5" } {
+	return "debug_names"
+    } else {
+	return ""
+    }
 }
 
 # Return 1 if partial symbols are available.  Otherwise, return 0.
@@ -8650,6 +9672,64 @@ proc add_gdb_index { program {style ""} } {
     return 1
 }
 
+# Use 'maint print objfiles OBJFILE' to determine what (if any) type
+# of index is present in OBJFILE.  Return a string indicating the
+# index type:
+#
+# 'gdb' - Contains a .gdb_index style index,
+#
+# 'dwarf5' - Contain DWARF5 style index sections,
+#
+# 'readnow' - A fake .gdb_index as a result of readnow being used,
+#
+# 'cooked' - The cooked index created when reading non-indexed debug
+#            information,
+#
+# 'none' - There's no index, and no debug information to create a
+#          cooked index from.
+#
+# If something goes wrong then this proc will emit a FAIL and return
+# an empty string.
+#
+# TESTNAME is used as part of any pass/fail emitted from this proc.
+proc get_index_type { objfile { testname "" } } {
+    if { $testname eq "" } {
+	set testname "find index type"
+    }
+
+    set index_type "unknown"
+    gdb_test_multiple "maint print objfiles ${objfile}" $testname -lbl {
+	-re "\r\n\\.gdb_index: version ${::decimal}(?=\r\n)" {
+	    set index_type "gdb"
+	    gdb_test_lines "" $gdb_test_name ".*"
+	}
+	-re "\r\n\\.debug_names: exists(?=\r\n)" {
+	    set index_type "dwarf5"
+	    gdb_test_lines "" $gdb_test_name ".*"
+	}
+	-re "\r\n(Cooked index in use:|Psymtabs)(?=\r\n)" {
+	    set index_type "cooked"
+	    gdb_test_lines "" $gdb_test_name ".*"
+	}
+	-re ".gdb_index: faked for \"readnow\"" {
+	    set index_type "readnow"
+	    gdb_test_lines "" $gdb_test_name ".*"
+	}
+	-re -wrap "" {
+	    set index_type "none"
+	}
+    }
+
+    gdb_assert { $index_type ne "unknown" } \
+	"$testname, check type is valid"
+
+    if { $index_type eq "unknown" } {
+	set index_type ""
+    }
+
+    return $index_type
+}
+
 # Add a .gdb_index section to PROGRAM, unless it alread has an index
 # (.gdb_index/.debug_names).  Gdb doesn't support building an index from a
 # program already using one.  Return 1 if a .gdb_index was added, return 0
@@ -8659,38 +9739,16 @@ proc add_gdb_index { program {style ""} } {
 # string (the default) means .gdb_index; "-dwarf-5" means .debug_names.
 
 proc ensure_gdb_index { binfile {style ""} } {
-    global decimal
-
     set testfile [file tail $binfile]
-    set test "check if index present"
-    set has_index 0
-    set has_readnow 0
-    gdb_test_multiple "mt print objfiles ${testfile}" $test -lbl {
-	-re "\r\n\\.gdb_index: version ${decimal}(?=\r\n)" {
-	    set has_index 1
-	    gdb_test_lines "" $gdb_test_name ".*"
-	}
-	-re "\r\n\\.debug_names: exists(?=\r\n)" {
-	    set has_index 1
-	    gdb_test_lines "" $gdb_test_name ".*"
-	}
-	-re "\r\n(Cooked index in use|Psymtabs)(?=\r\n)" {
-	    gdb_test_lines "" $gdb_test_name ".*"
-	}
-	-re ".gdb_index: faked for \"readnow\"" {
-	    set has_readnow 1
-	    gdb_test_lines "" $gdb_test_name ".*"
-	}
-	-re -wrap "" {
-	    fail $gdb_test_name
-	}
-    }
 
-    if { $has_index } {
+    set test "check if index present"
+    set index_type [get_index_type $testfile $test]
+
+    if { $index_type eq "gdb" || $index_type eq "dwarf5" } {
 	return 0
     }
 
-    if { $has_readnow } {
+    if { $index_type eq "readnow" } {
 	return -1
     }
 
@@ -8728,7 +9786,7 @@ proc is_stmt_addresses { file } {
     set is_stmt [list]
 
     gdb_test_multiple "maint info line-table $file" "" {
-	-re "\r\n$decimal\[ \t\]+$decimal\[ \t\]+($hex)\[ \t\]+Y\[^\r\n\]*" {
+	-re "\r\n$decimal\[ \t\]+$decimal\[ \t\]+($hex)\[ \t\]+$hex\[ \t\]+Y\[^\r\n\]*" {
 	    lappend is_stmt $expect_out(1,string)
 	    exp_continue
 	}
@@ -8751,6 +9809,22 @@ proc hex_in_list { val hexlist } {
     return [expr $index != -1]
 }
 
+# As info args, but also add the default values.
+
+proc info_args_with_defaults { name } {
+    set args {}
+
+    foreach arg [info args $name] {
+	if { [info default $name $arg default_value] } {
+	    lappend args [list $arg $default_value]
+	} else {
+	    lappend args $arg
+	}
+    }
+
+    return $args
+}
+
 # Override proc NAME to proc OVERRIDE for the duration of the execution of
 # BODY.
 
@@ -8770,7 +9844,7 @@ proc with_override { name override body } {
 
     # Save the old proc, if it exists.
     if { [info procs $name] != "" } {
-	set old_args [info args $name]
+	set old_args [info_args_with_defaults $name]
 	set old_body [info body $name]
 	set existed true
     } else {
@@ -8778,7 +9852,7 @@ proc with_override { name override body } {
     }
 
     # Install the override.
-    set new_args [info args $override]
+    set new_args [info_args_with_defaults $override]
     set new_body [info body $override]
     eval proc $name {$new_args} {$new_body}
 
@@ -8803,6 +9877,25 @@ proc with_override { name override body } {
     return $result
 }
 
+# Run BODY after setting the TERM environment variable to 'ansi', and
+# unsetting the NO_COLOR environment variable.
+proc with_ansi_styling_terminal { body } {
+    save_vars { ::env(TERM) ::env(NO_COLOR) } {
+	# Set environment variables to allow styling.
+	setenv TERM ansi
+	unset -nocomplain ::env(NO_COLOR)
+
+	set code [catch {uplevel 1 $body} result]
+    }
+
+    if {$code == 1} {
+	global errorInfo errorCode
+	return -code $code -errorinfo $errorInfo -errorcode $errorCode $result
+    } else {
+	return -code $code $result
+    }
+}
+
 # Setup tuiterm.exp environment.  To be used in test-cases instead of
 # "load_lib tuiterm.exp".  Calls initialization function and schedules
 # finalization function.
@@ -8817,7 +9910,7 @@ proc gdb_note { message } {
 }
 
 # Return 1 if compiler supports -fuse-ld=gold, otherwise return 0.
-gdb_caching_proc have_fuse_ld_gold {
+gdb_caching_proc have_fuse_ld_gold {} {
     set me "have_fuse_ld_gold"
     set flags "additional_flags=-fuse-ld=gold"
     set src { int main() { return 0; } }
@@ -8825,7 +9918,7 @@ gdb_caching_proc have_fuse_ld_gold {
 }
 
 # Return 1 if compiler supports fvar-tracking, otherwise return 0.
-gdb_caching_proc have_fvar_tracking {
+gdb_caching_proc have_fvar_tracking {} {
     set me "have_fvar_tracking"
     set flags "additional_flags=-fvar-tracking"
     set src { int main() { return 0; } }
@@ -8833,7 +9926,7 @@ gdb_caching_proc have_fvar_tracking {
 }
 
 # Return 1 if linker supports -Ttext-segment, otherwise return 0.
-gdb_caching_proc linker_supports_Ttext_segment_flag {
+gdb_caching_proc linker_supports_Ttext_segment_flag {} {
     set me "linker_supports_Ttext_segment_flag"
     set flags ldflags="-Wl,-Ttext-segment=0x7000000"
     set src { int main() { return 0; } }
@@ -8841,7 +9934,7 @@ gdb_caching_proc linker_supports_Ttext_segment_flag {
 }
 
 # Return 1 if linker supports -Ttext, otherwise return 0.
-gdb_caching_proc linker_supports_Ttext_flag {
+gdb_caching_proc linker_supports_Ttext_flag {} {
     set me "linker_supports_Ttext_flag"
     set flags ldflags="-Wl,-Ttext=0x7000000"
     set src { int main() { return 0; } }
@@ -8849,7 +9942,7 @@ gdb_caching_proc linker_supports_Ttext_flag {
 }
 
 # Return 1 if linker supports --image-base, otherwise 0.
-gdb_caching_proc linker_supports_image_base_flag {
+gdb_caching_proc linker_supports_image_base_flag {} {
     set me "linker_supports_image_base_flag"
     set flags ldflags="-Wl,--image-base=0x7000000"
     set src { int main() { return 0; } }
@@ -8859,7 +9952,7 @@ gdb_caching_proc linker_supports_image_base_flag {
 
 # Return 1 if compiler supports scalar_storage_order attribute, otherwise
 # return 0.
-gdb_caching_proc supports_scalar_storage_order_attribute {
+gdb_caching_proc supports_scalar_storage_order_attribute {} {
     set me "supports_scalar_storage_order_attribute"
     set src {
 	#include <string.h>
@@ -8882,7 +9975,8 @@ gdb_caching_proc supports_scalar_storage_order_attribute {
 	return 0
     }
 
-    set result [remote_exec target $obj]
+    set target_obj [gdb_remote_download target $obj]
+    set result [remote_exec target $target_obj]
     set status [lindex $result 0]
     set output [lindex $result 1]
     if { $output != "" } {
@@ -8893,7 +9987,7 @@ gdb_caching_proc supports_scalar_storage_order_attribute {
 }
 
 # Return 1 if compiler supports __GNUC__, otherwise return 0.
-gdb_caching_proc supports_gnuc {
+gdb_caching_proc supports_gnuc {} {
     set me "supports_gnuc"
     set src {
 	#ifndef __GNUC__
@@ -8904,7 +9998,7 @@ gdb_caching_proc supports_gnuc {
 }
 
 # Return 1 if target supports mpx, otherwise return 0.
-gdb_caching_proc have_mpx {
+gdb_caching_proc have_mpx {} {
     global srcdir
 
     set me "have_mpx"
@@ -8942,7 +10036,8 @@ gdb_caching_proc have_mpx {
         return 0
     }
 
-    set result [remote_exec target $obj]
+    set target_obj [gdb_remote_download target $obj]
+    set result [remote_exec target $target_obj]
     set status [lindex $result 0]
     set output [lindex $result 1]
     if { $output != "" } {
@@ -8966,7 +10061,8 @@ gdb_caching_proc have_mpx {
         return 0
     }
 
-    set result [remote_exec target $obj]
+    set target_obj [gdb_remote_download target $obj]
+    set result [remote_exec target $target_obj]
     set status [lindex $result 0]
     set output [lindex $result 1]
     set status [expr ($status == 0) \
@@ -8979,7 +10075,7 @@ gdb_caching_proc have_mpx {
 }
 
 # Return 1 if target supports avx, otherwise return 0.
-gdb_caching_proc have_avx {
+gdb_caching_proc have_avx {} {
     global srcdir
 
     set me "have_avx"
@@ -9009,7 +10105,8 @@ gdb_caching_proc have_avx {
         return 0
     }
 
-    set result [remote_exec target $obj]
+    set target_obj [gdb_remote_download target $obj]
+    set result [remote_exec target $target_obj]
     set status [lindex $result 0]
     set output [lindex $result 1]
     if { $output != "" } {
@@ -9022,41 +10119,51 @@ gdb_caching_proc have_avx {
     return $status
 }
 
-# Called as either:
-# - require EXPR VAL
-# - require EXPR OP VAL
-# In the first case, OP is ==.
+# Called as
+# - require ARG...
 #
-# Require EXPR OP VAL, where EXPR is evaluated in caller context.  If not,
-# return in the caller's context.
+# ARG can either be a name, or of the form !NAME.
+#
+# Each name is a proc to evaluate in the caller's context.  It can return a
+# boolean or a two element list with a boolean and a reason string.
+# A "!" means to invert the result.  If this is true, all is well.  If it is
+# false, an "unsupported" is emitted and this proc causes the caller to return.
+#
+# The reason string is used to provide some context about a require failure,
+# and is included in the "unsupported" message.
 
-proc require { fn arg1 {arg2 ""} } {
-    if { $arg2 == "" } {
-	set op ==
-	set val $arg1
-    } else {
-	set op $arg1
-	set val $arg2
-    }
-    set res [uplevel 1 $fn]
-    if { [expr $res $op $val] } {
-	return
-    }
-
-    switch "$fn $op $val" {
-	"gdb_skip_xml_test == 0" { set msg "missing xml support" }
-	"ensure_gdb_index $binfile != -1" -
-	"ensure_gdb_index $binfile -dwarf-5 != -1" {
-	    set msg "Couldn't ensure index in binfile"
+proc require { args } {
+    foreach arg $args {
+	if {[string index $arg 0] == "!"} {
+	    set required_val 0
+	    set fn [string range $arg 1 end]
+	} else {
+	    set required_val 1
+	    set fn $arg
 	}
-	"use_gdb_stub == 0" {
-	    set msg "Remote stub used"
-	}
-	default { set msg "$fn != $val" }
-    }
 
-    untested $msg
-    return -code return 0
+	set result [uplevel 1 $fn]
+	set len [llength $result]
+	if { $len == 2 } {
+	    set actual_val [lindex $result 0]
+	    set msg [lindex $result 1]
+	} elseif { $len == 1 } {
+	    set actual_val $result
+	    set msg ""
+	} else {
+	    error "proc $fn returned a list of unexpected length $len"
+	}
+
+	if {$required_val != !!$actual_val} {
+	    if { [string length $msg] > 0 } {
+		unsupported "require failed: $arg ($msg)"
+	    } else {
+		unsupported "require failed: $arg"
+	    }
+
+	    return -code return 0
+	}
+    }
 }
 
 # Wait up to ::TIMEOUT seconds for file PATH to exist on the target system.
@@ -9074,7 +10181,7 @@ proc target_file_exists_with_timeout { path } {
     return 0
 }
 
-gdb_caching_proc has_hw_wp_support {
+gdb_caching_proc has_hw_wp_support {} {
     # Power 9, proc rev 2.2 does not support HW watchpoints due to HW bug.
     # Need to use a runtime test to determine if the Power processor has
     # support for HW watchpoints.
@@ -9182,7 +10289,7 @@ proc get_set_option_choices { set_cmd {set_arg ""} } {
 # set, use that.  If not, try a few common compiler names, making sure
 # that the executable they produce can run.
 
-gdb_caching_proc arm_cc_for_target {
+gdb_caching_proc arm_cc_for_target {} {
     if {[info exists ::ARM_CC_FOR_TARGET]} {
 	# If the user specified the compiler explicitly, then don't
 	# check whether the resulting binary runs outside GDB.  Assume
@@ -9217,7 +10324,8 @@ gdb_caching_proc arm_cc_for_target {
 		 $src \
 		 executable [list compiler=$compiler]]} {
 
-	    set result [remote_exec target $obj]
+	    set target_obj [gdb_remote_download target $obj]
+	    set result [remote_exec target $target_obj]
 	    set status [lindex $result 0]
 	    set output [lindex $result 1]
 
@@ -9234,32 +10342,88 @@ gdb_caching_proc arm_cc_for_target {
 
 # Step until the pattern REGEXP is found.  Step at most
 # MAX_STEPS times, but stop stepping once REGEXP is found.
-#
+# CURRENT matches current location
 # If REGEXP is found then a single pass is emitted, otherwise, after
 # MAX_STEPS steps, a single fail is emitted.
 #
 # TEST_NAME is the name used in the pass/fail calls.
 
-proc gdb_step_until { regexp {test_name ""} {max_steps 10} } {
-    if { $test_name == "" } {
-	set test_name "stepping until regexp"
-    }
+proc gdb_step_until { regexp {test_name "stepping until regexp"} \
+			  {current "\}"} { max_steps 10 } } {
+    repeat_cmd_until "step" $current  $regexp  $test_name "10"
+}
+
+# Do repeated stepping COMMANDs in order to reach TARGET from CURRENT
+#
+#  COMMAND   is a stepping command
+#  CURRENT   is a string matching the current location
+#  TARGET    is a string matching the target location
+#  TEST_NAME is the test name
+#  MAX_STEPS is number of steps attempted before fail is emitted
+#
+# The function issues repeated COMMANDs as long as the location matches
+# CURRENT up to a maximum of MAX_STEPS.
+#
+# TEST_NAME passes if the resulting location matches TARGET and fails
+# otherwise.
+
+proc repeat_cmd_until { command current target \
+			    {test_name "stepping until regexp"} \
+			    {max_steps 100} } {
+    global gdb_prompt
 
     set count 0
-    gdb_test_multiple "step" "$test_name" {
-	-re "$regexp\r\n$::gdb_prompt $" {
-	    pass $test_name
+    gdb_test_multiple "$command" "$test_name" {
+	-re "$target.*$gdb_prompt $" {
+	    pass "$test_name"
 	}
-	-re ".*$::gdb_prompt $" {
-	    if {$count < $max_steps} {
-		incr count
-		send_gdb "step\n"
+	-re "$current.*$gdb_prompt $" {
+	    incr count
+	    if { $count < $max_steps } {
+		send_gdb "$command\n"
 		exp_continue
 	    } else {
-		fail $test_name
+		fail "$test_name"
 	    }
 	}
     }
+}
+
+# Return false if the current target is not operating in non-stop
+# mode, otherwise, return true.
+#
+# The inferior will need to have started running in order to get the
+# correct result.
+
+proc is_target_non_stop { {testname ""} } {
+    # For historical reasons we assume non-stop mode is on.  If the
+    # maintenance command fails for any reason then we're going to
+    # return true.
+    set is_non_stop true
+    gdb_test_multiple "maint show target-non-stop" $testname {
+	-wrap -re "(is|currently) on.*" {
+	    set is_non_stop true
+	}
+	-wrap -re "(is|currently) off.*" {
+	    set is_non_stop false
+	}
+    }
+    return $is_non_stop
+}
+
+# Return the number of worker threads that GDB is currently using.
+
+proc gdb_get_worker_threads { {testname ""} } {
+    set worker_threads "UNKNOWN"
+    gdb_test_multiple "maintenance show worker-threads" $testname {
+	-wrap -re "^The number of worker threads GDB can use is the default \\(currently ($::decimal)\\)\\." {
+	    set worker_threads $expect_out(1,string)
+	}
+	-wrap -re "^The number of worker threads GDB can use is ($::decimal)\\." {
+	    set worker_threads $expect_out(1,string)
+	}
+    }
+    return $worker_threads
 }
 
 # Check if the compiler emits epilogue information associated
@@ -9269,7 +10433,7 @@ proc gdb_step_until { regexp {test_name ""} {max_steps 10} } {
 #
 # Returns True if it is associated with the closing brace,
 # False if it is the last statement
-gdb_caching_proc have_epilogue_line_info {
+gdb_caching_proc have_epilogue_line_info {} {
 
     set main {
 	int
@@ -9314,6 +10478,181 @@ proc decompress_bz2 { bz2 } {
     }
 
     return $copy
+}
+
+# Return 1 if the output of "ldd FILE" contains regexp DEP, 0 if it doesn't,
+# and -1 if there was a problem running the command.
+
+proc has_dependency { file dep } {
+    set ldd [gdb_find_ldd]
+    set command "$ldd $file"
+    set result [remote_exec host $command]
+    set status [lindex $result 0]
+    set output [lindex $result 1]
+    verbose -log "status of $command is $status"
+    verbose -log "output of $command is $output"
+    if { $status != 0 || $output == "" } {
+	return -1
+    }
+    return [regexp $dep $output]
+}
+
+# Detect linux kernel version and return as list of 3 numbers: major, minor,
+# and patchlevel.  On failure, return an empty list.
+
+gdb_caching_proc linux_kernel_version {} {
+    if { ![istarget *-*-linux*] } {
+	return {}
+    }
+
+    set res [remote_exec target "uname -r"]
+    set status [lindex $res 0]
+    set output [lindex $res 1]
+    if { $status != 0 } {
+	return {}
+    }
+
+    set re ^($::decimal)\\.($::decimal)\\.($::decimal)
+    if { [regexp $re $output dummy v1 v2 v3] != 1 } {
+	return {}
+    }
+
+    return [list $v1 $v2 $v3]
+}
+
+# Return 1 if syscall NAME is supported.
+
+proc have_syscall { name } {
+    set src \
+	[list \
+	     "#include <sys/syscall.h>" \
+	     "int var = SYS_$name;"]
+    set src [join $src "\n"]
+    return [gdb_can_simple_compile have_syscall_$name $src object]
+}
+
+# Return 1 if compile flag FLAG is supported.
+
+gdb_caching_proc have_compile_flag { flag } {
+    set src { void foo () {} }
+    return [gdb_can_simple_compile have_compile_flag_$flag $src object \
+		additional_flags=$flag]
+}
+
+# Return 1 if we can create an executable using compile and link flag FLAG.
+
+gdb_caching_proc have_compile_and_link_flag { flag } {
+    set src { int main () { return 0; } }
+    return [gdb_can_simple_compile have_compile_and_link_flag_$flag $src executable \
+		additional_flags=$flag]
+}
+
+# Return 1 if this GDB is configured with a "native" target.
+
+gdb_caching_proc have_native_target {} {
+    gdb_test_multiple "help target native" "" {
+	-re -wrap "Undefined target command.*" {
+	    return 0
+	}
+	-re -wrap "Native process.*" {
+	    return 1
+	}
+    }
+    return 0
+}
+
+# Handle include file $srcdir/$subdir/FILE.
+
+proc include_file { file } {
+    set file [file join $::srcdir $::subdir $file]
+    if { [is_remote host] } {
+	set res [remote_download host $file]
+    } else {
+	set res $file
+    }
+
+    return $res
+}
+
+# Handle include file FILE, and if necessary update compiler flags variable
+# FLAGS.
+
+proc lappend_include_file { flags file } {
+    upvar $flags up_flags
+    if { [is_remote host] } {
+	gdb_remote_download host $file
+    } else {
+	set dir [file dirname $file]
+	if { $dir != [file join $::srcdir $::subdir] } {
+	    lappend up_flags "additional_flags=-I$dir"
+	}
+    }
+}
+
+# Return a list of supported host locales.
+
+gdb_caching_proc host_locales { } {
+    set result [remote_exec host "locale -a"]
+    set status [lindex $result 0]
+    set output [lindex $result 1]
+
+    if { $status != 0 } {
+	return {}
+    }
+
+    # Split into list.
+    set output [string trim $output]
+    set l [split $output \n]
+
+    # Trim items.
+    set l [lmap v $l { string trim $v }]
+
+    # Normalize items to lower-case.
+    set l [lmap v $l { string tolower $v }]
+    # Normalize items to without dash.
+    set l [lmap v $l { string map { "-" "" } $v }]
+
+    return $l
+}
+
+# Return 1 if host locale LOCALE is supported.
+
+proc have_host_locale { locale } {
+    # Normalize to lower-case.
+    set locale [string tolower $locale]
+    # Normalize to without dash.
+    set locale [string map { "-" "" } $locale]
+
+    set idx [lsearch [host_locales] $locale]
+    return [expr $idx != -1]
+}
+
+# Return 1 if we can use '#include <$file>' in source file.
+
+gdb_caching_proc have_system_header { file } {
+    set src "#include <$file>"
+    set name [string map { "/" "_sep_" } $file]
+    return [gdb_can_simple_compile have_system_header_$name $src object]
+}
+
+# Return 1 if the test is being run as root, 0 otherwise.
+
+gdb_caching_proc root_user {} {
+    # ID outputs to stdout, we have to use exec to capture it here.
+    set res [remote_exec target id]
+    set ret_val [lindex $res 0]
+    set output [lindex $res 1]
+
+    # If ret_val is not 0, we couldn't run `id` on the target for some
+    # reason.  Return that we are not root, so problems are easier to
+    # spot.
+    if { $ret_val != 0 } {
+        return 0
+    }
+
+    regexp -all ".*uid=(\[0-9\]+).*" $output dummy uid
+
+    return [expr $uid == 0]
 }
 
 # Always load compatibility stuff.

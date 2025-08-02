@@ -1,5 +1,5 @@
 /* Internal interfaces for the GNU/Linux specific target code for gdbserver.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +28,7 @@
 
 /* Included for ptrace type definitions.  */
 #include "nat/linux-ptrace.h"
-#include "target/waitstatus.h" /* For enum target_stop_reason.  */
+#include "target/waitstatus.h"
 #include "tracepoint.h"
 
 #include <list>
@@ -178,7 +178,7 @@ public:
 
   bool supports_read_auxv () override;
 
-  int read_auxv (CORE_ADDR offset, unsigned char *myaddr,
+  int read_auxv (int pid, CORE_ADDR offset, unsigned char *myaddr,
 		 unsigned int len) override;
 
   int insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
@@ -234,6 +234,8 @@ public:
 
   bool supports_vfork_events () override;
 
+  gdb_thread_options supported_thread_options () override;
+
   bool supports_exec_events () override;
 
   void handle_new_gdb_connection () override;
@@ -256,6 +258,8 @@ public:
   bool supports_thread_stopped () override;
 
   bool thread_stopped (thread_info *thread) override;
+
+  bool any_resumed () override;
 
   void pause_all (bool freeze) override;
 
@@ -282,11 +286,11 @@ public:
 
   int disable_btrace (btrace_target_info *tinfo) override;
 
-  int read_btrace (btrace_target_info *tinfo, buffer *buf,
+  int read_btrace (btrace_target_info *tinfo, std::string *buf,
 		   enum btrace_read_type type) override;
 
   int read_btrace_conf (const btrace_target_info *tinfo,
-			buffer *buf) override;
+			std::string *buf) override;
 #endif
 
   bool supports_range_stepping () override;
@@ -313,7 +317,8 @@ public:
 #endif
 
   thread_info *thread_pending_parent (thread_info *thread) override;
-  thread_info *thread_pending_child (thread_info *thread) override;
+  thread_info *thread_pending_child (thread_info *thread,
+				     target_waitkind *kind) override;
 
   bool supports_catch_syscall () override;
 
@@ -569,13 +574,15 @@ private: /* Back to private.  */
 
   /* Detect zombie thread group leaders, and "exit" them.  We can't
      reap their exits until all other threads in the group have
-     exited.  */
-  void check_zombie_leaders ();
+     exited.  Returns true if we left any new event pending, false
+     otherwise.  */
+  bool check_zombie_leaders ();
 
-  /* Convenience function that is called when the kernel reports an exit
-     event.  This decides whether to report the event to GDB as a
-     process exit event, a thread exit event, or to suppress the
-     event.  */
+  /* Convenience function that is called when we're about to return an
+     event to the core.  If the event is an exit or signalled event,
+     then this decides whether to report it as process-wide event, as
+     a thread exit event, or to suppress it.  All other event kinds
+     are passed through unmodified.  */
   ptid_t filter_exit_event (lwp_info *event_child,
 			    target_waitstatus *ourstatus);
 
@@ -732,57 +739,60 @@ struct pending_signal
 
 struct lwp_info
 {
-  /* If this LWP is a fork child that wasn't reported to GDB yet, return
-     its parent, else nullptr.  */
+  /* If this LWP is a fork/vfork/clone child that wasn't reported to
+     GDB yet, return its parent, else nullptr.  */
   lwp_info *pending_parent () const
   {
-    if (this->fork_relative == nullptr)
+    if (this->relative == nullptr)
       return nullptr;
 
-    gdb_assert (this->fork_relative->fork_relative == this);
+    gdb_assert (this->relative->relative == this);
 
-    /* In a fork parent/child relationship, the parent has a status pending and
+    /* In a parent/child relationship, the parent has a status pending and
        the child does not, and a thread can only be in one such relationship
        at most.  So we can recognize who is the parent based on which one has
        a pending status.  */
     gdb_assert (!!this->status_pending_p
-		!= !!this->fork_relative->status_pending_p);
+		!= !!this->relative->status_pending_p);
 
-    if (!this->fork_relative->status_pending_p)
+    if (!this->relative->status_pending_p)
       return nullptr;
 
     const target_waitstatus &ws
-      = this->fork_relative->waitstatus;
+      = this->relative->waitstatus;
     gdb_assert (ws.kind () == TARGET_WAITKIND_FORKED
-		|| ws.kind () == TARGET_WAITKIND_VFORKED);
+		|| ws.kind () == TARGET_WAITKIND_VFORKED
+		|| ws.kind () == TARGET_WAITKIND_THREAD_CLONED);
 
-    return this->fork_relative;
-  }
+    return this->relative; }
 
-  /* If this LWP is the parent of a fork child we haven't reported to GDB yet,
-     return that child, else nullptr.  */
-  lwp_info *pending_child () const
+  /* If this LWP is the parent of a fork/vfork/clone child we haven't
+     reported to GDB yet, return that child and fill in KIND with the
+     matching waitkind, otherwise nullptr.  */
+  lwp_info *pending_child (target_waitkind *kind) const
   {
-    if (this->fork_relative == nullptr)
+    if (this->relative == nullptr)
       return nullptr;
 
-    gdb_assert (this->fork_relative->fork_relative == this);
+    gdb_assert (this->relative->relative == this);
 
-    /* In a fork parent/child relationship, the parent has a status pending and
+    /* In a parent/child relationship, the parent has a status pending and
        the child does not, and a thread can only be in one such relationship
        at most.  So we can recognize who is the parent based on which one has
        a pending status.  */
     gdb_assert (!!this->status_pending_p
-		!= !!this->fork_relative->status_pending_p);
+		!= !!this->relative->status_pending_p);
 
     if (!this->status_pending_p)
       return nullptr;
 
     const target_waitstatus &ws = this->waitstatus;
     gdb_assert (ws.kind () == TARGET_WAITKIND_FORKED
-		|| ws.kind () == TARGET_WAITKIND_VFORKED);
+		|| ws.kind () == TARGET_WAITKIND_VFORKED
+		|| ws.kind () == TARGET_WAITKIND_THREAD_CLONED);
 
-    return this->fork_relative;
+    *kind = ws.kind ();
+    return this->relative;
   }
 
   /* Backlink to the parent object.  */
@@ -820,11 +830,13 @@ struct lwp_info
      information or exit status until it can be reported to GDB.  */
   struct target_waitstatus waitstatus;
 
-  /* A pointer to the fork child/parent relative.  Valid only while
-     the parent fork event is not reported to higher layers.  Used to
-     avoid wildcard vCont actions resuming a fork child before GDB is
-     notified about the parent's fork event.  */
-  struct lwp_info *fork_relative = nullptr;
+  /* A pointer to the fork/vfork/clone child/parent relative (like
+     people, LWPs have relatives).  Valid only while the parent
+     fork/vfork/clone event is not reported to higher layers.  Used to
+     avoid wildcard vCont actions resuming a fork/vfork/clone child
+     before GDB is notified about the parent's fork/vfork/clone
+     event.  */
+  struct lwp_info *relative = nullptr;
 
   /* When stopped is set, this is where the lwp last stopped, with
      decr_pc_after_break already accounted for.  If the LWP is
@@ -939,24 +951,23 @@ void thread_db_notice_clone (struct thread_info *parent_thr, ptid_t child_ptid);
 
 bool thread_db_thread_handle (ptid_t ptid, gdb_byte **handle, int *handle_len);
 
-extern int have_ptrace_getregset;
+extern enum tribool have_ptrace_getregset;
 
-/* Search for the value with type MATCH in the auxv vector with
-   entries of length WORDSIZE bytes.  If found, store the value in
-   *VALP and return 1.  If not found or if there is an error, return
-   0.  */
+/* Search for the value with type MATCH in the auxv vector, with entries of
+   length WORDSIZE bytes, of process with pid PID.  If found, store the
+   value in *VALP and return 1.  If not found or if there is an error,
+   return 0.  */
 
-int linux_get_auxv (int wordsize, CORE_ADDR match,
-		    CORE_ADDR *valp);
+int linux_get_auxv (int pid, int wordsize, CORE_ADDR match, CORE_ADDR *valp);
 
 /* Fetch the AT_HWCAP entry from the auxv vector, where entries are length
-   WORDSIZE.  If no entry was found, return zero.  */
+   WORDSIZE, of process with pid PID.  If no entry was found, return 0.  */
 
-CORE_ADDR linux_get_hwcap (int wordsize);
+CORE_ADDR linux_get_hwcap (int pid, int wordsize);
 
 /* Fetch the AT_HWCAP2 entry from the auxv vector, where entries are length
-   WORDSIZE.  If no entry was found, return zero.  */
+   WORDSIZE, of process with pid PID.  If no entry was found, return 0.  */
 
-CORE_ADDR linux_get_hwcap2 (int wordsize);
+CORE_ADDR linux_get_hwcap2 (int pid, int wordsize);
 
 #endif /* GDBSERVER_LINUX_LOW_H */

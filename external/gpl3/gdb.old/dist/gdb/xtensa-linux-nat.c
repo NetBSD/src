@@ -1,6 +1,6 @@
 /* Xtensa GNU/Linux native support.
 
-   Copyright (C) 2007-2020 Free Software Foundation, Inc.
+   Copyright (C) 2007-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -62,56 +62,57 @@ fill_gregset (const struct regcache *regcache,
   int i;
   xtensa_elf_gregset_t *regs = (xtensa_elf_gregset_t *) gregsetp;
   struct gdbarch *gdbarch = regcache->arch ();
+  xtensa_gdbarch_tdep *tdep = gdbarch_tdep<xtensa_gdbarch_tdep> (gdbarch);
 
   if (regnum == gdbarch_pc_regnum (gdbarch) || regnum == -1)
     regcache->raw_collect (gdbarch_pc_regnum (gdbarch), &regs->pc);
   if (regnum == gdbarch_ps_regnum (gdbarch) || regnum == -1)
     regcache->raw_collect (gdbarch_ps_regnum (gdbarch), &regs->ps);
 
-  if (regnum == gdbarch_tdep (gdbarch)->wb_regnum || regnum == -1)
-    regcache->raw_collect (gdbarch_tdep (gdbarch)->wb_regnum,
+  if (regnum == tdep->wb_regnum || regnum == -1)
+    regcache->raw_collect (tdep->wb_regnum,
 			   &regs->windowbase);
-  if (regnum == gdbarch_tdep (gdbarch)->ws_regnum || regnum == -1)
-    regcache->raw_collect (gdbarch_tdep (gdbarch)->ws_regnum,
+  if (regnum == tdep->ws_regnum || regnum == -1)
+    regcache->raw_collect (tdep->ws_regnum,
 			   &regs->windowstart);
-  if (regnum == gdbarch_tdep (gdbarch)->lbeg_regnum || regnum == -1)
-    regcache->raw_collect (gdbarch_tdep (gdbarch)->lbeg_regnum,
+  if (regnum == tdep->lbeg_regnum || regnum == -1)
+    regcache->raw_collect (tdep->lbeg_regnum,
 			   &regs->lbeg);
-  if (regnum == gdbarch_tdep (gdbarch)->lend_regnum || regnum == -1)
-    regcache->raw_collect (gdbarch_tdep (gdbarch)->lend_regnum,
+  if (regnum == tdep->lend_regnum || regnum == -1)
+    regcache->raw_collect (tdep->lend_regnum,
 			   &regs->lend);
-  if (regnum == gdbarch_tdep (gdbarch)->lcount_regnum || regnum == -1)
-    regcache->raw_collect (gdbarch_tdep (gdbarch)->lcount_regnum,
+  if (regnum == tdep->lcount_regnum || regnum == -1)
+    regcache->raw_collect (tdep->lcount_regnum,
 			   &regs->lcount);
-  if (regnum == gdbarch_tdep (gdbarch)->sar_regnum || regnum == -1)
-    regcache->raw_collect (gdbarch_tdep (gdbarch)->sar_regnum,
+  if (regnum == tdep->sar_regnum || regnum == -1)
+    regcache->raw_collect (tdep->sar_regnum,
 			   &regs->sar);
-  if (regnum == gdbarch_tdep (gdbarch)->threadptr_regnum || regnum == -1)
-    regcache->raw_collect (gdbarch_tdep (gdbarch)->threadptr_regnum,
+  if (regnum == tdep->threadptr_regnum || regnum == -1)
+    regcache->raw_collect (tdep->threadptr_regnum,
 			   &regs->threadptr);
-  if (regnum >=gdbarch_tdep (gdbarch)->ar_base
-      && regnum < gdbarch_tdep (gdbarch)->ar_base
-		    + gdbarch_tdep (gdbarch)->num_aregs)
+  if (regnum >=tdep->ar_base
+      && regnum < tdep->ar_base
+		    + tdep->num_aregs)
     regcache->raw_collect (regnum,
-			   &regs->ar[regnum - gdbarch_tdep (gdbarch)->ar_base]);
+			   &regs->ar[regnum - tdep->ar_base]);
   else if (regnum == -1)
     {
-      for (i = 0; i < gdbarch_tdep (gdbarch)->num_aregs; ++i)
-	regcache->raw_collect (gdbarch_tdep (gdbarch)->ar_base + i,
+      for (i = 0; i < tdep->num_aregs; ++i)
+	regcache->raw_collect (tdep->ar_base + i,
 			       &regs->ar[i]);
     }
-  if (regnum >= gdbarch_tdep (gdbarch)->a0_base
-      && regnum < gdbarch_tdep (gdbarch)->a0_base + C0_NREGS)
+  if (regnum >= tdep->a0_base
+      && regnum < tdep->a0_base + C0_NREGS)
     regcache->raw_collect (regnum,
 			   &regs->ar[(4 * regs->windowbase + regnum
-				      - gdbarch_tdep (gdbarch)->a0_base)
-			  % gdbarch_tdep (gdbarch)->num_aregs]);
+				      - tdep->a0_base)
+			  % tdep->num_aregs]);
   else if (regnum == -1)
     {
       for (i = 0; i < C0_NREGS; ++i)
-	regcache->raw_collect (gdbarch_tdep (gdbarch)->a0_base + i,
+	regcache->raw_collect (tdep->a0_base + i,
 			       (&regs->ar[(4 * regs->windowbase + i)
-				% gdbarch_tdep (gdbarch)->num_aregs]));
+				% tdep->num_aregs]));
     }
 }
 
@@ -123,56 +124,57 @@ supply_gregset_reg (struct regcache *regcache,
   xtensa_elf_gregset_t *regs = (xtensa_elf_gregset_t *) gregsetp;
 
   struct gdbarch *gdbarch = regcache->arch ();
+  xtensa_gdbarch_tdep *tdep = gdbarch_tdep<xtensa_gdbarch_tdep> (gdbarch);
 
   if (regnum == gdbarch_pc_regnum (gdbarch) || regnum == -1)
     regcache->raw_supply (gdbarch_pc_regnum (gdbarch), &regs->pc);
   if (regnum == gdbarch_ps_regnum (gdbarch) || regnum == -1)
     regcache->raw_supply (gdbarch_ps_regnum (gdbarch), &regs->ps);
 
-  if (regnum == gdbarch_tdep (gdbarch)->wb_regnum || regnum == -1)
-    regcache->raw_supply (gdbarch_tdep (gdbarch)->wb_regnum,
+  if (regnum == tdep->wb_regnum || regnum == -1)
+    regcache->raw_supply (tdep->wb_regnum,
 			  &regs->windowbase);
-  if (regnum == gdbarch_tdep (gdbarch)->ws_regnum || regnum == -1)
-    regcache->raw_supply (gdbarch_tdep (gdbarch)->ws_regnum,
+  if (regnum == tdep->ws_regnum || regnum == -1)
+    regcache->raw_supply (tdep->ws_regnum,
 			  &regs->windowstart);
-  if (regnum == gdbarch_tdep (gdbarch)->lbeg_regnum || regnum == -1)
-    regcache->raw_supply (gdbarch_tdep (gdbarch)->lbeg_regnum,
+  if (regnum == tdep->lbeg_regnum || regnum == -1)
+    regcache->raw_supply (tdep->lbeg_regnum,
 			  &regs->lbeg);
-  if (regnum == gdbarch_tdep (gdbarch)->lend_regnum || regnum == -1)
-    regcache->raw_supply (gdbarch_tdep (gdbarch)->lend_regnum,
+  if (regnum == tdep->lend_regnum || regnum == -1)
+    regcache->raw_supply (tdep->lend_regnum,
 			  &regs->lend);
-  if (regnum == gdbarch_tdep (gdbarch)->lcount_regnum || regnum == -1)
-    regcache->raw_supply (gdbarch_tdep (gdbarch)->lcount_regnum,
+  if (regnum == tdep->lcount_regnum || regnum == -1)
+    regcache->raw_supply (tdep->lcount_regnum,
 			  &regs->lcount);
-  if (regnum == gdbarch_tdep (gdbarch)->sar_regnum || regnum == -1)
-    regcache->raw_supply (gdbarch_tdep (gdbarch)->sar_regnum,
+  if (regnum == tdep->sar_regnum || regnum == -1)
+    regcache->raw_supply (tdep->sar_regnum,
 			  &regs->sar);
-  if (regnum == gdbarch_tdep (gdbarch)->threadptr_regnum || regnum == -1)
-    regcache->raw_supply (gdbarch_tdep (gdbarch)->threadptr_regnum,
+  if (regnum == tdep->threadptr_regnum || regnum == -1)
+    regcache->raw_supply (tdep->threadptr_regnum,
 			  &regs->threadptr);
-  if (regnum >=gdbarch_tdep (gdbarch)->ar_base
-      && regnum < gdbarch_tdep (gdbarch)->ar_base
-		    + gdbarch_tdep (gdbarch)->num_aregs)
+  if (regnum >=tdep->ar_base
+      && regnum < tdep->ar_base
+		    + tdep->num_aregs)
     regcache->raw_supply (regnum,
-			  &regs->ar[regnum - gdbarch_tdep (gdbarch)->ar_base]);
+			  &regs->ar[regnum - tdep->ar_base]);
   else if (regnum == -1)
     {
-      for (i = 0; i < gdbarch_tdep (gdbarch)->num_aregs; ++i)
-	regcache->raw_supply (gdbarch_tdep (gdbarch)->ar_base + i,
+      for (i = 0; i < tdep->num_aregs; ++i)
+	regcache->raw_supply (tdep->ar_base + i,
 			      &regs->ar[i]);
     }
-  if (regnum >= gdbarch_tdep (gdbarch)->a0_base
-      && regnum < gdbarch_tdep (gdbarch)->a0_base + C0_NREGS)
+  if (regnum >= tdep->a0_base
+      && regnum < tdep->a0_base + C0_NREGS)
     regcache->raw_supply (regnum,
 			  &regs->ar[(4 * regs->windowbase + regnum
-				     - gdbarch_tdep (gdbarch)->a0_base)
-			 % gdbarch_tdep (gdbarch)->num_aregs]);
+				     - tdep->a0_base)
+			 % tdep->num_aregs]);
   else if (regnum == -1)
     {
       for (i = 0; i < C0_NREGS; ++i)
-	regcache->raw_supply (gdbarch_tdep (gdbarch)->a0_base + i,
+	regcache->raw_supply (tdep->a0_base + i,
 			      &regs->ar[(4 * regs->windowbase + i)
-					% gdbarch_tdep (gdbarch)->num_aregs]);
+					% tdep->num_aregs]);
     }
 }
 
@@ -204,7 +206,6 @@ fetch_gregs (struct regcache *regcache, int regnum)
 {
   int tid = regcache->ptid ().lwp ();
   gdb_gregset_t regs;
-  int areg;
   
   if (ptrace (PTRACE_GETREGS, tid, 0, (long) &regs) < 0)
     {
@@ -223,7 +224,6 @@ store_gregs (struct regcache *regcache, int regnum)
 {
   int tid = regcache->ptid ().lwp ();
   gdb_gregset_t regs;
-  int areg;
 
   if (ptrace (PTRACE_GETREGS, tid, 0, (long) &regs) < 0)
     {
@@ -313,7 +313,7 @@ xtensa_linux_nat_target::store_registers (struct regcache *regcache,
 
 ps_err_e
 ps_get_thread_area (struct ps_prochandle *ph,
-                    lwpid_t lwpid, int idx, void **base)
+		    lwpid_t lwpid, int idx, void **base)
 {
   xtensa_elf_gregset_t regs;
 

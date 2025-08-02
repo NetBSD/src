@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -849,7 +849,7 @@ hw_tree_vparse (struct hw *current,
 			    my_port,
 			    dest,
 			    dest_port,
-			    permenant_object);
+			    permanent_object);
 	    break;
 	  }
 	default:

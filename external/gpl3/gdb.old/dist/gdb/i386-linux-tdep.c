@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux i386.
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -54,7 +54,7 @@
    group.  Put the LINUX_ORIG_EAX register in the system group.  */
 static int
 i386_linux_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
-				struct reggroup *group)
+				const struct reggroup *group)
 {
   if (regnum == I386_LINUX_ORIG_EAX_REGNUM)
     return (group == system_reggroup
@@ -122,7 +122,7 @@ static const gdb_byte linux_sigtramp_code[] =
    start of the routine.  Otherwise, return 0.  */
 
 static CORE_ADDR
-i386_linux_sigtramp_start (struct frame_info *this_frame)
+i386_linux_sigtramp_start (frame_info_ptr this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   gdb_byte buf[LINUX_SIGTRAMP_LEN];
@@ -134,7 +134,7 @@ i386_linux_sigtramp_start (struct frame_info *this_frame)
      PC is not at the start of the instruction sequence, there will be
      a few trailing readable bytes on the stack.  */
 
-  if (!safe_frame_unwind_memory (this_frame, pc, buf, LINUX_SIGTRAMP_LEN))
+  if (!safe_frame_unwind_memory (this_frame, pc, buf))
     return 0;
 
   if (buf[0] != LINUX_SIGTRAMP_INSN0)
@@ -155,7 +155,7 @@ i386_linux_sigtramp_start (struct frame_info *this_frame)
 
       pc -= adjust;
 
-      if (!safe_frame_unwind_memory (this_frame, pc, buf, LINUX_SIGTRAMP_LEN))
+      if (!safe_frame_unwind_memory (this_frame, pc, buf))
 	return 0;
     }
 
@@ -190,7 +190,7 @@ static const gdb_byte linux_rt_sigtramp_code[] =
    start of the routine.  Otherwise, return 0.  */
 
 static CORE_ADDR
-i386_linux_rt_sigtramp_start (struct frame_info *this_frame)
+i386_linux_rt_sigtramp_start (frame_info_ptr this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   gdb_byte buf[LINUX_RT_SIGTRAMP_LEN];
@@ -202,7 +202,7 @@ i386_linux_rt_sigtramp_start (struct frame_info *this_frame)
      PC is not at the start of the instruction sequence, there will be
      a few trailing readable bytes on the stack.  */
 
-  if (!safe_frame_unwind_memory (this_frame, pc, buf, LINUX_RT_SIGTRAMP_LEN))
+  if (!safe_frame_unwind_memory (this_frame, pc, buf))
     return 0;
 
   if (buf[0] != LINUX_RT_SIGTRAMP_INSN0)
@@ -212,8 +212,8 @@ i386_linux_rt_sigtramp_start (struct frame_info *this_frame)
 
       pc -= LINUX_RT_SIGTRAMP_OFFSET1;
 
-      if (!safe_frame_unwind_memory (this_frame, pc, buf,
-				     LINUX_RT_SIGTRAMP_LEN))
+      if (!safe_frame_unwind_memory (this_frame, pc,
+				     buf))
 	return 0;
     }
 
@@ -227,7 +227,7 @@ i386_linux_rt_sigtramp_start (struct frame_info *this_frame)
    routine.  */
 
 static int
-i386_linux_sigtramp_p (struct frame_info *this_frame)
+i386_linux_sigtramp_p (frame_info_ptr this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   const char *name;
@@ -252,7 +252,7 @@ i386_linux_sigtramp_p (struct frame_info *this_frame)
 
 static int
 i386_linux_dwarf_signal_frame_p (struct gdbarch *gdbarch,
-				 struct frame_info *this_frame)
+				 frame_info_ptr this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   const char *name;
@@ -275,7 +275,7 @@ i386_linux_dwarf_signal_frame_p (struct gdbarch *gdbarch,
    address of the associated sigcontext structure.  */
 
 static CORE_ADDR
-i386_linux_sigcontext_addr (struct frame_info *this_frame)
+i386_linux_sigcontext_addr (frame_info_ptr this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -409,11 +409,11 @@ i386_linux_report_signal_info (struct gdbarch *gdbarch, struct ui_out *uiout,
       sig_code = parse_and_eval_long ("$_siginfo.si_code\n");
 
       lower_bound
-        = parse_and_eval_long ("$_siginfo._sifields._sigfault._addr_bnd._lower");
+	= parse_and_eval_long ("$_siginfo._sifields._sigfault._addr_bnd._lower");
       upper_bound
-        = parse_and_eval_long ("$_siginfo._sifields._sigfault._addr_bnd._upper");
+	= parse_and_eval_long ("$_siginfo._sifields._sigfault._addr_bnd._upper");
       access
-        = parse_and_eval_long ("$_siginfo._sifields._sigfault.si_addr");
+	= parse_and_eval_long ("$_siginfo._sifields._sigfault.si_addr");
     }
   catch (const gdb_exception &exception)
     {
@@ -466,9 +466,10 @@ i386_linux_intx80_sysenter_syscall_record (struct regcache *regcache)
 
   if (syscall_gdb < 0)
     {
-      printf_unfiltered (_("Process record and replay target doesn't "
-                           "support syscall number %s\n"), 
-			 plongest (syscall_native));
+      gdb_printf (gdb_stderr,
+		  _("Process record and replay target doesn't "
+		    "support syscall number %s\n"), 
+		  plongest (syscall_native));
       return -1;
     }
 
@@ -497,8 +498,8 @@ i386_linux_intx80_sysenter_syscall_record (struct regcache *regcache)
 
 static int
 i386_linux_record_signal (struct gdbarch *gdbarch,
-                          struct regcache *regcache,
-                          enum gdb_signal signal)
+			  struct regcache *regcache,
+			  enum gdb_signal signal)
 {
   ULONGEST esp;
 
@@ -549,7 +550,7 @@ i386_linux_get_syscall_number_from_regcache (struct regcache *regcache)
      is stored at %eax register.  */
   regcache->cooked_read (I386_LINUX_ORIG_EAX_REGNUM, buf);
 
-  ret = extract_signed_integer (buf, 4, byte_order);
+  ret = extract_signed_integer (buf, byte_order);
 
   return ret;
 }
@@ -762,7 +763,7 @@ i386_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					 void *cb_data,
 					 const struct regcache *regcache)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
   cb (".reg", 68, 68, &i386_gregset, NULL, cb_data);
 
@@ -789,29 +790,30 @@ i386_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
    PC should get relocated back to its vDSO address.  Hide the 'ret'
    instruction by 'nop' so that i386_displaced_step_fixup is not confused.
    
-   It is not fully correct as the bytes in struct displaced_step_closure will
-   not match the inferior code.  But we would need some new flag in
-   displaced_step_closure otherwise to keep the state that syscall is finishing
-   for the later i386_displaced_step_fixup execution as the syscall execution
-   is already no longer detectable there.  The new flag field would mean
-   i386-linux-tdep.c needs to wrap all the displacement methods of i386-tdep.c
-   which does not seem worth it.  The same effect is achieved by patching that
-   'nop' instruction there instead.  */
+   It is not fully correct as the bytes in struct
+   displaced_step_copy_insn_closure will not match the inferior code.  But we
+   would need some new flag in displaced_step_copy_insn_closure otherwise to
+   keep the state that syscall is finishing for the later
+   i386_displaced_step_fixup execution as the syscall execution is already no
+   longer detectable there.  The new flag field would mean i386-linux-tdep.c
+   needs to wrap all the displacement methods of i386-tdep.c which does not seem
+   worth it.  The same effect is achieved by patching that 'nop' instruction
+   there instead.  */
 
-static displaced_step_closure_up
+static displaced_step_copy_insn_closure_up
 i386_linux_displaced_step_copy_insn (struct gdbarch *gdbarch,
 				     CORE_ADDR from, CORE_ADDR to,
 				     struct regcache *regs)
 {
-  displaced_step_closure_up closure_
+  displaced_step_copy_insn_closure_up closure_
     =  i386_displaced_step_copy_insn (gdbarch, from, to, regs);
 
   if (i386_linux_get_syscall_number_from_regcache (regs) != -1)
     {
       /* The closure returned by i386_displaced_step_copy_insn is simply a
 	 buffer with a copy of the instruction. */
-      i386_displaced_step_closure *closure
-	= (i386_displaced_step_closure *) closure_.get ();
+      i386_displaced_step_copy_insn_closure *closure
+	= (i386_displaced_step_copy_insn_closure *) closure_.get ();
 
       /* Fake nop.  */
       closure->buf[0] = 0x90;
@@ -823,7 +825,7 @@ i386_linux_displaced_step_copy_insn (struct gdbarch *gdbarch,
 static void
 i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
   const struct target_desc *tdesc = info.target_desc;
   struct tdesc_arch_data *tdesc_data = info.tdesc_data;
   const struct tdesc_feature *feature;
@@ -831,7 +833,7 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   gdb_assert (tdesc_data);
 
-  linux_init_abi (info, gdbarch);
+  linux_init_abi (info, gdbarch, 1);
 
   /* GNU/Linux uses ELF.  */
   i386_elf_init_abi (info, gdbarch);
@@ -1043,7 +1045,7 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* GNU/Linux uses SVR4-style shared libraries.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
   set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+    (gdbarch, linux_ilp32_fetch_link_map_offsets);
 
   /* GNU/Linux uses the dynamic linker included in the GNU C Library.  */
   set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
@@ -1052,7 +1054,7 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-                                             svr4_fetch_objfile_link_map);
+					     svr4_fetch_objfile_link_map);
 
   /* Core file support.  */
   set_gdbarch_iterate_over_regset_sections
@@ -1062,15 +1064,13 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Displaced stepping.  */
   set_gdbarch_displaced_step_copy_insn (gdbarch,
-                                        i386_linux_displaced_step_copy_insn);
+					i386_linux_displaced_step_copy_insn);
   set_gdbarch_displaced_step_fixup (gdbarch, i386_displaced_step_fixup);
-  set_gdbarch_displaced_step_location (gdbarch,
-                                       linux_displaced_step_location);
 
   /* Functions for 'catch syscall'.  */
   set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_I386);
   set_gdbarch_get_syscall_number (gdbarch,
-                                  i386_linux_get_syscall_number);
+				  i386_linux_get_syscall_number);
 
   set_gdbarch_get_siginfo_type (gdbarch, x86_linux_get_siginfo_type);
   set_gdbarch_report_signal_info (gdbarch, i386_linux_report_signal_info);

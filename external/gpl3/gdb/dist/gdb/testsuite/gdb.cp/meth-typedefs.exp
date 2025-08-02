@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -30,7 +30,7 @@ proc add {var name params expected {kind {func}}} {
     lappend result [list "${method_name}($params)" $expect]
 }
 
-if {[skip_cplus_tests]} { return }
+require allow_cplus_tests
 
 # Tests for c++/12266 et al
 standard_testfile .cc
@@ -187,4 +187,3 @@ foreach f [list "$func" "'$func'"] {
 }
 
 gdb_exit
-return 0

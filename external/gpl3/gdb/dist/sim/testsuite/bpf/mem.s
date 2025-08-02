@@ -1,7 +1,7 @@
 # mach: bpf
 # output: pass\nexit 0 (0x0)\n
-;;; mem.s
-;;; Tests for BPF memory (ldx, stx, ..) instructions in simulator
+/* mem.s
+   Tests for BPF memory (ldx, stx, ..) instructions in simulator  */
 
     .include "testutils.inc"
 
@@ -12,7 +12,7 @@ main:
     lddw        %r1, 0x1234deadbeef5678
     mov         %r2, 0x1000
 
-    ;; basic store/load check
+    /* basic store/load check  */
     stxb        [%r2+0], %r1
     stxh        [%r2+2], %r1
     stxw        [%r2+4], %r1
@@ -20,7 +20,7 @@ main:
 
     stb         [%r2+16], 0x5a
     sth         [%r2+18], 0xcafe
-    stw         [%r2+20], 0xbeefface
+    stw         [%r2+20], -1091568946 /* 0xbeefface  */
     stdw        [%r2+24], 0x7eadbeef
 
     ldxb        %r1, [%r2+16]
@@ -44,7 +44,7 @@ main:
     ldxw        %r4, [%r2+10]
     fail_ne     %r4, 0xffffffffdeadbeef
 
-    ;; negative offsets
+    /* negative offsets  */
     add         %r2, 16
     ldxh        %r5, [%r2+-14]
     fail_ne     %r5, 0x5678

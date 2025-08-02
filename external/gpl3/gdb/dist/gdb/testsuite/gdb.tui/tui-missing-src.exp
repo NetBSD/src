@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 # 7. Going back to main() shall result in no contents again.
 
 # Check if start command is supported.
-require use_gdb_stub 0
+require !use_gdb_stub
 
 tuiterm_env
 
@@ -89,6 +89,8 @@ Term::check_box_contents "check source box is empty" \
 Term::command "set pagination off"
 Term::command "start"
 Term::command "next"
+Term::check_contents "next does not show source line" \
+    "\\(gdb\\) next *\n\\(gdb\\)"
 Term::command "step"
 Term::check_contents "checking if inside f2 ()" "f2 \\(x=4\\)"
 Term::check_box_contents "f2.c must be displayed in source window" \

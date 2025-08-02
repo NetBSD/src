@@ -1,5 +1,5 @@
 /* Iterator of varobj.
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2023 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,59 +19,24 @@
 
 /* A node or item of varobj, composed of the name and the value.  */
 
-typedef struct varobj_item
+struct varobj_item
 {
   /* Name of this item.  */
   std::string name;
 
   /* Value of this item.  */
-  struct value *value;
-} varobj_item;
-
-struct varobj_iter_ops;
+  value_ref_ptr value;
+};
 
 /* A dynamic varobj iterator "class".  */
 
 struct varobj_iter
 {
-  /* The 'vtable'.  */
-  const struct varobj_iter_ops *ops;
+public:
 
-  /* The varobj this iterator is listing children for.  */
-  struct varobj *var;
+  virtual ~varobj_iter () = default;
 
-  /* The next raw index we will try to check is available.  If it is
-     equal to number_of_children, then we've already iterated the
-     whole set.  */
-  int next_raw_index;
+  virtual std::unique_ptr<varobj_item> next () = 0;
 };
-
-/* The vtable of the varobj iterator class.  */
-
-struct varobj_iter_ops
-{
-  /* Destructor.  Releases everything from SELF (but not SELF
-     itself).  */
-  void (*dtor) (struct varobj_iter *self);
-
-  /* Returns the next object or NULL if it has reached the end.  */
-  varobj_item *(*next) (struct varobj_iter *self);
-};
-
-/* Returns the next varobj or NULL if it has reached the end.  */
-
-#define varobj_iter_next(ITER)	(ITER)->ops->next (ITER)
-
-/* Delete a varobj_iter object.  */
-
-#define varobj_iter_delete(ITER)	       \
-  do					       \
-    {					       \
-      if ((ITER) != NULL)		       \
-	{				       \
-	  (ITER)->ops->dtor (ITER);	       \
-	  xfree (ITER);		       \
-	}				       \
-    } while (0)
 
 #endif /* VAROBJ_ITER_H */

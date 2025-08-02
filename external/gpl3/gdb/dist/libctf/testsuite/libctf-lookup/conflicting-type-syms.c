@@ -27,18 +27,22 @@ main (int argc, char *argv[])
   if ((a_fp = ctf_arc_lookup_symbol_name (ctf, "a", &a, &err)) == NULL)
     goto sym_err;
   printf ("Type of a is %s\n", foo = ctf_type_aname (a_fp, a));
+  free (foo);
 
   if ((b_fp = ctf_arc_lookup_symbol_name (ctf, "b", &b, &err)) == NULL)
     goto sym_err;
   printf ("Type of b is %s\n", foo = ctf_type_aname (b_fp, b));
+  free (foo);
 
   if ((ignore1_fp = ctf_arc_lookup_symbol_name (ctf, "ignore1", &ignore1, &err)) == NULL)
     goto sym_err;
   printf ("Type of ignore1 is %s\n", foo = ctf_type_aname (ignore1_fp, ignore1));
+  free (foo);
 
   if ((ignore2_fp = ctf_arc_lookup_symbol_name (ctf, "ignore2", &ignore2, &err)) == NULL)
     goto sym_err;
   printf ("Type of ignore2 is %s\n", foo = ctf_type_aname (ignore2_fp, ignore1));
+  free (foo);
 
   /* Try a call in just-get-the-dict mode and make sure it doesn't fail.  */
   if ((tmp_fp = ctf_arc_lookup_symbol_name (ctf, "ignore2", NULL, &err)) == NULL)

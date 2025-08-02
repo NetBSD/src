@@ -1,4 +1,4 @@
-#   Copyright 2011-2023 Free Software Foundation, Inc.
+#   Copyright 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +20,9 @@
 #
 
 # This only works on GNU/Linux.
-if { ![isnative] || [is_remote host] || ![istarget *-linux*]
-     || [skip_shlib_tests]} {
-    return
-}
+require isnative allow_shlib_tests
+require {!is_remote host}
+require {istarget *-linux*}
 
 set test "skip-solib"
 set srcfile_main "${test}-main.c"
@@ -52,9 +51,7 @@ if {[gdb_compile "${srcdir}/${subdir}/${srcfile_main}" "${binfile_main}.o" \
 
 set testobjdir [standard_output_file {}]
 if {[gdb_compile "${binfile_main}.o" "${binfile_main}" executable \
-	 [list debug "additional_flags=-L$testobjdir" \
-	      "additional_flags=-l${test}" \
-	      "ldflags=-Wl,-rpath=$testobjdir"]] != ""} {
+	 [list debug shlib=$binfile_lib]] != ""} {
     return -1
 }
 
@@ -64,6 +61,7 @@ if {[gdb_compile "${binfile_main}.o" "${binfile_main}" executable \
 with_test_prefix "ignoring solib file" {
 
     clean_restart ${executable_main}
+    gdb_load_shlib $binfile_lib
 
     gdb_test "skip file ${srcfile_lib}" \
 	"File ${srcfile_lib} will be skipped when stepping." \
@@ -90,6 +88,7 @@ with_test_prefix "ignoring solib file" {
 #
 with_test_prefix "ignoring solib function" {
     clean_restart ${executable_main}
+    gdb_load_shlib $binfile_lib
 
     gdb_test "skip function multiply" \
 	"Function multiply will be skipped when stepping\\." \

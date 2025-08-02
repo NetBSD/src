@@ -1,4 +1,4 @@
-#   Copyright 1998-2023 Free Software Foundation, Inc.
+#   Copyright 1998-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,24 +17,15 @@
 
 load_lib "trace-support.exp"
 
-
-gdb_exit
-gdb_start
 standard_testfile actions.c
-if ![gdb_trace_common_supports_arch] {
-    unsupported "no trace-common.h support for arch"
-    return -1
-}
+require gdb_trace_common_supports_arch
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 	  executable {debug nowarnings}] != "" } {
     untested "failed to compile"
     return -1
 }
-gdb_reinitialize_dir $srcdir/$subdir
 
-# If testing on a remote host, download the source file.
-# remote_download host $srcdir/$subdir/$srcfile
-
+clean_restart
 gdb_file_cmd $binfile
 
 # define relative source line numbers:
@@ -67,7 +58,7 @@ gdb_test "trace $srcfile:$testline2" \
 	"Tracepoint $decimal at $hex: file.*$srcfile, line $testline2." \
 	"1.1a: set tracepoint at sourceline"
 gdb_test "info trace" "in gdb_recursion_test.*$srcfile:$testline2.
-\[\t \]+not installed on target." \
+\[\t \]+not installed on target" \
 	"1.1b: trace sourcefile:line"
 
 # 1.2 trace invalid source line
@@ -91,7 +82,7 @@ gdb_test "trace gdb_recursion_test" \
 	"Tracepoint $decimal at $hex: file.*$srcfile, line $testline1." \
 	"1.4a: trace function by name"
 gdb_test "info trace" "in gdb_recursion_test.*$srcfile:$testline1.
-\[\t \]+not installed on target." \
+\[\t \]+not installed on target" \
 	"1.4b: trace function by name"
 
 # 1.5 trace non-existant function
@@ -129,7 +120,7 @@ gdb_test "trace \*gdb_recursion_test" \
 	"Tracepoint $decimal at .*$c_test_addr.*" \
 	"1.7a: trace at function label (before prologue)"
 gdb_test "info trace" "$c_test_addr.*in gdb_recursion_test.*:$baseline.
-\[\t \]+not installed on target." \
+\[\t \]+not installed on target" \
 	"1.7b: verify trace at specific address"
 
 # 1.8 trace at invalid address
@@ -148,7 +139,7 @@ gdb_test "trace gdb_recursion_test if q1 > 0" \
 	"1.11a: conditional tracepoint"
 gdb_test "info trace" "in gdb_recursion_test.*$srcfile:$testline1.
 \[\t \]+trace only if q1 > 0.
-\[\t \]+not installed on target." \
+\[\t \]+not installed on target" \
 	"1.11b: verify conditional tracepoint"
 
 # 1.12 set tracepoint in prologue

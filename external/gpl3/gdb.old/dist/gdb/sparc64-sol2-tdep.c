@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris UltraSPARC.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -99,7 +99,7 @@ static const struct regset sparc64_sol2_fpregset =
 
 
 static struct sparc_frame_cache *
-sparc64_sol2_sigtramp_frame_cache (struct frame_info *this_frame,
+sparc64_sol2_sigtramp_frame_cache (frame_info_ptr this_frame,
 				   void **this_cache)
 {
   struct sparc_frame_cache *cache;
@@ -121,40 +121,40 @@ sparc64_sol2_sigtramp_frame_cache (struct frame_info *this_frame,
     (cache->copied_regs_mask & 0x04) ? SPARC_I2_REGNUM : SPARC_O2_REGNUM;
   mcontext_addr = get_frame_register_unsigned (this_frame, regnum) + 64;
 
-  cache->saved_regs[SPARC64_CCR_REGNUM].addr = mcontext_addr + 0 * 8;
-  cache->saved_regs[SPARC64_PC_REGNUM].addr = mcontext_addr + 1 * 8;
-  cache->saved_regs[SPARC64_NPC_REGNUM].addr = mcontext_addr + 2 * 8;
-  cache->saved_regs[SPARC64_Y_REGNUM].addr = mcontext_addr + 3 * 8;
-  cache->saved_regs[SPARC64_ASI_REGNUM].addr = mcontext_addr + 19 * 8; 
-  cache->saved_regs[SPARC64_FPRS_REGNUM].addr = mcontext_addr + 20 * 8;
+  cache->saved_regs[SPARC64_CCR_REGNUM].set_addr (mcontext_addr + 0 * 8);
+  cache->saved_regs[SPARC64_PC_REGNUM].set_addr (mcontext_addr + 1 * 8);
+  cache->saved_regs[SPARC64_NPC_REGNUM].set_addr (mcontext_addr + 2 * 8);
+  cache->saved_regs[SPARC64_Y_REGNUM].set_addr (mcontext_addr + 3 * 8);
+  cache->saved_regs[SPARC64_ASI_REGNUM].set_addr (mcontext_addr + 19 * 8);
+  cache->saved_regs[SPARC64_FPRS_REGNUM].set_addr (mcontext_addr + 20 * 8);
 
   /* Since %g0 is always zero, keep the identity encoding.  */
   for (regnum = SPARC_G1_REGNUM, addr = mcontext_addr + 4 * 8;
        regnum <= SPARC_O7_REGNUM; regnum++, addr += 8)
-    cache->saved_regs[regnum].addr = addr;
+    cache->saved_regs[regnum].set_addr (addr);
 
   if (get_frame_memory_unsigned (this_frame, mcontext_addr + 21 * 8, 8))
     {
       /* The register windows haven't been flushed.  */
       for (regnum = SPARC_L0_REGNUM; regnum <= SPARC_I7_REGNUM; regnum++)
-	trad_frame_set_unknown (cache->saved_regs, regnum);
+	cache->saved_regs[regnum].set_unknown ();
     }
   else
     {
       CORE_ADDR sp;
 
-      addr = cache->saved_regs[SPARC_SP_REGNUM].addr;
+      addr = cache->saved_regs[SPARC_SP_REGNUM].addr ();
       sp = get_frame_memory_unsigned (this_frame, addr, 8);
       for (regnum = SPARC_L0_REGNUM, addr = sp + BIAS;
 	   regnum <= SPARC_I7_REGNUM; regnum++, addr += 8)
-	cache->saved_regs[regnum].addr = addr;
+	cache->saved_regs[regnum].set_addr (addr);
     }
 
   return cache;
 }
 
 static void
-sparc64_sol2_sigtramp_frame_this_id (struct frame_info *this_frame,
+sparc64_sol2_sigtramp_frame_this_id (frame_info_ptr this_frame,
 				     void **this_cache,
 				     struct frame_id *this_id)
 {
@@ -165,7 +165,7 @@ sparc64_sol2_sigtramp_frame_this_id (struct frame_info *this_frame,
 }
 
 static struct value *
-sparc64_sol2_sigtramp_frame_prev_register (struct frame_info *this_frame,
+sparc64_sol2_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 					   void **this_cache,
 					   int regnum)
 {
@@ -177,7 +177,7 @@ sparc64_sol2_sigtramp_frame_prev_register (struct frame_info *this_frame,
 
 static int
 sparc64_sol2_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				     struct frame_info *this_frame,
+				     frame_info_ptr this_frame,
 				     void **this_cache)
 {
   return sol2_sigtramp_p (this_frame);
@@ -185,6 +185,7 @@ sparc64_sol2_sigtramp_frame_sniffer (const struct frame_unwind *self,
 
 static const struct frame_unwind sparc64_sol2_sigtramp_frame_unwind =
 {
+  "sparc64 solaris sigtramp",
   SIGTRAMP_FRAME,
   default_frame_unwind_stop_reason,
   sparc64_sol2_sigtramp_frame_this_id,
@@ -198,7 +199,7 @@ static const struct frame_unwind sparc64_sol2_sigtramp_frame_unwind =
 static void
 sparc64_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  sparc_gdbarch_tdep *tdep = gdbarch_tdep<sparc_gdbarch_tdep> (gdbarch);
 
   tdep->gregset = &sparc64_sol2_gregset;
   tdep->sizeof_gregset = 304;

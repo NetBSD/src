@@ -1,6 +1,6 @@
 /* Code dealing with blocks for GDB.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #define BLOCK_H
 
 #include "dictionary.h"
+#include "gdbsupport/array-view.h"
 
 /* Opaque declarations.  */
 
@@ -38,19 +39,35 @@ struct addrmap;
 
 struct blockrange
 {
-  blockrange (CORE_ADDR startaddr_, CORE_ADDR endaddr_)
-    : startaddr (startaddr_),
-      endaddr (endaddr_)
+  blockrange (CORE_ADDR start, CORE_ADDR end)
+    : m_start (start),
+      m_end (end)
   {
   }
 
+  /* Return this blockrange's start address.  */
+  CORE_ADDR start () const
+  { return m_start; }
+
+  /* Set this blockrange's start address.  */
+  void set_start (CORE_ADDR start)
+  { m_start = start; }
+
+  /* Return this blockrange's end address.  */
+  CORE_ADDR end () const
+  { return m_end; }
+
+  /* Set this blockrange's end address.  */
+  void set_end (CORE_ADDR end)
+  { m_end = end; }
+
   /* Lowest address in this range.  */
 
-  CORE_ADDR startaddr;
+  CORE_ADDR m_start;
 
   /* One past the highest address in the range.  */
 
-  CORE_ADDR endaddr;
+  CORE_ADDR m_end;
 };
 
 /* Two or more non-contiguous ranges in the same order as that provided
@@ -90,16 +107,112 @@ struct blockranges
 
 struct block
 {
+  /* Return this block's start address.  */
+  CORE_ADDR start () const
+  { return m_start; }
+
+  /* Set this block's start address.  */
+  void set_start (CORE_ADDR start)
+  { m_start = start; }
+
+  /* Return this block's end address.  */
+  CORE_ADDR end () const
+  { return m_end; }
+
+  /* Set this block's end address.  */
+  void set_end (CORE_ADDR end)
+  { m_end = end; }
+
+  /* Return this block's function symbol.  */
+  symbol *function () const
+  { return m_function; }
+
+  /* Set this block's function symbol.  */
+  void set_function (symbol *function)
+  { m_function = function; }
+
+  /* Return this block's superblock.  */
+  const block *superblock () const
+  { return m_superblock; }
+
+  /* Set this block's superblock.  */
+  void set_superblock (const block *superblock)
+  { m_superblock = superblock; }
+
+  /* Return this block's multidict.  */
+  multidictionary *multidict () const
+  { return m_multidict; }
+
+  /* Set this block's multidict.  */
+  void set_multidict (multidictionary *multidict)
+  { m_multidict = multidict; }
+
+  /* Return this block's namespace info.  */
+  block_namespace_info *namespace_info () const
+  { return m_namespace_info; }
+
+  /* Set this block's namespace info.  */
+  void set_namespace_info (block_namespace_info *namespace_info)
+  { m_namespace_info = namespace_info; }
+
+  /* Return a view on this block's ranges.  */
+  gdb::array_view<blockrange> ranges ()
+  {
+    if (m_ranges == nullptr)
+      return {};
+    else
+      return gdb::make_array_view (m_ranges->range, m_ranges->nranges);
+  }
+
+  /* Const version of the above.  */
+  gdb::array_view<const blockrange> ranges () const
+  {
+    if (m_ranges == nullptr)
+      return {};
+    else
+      return gdb::make_array_view (m_ranges->range, m_ranges->nranges);
+  }
+
+  /* Set this block's ranges array.  */
+  void set_ranges (blockranges *ranges)
+  { m_ranges = ranges; }
+
+  /* Return true if all addresses within this block are contiguous.  */
+  bool is_contiguous () const
+  { return this->ranges ().size () <= 1; }
+
+  /* Return the "entry PC" of this block.
+
+     The entry PC is the lowest (start) address for the block when all addresses
+     within the block are contiguous.  If non-contiguous, then use the start
+     address for the first range in the block.
+
+     At the moment, this almost matches what DWARF specifies as the entry
+     pc.  (The missing bit is support for DW_AT_entry_pc which should be
+     preferred over range data and the low_pc.)
+
+     Once support for DW_AT_entry_pc is added, I expect that an entry_pc
+     field will be added to one of these data structures.  Once that's done,
+     the entry_pc field can be set from the dwarf reader (and other readers
+     too).  ENTRY_PC can then be redefined to be less DWARF-centric.  */
+
+  CORE_ADDR entry_pc () const
+  {
+    if (this->is_contiguous ())
+      return this->start ();
+    else
+      return this->ranges ()[0].start ();
+  }
 
   /* Addresses in the executable code that are in this block.  */
 
-  CORE_ADDR startaddr;
-  CORE_ADDR endaddr;
+  CORE_ADDR m_start;
+  CORE_ADDR m_end;
 
   /* The symbol that names this block, if the block is the body of a
      function (real or inlined); otherwise, zero.  */
 
-  struct symbol *function;
+  struct symbol *m_function;
 
   /* The `struct block' for the containing block, or 0 if none.
 
@@ -107,22 +220,22 @@ struct block
      case of C) is the STATIC_BLOCK.  The superblock of the
      STATIC_BLOCK is the GLOBAL_BLOCK.  */
 
-  const struct block *superblock;
+  const struct block *m_superblock;
 
   /* This is used to store the symbols in the block.  */
 
-  struct multidictionary *multidict;
+  struct multidictionary *m_multidict;
 
   /* Contains information about namespace-related info relevant to this block:
      using directives and the current namespace scope.  */
 
-  struct block_namespace_info *namespace_info;
+  struct block_namespace_info *m_namespace_info;
 
   /* Address ranges for blocks with non-contiguous ranges.  If this
      is NULL, then there is only one range which is specified by
      startaddr and endaddr above.  */
 
-  struct blockranges *ranges;
+  struct blockranges *m_ranges;
 };
 
 /* The global block is singled out so that we can provide a back-link
@@ -139,71 +252,84 @@ struct global_block
   struct compunit_symtab *compunit_symtab;
 };
 
-#define BLOCK_START(bl)		(bl)->startaddr
-#define BLOCK_END(bl)		(bl)->endaddr
-#define BLOCK_FUNCTION(bl)	(bl)->function
-#define BLOCK_SUPERBLOCK(bl)	(bl)->superblock
-#define BLOCK_MULTIDICT(bl)	(bl)->multidict
-#define BLOCK_NAMESPACE(bl)	(bl)->namespace_info
-
-/* Accessor for ranges field within block BL.  */
-
-#define BLOCK_RANGES(bl)	(bl)->ranges
-
-/* Number of ranges within a block.  */
-
-#define BLOCK_NRANGES(bl)	(bl)->ranges->nranges
-
-/* Access range array for block BL.  */
-
-#define BLOCK_RANGE(bl)		(bl)->ranges->range
-
-/* Are all addresses within a block contiguous?  */
-
-#define BLOCK_CONTIGUOUS_P(bl)	(BLOCK_RANGES (bl) == nullptr \
-				 || BLOCK_NRANGES (bl) <= 1)
-
-/* Obtain the start address of the Nth range for block BL.  */
-
-#define BLOCK_RANGE_START(bl,n) (BLOCK_RANGE (bl)[n].startaddr)
-
-/* Obtain the end address of the Nth range for block BL.  */
-
-#define BLOCK_RANGE_END(bl,n)	(BLOCK_RANGE (bl)[n].endaddr)
-
-/* Define the "entry pc" for a block BL to be the lowest (start) address
-   for the block when all addresses within the block are contiguous.  If
-   non-contiguous, then use the start address for the first range in the
-   block.
-
-   At the moment, this almost matches what DWARF specifies as the entry
-   pc.  (The missing bit is support for DW_AT_entry_pc which should be
-   preferred over range data and the low_pc.)
-
-   Once support for DW_AT_entry_pc is added, I expect that an entry_pc
-   field will be added to one of these data structures.  Once that's done,
-   the entry_pc field can be set from the dwarf reader (and other readers
-   too).  BLOCK_ENTRY_PC can then be redefined to be less DWARF-centric.  */
-
-#define BLOCK_ENTRY_PC(bl)	(BLOCK_CONTIGUOUS_P (bl) \
-				 ? BLOCK_START (bl) \
-				 : BLOCK_RANGE_START (bl,0))
-
 struct blockvector
 {
-  /* Number of blocks in the list.  */
-  int nblocks;
+  /* Return a view on the blocks of this blockvector.  */
+  gdb::array_view<struct block *> blocks ()
+  {
+    return gdb::array_view<struct block *> (m_blocks, m_num_blocks);
+  }
+
+  /* Const version of the above.  */
+  gdb::array_view<const struct block *const> blocks () const
+  {
+    const struct block **blocks = (const struct block **) m_blocks;
+    return gdb::array_view<const struct block *const> (blocks, m_num_blocks);
+  }
+
+  /* Return the block at index I.  */
+  struct block *block (size_t i)
+  { return this->blocks ()[i]; }
+
+  /* Const version of the above.  */
+  const struct block *block (size_t i) const
+  { return this->blocks ()[i]; }
+
+  /* Set the block at index I.  */
+  void set_block (int i, struct block *block)
+  { m_blocks[i] = block; }
+
+  /* Set the number of blocks of this blockvector.
+
+     The storage of blocks is done using a flexible array member, so the number
+     of blocks set here must agree with what was effectively allocated.  */
+  void set_num_blocks (int num_blocks)
+  { m_num_blocks = num_blocks; }
+
+  /* Return the number of blocks in this blockvector.  */
+  int num_blocks () const
+  { return m_num_blocks; }
+
+  /* Return the global block of this blockvector.  */
+  struct block *global_block ()
+  { return this->block (GLOBAL_BLOCK); }
+
+  /* Const version of the above.  */
+  const struct block *global_block () const
+  { return this->block (GLOBAL_BLOCK); }
+
+  /* Return the static block of this blockvector.  */
+  struct block *static_block ()
+  { return this->block (STATIC_BLOCK); }
+
+  /* Const version of the above.  */
+  const struct block *static_block () const
+  { return this->block (STATIC_BLOCK); }
+
+  /* Return the address -> block map of this blockvector.  */
+  addrmap *map ()
+  { return m_map; }
+
+  /* Const version of the above.  */
+  const addrmap *map () const
+  { return m_map; }
+
+  /* Set this blockvector's address -> block map.  */
+  void set_map (addrmap *map)
+  { m_map = map; }
+
+private:
   /* An address map mapping addresses to blocks in this blockvector.
      This pointer is zero if the blocks' start and end addresses are
      enough.  */
-  struct addrmap *map;
-  /* The blocks themselves.  */
-  struct block *block[1];
-};
+  struct addrmap *m_map;
 
-#define BLOCKVECTOR_NBLOCKS(blocklist) (blocklist)->nblocks
-#define BLOCKVECTOR_BLOCK(blocklist,n) (blocklist)->block[n]
-#define BLOCKVECTOR_MAP(blocklist) ((blocklist)->map)
+  /* Number of blocks in the list.  */
+  int m_num_blocks;
+
+  /* The blocks themselves.  */
+  struct block *m_blocks[1];
+};
 
 /* Return the objfile of BLOCK, which must be non-NULL.  */
 
@@ -392,7 +518,7 @@ extern int block_find_non_opaque_type (struct symbol *sym, void *data);
    struct symbol *with_opaque = NULL;
    struct symbol *sym
      = block_find_symbol (block, name, domain,
-                          block_find_non_opaque_type_preferred, &with_opaque);
+			  block_find_non_opaque_type_preferred, &with_opaque);
 
    At this point if SYM is non-NULL then a non-opaque type has been found.
    Otherwise, if WITH_OPAQUE is non-NULL then an opaque type has been found.
@@ -423,6 +549,6 @@ extern int block_find_non_opaque_type_preferred (struct symbol *sym,
 /* Given a vector of pairs, allocate and build an obstack allocated
    blockranges struct for a block.  */
 struct blockranges *make_blockranges (struct objfile *objfile,
-                                      const std::vector<blockrange> &rangevec);
+				      const std::vector<blockrange> &rangevec);
 
 #endif /* BLOCK_H */

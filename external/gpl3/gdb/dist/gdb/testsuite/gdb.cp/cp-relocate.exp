@@ -1,4 +1,4 @@
-# Copyright 2007-2023 Free Software Foundation, Inc.
+# Copyright 2007-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 standard_testfile .cc
 append binfile .o
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {c++ debug}] != "" } {
      untested "failed to compile"
@@ -46,9 +46,7 @@ proc get_func_address { func } {
 
 # Load the file as an executable; GDB should assign non-overlapping
 # section offsets.
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 gdb_file_cmd ${binfile}
 
 # Find the interesting functions.  We go to a little effort to find
@@ -118,11 +116,11 @@ if { $func1_sec == $func2_sec } {
 }
 
 # Now start a clean GDB, for add-symbol-file tests.
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 
-gdb_test "add-symbol-file ${binfile} 0 -s ${func1_sec} 0x10000 -s ${func2_sec} 0x20000" \
+set host_binfile [gdb_remote_download host $binfile]
+
+gdb_test "add-symbol-file $host_binfile 0 -s ${func1_sec} 0x10000 -s ${func2_sec} 0x20000" \
 	"Reading symbols from .*${testfile}\\.o\\.\\.\\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)" \
 	"add-symbol-file ${testfile}.o" \
 	"add symbol table from file \".*${testfile}\\.o\" at.*\\(y or n\\) " \

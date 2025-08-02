@@ -1,6 +1,6 @@
 /* DWARF attributes
 
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2023 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -29,6 +29,7 @@
 
 #include "dwarf2.h"
 #include "gdbtypes.h"
+#include "gdbsupport/gdb_optional.h"
 
 /* Blocks are a bunch of untyped bytes.  */
 struct dwarf_block
@@ -44,15 +45,78 @@ struct attribute
 {
   /* Read the given attribute value as an address, taking the
      attribute's form into account.  */
-  CORE_ADDR value_as_address () const;
+  CORE_ADDR as_address () const;
 
   /* If the attribute has a string form, return the string value;
      otherwise return NULL.  */
-  const char *value_as_string () const;
+  const char *as_string () const;
+
+  /* Return the block value.  The attribute must have block form.  */
+  dwarf_block *as_block () const
+  {
+    gdb_assert (form_is_block ());
+    return u.blk;
+  }
+
+  /* Return the signature.  The attribute must have signature
+     form.  */
+  ULONGEST as_signature () const
+  {
+    gdb_assert (form == DW_FORM_ref_sig8);
+    return u.signature;
+  }
+
+  /* Return the signed value.  The attribute must have the appropriate
+     form.  */
+  LONGEST as_signed () const
+  {
+    gdb_assert (form_is_signed ());
+    return u.snd;
+  }
+
+  /* Return the unsigned value, but only for attributes requiring
+     reprocessing.  */
+  ULONGEST as_unsigned_reprocess () const
+  {
+    gdb_assert (form_requires_reprocessing ());
+    gdb_assert (requires_reprocessing);
+    return u.unsnd;
+  }
+
+  /* Return the unsigned value.  Requires that the form be an unsigned
+     form, and that reprocessing not be needed.  */
+  ULONGEST as_unsigned () const
+  {
+    gdb_assert (form_is_unsigned ());
+    gdb_assert (!requires_reprocessing);
+    return u.unsnd;
+  }
+
+  /* Return true if the value is nonnegative.  Requires that that
+     reprocessing not be needed.  */
+  bool is_nonnegative () const
+  {
+    if (form_is_unsigned ())
+      return true;
+    if (form_is_signed ())
+      return as_signed () >= 0;
+    return false;
+  }
+
+  /* Return the nonnegative value.  Requires that that reprocessing not be
+     needed.  */
+  ULONGEST as_nonnegative () const
+  {
+    if (form_is_unsigned ())
+      return as_unsigned ();
+    if (form_is_signed ())
+      return (ULONGEST)as_signed ();
+    gdb_assert (false);
+  }
 
   /* Return non-zero if ATTR's value is a section offset --- classes
      lineptr, loclistptr, macptr or rangelistptr --- or zero, otherwise.
-     You may use DW_UNSND (attr) to retrieve such offsets.
+     You may use the as_unsigned method to retrieve such offsets.
 
      Section 7.5.4, "Attribute Encodings", explains that no attribute
      may have a value that belongs to more than one of these classes; it
@@ -79,8 +143,9 @@ struct attribute
 
   bool form_is_constant () const;
 
-  /* DW_ADDR is always stored already as sect_offset; despite for the forms
-     besides DW_FORM_ref_addr it is stored as cu_offset in the DWARF file.  */
+  /* The address is always stored already as sect_offset; despite for
+     the forms besides DW_FORM_ref_addr it is stored as cu_offset in
+     the DWARF file.  */
 
   bool form_is_ref () const
   {
@@ -97,6 +162,19 @@ struct attribute
      if so return true else false.  */
 
   bool form_is_block () const;
+
+  /* Check if the attribute's form is a string form.  */
+  bool form_is_string () const;
+
+  /* Check if the attribute's form is an unsigned integer form.  */
+  bool form_is_unsigned () const;
+
+  /* Check if the attribute's form is a signed integer form.  */
+  bool form_is_signed () const;
+
+  /* Check if the attribute's form is a form that requires
+     "reprocessing".  */
+  bool form_requires_reprocessing () const;
 
   /* Return DIE offset of this attribute.  Return 0 with complaint if
      the attribute is not of the required kind.  */
@@ -115,13 +193,124 @@ struct attribute
 
   LONGEST constant_value (int default_value) const;
 
+  /* Return true if this attribute holds a canonical string.  In some
+     cases, like C++ names, gdb will rewrite the name of a DIE to a
+     canonical form.  This makes lookups robust when a name can be
+     spelled different ways (e.g., "signed" or "signed int").  This
+     flag indicates whether the value has been canonicalized.  */
+  bool canonical_string_p () const
+  {
+    gdb_assert (form_is_string ());
+    return string_is_canonical;
+  }
 
-  ENUM_BITFIELD(dwarf_attribute) name : 16;
+  /* Initialize this attribute to hold a non-canonical string
+     value.  */
+  void set_string_noncanonical (const char *str)
+  {
+    gdb_assert (form_is_string ());
+    u.str = str;
+    string_is_canonical = 0;
+    requires_reprocessing = 0;
+  }
+
+  /* Set the canonical string value for this attribute.  */
+  void set_string_canonical (const char *str)
+  {
+    gdb_assert (form_is_string ());
+    u.str = str;
+    string_is_canonical = 1;
+  }
+
+  /* Set the block value for this attribute.  */
+  void set_block (dwarf_block *blk)
+  {
+    gdb_assert (form_is_block ());
+    u.blk = blk;
+  }
+
+  /* Set the signature value for this attribute.  */
+  void set_signature (ULONGEST signature)
+  {
+    gdb_assert (form == DW_FORM_ref_sig8);
+    u.signature = signature;
+  }
+
+  /* Set this attribute to a signed integer.  */
+  void set_signed (LONGEST snd)
+  {
+    gdb_assert (form == DW_FORM_sdata || form == DW_FORM_implicit_const);
+    u.snd = snd;
+  }
+
+  /* Set this attribute to an unsigned integer.  */
+  void set_unsigned (ULONGEST unsnd)
+  {
+    gdb_assert (form_is_unsigned ());
+    u.unsnd = unsnd;
+    requires_reprocessing = 0;
+  }
+
+  /* Temporarily set this attribute to an unsigned integer.  This is
+     used only for those forms that require reprocessing.  */
+  void set_unsigned_reprocess (ULONGEST unsnd)
+  {
+    gdb_assert (form_requires_reprocessing ());
+    u.unsnd = unsnd;
+    requires_reprocessing = 1;
+  }
+
+  /* Set this attribute to an address.  */
+  void set_address (CORE_ADDR addr)
+  {
+    gdb_assert (form == DW_FORM_addr
+		|| ((form == DW_FORM_addrx
+		     || form == DW_FORM_GNU_addr_index)
+		    && requires_reprocessing));
+    u.addr = addr;
+    requires_reprocessing = 0;
+  }
+
+  /* True if this attribute requires reprocessing.  */
+  bool requires_reprocessing_p () const
+  {
+    return requires_reprocessing;
+  }
+
+  /* Return the value as one of the recognized enum
+     dwarf_defaulted_attribute constants according to DWARF5 spec,
+     Table 7.24.  If the value is incorrect, or if this attribute has
+     the wrong form, then a complaint is issued and DW_DEFAULTED_no is
+     returned.  */
+  dwarf_defaulted_attribute defaulted () const;
+
+  /* Return the attribute's value as a dwarf_virtuality_attribute
+     constant according to DWARF spec.  An unrecognized value will
+     issue a complaint and return DW_VIRTUALITY_none.  */
+  dwarf_virtuality_attribute as_virtuality () const;
+
+  /* Return the attribute's value as a boolean.  An unrecognized form
+     will issue a complaint and return false.  */
+  bool as_boolean () const;
+
+  ENUM_BITFIELD(dwarf_attribute) name : 15;
+
+  /* A boolean that is used for forms that require reprocessing.  A
+     form may require data not directly available in the attribute.
+     E.g., DW_FORM_strx requires the corresponding
+     DW_AT_str_offsets_base.  In this case, the processing for the
+     attribute must be done in two passes.  In the first past, this
+     flag is set and the value is an unsigned.  In the second pass,
+     the unsigned value is turned into the correct value for the form,
+     and this flag is cleared.  This flag is unused for other
+     forms.  */
+  unsigned int requires_reprocessing : 1;
+
   ENUM_BITFIELD(dwarf_form) form : 15;
 
-  /* Has DW_STRING already been updated by dwarf2_canonicalize_name?  This
-     field should be in u.str (existing only for DW_STRING) but it is kept
-     here for better struct attribute alignment.  */
+  /* Has u.str already been updated by dwarf2_canonicalize_name?  This
+     field should be in u.str but it is kept here for better struct
+     attribute alignment.  */
   unsigned int string_is_canonical : 1;
 
   union
@@ -141,15 +330,5 @@ private:
 
   void get_ref_die_offset_complaint () const;
 };
-
-/* Get at parts of an attribute structure.  */
-
-#define DW_STRING(attr)    ((attr)->u.str)
-#define DW_STRING_IS_CANONICAL(attr) ((attr)->string_is_canonical)
-#define DW_UNSND(attr)     ((attr)->u.unsnd)
-#define DW_BLOCK(attr)     ((attr)->u.blk)
-#define DW_SND(attr)       ((attr)->u.snd)
-#define DW_ADDR(attr)	   ((attr)->u.addr)
-#define DW_SIGNATURE(attr) ((attr)->u.signature)
 
 #endif /* GDB_DWARF2_ATTRIBUTE_H */

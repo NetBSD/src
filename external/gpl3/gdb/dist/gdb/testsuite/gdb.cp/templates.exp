@@ -1,4 +1,4 @@
-# Copyright 1992-2023 Free Software Foundation, Inc.
+# Copyright 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,11 +17,13 @@
 
 set ws "\[\r\n\t \]+"
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests
 
 standard_testfile .cc
 
 set flags [list debug c++]
+lappend flags additional_flags=-std=c++11
+
 if { [test_compiler_info gcc-*] && [gcc_major_version] >= 10 } {
     # Work around PR gcc/101452.
     lappend flags additional_flags=-DGCC_BUG

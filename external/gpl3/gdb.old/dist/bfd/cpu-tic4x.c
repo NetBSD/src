@@ -1,5 +1,5 @@
 /* bfd back-end for TMS320C[34]x support
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    Contributed by Michael Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -24,7 +24,7 @@
 #include "bfd.h"
 #include "libbfd.h"
 
-static bfd_boolean
+static bool
 tic4x_scan (const struct bfd_arch_info *info,
 	    const char *string)
 {
@@ -35,14 +35,14 @@ tic4x_scan (const struct bfd_arch_info *info,
   if (*string == 'C' || *string == 'c')
     string++;
   if (string[1] < '0' && string[1] > '9')
-    return FALSE;
+    return false;
 
   if (*string == '3')
     return (info->mach == bfd_mach_tic3x);
   else if (*string == '4')
     return info->mach == bfd_mach_tic4x;
 
-  return FALSE;
+  return false;
 }
 
 #define N(NUMBER, NAME, PRINT, DEFAULT, NEXT)		\
@@ -64,7 +64,7 @@ tic4x_scan (const struct bfd_arch_info *info,
   }
 
 const bfd_arch_info_type bfd_tic3x_arch =
-  N (bfd_mach_tic3x, "tic3x", "tms320c3x", FALSE, NULL);
+  N (bfd_mach_tic3x, "tic3x", "tms320c3x", false, NULL);
 
 const bfd_arch_info_type bfd_tic4x_arch =
-  N (bfd_mach_tic4x, "tic4x", "tms320c4x", TRUE, &bfd_tic3x_arch);
+  N (bfd_mach_tic4x, "tic4x", "tms320c4x", true, &bfd_tic3x_arch);

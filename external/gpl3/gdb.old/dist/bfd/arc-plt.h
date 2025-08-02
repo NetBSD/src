@@ -1,5 +1,5 @@
 /* ARC-specific header file for PLT support.
-   Copyright (C) 2016-2020 Free Software Foundation, Inc.
+   Copyright (C) 2016-2022 Free Software Foundation, Inc.
    Contributed by Cupertino Miranda (cmiranda@synopsys.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -178,7 +178,7 @@ struct plt_version_t
 #define PLT_ELEM(...)
 #define ENTRY_RELOC(...)
 #define ELEM_RELOC(...)
-struct plt_version_t plt_versions[PLT_MAX] = {
+const struct plt_version_t plt_versions[PLT_MAX] = {
 
 #include "arc-plt.def"
 

@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD.
 
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,20 +26,18 @@
 #include <sys/ptrace.h>
 #include "gdbsupport/gdb_wait.h"
 
-#include "inf-child.h"
+#include "inf-ptrace.h"
 #include "obsd-nat.h"
 
 /* OpenBSD 5.2 and later include rthreads which uses a thread model
    that maps userland threads directly onto kernel threads in a 1:1
    fashion.  */
 
-#ifdef PT_GET_THREAD_FIRST
-
 std::string
 obsd_nat_target::pid_to_str (ptid_t ptid)
 {
   if (ptid.lwp () != 0)
-    return string_printf ("thread %ld", ptid.lwp ());
+    return string_printf ("thread %ld of process %d", ptid.lwp (), ptid.pid ());
 
   return normal_pid_to_str (ptid);
 }
@@ -72,100 +70,10 @@ obsd_nat_target::update_thread_list ()
     }
 }
 
-ptid_t
-obsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
-		       int options)
-{
-  pid_t pid;
-  int status, save_errno;
+/* Enable additional event reporting on a new or existing process.  */
 
-  do
-    {
-      set_sigint_trap ();
-
-      do
-	{
-	  pid = waitpid (ptid.pid (), &status, 0);
-	  save_errno = errno;
-	}
-      while (pid == -1 && errno == EINTR);
-
-      clear_sigint_trap ();
-
-      if (pid == -1)
-	{
-	  fprintf_unfiltered (gdb_stderr,
-			      _("Child process unexpectedly missing: %s.\n"),
-			      safe_strerror (save_errno));
-
-	  /* Claim it exited with unknown signal.  */
-	  ourstatus->kind = TARGET_WAITKIND_SIGNALLED;
-	  ourstatus->value.sig = GDB_SIGNAL_UNKNOWN;
-	  return inferior_ptid;
-	}
-
-      /* Ignore terminated detached child processes.  */
-      if (!WIFSTOPPED (status) && pid != inferior_ptid.pid ())
-	pid = -1;
-    }
-  while (pid == -1);
-
-  ptid = ptid_t (pid);
-
-  if (WIFSTOPPED (status))
-    {
-      ptrace_state_t pe;
-      pid_t fpid;
-
-      if (ptrace (PT_GET_PROCESS_STATE, pid, (caddr_t)&pe, sizeof pe) == -1)
-	perror_with_name (("ptrace"));
-
-      switch (pe.pe_report_event)
-	{
-	case PTRACE_FORK:
-	  ourstatus->kind = TARGET_WAITKIND_FORKED;
-	  ourstatus->value.related_pid = ptid_t (pe.pe_other_pid);
-
-	  /* Make sure the other end of the fork is stopped too.  */
-	  fpid = waitpid (pe.pe_other_pid, &status, 0);
-	  if (fpid == -1)
-	    perror_with_name (("waitpid"));
-
-	  if (ptrace (PT_GET_PROCESS_STATE, fpid,
-		      (caddr_t)&pe, sizeof pe) == -1)
-	    perror_with_name (("ptrace"));
-
-	  gdb_assert (pe.pe_report_event == PTRACE_FORK);
-	  gdb_assert (pe.pe_other_pid == pid);
-	  if (fpid == inferior_ptid.pid ())
-	    {
-	      ourstatus->value.related_pid = ptid_t (pe.pe_other_pid);
-	      return ptid_t (fpid);
-	    }
-
-	  return ptid_t (pid);
-	}
-
-      ptid = ptid_t (pid, pe.pe_tid, 0);
-      if (!in_thread_list (this, ptid))
-	{
-	  if (inferior_ptid.lwp () == 0)
-	    thread_change_ptid (this, inferior_ptid, ptid);
-	  else
-	    add_thread (this, ptid);
-	}
-    }
-
-  store_waitstatus (ourstatus, status);
-  return ptid;
-}
-
-#endif /* PT_GET_THREAD_FIRST */
-
-#ifdef PT_GET_PROCESS_STATE
-
-void
-obsd_nat_target::post_attach (int pid)
+static void
+obsd_enable_proc_events (pid_t pid)
 {
   ptrace_event_t pe;
 
@@ -177,38 +85,92 @@ obsd_nat_target::post_attach (int pid)
     perror_with_name (("ptrace"));
 }
 
+ptid_t
+obsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
+		       target_wait_flags options)
+{
+  ptid_t wptid = inf_ptrace_target::wait (ptid, ourstatus, options);
+  if (ourstatus->kind () == TARGET_WAITKIND_STOPPED)
+    {
+      ptrace_state_t pe;
+
+      pid_t pid = wptid.pid ();
+      if (ptrace (PT_GET_PROCESS_STATE, pid, (caddr_t)&pe, sizeof pe) == -1)
+	perror_with_name (("ptrace"));
+
+      wptid = ptid_t (pid, pe.pe_tid, 0);
+
+      switch (pe.pe_report_event)
+	{
+	case PTRACE_FORK:
+	  ourstatus->set_forked (ptid_t (pe.pe_other_pid));
+
+	  /* Make sure the other end of the fork is stopped too.  */
+	  pid_t fpid = waitpid (pe.pe_other_pid, nullptr, 0);
+	  if (fpid == -1)
+	    perror_with_name (("waitpid"));
+
+	  if (ptrace (PT_GET_PROCESS_STATE, fpid,
+		      (caddr_t)&pe, sizeof pe) == -1)
+	    perror_with_name (("ptrace"));
+
+	  gdb_assert (pe.pe_report_event == PTRACE_FORK);
+	  gdb_assert (pe.pe_other_pid == pid);
+	  if (find_inferior_pid (this, fpid) != nullptr)
+	    {
+	      ourstatus->set_forked (ptid_t (pe.pe_other_pid));
+	      wptid = ptid_t (fpid, pe.pe_tid, 0);
+	    }
+
+	  obsd_enable_proc_events (ourstatus->child_ptid ().pid ());
+	  break;
+	}
+
+      /* Ensure the ptid is updated with an LWP id on the first stop
+         of a process.  */
+      if (!in_thread_list (this, wptid))
+	{
+	  if (in_thread_list (this, ptid_t (pid)))
+	    thread_change_ptid (this, ptid_t (pid), wptid);
+	  else
+	    add_thread (this, wptid);
+	}
+    }
+  return wptid;
+}
+
+void
+obsd_nat_target::post_attach (int pid)
+{
+  obsd_enable_proc_events (pid);
+}
+
+/* Implement the virtual inf_ptrace_target::post_startup_inferior method.  */
+
 void
 obsd_nat_target::post_startup_inferior (ptid_t pid)
 {
-  ptrace_event_t pe;
-
-  /* Set the initial event mask.  */
-  memset (&pe, 0, sizeof pe);
-  pe.pe_set_event |= PTRACE_FORK;
-  if (ptrace (PT_SET_EVENT_MASK, pid.pid (),
-	      (PTRACE_TYPE_ARG3)&pe, sizeof pe) == -1)
-    perror_with_name (("ptrace"));
+  obsd_enable_proc_events (pid.pid ());
 }
 
-/* Target hook for follow_fork.  On entry and at return inferior_ptid is
-   the ptid of the followed inferior.  */
+/* Target hook for follow_fork.  */
 
-bool
-obsd_nat_target::follow_fork (bool follow_child, bool detach_fork)
+void
+obsd_nat_target::follow_fork (inferior *child_inf, ptid_t child_ptid,
+			      target_waitkind fork_kind,
+			      bool follow_child, bool detach_fork)
 {
-  if (!follow_child)
-    {
-      struct thread_info *tp = inferior_thread ();
-      pid_t child_pid = tp->pending_follow.value.related_pid.pid ();
+  inf_ptrace_target::follow_fork (child_inf, child_ptid, fork_kind,
+				  follow_child, detach_fork);
 
+  if (!follow_child && detach_fork)
+    {
       /* Breakpoints have already been detached from the child by
 	 infrun.c.  */
 
-      if (ptrace (PT_DETACH, child_pid, (PTRACE_TYPE_ARG3)1, 0) == -1)
+      if (ptrace (PT_DETACH, child_ptid.pid (), (PTRACE_TYPE_ARG3)1, 0) == -1)
 	perror_with_name (("ptrace"));
     }
-
-  return false;
 }
 
 int
@@ -222,5 +184,3 @@ obsd_nat_target::remove_fork_catchpoint (int pid)
 {
   return 0;
 }
-
-#endif /* PT_GET_PROCESS_STATE */

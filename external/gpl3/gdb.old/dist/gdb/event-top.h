@@ -1,6 +1,6 @@
 /* Definitions used by event-top.c, for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2023 Free Software Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
@@ -32,7 +32,7 @@ struct cmd_list_element;
 extern void display_gdb_prompt (const char *new_prompt);
 extern void gdb_setup_readline (int);
 extern void gdb_disable_readline (void);
-extern void async_init_signals (void);
+extern void gdb_init_signals (void);
 extern void change_line_handler (int);
 
 extern void command_line_handler (gdb::unique_xmalloc_ptr<char> &&rl);
@@ -45,7 +45,6 @@ extern void handle_sigtstp (int sig);
 extern void handle_sigint (int sig);
 extern void handle_sigterm (int sig);
 extern void async_request_quit (void *arg);
-extern void stdin_event_handler (int error, void *client_data);
 extern void async_disable_stdin (void);
 extern void async_enable_stdin (void);
 
@@ -70,10 +69,25 @@ extern void gdb_rl_callback_handler_install (const char *prompt);
    currently installed.  */
 extern void gdb_rl_callback_handler_reinstall (void);
 
-/* The SIGSEGV handler for this thread, or NULL if there is none.  GDB
-   always installs a global SIGSEGV handler, and then lets threads
-   indicate their interest in handling the signal by setting this
-   thread-local variable.  */
-extern thread_local void (*thread_local_segv_handler) (int);
+/* Called by readline after a complete line has been gathered from the
+   user, but before the line is dispatched to back to GDB.  This function
+   is a wrapper around readline's builtin rl_deprep_terminal function, and
+   handles the case where readline received EOF.  */
+extern void gdb_rl_deprep_term_function (void);
+
+typedef void (*segv_handler_t) (int);
+
+/* On construction, replaces the current thread's SIGSEGV handler with
+   the provided one.  On destruction, restores the handler to the
+   original one.  */
+class scoped_segv_handler_restore
+{
+ public:
+  scoped_segv_handler_restore (segv_handler_t new_handler);
+  ~scoped_segv_handler_restore ();
+
+ private:
+  segv_handler_t m_old_handler;
+};
 
 #endif

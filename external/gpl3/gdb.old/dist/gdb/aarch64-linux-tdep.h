@@ -1,6 +1,6 @@
 /* GNU/Linux on AArch64 target support, prototypes.
 
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2023 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -35,6 +35,9 @@
 
 /* The pauth regset consists of 2 X sized registers.  */
 #define AARCH64_LINUX_SIZEOF_PAUTH (2 * X_REGISTER_SIZE)
+
+/* The MTE regset consists of a 64-bit register.  */
+#define AARCH64_LINUX_SIZEOF_MTE_REGSET (8)
 
 extern const struct regset aarch64_linux_gregset;
 extern const struct regset aarch64_linux_fpregset;

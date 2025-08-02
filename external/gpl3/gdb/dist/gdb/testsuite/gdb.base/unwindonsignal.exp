@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,18 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if [target_info exists gdb,nosignals] {
-    verbose "Skipping unwindonsignal.exp because of nosignals."
-    return
-}
+require {!target_info exists gdb,nosignals}
 
 
 # Some targets can't do function calls, so don't even bother with this
 # test.
-if [target_info exists gdb,cannot_call_functions] {
-    unsupported "this target can not call functions"
-    return
-}
+require {!target_info exists gdb,cannot_call_functions}
 
 standard_testfile
 
@@ -40,18 +34,39 @@ gdb_test "break stop_here" "Breakpoint \[0-9\]* at .*"
 gdb_test "continue" "Continuing.*Breakpoint \[0-9\]*, stop_here.*" \
     "continue to breakpoint at stop_here"
 
-# Turn on unwindonsignal.
-gdb_test_no_output "set unwindonsignal on" \
-	"setting unwindonsignal"
+# Turn on unwind-on-signal.
+gdb_test_no_output "set unwind-on-signal on" \
+	"setting unwind-on-signal"
 
-gdb_test "show unwindonsignal" \
+gdb_test "show unwind-on-signal" \
 	"Unwinding of stack .* is on." \
-	"showing unwindonsignal"
+	"showing unwind-on-signal"
+
+# For backward compatibility we maintain a 'unwindonsignal' alias for
+# 'unwind-on-signal', check it now.
+gdb_test "show unwindonsignal" \
+    "Unwinding of stack .* is on\\." \
+    "showing unwindonsignal alias"
+
+gdb_test_no_output "set unwindonsignal off" \
+    "setting unwindonsignal alias to off"
+
+gdb_test "show unwind-on-signal" \
+    "Unwinding of stack .* is off\\." \
+    "showing unwind-on-signal after setting via alias"
+
+gdb_test_no_output "set unwindonsignal on" \
+    "setting unwindonsignal alias to on"
 
 # Call function (causing the program to get a signal), and see if gdb handles
 # it properly.
 if {[gdb_test "call gen_signal ()"  \
-	 "\[\r\n\]*The program being debugged was signaled.*" \
+	 [multi_line \
+	      "The program being debugged received signal SIGABRT, Aborted" \
+	      "while in a function called from GDB\\.  GDB has restored the context" \
+	      "to what it was before the call\\.  To change this behavior use" \
+	      "\"set unwind-on-signal off\"\\.  Evaluation of the expression containing" \
+	      "the function \\(gen_signal\\) will be abandoned\\."] \
 	 "unwindonsignal, inferior function call signaled"] != 0} {
     return 0
 }
@@ -59,17 +74,15 @@ if {[gdb_test "call gen_signal ()"  \
 # Verify the stack got unwound.
 gdb_test "bt" \
     "#0 *\[x0-9a-f in\]*stop_here \\(.*\\) at .*#1 *\[x0-9a-f in\]*main \\(.*\\) at .*" \
-	"unwindonsignal, stack unwound"
+	"stack unwound"
 
 # Verify the dummy frame got removed from dummy_frame_stack.
 gdb_test_multiple "maint print dummy-frames" \
-	"unwindonsignal, dummy frame removed" {
+	"unwind-on-signal, dummy frame removed" {
     -re "\[\r\n\]*.*stack=.*code=.*\[\r\n\]+$gdb_prompt $" {
-	fail "unwindonsignal, dummy frame removed"
+	fail $gdb_test_name
     }
     -re "\[\r\n\]+$gdb_prompt $" {
-	pass "unwindonsignal, dummy frame removed"
+	pass $gdb_test_name
     }
 }
-
-return 0

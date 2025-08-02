@@ -1,6 +1,6 @@
 /* Generic code for supporting multiple C++ ABI's
 
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -152,7 +152,7 @@ cplus_make_method_ptr (struct type *type, gdb_byte *contents,
 }
 
 CORE_ADDR
-cplus_skip_trampoline (struct frame_info *frame,
+cplus_skip_trampoline (frame_info_ptr frame,
 		       CORE_ADDR stop_pc)
 {
   if (current_cp_abi.skip_trampoline == NULL)
@@ -251,8 +251,7 @@ int
 register_cp_abi (struct cp_abi_ops *abi)
 {
   if (num_cp_abis == CP_ABI_MAX)
-    internal_error (__FILE__, __LINE__,
-		    _("Too many C++ ABIs, please increase "
+    internal_error (_("Too many C++ ABIs, please increase "
 		      "CP_ABI_MAX in cp-abi.c"));
 
   cp_abis[num_cp_abis++] = abi;
@@ -265,12 +264,10 @@ register_cp_abi (struct cp_abi_ops *abi)
 void
 set_cp_abi_as_auto_default (const char *short_name)
 {
-  char *new_longname, *new_doc;
   struct cp_abi_ops *abi = find_cp_abi (short_name);
 
   if (abi == NULL)
-    internal_error (__FILE__, __LINE__,
-		    _("Cannot find C++ ABI \"%s\" to set it as auto default."),
+    internal_error (_("Cannot find C++ ABI \"%s\" to set it as auto default."),
 		    short_name);
 
   xfree ((char *) auto_cp_abi.longname);
@@ -279,12 +276,10 @@ set_cp_abi_as_auto_default (const char *short_name)
   auto_cp_abi = *abi;
 
   auto_cp_abi.shortname = "auto";
-  new_longname = xstrprintf ("currently \"%s\"", abi->shortname);
-  auto_cp_abi.longname = new_longname;
-
-  new_doc = xstrprintf ("Automatically selected; currently \"%s\"",
-	     abi->shortname);
-  auto_cp_abi.doc = new_doc;
+  auto_cp_abi.longname = xstrprintf ("currently \"%s\"",
+				     abi->shortname).release ();
+  auto_cp_abi.doc = xstrprintf ("Automatically selected; currently \"%s\"",
+				abi->shortname).release ();
 
   /* Since we copy the current ABI into current_cp_abi instead of
      using a pointer, if auto is currently the default, we need to

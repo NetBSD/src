@@ -1,5 +1,5 @@
 /* simple.c -- BFD simple client routines
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
    Contributed by MontaVista Software, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -23,6 +23,36 @@
 #include "bfd.h"
 #include "libbfd.h"
 #include "bfdlink.h"
+#include "genlink.h"
+
+static void
+simple_dummy_add_to_set (struct bfd_link_info * info ATTRIBUTE_UNUSED,
+			 struct bfd_link_hash_entry *entry ATTRIBUTE_UNUSED,
+			 bfd_reloc_code_real_type reloc ATTRIBUTE_UNUSED,
+			 bfd *abfd ATTRIBUTE_UNUSED,
+			 asection *sec ATTRIBUTE_UNUSED,
+			 bfd_vma value ATTRIBUTE_UNUSED)
+{
+}
+
+static  void
+simple_dummy_constructor (struct bfd_link_info * info ATTRIBUTE_UNUSED,
+			  bool constructor ATTRIBUTE_UNUSED,
+			  const char *name ATTRIBUTE_UNUSED,
+			  bfd *abfd ATTRIBUTE_UNUSED,
+			  asection *sec ATTRIBUTE_UNUSED,
+			  bfd_vma value ATTRIBUTE_UNUSED)
+{
+}
+
+static void
+simple_dummy_multiple_common (struct bfd_link_info * info ATTRIBUTE_UNUSED,
+			      struct bfd_link_hash_entry * entry ATTRIBUTE_UNUSED,
+			      bfd * abfd ATTRIBUTE_UNUSED,
+			      enum bfd_link_hash_type type ATTRIBUTE_UNUSED,
+			      bfd_vma size ATTRIBUTE_UNUSED)
+{
+}
 
 static void
 simple_dummy_warning (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
@@ -40,7 +70,7 @@ simple_dummy_undefined_symbol (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
 			       bfd *abfd ATTRIBUTE_UNUSED,
 			       asection *section ATTRIBUTE_UNUSED,
 			       bfd_vma address ATTRIBUTE_UNUSED,
-			       bfd_boolean fatal ATTRIBUTE_UNUSED)
+			       bool fatal ATTRIBUTE_UNUSED)
 {
 }
 
@@ -179,8 +209,7 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
   struct bfd_link_info link_info;
   struct bfd_link_order link_order;
   struct bfd_link_callbacks callbacks;
-  bfd_byte *contents, *data;
-  int storage_needed;
+  bfd_byte *contents;
   struct saved_offsets saved_offsets;
   bfd *link_next;
 
@@ -189,10 +218,9 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
   if ((abfd->flags & (HAS_RELOC | EXEC_P | DYNAMIC)) != HAS_RELOC
       || ! (sec->flags & SEC_RELOC))
     {
-      contents = outbuf;
-      if (!bfd_get_full_section_contents (abfd, sec, &contents))
+      if (!bfd_get_full_section_contents (abfd, sec, &outbuf))
 	return NULL;
-      return contents;
+      return outbuf;
     }
 
   /* In order to use bfd_get_relocated_section_contents, we need
@@ -208,6 +236,9 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
   abfd->link.next = NULL;
   link_info.hash = _bfd_generic_link_hash_table_create (abfd);
   link_info.callbacks = &callbacks;
+  /* Make sure that any fields not initialised below do not
+     result in a potential indirection via a random address.  */
+  memset (&callbacks, 0, sizeof callbacks);
   callbacks.warning = simple_dummy_warning;
   callbacks.undefined_symbol = simple_dummy_undefined_symbol;
   callbacks.reloc_overflow = simple_dummy_reloc_overflow;
@@ -215,6 +246,9 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
   callbacks.unattached_reloc = simple_dummy_unattached_reloc;
   callbacks.multiple_definition = simple_dummy_multiple_definition;
   callbacks.einfo = simple_dummy_einfo;
+  callbacks.multiple_common = simple_dummy_multiple_common;
+  callbacks.constructor = simple_dummy_constructor;
+  callbacks.add_to_set = simple_dummy_add_to_set;
 
   memset (&link_order, 0, sizeof (link_order));
   link_order.next = NULL;
@@ -223,55 +257,32 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
   link_order.size = sec->size;
   link_order.u.indirect.section = sec;
 
-  data = NULL;
-  if (outbuf == NULL)
-    {
-      bfd_size_type amt = sec->rawsize > sec->size ? sec->rawsize : sec->size;
-      data = (bfd_byte *) bfd_malloc (amt);
-      if (data == NULL)
-	{
-	  _bfd_generic_link_hash_table_free (abfd);
-	  abfd->link.next = link_next;
-	  return NULL;
-	}
-      outbuf = data;
-    }
+  contents = NULL;
 
   saved_offsets.section_count = abfd->section_count;
   saved_offsets.sections = malloc (sizeof (*saved_offsets.sections)
 				   * saved_offsets.section_count);
   if (saved_offsets.sections == NULL)
-    {
-      free (data);
-      _bfd_generic_link_hash_table_free (abfd);
-      abfd->link.next = link_next;
-      return NULL;
-    }
+    goto out1;
   bfd_map_over_sections (abfd, simple_save_output_info, &saved_offsets);
 
   if (symbol_table == NULL)
     {
-      _bfd_generic_link_add_symbols (abfd, &link_info);
-
-      storage_needed = bfd_get_symtab_upper_bound (abfd);
-      symbol_table = (asymbol **) bfd_malloc (storage_needed);
-      bfd_canonicalize_symtab (abfd, symbol_table);
+      if (!bfd_generic_link_read_symbols (abfd))
+	goto out2;
+      symbol_table = _bfd_generic_link_get_symbols (abfd);
     }
-  else
-    storage_needed = 0;
 
   contents = bfd_get_relocated_section_contents (abfd,
 						 &link_info,
 						 &link_order,
 						 outbuf,
-						 0,
+						 false,
 						 symbol_table);
-  if (contents == NULL)
-    free (data);
-
+ out2:
   bfd_map_over_sections (abfd, simple_restore_output_info, &saved_offsets);
   free (saved_offsets.sections);
-
+ out1:
   _bfd_generic_link_hash_table_free (abfd);
   abfd->link.next = link_next;
   return contents;

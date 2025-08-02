@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,7 @@ load_lib gdbserver-support.exp
 
 standard_testfile wrapper.c
 
-if { [skip_gdbserver_tests] } {
-    return 0
-}
+require allow_gdbserver_tests
 
 if {[build_executable $testfile.exp $testfile $srcfile debug] == -1} {
     return -1
@@ -57,7 +55,10 @@ gdb_test "print d" "\\$${decimal} = ${hex} \"1\".*"
 with_test_prefix "restart" {
     # Disable vRun packet and clear remote exec-file, so that GDB will
     # use R packet to restart the process.
-    gdb_test_no_output "set remote run-packet off"
+    gdb_test \
+	"set remote run-packet off" \
+	"Support for the 'vRun' packet on the current remote target is set to \"off\"."
+
     gdb_test_no_output "set remote exec-file"
     set test "run to marker"
     gdb_test_multiple "run" $test {

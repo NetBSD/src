@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,10 +21,7 @@
 # We test that GDB shows the correct number of instances of the libraries
 # the test loaded while unloading them one-by-one.
 
-if { [skip_dlmopen_tests] } {
-    unsupported "target does not support dlmopen debugging"
-    return -1
-}
+require allow_dlmopen_tests
 
 standard_testfile
 
@@ -147,10 +144,7 @@ gdb_breakpoint $srcfile:$bp_main
 test_dlmopen
 
 # Try the same again when attaching after dlmopen().
-if { ![can_spawn_for_attach] } {
-    unsupported "target does not support attach"
-    return -1
-}
+require can_spawn_for_attach
 
 clean_restart $binfile
 

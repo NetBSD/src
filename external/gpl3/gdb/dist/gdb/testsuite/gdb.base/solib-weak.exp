@@ -1,4 +1,4 @@
-#   Copyright 2006-2023 Free Software Foundation, Inc.
+#   Copyright 2006-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@
 # than one shared library, when one of the implementations is a "weak"
 # symbol.  GDB should set a breakpoint at the first copy it finds.
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
 # These targets have shared libraries, but weak symbols are not meaningful.
 if {([istarget *-*-mingw*]
@@ -86,10 +84,7 @@ proc do_test { lib1opts lib2opts lib1first } {
     }
 
     with_test_prefix $testopts {
-	gdb_exit
-	gdb_start
-	gdb_reinitialize_dir $srcdir/$subdir
-	gdb_load ${binfile}
+	clean_restart $binfile
 	gdb_load_shlib $lib1
 	gdb_load_shlib $lib2
 

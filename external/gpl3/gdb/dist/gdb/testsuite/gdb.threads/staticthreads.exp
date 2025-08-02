@@ -1,6 +1,6 @@
 # static.exp -- test script, for GDB, the GNU debugger.
 
-# Copyright 2004-2023 Free Software Foundation, Inc.
+# Copyright 2004-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,7 +73,7 @@ gdb_test "continue" " .*sem_post .*" "handle $sig helps"
 
 set test "info threads"
 gdb_test_multiple "info threads" "$test" {
-    -re " Thread .*$gdb_prompt " {
+    -re " ${tdlabel_re} .*$gdb_prompt " {
 	pass "$test"
     }
     -re "$gdb_prompt " {

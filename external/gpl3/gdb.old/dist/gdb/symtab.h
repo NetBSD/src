@@ -1,6 +1,6 @@
 /* Symbol table definitions for GDB.
 
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,19 +26,21 @@
 #include <set>
 #include "gdbsupport/gdb_vecs.h"
 #include "gdbtypes.h"
-#include "gdb_obstack.h"
-#include "gdb_regex.h"
+#include "gdbsupport/gdb_obstack.h"
+#include "gdbsupport/gdb_regex.h"
 #include "gdbsupport/enum-flags.h"
 #include "gdbsupport/function-view.h"
 #include "gdbsupport/gdb_optional.h"
 #include "gdbsupport/gdb_string_view.h"
 #include "gdbsupport/next-iterator.h"
+#include "gdbsupport/iterator-range.h"
 #include "completer.h"
 #include "gdb-demangle.h"
+#include "split-name.h"
 
 /* Opaque declarations.  */
 struct ui_file;
-struct frame_info;
+class frame_info_ptr;
 struct symbol;
 struct obstack;
 struct objfile;
@@ -53,6 +55,7 @@ struct obj_section;
 struct cmd_list_element;
 class probe;
 struct lookup_name_info;
+struct code_breakpoint;
 
 /* How to match a lookup name against a symbol search name.  */
 enum class symbol_name_match_type
@@ -119,6 +122,21 @@ class ada_lookup_name_info final
   /* Return true if doing a verbatim match.  */
   bool verbatim_p () const
   { return m_verbatim_p; }
+
+  /* A wrapper for ::split_name that handles some Ada-specific
+     peculiarities.  */
+  std::vector<gdb::string_view> split_name () const
+  {
+    if (m_verbatim_p || m_standard_p)
+      {
+	std::vector<gdb::string_view> result;
+	if (m_standard_p)
+	  result.emplace_back ("standard");
+	result.emplace_back (m_encoded_name);
+	return result;
+      }
+    return ::split_name (m_encoded_name.c_str (), split_style::UNDERSCORE);
+  }
 
 private:
   /* The Ada-encoded lookup name.  */
@@ -269,6 +287,27 @@ class lookup_name_info final
       default:
 	return m_name.data ();
       }
+  }
+
+  /* A wrapper for ::split_name (see split-name.h) that splits this
+     name, and that handles any language-specific peculiarities.  */  
+  std::vector<gdb::string_view> split_name (language lang) const
+  {
+    if (lang == language_ada)
+      return ada ().split_name ();
+    split_style style = split_style::NONE;
+    switch (lang)
+      {
+      case language_cplus:
+      case language_rust:
+	style = split_style::CXX;
+	break;
+      case language_d:
+      case language_go:
+	style = split_style::DOT;
+	break;
+      }
+    return ::split_name (language_lookup_name (lang), style);
   }
 
   /* Get the Ada-specific lookup info.  */
@@ -472,7 +511,17 @@ struct general_symbol_info
   void compute_and_set_names (gdb::string_view linkage_name, bool copy_name,
 			      struct objfile_per_bfd_storage *per_bfd,
 			      gdb::optional<hashval_t> hash
-			        = gdb::optional<hashval_t> ());
+				= gdb::optional<hashval_t> ());
+
+  CORE_ADDR value_address () const
+  {
+    return m_value.address;
+  }
+
+  void set_value_address (CORE_ADDR address)
+  {
+    m_value.address = address;
+  }
 
   /* Name of the symbol.  This is a required field.  Storage for the
      name is allocated on the objfile_obstack for the associated
@@ -506,7 +555,7 @@ struct general_symbol_info
 
     struct symbol *chain;
   }
-  value;
+  m_value;
 
   /* Since one and only one language can apply, wrap the language specific
      information inside a union.  */
@@ -539,7 +588,27 @@ struct general_symbol_info
      section_offsets for this objfile.  Negative means that the symbol
      does not get relocated relative to a section.  */
 
-  short section;
+  short m_section;
+
+  /* Set the index into the obj_section list (within the containing
+     objfile) for the section that contains this symbol.  See M_SECTION
+     for more details.  */
+
+  void set_section_index (short idx)
+  { m_section = idx; }
+
+  /* Return the index into the obj_section list (within the containing
+     objfile) for the section that contains this symbol.  See M_SECTION
+     for more details.  */
+
+  short section_index () const
+  { return m_section; }
+
+  /* Return the obj_section from OBJFILE for this symbol.  The symbol
+     returned is based on the SECTION member variable, and can be nullptr
+     if SECTION is negative.  */
+
+  struct obj_section *obj_section (const struct objfile *objfile) const;
 };
 
 extern CORE_ADDR symbol_overlayed_address (CORE_ADDR, struct obj_section *);
@@ -552,40 +621,17 @@ extern CORE_ADDR symbol_overlayed_address (CORE_ADDR, struct obj_section *);
 
 extern CORE_ADDR get_symbol_address (const struct symbol *sym);
 
-/* Note that these macros only work with symbol, not partial_symbol.  */
-
-#define SYMBOL_VALUE(symbol)		(symbol)->value.ivalue
-#define SYMBOL_VALUE_ADDRESS(symbol)			      \
-  (((symbol)->maybe_copied) ? get_symbol_address (symbol)     \
-   : ((symbol)->value.address))
-#define SET_SYMBOL_VALUE_ADDRESS(symbol, new_value)	\
-  ((symbol)->value.address = (new_value))
-#define SYMBOL_VALUE_BYTES(symbol)	(symbol)->value.bytes
-#define SYMBOL_VALUE_COMMON_BLOCK(symbol) (symbol)->value.common_block
-#define SYMBOL_BLOCK_VALUE(symbol)	(symbol)->value.block
-#define SYMBOL_VALUE_CHAIN(symbol)	(symbol)->value.chain
-#define SYMBOL_SECTION(symbol)		(symbol)->section
-#define SYMBOL_OBJ_SECTION(objfile, symbol)			\
-  (((symbol)->section >= 0)				\
-   ? (&(((objfile)->sections)[(symbol)->section]))	\
-   : NULL)
-
 /* Try to determine the demangled name for a symbol, based on the
    language of that symbol.  If the language is set to language_auto,
    it will attempt to find any demangling algorithm that works and
    then set the language appropriately.  The returned name is allocated
    by the demangler and should be xfree'd.  */
 
-extern char *symbol_find_demangled_name (struct general_symbol_info *gsymbol,
-					 const char *mangled);
+extern gdb::unique_xmalloc_ptr<char> symbol_find_demangled_name
+     (struct general_symbol_info *gsymbol, const char *mangled);
 
-/* Return true if NAME matches the "search" name of SYMBOL, according
+/* Return true if NAME matches the "search" name of GSYMBOL, according
    to the symbol's language.  */
-#define SYMBOL_MATCHES_SEARCH_NAME(symbol, name)                       \
-  symbol_matches_search_name ((symbol), (name))
-
-/* Helper for SYMBOL_MATCHES_SEARCH_NAME that works with both symbols
-   and psymbols.  */
 extern bool symbol_matches_search_name
   (const struct general_symbol_info *gsymbol,
    const lookup_name_info &name);
@@ -653,6 +699,15 @@ enum minimal_symbol_type
 #define MINSYM_TYPE_BITS 4
 gdb_static_assert (nr_minsym_types <= (1 << MINSYM_TYPE_BITS));
 
+/* Return the address of MINSYM, which comes from OBJF.  The
+   MAYBE_COPIED flag must be set on MINSYM.  If MINSYM appears in the
+   main program's minimal symbols, then that minsym's address is
+   returned; otherwise, MINSYM's address is returned.  This should
+   generally only be used via the MSYMBOL_VALUE_ADDRESS macro.  */
+
+extern CORE_ADDR get_msymbol_address (struct objfile *objf,
+				      const struct minimal_symbol *minsym);
+
 /* Define a simple structure used to hold some very basic information about
    all defined global symbols (text, data, bss, abs, etc).  The only required
    information is the general_symbol_info.
@@ -667,31 +722,110 @@ gdb_static_assert (nr_minsym_types <= (1 << MINSYM_TYPE_BITS));
 
 struct minimal_symbol : public general_symbol_info
 {
+  LONGEST value_longest () const
+  {
+    return m_value.ivalue;
+  }
+
+  /* The relocated address of the minimal symbol, using the section
+     offsets from OBJFILE.  */
+  CORE_ADDR value_address (objfile *objfile) const;
+
+  /* The unrelocated address of the minimal symbol.  */
+  CORE_ADDR value_raw_address () const
+  {
+    return m_value.address;
+  }
+
+  /* Return this minimal symbol's type.  */
+
+  minimal_symbol_type type () const
+  {
+    return m_type;
+  }
+
+  /* Set this minimal symbol's type.  */
+
+  void set_type (minimal_symbol_type type)
+  {
+    m_type = type;
+  }
+
+  /* Return this minimal symbol's size.  */
+
+  unsigned long size () const
+  {
+    return m_size;
+  }
+
+  /* Set this minimal symbol's size.  */
+
+  void set_size (unsigned long size)
+  {
+    m_size = size;
+    m_has_size = 1;
+  }
+
+  /* Return true if this minimal symbol's size is known.  */
+
+  bool has_size () const
+  {
+    return m_has_size;
+  }
+
+  /* Return this minimal symbol's first target-specific flag.  */
+
+  bool target_flag_1 () const
+  {
+    return m_target_flag_1;
+  }
+
+  /* Set this minimal symbol's first target-specific flag.  */
+
+  void set_target_flag_1 (bool target_flag_1)
+  {
+    m_target_flag_1 = target_flag_1;
+  }
+
+  /* Return this minimal symbol's second target-specific flag.  */
+
+  bool target_flag_2 () const
+  {
+    return m_target_flag_2;
+  }
+
+  /* Set this minimal symbol's second target-specific flag.  */
+
+  void set_target_flag_2 (bool target_flag_2)
+  {
+    m_target_flag_2 = target_flag_2;
+  }
+
   /* Size of this symbol.  dbx_end_psymtab in dbxread.c uses this
      information to calculate the end of the partial symtab based on the
      address of the last symbol plus the size of the last symbol.  */
 
-  unsigned long size;
+  unsigned long m_size;
 
   /* Which source file is this symbol in?  Only relevant for mst_file_*.  */
   const char *filename;
 
   /* Classification type for this minimal symbol.  */
 
-  ENUM_BITFIELD(minimal_symbol_type) type : MINSYM_TYPE_BITS;
+  ENUM_BITFIELD(minimal_symbol_type) m_type : MINSYM_TYPE_BITS;
 
   /* Non-zero if this symbol was created by gdb.
      Such symbols do not appear in the output of "info var|fun".  */
   unsigned int created_by_gdb : 1;
 
   /* Two flag bits provided for the use of the target.  */
-  unsigned int target_flag_1 : 1;
-  unsigned int target_flag_2 : 1;
+  unsigned int m_target_flag_1 : 1;
+  unsigned int m_target_flag_2 : 1;
 
   /* Nonzero iff the size of the minimal symbol has been set.
      Symbol size information can sometimes not be determined, because
      the object file format may not carry that piece of information.  */
-  unsigned int has_size : 1;
+  unsigned int m_has_size : 1;
 
   /* For data symbols only, if this is set, then the symbol might be
      subject to copy relocation.  In this case, a minimal symbol
@@ -724,50 +858,6 @@ struct minimal_symbol : public general_symbol_info
   bool text_p () const;
 };
 
-/* Return the address of MINSYM, which comes from OBJF.  The
-   MAYBE_COPIED flag must be set on MINSYM.  If MINSYM appears in the
-   main program's minimal symbols, then that minsym's address is
-   returned; otherwise, MINSYM's address is returned.  This should
-   generally only be used via the MSYMBOL_VALUE_ADDRESS macro.  */
-
-extern CORE_ADDR get_msymbol_address (struct objfile *objf,
-				      const struct minimal_symbol *minsym);
-
-#define MSYMBOL_TARGET_FLAG_1(msymbol)  (msymbol)->target_flag_1
-#define MSYMBOL_TARGET_FLAG_2(msymbol)  (msymbol)->target_flag_2
-#define MSYMBOL_SIZE(msymbol)		((msymbol)->size + 0)
-#define SET_MSYMBOL_SIZE(msymbol, sz)		\
-  do						\
-    {						\
-      (msymbol)->size = sz;			\
-      (msymbol)->has_size = 1;			\
-    } while (0)
-#define MSYMBOL_HAS_SIZE(msymbol)	((msymbol)->has_size + 0)
-#define MSYMBOL_TYPE(msymbol)		(msymbol)->type
-
-#define MSYMBOL_VALUE(symbol)		(symbol)->value.ivalue
-/* The unrelocated address of the minimal symbol.  */
-#define MSYMBOL_VALUE_RAW_ADDRESS(symbol) ((symbol)->value.address + 0)
-/* The relocated address of the minimal symbol, using the section
-   offsets from OBJFILE.  */
-#define MSYMBOL_VALUE_ADDRESS(objfile, symbol)				\
-  (((symbol)->maybe_copied) ? get_msymbol_address (objfile, symbol)	\
-   : ((symbol)->value.address						\
-      + (objfile)->section_offsets[(symbol)->section]))
-/* For a bound minsym, we can easily compute the address directly.  */
-#define BMSYMBOL_VALUE_ADDRESS(symbol) \
-  MSYMBOL_VALUE_ADDRESS ((symbol).objfile, (symbol).minsym)
-#define SET_MSYMBOL_VALUE_ADDRESS(symbol, new_value)	\
-  ((symbol)->value.address = (new_value))
-#define MSYMBOL_VALUE_BYTES(symbol)	(symbol)->value.bytes
-#define MSYMBOL_BLOCK_VALUE(symbol)	(symbol)->value.block
-#define MSYMBOL_VALUE_CHAIN(symbol)	(symbol)->value.chain
-#define MSYMBOL_SECTION(symbol)		(symbol)->section
-#define MSYMBOL_OBJ_SECTION(objfile, symbol)			\
-  (((symbol)->section >= 0)				\
-   ? (&(((objfile)->sections)[(symbol)->section]))	\
-   : NULL)
-
 #include "minsyms.h"
 
 
@@ -777,7 +867,7 @@ extern CORE_ADDR get_msymbol_address (struct objfile *objf,
 /* Different name domains for symbols.  Looking up a symbol specifies a
    domain and ignores symbol definitions in other name domains.  */
 
-typedef enum domain_enum_tag
+enum domain_enum
 {
   /* UNDEF_DOMAIN is used when a domain has not been discovered or
      none of the following apply.  This usually indicates an error either
@@ -810,7 +900,7 @@ typedef enum domain_enum_tag
 
   /* This must remain last.  */
   NR_DOMAINS
-} domain_enum;
+};
 
 /* The number of bits in a symbol used to represent the domain.  */
 
@@ -979,13 +1069,13 @@ struct symbol_computed_ops
      FRAME may be zero.  */
 
   struct value *(*read_variable) (struct symbol * symbol,
-				  struct frame_info * frame);
+				  frame_info_ptr frame);
 
   /* Read variable SYMBOL like read_variable at (callee) FRAME's function
      entry.  SYMBOL should be a function parameter, otherwise
      NO_ENTRY_VALUE_ERROR will be thrown.  */
   struct value *(*read_variable_at_entry) (struct symbol *symbol,
-					   struct frame_info *frame);
+					   frame_info_ptr frame);
 
   /* Find the "symbol_needs_kind" value for the given symbol.  This
      value determines whether reading the symbol needs memory (e.g., a
@@ -1022,7 +1112,7 @@ struct symbol_computed_ops
 
   void (*generate_c_location) (struct symbol *symbol, string_file *stream,
 			       struct gdbarch *gdbarch,
-			       unsigned char *registers_used,
+			       std::vector<bool> &registers_used,
 			       CORE_ADDR pc, const char *result_name);
 
 };
@@ -1057,7 +1147,7 @@ struct symbol_block_ops
      computed with DW_AT_static_link and this method must be used to compute
      the corresponding DW_AT_frame_base attribute.  */
   CORE_ADDR (*get_frame_base) (struct symbol *framefunc,
-			       struct frame_info *frame);
+			       frame_info_ptr frame);
 };
 
 /* Functions used with LOC_REGISTER and LOC_REGPARM_ADDR.  */
@@ -1099,38 +1189,219 @@ enum symbol_subclass_kind
   SYMBOL_RUST_VTABLE
 };
 
+extern gdb::array_view<const struct symbol_impl> symbol_impls;
+
 /* This structure is space critical.  See space comments at the top.  */
 
 struct symbol : public general_symbol_info, public allocate_on_obstack
 {
   symbol ()
     /* Class-initialization of bitfields is only allowed in C++20.  */
-    : domain (UNDEF_DOMAIN),
-      aclass_index (0),
-      is_objfile_owned (1),
-      is_argument (0),
-      is_inlined (0),
+    : m_domain (UNDEF_DOMAIN),
+      m_aclass_index (0),
+      m_is_objfile_owned (1),
+      m_is_argument (0),
+      m_is_inlined (0),
       maybe_copied (0),
-      subclass (SYMBOL_NONE)
+      subclass (SYMBOL_NONE),
+      m_artificial (false)
     {
       /* We can't use an initializer list for members of a base class, and
-         general_symbol_info needs to stay a POD type.  */
+	 general_symbol_info needs to stay a POD type.  */
       m_name = nullptr;
-      value.ivalue = 0;
+      m_value.ivalue = 0;
       language_specific.obstack = nullptr;
       m_language = language_unknown;
       ada_mangled = 0;
-      section = -1;
+      m_section = -1;
       /* GCC 4.8.5 (on CentOS 7) does not correctly compile class-
-         initialization of unions, so we initialize it manually here.  */
+	 initialization of unions, so we initialize it manually here.  */
       owner.symtab = nullptr;
     }
 
   symbol (const symbol &) = default;
+  symbol &operator= (const symbol &) = default;
+
+  void set_aclass_index (unsigned int aclass_index)
+  {
+    m_aclass_index = aclass_index;
+  }
+
+  const symbol_impl &impl () const
+  {
+    return symbol_impls[this->m_aclass_index];
+  }
+
+  address_class aclass () const
+  {
+    return this->impl ().aclass;
+  }
+
+  domain_enum domain () const
+  {
+    return m_domain;
+  }
+
+  void set_domain (domain_enum domain)
+  {
+    m_domain = domain;
+  }
+
+  bool is_objfile_owned () const
+  {
+    return m_is_objfile_owned;
+  }
+
+  void set_is_objfile_owned (bool is_objfile_owned)
+  {
+    m_is_objfile_owned = is_objfile_owned;
+  }
+
+  bool is_argument () const
+  {
+    return m_is_argument;
+  }
+
+  void set_is_argument (bool is_argument)
+  {
+    m_is_argument = is_argument;
+  }
+
+  bool is_inlined () const
+  {
+    return m_is_inlined;
+  }
+
+  void set_is_inlined (bool is_inlined)
+  {
+    m_is_inlined = is_inlined;
+  }
+
+  bool is_cplus_template_function () const
+  {
+    return this->subclass == SYMBOL_TEMPLATE;
+  }
+
+  struct type *type () const
+  {
+    return m_type;
+  }
+
+  void set_type (struct type *type)
+  {
+    m_type = type;
+  }
+
+  unsigned short line () const
+  {
+    return m_line;
+  }
+
+  void set_line (unsigned short line)
+  {
+    m_line = line;
+  }
+
+  LONGEST value_longest () const
+  {
+    return m_value.ivalue;
+  }
+
+  void set_value_longest (LONGEST value)
+  {
+    m_value.ivalue = value;
+  }
+
+  CORE_ADDR value_address () const
+  {
+    if (this->maybe_copied)
+      return get_symbol_address (this);
+    else
+      return m_value.address;
+  }
+
+  void set_value_address (CORE_ADDR address)
+  {
+    m_value.address = address;
+  }
+
+  const gdb_byte *value_bytes () const
+  {
+    return m_value.bytes;
+  }
+
+  void set_value_bytes (const gdb_byte *bytes)
+  {
+    m_value.bytes = bytes;
+  }
+
+  const common_block *value_common_block () const
+  {
+    return m_value.common_block;
+  }
+
+  void set_value_common_block (const common_block *common_block)
+  {
+    m_value.common_block = common_block;
+  }
+
+  const block *value_block () const
+  {
+    return m_value.block;
+  }
+
+  void set_value_block (const block *block)
+  {
+    m_value.block = block;
+  }
+
+  symbol *value_chain () const
+  {
+    return m_value.chain;
+  }
+
+  void set_value_chain (symbol *sym)
+  {
+    m_value.chain = sym;
+  }
+
+  /* Return true if this symbol was marked as artificial.  */
+  bool is_artificial () const
+  {
+    return m_artificial;
+  }
+
+  /* Set the 'artificial' flag on this symbol.  */
+  void set_is_artificial (bool artificial)
+  {
+    m_artificial = artificial;
+  }
+
+  /* Return the OBJFILE of this symbol.  It is an error to call this
+     if is_objfile_owned is false, which only happens for
+     architecture-provided types.  */
+
+  struct objfile *objfile () const;
+
+  /* Return the ARCH of this symbol.  */
+
+  struct gdbarch *arch () const;
+
+  /* Return the symtab of this symbol.  It is an error to call this if
+     is_objfile_owned is false, which only happens for
+     architecture-provided types.  */
+
+  struct symtab *symtab () const;
+
+  /* Set the symtab of this symbol to SYMTAB.  It is an error to call
+     this if is_objfile_owned is false, which only happens for
+     architecture-provided types.  */
+
+  void set_symtab (struct symtab *symtab);
 
   /* Data type of value */
 
-  struct type *type = nullptr;
+  struct type *m_type = nullptr;
 
   /* The owner of this symbol.
      Which one to use is defined by symbol.is_objfile_owned.  */
@@ -1148,25 +1419,25 @@ struct symbol : public general_symbol_info, public allocate_on_obstack
 
   /* Domain code.  */
 
-  ENUM_BITFIELD(domain_enum_tag) domain : SYMBOL_DOMAIN_BITS;
+  ENUM_BITFIELD(domain_enum) m_domain : SYMBOL_DOMAIN_BITS;
 
   /* Address class.  This holds an index into the 'symbol_impls'
      table.  The actual enum address_class value is stored there,
      alongside any per-class ops vectors.  */
 
-  unsigned int aclass_index : SYMBOL_ACLASS_BITS;
+  unsigned int m_aclass_index : SYMBOL_ACLASS_BITS;
 
   /* If non-zero then symbol is objfile-owned, use owner.symtab.
        Otherwise symbol is arch-owned, use owner.arch.  */
 
-  unsigned int is_objfile_owned : 1;
+  unsigned int m_is_objfile_owned : 1;
 
   /* Whether this is an argument.  */
 
-  unsigned is_argument : 1;
+  unsigned m_is_argument : 1;
 
   /* Whether this is an inlined function (class LOC_BLOCK only).  */
-  unsigned is_inlined : 1;
+  unsigned m_is_inlined : 1;
 
   /* For LOC_STATIC only, if this is set, then the symbol might be
      subject to copy relocation.  In this case, a minimal symbol
@@ -1180,6 +1451,10 @@ struct symbol : public general_symbol_info, public allocate_on_obstack
 
   ENUM_BITFIELD (symbol_subclass_kind) subclass : 2;
 
+  /* Whether this symbol is artificial.  */
+
+  bool m_artificial : 1;
+
   /* Line number of this symbol's definition, except for inlined
      functions.  For an inlined function (class LOC_BLOCK and
      SYMBOL_INLINED set) this is the line number of the function's call
@@ -1191,7 +1466,7 @@ struct symbol : public general_symbol_info, public allocate_on_obstack
      to debug files longer than 64K lines?  What about machine
      generated programs?  */
 
-  unsigned short line = 0;
+  unsigned short m_line = 0;
 
   /* An arbitrary data pointer, allowing symbol readers to record
      additional information on a per-symbol basis.  Note that this data
@@ -1223,25 +1498,12 @@ struct block_symbol
   const struct block *block;
 };
 
-extern const struct symbol_impl *symbol_impls;
-
 /* Note: There is no accessor macro for symbol.owner because it is
    "private".  */
 
-#define SYMBOL_DOMAIN(symbol)	(symbol)->domain
-#define SYMBOL_IMPL(symbol)		(symbol_impls[(symbol)->aclass_index])
-#define SYMBOL_ACLASS_INDEX(symbol)	(symbol)->aclass_index
-#define SYMBOL_CLASS(symbol)		(SYMBOL_IMPL (symbol).aclass)
-#define SYMBOL_OBJFILE_OWNED(symbol)	((symbol)->is_objfile_owned)
-#define SYMBOL_IS_ARGUMENT(symbol)	(symbol)->is_argument
-#define SYMBOL_INLINED(symbol)		(symbol)->is_inlined
-#define SYMBOL_IS_CPLUS_TEMPLATE_FUNCTION(symbol) \
-  (((symbol)->subclass) == SYMBOL_TEMPLATE)
-#define SYMBOL_TYPE(symbol)		(symbol)->type
-#define SYMBOL_LINE(symbol)		(symbol)->line
-#define SYMBOL_COMPUTED_OPS(symbol)	(SYMBOL_IMPL (symbol).ops_computed)
-#define SYMBOL_BLOCK_OPS(symbol)	(SYMBOL_IMPL (symbol).ops_block)
-#define SYMBOL_REGISTER_OPS(symbol)	(SYMBOL_IMPL (symbol).ops_register)
+#define SYMBOL_COMPUTED_OPS(symbol)	((symbol)->impl ().ops_computed)
+#define SYMBOL_BLOCK_OPS(symbol)	((symbol)->impl ().ops_block)
+#define SYMBOL_REGISTER_OPS(symbol)	((symbol)->impl ().ops_register)
 #define SYMBOL_LOCATION_BATON(symbol)   (symbol)->aux_value
 
 extern int register_symbol_computed_impl (enum address_class,
@@ -1253,31 +1515,9 @@ extern int register_symbol_block_impl (enum address_class aclass,
 extern int register_symbol_register_impl (enum address_class,
 					  const struct symbol_register_ops *);
 
-/* Return the OBJFILE of SYMBOL.
-   It is an error to call this if symbol.is_objfile_owned is false, which
-   only happens for architecture-provided types.  */
-
-extern struct objfile *symbol_objfile (const struct symbol *symbol);
-
-/* Return the ARCH of SYMBOL.  */
-
-extern struct gdbarch *symbol_arch (const struct symbol *symbol);
-
-/* Return the SYMTAB of SYMBOL.
-   It is an error to call this if symbol.is_objfile_owned is false, which
-   only happens for architecture-provided types.  */
-
-extern struct symtab *symbol_symtab (const struct symbol *symbol);
-
-/* Set the symtab of SYMBOL to SYMTAB.
-   It is an error to call this if symbol.is_objfile_owned is false, which
-   only happens for architecture-provided types.  */
-
-extern void symbol_set_symtab (struct symbol *symbol, struct symtab *symtab);
-
 /* An instance of this type is used to represent a C++ template
    function.  A symbol is really of this type iff
-   SYMBOL_IS_CPLUS_TEMPLATE_FUNCTION is true.  */
+   symbol::is_cplus_template_function is true.  */
 
 struct template_symbol : public symbol
 {
@@ -1311,6 +1551,10 @@ struct linetable_entry
 
   /* True if this PC is a good location to place a breakpoint for LINE.  */
   unsigned is_stmt : 1;
+
+  /* True if this location is a good location to place a breakpoint after a
+     function prologue.  */
+  bool prologue_end : 1;
 
   /* The address for this entry.  */
   CORE_ADDR pc;
@@ -1356,6 +1600,36 @@ typedef std::vector<CORE_ADDR> section_offsets;
 
 struct symtab
 {
+  struct compunit_symtab *compunit () const
+  {
+    return m_compunit;
+  }
+
+  void set_compunit (struct compunit_symtab *compunit)
+  {
+    m_compunit = compunit;
+  }
+
+  struct linetable *linetable () const
+  {
+    return m_linetable;
+  }
+
+  void set_linetable (struct linetable *linetable)
+  {
+    m_linetable = linetable;
+  }
+
+  enum language language () const
+  {
+    return m_language;
+  }
+
+  void set_language (enum language language)
+  {
+    m_language = language;
+  }
+
   /* Unordered chain of all filetabs in the compunit,  with the exception
      that the "main" source file is the first entry in the list.  */
 
@@ -1363,20 +1637,32 @@ struct symtab
 
   /* Backlink to containing compunit symtab.  */
 
-  struct compunit_symtab *compunit_symtab;
+  struct compunit_symtab *m_compunit;
 
   /* Table mapping core addresses to line numbers for this file.
      Can be NULL if none.  Never shared between different symtabs.  */
 
-  struct linetable *linetable;
+  struct linetable *m_linetable;
 
-  /* Name of this source file.  This pointer is never NULL.  */
+  /* Name of this source file, in a form appropriate to print to the user.
+
+     This pointer is never nullptr.  */
 
   const char *filename;
 
+  /* Filename for this source file, used as an identifier to link with
+     related objects such as associated macro_source_file objects.  It must
+     therefore match the name of any macro_source_file object created for this
+     source file.  The value can be the same as FILENAME if it is known to
+     follow that rule, or another form of the same file name, this is up to
+     the specific debug info reader.
+
+     This pointer is never nullptr.*/
+  const char *filename_for_id;
+
   /* Language of this source file.  */
 
-  enum language language;
+  enum language m_language;
 
   /* Full name of file as found by searching the source path.
      NULL if not yet known.  */
@@ -1384,16 +1670,9 @@ struct symtab
   char *fullname;
 };
 
-#define SYMTAB_COMPUNIT(symtab) ((symtab)->compunit_symtab)
-#define SYMTAB_LINETABLE(symtab) ((symtab)->linetable)
-#define SYMTAB_LANGUAGE(symtab) ((symtab)->language)
-#define SYMTAB_BLOCKVECTOR(symtab) \
-  COMPUNIT_BLOCKVECTOR (SYMTAB_COMPUNIT (symtab))
-#define SYMTAB_OBJFILE(symtab) \
-  COMPUNIT_OBJFILE (SYMTAB_COMPUNIT (symtab))
-#define SYMTAB_PSPACE(symtab) (SYMTAB_OBJFILE (symtab)->pspace)
-#define SYMTAB_DIRNAME(symtab) \
-  COMPUNIT_DIRNAME (SYMTAB_COMPUNIT (symtab))
+/* A range adapter to allowing iterating over all the file tables in a list.  */
+
+using symtab_range = next_range<symtab>;
 
 /* Compunit symtabs contain the actual "symbol table", aka blockvector, as well
    as the list of all source files (what gdb has historically associated with
@@ -1414,29 +1693,161 @@ struct symtab
    This is recorded as:
 
    objfile -> foo.c(cu) -> bar.c(cu) -> NULL
-                |            |
-                v            v
-              foo.c        bar.c
-                |            |
-                v            v
-              foo1.h       foo1.h
-                |            |
-                v            v
-              foo2.h       bar.h
-                |            |
-                v            v
-               NULL         NULL
+		|            |
+		v            v
+	      foo.c        bar.c
+		|            |
+		v            v
+	      foo1.h       foo1.h
+		|            |
+		v            v
+	      foo2.h       bar.h
+		|            |
+		v            v
+	       NULL         NULL
 
    where "foo.c(cu)" and "bar.c(cu)" are struct compunit_symtab objects,
    and the files foo.c, etc. are struct symtab objects.  */
 
 struct compunit_symtab
 {
+  struct objfile *objfile () const
+  {
+    return m_objfile;
+  }
+
+  void set_objfile (struct objfile *objfile)
+  {
+    m_objfile = objfile;
+  }
+
+  symtab_range filetabs () const
+  {
+    return symtab_range (m_filetabs);
+  }
+
+  void add_filetab (symtab *filetab)
+  {
+    if (m_filetabs == nullptr)
+      {
+	m_filetabs = filetab;
+	m_last_filetab = filetab;
+      }
+    else
+      {
+	m_last_filetab->next = filetab;
+	m_last_filetab = filetab;
+      }
+  }
+
+  const char *debugformat () const
+  {
+    return m_debugformat;
+  }
+
+  void set_debugformat (const char *debugformat)
+  {
+    m_debugformat = debugformat;
+  }
+
+  const char *producer () const
+  {
+    return m_producer;
+  }
+
+  void set_producer (const char *producer)
+  {
+    m_producer = producer;
+  }
+
+  const char *dirname () const
+  {
+    return m_dirname;
+  }
+
+  void set_dirname (const char *dirname)
+  {
+    m_dirname = dirname;
+  }
+
+  struct blockvector *blockvector ()
+  {
+    return m_blockvector;
+  }
+
+  const struct blockvector *blockvector () const
+  {
+    return m_blockvector;
+  }
+
+  void set_blockvector (struct blockvector *blockvector)
+  {
+    m_blockvector = blockvector;
+  }
+
+  int block_line_section () const
+  {
+    return m_block_line_section;
+  }
+
+  void set_block_line_section (int block_line_section)
+  {
+    m_block_line_section = block_line_section;
+  }
+
+  bool locations_valid () const
+  {
+    return m_locations_valid;
+  }
+
+  void set_locations_valid (bool locations_valid)
+  {
+    m_locations_valid = locations_valid;
+  }
+
+  bool epilogue_unwind_valid () const
+  {
+    return m_epilogue_unwind_valid;
+  }
+
+  void set_epilogue_unwind_valid (bool epilogue_unwind_valid)
+  {
+    m_epilogue_unwind_valid = epilogue_unwind_valid;
+  }
+
+  struct macro_table *macro_table () const
+  {
+    return m_macro_table;
+  }
+
+  void set_macro_table (struct macro_table *macro_table)
+  {
+    m_macro_table = macro_table;
+  }
+
+  /* Make PRIMARY_FILETAB the primary filetab of this compunit symtab.
+
+     PRIMARY_FILETAB must already be a filetab of this compunit symtab.  */
+
+  void set_primary_filetab (symtab *primary_filetab);
+
+  /* Return the primary filetab of the compunit.  */
+  symtab *primary_filetab () const;
+
+  /* Set m_call_site_htab.  */
+  void set_call_site_htab (htab_t call_site_htab);
+
+  /* Find call_site info for PC.  */
+  call_site *find_call_site (CORE_ADDR pc) const;
+
+  /* Return the language of this compunit_symtab.  */
+  enum language language () const;
+
   /* Unordered chain of all compunit symtabs of this objfile.  */
   struct compunit_symtab *next;
 
   /* Object file from which this symtab information was read.  */
-  struct objfile *objfile;
+  struct objfile *m_objfile;
 
   /* Name of the symtab.
      This is *not* intended to be a usable filename, and is
@@ -1447,52 +1858,52 @@ struct compunit_symtab
      source file (e.g., .c, .cc) is guaranteed to be first.
      Each symtab is a file, either the "main" source file (e.g., .c, .cc)
      or header (e.g., .h).  */
-  struct symtab *filetabs;
+  symtab *m_filetabs;
 
   /* Last entry in FILETABS list.
      Subfiles are added to the end of the list so they accumulate in order,
      with the main source subfile living at the front.
      The main reason is so that the main source file symtab is at the head
      of the list, and the rest appear in order for debugging convenience.  */
-  struct symtab *last_filetab;
+  symtab *m_last_filetab;
 
   /* Non-NULL string that identifies the format of the debugging information,
      such as "stabs", "dwarf 1", "dwarf 2", "coff", etc.  This is mostly useful
      for automated testing of gdb but may also be information that is
      useful to the user.  */
-  const char *debugformat;
+  const char *m_debugformat;
 
   /* String of producer version information, or NULL if we don't know.  */
-  const char *producer;
+  const char *m_producer;
 
   /* Directory in which it was compiled, or NULL if we don't know.  */
-  const char *dirname;
+  const char *m_dirname;
 
   /* List of all symbol scope blocks for this symtab.  It is shared among
      all symtabs in a given compilation unit.  */
-  const struct blockvector *blockvector;
+  struct blockvector *m_blockvector;
 
   /* Section in objfile->section_offsets for the blockvector and
      the linetable.  Probably always SECT_OFF_TEXT.  */
-  int block_line_section;
+  int m_block_line_section;
 
   /* Symtab has been compiled with both optimizations and debug info so that
      GDB may stop skipping prologues as variables locations are valid already
      at function entry points.  */
-  unsigned int locations_valid : 1;
+  unsigned int m_locations_valid : 1;
 
   /* DWARF unwinder for this CU is valid even for epilogues (PC at the return
      instruction).  This is supported by GCC since 4.5.0.  */
-  unsigned int epilogue_unwind_valid : 1;
+  unsigned int m_epilogue_unwind_valid : 1;
 
   /* struct call_site entries for this compilation unit or NULL.  */
-  htab_t call_site_htab;
+  htab_t m_call_site_htab;
 
   /* The macro table for this symtab.  Like the blockvector, this
      is shared between different symtabs in a given compilation unit.
      It's debatable whether it *should* be shared among all the symtabs in
      the given compilation unit, but it currently is.  */
-  struct macro_table *macro_table;
+  struct macro_table *m_macro_table;
 
   /* If non-NULL, then this points to a NULL-terminated vector of
      included compunits.  When searching the static or global
@@ -1510,44 +1921,14 @@ struct compunit_symtab
   struct compunit_symtab *user;
 };
 
-#define COMPUNIT_OBJFILE(cust) ((cust)->objfile)
-#define COMPUNIT_FILETABS(cust) ((cust)->filetabs)
-#define COMPUNIT_DEBUGFORMAT(cust) ((cust)->debugformat)
-#define COMPUNIT_PRODUCER(cust) ((cust)->producer)
-#define COMPUNIT_DIRNAME(cust) ((cust)->dirname)
-#define COMPUNIT_BLOCKVECTOR(cust) ((cust)->blockvector)
-#define COMPUNIT_BLOCK_LINE_SECTION(cust) ((cust)->block_line_section)
-#define COMPUNIT_LOCATIONS_VALID(cust) ((cust)->locations_valid)
-#define COMPUNIT_EPILOGUE_UNWIND_VALID(cust) ((cust)->epilogue_unwind_valid)
-#define COMPUNIT_CALL_SITE_HTAB(cust) ((cust)->call_site_htab)
-#define COMPUNIT_MACRO_TABLE(cust) ((cust)->macro_table)
-
-/* A range adapter to allowing iterating over all the file tables
-   within a compunit.  */
-
-struct compunit_filetabs : public next_adapter<struct symtab>
-{
-  compunit_filetabs (struct compunit_symtab *cu)
-    : next_adapter<struct symtab> (cu->filetabs)
-  {
-  }
-};
-
-/* Return the primary symtab of CUST.  */
-
-extern struct symtab *
-  compunit_primary_filetab (const struct compunit_symtab *cust);
-
-/* Return the language of CUST.  */
-
-extern enum language compunit_language (const struct compunit_symtab *cust);
+using compunit_symtab_range = next_range<compunit_symtab>;
 
 /* Return true if this symtab is the "main" symtab of its compunit_symtab.  */
 
 static inline bool
 is_main_symtab_of_compunit_symtab (struct symtab *symtab)
 {
-  return symtab == COMPUNIT_FILETABS (SYMTAB_COMPUNIT (symtab));
+  return symtab == symtab->compunit ()->primary_filetab ();
 }
 
 
@@ -1823,7 +2204,7 @@ extern struct compunit_symtab *
 
 extern bool find_pc_line_pc_range (CORE_ADDR, CORE_ADDR *, CORE_ADDR *);
 
-extern void reread_symbols (void);
+extern void reread_symbols (int from_tty);
 
 /* Look up a type named NAME in STRUCT_DOMAIN in the current language.
    The type returned must not be opaque -- i.e., must have at least one field
@@ -1858,10 +2239,10 @@ struct gnu_ifunc_fns
 				 CORE_ADDR *function_address_p);
 
   /* See elf_gnu_ifunc_resolver_stop for its real implementation.  */
-  void (*gnu_ifunc_resolver_stop) (struct breakpoint *b);
+  void (*gnu_ifunc_resolver_stop) (code_breakpoint *b);
 
   /* See elf_gnu_ifunc_resolver_return_stop for its real implementation.  */
-  void (*gnu_ifunc_resolver_return_stop) (struct breakpoint *b);
+  void (*gnu_ifunc_resolver_return_stop) (code_breakpoint *b);
 };
 
 #define gnu_ifunc_resolve_addr gnu_ifunc_fns_p->gnu_ifunc_resolve_addr
@@ -1872,7 +2253,7 @@ struct gnu_ifunc_fns
 
 extern const struct gnu_ifunc_fns *gnu_ifunc_fns_p;
 
-extern CORE_ADDR find_solib_trampoline_target (struct frame_info *, CORE_ADDR);
+extern CORE_ADDR find_solib_trampoline_target (frame_info_ptr, CORE_ADDR);
 
 struct symtab_and_line
 {
@@ -2126,7 +2507,7 @@ public:
 private:
   /* The kind of symbols are we searching for.
      VARIABLES_DOMAIN - Search all symbols, excluding functions, type
-                        names, and constants (enums).
+			names, and constants (enums).
      FUNCTIONS_DOMAIN - Search all functions..
      TYPES_DOMAIN     - Search all type names.
      MODULES_DOMAIN   - Search all Fortran modules.
@@ -2231,7 +2612,51 @@ void fixup_section (struct general_symbol_info *ginfo,
 
 extern unsigned int symtab_create_debug;
 
+/* Print a "symtab-create" debug statement.  */
+
+#define symtab_create_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (symtab_create_debug >= 1, "symtab-create", fmt, ##__VA_ARGS__)
+
+/* Print a verbose "symtab-create" debug statement, only if
+   "set debug symtab-create" is set to 2 or higher.  */
+
+#define symtab_create_debug_printf_v(fmt, ...) \
+  debug_prefixed_printf_cond (symtab_create_debug >= 2, "symtab-create", fmt, ##__VA_ARGS__)
+
 extern unsigned int symbol_lookup_debug;
+
+/* Return true if symbol-lookup debug is turned on at all.  */
+
+static inline bool
+symbol_lookup_debug_enabled ()
+{
+  return symbol_lookup_debug > 0;
+}
+
+/* Return true if symbol-lookup debug is turned to verbose mode.  */
+
+static inline bool
+symbol_lookup_debug_enabled_v ()
+{
+  return symbol_lookup_debug > 1;
+}
+
+/* Print a "symbol-lookup" debug statement if symbol_lookup_debug is >= 1.  */
+
+#define symbol_lookup_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (symbol_lookup_debug_enabled (),	\
+			      "symbol-lookup", fmt, ##__VA_ARGS__)
+
+/* Print a "symbol-lookup" debug statement if symbol_lookup_debug is >= 2.  */
+
+#define symbol_lookup_debug_printf_v(fmt, ...) \
+  debug_prefixed_printf_cond (symbol_lookup_debug_enabled_v (), \
+			      "symbol-lookup", fmt, ##__VA_ARGS__)
+
+/* Print "symbol-lookup" enter/exit debug statements.  */
+
+#define SYMBOL_LOOKUP_SCOPED_DEBUG_ENTER_EXIT \
+  scoped_debug_enter_exit (symbol_lookup_debug_enabled, "symbol-lookup")
 
 extern bool basenames_may_differ;
 
@@ -2373,5 +2798,64 @@ private:
   /* Matching non-debug symbols.  */
   std::vector<bound_minimal_symbol> m_minimal_symbols;
 };
+
+/* Class used to encapsulate the filename filtering for the "info sources"
+   command.  */
+
+struct info_sources_filter
+{
+  /* If filename filtering is being used (see M_C_REGEXP) then which part
+     of the filename is being filtered against?  */
+  enum class match_on
+  {
+    /* Match against the full filename.  */
+    FULLNAME,
+
+    /* Match only against the directory part of the full filename.  */
+    DIRNAME,
+
+    /* Match only against the basename part of the full filename.  */
+    BASENAME
+  };
+
+  /* Create a filter of MATCH_TYPE using regular expression REGEXP.  If
+     REGEXP is nullptr then all files will match the filter and MATCH_TYPE
+     is ignored.
+
+     The string pointed too by REGEXP must remain live and unchanged for
+     this lifetime of this object as the object only retains a copy of the
+     pointer.  */
+  info_sources_filter (match_on match_type, const char *regexp);
+
+  DISABLE_COPY_AND_ASSIGN (info_sources_filter);
+
+  /* Does FULLNAME match the filter defined by this object, return true if
+     it does, otherwise, return false.  If there is no filtering defined
+     then this function will always return true.  */
+  bool matches (const char *fullname) const;
+
+private:
+
+  /* The type of filtering in place.  */
+  match_on m_match_type;
+
+  /* Points to the original regexp used to create this filter.  */
+  const char *m_regexp;
+
+  /* A compiled version of M_REGEXP.  This object is only given a value if
+     M_REGEXP is not nullptr and is not the empty string.  */
+  gdb::optional<compiled_regex> m_c_regexp;
+};
+
+/* Perform the core of the 'info sources' command.
+
+   FILTER is used to perform regular expression based filtering on the
+   source files that will be displayed.
+
+   Output is written to UIOUT in CLI or MI style as appropriate.  */
+
+extern void info_sources_worker (struct ui_out *uiout,
+				 bool group_by_objfile,
+				 const info_sources_filter &filter);
 
 #endif /* !defined(SYMTAB_H) */

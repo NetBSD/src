@@ -1,4 +1,4 @@
-# Copyright 2003-2023 Free Software Foundation, Inc.
+# Copyright 2003-2024 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,11 +21,7 @@
 # This file uses e500-regs.c for input.
 #
 
-
-if {![istarget "powerpc-*eabispe"]} {
-    verbose "Skipping e500 register tests."
-    return
-}
+require {istarget "powerpc-*eabispe"}
 
 set testfile "e500-regs"
 set binfile ${objdir}/${subdir}/${testfile}
@@ -75,7 +71,7 @@ for {set i 0} {$i < 32} {incr i 1} {
         gdb_test "info reg ev$i" "ev$i.*$vector_register" "info reg ev$i"
 }
 
-# Test wether the GPRs are updated accordingly. (GPRs are just the lower
+# Test whether the GPRs are updated accordingly. (GPRs are just the lower
 # 32 bits of the EV registers.)
 
 set general_register "0x1\[ \t\]+1"
@@ -140,10 +136,7 @@ gdb_expect_list "info vector" ".*$gdb_prompt $" {
 # We must restart everything, because we have set important registers to
 # some unusual values.
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart $binfile
 if {![runto_main]} {
     return 0
 }

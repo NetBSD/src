@@ -1,5 +1,5 @@
 /* Simulator option handling.
-   Copyright (C) 1996-2023 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -496,7 +496,7 @@ standard_option_handler (SIM_DESC sd, sim_cpu *cpu, int opt,
 
     case OPTION_ENV_UNSET:
       {
-	int i, varlen;
+	int varlen;
 	char **envp;
 
 	if (STATE_PROG_ENVP (sd) == NULL)
@@ -983,7 +983,7 @@ sim_print_version (SIM_DESC sd, int is_command)
 {
   sim_io_printf (sd, "GNU simulator %s%s\n", PKGVERSION, version);
 
-  sim_io_printf (sd, "Copyright (C) 2022 Free Software Foundation, Inc.\n");
+  sim_io_printf (sd, "Copyright (C) 2024 Free Software Foundation, Inc.\n");
 
   /* Following the copyright is a brief statement that the program is
      free software, that users are free to copy and change it on
@@ -1078,7 +1078,6 @@ complete_option_list (char **ret, size_t *cnt, const struct option_list *ol,
 		      const char *text, const char *word)
 {
   const OPTION *opt = NULL;
-  int argi;
   size_t len = strlen (word);
 
   for ( ; ol != NULL; ol = ol->next)

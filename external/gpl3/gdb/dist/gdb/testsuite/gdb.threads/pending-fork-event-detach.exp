@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2023 Free Software Foundation, Inc.
+# Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,6 +42,17 @@ if { [is_remote target] } {
     # If the target is remote, write the file in whatever the current working
     # directory is, with a somewhat unique name.
     set touch_file_path ${testfile}-flag
+
+    # Now get the remote name, by creating the file on build and copying it to
+    # target.
+    remote_exec build touch $touch_file_path
+    set target_touch_file_path [remote_download target $touch_file_path]
+
+    # Clean up.
+    remote_file build delete $touch_file_path
+    remote_file target delete $target_touch_file_path
+
+    set touch_file_path $target_touch_file_path
 } else {
     set touch_file_path [standard_output_file flag]
 }
@@ -51,11 +62,13 @@ if { [gdb_compile "$srcdir/$subdir/$srcfile2" $touch_file_bin executable $opts] 
     return
 }
 
+set target_touch_file_bin [gdb_remote_download target $touch_file_bin]
+
 proc do_test { target-non-stop who_forks fork_function stop_mode } {
     set opts [list \
 	debug \
 	"additional_flags=-DFORK_FUNCTION=$fork_function" \
-	"additional_flags=-DTOUCH_FILE_BIN=\"$::touch_file_bin\""]
+	"additional_flags=-DTOUCH_FILE_BIN=\"$::target_touch_file_bin\""]
 
     # WHO_FORKS says which of the main or other thread calls (v)fork.  The
     # thread that does not call (v)fork is the one who tries to step.

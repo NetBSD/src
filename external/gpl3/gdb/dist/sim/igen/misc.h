@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -19,7 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-
+#ifndef IGEN_MISC_H
+#define IGEN_MISC_H
 
 /* Frustrating header junk */
 
@@ -49,19 +50,19 @@ struct _line_ref
 
 /* Error appends a new line, warning and notify do not */
 typedef void error_func (const line_ref *line, const char *msg, ...)
-  ATTRIBUTE_PRINTF (2, 3);
+  ATTRIBUTE_PRINTF_2;
 
-extern ATTRIBUTE_NORETURN error_func error;
-extern error_func warning;
-extern error_func notify;
+extern error_func error ATTRIBUTE_PRINTF_2 ATTRIBUTE_NORETURN;
+extern error_func warning ATTRIBUTE_PRINTF_2;
+extern error_func notify ATTRIBUTE_PRINTF_2;
 
 
-#define ERROR(EXPRESSION) \
+#define ERROR(EXPRESSION, args...) \
 do { \
   line_ref line; \
   line.file_name = filter_filename (__FILE__); \
   line.line_nr = __LINE__; \
-  error (&line, EXPRESSION "\n"); \
+  error (&line, EXPRESSION "\n", ## args); \
 } while (0)
 
 #define ASSERT(EXPRESSION) \
@@ -102,3 +103,5 @@ name_map;
 extern int name2i (const char *name, const name_map * map);
 
 extern const char *i2name (const int i, const name_map * map);
+
+#endif /* IGEN_MISC_H */

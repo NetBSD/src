@@ -1,4 +1,4 @@
-# Copyright 2000-2023 Free Software Foundation, Inc.
+# Copyright 2000-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,11 +25,6 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    return
-}
-
 standard_testfile
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
@@ -37,10 +32,9 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
      return -1
 }
 
-mi_delete_breakpoints
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load ${binfile}
+if {[mi_clean_restart $binfile]} {
+    return
+}
 
 proc test_stack_frame_listing {} {
     global mi_gdb_prompt
@@ -71,9 +65,10 @@ proc test_stack_frame_listing {} {
 	"234\\^error,msg=\"-stack-list-frames: Usage.*FRAME_LOW FRAME_HIGH.*\"" \
 	"stack frame listing wrong"
 
-    mi_gdb_test "235-stack-info-frame" \
-	"235\\^done,frame=\{level=\"0\",addr=\"$hex\",func=\"callee4\",file=\".*${srcfile}\",fullname=\"${fullname_syntax}${srcfile}\",line=\"$callee4_begin\",arch=\"$any\"\}" \
-	"selected frame listing"
+    mi_info_frame "selected frame listing" \
+	-level 0 -addr $hex -func callee4 -file ".*${srcfile}" \
+	-fullname "${fullname_syntax}${srcfile}" -line $callee4_begin \
+	-arch $any
 
     mi_gdb_test "236-stack-list-frames 1 300" \
 	"236\\^done,stack=\\\[frame=\{level=\"1\",addr=\"$hex\",func=\"callee3\",.*\},frame=\{level=\"2\",addr=\"$hex\",func=\"callee2\",.*\},frame=\{level=\"3\",addr=\"$hex\",func=\"callee1\",.*\}\\\]" \
@@ -93,6 +88,9 @@ proc test_stack_args_listing {} {
     # -stack-list-arguments 1 1 1
     # -stack-list-arguments 1 1 3
     # -stack-list-arguments 
+    # -stack-list-arguments 1 1 300
+    # -stack-list-arguments 2 1 1
+    # -stack-list-arguments --simple-values 1 1
 
     mi_gdb_test "231-stack-list-arguments 0" \
 	"231\\^done,stack-args=\\\[frame=\{level=\"0\",args=\\\[\\\]\},frame=\{level=\"1\",args=\\\[name=\"strarg\"\\\]\},frame=\{level=\"2\",args=\\\[name=\"intarg\",name=\"strarg\"\\\]\},frame=\{level=\"3\",args=\\\[name=\"intarg\",name=\"strarg\",name=\"fltarg\"\\\]\},frame=\{level=\"4\",args=\\\[\\\]\}\\\]" \
@@ -125,6 +123,14 @@ proc test_stack_args_listing {} {
     mi_gdb_test "235-stack-list-arguments 1 1 300" \
 	"235\\^done,stack-args=\\\[frame=\{level=\"1\",args=\\\[\{name=\"strarg\",value=\"$hex \\\\\"A string argument.\\\\\"\"\}\\\]\},frame=\{level=\"2\",args=\\\[\{name=\"intarg\",value=\"2\"\},\{name=\"strarg\",value=\"$hex \\\\\"A string argument.\\\\\"\"\}\\\]\},frame=\{level=\"3\",args=\\\[\{name=\"intarg\",value=\"2\"\},\{name=\"strarg\",value=\"$hex \\\\\"A string argument.\\\\\"\"\},\{name=\"fltarg\",value=\"3.5\"\}\\\]\},frame=\{level=\"4\",args=\\\[\\\]\}\\\]" \
 	"stack args listing 1 1 300"
+
+    mi_gdb_test "236-stack-list-arguments 2 1 1" \
+	"236\\^done,stack-args=\\\[frame=\\{level=\"1\",args=\\\[\\{name=\"strarg\",type=\"char \\*\",value=\"$hex \\\\\"A string argument.\\\\\"\"\\}\\\]\\}\\\]" \
+	"stack args listing 2 1 1"
+
+    mi_gdb_test "237-stack-list-arguments --simple-values 1 1" \
+	"237\\^done,stack-args=\\\[frame=\\{level=\"1\",args=\\\[\\{name=\"strarg\",type=\"char \\*\",value=\"$hex \\\\\"A string argument.\\\\\"\"\\}\\\]\\}\\\]" \
+	"stack args listing --simple-values 1 1"
 }
 
 proc test_stack_info_depth {} {
@@ -163,7 +169,6 @@ proc test_stack_locals_listing {} {
     # -stack-list-locals 0 (--no-values)
     # -stack-list-locals 1 (--all-values)
     # -stack-list-locals 2 (--simple-values)
-    # -stack-list-arguments 
 
     mi_gdb_test "232-stack-list-locals 0" \
 	"232\\^done,locals=\\\[name=\"A\",name=\"B\",name=\"C\",name=\"D\"\\\]" \
@@ -178,6 +183,10 @@ proc test_stack_locals_listing {} {
     mi_gdb_test "232-stack-list-locals 1" \
 	"232\\^done,locals=\\\[\{name=\"A\",value=\"1\"\},\{name=\"B\",value=\"2\"\},\{name=\"C\",value=\"3\"\},\{name=\"D\",value=\"\\{0, 1, 2\\}\"\}\\\]" \
 	"stack locals listing of names and values"
+
+    mi_gdb_test "232-stack-list-locals 2" \
+	"232\\^done,locals=\\\[\{name=\"A\",type=\"int\",value=\"1\"\},\{name=\"B\",type=\"int\",value=\"2\"\},\{name=\"C\",type=\"int\",value=\"3\"\},\{name=\"D\",type=\"int \\\[3\\\]\"\}\\\]" \
+	"stack locals listing 2"
 
     mi_gdb_test "232-stack-list-locals --simple-values" \
 	"232\\^done,locals=\\\[\{name=\"A\",type=\"int\",value=\"1\"\},\{name=\"B\",type=\"int\",value=\"2\"\},\{name=\"C\",type=\"int\",value=\"3\"\},\{name=\"D\",type=\"int \\\[3\\\]\"\}\\\]" \
@@ -208,4 +217,3 @@ test_stack_info_depth
 
 
 mi_gdb_exit
-return 0

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,6 +39,8 @@ if { $lang == "c++" && [test_compiler_info clang*] } {
     # particular warning in order to build.
     lappend compile_flags "additional_flags=-Wno-tautological-compare"
 }
+
+lappend_include_file compile_flags $srcdir/lib/attributes.h
 
 # Given N (0..25), return the corresponding alphabetic letter in upper
 # case.
@@ -167,7 +169,7 @@ if [support_complex_tests] {
     }
 }
 
-if ![gdb_skip_float_test] {
+if {[allow_float_test]} {
     foreach ta $float_types {
 	start_gdb_and_run_tests $lang $ta
     }

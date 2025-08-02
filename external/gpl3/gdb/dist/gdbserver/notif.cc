@@ -1,5 +1,5 @@
 /* Notification to GDB.
-   Copyright (C) 1989-2023 Free Software Foundation, Inc.
+   Copyright (C) 1989-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -47,7 +47,6 @@
 
    # 3 is done by function 'handle_notif_ack'.  */
 
-#include "server.h"
 #include "notif.h"
 
 static struct notif_server *notifs[] =

@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,10 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { ![support_displaced_stepping] } { 
-    unsupported "displaced stepping"
-    return -1
-}
+require support_displaced_stepping
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
@@ -76,9 +73,10 @@ mi_gdb_test "-thread-select 5" "\\^done.*" "select thread 5"
 mi_delete_breakpoints
 
 # Recreate the same breakpoint, but this time, specific to thread 5.
-mi_gdb_test "234-break-insert -p 5 $srcfile:$bkpt_line" \
-    "234\\^done,bkpt=\{number=\"3\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\".*\",func=\"thread_function\",file=\".*\",fullname=\".*\",line=\".*\",thread-groups=\\\[\".*\"\\\],thread=\"5\",thread=\"5\",times=\"0\",original-location=\".*\"\}" \
-    "thread specific breakpoint at thread_function" 
+mi_create_breakpoint "-p 5 $srcfile:$bkpt_line" \
+    "thread specific breakpoint at thread_function" \
+    -number "3" -type "breakpoint" -disp "keep" -enabled "y" \
+    -func "thread_function" -line "$bkpt_line" -thread "5" -times "0"
 
 # Resume all threads.  Only thread 5 should report a stop.
 

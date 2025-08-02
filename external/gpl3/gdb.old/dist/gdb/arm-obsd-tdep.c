@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/arm.
 
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2023 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,7 @@
 
 static void
 armobsd_sigframe_init (const struct tramp_frame *self,
-		       struct frame_info *this_frame,
+		       frame_info_ptr this_frame,
 		       struct trad_frame_cache *cache,
 		       CORE_ADDR func)
 {
@@ -76,7 +76,7 @@ static void
 armobsd_init_abi (struct gdbarch_info info,
 		  struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  arm_gdbarch_tdep *tdep = gdbarch_tdep<arm_gdbarch_tdep> (gdbarch);
 
   if (tdep->fp_model == ARM_FLOAT_AUTO)
     tdep->fp_model = ARM_FLOAT_SOFT_VFP;

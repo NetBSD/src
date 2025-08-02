@@ -5,16 +5,16 @@
 #include "osabi.h"
 #include "target-descriptions.h"
 
-struct target_desc *tdesc_powerpc_e500;
+const struct target_desc *tdesc_powerpc_e500;
 static void
 initialize_tdesc_powerpc_e500 (void)
 {
-  struct target_desc *result = allocate_target_description ();
-  set_tdesc_architecture (result, bfd_scan_arch ("powerpc:e500"));
+  target_desc_up result = allocate_target_description ();
+  set_tdesc_architecture (result.get (), bfd_scan_arch ("powerpc:e500"));
 
   struct tdesc_feature *feature;
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.core");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.core");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "r1", 1, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "r2", 2, 1, NULL, 32, "uint32");
@@ -54,7 +54,7 @@ initialize_tdesc_powerpc_e500 (void)
   tdesc_create_reg (feature, "ctr", 68, 1, NULL, 32, "uint32");
   tdesc_create_reg (feature, "xer", 69, 1, NULL, 32, "uint32");
 
-  feature = tdesc_create_feature (result, "org.gnu.gdb.power.spe");
+  feature = tdesc_create_feature (result.get (), "org.gnu.gdb.power.spe");
   tdesc_create_reg (feature, "ev0h", 32, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "ev1h", 33, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "ev2h", 34, 1, NULL, 32, "int");
@@ -90,5 +90,5 @@ initialize_tdesc_powerpc_e500 (void)
   tdesc_create_reg (feature, "acc", 73, 1, NULL, 64, "int");
   tdesc_create_reg (feature, "spefscr", 74, 1, NULL, 32, "int");
 
-  tdesc_powerpc_e500 = result;
+  tdesc_powerpc_e500 = result.release ();
 }
