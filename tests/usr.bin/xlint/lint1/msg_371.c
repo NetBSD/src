@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_371.c,v 1.2 2024/04/12 05:17:48 rillig Exp $	*/
+/*	$NetBSD: msg_371.c,v 1.2.2.1 2025/08/02 05:58:18 perseant Exp $	*/
 # 3 "msg_371.c"
 
 // Test for message: bit position '%.*s' (%ju) in '%.*s' out of range %u..%u [371]
@@ -14,7 +14,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 example(unsigned u32, uint64_t u64)

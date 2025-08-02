@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.88 2024/05/12 17:26:50 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.88.2.1 2025/08/02 05:57:45 perseant Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.88 2024/05/12 17:26:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.88.2.1 2025/08/02 05:57:45 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
+#include "opt_mqueue.h"
 #endif
 
 #include <sys/param.h>
@@ -71,6 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.88 2024/05/12 17:26:50 christos E
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
+#ifdef MQUEUE
+#include <sys/mqueue.h>
+#endif
 
 #include <miscfs/procfs/procfs.h>
 
@@ -82,6 +86,13 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.88 2024/05/12 17:26:50 christos E
 
 extern struct devsw_conv *devsw_conv;
 extern int max_devsw_convs;
+#ifdef MQUEUE
+extern u_int mq_open_max;
+extern u_int mq_max_msgsize;
+extern u_int mq_def_maxmsg;
+extern u_int mq_max_maxmsg;
+#endif
+
 
 #define PGTOB(p)	((unsigned long)(p) << PAGE_SHIFT)
 #define PGTOKB(p)	((unsigned long)(p) << (PAGE_SHIFT - 10))
@@ -896,4 +907,65 @@ procfs_dosysvipc_shm(struct lwp *curl, struct proc *p,
 out:
 	free(bf, M_TEMP);
 	return error;
+}
+
+#ifdef MQUEUE
+#define print_uint(value, uio) PFS_print_uint(value, uio);
+
+static int
+PFS_print_uint(unsigned int value, struct uio *uio)
+{
+	char *bf;
+	int offset = 0;
+	int error = EFBIG;
+
+	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
+	offset += snprintf(bf, LBFSZ, "%u\n", value);
+	if (offset >= LBFSZ)
+		goto out;
+
+	error = uiomove_frombuf(bf, offset, uio);
+out:
+	free(bf, M_TEMP);
+	return error;
+}
+#else
+
+#define print_uint(value, uio) EINVAL
+
+#endif
+
+int
+procfs_domq_msg_def(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	return print_uint(mq_def_maxmsg, uio);
+}
+
+int
+procfs_domq_msg_max(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	return print_uint(mq_max_maxmsg, uio);
+}
+
+int
+procfs_domq_siz_def(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	return print_uint(MQ_DEF_MSGSIZE, uio);
+}
+
+int
+procfs_domq_siz_max(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	return print_uint(mq_max_msgsize, uio);
+}
+
+int
+procfs_domq_qmax(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	return print_uint(mq_open_max, uio);
 }

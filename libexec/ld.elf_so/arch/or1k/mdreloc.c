@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.4 2023/06/04 01:24:57 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.4.2.1 2025/08/02 05:55:02 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.4 2023/06/04 01:24:57 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.4.2.1 2025/08/02 05:55:02 perseant Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -43,6 +43,8 @@ __RCSID("$NetBSD: mdreloc.c,v 1.4 2023/06/04 01:24:57 joerg Exp $");
 
 #include "debug.h"
 #include "rtld.h"
+
+#include <machine/lwp_private.h>
 
 void _rtld_bind_start(void);
 Elf_Addr _rtld_bind(const Obj_Entry *, Elf_Word);
@@ -247,7 +249,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 		return 0;
 
 	value = (Elf_Addr)(defobj->relocbase + def->st_value);
-	rdbg(("bind now/fixup in %s --> new=%p", 
+	rdbg(("bind now/fixup in %s --> new=%p",
 	    defobj->strtab + def->st_name, (void *)value));
 
 	/*
@@ -273,7 +275,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	new_value = 0;	/* XXX gcc */
 
 	_rtld_shared_enter();
-	err = _rtld_relocate_plt_object(obj, rela, reloff, &new_value); 
+	err = _rtld_relocate_plt_object(obj, rela, reloff, &new_value);
 	if (err)
 		_rtld_die();
 	_rtld_shared_exit();
@@ -286,7 +288,7 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 	int reloff;
-	
+
 	for (rela = obj->pltrela, reloff = 0; rela < obj->pltrelalim; rela++, reloff++) {
 		if (_rtld_relocate_plt_object(obj, rela, reloff, NULL) < 0)
 			return -1;

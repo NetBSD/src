@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.89 2022/09/20 02:23:37 knakahara Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.89.10.1 2025/08/02 05:57:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.89 2022/09/20 02:23:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.89.10.1 2025/08/02 05:57:51 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -487,14 +487,10 @@ send_again:
 
 	secs = timo;
 	for (;;) {
-		if (from) {
-			m_freem(from);
-			from = NULL;
-		}
-		if (m) {
-			m_freem(m);
-			m = NULL;
-		}
+		m_freem(from);
+		from = NULL;
+		m_freem(m);
+		m = NULL;
 		uio.uio_resid = 1 << 16; /* ??? */
 		rcvflg = 0;
 		error = (*so->so_receive)(so, &from, &uio, &m, NULL, &rcvflg);
@@ -525,7 +521,7 @@ send_again:
 		break;
 	}
 out:
-	if (from) m_freem(from);
+	m_freem(from);
 	return (error);
 }
 

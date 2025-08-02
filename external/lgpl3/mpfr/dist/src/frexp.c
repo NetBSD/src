@@ -30,8 +30,8 @@ mpfr_frexp (mpfr_exp_t *exp, mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
   MPFR_BLOCK_DECL (flags);
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec (x), mpfr_log_prec, x, rnd),
-     ("y[%Pu]=%.*Rg exp=%" MPFR_EXP_FSPEC "d inex=%d", mpfr_get_prec (y),
+    (("x[%Pd]=%.*Rg rnd=%d", mpfr_get_prec (x), mpfr_log_prec, x, rnd),
+     ("y[%Pd]=%.*Rg exp=%" MPFR_EXP_FSPEC "d inex=%d", mpfr_get_prec (y),
       mpfr_log_prec, y, (mpfr_eexp_t) *exp, inex));
 
   if (MPFR_UNLIKELY(MPFR_IS_SINGULAR(x)))

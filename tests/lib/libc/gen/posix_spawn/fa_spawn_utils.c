@@ -1,4 +1,4 @@
-/*	$NetBSD: fa_spawn_utils.c,v 1.1 2021/11/07 15:46:20 christos Exp $	*/
+/*	$NetBSD: fa_spawn_utils.c,v 1.1.4.1 2025/08/02 05:58:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,34 +29,34 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: fa_spawn_utils.c,v 1.1 2021/11/07 15:46:20 christos Exp $");
 
-#include <atf-c.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: fa_spawn_utils.c,v 1.1.4.1 2025/08/02 05:58:04 perseant Exp $");
+
 #include <sys/stat.h>
 
+#include <atf-c.h>
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "fa_spawn_utils.h"
+#include "h_macros.h"
 
 off_t
-filesize(const char * restrict fname)
+filesize(const char *fname)
 {
 	struct stat st;
-	int err;
 
-	err = stat(fname, &st);
-	ATF_REQUIRE_MSG(err == 0, "Can't stat %s (%s)", fname, strerror(errno));
+	RL(stat(fname, &st));
 	return st.st_size;
 }
 
 void
-empty_outfile(const char * restrict fname)
+empty_outfile(const char *fname)
 {
 	FILE *f;
 
-	f = fopen(fname, "w");
-	ATF_REQUIRE_MSG(f != NULL, "Can't open %s (%s)", fname, strerror(errno));
-	fclose(f);
+	REQUIRE_LIBC(f = fopen(fname, "w"), NULL);
+	REQUIRE_LIBC(fclose(f), EOF);
 }

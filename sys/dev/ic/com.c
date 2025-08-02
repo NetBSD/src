@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.384 2023/04/11 13:01:41 riastradh Exp $ */
+/* $NetBSD: com.c,v 1.384.6.1 2025/08/02 05:56:41 perseant Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.384 2023/04/11 13:01:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.384.6.1 2025/08/02 05:56:41 perseant Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -540,12 +540,14 @@ com_attach_subr(struct com_softc *sc)
 	prop_dictionary_t dict;
 	bool is_console = true;
 	bool force_console = false;
+	bool skip_attach_delay = false;
 
 	aprint_naive("\n");
 
 	dict = device_properties(sc->sc_dev);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
 	prop_dictionary_get_bool(dict, "force_console", &force_console);
+	prop_dictionary_get_bool(dict, "skip_attach_delay", &skip_attach_delay);
 	callout_init(&sc->sc_diag_callout, 0);
 	callout_init(&sc->sc_poll_callout, 0);
 	callout_setfunc(&sc->sc_poll_callout, com_intr_poll, sc);
@@ -589,8 +591,11 @@ com_attach_subr(struct com_softc *sc)
 			break;
 		}
 
+		/* No need for a delay on virtual machines. */
+		if (!skip_attach_delay)
+			delay(10000); /* wait for output to finish */
+
 		/* Make sure the console is always "hardwired". */
-		delay(10000);			/* wait for output to finish */
 		if (is_console) {
 			SET(sc->sc_hwflags, COM_HW_CONSOLE);
 		}
@@ -667,7 +672,7 @@ com_attach_subr(struct com_softc *sc)
 	/* look for a NS 16550AF UART with FIFOs */
 	if (sc->sc_type == COM_TYPE_INGENIC) {
 		CSR_WRITE_1(regsp, COM_REG_FIFO,
-		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | 
+		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
 		    FIFO_TRIGGER_14 | FIFO_UART_ON);
 	} else
 		CSR_WRITE_1(regsp, COM_REG_FIFO,
@@ -2574,7 +2579,7 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 			/* no EFR on alchemy */
 			CSR_WRITE_2(regsp, COM_REG_DLBL, rate);
 		} else {
-			if ((type != COM_TYPE_16550_NOERS) && 
+			if ((type != COM_TYPE_16550_NOERS) &&
 			    (type != COM_TYPE_INGENIC)) {
 				CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
 				CSR_WRITE_1(regsp, COM_REG_EFR, 0);

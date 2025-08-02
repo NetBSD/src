@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pcireg.h,v 1.5 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_ntwoc_pcireg.h,v 1.5.202.1 2025/08/02 05:56:46 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -117,7 +117,7 @@
 #define NTWOC_FE_ID_NONE	0x07	/* empty, no card present */
 
 /*
- * ASIC Control defininitions
+ * ASIC Control definitions
  */
 
 /* Front End (Modem,etc) Control Register */

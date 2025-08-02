@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.49 2019/08/15 01:15:21 kamil Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.49.10.1 2025/08/02 05:55:03 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.49 2019/08/15 01:15:21 kamil Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.49.10.1 2025/08/02 05:55:03 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -436,7 +436,7 @@ getptyslave(void)
 #endif
 	struct winsize ws;
 	/*
-	 * Opening the slave side may cause initilization of the
+	 * Opening the slave side may cause initialization of the
 	 * kernel tty structure.  We need remember the state of
 	 * 	if linemode was turned on
 	 *	terminal window size
@@ -583,6 +583,10 @@ start_login(char *host, int autologin, char *name)
 	const char *loginprog = NULL;
 	extern struct sockaddr_storage from;
 	char buf[sizeof(from) * 4 + 1];
+	char *user;
+
+	user = getenv("USER");
+	user = (user != NULL) ? strdup(user) : NULL;
 
 	scrub_env();
 
@@ -634,9 +638,9 @@ start_login(char *host, int autologin, char *name)
 		argv = addarg(argv, name);
 	} else
 #endif
-	if (getenv("USER")) {
+	if (user != NULL) {
 		argv = addarg(argv, "--");
-		argv = addarg(argv, getenv("USER"));
+		argv = addarg(argv, user);
 		/*
 		 * Assume that login will set the USER variable
 		 * correctly.  For SysV systems, this means that

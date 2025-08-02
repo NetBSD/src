@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: unset.c,v 1.15 2019/03/26 14:55:02 martin Exp $");
+__RCSID("$NetBSD: unset.c,v 1.15.12.1 2025/08/02 05:55:06 perseant Exp $");
 #endif
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ static const char *unsethelp[] = {
 	"-l",
 };
 
-struct gpt_cmd c_unset = {
+const struct gpt_cmd c_unset = {
 	"unset",
 	cmd_unset,
 	unsethelp, __arraycount(unsethelp),

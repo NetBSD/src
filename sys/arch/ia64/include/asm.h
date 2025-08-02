@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.9 2023/10/06 11:45:37 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.9.6.1 2025/08/02 05:55:46 perseant Exp $	*/
 
 /* -
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -203,9 +203,18 @@ label:	ASCIZ msg;				\
 
 
 #ifdef __ELF__
+#ifdef _NETBSD_REVISIONID
+#define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+			.asciz x;					\
+			.ascii "$"; .ascii "NetBSD: "; .ascii __FILE__;	\
+			.ascii " "; .ascii _NETBSD_REVISIONID;		\
+			.asciz " $";					\
+			.popsection
+#else
 #define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
 			.asciz x;					\
 			.popsection
+#endif
 #else
 #define RCSID(name)		.asciz name
 #endif
@@ -219,7 +228,13 @@ label:	ASCIZ msg;				\
 #define	__KERNEL_SECTIONSTRING(_sec, _str)				\
 	.pushsection _sec ; .asciz _str ; .popsection
 
+#ifdef _NETBSD_REVISIONID
+#define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.ident,	\
+					"$" "NetBSD: " __FILE__ " "	\
+					_NETBSD_REVISIONID " $")
+#else
 #define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.ident, _s)
+#endif
 #define	__KERNEL_COPYRIGHT(_n, _s)	__KERNEL_SECTIONSTRING(.copyright, _s)
 
 #ifdef NO_KERNEL_RCSIDS

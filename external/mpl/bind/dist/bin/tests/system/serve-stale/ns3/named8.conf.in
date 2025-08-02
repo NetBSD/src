@@ -32,7 +32,7 @@ options {
 	dnssec-validation no;
 	stale-answer-enable yes;
 	stale-cache-enable yes;
-	stale-answer-client-timeout 1800;
+	stale-answer-client-timeout 0;
 	prefetch 2 8;
 	dns64 2001:aaaa::/96 {
 		clients { any; };

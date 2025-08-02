@@ -9,6 +9,16 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.*",
+        "ns1/ddns.key",
+        "ns1/update.txt",
+    ]
+)
+
 
 def test_dlzexternal(run_tests_sh):
     run_tests_sh()

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_30.h,v 1.1 2023/12/27 19:22:10 thorpej Exp $	*/
+/*	$NetBSD: mmu_30.h,v 1.1.2.1 2025/08/02 05:55:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  * - Lockable ATC entries
  * - ATC entries defined as Shared Globally
  *
- * Futhermore, the 68030 has some functional differences:
+ * Furthermore, the 68030 has some functional differences:
  * - Only 22 ATC entries
  * - Reduced instruction set for MMU operations
  * - Reduced addressing modes for MMU instructions.
@@ -87,5 +87,19 @@
 #define	TT30_USERP	__SHIFTIN(FC_USERP,TT30_FCBASE)
 #define	TT30_SUPERD	__SHIFTIN(FC_SUPERD,TT30_FCBASE)
 #define	TT30_SUPERP	__SHIFTIN(FC_SUPERP,TT30_FCBASE)
+
+#ifdef _KERNEL
+/*
+ * TT register value indices in the mmu_ttregs[] array.  Note that asm
+ * code makes assumptions about these indices, to change them at your
+ * peril.
+ */
+extern uint32_t mmu_tt30[];
+#define	MMU_TTREG_TT0	0
+#define	MMU_TTREG_TT1	1
+#define	MMU_NTTREGS30	2
+
+void	mmu_load_tt30(uint32_t *);
+#endif /* _KERNEL */
 
 #endif /* _M68K_MMU_30_H_ */

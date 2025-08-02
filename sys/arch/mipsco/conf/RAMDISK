@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.5 2010/11/23 11:14:02 hannken Exp $
+# 	$NetBSD: RAMDISK,v 1.5.96.1 2025/08/02 05:55:55 perseant Exp $
 #
 # Install kernel with ramdisk added.
 #
@@ -10,7 +10,7 @@ include	"arch/mipsco/conf/INSTALL"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=6144	# size of memory disk, in blocks (3MB)
+options 	MEMORY_DISK_ROOT_SIZE=7000	# size of memory disk, in blocks (3500KB)
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 

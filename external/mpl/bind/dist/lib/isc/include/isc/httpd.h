@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.h,v 1.7 2024/02/21 22:52:30 christos Exp $	*/
+/*	$NetBSD: httpd.h,v 1.7.2.1 2025/08/02 05:53:59 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,10 +19,7 @@
 
 #include <stdbool.h>
 
-#include <isc/event.h>
-#include <isc/eventclass.h>
 #include <isc/mutex.h>
-#include <isc/task.h>
 #include <isc/time.h>
 #include <isc/types.h>
 #include <isc/url.h>

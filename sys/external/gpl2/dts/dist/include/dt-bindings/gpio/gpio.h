@@ -1,6 +1,6 @@
-/*	$NetBSD: gpio.h,v 1.1.1.6 2019/05/25 11:29:13 jmcneill Exp $	*/
+/*	$NetBSD: gpio.h,v 1.1.1.6.34.1 2025/08/02 05:57:37 perseant Exp $	*/
 
-/* SPDX-License-Identifier: GPL-2.0 */
+/* SPDX-License-Identifier: (GPL-2.0 OR BSD-2-Clause) */
 /*
  * This header provides constants for most GPIO bindings.
  *
@@ -40,5 +40,8 @@
 
 /* Bit 5 express pull down */
 #define GPIO_PULL_DOWN 32
+
+/* Bit 6 express pull disable */
+#define GPIO_PULL_DISABLE 64
 
 #endif

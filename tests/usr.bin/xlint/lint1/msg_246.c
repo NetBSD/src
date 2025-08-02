@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_246.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_246.c,v 1.5.2.1 2025/08/02 05:58:17 perseant Exp $	*/
 # 3 "msg_246.c"
 
 // Test for message: dubious conversion of enum to '%s' [246]
@@ -19,6 +19,6 @@ to_double(enum color c)
 void *
 to_pointer(enum color c)
 {
-	/* expect+1: warning: illegal combination of pointer 'pointer to void' and integer 'enum color' [183] */
+	/* expect+1: warning: invalid combination of pointer 'pointer to void' and integer 'enum color' for 'return' [183] */
 	return c;
 }

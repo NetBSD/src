@@ -257,7 +257,7 @@ rely on these name servers.  Here is an example that achieves this result:
 The ``*`` at the beginning of these CNAME target names is special, and it
 causes the original query name to be prepended to the CNAME target. So if a
 user tries to visit the Conficker command and control domain
-http://racaldftn.com.ai/ (which was a valid Conficker command and control
+`racaldftn.com.ai` (which was a valid Conficker command and control
 domain name on 19-October-2011), the RPZ-configured recursive name server
 will send back this answer:
 
@@ -727,8 +727,8 @@ particular). This is a concern for some network administrators who do not
 want their users' DNS queries to be rerouted unexpectedly. However,
 Mozilla provides a mechanism to disable the DoH-by-default setting:
 if the Mozilla-owned domain `use-application-dns.net
-<https://use-application-dns.net>`_ returns an NXDOMAIN response code, Firefox
-will not use DoH.
+<https://support.mozilla.org/en-US/kb/canary-domain-use-application-dnsnet>`_
+returns an NXDOMAIN response code, Firefox will not use DoH.
 
 To accomplish this using RPZ:
 

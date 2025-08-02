@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,14 +7,14 @@
 </head> <body> <pre>
 POSTMAP(1)                                                          POSTMAP(1)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        postmap - Postfix lookup table management
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postmap</b> [<b>-bfFhimnNoprsuUvw</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-d</b> <i>key</i>] [<b>-q</b> <i>key</i>]
                [<i>file</i><b>_</b><i>type</i>:]<i>file</i><b>_</b><i>name</i> ...
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  <a href="postmap.1.html"><b>postmap</b>(1)</a>  command  creates or queries one or more Postfix lookup
        tables, or updates an existing one.
 
@@ -25,7 +25,7 @@ POSTMAP(1)                                                          POSTMAP(1)
        and an exclusive, advisory, lock is placed  on  the  entire  table,  in
        order to avoid surprises in spectator processes.
 
-<b>INPUT FILE FORMAT</b>
+<b><a name="input_file_format">INPUT FILE FORMAT</a></b>
        The format of a lookup table input file is as follows:
 
        <b>o</b>      A table entry has the form
@@ -62,7 +62,7 @@ POSTMAP(1)                                                          POSTMAP(1)
        <a href="regexp_table.5.html">regexp</a>: and <a href="pcre_table.5.html">pcre</a>:. This resulted in loss of  information  with  $<i>number</i>
        substitutions.
 
-<b>COMMAND-LINE ARGUMENTS</b>
+<b><a name="command-line_arguments">COMMAND-LINE ARGUMENTS</a></b>
        <b>-b</b>     Enable  message  body  query mode. When reading lookup keys from
               standard input with "<b>-q -</b>", process the input as  if  it  is  an
               email  message  in  <a href="https://tools.ietf.org/html/rfc5322">RFC  5322</a> format.  Each line of body content
@@ -235,7 +235,7 @@ POSTMAP(1)                                                          POSTMAP(1)
               The name of the lookup table source file when rebuilding a data-
               base.
 
-<b>DIAGNOSTICS</b>
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems are logged to the standard error stream and to  <b>syslogd</b>(8)  or
        <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.  No output means that no problems were detected. Duplicate
        entries are skipped and are flagged with a warning.
@@ -244,14 +244,14 @@ POSTMAP(1)                                                          POSTMAP(1)
        ing  successful  "<b>postmap -q</b>" lookup) and terminates with non-zero exit
        status in case of failure.
 
-<b>ENVIRONMENT</b>
+<b><a name="environment">ENVIRONMENT</a></b>
        <b>MAIL_CONFIG</b>
               Directory with Postfix configuration files.
 
        <b>MAIL_VERBOSE</b>
               Enable verbose logging for debugging purposes.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to  this  pro-
        gram.   The  text  below  provides  only a parameter summary. See <a href="postconf.5.html"><b>post-</b></a>
        <a href="postconf.5.html"><b>conf</b>(5)</a> for more details including examples.
@@ -293,17 +293,17 @@ POSTMAP(1)                                                          POSTMAP(1)
        <b><a href="postconf.5.html#lmdb_map_size">lmdb_map_size</a> (16777216)</b>
               The initial OpenLDAP LMDB database size limit in bytes.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postalias.1.html">postalias(1)</a>, create/update/query alias database
        <a href="postconf.1.html">postconf(1)</a>, supported database types
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

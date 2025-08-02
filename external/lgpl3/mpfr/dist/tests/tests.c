@@ -1048,14 +1048,14 @@ bad_cases (int (*fct)(FLIST), int (*inv)(FLIST), const char *name,
       tests_default_random (y, pos, emin, emax, 0);
       if (dbg)
         {
-          printf ("bad_cases: yprec =%4ld, y = ", (long) py);
+          printf ("bad_cases: yprec =%6ld, y = ", (long) py);
           mpfr_out_str (stdout, 16, 0, y, MPFR_RNDN);
           printf ("\n");
         }
       px = py + psup;
       mpfr_set_prec (x, px);
       if (dbg)
-        printf ("bad_cases: xprec =%4ld\n", (long) px);
+        printf ("bad_cases: xprec =%6ld\n", (long) px);
       mpfr_clear_flags ();
       inex_inv = inv (x, y, MPFR_RNDN);
       if (mpfr_nanflag_p () || mpfr_overflow_p () || mpfr_underflow_p ())
@@ -1086,10 +1086,9 @@ bad_cases (int (*fct)(FLIST), int (*inv)(FLIST), const char *name,
                 }
               if (inex_inv)
                 {
-                  printf ("bad_cases: f exact while f^(-1) inexact,\n"
-                          "due to a poor choice of the parameters.\n");
-                  exit (1);
-                  /* alternatively, goto next_i */
+                  if (dbg)
+                    printf ("bad_cases: f exact while f^(-1) inexact\n");
+                  goto does_not_match;
                 }
               inex = 0;
               break;
@@ -1112,6 +1111,10 @@ bad_cases (int (*fct)(FLIST), int (*inv)(FLIST), const char *name,
           if (mpfr_nanflag_p () || mpfr_overflow_p () || mpfr_underflow_p ()
               || ! mpfr_equal_p (z, y))
             {
+              /* This may occur when psup is not large enough: evaluating
+                 x = (f^(-1))(y) then z = f(x) may not give back y if the
+                 precision of x is too small. */
+            does_not_match:
               if (dbg)
                 {
                   printf ("bad_cases: inverse doesn't match for %s\ny = ",
@@ -1164,7 +1167,7 @@ bad_cases (int (*fct)(FLIST), int (*inv)(FLIST), const char *name,
         }
       if (dbg)
         {
-          printf ("bad_cases: yprec =%4ld, y = ", (long) py);
+          printf ("bad_cases: yprec =%6ld, y = ", (long) py);
           mpfr_out_str (stdout, 16, 0, y, MPFR_RNDN);
           printf ("\n");
         }

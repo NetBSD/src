@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.11 2008/07/15 23:17:38 perry Exp $
+$NetBSD: version,v 1.11.118.1 2025/08/02 05:55:44 perseant Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -17,3 +17,9 @@ is taken as the current.
 1.9:	move stack 64k up memory to allow for larger code and data
 	use .code16 and .code32 directives
 5.1:	Change boot messages to replace build date with kernel version.
+5.2:	Support for partition labels, recursive labels inside RAID partitions,
+	booting a directory with kernel and modules, MultiBoot 2, not using
+	the default menu options from prompt "boot" command, new "root"
+	command that changes default root, bi-endian support in disklabel,
+	RAID and UFS, and fixes for buggy ACPI implementations, and remove
+	XMS (eXtended Memory Specification) specific code.

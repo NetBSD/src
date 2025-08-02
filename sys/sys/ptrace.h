@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.75 2022/06/08 23:12:27 andvar Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.75.10.1 2025/08/02 05:57:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -68,6 +68,9 @@
 
 #define	PT_FIRSTMACH		32	/* for machine-specific requests */
 #include <machine/ptrace.h>		/* machine-specific requests, if any */
+#ifndef PT_MACHDEP_STRINGS
+# define PT_MACHDEP_STRINGS
+#endif
 
 #define PT_STRINGS \
 /*  0 */    "PT_TRACE_ME", \
@@ -97,7 +100,12 @@
 /* 24 */    "PT_LWPSTATUS", \
 /* 25 */    "PT_LWPNEXT", \
 /* 26 */    "PT_SET_SIGPASS", \
-/* 27 */    "PT_GET_SIGPASS"
+/* 27 */    "PT_GET_SIGPASS", \
+/* 28 */    "*PT_INVALID_28", \
+/* 29 */    "*PT_INVALID_29", \
+/* 30 */    "*PT_INVALID_30", \
+/* 31 */    "*PT_INVALID_31", \
+PT_MACHDEP_STRINGS
 
 /* PT_{G,S}EVENT_MASK */
 typedef struct ptrace_event {
@@ -346,11 +354,20 @@ int	ptrace_machdep_dorequest(struct lwp *, struct lwp **, int,
 typedef int (*ptrace_regrfunc_t)(struct lwp *, void *, size_t *);
 typedef int (*ptrace_regwfunc_t)(struct lwp *, void *, size_t);
 
-#if defined(PT_SETREGS) || defined(PT_GETREGS) || \
-    defined(PT_SETFPREGS) || defined(PT_GETFPREGS) || \
-    defined(PT_SETDBREGS) || defined(PT_GETDBREGS)
-# define PT_REGISTERS
-#endif
+#if defined(PTRACE)
+# if defined(PT_SETREGS) || defined(PT_GETREGS) 
+#  define PT_REGS
+# endif
+# if defined(PT_SETFPREGS) || defined(PT_GETFPREGS) 
+#  define PT_FPREGS
+# endif
+# if defined(PT_SETDBREGS) || defined(PT_GETDBREGS) 
+#  define PT_DBREGS
+# endif
+# if defined(PT_REGS) || defined(PT_FPREGS) || defined(PT_DBREGS)
+#  define PT_REGISTERS
+# endif
+#endif /* PTRACE */
 
 #else /* !_KERNEL */
 

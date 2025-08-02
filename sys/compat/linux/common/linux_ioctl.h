@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.29 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.29.10.1 2025/08/02 05:56:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ int linux_ioctl_blkio(struct lwp *, const struct linux_sys_ioctl_args *uap,
                  register_t *retval);
 int linux_ioctl_sg(struct lwp *, const struct linux_sys_ioctl_args *uap,
                  register_t *retval);
-int linux_ioctl_mtio(struct lwp *, const struct linux_sys_ioctl_args *uap, 
+int linux_ioctl_mtio(struct lwp *, const struct linux_sys_ioctl_args *uap,
                  register_t *retval);
 __END_DECLS
 #endif	/* !_KERNEL */

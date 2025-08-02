@@ -1,4 +1,4 @@
-/* $NetBSD: stack_pointer.h,v 1.1 2024/04/22 07:24:22 pho Exp $ */
+/*	$NetBSD: stack_pointer.h,v 1.1.2.1 2025/08/02 05:58:02 perseant Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -26,18 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/stdbool.h>
-#include <sys/stdint.h>
-
-#define LOAD_SP(var)					\
-	do {						\
-		register void* tmp __asm__("x0");	\
-		__asm__(				\
-			"mov %0, sp"			\
-			: "=r"(tmp)			\
-		);					\
-		(var) = tmp;				\
-	} while (0)
+#ifndef	TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H
+#define	TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H
 
 #define MISALIGN_SP				\
 	__asm__ volatile (			\
@@ -49,8 +39,4 @@
 		"add sp, sp, #8"		\
 	)
 
-static inline bool
-is_sp_aligned(uintptr_t sp)
-{
-	return sp % 16 == 0;
-}
+#endif	/* TESTS_KERNEL_ARCH_AARCH64_STACK_POINTER_H */

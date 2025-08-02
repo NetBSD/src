@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.86 2022/05/18 13:56:32 andvar Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.86.10.1 2025/08/02 05:56:01 perseant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -292,7 +292,7 @@ dsitrap_fix_dbat4:
 	/*
 	 * If we are running on a CPU that has HIGHBAT, these will be replaced
 	 * by instructions to test bit 30 (aka bit 1 for normal people) and if
-	 * set skip ahead to 5f (4 instructions),  follored by instructions to
+	 * set skip ahead to 5f (4 instructions),  followed by instructions to
 	 * update BAT4.
 	 */
 	mtspr	SPR_DBAT2U,%r30		/*	bt	30,dsitrap_fix_dbat5 */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2023/10/07 12:15:52 rin Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2025/08/02 05:48:44 perseant Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -18,6 +18,6 @@ CPPFLAGS+=	-I${.CURDIR}/arch/${GDB_MACHINE_ARCH} \
 
 SRCS=		${G_OBJS:.o=.c} ${G_SOURCES}
 
-.PATH: ${DIST}/libdecnumber ${DIST}/libdecnumber/dpd
+.PATH: ${DIST}/libdecnumber ${DIST}/libdecnumber/dpd ${DIST}/libdecnumber/bid
 
 .include <bsd.lib.mk>

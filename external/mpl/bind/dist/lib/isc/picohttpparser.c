@@ -1,4 +1,4 @@
-/*	$NetBSD: picohttpparser.c,v 1.2 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: picohttpparser.c,v 1.2.6.1 2025/08/02 05:53:54 perseant Exp $	*/
 
 /*
  * Copyright (c) 2009-2014 Kazuho Oku, Tokuhiro Matsuno, Daisuke Murase,
@@ -54,7 +54,7 @@
 #define ALIGNED(n) __attribute__((aligned(n)))
 #endif
 
-#define IS_PRINTABLE_ASCII(c) ((unsigned char)(c)-040u < 0137u)
+#define IS_PRINTABLE_ASCII(c) ((unsigned char)(c) - 040u < 0137u)
 
 #define CHECK_EOF()           \
 	if (buf == buf_end) { \
@@ -156,17 +156,19 @@ get_token_to_eol(const char *buf, const char *buf_end, const char **token,
 			      "\177\177"; /* allow chars w. MSB set */
 	int found;
 	buf = findchar_fast(buf, buf_end, ranges1, 6, &found);
-	if (found)
+	if (found) {
 		goto FOUND_CTL;
+	}
 #else
 	/* find non-printable char within the next 8 bytes, this is the hottest
 	 * code; manually inlined */
 	while (likely(buf_end - buf >= 8)) {
-#define DOIT()                                           \
-	do {                                             \
-		if (unlikely(!IS_PRINTABLE_ASCII(*buf))) \
-			goto NonPrintable;               \
-		++buf;                                   \
+#define DOIT()                                             \
+	do {                                               \
+		if (unlikely(!IS_PRINTABLE_ASCII(*buf))) { \
+			goto NonPrintable;                 \
+		}                                          \
+		++buf;                                     \
 	} while (0)
 		DOIT();
 		DOIT();
@@ -605,15 +607,32 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 	size_t dst = 0, src = 0, bufsz = *_bufsz;
 	ssize_t ret = -2; /* incomplete */
 
+	decoder->_total_read += bufsz;
+
 	while (1) {
 		switch (decoder->_state) {
 		case CHUNKED_IN_CHUNK_SIZE:
 			for (;; ++src) {
 				int v;
-				if (src == bufsz)
+				if (src == bufsz) {
 					goto Exit;
+				}
 				if ((v = decode_hex(buf[src])) == -1) {
 					if (decoder->_hex_count == 0) {
+						ret = -1;
+						goto Exit;
+					}
+					/* the only characters that may appear
+					 * after the chunk size are BWS,
+					 * semicolon, or CRLF */
+					switch (buf[src]) {
+					case ' ':
+					case '\011':
+					case ';':
+					case '\012':
+					case '\015':
+						break;
+					default:
 						ret = -1;
 						goto Exit;
 					}
@@ -634,10 +653,12 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 			/* RFC 7230 A.2 "Line folding in chunk extensions is
 			 * disallowed" */
 			for (;; ++src) {
-				if (src == bufsz)
+				if (src == bufsz) {
 					goto Exit;
-				if (buf[src] == '\012')
+				}
+				if (buf[src] == '\012') {
 					break;
+				}
 			}
 			++src;
 			if (decoder->bytes_left_in_chunk == 0) {
@@ -654,16 +675,18 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 		case CHUNKED_IN_CHUNK_DATA: {
 			size_t avail = bufsz - src;
 			if (avail < decoder->bytes_left_in_chunk) {
-				if (dst != src)
+				if (dst != src) {
 					memmove(buf + dst, buf + src, avail);
+				}
 				src += avail;
 				dst += avail;
 				decoder->bytes_left_in_chunk -= avail;
 				goto Exit;
 			}
-			if (dst != src)
+			if (dst != src) {
 				memmove(buf + dst, buf + src,
 					decoder->bytes_left_in_chunk);
+			}
 			src += decoder->bytes_left_in_chunk;
 			dst += decoder->bytes_left_in_chunk;
 			decoder->bytes_left_in_chunk = 0;
@@ -672,10 +695,12 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 		/* fallthru */
 		case CHUNKED_IN_CHUNK_CRLF:
 			for (;; ++src) {
-				if (src == bufsz)
+				if (src == bufsz) {
 					goto Exit;
-				if (buf[src] != '\015')
+				}
+				if (buf[src] != '\015') {
 					break;
+				}
 			}
 			if (buf[src] != '\012') {
 				ret = -1;
@@ -686,21 +711,26 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 			break;
 		case CHUNKED_IN_TRAILERS_LINE_HEAD:
 			for (;; ++src) {
-				if (src == bufsz)
+				if (src == bufsz) {
 					goto Exit;
-				if (buf[src] != '\015')
+				}
+				if (buf[src] != '\015') {
 					break;
+				}
 			}
-			if (buf[src++] == '\012')
+			if (buf[src++] == '\012') {
 				goto Complete;
+			}
 			decoder->_state = CHUNKED_IN_TRAILERS_LINE_MIDDLE;
 		/* fallthru */
 		case CHUNKED_IN_TRAILERS_LINE_MIDDLE:
 			for (;; ++src) {
-				if (src == bufsz)
+				if (src == bufsz) {
 					goto Exit;
-				if (buf[src] == '\012')
+				}
+				if (buf[src] == '\012') {
 					break;
+				}
 			}
 			++src;
 			decoder->_state = CHUNKED_IN_TRAILERS_LINE_HEAD;
@@ -713,9 +743,19 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 Complete:
 	ret = bufsz - src;
 Exit:
-	if (dst != src)
+	if (dst != src) {
 		memmove(buf + dst, buf + src, bufsz - src);
+	}
 	*_bufsz = dst;
+	/* if incomplete but the overhead of the chunked encoding is >=100KB and
+	 * >80%, signal an error */
+	if (ret == -2) {
+		decoder->_total_overhead += bufsz - dst;
+		if (decoder->_total_overhead >= 100 * 1024 &&
+		    decoder->_total_read - decoder->_total_overhead <
+			    decoder->_total_read / 4)
+			ret = -1;
+	}
 	return ret;
 }
 

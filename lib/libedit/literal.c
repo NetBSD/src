@@ -1,4 +1,4 @@
-/*	$NetBSD: literal.c,v 1.5 2019/07/23 13:10:11 christos Exp $	*/
+/*	$NetBSD: literal.c,v 1.5.12.1 2025/08/02 05:54:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: literal.c,v 1.5 2019/07/23 13:10:11 christos Exp $");
+__RCSID("$NetBSD: literal.c,v 1.5.12.1 2025/08/02 05:54:48 perseant Exp $");
 #endif /* not lint && not SCCSID */
 
 /*
@@ -85,7 +85,7 @@ literal_add(EditLine *el, const wchar_t *buf, const wchar_t *end, int *wp)
 	w = wcwidth(end[1]);	/* column width of the visible char */
 	*wp = (int)w;
 
-	if (w <= 0)		/* we require something to be printed */
+	if (w < 0)		/* non-printable characters are negative */
 		return 0;
 
 	len = (size_t)(end - buf);

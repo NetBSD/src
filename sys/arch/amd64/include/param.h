@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.38 2020/06/29 09:56:51 jdolecek Exp $	*/
+/*	$NetBSD: param.h,v 1.38.26.1 2025/08/02 05:55:24 perseant Exp $	*/
 
 #ifdef __x86_64__
 
@@ -31,6 +31,7 @@
  * (2) rtld in glibc >= 2.23 for Linux/x86_64 requires it.
  */
 #define STACK_ALIGNBYTES	(16 - 1)
+#define	STACK_ALIGNBYTES32	(4 - 1)
 
 #define ALIGNBYTES32		(sizeof(int) - 1)
 #define ALIGN32(p)		(((u_long)(p) + ALIGNBYTES32) &~ALIGNBYTES32)
@@ -69,12 +70,30 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #if defined(KASAN) || defined(KMSAN)
-#define	UPAGES		8
-#elif defined(SVS)
-#define	UPAGES		6		/* 1 page used internally by SVS */
+#define UPAGES_KxSAN	3
 #else
-#define	UPAGES		5		/* pages of u-area (1 for redzone) */
+#define	UPAGES_KxSAN	0
 #endif
+#if defined(SVS)
+#define	UPAGES_SVS	1
+#else
+#define	UPAGES_SVS	0
+#endif
+#define	UPAGES_PCB	1	/* one page for the PCB */
+#define	UPAGES_RED	1	/* one page for red zone between pcb/stack */
+#define	UPAGES_STACK	3	/* three pages (12 KiB) of stack space */
+#define	UPAGES		\
+	(UPAGES_PCB + UPAGES_RED + UPAGES_STACK + UPAGES_SVS + UPAGES_KxSAN)
+
+#ifndef _STANDALONE
+#if defined(KASAN) || defined(KMSAN)
+__CTASSERT(UPAGES == 8);
+#elif defined(SVS)
+__CTASSERT(UPAGES == 6);
+#else
+__CTASSERT(UPAGES == 5);
+#endif
+#endif	/* _STANDALONE */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE

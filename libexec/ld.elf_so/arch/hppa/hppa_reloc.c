@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.50 2023/06/04 01:24:57 joerg Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.50.2.1 2025/08/02 05:55:01 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -29,9 +29,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * HP PA-RISC ELF relocations.
+ *
+ * References:
+ *
+ *	[PAELF] Processor-Specific ELF Supplement for PA-RISC, Version
+ *	1.5, 1998-08-20.
+ *	https://parisc.wiki.kernel.org/images-parisc/0/0e/Elf-pa-hp.pdf
+ *	https://web.archive.org/web/20240712004045/https://parisc.wiki.kernel.org/images-parisc/0/0e/Elf-pa-hp.pdf
+ *
+ *	[PATLS] Randolph Chung, Carlos O'Donell, and John David
+ *	Anglin, `Implementing Thread Local Storage for HP PA-RISC
+ *	Linux', 2013-11-11.
+ *	http://www.parisc-linux.org/documentation/tls/hppa-tls-implementation.pdf
+ *	https://web.archive.org/web/20240722131647/http://www.parisc-linux.org/documentation/tls/hppa-tls-implementation.pdf
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.50 2023/06/04 01:24:57 joerg Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.50.2.1 2025/08/02 05:55:01 perseant Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -607,6 +624,10 @@ _rtld_relocate_plt_lazy(Obj_Entry *obj)
 	for (rela = obj->pltrela; rela < obj->pltrelalim; rela++) {
 		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 		Elf_Addr func_pc, func_sl;
+
+		/* skip R_PARISC_NONE entries */
+		if (ELF_R_TYPE(rela->r_info) == R_TYPE(NONE))
+			continue;
 
 		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(IPLT));
 

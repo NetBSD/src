@@ -1,6 +1,6 @@
-.\" $NetBSD: usb.4,v 1.122 2022/07/10 19:49:24 nia Exp $
+.\" $NetBSD: usb.4,v 1.122.4.1 2025/08/02 05:55:13 perseant Exp $
 .\"
-.\" Copyright (c) 1999-2014 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 10, 2022
+.Dd April 1, 2025
 .Dt USB 4
 .Os
 .Sh NAME
@@ -107,6 +107,8 @@ Kawasaki LSI KL5KUSB101B USB Ethernet device
 MosChip MCS7730/7830/7832 10/100 USB Ethernet device
 .It Xr mue 4
 Microchip LAN75xx/LAN78xx 10/100/Gigabit USB Ethernet device
+.It Xr ncm 4
+USB Network Control Model Ethernet device
 .It Xr udav 4
 Davicom DM9601 10/100 USB Ethernet device
 .It Xr ure 4
@@ -192,6 +194,15 @@ USB audio devices
 .It Xr umidi 4
 USB MIDI devices
 .El
+.Ss Video devices
+.Bl -tag -width 12n -offset ind -compact
+.It Xr pseye 4
+Sony PlayStation Eye webcam device driver
+.It Xr udl 4
+DisplayLink DL-1x0/1x5 USB display devices
+.It Xr uvideo 4
+USB video class devices (e.g. webcams, capture cards)
+.El
 .Ss Radio receiver devices
 .Bl -tag -width 12n -offset ind -compact
 .It Xr slurm 4
@@ -228,8 +239,6 @@ Sigmaltel 4116/4220 USB-IrDA bridge
 USB Araneus Alea I/II random number generators
 .It Xr uberry 4
 Battery charging RIM BlackBerry phones via USB
-.It Xr udl 4
-DisplayLink DL-1x0/1x5 USB display devices
 .\" .It Xr udsir 4
 .\" KingSun/DonShine USB IrDA bridge
 .It Xr ugen 4

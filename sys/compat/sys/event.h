@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.4 2023/07/29 11:58:53 rin Exp $	*/
+/*	$NetBSD: event.h,v 1.4.6.1 2025/08/02 05:56:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -32,7 +32,9 @@
 #define	_COMPAT_SYS_EVENT_H_
 
 #include <sys/cdefs.h>
+
 struct timespec;
+struct timespec50;
 
 #ifdef _KERNEL
 #include <lib/libkern/libkern.h>

@@ -22345,7 +22345,7 @@ Apologies for any names omitted.
 	Cleanup: integer wrap-around detection in the MySQL and
 	PostgreSQL clients. This is totally non-critical because
 	Postfix strings are size-limited by design. Files:
-	global/dict_mysqql.c, global/dict_pgsql.c.
+	global/dict_mysql.c, global/dict_pgsql.c.
 
 20160607
 
@@ -26245,7 +26245,7 @@ Apologies for any names omitted.
 
 	Documentation: added LINUX_README sections for logging in
 	a container, and for systemd logging workarounds. File:
-	proto/LINUX_README.hmtl.
+	proto/LINUX_README.html.
 
 20220126
 
@@ -27056,14 +27056,28 @@ Apologies for any names omitted.
 	sometimes incomplete) lookup table configuration info with
 	a reference to the corresponding *_table(5) manpage.
 
+20230417
+
+	Cleanup: in the MySQL client configuration file, the default
+	characterset is now configurable with the "charset" attribute.
+	Previously, the default was determined by the MySQL
+	implementation (utf8mb4 as of MySQL 8.0, latin1 with older
+	versions). This setting implicitly controls the collation
+	order. Files: proto/mysql_table, global/dict_mysql.c.
+
 20230418
 
-	Bugfix defect (introduced: Postfix 3.2): the MySQL client
-	could return "not found" instead of "error" (for example,
-	resulting in a 5XX SMTP status instead of 4XX) during the
-	time that all MySQL server connections were turned down
-	after error.  Found during code maintenance. File:
-	global/dict_mysql.c.
+	Bugfix (introduced: Postfix 3.2): the MySQL client could
+	return "not found" instead of "error" (for example, resulting
+	in a 5XX SMTP status instead of 4XX) during the time that
+	all MySQL server connections were turned down after error.
+	Found during code maintenance. File: global/dict_mysql.c.
+
+20230419
+
+	Cleanup: in the PostgreSQL client, cosmetic changes to make
+	the code easier to maintain (in preparation for adding new
+	functionality). File: global/dict_pgsql.c.
 
 20230428
 
@@ -27091,6 +27105,74 @@ Apologies for any names omitted.
 	...' with a single service definition 'name2 type2 ...'.
 	Problem reported by SATOH Fumiyasu. File: postconf/postconf_edit.c.
 
+20230503
+
+	Documentation: clarified the relationship between
+	smtp_bind*address, inet_interfaces, and system-chosen source
+	IP addresses for outbound SMTP/LMTP connections. File:
+	proto/postconf.proto.
+
+20230504
+
+	Documentation: clarified the relationships between
+	local_transport, virtual_mailbox_transport, relay_transport,
+	default_transport, relay_host, sender_dependent_relayhost_maps,
+	sender_dependent_default_transport_maps, and their precedences
+	when determining a delivery transport or next-hop destination,
+	in ADDRESS_REWRITING_README and in the text that defines
+	individual configuration features. Files: proto/postconf.proto,
+	proto/ADDRESS_REWRITING_README.html.
+
+20230505
+
+	Documentation: clarified the differences between virtual
+	and local aliasing, in four places. Files: mantools/postlink,
+	proto/postconf.proto, proto/ADDRESS_REWRITING_README.html.
+	cleanup/cleanup.c, local/local.c, smtpd/smtpd.c.
+
+	Usability: improved error message when master.cf specifies
+	a wild-card network listener (like "smtp inet ... smtpd")
+	while inet_interfaces is empty. File: master/master_ent.c.
+
+	More documentation updates for local aliasing versus virtual
+	aliasing. Files: proto/aliases, proto/virtual, postfix/postfix.c.
+
+20230506
+
+	Cleanup: simplified the master code to handle an empty
+	inet_interfaces setting. it is now closer to the original
+	code. Also documented that wildcard_inet_addr_list() will
+	not return an empty list. Files: master/master_ent.c,
+	global/own_inet_addr_list.c.
+
+20230507
+
+	Documentation: fine tuning of text about local aliasing
+	versus virtual aliasing. Files: proto/postconf.proto,
+	proto/aliases, proto/virtual, proto/ADDRESS_REWRITING_README.html.
+
+20230508
+
+	Documentation: more fine tuning of text about local aliasing
+	versus virtual aliasing, and inet_interfaces. Files:
+	proto/postconf.proto, proto/aliases, proto/virtual,
+	proto/ADDRESS_REWRITING_README.html.
+
+20230516
+
+	Bugfix (defect introduced: Postfix 3.4): the postlog(1)
+	command created a logfile with permissions 0644, but the
+	postlogd(8) daemon created it with permissions 0600, for
+	example after "postfix logrotate". The discrepancy is now
+	eliminated, and the permissions when creating a file are
+	now configurable with the "maillog_file_permissions"
+	parameter, default 0600 for backwards compatibility. Files:
+	mantools/postlink, proto/MAILLOG_README.html, proto/postconf.proto,
+	global/mail_params.c, global/mail_params.h, global/Makefile.in,
+	master/master.c, postlog/postlog.c, postlogd/postlogd.c,
+	util/logwriter.c, util/logwriter.h, util/Makefile.in,
+	util/vstream.c.
+
 20230517
 
 	Bugfix (defect introduced: Postfix 3.8) the posttls-finger
@@ -27100,6 +27182,17 @@ Apologies for any names omitted.
 	posttls-finger/posttls-finger.c.
 
 20230519
+
+	Cleanup: fixed postconf tests for dynamically-linked builds.
+	File: postconf/Makefile.in.
+
+20230521
+
+	Bitrot: library error messages in SMTP server tests.  File:
+	smtpd/Makefile.in.
+
+	Cleanup: removed some "the the" instances. Files:
+	proto/MILTER_README.html proto/stop.double-proto-html.
 
 	Bitrot: preliminary support for OpenSSL configuration files,
 	primarily OpenSSL 1.1.1b and later. This introduces new
@@ -27117,13 +27210,13 @@ Apologies for any names omitted.
 
 20230523
 
-	Cleanup: use TLS_CLIENT_PARAMS to pass the OpensSSL 'init'
-	configurations. This information is independent from the
-	client or server TLS context, and therefore does not belong
-	in tls_*_init() or tls_*_start() calls. The tlsproxy(8)
-	server uses TLS_CLIENT_PARAMS to report differences between
-	its own global TLS settings, and those from its clients.
-	Files: posttls-finger/posttls-finger.c, smtp/smtp.c,
+	Cleanup: use TLS_CLIENT_PARAMS to pass the OpenSSL 'init'
+	configuration settings. These are global, i.e. apply to all
+	client TLS contexts, and they do not belong in tls_client_init()
+	or tls_client_start() calls. The tlsproxy(8) server uses
+	TLS_CLIENT_PARAMS information to warn about differences
+	between its own global TLS settings, and those from its
+	clients. Files: posttls-finger/posttls-finger.c, smtp/smtp.c,
 	smtp/smtp_proto.c, tls/tls.h, tls/tls_proxy_client_misc.c,
 	tls/tls_proxy_client_print.c, tls/tls_proxy_client_scan.c,
 	tls/tls_proxy.h, tlsproxy/tlsproxy.c.
@@ -27131,15 +27224,27 @@ Apologies for any names omitted.
 20230524
 
 	Cleanup: reverted cosmetic-only changes to minimize the
-	patch footprint for OpenSSL INI file support; updated daemon
-	manpages with the new tls_config_file and tls_config_name
-	configuration parameters. Files: smtp/smtp.c, smtpd/smtpd.c,
-	tls/tls_client.c, tls/tls.h, tls/tls_server.c, tlsproxy/tlsproxy.c,
+	patch footprint for OpenSSL INI file support for stable
+	releases; updated daemon manpages with the new tls_config_file
+	and tls_config_name configuration parameters. Files:
+	smtp/smtp.c, smtpd/smtpd.c, tls/tls_client.c, tls/tls.h,
+	tls/tls_server.c, tlsproxy/tlsproxy.c,
+
+20230526
+
+	Documentation: clarified address class descriptions; added
+	the availability of back-ported OpenSSL INI file support
+	in stable releases. Files: proto/ADDRESS_CLASS_README.html,
+	proto/postconf.proto smtp/smtp.c, smtpd/smtpd.c,
+	tlsproxy/tlsproxy.c.
+
+	Security: in the Postfix SMTP daemon, improved pipelining
+	detection and reporting; added code to detect illegal command
+	pipelining before the server greeting. File: smtpd/smtpd.c.
 
 20230529
 
-	Cleanup: made OpenSSL 'default' INI file support error
-	handling consistent with OpenSSL default behavior. Viktor
+	Cleanup: error handling for OpenSSL INI file support. Viktor
 	Dukhovni. Files: proto/postconf.proto, tls/tls_misc.c.
 
 20230602
@@ -27150,22 +27255,64 @@ Apologies for any names omitted.
 	non-default tls_config_xxx settings. File: tls/tls_misc.c.
 
 	Cleanup: added a multiple initialization guard in the
-	tls_library_init() function, and made an initialization
-	error sticky. File: tls/tls_misc.c.
+	tls_library_init() function, and made an initialization error
+	sticky. File: tls/tls_misc.c.
 
-20230605
+20230603
 
 	Security: new parameter smtpd_forbid_unauth_pipelining
-	(default: no) to disconnect remote SMTP clients that violate
+	(default: yes) to disconnect remote SMTP clients that violate
 	RFC 2920 (or 5321) command pipelining constraints. Files:
 	global/mail_params.h, smtpd/smtpd.c, proto/postconf.proto.
 
+20230610
+
+	Trouble shooting: when the postfix UID or postdrop GID is
+	also used by a non-Postfix account, log the UID or GID.
+	File: global/mail_params.c.
+
+20240703
+
+	Typo fix by Trent W. Buck. Files: proto/postconf.proto, proto/stop.
+
+20230807
+
+	Feature: optional support to request a raw public key instead
+	of a public-key certificate when a) the Postfix SMTP server
+	requests TLS authentication from a remote SMTP client, or
+	b) when the Postfix SMTP client initiates a TLS handshake
+	with a remote SMTP server. See RELEASE_NOTES for details.
+	Viktor Dukhovni. Files: mantools/postlink, proto/TLS_README.html,
+	proto/postconf.proto, RELEASE_NOTES, global/mail_params.h,
+	posttls-finger/posttls-finger.c, smtp/lmtp_params.c,
+	smtp/smtp.c, smtp/smtp.h, smtp/smtp_params.c, smtp/smtp_proto.c,
+	smtp/smtp_tls_policy.c, smtpd/smtpd.c, smtpd/smtpd_check.c,
+	tls/tls.h, tls/tls_client.c, tls/tls_dane.c, tls/tls_fprint.c,
+	tls/tls_misc.c, tls/tls_proxy.h, tls/tls_proxy_client_print.c,
+	tls/tls_proxy_client_scan.c, tls/tls_proxy_context_print.c,
+	tls/tls_proxy_context_scan.c, tls/tls_server.c, tls/tls_verify.c,
+	tlsproxy/tlsproxy.c.
+
+20230808
+
+	Documentation loose ends. Files: proto/postconf.proto,
+	RELEASE_NOTES.
+
 20230815
 
-	Bugfix (bug introduced: 20140218): when opportunistic TLS fails
-	during or after the handshake, don't require that a probe
-	message spent a minimum time-in-queue before falling back to
-	plaintext. Problem reported by Serg. File: smtp/smtp.h.
+	Bugfix (defect introduced: 20140218): when an address
+	verification probe fails during or after an opportunistic
+	TLS handshake, immediately fall back to plaintext, without
+	enforcing a minimum time-in-queue. Problem reported by Serg.
+	File: smtp/smtp.h.
+
+20230820
+
+	Feature: smtp_sasl_password_result_delimiter, for the rare
+	case that the ":" character needs to be part of the username.
+	mantools/postlink, proto/postconf.proto, global/mail_params.h,
+	smtp/lmtp_params.c, smtp/smtp.c, smtp/smtp_params.c,
+	smtp/smtp_sasl_glue.c.
 
 20230819
 
@@ -27179,11 +27326,80 @@ Apologies for any names omitted.
             *.other.example IN A     10.0.0.1
             *.other.example IN TLSA  ..certificate info...
 
-	Such syntax is blesed in RFC 1034 section 4.3.3.
+	Such syntax is blessed in RFC 1034 section 4.3.3.
 
 	This problem was reported first in the context of TLSA
 	record lookups. Files: util/valid_hostname.[hc],
 	dns/dns_lookup.c.
+
+20230831
+
+	Documentation: clarify the scope of local_recipient_maps.
+	Files: proto/LOCAL_RECIPIENT_README.html, proto/postconf.proto.
+
+	Documentation loose ends. Files: HISTORY, dns/dns_lookup.c.
+
+20230901
+
+	Feature: force_mime_input_conversion (default: no) to
+	convert content that claims to be 8-bit into quoted-printable,
+	before header_checks, body_checks, Milters, and before
+	after-queue content filters. The typical use case is an MTA
+	that applies this conversion before signing outbound messages,
+	so that the signatures will remain valid when a message is
+	later delivered to an MTA that does not announce 8BITMIME
+	support, or when a message line exceeds the SMTP length
+	limit. Files: global/mail_params.c, cleanup/cleanup_message.c,
+	cleanup/cleanup.c, cleanup/cleanup_init.c, proto/postconf.proto,
+	mantools/postlink.
+
+20230902
+
+	Cleanup: renamed enforce_mime_input_conversion to
+	force_mime_input_conversion.
+
+20230903
+
+	Cleanup: removed support for MySQL < 4.0 (released 2003),
+	removed the deprecated mysql_escape_string() call, added
+	the preferred mysql_real_escape_string_quote() call, and
+	added error handling for the unlikely case that the legacy
+	mysql_real_escape_string() returns an error. File:
+	global/dict_mysql.c.
+
+20230906
+
+	Documentation: the postconf(5) manpage did not document
+	that the force_mime_input_conversion feature was introduced
+	in Postfix 3.9. Viktor Dukhovni. File: proto/postconf.proto.
+
+20230912
+
+	Cleanup: record the use of a raw public key in Received:
+	headers, when the Postfix SMTP server or the remote SMTP
+	client presents a raw public key. Viktor Dukhovni. File:
+	smtpd/smtpd.c.
+
+20230923
+
+	Documentation: updated descriptions of the postscreen_*_ttl
+	and postscreen_dnsbl_allowlist_threshold parameters. Files:
+	proto/postconf.proto, postscreen/postscreen.c.
+
+20230916
+
+	Documentation: fixed missing and misplaced quotes in "see
+	'postconf -d' output". Reported by наб. Files: Makefile.in,
+	mantools/check-see-postconf-d-output, proto/postconf.proto,
+	global/maillog_client.c, master/master.c, smtp/smtp.c,
+	smtpd/smtpd.c.
+
+20230917
+
+	Documentation: added a note to smtp_tls_security_level and
+	smtp_tls_policy_maps, that the level "MAY" will fall back
+	to plaintext after TLS failure, when a message has spent
+	minimal_backoff_time in the mail queue. File: proto/postconf.proto.
 
 20230929
 
@@ -27192,6 +27408,35 @@ Apologies for any names omitted.
 	replying immediately, after a client certificate verification
 	error in TLS wrappermode. Reported by Andreas Kinzler. File:
 	smtpd/smtpd.c.
+
+20230923
+
+	This changes the smtp-source test program, to avoid the
+	need to configure a large number of "valid" recipient
+	addresses in Postfix, by using a recipient address extension
+	in the form of a sequence number. The change is to append
+	the optional recipient address sequence number to the
+	recipient address localpart, instead of prepending it. To
+	use that sequence number as a recipient address extension,
+	specify an explicit address delimiter in the address
+	localpart, as in "-t localpart+@domain" or "-t localpart+"
+	where "+" is the Postfix recipient address delimiter. File:
+	smtpstone/smtp-source.c.
+
+20230924
+
+	Cleanup: simplified the smtp-source numbered recipient
+	implementation and documentation. File: smtpstone/smtp-source.c.
+
+	Documentation: added smtp_balance_inet_protocols to the
+	text with smtp_address_preference caveats. File:
+	proto/postconf.proto.
+
+20230926
+
+	Documentation: added a section to smtp_balance_inet_protocols
+	to address the problem that servers may flag mail received
+	over IPv6 as more spammy. File: proto/postconf.proto.
 
 20231006
 
@@ -27204,6 +27449,62 @@ Apologies for any names omitted.
 	on code by Jozsef Kadlecsik. Files: xsasl/xsasl_server.c,
 	xsasl/xsasl_cyrus_server.c, smtpd/smtpd_sasl_glue.c.
 
+20231008
+
+	Cleanup: enforce stricter UTF8 checks in printable(). Factor
+	out the UTF8 parser, so that it can be shared between
+	valid_utf8_string() and printable(). Wietse Venema, with
+	tests by Viktor Dukhovni. Files: util/valid_utf8_string.c,
+	util/printable.c, util/parse_utf8_char.h, util/printable.in,
+	util/printable.ref.
+
+20231010
+
+	Cleanup: printable() uses once again a single-pass algorithm.
+	Converted printable() test files to built-in test cases with
+	proper logging, and removed the printable() test files and
+	git metadata.  Added similar tests for the valid_utf8_string()
+	function. Files: util/valid_utf8_string.c, util/printable.c,
+	util/parse_utf8_char.h, util/Makefile.in.
+
+20231011
+
+	Documentation: fixed some instances of "." instead of ",".
+	Files: proto/POSTSCREEN_README.html, proto/socketmap_table.
+
+	Cleanup: finer-grained unit tests for valid_utf8_string().
+	File: util/valid_utf8_string.c.
+
+	Style: converted failed test reports to "got before want"
+	order, and converted tests to "fail before pass" order.
+	Files: util/valid_utf8_string.c, util/printable.c.
+
+	Cleanup: added a valid_utf8_stringz() function to simplify
+	most calls to validate null-terminated strings, eliminating
+	the runtime cost and code maintenance cost of 17 strlen()
+	calls. Files: src/bounce/bounce_notify_util.c,
+	src/cleanup/cleanup_addr.c, src/global/dict_ldap.c,
+	src/global/dict_mysql.c, src/global/dict_pgsql.c,
+	src/global/dict_sqlite.c, src/oqmgr/qmgr_deliver.c,
+	src/postalias/postalias.c, src/postmap/postmap.c,
+	src/postscreen/postscreen_smtpd.c, src/qmgr/qmgr_deliver.c,
+	src/smtpd/smtpd.c, src/smtpd/smtpd_check.c,
+	src/trivial-rewrite/resolve.c, src/util/casefold.c,
+	src/util/dict_inline.c, src/util/dict_thash.c,
+	src/util/dict_utf8.c, src/util/midna_domain.c,
+	src/util/printable.c, src/util/stringops.h,
+	src/util/valid_utf8_string.c.
+
+	Cleanup: added unit tests to the readlline module, with
+	multiline input that contains embedded comments, input that
+	contains a null byte, text not ending in newline. File:
+	readlline.c.
+
+20231024
+
+	Cleanup: emit place holder text when no SASL authentication
+	failure reason is available. File: smtpd/smtpd_sasl_glue.c.
+
 20231026
 
 	Bugfix (defect introduced: Postfix 2.11): in forward_path,
@@ -27213,16 +27514,1491 @@ Apologies for any names omitted.
 	a configured recipient delimiter value. Reported by Tod
 	A. Sandman. Files: proto/postconf.proto, local/local_expand.c.
 
+20231027
+
+	Cleanup: missing 'smtpd_tls_enable_rpk' parameter definition
+	in test driver. File: smtpd/smtpd_check.c.
+
+20231030
+
+	Cleanup: explicit %.100s limits for client-controlled strings
+	in SASL error logging. File: smtpd/smtpd_sasl_glue.c.
+
+20231102
+
+	Bugfix (defect introduced: Postfix 2.3, date 20051222): the
+	Dovecot auth client did not reset the 'reason' from  a
+	previous Dovecot auth service response, before parsing the
+	next Dovecot auth server response in the same SMTP session.
+	Reported by Stephan Bosch, File: xsasl/xsasl_dovecot_server.c.
+
+20231105
+
+	Cleanup: Postfix SMTP server response with an empty
+	authentication failure reason. File: smtpd/smtpd_sasl_glue.c.
+
+	Cleanup: proxymap error message when the service name is
+	not "proxymap" or "proxywrite". File: proxymap/proxymap.c.
+
+20231109
+
+	Portability: MariaDB emulates MySQL >= 5.7.6, but does not
+	implement mysql_real_escape_string_quote(). Fix by Levente
+	Birta. File: global/dict_mysql.c.
+
+	Portability: more precise MYSQL_VERSION_ID check. File:
+	global/dict_mysql.c.
+
+20231112
+
+	Robustness: don't loop on an 'unfinished' queue file that
+	still has its all-zero SIZE record. File: postcat/postcat.c.
+
+20231126
+
+	Cleanup: implementation and documentation for the selection
+	of SMTP versus LMTP client protocol and parameters, based
+	on process name. Files: smtp/smtp.c, global/mail_proto.h,
+	proto/postconf.proto.
+
+	Cleanup: documented (in proxymap source code) the complexities
+	of determining the optimal proxywrite service process limit,
+	and make the 'invalid' proxymap service name error message
+	more similar to the error message for an invalid SMTP/LMTP
+	client process name. File: proxymap/proxymap.c.
+
+20231127
+
+	Documentation: in the stock main.cf file, mailbox_command
+	uses $default_privs, not $default_user. Vijay Sarvepalli,
+	Cert/CC. File: conf/main.cf.
+
+20231202
+
+	Bugfix: posttls-finger certificate match expectations for
+	opportunistic DANE incorrectly defaulted to ("nexthop",
+	"hostname") instead of ("nexthop", "dot-nexthop"), when no
+	TLSA records were found. Viktor Dukhovni. File: posttls-finger.c.
+
+20231204
+
+	Documentation: updated comments on address validation in
+	smtpd_check.c, making them consistent with the implementation.
+	File: smtpd/smtpd_check.c.
+
+20231208
+
+	Bugfix (defect introduced: Postfix 3.1, date: 20151128):
+	"postqueue -j" produced broken JSON when escaping a control
+	character as \uXXXX. Found during code maintenance. File:
+	postqueue/showq_json.c.
+
+20231209
+
+	Feature: the local(8) delivery agent exports an ENVID
+	environment variable with the RFC 3461 envelope ID if
+	available. Files: local/command.c, local/local.c,
+	proto/postconf.proto.
+
+	Feature: the pipe(8) delivery agent supports an ${envid}
+	command-line attribute that expands to the RFC 3461 envelope
+	ID if available. File: pipe/pipe.c.
+
+20231211
+
+	Cleanup: posttls-finger certificate match expectations for
+	all TLS security levels, including warnings for levels that
+	don't implement certificate matching. Viktor Dukhovni.
+	File: posttls-finger.c.
+
+20231213
+
+	Bugfix (defect introduced: Postfix 2.3): after prepending
+	a message header with a Postfix access table PREPEND action,
+	a Milter request to delete or update an existing header
+	could have no effect, or it could target the wrong instance
+	of an existing header. Root cause: the fix dated 20141018
+	for the Postfix Milter client was incomplete. The client
+	did correctly hide the first, Postfix-generated, Received:
+	header when sending message header information to a Milter
+	with the smfi_header() application callback function, but
+	it was still hiding the first header (instead of the first
+	Received: header) when handling requests from a Milter to
+	delete or update an existing header. Problem report by
+	Carlos Velasco. This change was verified to have no effect
+	on requests from a Milter to add or insert a header. Files:
+	cleanup/cleanup_milter.c, cleanup/Makefile.in,
+	cleanup/test-queue-file18, cleanup/cleanup_milter.in18[a-d],
+	cleanup/cleanup_milter.ref18[a-d][12].
+
 20231221
 
-	Security: with "smtpd_forbid_bare_newline = yes" (default
-	"no" for Postfix < 3.9), reply with "Error: bare <LF>
-	received" and disconnect when an SMTP client sends a line
-	ending in <LF>, violating the RFC 5321 requirement that
-	lines must end in <CR><LF>. This prevents SMTP smuggling
-	attacks that target a recipient at a Postfix server. For
-	backwards compatibility, local clients are excluded by
-	default with "smtpd_forbid_bare_newline_exclusions =
-	$mynetworks". Files: mantools/postlink, proto/postconf.proto,
-	global/mail_params.h, global/smtp_stream.c, global/smtp_stream.h,
+	Security: with "smtpd_forbid_bare_newline = yes" (the default
+	for Postfix 3.9), reply with "Error: bare <LF> received"
+	and disconnect when an SMTP client sends a line ending in
+	<LF>, violating the RFC 5321 requirement that lines must
+	end in <CR><LF>. This prevents SMTP smuggling attacks that
+	target a recipient at a Postfix server. For backwards
+	compatibility, local clients are excluded by default with
+	"smtpd_forbid_bare_newline_exclusions = $mynetworks". Files:
+	mantools/postlink, proto/postconf.proto, global/mail_params.h,
+	global/smtp_stream.c, global/smtp_stream.h, smtpd/smtpd.c.
+
+20240104
+
+	Cleanup: when the Postfix SMTP server rejects bare <LF>,
+	log the helo, mail and rcpt information if available. Files:
+	smtpd/smtpd.c, smtpd/smtpd_check.c.
+
+	Cleanup: when the Postfix SMTP server rejects bare <LF>,
+	keep reading message content after an unexpected <LF>.<LF>
+	or <LF>.<CR><LF>, before responding. This increases the
+	likelihood that the client will actually see the Postfix
+	response and remove the attack from their mail queue. Files:
+	smtpd/smtpd.c, global/smtp_stream.[hc], global/cleanup_user.h.
+
+	Cleanup: added smtpd_forbid_bare_newline settings "reject"
+	and "normalize". The default setting "normalize" (and "yes")
+	will accept bare newlines from local or remote SMTP clients,
+	but if any DATA content line ends in <CR><LF>, require the
+	standard End-of-DATA form <CR><LF>.<CR><LF> and skip
+	non-standard End-of-DATA forms. This may fail to receive
+	email from legitimate clients that send a mix of lines
+	ending in <LF> and <CR><LF>. If such clients exist, they
+	need to be excluded with smtpd_forbid_bare_newline_exclusions.
+	Files: proto/postconf.proto, global/mail_params.h,
 	smtpd/smtpd.c.
+
+	Tooling: mantools/dehtml was breaking words in code examples,
+	causing false spellchecker errors. File: mantools/dehtml,
+	proto/stop.double-proto-html.
+
+20240105
+
+	Cleanup: don't spam the log with unexpected End-of-DATA
+	forms. Files: proto/postconf.proto, smtpd/smtpd.c,
+	RELEASE_NOTES.
+
+20240106
+
+	Inbound smuggling: with smtpd_forbid_bare_newline enabled,
+	do not "strip" extra <CR> characters before <LF>. This avoids
+	ambiguity when a client sends extra <CR> characters as in
+	<CR><LF>.<CR><CR><LF>. There is no smuggling vulnerability
+	because there is no mail system will send the above
+	sequence (mail systems send <CR><LF>..<CR><CR><LF> instead).
+	But this change will silence some testing tools. More at
+	https://www.postfix.org/false-smuggling-claims.html. File:
+	global/smtp_stream.c.
+
+20240109
+
+	Outbound smuggling: with "cleanup_replace_stray_cr_lf =
+	yes" (the default) Postfix will replace stray <CR> or <LF>
+	characters in message content with a space character. This
+	prevents Postfix from enabling outbound (remote) SMTP
+	smuggling, and it also makes evaluation of Postfix-added
+	DKIM etc. signatures independent from how a remote mail
+	server handles stray <CR> or <LF> characters. Files:
+	global/mail_params.h, cleanup/cleanup.c, cleanup/cleanup_message.c,
+	mantools/postlink, proto/postconf.proto.
+
+20240110
+
+	Cleanup: the smtpd_forbid_bare_newline settings "normalize"
+	and "reject" are now more similar. Both now unconditionally
+	require the standard End-of-DATA sequence <CR><LF>.<CR><LF>.
+	Files: smtpd/smtpd.c, proto/postconf.proto, RELEASE_NOTES.
+
+20240112
+
+	Cleanup: updated comments and identifiers because the bare
+	newline handling has evolved. Files: global/smtp_stream.[hc],
+	Files: global/smtp_stream.[hc], smtpd/smtpd.c.
+
+20240116
+
+	Reverted some changes after postfix-3.9-20240112, and updated
+	documentation.
+
+20240121
+
+	Documentation: "smtpd_forbid_bare_newline = reject"  will
+	reject email from services that use BDAT to send MIME text
+	containing a bare newline (RFC 3030 Section 3 requires
+	canonical MIME format for text message types, defined in
+	RFC 2045 Sections 2.7 and 2.8) Files: proto/postconf.proto,
+	RELEASE_NOTES.
+
+	Baseline for back porting the SMTP smuggling fixes to Postfix
+	3.8.5, 3.7.10, 3.6.14, and 3.5.24.
+
+20240124
+
+	Feature: with "smtpd_forbid_bare_newline = note", the Postfix
+	SMTP server notes in the log if it received any lines with
+	bare LF.  Otherwise, "note" is like "normalize". The
+	information is formatted as "disconnect from name[address]
+	...  notes=bare_lf".  The new value is expected to become
+	a list of comma-separated names. Files: smtpd/smtpd.[hc].
+
+	Cleanup: require that a stable release disables SNAPSHOT
+	and NONPROD features. File: mantools/check-snapshot-nonprod.
+
+	Bugfix (defect introduced: Postfix 3.4): the SMTP server's
+	BDAT command handler could be tricked to read $message_size_limit
+	bytes into memory. Found during code maintenance. File:
+	smtpd/smtpd.c.
+
+	Feature: never too late, an SMTP server HELP command that
+	lists the implemented commands. Some commands may be
+	implemented but not available due to smtpd_discard_ehlo_keywords
+	or access control limitations. Files: smtpd/smtpd.[hc],
+	util/argv.[hc].
+
+	Workaround: tlsmgr logfile spam. Some OS lies under load:
+	it says that a socket is readable, then it says that the
+	socket has unread data, and then it says that read returns
+	EOF, causing Postfix to spam the log with a warning message.
+	File: tlsmgr/tlsmgr.c.
+
+20240125
+
+	Cleanup: tlsmgr.c fix 20240124. File: tlsmgr/tlsmgr.c.
+
+	Documentation: updated obsolete "CONFIGURATION PARAMETERS"
+	summaries in Postfix manpages, with current text from the
+	postconf(5) manpage. Files: proto/generic, proto/header_checks,
+	proto/aliases, proto/canonical, proto/relocated,
+	postdrop/postdrop.c, postsuper/postsuper.c, sendmail/sendmail.c,
+	dnsblog/dnsblog.c, postkick/postkick.c, postlock/postlock.c,
+	qmgr/qmgr.c, qmqpd/qmqpd.c, trivial-rewrite/trivial-rewrite.c.
+
+20240129
+
+	Documentation: be more precise about server lookups with
+	MX or SRV records. File: smtp/smtp.c.
+
+	Documentation: postlogd is not a short-running process. It
+	wil keep running until it reaches the max_idle limit. File:
+	postlogd/postlogd.c.
+
+ 	Cleanup (no semantic change): in the mysql: and pgsql:
+ 	clients, made the hard-coded idle and retry timer settings
+ 	configurable, and updated the mysql_table(5) and pgsql_table(5)
+ 	manpages. Files: global/dict_mysql.c, global/dict_pgsql.c,
+	proto/mysql_table, proto/pgsql_table.
+
+20230130
+
+	Reproducible build: added LC_ALL=C to the top of the makedefs
+	script.
+
+20240206
+
+	Documentation: in COMPATIBILITY_README, the descriptions
+	of smtpd_relay_restrictions and smtputf8_enable were grouped
+	under the wrong compatibility level value. Reported by Rune
+	Philosof. File: proto/COMPATIBILITY_README.html.
+
+	Compatibility: the RFC 5322 date and time specification
+	recommends (i.e. should) that a single space be used in
+	each place that FWS appears. To avoid a breaking change,
+	Postfix now formats numerical days as two-digit days, i.e.
+	days 1-9 have a leading zero instead of a leading space.
+	Files: util/sys_defs.h global/mail_date.c.
+
+	Documentation: the post-install(1) manpage now lists
+	$config_directory/makedefs.out as one of the installed
+	files. File: postfix-install.
+
+20240208
+
+	Refactored the JSON string quoting function, so that it can
+	be shared between the postqueue command and the MongoDB
+	client implementation. Files: util.quote_for_json.c,
+	util/stringops.h, postqueue/showq_json.c.
+
+	MongoDB client support, contributed by Hamid Maadani, based
+	on earlier code by Stephan Ferraro. Files: conf/dynamicmaps.cf,
+	conf/postfix-files, makedefs, mantools/postlink,
+	proto/DATABASE_README.html, proto/Makefile.in,
+	proto/MONGODB_README.html, proto/mongodb_table,
+	global/dict_mongodb.c, global/dict_mongodb.h, global/mail_dict.c,
+	global/Makefile.in, postconf/Makefile.in, proto/INSTALL.html,
+	postfix/postfix.c.
+
+20240209
+
+	Performance: eliminate worst-case behavior where the queue
+	manager deferred delivery to all destinations over a specific
+	delivery transport, after only a single delivery agent
+	failure. The scheduler now throttles one destination, and
+	allows deliveries to other destinations to keep making
+	progress. Files: *qmgr/qmgr_deliver.c.
+
+20240210
+
+	Documentation: introductory text for SMTP and LMTP lookup
+	strategies. File: smtp/smtp.c.
+
+20240211
+
+	Documentation: updated the text for the new "notes=" attribute
+	in SMTP server "disconnect" logging. File: proto/postconf.proto.
+
+20240212
+
+	Documentation: emphasize that email address patterns and
+	host name/address patterns for indexed etc. files are really
+	for indexed etc. files. File: proto/access.
+
+	Documentation: mail_date(3) manpage. File: global/mail_date.c.
+
+20240213
+
+	Tests: updated tests that had suffered from bit rot. Files:
+	bounce/with-msgid-with-filter-no-thread.ref,
+	bounce/with-msgid-with-filter-with-thread.ref,
+	src/dns/mxonly_test.ref, dns/no-mx.ref.
+
+	Logging: indicate which (usually, substring) lookups are
+	skipped. File: global/maps.c.
+
+20240215
+
+	Portability: Clang versions that predate support for the
+	C23 standard do not allow a declaration immediately after
+	a (switch) label. The workaround is to add a null statement
+	between label and declaration. File: global/dict_mongodb.c.
+
+	Documentation: minor edits. Files: proto/mongodb_README.html,
+	proto/mongodb_table.html.
+
+20240216
+
+	Documentation: dropped text about partial matches from the
+	check_{client,helo,sender,recipient,etrn}_access summaries,
+	deferring to the access(5) manpage for details, for consistency
+	with the check_xx_yy_access features. File: proto/postconf.proto.
+
+	Cleanup: missing mongodb checks in the postconf command,
+	missing mongodb under "postconf -m" manpage entry. Files:
+	postconf/postconf.c, postconf/postconf_dbms.c.
+
+20240218
+
+	Deprecation: the Postfix SMTP server logs a warning when
+	"permit_mx_backup" is used (support for restriction
+	"permit_mx_backup" will be removed from Postfix; instead,
+	use "relay_domains"). File: smtpd/smtpd_check.c.
+
+	Deprecation: the postconf command logs a warning when the
+	following parameters are specified in main.cf or master.cf:
+	xxx_use_tls, xxx_enforce_tls (use the corresponding
+	xxx_security_level setting instead); xxx_per_site (use the
+	corresponding xxx_policy_maps setting instead); disable_dns_lookups
+	(use smtp_dns_support_level instead); smtpd_tls_dh1024_param_file,
+	smtpd_tls_eecdh_grade (do not specify, leave at default).
+	Files: postconf/postconf.c, postconf/postconf_unused.c.
+	proto/postconf.proto.
+
+	Cleanup: add "postconf -q" option to avoid redundant warnings
+	about unused or deprecated parameter settings when upgrading
+	or installing Postfix. Such warnings are still logged with
+	the commands postfix start, start-fg, check, reload, or
+	status. Files: postconf/postconf.c, postconf/postconf_dbms.c,
+	postconf/postconf.h, conf/postfix-script, conf/post-install,
+	postfix-install.
+
+20240221
+
+	Documentation: the text for TLS loglevel 2 was incomplete.
+	File: proto/postconf.proto.
+
+20240226
+
+	Safety: drop and log over-size DNS responses resulting in
+	more than 100 records. This 20x larger than the number of
+	server addresses that the Postfix SMTP client is willing
+	to consider when delivering mail, and is well below the
+	number of records that could cause a tail recursion crash
+	in dns_rr_append() as reported by Toshifumi Sakaguchi. This
+	also limits the number of DNS requests from check_*_*_access
+	restrictions. Files: dns/dns.h, dns/dns_lookup.c, dns/dns_rr.c,
+	dns/test_dns_lookup.c, posttls-finger/posttls-finger.c,
+	smtp/smtp_addr.c, smtpd/smtpd_check.c.
+
+20240227
+
+	Documentation: document the need to disable regular expression
+	special characters when using $name inside an inlined
+	pattern. Files: proto/pcre_table, proto/regexp_table.
+
+20240228
+
+	Cleanups. Fixed some dns_rr_create() calls in test code,
+	and reverted a workaround in the DNS record formatter;
+	files: dns/dns_rr_test.c, dns/dns_strrecord.c. Code formatting;
+	file: global/mail_addr_find.c. Added missing test reference;
+	file: postconf/test76.ref.
+
+20240229
+
+	Compatibility: moved the new DNS_RR.flags structure member
+	to the location of a "padding" hole (two bytes for ILP32
+	systems, 6 bytes for LP64). File: dns/dns.h.
+
+	Deprecation: removed permit_naked_ip_address, reject_maps_rbl,
+	and check_relay_domains. These have been logging deprecation
+	warnings since 2005 or earlier, and were removed from Postfix
+	documentation in 2004 (but who reads logs and documentation?).
+	Files: smtpd/smtpd_check.c, smtpd/smtpd_check_backup.ref,
+	smtpd/smtpd_exp.ref, smtpd/smtpd_deprecated.in,
+	smtpd/smtpd_deprecated.ref.
+
+20240302
+
+	Cleanup: fixed inconsistent formatting of deprecation warning
+	messages. Files: postconf/postconf_unused.c, postconf/test76.ref,
+	smtpd/smtpd_check.
+
+	Documentation: DEPRECATION_README suggests replacements for
+	features that will be removed or than have been removed.
+	Files: proto/DEPRECATION_README.html, conf/postfix-files,
+	html/index.html, proto/Makefile.in.
+
+20240305
+
+	Documentation: in the master.cf documentation, added text
+	for "quoting" a command-line argument that starts with "{".
+	File: proto/master.
+
+20240309
+
+	Cleanup: removed unused Makefile targets (lint, shar,
+	printfck). Files Makefile.* src/*/Makefile.in.
+
+20230310
+
+	Bugfix (introduced: 2.3): the Milter client function to
+	report an "unknown" command sent only the command name but
+	not the command arguments. Found during code maintenance.
+	File: smtpd/smtpd.c.
+
+	Bugfix (introduced: 2.3): after receiving an unknown command,
+	and after a Milter application callback function xxfi_unknown()
+	returned SMFIR_REJECT, the Postfix SMTP server replied with
+	a generic "Command rejected" instead of the more specific
+	"Error: command not recognized". The Postfix SMTP server
+	continues to return a generic "service unavailable" response
+	after xxfi_unknown() returns SMFIR_TEMPFAIL. The Milter API
+	does not allow other xxfi_unknown() return values. File:
+	smtpd/smtpd.c.
+
+	Bugfix (introduced: Postfix 3.0): the Postfix SMTP server
+	command handler for unimplemented commands did not report
+	the command (and arguments) to the Milter API for unknown
+	*or unimplemented* commands. File: smtpd/smtpd.c.
+
+	Documentation: added text that the read-only "service_name"
+	configuration parameter was introduced in Postfix 3.3. File:
+	proto/postconf.proto.
+
+20240402
+
+	Workaround: in the stock master.cf file, disable the feature
+	smtpd_forbid_unauth_pipelining in the submission and
+	submissions services, to work around a 15-year old open
+	Mozilla bug for sending a non-compliant SMTP command:"EHLO
+	we-guess.mozilla.org<CR><LF>QUIT<CR><LF>" (see
+	https://bugzilla.mozilla.org/show_bug.cgi?id=538809). File:
+	conf/master.cf.
+
+20240413
+
+	Documentation: mention in the first aliases(5) and virtual(5)
+	manpage paragraphs that alias_maps is searched only with
+	the email address localpart (no domain) and that
+	virtual_alias_maps is often queried with a full email address
+	(including domain). Add similar text to the parameter
+	descriptions for alias_maps and virtual_alias_maps. Files:
+	proto/aliases, proto/virtual.
+
+	Documentation: workaround for a load balancer paradox. When
+	a destination (relayhost, MySQL server, PostgreSQL server,
+	LDAP server) is a load balancer, and there are no alternative
+	servers, specify the load balancer multiple times. Without
+	this duplication, the Postfix client would not reconnect
+	immediately to the same load balancer after a server failure,
+	and it would defer mail. Files: proto/postconf.proto,
+	proto/mysql_table, proto/pgsql_table, proto/ldap_table.
+
+20240421
+
+	Documentation: replace the obsolete pickup service type
+	fifo with unix, and fix typos. Dilyan Palauzov. Files:
+	HISTORY, proto/BUILTIN_FILTER_README.html,
+	proto/STANDARD_CONFIGURATION_README.html
+
+20240418
+
+	Logging: when the pickup daemon logs a warning for a maildrop
+	queue file, log not only the 'new' name in the incoming
+	queue, but also log the 'old' name in the maildrop queue.
+	File: pickup/pickup.c.
+
+20240422
+
+	Cleanup: improved warning text when a local alias contains
+	a domain. File: postalias/postalias.c.
+
+20240502
+
+	Documentation: clarified the spawn(8) manpage BUGS section.
+	File: spawn/spawn.c.
+
+20240504
+
+	Documentation: clarified some text in the Postfix overview.
+	File: proto/OVERVIEW.html.
+
+20240603
+
+	Documentation: with "smtpd_tls_security_level = encrypt",
+	clarified what commands the Postfix will accept during the
+	plaintext phase. File: proto/postconf.proto.
+
+	Documentation: ugly javascript workaround for
+	Google Chrome scrolling to the wrong location with
+	'<a name=' and '<a id=' tags in postconf.5.html. See
+	https://support.google.com/chrome/thread/11993079. File:
+	proto/postconf.html.prolog.
+
+20240607
+
+	Documentation: tighten up the presentation of long-form and
+	short-form command arguments. File: proto/master.
+
+20240610
+
+	Compatibility: when the OpenSSL library compile-time version
+	differs from the run-time version, allow forward-compatible
+	minor version differences with OpenSSL >= 3.x.x, allow
+	forward-compatible micro version differences with OpenSSL
+	1.1.x, and allow no version difference with OpenSSL <=
+	1.0.x. Otherwise, log a potential version mismatch warning.
+	Viktor and Wietse. File: tls/tls_misc.c.
+
+20240612
+
+	Bugfix (defect introduced: Postfix 3.10, date 20230310):
+	segfault after reading a null pointer, while responding to
+	an unknown or unimplemented command. File: smtpd/smtpd.c.
+
+20240614
+
+	Documentation: made the descriptions of command-line arguments
+	inside {} more consistent. Files: proto/master, pipe/pipe.c.
+
+20240618
+
+	Code health: factored out duplicate code for unknown and
+	unimplemented commands in the SMTP server. File: smtpd/smtpd.c.
+
+20240622
+
+	Documentation: in the rbl_reply_maps description,added text
+	how it handles reject_rbl_* or reject_rhsbl_* queries with
+	an address filter. Also added text to clarify the differences
+	between rbl_reply_maps and postscreen_dnsbl_reply_map.
+	File: proto/postconf.proto.
+
+20240623
+
+	Feature: improved rbl_reply_maps usability. After a query
+	with the form domain=address-filter returns no result,
+	rbl_reply_maps will query the tables with the domain (i.e.
+	without the =address-filter). Files: smtpd/smtpd_check.c,
+	proto/postconf.proto, smtpd/smtpd_check_access, smtpd/smtpd_exp.in,
+	smtpd/smtpd_exp.ref.
+
+20240626
+
+	Cleanup: updated SMTP server regression tests for last-minute
+	changes to the wording of deprecation messages. Files:
+	smtpd/smtpd_check_backup.ref, smtpd/smtpd_deprecated.ref,
+	smtpd/smtpd_exp.ref.
+
+20240719
+
+	Bitrot: with MySQL 8.0.35 and later set TLS options with
+	mysql_options() instead of mysql_ssl_set(). Researched by
+	Robert Fuhrer. Files: global/dict_mysql.c, proto/mysql_table.
+
+20240720
+
+	Bitrot: MariaDB Connector/C 3.0.0 lists mysql_options() as
+	deprecated, and recommends using mysql_optionsv() instead.
+	Option names and semantics have not changed. Peter Ajamian.
+	Files: global/dict_mysql.c, proto/mysql_table.
+
+20240721
+
+	Reproducible build: sort the output from 'env'. Scott
+	Kitterman. File: makedefs.
+
+20240722
+
+	Bitrot: some groff version complains about ".ft C" directives
+	in postconf(5) manpages. File: mantools/postconf2man.
+
+20240724
+
+	Documentation: re-worded some text about Debian hard-coding
+	the Cyrus SASL smtpd.conf search path. Files:
+	proto/SASL_README.html, proto/postconf.proto.
+
+	Cleanup: the Postfix DNS client returned only the first
+	fragment of a multi-fragment TXT record. This would become
+	an issue when looking up policy records with strings longer
+	than 255 bytes. File: dns/dns_lookup.c.
+
+20240731
+
+	Documentation: automatic BCC recipients are subject to
+	address canonicalization (missing domain), canonical_maps,
+	masquerade_domains, and virtual_alias_maps. Files: 
+	proto/postconf.proto.
+
+	Documentation: 'redirect' recipients are subject to address
+	canonicalization (add missing domain), but not subject to
+	canonical_maps, masquerade_domains, and virtual_alias_maps.
+	Files: proto/access, proto/header_checks.
+
+20240807
+
+	Documentation: update the *sender_login_* descriptions
+	with guidance to enforce that the From: header address
+	matches the envelope sender (MAIL FROM) address. File:
+	proto/postconf.proto.
+
+20240808
+
+	Typofix in comment. File: global/normalize_mailhost_addr.c.
+ 
+20240730 
+
+	Infrastructure: added argv_addv() function to append an
+	array of strings. File: util/argv.c.
+
+20240809
+
+	Infrastructure: added a dns_rr_detach() function to extract
+	one DNS record from a list. Files: dns/dns_rr.c, dns_rr_test.c.
+
+20240816
+
+	Infrastructure: factored out strerror() wrapper that reports
+	"Application error" instead of "Success" when errno == 0.
+	Files: util/mystrerror.c, util/vbuf_print.c.
+
+20240822
+
+	Infrastructure: added "append to buffer" option to the
+	hex_encode_opt() function. Files: util/hex_encode.[hc];
+
+20240831
+
+	Bugfix: require that stable releases have a three-number
+	mail_version value. Found by Michael Orlitzky. File:
+	mantools/check-snapshot-nonprod.
+
+20240902
+
+	Documentation: update the local_login_sender_maps description
+	with guidance to enforce that the From: header address
+	matches the envelope sender (MAIL FROM) address. File:
+	proto/postconf.proto.
+ 
+20240909
+
+	Bitrot: some platforms prefer the pkgconf command over pkg-config,
+	which in turn has superseded icu-config. File: makedefs.
+
+20230910
+
+	Cleanup: the enable_threaded_bounces feature was re-implemented.
+	This simplifies the code and improves the handling of
+	multiline Message-Id: headers (no software should generate
+	those, but...). Files: bounce/bounce_notify_util.c,
+	cleanup/cleanup.h, cleanup/cleanup_extracted.c,
+	cleanup/cleanup_message.c, cleanup/cleanup_state.c,
+	global/mail_proto.h, multiple bounce testfiles.
+
+20240917
+
+	Minor feature: "postcat -f" option to prepend the filename
+	to each output line. This simplifies test data development.
+	File: postcat/postcat.c.
+
+20240919
+
+	Bitrot: With OpenSSL 3.0 additional key exchange algorithms
+	can be runtime loaded via "providers", and these don't have
+	short internal numeric ids (nids). We've been using numeric
+	ids to configure key exchange groups, and for logging the
+	negotiated group. We now need to switch to APIs that work
+	directly with string names. OpenSSL 3.0 supports not only
+	(EC)DH key exchange groups but also more general KEMs (Key
+	Encapsulation Mechanisms), in which the response from the
+	server to the client contains no server public key. So we
+	can no longer reliably deduce the negotiated group from a
+	"peer" key, and may need to fall back on the (new with
+	OpenSSL 3.2) SSL_get0_group_name() function. Viktor Dukhovni.
+	Files: src/tls/tls.h, src/tls/tls_dh.c, src/tls/tls_misc.c.
+
+20240923
+
+	Cleanup: No user-visible change. Updated TLSRPT related
+	internal comments and internal identifiers; updated error
+	logging after changes in libtlsrpt error-to-string conversion
+	functions; minor changes to improve robustness.
+
+20240924
+
+	Misc. cleanups. Viktor Dukhovni. Files: src/tls/tls_dh.c,
+	proto/postconf.proto, src/global/mail_params.h.
+
+	TLSRPT documentation cleanups. File: proto/TLSRPT_README.html.
+
+20240924
+
+	Code health: added proper unit tests to hex_code.c.
+
+	Code health: deduplicated code instances that convert an
+	IPv4-in-IPv6 address (::ffff:a.b.c.d) to IPv4 form, but
+	only if IPv4 support is enabled. Files: myaddrinfo,h,
+	sane_sockaddr_to_hostaddr.c, global/haproxy_srvr.c,
+	postscreen/postscreen_endpt.c, smtp/smtp_tlsrpt.c.
+
+20240925
+
+	TLSRPT support: add routine logging of TLSRPT 'success' and
+	'failure' events, as there is no other easy way to find out
+	what the Postfix TLSRPT client is doing. Document what this
+	logging looks like, that it is not logged for reused TCP
+	connections, and how to recognize such connections. Files:
+	tls/tlsrpt_wrapper.c, proto/TLSRPT_README.html.
+
+	TLSRPT support: simplified the handling of reused TLS
+	sessions. Report all TLS handshakes regardless of whether
+	or not a session is reused. Note that there is only one TLS
+	handshake for a reused SMTP connection. Files: smtp/smtp_proto.c,
+	tls/tls_client.c, proto/TLSRPT_README.html.
+
+	Cleanup: pre-release checks for snapshot and nonprod releases.
+	File: mantools/check-snapshot-nonprod.
+
+	First general Postfix release with TLSRPT support.
+
+20240927
+
+	Feature: new parameter smtp_tlsrpt_skip_reused_handshakes
+	(default: yes) to suppress TLSRPT status reports for TLS
+	handshakes that reuse a previously-negotiated TLS session
+	(there would be no new information to report). Specify "no"
+	for TLSRPT troubleshooting. Files: mantools/postlink,
+	proto/TLSRPT_README.html, proto/postconf.proto, smtp/smtp.c,
+	smtp/smtp_params.c, smtp/smtp_tlsrpt.c, tls/tls_client.c,
+	tls/tls_proxy_client_print.c, tls/tls_proxy_client_scan.c,
+	tls/tlsrpt_wrapper.c, tls/tlsrpt_wrapper.h.
+
+20240928
+
+	Feature (no code change): generate HTML anchors for manpage
+	sections, for example: cidr_table.5.html#table_format. The
+	anchor contains the section name, after replacing upper
+	case with lower case, and after replacing spaces with
+	underscores. File: mantools/man2html.
+
+	Cleanup (no code change): regenerate all man-style pages
+	so that the parameter summaries at the end match the text
+	in postconf(5). This also updates embedded man-style
+	comments in Postfix source code. Files: mantools/man2html,
+	proto/aliases, cleanup/cleanup.c, local/local.c, smtpd/smtpd.c,
+	tlsproxy/tlsproxy.c.
+
+20240930
+
+	Bugfix (defect introduced: Postfix 2.9, date 20111218):
+	with "smtpd_sasl_auth_enable = no", info received with
+	XCLIENT LOGIN was ignored by permit_sasl_authenticated.
+	Problem reported by Antonin Verrier. The fix was to REMOVE
+	a test and to rely solely on the sasl_mechanism property
+	which is always null when a remote SMTP client is not
+	authenticated. File: src/smtpd/smtpd_check.c.
+
+	Cleanup (no code change): regenerated HTML manpages that
+	weren't updated because of a simplistic make(1) dependency.
+
+20241010
+
+	Cleanup (no code change): reformatted source files that
+	diverged from Postfix style, complicating code maintenance.
+	The only object file change is in tls_dane.o, because
+	OPENSSL_free() has a line number argument. Other object
+	files are unchanged. Files: bounce/bounce_notify_util_tester.c,
+	bounce/bounce_one_service.c, cleanup/cleanup.c,
+	cleanup/cleanup_api.c, cleanup/cleanup_envelope.c,
+	cleanup/cleanup_out_recipient.c, cleanup/cleanup_rewrite.c,
+	dns/dns.h, dns/dns_lookup.c, dns/dns_rr_filter.c, dns/dns_sec.c,
+	global/bounce_log.h, global/cleanup_user.h, global/clnt_stream.h,
+	global/compat_level.c, global/compat_level.h, global/conv_time.c,
+	global/db_common.h, global/dot_lockfile_as.c,
+	global/header_body_checks.c, global/info_log_addr_form.c,
+	global/is_header.c, global/mail_addr_map.c,
+	global/mail_command_server.c, global/mail_conf.c,
+	global/mail_conf_raw.c, global/mail_conf_str.c, global/mail_copy.c,
+	global/mail_params.c, global/mail_proto.h, global/mail_queue.h,
+	global/mail_trigger.c, global/maillog_client.c,
+	global/mkmap_proxy.c, global/own_inet_addr.c,
+	global/quote_821_local.c, global/quote_821_local.h,
+	global/quote_822_local.c, global/quote_822_local.h,
+	global/rec_type.h, global/recdump.c, global/sent.h,
+	global/server_acl.c, global/smtputf8.c, global/smtputf8.h,
+	global/tok822_tree.c, global/user_acl.h,
+	global/valid_mailhost_addr.c, global/xtext.c, local/alias.c,
+	local/command.c, master/master.c, master/master.h,
+	master/master_listen.c, master/master_proto.h,
+	master/master_service.c, master/master_watch.c, milter/milter8.c,
+	milter/test-milter.c, oqmgr/qmgr_active.c, oqmgr/qmgr_entry.c,
+	pipe/pipe.c, postfix/postfix.c, postscreen/postscreen_dnsbl.c,
+	posttls-finger/posttls-finger.c, qmgr/qmgr_active.c,
+	qmgr/qmgr_entry.c, qmqpd/qmqpd_peer.c, smtp/smtp.h,
+	smtp/smtp_addr.c, smtp/smtp_tlsrpt.c, smtp/smtp_unalias.c,
+	smtpd/smtpd_milter.h, smtpd/smtpd_resolve.h, tls/tls_client.c,
+	tls/tls_dane.c, tls/tls_dh.c, tls/tls_misc.c,
+	tls/tls_proxy_client_print.c, tls/tls_server.c, util/alldig.c,
+	util/argv_split.c, util/balpar.c, util/byte_mask.c,
+	util/cidr_match.h, util/dict.h, util/dict_cdb.h,
+	util/dict_stream.c, util/dup2_pass_on_exec.c, util/duplex_pipe.c,
+	util/exec_command.c, util/find_inet.c, util/format_tv.c,
+	util/hash_fnv.c, util/host_port.c, util/inet_addr_sizes.c,
+	util/inet_connect.c, util/load_file.h, util/load_lib.h,
+	util/mac_expand.h, util/midna_domain.h, util/mkmap_cdb.c,
+	util/mvect.c, util/myaddrinfo.h, util/name_mask.c,
+	util/open_limit.c, util/parse_utf8_char.h, util/posix_signals.c,
+	util/sane_strtol.c, util/set_eugid.c, util/slmdb.c,
+	util/sock_addr.c, util/strcasecmp.c, util/stream_connect.c,
+	util/stream_recv_fd.c, util/stream_test.c,
+	util/unix_dgram_connect.c, util/unix_dgram_listen.c,
+	util/vbuf.c.
+
+20241015
+
+	Documentation: updated the TLSRPT_README text and example
+	for section "Delivering TLSRPT summaries via email". File:
+	proto/TLSRPT_README.html.
+
+20241021
+
+	Bugfix (defect introduced: postfix 3.0): the default master.cf
+	syslog_name setting for the relay service did not preserve
+	multi-instance information. File: conf/master.cf.
+
+20241022
+
+	Documentation: updated the TLSRPT_README examples for
+	MTA-STS. File: proto/TLSRPT_README.html.
+
+	Documentation: add explicit guidance to use "postconf -x"
+	when checking an inline pcre or regexp table for unescaped
+	'$' characters. Files: mantools/postlink, proto/pcre_table,
+	proto/regexp_table.
+
+	Documentation: be explicit about when Postfix expands $name
+	in inline pcre, regexp, and cidr lookup tables. Files:
+	proto/cidr_table, proto/pcre_table, proto/regexp_table.
+
+	Safety: replace ASCII control characters that match isspace()
+	with space characters. This prevents line breaks etc. in
+	smtp_tls_policy attribute values that use the long form "{
+	name = value }". This form was introduced with Postfix 3.10
+	TLSRPT support. Files: smtp/smtp_tls_policy.c, util/extpar.c,
+	util/Makefile.in, util/normalize_ws.c, util/stringops.h.
+
+20241023
+
+	Logging: Postfix SMTP server 'reject' logging now shows the
+	sasl_method, sasl_username, and sasl_sender if available.
+	Viktor Dukhovni. Files: smtpd/smtpd_check.c.
+
+20241024
+
+	Documentation: in a pgsql: client configuration, the setting
+	"dbname" is required, but ignored when the setting "hosts"
+	contains an URI with a database name. File: proto/pgsql_table.
+
+20241025
+
+	Cleanup: accept any well-formed URI prefix as a pgsql: client
+	connection target (the PostgreSQL URI parser decides what
+	is allowed). The dbname setting is now optional if the hosts
+	setting specifies only URIs. Files: util/valid_uri_scheme.[hc],
+	proto/pgsql_table, global/dict_pgsql.c.
+
+202141026
+
+	Documentation: updated the pgsql_table manpage that the
+	"user" and "password" settings  are also ignored when a
+	"hosts" setting specifies an URI.  File: proto/pgsql_table.
+
+	Documentation: updated text for how to handle retries with a
+	load balancer. Files: proto/pgsql_table, proto/mysql_table.
+
+20241027
+
+	Bugfix (defect introduced: Postfix 2.3, date 20051222):
+	file descriptor leak after failure to connect to a Dovecot
+	auth server. The impact is limited because there are limits
+	on the number of retries (one), on the number of errors per
+	SMTP session (smtpd_hard_error_limit), on the number
+	of sessions per SMTP server process (max_use), and on the
+	number file handles per process (managed with sysctl).
+	File: xsasl/xsasl_dovecot_server.c.
+
+20241031
+
+	Logging: the Dovecot SASL client logging for "Invalid
+	authentication mechanism" now includes the name of that
+	mechanism. File: xsasl/xsasl_dovecot_server.c
+
+20241028
+
+	Documentation: TLSRPT_README, section "Delivering TLSRPT
+	summaries via email". File: proto/TLSRPT_README.html.
+
+20241107
+
+	Documentation: tweaked text for smtpd_delay_open_until_valid_rcpt.
+	File: proto/postconf.proto.
+
+20241111
+
+	Bugfix (defect introduced: Postfix 3.10, date 20241025):
+	dict_pgsql_open() returned NULL when "hosts" specified a
+	non-URI target and "dbname" was not set. Instead, it should
+	return a surrogate dictionary. File: global/dict_pgsql.c.
+
+20241112
+
+	Logging: the cleanup server now logs "queueid: removed
+	(reason)" where "reason" is either "canceled" (message
+	transaction not completed) or "discarded" (DISCARD action
+	in access table, header/body_checks, or Milter response).
+
+20241113
+
+	Bugfix (defect introduced: Postfix 3.10, date 20240923):
+	TLSRPT support in tlsproxy dereferenced non-existent client
+	properties in the server role. Problem reported by Florian
+	Piekert. File: tlsproxy/tlsproxy.c
+
+	Cleanup: removed an unused string variable. File:
+	xsasl/xsasl_cyrus_server.c
+
+20241119
+
+	Documentation: converted hyperlinks to https:// and located
+	some early content on the Wayback Machine. Files: AAAREADME,
+	HISTORY, conf/main.cf, conf/master.cf, conf/post-install,
+	dns/dns.h, examples/smtpd-policy/README.SPF, html/index.html,
+	mantools/make_soho_readme, mantools/makemanidx, mantools/man2html,
+	mantools/postlink.sed, mantools/readme2html, master/master_avail.c,
+	postfix/postfix.c, proto/ADDRESS_CLASS_README.html,
+	proto/ADDRESS_REWRITING_README.html,
+	proto/ADDRESS_VERIFICATION_README.html,
+	proto/BACKSCATTER_README.html,
+	proto/BASIC_CONFIGURATION_README.html, proto/BDAT_README.html,
+	proto/BUILTIN_FILTER_README.html, proto/CDB_README.html,
+	proto/COMPATIBILITY_README.html,
+	proto/CONNECTION_CACHE_README.html,
+	proto/CONTENT_INSPECTION_README.html, proto/DATABASE_README.html,
+	proto/DB_README.html, proto/DEBUG_README.html,
+	proto/DEPRECATION_README.html, proto/DSN_README.html,
+	proto/ETRN_README.html, proto/FILTER_README.html,
+	proto/FORWARD_SECRECY_README.html, proto/INSTALL.html,
+	proto/IPV6_README.html, proto/LDAP_README.html,
+	proto/LINUX_README.html, proto/LMDB_README.html,
+	proto/LOCAL_RECIPIENT_README.html, proto/MAILDROP_README.html,
+	proto/MAILLOG_README.html, proto/MEMCACHE_README.html,
+	proto/MILTER_README.html, proto/MONGODB_README.html,
+	proto/MULTI_INSTANCE_README.html, proto/MYSQL_README.html,
+	proto/NFS_README.html, proto/OVERVIEW.html,
+	proto/PACKAGE_README.html, proto/PCRE_README.html,
+	proto/PGSQL_README.html, proto/POSTSCREEN_3_5_README.html,
+	proto/POSTSCREEN_README.html, proto/QSHAPE_README.html,
+	proto/README, proto/RESTRICTION_CLASS_README.html,
+	proto/SASL_README.html, proto/SCHEDULER_README.html,
+	proto/SMTPD_ACCESS_README.html, proto/SMTPD_POLICY_README.html,
+	proto/SMTPD_PROXY_README.html, proto/SMTPUTF8_README.html,
+	proto/SQLITE_README.html, proto/STANDARD_CONFIGURATION_README.html,
+	proto/STRESS_README.html, proto/TLSRPT_README.html,
+	proto/TLS_LEGACY_README.html, proto/TLS_README.html,
+	proto/TUNING_README.html, proto/UUCP_README.html,
+	proto/VERP_README.html, proto/VIRTUAL_README.html,
+	proto/XCLIENT_README.html, proto/XFORWARD_README.html,
+	proto/postconf.html.prolog, proto/postconf.proto,
+	proto/socketmap_table, qmqpd/qmqpd.c, tls/tls_misc.c,
+	util/midna_domain.c, util/netstring.c,
+	xsasl/xsasl_dovecot_server.c.
+
+20241121
+
+	Documentation: convert some narrative text for the
+	delay_logging_resolution_limit parameter into a bullet list.
+	File: proto/postconf.proto.
+
+20241122
+
+	Documentation: in the postconf(5) manpage, hyperlink the
+	"overload:" default parameter settings to the STRESS_README
+	documentation.  File: mantools/postlink.
+
+	Cleanup: generate html/index.html from proto/index.html to
+	make changes visible in source diffs. Also make mantools/man2html
+	a dependency for html/*.?.html. File: html/Makefile.in.
+
+	Bugfix (defect introduced: Postfix 3.4, date 20190121): the
+	postsuper command failed with "open logfile 'xxx': Permission
+	denied" when the maillog_file parameter specified a filename
+	and Postfix was not running. This was fixed by opening the
+	maillog_file before dropping root privileges. Files:
+	util/msg_logger.c, global/maillog_client.c.
+
+	Refactoring: the unix-dgram server skeleton now passes a
+	socket file descriptor to the application (e.g., postlogd)
+	instead of a message buffer and length. This is in preparation
+	for unix-dgram support in a spawn(8)-like service. Files:
+	master/dgram_server.c, master/mail_server.h, postlogd/postlogd.c.
+
+20241122
+
+	Documentation: updated the LOCAL_RECIPIENT_README text, and
+	pointed there from the local_recipient_maps description in
+	postconf(5). Files: proto/LOCAL_RECIPIENT_README.html,
+	proto/postconf.proto.
+
+20241127
+
+	Documentation: default_delivery_status_filter text. File:
+	proto/postconf.proto.
+
+	Documentation: support to convert superscripts in postconf.proto
+	manpage text from HTML to *roff. The result is a compromise:
+	vertical motion (\v'expr') works with groff, but not with
+	the newer mandoc and with the older UNIX nroff. So we use
+	^ instead.  Files: mantools/fixman, mantools/postconf2man,
+	proto/postconf.proto.
+
+20241129
+
+	Bugfix (introduced: on or before 19891104): the manpage
+	extractor mis-formatted titles with multiple names. File:
+	mantools/srctoman.
+
+20241130
+
+	Bugfix (defect introduced: 19991230): the spawn daemon
+	failed to enforce the command time limit. It was sending
+	the SIGKILL signal using the wrong effective UID and GID.
+	The pipe daemon has always done this right. File:
+	util/spawn_command.c.
+
+20241201
+
+	Bugfix (defect introduced Postfix 3.0). Missing UTF8
+	autodetection for headers that are automatically generated
+	by Postfix (for example, a From: header with UTF8 full name
+	information from the password file). Reported by Michael
+	Tokarev. File: src/cleanup/cleanup_message.c.
+
+20241202
+
+	Cleanup: don't leak parent directory information into
+	documentation checks. File: mantools/dehtml.
+
+	Documentation: reverted a breaking change made 20241122.
+	File: html/Makefile.in.
+
+	Documentation: revised spawn(8) manpage text. This is all
+	that remains of a failed experiment to implement a
+	datagram-based spawn(8) service. It was too difficult to
+	enforce that processes terminate as expected after "postfix
+	reload" etc. File: spawn/spawn.c.
+
+20241205
+
+	Portability: include <sys_socket.h> for a SUNOS5 workaround.
+	Gary R. Schmidt. File: util/peekfd.c.
+
+20241210
+
+	Documentation: ESMTP parameters that are supported in Milter
+	requests to change the envelope sender address, or to add
+	an envelope recipient address. File: proto/MILTER_README.html.
+
+20241213
+
+	Bugfix (defect introduced Postfix 3.1 date 20150523): makedefs did
+	not handle Major release version of zero. Michael Tokarev. File:
+	makedefs.
+
+	Portability: changed the closefrom() result type from 'int'
+	to 'void', for compatibility with systems that have a
+	closefrom() implementation that we don't want to use.
+	Michael Tokarev. Files: util/sys_defs.h, util/sys_compat.c.
+
+20241214
+
+	Documentation: updated the postlog(1) manpage text for
+	logging to the standard error stream. File postlog/postlog.c.
+
+20241226
+
+	Bit rot: The Postfix code for logging the TLS group wasn't
+	quite right. Instead of the TLS group name, it logged the
+	underlying public key algorithm name. These names may differ
+	when some of the newer constructs are used. Viktor Dukhovni.
+	File: tls/tls_misc.c.
+
+20241230
+
+	Bugfix (defect introduced: Postfix 3.3, date 20180107) small
+	memory leak in the cleanup daemon when generating a "From:
+	full-name <addr-spec>" message header. The impact is limited
+	because the number of requests is bounded by the "max_use"
+	configuration parameter. Found during code maintenance.
+	File: cleanup/cleanup_message.c.
+
+20250101
+
+	Wietse added -DNO_CLOSEFROM support to make the change
+	20241213 easily testable, and documented it in the makedefs(1)
+	manpage.
+
+20250102
+
+	Added pre-release checks for configuration parameters that
+	are implemented but not documented, and for configuration
+	parameters that are documented but not implemented. Files:
+	mantools/check-postconf-unimplemented,
+	mantools/check-postconf-undocumented.
+
+	Documentation: eliminated an "unused" postconf(5) entry for
+	the lmtp_lhlo_timeout parameter, and added end-of-life info
+	for the obsolete proxy_tls_session_cache_timeout parameter.
+	File: proto/postconf.proto.
+
+20250104
+
+	Cleanup: the SMTP client complained about "missing
+	trw_set_tls_policy call" when a destination had a TLSRPT
+	policy, but TLS was disabled. File: smtp/smtp_connect.c.
+
+	Logging: the Postfix SMTP server now logs the queue ID or
+	"NOQUEUE" when an SMTP session terminates abnormally (too
+	many errors, I/O timeout, lost connection). File: smtpd/smtpd.c.
+
+	Cleanup: improved error handling when the sqlite: client
+	tries to open a non-existent database: do not attempt to
+	create a read-write database file; and do log the underlying
+	system error (example: No such file or directory). Michael
+	Tokarev.File: global/dict_sqlite.c.
+
+	Feature: automatic RFC 2047 encoding for non-ASCII full
+	name information when Postfix generates a From: message
+	header. Encoding non-ASCII full names can avoid the need
+	to use SMTPUTF8, and therefore can avoid incompatibility
+	with sites that do not support SMTPUTF8.
+
+	The encoded result looks like "=?charset?Q?gibberish?=" for
+	quoted-printable encoding, or "=?charset?B?gibberish?=" for
+	base64 encoding. Postfix uses quoted-printable for a full
+	name that is short or mostly ASCII, and uses base64 otherwise.
+
+	The new parameter "full_name_encoding_charset" (default:
+	"utf-8") specifies the character set of the full name in
+	the Postfix sendmail "-F" option, in the Postfix sendmail
+	"NAME" environment variable, or in the GECOS field of the
+	UNIX password database. The parameter value is also part
+	of the encoded full name, and informs a Mail User Agent how
+	to display the decoded gibberish.
+
+	Files: mantools/postlink, proto/postconf.proto, cleanup/cleanup.c,
+	cleanup/cleanup_init.c, cleanup/cleanup_message.c,
+	global/ascii_header_text.c, global/ascii_header_text.h,
+	global/mail_params.h, global/rfc2047_code.c, global/rfc2047_code.h,
+	util/clean_ascii_cntrl_space.c, util/clean_ascii_cntrl_space.h.
+
+20250106
+
+	Cleanup: the Postfix Milter implementation now logs the
+	reason for a quarantine request. If a quarantine action is
+	requested by a Milter application, Postfix will log the
+	reason given by the application. If the quarantine action
+	is requested with the "milter_default_action" parameter
+	setting or with a per-Milter "default_action" property,
+	Postfix will log "default_action". Files: smtpd/smtp_milter.c,
+	cleanup/cleanup_milter.c, milter/milter8.c, milter/test-milter.c.
+
+	Cleanup: suppress repeated logging of a Milter "quarantine",
+	"discard", or "shutdown" request. Files: cleanup/cleanup_milter.c,
+	smtpd/smtpd.c.
+
+	Documentation: cleanup_replace_stray_cr_lf is disabled
+	with "receive_override_options = no_header_body_checks".
+	File: proto/postconf.proto.
+
+20250107
+
+	Re-worded the documentation for RFC 2047 full name encoding.
+	Files: HISTORY, RELEASE_NOTES, proto/postconf.proto.
+
+	Cleanup: eliminated a bogus warning "unexpected SMFIC_UNKNOWN
+	response" when a Milter default action is "quarantine", the
+	milter is unavailable, and a remote SMTP client sends a
+	command that is unknown or known-but-disabled. File:
+	smtpd/smtpd.c.
+
+	Cleanup: the maximum netstring reply size is now configurable
+	with the socketmap_max_reply_size configuration parameter.
+	Code by Christian Roessner. Files: util/dict_sockmap.[hc],
+	global/mail_params.[hc], proto/postconf.proto,
+	proto/socketmap_table.
+
+	Cleanup: the netstring client sets or clears errno to improve
+	error messages from its callers. File: util/netstring.c.
+
+20250109
+
+	Bugfix (defect introduced: Postfix 2.6): fixed the parsing
+	of multiple commas in a multi_instance_directories parameter
+	value. Michael Tokarev. Files: conf/postfix-script,
+	conf/post-install, conf/postfix-wrapper, proto/postfix-wrapper.
+
+	Cleanup: replace static result buffer with per-instance buffer.
+	Michael Tokarev. File: util/dict_cdb.c.
+
+	Feature: first/next iterator support for cdb: tables, if
+	built with tinycdb. Michael Tokarev. Wietse added a test
+	and documentation. Files: util/dict_cdb.c proto/CDB_README.html,
+	postmap/Makefile.in.
+
+20250114
+
+	Bugfix (defect introduced: Postfix 3.0): the flag "SMTPUTF8
+	was requested" was random after a message was re-queued,
+	for example with the command "postsuper -r". The result was
+	be that some messages that need to be sent using SMTPUTF8
+	would be sent without using SMTPUTF8 and might be bounced.
+	Found during code maintenance. File: cleanup/cleanup_envelope.c.
+
+20250115
+
+	Bugfix (defect introduced: Postfix 3.0): the bounce daemon
+	mangled a non-ASCII address localpart in the "X-Postfix-Sender:"
+	field of a delivery status notification. It backslash-escaped
+	each byte in a multi-byte character. This behavior was
+	implemented in Postfix 2.1 (no support for UTF8 local-parts),
+	but it became incorrect after SMTPUTF8 support was implemented
+	in Postfix 3.0. File: bounce/bounce_notify_util.c.
+
+20250116
+
+	Bugfix (defect introduced: 20250104): a 'fix' not only
+	eliminated a Postfix TLSRPT client warning message, it also
+	eliminated all the TLSRPT client functionality. Reported
+	by Andreas Schulze. File: smtp/smtp_connect.c.
+
+	Infrastructure: completed an overhaul of the infrastructure
+	for passing around SMTPUTF8 related flag bits. This
+	infrastructure can now be reused to implement the "TLS-Required:
+	no" header and the REQUIRETLS ESMTP verb with very little
+	additional code.
+
+	This change requires "postfix reload" after upgrade, because
+	of an intentional change in the delivery agent protocol.
+	If this step is skipped, Postfix delivery agents will log
+	a warning: "unexpected attribute smtputf8 from xxx socket
+	(expecting: sendopts)" where xxx is the delivery agent
+	service name.
+
+	Most changes are for renaming parameters, variables, structure
+	fields, and protocol fields, without changing their type.
+	Files: bounce/bounce.c, bounce/bounce_notify_service.c,
+	bounce/bounce_notify_util.c, bounce/bounce_notify_verp.c,
+	bounce/bounce_one_service.c, bounce/bounce_service.h,
+	bounce/bounce_trace_service.c, bounce/bounce_warn_service.c,
+	cleanup/cleanup.h, cleanup/cleanup_addr.c, cleanup/cleanup_api.c,
+	cleanup/cleanup_bounce.c, cleanup/cleanup_envelope.c,
+	cleanup/cleanup_envelope_test.c, cleanup/cleanup_final.c,
+	cleanup/cleanup_out.c, cleanup/cleanup_state.c, global/abounce.c,
+	global/bounce.c, global/defer.c, global/deliver_pass.c,
+	global/deliver_request.c, global/deliver_request.h,
+	global/mail_proto.h, global/mail_version.h, global/post_mail.c,
+	global/sendopts.c, global/sendopts.h, global/smtputf8.h,
+	local/forward.c, local/local.c, local/local.h, oqmgr/qmgr.h,
+	oqmgr/qmgr_active.c, oqmgr/qmgr_deliver.c, oqmgr/qmgr_message.c,
+	pickup/pickup.c, qmgr/qmgr.h, qmgr/qmgr_active.c,
+	qmgr/qmgr_deliver.c, qmgr/qmgr_message.c, qmqpd/qmqpd.c,
+	smtp/smtp_proto.c, smtpd/smtpd.c, verify/verify.c,
+
+20250117
+
+	Cleanup: factored out the sendopts.c unit test code, and
+	added two missing tests. File: global/sendopts_test.c.
+
+	Cleanup: increased the capacity to remember which types of
+	message headers have been seen, and encapsulated some set
+	operations. Files: cleanup/cleanup.h, cleanup/cleanup_message.c.
+
+	Feature: support for the RFC 8689 "TLS-Required: no" message
+	header. This limits the Postfix SMTP client TLS security
+	level to "smtp_tls_security = may", which does not verify
+	remote SMTP server TLS certificates, and which allows falling
+	back to plaintext. This is needed for the delivery of
+	messages such as TLSRPT summaries, which should be sent
+	even when the preferred TLS security policy cannot be
+	enforced. Support for the REQUIRETLS ESMTP extension remains
+	future work. Files: cleanup/cleanup_message.c,
+	global/header_opts.c, global/header_opts.h, smtp/smtp_connect.c,
+	proto/TLSRPT_README.html.
+
+	Cleanup: memory leaks in test code. Files: util/hex_code.c,
+	util/argv.c.
+
+20250127
+
+	Cleanup: broken non-TLS builds because of a missing #ifdef
+	USE_TLS/#endif around a new function get_effective_tls_level().
+	File: smtp/smtp_connect.c.
+
+	Cleanup: a few remaining pre-ANSI C function definitions
+	in the lowest-level Postfix code. Files: util/binhash.c,
+	util/close_on_exec.c, util/non_blocking.c, util/ring.c.
+
+20250130
+
+	Updated the TLSRPT_README introduction, github info, and
+	build instructions. File: proto/TLSRPT_README.html.
+
+20250131
+
+	Debug: verbose logging for the tlsrpt_wrapper functions.
+	File: tls/tlsrpt_wrapper.c.
+
+20250201
+
+	Cleanup: simplified the code in cleanup_envelope_test.c.
+
+	Feature: configuration parameter "tls_required_enable
+	(default: yes) to control support for the "TLS-Required:
+	no" message header. Files: global/mail_params.[hc],
+	bounce/bounce.c, bounce/bounce_notify_util.c, cleanup/cleanup.c,
+	cleanup/cleanup_message.c, smtp/smtp.c, smtp/smtp_connect.c,
+	mantools/postlink.
+
+20250202
+
+	Documentation: edited for clarity. Files: pipe/pipe.c,
+	proto/postconf.proto.
+
+	Debug logging: cleanup/cleanup_api.c. tls/tlsrpt_wrapper.c.
+	proto/TLSRPT_README.html.
+
+20250204
+
+	Feature: with "smtpd_hide_client_session = yes", the Postfix
+	SMTP server generates a Received: header without client
+	session info (EHLO, hostname, IP address, TLS session
+	details, SASL login details, SMTP protocol details). Files:
+	conf/master.cf, mantools/postlink, proto/postconf.proto,
+	global/mail_params.h, smtpd/smtpd.c.
+
+20250205
+
+	Documentation: updated TLSRPT_README, added postfix-tlspol
+	policy plugin, deprecated the policy_ttl attribute. File:
+	proto/TLSRPT_README.html.
+
+20250207
+
+	Performance: when a mysql: or pgsql: configuration specifies
+	a single host, assume that it is a load balancer and reconnect
+	immediately after a single failure, instead of failing all
+	requests for 60s. Files: global/dict_pgsql.c, global/dict_mysql.c,
+	proto/pgsql_table, proto/mysql_table.
+
+20250210
+
+	Bugfix (defect introduced: Postfix 3.6): Reverted the default
+	smtp_tls_dane_insecure_mx_policy setting to "dane" as of Postfix
+	3.6.17, 3.7.13, 3.8.8, 3.9.2, and 3.10.0. By mistake the default
+	was dependent on the smtp_tls_security_level setting. Files:
+	global/mail_params.h, proto/postconf.proto, smtp/smtp.c.
+
+20250210
+
+	Documentation: prefer 'submissions' over 'smtps'. Files:
+	proto/postconf.proto, proto/TLS_README.html.
+
+20250212
+
+	Support for OpenSSL 3.5 post-quantum cryptography. To manage
+	algorithm selection, OpenSSL introduces new TLS group syntax
+	that Postfix will not attempt to imitate. Instead, Postfix
+	now allows the tls_eecdh_auto_curves and tls_ffdhe_auto_groups
+	parameter values to have an empty value. When both are set
+	empty, the algorithm selection can be managed through OpenSSL
+	configuration. Viktor Dukhovni. Files: tls/tls_dh.c,
+	tls/tls_misc.c.
+
+	Bugfix (defect introduced: Postfix 3.4, date 20181113): a
+	server with multiple TLS certificates could report, for a
+	resumed TLS session, the wrong server-signature and
+	server-digest names in logging and Received: message headers.
+	Viktor Dukhovni. File: tls/tls_misc.c.
+
+20250213
+
+	Documentation: updated postconf(5) that the parameters
+	smtpd_tls_eecdh_grade, tls_eecdh_strong_curve,
+	tls_eecdh_ultra_curve, and tlsproxy_tls_eecdh_grade, are
+	not used since Postfix 3.6; updated the tls_eecdh_auto_curves
+	and tls_ffdhe_auto_groups description with post-quantum
+	configuration; added a post-quantum example to the
+	tls_config_file description. File: proto/postconf.proto.
+	The unused parameters will be deleted in Postfix 3.11.
+
+20250215
+
+	Safety: added a TLSRPT library version check. Log a warning
+	when the run-time TLSRPT library API version is not compatible
+	with the build-time TLSRPT API version, where 'compatible'
+	is defined according to the rules of semantic versioning.
+	This completes the Postfix 3.10 stable release.
+
+20250216
+
+	Bugfix (defect introduced: Postfix 3.10): Postfix SMTP
+	client segfault while reporting a 'certificate expired'
+	event. Problem reported by Oemer Gueven. File: tls/tls_verify.c.
+
+20250221
+
+	Bugfix (defect introduced: 20250210): a recent 'fix' for the
+	default smtp_tls_dane_insecure_mx_policy setting resulted in
+	unnecessary 'dnssec_probe' warnings, on systems that disable
+	DNSSEC lookups (the default). File: smtp/smtp_addr.c.

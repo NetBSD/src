@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.42 2023/02/24 11:03:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.42.6.1 2025/08/02 05:57:48 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -866,7 +866,7 @@ npf_table_gc(npf_t *npf, npf_table_t *t)
 
 	ref = thmap_stage_gc(t->t_map);
 	if (npf) {
-		npf_config_locked_p(npf);
+		KASSERT(npf_config_locked_p(npf));
 		npf_config_sync(npf);
 	}
 	thmap_gc(t->t_map, ref);

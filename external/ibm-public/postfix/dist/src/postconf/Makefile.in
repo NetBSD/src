@@ -17,7 +17,7 @@ MAKES	= bool_table.h bool_vars.h int_table.h int_vars.h str_table.h \
 	nint_table.h nint_vars.h nbool_table.h nbool_vars.h long_table.h \
 	long_vars.h str_fn_table.h str_fn_vars.h 
 DB_MAKES= pcf_ldap_suffixes.h pcf_memcache_suffixes.h pcf_mysql_suffixes.h \
-	pcf_pgsql_suffixes.h pcf_sqlite_suffixes.h
+	pcf_pgsql_suffixes.h pcf_sqlite_suffixes.h pcf_mongodb_suffixes.h
 TEST_TMP= main.cf master.cf test*.tmp
 DUMMIES	= makes_dummy # for "make -j"
 PROG	= postconf
@@ -55,7 +55,8 @@ tests: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 \
 	test31 test32 test33 test34 test35 test36 test37 test39 test40 test41 \
 	test42 test43 test44 test45 test46 test47 test48 test49 test50 test51 \
 	test52 test53 test54 test55 test56 test57 test58 test59 test60 test61 \
-	test62 test63 test64 test65 test66 test67 test68 test69 test70 test71
+	test62 test63 test64 test65 test66 test67 test68 test69 test70 test71 \
+	test72 test73 test74 test75 test76
 
 root_tests:
 
@@ -77,6 +78,9 @@ pcf_ldap_suffixes.h: ../global/dict_ldap.c
 
 pcf_memcache_suffixes.h: ../global/dict_memcache.c 
 	sh extract_cfg.sh -d ../global/dict_memcache.c > $@
+
+pcf_mongodb_suffixes.h: ../global/dict_mongodb.c 
+	sh extract_cfg.sh -d ../global/dict_mongodb.c > $@
 
 pcf_mysql_suffixes.h: ../global/dict_mysql.c 
 	sh extract_cfg.sh -d -s ../global/dict_mysql.c > $@
@@ -465,6 +469,9 @@ test29:	$(PROG) test29.ref
 	echo 'memcachexx = proxy:memcache:memcachefoo' >> main.cf
 	echo 'memcachefoo_domain = bar' >> main.cf
 	echo 'memcachefoo_domainx = bar' >> main.cf
+	echo 'mongodbxx = proxy:mongodb:mongodbfoo' >> main.cf
+	echo 'mongodbfoo_domain = bar' >> main.cf
+	echo 'mongodbfoo_domainx = bar' >> main.cf
 	touch -t 197101010000 main.cf
 	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test29.tmp 2>&1
 	diff test29.ref test29.tmp
@@ -807,7 +814,7 @@ test58: $(PROG) test58.ref
 	echo 'yy_backup = bbb' >> main.cf
 	echo 'yy_bogus = bbb' >> main.cf
 	touch -t 197101010000 main.cf
-	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./postconf -nc. >test58.tmp 2>&1 || true
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc. >test58.tmp 2>&1 || true
 	diff test58.ref test58.tmp
 	rm -f main.cf master.cf test58.tmp
 
@@ -989,21 +996,78 @@ test71:	$(PROG) test71.ref
 	diff test71.ref test71.tmp
 	rm -f main.cf master.cf test71.tmp
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	cp *.h printfck
-	sed '1,/^# do not edit/!d' Makefile >printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
+# Different requests to add lines to master.cf.
+test72:	$(PROG) test72.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. smtp/unix='smtp unix - n n - 0 other'
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. smtp/abcd='smtp fifo - n n - 0 other'
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. smtp/abcd='smtp inet - n n - 0 other'
+	touch -t 197201010000 main.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. >test72.tmp 2>&1
+	diff test72.ref test72.tmp
+	rm -f main.cf master.cf test72.tmp
 
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
+# Replace one entry based on the name+type in the request's service entry.
+test73:	$(PROG) test73.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. smtp/unix='smtp unix - n n - 0 other'
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. smtp/abcd='smtp fifo - n n - 0 other'
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. smtp/abcd='smtp inet - n n - 0 other'
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. smtp/abcd='smtp unix - n n - 0 otherx'
+	touch -t 197301010000 main.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. >test73.tmp 2>&1
+	diff test73.ref test73.tmp
+	rm -f main.cf master.cf test73.tmp
+
+# Replace one entry based on the name+type in the request's service pattern.
+test74:	$(PROG) test74.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. smtp/unix='smtp unix - n n - 0 other'
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. smtp/abcd='smtp fifo - n n - 0 other'
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. smtp/abcd='smtp inet - n n - 0 other'
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. smtp/fifo='lmtp unix - n n - 0 otherx'
+	touch -t 197401010000 main.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -Mc. >test74.tmp 2>&1
+	diff test74.ref test74.tmp
+	rm -f main.cf master.cf test74.tmp
+
+# Warn about skipping redundant name=value update.
+test75:	$(PROG) test75.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. mail_version=x mail_version=y >test75.tmp 2>&1
+	touch -t 197501010000 main.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc. >>test75.tmp 2>&1
+	diff test75.ref test75.tmp
+	rm -f main.cf master.cf test75.tmp
+
+# Warn about unused, deprecated, or deleted parameters.
+test76:	$(PROG) test76.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. \
+	    config_directory=. \
+	    deleted-test-only=whatever \
+	    disable_dns_lookups=no \
+	    lmtp_use_tls=no \
+	    smtpd_tls_dh1024_param_file=auto >test76.tmp 2>&1
+	touch -t 197601010000 main.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo ' -o alias_maps=foo' >> master.cf
+	echo ' -o smtp_enforce_tls=yes' >> master.cf
+	touch -t 197601010000 master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc. >>test76.tmp 2>&1
+	diff test76.ref test76.tmp
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -qnc. >/dev/null 2>test76.tmp
+	diff /dev/null test76.tmp
+	rm -f main.cf master.cf test76.tmp
 
 clean:
 	rm -f *.o *core $(PROG) $(TESTPROG) junk $(MAKES) $(AUTOS) $(DUMMIES) \
 	$(TEST_TMP) $(DB_MAKES)
-	rm -rf printfck
 
 tidy:	clean
 
@@ -1094,6 +1158,7 @@ postconf_dbms.o: ../../include/dict.h
 postconf_dbms.o: ../../include/dict_ht.h
 postconf_dbms.o: ../../include/dict_ldap.h
 postconf_dbms.o: ../../include/dict_memcache.h
+postconf_dbms.o: ../../include/dict_mongodb.h
 postconf_dbms.o: ../../include/dict_mysql.h
 postconf_dbms.o: ../../include/dict_pcre.h
 postconf_dbms.o: ../../include/dict_pgsql.h
@@ -1118,6 +1183,7 @@ postconf_dbms.o: ../../include/vstream.h
 postconf_dbms.o: ../../include/vstring.h
 postconf_dbms.o: pcf_ldap_suffixes.h
 postconf_dbms.o: pcf_memcache_suffixes.h
+postconf_dbms.o: pcf_mongodb_suffixes.h
 postconf_dbms.o: pcf_mysql_suffixes.h
 postconf_dbms.o: pcf_pgsql_suffixes.h
 postconf_dbms.o: pcf_sqlite_suffixes.h
@@ -1184,6 +1250,7 @@ postconf_main.o: postconf_main.c
 postconf_master.o: ../../include/argv.h
 postconf_master.o: ../../include/check_arg.h
 postconf_master.o: ../../include/dict.h
+postconf_master.o: ../../include/dict_ht.h
 postconf_master.o: ../../include/htable.h
 postconf_master.o: ../../include/mail_params.h
 postconf_master.o: ../../include/master_proto.h

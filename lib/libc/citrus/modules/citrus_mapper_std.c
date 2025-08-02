@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_std.c,v 1.12 2018/06/11 20:28:23 maya Exp $	*/
+/*	$NetBSD: citrus_mapper_std.c,v 1.12.14.1 2025/08/02 05:54:34 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003, 2006 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_std.c,v 1.12 2018/06/11 20:28:23 maya Exp $");
+__RCSID("$NetBSD: citrus_mapper_std.c,v 1.12.14.1 2025/08/02 05:54:34 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -322,7 +322,7 @@ rowcol_init(struct _citrus_mapper_std *ms)
 		rc->rc_dst_ilseq = be32toh(eix->eix_dst_ilseq);
 	}
 
-	/* calcurate expected table size */
+	/* calculate expected table size */
 	i = rc->rc_src_rowcol_len;
 	lz = &rc->rc_src_rowcol[--i];
 	table_size = lz->width;

@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,15 +7,15 @@
 </head> <body> <pre>
 BOUNCE(5)                                                            BOUNCE(5)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        bounce - Postfix bounce message template format
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b><a href="postconf.5.html#bounce_template_file">bounce_template_file</a> = /etc/postfix/bounce.cf</b>
 
        <b>postconf -b</b> [<i>template</i><b>_</b><i>file</i>]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  Postfix  <a href="bounce.8.html"><b>bounce</b>(8)</a>  server  produces  delivery status notification
        (DSN) messages for undeliverable mail, delayed mail, successful  deliv-
        ery or address verification requests.
@@ -29,7 +29,7 @@ BOUNCE(5)                                                            BOUNCE(5)
        plate  file,  followed  by the specific details of bounce template for-
        mats.
 
-<b>GENERAL PROCEDURE</b>
+<b><a name="general_procedure">GENERAL PROCEDURE</a></b>
        To create a customized bounce template file, create a temporary copy of
        the file <b>/etc/postfix/bounce.cf.default</b> and edit the temporary file.
 
@@ -51,7 +51,7 @@ BOUNCE(5)                                                            BOUNCE(5)
        /etc/postfix/<a href="postconf.5.html">main.cf</a>:
            <a href="postconf.5.html#bounce_template_file">bounce_template_file</a> = /etc/postfix/bounce.cf
 
-<b>TEMPLATE FILE FORMAT</b>
+<b><a name="template_file_format">TEMPLATE FILE FORMAT</a></b>
        The template file can specify templates for failed mail, delayed  mail,
        successful  delivery  or for address verification.  These templates are
        named  <b>failure_template</b>,  <b>delay_template</b>,  <b>success_template</b>  and   <b>ver-</b>
@@ -99,7 +99,7 @@ BOUNCE(5)                                                            BOUNCE(5)
        Examples of all templates can be found in the file <b>bounce.cf.default</b> in
        the Postfix configuration directory.
 
-<b>TEMPLATE HEADER FORMAT</b>
+<b><a name="template_header_format">TEMPLATE HEADER FORMAT</a></b>
        The first portion of a bounce template consists  of  optional  template
        headers.   Some become message headers in the delivery status notifica-
        tion; some control the formatting of  that  notification.  Headers  not
@@ -137,7 +137,7 @@ BOUNCE(5)                                                            BOUNCE(5)
        <b>o</b>      Template message headers must contain ASCII characters only, and
               must not contain ASCII null characters.
 
-<b>TEMPLATE MESSAGE TEXT FORMAT</b>
+<b><a name="template_message_text_format">TEMPLATE MESSAGE TEXT FORMAT</a></b>
        The second portion of a bounce template consists of  message  text.  As
        the  above  example  shows,  template  message text may contain <a href="postconf.5.html">main.cf</a>
        $parameters. Besides the parameters that are defined  in  <a href="postconf.5.html">main.cf</a>,  the
@@ -180,14 +180,14 @@ BOUNCE(5)                                                            BOUNCE(5)
               needed because Postfix appends ASCII text after the message tem-
               plate when it sends a delivery status notification.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="bounce.8.html">bounce(8)</a>, Postfix delivery status notifications
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        The Postfix bounce template format was originally developed by  Nicolas
        Riendeau.
 

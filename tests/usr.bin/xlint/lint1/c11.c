@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.7 2024/05/07 19:32:35 rillig Exp $	*/
+/*	$NetBSD: c11.c,v 1.7.2.1 2025/08/02 05:58:14 perseant Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -96,9 +96,9 @@ void fcompat(void)
 	int (*p)[4][n+1];
 	int c[n][n][6][m];
 	int (*r)[n][n][n+1];
-	/* expect+1: warning: illegal combination of 'pointer to array[4] of array[1] of int' and 'pointer to array[6] of array[1] of int', op '=' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to array[4] of array[1] of int' and 'pointer to array[6] of array[1] of int', op '=' [124] */
 	p = a;
-	/* expect+1: warning: illegal combination of 'pointer to array[1] of array[1] of array[1] of int' and 'pointer to array[1] of array[6] of array[1] of int', op '=' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to array[1] of array[1] of array[1] of int' and 'pointer to array[1] of array[6] of array[1] of int', op '=' [124] */
 	r = c;
 }
 
@@ -122,7 +122,7 @@ void fvla(int m, int C[m][m])
 	int (*s)[m];
 	/* expect+1: warning: nested 'extern' declaration of 'r' [352] */
 	extern int (*r)[m];
-	/* expect+1: warning: illegal combination of 'pointer to array[1] of int' and 'pointer to int', op 'init' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to array[1] of int' and 'pointer to array[100] of int', op 'init' [124] */
 	static int (*q)[m] = &B;
 }
 
@@ -164,6 +164,9 @@ void f2(double a[restrict][5]);
 /* expect+1: error: syntax error '3' [249] */
 void f3(double a[restrict 3][5]);
 void f4(double a[restrict static 3][5]);
+
+
+int _Alignas(double) int_aligned_as_double;
 
 
 // In C11 mode, 'thread_local' is not yet known, but '_Thread_local' is.

@@ -1,7 +1,9 @@
-/*	$NetBSD: float.h,v 1.12 2009/11/25 08:43:15 martin Exp $ */
+/*	$NetBSD: float.h,v 1.12.100.1 2025/08/02 05:56:08 perseant Exp $ */
 
 #ifndef _SPARC_FLOAT_H_
 #define _SPARC_FLOAT_H_
+
+#include <sys/featuretest.h>
 
 #ifdef _LP64
 

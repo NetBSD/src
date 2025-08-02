@@ -1,4 +1,4 @@
-/*	$NetBSD: builtin.h,v 1.6 2024/02/21 22:51:05 christos Exp $	*/
+/*	$NetBSD: builtin.h,v 1.6.2.1 2025/08/02 05:50:54 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,8 +17,19 @@
 
 /*! \file */
 
+#include <inttypes.h>
+
+#include <isc/lang.h>
 #include <isc/types.h>
 
+#include <dns/clientinfo.h>
+#include <dns/types.h>
+
+/***
+ *** Functions
+ ***/
+
+/* Initialization functions for builtin zone databases */
 isc_result_t
 named_builtin_init(void);
 

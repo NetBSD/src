@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.221 2023/02/23 02:57:17 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.221.6.1 2025/08/02 05:57:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,23 +62,35 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.221 2023/02/23 02:57:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.221.6.1 2025/08/02 05:57:41 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/resourcevar.h>
+#include <sys/types.h>
+
+#include <sys/callout.h>
+#include <sys/cpu.h>
+#include <sys/errno.h>
+#include <sys/intr.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/systm.h>
+#include <sys/kmem.h>
+#include <sys/lwp.h>
+#include <sys/mount.h>
+#include <sys/mutex.h>
 #include <sys/proc.h>
-#include <sys/vnode.h>
+#include <sys/queue.h>
+#include <sys/resourcevar.h>
+#include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/syscallargs.h>
 #include <sys/syslog.h>
+#include <sys/systm.h>
 #include <sys/timetc.h>
 #include <sys/timevar.h>
 #include <sys/timex.h>
-#include <sys/kauth.h>
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
-#include <sys/cpu.h>
+#include <sys/vnode.h>
+
+#include <machine/limits.h>
 
 kmutex_t	itimer_mutex __cacheline_aligned;	/* XXX static */
 static struct itlist itimer_realtime_changed_notify;
@@ -95,8 +107,6 @@ CTASSERT(ITIMER_REAL == CLOCK_REALTIME);
 CTASSERT(ITIMER_VIRTUAL == CLOCK_VIRTUAL);
 CTASSERT(ITIMER_PROF == CLOCK_PROF);
 CTASSERT(ITIMER_MONOTONIC == CLOCK_MONOTONIC);
-
-#define	DELAYTIMER_MAX	32
 
 /*
  * Initialize timekeeping.
@@ -329,6 +339,8 @@ clock_getres1(clockid_t clock_id, struct timespec *ts)
 	switch (clock_id) {
 	case CLOCK_REALTIME:
 	case CLOCK_MONOTONIC:
+	case CLOCK_PROCESS_CPUTIME_ID:
+	case CLOCK_THREAD_CPUTIME_ID:
 		ts->tv_sec = 0;
 		if (tc_getfrequency() > 1000000000)
 			ts->tv_nsec = 1;
@@ -836,10 +848,9 @@ itimer_arm_real(struct itimer * const it)
 static void
 itimer_callout(void *arg)
 {
-	uint64_t last_val, next_val, interval, now_ns;
 	struct timespec now, next;
 	struct itimer * const it = arg;
-	int backwards;
+	int overruns;
 
 	itimer_lock();
 	(*it->it_ops->ito_fire)(it);
@@ -856,34 +867,13 @@ itimer_callout(void *arg)
 		getnanotime(&now);
 	}
 
-	backwards = (timespeccmp(&it->it_time.it_value, &now, >));
-
-	/* Nonnegative interval guaranteed by itimerfix.  */
-	KASSERT(it->it_time.it_interval.tv_sec >= 0);
-	KASSERT(it->it_time.it_interval.tv_nsec >= 0);
-
-	/* Handle the easy case of non-overflown timers first. */
-	if (!backwards &&
-	    timespecaddok(&it->it_time.it_value, &it->it_time.it_interval)) {
-		timespecadd(&it->it_time.it_value, &it->it_time.it_interval,
-		    &next);
-		it->it_time.it_value = next;
-	} else {
-		now_ns = timespec2ns(&now);
-		last_val = timespec2ns(&it->it_time.it_value);
-		interval = timespec2ns(&it->it_time.it_interval);
-
-		next_val = now_ns +
-		    (now_ns - last_val + interval - 1) % interval;
-
-		if (backwards)
-			next_val += interval;
-		else
-			it->it_overruns += (now_ns - last_val) / interval;
-
-		it->it_time.it_value.tv_sec = next_val / 1000000000;
-		it->it_time.it_value.tv_nsec = next_val % 1000000000;
-	}
+	/*
+	 * Given the current itimer value and interval and the time
+	 * now, compute the next itimer value and count overruns.
+	 */
+	itimer_transition(&it->it_time, &now, &next, &overruns);
+	it->it_time.it_value = next;
+	it->it_overruns += overruns;
 
 	/*
 	 * Reset the callout, if it's not going away.
@@ -902,6 +892,9 @@ itimer_callout(void *arg)
  *
  *	If the callout had already fired but not yet run, fails with
  *	ERESTART -- caller must restart from the top to look up a timer.
+ *
+ *	Caller is responsible for validating it->it_value and
+ *	it->it_interval, e.g. with itimerfix or itimespecfix.
  */
 int
 itimer_settime(struct itimer *it)
@@ -911,6 +904,12 @@ itimer_settime(struct itimer *it)
 
 	KASSERT(itimer_lock_held());
 	KASSERT(!it->it_dying);
+	KASSERT(it->it_time.it_value.tv_sec >= 0);
+	KASSERT(it->it_time.it_value.tv_nsec >= 0);
+	KASSERT(it->it_time.it_value.tv_nsec < 1000000000);
+	KASSERT(it->it_time.it_interval.tv_sec >= 0);
+	KASSERT(it->it_time.it_interval.tv_nsec >= 0);
+	KASSERT(it->it_time.it_interval.tv_nsec < 1000000000);
 
 	if (!CLOCK_VIRTUAL_P(it->it_clockid)) {
 		/*
@@ -1386,7 +1385,7 @@ dotimer_settime(int timerid, struct itimerspec *value,
     struct itimerspec *ovalue, int flags, struct proc *p)
 {
 	struct timespec now;
-	struct itimerspec val, oval;
+	struct itimerspec val;
 	struct ptimers *pts;
 	struct itimer *it;
 	int error;
@@ -1396,9 +1395,9 @@ dotimer_settime(int timerid, struct itimerspec *value,
 	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
 		return EINVAL;
 	val = *value;
-	if ((error = itimespecfix(&val.it_value)) != 0 ||
-	    (error = itimespecfix(&val.it_interval)) != 0)
-		return error;
+	if (itimespecfix(&val.it_value) != 0 ||
+	    itimespecfix(&val.it_interval) != 0)
+		return EINVAL;
 
 	itimer_lock();
  restart:
@@ -1407,7 +1406,8 @@ dotimer_settime(int timerid, struct itimerspec *value,
 		return EINVAL;
 	}
 
-	oval = it->it_time;
+	if (ovalue)
+		itimer_gettime(it, ovalue);
 	it->it_time = val;
 
 	/*
@@ -1449,9 +1449,6 @@ dotimer_settime(int timerid, struct itimerspec *value,
 	}
 	KASSERT(error == 0);
 	itimer_unlock();
-
-	if (ovalue)
-		*ovalue = oval;
 
 	return 0;
 }

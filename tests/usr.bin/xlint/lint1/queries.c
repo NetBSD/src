@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.29 2024/04/27 12:46:37 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.29.2.1 2025/08/02 05:58:19 perseant Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -17,6 +17,7 @@
 
 /* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10 */
 /* lint1-extra-flags: -q 11,12,13,14,15,16,17,18,19,20 */
+/* lint1-extra-flags: -q 21,22,23,24 */
 /* lint1-extra-flags: -X 351 */
 
 typedef unsigned char u8_t;
@@ -70,6 +71,7 @@ c64_t c64;
 char *str;
 const char *cstr;
 volatile char *vstr;
+const volatile char *cvstr;
 
 void *void_ptr;
 const void *const_void_ptr;
@@ -281,10 +283,10 @@ Q7(void)
 	/* expect+1: redundant cast from 'pointer to char' to 'pointer to char' before assignment [Q7] */
 	str = (str_t)str;
 	str = (str_t)cstr;
-	/* expect+1: warning: operands of '=' have incompatible pointer types to 'char' and 'const char' [128] */
+	/* expect+1: warning: operator '=' discards 'const' from 'pointer to const char' [128] */
 	str = (cstr_t)str;
 	/* expect+2: no-op cast from 'pointer to const char' to 'pointer to const char' [Q6] */
-	/* expect+1: warning: operands of '=' have incompatible pointer types to 'char' and 'const char' [128] */
+	/* expect+1: warning: operator '=' discards 'const' from 'pointer to const char' [128] */
 	str = (cstr_t)cstr;
 	/* expect+1: no-op cast from 'pointer to char' to 'pointer to char' [Q6] */
 	cstr = (str_t)str;
@@ -298,10 +300,10 @@ Q7(void)
 	/* expect+1: redundant cast from 'pointer to char' to 'pointer to char' before assignment [Q7] */
 	str = (str_t)str;
 	str = (str_t)vstr;
-	/* expect+1: warning: operands of '=' have incompatible pointer types to 'char' and 'volatile char' [128] */
+	/* expect+1: warning: operator '=' discards 'volatile' from 'pointer to volatile char' [128] */
 	str = (vstr_t)str;
 	/* expect+2: no-op cast from 'pointer to volatile char' to 'pointer to volatile char' [Q6] */
-	/* expect+1: warning: operands of '=' have incompatible pointer types to 'char' and 'volatile char' [128] */
+	/* expect+1: warning: operator '=' discards 'volatile' from 'pointer to volatile char' [128] */
 	str = (vstr_t)vstr;
 	/* expect+1: no-op cast from 'pointer to char' to 'pointer to char' [Q6] */
 	vstr = (str_t)str;
@@ -310,6 +312,13 @@ Q7(void)
 	/* expect+2: no-op cast from 'pointer to volatile char' to 'pointer to volatile char' [Q6] */
 	/* expect+1: redundant cast from 'pointer to volatile char' to 'pointer to volatile char' before assignment [Q7] */
 	vstr = (vstr_t)vstr;
+
+	/* expect+1: warning: operator '=' discards 'const volatile' from 'pointer to const volatile char' [128] */
+	str = cvstr;
+	/* expect+1: warning: operator '=' discards 'volatile' from 'pointer to const volatile char' [128] */
+	cstr = cvstr;
+	/* expect+1: warning: operator '=' discards 'const' from 'pointer to const volatile char' [128] */
+	vstr = cvstr;
 }
 
 /*
@@ -321,7 +330,12 @@ Q8(void)
 {
 
 	u16 = 0;
+	/* expect+1: octal number '000000' [Q8] */
 	u16 = 000000;
+	/* expect+1: octal number '0123' [Q8] */
+	u16 = 0123ULL;
+	u16 = 1;
+	u16 = 10;
 	/* expect+1: octal number '0644' [Q8] */
 	u16 = 0644;
 	/* expect+1: octal number '0000644' [Q8] */
@@ -361,13 +375,13 @@ Q9(int x)
 		return (0.0);
 	case 9:
 		return
-# 365 "queries.c" 3 4
+# 379 "queries.c" 3 4
 		((void *)0)
-# 367 "queries.c"
-		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
+# 381 "queries.c"
+		/* expect+1: warning: invalid combination of integer 'int' and pointer 'pointer to void' for 'return' [183] */
 		;
 	case 10:
-		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
+		/* expect+1: warning: invalid combination of integer 'int' and pointer 'pointer to void' for 'return' [183] */
 		return (void *)(0);
 	default:
 		return 0;
@@ -516,7 +530,7 @@ convert_from_integer_to_floating(void)
 void
 Q20_void_pointer_conversion(void)
 {
-	/* expect+1: warning: operands of '=' have incompatible pointer types to 'void' and 'const void' [128] */
+	/* expect+1: warning: operator '=' discards 'const' from 'pointer to const void' [128] */
 	void_ptr = const_void_ptr;
 	const_void_ptr = void_ptr;
 	/* expect+1: implicit narrowing conversion from void pointer to 'pointer to int' [Q20] */
@@ -528,10 +542,30 @@ Q20_void_pointer_conversion(void)
 	void_ptr = char_ptr;
 	/* expect+1: implicit narrowing conversion from void pointer to 'pointer to int' [Q20] */
 	int_ptr = void_ptr;
-	/* expect+1: warning: illegal combination of 'pointer to int' and 'pointer to char', op '=' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to int' and 'pointer to char', op '=' [124] */
 	int_ptr = char_ptr;
-	/* expect+1: warning: illegal combination of 'pointer to char' and 'pointer to int', op '=' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to char' and 'pointer to int', op '=' [124] */
 	char_ptr = int_ptr;
 
 	int_ptr = (void *)0;
 }
+
+/*
+ * Q21, Q22, Q23 and Q24 detect typedefs for struct and union types and
+ * pointers to them. By using the tagged types directly instead of their
+ * typedefs, it may be possible to save including some system headers.
+ */
+
+struct struct_tag {
+};
+union union_tag {
+};
+
+/* expect+2: typedef 'struct_typedef' of struct type 'struct struct_tag' [Q21] */
+/* expect+1: typedef 'struct_ptr' of pointer to struct type 'pointer to struct struct_tag' [Q23] */
+typedef struct struct_tag struct_typedef, *struct_ptr;
+/* expect+2: typedef 'union_typedef' of union type 'union union_tag' [Q22] */
+/* expect+1: typedef 'union_ptr' of pointer to union type 'pointer to union union_tag' [Q24] */
+typedef union union_tag union_typedef, *union_ptr;
+typedef int int_typedef, *int_pointer;
+typedef void (function_typedef)(int), (*function_ptr)(int);

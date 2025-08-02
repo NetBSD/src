@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.nbincludes,v 1.11 2024/05/19 15:43:24 tsutsui Exp $
+#	$NetBSD: Makefile.nbincludes,v 1.11.2.1 2025/08/02 05:58:21 perseant Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -15,7 +15,7 @@ _SUBDIR!=	cd ${_ARCHDIR} && ${MAKE} -V SUBDIR
 _UFS_INCS!=	cd ${_UFSDIR} && find ffs ufs -name '*.h'
 _FS_INCS!=	cd ${_FSDIR} && find cd9660 -name '*.h'
 _FS_INCS+=	unicode.h
-_ARCH_INCS!=	${TOOL_SED} -e 's/^\#.*//' ${.PARSEDIR}/headerlist
+_ARCH_INCS!=	${TOOL_SED} -e 's/^\#.*//' ${.PARSEDIR}/headerlist 2> /dev/null || true
 .endif
 
 _ARCH_INCS+=	ews4800mips/include/pdinfo.h ews4800mips/include/vtoc.h

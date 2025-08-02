@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_135.c,v 1.15 2023/04/23 11:52:43 rillig Exp $	*/
+/*	$NetBSD: msg_135.c,v 1.15.2.1 2025/08/02 05:58:16 perseant Exp $	*/
 # 3 "msg_135.c"
 
 // Test for message: converting '%s' to '%s' increases alignment from %u to %u [135]
@@ -106,4 +106,27 @@ cast_to_union(void)
 	both = (union both *)&align_4;
 	both = (union both *)&align_8;
 	return both->p_align_8;
+}
+
+/*
+ * Structures with alignment 1 typically contain padding arrays only, so don't
+ * warn when they are converted to their structured counterparts.  An example
+ * of such a conversion is from 'struct sockaddr' to 'struct sockaddr_in6'.
+ */
+void
+from_alignment_1_to_8(void)
+{
+	struct alignment_1 {
+		char filler[32];
+	};
+	struct alignment_8 {
+		char filler[32];
+		double numbers[4];
+	};
+
+	static struct alignment_1 *pointer_1;
+	static struct alignment_8 *pointer_8;
+
+	pointer_8 = (struct alignment_8 *)pointer_1;
+	pointer_1 = (struct alignment_1 *)pointer_8;
 }

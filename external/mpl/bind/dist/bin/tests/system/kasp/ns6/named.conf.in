@@ -39,60 +39,13 @@ controls {
 	inet 10.53.0.6 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
-/* This zone switch from dynamic to inline-signing. */
-zone "dynamic2inline.kasp" {
-	type primary;
-	file "dynamic2inline.kasp.db";
-	allow-update { any; };
-	dnssec-policy "default";
-};
-
-/* These zones are going insecure. */
-zone "step1.going-insecure.kasp" {
-	type primary;
-	file "step1.going-insecure.kasp.db";
-	inline-signing yes;
-	dnssec-policy "unsigning";
-};
-
-zone "step1.going-insecure-dynamic.kasp" {
-	type primary;
-	file "step1.going-insecure-dynamic.kasp.db";
-	dnssec-policy "unsigning";
-	allow-update { any; };
-};
-
-zone "step1.going-straight-to-none.kasp" {
-	type primary;
-	file "step1.going-straight-to-none.kasp.db";
-	inline-signing yes;
-	dnssec-policy "default";
-};
-
-/* These are alorithm rollover test zones. */
-zone "step1.algorithm-roll.kasp" {
-	type primary;
-	file "step1.algorithm-roll.kasp.db";
-	inline-signing yes;
-	dnssec-policy "rsasha256";
-};
-
-zone "step1.csk-algorithm-roll.kasp" {
-	type primary;
-	file "step1.csk-algorithm-roll.kasp.db";
-	inline-signing yes;
-	dnssec-policy "csk-algoroll";
-};
-
-dnssec-policy "modified" {
-	keys {
-		csk lifetime unlimited algorithm rsasha256 2048;
-	};
+zone "." {
+	type hint;
+	file "../../_common/root.hint.blackhole";
 };
 
 zone example {
 	type primary;
 	file "example.db";
-	inline-signing yes;
 	dnssec-policy modified;
 };

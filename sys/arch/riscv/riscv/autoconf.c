@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2024/01/19 09:09:39 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.2.1 2025/08/02 05:56:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: autoconf.c,v 1.6 2024/01/19 09:09:39 skrll Exp $");
+__RCSID("$NetBSD: autoconf.c,v 1.6.2.1 2025/08/02 05:56:04 perseant Exp $");
 
 #include <sys/param.h>
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: autoconf.c,v 1.6 2024/01/19 09:09:39 skrll Exp $");
 void
 cpu_configure(void)
 {
-	(void) splhigh();
+	(void)splhigh();
 
 	config_rootfound("mainbus", NULL);
 

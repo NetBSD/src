@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.270 2023/09/09 16:01:09 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.270.6.1 2025/08/02 05:57:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #define __COMPAT_SYSCTL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.270 2023/09/09 16:01:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.270.6.1 2025/08/02 05:57:41 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -983,7 +983,7 @@ sysctl_create(SYSCTLFN_ARGS)
 		break;
 	case CTLTYPE_BOOL:
 		/*
-		 * since an bool is an bool, if the size is not given or
+		 * since a bool is a bool, if the size is not given or
 		 * is wrong, we can "intuit" it.
 		 */
 		if (sz != 0 && sz != sizeof(bool))

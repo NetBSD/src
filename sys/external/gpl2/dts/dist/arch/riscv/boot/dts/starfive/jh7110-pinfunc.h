@@ -1,3 +1,5 @@
+/*	$NetBSD: jh7110-pinfunc.h,v 1.1.2.1 2025/08/02 05:57:36 perseant Exp $	*/
+
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /*
  * Copyright (C) 2022 Emil Renner Berthing <kernel@esmil.dk>

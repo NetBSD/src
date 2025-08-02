@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_private.h,v 1.3 2019/06/30 11:38:16 sevan Exp $	*/
+/*	$NetBSD: gpt_private.h,v 1.3.12.1 2025/08/02 05:55:06 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 
 struct gpt {
@@ -44,5 +45,6 @@ struct gpt {
 	u_int secsz;
 	off_t mediasz;
 	time_t timestamp;
+	u_int uuidgen;
 	struct stat sb;
 };

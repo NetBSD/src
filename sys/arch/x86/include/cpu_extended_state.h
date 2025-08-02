@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.18 2023/02/25 13:57:37 riastradh Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.18.6.1 2025/08/02 05:56:16 perseant Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -226,6 +226,8 @@ struct xstate {
  * It is defined this way to separate the definitions and to
  * minimise the number of union/struct selectors.
  * NB: Some userspace stuff (eg firefox) uses it to parse ucontext.
+ * NB: This is not actually the largest possible save space;
+ *     x86_fpu_save_size may be larger.
  */
 union savefpu {
 	struct save87 sv_87;

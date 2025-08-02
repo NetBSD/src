@@ -217,7 +217,7 @@
 /* No fields */
 
 /*
- * RX Diagnsostic Packet Protocol (Table 344)
+ * RX Diagnostic Packet Protocol (Table 344)
  */
 
 #define S_BCM1480_HSP_RX_DIAG_VC     0

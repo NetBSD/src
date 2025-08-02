@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.39 2023/03/24 12:22:52 bouyer Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.39.6.1 2025/08/02 05:57:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,24 +68,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.39 2023/03/24 12:22:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.39.6.1 2025/08/02 05:57:44 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/namei.h>
-#include <sys/filedesc.h>
-#include <sys/kernel.h>
-#include <sys/file.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/proc.h>
-#include <sys/uio.h>
+#include <sys/types.h>
+
 #include <sys/extattr.h>
-#include <sys/xattr.h>
-#include <sys/sysctl.h>
-#include <sys/syscallargs.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/ktrace.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/sdt.h>
+#include <sys/syscallargs.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/uio.h>
+#include <sys/vnode.h>
+#include <sys/xattr.h>
 
 #include <miscfs/genfs/genfs.h>
 
@@ -131,7 +134,7 @@ vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
 
 	if (vp != NULL)
 		VOP_UNLOCK(vp);
-	return EOPNOTSUPP;
+	return SET_ERROR(EOPNOTSUPP);
 }
 
 /*
@@ -142,7 +145,8 @@ vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
  * require the use of this system call.
  */
 int
-sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap, register_t *retval)
+sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -237,7 +241,7 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 			break;
 		case 0:
 			if (flag & XATTR_CREATE) {
-				error = EEXIST;
+				error = SET_ERROR(EEXIST);
 				goto done;
 			}
 			break;
@@ -253,7 +257,7 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = 0;
 	if (nbytes > INT_MAX) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto done;
 	}
 	auio.uio_resid = nbytes;
@@ -269,7 +273,7 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	cnt -= auio.uio_resid;
 	retval[0] = cnt;
 
- done:
+done:
 	VOP_UNLOCK(vp);
 	return error;
 }
@@ -306,7 +310,7 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = 0;
 		if (nbytes > INT_MAX) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto done;
 		}
 		auio.uio_resid = nbytes;
@@ -331,7 +335,7 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	} else
 		retval[0] = size;
 
- done:
+done:
 	VOP_UNLOCK(vp);
 	return error;
 }
@@ -387,7 +391,7 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = 0;
 		if (nbytes > INT_MAX) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto done;
 		}
 		auio.uio_resid = nbytes;
@@ -410,7 +414,7 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 	} else
 		retval[0] = size;
 
- done:
+done:
 	VOP_UNLOCK(vp);
 	return error;
 }
@@ -813,7 +817,7 @@ xattr_native(const char *key)
 }
 #undef MATCH_NS
 
-#define XATTR_ERRNO(e) ((e) == EOPNOTSUPP ? ENOTSUP : (e))
+#define XATTR_ERRNO(e) ((e) == EOPNOTSUPP ? SET_ERROR(ENOTSUP) : (e))
 
 int
 sys_setxattr(struct lwp *l,

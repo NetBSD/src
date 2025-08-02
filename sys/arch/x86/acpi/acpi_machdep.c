@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.36 2023/10/16 17:27:02 bouyer Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.36.6.1 2025/08/02 05:56:16 perseant Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.36 2023/10/16 17:27:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.36.6.1 2025/08/02 05:56:16 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ out:
 	}
 #else
 #ifdef XEN
-	if (vm_guest == VM_GUEST_XENPVH) {
+	if (pvh_boot) {
 		PhysicalAddress = hvm_start_info->rsdp_paddr;
 		if (PhysicalAddress)
 			return PhysicalAddress;

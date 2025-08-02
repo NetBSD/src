@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2022/10/28 09:43:58 wiz Exp $
+#	$NetBSD: Makefile,v 1.11.4.1 2025/08/02 05:50:42 perseant Exp $
 
 USE_FORT?=	yes # data-driven bugs?
 
@@ -110,6 +110,7 @@ CPPFLAGS+=	-DHAVE_STDINT_H
 CPPFLAGS+=	-DHAVE_STRLCPY
 CPPFLAGS+=	-DHAVE_ERR_H
 CPPFLAGS+=	-DHAVE_REALPATH
+CPPFLAGS+=	-DHAVE_FLOAT_H
 CPPFLAGS+=	-DXFONT_BDFFORMAT
 CPPFLAGS+=	-DXFONT_BITMAP
 CPPFLAGS+=	-DXFONT_BUILTINS
@@ -130,6 +131,10 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
 
 CWARNFLAGS.clang+=	-Wno-format
 COPTS.ftfuncs.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-error=overflow :}
+
+.if ${HAVE_GCC:U0} >= 12 && ${MACHINE_ARCH} == "m68k"
+COPTS.fontxlfd.c+=	-fno-stack-protector
+.endif
 
 LIBDPLIBS=\
 	Xt	${.CURDIR}/../libXt \

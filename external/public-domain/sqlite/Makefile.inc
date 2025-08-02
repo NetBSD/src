@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.12 2022/04/19 22:40:45 rillig Exp $
+# $NetBSD: Makefile.inc,v 1.12.4.1 2025/08/02 05:54:24 perseant Exp $
 
 WARNS=		2
 
@@ -31,7 +31,6 @@ CPPFLAGS+=	\
 CWARNFLAGS+=	-Wno-shadow -Wno-unused
 
 LINTFLAGS+=	-X 117	# bitwise '>>' on signed value possibly nonportable
-LINTFLAGS+=	-X 161	# constant in conditional context
 LINTFLAGS+=	-X 220	# fallthrough on case statement
 LINTFLAGS+=	-X 247	# pointer cast from '%s' to '%s' may be troublesome
 LINTFLAGS+=	-X 275	# cast discards 'const' from type '%s'

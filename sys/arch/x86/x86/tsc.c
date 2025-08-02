@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.60 2024/02/19 20:10:09 mrg Exp $	*/
+/*	$NetBSD: tsc.c,v 1.60.2.1 2025/08/02 05:56:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.60 2024/02/19 20:10:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.60.2.1 2025/08/02 05:56:18 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.60 2024/02/19 20:10:09 mrg Exp $");
 #include <sys/cpu.h>
 #include <sys/xcall.h>
 #include <sys/lock.h>
+#ifdef BOOT_DURATION
+#include <sys/boot_duration.h>
+#endif
 
 #include <machine/cpu_counter.h>
 #include <machine/cpuvar.h>
@@ -57,6 +60,10 @@ static void	tsc_delay(unsigned int);
 
 static uint64_t	tsc_dummy_cacheline __cacheline_aligned;
 uint64_t	tsc_freq __read_mostly;	/* exported for sysctl */
+#ifdef BOOT_DURATION
+extern uint32_t	starttsc_lo;
+extern uint32_t	starttsc_hi;
+#endif
 static int64_t	tsc_drift_max = 1000;	/* max cycles */
 static int64_t	tsc_drift_observed;
 uint64_t	(*rdtsc)(void) = rdtsc_cpuid;
@@ -133,12 +140,12 @@ tsc_is_invariant(void)
 		 * The check is done below.
 		 */
 
-		 /*
-		  * AMD Errata 778: Processor Core Time Stamp Counters May
-		  * Experience Drift
-		  *
-		  * This affects all family 15h and family 16h processors.
-		  */
+		/*
+		 * AMD Errata 778: Processor Core Time Stamp Counters May
+		 * Experience Drift
+		 *
+		 * This affects all family 15h and family 16h processors.
+		 */
 		switch (CPUID_TO_FAMILY(ci->ci_signature)) {
 		case 0x15:
 		case 0x16:
@@ -466,3 +473,15 @@ tsc_tc_reset(void)
 	LIST_FOREACH(l, &alllwp, l_list)
 		l->l_md.md_tsc = 0;
 }
+
+#ifdef BOOT_DURATION
+/* Returns the kernel boot time in milliseconds. */
+uint64_t
+boot_duration_timer(void)
+{
+	KASSERT(curcpu_stable());
+	KASSERT(CPU_IS_PRIMARY(curcpu()));
+	return (rdtsc() - ((uint64_t)starttsc_hi << 32 | starttsc_lo)) /
+	    (curcpu()->ci_data.cpu_cc_freq / 1000);
+}
+#endif

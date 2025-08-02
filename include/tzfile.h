@@ -1,4 +1,4 @@
-/*	$NetBSD: tzfile.h,v 1.13 2024/02/17 14:54:47 christos Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.13.2.1 2025/08/02 05:54:28 perseant Exp $	*/
 
 #ifndef _TZFILE_H_
 #define _TZFILE_H_
@@ -33,7 +33,7 @@
 #endif /* !defined TZDEFRULES */
 
 
-/* See Internet RFC 8536 for more details about the following format.  */
+/* See Internet RFC 9636 for more details about the following format.  */
 
 /*
 ** Each file begins with. . .

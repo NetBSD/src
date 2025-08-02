@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6 2024/01/19 05:47:15 thorpej Exp $
+# $NetBSD: GENERIC,v 1.6.2.1 2025/08/02 05:56:14 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/virt68k/conf/std.virt68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.6.2.1 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -68,6 +68,9 @@ file-system	MSDOSFS
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system	NULLFS		# loopback file system
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+pseudo-device	putter		# for puffs and pud
 
 # File system options
 #options 	FFS_EI		# FFS Endian Independent support
@@ -104,6 +107,11 @@ include 	"conf/compat_netbsd09.config"
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
 #options 	COMPAT_OSSAUDIO	# compatibility with Linux/m68k binaries
+
+# Shared memory options
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
 
 ## force NFS root and swap
 #config	netbsd		root on ? type nfs
@@ -142,6 +150,11 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	npf			# NPF packet filter
 pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
+pseudo-device	drvctl			# user control of drive subsystem
+
+# crypto pseudo-devices
+pseudo-device	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
 
 # random number generator pseudo-device
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
@@ -161,10 +174,10 @@ virtctrl*	at mainbus? addr ?
 
 # VirtIO devices
 virtio*		at mainbus? addr ?	# VirtIO nexus
-ld*		at virtio?		# VirtIO disk device
-vioif*		at virtio?		# VirtIO network device
-viornd*		at virtio?		# VirtIO entropy device
-vioscsi*	at virtio?		# VirtIO SCSI device
+
+include "dev/virtio/virtio.config"
+no vio9p* 	at virtio?		# XXX ?
+no viomb* 	at virtio?		# XXX ?
 
 # SCSI devices
 scsibus* at scsi?

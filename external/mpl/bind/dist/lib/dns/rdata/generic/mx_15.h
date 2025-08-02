@@ -1,4 +1,4 @@
-/*	$NetBSD: mx_15.h,v 1.7 2024/02/21 22:52:13 christos Exp $	*/
+/*	$NetBSD: mx_15.h,v 1.7.2.1 2025/08/02 05:53:44 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

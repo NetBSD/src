@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2019/07/15 05:41:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.12.1 2025/08/02 05:50:38 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ DPADD+=	${LIBXEXT} ${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBX11} ${LIBSM} ${LIBICE} \
 
 CPPFLAGS+=	-I${X11SRCDIR.${PROG}}/../include
 CPPFLAGS+=	-D_CONST_X_STRING
+CPPFLAGS+=	-DPACKAGE_STRING=\"${PACKAGE_STRING}\"
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man

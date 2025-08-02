@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.264 2022/11/04 09:00:58 ozaki-r Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.264.8.1 2025/08/02 05:57:50 perseant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.264 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.264.8.1 2025/08/02 05:57:50 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -428,8 +428,7 @@ udp_input(struct mbuf *m, int off, int proto)
 	}
 
 bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return;
 
 badcsum:
@@ -470,8 +469,7 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 		m_adj(n, off);
 		if (sbappendaddr(&so->so_rcv, src, n, opts) == 0) {
 			m_freem(n);
-			if (opts)
-				m_freem(opts);
+			m_freem(opts);
 			UDP_STATINC(UDP_STAT_FULLSOCK);
 			soroverflow(so);
 		} else
@@ -577,10 +575,12 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		if (inp->inp_flags & INP_ESPINUDP) {
 			switch (udp4_espinudp(mp, off)) {
 			case -1: /* Error, m was freed */
+				KASSERT(*mp == NULL);
 				rcvcnt = -1;
 				goto bad;
 
 			case 1: /* ESP over UDP */
+				KASSERT(*mp == NULL);
 				rcvcnt++;
 				goto bad;
 
@@ -601,6 +601,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 			    sintosa(src), inp->inp_overudp_arg);
 			switch (ret) {
 			case -1: /* Error, m was freed */
+				KASSERT(*mp == NULL);
 				rcvcnt = -1;
 				goto bad;
 
@@ -804,10 +805,8 @@ udp_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
 	if (error != 0)
 		goto release;
 
-	if (control != NULL) {
-		m_freem(control);
-		control = NULL;
-	}
+	m_freem(control);
+	control = NULL;
 
 	/*
 	 * Fill in mbuf with extended UDP header
@@ -848,8 +847,7 @@ udp_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
 	return ip_output(m, inp->inp_options, ro, flags, pktopts.ippo_imo, inp);
 
  release:
-	if (control != NULL)
-		m_freem(control);
+	m_freem(control);
 	m_freem(m);
 	return error;
 }
@@ -1110,10 +1108,8 @@ udp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 		inpcb_set_state(inp, INP_BOUND);	/* XXX */
 	}
   die:
-	if (m != NULL)
-		m_freem(m);
-	if (control != NULL)
-		m_freem(control);
+	m_freem(m);
+	m_freem(control);
 
 	splx(s);
 	return error;
@@ -1265,7 +1261,7 @@ udp4_espinudp(struct mbuf **mp, int off)
 
 	if (m->m_len < minlen) {
 		if ((*mp = m_pullup(m, minlen)) == NULL) {
-			return -1;
+			return -1; /* dropped */
 		}
 		m = *mp;
 	}
@@ -1277,15 +1273,15 @@ udp4_espinudp(struct mbuf **mp, int off)
 	if ((len == 1) && (*data == 0xff)) {
 		m_freem(m);
 		*mp = NULL; /* avoid any further processing by caller */
-		return 1;
+		return 1;	/* consumed */
 	}
 
 	/* Handle Non-ESP marker (32bit). If zero, then IKE. */
 	marker = (uint32_t *)data;
 	if (len <= sizeof(uint32_t))
-		return 0;
+		return 0;	/* passthrough */
 	if (marker[0] == 0)
-		return 0;
+		return 0;	/* passthrough */
 
 	/*
 	 * Get the UDP ports. They are handled in network order
@@ -1330,7 +1326,8 @@ udp4_espinudp(struct mbuf **mp, int off)
 	if ((tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
 	    sizeof(sport) + sizeof(dport), M_DONTWAIT)) == NULL) {
 		m_freem(m);
-		return -1;
+		*mp = NULL;
+		return -1;	/* dropped */
 	}
 	((u_int16_t *)(tag + 1))[0] = sport;
 	((u_int16_t *)(tag + 1))[1] = dport;
@@ -1343,7 +1340,7 @@ udp4_espinudp(struct mbuf **mp, int off)
 
 	/* We handled it, it shouldn't be handled by UDP */
 	*mp = NULL; /* avoid free by caller ... */
-	return 1;
+	return 1;		/* consumed */
 }
 #endif
 

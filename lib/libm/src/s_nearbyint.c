@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nearbyint.c,v 1.5 2024/02/24 15:16:53 christos Exp $	*/
+/*	$NetBSD: s_nearbyint.c,v 1.5.2.1 2025/08/02 05:54:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_nearbyint.c,v 1.2 2008/01/14 02:12:06 das Exp $");
 #else
-__RCSID("$NetBSD: s_nearbyint.c,v 1.5 2024/02/24 15:16:53 christos Exp $");
+__RCSID("$NetBSD: s_nearbyint.c,v 1.5.2.1 2025/08/02 05:54:52 perseant Exp $");
 #endif
 
 #include "namespace.h"
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: s_nearbyint.c,v 1.5 2024/02/24 15:16:53 christos Exp $");
  * because the only exception defined for rint() is overflow, and
  * rounding can't overflow as long as emax >= p.
  */
-#define	DECL(type, fn, rint)	\
+#define	DECL(type, fn, rintfn)	\
 type				\
 fn(type x)			\
 {				\
@@ -54,7 +54,7 @@ fn(type x)			\
 	fenv_t env;		\
 				\
 	fegetenv(&env);		\
-	ret = rintl(x);		\
+	ret = rintfn(x);	\
 	fesetenv(&env);		\
 	return (ret);		\
 }

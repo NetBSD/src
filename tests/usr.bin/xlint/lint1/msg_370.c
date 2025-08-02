@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_370.c,v 1.2 2024/03/02 11:56:37 rillig Exp $	*/
+/*	$NetBSD: msg_370.c,v 1.2.2.1 2025/08/02 05:58:18 perseant Exp $	*/
 # 3 "msg_370.c"
 
 // Test for message: field width '%.*s' in '%.*s' should be escaped as octal or hex [370]
@@ -15,7 +15,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 example(uint64_t u64)

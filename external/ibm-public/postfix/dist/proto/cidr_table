@@ -113,9 +113,10 @@
 #	    \fB.. -o { \fIparameter\fR \fB= .. cidr:{ { \fIrule-1\fB }, { \fIrule-2\fB } .. } .. } ..\fR
 # .fi
 #
-#	Postfix ignores whitespace after '{' and before '}', and
-#	writes each \fIrule\fR as one text line to an in-memory
-#	file:
+#	Postfix recursively expands any \fI$parametername\fR instances
+#	in the above parameter value, ignores whitespace after '{'
+#	and before '}', and writes each \fIrule\fR as one text line to
+#	an in-memory file:
 #
 # .nf
 #	in-memory file:

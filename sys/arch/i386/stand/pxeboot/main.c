@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2021/09/07 11:41:32 nia Exp $	*/
+/*	$NetBSD: main.c,v 1.32.10.1 2025/08/02 05:55:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -96,7 +96,7 @@ alldone(void)
 	clearit();
 }
 
-static int 
+static int
 bootit(const char *filename, int howto)
 {
 	if (exec_netbsd(filename, 0, howto, 0, alldone) < 0)
@@ -180,6 +180,19 @@ main(void)
 	return (1);
 }
 
+/*
+ * dummy function to satisfy link against call in
+ * sys/arch/i386/stand/lib/bootmenu.c:do_bootcfg_command()
+ */
+
+/* ARGSUSED */
+void
+command_dev(char *arg)
+{
+	(void)arg;
+	return;
+}
+
 /* ARGSUSED */
 void
 command_help(char *arg)
@@ -187,7 +200,7 @@ command_help(char *arg)
 	printf("commands are:\n"
 	       "boot [filename] [-acdsqv]\n"
 	       "     (ex. \"netbsd.old -s\"\n"
-	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
+	       "consdev {pc|{com[0123]|com[0123]kbd|auto}[,{speed}]}\n"
 	       "vesa {modenum|on|off|enabled|disabled|list}\n"
 	       "multiboot [filename] [<args>]\n"
 	       "modules {on|off|enabled|disabled}\n"
@@ -239,17 +252,36 @@ void
 command_consdev(char *arg)
 {
 	const struct cons_devs *cdp;
+	char *sep;
+	int speed;
+
+	sep = strchr(arg, ',');
+	if (sep != NULL)
+		*sep++ = '\0';
 
 	for (cdp = cons_devs; cdp->name; cdp++) {
-		if (!strcmp(arg, cdp->name)) {
-			initio(cdp->tag);
-			clearit();
-			print_bootcfg_banner(bootprog_name, bootprog_rev);
-			return;
+		if (strcmp(arg, cdp->name) != 0)
+			continue;
+
+		if (sep != NULL) {
+			if (cdp->tag == CONSDEV_PC)
+				goto error;
+
+			speed = atoi(sep);
+			if (speed < 0)
+				goto error;
+			boot_params.bp_conspeed = speed;
 		}
+
+		initio(cdp->tag);
+		clearit();
+		print_bootcfg_banner(bootprog_name, bootprog_rev);
+		return;
 	}
+error:
 	printf("invalid console device.\n");
 }
+
 void
 command_modules(char *arg)
 {

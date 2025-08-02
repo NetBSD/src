@@ -32,15 +32,21 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 named-compilezone \- zone file validity checking or converting tool
 .SH SYNOPSIS
 .sp
-\fBnamed\-compilezone\fP [\fB\-d\fP] [\fB\-h\fP] [\fB\-j\fP] [\fB\-q\fP] [\fB\-v\fP] [\fB\-c\fP class] [\fB\-f\fP format] [\fB\-F\fP format] [\fB\-J\fP filename] [\fB\-i\fP mode] [\fB\-k\fP mode] [\fB\-m\fP mode] [\fB\-M\fP mode] [\fB\-n\fP mode] [\fB\-l\fP ttl] [\fB\-L\fP serial] [\fB\-r\fP mode] [\fB\-s\fP style] [\fB\-S\fP mode] [\fB\-t\fP directory] [\fB\-T\fP mode] [\fB\-w\fP directory] [\fB\-D\fP] [\fB\-W\fP mode] {\fB\-o\fP filename} {zonename} {filename}
+\fBnamed\-compilezone\fP [\fB\-d\fP] [\fB\-h\fP] [\fB\-j\fP] [\fB\-q\fP] [\fB\-v\fP] [\fB\-c\fP class] [\fB\-C\fP mode] [\fB\-f\fP format] [\fB\-F\fP format] [\fB\-J\fP filename] [\fB\-i\fP mode] [\fB\-k\fP mode] [\fB\-m\fP mode] [\fB\-M\fP mode] [\fB\-n\fP mode] [\fB\-l\fP ttl] [\fB\-L\fP serial] [\fB\-r\fP mode] [\fB\-s\fP style] [\fB\-S\fP mode] [\fB\-t\fP directory] [\fB\-T\fP mode] [\fB\-w\fP directory] [\fB\-D\fP] [\fB\-W\fP mode] {\fB\-o\fP filename} {zonename} {filename}
 .SH DESCRIPTION
 .sp
 \fBnamed\-compilezone\fP checks the syntax and integrity of a zone file,
 and dumps the zone contents to a specified file in a specified format.
-It applies strict check levels by default, since the
-dump output is used as an actual zone file loaded by \fI\%named\fP\&.
-When manually specified otherwise, the check levels must at least be as
-strict as those specified in the \fI\%named\fP configuration file.
+.sp
+Unlike \fBnamed\-checkzone\fP, zone contents are not strictly checked
+by default. If the output is to be used as an actual zone file to be loaded
+by \fI\%named\fP, then the check levels should be manually configured to
+be at least as strict as those specified in the \fI\%named\fP configuration
+file.
+.sp
+Running \fBnamed\-checkzone\fP on the input prior to compiling will
+ensure that the zone compiles with the default requirements of
+\fI\%named\fP\&.
 .SH OPTIONS
 .INDENT 0.0
 .TP
@@ -83,10 +89,20 @@ This option specifies the class of the zone. If not specified, \fBIN\fP is assum
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-C mode
+This option controls check mode on zone files when loading.
+Possible modes are \fBcheck\-svcb:fail\fP and \fBcheck\-svcb:ignore\fP\&.
+.sp
+\fBcheck\-svcb:fail\fP turns on additional checks on \fB_dns\fP SVCB
+records and \fBcheck\-svcb:ignore\fP disables these checks.  The
+default is \fBcheck\-svcb:ignore\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-i mode
 This option performs post\-load zone integrity checks. Possible modes are
-\fBfull\fP (the default), \fBfull\-sibling\fP, \fBlocal\fP,
-\fBlocal\-sibling\fP, and \fBnone\fP\&.
+\fBfull\fP, \fBfull\-sibling\fP, \fBlocal\fP,
+\fBlocal\-sibling\fP, and \fBnone\fP (the default).
 .sp
 Mode \fBfull\fP checks that MX records refer to A or AAAA records
 (both in\-zone and out\-of\-zone hostnames). Mode \fBlocal\fP only
@@ -133,7 +149,7 @@ file can only be read by release 9.9.0 or higher. The default is 1.
 .TP
 .B \-k mode
 This option performs \fBcheck\-names\fP checks with the specified failure mode.
-Possible modes are \fBfail\fP (the default), \fBwarn\fP, and \fBignore\fP\&.
+Possible modes are \fBfail\fP, \fBwarn\fP, and \fBignore\fP (the default).
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -153,21 +169,21 @@ expected to be used primarily for testing purposes.
 .TP
 .B \-m mode
 This option specifies whether MX records should be checked to see if they are
-addresses. Possible modes are \fBfail\fP, \fBwarn\fP (the default), and
-\fBignore\fP\&.
+addresses. Possible modes are \fBfail\fP, \fBwarn\fP, and
+\fBignore\fP (the default).
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-M mode
 This option checks whether a MX record refers to a CNAME. Possible modes are
-\fBfail\fP, \fBwarn\fP (the default), and \fBignore\fP\&.
+\fBfail\fP, \fBwarn\fP, and \fBignore\fP (the default).
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-n mode
 This option specifies whether NS records should be checked to see if they are
-addresses. Possible modes are \fBfail\fP (the default), \fBwarn\fP,  and
-\fBignore\fP\&.
+addresses. Possible modes are \fBfail\fP, \fBwarn\fP,  and
+\fBignore\fP (the default).
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -180,7 +196,7 @@ the zone output is written to standard output. This is mandatory for \fBnamed\-c
 .B \-r mode
 This option checks for records that are treated as different by DNSSEC but are
 semantically equal in plain DNS. Possible modes are \fBfail\fP,
-\fBwarn\fP (the default), and \fBignore\fP\&.
+\fBwarn\fP, and \fBignore\fP (the default).
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -195,7 +211,7 @@ suitable for editing by hand.
 .TP
 .B \-S mode
 This option checks whether an SRV record refers to a CNAME. Possible modes are
-\fBfail\fP, \fBwarn\fP (the default), and \fBignore\fP\&.
+\fBfail\fP, \fBwarn\fP, and \fBignore\fP (the default).
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -209,7 +225,7 @@ configuration file are processed as if run by a similarly chrooted
 .B \-T mode
 This option checks whether Sender Policy Framework (SPF) records exist and issues a
 warning if an SPF\-formatted TXT record is not also present. Possible
-modes are \fBwarn\fP (the default) and \fBignore\fP\&.
+modes are \fBwarn\fP and \fBignore\fP (the default).
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -229,8 +245,8 @@ This option dumps the zone file in canonical format. This is always enabled for
 .B \-W mode
 This option specifies whether to check for non\-terminal wildcards. Non\-terminal
 wildcards are almost always the result of a failure to understand the
-wildcard matching algorithm (\fI\%RFC 4592\fP). Possible modes are \fBwarn\fP
-(the default) and \fBignore\fP\&.
+wildcard matching algorithm (\X'tty: link https://datatracker.ietf.org/doc/html/rfc4592.html'\fI\%RFC 4592\fP\X'tty: link'). Possible modes are \fBwarn\fP
+and \fBignore\fP (the default).
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -248,11 +264,11 @@ This is the name of the zone file.
 and 0 otherwise.
 .SH SEE ALSO
 .sp
-\fI\%named(8)\fP, \fI\%named\-checkconf(8)\fP, \fI\%named\-checkzone(8)\fP, \fI\%RFC 1035\fP,
+\fI\%named(8)\fP, \fI\%named\-checkconf(8)\fP, \fI\%named\-checkzone(8)\fP, \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link',
 BIND 9 Administrator Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2024, Internet Systems Consortium
+2025, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

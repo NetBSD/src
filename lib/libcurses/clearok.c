@@ -1,4 +1,4 @@
-/*	$NetBSD: clearok.c,v 1.5 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: clearok.c,v 1.5.74.1 2025/08/02 05:54:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: clearok.c,v 1.5 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: clearok.c,v 1.5.74.1 2025/08/02 05:54:45 perseant Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -44,6 +44,9 @@ __RCSID("$NetBSD: clearok.c,v 1.5 2008/04/28 20:23:01 martin Exp $");
 int
 clearok(WINDOW *win, bool bf)
 {
+	if (__predict_false(win == NULL))
+		return ERR;
+
 	if (bf)
 		win->flags |= __CLEAROK;
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.86 2023/01/27 09:33:43 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.86.6.1 2025/08/02 05:57:51 perseant Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.86 2023/01/27 09:33:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.86.6.1 2025/08/02 05:57:51 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -634,8 +634,7 @@ noneed:
 unrefsav:
 	KEY_SA_UNREF(&sav);
 bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return error;
 }
 #endif
@@ -819,8 +818,7 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr, int flags)
 unrefsav:
 	KEY_SA_UNREF(&sav);
 bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return error;
 }
 #endif /* INET6 */

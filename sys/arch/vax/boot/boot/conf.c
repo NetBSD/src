@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 2018/05/01 07:03:47 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.18.38.1 2025/08/02 05:56:13 perseant Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,7 +48,7 @@ struct	devsw devsw[]={
 	SADEV("hp",hpstrategy, hpopen, nullsys, noioctl),
 	SADEV("qe",nostrategy, qeopen, qeclose, noioctl), /* DEQNA */
 	SADEV("ctu",ctustrategy, ctuopen, nullsys, noioctl),
-	SADEV("ra",rastrategy, raopen, nullsys, noioctl),
+	SADEV("ra",rastrategy, raopen, raclose, noioctl),
 	SADEV("mt",rastrategy, raopen, nullsys, noioctl),
         SADEV("rom",romstrategy, romopen, nullsys, noioctl),
         SADEV("rd",mfmstrategy, mfmopen, nullsys, noioctl),

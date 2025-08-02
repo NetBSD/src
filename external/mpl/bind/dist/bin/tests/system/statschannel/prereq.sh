@@ -23,4 +23,9 @@ if ! ${PERL} -MFile::Fetch -e ''; then
   exit 1
 fi
 
+if ! $FEATURETEST --have-libxml2 && ! $FEATURETEST --have-json-c; then
+  echo_i "skip: one or both of --with-libxml2 and --with-json-c required"
+  exit 255
+fi
+
 exit 0

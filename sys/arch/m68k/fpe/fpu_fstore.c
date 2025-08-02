@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fstore.c,v 1.14 2013/03/26 11:30:21 isaki Exp $	*/
+/*	$NetBSD: fpu_fstore.c,v 1.14.72.1 2025/08/02 05:55:48 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.14 2013/03/26 11:30:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fstore.c,v 1.14.72.1 2025/08/02 05:55:48 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -49,6 +49,7 @@ fpu_emul_fstore(struct fpemu *fe, struct instruction *insn)
 	int word1, sig;
 	int regnum;
 	int format;
+	int modreg;
 	uint32_t buf[3];
 
 #if DEBUG_FPE
@@ -59,8 +60,6 @@ fpu_emul_fstore(struct fpemu *fe, struct instruction *insn)
 	word1 = insn->is_word1;
 	format = (word1 >> 10) & 7;
 	regnum = (word1 >> 7) & 7;
-
-	insn->is_advance = 4;
 
 	if (format == FTYPE_DBL) {
 		insn->is_datasize = 8;
@@ -79,7 +78,7 @@ fpu_emul_fstore(struct fpemu *fe, struct instruction *insn)
 #if DEBUG_FPE
 		printf("  fpu_emul_fstore: invalid format %d\n", format);
 #endif
-		sig = SIGFPE;
+		return SIGFPE;
 	}
 #if DEBUG_FPE
 	printf("  fpu_emul_fstore: format %d, size %d\n",
@@ -88,8 +87,17 @@ fpu_emul_fstore(struct fpemu *fe, struct instruction *insn)
 
 	fe->fe_fpsr &= ~FPSR_EXCP;
 
-	/* Get effective address. (modreg=opcode&077) */
-	sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
+	/* Check an illegal mod/reg */
+	modreg = insn->is_opcode & 077;
+	if ((modreg >> 3) == 1/*An*/ || modreg >= 072/*PCrel and #imm*/) {
+#if DEBUG_FPE
+		printf("  fpu_emul_fstore: illegal modreg=0%o\n", modreg);
+#endif
+		return SIGILL;
+	}
+
+	/* Get effective address. */
+	sig = fpu_decode_ea(frame, insn, &insn->is_ea, modreg);
 	if (sig) {
 #if DEBUG_FPE
 		printf("  fpu_emul_fstore: failed in decode_ea sig=%d\n", sig);

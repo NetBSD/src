@@ -1,4 +1,4 @@
-/*	$NetBSD: alldig.c,v 1.2 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: alldig.c,v 1.2.4.1 2025/08/02 05:50:17 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -62,14 +62,14 @@ int     alldig(const char *string)
 
 /* allalnum - return true if string is all alphanum */
 
-int allalnum(const char *string)
+int     allalnum(const char *string)
 {
     const char *cp;
 
     if (*string == 0)
-        return (0);
+	return (0);
     for (cp = string; *cp != 0; cp++)
-        if (!ISALNUM(*cp))
-            return (0);
+	if (!ISALNUM(*cp))
+	    return (0);
     return (1);
 }

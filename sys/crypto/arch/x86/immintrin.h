@@ -1,4 +1,4 @@
-/*	$NetBSD: immintrin.h,v 1.1 2023/08/07 01:07:36 rin Exp $	*/
+/*	$NetBSD: immintrin.h,v 1.1.6.1 2025/08/02 05:56:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -42,8 +42,16 @@
 
 #define	_INTRINSATTR							      \
 	__attribute__((__gnu_inline__, __always_inline__, __artificial__))
-#define	_PACKALIAS
 
+typedef short __m16 __attribute__((__vector_size__(2), __may_alias__));
+typedef short __m16_u
+    __attribute__((__vector_size__(2), __may_alias__, __aligned__(1)));
+typedef int __m32 __attribute__((__vector_size__(4), __may_alias__));
+typedef int __m32_u
+    __attribute__((__vector_size__(4), __may_alias__, __aligned__(1)));
+typedef int __m64 __attribute__((__vector_size__(8), __may_alias__));
+typedef int __m64_u
+    __attribute__((__vector_size__(8), __may_alias__, __aligned__(1)));
 typedef float __m128 __attribute__((__vector_size__(16), __may_alias__));
 typedef long long __m128i __attribute__((__vector_size__(16), __may_alias__));
 typedef long long __m128i_u
@@ -55,6 +63,8 @@ typedef unsigned __v4su __attribute__((__vector_size__(16)));
 typedef float __v4sf __attribute__((__vector_size__(16)));
 typedef short __v8hi __attribute__((__vector_size__(16)));
 typedef char __v16qi __attribute__((__vector_size__(16)));
+typedef char __v16qi_u
+    __attribute__((__vector_size__(16), __may_alias__, __aligned__(1)));
 
 #elif defined(__clang__)
 
@@ -113,14 +123,22 @@ _INTRINSATTR
 static __inline __m128i
 _mm_loadu_si128(const __m128i_u *__p)
 {
+#if defined(__GNUC__) && !defined(__clang__)
+	return *__p;
+#else
 	return ((const struct { __m128i_u __v; } _PACKALIAS *)__p)->__v;
+#endif
 }
 
 _INTRINSATTR
 static __inline __m128i
 _mm_loadu_si32(const void *__p)
 {
+#if defined(__GNUC__) && !defined(__clang__)
+	int32_t __v = (*(const __m32_u *)__p)[0];
+#else
 	int32_t __v = ((const struct { int32_t __v; } _PACKALIAS *)__p)->__v;
+#endif
 	return __extension__ (__m128i)(__v4si){ __v, 0, 0, 0 };
 }
 
@@ -128,7 +146,11 @@ _INTRINSATTR
 static __inline __m128i
 _mm_loadu_si64(const void *__p)
 {
+#if defined(__GNUC__) && !defined(__clang__)
+	int64_t __v = (int64_t)*(const __m64_u *)__p;
+#else
 	int64_t __v = ((const struct { int64_t __v; } _PACKALIAS *)__p)->__v;
+#endif
 	return __extension__ (__m128i)(__v2di){ __v, 0 };
 }
 
@@ -278,21 +300,33 @@ _INTRINSATTR
 static __inline void
 _mm_storeu_si128(__m128i_u *__p, __m128i __v)
 {
+#if defined(__GNUC__) && !defined(__clang__)
+	*__p = __v;
+#else
 	((struct { __m128i_u __v; } _PACKALIAS *)__p)->__v = __v;
+#endif
 }
 
 _INTRINSATTR
 static __inline void
 _mm_storeu_si32(void *__p, __m128i __v)
 {
+#if defined(__GNUC__) && !defined(__clang__)
+	*(__m32_u *)__p = (__m32)((__v4si)__v)[0];
+#else
 	((struct { int32_t __v; } _PACKALIAS *)__p)->__v = ((__v4si)__v)[0];
+#endif
 }
 
 _INTRINSATTR
 static __inline void
 _mm_storeu_si64(void *__p, __m128i __v)
 {
+#if defined(__GNUC__) && !defined(__clang__)
+	*(__m64_u *)__p = (__m64)((__v2di)__v)[0];
+#else
 	((struct { int64_t __v; } _PACKALIAS *)__p)->__v = ((__v2di)__v)[0];
+#endif
 }
 
 _INTRINSATTR

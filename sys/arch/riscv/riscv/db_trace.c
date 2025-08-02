@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.4 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.4.6.1 2025/08/02 05:56:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,15 +31,19 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_trace.c,v 1.4 2023/05/07 12:41:48 skrll Exp $");
+__RCSID("$NetBSD: db_trace.c,v 1.4.6.1 2025/08/02 05:56:04 perseant Exp $");
 
 #include <sys/param.h>
+
+#include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/types.h>
 
 #include <riscv/db_machdep.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <ddb/db_user.h>
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
@@ -49,6 +53,10 @@ __RCSID("$NetBSD: db_trace.c,v 1.4 2023/05/07 12:41:48 skrll Exp $");
 #include <ddb/db_lwp.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
+
+#ifndef _KERNEL
+#include <stddef.h>
+#endif
 
 #define MAXBACKTRACE	128	/* against infinite loop */
 #define TRACEFLAG_LOOKUPLWP	0x00000001
@@ -121,18 +129,18 @@ void
 db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif, void (*pr)(const char *, ...) __printflike(1, 2))
 {
-	register_t ra, fp, lastra, lastfp;
+	vaddr_t ra, fp, lastra, lastfp;
 	struct trapframe *tf = NULL;
 	int flags = 0;
 	bool trace_user = false;
 	bool trace_thread = false;
 	bool trace_lwp = false;
 
-	printf("have_addr: %s\n", have_addr ? "true" : "false");
+	pr("have_addr: %s\n", have_addr ? "true" : "false");
 	if (have_addr)
-		printf("addr: %lx\n", addr);
-	printf("count: %ld\n", count);
-	printf("modif: %s\n", modif);
+		pr("addr: %lx\n", addr);
+	pr("count: %ld\n", count);
+	pr("modif: %s\n", modif);
 
 	for (; *modif != '\0'; modif++) {
 		switch (*modif) {
@@ -175,14 +183,14 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 #endif
 
 	if (trace_thread) {
-		proc_t *pp, p;
+		proc_t *pp;
 
 		if ((pp = db_proc_find((pid_t)addr)) == 0) {
 			(*pr)("trace: pid %d: not found\n", (int)addr);
 			return;
 		}
-		db_read_bytes((db_addr_t)pp, sizeof(p), (char *)&p);
-		addr = (db_addr_t)p.p_lwps.lh_first;
+		db_read_bytes((db_addr_t)pp + offsetof(proc_t, p_lwps.lh_first),
+		    sizeof(addr), (char *)&addr);
 		trace_thread = false;
 		trace_lwp = true;
 	}
@@ -216,7 +224,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		}
 	} else if (tf == NULL) {
 		fp = addr;
-		pr("trace fp %016" PRIxREGISTER "\n", fp);
+		pr("trace fp %016" PRIxVADDR "\n", fp);
 	} else {
 		pr("trace tf %p\n", tf);
 	}

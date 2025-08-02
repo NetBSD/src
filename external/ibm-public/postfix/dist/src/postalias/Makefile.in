@@ -63,19 +63,8 @@ fail_test: $(PROG) aliases fail_test.in fail_test.ref
 ../../bin/$(PROG): $(PROG)
 	cp $(PROG) ../../bin
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	sed '1,/^# do not edit/!d' Makefile >printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
-
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
-
 clean:
 	rm -f *.o *core $(PROG) $(TESTPROG) junk 
-	rm -rf printfck
 
 tidy:	clean
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.137 2024/06/29 12:11:11 riastradh Exp $ */
+/*	$NetBSD: gem.c,v 1.137.2.1 2025/08/02 05:56:41 perseant Exp $ */
 
 /*
  *
@@ -33,11 +33,11 @@
 /*
  * Driver for Apple GMAC, Sun ERI and Sun GEM Ethernet controllers
  * See `GEM Gigabit Ethernet ASIC Specification'
- *   http://www.sun.com/processors/manuals/ge.pdf
+ *   https://web.archive.org/web/20090701010806/http://www.sun.com/processors/manuals/ge.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.137 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.137.2.1 2025/08/02 05:56:41 perseant Exp $");
 
 #include "opt_inet.h"
 
@@ -1464,8 +1464,7 @@ next:
 			 * packet.
 			 */
 			bus_dmamap_unload(sc->sc_dmatag, dmamap);
-			if (m != NULL)
-				m_freem(m);
+			m_freem(m);
 			break;
 		}
 
@@ -1708,10 +1707,8 @@ gem_tint(struct gem_softc *sc)
 		    0, txs->txs_dmamap->dm_mapsize,
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmatag, txs->txs_dmamap);
-		if (txs->txs_mbuf != NULL) {
-			m_freem(txs->txs_mbuf);
-			txs->txs_mbuf = NULL;
-		}
+		m_freem(txs->txs_mbuf);
+		txs->txs_mbuf = NULL;
 
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 

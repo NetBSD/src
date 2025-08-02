@@ -1,4 +1,4 @@
-/*	$NetBSD: sbd.h,v 1.2 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: sbd.h,v 1.2.124.1 2025/08/02 05:55:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef _EWS4800MIPS_SBD_H_
 #define	_EWS4800MIPS_SBD_H_
-/* System board model independ definition */
+/* System board model independent definition */
 
 struct sbdinfo {
 	uint32_t machine	:16;

@@ -1,5 +1,5 @@
 
-/*	$NetBSD: sht3x.c,v 1.7 2022/04/27 23:11:25 brad Exp $	*/
+/*	$NetBSD: sht3x.c,v 1.7.10.1 2025/08/02 05:56:40 perseant Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sht3x.c,v 1.7 2022/04/27 23:11:25 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sht3x.c,v 1.7.10.1 2025/08/02 05:56:40 perseant Exp $");
 
 /*
   Driver for the Sensirion SHT30/SHT31/SHT35
@@ -171,6 +171,10 @@ static struct sht3x_timing sht3x_timings[] = {
 	{
 		.cmd = SHT3X_WRITE_LOW_ALERT_CLEAR,
 		.typicaldelay = 5000,
+	},
+	{
+		.cmd = SHT3X_READ_SERIAL_NUMBER,
+		.typicaldelay = 500,
 	}
 };
 
@@ -180,14 +184,17 @@ static struct sht3x_repeatability sht3x_repeatability_ss[] = {
 	{
 		.text = "high",
 		.cmd = SHT3X_MEASURE_REPEATABILITY_NOCS_HIGH,
+		.cscmd = SHT3X_MEASURE_REPEATABILITY_CS_HIGH,
 	},
 	{
 		.text = "medium",
 		.cmd = SHT3X_MEASURE_REPEATABILITY_NOCS_MEDIUM,
+		.cscmd = SHT3X_MEASURE_REPEATABILITY_CS_MEDIUM,
 	},
 	{
 		.text = "low",
 		.cmd = SHT3X_MEASURE_REPEATABILITY_NOCS_LOW,
+		.cscmd = SHT3X_MEASURE_REPEATABILITY_CS_LOW,
 	}
 };
 
@@ -542,7 +549,7 @@ sht3x_take_periodic_measurement(void *aux)
 		    rawbuf, sizeof(rawbuf));
 		/*
 		 * EIO is actually expected if the poll interval is faster
-		 * than the rate that the sensor is set to.  Unfortunally,
+		 * than the rate that the sensor is set to.  Unfortunately,
 		 * this will also mess with the ability to detect an actual
 		 * problem with the sensor in periodic mode, so we do the best
 		 * we can here.
@@ -861,27 +868,34 @@ sht3x_cmd(i2c_tag_t tag, i2c_addr_t addr, uint16_t *cmd,
 	cmd8[0] = cmd[0] >> 8;
 	cmd8[1] = cmd[0] & 0x00ff;
 
-	error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &cmd8[0], clen,
-	    NULL, 0, 0);
-	if (error)
-		return error;
+	if (cmd[0] == SHT3X_MEASURE_REPEATABILITY_CS_HIGH ||
+	    cmd[0] == SHT3X_MEASURE_REPEATABILITY_CS_MEDIUM ||
+	    cmd[0] == SHT3X_MEASURE_REPEATABILITY_CS_LOW) {
+		error = iic_exec(tag, I2C_OP_READ_WITH_STOP, addr, &cmd8[0], clen,
+		    buf, blen, 0);
+	} else {
+		error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &cmd8[0], clen,
+		    NULL, 0, 0);
+		if (error)
+			return error;
 
-	cmddelay = sht3x_cmddelay(cmd[0]);
-	if (cmddelay != -1) {
-		delay(cmddelay);
-	}
+		cmddelay = sht3x_cmddelay(cmd[0]);
+		if (cmddelay != -1) {
+			delay(cmddelay);
+		}
 
-	/* Not all commands return anything  */
-	if (blen == 0) {
-		return 0;
-	}
+		/* Not all commands return anything  */
+		if (blen == 0) {
+			return 0;
+		}
 
-	for (int aint = 0; aint < readattempts; aint++) {
-		error = iic_exec(tag, I2C_OP_READ_WITH_STOP, addr, NULL, 0, buf,
-		    blen, 0);
-		if (error == 0)
-			break;
-		delay(1000);
+		for (int aint = 0; aint < readattempts; aint++) {
+			error = iic_exec(tag, I2C_OP_READ_WITH_STOP, addr, NULL, 0, buf,
+			    blen, 0);
+			if (error == 0)
+				break;
+			delay(1000);
+		}
 	}
 
 	return error;
@@ -951,6 +965,13 @@ sht3x_sysctl_init(struct sht3x_sc *sc)
 #endif
 
 	if ((error = sysctl_createv(&sc->sc_sht3xlog, 0, NULL, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "clockstretch",
+	    SYSCTL_DESCR("Use clock stretch commands for measurements"), NULL, 0,
+	    &sc->sc_clockstretch, 0, CTL_HW, sysctlroot_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		return error;
+
+	if ((error = sysctl_createv(&sc->sc_sht3xlog, 0, NULL, &cnode,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "readattempts",
 	    SYSCTL_DESCR("The number of times to attempt to read the values"),
 	    sht3x_verify_sysctl, 0, &sc->sc_readattempts, 0, CTL_HW,
@@ -989,7 +1010,7 @@ sht3x_sysctl_init(struct sht3x_sc *sc)
 
 	if ((error = sysctl_createv(&sc->sc_sht3xlog, 0, NULL, &cnode,
 	    CTLFLAG_READONLY, CTLTYPE_STRING, "rates",
-	    SYSCTL_DESCR("Valid peridoic rates"), 0, 0,
+	    SYSCTL_DESCR("Valid periodic rates"), 0, 0,
 	    __UNCONST(sht3x_rate_names),
 	    sizeof(sht3x_rate_names) + 1,
 	    CTL_HW, sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
@@ -1081,6 +1102,7 @@ sht3x_attach(device_t parent, device_t self, void *aux)
 	sc->sc_stopping = false;
 	sc->sc_initperiodic = false;
 	sc->sc_opened = false;
+	sc->sc_clockstretch = false;
 	sc->sc_dying = false;
 	sc->sc_readpoolname = NULL;
 
@@ -1212,7 +1234,7 @@ out:
 }
 
 static uint16_t
-sht3x_compute_measure_command_ss(const char *repeatability)
+sht3x_compute_measure_command_ss(const char *repeatability, bool clockstretch)
 {
 	int i;
 	uint16_t r;
@@ -1220,7 +1242,10 @@ sht3x_compute_measure_command_ss(const char *repeatability)
 	for (i = 0; i < __arraycount(sht3x_repeatability_ss); i++) {
 		if (strncmp(repeatability, sht3x_repeatability_ss[i].text,
 		    SHT3X_REP_NAME) == 0) {
-			r = sht3x_repeatability_ss[i].cmd;
+			if (clockstretch)
+				r = sht3x_repeatability_ss[i].cscmd;
+			else
+				r = sht3x_repeatability_ss[i].cmd;
 			break;
 		}
 	}
@@ -1379,7 +1404,7 @@ sht3x_refresh_oneshot(struct sysmon_envsys *sme, envsys_data_t *edata)
 	}
 
 	measurement_command_ss = sht3x_compute_measure_command_ss(
-	    sc->sc_repeatability);
+	    sc->sc_repeatability, sc->sc_clockstretch);
 	error = sht3x_cmdr(sc, measurement_command_ss, rawdata, sizeof(rawdata));
 	DPRINTF(sc, 2, ("%s: Status for single-shot measurement cmd %04x "
 	    "Error %d\n", device_xname(sc->sc_dev), measurement_command_ss, error));

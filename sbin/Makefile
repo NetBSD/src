@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.139.4.1 2024/06/29 19:43:25 perseant Exp $
+#	$NetBSD: Makefile,v 1.139.4.2 2025/08/02 05:55:04 perseant Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -8,13 +8,18 @@
 
 SUBDIR=	amrctl apmlabel atactl badsect bioctl blkdiscard brconfig \
 	canconfig ccdconfig cgdconfig chown \
-	devpubd disklabel dkctl dkscan_bsdlabel dmesg dmctl \
-	drvctl fastboot fdisk fsck fsirand gpt ifconfig init ldconfig luactl \
+	devpubd disklabel dkctl dkscan_bsdlabel dmesg dmctl drvctl \
+	fastboot fdisk fsck fsirand gpt ifconfig init ldconfig luactl \
 	mbrlabel mknod modload modstat modunload mount \
 	newbtconf nologin nvmectl \
 	ping pppoectl raidctl reboot rcorder rndctl route routed \
 	savecore scan_ffs scsictl shutdown slattach svhlabel swapctl sysctl \
 	ttyflags umbctl umount veriexecctl wdogctl wsconsctl
+
+.if ${HAVE_EFI_RT} == "yes"
+SUBDIR+= efi
+.endif
+
 
 # support for various file systems
 SUBDIR+= newfs_ext2fs fsck_ext2fs

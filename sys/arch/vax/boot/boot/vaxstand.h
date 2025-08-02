@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxstand.h,v 1.11 2022/04/25 15:06:34 mlelstv Exp $ */
+/*	$NetBSD: vaxstand.h,v 1.11.10.1 2025/08/02 05:56:13 perseant Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -50,7 +50,8 @@ int ubmap(int mapno, int vaddr, int size);
 
 /* device calls */
 int	raopen(struct open_file *, int, int, int, int),
-	    rastrategy(void *, int, daddr_t, size_t, void *, size_t *);
+	    rastrategy(void *, int, daddr_t, size_t, void *, size_t *),
+	    raclose(struct open_file *);
 int	hpopen(struct open_file *, int, int, int, int),
 	    hpstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int	ctuopen(struct open_file *, int, int, int, int),

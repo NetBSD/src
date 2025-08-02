@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.76.2.1 2024/07/01 01:01:12 perseant Exp $ */
+/* $NetBSD: cpu.c,v 1.76.2.2 2025/08/02 05:55:19 perseant Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.76.2.1 2024/07/01 01:01:12 perseant Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.76.2.2 2025/08/02 05:55:19 perseant Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.76.2.1 2024/07/01 01:01:12 perseant Exp $"
 #include <sys/kmem.h>
 #include <sys/reboot.h>
 #include <sys/rndsource.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
@@ -167,6 +168,8 @@ cpu_attach(device_t dv, cpuid_t id)
 	aarch64_printcacheinfo(dv, ci);
 	cpu_identify2(dv, ci);
 
+	cpu_setup_rng(dv, ci);
+
 	if (unit != 0) {
 	    return;
 	}
@@ -178,7 +181,6 @@ cpu_attach(device_t dv, cpuid_t id)
 	cpu_init_counter(ci);
 
 	/* These currently only check the BP. */
-	cpu_setup_rng(dv, ci);
 	cpu_setup_aes(dv, ci);
 	cpu_setup_chacha(dv, ci);
 
@@ -227,16 +229,25 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEXA76R3 & CPU_PARTMASK, "Cortex-A76", "Arm", "v8.2-A+" },
 	{ CPU_ID_CORTEXA76AER1 & CPU_PARTMASK, "Cortex-A76AE", "Arm", "v8.2-A+" },
 	{ CPU_ID_CORTEXA77R0 & CPU_PARTMASK, "Cortex-A77", "Arm", "v8.2-A+" },
+	{ CPU_ID_CORTEXA520R0 & CPU_PARTMASK, "Cortex-A520", "Arm", "v9.2-A" },
+	{ CPU_ID_CORTEXA710R2 & CPU_PARTMASK, "Cortex-A710", "Arm", "v9.0-A" },
+	{ CPU_ID_CORTEXA720R0 & CPU_PARTMASK, "Cortex-A720", "Arm", "v9.2-A" },
 	{ CPU_ID_NVIDIADENVER2 & CPU_PARTMASK, "Denver2", "NVIDIA", "v8-A" },
 	{ CPU_ID_EMAG8180 & CPU_PARTMASK, "eMAG", "Ampere", "v8-A" },
 	{ CPU_ID_NEOVERSEE1R1 & CPU_PARTMASK, "Neoverse E1", "Arm", "v8.2-A+" },
 	{ CPU_ID_NEOVERSEN1R3 & CPU_PARTMASK, "Neoverse N1", "Arm", "v8.2-A+" },
+	{ CPU_ID_NEOVERSEV1R1 & CPU_PARTMASK, "Neoverse V1", "Arm", "v8.4-A+" },
+	{ CPU_ID_NEOVERSEN2R0 & CPU_PARTMASK, "Neoverse N2", "Arm", "v9.0-A" },
 	{ CPU_ID_THUNDERXRX, "ThunderX", "Cavium", "v8-A" },
 	{ CPU_ID_THUNDERX81XXRX, "ThunderX CN81XX", "Cavium", "v8-A" },
 	{ CPU_ID_THUNDERX83XXRX, "ThunderX CN83XX", "Cavium", "v8-A" },
 	{ CPU_ID_THUNDERX2RX, "ThunderX2", "Marvell", "v8.1-A" },
 	{ CPU_ID_APPLE_M1_ICESTORM & CPU_PARTMASK, "M1 Icestorm", "Apple", "Apple Silicon" },
 	{ CPU_ID_APPLE_M1_FIRESTORM & CPU_PARTMASK, "M1 Firestorm", "Apple", "Apple Silicon" },
+	{ CPU_ID_AMPERE1 & CPU_PARTMASK, "Ampere-1", "Ampere", "v8.6-A+" },
+	{ CPU_ID_AMPERE1A & CPU_PARTMASK, "Ampere-1A", "Ampere", "v8.6-A+" },
+	{ CPU_ID_A64FX & CPU_PARTMASK, "A64FX", "Fujitsu", "v8.2-A+" },
+	{ CPU_ID_ORYON & CPU_PARTMASK, "Oryon", "Qualcomm", "v8.7-A+" },
 };
 
 static void
@@ -606,8 +617,9 @@ rndrrs_get(size_t nbytes, void *cookie)
 	const unsigned bpb = 4;
 	size_t nbits = nbytes*NBBY;
 	uint64_t x;
-	int error;
+	int error, bound;
 
+	bound = curlwp_bind();	/* bind to CPU for rndrrs_fail evcnt */
 	while (nbits) {
 		/*
 		 * x := random 64-bit sample
@@ -627,12 +639,16 @@ rndrrs_get(size_t nbytes, void *cookie)
 		    "mrs	%0, s3_3_c2_c4_1\n"
 		    "cset	%w1, eq"
 		    : "=r"(x), "=r"(error));
-		if (error)
+		if (error) {
+			DTRACE_PROBE(rndrrs_fail);
+			curcpu()->ci_rndrrs_fail.ev_count++;
 			break;
+		}
 		rnd_add_data_sync(&rndrrs_source, &x, sizeof(x),
 		    bpb*sizeof(x));
 		nbits -= MIN(nbits, bpb*sizeof(x));
 	}
+	curlwp_bindx(bound);
 
 	explicit_memset(&x, 0, sizeof x);
 }
@@ -653,7 +669,16 @@ cpu_setup_rng(device_t dv, struct cpu_info *ci)
 		return;
 	}
 
-	/* Attach it.  */
+	/* Attach event counter for RNDRRS failure.  */
+	evcnt_attach_dynamic(&ci->ci_rndrrs_fail, EVCNT_TYPE_MISC, NULL,
+	    ci->ci_cpuname, "rndrrs fail");
+
+	/*
+	 * On the primary CPU, attach random source -- this only
+	 * happens once globally.
+	 */
+	if (!CPU_IS_PRIMARY(ci))
+		return;
 	rndsource_setcb(&rndrrs_source, rndrrs_get, NULL);
 	rnd_attach_source(&rndrrs_source, "rndrrs", RND_TYPE_RNG,
 	    RND_FLAG_DEFAULT|RND_FLAG_HASCB);

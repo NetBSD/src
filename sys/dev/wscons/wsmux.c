@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.66 2022/03/28 12:38:58 riastradh Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.66.10.1 2025/08/02 05:57:08 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.66 2022/03/28 12:38:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.66.10.1 2025/08/02 05:57:08 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -241,16 +241,11 @@ wsmux_mux_open(struct wsevsrc *me, struct wseventvar *evar)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)me;
 
-#ifdef DIAGNOSTIC
-	if (sc->sc_base.me_evp != NULL) {
-		printf("wsmux_mux_open: busy\n");
+	if (sc->sc_base.me_evp != NULL)
 		return (EBUSY);
-	}
-	if (sc->sc_base.me_parent == NULL) {
-		printf("wsmux_mux_open: no parent\n");
-		return (EINVAL);
-	}
-#endif
+
+	KASSERTMSG(sc->sc_base.me_parent != NULL,
+		"wsmux_mux_open: no parent\n");
 
 	wsmux_do_open(sc, evar);
 
@@ -262,6 +257,7 @@ void
 wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
 {
 	struct wsevsrc *me;
+	int error;
 
 	sc->sc_base.me_evp = evar; /* remember event variable, mark as open */
 
@@ -270,25 +266,20 @@ wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
 		DPRINTF(("wsmuxopen: %s: m=%p dev=%s\n",
 			 device_xname(sc->sc_base.me_dv), me,
 			 device_xname(me->me_dv)));
-#ifdef DIAGNOSTIC
+
 		if (me->me_evp != NULL) {
-			printf("wsmuxopen: dev already in use\n");
+			DPRINTF(("wsmuxopen: dev %s already in use\n",
+				device_xname(me->me_dv)));
 			continue;
 		}
-		if (me->me_parent != sc) {
-			printf("wsmux_do_open: bad child=%p\n", me);
-			continue;
-		}
-		{
-		int error = wsevsrc_open(me, evar);
+
+		KASSERTMSG(me->me_parent == sc,
+			"wsmux_do_open: bad child=%p\n", me);
+
+		error = wsevsrc_open(me, evar);
 		if (error) {
 			DPRINTF(("wsmuxopen: open failed %d\n", error));
 		}
-		}
-#else
-		/* ignore errors, failing children will not be marked open */
-		(void)wsevsrc_open(me, evar);
-#endif
 	}
 }
 
@@ -322,8 +313,8 @@ wsmuxclose(dev_t dev, int flags, int mode,
 int
 wsmux_mux_close(struct wsevsrc *me)
 {
-	me->me_evp = NULL;
 	wsmux_do_close((struct wsmux_softc *)me);
+	me->me_evp = NULL;
 	return (0);
 }
 
@@ -341,12 +332,16 @@ wsmux_do_close(struct wsmux_softc *sc)
 		DPRINTF(("wsmuxclose %s: m=%p dev=%s\n",
 			 device_xname(sc->sc_base.me_dv), me,
 			 device_xname(me->me_dv)));
-#ifdef DIAGNOSTIC
-		if (me->me_parent != sc) {
-			printf("wsmuxclose: bad child=%p\n", me);
+
+		KASSERTMSG(me->me_parent == sc,
+			"wsmuxclose: bad child=%p\n", me);
+
+		if (me->me_evp != sc->sc_base.me_evp) {
+			DPRINTF(("wsmuxclose: dev %s opened elsewhere\n",
+				device_xname(me->me_dv)));
 			continue;
 		}
-#endif
+
 		(void)wsevsrc_close(me);
 		me->me_evp = NULL;
 	}
@@ -369,13 +364,7 @@ wsmuxread(dev_t dev, struct uio *uio, int flags)
 	}
 
 	evar = sc->sc_base.me_evp;
-	if (evar == NULL) {
-#ifdef DIAGNOSTIC
-		/* XXX can we get here? */
-		printf("wsmuxread: not open\n");
-#endif
-		return (EINVAL);
-	}
+	KASSERTMSG(evar != NULL, "wsmuxread: not open\n");
 
 	DPRINTFN(5,("wsmuxread: %s event read evar=%p\n",
 		    device_xname(sc->sc_base.me_dv), evar));
@@ -545,13 +534,10 @@ wsmux_do_ioctl(device_t dv, u_long cmd, void *data, int flag,
 	error = 0;
 	ok = 0;
 	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
-#ifdef DIAGNOSTIC
 		/* XXX check evp? */
-		if (me->me_parent != sc) {
-			printf("wsmux_do_ioctl: bad child %p\n", me);
-			continue;
-		}
-#endif
+		KASSERTMSG(me->me_parent == sc,
+			"wsmux_do_ioctl: bad child %p\n", me);
+
 		error = wsevsrc_ioctl(me, cmd, data, flag, lwp);
 		DPRINTF(("wsmux_do_ioctl: %s: me=%p dev=%s ==> %d\n",
 			 device_xname(sc->sc_base.me_dv), me,
@@ -584,12 +570,7 @@ wsmuxpoll(dev_t dev, int events, struct lwp *l)
 		return (0);
 	}
 
-	if (sc->sc_base.me_evp == NULL) {
-#ifdef DIAGNOSTIC
-		printf("wsmuxpoll: not open\n");
-#endif
-		return (POLLHUP);
-	}
+	KASSERTMSG(sc->sc_base.me_evp != NULL, "wsmuxpoll: not open\n");
 
 	return (wsevent_poll(sc->sc_base.me_evp, events, l));
 }
@@ -608,12 +589,7 @@ wsmuxkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	if (sc->sc_base.me_evp == NULL) {
-#ifdef DIAGNOSTIC
-		printf("wsmuxkqfilter: not open\n");
-#endif
-		return (1);
-	}
+	KASSERTMSG(sc->sc_base.me_evp == NULL, "wsmuxkqfilter: not open\n");
 
 	return (wsevent_kqfilter(sc->sc_base.me_evp, kn));
 }
@@ -679,12 +655,9 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 	DPRINTF(("wsmux_attach_sc: %s(%p): type=%d\n",
 		 device_xname(sc->sc_base.me_dv), sc, me->me_ops->type));
 
-#ifdef DIAGNOSTIC
-	if (me->me_parent != NULL) {
-		printf("wsmux_attach_sc: busy\n");
-		return (EBUSY);
-	}
-#endif
+	/* This was checked in wsmux_add_mux() */
+	KASSERT(me->me_parent == NULL);
+
 	me->me_parent = sc;
 	TAILQ_INSERT_TAIL(&sc->sc_cld, me, me_next);
 
@@ -746,13 +719,8 @@ wsmux_detach_sc(struct wsevsrc *me)
 	DPRINTF(("wsmux_detach_sc: %s(%p) parent=%p\n",
 		 device_xname(me->me_dv), me, sc));
 
-#ifdef DIAGNOSTIC
-	if (sc == NULL) {
-		printf("wsmux_detach_sc: %s has no parent\n",
-		       device_xname(me->me_dv));
-		return;
-	}
-#endif
+	KASSERTMSG(sc != NULL, "wsmux_detach_sc: %s has no parent\n",
+		device_xname(me->me_dv));
 
 #if NWSDISPLAY > 0
 	if (sc->sc_base.me_dispdv != NULL) {
@@ -761,7 +729,7 @@ wsmux_detach_sc(struct wsevsrc *me)
 			(void)wsevsrc_set_display(me, NULL);
 	} else
 #endif
-		if (me->me_evp != NULL) {
+	if (me->me_evp != NULL) {
 		DPRINTF(("wsmux_detach_sc: close\n"));
 		/* mux device is open, so close multiplexee */
 		(void)wsevsrc_close(me);
@@ -802,12 +770,10 @@ wsmux_do_displayioctl(device_t dv, u_long cmd, void *data, int flag,
 	ok = 0;
 	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
 		DPRINTF(("wsmux_displayioctl: me=%p\n", me));
-#ifdef DIAGNOSTIC
-		if (me->me_parent != sc) {
-			printf("wsmux_displayioctl: bad child %p\n", me);
-			continue;
-		}
-#endif
+
+		KASSERTMSG(me->me_parent == sc,
+			"wsmux_displayioctl: bad child %p\n", me);
+
 		if (me->me_ops->ddispioctl != NULL) {
 			error = wsevsrc_display_ioctl(me, cmd, data, flag, l);
 			DPRINTF(("wsmux_displayioctl: me=%p dev=%s ==> %d\n",
@@ -864,12 +830,9 @@ wsmux_set_display(struct wsmux_softc *sc, device_t displaydv)
 	ok = 0;
 	error = 0;
 	TAILQ_FOREACH(me, &sc->sc_cld,me_next) {
-#ifdef DIAGNOSTIC
-		if (me->me_parent != sc) {
-			printf("wsmux_set_display: bad child parent %p\n", me);
-			continue;
-		}
-#endif
+		KASSERTMSG(me->me_parent == sc,
+			"wsmux_set_display: bad child parent %p\n", me);
+
 		if (me->me_ops->dsetdisplay != NULL) {
 			error = wsevsrc_set_display(me, &nsc->sc_base);
 			DPRINTF(("wsmux_set_display: m=%p dev=%s error=%d\n",

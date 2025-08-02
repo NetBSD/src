@@ -1,0 +1,5 @@
+# TSIG wrong class
+# header: QUERY, additional=1
+00 00 00 00 00 00 00 00 00 00 00 01
+# class should be ANY (00 ff) not IN (00 01)
+00 00 fa 00 01 00 00 00 01 00 12 00 01 02 03 04 05 06 01 02 00 01 00 00 00 00 00 00 00

@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenetvar.h,v 1.4 2021/05/03 10:28:26 rin Exp $ */
+/* $NetBSD: bcmgenetvar.h,v 1.4.20.1 2025/08/02 05:56:40 perseant Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -67,6 +67,9 @@ struct genet_softc {
 	callout_t		sc_stat_ch;
 	kmutex_t		sc_lock;
 	kmutex_t		sc_txlock;
+
+	u_short			sc_if_flags;
+	bool			sc_txrunning;
 
 	struct genet_ring	sc_tx;
 	struct genet_ring	sc_rx;

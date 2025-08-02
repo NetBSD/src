@@ -27,8 +27,6 @@ __kernel_cosl
 __kernel_sinl
 __kernel_tanl
 __mulxc3
-_fini
-_init
 fabsl
 fma
 fmaf

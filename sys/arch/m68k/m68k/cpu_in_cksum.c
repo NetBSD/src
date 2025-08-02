@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.c,v 1.1 2010/09/19 01:35:43 tsutsui Exp $	*/
+/*	$NetBSD: cpu_in_cksum.c,v 1.1.102.1 2025/08/02 05:55:49 perseant Exp $	*/
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.c,v 1.1 2010/09/19 01:35:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.c,v 1.1.102.1 2025/08/02 05:55:49 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -102,7 +102,7 @@ cpu_in_cksum(struct mbuf *m, int len, int off, uint32_t initial_sum)
 		}
 		needs_swap = started_on_odd;
 
-		/* A possbile trailing odd byte is handled in oc_cksum() */
+		/* A possible trailing odd byte is handled in oc_cksum() */
 		if (mlen & 1)
 			started_on_odd = !started_on_odd;
 		/* 16 bit word alignment is enough on m68k */

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.75 2021/11/02 20:12:26 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.75.10.1 2025/08/02 05:57:55 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -215,17 +215,18 @@ struct	sigaction {
 #endif
 
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+    (_XOPEN_SOURCE - 0) >= 500 || (_POSIX_C_SOURCE - 0) >= 200809L || \
+    defined(_NETBSD_SOURCE)
 #define SA_ONSTACK	0x0001	/* take signal on signal stack */
 #define SA_RESTART	0x0002	/* restart system call on signal return */
 #define SA_RESETHAND	0x0004	/* reset to SIG_DFL when taking signal */
 #define SA_NODEFER	0x0010	/* don't mask the signal we're delivering */
-#endif /* _XOPEN_SOURCE_EXTENDED || XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
+#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200809L || _NETBSD_SOURCE */
 /* Only valid for SIGCHLD. */
 #define SA_NOCLDSTOP	0x0008	/* do not generate SIGCHLD on child stop */
-#define SA_NOCLDWAIT	0x0020	/* do not generate zombies on unwaited child */
 #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
+#define SA_NOCLDWAIT	0x0020	/* do not generate zombies on unwaited child */
 #define SA_SIGINFO	0x0040	/* take sa_sigaction handler */
 #endif /* (_POSIX_C_SOURCE - 0) >= 199309L || ... */
 #if defined(_NETBSD_SOURCE)
@@ -317,9 +318,22 @@ struct	sigevent {
  */
 __BEGIN_DECLS
 void	(*signal(int, void (*)(int)))(int);
-void	(*bsd_signal(int, void (*)(int)))(int);
 #if (_POSIX_C_SOURCE - 0) >= 200112L || defined(_NETBSD_SOURCE)
 int	sigqueue(pid_t, int, const union sigval);
+#endif
+
+#if defined(_NETBSD_SOURCE) ||					\
+    (!defined (_XOPEN_SOURCE) && defined(_XOPEN_VERSION) &&	\
+	(_XOPEN_VERSION - 0) >= 4) ||				\
+    (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE - 0) <= 600)
+/*
+ * bsd_signal() was added to the standards in POSIX issue 4 (SusV4)
+ * (release 2 of SusV4) and then removed in POSIX issue 7 (2008),
+ * after being marked obsolete in POSIX issue 6 (2001).  It was
+ * always an X/Open extension function (though was moved to the
+ * base POSIX spec in issue 5, but still as an extension).
+ */
+void	(*bsd_signal(int, void (*)(int)))(int);
 #endif
 #if defined(_NETBSD_SOURCE)
 int	sigqueueinfo(pid_t, const siginfo_t *);

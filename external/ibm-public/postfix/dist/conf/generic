@@ -193,13 +193,13 @@
 #        Other parameters of interest:
 # 
 #        inet_interfaces (all)
-#               The network interface addresses that this mail sys-
-#               tem receives mail on.
+#               The local network  interface  addresses  that  this
+#               mail system receives mail on.
 # 
 #        proxy_interfaces (empty)
-#               The network interface addresses that this mail sys-
-#               tem receives mail on by way of a proxy  or  network
-#               address translation unit.
+#               The  remote  network  interface addresses that this
+#               mail system receives mail on by way of a  proxy  or
+#               network address translation unit.
 # 
 #        mydestination  ($myhostname,  localhost.$mydomain,  local-
 #        host)

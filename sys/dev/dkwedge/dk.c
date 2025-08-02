@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.171 2023/05/22 15:00:17 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.171.6.1 2025/08/02 05:56:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.171 2023/05/22 15:00:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.171.6.1 2025/08/02 05:56:36 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -392,6 +392,7 @@ dk_set_geometry(struct dkwedge_softc *sc, struct disk *pdk)
 {
 	struct disk *dk = &sc->sc_dk;
 	struct disk_geom *dg = &dk->dk_geom;
+	uint32_t r, lspps;
 
 	KASSERT(mutex_owned(&pdk->dk_openlock));
 
@@ -405,6 +406,15 @@ dk_set_geometry(struct dkwedge_softc *sc, struct disk *pdk)
 	dg->dg_ntracks = 64;
 	dg->dg_ncylinders =
 	    dg->dg_secperunit / (dg->dg_nsectors * dg->dg_ntracks);
+
+	dg->dg_physsecsize = pdk->dk_geom.dg_physsecsize;
+	dg->dg_alignedsec = pdk->dk_geom.dg_alignedsec;
+	lspps = MAX(1u, dg->dg_physsecsize / dg->dg_secsize);
+	r = sc->sc_offset % lspps;
+	if (r > dg->dg_alignedsec)
+		dg->dg_alignedsec += lspps;
+	dg->dg_alignedsec -= r;
+	dg->dg_alignedsec %= lspps;
 
 	disk_set_info(sc->sc_dev, dk, NULL);
 }
@@ -1798,6 +1808,7 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		else
 			dsa->dsa_firstaligned = (dsa->dsa_firstaligned +
 			    dsa->dsa_alignment) - r;
+		dsa->dsa_firstaligned %= dsa->dsa_alignment;
 		break;
 	}
 	default:

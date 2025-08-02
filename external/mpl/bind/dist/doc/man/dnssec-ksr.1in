@@ -1,0 +1,210 @@
+.\" Man page generated from reStructuredText.
+.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.TH "DNSSEC-KSR" "1" "@RELEASE_DATE@" "@PACKAGE_VERSION@" "BIND 9"
+.SH NAME
+dnssec-ksr \- create signed key response (SKR) files for offline KSK setups
+.SH SYNOPSIS
+.sp
+\fBdnssec\-ksr\fP [\fB\-E\fP engine] [\fB\-e\fP date/offset] [\fB\-F\fP] [\fB\-f\fP file] [\fB\-h\fP] [\fB\-i\fP date/offset] [\fB\-K\fP directory] [\fB\-k\fP policy] [\fB\-l\fP file] [\fB\-o\fP] [\fB\-V\fP] [\fB\-v\fP level] {command} {zone}
+.SH DESCRIPTION
+.sp
+The \fBdnssec\-ksr\fP can be used to issue several commands that are needed
+to generate presigned RRsets for a zone where the private key file of the Key
+Signing Key (KSK) is typically offline. This requires Zone Signing Keys
+(ZSKs) to be pregenerated, and the DNSKEY, CDNSKEY, and CDS RRsets to be
+already signed in advance.
+.sp
+The latter is done by creating Key Signing Requests (KSRs) that can be imported
+to the environment where the KSK is available. Once there, this program can
+create Signed Key Responses (SKRs) that can be loaded by an authoritative DNS
+server.
+.SH OPTIONS
+.INDENT 0.0
+.TP
+.B \-E engine
+This option specifies the cryptographic hardware to use, when applicable.
+.sp
+When BIND 9 is built with OpenSSL, this needs to be set to the OpenSSL
+engine identifier that drives the cryptographic accelerator or
+hardware service module (usually \fBpkcs11\fP).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-e date/offset
+This option sets the end date for which keys or SKRs need to be generated
+(depending on the command).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-F
+This options turns on FIPS (US Federal Information Processing Standards)
+mode if the underlying crytographic library supports running in FIPS
+mode.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f
+This option sets the SKR file to be signed when issuing a \fBsign\fP command.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-h
+This option prints a short summary of the options and arguments to
+\fBdnssec\-ksr\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-i date/offset
+This option sets the start date for which keys or SKRs need to be generated
+(depending on the command).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-K directory
+This option sets the directory in which the key files are to be read or
+written (depending on the command).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-k policy
+This option sets the specific \fBdnssec\-policy\fP for which keys need to
+be generated, or signed.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-l file
+This option provides a configuration file that contains a \fBdnssec\-policy\fP
+statement (matching the policy set with \fI\%\-k\fP).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-o
+Normally when pregenerating keys, ZSKs are created. When this option is
+set, create KSKs instead.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-V
+This option prints version information.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-v level
+This option sets the debugging level. Level 1 is intended to be usefully
+verbose for general users; higher levels are intended for developers.
+.UNINDENT
+.sp
+\fBcommand\fP
+.INDENT 0.0
+.INDENT 3.5
+The KSR command to be executed. See below for the available commands.
+.UNINDENT
+.UNINDENT
+.sp
+\fBzone\fP
+.INDENT 0.0
+.INDENT 3.5
+The name of the zone for which the KSR command is being executed.
+.UNINDENT
+.UNINDENT
+.SH COMMANDS
+.INDENT 0.0
+.TP
+.B keygen
+Pregenerate a number of keys, given a DNSSEC policy and an interval. The
+number of generated keys depends on the interval and the key lifetime.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B request
+Create a Key Signing Request (KSR), given a DNSSEC policy and an interval.
+This will generate a file with a number of key bundles, where each bundle
+contains the currently published ZSKs (according to the timing metadata).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B sign
+Sign a Key Signing Request (KSR), given a DNSSEC policy and an interval,
+creating a Signed Key Response (SKR). This will add the corresponding DNSKEY,
+CDS, and CDNSKEY records for the KSK that is being used for signing.
+.UNINDENT
+.SH EXIT STATUS
+.sp
+The \fBdnssec\-ksr\fP command exits 0 on success, or non\-zero if an error
+occurred.
+.SH EXAMPLES
+.sp
+When you need to generate ZSKs for the zone \(dqexample.com\(dq for the next year,
+given a \fBdnssec\-policy\fP named \(dqmypolicy\(dq:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+dnssec\-ksr \-i now \-e +1y \-k mypolicy \-l named.conf keygen example.com
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Creating a KSR for the same zone and period can be done with:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+dnssec\-ksr \-i now \-e +1y \-k mypolicy \-l named.conf request example.com > ksr.txt
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Typically you would now transfer the KSR to the system that has access to
+the KSK.
+.sp
+Signing the KSR created above can be done with:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+dnssec\-ksr \-i now \-e +1y \-k kskpolicy \-l named.conf \-f ksr.txt sign example.com
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Make sure that the DNSSEC parameters in \fBkskpolicy\fP match those
+in \fBmypolicy\fP\&.
+.SH SEE ALSO
+.sp
+\fI\%dnssec\-keygen(8)\fP,
+\fI\%dnssec\-signzone(8)\fP,
+BIND 9 Administrator Reference Manual.
+.SH AUTHOR
+Internet Systems Consortium
+.SH COPYRIGHT
+2025, Internet Systems Consortium
+.\" Generated by docutils manpage writer.
+.

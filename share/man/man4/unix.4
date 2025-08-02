@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.30 2022/12/06 15:06:40 uwe Exp $
+.\"	$NetBSD: unix.4,v 1.30.4.1 2025/08/02 05:55:13 perseant Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -77,7 +77,7 @@ socket with
 causes a socket file to be created in the filesystem.
 This file is
 .Em not
-removed when the socket is closed\(em\c
+removed when the socket is closed;
 .Xr unlink 2
 must be used to remove the file.
 .Pp
@@ -131,6 +131,7 @@ transport protocols that support the
 and
 .Dv SOCK_DGRAM
 abstractions.
+.Pp
 .Dv SOCK_STREAM
 and
 .Dv SOCK_SEQPACKET
@@ -144,22 +145,15 @@ argument to
 .Xr sendmsg 2
 and
 .Xr recvmsg 2 .
+Supported file descriptors may be sent in control messages of type
+.Dv SCM_RIGHTS
+holding an array of
+.Vt int
+file descriptor objects; see
+.Xr cmsg 3
+for details on assembling and examining control messages.
 .Pp
-Any valid descriptor may be sent in a message.
-The file descriptor(s) to be passed are described using a
-.Vt struct cmsghdr
-that is defined in the include file
-.In sys/socket.h .
-The type of the message is
-.Dv SCM_RIGHTS ,
-and the data portion of the messages is an array of integers
-representing the file descriptors to be passed.
-The number of descriptors being passed is defined
-by the length field of the message;
-the length field is the sum of the size of the header
-plus the size of the array of file descriptors.
-.Pp
-The received descriptor is a
+A file descriptor received this way is a
 .Em duplicate
 of the sender's descriptor, as if it were created with a call to
 .Xr dup 2 .
@@ -174,16 +168,29 @@ when the destination socket is closed.
 .Pp
 A
 .Ux Ns -domain
-socket supports several
-.Dv SOL_LOCAL
-level options for use with
+socket supports the following socket options for use with
 .Xr setsockopt 2
 and
-.Xr getsockopt 2 :
-.Pp
-The
-.Dv LOCAL_CREDS
-option may be enabled on a
+.Xr getsockopt 2
+at the level
+.Dv SOL_LOCAL :
+.Bl -tag -width 6n
+.It Dv LOCAL_CONNWAIT Pq Vt int
+May be enabled with
+.Xr setsockopt 2
+on a
+.Dv SOCK_SEQPACKET
+or
+.Dv SOCK_STREAM
+socket.
+If enabled,
+.Xr connect 2
+will block until a peer is waiting in
+.Xr accept 2 .
+.It Dv LOCAL_CREDS Pq Vt int
+May be enabled with
+.Xr setsockopt 2
+on a
 .Dv SOCK_DGRAM ,
 .Dv SOCK_SEQPACKET ,
 or a
@@ -206,41 +213,17 @@ length
 structure, defined in
 .In sys/socket.h
 as follows:
-.Bd -literal -offset indent
+.Bd -literal
 struct sockcred {
-        pid_t   sc_pid;         /* process id */
-        uid_t   sc_uid;         /* real user id */
-        uid_t   sc_euid;        /* effective user id */
-        gid_t   sc_gid;         /* real group id */
-        gid_t   sc_egid;        /* effective group id */
-        int     sc_ngroups;     /* number of supplemental groups */
-        gid_t   sc_groups[1];   /* variable length */
+        pid_t   sc_pid;       /* process id */
+        uid_t   sc_uid;       /* real user id */
+        uid_t   sc_euid;      /* effective user id */
+        gid_t   sc_gid;       /* real group id */
+        gid_t   sc_egid;      /* effective group id */
+        int     sc_ngroups;   /* number of supplemental groups */
+        gid_t   sc_groups[1]; /* variable length */
 };
 .Ed
-.Pp
-The
-.Dv LOCAL_PEEREID
-option may be used with
-.Xr getsockopt 2
-to get the PID and effective user and group IDs of a
-.Dv SOCK_STREAM
-or
-.Dv SOCK_SEQPACKET
-peer when it did
-.Xr connect 2
-or
-.Xr bind 2 .
-The returned structure is
-.Bd -literal -offset indent
-struct unpcbid {
-        pid_t unp_pid;          /* process id */
-        uid_t unp_euid;         /* effective user id */
-        gid_t unp_egid;         /* effective group id */
-};
-.Ed
-.Pp
-as defined in
-.In sys/un.h .
 .Pp
 The
 .Fn SOCKCREDSIZE
@@ -255,6 +238,29 @@ cmsg_len = CMSG_LEN(SOCKCREDSIZE(ngroups))
 cmsg_level = SOL_SOCKET
 cmsg_type = SCM_CREDS
 .Ed
+.It Dv LOCAL_PEEREID Pq Vt "struct unpcbid"
+May be queried with
+.Xr getsockopt 2
+to get the PID and effective user and group IDs of a
+.Dv SOCK_STREAM
+or
+.Dv SOCK_SEQPACKET
+peer when it did
+.Xr connect 2
+or
+.Xr bind 2 .
+The returned structure is
+.Bd -literal
+struct unpcbid {
+        pid_t unp_pid;        /* process id */
+        uid_t unp_euid;       /* effective user id */
+        gid_t unp_egid;       /* effective group id */
+};
+.Ed
+.Pp
+as defined in
+.In sys/un.h .
+.El
 .Sh EXAMPLES
 The following code fragment shows how to bind a socket to pathname:
 .Bd -literal -offset indent
@@ -275,7 +281,8 @@ if (ret != 0)
 .Sh COMPATIBILITY
 The
 .Fa sun_len
-field exists only in system derived from 4.4BSD.
+field exists only in system derived from
+.Bx 4.4 .
 On systems which don't have the
 .Fn SUN_LEN
 macro, the following definition is recommended:

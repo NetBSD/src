@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.22 2018/03/21 18:27:27 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.22.38.1 2025/08/02 05:56:13 perseant Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -305,5 +305,14 @@ rastrategy(void *f, int func, daddr_t dblk,
 	}
 
 	*rsize = size;
+	return 0;
+}
+
+int
+raclose(struct open_file *f)
+{
+	/* Reset controller by starting a soft initialization */
+	*ra_ip = 0;
+
 	return 0;
 }

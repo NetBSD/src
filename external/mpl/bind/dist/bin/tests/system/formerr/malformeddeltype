@@ -1,0 +1,5 @@
+# UPDATE malformed 'delete type' update change (non empty data)
+# header: UPDATE authority=1
+00 00 28 00 00 00 00 00 00 01 00 00
+# ./A/ANY TTL=0 length=1 data=00
+00 00 01 00 ff 00 00 00 00 00 01 00

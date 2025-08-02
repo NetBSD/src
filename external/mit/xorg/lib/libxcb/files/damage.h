@@ -191,11 +191,16 @@ xcb_generic_iterator_t
 xcb_damage_damage_end (xcb_damage_damage_iterator_t i);
 
 /**
+ * @brief Negotiate the version of the DAMAGE extension
  *
  * @param c The connection
+ * @param client_major_version The major version supported by the client.
+ * @param client_minor_version The minor version supported by the client.
  * @return A cookie
  *
- * Delivers a request to the X server.
+ * This negotiates the version of the DAMAGE extension.  It must precede any other
+ * request using the DAMAGE extension.  Failure to do so will cause a BadRequest
+ * error for those requests.
  *
  */
 xcb_damage_query_version_cookie_t
@@ -204,11 +209,16 @@ xcb_damage_query_version (xcb_connection_t *c,
                           uint32_t          client_minor_version);
 
 /**
+ * @brief Negotiate the version of the DAMAGE extension
  *
  * @param c The connection
+ * @param client_major_version The major version supported by the client.
+ * @param client_minor_version The minor version supported by the client.
  * @return A cookie
  *
- * Delivers a request to the X server.
+ * This negotiates the version of the DAMAGE extension.  It must precede any other
+ * request using the DAMAGE extension.  Failure to do so will cause a BadRequest
+ * error for those requests.
  *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
@@ -239,11 +249,40 @@ xcb_damage_query_version_reply (xcb_connection_t                   *c,
                                 xcb_generic_error_t               **e);
 
 /**
+ * @brief Creates a Damage object to monitor changes to a drawable.
  *
  * @param c The connection
+ * @param damage The ID with which you will refer to the new Damage object, created by
+ * `xcb_generate_id`.
+ * @param drawable The ID of the drawable to be monitored.
+ * @param level A bitmask of #xcb_damage_report_level_t values.
+ * @param level The level of detail to be provided in Damage events.
  * @return A cookie
  *
- * Delivers a request to the X server.
+ * This creates a Damage object to monitor changes to a drawable, and specifies
+ * the level of detail to be reported for changes.
+ * 
+ * We call changes made to pixel contents of windows and pixmaps 'damage'
+ * throughout this extension.
+ * 
+ * Damage accumulates as drawing occurs in the drawable.  Each drawing operation
+ * 'damages' one or more rectangular areas within the drawable.  The rectangles
+ * are guaranteed to include the set of pixels modified by each operation, but
+ * may include significantly more than just those pixels.  The desire is for
+ * the damage to strike a balance between the number of rectangles reported and
+ * the extraneous area included.  A reasonable goal is for each primitive
+ * object drawn (line, string, rectangle) to be represented as a single
+ * rectangle and for the damage area of the operation to be the union of these
+ * rectangles.
+ * 
+ * The DAMAGE extension allows applications to either receive the raw
+ * rectangles as a stream of events, or to have them partially processed within
+ * the X server to reduce the amount of data transmitted as well as reduce the
+ * processing latency once the repaint operation has started.
+ * 
+ * The Damage object holds any accumulated damage region and reflects the
+ * relationship between the drawable selected for damage notification and the
+ * drawable for which damage is tracked.
  *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
@@ -256,11 +295,40 @@ xcb_damage_create_checked (xcb_connection_t    *c,
                            uint8_t              level);
 
 /**
+ * @brief Creates a Damage object to monitor changes to a drawable.
  *
  * @param c The connection
+ * @param damage The ID with which you will refer to the new Damage object, created by
+ * `xcb_generate_id`.
+ * @param drawable The ID of the drawable to be monitored.
+ * @param level A bitmask of #xcb_damage_report_level_t values.
+ * @param level The level of detail to be provided in Damage events.
  * @return A cookie
  *
- * Delivers a request to the X server.
+ * This creates a Damage object to monitor changes to a drawable, and specifies
+ * the level of detail to be reported for changes.
+ * 
+ * We call changes made to pixel contents of windows and pixmaps 'damage'
+ * throughout this extension.
+ * 
+ * Damage accumulates as drawing occurs in the drawable.  Each drawing operation
+ * 'damages' one or more rectangular areas within the drawable.  The rectangles
+ * are guaranteed to include the set of pixels modified by each operation, but
+ * may include significantly more than just those pixels.  The desire is for
+ * the damage to strike a balance between the number of rectangles reported and
+ * the extraneous area included.  A reasonable goal is for each primitive
+ * object drawn (line, string, rectangle) to be represented as a single
+ * rectangle and for the damage area of the operation to be the union of these
+ * rectangles.
+ * 
+ * The DAMAGE extension allows applications to either receive the raw
+ * rectangles as a stream of events, or to have them partially processed within
+ * the X server to reduce the amount of data transmitted as well as reduce the
+ * processing latency once the repaint operation has started.
+ * 
+ * The Damage object holds any accumulated damage region and reflects the
+ * relationship between the drawable selected for damage notification and the
+ * drawable for which damage is tracked.
  *
  */
 xcb_void_cookie_t
@@ -270,11 +338,14 @@ xcb_damage_create (xcb_connection_t    *c,
                    uint8_t              level);
 
 /**
+ * @brief Destroys a previously created Damage object.
  *
  * @param c The connection
+ * @param damage The ID you provided to `xcb_create_damage`.
  * @return A cookie
  *
- * Delivers a request to the X server.
+ * This destroys a Damage object and requests the X server stop reporting
+ * the changes it was tracking.
  *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
@@ -285,11 +356,14 @@ xcb_damage_destroy_checked (xcb_connection_t    *c,
                             xcb_damage_damage_t  damage);
 
 /**
+ * @brief Destroys a previously created Damage object.
  *
  * @param c The connection
+ * @param damage The ID you provided to `xcb_create_damage`.
  * @return A cookie
  *
- * Delivers a request to the X server.
+ * This destroys a Damage object and requests the X server stop reporting
+ * the changes it was tracking.
  *
  */
 xcb_void_cookie_t
@@ -297,11 +371,15 @@ xcb_damage_destroy (xcb_connection_t    *c,
                     xcb_damage_damage_t  damage);
 
 /**
+ * @brief Remove regions from a previously created Damage object.
  *
  * @param c The connection
+ * @param damage The ID you provided to `xcb_create_damage`.
  * @return A cookie
  *
- * Delivers a request to the X server.
+ * This updates the regions of damage recorded in a a Damage object.
+ * See https://www.x.org/releases/current/doc/damageproto/damageproto.txt
+ * for details.
  *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
@@ -314,11 +392,15 @@ xcb_damage_subtract_checked (xcb_connection_t    *c,
                              xcb_xfixes_region_t  parts);
 
 /**
+ * @brief Remove regions from a previously created Damage object.
  *
  * @param c The connection
+ * @param damage The ID you provided to `xcb_create_damage`.
  * @return A cookie
  *
- * Delivers a request to the X server.
+ * This updates the regions of damage recorded in a a Damage object.
+ * See https://www.x.org/releases/current/doc/damageproto/damageproto.txt
+ * for details.
  *
  */
 xcb_void_cookie_t
@@ -328,11 +410,14 @@ xcb_damage_subtract (xcb_connection_t    *c,
                      xcb_xfixes_region_t  parts);
 
 /**
+ * @brief Add a region to a previously created Damage object.
  *
  * @param c The connection
  * @return A cookie
  *
- * Delivers a request to the X server.
+ * This updates the regions of damage recorded in a a Damage object.
+ * See https://www.x.org/releases/current/doc/damageproto/damageproto.txt
+ * for details.
  *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
@@ -344,11 +429,14 @@ xcb_damage_add_checked (xcb_connection_t    *c,
                         xcb_xfixes_region_t  region);
 
 /**
+ * @brief Add a region to a previously created Damage object.
  *
  * @param c The connection
  * @return A cookie
  *
- * Delivers a request to the X server.
+ * This updates the regions of damage recorded in a a Damage object.
+ * See https://www.x.org/releases/current/doc/damageproto/damageproto.txt
+ * for details.
  *
  */
 xcb_void_cookie_t

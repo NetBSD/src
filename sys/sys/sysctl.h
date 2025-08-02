@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.239 2024/01/20 13:15:46 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.239.2.1 2025/08/02 05:57:55 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -275,6 +275,7 @@ struct ctlname {
 #define	KERN_BOOTTIME		83	/* struct: time kernel was booted */
 #define	KERN_EVCNT		84	/* struct: evcnts */
 #define	KERN_SOFIXEDBUF		85	/* bool: fixed socket buffer sizes */
+#define	KERN_ENTROPY		86	/* node: entropy(9) subsystem */
 
 /*
  *  KERN_CLOCKRATE structure
@@ -780,6 +781,12 @@ typedef int	(*hashstat_func_t)(struct hashstat_sysctl *, bool);
 void		hashstat_register(const char *, hashstat_func_t);
 
 /*
+ * kern.entropy.* variables
+ */
+
+#define	KERN_ENTROPY_EPOCH	1	/* int: PRNG reseed epoch */
+
+/*
  * CTL_VM identifiers in <uvm/uvm_param.h>
  */
 
@@ -1154,13 +1161,13 @@ __sysctl_verify_##ctl_type##_arg(c_type *arg) \
     return arg; \
 }
 
-VERIFY_FN(CTLTYPE_NODE, struct sysctlnode);
-VERIFY_FN(CTLTYPE_INT, int);
-VERIFY_FN(CTLTYPE_STRING, char);
-VERIFY_FN(CTLTYPE_QUAD, int64_t);
-VERIFY_FN(CTLTYPE_STRUCT, void);
-VERIFY_FN(CTLTYPE_BOOL, bool);
-VERIFY_FN(CTLTYPE_LONG, long);
+VERIFY_FN(CTLTYPE_NODE, struct sysctlnode)
+VERIFY_FN(CTLTYPE_INT, int)
+VERIFY_FN(CTLTYPE_STRING, char)
+VERIFY_FN(CTLTYPE_QUAD, int64_t)
+VERIFY_FN(CTLTYPE_STRUCT, void)
+VERIFY_FN(CTLTYPE_BOOL, bool)
+VERIFY_FN(CTLTYPE_LONG, long)
 #undef VERIFY_FN
 
 #define	sysctl_createv(lg, cfl, rn, cn, fl, type, nm, desc, fn, qv, newp, ...) \

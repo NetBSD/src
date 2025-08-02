@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.6 2024/01/08 05:09:41 thorpej Exp $        */      
+/*      $NetBSD: bootinfo.c,v 1.6.2.1 2025/08/02 05:56:15 perseant Exp $        */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.6 2024/01/08 05:09:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.6.2.1 2025/08/02 05:56:15 perseant Exp $");
 
 #include "opt_md.h"
 
@@ -69,6 +69,7 @@ static bool		bootinfo_console_addr_valid;
 static uint32_t		bootinfo_initrd_start;
 static uint32_t		bootinfo_initrd_size;
 
+#if NGFTTY > 0
 static bool
 bootinfo_set_console(paddr_t pa)
 {
@@ -79,6 +80,7 @@ bootinfo_set_console(paddr_t pa)
 	}
 	return false;
 }
+#endif
 
 static inline struct bi_record *
 bootinfo_next(struct bi_record *bi)
@@ -409,7 +411,7 @@ bootinfo_setup_initrd(void)
 /*
  * bootinfo_setup_rndseed --
  *	Check for a BI_RNG_SEED record and, if found, use it to
- *	seed the kenrnel entropy pool.
+ *	seed the kernel entropy pool.
  */
 void
 bootinfo_setup_rndseed(void)

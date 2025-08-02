@@ -1,4 +1,4 @@
-/*	$NetBSD: own_inet_addr.c,v 1.1.1.2 2013/01/02 18:58:59 tron Exp $	*/
+/*	$NetBSD: own_inet_addr.c,v 1.1.1.2.42.1 2025/08/02 05:50:07 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -193,7 +193,7 @@ static void own_inet_addr_init(INET_ADDR_LIST *addr_list,
 
 /* own_inet_addr - is this my own internet address */
 
-int     own_inet_addr(struct sockaddr * addr)
+int     own_inet_addr(struct sockaddr *addr)
 {
     int     i;
 
@@ -255,7 +255,7 @@ static void proxy_inet_addr_init(INET_ADDR_LIST *addr_list)
 
 /* proxy_inet_addr - is this my proxy internet address */
 
-int     proxy_inet_addr(struct sockaddr * addr)
+int     proxy_inet_addr(struct sockaddr *addr)
 {
     int     i;
 

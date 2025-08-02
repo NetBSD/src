@@ -1,4 +1,4 @@
-/*	$NetBSD: ecs.h,v 1.9 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: ecs.h,v 1.9.2.1 2025/08/02 05:53:34 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,7 +37,7 @@
 
 /*
  * Any updates to this structure should also be applied in
- * contrib/modules/dlz/dlz_minmal.h.
+ * https://gitlab.isc.org/isc-projects/dlz-modules/-/raw/main/modules/include/dlz_minimal.h
  */
 struct dns_ecs {
 	isc_netaddr_t addr;

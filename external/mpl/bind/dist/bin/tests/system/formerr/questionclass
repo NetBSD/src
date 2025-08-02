@@ -1,0 +1,7 @@
+# two questions of different classes
+# header: QUERY, questions=2
+00 00 00 00 00 02 00 00 00 00 00 00
+# ./A/IN
+00 00 01 00 01
+# ./A/CLASS2
+00 00 01 00 02

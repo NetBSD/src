@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.116 2024/06/23 17:27:29 jakllsch Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.116.2.1 2025/08/02 05:57:00 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.116 2024/06/23 17:27:29 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.116.2.1 2025/08/02 05:57:00 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,6 +254,31 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x0008, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x0010, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x0018, COM_FREQ },
+	    },
+	},
+	{ "Brainboxes IX-100",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_IX100, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes IX-200",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_IX200, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes IX-400",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_IX400, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
 	    },
 	},
 	{ "Brainboxes UC-101",
@@ -652,6 +677,227 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x0008, COM_FREQ },
 	    },
 	},
+	{ "Brainboxes PX-101",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX101, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0000, COM_FREQ },
+	    },
+	},
+	{ "Brainboxes PX-101",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX101R3, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-246",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX246, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0000, COM_FREQ },
+	    },
+	},
+	{ "Brainboxes PX-246",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX246R3, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-257",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX257, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0000, COM_FREQ },
+	    },
+	},
+	{ "Brainboxes PX-257",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX257R3, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-260",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX260, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-279",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX279, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x0000, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x0008, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x0010, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x0018, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x0020, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x0028, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x0030, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x0038, COM_FREQ },
+	    },
+	},
+	{ "Brainboxes PX-310",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX310, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-313",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX313, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-320",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX320, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-346",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX346, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-368",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX368, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-420",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX420, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0000, COM_FREQ },
+	    },
+	},
+	{ "Brainboxes PX-420",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX420R3, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-431",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX431, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0000, COM_FREQ },
+	    },
+	},
+	{ "Brainboxes PX-431",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX431R3, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-475",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX475, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-803",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX803, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-820",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX820, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0000, COM_FREQ },
+	    },
+	},
+	{ "Brainboxes PX-820",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX820R3, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-831",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX831, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0000, COM_FREQ },
+	    },
+	},
+	{ "Brainboxes PX-831",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX831R3, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-846",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX846, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0000, COM_FREQ },
+	    },
+	},
+	{ "Brainboxes PX-846",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX846R3, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+	    },
+	},
+	{ "Brainboxes PX-857",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX857, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0000, COM_FREQ },
+	    },
+	},
+	{ "Brainboxes PX-857",
+	    { PCI_VENDOR_BRAINBOXES, PCI_PRODUCT_BRAINBOXES_PX857R3, 0, 0 },
+	    { 0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+	    },
+	},
 
 	/*
 	 * Comtrol
@@ -884,6 +1130,20 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0400, 125000000 },
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0800, 125000000 },
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0c00, 125000000 },
+	    },
+	},
+	{   "EXAR XR17D358",
+	    {	PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17V358, 0,      0       },
+	    {   0xffff, 0xffff, 0,      0       },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0000, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0400, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0800, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x0c00, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1800, 125000000 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1c00, 125000000 },
 	    },
 	},
 
@@ -1606,19 +1866,6 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-	/* Oxford Semiconductor OXPCIe954 PCIe UARTs */
-	{   "Oxford Semiconductor OXPCIe954 UART",
-	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE954,
-		0, 0 },
-	    {	0xffff,	0xffff,	0,	0	},
-	    {
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
-	    },
-	},
-
 	/* Oxford Semiconductor OXmPCI952 PCI UARTs */
 	{   "Oxford Semiconductor OXmPCI952 UARTs",
 	    {	PCI_VENDOR_OXFORDSEMI,	PCI_PRODUCT_OXFORDSEMI_EXSYS_EX41092,
@@ -1830,7 +2077,7 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-	/* Oxford Semiconductor OX16PCI958 UARTs (wildcard)*/
+	/* Oxford Semiconductor OX16PCI958 UARTs (wildcard) */
 	{   "Oxford Semiconductor OX16PCI958 UARTs",
 	    {	PCI_VENDOR_OXFORDSEMI,	PCI_PRODUCT_OXFORDSEMI_OX16PCI958,
 		0, 0 },
@@ -1844,6 +2091,81 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x28, COM_FREQ * 10},
 		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x30, COM_FREQ * 10},
 		{ PUC_PORT_TYPE_COM, PCI_BAR2, 0x38, COM_FREQ * 10},
+	    },
+	},
+
+	/* Oxford Semiconductor OXPCIe952 PCIe 1 native S */
+	{   "Oxford Semiconductor OXPCIe952 UART",
+	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952SN1,
+		0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+	    },
+	},
+
+	/* Oxford Semiconductor OXPCIe952 PCIe 2 native S */
+	{   "Oxford Semiconductor OXPCIe952 UART",
+	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952SN2,
+		0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+	    },
+	},
+	
+	/* Oxford Semiconductor OXPCIe952 PCIe 2 native S */
+	{   "Oxford Semiconductor OXPCIe952 UART",
+	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE952SN2_2,
+		0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+	    },
+	},
+
+	/* Oxford Semiconductor OXPCIe954 PCIe 4 native S */
+	{   "Oxford Semiconductor OXPCIe954 UART",
+	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE954,
+		0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
+	    },
+	},
+
+	/* Oxford Semiconductor OXPCIe954 PCIe 4 native S */
+	{   "Oxford Semiconductor OXPCIe954 UART",
+	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE954SN4,
+		0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
+	    },
+	},
+	
+	/* Oxford Semiconductor OXPCIe958 PCIe 8 native S */
+	{   "Oxford Semiconductor OXPCIe958 UART",
+	    {	PCI_VENDOR_OXFORDSEMI, PCI_PRODUCT_OXFORDSEMI_OXPCIE958SN8,
+		0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1000, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1200, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1400, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1600, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1800, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1a00, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1c00, COM_FREQ * 0x22 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x1e00, COM_FREQ * 0x22 },
 	    },
 	},
 

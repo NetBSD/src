@@ -870,6 +870,32 @@ int main (void) {
      ])
 fi
 
+dnl Timeout support in the testsuite.
+dnl If the --enable-tests-timeout option has not been provided, let's
+dnl enable timeout support only in -dev versions and if we detect that
+dnl the needed POSIX features seem to be available (this is not much
+dnl useful for releases, where an infinite loop is very unlikely).
+dnl When supported, default is 0 (no timeout).
+if test -z "$enable_tests_timeout" && test -n "$dev_version"; then
+AC_MSG_CHECKING(if timeout can be supported)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/resource.h>
+]], [[
+  struct rlimit rlim[1];
+  if (getrlimit (RLIMIT_CPU, rlim))
+    return 1;
+  rlim->rlim_cur = 1;
+  if (setrlimit (RLIMIT_CPU, rlim))
+    return 1;
+]])], [
+  AC_MSG_RESULT(yes)
+  enable_tests_timeout=yes
+],[AC_MSG_RESULT(no)])
+fi
+if test "$enable_tests_timeout" = yes; then
+  AC_DEFINE([MPFR_TESTS_TIMEOUT], 0, [timeout limit])
+fi
+
 ])
 dnl end of MPFR_CONFIGS
 
@@ -892,7 +918,7 @@ AC_CACHE_CHECK([for GMP library vs header correctness], mpfr_cv_check_gmp, [
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 #include <stdio.h>
 #include <limits.h>
-#include <gmp.h>
+#include "gmp.h"
 ]], [[
   fprintf (stderr, "GMP_NAIL_BITS     = %d\n", (int) GMP_NAIL_BITS);
   fprintf (stderr, "GMP_NUMB_BITS     = %d\n", (int) GMP_NUMB_BITS);
@@ -953,7 +979,7 @@ AC_REQUIRE([MPFR_CONFIGS])dnl
 AC_CACHE_CHECK([for double-to-integer conversion bug], mpfr_cv_dbl_int_bug, [
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 #include <stdio.h>
-#include <gmp.h>
+#include "gmp.h"
 ]], [[
   double d;
   mp_limb_t u;
@@ -1005,7 +1031,7 @@ dnl undefined function-like macros (which otherwise may be regarded
 dnl as valid function calls with AC_COMPILE_IFELSE since prototypes
 dnl are not required by the C standard).
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#include <gmp.h>
+#include "gmp.h"
 /* Make sure that a static assertion is used (not MPFR_ASSERTN). */
 #undef MPFR_USE_STATIC_ASSERT
 #define MPFR_USE_STATIC_ASSERT 1
@@ -1037,7 +1063,7 @@ dnl undefined function-like macros (which otherwise may be regarded
 dnl as valid function calls with AC_COMPILE_IFELSE since prototypes
 dnl are not required by the C standard).
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#include <gmp.h>
+#include "gmp.h"
 /* Make sure that a static assertion is used (not MPFR_ASSERTN). */
 #undef MPFR_USE_STATIC_ASSERT
 #define MPFR_USE_STATIC_ASSERT 1
@@ -1587,7 +1613,7 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 #include <stdio.h>
 #include <string.h>
 $3
-#include <gmp.h>
+#include "gmp.h"
 ]], [[
   char s[256];
   $2 a = 17;
@@ -1635,17 +1661,17 @@ if test "$ac_cv_type_intmax_t" = yes; then
 fi
 
 MPFR_FUNC_GMP_PRINTF_SPEC([hhd], [char], [
-#include <gmp.h>
+#include "gmp.h"
          ],,
          [AC_DEFINE([NPRINTF_HH], 1, [printf/gmp_printf cannot use `hh' length modifier])])
 
 MPFR_FUNC_GMP_PRINTF_SPEC([lld], [long long int], [
-#include <gmp.h>
+#include "gmp.h"
          ],,
          [AC_DEFINE([NPRINTF_LL], 1, [printf/gmp_printf cannot read long long int])])
 
 MPFR_FUNC_GMP_PRINTF_SPEC([Lf], [long double], [
-#include <gmp.h>
+#include "gmp.h"
          ],
          [AC_DEFINE([PRINTF_L], 1, [printf/gmp_printf can read long double])],
          [AC_DEFINE([NPRINTF_L], 1, [printf/gmp_printf cannot read long double])])
@@ -1656,7 +1682,7 @@ MPFR_FUNC_GMP_PRINTF_SPEC([td], [ptrdiff_t], [
 #else
 #include <stddef.h>
 #endif
-#include <gmp.h>
+#include "gmp.h"
     ],
     [AC_DEFINE([PRINTF_T], 1, [printf/gmp_printf can read ptrdiff_t])],
     [AC_DEFINE([NPRINTF_T], 1, [printf/gmp_printf cannot read ptrdiff_t])])
@@ -1673,7 +1699,7 @@ AC_DEFUN([MPFR_CHECK_PRINTF_GROUPFLAG], [
 AC_MSG_CHECKING(if gmp_printf supports the ' group flag)
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 #include <string.h>
-#include <gmp.h>
+#include "gmp.h"
 ]], [[
   char s[256];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.59 2021/09/19 23:51:37 thorpej Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.59.10.1 2025/08/02 05:56:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.59 2021/09/19 23:51:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.59.10.1 2025/08/02 05:56:25 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -209,7 +209,7 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 	if (error == EPASSTHROUGH) {
 		/*
 		 * linux returns EINVAL or ENOTTY for not supported ioctls.
-		 */ 
+		 */
 		error = EINVAL;
 	}
 

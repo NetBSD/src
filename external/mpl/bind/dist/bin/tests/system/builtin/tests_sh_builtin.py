@@ -9,6 +9,15 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.*",
+        "rndc.status.ns*",
+    ]
+)
+
 
 def test_builtin(run_tests_sh):
     run_tests_sh()

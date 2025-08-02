@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.7 2015/02/14 05:58:02 tsutsui Exp $	*/
+/*	$NetBSD: scsi.c,v 1.7.54.1 2025/08/02 05:55:48 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -137,7 +137,7 @@ scsi(int argc, char *argv[])
 			printf("Version:\t0x%x\n",	inquirybuf.version);
 			printf("RDF:\t0x%x\n",		inquirybuf.rsvd);
 
-			printf("Vender ID:\t");
+			printf("Vendor ID:\t");
 			for (i = 0; i < 8; i++)
 				printf("%c", inquirybuf.vendor_id[i]);
 			printf("\n");

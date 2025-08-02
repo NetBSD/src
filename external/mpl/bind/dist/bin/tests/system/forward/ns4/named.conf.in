@@ -11,11 +11,14 @@
  * information regarding copyright ownership.
  */
 
+include "named-tls.conf";
+
 options {
 	query-source address 10.53.0.4;
 	notify-source 10.53.0.4;
 	transfer-source 10.53.0.4;
 	port @PORT@;
+	include "options-tls.conf";
 	pid-file "named.pid";
 	listen-on { 10.53.0.4; };
 	listen-on-v6 { none; };
@@ -24,29 +27,16 @@ options {
 	minimal-responses yes;
 };
 
+trust-anchors { };
+
+statistics-channels { inet 10.53.0.4 port @EXTRAPORT1@ allow { localhost; }; };
+
 zone "." {
 	type hint;
 	file "root.db";
 };
 
-zone "example1." {
-	type forward;
-	forward first;
-	forwarders { 10.53.0.2; };
-};
-
-zone "example3." {
-	type forward;
-	forwarders { 10.53.0.2; };
-};
-
 zone "example5." {
-	type forward;
-	forward only;
-	forwarders { 10.53.0.2; };
-};
-
-zone "1.0.10.in-addr.arpa" {
 	type forward;
 	forward only;
 	forwarders { 10.53.0.2; };

@@ -1,4 +1,4 @@
-/*	$NetBSD: inch.c,v 1.14 2019/06/09 07:40:14 blymn Exp $	*/
+/*	$NetBSD: inch.c,v 1.14.12.1 2025/08/02 05:54:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inch.c,v 1.14 2019/06/09 07:40:14 blymn Exp $");
+__RCSID("$NetBSD: inch.c,v 1.14.12.1 2025/08/02 05:54:46 perseant Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -86,6 +86,9 @@ winch(WINDOW *win)
 {
 	chtype	ch;
 	attr_t	attr;
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	ch = (chtype) ((win)->alines[(win)->cury]->line[(win)->curx].ch &
 	    __CHARTEXT);

@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_alloca.c,v 1.2 2000/06/14 06:49:05 cgd Exp $ */
+/* $NetBSD: Lint_alloca.c,v 1.2.116.1 2025/08/02 05:54:36 perseant Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,8 +9,7 @@
 
 /*ARGSUSED*/
 void *
-alloca(size)
-	size_t size;
+alloca(size_t size)
 {
-	return (0);
+	return NULL;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: executor.c,v 1.2 2019/12/14 15:36:08 ad Exp $	*/
+/*	$NetBSD: executor.c,v 1.2.32.1 2025/08/02 05:57:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: executor.c,v 1.2 2019/12/14 15:36:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: executor.c,v 1.2.32.1 2025/08/02 05:57:46 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -68,7 +68,7 @@ runonce_example(void) {
 /*
  * callout_example : This function should get executed every second.
  * It calls runonce_example each time.
- * It prints the seconds elasped after the module was loaded.
+ * It prints the seconds elapsed after the module was loaded.
  * It reschedules the callout to the next second using callout_schedule
  */
 

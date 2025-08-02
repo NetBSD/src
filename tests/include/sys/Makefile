@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2020/05/31 16:36:07 kamil Exp $
+# $NetBSD: Makefile,v 1.16.8.1 2025/08/02 05:58:00 perseant Exp $
 
 NOMAN=		# defined
 
@@ -13,6 +13,10 @@ TESTS_C+=		t_list
 TESTS_C+=		t_pslist
 TESTS_C+=		t_tree
 TESTS_C+=		t_types
+
+COPTS.t_bitops.c+=	-fno-builtin-ffs
+COPTS.t_bitops.c+=	-fno-builtin-ffsl
+COPTS.t_bitops.c+=	-fno-builtin-ffsll
 
 # NULL + 0 arithmetic raises LLVM UBSan warnings, specially in sys/pslist.h
 # in the type-safe macros _PSLIST_VALIDATE_PTRS and _PSLIST_VALIDATE_CONTAINER.

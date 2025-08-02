@@ -23,6 +23,8 @@ options {
 	dnssec-validation yes;
 };
 
+trust-anchors { };
+
 zone "example" {
 	type secondary;
 	primaries { 10.53.0.2; };

@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.154 2022/11/04 09:01:53 ozaki-r Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.154.8.1 2025/08/02 05:57:51 perseant Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.154 2022/11/04 09:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.154.8.1 2025/08/02 05:57:51 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -404,8 +404,7 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 		m_adj(n, off);
 		if (sbappendaddr(&so->so_rcv, src, n, opts) == 0) {
 			m_freem(n);
-			if (opts)
-				m_freem(opts);
+			m_freem(opts);
 			UDP6_STATINC(UDP6_STAT_FULLSOCK);
 			soroverflow(so);
 		} else
@@ -526,10 +525,12 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 		if (inp->inp_flags & IN6P_ESPINUDP) {
 			switch (udp6_espinudp(mp, off)) {
 			case -1: /* Error, m was freed */
+				KASSERT(*mp == NULL);
 				rcvcnt = -1;
 				goto bad;
 
 			case 1: /* ESP over UDP */
+				KASSERT(*mp == NULL);
 				rcvcnt++;
 				goto bad;
 
@@ -551,6 +552,7 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 			    sin6tosa(src), inp->inp_overudp_arg);
 			switch (ret) {
 			case -1: /* Error, m was freed */
+				KASSERT(*mp == NULL);
 				rcvcnt = -1;
 				goto bad;
 
@@ -565,6 +567,7 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 				 * Normal UDP processing will take place,
 				 * m may have changed.
 				 */
+				m = *mp;
 				break;
 			}
 		}
@@ -723,8 +726,7 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return IPPROTO_DONE;
 }
 
@@ -1428,7 +1430,7 @@ udp6_espinudp(struct mbuf **mp, int off)
 
 	if (m->m_len < minlen) {
 		if ((*mp = m_pullup(m, minlen)) == NULL) {
-			return -1;
+			return -1; /* dropped */
 		}
 		m = *mp;
 	}
@@ -1440,15 +1442,15 @@ udp6_espinudp(struct mbuf **mp, int off)
 	if ((len == 1) && (*(unsigned char *)data == 0xff)) {
 		m_freem(m);
 		*mp = NULL; /* avoid any further processing by caller ... */
-		return 1;
+		return 1;	/* consumed */
 	}
 
 	/* Handle Non-ESP marker (32bit). If zero, then IKE. */
 	marker = (uint32_t *)data;
 	if (len <= sizeof(uint32_t))
-		return 0;
+		return 0;	/* passthrough */
 	if (marker[0] == 0)
-		return 0;
+		return 0;	/* passthrough */
 
 	/*
 	 * Get the UDP ports. They are handled in network
@@ -1493,7 +1495,8 @@ udp6_espinudp(struct mbuf **mp, int off)
 	if ((tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
 	    sizeof(sport) + sizeof(dport), M_DONTWAIT)) == NULL) {
 		m_freem(m);
-		return -1;
+		*mp = NULL;
+		return -1;	/* dropped */
 	}
 	((u_int16_t *)(tag + 1))[0] = sport;
 	((u_int16_t *)(tag + 1))[1] = dport;
@@ -1506,7 +1509,7 @@ udp6_espinudp(struct mbuf **mp, int off)
 
 	/* We handled it, it shouldn't be handled by UDP */
 	*mp = NULL; /* avoid free by caller ... */
-	return 1;
+	return 1;		/* consumed */
 }
 #endif /* IPSEC */
 

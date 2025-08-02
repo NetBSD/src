@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkeylist.h,v 1.7 2024/02/21 22:52:10 christos Exp $	*/
+/*	$NetBSD: ipkeylist.h,v 1.7.2.1 2025/08/02 05:53:35 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,6 +27,7 @@
  */
 struct dns_ipkeylist {
 	isc_sockaddr_t *addrs;
+	isc_sockaddr_t *sources;
 	dns_name_t    **keys;
 	dns_name_t    **tlss;
 	dns_name_t    **labels;

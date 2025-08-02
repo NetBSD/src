@@ -1,6 +1,9 @@
-/*	$NetBSD: pm_direct.h,v 1.1 1997/04/08 03:11:38 scottr Exp $	*/
+/*	$NetBSD: pm_direct.h,v 1.1.284.1 2025/08/02 05:55:50 perseant Exp $	*/
 
 /*
+ * Copyright (c) 2024 Nathanial Sloss <nathanialsloss@yahoo.com.au>
+ * All rights reserved.
+ *
  * Copyright (C) 1997 Takashi Hamada
  * All rights reserved.
  *
@@ -31,6 +34,11 @@
  */
 /* From: pm_direct.h 1.0 01/02/97 Takashi Hamada */
 
+/* define the types of the Power Manager */
+#define PM_HW_UNKNOWN		0x00	/* don't know */
+#define PM_HW_PB1XX		0x01	/* PowerBook 1XX series */
+#define	PM_HW_PB5XX		0x02	/* PowerBook Duo and 5XX series */
+
 /*
  * Public declarations that other routines may need.
  */
@@ -44,4 +52,8 @@ typedef	struct	{
 	char	data[32];		/* data buffer (is it too much?)	*/
 }	PMData;
 
+extern int	pmHardware;
+
 int		pmgrop(PMData *);
+void		pm_poweroff(void);
+u_int		pm_set_brightness(u_int);

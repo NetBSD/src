@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.h,v 1.2 2024/02/21 22:51:24 christos Exp $	*/
+/*	$NetBSD: driver.h,v 1.2.6.1 2025/08/02 05:51:38 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

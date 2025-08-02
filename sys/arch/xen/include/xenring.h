@@ -1,4 +1,4 @@
-/* $NetBSD: xenring.h,v 1.7 2023/02/25 00:32:26 riastradh Exp $ */
+/* $NetBSD: xenring.h,v 1.7.6.1 2025/08/02 05:56:19 perseant Exp $ */
 
 /*
  * Glue goop for xbd ring request/response protocol structures.
@@ -24,7 +24,7 @@
 #undef xen_rmb
 #undef xen_wmb
 
-#define xen_mb()  membar_sync()
+void xen_mb(void);
 #define xen_rmb() membar_acquire()
 #define xen_wmb() membar_release()
 

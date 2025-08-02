@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.17 2021/12/25 13:54:13 mlelstv Exp $ */
+/*	$NetBSD: display.c,v 1.17.4.1 2025/08/02 05:55:08 perseant Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -45,12 +45,13 @@
 static int border;
 static int dpytype;
 static struct wsdisplay_usefontdata font;
+static struct wsdisplay_getfont gfont;
+static char fontname_buf[256];
 static struct wsdisplay_param backlight;
 static struct wsdisplay_param brightness;
 static struct wsdisplay_param contrast;
 static struct wsdisplay_scroll_data scroll_l;
 static struct wsdisplayio_edid_info edid_info;
-static uint8_t edid_buf[256];
 static int msg_default_attrs, msg_default_bg, msg_default_fg;
 static int msg_kernel_attrs, msg_kernel_bg, msg_kernel_fg;
 static int splash_enable, splash_progress;
@@ -58,7 +59,7 @@ static int splash_enable, splash_progress;
 struct field display_field_tab[] = {
     { "border",			&border,	FMT_COLOR,	0 },
     { "type",			&dpytype,	FMT_DPYTYPE,	FLG_RDONLY },
-    { "font",			&font.name,	FMT_STRING,	FLG_WRONLY },
+    { "font",			&font.name,	FMT_STRING,	0 },
     { "backlight",		&backlight.curval,  FMT_UINT,	0 },
     { "brightness",		&brightness.curval, FMT_UINT,	FLG_MODIFY },
     { "contrast",		&contrast.curval,   FMT_UINT,	FLG_MODIFY },
@@ -78,9 +79,42 @@ struct field display_field_tab[] = {
 int display_field_tab_len = sizeof(display_field_tab) /
 	sizeof(display_field_tab[0]);
 
+static int
+display_get_edid(int fd, struct wsdisplayio_edid_info *ei)
+{
+	size_t sz = 256;
+	int res;
+
+	while (sz <= 65536) {
+		ei->buffer_size = sz;
+		ei->edid_data = malloc(sz);
+		if (ei->edid_data == NULL) {
+			res = -1;
+			break;
+		}
+
+		res = ioctl(fd, WSDISPLAYIO_GET_EDID, ei);
+		if (res == 0 || errno != EAGAIN)
+			break;
+
+		free(ei->edid_data);
+		ei->edid_data = NULL;
+		sz *= 2;
+	}
+
+	return res;
+}
+
 void
 display_get_values(int fd)
 {
+	if (field_by_value(&font.name)->flags & FLG_GET) {
+		gfont.gf_name = fontname_buf;
+		gfont.gf_size = sizeof(fontname_buf);
+		font.name = gfont.gf_name;
+		if (ioctl(fd, WSDISPLAYIO_GFONT, &gfont) < 0)
+			field_disable_by_value(&font.name);
+	}
 
 	if (field_by_value(&dpytype)->flags & FLG_GET)
 		if (ioctl(fd, WSDISPLAYIO_GTYPE, &dpytype) < 0)
@@ -149,11 +183,8 @@ display_get_values(int fd)
 	}
 
 	if (field_by_value(&edid_info)->flags & FLG_GET) {
-		edid_info.edid_data = edid_buf;
-		edid_info.buffer_size = sizeof(edid_buf);
-		if (ioctl(fd, WSDISPLAYIO_GET_EDID, &edid_info) < 0) {
+		if (display_get_edid(fd, &edid_info) < 0)
 			field_disable_by_value(&edid_info);
-		}
 	}
 }
 

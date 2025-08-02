@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.50 2021/12/24 18:12:58 jmcneill Exp $ */
+/* 	$NetBSD: rasops.h,v 1.50.10.1 2025/08/02 05:57:03 perseant Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 
 #include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
 #include <dev/wsfont/wsfont.h>
 
 /* For rasops_info::ri_flg */

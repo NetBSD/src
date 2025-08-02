@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sockio.h,v 1.19 2013/01/11 19:01:36 christos Exp $	*/
+/*	$NetBSD: linux_sockio.h,v 1.19.74.1 2025/08/02 05:56:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 struct linux_ifmap {
 	unsigned long mem_start;
 	unsigned long mem_end;
-	unsigned short base_addr; 
+	unsigned short base_addr;
 	unsigned char irq;
 	unsigned char dma;
 	unsigned char port;

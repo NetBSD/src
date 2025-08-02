@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_sti.c,v 1.2 2023/01/15 06:19:46 tsutsui Exp $	*/
+/*	$NetBSD: ite_sti.c,v 1.2.6.1 2025/08/02 05:55:39 perseant Exp $	*/
 /*	$OpenBSD: ite_sti.c,v 1.2 2011/08/18 20:02:58 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2011, Miodrag Vallat
@@ -35,9 +35,8 @@
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
 
-#if 0
+#include <hp300/dev/sti_diovar.h>
 #include <hp300/dev/dioreg.h>
-#endif
 #include <hp300/dev/sgcreg.h>
 #include <dev/ic/stireg.h>
 
@@ -60,13 +59,12 @@ static struct {
 	(((addr)[(ofs) +  3] << 24) | ((addr)[(ofs) +  7] << 16) | \
 	 ((addr)[(ofs) + 11] <<  8) | ((addr)[(ofs) + 15]))
 
-void	sti_do_cursor(struct ite_data *);
-void	sti_fontinfo(struct ite_data *);
-void	sti_init(int);
-void	sti_inqcfg(struct sti_inqconfout *);
-void	sti_iteinit_common(struct ite_data *);
+static void	sti_do_cursor(struct ite_data *);
+static void	sti_fontinfo(struct ite_data *);
+static void	sti_init(int);
+static void	sti_inqcfg(struct sti_inqconfout *);
+static void	sti_iteinit_common(struct ite_data *);
 
-#if 0 /* not yet */
 /* kinda similar to sti_dio_probe() */
 int
 sti_dio_probe(struct ite_data *ip)
@@ -89,10 +87,9 @@ void
 sti_iteinit_dio(struct ite_data *ip)
 {
 
-	ip->fbbase = (caddr_t)sctoaddr(ip->scode + STI_DIO_SCODE_OFFSET);
+	ip->fbbase = (uint8_t *)sctoaddr(ip->scode + STI_DIO_SCODE_OFFSET);
 	sti_iteinit_common(ip);
 }
-#endif
 
 void
 sti_iteinit_sgc(struct ite_data *ip)
@@ -109,7 +106,7 @@ sti_iteinit_sgc(struct ite_data *ip)
  * - since romputchar() does not work with sti devices, there is no way we
  *   can report errors (although we could switch to serial...)
  */
-void
+static void
 sti_iteinit_common(struct ite_data *ip)
 {
 	int i;
@@ -237,13 +234,14 @@ sti_cursor(struct ite_data *ip, int flag)
 		ip->cursorx = ip->curx;
 		ip->cursory = ip->cury;
 		/* FALLTHROUGH */
+	case ERASE_CURSOR:
 	default:
 		sti_do_cursor(ip);
 		break;
 	}
 }
 
-void
+static void
 sti_do_cursor(struct ite_data *ip)
 {
 	sti_blkmv_t blkmv;
@@ -312,7 +310,7 @@ sti_scroll(struct ite_data *ip)
 	(*blkmv)(&a.flags, &a.in, &a.out, &sti.cfg);
 }
 
-void
+static void
 sti_fontinfo(struct ite_data *ip)
 {
 	uint32_t fontbase;
@@ -325,7 +323,7 @@ sti_fontinfo(struct ite_data *ip)
 	ip->cols = ip->dwidth / ip->ftwidth;
 }
 
-void
+static void
 sti_init(int full)
 {
 	sti_init_t init;
@@ -346,7 +344,7 @@ sti_init(int full)
 	(*init)(&a.flags, &a.in, &a.out, &sti.cfg);
 }
 
-void
+static void
 sti_inqcfg(struct sti_inqconfout *ico)
 {
 	sti_inqconf_t inqconf;

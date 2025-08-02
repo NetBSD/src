@@ -1,0 +1,5 @@
+pthread__lock_ras_end
+pthread__lock_ras_start
+pthread__ras_simple_lock_init
+pthread__ras_simple_lock_try
+pthread__ras_simple_unlock

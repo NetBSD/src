@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.2.1 2025/08/02 05:53:53 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,7 +15,6 @@
 
 /*! \file */
 
-#include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -23,17 +22,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <isc/align.h>
 #include <isc/hash.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
 #include <isc/once.h>
 #include <isc/os.h>
-#include <isc/print.h>
+#include <isc/overflow.h>
 #include <isc/refcount.h>
+#include <isc/strerr.h>
 #include <isc/string.h>
 #include <isc/types.h>
+#include <isc/urcu.h>
 #include <isc/util.h>
 
 #ifdef HAVE_LIBXML2
@@ -52,12 +52,6 @@
 #elif defined(HAVE_JEMALLOC)
 #include <jemalloc/jemalloc.h>
 #define JEMALLOC_API_SUPPORTED 1
-
-#if JEMALLOC_VERSION_MAJOR < 4
-#define sdallocx(ptr, size, flags) dallocx(ptr, flags)
-#define MALLOCX_TCACHE_NONE	   (0)
-#endif /* JEMALLOC_VERSION_MAJOR < 4 */
-
 #else
 #include "jemalloc_shim.h"
 #endif
@@ -75,6 +69,8 @@ unsigned int isc_mem_defaultflags = ISC_MEMFLAG_DEFAULT;
 
 #define ISC_MEM_ILLEGAL_ARENA (UINT_MAX)
 
+volatile void *isc__mem_malloc = mallocx;
+
 /*
  * Constants.
  */
@@ -83,8 +79,6 @@ unsigned int isc_mem_defaultflags = ISC_MEMFLAG_DEFAULT;
 #define ALIGNMENT	     8U /*%< must be a power of 2 */
 #define ALIGNMENT_SIZE	     sizeof(size_info)
 #define DEBUG_TABLE_COUNT    512U
-#define STATS_BUCKETS	     512U
-#define STATS_BUCKET_SIZE    32U
 
 /*
  * Types.
@@ -92,11 +86,12 @@ unsigned int isc_mem_defaultflags = ISC_MEMFLAG_DEFAULT;
 #if ISC_MEM_TRACKLINES
 typedef struct debuglink debuglink_t;
 struct debuglink {
+	size_t dlsize;
 	ISC_LINK(debuglink_t) link;
 	const void *ptr;
 	size_t size;
-	const char *file;
 	unsigned int line;
+	const char file[];
 };
 
 typedef ISC_LIST(debuglink_t) debuglist_t;
@@ -113,11 +108,6 @@ struct element {
 	element *next;
 };
 
-struct stats {
-	atomic_size_t gets;
-	atomic_size_t totalgets;
-};
-
 #define MEM_MAGIC	 ISC_MAGIC('M', 'e', 'm', 'C')
 #define VALID_CONTEXT(c) ISC_MAGIC_VALID(c, MEM_MAGIC)
 
@@ -129,31 +119,19 @@ static isc_once_t init_once = ISC_ONCE_INIT;
 static isc_once_t shut_once = ISC_ONCE_INIT;
 static isc_mutex_t contextslock;
 
-/*%
- * Total size of lost memory due to a bug of external library.
- * Locked by the global lock.
- */
-static uint64_t totallost;
-
 struct isc_mem {
 	unsigned int magic;
 	unsigned int flags;
 	unsigned int jemalloc_flags;
 	unsigned int jemalloc_arena;
+	unsigned int debugging;
 	isc_mutex_t lock;
 	bool checkfree;
-	struct stats stats[STATS_BUCKETS + 1];
 	isc_refcount_t references;
 	char name[16];
-	atomic_size_t total;
 	atomic_size_t inuse;
-	atomic_size_t maxinuse;
-	atomic_size_t malloced;
-	atomic_size_t maxmalloced;
 	atomic_bool hi_called;
 	atomic_bool is_overmem;
-	isc_mem_water_t water;
-	void *water_arg;
 	atomic_size_t hi_water;
 	atomic_size_t lo_water;
 	ISC_LIST(isc_mempool_t) pools;
@@ -192,48 +170,28 @@ struct isc_mempool {
  */
 
 #if !ISC_MEM_TRACKLINES
-#define ADD_TRACE(a, b, c, d, e)
-#define DELETE_TRACE(a, b, c, d, e)
+#define ADD_TRACE(mctx, ptr, size, file, line)
+#define DELETE_TRACE(mctx, ptr, size, file, line)
 #define ISC_MEMFUNC_SCOPE
 #else /* if !ISC_MEM_TRACKLINES */
 #define TRACE_OR_RECORD (ISC_MEM_DEBUGTRACE | ISC_MEM_DEBUGRECORD)
 
-#define SHOULD_TRACE_OR_RECORD(ptr) \
-	((isc_mem_debugging & TRACE_OR_RECORD) != 0 && ptr != NULL)
+#define SHOULD_TRACE_OR_RECORD(mctx, ptr) \
+	(((mctx)->debugging & TRACE_OR_RECORD) != 0 && ptr != NULL)
 
-#define ADD_TRACE(a, b, c, d, e)                \
-	if (SHOULD_TRACE_OR_RECORD(b)) {        \
-		add_trace_entry(a, b, c, d, e); \
+#define ADD_TRACE(mctx, ptr, size, file, line)                \
+	if (SHOULD_TRACE_OR_RECORD(mctx, ptr)) {              \
+		add_trace_entry(mctx, ptr, size, file, line); \
 	}
 
-#define DELETE_TRACE(a, b, c, d, e)                \
-	if (SHOULD_TRACE_OR_RECORD(b)) {           \
-		delete_trace_entry(a, b, c, d, e); \
+#define DELETE_TRACE(mctx, ptr, size, file, line)                \
+	if (SHOULD_TRACE_OR_RECORD(mctx, ptr)) {                 \
+		delete_trace_entry(mctx, ptr, size, file, line); \
 	}
 
 static void
 print_active(isc_mem_t *ctx, FILE *out);
 #endif /* ISC_MEM_TRACKLINES */
-
-static size_t
-increment_malloced(isc_mem_t *ctx, size_t size) {
-	size_t malloced = atomic_fetch_add_relaxed(&ctx->malloced, size) + size;
-	size_t maxmalloced = atomic_load_relaxed(&ctx->maxmalloced);
-
-	if (malloced > maxmalloced) {
-		atomic_compare_exchange_strong(&ctx->maxmalloced, &maxmalloced,
-					       malloced);
-	}
-
-	return (malloced);
-}
-
-static size_t
-decrement_malloced(isc_mem_t *ctx, size_t size) {
-	size_t malloced = atomic_fetch_sub_relaxed(&ctx->malloced, size) - size;
-
-	return (malloced);
-}
 
 #if ISC_MEM_TRACKLINES
 /*!
@@ -245,9 +203,18 @@ add_trace_entry(isc_mem_t *mctx, const void *ptr, size_t size FLARG) {
 	uint32_t hash;
 	uint32_t idx;
 
+	/*
+	 * "file" needs to be copied because it can be part of a dynamically
+	 * loaded plugin which would be unloaded at the time the trace is
+	 * dumped. Storing "file" pointer then leads to a dangling pointer
+	 * dereference and a crash.
+	 */
+	size_t filelen = strlen(file) + 1;
+	size_t dlsize = STRUCT_FLEX_SIZE(dl, file, filelen);
+
 	MCTXLOCK(mctx);
 
-	if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0) {
+	if ((mctx->debugging & ISC_MEM_DEBUGTRACE) != 0) {
 		fprintf(stderr, "add %p size %zu file %s line %u mctx %p\n",
 			ptr, size, file, line, mctx);
 	}
@@ -259,23 +226,23 @@ add_trace_entry(isc_mem_t *mctx, const void *ptr, size_t size FLARG) {
 #ifdef __COVERITY__
 	/*
 	 * Use simple conversion from pointer to hash to avoid
-	 * tainting 'ptr' due to byte swap in isc_hash_function.
+	 * tainting 'ptr' due to byte swap in isc_hash32.
 	 */
 	hash = (uintptr_t)ptr >> 3;
 #else
-	hash = isc_hash_function(&ptr, sizeof(ptr), true);
+	hash = isc_hash32(&ptr, sizeof(ptr), true);
 #endif
 	idx = hash % DEBUG_TABLE_COUNT;
 
-	dl = mallocx(sizeof(*dl), mctx->jemalloc_flags);
+	dl = mallocx(dlsize, mctx->jemalloc_flags);
 	INSIST(dl != NULL);
-	increment_malloced(mctx, sizeof(*dl));
 
 	ISC_LINK_INIT(dl, link);
 	dl->ptr = ptr;
 	dl->size = size;
-	dl->file = file;
 	dl->line = line;
+	dl->dlsize = dlsize;
+	strlcpy((char *)dl->file, file, filelen);
 
 	ISC_LIST_PREPEND(mctx->debuglist[idx], dl, link);
 	mctx->debuglistcnt++;
@@ -292,7 +259,7 @@ delete_trace_entry(isc_mem_t *mctx, const void *ptr, size_t size,
 
 	MCTXLOCK(mctx);
 
-	if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0) {
+	if ((mctx->debugging & ISC_MEM_DEBUGTRACE) != 0) {
 		fprintf(stderr, "del %p size %zu file %s line %u mctx %p\n",
 			ptr, size, file, line, mctx);
 	}
@@ -304,11 +271,11 @@ delete_trace_entry(isc_mem_t *mctx, const void *ptr, size_t size,
 #ifdef __COVERITY__
 	/*
 	 * Use simple conversion from pointer to hash to avoid
-	 * tainting 'ptr' due to byte swap in isc_hash_function.
+	 * tainting 'ptr' due to byte swap in isc_hash32.
 	 */
 	hash = (uintptr_t)ptr >> 3;
 #else
-	hash = isc_hash_function(&ptr, sizeof(ptr), true);
+	hash = isc_hash32(&ptr, sizeof(ptr), true);
 #endif
 	idx = hash % DEBUG_TABLE_COUNT;
 
@@ -316,8 +283,7 @@ delete_trace_entry(isc_mem_t *mctx, const void *ptr, size_t size,
 	while (dl != NULL) {
 		if (dl->ptr == ptr) {
 			ISC_LIST_UNLINK(mctx->debuglist[idx], dl, link);
-			decrement_malloced(mctx, sizeof(*dl));
-			sdallocx(dl, sizeof(*dl), mctx->jemalloc_flags);
+			sdallocx(dl, dl->dlsize, mctx->jemalloc_flags);
 			goto unlock;
 		}
 		dl = ISC_LIST_NEXT(dl, link);
@@ -338,8 +304,6 @@ unlock:
 		s = ZERO_ALLOCATION_SIZE; \
 	}
 
-#define MEM_ALIGN(a) ((a) ? MALLOCX_ALIGN(a) : 0)
-
 /*!
  * Perform a malloc, doing memory filling and overrun detection as necessary.
  */
@@ -352,11 +316,13 @@ mem_get(isc_mem_t *ctx, size_t size, int flags) {
 	ret = mallocx(size, flags | ctx->jemalloc_flags);
 	INSIST(ret != NULL);
 
-	if ((ctx->flags & ISC_MEMFLAG_FILL) != 0) {
+	if ((flags & ISC__MEM_ZERO) == 0 &&
+	    (ctx->flags & ISC_MEMFLAG_FILL) != 0)
+	{
 		memset(ret, 0xbe, size); /* Mnemonic for "beef". */
 	}
 
-	return (ret);
+	return ret;
 }
 
 /*!
@@ -383,7 +349,9 @@ mem_realloc(isc_mem_t *ctx, void *old_ptr, size_t old_size, size_t new_size,
 	new_ptr = rallocx(old_ptr, new_size, flags | ctx->jemalloc_flags);
 	INSIST(new_ptr != NULL);
 
-	if ((ctx->flags & ISC_MEMFLAG_FILL) != 0) {
+	if ((flags & ISC__MEM_ZERO) == 0 &&
+	    (ctx->flags & ISC_MEMFLAG_FILL) != 0)
+	{
 		ssize_t diff_size = new_size - old_size;
 		void *diff_ptr = (uint8_t *)new_ptr + old_size;
 		if (diff_size > 0) {
@@ -392,47 +360,24 @@ mem_realloc(isc_mem_t *ctx, void *old_ptr, size_t old_size, size_t new_size,
 		}
 	}
 
-	return (new_ptr);
+	return new_ptr;
 }
-
-#define stats_bucket(ctx, size)                      \
-	((size / STATS_BUCKET_SIZE) >= STATS_BUCKETS \
-		 ? &ctx->stats[STATS_BUCKETS]        \
-		 : &ctx->stats[size / STATS_BUCKET_SIZE])
 
 /*!
  * Update internal counters after a memory get.
  */
 static void
 mem_getstats(isc_mem_t *ctx, size_t size) {
-	struct stats *stats = stats_bucket(ctx, size);
-
-	atomic_fetch_add_relaxed(&ctx->total, size);
-	atomic_fetch_add_release(&ctx->inuse, size);
-
-	atomic_fetch_add_relaxed(&stats->gets, 1);
-	atomic_fetch_add_relaxed(&stats->totalgets, 1);
-
-	increment_malloced(ctx, size);
+	atomic_fetch_add_relaxed(&ctx->inuse, size);
 }
 
 /*!
  * Update internal counters after a memory put.
  */
 static void
-mem_putstats(isc_mem_t *ctx, void *ptr, size_t size) {
-	struct stats *stats = stats_bucket(ctx, size);
-	atomic_size_t s, g;
-
-	UNUSED(ptr);
-
-	s = atomic_fetch_sub_release(&ctx->inuse, size);
+mem_putstats(isc_mem_t *ctx, size_t size) {
+	atomic_size_t s = atomic_fetch_sub_relaxed(&ctx->inuse, size);
 	INSIST(s >= size);
-
-	g = atomic_fetch_sub_release(&stats->gets, 1);
-	INSIST(g >= 1);
-
-	decrement_malloced(ctx, size);
 }
 
 /*
@@ -443,80 +388,95 @@ static bool
 mem_jemalloc_arena_create(unsigned int *pnew_arenano) {
 	REQUIRE(pnew_arenano != NULL);
 
-#if defined(JEMALLOC_API_SUPPORTED) && JEMALLOC_VERSION_MAJOR >= 4
+#ifdef JEMALLOC_API_SUPPORTED
 	unsigned int arenano = 0;
 	size_t len = sizeof(arenano);
 	int res = 0;
 
 	res = mallctl("arenas.create", &arenano, &len, NULL, 0);
 	if (res != 0) {
-		return (false);
+		return false;
 	}
 
 	*pnew_arenano = arenano;
 
-	return (true);
+	return true;
 #else
 	*pnew_arenano = ISC_MEM_ILLEGAL_ARENA;
-	return (true);
-#endif /* defined(JEMALLOC_API_SUPPORTED) && JEMALLOC_VERSION_MAJOR >= 4 */
+	return true;
+#endif /* JEMALLOC_API_SUPPORTED */
 }
 
 static bool
 mem_jemalloc_arena_destroy(unsigned int arenano) {
-#if defined(JEMALLOC_API_SUPPORTED) && JEMALLOC_VERSION_MAJOR >= 4
+#ifdef JEMALLOC_API_SUPPORTED
 	int res = 0;
 	char buf[256] = { 0 };
 
 	(void)snprintf(buf, sizeof(buf), "arena.%u.destroy", arenano);
 	res = mallctl(buf, NULL, NULL, NULL, 0);
 	if (res != 0) {
-		return (false);
+		return false;
 	}
 
-	return (true);
+	return true;
 #else
 	UNUSED(arenano);
-	return (true);
-#endif /* defined(JEMALLOC_API_SUPPORTED) && JEMALLOC_VERSION_MAJOR >= 4 */
+	return true;
+#endif /* JEMALLOC_API_SUPPORTED */
 }
 
 static void
 mem_initialize(void) {
+/*
+ * Check if the values copied from jemalloc still match
+ */
+#ifdef JEMALLOC_API_SUPPORTED
+	RUNTIME_CHECK(ISC__MEM_ZERO == MALLOCX_ZERO);
+#endif /* JEMALLOC_API_SUPPORTED */
+
 	isc_mutex_init(&contextslock);
 	ISC_LIST_INIT(contexts);
-	totallost = 0;
 }
 
 void
 isc__mem_initialize(void) {
-	RUNTIME_CHECK(isc_once_do(&init_once, mem_initialize) == ISC_R_SUCCESS);
+	isc_once_do(&init_once, mem_initialize);
 }
 
 static void
 mem_shutdown(void) {
+	bool empty;
+
 	isc__mem_checkdestroyed();
 
-	isc_mutex_destroy(&contextslock);
+	LOCK(&contextslock);
+	empty = ISC_LIST_EMPTY(contexts);
+	UNLOCK(&contextslock);
+
+	if (empty) {
+		isc_mutex_destroy(&contextslock);
+	}
 }
 
 void
 isc__mem_shutdown(void) {
-	RUNTIME_CHECK(isc_once_do(&shut_once, mem_shutdown) == ISC_R_SUCCESS);
+	isc_once_do(&shut_once, mem_shutdown);
 }
 
 static void
-mem_create(isc_mem_t **ctxp, unsigned int flags, unsigned int jemalloc_flags) {
+mem_create(isc_mem_t **ctxp, unsigned int debugging, unsigned int flags,
+	   unsigned int jemalloc_flags) {
 	isc_mem_t *ctx = NULL;
 
 	REQUIRE(ctxp != NULL && *ctxp == NULL);
 
-	ctx = mallocx(sizeof(*ctx),
-		      MALLOCX_ALIGN(isc_os_cacheline()) | jemalloc_flags);
+	ctx = mallocx(sizeof(*ctx), jemalloc_flags);
 	INSIST(ctx != NULL);
 
 	*ctx = (isc_mem_t){
 		.magic = MEM_MAGIC,
+		.debugging = debugging,
 		.flags = flags,
 		.jemalloc_flags = jemalloc_flags,
 		.jemalloc_arena = ISC_MEM_ILLEGAL_ARENA,
@@ -526,36 +486,26 @@ mem_create(isc_mem_t **ctxp, unsigned int flags, unsigned int jemalloc_flags) {
 	isc_mutex_init(&ctx->lock);
 	isc_refcount_init(&ctx->references, 1);
 
-	atomic_init(&ctx->total, 0);
 	atomic_init(&ctx->inuse, 0);
-	atomic_init(&ctx->maxinuse, 0);
-	atomic_init(&ctx->malloced, sizeof(*ctx));
-	atomic_init(&ctx->maxmalloced, sizeof(*ctx));
 	atomic_init(&ctx->hi_water, 0);
 	atomic_init(&ctx->lo_water, 0);
 	atomic_init(&ctx->hi_called, false);
 	atomic_init(&ctx->is_overmem, false);
 
-	for (size_t i = 0; i < STATS_BUCKETS + 1; i++) {
-		atomic_init(&ctx->stats[i].gets, 0);
-		atomic_init(&ctx->stats[i].totalgets, 0);
-	}
 	ISC_LIST_INIT(ctx->pools);
 
 #if ISC_MEM_TRACKLINES
-	if ((isc_mem_debugging & ISC_MEM_DEBUGRECORD) != 0) {
+	if ((ctx->debugging & ISC_MEM_DEBUGRECORD) != 0) {
 		unsigned int i;
 
-		ctx->debuglist =
-			mallocx((DEBUG_TABLE_COUNT * sizeof(debuglist_t)),
-				ctx->jemalloc_flags);
+		ctx->debuglist = mallocx(
+			ISC_CHECKED_MUL(DEBUG_TABLE_COUNT, sizeof(debuglist_t)),
+			jemalloc_flags);
 		INSIST(ctx->debuglist != NULL);
 
 		for (i = 0; i < DEBUG_TABLE_COUNT; i++) {
 			ISC_LIST_INIT(ctx->debuglist[i]);
 		}
-		increment_malloced(ctx,
-				   DEBUG_TABLE_COUNT * sizeof(debuglist_t));
 	}
 #endif /* if ISC_MEM_TRACKLINES */
 
@@ -572,13 +522,9 @@ mem_create(isc_mem_t **ctxp, unsigned int flags, unsigned int jemalloc_flags) {
 
 static void
 destroy(isc_mem_t *ctx) {
-	unsigned int i;
-	size_t malloced;
 	unsigned int arena_no;
-
 	LOCK(&contextslock);
 	ISC_LIST_UNLINK(contexts, ctx, link);
-	totallost += isc_mem_inuse(ctx);
 	UNLOCK(&contextslock);
 
 	ctx->magic = 0;
@@ -590,7 +536,7 @@ destroy(isc_mem_t *ctx) {
 #if ISC_MEM_TRACKLINES
 	if (ctx->debuglist != NULL) {
 		debuglink_t *dl;
-		for (i = 0; i < DEBUG_TABLE_COUNT; i++) {
+		for (size_t i = 0; i < DEBUG_TABLE_COUNT; i++) {
 			for (dl = ISC_LIST_HEAD(ctx->debuglist[i]); dl != NULL;
 			     dl = ISC_LIST_HEAD(ctx->debuglist[i]))
 			{
@@ -601,45 +547,22 @@ destroy(isc_mem_t *ctx) {
 
 				ISC_LIST_UNLINK(ctx->debuglist[i], dl, link);
 				sdallocx(dl, sizeof(*dl), ctx->jemalloc_flags);
-				decrement_malloced(ctx, sizeof(*dl));
 			}
 		}
 
-		sdallocx(ctx->debuglist,
-			 (DEBUG_TABLE_COUNT * sizeof(debuglist_t)),
-			 ctx->jemalloc_flags);
-		decrement_malloced(ctx,
-				   DEBUG_TABLE_COUNT * sizeof(debuglist_t));
+		sdallocx(
+			ctx->debuglist,
+			ISC_CHECKED_MUL(DEBUG_TABLE_COUNT, sizeof(debuglist_t)),
+			ctx->jemalloc_flags);
 	}
 #endif /* if ISC_MEM_TRACKLINES */
-
-	if (ctx->checkfree) {
-		for (i = 0; i <= STATS_BUCKETS; i++) {
-			struct stats *stats = &ctx->stats[i];
-			size_t gets = atomic_load_acquire(&stats->gets);
-			if (gets != 0U) {
-				fprintf(stderr,
-					"Failing assertion due to probable "
-					"leaked memory in context %p (\"%s\") "
-					"(stats[%u].gets == %zu).\n",
-					ctx, ctx->name, i, gets);
-#if ISC_MEM_TRACKLINES
-				print_active(ctx, stderr);
-#endif /* if ISC_MEM_TRACKLINES */
-				INSIST(gets == 0U);
-			}
-		}
-	}
 
 	isc_mutex_destroy(&ctx->lock);
 
-	malloced = decrement_malloced(ctx, sizeof(*ctx));
-
 	if (ctx->checkfree) {
-		INSIST(malloced == 0);
+		INSIST(atomic_load(&ctx->inuse) == 0);
 	}
-	sdallocx(ctx, sizeof(*ctx),
-		 MALLOCX_ALIGN(isc_os_cacheline()) | ctx->jemalloc_flags);
+	sdallocx(ctx, sizeof(*ctx), ctx->jemalloc_flags);
 
 	if (arena_no != ISC_MEM_ILLEGAL_ARENA) {
 		RUNTIME_CHECK(mem_jemalloc_arena_destroy(arena_no) == true);
@@ -668,7 +591,7 @@ isc__mem_detach(isc_mem_t **ctxp FLARG) {
 	if (isc_refcount_decrement(&ctx->references) == 1) {
 		isc_refcount_destroy(&ctx->references);
 #if ISC_MEM_TRACKLINES
-		if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0) {
+		if ((ctx->debugging & ISC_MEM_DEBUGTRACE) != 0) {
 			fprintf(stderr, "destroy mctx %p file %s line %u\n",
 				ctx, file, line);
 		}
@@ -689,25 +612,16 @@ isc__mem_detach(isc_mem_t **ctxp FLARG) {
 
 void
 isc__mem_putanddetach(isc_mem_t **ctxp, void *ptr, size_t size,
-		      size_t alignment FLARG) {
-	isc_mem_t *ctx = NULL;
-
+		      int flags FLARG) {
 	REQUIRE(ctxp != NULL && VALID_CONTEXT(*ctxp));
 	REQUIRE(ptr != NULL);
 	REQUIRE(size != 0);
 
-	ctx = *ctxp;
+	isc_mem_t *ctx = *ctxp;
 	*ctxp = NULL;
 
-	DELETE_TRACE(ctx, ptr, size, file, line);
-
-	mem_putstats(ctx, ptr, size);
-	mem_put(ctx, ptr, size, MEM_ALIGN(alignment));
-
-	if (isc_refcount_decrement(&ctx->references) == 1) {
-		isc_refcount_destroy(&ctx->references);
-		destroy(ctx);
-	}
+	isc__mem_put(ctx, ptr, size, flags FLARG_PASS);
+	isc__mem_detach(&ctx FLARG_PASS);
 }
 
 void
@@ -724,8 +638,10 @@ isc__mem_destroy(isc_mem_t **ctxp FLARG) {
 	ctx = *ctxp;
 	*ctxp = NULL;
 
+	rcu_barrier();
+
 #if ISC_MEM_TRACKLINES
-	if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0) {
+	if ((ctx->debugging & ISC_MEM_DEBUGTRACE) != 0) {
 		fprintf(stderr, "destroy mctx %p file %s line %u\n", ctx, file,
 			line);
 	}
@@ -742,117 +658,28 @@ isc__mem_destroy(isc_mem_t **ctxp FLARG) {
 	*ctxp = NULL;
 }
 
-#define CALL_HI_WATER(ctx)                                             \
-	{                                                              \
-		if (ctx->water != NULL && hi_water(ctx)) {             \
-			(ctx->water)(ctx->water_arg, ISC_MEM_HIWATER); \
-		}                                                      \
-	}
-
-#define CALL_LO_WATER(ctx)                                             \
-	{                                                              \
-		if ((ctx->water != NULL) && lo_water(ctx)) {           \
-			(ctx->water)(ctx->water_arg, ISC_MEM_LOWATER); \
-		}                                                      \
-	}
-
-static bool
-hi_water(isc_mem_t *ctx) {
-	size_t inuse;
-	size_t maxinuse;
-	size_t hiwater = atomic_load_relaxed(&ctx->hi_water);
-
-	if (hiwater == 0) {
-		return (false);
-	}
-
-	inuse = atomic_load_acquire(&ctx->inuse);
-	if (inuse <= hiwater) {
-		return (false);
-	}
-
-	maxinuse = atomic_load_acquire(&ctx->maxinuse);
-	if (inuse > maxinuse) {
-		(void)atomic_compare_exchange_strong(&ctx->maxinuse, &maxinuse,
-						     inuse);
-
-		if ((isc_mem_debugging & ISC_MEM_DEBUGUSAGE) != 0) {
-			fprintf(stderr, "maxinuse = %lu\n",
-				(unsigned long)inuse);
-		}
-	}
-
-	if (atomic_load_acquire(&ctx->hi_called)) {
-		return (false);
-	}
-
-	/* We are over water (for the first time) */
-	atomic_store_release(&ctx->is_overmem, true);
-
-	return (true);
-}
-
-static bool
-lo_water(isc_mem_t *ctx) {
-	size_t inuse;
-	size_t lowater = atomic_load_relaxed(&ctx->lo_water);
-
-	if (lowater == 0) {
-		return (false);
-	}
-
-	inuse = atomic_load_acquire(&ctx->inuse);
-	if (inuse >= lowater) {
-		return (false);
-	}
-
-	if (!atomic_load_acquire(&ctx->hi_called)) {
-		return (false);
-	}
-
-	/* We are no longer overmem */
-	atomic_store_release(&ctx->is_overmem, false);
-
-	return (true);
-}
-
 void *
-isc__mem_get(isc_mem_t *ctx, size_t size, size_t alignment FLARG) {
+isc__mem_get(isc_mem_t *ctx, size_t size, int flags FLARG) {
 	void *ptr = NULL;
 
 	REQUIRE(VALID_CONTEXT(ctx));
 
-	ptr = mem_get(ctx, size, MEM_ALIGN(alignment));
+	ptr = mem_get(ctx, size, flags);
 
 	mem_getstats(ctx, size);
 	ADD_TRACE(ctx, ptr, size, file, line);
 
-	CALL_HI_WATER(ctx);
-
-	return (ptr);
+	return ptr;
 }
 
 void
-isc__mem_put(isc_mem_t *ctx, void *ptr, size_t size, size_t alignment FLARG) {
+isc__mem_put(isc_mem_t *ctx, void *ptr, size_t size, int flags FLARG) {
 	REQUIRE(VALID_CONTEXT(ctx));
 
 	DELETE_TRACE(ctx, ptr, size, file, line);
 
-	mem_putstats(ctx, ptr, size);
-	mem_put(ctx, ptr, size, MEM_ALIGN(alignment));
-
-	CALL_LO_WATER(ctx);
-}
-
-void
-isc_mem_waterack(isc_mem_t *ctx, int flag) {
-	REQUIRE(VALID_CONTEXT(ctx));
-
-	if (flag == ISC_MEM_LOWATER) {
-		atomic_store(&ctx->hi_called, false);
-	} else if (flag == ISC_MEM_HIWATER) {
-		atomic_store(&ctx->hi_called, true);
-	}
+	mem_putstats(ctx, size);
+	mem_put(ctx, ptr, size, flags);
 }
 
 #if ISC_MEM_TRACKLINES
@@ -904,22 +731,6 @@ isc_mem_stats(isc_mem_t *ctx, FILE *out) {
 
 	MCTXLOCK(ctx);
 
-	for (size_t i = 0; i <= STATS_BUCKETS; i++) {
-		size_t totalgets;
-		size_t gets;
-		struct stats *stats = &ctx->stats[i];
-
-		totalgets = atomic_load_acquire(&stats->totalgets);
-		gets = atomic_load_acquire(&stats->gets);
-
-		if (totalgets != 0U && gets != 0U) {
-			fprintf(out, "%s%5zu: %11zu gets, %11zu rem",
-				(i == STATS_BUCKETS) ? ">=" : "  ", i,
-				totalgets, gets);
-			fputc('\n', out);
-		}
-	}
-
 	/*
 	 * Note that since a pool can be locked now, these stats might
 	 * be somewhat off if the pool is in active use at the time the
@@ -951,40 +762,37 @@ isc_mem_stats(isc_mem_t *ctx, FILE *out) {
 }
 
 void *
-isc__mem_allocate(isc_mem_t *ctx, size_t size FLARG) {
+isc__mem_allocate(isc_mem_t *ctx, size_t size, int flags FLARG) {
 	void *ptr = NULL;
 
 	REQUIRE(VALID_CONTEXT(ctx));
 
-	ptr = mem_get(ctx, size, 0);
+	ptr = mem_get(ctx, size, flags);
 
 	/* Recalculate the real allocated size */
-	size = sallocx(ptr, ctx->jemalloc_flags);
+	size = sallocx(ptr, flags | ctx->jemalloc_flags);
 
 	mem_getstats(ctx, size);
 	ADD_TRACE(ctx, ptr, size, file, line);
 
-	CALL_HI_WATER(ctx);
-
-	return (ptr);
+	return ptr;
 }
 
 void *
 isc__mem_reget(isc_mem_t *ctx, void *old_ptr, size_t old_size, size_t new_size,
-	       size_t alignment FLARG) {
+	       int flags FLARG) {
 	void *new_ptr = NULL;
 
 	if (old_ptr == NULL) {
 		REQUIRE(old_size == 0);
-		new_ptr = isc__mem_get(ctx, new_size, alignment FLARG_PASS);
+		new_ptr = isc__mem_get(ctx, new_size, flags FLARG_PASS);
 	} else if (new_size == 0) {
-		isc__mem_put(ctx, old_ptr, old_size, alignment FLARG_PASS);
+		isc__mem_put(ctx, old_ptr, old_size, flags FLARG_PASS);
 	} else {
 		DELETE_TRACE(ctx, old_ptr, old_size, file, line);
-		mem_putstats(ctx, old_ptr, old_size);
+		mem_putstats(ctx, old_size);
 
-		new_ptr = mem_realloc(ctx, old_ptr, old_size, new_size,
-				      MEM_ALIGN(alignment));
+		new_ptr = mem_realloc(ctx, old_ptr, old_size, new_size, flags);
 
 		mem_getstats(ctx, new_size);
 		ADD_TRACE(ctx, new_ptr, new_size, file, line);
@@ -994,33 +802,32 @@ isc__mem_reget(isc_mem_t *ctx, void *old_ptr, size_t old_size, size_t new_size,
 		 * where the realloc will exactly hit on the boundary of
 		 * the water and we would call water twice.
 		 */
-		CALL_LO_WATER(ctx);
-		CALL_HI_WATER(ctx);
 	}
 
-	return (new_ptr);
+	return new_ptr;
 }
 
 void *
-isc__mem_reallocate(isc_mem_t *ctx, void *old_ptr, size_t new_size FLARG) {
+isc__mem_reallocate(isc_mem_t *ctx, void *old_ptr, size_t new_size,
+		    int flags FLARG) {
 	void *new_ptr = NULL;
 
 	REQUIRE(VALID_CONTEXT(ctx));
 
 	if (old_ptr == NULL) {
-		new_ptr = isc__mem_allocate(ctx, new_size FLARG_PASS);
+		new_ptr = isc__mem_allocate(ctx, new_size, flags FLARG_PASS);
 	} else if (new_size == 0) {
-		isc__mem_free(ctx, old_ptr FLARG_PASS);
+		isc__mem_free(ctx, old_ptr, flags FLARG_PASS);
 	} else {
-		size_t old_size = sallocx(old_ptr, ctx->jemalloc_flags);
+		size_t old_size = sallocx(old_ptr, flags | ctx->jemalloc_flags);
 
 		DELETE_TRACE(ctx, old_ptr, old_size, file, line);
-		mem_putstats(ctx, old_ptr, old_size);
+		mem_putstats(ctx, old_size);
 
-		new_ptr = mem_realloc(ctx, old_ptr, old_size, new_size, 0);
+		new_ptr = mem_realloc(ctx, old_ptr, old_size, new_size, flags);
 
 		/* Recalculate the real allocated size */
-		new_size = sallocx(new_ptr, ctx->jemalloc_flags);
+		new_size = sallocx(new_ptr, flags | ctx->jemalloc_flags);
 
 		mem_getstats(ctx, new_size);
 		ADD_TRACE(ctx, new_ptr, new_size, file, line);
@@ -1030,27 +837,24 @@ isc__mem_reallocate(isc_mem_t *ctx, void *old_ptr, size_t new_size FLARG) {
 		 * where the realloc will exactly hit on the boundary of
 		 * the water and we would call water twice.
 		 */
-		CALL_LO_WATER(ctx);
-		CALL_HI_WATER(ctx);
 	}
 
-	return (new_ptr);
+	return new_ptr;
 }
 
 void
-isc__mem_free(isc_mem_t *ctx, void *ptr FLARG) {
+isc__mem_free(isc_mem_t *ctx, void *ptr, int flags FLARG) {
 	size_t size = 0;
 
 	REQUIRE(VALID_CONTEXT(ctx));
+	REQUIRE(ptr != NULL);
 
-	size = sallocx(ptr, ctx->jemalloc_flags);
+	size = sallocx(ptr, flags | ctx->jemalloc_flags);
 
 	DELETE_TRACE(ctx, ptr, size, file, line);
 
-	mem_putstats(ctx, ptr, size);
-	mem_put(ctx, ptr, size, 0);
-
-	CALL_LO_WATER(ctx);
+	mem_putstats(ctx, size);
+	mem_put(ctx, ptr, size, flags);
 }
 
 /*
@@ -1067,11 +871,11 @@ isc__mem_strdup(isc_mem_t *mctx, const char *s FLARG) {
 
 	len = strlen(s) + 1;
 
-	ns = isc__mem_allocate(mctx, len FLARG_PASS);
+	ns = isc__mem_allocate(mctx, len, 0 FLARG_PASS);
 
 	strlcpy(ns, s, len);
 
-	return (ns);
+	return ns;
 }
 
 char *
@@ -1088,11 +892,11 @@ isc__mem_strndup(isc_mem_t *mctx, const char *s, size_t size FLARG) {
 		len = size;
 	}
 
-	ns = isc__mem_allocate(mctx, len FLARG_PASS);
+	ns = isc__mem_allocate(mctx, len, 0 FLARG_PASS);
 
 	strlcpy(ns, s, len);
 
-	return (ns);
+	return ns;
 }
 
 void
@@ -1110,92 +914,71 @@ size_t
 isc_mem_inuse(isc_mem_t *ctx) {
 	REQUIRE(VALID_CONTEXT(ctx));
 
-	return (atomic_load_acquire(&ctx->inuse));
-}
-
-size_t
-isc_mem_maxinuse(isc_mem_t *ctx) {
-	REQUIRE(VALID_CONTEXT(ctx));
-
-	return (atomic_load_acquire(&ctx->maxinuse));
-}
-
-size_t
-isc_mem_total(isc_mem_t *ctx) {
-	REQUIRE(VALID_CONTEXT(ctx));
-
-	return (atomic_load_acquire(&ctx->total));
-}
-
-size_t
-isc_mem_malloced(isc_mem_t *ctx) {
-	REQUIRE(VALID_CONTEXT(ctx));
-
-	return (atomic_load_acquire(&ctx->malloced));
-}
-
-size_t
-isc_mem_maxmalloced(isc_mem_t *ctx) {
-	REQUIRE(VALID_CONTEXT(ctx));
-
-	return (atomic_load_acquire(&ctx->maxmalloced));
+	return atomic_load_relaxed(&ctx->inuse);
 }
 
 void
 isc_mem_clearwater(isc_mem_t *mctx) {
-	isc_mem_setwater(mctx, NULL, NULL, 0, 0);
+	isc_mem_setwater(mctx, 0, 0);
 }
 
 void
-isc_mem_setwater(isc_mem_t *ctx, isc_mem_water_t water, void *water_arg,
-		 size_t hiwater, size_t lowater) {
-	isc_mem_water_t oldwater;
-	void *oldwater_arg;
-
+isc_mem_setwater(isc_mem_t *ctx, size_t hiwater, size_t lowater) {
 	REQUIRE(VALID_CONTEXT(ctx));
 	REQUIRE(hiwater >= lowater);
 
-	oldwater = ctx->water;
-	oldwater_arg = ctx->water_arg;
+	atomic_store_release(&ctx->hi_water, hiwater);
+	atomic_store_release(&ctx->lo_water, lowater);
 
-	/* No water was set and new water is also NULL */
-	if (oldwater == NULL && water == NULL) {
-		return;
-	}
-
-	/* The water function is being set for the first time */
-	if (oldwater == NULL) {
-		REQUIRE(water != NULL && lowater > 0);
-
-		INSIST(atomic_load(&ctx->hi_water) == 0);
-		INSIST(atomic_load(&ctx->lo_water) == 0);
-
-		ctx->water = water;
-		ctx->water_arg = water_arg;
-		atomic_store(&ctx->hi_water, hiwater);
-		atomic_store(&ctx->lo_water, lowater);
-
-		return;
-	}
-
-	REQUIRE((water == oldwater && water_arg == oldwater_arg) ||
-		(water == NULL && water_arg == NULL && hiwater == 0));
-
-	atomic_store(&ctx->hi_water, hiwater);
-	atomic_store(&ctx->lo_water, lowater);
-
-	if (atomic_load_acquire(&ctx->hi_called) &&
-	    (atomic_load_acquire(&ctx->inuse) < lowater || lowater == 0U))
-	{
-		(oldwater)(oldwater_arg, ISC_MEM_LOWATER);
-	}
+	return;
 }
 
 bool
 isc_mem_isovermem(isc_mem_t *ctx) {
 	REQUIRE(VALID_CONTEXT(ctx));
 
-	return (atomic_load_relaxed(&ctx->is_overmem));
+	bool is_overmem = atomic_load_relaxed(&ctx->is_overmem);
+
+	if (!is_overmem) {
+		/* We are not overmem, check whether we should be? */
+		size_t hiwater = atomic_load_relaxed(&ctx->hi_water);
+		if (hiwater == 0) {
+			return false;
+		}
+
+		size_t inuse = atomic_load_relaxed(&ctx->inuse);
+		if (inuse <= hiwater) {
+			return false;
+		}
+
+		if ((isc_mem_debugging & ISC_MEM_DEBUGUSAGE) != 0) {
+			fprintf(stderr,
+				"overmem mctx %p inuse %zu hi_water %zu\n", ctx,
+				inuse, hiwater);
+		}
+
+		atomic_store_relaxed(&ctx->is_overmem, true);
+		return true;
+	} else {
+		/* We are overmem, check whether we should not be? */
+		size_t lowater = atomic_load_relaxed(&ctx->lo_water);
+		if (lowater == 0) {
+			return false;
+		}
+
+		size_t inuse = atomic_load_relaxed(&ctx->inuse);
+		if (inuse >= lowater) {
+			return true;
+		}
+
+		if ((isc_mem_debugging & ISC_MEM_DEBUGUSAGE) != 0) {
+			fprintf(stderr,
+				"overmem mctx %p inuse %zu lo_water %zu\n", ctx,
+				inuse, lowater);
+		}
+		atomic_store_relaxed(&ctx->is_overmem, false);
+		return false;
+	}
 }
 
 void
@@ -1212,10 +995,10 @@ isc_mem_getname(isc_mem_t *ctx) {
 	REQUIRE(VALID_CONTEXT(ctx));
 
 	if (ctx->name[0] == 0) {
-		return ("");
+		return "";
 	}
 
-	return (ctx->name);
+	return ctx->name;
 }
 
 /*
@@ -1252,7 +1035,7 @@ isc__mempool_create(isc_mem_t *restrict mctx, const size_t element_size,
 	};
 
 #if ISC_MEM_TRACKLINES
-	if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0) {
+	if ((mctx->debugging & ISC_MEM_DEBUGTRACE) != 0) {
 		fprintf(stderr, "create pool %p file %s line %u mctx %p\n",
 			mpctx, file, line, mctx);
 	}
@@ -1292,7 +1075,7 @@ isc__mempool_destroy(isc_mempool_t **restrict mpctxp FLARG) {
 	mctx = mpctx->mctx;
 
 #if ISC_MEM_TRACKLINES
-	if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0) {
+	if ((mctx->debugging & ISC_MEM_DEBUGTRACE) != 0) {
 		fprintf(stderr, "destroy pool %p file %s line %u mctx %p\n",
 			mpctx, file, line, mctx);
 	}
@@ -1313,7 +1096,7 @@ isc__mempool_destroy(isc_mempool_t **restrict mpctxp FLARG) {
 		item = mpctx->items;
 		mpctx->items = item->next;
 
-		mem_putstats(mctx, item, mpctx->size);
+		mem_putstats(mctx, mpctx->size);
 		mem_put(mctx, item, mpctx->size, 0);
 	}
 
@@ -1357,8 +1140,8 @@ isc__mempool_get(isc_mempool_t *restrict mpctx FLARG) {
 		}
 	}
 
+	INSIST(mpctx->items != NULL);
 	item = mpctx->items;
-	INSIST(item != NULL);
 
 	mpctx->items = item->next;
 
@@ -1368,7 +1151,7 @@ isc__mempool_get(isc_mempool_t *restrict mpctx FLARG) {
 
 	ADD_TRACE(mpctx->mctx, item, mpctx->size, file, line);
 
-	return (item);
+	return item;
 }
 
 /* coverity[+free : arg-1] */
@@ -1396,7 +1179,7 @@ isc__mempool_put(isc_mempool_t *restrict mpctx, void *mem FLARG) {
 	 * If our free list is full, return this to the mctx directly.
 	 */
 	if (freecount >= freemax) {
-		mem_putstats(mctx, mem, mpctx->size);
+		mem_putstats(mctx, mpctx->size);
 		mem_put(mctx, mem, mpctx->size, 0);
 		return;
 	}
@@ -1425,21 +1208,21 @@ unsigned int
 isc_mempool_getfreemax(isc_mempool_t *restrict mpctx) {
 	REQUIRE(VALID_MEMPOOL(mpctx));
 
-	return (mpctx->freemax);
+	return mpctx->freemax;
 }
 
 unsigned int
 isc_mempool_getfreecount(isc_mempool_t *restrict mpctx) {
 	REQUIRE(VALID_MEMPOOL(mpctx));
 
-	return (mpctx->freecount);
+	return mpctx->freecount;
 }
 
 unsigned int
 isc_mempool_getallocated(isc_mempool_t *restrict mpctx) {
 	REQUIRE(VALID_MEMPOOL(mpctx));
 
-	return (mpctx->allocated);
+	return mpctx->allocated;
 }
 
 void
@@ -1455,7 +1238,7 @@ unsigned int
 isc_mempool_getfillcount(isc_mempool_t *restrict mpctx) {
 	REQUIRE(VALID_MEMPOOL(mpctx));
 
-	return (mpctx->fillcount);
+	return mpctx->fillcount;
 }
 
 /*
@@ -1507,15 +1290,8 @@ isc__mem_checkdestroyed(void) {
 
 unsigned int
 isc_mem_references(isc_mem_t *ctx) {
-	return (isc_refcount_current(&ctx->references));
+	return isc_refcount_current(&ctx->references);
 }
-
-typedef struct summarystat {
-	uint64_t total;
-	uint64_t inuse;
-	uint64_t malloced;
-	uint64_t contextsize;
-} summarystat_t;
 
 #ifdef HAVE_LIBXML2
 #define TRY0(a)                     \
@@ -1525,7 +1301,7 @@ typedef struct summarystat {
 			goto error; \
 	} while (0)
 static int
-xml_renderctx(isc_mem_t *ctx, summarystat_t *summary, xmlTextWriterPtr writer) {
+xml_renderctx(isc_mem_t *ctx, size_t *inuse, xmlTextWriterPtr writer) {
 	REQUIRE(VALID_CONTEXT(ctx));
 
 	int xmlrc;
@@ -1544,52 +1320,26 @@ xml_renderctx(isc_mem_t *ctx, summarystat_t *summary, xmlTextWriterPtr writer) {
 		TRY0(xmlTextWriterEndElement(writer)); /* name */
 	}
 
-	summary->contextsize += sizeof(*ctx);
-#if ISC_MEM_TRACKLINES
-	if (ctx->debuglist != NULL) {
-		summary->contextsize += DEBUG_TABLE_COUNT *
-						sizeof(debuglist_t) +
-					ctx->debuglistcnt * sizeof(debuglink_t);
-	}
-#endif /* if ISC_MEM_TRACKLINES */
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "references"));
 	TRY0(xmlTextWriterWriteFormatString(
 		writer, "%" PRIuFAST32,
 		isc_refcount_current(&ctx->references)));
 	TRY0(xmlTextWriterEndElement(writer)); /* references */
 
-	summary->total += isc_mem_total(ctx);
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "total"));
-	TRY0(xmlTextWriterWriteFormatString(writer, "%" PRIu64 "",
-					    (uint64_t)isc_mem_total(ctx)));
-	TRY0(xmlTextWriterEndElement(writer)); /* total */
-
-	summary->inuse += isc_mem_inuse(ctx);
+	*inuse += isc_mem_inuse(ctx);
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "inuse"));
 	TRY0(xmlTextWriterWriteFormatString(writer, "%" PRIu64 "",
 					    (uint64_t)isc_mem_inuse(ctx)));
 	TRY0(xmlTextWriterEndElement(writer)); /* inuse */
 
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "maxinuse"));
-	TRY0(xmlTextWriterWriteFormatString(writer, "%" PRIu64 "",
-					    (uint64_t)isc_mem_maxinuse(ctx)));
-	TRY0(xmlTextWriterEndElement(writer)); /* maxinuse */
-
-	summary->malloced += isc_mem_malloced(ctx);
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "malloced"));
 	TRY0(xmlTextWriterWriteFormatString(writer, "%" PRIu64 "",
-					    (uint64_t)isc_mem_malloced(ctx)));
+					    (uint64_t)isc_mem_inuse(ctx)));
 	TRY0(xmlTextWriterEndElement(writer)); /* malloced */
-
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "maxmalloced"));
-	TRY0(xmlTextWriterWriteFormatString(
-		writer, "%" PRIu64 "", (uint64_t)isc_mem_maxmalloced(ctx)));
-	TRY0(xmlTextWriterEndElement(writer)); /* maxmalloced */
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "pools"));
 	TRY0(xmlTextWriterWriteFormatString(writer, "%u", ctx->poolcnt));
 	TRY0(xmlTextWriterEndElement(writer)); /* pools */
-	summary->contextsize += ctx->poolcnt * sizeof(isc_mempool_t);
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "hiwater"));
 	TRY0(xmlTextWriterWriteFormatString(
@@ -1608,25 +1358,23 @@ xml_renderctx(isc_mem_t *ctx, summarystat_t *summary, xmlTextWriterPtr writer) {
 error:
 	MCTXUNLOCK(ctx);
 
-	return (xmlrc);
+	return xmlrc;
 }
 
 int
 isc_mem_renderxml(void *writer0) {
 	isc_mem_t *ctx;
-	summarystat_t summary = { 0 };
-	uint64_t lost;
+	size_t inuse = 0;
 	int xmlrc;
 	xmlTextWriterPtr writer = (xmlTextWriterPtr)writer0;
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "contexts"));
 
 	LOCK(&contextslock);
-	lost = totallost;
 	for (ctx = ISC_LIST_HEAD(contexts); ctx != NULL;
 	     ctx = ISC_LIST_NEXT(ctx, link))
 	{
-		xmlrc = xml_renderctx(ctx, &summary, writer);
+		xmlrc = xml_renderctx(ctx, &inuse, writer);
 		if (xmlrc < 0) {
 			UNLOCK(&contextslock);
 			goto error;
@@ -1638,33 +1386,19 @@ isc_mem_renderxml(void *writer0) {
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "summary"));
 
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "TotalUse"));
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "Malloced"));
 	TRY0(xmlTextWriterWriteFormatString(writer, "%" PRIu64 "",
-					    summary.total));
-	TRY0(xmlTextWriterEndElement(writer)); /* TotalUse */
+					    (uint64_t)inuse));
+	TRY0(xmlTextWriterEndElement(writer)); /* malloced */
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "InUse"));
 	TRY0(xmlTextWriterWriteFormatString(writer, "%" PRIu64 "",
-					    summary.inuse));
+					    (uint64_t)inuse));
 	TRY0(xmlTextWriterEndElement(writer)); /* InUse */
-
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "Malloced"));
-	TRY0(xmlTextWriterWriteFormatString(writer, "%" PRIu64 "",
-					    summary.malloced));
-	TRY0(xmlTextWriterEndElement(writer)); /* InUse */
-
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "ContextSize"));
-	TRY0(xmlTextWriterWriteFormatString(writer, "%" PRIu64 "",
-					    summary.contextsize));
-	TRY0(xmlTextWriterEndElement(writer)); /* ContextSize */
-
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "Lost"));
-	TRY0(xmlTextWriterWriteFormatString(writer, "%" PRIu64 "", lost));
-	TRY0(xmlTextWriterEndElement(writer)); /* Lost */
 
 	TRY0(xmlTextWriterEndElement(writer)); /* summary */
 error:
-	return (xmlrc);
+	return xmlrc;
 }
 
 #endif /* HAVE_LIBXML2 */
@@ -1673,9 +1407,8 @@ error:
 #define CHECKMEM(m) RUNTIME_CHECK(m != NULL)
 
 static isc_result_t
-json_renderctx(isc_mem_t *ctx, summarystat_t *summary, json_object *array) {
+json_renderctx(isc_mem_t *ctx, size_t *inuse, json_object *array) {
 	REQUIRE(VALID_CONTEXT(ctx));
-	REQUIRE(summary != NULL);
 	REQUIRE(array != NULL);
 
 	json_object *ctxobj, *obj;
@@ -1683,17 +1416,7 @@ json_renderctx(isc_mem_t *ctx, summarystat_t *summary, json_object *array) {
 
 	MCTXLOCK(ctx);
 
-	summary->contextsize += sizeof(*ctx);
-	summary->total += isc_mem_total(ctx);
-	summary->inuse += isc_mem_inuse(ctx);
-	summary->malloced += isc_mem_malloced(ctx);
-#if ISC_MEM_TRACKLINES
-	if (ctx->debuglist != NULL) {
-		summary->contextsize += DEBUG_TABLE_COUNT *
-						sizeof(debuglist_t) +
-					ctx->debuglistcnt * sizeof(debuglink_t);
-	}
-#endif /* if ISC_MEM_TRACKLINES */
+	*inuse += isc_mem_inuse(ctx);
 
 	ctxobj = json_object_new_object();
 	CHECKMEM(ctxobj);
@@ -1713,31 +1436,17 @@ json_renderctx(isc_mem_t *ctx, summarystat_t *summary, json_object *array) {
 	CHECKMEM(obj);
 	json_object_object_add(ctxobj, "references", obj);
 
-	obj = json_object_new_int64(isc_mem_total(ctx));
+	obj = json_object_new_int64(isc_mem_inuse(ctx));
 	CHECKMEM(obj);
-	json_object_object_add(ctxobj, "total", obj);
+	json_object_object_add(ctxobj, "malloced", obj);
 
 	obj = json_object_new_int64(isc_mem_inuse(ctx));
 	CHECKMEM(obj);
 	json_object_object_add(ctxobj, "inuse", obj);
 
-	obj = json_object_new_int64(isc_mem_maxinuse(ctx));
-	CHECKMEM(obj);
-	json_object_object_add(ctxobj, "maxinuse", obj);
-
-	obj = json_object_new_int64(isc_mem_malloced(ctx));
-	CHECKMEM(obj);
-	json_object_object_add(ctxobj, "malloced", obj);
-
-	obj = json_object_new_int64(isc_mem_maxmalloced(ctx));
-	CHECKMEM(obj);
-	json_object_object_add(ctxobj, "maxmalloced", obj);
-
 	obj = json_object_new_int64(ctx->poolcnt);
 	CHECKMEM(obj);
 	json_object_object_add(ctxobj, "pools", obj);
-
-	summary->contextsize += ctx->poolcnt * sizeof(isc_mempool_t);
 
 	obj = json_object_new_int64(atomic_load_relaxed(&ctx->hi_water));
 	CHECKMEM(obj);
@@ -1749,15 +1458,14 @@ json_renderctx(isc_mem_t *ctx, summarystat_t *summary, json_object *array) {
 
 	MCTXUNLOCK(ctx);
 	json_object_array_add(array, ctxobj);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
 isc_mem_renderjson(void *memobj0) {
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_mem_t *ctx;
-	summarystat_t summary = { 0 };
-	uint64_t lost;
+	size_t inuse = 0;
 	json_object *ctxarray, *obj;
 	json_object *memobj = (json_object *)memobj0;
 
@@ -1765,11 +1473,10 @@ isc_mem_renderjson(void *memobj0) {
 	CHECKMEM(ctxarray);
 
 	LOCK(&contextslock);
-	lost = totallost;
 	for (ctx = ISC_LIST_HEAD(contexts); ctx != NULL;
 	     ctx = ISC_LIST_NEXT(ctx, link))
 	{
-		result = json_renderctx(ctx, &summary, ctxarray);
+		result = json_renderctx(ctx, &inuse, ctxarray);
 		if (result != ISC_R_SUCCESS) {
 			UNLOCK(&contextslock);
 			goto error;
@@ -1777,40 +1484,28 @@ isc_mem_renderjson(void *memobj0) {
 	}
 	UNLOCK(&contextslock);
 
-	obj = json_object_new_int64(summary.total);
-	CHECKMEM(obj);
-	json_object_object_add(memobj, "TotalUse", obj);
-
-	obj = json_object_new_int64(summary.inuse);
+	obj = json_object_new_int64(inuse);
 	CHECKMEM(obj);
 	json_object_object_add(memobj, "InUse", obj);
 
-	obj = json_object_new_int64(summary.malloced);
+	obj = json_object_new_int64(inuse);
 	CHECKMEM(obj);
 	json_object_object_add(memobj, "Malloced", obj);
 
-	obj = json_object_new_int64(summary.contextsize);
-	CHECKMEM(obj);
-	json_object_object_add(memobj, "ContextSize", obj);
-
-	obj = json_object_new_int64(lost);
-	CHECKMEM(obj);
-	json_object_object_add(memobj, "Lost", obj);
-
 	json_object_object_add(memobj, "contexts", ctxarray);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 
 error:
 	if (ctxarray != NULL) {
 		json_object_put(ctxarray);
 	}
-	return (result);
+	return result;
 }
 #endif /* HAVE_JSON_C */
 
 void
 isc__mem_create(isc_mem_t **mctxp FLARG) {
-	mem_create(mctxp, isc_mem_defaultflags, 0);
+	mem_create(mctxp, isc_mem_debugging, isc_mem_defaultflags, 0);
 #if ISC_MEM_TRACKLINES
 	if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0) {
 		fprintf(stderr, "create mctx %p file %s line %u\n", *mctxp,
@@ -1832,7 +1527,7 @@ isc__mem_create_arena(isc_mem_t **mctxp FLARG) {
 	 *
 	 * https://github.com/jemalloc/jemalloc/issues/2483#issuecomment-1698173849
 	 */
-	mem_create(mctxp, isc_mem_defaultflags,
+	mem_create(mctxp, isc_mem_debugging, isc_mem_defaultflags,
 		   arena_no == ISC_MEM_ILLEGAL_ARENA
 			   ? 0
 			   : MALLOCX_ARENA(arena_no) | MALLOCX_TCACHE_NONE);
@@ -1847,26 +1542,26 @@ isc__mem_create_arena(isc_mem_t **mctxp FLARG) {
 #endif /* ISC_MEM_TRACKLINES */
 }
 
-#if defined(JEMALLOC_API_SUPPORTED) && JEMALLOC_VERSION_MAJOR >= 4
+#ifdef JEMALLOC_API_SUPPORTED
 static bool
 jemalloc_set_ssize_value(const char *valname, ssize_t newval) {
 	int ret;
 
 	ret = mallctl(valname, NULL, NULL, &newval, sizeof(newval));
-	return (ret == 0);
+	return ret == 0;
 }
-#endif /* defined(JEMALLOC_API_SUPPORTED) && JEMALLOC_VERSION_MAJOR >= 4 */
+#endif /* JEMALLOC_API_SUPPORTED */
 
 static isc_result_t
 mem_set_arena_ssize_value(isc_mem_t *mctx, const char *arena_valname,
 			  const ssize_t newval) {
 	REQUIRE(VALID_CONTEXT(mctx));
-#if defined(JEMALLOC_API_SUPPORTED) && JEMALLOC_VERSION_MAJOR >= 4
+#ifdef JEMALLOC_API_SUPPORTED
 	bool ret;
 	char buf[256] = { 0 };
 
 	if (mctx->jemalloc_arena == ISC_MEM_ILLEGAL_ARENA) {
-		return (ISC_R_UNEXPECTED);
+		return ISC_R_UNEXPECTED;
 	}
 
 	(void)snprintf(buf, sizeof(buf), "arena.%u.%s", mctx->jemalloc_arena,
@@ -1875,25 +1570,25 @@ mem_set_arena_ssize_value(isc_mem_t *mctx, const char *arena_valname,
 	ret = jemalloc_set_ssize_value(buf, newval);
 
 	if (!ret) {
-		return (ISC_R_FAILURE);
+		return ISC_R_FAILURE;
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 #else
 	UNUSED(arena_valname);
 	UNUSED(newval);
-	return (ISC_R_NOTIMPLEMENTED);
-#endif /* defined(JEMALLOC_API_SUPPORTED) && JEMALLOC_VERSION_MAJOR >= 4 */
+	return ISC_R_NOTIMPLEMENTED;
+#endif
 }
 
 isc_result_t
 isc_mem_arena_set_muzzy_decay_ms(isc_mem_t *mctx, const ssize_t decay_ms) {
-	return (mem_set_arena_ssize_value(mctx, "muzzy_decay_ms", decay_ms));
+	return mem_set_arena_ssize_value(mctx, "muzzy_decay_ms", decay_ms);
 }
 
 isc_result_t
 isc_mem_arena_set_dirty_decay_ms(isc_mem_t *mctx, const ssize_t decay_ms) {
-	return (mem_set_arena_ssize_value(mctx, "dirty_decay_ms", decay_ms));
+	return mem_set_arena_ssize_value(mctx, "dirty_decay_ms", decay_ms);
 }
 
 void
@@ -1907,15 +1602,4 @@ isc__mem_printactive(isc_mem_t *ctx, FILE *file) {
 	UNUSED(ctx);
 	UNUSED(file);
 #endif /* if ISC_MEM_TRACKLINES */
-}
-
-void *
-isc__mem_alloc_noctx(size_t size) {
-	return mallocx(size, 0);
-}
-
-void
-isc__mem_free_noctx(void *ptr, size_t size) {
-	ADJUST_ZERO_ALLOCATION_SIZE(size);
-	sdallocx(ptr, size, 0);
 }

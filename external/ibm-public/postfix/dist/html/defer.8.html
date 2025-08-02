@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,13 +7,13 @@
 </head> <body> <pre>
 BOUNCE(8)                                                            BOUNCE(8)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        bounce - Postfix delivery status reports
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>bounce</b> [generic Postfix daemon options]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The <a href="bounce.8.html"><b>bounce</b>(8)</a> daemon maintains per-message log files with delivery sta-
        tus information. Each log file is named after the queue  file  that  it
        corresponds  to,  and  is  kept in a queue subdirectory named after the
@@ -39,7 +39,7 @@ BOUNCE(8)                                                            BOUNCE(8)
        This  is  used by clients that cannot retry transactions by themselves,
        and that depend on retry logic in their own client.
 
-<b>STANDARDS</b>
+<b><a name="standards">STANDARDS</a></b>
        <a href="https://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
        <a href="https://tools.ietf.org/html/rfc2045">RFC 2045</a> (Format of Internet Message Bodies)
        <a href="https://tools.ietf.org/html/rfc2822">RFC 2822</a> (Internet Message Format)
@@ -51,10 +51,10 @@ BOUNCE(8)                                                            BOUNCE(8)
        <a href="https://tools.ietf.org/html/rfc6532">RFC 6532</a> (Internationalized Message Format)
        <a href="https://tools.ietf.org/html/rfc6533">RFC 6533</a> (Internationalized Delivery Status Notifications)
 
-<b>DIAGNOSTICS</b>
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically, as <a href="bounce.8.html"><b>bounce</b>(8)</a>  processes
        run for only a limited amount of time. Use the command "<b>postfix reload</b>"
        to speed up a change.
@@ -166,12 +166,18 @@ BOUNCE(8)                                                            BOUNCE(8)
        <b><a href="postconf.5.html#header_from_format">header_from_format</a> (standard)</b>
               The format of the Postfix-generated <b>From:</b> header.
 
-<b>FILES</b>
+       Available in Postfix 3.10 and later:
+
+       <b><a href="postconf.5.html#tls_required_enable">tls_required_enable</a> (yes)</b>
+              Enable  support  for  the  "TLS-Required:  no"  message  header,
+              defined in <a href="https://tools.ietf.org/html/rfc8689">RFC 8689</a>.
+
+<b><a name="files">FILES</a></b>
        /var/spool/postfix/bounce/* non-delivery records
        /var/spool/postfix/defer/* non-delivery records
        /var/spool/postfix/trace/* delivery status records
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="bounce.5.html">bounce(5)</a>, bounce message template format
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
@@ -180,7 +186,7 @@ BOUNCE(8)                                                            BOUNCE(8)
        <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>
@@ -193,6 +199,9 @@ BOUNCE(8)                                                            BOUNCE(8)
        Google, Inc.
        111 8th Avenue
        New York, NY 10011, USA
+
+       Wietse Venema
+       porcupine.org
 
                                                                      BOUNCE(8)
 </pre> </body> </html>

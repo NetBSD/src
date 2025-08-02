@@ -1,4 +1,4 @@
-/*	$NetBSD: res_state.c,v 1.7 2022/02/12 14:59:32 riastradh Exp $	*/
+/*	$NetBSD: res_state.c,v 1.7.4.1 2025/08/02 05:54:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_state.c,v 1.7 2022/02/12 14:59:32 riastradh Exp $");
+__RCSID("$NetBSD: res_state.c,v 1.7.4.1 2025/08/02 05:54:55 perseant Exp $");
 #endif
 
 /* Need to use libc-private names for atomic operations. */
@@ -93,7 +93,7 @@ __res_get_state(void)
 		res_state_debug("checkout from list", st);
 	} else {
 		pthread_mutex_unlock(&res_mtx);
-		st = malloc(sizeof(*st));
+		st = calloc(1, sizeof(*st));
 		if (st == NULL) {
 			h_errno = NETDB_INTERNAL;
 			return NULL;

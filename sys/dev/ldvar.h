@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.35 2021/05/30 11:24:02 riastradh Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.35.18.1 2025/08/02 05:56:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -55,11 +55,13 @@ struct ld_softc {
 	int		sc_flags;	/* control flags */
 	uint64_t	sc_secperunit;	/* # sectors in total */
 	int		sc_secsize;	/* sector size in bytes */
+	int		sc_physsecsize;	/* physical sector size in bytes */
+	uint32_t	sc_alignedsec;	/* first physically-aligned LBA */
 	int		sc_maxxfer;	/* max xfer size in bytes */
 	int		sc_maxqueuecnt;	/* maximum h/w queue depth */
 	char		*sc_typename;	/* inquiry data */
 
-	int		(*sc_dump)(struct ld_softc *, void *, int, int);
+	int		(*sc_dump)(struct ld_softc *, void *, daddr_t, int);
 	int		(*sc_ioctl)(struct ld_softc *, u_long, void *, int32_t, bool);
 	int		(*sc_start)(struct ld_softc *, struct buf *);
 	int		(*sc_discard)(struct ld_softc *, struct buf *);

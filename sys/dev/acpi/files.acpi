@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.132 2024/03/21 02:36:01 riastradh Exp $
+#	$NetBSD: files.acpi,v 1.132.2.1 2025/08/02 05:56:32 perseant Exp $
 
 defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV
 			ACPI_DSDT_OVERRIDE ACPI_SCANPCI ACPI_BREAKPOINT
@@ -22,7 +22,8 @@ file	dev/acpi/acpi.c			acpi
 file	dev/acpi/acpi_debug.c		acpi
 file	dev/acpi/acpi_dev.c		acpi
 file	dev/acpi/acpi_event.c		acpi
-file	dev/acpi/acpi_i2c.c		acpi
+file	dev/acpi/acpi_gpio.c		acpi
+file	dev/acpi/acpi_i2c.c		acpi & iic
 file	dev/acpi/acpi_mcfg.c		acpi & pci
 file	dev/acpi/acpi_pci.c		acpi & pci
 file	dev/acpi/acpi_pci_link.c	acpi & pci
@@ -115,6 +116,11 @@ file	dev/acpi/acpi_pcc.c		acpipcc
 device	acpicppc: acpipcc
 attach	acpicppc at acpinodebus
 file	dev/acpi/acpi_cppc.c		acpicppc
+
+# ACPI Virtual Machine Generation ID
+device	acpivmgenid
+attach	acpivmgenid at acpinodebus
+file	dev/acpi/acpi_vmgenid.c		acpivmgenid
 
 # ACPI Platform Error Interface
 device	apei
@@ -291,7 +297,7 @@ attach	amdccp at acpinodebus with amdccp_acpi
 file	dev/acpi/amdccp_acpi.c		amdccp_acpi
 
 # QEMU Virtio
-attach	virtio at acpinodebus with virtio_acpi
+attach	virtio at acpinodebus with virtio_acpi: virtio_mmio
 file	dev/acpi/virtio_acpi.c		virtio_acpi
 
 # OHCI-compliant USB controller
@@ -330,5 +336,55 @@ file	dev/acpi/dwcmmc_acpi.c		dwcmmc_acpi
 # DesignWare Watchdog
 attach	dwcwdt at acpinodebus with dwcwdt_acpi
 file	dev/acpi/dwcwdt_acpi.c		dwcwdt_acpi
+
+# Qualcomm GPIO
+device	qcomgpio: gpiobus
+attach	qcomgpio at acpinodebus
+file	dev/acpi/qcomgpio.c		qcomgpio
+
+# Qualcomm I2C controller
+device	qcomiic: i2cbus
+attach	qcomiic at acpinodebus
+file	dev/acpi/qcomiic.c		qcomiic
+
+# Qualcomm SPMI controller
+device	qcomspmi
+attach	qcomspmi at acpinodebus
+file	dev/acpi/qcomspmi.c		qcomspmi
+
+# Qualcomm Secure Channel Manager
+device	qcomscm
+attach	qcomscm at acpinodebus
+file	dev/acpi/qcomscm.c		qcomscm
+
+# Qualcomm IPCC driver
+device	qcomipcc
+attach	qcomipcc at acpinodebus
+file	dev/acpi/qcomipcc.c		qcomipcc
+
+# Qualcomm PEP / AOSS driver
+device	qcompep: scmi
+attach	qcompep at acpinodebus
+file	dev/acpi/qcompep.c		qcompep
+
+# Qualcomm Shared Memory driver
+device	qcomsmem
+attach	qcomsmem at acpinodebus
+file	dev/acpi/qcomsmem.c		qcomsmem
+
+# Qualcomm SMP2P driver
+device	qcomsmptp
+attach	qcomsmptp at acpinodebus
+file	dev/acpi/qcomsmptp.c		qcomsmptp
+
+# Qualcomm PAS driver
+device	qcompas
+attach	qcompas at acpinodebus
+file	dev/acpi/qcompas.c		qcompas
+
+# AMD GPIO
+device	amdgpio: gpiobus
+attach	amdgpio at acpinodebus
+file	dev/acpi/amdgpio.c		amdgpio
 
 include	"dev/acpi/wmi/files.wmi"

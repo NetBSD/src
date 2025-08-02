@@ -242,7 +242,8 @@ sin_pil(long double x)
 long double
 lgammal_r(long double x, int *signgamp)
 {
-	long double nadj,p,p1,p2,q,r,t,w,y,z;
+	long double p,p1,p2,q,r,t,w,y,z;
+	long double nadj = 0; // XXX: gcc
 	uint64_t lx;
 	int i;
 	uint16_t hx,ix;

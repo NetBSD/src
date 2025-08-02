@@ -27,7 +27,7 @@ mpfr_set_prec (mpfr_ptr x, mpfr_prec_t p)
 {
   mp_size_t xsize, xoldsize;
 
-  MPFR_LOG_MSG (("prec=%Pu\n", p));
+  MPFR_LOG_MSG (("prec=%Pd\n", p));
 
   /* first, check if p is correct */
   MPFR_ASSERTN (MPFR_PREC_COND (p));

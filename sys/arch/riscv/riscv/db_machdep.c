@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.11 2023/06/12 19:04:14 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.11.6.1 2025/08/02 05:56:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,18 +31,26 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_machdep.c,v 1.11 2023/06/12 19:04:14 skrll Exp $");
+__RCSID("$NetBSD: db_machdep.c,v 1.11.6.1 2025/08/02 05:56:04 perseant Exp $");
 
 #include <sys/param.h>
+
+#include <sys/cpu.h>
+#include <sys/systm.h>
 
 #include <riscv/insn.h>
 #include <riscv/db_machdep.h>
 
+#include <ddb/db_user.h>
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_output.h>
+
+#ifndef _KERNEL
+#include <stddef.h>
+#endif
 
 static int db_rw_ddbreg(const struct db_variable *, db_expr_t *, int);
 
@@ -88,7 +96,7 @@ const struct db_variable * const db_eregs = db_regs + __arraycount(db_regs);
 int
 db_rw_ddbreg(const struct db_variable *vp, db_expr_t *valp, int rw)
 {
-	struct trapframe * const tf = curcpu()->ci_ddb_regs;
+	struct trapframe * const tf = &ddb_regs;
 	const uintptr_t addr = (uintptr_t)tf + (uintptr_t)vp->valuep;
 	if (vp->modif != NULL && vp->modif[0] == 'i') {
 		if (rw == DB_VAR_GET) {
@@ -177,7 +185,6 @@ branch_taken(uint32_t insn, db_addr_t pc, db_regs_t *tf)
 		displacement |= i.type_j.j_imm11 << 11;
 		displacement |= i.type_j.j_imm10to1 << 1;
 	} else {
-		KASSERT(OPCODE_P(insn, BRANCH));
 		register_t rs1 = get_reg_value(tf, i.type_b.b_rs1);
 		register_t rs2 = get_reg_value(tf, i.type_b.b_rs2);
 		bool branch_p; // = false;
@@ -217,59 +224,4 @@ db_addr_t
 next_instr_address(db_addr_t pc, bool bdslot_p)
 {
 	return pc + (bdslot_p ? 0 : 4);
-}
-
-void
-db_read_bytes(db_addr_t addr, size_t len, char *data)
-{
-	const char *src = (char *)addr;
-	int err;
-
-	/* If asked to fetch from userspace, do it safely */
-	if ((intptr_t)addr >= 0) {
-		err = copyin(src, data, len);
-		if (err) {
-#ifdef DDB
-			db_printf("address %p is invalid\n", src);
-#endif
-			memset(data, 0, len);
-		}
-		return;
-	}
-
-	while (len--) {
-		*data++ = *src++;
-	}
-}
-
-/*
- * Write bytes to kernel address space for debugger.
- */
-void
-db_write_bytes(vaddr_t addr, size_t len, const char *data)
-{
-	int err;
-
-	/* If asked to fetch from userspace, do it safely */
-	if ((intptr_t)addr >= 0) {
-		err = copyout(data, (char *)addr, len);
-		if (err) {
-#ifdef DDB
-			db_printf("address %p is invalid\n", (char *)addr);
-#endif
-		}
-		return;
-	}
-
-	if (len == 8) {
-		*(uint64_t *)addr = *(const uint64_t *) data;
-	} else if (len == 4) {
-		*(uint32_t *)addr = *(const uint32_t *) data;
-	} else if (len == 2) {
-		*(uint16_t *)addr = *(const uint16_t *) data;
-	} else {
-		KASSERT(len == 1);
-		*(uint8_t *)addr = *(const uint8_t *) data;
-	}
-	__asm("fence rw,rw; fence.i");
 }

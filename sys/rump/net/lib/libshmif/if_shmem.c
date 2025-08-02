@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.84 2022/04/09 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.84.10.1 2025/08/02 05:57:53 perseant Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.84 2022/04/09 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.84.10.1 2025/08/02 05:57:53 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.84 2022/04/09 23:45:02 riastradh Exp 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 #include <net/ether_sw_offload.h>
 
 #include <netinet/in.h>
@@ -58,6 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.84 2022/04/09 23:45:02 riastradh Exp 
 
 static int shmif_clone(struct if_clone *, int);
 static int shmif_unclone(struct ifnet *);
+
+static int shmif_mediachange(struct ifnet *);
+static void shmif_mediastatus(struct ifnet *, struct ifmediareq *);
 
 struct if_clone shmif_cloner =
     IF_CLONE_INITIALIZER("shmif", shmif_clone, shmif_unclone);
@@ -84,6 +88,7 @@ static void	shmif_stop(struct ifnet *, int);
 
 struct shmif_sc {
 	struct ethercom sc_ec;
+	struct ifmedia sc_im;
 	struct shmif_mem *sc_busmem;
 	int sc_memfd;
 	int sc_kq;
@@ -105,10 +110,6 @@ struct shmif_sc {
 };
 
 static void shmif_rcv(void *);
-
-#define LOCK_UNLOCKED	0
-#define LOCK_LOCKED	1
-#define LOCK_COOLDOWN	1001
 
 vmem_t *shmif_units;
 
@@ -175,6 +176,11 @@ allocif(int unit, struct shmif_sc **scp)
 	sc->sc_uid = randnum;
 
 	ifp = &sc->sc_ec.ec_if;
+
+	ifmedia_init(&sc->sc_im, 0, shmif_mediachange, shmif_mediastatus);
+	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_AUTO, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_NONE, 0, NULL);
+	ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_AUTO);
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "shmif%d", unit);
 	ifp->if_softc = sc;
@@ -446,6 +452,33 @@ shmif_init(struct ifnet *ifp)
 }
 
 static int
+shmif_mediachange(struct ifnet *ifp)
+{
+	struct shmif_sc *sc = ifp->if_softc;
+	int link_state;
+
+	if (IFM_SUBTYPE(sc->sc_im.ifm_cur->ifm_media) == IFM_NONE)
+		link_state = LINK_STATE_DOWN;
+	else
+		link_state = LINK_STATE_UP;
+
+	if_link_state_change(ifp, link_state);
+	return 0;
+}
+
+static void
+shmif_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
+{
+	struct shmif_sc *sc = ifp->if_softc;
+
+	imr->ifm_active = sc->sc_im.ifm_cur->ifm_media;
+
+	imr->ifm_status = IFM_AVALID;
+	if (IFM_SUBTYPE(imr->ifm_active) != IFM_NONE)
+		imr->ifm_status |= IFM_ACTIVE;
+}
+
+static int
 shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct shmif_sc *sc = ifp->if_softc;
@@ -486,6 +519,8 @@ shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		ifd = data;
 		if (ifd->ifd_cmd == IFLINKSTR_UNSET) {
 			finibackend(sc);
+			/* Back to the default just in case */
+			ifp->if_link_state = LINK_STATE_UNKNOWN;
 			rv = 0;
 			break;
 		} else if (ifd->ifd_cmd != 0) {
@@ -525,7 +560,17 @@ shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		sc->sc_backfile = path;
 		sc->sc_backfilelen = ifd->ifd_len;
 
+		if_link_state_change(ifp, LINK_STATE_UP);
 		break;
+
+#ifdef OSIOCSIFMEDIA
+	case OSIOCSIFMEDIA:
+#endif
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		rv = ifmedia_ioctl(ifp, data, &sc->sc_im, cmd);
+		break;
+
 	default:
 		rv = ether_ioctl(ifp, cmd, data);
 		if (rv == ENETRESET)
@@ -601,6 +646,14 @@ shmif_snd(struct ifnet *ifp, struct mbuf *m0)
 
 	bpf_mtap(ifp, m0, BPF_D_OUT);
 
+	/*
+	 * Compare with DOWN to allow UNKNOWN (the default value),
+	 * which is required by some ATF tests using rump servers
+	 * written in C.
+	 */
+	if (ifp->if_link_state == LINK_STATE_DOWN)
+		goto dontsend;
+
 	shmif_lockbus(busmem);
 	KASSERT(busmem->shm_magic == SHMIF_MAGIC);
 	busmem->shm_last = shmif_nextpktoff(busmem, busmem->shm_last);
@@ -621,6 +674,7 @@ shmif_snd(struct ifnet *ifp, struct mbuf *m0)
 	}
 	shmif_unlockbus(busmem);
 
+dontsend:
 	m_freem(m0);
 	if_statinc(ifp, if_opackets);
 
@@ -790,7 +844,14 @@ shmif_rcv(void *arg)
 		 * Test if we want to pass the packet upwards
 		 */
 		eth = mtod(m, struct ether_header *);
-		if (sp.sp_sender == sc->sc_uid) {
+		/*
+		 * Compare with DOWN to allow UNKNOWN (the default value),
+		 * which is required by some ATF tests using rump servers
+		 * written in C.
+		 */
+		if (ifp->if_link_state == LINK_STATE_DOWN) {
+			passup = false;
+		} else if (sp.sp_sender == sc->sc_uid) {
 			passup = false;
 		} else if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN) == 0) {

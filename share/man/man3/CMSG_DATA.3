@@ -1,4 +1,4 @@
-.\"	$NetBSD: CMSG_DATA.3,v 1.3 2015/01/24 17:17:01 christos Exp $
+.\"	$NetBSD: CMSG_DATA.3,v 1.3.28.1 2025/08/02 05:55:10 perseant Exp $
 .\"	$OpenBSD: CMSG_DATA.3,v 1.5 2008/03/24 16:11:07 deraadt Exp $
 .\" Written by Jared Yanovich <jaredy@openbsd.org>
 .\" Public domain, July 3, 2005
@@ -64,12 +64,19 @@ This routine determines the size in bytes of a control message,
 which includes the control message header.
 .Fa len
 specifies the length of the data held by the control message.
+.Pp
 This value is what is normally stored in the
 .Fa cmsg_len
 of each control message.
+.Pp
 This routine accounts for any alignment constraints on the beginning of
 ancillary data.
-This macro might not evaluate to a compile-time constant.
+.Pp
+If
+.Fa len
+is an integer constant expression, then
+.Fn CMSG_LEN len
+is an integer constant expression.
 .It Fn CMSG_NXTHDR mhdr cmsg
 This routine returns the location of the control message following
 .Fa cmsg
@@ -84,11 +91,18 @@ This routine determines the size in bytes needed to hold a control
 message and its contents of length
 .Fa len ,
 which includes the control message header.
+.Pp
 This value is what is normally stored in
 .Fa msg_msgcontrollen .
+.Pp
 This routine accounts for any alignment constraints on the beginning of
 ancillary data as well as any needed to pad the next control message.
-This macro might not evaluate to a compile-time constant.
+.Pp
+If
+.Fa len
+is an integer constant expression, then
+.Fn CMSG_SPACE len
+is an integer constant expression.
 .El
 .Sh EXAMPLES
 The following example constructs a control message containing a file
@@ -98,19 +112,13 @@ struct msghdr	 msg;
 struct cmsghdr	*cmsg;
 /* We use a union to make sure hdr is aligned */
 union {
-	struct cmsghdr hdr;
-	unsigned char	 buf[CMSG_SPACE(sizeof(int))];
-} *cmsgbuf;
+	struct cmsghdr	hdr;
+	unsigned char	buf[CMSG_SPACE(sizeof(int))];
+} cmsgbuf;
 
-/*
- * We allocate in the heap instead of the stack to avoid C99
- * variable stack allocation, which breaks gcc -fstack-protector.
- */
-if ((cmsgbuf = malloc(sizeof(*cmsgbuf))) == NULL)
-	err(1, "malloc");
 (void)memset(&msg, 0, sizeof(msg));
-msg.msg_control = cmsgbuf->buf;
-msg.msg_controllen = sizeof(cmsgbuf->buf);
+msg.msg_control = cmsgbuf.buf;
+msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 cmsg = CMSG_FIRSTHDR(&msg);
 cmsg->cmsg_len = CMSG_LEN(sizeof(int));
@@ -120,39 +128,57 @@ cmsg->cmsg_type = SCM_RIGHTS;
 
 if (sendmsg(s, &msg, 0) == -1)
 	err(1, "sendmsg");
-free(cmsgbuf);
 .Ed
 .Pp
-And an example that receives and decomposes the control message:
+And an example that receives the control message and handles all the
+file descriptors it receives:
 .Bd -literal -offset indent
 struct msghdr	 msg;
 struct cmsghdr	*cmsg;
 union {
-	struct cmsghdr hdr;
-	unsigned char	 buf[CMSG_SPACE(sizeof(int))];
-} *cmsgbuf;
+	struct cmsghdr	hdr;
+	unsigned char	buf[CMSG_SPACE(sizeof(int))];
+} cmsgbuf;
 
-if ((cmsgbuf = malloc(sizeof(*cmsgbuf))) == NULL)
-	err(1, "malloc");
 (void)memset(&msg, 0, sizeof(msg));
-msg.msg_control = cmsgbuf->buf;
-msg.msg_controllen = sizeof(cmsgbuf->buf);
+msg.msg_control = cmsgbuf.buf;
+msg.msg_controllen = sizeof(cmsgbuf.buf);
 
 if (recvmsg(s, &msg, 0) == -1)
 	err(1, "recvmsg");
-if ((msg.msg_flags & (MSG_TRUNC|MSG_CTRUNC))
-	errx(1, "control message truncated");
+if (msg.msg_flags & MSG_CTRUNC)
+	warnx("control message truncated");
 for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
     cmsg = CMSG_NXTHDR(&msg, cmsg)) {
-	if (cmsg->cmsg_len == CMSG_LEN(sizeof(int)) &&
-	    cmsg->cmsg_level == SOL_SOCKET &&
+	if (cmsg->cmsg_level == SOL_SOCKET &&
 	    cmsg->cmsg_type == SCM_RIGHTS) {
-		fd = *(int *)CMSG_DATA(cmsg);
-		/* Do something with the descriptor. */
+		int *fdp = (int *)CMSG_DATA(cmsg);
+		socklen_t nbytes = cmsg->cmsg_len - CMSG_LEN(0);
+		socklen_t nfds = nbytes/sizeof(fdp[0]);
+
+		assert(nbytes % sizeof(fdp[0]) == 0);
+
+		while (nfds --> 0) {
+			int fd = *fdp++;
+
+			/* Do something with the descriptor. */
+		}
 	}
 }
-free(cmsgbuf);
 .Ed
+.Pp
+Note that even if the receiver
+.Em intends
+to size its control buffer for
+.Em one
+file descriptor with
+.Li CMSG_SPACE(sizeof(int)) ,
+this size may be rounded up for alignment to enough space for more than
+one file descriptor.
+So if the sender may send more than one file descriptor at a time, the
+receiver cannot restrict itself to receiving at most one at a time, and
+must be prepared to handle all of them \(em otherwise they will simply
+leak on the receiver side.
 .Sh SEE ALSO
 .Xr recvmsg 2 ,
 .Xr sendmsg 2 ,

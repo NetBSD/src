@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.35 2022/11/21 21:29:32 brad Exp $
+.\"	$NetBSD: iic.4,v 1.35.4.1 2025/08/02 05:55:11 perseant Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -42,6 +42,7 @@
 .Cd "iic* at cuda?                # macppc "
 .Cd "iic* at cxdtv?               # amd64 i386 "
 .Cd "iic* at diic?                # acorn32 evbppc "
+.Cd "iic* at ds28e17iic?          # 1-Wire "
 .Cd "iic* at dwiic?               # amd64 i386 "
 .Cd "iic* at exyoi2c?             # evbarm "
 .Cd "iic* at g2i2c?               # evbarm "
@@ -71,6 +72,7 @@
 .Cd "iic* at tegrai2c?            # evbarm "
 .Cd "iic* at tiiic?               # evbarm "
 .Cd "iic* at tsciic?              # alpha "
+.Cd "iic* at umcpmio?             # USB "
 .Cd "iic* at viapcib?             # i386 "
 .Cd "iic* at voyager0             # evbmips "
 .Cd "iic0 at ziic?                # evbmips zaurus "
@@ -154,6 +156,8 @@ Support for CUDA microcontrollers found in many Power Macintosh and
 compatible computers
 .It Xr cxdtv 4
 Digital video driver for Conexant CX2388x based cards
+.It Xr ds28e17iic 4
+1-Wire to I2C bridge
 .It Xr gpioiic 4
 GPIO I2C controller
 .It Xr ichsmb 4
@@ -164,6 +168,8 @@ Intel Chipset internal SMBus 2.0 controller with DMA
 NVIDIA nForce 2/3/4 SMBus controller and SMBus driver
 .It Xr piixpm 4
 Intel PIIX and compatible Power Management controller
+.It Xr umcpmio 4
+MCP-2221 / 2221A USB multi-io chip
 .El
 .Sh SUPPORTED SLAVES
 A wide list of slaves are supported, among them:
@@ -189,6 +195,10 @@ Bosch BMP280/BME280 humidity/temperature/pressure sensors
 VESA Display Data Channel V2 devices
 .It Xr dbcool 4
 dbCool(tm) family of environmental monitors and fan controllers
+.It Xr ds2482ow 4
+Maxim DS2482-100 and DS2482-800 I2C to 1-Wire bridge
+.It Xr emcfan 4
+Microchip Technology EMC210X and EMC230X fan controllers
 .It Xr g760a 4
 Global Mixed-mode Technology Inc. G760a fan speed controller
 .It Xr hythygtemp 4

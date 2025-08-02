@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.217 2024/01/20 14:52:47 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.217.2.1 2025/08/02 05:54:36 perseant Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -33,11 +33,15 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	signame.c sigrelse.c sigset.c sigsetops.c sleep.c \
 	stringlist.c sysconf.c sysctl.c sysctlbyname.c sysctlgetmibinfo.c \
 	sysctlnametomib.c syslog.c syslog_ss.c telldir.c time.c timespec_get.c \
+	timespec_getres.c \
 	times.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c ualarm.c \
 	ulimit.c uname.c unvis.c usleep.c utime.c utimens.c utmp.c \
 	utmpx.c valloc.c vis.c wait.c wait3.c waitid.c waitpid.c warn.c \
 	warnx.c warnc.c wordexp.c xsyslog.c \
 	vwarn.c vwarnx.c vwarnc.c verr.c verrx.c verrc.c
+
+LINTFLAGS.arc4random.c+=-Ac11	# stdatomic.h
+LINTFLAGS.arc4random.c+=-X 129	# expression has null effect (in atomic macros)
 
 # uses alloca
 COPTS.execvp.c = -Wno-stack-protector
@@ -57,7 +61,6 @@ MAN+=	alarm.3 arc4random.3 basename.3 bsd_signal.3 bswap.3 \
 	clock.3 closefrom.3 confstr.3 \
 	cpuset.3 ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 \
 	endutent.3 endutxent.3 err.3 exec.3 extattr_copy_file.3 \
-	extattr_namespace_to_string.3 \
 	fmtcheck.3 fmtmsg.3 fnmatch.3 fpclassify.3 fpgetmask.3 \
 	ftok.3 fts.3 ftw.3 \
 	getbsize.3 cgetcap.3 getcwd.3 getdevmajor.3 \
@@ -83,8 +86,8 @@ MAN+=	alarm.3 arc4random.3 basename.3 bsd_signal.3 bswap.3 \
 	setproctitle.3 shquote.3 sighold.3 sigignore.3 siginterrupt.3 \
 	signal.3 signalname.3 signbit.3 sigrelse.3 sigset.3 sigsetops.3 \
 	sleep.3 stringlist.3 sysconf.3 sysctl.3 syslog.3 \
-	time.3 timespec_get.3 times.3 timezone.3 toascii.3 tolower.3 \
-	toupper.3 ttyname.3 \
+	time.3 timespec_get.3 times.3 timezone.3 toascii.3 \
+	tolower.3 toupper.3 ttyname.3 \
 	ualarm.3 ulimit.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3 \
 	wordexp.3
 
@@ -109,8 +112,7 @@ MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
 	err.3 vwarnc.3
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execlpe.3 \
 	exec.3 execv.3 exec.3 execvp.3 exec.3 execvpe.3 exec.3 exect.3 
-MLINKS+=extattr_namespace_to_string.3 extattr_string_to_namespace.3 \
-	extattr_copy_file.3 extattr_copy_fd.3 \
+MLINKS+=extattr_copy_file.3 extattr_copy_fd.3 \
 	extattr_copy_file.3 extattr_copy_link.3 \
 	extattr_copy_file.3 cpxattr.3 \
 	extattr_copy_file.3 fcpxattr.3 \
@@ -191,9 +193,12 @@ MLINKS+=sysctl.3 sysctlbyname.3 \
 MLINKS+=syslog.3 closelog.3 syslog.3 openlog.3 syslog.3 setlogmask.3 \
 	syslog.3 vsyslog.3
 MLINKS+=syslog.3 closelog_r.3 syslog.3 openlog_r.3 syslog.3 setlogmask_r.3 \
-	syslog.3 syslog_r.3 syslog.3 vsyslog_r.3
+	syslog.3 syslog_r.3 syslog.3 vsyslog_r.3 \
+	syslog.3 syslog_ss.3 syslog.3 vsyslog_ss.3
 MLINKS+=syslog.3 syslogp.3 syslog.3 syslogp_r.3 \
-	syslog.3 vsyslogp.3 syslog.3 vsyslogp_r.3
+	syslog.3 vsyslogp.3 syslog.3 vsyslogp_r.3 \
+	syslog.3 syslogp_ss.3 syslog.3 vsyslogp_ss.3
+MLINKS+=timespec_get.3 timespec_getres.3
 MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3 ttyname.3 ttyname_r.3
 MLINKS+=unvis.3 strunvis.3 unvis.3 strunvisx.3
 MLINKS+=unvis.3 strnunvis.3 unvis.3 strnunvisx.3
@@ -213,5 +218,7 @@ errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 LINTFLAGS.rb.c += -X 231	# XXX: marked as unused already why?
 LINTFLAGS.siglist.c += -X 351	# XXX: renames
 LINTFLAGS.signame.c += -X 351	# XXX: renames
+# missing atomic decls
+LINTFLAGS.arc4random.c += ${${ACTIVE_CC} == "clang":? -X 215 :}
 
 CLEANFILES+= errlist.c

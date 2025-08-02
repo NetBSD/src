@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.145 2023/09/06 19:14:52 mrg Exp $	*/
+/*	$NetBSD: libkern.h,v 1.145.6.1 2025/08/02 05:57:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
 #include <sys/types.h>
 #include <sys/inttypes.h>
 #include <sys/null.h>
+#include <sys/stddef.h>
+#include <sys/container_of.h>
 
 #include <lib/libkern/strlist.h>
 
@@ -314,56 +316,6 @@ tolower(int ch)
  */
 #define SMALL_RANDOM
 
-#ifndef offsetof
-#if __GNUC_PREREQ__(4, 0)
-#define offsetof(type, member)	__builtin_offsetof(type, member)
-#else
-#define	offsetof(type, member) \
-    ((size_t)(unsigned long)(&(((type *)0)->member)))
-#endif
-#endif
-
-/*
- * Return the container of an embedded struct.  Given x = &c->f,
- * container_of(x, T, f) yields c, where T is the type of c.  Example:
- *
- *	struct foo { ... };
- *	struct bar {
- *		int b_x;
- *		struct foo b_foo;
- *		...
- *	};
- *
- *	struct bar b;
- *	struct foo *fp = &b.b_foo;
- *
- * Now we can get at b from fp by:
- *
- *	struct bar *bp = container_of(fp, struct bar, b_foo);
- *
- * The 0*sizeof((PTR) - ...) causes the compiler to warn if the type of
- * *fp does not match the type of struct bar::b_foo.
- * We skip the validation for coverity runs to avoid warnings.
- */
-#if defined(__COVERITY__) || defined(__LGTM_BOT__)
-#define __validate_container_of(PTR, TYPE, FIELD) 0
-#define __validate_const_container_of(PTR, TYPE, FIELD) 0
-#else
-#define __validate_container_of(PTR, TYPE, FIELD)			\
-    (0 * sizeof((PTR) - &((TYPE *)(((char *)(PTR)) -			\
-    offsetof(TYPE, FIELD)))->FIELD))
-#define __validate_const_container_of(PTR, TYPE, FIELD)			\
-    (0 * sizeof((PTR) - &((const TYPE *)(((const char *)(PTR)) -	\
-    offsetof(TYPE, FIELD)))->FIELD))
-#endif
-
-#define	container_of(PTR, TYPE, FIELD)					\
-    ((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD))			\
-	+ __validate_container_of(PTR, TYPE, FIELD))
-#define	const_container_of(PTR, TYPE, FIELD)				\
-    ((const TYPE *)(((const char *)(PTR)) - offsetof(TYPE, FIELD))	\
-	+ __validate_const_container_of(PTR, TYPE, FIELD))
-
 /* Prototypes for which GCC built-ins exist. */
 void	*memcpy(void *, const void *, size_t);
 int	 memcmp(const void *, const void *, size_t);
@@ -506,8 +458,8 @@ void	 mi_vector_hash(const void * __restrict, size_t, uint32_t,
 int	 scanc(u_int, const u_char *, const u_char *, int);
 int	 skpc(int, size_t, u_char *);
 int	 strcasecmp(const char *, const char *);
-size_t	 strlcpy(char *, const char *, size_t);
-size_t	 strlcat(char *, const char *, size_t);
+size_t	 strlcpy(char * __restrict, const char * __restrict, size_t);
+size_t	 strlcat(char * __restrict, const char * __restrict, size_t);
 int	 strncasecmp(const char *, const char *, size_t);
 u_long	 strtoul(const char *, char **, int);
 long long strtoll(const char *, char **, int);
@@ -524,7 +476,10 @@ void	 hexdump(void (*)(const char *, ...) __printflike(1, 2),
 int	 snprintb(char *, size_t, const char *, uint64_t);
 int	 snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 int	 kheapsort(void *, size_t, size_t, int (*)(const void *, const void *),
-		   void *);
+	    void *);
+int	 kheapsort_r(void *, size_t, size_t,
+	    int (*)(const void *, const void *, void *), void *,
+	    void *);
 uint32_t crc32(uint32_t, const uint8_t *, size_t);
 #if __GNUC_PREREQ__(4, 5) \
     && (defined(__alpha_cix__) || defined(__mips_popcount))

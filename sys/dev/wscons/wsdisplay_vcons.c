@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.68 2024/02/09 22:08:37 andvar Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.68.2.1 2025/08/02 05:57:08 perseant Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.68 2024/02/09 22:08:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.68.2.1 2025/08/02 05:57:08 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,7 +462,8 @@ vcons_load_font(void *v, void *cookie, struct wsdisplay_font *f)
 	struct vcons_screen *scr = cookie;
 	struct rasops_info *ri;
 	struct wsdisplay_font *font;
-	int flags = WSFONT_FIND_BITMAP, fcookie;
+	char buf[64], *at;
+	int flags = WSFONT_FIND_BITMAP, fcookie, h = 0;
 
 	/* see if we're asked to add a font or use it */
 	if (scr == NULL)
@@ -480,7 +481,19 @@ vcons_load_font(void *v, void *cookie, struct wsdisplay_font *f)
 		flags |= WSFONT_FIND_ALPHA;
 	}
 
-	fcookie = wsfont_find(f->name, 0, 0, 0,
+	strncpy(buf, f->name, 63);
+	buf[63] = 0;
+	at = strchr(buf, '@');
+	if (at != NULL) {
+		int stat;
+		at[0] = 0;
+		at++;
+		DPRINTF("got '%s'\n", at);
+		h = strtoi(at, NULL, 10, 1, 99, &stat);
+		if (stat != 0) h = 0;
+		DPRINTF("looking for %d\n", h);
+	}
+	fcookie = wsfont_find(buf, 0, h, 0,
 	    /* bitorder */
 	    scr->scr_flags & VCONS_FONT_BITS_R2L ?
 	      WSDISPLAY_FONTORDER_R2L : WSDISPLAY_FONTORDER_L2R,
@@ -489,7 +502,7 @@ vcons_load_font(void *v, void *cookie, struct wsdisplay_font *f)
 	      WSDISPLAY_FONTORDER_R2L : WSDISPLAY_FONTORDER_L2R,
 	    flags);
 	if (fcookie == -1)
-		return EINVAL;
+		return ENOENT;
 
 	wsfont_lock(fcookie, &font);
 	if (font == NULL)
@@ -838,6 +851,20 @@ vcons_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			vcons_hard_switch(LIST_FIRST(&vdp->screens));
 		} else
 			vcons_disable_polling(vd);
+		}
+		break;
+
+	case WSDISPLAYIO_GFONT: {
+		struct wsdisplay_getfont *gf = data;
+		size_t actual;
+		struct wsdisplay_font *font;
+		const char *fontname;
+
+		font = ((struct vcons_screen *)vs)->scr_ri.ri_font;
+		fontname = font && font->name ? font->name : "";
+		error = copyoutstr(fontname, gf->gf_name, gf->gf_size, &actual);
+		if (!error)
+			gf->gf_actual = actual;
 		}
 		break;
 

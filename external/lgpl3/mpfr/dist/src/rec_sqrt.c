@@ -463,10 +463,11 @@ mpfr_rec_sqrt (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
   int s, cy, inex;
   mpfr_limb_ptr x;
   MPFR_TMP_DECL(marker);
+  MPFR_ZIV_DECL (loop);
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec (u), mpfr_log_prec, u, rnd_mode),
-     ("y[%Pu]=%.*Rg inexact=%d", mpfr_get_prec (r), mpfr_log_prec, r, inex));
+    (("x[%Pd]=%.*Rg rnd=%d", mpfr_get_prec (u), mpfr_log_prec, u, rnd_mode),
+     ("y[%Pd]=%.*Rg inexact=%d", mpfr_get_prec (r), mpfr_log_prec, r, inex));
 
   /* special values */
   if (MPFR_UNLIKELY(MPFR_IS_SINGULAR(u)))
@@ -530,6 +531,7 @@ mpfr_rec_sqrt (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
   wp = rp + 11;
   if (wp < rn * GMP_NUMB_BITS)
     wp = rn * GMP_NUMB_BITS;
+  MPFR_ZIV_INIT (loop, wp);
   for (;;)
     {
       MPFR_TMP_MARK (marker);
@@ -561,8 +563,9 @@ mpfr_rec_sqrt (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
         }
       MPFR_TMP_FREE(marker);
 
-      wp += GMP_NUMB_BITS;
+      MPFR_ZIV_NEXT (loop, wp);
     }
+  MPFR_ZIV_FREE (loop);
   cy = mpfr_round_raw (MPFR_MANT(r), x, wp, 0, rp, rnd_mode, &inex);
   MPFR_EXP(r) = - (MPFR_EXP(u) - 1 - s) / 2;
   if (MPFR_UNLIKELY(cy != 0))

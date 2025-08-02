@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.66 2023/10/04 20:28:06 ad Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.66.6.1 2025/08/02 05:57:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.66 2023/10/04 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.66.6.1 2025/08/02 05:57:41 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -358,7 +358,7 @@ entropy_init(void)
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "entropy",
 	    SYSCTL_DESCR("Entropy (random number sources) options"),
 	    NULL, 0, NULL, 0,
-	    CTL_KERN, CTL_CREATE, CTL_EOL);
+	    CTL_KERN, KERN_ENTROPY, CTL_EOL);
 
 	/* Create the sysctl knobs.  */
 	/* XXX These shouldn't be writable at securelevel>0.  */
@@ -400,9 +400,9 @@ entropy_init(void)
 	    SYSCTL_DESCR("Number of samples pending on CPUs"),
 	    NULL, 0, &E->samplespending, 0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(&entropy_sysctllog, 0, &entropy_sysctlroot, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_PRIVATE, CTLTYPE_INT,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT,
 	    "epoch", SYSCTL_DESCR("Entropy epoch"),
-	    NULL, 0, &E->epoch, 0, CTL_CREATE, CTL_EOL);
+	    NULL, 0, &E->epoch, 0, KERN_ENTROPY_EPOCH, CTL_EOL);
 
 	/* Initialize the global state for multithreaded operation.  */
 	mutex_init(&E->lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
@@ -1354,7 +1354,8 @@ entropy_notify(void)
 /*
  * entropy_consolidate()
  *
- *	Trigger entropy consolidation and wait for it to complete.
+ *	Trigger entropy consolidation and wait for it to complete, or
+ *	return EINTR if interrupted by a signal.
  *
  *	This should be used sparingly, not periodically -- requiring
  *	conscious intervention by the operator or a clear policy
@@ -1362,7 +1363,7 @@ entropy_notify(void)
  *	when enough entropy has been gathered into per-CPU pools to
  *	transition to full entropy.
  */
-void
+int
 entropy_consolidate(void)
 {
 	uint64_t ticket;
@@ -1381,6 +1382,8 @@ entropy_consolidate(void)
 			break;
 	}
 	mutex_exit(&E->lock);
+
+	return error;
 }
 
 /*
@@ -1404,7 +1407,27 @@ sysctl_entropy_consolidate(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 	if (arg)
-		entropy_consolidate();
+		error = entropy_consolidate();
+
+	return error;
+}
+
+/*
+ * entropy_gather()
+ *
+ *	Trigger gathering entropy from all on-demand sources, and, if
+ *	requested, wait for synchronous sources (but not asynchronous
+ *	sources) to complete, or fail with EINTR if interrupted by a
+ *	signal.
+ */
+int
+entropy_gather(void)
+{
+	int error;
+
+	mutex_enter(&E->lock);
+	error = entropy_request(ENTROPY_CAPACITY, ENTROPY_WAIT|ENTROPY_SIG);
+	mutex_exit(&E->lock);
 
 	return error;
 }
@@ -1427,14 +1450,10 @@ sysctl_entropy_gather(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
-	if (arg) {
-		mutex_enter(&E->lock);
-		error = entropy_request(ENTROPY_CAPACITY,
-		    ENTROPY_WAIT|ENTROPY_SIG);
-		mutex_exit(&E->lock);
-	}
+	if (arg)
+		error = entropy_gather();
 
-	return 0;
+	return error;
 }
 
 /*
@@ -2435,6 +2454,27 @@ entropy_reset_xc(void *arg1 __unused, void *arg2 __unused)
 }
 
 /*
+ * entropy_reset()
+ *
+ *	Assume the entropy pool has been exposed, e.g. because the VM
+ *	has been cloned.  Nix all the pending entropy and set the
+ *	needed to maximum.
+ */
+void
+entropy_reset(void)
+{
+
+	xc_broadcast(0, &entropy_reset_xc, NULL, NULL);
+	mutex_enter(&E->lock);
+	E->bitspending = 0;
+	E->samplespending = 0;
+	atomic_store_relaxed(&E->bitsneeded, MINENTROPYBITS);
+	atomic_store_relaxed(&E->samplesneeded, MINSAMPLES);
+	E->consolidate = false;
+	mutex_exit(&E->lock);
+}
+
+/*
  * entropy_ioctl(cmd, data)
  *
  *	Handle various /dev/random ioctl queries.
@@ -2712,16 +2752,8 @@ entropy_ioctl(unsigned long cmd, void *data)
 		 * If we disabled estimation or collection, nix all the
 		 * pending entropy and set needed to the maximum.
 		 */
-		if (reset) {
-			xc_broadcast(0, &entropy_reset_xc, NULL, NULL);
-			mutex_enter(&E->lock);
-			E->bitspending = 0;
-			E->samplespending = 0;
-			atomic_store_relaxed(&E->bitsneeded, MINENTROPYBITS);
-			atomic_store_relaxed(&E->samplesneeded, MINSAMPLES);
-			E->consolidate = false;
-			mutex_exit(&E->lock);
-		}
+		if (reset)
+			entropy_reset();
 
 		/*
 		 * If we changed any of the estimation or collection
@@ -2734,12 +2766,8 @@ entropy_ioctl(unsigned long cmd, void *data)
 		 * we have committed side effects, because this ioctl
 		 * command is idempotent, so repeating it is safe.
 		 */
-		if (request) {
-			mutex_enter(&E->lock);
-			error = entropy_request(ENTROPY_CAPACITY,
-			    ENTROPY_WAIT|ENTROPY_SIG);
-			mutex_exit(&E->lock);
-		}
+		if (request)
+			error = entropy_gather();
 		break;
 	}
 	case RNDADDDATA: {	/* Enter seed into entropy pool.  */
@@ -2777,7 +2805,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		/* Enter the data and consolidate entropy.  */
 		rnd_add_data(&seed_rndsource, rdata->data, rdata->len,
 		    entropybits);
-		entropy_consolidate();
+		error = entropy_consolidate();
 		break;
 	}
 	default:

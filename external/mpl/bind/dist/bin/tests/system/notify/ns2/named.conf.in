@@ -11,14 +11,19 @@
  * information regarding copyright ownership.
  */
 
+include "named-tls.conf";
+
 options {
 	query-source address 10.53.0.2;
 	notify-source 10.53.0.2;
+	notify-source-v6 fd92:7065:b8e:ffff::2;
 	transfer-source 10.53.0.2;
 	port @PORT@;
+	include "options-tls.conf";
 	pid-file "named.pid";
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion no;
 	notify yes;
 	startup-notify-rate 5;
@@ -46,10 +51,8 @@ zone "example" {
 	also-notify { /* empty */ };
 };
 
-# use both 'primaries' and 'masters' to test that they
-# can work correctly together.
-primaries noport { 10.53.0.4; };
-masters x21 port @EXTRAPORT1@ { noport; };
+remote-servers noport { 10.53.0.4; };
+remote-servers x21 port @EXTRAPORT1@ { noport; };
 
 zone x1 {
 	type primary;

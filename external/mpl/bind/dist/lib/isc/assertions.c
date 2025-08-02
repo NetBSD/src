@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.8 2024/02/21 22:52:27 christos Exp $	*/
+/*	$NetBSD: assertions.c,v 1.8.2.1 2025/08/02 05:53:51 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,8 +20,8 @@
 
 #include <isc/assertions.h>
 #include <isc/backtrace.h>
-#include <isc/print.h>
 #include <isc/result.h>
+#include <isc/strerr.h>
 
 /*
  * The maximum number of stack frames to dump on assertion failure.
@@ -87,19 +87,18 @@ isc_assertion_typetotext(isc_assertiontype_t type) {
 	default:
 		result = "UNKNOWN";
 	}
-	return (result);
+	return result;
 }
 
 /*
  * Private.
  */
 
-/* coverity[+kill] */
 static void
 default_callback(const char *file, int line, isc_assertiontype_t type,
 		 const char *cond) {
-	void *tracebuf[BACKTRACE_MAXFRAME];
-	int nframes = isc_backtrace(tracebuf, BACKTRACE_MAXFRAME);
+	void *tracebuf[ISC_BACKTRACE_MAXFRAME];
+	int nframes = isc_backtrace(tracebuf, ISC_BACKTRACE_MAXFRAME);
 
 	fprintf(stderr, "%s:%d: %s(%s) failed%s\n", file, line,
 		isc_assertion_typetotext(type), cond,

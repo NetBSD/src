@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.123 2022/05/23 13:53:37 rin Exp $ */
+/* $NetBSD: if_ti.c,v 1.123.10.1 2025/08/02 05:56:46 perseant Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -48,7 +48,7 @@
  * The Alteon Networks Tigon chip contains an embedded R4000 CPU,
  * gigabit MAC, dual DMA channels and a PCI interface unit. NICs
  * using the Tigon may have anywhere from 512K to 2MB of SRAM. The
- * Tigon supports hardware IP, TCP and UCP checksumming, multicast
+ * Tigon supports hardware IP, TCP and UDP checksumming, multicast
  * filtering and jumbo (9014 byte) frames. The hardware is largely
  * controlled by firmware, which must be loaded into the NIC during
  * initialization.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.123 2022/05/23 13:53:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.123.10.1 2025/08/02 05:56:46 perseant Exp $");
 
 #include "opt_inet.h"
 
@@ -950,10 +950,8 @@ ti_free_rx_ring_jumbo(struct ti_softc *sc)
 	int		i;
 
 	for (i = 0; i < TI_JUMBO_RX_RING_CNT; i++) {
-		if (sc->ti_cdata.ti_rx_jumbo_chain[i] != NULL) {
-			m_freem(sc->ti_cdata.ti_rx_jumbo_chain[i]);
-			sc->ti_cdata.ti_rx_jumbo_chain[i] = NULL;
-		}
+		m_freem(sc->ti_cdata.ti_rx_jumbo_chain[i]);
+		sc->ti_cdata.ti_rx_jumbo_chain[i] = NULL;
 		memset((char *)&sc->ti_rdata->ti_rx_jumbo_ring[i], 0,
 		    sizeof(struct ti_rx_desc));
 	}

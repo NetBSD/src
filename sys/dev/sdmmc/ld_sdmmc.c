@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.43 2024/01/23 23:13:05 riastradh Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.43.2.1 2025/08/02 05:57:03 perseant Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.43 2024/01/23 23:13:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.43.2.1 2025/08/02 05:57:03 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -111,7 +111,7 @@ static int ld_sdmmc_match(device_t, cfdata_t, void *);
 static void ld_sdmmc_attach(device_t, device_t, void *);
 static int ld_sdmmc_detach(device_t, int);
 
-static int ld_sdmmc_dump(struct ld_softc *, void *, int, int);
+static int ld_sdmmc_dump(struct ld_softc *, void *, daddr_t, int);
 static int ld_sdmmc_start(struct ld_softc *, struct buf *);
 static void ld_sdmmc_restart(void *);
 static int ld_sdmmc_discard(struct ld_softc *, struct buf *);
@@ -322,16 +322,21 @@ ld_sdmmc_doattach(void *arg)
 	struct ld_sdmmc_softc *sc = (struct ld_sdmmc_softc *)arg;
 	struct ld_softc *ld = &sc->sc_ld;
 	struct sdmmc_softc *ssc = device_private(device_parent(ld->sc_dv));
-	const u_int cache_size = sc->sc_sf->ext_csd.cache_size;
+	const u_int emmc_cache_size = sc->sc_sf->ext_csd.cache_size;
+	const bool sd_cache = sc->sc_sf->ssr.cache;
 	char buf[sizeof("9999 KB")];
 
 	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 	aprint_normal_dev(ld->sc_dv, "%d-bit width,", sc->sc_sf->width);
 	if (ssc->sc_transfer_mode != NULL)
 		aprint_normal(" %s,", ssc->sc_transfer_mode);
-	if (cache_size > 0) {
-		format_bytes(buf, sizeof(buf), cache_size);
+	if (emmc_cache_size > 0) {
+		format_bytes(buf, sizeof(buf), emmc_cache_size);
 		aprint_normal(" %s cache%s,", buf,
+		    ISSET(sc->sc_sf->flags, SFF_CACHE_ENABLED) ? "" :
+		    " (disabled)");
+	} else if (sd_cache) {
+		aprint_normal(" Cache%s,",
 		    ISSET(sc->sc_sf->flags, SFF_CACHE_ENABLED) ? "" :
 		    " (disabled)");
 	}
@@ -505,9 +510,12 @@ done_locked:
 }
 
 static int
-ld_sdmmc_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_sdmmc_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
 	struct ld_sdmmc_softc *sc = device_private(ld->sc_dv);
+
+	if (blkno + blkcnt - 1 >= sc->sc_sf->csd.capacity)
+		return EIO;
 
 	return sdmmc_mem_write_block(sc->sc_sf, blkno, data,
 	    blkcnt * ld->sc_secsize);

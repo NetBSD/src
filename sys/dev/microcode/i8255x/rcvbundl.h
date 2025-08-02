@@ -1,4 +1,4 @@
-/*	$NetBSD: rcvbundl.h,v 1.5 2024/02/02 22:00:33 andvar Exp $	*/
+/*	$NetBSD: rcvbundl.h,v 1.5.2.1 2025/08/02 05:56:43 perseant Exp $	*/
 
 /*
 Copyright (c) 1999-2001, Intel Corporation
@@ -987,7 +987,7 @@ rcvbundl.h file given above).
 
 #if 0
 // this uCode include the CPU Saver and the TCO work around
-//for IP fregments.
+//for IP fragments.
 #endif
 #define     D102_C_RCVBUNDLE_UCODE \
 { \

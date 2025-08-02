@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.149 2024/01/19 19:21:34 christos Exp $
+#	$NetBSD: Makefile,v 1.149.2.1 2025/08/02 05:55:00 perseant Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -98,6 +98,10 @@ SRCS+=		stack_protector.c
 .PATH.c: ${NETBSDSRCDIR}/lib/libc/stdlib
 SRCS+=		exit.c
 
+.PATH.c: ${NETBSDSRCDIR}/lib/libc/gen
+SRCS+=		ctype_.c	# ctype(3) tables without useless guard page
+CPPFLAGS.ctype_.c+=	-I${NETBSDSRCDIR}/lib/libc/locale
+
 errlist_concat.h: ${NETBSDSRCDIR}/lib/libc/gen/errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 	${TOOL_AWK} -v concat=1 -f ${.ALLSRC} > ${.TARGET}.tmp && \
 	mv -f ${.TARGET}.tmp ${.TARGET}
@@ -136,10 +140,6 @@ COPTS+=		-mno-3dnow -mno-mmx -mno-sse -mno-sse2 -mno-sse3
 .if ${SHLIBDIR} != ${LIBDIR}
 CPPFLAGS+=	-DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
 .endif
-
-# rtld.c and symbol.c use alloca, so disable SSP warnings.
-COPTS.rtld.c+=	-Wno-stack-protector
-COPTS.symbol.c+=-Wno-stack-protector
 
 LDADD+=		-Wl,--version-script=${.CURDIR}/symbols.map
 LDADD+=		-L${CLIBOBJ} -L${DESTDIR}${LIBDIR}

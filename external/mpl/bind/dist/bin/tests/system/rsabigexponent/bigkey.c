@@ -1,4 +1,4 @@
-/*	$NetBSD: bigkey.c,v 1.9 2024/02/21 22:51:36 christos Exp $	*/
+/*	$NetBSD: bigkey.c,v 1.9.2.1 2025/08/02 05:52:42 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,6 @@
 
 #include <isc/buffer.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/region.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
@@ -70,7 +69,7 @@ EVP_PKEY *pkey;
 				msg, isc_result_totext(result), __FILE__,     \
 				__LINE__);                                    \
 			ERR_clear_error();                                    \
-			exit(1);                                              \
+			exit(EXIT_FAILURE);                                   \
 		}                                                             \
 	} while (0)
 
@@ -88,7 +87,7 @@ main(int argc, char **argv) {
 	{
 		fprintf(stderr, "fatal error: basic OpenSSL failure\n");
 		ERR_clear_error();
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	/* e = 0x1000000000001 */
@@ -104,7 +103,7 @@ main(int argc, char **argv) {
 			"at file %s line %d\n",
 			__FILE__, __LINE__);
 		ERR_clear_error();
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	isc_mem_create(&mctx);
@@ -153,7 +152,7 @@ main(int argc, char **argv) {
 	dns_log_setcontext(NULL);
 	dst_lib_destroy();
 	isc_mem_destroy(&mctx);
-	return (0);
+	return 0;
 }
 
 /*! \file */

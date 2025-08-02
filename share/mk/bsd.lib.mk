@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.405.2.1 2024/07/01 01:01:12 perseant Exp $
+#	$NetBSD: bsd.lib.mk,v 1.405.2.2 2025/08/02 05:55:18 perseant Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -57,6 +57,12 @@ realinstall:	checkver libinstall
 CFLAGS+=        ${PIE_CFLAGS}
 AFLAGS+=        ${PIE_AFLAGS}
 .endif
+# The -fPIC is needed for libraries that include other libraries
+# The order matters here, PIC needs to be last
+.if ${LIBISPRIVATE} == "pic" && ${MKPIC} != "no"
+CFLAGS+=        -fPIC
+AFLAGS+=        -fPIC
+.endif
 
 PGFLAGS+=	-pg
 .if ${MKPIC} != "no"
@@ -65,24 +71,24 @@ PGFLAGS+=	-fPIC
 
 ##### Libraries that this may depend upon.
 .if defined(LIBDPLIBS) && ${MKPIC} != "no"				# {
-.for _lib _dir in ${LIBDPLIBS}
-.if !defined(LIBDO.${_lib})
+.  for _lib _dir in ${LIBDPLIBS}
+.    if !defined(LIBDO.${_lib})
 LIBDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=LIBDO.${_lib}
-.endif
-.if ${LIBDO.${_lib}} == "_external"
+.    endif
+.    if ${LIBDO.${_lib}} == "_external"
 LDADD+=		-l${_lib}
-.else
+.    else
 LDADD+=		-L${LIBDO.${_lib}} -l${_lib}
-.if exists(${LIBDO.${_lib}}/lib${_lib}_pic.a)
+.      if exists(${LIBDO.${_lib}}/lib${_lib}_pic.a)
 DPADD+=         ${LIBDO.${_lib}}/lib${_lib}_pic.a
-.elif exists(${LIBDO.${_lib}}/lib${_lib}.so)
+.      elif exists(${LIBDO.${_lib}}/lib${_lib}.so)
 DPADD+=         ${LIBDO.${_lib}}/lib${_lib}.so
-.else
+.      else
 DPADD+=         ${LIBDO.${_lib}}/lib${_lib}.a
-.endif
-.endif
-.endfor
+.      endif
+.    endif
+.  endfor
 .endif									# }
 
 ##### Build and install rules
@@ -682,6 +688,39 @@ LIB_EXPSYM?=	${LIB}.${LIBC_MACHINE_CPU:U${MACHINE_CPU}}.expsym
 LIB_EXPSYM?=	${LIB}.expsym
 .endif
 
+# If we don't have a version map enumerating the exact symbols
+# exported, skip various machine-dependent crud that the linker
+# automatically exports (even though it appears to be unnecessary, as
+# demonstrated by libraries with version scripts which don't export
+# these symbols).
+#
+# This list has been gathered empirically -- I'm not sure it's written
+# down anywhere and I'm not sure there's any way to ask the linker to
+# simply not export the symbols.
+.if !empty(VERSION_MAP)
+_EXPSYM_PIPE_GREP=	# empty
+.else
+_EXPSYM_PIPE_GREP=	| grep -Fvx ${_EXPSYM_IGNORE:@_s_@-e ${_s_:Q}@}
+_EXPSYM_IGNORE+=		_end
+_EXPSYM_IGNORE+=		_fini
+_EXPSYM_IGNORE+=		_init
+_EXPSYM_IGNORE.aarch64+=	__bss_end__
+_EXPSYM_IGNORE.aarch64+=	__bss_start__
+_EXPSYM_IGNORE.aarch64+=	__end__
+_EXPSYM_IGNORE.aarch64+=	_bss_end__
+_EXPSYM_IGNORE.hppa+=		_GLOBAL_OFFSET_TABLE_
+_EXPSYM_IGNORE.powerpc64+=	._fini
+_EXPSYM_IGNORE.powerpc64+=	._init
+_EXPSYM_IGNORE.sh3+=		___ctors
+_EXPSYM_IGNORE.sh3+=		___ctors_end
+_EXPSYM_IGNORE.sh3+=		___dtors
+_EXPSYM_IGNORE.sh3+=		___dtors_end
+_EXPSYM_IGNORE+=		${_EXPSYM_IGNORE.${MACHINE_ARCH}}
+.  if ${MACHINE_ARCH} != ${MACHINE_CPU}
+_EXPSYM_IGNORE+=		${_EXPSYM_IGNORE.${MACHINE_CPU}}
+.  endif
+.endif
+
 .if !empty(LIB_EXPSYM) && ${MKPIC} != "no"
 realall: ${_LIB.so.full}.diffsym
 ${_LIB.so.full}.diffsym: ${LIB_EXPSYM} ${_LIB.so.full}.actsym
@@ -699,7 +738,7 @@ ${_LIB.so.full}.actsym: ${_LIB.so.full}
 	${_MKTARGET_CREATE}
 	${NM} --dynamic --extern-only --defined-only --with-symbol-versions \
 		${.ALLSRC} \
-	| cut -d' ' -f3 | LANG=C sort -u >${.TARGET}.tmp
+	| cut -d' ' -f3	${_EXPSYM_PIPE_GREP} | LC_ALL=C sort -u >${.TARGET}.tmp
 	${MV} ${.TARGET}.tmp ${.TARGET}
 CLEANFILES+=	${_LIB.so.full}.actsym
 CLEANFILES+=	${_LIB.so.full}.actsym.tmp
@@ -707,7 +746,14 @@ CLEANFILES+=	${_LIB.so.full}.diffsym
 CLEANFILES+=	${_LIB.so.full}.diffsym.tmp
 update-symbols: .PHONY
 update-symbols: ${_LIB.so.full}.actsym
-	cp ${.ALLSRC} ${.CURDIR}/${LIB_EXPSYM}
+	@if [ -f ${${LIB_EXPSYM}:P:Q} ] && \
+	    [ -n "`comm -23 ${${LIB_EXPSYM}:P:Q} ${.ALLSRC:Q}`" ]; then \
+		echo 'WARNING: Symbols deleted, major bump required!' >&2; \
+	elif [ -f ${${LIB_EXPSYM}:P:Q} ] && \
+	    [ -n "`comm -13 ${${LIB_EXPSYM}:P:Q} ${.ALLSRC:Q}`" ]; then \
+		echo 'WARNING: Symbols added, minor bump required!' >&2; \
+	fi
+	cp ${.ALLSRC} ${defined(NETBSDSRCDIR_RW):?${${LIB_EXPSYM}:P:C,^${NETBSDSRCDIR}/,${NETBSDSRCDIR_RW}/,}:${${LIB_EXPSYM}:P}}
 .endif
 
 .if !empty(LOBJS)							# {
@@ -722,9 +768,10 @@ ${_LIB.ln}: ${LOBJS}
 .endif
 .endif									# }
 
+# Only intended to be invoked manually, not as part of dependall.
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
-	${LINT} ${LINTFLAGS} ${LOBJS}
+	${LINT} ${LINTFLAGS} -Cmanual-lint ${LOBJS}
 .endif
 
 
@@ -751,7 +798,7 @@ LIBCLEANFILES4+= ${_LIB_pic.a}
 LIBCLEANFILES4+= ${_LIB.so}.* ${_LIB.so} ${_LIB.so.debug}
 .endif
 LIBCLEANFILES4+= ${SOBJS} ${SOBJS:=.tmp}
-LIBCLEANFILES5+= ${_LIB.ln} ${LOBJS}
+LIBCLEANFILES5+= ${_LIB.ln} ${LOBJS} llib-lmanual-lint.ln
 
 .if !target(libinstall)							# {
 # Make sure it gets defined, in case MKPIC==no && MKLINKLIB==no

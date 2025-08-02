@@ -4,8 +4,8 @@
 @documentencoding UTF-8
 @c Note that the 5 occurrences of the version string in this file
 @c should be updated by the tools/update-version script.
-@set VERSION 4.2.0
-@set UPDATED-MONTH January 2023
+@set VERSION 4.2.1
+@set UPDATED-MONTH August 2023
 @settitle GNU MPFR @value{VERSION}
 @synindex tp fn
 @iftex
@@ -587,7 +587,7 @@ specific to MPFR)@. Problems are also mentioned in the FAQ
 Please report problems to the MPFR mailing-list @samp{mpfr@@inria.fr}.
 @xref{Reporting Bugs}.
 Some bug fixes are available on the
-MPFR@tie{}4.2.0 web page @url{https://www.mpfr.org/mpfr-4.2.0/}.
+MPFR@tie{}4.2.1 web page @url{https://www.mpfr.org/mpfr-4.2.1/}.
 
 @section Getting the Latest Version of MPFR
 
@@ -602,7 +602,7 @@ The latest version of MPFR is available from
 @comment Warning! Do not split "MPFR ... @url{...}" across several lines
 @comment as this needs to be updated with update-version.
 If you think you have found a bug in the MPFR library, first have a look
-on the MPFR@tie{}4.2.0 web page @url{https://www.mpfr.org/mpfr-4.2.0/}
+on the MPFR@tie{}4.2.1 web page @url{https://www.mpfr.org/mpfr-4.2.1/}
 and the FAQ @url{https://www.mpfr.org/faq.html}:
 perhaps this bug is already known, in which case you may find there
 a workaround for it.
@@ -1577,7 +1577,7 @@ Note that the input 0 is converted to @mm{+}0.
 Set @var{rop} to the value of the string @var{s} in base @var{base},
 rounded in the direction @var{rnd}.
 See the documentation of @code{mpfr_strtofr} for a detailed description
-of the valid string formats.
+of @var{base} (with its special value 0) and the valid string formats.
 Contrary to @code{mpfr_strtofr}, @code{mpfr_set_str} requires the
 @emph{whole} string to represent a valid floating-point number.
 @c Additionally, special values
@@ -2405,9 +2405,13 @@ used for @code{pow}.
 
 @deftypefun int mpfr_compound_si (mpfr_t @var{rop}, mpfr_t @var{op}, long int @var{n}, mpfr_rnd_t @var{rnd})
 Set @var{rop} to the power @var{n} of one plus @var{op},
-following IEEE@tie{}754 for the special cases and exceptions.
-When @var{n} is zero and @var{op} is NaN or greater or equal to @minus{}1,
-@var{rop} is set to 1.
+following IEEE@tie{}754 for the special cases and exceptions. In particular:
+@itemize @bullet
+@item When @tm{@var{op} < @minus{}1}, @var{rop} is set to NaN@.
+@item When @var{n} is zero and @var{op} is NaN (like any value greater or equal to @minus{}1), @var{rop} is set to 1.
+@item When @tm{@var{op} = @minus{}1}, @var{rop} is set to @mm{+}Inf for @tm{@var{n} < 0}, and to @mm{+}0 for @tm{@var{n} > 0}.
+@end itemize
+The other special cases follow the usual rules.
 @end deftypefun
 
 @deftypefun int mpfr_cos (mpfr_t @var{rop}, mpfr_t @var{op}, mpfr_rnd_t @var{rnd})
@@ -2771,8 +2775,10 @@ read float in @var{rop}.
 @c written in decimal for the specified base, and in base 16, @samp{B} is the
 @c binary exponent written in decimal (i.e., it indicates the power of 2 by
 @c which the significand is to be scaled).
-This function reads a word (defined as a sequence of characters between
-whitespace) and parses it using @code{mpfr_set_str}.
+After skipping optional whitespace (as defined by @code{isspace}, which
+depends on the current locale), this function reads a word, defined as
+the longest sequence of non-whitespace characters, and parses it using
+@code{mpfr_set_str}.
 See the documentation of @code{mpfr_strtofr} for a detailed description
 of the valid string formats.
 @c Special values can be read as follows (the case does not matter):
@@ -2781,7 +2787,9 @@ of the valid string formats.
 @c or equal to 16, the following strings are accepted too: @samp{NaN},
 @c @samp{Inf}, @samp{+Inf} and @samp{-Inf}.
 
-Return the number of bytes read, or if an error occurred, return 0.
+Return the number of bytes read (including the leading whitespace,
+if any), or if the string format is invalid or an error occurred,
+return 0.
 @end deftypefun
 
 @c @deftypefun void mpfr_inp_raw (mpfr_t @var{float}, FILE *@var{stream})
@@ -2945,7 +2953,7 @@ mpfr_prec_t p;
 mpfr_init (x);
 @dots{}
 p = mpfr_get_prec (x);
-mpfr_printf ("variable x with %Pu bits", p);
+mpfr_printf ("variable x with %Pd bits", p);
 @end example
 
 The @samp{R} type specifies that a following @samp{a}, @samp{A}, @samp{b},
@@ -3005,10 +3013,14 @@ argument.
 
 In case of non-decimal output, only the significand is written in the
 specified base, the exponent is always displayed in decimal.
-Special values are always displayed as @samp{nan}, @samp{-inf}, and @samp{inf}
-for @samp{a}, @samp{b}, @samp{e}, @samp{f}, and @samp{g} specifiers and
-@samp{NAN}, @samp{-INF}, and @samp{INF} for @samp{A}, @samp{E}, @samp{F}, and
-@samp{G} specifiers.
+
+Non-real values are always displayed as @samp{nan} / @samp{inf} for the
+@samp{a}, @samp{b}, @samp{e}, @samp{f}, and @samp{g} specifiers, and
+@samp{NAN} / @samp{INF} for @samp{A}, @samp{E}, @samp{F}, and @samp{G}
+specifiers, possibly preceded by a sign or a space (the minus sign
+when the value has a negative sign, the plus sign when the value has
+a positive sign and the @samp{+} flag is used, a space when the value
+has a positive sign and the @emph{space} flag is used).
 
 The @code{mpfr_t} number is rounded to the given precision in the direction
 specified by the rounding mode (see below if the precision is missing).

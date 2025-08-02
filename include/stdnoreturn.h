@@ -1,4 +1,4 @@
-/*	$NetBSD: stdnoreturn.h,v 1.1 2016/10/02 13:09:24 kamil Exp $	*/
+/*	$NetBSD: stdnoreturn.h,v 1.1.28.1 2025/08/02 05:54:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _STDNORETURN_H_
 #define _STDNORETURN_H_
 
-/* ISO/IEC 9899:201x 7.23 _Noreturn <stdnoreturn.h> */
+/* ISO/IEC 9899:2011 7.23 _Noreturn <stdnoreturn.h> */
 
 #ifndef __noreturn_is_defined
 #define noreturn	_Noreturn

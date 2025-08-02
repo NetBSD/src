@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.144 2023/07/28 06:21:02 rin Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.144.6.1 2025/08/02 05:55:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.144 2023/07/28 06:21:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.144.6.1 2025/08/02 05:55:26 perseant Exp $");
 
 #include <sys/param.h>
 
@@ -216,7 +216,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 		/* XXX cache last result? */
 		const struct arm32_dma_range * const dr =
 		    _bus_dma_paddr_inrange(t->_ranges, t->_nranges, paddr);
-		if (dr == NULL) {
+		if (__predict_false(dr == NULL)) {
 			STAT_INCR(inrange_fail);
 			return EINVAL;
 		}
@@ -232,7 +232,10 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 		 */
 		curaddr = (paddr - dr->dr_sysbase) + dr->dr_busbase;
 #if 0
-		printf("%p: %#lx: range %#lx/%#lx/%#lx/%#x: %#x <-- %#lx\n",
+		printf("%p: %#" PRIxPADDR
+		    ": range %#" PRIxPADDR "/%#" PRIxBUSADDR
+		    "/%#" PRIxBUSSIZE "/%#" PRIx32 ": %#" PRIx32
+		    " <-- %#" PRIxBUSADDR "\n",
 		    t, paddr, dr->dr_sysbase, dr->dr_busbase,
 		    dr->dr_len, dr->dr_flags, _ds_flags, curaddr);
 #endif
@@ -261,7 +264,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	     (segs[nseg - 1].ds_addr & bmask) == (curaddr & bmask))) {
 		/* coalesce */
 		segs[nseg - 1].ds_len += sgsize;
-	} else if (nseg >= map->_dm_segcnt) {
+	} else if (__predict_false(nseg >= map->_dm_segcnt)) {
 		return EFBIG;
 	} else {
 		/* new segment */
@@ -308,7 +311,7 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 */
 	if ((cookie->id_flags & _BUS_DMA_HAS_BOUNCE) == 0) {
 		error = _bus_dma_alloc_bouncebuf(t, map, buflen, flags);
-		if (error)
+		if (__predict_false(error))
 			return error;
 	}
 
@@ -329,7 +332,7 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	cookie->id_origbuflen = buflen;
 	error = _bus_dmamap_load_buffer(t, map, cookie->id_bouncebuf,
 	    buflen, vm, flags);
-	if (error)
+	if (__predict_false(error))
 		return error;
 
 	STAT_INCR(bounced_loads);
@@ -357,7 +360,9 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	int error = 0;
 
 #ifdef DEBUG_DMA
-	printf("dmamap_create: t=%p size=%#lx nseg=%#x msegsz=%#lx boundary=%#lx"
+	printf("dmamap_create: t=%p size=%#" PRIxBUSSIZE
+	    " nseg=%#x msegsz=%#" PRIxBUSSIZE
+	    " boundary=%#" PRIxBUSSIZE
 	    " flags=%#x\n", t, size, nsegments, maxsegsz, boundary, flags);
 #endif	/* DEBUG_DMA */
 
@@ -513,8 +518,8 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	int error;
 
 #ifdef DEBUG_DMA
-	printf("dmamap_load: t=%p map=%p buf=%p len=%#lx p=%p f=%#x\n",
-	    t, map, buf, buflen, p, flags);
+	printf("dmamap_load: t=%p map=%p buf=%p len=%#" PRIxBUSSIZE
+	    " p=%p f=%#x\n", t, map, buf, buflen, p, flags);
 #endif	/* DEBUG_DMA */
 
 	if (map->dm_nsegs > 0) {
@@ -541,7 +546,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	    "dm_maxsegsz %" PRIuBUSSIZE " _dm_maxmaxsegsz %" PRIuBUSSIZE,
 	    map->dm_maxsegsz, map->_dm_maxmaxsegsz);
 
-	if (buflen > map->_dm_size)
+	if (__predict_false(buflen > map->_dm_size))
 		return EINVAL;
 
 	if (p != NULL) {
@@ -554,7 +559,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	map->_dm_flags |= _BUS_DMAMAP_COHERENT;
 
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags);
-	if (error == 0) {
+	if (__predict_true(error == 0)) {
 		map->dm_mapsize = buflen;
 		map->_dm_vmspace = vm;
 		map->_dm_origbuf = buf;
@@ -617,7 +622,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 
 	KASSERT(m0->m_flags & M_PKTHDR);
 
-	if (m0->m_pkthdr.len > map->_dm_size)
+	if (__predict_false(m0->m_pkthdr.len > map->_dm_size))
 		return EINVAL;
 
 	/* _bus_dmamap_load_paddr() clears this if we're not... */
@@ -636,13 +641,12 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 		/*
 		 * Don't allow reads in read-only mbufs.
 		 */
-		if (M_ROMAP(m) && (flags & BUS_DMA_READ)) {
+		if (__predict_false(M_ROMAP(m) && (flags & BUS_DMA_READ))) {
 			error = EFAULT;
 			break;
 		}
 		switch (m->m_flags & (M_EXT | M_EXT_CLUSTER | M_EXT_PAGES)) {
 		case M_EXT | M_EXT_CLUSTER:
-			/* XXX KDASSERT */
 			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
 			paddr = m->m_ext.ext_paddr +
 			    (m->m_data - m->m_ext.ext_buf);
@@ -678,7 +682,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 
 				error = _bus_dmamap_load_paddr(t, map,
 				    paddr, size, false);
-				if (error)
+				if (__predict_false(error))
 					break;
 				offset = 0;
 				remainbytes -= size;
@@ -698,7 +702,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			    m->m_len, vmspace_kernel(), flags);
 		}
 	}
-	if (error == 0) {
+	if (__predict_true(error == 0)) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->_dm_origbuf = m0;
 		map->_dm_buftype = _BUS_DMA_BUFTYPE_MBUF;
@@ -762,7 +766,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 
 		resid -= minlen;
 	}
-	if (error == 0) {
+	if (__predict_true(error == 0)) {
 		map->dm_mapsize = uio->uio_resid;
 		map->_dm_origbuf = uio;
 		map->_dm_buftype = _BUS_DMA_BUFTYPE_UIO;
@@ -795,7 +799,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	map->dm_nsegs = 0;
 	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
-	if (size0 > map->_dm_size)
+	if (__predict_false(size0 > map->_dm_size))
 		return EINVAL;
 
 	for (i = 0, size = size0; i < nsegs && size > 0; i++) {
@@ -809,12 +813,12 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		    (ds->_ds_flags & _BUS_DMAMAP_COHERENT) != 0;
 		error = _bus_dmamap_load_paddr(t, map, ds->ds_addr,
 		    sgsize, coherent);
-		if (error != 0)
+		if (__predict_false(error != 0))
 			break;
 		size -= sgsize;
 	}
 
-	if (error != 0) {
+	if (__predict_false(error != 0)) {
 		map->dm_mapsize = 0;
 		map->dm_nsegs = 0;
 		return error;
@@ -870,8 +874,9 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops,
 	KASSERTMSG((va & PAGE_MASK) == (pa & PAGE_MASK),
 	    "va %#" PRIxVADDR " pa %#" PRIxPADDR, va, pa);
 #if 0
-	printf("sync_segment: va=%#lx pa=%#lx len=%#lx ops=%#x ro=%d\n",
-	    va, pa, len, ops, readonly_p);
+	printf("sync_segment: va=%#" PRIxVADDR
+	    " pa=%#" PRIxPADDR " len=%#" PRIxVSIZE " ops=%#x\n",
+	    va, pa, len, ops);
 #endif
 
 	switch (ops) {
@@ -1095,16 +1100,16 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
 #ifdef DEBUG_DMA
-	printf("dmamap_sync: t=%p map=%p offset=%#lx len=%#lx ops=%#x\n",
-	    t, map, offset, len, ops);
+	printf("dmamap_sync: t=%p map=%p offset=%#" PRIxBUSADDR
+	    " len=%#" PRIxBUSSIZE " ops=%#x\n", t, map, offset, len, ops);
 #endif	/* DEBUG_DMA */
 
 	/*
 	 * Mixing of PRE and POST operations is not allowed.
 	 */
-	if ((ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) != 0 &&
-	    (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)) != 0)
-		panic("%s: mix PRE and POST", __func__);
+	KASSERTMSG((((ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) == 0)
+	    || ((ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)) == 0)),
+	    "%s: mix PRE and POST", __func__);
 
 	KASSERTMSG(offset < map->dm_mapsize,
 	    "offset %" PRIxBUSADDR " mapsize %" PRIuBUSSIZE,
@@ -1335,7 +1340,9 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	int error, i;
 
 #ifdef DEBUG_DMA
-	printf("dmamem_alloc t=%p size=%#lx align=%#lx boundary=%#lx "
+	printf("dmamem_alloc t=%p size=%#" PRIxBUSSIZE
+	    " align=%#" PRIxBUSSIZE
+	    " boundary=%#" PRIxBUSSIZE " "
 	    "segs=%p nsegs=%#x rsegs=%p flags=%#x\n", t, size, alignment,
 	    boundary, segs, nsegs, rsegs, flags);
 #endif
@@ -1412,8 +1419,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	vsize_t align = 0;
 
 #ifdef DEBUG_DMA
-	printf("dmamem_map: t=%p segs=%p nsegs=%#x size=%#lx flags=%#x\n", t,
-	    segs, nsegs, (unsigned long)size, flags);
+	printf("dmamem_map: t=%p segs=%p nsegs=%#x size=%#zx flags=%#x\n", t,
+	    segs, nsegs, size, flags);
 #endif	/* DEBUG_DMA */
 
 #ifdef PMAP_MAP_POOLPAGE
@@ -1422,7 +1429,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 * contiguous area then this area is already mapped.  Let's see if we
 	 * avoid having a separate mapping for it.
 	 */
-	if (nsegs == 1 && (flags & BUS_DMA_PREFETCHABLE) == 0) {
+	if (nsegs == 1 &&
+	    (flags & (BUS_DMA_PREFETCHABLE|BUS_DMA_NOCACHE)) == 0) {
 		/*
 		 * If this is a non-COHERENT mapping, then the existing kernel
 		 * mapping is already compatible with it.
@@ -1508,10 +1516,12 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		for (pa = segs[curseg].ds_addr;
 		    pa < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    pa += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
-			bool uncached = (flags & BUS_DMA_COHERENT);
+			bool uncached =
+			    (flags & (BUS_DMA_COHERENT | BUS_DMA_NOCACHE)) != 0;
 			bool prefetchable = (flags & BUS_DMA_PREFETCHABLE);
 #ifdef DEBUG_DMA
-			printf("wiring P%#lx to V%#lx\n", pa, va);
+			printf("wiring P%#" PRIxPADDR
+			    " to V%#" PRIxVADDR "\n", pa, va);
 #endif	/* DEBUG_DMA */
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
@@ -1522,7 +1532,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			 * If this dma region is coherent then there is
 			 * no need for an uncached mapping.
 			 */
-			if (dr != NULL
+			if ((flags & BUS_DMA_NOCACHE) == 0 &&
+			    dr != NULL
 			    && (dr->dr_flags & _BUS_DMAMAP_COHERENT)) {
 				uncached = false;
 			}
@@ -1632,14 +1643,13 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bus_addr_t curaddr;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int error;
-	pmap_t pmap;
 
 #ifdef DEBUG_DMA
-	printf("_bus_dmamap_load_buffer(buf=%p, len=%#lx, flags=%#x)\n",
-	    buf, buflen, flags);
-#endif	/* DEBUG_DMA */
+	printf("_bus_dmamap_load_buffer(buf=%p, len=%#" PRIxBUSSIZE
+	    ", flags=%#x)\n", buf, buflen, flags);
+#endif /* DEBUG_DMA */
 
-	pmap = vm_map_pmap(&vm->vm_map);
+	pmap_t pmap = vm_map_pmap(&vm->vm_map);
 
 	while (buflen > 0) {
 		/*
@@ -1657,7 +1667,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		KASSERT(ok);
 
 		KASSERTMSG((vaddr & PAGE_MASK) == (curaddr & PAGE_MASK),
-		    "va %#lx curaddr %#lx", vaddr, curaddr);
+		    "va %#" PRIxVADDR " curaddr %#" PRIxBUSADDR, vaddr, curaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -1668,7 +1678,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 		error = _bus_dmamap_load_paddr(t, map, curaddr, sgsize,
 		    coherent);
-		if (error)
+		if (__predict_false(error))
 			return error;
 
 		vaddr += sgsize;
@@ -1696,7 +1706,10 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	    "invalid boundary %#" PRIxBUSSIZE, boundary);
 
 #ifdef DEBUG_DMA
-	printf("alloc_range: t=%p size=%#lx align=%#lx boundary=%#lx segs=%p nsegs=%#x rsegs=%p flags=%#x lo=%#lx hi=%#lx\n",
+	printf("alloc_range: t=%p size=%#" PRIxBUSSIZE
+	    " align=%#" PRIxBUSSIZE " boundary=%#" PRIxBUSSIZE
+	    " segs=%p nsegs=%#x rsegs=%p flags=%#x"
+	    " lo=%#" PRIxPADDR " hi=%#" PRIxPADDR "\n",
 	    t, size, alignment, boundary, segs, nsegs, rsegs, flags, low, high);
 #endif	/* DEBUG_DMA */
 
@@ -1735,19 +1748,18 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	    VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_len = PAGE_SIZE;
 #ifdef DEBUG_DMA
-		printf("alloc: page %#lx\n", lastaddr);
+	printf("alloc: page %#" PRIxPADDR "\n", lastaddr);
 #endif	/* DEBUG_DMA */
 	m = TAILQ_NEXT(m, pageq.queue);
 
 	for (; m != NULL; m = TAILQ_NEXT(m, pageq.queue)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 		KASSERTMSG(low <= curaddr && curaddr < high,
-		    "uvm_pglistalloc returned non-sensical "
-		    "address %#" PRIxPADDR "(low=%#" PRIxPADDR
-		    ", high=%#" PRIxPADDR "\n",
+		    "uvm_pglistalloc returned non-sensicaladdress %#" PRIxPADDR
+		    "(low=%#" PRIxPADDR ", high=%#" PRIxPADDR "\n",
 		    curaddr, low, high);
 #ifdef DEBUG_DMA
-		printf("alloc: page %#lx\n", curaddr);
+		printf("alloc: page %#" PRIxPADDR "\n", curaddr);
 #endif	/* DEBUG_DMA */
 		if (curaddr == lastaddr + PAGE_SIZE
 		    && (lastaddr & boundary) == (curaddr & boundary))

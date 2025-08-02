@@ -1,4 +1,4 @@
-/* $NetBSD: iplcb.h,v 1.2 2015/07/11 10:32:46 kamil Exp $ */
+/* $NetBSD: iplcb.h,v 1.2.54.1 2025/08/02 05:56:06 perseant Exp $ */
 
 /* Structure for the IPL Control Block on RS/6000 machines */
 
@@ -139,7 +139,7 @@ struct sys_info {
 	u_char		*loc_waddr;	/* RA of APM space write */
 	int		access_id_raddr;/* type of access to loc_raddr */
 	u_char		*loc_raddr;	/* RA of APM space read */
-	int		architecture;	/* Architecutre of this box:
+	int		architecture;	/* Architecture of this box:
 					 * RS6K = 1 = rs/6000 old mca
 					 * RSPC = 2 = PReP */
 	int		implementation;

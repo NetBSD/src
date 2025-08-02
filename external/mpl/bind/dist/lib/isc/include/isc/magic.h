@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.h,v 1.7 2024/02/21 22:52:30 christos Exp $	*/
+/*	$NetBSD: magic.h,v 1.7.2.1 2025/08/02 05:54:00 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.18 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.18.2.1 2025/08/02 05:56:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.18 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.18.2.1 2025/08/02 05:56:45 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1870,12 +1870,15 @@ iavf_setup_interrupts(struct iavf_softc *sc)
 fail:
 	if (affinity != NULL)
 		kcpuset_destroy(affinity);
-	for (vector = 0; vector < num; vector++) {
-		if (sc->sc_ihs[vector] == NULL)
-			continue;
-		pci_intr_disestablish(pa->pa_pc, sc->sc_ihs[vector]);
+
+	if (sc->sc_ihs != NULL) {
+		for (vector = 0; vector < num; vector++) {
+			if (sc->sc_ihs[vector] == NULL)
+				continue;
+			pci_intr_disestablish(pa->pa_pc, sc->sc_ihs[vector]);
+		}
+		kmem_free(sc->sc_ihs, sizeof(sc->sc_ihs[0]) * num);
 	}
-	kmem_free(sc->sc_ihs, sizeof(sc->sc_ihs[0]) * num);
 	pci_intr_release(pa->pa_pc, sc->sc_ihp, num);
 
 	return -1;
@@ -2518,6 +2521,7 @@ iavf_rxfill(struct iavf_softc *sc, struct iavf_rx_ring *rxr)
 	if (slots == 0)
 		return 0;
 
+	post = 0;
 	error = 0;
 	prod = rxr->rxr_prod;
 

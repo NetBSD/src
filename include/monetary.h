@@ -1,4 +1,4 @@
-/*	$NetBSD: monetary.h,v 1.4 2019/12/08 02:15:02 kre Exp $	*/
+/*	$NetBSD: monetary.h,v 1.4.10.1 2025/08/02 05:54:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,6 +32,7 @@
 #define	_MONETARY_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <machine/ansi.h>
 
 #ifdef	_BSD_SIZE_T_

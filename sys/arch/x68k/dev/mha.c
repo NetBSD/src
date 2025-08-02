@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.61 2024/01/07 07:58:33 isaki Exp $	*/
+/*	$NetBSD: mha.c,v 1.61.2.1 2025/08/02 05:56:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.61 2024/01/07 07:58:33 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.61.2.1 2025/08/02 05:56:15 perseant Exp $");
 
 #include "opt_ddb.h"
 
@@ -1042,7 +1042,7 @@ mha_msgin(struct mha_softc *sc)
 		/*
 		 * This testing is suboptimal, but most
 		 * messages will be of the one byte variety, so
-		 * it should not effect performance
+		 * it should not affect performance
 		 * significantly.
 		 */
 		if (sc->sc_imlen == 1 && MSG_IS1BYTE(sc->sc_imess[0]))

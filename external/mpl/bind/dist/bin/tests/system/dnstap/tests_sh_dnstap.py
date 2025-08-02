@@ -9,6 +9,27 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+import isctest.mark
+
+pytestmark = [
+    isctest.mark.with_dnstap,
+    pytest.mark.extra_artifacts(
+        [
+            "dig.out*",
+            "dnstap.hex*",
+            "dnstap.out*",
+            "fstrm_capture.out.*",
+            "nsupdate.out*",
+            "ydump.out*",
+            "ns*/dnstap.out*",
+            "ns2/example.db",
+            "ns2/example.db.jnl",
+        ]
+    ),
+]
+
 
 def test_dnstap(run_tests_sh):
     run_tests_sh()

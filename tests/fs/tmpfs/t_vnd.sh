@@ -1,4 +1,4 @@
-# $NetBSD: t_vnd.sh,v 1.14 2024/04/28 07:27:41 rillig Exp $
+# $NetBSD: t_vnd.sh,v 1.14.2.1 2025/08/02 05:58:00 perseant Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,13 +38,27 @@ basic_head() {
 	atf_set "require.user" "root"
 }
 basic_body() {
+	if [ $(uname -p) = vax ]; then
+		atf_skip "port-vax/59287 vnd(4) can cause kernel crash"
+	fi
+
 	test_mount
 
 	atf_check -s exit:0 -o ignore -e ignore \
 	    dd if=/dev/zero of=disk.img bs=1m count=10
 	atf_check -s exit:0 -o empty -e empty vndconfig -c ${vnddev} disk.img
 
+	atf_check -s exit:0 -o ignore -e ignore disklabel -i -I ${vnddev} << EOF
+a
+4.2BSD
+0
+$
+W
+y
+Q
+EOF
 	atf_check -s exit:0 -o ignore -e ignore newfs -I ${rvnd}
+
 
 	atf_check -s exit:0 -o empty -e empty mkdir mnt
 	atf_check -s exit:0 -o empty -e empty mount ${vnd} mnt

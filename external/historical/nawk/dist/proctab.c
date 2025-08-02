@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "awk.h"
-#include "ytab.h"
+#include "awkgram.h"
 
 static const char * const printname[96] = {
 	"FIRSTTOKEN",	/* 257 */
@@ -147,8 +147,8 @@ Cell *(*proctab[96])(Node **, int) = {
 	forstat,	/* FOR */
 	nullproc,	/* FUNC */
 	gensub,	/* GENSUB */
-	sub,	/* SUB */
-	gsub,	/* GSUB */
+	dosub,	/* SUB */
+	dosub,	/* GSUB */
 	ifstat,	/* IF */
 	sindex,	/* INDEX */
 	nullproc,	/* LSUBSTR */

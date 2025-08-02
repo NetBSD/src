@@ -1,4 +1,4 @@
-# $NetBSD: MIPSSIM,v 1.9 2024/01/29 18:27:11 christos Exp $
+# $NetBSD: MIPSSIM,v 1.9.2.1 2025/08/02 05:55:34 perseant Exp $
 #
 # Kernel config for the QEMU MIPS "mipssim" simulator
 #
@@ -8,7 +8,7 @@
 
 include 	"arch/evbmips/conf/std.mipssim"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.9.2.1 $"
 
 maxusers	32
 
@@ -68,6 +68,7 @@ file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system	MFS		# memory-based filesystem
 file-system	TMPFS		# Efficient memory file-system
 
@@ -120,12 +121,11 @@ com*		at mainbus?
 
 # Virtio devices
 virtio*		at mainbus?		# Virtio PCI device
-#viomb*		at virtio?		# Virtio memory balloon device
-ld*		at virtio?		# Virtio disk device
-vioif*		at virtio?		# Virtio network device
-viornd*		at virtio?		# Virtio entropy device
-vioscsi*	at virtio?		# Virtio SCSI device
-#vio9p*		at virtio?		# Virtio 9P device
+
+include "dev/virtio/virtio.config"
+no vio9p* 	at virtio?		# XXX ?
+no viomb* 	at virtio?		# XXX ?
+wsdisplay*	at wsemuldisplaydev?
 
 # SCSI bus support
 scsibus* at scsi?
@@ -139,6 +139,15 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+# Pseudo-Devices
+
+pseudo-device	crypto				# /dev/crypto device
+pseudo-device	swcrypto			# software crypto implementation
+
+pseudo-device	vnd				# disk-like interface to files
+#options 	VND_COMPRESSION			# compressed vnd(4)
+
+pseudo-device	putter				# for puffs and pud
 
 # Network pseudo-devices
 pseudo-device	bpfilter			# Berkeley packet filter

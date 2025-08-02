@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdefs.h,v 1.6 2008/04/28 20:23:20 martin Exp $	*/
+/*	$NetBSD: hpcdefs.h,v 1.6.124.1 2025/08/02 05:55:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #if _WIN32_WCE == 101
 #include <winnls.h>
 #elif WIN32_WCE == 100
-#error "can't convert WideChar <-> MutiByte"
+#error "can't convert WideChar <-> MultiByte"
 #endif
 #if _WIN32_WCE < 200
 #include <ctype.h>

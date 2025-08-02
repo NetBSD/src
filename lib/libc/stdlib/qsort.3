@@ -1,4 +1,4 @@
-.\"	$NetBSD: qsort.3,v 1.14 2014/09/19 16:02:58 wiz Exp $
+.\"	$NetBSD: qsort.3,v 1.14.28.1 2025/08/02 05:54:41 perseant Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,13 +33,16 @@
 .\"
 .\"     from: @(#)qsort.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd July 20, 2025
 .Dt QSORT 3
 .Os
 .Sh NAME
 .Nm qsort ,
 .Nm heapsort ,
-.Nm mergesort
+.Nm mergesort ,
+.Nm qsort_r ,
+.Nm heapsort_r ,
+.Nm mergesort_r
 .Nd sort functions
 .Sh LIBRARY
 .Lb libc
@@ -47,10 +50,16 @@
 .In stdlib.h
 .Ft void
 .Fn qsort "void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *)"
+.Ft void
+.Fn qsort_r "void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *, void *)" "void *cookie"
 .Ft int
 .Fn heapsort "void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *)"
 .Ft int
+.Fn heapsort_r "void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *, void *)" "void *cookie"
+.Ft int
 .Fn mergesort "void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *)"
+.Ft int
+.Fn mergesort_r "void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *, void *)" "void *cookie"
 .Sh DESCRIPTION
 The
 .Fn qsort
@@ -106,6 +115,14 @@ The function
 is stable.
 .Pp
 The
+.Fn qsort_r ,
+.Fn heapsort_r ,
+and
+.Fn mergesort_r
+functions pass an additional cookie argument through to the comparison
+function.
+.Pp
+The
 .Fn qsort
 function is an implementation of C.A.R. Hoare's ``quicksort'' algorithm,
 a variant of partition-exchange sorting; in particular, see D.E. Knuth's
@@ -150,13 +167,17 @@ untrue.
 .Sh RETURN VALUES
 The
 .Fn qsort
-function
-returns no value.
+and
+.Fn qsort_r
+functions
+return no value.
 .Pp
 Upon successful completion,
-.Fn heapsort
-and
+.Fn heapsort ,
 .Fn mergesort
+.Fn heapsort_r ,
+and
+.Fn mergesort_r
 return 0.
 Otherwise, they return \-1 and the global variable
 .Va errno
@@ -169,8 +190,12 @@ did not permit the comparison routine itself to call
 This is no longer true.
 .Sh ERRORS
 The
-.Fn heapsort
-function succeeds unless:
+.Fn heapsort ,
+.Fn mergesort
+.Fn heapsort_r ,
+and
+.Fn heapsort_r
+functions succeed unless:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The
@@ -180,12 +205,16 @@ the
 .Fa size
 argument to
 .Fn mergesort
+or
+.Fn mergesort_r
 is less than
 .Dq "sizeof(void *) / 2" .
 .It Bq Er ENOMEM
-.Fn heapsort
+.Fn heapsort ,
+.Fn heapsort_r ,
+.Fn mergesort ,
 or
-.Fn mergesort
+.Fn mergesort_r
 were unable to allocate memory.
 .El
 .Sh SEE ALSO
@@ -233,6 +262,18 @@ were unable to allocate memory.
 .Sh STANDARDS
 The
 .Fn qsort
-function
-conforms to
+function conforms to
 .St -ansiC .
+.Sh HISTORY
+The
+.Fn qsort_r ,
+.Fn heapsort_r ,
+and
+.Fn mergesort_r
+functions were added in
+.Nx 11.0 .
+.Pp
+The
+.Fn qsort_r
+function conforms to
+.St -p1003.1-2024 .

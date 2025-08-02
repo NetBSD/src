@@ -1,4 +1,4 @@
-/*	$NetBSD: non_blocking.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: non_blocking.c,v 1.1.1.1.62.1 2025/08/02 05:50:19 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -54,9 +54,7 @@
 
 /* non_blocking - set/clear non-blocking flag */
 
-int     non_blocking(fd, on)
-int     fd;
-int     on;
+int     non_blocking(int fd, int on)
 {
     int     flags;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.41 2017/03/22 17:52:36 roy Exp $	*/
+/*	$NetBSD: syslog.h,v 1.41.50.1 2025/08/02 05:57:55 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,6 +37,7 @@
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <sys/ansi.h>
+#include <sys/stdarg.h>
 
 #define	_PATH_LOG	"/var/run/log"
 
@@ -61,12 +62,11 @@
 #define	LOG_PRIMASK	0x07	/* mask to extract priority part (internal) */
 				/* extract priority */
 #define	LOG_PRI(p)	((p) & LOG_PRIMASK)
-#define	LOG_MAKEPRI(fac, pri)	(((fac) << 3) | (pri))
 
 #ifdef SYSLOG_NAMES
 #define	INTERNAL_NOPRI	0x10	/* the "no priority" priority */
 				/* mark "facility" */
-#define	INTERNAL_MARK	LOG_MAKEPRI(LOG_NFACILITIES, 0)
+#define	INTERNAL_MARK	(LOG_NFACILITIES<<3)
 typedef struct _code {
 	const char	*c_name;
 	int	c_val;
@@ -219,6 +219,14 @@ void	syslogp_r(int, struct syslog_data *, const char *, const char *,
     const char *, ...) __RENAME(__syslogp_r60) __sysloglike(5, 6);
 void	vsyslogp_r(int, struct syslog_data *, const char *, const char *,
     const char *, __va_list) __RENAME(__vsyslogp_r60) __sysloglike(5, 0);
+void	syslog_ss(int, struct syslog_data *, const char *, ...)
+    __RENAME(__syslog_ss60) __sysloglike(3, 4);
+void    vsyslog_ss(int, struct syslog_data *, const char *, va_list)
+    __RENAME(__vsyslog_ss60) __sysloglike(3, 0);
+void	syslogp_ss(int, struct syslog_data *, const char *, const char *,
+    const char *, ...) __RENAME(__syslogp_ss60) __sysloglike(5, 0);
+void	vsyslogp_ss(int, struct syslog_data *, const char *, const char *,
+    const char *, va_list) __RENAME(__vsyslogp_ss60) __sysloglike(5, 0);
 #endif
 void	syslogp(int, const char *, const char *, const char *, ...)
     __sysloglike(4, 5);

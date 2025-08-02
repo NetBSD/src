@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.22 2024/02/29 20:41:52 christos Exp $
+#	$NetBSD: Makefile,v 1.22.2.1 2025/08/02 05:54:21 perseant Exp $
 
-NOLINT=yes # XXX
 LIB=isc
 #USE_SHLIBDIR=   yes
 
@@ -14,40 +13,37 @@ CPPFLAGS+=-I${LIBUVDIR}/dist/include
 
 DIST=	${IDIST}/lib/isc
 CPPFLAGS+=-I${IDIST}/lib/isc
+CPPFLAGS+=-I${BIND_SRCDIR}/include/isc
 
 DIST_ISC= ${DIST} ${DIST}/netmgr
 
 .PATH.c:	${DIST}/unix ${DIST}/nls ${DIST}/pthreads ${DIST_ISC}
 
 UNIX_SRCS=	backtrace.c dir.c entropy.c errno.c errno2result.c \
-		file.c interfaceiter.c net.c os.c resource.c \
+		file.c interfaceiter.c net.c os.c \
 		stdio.c stdtime.c syslog.c time.c \
 		meminfo.c
 
 PTHREAD_SRCS=	condition.c mutex.c thread.c
 
-NETMGR_SRCS=    tcp.c udp.c netmgr.c tcpdns.c tlsdns.c \
-		uv-compat.c netmgr-timer.c uverr2result.c 
+NETMGR_SRCS=    netmgr.c proxystream.c proxyudp.c socket.c streamdns.c \
+		tcp.c netmgr-timer.c tlsstream.c udp.c
 
-CRYPTO_SRCS=	aes.c
+CRYPTO_SRCS=
 
-SRCS=		app.c assertions.c astack.c base32.c base64.c buffer.c \
-		commandline.c crc64.c counter.c error.c event.c glob.c \
-		hash.c heap.c hex.c hmac.c httpd.c ht.c managers.c \
-		iterated_hash.c lex.c lib.c log.c md.c mem.c \
+SRCS=		ascii.c assertions.c async.c base32.c base64.c \
+		commandline.c crc64.c counter.c error.c fips.c \
+		getaddresses.c hash.c hashmap.c heap.c helper.c hex.c histo.c \
+		hmac.c httpd.c ht.c managers.c iterated_hash.c job.c \
+		lex.c lib.c log.c loop.c md.c mem.c \
 		mutexblock.c netaddr.c netscope.c nonce.c parseint.c \
-		picohttpparser.c pool.c portset.c quota.c radix.c random.c \
-		ratelimiter.c regex.c trampoline.c \
-		region.c result.c rwlock.c safe.c serial.c siphash.c \
-		sockaddr.c stats.c string.c symtab.c task.c \
-		taskpool.c timer.c tls.c tm.c url.c utf8.c \
+		picohttpparser.c portset.c proxy2.c quota.c radix.c random.c \
+		ratelimiter.c regex.c \
+		region.c result.c rwlock.c safe.c serial.c signal.c \
+		sockaddr.c stats.c string.c symtab.c tid.c \
+		timer.c tls.c tm.c url.c utf8.c uv.c work.c xml.c \
 		${UNIX_SRCS} ${PTHREAD_SRCS} ${CRYPTO_SRCS} ${NETMGR_SRCS}
 
-
-.if (${USE_INET6} == "no")
-CPPFLAGS.net.c=	-Wno-error
-SRCS+=		ipv6.c
-.endif
 
 LDFLAGS+=-Wl,--version-script=${.CURDIR}/isc.map
 LDADD+=-Wl,-Bstatic

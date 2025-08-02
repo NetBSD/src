@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg_test.c,v 1.2 2024/02/21 22:51:54 christos Exp $	*/
+/*	$NetBSD: cfg_test.c,v 1.2.6.1 2025/08/02 05:53:18 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,6 @@
 #include <stdlib.h>
 
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -41,7 +40,7 @@ check_result(isc_result_t result, const char *format, ...) {
 	vfprintf(stderr, format, args);
 	va_end(args);
 	fprintf(stderr, ": %s\n", isc_result_totext(result));
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 static void
@@ -55,7 +54,7 @@ usage(void) {
 	fprintf(stderr, "usage: cfg_test --rndc|--named "
 			"[--grammar] [--zonegrammar] [--active] "
 			"[--memstats] conffile\n");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -131,8 +130,6 @@ main(int argc, char **argv) {
 				zonetype = CFG_ZONE_FORWARD;
 			} else if (strcmp(argv[1], "redirect") == 0) {
 				zonetype = CFG_ZONE_REDIRECT;
-			} else if (strcmp(argv[1], "delegation-only") == 0) {
-				zonetype = CFG_ZONE_DELEGATION;
 			} else if (strcmp(argv[1], "in-view") == 0) {
 				zonetype = CFG_ZONE_INVIEW;
 			} else {
@@ -171,7 +168,7 @@ main(int argc, char **argv) {
 		fprintf(stderr, "read config: %s\n", isc_result_totext(result));
 
 		if (result != ISC_R_SUCCESS) {
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 
 		cfg_print(cfg, output, NULL);
@@ -190,8 +187,8 @@ main(int argc, char **argv) {
 	fflush(stdout);
 	if (ferror(stdout)) {
 		fprintf(stderr, "write error\n");
-		return (1);
-	} else {
-		return (0);
+		return 1;
 	}
+
+	return 0;
 }

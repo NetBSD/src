@@ -1,4 +1,4 @@
--- $NetBSD: fix.sql,v 1.2 2011/10/12 16:24:39 yamt Exp $
+-- $NetBSD: fix.sql,v 1.2.54.1 2025/08/02 05:55:09 perseant Exp $
 
 -- Copyright (c)2011 YAMAMOTO Takashi,
 -- All rights reserved.
@@ -24,7 +24,7 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 
--- remove orphaned files unless there's mount_pgfs connectd this db
+-- remove orphaned files unless there's mount_pgfs connected to this db
 
 BEGIN;
 SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;

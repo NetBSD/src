@@ -116,10 +116,10 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
 	$(top_srcdir)/m4/ax_prog_cc_for_build.m4 \
 	$(top_srcdir)/m4/ax_pthread.m4 \
 	$(top_srcdir)/m4/ax_restore_flags.m4 \
-	$(top_srcdir)/m4/ax_save_flags.m4 $(top_srcdir)/m4/ax_tls.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
-	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/ax_save_flags.m4 $(top_srcdir)/m4/libtool.m4 \
+	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/m4/pkg-modversion.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
@@ -133,36 +133,40 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 arpaname_SOURCES = arpaname.c
 arpaname_OBJECTS = arpaname.$(OBJEXT)
-arpaname_DEPENDENCIES = $(LIBISC_LIBS)
+am__DEPENDENCIES_1 =
+@HAVE_JEMALLOC_FALSE@am__DEPENDENCIES_2 =  \
+@HAVE_JEMALLOC_FALSE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
+arpaname_DEPENDENCIES = $(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 dnstap_read_SOURCES = dnstap-read.c
 dnstap_read_OBJECTS = dnstap_read-dnstap-read.$(OBJEXT)
-am__DEPENDENCIES_1 =
 @HAVE_DNSTAP_TRUE@dnstap_read_DEPENDENCIES = $(LIBDNS_LIBS) \
-@HAVE_DNSTAP_TRUE@	$(LIBISC_LIBS) $(am__DEPENDENCIES_1)
+@HAVE_DNSTAP_TRUE@	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
 mdig_SOURCES = mdig.c
-mdig_OBJECTS = mdig-mdig.$(OBJEXT)
-mdig_DEPENDENCIES = $(LIBBIND9_LIBS) $(LIBISCCFG_LIBS) $(LIBDNS_LIBS) \
-	$(LIBISC_LIBS)
+mdig_OBJECTS = mdig.$(OBJEXT)
+mdig_LDADD = $(LDADD)
+mdig_DEPENDENCIES = $(LIBDNS_LIBS) $(am__DEPENDENCIES_2)
 named_journalprint_SOURCES = named-journalprint.c
 named_journalprint_OBJECTS = named-journalprint.$(OBJEXT)
 named_journalprint_LDADD = $(LDADD)
-named_journalprint_DEPENDENCIES = $(LIBDNS_LIBS) $(LIBISC_LIBS)
+named_journalprint_DEPENDENCIES = $(LIBDNS_LIBS) $(am__DEPENDENCIES_2)
 named_nzd2nzf_SOURCES = named-nzd2nzf.c
 named_nzd2nzf_OBJECTS = named_nzd2nzf-named-nzd2nzf.$(OBJEXT)
-@HAVE_LMDB_TRUE@named_nzd2nzf_DEPENDENCIES = $(LIBISC_LIBS) \
+@HAVE_LMDB_TRUE@named_nzd2nzf_DEPENDENCIES = $(am__DEPENDENCIES_2) \
 @HAVE_LMDB_TRUE@	$(am__DEPENDENCIES_1)
 named_rrchecker_SOURCES = named-rrchecker.c
 named_rrchecker_OBJECTS = named-rrchecker.$(OBJEXT)
 named_rrchecker_LDADD = $(LDADD)
-named_rrchecker_DEPENDENCIES = $(LIBDNS_LIBS) $(LIBISC_LIBS)
+named_rrchecker_DEPENDENCIES = $(LIBDNS_LIBS) $(am__DEPENDENCIES_2)
 nsec3hash_SOURCES = nsec3hash.c
 nsec3hash_OBJECTS = nsec3hash.$(OBJEXT)
 nsec3hash_LDADD = $(LDADD)
-nsec3hash_DEPENDENCIES = $(LIBDNS_LIBS) $(LIBISC_LIBS)
+nsec3hash_DEPENDENCIES = $(LIBDNS_LIBS) $(am__DEPENDENCIES_2)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -179,8 +183,8 @@ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/arpaname.Po \
-	./$(DEPDIR)/dnstap_read-dnstap-read.Po \
-	./$(DEPDIR)/mdig-mdig.Po ./$(DEPDIR)/named-journalprint.Po \
+	./$(DEPDIR)/dnstap_read-dnstap-read.Po ./$(DEPDIR)/mdig.Po \
+	./$(DEPDIR)/named-journalprint.Po \
 	./$(DEPDIR)/named-rrchecker.Po \
 	./$(DEPDIR)/named_nzd2nzf-named-nzd2nzf.Po \
 	./$(DEPDIR)/nsec3hash.Po
@@ -263,10 +267,12 @@ DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DEVELOPER_MODE = @DEVELOPER_MODE@
 DLLTOOL = @DLLTOOL@
+DLOPEN_LIBS = @DLOPEN_LIBS@
 DNSTAP_CFLAGS = @DNSTAP_CFLAGS@
 DNSTAP_LIBS = @DNSTAP_LIBS@
 DOXYGEN = @DOXYGEN@
 DSYMUTIL = @DSYMUTIL@
+DTRACE = @DTRACE@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
@@ -289,15 +295,16 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 JEMALLOC_CFLAGS = @JEMALLOC_CFLAGS@
 JEMALLOC_LIBS = @JEMALLOC_LIBS@
+JEMALLOC_VERSION = @JEMALLOC_VERSION@
 JSON_C_CFLAGS = @JSON_C_CFLAGS@
 JSON_C_LIBS = @JSON_C_LIBS@
 KRB5_CFLAGS = @KRB5_CFLAGS@
 KRB5_CONFIG = @KRB5_CONFIG@
 KRB5_LIBS = @KRB5_LIBS@
-LATEXMK = @LATEXMK@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LDFLAGS_FOR_BUILD = @LDFLAGS_FOR_BUILD@
+LIBCAP_CFLAGS = @LIBCAP_CFLAGS@
 LIBCAP_LIBS = @LIBCAP_LIBS@
 LIBIDN2_CFLAGS = @LIBIDN2_CFLAGS@
 LIBIDN2_LIBS = @LIBIDN2_LIBS@
@@ -306,8 +313,11 @@ LIBNGHTTP2_LIBS = @LIBNGHTTP2_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
+LIBURCU_CFLAGS = @LIBURCU_CFLAGS@
+LIBURCU_LIBS = @LIBURCU_LIBS@
 LIBUV_CFLAGS = @LIBUV_CFLAGS@
 LIBUV_LIBS = @LIBUV_LIBS@
+LIBUV_VERSION = @LIBUV_VERSION@
 LIBXML2_CFLAGS = @LIBXML2_CFLAGS@
 LIBXML2_LIBS = @LIBXML2_LIBS@
 LIPO = @LIPO@
@@ -331,6 +341,7 @@ OBJEXT = @OBJEXT@
 OPENSSL_CFLAGS = @OPENSSL_CFLAGS@
 OPENSSL_LDFLAGS = @OPENSSL_LDFLAGS@
 OPENSSL_LIBS = @OPENSSL_LIBS@
+OPENSSL_VERSION = @OPENSSL_VERSION@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -357,6 +368,7 @@ PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
 RANLIB = @RANLIB@
+RCU_VERSION = @RCU_VERSION@
 READLINE_CFLAGS = @READLINE_CFLAGS@
 READLINE_LIBS = @READLINE_LIBS@
 RELEASE_DATE = @RELEASE_DATE@
@@ -370,7 +382,6 @@ STD_LDFLAGS = @STD_LDFLAGS@
 STRIP = @STRIP@
 TEST_CFLAGS = @TEST_CFLAGS@
 VERSION = @VERSION@
-XELATEX = @XELATEX@
 XSLTPROC = @XSLTPROC@
 ZLIB_CFLAGS = @ZLIB_CFLAGS@
 ZLIB_LIBS = @ZLIB_LIBS@
@@ -445,12 +456,19 @@ AM_CPPFLAGS = $(STD_CPPFLAGS) -include $(top_builddir)/config.h \
 	-I$(srcdir)/include $(LIBISC_CFLAGS) $(LIBDNS_CFLAGS)
 AM_LDFLAGS = $(STD_LDFLAGS) $(am__append_1)
 LDADD = $(LIBDNS_LIBS) $(LIBISC_LIBS)
-LIBISC_CFLAGS = \
-	-I$(top_srcdir)/include				\
-	-I$(top_srcdir)/lib/isc/include			\
-	-I$(top_builddir)/lib/isc/include
-
-LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+BUILT_SOURCES = 
+CLEANFILES = 
+@HAVE_JEMALLOC_FALSE@LIBISC_CFLAGS = -I$(top_srcdir)/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_FALSE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_TRUE@LIBISC_CFLAGS = $(JEMALLOC_CFLAGS) \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_srcdir)/lib/isc/include \
+@HAVE_JEMALLOC_TRUE@	-I$(top_builddir)/lib/isc/include
+@HAVE_JEMALLOC_FALSE@LIBISC_LIBS = $(top_builddir)/lib/isc/libisc.la
+@HAVE_JEMALLOC_TRUE@LIBISC_LIBS = $(JEMALLOC_LIBS) \
+@HAVE_JEMALLOC_TRUE@	$(top_builddir)/lib/isc/libisc.la
+@HAVE_DTRACE_TRUE@LIBISC_DTRACE = $(top_builddir)/lib/isc/probes.lo
 LIBDNS_CFLAGS = \
 	-I$(top_srcdir)/lib/dns/include			\
 	-I$(top_builddir)/lib/dns/include
@@ -458,18 +476,14 @@ LIBDNS_CFLAGS = \
 LIBDNS_LIBS = \
 	$(top_builddir)/lib/dns/libdns.la
 
+@HAVE_DTRACE_TRUE@LIBDNS_DTRACE = $(top_builddir)/lib/dns/probes.lo
 LIBNS_CFLAGS = \
 	-I$(top_srcdir)/lib/ns/include
 
 LIBNS_LIBS = \
 	$(top_builddir)/lib/ns/libns.la
 
-LIBIRS_CFLAGS = \
-	-I$(top_srcdir)/lib/irs/include
-
-LIBIRS_LIBS = \
-	$(top_builddir)/lib/irs/libirs.la
-
+@HAVE_DTRACE_TRUE@LIBNS_DTRACE = $(top_builddir)/lib/ns/probes.lo
 LIBISCCFG_CFLAGS = \
 	-I$(top_srcdir)/lib/isccfg/include
 
@@ -482,23 +496,7 @@ LIBISCCC_CFLAGS = \
 LIBISCCC_LIBS = \
 	$(top_builddir)/lib/isccc/libisccc.la
 
-LIBBIND9_CFLAGS = \
-	-I$(top_srcdir)/lib/bind9/include
-
-LIBBIND9_LIBS = \
-	$(top_builddir)/lib/bind9/libbind9.la
-
 arpaname_LDADD = \
-	$(LIBISC_LIBS)
-
-mdig_CPPFLAGS = \
-	$(AM_CPPFLAGS)		\
-	$(LIBBIND9_CFLAGS)
-
-mdig_LDADD = \
-	$(LIBBIND9_LIBS)	\
-	$(LIBISCCFG_LIBS)	\
-	$(LIBDNS_LIBS)		\
 	$(LIBISC_LIBS)
 
 @HAVE_DNSTAP_TRUE@dnstap_read_CPPFLAGS = \
@@ -519,7 +517,8 @@ mdig_LDADD = \
 @HAVE_LMDB_TRUE@	$(LIBISC_LIBS)		\
 @HAVE_LMDB_TRUE@	$(LMDB_LIBS)
 
-all: all-am
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .o .obj
@@ -639,7 +638,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arpaname.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnstap_read-dnstap-read.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mdig-mdig.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mdig.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/named-journalprint.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/named-rrchecker.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/named_nzd2nzf-named-nzd2nzf.Po@am__quote@ # am--include-marker
@@ -688,20 +687,6 @@ dnstap_read-dnstap-read.obj: dnstap-read.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dnstap-read.c' object='dnstap_read-dnstap-read.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dnstap_read_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dnstap_read-dnstap-read.obj `if test -f 'dnstap-read.c'; then $(CYGPATH_W) 'dnstap-read.c'; else $(CYGPATH_W) '$(srcdir)/dnstap-read.c'; fi`
-
-mdig-mdig.o: mdig.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(mdig_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mdig-mdig.o -MD -MP -MF $(DEPDIR)/mdig-mdig.Tpo -c -o mdig-mdig.o `test -f 'mdig.c' || echo '$(srcdir)/'`mdig.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/mdig-mdig.Tpo $(DEPDIR)/mdig-mdig.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mdig.c' object='mdig-mdig.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(mdig_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mdig-mdig.o `test -f 'mdig.c' || echo '$(srcdir)/'`mdig.c
-
-mdig-mdig.obj: mdig.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(mdig_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mdig-mdig.obj -MD -MP -MF $(DEPDIR)/mdig-mdig.Tpo -c -o mdig-mdig.obj `if test -f 'mdig.c'; then $(CYGPATH_W) 'mdig.c'; else $(CYGPATH_W) '$(srcdir)/mdig.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/mdig-mdig.Tpo $(DEPDIR)/mdig-mdig.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mdig.c' object='mdig-mdig.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(mdig_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mdig-mdig.obj `if test -f 'mdig.c'; then $(CYGPATH_W) 'mdig.c'; else $(CYGPATH_W) '$(srcdir)/mdig.c'; fi`
 
 named_nzd2nzf-named-nzd2nzf.o: named-nzd2nzf.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(named_nzd2nzf_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT named_nzd2nzf-named-nzd2nzf.o -MD -MP -MF $(DEPDIR)/named_nzd2nzf-named-nzd2nzf.Tpo -c -o named_nzd2nzf-named-nzd2nzf.o `test -f 'named-nzd2nzf.c' || echo '$(srcdir)/'`named-nzd2nzf.c
@@ -811,14 +796,17 @@ distdir-am: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-check: check-am
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(PROGRAMS)
 installdirs:
 	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-am
-install-exec: install-exec-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-am
+install-exec: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
 
@@ -839,6 +827,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -847,6 +836,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
@@ -854,7 +844,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/arpaname.Po
 	-rm -f ./$(DEPDIR)/dnstap_read-dnstap-read.Po
-	-rm -f ./$(DEPDIR)/mdig-mdig.Po
+	-rm -f ./$(DEPDIR)/mdig.Po
 	-rm -f ./$(DEPDIR)/named-journalprint.Po
 	-rm -f ./$(DEPDIR)/named-rrchecker.Po
 	-rm -f ./$(DEPDIR)/named_nzd2nzf-named-nzd2nzf.Po
@@ -910,7 +900,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/arpaname.Po
 	-rm -f ./$(DEPDIR)/dnstap_read-dnstap-read.Po
-	-rm -f ./$(DEPDIR)/mdig-mdig.Po
+	-rm -f ./$(DEPDIR)/mdig.Po
 	-rm -f ./$(DEPDIR)/named-journalprint.Po
 	-rm -f ./$(DEPDIR)/named-rrchecker.Po
 	-rm -f ./$(DEPDIR)/named_nzd2nzf-named-nzd2nzf.Po
@@ -941,7 +931,7 @@ unit: unit-am
 
 unit-am: unit-local
 
-.MAKE: install-am install-strip
+.MAKE: all check install install-am install-exec install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am clean \
 	clean-binPROGRAMS clean-generic clean-libtool cscopelist-am \

@@ -21,11 +21,8 @@ _ItL_qS6
 _ItL_qS7
 _ItL_qS8
 _ItL_qS9
-__bss_end__
-__bss_start__
 __divtc3
 __divxc3
-__end__
 __fe_dfl_env
 __ieee754_sqrtl
 __kernel_cosl
@@ -33,7 +30,6 @@ __kernel_sinl
 __kernel_tanl
 __multc3
 __mulxc3
-_bss_end__
 _fma
 _fmaf
 _fmax

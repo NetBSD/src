@@ -1,4 +1,4 @@
-/* $NetBSD: idle_machdep.S,v 1.12 2022/05/29 23:39:59 ryo Exp $ */
+/* $NetBSD: idle_machdep.S,v 1.12.10.1 2025/08/02 05:55:20 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <aarch64/locore.h>
 #include "assym.h"
 
-RCSID("$NetBSD: idle_machdep.S,v 1.12 2022/05/29 23:39:59 ryo Exp $");
+RCSID("$NetBSD: idle_machdep.S,v 1.12.10.1 2025/08/02 05:55:20 perseant Exp $");
 
 #ifdef ARM_INTR_IMPL
 #include ARM_INTR_IMPL
@@ -49,7 +49,7 @@ RCSID("$NetBSD: idle_machdep.S,v 1.12 2022/05/29 23:39:59 ryo Exp $");
 #endif
 
 
-ENTRY(cpu_idle)
+ENTRY(aarch64_cpu_idle_wfi)
 #ifdef LAZY_CPUIDLE
 
 	/*
@@ -122,4 +122,4 @@ ENTRY(cpu_idle)
 #endif /* LAZY_CPUIDLE */
 
 	ret
-END(cpu_idle)
+END(aarch64_cpu_idle_wfi)

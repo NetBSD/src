@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_entry.c,v 1.3 2022/10/08 16:12:48 christos Exp $	*/
+/*	$NetBSD: qmgr_entry.c,v 1.3.4.1 2025/08/02 05:50:13 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -394,8 +394,7 @@ QMGR_ENTRY *qmgr_entry_create(QMGR_PEER *peer, QMGR_MESSAGE *message)
      * 
      * XXX At this point in the code, the busy reference count is still less
      * than the concurrency limit (otherwise this code would not be invoked
-     * in the first place) so we have to make some awkward adjustments
-     * below.
+     * in the first place) so we have to make some awkward adjustments below.
      * 
      * XXX The queue length test below looks at the active queue share of an
      * individual destination. This catches the case where mail for one

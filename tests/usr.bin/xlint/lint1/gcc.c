@@ -1,11 +1,11 @@
-/*	$NetBSD: gcc.c,v 1.3 2024/06/08 13:50:47 rillig Exp $	*/
+/*	$NetBSD: gcc.c,v 1.3.2.1 2025/08/02 05:58:14 perseant Exp $	*/
 # 3 "gcc.c"
 
 /*
  * Miscellaneous tests that are specific to lint's GCC mode.
  */
 
-/* lint1-extra-flags: -X 351 */
+/* lint1-extra-flags: -chaapbrz -X 351 */
 
 // Before C99 introduced __func__, GCC already had __FUNCTION__ with the same
 // semantics.
@@ -91,4 +91,38 @@ typeof_after_statement(void **ptr)
 		__typeof__(*ptr) ret = *ptr;
 		ret;
 	});
+}
+
+const char *
+auto_type(const char *ptr)
+{
+	__auto_type pp = &ptr;
+	return *pp;
+}
+
+void
+atomic_functions(void)
+{
+	static unsigned long long v, *pv;
+	v = __atomic_load_n(pv, 0);
+	v = __atomic_exchange_n(pv, 0, 0);
+	v = __atomic_add_fetch(pv, 0, 0);
+	v = __atomic_sub_fetch(pv, 0, 0);
+	v = __atomic_and_fetch(pv, 0, 0);
+	v = __atomic_xor_fetch(pv, 0, 0);
+	v = __atomic_or_fetch(pv, 0, 0);
+	v = __atomic_nand_fetch(pv, 0, 0);
+	v = __atomic_fetch_add(pv, 0, 0);
+	v = __atomic_fetch_sub(pv, 0, 0);
+	v = __atomic_fetch_and(pv, 0, 0);
+	v = __atomic_fetch_xor(pv, 0, 0);
+	v = __atomic_fetch_or(pv, 0, 0);
+	v = __atomic_fetch_nand(pv, 0, 0);
+
+	static char c, *pc;
+	c = __atomic_load_n(pc, 0);
+	c = __atomic_exchange_n(pc, 0, 0);
+
+	/* expect+1: warning: conversion from 'unsigned long long' to 'char' may lose accuracy [132] */
+	c = __atomic_exchange_n(pv, 0, 0);
 }

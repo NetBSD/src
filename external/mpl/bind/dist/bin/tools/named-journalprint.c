@@ -1,4 +1,4 @@
-/*	$NetBSD: named-journalprint.c,v 1.8 2024/02/21 22:51:41 christos Exp $	*/
+/*	$NetBSD: named-journalprint.c,v 1.8.2.1 2025/08/02 05:53:08 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,6 @@
 #include <isc/commandline.h>
 #include <isc/log.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/util.h>
 
@@ -33,7 +32,7 @@ const char *progname = NULL;
 static void
 usage(void) {
 	fprintf(stderr, "Usage: %s [-dux] journal\n", progname);
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 /*
@@ -61,7 +60,7 @@ setup_logging(isc_mem_t *mctx, FILE *errout, isc_log_t **logp) {
 		      ISC_R_SUCCESS);
 
 	*logp = log;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 int
@@ -87,7 +86,7 @@ main(int argc, char **argv) {
 			if (endp == isc_commandline_argument || *endp != 0) {
 				fprintf(stderr, "invalid serial: %s\n",
 					isc_commandline_argument);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			break;
 		case 'd':
@@ -132,5 +131,5 @@ main(int argc, char **argv) {
 	}
 	isc_log_destroy(&lctx);
 	isc_mem_detach(&mctx);
-	return (result != ISC_R_SUCCESS ? 1 : 0);
+	return result != ISC_R_SUCCESS ? 1 : 0;
 }

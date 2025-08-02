@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.15 2024/01/28 08:17:27 rillig Exp $
+# $NetBSD: accept.sh,v 1.15.2.1 2025/08/02 05:58:14 perseant Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,6 +33,13 @@
 #	'expect' comments.
 
 set -eu
+
+atf_get_srcdir() {
+	echo "."
+}
+atf_test_case() {
+	:
+}
 
 : "${archsubdir:=$(make -v ARCHSUBDIR)}"
 . './t_integration.sh'		# for configure_test_case
@@ -79,7 +86,7 @@ for pattern in "$@"; do
 			continue
 		fi
 
-		if [ -f "$exp_file" ] && cmp -s "$exp_tmp_file"  "$exp_file"; then
+		if [ -f "$exp_file" ] && cmp -s "$exp_tmp_file" "$exp_file"; then
 			rm "$exp_tmp_file"
 		else
 			mv "$exp_tmp_file" "$exp_file"
@@ -90,7 +97,7 @@ for pattern in "$@"; do
 		elif [ "$ln_file" = '/dev/null' ]; then
 			rm "$ln_tmp_file"
 		else
-			if tr -d ' \t' < "$ln_file" > "$ln_file.trimmed.tmp" &&
+			if tr -d ' \t' < "$ln_file" | sed '/^$/d' > "$ln_file.trimmed.tmp" &&
 			    tr -d ' \t' < "$ln_tmp_file" > "$ln_tmp_file.trimmed.tmp" &&
 			    cmp -s "$ln_file.trimmed.tmp" "$ln_tmp_file.trimmed.tmp"; then
 				rm "$ln_tmp_file"

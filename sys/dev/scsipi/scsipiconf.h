@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.131 2024/06/22 10:07:46 palle Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.131.2.1 2025/08/02 05:57:03 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.

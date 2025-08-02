@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.45 2023/09/10 15:03:56 andvar Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.45.6.1 2025/08/02 05:55:40 perseant Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.45 2023/09/10 15:03:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.45.6.1 2025/08/02 05:55:40 perseant Exp $");
 
 #include "plumohci.h" /* Plum2 OHCI shared memory allocated on V-RAM */
 #include "bivideo.h"
@@ -395,7 +395,7 @@ plumvideo_init(struct plumvideo_softc *sc, int *reverse)
 	}
 	
 	/*
-	 * calcurate frame buffer size.
+	 * calculate frame buffer size.
 	 */
 	reg = plum_conf_read(regt, regh, PLUM_VIDEO_PLGMD_REG);
 	vram_size = (width * height * bpp) / NBBY;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/01/10 00:05:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.16.1 2025/08/02 05:50:45 perseant Exp $
 
 DRIVER=		xf86-video-vboxvideo
 DRIVER_NAME=	vboxvideo_drv
@@ -11,7 +11,6 @@ SRCS=	 \
 		VBVABase.c \
 		edid.c \
 		getmode.c \
-		helpers.c \
 		hgsmimemalloc.c \
 		pointer.c \
 		setmode.c \

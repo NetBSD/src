@@ -1,0 +1,7 @@
+bcrypt_gensalt
+crypt
+des_cipher
+des_setkey
+encrypt
+pw_gensalt
+setkey

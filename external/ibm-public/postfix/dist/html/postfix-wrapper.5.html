@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,10 +7,10 @@
 </head> <body> <pre>
 POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        postfix-wrapper - Postfix multi-instance API
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        Support for managing multiple Postfix instances is available as of ver-
        sion 2.6. Instances share executable files and documentation, but  have
        their own directories for configuration, queue and data files.
@@ -24,7 +24,7 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
        required.  This  instance is identified by the <a href="postconf.5.html#config_directory">config_directory</a> parame-
        ter's default value.
 
-<b>GENERAL OPERATION</b>
+<b><a name="general_operation">GENERAL OPERATION</a></b>
        Multi-instance support is backwards compatible: when you run  only  one
        Postfix  instance,  commands  such  as  "postfix start" will not change
        behavior at all.
@@ -46,7 +46,7 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
        This  enumerates  the  status  of  all  Postfix  instances   within   a
        multi-instance configuration.
 
-<b>MANAGING AN INDIVIDUAL POSTFIX INSTANCE</b>
+<b><a name="managing_an_individual_postfix_instance">MANAGING AN INDIVIDUAL POSTFIX INSTANCE</a></b>
        To manage a specific Postfix instance, specify its configuration direc-
        tory on the <a href="postfix.1.html">postfix(1)</a> command line:
 
@@ -106,7 +106,7 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
               POSTCONF=$<a href="postconf.5.html#command_directory">command_directory</a>/postconf
               POSTFIX=$<a href="postconf.5.html#command_directory">command_directory</a>/postfix
               instance_dirs=`$POSTCONF -h <a href="postconf.5.html#multi_instance_directories">multi_instance_directories</a> |
-                              sed 's/,/ /'` || exit 1
+                              sed 'y/,/ /'` || exit 1
 
               err=0
               for dir in $<a href="postconf.5.html#config_directory">config_directory</a> $instance_dirs
@@ -127,7 +127,7 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
 
               exit $err
 
-<b>PER-INSTANCE MULTI-INSTANCE MANAGER CONTROLS</b>
+<b><a name="per-instance_multi-instance_manager_controls">PER-INSTANCE MULTI-INSTANCE MANAGER CONTROLS</a></b>
        Each Postfix instance has its own <a href="postconf.5.html">main.cf</a>  file  with  parameters  that
        control how the multi-instance manager operates on that instance.  This
        section discusses the most important settings.
@@ -145,7 +145,7 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
        "check" so that problems will be reported even  when  the  instance  is
        disabled.
 
-<b>MAINTAINING SHARED AND NON-SHARED FILES</b>
+<b><a name="maintaining_shared_and_non-shared_files">MAINTAINING SHARED AND NON-SHARED FILES</a></b>
        Some  files  are  shared between Postfix instances, such as executables
        and manpages, and some files are per-instance,  such  as  configuration
        files, mail queue files, and data files.  See the NON-SHARED FILES sec-
@@ -163,7 +163,7 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
        The  consequence  of this approach is that the default Postfix instance
        should be checked and updated before any other instances.
 
-<b>MULTI-INSTANCE API SUMMARY</b>
+<b><a name="multi-instance_api_summary">MULTI-INSTANCE API SUMMARY</a></b>
        Only  the   multi-instance   manager   implements   support   for   the
        <a href="postconf.5.html#multi_instance_enable">multi_instance_enable</a>  configuration parameter. The multi-instance man-
        ager  will  start  only  Postfix  instances  whose  <a href="postconf.5.html">main.cf</a>  file   has
@@ -205,14 +205,14 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
        Postfix, or that are not managed  together  with  the  default  Postfix
        instance.
 
-<b>ENVIRONMENT VARIABLES</b>
+<b><a name="environment_variables">ENVIRONMENT VARIABLES</a></b>
        MAIL_CONFIG
               When present, this forces the <a href="postfix.1.html">postfix(1)</a> command to operate only
               on the specified Postfix instance. This environment variable  is
               exported  by  the  <a href="postfix.1.html">postfix(1)</a> -c option, so that <a href="postfix.1.html">postfix(1)</a> com-
               mands in descendant processes will work correctly.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        The text below provides only a parameter summary. See  <a href="postconf.5.html">postconf(5)</a>  for
        more details.
 
@@ -238,7 +238,7 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
               Allow  this  Postfix instance to be started, stopped, etc., by a
               multi-instance manager.
 
-<b>NON-SHARED FILES</b>
+<b><a name="non-shared_files">NON-SHARED FILES</a></b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
               The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
               figuration files.
@@ -250,12 +250,12 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
               The location of the Postfix top-level queue directory.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postfix.1.html">postfix(1)</a> Postfix control program
        <a href="postmulti.1.html">postmulti(1)</a> full-blown multi-instance manager
        $<a href="postconf.5.html#daemon_directory">daemon_directory</a>/postfix-wrapper simple multi-instance manager
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

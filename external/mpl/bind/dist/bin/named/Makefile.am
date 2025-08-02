@@ -7,7 +7,6 @@ AM_CPPFLAGS +=				\
 	$(LIBNS_CFLAGS)			\
 	$(LIBISCCC_CFLAGS)		\
 	$(LIBISCCFG_CFLAGS)		\
-	$(LIBBIND9_CFLAGS)		\
 	$(OPENSSL_CFLAGS)		\
 	$(LIBCAP_CFLAGS)		\
 	$(LMDB_CFLAGS)			\
@@ -38,8 +37,8 @@ AM_CPPFLAGS +=						\
 sbin_PROGRAMS = named
 
 nodist_named_SOURCES = xsl.c
-BUILT_SOURCES = xsl.c
-CLEANFILES = xsl.c
+BUILT_SOURCES += xsl.c
+CLEANFILES += xsl.c
 
 EXTRA_DIST = bind9.xsl
 
@@ -102,14 +101,12 @@ named_LDADD =					\
 	$(LIBNS_LIBS)				\
 	$(LIBISCCC_LIBS)			\
 	$(LIBISCCFG_LIBS)			\
-	$(LIBBIND9_LIBS)			\
 	$(OPENSSL_LIBS)				\
 	$(LIBCAP_LIBS)				\
 	$(LMDB_LIBS)				\
 	$(MAXMINDDB_LIBS)			\
 	$(DNSTAP_LIBS)				\
 	$(LIBUV_LIBS)				\
-	$(LIBXML2_LIBS)				\
 	$(ZLIB_LIBS)
 
 if HAVE_JSON_C
@@ -121,3 +118,8 @@ if HAVE_LIBNGHTTP2
 named_LDADD +=					\
 	$(LIBNGHTTP2_LIBS)
 endif HAVE_LIBNGHTTP2
+
+if HAVE_LIBXML2
+named_LDADD +=					\
+	$(LIBXML2_LIBS)
+endif HAVE_LIBXML2

@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile,v 1.25 2021/04/30 13:54:26 christos Exp $
+# 	$NetBSD: Makefile,v 1.25.20.1 2025/08/02 05:56:16 perseant Exp $
 
 INCSDIR=/usr/include/x86
 
@@ -16,7 +16,7 @@ INCS=	aout_machdep.h \
 	gdt.h \
 	ieee.h ieeefp.h \
 	intr.h intrdefs.h \
-	lock.h \
+	lock.h lwp_private.h \
 	math.h mutex.h mtrr.h \
 	pio.h \
 	pmap.h \

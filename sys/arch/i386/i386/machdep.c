@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.842 2024/06/27 23:58:46 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.842.2.1 2025/08/02 05:55:43 perseant Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.842 2024/06/27 23:58:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.842.2.1 2025/08/02 05:55:43 perseant Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -676,6 +676,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	KASSERT(mutex_owned(p->p_lock));
 
 	fp--;
+	fp = (struct sigframe_siginfo *)((uintptr_t)fp & ~STACK_ALIGNBYTES);
 
 	memset(&frame, 0, sizeof(frame));
 	frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
@@ -859,6 +860,9 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	x86_dbregs_clear(l);
 
 	tf = l->l_md.md_regs;
+	memset(tf, 0, sizeof(*tf));
+
+	tf->tf_trapno = T_ASTFLT;
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
@@ -1105,6 +1109,13 @@ init386_ksyms(void)
 		return;
 #endif
 
+#ifdef XEN
+	if (pvh_boot && vm_guest != VM_GUEST_XENPVH) {
+		ksyms_addsyms_elf(0, ((int *)&end) + 1, esym);
+		return;
+	}
+#endif
+
 	if ((symtab = lookup_bootinfo(BTINFO_SYMTAB)) == NULL) {
 		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
 		return;
@@ -1184,7 +1195,7 @@ init386(paddr_t first_avail)
 #endif
 
 #ifdef XEN
-	if (vm_guest == VM_GUEST_XENPVH)
+	if (pvh_boot)
 		xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 #endif
 

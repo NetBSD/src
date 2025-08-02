@@ -50,7 +50,6 @@ zone "initially-unavailable" {
 	type mirror;
 	primaries { 10.53.0.2; };
 	file "initially-unavailable.db.mirror";
-	use-alt-transfer-source no;
 };
 
 zone "verify-axfr" {

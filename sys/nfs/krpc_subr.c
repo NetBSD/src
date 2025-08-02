@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.42 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.42.54.1 2025/08/02 05:57:51 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.42 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.42.54.1 2025/08/02 05:57:51 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,6 +280,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func, struct mbu
 	 * Prepend RPC message header.
 	 */
 	mhead = m_gethdr(M_WAIT, MT_DATA);
+	MCLAIM(mhead, &nfs_mowner);
 	mhead->m_next = *data;
 	call = mtod(mhead, struct rpc_call *);
 	mhead->m_len = sizeof(*call);
@@ -380,8 +381,8 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func, struct mbu
 	}
 
  out:
-	if (mhead) m_freem(mhead);
-	if (from) m_freem(from);
+	m_freem(mhead);
+	m_freem(from);
 	soclose(so);
 	return error;
 }

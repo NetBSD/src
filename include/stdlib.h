@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.125 2022/10/28 09:43:59 wiz Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.125.4.1 2025/08/02 05:54:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -63,9 +63,8 @@ typedef struct {
 	long rem;		/* remainder */
 } ldiv_t;
 
-#if !defined(_ANSI_SOURCE) && \
-    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-     (__cplusplus - 0) >= 201103L || defined(_NETBSD_SOURCE))
+#if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
+    defined(_NETBSD_SOURCE) || (__cplusplus - 0) >= 201103L
 typedef struct {
 	/* LONGLONG */
 	long long int quot;	/* quotient */
@@ -118,7 +117,6 @@ void	*malloc(size_t);
 void	 qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 rand(void);
 void	*realloc(void *, size_t);
-void	*reallocarray(void *, size_t, size_t);
 void	 srand(unsigned);
 double	 strtod(const char * __restrict, char ** __restrict);
 long	 strtol(const char * __restrict, char ** __restrict, int);
@@ -186,7 +184,6 @@ void	 srandom(unsigned int) __RENAME(__srandom60);
 #endif
 #ifdef _NETBSD_SOURCE
 #define	RANDOM_MAX	0x7fffffff	/* (((long)1 << 31) - 1) */
-int	 mkostemp(char *, int);
 int	 mkostemps(char *, int, int);
 #endif
 
@@ -320,8 +317,12 @@ int	 getenv_r(const char *, char *, size_t);
 void	 cfree(void *);
 
 int	 heapsort(void *, size_t, size_t, int (*)(const void *, const void *));
+int	 heapsort_r(void *, size_t, size_t,
+	    int (*)(const void *, const void *, void *), void *);
 int	 mergesort(void *, size_t, size_t,
 	    int (*)(const void *, const void *));
+int	 mergesort_r(void *, size_t, size_t,
+	    int (*)(const void *, const void *, void *), void *);
 int	 ptsname_r(int, char *, size_t);
 int	 radixsort(const unsigned char **, int, const unsigned char *,
 	    unsigned);
@@ -395,6 +396,17 @@ size_t	 wcstombs_l(char * __restrict, const wchar_t * __restrict, size_t,
 
 #  endif /* _NETBSD_SOURCE */
 #endif /* _POSIX_C_SOURCE >= 200809 || _NETBSD_SOURCE */
+
+#if (_POSIX_C_SOURCE - 0) >= 202405L || \
+    defined(_NETBSD_SOURCE) || defined(_OPENBSD_SOURCE)
+void	*reallocarray(void *, size_t, size_t);
+#endif	/* _POSIX_C_SOURCE >= 202405L || _NETBSD_SOURCE || _OPENBSD_SOURCE */
+
+#if (_POSIX_C_SOURCE - 0) >= 202405L || defined(_NETBSD_SOURCE)
+int	 mkostemp(char *, int);
+void	 qsort_r(void *, size_t, size_t,
+	    int (*)(const void *, const void *, void *), void *);
+#endif /* _POSIX_C_SOURCE >= 202405L || _NETBSD_SOURCE */
 
 __END_DECLS
 

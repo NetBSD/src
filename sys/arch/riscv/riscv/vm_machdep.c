@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8 2023/05/07 12:41:49 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8.6.1 2025/08/02 05:56:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8 2023/05/07 12:41:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8.6.1 2025/08/02 05:56:04 perseant Exp $");
 
 #define _PMAP_PRIVATE
 
@@ -219,7 +219,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 
 	vaddr_t uva = trunc_page((vaddr_t)bp->b_data);
 	const vaddr_t off = (vaddr_t)bp->b_data - uva;
-        len = round_page(off + len);
+	len = round_page(off + len);
 
 	kva = uvm_km_alloc(phys_map, len, atop(uva) & uvmexp.colormask,
 	    UVM_KMF_VAONLY | UVM_KMF_WAITVA | UVM_KMF_COLORMATCH);

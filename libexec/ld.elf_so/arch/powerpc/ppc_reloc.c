@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.63 2023/06/04 01:24:57 joerg Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.63.2.1 2025/08/02 05:55:02 perseant Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -28,9 +28,22 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Power ELF relocations.
+ *
+ * Reference:
+ *
+ *	Power Architecture(R) 32-bit
+ *	Application Binary Interface Supplement 1.0 - Linux(R)
+ *	http://web.archive.org/web/20120608163845/https://www.power.org/resources/downloads/Power-Arch-32-bit-ABI-supp-1.0-Linux.pdf
+ *
+ *	64-bit PowerPC ELF Application Binary Interface Supplement 1.9
+ *	https://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi-1.9.pdf
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.63 2023/06/04 01:24:57 joerg Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.63.2.1 2025/08/02 05:55:02 perseant Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -42,6 +55,8 @@ __RCSID("$NetBSD: ppc_reloc.c,v 1.63 2023/06/04 01:24:57 joerg Exp $");
 
 #include "debug.h"
 #include "rtld.h"
+
+#include <machine/lwp_private.h>
 
 void _rtld_powerpc_pltcall(Elf_Word);
 void _rtld_powerpc_pltresolve(Elf_Word, Elf_Word);
@@ -442,7 +457,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 	} else {
 		value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	}
-	rdbg(("bind now/fixup in %s --> new=%p", 
+	rdbg(("bind now/fixup in %s --> new=%p",
 	    defobj->strtab + def->st_name, (void *)value));
 
 #ifdef _LP64
@@ -473,14 +488,14 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 	} else {
 		Elf_Addr *pltcall, *jmptab;
 		int N = obj->pltrelalim - obj->pltrela;
-	
+
 		/* Entries beyond 8192 take twice as much space. */
 		if (N > 8192)
 			N += N-8192;
 
 		pltcall = obj->pltgot;
 		jmptab = pltcall + 18 + N * 2;
-	
+
 		jmptab[reloff] = value;
 
 		if (reloff < 32768) {
@@ -525,7 +540,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	new_value = 0;	/* XXX gcc */
 
 	_rtld_shared_enter();
-	err = _rtld_relocate_plt_object(obj, rela, reloff, &new_value); 
+	err = _rtld_relocate_plt_object(obj, rela, reloff, &new_value);
 	if (err)
 		_rtld_die();
 	_rtld_shared_exit();
@@ -542,7 +557,7 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 	int reloff;
-	
+
 	for (rela = obj->pltrela, reloff = 0; rela < obj->pltrelalim; rela++, reloff++) {
 		if (_rtld_relocate_plt_object(obj, rela, reloff, NULL) < 0)
 			return -1;

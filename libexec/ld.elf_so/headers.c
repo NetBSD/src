@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.71 2023/01/04 01:37:24 christos Exp $	 */
+/*	$NetBSD: headers.c,v 1.71.2.1 2025/08/02 05:55:01 perseant Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.71 2023/01/04 01:37:24 christos Exp $");
+__RCSID("$NetBSD: headers.c,v 1.71.2.1 2025/08/02 05:55:01 perseant Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -72,7 +72,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 	const Elf_Dyn  *dyn_rpath = NULL;
 	bool		use_pltrel = false;
 	bool		use_pltrela = false;
-	Elf_Addr        relsz = 0, relasz = 0;
+	Elf_Addr        relsz = 0, relasz = 0, relrsz = 0;
 	Elf_Addr	pltrel = 0, pltrelsz = 0;
 #ifdef RTLD_LOADER
 	Elf_Addr	init = 0, fini = 0;
@@ -115,6 +115,19 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 		case DT_RELAENT:
 			assert(dynp->d_un.d_val == sizeof(Elf_Rela));
+			break;
+
+		case DT_RELR:
+			obj->relr = (const Elf_Relr *)(obj->relocbase +
+			    dynp->d_un.d_ptr);
+			break;
+
+		case DT_RELRSZ:
+			relrsz = dynp->d_un.d_val;
+			break;
+
+		case DT_RELRENT:
+			assert(dynp->d_un.d_val == sizeof(Elf_Relr));
 			break;
 
 		case DT_PLTREL:
@@ -333,8 +346,10 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 #endif
 
 		/*
-		 * Don't process DT_DEBUG on MIPS as the dynamic section
-		 * is mapped read-only. DT_MIPS_RLD_MAP is used instead.
+		 * Don't process DT_DEBUG on MIPS as the dynamic
+		 * section is mapped read-only.  DT_MIPS_RLD_MAP or
+		 * DT_MIPS_RLD_MAP_REL is used instead.
+		 *
 		 * XXX: n32/n64 may use DT_DEBUG, not sure yet.
 		 */
 #ifndef __mips__
@@ -345,6 +360,11 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			break;
 #endif
 
+#ifdef __alpha__
+		case DT_ALPHA_PLTRO:
+			obj->secureplt = (dynp->d_un.d_val != 0);
+			break;
+#endif
 #ifdef __mips__
 		case DT_MIPS_LOCAL_GOTNO:
 			obj->local_gotno = dynp->d_un.d_val;
@@ -358,10 +378,38 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			obj->gotsym = dynp->d_un.d_val;
 			break;
 
+		/*
+		 * The .dynamic section is read-only, so the loader
+		 * can't write to it; instead, the linker reserves
+		 * space in a read/write .rld_map section for the
+		 * loader write to, and leaves a pointer to that space
+		 * in a DT_MIPS_RLD_MAP entry.
+		 *
+		 * Except pointers like that don't work for
+		 * position-independent executables, which use
+		 * DT_MIPS_RLD_MAP_REL instead.
+		 */
 		case DT_MIPS_RLD_MAP:
 #ifdef RTLD_LOADER
-			*((Elf_Addr *)(dynp->d_un.d_ptr)) = (Elf_Addr)
-			    &_rtld_debug;
+			*((Elf_Addr *)dynp->d_un.d_ptr) =
+			    (Elf_Addr)&_rtld_debug;
+#endif
+			break;
+
+		/*
+		 * The .dynamic section is read-only, so the loader
+		 * can't write to it; instead, the linker reserves
+		 * space in a read/write .rld_map section for the
+		 * loader write to, which might be mapped anywhere in
+		 * virtual address space for position-independent
+		 * executables, so the linker leaves its offset
+		 * relative to the .dynamic entry itself in the dynamic
+		 * entry.
+		 */
+		case DT_MIPS_RLD_MAP_REL:
+#ifdef RTLD_LOADER
+			*(Elf_Addr *)((Elf_Addr)dynp + dynp->d_un.d_val) =
+			    (Elf_Addr)&_rtld_debug;
 #endif
 			break;
 #endif
@@ -391,6 +439,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 	obj->rellim = (const Elf_Rel *)((const uint8_t *)obj->rel + relsz);
 	obj->relalim = (const Elf_Rela *)((const uint8_t *)obj->rela + relasz);
+	obj->relrlim = (const Elf_Relr *)((const uint8_t *)obj->relr + relrsz);
 	if (use_pltrel) {
 		obj->pltrel = (const Elf_Rel *)(obj->relocbase + pltrel);
 		obj->pltrellim = (const Elf_Rel *)(obj->relocbase + pltrel + pltrelsz);
@@ -435,10 +484,10 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 #ifdef RTLD_LOADER
 #if defined(__HAVE_FUNCTION_DESCRIPTORS)
- 	if (init != 0)
+	if (init != 0)
 		obj->init = (void (*)(void))
 		    _rtld_function_descriptor_alloc(obj, NULL, init);
- 	if (fini != 0)
+	if (fini != 0)
 		obj->fini = (void (*)(void))
 		    _rtld_function_descriptor_alloc(obj, NULL, fini);
 #else

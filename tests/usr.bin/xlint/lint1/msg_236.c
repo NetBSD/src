@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_236.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_236.c,v 1.5.2.1 2025/08/02 05:58:17 perseant Exp $	*/
 # 3 "msg_236.c"
 
 // Test for message: static function '%s' unused [236]
@@ -18,5 +18,11 @@ static_function(void)
 
 static inline void
 inline_function(void)
+{
+}
+
+__attribute__((__constructor__))
+static void
+constructor_function(void)
 {
 }

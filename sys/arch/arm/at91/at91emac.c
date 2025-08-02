@@ -1,4 +1,4 @@
-/*	$NetBSD: at91emac.c,v 1.35 2022/09/27 06:36:41 skrll Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.35.10.1 2025/08/02 05:55:26 perseant Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.35 2022/09/27 06:36:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.35.10.1 2025/08/02 05:55:26 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -299,9 +299,7 @@ emac_intr(void *arg)
 				/* Drop packets until we can get replacement
 				 * empty mbufs for the RXDQ.
 				 */
-				if (m != NULL) {
-					m_freem(m);
-				}
+				m_freem(m);
 				if_statinc(ifp, if_ierrors);
 			}
 			sc->rxqi++;

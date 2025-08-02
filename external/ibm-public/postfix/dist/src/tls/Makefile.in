@@ -9,7 +9,7 @@ SRCS	= tls_prng_dev.c tls_prng_egd.c tls_prng_file.c tls_fprint.c \
 	tls_proxy_server_init_print.c tls_proxy_server_init_scan.c \
 	tls_proxy_client_start_print.c tls_proxy_client_start_scan.c \
 	tls_proxy_server_start_print.c tls_proxy_server_start_scan.c \
-	tls_proxy_client_misc.c
+	tls_proxy_client_misc.c tlsrpt_wrapper.c
 OBJS	= tls_prng_dev.o tls_prng_egd.o tls_prng_file.o tls_fprint.o \
 	tls_prng_exch.o tls_stream.o tls_bio_ops.o tls_misc.o tls_dh.o \
 	tls_verify.o tls_dane.o tls_certkey.o tls_session.o \
@@ -18,8 +18,8 @@ OBJS	= tls_prng_dev.o tls_prng_egd.o tls_prng_file.o tls_fprint.o \
 	tls_proxy_clnt.o tls_proxy_context_print.o tls_proxy_context_scan.o \
 	tls_proxy_client_print.o tls_proxy_client_scan.o \
 	tls_proxy_server_print.o tls_proxy_server_scan.o \
-	tls_proxy_client_misc.o
-HDRS	= tls.h tls_prng.h tls_scache.h tls_mgr.h tls_proxy.h
+	tls_proxy_client_misc.o tlsrpt_wrapper.o
+HDRS	= tls.h tls_prng.h tls_scache.h tls_mgr.h tls_proxy.h tlsrpt_wrapper.h
 TESTSRC	= 
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
@@ -94,20 +94,8 @@ update: $(LIB_DIR)/$(LIB) $(HDRS)
 	done
 	cd $(INC_DIR); chmod 644 $(HDRS)
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	cp *.h printfck
-	sed '1,/^# do not edit/!d' Makefile >printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
-
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
-
 clean:
 	rm -f *.o $(LIB) *core $(TESTPROG) junk *.pem.out
-	rm -rf printfck
 
 tidy:	clean
 
@@ -194,6 +182,7 @@ tls_client.o: tls.h
 tls_client.o: tls_client.c
 tls_client.o: tls_mgr.h
 tls_client.o: tls_scache.h
+tls_client.o: tlsrpt_wrapper.h
 tls_dane.o: ../../include/argv.h
 tls_dane.o: ../../include/check_arg.h
 tls_dane.o: ../../include/ctable.h
@@ -219,6 +208,7 @@ tls_dane.o: ../../include/vstring.h
 tls_dane.o: tls.h
 tls_dane.o: tls_dane.c
 tls_dh.o: ../../include/argv.h
+tls_dh.o: ../../include/been_here.h
 tls_dh.o: ../../include/check_arg.h
 tls_dh.o: ../../include/dns.h
 tls_dh.o: ../../include/mail_params.h
@@ -377,6 +367,7 @@ tls_proxy_client_print.o: ../../include/vstring.h
 tls_proxy_client_print.o: tls.h
 tls_proxy_client_print.o: tls_proxy.h
 tls_proxy_client_print.o: tls_proxy_client_print.c
+tls_proxy_client_print.o: tlsrpt_wrapper.h
 tls_proxy_client_scan.o: ../../include/argv.h
 tls_proxy_client_scan.o: ../../include/argv_attr.h
 tls_proxy_client_scan.o: ../../include/attr.h
@@ -398,6 +389,7 @@ tls_proxy_client_scan.o: ../../include/vstring.h
 tls_proxy_client_scan.o: tls.h
 tls_proxy_client_scan.o: tls_proxy.h
 tls_proxy_client_scan.o: tls_proxy_client_scan.c
+tls_proxy_client_scan.o: tlsrpt_wrapper.h
 tls_proxy_clnt.o: ../../include/argv.h
 tls_proxy_clnt.o: ../../include/attr.h
 tls_proxy_clnt.o: ../../include/check_arg.h
@@ -495,7 +487,6 @@ tls_proxy_server_scan.o: ../../include/vstring.h
 tls_proxy_server_scan.o: tls.h
 tls_proxy_server_scan.o: tls_proxy.h
 tls_proxy_server_scan.o: tls_proxy_server_scan.c
-tls_rsa.o: tls_rsa.c
 tls_scache.o: ../../include/argv.h
 tls_scache.o: ../../include/check_arg.h
 tls_scache.o: ../../include/dict.h
@@ -599,3 +590,15 @@ tls_verify.o: ../../include/vstream.h
 tls_verify.o: ../../include/vstring.h
 tls_verify.o: tls.h
 tls_verify.o: tls_verify.c
+tls_verify.o: tlsrpt_wrapper.h
+tlsrpt_wrapper.o: ../../include/argv.h
+tlsrpt_wrapper.o: ../../include/check_arg.h
+tlsrpt_wrapper.o: ../../include/msg.h
+tlsrpt_wrapper.o: ../../include/mymalloc.h
+tlsrpt_wrapper.o: ../../include/name_code.h
+tlsrpt_wrapper.o: ../../include/stringops.h
+tlsrpt_wrapper.o: ../../include/sys_defs.h
+tlsrpt_wrapper.o: ../../include/vbuf.h
+tlsrpt_wrapper.o: ../../include/vstring.h
+tlsrpt_wrapper.o: tlsrpt_wrapper.c
+tlsrpt_wrapper.o: tlsrpt_wrapper.h

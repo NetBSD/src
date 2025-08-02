@@ -40,7 +40,10 @@ options {
 	ixfr-from-differences yes;
 	check-integrity no;
 	dnssec-validation yes;
+	max-records-per-type 0;
 };
+
+trust-anchors { };
 
 zone "." {
 	type hint;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.39 2024/05/07 19:24:32 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.39.2.1 2025/08/02 05:55:38 perseant Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -43,9 +43,10 @@ ${PROG}: ${PROGELF}
 CPPFLAGS+=		-DDCACONSOLE -DAPCICONSOLE -DITECONSOLE -DDCMCONSOLE
 CPPFLAGS+=		-DHIL_KEYBOARD -DUK_KEYBOARD
 CPPFLAGS+=		-DDOMAIN_KEYBOARD
-CPPFLAGS+=		-D_STANDALONE -DCOMPAT_NOLABEL -Dhp300
+CPPFLAGS+=		-D_STANDALONE -Dhp300
 CPPFLAGS+=		-DCOMPAT_UFS -DNO_LSEEK
 CPPFLAGS+=		-DLIBSA_CREAD_NOCRC
+CPPFLAGS+=		-DBBC_SLOW_GETSECS
 
 # if sun bootparams is desired
 #CPPFLAGS+=     -DSUN_BOOTPARAMS
@@ -56,7 +57,7 @@ CPPFLAGS+=		-DHEAP_LIMIT="0xffffdfff"
 COMMONSOURCE=		srt0.S autoconf.c clock.c conf.c cons.c devopen.c \
 			exec.c machdep.c prf.c rawfs.c netio.c
 DRIVERSOURCE=		apci.c ct.c dca.c dcm.c dnkbd.c fhpib.c hil.c \
-			hpib.c if_le.c ite.c ite_dumb.c ite_dv.c ite_gb.c \
+			hpib.c if_le.c ite.c ite_dv.c ite_gb.c \
 			ite_hy.c ite_rb.c ite_subr.c ite_tc.c ite_tvrx.c \
 			ite_sti.c \
 			kbd.c kbdconf.c nhpib.c rd.c scsi.c sd.c

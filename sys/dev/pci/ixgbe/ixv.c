@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.196 2023/11/15 03:50:22 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.196.2.1 2025/08/02 05:57:01 perseant Exp $ */
 
 /******************************************************************************
 
@@ -35,12 +35,11 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.196 2023/11/15 03:50:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.196.2.1 2025/08/02 05:57:01 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_inet6.h"
-#include "opt_net_mpsafe.h"
 #endif
 
 #include "ixgbe.h"
@@ -228,18 +227,6 @@ TUNABLE_INT("hw.ixv.rxd", &ixv_rxd);
 static int ixv_enable_legacy_tx = 0;
 TUNABLE_INT("hw.ixv.enable_legacy_tx", &ixv_enable_legacy_tx);
 
-#ifdef NET_MPSAFE
-#define IXGBE_MPSAFE		1
-#define IXGBE_CALLOUT_FLAGS	CALLOUT_MPSAFE
-#define IXGBE_SOFTINT_FLAGS	SOFTINT_MPSAFE
-#define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU | WQ_MPSAFE
-#define IXGBE_TASKLET_WQ_FLAGS	WQ_MPSAFE
-#else
-#define IXGBE_CALLOUT_FLAGS	0
-#define IXGBE_SOFTINT_FLAGS	0
-#define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU
-#define IXGBE_TASKLET_WQ_FLAGS	0
-#endif
 #define IXGBE_WORKQUEUE_PRI PRI_SOFTNET
 
 #if 0
@@ -363,11 +350,10 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	ixv_add_device_sysctls(sc);
 
 	/* Set up the timer callout and workqueue */
-	callout_init(&sc->timer, IXGBE_CALLOUT_FLAGS);
+	callout_init(&sc->timer, CALLOUT_MPSAFE);
 	snprintf(wqname, sizeof(wqname), "%s-timer", device_xname(dev));
 	error = workqueue_create(&sc->timer_wq, wqname,
-	    ixv_handle_timer, sc, IXGBE_WORKQUEUE_PRI, IPL_NET,
-	    IXGBE_TASKLET_WQ_FLAGS);
+	    ixv_handle_timer, sc, IXGBE_WORKQUEUE_PRI, IPL_NET, WQ_MPSAFE);
 	if (error) {
 		aprint_error_dev(dev,
 		    "could not create timer workqueue (%d)\n", error);
@@ -1657,9 +1643,7 @@ ixv_setup_interface(device_t dev, struct ixgbe_softc *sc)
 	ifp->if_stop = ixv_ifstop;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-#ifdef IXGBE_MPSAFE
 	ifp->if_extflags = IFEF_MPSAFE;
-#endif
 	ifp->if_ioctl = ixv_ioctl;
 	if (sc->feat_en & IXGBE_FEATURE_LEGACY_TX) {
 #if 0
@@ -3407,10 +3391,9 @@ ixv_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 		    device_xname(dev), i);
 		intrstr = pci_intr_string(pc, sc->osdep.intrs[i], intrbuf,
 		    sizeof(intrbuf));
-#ifdef IXGBE_MPSAFE
 		pci_intr_setattr(pc, &sc->osdep.intrs[i], PCI_INTR_MPSAFE,
 		    true);
-#endif
+
 		/* Set the handler function */
 		que->res = sc->osdep.ihs[i] = pci_intr_establish_xname(pc,
 		    sc->osdep.intrs[i], IPL_NET, ixv_msix_que, que,
@@ -3441,11 +3424,11 @@ ixv_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 
 #ifndef IXGBE_LEGACY_TX
 		txr->txr_si
-		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
+		    = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 			ixgbe_deferred_mq_start, txr);
 #endif
 		que->que_si
-		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
+		    = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 			ixv_handle_que, que);
 		if (que->que_si == NULL) {
 			aprint_error_dev(dev,
@@ -3455,7 +3438,7 @@ ixv_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 	snprintf(wqname, sizeof(wqname), "%sdeferTx", device_xname(dev));
 	error = workqueue_create(&sc->txr_wq, wqname,
 	    ixgbe_deferred_mq_start_work, sc, IXGBE_WORKQUEUE_PRI, IPL_NET,
-	    IXGBE_WORKQUEUE_FLAGS);
+	    WQ_PERCPU | WQ_MPSAFE);
 	if (error) {
 		aprint_error_dev(dev,
 		    "couldn't create workqueue for deferred Tx\n");
@@ -3465,7 +3448,7 @@ ixv_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(dev));
 	error = workqueue_create(&sc->que_wq, wqname,
 	    ixv_handle_que_work, sc, IXGBE_WORKQUEUE_PRI, IPL_NET,
-	    IXGBE_WORKQUEUE_FLAGS);
+	    WQ_PERCPU | WQ_MPSAFE);
 	if (error) {
 		aprint_error_dev(dev, "couldn't create workqueue for Tx/Rx\n");
 	}
@@ -3476,10 +3459,8 @@ ixv_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 	sc->vector = vector;
 	intrstr = pci_intr_string(pc, sc->osdep.intrs[vector], intrbuf,
 	    sizeof(intrbuf));
-#ifdef IXGBE_MPSAFE
-	pci_intr_setattr(pc, &sc->osdep.intrs[vector], PCI_INTR_MPSAFE,
-	    true);
-#endif
+	pci_intr_setattr(pc, &sc->osdep.intrs[vector], PCI_INTR_MPSAFE, true);
+
 	/* Set the mbx handler function */
 	sc->osdep.ihs[vector] = pci_intr_establish_xname(pc,
 	    sc->osdep.intrs[vector], IPL_NET, ixv_msix_mbx, sc, intr_xname);
@@ -3504,8 +3485,7 @@ ixv_allocate_msix(struct ixgbe_softc *sc, const struct pci_attach_args *pa)
 	/* Tasklets for Mailbox */
 	snprintf(wqname, sizeof(wqname), "%s-admin", device_xname(dev));
 	error = workqueue_create(&sc->admin_wq, wqname,
-	    ixv_handle_admin, sc, IXGBE_WORKQUEUE_PRI, IPL_NET,
-	    IXGBE_TASKLET_WQ_FLAGS);
+	    ixv_handle_admin, sc, IXGBE_WORKQUEUE_PRI, IPL_NET, WQ_MPSAFE);
 	if (error) {
 		aprint_error_dev(dev,
 		    "could not create admin workqueue (%d)\n", error);

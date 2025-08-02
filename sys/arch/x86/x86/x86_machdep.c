@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.154 2023/10/04 20:28:06 ad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.154.6.1 2025/08/02 05:56:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.154 2023/10/04 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.154.6.1 2025/08/02 05:56:18 perseant Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -435,6 +435,9 @@ void
 cpu_kpreempt_exit(uintptr_t where)
 {
 	extern char x86_copyfunc_start, x86_copyfunc_end;
+#if defined(XENPV) && defined(i386)
+	extern char i386_calltrap_start, i386_calltrap_end;
+#endif
 	struct pcb *pcb;
 
 	KASSERT(kpreempt_disabled());
@@ -448,6 +451,12 @@ cpu_kpreempt_exit(uintptr_t where)
 	    where < (uintptr_t)&x86_copyfunc_end) {
 		pmap_load();
 	}
+#if defined(XENPV) && defined(i386)
+	else if (where >= (uintptr_t)&i386_calltrap_start &&
+	    where < (uintptr_t)&i386_calltrap_end) {
+		pmap_load();
+	}
+#endif
 
 	/* Restore cr2 only after the pmap, as pmap_load can block. */
 	pcb = lwp_getpcb(curlwp);
@@ -911,7 +920,7 @@ init_x86_clusters(void)
 	 * the boot program).
 	 */
 #ifdef XEN
-	if (vm_guest == VM_GUEST_XENPVH) {
+	if (pvh_boot) {
 		x86_add_xen_clusters();
 	}
 #endif /* XEN */
@@ -1342,10 +1351,12 @@ static const char * const vm_guest_name[VM_LAST] = {
 	[VM_GUEST_XENPVH] =	"XenPVH",
 	[VM_GUEST_XENHVM] =	"XenHVM",
 	[VM_GUEST_XENPVHVM] =	"XenPVHVM",
+	[VM_GUEST_GENPVH] =	"GenPVH",
 	[VM_GUEST_HV] =		"Hyper-V",
 	[VM_GUEST_VMWARE] =	"VMware",
 	[VM_GUEST_KVM] =	"KVM",
 	[VM_GUEST_VIRTUALBOX] =	"VirtualBox",
+	[VM_GUEST_NVMM] =	"NVMM",
 };
 
 static int

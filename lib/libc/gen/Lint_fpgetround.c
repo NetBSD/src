@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_fpgetround.c,v 1.3 2012/06/24 15:26:03 christos Exp $ */
+/* $NetBSD: Lint_fpgetround.c,v 1.3.44.1 2025/08/02 05:54:36 perseant Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -7,11 +7,10 @@
 
 #include <ieeefp.h>
 
-/*ARGSUSED*/
 fp_rnd
 fpgetround(void)
 {
 	fp_rnd rv = { 0 };
 
-	return (rv);
+	return rv;
 }

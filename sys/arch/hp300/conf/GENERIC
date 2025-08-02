@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.212 2024/01/29 18:27:12 christos Exp $
+# $NetBSD: GENERIC,v 1.212.2.1 2025/08/02 05:55:37 perseant Exp $
 #
 # GENERIC machine description file
 #
@@ -22,9 +22,9 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.212 $"
+#ident 		"GENERIC-$Revision: 1.212.2.1 $"
 
-makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
+makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
 	# backtraces in DDB.
 
@@ -161,7 +161,7 @@ options 	DIOVERBOSE	# recognize "unknown" DIO devices
 options 	WSEMUL_VT100			# VT100 / VT220 emulation
 #options 	WSDISPLAY_DEFAULTSCREENS=1
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
-options 	WSDISPLAY_COMPAT_RAWKBD
+#options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 
@@ -235,11 +235,12 @@ tvrx*		at dio? scode ?
 wsdisplay*	at tvrx?
 
 # dumb framebuffer support for 362/382
-gendiofb*	at dio? scode ?
-wsdisplay*	at gendiofb?
+#gendiofb*	at dio? scode ?
+#wsdisplay*	at gendiofb?
 
 # STI framebuffers
-sti*		at sgc?	slot ?
+sti*		at dio? scode ?		# 362 and 382
+sti*		at sgc?	slot ?		# 425e and 425t variants
 wsdisplay*	at sti?
 
 com0		at dio0 scode 9		# DCA serial interfaces

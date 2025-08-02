@@ -87,9 +87,6 @@ server receives a message signed by the key, it is able to verify
 the signature. If the signature is valid, the response is signed
 using the same key.
 
-TSIG keys that are known to a server can be listed using the command
-:option:`rndc tsig-list`.
-
 Instructing the Server to Use a Key
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.78 2019/05/08 13:40:16 isaki Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.78.34.1 2025/08/02 05:56:08 perseant Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -12,7 +12,7 @@ maxusers	32
 ## System kernel configuration.  See options(4) for more detail.
 
 
-# Options for variants of the Sun SPARC architecure.
+# Options for variants of the Sun SPARC architecture.
 # We currently support three architecture types; at least one is required.
 options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 

@@ -1,4 +1,849 @@
+2023-08-22  Vincent Lefevre  <vincent@vinc17.net>
+
+	Updated version to 4.2.1.
+
+2023-08-18  Vincent Lefevre  <vincent@vinc17.net>
+
+	ChangeLog update with tools/update-changelog
+
+	[tools/gitlog-to-changelog] Improve --strip-cherry-pick for this repository.
+
+	Updated version to 4.2.1-rc1.
+
+2023-08-18  Vincent Lefevre  <vincent@vinc17.net>
+
+	[configure.ac] More checks for the support of old dtags.
+
+	There is an attempt to use the old dtags when LD_LIBRARY_PATH is
+	defined in order to avoid issues with the testsuite when this path
+	contains some compatible version of the MPFR library. However, the
+	old dtags do not work everywhere at run time, even when they appear
+	to work at link time (via -Wl,--disable-new-dtags).
+
+	So, let's restrict to *-*-linux-gnu hosts. Unfortunately, this is
+	not sufficient for Android/Termux, where config.guess currently
+	identifies the host as GNU/Linux (matching *-*-linux-gnu) instead of
+	Android, but the old dtags do not work at run time. So, let's also
+	exclude Termux explicitly (a test to exclude all Android hosts would
+	be better, though).
+
+	Note: in most cases, LD_LIBRARY_PATH is not set, so that there should
+	be no issues in practice.
+
+2023-08-18  Vincent Lefevre  <vincent@vinc17.net>
+
+	[NEWS] Update for 4.2.1
+
+2023-08-18  Vincent Lefevre  <vincent@vinc17.net>
+
+	[src/compound.c] Removed obsolete FIXME.
+
+	The implementation changed in 63cc8dfaf4dd93d68bb4f12c0787046f8a525893
+	(cherry picked in 952fb0f5cc2df1fffde3eb54c462fdae5f123ea6).
+
+2023-08-17  Vincent Lefevre  <vincent@vinc17.net>
+
+	[strtofr.c] Fixed 2 mpfr_strtofr bugs in case of huge negative exponent.
+
+	This fixes the bugs triggered by bug20230606, mentioned at
+	  https://sympa.inria.fr/sympa/arc/mpfr/2023-06/msg00000.html
+	  https://sympa.inria.fr/sympa/arc/mpfr/2023-06/msg00001.html
+
+	These bugs are integer overflows, meaning undefined behavior.
+	In practice, the consequences may be incorrect results. But
+	for the first bug, it has been seen that a GCC optimization
+	makes the bug invisible.
+
+	Note: There are other issues with the code for huge exponents
+	(in strtofr.c and the MPFR_SADD_OVERFLOW macro from mpfr-impl.h).
+	See FIXME from commits
+	  aa30bfe3c868640852fa2510b0f228170e39c0c5
+	  e06a073c157fe95dd24d16d9fc3eef3781b58795
+	in master. But it is not clear whether the problematic cases can
+	occur in the context of mpfr_strtofr: my attempts to trigger a
+	problematic case failed, so that there is a chance that the code
+	is actually correct; but many parameters are involved, including
+	those based on the internal structure in limbs, so that it is
+	difficult to say for now. A closer analysis needs to be done.
+	Even if correct, the code would need to be cleaned up, proved,
+	and better documented.
+
+2023-08-17  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tstrtofr.c] Added testcases for mpfr_strtofr integer overflows.
+
+	These bugs occur on inputs with a large negative exponents, such as
+	"0.1E-99999999999999999999".
+
+	A first bug was reported by Michael Jones at
+	  https://sympa.inria.fr/sympa/arc/mpfr/2023-06/msg00000.html
+
+	Second bug mentioned at
+	  https://sympa.inria.fr/sympa/arc/mpfr/2023-06/msg00001.html
+
+2023-08-16  Vincent Lefevre  <vincent@vinc17.net>
+
+	[doc/mpfr.texi] Updated the month.
+
+2023-08-15  Vincent Lefevre  <vincent@vinc17.net>
+
+	Formatted output functions: fixed ‘+’/space flags on NaN and Inf.
+
+	This is about the documentation and behavior of the mpfr_printf,
+	etc. functions on MPFR numbers (mpfr_t) only, i.e. with the ‘R’
+	type specifier.
+
+	The ‘+’ and space flags were ignored on NaN and Inf. While this
+	was loosely documented as such (without an explicit mention of
+	these flags), the GNU MPFR manual also says that the flags have
+	the same meaning as for the standard ‘printf’ function. So this
+	was contradictory and regarded as a bug.
+
+	Behaving like the ISO C standard should give less surprise, and
+	this is probably what is expected (better for alignment purpose).
+
+	This was partly discussed at
+	  https://sympa.inria.fr/sympa/arc/mpfr/2023-03/msg00003.html
+	(only for NaN and the ‘+’ flag at that time).
+
+	* doc/mpfr.texi: corrected the documentation.
+	* src/vasprintf.c: fixed (the code is now simpler since the rule
+	  is the same in all cases: real and non-real values).
+	* tests/tsprintf.c: grouped all the tests of NaN and Inf, and
+	  added much more tests (by constructing the format string in
+	  nested loops instead of just a few hardcoded cases).
+
+2023-08-15  Vincent Lefevre  <vincent@vinc17.net>
+
+	[src/vasprintf.c] Coding style.
+
+2023-08-10  Vincent Lefevre  <vincent@vinc17.net>
+
+	[configure.ac] For libgmp, replaced AC_CHECK_LIB by our own link test.
+
+	The issue with AC_CHECK_LIB is that it cannot know the prototype of
+	mpz_init. Thus it declares the function without a prototype, which
+	is obsolescent in ISO C, so that the compiler may complain (e.g.
+	with GCC's -Werror=strict-prototypes option, which may be useful to
+	detect bugs in MPFR). Moreover, the call is done with an incorrect
+	prototype, which could also be an issue on some systems (currently,
+	no prototype check is done when linking, but this might change in
+	the future).
+
+	Note also that this new test is more robust, in case GMP changes the
+	symbol name in the future (the API does not need to be changed).
+
+	For the reference:
+	  https://sympa.inria.fr/sympa/arc/mpfr/2023-08/msg00003.html
+
+2023-08-10  Vincent Lefevre  <vincent@vinc17.net>
+
+	[configure.ac] Do the MPFR_CHECK_MP_LIMB_T_VS_* tests without -lgmp.
+
+	Moved the two tests
+
+	  MPFR_CHECK_MP_LIMB_T_VS_LONG
+	  MPFR_CHECK_MP_LIMB_T_VS_INTMAX
+
+	before the LIBS="-lgmp $LIBS" as linking with GMP is not needed for
+	these tests (only mp_limb_t is used from gmp.h), and it is actually
+	better not to link with GMP. Indeed, as said for these tests, which
+	use AC_LINK_IFELSE:
+
+	  AC_LINK_IFELSE is safer than AC_COMPILE_IFELSE, as it will detect
+	  undefined function-like macros (which otherwise may be regarded
+	  as valid function calls with AC_COMPILE_IFELSE since prototypes
+	  are not required by the C standard).
+
+	So linking with GMP could make a failure disappear in case of a bug
+	somewhere, so that the bug could remain undetected.
+
+2023-08-10  Vincent Lefevre  <vincent@vinc17.net>
+
+	[acinclude.m4] Replaced <gmp.h> by "gmp.h" for #include.
+
+	The tests from configure.ac all use #include "gmp.h", and for the
+	MPFR build and tests, gmp.h is also included with #include "gmp.h"
+	(by mpfr-impl.h). For consistency, do the same in acinclude.m4.
+
+	Note: In practice, there should not be a difference, except if there
+	is a gmp.h file somewhere in the MPFR build tree. But this is not
+	supported, and this may break the build or the testsuite (whatever
+	is used in the configure tests).
+
+2023-07-19  Vincent Lefevre  <vincent@vinc17.net>
+
+	[src/mpfr-gmp.h] Fix integer overflow when mp_limb_t < int (mini-gmp).
+
+	When mp_limb_t is shorter than int (which is possible with mini-gmp),
+	an integer promotion in udiv_qr_3by2 triggers an integer overflow,
+	detected by testing MPFR with
+
+	  ./configure --with-mini-gmp=/path/to/mini-gmp CC=gcc-13 \
+	  CFLAGS="-O2 -fsanitize=undefined -fno-sanitize-recover
+	          -DMINI_GMP_LIMB_TYPE=short"
+
+	(many tests fail).
+
+	Note that this is not detected by GCC 12 and before, probably due to
+	an optimization bug that hides the UBsan error.
+
+	Moreover, mini-gmp currently has the same bug in gmp_udiv_qr_3by2,
+	but also in gmp_udiv_qrnnd_preinv; it needs to be fixed too in order
+	to avoid the failures in the MPFR tests.
+
+2023-07-19  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/trint.c] C2x compat: replaced function without a prototype.
+
+	The second parameter of test_fct was "int (*g)()", i.e. a pointer to
+	a function without a prototype, because 2 kinds of prototypes can be
+	used:
+	  * one with args (mpfr_ptr, mpfr_srcptr);
+	  * one with args (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t),
+	    but only for mpfr_rint.
+	This was not a problem thanks to the test "g == &mpfr_rint", i.e.
+	we knew which one to use. However, as the Clang 16 warning message
+	says for -Wdeprecated-non-prototype:
+	"passing arguments to a function without a prototype is deprecated
+	in all versions of C and is not supported in C2x".
+
+	The best way to fix this is to use the prototype with 2 arguments
+	(mpfr_ptr, mpfr_srcptr) for the parameter, as this is the general
+	case. All we need to do is to cast &mpfr_rint to this prototype
+	(this appears only twice).
+
+	As these casts trigger the -Wcast-function-type warning when enabled,
+	let's explicitly disable this warning for GCC and Clang in versions
+	where it has been introduced.
+
+2023-07-18  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tfpif.c] Removed "fclose (fh);" under "if (fh == NULL)".
+
+	The fopen() failed, so fclose() is not needed, and this is even UB.
+
+	Issue reported by Jerry James:
+	  https://sympa.inria.fr/sympa/arc/mpfr/2023-07/msg00002.html
+	as GNU libc recently added a "nonnull" function attribute:
+	  https://sourceware.org/git/?p=glibc.git;a=commitdiff;h=71d9e0fe766a3c22a730995b9d024960970670af
+
+2023-07-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	[doc/mpfr.texi] Updated the month.
+
+	[src/inp_str.c] Resolved the FIXME on a deprecated use of ungetc.
+
+2023-07-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	Fixed mpfr_strtofr bug in parse_string when isspace(0) is true.
+
+	When isspace(0) is true (allowed by ISO C for non-"C" locales), '\0'
+	would be skipped if part of the leading whitespace. But it must be
+	regarded as the terminating null character, from the definition of
+	a string (before the notion of whitespace is involved). So let's
+	stop explicitly on '\0'.
+
+	Note: in such locales (Mutt's lib.h suggests that some systems are
+	affected, but this was in 1998), this is a security vulnerability,
+	because characters after the terminating null character are read to
+	determine the result.
+
+2023-07-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	[inp_str.c] mpfr_inp_str: fixed the handling of '\0' in the word.
+
+	When '\0' is not a whitespace character (which is almost always the
+	case in practice), it was not handled correctly. For instance, if the
+	word is the sequence { '1', '\0', '2' }, the string "1" was passed to
+	mpfr_set_str because '\0' is regarded as a terminating null character,
+	and one was getting a valid number while '\0' in a word is necessarily
+	invalid. This is fixed by putting '*' at the beginning of the string,
+	which is thus necessarily invalid.
+
+	This fixes the failure after c9523bc6fb11c8eefc75524e947e5eb81e682675
+	(4642e68fb3cd6793a51537cfc86a7cb3ef1c0a4c in the 4.2 branch).
+
+2023-07-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/inp_str.dat] Make the word that contains '\0' look like a number.
+
+	Changed ".\0." to "1\01" (\0 being the null character) in order to
+	trigger a failure with the current mpfr_inp_str code. The issue is
+	that '\0' makes the word look like the string "1", the '\0' being
+	regarded as a terminating null character. This is incorrect as '\0'
+	is part of the full word.
+
+2023-07-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	[manual] Clarified the return value of mpfr_inp_str.
+
+2023-07-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	Added a '\0' test for mpfr_inp_str.
+
+	After ensuring that isspace(0) is false, make sure that '\0' is
+	handled as a normal non-whitespace character.
+
+	Also note that inp_str.dat does not end with a newline character
+	on purpose, in order to check that a number at the end of the file
+	(with no whitespace after it) is handled correctly.
+
+2023-07-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	Improved the mpfr_inp_str tests.
+
+2023-07-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/inp_str.dat] Added the other standard whitespace characters.
+
+	These are:
+	  * space (' ');
+	  * ^I (horizontal tab '\t');
+	  * ^J (newline '\n', already there);
+	  * ^K (vertical tab '\v');
+	  * ^L (form feed '\f');
+	  * ^M (carriage return '\r').
+
+2023-07-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	[MPFR manual] Corrected description of mpfr_inp_str.
+
+	The description seemed to assume that there was leading and trailing
+	whitespace (due to "between whitespace"). Also clarify what whitespace
+	is: defined by isspace(), which depends on the current locale.
+
+2023-06-26  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tfpif.c] Workaround for GCC bug 106155.
+
+	This GCC bug is:
+	  [12/13/14 Regression] spurious "may be used uninitialized" warning
+
+	This bug appeared in GCC 12, but it is more serious in GCC 13
+	(at least for tfpif.c), which warns also at -O2:
+	  https://gcc.gnu.org/bugzilla/show_bug.cgi?id=106155#c12
+
+	Silencing this warning avoids an error when -Werror is used.
+
+2023-06-26  Vincent Lefevre  <vincent@vinc17.net>
+
+	[src/pow.c] Typo detected by codespell.
+
+2023-05-26  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tsprintf.c] Fixed large_prec_for_g with 32-bit mpfr_intmax_t.
+
+	If mpfr_intmax_t is a 32-bit type (meaning that int is a 32-bit type
+	too), then allow a failure on "%.2147483648Rg" (return value < 0),
+	due to a (reasonable) limit on the current implementation.
+
+	This can currently be tested with
+	  -std=c90 -Werror -pedantic -Wformat -Wno-error=overlength-strings
+
+2023-05-25  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tsprintf.c] large_prec_for_g: C++ compatibility.
+
+	Note that after this change, the test is still meaningful.
+
+2023-05-23  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tsprintf.c] Improved large_prec_for_g even more.
+
+2023-05-23  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tsprintf.c] A few more tests for large_prec_for_g.
+
+	... to really check that the results are correct.
+
+2023-05-22  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/trec_sqrt.c] Updated bad_case3() test.
+
+	Also check the result, though this is not the real purpose of
+	this test (the purpose is to detect a stack overflow, which
+	just makes the program crash).
+
+2023-05-22  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/trec_sqrt.c] Added bad_case3() test.
+
+	Simple hardcoded test for the stack overflow bug fixed on 2023-04-17
+	in commits
+	  270f4df6b3a49caae1cf564dcdc1c55b1c5989eb (master)
+	  934dd8842b4bdeb919a73123203bc8ce56db38d1 (4.2 branch)
+
+	Otherwise, this bug was triggered by a generic bad_cases() test,
+	based on random values.
+
+2023-05-22  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests.c] In bad_cases(), improved alignment in debug messages.
+
+	Needed as some trec_sqrt tests use a precision with up to 6 digits.
+
+2023-05-17  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tcompound.c] Updated comment for bug_20230517.
+
+	Similar to b8ee84929ef6caf66d7c694cf74534b7190339c5 in master.
+
+2023-05-17  Vincent Lefevre  <vincent@vinc17.net>
+
+	[compound.c] Improved tests and corresponding comment.
+
+	[compound.c] Avoid a possible integer overflow; other improvements.
+
+2023-05-17  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tcompound.c] Added bug_20230517 (integer overflow in compound.c).
+
+	and updated comment for the 4.2 branch.
+
+2023-05-16  Vincent Lefevre  <vincent@vinc17.net>
+
+	[src/vasprintf.c] Fixed bug triggered by the large_prec_for_g test.
+
+	Bug fixes in partition_number():
+	* Fixed the type of the variable `threshold`: as this variable may
+	  contain spec.prec, it needs to be of type mpfr_intmax_t.
+	  This was the cause of the "MPFR assertion failed: threshold >= 1"
+	  (or the incorrect size when assertions are not checked) with the
+	  large_prec_for_g test.
+	* Also make sure that the 4th argument given to mpfr_get_str fits
+	  in a size_t (if it doesn't, return with a failure, as done when
+	  reaching other environmental limits).
+	  In practice, this could be an issue only with a 32-bit size_t and
+	  mpfr_exp_t on more than 32 bits.
+
+2023-05-16  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tsprintf.c] Added large_prec_for_g, which makes MPFR crash.
+
+	On a 64-bit Linux machine, the case %.2147483648Rg yields an incorrect
+	size computation and MPFR wants to allocate 18446744071562070545 bytes.
+	This case should either succeed or fail as reaching an environmental
+	limit like with glibc (note that the precision does not fit in an int).
+
+2023-05-16  Vincent Lefevre  <vincent@vinc17.net>
+
+	[manual] Detailed mpfr_compound_si description (special cases).
+
+	The MPFR manual should be self-contained. So, let's describe
+	the special cases of mpfr_compound_si that do not follow the
+	usual rules (or are ambiguous), instead of just referring to
+	the IEEE 754 standard.
+
+2023-05-16  Vincent Lefevre  <vincent@vinc17.net>
+
+	[compound.c] Fixes concerning the overflow and underflow detection.
+
+	Note: It is not clear whether overflow and underflow detection is
+	now correct. There may still be potential issues, but currently,
+	after these fixes, no tests yield any failure (however, we do not
+	test some of the most problematic cases yet; this should be a
+	future improvement of ofuf_thresholds in the master branch).
+
+	Note: compound.c now corresponds to the version in master.
+
+2023-05-16  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tcompound.c] Added various tests.
+
+	* Added bug_20230206, based on a bug report by Patrick Pélissier.
+	* Implemented the inverse function x^(1/n) - 1 of the compound function
+	  on non-special cases: useful to build and check hard-to-round cases
+	  and test the behavior close to the overflow and underflow thresholds.
+	* Check hard-to-round cases for n = 2, 3, 4, 5, 17, 120 (like in tpow.c)
+	  and also call the generic tests for these values.
+	* Added bug_20230211 (buggy overflow detection for 32 bits after the
+	  fix of bug_20230206 in master).
+
+	and updated two comments for the 4.2 branch.
+
+	Note: Every change has been cherry picked from master, except a
+	TODO comment and the ofuf_thresholds() calls (feature not yet in
+	the 4.2 branch). And bug_20230206 has not been fixed yet in the
+	4.2 branch.
+
+2023-05-15  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests.c] In bad_cases(), handle the inex_inv case better.
+
+	The "f exact while f^(-1) inexact" case is actually almost the same
+	as the "inverse doesn't match" case. So, handle it in the same way,
+	avoiding a fatal error (which would be bad for the non-developers):
+	a few occurrences of this case should be regarded as normal, and if
+	this occurs too often, this will be detected like the other case
+	when the MPFR_CHECK_BADCASES environment variable is set.
+
+	This is useful for future bad_cases() calls.
+
+2023-05-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	[src/pow.c] Fixed a corner case in mpfr_pow_general (bug20230427).
+
+	This fixes the bug triggered by bug20230427 added in commit 85bc7331c:
+	  bug20230427 triggers another bug in mpfr_pow_general, which
+	  occurs in destination precision 1 in the particular case of
+	  rounding to nearest, z * 2^k = 2^(emin - 2) and real result
+	  larger than this value.
+
+	This corresponds to a particular hunk of a diff from master,
+	or with a cherry-pick from commits
+	  ef31bb98521ecf7d100593346e2f4d7a7724c573
+	  27bc582645e513200c56c99a9da83eb4e47c669a
+	  e1f9f14a3829081503c027f4d38eb51778da26e6
+	  ff5012b61d5e5fee5156c57b8aa8fc1739c2a771
+	  3b63024c640181cb5fe7fd87bac94a8f942a07da
+	  4f5de980be290687ac1409aa02873e9e0dd1a030
+	  467b17025a5b05e888ed7117d6730ac0954f01cb
+	restoring the changes not related to this hunk.
+
+2023-05-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	[src/pow.c] Fixed error bound in mpfr_pow_general (bug20230213).
+
+	This fixes the bug triggered by bug20230213 added in commit 85bc7331c:
+	  bug20230213 triggers a bug in mpfr_pow_general, where the
+	  computation of the error term is incorrect when there has
+	  been an intermediate underflow or overflow (k_non_zero is
+	  true); the error analysis is correct, but the associated
+	  code is not (due to the change of the value of a variable).
+
+2023-05-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/texp10.c] Added bug20230213 and bug20230427 tests.
+
+	* bug20230213 triggers a bug in mpfr_pow_general, where the
+	  computation of the error term is incorrect when there has
+	  been an intermediate underflow or overflow (k_non_zero is
+	  true); the error analysis is correct, but the associated
+	  code is not (due to the change of the value of a variable).
+	* bug20230427 triggers another bug in mpfr_pow_general, which
+	  occurs in destination precision 1 in the particular case of
+	  rounding to nearest, z * 2^k = 2^(emin - 2) and real result
+	  larger than this value.
+
+	Note: The code has been copied from master (and because of changes
+	of other parts of the code by commits in master, cherry-picking
+	was impossible or much more complex). These bugs have been fixed
+	in master, but these fixes will be provided in the 4.2 branch by
+	separate commits in order to facilitate testing (e.g., to check
+	that one gets failures without these fixes).
+
+	Both bugs were found by the current ofuf_thresholds tests in master
+	(but there are currently issues with these tests).
+
+2023-05-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	Added bad_cases tests for mpfr_exp2, mpfr_exp10, mpfr_log2, mpfr_log10.
+
+	[tests/tui_pow.c] Added generic tests.
+
+	Added /treldiff to tests/.gitignore
+
+2023-05-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tui_pow.c] Some small corrections.
+
+	* Improved organization and style.
+	* Replaced output to stderr by output to stdout (as usual).
+	* Added missing "\n" at the end of 2 printf strings.
+
+2023-05-05  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tset_float128.c] check_special(): output values in error messages.
+
+2023-05-04  Vincent Lefevre  <vincent@vinc17.net>
+
+	[doc/mpfr.texi] Updated the month.
+
+	[src/Makefile.am] Updated -version-info to 8:1:2 for MPFR 4.2.1.
+
+2023-05-04  Vincent Lefevre  <vincent@vinc17.net>
+
+	Updated version to 4.2.1-dev (with tools/update-version).
+
+	This should have been done just after 4.2.0 was published,
+	i.e. just after the 4.2.0 tag, but I forgot.
+
+2023-05-04  Vincent Lefevre  <vincent@vinc17.net>
+
+	Added treldiff.c test, assuming that mpfr_reldiff behaves as documented.
+
+	Basically, mpfr_reldiff is tested with all special numbers and some
+	regular ones, with various precisions and all the rounding modes
+	(including MPFR_RNDF since in practice, the implementation cannot
+	exploit it to give failures). The result is just compared with the
+	basic algorithm (as documented), which does not use any optimization
+	(i.e. it does not treat special numbers in a particular way): the
+	formula is just computed using the precision of the destination and
+	the provided rounding mode for all operations (thus, in general,
+	this mpfr_reldiff function is not correctly rounded).
+
+	This test would detect the bugs on special values that have been fixed
+	in 81e4d4427eed0404292ac69c17f986a6cb640562.
+
+2023-05-04  Vincent Lefevre  <vincent@vinc17.net>
+
+	[src/reldiff.c] Fixed mpfr_reldiff on special values.
+
+	The mpfr_reldiff function, which computes |b-c|/b, was buggy on
+	special values, e.g. on the following (b,c) values:
+	  * (+Inf,+Inf) gave ±0 instead of NaN (like NaN/Inf).
+	  * (+0,+0) gave 1 instead of NaN (like 0/0).
+	  * (+0,1) gave 1 instead of Inf (like 1/0).
+
+	The sign of 0 for (+Inf,+Inf) or (-Inf,-Inf) was not set, i.e. it
+	was just the sign of the destination before the call. This made
+	the "reuse" test fail after its update to check the sign of zero
+	(commit e6d47b8f5ab666e658e05fe282e3490a06c0278e), as the results
+	were not consistent.
+
+	For b = 0, there was a comment "reldiff = abs(c)/c = sign(c)", which
+	mixed up b and c (one should divide by b, not by c), and this could
+	explain some bugs.
+
+	Note that this comment (and associated code), if corrected, seemed to
+	imply that for c = 0 and b finite (and non-zero?), the intent was to
+	return sign(b). However, this does not follow the documentation, which
+	says that the formula is just computed using the precision of the
+	destination and the provided rounding mode for all operations. So the
+	final result may be affected by intermediate roundings, while sign(b)
+	assumes that the function is correctly rounded, which is not the case
+	for this function (just there for compatibility with MPF). Deviating
+	from the documentation in some cases could break some properties (like
+	monotonicity?).
+
+	These bugs were not found because mpfr_reldiff is not tested at all,
+	except by "reuse", which just checks some consistency when a variable
+	is reused for the destination.
+
+2023-05-04  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/reuse.c] Check the sign of zero; other improvements.
+
+	* Replaced the static mpfr_compare by "! SAME_VAL" to do a complete
+	  comparison of MPFR numbers. In particular, this checks the sign of
+	  zero, revealing a bug in mpfr_reldiff (failure 0 vs -0).
+	* More consistent output of errors (use of mpfr_dump for ref and res
+	  in all cases).
+	* Code style.
+
+2023-04-20  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tsprintf.c] Updated comment for snprintf_size.
+
+	Like commit 524c7bf4ff4f0dc1c83bc9a36d621a4a9607ee3b in master,
+	but without the "Code reworked..." line, as this isn't done in
+	the 4.2 branch.
+
+2023-04-17  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tsprintf.c] Update about the glibc 2.37 bug.
+
+	This updates commit 78ff7526dea103f73acc98d9a9ffa7429050c0dd.
+
+2023-04-17  Vincent Lefevre  <vincent@vinc17.net>
+
+	Fixed possible stack overflow in mpfr_rec_sqrt + non-regression test.
+
+	* src/rec_sqrt.c: use a standard Ziv loop.
+	* tests/trec_sqrt.c: added a non-regression test with bad_cases().
+
+	Details:
+
+	The issue is due to many allocations in the stack (with alloca(),
+	via MPFR_TMP_LIMBS_ALLOC) on cases that are very hard to round (from
+	an analysis on a testcase given by Fredrik Johansson, not included
+	here) with a not too large destination precision: many iterations
+	are needed due to a specific Ziv loop where the working precision
+	is increased additively, and it is not possible to free the data
+	allocated in the previous iterations.
+
+	The fix is to use a standard Ziv loop, as it increases the working
+	precision multiplicatively instead of additively, so that it needs
+	much fewer iterations in such cases. This should also make the code
+	much faster in such cases.
+
+	This issue was not detected by bad_cases() in tests/trec_sqrt.c
+	because to be able to reproduce it, one needs a much larger precision
+	than the ones tested with the chosen parameters.
+
+	A new bad_cases() instance, with a large enough precision for the
+	input (py = 9999, psup = 120000, giving px = py + psup = 129999),
+	is added here in order to be able to reproduce the failure.
+
+	The testcase given by Fredrik Johansson is not included here because
+	it uses a very large string for the input (the point of bad_cases()
+	is to generate such an input automatically).
+
+2023-04-15  Vincent Lefevre  <vincent@vinc17.net>
+
+	[src] Since mpfr_prec_t is signed, changed %Pu to %Pd.
+
+	Note: Even the mpfr_prec_t is not supposed to contain negative values
+	(at least in these cases), this may still be useful in case of bugs.
+
+2023-04-14  Vincent Lefevre  <vincent@vinc17.net>
+
+	[doc/mpfr.texi] Updated the month.
+
+2023-04-14  Vincent Lefevre  <vincent@vinc17.net>
+
+	[manual] Improved example on how to print a mpfr_prec_t value.
+
+	mpfr_prec_t is signed, so that it is better to use %Pd than %Pu.
+
+2023-04-12  Vincent Lefevre  <vincent@vinc17.net>
+
+	[src/mpfr-thread.h] Output a message in case of lock/unlock failure.
+
+	The message is output just before abort(), so that one can know
+	the cause of the abort().
+
+	Tested with --enable-shared-cache CC=i686-w64-mingw32-gcc-posix
+	(which has the effect to enable POSIX threads inside MPFR via
+	AX_PTHREAD, with MinGW), where
+
+	MPFR_LOCK_DECL(mpfr_lock_memory)
+	int main (void)
+	{
+	  MPFR_LOCK_WRITE(mpfr_lock_memory);
+	  return 0;
+	}
+
+	fails with the "MPFR lock failure" message and exit status 3 due to
+	the abort(). Note that there is no failure with GNU/Linux.
+
+2023-03-22  Vincent Lefevre  <vincent@vinc17.net>
+
+	[doc/mpfr.texi] Updated the month.
+
+	[manual] Detailed mpfr_set_str a bit more.
+
+2023-02-28  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests] Added/improved tests for the log, log2 and log10 functions.
+
+	* Added log(1) test.
+	* For the special tests of these functions: test in all rounding modes
+	  and use MPFR_IS_ZERO(x) rather than mpfr_cmp_ui(x,0) to exclude NaN.
+
+2023-02-21  Vincent Lefevre  <vincent@vinc17.net>
+
+	Fixed mpfr_ui_pow_ui infinite loop in case of overflow, with testcases.
+
+	* src/ui_pow_ui.c:
+	    - Cleanup. In particular, renamed a variable as this was confusing:
+	      one usually uses y = f(x), but here it was x = f(y,n). Let's use
+	      x = f(k,n) since here, both arguments are integers.
+	    - Added mpfr_ui_pow_ui logging.
+	    - Handle the +Inf case in the Ziv iteration.
+	      This is done by calling mpfr_pow_z (this should be a bit more
+	      efficient than calling mpfr_pow_ui, which would eventually call
+	      mpfr_pow_z to handle the overflow).
+	      Note that mpfr_pow_z avoids spurious overflows by internally
+	      rounding toward 1 (for positive results). This might be an
+	      alternative solution here to avoid calling mpfr_pow_z.
+	* tests/tlog10.c: added bug20230213 test: infinite loop in mpfr_log10,
+	  which was occurring before the above bug fix.
+	* tests/tui_pow.c: added testcase for this mpfr_ui_pow_ui bug.
+
+2023-02-14  Vincent Lefevre  <vincent@vinc17.net>
+
+	For -dev versions, enable timeout support by default (when possible).
+
+	* configure.ac:
+	    - added dev_version variable, set to 1 for -dev versions;
+	    - updated --enable-tests-timeout handling;
+	    - use $dev_version for a test that already considers -dev versions.
+	* acinclude.m4:
+	    - handle absent --enable-tests-timeout option and case "yes".
+
+2023-02-03  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tsprintf.c] Added a comment about a failure with glibc 2.37.
+
+	Klaus Dittrich reported in the MPFR mailing-list that the modified
+	test from commit 4f03d40b5a5ceeb3126dc51c3511bdceef3bab19 was still
+	failing with the glibc git. But this time, this is entirely a bug
+	in glibc, present in glibc 2.37:
+
+	  https://sourceware.org/bugzilla/show_bug.cgi?id=30068
+
+	with even a possible buffer overflow in sprintf (as I guessed
+	in Comment 2 and was confirmed later). → CVE-2023-25139
+
+	Thus the test still fails with glibc 2.37, and the future fix of
+	the glibc vulnerability should also fix this failure.
+
+2023-02-01  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/{tfprintf.c,tprintf.c}] Fix when decimal_point > 1 byte.
+
+	These tests were failing in locales where localeconv()->decimal_point
+	takes several bytes, such as in the ps_AF locale under Linux, where
+	decimal_point is U+066B ARABIC DECIMAL SEPARATOR, which takes 2 bytes
+	(d9 ab, as encoded in UTF-8).
+
+	Note: A multibyte decimal-point is currently honored only with
+	native C types (via the C library), so that the length of the
+	decimal-point had to be taken into account only for a small number
+	of tests. Once a multibyte decimal-point is supported for the MPFR
+	numbers ("R" type specifier), the expected lengths in many tests
+	will have to be updated. See the code about MPFR_DECIMAL_POINT in
+	"src/mpfr-impl.h".
+
+2023-02-01  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests] Consistency in the error messages.
+
+2023-02-01  Vincent Lefevre  <vincent@vinc17.net>
+
+	[src/mpfr-impl.h] Updated FIXME comment for decimal_point/thousands_sep.
+
+	* Added info for the fr_FR.UTF-8 and ps_AF locales.
+	* Removed the sentence about the C standard (since multibyte characters
+	  are used for decimal_point and thousands_sep in practice, the term
+	  "character" could have a broader mean, e.g. the abstract one in 3.7).
+
+	This completes commit 00ad47c8ec4ba31ad0afd067286f2fab8d7283ff.
+
+2023-01-11  Vincent Lefevre  <vincent@vinc17.net>
+
+	[tests/tsprintf.c] Modified a buggy test of the thousands separator.
+
+	The test
+
+	  check_vsprintf ("+01,234,567  :", "%0+ -'13.10Pd:", (mpfr_prec_t) 1234567);
+
+	is based on the output from glibc up to 2.36, which is incorrect:
+
+	  https://sourceware.org/bugzilla/show_bug.cgi?id=23432
+
+	The GNU C Library has apparently been partially fixed in its Git
+	repository for the future 2.37, since a tsprintf failure has been
+	reported (this is a bug in this test, not in the MPFR library):
+
+	  https://sympa.inria.fr/sympa/arc/mpfr/2023-01/msg00001.html
+
+	So, modified the test to avoid the particular case of leading zeros
+	due to the precision field larger than the number of digits. This
+	case has already been tested without the thousands separator (where
+	there are no issues with the C libraries), so that we do not miss
+	much testing. Added a comment explaining the issue and a possible
+	solution for future testing of this particular case (if need be).
+
 2023-01-06  Vincent Lefevre  <vincent@vinc17.net>
+
+	[BUGS] Added a note for a bug that cannot occur in practice.
+
+	[doc/README.dev] Updated "To make a release".
+
+	ChangeLog update with tools/update-changelog
 
 	Updated version to 4.2.0.
 

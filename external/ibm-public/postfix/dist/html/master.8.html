@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,13 +7,13 @@
 </head> <body> <pre>
 MASTER(8)                                                            MASTER(8)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        master - Postfix master process
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>master</b> [<b>-Dditvw</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-e</b> <i>exit</i><b>_</b><i>time</i>]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  <a href="master.8.html"><b>master</b>(8)</a> daemon is the resident process that runs Postfix daemons
        on demand: daemons to send or receive messages via the network, daemons
        to  deliver  mail locally, etc.  These daemons are created on demand up
@@ -92,12 +92,12 @@ MASTER(8)                                                            MASTER(8)
               one  would  terminate only the master ("<b>postfix stop</b>") and allow
               running processes to finish what they are doing.
 
-<b>DIAGNOSTICS</b>
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems are reported to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.  The exit status is
        non-zero  in case of problems, including problems while initializing as
        a master daemon process in the background.
 
-<b>ENVIRONMENT</b>
+<b><a name="environment">ENVIRONMENT</a></b>
        <b>MAIL_DEBUG</b>
               After initialization, start a debugger  as  specified  with  the
               <b><a href="postconf.5.html#debugger_command">debugger_command</a></b> configuration parameter in the <a href="postconf.5.html"><b>main.cf</b></a> configu-
@@ -106,13 +106,13 @@ MASTER(8)                                                            MASTER(8)
        <b>MAIL_CONFIG</b>
               Directory with Postfix configuration files.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        Unlike most Postfix daemon processes, the  <a href="master.8.html"><b>master</b>(8)</a>  server  does  not
        automatically  pick  up  changes  to  <a href="postconf.5.html"><b>main.cf</b></a>. Changes to <a href="master.5.html"><b>master.cf</b></a> are
        never picked up automatically.  Use the "<b>postfix reload</b>" command  after
        a configuration change.
 
-<b>RESOURCE AND RATE CONTROLS</b>
+<b><a name="resource_and_rate_controls">RESOURCE AND RATE CONTROLS</a></b>
        <b><a href="postconf.5.html#default_process_limit">default_process_limit</a> (100)</b>
               The  default maximal number of Postfix child processes that pro-
               vide a given service.
@@ -135,7 +135,7 @@ MASTER(8)                                                            MASTER(8)
               Selectively disable <a href="master.8.html"><b>master</b>(8)</a> listener ports by service type  or
               by service name and type.
 
-<b>MISCELLANEOUS CONTROLS</b>
+<b><a name="miscellaneous_controls">MISCELLANEOUS CONTROLS</a></b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
               The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
               figuration files.
@@ -148,15 +148,15 @@ MASTER(8)                                                            MASTER(8)
               invoked with the -D option.
 
        <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a> (all)</b>
-              The network interface addresses that this mail  system  receives
-              mail on.
+              The local network interface  addresses  that  this  mail  system
+              receives mail on.
 
-       <b><a href="postconf.5.html#inet_protocols">inet_protocols</a> (see 'postconf -d output')</b>
+       <b><a href="postconf.5.html#inet_protocols">inet_protocols</a> (see 'postconf -d' output)</b>
               The  Internet  protocols Postfix will attempt to use when making
               or accepting connections.
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The list of environment parameters  that  a  privileged  Postfix
+              The list of environment  variables  that  a  privileged  Postfix
               process  will  import  from  a  non-Postfix  parent  process, or
               name=value environment overrides.
 
@@ -192,7 +192,7 @@ MASTER(8)                                                            MASTER(8)
               Optional setting that avoids lookups in  the  <b>services</b>(5)  data-
               base.
 
-<b>FILES</b>
+<b><a name="files">FILES</a></b>
        To  expand  the directory names below into their actual values, use the
        command "<b>postconf <a href="postconf.5.html#config_directory">config_directory</a></b>" etc.
 
@@ -201,7 +201,7 @@ MASTER(8)                                                            MASTER(8)
        $<a href="postconf.5.html#queue_directory">queue_directory</a>/pid/master.pid, master lock file.
        $<a href="postconf.5.html#data_directory">data_directory</a>/master.lock, master lock file.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
        <a href="verify.8.html">verify(8)</a>, address verification
        <a href="master.5.html">master(5)</a>, <a href="master.5.html">master.cf</a> configuration file syntax
@@ -209,7 +209,7 @@ MASTER(8)                                                            MASTER(8)
        <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

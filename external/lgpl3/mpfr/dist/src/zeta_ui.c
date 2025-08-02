@@ -29,8 +29,8 @@ mpfr_zeta_ui (mpfr_ptr z, unsigned long m, mpfr_rnd_t r)
   MPFR_ZIV_DECL (loop);
 
   MPFR_LOG_FUNC
-    (("m=%lu rnd=%d prec=%Pu", m, r, mpfr_get_prec (z)),
-     ("z[%Pu]=%.*Rg", mpfr_get_prec (z), mpfr_log_prec, z));
+    (("m=%lu rnd=%d prec=%Pd", m, r, mpfr_get_prec (z)),
+     ("z[%Pd]=%.*Rg", mpfr_get_prec (z), mpfr_log_prec, z));
 
   if (m == 0) /* zeta(0) = -1/2 */
     return mpfr_set_si_2exp (z, -1, -1, r);

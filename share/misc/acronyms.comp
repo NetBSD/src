@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.390 2024/05/19 15:47:38 gutteridge Exp $
+$NetBSD: acronyms.comp,v 1.390.2.1 2025/08/02 05:55:18 perseant Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -247,6 +247,7 @@ CFB	cipher feedback
 CFG	context-free grammar
 CFG	control-flow graph
 CFI	control-flow integrity
+CFRG	Crypto Forum Research Group (IRTF)
 CG	control gate
 CGA	Color Graphics Adapter
 CGI	common gateway interface
@@ -479,6 +480,7 @@ DRN	Discovery of Network-designated Resolvers
 DRRS	display refresh rate switching
 DS	debug store
 DS	differentiated services
+DS	delegation signer
 DS9000	DeathStation 9000
 DS9K	DeathStation 9000
 DSA	digital signature algorithm
@@ -533,6 +535,7 @@ ECDH	elliptic curve Diffie-Hellman
 ECDL	elliptic curve discrete logarithm
 ECDLP	elliptic curve discrete logarithm problem
 ECDSA	elliptic curve digital signature algorithm
+EDDSA	Edwards-curve digital signature algorithm
 ECL	emitter-coupled logic
 ECN	explicit congestion notification
 ECP	enhanced capability port
@@ -559,12 +562,14 @@ EH	extension header
 EIDE	enhanced IDE
 EINJ	error injection table
 EISA	extended industry standard architecture
+EKU	extended key usage (x509)
 ELF	executable and linking format
 ELS	entry level system
 EMACS	Editor MACroS
 EMI	electro-magnetic interference
 EMP	electro-magnetic pulse
 EMR	electro-magnetic radiation
+EMS	extended master secret (RFC7627)
 ENIAC	electronic numerical integrator and computer
 EOF	end of file
 EOI	end of interrupt
@@ -598,6 +603,7 @@ EU	execution unit
 EULA	end user license agreement
 EdDSA	Edwards curve digital signature algorithm
 FAT	file allocation table
+FBL	feedback loop
 FBRAM	frame buffer random access memory
 FCIF	full common intermediate format
 FCL	fiber channel loop
@@ -620,6 +626,7 @@ FFS	Fast File System
 FFS	find first set
 FFT	fast Fourier transform
 FG	floating gate
+FHE	fully homomorphic encryption
 FHRP	first hop redundancy protocol
 FHSS	frequency hop spread spectrum
 FID	frequency identifier
@@ -663,6 +670,7 @@ GCM	Galois counter mode
 GCR	group-coded recording
 GDI	Graphics Device Interface
 GDT	global descriptor table
+GDT	(block) group descriptor table
 GECOS	general comprehensive operating supervisor
 GEM	graphics environment manager
 GEM	graphics execution manager
@@ -691,6 +699,7 @@ GRE	generic routing encapsulation
 GRO	generic receive offload
 GSI	global system interrupt
 GSO	generic send offload
+GUA	global unicast address
 GUI	graphical user interface
 GUID	globally unique identifier
 GUS	Gravis UltraSound
@@ -700,6 +709,7 @@ HAL	hardware abstraction layer
 HAT	hashed array tree
 HATEOAS	hypermedia as the engine of application state
 HBA	host bus adapter
+HBS	hash-based signature
 HCC	Home Cable Computer
 HCCA	Home Cable Computer Adaptor
 HCF	halt and catch fire
@@ -732,6 +742,7 @@ HPC	high performance computing
 HPD	hot plug detection
 HPET	high precision event timer
 HPKE	hybrid public key encryption
+HQC	Hamming Quasi-Cyclic
 HSM	hardware security module
 HSM	hierarchical storage management
 HSRP	hot standby router protocol
@@ -874,11 +885,13 @@ KB	kilobyte
 KBD	keyboard
 KBD	kilobaud
 KCS	keyboard controller style
+KDF	key derivation function
 KEK	key encryption key
 KEM	key encapsulation mechanism
 KLOC	thousand lines of code
 KMS	kernel-mode setting
 KPI	kernel programming interface
+KSK	key signing key
 KVA	kernel virtual address
 KVM	kernel virtual machine
 KVM	kernel virtual memory
@@ -934,6 +947,7 @@ LMCE	local machine check exception
 LMI	local management interface
 LMM	link management mode
 LMP	link management protocol
+LMS	Leighton-Micali Signature
 LNO	loop nest optimization
 LOC	lines of code
 LOM	lights-out management
@@ -1094,6 +1108,7 @@ MVR	multicast VLAN registration
 MVRP	multiple VLAN registration protocol
 MWE	module width encoding
 MX	mail exchange
+MZM	Majorana zero mode
 NACK	negative acknowledgement
 NAK	negative acknowledgement
 NAN	neighbor awareness networking
@@ -1123,6 +1138,7 @@ NIA	next instruction address
 NIC	network information center
 NIC	network interface card
 NIDS	network intrusion detection system
+NIKE	Non-Interactive Key Exchange
 NIP	network interface protocol
 NIPR	non-classified IP router (network)
 NIPS	network intrusion prevention system
@@ -1224,6 +1240,7 @@ PATA	parallel ATA
 PAX	portable archive exchange
 PBE	pending break encoding
 PBE	programming by example
+PBKDF	password-based key derivation function
 PBR	partition boot record
 PBX	private branch exchange
 PC	personal computer
@@ -1243,6 +1260,7 @@ PCM	phase change memory
 PCM	pulse code modulation
 PCMCIA	Personal Computer Memory Card International Association
 PCP	Port Control Protocol
+PCR	Platform Configuration Register
 PD	public domain
 PDA	personal digital assistant
 PDA	pushdown automaton
@@ -1374,6 +1392,7 @@ QDI	quasi delay insensitive
 QOI	quality of implementation
 QOI	quick order interface
 QOS	quality of service
+QPU	quantum processing unit
 QUIC	Quick UDP Internet Connections
 QVL	qualified vendor list
 R/O	read only
@@ -1453,8 +1472,11 @@ RPL	requested privilege level
 RPM	revolutions per minute
 RPN	reverse Polish notation
 RPVST	Rapid Per-VLAN Spanning Tree
+RPZ	response policy zone
 RR	random replacement
+RR	resource record
 RR	round robin
+RRSIG	resource record signature
 RS	relay station
 RSA	Rivest, Shamir, [and] Adleman
 RSC	Receive Segment Coalescing
@@ -1506,6 +1528,7 @@ SATA	serial advanced technology attachment
 SAX	simple API for XML
 SB	sound blaster
 SBI	supervisor binary interface
+SBOM	Software Bill of Materials
 SBSA	server base system architecture
 SBU	standard build unit
 SC	store conditional
@@ -1526,6 +1549,7 @@ SCP	secure copy
 SCP	system control processor
 SCPI	system control and power interface
 SCSI	Small Computer System Interface
+SCT	Signed Certificate Timestamp
 SCTP	Stream Control Transmission Protocol
 SDDC	software defined data center
 SDEI	software delegated exception interface
@@ -1574,7 +1598,7 @@ SIR	signal-to-interference ratio
 SIR	slow infrared
 SIRT	security incident response team
 SISD	single instruction, single data
-SIV	synthetic intialization vector
+SIV	synthetic initialization vector
 SLAAC	stateless address auto-configuration
 SLC	single-level cell
 SLDRAM	synchronous-link dynamic random access memory
@@ -1645,6 +1669,7 @@ SRAM	static random access memory
 SRC	sample rate conversion
 SRP	SCSI RDMA protocol
 SRR	shaped round robin
+SRS	Sender Rewriting Scheme
 SRTP	Secure Real-time Transport Protocol
 SS	self-snoop
 SS	stack segment
@@ -1728,6 +1753,7 @@ TLER	time-limited error recovery
 TLI	transport layer interface
 TLS	thread local storage
 TLS	transport layer security
+TLV	type, length, value
 TM	Turing machine
 TM	thermal monitor
 TMDS	transition minimized differential signaling
@@ -1804,6 +1830,7 @@ UICC	universal integrated circuit card
 UID	unique identifier
 UID	user identifier
 UL	upload
+ULA	unique local address
 UMA	uniform memory access
 UMA	upper memory area
 UMB	upper memory block
@@ -1849,6 +1876,7 @@ VFO	variable-frequency oscillator
 VFS	virtual file system
 VG	volume group
 VGA	Video Graphics Array
+VHD	virtual hard disk
 VHDCI	very high density cable interconnect
 VID	{VLAN,voltage level} identifier
 VIM	Vi IMproved
@@ -1889,6 +1917,7 @@ WAN	wide area network
 WAP	Wireless Application Protocol
 WAP	wireless access point
 WDDM	Windows Display Driver Model
+WDM	Wavelength Division Multiplexing
 WDM	Windows Driver Model
 WDT	watchdog timer
 WEP	Wired Equivalent Privacy
@@ -1927,8 +1956,10 @@ XGA	Extended Graphics Array
 XHR	XMLHttpRequest
 XIP	execute in place
 XML	Extensible Markup Language
+XMSS	eXtended Merkle Signature Scheme
 XNA	XNA's not acronymed
 XNS	Xerox network systems
+XOF	eXtendable-Output Function
 XOR	exclusive or
 XP	extreme programming
 XSI	X/Open System Interface
@@ -1956,4 +1987,5 @@ ZMA	zone multicast address
 ZOI	zero one infinity
 ZOI	zone of influence
 ZPL	ZFS Posix layer
+ZSK	zone signing key
 ZVOL	ZFS Volume

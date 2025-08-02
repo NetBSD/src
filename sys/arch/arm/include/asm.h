@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.35 2024/06/09 22:35:47 riastradh Exp $	*/
+/*	$NetBSD: asm.h,v 1.35.2.1 2025/08/02 05:55:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -73,8 +73,10 @@
 
 #ifdef __thumb__
 #define THUMB_INSN(n)	n
+#define _INSN_SIZE	(2)
 #else
 #define THUMB_INSN(n)
+#define _INSN_SIZE	(4)
 #endif
 
 #define	__BIT(n)	(1 << (n))
@@ -194,21 +196,25 @@
 #define	GOT_GET(x,got,sym)	\
 	ldr	x, sym;		\
 	ldr	x, [x, got]
-#define	GOT_INIT(got,gotsym,pclabel) \
-	ldr	got, gotsym;	\
-	pclabel: add	got, got, pc
-#ifdef __thumb__
-#define	GOT_INITSYM(gotsym,pclabel) \
+
+/*
+ * Load _GLOBAL_OFFSET_TABLE_ address into register:
+ *
+ * 0:	GOT_INIT(rX, .Lgot)
+ *	...
+ *
+ *      // and in the data after the function
+ *	GOT_INITSYM(.Lgot, 0b)
+ */
+#define	GOT_INIT(Rgot, gotsym)	  \
+	ldr	Rgot, gotsym	; \
+	add	Rgot, Rgot, pc
+#define	GOT_INITSYM(gotsym, initlabel)	\
 	.align 0;		\
-	gotsym: .word _C_LABEL(_GLOBAL_OFFSET_TABLE_) - (pclabel+4)
-#else
-#define	GOT_INITSYM(gotsym,pclabel) \
-	.align 0;		\
-	gotsym: .word _C_LABEL(_GLOBAL_OFFSET_TABLE_) - (pclabel+8)
-#endif
+	gotsym:	.word _C_LABEL(_GLOBAL_OFFSET_TABLE_) - (initlabel+(1+2)*_INSN_SIZE)
 
 #ifdef __STDC__
-#define	PIC_SYM(x,y)	x ## ( ## y ## )
+#define	PIC_SYM(x,y)	x(y)
 #else
 #define	PIC_SYM(x,y)	x/**/(/**/y/**/)
 #endif
@@ -219,8 +225,8 @@
 #define	GOT_SYM(x)	x
 #define	GOT_GET(x,got,sym)	\
 	ldr	x, sym;
-#define	GOT_INIT(got,gotsym,pclabel)
-#define	GOT_INITSYM(gotsym,pclabel)
+#define	GOT_INIT(Rgot, gotsym)
+#define	GOT_INITSYM(gotsym, initlabel)
 #define	PIC_SYM(x,y)	x
 #endif	/* __PIC__ */
 
@@ -264,7 +270,7 @@
 
 #ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\
-	.pushsection .gnu.warning. ## sym;				\
+	.pushsection .gnu.warning.sym;					\
 	.ascii msg;							\
 	.popsection
 #else

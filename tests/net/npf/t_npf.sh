@@ -1,4 +1,4 @@
-# $NetBSD: t_npf.sh,v 1.4 2020/06/01 11:08:57 martin Exp $
+# $NetBSD: t_npf.sh,v 1.4.8.1 2025/08/02 05:58:11 perseant Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,8 +29,23 @@ run_test()
 {
 	local name="${1}"
 
-	atf_check -o ignore -e ignore npfctl debug -c "$(atf_get_srcdir)/npftest.conf" -o ./npf.plist
+	if [ "$name" = "l2defpass" ]; then
+		atf_check -o ignore -e ignore npfctl debug -c "$(atf_get_srcdir)/npftestl3.conf" -o ./npf.plist
+	else
+		atf_check -o ignore -e ignore npfctl debug -c "$(atf_get_srcdir)/npftest.conf" -o ./npf.plist
+	fi
+
 	atf_check -o ignore npftest -c npf.plist -T "${name}"
+}
+
+cleanup()
+{
+
+	if [ -f npftest.core ]; then
+		gdb -batch -ex bt npftest npftest.core
+		# Extract kernel logs including a panic message
+		strings npftest.core |grep -E '^\[.+\] '
+	fi
 }
 
 add_test()
@@ -38,13 +53,16 @@ add_test()
 	local name="${1}"; shift
 	local desc="${*}";
 
-	atf_test_case "npf_${name}"
+	atf_test_case "npf_${name}" cleanup
 	eval "npf_${name}_head() {
 			atf_set descr \"${desc}\"
 			atf_set require.progs npfctl npftest
 		}
 	    npf_${name}_body() {
 			run_test ${name}
+		}
+	    npf_${name}_cleanup() {
+			cleanup
 		}"
 	atf_add_test_case "npf_${name}"
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.7 2024/02/21 22:52:46 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.7.2.1 2025/08/02 05:54:08 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,6 +36,7 @@ isc_logcategory_t ns_categories[] = { { "client", 0 },
 				      { "query-errors", 0 },
 				      { "trust-anchor-telemetry", 0 },
 				      { "serve-stale", 0 },
+				      { "responses", 0 },
 				      { NULL, 0 } };
 
 /*%

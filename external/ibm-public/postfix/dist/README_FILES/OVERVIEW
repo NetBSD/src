@@ -109,8 +109,8 @@ unnumbered names inside shaded areas represent Postfix queues.
     error(8) delivery agents are special: they discard or bounce all mail, and
     are not shown in the figure above.
 
-    The queue manager maintains a small active queue with the messages that it
-    has opened for delivery. The active queue acts as a limited window on
+    The queue manager maintains a limited active queue with the messages that
+    it has opened for delivery. The active queue acts as a limited window on
     potentially large incoming or deferred queues. The limited active queue
     prevents the queue manager from running out of memory under heavy load.
 
@@ -126,11 +126,13 @@ unnumbered names inside shaded areas represent Postfix queues.
     relocated(5) table for recipients whose address has changed; mail for such
     recipients is returned to the sender with an explanation.
 
-  * The smtp(8) client looks up a list of mail exchangers for the destination
-    host, sorts the list by preference, and tries each server in turn until it
-    finds a server that responds. It then encapsulates the sender, recipient
-    and message content as required by the SMTP protocol; this includes
-    conversion of 8-bit MIME to 7-bit encoding.
+  * The smtp(8) client looks up a list of SMTP servers for the destination(s)
+    in a delivery request, sorts the list by preference, and tries each server
+    in turn until it has delivered or bounced all recipients in the delivery
+    request. It encapsulates the sender, recipients and message content as
+    required by the SMTP protocol; this includes message body conversion from
+    8-bit MIME to 7-bit encoding, but does not include RFC 2047 header
+    encoding.
 
   * The lmtp(8) client speaks a protocol similar to SMTP that is optimized for
     delivery to mailbox servers such as Cyrus. The advantage of this setup is
@@ -158,10 +160,11 @@ unnumbered names inside shaded areas represent Postfix queues.
 
   * The pipe(8) mailer is the outbound interface to other mail processing
     systems (the Postfix sendmail(1) command being the inbound interface). The
-    interface is UNIX compatible: it provides information on the command line
-    and on the standard input stream, and expects a process exit status code as
-    defined in <sysexits.h>. Examples of delivery via the pipe(8) mailer are in
-    the MAILDROP_README and UUCP_README documents.
+    interface is UNIX compatible: the pipe(8) mailer provides information to a
+    child process command line, environment variables, and standard input
+    stream, and expects a child process exit status code as defined in
+    <sysexits.h>. Examples of delivery via the pipe(8) mailer are in the
+    FILTER_README, MAILDROP_README, and UUCP_README documents.
 
 PPoossttffiixx bbeehhiinndd tthhee sscceenneess
 
@@ -237,11 +240,12 @@ queues.
                    message
                   logfiles
 
-  * The flush(8) servers maintain per-destination logs and implement both ETRN
-    and "sendmail -qRdestination", as described in the ETRN_README document.
-    This moves selected queue files from the deferred queue back to the
-    incoming queue and requests their delivery. The flush(8) service is
-    available with Postfix version 1.0 and later.
+  * The flush(8) servers maintain per-destination logs and implement "sendmail
+    -qRsite", "sendmail -qIqueueid" "postqueue -s site", "postqueue -
+    i queueid", and ETRN as described in the ETRN_README document. This moves
+    selected queue files from the deferred queue back to the incoming queue and
+    requests their delivery. The flush(8) service is available with Postfix
+    version 1.0 and later.
 
                                   incoming
                                      ^
@@ -298,14 +302,7 @@ queues.
     connection setup and improves message delivery rates. After a Postfix smtp
     (8) client connects to a remote SMTP server and sends plaintext EHLO and
     STARTTLS commands, the smtp(8) client inserts a tlsproxy(8) process into
-    the connection as shown below.
-
-    After the mail transaction completes, the Postfix smtp(8) client gives the
-    smtp(8)-to-tlsproxy(8) connection to the scache(8) server, which keeps the
-    connection open for a limited amount of time. The smtp(8) client continues
-    with some other mail delivery request. Meanwhile, any Postfix smtp(8)
-    client can ask the scache(8) server for that cached connection and reuse it
-    for mail delivery.
+    the connection as shown in the top of the figure below.
 
             /--  smtp(8)  --> tlsproxy(8) --> Internet
 
@@ -317,6 +314,13 @@ queues.
                 v     |
 
                 scache(8)
+
+    After the mail transaction completes, the Postfix smtp(8) client gives the
+    smtp(8)-to-tlsproxy(8) connection to the scache(8) server, which keeps the
+    connection open for a limited amount of time. The smtp(8) client continues
+    with some other mail delivery request. Meanwhile, any Postfix smtp(8)
+    client can ask the scache(8) server for that cached connection and reuse it
+    for mail delivery.
 
   * The showq(8) servers list the Postfix queue status. This is the queue
     listing service that does the work for the mailq(1) and postqueue(1)

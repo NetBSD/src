@@ -1,4 +1,4 @@
-/* $NetBSD: ehci_acpi.c,v 1.9 2021/12/24 00:27:22 jmcneill Exp $ */
+/* $NetBSD: ehci_acpi.c,v 1.9.10.1 2025/08/02 05:56:32 perseant Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_acpi.c,v 1.9 2021/12/24 00:27:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_acpi.c,v 1.9.10.1 2025/08/02 05:56:32 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,7 +96,7 @@ ehci_acpi_attach(device_t parent, device_t self, void *aux)
 	int error;
 	void *ih;
 
-	acpi_claim_childdevs(self, aa->aa_node);
+	acpi_claim_childdevs(self, aa->aa_node, NULL);
 
 	asc->sc_handle = aa->aa_node->ad_handle;
 

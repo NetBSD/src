@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.8 2023/01/25 21:43:31 christos Exp $	*/
+/*	$NetBSD: list.h,v 1.8.2.1 2025/08/02 05:54:00 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,9 +19,10 @@
 
 #define ISC_LINK_TOMBSTONE(type) ((type *)-1)
 
-#define ISC_LIST_INITIALIZER                \
-	{                                   \
-		.head = NULL, .tail = NULL, \
+#define ISC_LIST_INITIALIZER  \
+	{                     \
+		.head = NULL, \
+		.tail = NULL, \
 	}
 #define ISC_LINK_INITIALIZER_TYPE(type)           \
 	{                                         \
@@ -229,3 +230,31 @@
 		INSIST(ISC_LIST_EMPTY(dest));   \
 		ISC_LIST_MOVEUNSAFE(dest, src); \
 	}
+
+/* clang-format off */
+#define ISC_LIST_FOREACH(list, elt, link)	\
+	for (elt = ISC_LIST_HEAD(list);		\
+	     elt != NULL;			\
+	     elt = ISC_LIST_NEXT(elt, link))
+/* clang-format on */
+
+/* clang-format off */
+#define ISC_LIST_FOREACH_SAFE(list, elt, link, next)						\
+	for (elt = ISC_LIST_HEAD(list), next = (elt != NULL) ? ISC_LIST_NEXT(elt, link) : NULL;	\
+	     elt != NULL;									\
+	     elt = next, next = (elt != NULL) ? ISC_LIST_NEXT(elt, link) : NULL)
+/* clang-format on */
+
+/* clang-format off */
+#define ISC_LIST_FOREACH_REV(list, elt, link)	\
+	for (elt = ISC_LIST_TAIL(list);		\
+	     elt != NULL;			\
+	     elt = ISC_LIST_PREV(elt, link))
+/* clang-format on */
+
+/* clang-format off */
+#define ISC_LIST_FOREACH_REV_SAFE(list, elt, link, prev)						\
+	for (elt = ISC_LIST_TAIL(list), prev = (elt != NULL) ? ISC_LIST_PREV(elt, link) : NULL;	\
+	     elt != NULL;									\
+	     elt = prev, prev = (elt != NULL) ? ISC_LIST_PREV(elt, link) : NULL)
+/* clang-format on */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.50 2020/01/17 19:31:31 ad Exp $ */
+/*	$NetBSD: ld_ataraid.c,v 1.50.30.1 2025/08/02 05:56:35 perseant Exp $ */
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.50 2020/01/17 19:31:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.50.30.1 2025/08/02 05:56:35 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -101,7 +101,7 @@ struct ld_ataraid_softc {
 static int	ld_ataraid_match(device_t, cfdata_t, void *);
 static void	ld_ataraid_attach(device_t, device_t, void *);
 
-static int	ld_ataraid_dump(struct ld_softc *, void *, int, int);
+static int	ld_ataraid_dump(struct ld_softc *, void *, daddr_t, int);
 static int	ld_ataraid_ioctl(struct ld_softc *, u_long, void *, int32_t,
     bool);
 
@@ -226,7 +226,11 @@ ld_ataraid_attach(device_t parent, device_t self, void *aux)
 	 */
 	for (i = 0; i < aai->aai_ndisks; i++) {
 		adi = &aai->aai_disks[i];
-		vp = ata_raid_disk_vnode_find(adi);
+		vp = NULL;
+		if (adi->adi_status &
+		    (ADI_S_ONLINE | ADI_S_ASSIGNED | ADI_S_SPARE))
+			vp = ata_raid_disk_vnode_find(adi);
+
 		if (vp == NULL) {
 			/*
 			 * XXX This is bogus.  We should just mark the
@@ -577,8 +581,7 @@ out:
 }
 
 static int
-ld_ataraid_dump(struct ld_softc *sc, void *data,
-    int blkno, int blkcnt)
+ld_ataraid_dump(struct ld_softc *sc, void *data, daddr_t blkno, int blkcnt)
 {
 
 	return (EIO);

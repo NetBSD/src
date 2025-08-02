@@ -9,6 +9,30 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "delv.out.*",
+        "dig.out.*",
+        "host.out.*",
+        "nslookup.out.*",
+        "nsupdate.out.*",
+        "yamlget.out.*",
+        "ans*/ans.run",
+        "ans*/query.log",
+        "ns*/anchor.*",
+        "ns*/dsset-*",
+        "ns*/keydata",
+        "ns*/keyid",
+        "ns*/K*.key",
+        "ns*/K*.private",
+        "ns1/root.db",
+        "ns2/example.db",
+        "ns2/example.tld.db",
+    ]
+)
+
 
 def test_digdelv(run_tests_sh):
     run_tests_sh()

@@ -16,13 +16,6 @@
 	#size-cells = <1>;
 	compatible = "canaan,kendryte-k210";
 
-	aliases {
-		serial0 = &uarths0;
-		serial1 = &uart1;
-		serial2 = &uart2;
-		serial3 = &uart3;
-	};
-
 	/*
 	 * The K210 has an sv39 MMU following the privileged specification v1.9.
 	 * Since this is a non-ratified draft specification, the kernel does not
@@ -65,15 +58,29 @@
 				compatible = "riscv,cpu-intc";
 			};
 		};
+
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cpu0>;
+				};
+
+				core1 {
+					cpu = <&cpu1>;
+				};
+			};
+		};
 	};
 
 	sram: memory@80000000 {
 		device_type = "memory";
+		reg = <0x80000000 0x400000>, /* sram0 4 MiB */
+		      <0x80400000 0x200000>, /* sram1 2 MiB */
+		      <0x80600000 0x200000>; /* aisram 2 MiB */
+	};
+
+	sram_controller: memory-controller {
 		compatible = "canaan,k210-sram";
-		reg = <0x80000000 0x400000>,
-		      <0x80400000 0x200000>,
-		      <0x80600000 0x200000>;
-		reg-names = "sram0", "sram1", "aisram";
 		clocks = <&sysclk K210_CLK_SRAM0>,
 			 <&sysclk K210_CLK_SRAM1>,
 			 <&sysclk K210_CLK_AI>;
@@ -103,8 +110,8 @@
 		clint0: timer@2000000 {
 			compatible = "canaan,k210-clint", "sifive,clint0";
 			reg = <0x2000000 0xC000>;
-			interrupts-extended = <&cpu0_intc 3 &cpu0_intc 7
-					      &cpu1_intc 3 &cpu1_intc 7>;
+			interrupts-extended = <&cpu0_intc 3>, <&cpu0_intc 7>,
+					      <&cpu1_intc 3>, <&cpu1_intc 7>;
 		};
 
 		plic0: interrupt-controller@c000000 {
@@ -113,7 +120,8 @@
 			compatible = "canaan,k210-plic", "sifive,plic-1.0.0";
 			reg = <0xC000000 0x4000000>;
 			interrupt-controller;
-			interrupts-extended = <&cpu0_intc 11 &cpu1_intc 11>;
+			interrupts-extended = <&cpu0_intc 11>, <&cpu0_intc 9>,
+					      <&cpu1_intc 11>, <&cpu1_intc 9>;
 			riscv,ndev = <65>;
 		};
 
@@ -122,6 +130,7 @@
 			reg = <0x38000000 0x1000>;
 			interrupts = <33>;
 			clocks = <&sysclk K210_CLK_CPU>;
+			status = "disabled";
 		};
 
 		gpio0: gpio-controller@38001000 {
@@ -130,18 +139,20 @@
 			compatible = "canaan,k210-gpiohs", "sifive,gpio0";
 			reg = <0x38001000 0x1000>;
 			interrupt-controller;
-			interrupts = <34 35 36 37 38 39 40 41
-				      42 43 44 45 46 47 48 49
-				      50 51 52 53 54 55 56 57
-				      58 59 60 61 62 63 64 65>;
+			interrupts = <34>, <35>, <36>, <37>, <38>, <39>, <40>,
+				     <41>, <42>, <43>, <44>, <45>, <46>, <47>,
+				     <48>, <49>, <50>, <51>, <52>, <53>, <54>,
+				     <55>, <56>, <57>, <58>, <59>, <60>, <61>,
+				     <62>, <63>, <64>, <65>;
 			gpio-controller;
 			ngpios = <32>;
+			status = "disabled";
 		};
 
 		dmac0: dma-controller@50000000 {
 			compatible = "snps,axi-dma-1.01a";
 			reg = <0x50000000 0x1000>;
-			interrupts = <27 28 29 30 31 32>;
+			interrupts = <27>, <28>, <29>, <30>, <31>, <32>;
 			#dma-cells = <1>;
 			clocks = <&sysclk K210_CLK_DMA>, <&sysclk K210_CLK_DMA>;
 			clock-names = "core-clk", "cfgr-clk";
@@ -159,7 +170,7 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 			compatible = "simple-pm-bus";
-			ranges;
+			ranges = <0x50200000 0x50200000 0x200000>;
 			clocks = <&sysclk K210_CLK_APB0>;
 
 			gpio1: gpio@50200000 {
@@ -171,6 +182,7 @@
 					 <&sysclk K210_CLK_GPIO>;
 				clock-names = "bus", "db";
 				resets = <&sysrst K210_RST_GPIO>;
+				status = "disabled";
 
 				gpio1_0: gpio-port@0 {
 					#gpio-cells = <2>;
@@ -198,6 +210,7 @@
 				dsr-override;
 				cts-override;
 				ri-override;
+				status = "disabled";
 			};
 
 			uart2: serial@50220000 {
@@ -214,6 +227,7 @@
 				dsr-override;
 				cts-override;
 				ri-override;
+				status = "disabled";
 			};
 
 			uart3: serial@50230000 {
@@ -230,6 +244,7 @@
 				dsr-override;
 				cts-override;
 				ri-override;
+				status = "disabled";
 			};
 
 			spi2: spi@50240000 {
@@ -243,34 +258,37 @@
 					 <&sysclk K210_CLK_APB0>;
 				clock-names = "ssi_clk", "pclk";
 				resets = <&sysrst K210_RST_SPI2>;
-				spi-max-frequency = <25000000>;
+				status = "disabled";
 			};
 
 			i2s0: i2s@50250000 {
-				compatible = "snps,designware-i2s";
+				compatible = "canaan,k210-i2s", "snps,designware-i2s";
 				reg = <0x50250000 0x200>;
 				interrupts = <5>;
 				clocks = <&sysclk K210_CLK_I2S0>;
 				clock-names = "i2sclk";
 				resets = <&sysrst K210_RST_I2S0>;
+				status = "disabled";
 			};
 
 			i2s1: i2s@50260000 {
-				compatible = "snps,designware-i2s";
+				compatible = "canaan,k210-i2s", "snps,designware-i2s";
 				reg = <0x50260000 0x200>;
 				interrupts = <6>;
 				clocks = <&sysclk K210_CLK_I2S1>;
 				clock-names = "i2sclk";
 				resets = <&sysrst K210_RST_I2S1>;
+				status = "disabled";
 			};
 
 			i2s2: i2s@50270000 {
-				compatible = "snps,designware-i2s";
+				compatible = "canaan,k210-i2s", "snps,designware-i2s";
 				reg = <0x50270000 0x200>;
 				interrupts = <7>;
 				clocks = <&sysclk K210_CLK_I2S2>;
 				clock-names = "i2sclk";
 				resets = <&sysrst K210_RST_I2S2>;
+				status = "disabled";
 			};
 
 			i2c0: i2c@50280000 {
@@ -281,6 +299,7 @@
 					 <&sysclk K210_CLK_APB0>;
 				clock-names = "ref", "pclk";
 				resets = <&sysrst K210_RST_I2C0>;
+				status = "disabled";
 			};
 
 			i2c1: i2c@50290000 {
@@ -291,6 +310,7 @@
 					 <&sysclk K210_CLK_APB0>;
 				clock-names = "ref", "pclk";
 				resets = <&sysrst K210_RST_I2C1>;
+				status = "disabled";
 			};
 
 			i2c2: i2c@502a0000 {
@@ -301,6 +321,7 @@
 					 <&sysclk K210_CLK_APB0>;
 				clock-names = "ref", "pclk";
 				resets = <&sysrst K210_RST_I2C2>;
+				status = "disabled";
 			};
 
 			fpioa: pinmux@502b0000 {
@@ -315,28 +336,58 @@
 
 			timer0: timer@502d0000 {
 				compatible = "snps,dw-apb-timer";
-				reg = <0x502D0000 0x100>;
-				interrupts = <14 15>;
+				reg = <0x502D0000 0x14>;
+				interrupts = <14>;
 				clocks = <&sysclk K210_CLK_TIMER0>,
 					 <&sysclk K210_CLK_APB0>;
 				clock-names = "timer", "pclk";
 				resets = <&sysrst K210_RST_TIMER0>;
 			};
 
-			timer1: timer@502e0000 {
+			timer1: timer@502d0014 {
 				compatible = "snps,dw-apb-timer";
-				reg = <0x502E0000 0x100>;
-				interrupts = <16 17>;
+				reg = <0x502D0014 0x14>;
+				interrupts = <15>;
+				clocks = <&sysclk K210_CLK_TIMER0>,
+					 <&sysclk K210_CLK_APB0>;
+				clock-names = "timer", "pclk";
+				resets = <&sysrst K210_RST_TIMER0>;
+			};
+
+			timer2: timer@502e0000 {
+				compatible = "snps,dw-apb-timer";
+				reg = <0x502E0000 0x14>;
+				interrupts = <16>;
 				clocks = <&sysclk K210_CLK_TIMER1>,
 					 <&sysclk K210_CLK_APB0>;
 				clock-names = "timer", "pclk";
 				resets = <&sysrst K210_RST_TIMER1>;
 			};
 
-			timer2: timer@502f0000 {
+			timer3: timer@502e0014 {
 				compatible = "snps,dw-apb-timer";
-				reg = <0x502F0000 0x100>;
-				interrupts = <18 19>;
+				reg = <0x502E0014 0x114>;
+				interrupts = <17>;
+				clocks = <&sysclk K210_CLK_TIMER1>,
+					 <&sysclk K210_CLK_APB0>;
+				clock-names = "timer", "pclk";
+				resets = <&sysrst K210_RST_TIMER1>;
+			};
+
+			timer4: timer@502f0000 {
+				compatible = "snps,dw-apb-timer";
+				reg = <0x502F0000 0x14>;
+				interrupts = <18>;
+				clocks = <&sysclk K210_CLK_TIMER2>,
+					 <&sysclk K210_CLK_APB0>;
+				clock-names = "timer", "pclk";
+				resets = <&sysrst K210_RST_TIMER2>;
+			};
+
+			timer5: timer@502f0014 {
+				compatible = "snps,dw-apb-timer";
+				reg = <0x502F0014 0x14>;
+				interrupts = <19>;
 				clocks = <&sysclk K210_CLK_TIMER2>,
 					 <&sysclk K210_CLK_APB0>;
 				clock-names = "timer", "pclk";
@@ -348,7 +399,7 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 			compatible = "simple-pm-bus";
-			ranges;
+			ranges = <0x50400000 0x50400000 0x40100>;
 			clocks = <&sysclk K210_CLK_APB1>;
 
 			wdt0: watchdog@50400000 {
@@ -403,7 +454,7 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 			compatible = "simple-pm-bus";
-			ranges;
+			ranges = <0x52000000 0x52000000 0x2000200>;
 			clocks = <&sysclk K210_CLK_APB2>;
 
 			spi0: spi@52000000 {
@@ -417,9 +468,9 @@
 				clock-names = "ssi_clk", "pclk";
 				resets = <&sysrst K210_RST_SPI0>;
 				reset-names = "spi";
-				spi-max-frequency = <25000000>;
 				num-cs = <4>;
 				reg-io-width = <4>;
+				status = "disabled";
 			};
 
 			spi1: spi@53000000 {
@@ -433,9 +484,9 @@
 				clock-names = "ssi_clk", "pclk";
 				resets = <&sysrst K210_RST_SPI1>;
 				reset-names = "spi";
-				spi-max-frequency = <25000000>;
 				num-cs = <4>;
 				reg-io-width = <4>;
+				status = "disabled";
 			};
 
 			spi3: spi@54000000 {
@@ -449,10 +500,10 @@
 				clock-names = "ssi_clk", "pclk";
 				resets = <&sysrst K210_RST_SPI3>;
 				reset-names = "spi";
-				/* Could possibly go up to 200 MHz */
-				spi-max-frequency = <100000000>;
+
 				num-cs = <4>;
 				reg-io-width = <4>;
+				status = "disabled";
 			};
 		};
 	};

@@ -26,6 +26,8 @@ options {
 	dnssec-validation yes;
 };
 
+trust-anchors { };
+
 key rndc_key {
 	secret "1234abcd8765";
 	algorithm @DEFAULT_HMAC@;
@@ -33,6 +35,14 @@ key rndc_key {
 
 controls {
 	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+dnssec-policy "zonechecks" {
+	inline-signing no;
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
 };
 
 view unused {
@@ -52,7 +62,7 @@ view primary {
 		file "primary.db";
 		allow-update { any; };
 		allow-transfer { any; };
-		auto-dnssec maintain;
+		dnssec-policy zonechecks;
 	};
 
 	zone "bigserial.example" {

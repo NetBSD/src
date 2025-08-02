@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrierattr.3,v 1.13 2017/10/22 18:37:01 abhinav Exp $
+.\" $NetBSD: pthread_barrierattr.3,v 1.13.16.1 2025/08/02 05:54:55 perseant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Ft int
 .Fn pthread_barrierattr_destroy "pthread_barrierattr_t *attr"
 .Ft int
-.Fn pthread_barrierattr_getpshared "const pthread_barrierattr_t * __restrict attr" "int * __restrict pshared"
+.Fn pthread_barrierattr_getpshared "const pthread_barrierattr_t * restrict attr" "int * restrict pshared"
 .Ft int
 .Fn pthread_barrierattr_setpshared "pthread_barrierattr_t * attr" "int pshared"
 .Sh DESCRIPTION

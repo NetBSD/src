@@ -1,4 +1,4 @@
-# $NetBSD: t_cut.sh,v 1.1 2012/03/17 16:33:13 jruoho Exp $
+# $NetBSD: t_cut.sh,v 1.1.46.1 2025/08/02 05:58:12 perseant Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -90,7 +90,7 @@ dsflag_body()
 atf_test_case latin1
 latin1_head()
 {
-	atf_set "descr" "Checks support for non-ascii characters"
+	atf_set "descr" "Checks support for non-ASCII characters"
 }
 latin1_body()
 {
@@ -119,6 +119,20 @@ utf8_body()
 		cut -c 6,7,8 "$(atf_get_srcdir)/d_utf8.in"
 }
 
+atf_test_case nflag
+nflag_head()
+{
+	atf_set "descr" "Checks -n flag (PR bin/59029)"
+}
+
+nflag_body()
+{
+	export LC_ALL=en_US.UTF-8
+
+	atf_check -o inline:$'\xC3\x84:b\n\xC3\x84:B\n\xC3\x84:B\n\xC3\x84:B\n' \
+		cut -b 5,6,7 -n "$(atf_get_srcdir)/d_utf8.in"
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case basic
@@ -127,4 +141,5 @@ atf_init_test_cases()
 	atf_add_test_case dsflag
 	atf_add_test_case latin1
 	atf_add_test_case utf8
+	atf_add_test_case nflag
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.c,v 1.2 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.2.6.1 2025/08/02 05:53:53 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,7 +34,6 @@
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/net.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/strerr.h>
 #include <isc/string.h>
@@ -135,26 +134,10 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
  * Include system-dependent code.
  */
 
-#ifdef __linux
-#define ISC_IF_INET6_SZ                                        \
-	sizeof("00000000000000000000000000000001 01 80 10 80 " \
-	       "XXXXXXloXXXXXXXX\n")
-static isc_result_t
-linux_if_inet6_next(isc_interfaceiter_t *);
-static isc_result_t
-linux_if_inet6_current(isc_interfaceiter_t *);
-static void
-linux_if_inet6_first(isc_interfaceiter_t *iter);
-#endif /* ifdef __linux */
-
 /*% Iterator Magic */
 #define IFITER_MAGIC ISC_MAGIC('I', 'F', 'I', 'G')
 /*% Valid Iterator */
 #define VALID_IFITER(t) ISC_MAGIC_VALID(t, IFITER_MAGIC)
-
-#ifdef __linux
-static bool seenv6 = false;
-#endif /* ifdef __linux */
 
 /*% Iterator structure */
 struct isc_interfaceiter {
@@ -166,11 +149,6 @@ struct isc_interfaceiter {
 	struct ifaddrs *pos;	 /*%< Ptr to current ifaddr */
 	isc_interface_t current; /*%< Current interface data. */
 	isc_result_t result;	 /*%< Last result code. */
-#ifdef __linux
-	FILE *proc;
-	char entry[ISC_IF_INET6_SZ];
-	isc_result_t valid;
-#endif /* ifdef __linux */
 };
 
 isc_result_t
@@ -189,18 +167,6 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 	iter->buf = NULL;
 	iter->bufsize = 0;
 	iter->ifaddrs = NULL;
-#ifdef __linux
-	/*
-	 * Only open "/proc/net/if_inet6" if we have never seen a IPv6
-	 * address returned by getifaddrs().
-	 */
-	if (!seenv6) {
-		iter->proc = fopen("/proc/net/if_inet6", "r");
-	} else {
-		iter->proc = NULL;
-	}
-	iter->valid = ISC_R_FAILURE;
-#endif /* ifdef __linux */
 
 	if (getifaddrs(&iter->ifaddrs) < 0) {
 		strerror_r(errno, strbuf, sizeof(strbuf));
@@ -219,19 +185,14 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 
 	iter->magic = IFITER_MAGIC;
 	*iterp = iter;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 
 failure:
-#ifdef __linux
-	if (iter->proc != NULL) {
-		fclose(iter->proc);
-	}
-#endif				     /* ifdef __linux */
 	if (iter->ifaddrs != NULL) { /* just in case */
 		freeifaddrs(iter->ifaddrs);
 	}
 	isc_mem_put(mctx, iter, sizeof(*iter));
-	return (result);
+	return result;
 }
 
 /*
@@ -251,29 +212,17 @@ internal_current(isc_interfaceiter_t *iter) {
 
 	ifa = iter->pos;
 
-#ifdef __linux
-	if (iter->pos == NULL) {
-		return (linux_if_inet6_current(iter));
-	}
-#endif /* ifdef __linux */
-
 	INSIST(ifa != NULL);
 	INSIST(ifa->ifa_name != NULL);
 
 	if (ifa->ifa_addr == NULL) {
-		return (ISC_R_IGNORE);
+		return ISC_R_IGNORE;
 	}
 
 	family = ifa->ifa_addr->sa_family;
 	if (family != AF_INET && family != AF_INET6) {
-		return (ISC_R_IGNORE);
+		return ISC_R_IGNORE;
 	}
-
-#ifdef __linux
-	if (family == AF_INET6) {
-		seenv6 = true;
-	}
-#endif /* ifdef __linux */
 
 	memset(&iter->current, 0, sizeof(iter->current));
 
@@ -315,7 +264,7 @@ internal_current(isc_interfaceiter_t *iter) {
 			 ifa->ifa_name);
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 /*
@@ -331,25 +280,14 @@ internal_next(isc_interfaceiter_t *iter) {
 		iter->pos = iter->pos->ifa_next;
 	}
 	if (iter->pos == NULL) {
-#ifdef __linux
-		if (!seenv6) {
-			return (linux_if_inet6_next(iter));
-		}
-#endif /* ifdef __linux */
-		return (ISC_R_NOMORE);
+		return ISC_R_NOMORE;
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static void
 internal_destroy(isc_interfaceiter_t *iter) {
-#ifdef __linux
-	if (iter->proc != NULL) {
-		fclose(iter->proc);
-	}
-	iter->proc = NULL;
-#endif /* ifdef __linux */
 	if (iter->ifaddrs) {
 		freeifaddrs(iter->ifaddrs);
 	}
@@ -358,96 +296,8 @@ internal_destroy(isc_interfaceiter_t *iter) {
 
 static void
 internal_first(isc_interfaceiter_t *iter) {
-#ifdef __linux
-	linux_if_inet6_first(iter);
-#endif /* ifdef __linux */
 	iter->pos = iter->ifaddrs;
 }
-
-#ifdef __linux
-static void
-linux_if_inet6_first(isc_interfaceiter_t *iter) {
-	if (iter->proc != NULL) {
-		rewind(iter->proc);
-		(void)linux_if_inet6_next(iter);
-	} else {
-		iter->valid = ISC_R_NOMORE;
-	}
-}
-
-static isc_result_t
-linux_if_inet6_next(isc_interfaceiter_t *iter) {
-	if (iter->proc != NULL &&
-	    fgets(iter->entry, sizeof(iter->entry), iter->proc) != NULL)
-	{
-		iter->valid = ISC_R_SUCCESS;
-	} else {
-		iter->valid = ISC_R_NOMORE;
-	}
-	return (iter->valid);
-}
-
-static isc_result_t
-linux_if_inet6_current(isc_interfaceiter_t *iter) {
-	char address[33];
-	char name[IF_NAMESIZE + 1];
-	struct in6_addr addr6;
-	unsigned int ifindex, prefix, flag3, flag4;
-	int res;
-	unsigned int i;
-
-	if (iter->valid != ISC_R_SUCCESS) {
-		return (iter->valid);
-	}
-	if (iter->proc == NULL) {
-		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
-			      ISC_LOGMODULE_INTERFACE, ISC_LOG_ERROR,
-			      "/proc/net/if_inet6:iter->proc == NULL");
-		return (ISC_R_FAILURE);
-	}
-
-	res = sscanf(iter->entry, "%32[a-f0-9] %x %x %x %x %16s\n", address,
-		     &ifindex, &prefix, &flag3, &flag4, name);
-	if (res != 6) {
-		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
-			      ISC_LOGMODULE_INTERFACE, ISC_LOG_ERROR,
-			      "/proc/net/if_inet6:sscanf() -> %d (expected 6)",
-			      res);
-		return (ISC_R_FAILURE);
-	}
-	if (strlen(address) != 32) {
-		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
-			      ISC_LOGMODULE_INTERFACE, ISC_LOG_ERROR,
-			      "/proc/net/if_inet6:strlen(%s) != 32", address);
-		return (ISC_R_FAILURE);
-	}
-	for (i = 0; i < 16; i++) {
-		unsigned char byte;
-		static const char hex[] = "0123456789abcdef";
-		byte = ((strchr(hex, address[i * 2]) - hex) << 4) |
-		       (strchr(hex, address[i * 2 + 1]) - hex);
-		addr6.s6_addr[i] = byte;
-	}
-	iter->current.af = AF_INET6;
-	iter->current.flags = INTERFACE_F_UP;
-	isc_netaddr_fromin6(&iter->current.address, &addr6);
-	if (isc_netaddr_islinklocal(&iter->current.address)) {
-		isc_netaddr_setzone(&iter->current.address, (uint32_t)ifindex);
-	}
-	for (i = 0; i < 16; i++) {
-		if (prefix > 8) {
-			addr6.s6_addr[i] = 0xff;
-			prefix -= 8;
-		} else {
-			addr6.s6_addr[i] = (0xff << (8 - prefix)) & 0xff;
-			prefix = 0;
-		}
-	}
-	isc_netaddr_fromin6(&iter->current.netmask, &addr6);
-	strlcpy(iter->current.name, name, sizeof(iter->current.name));
-	return (ISC_R_SUCCESS);
-}
-#endif /* ifdef __linux */
 
 /*
  * The remaining code is common to the sysctl and ioctl case.
@@ -457,7 +307,7 @@ isc_result_t
 isc_interfaceiter_current(isc_interfaceiter_t *iter, isc_interface_t *ifdata) {
 	REQUIRE(iter->result == ISC_R_SUCCESS);
 	memmove(ifdata, &iter->current, sizeof(*ifdata));
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -478,7 +328,7 @@ isc_interfaceiter_first(isc_interfaceiter_t *iter) {
 		}
 	}
 	iter->result = result;
-	return (result);
+	return result;
 }
 
 isc_result_t
@@ -499,7 +349,7 @@ isc_interfaceiter_next(isc_interfaceiter_t *iter) {
 		}
 	}
 	iter->result = result;
-	return (result);
+	return result;
 }
 
 void

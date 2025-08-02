@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.18 2016/11/14 19:24:23 maya Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.18.52.1 2025/08/02 05:55:55 perseant Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #define	__INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.18 2016/11/14 19:24:23 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.18.52.1 2025/08/02 05:55:55 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,30 @@ void pizazz_intr_establish (int, int (*)(void *), void *);
 
 #define INT_MASK_FPU MIPS_INT_MASK_3
 
+/*
+ * nesting interrupt masks.
+ */
+#define MIPS_INT_MASK_SPL_SOFT0	MIPS_SOFT_INT_MASK_0
+#define MIPS_INT_MASK_SPL_SOFT1	(MIPS_SOFT_INT_MASK_1|MIPS_INT_MASK_SPL_SOFT0)
+#define MIPS_INT_MASK_SPL0	(MIPS_INT_MASK_0|MIPS_INT_MASK_SPL_SOFT1)
+#define MIPS_INT_MASK_SPL1	(MIPS_INT_MASK_1|MIPS_INT_MASK_SPL0)
+#define MIPS_INT_MASK_SPL2	(MIPS_INT_MASK_2|MIPS_INT_MASK_SPL1)
+#define MIPS_INT_MASK_SPL3	(MIPS_INT_MASK_3|MIPS_INT_MASK_SPL2)
+#define MIPS_INT_MASK_SPL4	(MIPS_INT_MASK_4|MIPS_INT_MASK_SPL3)
+#define MIPS_INT_MASK_SPL5	(MIPS_INT_MASK_5|MIPS_INT_MASK_SPL4)
+
+const struct ipl_sr_map pizazz_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] = 0,
+	[IPL_SOFTCLOCK] = MIPS_INT_MASK_SPL_SOFT0,
+	[IPL_SOFTNET] = MIPS_INT_MASK_SPL_SOFT1,
+	[IPL_VM] = MIPS_INT_MASK_SPL2,
+	[IPL_SCHED] = MIPS_INT_MASK_SPL2,
+	[IPL_DDB] = MIPS_INT_MASK,
+	[IPL_HIGH] = MIPS_INT_MASK,
+    },
+};
+
 void
 pizazz_init(void)
 {
@@ -64,7 +88,7 @@ pizazz_init(void)
 	platform.iointr = pizazz_intr;
 	platform.intr_establish = pizazz_intr_establish;
 
-	ipl_sr_map = mipsco_ipl_sr_map;
+	ipl_sr_map = pizazz_ipl_sr_map;
 
 	pizazz_intr_establish(SYS_INTR_LEVEL0, pizazz_level0_intr, NULL);
 
@@ -144,9 +168,9 @@ pizazz_level0_intr(void *arg)
 void
 pizazz_level5_intr(uint32_t status, vaddr_t pc)
 {
-	u_int32_t ereg;
+	uint32_t ereg;
 
-	ereg = *(u_int32_t *)RAMBO_ERREG;
+	ereg = *(uint32_t *)RAMBO_ERREG;
 
 	printf("interrupt: pc=%p sr=%x\n", (void *)pc, status);
 	printf("parity error: %p mask: 0x%x\n", (void *)ereg, ereg & 0xf);

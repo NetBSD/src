@@ -57,7 +57,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "Unknown EDNS version ($n)"
 ret=0 reason=
-$DIG $DIGOPTS @10.53.0.1 +edns=100 +noednsnegotiation soa $zone >dig.out$n || ret=1
+$DIG $DIGOPTS @10.53.0.1 +edns=100 +nsid +noednsnegotiation soa $zone >dig.out$n || ret=1
 grep "status: BADVERS," dig.out$n >/dev/null || {
   ret=1
   reason="status"
@@ -65,6 +65,14 @@ grep "status: BADVERS," dig.out$n >/dev/null || {
 grep "EDNS: version: 0," dig.out$n >/dev/null || {
   ret=1
   reason="version"
+}
+grep "; COOKIE: .* (good)" dig.out$n >/dev/null || {
+  ret=1
+  reason="cookie missing"
+}
+grep '; NSID: 6e 73 31 ("ns1")' dig.out$n >/dev/null || {
+  ret=1
+  reason="nsid missing"
 }
 grep "IN.SOA." dig.out$n >/dev/null && {
   ret=1

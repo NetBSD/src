@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.112 2021/05/30 11:24:02 riastradh Exp $	*/
+/*	$NetBSD: ld.c,v 1.112.18.1 2025/08/02 05:56:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.112 2021/05/30 11:24:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.112.18.1 2025/08/02 05:56:30 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -582,6 +582,13 @@ ld_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	if (sc->sc_dump == NULL)
 		return (ENODEV);
 
+	/*
+	 * Minimum consistency check; sc_dump() should check
+	 * device-dependent constraints if necessary.
+	 */
+	if (blkno < 0)
+		return (EIO);
+
 	return (*sc->sc_dump)(sc, va, blkno, nblk);
 }
 
@@ -644,9 +651,17 @@ ld_set_geometry(struct ld_softc *sc)
 	format_bytes(tbuf, sizeof(tbuf), sc->sc_secperunit *
 	    sc->sc_secsize);
 	aprint_normal_dev(dksc->sc_dev, "%s, %d cyl, %d head, %d sec, "
-	    "%d bytes/sect x %"PRIu64" sectors\n",
+	    "%d bytes/sect x %"PRIu64" sectors",
 	    tbuf, sc->sc_ncylinders, sc->sc_nheads,
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
+	if (sc->sc_physsecsize != sc->sc_secsize) {
+		aprint_normal(" (%d bytes/physsect", sc->sc_physsecsize);
+		if (sc->sc_alignedsec != 0)
+			aprint_normal("; first aligned sector %u",
+			    sc->sc_alignedsec);
+		aprint_normal(")");
+	}
+	aprint_normal("\n");
 
 	memset(dg, 0, sizeof(*dg));
 	dg->dg_secperunit = sc->sc_secperunit;
@@ -654,6 +669,8 @@ ld_set_geometry(struct ld_softc *sc)
 	dg->dg_nsectors = sc->sc_nsectors;
 	dg->dg_ntracks = sc->sc_nheads;
 	dg->dg_ncylinders = sc->sc_ncylinders;
+	dg->dg_physsecsize = sc->sc_physsecsize;
+	dg->dg_alignedsec = sc->sc_alignedsec;
 
 	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, sc->sc_typename);
 }

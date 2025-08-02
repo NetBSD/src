@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.174 2023/05/29 18:25:52 lukem Exp $
+#	$NetBSD: Makefile,v 1.174.2.1 2025/08/02 05:54:31 perseant Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -156,6 +156,10 @@ FILESDIR=	/var/db
 # multibyte for libc.so.  the quirk should be removed when we support
 # dlopen() from within statically linked binaries.
 CSHLIBFLAGS+=	-D_I18N_DYNAMIC
+
+# Tell ctype(3) that this is a dynamic libc, so if appropriate it
+# should allocate a guard page.
+CSHLIBFLAGS+=	-D_CTYPE_DYNAMIC
 
 .include <bsd.lib.mk>
 

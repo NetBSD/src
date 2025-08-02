@@ -1,4 +1,4 @@
-/*	$NetBSD: argv_split.c,v 1.1.1.2 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: argv_split.c,v 1.1.1.2.36.1 2025/08/02 05:50:17 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -30,7 +30,7 @@
 /*	input after at most \fIcount\fR -1 times and leaves the
 /*	remainder, if any, in the last array element. It is an error
 /*	to specify a count < 1.
-/* 
+/*
 /*	argv_split_append() performs the same operation as argv_split(),
 /*	but appends the result to an existing string array.
 /* SEE ALSO

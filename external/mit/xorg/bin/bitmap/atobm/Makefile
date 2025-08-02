@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.76.1 2025/08/02 05:50:37 perseant Exp $
 
 NOMAN=	1
 
@@ -6,9 +6,7 @@ NOMAN=	1
 
 PROG=	atobm
 
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lm
-DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBM}
+.include "../Makefile.common"
 
 .PATH:	${X11SRCDIR.bitmap}
 

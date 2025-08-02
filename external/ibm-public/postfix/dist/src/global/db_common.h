@@ -1,4 +1,4 @@
-/*	$NetBSD: db_common.h,v 1.1.1.2 2013/01/02 18:58:56 tron Exp $	*/
+/*	$NetBSD: db_common.h,v 1.1.1.2.42.1 2025/08/02 05:50:06 perseant Exp $	*/
 
 #ifndef _DB_COMMON_H_INCLUDED_
 #define _DB_COMMON_H_INCLUDED_
@@ -13,21 +13,21 @@
 /* DESCRIPTION
 /* .nf
  */
-  
+
  /*
   * External interface.
   */
 #include "dict.h"
 #include "string_list.h"
 
-typedef void (*db_quote_callback_t)(DICT *, const char *, VSTRING *);
+typedef void (*db_quote_callback_t) (DICT *, const char *, VSTRING *);
 
 extern int db_common_parse(DICT *, void **, const char *, int);
 extern void *db_common_alloc(DICT *);
 extern void db_common_parse_domain(CFG_PARSER *, void *);
 extern int db_common_dict_partial(void *);
 extern int db_common_expand(void *, const char *, const char *,
-			    const char *, VSTRING *, db_quote_callback_t);
+		              const char *, VSTRING *, db_quote_callback_t);
 extern int db_common_check_domain(void *, const char *);
 extern void db_common_free_ctx(void *);
 extern void db_common_sql_build_query(VSTRING *query, CFG_PARSER *parser);
@@ -57,4 +57,3 @@ extern void db_common_sql_build_query(VSTRING *query, CFG_PARSER *parser);
 /*--*/
 
 #endif
-

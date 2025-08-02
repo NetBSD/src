@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.282 2024/04/11 07:34:37 knakahara Exp $	*/
+/*	$NetBSD: nd6.c,v 1.282.2.1 2025/08/02 05:57:51 perseant Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.282 2024/04/11 07:34:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.282.2.1 2025/08/02 05:57:51 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1163,15 +1163,9 @@ nd6_setifflags(struct ifnet *ifp, uint32_t flags)
 			bool haslinklocal = 0;
 
 			s = pserialize_read_enter();
-			IFADDR_READER_FOREACH(ifa, ifp) {
-				if (ifa->ifa_addr->sa_family !=AF_INET6)
-					continue;
-				ia = (struct in6_ifaddr *)ifa;
-				if (IN6_IS_ADDR_LINKLOCAL(IA6_IN6(ia))){
-					haslinklocal = true;
-					break;
-				}
-			}
+			ifa = in6ifa_first_lladdr(ifp);
+			if (ifa != NULL)
+				haslinklocal = true;
 			pserialize_read_exit(s);
 			if (!haslinklocal)
 				in6_ifattach(ifp, NULL);
@@ -1596,7 +1590,10 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 	ln = nd6_lookup(&dst->sin6_addr, ifp, false);
 
 	if (ln != NULL && (ln->la_flags & LLE_VALID) != 0 &&
-	    ln->ln_state == ND_LLINFO_REACHABLE) {
+	    /* Only STALE needs to go the slow path to change its state. */
+	    (ln->ln_state == ND_LLINFO_REACHABLE ||
+	     ln->ln_state == ND_LLINFO_DELAY ||
+	     ln->ln_state == ND_LLINFO_PROBE)) {
 		/* Fast path */
 		memcpy(lldst, &ln->ll_addr, MIN(dstsize, ifp->if_addrlen));
 		LLE_RUNLOCK(ln);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.217 2024/01/19 19:21:34 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.217.2.1 2025/08/02 05:55:01 perseant Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.217 2024/01/19 19:21:34 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.217.2.1 2025/08/02 05:55:01 perseant Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -467,7 +467,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	bool            bind_now = 0;
 	const char     *ld_bind_now, *ld_preload, *ld_library_path;
 	const char    **argv;
-	const char     *execname;
+	const char     *execname, *objmain_name;
 	long		argc;
 	const char **real___progname;
 	const Obj_Entry **real___mainprog_obj;
@@ -633,6 +633,14 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	}
 	*oenvp++ = NULL;
 
+	/*
+	 * Set the main name. Prefer the name passed by the kernel first,
+	 * then the argument vector, and fall back to "main program"
+	 * This way the name will be an absolute path if available.
+	 */
+	objmain_name = execname ? execname :
+	    (argv[0] ? argv[0] : "main program");
+
 	if (ld_bind_now != NULL && *ld_bind_now != '\0')
 		bind_now = true;
 	if (_rtld_trust) {
@@ -645,6 +653,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 #endif
 		_rtld_add_paths(execname, &_rtld_paths, ld_library_path);
 	} else {
+		// Prevent $ORIGIN expansion
 		execname = NULL;
 	}
 	_rtld_process_hints(execname, &_rtld_paths, &_rtld_xforms,
@@ -658,9 +667,8 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
          */
 	if (pAUX_execfd != NULL) {	/* Load the main program. */
 		int             fd = pAUX_execfd->a_v;
-		const char *obj_name = argv[0] ? argv[0] : "main program";
 		dbg(("loading main program"));
-		_rtld_objmain = _rtld_map_object(obj_name, fd, NULL);
+		_rtld_objmain = _rtld_map_object(objmain_name, fd, NULL);
 		close(fd);
 		if (_rtld_objmain == NULL)
 			_rtld_die();
@@ -679,8 +687,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 		assert(pAUX_entry != NULL);
 		entry = (caddr_t) pAUX_entry->a_v;
 		_rtld_objmain = _rtld_digest_phdr(phdr, phnum, entry);
-		_rtld_objmain->path = xstrdup(argv[0] ? argv[0] :
-		    "main program");
+		_rtld_objmain->path = xstrdup(objmain_name);
 		_rtld_objmain->pathlen = strlen(_rtld_objmain->path);
 	}
 
@@ -798,6 +805,27 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	     _rtld_objmain->entry, _rtld_objmain, _rtld_exit));
 
 	_rtld_exclusive_exit(&mask);
+
+#ifdef GNU_RELRO
+	/*
+	 * If the main program is lazily bound (default -- whether or
+	 * not LD_BINDNOW is set in the calling environment), its RELRO
+	 * region has already been mapped read-only in
+	 * _rtld_do_copy_relocations.  The ifunc resolutions lie
+	 * outside this region, so future lazy ifunc resolution is
+	 * unaffected by the RELRO region's being read-only.
+	 *
+	 * If the main program is eagerly bound (i.e., the object has
+	 * DF_1_NOW set in DT_FLAGS_1, whether or not LD_BIND_NOW is
+	 * set in the calling environment), we deferred that from
+	 * _rtld_do_copy_relocations so that the ifunc resolution, we
+	 * have now resolved all ifuncs in it, so we can commit the
+	 * RELRO region to be read-only -- and that means ifunc
+	 * resolutions are read-only too.
+	 */
+	if (_rtld_objmain->z_now && _rtld_relro(_rtld_objmain, true) == -1)
+		_rtld_die();
+#endif
 
 	/*
 	 * Return with the entry point and the exit procedure in at the top
@@ -1113,6 +1141,8 @@ dlopen(const char *name, int mode)
 /*
  * Find a symbol in the main program.
  */
+_Pragma("GCC diagnostic push")	/* _rtld_donelist_init: -Wno-stack-protector */
+_Pragma("GCC diagnostic ignored \"-Wstack-protector\"")
 void *
 _rtld_objmain_sym(const char *name)
 {
@@ -1133,6 +1163,7 @@ _rtld_objmain_sym(const char *name)
 		return obj->relocbase + def->st_value;
 	return NULL;
 }
+_Pragma("GCC diagnostic pop")
 
 #if defined(__powerpc__) && !defined(__clang__)
 static __noinline void *
@@ -1157,6 +1188,8 @@ hackish_return_address(void)
 #define	lookup_mutex_exit()	_rtld_shared_exit()
 #endif
 
+_Pragma("GCC diagnostic push")	/* _rtld_donelist_init: -Wno-stack-protector */
+_Pragma("GCC diagnostic ignored \"-Wstack-protector\"")
 static void *
 do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 {
@@ -1291,6 +1324,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 	lookup_mutex_exit();
 	return NULL;
 }
+_Pragma("GCC diagnostic pop")
 
 __strong_alias(__dlsym,dlsym)
 void *

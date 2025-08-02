@@ -4,8 +4,6 @@ __libm_cdabs_r6
 __log__L
 __mulxc3
 _cabs
-_fini
-_init
 _pow
 _powf
 d_cbrt

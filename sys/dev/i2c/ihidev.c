@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.30 2024/04/29 21:25:34 andvar Exp $ */
+/* $NetBSD: ihidev.c,v 1.30.2.1 2025/08/02 05:56:39 perseant Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -53,8 +53,11 @@
  *
  */
 
+#include "gpio.h"
+#include "acpica.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.30 2024/04/29 21:25:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.30.2.1 2025/08/02 05:56:39 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,12 +70,13 @@ __KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.30 2024/04/29 21:25:34 andvar Exp $");
 
 #include <dev/hid/hid.h>
 
-#if defined(__i386__) || defined(__amd64__)
-#  include "acpica.h"
-#endif
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
+#include <dev/acpi/acpi_gpio.h>
+#endif
+#if NGPIO > 0
+#include <dev/gpio/gpiovar.h>
 #endif
 
 #include "locators.h"
@@ -120,6 +124,7 @@ static int	ihidev_hid_command(struct ihidev_softc *, int, void *, bool);
 static int	ihidev_intr(void *);
 static void	ihidev_work(struct work *, void *);
 #endif
+static int	ihidev_poweron(struct ihidev_softc *, bool);
 static int	ihidev_reset(struct ihidev_softc *, bool);
 static int	ihidev_hid_desc_parse(struct ihidev_softc *);
 
@@ -222,7 +227,8 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 	locs[IHIDBUSCF_REPORTID] = IHIDEV_CLAIM_ALLREPORTID;
 	dev = config_found(self, &iha, ihidev_print,
 	    CFARGS(.submatch = ihidev_submatch,
-		   .locators = locs));
+		   .locators = locs,
+		   .iattr = "ihidbus"));
 	if (dev != NULL) {
 		for (repid = 0; repid < sc->sc_nrepid; repid++)
 			sc->sc_subdevs[repid] = device_private(dev);
@@ -242,7 +248,8 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 		locs[IHIDBUSCF_REPORTID] = repid;
 		dev = config_found(self, &iha, ihidev_print,
 		    CFARGS(.submatch = ihidev_submatch,
-			   .locators = locs));
+			   .locators = locs,
+			   .iattr = "ihidbus"));
 		sc->sc_subdevs[repid] = device_private(dev);
 	}
 
@@ -583,9 +590,9 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg, bool poll)
 }
 
 static int
-ihidev_reset(struct ihidev_softc *sc, bool poll)
+ihidev_poweron(struct ihidev_softc *sc, bool poll)
 {
-	DPRINTF(("%s: resetting\n", device_xname(sc->sc_dev)));
+	DPRINTF(("%s: poweron\n", device_xname(sc->sc_dev)));
 
 	if (ihidev_hid_command(sc, I2C_HID_CMD_SET_POWER,
 	    &I2C_HID_POWER_ON, poll)) {
@@ -594,6 +601,14 @@ ihidev_reset(struct ihidev_softc *sc, bool poll)
 	}
 
 	DELAY(1000);
+
+	return (0);
+}
+
+static int
+ihidev_reset(struct ihidev_softc *sc, bool poll)
+{
+	DPRINTF(("%s: resetting\n", device_xname(sc->sc_dev)));
 
 	if (ihidev_hid_command(sc, I2C_HID_CMD_RESET, 0, poll)) {
 		aprint_error_dev(sc->sc_dev, "failed to reset hardware\n");
@@ -685,9 +700,13 @@ ihidev_intr_init(struct ihidev_softc *sc)
 
 	const struct acpi_irq * const irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
-		aprint_error_dev(sc->sc_dev, "no IRQ resource\n");
+		aprint_debug_dev(sc->sc_dev, "no IRQ resource\n");
 		acpi_resource_cleanup(&res);
+#if NGPIO > 0
+		goto try_gpioint;
+#else
 		return false;
+#endif
 	}
 
 	sc->sc_intr_type =
@@ -703,6 +722,43 @@ ihidev_intr_init(struct ihidev_softc *sc)
 	}
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n",
 	    acpi_intr_string(sc->sc_ih, buf, sizeof(buf)));
+
+#if NGPIO > 0
+try_gpioint:
+	if (sc->sc_ih == NULL) {
+		int pin, irqmode, error;
+
+		rv = acpi_gpio_get_int(hdl, 0, &sc->sc_ih_gpio, &pin, &irqmode);
+		if (ACPI_FAILURE(rv)) {
+			aprint_error_dev(sc->sc_dev,
+			    "can't find gpioint resource\n");
+			return false;
+		}
+
+		sc->sc_ih_gpiomap.pm_map = sc->sc_ih_gpiopins;
+		error = gpio_pin_map(sc->sc_ih_gpio, pin, 1,
+		    &sc->sc_ih_gpiomap);
+		if (error) {
+			aprint_error_dev(sc->sc_dev, "can't map pin %d\n", pin);
+			return false;
+		}
+
+		sc->sc_ih = gpio_intr_establish(sc->sc_ih_gpio,
+		    &sc->sc_ih_gpiomap, 0, IPL_VM, irqmode, ihidev_intr, sc);
+		if (sc->sc_ih == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "can't establish gpio interrupt\n");
+			return false;
+		}
+
+		sc->sc_intr_type = (irqmode & GPIO_INTR_LEVEL_MASK) ?
+		    IST_LEVEL : IST_EDGE;
+
+		gpio_intr_str(sc->sc_ih_gpio, &sc->sc_ih_gpiomap, 0,
+		    irqmode, buf, sizeof(buf));
+		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", buf);
+	}
+#endif
 
 	if (workqueue_create(&sc->sc_wq, device_xname(sc->sc_dev), ihidev_work,
 		sc, PRI_NONE, IPL_TTY, WQ_MPSAFE)) {
@@ -724,7 +780,13 @@ ihidev_intr_fini(struct ihidev_softc *sc)
 {
 #if NACPICA > 0
 	if (sc->sc_ih != NULL) {
-		acpi_intr_disestablish(sc->sc_ih);
+		if (sc->sc_ih_gpio != NULL) {
+#if NGPIO > 0
+			gpio_intr_disestablish(sc->sc_ih_gpio, sc->sc_ih);
+#endif
+		} else {
+			acpi_intr_disestablish(sc->sc_ih);
+		}
 	}
 	if (sc->sc_wq != NULL) {
 		workqueue_destroy(sc->sc_wq);
@@ -738,7 +800,13 @@ ihidev_intr_mask(struct ihidev_softc * const sc)
 {
 
 	if (sc->sc_intr_type == IST_LEVEL) {
-		acpi_intr_mask(sc->sc_ih);
+		if (sc->sc_ih_gpio != NULL) {
+#if NGPIO > 0
+			gpio_intr_mask(sc->sc_ih_gpio, sc->sc_ih);
+#endif
+		} else {
+			acpi_intr_mask(sc->sc_ih);
+		}
 	}
 }
 
@@ -747,7 +815,13 @@ ihidev_intr_unmask(struct ihidev_softc * const sc)
 {
 
 	if (sc->sc_intr_type == IST_LEVEL) {
-		acpi_intr_unmask(sc->sc_ih);
+		if (sc->sc_ih_gpio != NULL) {
+#if NGPIO > 0
+			gpio_intr_unmask(sc->sc_ih_gpio, sc->sc_ih);
+#endif
+		} else {
+			acpi_intr_unmask(sc->sc_ih);
+		}
 	}
 }
 
@@ -903,7 +977,7 @@ ihidev_open(struct ihidev *scd)
 	}
 
 	/* power on */
-	ihidev_reset(sc, false);
+	ihidev_poweron(sc, false);
 	error = 0;
 
 out:	mutex_exit(&sc->sc_lock);

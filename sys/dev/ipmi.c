@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.10 2023/03/22 13:00:54 mlelstv Exp $ */
+/*	$NetBSD: ipmi.c,v 1.10.6.1 2025/08/02 05:56:30 perseant Exp $ */
 
 /*
  * Copyright (c) 2019 Michael van Elst
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.10 2023/03/22 13:00:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.10.6.1 2025/08/02 05:56:30 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -355,9 +355,7 @@ bmc_io_wait_sleep(struct ipmi_softc *sc, int offset, uint8_t mask,
 		v = bmc_read(sc, offset);
 		if ((v & mask) == value)
 			return v;
-		mutex_enter(&sc->sc_sleep_mtx);
-		cv_timedwait(&sc->sc_cmd_sleep, &sc->sc_sleep_mtx, 1);
-		mutex_exit(&sc->sc_sleep_mtx);
+		kpause("ipmicmd", /*intr*/false, /*timo*/1, /*mtx*/NULL);
 	}
 	return -1;
 }
@@ -1096,9 +1094,7 @@ ipmi_delay(struct ipmi_softc *sc, int ms)
 		delay(ms * 1000);
 		return;
 	}
-	mutex_enter(&sc->sc_sleep_mtx);
-	cv_timedwait(&sc->sc_cmd_sleep, &sc->sc_sleep_mtx, mstohz(ms));
-	mutex_exit(&sc->sc_sleep_mtx);
+	kpause("ipmicmd", /*intr*/false, /*timo*/mstohz(ms), /*mtx*/NULL);
 }
 
 /* Read a partial SDR entry */
@@ -1106,29 +1102,44 @@ static int
 get_sdr_partial(struct ipmi_softc *sc, uint16_t recordId, uint16_t reserveId,
     uint8_t offset, uint8_t length, void *buffer, uint16_t *nxtRecordId)
 {
-	uint8_t	cmd[256 + 8];
+	union {
+		struct {
+			uint16_t	reserveId;
+			uint16_t	recordId;
+			uint8_t		offset;
+			uint8_t		length;
+		} __packed	cmd;
+		struct {
+			uint16_t	nxtRecordId;
+			uint8_t		data[262];
+		} __packed	msg;
+	}		u;
 	int		len;
 
-	((uint16_t *) cmd)[0] = reserveId;
-	((uint16_t *) cmd)[1] = recordId;
-	cmd[4] = offset;
-	cmd[5] = length;
+	__CTASSERT(sizeof(u) == 256 + 8);
+	__CTASSERT(sizeof(u.cmd) == 6);
+	__CTASSERT(offsetof(typeof(u.msg), data) == 2);
+
+	u.cmd.reserveId = reserveId;
+	u.cmd.recordId = recordId;
+	u.cmd.offset = offset;
+	u.cmd.length = length;
 	mutex_enter(&sc->sc_cmd_mtx);
-	if (ipmi_sendcmd(sc, BMC_SA, 0, STORAGE_NETFN, STORAGE_GET_SDR, 6,
-	    cmd)) {
+	if (ipmi_sendcmd(sc, BMC_SA, 0, STORAGE_NETFN, STORAGE_GET_SDR,
+		sizeof(u.cmd), &u.cmd)) {
 		mutex_exit(&sc->sc_cmd_mtx);
 		aprint_error_dev(sc->sc_dev, "%s: sendcmd fails\n", __func__);
 		return -1;
 	}
-	if (ipmi_recvcmd(sc, 8 + length, &len, cmd)) {
+	if (ipmi_recvcmd(sc, 8 + length, &len, &u.msg)) {
 		mutex_exit(&sc->sc_cmd_mtx);
 		aprint_error_dev(sc->sc_dev, "%s: recvcmd fails\n", __func__);
 		return -1;
 	}
 	mutex_exit(&sc->sc_cmd_mtx);
 	if (nxtRecordId)
-		*nxtRecordId = *(uint16_t *) cmd;
-	memcpy(buffer, cmd + 2, len - 2);
+		*nxtRecordId = u.msg.nxtRecordId;
+	memcpy(buffer, u.msg.data, len - offsetof(typeof(u.msg), data));
 
 	return 0;
 }
@@ -1302,7 +1313,7 @@ static int64_t fixexp_a[] = {
 	0x0000000080000000ll /* 1.0/2.0 */,
 	0x000000002aaaaaabll /* 1.0/6.0 */,
 	0x000000000aaaaaabll /* 1.0/24.0 */,
-	0x0000000002222222ll /* 1.0/120.0 */, 
+	0x0000000002222222ll /* 1.0/120.0 */,
 	0x00000000005b05b0ll /* 1.0/720.0 */,
 	0x00000000000d00d0ll /* 1.0/5040.0 */,
 	0x000000000001a01all /* 1.0/40320.0 */
@@ -1320,7 +1331,7 @@ fixmul(int64_t x, int64_t y)
 		x = -x;
 		neg = !neg;
 	}
-	if (y < 0) { 
+	if (y < 0) {
 		y = -y;
 		neg = !neg;
 	}
@@ -1807,7 +1818,7 @@ add_child_sensors(struct ipmi_softc *sc, uint8_t *psdr, int count,
 	char			*e;
 	struct ipmi_sensor	*psensor;
 	struct sdrtype1		*s1 = (struct sdrtype1 *)psdr;
-	
+
 	typ = ipmi_sensor_type(sensor_type, ext_type, entity);
 	if (typ == -1) {
 		dbg_printf(5, "Unknown sensor type:%#.2x et:%#.2x sn:%#.2x "
@@ -1967,12 +1978,10 @@ ipmi_match(device_t parent, cfdata_t cf, void *aux)
 	sc.sc_if->probe(&sc);
 
 	mutex_init(&sc.sc_cmd_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
-	cv_init(&sc.sc_cmd_sleep, "ipmimtch");
 
 	if (ipmi_get_device_id(&sc, NULL) == 0)
 		rv = 1;
 
-	cv_destroy(&sc.sc_cmd_sleep);
 	mutex_destroy(&sc.sc_cmd_mtx);
 	ipmi_unmap_regs(&sc);
 
@@ -1997,6 +2006,23 @@ ipmi_thread(void *cookie)
 
 	/* Map registers */
 	ipmi_map_regs(sc, ia);
+
+	/* Setup Watchdog timer */
+	sc->sc_wdog.smw_name = device_xname(sc->sc_dev);
+	sc->sc_wdog.smw_cookie = sc;
+	sc->sc_wdog.smw_setmode = ipmi_watchdog_setmode;
+	sc->sc_wdog.smw_tickle = ipmi_watchdog_tickle;
+	sysmon_wdog_register(&sc->sc_wdog);
+
+	/* Set up a power handler so we can possibly sleep */
+	if (!pmf_device_register(self, ipmi_suspend, NULL))
+                aprint_error_dev(self, "couldn't establish a power handler\n");
+
+	/*
+	 * Allow boot to proceed -- we'll do the rest asynchronously
+	 * since it requires talking to the device.
+	 */
+	config_pending_decr(self);
 
 	memset(&id, 0, sizeof(id));
 	if (ipmi_get_device_id(sc, &id))
@@ -2098,20 +2124,9 @@ ipmi_thread(void *cookie)
 	/* setup flag to exclude iic */
 	ipmi_enabled = 1;
 
-	/* Setup Watchdog timer */
-	sc->sc_wdog.smw_name = device_xname(sc->sc_dev);
-	sc->sc_wdog.smw_cookie = sc;
-	sc->sc_wdog.smw_setmode = ipmi_watchdog_setmode;
-	sc->sc_wdog.smw_tickle = ipmi_watchdog_tickle;
-	sysmon_wdog_register(&sc->sc_wdog);
-
-	/* Set up a power handler so we can possibly sleep */
-	if (!pmf_device_register(self, ipmi_suspend, NULL))
-                aprint_error_dev(self, "couldn't establish a power handler\n");
-
-	config_pending_decr(self);
-
 	mutex_enter(&sc->sc_poll_mtx);
+	sc->sc_thread_ready = true;
+	cv_broadcast(&sc->sc_mode_cv);
 	while (sc->sc_thread_running) {
 		while (sc->sc_mode == IPMI_MODE_COMMAND)
 			cv_wait(&sc->sc_mode_cv, &sc->sc_poll_mtx);
@@ -2144,8 +2159,6 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 
 	/* lock around read_sensor so that no one messes with the bmc regs */
 	mutex_init(&sc->sc_cmd_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
-	mutex_init(&sc->sc_sleep_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
-	cv_init(&sc->sc_cmd_sleep, "ipmicmd");
 
 	mutex_init(&sc->sc_poll_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 	cv_init(&sc->sc_poll_cv, "ipmipoll");
@@ -2209,8 +2222,6 @@ ipmi_detach(device_t self, int flags)
 	cv_destroy(&sc->sc_mode_cv);
 	cv_destroy(&sc->sc_poll_cv);
 	mutex_destroy(&sc->sc_poll_mtx);
-	cv_destroy(&sc->sc_cmd_sleep);
-	mutex_destroy(&sc->sc_sleep_mtx);
 	mutex_destroy(&sc->sc_cmd_mtx);
 
 	return 0;
@@ -2258,6 +2269,15 @@ ipmi_watchdog_setmode(struct sysmon_wdog *smwdog)
 		sc->sc_wdog.smw_period = 10;
 	else
 		sc->sc_wdog.smw_period = smwdog->smw_period;
+
+	/* Wait until the device is initialized */
+	rc = 0;
+	mutex_enter(&sc->sc_poll_mtx);
+	while (sc->sc_thread_ready)
+		rc = cv_wait_sig(&sc->sc_mode_cv, &sc->sc_poll_mtx);
+	mutex_exit(&sc->sc_poll_mtx);
+	if (rc)
+		return rc;
 
 	mutex_enter(&sc->sc_cmd_mtx);
 	/* see if we can properly task to the watchdog */
@@ -2504,7 +2524,7 @@ ipmi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		error = EOPNOTSUPP;
 		break;
 	default:
-		error = ENODEV;	
+		error = ENODEV;
 		break;
 	}
 

@@ -1,3 +1,6 @@
+s!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "https://
+www.w3.org/TR/html4/loose.dtd">
+
 PPoossttffiixx LLDDAAPP HHoowwttoo
 
 -------------------------------------------------------------------------------
@@ -46,9 +49,8 @@ client code only), you could use the following command:
         --without-threads --disable-slapd --disable-slurpd \
         --disable-debug --disable-shared
 
-If you're using the libraries from the UM distribution (http://www.umich.edu/
-~dirsvcs/ldap/ldap.html) or OpenLDAP (http://www.openldap.org), something like
-this in the top level of your Postfix source tree should work:
+If you're using the libraries from OpenLDAP (https://www.openldap.org),
+something like this in the top level of your Postfix source tree should work:
 
     % make tidy
     % make makefiles CCARGS="-I/usr/local/include -DHAS_LDAP" \

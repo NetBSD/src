@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.19 2024/05/06 06:57:32 skrll Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.19.2.1 2025/08/02 05:54:31 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -59,7 +59,7 @@ ENTRY(__setjmp14)
 #if !defined(__thumb__)
 	adds	r2, r0, #(_JB_SIGMASK * 4)
 #else
-	mov	r2, r0
+	movs	r2, r0
 	adds	r2, r2, #(_JB_SIGMASK * 4)
 #endif
 	movs	r1, #0
@@ -167,7 +167,7 @@ ENTRY(__longjmp14)
 #if !defined(__thumb__)
 	adds	r1, r0, #(_JB_SIGMASK * 4)
 #else
-	mov	r1, r0
+	movs	r1, r0
 	adds	r1, r1, #(_JB_SIGMASK * 4)
 #endif
 	movs	r0, #3				/* SIG_SETMASK */

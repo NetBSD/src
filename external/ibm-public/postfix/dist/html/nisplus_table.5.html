@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,15 +7,15 @@
 </head> <body> <pre>
 NISPLUS_TABLE(5)                                              NISPLUS_TABLE(5)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        nisplus_table - Postfix NIS+ client
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postmap -q "</b><i>string</i><b>" "<a href="nisplus_table.5.html">nisplus</a>:[</b><i>name</i><b>=%s];</b><i>name.name.</i><b>"</b>
 
        <b>postmap -q - "<a href="nisplus_table.5.html">nisplus</a>:[</b><i>name</i><b>=%s];</b><i>name.name.</i><b>"</b> &lt;<i>inputfile</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  Postfix mail system uses optional lookup tables.  These tables are
        usually in <b>dbm</b> or <b>db</b> format.  Alternatively, lookup tables can be spec-
        ified as NIS+ databases.
@@ -26,7 +26,7 @@ NISPLUS_TABLE(5)                                              NISPLUS_TABLE(5)
        To test Postfix NIS+ lookup tables, use the  "<b>postmap  -q</b>"  command  as
        described in the SYNOPSIS above.
 
-<b>QUERY SYNTAX</b>
+<b><a name="query_syntax">QUERY SYNTAX</a></b>
        Most  of the NIS+ query is specified via the NIS+ map name. The general
        format of a Postfix NIS+ map name is as follows:
 
@@ -49,7 +49,7 @@ NISPLUS_TABLE(5)                                              NISPLUS_TABLE(5)
               column that provides the lookup result.  When  no  ":<i>column</i>"  is
               specified the first column (1) is used.
 
-<b>EXAMPLE</b>
+<b><a name="example">EXAMPLE</a></b>
        A NIS+ aliases map might be queried as follows:
 
            <a href="postconf.5.html#alias_maps">alias_maps</a> = <a href="DATABASE_README.html#types">dbm</a>:/etc/mail/aliases,
@@ -57,13 +57,13 @@ NISPLUS_TABLE(5)                                              NISPLUS_TABLE(5)
 
        This queries the local aliases file before the NIS+ file.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

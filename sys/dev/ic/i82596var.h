@@ -1,4 +1,4 @@
-/* $NetBSD: i82596var.h,v 1.15 2009/12/01 23:16:01 skrll Exp $ */
+/* $NetBSD: i82596var.h,v 1.15.102.1 2025/08/02 05:56:41 perseant Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -132,7 +132,7 @@ struct iee_rfd {
 
 /* Receive Buffer Descriptor */
 struct iee_rbd {
-	volatile uint16_t rbd_count;		/* Actual Cont of bytes */
+	volatile uint16_t rbd_count;		/* Actual Count of bytes */
 	volatile uint16_t rbd_pad1;
 	volatile uint32_t rbd_next_rbd;		/* Address of Next RBD */
 	volatile uint32_t rbd_rb_addr;		/* Receive Buffer Address */

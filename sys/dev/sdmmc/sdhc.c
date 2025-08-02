@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.119 2024/05/09 01:33:13 dyoung Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.119.2.1 2025/08/02 05:57:03 perseant Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.119 2024/05/09 01:33:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.119.2.1 2025/08/02 05:57:03 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -142,9 +142,6 @@ hwrite1(struct sdhc_host *hp, bus_size_t o, uint8_t val)
 		tmp = (val << shift) | (tmp & ~(0xffU << shift));
 		bus_space_write_4(hp->iot, hp->ioh, o, tmp);
 	}
-	if (hp->sc->sc_write_delay != 0) {
-		delay(hp->sc->sc_write_delay);
-	}
 }
 
 static void
@@ -160,9 +157,6 @@ hwrite2(struct sdhc_host *hp, bus_size_t o, uint16_t val)
 		tmp = (val << shift) | (tmp & ~(0xffffU << shift));
 		bus_space_write_4(hp->iot, hp->ioh, o, tmp);
 	}
-	if (hp->sc->sc_write_delay != 0) {
-		delay(hp->sc->sc_write_delay);
-	}
 }
 
 static void
@@ -170,9 +164,6 @@ hwrite4(struct sdhc_host *hp, bus_size_t o, uint32_t val)
 {
 
 	bus_space_write_4(hp->iot, hp->ioh, o, val);
-	if (hp->sc->sc_write_delay != 0) {
-		delay(hp->sc->sc_write_delay);
-	}
 }
 
 #define HWRITE1(hp, reg, val)		hwrite1(hp, reg, val)
@@ -1572,17 +1563,25 @@ sdhc_hw_reset(sdmmc_chipset_handle_t sch)
 static int
 sdhc_wait_state(struct sdhc_host *hp, uint32_t mask, uint32_t value)
 {
+	struct timeval start, diff;
 	uint32_t state;
-	int timeout;
 
-	for (timeout = 100000; timeout > 0; timeout--) {
-		if (((state = HREAD4(hp, SDHC_PRESENT_STATE)) & mask) == value)
+	microuptime(&start);
+	for (;;) {
+		state = HREAD4(hp, SDHC_PRESENT_STATE);
+		if ((state & mask) == value) {
 			return 0;
-		sdmmc_delay(10);
+		}
+		microuptime(&diff);
+		timersub(&diff, &start, &diff);
+		if (diff.tv_sec != 0) {
+			aprint_error_dev(hp->sc->sc_dev,
+			    "timeout waiting for mask %#x value %#x "
+			    "(state=%#x)\n",
+			    mask, value, state);
+			return ETIMEDOUT;
+		}
 	}
-	aprint_error_dev(hp->sc->sc_dev, "timeout waiting for mask %#x value %#x (state=%#x)\n",
-	    mask, value, state);
-	return ETIMEDOUT;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.26 2024/02/09 22:08:32 andvar Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.26.2.1 2025/08/02 05:55:58 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.26 2024/02/09 22:08:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.26.2.1 2025/08/02 05:55:58 perseant Exp $");
 
 #define	__INTR_PRIVATE
 #include <sys/param.h>
@@ -287,7 +287,7 @@ sc_send(struct sc_scb *scb, int chan, int ie)
 	if (p[0] == SCOP_RESET && p[1] == SCOP_RESET) {
 		/*
 		 * SCSI bus reset command procedure
-		 *	(vender unique by Sony Corp.)
+		 *	(vendor unique by Sony Corp.)
 		 */
 #ifdef SCSI_1185AQ
 		if (sc_idenr & 0x08)

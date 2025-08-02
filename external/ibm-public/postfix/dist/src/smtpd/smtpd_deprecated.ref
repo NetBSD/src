@@ -1,0 +1,35 @@
+>>> #
+>>> # permit_naked_ip_address
+>>> #
+>>> client foo 127.0.0.2
+OK
+>>> recipient_restrictions permit_naked_ip_address
+OK
+>>> helo 127.0.0.2
+OK
+>>> mail sname@sdomain.example
+OK
+>>> rcpt rname@rdomain.example
+./smtpd_check: warning: support for restriction "permit_naked_ip_address" has been removed in Postfix 3.9; instead, specify "permit_mynetworks" or "permit_sasl_authenticated"
+./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 451 4.3.5 Server configuration error; from=<sname@sdomain.example> to=<rname@rdomain.example> proto=SMTP helo=<127.0.0.2>
+451 4.3.5 Server configuration error
+>>> #
+>>> # check_relay_domains
+>>> #
+>>> client foo 127.0.0.2
+OK
+>>> recipient_restrictions check_relay_domains
+OK
+>>> relay_domains foo
+OK
+>>> helo 127.0.0.2
+OK
+>>> mail sname@sdomain.example
+OK
+>>> rcpt rname@rdomain.example
+./smtpd_check: warning: support for restriction "check_relay_domains" has been removed in Postfix 3.9; instead, specify "reject_unauth_destination"
+./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 451 4.3.5 Server configuration error; from=<sname@sdomain.example> to=<rname@rdomain.example> proto=SMTP helo=<127.0.0.2>
+451 4.3.5 Server configuration error
+>>> #
+>>> # reject_maps_rbl is already covered elsewhere.
+>>> #

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1256 2024/04/30 19:35:28 andvar Exp $
+# $NetBSD: GENERIC,v 1.1256.2.1 2025/08/02 05:55:43 perseant Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1256 $"
+#ident		"GENERIC-$Revision: 1.1256.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -324,6 +324,7 @@ acpilid*	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 acpivga*	at acpi?		# ACPI Display Adapter
 acpiout*	at acpivga?		# ACPI Display Output Device
+acpivmgenid*	at acpi?		# ACPI Virtual Machine Generation ID
 acpiwdrt*	at acpi?		# ACPI Watchdog Resource Table
 acpiwmi*	at acpi?		# ACPI WMI Mapper
 apei*		at apeibus?		# ACPI Platform Error Interfaces
@@ -1407,12 +1408,8 @@ weasel* at pci?
 
 # Virtio devices
 virtio* at pci? dev ? function ?	# Virtio PCI device
-viomb* at virtio?			# Virtio memory balloon device
-ld* at virtio?				# Virtio disk device
-vioif* at virtio?			# Virtio network device
-viornd* at virtio?			# Virtio entropy device
-vioscsi* at virtio?			# Virtio SCSI device
-#vio9p*	at virtio?			# Virtio 9P device
+
+include "dev/virtio/virtio.config"
 
 # Hyper-V devices
 vmbus*		at acpi?		# Hyper-V VMBus

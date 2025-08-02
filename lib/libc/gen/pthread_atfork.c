@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.18 2024/01/20 14:52:47 christos Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.18.2.1 2025/08/02 05:54:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.18 2024/01/20 14:52:47 christos Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.18.2.1 2025/08/02 05:54:37 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -39,7 +39,12 @@ __RCSID("$NetBSD: pthread_atfork.c,v 1.18 2024/01/20 14:52:47 christos Exp $");
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#include <sys/mman.h>
+#include <sys/param.h>
 #include <sys/queue.h>
+#include <sys/sysctl.h>
+
 #include "extern.h"
 #include "reentrant.h"
 
@@ -59,13 +64,43 @@ struct atfork_callback {
 	void (*fn)(void);
 };
 
+struct atfork_cb_header {
+	uint16_t	entries;
+	uint16_t	used;
+};
+
+struct atfork_cb_block {
+	union {
+		struct atfork_callback block;
+		struct atfork_cb_header hdr;
+	} u;
+};
+
+#define	cb_blocks(bp)	(&(bp)->u.block)
+#define	cb_ents(bp)	(bp)->u.hdr.entries
+#define	cb_used(bp)	(bp)->u.hdr.used
+
+/*
+ * We need to keep a cache for of at least 6, one for prepare, one for parent,
+ * one for child x 2 bexause of the two uses in the libpthread (pthread_init,
+ * pthread_tsd_init) constructors, where it is too early to call malloc(3).
+ * This does not guarantee that we will have enough, because other libraries
+ * can also call pthread_atfork() from their own constructors, so this is not
+ * a complete solution and will need to be fixed properly. For now a keep
+ * space for 16 since it is just 256 bytes.
+ */
+static struct atfork_callback atfork_builtin[16];
+static struct atfork_cb_block *atfork_storage = NULL;
+static int hw_pagesize = 0;
+
+static const int hw_pagesize_sysctl[2] = { CTL_HW, HW_PAGESIZE };
+
 /*
  * Hypothetically, we could protect the queues with a rwlock which is
  * write-locked by pthread_atfork() and read-locked by fork(), but
  * since the intended use of the functions is obtaining locks to hold
  * across the fork, forking is going to be serialized anyway.
  */
-static struct atfork_callback atfork_builtin;
 #ifdef _REENTRANT
 static mutex_t atfork_lock = MUTEX_INITIALIZER;
 #endif
@@ -75,22 +110,59 @@ static struct atfork_callback_q prepareq = SIMPLEQ_HEAD_INITIALIZER(prepareq);
 static struct atfork_callback_q parentq = SIMPLEQ_HEAD_INITIALIZER(parentq);
 static struct atfork_callback_q childq = SIMPLEQ_HEAD_INITIALIZER(childq);
 
+/*
+ * Nb: nothing allocated by this allocator is ever freed.
+ * (there is no API to free anything, and no need for one)
+ *
+ * The code relies upon this.
+ */
 static struct atfork_callback *
-af_alloc(void)
+af_alloc(unsigned int blocks)
 {
+	struct atfork_callback *result;
 
-	if (atfork_builtin.fn == NULL)
-		return &atfork_builtin;
+	if (__predict_false(blocks == 0))
+		return NULL;
 
-	return malloc(sizeof(atfork_builtin));
-}
+	if (__predict_true(atfork_storage == NULL)) {
+		for (size_t i = 0; i < __arraycount(atfork_builtin); i++) {
+			if (atfork_builtin[i].fn == NULL) {
+				if (i + blocks <= __arraycount(atfork_builtin))
+					return &atfork_builtin[i];
+				else
+					break;
+			}
+		}
+	}
 
-static void
-af_free(struct atfork_callback *af)
-{
+	if (__predict_false(atfork_storage == NULL ||
+	    cb_used(atfork_storage) + blocks > cb_ents(atfork_storage))) {
+		if (__predict_false(hw_pagesize == 0)) {
+			size_t len = sizeof(hw_pagesize);
 
-	if (af != &atfork_builtin)
-		free(af);
+			if (sysctl(hw_pagesize_sysctl, 2, &hw_pagesize,
+			    &len, NULL, 0) != 0)
+				return NULL;
+			if (len != sizeof(hw_pagesize))
+				return NULL;
+			if (hw_pagesize == 0 || (hw_pagesize & 0xFF) != 0)
+				return NULL;
+		}
+		atfork_storage = mmap(0, hw_pagesize, PROT_READ|PROT_WRITE,
+		    MAP_PRIVATE | MAP_ANON, -1, 0);
+		if (__predict_false(atfork_storage == NULL))
+			return NULL;
+		cb_used(atfork_storage) = 1;
+		cb_ents(atfork_storage) =
+		    (uint16_t)(hw_pagesize / sizeof(struct atfork_cb_block));
+		if (__predict_false(cb_ents(atfork_storage) < blocks + 1))
+			return NULL;
+	}
+
+	result = cb_blocks(atfork_storage) + cb_used(atfork_storage);
+	cb_used(atfork_storage) += blocks;
+
+	return result;
 }
 
 int
@@ -101,42 +173,46 @@ pthread_atfork(void (*prepare)(void), void (*parent)(void),
 	sigset_t mask, omask;
 	int error;
 
-	newprepare = newparent = newchild = NULL;
-
 	sigfillset(&mask);
+#ifdef _REENTRANT	/* XXX PR lib/59401 */
 	thr_sigsetmask(SIG_SETMASK, &mask, &omask);
+#else
+	sigprocmask(SIG_SETMASK, &mask, &omask);
+#endif
 
 	mutex_lock(&atfork_lock);
+
+	/*
+	 * Note here that we either get all the blocks
+	 * we need, in one call, or we get NULL.
+	 *
+	 * Note also that a NULL return is not an error
+	 * if no blocks were required (all args == NULL)
+	 */
+	newprepare = af_alloc((prepare != NULL) +
+	    (parent != NULL) + (child != NULL));
+
+	error = ENOMEM;		/* in case of "goto out" */
+
+	newparent = newprepare;
 	if (prepare != NULL) {
-		newprepare = af_alloc();
-		if (newprepare == NULL) {
-			error = ENOMEM;
+		if (__predict_false(newprepare == NULL))
 			goto out;
-		}
 		newprepare->fn = prepare;
+		newparent++;
 	}
 
+	newchild = newparent;
 	if (parent != NULL) {
-		newparent = af_alloc();
-		if (newparent == NULL) {
-			if (newprepare != NULL)
-				af_free(newprepare);
-			error = ENOMEM;
+		if (__predict_false(newparent == NULL))
 			goto out;
-		}
 		newparent->fn = parent;
+		newchild++;
 	}
 
 	if (child != NULL) {
-		newchild = af_alloc();
-		if (newchild == NULL) {
-			if (newprepare != NULL)
-				af_free(newprepare);
-			if (newparent != NULL)
-				af_free(newparent);
-			error = ENOMEM;
+		if (__predict_false(newchild == NULL))
 			goto out;
-		}
 		newchild->fn = child;
 	}
 
@@ -152,10 +228,16 @@ pthread_atfork(void (*prepare)(void), void (*parent)(void),
 		SIMPLEQ_INSERT_TAIL(&parentq, newparent, next);
 	if (child)
 		SIMPLEQ_INSERT_TAIL(&childq, newchild, next);
+
 	error = 0;
 
-out:	mutex_unlock(&atfork_lock);
+ out:;
+	mutex_unlock(&atfork_lock);
+#ifdef _REENTRANT	/* XXX PR lib/59401 */
 	thr_sigsetmask(SIG_SETMASK, &omask, NULL);
+#else
+	sigprocmask(SIG_SETMASK, &omask, NULL);
+#endif
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.20 2024/02/08 17:57:54 christos Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.20.2.1 2025/08/02 05:56:01 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -577,11 +577,11 @@ rs6000_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 		printf("writing records\n");
 	memcpy(swapped, &bootrec, sizeof(rs6000_boot_record_t));
 	for (i=0; i < 128; i++)
-		swapped[i] = htonl(swapped[i]);
+		swapped[i] = sa_htobe32(swapped[i]);
 	write(rs6000_fd, swapped, sizeof(rs6000_boot_record_t));
 	memcpy(swapped, &confrec, sizeof(rs6000_config_record_t));
 	for (i=0; i < 128; i++)
-		swapped[i] = htonl(swapped[i]);
+		swapped[i] = sa_htobe32(swapped[i]);
 	write(rs6000_fd, swapped, sizeof(rs6000_config_record_t));
 
 	free(kern_img);

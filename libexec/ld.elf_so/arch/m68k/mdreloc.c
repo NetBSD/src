@@ -1,14 +1,58 @@
-/*	$NetBSD: mdreloc.c,v 1.34 2023/06/04 01:24:57 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.34.2.1 2025/08/02 05:55:02 perseant Exp $	*/
+
+/*
+ * Copyright 1996 John D. Polstra.
+ * Copyright 1996 Matt Thomas <matt@3am-software.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by John Polstra.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * m68k ELF relocations.
+ *
+ * References:
+ *
+ *	[M68KSYSVABI] System V Application Binary Interface: Motorola
+ *	68000 Processor Family Supplement, 1990, AT&T.
+ *	https://people.debian.org/~glaubitz/m68k-sysv-abi.pdf
+ *	https://web.archive.org/web/20250317195959/https://people.debian.org/~glaubitz/m68k-sysv-abi.pdf
+ */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.34 2023/06/04 01:24:57 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.34.2.1 2025/08/02 05:55:02 perseant Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 
 #include "debug.h"
 #include "rtld.h"
+
+#include <machine/lwp_private.h>
 
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);

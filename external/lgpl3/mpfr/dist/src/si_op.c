@@ -33,9 +33,9 @@ mpfr_add_si (mpfr_ptr y, mpfr_srcptr x, long int u, mpfr_rnd_t rnd_mode)
   int res;
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg u=%ld rnd=%d",
+    (("x[%Pd]=%.*Rg u=%ld rnd=%d",
       mpfr_get_prec(x), mpfr_log_prec, x, u, rnd_mode),
-     ("y[%Pu]=%.*Rg inexact=%d",
+     ("y[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec(y), mpfr_log_prec, y, res));
 
   if (u >= 0)
@@ -52,9 +52,9 @@ mpfr_sub_si (mpfr_ptr y, mpfr_srcptr x, long int u, mpfr_rnd_t rnd_mode)
   int res;
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg u=%ld rnd=%d",
+    (("x[%Pd]=%.*Rg u=%ld rnd=%d",
       mpfr_get_prec(x), mpfr_log_prec, x, u, rnd_mode),
-     ("y[%Pu]=%.*Rg inexact=%d",
+     ("y[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec(y), mpfr_log_prec, y, res));
 
   if (u >= 0)
@@ -71,9 +71,9 @@ mpfr_si_sub (mpfr_ptr y, long int u, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   int res;
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg u=%ld rnd=%d",
+    (("x[%Pd]=%.*Rg u=%ld rnd=%d",
       mpfr_get_prec(x), mpfr_log_prec, x, u, rnd_mode),
-     ("y[%Pu]=%.*Rg inexact=%d",
+     ("y[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec(y), mpfr_log_prec, y, res));
 
   if (u >= 0)
@@ -95,9 +95,9 @@ mpfr_mul_si (mpfr_ptr y, mpfr_srcptr x, long int u, mpfr_rnd_t rnd_mode)
   int res;
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg u=%ld rnd=%d",
+    (("x[%Pd]=%.*Rg u=%ld rnd=%d",
       mpfr_get_prec(x), mpfr_log_prec, x, u, rnd_mode),
-     ("y[%Pu]=%.*Rg inexact=%d",
+     ("y[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec(y), mpfr_log_prec, y, res));
 
   if (u >= 0)
@@ -119,9 +119,9 @@ mpfr_div_si (mpfr_ptr y, mpfr_srcptr x, long int u, mpfr_rnd_t rnd_mode)
   int res;
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg u=%ld rnd=%d",
+    (("x[%Pd]=%.*Rg u=%ld rnd=%d",
       mpfr_get_prec(x), mpfr_log_prec, x, u, rnd_mode),
-     ("y[%Pu]=%.*Rg inexact=%d",
+     ("y[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec(y), mpfr_log_prec, y, res));
 
   if (u >= 0)
@@ -142,9 +142,9 @@ mpfr_si_div (mpfr_ptr y, long int u, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   int res;
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg u=%ld rnd=%d",
+    (("x[%Pd]=%.*Rg u=%ld rnd=%d",
       mpfr_get_prec(x), mpfr_log_prec, x, u, rnd_mode),
-     ("y[%Pu]=%.*Rg inexact=%d",
+     ("y[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec(y), mpfr_log_prec, y, res));
 
   if (u >= 0)

@@ -25,8 +25,11 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { fd92:7065:b8e:ffff::2; };
+	allow-transfer { any; };
 	notify no;
+	notify-delay 0;
 	recursion no;
+#T5	allow-query { 10.53.0.99; };
 	serial-query-rate 100;
 	dnssec-validation no;
 };
@@ -42,29 +45,41 @@ view "default" {
 	catalog-zones {
 		zone "catalog1.example"
 			default-masters { 10.53.0.1; }
+			min-update-interval 1s
 			in-memory no
 			zone-directory "zonedir";
 		zone "catalog2.example"
 			default-primaries { 10.53.0.1 port @EXTRAPORT1@; }
+			min-update-interval 1s
 			in-memory yes;
 		zone "catalog3.example"
 			default-masters { 10.53.0.1; }
+			min-update-interval 1s
 			zone-directory "nonexistent";
 #T1		zone "catalog4.example"
+#T1			min-update-interval 1s
 #T1			default-masters { 10.53.0.1; };
 #T2		zone "catalog5.example"
+#T2			min-update-interval 1s
 #T2			default-primaries { 10.53.0.1; };
+		zone "catalog6.example"
+			min-update-interval 1s
+			default-primaries { 10.53.0.1; };
 		zone "catalog-bad1.example"
 			default-masters { 10.53.0.1; }
+			min-update-interval 1s
 			in-memory yes;
 		zone "catalog-bad2.example"
 			default-masters { 10.53.0.1; }
+			min-update-interval 1s
 			in-memory yes;
 		zone "catalog-bad3.example"
 			default-masters { 10.53.0.1; }
+			min-update-interval 1s
 			in-memory yes;
 		zone "catalog-bad4.example"
 			default-masters { 10.53.0.1; }
+			min-update-interval 1s
 			in-memory yes;
 	};
 
@@ -114,6 +129,12 @@ view "default" {
 	zone "catalog4.example" {
 		type secondary;
 		file "catalog4.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	zone "catalog6.example" {
+		type secondary;
+		file "catalog6.example.db";
 		primaries { 10.53.0.1; };
 	};
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.67 2023/06/04 01:24:56 joerg Exp $	 */
+/*	$NetBSD: map_object.c,v 1.67.2.1 2025/08/02 05:55:01 perseant Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.67 2023/06/04 01:24:56 joerg Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.67.2.1 2025/08/02 05:55:01 perseant Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -359,7 +359,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 		data_prot = convert_prot(segs[i]->p_flags);
 		data_flags = convert_flags(segs[i]->p_flags) | MAP_FIXED;
 		if (data_vlimit != data_vaddr &&
-		    mmap(data_addr, data_vlimit - data_vaddr, data_prot, 
+		    mmap(data_addr, data_vlimit - data_vaddr, data_prot,
 		    data_flags, fd, data_offset) == MAP_FAILED) {
 			_rtld_error("%s: mmap of data failed: %s", path,
 			    xstrerror(errno));
@@ -376,7 +376,9 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 			    - base_vaddr);
 
 			if ((nclear = data_vlimit - clear_vaddr) > 0) {
-				/* Make sure the end of the segment is writable
+				/*
+				 * Make sure the end of the segment is
+				 * writable.
 				 */
 				if ((data_prot & PROT_WRITE) == 0 && -1 ==
 				     mprotect(clear_page, _rtld_pagesz,

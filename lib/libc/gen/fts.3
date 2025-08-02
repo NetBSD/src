@@ -1,4 +1,4 @@
-.\"	$NetBSD: fts.3,v 1.31 2013/06/30 19:19:12 wiz Exp $
+.\"	$NetBSD: fts.3,v 1.31.40.1 2025/08/02 05:54:36 perseant Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fts.3	8.5 (Berkeley) 4/16/94
 .\"
-.Dd March 30, 2011
+.Dd October 27, 2024
 .Dt FTS 3
 .Os
 .Sh NAME
@@ -83,62 +83,67 @@ The function
 returns a pointer to a linked list of structures, each of which describes
 one of the files contained in a directory in the hierarchy.
 In general, directories are visited two distinguishable times; in pre-order
-(before any of their descendants are visited) and in post-order (after all
-of their descendants have been visited).
+.Pq before any of their descendants are visited
+and in post-order
+.Pq after all of their descendants have been visited .
 Files are visited once.
 It is possible to walk the hierarchy
 .Dq logically
-(ignoring symbolic links)
-or physically (visiting symbolic links), order the walk of the hierarchy or
-prune and/or re-visit portions of the hierarchy.
+.Pq ignoring symbolic links
+or physically
+.Pq visiting symbolic links ,
+order the walk of the hierarchy or prune and/or re-visit portions of
+the hierarchy.
 .Pp
-Two structures are defined (and typedef'd) in the include file
+Two structures are defined
+.Pq and Li typedef Ap ed
+in the include file
 .In fts.h .
 The first is
-.Fa FTS ,
+.Vt FTS ,
 the structure that represents the file hierarchy itself.
 The second is
-.Fa FTSENT ,
+.Vt FTSENT ,
 the structure that represents a file in the file
 hierarchy.
 Normally, an
-.Fa FTSENT
+.Vt FTSENT
 structure is returned for every file in the file
 hierarchy.
 In this manual page,
 .Dq file
 and
-.Dq Fa FTSENT No structure
+.Dq Vt FTSENT No structure
 are generally
 interchangeable.
 The
-.Fa FTSENT
+.Vt FTSENT
 structure contains at least the following fields, which are
 described in greater detail below:
-.Bd -literal -offset 2n
+.Bd -literal -offset indent
 typedef struct _ftsent {
-	u_short fts_info;		/* flags for FTSENT structure */
-	char *fts_accpath;		/* access path */
-	char *fts_path;			/* root path */
-	short fts_pathlen;		/* strlen(fts_path) */
-	char *fts_name;			/* file name */
-	short fts_namelen;		/* strlen(fts_name) */
-	short fts_level;		/* depth (\-1 to N) */
-	int fts_errno;			/* file errno */
-	long fts_number;		/* local numeric value */
-	void *fts_pointer;		/* local address value */
-	struct ftsent *fts_parent;	/* parent directory */
-	struct ftsent *fts_link;	/* next file structure */
-	struct ftsent *fts_cycle;	/* cycle structure */
-	struct stat *fts_statp;		/* stat(2) information */
+        u_short fts_info;           /* flags for FTSENT structure */
+        char *fts_accpath;          /* access path */
+        char *fts_path;             /* root path */
+        short fts_pathlen;          /* strlen(fts_path) */
+        char *fts_name;             /* file name */
+        short fts_namelen;          /* strlen(fts_name) */
+        short fts_level;            /* depth (\-1 to N) */
+        int fts_errno;              /* file errno */
+        long fts_number;            /* local numeric value */
+        void *fts_pointer;          /* local address value */
+        struct ftsent *fts_parent;  /* parent directory */
+        struct ftsent *fts_link;    /* next file structure */
+        struct ftsent *fts_cycle;   /* cycle structure */
+        struct stat *fts_statp;     /* stat(2) information */
 } FTSENT;
 .Ed
 .Pp
 These fields are defined as follows:
-.Bl -tag -width "fts_namelen"
+.Bl -tag -width Fa
 .It Fa fts_info
 One of the following flags describing the returned
-.Fa FTSENT
+.Vt FTSENT
 structure and
 the file it represents.
 With the exception of directories without errors
@@ -146,19 +151,19 @@ With the exception of directories without errors
 all of these
 entries are terminal, that is, they will not be revisited, nor will any
 of their descendants be visited.
-.Bl  -tag -width FTS_DEFAULT
+.Bl -tag -width Dv
 .It Dv FTS_D
 A directory being visited in pre-order.
 .It Dv FTS_DC
 A directory that causes a cycle in the tree.
-(The
+The
 .Fa fts_cycle
 field of the
-.Fa FTSENT
-structure will be filled in as well).
+.Vt FTSENT
+structure will be filled in as well.
 .It Dv FTS_DEFAULT
 Any
-.Fa FTSENT
+.Vt FTSENT
 structure that represents a file type not explicitly described
 by one of the other
 .Fa fts_info
@@ -180,7 +185,7 @@ which was not specified as a file name to
 .It Dv FTS_DP
 A directory being visited in post-order.
 The contents of the
-.Fa FTSENT
+.Vt FTSENT
 structure will be unchanged from when
 it was returned in pre-order, i.e., with the
 .Fa fts_info
@@ -239,15 +244,15 @@ The length of the string referenced by
 The depth of the traversal, numbered from \-1 to N, where this file
 was found.
 The
-.Fa FTSENT
+.Vt FTSENT
 structure representing the parent of the starting point (or root)
 of the traversal is numbered \-1, and the
-.Fa FTSENT
+.Vt FTSENT
 structure for the root
 itself is numbered 0.
 .It Fa fts_errno
 Upon return of a
-.Fa FTSENT
+.Vt FTSENT
 structure from the
 .Fn fts_children
 or
@@ -282,7 +287,7 @@ It is initialized to
 .Dv NULL .
 .It Fa fts_parent
 A pointer to the
-.Fa FTSENT
+.Vt FTSENT
 structure referencing the file in the hierarchy
 immediately above the current file, i.e., the directory of which this
 file is a member.
@@ -312,9 +317,9 @@ of a hard link between two directories, or a symbolic link pointing to a
 directory, the
 .Fa fts_cycle
 field of the structure will point to the
-.Fa FTSENT
+.Vt FTSENT
 structure in the hierarchy that references the same file as the current
-.Fa FTSENT
+.Vt FTSENT
 structure.
 Otherwise, the contents of the
 .Fa fts_cycle
@@ -332,15 +337,15 @@ Therefore, the
 and
 .Fa fts_accpath
 fields are guaranteed to be
-.Dv NUL Ns -terminated
+.Tn NUL Ns -terminated
 .Em only
 for the file most recently returned by
 .Fn fts_read .
 To use these fields to reference any files represented by other
-.Fa FTSENT
+.Vt FTSENT
 structures will require that the path buffer be modified using the
 information contained in that
-.Fa FTSENT
+.Vt FTSENT
 structure's
 .Fa fts_pathlen
 field.
@@ -350,8 +355,8 @@ are attempted.
 The
 .Fa fts_name
 field is always
-.Dv NUL Ns -terminated .
-.Sh FTS_OPEN
+.Tn NUL Ns -terminated .
+.Ss FTS_OPEN
 The
 .Fn fts_open
 function takes a pointer to an array of character pointers naming one
@@ -361,15 +366,18 @@ The array must be terminated by a
 pointer.
 .Pp
 There are
-a number of options, at least one of which (either
+a number of options, at least one of which
+.Po
+either
 .Dv FTS_LOGICAL
 or
-.Dv FTS_PHYSICAL )
+.Dv FTS_PHYSICAL
+.Pc
 must be specified.
 The options are selected by
 .Em or Ns 'ing
 the following values:
-.Bl -tag -width "FTS_COMFOLLOW "
+.Bl -tag -width Dv
 .It Dv FTS_COMFOLLOW
 This option causes any symbolic link specified as a root path to be
 followed immediately whether or not
@@ -379,11 +387,11 @@ is also specified.
 This option causes the
 .Nm
 routines to return
-.Fa FTSENT
+.Vt FTSENT
 structures for the targets of symbolic links
 instead of the symbolic links themselves.
 If this option is set, the only symbolic links for which
-.Fa FTSENT
+.Vt FTSENT
 structures
 are returned to the application are those referencing non-existent files.
 Either
@@ -413,10 +421,10 @@ pathnames were provided as arguments to
 .Fn fts_open .
 .It Dv FTS_NOSTAT
 By default, returned
-.Fa FTSENT
-structures reference file characteristic information (the
-.Fa statp
-field) for each file visited.
+.Vt FTSENT
+structures reference file characteristic information
+.Pq the Fa fts_statp No field
+for each file visited.
 This option relaxes that requirement as a performance optimization,
 allowing the
 .Nm
@@ -425,17 +433,17 @@ functions to set the
 field to
 .Dv FTS_NSOK
 and leave the contents of the
-.Fa statp
+.Fa fts_statp
 field undefined.
 .It Dv FTS_PHYSICAL
 This option causes the
 .Nm
 routines to return
-.Fa FTSENT
+.Vt FTSENT
 structures for symbolic links themselves instead
 of the target files they point to.
 If this option is set,
-.Fa FTSENT
+.Vt FTSENT
 structures for all symbolic links in the
 hierarchy are returned to the application.
 Either
@@ -457,7 +465,7 @@ encountered in the file hierarchy are ignored.
 This option causes the
 .Nm
 routines to return
-.Fa FTSENT
+.Vt FTSENT
 structures for them.
 .It Dv FTS_WHITEOUT
 Return whiteout entries, which are normally hidden.
@@ -474,7 +482,7 @@ specifies a user-defined function which may be used to order the traversal
 of the hierarchy.
 It
 takes two pointers to pointers to
-.Fa FTSENT
+.Vt FTSENT
 structures as arguments and
 should return a negative value, zero, or a positive value to indicate
 if the file referenced by its first argument comes before, in any order
@@ -485,7 +493,7 @@ The
 and
 .Fa fts_pathlen
 fields of the
-.Fa FTSENT
+.Vt FTSENT
 structures may
 .Em never
 be used in this comparison.
@@ -506,19 +514,30 @@ the directory traversal order is in the order listed in
 .Fa path_argv
 for the root paths, and in the order listed in the directory for
 everything else.
-.Sh FTS_READ
+.Pp
+If an error occurs,
+.Fn fts_open
+returns
+.Dv NULL
+and sets
+.Va errno
+appropriately.
+.Ss FTS_READ
 The
 .Fn fts_read
 function returns a pointer to an
-.Fa FTSENT
+.Vt FTSENT
 structure describing a file in
 the hierarchy.
-Directories (that are readable and do not cause cycles) are visited at
-least twice, once in pre-order and once in post-order.
+Directories
+.Pq that are readable and do not cause cycles
+are visited at least twice, once in pre-order and once in post-order.
 All other files are visited at least once.
-(Hard links between directories that do not cause cycles or symbolic
+.Po
+Hard links between directories that do not cause cycles or symbolic
 links to symbolic links may cause files to be visited more than once,
-or directories more than twice.)
+or directories more than twice
+.Pc .
 .Pp
 If all the members of the hierarchy have been returned,
 .Fn fts_read
@@ -535,14 +554,14 @@ and sets
 .Va errno
 appropriately.
 If an error related to a returned file occurs, a pointer to an
-.Fa FTSENT
+.Vt FTSENT
 structure is returned, and
 .Va errno
 may or may not have been set (see
 .Fa fts_info ) .
 .Pp
 The
-.Fa FTSENT
+.Vt FTSENT
 structures returned by
 .Fn fts_read
 may be overwritten after a call to
@@ -553,25 +572,25 @@ on the same file hierarchy stream unless they represent a file of type
 directory, in which case they will not be overwritten until after a call to
 .Fn fts_read
 after the
-.Fa FTSENT
+.Vt FTSENT
 structure has been returned by the function
 .Fn fts_read
 in post-order.
-.Sh FTS_CHILDREN
+.Ss FTS_CHILDREN
 The
 .Fn fts_children
 function returns a pointer to an
-.Fa FTSENT
+.Vt FTSENT
 structure describing the first entry in a
 .Dv NULL Ns -terminated
 linked list of the files in the directory represented by the
-.Fa FTSENT
+.Vt FTSENT
 structure most recently returned by
 .Fn fts_read .
 The list is linked through the
 .Fa fts_link
 field of the
-.Fa FTSENT
+.Vt FTSENT
 structure, and is ordered by the user-specified comparison function, if any.
 Repeated calls to
 .Fn fts_children
@@ -586,7 +605,7 @@ will return a pointer to the files in the logical directory specified to
 i.e., the arguments specified to
 .Fn fts_open .
 Otherwise, if the
-.Fa FTSENT
+.Vt FTSENT
 structure most recently returned by
 .Fn fts_read
 is not a directory being visited in pre-order,
@@ -606,7 +625,7 @@ and sets
 appropriately.
 .Pp
 The
-.Fa FTSENT
+.Vt FTSENT
 structures returned by
 .Fn fts_children
 may be overwritten after a call to
@@ -618,7 +637,7 @@ on the same file hierarchy stream.
 .Pp
 .Em Option
 may be set to the following value:
-.Bl -tag -width "FTS_COMFOLLOW "
+.Bl -tag -width Dv
 .It Dv FTS_NAMEONLY
 Only the names of the files are needed.
 The contents of all the fields in the returned linked list of structures
@@ -628,7 +647,7 @@ and
 .Fa fts_namelen
 fields.
 .El
-.Sh FTS_SET
+.Ss FTS_SET
 The function
 .Fn fts_set
 allows the user application to determine further processing for the
@@ -642,7 +661,7 @@ function
 returns 0 on success, and \-1 if an error occurs.
 .Em Option
 must be set to one of the following values:
-.Bl -tag -width "FTS_COMFOLLOW "
+.Bl -tag -width Dv
 .It Dv FTS_AGAIN
 Re-visit the file; any file type may be re-visited.
 The next call to
@@ -658,8 +677,9 @@ This option is meaningful only for the most recently returned
 file from
 .Fn fts_read .
 Normal use is for post-order directory visits, where it causes the
-directory to be re-visited (in both pre and post-order) as well as all
-of its descendants.
+directory to be re-visited
+.Pq in both pre- and post-order
+as well as all of its descendants.
 .It Dv FTS_FOLLOW
 The referenced file must be a symbolic link.
 If the referenced file is the one most recently returned by
@@ -698,7 +718,7 @@ The file may be one of those most recently returned by either
 or
 .Fn fts_read .
 .El
-.Sh FTS_CLOSE
+.Ss FTS_CLOSE
 The
 .Fn fts_close
 function closes a file hierarchy stream

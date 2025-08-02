@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2023/08/20 02:30:58 rin Exp $
+#	$NetBSD: Makefile,v 1.49.2.1 2025/08/02 05:58:23 perseant Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -10,13 +10,22 @@ FIND_ARGS=	\! \( -type d -name sim -prune \)
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
-		--without-mpfr --with-libgmp-prefix=${TOOLDIR}
+		--with-zstd=no \
+		--with-mpfr=${TOOLDIR} \
+		--with-mpc=${TOOLDIR} \
+		--with-gmp=${TOOLDIR}
 
 .if ${MACHINE} == "ia64"
 CONFIGURE_ARGS+=--enable-obsolete
 .endif
 
-MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q}
+# XXX
+# Unfortunately, our in-tree makeinfo(1) (latest GPLv2 release) is
+# too old to generate *.info. Use external tool from pkgsrc.
+EXTERN_MAKEINFO?=	/usr/pkg/bin/makeinfo
+MAKEINFOFLAGS?=		--no-split
+
+MAKE_ARGS=	MACHINE=
 
 ALL_TARGET=	all-gdb
 INSTALL_TARGET=	install-gdb
@@ -39,12 +48,14 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*:Nam_cv_func_iconv*} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q}' '${CXXADDFLAGS:Q} \
 			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
 			CFLAGS= CPPFLAGS= \
-			CXXFLAGS= LDFLAGS=-L${GMPOBJ} \
+			CXXFLAGS= LDFLAGS='-L${GMPOBJ} -L${MPFROBJ} -L${MPCOBJ}'\
 			AS=${AS:Q} AWK=${TOOL_AWK:Q} LD=${LD:Q} \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
 			NM=${NM:Q} OBJDUMP=${OBJDUMP:Q} \
 			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
 			LIBS=-lintl \
+			MAKEINFO=${EXTERN_MAKEINFO} \
+			MAKEINFOFLAGS=${MAKEINFOFLAGS} \
 			${MKNATIVE_CONFIGURE_PRESET}
 
 MKENV_BUILD_MAKE=${MKNATIVE_ENV} ${BUILD_MAKE}
@@ -97,15 +108,14 @@ CONFIGURE_ENV+=	ac_cv_header_ncurses_h=no \
 # Disable sim unless it's known to work (configure's default is to
 # enable sim if supported).
 CONFIGURE_ARGS_SIM=
-.if \
-    ${MACHINE_CPU} != "powerpc" && \
-    ${MACHINE_CPU} != "powerpc64"
+#.if \
+#    ${MACHINE_CPU} != "powerpc" && \
+#    ${MACHINE_CPU} != "powerpc64"
 CONFIGURE_ARGS_SIM+= --disable-sim
-.endif
+#.endif
 
 CONFIGURE_ARGS_GDBSERVER=
-.if \
-    ${MACHINE_CPU} == "x86_64"
+.if ${MKGDBSERVER} != "no"
 CONFIGURE_ARGS_GDBSERVER+= --enable-gdbserver
 .endif
 
@@ -120,11 +130,17 @@ native-gdb: .native/.configure_done
 	mkdir -p ${.OBJDIR}/.native/include
 	# we need to make a copy because ${GMPINC} has a config.h
 	cp -p ${GMPINC}/gmp.h ${.OBJDIR}/.native/include
+	# copy the rest because using --with-foo=${TOOLDIR} breaks with
+	# static linking because it picks the tools version of the libraries
+	cp -p ${MPFRINC}/mpfr.h ${.OBJDIR}/.native/include
+	cp -p ${MPFRINC}/mpf2mpfr.h ${.OBJDIR}/.native/include
+	cp -p ${MPCINC}/mpc.h ${.OBJDIR}/.native/include
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd ${.OBJDIR}/.native && \
 			${MKNATIVE_ENV} ${HOST_SH} ${GNUHOSTDIST}/configure \
 			--prefix=/usr \
 			--with-separate-debug-dir=/usr/libdata/debug \
+			--with-zstd=no \
 			${CONFIGURE_ARGS_SIM} \
 			${CONFIGURE_ARGS_GDBSERVER} \
 			--build=`${GNUHOSTDIST}/config.guess` \
@@ -141,7 +157,9 @@ native-gdb: .native/.configure_done
 			${MKENV_BUILD_MAKE} backtrace-supported.h) && \
 		(if [ -d ${.OBJDIR}/.native/gdbserver ]; then \
 			cd ${.OBJDIR}/.native/gdbserver && \
-			${MKENV_BUILD_MAKE} version-generated.cc; fi)
+			${MKENV_BUILD_MAKE} version-generated.cc; fi) && \
+		(cd ${.OBJDIR}/.native/gdb/doc && \
+			${MKENV_BUILD_MAKE} NetBSD_DISABLED_info)
 	@touch $@
 
 clean: clean.native

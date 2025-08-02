@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.45 2023/07/31 17:38:28 christos Exp $	*/
+/*	$NetBSD: wchar.h,v 1.45.2.1 2025/08/02 05:54:28 perseant Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -134,7 +134,11 @@ wchar_t	*wmempcpy(wchar_t * __restrict, const wchar_t * __restrict, size_t);
 wchar_t	*wmemmove(wchar_t *, const wchar_t *, size_t);
 wchar_t	*wmemset(wchar_t *, wchar_t, size_t);
 
-#if defined(_NETBSD_SOURCE)
+/*
+ * IEEE Std 1003.1-2024 (POSIX.1-2024)
+ */
+#if (_POSIX_C_SOURCE - 0) >= 202405L || (_XOPEN_SOURCE - 0 >= 800) || \
+    defined(_NETBSD_SOURCE)
 size_t	wcslcat(wchar_t *, const wchar_t *, size_t);
 size_t	wcslcpy(wchar_t *, const wchar_t *, size_t);
 #endif

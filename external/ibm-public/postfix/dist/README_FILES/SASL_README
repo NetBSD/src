@@ -185,12 +185,9 @@ You can read more about the following topics:
     cyrus_sasl_config_path and/or the distribution-specific documentation to
     determine the expected location.
 
-  * Some Debian-based Postfix distributions patch Postfix to hardcode a non-
-    default search path, making it impossible to set an alternate search path
-    via the "cyrus_sasl_config_path" parameter. This is likely to be the case
-    when the distribution documents a Postfix-specific path (e.g. /etc/postfix/
-    sasl/) that is different from the default value of "cyrus_sasl_config_path"
-    (which then is likely to be empty).
+  * Some Debian-based Postfix distributions ignore the "cyrus_sasl_config_path"
+    parameter setting, and force Postfix to open the file /etc/postfix/sasl/
+    smtpd.conf.
 
     NNoottee
 
@@ -987,7 +984,7 @@ authentication information:
 
     The mmmmeennccooddee command is part of the metamail software.
 
-  * Using Perl MMIIMMEE::::BBaassee6644 (from http://www.cpan.org/):
+  * Using Perl MMIIMMEE::::BBaassee6644 (from https://www.cpan.org/):
 
         % ppeerrll --MMMMIIMMEE::::BBaassee6644 --ee \\
             ''pprriinntt eennccooddee__bbaassee6644((""\\00uusseerrnnaammee\\00ppaasssswwoorrdd""));;''
@@ -1001,7 +998,7 @@ authentication information:
         password:
 
     The ggeenn--aauutthh Perl script was written by John Jetmore and can be found at
-    http://jetmore.org/john/code/gen-auth.
+    https://jetmore.org/john/code/gen-auth.
 
 CCoonnffiigguurriinngg SSAASSLL aauutthheennttiiccaattiioonn iinn tthhee PPoossttffiixx SSMMTTPP//LLMMTTPP cclliieenntt
 

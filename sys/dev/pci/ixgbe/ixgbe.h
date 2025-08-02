@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.98 2023/12/30 06:16:44 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.98.2.1 2025/08/02 05:57:01 perseant Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -332,7 +332,7 @@ struct ix_queue {
 	struct rx_ring   *rxr;
 	struct work      wq_cookie;
 	void             *que_si;
-	/* Per queue event conters */
+	/* Per queue event counters */
 	struct evcnt     irqs;		/* Hardware interrupt */
 	struct evcnt     handleq;	/* software_interrupt */
 	struct evcnt     req;		/* deferred */
@@ -389,7 +389,7 @@ struct tx_ring {
 	struct evcnt		pcq_drops;
 	struct evcnt		no_desc_avail;
 	struct evcnt		tso_tx;
-	/* Per queue conters.  The adapter total is in struct adapter */
+	/* Per queue counters.  The adapter total is in struct adapter */
 	u64              q_efbig_tx_dma_setup;
 	u64              q_mbuf_defrag_failed;
 	u64              q_efbig2_tx_dma_setup;
@@ -458,8 +458,8 @@ struct ixgbe_vf {
 };
 
 /*
- * NetBSD: For trafic class
- * Crrently, the following structure is only for statistics.
+ * NetBSD: For traffic class
+ * Currently, the following structure is only for statistics.
  */
 struct ixgbe_tc {
 	char             evnamebuf[32];

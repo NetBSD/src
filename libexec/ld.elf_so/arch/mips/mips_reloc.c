@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.75 2023/06/04 01:24:57 joerg Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.75.2.1 2025/08/02 05:55:02 perseant Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -28,9 +28,25 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * MIPS ELF relocations, for all ABIs: o32, n32, n64.
+ *
+ * References:
+ *
+ *	[SYSVMIPS32ABI] System V Application Binary Interface: MIPS
+ *	RISC Processor Supplement, 3rd ed., 1996.
+ *	https://www.sco.com/developers/devspecs/mipsabi.pdf
+ *	https://web.archive.org/web/20221026055746/http://www.sco.com/developers/devspecs/mipsabi.pdf
+ *
+ *	[SGIMIPS64ELF] 64-bit ELF Object File Specification, Draft
+ *	Version 2.5, MIPS Technologies / Silicon Graphics Computer
+ *	Systems.  Archived 2015-08-18.
+ *	https://web.archive.org/web/20150818210955/http://techpubs.sgi.com/library/manuals/4000/007-4658-001/pdf/007-4658-001.pdf
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.75 2023/06/04 01:24:57 joerg Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.75.2.1 2025/08/02 05:55:02 perseant Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,6 +58,8 @@ __RCSID("$NetBSD: mips_reloc.c,v 1.75 2023/06/04 01:24:57 joerg Exp $");
 
 #include "debug.h"
 #include "rtld.h"
+
+#include <machine/lwp_private.h>
 
 #ifdef __mips_o32
 #define SUPPORT_OLD_BROKEN_LD
@@ -327,7 +345,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		case R_TYPE(TLS_DTPREL64):
 		case R_TYPE(TLS_TPREL64):
 #else
-		case R_TYPE(TLS_DTPMOD32): 
+		case R_TYPE(TLS_DTPMOD32):
 		case R_TYPE(TLS_DTPREL32):
 		case R_TYPE(TLS_TPREL32):
 #endif
@@ -405,7 +423,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 #if ELFSIZE == 64
 		case R_TYPE(TLS_DTPMOD64):
 #else
-		case R_TYPE(TLS_DTPMOD32): 
+		case R_TYPE(TLS_DTPMOD32):
 #endif
 		{
 			Elf_Addr old = load_ptr(where, ELFSIZE / 8);

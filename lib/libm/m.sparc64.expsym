@@ -29,8 +29,6 @@ __kernel_sinl
 __kernel_tanl
 __multc3
 __mulxc3
-_fini
-_init
 fabsl
 fma
 fmaf

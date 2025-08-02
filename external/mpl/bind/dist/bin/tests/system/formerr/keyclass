@@ -1,0 +1,7 @@
+# mismatched key class
+# header: questions=1 additional=1
+00 00 00 00 00 01 00 00 00 00 00 01
+# question: ./A/IN
+00 00 01 00 01
+# additional: ./KEY/CLASS2 flags=0 protocol=0 algorithm=248 keydata=00
+00 00 19 00 02 00 00 00 01 00 05 00 00 00 f8 00

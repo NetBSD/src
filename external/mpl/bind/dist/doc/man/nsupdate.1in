@@ -32,11 +32,11 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 nsupdate \- dynamic DNS update utility
 .SH SYNOPSIS
 .sp
-\fBnsupdate\fP [\fB\-d\fP] [\fB\-D\fP] [\fB\-i\fP] [\fB\-L\fP level] [ [\fB\-g\fP] | [\fB\-o\fP] | [\fB\-l\fP] | [\fB\-y\fP [hmac:]keyname:secret] | [\fB\-k\fP keyfile] ] [\fB\-t\fP timeout] [\fB\-u\fP udptimeout] [\fB\-r\fP udpretries] [\fB\-v\fP] [\fB\-T\fP] [\fB\-P\fP] [\fB\-V\fP] [ [\fB\-4\fP] | [\fB\-6\fP] ] [filename]
+\fBnsupdate\fP [\fB\-d\fP] [\fB\-D\fP] [\fB\-i\fP] [\fB\-L\fP level] [ [\fB\-g\fP] | [\fB\-o\fP] | [\fB\-l\fP] | [\fB\-y\fP [hmac:]keyname:secret] | [\fB\-k\fP keyfile] ] [ [\fB\-S\fP] [\fB\-K\fP tlskeyfile] [\fB\-E\fP tlscertfile] [\fB\-A\fP tlscafile] [\fB\-H\fP tlshostname] [\-O] ] [\fB\-t\fP timeout] [\fB\-u\fP udptimeout] [\fB\-r\fP udpretries] [\fB\-v\fP] [\fB\-T\fP] [\fB\-P\fP] [\fB\-V\fP] [ [\fB\-4\fP] | [\fB\-6\fP] ] [filename]
 .SH DESCRIPTION
 .sp
 \fBnsupdate\fP is used to submit Dynamic DNS Update requests, as defined in
-\fI\%RFC 2136\fP, to a name server. This allows resource records to be added or
+\X'tty: link https://datatracker.ietf.org/doc/html/rfc2136.html'\fI\%RFC 2136\fP\X'tty: link', to a name server. This allows resource records to be added or
 removed from a zone without manually editing the zone file. A single
 update request can contain requests to add or remove more than one
 resource record.
@@ -51,9 +51,9 @@ zone\(aqs primary server, which is identified by the MNAME field of the
 zone\(aqs SOA record.
 .sp
 Transaction signatures can be used to authenticate the Dynamic DNS
-updates. These use the TSIG resource record type described in \fI\%RFC 2845\fP,
-the SIG(0) record described in \fI\%RFC 2535\fP and \fI\%RFC 2931\fP, or GSS\-TSIG as
-described in \fI\%RFC 3645\fP\&.
+updates. These use the TSIG resource record type described in \X'tty: link https://datatracker.ietf.org/doc/html/rfc2845.html'\fI\%RFC 2845\fP\X'tty: link',
+the SIG(0) record described in \X'tty: link https://datatracker.ietf.org/doc/html/rfc2535.html'\fI\%RFC 2535\fP\X'tty: link' and \X'tty: link https://datatracker.ietf.org/doc/html/rfc2931.html'\fI\%RFC 2931\fP\X'tty: link', or GSS\-TSIG as
+described in \X'tty: link https://datatracker.ietf.org/doc/html/rfc3645.html'\fI\%RFC 3645\fP\X'tty: link'\&.
 .sp
 TSIG relies on a shared secret that should only be known to \fBnsupdate\fP
 and the name server. For instance, suitable \fBkey\fP and \fBserver\fP
@@ -83,6 +83,16 @@ This option sets use of IPv6 only.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-A tlscafile
+This option specifies the file of the certificate authorities (CA) certificates
+(in PEM format) in order to verify the remote server TLS certificate when
+using DNS\-over\-TLS (DoT), to achieve Strict or Mutual TLS. When used, it will
+override the certificates from the global certificates store, which are
+otherwise used by default when \fI\%\-S\fP is enabled. This option can not
+be used in conjuction with \fI\%\-O\fP, and it implies \fI\%\-S\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-C
 Overrides the default \fIresolv.conf\fP file. This is only intended for testing.
 .UNINDENT
@@ -99,8 +109,23 @@ This option sets extra debug mode.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-E tlscertfile
+This option sets the certificate(s) file for authentication for the
+DNS\-over\-TLS (DoT) transport to the remote server. The certificate
+chain file is expected to be in PEM format. This option implies \fI\%\-S\fP,
+and can only be used with \fI\%\-K\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-g
 This option enables standard GSS\-TSIG mode.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-H tlshostname
+This option makes \fBnsupdate\fP use the provided hostname during remote
+server TLS certificate verification. Otherwise, the DNS server name
+is used. This option implies \fI\%\-S\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -122,6 +147,14 @@ the key specified is not an HMAC\-MD5 key.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-K tlskeyfile
+This option sets the key file for authenticated encryption for the
+DNS\-over\-TLS (DoT) transport with the remote server. The private key file is
+expected to be in PEM format. This option implies \fI\%\-S\fP, and can only
+be used with \fI\%\-E\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-l
 This option sets local\-host only mode, which sets the server address to localhost
 (disabling the \fBserver\fP so that the server address cannot be
@@ -139,8 +172,19 @@ This option sets the logging debug level. If zero, logging is disabled.
 .INDENT 0.0
 .TP
 .B \-o
-This option enables a non\-standards\-compliant variant of GSS\-TSIG
-used by Windows 2000.
+This option is deprecated. Previously, it enabled a
+non\-standards\-compliant variant of GSS\-TSIG that was used by Windows
+2000. Since that OS is now long past its end of life, this option is
+now treated as a synonym for \fI\%\-g\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-O
+This option enables Opportunistic TLS. When used, the remote peer\(aqs TLS
+certificate will not be verified. This option should be used for debugging
+purposes only, and it is not recommended to use it in production. This
+option can not be used in conjuction with \fI\%\-A\fP, and it implies
+\fI\%\-S\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -159,6 +203,16 @@ format is understood by \fBnsupdate\fP\&. See also the \fI\%\-T\fP option.
 .B \-r udpretries
 This option sets the number of UDP retries. The default is 3. If zero, only one update
 request is made.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-S
+This option indicates whether to use DNS\-over\-TLS (DoT) when querying
+name servers specified by \fBserver servername port\fP syntax in the input
+file, and the primary server discovered through a SOA request. When the
+\fI\%\-K\fP and \fI\%\-E\fP options are used, then the specified TLS
+client certificate and private key pair are used for authentication
+(Mutual TLS). This option implies \fI\%\-v\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -287,8 +341,9 @@ This command uses GSS\-TSIG to sign the updates. This is equivalent to specifyin
 \fI\%\-g\fP on the command line.
 .TP
 .B \fBoldgsstsig\fP
-This command uses the Windows 2000 version of GSS\-TSIG to sign the updates. This is
-equivalent to specifying \fI\%\-o\fP on the command line.
+This command is deprecated and will be removed in a future release.
+Previously, it caused \fBnsupdate\fP to use the Windows 2000 version of
+GSS\-TSIG to sign updates. It is now treated as a synonym for \fBgsstsig\fP\&.
 .TP
 .B \fBrealm [realm_name]\fP
 When using GSS\-TSIG, this command specifies the use of \fBrealm_name\fP rather than the default realm
@@ -300,6 +355,17 @@ This command turns on or off check\-names processing on records to be added.
 Check\-names has no effect on prerequisites or records to be deleted.
 By default check\-names processing is on. If check\-names processing
 fails, the record is not added to the UPDATE message.
+.TP
+.B \fBcheck\-svbc [boolean]\fP
+This command turns on or off check\-svcb processing on records to be added.
+Check\-svcb has no effect on prerequisites or records to be deleted.
+By default check\-svcb processing is on. If check\-svcb processing
+fails, the record is not added to the UPDATE message.
+.TP
+.B \fBlease time [keytime]\fP
+Set the EDNS Update Lease (UL) option to value to \fBtime\fP and
+optionally also set the key lease time to \fBkeytime\fP in seconds.
+If \fBtime\fP is \fBnone\fP the lease times are cleared.
 .TP
 .B \fBprereq nxdomain domain\-name\fP
 This command requires that no resource record of any type exist with the name
@@ -369,14 +435,12 @@ server for \fBexample.com\fP\&.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 # nsupdate
 > update delete oldhost.example.com A
 > update add newhost.example.com 86400 A 172.16.1.1
 > send
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -386,14 +450,12 @@ newly added record has a TTL of 1 day (86400 seconds).
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 # nsupdate
 > prereq nxdomain nickname.example.com
 > update add nickname.example.com 86400 CNAME somehost.example.com
 > send
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -401,9 +463,9 @@ The prerequisite condition tells the name server to verify that there are
 no resource records of any type for \fBnickname.example.com\fP\&. If there
 are, the update request fails. If this name does not exist, a CNAME for
 it is added. This ensures that when the CNAME is added, it cannot
-conflict with the long\-standing rule in \fI\%RFC 1034\fP that a name must not
+conflict with the long\-standing rule in \X'tty: link https://datatracker.ietf.org/doc/html/rfc1034.html'\fI\%RFC 1034\fP\X'tty: link' that a name must not
 exist as any other record type if it exists as a CNAME. (The rule has
-been updated for DNSSEC in \fI\%RFC 2535\fP to allow CNAMEs to have RRSIG,
+been updated for DNSSEC in \X'tty: link https://datatracker.ietf.org/doc/html/rfc2535.html'\fI\%RFC 2535\fP\X'tty: link' to allow CNAMEs to have RRSIG,
 DNSKEY, and NSEC records.)
 .SH FILES
 .INDENT 0.0
@@ -422,7 +484,7 @@ Base\-64 encoding of the HMAC\-MD5 key created by \fI\%dnssec\-keygen\fP\&.
 .UNINDENT
 .SH SEE ALSO
 .sp
-\fI\%RFC 2136\fP, \fI\%RFC 3007\fP, \fI\%RFC 2104\fP, \fI\%RFC 2845\fP, \fI\%RFC 1034\fP, \fI\%RFC 2535\fP, \fI\%RFC 2931\fP,
+\X'tty: link https://datatracker.ietf.org/doc/html/rfc2136.html'\fI\%RFC 2136\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc3007.html'\fI\%RFC 3007\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc2104.html'\fI\%RFC 2104\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc2845.html'\fI\%RFC 2845\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc1034.html'\fI\%RFC 1034\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc2535.html'\fI\%RFC 2535\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc2931.html'\fI\%RFC 2931\fP\X'tty: link',
 \fI\%named(8)\fP, \fI\%dnssec\-keygen(8)\fP, \fI\%tsig\-keygen(8)\fP\&.
 .SH BUGS
 .sp
@@ -432,6 +494,6 @@ operations, and may change in future releases.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2024, Internet Systems Consortium
+2025, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

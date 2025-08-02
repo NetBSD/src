@@ -12,17 +12,17 @@
  */
 
 key "a" {
-	algorithm "hmac-md5";
+	algorithm @DEFAULT_HMAC@;
 	secret "aaaaaaaaaaaaaaaaaaaa";
 };
 
 key "b" {
-	algorithm "hmac-md5";
+	algorithm @DEFAULT_HMAC@;
 	secret "bbbbbbbbbbbbbbbbbbbb";
 };
 
 key "c" {
-	algorithm "hmac-md5";
+	algorithm @DEFAULT_HMAC@;
 	secret "cccccccccccccccccccc";
 };
 
@@ -34,6 +34,7 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.5; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion yes;
 	notify yes;
 	dnssec-validation no;

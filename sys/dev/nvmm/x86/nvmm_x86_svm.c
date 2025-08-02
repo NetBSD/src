@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.85 2023/02/23 02:54:02 riastradh Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.85.6.1 2025/08/02 05:56:44 perseant Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.85 2023/02/23 02:54:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.85.6.1 2025/08/02 05:56:44 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.85 2023/02/23 02:54:02 riastradh 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
 
+#include <x86/apicvar.h>
 #include <x86/cputypes.h>
 #include <x86/specialreg.h>
 #include <x86/dbregs.h>
@@ -839,7 +840,7 @@ svm_inkernel_advance(struct vmcb *vmcb)
 }
 
 #define SVM_CPUID_MAX_BASIC		0xD
-#define SVM_CPUID_MAX_HYPERVISOR	0x40000000
+#define SVM_CPUID_MAX_HYPERVISOR	0x40000010
 #define SVM_CPUID_MAX_EXTENDED		0x8000001F
 static uint32_t svm_cpuid_max_basic __read_mostly;
 static uint32_t svm_cpuid_max_extended __read_mostly;
@@ -862,17 +863,34 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 	uint64_t cr4;
 
-	if (eax < 0x40000000) {
+
+	/*
+	 * `If a value entered for CPUID.EAX is higher than the maximum
+	 *  input value for basic or extended function for that
+	 *  processor then the data for the highest basic information
+	 *  leaf is returned.'
+	 *
+	 * --Intel 64 and IA-32 Architectures Software Developer's
+	 *   Manual, Vol. 2A, Order Number: 325383-077US, April 2022,
+	 *   Sec. 3.2 `Instructions (A-L)', CPUID--CPU Identification,
+	 *   p. 3-214.
+	 *
+	 * We take the same to hold for the hypervisor range,
+	 * 0x40000000-0x4fffffff.
+	 *
+	 * (Sync with nvmm_x86_vmx.c.)
+	 */
+	if (eax < 0x40000000) {		/* basic CPUID range */
 		if (__predict_false(eax > svm_cpuid_max_basic)) {
 			eax = svm_cpuid_max_basic;
 			svm_inkernel_exec_cpuid(cpudata, eax, ecx);
 		}
-	} else if (eax < 0x80000000) {
+	} else if (eax < 0x80000000) {	/* hypervisor CPUID range */
 		if (__predict_false(eax > SVM_CPUID_MAX_HYPERVISOR)) {
 			eax = svm_cpuid_max_basic;
 			svm_inkernel_exec_cpuid(cpudata, eax, ecx);
 		}
-	} else {
+	} else {			/* extended CPUID range */
 		if (__predict_false(eax > svm_cpuid_max_extended)) {
 			eax = svm_cpuid_max_basic;
 			svm_inkernel_exec_cpuid(cpudata, eax, ecx);
@@ -880,6 +898,10 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 	}
 
 	switch (eax) {
+
+	/*
+	 * basic CPUID range
+	 */
 	case 0x00000000:
 		cpudata->vmcb->state.rax = svm_cpuid_max_basic;
 		break;
@@ -970,6 +992,9 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		}
 		break;
 
+	/*
+	 * hypervisor CPUID range
+	 */
 	case 0x40000000: /* Hypervisor Information */
 		cpudata->vmcb->state.rax = SVM_CPUID_MAX_HYPERVISOR;
 		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
@@ -979,7 +1004,19 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RCX], "NVMM", 4);
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RDX], " ___", 4);
 		break;
+	case 0x40000010: /* VMware-style TSC and LAPIC freq */
+		cpudata->gprs[NVMM_X64_GPR_RAX] = curcpu()->ci_data.cpu_cc_freq / 1000;
+		if (has_lapic())
+			cpudata->gprs[NVMM_X64_GPR_RBX] = lapic_per_second / 1000;
+		else
+			cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+		break;
 
+	/*
+	 * extended CPUID range
+	 */
 	case 0x80000000:
 		cpudata->vmcb->state.rax = svm_cpuid_max_extended;
 		break;

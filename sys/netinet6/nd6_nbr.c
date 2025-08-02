@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.183 2023/03/29 13:01:44 kardel Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.183.6.1 2025/08/02 05:57:51 perseant Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.183 2023/03/29 13:01:44 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.183.6.1 2025/08/02 05:57:51 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -225,15 +225,14 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	if (ifp->if_carp && ifp->if_type != IFT_CARP) {
 		int s = pserialize_read_enter();
 		ifa = carp_iamatch6(ifp->if_carp, &taddr6);
-		if (ifa != NULL) {    
+		if (ifa != NULL) {
 			ifa_acquire(ifa, &psref_ia);
 			if (ifa->ifa_ifp && ifa->ifa_ifp != ifp) {
 				ifpc = ifa->ifa_ifp;
 				if_acquire(ifpc, &psref_c);
 			}
 		}
-		
-		
+
 		pserialize_read_exit(s);
 	} else
 		ifa = NULL;
@@ -685,7 +684,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 
 		if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
 			nd6log(LOG_INFO, "lladdrlen mismatch for %s "
-			    "(if %d, NA packet %d)\n", IN6_PRINT(ip6buf, &taddr6),
+			    "(if %d, NA packet %d)\n",
+			    IN6_PRINT(ip6buf, &taddr6),
 			    ifp->if_addrlen, lladdrlen - 2);
 			goto bad;
 		}

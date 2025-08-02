@@ -1,4 +1,4 @@
-/*	$NetBSD: sht3xvar.h,v 1.1 2021/11/06 13:34:40 brad Exp $	*/
+/*	$NetBSD: sht3xvar.h,v 1.1.10.1 2025/08/02 05:56:40 perseant Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -57,6 +57,7 @@ struct sht3x_sc {
 	bool		sc_dying;
 	bool		sc_opened;
 	bool		sc_wassingleshot;
+	bool		sc_clockstretch;
 	pool_cache_t	sc_readpool;
 	char		*sc_readpoolname;
 	SIMPLEQ_HEAD(,sht3x_read_q)  sc_read_queue;
@@ -87,6 +88,7 @@ struct sht3x_periodic {
 struct sht3x_repeatability {
 	const char     *text;
 	uint16_t        cmd;
+	uint16_t        cscmd;
 };
 
 #endif

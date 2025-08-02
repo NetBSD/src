@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.41 2019/11/20 19:37:53 pgoyette Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.41.32.1 2025/08/02 05:57:40 perseant Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,16 +31,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.41 2019/11/20 19:37:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.41.32.1 2025/08/02 05:57:40 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
+#include <sys/types.h>
+
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
-#include <sys/resourcevar.h>
 #include <sys/module.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/sdt.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -73,7 +76,7 @@ exec_aout_modcmd(modcmd_t cmd, void *arg)
 		return exec_remove(&exec_aout_execsw, 1);
 
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
         }
 }
 
@@ -98,7 +101,7 @@ exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 	struct exec *execp = epp->ep_hdr;
 
 	if (epp->ep_hdrvalid < sizeof(struct exec))
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 
 	midmag = ntohl(execp->a_midmag);
 	mid = (midmag >> 16) & 0x3ff;

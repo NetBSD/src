@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_sbrk.c,v 1.3 2000/06/14 06:49:10 cgd Exp $ */
+/* $NetBSD: Lint_sbrk.c,v 1.3.118.1 2025/08/02 05:54:42 perseant Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,8 +9,7 @@
 
 /*ARGSUSED*/
 void *
-sbrk(incr)
-	intptr_t incr;
+sbrk(intptr_t incr)
 {
-	return (0);
+	return NULL;
 }

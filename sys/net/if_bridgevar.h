@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.37 2021/09/30 03:57:48 yamaguchi Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.37.10.1 2025/08/02 05:57:47 perseant Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -130,8 +130,9 @@ struct ifbreq {
 #define	IFBIF_LEARNING		0x01	/* if can learn */
 #define	IFBIF_DISCOVER		0x02	/* if sends packets w/ unknown dest. */
 #define	IFBIF_STP		0x04	/* if participates in spanning tree */
+#define	IFBIF_PROTECTED		0x08	/* if participates in protected mode */
 
-#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER\3STP"
+#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER\3STP\4PROTECTED"
 
 /* BRDGFLUSH */
 #define	IFBF_FLUSHDYN		0x00	/* flush learned addresses only */
@@ -331,6 +332,7 @@ struct bridge_softc {
 	uint32_t		sc_filter_flags; /* ipf and flags */
 	int			sc_csum_flags_tx;
 	int			sc_capenable;
+	bool			sc_stopping;
 };
 
 extern const uint8_t bstp_etheraddr[];
@@ -352,8 +354,6 @@ void	bridge_calc_csum_flags(struct bridge_softc *);
 #define BRIDGE_UNLOCK(_sc)	mutex_exit(BRIDGE_LOCK_OBJ(_sc))
 #define BRIDGE_LOCKED(_sc)	mutex_owned(BRIDGE_LOCK_OBJ(_sc))
 
-#define BRIDGE_PSZ_RENTER(__s)	do { __s = pserialize_read_enter(); } while (0)
-#define BRIDGE_PSZ_REXIT(__s)	do { pserialize_read_exit(__s); } while (0)
 #define BRIDGE_PSZ_PERFORM(_sc)	pserialize_perform((_sc)->sc_iflist_psref.bip_psz)
 
 #define BRIDGE_IFLIST_READER_FOREACH(_bif, _sc) \

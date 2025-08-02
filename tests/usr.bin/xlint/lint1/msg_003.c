@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_003.c,v 1.7 2023/08/02 18:51:25 rillig Exp $	*/
+/*	$NetBSD: msg_003.c,v 1.7.2.1 2025/08/02 05:58:15 perseant Exp $	*/
 # 3 "msg_003.c"
 
 // Test for message: '%s' declared in parameter declaration list [3]
@@ -7,6 +7,7 @@
 
 /*ARGSUSED*/
 void
+/* expect+1: warning: function definition for 'example' with identifier list is obsolete in C23 [384] */
 example(declare_struct, declare_union, declare_enum)
     /* expect+1: warning: 'incomplete struct struct_in_parameter' declared in parameter declaration list [3] */
     struct struct_in_parameter *declare_struct;

@@ -9,6 +9,15 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.test*",
+        "ns*/example.*.bk",
+    ]
+)
+
 
 def test_auth(run_tests_sh):
     run_tests_sh()

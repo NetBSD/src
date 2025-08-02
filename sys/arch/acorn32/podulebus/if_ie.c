@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.55 2024/02/05 22:08:04 andvar Exp $ */
+/* $NetBSD: if_ie.c,v 1.55.2.1 2025/08/02 05:55:21 perseant Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.55 2024/02/05 22:08:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.55.2.1 2025/08/02 05:55:21 perseant Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -1387,7 +1387,7 @@ loop:
 	return(0);
     }
 
-    /* This is prehaps a little over cautious */
+    /* This is perhaps a little over cautious */
     if ( safety_catch++ > 10 )
     {
 	printf ( "ie: Interrupt couldn't be cleared\n" );

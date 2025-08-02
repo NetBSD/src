@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -59,7 +59,7 @@ documentation: </p>
     alias_maps = hash:/etc/postfix/aliases            (local aliasing)
     header_checks = regexp:/etc/postfix/header_checks (content filtering)
     transport_maps = hash:/etc/postfix/transport      (routing table)
-    virtual_alias_maps = hash:/etc/postfix/virtual    (address rewriting)
+    virtual_alias_maps = hash:/etc/postfix/virtual    (virtual aliasing)
 </pre>
 </blockquote>
 
@@ -348,6 +348,11 @@ ldap_table(5). </dd>
 
 <dd> Memcache database client. Configuration details are given in
 memcache_table(5). </dd>
+
+<dt> <b>mongodb</b> (read-only) </dt>
+
+<dd> MongoDB database client. Configuration details are given in
+mongodb_table(5), with examples in MONGODB_README. </dd>
 
 <dt> <b>mysql</b> (read-only) </dt>
 

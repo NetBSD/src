@@ -1,4 +1,4 @@
-/* $NetBSD: identcpu_subr.c,v 1.9 2021/10/07 13:04:18 msaitoh Exp $ */
+/* $NetBSD: identcpu_subr.c,v 1.9.10.1 2025/08/02 05:56:18 perseant Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * See src/usr.sbin/cpuctl/{Makefile, arch/i386.c}).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.9 2021/10/07 13:04:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.9.10.1 2025/08/02 05:56:18 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "lapic.h"
@@ -58,18 +58,51 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.9 2021/10/07 13:04:18 msaitoh Ex
 #include <stdlib.h>
 #include <string.h>
 #include <x86/cacheinfo.h>
+#include <x86/cpuvar.h>
 #include "cpuctl.h"
 #include "cpuctl_i386.h"
 #endif
 
-uint64_t
-cpu_tsc_freq_cpuid(struct cpu_info *ci)
+#ifdef _KERNEL
+static uint64_t
+tsc_freq_vmware_cpuid(struct cpu_info *ci)
+{
+	uint32_t descs[4];
+	uint64_t freq;
+
+	if (cpu_max_hypervisor_cpuid < 0x40000010)
+		return 0;
+
+	x86_cpuid(0x40000010, descs);
+
+	freq = descs[0];
+	if (freq == 0)
+		return 0;
+
+	aprint_verbose(
+	    "got tsc frequency from vmware compatible cpuid\n");
+
+#if NLAPIC > 0
+	if (descs[1] > 0) {
+		aprint_verbose(
+		    "got lapic frequency from vmware compatible cpuid\n");
+		lapic_per_second = descs[1] * 1000;
+		lapic_from_cpuid = true;
+	}
+#endif
+
+	return freq * 1000;
+}
+#endif
+
+static uint64_t
+tsc_freq_cpuid(struct cpu_info *ci)
 {
 	uint64_t freq = 0, khz;
 	uint32_t descs[4];
 	uint32_t denominator, numerator;
 
-	if (!((ci->ci_max_cpuid >= 0x15) && (cpu_vendor == CPUVENDOR_INTEL)))
+	if (ci->ci_max_cpuid < 0x15)
 		return 0;
 
 	x86_cpuid(0x15, descs);
@@ -139,6 +172,21 @@ cpu_tsc_freq_cpuid(struct cpu_info *ci)
 		}
 #endif
 	}
+	return freq;
+}
+
+uint64_t
+cpu_tsc_freq_cpuid(struct cpu_info *ci)
+{
+	uint64_t freq = 0;
+
+#ifdef _KERNEL
+	/* VMware compatible tsc and lapic frequency query */
+	if (vm_guest > VM_GUEST_NO)
+		freq = tsc_freq_vmware_cpuid(ci);
+#endif
+	if (freq == 0 && cpu_vendor == CPUVENDOR_INTEL)
+		freq = tsc_freq_cpuid(ci);
 	if (freq != 0)
 		aprint_verbose_dev(ci->ci_dev, "TSC freq CPUID %" PRIu64
 		    " Hz\n", freq);

@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.17 2024/02/02 22:39:09 andvar Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.17.2.1 2025/08/02 05:57:50 perseant Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.17 2024/02/02 22:39:09 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.17.2.1 2025/08/02 05:57:50 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -201,10 +201,8 @@ sctp_process_init(struct sctp_init_chunk *cp, struct sctp_tcb *stcb,
 					sctp_ulp_notify(SCTP_NOTIFY_DG_FAIL,
 					    stcb, SCTP_NOTIFY_DATAGRAM_UNSENT,
 					    chk);
-					if (chk->data) {
-						sctp_m_freem(chk->data);
-						chk->data = NULL;
-					}
+					sctp_m_freem(chk->data);
+					chk->data = NULL;
 					sctp_free_remote_addr(chk->whoTo);
 					chk->whoTo = NULL;
 					chk->asoc = NULL;
@@ -1762,7 +1760,7 @@ sctp_handle_cookie_echo(struct mbuf *m, int iphlen, int offset,
 		 * invalid ports or bad tag.  Note that we always leave
 		 * the v_tag in the header in network order and when we
 		 * stored it in the my_vtag slot we also left it in network
-		 * order. This maintians the match even though it may be in
+		 * order. This maintains the match even though it may be in
 		 * the opposite byte order of the machine :->
 		 */
 		return (NULL);
@@ -2312,10 +2310,8 @@ sctp_handle_ecn_cwr(struct sctp_cwr_chunk *cp, struct sctp_tcb *stcb)
 			/* this covers this ECNE, we can remove it */
 			TAILQ_REMOVE(&stcb->asoc.control_send_queue, chk,
 			    sctp_next);
-			if (chk->data) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			stcb->asoc.ctrl_queue_cnt--;
 			sctp_free_remote_addr(chk->whoTo);
 			SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk, chk);
@@ -2654,10 +2650,8 @@ sctp_clean_up_stream_reset(struct sctp_tcb *stcb)
 			TAILQ_REMOVE(&asoc->control_send_queue,
 				     chk,
 				     sctp_next);
-			if (chk->data) {
-				sctp_m_freem(chk->data);
-				chk->data = NULL;
-			}
+			sctp_m_freem(chk->data);
+			chk->data = NULL;
 			asoc->ctrl_queue_cnt--;
 			sctp_free_remote_addr(chk->whoTo);
 			SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_chunk, chk);
@@ -4262,11 +4256,8 @@ sctp_input(struct mbuf *m, int off, int proto)
 	sctp_common_input_processing(&m, iphlen, offset, length, sh, ch,
 	    inp, stcb, net, ecn_bits);
 	/* inp's ref-count reduced && stcb unlocked */
-	if (m) {
-		sctp_m_freem(m);
-	}
-	if (opts)
-		sctp_m_freem(opts);
+	sctp_m_freem(m);
+	sctp_m_freem(opts);
 
 	if ((inp) && (refcount_up)) {
 		/* reduce ref-count */
@@ -4288,10 +4279,7 @@ bad:
 		SCTP_INP_WUNLOCK(inp);
 	}
 
-	if (m) {
-		sctp_m_freem(m);
-	}
-	if (opts)
-		sctp_m_freem(opts);
+	sctp_m_freem(m);
+	sctp_m_freem(opts);
 	return;
 }

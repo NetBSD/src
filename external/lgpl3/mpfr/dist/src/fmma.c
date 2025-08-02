@@ -36,12 +36,12 @@ mpfr_fmma_aux (mpfr_ptr z, mpfr_srcptr a, mpfr_srcptr b, mpfr_srcptr c,
   MPFR_TMP_DECL(marker);
 
   MPFR_LOG_FUNC
-    (("a[%Pu]=%.*Rg b[%Pu]=%.*Rg c[%Pu]=%.*Rg d[%Pu]=%.*Rg rnd=%d neg=%d",
+    (("a[%Pd]=%.*Rg b[%Pd]=%.*Rg c[%Pd]=%.*Rg d[%Pd]=%.*Rg rnd=%d neg=%d",
       mpfr_get_prec (a), mpfr_log_prec, a,
       mpfr_get_prec (b), mpfr_log_prec, b,
       mpfr_get_prec (c), mpfr_log_prec, c,
       mpfr_get_prec (d), mpfr_log_prec, d, rnd, neg),
-     ("z[%Pu]=%.*Rg inex=%d",
+     ("z[%Pd]=%.*Rg inex=%d",
       mpfr_get_prec (z), mpfr_log_prec, z, inex));
 
   MPFR_TMP_MARK (marker);

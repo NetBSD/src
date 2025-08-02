@@ -1,7 +1,7 @@
-# $NetBSD: msg_011.ln,v 1.3 2021/08/24 23:38:51 rillig Exp $
+# $NetBSD: msg_011.ln,v 1.3.4.1 2025/08/02 05:58:20 perseant Exp $
 #
 # Test data for message 11 of lint2:
-#	%s, arg %d declared inconsistently (%s != %s)	%s :: %s
+#	%s has parameter %d declared as '%s' in %s, versus '%s' in %s
 
 # msg_011_define.c:2: double add(double a, double b) { return a + b; }
 0 s msg_011_define.c
@@ -15,3 +15,17 @@ S msg_011_call.c
 2 d 0.2 e 3add F2 I I I
 4 c 0.4 p1 p2 u 3add f2 I I I
 4 d 0.4 d r 4main F0 I
+
+# # 11 "msg_011_call_func.c"
+# void func_param(void (*)(char)) {}
+# void func_param(void (*)());
+# void func_param(void (*)(void));
+# void func_param(void (*)(double));
+# void func_param(void (*)(double, double));
+0 s msg_011_call_func.c
+S msg_011_call_func.c
+11 d 0.11 d 10func_param F1 PF1 C   V V
+12 d 0.12 e 10func_param F1 PF      V V
+13 d 0.13 e 10func_param F1 PF0     V V
+14 d 0.14 e 10func_param F1 PF1 D   V V
+15 d 0.15 e 10func_param F1 PF2 D D V V

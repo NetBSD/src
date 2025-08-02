@@ -1,11 +1,11 @@
-/*	$NetBSD: msg_270.c,v 1.4 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_270.c,v 1.4.2.1 2025/08/02 05:58:17 perseant Exp $	*/
 # 3 "msg_270.c"
 
-/* Test for message: function prototypes are illegal in traditional C [270] */
+/* Test for message: function prototypes require C90 or later [270] */
 
 /* lint1-flags: -tw -X 351 */
 
-/* expect+1: warning: function prototypes are illegal in traditional C [270] */
+/* expect+1: warning: function prototypes require C90 or later [270] */
 void prototype(void);
 
 char *traditional();

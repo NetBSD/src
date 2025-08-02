@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.17 2023/05/22 12:55:04 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.17.2.1 2025/08/02 05:58:14 perseant Exp $	*/
 # 3 "decl_struct_member.c"
 
 /* lint1-extra-flags: -X 351 */
@@ -34,7 +34,7 @@ struct cover_begin_type_qualifier_list {
 /* cover struct_or_union_specifier: struct_or_union error */
 /* expect+1: error: syntax error 'goto' [249] */
 struct goto {
-	/* expect+1: error: illegal type combination [4] */
+	/* expect+1: error: invalid type combination [4] */
 	int member;
 	/* expect+1: error: syntax error '}' [249] */
 };
@@ -71,7 +71,7 @@ struct cover_notype_struct_declarator_bit_field {
  * int [8]'.
  */
 struct array_of_bit_fields {
-	/* expect+1: warning: illegal bit-field type 'array[8] of unsigned int' [35] */
+	/* expect+1: warning: invalid bit-field type 'array[8] of unsigned int' [35] */
 	unsigned int bits[8]: 1;
 };
 

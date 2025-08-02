@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: uuid.c,v 1.1 2019/06/25 04:53:40 jnemeth Exp $");
+__RCSID("$NetBSD: uuid.c,v 1.1.14.1 2025/08/02 05:55:06 perseant Exp $");
 #endif
 
 #include <sys/types.h>
@@ -53,10 +53,10 @@ static int cmd_uuid(gpt_t, int, char *[]);
 
 static const char *uuidhelp[] = {
 	"-a",
-	"[-b blocknr] [-i index] [-L label] [-s sectors] [-t type]",
+	"[-b blocknr] [-i index] [-L label] [-s sectors] [-t type] [-U newuuid]",
 };
 
-struct gpt_cmd c_uuid = {
+const struct gpt_cmd c_uuid = {
 	"uuid",
 	cmd_uuid,
 	uuidhelp, __arraycount(uuidhelp),
@@ -65,23 +65,34 @@ struct gpt_cmd c_uuid = {
 
 #define usage() gpt_usage(NULL, &c_uuid)
 
+struct uuidctx {
+	gpt_t gpt;
+	gpt_uuid_t *uuid;
+};
+
 static void
 change_ent(struct gpt_ent *ent, void *v, int backup)
 {
+	struct uuidctx *ctx = v;
 	static gpt_uuid_t uuidstore;
 
-	if (!backup)
-		gpt_uuid_generate(NULL, uuidstore);
+	if (!backup) {
+		if (ctx->uuid != NULL)
+			memcpy(uuidstore, ctx->uuid, sizeof(uuidstore));
+		else
+			gpt_uuid_generate(ctx->gpt, uuidstore);
+	}
 	memmove(ent->ent_guid, uuidstore, sizeof(ent->ent_guid));
 }
 
 static void
 change_hdr(struct gpt_hdr *hdr, void *v, int backup)
 {
+	struct uuidctx *ctx = v;
 	static gpt_uuid_t uuidstore;
 
 	if (!backup)
-		gpt_uuid_generate(NULL, uuidstore);
+		gpt_uuid_generate(ctx->gpt, uuidstore);
 	memmove(hdr->hdr_guid, uuidstore, sizeof(hdr->hdr_guid));
 }
 
@@ -90,25 +101,48 @@ cmd_uuid(gpt_t gpt, int argc, char *argv[])
 {
 	int ch, rc;
 	struct gpt_find find;
+	gpt_uuid_t new_uuid;
+	struct uuidctx ctx;
+
+	if (gpt == NULL)
+		return usage();
 
 	memset(&find, 0, sizeof(find));
 	find.msg = "UUID changed";
 
 	/* Get the uuid options */
-	while ((ch = getopt(argc, argv, GPT_FIND)) != -1) {
-		if (gpt == NULL || gpt_add_find(gpt, &find, ch) == -1)
+	ctx.gpt = gpt;
+	ctx.uuid = NULL;
+	while ((ch = getopt(argc, argv, GPT_FIND "U:")) != -1) {
+		switch (ch) {
+		case 'U':
+			if (gpt_uuid_parse(optarg, new_uuid) == -1)
+				return usage();
+			ctx.uuid = &new_uuid;
+			break;
+		case 'L':
+		case 'a':
+		case 'b':
+		case 'i':
+		case 's':
+		case 't':
+			if (gpt_add_find(gpt, &find, ch) == -1)
+				return usage();
+			break;
+		default:
 			return usage();
+		}
 	}
 
-	if (gpt == NULL || argc != optind)
+	if (argc != optind)
 		return usage();
 
-	rc = gpt_change_ent(gpt, &find, change_ent, NULL);
+	rc = gpt_change_ent(gpt, &find, change_ent, &ctx);
 	if (rc != 0)
 		return rc;
 
 	if (find.all)
-		return gpt_change_hdr(gpt, &find, change_hdr, NULL);
+		return gpt_change_hdr(gpt, &find, change_hdr, &ctx);
 
 	return 0;
 }

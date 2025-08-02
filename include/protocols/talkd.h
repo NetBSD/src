@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.h,v 1.11 2016/01/22 23:11:50 dholland Exp $	*/
+/*	$NetBSD: talkd.h,v 1.11.28.1 2025/08/02 05:54:28 perseant Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -87,7 +87,7 @@ typedef struct {
 typedef struct {
 	unsigned char vers;	/* protocol version */
 	unsigned char type;	/* type of request message, see below */
-	unsigned char answer;	/* respose to request message, see below */
+	unsigned char answer;	/* response to request message, see below */
 	unsigned char pad;
 	uint32_t id_num;	/* message id */
 	struct	  talkd_sockaddr addr; /* address for establishing conversation */

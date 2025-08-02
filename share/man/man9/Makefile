@@ -1,9 +1,9 @@
-#       $NetBSD: Makefile,v 1.470 2024/06/14 13:19:35 riastradh Exp $
+#       $NetBSD: Makefile,v 1.470.2.1 2025/08/02 05:55:17 perseant Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
-	altq.9 arp.9 audio.9 autoconf.9 \
+	acct_process.9 altq.9 arp.9 audio.9 autoconf.9 \
 	bcdtobin.9 bcmp.9 bcopy.9 bintime_add.9 bluetooth.9 boothowto.9 bpf.9 \
 	buffercache.9 bufferio.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 \
 	bzero.9 \
@@ -14,7 +14,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
 	cpu_idle.9 cpu_initclocks.9 cpu_need_resched.9 \
 	cpu_number.9 cpu_reboot.9 cpu_rootconf.9 \
 	cpu_startup.9 cpu_switchto.9 cpufreq.9 \
-	csf.9 ctod.9 \
+	crashme.9 csf.9 ctod.9 \
 	curproc.9 \
 	ddb.9 ddc.9 \
 	delay.9 devsw_attach.9 disk.9 disklabel.9 dksubr.9 dofileread.9 \
@@ -24,7 +24,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
 	fork1.9 fsetown.9 fstrans.9 \
 	genfs.9 genfs_can_access.9 genfs_can_access_acl_nfs4.9 \
 	genfs_can_access_acl_posix1e.9 genfs_rename.9 \
-	hash.9 hashinit.9 hardclock.9 humanize_number.9 hz.9 \
+	hardclock.9 hash.9 hashinit.9 heartbeat.9 humanize_number.9 hz.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
 	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
 	ieee80211_radiotap.9 iic.9 imax.9 \
@@ -413,7 +413,13 @@ MLINKS+=iic.9 iic_acquire_bus.9 \
 	iic.9 iic_smbus_write_byte.9 \
 	iic.9 iic_smbus_read_byte.9 \
 	iic.9 iic_smbus_receive_byte.9
-MLINKS+=imax.9 imin.9
+MLINKS+=imax.9 imin.9 \
+	imax.9 lmax.9 \
+	imax.9 lmin.9 \
+	imax.9 uimax.9 \
+	imax.9 uimin.9 \
+	imax.9 ulmax.9 \
+	imax.9 ulmin.9
 MLINKS+=in4_cksum.9 in_cksum.9 \
 	in4_cksum.9 in6_cksum.9
 MLINKS+=ioasic.9 ioasic_intr_establish.9 \

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.24 2021/07/24 21:31:36 andvar Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.24.16.1 2025/08/02 05:56:14 perseant Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24 2021/07/24 21:31:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24.16.1 2025/08/02 05:56:14 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24 2021/07/24 21:31:36 andvar Exp $"
 #include <ddb/db_variables.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
+#include <ddb/db_command.h>
 
 #include <vax/vax/db_disasm.h>
 
@@ -146,6 +147,12 @@ db_disasm(db_addr_t loc, bool altfmt)
 
 	inst_buffer	ib;
 
+	if (!db_validate_address(loc)) {
+		db_printf("location 0x%lx inaccessible\n", loc);
+		db_error(NULL);
+		/*NOTREACHED*/
+	}
+
 	memset(&ib, 0, sizeof(ib));
 	ib.ppc = (void *) loc;
 	ib.curp = ib.dasm;
@@ -157,9 +164,9 @@ db_disasm(db_addr_t loc, bool altfmt)
 		db_symbol_values(sym, &symname, 0);
 
 		if (symname && !diff) { /* symbol at loc */
-			db_printf("function \"%s()\", entry-mask 0x%x\n\t\t",
+			db_printf("function \"%s()\", entry-mask 0x%x\n",
 				  symname, (unsigned short) get_word(&ib));
-			ib.ppc += 2;
+			return ((u_int) ib.ppc);
 		}
 	}
 	get_opcode(&ib);

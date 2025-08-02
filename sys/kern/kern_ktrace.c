@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.184 2023/10/17 10:27:34 riastradh Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.184.6.1 2025/08/02 05:57:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.184 2023/10/17 10:27:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.184.6.1 2025/08/02 05:57:41 perseant Exp $");
 
 #include <sys/param.h>
 
@@ -1042,7 +1042,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 			mutex_exit(&ktrace_lock);
 
 			/*
-			 * XXX: not correct.  needs an way to detect
+			 * XXX: not correct.  needs a way to detect
 			 * whether ktruss or ktrace.
 			 */
 			if (fp->f_type == DTYPE_PIPE)
@@ -1096,7 +1096,10 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 		/*
 		 * by process group
 		 */
-		pg = pgrp_find(-pid);
+		if (pid == INT_MIN)
+			pg = NULL;
+		else
+			pg = pgrp_find(-pid);
 		if (pg == NULL)
 			error = ESRCH;
 		else {

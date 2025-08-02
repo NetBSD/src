@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.53 2020/07/14 00:45:53 yamaguchi Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.53.26.1 2025/08/02 05:56:16 perseant Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -124,8 +124,11 @@ void x86_cpu_idle_xen(void);
 void	cpu_get_tsc_freq(struct cpu_info *);
 void	pat_init(struct cpu_info *);
 
+bool	has_lapic(void);
+
 extern int cpu_vendor;
 extern bool x86_mp_online;
+extern u_int cpu_max_hypervisor_cpuid;
 
 extern uint32_t cpu_feature[7];
 

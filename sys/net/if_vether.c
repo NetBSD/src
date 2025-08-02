@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vether.c,v 1.1 2020/09/27 13:31:04 roy Exp $	*/
+/*	$NetBSD: if_vether.c,v 1.1.26.1 2025/08/02 05:57:47 perseant Exp $	*/
 /* $OpenBSD: if_vether.c,v 1.27 2016/04/13 11:41:15 mpi Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vether.c,v 1.1 2020/09/27 13:31:04 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vether.c,v 1.1.26.1 2025/08/02 05:57:47 perseant Exp $");
 
 #include <sys/cprng.h>
 #include <sys/kmem.h>
@@ -27,10 +27,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_vether.c,v 1.1 2020/09/27 13:31:04 roy Exp $");
 
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 #include <net/bpf.h>
 
 void		vetherattach(int);
 static int	vether_ioctl(struct ifnet *, u_long, void *);
+static int	vether_mediachange(struct ifnet *);
+static void	vether_mediastatus(struct ifnet *, struct ifmediareq *);
 static void	vether_start(struct ifnet *);
 static int	vether_clone_create(struct if_clone *, int);
 static int	vether_clone_destroy(struct ifnet *);
@@ -40,6 +43,7 @@ static int	vether_init(struct ifnet *);
 
 struct vether_softc {
 	struct ethercom		sc_ec;
+	struct ifmedia		sc_im;
 };
 
 struct if_clone	vether_cloner =
@@ -61,6 +65,13 @@ vether_clone_create(struct if_clone *ifc, int unit)
 	    { 0xf2, 0x0b, 0xa4, 0xff, 0xff, 0xff };
 
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
+
+	sc->sc_ec.ec_ifmedia = &sc->sc_im;
+	ifmedia_init(&sc->sc_im, 0, vether_mediachange, vether_mediastatus);
+	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_AUTO, 0, NULL);
+	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_NONE, 0, NULL);
+	ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_AUTO);
+
 	ifp = &sc->sc_ec.ec_if;
 	if_initname(ifp, ifc->ifc_name, unit);
 	ifp->if_softc = sc;
@@ -89,6 +100,9 @@ vether_clone_create(struct if_clone *ifc, int unit)
 	ether_ifattach(ifp, enaddr);
 	if_register(ifp);
 
+	/* Notify our link state */
+	vether_mediachange(ifp);
+
 	return 0;
 }
 
@@ -108,9 +122,35 @@ vether_init(struct ifnet *ifp)
 {
 
 	ifp->if_flags |= IFF_RUNNING;
-	if_link_state_change(ifp, LINK_STATE_UP);
 	vether_start(ifp);
 	return 0;
+}
+
+static int
+vether_mediachange(struct ifnet *ifp)
+{
+	struct vether_softc *sc = ifp->if_softc;
+	int link_state;
+
+	if (IFM_SUBTYPE(sc->sc_im.ifm_cur->ifm_media) == IFM_NONE)
+		link_state = LINK_STATE_DOWN;
+	else
+		link_state = LINK_STATE_UP;
+
+	if_link_state_change(ifp, link_state);
+	return 0;
+}
+
+static void
+vether_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
+{
+	struct vether_softc *sc = ifp->if_softc;
+
+	imr->ifm_active = sc->sc_im.ifm_cur->ifm_media;
+
+	imr->ifm_status = IFM_AVALID;
+	if (IFM_SUBTYPE(imr->ifm_active) != IFM_NONE)
+		imr->ifm_status |= IFM_ACTIVE;
 }
 
 /*
@@ -137,7 +177,6 @@ vether_stop(struct ifnet *ifp, __unused int disable)
 {
 
 	ifp->if_flags &= ~IFF_RUNNING;
-	if_link_state_change(ifp, LINK_STATE_DOWN);
 }
 
 static int

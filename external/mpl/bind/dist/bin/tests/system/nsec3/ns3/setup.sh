@@ -20,21 +20,18 @@ setup() {
   zone="$1"
   echo_i "setting up zone: $zone"
   zonefile="${zone}.db"
-  infile="${zone}.db.infile"
   cp template.db.in "$zonefile"
 }
 
 for zn in nsec-to-nsec3 nsec3 nsec3-other nsec3-change nsec3-to-nsec \
   nsec3-to-optout nsec3-from-optout nsec3-dynamic \
   nsec3-dynamic-change nsec3-dynamic-to-inline \
-  nsec3-inline-to-dynamic nsec3-dynamic-update-inline; do
+  nsec3-inline-to-dynamic nsec3-dynamic-update-inline \
+  nsec3-ent; do
   setup "${zn}.kasp"
 done
 
-if (
-  cd ..
-  $SHELL ../testcrypto.sh -q RSASHA1
-); then
+if [ $RSASHA1_SUPPORTED = 1 ]; then
   for zn in rsasha1-to-nsec3 rsasha1-to-nsec3-wait nsec3-to-rsasha1 \
     nsec3-to-rsasha1-ds; do
     setup "${zn}.kasp"

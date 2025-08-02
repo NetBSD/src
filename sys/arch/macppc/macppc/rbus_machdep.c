@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.19 2023/12/28 04:43:55 rin Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.19.2.1 2025/08/02 05:55:52 perseant Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.19 2023/12/28 04:43:55 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.19.2.1 2025/08/02 05:55:52 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -74,25 +74,41 @@ md_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size,
 rbus_tag_t
 rbus_pccbb_parent_mem(struct pci_attach_args *pa)
 {
-	bus_addr_t start;
-	bus_size_t size;
+	bus_addr_t start = 0;
+	bus_size_t size = 0;
 	int node, reg[5];
 
 	macppc_cardbus_init(pa->pa_pc, pa->pa_tag);
 
 	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
-	OF_getprop(node, "assigned-addresses", reg, sizeof(reg));
 
-	start = reg[2];
-	size = reg[4];
+	/*
+	 * the Powerbook 3400c has the cardbus controller's memory space in
+	 * 'assigned-addresses', at 0xa0000000. Core99 machines do not, they 
+	 * have 'reserved-segment' instead, which points at 0x90000000 on
+	 * my Pismo, TiBook and AluBook.
+	 * This leaves the older G3 Powerbooks with pre-3.0 OF, I suspect they
+	 * behave like the 3400c.
+	 */
 
-	/* XXX PowerBook G3 */
-	if (size < 0x10000) {
-		start = 0x90000000;
-		size  = 0x10000000;
+	/* first we look for 'reserved-segment' */
+	if (OF_getprop(node, "reserved-segment", &start, 4) == 4) {
+		size = 0x10000000;
+		printf("found reserved-segment %08x\n", start);
+	} else {
+		/* if that fails look at assigned-addresses */
+		OF_getprop(node, "assigned-addresses", reg, sizeof(reg));
+		/* see if the range is big enough */
+		if (reg[4] < 0x10000) {
+			/* nope, use the default */
+			start = 0x90000000;
+			size = 0x10000000;
+		} else {
+			start = reg[2];
+			size = reg[4];
+			printf("found assigned-addresses %08x\n", start);
+		}
 	}
-
-	oea_iobat_add(start, size);
 
 	return rbus_new_root_delegate(pa->pa_memt, start, size, 0);
 }

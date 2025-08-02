@@ -1,4 +1,4 @@
-/*	$NetBSD: meminfo.c,v 1.2 2024/02/21 22:52:28 christos Exp $	*/
+/*	$NetBSD: meminfo.c,v 1.2.6.1 2025/08/02 05:53:53 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,7 +34,7 @@ isc_meminfo_totalphys(void) {
 	uint64_t size = 0;
 	size_t len = sizeof(size);
 	if (sysctl(mib, 2, &size, &len, NULL, 0) == 0) {
-		return (size);
+		return size;
 	}
 #endif /* if defined(CTL_HW) && (defined(HW_PHYSMEM64) || defined(HW_MEMSIZE)) \
 	* */
@@ -42,11 +42,11 @@ isc_meminfo_totalphys(void) {
 	long pages = sysconf(_SC_PHYS_PAGES);
 	long pagesize = sysconf(_SC_PAGESIZE);
 
-	if (pages == -1 || pagesize == -1) {
-		return (0);
+	if (pages < 0 || pagesize < 0) {
+		return 0;
 	}
 
-	return ((size_t)pages * pagesize);
+	return (uint64_t)pages * pagesize;
 #endif /* if defined(_SC_PHYS_PAGES) && defined(_SC_PAGESIZE) */
-	return (0);
+	return 0;
 }

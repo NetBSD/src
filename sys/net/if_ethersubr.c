@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.326 2023/11/02 09:40:47 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.326.4.1 2025/08/02 05:57:47 perseant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.326 2023/11/02 09:40:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.326.4.1 2025/08/02 05:57:47 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -423,7 +423,8 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 #if NCARP > 0
 	if (ifp0 != ifp && ifp0->if_type == IFT_CARP) {
-	 	memcpy(eh->ether_shost, CLLADDR(ifp0->if_sadl),
+		/* update with virtual MAC */
+		memcpy(eh->ether_shost, CLLADDR(ifp0->if_sadl),
 		    sizeof(eh->ether_shost));
 	}
 #endif
@@ -462,8 +463,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 bad:
 	if_statinc(ifp, if_oerrors);
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return error;
 }
 
@@ -856,7 +856,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		default:
 			if (subtype == 0 || subtype > 10) {
 				/* illegal value */
-				goto error;
+				goto noproto;
 			}
 			/* unknown subtype */
 			break;
@@ -1044,7 +1044,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 	if (lla != NULL && ETHER_IS_MULTICAST(lla))
 		aprint_error("The multicast bit is set in the MAC address. "
 			"It's wrong.\n");
-	
+
 	ifp->if_type = IFT_ETHER;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_dlt = DLT_EN10MB;

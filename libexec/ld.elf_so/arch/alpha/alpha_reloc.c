@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.44 2023/06/04 01:24:57 joerg Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.44.2.1 2025/08/02 05:55:01 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,18 +36,18 @@
  */
 
 /*
- * Copyright 1996, 1997, 1998, 1999 John D. Polstra.   
+ * Copyright 1996, 1997, 1998, 1999 John D. Polstra.
  * All rights reserved.
- *           
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
- * are met: 
+ * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *          
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alpha_reloc.c,v 1.44 2023/06/04 01:24:57 joerg Exp $");
+__RCSID("$NetBSD: alpha_reloc.c,v 1.44.2.1 2025/08/02 05:55:01 perseant Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,6 +78,7 @@ __RCSID("$NetBSD: alpha_reloc.c,v 1.44 2023/06/04 01:24:57 joerg Exp $");
 #define	adbg(x)		/* nothing */
 #endif
 
+void _rtld_bind_start_secureplt(void);
 void _rtld_bind_start(void);
 void _rtld_bind_start_old(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
@@ -91,7 +92,19 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 	uint32_t word0;
 
 	/*
-	 * The PLTGOT on the Alpha looks like this:
+	 * If we're using Alpha secureplt, the PLTGOT points to the
+	 * .got.plt section.  Just fill in the rtld binding stub and
+	 * we're done -- we're not writing to instruction memory, so no
+	 * imb needed.
+	 */
+	if (obj->secureplt) {
+		obj->pltgot[0] = (Elf_Addr) _rtld_bind_start_secureplt;
+		obj->pltgot[1] = (Elf_Addr) obj;
+		return;
+	}
+
+	/*
+	 * The non-secureplt PLTGOT on the Alpha looks like this:
 	 *
 	 *	PLT HEADER
 	 *	.
@@ -207,7 +220,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
 		Elf_Addr         tmp;
-		unsigned long	 symnum;
+		unsigned long	 symnum = ELF_R_SYM(rela->r_info);
 
 		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 
@@ -217,7 +230,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		case R_TYPE(TPREL64):
 		case R_TYPE(DTPMOD64):
 		case R_TYPE(DTPREL64):
-			symnum = ELF_R_SYM(rela->r_info);
 			if (last_symnum != symnum) {
 				last_symnum = symnum;
 				def = _rtld_find_symdef(symnum, obj, &defobj,
@@ -371,7 +383,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 	Elf_Addr new_value;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	Elf_Addr stubaddr; 
+	Elf_Addr stubaddr;
 	unsigned long info = rela->r_info;
 
 	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
@@ -418,7 +430,8 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		 *
 		 * Note if the shared object uses the old PLT format, then
 		 * we cannot patch up the PLT safely, and so we skip it
-		 * in that case[*].
+		 * in that case[*].  And if the shared object has a read-only
+		 * secureplt, then we also skip it.
 		 *
 		 * [*] Actually, if we're not doing lazy-binding, then
 		 * we *can* (and do) patch up this PLT entry; the PLTGOT
@@ -426,6 +439,10 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		 * so this test will fail as it would for the new PLT
 		 * entry format.
 		 */
+		if (obj->secureplt) {
+			rdbg(("  secureplt format"));
+			goto out;
+		}
 		if (obj->pltgot[2] == (Elf_Addr) &_rtld_bind_start_old) {
 			rdbg(("  old PLT format"));
 			goto out;
@@ -549,7 +566,7 @@ out:
 caddr_t
 _rtld_bind(const Obj_Entry *obj, Elf_Addr reloff)
 {
-	const Elf_Rela *rela = 
+	const Elf_Rela *rela =
 	    (const Elf_Rela *)((const uint8_t *)obj->pltrela + reloff);
 	Elf_Addr result = 0; /* XXX gcc */
 	int err;

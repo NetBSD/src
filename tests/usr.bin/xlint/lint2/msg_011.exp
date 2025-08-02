@@ -1,6 +1,11 @@
-add value used inconsistently  	msg_011_define.c(2)  ::  msg_011_call.c(4)
-add value declared inconsistently (double != int) 	msg_011_define.c(2)  ::  msg_011_call.c(2)
-add, arg 1 used inconsistently  	msg_011_define.c(2)[double]  ::  msg_011_call.c(4)[int]
-add, arg 2 used inconsistently  	msg_011_define.c(2)[double]  ::  msg_011_call.c(4)[int]
-add, arg 1 declared inconsistently (double != int)	msg_011_define.c(2) :: msg_011_call.c(2)
-add, arg 2 declared inconsistently (double != int)	msg_011_define.c(2) :: msg_011_call.c(2)
+add has its return value used inconsistently by msg_011_define.c(2) and msg_011_call.c(4) [lint2:004]
+add returns 'double' at msg_011_define.c(2), versus 'int' at msg_011_call.c(2) [lint2:005]
+add has argument 1 with type 'double' at msg_011_define.c(2), versus 'int' at msg_011_call.c(4) [lint2:006]
+add has argument 2 with type 'double' at msg_011_define.c(2), versus 'int' at msg_011_call.c(4) [lint2:006]
+add has parameter 1 declared as 'double' in msg_011_define.c(2), versus 'int' in msg_011_call.c(2) [lint2:011]
+add has parameter 2 declared as 'double' in msg_011_define.c(2), versus 'int' in msg_011_call.c(2) [lint2:011]
+func_param is defined in msg_011_call_func.c(11) but never used [lint2:001]
+func_param has parameter 1 declared as 'pointer to function(char) returning void' in msg_011_call_func.c(11), versus 'pointer to function() returning void' in msg_011_call_func.c(12) [lint2:011]
+func_param has parameter 1 declared as 'pointer to function(char) returning void' in msg_011_call_func.c(11), versus 'pointer to function(void) returning void' in msg_011_call_func.c(13) [lint2:011]
+func_param has parameter 1 declared as 'pointer to function(char) returning void' in msg_011_call_func.c(11), versus 'pointer to function(double) returning void' in msg_011_call_func.c(14) [lint2:011]
+func_param has parameter 1 declared as 'pointer to function(char) returning void' in msg_011_call_func.c(11), versus 'pointer to function(double, double) returning void' in msg_011_call_func.c(15) [lint2:011]

@@ -1,4 +1,4 @@
-/* $NetBSD: ascreg.h,v 1.1 2024/03/13 07:55:28 nat Exp $ */
+/* $NetBSD: ascreg.h,v 1.1.2.1 2025/08/02 05:55:50 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -31,13 +31,18 @@
 
 #define ASCIRQ		5
 
+#define EASC_VER	0xb0
+#define EASC_VER2	0xbb
+
 #define FIFO_A		0
 #define FIFO_B		0x400
+#define FIFO_A_ALT	0x1000
+#define FIFO_B_ALT	0x1800
 #define FIFO_LEN	0x400
 
 #define VERLOC		0x800
 
-#define ASCMODE		0x801		
+#define ASCMODE		0x801
 #define MODESTOP	0
 #define MODEFIFO	1
 #define MODEWAVE	2 		/* not in easc */
@@ -63,7 +68,7 @@
 #define ASCRATE		0x807
 #define MACFREQ		0 		/* 22254 Hz */
 #define F22KHZ		2		/* 22050 Hz */
-#define F44KHZ		3		/* 44100 Hz */	
+#define F44KHZ		3		/* 44100 Hz */
 
 #define APLAYREC	0x80a
 #define RECORDA		__BIT(0)
@@ -80,6 +85,8 @@
 #define	B_READPTRHI	0xf22
 #define	B_READPTRLO	0xf23
 
+#define MACOS_HIGH_VOL	0x36  /* Should NOT exceed this value */
+
 #define A_LEFT_VOL	0xf06
 #define A_RIGHT_VOL	0xf07
 #define B_LEFT_VOL	0xf26
@@ -93,5 +100,14 @@
 #define IRQA		0xf09
 #define IRQB		0xf29
 #define DISABLEHALFIRQ	__BIT(0)
+
+/* Digitally Filtered Audio Chip (dfac) VIA2 Bits */
+#define DFAC_CLOCK 	(__BIT(4))
+#define DFAC_DATA	(__BIT(3))
+#define DFAC_LATCH	(__BIT(0))
+
+/* dfac config byte */
+#define DFAC_DISABLE	0
+#define DFAC_GAIN_HIGH	0x0c
 
 #endif /* !_SYS_ARCH_MAC68K_OBIO_ASCREG_H */

@@ -47,10 +47,11 @@ def split_csv(argument, required):
             "a non-empty list required; provide at least one value or remove"
             " this option"
         )
+    if not len(outlist) == len(set(outlist)):
+        raise ValueError("duplicate value detected")
     return outlist
 
 
-# pylint: disable=too-many-statements
 def domain_factory(domainname, domainlabel, todolist, grammar):
     """
     Return parametrized Sphinx domain object.
@@ -73,10 +74,8 @@ def domain_factory(domainname, domainlabel, todolist, grammar):
 
         def run(self):
             placeholder = todolist("")
-            placeholder["isc_filter_tags"] = set(self.options.get("filter_tags", []))
-            placeholder["isc_filter_blocks"] = set(
-                self.options.get("filter_blocks", [])
-            )
+            placeholder["isc_filter_tags"] = self.options.get("filter_tags", [])
+            placeholder["isc_filter_blocks"] = self.options.get("filter_blocks", [])
             return [placeholder]
 
     class ISCConfDomain(Domain):
@@ -127,7 +126,7 @@ def domain_factory(domainname, domainlabel, todolist, grammar):
 
             @property
             def isc_tags(self):
-                return set(self.options.get("tags", []))
+                return self.options.get("tags", [])
 
             @property
             def isc_short(self):
@@ -226,16 +225,16 @@ def domain_factory(domainname, domainlabel, todolist, grammar):
                 self.state.nested_parse(raw, self.content_offset, parsed)
                 return parsed
 
-            def transform_content(self, contentnode: addnodes.desc_content) -> None:
+            def transform_content(self, content_node: addnodes.desc_content) -> None:
                 """autogenerate content from structured data"""
                 self.workaround_transform_content = True
                 if self.isc_short:
-                    contentnode.insert(0, self.isc_short_node)
+                    content_node.insert(0, self.isc_short_node)
                 if self.isc_tags:
                     tags = nodes.paragraph()
                     tags += nodes.strong(text="Tags: ")
                     tags += nodes.Text(", ".join(self.isc_tags))
-                    contentnode.insert(0, tags)
+                    content_node.insert(0, tags)
 
                 iscconf = self.env.get_domain(domainname)
 
@@ -244,7 +243,7 @@ def domain_factory(domainname, domainlabel, todolist, grammar):
                     return  # not defined in grammar, nothing to render
 
                 blocks = self.format_blocks(iscconf.statement_blocks[name])
-                contentnode.insert(0, blocks)
+                content_node.insert(0, blocks)
 
                 grammars = iscconf.statement_grammar_groups[name]
                 multi_grammar = len(grammars) > 1
@@ -257,11 +256,11 @@ def domain_factory(domainname, domainlabel, todolist, grammar):
                     if "suppress_grammar" in self.options:
                         continue
                     grammarnode = self.format_grammar(multi_grammar, grammar_grp)
-                    contentnode.insert(0, grammarnode)
+                    content_node.insert(0, grammarnode)
 
                 warn = self.format_warnings(union_flags)
                 if len(warn):
-                    contentnode.insert(0, warn)
+                    content_node.insert(0, warn)
 
             def __init__(self, *args, **kwargs):
                 """Compability with Sphinx < 3.0.0"""
@@ -318,7 +317,6 @@ def domain_factory(domainname, domainlabel, todolist, grammar):
                     ]
                 )
 
-        # pylint: disable=too-many-arguments
         def resolve_xref(self, env, fromdocname, builder, typ, target, node, contnode):
             """
             Sphinx API:
@@ -475,11 +473,11 @@ def domain_factory(domainname, domainlabel, todolist, grammar):
                             lambda item: (
                                 (
                                     not acceptable_tags
-                                    or item["tags"].intersection(acceptable_tags)
+                                    or set(item["tags"]).intersection(acceptable_tags)
                                 )
                                 and (
                                     not acceptable_blocks
-                                    or item["block_names"].intersection(
+                                    or set(item["block_names"]).intersection(
                                         acceptable_blocks
                                     )
                                 )

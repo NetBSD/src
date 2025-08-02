@@ -1,4 +1,4 @@
-# $NetBSD: t_threadpool.sh,v 1.2 2024/04/28 07:27:42 rillig Exp $
+# $NetBSD: t_threadpool.sh,v 1.2.2.1 2025/08/02 05:58:10 perseant Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -105,7 +105,7 @@ percpu_body() {
 	# Ensure that the state is clean.
 	read_sysctl kern.threadpool_tester.test_value 0
 
-	# Create an percpu pool.
+	# Create a percpu pool.
 	write_sysctl kern.threadpool_tester.get_percpu $tp_pri
 
 	# Do it again.  We expect this to fail, but the test jig will

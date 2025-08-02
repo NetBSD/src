@@ -49,13 +49,13 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 newtest "check authoritative server (expect NOERROR)"
-$DIG $DIGOPTS @10.53.0.2 example SOA >dig.out.ns2.test$n
+$DIG $DIGOPTS @10.53.0.2 example SOA >dig.out.ns2.test$n || ret=1
 grep "status: NOERROR" dig.out.ns2.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 newtest "check test zone resolves with 'root-key-sentinel yes;'" " (expect NOERROR)"
-$DIG $DIGOPTS @10.53.0.3 example SOA >dig.out.ns3.test$n
+$DIG $DIGOPTS @10.53.0.3 example SOA >dig.out.ns3.test$n || ret=1
 grep "status: NOERROR" dig.out.ns3.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59 2024/05/09 06:38:27 nia Exp $
+#	$NetBSD: Makefile,v 1.59.2.1 2025/08/02 05:50:41 perseant Exp $
 
 # build libraries for xorg
 
@@ -7,7 +7,7 @@
 .include "mesa-which.mk"
 
 SUBDIR=	libfontenc freetype libFS libICE libglapi${OLD_SUFFIX} \
-	libXau libXdmcp libdrm libpciaccess libpthread-stubs \
+	libXau libXdmcp libdrm libpciaccess \
 	libxcvt libxshmfence .WAIT
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=libdrm_intel
@@ -56,7 +56,7 @@ SUBDIR+=libGLU libGLw libXaw6 libXaw libXcursor \
 	libXdmGreet \
 	xcb-util
 SUBDIR+=libgbm${OLD_SUFFIX}
-.if ${HAVE_XORG_GLAMOR} != "no"
+.if ${HAVE_XORG_EGL} != "no"
 # libEGL depends upon libgbm
 SUBDIR+=.WAIT libEGL${OLD_SUFFIX}
 .endif

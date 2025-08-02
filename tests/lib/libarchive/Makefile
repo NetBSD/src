@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2024/06/13 21:03:33 martin Exp $
+# $NetBSD: Makefile,v 1.12.2.1 2025/08/02 05:58:03 perseant Exp $
 
 NOMAN=
 
@@ -18,11 +18,13 @@ CPPFLAGS+=-I${LIBARCHIVE}/libarchive/test -I${LIBARCHIVE}/../include
 
 DPADD+=	${LIBARCHIVE} ${LIBEXPAT} ${LIBBZ2} ${LIBLZMA} ${LIBZ} \
 	${LIBCRYPTO} ${LIBPTHREAD}
-LDADD+=	-larchive -lexpat -lbz2 -llzma -lz -lcrypto -lpthread
+LDADD+=	-Wl,--push-state,-Bstatic,-larchive,--pop-state	# uses libarchive guts
+LDADD+=	-lexpat -lbz2 -llzma -lz -lcrypto -lpthread
+
+.include "${NETBSDSRCDIR}/external/bsd/zstd/Makefile.zstd"
+PROGDPLIBS+=	${ZSTDDPLIBS}	# needed by libarchive
 
 SRCS.h_libarchive= \
-test_main.c \
-test_utils.c \
 read_open_memory.c \
 test_acl_nfs4.c \
 test_acl_pax.c \
@@ -92,6 +94,7 @@ test_filter_count.c \
 test_fuzz.c \
 test_gnutar_filename_encoding.c \
 test_link_resolver.c \
+test_main.c \
 test_open_failure.c \
 test_open_fd.c \
 test_open_file.c \
@@ -214,6 +217,7 @@ test_tar_filenames.c \
 test_tar_large.c \
 test_ustar_filename_encoding.c \
 test_ustar_filenames.c \
+test_utils.c \
 test_warn_missing_hardlink_target.c \
 test_write_disk.c \
 test_write_disk_appledouble.c \
@@ -349,6 +353,8 @@ test_compat_zip_6.zip.uu  \
 test_compat_zip_7.xps.uu  \
 test_compat_zip_8.zip.uu  \
 test_compat_zstd_1.tar.zst.uu  \
+test_compat_zstd_1.tar.zst.uu \
+test_compat_zstd_2.tar.zst.uu \
 test_fuzz.cab.uu  \
 test_fuzz.lzh.uu  \
 test_fuzz_1.iso.Z.uu  \
@@ -395,15 +401,16 @@ test_read_format_7zip_copy.7z.uu  \
 test_read_format_7zip_copy_2.7z.uu  \
 test_read_format_7zip_deflate.7z.uu  \
 test_read_format_7zip_deflate_arm64.7z.uu  \
-test_read_format_7zip_delta_lzma1.7z.uu  \
-test_read_format_7zip_delta_lzma2.7z.uu  \
 test_read_format_7zip_delta4_lzma1.7z.uu  \
 test_read_format_7zip_delta4_lzma2.7z.uu  \
+test_read_format_7zip_delta_lzma1.7z.uu  \
+test_read_format_7zip_delta_lzma2.7z.uu  \
 test_read_format_7zip_empty_archive.7z.uu  \
 test_read_format_7zip_empty_file.7z.uu  \
 test_read_format_7zip_encryption.7z.uu  \
 test_read_format_7zip_encryption_header.7z.uu  \
 test_read_format_7zip_encryption_partially.7z.uu  \
+test_read_format_7zip_extract_second.7z.uu \
 test_read_format_7zip_lzma1.7z.uu  \
 test_read_format_7zip_lzma1_2.7z.uu  \
 test_read_format_7zip_lzma1_lzma2.7z.uu  \
@@ -412,8 +419,13 @@ test_read_format_7zip_lzma2_arm.7z.uu \
 test_read_format_7zip_malformed.7z.uu  \
 test_read_format_7zip_malformed2.7z.uu  \
 test_read_format_7zip_ppmd.7z.uu  \
+test_read_format_7zip_solid_zstd.7z.uu \
 test_read_format_7zip_symbolic_name.7z.uu  \
 test_read_format_7zip_win_attrib.7z.uu \
+test_read_format_7zip_zstd.7z.uu \
+test_read_format_7zip_zstd_arm.7z.uu \
+test_read_format_7zip_zstd_bcj.7z.uu \
+test_read_format_7zip_zstd_nobcj.7z.uu \
 test_read_format_ar.ar.uu  \
 test_read_format_cab_1.cab.uu  \
 test_read_format_cab_2.cab.uu  \
@@ -440,6 +452,7 @@ test_read_format_gtar_sparse_1_17_posix10_modified.tar.uu  \
 test_read_format_gtar_sparse_skip_entry.tar.Z.uu  \
 test_read_format_iso.iso.Z.uu  \
 test_read_format_iso_2.iso.Z.uu  \
+test_read_format_iso_3.iso.Z.uu \
 test_read_format_iso_joliet.iso.Z.uu  \
 test_read_format_iso_joliet_by_nero.iso.Z.uu  \
 test_read_format_iso_joliet_long.iso.Z.uu  \
@@ -474,6 +487,7 @@ test_read_format_rar5_bad_window_sz_in_mltarc_file.rar.uu \
 test_read_format_rar5_blake2.rar.uu  \
 test_read_format_rar5_block_size_is_too_small.rar.uu \
 test_read_format_rar5_compressed.rar.uu  \
+test_read_format_rar5_data_ready_pointer_leak.rar.uu \
 test_read_format_rar5_decode_number_out_of_bounds_read.rar.uu \
 test_read_format_rar5_different_solid_window_size.rar.uu \
 test_read_format_rar5_different_window_size.rar.uu \
@@ -543,6 +557,7 @@ test_read_format_ustar_filename_cp866.tar.Z.uu  \
 test_read_format_ustar_filename_eucjp.tar.Z.uu  \
 test_read_format_ustar_filename_koi8r.tar.Z.uu  \
 test_read_format_warc.warc.uu  \
+test_read_format_xar_duplicate_filename_node.xar.uu \
 test_read_format_zip.zip.uu  \
 test_read_format_zip_7075_utf8_paths.zip.uu  \
 test_read_format_zip_7z_deflate.zip.uu \
@@ -593,6 +608,8 @@ test_read_format_zip_with_invalid_traditional_eocd.zip.uu  \
 test_read_format_zip_xz_multi.zipx.uu  \
 test_read_format_zip_zip64a.zip.uu  \
 test_read_format_zip_zip64b.zip.uu  \
+test_read_format_zip_zstd.zipx.uu \
+test_read_format_zip_zstd_multi.zipx.uu \
 test_read_large_splitted_rar_aa.uu  \
 test_read_large_splitted_rar_ab.uu  \
 test_read_large_splitted_rar_ac.uu  \

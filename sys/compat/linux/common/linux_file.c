@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.124 2024/06/29 13:46:10 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.124.2.1 2025/08/02 05:56:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,8 +35,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.124 2024/06/29 13:46:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.124.2.1 2025/08/02 05:56:25 perseant Exp $");
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -44,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.124 2024/06/29 13:46:10 christos Ex
 #include <sys/file.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
+#include <sys/vfs_syscalls.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
@@ -54,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.124 2024/06/29 13:46:10 christos Ex
 #include <sys/socketvar.h>
 #include <sys/conf.h>
 #include <sys/pipe.h>
-
+#include <sys/fstrans.h>
 #include <sys/syscallargs.h>
 #include <sys/vfs_syscalls.h>
 
@@ -67,6 +69,14 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.124 2024/06/29 13:46:10 christos Ex
 #include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
+
+#ifdef DEBUG_LINUX
+#define DPRINTF(a, ...)	uprintf(a, __VA_ARGS__)
+#else
+#define DPRINTF(a, ...)
+#endif
+
+#define LINUX_COPY_FILE_RANGE_MAX_CHUNK 8192
 
 static int bsd_to_linux_ioflags(int);
 #if !defined(__aarch64__) && !defined(__amd64__)
@@ -146,7 +156,7 @@ linux_hilo_to_off_t(unsigned long hi, unsigned long lo)
 	 * argument regardless, the "lo" argument has all the bits in
 	 * this case.
 	 */
-	(void) hi; 
+	(void) hi;
 	return (off_t)lo;
 #else
 	return (((off_t)hi) << 32) | lo;
@@ -164,7 +174,8 @@ linux_hilo_to_off_t(unsigned long hi, unsigned long lo)
  * Just call open(2) with the TRUNC, CREAT and WRONLY flags.
  */
 int
-linux_sys_creat(struct lwp *l, const struct linux_sys_creat_args *uap, register_t *retval)
+linux_sys_creat(struct lwp *l, const struct linux_sys_creat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -213,7 +224,8 @@ linux_open_ctty(struct lwp *l, int flags, int fd)
  * (XXX is this necessary?)
  */
 int
-linux_sys_open(struct lwp *l, const struct linux_sys_open_args *uap, register_t *retval)
+linux_sys_open(struct lwp *l, const struct linux_sys_open_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -237,7 +249,8 @@ linux_sys_open(struct lwp *l, const struct linux_sys_open_args *uap, register_t 
 }
 
 int
-linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap, register_t *retval)
+linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -269,7 +282,8 @@ linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap, registe
  * because the flag values and lock structure are different.
  */
 int
-linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_t *retval)
+linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -501,7 +515,8 @@ bsd_to_linux_stat(struct stat *bsp, struct linux_stat *lsp)
  * by one function to avoid code duplication.
  */
 int
-linux_sys_fstat(struct lwp *l, const struct linux_sys_fstat_args *uap, register_t *retval)
+linux_sys_fstat(struct lwp *l, const struct linux_sys_fstat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -520,7 +535,8 @@ linux_sys_fstat(struct lwp *l, const struct linux_sys_fstat_args *uap, register_
 }
 
 static int
-linux_stat1(const struct linux_sys_stat_args *uap, register_t *retval, int flags)
+linux_stat1(const struct linux_sys_stat_args *uap, register_t *retval,
+    int flags)
 {
 	struct linux_stat tmplst;
 	struct stat tmpst;
@@ -536,7 +552,8 @@ linux_stat1(const struct linux_sys_stat_args *uap, register_t *retval, int flags
 }
 
 int
-linux_sys_stat(struct lwp *l, const struct linux_sys_stat_args *uap, register_t *retval)
+linux_sys_stat(struct lwp *l, const struct linux_sys_stat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -549,7 +566,8 @@ linux_sys_stat(struct lwp *l, const struct linux_sys_stat_args *uap, register_t 
 /* Note: this is "newlstat" in the Linux sources */
 /*	(we don't bother with the old lstat currently) */
 int
-linux_sys_lstat(struct lwp *l, const struct linux_sys_lstat_args *uap, register_t *retval)
+linux_sys_lstat(struct lwp *l, const struct linux_sys_lstat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -565,7 +583,8 @@ linux_sys_lstat(struct lwp *l, const struct linux_sys_lstat_args *uap, register_
  */
 
 int
-linux_sys_linkat(struct lwp *l, const struct linux_sys_linkat_args *uap, register_t *retval)
+linux_sys_linkat(struct lwp *l, const struct linux_sys_linkat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd1;
@@ -619,7 +638,8 @@ linux_unlink_dircheck(const char *path)
 }
 
 int
-linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, register_t *retval)
+linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -634,7 +654,8 @@ linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, registe
 }
 
 int
-linux_sys_unlinkat(struct lwp *l, const struct linux_sys_unlinkat_args *uap, register_t *retval)
+linux_sys_unlinkat(struct lwp *l, const struct linux_sys_unlinkat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -656,7 +677,8 @@ linux_sys_unlinkat(struct lwp *l, const struct linux_sys_unlinkat_args *uap, reg
 }
 
 int
-linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap, register_t *retval)
+linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
@@ -674,7 +696,8 @@ linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap, register_
 }
 
 int
-linux_sys_mknodat(struct lwp *l, const struct linux_sys_mknodat_args *uap, register_t *retval)
+linux_sys_mknodat(struct lwp *l, const struct linux_sys_mknodat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -708,7 +731,8 @@ linux_sys_mknodat(struct lwp *l, const struct linux_sys_mknodat_args *uap, regis
 }
 
 int
-linux_sys_fchmodat(struct lwp *l, const struct linux_sys_fchmodat_args *uap, register_t *retval)
+linux_sys_fchmodat(struct lwp *l, const struct linux_sys_fchmodat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -721,7 +745,8 @@ linux_sys_fchmodat(struct lwp *l, const struct linux_sys_fchmodat_args *uap, reg
 }
 
 int
-linux_sys_fchownat(struct lwp *l, const struct linux_sys_fchownat_args *uap, register_t *retval)
+linux_sys_fchownat(struct lwp *l, const struct linux_sys_fchownat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -738,7 +763,8 @@ linux_sys_fchownat(struct lwp *l, const struct linux_sys_fchownat_args *uap, reg
 }
 
 int
-linux_sys_faccessat(struct lwp *l, const struct linux_sys_faccessat_args *uap, register_t *retval)
+linux_sys_faccessat(struct lwp *l, const struct linux_sys_faccessat_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -757,7 +783,8 @@ linux_sys_faccessat(struct lwp *l, const struct linux_sys_faccessat_args *uap, r
  *	(syscall #148 on the arm)
  */
 int
-linux_sys_fdatasync(struct lwp *l, const struct linux_sys_fdatasync_args *uap, register_t *retval)
+linux_sys_fdatasync(struct lwp *l, const struct linux_sys_fdatasync_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -770,7 +797,8 @@ linux_sys_fdatasync(struct lwp *l, const struct linux_sys_fdatasync_args *uap, r
  * pread(2).
  */
 int
-linux_sys_pread(struct lwp *l, const struct linux_sys_pread_args *uap, register_t *retval)
+linux_sys_pread(struct lwp *l, const struct linux_sys_pread_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -793,7 +821,8 @@ linux_sys_pread(struct lwp *l, const struct linux_sys_pread_args *uap, register_
  * pwrite(2).
  */
 int
-linux_sys_pwrite(struct lwp *l, const struct linux_sys_pwrite_args *uap, register_t *retval)
+linux_sys_pwrite(struct lwp *l, const struct linux_sys_pwrite_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -883,7 +912,6 @@ linux_sys_dup3(struct lwp *l, const struct linux_sys_dup3_args *uap,
 	return dodup(l, SCARG(uap, from), SCARG(uap, to), flags, retval);
 }
 
-
 int
 linux_to_bsd_atflags(int lflags)
 {
@@ -908,7 +936,7 @@ linux_sys_faccessat2(lwp_t *l, const struct linux_sys_faccessat2_args *uap,
 		syscallarg(const char *) path;
 		syscallarg(int) amode;
 		syscallarg(int) flags;
-	}*/
+	} */
 	int flag = linux_to_bsd_atflags(SCARG(uap, flags));
 	int mode = SCARG(uap, amode);
 	int fd = SCARG(uap, fd);
@@ -917,6 +945,336 @@ linux_sys_faccessat2(lwp_t *l, const struct linux_sys_faccessat2_args *uap,
 	return do_sys_accessat(l, fd, path, mode, flag);
 }
 
+int
+linux_sys_sync_file_range(lwp_t *l,
+    const struct linux_sys_sync_file_range_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(off_t) offset;
+		syscallarg(off_t) nbytes;
+		syscallarg(unsigned int) flags;
+	} */
+
+	struct sys_fsync_range_args ua;
+
+	if (SCARG(uap, offset) < 0 || SCARG(uap, nbytes) < 0 ||
+	    ((SCARG(uap, flags) & ~LINUX_SYNC_FILE_RANGE_ALL) != 0))
+		return EINVAL;
+
+	/* Fill ua with uap */
+	SCARG(&ua, fd) = SCARG(uap, fd);
+	SCARG(&ua, flags) = SCARG(uap, flags);
+
+	/* Round down offset to page boundary */
+	SCARG(&ua, start) = rounddown(SCARG(uap, offset), PAGE_SIZE);
+	SCARG(&ua, length) = SCARG(uap, nbytes);
+	if (SCARG(&ua, length) != 0) {
+		/* Round up length to nbytes+offset to page boundary */
+		SCARG(&ua, length) = roundup(SCARG(uap, nbytes)
+		    + SCARG(uap, offset) - SCARG(&ua, start), PAGE_SIZE);
+	}
+
+	return sys_fsync_range(l, &ua, retval);
+}
+
+int
+linux_sys_syncfs(lwp_t *l, const struct linux_sys_syncfs_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+	} */
+
+	struct mount *mp;
+	struct vnode *vp;
+	file_t *fp;
+	int error, fd;
+	fd = SCARG(uap, fd);
+
+	/* Get file pointer */
+	if ((error = fd_getvnode(fd, &fp)) != 0)
+		return error;
+
+	/* Get vnode and mount point */
+	vp = fp->f_vnode;
+	mp = vp->v_mount;
+
+	mutex_enter(mp->mnt_updating);
+	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
+		int asyncflag = mp->mnt_flag & MNT_ASYNC;
+		mp->mnt_flag &= ~MNT_ASYNC;
+		VFS_SYNC(mp, MNT_NOWAIT, l->l_cred);
+		if (asyncflag)
+			mp->mnt_flag |= MNT_ASYNC;
+	}
+	mutex_exit(mp->mnt_updating);
+
+	/* Cleanup vnode and file pointer */
+	vrele(vp);
+	fd_putfile(fd);
+	return 0;
+
+}
+
+int
+linux_sys_renameat2(struct lwp *l, const struct linux_sys_renameat2_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fromfd;
+		syscallarg(const char *) from;
+		syscallarg(int) tofd;
+		syscallarg(const char *) to;
+		syscallarg(unsigned int) flags;
+	} */
+
+	struct sys_renameat_args ua;
+	SCARG(&ua, fromfd) = SCARG(uap, fromfd);
+	SCARG(&ua, from) = SCARG(uap, from);
+	SCARG(&ua, tofd) = SCARG(uap, tofd);
+	SCARG(&ua, to) = SCARG(uap, to);
+
+	unsigned int flags = SCARG(uap, flags);
+	int error;
+
+	if (flags != 0) {
+		if (flags & ~LINUX_RENAME_ALL)
+			return EINVAL;
+		if ((flags & LINUX_RENAME_EXCHANGE) != 0 &&
+		    (flags & (LINUX_RENAME_NOREPLACE | LINUX_RENAME_WHITEOUT))
+		    != 0)
+			return EINVAL;
+		/*
+		 * Suppoting renameat2 flags without support from file systems
+		 * becomes a messy affair cause of locks and how VOP_RENAME
+		 * protocol is implemented. So, return EOPNOTSUPP for now.
+		 */
+		return EOPNOTSUPP;
+	}
+
+	error = sys_renameat(l, &ua, retval);
+	return error;
+}
+
+int
+linux_sys_copy_file_range(lwp_t *l,
+    const struct linux_sys_copy_file_range_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd_in;
+		syscallarg(unsigned long) off_in;
+		syscallarg(int) fd_out;
+		syscallarg(unsigned long) off_out;
+		syscallarg(size_t) len;
+		syscallarg(unsigned int) flags;
+	} */
+	const off_t OFF_MAX = __type_max(off_t);
+	int fd_in, fd_out;
+	file_t *fp_in, *fp_out;
+	struct vnode *invp, *outvp;
+	off_t off_in = 0, off_out = 0;
+	struct vattr vattr_in, vattr_out;
+	ssize_t total_copied = 0;
+	size_t bytes_left, to_copy;
+	bool have_off_in = false, have_off_out = false;
+	int error = 0;
+	size_t len = SCARG(uap, len);
+	unsigned int flags = SCARG(uap, flags);
+	/* Structures for actual copy */
+	char *buffer = NULL;
+	struct uio auio;
+	struct iovec aiov;
+
+	if (len > SSIZE_MAX) {
+		DPRINTF("%s: len is greater than SSIZE_MAX\n",
+		    __func__);
+		return EOVERFLOW;
+	}
+
+	if (flags != 0) {
+		DPRINTF("%s: unsupported flags %#x\n", __func__, flags);
+		return EINVAL;
+	}
+
+	fd_in = SCARG(uap, fd_in);
+	fd_out = SCARG(uap, fd_out);
+	error = fd_getvnode(fd_in, &fp_in);
+	if (error) {
+		return error;
+	}
+
+	error = fd_getvnode(fd_out, &fp_out);
+	if (error) {
+		fd_putfile(fd_in);
+		return error;
+	}
+
+	invp = fp_in->f_vnode;
+	outvp = fp_out->f_vnode;
+
+	/* Get attributes of input and output files */
+	VOP_GETATTR(invp, &vattr_in, l->l_cred);
+	VOP_GETATTR(outvp, &vattr_out, l->l_cred);
+
+	/* Check if input and output files are regular files */
+	if (vattr_in.va_type == VDIR || vattr_out.va_type == VDIR) {
+		error = EISDIR;
+		DPRINTF("%s: Input or output is a directory\n", __func__);
+		goto out;
+	}
+	if ((SCARG(uap, off_in) != NULL && *SCARG(uap, off_in) < 0) ||
+	    (SCARG(uap, off_out) != NULL && *SCARG(uap, off_out) < 0) ||
+	    vattr_in.va_type != VREG || vattr_out.va_type != VREG) {
+		error = EINVAL;
+		DPRINTF("%s: Invalid offset or file type\n", __func__);
+		goto out;
+	}
+
+	if ((fp_in->f_flag & FREAD) == 0 ||
+	    (fp_out->f_flag & FWRITE) == 0 ||
+	    (fp_out->f_flag & FAPPEND) != 0) {
+		DPRINTF("%s: input file can't be read or output file "
+		    "can't be written\n", __func__);
+		error = EBADF;
+		goto out;
+	}
+	/* Retrieve and validate offsets if provided */
+	if (SCARG(uap, off_in) != NULL) {
+		error = copyin(SCARG(uap, off_in), &off_in, sizeof(off_in));
+		if (error) {
+			goto out;
+		}
+		have_off_in = true;
+	}
+
+	if (SCARG(uap, off_out) != NULL) {
+		error = copyin(SCARG(uap, off_out), &off_out, sizeof(off_out));
+		if (error) {
+			goto out;
+		}
+		have_off_out = true;
+	}
+
+	if (off_out < 0 || len > OFF_MAX - off_out ||
+	    off_in < 0 || len > OFF_MAX - off_in) {
+		DPRINTF("%s: New size is greater than OFF_MAX\n", __func__);
+		error = EFBIG;
+		goto out;
+	}
+
+	/* Identify overlapping ranges */
+	if ((invp == outvp) &&
+	    ((off_in <= off_out && off_in + (off_t)len > off_out) ||
+		(off_in > off_out && off_out + (off_t)len > off_in))) {
+		DPRINTF("%s: Ranges overlap\n", __func__);
+		error = EINVAL;
+		goto out;
+	}
+
+	buffer = kmem_alloc(LINUX_COPY_FILE_RANGE_MAX_CHUNK, KM_SLEEP);
+
+	bytes_left = len;
+
+	while (bytes_left > 0) {
+		to_copy = MIN(bytes_left, LINUX_COPY_FILE_RANGE_MAX_CHUNK);
+
+		/* Lock the input vnode for reading */
+		vn_lock(fp_in->f_vnode, LK_SHARED | LK_RETRY);
+		/* Set up iovec and uio for reading */
+		aiov.iov_base = buffer;
+		aiov.iov_len = to_copy;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		auio.uio_offset = have_off_in ? off_in : fp_in->f_offset;
+		auio.uio_resid = to_copy;
+		auio.uio_rw = UIO_READ;
+		auio.uio_vmspace = l->l_proc->p_vmspace;
+		UIO_SETUP_SYSSPACE(&auio);
+
+		/* Perform read using vn_read */
+		error = VOP_READ(fp_in->f_vnode, &auio, 0, l->l_cred);
+		VOP_UNLOCK(fp_in->f_vnode);
+		if (error) {
+			DPRINTF("%s: Read error %d\n", __func__, error);
+			break;
+		}
+
+		size_t read_bytes = to_copy - auio.uio_resid;
+		if (read_bytes == 0) {
+			/* EOF reached */
+			break;
+		}
+
+		/* Lock the output vnode for writing */
+		vn_lock(fp_out->f_vnode, LK_EXCLUSIVE | LK_RETRY);
+		/* Set up iovec and uio for writing */
+		aiov.iov_base = buffer;
+		aiov.iov_len = read_bytes;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		auio.uio_offset = have_off_out ? off_out : fp_out->f_offset;
+		auio.uio_resid = read_bytes;
+		auio.uio_rw = UIO_WRITE;
+		auio.uio_vmspace = l->l_proc->p_vmspace;
+		UIO_SETUP_SYSSPACE(&auio);
+
+		/* Perform the write */
+		error = VOP_WRITE(fp_out->f_vnode, &auio, 0, l->l_cred);
+		VOP_UNLOCK(fp_out->f_vnode);
+		if (error) {
+			DPRINTF("%s: Write error %d\n", __func__, error);
+			break;
+		}
+		size_t written_bytes = read_bytes - auio.uio_resid;
+		total_copied += written_bytes;
+		bytes_left -= written_bytes;
+
+		/* Update offsets if provided */
+		if (have_off_in) {
+			off_in += written_bytes;
+		} else {
+			fp_in->f_offset += written_bytes;
+		}
+		if (have_off_out) {
+			off_out += written_bytes;
+		} else {
+			fp_out->f_offset += written_bytes;
+		}
+	}
+
+	if (have_off_in) {
+		/* Adjust user space offset */
+		error = copyout(&off_in, SCARG(uap, off_in), sizeof(off_t));
+		if (error) {
+			DPRINTF("%s: Error adjusting user space offset\n",
+			    __func__);
+		}
+		goto out;
+	}
+
+	if (have_off_out) {
+		/* Adjust user space offset */
+		error = copyout(&off_out, SCARG(uap, off_out), sizeof(off_t));
+		if (error) {
+			DPRINTF("%s: Error adjusting user space offset\n",
+			    __func__);
+		}
+	}
+
+	*retval = total_copied;
+out:
+	if (buffer) {
+		kmem_free(buffer, LINUX_COPY_FILE_RANGE_MAX_CHUNK);
+	}
+	if (fp_out) {
+		fd_putfile(fd_out);
+	}
+	if (fp_in) {
+		fd_putfile(fd_in);
+	}
+	return error;
+}
 
 #define LINUX_NOT_SUPPORTED(fun) \
 int \

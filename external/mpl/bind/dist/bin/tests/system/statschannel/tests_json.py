@@ -15,13 +15,32 @@ from datetime import datetime
 
 import pytest
 
-import pytest_custom_markers
+import isctest.mark
 
 pytest.register_assert_rewrite("generic")
 import generic
 
-pytestmark = pytest_custom_markers.have_json_c
 requests = pytest.importorskip("requests")
+
+pytestmark = [
+    isctest.mark.with_json_c,
+    pytest.mark.extra_artifacts(
+        [
+            "ns2/*.jnl",
+            "ns2/*.signed",
+            "ns2/dsset-*",
+            "ns2/K*",
+            "ns2/dnssec.db.signed",
+            "ns2/dnssec.*.id",
+            "ns2/manykeys.*.id",
+            "ns2/signzone.out.*",
+            "ns3/_default.nzd",
+            "ns3/example-tcp.db",
+            "ns3/example-tls.db",
+            "ns3/example.db",
+        ]
+    ),
+]
 
 
 # JSON helper functions
@@ -100,5 +119,6 @@ def test_zone_with_many_keys_json(statsport):
     )
 
 
+@isctest.mark.flaky(max_runs=2, rerun_filter=isctest.mark.with_tsan)
 def test_traffic_json(statsport):
     generic.test_traffic(fetch_traffic_json, statsip="10.53.0.2", statsport=statsport)

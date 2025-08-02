@@ -35,7 +35,7 @@ burst() {
       echo "${num}${2}${3}.lamesub.example A" >>burst.input.$$
     fi
   done
-  $PERL ../ditch.pl -p ${PORT} -s ${server} burst.input.$$
+  $PERL ../ditch.pl -p ${PORT} -s ${server} -b ${EXTRAPORT8} burst.input.$$
   rm -f burst.input.$$
 }
 
@@ -83,12 +83,11 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "dumping ADB data ($n)"
 ret=0
-rndccmd 10.53.0.3 dumpdb -adb
-info=$(grep '10.53.0.4' ns3/named_dump.db | sed 's/.*\(atr [.0-9]*\).*\(quota [0-9]*\).*/\1 \2/')
+info=$(rndccmd 10.53.0.3 fetchlimit | grep 10.53.0.4 | sed 's/.*quota .*(\([0-9]*\).*atr \([.0-9]*\).*/\2 \1/')
 echo_i $info
 set -- $info
-quota=$4
-[ ${4:-200} -lt 200 ] || ret=1
+quota=$2
+[ ${quota:-200} -lt 200 ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -125,12 +124,11 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "dumping ADB data ($n)"
 ret=0
-rndccmd 10.53.0.3 dumpdb -adb
-info=$(grep '10.53.0.4' ns3/named_dump.db | sed 's/.*\(atr [.0-9]*\).*\(quota [0-9]*\).*/\1 \2/')
+info=$(rndccmd 10.53.0.3 fetchlimit | grep 10.53.0.4 | sed 's/.*quota .*(\([0-9]*\).*atr \([.0-9]*\).*/\2 \1/')
 echo_i $info
 set -- $info
-[ ${4:-${quota}} -lt $quota ] || ret=1
-quota=$4
+[ ${2:-${quota}} -lt $quota ] || ret=1
+quota=$2
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -149,12 +147,11 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "dumping ADB data ($n)"
 ret=0
-rndccmd 10.53.0.3 dumpdb -adb
-info=$(grep '10.53.0.4' ns3/named_dump.db | sed 's/.*\(atr [.0-9]*\).*\(quota [0-9]*\).*/\1 \2/')
+info=$(rndccmd 10.53.0.3 fetchlimit | grep 10.53.0.4 | sed 's/.*quota .*(\([0-9]*\).*atr \([.0-9]*\).*/\2 \1/')
 echo_i $info
 set -- $info
-[ ${4:-${quota}} -gt $quota ] || ret=1
-quota=$4
+[ ${2:-${quota}} -gt $quota ] || ret=1
+quota=$2
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -168,15 +165,16 @@ fail=0
 success=0
 touch ans4/norespond
 for try in 1 2 3 4 5; do
-  burst 10.53.0.3 b $try 300
+  burst 10.53.0.3 d $try 300
   $DIGCMD a ${try}.example >dig.out.ns3.$n.$try
   grep "status: NOERROR" dig.out.ns3.$n.$try >/dev/null 2>&1 \
     && success=$((success + 1))
   grep "status: SERVFAIL" dig.out.ns3.$n.$try >/dev/null 2>&1 \
     && fail=$(($fail + 1))
-  stat 10.53.0.3 30 50 || ret=1
+  stat 10.53.0.3 40 40 || ret=1
+  allowed=$(rndccmd 10.53.0.3 fetchlimit | awk '/lamesub/ { print $6 }')
+  [ "${allowed:-0}" -eq 40 ] || ret=1
   [ $ret -eq 1 ] && break
-  rndccmd 10.53.0.3 recursing 2>&1 | sed 's/^/ns3 /' | cat_i
   sleep 1
 done
 echo_i "$success successful valid queries, $fail SERVFAIL"
@@ -327,6 +325,15 @@ zspill=$(grep 'spilled due to clients per query' ns5/named.stats | sed 's/ *\([0
 expected=55
 [ "$zspill" -eq "$expected" ] || ret=1
 echo_i "$zspill clients spilled (expected $expected)"
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking a warning is logged if max-clients-per-query < clients-per-query ($n)"
+ret=0
+copy_setports ns5/named3.conf.in ns5/named.conf
+rndc_reconfig ns5 10.53.0.5
+wait_for_message ns5/named.run "configured clients-per-query (10) exceeds max-clients-per-query (5); automatically adjusting max-clients-per-query to (10)" || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

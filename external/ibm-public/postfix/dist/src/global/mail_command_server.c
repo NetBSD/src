@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_command_server.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_command_server.c,v 1.1.1.1.62.1 2025/08/02 05:50:07 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -43,7 +43,7 @@
 /* System library. */
 
 #include <sys_defs.h>
-#include <stdlib.h>		/* 44BSD stdarg.h uses abort() */
+#include <stdlib.h>			/* 44BSD stdarg.h uses abort() */
 #include <stdarg.h>
 #include <string.h>
 

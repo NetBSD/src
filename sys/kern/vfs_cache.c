@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.156 2023/10/02 21:50:18 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.156.6.1 2025/08/02 05:57:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020, 2023 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  *	therefore want to make everything simplest in the lookup path.
  *
  *	struct namecache is mostly stable except for list and tree related
- *	entries, changes to which don't affect the cached name or vnode. 
+ *	entries, changes to which don't affect the cached name or vnode.
  *	For changes to name+vnode, entries are purged in preference to
  *	modifying them.
  *
@@ -181,10 +181,11 @@
  *	3) cache_lru_lock	(LRU list direction, used during reclaim)
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.156 2023/10/02 21:50:18 ad Exp $");
-
 #define __NAMECACHE_PRIVATE
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.156.6.1 2025/08/02 05:57:43 perseant Exp $");
+
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
@@ -192,6 +193,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.156 2023/10/02 21:50:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
+
 #include <sys/atomic.h>
 #include <sys/callout.h>
 #include <sys/cpu.h>
@@ -559,7 +561,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	/* Could the entry be purged below? */
 	if ((cnflags & ISLASTCN) != 0 &&
 	    ((cnflags & MAKEENTRY) == 0 || nameiop == CREATE)) {
-	    	op = RW_WRITER;
+		op = RW_WRITER;
 	} else {
 		op = RW_READER;
 	}
@@ -724,9 +726,10 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 		KASSERT(dvi->vi_nc_gid != VNOVAL);
 		error = kauth_authorize_vnode(cred,
 		    KAUTH_ACCESS_ACTION(VEXEC,
-		    dvp->v_type, dvi->vi_nc_mode & ALLPERMS), dvp, NULL,
+			dvp->v_type, dvi->vi_nc_mode & ALLPERMS),
+		    dvp, NULL,
 		    genfs_can_access(dvp, cred, dvi->vi_nc_uid, dvi->vi_nc_gid,
-		    dvi->vi_nc_mode & ALLPERMS, NULL, VEXEC));
+			dvi->vi_nc_mode & ALLPERMS, NULL, VEXEC));
 		if (error != 0) {
 			if (newlock != NULL) {
 				rw_exit(newlock);
@@ -823,13 +826,15 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 		KASSERT(vi->vi_nc_gid != VNOVAL);
 		error = kauth_authorize_vnode(kauth_cred_get(),
 		    KAUTH_ACCESS_ACTION(VEXEC, vp->v_type, vi->vi_nc_mode &
-		    ALLPERMS), vp, NULL, genfs_can_access(vp, curlwp->l_cred,
-		    vi->vi_nc_uid, vi->vi_nc_gid, vi->vi_nc_mode & ALLPERMS,
-		    NULL, accmode));
-		    if (error != 0) {
-		    	rw_exit(&vi->vi_nc_listlock);
+			ALLPERMS),
+		    vp, NULL, genfs_can_access(vp, curlwp->l_cred,
+			vi->vi_nc_uid, vi->vi_nc_gid,
+			vi->vi_nc_mode & ALLPERMS,
+			NULL, accmode));
+		if (error != 0) {
+			rw_exit(&vi->vi_nc_listlock);
 			COUNT(ncs_denied);
-			return EACCES;
+			return SET_ERROR(EACCES);
 		}
 	}
 	TAILQ_FOREACH(ncp, &vi->vi_nc_list, nc_list) {
@@ -851,7 +856,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 		if (ncp->nc_name[0] == '.') {
 			if (nlen == 1 ||
 			    (nlen == 2 && ncp->nc_name[1] == '.')) {
-			    	break;
+				break;
 			}
 		}
 
@@ -872,7 +877,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 				rw_exit(&vi->vi_nc_listlock);
 				SDT_PROBE(vfs, namecache, revlookup,
 				    fail, vp, ERANGE, 0, 0, 0);
-				return (ERANGE);
+				return SET_ERROR(ERANGE);
 			}
 			memcpy(bp, ncp->nc_name, nlen);
 			*bpp = bp;
@@ -894,13 +899,13 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 		SDT_PROBE(vfs, namecache, revlookup, success, vp, dvp,
 		    0, 0, 0);
 		COUNT(ncs_revhits);
-		return (0);
+		return 0;
 	}
 	rw_exit(&vi->vi_nc_listlock);
 	COUNT(ncs_revmiss);
- out:
+out:
 	*dvpp = NULL;
-	return (-1);
+	return -1;
 }
 
 /*
@@ -1349,7 +1354,7 @@ cache_deactivate(void)
 	/* If we're nowhere near budget yet, don't bother. */
 	total = cache_lru.count[LRU_ACTIVE] + cache_lru.count[LRU_INACTIVE];
 	if (total < (desiredvnodes >> 1)) {
-	    	return;
+		return;
 	}
 
 	/*

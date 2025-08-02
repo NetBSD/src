@@ -92,7 +92,7 @@ mpfr_const_catalan_internal (mpfr_ptr g, mpfr_rnd_t rnd_mode)
   MPFR_GROUP_DECL (group);
 
   MPFR_LOG_FUNC (("rnd_mode=%d", rnd_mode),
-    ("g[%Pu]=%.*Rg inex=%d", mpfr_get_prec (g), mpfr_log_prec, g, inex));
+    ("g[%Pd]=%.*Rg inex=%d", mpfr_get_prec (g), mpfr_log_prec, g, inex));
 
   /* Here are the WC (max prec = 100.000.000)
      Once we have found a chain of 11, we only look for bigger chain.

@@ -1,4 +1,4 @@
-/*	$NetBSD: lcg.c,v 1.11 2022/12/10 19:50:43 jakllsch Exp $ */
+/*	$NetBSD: lcg.c,v 1.11.8.1 2025/08/02 05:56:14 perseant Exp $ */
 /*
  * LCG accelerated framebuffer driver
  * Copyright (c) 2003, 2004 Blaz Antonic
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.11 2022/12/10 19:50:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.11.8.1 2025/08/02 05:56:14 perseant Exp $");
 
 #define LCG_NO_ACCEL
 
@@ -435,7 +435,21 @@ lcg_match(struct device *parent, struct cfdata *match, void *aux)
 	struct vsbus_attach_args *va = aux;
 	volatile char * const ch = (char *)va->va_addr;
 
+	/*
+	 * Check the VAX board type. LCG can exist on two board types:
+	 * - KA46 (VAXstation 4000/60 or MicroVAX 3100/80)
+	 * - KA48 (VAXstation 4000 VLC or MicroVAX 3100/m{30,40}
+	 */
 	if ((vax_boardtype != VAX_BTYP_46) && (vax_boardtype != VAX_BTYP_48))
+		return 0;
+
+	/*
+	 * LCG supposedly only exists on VAXstations, not the MicroVAXen using
+	 * the same board type.
+	 *
+	 * These are "magic values", taken from vax/locore.c
+	 */
+	if ((vax_siedata & 0x3) != 2)
 		return 0;
 
 	*ch = 1;
@@ -953,6 +967,9 @@ lcgcnprobe(struct consdev *cndev)
 	if ((vax_boardtype != VAX_BTYP_46) && (vax_boardtype != VAX_BTYP_48))
 		return; /* Only for VS 4000/60 and VLC */
 
+	if ((vax_siedata & 0x3) != 2)
+		return; /* VAXstation only */
+
 	if (vax_confdata & 0x100)
 		return; /* Diagnostic console */
 
@@ -974,7 +991,7 @@ lcg_init_common(struct device *self, struct vsbus_attach_args *va)
 	int cookie;
 	struct wsdisplay_font *wf;
 
-	struct lcg_softc *sc = (void *)self;
+	struct lcg_softc *sc = device_private(self);
 	bus_dma_segment_t seg;
 	int rseg, err;
 	void *fifo_mem_vaddr;

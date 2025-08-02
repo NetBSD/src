@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.23 2022/03/19 13:53:32 hannken Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.23.10.1 2025/08/02 05:57:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -276,7 +276,7 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	mutex_init(&chmp->chm_lock_sizes, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&chmp->chm_lock_vnocache, MUTEX_DEFAULT, IPL_NONE);
 
-	/* Initialize read/write contants. (from UFS) */
+	/* Initialize read/write constants. (from UFS) */
 	chmp->chm_fs_bmask = -4096;
 	chmp->chm_fs_bsize = 4096;
 	chmp->chm_fs_qbmask = 4095;

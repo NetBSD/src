@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.182 2024/03/26 18:02:04 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.182.2.1 2025/08/02 05:54:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.182 2024/03/26 18:02:04 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.182.2.1 2025/08/02 05:54:48 perseant Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1922,7 +1922,7 @@ username_completion_function(const char *text, int state)
 static unsigned char
 _el_rl_tstp(EditLine *el __attribute__((__unused__)), int ch __attribute__((__unused__)))
 {
-	(void)kill(0, SIGTSTP);
+	(void)raise(SIGTSTP);
 	return CC_NORM;
 }
 

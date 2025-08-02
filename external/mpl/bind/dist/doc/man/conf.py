@@ -16,7 +16,7 @@
 #
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
+# https://www.sphinx-doc.org/en/master/config
 
 # -- Path setup --------------------------------------------------------------
 
@@ -100,6 +100,13 @@ man_pages = [
         1,
     ),
     ("dnssec-keygen", "dnssec-keygen", "DNSSEC key generation tool", author, 1),
+    (
+        "dnssec-ksr",
+        "dnssec-ksr",
+        "create signed key response (SKR) files for offline KSK setups",
+        author,
+        1,
+    ),
     (
         "dnssec-revoke",
         "dnssec-revoke",
@@ -201,7 +208,6 @@ rst_epilog = """
 .. |rndc_conf| replace:: ``@sysconfdir@/rndc.conf``
 .. |rndc_key| replace:: ``@sysconfdir@/rndc.key``
 .. |named_conf| replace:: ``@sysconfdir@/named.conf``
-.. |bind_keys| replace:: ``@sysconfdir@/bind.keys``
 .. |named_pid| replace:: ``@runstatedir@/named.pid``
 .. |session_key| replace:: ``@runstatedir@/session.key``
 """

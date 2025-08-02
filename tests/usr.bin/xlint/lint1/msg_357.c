@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_357.c,v 1.1 2024/03/01 19:39:28 rillig Exp $	*/
+/*	$NetBSD: msg_357.c,v 1.1.2.1 2025/08/02 05:58:18 perseant Exp $	*/
 # 3 "msg_357.c"
 
 // Test for message: hex escape '%.*s' mixes uppercase and lowercase digits [357]
@@ -6,9 +6,9 @@
 /*
  * In the format argument of the snprintb and snprintb_m functions, a bit
  * position or field width is written as an octal or hexadecimal escape
- * sequence.  If the description that follows starts with hex digits (A-Fa-f),
- * these digits are still part of the escape sequence instead of the
- * description.
+ * sequence.  If the description that follows a hexadecimal escape sequence
+ * starts with hexadecimal digits (A-Fa-f), these digits are still part of the
+ * escape sequence instead of the description.
  *
  * Since the escape sequences are typically written in lowercase and the
  * descriptions are typically written in uppercase, a mixture of both cases
@@ -20,7 +20,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 examples(unsigned u32, uint64_t u64)
@@ -40,6 +40,13 @@ examples(unsigned u32, uint64_t u64)
 	snprintb(buf, sizeof(buf),
 	    "\020\x1FIELD",
 	    u32);
+
+	// If the input value is restricted further, the unintended hexadecimal
+	// escape sequence is detected, although with a less obvious message.
+	/* expect+3: warning: conversion '\x1FIELD' is unreachable by input value [378] */
+	snprintb(buf, sizeof(buf),
+	    "\020\x1FIELD",
+	    u32 & 0xffff);
 
 	/* expect+5: warning: hex escape '\x0aB' mixes uppercase and lowercase digits [357] */
 	/* expect+4: warning: hex escape '\x0aB' has more than 2 digits [358] */

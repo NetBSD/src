@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.h,v 1.9 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.9.2.1 2025/08/02 05:53:34 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,7 @@
 #include <isc/stdtime.h>
 
 #include <dns/diff.h>
+#include <dns/kasp.h>
 #include <dns/types.h>
 
 #include <dst/dst.h>
@@ -72,6 +73,7 @@ struct dns_dnsseckey {
 				      *  an older version of BIND9) and
 				      *  should be ignored when searching
 				      *  for keys to import into the zone */
+	bool	     pubkey;	     /*% public key only */
 	unsigned int index;	     /*% position in list */
 	ISC_LINK(dns_dnsseckey_t) link;
 };
@@ -95,6 +97,23 @@ dns_dnssec_keyfromrdata(const dns_name_t *name, const dns_rdata_t *rdata,
  *\li		#ISC_R_NOMEMORY
  *\li		DST_R_INVALIDPUBLICKEY
  *\li		various errors from dns_name_totext
+ */
+
+isc_result_t
+dns_dnssec_make_dnskey(dst_key_t *key, unsigned char *buf, int bufsize,
+		       dns_rdata_t *target);
+/*%<
+ *	Convert a DST key into a DNS record.
+ *
+ *	Requires:
+ *\li		'key' is not NULL
+ *\li		'buf' is not NULL
+ *\li		'bufsize' equals DST_KEY_MAXSIZE
+ *\li		'target' is not NULL
+ *
+ *	Returns:
+ *\li		#ISC_R_SUCCESS
+ *\li		various errors from dst_key_todns
  */
 
 isc_result_t
@@ -160,20 +179,6 @@ dns_dnssec_verify(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
  *			authentication)
  *\li		DST_R_*
  */
-
-/*@{*/
-isc_result_t
-dns_dnssec_findzonekeys(dns_db_t *db, dns_dbversion_t *ver, dns_dbnode_t *node,
-			const dns_name_t *name, const char *directory,
-			isc_stdtime_t now, isc_mem_t *mctx,
-			unsigned int maxkeys, dst_key_t **keys,
-			unsigned int *nkeys);
-
-/*%<
- * 	Finds a set of zone keys.
- * 	XXX temporary - this should be handled in dns_zone_t.
- */
-/*@}*/
 
 bool
 dns_dnssec_keyactive(dst_key_t *key, isc_stdtime_t now);
@@ -247,7 +252,7 @@ dns_dnssec_signs(dns_rdata_t *rdata, const dns_name_t *name,
  * rrset.  dns_dnssec_signs() works on any rrset.
  */
 
-isc_result_t
+void
 dns_dnsseckey_create(isc_mem_t *mctx, dst_key_t **dstkey,
 		     dns_dnsseckey_t **dkp);
 /*%<
@@ -255,10 +260,6 @@ dns_dnsseckey_create(isc_mem_t *mctx, dst_key_t **dstkey,
  *
  *	Requires:
  *\li		'dkp' is not NULL and '*dkp' is NULL.
- *
- *	Returns:
- *\li		#ISC_R_SUCCESS
- *\li		#ISC_R_NOMEMORY
  */
 
 void
@@ -284,11 +285,15 @@ dns_dnssec_get_hints(dns_dnsseckey_t *key, isc_stdtime_t now);
  */
 
 isc_result_t
-dns_dnssec_findmatchingkeys(const dns_name_t *origin, const char *directory,
+dns_dnssec_findmatchingkeys(const dns_name_t *origin, dns_kasp_t *kasp,
+			    const char *keydir, dns_keystorelist_t *keystores,
 			    isc_stdtime_t now, isc_mem_t *mctx,
 			    dns_dnsseckeylist_t *keylist);
 /*%<
- * Search 'directory' for K* key files matching the name in 'origin'.
+ * Search for K* key files matching the name in 'origin'. If 'kasp' is not
+ * NULL, search in the directories used in 'keystores'. Otherwise search in the
+ * key-directory 'keydir'.
+ *
  * Append all such keys, along with use hints gleaned from their
  * metadata, onto 'keylist'.  Skip any unsupported algorithms.
  *
@@ -307,21 +312,25 @@ dns_dnssec_findmatchingkeys(const dns_name_t *origin, const char *directory,
  */
 
 isc_result_t
-dns_dnssec_keylistfromrdataset(const dns_name_t *origin, const char *directory,
-			       isc_mem_t *mctx, dns_rdataset_t *keyset,
-			       dns_rdataset_t *keysigs, dns_rdataset_t *soasigs,
-			       bool savekeys, bool publickey,
-			       dns_dnsseckeylist_t *keylist);
+dns_dnssec_keylistfromrdataset(const dns_name_t *origin, dns_kasp_t *kasp,
+			       const char *directory, isc_mem_t *mctx,
+			       dns_rdataset_t *keyset, dns_rdataset_t *keysigs,
+			       dns_rdataset_t *soasigs, bool savekeys,
+			       bool publickey, dns_dnsseckeylist_t *keylist);
 /*%<
  * Append the contents of a DNSKEY rdataset 'keyset' to 'keylist'.
- * Omit duplicates.  If 'publickey' is false, search 'directory' for
- * matching key files, and load the private keys that go with
- * the public ones.  If 'savekeys' is true, mark the keys so
- * they will not be deleted or inactivated regardless of metadata.
+ * Omit duplicates.  If 'publickey' is false, search the key stores referenced
+ * in 'kasp', or 'directory' if 'kasp' is NULL, for matching key files, and
+ * load the private keys that go with the public ones.  If 'savekeys' is true,
+ * mark the keys so they will not be deleted or inactivated regardless of
+ * metadata.
  *
  * 'keysigs' and 'soasigs', if not NULL and associated, contain the
  * RRSIGS for the DNSKEY and SOA records respectively and are used to mark
  * whether a key is already active in the zone.
+ *
+ * Private key files for keys with the KSK role are skipped if kasp is in
+ * offline-ksk mode.
  */
 
 isc_result_t
@@ -358,10 +367,29 @@ dns_dnssec_updatekeys(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *newkeys,
 isc_result_t
 dns_dnssec_syncupdate(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *rmkeys,
 		      dns_rdataset_t *cds, dns_rdataset_t *cdnskey,
-		      isc_stdtime_t now, dns_ttl_t hint_ttl, dns_diff_t *diff,
+		      isc_stdtime_t now, dns_kasp_digestlist_t *digests,
+		      bool gencdnskey, dns_ttl_t hint_ttl, dns_diff_t *diff,
 		      isc_mem_t *mctx);
 /*%<
  * Update the CDS and CDNSKEY RRsets, adding and removing keys as needed.
+ *
+ * For each key in 'keys', check if corresponding CDS and CDNSKEY records
+ * need to be published. If needed and 'gencdnskey' is true, there will be one
+ * CDNSKEY record added to the 'cdnskey' RRset. Also one CDS record will be
+ * added to the 'cds' RRset for each digest type in 'digests'.
+ *
+ * For each key in 'rmkeys', remove any associated CDS and CDNSKEY records from
+ * the RRsets 'cds' and 'cdnskey'.
+ *
+ * 'hint_ttl' is the TTL to use for the CDS and CDNSKEY RRsets if there is no
+ * existing RRset.
+ *
+ * Any changes made also cause a dns_difftuple to be added to 'diff'.
+ *
+ * Requires:
+ *\li	'keys' is not NULL.
+ *\li	'rmkeys' is not NULL.
+ *\li	'digests' is not NULL.
  *
  * Returns:
  *\li   ISC_R_SUCCESS

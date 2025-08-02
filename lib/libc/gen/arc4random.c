@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.34 2024/01/20 14:52:47 christos Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.34.2.1 2025/08/02 05:54:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,17 +42,16 @@
  *
  * The arc4random(3) API may abort the process if:
  *
- * (a) the crypto self-test fails,
- * (b) pthread_atfork or thr_keycreate fail, or
- * (c) sysctl(KERN_ARND) fails when reseeding the PRNG.
+ * (a) the crypto self-test fails, or
+ * (b) sysctl(KERN_ARND) fails when reseeding the PRNG.
  *
- * The crypto self-test, pthread_atfork, and thr_keycreate occur only
- * once, on the first use of any of the arc4random(3) API.  KERN_ARND
- * is unlikely to fail later unless the kernel is seriously broken.
+ * The crypto self-test occurs only once, on the first use of any of
+ * the arc4random(3) API.  KERN_ARND is unlikely to fail later unless
+ * the kernel is seriously broken.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.34 2024/01/20 14:52:47 christos Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.34.2.1 2025/08/02 05:54:36 perseant Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -70,6 +69,9 @@ __RCSID("$NetBSD: arc4random.c,v 1.34 2024/01/20 14:52:47 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "arc4random.h"
+#include "reentrant.h"
 
 #ifdef __weak_alias
 __weak_alias(arc4random,_arc4random)
@@ -183,8 +185,6 @@ crypto_core(uint8_t *out, const uint8_t *in, const uint8_t *k,
 
 /* ChaCha self-test */
 
-#ifdef _DIAGNOSTIC
-
 /*
  * Test vector for ChaCha20 from
  * <http://tools.ietf.org/html/draft-strombergson-chacha-test-vectors-00>,
@@ -278,17 +278,6 @@ crypto_core_selftest(void)
 	return 0;
 }
 
-#else  /* !_DIAGNOSTIC */
-
-static int
-crypto_core_selftest(void)
-{
-
-	return 0;
-}
-
-#endif
-
 /* PRNG */
 
 /*
@@ -304,9 +293,7 @@ crypto_core_selftest(void)
 #define	crypto_prng_MAXOUTPUTBYTES	\
 	(crypto_core_OUTPUTBYTES - crypto_prng_SEEDBYTES)
 
-struct crypto_prng {
-	uint8_t		state[crypto_prng_SEEDBYTES];
-};
+__CTASSERT(sizeof(struct crypto_prng) == crypto_prng_SEEDBYTES);
 
 static void
 crypto_prng_seed(struct crypto_prng *prng, const void *seed)
@@ -329,6 +316,52 @@ crypto_prng_buf(struct crypto_prng *prng, void *buf, size_t n)
 	(void)memcpy(prng->state, output, sizeof prng->state);
 	(void)memcpy(buf, output + sizeof prng->state, n);
 	(void)explicit_memset(output, 0, sizeof output);
+}
+
+static int
+crypto_prng_selftest(void)
+{
+	const uint8_t expected[32] = {
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+#  if crypto_core_ROUNDS == 20
+		0x2b,	/* first call */
+		0x2d,0x41,0xa5,0x9c,0x90,0xe4,0x1a,0x8e, /* second call */
+		0x7a,0x4d,0xcc,0xaa,0x1c,0x46,0x06,0x99,
+		0x83,0xb1,0xa3,0x33,0xce,0x25,0x71,0x9e,
+		0xc3,0x43,0x77,0x68,0xab,0x57,
+		0x5f,	/* third call */
+#  else
+#    error crypto_core_ROUNDS other than 20 left as exercise for reader.
+#  endif
+#elif _BYTE_ORDER == _BIG_ENDIAN
+#  if crypto_core_ROUNDS == 20
+		0xae,	/* first call */
+		0x97,0x14,0x5a,0x05,0xad,0xa8,0x48,0xf1, /* second call */
+		0x3a,0x81,0x84,0xd7,0x05,0xda,0x20,0x5d,
+		0xc0,0xef,0x86,0x65,0x98,0xbd,0xb0,0x16,
+		0x1b,0xfc,0xff,0xc4,0xc2,0xfd,
+		0xa0,	/* third call */
+#  else
+#    error crypto_core_ROUNDS other than 20 left as exercise for reader.
+#  endif
+#else
+#  error Byte order must be little-endian or big-endian.
+#endif
+	};
+	uint8_t seed[crypto_prng_SEEDBYTES];
+	struct crypto_prng prng;
+	uint8_t output[32];
+	unsigned i;
+
+	for (i = 0; i < __arraycount(seed); i++)
+		seed[i] = i;
+	crypto_prng_seed(&prng, seed);
+	crypto_prng_buf(&prng, output, 1);
+	crypto_prng_buf(&prng, output + 1, 30);
+	crypto_prng_buf(&prng, output + 31, 1);
+	if (memcmp(output, expected, 32) != 0)
+		return EIO;
+	return 0;
 }
 
 /* One-time stream: expand short single-use secret into long secret */
@@ -378,19 +411,25 @@ crypto_onetimestream(const void *seed, void *buf, size_t n)
 
 	if (ni) {
 		crypto_core(block, nonce8, seed, crypto_core_constant32);
-		nonce[0]++;
+		crypto_le32enc(&nonce[0], 1 + crypto_le32dec(&nonce[0]));
 		(void)memcpy(p8, block, ni);
 	}
 	while (nb--) {
 		crypto_core(p32, nonce8, seed, crypto_core_constant32);
-		if (++nonce[0] == 0)
-			nonce[1]++;
+		crypto_le32enc(&nonce[0], 1 + crypto_le32dec(&nonce[0]));
+		if (crypto_le32dec(&nonce[0]) == 0) {
+			crypto_le32enc(&nonce[1],
+			    1 + crypto_le32dec(&nonce[1]));
+		}
 		p32 += crypto_core_OUTPUTBYTES;
 	}
 	if (nf) {
 		crypto_core(block, nonce8, seed, crypto_core_constant32);
-		if (++nonce[0] == 0)
-			nonce[1]++;
+		crypto_le32enc(&nonce[0], 1 + crypto_le32dec(&nonce[0]));
+		if (crypto_le32dec(&nonce[0]) == 0) {
+			crypto_le32enc(&nonce[1],
+			    1 + crypto_le32dec(&nonce[1]));
+		}
 		(void)memcpy(p32, block, nf);
 	}
 
@@ -398,12 +437,92 @@ crypto_onetimestream(const void *seed, void *buf, size_t n)
 		(void)explicit_memset(block, 0, sizeof block);
 }
 
-/* arc4random state: per-thread, per-process (zeroed in child on fork) */
+static int
+crypto_onetimestream_selftest(void)
+{
+	const uint8_t expected[70] = {
+		0x5a,			/* guard byte */
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+#  if crypto_core_ROUNDS == 20
+		0x39,0xfd,0x2b,		/* initial block */
+		0x18,0xb8,0x42,0x31,0xad,0xe6,0xa6,0xd1,
+		0x13,0x61,0x5c,0x61,0xaf,0x43,0x4e,0x27,
+		0xf8,0xb1,0xf3,0xf5,0xe1,0xad,0x5b,0x5c,
+		0xec,0xf8,0xfc,0x12,0x2a,0x35,0x75,0x5c,
+		0x72,0x08,0x08,0x6d,0xd1,0xee,0x3c,0x5d,
+		0x9d,0x81,0x58,0x24,0x64,0x0e,0x00,0x3c,
+		0x9b,0xa0,0xf6,0x5e,0xde,0x5d,0x59,0xce,
+		0x0d,0x2a,0x4a,0x7f,0x31,0x95,0x5a,0xcd,
+		0x42,			/* final block */
+#  else
+#    error crypto_core_ROUNDS other than 20 left as exercise for reader.
+#  endif
+#elif _BYTE_ORDER == _BIG_ENDIAN
+#  if crypto_core_ROUNDS == 20
+		0x20,0xf0,0x66,		/* initial block */
+		0x1a,0x82,0xda,0xb6,0xba,0x90,0x42,0x19,
+		0x39,0xc2,0x4e,0x4d,0xaf,0xbc,0x67,0xcf,
+		0xe3,0xe4,0xe2,0x80,0x38,0x80,0x8e,0x53,
+		0x19,0x25,0x37,0x67,0x66,0x57,0x7c,0x78,
+		0xac,0xb3,0x8b,0x97,0x54,0x20,0xc4,0x46,
+		0xff,0x90,0x76,0x56,0xcc,0xde,0xe5,0xb9,
+		0xdf,0x82,0x8c,0x05,0x9d,0xf0,0x69,0x99,
+		0x42,0x53,0x74,0x5e,0x80,0x81,0xdb,0x9b,
+		0xb1,			/* final block */
+#  else
+#    error crypto_core_ROUNDS other than 20 left as exercise for reader.
+#  endif
+#else
+#  error Byte order must be little-endian or big-endian.
+#endif
+		0xcc,			/* guard byte */
+	};
+	uint8_t seed[crypto_prng_SEEDBYTES];
+	uint8_t output[70] __aligned(4);
+	unsigned i;
 
-struct arc4random_prng {
-	struct crypto_prng	arc4_prng;
-	bool			arc4_seeded;
-};
+	for (i = 0; i < __arraycount(seed); i++)
+		seed[i] = i;
+	output[0] = 0x5a;
+	output[69] = 0xcc;
+	crypto_onetimestream(seed, output + 1, 68);
+	if (memcmp(output, expected, 70) != 0)
+		return EIO;
+	return 0;
+}
+
+/*
+ * entropy_epoch()
+ *
+ *	Return the current entropy epoch, from the sysctl node
+ *	kern.entropy.epoch.
+ *
+ *	The entropy epoch is never zero.  Initially, or on error, it is
+ *	(unsigned)-1.  It may wrap around but it skips (unsigned)-1 and
+ *	0 when it does.  Changes happen less than once per second, so
+ *	wraparound will only affect systems after 136 years of uptime.
+ *
+ *	XXX This should get it from a page shared read-only by kernel
+ *	with userland, but until we implement such a mechanism, this
+ *	sysctl -- incurring the cost of a syscall -- will have to
+ *	serve.
+ */
+static unsigned
+entropy_epoch(void)
+{
+	const int mib[] = { CTL_KERN, KERN_ENTROPY, KERN_ENTROPY_EPOCH };
+	unsigned epoch = (unsigned)-1;
+	size_t epochlen = sizeof(epoch);
+
+	if (sysctl(mib, __arraycount(mib), &epoch, &epochlen, NULL, 0) == -1)
+		return (unsigned)-1;
+	if (epochlen != sizeof(epoch))
+		return (unsigned)-1;
+
+	return epoch;
+}
+
+/* arc4random state: per-thread, per-process (zeroed in child on fork) */
 
 static void
 arc4random_prng_addrandom(struct arc4random_prng *prng, const void *data,
@@ -413,6 +532,7 @@ arc4random_prng_addrandom(struct arc4random_prng *prng, const void *data,
 	SHA256_CTX ctx;
 	uint8_t buf[crypto_prng_SEEDBYTES];
 	size_t buflen = sizeof buf;
+	unsigned epoch = entropy_epoch();
 
 	__CTASSERT(sizeof buf == SHA256_DIGEST_LENGTH);
 
@@ -436,7 +556,7 @@ arc4random_prng_addrandom(struct arc4random_prng *prng, const void *data,
 	/* reseed(SHA256(prng() || sysctl(KERN_ARND) || data)) */
 	crypto_prng_seed(&prng->arc4_prng, buf);
 	(void)explicit_memset(buf, 0, sizeof buf);
-	prng->arc4_seeded = true;
+	prng->arc4_epoch = epoch;
 }
 
 #ifdef _REENTRANT
@@ -473,18 +593,11 @@ arc4random_prng_destroy(struct arc4random_prng *prng)
 
 /* Library state */
 
-static struct arc4random_global {
-#ifdef _REENTRANT
-	mutex_t			lock;
-	thread_key_t		thread_key;
-#endif
-	struct arc4random_prng	prng;
-	bool			initialized;
-} arc4random_global = {
+struct arc4random_global_state arc4random_global = {
 #ifdef _REENTRANT
 	.lock		= MUTEX_INITIALIZER,
 #endif
-	.initialized	= false,
+	.once		= ONCE_INITIALIZER,
 };
 
 static void
@@ -524,58 +637,102 @@ static void
 arc4random_initialize(void)
 {
 
-	mutex_lock(&arc4random_global.lock);
-	if (!arc4random_global.initialized) {
-		if (crypto_core_selftest() != 0)
-			abort();
-		if (pthread_atfork(&arc4random_atfork_prepare,
-			&arc4random_atfork_parent, &arc4random_atfork_child)
-		    != 0)
-			abort();
+	/*
+	 * If the crypto software is broken, abort -- something is
+	 * severely wrong with this process image.
+	 */
+	if (crypto_core_selftest() != 0 ||
+	    crypto_prng_selftest() != 0 ||
+	    crypto_onetimestream_selftest() != 0)
+		abort();
+
+	/*
+	 * Set up a pthread_atfork handler to lock the global state
+	 * around fork so that if forked children can't use the
+	 * per-thread state, they can take the lock and use the global
+	 * state without deadlock.  If this fails, we will fall back to
+	 * PRNG state on the stack reinitialized from the kernel
+	 * entropy pool at every call.
+	 */
+	if (pthread_atfork(&arc4random_atfork_prepare,
+		&arc4random_atfork_parent, &arc4random_atfork_child)
+	    == 0)
+		arc4random_global.forksafe = true;
+
+	/*
+	 * For multithreaded builds, try to allocate a per-thread PRNG
+	 * state to avoid contention due to arc4random.
+	 */
 #ifdef _REENTRANT
-		if (thr_keycreate(&arc4random_global.thread_key,
-			&arc4random_tsd_destructor) != 0)
-			abort();
+	if (thr_keycreate(&arc4random_global.thread_key,
+		&arc4random_tsd_destructor) == 0)
+		arc4random_global.per_thread = true;
 #endif
-		arc4random_global.initialized = true;
-	}
-	mutex_unlock(&arc4random_global.lock);
+
+	/*
+	 * Note that the arc4random library state has been initialized
+	 * for the sake of automatic tests.
+	 */
+	arc4random_global.initialized = true;
 }
 
 static struct arc4random_prng *
-arc4random_prng_get(void)
+arc4random_prng_get(struct arc4random_prng *fallback)
 {
 	struct arc4random_prng *prng = NULL;
 
 	/* Make sure the library is initialized.  */
-	if (__predict_false(!arc4random_global.initialized))
-		arc4random_initialize();
+	thr_once(&arc4random_global.once, &arc4random_initialize);
 
 #ifdef _REENTRANT
 	/* Get or create the per-thread PRNG state.  */
-	prng = thr_getspecific(arc4random_global.thread_key);
-	if (__predict_false(prng == NULL)) {
+	prng = __predict_true(arc4random_global.per_thread)
+	    ? thr_getspecific(arc4random_global.thread_key)
+	    : NULL;
+	if (__predict_false(prng == NULL) && arc4random_global.per_thread) {
 		prng = arc4random_prng_create();
 		thr_setspecific(arc4random_global.thread_key, prng);
 	}
 #endif
 
-	/* If we can't create it, fall back to the global PRNG.  */
+	/*
+	 * If we can't create it, fall back to the global PRNG -- or an
+	 * on-stack PRNG, in the unlikely event that pthread_atfork
+	 * failed, which we have to seed from scratch each time
+	 * (suboptimal, but unlikely, so not worth optimizing).
+	 */
 	if (__predict_false(prng == NULL)) {
-		mutex_lock(&arc4random_global.lock);
-		prng = &arc4random_global.prng;
+		if (__predict_true(arc4random_global.forksafe)) {
+			mutex_lock(&arc4random_global.lock);
+			prng = &arc4random_global.prng;
+		} else {
+			prng = fallback;
+			memset(prng, 0, sizeof(*prng));
+		}
 	}
 
 	/* Guarantee the PRNG is seeded.  */
-	if (__predict_false(!prng->arc4_seeded))
+	if (__predict_false(prng->arc4_epoch != entropy_epoch()))
 		arc4random_prng_addrandom(prng, NULL, 0);
 
 	return prng;
 }
 
 static void
-arc4random_prng_put(struct arc4random_prng *prng)
+arc4random_prng_put(struct arc4random_prng *prng,
+    struct arc4random_prng *fallback)
 {
+
+	/*
+	 * If we had to use a stack fallback, zero it before we return
+	 * so that after we return we avoid leaving secrets on the
+	 * stack that could recover the parent's future outputs in an
+	 * unprivileged forked child (of course, we can't guarantee
+	 * that the compiler hasn't spilled anything; this is
+	 * best-effort, not a guarantee).
+	 */
+	if (__predict_false(prng == fallback))
+		explicit_memset(fallback, 0, sizeof(*fallback));
 
 	/* If we had fallen back to the global PRNG, unlock it.  */
 	if (__predict_false(prng == &arc4random_global.prng))
@@ -587,12 +744,12 @@ arc4random_prng_put(struct arc4random_prng *prng)
 uint32_t
 arc4random(void)
 {
-	struct arc4random_prng *prng;
+	struct arc4random_prng *prng, fallback;
 	uint32_t v;
 
-	prng = arc4random_prng_get();
+	prng = arc4random_prng_get(&fallback);
 	crypto_prng_buf(&prng->arc4_prng, &v, sizeof v);
-	arc4random_prng_put(prng);
+	arc4random_prng_put(prng, &fallback);
 
 	return v;
 }
@@ -600,18 +757,18 @@ arc4random(void)
 void
 arc4random_buf(void *buf, size_t len)
 {
-	struct arc4random_prng *prng;
+	struct arc4random_prng *prng, fallback;
 
 	if (len <= crypto_prng_MAXOUTPUTBYTES) {
-		prng = arc4random_prng_get();
+		prng = arc4random_prng_get(&fallback);
 		crypto_prng_buf(&prng->arc4_prng, buf, len);
-		arc4random_prng_put(prng);
+		arc4random_prng_put(prng, &fallback);
 	} else {
 		uint8_t seed[crypto_onetimestream_SEEDBYTES];
 
-		prng = arc4random_prng_get();
+		prng = arc4random_prng_get(&fallback);
 		crypto_prng_buf(&prng->arc4_prng, seed, sizeof seed);
-		arc4random_prng_put(prng);
+		arc4random_prng_put(prng, &fallback);
 
 		crypto_onetimestream(seed, buf, len);
 		(void)explicit_memset(seed, 0, sizeof seed);
@@ -621,7 +778,7 @@ arc4random_buf(void *buf, size_t len)
 uint32_t
 arc4random_uniform(uint32_t bound)
 {
-	struct arc4random_prng *prng;
+	struct arc4random_prng *prng, fallback;
 	uint32_t minimum, r;
 
 	/*
@@ -641,10 +798,10 @@ arc4random_uniform(uint32_t bound)
 	 */
 	minimum = (-bound % bound);
 
-	prng = arc4random_prng_get();
+	prng = arc4random_prng_get(&fallback);
 	do crypto_prng_buf(&prng->arc4_prng, &r, sizeof r);
 	while (__predict_false(r < minimum));
-	arc4random_prng_put(prng);
+	arc4random_prng_put(prng, &fallback);
 
 	return (r % bound);
 }
@@ -652,11 +809,11 @@ arc4random_uniform(uint32_t bound)
 void
 arc4random_stir(void)
 {
-	struct arc4random_prng *prng;
+	struct arc4random_prng *prng, fallback;
 
-	prng = arc4random_prng_get();
+	prng = arc4random_prng_get(&fallback);
 	arc4random_prng_addrandom(prng, NULL, 0);
-	arc4random_prng_put(prng);
+	arc4random_prng_put(prng, &fallback);
 }
 
 /*
@@ -666,13 +823,13 @@ arc4random_stir(void)
 void
 arc4random_addrandom(u_char *data, int datalen)
 {
-	struct arc4random_prng *prng;
+	struct arc4random_prng *prng, fallback;
 
 	_DIAGASSERT(0 <= datalen);
 
-	prng = arc4random_prng_get();
+	prng = arc4random_prng_get(&fallback);
 	arc4random_prng_addrandom(prng, data, datalen);
-	arc4random_prng_put(prng);
+	arc4random_prng_put(prng, &fallback);
 }
 
 #ifdef _ARC4RANDOM_TEST
@@ -752,8 +909,20 @@ main(int argc __unused, char **argv __unused)
 	switch (pid) {
 	case -1:
 		err(1, "fork");
-	case 0:
-		_exit(arc4random_prng_get()->arc4_seeded);
+	case 0: {
+		/*
+		 * Verify the epoch has been set to zero by fork.
+		 */
+		struct arc4random_prng *prng = NULL;
+#ifdef _REENTRANT
+		prng = arc4random_global.per_thread
+		    ? thr_getspecific(arc4random_global.thread_key)
+		    : NULL;
+#endif
+		if (prng == NULL)
+			prng = &arc4random_global.prng;
+		_exit(prng->arc4_epoch != 0);
+	}
 	default:
 		rpid = waitpid(pid, &status, 0);
 		if (rpid == -1)

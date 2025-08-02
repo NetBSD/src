@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dse.c,v 1.5 2024/01/01 22:29:48 gutteridge Exp $ */
+/*	$NetBSD: if_dse.c,v 1.5.2.1 2025/08/02 05:57:03 perseant Exp $ */
 
 /*
  * Driver for DaynaPORT SCSI/Link SCSI-Ethernet
@@ -578,8 +578,7 @@ dse_send_worker(struct work *wk, void *cookie)
 		error = dse_scsipi_cmd(sc->sc_periph,
 		    (void *)&cmd_send, sizeof(cmd_send),
 		    sc->sc_tbuf, len, DSE_RETRIES,
-		    DSE_TIMEOUT, NULL, XS_CTL_NOSLEEP | XS_CTL_POLL |
-		    XS_CTL_DATA_OUT);
+		    DSE_TIMEOUT, NULL, XS_CTL_NOSLEEP | XS_CTL_DATA_OUT);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
 			    "not queued, error %d\n", error);
@@ -620,6 +619,8 @@ dsedone(struct scsipi_xfer *xs, int error)
 				ntimeo = dse_poll;
 			else if (n >= RDATA_MAX)
 				ntimeo = dse_poll0;
+			else if (n >= dse_max_received)
+				ntimeo = 0;
 			else {
 				ntimeo = sc->sc_last_timeout;
 				ntimeo = (ntimeo * RDATA_GOAL)/n;
@@ -983,7 +984,7 @@ dse_get_addr(struct dse_softc *sc, uint8_t *myaddr)
 	if (error == 0) {
 		memcpy(myaddr, &(tmpbuf[0]), ETHER_ADDR_LEN);
 
-		aprint_error_dev(sc->sc_dev, "ethernet address %s\n",
+		aprint_normal_dev(sc->sc_dev, "ethernet address %s\n",
 			   ether_sprintf(myaddr));
 	}
 
@@ -1080,7 +1081,7 @@ dse_set_multi(struct dse_softc *sc)
 
 	error = dse_scsipi_cmd(sc->sc_periph,
 	    (struct scsipi_generic*)&cmd_set_multi, sizeof(cmd_set_multi),
-	    mybuf, len, DSE_RETRIES, DSE_TIMEOUT, NULL, XS_CTL_POLL | XS_CTL_DATA_OUT);
+	    mybuf, len, DSE_RETRIES, DSE_TIMEOUT, NULL, XS_CTL_DATA_OUT);
 
 	free(mybuf, M_DEVBUF);
 
@@ -1364,7 +1365,7 @@ dseopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 /*
  * close the device.. only called if we are the LAST
- * occurence of an open device
+ * occurrence of an open device
  */
 int
 dseclose(dev_t dev, int flag, int fmt, struct lwp *l)

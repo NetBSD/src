@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.3 2022/05/28 22:00:56 andvar Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.3.4.1 2025/08/02 05:58:22 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -296,7 +296,7 @@ typedef struct {
 #define EM_ST200	100	/* STMicroelectronics ST200 microcontroller */
 #define EM_IP2K		101	/* Ubicom IP2xxx microcontroller family */
 #define EM_MAX		102	/* MAX processor */
-#define EM_CR		103	/* National Semiconductor CompactRISC micorprocessor */
+#define EM_CR		103	/* National Semiconductor CompactRISC microprocessor */
 #define EM_F2MC16	104	/* Fujitsu F2MC16 */
 #define EM_MSP430	105	/* Texas Instruments MSP430 */
 #define EM_BLACKFIN	106	/* Analog Devices Blackfin DSP */

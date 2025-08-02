@@ -29,6 +29,7 @@
 #ifndef	_IA64_FENV_H_
 #define	_IA64_FENV_H_
 
+#include <sys/featuretest.h>
 #include <sys/stdint.h>
 
 #ifndef	__fenv_static

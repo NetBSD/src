@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,10 +7,10 @@
 </head> <body> <pre>
 POSTMULTI(1)                                                      POSTMULTI(1)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        postmulti - Postfix multi-instance manager
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
    <b>Enabling multi-instance management:</b>
 
        <b>postmulti -e init</b> [<b>-v</b>]
@@ -41,7 +41,7 @@ POSTMULTI(1)                                                      POSTMULTI(1)
 
        <b>postmulti -e assign</b> [<b>-v</b>] <b>-i</b> <i>name</i> [<b>-I</b> <i>name</i>] [-G <i>group</i>]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  <a href="postmulti.1.html"><b>postmulti</b>(1)</a> command allows a Postfix administrator to manage mul-
        tiple Postfix instances on a single host.
 
@@ -53,7 +53,7 @@ POSTMULTI(1)                                                      POSTMULTI(1)
        Each  mode  of  operation  has its own command syntax. For this reason,
        each mode is documented in separate sections below.
 
-<b>BACKGROUND</b>
+<b><a name="background">BACKGROUND</a></b>
        A  multi-instance  configuration  consists  of  one   primary   Postfix
        instance,  and  one  or  more  secondary  instances whose configuration
        directory pathnames are recorded  in  the  primary  instance's  <a href="postconf.5.html">main.cf</a>
@@ -69,7 +69,7 @@ POSTMULTI(1)                                                      POSTMULTI(1)
        See the <a href="MULTI_INSTANCE_README.html">MULTI_INSTANCE_README</a> tutorial for a more  detailed  discussion
        of multi-instance management with <a href="postmulti.1.html"><b>postmulti</b>(1)</a>.
 
-<b>ITERATOR MODE</b>
+<b><a name="iterator_mode">ITERATOR MODE</a></b>
        In  iterator mode, <b>postmulti</b> performs the same operation on all Postfix
        instances in turn.
 
@@ -143,7 +143,7 @@ POSTMULTI(1)                                                      POSTMULTI(1)
        <b>-v</b>     Enable verbose  logging  for  debugging  purposes.  Multiple  <b>-v</b>
               options make the software increasingly verbose.
 
-<b>LIFE-CYCLE MANAGEMENT MODE</b>
+<b><a name="life-cycle_management_mode">LIFE-CYCLE MANAGEMENT MODE</a></b>
        With  the <b>-e</b> option <a href="postmulti.1.html"><b>postmulti</b>(1)</a> can be used to add or delete a Postfix
        instance, and to  manage  the  multi-instance  status  of  an  existing
        instance.
@@ -301,7 +301,7 @@ POSTMULTI(1)                                                      POSTMULTI(1)
        <b>-v</b>     Enable  verbose  logging  for  debugging  purposes.  Multiple <b>-v</b>
               options make the software increasingly verbose.
 
-<b>ENVIRONMENT</b>
+<b><a name="environment">ENVIRONMENT</a></b>
        The <a href="postmulti.1.html"><b>postmulti</b>(1)</a> command exports the  following  environment  variables
        before executing the requested <i>command</i> for a given instance:
 
@@ -311,7 +311,7 @@ POSTMULTI(1)                                                      POSTMULTI(1)
        <b>MAIL_CONFIG</b>
               The location of the configuration directory of the instance.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
               The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
               figuration files.
@@ -374,22 +374,22 @@ POSTMULTI(1)                                                      POSTMULTI(1)
               (postfix-*.so) that have  a  relative  pathname  in  the  dynam-
               icmaps.cf file.
 
-<b>FILES</b>
+<b><a name="files">FILES</a></b>
        $<a href="postconf.5.html#meta_directory">meta_directory</a>/<a href="postconf.5.html">main.cf</a>.proto, stock configuration file
        $<a href="postconf.5.html#meta_directory">meta_directory</a>/<a href="master.5.html">master.cf</a>.proto, stock configuration file
        $<a href="postconf.5.html#daemon_directory">daemon_directory</a>/postmulti-script, life-cycle helper program
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postfix.1.html">postfix(1)</a>, Postfix control program
        <a href="postfix-wrapper.5.html">postfix-wrapper(5)</a>, Postfix multi-instance API
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="MULTI_INSTANCE_README.html">MULTI_INSTANCE_README</a>, Postfix multi-instance management
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        The <a href="postmulti.1.html"><b>postmulti</b>(1)</a> command was introduced with Postfix version 2.6.
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

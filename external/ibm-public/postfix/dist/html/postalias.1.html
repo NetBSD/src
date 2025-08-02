@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,14 +7,14 @@
 </head> <body> <pre>
 POSTALIAS(1)                                                      POSTALIAS(1)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        postalias - Postfix alias database maintenance
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postalias</b> [<b>-Nfinoprsuvw</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-d</b> <i>key</i>] [<b>-q</b> <i>key</i>]
                [<i>file</i><b>_</b><i>type</i>:]<i>file</i><b>_</b><i>name</i> ...
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  <a href="postalias.1.html"><b>postalias</b>(1)</a>  command creates or queries one or more Postfix alias
        databases, or updates an existing one. The input and output  file  for-
        mats  are  expected  to  be compatible with Sendmail version 8, and are
@@ -155,7 +155,7 @@ POSTALIAS(1)                                                      POSTALIAS(1)
               The name of the alias database source file when creating a data-
               base.
 
-<b>DIAGNOSTICS</b>
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems are logged to the standard error stream and to  <b>syslogd</b>(8)  or
        <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.  No output means that no problems were detected. Duplicate
        entries are skipped and are flagged with a warning.
@@ -164,14 +164,14 @@ POSTALIAS(1)                                                      POSTALIAS(1)
        (including  successful  "<b>postalias  -q</b>"  lookup)  and  terminates  with
        non-zero exit status in case of failure.
 
-<b>ENVIRONMENT</b>
+<b><a name="environment">ENVIRONMENT</a></b>
        <b>MAIL_CONFIG</b>
               Directory with Postfix configuration files.
 
        <b>MAIL_VERBOSE</b>
               Enable verbose logging for debugging purposes.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to  this  pro-
        gram.
 
@@ -219,10 +219,10 @@ POSTALIAS(1)                                                      POSTALIAS(1)
        <b><a href="postconf.5.html#lmdb_map_size">lmdb_map_size</a> (16777216)</b>
               The initial OpenLDAP LMDB database size limit in bytes.
 
-<b>STANDARDS</b>
+<b><a name="standards">STANDARDS</a></b>
        <a href="https://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="aliases.5.html">aliases(5)</a>, format of alias database input file.
        <a href="local.8.html">local(8)</a>, Postfix local delivery agent.
        <a href="postconf.1.html">postconf(1)</a>, supported database types
@@ -232,10 +232,10 @@ POSTALIAS(1)                                                      POSTALIAS(1)
        <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_usb.c,v 1.10 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_usb.c,v 1.10.12.1 2025/08/02 05:55:27 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -172,7 +172,7 @@ ehci_bcmusb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive(": EHCI USB controller\n");
-	aprint_normal(": ECHI USB controller\n");
+	aprint_normal(": EHCI USB controller\n");
 
 	int error = ehci_init(sc);
 	if (error) {
@@ -184,7 +184,7 @@ ehci_bcmusb_attach(device_t parent, device_t self, void *aux)
 }
 
 /*
- * There's only IRQ shared between both OCHI and EHCI devices.
+ * There's only IRQ shared between both OHCI and EHCI devices.
  */
 static int
 bcmusb_intr(void *arg)

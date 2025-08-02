@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_376.c,v 1.3 2024/04/12 05:17:48 rillig Exp $	*/
+/*	$NetBSD: msg_376.c,v 1.3.2.1 2025/08/02 05:58:19 perseant Exp $	*/
 # 3 "msg_376.c"
 
 // Test for message: '%.*s' overlaps earlier '%.*s' on bit %u [376]
@@ -12,7 +12,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 example(unsigned u32, uint64_t u64)

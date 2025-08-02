@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.11 2024/06/29 13:46:31 christos Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.11.2.1 2025/08/02 05:56:20 perseant Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -591,6 +591,16 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		const struct linux_sys_fdatasync_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		*n_args = 1;
+		break;
+	}
+	/* linux_sys_sync_file_range */
+	case 84: {
+		const struct linux_sys_sync_file_range_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		iarg[1] = SCARG(p, offset); /* off_t */
+		iarg[2] = SCARG(p, nbytes); /* off_t */
+		uarg[3] = SCARG(p, flags); /* unsigned int */
+		*n_args = 4;
 		break;
 	}
 	/* linux_sys_timerfd_create */
@@ -1244,6 +1254,62 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 1;
 		break;
 	}
+	/* linux_sys_mq_open */
+	case 180: {
+		const struct linux_sys_mq_open_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, name); /* const char * */
+		iarg[1] = SCARG(p, oflag); /* int */
+		iarg[2] = SCARG(p, mode); /* linux_umode_t */
+		uarg[3] = (intptr_t) SCARG(p, attr); /* struct linux_mq_attr * */
+		*n_args = 4;
+		break;
+	}
+	/* linux_sys_mq_unlink */
+	case 181: {
+		const struct linux_sys_mq_unlink_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, name); /* const char * */
+		*n_args = 1;
+		break;
+	}
+	/* linux_sys_mq_timedsend */
+	case 182: {
+		const struct linux_sys_mq_timedsend_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* linux_mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, msg_ptr); /* const char * */
+		uarg[2] = SCARG(p, msg_len); /* size_t */
+		uarg[3] = SCARG(p, msg_prio); /* unsigned int */
+		uarg[4] = (intptr_t) SCARG(p, abs_timeout); /* const struct linux_timespec * */
+		*n_args = 5;
+		break;
+	}
+	/* linux_sys_mq_timedreceive */
+	case 183: {
+		const struct linux_sys_mq_timedreceive_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* linux_mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, msg_ptr); /* char * */
+		uarg[2] = SCARG(p, msg_len); /* size_t */
+		uarg[3] = (intptr_t) SCARG(p, msg_prio); /* unsigned int * */
+		uarg[4] = (intptr_t) SCARG(p, abs_timeout); /* const struct linux_timespec * */
+		*n_args = 5;
+		break;
+	}
+	/* linux_sys_mq_notify */
+	case 184: {
+		const struct linux_sys_mq_notify_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* linux_mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, sevp); /* const struct linux_sigevent * */
+		*n_args = 2;
+		break;
+	}
+	/* linux_sys_mq_getsetattr */
+	case 185: {
+		const struct linux_sys_mq_getsetattr_args *p = params;
+		iarg[0] = SCARG(p, mqdes); /* linux_mqd_t */
+		uarg[1] = (intptr_t) SCARG(p, newattr); /* const struct linux_mq_attr * */
+		uarg[2] = (intptr_t) SCARG(p, oldattr); /* struct linux_mq_attr * */
+		*n_args = 3;
+		break;
+	}
 #ifdef SYSVMSG
 	/* sys_msgget */
 	case 186: {
@@ -1692,6 +1758,13 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 4;
 		break;
 	}
+	/* linux_sys_syncfs */
+	case 267: {
+		const struct linux_sys_syncfs_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		*n_args = 1;
+		break;
+	}
 	/* linux_sys_sendmmsg */
 	case 269: {
 		const struct linux_sys_sendmmsg_args *p = params;
@@ -1700,6 +1773,17 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[2] = SCARG(p, vlen); /* unsigned int */
 		uarg[3] = SCARG(p, flags); /* unsigned int */
 		*n_args = 4;
+		break;
+	}
+	/* linux_sys_renameat2 */
+	case 276: {
+		const struct linux_sys_renameat2_args *p = params;
+		iarg[0] = SCARG(p, fromfd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, from); /* const char * */
+		iarg[2] = SCARG(p, tofd); /* int */
+		uarg[3] = (intptr_t) SCARG(p, to); /* const char * */
+		uarg[4] = SCARG(p, flags); /* unsigned int */
+		*n_args = 5;
 		break;
 	}
 	/* sys_getrandom */
@@ -1719,6 +1803,18 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 2;
 		break;
 	}
+	/* linux_sys_copy_file_range */
+	case 285: {
+		const struct linux_sys_copy_file_range_args *p = params;
+		iarg[0] = SCARG(p, fd_in); /* int */
+		uarg[1] = (intptr_t) SCARG(p, off_in); /* off_t * */
+		iarg[2] = SCARG(p, fd_out); /* int */
+		uarg[3] = (intptr_t) SCARG(p, off_out); /* off_t * */
+		uarg[4] = SCARG(p, len); /* size_t */
+		uarg[5] = SCARG(p, flags); /* unsigned int */
+		*n_args = 6;
+		break;
+	}
 	/* linux_sys_statx */
 	case 291: {
 		const struct linux_sys_statx_args *p = params;
@@ -1728,6 +1824,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[3] = SCARG(p, mask); /* unsigned int */
 		uarg[4] = (intptr_t) SCARG(p, sp); /* struct linux_statx * */
 		*n_args = 5;
+		break;
+	}
+	/* linux_sys_clone3 */
+	case 435: {
+		const struct linux_sys_clone3_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, cl_args); /* struct linux_user_clone3_args * */
+		uarg[1] = SCARG(p, size); /* size_t */
+		*n_args = 2;
 		break;
 	}
 	/* linux_sys_close_range */
@@ -2802,6 +2906,25 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_sync_file_range */
+	case 84:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "off_t";
+			break;
+		case 2:
+			p = "off_t";
+			break;
+		case 3:
+			p = "unsigned int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_timerfd_create */
 	case 85:
 		switch(ndx) {
@@ -3832,6 +3955,108 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_mq_open */
+	case 180:
+		switch(ndx) {
+		case 0:
+			p = "const char *";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "linux_umode_t";
+			break;
+		case 3:
+			p = "struct linux_mq_attr *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_mq_unlink */
+	case 181:
+		switch(ndx) {
+		case 0:
+			p = "const char *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_mq_timedsend */
+	case 182:
+		switch(ndx) {
+		case 0:
+			p = "linux_mqd_t";
+			break;
+		case 1:
+			p = "const char *";
+			break;
+		case 2:
+			p = "size_t";
+			break;
+		case 3:
+			p = "unsigned int";
+			break;
+		case 4:
+			p = "const struct linux_timespec *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_mq_timedreceive */
+	case 183:
+		switch(ndx) {
+		case 0:
+			p = "linux_mqd_t";
+			break;
+		case 1:
+			p = "char *";
+			break;
+		case 2:
+			p = "size_t";
+			break;
+		case 3:
+			p = "unsigned int *";
+			break;
+		case 4:
+			p = "const struct linux_timespec *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_mq_notify */
+	case 184:
+		switch(ndx) {
+		case 0:
+			p = "linux_mqd_t";
+			break;
+		case 1:
+			p = "const struct linux_sigevent *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_mq_getsetattr */
+	case 185:
+		switch(ndx) {
+		case 0:
+			p = "linux_mqd_t";
+			break;
+		case 1:
+			p = "const struct linux_mq_attr *";
+			break;
+		case 2:
+			p = "struct linux_mq_attr *";
+			break;
+		default:
+			break;
+		};
+		break;
 #ifdef SYSVMSG
 	/* sys_msgget */
 	case 186:
@@ -4629,6 +4854,16 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_syncfs */
+	case 267:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_sendmmsg */
 	case 269:
 		switch(ndx) {
@@ -4642,6 +4877,28 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "unsigned int";
 			break;
 		case 3:
+			p = "unsigned int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_renameat2 */
+	case 276:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "const char *";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "const char *";
+			break;
+		case 4:
 			p = "unsigned int";
 			break;
 		default:
@@ -4677,6 +4934,31 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_copy_file_range */
+	case 285:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "off_t *";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "off_t *";
+			break;
+		case 4:
+			p = "size_t";
+			break;
+		case 5:
+			p = "unsigned int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_statx */
 	case 291:
 		switch(ndx) {
@@ -4694,6 +4976,19 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 4:
 			p = "struct linux_statx *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_clone3 */
+	case 435:
+		switch(ndx) {
+		case 0:
+			p = "struct linux_user_clone3_args *";
+			break;
+		case 1:
+			p = "size_t";
 			break;
 		default:
 			break;
@@ -5092,6 +5387,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* linux_sys_sync_file_range */
+	case 84:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* linux_sys_timerfd_create */
 	case 85:
 		if (ndx == 0 || ndx == 1)
@@ -5477,6 +5777,36 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* linux_sys_mq_open */
+	case 180:
+		if (ndx == 0 || ndx == 1)
+			p = "linux_mqd_t";
+		break;
+	/* linux_sys_mq_unlink */
+	case 181:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_mq_timedsend */
+	case 182:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_mq_timedreceive */
+	case 183:
+		if (ndx == 0 || ndx == 1)
+			p = "ssize_t";
+		break;
+	/* linux_sys_mq_notify */
+	case 184:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_mq_getsetattr */
+	case 185:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 #ifdef SYSVMSG
 	/* sys_msgget */
 	case 186:
@@ -5723,8 +6053,18 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* linux_sys_syncfs */
+	case 267:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* linux_sys_sendmmsg */
 	case 269:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_renameat2 */
+	case 276:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
@@ -5738,8 +6078,18 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* linux_sys_copy_file_range */
+	case 285:
+		if (ndx == 0 || ndx == 1)
+			p = "ssize_t";
+		break;
 	/* linux_sys_statx */
 	case 291:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_clone3 */
+	case 435:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

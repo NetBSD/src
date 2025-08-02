@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.36 2023/07/07 07:22:18 martin Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.36.6.1 2025/08/02 05:56:41 perseant Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -227,7 +227,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 		aprint_debug_dev(sc->sc_dev, "got MAC address!\n");
 	} else {
 		/*
-		 * If we did not get an externaly configure address,
+		 * If we did not get an externally configure address,
 		 * try to read one from the current setup, before
 		 * resetting the chip.
 		 */
@@ -244,7 +244,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 			enaddr[5] = machi >> 8;
 		}
 	}
-	/* TODO: perform explicit EEPROM read op if it's availble */
+	/* TODO: perform explicit EEPROM read op if it's available */
 
 	dme_reset(sc);
 
@@ -366,7 +366,7 @@ dme_reset(struct dme_softc *sc)
 		dme_write(sc, DM9000_NCR, 0x0);
 	}
 
-	/* Select internal PHY, no wakeup event, no collosion mode,
+	/* Select internal PHY, no wakeup event, no collision mode,
 	 * normal loopback mode.
 	 */
 	dme_write(sc, DM9000_NCR, DM9000_NCR_LBK_NORMAL);
@@ -444,7 +444,7 @@ dme_set_rcvfilt(struct dme_softc *sc)
 			ec->ec_flags |= ETHER_F_ALLMULTI;
 			ETHER_UNLOCK(ec);
 			memset(mchash, 0xff, sizeof(mchash)); /* necessary? */
-			/* accept all mulicast frame */
+			/* accept all multicast frame */
 			rcr |= DM9000_RCR_ALL;
 			goto update;
 		}

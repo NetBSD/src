@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.28 2024/01/19 19:22:17 christos Exp $ */
+/* $NetBSD: crt0-common.c,v 1.28.2.1 2025/08/02 05:54:29 perseant Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,13 +36,16 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.28 2024/01/19 19:22:17 christos Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.28.2.1 2025/08/02 05:54:29 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/syscall.h>
+
 #include <machine/profile.h>
+
+#include <limits.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -253,11 +256,19 @@ relocate_self(struct ps_strings *ps_strings)
 
 	Elf_Dyn *dynp = (Elf_Dyn *)((uint8_t *)dynphdr->p_vaddr + relocbase);
 
+	const Elf_Relr *relr = 0, *relrlim;
 	const REL_TYPE *relocs = 0, *relocslim;
-	Elf_Addr relocssz = 0;
+	Elf_Addr relrsz = 0, relocssz = 0;
 
 	for (; dynp->d_tag != DT_NULL; dynp++) {
 		switch (dynp->d_tag) {
+		case DT_RELR:
+			relr =
+			    (const Elf_Relr *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_RELRSZ:
+			relrsz = dynp->d_un.d_val;
+			break;
 		case REL_TAG:
 			relocs =
 			    (const REL_TYPE *)(relocbase + dynp->d_un.d_ptr);
@@ -267,7 +278,22 @@ relocate_self(struct ps_strings *ps_strings)
 			break;
 		}
 	}
+	relrlim = (const Elf_Relr *)((const uint8_t *)relr + relrsz);
 	relocslim = (const REL_TYPE *)((const uint8_t *)relocs + relocssz);
+	while (relr < relrlim) {
+		Elf_Addr *where;
+
+		where = (Elf_Addr *)(relocbase + *relr);
+		*where++ += relocbase;
+		while (++relr < relrlim && *relr & 1) {
+			unsigned i;
+
+			for (i = 1; i < CHAR_BIT*sizeof(*relr); i++, where++) {
+				if (*relr & ((Elf_Relr)1 << i))
+					*where += relocbase;
+			}
+		}
+	}
 	for (; relocs < relocslim; ++relocs) {
 		Elf_Addr *where;
 
@@ -317,9 +343,6 @@ ___start(void (*cleanup)(void),			/* from shared loader */
 		__progname = empty_string;
 	}
 
-	if (cleanup != NULL)
-		atexit(cleanup);
-
 	_libc_init();
 
 	if (&rtld_DYNAMIC == NULL) {
@@ -332,6 +355,9 @@ ___start(void (*cleanup)(void),			/* from shared loader */
 	}
 
 	_preinit();
+
+	if (cleanup != NULL)
+		atexit(cleanup);
 
 #ifdef MCRT0
 	atexit(_mcleanup);

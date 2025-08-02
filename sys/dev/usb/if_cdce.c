@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.81 2022/03/03 05:56:28 riastradh Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.81.10.1 2025/08/02 05:57:05 perseant Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -36,11 +36,17 @@
 
 /*
  * USB Communication Device Class (Ethernet Networking Control Model)
- * http://www.usb.org/developers/devclass_docs/usbcdc11.pdf
+ *
+ * Originally written for the 1.1 spec at:
+ * https://web.archive.org/web/20140824090418/http://www.usb.org/developers/devclass_docs/usbcdc11.pdf
+ *
+ * Updated 1.2 spec at:
+ * https://web.archive.org/web/20241127002135/https://www.usb.org/document-library/class-definitions-communication-devices-12
+ * https://web.archive.org/web/20240510195654/https://www.usb.org/sites/default/files/CDC1.2_WMC1.1_012011.zip
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.81 2022/03/03 05:56:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.81.10.1 2025/08/02 05:57:05 perseant Exp $");
 
 #include <sys/param.h>
 
@@ -251,6 +257,9 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	usbnet_attach(un);
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
             0, NULL);
+
+	/* XXX There is no link state, pretend we are always on */
+	if_link_state_change(usbnet_ifp(un), LINK_STATE_UP);
 }
 
 static void

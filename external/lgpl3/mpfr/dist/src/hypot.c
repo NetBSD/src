@@ -43,10 +43,10 @@ mpfr_hypot (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y, mpfr_rnd_t rnd_mode)
   MPFR_BLOCK_DECL (flags);
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg y[%Pu]=%.*Rg rnd=%d",
+    (("x[%Pd]=%.*Rg y[%Pd]=%.*Rg rnd=%d",
       mpfr_get_prec (x), mpfr_log_prec, x,
       mpfr_get_prec (y), mpfr_log_prec, y, rnd_mode),
-     ("z[%Pu]=%.*Rg inexact=%d",
+     ("z[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec (z), mpfr_log_prec, z, inexact));
 
   /* particular cases */

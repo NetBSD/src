@@ -1,4 +1,4 @@
-/*	$NetBSD: fincore.c,v 1.1 2011/12/09 15:17:34 yamt Exp $	*/
+/*	$NetBSD: fincore.c,v 1.1.54.1 2025/08/02 05:58:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2011 YAMAMOTO Takashi,
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
 #ifndef lint
-__RCSID("$NetBSD: fincore.c,v 1.1 2011/12/09 15:17:34 yamt Exp $");
+__RCSID("$NetBSD: fincore.c,v 1.1.54.1 2025/08/02 05:58:26 perseant Exp $");
 #endif /* not lint */
 #endif /* defined(__NetBSD__) */
 
@@ -174,7 +174,6 @@ int
 /*ARGSUSED*/
 main(int argc, char *argv[])
 {
-	extern int optind;
 	long l;
 	int ch;
 

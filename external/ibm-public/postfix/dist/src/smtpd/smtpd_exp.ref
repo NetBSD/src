@@ -25,13 +25,15 @@ OK
 >>> client spike.porcupine.org 168.100.3.2
 OK
 >>> rcpt rname@rdomain
-./smtpd_check: warning: support for restriction "reject_maps_rbl" will be removed from Postfix; use "reject_rbl_client domain-name" instead
-OK
+./smtpd_check: warning: support for restriction "reject_maps_rbl" has been removed in Postfix 3.9; instead, specify "reject_rbl_client domain-name"
+./smtpd_check: <queue id>: reject: RCPT from spike.porcupine.org[168.100.3.2]: 451 4.3.5 Server configuration error; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<foobar>
+451 4.3.5 Server configuration error
 >>> client foo 127.0.0.2
 OK
 >>> rcpt rname@rdomain
-./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 554 5.7.1 Service unavailable; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org; DNS blocklist test; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<foobar>
-554 5.7.1 Service unavailable; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org; DNS blocklist test
+./smtpd_check: warning: support for restriction "reject_maps_rbl" has been removed in Postfix 3.9; instead, specify "reject_rbl_client domain-name"
+./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 451 4.3.5 Server configuration error; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<foobar>
+451 4.3.5 Server configuration error
 >>> #
 >>> recipient_restrictions reject_rbl_client,dnsbltest.porcupine.org
 OK
@@ -42,19 +44,26 @@ OK
 >>> client foo 127.0.0.2
 OK
 >>> rcpt rname@rdomain
-./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 554 5.7.1 Service unavailable; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org; DNS blocklist test; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<foobar>
-554 5.7.1 Service unavailable; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org; DNS blocklist test
+./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 554 5.7.1 SERVICE UNAVAILABLE; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org; DNS blocklist test; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<foobar>
+554 5.7.1 SERVICE UNAVAILABLE; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org; DNS blocklist test
 >>> recipient_restrictions reject_rbl_client,dnsbltest.porcupine.org=127.0.0.2
 OK
 >>> client foo 127.0.0.2
 OK
 >>> rcpt rname@rdomain
-./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 554 5.7.1 Service unavailable; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org; DNS blocklist test; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<foobar>
-554 5.7.1 Service unavailable; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org; DNS blocklist test
+./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 554 5.7.1 SERVICE UNAVAILABLE; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org; DNS blocklist test; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<foobar>
+554 5.7.1 SERVICE UNAVAILABLE; Client host [127.0.0.2] blocked using dnsbltest.porcupine.org; DNS blocklist test
 >>> client foo 127.0.0.1
 OK
 >>> rcpt rname@rdomain
 OK
+>>> recipient_restrictions reject_rbl_client,dnsbltest.porcupine.org=127.0.0.3
+OK
+>>> client foo 127.0.0.3
+OK
+>>> rcpt rname@rdomain
+./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.3]: 554 5.7.1 service unavailable; Client host [127.0.0.3] blocked using dnsbltest.porcupine.org=127.0.0.3 ; DNS blocklist test; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<foobar>
+554 5.7.1 service unavailable; Client host [127.0.0.3] blocked using dnsbltest.porcupine.org=127.0.0.3 ; DNS blocklist test
 >>> #
 >>> # RHSBL sender domain name
 >>> #
@@ -109,3 +118,26 @@ OK
 >>> rcpt rname@rdomain
 ./smtpd_check: <queue id>: reject: RCPT from spike.porcupine.org[168.100.3.2]: 554 5.7.1 client=spike.porcupine.org[168.100.3.2] client_address=168.100.3.2 client_name=spike.porcupine.org helo_name=example.tld  sender=sname@sdomain sender_name=sname  sender_domain=sdomain recipient=rname@rdomain recipient_name=rname recipient_domain=rdomain rbl_code=554 rbl_domain=rhsbl.porcupine.org rbl_txt=RHSBL test rbl_what=example.tld rbl_class=Helo command; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<example.tld>
 554 5.7.1 client=spike.porcupine.org[168.100.3.2] client_address=168.100.3.2 client_name=spike.porcupine.org helo_name=example.tld  sender=sname@sdomain sender_name=sname  sender_domain=sdomain recipient=rname@rdomain recipient_name=rname recipient_domain=rdomain rbl_code=554 rbl_domain=rhsbl.porcupine.org rbl_txt=RHSBL test rbl_what=example.tld rbl_class=Helo command
+>>> #
+>>> # rbl_reply_maps lookup error
+>>> #
+>>> smtpd_delay_reject 0
+OK
+>>> mynetworks 127.0.0.0/8,168.100.3.0/28
+OK
+>>> relay_domains porcupine.org
+OK
+>>> rbl_reply_maps fail:1_rbl_reply_maps
+OK
+>>> helo foobar
+OK
+>>> mail sname@sdomain
+OK
+>>> recipient_restrictions reject_rbl_client,dnsbltest.porcupine.org
+OK
+>>> client foo 127.0.0.2
+OK
+>>> rcpt rname@rdomain
+./smtpd_check: warning: fail:1_rbl_reply_maps lookup error for "dnsbltest.porcupine.org"
+./smtpd_check: <queue id>: reject: RCPT from foo[127.0.0.2]: 451 4.3.5 Server configuration error; from=<sname@sdomain> to=<rname@rdomain> proto=SMTP helo=<foobar>
+451 4.3.5 Server configuration error

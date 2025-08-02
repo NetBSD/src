@@ -11,11 +11,17 @@ dist-hook:
 
 SUBDIRS = dyndb/driver dlzexternal/driver hooks/driver
 
+if DNSRPS
+SUBDIRS += rpz/testlib
+endif
+
 AM_CPPFLAGS +=			\
-	$(LIBISC_CFLAGS)
+	$(LIBISC_CFLAGS) 	\
+	$(LIBDNS_CFLAGS)
 
 LDADD +=			\
-	$(LIBISC_LIBS)
+	$(LIBISC_LIBS)		\
+	$(LIBDNS_LIBS)
 
 if HAVE_PERL
 if HAVE_PYTHON
@@ -25,15 +31,18 @@ noinst_PROGRAMS =		\
 	feature-test		\
 	makejournal		\
 	pipelined/pipequeries	\
-	resolve			\
 	rndc/gencheck		\
-	rpz/dnsrps		\
-	tkey/keycreate		\
-	tkey/keydelete
+	rpz/dnsrps
 
 feature_test_CPPFLAGS =		\
 	$(AM_CPPFLAGS)		\
-	$(LIBDNS_CFLAGS)
+	$(LIBDNS_CFLAGS)	\
+	$(OPENSSL_CFLAGS)
+
+feature_test_LDADD =		\
+	$(LDADD)		\
+	$(LIBDNS_LIBS)		\
+	$(OPENSSL_LIBS)
 
 makejournal_CPPFLAGS =		\
 	$(AM_CPPFLAGS)		\
@@ -51,37 +60,15 @@ pipelined_pipequeries_LDADD =	\
 	$(LDADD)		\
 	$(LIBDNS_LIBS)
 
-resolve_CPPFLAGS =		\
-	$(AM_CPPFLAGS)		\
-	$(LIBISC_CFLAGS)	\
-	$(LIBDNS_CFLAGS)	\
-	$(LIBIRS_CFLAGS)
-
-resolve_LDADD = $(LIBISC_LIBS) $(LIBIRS_LIBS) $(LIBDNS_LIBS)
-
 rpz_dnsrps_CPPFLAGS =		\
 	$(AM_CPPFLAGS)		\
-	$(LIBDNS_CFLAGS)
+	$(LIBDNS_CFLAGS)	\
+	-DLIBRPZ_LIB_OPEN=\"$(abs_builddir)/rpz/testlib/.libs/libdummyrpz.so\"
 
 rpz_dnsrps_LDADD =		\
 	$(LDADD)		\
-	$(LIBDNS_LIBS)
-
-tkey_keycreate_CPPFLAGS =	\
-	$(AM_CPPFLAGS)		\
-	$(LIBDNS_CFLAGS)
-
-tkey_keycreate_LDADD =		\
-	$(LDADD)		\
-	$(LIBDNS_LIBS)
-
-tkey_keydelete_CPPFLAGS =	\
-	$(AM_CPPFLAGS)		\
-	$(LIBDNS_CFLAGS)
-
-tkey_keydelete_LDADD =		\
-	$(LDADD)		\
-	$(LIBDNS_LIBS)
+	$(LIBDNS_LIBS)		\
+	$(DLOPEN_LIBS)
 
 # Longer running tests are listed (and executed) first to take the most
 # advantage of parallel execution.
@@ -99,6 +86,7 @@ TESTS =				\
 	autosign		\
 	builtin			\
 	cacheclean		\
+	camp			\
 	case			\
 	catz			\
 	cds			\
@@ -108,6 +96,7 @@ TESTS =				\
 	checknames		\
 	checkzone		\
 	cookie			\
+	cpu			\
 	database		\
 	dialup			\
 	digdelv			\
@@ -118,7 +107,6 @@ TESTS =				\
 	dnstap			\
 	doth			\
 	dsdigest		\
-	dupsigs			\
 	dyndb			\
 	ecdsa			\
 	eddsa			\
@@ -142,7 +130,7 @@ TESTS =				\
 	kasp			\
 	keepalive		\
 	keyfromlabel		\
-	keymgr2kasp		\
+	ksr			\
 	legacy			\
 	limits			\
 	logfileconfig		\
@@ -151,6 +139,7 @@ TESTS =				\
 	metadata		\
 	mirror			\
 	mkeys			\
+	multisigner		\
 	names			\
 	notify			\
 	nsec3			\
@@ -159,12 +148,15 @@ TESTS =				\
 	nzd2nzf			\
 	padding			\
 	pending			\
+	proxy			\
 	pipelined		\
 	qmin			\
+	query-source		\
 	reclimit		\
 	redirect		\
 	resolver		\
 	rndc			\
+	rollover		\
 	rootkeysentinel		\
 	rpzextra		\
 	rrchecker		\
@@ -184,7 +176,6 @@ TESTS =				\
 	stub			\
 	synthfromdnssec		\
 	tcp			\
-	tkey			\
 	tools			\
 	transport-acl		\
 	tsig			\

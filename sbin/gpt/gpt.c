@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.89 2024/06/10 09:17:29 kre Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.89.2.1 2025/08/02 05:55:06 perseant Exp $");
 #endif
 
 #include <sys/param.h>
@@ -483,7 +483,7 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 	int mode, found;
 	off_t devsz;
 	gpt_t gpt;
-	unsigned int index;
+	unsigned int idx;
 
 	if ((gpt = calloc(1, sizeof(*gpt))) == NULL) {
 		if (!(flags & GPT_QUIET))
@@ -495,6 +495,7 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 	gpt->mediasz = mediasz;
 	gpt->secsz = secsz;
 	gpt->timestamp = timestamp;
+	gpt->uuidgen = 0;
 
 	mode = (gpt->flags & GPT_READONLY) ? O_RDONLY : O_RDWR|O_EXCL;
 		
@@ -572,8 +573,8 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 	if (map_init(gpt, devsz) == -1)
 		goto close;
 
-	index = 1;
-	if (gpt_mbr(gpt, 0LL, &index, 0U) == -1)
+	idx = 1;
+	if (gpt_mbr(gpt, 0LL, &idx, 0U) == -1)
 		goto close;
 	if ((found = gpt_gpt(gpt, 1LL, 1)) == -1)
 		goto close;
@@ -765,7 +766,7 @@ gpt_create_pmbr_part(struct mbr_part *part, off_t last, int active)
 		part->part_size_hi = htole16(0xffff);
 	} else {
 		part->part_size_lo = htole16((uint16_t)last);
-		part->part_size_hi = htole16((uint16_t)(last >> 16));
+		part->part_size_hi = htole16((uint16_t)((uint64_t)last >> 16));
 	}
 }
 
@@ -829,7 +830,7 @@ gpt_last(gpt_t gpt)
 off_t
 gpt_create(gpt_t gpt, off_t last, u_int parts, int primary_only)
 {
-	off_t blocks;
+	off_t blocks, lastoff;
 	map_t map;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
@@ -860,8 +861,9 @@ gpt_create(gpt_t gpt, off_t last, u_int parts, int primary_only)
 	}
 
 	/* Never cross the median of the device. */
-	if ((blocks + 1LL) > ((last + 1LL) >> 1))
-		blocks = ((last + 1LL) >> 1) - 1LL;
+	lastoff = (off_t)(((uint64_t)last + 1LL) >> 1);
+	if ((blocks + 1LL) > lastoff)
+		blocks = lastoff - 1LL;
 
 	/*
 	 * Get the amount of free space at the end of the device and
@@ -1041,7 +1043,6 @@ gpt_change_ent(gpt_t gpt, const struct gpt_find *find,
     void (*cfn)(struct gpt_ent *, void *, int), void *v)
 {
 	map_t m;
-	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
 	unsigned int i;
 	uint8_t utfbuf[__arraycount(ent->ent_name) * 3 + 1];
@@ -1051,7 +1052,7 @@ gpt_change_ent(gpt_t gpt, const struct gpt_find *find,
 	    || find->size > 0 || !gpt_uuid_is_nil(find->type)))
 		return -1;
 
-	if ((hdr = gpt_hdr(gpt)) == NULL)
+	if (gpt_hdr(gpt) == NULL)
 		return -1;
 
 	/* Relabel all matching entries in the map. */

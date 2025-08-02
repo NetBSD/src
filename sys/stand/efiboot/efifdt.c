@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.35 2022/08/14 11:26:41 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.35.10.1 2025/08/02 05:57:53 perseant Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -596,15 +596,21 @@ load_modules(const char *kernel_name)
  * Prepare kernel arguments and shutdown boot services.
  */
 int
-arch_prepare_boot(const char *fname, const char *args, u_long *marks)
+efi_fdt_prepare_boot(const char *fname, const char *args, u_long *marks)
 {
+	int error;
+
 	load_file(get_initrd_path(), 0, false, &initrd_addr, &initrd_size);
 	load_file(get_dtb_path(), 0, false, &dtb_addr, &dtb_size);
 
+	error = efi_md_prepare_boot(fname, args, marks);
+	if (error) {
+		return error;
+	}
 #ifdef EFIBOOT_ACPI
 	/* ACPI support only works for little endian kernels */
 	if (efi_acpi_available() && netbsd_elf_data == ELFDATA2LSB) {
-		int error = efi_fdt_create_acpifdt();
+		error = efi_fdt_create_acpifdt();
 		if (error != 0) {
 			return error;
 		}
@@ -650,7 +656,7 @@ arch_prepare_boot(const char *fname, const char *args, u_long *marks)
  * Free memory after a failed boot.
  */
 void
-arch_cleanup_boot(void)
+efi_fdt_cleanup_boot(void)
 {
 	if (rndseed_addr) {
 		uefi_call_wrapper(BS->FreePages, 2, rndseed_addr, EFI_SIZE_TO_PAGES(rndseed_size));
@@ -670,7 +676,7 @@ arch_cleanup_boot(void)
 }
 
 size_t
-arch_alloc_size(void)
+efi_fdt_alloc_size(void)
 {
 	return FDT_SPACE;
 }
@@ -716,8 +722,9 @@ efi_fdt_create_acpifdt(void)
 
 #ifdef EFIBOOT_RUNTIME_ADDRESS
 static uint64_t
-efi_fdt_runtime_alloc_va(uint64_t npages)
+efi_fdt_runtime_alloc_va(uint64_t pa, uint64_t npages)
 {
+#if EFIBOOT_RUNTIME_ADDRESS != 0
 	static uint64_t va = EFIBOOT_RUNTIME_ADDRESS;
 	static uint64_t sz = EFIBOOT_RUNTIME_SIZE;
 	uint64_t nva;
@@ -732,10 +739,13 @@ efi_fdt_runtime_alloc_va(uint64_t npages)
 	sz -= (npages * EFI_PAGE_SIZE);
 
 	return nva;
+#else
+	return pa;
+#endif
 }
 
 void
-arch_set_virtual_address_map(EFI_MEMORY_DESCRIPTOR *memmap, UINTN nentries,
+efi_fdt_set_virtual_address_map(EFI_MEMORY_DESCRIPTOR *memmap, UINTN nentries,
     UINTN mapkey, UINTN descsize, UINT32 descver)
 {
 	EFI_MEMORY_DESCRIPTOR *md, *vmd, *vmemmap;
@@ -757,7 +767,8 @@ arch_set_virtual_address_map(EFI_MEMORY_DESCRIPTOR *memmap, UINTN nentries,
 			continue;
 		}
 
-		md->VirtualStart = efi_fdt_runtime_alloc_va(md->NumberOfPages);
+		md->VirtualStart =
+		    efi_fdt_runtime_alloc_va(md->PhysicalStart, md->NumberOfPages);
 
 		switch (md->Type) {
 		case EfiRuntimeServicesCode:

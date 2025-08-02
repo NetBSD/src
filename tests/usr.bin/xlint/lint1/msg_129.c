@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_129.c,v 1.8 2023/08/02 18:51:25 rillig Exp $	*/
+/*	$NetBSD: msg_129.c,v 1.8.2.1 2025/08/02 05:58:16 perseant Exp $	*/
 # 3 "msg_129.c"
 
 // Test for message: expression has null effect [129]
@@ -64,7 +64,7 @@ legitimate_use_cases(int arg)
 	 */
 	(void)local;
 
-	/* This is a short-hand notation for a do-nothing command. */
+	/* This is a shorthand notation for a do-nothing command. */
 	(void)0;
 
 	/*
@@ -78,7 +78,8 @@ legitimate_use_cases(int arg)
 	/*
 	 * This variant of the do-nothing command is commonly used in
 	 * preprocessor macros since it works nicely with if-else and if-then
-	 * statements.  It is longer than the above variant though.
+	 * statements.  It is longer than the above variant, and it is not
+	 * embeddable into an expression.
 	 */
 	do {
 	} while (0);
@@ -93,4 +94,32 @@ legitimate_use_cases(int arg)
 	/* Double casts are unusual enough to warrant a warning. */
 	/* expect+1: warning: expression has null effect [129] */
 	(void)(void)0;
+}
+
+int
+return_statement_expression(int arg)
+{
+	({
+		int local = arg;
+		local + 4;
+	/* expect+1: warning: expression has null effect [129] */
+	});
+
+	if (arg == 1)
+		return ({
+			int local = arg;
+			// Before cgram.y 1.513 from 2024-10-29, lint wrongly
+			// warned that this expression would have a null effect.
+			local;
+		});
+
+	if (arg == 2)
+		return ({
+			int local = arg;
+			// Before cgram.y 1.513 from 2024-10-29, lint wrongly
+			// warned that this expression would have a null effect.
+			local + 4;
+		});
+
+	return 0;
 }

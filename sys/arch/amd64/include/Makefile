@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2018/10/31 18:35:04 maxv Exp $
+#	$NetBSD: Makefile,v 1.22.36.1 2025/08/02 05:55:24 perseant Exp $
 
 INCSDIR= /usr/include/amd64
 
@@ -19,7 +19,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	netbsd32_machdep.h \
 	param.h pcb.h pci_machdep.h pio.h pmap.h proc.h \
 	profile.h psl.h pte.h ptrace.h \
-	reg.h rwlock.h \
+	lwp_private.h reg.h rwlock.h \
 	segments.h setjmp.h signal.h sljit_machdep.h specialreg.h sysarch.h \
 	trap.h tss.h types.h \
 	userret.h \

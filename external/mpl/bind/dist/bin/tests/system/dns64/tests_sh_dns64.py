@@ -9,6 +9,17 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.*",
+        "ns1/K*",
+        "ns1/dsset-signed.",
+        "ns1/signed.db*",
+    ]
+)
+
 
 def test_dns64(run_tests_sh):
     run_tests_sh()

@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.203 2022/05/31 13:42:59 riastradh Exp $	*/
+/*	$NetBSD: namespace.h,v 1.203.4.1 2025/08/02 05:54:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -224,6 +224,10 @@
 #define bm_comp			_bm_comp
 #define bm_exec			_bm_exec
 #define bm_free			_bm_free
+#define c16rtomb_l		_c16rtomb_l
+#define c32rtomb		_c32rtomb
+#define c32rtomb_l		_c32rtomb_l
+#define c8rtomb_l		_c8rtomb_l
 #define callrpc			_callrpc
 #define cdbr_close		_cdbr_close
 #define cdbr_find		_cdbr_find
@@ -433,6 +437,7 @@
 #define gmtime_r		_gmtime_r
 #define group_from_gid		_group_from_gid
 #define heapsort		_heapsort
+#define heapsort_r		_heapsort_r
 #define herror			_herror
 #define hes_error		_hes_error
 #define hes_free		_hes_free
@@ -511,8 +516,13 @@
 #define lockf			_lockf
 #define lrand48			_lrand48
 #define lseek			_lseek
+#define mbrtoc16_l		_mbrtoc16_l
+#define mbrtoc32		_mbrtoc32
+#define mbrtoc32_l		_mbrtoc32_l
+#define mbrtoc8_l		_mbrtoc8_l
 #define membar_producer		_membar_producer
 #define mergesort		_mergesort
+#define mergesort_r		_mergesort_r
 #define mi_vector_hash		_mi_vector_hash
 #define mkstemp			_mkstemp
 #define mktime_z		_mktime_z

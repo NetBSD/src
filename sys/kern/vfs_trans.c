@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.70 2022/11/04 11:20:39 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.70.8.1 2025/08/02 05:57:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.70 2022/11/04 11:20:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.70.8.1 2025/08/02 05:57:44 perseant Exp $");
 
 /*
  * File system transaction operations.
@@ -41,17 +41,20 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.70 2022/11/04 11:20:39 hannken Exp $
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/atomic.h>
 #include <sys/buf.h>
+#include <sys/fstrans.h>
 #include <sys/hash.h>
 #include <sys/kmem.h>
 #include <sys/mount.h>
-#include <sys/pserialize.h>
-#include <sys/vnode.h>
-#include <sys/fstrans.h>
-#include <sys/proc.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/pserialize.h>
+#include <sys/sdt.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <miscfs/deadfs/deadfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -544,7 +547,7 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 	pserialize_read_exit(s);
 
 	if (! wait)
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 
 	mutex_enter(&fstrans_lock);
 	while (! grant_lock(fmi, lock_type))
@@ -700,7 +703,7 @@ fstrans_setstate(struct mount *mp, enum fstrans_state new_state)
 
 	fli = fstrans_get_lwp_info(mp, true);
 	if (fli == NULL)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	fmi = fli->fli_mountinfo;
 	old_state = fmi->fmi_state;
 	if (old_state == new_state)
@@ -766,15 +769,15 @@ vfs_suspend(struct mount *mp, int nowait)
 	int error;
 
 	if (mp == dead_rootmount)
-		return EOPNOTSUPP;
+		return SET_ERROR(EOPNOTSUPP);
 
 	fli = fstrans_get_lwp_info(mp, true);
 	if (fli == NULL)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 
 	if (nowait) {
 		if (!mutex_tryenter(&vfs_suspend_lock))
-			return EWOULDBLOCK;
+			return SET_ERROR(EWOULDBLOCK);
 	} else
 		mutex_enter(&vfs_suspend_lock);
 
@@ -785,7 +788,7 @@ vfs_suspend(struct mount *mp, int nowait)
 
 	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
 		vfs_resume(mp);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 
 	return 0;
@@ -807,7 +810,6 @@ vfs_resume(struct mount *mp)
 	VFS_SUSPENDCTL(mp, SUSPEND_RESUME);
 	mutex_exit(&vfs_suspend_lock);
 }
-
 
 /*
  * True, if no thread is running a cow handler.
@@ -932,7 +934,7 @@ fscow_disestablish(struct mount *mp, int (*func)(void *, struct buf *, bool),
 	fstrans_mount_dtor(fmi);
 	cow_change_done(fmi);
 
-	return hp ? 0 : EINVAL;
+	return hp ? 0 : SET_ERROR(EINVAL);
 }
 
 /*
@@ -996,8 +998,8 @@ fscow_run(struct buf *bp, bool data_valid)
 	LIST_FOREACH(hp, &fmi->fmi_cow_handler, ch_list)
 		if ((error = (*hp->ch_func)(hp->ch_arg, bp, data_valid)) != 0)
 			break;
- 	if (error == 0)
- 		bp->b_flags |= B_COWDONE;
+	if (error == 0)
+		bp->b_flags |= B_COWDONE;
 
 	/*
 	 * Check if other threads want to change the list.

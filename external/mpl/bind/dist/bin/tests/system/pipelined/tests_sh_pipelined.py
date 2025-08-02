@@ -9,6 +9,16 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "output*",
+        "raw*",
+        "ans*/ans.run",
+    ]
+)
+
 
 def test_pipelined(run_tests_sh):
     run_tests_sh()

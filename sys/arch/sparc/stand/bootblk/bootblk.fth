@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.17 2022/11/17 06:40:39 chs Exp $
+\	$NetBSD: bootblk.fth,v 1.17.8.1 2025/08/02 05:56:09 perseant Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \
@@ -703,7 +703,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 : check-supers ( -- found? )
    \ Superblocks used to be 8KB into the partition, but ffsv2 changed that.
    \ See comments in src/sys/ufs/ffs/fs.h
-   \ Put a list of offets to check on the stack, ending with -1
+   \ Put a list of offsets to check on the stack, ending with -1
    -1
    0
    d# 128 KB
@@ -891,7 +891,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 
 : do-boot ( bootfile -- )
    ." NetBSD IEEE 1275 Multi-FS Bootblock" cr
-   ." Version $NetBSD: bootblk.fth,v 1.17 2022/11/17 06:40:39 chs Exp $" cr
+   ." Version $NetBSD: bootblk.fth,v 1.17.8.1 2025/08/02 05:56:09 perseant Exp $" cr
    boot-path load-file ( -- load-base )
    dup 0<>  if  " init-program " evaluate  then
 ; 

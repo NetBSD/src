@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma3.h,v 1.11 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: dvma3.h,v 1.11.124.1 2025/08/02 05:56:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /*
  * DVMA (SUN3 specific)
  *
- * Note that while the DVMA harware makes the last 1MB visible
+ * Note that while the DVMA hardware makes the last 1MB visible
  * for secondary masters, the PROM "owns" the last page of it.
  * Also note that OBIO devices can actually see the last 16MB
  * of kernel virtual space.  That can be mostly ignored, except

@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.24 2024/04/28 07:27:41 rillig Exp $
+#       $NetBSD: t_tcpip.sh,v 1.24.2.1 2025/08/02 05:58:09 perseant Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,7 +93,7 @@ start_sshd() {
 
 # Start in debugging mode so we don't have parent<->child privsep stuff
         env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    /usr/sbin/sshd -d -e -E out -f ./sshd_config &
+	    /usr/sbin/sshd -d -e -E "$(pwd)/out" -f ./sshd_config &
 #	while [ ! -f sshd.pid ]; do
 #		sleep 0.01
 #	done
@@ -136,6 +136,25 @@ ssh_body()
 	jot 11 | xargs touch
 	jot 11 12 | xargs mkdir
 	cd ..
+
+	# From the PR (https://gnats.NetBSD.org/59278):
+	#
+	# > The LDAP problem has been fixed, but the new sshd-session
+	# > wants to exec sshd-auth with stdin/out the network socket so the
+	# > hijack code tries to dup(128, 0) and fails in:
+	# >
+	# >	if (fd_isrump(oldd)) {
+	# >		int (*op_close)(int) = GETSYSCALL(host, CLOSE);
+	# >
+	# >		/* only allow fd 0-2 for cross-kernel dup */
+	# >		if (!(newd >= 0 && newd <= 2 && !fd_isrump(newd))) {
+	# >			errno = EBADF; <-----
+	# >			return -1;
+	# >		}
+	# >
+	# > The server client portion of the test works without rump...
+	#
+	atf_expect_fail "PR bin/59278: failing since openssh 10.0 update"
 
 	# ignore stderr for now, prints environment in debug mode
 	atf_check -s exit:0 -o save:ssh.out -e ignore			\

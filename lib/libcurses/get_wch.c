@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.26 2021/09/06 07:45:48 rin Exp $ */
+/*   $NetBSD: get_wch.c,v 1.26.4.1 2025/08/02 05:54:46 perseant Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.26 2021/09/06 07:45:48 rin Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.26.4.1 2025/08/02 05:54:46 perseant Exp $");
 #endif						  /* not lint */
 
 #include <errno.h>
@@ -135,7 +135,7 @@ inkey(wchar_t *wc, int to, int delay)
 			}
 
 			c = __fgetc_resize(infd);
-			if (ferror(infd)) {
+			if (c == ERR || ferror(infd)) {
 				clearerr(infd);
 				return c;
 			}
@@ -179,7 +179,7 @@ inkey(wchar_t *wc, int to, int delay)
 			}
 
 			c = __fgetc_resize(infd);
-			if (ferror(infd)) {
+			if (c == ERR || ferror(infd)) {
 				clearerr(infd);
 				return c;
 			}
@@ -440,6 +440,9 @@ wget_wch(WINDOW *win, wint_t *ch)
 	FILE *infd = _cursesi_screen->infd;
 	cchar_t wc;
 	wchar_t inp, ws[2];
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	if (!(win->flags & __SCROLLOK)
 	    && (win->flags & __FULLWIN)

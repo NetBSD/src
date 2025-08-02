@@ -11,6 +11,8 @@
  * information regarding copyright ownership.
  */
 
+include "named-tls.conf";
+
 options {
 	query-source address 10.53.0.2;
 	query-source-v6 address fd92:7065:b8e:ffff::2;
@@ -21,6 +23,7 @@ options {
 	port @PORT@;
 	pid-file "named.pid";
 	listen-on { 10.53.0.2; };
+	include "options-tls.conf";
 	listen-on-v6 { fd92:7065:b8e:ffff::2; };
 	recursion no;
 	dnssec-validation no;
@@ -52,6 +55,16 @@ zone "example4." {
 };
 
 zone "example7." {
+	type primary;
+	file "example.db";
+};
+
+zone "example8." {
+	type primary;
+	file "example.db";
+};
+
+zone "example9." {
 	type primary;
 	file "example.db";
 };

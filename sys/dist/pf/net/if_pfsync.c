@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.22 2021/03/10 22:18:17 christos Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.22.24.1 2025/08/02 05:57:09 perseant Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.22 2021/03/10 22:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.22.24.1 2025/08/02 05:57:09 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -850,8 +850,7 @@ pfsync_input(struct mbuf *m, int off, int proto)
 	}
 
 done:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 }
 
 int

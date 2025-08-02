@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,15 +7,15 @@
 </head> <body> <pre>
 MEMCACHE_TABLE(5)                                            MEMCACHE_TABLE(5)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        memcache_table - Postfix memcache client configuration
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postmap -q "</b><i>string</i><b>" <a href="memcache_table.5.html">memcache</a>:/etc/postfix/</b><i>filename</i>
 
        <b>postmap -q - <a href="memcache_table.5.html">memcache</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  Postfix  mail system uses optional tables for address rewriting or
        mail routing. These tables are usually in <b>dbm</b> or <b>db</b> format.
 
@@ -32,7 +32,7 @@ MEMCACHE_TABLE(5)                                            MEMCACHE_TABLE(5)
        sequence (first/next) operations. The  sequence  operation  requires  a
        backup database that supports the operation.
 
-<b>MEMCACHE MAIN PARAMETERS</b>
+<b><a name="memcache_main_parameters">MEMCACHE MAIN PARAMETERS</a></b>
        <b>memcache (default: inet:localhost:11211)</b>
               The  memcache  server  (note: singular) that Postfix will try to
               connect to.  For a TCP server  specify  "inet:"  followed  by  a
@@ -98,7 +98,7 @@ MEMCACHE_TABLE(5)                                            MEMCACHE_TABLE(5)
               greater  than  30 days (2592000 seconds) specifies absolute UNIX
               time. Smaller values are relative to the time of the update.
 
-<b>MEMCACHE KEY PARAMETERS</b>
+<b><a name="memcache_key_parameters">MEMCACHE KEY PARAMETERS</a></b>
        <b>key_format (default: %s)</b>
               Format of the lookup and update keys that the  Postfix  memcache
               client  sends to the memcache server.  By default, these are the
@@ -161,7 +161,7 @@ MEMCACHE_TABLE(5)                                            MEMCACHE_TABLE(5)
 
                   domain = example.com, <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/searchdomains
 
-<b>MEMCACHE ERROR CONTROLS</b>
+<b><a name="memcache_error_controls">MEMCACHE ERROR CONTROLS</a></b>
        <b>data_size_limit (default: 10240)</b>
               The maximal memcache reply data length in bytes.
 
@@ -180,7 +180,7 @@ MEMCACHE_TABLE(5)                                            MEMCACHE_TABLE(5)
               The time limit for sending a memcache command and for  receiving
               a memcache reply.
 
-<b>BUGS</b>
+<b><a name="bugs">BUGS</a></b>
        The  Postfix  memcache  client  cannot  be  used for security-sensitive
        tables such as <b><a href="postconf.5.html#alias_maps">alias_maps</a></b> (these may contain "<i>|command</i> and "<i>/file/name</i>"
        destinations),  or <b><a href="postconf.5.html#virtual_uid_maps">virtual_uid_maps</a></b>, <b><a href="postconf.5.html#virtual_gid_maps">virtual_gid_maps</a></b> and <b><a href="postconf.5.html#virtual_mailbox_maps">virtual_mail</a>-</b>
@@ -195,18 +195,18 @@ MEMCACHE_TABLE(5)                                            MEMCACHE_TABLE(5)
        <b>ttl</b> parameter discussions  in  the  MEMCACHE  MAIN  PARAMETERS  section
        above.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
        <a href="MEMCACHE_README.html">MEMCACHE_README</a>, Postfix memcache client guide
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        Memcache support was introduced with Postfix version 2.9.
 
 <b>AUTHOR(S)</b>

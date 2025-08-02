@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.22 2007/04/21 06:11:57 plunky Exp $
+#	$NetBSD: Makefile,v 1.22.90.1 2025/08/02 05:55:15 perseant Exp $
 # 	from: @(#)Makefile	8.2 (Berkeley) 2/16/94
 
-MAN=	audioamd.4 autoconf.4 auxreg.4 bpp.4 bwtwo.4 \
+MAN=	apc.4 audioamd.4 autoconf.4 auxreg.4 bpp.4 bwtwo.4 \
 	cgeight.4 cgfour.4 cgfourteen.4 \
 	cgsix.4 cgthree.4 cgtwo.4 clock.4 dbri.4 fd.4 ie.4 intro.4 kbd.4 \
 	magma.4 mem.4 ms.4 nell.4 openprom.4 pnozz.4 tctrl.4 tcx.4 timer.4 \

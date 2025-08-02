@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,17 +7,17 @@
 </head> <body> <pre>
 TRANSPORT(5)                                                      TRANSPORT(5)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        transport - Postfix transport table format
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postmap /etc/postfix/transport</b>
 
        <b>postmap -q "</b><i>string</i><b>" /etc/postfix/transport</b>
 
        <b>postmap -q - /etc/postfix/transport</b> &lt;<i>inputfile</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The   optional  <a href="transport.5.html"><b>transport</b>(5)</a>  table  specifies  a  mapping  from  email
        addresses to message delivery  transports  and  next-hop  destinations.
        Message  delivery  transports  such as <b>local</b> or <b>smtp</b> are defined in the
@@ -66,13 +66,13 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        a slightly different way as described below under  "REGULAR  EXPRESSION
        TABLES" or "TCP-BASED TABLES".
 
-<b>CASE FOLDING</b>
+<b><a name="case_folding">CASE FOLDING</a></b>
        The  search string is folded to lowercase before database lookup. As of
        Postfix 2.3, the search string is not case folded with  database  types
        such  as  <a href="regexp_table.5.html">regexp</a>: or <a href="pcre_table.5.html">pcre</a>: whose lookup fields can match both upper and
        lower case.
 
-<b>TABLE FORMAT</b>
+<b><a name="table_format">TABLE FORMAT</a></b>
        The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
 
        <i>pattern result</i>
@@ -93,7 +93,7 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        The <i>result</i> is of the form <i>transport:nexthop</i> and specifies how or  where
        to deliver mail. This is described in section "RESULT FORMAT".
 
-<b>TABLE SEARCH ORDER</b>
+<b><a name="table_search_order">TABLE SEARCH ORDER</a></b>
        With  lookups  from  indexed files such as DB or DBM, or from networked
        tables such as NIS, LDAP or SQL, patterns are tried  in  the  order  as
        listed below:
@@ -126,7 +126,7 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        Note 2: <i>user@domain</i> or <i>user+extension@domain</i>  lookup  is  available  in
        Postfix 2.0 and later.
 
-<b>RESULT FORMAT</b>
+<b><a name="result_format">RESULT FORMAT</a></b>
        The  lookup  result  is  of  the form <i>transport</i><b>:</b><i>nexthop</i>.  The <i>transport</i>
        field specifies a mail delivery transport such as <b>smtp</b>  or  <b>local</b>.  The
        <i>nexthop</i> field specifies where and how to deliver mail.
@@ -155,7 +155,7 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        A null <i>transport</i> field with non-null <i>nexthop</i> field does not modify  the
        transport information.
 
-<b>EXAMPLES</b>
+<b><a name="examples">EXAMPLES</a></b>
        In  order  to  deliver internal mail directly, while using a mail relay
        for all other mail, specify a null entry for internal destinations  (do
        not change the delivery transport or the nexthop information) and spec-
@@ -213,7 +213,7 @@ TRANSPORT(5)                                                      TRANSPORT(5)
 
        This causes all mail for <i>user</i>@<i>anything</i><b>.example.com</b> to be bounced.
 
-<b>REGULAR EXPRESSION TABLES</b>
+<b><a name="regular_expression_tables">REGULAR EXPRESSION TABLES</a></b>
        This section describes how the table lookups change when the  table  is
        given  in the form of regular expressions. For a description of regular
        expression lookup table syntax, see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
@@ -230,7 +230,7 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        of $1 etc. in regular expression lookup tables, because that could open
        a security hole (Postfix version 2.3 and later).
 
-<b>TCP-BASED TABLES</b>
+<b><a name="tcp-based_tables">TCP-BASED TABLES</a></b>
        This section describes how the table lookups change  when  lookups  are
        directed   to  a  TCP-based  server.  For  a  description  of  the  TCP
        client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.  This feature  is  not
@@ -242,7 +242,7 @@ TRANSPORT(5)                                                      TRANSPORT(5)
 
        Results are the same as with indexed file lookups.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        The  following  <a href="postconf.5.html"><b>main.cf</b></a>  parameters  are especially relevant.  The text
        below provides only a  parameter  summary.  See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for  more
        details including examples.
@@ -259,18 +259,18 @@ TRANSPORT(5)                                                      TRANSPORT(5)
               Optional  lookup  tables with mappings from recipient address to
               (message delivery transport, next-hop destination).
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="trivial-rewrite.8.html">trivial-rewrite(8)</a>, rewrite and resolve addresses
        <a href="master.5.html">master(5)</a>, <a href="master.5.html">master.cf</a> file format
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="ADDRESS_REWRITING_README.html">ADDRESS_REWRITING_README</a>, address rewriting guide
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
        <a href="FILTER_README.html">FILTER_README</a>, external content filter
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

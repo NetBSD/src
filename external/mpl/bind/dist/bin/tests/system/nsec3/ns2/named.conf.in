@@ -42,6 +42,5 @@ controls {
 zone "nsec3-xfr-inline.kasp" {
 	type primary;
 	file "nsec3-xfr-inline.kasp.db";
-	inline-signing yes;
 	dnssec-policy "nsec3";
 };

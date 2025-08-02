@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbufdebug.c,v 1.7 2018/10/18 05:44:19 msaitoh Exp $	*/
+/*	$NetBSD: uipc_mbufdebug.c,v 1.7.38.1 2025/08/02 05:57:43 perseant Exp $	*/
 
 /*
  * Copyright (C) 2017 Internet Initiative Japan Inc.
@@ -27,26 +27,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.7 2018/10/18 05:44:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.7.38.1 2025/08/02 05:57:43 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
+#include <sys/types.h>
+
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
+#include <net/if_arp.h>
 #include <net/if_ether.h>
 #include <net/ppp_defs.h>
-#include <net/if_arp.h>
 
+#include <netinet/icmp6.h>
+#include <netinet/if_inarp.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
 #include <netinet/ip6.h>
-#include <netinet/icmp6.h>
-#include <netinet/if_inarp.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
@@ -241,8 +243,23 @@ m_examine_ether(const struct mbuf *m, int off, const char *modif,
 	(*pr)("ETHER: DST = %s\n", str_ethaddr(eh.ether_dhost));
 	(*pr)("ETHER: SRC = %s\n", str_ethaddr(eh.ether_shost));
 
+again:
 	(*pr)("ETHER: TYPE = 0x%04x(", ntohs(eh.ether_type));
 	switch (ntohs(eh.ether_type)) {
+	case ETHERTYPE_VLAN:
+		(*pr)("VLAN)\n");
+		
+		pktlen = m_peek_len(m, modif) - off;
+		if (pktlen < 4) {
+			return m_examine_hex(m, off, modif, pr);
+		}
+		if (m_peek_data(m, off + 2, sizeof(eh.ether_type), (void *)(&eh.ether_type)) < 0) {
+			(*pr)("%s: cannot read header\n", __func__);
+			return m_examine_hex(m, off, modif, pr);
+		}
+		off += 4;
+		goto again;
+		break;
 	case ETHERTYPE_PPPOE:
 		(*pr)("PPPoE)\n");
 		return m_examine_pppoe(m, off, modif, pr);

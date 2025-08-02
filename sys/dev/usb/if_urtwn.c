@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.109 2024/02/28 20:18:13 riastradh Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.109.2.1 2025/08/02 05:57:05 perseant Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.109 2024/02/28 20:18:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.109.2.1 2025/08/02 05:57:05 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -142,7 +142,6 @@ static const struct urtwn_dev {
 	URTWN_DEV(ASUSTEK,	RTL8192CU),
 	URTWN_DEV(ASUSTEK,	RTL8192CU_3),
 	URTWN_DEV(ASUSTEK,	USBN10NANO),
-	URTWN_DEV(ASUSTEK,	RTL8192CU_3),
 	URTWN_DEV(AZUREWAVE,	RTL8188CE_1),
 	URTWN_DEV(AZUREWAVE,	RTL8188CE_2),
 	URTWN_DEV(AZUREWAVE,	RTL8188CU),
@@ -213,6 +212,7 @@ static const struct urtwn_dev {
 	URTWN_DEV(ZYXEL,	RTL8192CU),
 
 	/* URTWN_RTL8188E */
+	URTWN_RTL8188E_DEV(ASUSTEK, USBN10NANO_B1),
 	URTWN_RTL8188E_DEV(DLINK, DWA125D1),
 	URTWN_RTL8188E_DEV(ELECOM, WDC150SU2M),
 	URTWN_RTL8188E_DEV(MERCUSYS, MW150USV2),
@@ -2482,6 +2482,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 		if_statinc(ifp, if_ierrors);
 		return;
 	}
+	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
 	if (pktlen > (int)MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if (__predict_false(!(m->m_flags & M_EXT))) {
@@ -2668,7 +2669,7 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 				usbd_clear_endpoint_stall_async(pipe);
 			}
 			device_printf(sc->sc_dev, "transmit failed, %s\n",
-			              usbd_errstr(status));
+			    usbd_errstr(status));
 			if_statinc(ifp, if_oerrors);
 		}
 		splx(s);
@@ -4839,7 +4840,7 @@ urtwn_init(struct ifnet *ifp)
 
 	/* Init interrupts. */
 	if (ISSET(sc->chip, URTWN_CHIP_88E) ||
-	     ISSET(sc->chip, URTWN_CHIP_92EU)) {
+	    ISSET(sc->chip, URTWN_CHIP_92EU)) {
 		urtwn_write_4(sc, R88E_HISR, 0xffffffff);
 		urtwn_write_4(sc, R88E_HIMR, R88E_HIMR_CPWM | R88E_HIMR_CPWM2 |
 		    R88E_HIMR_TBDER | R88E_HIMR_PSTIMEOUT);

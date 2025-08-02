@@ -1,4 +1,4 @@
-/* 	$NetBSD: apicvar.h,v 1.8 2020/04/25 15:26:18 bouyer Exp $ */
+/* 	$NetBSD: apicvar.h,v 1.8.26.1 2025/08/02 05:56:16 perseant Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -56,5 +56,6 @@ void apic_format_redir(const char *, const char *, int, int, uint32_t,
 
 /* For lapic.c */
 extern uint32_t lapic_per_second;
+extern bool lapic_from_cpuid;
 
 #endif /* !_X86_APICVAR_H_ */

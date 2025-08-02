@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.16 2024/06/17 22:11:09 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.16.2.1 2025/08/02 05:58:14 perseant Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -160,6 +160,15 @@ attributes(int i)
 
 	// There may be multiple attribute specifier sequences in a row.
 	[[]][[]][[]]i++;
+
+	// An attribute may occur more than once.
+	[[
+		maybe_unused, maybe_unused, maybe_unused, maybe_unused,
+		maybe_unused, maybe_unused, maybe_unused, maybe_unused,
+		maybe_unused, maybe_unused, maybe_unused, maybe_unused,
+		maybe_unused, maybe_unused, maybe_unused, maybe_unused,
+		maybe_unused, maybe_unused, maybe_unused, maybe_unused,
+	]]i++;
 
 	return i;
 }

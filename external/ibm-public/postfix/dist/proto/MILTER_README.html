@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -630,7 +630,7 @@ main.cf: items separated by space or comma. There is one difference:
 clients </a></h3>
 
 <p> The smtpd_milter_maps feature supports different Milter settings
-for different client IP addresses. Lookup results override the the
+for different client IP addresses. Lookup results override the
 global smtpd_milters setting, and have the same syntax. For example,
 to disable Milter settings for local address ranges: </p>
 
@@ -973,7 +973,27 @@ only to the SMTP command information; they have no access to the
 message header or body, and cannot make modifications to the message
 or to the envelope. </p>
 
-<li> <p> Postfix 2.6 ignores the optional ESMTP parameters in
+<li> <p> Postfix 3.3 and later support the ESMTP parameters RET and
+ENVID in requests to replace the envelope sender (SMFIR_CHGFROM).
+Postfix logs a warning message when a Milter application supplies
+other ESMTP parameters: </p>
+
+<pre>
+warning: <i>queue-id</i>: cleanup_chg_from: ignoring bad ESMTP
+    parameter "<i>whatever</i>" in SMFI_CHGFROM request
+</pre>
+
+<li> <p> Postfix 3.0 and later support the ESMTP parameters NOTIFY
+and ORCPT in requests to add an envelope recipient. Postfix logs a
+warning message when a Milter application supplies other ESMTP
+parameters: </p>
+
+<pre>
+warning: <i>queue-id</i>: cleanup_add_rcpt: ignoring ESMTP argument
+    from Milter or header/body_checks: "<i>whatever</i>"
+</pre>
+
+<li> <p> Postfix 2.6 and later ignore optional ESMTP parameters in
 requests to replace the sender (SMFIR_CHGFROM) or to append a
 recipient (SMFIR_ADDRCPT_PAR). Postfix logs a warning message when
 a Milter application supplies such ESMTP parameters: </p>

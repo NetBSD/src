@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.73 2023/07/30 10:45:11 riastradh Exp $ */
+/* $NetBSD: wsmouse.c,v 1.73.6.1 2025/08/02 05:57:08 perseant Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.73 2023/07/30 10:45:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.73.6.1 2025/08/02 05:57:08 perseant Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -378,15 +378,8 @@ wsmouse_input(device_t wsmousedev, u_int btns /* 0 is up */,
          * Discard input if not open.
          */
 	evar = sc->sc_base.me_evp;
-	if (evar == NULL)
+	if (evar == NULL || evar->q == NULL)
 		goto out;
-
-#ifdef DIAGNOSTIC
-	if (evar->q == NULL) {
-		printf("wsmouse_input: evar->q=NULL\n");
-		goto out;
-	}
-#endif
 
 #if NWSMUX > 0
 	DPRINTFN(5,("wsmouse_input: %s mux=%p, evar=%p\n",
@@ -749,9 +742,15 @@ wsmouseclose(dev_t dev, int flags, int mode,
 	    device_lookup_private(&wsmouse_cd, minor(dev));
 	struct wseventvar *evar = sc->sc_base.me_evp;
 
-	if (evar == NULL)
+#if NWSMUX > 0
+	DPRINTF(("wsmouseclose: %s mux=%p p=%p\n", device_xname(sc->sc_base.me_dv),
+		 sc->sc_base.me_parent, l));
+#endif
+	if (evar == NULL) {
 		/* not open for read */
 		return (0);
+	}
+
 	sc->sc_base.me_evp = NULL;
 	(*sc->sc_accessops->disable)(sc->sc_accesscookie);
 	wsevent_fini(evar);
@@ -789,12 +788,7 @@ wsmouseread(dev_t dev, struct uio *uio, int flags)
 	if (sc->sc_dying)
 		return (EIO);
 
-#ifdef DIAGNOSTIC
-	if (sc->sc_base.me_evp == NULL) {
-		printf("wsmouseread: evp == NULL\n");
-		return (EINVAL);
-	}
-#endif
+	KASSERTMSG(sc->sc_base.me_evp != NULL, "wsmouseread: evp == NULL\n");
 
 	sc->sc_refcnt++;
 	error = wsevent_read(sc->sc_base.me_evp, uio, flags);

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_signal_wait.h,v 1.5 2021/03/19 00:44:09 simonb Exp $	*/
+/*	$NetBSD: t_ptrace_signal_wait.h,v 1.5.10.1 2025/08/02 05:58:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -26,6 +26,41 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* XXX copied from include/fenv.h -- factor me out, please! */
+#if \
+	(defined(__arm__) && defined(__SOFTFP__)) || \
+	(defined(__m68k__) && !defined(__HAVE_68881__)) || \
+	defined(__mips_soft_float) || \
+	(defined(__powerpc__) && defined(_SOFT_FLOAT)) || \
+	(defined(__sh__) && !defined(__SH_FPU_ANY__)) || \
+	0
+#define	SOFTFLOAT
+#endif
+
+#ifdef SOFTFLOAT
+static void
+softfloat_fudge_sigs(const ki_sigset_t *kbefore, ki_sigset_t *kafter)
+{
+	sigset_t before, after;
+
+	/*
+	 * XXX Would be nice if the layout of ki_sigset_t were publicly
+	 * documented!
+	 */
+	__CTASSERT(sizeof(before) == sizeof(*kbefore));
+	__CTASSERT(sizeof(after) == sizeof(*kafter));
+	memcpy(&before, kbefore, sizeof(before));
+	memcpy(&after, kafter, sizeof(after));
+	if (sigismember(&before, SIGFPE)) {
+		fprintf(stderr, "%s: add SIGFPE\n", __func__);
+		sigaddset(&after, SIGFPE);
+	} else {
+		fprintf(stderr, "%s: del SIGFPE\n", __func__);
+		sigdelset(&after, SIGFPE);
+	}
+	memcpy(kafter, &after, sizeof(after));
+}
+#endif
 
 static void
 traceme_raise(int sigval)
@@ -43,7 +78,7 @@ traceme_raise(int sigval)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -87,13 +122,13 @@ traceme_raise(int sigval)
 			info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 			info.psi_siginfo.si_errno);
 
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+		TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 		DPRINTF("Assert that PT_GET_PROCESS_STATE returns non-error\n");
 		SYSCALL_REQUIRE(
 		    ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
-		ATF_REQUIRE(memcmp(&state, &zero_state, slen) == 0);
+		TEST_CHECK_MEMEQ(&state, &zero_state, slen);
 
 		DPRINTF("Before resuming the child process where it left off "
 		    "and without signal to be sent\n");
@@ -151,7 +186,7 @@ traceme_raisesignal_ignored(int sigignored)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -187,8 +222,8 @@ traceme_raisesignal_ignored(int sigignored)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -208,8 +243,8 @@ traceme_raisesignal_ignored(int sigignored)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigignored);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigignored);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -266,7 +301,7 @@ traceme_raisesignal_masked(int sigmasked)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -301,8 +336,8 @@ traceme_raisesignal_masked(int sigmasked)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -364,7 +399,7 @@ traceme_crash(int sig)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -410,23 +445,25 @@ traceme_crash(int sig)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sig);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sig);
 	switch (sig) {
 	case SIGTRAP:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
 		break;
 	case SIGSEGV:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 		break;
 	case SIGILL:
-		ATF_REQUIRE(info.psi_siginfo.si_code >= ILL_ILLOPC &&
-		            info.psi_siginfo.si_code <= ILL_BADSTK);
+		ATF_CHECK_MSG((info.psi_siginfo.si_code >= ILL_ILLOPC &&
+			info.psi_siginfo.si_code <= ILL_BADSTK),
+		    "info.psi_siginfo.si_code=%d ILL_ILLOPC=%d ILL_BADSTK=%d",
+		    info.psi_siginfo.si_code, ILL_ILLOPC, ILL_BADSTK);
 		break;
 	case SIGFPE:
-// XXXQEMU	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
+// XXXQEMU	TEST_CHECK_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
 		break;
 	case SIGBUS:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
 		break;
 	}
 
@@ -488,10 +525,19 @@ traceme_signalmasked_crash(int sig)
 	if (sig == SIGFPE && !are_fpu_exceptions_supported())
 		atf_tc_skip("FP exceptions are not supported");
 
+#ifdef SOFTFLOAT
+	/*
+	 * Let's try to track down the dregs of PR misc/56820: Many FPE
+	 * related tests fail on softfloat machines.
+	 */
+	if (sig == SIGFPE)
+		debug = 1;
+#endif
+
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -542,7 +588,7 @@ traceme_signalmasked_crash(int sig)
 	name[4] = sizeof(kp);
 	name[5] = 1;
 
-	ATF_REQUIRE_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+	RL(sysctl(name, namelen, &kp, &len, NULL, 0));
 
 	kp_sigmask = kp.p_sigmask;
 
@@ -555,8 +601,8 @@ traceme_signalmasked_crash(int sig)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -576,7 +622,7 @@ traceme_signalmasked_crash(int sig)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+	RL(sysctl(name, namelen, &kp, &len, NULL, 0));
 
 	DPRINTF("kp_sigmask="
 	    "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02" PRIx32"\n",
@@ -588,25 +634,54 @@ traceme_signalmasked_crash(int sig)
 	    kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
 	    kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
 
-	ATF_REQUIRE(!memcmp(&kp_sigmask, &kp.p_sigmask, sizeof(kp_sigmask)));
+#ifdef SOFTFLOAT
+	/*
+	 * Hardfloat floating-point exception traps raise SIGFPE even
+	 * if the process has masked SIGFPE.  As a side effect,
+	 * delivery of the signal on trap unmasks it -- but as a
+	 * special case, if the process is traced, it first stops and
+	 * notifies the tracer _before_ unmasking SIGFPE and removing
+	 * it from p_sigmask.
+	 *
+	 * Softfloat floating-point exception traps try to mimic this
+	 * behaviour by sigprocmask and sigqueueinfo in userland, but
+	 * it is difficult -- and likely not worthwhile -- to emulate
+	 * the special case of a traced process.  So when the tracer is
+	 * notified of the child's signal, the child has _already_
+	 * unmasked SIGFPE so it is no longer in p_sigmask.  (See
+	 * float_raise in lib/libc/softfloat/softfloat-specialize for
+	 * details.)
+	 *
+	 * Since this is probably not worthwhile to address (it only
+	 * affects an obscure detail of how the process state manifests
+	 * to a debugger), we just pretend that SIGFPE didn't change in
+	 * p_sigmask.
+	 */
+	if (sig == SIGFPE)
+		softfloat_fudge_sigs(&kp_sigmask, &kp.p_sigmask);
+#endif
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sig);
+	TEST_CHECK_MEMEQ(&kp_sigmask, &kp.p_sigmask, sizeof(kp_sigmask));
+
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sig);
 	switch (sig) {
 	case SIGTRAP:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
 		break;
 	case SIGSEGV:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 		break;
 	case SIGILL:
-		ATF_REQUIRE(info.psi_siginfo.si_code >= ILL_ILLOPC &&
-		            info.psi_siginfo.si_code <= ILL_BADSTK);
+		ATF_CHECK_MSG((info.psi_siginfo.si_code >= ILL_ILLOPC &&
+			info.psi_siginfo.si_code <= ILL_BADSTK),
+		    "info.psi_siginfo.si_code=%d ILL_ILLOPC=%d ILL_BADSTK=%d",
+		    info.psi_siginfo.si_code, ILL_ILLOPC, ILL_BADSTK);
 		break;
 	case SIGFPE:
-// XXXQEMU	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
+// XXXQEMU	TEST_CHECK_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
 		break;
 	case SIGBUS:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
 		break;
 	}
 
@@ -669,10 +744,19 @@ traceme_signalignored_crash(int sig)
 	if (sig == SIGFPE && !are_fpu_exceptions_supported())
 		atf_tc_skip("FP exceptions are not supported");
 
+#ifdef SOFTFLOAT
+	/*
+	 * Let's try to track down the dregs of PR misc/56820: Many FPE
+	 * related tests fail on softfloat machines.
+	 */
+	if (sig == SIGFPE)
+		debug = 1;
+#endif
+
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -725,7 +809,7 @@ traceme_signalignored_crash(int sig)
 	name[4] = sizeof(kp);
 	name[5] = 1;
 
-	ATF_REQUIRE_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+	RL(sysctl(name, namelen, &kp, &len, NULL, 0));
 
 	kp_sigignore = kp.p_sigignore;
 
@@ -738,8 +822,8 @@ traceme_signalignored_crash(int sig)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -759,7 +843,7 @@ traceme_signalignored_crash(int sig)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+	RL(sysctl(name, namelen, &kp, &len, NULL, 0));
 
 	DPRINTF("kp_sigignore="
 	    "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02" PRIx32"\n",
@@ -771,25 +855,55 @@ traceme_signalignored_crash(int sig)
 	    kp.p_sigignore.__bits[0], kp.p_sigignore.__bits[1],
 	    kp.p_sigignore.__bits[2], kp.p_sigignore.__bits[3]);
 
-	ATF_REQUIRE(!memcmp(&kp_sigignore, &kp.p_sigignore, sizeof(kp_sigignore)));
+#ifdef SOFTFLOAT
+	/*
+	 * Hardfloat floating-point exception traps raise SIGFPE even
+	 * if the process has set the signal disposition of SIGFPE to
+	 * SIG_IGN.  As a side effect, delivery of the signal on trap
+	 * changes the disposition from SIG_IGN to SIG_DFL -- but as a
+	 * special case, if the process is traced, it first stops and
+	 * notifies the tracer _before_ changing the disposition and
+	 * removing SIGFPE from p_sigignore.
+	 *
+	 * Softfloat floating-point exception traps try to mimic this
+	 * behaviour by sigaction and sigqueueinfo in userland, but it
+	 * is difficult -- and likely not worthwhile -- to emulate the
+	 * special case of a traced process.  So when the tracer is
+	 * notified of the child's signal, its disposition has
+	 * _already_ been changed to SIG_DFL and so SIGFPE is no longer
+	 * in p_sigignore.  (See float_raise in
+	 * lib/libc/softfloat/softfloat-specialize for details.)
+	 *
+	 * Since this is probably not worthwhile to address (it only
+	 * affects an obscure detail of how the process state manifests
+	 * to a debugger), we just pretend that nothing changeed in
+	 * whether SIGFPE is ignored or not.
+	 */
+	if (sig == SIGFPE)
+		softfloat_fudge_sigs(&kp_sigignore, &kp.p_sigignore);
+#endif
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sig);
+	TEST_CHECK_MEMEQ(&kp_sigignore, &kp.p_sigignore, sizeof(kp_sigignore));
+
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sig);
 	switch (sig) {
 	case SIGTRAP:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
 		break;
 	case SIGSEGV:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 		break;
 	case SIGILL:
-		ATF_REQUIRE(info.psi_siginfo.si_code >= ILL_ILLOPC &&
-		            info.psi_siginfo.si_code <= ILL_BADSTK);
+		ATF_CHECK_MSG((info.psi_siginfo.si_code >= ILL_ILLOPC &&
+			info.psi_siginfo.si_code <= ILL_BADSTK),
+		    "info.psi_siginfo.si_code=%d ILL_ILLOPC=%d ILL_BADSTK=%d",
+		    info.psi_siginfo.si_code, ILL_ILLOPC, ILL_BADSTK);
 		break;
 	case SIGFPE:
-// XXXQEMU	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
+// XXXQEMU	TEST_CHECK_EQ(info.psi_siginfo.si_code, FPE_FLTDIV);
 		break;
 	case SIGBUS:
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
 		break;
 	}
 
@@ -842,7 +956,7 @@ traceme_sendsignal_handle(int sigsent, void (*sah)(int a), int *traceme_caught)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -877,8 +991,8 @@ traceme_sendsignal_handle(int sigsent, void (*sah)(int a), int *traceme_caught)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and with "
 	    "signal %s to be sent\n", strsignal(sigsent));
@@ -945,7 +1059,7 @@ traceme_sendsignal_masked(int sigsent)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -975,8 +1089,8 @@ traceme_sendsignal_masked(int sigsent)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and with "
 	    "signal %s to be sent\n", strsignal(sigsent));
@@ -1033,10 +1147,10 @@ traceme_sendsignal_ignored(int sigsent)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		
+
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		memset(&sa, 0, sizeof(sa));
@@ -1065,8 +1179,8 @@ traceme_sendsignal_ignored(int sigsent)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and with "
 	    "signal %s to be sent\n", strsignal(sigsent));
@@ -1137,7 +1251,7 @@ traceme_sendsignal_simple(int sigsent)
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1170,8 +1284,8 @@ traceme_sendsignal_simple(int sigsent)
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+	TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+	TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 	DPRINTF("Before resuming the child process where it left off and with "
 	    "signal %s to be sent\n", strsignal(sigsent));
@@ -1194,8 +1308,8 @@ traceme_sendsignal_simple(int sigsent)
 		    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 		    info.psi_siginfo.si_errno);
 
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+		TEST_CHECK_EQ(info.psi_siginfo.si_signo, sigval);
+		TEST_CHECK_EQ(info.psi_siginfo.si_code, SI_LWP);
 
 		DPRINTF("Before resuming the child process where it left off "
 		    "and with signal %s to be sent\n", strsignal(sigsent));
@@ -1282,7 +1396,7 @@ traceme_vfork_raise(int sigval)
 	if (sigval == SIGSTOP) {
 		parent = getpid();
 
-		watcher = fork();
+		RL(watcher = fork());
 		ATF_REQUIRE(watcher != 1);
 		if (watcher == 0) {
 			/* Double fork(2) trick to reparent to initproc */
@@ -1313,7 +1427,7 @@ traceme_vfork_raise(int sigval)
 	}
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = vfork()) != -1);
+	RL(child = vfork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1422,7 +1536,7 @@ traceme_vfork_crash(int sig)
 		atf_tc_skip("FP exceptions are not supported");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = vfork()) != -1);
+	RL(child = vfork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1504,7 +1618,7 @@ traceme_vfork_signalmasked_crash(int sig)
 		atf_tc_skip("FP exceptions are not supported");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = vfork()) != -1);
+	RL(child = vfork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1590,7 +1704,7 @@ traceme_vfork_signalignored_crash(int sig)
 		atf_tc_skip("FP exceptions are not supported");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = vfork()) != -1);
+	RL(child = vfork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1857,8 +1971,20 @@ unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 			    kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
 			    kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
 
-			FORKEE_ASSERTX(!memcmp(&kp_sigmask, &kp.p_sigmask,
-			    sizeof(kp_sigmask)));
+#ifdef SOFTFLOAT
+			/*
+			 * See above in traceme_signalmasked_crash
+			 * about the softfloat trap SIGFPE delivery
+			 * quirk that requires us to fudge this test.
+			 */
+			if (sig == SIGFPE) {
+				softfloat_fudge_sigs(&kp_sigmask,
+				    &kp.p_sigmask);
+			}
+#endif
+
+			FORKEE_ASSERT_MEMEQ(&kp_sigmask, &kp.p_sigmask,
+			    sizeof(kp_sigmask));
 		}
 
 		if (ignored) {
@@ -1874,8 +2000,20 @@ unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 			    kp.p_sigignore.__bits[0], kp.p_sigignore.__bits[1],
 			    kp.p_sigignore.__bits[2], kp.p_sigignore.__bits[3]);
 
-			FORKEE_ASSERTX(!memcmp(&kp_sigignore, &kp.p_sigignore,
-			    sizeof(kp_sigignore)));
+#ifdef SOFTFLOAT
+			/*
+			 * See above in traceme_signalignored_crash
+			 * about the softfloat trap SIGFPE delivery
+			 * quirk that requires us to fudge this test.
+			 */
+			if (sig == SIGFPE) {
+				softfloat_fudge_sigs(&kp_sigignore,
+				    &kp.p_sigignore);
+			}
+#endif
+
+			FORKEE_ASSERT_MEMEQ(&kp_sigignore, &kp.p_sigignore,
+			    sizeof(kp_sigignore));
 		}
 
 		switch (sig) {
@@ -2042,7 +2180,7 @@ ATF_TC_BODY(signal_mask_unrelated, tc)
 	sigset_t intmask;
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
+	RL(child = fork());
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);

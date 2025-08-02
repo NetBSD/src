@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_discover.c,v 1.5 2016/05/29 13:35:45 mlelstv Exp $	*/
+/*	$NetBSD: iscsid_discover.c,v 1.5.28.1 2025/08/02 05:55:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -391,7 +391,7 @@ register_isns_server(isns_t * isns)
 	isns_add_string(t, isnst_iSCSIName, (char *)isns->reg_iscsi_name);	/*tag=32 */
 	u32 = htonl(2);
 	isns_add_tlv(t, isnst_iSCSINodeType, (uint32_t)sizeof(u32), &u32);
-		/*tag=33 (node type = intiator) */
+		/*tag=33 (node type = initiator) */
 
 	retval = isns_send_trans(t, &tout, &status);
 	DEB(9, ("DevAttrReg request returns %d, status %d", retval, status));

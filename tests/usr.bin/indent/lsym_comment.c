@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.24 2023/06/23 20:59:04 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.24.2.1 2025/08/02 05:58:13 perseant Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -761,7 +761,8 @@ while(cond)/*comment*/;
 void
 loop(void)
 {
-	while (cond) /* comment */;
+	while (cond)		/* comment */
+		;
 
 	while (cond)
 		/* comment */;

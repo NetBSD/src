@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.14 2024/04/17 06:11:56 skrll Exp $
+#	$NetBSD: GENERIC.common,v 1.14.2.1 2025/08/02 05:56:02 perseant Exp $
 #
 #	GENERIC common RISC-V kernel config items shared between 32 and 64
 #	kernels
@@ -149,21 +149,44 @@ qemufwcfg* 	at fdt?			# QEMU Firmware Configuration device
 # RTC devices
 gfrtc* 		at fdt?			# Google Goldfish RTC
 
+# PCIE
+pcihost* 	at fdt?			# Generic PCI host controller
+pci* 		at pcibus?
+ppb* 		at pci? dev ? function ?
+pci* 		at ppb?
+
 # USB
 xhci* 		at fdt?			# XHCI
+xhci*		at pci?			# XHCI
 usb* 		at usbus?
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
 pseudo-device 	sequencer		# MIDI sequencer
 
+# NVMe
+nvme* 		at pci? dev ? function ?
+ld* 		at nvme? nsid ?
+
+# Audio
+audio*		at audiobus?
+auich*		at pci? dev ? function ?	# Intel AC'97 Audio (QEMU)
+eap*		at pci? dev ? function ?	# Ensoniq AudioPCI (QEMU)
+
+# I2C controllers
+dwiic* 		at fdt?			# Designware I2C
+iic* 		at i2cbus?
+
+# I2C devices
+#axppmic* 	at iic?			# X-Powers AXP Power Management IC
+#axpreg* 	at axppmic?
 
 # Virtio devices
 virtio* 	at fdt?			# Virtio MMIO device
-#viomb* 	at virtio?		# Virtio memory balloon device
-ld* 		at virtio?		# Virtio disk device
-vioif* 		at virtio?		# Virtio network device
-viornd* 	at virtio?		# Virtio entropy device
-#vioscsi* 	at virtio?		# Virtio SCSI device
+
+include "dev/virtio/virtio.config"
+no vio9p* 	at virtio?		# XXX ?
+no viomb* 	at virtio?		# XXX ?
+no vioscsi* 	at virtio?		# XXX ?
 
 # Pseudo-Devices
 # network pseudo-devices
@@ -188,7 +211,8 @@ pseudo-device 	clockctl		# user control of clock subsystem
 pseudo-device 	crypto			# /dev/crypto device
 pseudo-device 	lockstat		# lock profiling
 pseudo-device 	ksyms			# /dev/ksyms
-#pseudo-device 	pad			# pseudo audio device
+pseudo-device 	openfirm		# /dev/openfirm
+pseudo-device 	pad			# pseudo audio device
 pseudo-device 	pty			# pseudo-terminals
 #options 	RND_COM
 pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)

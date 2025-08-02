@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.439 2024/06/29 12:59:08 riastradh Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.439.2.1 2025/08/02 05:57:50 perseant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.439 2024/06/29 12:59:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.439.2.1 2025/08/02 05:57:50 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -230,6 +230,8 @@ int	tcp_do_autorcvbuf = 1;
 int	tcp_autorcvbuf_inc = 16 * 1024;
 int	tcp_autorcvbuf_max = 256 * 1024;
 int	tcp_msl = (TCPTV_MSL / PR_SLOWHZ);
+
+int tcp_reass_maxqueuelen = 100;
 
 static int tcp_rst_ppslim_count = 0;
 static struct timeval tcp_rst_ppslim_last;
@@ -707,6 +709,13 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 #endif
 
 insert_it:
+	/* limit tcp segments per reassembly queue */
+	if (tp->t_segqlen > tcp_reass_maxqueuelen) {
+		TCP_STATINC(TCP_STAT_RCVMEMDROP);
+		m_freem(m);
+		goto out;
+	}
+
 	/*
 	 * Allocate a new queue entry (block) since the received segment
 	 * did not collapse onto any other out-of-order block. If it had
@@ -1484,10 +1493,8 @@ findpcb:
 #ifdef INET6
 	/* save packet options if user wanted */
 	if (inp->inp_af == AF_INET6 && (inp->inp_flags & IN6P_CONTROLOPTS)) {
-		if (inp->inp_options) {
-			m_freem(inp->inp_options);
-			inp->inp_options = NULL;
-		}
+		m_freem(inp->inp_options);
+		inp->inp_options = NULL;
 		ip6_savecontrol(inp, &inp->inp_options, ip6, m);
 	}
 #endif
@@ -1898,8 +1905,7 @@ after_listen:
 					(void)tcp_output(tp);
 					KERNEL_UNLOCK_ONE(NULL);
 				}
-				if (tcp_saveti)
-					m_freem(tcp_saveti);
+				m_freem(tcp_saveti);
 				return;
 			}
 		} else if (th->th_ack == tp->snd_una &&
@@ -2009,8 +2015,7 @@ after_listen:
 				(void)tcp_output(tp);
 				KERNEL_UNLOCK_ONE(NULL);
 			}
-			if (tcp_saveti)
-				m_freem(tcp_saveti);
+			m_freem(tcp_saveti);
 			return;
 		}
 	}
@@ -2401,8 +2406,7 @@ after_listen:
 		if (tp->rcv_nxt == th->th_seq) {
 			tcp_respond(tp, m, m, th, (tcp_seq)0, th->th_ack - 1,
 			    TH_ACK);
-			if (tcp_saveti)
-				m_freem(tcp_saveti);
+			m_freem(tcp_saveti);
 			return;
 		}
 
@@ -2855,8 +2859,7 @@ dodata:
 		(void)tcp_output(tp);
 		KERNEL_UNLOCK_ONE(NULL);
 	}
-	if (tcp_saveti)
-		m_freem(tcp_saveti);
+	m_freem(tcp_saveti);
 
 	if (tp->t_state == TCPS_TIME_WAIT
 	    && (so->so_state & SS_NOFDREF)
@@ -2901,8 +2904,7 @@ dropafterack2:
 	KERNEL_LOCK(1, NULL);
 	(void)tcp_output(tp);
 	KERNEL_UNLOCK_ONE(NULL);
-	if (tcp_saveti)
-		m_freem(tcp_saveti);
+	m_freem(tcp_saveti);
 	return;
 
 dropwithreset_ratelim:
@@ -2933,8 +2935,7 @@ dropwithreset:
 		(void)tcp_respond(tp, m, m, th, th->th_seq + tlen, (tcp_seq)0,
 		    TH_RST|TH_ACK);
 	}
-	if (tcp_saveti)
-		m_freem(tcp_saveti);
+	m_freem(tcp_saveti);
 	return;
 
 badcsum:
@@ -2949,8 +2950,7 @@ drop:
 			tcp_trace(TA_DROP, ostate, tp, tcp_saveti, 0);
 #endif
 	}
-	if (tcp_saveti)
-		m_freem(tcp_saveti);
+	m_freem(tcp_saveti);
 	m_freem(m);
 	return;
 }

@@ -21,6 +21,7 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.1; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion no;
 	notify yes;
 	dnssec-validation yes;
@@ -37,12 +38,10 @@ controls {
 
 zone "." {
 	type primary;
-	file "root.db";
+	file "root.db.signed";
 	allow-transfer { any; };
-	allow-query { any; };
 	allow-update { any; };
-	auto-dnssec maintain;
-	dnssec-dnskey-kskonly no;
+	allow-query { any; };
 };
 
 include "trusted.conf";

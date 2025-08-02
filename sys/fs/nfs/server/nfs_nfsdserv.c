@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdserv.c,v 1.5 2024/02/05 21:46:06 andvar Exp $	*/
+/*	$NetBSD: nfs_nfsdserv.c,v 1.5.2.1 2025/08/02 05:57:39 perseant Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdserv.c 299514 2016-05-12 05:03:12Z cem "); */
-__RCSID("$NetBSD: nfs_nfsdserv.c,v 1.5 2024/02/05 21:46:06 andvar Exp $");
+__RCSID("$NetBSD: nfs_nfsdserv.c,v 1.5.2.1 2025/08/02 05:57:39 perseant Exp $");
 
 /*
  * nfs version 2, 3 and 4 server calls to vnode ops
@@ -753,8 +753,7 @@ nfsrvd_read(struct nfsrv_descript *nd, __unused int isdgram,
 		}
 		if (nd->nd_repstat) {
 			vput(vp);
-			if (m3)
-				mbuf_freem(m3);
+			mbuf_freem(m3);
 			if (nd->nd_flag & ND_NFSV3)
 				nfsrv_postopattr(nd, getret, &nva);
 			goto out;

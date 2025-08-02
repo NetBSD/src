@@ -28,6 +28,8 @@ managed.		NS	ns2.managed.
 ns2.managed.		A	10.53.0.2
 trusted.		NS	ns2.trusted.
 ns2.trusted.		A	10.53.0.2
+lazy-ksk.		NS	ns2.lazy-ksk.
+ns2.lazy-ksk.		A	10.53.0.2
 optout-tld		NS	ns6.optout-tld.
 ns6.optout-tld.		A	10.53.0.6
 in-addr.arpa.		NS	ns2.example.
@@ -35,3 +37,11 @@ inprogress.		NS	ns10.inprogress.
 ns10.inprogress.	A	10.53.0.10
 too-many-iterations.	NS	ns2.too-many-iterations.
 ns2.too-many-iterations.	A	10.53.0.2
+dnskey-rrsigs-stripped.	NS	ns2.dnskey-rrsigs-stripped.
+ns2.dnskey-rrsigs-stripped.	A	10.53.0.2
+ds-rrsigs-stripped.	NS	ns2.ds-rrsigs-stripped.
+ns2.ds-rrsigs-stripped.	A	10.53.0.2
+inconsistent.		NS	ns2.inconsistent.
+ns2.inconsistent.	A	10.53.0.2
+nsec-rrsigs-stripped.	NS	ns10.nsec-rrsigs-stripped.
+ns10.nsec-rrsigs-stripped.	A	10.53.0.10

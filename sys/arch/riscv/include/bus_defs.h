@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.3 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.3.6.1 2025/08/02 05:56:03 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -412,7 +412,7 @@ struct riscv_bus_dma_tag {
 	 * DMA tag utility functions
 	 */
 	int	(*_dmatag_subregion)(bus_dma_tag_t, bus_addr_t, bus_addr_t,
-		     bus_dma_tag_t *, int);
+		    bus_dma_tag_t *, int);
 	void	(*_dmatag_destroy)(bus_dma_tag_t);
 
 	/*

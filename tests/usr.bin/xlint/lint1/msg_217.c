@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_217.c,v 1.12 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_217.c,v 1.12.2.1 2025/08/02 05:58:17 perseant Exp $	*/
 # 3 "msg_217.c"
 
 // Test for message: function '%s' falls off bottom without returning value [217]
@@ -65,9 +65,56 @@ unreachable_continue_falls_through(void)
 {
 	for (;;) {
 		if (0)
-			/* expect+1: warning: statement not reached [193] */
+			/* expect+1: warning: 'continue' statement not reached [193] */
 			continue;
 		break;
 	}
 }
 /* expect-1: warning: function 'unreachable_continue_falls_through' falls off bottom without returning value [217] */
+
+
+_Noreturn void noreturn_c11(void);
+[[noreturn]] void noreturn_c23(void);
+__attribute__((__noreturn__)) void noreturn_gnu_prefix(void);
+void __attribute__((__noreturn__)) noreturn_gnu_infix(void);
+void noreturn_gnu_suffix(void) __attribute__((__noreturn__));
+
+int
+call_noreturn_c11(void)
+{
+	noreturn_c11();
+}
+
+inline int
+call_noreturn_c23(void)
+{
+	noreturn_c23();
+}
+
+int
+call_noreturn_gnu_prefix(void)
+{
+	noreturn_gnu_prefix();
+}
+
+int
+call_noreturn_gnu_infix(void)
+{
+	noreturn_gnu_infix();
+}
+
+int
+call_noreturn_gnu_suffix(void)
+{
+	noreturn_gnu_suffix();
+}
+
+
+double *force_function_attributes_in_diagnostic[] = {
+	// Force the word 'noreturn' to occur in a diagnostic.
+	/* expect+1: warning: invalid combination of 'pointer to double' and 'pointer to noreturn function(void) returning void', op 'init' [124] */
+	noreturn_c23,
+	// The 'inline' does affect the type of the function.
+	/* expect+1: warning: invalid combination of 'pointer to double' and 'pointer to function(void) returning int', op 'init' [124] */
+	call_noreturn_c23,
+};

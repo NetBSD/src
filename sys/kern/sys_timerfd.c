@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_timerfd.c,v 1.8 2022/02/17 16:28:29 thorpej Exp $	*/
+/*	$NetBSD: sys_timerfd.c,v 1.8.10.1 2025/08/02 05:57:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.8 2022/02/17 16:28:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.8.10.1 2025/08/02 05:57:43 perseant Exp $");
 
 /*
  * timerfd
@@ -337,7 +337,7 @@ static int
 timerfd_fop_poll(file_t * const fp, int const events)
 {
 	struct timerfd * const tfd = fp->f_timerfd;
-	int revents = events & (POLLOUT | POLLWRNORM);
+	int revents = 0;
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		itimer_lock();
@@ -593,10 +593,15 @@ do_timerfd_settime(struct lwp *l, int fd, int flags,
     const struct itimerspec *new_value, struct itimerspec *old_value,
     register_t *retval)
 {
+	struct itimerspec value = *new_value;
 	file_t *fp;
 	int error;
 
 	if (flags & ~(TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET)) {
+		return EINVAL;
+	}
+	if (itimespecfix(&value.it_value) != 0 ||
+	    itimespecfix(&value.it_interval) != 0) {
 		return EINVAL;
 	}
 
@@ -616,9 +621,9 @@ do_timerfd_settime(struct lwp *l, int fd, int flags,
 
  restart:
 	if (old_value != NULL) {
-		*old_value = it->it_time;
+		itimer_gettime(it, old_value);
 	}
-	it->it_time = *new_value;
+	it->it_time = value;
 
 	/*
 	 * If we've been passed a relative value, convert it to an

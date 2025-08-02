@@ -1,4 +1,4 @@
-/*	$NetBSD: load_lib.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: load_lib.h,v 1.2.28.1 2025/08/02 05:50:18 perseant Exp $	*/
 
 #ifndef _LOAD_LIB_H_INCLUDED_
 #define _LOAD_LIB_H_INCLUDED_
@@ -19,12 +19,12 @@
 /* NULL name terminates list */
 typedef struct LIB_FN {
     const char *name;
-    void  (*fptr)(void);
+    void    (*fptr) (void);
 } LIB_FN;
 
 typedef struct LIB_DP {
     const char *name;
-    void  *dptr;
+    void   *dptr;
 } LIB_DP;
 
 extern void load_library_symbols(const char *, LIB_FN *, LIB_DP *);

@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.3 2019/05/18 08:38:00 mlelstv Exp $ */
+/* $NetBSD: ipmivar.h,v 1.3.36.1 2025/08/02 05:56:30 perseant Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -24,16 +24,19 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
-
-#include <sys/mutex.h>
-#include <sys/condvar.h>
-
-#include <dev/sysmon/sysmonvar.h>
 
 #ifndef _IPMIVAR_H_
 #define _IPMIVAR_H_
+
+#include <sys/types.h>
+
+#include <sys/bus.h>
+#include <sys/condvar.h>
+#include <sys/ipmi.h>
+#include <sys/mutex.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #define IPMI_IF_KCS		1
 #define IPMI_IF_SMIC		2
@@ -95,20 +98,19 @@ struct ipmi_softc {
 	kcondvar_t		sc_mode_cv;
 
 	kmutex_t		sc_cmd_mtx;
-	kmutex_t		sc_sleep_mtx;
-	kcondvar_t		sc_cmd_sleep;
 
 	struct ipmi_bmc_args	*sc_iowait_args;
 
 	struct ipmi_sensor	*current_sensor;
-	volatile bool		sc_thread_running;
-	volatile bool		sc_tickle_due;
+	bool			sc_thread_running;
+	bool			sc_thread_ready;
+	bool			sc_tickle_due;
 	struct sysmon_wdog	sc_wdog;
 	struct sysmon_envsys	*sc_envsys;
 	envsys_data_t		*sc_sensor;
 	int 		sc_nsensors; /* total number of sensors */
 
-	char		sc_buf[1024 + 3]; /* IPMI_MAX_RX + 3 */
+	char		sc_buf[IPMI_MAX_RX + 3];
 	bool		sc_buf_rsvd;
 
 	/* request busy */

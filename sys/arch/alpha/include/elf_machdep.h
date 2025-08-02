@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.15 2020/10/10 21:25:51 thorpej Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.15.26.1 2025/08/02 05:55:22 perseant Exp $ */
 
 #ifndef	_ALPHA_ELF_MACHDEP_H_
 #define	_ALPHA_ELF_MACHDEP_H_
@@ -73,5 +73,8 @@
 #define	R_ALPHA_TPREL16		41
 
 #define	R_TYPE(name)		__CONCAT(R_ALPHA_,name)
+
+/* Alpha dynamic tags */
+#define	DT_ALPHA_PLTRO		0x70000000	/* secure (read-only) PLT */
 
 #endif /* _ALPHA_ELF_MACHDEP_H_ */

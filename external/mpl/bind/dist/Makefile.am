@@ -1,25 +1,26 @@
 include $(top_srcdir)/Makefile.top
 
-SUBDIRS = . lib doc bin fuzz
+SUBDIRS = . lib doc
 
-if HAVE_CMOCKA
+# build libtest before fuzz/* and bin/tests
 SUBDIRS += tests
-endif HAVE_CMOCKA
 
-BUILT_SOURCES = bind.keys.h
-CLEANFILES = bind.keys.h
+# run fuzz tests before system tests
+SUBDIRS += fuzz bin
+
+BUILT_SOURCES += bind.keys.h
+CLEANFILES += bind.keys.h
 
 bind.keys.h: bind.keys Makefile
 	${PERL} ${top_srcdir}/util/bindkeys.pl ${top_srcdir}/bind.keys > $@
 
-dist_sysconf_DATA = bind.keys
-
 .PHONY: doc
 
 EXTRA_DIST =			\
+	bind.keys		\
 	util/bindkeys.pl	\
+	util/dtrace.sh		\
 	contrib			\
-	CHANGES			\
 	COPYRIGHT		\
 	LICENSE			\
 	*.md

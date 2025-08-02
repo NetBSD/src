@@ -22,9 +22,11 @@ if [ -z "$1" ] || [ ! -d "$1" ]; then
 fi
 
 system_test_dir="$1"
+system_test="$(basename $system_test_dir)"
 shift
 
 (
-  cd "$system_test_dir" || exit 2
-  /usr/bin/env python3 -m pytest "$@"
+  [ -d "$system_test_dir" ] || exit 2
+  cd "${system_test_dir}/.."
+  /usr/bin/env python3 -m pytest "$@" "$system_test"
 )

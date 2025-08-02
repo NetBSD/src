@@ -1,4 +1,4 @@
-/*	$NetBSD: x25_19.h,v 1.7 2024/02/21 22:52:14 christos Exp $	*/
+/*	$NetBSD: x25_19.h,v 1.7.2.1 2025/08/02 05:53:48 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

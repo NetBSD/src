@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.9 2022/02/16 23:49:26 riastradh Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.9.10.1 2025/08/02 05:55:35 perseant Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.9 2022/02/16 23:49:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.9.10.1 2025/08/02 05:55:35 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -443,7 +443,7 @@ cs_check_eeprom(struct cs_softc *sc)
 
 	/*
 	 * The CS8900a datasheet calls for the two's complement of the checksum
-	 * to be prgrammed in the most significant byte of the last word of the
+	 * to be programmed in the most significant byte of the last word of the
 	 * header.
 	 */
 	checksum = ~checksum + 1;

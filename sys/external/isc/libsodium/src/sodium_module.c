@@ -1,4 +1,4 @@
-/*	$NetBSD: sodium_module.c,v 1.1 2021/08/21 09:08:08 christos Exp $	*/
+/*	$NetBSD: sodium_module.c,v 1.1.10.1 2025/08/02 05:57:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,11 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sodium_module.c,v 1.1 2021/08/21 09:08:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sodium_module.c,v 1.1.10.1 2025/08/02 05:57:38 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
+
+#include <crypto/sodium/sodium_selftest.h>
 
 MODULE(MODULE_CLASS_MISC, sodium, NULL);
 
@@ -41,6 +43,10 @@ sodium_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		if (sodium_selftest()) {
+			printf("sodium self-test failed\n");
+			return EIO;
+		}
 		break;
 
 	case MODULE_CMD_FINI:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2023/02/24 17:08:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.22.2.1 2025/08/02 05:50:45 perseant Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -89,6 +89,7 @@ SRCS.expat=	xmlparse.c xmltok.c xmlrole.c
 SRCS=	${SRCS.fc-cache} ${SRCS.fontconfig} ${SRCS.freetype} ${SRCS.expat}
 
 # XXX FONTCONFIG_PATH was arbitrarily chosen
+HOST_CFLAGS=	-std=c99
 HOST_CPPFLAGS=	-DFONTCONFIG_PATH='"${DESTDIR}/etc/X11/fonts"' \
 		-DFC_DEFAULT_FONTS='"${X11FONTDIR}/Type1"' \
 		-DFC_TEMPLATEDIR='"${DESTDIR}${X11FONTDIR}"' \

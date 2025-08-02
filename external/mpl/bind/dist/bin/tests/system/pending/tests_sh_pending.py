@@ -9,6 +9,23 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "nsupdate.out.*",
+        "ns*/dsset-*",
+        "ns*/K*",
+        "ns*/*.jnl",
+        "ns*/*.signed",
+        "ns*/trusted.conf",
+        "ns*/K*",
+        "ns1/root.db",
+        "ns2/example.com.db",
+        "ns2/example.db",
+    ]
+)
+
 
 def test_pending(run_tests_sh):
     run_tests_sh()

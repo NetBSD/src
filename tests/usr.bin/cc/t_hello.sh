@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.12 2022/06/12 15:08:38 skrll Exp $
+#	$NetBSD: t_hello.sh,v 1.12.4.1 2025/08/02 05:58:12 perseant Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -66,6 +66,12 @@ EOF
 }
 
 hello_profile_body() {
+	case `uname -m` in
+	riscv)	atf_expect_fail "PR port-riscv/59301:" \
+		    " riscv: missing MKPROFILE=yes support"
+		;;
+	esac
+
 	cat > test.c << EOF
 #include <stdio.h>
 #include <stdlib.h>

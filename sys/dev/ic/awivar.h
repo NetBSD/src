@@ -1,4 +1,4 @@
-/*	$NetBSD: awivar.h,v 1.28 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: awivar.h,v 1.28.52.1 2025/08/02 05:56:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,6 @@ struct awi_softc {
 
 	void			*sc_soft_ih;
 	void			*sc_sdhook;	/* shutdown hook */
-	void			*sc_powerhook;	/* power management hook */
 	unsigned int		sc_attached:1,
 				sc_enabled:1,
 				sc_busy:1,
@@ -141,7 +140,6 @@ struct awi_softc {
 int	awi_attach(struct awi_softc *);
 int	awi_detach(struct awi_softc *);
 int	awi_activate(device_t, enum devact);
-void	awi_power(int, void *);
 void	awi_shutdown(void *);
 int	awi_intr(void *);
 

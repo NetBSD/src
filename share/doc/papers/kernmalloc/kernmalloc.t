@@ -1,4 +1,4 @@
-.\"	$NetBSD: kernmalloc.t,v 1.5 2003/08/07 10:30:43 agc Exp $
+.\"	$NetBSD: kernmalloc.t,v 1.5.108.1 2025/08/02 05:55:09 perseant Exp $
 .\"
 .\" Copyright (c) 1988 The Regents of the University of California.
 .\" All rights reserved.
@@ -133,7 +133,7 @@ it is not feasible to allocate even moderate blocks of memory on it.
 Consequently, such memory must be allocated through a more dynamic mechanism.
 For example,
 when the system must translate a pathname,
-it must allocate a one kilobye buffer to hold the name.
+it must allocate a one kilobyte buffer to hold the name.
 Other blocks of memory must be more persistent than a single system call
 and really have to be allocated from dynamic memory.
 Examples include protocol control blocks that remain throughout
@@ -465,7 +465,7 @@ that cannot wait for memory to become available.
 Clients indicate their willingness (and ability) to wait with a flag
 to the allocation routine.
 For clients that are willing to wait,
-the allocator guarrentees that their request will succeed.
+the allocator guarantees that their request will succeed.
 Thus, these clients can need not check the return value from the allocator.
 If memory is unavailable and the client cannot wait,
 the allocator returns a null pointer.

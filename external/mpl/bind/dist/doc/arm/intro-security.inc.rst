@@ -54,7 +54,7 @@ therefore, depend on the site's security policy.
 
 3. Zone transfer from a **primary** to one or more **secondary** authoritative name servers across a
 public network carries risk. The zone transfer may be secured using
-``named.conf`` :ref:`statements, TSIG cryptographic methods or TLS<sec_file_transfer>`.
+``named.conf`` :ref:`statements, TSIG cryptographic methods, or TLS<sec_file_transfer>`.
 Clearly, if the secondary authoritative name server(s) all lie within a network entirely
 under the user's control, the security threat may be regarded as non-existent. Any implementation requirements
 again depend on the site's security policy.
@@ -72,5 +72,5 @@ or full-service resolver to completely answer user queries. Stub resolvers on th
 typically have a caching capability to increase performance. At this time there are no standard stub resolvers or proxy
 DNS tools that implement DNSSEC. BIND 9 may be configured to provide such capability on supported Linux or Unix platforms.
 :ref:`DNS over TLS <dns_over_tls>` may be configured to verify the integrity of the data between the stub resolver and
-area (or full-service) resolver. However, unless the resolver and the Authoritative Name Server implements DNSSEC, end-to-end integrity (from
+area (or full-service) resolver. However, unless the resolver and the authoritative name server implements DNSSEC, end-to-end integrity (from
 authoritative name server to stub resolver) cannot be guaranteed.

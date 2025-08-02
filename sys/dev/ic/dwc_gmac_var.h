@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.19 2024/02/27 08:33:06 skrll Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.19.2.1 2025/08/02 05:56:41 perseant Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -28,21 +28,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifdef _KERNEL_OPT
-#include "opt_net_mpsafe.h"
-#endif
-
-/* Use DWCGMAC_MPSAFE inside the front-ends for interrupt handlers.  */
-#ifdef NET_MPSAFE
-#define DWCGMAC_MPSAFE	1
-#endif
-
-#ifdef DWCGMAC_MPSAFE
-#define DWCGMAC_FDT_INTR_MPSAFE FDT_INTR_MPSAFE
-#else
-#define DWCGMAC_FDT_INTR_MPSAFE 0
-#endif
 
 /*
  * Rx and Tx Ring counts that map into single 4K page with 16byte descriptor
@@ -117,18 +102,19 @@ struct dwc_gmac_softc {
 	struct dwc_gmac_rx_ring sc_rxq;
 	struct dwc_gmac_tx_ring sc_txq;
 	const struct dwc_gmac_desc_methods *sc_descm;
-	u_short sc_if_flags;			/* shadow of ether flags */
+	u_short sc_if_flags;	/* (sc_mcastlock) if_flags cache */
 	uint16_t sc_mii_clk;
-	bool sc_txbusy;
-	bool sc_stopping;
+	bool sc_txbusy;		/* (sc_txq.t_mtx) no Tx because down or busy */
+	bool sc_stopping;	/* (sc_intr_lock) ignore intr because down */
 	krndsource_t rnd_source;
-	kmutex_t *sc_lock;			/* lock for softc operations */
+	kmutex_t *sc_mcast_lock;	/* lock for SIOCADD/DELMULTI */
+	kmutex_t *sc_intr_lock;		/* lock for interrupt operations */
 
-	struct if_percpuq *sc_ipq;		/* softint-based input queues */
+	struct if_percpuq *sc_ipq;	/* softint-based input queues */
 
 	void (*sc_set_speed)(struct dwc_gmac_softc *, int);
 };
 
-int dwc_gmac_attach(struct dwc_gmac_softc*, int /*phy_id*/,
+int dwc_gmac_attach(struct dwc_gmac_softc *, int /*phy_id*/,
     uint32_t /*mii_clk*/);
-int dwc_gmac_intr(struct dwc_gmac_softc*);
+int dwc_gmac_intr(struct dwc_gmac_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: keygen.h,v 1.7 2024/02/21 22:51:00 christos Exp $	*/
+/*	$NetBSD: keygen.h,v 1.7.2.1 2025/08/02 05:50:49 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

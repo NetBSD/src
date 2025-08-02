@@ -1,4 +1,4 @@
-/*	$NetBSD: mainboard.h,v 1.4 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: mainboard.h,v 1.4.124.1 2025/08/02 05:55:55 perseant Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define RAMBO_BASE      0xbc000000 /* Base address for RAMBO DMA */
 
 #define RAMBO_TCOUNT    (RAMBO_BASE+0xc00) /* Timer count register */
-#define RAMBO_TBREAK    (RAMBO_BASE+0xd00) /* Timner break register */
+#define RAMBO_TBREAK    (RAMBO_BASE+0xd00) /* Timer break register */
 #define RAMBO_ERREG	(RAMBO_BASE+0xe00) /* Machine error register */
 #define RAMBO_CTL       (RAMBO_BASE+0xf00) /* Machine control register */
 

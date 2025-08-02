@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.216.2.1 2024/07/01 01:01:13 perseant Exp $
+#	$NetBSD: GENERIC64,v 1.216.2.2 2025/08/02 05:55:33 perseant Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -127,6 +127,7 @@ acpifan*	at acpi?
 acpiged*	at acpi?
 acpilid*	at acpi?
 acpitz* 	at acpi?
+acpivmgenid*	at acpi?
 
 # CPUs
 cpus*		at fdt? pass 0
@@ -157,6 +158,13 @@ gpioleds*	at fdt?
 # System Controller
 syscon* 	at fdt? pass 1		# Generic System Controller
 sunxisramc*	at fdt? pass 1		# Allwinner System Control
+qcomipcc*	at acpi?		# Qualcomm IPCC
+qcompas*	at acpi?		# Qualcomm ADSP PAS
+qcompep*	at acpi?		# Qualcomm PEP / AOSS
+qcomscm*	at acpi?		# Qualcomm Secure Channel Manager
+qcomsmem*	at acpi?		# Qualcomm Shared Memory
+qcomsmptp*	at acpi?		# Qualcomm Shared Memory P2P
+qcomspmi*	at acpi?		# Qualcomm SPMI
 
 # Timer
 gtmr*		at fdt? pass 2		# ARM Generic Timer
@@ -243,9 +251,10 @@ imxgpio*	at fdt? pass 3		# IMX GPIO
 mesonpinctrl*	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio* 	at fdt?			# ARM PrimeCell PL061 GPIO
 plgpio* 	at acpi?
+qcomgpio*	at acpi?		# Qualcomm GPIO
+rkgpio* 	at rkiomux?		# Rockchip GPIO
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO
 tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
-rkgpio* 	at rkiomux?		# Rockchip GPIO
 gpio*		at gpiobus?
 
 # PWM controller
@@ -354,6 +363,7 @@ dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
 imxi2c* 	at fdt? pass 4		# IMX I2C
 nxpiic* 	at acpi?		# NXP Layerscape I2C
+qcomiic*	at acpi?		# Qualcomm I2C
 rkiic*		at fdt? pass 4		# Rockchip I2C
 sunxirsb*	at fdt?	pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
@@ -375,6 +385,7 @@ cwfg*		at iic?			# CellWise CW2015 Fuel Gauge IC
 dsrtc*		at iic?			# Dallas Semiconductor RTCs
 es8316ac*	at iic?			# Everest Semi ES8316 Audio CODEC
 fan53555reg*	at iic?			# FAN53555 / SY82x regulator
+#fusbtc* 	at iic?			# USB-C power controller
 max77620pmic*	at iic?
 pcaiicmux*	at iic?			# PCA954x / PCA984x I2C switch / mux
 pcf8563rtc*	at iic?			# PCF8563 RTC
@@ -382,11 +393,18 @@ rkpmic* 	at iic?			# Rockchip Power Management IC
 rkreg*		at rkpmic?
 tcagpio*	at iic?
 
+# I2C HID devices
+ihidev*		at iic?
+ims*		at ihidev? reportid ?
+wsmouse*	at ims? mux 0
+ikbd*		at ihidev? reportid ?
+wskbd*		at ikbd? mux 1
+
 # Power Domain controllers
 applepmgr* 	at fdt? pass 0
 
 # Random number generators and security devices
-amdccp* 	at fdt?			# AMD Cryptograhic Coprocessor RNG
+amdccp* 	at fdt?			# AMD Cryptographic Coprocessor RNG
 amdccp* 	at acpi?
 bcmrng* 	at fdt?			# Broadcom BCM283x RNG
 mesonrng*	at fdt?			# Amlogic Meson RNG
@@ -538,6 +556,8 @@ mesongxlu2phy*	at fdt? pass 9		# Amlogic Meson GXL USB2 PHY
 mesongxlu3phy*	at fdt? pass 9		# Amlogic Meson GXL USB3 PHY
 rkusb*		at fdt? pass 9		# Rockchip USB PHY
 rkusbphy*	at rkusb?
+#rktypec* 	at fdt?			# Rockchip USB-C PHY
+#rktcphy* 	at rktypec?
 sunxiusbphy*	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy*	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY
@@ -562,11 +582,9 @@ pseudo-device	sequencer			# MIDI sequencer
 virtio* 	at fdt?			# Virtio MMIO device
 virtio* 	at acpi?
 virtio* 	at pci? dev ? function ?
-#viomb*		at virtio?		# Virtio memory balloon device
-ld*		at virtio?		# Virtio disk device
-vioif*		at virtio?		# Virtio network device
-viornd* 	at virtio?		# Virtio entropy device
-vioscsi*	at virtio?		# Virtio SCSI device
+
+include "dev/virtio/virtio.config"
+no viomb* 	at virtio?		# XXX ?
 
 # SCSI controllers
 mpt*		at pci? dev ? function ?

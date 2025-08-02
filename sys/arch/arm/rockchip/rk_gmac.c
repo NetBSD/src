@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.22 2023/12/31 09:45:58 skrll Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.22.2.1 2025/08/02 05:55:29 perseant Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.22 2023/12/31 09:45:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.22.2.1 2025/08/02 05:55:29 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -551,7 +551,7 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 		return;
 
 	if (fdtbus_intr_establish_xname(phandle, 0, IPL_NET,
-	    DWCGMAC_FDT_INTR_MPSAFE, rk_gmac_intr, sc,
+	    FDT_INTR_MPSAFE, rk_gmac_intr, sc,
 	    device_xname(self)) == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n", intrstr);
 		return;

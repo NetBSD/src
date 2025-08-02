@@ -11,14 +11,17 @@
  * information regarding copyright ownership.
  */
 
+include "named-tls.conf";
+
 options {
 	query-source address 10.53.0.3;
 	notify-source 10.53.0.3;
 	transfer-source 10.53.0.3;
 	port @PORT@;
+	include "options-tls.conf";
 	pid-file "named.pid";
 	listen-on { 10.53.0.3; };
-	listen-on-v6 { none; };
+	listen-on-v6 { fd92:7065:b8e:ffff::3; };
 	recursion yes;
 	notify yes;
 	dnssec-validation no;

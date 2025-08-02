@@ -63,7 +63,6 @@ what the :iscman:`named.conf` zone statement looks like on the primary server, 1
        file "db/example.com.db";
        key-directory "keys/example.com";
        dnssec-policy default;
-       inline-signing yes;
        allow-transfer { 192.168.1.2; 192.168.1.3; 192.168.1.4; };
    };
 
@@ -143,7 +142,6 @@ signed data via zone transfer to the other three DNS secondaries. Its
        file "db/example.com.db";
        key-directory "keys/example.com";
        dnssec-policy default;
-       inline-signing yes;
        allow-transfer { 192.168.1.2; 192.168.1.3; 192.168.1.4; };
    };
 
@@ -325,7 +323,7 @@ the new ZSK is in effect:
 
 These are all the manual tasks you need to perform for a ZSK rollover.
 If you have followed the configuration examples in this guide of using
-:any:`inline-signing` and :any:`auto-dnssec`, everything else is automated for
+:any:`inline-signing` and :any:`dnssec-policy`, everything else is automated for
 you by BIND.
 
 Day of ZSK Rollover
@@ -562,7 +560,8 @@ since this new KSK is not active yet. You can do it
 immediately after the new DS record has been generated on December 1,
 or you can wait until the next day after you have verified that the
 new DNSKEY record is added to the zone. Below are some screenshots from
-GoDaddy's web-based interface, used to add a new DS record [#]_.
+GoDaddy's web-based interface, used to add a new DS record.
+[#godaddy_iface_note]_
 
 1. After logging in, click the green "Launch" button next to the domain
    name you want to manage.
@@ -763,7 +762,7 @@ Congratulations, the KSK rollover is complete! As for the actual key
 files (ending in ``.key`` and ``.private``), they may be deleted at this
 point, but they do not have to be.
 
-.. [#]
+.. [#godaddy_iface_note]
    The screenshots were taken from GoDaddy's interface at the time the
    original version of this guide was published (2015). It may have
    changed since then.
@@ -997,7 +996,6 @@ Here is what :iscman:`named.conf` looks like when it is signed:
        type primary;
        file "db/example.com.db";
        dnssec-policy "default";
-       inline-signing yes;
    };
 
 To indicate the reversion to unsigned, change the :any:`dnssec-policy` line:
@@ -1009,7 +1007,6 @@ To indicate the reversion to unsigned, change the :any:`dnssec-policy` line:
        type primary;
        file "db/example.com.db";
        dnssec-policy "insecure";
-       inline-signing yes;
    };
 
 Then use :option:`rndc reload` to reload the zone.

@@ -2,11 +2,11 @@ SHELL	= /bin/sh
 SRCS	= smtp.c smtp_connect.c smtp_proto.c smtp_chat.c smtp_session.c \
 	smtp_addr.c smtp_trouble.c smtp_state.c smtp_rcpt.c smtp_tls_policy.c \
 	smtp_sasl_proto.c smtp_sasl_glue.c smtp_reuse.c smtp_map11.c \
-	smtp_sasl_auth_cache.c smtp_key.c smtp_misc.c
+	smtp_sasl_auth_cache.c smtp_key.c smtp_misc.c smtp_tlsrpt.c
 OBJS	= smtp.o smtp_connect.o smtp_proto.o smtp_chat.o smtp_session.o \
 	smtp_addr.o smtp_trouble.o smtp_state.o smtp_rcpt.o smtp_tls_policy.o \
 	smtp_sasl_proto.o smtp_sasl_glue.o smtp_reuse.o smtp_map11.o \
-	smtp_sasl_auth_cache.o smtp_key.o smtp_misc.o
+	smtp_sasl_auth_cache.o smtp_key.o smtp_misc.o smtp_tlsrpt.o
 HDRS	= smtp.h smtp_sasl.h smtp_addr.h smtp_reuse.h smtp_sasl_auth_cache.h
 TESTSRC	= 
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
@@ -48,20 +48,8 @@ lmtp_params.c: smtp_params.c
 	grep -E -v -f smtp-only smtp_params.c | \
 	    sed 's/SMTP/LMTP/g; s/smtp_\([a-z]*_table\)/lmtp_\1/' >$@
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	cp *.h printfck
-	sed '1,/^# do not edit/!d' Makefile >printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
-
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
-
 clean:
 	rm -f *.o *core $(PROG) $(TESTPROG) junk 
-	rm -rf printfck
 
 tidy:	clean
 
@@ -219,6 +207,7 @@ smtp_chat.o: ../../include/post_mail.h
 smtp_chat.o: ../../include/recipient_list.h
 smtp_chat.o: ../../include/resolve_clnt.h
 smtp_chat.o: ../../include/scache.h
+smtp_chat.o: ../../include/sendopts.h
 smtp_chat.o: ../../include/smtp_stream.h
 smtp_chat.o: ../../include/smtputf8.h
 smtp_chat.o: ../../include/sock_addr.h
@@ -270,6 +259,7 @@ smtp_connect.o: ../../include/recipient_list.h
 smtp_connect.o: ../../include/resolve_clnt.h
 smtp_connect.o: ../../include/sane_connect.h
 smtp_connect.o: ../../include/scache.h
+smtp_connect.o: ../../include/sendopts.h
 smtp_connect.o: ../../include/sock_addr.h
 smtp_connect.o: ../../include/split_at.h
 smtp_connect.o: ../../include/string_list.h
@@ -279,6 +269,7 @@ smtp_connect.o: ../../include/timed_connect.h
 smtp_connect.o: ../../include/tls.h
 smtp_connect.o: ../../include/tls_proxy.h
 smtp_connect.o: ../../include/tok822.h
+smtp_connect.o: ../../include/valid_hostname.h
 smtp_connect.o: ../../include/vbuf.h
 smtp_connect.o: ../../include/vstream.h
 smtp_connect.o: ../../include/vstring.h
@@ -450,6 +441,7 @@ smtp_proto.o: ../../include/recipient_list.h
 smtp_proto.o: ../../include/record.h
 smtp_proto.o: ../../include/resolve_clnt.h
 smtp_proto.o: ../../include/scache.h
+smtp_proto.o: ../../include/sendopts.h
 smtp_proto.o: ../../include/smtp_stream.h
 smtp_proto.o: ../../include/smtputf8.h
 smtp_proto.o: ../../include/sock_addr.h
@@ -459,6 +451,7 @@ smtp_proto.o: ../../include/stringops.h
 smtp_proto.o: ../../include/sys_defs.h
 smtp_proto.o: ../../include/tls.h
 smtp_proto.o: ../../include/tls_proxy.h
+smtp_proto.o: ../../include/tlsrpt_wrapper.h
 smtp_proto.o: ../../include/tok822.h
 smtp_proto.o: ../../include/uxtext.h
 smtp_proto.o: ../../include/vbuf.h
@@ -749,6 +742,7 @@ smtp_state.o: ../../include/string_list.h
 smtp_state.o: ../../include/sys_defs.h
 smtp_state.o: ../../include/tls.h
 smtp_state.o: ../../include/tls_proxy.h
+smtp_state.o: ../../include/tlsrpt_wrapper.h
 smtp_state.o: ../../include/tok822.h
 smtp_state.o: ../../include/vbuf.h
 smtp_state.o: ../../include/vstream.h
@@ -782,6 +776,7 @@ smtp_tls_policy.o: ../../include/name_mask.h
 smtp_tls_policy.o: ../../include/nvtable.h
 smtp_tls_policy.o: ../../include/recipient_list.h
 smtp_tls_policy.o: ../../include/resolve_clnt.h
+smtp_tls_policy.o: ../../include/sane_strtol.h
 smtp_tls_policy.o: ../../include/scache.h
 smtp_tls_policy.o: ../../include/sock_addr.h
 smtp_tls_policy.o: ../../include/string_list.h
@@ -789,6 +784,7 @@ smtp_tls_policy.o: ../../include/stringops.h
 smtp_tls_policy.o: ../../include/sys_defs.h
 smtp_tls_policy.o: ../../include/tls.h
 smtp_tls_policy.o: ../../include/tls_proxy.h
+smtp_tls_policy.o: ../../include/tlsrpt_wrapper.h
 smtp_tls_policy.o: ../../include/tok822.h
 smtp_tls_policy.o: ../../include/valid_hostname.h
 smtp_tls_policy.o: ../../include/valid_utf8_hostname.h
@@ -797,6 +793,47 @@ smtp_tls_policy.o: ../../include/vstream.h
 smtp_tls_policy.o: ../../include/vstring.h
 smtp_tls_policy.o: smtp.h
 smtp_tls_policy.o: smtp_tls_policy.c
+smtp_tlsrpt.o: ../../include/argv.h
+smtp_tlsrpt.o: ../../include/attr.h
+smtp_tlsrpt.o: ../../include/check_arg.h
+smtp_tlsrpt.o: ../../include/deliver_request.h
+smtp_tlsrpt.o: ../../include/dict.h
+smtp_tlsrpt.o: ../../include/dns.h
+smtp_tlsrpt.o: ../../include/dsn.h
+smtp_tlsrpt.o: ../../include/dsn_buf.h
+smtp_tlsrpt.o: ../../include/header_body_checks.h
+smtp_tlsrpt.o: ../../include/header_opts.h
+smtp_tlsrpt.o: ../../include/hex_code.h
+smtp_tlsrpt.o: ../../include/htable.h
+smtp_tlsrpt.o: ../../include/mail_params.h
+smtp_tlsrpt.o: ../../include/maps.h
+smtp_tlsrpt.o: ../../include/match_list.h
+smtp_tlsrpt.o: ../../include/midna_domain.h
+smtp_tlsrpt.o: ../../include/mime_state.h
+smtp_tlsrpt.o: ../../include/msg.h
+smtp_tlsrpt.o: ../../include/msg_stats.h
+smtp_tlsrpt.o: ../../include/myaddrinfo.h
+smtp_tlsrpt.o: ../../include/myflock.h
+smtp_tlsrpt.o: ../../include/mymalloc.h
+smtp_tlsrpt.o: ../../include/name_code.h
+smtp_tlsrpt.o: ../../include/name_mask.h
+smtp_tlsrpt.o: ../../include/nvtable.h
+smtp_tlsrpt.o: ../../include/recipient_list.h
+smtp_tlsrpt.o: ../../include/resolve_clnt.h
+smtp_tlsrpt.o: ../../include/scache.h
+smtp_tlsrpt.o: ../../include/sock_addr.h
+smtp_tlsrpt.o: ../../include/string_list.h
+smtp_tlsrpt.o: ../../include/stringops.h
+smtp_tlsrpt.o: ../../include/sys_defs.h
+smtp_tlsrpt.o: ../../include/tls.h
+smtp_tlsrpt.o: ../../include/tls_proxy.h
+smtp_tlsrpt.o: ../../include/tlsrpt_wrapper.h
+smtp_tlsrpt.o: ../../include/tok822.h
+smtp_tlsrpt.o: ../../include/vbuf.h
+smtp_tlsrpt.o: ../../include/vstream.h
+smtp_tlsrpt.o: ../../include/vstring.h
+smtp_tlsrpt.o: smtp.h
+smtp_tlsrpt.o: smtp_tlsrpt.c
 smtp_trouble.o: ../../include/argv.h
 smtp_trouble.o: ../../include/attr.h
 smtp_trouble.o: ../../include/bounce.h

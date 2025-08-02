@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.140 2023/12/20 05:18:00 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.140.2.1 2025/08/02 05:56:12 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 2023/12/20 05:18:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140.2.1 2025/08/02 05:56:12 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -580,7 +580,7 @@ dumpsys(void)
 
 	/*
 	 * Now dump physical memory.  Note that physical memory
-	 * might NOT be congiguous, so do it by segments.
+	 * might NOT be contiguous, so do it by segments.
 	 */
 
 	vaddr = (char *)vmmap;	/* Borrow /dev/mem VA */

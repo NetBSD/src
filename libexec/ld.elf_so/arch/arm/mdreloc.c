@@ -1,9 +1,18 @@
-/*	$NetBSD: mdreloc.c,v 1.46 2023/06/04 01:24:57 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.46.2.1 2025/08/02 05:55:01 perseant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.46 2023/06/04 01:24:57 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.46.2.1 2025/08/02 05:55:01 perseant Exp $");
 #endif /* not lint */
+
+/*
+ * Arm (32-bit) ELF relocations.
+ *
+ * Reference:
+ *
+ *	[AAELF32] ELF for the Arm Architecture, 2022Q3.  Arm Ltd.
+ *	https://github.com/ARM-software/abi-aa/blob/2982a9f3b512a5bfdc9e3fea5d3b298f9165c36b/aaelf32/aaelf32.rst
+ */
 
 #include <sys/types.h>
 #include <string.h>
@@ -341,7 +350,7 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
 	int err = 0;
-	
+
 	for (rel = obj->pltrel; rel < obj->pltrellim; rel++) {
 		err = _rtld_relocate_plt_object(obj, rel, NULL);
 		if (err)

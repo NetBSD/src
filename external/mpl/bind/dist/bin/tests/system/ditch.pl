@@ -34,18 +34,21 @@ use IO::File;
 use IO::Socket;
 
 sub usage {
-    print ("Usage: ditch.pl [-s address] [-p port] [file]\n");
+    print ("Usage: ditch.pl [-s address] [-p port] [-b source_port] [file]\n");
     exit 1;
 }
 
 my %options={};
-getopts("s:p:t:", \%options);
+getopts("s:p:b:", \%options);
 
 my $addr = "127.0.0.1";
 $addr = $options{s} if defined $options{s};
 
 my $port = 53;
 $port = $options{p} if defined $options{p};
+
+my $source_port = 0;
+$source_port = $options{b} if defined $options{b};
 
 my $file = "STDIN";
 if (@ARGV >= 1) {
@@ -74,8 +77,12 @@ while (defined(my $line = <$file>) ) {
     $packet->header->rd(1);
     $packet->push(question => $q);
 
-    my $sock = IO::Socket::INET->new(PeerAddr => $addr, PeerPort => $port,
-                                     Proto => "udp",) or die "$!";
+    my $sock = IO::Socket::INET->new(
+        PeerAddr => $addr,
+        PeerPort => $port,
+        Proto => "udp",
+        LocalPort => $source_port,
+        ) or die "$!";
 
     my $bytes = $sock->send($packet->data);
     #print ("sent $bytes bytes to $addr:$port:\n");

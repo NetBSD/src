@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.50 2024/06/07 20:50:27 riastradh Exp $
+# $NetBSD: Makefile.inc,v 1.50.2.1 2025/08/02 05:54:35 perseant Exp $
 
 COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
 COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
@@ -333,6 +333,7 @@ COPTS.${src}+=	-D__SOFT_FP__
 .endfor
 
 LINTFLAGS.GCDAProfiling.c += -X 123,132,351 # Ok, this is just sloppy
+LINTFLAGS.GCDAProfiling.c += -X 286,287 # missing prototypes
 LINTFLAGS.GCDAProfiling.c += -X 298 # vax
 LINTFLAGS.InstrProfiling.c += -X 298 # vax
 LINTFLAGS.InstrProfiling.c += -X 351
@@ -396,7 +397,7 @@ LINTFLAGS.floatuntidf.c += -X 122,141,267,351
 LINTFLAGS.floatuntisf.c += -X 351
 LINTFLAGS.floatuntixf.c += -X 122,351
 LINTFLAGS.floatuntixf.c += -X 141 # alpha
-LINTFLAGS.gcc_personality_v0.c += -X 132,231
+LINTFLAGS.gcc_personality_v0.c += -X 132,193,231
 LINTFLAGS.int_util.c += -X 231
 LINTFLAGS.lshrti3.c += -X 351
 LINTFLAGS.moddi3.c += -X 117 # vax
@@ -420,9 +421,9 @@ LINTFLAGS.parityti2.c += -X 351
 LINTFLAGS.popcountdi2.c += -X 351
 LINTFLAGS.popcountsi2.c += -X 351
 LINTFLAGS.popcountti2.c += -X 122,132,351
-LINTFLAGS.powidf2.c += -X 161,351
-LINTFLAGS.powisf2.c += -X 161,351
-LINTFLAGS.powixf2.c += -X 161,351
+LINTFLAGS.powidf2.c += -X 351
+LINTFLAGS.powisf2.c += -X 351
+LINTFLAGS.powixf2.c += -X 351
 LINTFLAGS.subvdi3.c += -X 351
 LINTFLAGS.subvsi3.c += -X 351
 LINTFLAGS.subvti3.c += -X 351
@@ -434,5 +435,6 @@ LINTFLAGS.udivsi3.c += -X 117
 LINTFLAGS.udivti3.c += -X 351
 LINTFLAGS.umodsi3.c += -X 351
 LINTFLAGS.umodti3.c += -X 351
+LINTFLAGS.gcc_personality_v0.c += ${${ACTIVE_CC} == "clang":? -X 298:}
 
 .include "${COMPILER_RT_DIR}/abi.mk"

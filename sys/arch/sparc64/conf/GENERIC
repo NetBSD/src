@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.240 2024/04/02 22:56:51 charlotte Exp $
+# $NetBSD: GENERIC,v 1.240.2.1 2025/08/02 05:56:09 perseant Exp $
 #
 # GENERIC machine description file
 #
@@ -22,14 +22,14 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.240 $"
+#ident		"GENERIC-$Revision: 1.240.2.1 $"
 
 maxusers	64
 
 ## System kernel configuration.  See options(4) for more detail.
 
 
-# Options for variants of the Sun SPARC architecure.
+# Options for variants of the Sun SPARC architecture.
 options 	SUN4U		# sun4u - UltraSPARC
 options 	SUN4V		# sun4v - UltraSPARC T1/T2+/T3/T4/T5
 #options 	BLINK		# blink the system LED
@@ -406,12 +406,10 @@ ld*	at mlx? unit ?
 
 # Virtio devices
 virtio* at pci? dev ? function ?	# Virtio PCI device
-# the baloon driver can not work on machines with non-4k pages
-#viomb*	at virtio?			# Virtio memory balloon device
-ld*	at virtio?			# Virtio disk device
-vioif*	at virtio?			# Virtio network device
-viornd* at virtio?			# Virtio entropy device
-vioscsi* at virtio?			# Virtio SCSI device
+
+include "dev/virtio/virtio.config"
+no vio9p* 	at virtio?	# PAGE_SIZE != VIRTIO_PAGE_SIZE
+no viomb* 	at virtio?	# PAGE_SIZE != VIRTIO_PAGE_SIZE
 
 ## Floppy controller and drive found on SPARCstations.
 

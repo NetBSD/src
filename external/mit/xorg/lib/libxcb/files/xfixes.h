@@ -739,7 +739,15 @@ typedef struct xcb_xfixes_delete_pointer_barrier_request_t {
 
 typedef enum xcb_xfixes_client_disconnect_flags_t {
     XCB_XFIXES_CLIENT_DISCONNECT_FLAGS_DEFAULT = 0,
+/**< The default behavior for regular clients: the X11 server won't terminate as long
+as such clients are still connected, and should this client disconnect, the
+server will continue running so long as other clients (that have not set
+XFixesClientDisconnectFlagTerminate) are connected. */
+
     XCB_XFIXES_CLIENT_DISCONNECT_FLAGS_TERMINATE = 1
+/**< Indicates to the X11 server that it can ignore the client and terminate itself
+even though the client is still connected to the X11 server. */
+
 } xcb_xfixes_client_disconnect_flags_t;
 
 /** Opcode for xcb_xfixes_set_client_disconnect_mode. */
@@ -2046,11 +2054,13 @@ xcb_xfixes_delete_pointer_barrier (xcb_connection_t     *c,
                                    xcb_xfixes_barrier_t  barrier);
 
 /**
+ * @brief Sets the disconnect mode for the client.
  *
  * @param c The connection
+ * @param disconnect_mode The new disconnect mode.
  * @return A cookie
  *
- * Delivers a request to the X server.
+ * No description yet
  *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
@@ -2061,11 +2071,13 @@ xcb_xfixes_set_client_disconnect_mode_checked (xcb_connection_t *c,
                                                uint32_t          disconnect_mode);
 
 /**
+ * @brief Sets the disconnect mode for the client.
  *
  * @param c The connection
+ * @param disconnect_mode The new disconnect mode.
  * @return A cookie
  *
- * Delivers a request to the X server.
+ * No description yet
  *
  */
 xcb_void_cookie_t

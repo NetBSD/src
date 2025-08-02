@@ -1,4 +1,4 @@
-.\" $NetBSD: ksyms.4,v 1.7 2010/03/22 18:58:31 joerg Exp $
+.\" $NetBSD: ksyms.4,v 1.7.60.1 2025/08/02 05:55:12 perseant Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 12, 2008
+.Dd July 27, 2024
 .Dt KSYMS 4
 .Os
 .Sh NAME
@@ -60,46 +60,46 @@ command codes below are defined in
 The (third) argument to the
 .Xr ioctl 2
 should be a pointer to the type indicated.
-.Bl -tag -width indent -offset indent
-.It Dv KIOCGSIZE (int)
+.Bl -tag -width Dv -offset indent
+.It Dv KIOCGSIZE Pq Vt int
 Returns the total size of the current symbol table.
 This should be used when allocating a buffer to read in the
 whole symbol table to memory.
-.It Dv KIOCGVALUE (struct ksyms_gsymbol)
+.It Dv KIOCGVALUE Pq Vt struct ksyms_gvalue
 Returns the value for the given symbol name in a symtab-independent
 fashion.
 .Bd -literal -offset indent
-struct ksyms_gsymbol {
-	const char *kg_name;
-	unsigned long *kg_value;
+struct ksyms_gvalue {
+        const char *kv_name;
+        uint64_t kv_value;
 };
 .Ed
 .Pp
-The struct element
-.Va kg_name
-should be set to the name of the requested value, and the address that
-.Va kg_value
-points to will receive the symbol value.
-.It Dv KIOCGSYMBOL (struct ksyms_gsymbol)
+The struct member
+.Fa kv_name
+should be set to the name of the requested value, and upon return
+.Fa kv_value
+contains the symbol value.
+.It Dv KIOCGSYMBOL Pq Vt struct ksyms_gsymbol
 Returns the complete symbol for the given symbol name.
 .Bd -literal -offset indent
 struct ksyms_gsymbol {
-	const char *kg_name;
+        const char *kg_name;
         void *kg_sym;
 };
 .Ed
 .Pp
-The struct element
-.Va kg_name
+The struct member
+.Fa kg_name
 should be set to the name of the requested symbol, and the found
 symbol will be written to the
-.Va kg_sym
+.Fa kg_sym
 address.
 It is the callers responsibility to ensure that enough space
 for the symbol is allocated.
 .El
 .Sh FILES
-.Bl -tag -width /dev/ksymsX
+.Bl -tag -width Pa
 .It Pa /dev/ksyms
 .El
 .Sh SEE ALSO

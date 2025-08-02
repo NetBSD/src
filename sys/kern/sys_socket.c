@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.81 2023/04/22 13:53:02 riastradh Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.81.6.1 2025/08/02 05:57:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,21 +61,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.81 2023/04/22 13:53:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.81.6.1 2025/08/02 05:57:42 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/file.h>
-#include <sys/mbuf.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/ioctl.h>
-#include <sys/stat.h>
+#include <sys/kauth.h>
+#include <sys/mbuf.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
-#include <sys/kauth.h>
+#include <sys/protosw.h>
+#include <sys/sdt.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/stat.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -138,7 +140,7 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 		solock(so);
 		if (*(int *)data)
 			so->so_state |= SS_NBIO;
-		else 
+		else
 			so->so_state &= ~SS_NBIO;
 		sounlock(so);
 		break;
@@ -278,7 +280,7 @@ soo_fpathconf(struct file *fp, int name, register_t *retval)
 		*retval = PIPE_BUF;
 		return 0;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 }
 
@@ -286,5 +288,5 @@ static int
 soo_posix_fadvise(struct file *fp, off_t offset, off_t len, int advice)
 {
 
-	return ESPIPE;
+	return SET_ERROR(ESPIPE);
 }

@@ -1,3 +1,5 @@
+/*	$NetBSD: armperiph.c,v 1.19.12.1 2025/08/02 05:55:27 perseant Exp $	*/
+
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.19 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.19.12.1 2025/08/02 05:55:27 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

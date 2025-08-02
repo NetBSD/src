@@ -1,4 +1,4 @@
-/*	$NetBSD: zonemd_63.h,v 1.6 2024/02/21 22:52:14 christos Exp $	*/
+/*	$NetBSD: zonemd_63.h,v 1.6.2.1 2025/08/02 05:53:48 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

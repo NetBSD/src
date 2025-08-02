@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,13 +7,13 @@
 </head> <body> <pre>
 TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        trivial-rewrite - Postfix address rewriting and resolving daemon
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>trivial-rewrite</b> [generic Postfix daemon options]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a>  daemon processes three types of client service
        requests:
 
@@ -56,7 +56,7 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
        <b>verify</b> <i>sender address</i>
               Resolve the address for address verification purposes.
 
-<b>SERVER PROCESS MANAGEMENT</b>
+<b><a name="server_process_management">SERVER PROCESS MANAGEMENT</a></b>
        The <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a> servers run under control by  the  Postfix  <a href="master.8.html">mas-</a>
        <a href="master.8.html">ter(8)</a>  server.   Each  server can handle multiple simultaneous connec-
        tions.  When all servers are busy while a client connects,  the  master
@@ -65,18 +65,18 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
        after  serving  at least <b>$<a href="postconf.5.html#max_use">max_use</a></b> clients of after <b>$<a href="postconf.5.html#max_idle">max_idle</a></b> seconds of
        idle time.
 
-<b>STANDARDS</b>
+<b><a name="standards">STANDARDS</a></b>
        None. The command does not interact with the outside world.
 
-<b>SECURITY</b>
+<b><a name="security">SECURITY</a></b>
        The <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a> daemon is not security sensitive.   By  default,
        this  daemon  does  not talk to remote or local users.  It can run at a
        fixed low privilege in a chrooted environment.
 
-<b>DIAGNOSTICS</b>
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        On busy mail systems a long time  may  pass  before  a  <a href="postconf.5.html"><b>main.cf</b></a>  change
        affecting  <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a>  is  picked  up. Use the command "<b>postfix</b>
        <b>reload</b>" to speed up a change.
@@ -84,7 +84,7 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
        The text below provides only a parameter summary. See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for
        more details including examples.
 
-<b>COMPATIBILITY CONTROLS</b>
+<b><a name="compatibility_controls">COMPATIBILITY CONTROLS</a></b>
        <b><a href="postconf.5.html#resolve_dequoted_address">resolve_dequoted_address</a> (yes)</b>
               Resolve  a  recipient  address  safely  instead of correctly, by
               looking inside quotes.
@@ -108,7 +108,7 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
               Allow  a  sender  or  recipient address to have `-' as the first
               character.
 
-<b>ADDRESS REWRITING CONTROLS</b>
+<b><a name="address_rewriting_controls">ADDRESS REWRITING CONTROLS</a></b>
        <b><a href="postconf.5.html#myorigin">myorigin</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
               The domain name that locally-posted mail appears to  come  from,
               and that locally posted mail is delivered to.
@@ -134,11 +134,13 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
        Available in Postfix 2.2 and later:
 
        <b><a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> (empty)</b>
-              Don't  rewrite  message  headers from remote clients at all when
-              this parameter is empty; otherwise, rewrite message headers  and
-              append the specified domain name to incomplete addresses.
+              Rewrite  or  add  message headers in mail from remote clients if
+              the <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> parameter value  is  non-empty,
+              updating  incomplete  addresses with the domain specified in the
+              <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> parameter, and adding missing head-
+              ers.
 
-<b>ROUTING CONTROLS</b>
+<b><a name="routing_controls">ROUTING CONTROLS</a></b>
        The  following is applicable to Postfix version 2.0 and later.  Earlier
        versions do not have support for:  <a href="postconf.5.html#virtual_transport">virtual_transport</a>,  <a href="postconf.5.html#relay_transport">relay_transport</a>,
        <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a>, <a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> or <a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>.
@@ -155,13 +157,14 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
 
        <b><a href="postconf.5.html#relay_transport">relay_transport</a> (relay)</b>
               The default mail delivery transport and next-hop destination for
-              remote delivery to domains listed with $<a href="postconf.5.html#relay_domains">relay_domains</a>.
+              the  relay  domain  address  class: recipient domains that match
+              $<a href="postconf.5.html#relay_domains">relay_domains</a>.
 
        <b><a href="postconf.5.html#default_transport">default_transport</a> (smtp)</b>
               The default mail delivery transport and next-hop destination for
-              destinations that do not match $<a href="postconf.5.html#mydestination">mydestination</a>, $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a>,
-              $<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>,     $<a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a>,    $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mail</a>-
-              <a href="postconf.5.html#virtual_mailbox_domains">box_domains</a>, or $<a href="postconf.5.html#relay_domains">relay_domains</a>.
+              the  default  domain  class: recipient domains that do not match
+              $<a href="postconf.5.html#mydestination">mydestination</a>,   $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a>,   $<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>,   $<a href="postconf.5.html#virtual_alias_domains">vir</a>-
+              <a href="postconf.5.html#virtual_alias_domains">tual_alias_domains</a>, $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>, or $<a href="postconf.5.html#relay_domains">relay_domains</a>.
 
        <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a> (see 'postconf -d' output)</b>
               A list of Postfix features where the pattern "example.com"  also
@@ -169,8 +172,8 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
               explicit ".example.com" pattern.
 
        <b><a href="postconf.5.html#relayhost">relayhost</a> (empty)</b>
-              The  next-hop  destination(s)  for  non-local  mail;   overrides
-              non-<a href="ADDRESS_CLASS_README.html#local_domain_class">local domains</a> in recipient addresses.
+              The next-hop destination(s) for non-local mail; takes precedence
+              over non-<a href="ADDRESS_CLASS_README.html#local_domain_class">local domains</a> in recipient addresses.
 
        <b><a href="postconf.5.html#transport_maps">transport_maps</a> (empty)</b>
               Optional  lookup  tables with mappings from recipient address to
@@ -198,7 +201,7 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
               A  sender-dependent  override  for  the global <a href="postconf.5.html#default_transport">default_transport</a>
               parameter setting.
 
-<b>ADDRESS VERIFICATION CONTROLS</b>
+<b><a name="address_verification_controls">ADDRESS VERIFICATION CONTROLS</a></b>
        Postfix version 2.1 introduces sender and recipient  address  verifica-
        tion.  This feature is implemented by sending probe email messages that
        are not actually delivered.  By default,  address  verification  probes
@@ -244,7 +247,7 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
               Overrides the <a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default_transport_maps</a>  parameter
               setting for address verification probes.
 
-<b>MISCELLANEOUS CONTROLS</b>
+<b><a name="miscellaneous_controls">MISCELLANEOUS CONTROLS</a></b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
               The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
               figuration files.
@@ -303,7 +306,7 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
        <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
               The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="transport.5.html">transport(5)</a>, transport table format
        <a href="relocated.5.html">relocated(5)</a>, format of the "user has moved" table
@@ -311,11 +314,11 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
        <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="ADDRESS_CLASS_README.html">ADDRESS_CLASS_README</a>, Postfix address classes howto
        <a href="ADDRESS_VERIFICATION_README.html">ADDRESS_VERIFICATION_README</a>, Postfix address verification
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

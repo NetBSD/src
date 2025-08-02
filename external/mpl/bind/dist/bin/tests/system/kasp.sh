@@ -34,6 +34,8 @@ SHA256="R16NojROxtxH/xbDl//ehDsHm5DjWTQ2YXV+hGC2iBY="
 VIEW1="YPfMoAk6h+3iN8MDRQC004iSNHY="
 VIEW2="4xILSZQnuO1UKubXHkYUsvBRPu8="
 VIEW3="C1Azf+gGPMmxrUg/WQINP6eV9Y0="
+MINDEPTH=1
+MAXDEPTH=3
 
 ###############################################################################
 # Key properties                                                              #
@@ -67,6 +69,8 @@ VIEW3="C1Azf+gGPMmxrUg/WQINP6eV9Y0="
 # PRIVKEY_STAT
 # PUBKEY_STAT
 # STATE_STAT
+# FLAGS
+# KEYDIR
 
 key_key() {
   echo "${1}__${2}"
@@ -88,6 +92,7 @@ key_stat() {
 key_save() {
   # Save key id.
   key_set "$1" ID "$KEY_ID"
+  key_set "$1" RID "$KEY_RID"
   # Save base filename.
   key_set "$1" BASEFILE "$BASE_FILE"
   # Save creation date.
@@ -103,6 +108,7 @@ key_save() {
 # This will update either the KEY1, KEY2, or KEY3 array.
 key_clear() {
   key_set "$1" "ID" 'no'
+  key_set "$1" "RID" 'no'
   key_set "$1" "IDPAD" 'no'
   key_set "$1" "EXPECT" 'no'
   key_set "$1" "ROLE" 'none'
@@ -132,6 +138,7 @@ key_clear() {
   key_set "$1" "PRIVKEY_STAT" '0'
   key_set "$1" "PUBKEY_STAT" '0'
   key_set "$1" "STATE_STAT" '0'
+  key_set "$1" "KEYDIR" 'none'
 }
 
 # Start clear.
@@ -161,13 +168,19 @@ _rndccmd() {
   "$RNDC" -c ../_common/rndc.conf -p "$CONTROLPORT" -s "$@"
 }
 
-# Print IDs of keys used for generating RRSIG records for RRsets of type $1
-# found in dig output file $2.
+# Print IDs of keys used for generating RRSIG records for RRsets of type $1,
+# matching algorithm number $2, found in dig output file $3.
+# If $2 is equal to 0, any algorithm matches.
 get_keys_which_signed() {
   _qtype=$1
-  _output=$2
+  _alg=$2
+  _output=$3
   # The key ID is the 11th column of the RRSIG record line.
-  awk -v qt="$_qtype" '$4 == "RRSIG" && $5 == qt {print $11}' <"$_output"
+  if [ "$_alg" = "0" ]; then
+    awk -v qt="$_qtype" '$4 == "RRSIG" && $5 == qt {print $11}' <"$_output"
+  else
+    awk -v alg="$_alg" -v qt="$_qtype" '$4 == "RRSIG" && $5 == qt && $6 == alg {print $11}' <"$_output"
+  fi
 }
 
 # Get the key ids from key files for zone $2 in directory $1.
@@ -176,7 +189,7 @@ get_keyids() {
   _zone=$2
   _regex="K${_zone}.+*+*.key"
 
-  find "${_dir}" -mindepth 1 -maxdepth 1 -name "${_regex}" | sed "s,$_dir/K${_zone}.+\([0-9]\{3\}\)+\([0-9]\{5\}\).key,\2,"
+  find "${_dir}" -mindepth $MINDEPTH -maxdepth $MAXDEPTH -name "${_regex}" | sed "s,.*/K${_zone}.+\([0-9]\{3\}\)+\([0-9]\{5\}\).key,\2,"
 }
 
 # By default log errors and don't quit immediately.
@@ -208,12 +221,16 @@ set_dynamic() {
   DYNAMIC="yes"
 }
 
-# Set policy settings (name $1, number of keys $2, dnskey ttl $3) for testing keys.
+# Set policy settings (name $1, number of keys $2, dnskey ttl $3).
 set_policy() {
   POLICY=$1
   NUM_KEYS=$2
   DNSKEY_TTL=$3
+  KEYFILE_TTL=$3
   CDS_DELETE="no"
+  CDS_SHA256="yes"
+  CDS_SHA384="no"
+  CDNSKEY="yes"
 }
 # By default policies are considered to be secure.
 # If a zone sets its policy to "insecure", call 'set_cdsdelete' to tell the
@@ -309,6 +326,13 @@ set_keystate() {
   key_set "$1" "$2" "$3"
 }
 
+# Set key directory.
+# $1: Key to update (KEY1, KEY2, ...)
+# $2: Directory.
+set_keydir() {
+  key_set "$1" "KEYDIR" "$2"
+}
+
 # Check the key $1 with id $2.
 # This requires environment variables to be set.
 #
@@ -320,7 +344,10 @@ set_keystate() {
 # KEY_ID=$(echo $1 | sed 's/^0\{0,4\}//')
 # KEY_CREATED (from the KEY_FILE)
 check_key() {
-  _dir="$DIR"
+  _dir=$(key_get "$1" KEYDIR)
+  if [ "$_dir" = "none" ]; then
+    _dir="$DIR"
+  fi
   _zone="$ZONE"
   _role=$(key_get "$1" ROLE)
   _key_idpad="$2"
@@ -329,7 +356,7 @@ check_key() {
   _alg_numpad=$(printf "%03d" "$_alg_num")
   _alg_string=$(key_get "$1" ALG_STR)
   _length=$(key_get "$1" "ALG_LEN")
-  _dnskey_ttl="$DNSKEY_TTL"
+  _dnskey_ttl="$KEYFILE_TTL"
   _lifetime=$(key_get "$1" LIFETIME)
   _legacy=$(key_get "$1" LEGACY)
   _private=$(key_get "$1" PRIVATE)
@@ -381,6 +408,9 @@ check_key() {
   fi
   [ "$ret" -eq 0 ] || _log_error "${BASE_FILE} files missing"
   [ "$ret" -eq 0 ] || return 0
+
+  # Retrieve revoked key id
+  KEY_RID=$($REVOKE -R ${BASE_FILE})
 
   # Retrieve creation date.
   grep "; Created:" "$KEY_FILE" >"${ZONE}.${KEY_ID}.${_alg_num}.created" || _log_error "mismatch created comment in $KEY_FILE"
@@ -461,7 +491,10 @@ check_key() {
 
 # Check the key timing metadata for key $1.
 check_timingmetadata() {
-  _dir="$DIR"
+  _dir=$(key_get "$1" KEYDIR)
+  if [ "$_dir" = "none" ]; then
+    _dir="$DIR"
+  fi
   _zone="$ZONE"
   _key_idpad=$(key_get "$1" ID)
   _key_id=$(echo "$_key_idpad" | sed 's/^0\{0,4\}//')
@@ -640,11 +673,11 @@ check_keytimes() {
 # STATE_FILE="${BASE_FILE}.state"
 # KEY_ID=$(echo $1 | sed 's/^0\{0,4\}//')
 key_unused() {
-  _dir=$DIR
-  _zone=$ZONE
-  _key_idpad=$1
+  _dir="$DIR"
+  _zone="$ZONE"
+  _key_idpad="$1"
   _key_id=$(echo "$_key_idpad" | sed 's/^0\{0,4\}//')
-  _alg_num=$2
+  _alg_num="$2"
   _alg_numpad=$(printf "%03d" "$_alg_num")
 
   BASE_FILE="${_dir}/K${_zone}.+${_alg_numpad}+${_key_idpad}"
@@ -732,10 +765,12 @@ _check_keys() {
   _ret=0
 
   # Clear key ids.
-  key_set KEY1 ID "no"
-  key_set KEY2 ID "no"
-  key_set KEY3 ID "no"
-  key_set KEY4 ID "no"
+  if [ "$1" != "keep" ]; then
+    key_set KEY1 ID "no"
+    key_set KEY2 ID "no"
+    key_set KEY3 ID "no"
+    key_set KEY4 ID "no"
+  fi
 
   # Check key files.
   _ids=$(get_keyids "$DIR" "$ZONE")
@@ -784,6 +819,11 @@ _check_keys() {
 #
 # It is expected that KEY1, KEY2, KEY3, and KEY4 arrays are set correctly.
 # Found key identifiers are stored in the right key array.
+# Keys are found if they are stored inside $DIR or in a subdirectory up to
+# three levels deeper.
+#
+# If $1 is set, we keep keys that are already found and don't look for them
+# again.
 check_keys() {
   n=$((n + 1))
   echo_i "check keys are created for zone ${ZONE} ($n)"
@@ -800,7 +840,7 @@ check_keys() {
   # Temporarily don't log errors because we are searching multiple files.
   disable_logerror
 
-  retry_quiet 3 _check_keys || ret=1
+  retry_quiet 3 _check_keys $1 || ret=1
   test "$ret" -eq 0 || echo_i "failed"
   status=$((status + ret))
 
@@ -809,19 +849,19 @@ check_keys() {
 
   ret=0
   if [ "$(key_get KEY1 EXPECT)" = "yes" ]; then
-    echo_i "KEY1 ID $(key_get KEY1 ID)"
+    echo_i "KEY1 ID $(key_get KEY1 ID) ALG $(key_get KEY1 ALG_STR)"
     test "no" = "$(key_get KEY1 ID)" && _log_error "No KEY1 found for zone ${ZONE}"
   fi
   if [ "$(key_get KEY2 EXPECT)" = "yes" ]; then
-    echo_i "KEY2 ID $(key_get KEY2 ID)"
+    echo_i "KEY2 ID $(key_get KEY2 ID) ALG $(key_get KEY2 ALG_STR)"
     test "no" = "$(key_get KEY2 ID)" && _log_error "No KEY2 found for zone ${ZONE}"
   fi
   if [ "$(key_get KEY3 EXPECT)" = "yes" ]; then
-    echo_i "KEY3 ID $(key_get KEY3 ID)"
+    echo_i "KEY3 ID $(key_get KEY3 ID) ALG $(key_get KEY3 ALG_STR)"
     test "no" = "$(key_get KEY3 ID)" && _log_error "No KEY3 found for zone ${ZONE}"
   fi
   if [ "$(key_get KEY4 EXPECT)" = "yes" ]; then
-    echo_i "KEY4 ID $(key_get KEY4 ID)"
+    echo_i "KEY4 ID $(key_get KEY4 ID) ALG $(key_get KEY4 ALG_STR)"
     test "no" = "$(key_get KEY4 ID)" && _log_error "No KEY4 found for zone ${ZONE}"
   fi
   test "$ret" -eq 0 || echo_i "failed"
@@ -907,34 +947,34 @@ _check_signatures() {
   fi
 
   if [ "$(key_get KEY1 "$_expect_type")" = "yes" ] && [ "$(key_get KEY1 "$_role")" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY1 ID)$" >/dev/null || return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY1 ALG_NUM)" "$_file" | grep "^$(key_get KEY1 ID)$" >/dev/null || return 1
     numsigs=$((numsigs + 1))
   elif [ "$(key_get KEY1 EXPECT)" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY1 ID)$" >/dev/null && return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY1 ALG_NUM)" "$_file" | grep "^$(key_get KEY1 ID)$" >/dev/null && return 1
   fi
 
   if [ "$(key_get KEY2 "$_expect_type")" = "yes" ] && [ "$(key_get KEY2 "$_role")" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY2 ID)$" >/dev/null || return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY2 ALG_NUM)" "$_file" | grep "^$(key_get KEY2 ID)$" >/dev/null || return 1
     numsigs=$((numsigs + 1))
   elif [ "$(key_get KEY2 EXPECT)" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY2 ID)$" >/dev/null && return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY2 ALG_NUM)" "$_file" | grep "^$(key_get KEY2 ID)$" >/dev/null && return 1
   fi
 
   if [ "$(key_get KEY3 "$_expect_type")" = "yes" ] && [ "$(key_get KEY3 "$_role")" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY3 ID)$" >/dev/null || return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY3 ALG_NUM)" "$_file" | grep "^$(key_get KEY3 ID)$" >/dev/null || return 1
     numsigs=$((numsigs + 1))
   elif [ "$(key_get KEY3 EXPECT)" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY3 ID)$" >/dev/null && return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY3 ALG_NUM)" "$_file" | grep "^$(key_get KEY3 ID)$" >/dev/null && return 1
   fi
 
   if [ "$(key_get KEY4 "$_expect_type")" = "yes" ] && [ "$(key_get KEY4 "$_role")" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY4 ID)$" >/dev/null || return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY4 ALG_NUM)" "$_file" | grep "^$(key_get KEY4 ID)$" >/dev/null || return 1
     numsigs=$((numsigs + 1))
   elif [ "$(key_get KEY4 EXPECT)" = "yes" ]; then
-    get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY4 ID)$" >/dev/null && return 1
+    get_keys_which_signed "$_qtype" "$(key_get KEY4 ALG_NUM)" "$_file" | grep "^$(key_get KEY4 ID)$" >/dev/null && return 1
   fi
 
-  lines=$(get_keys_which_signed "${_qtype}" "${_file}" | wc -l)
+  lines=$(get_keys_which_signed "${_qtype}" "0" "${_file}" | wc -l)
   test "$lines" -eq "$numsigs" || echo_i "bad number of signatures for $_qtype (got $lines, expected $numsigs)"
   test "$lines" -eq "$numsigs" || return 1
 
@@ -944,18 +984,18 @@ check_signatures() {
   retry_quiet 3 _check_signatures $1 $2 $3 || _log_error "RRset $1 in zone $ZONE incorrectly signed"
 }
 
-response_has_cds_for_key() (
+response_has_cds_for_key() {
   awk -v zone="${ZONE%%.}." \
     -v ttl="${DNSKEY_TTL}" \
     -v qtype="CDS" \
-    -v keyid="$(key_get "${1}" ID)" \
-    -v keyalg="$(key_get "${1}" ALG_NUM)" \
-    -v hashalg="2" \
+    -v keyid="$(key_get "${2}" ID)" \
+    -v keyalg="$(key_get "${2}" ALG_NUM)" \
+    -v hashalg="$1" \
     'BEGIN { ret=1; }
 	     $1 == zone && $2 == ttl && $4 == qtype && $5 == keyid && $6 == keyalg && $7 == hashalg { ret=0; exit; }
 	     END { exit ret; }' \
-    "$2"
-)
+    "$3"
+}
 
 response_has_cdnskey_for_key() (
 
@@ -969,6 +1009,39 @@ response_has_cdnskey_for_key() (
 	     END { exit ret; }' \
     "$2"
 )
+
+check_cds_digests() {
+  if [ "$CDS_SHA256" = "yes" ]; then
+    response_has_cds_for_key 2 $1 "${2}.cds" || _log_error "missing CDS 2 record in response for key $(key_get $1 ID)"
+  else
+    response_has_cds_for_key 2 $1 "${2}.cds" && _log_error "unexpected CDS 2 record in response for key $(key_get $1 ID)"
+  fi
+
+  if [ "$CDS_SHA384" = "yes" ]; then
+    response_has_cds_for_key 4 $1 "${2}.cds" || _log_error "missing CDS 4 record in response for key $(key_get $1 ID)"
+  else
+    response_has_cds_for_key 4 $1 "${2}.cds" && _log_error "unexpected CDS 4 record in response for key $(key_get $1 ID)"
+  fi
+
+  if [ "$CDNSKEY" = "yes" ]; then
+    response_has_cdnskey_for_key $1 "${2}.cdnskey" || _log_error "missing CDNSKEY record in response for key $(key_get $1 ID)"
+  else
+    response_has_cdnskey_for_key $1 "${2}.cdnskey" && _log_error "unexpected CDNSKEY record in response for key $(key_get $1 ID)"
+  fi
+
+  return 0
+}
+
+check_cds_digests_invert() {
+  response_has_cds_for_key 2 $1 "${2}.cds" && _log_error "unexpected CDS 2 record in response for key $(key_get $1 ID)"
+  response_has_cds_for_key 4 $1 "${2}.cds" && _log_error "unexpected CDS 4 record in response for key $(key_get $1 ID)"
+  # The key should not have an associated CDNSKEY, but there may be
+  # one for another key.  Since the CDNSKEY has no field for key
+  # id, it is hard to check what key the CDNSKEY may belong to
+  # so let's skip this check for now.
+
+  return 0
+}
 
 # Test CDS and CDNSKEY publication.
 check_cds() {
@@ -995,55 +1068,38 @@ check_cds() {
   fi
 
   if [ "$(key_get KEY1 STATE_DS)" = "rumoured" ] || [ "$(key_get KEY1 STATE_DS)" = "omnipresent" ]; then
-    response_has_cds_for_key KEY1 "dig.out.$DIR.test$n.cds" || _log_error "missing CDS record in response for key $(key_get KEY1 ID)"
-    response_has_cdnskey_for_key KEY1 "dig.out.$DIR.test$n.cdnskey" || _log_error "missing CDNSKEY record in response for key $(key_get KEY1 ID)"
+    check_cds_digests KEY1 "dig.out.$DIR.test$n"
     _checksig=1
   elif [ "$(key_get KEY1 EXPECT)" = "yes" ]; then
-    response_has_cds_for_key KEY1 "dig.out.$DIR.test$n.cds" && _log_error "unexpected CDS record in response for key $(key_get KEY1 ID)"
-    # KEY1 should not have an associated CDNSKEY, but there may be
-    # one for another key.  Since the CDNSKEY has no field for key
-    # id, it is hard to check what key the CDNSKEY may belong to
-    # so let's skip this check for now.
+    check_cds_digests_invert KEY1 "dig.out.$DIR.test$n"
   fi
 
   if [ "$(key_get KEY2 STATE_DS)" = "rumoured" ] || [ "$(key_get KEY2 STATE_DS)" = "omnipresent" ]; then
-    response_has_cds_for_key KEY2 "dig.out.$DIR.test$n.cds" || _log_error "missing CDS record in response for key $(key_get KEY2 ID)"
-    response_has_cdnskey_for_key KEY2 "dig.out.$DIR.test$n.cdnskey" || _log_error "missing CDNSKEY record in response for key $(key_get KEY2 ID)"
+    check_cds_digests KEY2 "dig.out.$DIR.test$n"
     _checksig=1
   elif [ "$(key_get KEY2 EXPECT)" = "yes" ]; then
-    response_has_cds_for_key KEY2 "dig.out.$DIR.test$n.cds" && _log_error "unexpected CDS record in response for key $(key_get KEY2 ID)"
-    # KEY2 should not have an associated CDNSKEY, but there may be
-    # one for another key.  Since the CDNSKEY has no field for key
-    # id, it is hard to check what key the CDNSKEY may belong to
-    # so let's skip this check for now.
+    check_cds_digests_invert KEY2 "dig.out.$DIR.test$n"
   fi
 
   if [ "$(key_get KEY3 STATE_DS)" = "rumoured" ] || [ "$(key_get KEY3 STATE_DS)" = "omnipresent" ]; then
-    response_has_cds_for_key KEY3 "dig.out.$DIR.test$n.cds" || _log_error "missing CDS record in response for key $(key_get KEY3 ID)"
-    response_has_cdnskey_for_key KEY3 "dig.out.$DIR.test$n.cdnskey" || _log_error "missing CDNSKEY record in response for key $(key_get KEY3 ID)"
+    check_cds_digests KEY3 "dig.out.$DIR.test$n"
     _checksig=1
   elif [ "$(key_get KEY3 EXPECT)" = "yes" ]; then
-    response_has_cds_for_key KEY3 "dig.out.$DIR.test$n.cds" && _log_error "unexpected CDS record in response for key $(key_get KEY3 ID)"
-    # KEY3 should not have an associated CDNSKEY, but there may be
-    # one for another key.  Since the CDNSKEY has no field for key
-    # id, it is hard to check what key the CDNSKEY may belong to
-    # so let's skip this check for now.
+    check_cds_digests_invert KEY3 "dig.out.$DIR.test$n"
   fi
 
   if [ "$(key_get KEY4 STATE_DS)" = "rumoured" ] || [ "$(key_get KEY4 STATE_DS)" = "omnipresent" ]; then
-    response_has_cds_for_key KEY4 "dig.out.$DIR.test$n.cds" || _log_error "missing CDS record in response for key $(key_get KEY4 ID)"
-    response_has_cdnskey_for_key KEY4 "dig.out.$DIR.test$n.cdnskey" || _log_error "missing CDNSKEY record in response for key $(key_get KEY4 ID)"
+    check_cds_digests KEY4 "dig.out.$DIR.test$n"
     _checksig=1
   elif [ "$(key_get KEY4 EXPECT)" = "yes" ]; then
-    response_has_cds_for_key KEY4 "dig.out.$DIR.test$n.cds" && _log_error "unexpected CDS record in response for key $(key_get KEY4 ID)"
-    # KEY4 should not have an associated CDNSKEY, but there may be
-    # one for another key.  Since the CDNSKEY has no field for key
-    # id, it is hard to check what key the CDNSKEY may belong to
-    # so let's skip this check for now.
+    check_cds_digests_invert KEY4 "dig.out.$DIR.test$n"
   fi
 
   test "$_checksig" -eq 0 || check_signatures "CDS" "dig.out.$DIR.test$n.cds" "KSK"
-  test "$_checksig" -eq 0 || check_signatures "CDNSKEY" "dig.out.$DIR.test$n.cdnskey" "KSK"
+
+  if [ "$CDNSKEY" = "yes" ]; then
+    test "$_checksig" -eq 0 || check_signatures "CDNSKEY" "dig.out.$DIR.test$n.cdnskey" "KSK"
+  fi
 
   test "$ret" -eq 0 || echo_i "failed"
   status=$((status + ret))
@@ -1055,7 +1111,7 @@ _find_dnskey() {
   _flags="$(key_get $1 FLAGS)"
   _key_file="$(key_get $1 BASEFILE).key"
 
-  awk '$1 == "'"$_owner"'" && $2 == "'"$DNSKEY_TTL"'" && $3 == "IN" && $4 == "DNSKEY" && $5 == "'"$_flags"'" && $6 == "3" && $7 == "'"$_alg"'" { print $8 }' <"$_key_file"
+  awk '$1 == "'"$_owner"'" && $2 == "'"$KEYFILE_TTL"'" && $3 == "IN" && $4 == "DNSKEY" && $5 == "'"$_flags"'" && $6 == "3" && $7 == "'"$_alg"'" { print $8 }' <"$_key_file"
 }
 
 # Test DNSKEY query.
@@ -1157,7 +1213,7 @@ check_subdomain() {
   _dig_with_opts "a.$ZONE" "@${SERVER}" $_qtype >"dig.out.$DIR.test$n" || _log_error "dig a.${ZONE} ${_qtype} failed"
   grep "status: NOERROR" "dig.out.$DIR.test$n" >/dev/null || _log_error "mismatch status in DNS response"
   grep "a.${ZONE}\..*${DEFAULT_TTL}.*IN.*${_qtype}.*10\.0\.0\.1" "dig.out.$DIR.test$n" >/dev/null || _log_error "missing a.${ZONE} ${_qtype} record in response"
-  lines=$(get_keys_which_signed $_qtype "dig.out.$DIR.test$n" | wc -l)
+  lines=$(get_keys_which_signed $_qtype 0 "dig.out.$DIR.test$n" | wc -l)
   check_signatures $_qtype "dig.out.$DIR.test$n" "ZSK"
   test "$ret" -eq 0 || echo_i "failed"
   status=$((status + ret))
@@ -1176,8 +1232,15 @@ check_cdslog() {
   echo_i "check CDS/CDNSKEY publication is logged in ${_dir}/named.run for key ${_zone}/${_alg}/${_id} ($n)"
   ret=0
 
-  grep "CDS for key ${_zone}/${_alg}/${_id} is now published" "${_dir}/named.run" >/dev/null || ret=1
-  grep "CDNSKEY for key ${_zone}/${_alg}/${_id} is now published" "${_dir}/named.run" >/dev/null || ret=1
+  if [ "$CDS_SHA256" = "yes" ]; then
+    grep "CDS (SHA-256) for key ${_zone}/${_alg}/${_id} is now published" "${_dir}/named.run" >/dev/null || ret=1
+  fi
+  if [ "$CDS_SHA384" = "yes" ]; then
+    grep "CDS (SHA-384) for key ${_zone}/${_alg}/${_id} is now published" "${_dir}/named.run" >/dev/null || ret=1
+  fi
+  if [ "$CDNSKEY" = "yes" ]; then
+    grep "CDNSKEY for key ${_zone}/${_alg}/${_id} is now published" "${_dir}/named.run" >/dev/null || ret=1
+  fi
 
   test "$ret" -eq 0 || echo_i "failed"
   status=$((status + ret))

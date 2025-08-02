@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.12 2024/05/18 00:37:41 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.12.2.1 2025/08/02 05:56:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,22 +75,5 @@ typedef struct {
 #define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R0])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
-
-#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || \
-    defined(__LIBPTHREAD_SOURCE__)
-#include <sys/tls.h>
-#include <sys/syscall.h>
-
-__BEGIN_DECLS
-static __inline void *
-__lwp_getprivate_fast(void)
-{
-	register void *tcb __asm("r0");
-	__asm("chmk %0" :: "i"(SYS__lwp_getprivate) : "r0");
-	return tcb;
-}
-__END_DECLS
-
-#endif
 
 #endif	/* !_VAX_MCONTEXT_H_ */

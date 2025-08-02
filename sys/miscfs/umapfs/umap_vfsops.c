@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.104 2022/11/04 11:20:40 hannken Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.104.8.1 2025/08/02 05:57:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.104 2022/11/04 11:20:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.104.8.1 2025/08/02 05:57:45 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,13 +355,9 @@ umap_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		error = vfs_attach(&umapfs_vfsops);
-		if (error != 0)
-			break;
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&umapfs_vfsops);
-		if (error != 0)
-			break;
 		break;
 	default:
 		error = ENOTTY;

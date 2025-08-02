@@ -2,7 +2,7 @@
 #include <sys/malloc.h>
 #undef malloc
 #undef free
-#define	malloc(size)	kern_malloc(size, 0)
-#define	free(addr)	kern_free(addr)
+#define	malloc(size)	__malloc_should_not_be_used
+#define	free(addr)	__free_should_not_be_used
 
-#define abort()		panic("abort")
+#define abort()		panic("libsodium internal error")

@@ -17,6 +17,9 @@ set -e
 
 . ../conf.sh
 
+# Uncomment to regenerate credential caches after running krb5/setup.sh
+# KRB5_CONFIG=$(pwd)/krb/krb5.conf
+
 status=0
 n=1
 
@@ -168,6 +171,18 @@ grep "realm is too long" nsupdate.out${n} >/dev/null || ret=1
   status=1
 }
 n=$((n + 1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+echo_i "stop and start server to check key restoration ($n)"
+ret=0
+gss_keys=$(grep 'tsig key.*generated' ns1/named.run | wc -l)
+stop_server --use-rndc --port "${CONTROLPORT}" ns1
+start_server --noclean --restart --port "${PORT}" ns1
+restored_keys=$(grep 'tsig key.*restored from file' ns1/named.run | wc -l)
+[ "$gss_keys" -ne 0 ] || ret=1
+[ "$restored_keys" -ne 0 ] || ret=1
+[ "$gss_keys" -eq "$restored_keys" ] || ret=1
 if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

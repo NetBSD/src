@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.70 2024/05/12 09:34:25 rillig Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.70.2.1 2025/08/02 05:57:55 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,6 +33,8 @@
 
 #ifndef _SYS_KTRACE_H_
 #define _SYS_KTRACE_H_
+
+#include <sys/param.h>
 
 #include <sys/mutex.h>
 #include <sys/lwp.h>

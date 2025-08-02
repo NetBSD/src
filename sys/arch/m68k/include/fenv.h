@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.9 2023/09/26 12:46:30 tsutsui Exp $	*/
+/*	$NetBSD: fenv.h,v 1.9.6.1 2025/08/02 05:55:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,9 @@
 #ifndef _M68K_FENV_H_
 #define _M68K_FENV_H_
 
+#include <sys/featuretest.h>
 #include <sys/stdint.h>
+
 #include <m68k/float.h>
 #include <m68k/fpreg.h>
 

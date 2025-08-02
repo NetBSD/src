@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.h,v 1.5 2021/09/07 11:41:31 nia Exp $	*/
+/*	$NetBSD: bootcfg.h,v 1.5.10.1 2025/08/02 05:57:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,12 +29,15 @@
 #ifndef _BOOTCFG_H
 #define _BOOTCFG_H
 
-#define BOOTCFG_FILENAME "boot.cfg"
-#define BOOTCFG_MAXMENU	 20
-#define BOOTCFG_MAXBANNER 12
+#define BOOTCFG_FILENAME	"boot.cfg"
+#define BOOTCFG_MAXMENU		20
+#define BOOTCFG_MAXBANNER	12
 
-#define BOOTCFG_CMD_LOAD	  "load"
-#define BOOTCFG_CMD_USERCONF	  "userconf"
+#define BOOTCFG_CMD_DEV		"dev"
+#define BOOTCFG_CMD_FS		"fs"
+#define BOOTCFG_CMD_LOAD	"load"
+#define BOOTCFG_CMD_RNDSEED	"rndseed"
+#define BOOTCFG_CMD_USERCONF	"userconf"
 
 typedef void (*bootcfg_command)(const char *cmd, char *arg);
 

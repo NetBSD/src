@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_reg.h,v 1.22 2024/02/27 08:21:24 skrll Exp $ */
+/* $NetBSD: dwc_gmac_reg.h,v 1.22.2.1 2025/08/02 05:56:41 perseant Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 #define	AWIN_GMAC_MAC_FLOWCTRL		0x0018
 #define	AWIN_GMAC_MAC_VLANTAG		0x001c
 #define	AWIN_GMAC_MAC_VERSION		0x0020	/* not always implemented? */
+#define	 AWIN_GMAC_MAC_VERSION_USERVER_MASK	__BITS(15, 8)
+#define	 AWIN_GMAC_MAC_VERSION_SNPSVER_MASK	__BITS( 7, 0)
 #define	AWIN_GMAC_MAC_INTR		0x0038
 #define	AWIN_GMAC_MAC_INTMASK		0x003c
 #define	AWIN_GMAC_MAC_ADDR0HI		0x0040
@@ -208,8 +210,8 @@
 
 #define	GMAC_DMA_INT_MASK	__BITS(0,16)	  /* all possible intr bits */
 
-#define GMAC_DMA_FEAT_ENHANCED_DESC	__BIT(24)
-#define GMAC_DMA_FEAT_RMON		__BIT(11) /* MMC */
+#define	GMAC_DMA_FEAT_ENHANCED_DESC	__BIT(24)
+#define	GMAC_DMA_FEAT_RMON		__BIT(11) /* MMC */
 
 struct dwc_gmac_dev_dmadesc {
 	uint32_t ddesc_status0;		/* Status / TDES0 */
@@ -270,22 +272,22 @@ struct dwc_gmac_dev_dmadesc {
 
 /* Common to enhanced descriptors */
 
-#define DDESC_DES0_OWN			__BIT(31)
+#define	DDESC_DES0_OWN			__BIT(31)
 
-#define DDESC_DES1_SIZE2MASK		__BITS(28,16)
-#define DDESC_DES1_SIZE1MASK		__BITS(12,0)
+#define	DDESC_DES1_SIZE2MASK		__BITS(28,16)
+#define	DDESC_DES1_SIZE1MASK		__BITS(12,0)
 
 /* For enhanced TX descriptors */
 
-#define DDESC_TDES0_IC			__BIT(30)
-#define DDESC_TDES0_LS			__BIT(29)
-#define DDESC_TDES0_FS			__BIT(28)
-#define DDESC_TDES0_TCH			__BIT(20)
+#define	DDESC_TDES0_IC			__BIT(30)
+#define	DDESC_TDES0_LS			__BIT(29)
+#define	DDESC_TDES0_FS			__BIT(28)
+#define	DDESC_TDES0_TCH			__BIT(20)
 
 /* For enhanced RX descriptors */
 
-#define DDESC_RDES0_FL			__BITS(29,16)
-#define DDESC_RDES0_ES			__BIT(15)
-#define DDESC_RDES0_LE			__BIT(12)
+#define	DDESC_RDES0_FL			__BITS(29,16)
+#define	DDESC_RDES0_ES			__BIT(15)
+#define	DDESC_RDES0_LE			__BIT(12)
 
-#define DDESC_RDES1_RCH			__BIT(14)
+#define	DDESC_RDES1_RCH			__BIT(14)

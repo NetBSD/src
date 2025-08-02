@@ -1,4 +1,4 @@
-/* $NetBSD: t_sleep.c,v 1.11 2017/01/10 15:43:59 maya Exp $ */
+/* $NetBSD: t_sleep.c,v 1.11.26.1 2025/08/02 05:58:04 perseant Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -165,10 +165,14 @@ do_kevent(struct timespec *delay, struct timespec *remain)
 	    tmo/1000 < delay->tv_sec && tmo/500 > delay->tv_sec)
 		delay->tv_sec = MAXSLEEP;
 
+	fprintf(stderr, "kevent: set EVFILT_TIMER tmo=%d\n", tmo);
 	EV_SET(&ktimer, 1, EVFILT_TIMER, EV_ADD, 0, tmo, 0);
 
+	fprintf(stderr, "kevent: wait up to %lld.%09ld sec\n",
+	    (long long)delay->tv_sec, (long)delay->tv_nsec);
 	rtc = kevent(kq, &ktimer, 1, &kresult, 1, delay);
 	kerrno = errno;
+	fprintf(stderr, "kevent returned rtc=%d\n", rtc);
 
 	(void)close(kq);
 
@@ -179,19 +183,19 @@ do_kevent(struct timespec *delay, struct timespec *remain)
 	}
 
 	if (delay->tv_sec * BILLION + delay->tv_nsec > tmo * MILLION)
-		ATF_REQUIRE_MSG(rtc > 0,
+		ATF_CHECK_MSG(rtc > 0,
 		    "kevent: KEVNT_TIMEOUT did not cause EVFILT_TIMER event");
 
 	return 0;
 }
 
 ATF_TC(nanosleep);
-ATF_TC_HEAD(nanosleep, tc) 
+ATF_TC_HEAD(nanosleep, tc)
 {
- 
+
 	atf_tc_set_md_var(tc, "descr", "Test nanosleep(2) timing");
 	atf_tc_set_md_var(tc, "timeout", "65");
-} 
+}
 
 ATF_TC_BODY(nanosleep, tc)
 {
@@ -200,12 +204,12 @@ ATF_TC_BODY(nanosleep, tc)
 }
 
 ATF_TC(select);
-ATF_TC_HEAD(select, tc) 
+ATF_TC_HEAD(select, tc)
 {
- 
+
 	atf_tc_set_md_var(tc, "descr", "Test select(2) timing");
 	atf_tc_set_md_var(tc, "timeout", "65");
-} 
+}
 
 ATF_TC_BODY(select, tc)
 {
@@ -214,12 +218,12 @@ ATF_TC_BODY(select, tc)
 }
 
 ATF_TC(poll);
-ATF_TC_HEAD(poll, tc) 
+ATF_TC_HEAD(poll, tc)
 {
- 
+
 	atf_tc_set_md_var(tc, "descr", "Test poll(2) timing");
 	atf_tc_set_md_var(tc, "timeout", "65");
-} 
+}
 
 ATF_TC_BODY(poll, tc)
 {
@@ -228,12 +232,12 @@ ATF_TC_BODY(poll, tc)
 }
 
 ATF_TC(sleep);
-ATF_TC_HEAD(sleep, tc) 
+ATF_TC_HEAD(sleep, tc)
 {
- 
+
 	atf_tc_set_md_var(tc, "descr", "Test sleep(3) timing");
 	atf_tc_set_md_var(tc, "timeout", "65");
-} 
+}
 
 ATF_TC_BODY(sleep, tc)
 {
@@ -242,12 +246,12 @@ ATF_TC_BODY(sleep, tc)
 }
 
 ATF_TC(kevent);
-ATF_TC_HEAD(kevent, tc) 
+ATF_TC_HEAD(kevent, tc)
 {
- 
+
 	atf_tc_set_md_var(tc, "descr", "Test kevent(2) timing");
 	atf_tc_set_md_var(tc, "timeout", "65");
-} 
+}
 
 ATF_TC_BODY(kevent, tc)
 {
@@ -272,38 +276,65 @@ sleeptest(int (*test)(struct timespec *, struct timespec *),
 		round = 1000000000;
 		delta3 = round;
 	}
+	fprintf(stderr, "round=%"PRId64" delta3=%"PRId64"\n", round, delta3);
 
 	tslp.tv_sec = delta3 / 1000000000;
 	tslp.tv_nsec = delta3 % 1000000000;
+	fprintf(stderr, "initial tslp = %lld.%09ld sec\n",
+	    (long long)tslp.tv_sec, (long)tslp.tv_nsec);
 
 	while (tslp.tv_sec <= MAXSLEEP) {
+		fprintf(stderr, "\n");
+
 		/*
 		 * disturb sleep by signal on purpose
-		 */ 
-		if (tslp.tv_sec > ALARM && sig == 0)
+		 */
+		if (tslp.tv_sec > ALARM && sig == 0) {
+			fprintf(stderr, "request alarm after %d sec\n", ALARM);
 			alarm(ALARM);
+		}
+
+		fprintf(stderr, "sleep for %lld.%09ld sec\n",
+		    (long long)tslp.tv_sec, (long)tslp.tv_nsec);
 
 		clock_gettime(CLOCK_REALTIME, &tsa);
 		(*test)(&tslp, &tremain);
 		clock_gettime(CLOCK_REALTIME, &tsb);
 
+		fprintf(stderr, "slept from %lld.%09ld to %lld.%09ld\n",
+		    (long long)tsa.tv_sec, (long)tsa.tv_nsec,
+		    (long long)tsb.tv_sec, (long)tsb.tv_nsec);
+
 		if (sim_remain) {
 			timespecsub(&tsb, &tsa, &tremain);
+			fprintf(stderr, "slept %lld.%09ld sec\n",
+			    (long long)tremain.tv_sec, (long)tremain.tv_nsec);
 			timespecsub(&tslp, &tremain, &tremain);
 		}
+
+		fprintf(stderr, "remaining %lld.%09ld sec\n",
+		    (long long)tremain.tv_sec, (long)tremain.tv_nsec);
 
 		delta1 = (int64_t)tsb.tv_sec - (int64_t)tsa.tv_sec;
 		delta1 *= BILLION;
 		delta1 += (int64_t)tsb.tv_nsec - (int64_t)tsa.tv_nsec;
 
+		fprintf(stderr, "delta1=%"PRId64"\n", delta1);
+
 		delta2 = (int64_t)tremain.tv_sec * BILLION;
 		delta2 += (int64_t)tremain.tv_nsec;
+
+		fprintf(stderr, "delta2=%"PRId64"\n", delta2);
 
 		delta3 = (int64_t)tslp.tv_sec * BILLION;
 		delta3 += (int64_t)tslp.tv_nsec - delta1 - delta2;
 
+		fprintf(stderr, "delta3=%"PRId64"\n", delta3);
+
 		delta3 /= round;
 		delta3 *= round;
+
+		fprintf(stderr, "     ->%"PRId64"\n", delta3);
 
 		if (delta3 > FUZZ || delta3 < -FUZZ) {
 			if (!sim_remain)
@@ -316,25 +347,30 @@ sleeptest(int (*test)(struct timespec *, struct timespec *),
 		delta3 = (int64_t)tslp.tv_sec * 2 * BILLION;
 		delta3 += (int64_t)tslp.tv_nsec * 2;
 
+		fprintf(stderr, "delta3=%"PRId64"\n", delta3);
+
 		delta3 /= round;
 		delta3 *= round;
+		fprintf(stderr, "     ->%"PRId64"\n", delta3);
 		if (delta3 < FUZZ)
 			break;
 		tslp.tv_sec = delta3 / BILLION;
 		tslp.tv_nsec = delta3 % BILLION;
+		fprintf(stderr, "tslp = %lld.%ld sec\n",
+		    (long long)tslp.tv_sec, (long)tslp.tv_nsec);
 	}
 	ATF_REQUIRE_MSG(sig == 1, "Alarm did not fire!");
 
 	atf_tc_pass();
 }
 
-ATF_TP_ADD_TCS(tp) 
+ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, nanosleep);
 	ATF_TP_ADD_TC(tp, select);
-	ATF_TP_ADD_TC(tp, poll); 
+	ATF_TP_ADD_TC(tp, poll);
 	ATF_TP_ADD_TC(tp, sleep);
 	ATF_TP_ADD_TC(tp, kevent);
- 
+
 	return atf_no_error();
 }

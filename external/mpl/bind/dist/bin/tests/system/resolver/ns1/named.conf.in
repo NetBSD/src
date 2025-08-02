@@ -28,8 +28,12 @@ options {
 			      "gooddname.example.net"; };
 	allow-query {!10.53.0.8; any; };
 	max-zone-ttl unlimited;
+	resolver-query-timeout 5000; # 5 seconds
 	attach-cache "globalcache";
+	max-recursion-queries 100;
 };
+
+trust-anchors { };
 
 server 10.53.0.3 {
 	tcp-only yes;
@@ -63,6 +67,13 @@ view "class" chaos {
  * "globalcache"/CH cache.
  */
 view "default" {
+	zone "." {
+		type hint;
+		file "root.hint";
+	};
+};
+
+view "alternative" {
 	zone "." {
 		type hint;
 		file "root.hint";

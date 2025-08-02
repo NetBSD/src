@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -35,8 +35,33 @@ under construction).  CDB databases are maintained with the <a href="postmap.1.h
 or <a href="postalias.1.html">postalias(1)</a> command. The <a href="DATABASE_README.html">DATABASE_README</a> document has general
 information about Postfix databases.  </p>
 
+<p> You can use "<a href="CDB_README.html">cdb</a>:" tables wherever you can use read-only "hash",
+"btree" or "lmdb" tables with the following limitations: </p>
+
+<ul>
+
+<li> <p> CDB databases cannot be larger than 4GB on LP64 and ILP32
+systems, because the CDB library API uses unsigned integers for
+file offsets.  </p>
+
+<li> <p> The "<b>postmap -i</b>" (incremental record insertion) and
+"<b>postmap -d</b>" (incremental record deletion) command-line
+options are not available. For the same reason the "<a href="CDB_README.html">cdb</a>:" map type
+cannot be used to for persistent caches, such as the address
+verification cache for the <a href="verify.8.html">verify(8)</a> service, the TLS session cache
+for the <a href="tlsmgr.8.html">tlsmgr(8)</a> service, or the dynamic allowlist for <a href="postscreen.8.html">postscreen(8)</a>.
+</p>
+
+<li> <p> The "sequence" operation ("<b>postmap -s</b>" or "<b>postalias
+-s</b>") is available only wen Postfix is built with tinycdb by
+Michael Tokarev, not with the original cdb library by Daniel Bernstein.
+</p>
+
+</ul>
+
 <p> CDB support is available with Postfix 2.2 and later releases.
-This document describes how to build Postfix with CDB support. </p>
+The remainder of this document describes how to build Postfix with
+CDB support. </p>
 
 <h2>Building Postfix with CDB support</h2>
 
@@ -50,10 +75,10 @@ package.  </p>
 <ul>
 
 <li> <p> The original cdb library from Daniel Bernstein, available
-from <a href="http://cr.yp.to/cdb.html">http://cr.yp.to/cdb.html</a>, and </p>
+from <a href="https://cr.yp.to/cdb.html">https://cr.yp.to/cdb.html</a>, and </p>
 
 <li> <p> tinycdb (version 0.5 and later) from Michael Tokarev,
-available from <a href="http://www.corpit.ru/mjt/tinycdb.html">http://www.corpit.ru/mjt/tinycdb.html</a>. </p>
+available from <a href="https://www.corpit.ru/mjt/tinycdb.html">https://www.corpit.ru/mjt/tinycdb.html</a>. </p>
 
 </ul>
 
@@ -99,12 +124,3 @@ will have CDB database library dependencies. And that was exactly
 what dynamic database client loading was meant to avoid. </p>
 
 </blockquote>
-
-<p> After Postfix has been built with cdb support, you can use
-"cdb" tables wherever you can use read-only "hash", "btree" or
-"dbm" tables. However, the "<b>postmap -i</b>" (incremental record
-insertion) and "<b>postmap -d</b>" (incremental record deletion)
-command-line options are not available. For the same reason the
-"cdb" map type cannot be used to store the persistent address
-verification cache for the <a href="verify.8.html">verify(8)</a> service, or to store
-TLS session information for the <a href="tlsmgr.8.html">tlsmgr(8)</a> service. </p>

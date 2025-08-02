@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_sigchld.c,v 1.3 2020/05/05 18:12:20 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_sigchld.c,v 1.3.12.1 2025/08/02 05:58:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_sigchld.c,v 1.3 2020/05/05 18:12:20 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_sigchld.c,v 1.3.12.1 2025/08/02 05:58:07 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -73,9 +73,14 @@ __RCSID("$NetBSD: t_ptrace_sigchld.c,v 1.3 2020/05/05 18:12:20 kamil Exp $");
 static int debug = 0;
 
 #define DPRINTF(a, ...)	do  \
-	if (debug) \
-	printf("%s() %d.%d %s:%d " a, \
-	__func__, getpid(), _lwp_self(), __FILE__, __LINE__,  ##__VA_ARGS__); \
+	if (debug) { \
+		const char *file = __FILE__, *slash = strrchr(file, '/'); \
+		if (slash) \
+			file = slash + 1; \
+		printf("%s() %d.%d %s:%d " a, \
+       		    __func__, getpid(), _lwp_self(), file, __LINE__, \
+		    ##__VA_ARGS__); \
+	} \
     while (/*CONSTCOND*/0)
 
 /// ----------------------------------------------------------------------------
@@ -166,7 +171,7 @@ traceme_raise(int sigval)
 		break;
 	default:
 		break;
-	}	
+	}
 
 	PARENT_TO_CHILD("raise1 child", parent_child, msg);
 

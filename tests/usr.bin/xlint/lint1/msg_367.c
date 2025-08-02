@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_367.c,v 1.2 2024/03/03 10:27:18 rillig Exp $	*/
+/*	$NetBSD: msg_367.c,v 1.2.2.1 2025/08/02 05:58:18 perseant Exp $	*/
 # 3 "msg_367.c"
 
 // Test for message: empty description in '%.*s' [367]
@@ -15,7 +15,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 old_style(unsigned u32)

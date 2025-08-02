@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -35,8 +35,33 @@ under construction).  CDB databases are maintained with the postmap(1)
 or postalias(1) command. The DATABASE_README document has general
 information about Postfix databases.  </p>
 
+<p> You can use "cdb:" tables wherever you can use read-only "hash",
+"btree" or "lmdb" tables with the following limitations: </p>
+
+<ul>
+
+<li> <p> CDB databases cannot be larger than 4GB on LP64 and ILP32
+systems, because the CDB library API uses unsigned integers for
+file offsets.  </p>
+
+<li> <p> The "<b>postmap -i</b>" (incremental record insertion) and
+"<b>postmap -d</b>" (incremental record deletion) command-line
+options are not available. For the same reason the "cdb:" map type
+cannot be used to for persistent caches, such as the address
+verification cache for the verify(8) service, the TLS session cache
+for the tlsmgr(8) service, or the dynamic allowlist for postscreen(8).
+</p>
+
+<li> <p> The "sequence" operation ("<b>postmap -s</b>" or "<b>postalias
+-s</b>") is available only wen Postfix is built with tinycdb by
+Michael Tokarev, not with the original cdb library by Daniel Bernstein.
+</p>
+
+</ul>
+
 <p> CDB support is available with Postfix 2.2 and later releases.
-This document describes how to build Postfix with CDB support. </p>
+The remainder of this document describes how to build Postfix with
+CDB support. </p>
 
 <h2>Building Postfix with CDB support</h2>
 
@@ -50,10 +75,10 @@ package.  </p>
 <ul>
 
 <li> <p> The original cdb library from Daniel Bernstein, available
-from http://cr.yp.to/cdb.html, and </p>
+from https://cr.yp.to/cdb.html, and </p>
 
 <li> <p> tinycdb (version 0.5 and later) from Michael Tokarev,
-available from http://www.corpit.ru/mjt/tinycdb.html. </p>
+available from https://www.corpit.ru/mjt/tinycdb.html. </p>
 
 </ul>
 
@@ -99,12 +124,3 @@ will have CDB database library dependencies. And that was exactly
 what dynamic database client loading was meant to avoid. </p>
 
 </blockquote>
-
-<p> After Postfix has been built with cdb support, you can use
-"cdb" tables wherever you can use read-only "hash", "btree" or
-"dbm" tables. However, the "<b>postmap -i</b>" (incremental record
-insertion) and "<b>postmap -d</b>" (incremental record deletion)
-command-line options are not available. For the same reason the
-"cdb" map type cannot be used to store the persistent address
-verification cache for the verify(8) service, or to store
-TLS session information for the tlsmgr(8) service. </p>

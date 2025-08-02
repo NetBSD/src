@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-revoke.c,v 1.9 2024/02/21 22:51:03 christos Exp $	*/
+/*	$NetBSD: dnssec-revoke.c,v 1.9.2.1 2025/08/02 05:50:51 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,6 @@
 #include <isc/file.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -61,7 +60,7 @@ usage(void) {
 	fprintf(stderr, "     K<name>+<alg>+<new id>.key, "
 			"K<name>+<alg>+<new id>.private\n");
 
-	exit(-1);
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -133,7 +132,7 @@ main(int argc, char **argv) {
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n", program,
 				isc_commandline_option);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -193,7 +192,7 @@ main(int argc, char **argv) {
 
 	flags = dst_key_flags(key);
 	if ((flags & DNS_KEYFLAG_REVOKE) == 0) {
-		isc_stdtime_t now;
+		isc_stdtime_t now = isc_stdtime_now();
 
 		if ((flags & DNS_KEYFLAG_KSK) == 0) {
 			fprintf(stderr,
@@ -203,7 +202,6 @@ main(int argc, char **argv) {
 				program);
 		}
 
-		isc_stdtime_get(&now);
 		dst_key_settime(key, DST_TIME_REVOKE, now);
 
 		dst_key_setflags(key, flags | DNS_KEYFLAG_REVOKE);
@@ -261,5 +259,5 @@ cleanup:
 	}
 	isc_mem_destroy(&mctx);
 
-	return (0);
+	return 0;
 }

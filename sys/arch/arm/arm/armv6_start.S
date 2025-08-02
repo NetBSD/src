@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.38 2023/02/23 14:55:24 riastradh Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.38.6.1 2025/08/02 05:55:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -302,7 +302,7 @@ arm_build_translation_table:
 	VPRINTF("DTB")
 
 	/*
-	 * Add DTB identity mapping (1MB) from originaly r2 (but saved in
+	 * Add DTB identity mapping (1MB) from originally r2 (but saved in
 	 * R_FDTADDR)
 	 */
 	ldr	r0, =(L1_S_SIZE - 1)		/* align DTB PA to 1M */

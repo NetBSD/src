@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.27 2024/04/11 10:42:42 andvar Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.27.2.1 2025/08/02 05:56:46 perseant Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.101 2021/06/02 19:16:11 patrick Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.27 2024/04/11 10:42:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.27.2.1 2025/08/02 05:56:46 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2678,6 +2678,7 @@ static const struct {
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28800 },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28800VF },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28908 },
+	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28908VF },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT2892 },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT2894 },
 };
@@ -7229,8 +7230,7 @@ mcx_free_slots(struct mcx_softc *sc, struct mcx_slot *slots, int allocated,
 	while (i-- > 0) {
 		ms = &slots[i];
 		bus_dmamap_destroy(sc->sc_dmat, ms->ms_map);
-		if (ms->ms_m != NULL)
-			m_freem(ms->ms_m);
+		m_freem(ms->ms_m);
 	}
 	kmem_free(slots, total * sizeof(*ms));
 }

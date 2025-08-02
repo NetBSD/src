@@ -1,4 +1,4 @@
-/* $NetBSD */
+/* $NetBSD: vmt.c,v 1.1.2.1 2025/08/02 05:55:20 perseant Exp $ */
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.

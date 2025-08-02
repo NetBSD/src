@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu.h,v 1.9 2024/04/16 14:34:01 riastradh Exp $	*/
+/*	$NetBSD: amdgpu.h,v 1.9.2.1 2025/08/02 05:57:31 perseant Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -32,10 +32,14 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_amdgpu_cik.h"
+#include "opt_amdgpu_si.h"
 #endif
 
 #ifdef AMDGPU_CIK
 #define	CONFIG_DRM_AMDGPU_CIK	1
+#endif
+#ifdef AMDGPU_SI
+#define	CONFIG_DRM_AMDGPU_SI	1
 #endif
 #include "amdgpu_ctx.h"
 

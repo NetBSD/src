@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.122 2023/07/21 22:05:04 lukem Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.122.2.1 2025/08/02 05:58:22 perseant Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -462,8 +462,12 @@ int __nbcompat_gettemp(char *, int *, int);
 ssize_t pread(int, void *, size_t, off_t);
 #endif
 
-int __nbcompat_heapsort (void *, size_t, size_t, int (*)(const void *, const void *));
+int __nbcompat_heapsort(void *, size_t, size_t,
+    int (*)(const void *, const void *));
+int __nbcompat_heapsort_r(void *, size_t, size_t,
+    int (*)(const void *, const void *, void *), void *);
 #define heapsort __nbcompat_heapsort
+#define heapsort_r __nbcompat_heapsort_r
 
 #if !HAVE_DECL_HEAPSORT
 int heapsort (void *, size_t, size_t, int (*)(const void *, const void *));
@@ -518,6 +522,9 @@ int pwcache_groupdb(int (*)(int), void (*)(void),
     struct group * (*)(const char *), struct group * (*)(gid_t));
 #endif
 
+#if !HAVE_DECL_SHQUOTE
+size_t		shquote(const char *, char *, size_t);
+#endif
 #if !HAVE_DECL_STRLCAT
 size_t		strlcat(char *, const char *, size_t);
 #endif
@@ -1271,6 +1278,9 @@ __GEN_ENDIAN_DEC(64, le)
 
 #undef roundup
 #define roundup(x, y)	((((x)+((y)-1))/(y))*(y))
+
+#undef roundup2
+#define roundup2(x, m)	((((x) - 1) | ((m) - 1)) + 1)
 
 /* <sys/stat.h> */
 

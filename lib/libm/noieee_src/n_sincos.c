@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.c,v 1.10 2024/05/08 01:40:27 riastradh Exp $	*/
+/*	$NetBSD: n_sincos.c,v 1.10.2.1 2025/08/02 05:54:51 perseant Exp $	*/
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: n_sincos.c,v 1.10.2.1 2025/08/02 05:54:51 perseant Exp $");
 
 #ifndef lint
 #if 0
@@ -118,18 +121,4 @@ float
 cosf(float x)
 {
 	return cos(x);
-}
-
-void
-sincos(double x, double *s, double *c)
-{
-	*s = sin(x);
-	*c = cos(x);
-}
-
-void
-sincosf(float x, float *s, float *c)
-{
-	*s = sinf(x);
-	*c = cosf(x);
 }

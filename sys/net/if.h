@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.305 2023/10/09 11:55:34 riastradh Exp $	*/
+/*	$NetBSD: if.h,v 1.305.4.1 2025/08/02 05:57:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -451,7 +451,7 @@ typedef struct ifnet {
 /*			0x0020		   was IFF_NOTRAILERS */
 #else
 /*
- * sys/compat/svr4 is remvoed on 19 Dec 2018.
+ * sys/compat/svr4 is removed on 19 Dec 2018.
  * And then, IFF_NOTRAILERS itself is removed by if.h:r1.268 on 5 Feb 2019.
  */
 #define	IFF_UNNUMBERED	0x0020		/* explicit unnumbered */
@@ -1224,7 +1224,6 @@ void	ifafree(struct ifaddr *);
 
 struct	ifaddr *ifa_ifwithaddr(const struct sockaddr *);
 struct	ifaddr *ifa_ifwithaddr_psref(const struct sockaddr *, struct psref *);
-struct	ifaddr *ifa_ifwithaf(int);
 struct	ifaddr *ifa_ifwithdstaddr(const struct sockaddr *);
 struct	ifaddr *ifa_ifwithdstaddr_psref(const struct sockaddr *,
 	    struct psref *);
@@ -1237,6 +1236,9 @@ struct	ifaddr *ifaof_ifpforaddr_psref(const struct sockaddr *, struct ifnet *,
 	    struct psref *);
 void	link_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 void	p2p_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
+
+struct ifaddr *if_first_addr(const struct ifnet *ifp, const int af);
+struct ifaddr *if_first_addr_psref(const struct ifnet *ifp, const int af, struct psref *psref);
 
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);

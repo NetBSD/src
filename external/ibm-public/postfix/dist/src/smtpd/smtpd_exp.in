@@ -29,6 +29,9 @@ client foo 127.0.0.2
 rcpt rname@rdomain
 client foo 127.0.0.1
 rcpt rname@rdomain
+recipient_restrictions reject_rbl_client,dnsbltest.porcupine.org=127.0.0.3
+client foo 127.0.0.3
+rcpt rname@rdomain
 #
 # RHSBL sender domain name
 #
@@ -59,4 +62,16 @@ rcpt rname@example.tld
 recipient_restrictions reject_rhsbl_helo,rhsbl.porcupine.org
 helo example.tld
 mail sname@sdomain
+rcpt rname@rdomain
+#
+# rbl_reply_maps lookup error
+#
+smtpd_delay_reject 0
+mynetworks 127.0.0.0/8,168.100.3.0/28
+relay_domains porcupine.org
+rbl_reply_maps fail:1_rbl_reply_maps
+helo foobar
+mail sname@sdomain
+recipient_restrictions reject_rbl_client,dnsbltest.porcupine.org
+client foo 127.0.0.2
 rcpt rname@rdomain

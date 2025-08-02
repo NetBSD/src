@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 
 <html>
 
@@ -94,9 +94,7 @@ as invalid </a>
 
 <ul>
 
-<li> <a href="#resolve"> Resolve address to destination </a>
-
-<li> <a href="#transport"> Mail transport switch </a>
+<li> <a href="#resolve"> Resolve address to (transport, next-hop destination) </a>
 
 <li> <a href="#relocated"> Relocated users table </a>
 
@@ -312,8 +310,8 @@ find what you need.  </p>
 <table border="1">
 
 <tr> <th nowrap> Address manipulation </th> <th nowrap> Scope </th>
-<th> Daemon </th> <th nowrap> Global turn-on control </th> <th nowrap> Selective
-turn-off control </th> </tr>
+<th> Daemon </th> <th nowrap> Turn-on controls </th> <th nowrap> 
+Turn-off controls </th> </tr>
 
 <tr> <td> <a href="#standard"> Rewrite addresses to standard form</a>
 </td> <td nowrap> all mail </td> <td> trivial-<br>rewrite(8) </td>
@@ -340,13 +338,12 @@ sender_bcc_maps, recipient_bcc_maps </td> <td> receive_override_options
 nowrap> all mail </td> <td> cleanup(8) </td> <td> virtual_alias_maps
 </td> <td> receive_override_options </td> </tr>
 
-<tr> <td> <a href="#resolve"> Resolve address to destination </a>
-</td> <td nowrap> all mail </td> <td> trivial-<br>rewrite(8) </td>
-<td> none </td> <td> none </td> </tr>
-
-<tr> <td> <a href="#transport"> Mail transport switch</a> </td>
-<td nowrap> all mail </td> <td> trivial-<br>rewrite(8) </td> <td>
-transport_maps </td> <td> none </td> </tr>
+<tr> <td> <a href="#resolve"> Resolve address to (transport, next-hop
+destination) </a> </td> <td nowrap> all mail </td> <td>
+trivial-<br>rewrite(8) </td> <td> local_transport, virtual_transport,
+relay_transport, default_transport, relayhost,
+sender_dependent_relayhost_maps, sender_dependent_default_transport_maps
+</td> <td> content_filter </td> </tr>
 
 <tr> <td> <a href="#relocated"> Relocated users table</a> </td>
 <td nowrap> all mail </td> <td> trivial-<br>rewrite(8) </td> <td>
@@ -774,6 +771,11 @@ may be a more appropriate vehicle. See the VIRTUAL_README document
 for an overview of methods to host virtual domains with Postfix.
 </p>
 
+<p> Note: virtual aliasing (virtual_alias_maps) applies to all
+recipients: local(8), virtual, and remote.  <!-- wrap filler -->
+This is unlike local aliasing (alias_maps) which applies only to
+local(8) recipients. </p>
+
 <p> Virtual aliasing is disabled by default. To enable, edit the
 virtual_alias_maps parameter in the main.cf file and
 specify one or more lookup tables, separated by whitespace or
@@ -833,9 +835,8 @@ trivial-rewrite(8) server. </p>
 
 <ul>
 
-<li> <a href="#resolve"> Resolve address to destination </a>
-
-<li> <a href="#transport"> Mail transport switch</a>
+<li> <a href="#resolve"> Resolve address to (transport, next-hop
+destination) </a>
 
 <li> <a href="#relocated"> Relocated users table</a>
 
@@ -873,67 +874,108 @@ via the local(8) delivery agent: </p>
 step in more detail, with specific examples or with pointers to
 documentation with examples. </p>
 
-<h3> <a name="resolve"> Resolve address to destination </a> </h3>
+<h3> <a name="resolve"> Resolve address to (transport, next-hop
+destination) </a> </h3>
 
 <p> The Postfix qmgr(8) queue manager selects new mail from the
-incoming queue or old mail from the deferred queue, and asks the
-trivial-rewrite(8) address rewriting and resolving daemon where it
-should be delivered. </p>
+incoming queue or old mail from the deferred queue. First it
+looks for overrides: </p>
 
-<p> As of version 2.0, Postfix distinguishes four major address
-classes. Each class has its own list of domain names, and each
-class has its own default delivery method, as shown in the table
-below.  See the ADDRESS_CLASS_README document for the fine details.
-Postfix versions before 2.0 only distinguish between local delivery
-and everything else.  </p>
+<ul>
+
+<li> <p> The REDIRECT action in access(5), header_checks(5) or
+body_checks(5) overrides all recipients of the message, and overrides
+a content_filter setting, and FILTER action in access(5),
+header_checks(5) or body_checks(5). The REDIRECT action was implemented
+as a short-cut to retaliate for abuse. </p>
+
+<li> <p> A content_filter setting and FILTER action in access(5),
+header_checks(5) or body_checks(5) provide their own (transport,
+next-hop destination) information. This bypasses all the steps that
+are described in the remainder of this section. </p>
+
+</ul>
+
+<p> When there is no content filter override, the qmgr(8) queue
+manager asks the trivial-rewrite(8) address rewriting and resolving
+daemon for each recipient how to deliver it (which message delivery
+transport) and where to deliver it (what next-hop destination). </p>
+
+<p> As of version 2.0, Postfix distinguishes four major domain
+classes. Each class has its own list of recipient domain names, and
+each class has its own delivery method, as shown in the table below.
+See the ADDRESS_CLASS_README document for the fine details.  Postfix
+versions before 2.0 only distinguish between local delivery and
+everything else. </p>
+
+<p> Note that the table does not match recipients against
+virtual_alias_domains. The reason is that all valid recipients in
+a virtual alias domain must be aliased to an address in a different
+domain. All other recipients in a virtual alias domain are by
+definition undeliverable, and do not need to be considered here.
+</p>
 
 <blockquote>
 
 <table border="1">
 
-<tr><th align="left">Destination domain list </th> <th
-align="left">Default delivery method </th> <th>Availability
-</th> </tr>
-
-<tr><td>$mydestination, $inet_interfaces, $proxy_interfaces </td>
-<td>$local_transport </td> <td>Postfix 1.0</td></tr>
-
-<tr><td>$virtual_mailbox_domains </td> <td>$virtual_transport </td>
-<td>Postfix 2.0</td> </tr>
-
-<tr><td>$relay_domains </td> <td>$relay_transport </td> <td>Postfix
-2.0</td> </tr>
-
-<tr><td>none </td> <td>$default_transport </td> <td>Postfix 1.0</td>
+<tr> <th align="left">Domain class</th> <th align="left">Recipient
+domain match </th> <th> Delivery method </th> <th>Availability </th>
 </tr>
+
+<tr><td>Local</td> <td>mydestination, inet_interfaces, proxy_interfaces
+</td> <td>local_transport </td> <td>Postfix 1.0</td></tr>
+
+<tr><td>Virtual mailbox</td> <td>virtual_mailbox_domains </td>
+<td>virtual_transport </td> <td>Postfix 2.0</td> </tr>
+
+<tr><td>Relay</td> <td>relay_domains </td> <td>relay_transport
+</td> <td>Postfix 2.0</td> </tr>
+
+<tr><td>Default</td><td> none </td> <td>default_transport </td>
+<td>Postfix 1.0</td> </tr>
 
 </table>
 
 </blockquote>
 
-<h3> <a name="transport"> Mail transport switch </a> </h3>
+<p> The delivery methods in the above table may include a next-hop
+destination in addition to a delivery transport. This may override
+the next-hop destination that is by default taken from the recipient
+domain. </p>
 
-<p> Once the trivial-rewrite(8) daemon has determined a default
-delivery method it searches the optional transport(5) table for
-information that overrides the message destination and/or delivery
-method.  Typical use of the transport(5) table is to send mail to
-a system
-that is not connected to the Internet, or to use a special SMTP
-client configuration for destinations that have special requirements.
-See, for example, the STANDARD_CONFIGURATION_README and UUCP_README
-documents, and the examples in the transport(5) manual page.  </p>
-
-<p> Transport table lookups are disabled by default. To enable,
-edit the transport_maps parameter in the main.cf file and specify
-one or more lookup tables, separated by whitespace or commas. </p>
-
-<p> Example: </p>
+<p> Over time, features have been added to override the above
+transport and/or next-hop destination information. The following
+table lists where a transport or next-hop destination may be taken
+from, depending on the recipient domain class. </p>
 
 <blockquote>
-<pre>
-/etc/postfix/main.cf:
-    transport_maps = hash:/etc/postfix/transport
-</pre>
+
+<table border="1">
+
+<tr> <th>Domain class</th> <th>Transport sources (in order of
+descending precedence)</th> <th> Next hop sources (in order of
+descending precedence)</th> </tr>
+
+<tr> <td> Local </td> <td> transport_maps, local_transport</td>
+<td> transport_maps, local_transport, recipient domain</td> </tr>
+
+<tr> <td> Virtual mailbox </td> <td> transport_maps,
+virtual_transport</td> <td> transport_maps, virtual_transport,
+recipient domain</td> </tr>
+
+<tr> <td> Relay </td> <td> transport_maps, relay_transport</td>
+<td> transport_maps, relay_transport, sender_dependent_relayhost_maps,
+relayhost, recipient domain</td> </tr>
+
+<tr> <td> Default </td> <td> transport_maps,
+sender_dependent_default_transport_maps, default_transport</td>
+<td> transport_maps, sender_dependent_default_transport_maps,
+default_transport, sender_dependent_relayhost_maps, relayhost,
+recipient domain</td> </tr>
+
+</table>
+
 </blockquote>
 
 <h3> <a name="relocated"> Relocated users table </a> </h3>
@@ -1018,6 +1060,11 @@ aliases are typically used to implement distribution lists, or to
 direct mail for standard aliases such as postmaster to real people.
 The table can also be used to map "Firstname.Lastname" addresses
 to login names. </p>
+
+<p> Note: local aliasing (alias_maps) applies only to local(8)
+recipients. This is  unlike virtual aliasing (virtual_alias_maps)
+which applies to all recipients: local(8), virtual, and remote.
+</p>
 
 <p> Alias lookups are enabled by default. The default configuration
 depends on the operating system environment, but it is typically

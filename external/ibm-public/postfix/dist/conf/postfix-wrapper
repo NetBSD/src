@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-wrapper,v 1.1.1.1 2009/06/23 10:08:23 tron Exp $
+#	$NetBSD: postfix-wrapper,v 1.1.1.1.62.1 2025/08/02 05:49:49 perseant Exp $
 #
 
 #++
@@ -190,7 +190,7 @@ POSTFIX=$command_directory/postfix
 # Canonicalize the instance directory list. The list is specified
 # in startup order.
 
-instance_dirs=`$POSTCONF -h multi_instance_directories | sed 's/,/ /'` ||
+instance_dirs=`$POSTCONF -h multi_instance_directories | sed 'y/,/ /'` ||
     exit 1
 
 case "$1" in

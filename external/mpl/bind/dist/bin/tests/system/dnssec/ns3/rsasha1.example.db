@@ -1,0 +1,63 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+; File written on Tue Jan  4 17:29:34 2022
+; dnssec_signzone version 9.17.20
+rsasha1.example.			      300 IN SOA	mname1. . 2000042407 20 20 1814400 3600
+rsasha1.example.			      300 IN RRSIG	SOA 5 2 300 20900122074341 20220104052934 30286 rsasha1.example. wg8k4y/Cs/+u2QfUnBURhD4isSFTzCofpdhMzVJEUfBqu1DBVO+FECQ4 U80NCg9iksxm7xsWAZiQx6Rzvh1rUqEA7OhCy7XiPuz+jR1TYHXJhRMu t9gu7aCdTkcXYCMtppd49/2vT+WPKB98QIKD6wgl4LFFhwbUCoXavin4 babUiJrJeAnuxmIeD5HtM5a+++p0F8QemdP5FkX3WCRBHNFGnoVYJjc7 PZ+L8ZpKElah47XzJwAYWDr34TwqU9llCOcXlXYKBqDKO9fEtJJ1hyk9 Sf4fGOdzZD9Pj4Zz83UlHumeZPfIC1N0xVBYvGPu8LU41WZ4BgZfKSoS UIpbPQ==
+; resign=20900122074341
+rsasha1.example.			      300 IN NS		ns.rsasha1.example.
+rsasha1.example.			      300 IN RRSIG	NS 5 2 300 20900122074341 20220104052934 30286 rsasha1.example. VqOKkNo7CRH2uquL/46cIVoIPvFYT2WrpwpG6ienlJoLF/mZn0ReoMaK G29R8Q0tklalk14CGShiD409lXDRynyHgmLGIFjkXMd6aNRQOdD1O+7C wEhAj4/FEz+qpk/xRGMslxCCF1P7DxpX5ZPI9DuPVVvTRk4131CALaFQ EPblDzEgd7JeoO0tKnPjpzXLdr86NDeDVZXonimjEhQNrvrrurQ5/u2F x7jVmovN47Z06+XCbleC2ag8ZazNkYfU8GlFvkozZMGZtnpja1/SllNJ ZdURisd3JFMw/xsZd1v2MspKYcZePTfzyk/keXSJ0AlO7TA1X2sjiFOo 1fhSnQ==
+; resign=20900122074341
+rsasha1.example.			      300 IN NSEC	a.rsasha1.example. NS SOA RRSIG NSEC DNSKEY
+rsasha1.example.			      300 IN RRSIG	NSEC 5 2 300 20900122074341 20220104052934 30286 rsasha1.example. U7SEGuJ95CKk6+sWNCNHfPuvjJ2KChhutImWmSTc9lgb3uSfptzwbYnP UZ3xG0IqkayRJhBSizLb5kntvBZbcz4pEWZ+o7ZJdiBHcCARj82OJaLF d147VB3XJa6rIi+o/Zm8SIbxU7gugqRds7KfSTxAIjHzLpCcu12hlgfc Qso1LYiVeU5GVnmfuNJQL7QvS3BQuTylTI1+HQpiY6W8Bzev/TcbhoDJ Ywp4hvgF4VGCvrO2glSO4VycLjluawKSlrNaLbAtWIYYUSPbvtktM8tQ GBqOij4l7eMCTGRCoExWEnr+CzWAauoemhLDh27Bq6VNjD5iIvjzt3Ym uGDQUg==
+; resign=20900122074341
+rsasha1.example.			      300 IN DNSKEY	256 3 5 AwEAAe31msH3kL5cIQ6C1vTnB8GvbFDm0t/j5XWnLonaKDSUoHtKLlRq pBPuwlORRUZxRSs7VDAaKE0YGky/YklSCqvo8gBD4dkNjWD/6XGkmtEq DOL8XCz1KO+djs7WLCuCyGIkG282+sntuZJj4IMd+ZDW1urCwaP94t3u W9N+PgrSacK9Ff1bwLR9KIgkRFpJ+JxPeaFYnVEyB4ZaZ8DgPWYNJ+aC awL0nATybC8asPeCGvft3lSS99z55IMfkpjF1rwHIVybqhiukRighazQ ljjVQdlXj3YxFgD0fpscJ6yN0QXdseagxiT4PahnwaHYHUhgGm+HB1zA pA49L9dg2RE=
+rsasha1.example.			      300 IN DNSKEY	257 3 5 AwEAAcQdnpcda8XlNxllEGbWy9EGkD5TtHEbxThaB9c6ZNQPTf3gJw0A LpIZ787sepWND7vPcq6Qb/xZEmC6ER5OfaYbDznUh8q5NaaTbSwv0tng gE8KPwtvlgH+4eUmOcEkGrfR9G6J9S8JTT5bUWKTUbprxE65/8xcY33S cEeOpi34DLR9GLNvPLTSLuWQcYrq1YZFHbivQ45oFD9PvWPJWOoAN68N T28e0ZV8QHuXqW0IEheeW+AEemywupdaxun6Cvvolfz2EMYFnYX8YycE 0qUoDC4W9w3xB4nOllWQfJzgQkSTr/I4XCgepFunBeuAHZhCoQHPt9fK IfPUYxQzaa8=
+rsasha1.example.			      300 IN RRSIG	DNSKEY 5 2 300 20900122074341 20220104052934 30286 rsasha1.example. tODh3LiRuG/ao3ZtJSLBPCy74pkfHXMPRUgFP7MhNR3X6gq75daTVHLi ApTesgAXPAbHI404ps/8M2Z84dkMKBhRDdp1e9OwR8IB4Iw0IOGp2rV7 oZSYNzgnlwRfQ2G75G3xbCjiQhY0H+7IlSiys3sAaI67plvI3nDC3C/r zyDKiY90pK31e+q72SSK+1t/MlsRm0nAYHyUZGLuBMoXYHwonLImeH9Q jwy+cXLwhzOfPfm97ailNifEk38+P+H+Yq35Cp1ezpMzxAi67AcY83sR XB7RVRCf/4uUErh5rYcl6EcnHFh1xA9oSHsaPQbd39PO2fNanyvdPH+p b0ey0A==
+rsasha1.example.			      300 IN RRSIG	DNSKEY 5 2 300 20900122074341 20220104052934 9662 rsasha1.example. Ksyrf1lseBMSQGyPWrSve/X09Nb1CWB//Yvjw9HAEBwna9wseI6cH6mi B1G2JyFmTFzxGgVmf0wB+oec2w7nt5/uUJbyVfLQvCs9RXBGEpKAwhVf GKIwcSF1VTyVfx+PYPHvCpeN01Qm3C/5pJ28dkT65Hry2a7f39kk/8YZ 4zVM1nYaTsBUQdQWvR5UlSm0S3SUMBc2MIEUGUFBhtBJ10W8VkIfNzma ONjMHthu8vLAfwuBYX8zzJIVB31XvnxZDa4LSM4PesyPZ+KVR27o5dlL gQS62u3PWJDgEhUNFIa8A+5kDENC24p7DSfG+Aipe3upefBpBAW3VEdN A/nwQQ==
+; resign=20900122074341
+b.rsasha1.example.			      300 IN A		10.0.0.2
+b.rsasha1.example.			      300 IN RRSIG	A 5 3 300 20900122074341 20220104052934 30286 rsasha1.example. ivXu+xAyZThIsY2T1c1wczdeeIG/37z+nO9sbUOzcUyf4+T9lX+6rU0D gxQTxHVdcsw3ge/C+dU2qcrs3EHHW4JcpT1yZMbXcyo+w5ocj5oHGYD2 L3iKLCEZrzdkIwmY4GXNyTznk0X5GKuaP7P6PeNrwWEBficB6xLSiLm7 tsswVcc4XyHa+zKBbxevIt2bKvRUfruyztgENZXJ5125Kx1Ee70Hwvgw bNc2J7lqpJw5c5O8yUaXq5gsxcaLBuONbQ4ANL5PtFQJJY7B5GhqlRTy gVrThJsoZj66pfa8gK92yn8uRG6sFpAbtPrTMQaReiExOhCUdBZRBmA+ RWUTKQ==
+; resign=20900122074341
+b.rsasha1.example.			      300 IN NSEC	d.rsasha1.example. A RRSIG NSEC
+b.rsasha1.example.			      300 IN RRSIG	NSEC 5 3 300 20900122074341 20220104052934 30286 rsasha1.example. hHtS5Bev1RkOJhsz4QnWJzzn/BBRLJil1l1RCbX+nbVbPE93l/2aDi12 jgctWKIfAiVfdFn93uno11+7Lq+bJaiMvaozJ+f7XWMAPsITOlKGNtiw l9kqZJExugH3q0RC1W0xxnb6HlIbwYGn6refUexaZKjgBsUg302pY7bh 6z4WuPakuxAqsaI6KLxLAlm7CWmdXvpFMCc1dnIVDplxOAvEINTrEesY sffjfmRbP3YAXC6/xvu0WVlikgklJjjiRqdeiSqPLGlnb79OAF5whHSL nYvWscX00/f+SOiniFoAFH2KeSb7VdJ2jvpTaqWjrYxxvwuZMsKNzwRI 4pnH/w==
+; resign=20900122074341
+a.a.a.a.a.a.a.a.a.a.e.rsasha1.example.	      300 IN A		10.0.0.27
+a.a.a.a.a.a.a.a.a.a.e.rsasha1.example.	      300 IN RRSIG	A 5 13 300 20900122074341 20220104052934 30286 rsasha1.example. BQT+sZ6SJUbGDJ0eG6WBM19+UoBGZEie96E7EXaeS4It3M+EaMkIWIGD hp0MwiC0yW8u0zWjlA57t3yRpVhvCic8kl4SPs5tOmDXyy5RRJ7YOHNx 3PCuAbkoTfoLt5ReVtGcs5LTz+lmPUKZw/dwols5x8v1PIC2O/Ud6Yep TE9Qeymj1/C3GxxLVPLxXQhirkhT6LfMmFH6fNwec6U7bVRyMo3twcvK TDxkEZu5qA0+6bSrLC/xdyZYE38RQOlicmmGfYAIkDWKDdDXYbfBeJq6 zP8aFvdqOckDBvXQcnP9Cq+IvQX1noO90ePYf5AzNxAEQFJ4S1LUm/0q mQqNLA==
+; resign=20900122074341
+a.a.a.a.a.a.a.a.a.a.e.rsasha1.example.	      300 IN NSEC	ns.rsasha1.example. A RRSIG NSEC
+a.a.a.a.a.a.a.a.a.a.e.rsasha1.example.	      300 IN RRSIG	NSEC 5 13 300 20900122074341 20220104052934 30286 rsasha1.example. jvJup/Pg4BpAjh+eLMKEYFkpK/iOVt3QggGL7CRMxzxkYYMJNPwXqdAt 5MovIAFjFKBQm0RDe8/tqav/zdOZrDTyRZ2Zsh9qOp7hlOhy4oqQF+4n Wqg3x8v9gSgrzSAsiJAhb3fbbfdAb3Esc1R0Ec/RcLYEUXiD1eLTG0cB qtVmX3McwXTmu0OGpn0Dsg8CTSuQnrvo24bvsah5SEL1/NVkPtEE7KDT Q8orR7LNM0EeIL1CHxT5dqCAo5MvUm9L8GL/YIOZgtifD/uL23T0ej4j 0JYN7EYoDyFT0fyGeBoS2jkCZTsQZivfnkE5J4Ch1nAU5bUmSeX1eZHK nvce9Q==
+; resign=20900122074341
+d.rsasha1.example.			      300 IN A		10.0.0.4
+d.rsasha1.example.			      300 IN RRSIG	A 5 3 300 20900122074341 20220104052934 30286 rsasha1.example. 1mZnG0HsIygSfEue9vMlqWpIQ59EmrktvFrGBzNUEDQDjsoGHv+syMFi A8BtRPkrHZzGaYTqy4L8ZL6V5vZPN1icETNVebx7teBTNFIwlvubdKoQ Zg/37W8gW6U1PN4khQlfX7W5XMFifF4qfCfI3XhkPgKacVaucHQhvGth ZzgCbhCQBVMooRb+v+nzknin0qpIWm7pVPh94BaajxQJ0mNwVQ8hjdJP jy16PH4z/aQ6oPjPKMbnMwTQOdWVUKsZtEkBGcAjJWLFmUJYpR5PPdRB /VsEtjexNKZtDwn0/QUIqUi4GcSp0ISTDBTNDjImJhWVJUoFh6S6zuRW tPYZGA==
+; resign=20900122074341
+d.rsasha1.example.			      300 IN NSEC	a.a.a.a.a.a.a.a.a.a.e.rsasha1.example. A RRSIG NSEC
+d.rsasha1.example.			      300 IN RRSIG	NSEC 5 3 300 20900122074341 20220104052934 30286 rsasha1.example. oWJRAhXbXUA84Nc56NyMocBq93bn3k4uGeqv+XL2L5l6yjxQYxKzjqq1 O5m72K6GiIjoIeun5TxJlEI7/o1EivTxdGYVP4Fsb//Wrv422QcHwS27 xNsFhLMFQglBCOaZzj1v3G2nXRRjP8x81ysg048THlhH5Jm7cW3aUmuS P6kXebWVwIc2nywLHVr/U4dCT2sHOk2gkUuaj8p6rMLVYwj/5dBRijVl Wm131ZeimetxrrRVxXtOfof7W4pqx3bpYRqb/Exdh035Hen+QesxRYTA zcxY7CywJY59afc9/abQBWGkPLfF7rgfJjPIc3MpJlP4SPf0SV4bTNUU nptZ/A==
+; resign=20900122074341
+ns.rsasha1.example.			      300 IN A		10.53.0.3
+ns.rsasha1.example.			      300 IN RRSIG	A 5 3 300 20900122074341 20220104052934 30286 rsasha1.example. ONQph6nkFWSS6dqe/agbVnbjwTtA8ZZATpTCqoRJp2QoEgIjZ/0Yh7Fl Axz4PnpMYsEoie0IZ0/g+xTH7nXYphZzzzgedK8WK0vdTW3Pspyoiek/ tWjiGshqq1atHgi+jjRiuhnEvkaX0UDipMCQvI7oFHMOJxmnwZBCNWMc kBu9vbqtr/+HM4y+jGywg5l2XVkmHC5RZv1CoYc5PhfvV4zMI2RCb/Km i5eNCrUZefRfAq4fK9M67Jh/WnfRWfnHZKZN3O0yiRdnKOh2tOQP3X46 fIuNldCeg1PPnkbs4R+ekqJYhpEydNuWKEoKw2ZgeIrmbcRqepD6y3SZ UP/TAw==
+; resign=20900122074341
+ns.rsasha1.example.			      300 IN NSEC	z.rsasha1.example. A RRSIG NSEC
+ns.rsasha1.example.			      300 IN RRSIG	NSEC 5 3 300 20900122074341 20220104052934 30286 rsasha1.example. s7P7k9FDJrO1JhUVjgVUDQXNXfNOJrYVt44OoD45e7w4Q7QkyeZe+6z1 Arj9tW1bI9nIVNo63DT51bsJmj4vPf4SuJgHO05ElkLFSvHn17qMdw8Q Kpx8MQa7plAISqzl9hJip0exMuV+1IHujO9VGE42CxKl0q6l2b/x3+Il afx47bcEePkdhHXyhOSdrtxFTayzjMd/7uSy6p1jFSEVrheejQ/r44t3 9uxEc4EYfiP+HVfnjJ178j2Xa4dZyi3ljhJjaH5oleiy5c2Y5kXRIuXH OcIQ2axO7LT/yupRcBPlo7ulwI9iEVd2Q2gueMqaJ9YEWlcoOSFu1H75 7IRAbA==
+; resign=20900122074341
+z.rsasha1.example.			      300 IN A		10.0.0.26
+z.rsasha1.example.			      300 IN RRSIG	A 5 3 300 20900122074341 20220104052934 30286 rsasha1.example. nuqG+ILECKKCQockETu4yLRKZzv9qjXJpfD0/yw5Cw7nSrZFvAjpkQR2 f+xmzbcxP4xiYqs1I+nz8cnHs6NNkJA8vcmk9dnzRu78X0x8MFFV0Yha jQKK/cSzhEhys7GMYv3Jz6lKfmFOAoq1et9PaQT6w8zQD8Q5vBzKrvZm pg+QzZvvgToZfj4e5J7nrhnyOVo7Jec5l/aBCGJbgRMDxjyyC0ufOjnm POvsTZk+wM3+wuN6zYwDpproPiH/6vC/yPlDHeh6kDt971dMsdvRv+kS KAzPyN8rweptJ/HRprb9x6zcAJOrK0T1sJ+EhMbYMgC/py6aAn+T7G5D FGY1tg==
+; resign=20900122074341
+z.rsasha1.example.			      300 IN NSEC	rsasha1.example. A RRSIG NSEC
+z.rsasha1.example.			      300 IN RRSIG	NSEC 5 3 300 20900122074341 20220104052934 30286 rsasha1.example. Wj5DkrGppeMFn8bWLUMfFPCzDAO2HeabbEIMaAHBH/g0hdn+2PPkQc8D D6WCSc4q5gyGNRSXj2Kik2TojD9n/5WuwDAA3W2AOso+4d616lSy9pyj x+e4WZ6y6tAYRRIGIVTdDEOxrZ8KspclWk7H6OAAPIYvgZeYjox21qXN BknpIifVoaYUoxi3e81k25erm/Xww4uU2SMQgvq3sBrs0YGANembfxas BRVmSmBykpugHgS1/Fl19Hp40y/JTBzqOLrHgPgHO4aH89dgta0WlMhb 8uCUOjHNjcR+KO3KUpKDZkH8IuJHWWFd0TabdV0KBhpInQh6Yorhpjg7 qNBbgA==
+; resign=20900122074341
+a.rsasha1.example.			      300 IN A		10.0.0.1
+a.rsasha1.example.			      300 IN RRSIG	A 5 3 300 20900122074341 20220104052934 30286 rsasha1.example. eJyAqMArSagK54kSFvJxE5qYXFSDYxj6Vt8l4gi58BQigO7p5v0BUWcS icToRx3a9+rSdhnBuGbOWGNlrKFfCKrLmqYrlI9GFSAFLAFj7DETSKDJ X5dQ0KnpyGL3SneQsDWAvAof0y9B17dnBHQMSjeVqqQLjYEnq3ZIdT3c b6emCGMhcbfIAOYWt7t9nk/J2tsTsdoKtTCHP1SHjn5sE++BPXOce49X gFnNMD+pOcoLH8Z07RcTQ8IeNIa9hO8UaypyicaHQ2F0JtsiL1pqREXf QsBeLC12Gbi0rxJX3gdj0LXsmSerVl6BgaNjPTp3840WKrW3nTG/8Lre bxgkow==
+; resign=20900122074341
+a.rsasha1.example.			      300 IN NSEC	b.rsasha1.example. A RRSIG NSEC
+a.rsasha1.example.			      300 IN RRSIG	NSEC 5 3 300 20900122074341 20220104052934 30286 rsasha1.example. 6fZ5/GXrFAc9lEspMNlPa40F8O/tGq1oaSZXVstwLH124TNWxRK+i8eT H77Kq80vZkDus8rkLr4fiLP3ApXVBffCRHZWecGrYaPGDbQXALQEktld NhmLr9Nf30Jq7KvVV9Qf4daPC7ZwkB8EsikJxjpQ/paHlU/Pua7ZonnH /x9HHRJBLWb/PPQWEc++8SSjA79+HZVbB8rBwXyxHO1tFBCbBpK/JNwu KpRqNp/mwxPpSaJGZIuhHlzfbLsS4WoXjdG+fob4RqsPPwrf/uAAzKM2 dHVuqZ1erH3ryb4JdRo+MhqD0+vC/7+eNccEXraBsE5xGw4M62Se37WC kyQDQA==
+; resign=20900122074341

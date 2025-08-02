@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.78 2024/02/10 09:21:52 andvar Exp $
+# $NetBSD: GENERIC,v 1.78.2.1 2025/08/02 05:55:46 perseant Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.78 $"
+#ident          "GENERIC-$Revision: 1.78.2.1 $"
 
 maxusers	16		# estimated number of users
 
@@ -48,6 +48,11 @@ options 	SH4_CACHE_DISABLE_EMODE
 
 # Standard system options
 
+# sh3 uses only one page by default; if anything goes slightly awry or
+# if you have any USB devices - that single page can't hold even the
+# full initial dmesg at boot time, so bump it up a bit
+options 	MSGBUFSIZE=0x2000
+
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	HZ=64		# clock interrupt generates every 1/HZ sec
 options 	NTP		# NTP phase/frequency locked loop
@@ -71,7 +76,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-#options 	DIAGNOSTIC	# cheap kernel consistency checks
+options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'

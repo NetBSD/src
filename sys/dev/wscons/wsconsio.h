@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.127 2024/01/20 00:23:12 jmcneill Exp $ */
+/* $NetBSD: wsconsio.h,v 1.127.2.1 2025/08/02 05:57:08 perseant Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -367,6 +367,8 @@ struct wsmouse_parameters {
 #define	WSDISPLAY_TYPE_PLFB	65	/* ARM PrimeCell PL11x */
 #define	WSDISPLAY_TYPE_SSDFB	66	/* ssdfb(4) */
 #define	WSDISPLAY_TYPE_HOLLYWOOD 67	/* Nintendo Wii "Hollywood" SoC */
+#define	WSDISPLAY_TYPE_VC6	68	/* Broadcom VideoCore 6 */
+#define	WSDISPLAY_TYPE_VIOGPU	69	/* VirtIO GPU */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -728,5 +730,21 @@ struct wsdisplayio_fontinfo {
  */
 
 #define WSDISPLAYIO_LISTFONTS	_IOWR('W', 107, struct wsdisplayio_fontinfo)
+
+struct wsdisplay_getfont {
+	char *gf_name;
+	uint32_t gf_size;
+	uint32_t gf_actual;
+};
+
+/*
+ * return currently active font
+ *
+ * gf_name points to a buffer of gf_size bytes, the result may be truncated
+ * and NUL-terminated.
+ * gf_actual is set to the size of full name.
+ */
+
+#define WSDISPLAYIO_GFONT	_IOWR('W', 108, struct wsdisplay_getfont)
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */

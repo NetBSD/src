@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.c,v 1.10 2024/02/21 22:52:07 christos Exp $	*/
+/*	$NetBSD: nsec.c,v 1.10.2.1 2025/08/02 05:53:27 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,13 +32,6 @@
 
 #include <dst/dst.h>
 
-#define RETERR(x)                            \
-	do {                                 \
-		result = (x);                \
-		if (result != ISC_R_SUCCESS) \
-			goto failure;        \
-	} while (0)
-
 void
 dns_nsec_setbit(unsigned char *array, unsigned int type, unsigned int bit) {
 	unsigned int shift, mask;
@@ -61,7 +54,7 @@ dns_nsec_isset(const unsigned char *array, unsigned int type) {
 	shift = 7 - (type % 8);
 	mask = 1 << shift;
 
-	return ((byte & mask) != 0);
+	return (byte & mask) != 0;
 }
 
 unsigned int
@@ -72,7 +65,7 @@ dns_nsec_compressbitmap(unsigned char *map, const unsigned char *raw,
 	int octet;
 
 	if (raw == NULL) {
-		return (0);
+		return 0;
 	}
 
 	for (window = 0; window < 256; window++) {
@@ -97,7 +90,7 @@ dns_nsec_compressbitmap(unsigned char *map, const unsigned char *raw,
 		map += octet + 1;
 		raw += 32;
 	}
-	return ((unsigned int)(map - start));
+	return (unsigned int)(map - start);
 }
 
 isc_result_t
@@ -132,7 +125,7 @@ dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
 	rdsiter = NULL;
 	result = dns_db_allrdatasets(db, node, version, 0, 0, &rdsiter);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 	for (result = dns_rdatasetiter_first(rdsiter); result == ISC_R_SUCCESS;
 	     result = dns_rdatasetiter_next(rdsiter))
@@ -167,7 +160,7 @@ dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
 
 	dns_rdatasetiter_destroy(&rdsiter);
 	if (result != ISC_R_NOMORE) {
-		return (result);
+		return result;
 	}
 
 	nsec_bits += dns_nsec_compressbitmap(nsec_bits, bm, max_type);
@@ -176,7 +169,7 @@ dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
 	INSIST(r.length <= DNS_NSEC_BUFFERSIZE);
 	dns_rdata_fromregion(rdata, dns_db_class(db), dns_rdatatype_nsec, &r);
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -191,14 +184,17 @@ dns_nsec_build(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
 	dns_rdataset_init(&rdataset);
 	dns_rdata_init(&rdata);
 
-	RETERR(dns_nsec_buildrdata(db, version, node, target, data, &rdata));
+	result = dns_nsec_buildrdata(db, version, node, target, data, &rdata);
+	if (result != ISC_R_SUCCESS) {
+		goto failure;
+	}
 
 	dns_rdatalist_init(&rdatalist);
 	rdatalist.rdclass = dns_db_class(db);
 	rdatalist.type = dns_rdatatype_nsec;
 	rdatalist.ttl = ttl;
 	ISC_LIST_APPEND(rdatalist.rdata, &rdata, link);
-	RETERR(dns_rdatalist_tordataset(&rdatalist, &rdataset));
+	dns_rdatalist_tordataset(&rdatalist, &rdataset);
 	result = dns_db_addrdataset(db, node, version, 0, &rdataset, 0, NULL);
 	if (result == DNS_R_UNCHANGED) {
 		result = ISC_R_SUCCESS;
@@ -208,7 +204,7 @@ failure:
 	if (dns_rdataset_isassociated(&rdataset)) {
 		dns_rdataset_disassociate(&rdataset);
 	}
-	return (result);
+	return result;
 }
 
 bool
@@ -246,7 +242,7 @@ dns_nsec_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type) {
 		break;
 	}
 	dns_rdata_freestruct(&nsecstruct);
-	return (present);
+	return present;
 }
 
 isc_result_t
@@ -263,7 +259,7 @@ dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version, dns_diff_t *diff,
 
 	result = dns_db_getoriginnode(db, &node);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	result = dns_db_findrdataset(db, node, version, dns_rdatatype_dnskey, 0,
@@ -274,7 +270,7 @@ dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version, dns_diff_t *diff,
 		*answer = false;
 	}
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 	for (result = dns_rdataset_first(&rdataset); result == ISC_R_SUCCESS;
 	     result = dns_rdataset_next(&rdataset))
@@ -286,7 +282,6 @@ dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version, dns_diff_t *diff,
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
 		if (dnskey.algorithm == DST_ALG_RSAMD5 ||
-		    dnskey.algorithm == DST_ALG_DH ||
 		    dnskey.algorithm == DST_ALG_DSA ||
 		    dnskey.algorithm == DST_ALG_RSASHA1)
 		{
@@ -326,7 +321,7 @@ dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version, dns_diff_t *diff,
 		*answer = false;
 		result = ISC_R_SUCCESS;
 	}
-	return (result);
+	return result;
 }
 
 /*%
@@ -358,7 +353,7 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 	result = dns_rdataset_first(nsecset);
 	if (result != ISC_R_SUCCESS) {
 		(*logit)(arg, ISC_LOG_DEBUG(3), "failure processing NSEC set");
-		return (result);
+		return result;
 	}
 	dns_rdataset_current(nsecset, &rdata);
 
@@ -368,7 +363,7 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 	{
 		(*logit)(arg, ISC_LOG_DEBUG(3),
 			 "NSEC missing RRSIG and/or NSEC from type map");
-		return (ISC_R_IGNORE);
+		return ISC_R_IGNORE;
 	}
 #endif
 
@@ -381,7 +376,7 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 		 */
 		(*logit)(arg, ISC_LOG_DEBUG(3),
 			 "NSEC does not cover name, before NSEC");
-		return (ISC_R_IGNORE);
+		return ISC_R_IGNORE;
 	}
 
 	if (order == 0) {
@@ -401,7 +396,7 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 				 */
 				(*logit)(arg, ISC_LOG_DEBUG(3),
 					 "ignoring parent nsec");
-				return (ISC_R_IGNORE);
+				return ISC_R_IGNORE;
 			}
 		} else if (atparent && ns && soa) {
 			/*
@@ -409,7 +404,7 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 			 * It can not be legitimately used here.
 			 */
 			(*logit)(arg, ISC_LOG_DEBUG(3), "ignoring child nsec");
-			return (ISC_R_IGNORE);
+			return ISC_R_IGNORE;
 		}
 		if (type == dns_rdatatype_cname || type == dns_rdatatype_nxt ||
 		    type == dns_rdatatype_nsec || type == dns_rdatatype_key ||
@@ -420,10 +415,10 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 			(*logit)(arg, ISC_LOG_DEBUG(3),
 				 "nsec proves name exists (owner) data=%d",
 				 *data);
-			return (ISC_R_SUCCESS);
+			return ISC_R_SUCCESS;
 		}
 		(*logit)(arg, ISC_LOG_DEBUG(3), "NSEC proves CNAME exists");
-		return (ISC_R_IGNORE);
+		return ISC_R_IGNORE;
 	}
 
 	if (relation == dns_namereln_subdomain &&
@@ -437,7 +432,7 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 		 * It can not be legitimately used here.
 		 */
 		(*logit)(arg, ISC_LOG_DEBUG(3), "ignoring parent nsec");
-		return (ISC_R_IGNORE);
+		return ISC_R_IGNORE;
 	}
 
 	if (relation == dns_namereln_subdomain &&
@@ -445,19 +440,19 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 	{
 		(*logit)(arg, ISC_LOG_DEBUG(3), "nsec proves covered by dname");
 		*exists = false;
-		return (DNS_R_DNAME);
+		return DNS_R_DNAME;
 	}
 
 	result = dns_rdata_tostruct(&rdata, &nsec, NULL);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 	relation = dns_name_fullcompare(&nsec.next, name, &order, &nlabels);
 	if (order == 0) {
 		dns_rdata_freestruct(&nsec);
 		(*logit)(arg, ISC_LOG_DEBUG(3),
 			 "ignoring nsec matches next name");
-		return (ISC_R_IGNORE);
+		return ISC_R_IGNORE;
 	}
 
 	if (order < 0 && !dns_name_issubdomain(nsecname, &nsec.next)) {
@@ -467,7 +462,7 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 		dns_rdata_freestruct(&nsec);
 		(*logit)(arg, ISC_LOG_DEBUG(3),
 			 "ignoring nsec because name is past end of range");
-		return (ISC_R_IGNORE);
+		return ISC_R_IGNORE;
 	}
 
 	if (order > 0 && relation == dns_namereln_subdomain) {
@@ -476,7 +471,7 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 		dns_rdata_freestruct(&nsec);
 		*exists = true;
 		*data = false;
-		return (ISC_R_SUCCESS);
+		return ISC_R_SUCCESS;
 	}
 	if (wild != NULL) {
 		dns_name_t common;
@@ -496,13 +491,13 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 			dns_rdata_freestruct(&nsec);
 			(*logit)(arg, ISC_LOG_DEBUG(3),
 				 "failure generating wildcard name");
-			return (result);
+			return result;
 		}
 	}
 	dns_rdata_freestruct(&nsec);
 	(*logit)(arg, ISC_LOG_DEBUG(3), "nsec range ok");
 	*exists = false;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 bool
@@ -526,10 +521,10 @@ dns_nsec_requiredtypespresent(dns_rdataset_t *nsecset) {
 		    !dns_nsec_typepresent(&rdata, dns_rdatatype_rrsig))
 		{
 			dns_rdataset_disassociate(&rdataset);
-			return (false);
+			return false;
 		}
 		found = true;
 	}
 	dns_rdataset_disassociate(&rdataset);
-	return (found);
+	return found;
 }

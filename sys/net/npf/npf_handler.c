@@ -1,6 +1,6 @@
 /*-
  * Copyright (c) 2020 Mindaugas Rasiukevicius <rmind at noxt eu>
- * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.49 2020/05/30 14:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.49.26.1 2025/08/02 05:57:48 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -148,7 +148,7 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	npf_conn_t *con;
 	npf_rule_t *rl;
 	npf_rproc_t *rp;
-	int error, decision, flags;
+	int error, decision, flags, id_match;
 	npf_match_info_t mi;
 	bool mff;
 
@@ -219,7 +219,7 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	int slock = npf_config_read_enter(npf);
 	npf_ruleset_t *rlset = npf_config_ruleset(npf);
 
-	rl = npf_ruleset_inspect(&npc, rlset, di, NPF_LAYER_3);
+	rl = npf_ruleset_inspect(&npc, rlset, di, NPF_RULE_LAYER_3);
 	if (__predict_false(rl == NULL)) {
 		const bool pass = npf_default_pass(npf);
 		npf_config_read_exit(npf, slock);
@@ -239,11 +239,20 @@ npfk_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	KASSERT(rp == NULL);
 	rp = npf_rule_getrproc(rl);
 
+	/* check for matching process uid/gid before concluding */
+	id_match = npf_rule_match_rid(rl, &npc, di);
+
 	/* Conclude with the rule and release the lock. */
 	error = npf_rule_conclude(rl, &mi);
 	npf_config_read_exit(npf, slock);
 
-	if (error) {
+	/* reverse between pass and block conditions */
+	if (id_match != -1 && !id_match) {
+		error = npf_rule_reverse(&npc, &mi, error);
+	}
+
+	/* reject packets whose addr-port pair matches no sockets  */
+	if (id_match == ENOTCONN || error) {
 		npf_stats_inc(npf, NPF_STAT_BLOCK_RULESET);
 		goto block;
 	}
@@ -322,6 +331,96 @@ out:
 	 */
 	if (mi.mi_retfl && npf_return_block(&npc, mi.mi_retfl)) {
 		*mp = NULL;
+	}
+
+	if (!error) {
+		error = ENETUNREACH;
+	}
+
+	/* Free the mbuf chain. */
+	m_freem(*mp);
+	*mp = NULL;
+	return error;
+}
+
+__dso_public int
+npfk_layer2_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
+{
+	nbuf_t nbuf;
+	npf_cache_t npc;
+	npf_rule_t *rl;
+	int error, decision, flags;
+	npf_match_info_t mi;
+
+	KASSERT(ifp != NULL);
+
+	/*
+	 * as usual, get packet info
+	 * including the interface the frame is traveling on
+	 */
+	nbuf_init(npf, &nbuf, *mp, ifp);
+	memset(&npc, 0, sizeof(npc));
+	npc.npc_ctx = npf;
+	npc.npc_nbuf = &nbuf;
+
+	mi.mi_di = di;
+	mi.mi_rid = 0;
+	mi.mi_retfl = 0;
+
+	*mp = NULL;
+	decision = NPF_DECISION_BLOCK;
+	error = 0;
+
+	/* Cache only ether header. */
+	flags = npf_cache_ether(&npc);
+
+	/* Malformed packet, leave quickly. */
+	if (flags & NPC_FMTERR) {
+		error = EINVAL;
+		goto out;
+	}
+
+	/* Just pass-through if specially tagged. */
+	if (npf_packet_bypass_tag_p(&nbuf)) {
+		goto pass;
+	}
+
+	/* Acquire the lock, inspect the ruleset using this packet. */
+	int slock = npf_config_read_enter(npf);
+	npf_ruleset_t *rlset = npf_config_ruleset(npf);
+
+	rl = npf_ruleset_inspect(&npc, rlset, di, NPF_RULE_LAYER_2);
+	if (__predict_false(rl == NULL)) {
+		npf_config_read_exit(npf, slock);
+
+		npf_stats_inc(npf, NPF_STAT_PASS_DEFAULT);
+		goto pass;
+	}
+
+	/* Conclude with the rule and release the lock. */
+	error = npf_rule_conclude(rl, &mi);
+	npf_config_read_exit(npf, slock);
+
+	if (error) {
+		npf_stats_inc(npf, NPF_ETHER_STAT_BLOCK);
+		goto out;
+	}
+	npf_stats_inc(npf, NPF_ETHER_STAT_PASS);
+
+pass:
+	decision = NPF_DECISION_PASS;
+	KASSERT(error == 0);
+
+out:
+
+	/* Get the new mbuf pointer. */
+	if ((*mp = nbuf_head_mbuf(&nbuf)) == NULL) {
+		return error ? error : ENOMEM;
+	}
+
+	/* Pass the packet if decided and there is no error. */
+	if (decision == NPF_DECISION_PASS && !error) {
+		return 0;
 	}
 
 	if (!error) {

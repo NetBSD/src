@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rhreg.h,v 1.17 2022/05/03 20:52:30 andvar Exp $	*/
+/*	$NetBSD: grf_rhreg.h,v 1.17.10.1 2025/08/02 05:55:24 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -403,7 +403,7 @@ struct MonDef {
 	void RZ3SetHWCloc (unsigned short x, unsigned short y);
 
 /*
- * sets the location of the hardwar-cursor sprite to x,y
+ * sets the location of the hardware-cursor sprite to x,y
  * relative to the logical screen beginning.
  * IMPORTANT: If you use RZ3SetHWCloc() to set the position
  * of the hardware-cursor sprite, all necessary panning is

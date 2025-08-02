@@ -1,1 +1,1 @@
-add: variable # of args declared  	msg_012_a.c(2)  ::  msg_012_b.c(2)
+add has 2 parameters in msg_012_a.c(2), versus 3 in msg_012_b.c(2) [lint2:012]

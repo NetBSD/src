@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.21 2021/12/08 20:11:54 andvar Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.21.4.1 2025/08/02 05:54:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  * Implementation Details:
  * 
  * The thread primitives used by the library (mutex_t, mutex_lock, etc.)
- * are macros which expand to the cooresponding primitives provided by
+ * are macros which expand to the corresponding primitives provided by
  * the thread engine or to nothing.  The latter is used so that code is
  * not unreasonably cluttered with #ifdefs when all thread safe support
  * is removed.
@@ -90,6 +90,9 @@
  * pthread library, and the real function in the pthread library if it
  * is.
  */
+
+#ifndef	_LIBC_REENTRANT_H_
+#define	_LIBC_REENTRANT_H_
 
 #include <pthread.h>
 #include <signal.h>
@@ -326,3 +329,5 @@ thr_once(once_t *once_control, void (*routine)(void))
 #define	FUNLOCKFILE(fp) __nothing
 
 #endif /* _REENTRANT */
+
+#endif	/* _LIBC_REENTRANT_H_ */

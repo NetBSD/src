@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.116 2024/04/24 02:08:03 thorpej Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.116.2.1 2025/08/02 05:57:42 perseant Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,54 +46,66 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.116 2024/04/24 02:08:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.116.2.1 2025/08/02 05:57:42 perseant Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif /* defined(_KERNEL) && defined(_KERNEL_OPT) */
 
 #include <sys/param.h>
+#include <sys/types.h>
+
+#include <sys/bitops.h>
 #include <sys/hash.h>
 #include <sys/queue.h>
-#include <sys/bitops.h>
 
 #if defined(_KERNEL)
-#include <sys/systm.h>
-#include <sys/kernel.h>	/* hz */
+
+#include <sys/atomic.h>
 #include <sys/callout.h>
+#include <sys/kernel.h>	/* hz */
 #include <sys/kmem.h>
 #include <sys/pool.h>
+#include <sys/sdt.h>
+#include <sys/systm.h>
 #include <sys/vmem.h>
 #include <sys/vmem_impl.h>
 #include <sys/workqueue.h>
-#include <sys/atomic.h>
+
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_km.h>
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_pdaemon.h>
+
 #else /* defined(_KERNEL) */
-#include <stdio.h>
-#include <errno.h>
+
 #include <assert.h>
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "../sys/vmem.h"
 #include "../sys/vmem_impl.h"
+
+#define	SET_ERROR(E)	(E)
+
 #endif /* defined(_KERNEL) */
 
-
 #if defined(_KERNEL)
+
 #include <sys/evcnt.h>
+
 #define VMEM_EVCNT_DEFINE(name) \
 struct evcnt vmem_evcnt_##name = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, \
     "vmem", #name); \
-EVCNT_ATTACH_STATIC(vmem_evcnt_##name);
-#define VMEM_EVCNT_INCR(ev)	vmem_evcnt_##ev.ev_count++
-#define VMEM_EVCNT_DECR(ev)	vmem_evcnt_##ev.ev_count--
+EVCNT_ATTACH_STATIC(vmem_evcnt_##name)
+#define VMEM_EVCNT_INCR(ev)	(vmem_evcnt_##ev.ev_count++)
+#define VMEM_EVCNT_DECR(ev)	(vmem_evcnt_##ev.ev_count--)
 
-VMEM_EVCNT_DEFINE(static_bt_count)
-VMEM_EVCNT_DEFINE(static_bt_inuse)
+VMEM_EVCNT_DEFINE(static_bt_count);
+VMEM_EVCNT_DEFINE(static_bt_inuse);
 
 #define	VMEM_CONDVAR_INIT(vm, wchan)	cv_init(&vm->vm_cv, wchan)
 #define	VMEM_CONDVAR_DESTROY(vm)	cv_destroy(&vm->vm_cv)
@@ -102,31 +114,32 @@ VMEM_EVCNT_DEFINE(static_bt_inuse)
 
 #else /* defined(_KERNEL) */
 
-#define VMEM_EVCNT_INCR(ev)	/* nothing */
-#define VMEM_EVCNT_DECR(ev)	/* nothing */
+#define VMEM_EVCNT_INCR(ev)	__nothing
+#define VMEM_EVCNT_DECR(ev)	__nothing
 
-#define	VMEM_CONDVAR_INIT(vm, wchan)	/* nothing */
-#define	VMEM_CONDVAR_DESTROY(vm)	/* nothing */
-#define	VMEM_CONDVAR_WAIT(vm)		/* nothing */
-#define	VMEM_CONDVAR_BROADCAST(vm)	/* nothing */
+#define	VMEM_CONDVAR_INIT(vm, wchan)	__nothing
+#define	VMEM_CONDVAR_DESTROY(vm)	__nothing
+#define	VMEM_CONDVAR_WAIT(vm)		__nothing
+#define	VMEM_CONDVAR_BROADCAST(vm)	__nothing
 
 #define	UNITTEST
 #define	KASSERT(a)		assert(a)
 #define	KASSERTMSG(a, m, ...)	assert(a)
-#define	mutex_init(a, b, c)	/* nothing */
-#define	mutex_destroy(a)	/* nothing */
-#define	mutex_enter(a)		/* nothing */
+#define	mutex_init(a, b, c)	__nothing
+#define	mutex_destroy(a)	__nothing
+#define	mutex_enter(a)		__nothing
 #define	mutex_tryenter(a)	true
-#define	mutex_exit(a)		/* nothing */
+#define	mutex_exit(a)		__nothing
 #define	mutex_owned(a)		true
-#define	ASSERT_SLEEPABLE()	/* nothing */
-#define	panic(...)		printf(__VA_ARGS__); abort()
+#define	ASSERT_SLEEPABLE()	__nothing
+#define	panic(...)		(printf(__VA_ARGS__), abort())
+
 #endif /* defined(_KERNEL) */
 
 #if defined(VMEM_SANITY)
 static void vmem_check(vmem_t *);
 #else /* defined(VMEM_SANITY) */
-#define vmem_check(vm)	/* nothing */
+#define vmem_check(vm)	__nothing
 #endif /* defined(VMEM_SANITY) */
 
 #define	VMEM_HASHSIZE_MIN	1	/* XXX */
@@ -174,7 +187,7 @@ static void vmem_xfree_bt(vmem_t *, bt_t *);
 #define	xfree(p, sz)		free(p)
 #define	bt_alloc(vm, flags)	malloc(sizeof(bt_t))
 #define	bt_free(vm, bt)		free(bt)
-#define	bt_freetrim(vm, l)	/* nothing */
+#define	bt_freetrim(vm, l)	__nothing
 #else /* defined(_KERNEL) */
 
 #define	xmalloc(sz, flags) \
@@ -279,7 +292,7 @@ bt_refill_locked(vmem_t *vm)
 	}
 
 	if (vm->vm_nfreetags <= BT_MINRESERVE) {
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 
 	if (kmem_meta_arena != NULL) {
@@ -744,12 +757,12 @@ vmem_add1(vmem_t *vm, vmem_addr_t addr, vmem_size_t size, vm_flag_t flags,
 
 	btspan = bt_alloc(vm, flags);
 	if (btspan == NULL) {
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 	btfree = bt_alloc(vm, flags);
 	if (btfree == NULL) {
 		bt_free(vm, btspan);
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 
 	btspan->bt_type = spanbttype;
@@ -808,7 +821,7 @@ vmem_import(vmem_t *vm, vmem_size_t size, vm_flag_t flags)
 	VMEM_ASSERT_LOCKED(vm);
 
 	if (vm->vm_importfn == NULL) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	if (vm->vm_flags & VM_LARGEIMPORT) {
@@ -825,14 +838,14 @@ vmem_import(vmem_t *vm, vmem_size_t size, vm_flag_t flags)
 	VMEM_LOCK(vm);
 
 	if (rc) {
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 
 	if (vmem_add1(vm, addr, size, flags, BT_TYPE_SPAN) != 0) {
 		VMEM_UNLOCK(vm);
 		(*vm->vm_releasefn)(vm->vm_arg, addr, size);
 		VMEM_LOCK(vm);
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 
 	return 0;
@@ -856,7 +869,7 @@ vmem_rehash(vmem_t *vm, size_t newhashsize, vm_flag_t flags)
 	newhashlist =
 	    xmalloc(sizeof(struct vmem_hashlist) * newhashsize, flags);
 	if (newhashlist == NULL) {
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 	for (i = 0; i < newhashsize; i++) {
 		LIST_INIT(&newhashlist[i]);
@@ -930,7 +943,7 @@ vmem_fit(const bt_t *bt, vmem_size_t size, vmem_size_t align,
 		end = maxaddr;
 	}
 	if (start > end) {
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 
 	start = VMEM_ALIGNUP(start - phase, align) + phase;
@@ -951,7 +964,7 @@ vmem_fit(const bt_t *bt, vmem_size_t size, vmem_size_t align,
 		*addrp = start;
 		return 0;
 	}
-	return ENOMEM;
+	return SET_ERROR(ENOMEM);
 }
 
 /* ---- vmem API */
@@ -1130,7 +1143,7 @@ vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags, vmem_addr_t *addrp)
 		p = pool_cache_get(qc->qc_cache, vmf_to_prf(flags));
 		if (addrp != NULL)
 			*addrp = (vmem_addr_t)p;
-		error = (p == NULL) ? ENOMEM : 0;
+		error = (p == NULL) ? SET_ERROR(ENOMEM) : 0;
 		goto out;
 	}
 #endif /* defined(QCACHE) */
@@ -1213,13 +1226,13 @@ vmem_xalloc(vmem_t *vm, const vmem_size_t size0, vmem_size_t align,
 	btnew = bt_alloc(vm, flags);
 	if (btnew == NULL) {
 		VMEM_UNLOCK(vm);
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 	btnew2 = bt_alloc(vm, flags); /* XXX not necessary if no restrictions */
 	if (btnew2 == NULL) {
 		bt_free(vm, btnew);
 		VMEM_UNLOCK(vm);
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 
 	/*
@@ -1310,7 +1323,7 @@ fail:
 	bt_free(vm, btnew);
 	bt_free(vm, btnew2);
 	VMEM_UNLOCK(vm);
-	return ENOMEM;
+	return SET_ERROR(ENOMEM);
 
 gotit:
 	KASSERT(bt->bt_type == BT_TYPE_FREE);

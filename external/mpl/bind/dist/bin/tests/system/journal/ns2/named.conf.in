@@ -20,7 +20,8 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { none; };
-	dnssec-validation yes;
+	dnssec-validation auto;
+	bindkeys-file "../../../../../bind.keys";
 	minimal-responses no;
 	recursion no;
 	notify yes;
@@ -33,4 +34,9 @@ key rndc_key {
 
 controls {
 	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+zone . {
+	type hint;
+	file "../../_common/root.hint.blackhole";
 };

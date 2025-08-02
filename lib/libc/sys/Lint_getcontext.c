@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_getcontext.c,v 1.2 2003/01/18 11:32:58 thorpej Exp $	*/
+/*	$NetBSD: Lint_getcontext.c,v 1.2.110.1 2025/08/02 05:54:42 perseant Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -9,9 +9,7 @@
 
 /*ARGSUSED*/
 int
-getcontext(ucp)
-	ucontext_t *ucp;
+getcontext(ucontext_t *ucp)
 {
-
-	return (0);
+	return 0;
 }

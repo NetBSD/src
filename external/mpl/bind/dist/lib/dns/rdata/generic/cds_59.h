@@ -1,4 +1,4 @@
-/*	$NetBSD: cds_59.h,v 1.5 2024/02/21 22:52:12 christos Exp $	*/
+/*	$NetBSD: cds_59.h,v 1.5.2.1 2025/08/02 05:53:40 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

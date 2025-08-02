@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.13 2024/05/18 00:37:41 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.13.2.1 2025/08/02 05:56:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,10 +36,6 @@
  * Layout of mcontext_t for the sh3 architecture.
  */
 
-#define _NGREG		22
-typedef int		__greg_t;
-typedef __greg_t	__gregset_t[_NGREG];
-
 #define	_REG_GBR	0
 #define	_REG_PC		1
 #define	_REG_SR		2
@@ -65,6 +61,17 @@ typedef __greg_t	__gregset_t[_NGREG];
 /* Convenience synonym */
 #define	_REG_SP		_REG_R15
 
+#define _NGREG		22
+
+
+#ifndef _LOCORE
+
+/*
+ * General register state
+ */
+typedef int		__greg_t;
+typedef __greg_t	__gregset_t[_NGREG];
+
 /*
  * FPU state description.
  * XXX: kernel doesn't support FPU yet, so this is just a placeholder.
@@ -88,29 +95,13 @@ typedef struct {
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
+#endif	/* !_LOCORE */
+
 /*
  * Machine dependent uc_flags
  */
 #define	_UC_SETSTACK		_UC_MD_BIT16
 #define	_UC_CLRSTACK		_UC_MD_BIT17
 #define	_UC_TLSBASE		_UC_MD_BIT19
-
-#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || \
-    defined(__LIBPTHREAD_SOURCE__)
-#include <sys/tls.h>
-
-__BEGIN_DECLS
-static __inline void *
-__lwp_getprivate_fast(void)
-{
-	register void *__gbr;
-
-	__asm volatile("stc gbr, %0" : "=r" (__gbr));
-
-	return __gbr;
-}
-__END_DECLS
-
-#endif
 
 #endif /* !_SH3_MCONTEXT_H_ */

@@ -10,12 +10,16 @@
 #
 #	\fBpostmap -q - /etc/postfix/virtual <\fIinputfile\fR
 # DESCRIPTION
-#	The optional \fBvirtual\fR(5) alias table rewrites recipient
-#	addresses for all local, all virtual, and all remote mail
-#	destinations.
-#	This is unlike the \fBaliases\fR(5) table which is used
-#	only for \fBlocal\fR(8) delivery. This feature is implemented
+#	The optional \fBvirtual\fR(5) alias table (virtual_alias_maps)
+#	applies to all recipients: local(8), virtual, and remote.
+#	This feature is implemented
 #	in the Postfix \fBcleanup\fR(8) daemon before mail is queued.
+#	These tables are often queried with a full email address
+#	(including domain).
+#
+#	This is unlike the \fBaliases\fR(5) table (alias_maps) which
+#	applies only to \fBlocal\fR(8) recipients. That table is
+#	only queried with the email address localpart (no domain).
 #
 #	Virtual aliasing is recursive; to terminate recursion for
 #	a specific address, alias that address to itself.
@@ -244,8 +248,11 @@
 #	and for default values. Use the "\fBpostfix reload\fR" command after
 #	a configuration change.
 # .IP "\fBvirtual_alias_maps ($virtual_maps)\fR"
-#	Optional lookup tables that alias specific mail addresses or domains
-#	to other local or remote addresses.
+#	Optional lookup tables that are often searched with a full email
+#	address (including domain) and that apply to all recipients: \fBlocal\fR(8),
+#	virtual, and remote; this is unlike alias_maps that are only searched
+#	with an email address localpart (no domain) and that apply
+#	only to \fBlocal\fR(8) recipients.
 # .IP "\fBvirtual_alias_domains ($virtual_alias_maps)\fR"
 #	Postfix is the final destination for the specified list of virtual
 #	alias domains, that is, domains for which all addresses are aliased
@@ -256,8 +263,8 @@
 # .PP
 #	Other parameters of interest:
 # .IP "\fBinet_interfaces (all)\fR"
-#	The network interface addresses that this mail system receives
-#	mail on.
+#	The local network interface addresses that this mail system
+#	receives mail on.
 # .IP "\fBmydestination ($myhostname, localhost.$mydomain, localhost)\fR"
 #	The list of domains that are delivered via the $local_transport
 #	mail delivery transport.
@@ -270,7 +277,7 @@
 #	\fIlistname\fR-request address localparts when the recipient_delimiter
 #	is set to "-".
 # .IP "\fBproxy_interfaces (empty)\fR"
-#	The network interface addresses that this mail system receives mail
+#	The remote network interface addresses that this mail system receives mail
 #	on by way of a proxy or network address translation unit.
 # SEE ALSO
 #	cleanup(8), canonicalize and enqueue mail

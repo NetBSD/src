@@ -46,8 +46,8 @@ typedef	uint32_t manh_t;
 
 /*
  * These macros add and remove an explicit integer bit in front of the
- * fractional mantissa, if the architecture doesn't have such a bit by
- * default already.
+ * fractional significand, if the architecture doesn't have such a bit
+ * by default already.
  */
 #ifdef LDBL_IMPLICIT_NBIT
 #define	SET_NBIT(hx)	((hx) | (1ULL << EXT_FRACHBITS))
@@ -70,9 +70,9 @@ static const long double Zero[] = {0.0L, -0.0L};
  * remquo in reduction algorithms.
  *
  * Assumptions:
- * - The low part of the mantissa fits in a manl_t exactly.
- * - The high part of the mantissa fits in an int64_t with enough room
- *   for an explicit integer bit in front of the fractional bits.
+ * - The low part of the significand fits in a manl_t exactly.
+ * - The high part of the significand fits in an int64_t with enough
+ *   room for an explicit integer bit in front of the fractional bits.
  */
 long double
 remquol(long double x, long double y, int *quo)

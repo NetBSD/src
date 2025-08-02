@@ -39,20 +39,8 @@ update: ../../libexec/o$(PROG)
 ../../libexec/o$(PROG): $(PROG)
 	cp $(PROG) ../../libexec/o$(PROG)
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	cp *.h printfck
-	sed '1,/^# do not edit/!d' Makefile >printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
-
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
-
 clean:
 	rm -f *.o *core $(PROG) $(TESTPROG) junk 
-	rm -rf printfck
 
 tidy:	clean
 
@@ -187,6 +175,7 @@ qmgr_deliver.o: ../../include/nvtable.h
 qmgr_deliver.o: ../../include/rcpt_print.h
 qmgr_deliver.o: ../../include/recipient_list.h
 qmgr_deliver.o: ../../include/scan_dir.h
+qmgr_deliver.o: ../../include/sendopts.h
 qmgr_deliver.o: ../../include/smtputf8.h
 qmgr_deliver.o: ../../include/stringops.h
 qmgr_deliver.o: ../../include/sys_defs.h
@@ -284,6 +273,7 @@ qmgr_message.o: ../../include/record.h
 qmgr_message.o: ../../include/resolve_clnt.h
 qmgr_message.o: ../../include/rewrite_clnt.h
 qmgr_message.o: ../../include/scan_dir.h
+qmgr_message.o: ../../include/sendopts.h
 qmgr_message.o: ../../include/sent.h
 qmgr_message.o: ../../include/split_addr.h
 qmgr_message.o: ../../include/split_at.h

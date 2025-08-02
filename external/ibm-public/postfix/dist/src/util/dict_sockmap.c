@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sockmap.c,v 1.5 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_sockmap.c,v 1.5.24.1 2025/08/02 05:50:18 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -121,7 +121,7 @@ typedef struct {
   * Class variables.
   */
 static int dict_sockmap_timeout = DICT_SOCKMAP_DEF_TIMEOUT;
-static int dict_sockmap_max_reply = DICT_SOCKMAP_DEF_MAX_REPLY;
+int     dict_sockmap_max_reply = DICT_SOCKMAP_DEF_MAX_REPLY;
 static int dict_sockmap_max_idle = DICT_SOCKMAP_DEF_MAX_IDLE;
 static int dict_sockmap_max_ttl = DICT_SOCKMAP_DEF_MAX_TTL;
 

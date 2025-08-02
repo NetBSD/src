@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.11 2024/06/12 02:31:48 gutteridge Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.11.2.1 2025/08/02 05:55:09 perseant Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -113,6 +113,24 @@
 		<string>Rockchip RK3288 Asus Tinker Board</string>
 		<key>u-boot-pkg</key>
 		<string>tinker</string>
+	</dict>
+
+	<!--
+	  imx boards
+	  -->
+	<key>embest,imx6q-marsboard</key>
+	<dict>
+		<key>description</key>
+		<string>Embest MarS Board i.MX6Dual</string>
+		<key>u-boot-pkg</key>
+		<string>marsboard</string>
+	</dict>
+	<key>riot,imx6s-riotboard</key>
+	<dict>
+		<key>description</key>
+		<string>RIoTboard i.MX6S</string>
+		<key>u-boot-pkg</key>
+		<string>riotboard</string>
 	</dict>
 
 	<!--
@@ -395,7 +413,7 @@
 		<key>description</key>
 		<string>Olimex A20-OLinuXino-MICRO</string>
 		<key>u-boot-pkg</key>
-		<string>a20-olinuxino-micro-emmc</string>
+		<string>a20-olinuxino-micro</string>
 	</dict>
 	<key>olimex,a20-olinuxino-micro-emmc</key>
 	<dict>
@@ -403,6 +421,20 @@
 		<string>Olimex A20-OLinuXino-MICRO-eMMC</string>
 		<key>u-boot-pkg</key>
 		<string>a20-olinuxino-micro-emmc</string>
+	</dict>
+	<key>olimex,a64-olinuxino</key>
+	<dict>
+		<key>description</key>
+		<string>Olimex A64-OLinuXino</string>
+		<key>u-boot-pkg</key>
+		<string>a64-olinuxino</string>
+	</dict>
+	<key>olimex,a64-olinuxino-emmc</key>
+	<dict>
+		<key>description</key>
+		<string>Olimex A64-OLinuXino-eMMC</string>
+		<key>u-boot-pkg</key>
+		<string>a64-olinuxino-emmc</string>
 	</dict>
 
 	<key>pine64,pine64-plus</key>

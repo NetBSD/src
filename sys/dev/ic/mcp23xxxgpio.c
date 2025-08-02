@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23xxxgpio.c,v 1.2 2022/01/17 19:38:14 thorpej Exp $	*/
+/*      $NetBSD: mcp23xxxgpio.c,v 1.2.10.1 2025/08/02 05:56:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio.c,v 1.2 2022/01/17 19:38:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio.c,v 1.2.10.1 2025/08/02 05:56:42 perseant Exp $");
 
 /* 
  * Driver for Microchip serial I/O expansers:
@@ -289,7 +289,7 @@ mcpgpio_attach(struct mcpgpio_softc *sc)
 
 	/*
 	 * The SPI front-end provides the logical pin count to
-	 * deal with muliple chips on one chip select.
+	 * deal with multiple chips on one chip select.
 	 */
 	if (sc->sc_npins == 0) {
 		sc->sc_npins = sc->sc_variant->type == MCPGPIO_TYPE_23x08

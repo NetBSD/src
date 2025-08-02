@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mod.c,v 1.15 2023/08/19 17:57:54 christos Exp $	*/
+/*	$NetBSD: linux_mod.c,v 1.15.6.1 2025/08/02 05:56:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.15 2023/08/19 17:57:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.15.6.1 2025/08/02 05:56:26 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.15 2023/08/19 17:57:54 christos Exp 
 # define	MD3	""
 #endif
 
-#define REQ1    "compat_ossaudio,sysv_ipc,compat_util"
+#define REQ1    "compat_ossaudio,sysv_ipc,mqueue,compat_util"
 #define REQ2    ",compat_50,compat_43"
 
 MODULE(MODULE_CLASS_EXEC, compat_linux, REQ1 REQ2 MD1 MD2 MD3);
@@ -145,7 +145,7 @@ linux_sysctl_enable(SYSCTLFN_ARGS)
 		error = exec_add(linux_execsw, __arraycount(linux_execsw));
 	else if (val == 0)
 		error = exec_remove(linux_execsw, __arraycount(linux_execsw));
-	else 
+	else
 		error = EINVAL;
 
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: peekfd.c,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: peekfd.c,v 1.3.8.1 2025/08/02 05:50:19 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -41,6 +41,9 @@
 
 #include <sys_defs.h>
 #include <sys/ioctl.h>
+#ifdef SUNOS5
+#include <sys/socket.h>			/* shutdown(2) */
+#endif
 #ifdef FIONREAD_IN_SYS_FILIO_H
 #include <sys/filio.h>
 #endif

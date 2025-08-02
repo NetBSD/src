@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.115 2024/03/05 14:15:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115.2.1 2025/08/02 05:55:57 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 2024/03/05 14:15:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115.2.1 2025/08/02 05:55:57 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -693,7 +693,7 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 }
 
 /*
- *  System dependent initilization
+ *  System dependent initialization
  */
 
 static volatile uint8_t *dip_switch, *int_status;

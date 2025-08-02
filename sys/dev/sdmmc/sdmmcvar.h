@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.36 2021/03/13 23:22:44 mlelstv Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.36.24.1 2025/08/02 05:57:04 perseant Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -66,8 +66,26 @@ struct sdmmc_cid {
 
 struct sdmmc_scr {
 	int	sd_spec;
+	int	sd_spec3;
+	int	sd_spec4;
 	int	bus_width;
+	bool	support_cmd48;
 };
+
+struct sdmmc_ssr {
+	bool	cache;		/* cache supported */
+};
+
+struct sdmmc_ext_regset {
+	bool		valid;
+	uint8_t		fno;
+	uint32_t	start_addr;
+};
+
+struct sdmmc_ext_sd {
+	struct sdmmc_ext_regset	pef;	/* Performance Enhancement */
+};
+
 
 typedef uint32_t sdmmc_response[4];
 
@@ -169,6 +187,7 @@ struct sdmmc_cis {
 	u_char		 cis1_minor;
 	char		 cis1_info_buf[256];
 	char		*cis1_info[4];
+	uint8_t		 lan_nid[6];
 };
 
 /*
@@ -201,6 +220,8 @@ struct sdmmc_function {
 	sdmmc_response raw_cid;		/* temp. storage for decoding */
 	uint32_t raw_scr[2];
 	struct sdmmc_scr scr;		/* decoded SCR value */
+	struct sdmmc_ssr ssr;		/* decoded SSR value */
+	struct sdmmc_ext_sd ext_sd;	/* decoded SD extension value */
 
 	void *bbuf;			/* bounce buffer */
 	bus_dmamap_t bbuf_dmap;		/* DMA map for bounce buffer */
@@ -373,6 +394,7 @@ int	sdmmc_io_function_enable(struct sdmmc_function *);
 void	sdmmc_io_function_disable(struct sdmmc_function *);
 int	sdmmc_io_function_abort(struct sdmmc_function *);
 
+uint32_t sdmmc_cisptr(struct sdmmc_function *);
 int	sdmmc_read_cis(struct sdmmc_function *, struct sdmmc_cis *);
 void	sdmmc_print_cis(struct sdmmc_function *);
 void	sdmmc_check_cis_quirks(struct sdmmc_function *);

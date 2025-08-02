@@ -2605,7 +2605,7 @@ mpfr_get_str (char *s, mpfr_exp_t *e, int b, size_t m, mpfr_srcptr x,
   /* otherwise err is such that |x*b^(m-g)-a*2^exp_a| < 2^(err+exp_a) */
 
   MPFR_LOG_FUNC
-    (("b=%d m=%zu x[%Pu]=%.*Rg rnd=%d",
+    (("b=%d m=%zu x[%Pd]=%.*Rg rnd=%d",
       b, m, mpfr_get_prec (x), mpfr_log_prec, x, rnd),
      ("flags=%lx", (unsigned long) __gmpfr_flags));
 

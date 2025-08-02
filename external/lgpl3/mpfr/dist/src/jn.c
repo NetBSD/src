@@ -95,8 +95,8 @@ mpfr_jn (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
   MPFR_ZIV_DECL (loop);
 
   MPFR_LOG_FUNC
-    (("n=%d x[%Pu]=%.*Rg rnd=%d", n, mpfr_get_prec (z), mpfr_log_prec, z, r),
-     ("res[%Pu]=%.*Rg inexact=%d",
+    (("n=%d x[%Pd]=%.*Rg rnd=%d", n, mpfr_get_prec (z), mpfr_log_prec, z, r),
+     ("res[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec (res), mpfr_log_prec, res, inex));
 
   absn = SAFE_ABS (unsigned long, n);

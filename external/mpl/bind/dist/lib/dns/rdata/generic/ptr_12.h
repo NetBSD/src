@@ -1,4 +1,4 @@
-/*	$NetBSD: ptr_12.h,v 1.6 2024/02/21 22:52:13 christos Exp $	*/
+/*	$NetBSD: ptr_12.h,v 1.6.2.1 2025/08/02 05:53:46 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

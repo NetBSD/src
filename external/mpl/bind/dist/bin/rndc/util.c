@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7 2024/02/21 22:51:12 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.7.2.1 2025/08/02 05:50:56 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,8 +20,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
-#include <isc/print.h>
+#include <isc/tls.h>
 
 extern bool verbose;
 extern const char *progname;
@@ -47,5 +48,5 @@ fatal(const char *format, ...) {
 	vfprintf(stderr, format, args);
 	va_end(args);
 	fprintf(stderr, "\n");
-	exit(1);
+	_exit(EXIT_FAILURE);
 }

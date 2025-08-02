@@ -1,7 +1,7 @@
-# $NetBSD: msg_001.ln,v 1.6 2023/01/14 08:48:18 rillig Exp $
+# $NetBSD: msg_001.ln,v 1.6.2.1 2025/08/02 05:58:20 perseant Exp $
 #
 # Test data for message 1 of lint2:
-#	%s defined( %s ), but never used
+#	%s is defined in %s but never used
 #
 
 0 s msg_001.c

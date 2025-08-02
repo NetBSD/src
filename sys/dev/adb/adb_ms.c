@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.22 2024/02/11 10:36:40 andvar Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.22.2.1 2025/08/02 05:56:35 perseant Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,25 +32,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.22 2024/02/11 10:36:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.22.2.1 2025/08/02 05:56:35 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/fcntl.h>
-#include <sys/poll.h>
-#include <sys/select.h>
-#include <sys/proc.h>
-#include <sys/signalvar.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/sysctl.h>
+#include <sys/condvar.h>
 
 #include <machine/autoconf.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-#include <machine/adbsys.h>
 #include <dev/adb/adbvar.h>
 
 #include "adbdebug.h"
@@ -73,7 +66,7 @@ struct adbms_softc {
 	u_int8_t	sc_class;	/* mouse class (mouse, trackball) */
 	u_int8_t	sc_buttons;	/* number of buttons */
 	u_int32_t	sc_res;		/* mouse resolution (dpi) */
-	char		sc_devid[5];	/* device indentifier */
+	char		sc_devid[5];	/* device identifier */
 	uint8_t		sc_us;		/* cmd to watch for */
 	int		sc_mb;		/* current button state */
 	device_t	sc_wsmousedev;
@@ -91,15 +84,10 @@ struct adbms_softc {
 	/* buffers */
 	int		sc_poll;
 	int		sc_msg_len;
-	int		sc_event;
+	kcondvar_t 	sc_event;
+	kmutex_t 	sc_interlock;
 	uint8_t		sc_buffer[16];
 };
-
-/* EMP device classes */
-#define MSCLASS_TABLET		0
-#define MSCLASS_MOUSE		1
-#define MSCLASS_TRACKBALL	2
-#define MSCLASS_TRACKPAD	3
 
 /*
  * Function declarations.
@@ -162,6 +150,8 @@ adbms_attach(device_t parent, device_t self, void *aux)
 	sc->sc_adbdev = aaa->dev;
 	sc->sc_adbdev->cookie = sc;
 	sc->sc_adbdev->handler = adbms_handler;
+	mutex_init(&sc->sc_interlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_event, "adbms");
 	sc->sc_us = ADBTALK(sc->sc_adbdev->current_addr, 0);
 	printf(" addr %d: ", sc->sc_adbdev->current_addr);
 
@@ -250,7 +240,6 @@ adbms_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARGS_NONE);
 }
 
-
 /*
  * Initialize extended mouse support -- probes devices as described
  * in Inside Macintosh: Devices, Chapter 5 "ADB Manager".
@@ -265,7 +254,7 @@ void
 ems_init(struct adbms_softc *sc)
 {
 	
-	DPRINTF("ems_init %d\n", sc->sc_adbdev->handler_id);
+	DPRINTF("ems_init %x\n", sc->sc_adbdev->handler_id);
 
 	switch (sc->sc_adbdev->handler_id) {
 		case ADBMS_USPEED:
@@ -288,6 +277,7 @@ adbms_init_uspeed(struct adbms_softc *sc)
 
 	addr = sc->sc_adbdev->current_addr;
 
+
 	/* Found MicroSpeed Mouse Deluxe Mac or Contour Mouse */
 	cmd = ADBLISTEN(addr, 1);
 
@@ -305,7 +295,7 @@ adbms_init_uspeed(struct adbms_softc *sc)
 	 * buffer[3]'s alternative speed mask enables using
 	 * different speed when the corr. button is down
 	 */
-	buffer[0] = 0x00;	/* Alternative speed */
+	buffer[0] = 0x20;	/* Alternative speed */
 	buffer[1] = 0x00;	/* speed = maximum */
 	buffer[2] = 0x10;	/* enable extended protocol,
 				 * lower bits = alt. speed mask
@@ -317,7 +307,21 @@ adbms_init_uspeed(struct adbms_softc *sc)
 	adbms_send_sync(sc, cmd, 4, buffer);
 
 	sc->sc_buttons = 3;
+
+	adbms_send_sync(sc, ADBTALK(addr, 1), 0, NULL);
+#ifdef ADBMS_DEBUG
+		int i;
+		printf("reg *");
+		for (i = 0; i < sc->sc_msg_len; i++)
+			printf(" %02x", sc->sc_buffer[i]);
+		printf("\n");
+#endif
 	sc->sc_res = 200;
+
+	if (sc->sc_msg_len == 0) {
+		DPRINTF("found ancient MacTrac, middle button can't be programmed\n");
+		sc->sc_res = 100;
+	}
 }
 
 static int
@@ -545,12 +549,12 @@ adbms_handler(void *cookie, int len, uint8_t *data)
 	if (len >= 2) {
 		memcpy(sc->sc_buffer, &data[2], len - 2);
 		sc->sc_msg_len = len - 2;
-		if (data[1] == sc->sc_us) {
+		if ((data[1] == sc->sc_us) && (len > 2)) {
 			/* make sense of the mouse message */
 			adbms_process_event(sc, sc->sc_msg_len, sc->sc_buffer);
 			return;
 		}
-		wakeup(&sc->sc_event);
+		cv_signal(&sc->sc_event);
 	} else {
 		DPRINTF("bogus message\n");
 	}
@@ -584,8 +588,23 @@ adbms_process_event(struct adbms_softc *sc, int len, uint8_t *buffer)
 			/* MicroSpeed mouse and Contour mouse */
 			if (len == 4)
 				buttons = (~buffer[3]) & 0xff;
-			else
-				buttons = (buffer[1] & 0x80) ? 0 : 1;
+			else {
+				/*
+				 * deal with the strange way old MacTracs report
+				 * button events:
+				 * 0x8080 - all up
+				 * 0x0000 - right button down
+				 * ox0080 - left button down
+				 * 0x8000 - both buttons down
+				 * the middle button seems to do wome weird
+				 * click lock thing
+				 */
+				int bt = ((buffer[0] & 0x80) >> 6) |
+					 ((buffer[1] & 0x80) >> 7);
+				int bttrans[] = {4, 1, 5, 0};
+				buttons = bttrans[bt];
+				DPRINTF("microspeed buttons %x\n", buttons);
+			}
 			break;
 		case ADBMS_MSA3:
 			/* Mouse Systems A3 mouse */
@@ -840,10 +859,12 @@ adbms_wait(struct adbms_softc *sc, int timeout)
 			sc->sc_ops->poll(sc->sc_ops->cookie);
 		}
 	} else {
+		mutex_enter(&sc->sc_interlock);
 		while ((sc->sc_msg_len == -1) && (cnt < timeout)) {
-			tsleep(&sc->sc_event, 0, "adbmsio", hz);
+			cv_timedwait(&sc->sc_event, &sc->sc_interlock, hz);
 			cnt++;
 		}
+		mutex_exit(&sc->sc_interlock);
 	}
 	return (sc->sc_msg_len > 0);
 }

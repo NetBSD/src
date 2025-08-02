@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.59 2021/08/07 16:18:57 thorpej Exp $	*/
+/*	$NetBSD: adb.c,v 1.59.12.1 2025/08/02 05:55:49 perseant Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.59 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.59.12.1 2025/08/02 05:55:49 perseant Exp $");
 
 #include "opt_adb.h"
 
@@ -93,6 +93,25 @@ adbmatch(device_t parent, cfdata_t cf, void *aux)
 static void
 adbattach(device_t parent, device_t self, void *aux)
 {
+
+	switch (mac68k_machine.machineid) {
+		case MACH_MACPB140:
+		case MACH_MACPB145:
+		case MACH_MACPB160:
+		case MACH_MACPB165:
+		case MACH_MACPB165C:
+		case MACH_MACPB170:
+		case MACH_MACPB180:
+		case MACH_MACPB180C:
+		case MACH_MACPB150:
+			/* Reqired on machines with in-built trackballs. */
+			printf("...  Waiting 5 seconds for adb devices to "
+			     "settle.");
+			kpause("adb-slp", false, mstohz(5000), NULL);
+			break;
+		default:
+			break;
+	}
 
 	adb_softintr_cookie = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))adb_soft_intr, NULL);

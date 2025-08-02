@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.7 2021/07/06 12:38:40 thorpej Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.7.4.1 2025/08/02 05:54:31 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,15 +31,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.7 2021/07/06 12:38:40 thorpej Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.7.4.1 2025/08/02 05:54:31 perseant Exp $");
 #endif
 
-#include <stddef.h>
-#include <inttypes.h>
-#include <ucontext.h>
-#include "extern.h"
+#include <sys/param.h>
 
+#include <inttypes.h>
 #include <stdarg.h>
+#include <stddef.h>
+#include <ucontext.h>
+
+#include "extern.h"
 
 void __resumecontext(void) __dead;
 
@@ -58,7 +60,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	if (argc > 6)
 		sp -= (argc - 6);
 	/* Align stack pointer. */
-	sp = (unsigned long *)((uintptr_t)sp & ~0xfUL);
+	sp = (unsigned long *)((uintptr_t)sp & ~STACK_ALIGNBYTES);
 	gr[_REG_SP] = (__greg_t)sp;
 	/* Arrange for return via the trampoline code. */
 	gr[_REG_RA] = (__greg_t)__resumecontext;

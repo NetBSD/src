@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.264 2024/06/29 13:46:10 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.264.2.1 2025/08/02 05:56:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.264 2024/06/29 13:46:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.264.2.1 2025/08/02 05:56:26 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,11 +169,11 @@ const struct linux_mnttypes linux_fstypes[] = {
 };
 const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 
-# ifdef DEBUG_LINUX
-#define	DPRINTF(a)	uprintf a
-# else
-#define	DPRINTF(a)
-# endif
+#ifdef DEBUG_LINUX
+#define DPRINTF(a, ...)	uprintf(a, __VA_ARGS__)
+#else
+#define DPRINTF(a, ...)
+#endif
 
 /* Local linux_misc.c functions: */
 static void linux_to_bsd_mmap_args(struct sys_mmap_args *,
@@ -1161,7 +1161,7 @@ linux_sys_personality(struct lwp *l, const struct linux_sys_personality_args *ua
 		retval[0] = led->led_personality;
 		return 0;
 	}
-	 
+
 	switch (per & LINUX_PER_MASK) {
 	case LINUX_PER_LINUX:
 	case LINUX_PER_LINUX32:
@@ -1308,7 +1308,7 @@ linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, registe
 			case LINUX_PTRACE_PEEKTEXT:
 			case LINUX_PTRACE_PEEKDATA:
 				error = copyout (retval,
-				    (void *)SCARG(uap, data), 
+				    (void *)SCARG(uap, data),
 				    sizeof *retval);
 				*retval = SCARG(uap, data);
 				break;
@@ -1457,7 +1457,7 @@ linux_sys_sysinfo(struct lwp *l, const struct linux_sys_sysinfo_args *uap, regis
 	si.sharedram = 0;	/* XXX */
 	si.bufferram = (u_long)(filepg * uvmexp.pagesize);
 	si.totalswap = (u_long)uvmexp.swpages * uvmexp.pagesize;
-	si.freeswap = 
+	si.freeswap =
 	    (u_long)(uvmexp.swpages - uvmexp.swpginuse) * uvmexp.pagesize;
 	si.procs = atomic_load_relaxed(&nprocs);
 
@@ -1685,7 +1685,7 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap,
 	const int op = (SCARG(uap, op) & FUTEX_CMD_MASK);
 	if ((op == FUTEX_WAIT || op == FUTEX_WAIT_BITSET) &&
 	    SCARG(uap, timeout) != NULL) {
-		if ((error = copyin(SCARG(uap, timeout), 
+		if ((error = copyin(SCARG(uap, timeout),
 		    &lts, sizeof(lts))) != 0) {
 			return error;
 		}
@@ -2052,8 +2052,8 @@ linux_sys_memfd_create(struct lwp *l,
 	}
 
 	if (lflags & ~LINUX_MFD_KNOWN_FLAGS) {
-		DPRINTF(("linux_sys_memfd_create: ignored flags %x\n",
-		    lflags & ~LINUX_MFD_KNOWN_FLAGS));
+		DPRINTF("%s: ignored flags %#x\n", __func__,
+		    lflags & ~LINUX_MFD_KNOWN_FLAGS);
 	}
 
 	SCARG(&muap, name) = SCARG(uap, name);
@@ -2160,7 +2160,7 @@ linux_sys_getcpu(lwp_t *l, const struct linux_sys_getcpu_args *uap,
 			return error;
 
 	}
-	
+
 	// TO-DO: Test on a NUMA machine if the node_id returned is correct
 	if (SCARG(uap, node)) {
 		u_int node_id = l->l_cpu->ci_data.cpu_numa_id;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xtext.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: xtext.c,v 1.3.8.1 2025/08/02 05:50:08 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -136,6 +136,7 @@ VSTRING *xtext_unquote_append(VSTRING *unquoted, const char *quoted)
     VSTRING_TERMINATE(unquoted);
     return (unquoted);
 }
+
 /* xtext_unquote - quoted data to unquoted */
 
 VSTRING *xtext_unquote(VSTRING *unquoted, const char *quoted)

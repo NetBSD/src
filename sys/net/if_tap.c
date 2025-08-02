@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.132 2024/04/17 18:52:54 riastradh Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.132.2.1 2025/08/02 05:57:47 perseant Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,11 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.132 2024/04/17 18:52:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.132.2.1 2025/08/02 05:57:47 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
-
 #include "opt_modular.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -663,7 +663,7 @@ tap_clone_destroyer(device_t dev)
  * call ends in tap_cdev_open.  The actual place where it is handled is
  * tap_dev_cloner.
  *
- * An tap device cannot be opened more than once at a time, so the cdevsw
+ * A tap device cannot be opened more than once at a time, so the cdevsw
  * part of open() does nothing but noting that the interface is being used and
  * hence ready to actually handle packets.
  */
@@ -902,8 +902,7 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 		m = n = m_free(m);
 	} while (m != NULL && uio->uio_resid > 0 && error == 0);
 
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 
 out:
 	return error;
@@ -977,6 +976,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 		if_statinc(ifp, if_ierrors);
 		return ENOBUFS;
 	}
+	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
 	m->m_pkthdr.len = uio->uio_resid;
 
 	mp = &m;
@@ -987,6 +987,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 				error = ENOBUFS;
 				break;
 			}
+			MCLAIM(*mp, &sc->sc_ec.ec_rx_mowner);
 		}
 		(*mp)->m_len = uimin(MHLEN, uio->uio_resid);
 		len += (*mp)->m_len;

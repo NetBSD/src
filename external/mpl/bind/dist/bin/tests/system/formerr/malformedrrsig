@@ -1,0 +1,5 @@
+# malformed RRRSIG
+# header: QUERY, additional=1
+00 00 00 00 00 00 00 00 00 00 00 01
+# ./RRSIG/IN TTL=1 covers=0 algorithm=240 labels=0 ttl=1 expire=2 signed=3 id=0
+00 00 2e 00 01 00 00 00 01 00 14 00 00 f0 00 00 00 00 01 00 00 00 02 00 00 00 03 00 00 00 00

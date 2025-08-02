@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.49 2024/05/05 02:53:02 riastradh Exp $
+# $NetBSD: Makefile,v 1.49.2.1 2025/08/02 05:58:08 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,7 @@ TESTS_C+=	t_ceil
 TESTS_C+=	t_cos
 TESTS_C+=	t_cosh
 TESTS_C+=	t_erf
+TESTS_C+=	t_errhandling
 TESTS_C+=	t_exp
 TESTS_C+=	t_fenv
 TESTS_C+=	t_fe_round
@@ -38,6 +39,7 @@ TESTS_C+=	t_modf
 TESTS_C+=	t_next
 TESTS_C+=	t_pow
 TESTS_C+=	t_precision
+TESTS_C+=	t_remquo
 TESTS_C+=	t_round
 TESTS_C+=	t_scalbn
 TESTS_C+=	t_sin

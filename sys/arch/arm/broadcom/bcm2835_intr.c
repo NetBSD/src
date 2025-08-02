@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.44 2022/11/19 09:29:26 yamt Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.44.8.1 2025/08/02 05:55:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.44 2022/11/19 09:29:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.44.8.1 2025/08/02 05:55:27 perseant Exp $");
 
 #define _INTR_PRIVATE
 
@@ -115,7 +115,7 @@ static int bcm2836mp_int_base[_BCM2836_NCPUS];
 #define BCM2836_INT_CNTHPIRQ_CPUN(n)	(BCM2836_INT_BASECPUN(n) + BCM2836_INT_CNTHPIRQ)
 #define BCM2836_INT_MAILBOX0_CPUN(n)	(BCM2836_INT_BASECPUN(n) + BCM2836_INT_MAILBOX0)
 
-/* Periperal Interrupt sources */
+/* Peripheral Interrupt sources */
 #define	BCM2835_NIRQ			96
 
 #define BCM2835_INT_GPU0BASE		(BCM2835_INT_BASE + 0)
@@ -611,7 +611,7 @@ bcm2835_icu_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	/*
 	 * XXX interrupt_distribute(9) assumes that any interrupt
 	 * handle can be used as an input to the MD interrupt_distribute
-	 * implementationm, so we are forced to return the handle
+	 * implementation, so we are forced to return the handle
 	 * we got back from intr_establish().  Upshot is that the
 	 * input to bcm2835_icu_fdt_disestablish() is ambiguous for
 	 * shared IRQs, rendering them un-disestablishable.

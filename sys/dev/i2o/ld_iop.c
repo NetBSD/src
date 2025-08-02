@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.40 2023/05/31 20:00:50 ad Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.40.6.1 2025/08/02 05:56:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.40 2023/05/31 20:00:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.40.6.1 2025/08/02 05:56:40 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ struct ld_iop_softc {
 static void	ld_iop_adjqparam(device_t, int);
 static void	ld_iop_attach(device_t, device_t, void *);
 static int	ld_iop_detach(device_t, int);
-static int	ld_iop_dump(struct ld_softc *, void *, int, int);
+static int	ld_iop_dump(struct ld_softc *, void *, daddr_t, int);
 static int	ld_iop_flush(struct ld_softc *, bool);
 static int	ld_iop_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 static void	ld_iop_intr(device_t, struct iop_msg *, void *);
@@ -231,7 +231,7 @@ ld_iop_attach(device_t parent, device_t self, void *aux)
 	printf(" %s, %s", typestr, fixedstr);
 
 	/*
-	 * Determine if the device has an private cache.  If so, print the
+	 * Determine if the device has a private cache.  If so, print the
 	 * cache size.  Even if the device doesn't appear to have a cache,
 	 * we perform a flush at shutdown.
 	 */
@@ -401,7 +401,7 @@ ld_iop_start(struct ld_softc *ld, struct buf *bp)
 }
 
 static int
-ld_iop_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
+ld_iop_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 {
 	struct iop_msg *im;
 	struct iop_softc *iop;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: akbd.4,v 1.1 2003/09/26 19:15:15 mbw Exp $
+.\"	$NetBSD: akbd.4,v 1.1.114.1 2025/08/02 05:55:10 perseant Exp $
 .\"
 .\" Copyright (c) 2003 Alex Zepeda <zipzippy@sonic.net>
 .\" All rights reserved.
@@ -28,10 +28,12 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 21, 2003
+.Dd January 20, 2025
 .Dt AKBD 4
 .Os
+.
 .Sh NAME
+.
 .Nm akbd
 .Nd Apple Desktop Bus keyboard driver for wscons
 .Sh SYNOPSIS
@@ -41,42 +43,101 @@
 .Cd "options ALTXBUTTONS"
 .Cd "options CAPS_IS_CONTROL"
 .Cd "options FORCE_FUNCTION_KEYS"
+.
 .Sh DESCRIPTION
+.
 This driver provides the
 .Xr wscons 4
 driver with support for Apple Desktop Bus keyboards.
+.Bl -tag -width Cd
+.
+.It Cd "options ALTXBUTTONS"
+.
+To map
+.Sm off
+.Ao Option Ac \&+ Aq 1 ,
+.Sm on
+.Sm off
+.Ao Option Ac \&+ Aq 2 ,
+.Sm on
+.Sm off
+.Ao Option Ac \&+ Aq 3 ,
+.Sm on
+to mouse buttons 1, 2, and 3
+respectively.
+.
+.It Cd options CAPS_IS_CONTROL
+.
+On macppc systems it is possible to tweak the keyboard driver to treat
+the caps lock key on an
+.Tn ADB
+keyboard as a control key.
+This requires special remapping because of
+.Tn ADB Ap s
+strange emulation of a mechanically-locked key.
+.
+.It Cd options FORCE_FUNCTION_KEYS
+.
+On macppc PowerBooks, several function keys double as
+.Dq hot keys
+.Pq brightness, volume, eject
+when the
+.Aq \&Fn
+modifier is held down.
+Mac OS\~X likes to reprogram the keyboard controller to send hot key
+events when
+.Aq \&Fn
+is
+.Em not
+held down and send function key events when it is.
+With this option you can transform the non-keyboard
+.Dq button
+events back into function key events.
+.El
+.
+.Ss Special Keys
+.
+To work around the limited number of buttons found on most
+.Tn ADB
+mice, the following key sequences trigger mouse button events:
 .Pp
-To work around the limited number of buttons found on most ADB mice,
-one can map key sequences to trigger mouse button events.
-To map Option+1, Option+2, Option+3 to mouse buttons 1, 2, and 3
-respectively, add the following line to your kernel configuration
-file:
+.Bl -dash -compact
+.It
+.Sm off
+.Ao Option Ac \&+ Aq LeftArrow
+.Sm on
+will work as the middle mouse button.
+.It
+.Sm off
+.Ao Option Ac \&+ Aq RightArrow
+.Sm on
+will work as the right mouse button.
+.El
 .Pp
-.Cd "options ALTXBUTTONS"
+On PowerBook (mac68k) models the following key sequences are also
+significant:
 .Pp
-On macppc systems it is possible to tweak the keyboard driver
-to treat the caps lock key on an ADB keyboard as a control key.
-This requires special remapping because of ADB's strange emulation of
-a mechanically-locked key.  To enable this code add the following
-line to your kernel configuration file:
-.Pp
-.Cd options CAPS_IS_CONTROL
-.Pp
-On macppc PowerBooks, several function keys double as "hot keys"
-(brightness, volume, eject) when the Fn modifier is held down.
-Mac OS X likes to reprogram the keyboard controller to send hot key
-events when Fn is not held down and send function key events when it
-is.
-To transform the non-keyboard "button" events back into function key
-events, place the following line in your kernel configuration file:
-.Pp
-.Cd options FORCE_FUNCTION_KEYS
-.Sh SUPPORTED HARDWARE
+.Bl -dash -compact
+.It
+.Sm off
+.Ao Option Ac \&+ Aq UpArrow
+.Sm on
+increase screen brightness.
+.It
+.Sm off
+.Ao Option Ac \&+ Aq DownArrow
+.Sm on
+decrease screen brightness.
+.El
+.
+.Ss Supported Hardware
+.
 .Nx
 is known to support the following
 .Tn ADB
 keyboards:
-.Bl -bullet -offset indent
+.Pp
+.Bl -bullet -offset indent -compact
 .It
 On-board keyboards on PowerBook models
 .It
@@ -90,16 +151,39 @@ Apple Extended Keyboard II
 .It
 Apple Adjustable Keyboard
 .It
-Most third-party ADB keyboards are supported
+Most third-party
+.Tn ADB
+keyboards are supported
 .El
+.
 .Sh SEE ALSO
+.
+.Xr xmodmap 1 ,
 .Xr adb 4 ,
 .Xr wscons 4 ,
 .Xr wskbd 4 ,
 .Xr wsconsctl 8
+.
 .Sh BUGS
+.
 The number pad on extended keyboards does not send out the proper
 key codes for many applications.
 .Pp
 The LEDs on extended keyboards are not functional under
 .Nx .
+.Pp
+In X11 with the default key mapping, middle and right mouse button events will
+hold
+.Ql Meta_L
+and this will clobber the intended mouse button.
+.Aq Option
+shoud be remapped with
+.Xr xmodmap 1
+to the
+.Aq Command
+key:
+.Bd -literal -offset indent
+remove Mod4 = Super_L
+remove Mod1 = Alt_L
+add Mod1 = Super_L
+.Ed

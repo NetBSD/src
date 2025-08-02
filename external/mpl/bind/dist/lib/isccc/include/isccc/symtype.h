@@ -1,4 +1,4 @@
-/*	$NetBSD: symtype.h,v 1.6 2024/02/21 22:52:43 christos Exp $	*/
+/*	$NetBSD: symtype.h,v 1.6.2.1 2025/08/02 05:54:06 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

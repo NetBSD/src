@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.7 2024/02/21 22:52:09 christos Exp $	*/
+/*	$NetBSD: cache.h,v 1.7.2.1 2025/08/02 05:53:33 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,7 +24,7 @@
  * Defines dns_cache_t, the cache object.
  *
  * Notes:
- *\li 	A cache object contains DNS data of a single class.
+ *\li	A cache object contains DNS data of a single class.
  *	Multiple classes will be handled by creating multiple
  *	views, each with a different class and its own cache.
  *
@@ -44,9 +44,12 @@
  ***	Imports
  ***/
 
+/* Add -DDNS_CACHE_TRACE=1 to CFLAGS for detailed reference tracing */
+
 #include <stdbool.h>
 
 #include <isc/lang.h>
+#include <isc/refcount.h>
 #include <isc/stats.h>
 #include <isc/stdtime.h>
 
@@ -57,33 +60,34 @@ ISC_LANG_BEGINDECLS
 /***
  ***	Functions
  ***/
+
+#if DNS_CACHE_TRACE
+#define dns_cache_ref(ptr)   dns_cache__ref(ptr, __func__, __FILE__, __LINE__)
+#define dns_cache_unref(ptr) dns_cache__unref(ptr, __func__, __FILE__, __LINE__)
+#define dns_cache_attach(ptr, ptrp) \
+	dns_cache__attach(ptr, ptrp, __func__, __FILE__, __LINE__)
+#define dns_cache_detach(ptrp) \
+	dns_cache__detach(ptrp, __func__, __FILE__, __LINE__)
+ISC_REFCOUNT_TRACE_DECL(dns_cache);
+#else
+ISC_REFCOUNT_DECL(dns_cache);
+#endif
+
 isc_result_t
-dns_cache_create(isc_mem_t *cmctx, isc_mem_t *hmctx, isc_taskmgr_t *taskmgr,
-		 isc_timermgr_t *timermgr, dns_rdataclass_t rdclass,
-		 const char *cachename, const char *db_type,
-		 unsigned int db_argc, char **db_argv, dns_cache_t **cachep);
+dns_cache_create(isc_loopmgr_t *loopmgr, dns_rdataclass_t rdclass,
+		 const char *cachename, isc_mem_t *mctx, dns_cache_t **cachep);
 /*%<
  * Create a new DNS cache.
  *
- * dns_cache_create2() will create a named cache.
- *
- * dns_cache_create3() will create a named cache using two separate memory
- * contexts, one for cache data which can be cleaned and a separate one for
- * memory allocated for the heap (which can grow without an upper limit and
- * has no mechanism for shrinking).
- *
- * dns_cache_create() is a backward compatible version that internally
- * specifies an empty cache name and a single memory context.
+ * dns_cache_create() will create a named cache (based on dns_rbtdb).
  *
  * Requires:
  *
- *\li	'cmctx' (and 'hmctx' if applicable) is a valid memory context.
- *
- *\li	'taskmgr' is a valid task manager and 'timermgr' is a valid timer
- * 	manager, or both are NULL.  If NULL, no periodic cleaning of the
- * 	cache will take place.
+ *\li	'loopmgr' is a valid loop manager.
  *
  *\li	'cachename' is a valid string.  This must not be NULL.
+
+ *\li	'mctx' is a valid memory context.
  *
  *\li	'cachep' is a valid pointer, and *cachep == NULL
  *
@@ -95,39 +99,6 @@ dns_cache_create(isc_mem_t *cmctx, isc_mem_t *hmctx, isc_taskmgr_t *taskmgr,
  *
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOMEMORY
- */
-
-void
-dns_cache_attach(dns_cache_t *cache, dns_cache_t **targetp);
-/*%<
- * Attach *targetp to cache.
- *
- * Requires:
- *
- *\li	'cache' is a valid cache.
- *
- *\li	'targetp' points to a NULL dns_cache_t *.
- *
- * Ensures:
- *
- *\li	*targetp is attached to cache.
- */
-
-void
-dns_cache_detach(dns_cache_t **cachep);
-/*%<
- * Detach *cachep from its cache.
- *
- * Requires:
- *
- *\li	'cachep' points to a valid cache.
- *
- * Ensures:
- *
- *\li	*cachep is NULL.
- *
- *\li	If '*cachep' is the last reference to the cache,
- *		all resources used by the cache will be freed
  */
 
 void
@@ -154,14 +125,6 @@ dns_cache_attachdb(dns_cache_t *cache, dns_db_t **dbp);
  * Ensures:
  *
  *\li	*dbp is attached to the database.
- */
-
-isc_result_t
-dns_cache_clean(dns_cache_t *cache, isc_stdtime_t now);
-/*%<
- * Force immediate cleaning of the cache, freeing all rdatasets
- * whose TTL has expired as of 'now' and that have no pending
- * references.
  */
 
 const char *
@@ -283,6 +246,18 @@ void
 dns_cache_updatestats(dns_cache_t *cache, isc_result_t result);
 /*
  * Update cache statistics based on result code in 'result'
+ */
+
+void
+dns_cache_setmaxrrperset(dns_cache_t *cache, uint32_t value);
+/*%<
+ * Set the maximum resource records per RRSet that can be cached.
+ */
+
+void
+dns_cache_setmaxtypepername(dns_cache_t *cache, uint32_t value);
+/*%<
+ * Set the maximum resource record types per owner name that can be cached.
  */
 
 #ifdef HAVE_LIBXML2

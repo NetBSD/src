@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.17 2024/04/06 10:08:54 skrll Exp $ */
+/* $NetBSD: types.h,v 1.17.2.1 2025/08/02 05:56:04 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ typedef unsigned int tlb_asid_t;
 
 #if defined(_KERNEL)
 typedef struct label_t {	/* Used by setjmp & longjmp */
-        register_t lb_reg[16];	/* */
+	register_t lb_reg[16];	/* */
 	__uint32_t lb_sr;
 } label_t;
 #endif
@@ -95,6 +95,7 @@ typedef __int32_t	__register_t;
 #define	__HAVE_FAST_SOFTINTS		// Not yet
 #endif
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#define	__HAVE_MM_MD_KERNACC
 #define	__HAVE_NEW_STYLE_BUS_H
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_TLS_VARIANT_I

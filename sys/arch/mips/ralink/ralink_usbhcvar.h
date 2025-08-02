@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_usbhcvar.h,v 1.3 2012/10/27 17:18:02 chs Exp $	*/
+/*	$NetBSD: ralink_usbhcvar.h,v 1.3.74.1 2025/08/02 05:55:54 perseant Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 #include <mips/ralink/ralink_var.h>
 
 /*
- * EHCI controllers need a way to find their compainion controllers
+ * EHCI controllers need a way to find their companion controllers
  * so we keep track of them as we attach.
  */
 

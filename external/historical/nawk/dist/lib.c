@@ -29,13 +29,17 @@ THIS SOFTWARE.
 #define DEBUG
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <math.h>
 #include "awk.h"
 #include "awkgram.h"
+
+extern int u8_nextlen(const char *s);
 
 char	EMPTY[] = { '\0' };
 FILE	*infile	= NULL;
@@ -65,10 +69,10 @@ static Cell dollar1 = { OCELL, CFLD, NULL, EMPTY, 0.0, FLD|STR|DONTFREE, NULL, N
 
 void recinit(unsigned int n)
 {
-	if ( (record = malloc(n)) == NULL
-	  || (fields = malloc(n+1)) == NULL
-	  || (fldtab = calloc(nfields+2, sizeof(*fldtab))) == NULL
-	  || (fldtab[0] = malloc(sizeof(**fldtab))) == NULL)
+	if ( (record = (char *) malloc(n)) == NULL
+	  || (fields = (char *) malloc(n+1)) == NULL
+	  || (fldtab = (Cell **) calloc(nfields+2, sizeof(*fldtab))) == NULL
+	  || (fldtab[0] = (Cell *) malloc(sizeof(**fldtab))) == NULL)
 		FATAL("out of space for $0 and fields");
 	*record = '\0';
 	*fldtab[0] = dollar0;
@@ -84,7 +88,7 @@ void makefields(int n1, int n2)		/* create $n1..$n2 inclusive */
 	int i;
 
 	for (i = n1; i <= n2; i++) {
-		fldtab[i] = malloc(sizeof(**fldtab));
+		fldtab[i] = (Cell *) malloc(sizeof(**fldtab));
 		if (fldtab[i] == NULL)
 			FATAL("out of space in makefields %d", i);
 		*fldtab[i] = dollar1;
@@ -133,7 +137,7 @@ void savefs(void)
 	}
 
 	len_inputFS = len + 1;
-	inputFS = realloc(inputFS, len_inputFS);
+	inputFS = (char *) realloc(inputFS, len_inputFS);
 	if (inputFS == NULL)
 		FATAL("field separator %.10s... is too long", *FS);
 	memcpy(inputFS, *FS, len_inputFS);
@@ -152,17 +156,12 @@ int getrec(char **pbuf, int *pbufsize, bool isrecord)	/* get next input record *
 		firsttime = false;
 		initgetrec();
 	}
-	   dprintf( ("RS=<%s>, FS=<%s>, ARGC=%g, FILENAME=%s\n",
-		*RS, *FS, *ARGC, *FILENAME) );
-	if (isrecord) {
-		donefld = false;
-		donerec = true;
-		savefs();
-	}
+	DPRINTF("RS=<%s>, FS=<%s>, ARGC=%g, FILENAME=%s\n",
+		*RS, *FS, *ARGC, *FILENAME);
 	saveb0 = buf[0];
 	buf[0] = 0;
 	while (argno < *ARGC || infile == stdin) {
-		   dprintf( ("argno=%d, file=|%s|\n", argno, file) );
+		DPRINTF("argno=%d, file=|%s|\n", argno, file);
 		if (infile == NULL) {	/* have to open a new file */
 			file = getargv(argno);
 			if (file == NULL || *file == '\0') {	/* deleted or zapped */
@@ -175,11 +174,12 @@ int getrec(char **pbuf, int *pbufsize, bool isrecord)	/* get next input record *
 				continue;
 			}
 			*FILENAME = file;
-			   dprintf( ("opening file %s\n", file) );
+			DPRINTF("opening file %s\n", file);
 			if (*file == '-' && *(file+1) == '\0')
 				infile = stdin;
 			else if ((infile = fopen(file, "r")) == NULL)
 				FATAL("can't open file %s", file);
+			innew = true;
 			setfval(fnrloc, 0.0);
 		}
 		c = readrec(&buf, &bufsize, infile, innew);
@@ -192,6 +192,9 @@ int getrec(char **pbuf, int *pbufsize, bool isrecord)	/* get next input record *
 				fldtab[0]->sval = buf;	/* buf == record */
 				fldtab[0]->tval = REC | STR | DONTFREE;
 				check_number(fldtab[0]);
+				donefld = false;
+				donerec = true;
+				savefs();
 			}
 			setfval(nrloc, nrloc->fval+1);
 			setfval(fnrloc, fnrloc->fval+1);
@@ -219,16 +222,22 @@ void nextfile(void)
 	argno++;
 }
 
+extern int readcsvrec(char **pbuf, int *pbufsize, FILE *inf, bool newflag);
+
 int readrec(char **pbuf, int *pbufsize, FILE *inf, bool newflag)	/* read one record into buf */
 {
-	int sep, c, isrec;
-	char *rr, *buf = *pbuf;
+	int sep, c, isrec; // POTENTIAL BUG? isrec is a macro in awk.h
+	char *rr = *pbuf, *buf = *pbuf;
 	int bufsize = *pbufsize;
 	char *rs = getsval(rsloc);
 
-	if (*rs && rs[1]) {
+	if (CSV) {
+		c = readcsvrec(&buf, &bufsize, inf, newflag);
+		isrec = (c == EOF && rr == buf) ? false : true;
+	} else if (*rs && rs[1]) {
 		bool found;
 
+		memset(buf, 0, bufsize);
 		fa *pfa = makedfa(rs, 1);
 		if (newflag)
 			found = fnematch(pfa, inf, &buf, &bufsize, recsize);
@@ -240,6 +249,8 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf, bool newflag)	/* read one rec
 		}
 		if (found)
 			setptr(patbeg, '\0');
+		isrec = found != 0 || *buf != '\0';
+
 	} else {
 		if ((sep = *rs) == 0) {
 			sep = '\n';
@@ -269,42 +280,96 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf, bool newflag)	/* read one rec
 		if (!adjbuf(&buf, &bufsize, 1+rr-buf, recsize, &rr, "readrec 3"))
 			FATAL("input record `%.30s...' too long", buf);
 		*rr = 0;
+		isrec = c != EOF || rr != buf;
 	}
 	*pbuf = buf;
 	*pbufsize = bufsize;
-	isrec = *buf || !feof(inf);
-	   dprintf( ("readrec saw <%s>, returns %d\n", buf, isrec) );
+	DPRINTF("readrec saw <%s>, returns %d\n", buf, isrec);
 	return isrec;
+}
+
+
+/*******************
+ * loose ends here:
+ *   \r\n should become \n
+ *   what about bare \r?  Excel uses that for embedded newlines
+ *   can't have "" in unquoted fields, according to RFC 4180
+*/
+
+
+int readcsvrec(char **pbuf, int *pbufsize, FILE *inf, bool newflag) /* csv can have \n's */
+{			/* so read a complete record that might be multiple lines */
+	int sep, c;
+	char *rr = *pbuf, *buf = *pbuf;
+	int bufsize = *pbufsize;
+	bool in_quote = false;
+
+	sep = '\n'; /* the only separator; have to skip over \n embedded in "..." */
+	rr = buf;
+	while ((c = getc(inf)) != EOF) {
+		if (c == sep) {
+			if (! in_quote)
+				break;
+			if (rr > buf && rr[-1] == '\r')	// remove \r if was \r\n
+				rr--;
+		}
+
+		if (rr-buf+1 > bufsize)
+			if (!adjbuf(&buf, &bufsize, 1+rr-buf,
+			    recsize, &rr, "readcsvrec 1"))
+				FATAL("input record `%.30s...' too long", buf);
+		*rr++ = c;
+		if (c == '"')
+			in_quote = ! in_quote;
+ 	}
+	if (c == '\n' && rr > buf && rr[-1] == '\r') 	// remove \r if was \r\n
+		rr--;
+
+	if (!adjbuf(&buf, &bufsize, 1+rr-buf, recsize, &rr, "readcsvrec 4"))
+		FATAL("input record `%.30s...' too long", buf);
+	*rr = 0;
+	*pbuf = buf;
+	*pbufsize = bufsize;
+	DPRINTF("readcsvrec saw <%s>, returns %d\n", buf, c);
+	return c;
 }
 
 char *getargv(int n)	/* get ARGV[n] */
 {
+	Array *ap;
 	Cell *x;
 	char *s, temp[50];
-	extern Array *ARGVtab;
+	extern Cell *ARGVcell;
 
+	ap = (Array *)ARGVcell->sval;
 	snprintf(temp, sizeof(temp), "%d", n);
-	if (lookup(temp, ARGVtab) == NULL)
+	if (lookup(temp, ap) == NULL)
 		return NULL;
-	x = setsymtab(temp, "", 0.0, STR, ARGVtab);
+	x = setsymtab(temp, "", 0.0, STR, ap);
 	s = getsval(x);
-	   dprintf( ("getargv(%d) returns |%s|\n", n, s) );
+	DPRINTF("getargv(%d) returns |%s|\n", n, s);
 	return s;
 }
 
 void setclvar(char *s)	/* set var=value from s */
 {
-	char *p;
+	char *e, *p;
 	Cell *q;
+
+/* commit f3d9187d4e0f02294fb1b0e31152070506314e67 broke T.argv test */
+/* I don't understand why it was changed. */
 
 	for (p=s; *p != '='; p++)
 		;
+	e = p;
 	*p++ = 0;
 	p = qstring(p, '\0');
 	q = setsymtab(s, p, 0.0, STR, symtab);
 	setsval(q, p);
 	check_number(q);
-	   dprintf( ("command line set %s to |%s|\n", s, p) );
+	DPRINTF("command line set %s to |%s|\n", s, p);
+	free(p);
+	*e = '=';
 }
 
 
@@ -325,15 +390,17 @@ void fldbld(void)	/* create fields from current record */
 	n = strlen(r);
 	if (n > fieldssize) {
 		xfree(fields);
-		if ((fields = malloc(n+2)) == NULL) /* possibly 2 final \0s */
+		if ((fields = (char *) malloc(n+2)) == NULL) /* possibly 2 final \0s */
 			FATAL("out of space for fields in fldbld %d", n);
 		fieldssize = n;
 	}
 	fr = fields;
 	i = 0;	/* number of fields accumulated here */
-	if (strlen(inputFS) > 1) {	/* it's a regular expression */
+	if (inputFS == NULL)	/* make sure we have a copy of FS */
+		savefs();
+	if (!CSV && strlen(inputFS) > 1) {	/* it's a regular expression */
 		i = refldbld(r, inputFS);
-	} else if ((sep = *inputFS) == ' ') {	/* default whitespace */
+	} else if (!CSV && (sep = *inputFS) == ' ') {	/* default whitespace */
 		for (i = 0; ; ) {
 			while (*r == ' ' || *r == '\t' || *r == '\n')
 				r++;
@@ -352,26 +419,58 @@ void fldbld(void)	/* create fields from current record */
 			*fr++ = 0;
 		}
 		*fr = 0;
-	} else if ((sep = *inputFS) == 0) {		/* new: FS="" => 1 char/field */
-		for (i = 0; *r != '\0'; r += n) {
-			char buf[MB_LEN_MAX + 1];
-
+	} else if (CSV) {	/* CSV processing.  no error handling */
+		if (*r != 0) {
+			for (;;) {
+				i++;
+				if (i > nfields)
+					growfldtab(i);
+				if (freeable(fldtab[i]))
+					xfree(fldtab[i]->sval);
+				fldtab[i]->sval = fr;
+				fldtab[i]->tval = FLD | STR | DONTFREE;
+				if (*r == '"' ) { /* start of "..." */
+					for (r++ ; *r != '\0'; ) {
+						if (*r == '"' && r[1] != '\0' && r[1] == '"') {
+							r += 2; /* doubled quote */
+							*fr++ = '"';
+						} else if (*r == '"' && (r[1] == '\0' || r[1] == ',')) {
+							r++; /* skip over closing quote */
+							break;
+						} else {
+							*fr++ = *r++;
+						}
+					}
+					*fr++ = 0;
+				} else {	/* unquoted field */
+					while (*r != ',' && *r != '\0')
+						*fr++ = *r++;
+					*fr++ = 0;
+				}
+				if (*r++ == 0)
+					break;
+	
+			}
+		}
+		*fr = 0;
+	} else if ((sep = *inputFS) == 0) {	/* new: FS="" => 1 char/field */
+		for (i = 0; *r != '\0'; ) {
+			char buf[10];
 			i++;
 			if (i > nfields)
 				growfldtab(i);
 			if (freeable(fldtab[i]))
 				xfree(fldtab[i]->sval);
-			n = mblen(r, MB_LEN_MAX);
-			if (n < 0)
-				n = 1;
-			memcpy(buf, r, n);
-			buf[n] = '\0';
+			n = u8_nextlen(r);
+			for (j = 0; j < n; j++)
+				buf[j] = *r++;
+			buf[j] = '\0';
 			fldtab[i]->sval = tostring(buf);
 			fldtab[i]->tval = FLD | STR;
 		}
 		*fr = 0;
 	} else if (*r != 0) {	/* if 0, it's a null field */
-		/* subtlecase : if length(FS) == 1 && length(RS > 0)
+		/* subtle case: if length(FS) == 1 && length(RS > 0)
 		 * \n is NOT a field separator (cf awk book 61,84).
 		 * this variable is tested in the inner while loop.
 		 */
@@ -489,7 +588,7 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 	n = strlen(rec);
 	if (n > fieldssize) {
 		xfree(fields);
-		if ((fields = malloc(n+1)) == NULL)
+		if ((fields = (char *) malloc(n+1)) == NULL)
 			FATAL("out of space for fields in refldbld %d", n);
 		fieldssize = n;
 	}
@@ -498,7 +597,7 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 	if (*rec == '\0')
 		return 0;
 	pfa = makedfa(fs, 1);
-	   dprintf( ("into refldbld, rec = <%s>, pat = <%s>\n", rec, fs) );
+	DPRINTF("into refldbld, rec = <%s>, pat = <%s>\n", rec, fs);
 	tempstat = pfa->initstat;
 	for (i = 1; ; i++) {
 		if (i > nfields)
@@ -507,16 +606,16 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 			xfree(fldtab[i]->sval);
 		fldtab[i]->tval = FLD | STR | DONTFREE;
 		fldtab[i]->sval = fr;
-		   dprintf( ("refldbld: i=%d\n", i) );
+		DPRINTF("refldbld: i=%d\n", i);
 		if (nematch(pfa, rec)) {
 			pfa->initstat = 2;	/* horrible coupling to b.c */
-			   dprintf( ("match %s (%d chars)\n", patbeg, patlen) );
+			DPRINTF("match %s (%d chars)\n", patbeg, patlen);
 			strncpy(fr, rec, patbeg-rec);
 			fr += patbeg - rec + 1;
 			*(fr-1) = '\0';
 			rec = patbeg + patlen;
 		} else {
-			   dprintf( ("no match %s\n", rec) );
+			DPRINTF("no match %s\n", rec);
 			strcpy(fr, rec);
 			pfa->initstat = tempstat;
 			break;
@@ -550,15 +649,15 @@ void recbld(void)	/* create $0 from $1..$NF if necessary */
 	if (!adjbuf(&record, &recsize, 2+r-record, recsize, &r, "recbld 3"))
 		FATAL("built giant record `%.30s...'", record);
 	*r = '\0';
-	   dprintf( ("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, (void*)fldtab[0]) );
+	DPRINTF("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, (void*)fldtab[0]);
 
 	if (freeable(fldtab[0]))
 		xfree(fldtab[0]->sval);
 	fldtab[0]->tval = REC | STR | DONTFREE;
 	fldtab[0]->sval = record;
 
-	   dprintf( ("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, (void*)fldtab[0]) );
-	   dprintf( ("recbld = |%s|\n", record) );
+	DPRINTF("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, (void*)fldtab[0]);
+	DPRINTF("recbld = |%s|\n", record);
 	donerec = true;
 }
 
@@ -664,12 +763,11 @@ void error()
 			fprintf(stderr, " source line number %d", curnode->lineno);
 		else if (lineno)
 			fprintf(stderr, " source line number %d", lineno);
+		if (compile_time == COMPILING && cursource() != NULL)
+			fprintf(stderr, " source file %s", cursource());
+		fprintf(stderr, "\n");
+		eprint();
 	}
-
-	if (compile_time == COMPILING && cursource() != NULL)
-		fprintf(stderr, " source file %s", cursource());
-	fprintf(stderr, "\n");
-	eprint();
 }
 
 void eprint(void)	/* try to print context around error */
@@ -741,10 +839,10 @@ int isclvar(const char *s)	/* is s of form var=something ? */
 {
 	const char *os = s;
 
-	if (!isalpha((uschar) *s) && *s != '_')
+	if (!isalpha((unsigned char) *s) && *s != '_')
 		return 0;
 	for ( ; *s; s++)
-		if (!(isalnum((uschar) *s) || *s == '_'))
+		if (!(isalnum((unsigned char) *s) || *s == '_'))
 			break;
 	return *s == '=' && s > os;
 }
@@ -753,32 +851,81 @@ int isclvar(const char *s)	/* is s of form var=something ? */
 /* appears to be broken in gcc on linux: thinks 0x123 is a valid FP number */
 /* wrong: violates 4.10.1.4 of ansi C standard */
 
-#include <math.h>
+/* well, not quite. As of C99, hex floating point is allowed. so this is
+ * a bit of a mess. We work around the mess by checking for a hexadecimal
+ * value and disallowing it. Similarly, we now follow gawk and allow only
+ * +nan, -nan, +inf, and -inf for NaN and infinity values.
+ */
 
-static int get_number(const char *s, double *res)
+/*
+ * This routine now has a more complicated interface, the main point
+ * being to avoid the double conversion of a string to double, and
+ * also to convey out, if requested, the information that the numeric
+ * value was a leading string or is all of the string. The latter bit
+ * is used in getfval().
+ */
+
+bool is_valid_number(const char *s, bool trailing_stuff_ok,
+			bool *no_trailing, double *result)
 {
 	double r;
 	char *ep;
+	bool retval = false;
+	bool is_nan = false;
+	bool is_inf = false;
+
+	if (no_trailing)
+		*no_trailing = false;
+
+	while (isspace((unsigned char) *s))
+		s++;
+
+	/* no hex floating point, sorry */
+	if (s[0] == '0' && tolower((unsigned char) s[1]) == 'x')
+		return false;
+
+	/* allow +nan, -nan, +inf, -inf, any other letter, no */
+	if (s[0] == '+' || s[0] == '-') {
+		is_nan = (strncasecmp(s+1, "nan", 3) == 0);
+		is_inf = (strncasecmp(s+1, "inf", 3) == 0);
+		if ((is_nan || is_inf)
+		    && (isspace((unsigned char) s[4]) || s[4] == '\0'))
+			goto convert;
+		else if (! isdigit((unsigned char) s[1]) && s[1] != '.')
+			return false;
+	}
+	else if (! isdigit((unsigned char) s[0]) && s[0] != '.')
+		return false;
+
+convert:
 	errno = 0;
 	r = strtod(s, &ep);
-	if (ep == s || r == HUGE_VAL || errno == ERANGE)
-		return 0;
-	while (*ep == ' ' || *ep == '\t' || *ep == '\n')
+	if (ep == s || errno == ERANGE)
+		return false;
+
+	if (isnan(r) && s[0] == '-' && signbit(r) == 0)
+		r = -r;
+
+	if (result != NULL)
+		*result = r;
+
+	/*
+	 * check for trailing stuff
+	 */
+	while (isspace((unsigned char) *ep))
 		ep++;
-	if (*ep != '\0')
-		return 0;
-	if (res)		
-		*res = r;
-	return 1;
+
+	if (no_trailing != NULL)
+		*no_trailing = (*ep == '\0');
+
+        /* return true if found the end, or trailing stuff is allowed */
+	retval = *ep == '\0' || trailing_stuff_ok;
+
+	return retval;
 }
 
 void check_number(Cell *x)
 {
-	if (get_number(x->sval, &x->fval))
+	if (is_valid_number(x->sval, false, NULL, &x->fval))
 		x->tval |= NUM;
-}
-
-int is_number(const char *s)
-{
-	return get_number(s, NULL);
 }

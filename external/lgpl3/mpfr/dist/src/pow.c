@@ -64,7 +64,7 @@ mpfr_pow_is_exact (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y,
   MPFR_ASSERTD (d < 0);
 
   /* Compute a,b such that x=a*2^b.
-     Since a comes from a regular MPFR number, due to the constrainst on the
+     Since a comes from a regular MPFR number, due to the constraints on the
      exponent and the precision, there can be no integer overflow below. */
   mpz_init (a);
   b = mpfr_get_z_2exp (a, x);
@@ -131,14 +131,13 @@ mpfr_pow_general (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y,
   /* Declaration of the size variable */
   mpfr_prec_t Nz = MPFR_PREC(z);               /* target precision */
   mpfr_prec_t Nt;                              /* working precision */
-  mpfr_exp_t err;                              /* error */
   MPFR_ZIV_DECL (ziv_loop);
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg y[%Pu]=%.*Rg rnd=%d",
+    (("x[%Pd]=%.*Rg y[%Pd]=%.*Rg rnd=%d",
       mpfr_get_prec (x), mpfr_log_prec, x,
       mpfr_get_prec (y), mpfr_log_prec, y, rnd_mode),
-     ("z[%Pu]=%.*Rg inexact=%d",
+     ("z[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec (z), mpfr_log_prec, z, inexact));
 
   /* We put the absolute value of x in absx, pointing to the significand
@@ -171,12 +170,14 @@ mpfr_pow_general (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y,
   MPFR_ZIV_INIT (ziv_loop, Nt);
   for (;;)
     {
+      mpfr_exp_t err, exp_t;
       MPFR_BLOCK_DECL (flags1);
 
       /* compute exp(y*ln|x|), using MPFR_RNDU to get an upper bound, so
          that we can detect underflows. */
       mpfr_log (t, absx, MPFR_IS_NEG (y) ? MPFR_RNDD : MPFR_RNDU); /* ln|x| */
       mpfr_mul (t, y, t, MPFR_RNDU);                              /* y*ln|x| */
+      exp_t = MPFR_GET_EXP (t);
       if (k_non_zero)
         {
           MPFR_LOG_MSG (("subtract k * ln(2)\n", 0));
@@ -188,14 +189,16 @@ mpfr_pow_general (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y,
           MPFR_LOG_VAR (t);
         }
       /* estimate of the error -- see pow function in algorithms.tex.
-         The error on t is at most 1/2 + 3*2^(EXP(t)+1) ulps, which is
-         <= 2^(EXP(t)+3) for EXP(t) >= -1, and <= 2 ulps for EXP(t) <= -2.
+         The error on t before the subtraction of k*log(2) is at most
+         1/2 + 3*2^(EXP(t)+1) ulps, which is <= 2^(EXP(t)+3) for EXP(t) >= -1,
+         and <= 2 ulps for EXP(t) <= -2.
          Additional error if k_no_zero: treal = t * errk, with
          1 - |k| * 2^(-Nt) <= exp(-|k| * 2^(-Nt)) <= errk <= 1,
          i.e., additional absolute error <= 2^(EXP(k)+EXP(t)-Nt).
-         Total error <= 2^err1 + 2^err2 <= 2^(max(err1,err2)+1). */
-      err = MPFR_NOTZERO (t) && MPFR_GET_EXP (t) >= -1 ?
-        MPFR_GET_EXP (t) + 3 : 1;
+         Total ulp error <= 2^err1 + 2^err2 <= 2^(max(err1,err2)+1),
+         where err1 = EXP(t)+3 for EXP(t) >= -1, and 1 otherwise,
+         and err2 = EXP(k). */
+      err = MPFR_NOTZERO (t) && exp_t >= -1 ? exp_t + 3 : 1;
       if (k_non_zero)
         {
           if (MPFR_GET_EXP (k) > err)
@@ -328,11 +331,17 @@ mpfr_pow_general (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y,
        */
       if (rnd_mode == MPFR_RNDN && inexact < 0 && lk < 0 &&
           MPFR_GET_EXP (z) == __gmpfr_emin - 1 - lk && mpfr_powerof2_raw (z))
-        /* Rounding to nearest, real result > z * 2^k = 2^(emin - 2),
-         * underflow case: we will obtain the correct result and exceptions
-         *  by replacing z by nextabove(z).
-         */
-        mpfr_nextabove (z);
+        /* Rounding to nearest, exact result > z * 2^k = 2^(emin - 2),
+         * and underflow case because the rounded result assuming an
+         * unbounded exponent range is 2^(emin - 2). We need to round
+         * to 2^(emin - 1), i.e. to round toward +inf.
+         * Note: the old code was using "mpfr_nextabove (z);" instead of
+         * setting rnd_mode to MPFR_RNDU for the call to mpfr_mul_2si, but
+         * this was incorrect in precision 1 because in this precision,
+         * mpfr_nextabove gave 2^(emin - 1), which is representable,
+         * so that mpfr_mul_2si did not generate the wanted underflow
+         * (the value was correct, but the underflow flag was missing). */
+        rnd_mode = MPFR_RNDU;
       MPFR_CLEAR_FLAGS ();
       inex2 = mpfr_mul_2si (z, z, lk, rnd_mode);
       if (inex2)  /* underflow or overflow */
@@ -385,10 +394,10 @@ mpfr_pow (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y, mpfr_rnd_t rnd_mode)
   MPFR_SAVE_EXPO_DECL (expo);
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg y[%Pu]=%.*Rg rnd=%d",
+    (("x[%Pd]=%.*Rg y[%Pd]=%.*Rg rnd=%d",
       mpfr_get_prec (x), mpfr_log_prec, x,
       mpfr_get_prec (y), mpfr_log_prec, y, rnd_mode),
-     ("z[%Pu]=%.*Rg inexact=%d",
+     ("z[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec (z), mpfr_log_prec, z, inexact));
 
   if (MPFR_ARE_SINGULAR (x, y))

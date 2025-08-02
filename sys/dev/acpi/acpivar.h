@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.90 2024/03/20 03:14:45 riastradh Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.90.2.1 2025/08/02 05:56:32 perseant Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -102,6 +102,12 @@ struct acpi_pci_info {
 #define ACPI_PCI_INFO_DEVICE	__BIT(0)	/* PCI device */
 #define ACPI_PCI_INFO_BRIDGE	__BIT(1)	/* PCI bridge */
 
+/* Represents a device node dependency. */
+struct acpi_devnodedep {
+	SIMPLEQ_ENTRY(acpi_devnodedep)	 dd_list;
+	struct acpi_devnode		*dd_node;
+};
+
 /*
  * An ACPI device node.
  *
@@ -135,9 +141,16 @@ struct acpi_devnode {
 	bus_dma_tag_t		 ad_dmat;	/* Bus DMA tag for device */
 	bus_dma_tag_t		 ad_dmat64;	/* Bus DMA tag for device (64-bit) */
 
+	device_t		ad_gpiodev;	/* GPIO controller device */
+	int			(*ad_gpio_translate)(void *, ACPI_RESOURCE_GPIO *, void **);
+	void			*ad_gpio_priv;	/* private data for translate */
+
 	SIMPLEQ_ENTRY(acpi_devnode)	ad_list;
 	SIMPLEQ_ENTRY(acpi_devnode)	ad_child_list;
 	SIMPLEQ_HEAD(, acpi_devnode)	ad_child_head;
+	SIMPLEQ_HEAD(, acpi_devnodedep)	ad_deps;
+
+	bool			ad_scanned;	/* private: acpi_rescan state */
 };
 
 /*

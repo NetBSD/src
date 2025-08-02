@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.80 2024/06/29 13:46:10 christos Exp $  
+	$NetBSD: syscalls.master,v 1.80.2.1 2025/08/02 05:56:24 perseant Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -52,6 +52,7 @@
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_mmap.h>
+#include <compat/linux/common/linux_mqueue.h>
 #include <compat/linux/common/linux_socketcall.h>
 #include <compat/linux/common/linux_sched.h>
 
@@ -468,12 +469,23 @@
 268	UNIMPL		mbind
 269	UNIMPL		get_mempolicy
 270	UNIMPL		set_mempolicy
-271	UNIMPL		mq_open
-272	UNIMPL		mq_unlink
-273	UNIMPL		mq_timedsend
-274	UNIMPL		mq_timedreceive
-275	UNIMPL		mq_notify
-276	UNIMPL		mq_getsetattr
+271	STD		{ linux_mqd_t|linux_sys||mq_open(const char *name, \
+			    int oflag, linux_umode_t mode, \
+			    struct linux_mq_attr *attr); }
+272	STD		{ int|linux_sys||mq_unlink(const char *name); }
+273	STD		{ int|linux_sys||mq_timedsend(linux_mqd_t mqdes, \
+			    const char *msg_ptr, size_t msg_len, \
+			    unsigned int msg_prio, \
+			    const struct linux_timespec *abs_timeout); }
+274	STD		{ ssize_t|linux_sys||mq_timedreceive(linux_mqd_t mqdes, \
+			    char *msg_ptr, size_t msg_len, \
+			    unsigned int *msg_prio, \
+			    const struct linux_timespec *abs_timeout); }
+275	STD		{ int|linux_sys||mq_notify(linux_mqd_t mqdes, \
+			    const struct linux_sigevent *sevp); }
+276	STD		{ int|linux_sys||mq_getsetattr(linux_mqd_t mqdes, \
+			    const struct linux_mq_attr *newattr, \
+			    struct linux_mq_attr *oldattr); }
 277	UNIMPL		vserve
 278	STD		{ int|linux_sys||waitid(int idtype, id_t id, \
 			    linux_siginfo_t *infop, int options, \
@@ -522,7 +534,8 @@
 			    linux_sigset_t *sigset); }
 303	UNIMPL		unshare
 304	UNIMPL		splice
-305	UNIMPL		sync_file_range
+305	STD		{ int|linux_sys||sync_file_range(int fd, \
+			    off_t offset, off_t nbytes, unsigned int flags); }
 306	UNIMPL		tee
 307	UNIMPL		vmsplice
 308	UNIMPL		move_pages
@@ -587,7 +600,7 @@
 340	UNIMPL		name_to_handle_at
 341	UNIMPL		open_by_handle_at
 342	UNIMPL		clock_adjtime
-343	UNIMPL		syncfs
+343	STD		{ int|linux_sys||syncfs(int fd); }
 344	STD		{ int|linux_sys||sendmmsg(int s, \
 			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
 			    unsigned int flags); }
@@ -598,7 +611,9 @@
 349	UNIMPL		finit_module
 350	UNIMPL		sched_setattr
 351	UNIMPL		sched_getattr
-352	UNIMPL		renameat2
+352	STD		{ int|linux_sys||renameat2(int fromfd, \
+			    const char *from, int tofd, const char *to, \
+			    unsigned int flags); }
 353	NOARGS		{ ssize_t|sys||getrandom(void *buf, size_t buflen, \
 			    unsigned int flags); }
 354	STD		{ int|linux_sys||memfd_create(const char *name, \
@@ -608,7 +623,9 @@
 357	UNIMPL		userfaultfd
 358	UNIMPL		membarrier
 359	UNIMPL		mlock2
-360	UNIMPL		copy_file_range
+360	STD		{ ssize_t|linux_sys||copy_file_range(int fd_in, \
+			off_t * off_in, int fd_out, off_t * off_out, \
+			size_t len, unsigned int flags); }
 361	UNIMPL		preadv2
 362	UNIMPL		pwritev2
 363	UNIMPL		pkey_mprotect
@@ -685,7 +702,9 @@
 432	UNIMPL
 433	UNIMPL
 434	UNIMPL
-435	UNIMPL
+435	STD		{ int|linux_sys||clone3( \
+			    struct linux_user_clone3_args *cl_args, \
+			    size_t size); }
 436	STD		{ int|linux_sys||close_range(unsigned int first, \
 			    unsigned int last, unsigned int flags); }
 437	UNIMPL

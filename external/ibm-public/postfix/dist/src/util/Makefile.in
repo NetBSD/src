@@ -45,7 +45,9 @@ SRCS	= alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	byte_mask.c known_tcp_ports.c argv_split_at.c dict_stream.c \
 	sane_strtol.c hash_fnv.c ldseed.c mkmap_cdb.c mkmap_db.c mkmap_dbm.c \
 	mkmap_fail.c mkmap_lmdb.c mkmap_open.c mkmap_sdbm.c inet_prefix_top.c \
-	inet_addr_sizes.c
+	inet_addr_sizes.c quote_for_json.c mystrerror.c \
+	sane_sockaddr_to_hostaddr.c normalize_ws.c valid_uri_scheme.c \
+	clean_ascii_cntrl_space.c
 OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	attr_print64.o attr_print_plain.o attr_scan0.o attr_scan64.o \
 	attr_scan_plain.o auto_clnt.o base64_code.o basename.o binhash.o \
@@ -91,7 +93,9 @@ OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	msg_logger.o logwriter.o unix_dgram_connect.o unix_dgram_listen.o \
 	byte_mask.o known_tcp_ports.o argv_split_at.o dict_stream.o \
 	sane_strtol.o hash_fnv.o ldseed.o mkmap_db.o mkmap_dbm.o \
-	mkmap_fail.o mkmap_open.o inet_prefix_top.o inet_addr_sizes.o
+	mkmap_fail.o mkmap_open.o inet_prefix_top.o inet_addr_sizes.o \
+	quote_for_json.o mystrerror.o sane_sockaddr_to_hostaddr.o \
+	normalize_ws.o valid_uri_scheme.o clean_ascii_cntrl_space.o
 # MAP_OBJ is for maps that may be dynamically loaded with dynamicmaps.cf.
 # When hard-linking these, makedefs sets NON_PLUGIN_MAP_OBJ=$(MAP_OBJ),
 # otherwise it sets the PLUGIN_* macros.
@@ -123,7 +127,8 @@ HDRS	= argv.h attr.h attr_clnt.h auto_clnt.h base64_code.h binhash.h \
 	valid_utf8_hostname.h midna_domain.h dict_union.h dict_inline.h \
 	check_arg.h argv_attr.h msg_logger.h logwriter.h byte_mask.h \
 	known_tcp_ports.h sane_strtol.h hash_fnv.h ldseed.h mkmap.h \
-	inet_prefix_top.h inet_addr_sizes.h
+	inet_prefix_top.h inet_addr_sizes.h valid_uri_scheme.h \
+	clean_ascii_cntrl_space.h
 TESTSRC	= fifo_open.c fifo_rdwr_bug.c fifo_rdonly_bug.c select_bug.c \
 	stream_test.c dup2_pass_on_exec.c
 DEFS	= -I. -D$(SYSTYPE)
@@ -145,7 +150,8 @@ TESTPROG= dict_open dup2_pass_on_exec events exec_command fifo_open \
 	vstream timecmp dict_cache midna_domain casefold strcasecmp_utf8 \
 	vbuf_print split_qnameval vstream msg_logger byte_mask \
 	known_tcp_ports dict_stream find_inet binhash hash_fnv argv \
-	clean_env inet_prefix_top
+	clean_env inet_prefix_top printable readlline quote_for_json \
+	normalize_ws valid_uri_scheme clean_ascii_cntrl_space
 PLUGIN_MAP_SO = $(LIB_PREFIX)pcre$(LIB_SUFFIX) $(LIB_PREFIX)lmdb$(LIB_SUFFIX) \
 	$(LIB_PREFIX)cdb$(LIB_SUFFIX) $(LIB_PREFIX)sdbm$(LIB_SUFFIX)
 HTABLE_FIX = NORANDOMIZE=1
@@ -215,23 +221,8 @@ plugin_map_obj_update: $(LIB_MAP_OBJ)
 	  cmp -s $$i $(LIB_DIR)/$$i 2>/dev/null || cp $$i $(LIB_DIR); \
 	done
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	cp *.h printfck
-	sed '1,/^# do not edit/!d' Makefile >printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
-
-shar:
-	@shar $(FILES)
-
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
-
 clean:
 	rm -f *.o $(LIB) *core $(TESTPROG) junk $(MAKES) *.tmp
-	rm -rf printfck
 
 tidy:	clean
 
@@ -361,6 +352,16 @@ watchdog: $(LIB)
 	mv junk $@.o
 
 unescape: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+printable: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+readlline: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
@@ -609,6 +610,26 @@ inet_prefix_top: $(LIB)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
+quote_for_json: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+normalize_ws: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+valid_uri_scheme: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+clean_ascii_cntrl_space: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
 tests: all valid_hostname_test mac_expand_test dict_test unescape_test \
 	hex_quote_test ctable_test inet_addr_list_test base64_code_test \
 	attr_scan64_test attr_scan0_test host_port_test dict_tests \
@@ -618,7 +639,9 @@ tests: all valid_hostname_test mac_expand_test dict_test unescape_test \
 	strcasecmp_utf8_test vbuf_print_test miss_endif_cidr_test \
 	miss_endif_regexp_test split_qnameval_test vstring_test \
 	vstream_test byte_mask_tests mystrtok_test known_tcp_ports_test \
-	binhash_test argv_test inet_prefix_top_test
+	binhash_test argv_test inet_prefix_top_test printable_test \
+	valid_utf8_string_test readlline_test quote_for_json_test \
+	normalize_ws_test valid_uri_scheme_test clean_ascii_cntrl_space_test
  
 dict_tests: all dict_test \
 	dict_pcre_tests dict_cidr_test dict_thash_test dict_static_test \
@@ -649,6 +672,15 @@ unescape_test: unescape unescape.in unescape.ref
 #	$(SHLIB_ENV) ${VALGRIND} ./unescape <unescape.in | $(SHLIB_ENV) ${VALGRIND} ./unescape -e >unescape.tmp
 #	diff unescape.in unescape.tmp
 	rm -f unescape.tmp
+
+printable_test: printable
+	$(SHLIB_ENV) ${VALGRIND} ./printable 
+
+readlline_test: readlline
+	$(SHLIB_ENV) ${VALGRIND} ./readlline 
+
+valid_utf8_string_test: valid_utf8_string
+	$(SHLIB_ENV) ${VALGRIND} ./valid_utf8_string 
 
 hex_quote_test: hex_quote
 	$(SHLIB_ENV) ${VALGRIND} ./hex_quote <hex_quote.c | od -cb >hex_quote.tmp
@@ -1083,6 +1115,18 @@ argv_test: argv
 inet_prefix_top_test: inet_prefix_top
 	$(SHLIB_ENV) ${VALGRIND} ./inet_prefix_top
 
+quote_for_json_test: quote_for_json
+	$(SHLIB_ENV) ${VALGRIND} ./quote_for_json
+
+normalize_ws_test: normalize_ws
+	$(SHLIB_ENV) ${VALGRIND} ./normalize_ws
+
+valid_uri_scheme_test: valid_uri_scheme
+	$(SHLIB_ENV) ${VALGRIND} ./valid_uri_scheme
+
+clean_ascii_cntrl_space_test: clean_ascii_cntrl_space
+	$(SHLIB_ENV) ${VALGRIND} ./clean_ascii_cntrl_space
+
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
@@ -1119,9 +1163,12 @@ allspace.o: vbuf.h
 allspace.o: vstring.h
 argv.o: argv.c
 argv.o: argv.h
+argv.o: check_arg.h
 argv.o: msg.h
 argv.o: mymalloc.h
 argv.o: sys_defs.h
+argv.o: vbuf.h
+argv.o: vstring.h
 argv_attr_print.o: argv.h
 argv_attr_print.o: argv_attr.h
 argv_attr_print.o: argv_attr_print.c
@@ -1344,6 +1391,14 @@ cidr_match.o: stringops.h
 cidr_match.o: sys_defs.h
 cidr_match.o: vbuf.h
 cidr_match.o: vstring.h
+clean_ascii_cntrl_space.o: check_arg.h
+clean_ascii_cntrl_space.o: clean_ascii_cntrl_space.c
+clean_ascii_cntrl_space.o: clean_ascii_cntrl_space.h
+clean_ascii_cntrl_space.o: stringops.h
+clean_ascii_cntrl_space.o: sys_defs.h
+clean_ascii_cntrl_space.o: vbuf.h
+clean_ascii_cntrl_space.o: vstream.h
+clean_ascii_cntrl_space.o: vstring.h
 clean_env.o: argv.h
 clean_env.o: check_arg.h
 clean_env.o: clean_env.c
@@ -2157,6 +2212,7 @@ logwriter.o: logwriter.c
 logwriter.o: logwriter.h
 logwriter.o: msg.h
 logwriter.o: mymalloc.h
+logwriter.o: name_code.h
 logwriter.o: safe_open.h
 logwriter.o: sys_defs.h
 logwriter.o: vbuf.h
@@ -2426,6 +2482,12 @@ mymalloc.o: sys_defs.h
 myrand.o: myrand.c
 myrand.o: myrand.h
 myrand.o: sys_defs.h
+mystrerror.o: check_arg.h
+mystrerror.o: mystrerror.c
+mystrerror.o: stringops.h
+mystrerror.o: sys_defs.h
+mystrerror.o: vbuf.h
+mystrerror.o: vstring.h
 mystrtok.o: check_arg.h
 mystrtok.o: msg.h
 mystrtok.o: mystrtok.c
@@ -2470,6 +2532,16 @@ non_blocking.o: iostuff.h
 non_blocking.o: msg.h
 non_blocking.o: non_blocking.c
 non_blocking.o: sys_defs.h
+normalize_ws.o: check_arg.h
+normalize_ws.o: msg.h
+normalize_ws.o: msg_vstream.h
+normalize_ws.o: mymalloc.h
+normalize_ws.o: normalize_ws.c
+normalize_ws.o: stringops.h
+normalize_ws.o: sys_defs.h
+normalize_ws.o: vbuf.h
+normalize_ws.o: vstream.h
+normalize_ws.o: vstring.h
 nvtable.o: htable.h
 nvtable.o: mymalloc.h
 nvtable.o: nvtable.c
@@ -2525,11 +2597,18 @@ posix_signals.o: posix_signals.c
 posix_signals.o: posix_signals.h
 posix_signals.o: sys_defs.h
 printable.o: check_arg.h
+printable.o: parse_utf8_char.h
 printable.o: printable.c
 printable.o: stringops.h
 printable.o: sys_defs.h
 printable.o: vbuf.h
 printable.o: vstring.h
+quote_for_json.o: check_arg.h
+quote_for_json.o: quote_for_json.c
+quote_for_json.o: stringops.h
+quote_for_json.o: sys_defs.h
+quote_for_json.o: vbuf.h
+quote_for_json.o: vstring.h
 rand_sleep.o: iostuff.h
 rand_sleep.o: msg.h
 rand_sleep.o: myrand.h
@@ -2594,6 +2673,10 @@ sane_rename.o: sane_fsops.h
 sane_rename.o: sane_rename.c
 sane_rename.o: sys_defs.h
 sane_rename.o: warn_stat.h
+sane_sockaddr_to_hostaddr.o: inet_proto.h
+sane_sockaddr_to_hostaddr.o: myaddrinfo.h
+sane_sockaddr_to_hostaddr.o: sane_sockaddr_to_hostaddr.c
+sane_sockaddr_to_hostaddr.o: sys_defs.h
 sane_socketpair.o: msg.h
 sane_socketpair.o: sane_socketpair.c
 sane_socketpair.o: sane_socketpair.h
@@ -2652,6 +2735,7 @@ spawn_command.o: check_arg.h
 spawn_command.o: clean_env.h
 spawn_command.o: exec_command.h
 spawn_command.o: msg.h
+spawn_command.o: set_eugid.h
 spawn_command.o: set_ugid.h
 spawn_command.o: spawn_command.c
 spawn_command.o: spawn_command.h
@@ -2836,6 +2920,16 @@ valid_hostname.o: valid_hostname.c
 valid_hostname.o: valid_hostname.h
 valid_hostname.o: vbuf.h
 valid_hostname.o: vstring.h
+valid_uri_scheme.o: check_arg.h
+valid_uri_scheme.o: msg.h
+valid_uri_scheme.o: msg_vstream.h
+valid_uri_scheme.o: stringops.h
+valid_uri_scheme.o: sys_defs.h
+valid_uri_scheme.o: valid_uri_scheme.c
+valid_uri_scheme.o: valid_uri_scheme.h
+valid_uri_scheme.o: vbuf.h
+valid_uri_scheme.o: vstream.h
+valid_uri_scheme.o: vstring.h
 valid_utf8_hostname.o: check_arg.h
 valid_utf8_hostname.o: midna_domain.h
 valid_utf8_hostname.o: msg.h
@@ -2848,6 +2942,7 @@ valid_utf8_hostname.o: valid_utf8_hostname.h
 valid_utf8_hostname.o: vbuf.h
 valid_utf8_hostname.o: vstring.h
 valid_utf8_string.o: check_arg.h
+valid_utf8_string.o: parse_utf8_char.h
 valid_utf8_string.o: stringops.h
 valid_utf8_string.o: sys_defs.h
 valid_utf8_string.o: valid_utf8_string.c
@@ -2859,6 +2954,7 @@ vbuf.o: vbuf.h
 vbuf_print.o: check_arg.h
 vbuf_print.o: msg.h
 vbuf_print.o: mymalloc.h
+vbuf_print.o: stringops.h
 vbuf_print.o: sys_defs.h
 vbuf_print.o: vbuf.h
 vbuf_print.o: vbuf_print.c

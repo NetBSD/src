@@ -1,0 +1,270 @@
+PPoossttffiixx RReeppllaacceemmeennttss ffoorr DDeepprreeccaatteedd FFeeaattuurreess
+
+-------------------------------------------------------------------------------
+
+PPuurrppoossee ooff tthhiiss ddooccuummeenntt
+
+This document describes Postfix features that are deprecated (will be removed)
+or that have already been removed. It also has tips for making an existing
+Postfix configuration more future-proof.
+
+Overview:
+
+  * Why deprecate?
+  * Deprecation process
+  * Deprecated features
+
+WWhhyy ddeepprreeccaattee??
+
+Sometimes, a Postfix feature needs to be replaced with a different one. To give
+an example:
+
+  * The initial Postfix TLS implementation used multiple boolean parameters:
+    one parameter to enable opportunistic TLS (for example, "smtp_enforce_tls =
+    yes") and one parameter to enable mandatory TLS (for example,
+    "smtp_require_tls = yes").
+
+  * As we added support more features such as fingerprint, dane, and so on, we
+    decided not to add more boolean parameters. Instead we introduced one
+    configuration parameter to select from multiple deployment models (for
+    example, smtp_tls_security_level = may | encrypt | dane, etc...).
+
+Having both the "old" and "new" way to configure Postfix is convenient for
+existing Postfix installations, because their configuration does not break
+after an upgrade to a new version. Unfortunately, there are also disadvantages.
+Having multiple ways to do similar things is not only confusing for newcomers,
+it also makes Postfix harder to change.
+
+DDeepprreeccaattiioonn pprroocceessss
+
+The basic process steps are:
+
+ 1. Inform humans that a feature will be removed, and suggest replacements, in
+    logging and documentation.
+
+ 2. Remove the feature, and update logging and documentation.
+
+Disclaimer: it has taken 20 years for some features to be removed. This past is
+not a guarantee for the future.
+
+DDeepprreeccaatteedd ffeeaattuurreess
+
+The table summarizes removed or deprecated features and replacements. Click on
+the "obsolete feature" name for a more detailed description.
+
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |                           |WWaarrnniinngg|          |                         |
+    |OObbssoolleettee ffeeaattuurree nnaammee      |aass     |RReemmoovveedd   |RReeppllaacceemmeenntt              |
+    |                           |ooff     |iinn vveerrssiioonn|                         |
+    |                           |vveerrssiioonn|          |                         |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |disable_dns_lookups        |   3.9 |      -   |smtp_dns_support_level   |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |xxx_use_tls                |   3.9 |      -   |xxx_tls_security_level   |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |xxx_enforce_tls            |   3.9 |      -   |xxx_tls_security_level   |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |xxx_per_site               |   3.9 |      -   |xxx_policy_maps          |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_tls_dh1024_param_file|   3.9 |      -   |do not specify (leave at |
+    |                           |       |          |default)                 |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_tls_eecdh_grade      |   3.9 |      -   |do not specify (leave at |
+    |                           |       |          |default)                 |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |permit_mx_backup           |   3.9 |      -   |relay_domains            |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |check_relay_domains        |   2.2 |     3.9  |permit_mynetworks,       |
+    |                           |       |          |reject_unauth_destination|
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |reject_maps_rbl            |   2.1 |     3.9  |reject_rbl_client        |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |permit_naked_ip_address    |   2.0 |     3.9  |permit_mynetworks,       |
+    |                           |       |          |permit_sasl_authenticated|
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+
+OObbssoolleettee DDNNSS oonn//ooffff ccoonnffiigguurraattiioonn
+
+The postconf(1) command logs the following:
+
+  * support for parameter "disable_dns_lookups" will be removed; instead,
+    specify "smtp_dns_support_level"
+
+Replace obsolete configuration with its replacement:
+
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |GGooaall                  |OObbssoolleettee ccoonnffiigguurraattiioonn  |RReeppllaacceemmeenntt             |
+    |                      |                        |ccoonnffiigguurraattiioonn           |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |To disable DNS lookups|disable_dns_lookups =   |smtp_dns_support_level =|
+    |in the Postfix SMTP/  |yes                     |disabled                |
+    |LMTP client           |                        |                        |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |                      |                        |Leave                   |
+    |                      |                        |smtp_dns_support_level  |
+    |To enable DNS lookups |                        |at the implicit default |
+    |in the Postfix SMTP/  |disable_dns_lookups = no|which is empty, unless  |
+    |LMTP client           |                        |you need a higher       |
+    |                      |                        |support level such as   |
+    |                      |                        |DNSSEC.                 |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+
+OObbssoolleettee ooppppoorrttuunniissttiicc TTLLSS ccoonnffiigguurraattiioonn
+
+The postconf(1) command logs one of the following:
+
+  * support for parameter "lmtp_use_tls" will be removed; instead, specify
+    "lmtp_tls_security_level"
+  * support for parameter "smtp_use_tls" will be removed; instead, specify
+    "smtp_tls_security_level"
+  * support for parameter "smtpd_use_tls" will be removed; instead, specify
+    "smtpd_tls_security_level"
+
+There are similarly-named parameters and warnings for postscreen(8) and
+tlsproxy(8), but those parameters should rarely be specified by hand.
+
+Replace obsolete configuration with its replacement:
+
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |GGooaall                    |OObbssoolleettee ccoonnffiigguurraattiioonn|RReeppllaacceemmeenntt ccoonnffiigguurraattiioonn|
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |To turn off TLS         |xxx_use_tls = no      |xxx_security_level = none|
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |To turn on opportunistic|xxx_use_tls = yes     |xxx_security_level = may |
+    |TLS                     |                      |                         |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+
+OObbssoolleettee mmaannddaattoorryy TTLLSS ccoonnffiigguurraattiioonn
+
+The postconf(1) command logs one of the following:
+
+  * support for parameter "lmtp_enforce_tls" will be removed; instead, specify
+    "lmtp_tls_security_level"
+  * support for parameter "smtp_enforce_tls" will be removed; instead, specify
+    "smtp_tls_security_level"
+  * support for parameter "smtpd_enforce_tls" will be removed; instead, specify
+    "smtpd_tls_security_level"
+
+There are similarly-named parameters and warnings for postscreen(8) and
+tlsproxy(8), but those parameters should rarely be specified by hand.
+
+Replace obsolete configuration with its replacement:
+
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |GGooaall                    |OObbssoolleettee ccoonnffiigguurraattiioonn|RReeppllaacceemmeenntt ccoonnffiigguurraattiioonn|
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |To turn off mandatory   |xxx_enforce_tls = no  |xxx_security_level = may |
+    |TLS                     |                      |                         |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |To turn on mandatory TLS|xxx_enforce_tls = yes |xxx_security_level =     |
+    |                        |                      |encrypt                  |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+
+OObbssoolleettee TTLLSS ppoolliiccyy ttaabbllee ccoonnffiigguurraattiioonn
+
+The postconf(1) command logs one of the following:
+
+  * support for parameter "lmtp_tls_per_site" will be removed; instead, specify
+    "lmtp_tls_policy_maps"
+  * support for parameter "smtp_tls_per_site" will be removed; instead, specify
+    "smtp_tls_policy_maps"
+
+There is similarly-named parameter and warning for tlsproxy(8), but that
+parameter should rarely be specified by hand.
+
+Unfortunately, this is more than a name change: the table format has changed
+too, as has the table search process. There is no simple conversion of the
+obsolete form to its replacement.
+
+cchheecckk__rreellaayy__ddoommaaiinnss
+
+Depending on the Postfix version, the Postfix SMTP daemon logs following
+warning:
+
+  * support for restriction "check_relay_domains" has been removed in Postfix
+    3.9"; instead, specify "reject_unauth_destination"
+  * support for restriction "check_relay_domains" will be removed from Postfix;
+    use "reject_unauth_destination" instead
+
+This feature was removed because it would relay based on the client domain
+name, which is not robust.
+
+Recommended configuration to prevent an "open relay" problem with the SMTP
+service on port 25:
+
+    main.cf:
+        smtpd_recipient_restrictions =
+            permit_mynetworks,
+            permit_sasl_authenticated,
+            reject_unauth_destination
+            ...other restrictions...
+
+Or equivalent in smtpd_relay_restrictions.
+
+ppeerrmmiitt__mmxx__bbaacckkuupp
+
+The Postfix version 3.9 and later SMTP daemon logs the following warning:
+
+  * support for restriction "permit_mx_backup" will be removed from Postfix;
+    instead, specify "relay_domains"
+
+This feature will be removed because it is too difficult to configure recipient
+address validation, making Postfix a source of backscatter bounces.
+
+To specify the domains that Postfix will provide MX backup service for, see
+Configuring Postfix as primary or backup MX host for a remote site.
+
+rreejjeecctt__mmaappss__rrbbll
+
+Depending on the Postfix version, the SMTP daemon logs one of the following
+warnings:
+
+  * support for restriction "reject_maps_rbl" has been removed in Postfix 3.9";
+    instead, specify "reject_rbl_client domain-name"
+  * support for restriction "reject_maps_rbl" will be removed from Postfix; use
+    "reject_rbl_client domain-name" instead
+
+This feature was replaced because "MAPS RBL" is the name of a specific
+reputation service. The reject_rbl_client feature provides a superset of the
+reject_maps_rbl functionality.
+
+Recommended configuration:
+
+    main.cf:
+        smtpd_recipient_restrictions =
+            permit_mynetworks,
+            permit_sasl_authenticated,
+            reject_unauth_destination
+            reject_rbl_client domain-name
+            ...other restrictions...
+
+Where domain-name is the domain name of a DNS reputation service.
+
+ppeerrmmiitt__nnaakkeedd__iipp__aaddddrreessss
+
+Depending on the Postfix version, the SMTP daemon logs one of the following
+warnings:
+
+  * support for restriction "permit_naked_ip_address" has been removed in
+    Postfix 3.9"; instead, specify "permit_mynetworks" or
+    "permit_sasl_authenticated"
+  * restriction permit_naked_ip_address is deprecated. Use permit_mynetworks or
+    permit_sasl_authenticated instead
+
+This feature was removed because it was easy to get a false match when
+smtpd_recipient_restrictions was intended to match a remote SMTP client IP
+address.
+
+Recommended configuration:
+
+    main.cf:
+        smtpd_recipient_restrictions =
+            permit_mynetworks,
+            permit_sasl_authenticated,
+            reject_unauth_destination
+            reject_rbl_client domain-name
+            ...other restrictions...
+
+That is, no restriction on HELO or EHLO syntax. Such restrictions ar rarely
+useful nowadays.
+

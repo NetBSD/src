@@ -4,9 +4,117 @@
  *
  *****************************************************************************/
 
-/*
- * Copyright (C) 2000 - 2023, Intel Corp.
+/******************************************************************************
+ *
+ * 1. Copyright Notice
+ *
+ * Some or all of this work - Copyright (c) 1999 - 2024, Intel Corp.
  * All rights reserved.
+ *
+ * 2. License
+ *
+ * 2.1. This is your license from Intel Corp. under its intellectual property
+ * rights. You may have additional license terms from the party that provided
+ * you this software, covering your right to use that party's intellectual
+ * property rights.
+ *
+ * 2.2. Intel grants, free of charge, to any person ("Licensee") obtaining a
+ * copy of the source code appearing in this file ("Covered Code") an
+ * irrevocable, perpetual, worldwide license under Intel's copyrights in the
+ * base code distributed originally by Intel ("Original Intel Code") to copy,
+ * make derivatives, distribute, use and display any portion of the Covered
+ * Code in any form, with the right to sublicense such rights; and
+ *
+ * 2.3. Intel grants Licensee a non-exclusive and non-transferable patent
+ * license (with the right to sublicense), under only those claims of Intel
+ * patents that are infringed by the Original Intel Code, to make, use, sell,
+ * offer to sell, and import the Covered Code and derivative works thereof
+ * solely to the minimum extent necessary to exercise the above copyright
+ * license, and in no event shall the patent license extend to any additions
+ * to or modifications of the Original Intel Code. No other license or right
+ * is granted directly or by implication, estoppel or otherwise;
+ *
+ * The above copyright and patent license is granted only if the following
+ * conditions are met:
+ *
+ * 3. Conditions
+ *
+ * 3.1. Redistribution of Source with Rights to Further Distribute Source.
+ * Redistribution of source code of any substantial portion of the Covered
+ * Code or modification with rights to further distribute source must include
+ * the above Copyright Notice, the above License, this list of Conditions,
+ * and the following Disclaimer and Export Compliance provision. In addition,
+ * Licensee must cause all Covered Code to which Licensee contributes to
+ * contain a file documenting the changes Licensee made to create that Covered
+ * Code and the date of any change. Licensee must include in that file the
+ * documentation of any changes made by any predecessor Licensee. Licensee
+ * must include a prominent statement that the modification is derived,
+ * directly or indirectly, from Original Intel Code.
+ *
+ * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
+ * Redistribution of source code of any substantial portion of the Covered
+ * Code or modification without rights to further distribute source must
+ * include the following Disclaimer and Export Compliance provision in the
+ * documentation and/or other materials provided with distribution. In
+ * addition, Licensee may not authorize further sublicense of source of any
+ * portion of the Covered Code, and must include terms to the effect that the
+ * license from Licensee to its licensee is limited to the intellectual
+ * property embodied in the software Licensee provides to its licensee, and
+ * not to intellectual property embodied in modifications its licensee may
+ * make.
+ *
+ * 3.3. Redistribution of Executable. Redistribution in executable form of any
+ * substantial portion of the Covered Code or modification must reproduce the
+ * above Copyright Notice, and the following Disclaimer and Export Compliance
+ * provision in the documentation and/or other materials provided with the
+ * distribution.
+ *
+ * 3.4. Intel retains all right, title, and interest in and to the Original
+ * Intel Code.
+ *
+ * 3.5. Neither the name Intel nor any other trademark owned or controlled by
+ * Intel shall be used in advertising or otherwise to promote the sale, use or
+ * other dealings in products derived from or relating to the Covered Code
+ * without prior written authorization from Intel.
+ *
+ * 4. Disclaimer and Export Compliance
+ *
+ * 4.1. INTEL MAKES NO WARRANTY OF ANY KIND REGARDING ANY SOFTWARE PROVIDED
+ * HERE. ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
+ * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT, ASSISTANCE,
+ * INSTALLATION, TRAINING OR OTHER SERVICES. INTEL WILL NOT PROVIDE ANY
+ * UPDATES, ENHANCEMENTS OR EXTENSIONS. INTEL SPECIFICALLY DISCLAIMS ANY
+ * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
+ * PARTICULAR PURPOSE.
+ *
+ * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
+ * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
+ * COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY INDIRECT,
+ * SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT, UNDER ANY
+ * CAUSE OF ACTION OR THEORY OF LIABILITY, AND IRRESPECTIVE OF WHETHER INTEL
+ * HAS ADVANCE NOTICE OF THE POSSIBILITY OF SUCH DAMAGES. THESE LIMITATIONS
+ * SHALL APPLY NOTWITHSTANDING THE FAILURE OF THE ESSENTIAL PURPOSE OF ANY
+ * LIMITED REMEDY.
+ *
+ * 4.3. Licensee shall not export, either directly or indirectly, any of this
+ * software or system incorporating such software without first obtaining any
+ * required license or other approval from the U. S. Department of Commerce or
+ * any other agency or department of the United States Government. In the
+ * event Licensee exports any such software from the United States or
+ * re-exports any such software from a foreign destination, Licensee shall
+ * ensure that the distribution and export/re-export of the software is in
+ * compliance with all laws, regulations, orders, or other restrictions of the
+ * U.S. Export Administration Regulations. Licensee agrees that neither it nor
+ * any of its subsidiaries will export/re-export any technical data, process,
+ * software, or service, directly or indirectly, to any country for which the
+ * United States government or any agency thereof requires an export license,
+ * other governmental approval, or letter of assurance, without first obtaining
+ * such license, approval or letter.
+ *
+ *****************************************************************************
+ *
+ * Alternatively, you may choose to be licensed under the terms of the
+ * following license:
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,23 +131,23 @@
  *    of any contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
- *
- * NO WARRANTY
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGES.
- */
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Alternatively, you may choose to be licensed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
+ *
+ *****************************************************************************/
 
 /*
  * Macros used to generate offsets to specific table fields
@@ -75,11 +183,11 @@
 #define ACPI_MPST_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_TABLE_MPST,f)
 #define ACPI_MSCT_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_TABLE_MSCT,f)
 #define ACPI_NFIT_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_TABLE_NFIT,f)
-#define ACPI_NHLT_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_TABLE_NHLT,f)
 #define ACPI_PCCT_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_TABLE_PCCT,f)
 #define ACPI_PDTT_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_TABLE_PDTT,f)
 #define ACPI_PMTT_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_TABLE_PMTT,f)
 #define ACPI_RASF_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_TABLE_RASF,f)
+#define ACPI_RAS2_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_TABLE_RAS2,f)
 #define ACPI_RGRT_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_TABLE_RGRT,f)
 #define ACPI_RHCT_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_TABLE_RHCT,f)
 #define ACPI_S3PT_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_TABLE_S3PT,f)
@@ -117,9 +225,17 @@
 #define ACPI_AEST1_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_AEST_MEMORY,f)
 #define ACPI_AEST2_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_AEST_SMMU,f)
 #define ACPI_AEST3_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_AEST_VENDOR,f)
+#define ACPI_AEST3A_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_AEST_VENDOR_V2,f)
 #define ACPI_AEST4_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_AEST_GIC,f)
+#define ACPI_AEST5_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_AEST_PCIE,f)
+#define ACPI_AEST6_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_AEST_PROXY,f)
 #define ACPI_AEST0D_OFFSET(f)           (UINT16) ACPI_OFFSET (ACPI_AEST_NODE_INTERFACE,f)
+#define ACPI_AEST0DH_OFFSET(f)          (UINT16) ACPI_OFFSET (ACPI_AEST_NODE_INTERFACE_HEADER,f)
+#define ACPI_AEST0D4_OFFSET(f)          (UINT16) ACPI_OFFSET (ACPI_AEST_NODE_INTERFACE_4K,f)
+#define ACPI_AEST0D16_OFFSET(f)         (UINT16) ACPI_OFFSET (ACPI_AEST_NODE_INTERFACE_16K,f)
+#define ACPI_AEST0D64_OFFSET(f)         (UINT16) ACPI_OFFSET (ACPI_AEST_NODE_INTERFACE_64K,f)
 #define ACPI_AEST0E_OFFSET(f)           (UINT16) ACPI_OFFSET (ACPI_AEST_NODE_INTERRUPT,f)
+#define ACPI_AEST0EA_OFFSET(f)           (UINT16) ACPI_OFFSET (ACPI_AEST_NODE_INTERRUPT_V2,f)
 #define ACPI_APMTN_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_APMT_NODE,f)
 #define ACPI_ASF0_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_ASF_INFO,f)
 #define ACPI_ASF1_OFFSET(f)             (UINT16) ACPI_OFFSET (ACPI_ASF_ALERT,f)
@@ -145,6 +261,8 @@
 #define ACPI_CEDT0_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_CEDT_CHBS, f)
 #define ACPI_CEDT1_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_CEDT_CFMWS, f)
 #define ACPI_CEDT1_TE_OFFSET(f)         (UINT16) ACPI_OFFSET (ACPI_CEDT_CFMWS_TARGET_ELEMENT, f)
+#define ACPI_CEDT2_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_CEDT_CXIMS, f)
+#define ACPI_CEDT2_TE_OFFSET(f)         (UINT16) ACPI_OFFSET (ACPI_CEDT_CXIMS_TARGET_ELEMENT, f)
 #define ACPI_CPEP0_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_CPEP_POLLING,f)
 #define ACPI_CSRT0_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_CSRT_GROUP,f)
 #define ACPI_CSRT1_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_CSRT_SHARED_INFO,f)
@@ -265,21 +383,6 @@
 #define ACPI_NFIT5_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_NFIT_DATA_REGION,f)
 #define ACPI_NFIT6_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_NFIT_FLUSH_ADDRESS,f)
 #define ACPI_NFIT7_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_NFIT_CAPABILITIES,f)
-#define ACPI_NHLT0_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_NHLT_ENDPOINT,f)
-#define ACPI_NHLT1_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_NHLT_DEVICE_SPECIFIC_CONFIG,f)
-#define ACPI_NHLT2_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_NHLT_WAVE_EXTENSIBLE,f)
-#define ACPI_NHLT3_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_NHLT_FORMAT_CONFIG,f)
-#define ACPI_NHLT4_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_NHLT_FORMATS_CONFIG,f)
-#define ACPI_NHLT5_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_NHLT_DEVICE_SPECIFIC_CONFIG,f)
-#define ACPI_NHLT5A_OFFSET(f)           (UINT16) ACPI_OFFSET (ACPI_NHLT_DEVICE_SPECIFIC_CONFIG_A,f)
-#define ACPI_NHLT5B_OFFSET(f)           (UINT16) ACPI_OFFSET (ACPI_NHLT_DEVICE_SPECIFIC_CONFIG_B,f)
-#define ACPI_NHLT5C_OFFSET(f)           (UINT16) ACPI_OFFSET (ACPI_NHLT_DEVICE_SPECIFIC_CONFIG_C,f)
-#define ACPI_NHLT6_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_NHLT_VENDOR_MIC_CONFIG,f)
-#define ACPI_NHLT6A_OFFSET(f)           (UINT16) ACPI_OFFSET (ACPI_NHLT_VENDOR_MIC_COUNT,f)
-#define ACPI_NHLT6B_OFFSET(f)           (UINT16) ACPI_OFFSET (ACPI_NHLT_RENDER_FEEDBACK_DEVICE_SPECIFIC_CONFIG,f)
-#define ACPI_NHLT7_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_NHLT_DEVICE_INFO_COUNT,f)
-#define ACPI_NHLT7A_OFFSET(f)           (UINT16) ACPI_OFFSET (ACPI_NHLT_DEVICE_INFO,f)
-#define ACPI_NHLT9_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_NHLT_MIC_SNR_SENSITIVITY_EXTENSION,f)
 #define ACPI_PCCT0_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_PCCT_SUBSPACE,f)
 #define ACPI_PCCT1_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_PCCT_HW_REDUCED,f)
 #define ACPI_PCCT2_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_PCCT_HW_REDUCED_TYPE2,f)
@@ -304,6 +407,7 @@
 #define ACPI_PRMTH_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_TABLE_PRMT_HEADER,f)
 #define ACPI_PRMT0_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_PRMT_MODULE_INFO,f)
 #define ACPI_PRMT1_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_PRMT_HANDLER_INFO,f)
+#define ACPI_RAS2_PCC_DESC_OFFSET(f)    (UINT16) ACPI_OFFSET (ACPI_RAS2_PCC_DESC,f)
 #define ACPI_RHCTH_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_RHCT_NODE_HEADER,f)
 #define ACPI_RHCT0_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_RHCT_ISA_STRING,f)
 #define ACPI_RHCT1_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_RHCT_CMO_NODE,f)
@@ -328,6 +432,7 @@
 #define ACPI_SRAT3_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_SRAT_GICC_AFFINITY,f)
 #define ACPI_SRAT4_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_SRAT_GIC_ITS_AFFINITY,f)
 #define ACPI_SRAT5_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_SRAT_GENERIC_AFFINITY,f)
+#define ACPI_SRAT7_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_SRAT_RINTC_AFFINITY,f)
 #define ACPI_SVKL0_OFFSET(f)            (UINT16) ACPI_OFFSET (ACPI_SVKL_KEY,f)
 #define ACPI_TCPA_CLIENT_OFFSET(f)      (UINT16) ACPI_OFFSET (ACPI_TABLE_TCPA_CLIENT,f)
 #define ACPI_TCPA_SERVER_OFFSET(f)      (UINT16) ACPI_OFFSET (ACPI_TABLE_TCPA_SERVER,f)
@@ -351,6 +456,7 @@
 #define ACPI_AEST0_FLAG_OFFSET(f,o)     ACPI_FLAG_OFFSET (ACPI_AEST_PROCESSOR,f,o)
 #define ACPI_AEST0D_FLAG_OFFSET(f,o)    ACPI_FLAG_OFFSET (ACPI_AEST_NODE_INTERFACE,f,o)
 #define ACPI_AEST0E_FLAG_OFFSET(f,o)    ACPI_FLAG_OFFSET (ACPI_AEST_NODE_INTERRUPT,f,o)
+#define ACPI_AEST0EA_FLAG_OFFSET(f,o)    ACPI_FLAG_OFFSET (ACPI_AEST_NODE_INTERRUPT_V2,f,o)
 #define ACPI_AGDI_FLAG_OFFSET(f,o)      ACPI_FLAG_OFFSET (ACPI_TABLE_AGDI,f,o)
 #define ACPI_APMTN_FLAG_OFFSET(f,o)     ACPI_FLAG_OFFSET (ACPI_APMT_NODE,f,o)
 #define ACPI_BGRT_FLAG_OFFSET(f,o)      ACPI_FLAG_OFFSET (ACPI_TABLE_BGRT,f,o)
@@ -367,6 +473,7 @@
 #define ACPI_SRAT2_FLAG_OFFSET(f,o)     ACPI_FLAG_OFFSET (ACPI_SRAT_X2APIC_CPU_AFFINITY,f,o)
 #define ACPI_SRAT3_FLAG_OFFSET(f,o)     ACPI_FLAG_OFFSET (ACPI_SRAT_GICC_AFFINITY,f,o)
 #define ACPI_SRAT5_FLAG_OFFSET(f,o)     ACPI_FLAG_OFFSET (ACPI_SRAT_GENERIC_AFFINITY,f,o)
+#define ACPI_SRAT7_FLAG_OFFSET(f,o)     ACPI_FLAG_OFFSET (ACPI_SRAT_RINTC_AFFINITY,f,o)
 #define ACPI_GTDT_FLAG_OFFSET(f,o)      ACPI_FLAG_OFFSET (ACPI_TABLE_GTDT,f,o)
 #define ACPI_GTDT0a_FLAG_OFFSET(f,o)    ACPI_FLAG_OFFSET (ACPI_GTDT_TIMER_ENTRY,f,o)
 #define ACPI_GTDT1_FLAG_OFFSET(f,o)     ACPI_FLAG_OFFSET (ACPI_GTDT_WATCHDOG,f,o)
@@ -393,6 +500,8 @@
 #define ACPI_MADT10_FLAG_OFFSET(f,o)    ACPI_FLAG_OFFSET (ACPI_MADT_LOCAL_X2APIC_NMI,f,o)
 #define ACPI_MADT11_FLAG_OFFSET(f,o)    ACPI_FLAG_OFFSET (ACPI_MADT_GENERIC_INTERRUPT,f,o)
 #define ACPI_MADT13_FLAG_OFFSET(f,o)    ACPI_FLAG_OFFSET (ACPI_MADT_GENERIC_MSI_FRAME,f,o)
+#define ACPI_MADT14_FLAG_OFFSET(f,o)    ACPI_FLAG_OFFSET (ACPI_MADT_GENERIC_REDISTRIBUTOR,f,o)
+#define ACPI_MADT15_FLAG_OFFSET(f,o)    ACPI_FLAG_OFFSET (ACPI_MADT_GENERIC_TRANSLATOR,f,o)
 #define ACPI_MPST0_FLAG_OFFSET(f,o)     ACPI_FLAG_OFFSET (ACPI_MPST_POWER_NODE,f,o)
 #define ACPI_MPST2_FLAG_OFFSET(f,o)     ACPI_FLAG_OFFSET (ACPI_MPST_POWER_DATA,f,o)
 #define ACPI_NFIT0_FLAG_OFFSET(f,o)     ACPI_FLAG_OFFSET (ACPI_NFIT_SYSTEM_ADDRESS,f,o)

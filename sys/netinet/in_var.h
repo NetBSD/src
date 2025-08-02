@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.103 2022/11/19 08:00:51 yamt Exp $	*/
+/*	$NetBSD: in_var.h,v 1.103.8.1 2025/08/02 05:57:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -327,11 +327,7 @@ in_get_ia_from_ifp(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 
-	IFADDR_READER_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			break;
-	}
-
+	ifa = if_first_addr(ifp, AF_INET);
 	return ifatoia(ifa);
 }
 
@@ -467,7 +463,7 @@ ip_randomid(void)
  * => Return the first ID.
  */
 static __inline uint16_t
-ip_newid_range(const struct in_ifaddr *ia, u_int num)
+ip_newid_range(u_int num)
 {
 	uint16_t id;
 
@@ -486,10 +482,10 @@ ip_newid_range(const struct in_ifaddr *ia, u_int num)
 }
 
 static __inline uint16_t
-ip_newid(const struct in_ifaddr *ia)
+ip_newid(void)
 {
 
-	return ip_newid_range(ia, 1);
+	return ip_newid_range(1);
 }
 
 #ifdef SYSCTLFN_PROTO

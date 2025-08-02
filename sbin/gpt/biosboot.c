@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.32 2019/06/20 10:56:38 martin Exp $ */
+/*	$NetBSD: biosboot.c,v 1.32.12.1 2025/08/02 05:55:06 perseant Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.32 2019/06/20 10:56:38 martin Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.32.12.1 2025/08/02 05:55:06 perseant Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -79,7 +79,7 @@ static const char *biosboothelp[] = {
 #endif
 };
 
-struct gpt_cmd c_biosboot = {
+const struct gpt_cmd c_biosboot = {
 	"biosboot",
 	cmd_biosboot,
 	biosboothelp, __arraycount(biosboothelp),
@@ -167,7 +167,7 @@ set_bootable(gpt_t gpt, map_t map, map_t tbl, unsigned int i)
 }
 
 static int
-biosboot(gpt_t gpt, daddr_t start, uint64_t size, u_int entry, uint8_t *label,
+biosboot(gpt_t gpt, off_t start, uint64_t size, u_int entry, uint8_t *label,
     const char *bootpath, int active)
 {
 	map_t mbrmap, m;
@@ -267,7 +267,7 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 #endif
 	int ch;
 	gpt_t ngpt = gpt;
-	daddr_t start = 0;
+	off_t start = 0;
 	uint64_t size = 0;
 	int active = 0;
 	unsigned int entry = 0;

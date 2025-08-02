@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.120 2023/07/15 22:30:19 riastradh Exp $
+#	$NetBSD: GENERIC,v 1.120.6.1 2025/08/02 05:55:33 perseant Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -409,6 +409,7 @@ wskbd* 		at tcakp? console ?
 options 	CAN			# Controller Area Network protocol
 pseudo-device 	canloop			# CAN loopback interface
 sunxican* 	at fdt?			# A10/A20 CAN controller
+gscan*		at uhub? port ?		# Geschwister Schneider USB to CAN
 
 # SPI
 imxspi* 	at fdt?			# i.MX SPI
@@ -599,12 +600,10 @@ usb* 		at usbus?
 # Virtio devices
 virtio* 	at fdt?				# Virtio MMIO device
 virtio* 	at pci? dev ? function ?	# Virtio PCI device
-# the balloon driver cannot work on machines with non-4k pages
-#viomb* 	at virtio?			# Virtio memory balloon device
-ld* 		at virtio?			# Virtio disk device
-vioif* 		at virtio?			# Virtio network device
-viornd* 	at virtio?			# Virtio entropy device
-vioscsi* 	at virtio?			# Virtio SCSI device
+
+include "dev/virtio/virtio.config"
+no vio9p* 	at virtio?	# PAGE_SIZE != VIRTIO_PAGE_SIZE
+no viomb* 	at virtio?	# PAGE_SIZE != VIRTIO_PAGE_SIZE
 
 # SCSI
 scsibus* at scsi?

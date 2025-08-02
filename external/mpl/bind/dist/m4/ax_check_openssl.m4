@@ -39,6 +39,7 @@
 AU_ALIAS([CHECK_SSL], [AX_CHECK_OPENSSL])
 AC_DEFUN([AX_CHECK_OPENSSL], [
     found=false
+    AC_PROG_SED
     AC_ARG_WITH([openssl],
         [AS_HELP_STRING([--with-openssl=DIR],
             [root of the OpenSSL directory])],
@@ -59,6 +60,7 @@ AC_DEFUN([AX_CHECK_OPENSSL], [
                 if test $? = 0; then
                     OPENSSL_LIBS=`$PKG_CONFIG openssl --libs-only-l 2>/dev/null`
                     OPENSSL_CFLAGS=`$PKG_CONFIG openssl --cflags-only-I 2>/dev/null`
+                    OPENSSL_VERSION=`$PKG_CONFIG openssl --modversion 2>/dev/null`
                     found=true
                 fi
             fi
@@ -82,6 +84,10 @@ AC_DEFUN([AX_CHECK_OPENSSL], [
                 OPENSSL_CFLAGS="-I$ssldir/include"
                 OPENSSL_LDFLAGS="-L$ssldir/lib"
                 OPENSSL_LIBS="-lssl -lcrypto"
+                OPENSSL_VERSION=`$SED -ne 's/.*OPENSSL_VERSION_STR[^"]*"\([^"]*\)".*/\1/p;' $ssldir/include/openssl/opensslv.h`
+                if test -z "$OPENSSL_VERSION"; then
+                  OPENSSL_VERSION=`$SED -ne 's/.*OPENSSL_VERSION_TEXT[^"]*"\([^"]*\)".*/\1/p;' $ssldir/include/openssl/opensslv.h`
+                fi
                 found=true
                 AC_MSG_RESULT([yes])
                 break
@@ -123,4 +129,5 @@ AC_DEFUN([AX_CHECK_OPENSSL], [
     AC_SUBST([OPENSSL_CFLAGS])
     AC_SUBST([OPENSSL_LIBS])
     AC_SUBST([OPENSSL_LDFLAGS])
+    AC_SUBST([OPENSSL_VERSION])
 ])

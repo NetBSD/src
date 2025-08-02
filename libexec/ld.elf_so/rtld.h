@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.147 2023/07/30 09:20:14 riastradh Exp $	 */
+/*	$NetBSD: rtld.h,v 1.147.2.1 2025/08/02 05:55:01 perseant Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -69,6 +69,7 @@ extern size_t _rtld_pagesz;
  * Fill in a DoneList with an allocation large enough to hold all of
  * the currently-loaded objects. Keep this in a macro since it calls
  * alloca and we want that to occur within the scope of the caller.
+ * Callers must be built with -Wno-stack-protector.
  */
 #define _rtld_donelist_init(dlp)					\
     ((dlp)->num_alloc = _rtld_objcount,					\
@@ -168,6 +169,8 @@ typedef struct Struct_Obj_Entry {
 	const Elf_Rel  *rellim;		/* Limit of Relocation entries */
 	const Elf_Rela *rela;		/* Relocation entries */
 	const Elf_Rela *relalim;	/* Limit of Relocation entries */
+	const Elf_Relr *relr;		/* Relative relocations */
+	const Elf_Relr *relrlim;	/* Limit of relative relocations */
 	const Elf_Rel  *pltrel;		/* PLT relocation entries */
 	const Elf_Rel  *pltrellim;	/* Limit of PLT relocation entries */
 	const Elf_Rela *pltrela;	/* PLT relocation entries */
@@ -218,6 +221,9 @@ typedef struct Struct_Obj_Entry {
 					   dlopen'ed */
 			phdr_loaded:1,	/* Phdr is loaded and doesn't need to
 					 * be freed. */
+#ifdef __alpha__
+			secureplt:1,	/* True if PLT is read-only format */
+#endif
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 			tls_static:1,	/* True if static TLS offset
 					 * has been allocated */

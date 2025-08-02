@@ -19,6 +19,7 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion yes;
 	dnssec-validation no;
 	notify yes;
@@ -34,7 +35,7 @@ controls {
 };
 
 key tsigzone. {
-	algorithm hmac-md5;
+	algorithm @DEFAULT_HMAC@;
 	secret "1234abcd8765";
 };
 

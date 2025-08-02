@@ -1,7 +1,7 @@
-/* $NetBSD: ascaudio.c,v 1.1 2024/03/13 07:55:28 nat Exp $ */
+/* $NetBSD: ascaudio.c,v 1.1.2.1 2025/08/02 05:55:50 perseant Exp $ */
 
 /*-
- * Copyright (c) 2017, 2023 Nathanial Sloss <nathanialsloss@yahoo.com.au>
+ * Copyright (c) 2017, 2023, 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.1 2024/03/13 07:55:28 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.1.2.1 2025/08/02 05:55:50 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,17 +54,20 @@ __KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.1 2024/03/13 07:55:28 nat Exp $");
 #include <machine/bus.h>
 #include <machine/viareg.h>
 
+#include <mac68k/dev/pm_direct.h>
 #include <mac68k/obio/ascaudiovar.h>
 #include <mac68k/obio/ascreg.h>
 #include <mac68k/obio/obiovar.h>
 
 #define	MAC68K_ASCAUDIO_BASE		0x50f14000
 #define	MAC68K_IIFX_ASCAUDIO_BASE	0x50f10000
-#define	MAC68K_ASCAUDIO_LEN		0x1000
+#define	MAC68K_ASCAUDIO_LEN		0x2000
 
 #define BUFSIZE 			32768
 #define PLAYBLKSIZE			8192
-#define RECBLKSIZE			8192
+#define RECBLKSIZE			1024
+
+#define ASC_VIA_CLR_INTR()     via_reg(VIA2, vIFR) = V2IF_ASC
 
 static int	ascaudiomatch(device_t, cfdata_t, void *);
 static void	ascaudioattach(device_t, device_t, void *);
@@ -103,7 +106,8 @@ static int	ascaudio_start_output(void *, void *, int,
 				    void (*)(void *), void *);
 static int	ascaudio_start_input(void *, void *, int,
 				   void (*)(void *), void *);
-static int	ascaudio_halt(void *);
+static int	ascaudio_halt_input(void *);
+static int	ascaudio_halt_output(void *);
 static int	ascaudio_set_port(void *, mixer_ctrl_t *);
 static int	ascaudio_get_port(void *, mixer_ctrl_t *);
 static int	ascaudio_getdev(void *, struct audio_device *);
@@ -117,14 +121,15 @@ static int 	ascaudio_intr_est(void *);
 static void	ascaudio_intr_enable(void);
 static void	ascaudio_done_output(void *);
 static void	ascaudio_done_input(void *);
+static void	configure_dfac(uint8_t);
 
 static const struct audio_hw_if ascaudio_hw_if = {
 	.query_format	 = ascaudio_query_format,
 	.set_format	 = ascaudio_set_format,
 	.start_output	 = ascaudio_start_output,
 	.start_input	 = ascaudio_start_input,
-	.halt_output	 = ascaudio_halt,
-	.halt_input	 = ascaudio_halt,
+	.halt_output	 = ascaudio_halt_output,
+	.halt_input	 = ascaudio_halt_input,
 	.set_port	 = ascaudio_set_port,
 	.get_port	 = ascaudio_get_port,
 	.getdev		 = ascaudio_getdev,
@@ -133,8 +138,6 @@ static const struct audio_hw_if ascaudio_hw_if = {
 	.round_blocksize = ascaudio_round_blocksize,
 	.get_locks	 = ascaudio_get_locks,
 };
-
-#define EASC_VER 0xb0
 
 enum {
 	ASC_OUTPUT_CLASS,
@@ -197,7 +200,7 @@ ascaudioattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Pull in the options flags. */ 
+	/* Pull in the options flags. */
 	sc->sc_options = ((device_cfdata(self)->cf_flags) &
 			    ASCAUDIO_OPTIONS_MASK);
 
@@ -244,10 +247,11 @@ ascaudioattach(device_t parent, device_t self, void *aux)
 			sc->sc_rate /= 2;
 	}
 
-	if (sc->sc_ver != EASC_VER)
-		printf(": Apple Sound Chip");
-	else
+	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2)
 		printf(": Enhanced Apple Sound Chip");
+	else
+		printf(": Apple Sound Chip");
+
 	if (oa->oa_addr != (-1))
 		printf(" at %x", oa->oa_addr);
 	printf("\n");
@@ -262,13 +266,14 @@ ascaudioattach(device_t parent, device_t self, void *aux)
 	ascaudio_intr_enable();
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_HIGH);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 	callout_init(&sc->sc_pcallout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_pcallout, ascaudio_done_output, sc);
 	callout_init(&sc->sc_rcallout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_rcallout, ascaudio_done_input, sc);
 
-	sc->sc_vol = 255;
+	sc->sc_vol = 180;
+	sc->sc_recvol = 255;
 
 	sc->sc_audiodev = audio_attach_mi(&ascaudio_hw_if, sc, sc->sc_dev);
 
@@ -276,8 +281,7 @@ ascaudioattach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish power handler\n");
 
-
-	if (sc->sc_ver != EASC_VER)
+	if (sc->sc_ver != EASC_VER && sc->sc_ver != EASC_VER2)
 		return;
 
 	if (sc->sc_options & HIGHQUALITY)
@@ -287,7 +291,7 @@ ascaudioattach(device_t parent, device_t self, void *aux)
 
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOCTRLA, tmp);
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOCTRLB, tmp);
-	
+
 }
 
 int
@@ -348,7 +352,7 @@ ascaudioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return (error);
 }
 
-#define ASCAUDIO_NFORMATS	2
+#define ASCAUDIO_NFORMATS	3
 static int
 ascaudio_query_format(void *opaque, struct audio_format_query *ae)
 {
@@ -356,7 +360,7 @@ ascaudio_query_format(void *opaque, struct audio_format_query *ae)
 
 	const struct audio_format asc_formats[ASCAUDIO_NFORMATS] = {
 	      { .mode		= AUMODE_PLAY,
-		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.encoding	= AUDIO_ENCODING_SLINEAR_BE,
 		.validbits	= 8,
 		.precision	= 8,
 		.channels	= sc->sc_speakers,
@@ -365,15 +369,23 @@ ascaudio_query_format(void *opaque, struct audio_format_query *ae)
 		.frequency_type	= 1,
 		.frequency	= { sc->sc_rate }, },
 	      { .mode		= AUMODE_RECORD,
-		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.encoding	= AUDIO_ENCODING_SLINEAR_BE,
 		.validbits	= 8,
 		.precision	= 8,
 		.channels	= 1,
 		.channel_mask	= AUFMT_MONAURAL,
 		.frequency_type	= 1,
-		.frequency	= { 11025 }, }
+		.frequency	= { 11025 }, },
+	      { .mode		= AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_BE,
+		.validbits	= 8,
+		.precision	= 8,
+		.channels	= 1,
+		.channel_mask	= AUFMT_MONAURAL,
+		.frequency_type	= 1,
+		.frequency	= { 22050 }, }
 	};
-			
+
 	return audio_query_format(asc_formats, ASCAUDIO_NFORMATS, ae);
 }
 
@@ -385,6 +397,8 @@ ascaudio_set_format(void *opaque, int setmode,
 	struct ascaudio_softc *sc = opaque;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
+
+	sc->sc_recfreq = rec->sample_rate;
 
 	return 0;
 }
@@ -404,51 +418,42 @@ ascaudio_start_output(void *opaque, void *block, int blksize,
 	sc->sc_pintr = intr;
 	sc->sc_pintrarg = intrarg;
 
-
 	loc = block;
  	if (bus_space_read_1(sc->sc_tag, sc->sc_handle, ASCMODE) !=
 								 MODEFIFO) {
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODESTOP);
-
-		if (sc->sc_ver == EASC_VER) {
-			/* disable half interrupts channel a */
-			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA,
-			    DISABLEHALFIRQ);
-			/* Disable half interrupts channel b */
-			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB,
-			    DISABLEHALFIRQ);
-		}
-
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCTEST, 0);
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOPARAM,
-		    CLEARFIFO);
-		tmp = 0;
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, APLAYREC, tmp);
+		    NONCOMP);
 
-		if (sc->sc_ver == EASC_VER) {
-			/* enable interrupts channel b */
-			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB, 0);
-		}
 	}
 
-	/* set the volume */
-	tmp = sc->sc_vol >> 5;
-	/* set volume for channel b left and right speakers */
-	if (sc->sc_ver == EASC_VER) {
- 		bus_space_write_1(sc->sc_tag, sc->sc_handle, A_LEFT_VOL, tmp);
+	/* set the volume. */
+	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
+		/* DO NOT CHANGE THESE VALUES UNLESS TESTED.
+		   CAN BE VERY LOUD!!!! */
+		tmp = sc->sc_vol >> 5;
+		KASSERT(tmp <= MACOS_HIGH_VOL);
  		bus_space_write_1(sc->sc_tag, sc->sc_handle, B_LEFT_VOL, tmp);
- 		bus_space_write_1(sc->sc_tag, sc->sc_handle, A_RIGHT_VOL, tmp);
  		bus_space_write_1(sc->sc_tag, sc->sc_handle, B_RIGHT_VOL, tmp);
-	} else
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, INTVOL, tmp << 5);
+		if (sc->sc_rintr == NULL) {
+ 			bus_space_write_1(sc->sc_tag, sc->sc_handle,
+			    A_LEFT_VOL, tmp);
+ 			bus_space_write_1(sc->sc_tag, sc->sc_handle,
+			    A_RIGHT_VOL, tmp);
+		}
+	}
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, INTVOL, sc->sc_vol);
 
 	total = blksize;
-	if (sc->sc_putptr + blksize > sc->sc_playbuf + BUFSIZE)
+	if (sc->sc_putptr + blksize >= sc->sc_playbuf + BUFSIZE)
 		total = sc->sc_playbuf + BUFSIZE - sc->sc_putptr;
 
-	memcpy(sc->sc_putptr, loc, total);
-	sc->sc_putptr += total;
-	loc += total;
+	if (total) {
+		memcpy(sc->sc_putptr, loc, total);
+		sc->sc_putptr += total;
+		loc += total;
+	}
 
 	total = blksize - total;
 	if (total) {
@@ -462,7 +467,14 @@ ascaudio_start_output(void *opaque, void *block, int blksize,
 		sc->sc_avail = BUFSIZE;
 
 	/* start fifo playback */
-	bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODEFIFO);
+	if ((sc->sc_rintr == NULL) && bus_space_read_1(sc->sc_tag,
+	    sc->sc_handle, ASCMODE) != MODEFIFO)
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODEFIFO);
+
+	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
+		/* enable interrupts channel b */
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB, 0);
+	}
 
 	return 0;
 }
@@ -479,7 +491,6 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
 	if (!sc)
 		return (ENODEV);
 
-
 	uint8_t *loc;
 	loc = block;
 
@@ -489,58 +500,71 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
  	if (bus_space_read_1(sc->sc_tag, sc->sc_handle, ASCMODE) !=
 								 MODEFIFO) {
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODESTOP);
-
-		if (sc->sc_ver == EASC_VER) {
-			/* disable half interrupts channel a */
-			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA,
-			    DISABLEHALFIRQ);
-			/* Disable half interrupts channel b */
-			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB,
-			    DISABLEHALFIRQ);
-		}
-
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCTEST, 0);
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOPARAM,
-		    CLEARFIFO);
-		tmp = RECORDA;
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, APLAYREC, tmp);
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, INTVOL, 0xa0);
+		    NONCOMP);
+		memset(loc, 0x80, blksize);
+	}
 
-		if (sc->sc_ver == EASC_VER) {
-			/* enable interrupts channel a */
-			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA, 0);
-		}
+	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
+		/*
+		 * Set up dfac for microphone.
+		 * DO NOT SET BITS 5-7 due to loud feedback squeal.
+		 */
+		configure_dfac(DFAC_GAIN_HIGH);
+	}
 
-		/* start fifo playback */
+	tmp = RECORDA;
+	if (sc->sc_recfreq == 22050)
+		tmp |= REC22KHZ;
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, APLAYREC, tmp);
+
+	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
+		/* enable interrupts channel a */
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA, 0);
+	}
+
+	/* start fifo playback */
+	if ((sc->sc_pintr == NULL) && bus_space_read_1(sc->sc_tag,
+	    sc->sc_handle, ASCMODE) != MODEFIFO) {
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODEFIFO);
 
 		return 0;
 	}
 
-	/* set the volume */
-	tmp = sc->sc_vol >> 5;
-	/* set volume for channel b left and right speakers */
-	if (sc->sc_ver == EASC_VER) {
+	/* set the volume. */
+	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
+		/* DO NOT CHANGE THESE VALUES UNLESS TESTED.
+		   CAN BE VERY LOUD!!!! */
+		tmp = sc->sc_recvol >> 5;
+		KASSERT(tmp <= MACOS_HIGH_VOL);
  		bus_space_write_1(sc->sc_tag, sc->sc_handle, A_LEFT_VOL, tmp);
- 		bus_space_write_1(sc->sc_tag, sc->sc_handle, B_LEFT_VOL, tmp);
  		bus_space_write_1(sc->sc_tag, sc->sc_handle, A_RIGHT_VOL, tmp);
- 		bus_space_write_1(sc->sc_tag, sc->sc_handle, B_RIGHT_VOL, tmp);
-	} else
-		bus_space_write_1(sc->sc_tag, sc->sc_handle, INTVOL, tmp << 5);
+		if (sc->sc_pintr == NULL) {
+ 			bus_space_write_1(sc->sc_tag, sc->sc_handle,
+			    B_LEFT_VOL, tmp);
+ 			bus_space_write_1(sc->sc_tag, sc->sc_handle,
+			    B_RIGHT_VOL, tmp);
+		}
+	}
+	if (sc->sc_pintr == NULL) {
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, INTVOL,
+		    sc->sc_recvol);
+	}
 
 	total = blksize;
-	if (sc->sc_getptr + blksize > sc->sc_recbuf + BUFSIZE)
+	if (sc->sc_getptr + blksize >= sc->sc_recbuf + BUFSIZE)
 		total = sc->sc_recbuf + BUFSIZE - sc->sc_getptr;
 
-	memcpy(loc, sc->sc_getptr, total);
-	sc->sc_getptr += total;
-	loc += total;
-
-	if (sc->sc_getptr >= sc->sc_recbuf + BUFSIZE)
-		sc->sc_getptr = sc->sc_recbuf;
+	if (total) {
+		memcpy(loc, sc->sc_getptr, total);
+		sc->sc_getptr += total;
+		loc += total;
+	}
 
 	total = blksize - total;
 	if (total) {
+		sc->sc_getptr = sc->sc_recbuf;
 		memcpy(loc, sc->sc_getptr, total);
 		sc->sc_getptr += total;
 	}
@@ -551,7 +575,7 @@ ascaudio_start_input(void *opaque, void *block, int blksize,
 }
 
 static int
-ascaudio_halt(void *opaque)
+ascaudio_halt_input(void *opaque)
 {
 	ascaudio_softc_t *sc;
 
@@ -559,32 +583,61 @@ ascaudio_halt(void *opaque)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
+	callout_halt(&sc->sc_rcallout, &sc->sc_intr_lock);
 
-	sc->sc_pintr = NULL;
-	sc->sc_pintrarg = NULL;
 	sc->sc_rintr = NULL;
 	sc->sc_rintrarg = NULL;
-
-	sc->sc_avail = 0;
 	sc->sc_recavail = 0;
 
-	callout_halt(&sc->sc_pcallout, &sc->sc_lock);
-	callout_halt(&sc->sc_rcallout, &sc->sc_lock);
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, APLAYREC, 0);
 
-	bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODESTOP);
-
-	bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOPARAM, CLEARFIFO);
+	if (sc->sc_pintr == NULL) {
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODESTOP);
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOPARAM,
+		    CLEARFIFO);
+	}
 
 	sc->sc_rptr = sc->sc_recbuf;
 	sc->sc_getptr = sc->sc_recbuf;
-	sc->sc_wptr = sc->sc_playbuf;
-	sc->sc_putptr = sc->sc_playbuf;
 
-	if (sc->sc_ver != EASC_VER)
+	if (sc->sc_ver != EASC_VER && sc->sc_ver != EASC_VER2)
 		return 0;
+
+	configure_dfac(DFAC_DISABLE);
 
 	/* disable half interrupts channel a */
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA, DISABLEHALFIRQ);
+
+	return 0;
+}
+
+static int
+ascaudio_halt_output(void *opaque)
+{
+	ascaudio_softc_t *sc;
+
+	sc = (ascaudio_softc_t *)opaque;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	callout_halt(&sc->sc_pcallout, &sc->sc_intr_lock);
+
+	sc->sc_pintr = NULL;
+	sc->sc_pintrarg = NULL;
+	sc->sc_avail = 0;
+
+	if (sc->sc_rintr == NULL) {
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODESTOP);
+		bus_space_write_1(sc->sc_tag, sc->sc_handle, FIFOPARAM,
+		    CLEARFIFO);
+	}
+
+	sc->sc_wptr = sc->sc_playbuf;
+	sc->sc_putptr = sc->sc_playbuf;
+
+	if (sc->sc_ver != EASC_VER && sc->sc_ver != EASC_VER2)
+		return 0;
+
 	/* disable half interrupts channel b */
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB, DISABLEHALFIRQ);
 
@@ -610,10 +663,14 @@ ascaudio_set_port(void *opaque, mixer_ctrl_t *mc)
 
 	switch (mc->dev) {
 	case ASC_OUTPUT_MASTER_VOLUME:
-	case ASC_INPUT_DAC_VOLUME:
 		if (mc->un.value.num_channels != 1)
 			return EINVAL;
 		sc->sc_vol = mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		return 0;
+	case ASC_INPUT_DAC_VOLUME:
+		if (mc->un.value.num_channels != 1)
+			return EINVAL;
+		sc->sc_recvol = mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
 		return 0;
 	}
 
@@ -629,10 +686,14 @@ ascaudio_get_port(void *opaque, mixer_ctrl_t *mc)
 
 	switch (mc->dev) {
 	case ASC_OUTPUT_MASTER_VOLUME:
-	case ASC_INPUT_DAC_VOLUME:
 		if (mc->un.value.num_channels != 1)
 			return EINVAL;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_vol;
+		return 0;
+	case ASC_INPUT_DAC_VOLUME:
+		if (mc->un.value.num_channels != 1)
+			return EINVAL;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_recvol;
 		return 0;
 	}
 
@@ -687,7 +748,7 @@ ascaudio_get_props(void *opaque)
 {
 
 	return AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE |
-	    AUDIO_PROP_INDEPENDENT;
+	    AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 static int
@@ -728,9 +789,9 @@ static void
 ascaudio_intr(void *arg)
 {
 	struct ascaudio_softc *sc = arg;
-	uint8_t status, val;
-	bool again;
-	int total, count, i;
+	uint8_t status;
+	int8_t val;
+	int loc_a, loc_b, total, count, i;
 
 	if (!sc)
 		return;
@@ -739,105 +800,157 @@ ascaudio_intr(void *arg)
 		return;
 
 	mutex_enter(&sc->sc_intr_lock);
-	do {
-		status = bus_space_read_1(sc->sc_tag, sc->sc_handle,
-			    FIFOSTATUS);
-		again = false;
-		count = 0;
-		if ((status & A_HALF) == 0)
-			count = 0x200;
-		if (count && ((status & A_FULL) == 0))
-			count = 0x400;
 
-		if (sc->sc_rintr && count) {
-			total = count;
-			if (sc->sc_rptr + count > sc->sc_recbuf + BUFSIZE)
-				count = sc->sc_recbuf + BUFSIZE - sc->sc_rptr;
-
-			while (total) {
-				for (i = 0; i < count; i++) {
-					val = bus_space_read_1(sc->sc_tag,
-					    sc->sc_handle, FIFO_A);
-					val ^= 0x80;
-					*sc->sc_rptr++ = val;
-				}
-				if (sc->sc_rptr >= sc->sc_recbuf + BUFSIZE)
-					sc->sc_rptr = sc->sc_recbuf;
-				total -= count;
-				sc->sc_recavail += count;
-			}
-
-			if (sc->sc_recavail > BUFSIZE)
-				sc->sc_recavail = BUFSIZE;
+	status = bus_space_read_1(sc->sc_tag, sc->sc_handle, FIFOSTATUS);
+	
+	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
+		if (sc->sc_pintr) {
+			bus_space_write_1(sc->sc_tag, sc->sc_handle,
+			    IRQB, DISABLEHALFIRQ);
 		}
+		if (sc->sc_rintr) {
+			bus_space_write_1(sc->sc_tag, sc->sc_handle,
+			    IRQA, DISABLEHALFIRQ);
+		}
+	}
 
+	if (sc->sc_ver == EASC_VER2 && (status & A_HALF))
+		count = 0x200;
+	else if (sc->sc_ver != EASC_VER2 && !(status & A_HALF))
+		count = 0x200;
+	else
 		count = 0;
-		if (status &  B_FULL)
-			count = 0x400;
-		else if (status & B_HALF)
-			count = 0x200;
 
-		if (sc->sc_slowcpu)
-			count /= 2;
-
-		if (sc->sc_pintr && count) {
-			if (sc->sc_avail < count) {
-				if (sc->sc_pintr) {
-					for (i = 0; i < 0x200; i++) {
-						bus_space_write_1(sc->sc_tag,
-						    sc->sc_handle, FIFO_A,
-						    0x80);
-						bus_space_write_1(sc->sc_tag,
-						    sc->sc_handle, FIFO_B,
-						    0x80);
-					}
-				} else {
-					for (i = 0; i < 0x200; i++) {
-						bus_space_write_1(sc->sc_tag,
-						    sc->sc_handle, FIFO_B,
-						    0x80);
-					}
-				}
-			} else if (sc->sc_slowcpu) {
-				for (i = 0; i < count; i++) {
-					val = *sc->sc_wptr++;
-					val ^= 0x80;
-					bus_space_write_1(sc->sc_tag,
-					    sc->sc_handle, FIFO_A, val);
-					bus_space_write_1(sc->sc_tag,
-					    sc->sc_handle, FIFO_B, val);
-					bus_space_write_1(sc->sc_tag,
-					    sc->sc_handle, FIFO_A, val);
-					bus_space_write_1(sc->sc_tag,
-					    sc->sc_handle, FIFO_B, val);
-				}
-				sc->sc_avail -= count;
-				again = true;
+	if (count && sc->sc_rintr) {
+		total = count;
+		if (sc->sc_rptr + count >= sc->sc_recbuf + BUFSIZE)
+			count = sc->sc_recbuf + BUFSIZE - sc->sc_rptr;
+		while (total) {
+			if (sc->sc_ver == EASC_VER2) {
+				loc_a = FIFO_A_ALT;
+				loc_b = FIFO_B_ALT;
 			} else {
-				for (i = 0; i < count; i++) {
-					val = *sc->sc_wptr++;
-					val ^= 0x80;
+				loc_a = FIFO_A;
+				loc_b = 0;
+			}
+			for (i = 0; i < count; i++) {
+				val = bus_space_read_1(sc->sc_tag,
+				    sc->sc_handle, loc_a);
+				val ^= 0x80;
+				val = val * sc->sc_recvol / 64;
+				*sc->sc_rptr++ = val;
+				if (loc_b) {
+					(void)bus_space_read_1
+					    (sc->sc_tag, sc->sc_handle, loc_b);
+				}
+			}
+			if (sc->sc_rptr >= sc->sc_recbuf + BUFSIZE)
+				sc->sc_rptr = sc->sc_recbuf;
+			total -= count;
+			sc->sc_recavail += count;
+			count = total;
+		}
+
+		if (sc->sc_recavail > BUFSIZE)
+			sc->sc_recavail = BUFSIZE;
+	}
+	
+	if (sc->sc_pintr == NULL)
+		goto more;
+
+	if (status & B_HALF)
+		count = 0x200;
+	else
+		count = 0;
+
+	if (sc->sc_slowcpu)
+		count /= 2;
+
+	if (count && sc->sc_avail < count) {
+		if (sc->sc_avail) {
+			count = sc->sc_avail;
+			goto fill_fifo;
+		}
+		if (sc->sc_pintr) {
+			for (i = 0; i < 0x200; i++) {
+				if (sc->sc_rintr == NULL ||
+				    sc->sc_ver == EASC_VER2) {
+					bus_space_write_1(sc->sc_tag,
+					    sc->sc_handle, FIFO_A, 0x80);
+				}
+				bus_space_write_1(sc->sc_tag,
+				    sc->sc_handle, FIFO_B, 0x80);
+			}
+		} else {
+			if (sc->sc_slowcpu)
+				count *= 2;
+			for (i = 0; i < count; i++) {
+				bus_space_write_1(sc->sc_tag,
+				    sc->sc_handle, FIFO_B, 0x80);
+			}
+		}
+		goto more;
+	}
+
+fill_fifo:
+	total = count;
+	if (sc->sc_wptr + count >= sc->sc_playbuf + BUFSIZE)
+		count = sc->sc_playbuf + BUFSIZE - sc->sc_wptr;
+
+	while (total) {
+		if (sc->sc_slowcpu) {
+			for (i = 0; i < count; i++) {
+				val = *sc->sc_wptr++;
+				val ^= 0x80;
+				if (sc->sc_rintr == NULL ||
+				    sc->sc_ver == EASC_VER2) {
 					bus_space_write_1(sc->sc_tag,
 					    sc->sc_handle, FIFO_A, val);
 					bus_space_write_1(sc->sc_tag,
-					    sc->sc_handle, FIFO_B, val);
+					    sc->sc_handle, FIFO_A, val);
 				}
-				sc->sc_avail -= count;
-				again = true;
+				bus_space_write_1(sc->sc_tag,
+				    sc->sc_handle, FIFO_B, val);
+				bus_space_write_1(sc->sc_tag,
+				    sc->sc_handle, FIFO_B, val);
 			}
-			if (sc->sc_wptr >= sc->sc_playbuf + BUFSIZE)
-				sc->sc_wptr = sc->sc_playbuf;
+		} else {
+			for (i = 0; i < count; i++) {
+				val = *sc->sc_wptr++;
+				val ^= 0x80;
+				if (sc->sc_rintr == NULL ||
+				    sc->sc_ver == EASC_VER2) {
+					bus_space_write_1(sc->sc_tag,
+					    sc->sc_handle, FIFO_A, val);
+				}
+				bus_space_write_1(sc->sc_tag,
+				    sc->sc_handle, FIFO_B, val);
+			}
 		}
+		if (sc->sc_wptr >= sc->sc_playbuf + BUFSIZE)
+			sc->sc_wptr = sc->sc_playbuf;
+		total -= count;
+		sc->sc_avail -= count;
+		count = total;
+	}
 
-		if (sc->sc_pintr && (sc->sc_avail <= PLAYBLKSIZE))
-			callout_schedule(&sc->sc_pcallout, 0);
+more:
+	if (sc->sc_ver == EASC_VER || sc->sc_ver == EASC_VER2) {
+		if (sc->sc_rintr)
+			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQA, 0);
+		if (sc->sc_pintr)
+			bus_space_write_1(sc->sc_tag, sc->sc_handle, IRQB, 0);
+	}
 
-		if (sc->sc_rintr && (sc->sc_recavail >= RECBLKSIZE))
-			callout_schedule(&sc->sc_rcallout, 0);
-	} while (again);
+	if (sc->sc_pintr && (sc->sc_avail <= PLAYBLKSIZE))
+		callout_schedule(&sc->sc_pcallout, 0);
+
+	if (sc->sc_rintr && (sc->sc_recavail >= RECBLKSIZE))
+		callout_schedule(&sc->sc_rcallout, 0);
+
 	mutex_exit(&sc->sc_intr_lock);
 }
-		
+
 static void
 ascaudio_intr_enable(void)
 {
@@ -871,6 +984,30 @@ ascaudio_done_input(void *arg)
 	if (sc->sc_rintr)
 		(*sc->sc_rintr)(sc->sc_rintrarg);
 	mutex_exit(&sc->sc_intr_lock);
+}
+
+static void
+configure_dfac(uint8_t config)
+{
+	int i;
+
+	if (pmHardware == PM_HW_PB5XX)
+		return;		/* These macs use the pm to configure dfac */
+
+	for (i = 0; i < 8; i++) {
+		via_reg(VIA2, vBufB) &= ~DFAC_CLOCK;
+
+		if (config & 0x1)
+			via_reg(VIA2, vBufB) |= DFAC_DATA;
+		else
+			via_reg(VIA2, vBufB) &= ~DFAC_DATA;
+
+		via_reg(VIA2, vBufB) |= DFAC_CLOCK;
+		config >>= 1;
+	}
+	via_reg(VIA2, vBufB) &= ~DFAC_CLOCK;
+	via_reg(VIA2, vBufB) |= DFAC_LATCH;
+	via_reg(VIA2, vBufB) &= ~DFAC_LATCH;
 }
 
 #ifdef _MODULE

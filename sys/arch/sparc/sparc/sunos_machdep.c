@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.24 2019/04/06 03:06:27 thorpej Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.24.36.1 2025/08/02 05:56:09 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.24 2019/04/06 03:06:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.24.36.1 2025/08/02 05:56:09 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -96,7 +96,7 @@ void sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 		fp = (struct sunos_sigframe *)oldsp;
 
-	fp = (struct sunos_sigframe *)((int)(fp - 1) & ~7);
+	fp = (struct sunos_sigframe *)((int)(fp - 1) & ~STACK_ALIGNBYTES);
 
 #ifdef DEBUG
 	if ((sunos_sigdebug & SDB_KSTACK) && p->p_pid == sunos_sigpid)

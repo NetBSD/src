@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_16.c,v 1.5 2024/05/01 11:32:29 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_compat_16.c,v 1.5.2.1 2025/08/02 05:56:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.5 2024/05/01 11:32:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.5.2.1 2025/08/02 05:56:27 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,22 +48,39 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.5 2024/05/01 11:32:29 mlels
 
 struct uvm_object *emul_netbsd32_object;
 
+#if defined(__amd64__) || defined(__arm__) || defined(__mips__) || defined(__sparc64__)
+#define __HAVE_MD_NETBSD32_SIGRETURN14
+#endif
+
+#if defined(__amd64__) || defined(__arm__) || defined(__mips__) || defined(__powerpc__) || defined(__riscv__)
+#define __HAVE_MD_NETBSD32_SIGCODE
+#endif
+
+
+#ifdef __HAVE_MD_NETBSD32_SIGRETURN14
 static const struct syscall_package netbsd32_kern_sig_16_syscalls[] = {
-        /* compat_16_netbs32___sigreturn14 is in MD code! */
+        /* compat_16_netbsd32___sigreturn14 is in MD code! */
         { NETBSD32_SYS_compat_16_netbsd32___sigreturn14, 0,
             (sy_call_t *)compat_16_netbsd32___sigreturn14 },
         { 0, 0, NULL }
 };
+#endif
 
 static int
 compat_netbsd32_16_init(void)
 {
+#if defined(__HAVE_MD_NETBSD32_SIGRETURN14) || defined(__HAVE_MD_NETBSD32_SIGCODE)
 	int error;
+#endif
 
-	error = syscall_establish(&emul_netbsd32, netbsd32_kern_sig_16_syscalls);
+#ifdef __HAVE_MD_NETBSD32_SIGRETURN14
+	error = syscall_establish(&emul_netbsd32,
+	    netbsd32_kern_sig_16_syscalls);
 	if (error)
 		return error;
+#endif
 
+#ifdef __HAVE_MD_NETBSD32_SIGCODE
 	rw_enter(&exec_lock, RW_WRITER);
 	emul_netbsd32.e_sigcode = netbsd32_sigcode;
 	emul_netbsd32.e_esigcode = netbsd32_esigcode;
@@ -78,43 +95,52 @@ compat_netbsd32_16_init(void)
 	if (error)
 		return error;
 	netbsd32_machdep_md_16_init();
+#endif
 	return 0;
 }
 
 static int
 compat_netbsd32_16_fini(void)
 {
+#if defined(__HAVE_MD_NETBSD32_SIGRETURN14)
 	proc_t *p;
 	int error;
+#endif
 
-	error = syscall_disestablish(&emul_netbsd32, netbsd32_kern_sig_16_syscalls);
-        if (error)
-                return error;
-        /*
-         * Ensure sendsig_sigcontext() is not being used.
-         * module_lock prevents the flag being set on any
-         * further processes while we are here.  See
-         * sigaction1() for the opposing half.
-         */
-        mutex_enter(&proc_lock);
-        PROCLIST_FOREACH(p, &allproc) {
-                if ((p->p_lflag & PL_SIGCOMPAT) != 0) {
-                        break;
-                }
-        }
-        mutex_exit(&proc_lock);
-        if (p != NULL) {
-                syscall_establish(&emul_netbsd32, netbsd32_kern_sig_16_syscalls);
-                return EBUSY;
-        }
+#ifdef __HAVE_MD_NETBSD32_SIGRETURN14
+	error = syscall_disestablish(&emul_netbsd32,
+	    netbsd32_kern_sig_16_syscalls);
+	if (error)
+		return error;
+	/*
+	 * Ensure sendsig_sigcontext() is not being used.
+	 * module_lock prevents the flag being set on any
+	 * further processes while we are here.  See
+	 * sigaction1() for the opposing half.
+	 */
+	mutex_enter(&proc_lock);
+	PROCLIST_FOREACH(p, &allproc) {
+		if ((p->p_lflag & PL_SIGCOMPAT) != 0) {
+			break;
+		}
+	}
+	mutex_exit(&proc_lock);
+	if (p != NULL) {
+		syscall_establish(&emul_netbsd32,
+		    netbsd32_kern_sig_16_syscalls);
+		return EBUSY;
+	}
+#endif
 
+#ifdef __HAVE_MD_NETBSD32_SIGCODE
 	rw_enter(&exec_lock, RW_WRITER);
 	exec_sigcode_free(&emul_netbsd);
 	emul_netbsd32.e_sigcode = NULL;
-       	emul_netbsd32.e_esigcode = NULL;
-       	emul_netbsd32.e_sigobject = NULL;
+	emul_netbsd32.e_esigcode = NULL;
+	emul_netbsd32.e_sigobject = NULL;
 	rw_exit(&exec_lock);
 	netbsd32_machdep_md_16_fini();
+#endif
 	return 0;
 }
 

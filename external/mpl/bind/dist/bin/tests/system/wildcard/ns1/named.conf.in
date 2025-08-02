@@ -34,6 +34,12 @@ zone "example" { type primary; file "example.db"; };
 zone "nsec" { type primary; file "nsec.db.signed"; };
 zone "private.nsec" { type primary; file "private.nsec.db.signed"; };
 
+zone "nestedwild.test" {
+        type primary;
+        file "nestedwild.db";
+        check-names ignore;
+};
+
 /*
  * The contents of nsec3 and private.nsec3 are specially chosen to
  * have separate NSEC3 records for the "no qname proof" and the

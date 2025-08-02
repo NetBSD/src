@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.318 2024/04/05 18:57:10 riastradh Exp $	*/
+/*	$NetBSD: uhci.c,v 1.318.2.1 2025/08/02 05:57:05 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.318 2024/04/05 18:57:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.318.2.1 2025/08/02 05:57:05 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -829,7 +829,7 @@ uhci_dump_td(uhci_soft_td_t *p)
 	    !!(le32toh(p->td.td_status) & UHCI_TD_IOS),
 	    !!(le32toh(p->td.td_status) & UHCI_TD_LS),
 	    !!(le32toh(p->td.td_status) & UHCI_TD_SPD), 0);
-	DPRINTF("errcnt  =%d actlen  =%d pid=%02x",
+	DPRINTF("errcnt  =%jd actlen  =%jd pid=%02jx",
 	    UHCI_TD_GET_ERRCNT(le32toh(p->td.td_status)),
 	    UHCI_TD_GET_ACTLEN(le32toh(p->td.td_status)),
 	    UHCI_TD_GET_PID(le32toh(p->td.td_token)), 0);
@@ -3132,7 +3132,6 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 	uhci_softc_t *sc __diagused = UHCI_XFER2SC(xfer);
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
 	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
-	int i, offs;
 	int rd = UE_GET_DIR(upipe->pipe.up_endpoint->ue_edesc->bEndpointAddress) == UE_DIR_IN;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
@@ -3164,12 +3163,9 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 	    sizeof(ux->ux_stdend->td.td_status),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-	offs = 0;
-	for (i = 0; i < xfer->ux_nframes; i++) {
-		usb_syncmem(&xfer->ux_dmabuf, offs, xfer->ux_frlengths[i],
+	if (xfer->ux_length)
+		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 		    rd ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-		offs += xfer->ux_frlengths[i];
-	}
 }
 
 void

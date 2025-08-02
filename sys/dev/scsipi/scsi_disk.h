@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.35 2023/12/07 07:04:13 andvar Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.35.2.1 2025/08/02 05:57:03 perseant Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -136,9 +136,9 @@ struct scsi_defect_descriptor_psf {
 };
 
 /*
- * XXX for now this isn't in the ATAPI specs, but if there are on day
+ * XXX for now this isn't in the ATAPI specs, but if there are one day
  * ATAPI hard disks, it is likely that they implement this command (or a
- * command like this ?
+ * command like this?).
  */
 #define	SCSI_REASSIGN_BLOCKS		0x07
 struct scsi_reassign_blocks {
@@ -298,7 +298,7 @@ union scsi_disk_pages {
 		u_int8_t rpm[2];	/* media rotation speed */
 		u_int8_t reserved2;
 		u_int8_t reserved3;
-    	} rigid_geometry;
+	} rigid_geometry;
 	struct page_flex_geometry {
 		u_int8_t pg_code;	/* page code (should be 5) */
 		u_int8_t pg_length;	/* page length (should be 0x1e) */
@@ -364,13 +364,13 @@ union scsi_disk_pages {
 		u_int8_t pg_code;	/* page code (should be 0x0a) */
 		u_int8_t pg_length;	/* page length (should be 0x0a) */
 		u_int8_t ctl_flags1;	/* First set of flags */
-#define CTL1_TST_PER_INTR 	0x40	/* Task set per initiator */
+#define CTL1_TST_PER_INTR	0x40	/* Task set per initiator */
 #define CTL1_TST_FIELD		0xe0	/* Full field */
 #define CTL1_D_SENSE		0x04	/* Descriptor-format sense return */
 #define CTL1_GLTSD		0x02	/* Glob. Log Targ. Save Disable */
 #define CTL1_RLEC		0x01	/* Rpt Logging Exception Condition */
 		u_int8_t ctl_flags2;	/* Second set of flags */
-#define CTL2_QAM_UNRESTRICT 0x10	/* Unrestricted reordering allowed */
+#define CTL2_QAM_UNRESTRICT	0x10	/* Unrestricted reordering allowed */
 #define CTL2_QAM_FIELD		0xf0	/* Full Queue alogo. modifier field */
 #define CTL2_QERR_ABRT		0x02	/* Queue error - abort all */
 #define CTL2_QERR_ABRT_SELF	0x06	/* Queue error - abort intr's */
@@ -393,5 +393,40 @@ union scsi_disk_pages {
 		u_int8_t ctl_selt[2];	/* extended self-test completion time */
 	} control_params;
 };
+
+struct scsi_vpd_logical_block_provisioning {
+	struct {
+/*1*/		u_int8_t	device;
+/*2*/		u_int8_t	pagecode;
+/*3*/		u_int8_t	length[2];
+	};
+/*4*/	u_int8_t	threshold_exponent;
+/*5*/	u_int8_t	flags;
+#define VPD_LBP_LBPU		0x80
+#define VPD_LBP_LBPWS		0x40
+#define VPD_LBP_LBPWS10		0x20
+/*6*/	u_int8_t	reserved6[2];
+} __packed;
+
+#define	UNMAP_10		0x42
+struct scsi_unmap_10 {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t reserved3[4];
+	u_int8_t byte7;
+	u_int8_t length[2];
+	u_int8_t control;
+} __packed;
+
+struct scsi_unmap_10_data {
+	u_int8_t	unmap_data_length[2];
+	u_int8_t	unmap_block_descriptor_data_length[2];
+	u_int8_t	reserved5[4];
+	struct {
+		u_int8_t	addr[8];
+		u_int8_t	len[4];
+		u_int8_t	reserved13[4];
+	} unmap_block_descriptor[1];
+} __packed;
 
 #endif /* _DEV_SCSIPI_SCSI_DISK_H_ */

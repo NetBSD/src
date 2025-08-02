@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.107 2023/07/20 16:21:23 lukem Exp $
+#	$NetBSD: configure.ac,v 1.107.2.1 2025/08/02 05:58:22 perseant Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -159,6 +159,21 @@ AC_DEFUN([NB_CHECK_INTTYPE], [dnl
 				  [Define if you have uint][$1][_t, but not u_int][$1][_t.]),
 			AC_MSG_ERROR([cannot find a suitable type for u_int][$1][_t]))
 	])
+	AC_CHECK_TYPE(__uint][$1][_t,, [
+		AC_CHECK_TYPE(uint][$1][_t,
+			AC_DEFINE(__uint][$1][_t, uint][$1][_t, \
+			          [Define if you have uint][$1][_t, but not __uint][$1][_t.]),
+			AC_CHECK_TYPE(u_int][$1][_t,
+				AC_DEFINE(uint][$1][_t, u_int][$1][_t, \
+				          [Define if you have u_int][$1][_t, but not uint][$1][_t.]),
+				AC_MSG_ERROR([cannot find a suitable type for __uint][$1][_t])))
+	])
+	AC_CHECK_TYPE(__int][$1][_t,, [
+		AC_CHECK_TYPE(int][$1][_t,
+			AC_DEFINE(__int][$1][_t, int][$1][_t, \
+			          [Define if you have int][$1][_t, but not __int][$1][_t.]),
+			AC_MSG_ERROR([cannot find a suitable type for __int][$1][_t]))
+	])
 ])dnl NB_CHECK_INTTYPE
 
 NB_CHECK_INTTYPE(8)
@@ -184,7 +199,7 @@ AC_CHECK_DECLS([asprintf, asnprintf, vasprintf, vasnprintf, vsnprintf, fgetln, f
 ])
 
 AC_CHECK_DECLS([atoll, heapsort, mkdtemp, mkstemp, reallocarr, reallocarray,
-	getsubopt, setenv, strtoi, strtoll, strtou, setprogname,
+	getsubopt, setenv, strtoi, strtoll, strtou, setprogname, shquote,
 	getprogname],,, [
 #include <stdlib.h>
 ])

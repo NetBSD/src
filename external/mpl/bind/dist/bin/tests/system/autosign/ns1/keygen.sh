@@ -31,8 +31,8 @@ zskactnowpub1d=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q -A now -P +1d $zone)
 zsknopriv=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q $zone)
 rm $zsknopriv.private
 
-ksksby=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q -P now -A now+15s -fk $zone)
-kskrev=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q -R now+15s -fk $zone)
+ksksby=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q -P now -A now -fk $zone)
+kskrev=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q -R now -fk $zone)
 
 keyfile_to_static_ds $ksksby >trusted.conf
 cp trusted.conf ../ns2/trusted.conf
@@ -51,3 +51,5 @@ echo $zsknopriv >../nopriv.key
 echo $zsksby >../standby.key
 echo $zskactnowpub1d >../activate-now-publish-1day.key
 $REVOKE -R $kskrev >../rev.key
+
+$SIGNER -S -o . -O full root.db >signing.out 2>&1

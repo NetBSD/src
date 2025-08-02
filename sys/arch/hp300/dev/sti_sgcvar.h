@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgcvar.h,v 1.1 2014/04/20 04:12:54 tsutsui Exp $	*/
+/*	$NetBSD: sti_sgcvar.h,v 1.1.74.1 2025/08/02 05:55:38 perseant Exp $	*/
 /*-
  * Copyright (c) 2014 Izumi Tsutsui.  All rights reserved.
  *
@@ -23,5 +23,5 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	sti_sgc_cnprobe(bus_space_tag_t, bus_addr_t, int);
-void	sti_sgc_cnattach(bus_space_tag_t, bus_addr_t, int);
+int	sti_sgc_cnprobe(bus_space_tag_t, int);
+void	sti_sgc_cnattach(bus_space_tag_t, int);

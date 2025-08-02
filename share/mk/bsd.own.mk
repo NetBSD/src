@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1382.2.2 2024/07/01 01:01:12 perseant Exp $
+#	$NetBSD: bsd.own.mk,v 1.1382.2.3 2025/08/02 05:55:19 perseant Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -75,22 +75,7 @@ TOOLCHAIN_MISSING?=	no
 #
 # What GCC is used?
 #
-.if \
-    ${MACHINE_CPU} == "aarch64" || \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_CPU} == "mips" || \
-    ${MACHINE_CPU} == "powerpc" || \
-    ${MACHINE_CPU} == "riscv" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE} == "hppa" || \
-    ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64" || \
-    ${MACHINE} == "ia64" || \
-    ${MACHINE} == "alpha"
 HAVE_GCC?=	12
-.endif
-HAVE_GCC?=	10
 
 #
 # Platforms that can't run a modern GCC natively
@@ -115,9 +100,21 @@ MKGCCCMDS?=	no
 .endif	# MKGCC == no							# }
 
 #
+# Build GCC with the "isl" library enabled.
+# The alpha port does not work with it, see GCC PR's 84204 and 84353.
+# Other ports don't have vector units GCC can target.
+#
+.if ${MACHINE} == "alpha" || \
+    ${MACHINE} == "vax" || \
+    ${MACHINE_CPU} == "m68k" || \
+    ${MACHINE_CPU} == "sh3"
+NOGCCISL=	# defined
+.endif
+
+#
 # What binutils is used?
 #
-HAVE_BINUTILS?=	239
+HAVE_BINUTILS?= 242
 
 .if ${HAVE_BINUTILS} == 242
 EXTERNAL_BINUTILS_SUBDIR=	binutils
@@ -130,25 +127,32 @@ EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
 #
 # What GDB is used?
 #
-HAVE_GDB?=	1320
+HAVE_GDB?=	1510
 
-.if ${HAVE_GDB} == 1320
+.if ${HAVE_GDB} == 1510
 EXTERNAL_GDB_SUBDIR=		gdb
-.elif ${HAVE_GDB} == 1100
+.elif ${HAVE_GDB} == 1320
 EXTERNAL_GDB_SUBDIR=		gdb.old
 .else
 EXTERNAL_GDB_SUBDIR=		/does/not/exist
 .endif
 
+.if ${MACHINE_ARCH} == "x86_64"
+MKGDBSERVER?=	yes
+.endif
+MKGDBSERVER?=	no
+
 #
 # What OpenSSL is used?
 #
-HAVE_OPENSSL?=	30
+HAVE_OPENSSL?=	35
 
-.if ${HAVE_OPENSSL} == 30
-EXTERNAL_OPENSSL_SUBDIR=openssl
+.if ${HAVE_OPENSSL} == 35
+EXTERNAL_OPENSSL_SUBDIR=apache2/openssl
+.elif ${HAVE_OPENSSL} == 30
+EXTERNAL_OPENSSL_SUBDIR=bsd/openssl
 .elif ${HAVE_OPENSSL} == 11
-EXTERNAL_OPENSSL_SUBDIR=openssl.old
+EXTERNAL_OPENSSL_SUBDIR=bsd/openssl.old
 .else
 EXTERNAL_OPENSSL_SUBDIR=/does/not/exist
 .endif
@@ -177,6 +181,15 @@ HAVE_ACPI=	no
 HAVE_UEFI=	yes
 .else
 HAVE_UEFI=	no
+.endif
+
+#
+# Does the platform support EFI RT services?
+#
+.if ${HAVE_UEFI} == "yes" && ${MACHINE_ARCH:M*eb} == ""
+HAVE_EFI_RT=	yes
+.else
+HAVE_EFI_RT=	no
 .endif
 
 #
@@ -220,8 +233,7 @@ HAVE_LIBGCC_EH?=	yes
 .if defined(COVERITY_TOP_CONFIG) || \
     ${MACHINE} == "alpha" || \
     ${MACHINE} == "hppa" || \
-    ${MACHINE} == "ia64" || \
-    ${MACHINE_CPU} == "mips"
+    ${MACHINE} == "ia64"
 HAVE_SSP?=	no
 .else
 HAVE_SSP?=	yes
@@ -237,14 +249,22 @@ USE_SSP?=	yes
 .if ${MACHINE_ARCH} == "vax" || ${MACHINE} == "sun2"
 HAVE_JEMALLOC?=		100
 .else
-HAVE_JEMALLOC?=		510
+HAVE_JEMALLOC?=		530
+.endif
+
+.if ${HAVE_JEMALLOC} == 530 || ${HAVE_JEMALLOC} == 100
+EXTERNAL_JEMALLOC_SUBDIR = jemalloc
+.elif ${HAVE_JEMALLOC} == 510
+EXTERNAL_JEMALLOC_SUBDIR = jemalloc.old
+.else
+EXTERNAL_JEMALLOC_SUBDIR = /does/not/exist
 .endif
 
 .if empty(.MAKEFLAGS:tW:M*-V .OBJDIR*)
 .if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
-PRINTOBJDIR=	${MAKE} -r -V .OBJDIR -f /dev/null xxx
+PRINTOBJDIR=	${MAKE} -B -r -V .OBJDIR -f /dev/null xxx
 .else
-PRINTOBJDIR=	${MAKE} -V .OBJDIR
+PRINTOBJDIR=	${MAKE} -B -V .OBJDIR
 .endif
 .else
 PRINTOBJDIR=	echo /error/bsd.own.mk/PRINTOBJDIR # avoid infinite recursion
@@ -464,6 +484,7 @@ TOOL_DTC=		${TOOLDIR}/bin/${_TOOL_PREFIX}dtc
 TOOL_EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
 TOOL_FDISK=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-fdisk
 TOOL_FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
+TOOL_FILE=		${TOOLDIR}/bin/${_TOOL_PREFIX}file
 TOOL_GENASSYM=		${TOOLDIR}/bin/${_TOOL_PREFIX}genassym
 TOOL_GENCAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gencat
 TOOL_GMAKE=		${TOOLDIR}/bin/${_TOOL_PREFIX}gmake
@@ -489,6 +510,7 @@ TOOL_LLVM_TBLGEN=	${TOOLDIR}/bin/${_TOOL_PREFIX}llvm-tblgen
 TOOL_M4=		${TOOLDIR}/bin/${_TOOL_PREFIX}m4
 TOOL_MACPPCFIXCOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}macppc-fixcoff
 TOOL_MACPPCINSTALLBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}macppc_installboot
+TOOL_MACPPCMKBOOTHFS=	${TOOLDIR}/bin/${_TOOL_PREFIX}macppc_mkboothfs
 TOOL_MAKEFS=		${TOOLDIR}/bin/${_TOOL_PREFIX}makefs
 TOOL_MAKEINFO=		${TOOLDIR}/bin/${_TOOL_PREFIX}makeinfo
 TOOL_MAKEKEYS=		${TOOLDIR}/bin/${_TOOL_PREFIX}makekeys
@@ -543,6 +565,7 @@ TOOL_SUNLABEL=		${TOOLDIR}/bin/${_TOOL_PREFIX}sunlabel
 TOOL_TBL=		${TOOLDIR}/bin/${_TOOL_PREFIX}tbl
 TOOL_TIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}tic
 TOOL_UUDECODE=		${TOOLDIR}/bin/${_TOOL_PREFIX}uudecode
+TOOL_VAXMOPCOPY=	${TOOLDIR}/bin/${_TOOL_PREFIX}vax-mopcopy
 TOOL_VGRIND=		${TOOLDIR}/bin/${_TOOL_PREFIX}vgrind -f
 TOOL_VFONTEDPR=		${TOOLDIR}/libexec/${_TOOL_PREFIX}vfontedpr
 TOOL_ZIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}zic
@@ -590,6 +613,7 @@ TOOL_DTC=		dtc
 TOOL_EQN=		eqn
 TOOL_FDISK=		fdisk
 TOOL_FGEN=		fgen
+TOOL_FILE=		file
 TOOL_GENASSYM=		genassym
 TOOL_GENCAT=		gencat
 TOOL_GMAKE=		gmake
@@ -659,6 +683,7 @@ TOOL_SUNLABEL=		sunlabel
 TOOL_TBL=		tbl
 TOOL_TIC=		tic
 TOOL_UUDECODE=		uudecode
+TOOL_VAXMOPCOPY=	vax-mopcopy
 TOOL_VGRIND=		vgrind -f
 TOOL_VFONTEDPR=		/usr/libexec/vfontedpr
 TOOL_ZIC=		zic
@@ -723,6 +748,14 @@ CC_WNO_RETURN_LOCAL_ADDR=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno
 CC_WNO_STRINGOP_OVERFLOW=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-stringop-overflow :}
 CC_WNO_STRINGOP_OVERREAD=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-stringop-overread :}
 CC_WNO_STRINGOP_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-stringop-truncation :}
+
+# relative relocs are only supported in gnu ld for ppc64 and x86
+.if ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "i386"  || \
+    ${MACHINE_ARCH} == "powerpc64"
+LD_PACK_RELATIVE_RELOCS=	-Wl,-z,pack-relative-relocs
+LD_NOPACK_RELATIVE_RELOCS=	-Wl,-z,nopack-relative-relocs
+.endif
 
 # For each ${MACHINE_CPU}, list the ports that use it.
 MACHINES.aarch64=	evbarm
@@ -904,10 +937,10 @@ MKGCC:= no
 
 MKGDB.or1k=	no
 
-# No kernel modules for or1k or riscv (yet)
+# No kernel modules for or1k (yet)
 MKKMOD.or1k=	no
 
-# No profiling for or1k (yet)
+# No profiling for or1k or risc-v (yet)
 MKPROFILE.or1k=	no
 MKPROFILE.riscv32=no
 MKPROFILE.riscv64=no
@@ -1068,6 +1101,7 @@ _NOVARS= \
 	NONLS \
 	NOOBJ \
 	NOPIC \
+	NOPIE \
 	NOPICINSTALL \
 	NOPROFILE \
 	NORELRO \
@@ -1162,6 +1196,7 @@ MKCTF?=		yes
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH:Maarch64*} || \
     ${MACHINE_CPU} == "arm" || \
+    ${MACHINE} == "macppc" || \
     ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_CPU} == "mips" || \
     ${MACHINE_CPU} == "sh3" || \
@@ -1179,7 +1214,8 @@ MKPIE?=		no
 #
 .if ${MACHINE} == "i386" || \
     ${MACHINE} == "amd64" || \
-    ${MACHINE_ARCH:Maarch64*}
+    ${MACHINE_ARCH:Maarch64*} || \
+    ${MACHINE_MIPS64}
 MKRELRO?=	partial
 .else
 MKRELRO?=	no
@@ -1354,9 +1390,8 @@ HAVE_XORG_SERVER_VER?=120
 .endif
 
 # Newer Mesa does not build with old X server
-# VAX build triggers a gcc internal error
-.if ${HAVE_XORG_SERVER_VER} != "120" || ${MACHINE} == "vax"
-HAVE_MESA_VER=19
+.if ${HAVE_XORG_SERVER_VER} != "120"
+HAVE_MESA_VER?=19
 .endif
 
 HAVE_MESA_VER?=	21
@@ -1593,7 +1628,7 @@ OBJECT_FMTS=
 OBJECT_FMTS+=	elf32
 .endif
 .if	${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH:M*64*} != ""
-. if !(${MKCOMPAT:Uyes} == "no" && ${MACHINE_CPU} == "mips")
+. if !(${MKCOMPAT:Uyes} == "no" && ${MACHINE_ARCH:Mmips64*} != "")
 OBJECT_FMTS+=	elf64
 . endif
 .endif
@@ -1709,19 +1744,21 @@ X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 .endfor
 
+# Build glamor extension?
+
 .if ${HAVE_XORG_SERVER_VER} == "120"
 XORG_SERVER_SUBDIR?=xorg-server
 . if ${MACHINE} == "amd64" || ${MACHINE} == "i386" || ${MACHINE} == "evbarm"
 HAVE_XORG_GLAMOR?=	yes
 . endif
+HAVE_XORG_EGL?=		yes
 .else
 XORG_SERVER_SUBDIR?=xorg-server.old
 .endif
 
 X11SRCDIR.xorg-server?=		${X11SRCDIRMIT}/${XORG_SERVER_SUBDIR}/dist
 HAVE_XORG_GLAMOR?=	no
-
-# Build glamor extension?
+HAVE_XORG_EGL?=		no
 
 .for _dir in \
 	xtrans fontconfig freetype evieext mkfontscale bdftopcf \
@@ -1751,7 +1788,10 @@ HAVE_XORG_GLAMOR?=	no
 	font-bitstream-100dpi font-bitstream-75dpi font-bitstream-type1 \
 	font-cursor-misc font-daewoo-misc font-dec-misc font-ibm-type1 \
 	font-isas-misc font-jis-misc font-misc-misc font-mutt-misc \
-	font-sony-misc font-util ttf-bitstream-vera encodings
+	font-sony-misc font-util ttf-bitstream-vera encodings \
+	font-arabic-misc font-micro-misc font-schumacher-misc \
+	font-sun-misc font-cronyx-cyrillic font-misc-cyrillic \
+	font-screen-cyrillic font-winitzki-cyrillic font-xfree86-type1
 X11SRCDIR.${_dir}?=		${X11SRCDIRMIT}/${_dir}/dist
 .endfor
 
@@ -1774,8 +1814,8 @@ EXTRA_DRIVERS=	modesetting
 .for _v in \
 	ag10e amdgpu apm ark ast ati ati-kms chips cirrus crime \
 	geode glint i128 i740 igs imstt intel intel-old intel-2014 \
-	${EXTRA_DRIVERS} mach64 mga \
-	neomagic newport nouveau nsc nv openchrome pnozz \
+	${EXTRA_DRIVERS} mach64 mga mgx \
+	neomagic newport ngle nouveau nsc nv openchrome pnozz \
 	r128 rendition \
 	s3 s3virge savage siliconmotion sis suncg14 \
 	suncg6 sunffb sunleo suntcx \

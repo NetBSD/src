@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.190 2024/06/14 18:44:18 kardel Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.190.2.1 2025/08/02 05:57:03 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.190 2024/06/14 18:44:18 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.190.2.1 2025/08/02 05:57:03 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1055,6 +1055,13 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 			break;
 		case SKEY_VOLUME_OVERFLOW:
 			error = ENOSPC;
+			break;
+		case SKEY_MEDIUM_ERROR:
+			if (xs->xs_retries != 0) {
+				xs->xs_retries--;
+				error = ERESTART;
+			} else
+				error = EIO;
 			break;
 		default:
 			error = EIO;

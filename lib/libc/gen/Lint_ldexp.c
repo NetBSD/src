@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_ldexp.c,v 1.2 1998/12/02 09:47:20 christos Exp $	*/
+/*	$NetBSD: Lint_ldexp.c,v 1.2.124.1 2025/08/02 05:54:36 perseant Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -9,9 +9,7 @@
 
 /*ARGSUSED*/
 double
-ldexp(val, exp)
-	double val;
-	int exp;
+ldexp(double val, int exp)
 {
-	return(0);
+	return 0.0;
 }

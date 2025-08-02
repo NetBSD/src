@@ -12,16 +12,21 @@
 # information regarding copyright ownership.
 
 import pytest
+import isctest
 
 pytest.importorskip("dns")
 import dns.message
-import dns.query
-import dns.rcode
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "ans*/ans.run",
+    ]
+)
 
 
-def test_connreset(named_port):
+def test_connreset():
     msg = dns.message.make_query(
         "sub.example.", "A", want_dnssec=True, use_edns=0, payload=1232
     )
-    ans = dns.query.udp(msg, "10.53.0.2", timeout=10, port=named_port)
-    assert ans.rcode() == dns.rcode.SERVFAIL
+    res = isctest.query.udp(msg, "10.53.0.2")
+    isctest.check.servfail(res)

@@ -1,4 +1,4 @@
-/* $NetBSD: t_isnan.c,v 1.5 2014/11/04 00:20:19 justin Exp $ */
+/* $NetBSD: t_isnan.c,v 1.5.28.1 2025/08/02 05:58:04 perseant Exp $ */
 
 /*
  * This file is in the Public Domain.
@@ -22,16 +22,13 @@ ATF_TC_HEAD(isnan_basic, tc)
 
 ATF_TC_BODY(isnan_basic, tc)
 {
-#if defined(__m68k__)
-	atf_tc_skip("Test not applicable on " MACHINE_ARCH);
-#endif
 
 #ifdef NAN
 	/* NAN is meant to be a (float)NaN. */
 	ATF_CHECK(isnan(NAN) != 0);
 	ATF_CHECK(isnan((double)NAN) != 0);
 #else
-	atf_tc_skip("Test not applicable");
+	atf_tc_skip("No NaN on this architecture");
 #endif
 }
 
@@ -43,8 +40,8 @@ ATF_TC_HEAD(isinf_basic, tc)
 
 ATF_TC_BODY(isinf_basic, tc)
 {
-#if defined(__m68k__)
-	atf_tc_skip("Test not applicable on " MACHINE_ARCH);
+#ifdef __vax__
+	atf_tc_skip("No infinity on this architecture");
 #endif
 
 	/* HUGE_VAL is meant to be an infinity. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.34 2023/02/14 08:22:02 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.34.6.1 2025/08/02 05:57:08 perseant Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -35,6 +35,9 @@
 #endif
 
 #include <sys/atomic.h>
+
+#include <dev/rasops/rasops.h>
+#include <dev/wscons/wsdisplayvar.h>
 
 struct vcons_data;
 

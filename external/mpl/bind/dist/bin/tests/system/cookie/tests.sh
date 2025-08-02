@@ -85,7 +85,8 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "checking COOKIE is not returned when answer-cookie is false ($n)"
 ret=0
-$DIG $DIGOPTS +cookie version.bind txt ch @10.53.0.7 >dig.out.test$n || ret=1
+oldcookie=b71d3138bb984fc50100000064a65cffbbf02482dfb99ba5
+$DIG $DIGOPTS +cookie=$oldcookie version.bind txt ch @10.53.0.7 >dig.out.test$n || ret=1
 grep COOKIE: dig.out.test$n >/dev/null && ret=1
 grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -151,7 +152,7 @@ n=$((n + 1))
 echo_i "checking require-server-cookie default (no) ($n)"
 ret=0
 $DIG $DIGOPTS +qr +cookie +nobadcookie soa @10.53.0.1 >dig.out.test$n || ret=1
-grep BADCOOKIE dig.out.test$n >/dev/null && ret=1
+grep "status: BADCOOKIE" dig.out.test$n >/dev/null && ret=1
 linecount=$(getcookie dig.out.test$n | wc -l)
 if [ $linecount != 2 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -163,7 +164,7 @@ ret=0
 $DIG $DIGOPTS +qr +cookie +nobadcookie soa @10.53.0.3 >dig.out.test$n || ret=1
 grep "flags: qr[^;]* aa[ ;]" dig.out.test$n >/dev/null && ret=1
 grep "flags: qr[^;]* ad[ ;]" dig.out.test$n >/dev/null && ret=1
-grep BADCOOKIE dig.out.test$n >/dev/null || ret=1
+grep "status: BADCOOKIE" dig.out.test$n >/dev/null || ret=1
 linecount=$(getcookie dig.out.test$n | wc -l)
 if [ $linecount != 2 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -185,8 +186,8 @@ if [ $good != 2 ]; then ret=1; fi
 if [ $linecount != 4 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
-
 n=$((n + 1))
+
 echo_i "checking +showbadcookie ($n)"
 ret=0
 $DIG $DIGOPTS +cookie +showbadcookie soa @10.53.0.3 >dig.out.test$n || ret=1
@@ -208,9 +209,20 @@ echo_i "checking require-server-cookie yes with rate-limit ($n)"
 ret=0
 $DIG $DIGOPTS +qr +cookie +nobadcookie soa example @10.53.0.8 >dig.out.test$n || ret=1
 grep "flags: qr[^;]* ad[ ;]" dig.out.test$n >/dev/null && ret=1
-grep BADCOOKIE dig.out.test$n >/dev/null || ret=1
+grep "status: BADCOOKIE" dig.out.test$n >/dev/null || ret=1
 linecount=$(getcookie dig.out.test$n | wc -l)
 if [ $linecount != 2 ]; then ret=1; fi
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking 'server <prefix> { require-cookie yes; };' triggers TCP when cookie not returned ($n)"
+ret=0
+nextpart ns8/named.run >/dev/null
+$DIG $DIGOPTS +cookie soa from-no-cookie-server.example @10.53.0.8 >dig.out.test$n || ret=1
+grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
+wait_for_log_peek 3 "missing required cookie from 10.53.0.7#" ns8/named.run || ret=1
+wait_for_log_peek 3 "connected from" ns8/named.run || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -235,6 +247,17 @@ echo_i "send oversized for named cookie with server requiring a good cookie ($n)
 ret=0
 $DIG $DIGOPTS +qr +cookie=${cookie}00 soa @10.53.0.3 >dig.out.test$n || ret=1
 grep "COOKIE: [a-f0-9]* (good)" dig.out.test$n >/dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+echo_i "check that BADCOOKIE is returned for a bad server COOKIE ($n)"
+ret=0
+badcookie=$(echo $cookie | sed 's/[a-f0-9]/0/g')
+$DIG $DIGOPTS +qr +cookie=$badcookie +nobadcookie soa example @10.53.0.1 >dig.out.test$n || ret=1
+grep "flags: qr[^;]* ad[ ;]" dig.out.test$n >/dev/null && ret=1
+grep "status: BADCOOKIE" dig.out.test$n >/dev/null || ret=1
+linecount=$(getcookie dig.out.test$n | wc -l)
+if [ $linecount != 2 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -339,6 +362,23 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
+echo_i "Restart NS4 with -T cookiealwaysvalid ($n)"
+stop_server ns4
+touch ns4/named.cookiealwaysvalid
+start_server --noclean --restart --port ${PORT} ns4 || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "test NS6 cookie on NS4 with -T cookiealwaysvalid (expect success) ($n)"
+ret=0
+$DIG $DIGOPTS +cookie=$ns6cookie -b 10.53.0.4 +nobadcookie soa . @10.53.0.4 >dig.out.test$n || ret=1
+grep "; COOKIE:.*(good)" dig.out.test$n >/dev/null || ret=1
+grep "status: NOERROR," dig.out.test$n >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
 echo_i "check that test server is correctly configured ($n)"
 ret=0
 pat="; COOKIE: ................................ (good)"
@@ -379,21 +419,21 @@ grep 'A.10\.53\.0\.9' dig.out.test$n.5 >/dev/null || ret=1
 grep 'A.10\.53\.0\.10' dig.out.test$n.5 >/dev/null && ret=1
 grep ";; TSIG PSEUDOSECTION:" dig.out.test$n.1 >/dev/null && ret=1
 
-$DIG $DIGOPTS @10.53.0.9 +tcp tcponly.tld >dig.out.test$n.6
+$DIG $DIGOPTS @10.53.0.9 +tcp tcponly.tld >dig.out.test$n.6 || ret=1
 grep "status: NOERROR" dig.out.test$n.6 >/dev/null || ret=1
 grep "$pat" dig.out.test$n.6 >/dev/null || ret=1
 grep 'A.10\.53\.0\.9' dig.out.test$n.6 >/dev/null || ret=1
 grep 'A.10\.53\.0\.10' dig.out.test$n.6 >/dev/null && ret=1
 grep ";; TSIG PSEUDOSECTION:" dig.out.test$n.1 >/dev/null && ret=1
 
-$DIG $DIGOPTS @10.53.0.9 +tcp nocookie.tld >dig.out.test$n.7
+$DIG $DIGOPTS @10.53.0.9 +tcp nocookie.tld >dig.out.test$n.7 || ret=1
 grep "status: NOERROR" dig.out.test$n.7 >/dev/null || ret=1
 grep "; COOKIE:" dig.out.test$n.7 >/dev/null && ret=1
 grep 'A.10\.53\.0\.9' dig.out.test$n.7 >/dev/null || ret=1
 grep 'A.10\.53\.0\.10' dig.out.test$n.7 >/dev/null && ret=1
 grep ";; TSIG PSEUDOSECTION:" dig.out.test$n.1 >/dev/null && ret=1
 
-$DIG $DIGOPTS @10.53.0.9 +tcp withtsig.tld >dig.out.test$n.8
+$DIG $DIGOPTS @10.53.0.9 +tcp withtsig.tld >dig.out.test$n.8 || ret=1
 grep "status: NOERROR" dig.out.test$n.8 >/dev/null || ret=1
 grep "$pat" dig.out.test$n.8 >/dev/null || ret=1
 grep 'A.10\.53\.0\.9' dig.out.test$n.8 >/dev/null || ret=1
@@ -435,7 +475,7 @@ rndc_dumpdb ns1
 grep "$pat" ns1/named_dump.db.test$n >/dev/null || ret=1
 # check the disabled server response
 nextpart ns1/named.run >/dev/null
-$DIG $DIGOPTS @10.53.0.1 nocookie.tld >dig.out.test$n.2
+$DIG $DIGOPTS @10.53.0.1 nocookie.tld >dig.out.test$n.2 || ret=1
 wait_for_log 5 "$msg" ns1/named.run || ret=1
 grep "status: NOERROR" dig.out.test$n.2 >/dev/null || ret=1
 grep 'A.10\.53\.0\.9' dig.out.test$n.2 >/dev/null || ret=1
@@ -473,7 +513,7 @@ sys.exit(1)'; then
   echo_i "check that TSIG test server is correctly configured ($n)"
   ret=0
   pat="; COOKIE: ................................ (good)"
-  key=hmac-sha256:foo:aaaaaaaaaaaa
+  key="${DEFAULT_HMAC}:foo:aaaaaaaaaaaa"
   #UDP
   $DIG $DIGOPTS @10.53.0.10 -y $key +notcp tsig. >dig.out.test$n.1 || ret=1
   grep "status: NOERROR" dig.out.test$n.1 >/dev/null || ret=1
@@ -526,13 +566,13 @@ sys.exit(1)'; then
   ret=0
   pat='10\.53\.0\.10 .*\[cookie=................................\] \[ttl'
   # prime EDNS COOKIE state
-  $DIG $DIGOPTS @10.53.0.1 tsig. >dig.out.test$n.1
+  $DIG $DIGOPTS @10.53.0.1 tsig. >dig.out.test$n.1 || ret=1
   grep "status: NOERROR" dig.out.test$n.1 >/dev/null || ret=1
   rndc_dumpdb ns1
   grep "$pat" ns1/named_dump.db.test$n >/dev/null || ret=1
   # check the disabled server response
   nextpart ns1/named.run >/dev/null
-  $DIG $DIGOPTS @10.53.0.1 nocookie.tsig >dig.out.test$n.2
+  $DIG $DIGOPTS @10.53.0.1 nocookie.tsig >dig.out.test$n.2 || ret=1
   grep "status: NOERROR" dig.out.test$n.2 >/dev/null || ret=1
   grep 'A.10\.53\.0\.9' dig.out.test$n.2 >/dev/null || ret=1
   grep 'A.10\.53\.0\.10' dig.out.test$n.2 >/dev/null || ret=1

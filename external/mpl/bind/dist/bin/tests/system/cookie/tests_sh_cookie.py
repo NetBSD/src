@@ -9,6 +9,20 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out.*",
+        "named.run.*",
+        "rndc.out.*",
+        "ans*/ans.run",
+        "ans*/query.log",
+        "ns1/named_dump.db*",
+        "ns4/named.cookiealwaysvalid",
+    ]
+)
+
 
 def test_cookie(run_tests_sh):
     run_tests_sh()

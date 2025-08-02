@@ -17,4 +17,10 @@ $FEATURETEST --with-libnghttp2 || {
   echo_i "This test requires libnghttp2 support." >&2
   exit 255
 }
+
+$FEATURETEST --have-fips-dh || {
+  echo_i "FIPS mode Diffie-Hellman not working - skipping doth test"
+  exit 255
+}
+
 exit 0

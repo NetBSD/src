@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.31 2022/08/20 19:01:31 thorpej Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.31.10.1 2025/08/02 05:56:42 perseant Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.31 2022/08/20 19:01:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.31.10.1 2025/08/02 05:56:42 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -268,8 +268,7 @@ fwip_start(struct ifnet *ifp)
 
 		do {
 			IF_DEQUEUE(&ifp->if_snd, m);
-			if (m != NULL)
-				m_freem(m);
+			m_freem(m);
 			if_statinc(ifp, if_oerrors);
 		} while (m != NULL);
 

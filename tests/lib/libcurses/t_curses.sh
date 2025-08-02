@@ -1487,7 +1487,7 @@ clear_body()
 atf_test_case clearok
 clearok_head()
 {
-    atf_set "descr" "Check clearing of screen during a refresh if correspnding flag is set"
+    atf_set "descr" "Check clearing of screen during a refresh if corresponding flag is set"
 }
 clearok_body()
 {

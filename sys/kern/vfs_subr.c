@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.500 2023/04/30 08:46:11 riastradh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.500.6.1 2025/08/02 05:57:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.500 2023/04/30 08:46:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.500.6.1 2025/08/02 05:57:44 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_43.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.500 2023/04/30 08:46:11 riastradh Exp
 #include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/sdt.h>
 #include <sys/stat.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
@@ -197,7 +198,7 @@ vntblinit(void)
  */
 int
 vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
-	  bool catch_p, int slptimeo)
+    bool catch_p, int slptimeo)
 {
 	struct buf *bp, *nbp;
 	int error;
@@ -214,7 +215,7 @@ vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
 	if (flags & V_SAVE) {
 		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, 0, 0);
 		if (error)
-		        return (error);
+		        return error;
 		KASSERT(LIST_EMPTY(&vp->v_dirtyblkhd));
 	}
 
@@ -228,7 +229,7 @@ restart:
 			if (error == EPASSTHROUGH)
 				goto restart;
 			mutex_exit(&bufcache_lock);
-			return (error);
+			return error;
 		}
 		brelsel(bp, BC_INVAL | BC_VFLUSH);
 	}
@@ -241,7 +242,7 @@ restart:
 			if (error == EPASSTHROUGH)
 				goto restart;
 			mutex_exit(&bufcache_lock);
-			return (error);
+			return error;
 		}
 		/*
 		 * XXX Since there are no node locks for NFS, I believe
@@ -268,7 +269,7 @@ restart:
 
 	mutex_exit(&bufcache_lock);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -302,7 +303,7 @@ restart:
 			if (error == EPASSTHROUGH)
 				goto restart;
 			mutex_exit(&bufcache_lock);
-			return (error);
+			return error;
 		}
 		brelsel(bp, BC_INVAL | BC_VFLUSH);
 	}
@@ -317,13 +318,13 @@ restart:
 			if (error == EPASSTHROUGH)
 				goto restart;
 			mutex_exit(&bufcache_lock);
-			return (error);
+			return error;
 		}
 		brelsel(bp, BC_INVAL | BC_VFLUSH);
 	}
 	mutex_exit(&bufcache_lock);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -340,8 +341,8 @@ vflushbuf(struct vnode *vp, int flags)
 
 	sync = (flags & FSYNC_WAIT) != 0;
 	pflags = PGO_CLEANIT | PGO_ALLPAGES |
-		(sync ? PGO_SYNCIO : 0) |
-		((flags & FSYNC_LAZY) ? PGO_LAZY : 0);
+	    (sync ? PGO_SYNCIO : 0) |
+	    ((flags & FSYNC_LAZY) ? PGO_LAZY : 0);
 	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	(void) VOP_PUTPAGES(vp, 0, 0, pflags);
 
@@ -952,39 +953,39 @@ sysctl_vfs_syncfs_setup(struct sysctllog **clog)
 	const struct sysctlnode *rnode, *cnode;
 
 	sysctl_createv(clog, 0, NULL, &rnode,
-			CTLFLAG_PERMANENT,
-			CTLTYPE_NODE, "sync",
-			SYSCTL_DESCR("syncer options"),
-			NULL, 0, NULL, 0,
-			CTL_VFS, CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "sync",
+	    SYSCTL_DESCR("syncer options"),
+	    NULL, 0, NULL, 0,
+	    CTL_VFS, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &cnode,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_QUAD, "delay",
-			SYSCTL_DESCR("max time to delay syncing data"),
-			NULL, 0, &syncdelay, 0,
-			CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_QUAD, "delay",
+	    SYSCTL_DESCR("max time to delay syncing data"),
+	    NULL, 0, &syncdelay, 0,
+	    CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &cnode,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_QUAD, "filedelay",
-			SYSCTL_DESCR("time to delay syncing files"),
-			NULL, 0, &filedelay, 0,
-			CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_QUAD, "filedelay",
+	    SYSCTL_DESCR("time to delay syncing files"),
+	    NULL, 0, &filedelay, 0,
+	    CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &cnode,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_QUAD, "dirdelay",
-			SYSCTL_DESCR("time to delay syncing directories"),
-			NULL, 0, &dirdelay, 0,
-			CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_QUAD, "dirdelay",
+	    SYSCTL_DESCR("time to delay syncing directories"),
+	    NULL, 0, &dirdelay, 0,
+	    CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &cnode,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_QUAD, "metadelay",
-			SYSCTL_DESCR("time to delay syncing metadata"),
-			NULL, 0, &metadelay, 0,
-			CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_QUAD, "metadelay",
+	    SYSCTL_DESCR("time to delay syncing metadata"),
+	    NULL, 0, &metadelay, 0,
+	    CTL_CREATE, CTL_EOL);
 }
 
 /*
@@ -1000,9 +1001,9 @@ sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 	int error, first;
 
 	if (newp != NULL)
-		return (EPERM);
+		return SET_ERROR(EPERM);
 	if (namelen != 0)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	first = 1;
 	error = 0;
@@ -1043,7 +1044,7 @@ sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 	mutex_exit(&vfs_list_lock);
 	sysctl_relock();
 	*oldlenp = needed;
-	return (error);
+	return error;
 }
 
 int kinfo_vdebug = 1;
@@ -1069,15 +1070,15 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	int error;
 
 	if (namelen != 0)
-		return (EOPNOTSUPP);
+		return SET_ERROR(EOPNOTSUPP);
 	if (newp != NULL)
-		return (EPERM);
+		return SET_ERROR(EPERM);
 
 #define VPTRSZ	sizeof(vnode_t *)
 #define VNODESZ	sizeof(vnode_t)
 	if (where == NULL) {
 		*sizep = (numvnodes + KINFO_VNODESLOP) * (VPTRSZ + VNODESZ);
-		return (0);
+		return 0;
 	}
 	ewhere = where + *sizep;
 
@@ -1092,7 +1093,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 				mountlist_iterator_destroy(iter);
 				sysctl_relock();
 				*sizep = bp - where;
-				return (ENOMEM);
+				return SET_ERROR(ENOMEM);
 			}
 			memcpy(&vbuf, vp, VNODESZ);
 			if ((error = copyout(&vp, bp, VPTRSZ)) ||
@@ -1101,7 +1102,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 				vfs_vnode_iterator_destroy(marker);
 				mountlist_iterator_destroy(iter);
 				sysctl_relock();
-				return (error);
+				return error;
 			}
 			vrele(vp);
 			bp += VPTRSZ + VNODESZ;
@@ -1112,7 +1113,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	sysctl_relock();
 
 	*sizep = bp - where;
-	return (0);
+	return 0;
 }
 
 /*
@@ -1262,7 +1263,7 @@ vfs_getopsbyname(const char *name)
 		v->vfs_refcount++;
 	mutex_exit(&vfs_list_lock);
 
-	return (v);
+	return v;
 }
 
 void
@@ -1412,13 +1413,14 @@ vfs_timestamp(struct timespec *tsp)
 int
 vfs_unixify_accmode(accmode_t *accmode)
 {
+
 	/*
 	 * There is no way to specify explicit "deny" rule using
 	 * file mode or POSIX.1e ACLs.
 	 */
 	if (*accmode & VEXPLICIT_DENY) {
 		*accmode = 0;
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -1428,7 +1430,7 @@ vfs_unixify_accmode(accmode_t *accmode)
 	 * on the containing directory instead.
 	 */
 	if (*accmode & (VDELETE_CHILD | VDELETE))
-		return (EPERM);
+		return SET_ERROR(EPERM);
 
 	if (*accmode & VADMIN_PERMS) {
 		*accmode &= ~VADMIN_PERMS;
@@ -1441,17 +1443,18 @@ vfs_unixify_accmode(accmode_t *accmode)
 	 */
 	*accmode &= ~(VSTAT_PERMS | VSYNCHRONIZE);
 
-	return (0);
+	return 0;
 }
 
 time_t	rootfstime;			/* recorded root fs time, if known */
 void
 setrootfstime(time_t t)
 {
+
 	rootfstime = t;
 }
 
-static const uint8_t vttodt_tab[ ] = {
+static const uint8_t vttodt_tab[] = {
 	[VNON]	=	DT_UNKNOWN,
 	[VREG]	=	DT_REG,
 	[VDIR]	=	DT_DIR,
@@ -1685,9 +1688,9 @@ vfs_buf_print(struct buf *bp, int full, void (*pr)(const char *, ...))
 	(*pr)("  error %d flags %s\n", bp->b_error, bf);
 
 	(*pr)("  bufsize 0x%lx bcount 0x%lx resid 0x%lx\n",
-		  bp->b_bufsize, bp->b_bcount, bp->b_resid);
+	    bp->b_bufsize, bp->b_bcount, bp->b_resid);
 	(*pr)("  data %p saveaddr %p\n",
-		  bp->b_data, bp->b_saveaddr);
+	    bp->b_data, bp->b_saveaddr);
 	(*pr)("  iodone %p objlock %p\n", bp->b_iodone, bp->b_objlock);
 }
 
@@ -1744,10 +1747,10 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	char sbuf[256];
 
 	(*pr)("vnodecovered = %p data = %p\n",
-			mp->mnt_vnodecovered, mp->mnt_data);
+	    mp->mnt_vnodecovered, mp->mnt_data);
 
 	(*pr)("fs_bshift %d dev_bshift = %d\n",
-			mp->mnt_fs_bshift, mp->mnt_dev_bshift);
+	    mp->mnt_fs_bshift, mp->mnt_dev_bshift);
 
 	snprintb(sbuf, sizeof(sbuf), __MNT_FLAG_BITS, mp->mnt_flag);
 	(*pr)("flag = %s\n", sbuf);
@@ -1773,8 +1776,8 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	(*pr)("\tfresvd = %"PRIu64"\n", mp->mnt_stat.f_fresvd);
 
 	(*pr)("\tf_fsidx = { 0x%"PRIx32", 0x%"PRIx32" }\n",
-			mp->mnt_stat.f_fsidx.__fsid_val[0],
-			mp->mnt_stat.f_fsidx.__fsid_val[1]);
+	    mp->mnt_stat.f_fsidx.__fsid_val[0],
+	    mp->mnt_stat.f_fsidx.__fsid_val[1]);
 
 	(*pr)("\towner = %"PRIu32"\n", mp->mnt_stat.f_owner);
 	(*pr)("\tnamemax = %lu\n", mp->mnt_stat.f_namemax);
@@ -1812,6 +1815,7 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 		int cnt = 0;
 		vnode_t *vp;
 		vnode_impl_t *vip;
+
 		(*pr)("all vnodes =");
 		TAILQ_FOREACH(vip, &mp->mnt_vnodelist, vi_mntvnodes) {
 			vp = VIMPL_TO_VNODE(vip);

@@ -49,10 +49,12 @@ $DSFROMKEY -T 1200 $keyname >>../ns1/root.db
 zone=updated
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
-keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
-$DSFROMKEY -T 1200 $keyname >>../ns1/root.db
-$SIGNER -S -O raw -L 2000042407 -o ${zone} ${zone}.db >/dev/null
+zsk=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -L 3600 -n zone $zone)
+ksk=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -L 3600 -n zone -f KSK $zone)
+$SETTIME -s -g OMNIPRESENT -k RUMOURED now -z RUMOURED now "$zsk" >settime.out.updated.1 2>&1
+$SETTIME -s -g OMNIPRESENT -k RUMOURED now -r RUMOURED now -d HIDDEN now "$ksk" >settime.out.updated.2 2>&1
+$DSFROMKEY -T 1200 $ksk >>../ns1/root.db
+$SIGNER -S -x -O raw -L 2000042407 -o ${zone} ${zone}.db >/dev/null
 cp primary2.db.in updated.db
 
 # signatures are expired and should be regenerated on startup
@@ -75,31 +77,6 @@ zone=nsec3
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
 keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
-$DSFROMKEY -T 1200 $keyname >>../ns1/root.db
-
-zone=retransfer3
-rm -f K${zone}.+*+*.key
-rm -f K${zone}.+*+*.private
-keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
-keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
-$DSFROMKEY -T 1200 $keyname >>../ns1/root.db
-
-zone=inactiveksk
-rm -f K${zone}.+*+*.key
-rm -f K${zone}.+*+*.private
-keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
-keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -P now -A now+3600 -f KSK $zone)
-keyname=$($KEYGEN -q -a ${ALTERNATIVE_ALGORITHM} -n zone $zone)
-keyname=$($KEYGEN -q -a ${ALTERNATIVE_ALGORITHM} -n zone -f KSK $zone)
-$DSFROMKEY -T 1200 $keyname >>../ns1/root.db
-
-zone=inactivezsk
-rm -f K${zone}.+*+*.key
-rm -f K${zone}.+*+*.private
-keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -P now -A now+3600 $zone)
-keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
-keyname=$($KEYGEN -q -a ${ALTERNATIVE_ALGORITHM} -n zone $zone)
-keyname=$($KEYGEN -q -a ${ALTERNATIVE_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >>../ns1/root.db
 
 zone=delayedkeys
@@ -134,6 +111,7 @@ for s in b f i o p t v; do
 done
 
 zone=externalkey
+zonefile=${zone}.db
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
 
@@ -144,13 +122,10 @@ for alg in ${DEFAULT_ALGORITHM} ${ALTERNATIVE_ALGORITHM}; do
   k4=$($KEYGEN -q -a $alg -n zone -f KSK $zone)
   $DSFROMKEY -T 1200 $k4 >>../ns1/root.db
 
-  # Convert k1 and k2 in to External Keys.
+  cat $k1.key $k2.key >>$zonefile
+
+  rm -f $k1.key
   rm -f $k1.private
-  mv $k1.key a-file
-  $IMPORTKEY -P now -D now+3600 -f a-file $zone >/dev/null 2>&1 \
-    || (echo_i "importkey failed: $alg")
+  rm -f $k2.key
   rm -f $k2.private
-  mv $k2.key a-file
-  $IMPORTKEY -f a-file $zone >/dev/null 2>&1 \
-    || (echo_i "importkey failed: $alg")
 done

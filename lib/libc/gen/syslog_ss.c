@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog_ss.c,v 1.3 2017/01/15 16:41:39 christos Exp $	*/
+/*	$NetBSD: syslog_ss.c,v 1.3.28.1 2025/08/02 05:54:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: syslog_ss.c,v 1.3 2017/01/15 16:41:39 christos Exp $");
+__RCSID("$NetBSD: syslog_ss.c,v 1.3.28.1 2025/08/02 05:54:37 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <stdio.h>
+#include <sys/syslog.h>
 #include "extern.h"
 #include "syslog_private.h"
 

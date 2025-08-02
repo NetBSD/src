@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.82 2024/06/10 09:17:29 kre Exp $
+.\" $NetBSD: gpt.8,v 1.82.2.1 2025/08/02 05:55:06 perseant Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd July 15, 2023
+.Dd February 9, 2025
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -86,13 +86,12 @@ Do not update the wedge information that
 changed.
 You need to use the
 .Xr dkctl 8
-command manually update the device's wedge configuration if you do that.
+command to manually update the device's wedge configuration if you do that.
 .It Fl q
 Do not print error messages.
 This is not implemented completely yet.
 .It Fl r
 Open the device for reading only.
-.Nm
 Currently this option is primarily useful for the
 .Ic show
 command, but the intent is to use it to implement dry-run behaviour.
@@ -166,7 +165,7 @@ to denote bytes,
 .Sq k
 to denote kilobytes,
 .Sq m
-to denote megabytes and
+to denote megabytes,
 .Sq g
 to denote gigabytes,
 .Sq t
@@ -216,6 +215,8 @@ Linux RAID
 Linux swap
 .It Cm linux-lvm
 Linux LVM
+.It Cm obsd
+OpenBSD data
 .It Cm windows
 Microsoft basic data - NTFS, FAT32 ("msdos"), FAT16, also used for UDF
 .It Cm windows-reserved
@@ -630,7 +631,7 @@ They may be used by
 .Nx
 in the future.
 .\" ==== show ====
-.It Nm Ic show Oo Fl aglu Oc Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc
+.It Nm Ic show Oo Fl aglux Oc Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc
 The
 .Ic show
 command displays the current partitioning on the listed devices and gives
@@ -658,13 +659,17 @@ With the
 option, all information for all GPT partitions (just like with
 .Fl i Ar index )
 will be printed.
+The
+.Fl x
+option prints start/size in hex.
 None of the options have any effect on non-GPT partitions.
 The order of precedence for the options is:
 .Fl a ,
 .Fl i ,
 .Fl l ,
 .Fl g ,
-.Fl u .
+.Fl u ,
+.Fl x .
 .\" ==== type ====
 .It Nm Ic type Oo Fl a Oc Fl T Ar newtype
 .It Nm Ic type Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
@@ -722,8 +727,9 @@ They may be used by
 code in the future.
 .\" ==== uuid ====
 .It Nm Ic uuid Oo Fl a Oc
-.It Nm Ic uuid Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
-Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc
+.It Nm Ic uuid Oo Fl b Ar blocknr Oc Oo Fl i Ar index Ar Oc \
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
+Oo Fl U Ar newuuid Oc
 The
 .Ic uuid
 command allows the user to change the UUID of any and all partitions
@@ -732,6 +738,13 @@ It uses the same selection options as the
 .Ic label
 command.
 See above for a description of these options.
+If
+.Ar newuuid
+is not specified, a random UUID value is derived from the timestamp
+.Po see the
+.Fl T
+option
+.Pc .
 If
 .Fl a
 is used, then the header UUID is changed as well.

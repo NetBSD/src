@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.31 2024/06/08 09:09:20 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.31.2.1 2025/08/02 05:58:14 perseant Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -68,7 +68,7 @@ declarators(void)
 
 	/* expect+1: warning: converting 'pointer to char' to incompatible 'pointer to double' for argument 1 [153] */
 	sink(pc);
-	/* expect+1: warning: illegal combination of pointer 'pointer to double' and integer 'char', arg #1 [154] */
+	/* expect+1: warning: invalid combination of pointer 'pointer to double' and integer 'char', arg #1 [154] */
 	sink(c);
 	/* expect+1: warning: converting 'pointer to pointer to char' to incompatible 'pointer to double' for argument 1 [153] */
 	sink(ppc);
@@ -274,7 +274,7 @@ offsetof_on_array_member(void)
 int
 long_double_vs_long_int(long double *a, long int *b)
 {
-	/* expect+1: warning: illegal combination of 'pointer to long double' and 'pointer to long', op '==' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to long double' and 'pointer to long', op '==' [124] */
 	return a == b;
 }
 
@@ -299,4 +299,39 @@ type_name_as_member_name(void)
 			int y;
 		} fl;
 	};
+}
+
+
+// When query 16 is not enabled, don't produce a 'previous declaration' message
+// without a preceding main diagnostic.
+static void static_function(void) __attribute__((__used__));
+
+// The definition is without 'static'.
+void
+static_function(void)
+{
+}
+
+
+typedef void (*fprint_function)(int, const char *, ...);
+typedef fprint_function (*change_logger)
+    (fprint_function, fprint_function, fprint_function, fprint_function);
+
+// Provoke a long type name to test reallocation in type_name.
+/* expect+1: error: redeclaration of 'static_function' with type 'function(pointer to function(pointer to function(int, pointer to const char, ...) returning void, pointer to function(int, pointer to const char, ...) returning void, pointer to function(int, pointer to const char, ...) returning void, pointer to function(int, pointer to const char, ...) returning void) returning pointer to function(int, pointer to const char, ...) returning void) returning void', expected 'function(void) returning void' [347] */
+void static_function(change_logger);
+
+
+void no_prototype_declaration();
+void prototype_declaration(void);
+
+// TODO: Warn about the missing 'void', for C99 and later.
+void
+no_prototype_definition()
+{
+}
+
+void
+prototype_definition(void)
+{
 }

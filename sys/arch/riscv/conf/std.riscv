@@ -1,5 +1,5 @@
 #
-# $NetBSD: std.riscv,v 1.1 2015/03/28 16:13:56 matt Exp $
+# $NetBSD: std.riscv,v 1.1.58.1 2025/08/02 05:56:02 perseant Exp $
 #
 machine		riscv
 
@@ -7,6 +7,11 @@ include 	"conf/std"
 
 options  	EXEC_ELF32
 options  	EXEC_SCRIPT
+
+options 	PCI_NETBSD_CONFIGURE
+options 	__HAVE_PCI_CONF_HOOK
+
+options 	SOC_SUN20I_D1
 
 #no defflag COMPAT_09
 #no defflag COMPAT_10

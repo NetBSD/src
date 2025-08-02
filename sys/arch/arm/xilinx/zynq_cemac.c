@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_cemac.c,v 1.4 2022/10/26 11:31:11 jmcneill Exp $	*/
+/*	$NetBSD: zynq_cemac.c,v 1.4.8.1 2025/08/02 05:55:30 perseant Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,31 +26,51 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.4 2022/10/26 11:31:11 jmcneill Exp $");
-
-#include "opt_soc.h"
+__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.4.8.1 2025/08/02 05:55:30 perseant Exp $");
 
 #include <sys/param.h>
+
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/intr.h>
 #include <sys/systm.h>
 
-#include <dev/cadence/cemacreg.h>
 #include <dev/cadence/if_cemacvar.h>
 
+#include <net/if.h>
+#include <net/if_media.h>
 #include <net/if_ether.h>
 
 #include <dev/fdt/fdtvar.h>
+
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "cdns,zynq-gem" },
 	DEVICE_COMPAT_EOL
 };
 
-int
+static int
+cemac_get_phyid(const int phandle)
+{
+	bus_addr_t addr;
+	int phy_phandle;
+
+	phy_phandle = fdtbus_get_phandle(phandle, "phy");
+	if (phy_phandle == -1)
+		phy_phandle = fdtbus_get_phandle(phandle, "phy-handle");
+	if (phy_phandle == -1)
+		return MII_PHY_ANY;
+
+	if (fdtbus_get_reg(phy_phandle, 0, &addr, NULL) != 0)
+		return MII_PHY_ANY;
+
+	return (int)addr;
+}
+
+static int
 cemac_match(device_t parent, cfdata_t cfdata, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
@@ -58,13 +78,13 @@ cemac_match(device_t parent, cfdata_t cfdata, void *aux)
 	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
-void
+static void
 cemac_attach(device_t parent, device_t self, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
+	struct cemac_softc *sc = device_private(self);
 	const int phandle = faa->faa_phandle;
 	prop_dictionary_t prop = device_properties(self);
-	bus_space_handle_t ioh;
 	char intrstr[128];
 	const char *macaddr;
 	bus_addr_t addr;
@@ -76,7 +96,7 @@ cemac_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	error = bus_space_map(faa->faa_bst, addr, size, 0, &ioh);
+	error = bus_space_map(faa->faa_bst, addr, size, 0, &sc->sc_ioh);
 	if (error) {
 		aprint_error(": failed to map register %#lx@%#lx: %d\n",
 		    size, addr, error);
@@ -90,7 +110,8 @@ cemac_attach(device_t parent, device_t self, void *aux)
 
 	if (fdtbus_intr_establish(phandle, 0, IPL_NET, 0, cemac_intr,
 				  device_private(self)) == NULL) {
-		aprint_error(": failed to establish interrupt on %s\n", intrstr);
+		aprint_error(": failed to establish interrupt on %s\n",
+		    intrstr);
 		return;
 	}
 
@@ -99,7 +120,16 @@ cemac_attach(device_t parent, device_t self, void *aux)
 		prop_dictionary_set_data(prop, "mac-address", macaddr, len);
 	}
 
-	cemac_attach_common(self, faa->faa_bst, ioh, faa->faa_dmat, CEMAC_FLAG_GEM);
+	sc->sc_dev = self;
+	sc->sc_iot = faa->faa_bst;
+	sc->sc_dmat = faa->faa_dmat;
+	sc->sc_phyno = cemac_get_phyid(phandle);
+	sc->cemac_flags = CEMAC_FLAG_GEM;
+
+	cemac_attach_common(sc);
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 }
 
+
+CFATTACH_DECL_NEW(cemac, sizeof(struct cemac_softc),
+    cemac_match, cemac_attach, NULL, NULL);

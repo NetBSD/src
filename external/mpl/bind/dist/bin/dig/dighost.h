@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.h,v 1.2 2024/02/21 22:51:01 christos Exp $	*/
+/*	$NetBSD: dighost.h,v 1.2.6.1 2025/08/02 05:50:50 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,10 +25,10 @@
 #include <isc/formatcheck.h>
 #include <isc/lang.h>
 #include <isc/list.h>
+#include <isc/loop.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/netmgr.h>
-#include <isc/print.h>
 #include <isc/refcount.h>
 #include <isc/sockaddr.h>
 #include <isc/time.h>
@@ -107,11 +107,10 @@ typedef struct dig_searchlist dig_searchlist_t;
 struct dig_lookup {
 	unsigned int magic;
 	isc_refcount_t references;
-	bool aaonly, adflag, badcookie, besteffort, cdflag, cleared, comments,
-		dns64prefix, dnssec, doing_xfr, done_as_is, ednsneg, expandaaaa,
-		expire, fuzzing, header_only, identify, /*%< Append an "on
-							   server <foo>" message
-							 */
+	bool aaonly, adflag, badcookie, besteffort, cdflag, cleared, coflag,
+		comments, dns64prefix, dnssec, doing_xfr, done_as_is, ednsneg,
+		expandaaaa, expire, fuzzing, header_only,
+		identify, /*%< Append an "on server <foo>" message */
 		identify_previous_line, /*% Prepend a "Nameserver <foo>:"
 					   message, with newline and tab */
 		idnin, idnout, ignore, multiline, need_search, new_search,
@@ -123,9 +122,9 @@ struct dig_lookup {
 		section_answer, section_authority, section_question,
 		seenbadcookie, sendcookie, servfail_stops,
 		setqid, /*% use a speciied query ID */
-		showbadcookie, stats, tcflag, tcp_keepalive, tcp_mode,
-		tcp_mode_set, tls_mode, /*% connect using TLS */
-		trace,			/*% dig +trace */
+		showbadcookie, showbadvers, stats, tcflag, tcp_keepalive,
+		tcp_mode, tcp_mode_set, tls_mode, /*% connect using TLS */
+		trace,				  /*% dig +trace */
 		trace_root, /*% initial query for either +trace or +nssearch */
 		ttlunits, use_usec, waiting_connect, zflag;
 	char textname[MXNAME]; /*% Name we're going to be looking up */
@@ -156,6 +155,7 @@ struct dig_lookup {
 	int nsfound;
 	int16_t udpsize;
 	int16_t edns;
+	int16_t original_edns;
 	int16_t padding;
 	uint32_t ixfr_serial;
 	isc_buffer_t rdatabuf;
@@ -188,6 +188,13 @@ struct dig_lookup {
 		bool tls_key_file_set;
 		char *tls_key_file;
 		isc_tlsctx_cache_t *tls_ctx_cache;
+	};
+	struct {
+		bool proxy_mode;
+		bool proxy_plain;
+		bool proxy_local;
+		isc_sockaddr_t proxy_src_addr;
+		isc_sockaddr_t proxy_dst_addr;
 	};
 	isc_stdtime_t fuzztime;
 };
@@ -261,17 +268,17 @@ extern isc_sockaddr_t localaddr;
 extern char keynametext[MXNAME];
 extern char keyfile[MXNAME];
 extern char keysecret[MXNAME];
-extern const dns_name_t *hmacname;
+extern dst_algorithm_t hmac_alg;
 extern unsigned int digestbits;
 extern dns_tsigkey_t *tsigkey;
 extern bool validated;
-extern isc_taskmgr_t *taskmgr;
-extern isc_task_t *global_task;
+extern isc_loopmgr_t *loopmgr;
+extern isc_loop_t *mainloop;
 extern bool free_now;
 extern bool debugging, debugtiming, memdebugging;
 extern bool keep_open;
 
-extern const char *progname;
+extern char *progname;
 extern int tries;
 extern int fatalexit;
 extern bool verbose;
@@ -319,7 +326,10 @@ void
 start_lookup(void);
 
 void
-onrun_callback(isc_task_t *task, isc_event_t *event);
+onrun_callback(void *arg);
+
+void
+run_loop(void *arg);
 
 int
 dhmain(int argc, char **argv);
@@ -340,7 +350,7 @@ isc_result_t
 parse_netprefix(isc_sockaddr_t **sap, const char *value);
 
 void
-parse_hmac(const char *hmacstr);
+parse_hmac(const char *algname);
 
 dig_lookup_t *
 requeue_lookup(dig_lookup_t *lookold, bool servers);
@@ -443,12 +453,6 @@ dig_query_setup(bool, bool, int argc, char **argv);
  */
 void
 dig_startup(void);
-
-/*%
- * Initiates the next lookup cycle
- */
-void
-dig_query_start(void);
 
 /*%
  * Activate/deactivate IDN filtering of output.

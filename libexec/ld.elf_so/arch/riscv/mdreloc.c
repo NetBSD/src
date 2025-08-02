@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.9 2023/06/04 01:24:58 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.9.2.1 2025/08/02 05:55:02 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,12 +31,23 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.9 2023/06/04 01:24:58 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.9.2.1 2025/08/02 05:55:02 perseant Exp $");
 #endif /* not lint */
+
+/*
+ * RISC-V ELF relocations.
+ *
+ * Reference:
+ *
+ *	[RISCVELF] RISC-V ELF Specification, 2024-07-17.
+ *	https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/9fec6080d15e7f009c9e714d1e9b8dd7177b0b67/riscv-elf.adoc
+ */
 
 #include <sys/types.h>
 #include <sys/endian.h>
 #include <sys/tls.h>
+
+#include <machine/lwp_private.h>
 
 #include <stdlib.h>
 #include <string.h>

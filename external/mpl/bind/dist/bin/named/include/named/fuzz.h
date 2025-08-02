@@ -1,4 +1,4 @@
-/*	$NetBSD: fuzz.h,v 1.5 2024/02/21 22:51:06 christos Exp $	*/
+/*	$NetBSD: fuzz.h,v 1.5.2.1 2025/08/02 05:50:54 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

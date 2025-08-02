@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.40 2022/08/28 10:26:37 mlelstv Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.40.10.1 2025/08/02 05:57:03 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@ struct disk_parms {
 	u_long	rot_rate;		/* rotational rate, in RPM */
 	u_int64_t disksize;		/* total number sectors */
 	u_int64_t disksize512;		/* total number sectors */
+	uint8_t	lbppbe;			/* logical blocks per physical block exponent */
+	uint16_t lalba;			/* lowest aligned logical block address */
 };
 
 struct sd_softc {
@@ -80,6 +82,8 @@ struct sd_softc {
 #define	SDF_ANCIENT	0x10		/* disk is ancient; for minphys */
 #define	SDF_DIRTY	0x20		/* disk is dirty; needs cache flush */
 #define	SDF_FLUSHING	0x40		/* flushing, for sddone() */
+#define	SDF_LBPME	0x80		/* logical block provisioning management enabled */
+#define	SDF_LBPU	0x100		/* logical block provisioning unmap */
 
 	struct scsipi_periph *sc_periph;/* contains our targ, lun, etc. */
 

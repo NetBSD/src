@@ -25,12 +25,14 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.6; };
 	listen-on-v6 { none; };
+	allow-transfer { any; };
 	recursion no;
 	dnssec-validation no;
 	notify yes;
 	ixfr-from-differences primary;
 	check-integrity no;
 	tcp-idle-timeout 600;
+	min-transfer-rate-in 10240 300;  # this is tested as seconds, when used with '-T transferinsecs' (i.e. convert the default '10240 5' back so that it doesn't interfere with other tests)
 };
 
 zone "." {
@@ -56,6 +58,13 @@ zone "edns-expire" {
 	file "edns-expire.bk";
 };
 
+zone "axfr-min-transfer-rate" {
+	type secondary;
+	min-transfer-rate-in 100000 5; # this is tested as seconds, when used with '-T transferinsecs' (i.e. 100000 bytes in 5 seconds)
+	primaries { 10.53.0.1; };
+	file "axfr-min-transfer-rate.bk";
+};
+
 zone "axfr-max-transfer-time" {
 	type secondary;
 	max-transfer-time-in 1; # this is tested as seconds, when used with '-T transferinsecs'
@@ -70,6 +79,18 @@ zone "axfr-max-idle-time" {
 	file "axfr-max-idle-time.bk";
 };
 
+zone "axfr-rndc-retransfer-force" {
+	type secondary;
+	primaries { 10.53.0.1; };
+	file "axfr-rndc-retransfer-force.bk";
+};
+
+zone "xot-primary-try-next" {
+	type secondary;
+	primaries { 10.53.0.99 port @EXTRAPORT1@ tls ephemeral; 10.53.0.1; };
+	file "xot-primary-try-next.bk";
+};
+
 zone "axfr-too-big" {
 	type secondary;
 	max-records 30;
@@ -82,4 +103,11 @@ zone "ixfr-too-big" {
 	max-records 30;
 	primaries { 10.53.0.1; };
 	file "ixfr-too-big.bk";
+};
+
+zone "xfr-and-reconfig" {
+	type secondary;
+	primaries { 10.53.0.9; };
+	file "xfr-and-reconfig.bk";
+	request-ixfr no; # ans9 supports only axfr
 };

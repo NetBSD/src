@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.109 2023/03/30 15:58:21 riastradh Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.109.6.1 2025/08/02 05:57:43 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,29 +32,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.109 2023/03/30 15:58:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.109.6.1 2025/08/02 05:57:43 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/protosw.h>
-#include <sys/domain.h>
-#include <sys/mbuf.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/callout.h>
-#include <sys/queue.h>
-#include <sys/proc.h>
-#include <sys/sysctl.h>
-#include <sys/un.h>
-#include <sys/unpcb.h>
+#include <sys/domain.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/mbuf.h>
+#include <sys/proc.h>
+#include <sys/protosw.h>
+#include <sys/queue.h>
+#include <sys/sdt.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/un.h>
+#include <sys/unpcb.h>
 
-#include <netatalk/at.h>
 #include <net/if_dl.h>
+#include <netatalk/at.h>
 #include <netinet/in.h>
 
 MALLOC_DECLARE(M_SOCKADDR);
@@ -561,14 +564,14 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 		return sysctl_query(SYSCTLFN_CALL(rnode));
 
 	if (namelen != 4)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (oldp != NULL) {
 		len = *oldlenp;
 		elem_size = name[2];
 		elem_count = name[3];
 		if (elem_size != sizeof(pcb))
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 	} else {
 		len = 0;
 		elem_size = sizeof(pcb);
@@ -580,7 +583,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	needed = 0;
 
 	if (name - oname != 4)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	pf = oname[1];
 	type = oname[2];
@@ -590,8 +593,8 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	 */
 	sysctl_unlock();
 	if ((dfp = fgetdummy()) == NULL) {
-	 	sysctl_relock();
-		return ENOMEM;
+		sysctl_relock();
+		return SET_ERROR(ENOMEM);
 	}
 
 	/*
@@ -644,10 +647,10 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	}
 	mutex_exit(&filelist_lock);
 	fputdummy(dfp);
- 	*oldlenp = needed;
+	*oldlenp = needed;
 	if (oldp == NULL)
 		*oldlenp += PCB_SLOP * sizeof(struct kinfo_pcb);
- 	sysctl_relock();
+	sysctl_relock();
 
 	return error;
 }

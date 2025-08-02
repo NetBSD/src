@@ -1,4 +1,4 @@
-/* $NetBSD: float.h,v 1.8 2014/01/29 01:10:36 matt Exp $ */
+/* $NetBSD: float.h,v 1.8.66.1 2025/08/02 05:55:28 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _ARM_FLOAT_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 #ifdef __ARM_PCS_AAPCS64
 

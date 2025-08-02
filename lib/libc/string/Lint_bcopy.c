@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_bcopy.c,v 1.2 2000/06/14 06:49:07 cgd Exp $ */
+/* $NetBSD: Lint_bcopy.c,v 1.2.116.1 2025/08/02 05:54:41 perseant Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,9 +9,6 @@
 
 /*ARGSUSED*/
 void
-bcopy(src, dst, len)
-	const void *src;
-	void *dst;
-	size_t len;
+bcopy(const void *src, void *dst, size_t len)
 {
 }

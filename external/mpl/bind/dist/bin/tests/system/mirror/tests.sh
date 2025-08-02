@@ -129,6 +129,7 @@ n=$((n + 1))
 echo_i "checking that an AXFR of an updated, correctly signed mirror zone is accepted ($n)"
 ret=0
 nextpart ns3/named.run >/dev/null
+sleep 1
 cat ns2/verify-axfr.db.good.signed >ns2/verify-axfr.db.signed
 reload_zone verify-axfr ${UPDATED_SERIAL_GOOD}
 $RNDCCMD 10.53.0.3 retransfer verify-axfr >/dev/null 2>&1
@@ -220,7 +221,7 @@ n=$((n + 1))
 echo_i "ensuring trust anchor telemetry queries are sent upstream for a mirror zone ($n)"
 ret=0
 # ns3 is started with "-T tat=3", so TAT queries should have already been sent.
-grep "_ta-[-0-9a-f]*/NULL" ns1/named.run >/dev/null || ret=1
+wait_for_log_re 3 "_ta-[-0-9a-f]*/NULL" ns1/named.run || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.379 2024/03/31 17:13:29 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.379.2.1 2025/08/02 05:55:22 perseant Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.379 2024/03/31 17:13:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.379.2.1 2025/08/02 05:55:22 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -886,7 +886,6 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	extern struct evcnt fpevent_use, fpevent_reuse;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 #if defined(DEBUG)
@@ -951,12 +950,9 @@ cpu_startup(void)
 	hwrpb_primary_init();
 
 	/*
-	 * Initialize some trap event counters.
+	 * Initialize FP handling.
 	 */
-	evcnt_attach_dynamic_nozero(&fpevent_use, EVCNT_TYPE_MISC, NULL,
-	    "FP", "proc use");
-	evcnt_attach_dynamic_nozero(&fpevent_reuse, EVCNT_TYPE_MISC, NULL,
-	    "FP", "proc re-use");
+	alpha_fp_init();
 }
 
 /*
@@ -1017,15 +1013,25 @@ identifycpu(void)
 	/*
 	 * print out CPU identification information.
 	 */
-	printf("%s", cpu_getmodel());
-	for(s = cpu_getmodel(); *s; ++s)
-		if(strncasecmp(s, "MHz", 3) == 0)
+	s = cpu_getmodel();
+	printf("%s", s);
+	for (; *s != '\0'; s++) {
+		if (strncasecmp(s, "MHz", 3) == 0) {
 			goto skipMHz;
+		}
+	}
 	printf(", %ldMHz", hwrpb->rpb_cc_freq / 1000000);
-skipMHz:
-	printf(", s/n ");
-	for (i = 0; i < 10; i++)
+ skipMHz:
+	for (i = 0; i < 10; i++) {
+		/* Only so long as there are printable characters. */
+		if (! isprint((unsigned char)hwrpb->rpb_ssn[i])) {
+			break;
+		}
+		if (i == 0) {
+			printf(", s/n ");
+		}
 		printf("%c", hwrpb->rpb_ssn[i]);
+	}
 	printf("\n");
 	printf("%ld byte page size, %d processor%s.\n",
 	    hwrpb->rpb_page_size, ncpus, ncpus == 1 ? "" : "s");
@@ -1471,9 +1477,11 @@ regdump(struct trapframe *framep)
 
 
 void *
-getframe(const struct lwp *l, int sig, int *onstack)
+getframe(const struct lwp *l, int sig, int *onstack, size_t size, size_t align)
 {
-	void *frame;
+	uintptr_t frame;
+
+	KASSERT((align & (align - 1)) == 0);
 
 	/* Do we need to jump onto the signal stack? */
 	*onstack =
@@ -1481,11 +1489,12 @@ getframe(const struct lwp *l, int sig, int *onstack)
 	    (SIGACTION(l->l_proc, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (*onstack)
-		frame = (void *)((char *)l->l_sigstk.ss_sp +
-					l->l_sigstk.ss_size);
+		frame = (uintptr_t)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
 	else
-		frame = (void *)(alpha_pal_rdusp());
-	return (frame);
+		frame = (uintptr_t)alpha_pal_rdusp();
+	frame -= size;
+	frame &= ~(STACK_ALIGNBYTES | (align - 1));
+	return (void *)frame;
 }
 
 void
@@ -1514,11 +1523,10 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct trapframe *tf;
 	sig_t catcher = SIGACTION(p, ksi->ksi_signo).sa_handler;
 
-	fp = (struct sigframe_siginfo *)getframe(l,ksi->ksi_signo,&onstack);
 	tf = l->l_md.md_tf;
 
 	/* Allocate space for the signal handler context. */
-	fp--;
+	fp = getframe(l, ksi->ksi_signo, &onstack, sizeof(*fp), _Alignof(*fp));
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -1684,11 +1692,11 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		panic("crash requested by boot flags");
 #endif
 
+	memset(tfp, 0, sizeof(*tfp));
+
 #ifdef DEBUG
 	for (i = 0; i < FRAME_SIZE; i++)
 		tfp->tf_regs[i] = 0xbabefacedeadbeef;
-#else
-	memset(tfp->tf_regs, 0, FRAME_SIZE * sizeof tfp->tf_regs[0]);
 #endif
 	pcb = lwp_getpcb(l);
 	memset(&pcb->pcb_fp, 0, sizeof(pcb->pcb_fp));

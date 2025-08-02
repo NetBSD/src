@@ -1,4 +1,4 @@
-/*	$NetBSD: init_field.c,v 1.12 2009/07/20 06:39:06 dholland Exp $	*/
+/*	$NetBSD: init_field.c,v 1.12.58.1 2025/08/02 05:54:27 perseant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init_field.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init_field.c,v 1.12 2009/07/20 06:39:06 dholland Exp $");
+__RCSID("$NetBSD: init_field.c,v 1.12.58.1 2025/08/02 05:54:27 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ static int tely = 0;
 
 /*
  * init_field:
- *	Lay down the initial pattern whih is constant across all levels,
+ *	Lay down the initial pattern which is constant across all levels,
  *	and initialize all the global variables.
  */
 void

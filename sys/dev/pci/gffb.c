@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.22 2022/09/25 17:52:25 thorpej Exp $	*/
+/*	$NetBSD: gffb.c,v 1.22.10.1 2025/08/02 05:56:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.22 2022/09/25 17:52:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.22.10.1 2025/08/02 05:56:45 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,6 +166,8 @@ gffb_match(device_t parent, cfdata_t match, void *aux)
 		return 100;
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NVIDIA_GF_FXGO5200)
 		return 100;
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NVIDIA_GF_FX5200U)
+		return 100;
 	return (0);
 }
 
@@ -268,7 +270,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 		0, 0,
 		NULL,
 		8, 16,
-		WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+		WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_RESIZE,
 		NULL
 	};
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
@@ -305,6 +307,8 @@ gffb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_gc.gc_bitblt = gffb_bitblt;
 		sc->sc_gc.gc_blitcookie = sc;
 		sc->sc_gc.gc_rop = 0xcc;
+		sc->vd.show_screen_cookie = &sc->sc_gc;
+		sc->vd.show_screen_cb = glyphcache_adapt;
 	}
 
 	if (is_console) {
@@ -554,7 +558,8 @@ gffb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_RESIZE;
+	scr->scr_flags |= VCONS_LOADFONT;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);

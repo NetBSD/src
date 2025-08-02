@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2019/09/26 17:34:56 christos Exp $
+#	$NetBSD: Makefile,v 1.7.32.1 2025/08/02 05:57:46 perseant Exp $
 
 .include "../Makefile.inc"
 
@@ -8,6 +8,9 @@
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 .PATH:  ${S}/arch/x86/x86
 .endif
+
+# enable the SYSV and MQUEUE linux nodes
+COPTS+=	-D SYSVSHM -D SYSVSEM -D SYSVMSG -D MQUEUE
 
 KMOD=	procfs
 SRCS=	procfs_note.c procfs_status.c procfs_subr.c \

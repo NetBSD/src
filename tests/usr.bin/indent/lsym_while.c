@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_while.c,v 1.6 2023/06/02 15:07:46 rillig Exp $ */
+/* $NetBSD: lsym_while.c,v 1.6.2.1 2025/08/02 05:58:13 perseant Exp $ */
 
 /*
  * Tests for the token 'lsym_while', which represents the keyword 'while' that
@@ -45,6 +45,7 @@ function(void)
 {
 	{
 	}
-	while (0);
+	while (0)
+		;
 }
 //indent end

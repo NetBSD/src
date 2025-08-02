@@ -1,4 +1,4 @@
-/* $NetBSD: linux_mtio.c,v 1.8 2021/09/07 11:43:04 riastradh Exp $ */
+/* $NetBSD: linux_mtio.c,v 1.8.10.1 2025/08/02 05:56:26 perseant Exp $ */
 
 /*
  * Copyright (c) 2005 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mtio.c,v 1.8 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mtio.c,v 1.8.10.1 2025/08/02 05:56:26 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ linux_ioctl_mtio(struct lwp *l, const struct linux_sys_ioctl_args *uap,
 			error = EINVAL;
 			break;
 		}
-		
+
 		mt.mt_op = mtop_map[i].op;
 		mt.mt_count = lmtop.mt_count;
 		error = ioctlf(fp, MTIOCTOP, &mt);

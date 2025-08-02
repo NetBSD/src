@@ -1,4 +1,4 @@
-/*	$NetBSD: immintrin_ext.h,v 1.1 2023/08/07 01:07:36 rin Exp $	*/
+/*	$NetBSD: immintrin_ext.h,v 1.1.6.1 2025/08/02 05:56:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,14 +35,22 @@ _INTRINSATTR
 static __inline __m128i
 _mm_loadu_epi8(const void *__p)
 {
+#if defined(__GNUC__) && !defined(__clang__)
+	return (__m128i)(*(const __v16qi_u *)__p);
+#else
 	return ((const struct { __m128i_u __v; } _PACKALIAS *)__p)->__v;
+#endif
 }
 
 _INTRINSATTR
 static __inline void
 _mm_storeu_epi8(void *__p, __m128i __v)
 {
+#if defined(__GNUC__) && !defined(__clang__)
+	*(__v16qi_u *)__p = (__v16qi_u)__v;
+#else
 	((struct { __m128i_u __v; } _PACKALIAS *)__p)->__v = __v;
+#endif
 }
 
 #endif	/* _SYS_CRYPTO_ARCH_X86_IMMINTRIN_EXT_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_imaxabs.c,v 1.1 2008/08/04 21:29:27 matt Exp $	*/
+/*	$NetBSD: Lint_imaxabs.c,v 1.1.76.1 2025/08/02 05:54:40 perseant Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -11,5 +11,5 @@
 intmax_t
 imaxabs(intmax_t j)
 {
-	return (0);
+	return 0;
 }

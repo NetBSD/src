@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.45 2021/06/21 03:12:54 christos Exp $	*/
+/*	$NetBSD: lm75.c,v 1.45.16.1 2025/08/02 05:56:40 perseant Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.45 2021/06/21 03:12:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.45.16.1 2025/08/02 05:56:40 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
 	sc->sc_prop = ia->ia_prop;
-	
+
 	if (ia->ia_prop != NULL) prop_object_retain(sc->sc_prop);
 
 	aprint_naive(": Temperature Sensor\n");
@@ -282,9 +282,9 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_sme = sysmon_envsys_create();
 	/* Initialize sensor data. */
-	sc->sc_sensor.units =  ENVSYS_STEMP;
-	sc->sc_sensor.state =  ENVSYS_SINVALID;
-	sc->sc_sensor.flags =  ENVSYS_FMONLIMITS | ENVSYS_FHAS_ENTROPY;
+	sc->sc_sensor.units = ENVSYS_STEMP;
+	sc->sc_sensor.state = ENVSYS_SINVALID;
+	sc->sc_sensor.flags = ENVSYS_FMONLIMITS | ENVSYS_FHAS_ENTROPY;
 
 	(void)strlcpy(name,
 	    ia->ia_name? ia->ia_name : device_xname(self),
@@ -433,7 +433,7 @@ lmtemp_getlim_lm77(struct sysmon_envsys *sme, envsys_data_t *edata,
 }
 
 static void
-lmtemp_setlim_lm75(struct sysmon_envsys *sme, envsys_data_t *edata, 
+lmtemp_setlim_lm75(struct sysmon_envsys *sme, envsys_data_t *edata,
     sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	struct lmtemp_softc *sc = sme->sme_cookie;
@@ -457,7 +457,7 @@ lmtemp_setlim_lm75(struct sysmon_envsys *sme, envsys_data_t *edata,
 }
 
 static void
-lmtemp_setlim_lm77(struct sysmon_envsys *sme, envsys_data_t *edata, 
+lmtemp_setlim_lm77(struct sysmon_envsys *sme, envsys_data_t *edata,
     sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	struct lmtemp_softc *sc = sme->sme_cookie;
@@ -620,7 +620,7 @@ sysctl_lm75_temp(SYSCTLFN_ARGS)
 
 	if (newp) {
 
-		/* we're asked to write */	
+		/* we're asked to write */
 		node.sysctl_data = &sc->sc_tmax;
 		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: meta.c,v 1.10 2021/09/06 07:03:50 rin Exp $	*/
+/*	$NetBSD: meta.c,v 1.10.4.1 2025/08/02 05:54:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: meta.c,v 1.10 2021/09/06 07:03:50 rin Exp $");
+__RCSID("$NetBSD: meta.c,v 1.10.4.1 2025/08/02 05:54:47 perseant Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -44,6 +44,8 @@ __RCSID("$NetBSD: meta.c,v 1.10 2021/09/06 07:03:50 rin Exp $");
 int
 meta(/*ARGSUSED*/ WINDOW *win, bool bf)
 {
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	if (bf == TRUE) {
 		if (meta_on != NULL) {

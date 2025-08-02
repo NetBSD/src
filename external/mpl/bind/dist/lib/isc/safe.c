@@ -1,4 +1,4 @@
-/*	$NetBSD: safe.c,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: safe.c,v 1.6.6.1 2025/08/02 05:53:55 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,7 @@
 
 int
 isc_safe_memequal(const void *s1, const void *s2, size_t len) {
-	return (!CRYPTO_memcmp(s1, s2, len));
+	return !CRYPTO_memcmp(s1, s2, len);
 }
 
 void

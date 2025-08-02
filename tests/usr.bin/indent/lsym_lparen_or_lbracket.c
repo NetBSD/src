@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.19 2023/06/17 22:09:24 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.19.2.1 2025/08/02 05:58:13 perseant Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['
@@ -316,11 +316,13 @@ cover_want_blank_before_lparen(void)
 #define preprocessing
 	(preprocessing)();
 	(lsym_form_feed)();
-	for (;;);
+	for (;;)
+		;
 	do
 		(lsym_do) = 3;
 	while (0);
-	if (cond);
+	if (cond)
+		;
 	else
 		(lsym_else)();
 	do

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2023/11/24 16:21:17 riastradh Exp $
+# $NetBSD: Makefile,v 1.16.2.1 2025/08/02 05:58:09 perseant Exp $
 
 NOMAN=		# defined
 
@@ -17,6 +17,8 @@ CPPFLAGS.t_condwait.c+=	-I${.CURDIR}/../libc/gen
 TESTS_SH+=	t_atexit
 TESTS_C+=	t_barrier
 TESTS_SH+=	t_cancel
+TESTS_C+=	t_cancellation
+TESTS_C+=	t_compat_cancel
 TESTS_C+=	t_cond
 TESTS_C+=	t_condwait
 TESTS_C+=	t_detach
@@ -43,6 +45,11 @@ TESTS_SH+=	t_thread_local_dtor
 TESTS_C+=	t_timedmutex
 
 LDADD.t_sem+=	-lrt
+LDADD.t_cancellation+=	-lrt
+LDADD.t_compat_cancel+=	-lrt
+CPPFLAGS.t_compat_cancel.c+=	-I${NETBSDSRCDIR}/lib/libc
+CPPFLAGS.t_compat_cancel.c+=	-I${NETBSDSRCDIR}/sys
+LDFLAGS.t_compat_cancel+=	-Wl,--no-fatal-warnings # intend compat use
 
 BINDIR=		${TESTSDIR}
 PROGS=		h_atexit

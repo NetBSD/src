@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.447.2.1 2024/07/01 01:01:12 perseant Exp $
+#	$NetBSD: bsd.README,v 1.447.2.2 2025/08/02 05:55:18 perseant Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -328,9 +328,9 @@ MANINSTALL	Manual installation type.  Space separated list:
 			catinstall, htmlinstall, maninstall
 		Default value derived from MKCATPAGES and MKHTML.
 
-MAKELINKLIB	Defaults to ${MKLINKLIB} but can be overriden by Makefiles
+MAKELINKLIB	Defaults to ${MKLINKLIB} but can be overridden by Makefiles
 
-MAKESTATICLIB	Defaults to ${MKSTATICLIB} but can be overriden by Makefiles
+MAKESTATICLIB	Defaults to ${MKSTATICLIB} but can be overridden by Makefiles
 
 LDSTATIC	Control program linking; if set blank, link everything
 		dynamically.  If set to "-static", link everything statically.
@@ -650,6 +650,9 @@ TOOL_SUNLABEL		Read or modify a SunOS disk label.  [sunlabel]
 TOOL_TBL		Format tables for groff.  [tbl]
 
 TOOL_UUDECODE		Uudecode a binary file.  [uudecode]
+
+TOOL_VAXMOPCOPY		Creates a MOP image from another executable format.
+			[vax-mopcopy]
 
 TOOL_VGRIND		Grind nice listings of programs.  [vgrind -f]
 
@@ -1310,7 +1313,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBASN1?=		${DESTDIR}/usr/lib/libasn1.a
 		LIBATF_C?=		${DESTDIR}/usr/lib/libatf-c.a
 		LIBATF_CXX?=		${DESTDIR}/usr/lib/libatf-c++.a
-		LIBBIND9?=		${DESTDIR}/usr/lib/libbind9.a
 		LIBBLOCKLIST?=		${DESTDIR}/usr/lib/libblocklist.a
 		LIBBLUETOOTH?=		${DESTDIR}/usr/lib/libbluetooth.a
 		LIBBSDMALLOC?=		${DESTDIR}/usr/lib/libbsdmalloc.a
@@ -1423,6 +1425,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		The following X-Windows libraries are predefined for DPADD:
 
 		LIBDPS?=		${DESTDIR}/usr/X11R7/lib/libdps.a
+		LIBEGL?=		${DESTDIR}/usr/X11R7/lib/libEGL.a
 		LIBFNTSTUBS?=		${DESTDIR}/usr/X11R7/lib/libfntstubs.a
 		LIBFONTCACHE?=		${DESTDIR}/usr/X11R7/lib/libfontcache.a
 		LIBFONTCONFIG?=		${DESTDIR}/usr/X11R7/lib/libfontconfig.a
@@ -1431,15 +1434,21 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBFS?=			${DESTDIR}/usr/X11R7/lib/libFS.a
 		LIBGL?=			${DESTDIR}/usr/X11R7/lib/libGL.a
 		LIBGLU?=		${DESTDIR}/usr/X11R7/lib/libGLU.a
+		LIBGLW?=		${DESTDIR}/usr/X11R7/lib/libGLw.a
+		LIBI810XVMC		4{DESTDIR}/usr/X11R7/lib/libI810XvMC.a
 		LIBICE?=		${DESTDIR}/usr/X11R7/lib/libICE.a
+		LIBINTELXVMC		${DESTDIR}/usr/X11R7/lib/libIntelXvMC.a
 		LIBLBXUTIL?=		${DESTDIR}/usr/X11R7/lib/liblbxutil.a
 		LIBSM?=			${DESTDIR}/usr/X11R7/lib/libSM.a
-		LIBX11?=		${DESTDIR}/usr/X11R7/lib/libX11.a
 		LIBX11_XCB?=		${DESTDIR}/usr/X11R7/lib/libX11-xcb.a
+		LIBX11?=		${DESTDIR}/usr/X11R7/lib/libX11.a
+		LIBXRES?=		${DESTDIR}/usr/X11R7/lib/libXres.a
 		LIBXAU?=		${DESTDIR}/usr/X11R7/lib/libXau.a
+		LIBXAU7?=		${DESTDIR}/usr/X11R7/lib/libXau7.a
 		LIBXAW?=		${DESTDIR}/usr/X11R7/lib/libXaw.a
 		LIBXCB?=		${DESTDIR}/usr/X11R7/lib/libxcb.a
 		LIBXCOMPOSITE?=		${DESTDIR}/usr/X11R7/lib/libXcomposite.a
+		LIBXCURSOR?=		${DESTDIR}/usr/X11R7/lib/libXcursor.a
 		LIBXCVT?=		${DESTDIR}/usr/X11R7/lib/libxcvt.a
 		LIBXDAMAGE?=		${DESTDIR}/usr/X11R7/lib/libXdamage.a
 		LIBXDMCP?=		${DESTDIR}/usr/X11R7/lib/libXdmcp.a

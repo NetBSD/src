@@ -1,4 +1,4 @@
-/*	$NetBSD: tok822_tree.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: tok822_tree.c,v 1.2.24.1 2025/08/02 05:50:08 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -265,7 +265,7 @@ TOK822 *tok822_free_tree(TOK822 *tp)
 {
     TOK822 *next;
 
-    for (/* void */; tp != 0; tp = next) {
+    for ( /* void */ ; tp != 0; tp = next) {
 	if (tp->head)
 	    tok822_free_tree(tp->head);
 	next = tp->next;

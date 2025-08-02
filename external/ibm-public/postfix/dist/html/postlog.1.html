@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,13 +7,13 @@
 </head> <body> <pre>
 POSTLOG(1)                                                          POSTLOG(1)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        postlog - Postfix-compatible logging utility
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postlog</b> [<b>-iv</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-p</b> <i>priority</i>] [<b>-t</b> <i>tag</i>] [<i>text...</i>]
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  <a href="postlog.1.html"><b>postlog</b>(1)</a>  command implements a Postfix-compatible logging inter-
        face for use in, for example, shell scripts.
 
@@ -21,9 +21,9 @@ POSTLOG(1)                                                          POSTLOG(1)
        record.  If  no <i>text</i> is specified on the command line, <a href="postlog.1.html"><b>postlog</b>(1)</a> reads
        from standard input and logs each input line as one record.
 
-       By default, logging is sent to  <b>syslogd</b>(8)  or  <a href="postlogd.8.html"><b>postlogd</b>(8)</a>;  when  the
-       standard error stream is connected to a terminal, logging is sent there
-       as well.
+       Logging is sent to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>, and to the standard error
+       stream  (with  Postfix  &lt;  3.8, <a href="postlog.1.html"><b>postlog</b>(1)</a> writes to the standard error
+       stream only if that stream is connected to a terminal).
 
        The following options are implemented:
 
@@ -48,17 +48,17 @@ POSTLOG(1)                                                          POSTLOG(1)
        <b>-v</b>     Enable  verbose  logging  for  debugging  purposes.  Multiple <b>-v</b>
               options make the software increasingly verbose.
 
-<b>SECURITY</b>
+<b><a name="security">SECURITY</a></b>
        The <a href="postlog.1.html"><b>postlog</b>(1)</a> command is designed to run with set-groupid  privileges,
        so  that  it can connect to the <a href="postlogd.8.html"><b>postlogd</b>(8)</a> daemon process (Postfix 3.7
        and later; earlier  implementations  of  this  command  must  not  have
        set-groupid or set-userid permissions).
 
-<b>ENVIRONMENT</b>
+<b><a name="environment">ENVIRONMENT</a></b>
        MAIL_CONFIG
               Directory with the <a href="postconf.5.html"><b>main.cf</b></a> file.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to this pro-
        gram.
 
@@ -90,15 +90,22 @@ POSTLOG(1)                                                          POSTLOG(1)
        <b><a href="postconf.5.html#postlog_service_name">postlog_service_name</a> (postlog)</b>
               The name of the <a href="postlogd.8.html"><b>postlogd</b>(8)</a> service entry in <a href="master.5.html">master.cf</a>.
 
-<b>SEE ALSO</b>
+       Available in Postfix 3.9 and later:
+
+       <b><a href="postconf.5.html#maillog_file_permissions">maillog_file_permissions</a> (0600)</b>
+              The file access permissions that  will  be  set  when  the  file
+              $<a href="postconf.5.html#maillog_file">maillog_file</a> is created for the first time, or when the file is
+              created after an existing file is rotated.
+
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        The <a href="postlog.1.html"><b>postlog</b>(1)</a> command was introduced with Postfix version 3.4.
 
 <b>AUTHOR(S)</b>

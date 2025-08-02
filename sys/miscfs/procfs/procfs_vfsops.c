@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.116 2024/05/12 17:26:50 christos Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.116.2.1 2025/08/02 05:57:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,10 +76,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.116 2024/05/12 17:26:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.116.2.1 2025/08/02 05:57:45 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
+#include "opt_sysv_ipc.h"
+#include "opt_mqueue.h"
 #endif
 
 #include <sys/param.h>
@@ -107,7 +109,14 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.116 2024/05/12 17:26:50 christos
 
 #include <uvm/uvm_extern.h>			/* for PAGE_SIZE */
 
-MODULE(MODULE_CLASS_VFS, procfs, "ptrace_common");
+MODULE(MODULE_CLASS_VFS, procfs, "ptrace_common"
+#if defined(MQUEUE)
+				 ",mqueue"
+#endif
+#if defined(SYSVSHM) || defined(SYSVSEM) || defined(SYSVMSG)
+				 ",sysv_ipc"
+#endif
+);
 
 VFS_PROTOS(procfs);
 
@@ -437,6 +446,9 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 		vp->v_type = VREG;
 		break;
 
+	case PFSsys:	/* /proc/sys = dr-xr-xr-x */
+	case PFSsysfs:	/* /proc/sys/fs = dr-xr-xr-x */
+	case PFSmqueue:	/* /proc/sys/fs/mqueue = dr-xr-xr-x */
 	case PFSsysvipc:/* /proc/sysvipc = dr-xr-xr-x */
 		if (pfs->pfs_fd == -1) {
 			pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|
@@ -445,6 +457,11 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 			break;
 		}
 		/*FALLTHROUGH*/
+	case PFSmq_msg_def:	/* /proc/sys/fs/mqueue/msg_default = -r--r--r-- */
+	case PFSmq_msg_max:	/* /proc/sys/fs/mqueue/msg_max = -r--r--r-- */
+	case PFSmq_siz_def:	/* /proc/sys/fs/mqueue/msgsize_default = -r--r--r-- */
+	case PFSmq_siz_max:	/* /proc/sys/fs/mqueue/msgsize_max = -r--r--r-- */
+	case PFSmq_qmax:	/* /proc/sys/fs/mqueue/queues_max = -r--r--r-- */
 	case PFSsysvipc_msg:	/* /proc/sysvipc/msg = -r--r--r-- */
 	case PFSsysvipc_sem:	/* /proc/sysvipc/sem = -r--r--r-- */
 	case PFSsysvipc_shm:	/* /proc/sysvipc/shm = -r--r--r-- */

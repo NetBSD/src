@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_riscv.c,v 1.3 2023/08/23 14:00:11 rin Exp $	*/
+/*	$NetBSD: kvm_riscv.c,v 1.3.2.1 2025/08/02 05:54:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #include <machine/kcore.h>
 #include <machine/vmparam.h>
 
-__RCSID("$NetBSD: kvm_riscv.c,v 1.3 2023/08/23 14:00:11 rin Exp $");
+__RCSID("$NetBSD: kvm_riscv.c,v 1.3.2.1 2025/08/02 05:54:49 perseant Exp $");
 
 void
 _kvm_freevtop(kvm_t *kd)
@@ -82,7 +82,7 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	}
 
 	/* No hit -- no translation */
-	*pa = (u_long)~0UL;
+	*pa = ~0UL;
 	return 0;
 }
 

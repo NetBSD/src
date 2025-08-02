@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.153 2023/11/27 16:13:59 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.153.2.1 2025/08/02 05:57:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,33 +148,35 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.153 2023/11/27 16:13:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.153.2.1 2025/08/02 05:57:44 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/fstrans.h>
 #include <sys/hash.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/pax.h>
+#include <sys/sdt.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/threadpool.h>
 #include <sys/vnode_impl.h>
 #include <sys/wapbl.h>
-#include <sys/fstrans.h>
 
 #include <miscfs/deadfs/deadfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -521,7 +523,7 @@ lru_requeue(vnode_t *vp, vnodelst_t *listhd)
 	vip = VNODE_TO_VIMPL(vp);
 	if (listhd == vip->vi_lrulisthd &&
 	    (getticks() - vip->vi_lrulisttm) < hz) {
-	    	return;
+		return;
 	}
 
 	mutex_enter(&vdrain_lock);
@@ -739,8 +741,10 @@ vrele_task(struct threadpool_job *job)
 		}
 
 		lru_iter_release(&iter);
-		if (skipped)
-			kpause("vrele", false, MAX(1, mstohz(10)), &vdrain_lock);
+		if (skipped) {
+			kpause("vrele", false, MAX(1, mstohz(10)),
+			    &vdrain_lock);
+		}
 	}
 
 	threadpool_job_done(job);
@@ -1298,7 +1302,8 @@ vgone(vnode_t *vp)
 {
 	int lktype;
 
-	KASSERT(vp->v_mount == dead_rootmount || fstrans_is_owner(vp->v_mount));
+	KASSERT(vp->v_mount == dead_rootmount ||
+	    fstrans_is_owner(vp->v_mount));
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	lktype = LK_EXCLUSIVE;
@@ -1521,7 +1526,7 @@ vcache_tryvget(vnode_t *vp)
 
 	for (use = atomic_load_relaxed(&vp->v_usecount);; use = next) {
 		if (__predict_false((use & VUSECOUNT_GATE) == 0)) {
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		}
 		next = atomic_cas_uint(&vp->v_usecount,
 		    use, (use + 1) | VUSECOUNT_VGET);
@@ -1557,7 +1562,7 @@ vcache_vget(vnode_t *vp)
 			vcache_free(VNODE_TO_VIMPL(vp));
 		else
 			mutex_exit(vp->v_interlock);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 	VSTATE_ASSERT(vp, VS_LOADED);
 	error = vcache_tryvget(vp);
@@ -1777,7 +1782,7 @@ vcache_rekey_enter(struct mount *mp, struct vnode *vp,
 	vip = vcache_hash_lookup(&new_vcache_key, new_hash);
 	if (vip != NULL) {
 		vcache_dealloc(new_vip);
-		return EEXIST;
+		return SET_ERROR(EEXIST);
 	}
 	SLIST_INSERT_HEAD(&vcache_hashtab[new_hash & vcache_hashmask],
 	    new_vip, vi_hash);
@@ -2006,7 +2011,8 @@ vcache_make_anon(vnode_t *vp)
 	bool recycle;
 
 	KASSERT(vp->v_type == VBLK || vp->v_type == VCHR);
-	KASSERT(vp->v_mount == dead_rootmount || fstrans_is_owner(vp->v_mount));
+	KASSERT(vp->v_mount == dead_rootmount ||
+	    fstrans_is_owner(vp->v_mount));
 	VSTATE_ASSERT_UNLOCKED(vp, VS_ACTIVE);
 
 	/* Remove from vnode cache. */
@@ -2095,9 +2101,9 @@ vdead_check(struct vnode *vp, int flags)
 
 	if (VSTATE_GET(vp) == VS_RECLAIMING) {
 		KASSERT(ISSET(flags, VDEAD_NOWAIT));
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	} else if (VSTATE_GET(vp) == VS_RECLAIMED) {
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 
 	return 0;
@@ -2111,7 +2117,7 @@ vfs_drainvnodes(void)
 
 	if (!vdrain_one(desiredvnodes)) {
 		mutex_exit(&vdrain_lock);
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	}
 
 	mutex_exit(&vdrain_lock);

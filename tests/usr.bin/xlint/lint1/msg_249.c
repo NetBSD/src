@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_249.c,v 1.15 2024/01/28 08:17:27 rillig Exp $	*/
+/*	$NetBSD: msg_249.c,v 1.15.2.1 2025/08/02 05:58:17 perseant Exp $	*/
 # 3 "msg_249.c"
 
 // Test for message: syntax error '%s' [249]
@@ -31,7 +31,7 @@ void
 function(void)
 {
 	if (0)
-		/* expect+1: warning: statement not reached [193] */
+		/* expect+1: warning: 'empty' statement not reached [193] */
 		;
 	/* expect+1: error: syntax error ')' [249] */
 	);

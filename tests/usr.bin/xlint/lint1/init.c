@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.16 2024/06/08 13:50:47 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.16.2.1 2025/08/02 05:58:14 perseant Exp $	*/
 # 3 "init.c"
 
 /*
@@ -106,7 +106,7 @@ extern int extern_var = 1;
 int defined_var = 1;
 /* expect+1: warning: static variable 'static_var' unused [226] */
 static int static_var = 1;
-/* expect+1: error: illegal storage class [8] */
+/* expect+1: error: invalid storage class [8] */
 register int register_var = 1;
 /* expect+1: error: cannot initialize typedef 'typedef_var' [25] */
 typedef int typedef_var = 1;
@@ -130,9 +130,9 @@ init_string_via_assignment(void)
 	const char *cs_match = "";
 	const int *ws_match = L"";
 
-	/* expect+1: warning: illegal combination of 'pointer to const char' and 'pointer to int', op 'init' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to const char' and 'pointer to int', op 'init' [124] */
 	const char *cs_mismatch = L"";
-	/* expect+1: warning: illegal combination of 'pointer to const int' and 'pointer to char', op 'init' [124] */
+	/* expect+1: warning: invalid combination of 'pointer to const int' and 'pointer to char', op 'init' [124] */
 	const int *ws_mismatch = "";
 }
 
@@ -150,9 +150,9 @@ init_pointer_in_struct(void)
 	};
 
 	struct cs_ws type_mismatch = {
-		/* expect+1: warning: illegal combination of 'pointer to const char' and 'pointer to int', op 'init' [124] */
+		/* expect+1: warning: invalid combination of 'pointer to const char' and 'pointer to int', op 'init' [124] */
 		L"",
-		/* expect+1: warning: illegal combination of 'pointer to const int' and 'pointer to char', op 'init' [124] */
+		/* expect+1: warning: invalid combination of 'pointer to const int' and 'pointer to char', op 'init' [124] */
 		"",
 	};
 
@@ -177,9 +177,9 @@ init_array_in_struct(void)
 	};
 
 	struct cs_ws type_mismatch = {
-		/* expect+1: warning: illegal combination of integer 'char' and pointer 'pointer to int' [183] */
+		/* expect+1: warning: invalid combination of integer 'char' and pointer 'pointer to int' for 'init' [183] */
 		L"",
-		/* expect+1: warning: illegal combination of integer 'char' and pointer 'pointer to char' [183] */
+		/* expect+1: warning: invalid combination of integer 'char' and pointer 'pointer to char' for 'init' [183] */
 		"",
 	};
 

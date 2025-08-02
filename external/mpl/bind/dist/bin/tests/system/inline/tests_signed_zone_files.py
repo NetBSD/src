@@ -12,6 +12,27 @@
 import glob
 import struct
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "K*",
+        "*.out*",
+        "*/*.out*",
+        "ns*/K*",
+        "ns*/dsset-*",
+        "ns*/*.bk",
+        "ns*/*.db",
+        "ns*/*.jbk",
+        "ns*/*.jnl",
+        "ns*/*.nzd",
+        "ns*/*.signed",
+        "ns*/trusted.conf",
+        "ns3/delayedkeys.conf",
+        "ns3/removedkeys",
+    ]
+)
+
 
 class RawFormatHeader(dict):
     """

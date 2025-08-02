@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_schar.c,v 1.6 2024/06/08 06:37:06 rillig Exp $	*/
+/*	$NetBSD: platform_schar.c,v 1.6.2.1 2025/08/02 05:58:19 perseant Exp $	*/
 # 3 "platform_schar.c"
 
 /*
@@ -6,7 +6,7 @@
  * representation as signed char.
  */
 
-/* lint1-extra-flags: -c -h -a -p -b -r -z -X 161,351 */
+/* lint1-extra-flags: -c -h -a -p -b -r -z -X 351 */
 /* lint1-only-if: schar */
 
 /* expect+1: warning: nonportable character comparison '-128 < ?' [230] */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.36 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.36.2.1 2025/08/02 05:56:46 perseant Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.36 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.36.2.1 2025/08/02 05:56:46 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1114,7 +1114,7 @@ vte_rxeof(struct vte_softc *sc)
 	    VTE_DESC_INC(cons, VTE_RX_RING_CNT)) {
 		rxd = &sc->vte_cdata.vte_rxdesc[cons];
 		status = le16toh(rxd->rx_desc->drst);
-		DPRINTF(("vte_rxoef rxd %d/%p mbuf %p status 0x%x len %d\n",
+		DPRINTF(("vte_rxeof rxd %d/%p mbuf %p status 0x%x len %d\n",
 			cons, rxd, rxd->rx_m, status,
 			VTE_RX_LEN(le16toh(rxd->rx_desc->drlen))));
 		if ((status & VTE_DRST_RX_OWN) != 0)
@@ -1169,7 +1169,7 @@ vte_rxeof(struct vte_softc *sc)
 		 * A couple of severe issues were seen on sample
 		 * board where the controller continuously emits TX
 		 * pause frames once RX pause threshold crossed.
-		 * Once triggered it never recovered form that
+		 * Once triggered it never recovered from that
 		 * state, I couldn't find a way to make it back to
 		 * work at least.  This issue effectively
 		 * disconnected the system from network.  Also, the
@@ -1435,10 +1435,8 @@ vte_stop(struct ifnet *ifp, int disable)
 	}
 	/* Free TX mbuf pools used for deep copy. */
 	for (i = 0; i < VTE_TX_RING_CNT; i++) {
-		if (sc->vte_cdata.vte_txmbufs[i] != NULL) {
-			m_freem(sc->vte_cdata.vte_txmbufs[i]);
-			sc->vte_cdata.vte_txmbufs[i] = NULL;
-		}
+		m_freem(sc->vte_cdata.vte_txmbufs[i]);
+		sc->vte_cdata.vte_txmbufs[i] = NULL;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldcvar.h,v 1.1 2016/08/19 19:02:07 palle Exp $	*/
+/*	$NetBSD: ldcvar.h,v 1.1.58.1 2025/08/02 05:56:09 perseant Exp $	*/
 /*	$OpenBSD: ldcvar.h,v 1.6 2014/09/29 17:43:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -121,7 +121,7 @@ struct ldc_conn {
 void	ldc_rx_ctrl(struct ldc_conn *, struct ldc_pkt *);
 void	ldc_rx_data(struct ldc_conn *, struct ldc_pkt *);
 
-void	ldc_send_vers(struct ldc_conn *);
+int	ldc_send_vers(struct ldc_conn *);
 int	ldc_send_unreliable(struct ldc_conn *, void *, size_t);
 
 void	ldc_reset(struct ldc_conn *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mutexblock.c,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: mutexblock.c,v 1.6.4.1 2025/08/02 05:53:54 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

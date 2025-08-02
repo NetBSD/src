@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584reg.h,v 1.2 2016/01/03 17:32:17 jdc Exp $ */
+/*	$NetBSD: pcf8584reg.h,v 1.2.56.1 2025/08/02 05:56:42 perseant Exp $ */
 
 /* Written by Tobias Nygren. Released into the public domain. */
 
@@ -28,7 +28,7 @@
 /* Status register bits (read only) */
 #define	PCF8584_STATUS_BBN	(1<<0)	/* Bus Busy Not */
 #define	PCF8584_STATUS_LAB	(1<<1)	/* Lost Arbitration */
-#define	PCF8584_STATUS_AAS	(1<<2)	/* Adressed As Slave */
+#define	PCF8584_STATUS_AAS	(1<<2)	/* Addressed As Slave */
 #define	PCF8584_STATUS_LRB	(1<<3)	/* Last Received Bit (NAK+bcast det.) */
 #define	PCF8584_STATUS_BER	(1<<4)	/* Bus error */
 #define	PCF8584_STATUS_STS	(1<<5)	/* external STOP condition detected */

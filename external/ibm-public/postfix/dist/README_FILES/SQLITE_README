@@ -14,7 +14,7 @@ BBuuiillddiinngg PPoossttffiixx wwiitthh SSQQLLiittee s
 The Postfix SQLite client utilizes the sqlite3 library, which can be obtained
 from:
 
-    http://www.sqlite.org/
+    https://www.sqlite.org/
 
 In order to build Postfix with sqlite map support, you will need to add to
 CCARGS the flags -DHAS_SQLITE and -I with the directory containing the sqlite

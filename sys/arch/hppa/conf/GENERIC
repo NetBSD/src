@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.44 2024/03/14 13:18:35 macallan Exp $
+# $NetBSD: GENERIC,v 1.44.2.1 2025/08/02 05:55:41 perseant Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.44 $"
+#ident 		"GENERIC-$Revision: 1.44.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -283,7 +283,11 @@ sti*	at mainbus0		# [H]CRX-{8,24,48}[Z] and Visualize graphics
 sti*	at phantomas?		# [H]CRX-{8,24,48}[Z] and Visualize graphics
 sti*	at uturn?
 sti*	at pci?			# EG-PCI, FX*
-gftfb* 	at pci?			# PCI Visualize EG
+
+# graphics with native drivers
+hyperfb* 	at uturn?	# hyperdrive / HCRX
+gftfb* 		at pci?		# PCI Visualize EG
+summitfb* 	at pci?		# Visualize FX4
 
 # Human Interface Loop
 hil*		at gsc? irq 1	# Human Interface Loop, kbd and mouse
@@ -687,6 +691,14 @@ ucom*	at u3g?
 # USB generic serial port (e.g., data over cellular)
 ugensa* at uhub? port ?
 ucom*	at ugensa?
+
+# Virtio devices
+virtio* at pci? dev ? function ?	# Virtio PCI device
+
+include "dev/virtio/virtio.config"
+no vio9p* 	at virtio?		# XXX ?
+no viocon* 	at virtio?		# XXX ?
+no viomb* 	at virtio?		# XXX ?
 
 # Pseudo-Devices
 

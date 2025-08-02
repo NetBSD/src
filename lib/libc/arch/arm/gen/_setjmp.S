@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.17 2020/12/05 11:18:21 skrll Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.17.8.1 2025/08/02 05:54:31 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -149,7 +149,7 @@ ENTRY(_longjmp)
 	mov	r9, r3
 	ldmia	r0!, {r2-r3}
 	mov	r10, r2
-	mov	r1, r3
+	movs	r1, r3
 	adds	r0, r0, #4		/* skip r12 */
 #endif
 	ldmia	r0!, {r2-r3}		/* r2 = sp, r3 = lr */

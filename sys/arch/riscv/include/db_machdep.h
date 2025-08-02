@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.9 2023/09/02 09:27:09 skrll Exp $ */
+/* $NetBSD: db_machdep.h,v 1.9.6.1 2025/08/02 05:56:03 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,8 +32,11 @@
 #ifndef	_RISCV_DB_MACHDEP_H_
 #define	_RISCV_DB_MACHDEP_H_
 
-#include <riscv/locore.h>		/* T_BREAK */
 #include <riscv/frame.h>
+
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif /* _KERNEL */
 
 #define	DB_ELF_SYMBOLS
 
@@ -50,15 +53,15 @@ extern db_regs_t ddb_regs;
 
 #define	PC_REGS(tf)	((tf)->tf_pc)
 
-#define	PC_ADVANCE(tf) do {						\
-	if (db_get_value((tf)->tf_pc, sizeof(uint32_t), false) == BKPT_INST) \
-		(tf)->tf_pc += BKPT_SIZE;			\
+#define	PC_ADVANCE(tf) do {						       \
+	if (db_get_value((tf)->tf_pc, sizeof(uint32_t), false) == BKPT_INST)   \
+		(tf)->tf_pc += BKPT_SIZE;				       \
 } while(0)
 
 /* Similar to PC_ADVANCE(), except only advance on cpu_Debugger()'s bpt */
-#define	PC_BREAK_ADVANCE(tf) do {				\
-	if ((tf)->tf_pc == (register_t)cpu_Debugger_insn)	\
-		(tf)->tf_pc = (register_t)cpu_Debugger_ret;	\
+#define	PC_BREAK_ADVANCE(tf) do {					       \
+	if ((tf)->tf_pc == (register_t)cpu_Debugger_insn)		       \
+		(tf)->tf_pc = (register_t)cpu_Debugger_ret;		       \
 } while(0)
 
 #define	BKPT_ADDR(addr)		(addr)			/* breakpoint address */
@@ -91,13 +94,6 @@ db_addr_t	db_disasm_insn(uint32_t, db_addr_t, bool);
  */
 void 	kdb_kbd_trap(db_regs_t *);
 int 	kdb_trap(int, db_regs_t *);
-
-static inline void
-db_set_ddb_regs(int type, struct trapframe *tf)
-{
-	*curcpu()->ci_ddb_regs = *tf;
-}
-
 
 /*
  * Constants for KGDB.

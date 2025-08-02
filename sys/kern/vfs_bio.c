@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.303 2022/03/30 14:54:29 riastradh Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.303.10.1 2025/08/02 05:57:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,32 +123,34 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.303 2022/03/30 14:54:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.303.10.1 2025/08/02 05:57:43 perseant Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_biohist.h"
 #include "opt_bufcache.h"
 #include "opt_dtrace.h"
-#include "opt_biohist.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
+#include <sys/types.h>
+
+#include <sys/bitops.h>
 #include <sys/buf.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/resourcevar.h>
-#include <sys/sysctl.h>
 #include <sys/conf.h>
-#include <sys/kauth.h>
+#include <sys/cprng.h>
+#include <sys/cpu.h>
 #include <sys/fstrans.h>
 #include <sys/intr.h>
-#include <sys/cpu.h>
-#include <sys/wapbl.h>
-#include <sys/bitops.h>
-#include <sys/cprng.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/sdt.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
+#include <sys/wapbl.h>
 
 #include <uvm/uvm.h>	/* extern struct uvm uvm */
 
@@ -320,7 +322,7 @@ buf_setvalimit(vsize_t sz)
 
 	/* We need to accommodate at least NMEMPOOLS of MAXBSIZE each */
 	if (sz < NMEMPOOLS * MAXBSIZE)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	bufmem_valimit = sz;
 	return 0;
@@ -451,7 +453,7 @@ buf_memcalc(void)
 	if (bufmem_valimit != 0 && n > bufmem_valimit)
 		n = bufmem_valimit;
 
-	return (n);
+	return n;
 }
 
 /*
@@ -473,7 +475,7 @@ bufinit(void)
 	if (bufmem_valimit != 0) {
 		vaddr_t minaddr = 0, maxaddr;
 		buf_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-					  bufmem_valimit, 0, false, 0);
+		    bufmem_valimit, 0, false, 0);
 		if (buf_map == NULL)
 			panic("bufinit: cannot allocate submap");
 	} else
@@ -506,6 +508,7 @@ bufinit(void)
 		struct pool *pp = &bmempools[i];
 		u_int size = 1 << (i + MEMPOOL_INDEX_OFFSET);
 		char *name = kmem_alloc(8, KM_SLEEP); /* XXX: never freed */
+
 		if (__predict_false(size >= 1048576))
 			(void)snprintf(name, 8, "buf%um", size / 1048576);
 		else if (__predict_true(size >= 1024))
@@ -513,8 +516,8 @@ bufinit(void)
 		else
 			(void)snprintf(name, 8, "buf%ub", size);
 		pa = (size <= PAGE_SIZE && use_std)
-			? &pool_allocator_nointr
-			: &bufmempool_allocator;
+		    ? &pool_allocator_nointr
+		    : &bufmempool_allocator;
 		pool_init(pp, size, DEV_BSIZE, 0, 0, name, pa, IPL_NONE);
 		pool_setlowat(pp, 1);
 		pool_sethiwat(pp, 1);
@@ -634,6 +637,7 @@ buf_mempoolidx(u_long size)
 static u_long
 buf_roundsize(u_long size)
 {
+
 	/* Round up to nearest power of 2 */
 	return (1 << (buf_mempoolidx(size) + MEMPOOL_INDEX_OFFSET));
 }
@@ -731,7 +735,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
 			mp->mnt_stat.f_asyncreads++;
 	}
 
-	return (bp);
+	return bp;
 }
 
 /*
@@ -749,7 +753,7 @@ bread(struct vnode *vp, daddr_t blkno, int size, int flags, buf_t **bpp)
 	/* Get buffer for block. */
 	bp = *bpp = bio_doread(vp, blkno, size, 0);
 	if (bp == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 
 	/* Wait for the read to complete, and return result. */
 	error = biowait(bp);
@@ -778,7 +782,7 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
 
 	bp = *bpp = bio_doread(vp, blkno, size, 0);
 	if (bp == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 
 	/*
 	 * For each of the read-ahead blocks, start a read, if necessary.
@@ -860,7 +864,7 @@ bwrite(buf_t *bp)
 	sync = !ISSET(bp->b_flags, B_ASYNC);
 	if (sync && mp != NULL && ISSET(mp->mnt_flag, MNT_ASYNC)) {
 		bdwrite(bp);
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -914,9 +918,9 @@ bwrite(buf_t *bp)
 		/* Release the buffer. */
 		brelse(bp, 0);
 
-		return (rv);
+		return rv;
 	} else {
-		return (0);
+		return 0;
 	}
 }
 
@@ -925,7 +929,7 @@ vn_bwrite(void *v)
 {
 	struct vop_bwrite_args *ap = v;
 
-	return (bwrite(ap->a_bp));
+	return bwrite(ap->a_bp);
 }
 
 /*
@@ -1086,8 +1090,8 @@ brelsel(buf_t *bp, int set)
 			if (wapbl_vphaswapbl(vp = bp->b_vp)) {
 				struct mount *mp = wapbl_vptomp(vp);
 
-				KASSERT(bp->b_iodone
-				    != mp->mnt_wapbl_op->wo_wapbl_biodone);
+				KASSERT(bp->b_iodone !=
+				    mp->mnt_wapbl_op->wo_wapbl_biodone);
 				WAPBL_REMOVE_BUF(mp, bp);
 			}
 		}
@@ -1185,12 +1189,12 @@ incore(struct vnode *vp, daddr_t blkno)
 	LIST_FOREACH(bp, BUFHASH(vp, blkno), b_hash) {
 		if (bp->b_lblkno == blkno && bp->b_vp == vp &&
 		    !ISSET(bp->b_cflags, BC_INVAL)) {
-		    	KASSERT(bp->b_objlock == vp->v_interlock);
-		    	return (bp);
+			KASSERT(bp->b_objlock == vp->v_interlock);
+			return (bp);
 		}
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -1209,7 +1213,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 
 	mutex_enter(&bufcache_lock);
 	SDT_PROBE3(io, kernel, , getblk__start,  vp, blkno, size);
- loop:
+loop:
 	bp = incore(vp, blkno);
 	if (bp != NULL) {
 		err = bbusy(bp, ((slpflag & PCATCH) != 0), slptimeo, NULL);
@@ -1219,7 +1223,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 			mutex_exit(&bufcache_lock);
 			SDT_PROBE4(io, kernel, , getblk__done,
 			    vp, blkno, size, NULL);
-			return (NULL);
+			return NULL;
 		}
 		KASSERT(!cv_has_waiters(&bp->b_done));
 #ifdef DIAGNOSTIC
@@ -1267,7 +1271,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 	}
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 	SDT_PROBE4(io, kernel, , getblk__done,  vp, blkno, size, bp);
-	return (bp);
+	return bp;
 }
 
 /*
@@ -1281,7 +1285,7 @@ geteblk(int size)
 
 	mutex_enter(&bufcache_lock);
 	while ((bp = getnewbuf(0, 0, 0)) == NULL)
-		;
+		continue;
 
 	SET(bp->b_cflags, BC_INVAL);
 	LIST_INSERT_HEAD(&invalhash, bp, b_hash);
@@ -1289,7 +1293,7 @@ geteblk(int size)
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 	error = allocbuf(bp, size, 0);
 	KASSERT(error == 0);
-	return (bp);
+	return bp;
 }
 
 /*
@@ -1332,7 +1336,7 @@ allocbuf(buf_t *bp, int size, int preserve)
 	 */
 	addr = buf_alloc(desired_size);
 	if (addr == NULL)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	if (preserve)
 		memcpy(addr, bp->b_data, MIN(oldsize,desired_size));
 	if (bp->b_data != NULL)
@@ -1362,9 +1366,11 @@ allocbuf(buf_t *bp, int size, int preserve)
 	}
 	mutex_exit(&bufcache_lock);
 
- out:
-	if (wapbl_vphaswapbl(bp->b_vp))
-		WAPBL_RESIZE_BUF(wapbl_vptomp(bp->b_vp), bp, oldsize, oldcount);
+out:
+	if (wapbl_vphaswapbl(bp->b_vp)) {
+		WAPBL_RESIZE_BUF(wapbl_vptomp(bp->b_vp), bp,
+		    oldsize, oldcount);
+	}
 
 	return 0;
 }
@@ -1386,7 +1392,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 
 	SDT_PROBE0(io, kernel, , getnewbuf__start);
 
- start:
+start:
 	KASSERT(mutex_owned(&bufcache_lock));
 
 	/*
@@ -1404,7 +1410,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 			bp->b_freelistindex = -1;
 #endif /* defined(DIAGNOSTIC) */
 			SDT_PROBE1(io, kernel, , getnewbuf__done,  bp);
-			return (bp);
+			return bp;
 		}
 		mutex_enter(&bufcache_lock);
 	}
@@ -1425,7 +1431,8 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 		}
 	}
 	if (bp != NULL) {
-	    	KASSERT(!ISSET(bp->b_cflags, BC_BUSY) || ISSET(bp->b_cflags, BC_VFLUSH));
+		KASSERT(!ISSET(bp->b_cflags, BC_BUSY) ||
+		    ISSET(bp->b_cflags, BC_VFLUSH));
 		bremfree(bp);
 
 		/* Buffer is no longer on free lists. */
@@ -1447,7 +1454,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 				    &bufcache_lock, slptimeo);
 		}
 		SDT_PROBE1(io, kernel, , getnewbuf__done,  NULL);
-		return (NULL);
+		return NULL;
 	}
 
 #ifdef DIAGNOSTIC
@@ -1467,7 +1474,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 	}
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
-    	KASSERT(!cv_has_waiters(&bp->b_done));
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	/*
 	 * If buffer was a delayed write, start it and return NULL
@@ -1485,7 +1492,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 		fstrans_done(transmp);
 		mutex_enter(&bufcache_lock);
 		SDT_PROBE1(io, kernel, , getnewbuf__done,  NULL);
-		return (NULL);
+		return NULL;
 	}
 
 	KASSERT(transmp == NULL);
@@ -1515,7 +1522,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 	}
 
 	SDT_PROBE1(io, kernel, , getnewbuf__done,  bp);
-	return (bp);
+	return bp;
 }
 
 /*
@@ -1529,7 +1536,7 @@ binvalbuf(struct vnode *vp, daddr_t blkno)
 
 	mutex_enter(&bufcache_lock);
 
- loop:
+loop:
 	bp = incore(vp, blkno);
 	if (bp != NULL) {
 		err = bbusy(bp, 0, 0, NULL);
@@ -1611,11 +1618,12 @@ biowait(buf_t *bp)
 	mutex_enter(bp->b_objlock);
 
 	BIOHIST_CALLARGS(biohist, "bp=%#jx, oflags=0x%jx, ret_addr=%#jx",
-	    (uintptr_t)bp, bp->b_oflags, 
+	    (uintptr_t)bp, bp->b_oflags,
 	    (uintptr_t)__builtin_return_address(0), 0);
 
 	while (!ISSET(bp->b_oflags, BO_DONE | BO_DELWRI)) {
-		BIOHIST_LOG(biohist, "waiting bp=%#jx", (uintptr_t)bp, 0, 0, 0);
+		BIOHIST_LOG(biohist, "waiting bp=%#jx",
+		    (uintptr_t)bp, 0, 0, 0);
 		cv_wait(&bp->b_done, bp->b_objlock);
 	}
 	mutex_exit(bp->b_objlock);
@@ -1777,13 +1785,13 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 	int error, elem_count, retries;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+		return sysctl_query(SYSCTLFN_CALL(rnode));
 
 	if (namelen != 4)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	retries = 100;
- retry:
+retry:
 	dp = oldp;
 	len = (oldp != NULL) ? *oldlenp : 0;
 	op = name[0];
@@ -1802,11 +1810,12 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 	 */
 	if (op != KERN_BUF_ALL || arg != KERN_BUF_ALL ||
 	    elem_size < 1 || elem_count < 0)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	if (oldp == NULL) {
 		/* count only, don't run through the buffer queues */
-		needed = pool_cache_nget(buf_cache) - pool_cache_nput(buf_cache);
+		needed = pool_cache_nget(buf_cache) -
+		    pool_cache_nput(buf_cache);
 		*oldlenp = (needed + KERN_BUFSLOP) * elem_size;
 
 		return 0;
@@ -1835,7 +1844,7 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 					 * bail out.
 					 */
 					if (retries-- == 0) {
-						error = EAGAIN;
+						error = SET_ERROR(EAGAIN);
 						break;
 					}
 					mutex_exit(&bufcache_lock);
@@ -1857,7 +1866,7 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 
 	*oldlenp = needed;
 
-	return (error);
+	return error;
 }
 
 static int
@@ -1871,33 +1880,33 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 	/* Take a copy of the supplied node and its data */
 	node = *rnode;
 	if (node.sysctl_data == &bufcache) {
-	    node.sysctl_data = &temp_bufcache;
-	    temp_bufcache = *(unsigned int *)rnode->sysctl_data;
+		node.sysctl_data = &temp_bufcache;
+		temp_bufcache = *(unsigned int *)rnode->sysctl_data;
 	} else {
-	    node.sysctl_data = &temp_water;
-	    temp_water = *(unsigned long *)rnode->sysctl_data;
+		node.sysctl_data = &temp_water;
+		temp_water = *(unsigned long *)rnode->sysctl_data;
 	}
 
 	/* Update the copy */
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
+		return error;
 
 	if (rnode->sysctl_data == &bufcache) {
 		if (temp_bufcache > 100)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		bufcache = temp_bufcache;
 		buf_setwm();
 	} else if (rnode->sysctl_data == &bufmem_lowater) {
 		if (bufmem_hiwater - temp_water < 16)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		bufmem_lowater = temp_water;
 	} else if (rnode->sysctl_data == &bufmem_hiwater) {
 		if (temp_water - bufmem_lowater < 16)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		bufmem_hiwater = temp_water;
 	} else
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	/* Drain until below new high water mark */
 	sysctl_unlock();
@@ -1920,11 +1929,11 @@ sysctl_kern_buf_setup(void)
 {
 
 	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "buf",
-		       SYSCTL_DESCR("Kernel buffer cache information"),
-		       sysctl_dobuf, 0, NULL, 0,
-		       CTL_KERN, KERN_BUF, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "buf",
+	    SYSCTL_DESCR("Kernel buffer cache information"),
+	    sysctl_dobuf, 0, NULL, 0,
+	    CTL_KERN, KERN_BUF, CTL_EOL);
 }
 
 static void
@@ -1932,33 +1941,32 @@ sysctl_vm_buf_setup(void)
 {
 
 	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "bufcache",
-		       SYSCTL_DESCR("Percentage of physical memory to use for "
-				    "buffer cache"),
-		       sysctl_bufvm_update, 0, &bufcache, 0,
-		       CTL_VM, CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "bufcache",
+	    SYSCTL_DESCR("Percentage of physical memory to use for "
+		"buffer cache"),
+	    sysctl_bufvm_update, 0, &bufcache, 0,
+	    CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-		       CTLTYPE_LONG, "bufmem",
-		       SYSCTL_DESCR("Amount of kernel memory used by buffer "
-				    "cache"),
-		       NULL, 0, &bufmem, 0,
-		       CTL_VM, CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+	    CTLTYPE_LONG, "bufmem",
+	    SYSCTL_DESCR("Amount of kernel memory used by buffer cache"),
+	    NULL, 0, &bufmem, 0,
+	    CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_LONG, "bufmem_lowater",
-		       SYSCTL_DESCR("Minimum amount of kernel memory to "
-				    "reserve for buffer cache"),
-		       sysctl_bufvm_update, 0, &bufmem_lowater, 0,
-		       CTL_VM, CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_LONG, "bufmem_lowater",
+	    SYSCTL_DESCR("Minimum amount of kernel memory to reserve for "
+		"buffer cache"),
+	    sysctl_bufvm_update, 0, &bufmem_lowater, 0,
+	    CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_LONG, "bufmem_hiwater",
-		       SYSCTL_DESCR("Maximum amount of kernel memory to use "
-				    "for buffer cache"),
-		       sysctl_bufvm_update, 0, &bufmem_hiwater, 0,
-		       CTL_VM, CTL_CREATE, CTL_EOL);
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_LONG, "bufmem_hiwater",
+	    SYSCTL_DESCR("Maximum amount of kernel memory to use for "
+		"buffer cache"),
+	    sysctl_bufvm_update, 0, &bufmem_hiwater, 0,
+	    CTL_VM, CTL_CREATE, CTL_EOL);
 }
 
 static int
@@ -2077,7 +2085,7 @@ nestiobuf_iodone(buf_t *bp)
 		 * Not all got transferred, raise an error. We have no way to
 		 * propagate these conditions to mbp.
 		 */
-		error = EIO;
+		error = SET_ERROR(EIO);
 	}
 
 	donebytes = bp->b_bufsize;
@@ -2185,7 +2193,7 @@ bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
 
 	if ((bp->b_cflags & BC_BUSY) != 0) {
 		if (curlwp == uvm.pagedaemon_lwp) {
-			error = EDEADLK;
+			error = SET_ERROR(EDEADLK);
 			goto out;
 		}
 		bp->b_cflags |= BC_WANTED;
@@ -2205,7 +2213,7 @@ bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
 		if (interlock != NULL)
 			mutex_enter(interlock);
 		if (error == 0)
-			error = EPASSTHROUGH;
+			error = SET_ERROR(EPASSTHROUGH);
 	} else {
 		bp->b_cflags |= BC_BUSY;
 		error = 0;

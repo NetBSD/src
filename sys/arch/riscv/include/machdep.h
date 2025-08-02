@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.5 2023/06/12 19:04:14 skrll Exp $	*/
+/*	$NetBSD: machdep.h,v 1.5.6.1 2025/08/02 05:56:03 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 #define _RISCV_MACHDEP_H_
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.h,v 1.5 2023/06/12 19:04:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.h,v 1.5.6.1 2025/08/02 05:56:03 perseant Exp $");
 
-#include <sys/proc.h>
 #include <sys/lwp.h>
+#include <sys/proc.h>
 #include <sys/siginfo.h>
 
 static inline paddr_t

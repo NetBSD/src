@@ -54,9 +54,9 @@ mpfr_rootn_ui (mpfr_ptr y, mpfr_srcptr x, unsigned long k, mpfr_rnd_t rnd_mode)
   MPFR_SAVE_EXPO_DECL (expo);
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg k=%lu rnd=%d",
+    (("x[%Pd]=%.*Rg k=%lu rnd=%d",
       mpfr_get_prec (x), mpfr_log_prec, x, k, rnd_mode),
-     ("y[%Pu]=%.*Rg inexact=%d",
+     ("y[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec (y), mpfr_log_prec, y, inexact));
 
   if (MPFR_UNLIKELY (k <= 1))
@@ -306,9 +306,9 @@ mpfr_rootn_si (mpfr_ptr y, mpfr_srcptr x, long k, mpfr_rnd_t rnd_mode)
   MPFR_SAVE_EXPO_DECL (expo);
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg k=%lu rnd=%d",
+    (("x[%Pd]=%.*Rg k=%lu rnd=%d",
       mpfr_get_prec (x), mpfr_log_prec, x, k, rnd_mode),
-     ("y[%Pu]=%.*Rg inexact=%d",
+     ("y[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec (y), mpfr_log_prec, y, inexact));
 
   if (k >= 0)
@@ -441,9 +441,9 @@ int
 mpfr_root (mpfr_ptr y, mpfr_srcptr x, unsigned long k, mpfr_rnd_t rnd_mode)
 {
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg k=%lu rnd=%d",
+    (("x[%Pd]=%.*Rg k=%lu rnd=%d",
       mpfr_get_prec (x), mpfr_log_prec, x, k, rnd_mode),
-     ("y[%Pu]=%.*Rg",
+     ("y[%Pd]=%.*Rg",
       mpfr_get_prec (y), mpfr_log_prec, y));
 
   /* Like mpfr_rootn_ui... */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.30 2023/02/04 14:38:09 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.30.6.1 2025/08/02 05:55:58 perseant Exp $	*/
 
 /*
  * This file was taken from mvme68k/include/vmparam.h and
@@ -75,7 +75,7 @@
 #define	MAXDSIZ		(64*1024*1024)		/* max data size */
 #endif
 #ifndef	DFLSSIZ
-#define	DFLSSIZ		(512*1024)		/* initial stack size limit */
+#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		MAXDSIZ			/* max stack size */

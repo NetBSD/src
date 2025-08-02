@@ -1,4 +1,4 @@
-/*	$NetBSD: gpx.c,v 1.3 2024/02/03 16:21:25 tsutsui Exp $ */
+/*	$NetBSD: gpx.c,v 1.3.2.1 2025/08/02 05:56:14 perseant Exp $ */
 /*	$OpenBSD: gpx.c,v 1.25 2014/12/23 21:39:12 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
@@ -1146,6 +1146,9 @@ gpx_getcmap(struct gpx_screen *ss, struct wsdisplay_cmap *cm)
 
 	if (index >= colcount || count > colcount - index)
 		return EINVAL;
+
+	if (count == 0)
+		return 0;
 
 	/* extract reds */
 	c = ss->ss_cmap + 0 + index * 3;

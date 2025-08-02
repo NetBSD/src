@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.8 2016/08/10 16:40:24 skrll Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.8.26.1 2025/08/02 05:54:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,15 +31,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.8 2016/08/10 16:40:24 skrll Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.8.26.1 2025/08/02 05:54:32 perseant Exp $");
 #endif
 
+#include <sys/param.h>
+
 #include <inttypes.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <ucontext.h>
-#include "extern.h"
 
-#include <stdarg.h>
+#include "extern.h"
 
 void __resumecontext(void) __dead;
 
@@ -54,16 +56,13 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	/* LINTED uintptr_t is safe */
 	sp  = (__greg_t *)
 	    ((uintptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
-	/* LINTED uintptr_t is safe */
 #if defined(__mips_o32) || defined(__mips_o64)
 	sp -= (argc >= 4 ? argc : 4);	/* Make room for >=4 arguments. */
-	sp  = (__greg_t *)
-	      ((uintptr_t)sp & ~0x7);	/* Align on double-word boundary. */
 #elif defined(__mips_n32) || defined(__mips_n64)
 	sp -= (argc > 8 ? argc - 8 : 0); /* Make room for > 8 arguments. */
-	sp  = (__greg_t *)
-	      ((uintptr_t)sp & ~0xf);	/* Align on quad-word boundary. */
 #endif
+	/* LINTED uintptr_t is safe */
+	sp  = (__greg_t *)((uintptr_t)sp & ~STACK_ALIGNBYTES);
 
 	gr[_REG_SP]  = (intptr_t)sp;
 	gr[_REG_RA]  = (intptr_t)__resumecontext;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.69 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.69.12.1 2025/08/02 05:56:42 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.69 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.69.12.1 2025/08/02 05:56:42 perseant Exp $");
 
 #include "opt_ddb.h"
 
@@ -393,6 +393,7 @@ ncr5380_init(struct ncr5380_softc *sc)
 static void
 ncr5380_reset_scsibus(struct ncr5380_softc *sc)
 {
+	struct sci_req *sr;
 
 	NCR_TRACE("reset_scsibus, cur=0x%x\n",
 			  (long) sc->sc_current);
@@ -409,6 +410,9 @@ ncr5380_reset_scsibus(struct ncr5380_softc *sc)
 	delay(100000);
 
 	/* XXX - Need to cancel disconnected requests. */
+	sr = sc->sc_current;
+	if (sr && (sc->sc_state & NCR_ABORTING) == 0)
+		ncr5380_abort(sc);
 }
 
 
@@ -617,9 +621,11 @@ ncr5380_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			/* Terminate any current command. */
 			sr = sc->sc_current;
 			if (sr) {
+#ifdef	NCR5380_DEBUG
 				printf("%s: polled request aborting %d/%d\n",
 				    device_xname(sc->sc_dev),
 				    sr->sr_target, sr->sr_lun);
+#endif
 				ncr5380_abort(sc);
 			}
 			if (sc->sc_state != NCR_IDLE) {
@@ -801,11 +807,18 @@ finish:
 	sr->sr_xs = NULL;
 	sc->sc_ncmds--;
 
+	const bool aborting = sc->sc_state & NCR_ABORTING;
+	if (aborting)
+		scsipi_channel_freeze(&sc->sc_channel, 1);
+
 	/* Tell common SCSI code it is done. */
 	scsipi_done(xs);
 
 	sc->sc_state = NCR_IDLE;
 	/* Now ncr5380_sched() may be called again. */
+
+	if (aborting)
+		scsipi_channel_thaw(&sc->sc_channel, 1);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unpriv.c,v 1.16.12.1 2024/08/12 22:38:30 perseant Exp $	*/
+/*	$NetBSD: t_unpriv.c,v 1.16.12.2 2025/08/02 05:58:00 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -94,24 +94,31 @@ dirperms(const atf_tc_t *tc, const char *mp)
 	rump_pub_lwproc_rfork(RUMP_RFCFDG);
 	if (rump_sys_setuid(1) == -1)
 		atf_tc_fail_errno("setuid");
+fprintf(stderr, "OPEN AS USER #1\n");
         if (rump_sys_open(name, O_RDWR|O_CREAT, 0666) != -1 || errno != EACCES)
 		atf_tc_fail_errno("open");
 	rump_pub_lwproc_releaselwp();
 
+fprintf(stderr, "OPEN AS USER #0\n");
 	if ((fd = rump_sys_open(name, O_RDWR|O_CREAT, 0666)) == -1)
 		atf_tc_fail_errno("open");
+fprintf(stderr, "CLOSE AS USER #0\n");
 	if (rump_sys_close(fd) == -1)
 		atf_tc_fail_errno("close");
 
 	rump_pub_lwproc_rfork(RUMP_RFCFDG);
 	if (rump_sys_setuid(1) == -1)
 		atf_tc_fail_errno("setuid");
-        if (rump_sys_unlink(name) != -1 || errno != EACCES)
-		atf_tc_fail_errno("unlink");
+fprintf(stderr, "UNLINK AS USER #1\n");
+        if (rump_sys_unlink(name) != -1)
+		atf_tc_fail_errno("unlink[1]: succeeded");
+	if (errno != EACCES)
+		atf_tc_fail_errno("unlink[1]: not EACCES");
 	rump_pub_lwproc_releaselwp();
 
+fprintf(stderr, "UNLINK AS USER #0\n");
         if (rump_sys_unlink(name) == -1)
-		atf_tc_fail_errno("unlink");
+		atf_tc_fail_errno("unlink[0]");
 
 	if (rump_sys_rmdir(dir) == -1)
 		atf_tc_fail_errno("rmdir");
@@ -142,8 +149,10 @@ times(const atf_tc_t *tc, const char *mp)
 	rump_pub_lwproc_rfork(RUMP_RFCFDG);
 	if (rump_sys_setuid(1) == -1)
 		atf_tc_fail_errno("setuid");
-	if (rump_sys_utimes(name, NULL) != -1 || errno != EACCES)
-		atf_tc_fail_errno("utimes");
+	if (rump_sys_utimes(name, NULL) != -1)
+		atf_tc_fail_errno("utimes: succeeded");
+	if (errno != EACCES)
+		atf_tc_fail_errno("utimes: not EACCES");
 	rump_pub_lwproc_releaselwp();
 
 	if (rump_sys_utimes(name, NULL) == -1)
@@ -156,8 +165,10 @@ times(const atf_tc_t *tc, const char *mp)
 			rump_pub_lwproc_rfork(RUMP_RFCFDG);
 			if (rump_sys_setuid(1) == -1)
 				atf_tc_fail_errno("setuid");
-			if (rump_sys_utimes(name, tmv) != -1 || errno != EPERM)
-				atf_tc_fail_errno("utimes");
+			if (rump_sys_utimes(name, tmv) != -1)
+				atf_tc_fail_errno("utimes[1]: succeeded");
+			if (errno != EPERM)
+				atf_tc_fail_errno("utimes[1]: not EPERM");
 			rump_pub_lwproc_releaselwp();
 
 			if (rump_sys_utimes(name, tmv) == -1)
@@ -190,25 +201,34 @@ flags(const atf_tc_t *tc, const char *mp)
 	if (rump_sys_chflags(name, st.st_flags) == -1) {
 		if (errno == EOPNOTSUPP)
 			atf_tc_skip("file flags not supported by file system");
-		atf_tc_fail_errno("chflags");
+		atf_tc_fail_errno("chflags[0]");
 	}
 
 	fflags = st.st_flags | UF_NODUMP;
 
+	if (rump_sys_stat(mp, &st) == -1)
+		atf_tc_fail_errno("stat[0]");
+	fprintf(stderr, "stat(%s) -> mode=%o\n", mp, st.st_mode);
 	rump_pub_lwproc_rfork(RUMP_RFCFDG);
 	if (rump_sys_setuid(1) == -1)
 		atf_tc_fail_errno("setuid");
+	if (rump_sys_stat(name, &st) == -1)
+		atf_tc_fail_errno("stat[1]");
 	fflags |= UF_NODUMP;
-	if (rump_sys_chflags(name, fflags) != -1 || errno != EPERM)
-		atf_tc_fail_errno("chflags");
+	if (rump_sys_chflags(name, fflags) != -1)
+		atf_tc_fail_errno("chflags[1]: succeeded");
+	if (errno != EPERM) {
+		fprintf(stderr, "errno = %d\n", errno);
+		atf_tc_fail_errno("chflags[1]: not EPERM");
+	}
 	rump_pub_lwproc_releaselwp();
 
 	if (rump_sys_chflags(name, fflags) == -1)
-		atf_tc_fail_errno("chflags");
+		atf_tc_fail_errno("chflags[2]");
 
 	fflags &= ~UF_NODUMP;
 	if (rump_sys_chflags(name, fflags) == -1)
-		atf_tc_fail_errno("chflags");
+		atf_tc_fail_errno("chflags[3]");
 
 	if (rump_sys_unlink(name) == -1)
 		atf_tc_fail_errno("unlink");

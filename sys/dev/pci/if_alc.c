@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.54 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.54.2.1 2025/08/02 05:56:45 perseant Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2433,6 +2433,7 @@ alc_newbuf(struct alc_softc *sc, struct alc_rxdesc *rxd, bool init)
 	MGETHDR(m, init ? M_WAITOK : M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (ENOBUFS);
+	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
 	MCLGET(m, init ? M_WAITOK : M_DONTWAIT);
 	if (!(m->m_flags & M_EXT)) {
 		m_freem(m);
@@ -2579,8 +2580,7 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 		if (alc_newbuf(sc, rxd, false) != 0) {
 			if_statinc(ifp, if_iqdrops);
 			/* Reuse Rx buffers. */
-			if (sc->alc_cdata.alc_rxhead != NULL)
-				m_freem(sc->alc_cdata.alc_rxhead);
+			m_freem(sc->alc_cdata.alc_rxhead);
 			break;
 		}
 
@@ -3229,8 +3229,7 @@ alc_stop(struct ifnet *ifp, int disable)
 	alc_aspm(sc, 0, IFM_UNKNOWN);
 
 	/* Reclaim Rx buffers that have been processed. */
-	if (sc->alc_cdata.alc_rxhead != NULL)
-		m_freem(sc->alc_cdata.alc_rxhead);
+	m_freem(sc->alc_cdata.alc_rxhead);
 	ALC_RXCHAIN_RESET(sc);
 	/*
 	 * Free Tx/Rx mbufs still in the queues.

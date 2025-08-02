@@ -1,4 +1,4 @@
-/*	$NetBSD: dbversion_test.c,v 1.2 2024/02/21 22:52:49 christos Exp $	*/
+/*	$NetBSD: dbversion_test.c,v 1.2.6.1 2025/08/02 05:54:11 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -80,19 +80,19 @@ setup_test(void **state) {
 
 	isc_assertion_setcallback(local_callback);
 
-	res = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
+	res = dns_db_create(mctx, ZONEDB_DEFAULT, dns_rootname, dns_dbtype_zone,
 			    dns_rdataclass_in, 0, NULL, &db1);
 	assert_int_equal(res, ISC_R_SUCCESS);
 	dns_db_newversion(db1, &v1);
 	assert_non_null(v1);
 
-	res = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
+	res = dns_db_create(mctx, ZONEDB_DEFAULT, dns_rootname, dns_dbtype_zone,
 			    dns_rdataclass_in, 0, NULL, &db2);
 	assert_int_equal(res, ISC_R_SUCCESS);
 	dns_db_newversion(db2, &v2);
 	assert_non_null(v1);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -121,7 +121,7 @@ teardown_test(void **state) {
 		assert_null(db2);
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -172,7 +172,14 @@ ISC_RUN_TEST_IMPL(find) {
 	dns_rdataset_init(&rdataset);
 	res = dns_db_find(db1, dns_rootname, v1, dns_rdatatype_soa, 0, 0, NULL,
 			  name, &rdataset, NULL);
-	assert_int_equal(res, DNS_R_NXDOMAIN);
+	/*
+	 * Note: in the QPzone database, the root node always exists,
+	 * even if it's empty, so we would get DNS_R_NXRRSET from this
+	 * query. In other databases (including the old RBTDB) the root
+	 * node can be nonexistent, and the query would then return
+	 * DNS_R_NXDOMAIN. Allow for both possibilities.
+	 */
+	assert_true(res == DNS_R_NXRRSET || res == DNS_R_NXDOMAIN);
 
 	if (dns_rdataset_isassociated(&rdataset)) {
 		dns_rdataset_disassociate(&rdataset);
@@ -280,8 +287,7 @@ ISC_RUN_TEST_IMPL(subtract) {
 
 	rdatalist.rdclass = dns_rdataclass_in;
 
-	res = dns_rdatalist_tordataset(&rdatalist, &rdataset);
-	assert_int_equal(res, ISC_R_SUCCESS);
+	dns_rdatalist_tordataset(&rdatalist, &rdataset);
 
 	res = dns_db_findnode(db1, dns_rootname, false, &node);
 	assert_int_equal(res, ISC_R_SUCCESS);
@@ -294,34 +300,13 @@ ISC_RUN_TEST_IMPL(subtract) {
 	}
 
 	dns_rdataset_init(&rdataset);
-	res = dns_rdatalist_tordataset(&rdatalist, &rdataset);
-	assert_int_equal(res, ISC_R_SUCCESS);
+	dns_rdatalist_tordataset(&rdatalist, &rdataset);
 
 	check_assertion(
 		dns_db_subtractrdataset(db1, node, v2, &rdataset, 0, NULL));
 
 	dns_db_detachnode(db1, &node);
 	assert_null(node);
-}
-
-/*
- * Check dns_db_dump() passes with matching db and version, and
- * asserts with mis-matching db and version.
- */
-ISC_RUN_TEST_IMPL(dump) {
-	isc_result_t res;
-	FILE *f = NULL;
-
-	UNUSED(state);
-
-	res = isc_file_openunique(tempname, &f);
-	fclose(f);
-	assert_int_equal(res, ISC_R_SUCCESS);
-
-	res = dns_db_dump(db1, v1, tempname);
-	assert_int_equal(res, ISC_R_SUCCESS);
-
-	check_assertion(dns_db_dump(db1, v2, tempname));
 }
 
 /*
@@ -341,8 +326,7 @@ ISC_RUN_TEST_IMPL(addrdataset) {
 
 	rdatalist.rdclass = dns_rdataclass_in;
 
-	res = dns_rdatalist_tordataset(&rdatalist, &rdataset);
-	assert_int_equal(res, ISC_R_SUCCESS);
+	dns_rdatalist_tordataset(&rdatalist, &rdataset);
 
 	res = dns_db_findnode(db1, dns_rootname, false, &node);
 	assert_int_equal(res, ISC_R_SUCCESS);
@@ -380,74 +364,154 @@ ISC_RUN_TEST_IMPL(getnsec3parameters) {
 }
 
 /*
- * Check dns_db_resigned() passes with matching db and version, and
- * asserts with mis-matching db and version.
+ * Check that the correct node contents are found after a rollback.
  */
-ISC_RUN_TEST_IMPL(resigned) {
+ISC_RUN_TEST_IMPL(rollback) {
 	isc_result_t res;
-	dns_rdataset_t rdataset, added;
+	dns_rdata_t rdata1 = DNS_RDATA_INIT, rdata2 = DNS_RDATA_INIT;
+	dns_rdataset_t input1 = DNS_RDATASET_INIT;
+	dns_rdataset_t input2 = DNS_RDATASET_INIT;
+	dns_rdataset_t rdataset1 = DNS_RDATASET_INIT;
+	dns_rdataset_t rdataset2 = DNS_RDATASET_INIT;
+	dns_rdatalist_t rdatalist1, rdatalist2;
+	dns_rdata_t out1 = DNS_RDATA_INIT, out2 = DNS_RDATA_INIT;
 	dns_dbnode_t *node = NULL;
-	dns_rdatalist_t rdatalist;
-	dns_rdata_rrsig_t rrsig;
-	dns_rdata_t rdata = DNS_RDATA_INIT;
+	char *txt1 = (char *)"\006text 1";
+	char *txt2 = (char *)"\006text 2";
+	size_t len1 = strlen(txt1), len2 = strlen(txt2);
+	char buf[1024];
 	isc_buffer_t b;
-	unsigned char buf[1024];
 
 	UNUSED(state);
 
-	/*
-	 * Create a dummy RRSIG record and set a resigning time.
-	 */
-	dns_rdataset_init(&added);
-	dns_rdataset_init(&rdataset);
-	dns_rdatalist_init(&rdatalist);
 	isc_buffer_init(&b, buf, sizeof(buf));
 
-	DNS_RDATACOMMON_INIT(&rrsig, dns_rdatatype_rrsig, dns_rdataclass_in);
-	rrsig.covered = dns_rdatatype_a;
-	rrsig.algorithm = 100;
-	rrsig.labels = 0;
-	rrsig.originalttl = 0;
-	rrsig.timeexpire = 3600;
-	rrsig.timesigned = 0;
-	rrsig.keyid = 0;
-	dns_name_init(&rrsig.signer, NULL);
-	dns_name_clone(dns_rootname, &rrsig.signer);
-	rrsig.siglen = 0;
-	rrsig.signature = NULL;
+	/* Set up two rdatasets to insert */
+	rdata1.rdclass = dns_rdataclass_in;
+	rdata1.type = dns_rdatatype_txt;
+	rdata2 = rdata1;
 
-	res = dns_rdata_fromstruct(&rdata, dns_rdataclass_in,
-				   dns_rdatatype_rrsig, &rrsig, &b);
+	rdata1.length = len1;
+	rdata1.data = (unsigned char *)txt1;
+	rdata2.length = len2;
+	rdata2.data = (unsigned char *)txt2;
+
+	dns_rdatalist_init(&rdatalist1);
+	rdatalist1.rdclass = dns_rdataclass_in;
+	rdatalist1.type = dns_rdatatype_txt;
+	rdatalist1.ttl = 3600;
+	rdatalist2 = rdatalist1;
+
+	ISC_LIST_APPEND(rdatalist1.rdata, &rdata1, link);
+	ISC_LIST_APPEND(rdatalist2.rdata, &rdata2, link);
+
+	dns_rdatalist_tordataset(&rdatalist1, &input1);
+	dns_rdatalist_tordataset(&rdatalist2, &input2);
+
+	/* db1: Insert the first version ("text 1"), and commit */
+	res = dns_db_findnode(db1, dns_rootname, true, &node);
 	assert_int_equal(res, ISC_R_SUCCESS);
-
-	rdatalist.rdclass = dns_rdataclass_in;
-	rdatalist.type = dns_rdatatype_rrsig;
-	ISC_LIST_APPEND(rdatalist.rdata, &rdata, link);
-
-	res = dns_rdatalist_tordataset(&rdatalist, &rdataset);
+	res = dns_db_addrdataset(db1, node, v1, 0, &input1, 0, NULL);
 	assert_int_equal(res, ISC_R_SUCCESS);
-
-	rdataset.attributes |= DNS_RDATASETATTR_RESIGN;
-	rdataset.resign = 7200;
-
-	res = dns_db_findnode(db1, dns_rootname, false, &node);
-	assert_int_equal(res, ISC_R_SUCCESS);
-
-	res = dns_db_addrdataset(db1, node, v1, 0, &rdataset, 0, &added);
-	assert_int_equal(res, ISC_R_SUCCESS);
-
+	dns_db_closeversion(db1, &v1, true); /* commit */
+	assert_null(v1);
 	dns_db_detachnode(db1, &node);
 	assert_null(node);
 
-	check_assertion(dns_db_resigned(db1, &added, v2));
+	/* db2: Insert the first version ("text 1"), and commit */
+	res = dns_db_findnode(db2, dns_rootname, true, &node);
+	assert_int_equal(res, ISC_R_SUCCESS);
+	res = dns_db_addrdataset(db2, node, v2, 0, &input1, 0, NULL);
+	assert_int_equal(res, ISC_R_SUCCESS);
+	dns_db_closeversion(db2, &v2, true); /* commit */
+	assert_null(v2);
+	dns_db_detachnode(db2, &node);
+	assert_null(node);
 
-	dns_db_resigned(db1, &added, v1);
+	/* Reopen the versions */
+	dns_db_newversion(db1, &v1);
+	assert_non_null(v1);
+	dns_db_newversion(db2, &v2);
+	assert_non_null(v2);
 
-	dns_rdataset_disassociate(&added);
+	/* db1: Insert the second version ("text 2"), and roll back */
+	res = dns_db_findnode(db1, dns_rootname, true, &node);
+	assert_int_equal(res, ISC_R_SUCCESS);
+	res = dns_db_addrdataset(db1, node, v1, 0, &input2, 0, NULL);
+	assert_int_equal(res, ISC_R_SUCCESS);
+	dns_db_closeversion(db1, &v1, false); /* rollback */
+	assert_null(v1);
+	dns_db_detachnode(db1, &node);
+	assert_null(node);
+
+	/* db2: Insert the second version ("text 2"), and commit */
+	res = dns_db_findnode(db2, dns_rootname, true, &node);
+	assert_int_equal(res, ISC_R_SUCCESS);
+	res = dns_db_addrdataset(db2, node, v2, 0, &input2, 0, NULL);
+	assert_int_equal(res, ISC_R_SUCCESS);
+	dns_db_closeversion(db2, &v2, true); /* commit */
+	assert_null(v2);
+	dns_db_detachnode(db2, &node);
+	assert_null(node);
+
+	/* db1: Look it up and check that the first version is found */
+	dns_db_currentversion(db1, &v1);
+	assert_non_null(v1);
+	res = dns_db_findnode(db1, dns_rootname, true, &node);
+	assert_int_equal(res, ISC_R_SUCCESS);
+	res = dns_db_findrdataset(db1, node, v1, dns_rdatatype_txt, 0, 0,
+				  &rdataset1, NULL);
+	assert_int_equal(res, ISC_R_SUCCESS);
+
+	/* db1: Convert result to text */
+	res = dns_rdataset_first(&rdataset1);
+	assert_int_equal(res, ISC_R_SUCCESS);
+	dns_rdataset_current(&rdataset1, &out1);
+
+	res = dns_rdata_totext(&out1, NULL, &b);
+	assert_int_equal(res, ISC_R_SUCCESS);
+	isc_buffer_putuint8(&b, 0);
+
+	/* db1: We should have "text 1" */
+	assert_string_equal(buf, "\"text 1\"");
+
+	dns_rdataset_disassociate(&rdataset1);
+
+	dns_db_closeversion(db1, &v1, true);
+	assert_null(v1);
+	dns_db_detachnode(db1, &node);
+	assert_null(node);
+
+	/* db2: Look it up and check that the second version is found */
+	dns_db_currentversion(db2, &v2);
+	assert_non_null(v2);
+	res = dns_db_findnode(db2, dns_rootname, true, &node);
+	assert_int_equal(res, ISC_R_SUCCESS);
+	res = dns_db_findrdataset(db2, node, v2, dns_rdatatype_txt, 0, 0,
+				  &rdataset2, NULL);
+	assert_int_equal(res, ISC_R_SUCCESS);
+
+	/* db2: Convert result to text */
+	res = dns_rdataset_first(&rdataset2);
+	assert_int_equal(res, ISC_R_SUCCESS);
+	dns_rdataset_current(&rdataset2, &out2);
+	isc_buffer_init(&b, buf, sizeof(buf));
+	res = dns_rdata_totext(&out2, NULL, &b);
+	assert_int_equal(res, ISC_R_SUCCESS);
+	isc_buffer_putuint8(&b, 0);
+
+	/* db2: We should have "text 2" */
+	assert_string_equal(buf, "\"text 2\"");
+
+	dns_rdataset_disassociate(&rdataset2);
+
+	dns_db_closeversion(db2, &v2, true);
+	assert_null(v2);
+	dns_db_detachnode(db2, &node);
+	assert_null(node);
 }
 
 ISC_TEST_LIST_START
-ISC_TEST_ENTRY_CUSTOM(dump, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(find, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(allrdatasets, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(findrdataset, setup_test, teardown_test)
@@ -455,9 +519,9 @@ ISC_TEST_ENTRY_CUSTOM(deleterdataset, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(subtract, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(addrdataset, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(getnsec3parameters, setup_test, teardown_test)
-ISC_TEST_ENTRY_CUSTOM(resigned, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(attachversion, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(closeversion, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(rollback, setup_test, teardown_test)
 ISC_TEST_LIST_END
 
 ISC_TEST_MAIN

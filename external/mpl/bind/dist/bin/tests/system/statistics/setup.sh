@@ -13,6 +13,13 @@
 
 . ../conf.sh
 
-copy_setports ns1/named.conf.in ns1/named.conf
-copy_setports ns2/named.conf.in ns2/named.conf
-copy_setports ns3/named.conf.in ns3/named.conf
+for d in ns1 ns2 ns3; do
+  conf=named.conf
+  copy_setports "${d}/${conf}.in" "${d}/${conf}"
+  conf=statistics-channels.conf
+  if $FEATURETEST --have-libxml2 || $FEATURETEST --have-json-c; then
+    copy_setports "${d}/${conf}.in" "${d}/${conf}"
+  else
+    echo "" >"${d}/${conf}"
+  fi
+done

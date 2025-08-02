@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.55 2022/09/02 23:48:11 thorpej Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.55.10.1 2025/08/02 05:57:51 perseant Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.55 2022/09/02 23:48:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.55.10.1 2025/08/02 05:57:51 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -332,7 +332,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			/*
 			 * Depending on the value of "valid" and routing table
 			 * size (mtudisc_{hi,lo}wat), we will:
-			 * - recalcurate the new MTU and create the
+			 * - recalculate the new MTU and create the
 			 *   corresponding routing entry, or
 			 * - ignore the MTU change notification.
 			 */

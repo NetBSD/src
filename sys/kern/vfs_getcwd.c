@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.61 2021/06/29 22:39:21 dholland Exp $ */
+/*	$NetBSD: vfs_getcwd.c,v 1.61.16.1 2025/08/02 05:57:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2020 The NetBSD Foundation, Inc.
@@ -30,26 +30,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.61 2021/06/29 22:39:21 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.61.16.1 2025/08/02 05:57:43 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/namei.h>
-#include <sys/filedesc.h>
-#include <sys/kernel.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/proc.h>
-#include <sys/uio.h>
-#include <sys/kmem.h>
+#include <sys/types.h>
+
 #include <sys/dirent.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/sdt.h>
+#include <sys/stat.h>
+#include <sys/syscallargs.h>
+#include <sys/systm.h>
+#include <sys/uio.h>
+#include <sys/vnode.h>
 
 #include <ufs/ufs/dir.h>	/* XXX only for DIRBLKSIZ */
 
-#include <sys/syscallargs.h>
 
 /*
  * Vnode variable naming conventions in this file:
@@ -211,7 +214,7 @@ unionread:
 				/* check for malformed directory.. */
 				if (reclen < _DIRENT_MINSIZE(dp) ||
 				    reclen > len) {
-					error = EINVAL;
+					error = SET_ERROR(EINVAL);
 					goto out;
 				}
 				/*
@@ -226,7 +229,7 @@ unionread:
 
 					bp -= dp->d_namlen;
 					if (bp <= bufp) {
-						error = ERANGE;
+						error = SET_ERROR(ERANGE);
 						goto out;
 					}
 					memcpy(bp, dp->d_name, dp->d_namlen);
@@ -256,7 +259,7 @@ unionread:
 		goto unionread;
 	}
 #endif
-	error = ENOENT;
+	error = SET_ERROR(ENOENT);
 
 out:
 	VOP_UNLOCK(uvp);
@@ -345,7 +348,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 				 */
 				if (tvp == NULL) {
 					VOP_UNLOCK(lvp);
-					error = ENOENT;
+					error = SET_ERROR(ENOENT);
 					goto out;
 				}
 				vref(tvp);
@@ -358,7 +361,10 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 
 		/* Do we need to check access to the directory? */
 		if (chkaccess && !cache_have_id(lvp)) {
-			/* Need exclusive for UFS VOP_GETATTR (itimes) & VOP_LOOKUP. */
+			/*
+			 * Need exclusive for UFS VOP_GETATTR (itimes)
+			 * & VOP_LOOKUP.
+			 */
 			vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
 			error = VOP_ACCESS(lvp, accmode, cred);
 			if (error) {
@@ -382,7 +388,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 			}
 			if (lvp->v_type != VDIR) {
 				VOP_UNLOCK(lvp);
-				error = ENOTDIR;
+				error = SET_ERROR(ENOTDIR);
 				goto out;
 			}
 			error = getcwd_scandir(lvp, &uvp, &bp, bufp, l);
@@ -466,7 +472,8 @@ proc_isunder(struct proc *p1, struct lwp *l2)
  */
 
 int
-sys___getcwd(struct lwp *l, const struct sys___getcwd_args *uap, register_t *retval)
+sys___getcwd(struct lwp *l, const struct sys___getcwd_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(char *) bufp;
@@ -483,7 +490,7 @@ sys___getcwd(struct lwp *l, const struct sys___getcwd_args *uap, register_t *ret
 	if (len > MAXPATHLEN * 4)
 		len = MAXPATHLEN * 4;
 	else if (len < 2)
-		return ERANGE;
+		return SET_ERROR(ERANGE);
 
 	path = kmem_alloc(len, KM_SLEEP);
 	bp = &path[len];
@@ -497,7 +504,7 @@ sys___getcwd(struct lwp *l, const struct sys___getcwd_args *uap, register_t *ret
 	 */
 	cwdi = l->l_proc->p_cwdi;
 	rw_enter(&cwdi->cwdi_lock, RW_READER);
-	error = getcwd_common(cwdi->cwdi_cdir, NULL, &bp, path, 
+	error = getcwd_common(cwdi->cwdi_cdir, NULL, &bp, path,
 	    len/2, GETCWD_CHECK_ACCESS, l);
 	rw_exit(&cwdi->cwdi_lock);
 
@@ -534,7 +541,7 @@ vnode_to_path(char *path, size_t len, struct vnode *vp, struct lwp *curl,
 
 	error = cache_revlookup(vp, &dvp, &bp, path, false, 0);
 	if (error != 0)
-		return (error == -1 ? ENOENT : error);
+		return (error == -1 ? SET_ERROR(ENOENT) : error);
 
 	*(--bp) = '/';
 	error = getcwd_common(dvp, NULL, &bp, path, len / 2,

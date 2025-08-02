@@ -39,3 +39,6 @@ ns2.fwd.		A	10.53.0.2
 $TTL 2
 stale.			NS	ns2.stale.
 ns2.stale.		A	10.53.0.2
+
+in-addr.arpa.		NS	ns5.in-addr.arpa.
+ns5.in-addr.arpa.	A	10.53.0.5

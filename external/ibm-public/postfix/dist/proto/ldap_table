@@ -87,6 +87,10 @@
 #	    server_host = ldap.example.com:1444
 # .fi
 #
+#	NOTE: this client will reconnect immediately after a single
+#	failure, and will fail a lookup request after a second attempt
+#	also fails.
+#
 #	With OpenLDAP, a (list of) LDAP URLs can be used to specify both
 #	the hostname(s) and the port(s):
 #

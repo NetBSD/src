@@ -29,16 +29,20 @@
 # as initializing keys; thereafter, the keys in the managed key database
 # will be trusted and maintained automatically.
 #
-# These keys are current as of Mar 2019.  If any key fails to initialize
-# correctly, it may have expired.  In that event you should replace this
-# file with a current version.  The latest version of bind.keys can always
-# be obtained from ISC at https://www.isc.org/bind-keys.
+# These keys are current as of November 2024.  If any key fails to
+# initialize correctly, it may have expired. This should not occur if
+# BIND is kept up to date.
 #
 # See https://data.iana.org/root-anchors/root-anchors.xml for current trust
 # anchor information for the root zone.
 
 trust-anchors {
-        # This key (20326) was published in the root zone in 2017.
+        # This key (20326) was published in the root zone in 2017, and
+        # is scheduled to be phased out starting in 2025. It will remain
+        # in the root zone until some time after its successor key has
+        # been activated. It will remain this file until it is removed
+        # from the root zone.
+
         . initial-key 257 3 8 "AwEAAaz/tAm8yTn4Mfeh5eyI96WSVexTBAvkMgJzkKTOiW1vkIbzxeF3
                 +/4RgWOq7HrxRixHlFlExOLAJr5emLvN7SWXgnLh4+B5xQlNVz8Og8kv
                 ArMtNROxVQuCaSnIDdD5LKyWbRd2n9WGe2R8PzgCmr3EgVLrjyBxWezF
@@ -46,4 +50,10 @@ trust-anchors {
                 oZG+SrDK6nWeL3c6H5Apxz7LjVc1uTIdsIXxuOLYA4/ilBmSVIzuDWfd
                 RUfhHdY6+cn8HFRm+2hM8AnXGXws9555KrUB5qihylGa8subX2Nn6UwN
                 R1AkUTV74bU=";
+        # This key (38696) will be pre-published in the root zone in 2025
+        # and is scheduled to begin signing in late 2026. At that time,
+        # servers which were already using the old key (20326) should roll
+        # seamlessly to this new one via RFC 5011 rollover.
+        . initial-ds 38696 8 2 "683D2D0ACB8C9B712A1948B27F741219298D0A450D612C483AF444A
+        4C0FB2B16";
 };

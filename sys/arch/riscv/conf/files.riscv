@@ -1,4 +1,4 @@
-#	$NetBSD: files.riscv,v 1.15 2024/04/06 10:08:54 skrll Exp $
+#	$NetBSD: files.riscv,v 1.15.2.1 2025/08/02 05:56:02 perseant Exp $
 #
 
 maxpartitions	16
@@ -33,6 +33,7 @@ file	arch/riscv/riscv/cpu_switch.S
 file	arch/riscv/riscv/db_interface.c		ddb
 file	arch/riscv/riscv/db_disasm.c		ddb
 file	arch/riscv/riscv/db_machdep.c		ddb | kgdb
+file	arch/riscv/riscv/db_memrw.c		ddb | kgdb
 file	arch/riscv/riscv/db_trace.c		ddb
 file	arch/riscv/riscv/exec_machdep.c
 file	arch/riscv/riscv/fixup.c
@@ -72,7 +73,9 @@ file	arch/riscv/dev/plic.c			plic
 attach  plic at fdt with plic_fdt
 file	arch/riscv/dev/plic_fdt.c		plic & fdt
 
+#
 # Binary compatibility with 32bit NetBSD (COMPAT_NETBSD32)
+#
 file	arch/riscv/riscv/core32_machdep.c	compat_netbsd32 & coredump
 file	arch/riscv/riscv/netbsd32_machdep.c	compat_netbsd32
 file	arch/riscv/riscv/sig32_machdep.c	compat_netbsd32
@@ -80,7 +83,9 @@ include "compat/netbsd32/files.netbsd32"
 
 include "arch/riscv/fdt/files.fdt"
 
+#
 # Machine-independent drivers
+#
 include "dev/ata/files.ata"			# ATA drivers
 include "dev/bluetooth/files.bluetooth"		# Bluetooth devices
 include "dev/i2o/files.i2o"			# I2O drivers.
@@ -89,4 +94,7 @@ include "dev/scsipi/files.scsipi"
 include "dev/usb/files.usb"			# USB device support
 include "dev/pci/files.pci"			# PCI device support
 
+#
+# Machine-dependent drivers
+#
 include "arch/riscv/conf/majors.riscv"

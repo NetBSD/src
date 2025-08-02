@@ -9,5 +9,7 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
-@	3600	SOA	. . 0 0 0 0 0
-@	3600	NS	.
+@				3600	SOA	. . 0 0 0 0 0
+@				3600	NS	.
+from-no-cookie-server		3600	NS	ns7.from-no-cookie-server
+ns7.from-no-cookie-server	3600	A	10.53.0.7

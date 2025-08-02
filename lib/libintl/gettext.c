@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.32 2024/04/13 02:01:38 christos Exp $	*/
+/*	$NetBSD: gettext.c,v 1.32.2.1 2025/08/02 05:54:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.32 2024/04/13 02:01:38 christos Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.32.2.1 2025/08/02 05:54:49 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -174,11 +174,13 @@ pgettext_impl(const char *domainname, const char *msgctxt, const char *msgid1,
 
 	translation = dcngettext(domainname, msgctxt_id,
 		msgid2, n, category);
-	free(msgctxt_id);
 
-	if (translation == msgctxt_id)
+	if (translation == msgctxt_id) {
+		free(msgctxt_id);
 		return msgid1;
+	}
 
+	free(msgctxt_id);
 	p = strchr(translation, '\004');
 	if (p)
 		return p + 1;
@@ -579,7 +581,7 @@ mapit(const char *path, struct domainbinding *db)
 	struct mo *mo;
 	size_t l, headerlen;
 	unsigned int i;
-	char *v;
+	const char *value;
 	struct mohandle *mohandle = &db->mohandle;
 
 	if (mohandle->addr && mohandle->addr != MAP_FAILED &&
@@ -711,16 +713,16 @@ mapit(const char *path, struct domainbinding *db)
 	/* grab MIME-header and charset field */
 	mohandle->mo.mo_header = lookup("", db, &headerlen);
 	if (mohandle->mo.mo_header)
-		v = strstr(mohandle->mo.mo_header, "charset=");
+		value = strstr(mohandle->mo.mo_header, "charset=");
 	else
-		v = NULL;
-	if (v) {
-		mohandle->mo.mo_charset = strdup(v + 8);
+		value = NULL;
+	if (value != NULL) {
+		mohandle->mo.mo_charset = strdup(value + 8);
 		if (!mohandle->mo.mo_charset)
 			goto fail;
-		v = strchr(mohandle->mo.mo_charset, '\n');
-		if (v)
-			*v = '\0';
+		char *newline = strchr(mohandle->mo.mo_charset, '\n');
+		if (newline != NULL)
+			*newline = '\0';
 	}
 	if (!mohandle->mo.mo_header ||
 	    _gettext_parse_plural(&mohandle->mo.mo_plural,

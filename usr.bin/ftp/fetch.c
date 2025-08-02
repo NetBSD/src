@@ -1,7 +1,7 @@
-/*	$NetBSD: fetch.c,v 1.239 2024/02/18 22:29:56 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.239.2.1 2025/08/02 05:58:26 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.239 2024/02/18 22:29:56 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.239.2.1 2025/08/02 05:58:26 perseant Exp $");
 #endif /* not lint */
 
 /*
@@ -261,8 +261,8 @@ freeurlinfo(struct urlinfo *ui)
 static int
 auth_url(const char *challenge, char **response, const struct authinfo *auth)
 {
-	const char	*cp, *scheme, *errormsg;
-	char		*ep, *clear, *realm;
+	const char	*cp, *ep, *scheme, *errormsg;
+	char		*clear, *realm;
 	char		 uuser[BUFSIZ], *gotpass;
 	const char	*upass;
 	int		 rval;
@@ -590,7 +590,7 @@ parse_url(const char *url, const char *desc, struct urlinfo *ui,
 			    cp, desc, origurl);
 			goto cleanup_parse_url;
 		}
-		ui->portnum = nport;
+		ui->portnum = (in_port_t)nport;
 		tport = cp;
 	} else
 		tport = get_port(ui);
@@ -614,7 +614,7 @@ parse_url(const char *url, const char *desc, struct urlinfo *ui,
 	return (0);
 }
 
-sigjmp_buf	httpabort;
+static sigjmp_buf	httpabort;
 
 static int
 ftp_socket(const struct urlinfo *ui, void **ssl, struct authinfo *auth)
@@ -865,6 +865,7 @@ print_get(FETCH *fin, int hasleading, int isproxy, const struct urlinfo *oui,
     const struct urlinfo *ui)
 {
 	const char *leading = hasleading ? ", " : "  (";
+	struct entry *np;
 
 	if (isproxy) {
 		if (verbose) {
@@ -882,6 +883,10 @@ print_get(FETCH *fin, int hasleading, int isproxy, const struct urlinfo *oui,
 	print_host(fin, ui);
 	fetch_printf(fin, "Accept: */*\r\n");
 	fetch_printf(fin, "Connection: close\r\n");
+	SLIST_FOREACH(np, &custom_headers, entries) {
+		fetch_printf(fin, "%s\r\n", np->header);
+	}
+
 	if (restart_point) {
 		fputs(leading, ttyout);
 		fetch_printf(fin, "Range: bytes=" LLF "-\r\n",
@@ -1716,7 +1721,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth,
 		lastchunk = 0;
 					/* read chunk-size */
 		if (ischunked) {
-			if (fetch_getln(xferbuf, bufsize, fin) == NULL) {
+			if (fetch_getln(xferbuf, (int)bufsize, fin) == NULL) {
 				warnx("Unexpected EOF reading chunk-size");
 				goto cleanup_fetch_url;
 			}
@@ -1759,7 +1764,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth,
 			}
 		}
 					/* transfer file or chunk */
-		while (1) {
+		for (;;) {
 			struct timeval then, now, td;
 			volatile off_t bufrem;
 
@@ -1798,7 +1803,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth,
 				}
 			}
 			if (rate_get) {
-				while (1) {
+				for (;;) {
 					(void)gettimeofday(&now, NULL);
 					timersub(&now, &then, &td);
 					if (td.tv_sec > 0)
@@ -1812,7 +1817,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth,
 					/* read CRLF after chunk*/
  chunkdone:
 		if (ischunked) {
-			if (fetch_getln(xferbuf, bufsize, fin) == NULL) {
+			if (fetch_getln(xferbuf, (int)bufsize, fin) == NULL) {
 				alarmtimer(0);
 				warnx("Unexpected EOF reading chunk CRLF");
 				goto cleanup_fetch_url;
@@ -1856,6 +1861,11 @@ chunkerror:
 	}
 	if (bytes > 0)
 		ptransfer(0);
+
+		/* fail if short transfer when filesize is known */
+	if (filesize >= 0 && (bytes + restart_point < filesize))
+		goto cleanup_fetch_url;
+
 	bytes = 0;
 
 	rval = 0;
@@ -1896,7 +1906,7 @@ chunkerror:
  * Abort a HTTP retrieval
  */
 static void
-aborthttp(int notused)
+aborthttp(int notused __unused)
 {
 	char msgbuf[100];
 	int len;
@@ -1913,7 +1923,7 @@ aborthttp(int notused)
 }
 
 static void
-timeouthttp(int notused)
+timeouthttp(int notused __unused)
 {
 	char msgbuf[100];
 	int len;
@@ -2275,7 +2285,7 @@ static int
 go_fetch(const char *url, struct urlinfo *rui)
 {
 	char *proxyenv;
-	char *p;
+	const char *p;
 
 #ifndef NO_ABOUT
 	/*

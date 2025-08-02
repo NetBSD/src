@@ -21,7 +21,7 @@ recipients correctly.
 
   * Configuring local_recipient_maps in main.cf
   * When you need to change the local_recipient_maps setting in main.cf
-  * Local recipient table format
+  * Local recipient table query format
 
 CCoonnffiigguurriinngg llooccaall__rreecciippiieenntt__mmaappss iinn mmaaiinn..ccff
 
@@ -30,11 +30,13 @@ addresses of local recipients. A recipient address is local when its domain
 matches $mydestination, $inet_interfaces or $proxy_interfaces. If a local
 username or address is not listed in $local_recipient_maps, then the Postfix
 SMTP server will reject the address with "User unknown in local recipient
-table".
+table". Other interfaces such as the Postfix sendmail(1) command may still
+accept an "unknown" recipient.
 
 The default setting, shown below, assumes that you use the default Postfix
 local(8) delivery agent for local delivery, where recipients are either UNIX
-accounts or local aliases:
+accounts (typically, in /etc/passwd) or local aliases (typically, in /etc/
+aliases):
 
     /etc/postfix/main.cf:
         local_recipient_maps = proxy:unix:passwd.byname $alias_maps
@@ -67,19 +69,19 @@ WWhheenn yyoouu nneeeedd ttoo cchhaannggee tthhee llooc
         local_transport = virtual
         local_recipient_maps = $virtual_mailbox_maps
 
-    If you use a different delivery agent for $mydestination etc. domains, see
-    the section "Local recipient table format" below for a description of how
-    the table should be populated.
+    If you don't use the local(8) or virtual(8) delivery agent for
+    $mydestination etc. domains, see the section "Local recipient table format"
+    below for a description of how the table should be populated.
 
   * Problem: you use the mailbox_transport or fallback_transport feature of the
     Postfix local(8) delivery agent in order to deliver mail to non-UNIX
-    accounts.
+    recipients.
 
-    Solution: you need to add the database that lists the non-UNIX users:
+    Solution: you need to add the database that lists the non-UNIX recipients:
 
     /etc/postfix/main.cf
         local_recipient_maps = proxy:unix:passwd.byname, $alias_maps,
-            <the database with non-UNIX accounts>
+            <the database with non-UNIX recipients>
 
     See the section "Local recipient table format" below for a description of
     how the table should be populated.
@@ -88,30 +90,49 @@ WWhheenn yyoouu nneeeedd ttoo cchhaannggee tthhee llooc
     agent.
 
     Solution: you must disable the local_recipient_maps feature completely, so
-    that Postfix accepts mail for all local addresses:
+    that the Postfix SMTP server accepts mail for all local addresses:
 
     /etc/postfix/main.cf
         local_recipient_maps =
 
-LLooccaall rreecciippiieenntt ttaabbllee ffoorrmmaatt
+LLooccaall rreecciippiieenntt ttaabbllee qquueerryy ffoorrmmaatt
 
-If you use local files in postmap(1) format, then local_recipient_maps expects
-the following table format:
+If local_recipient_maps specifies local files, such as files in postmap(1) or
+postalias(1) format, then the Postfix SMTP server generates the following
+queries:
 
-  * In the left-hand side, specify a bare username, an "@domain.tld" wild-card,
-    or specify a complete "user@domain.tld" address.
+  * The full recipient address. This query supports a non-default
+    local_transport setting with a delivery agent such as lmtp(8) or virtual
+    (8). See "Configuring local_recipient_maps in main.cf: for additional
+    guidance for what lookup tables to specify.
 
-  * You have to specify something on the right-hand side of the table, but the
-    value is ignored by local_recipient_maps.
+  * The recipient address local-part. This query supports the default
+    local_transport setting with the UNIX-compatible local(8) delivery agent;
+    the Postfix SMTP server makes this query only when the recipient domain
+    matches $mydestination, $inet_interfaces or $proxy_interfaces.
 
-If you use lookup tables based on NIS, LDAP, MYSQL, or PGSQL, then
-local_recipient_maps does the same queries as for local files in postmap(1)
-format, and expects the same results.
+  * The recipient @domain. This query supports a non-default local_transport
+    setting with a delivery agent such as virtual(8); it is a wildcard for
+    domains that do not have a valid recipient list.
 
-With regular expression tables, Postfix only queries with the full recipient
-address, and not with the bare username or the "@domain.tld" wild-card.
+NOTES:
 
-NOTE: a lookup table should always return a result when the address exists, and
-should always return "not found" when the address does not exist. In
-particular, a zero-length result does not count as a "not found" result.
+  * A lookup table should return a non-empty result when the address exists,
+    and should return "not found" when the address does not exist. In
+    particular, a zero-length (empty) result does not count as a "not found"
+    result.
+
+  * When local_recipient_maps specifies a lookup table based on ldap:,
+    memcache:, mongodb:, mysql:, pgsql:, sqlite:, or other external database,
+    then the Postfix SMTP server queries that lookup table with the same
+    queries as described at the start of this section, and expects the same
+    results.
+
+  * To suppress lookups for the local-part and the @domain wild-card, specify
+    the ddoommaaiinn setting in a Postfix ldap:, memcache:, mongodb:, mysql:, pgsql:,
+    sqlite:, etc., database client configuration file.
+
+  * When local_recipient_maps specifies a lookup table based on pcre:, regexp:,
+    socketmap: or tcp:, Postfix queries that table only with the full recipient
+    address, and not with the local-part or the @domain wild-card.
 

@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.45 2022/03/03 06:23:25 riastradh Exp $ */
+/* $NetBSD: video.c,v 1.45.10.1 2025/08/02 05:56:30 perseant Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.45 2022/03/03 06:23:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.45.10.1 2025/08/02 05:56:30 perseant Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -102,7 +102,7 @@ struct scatter_io {
 	size_t		sio_resid;
 };
 
-static void	scatter_buf_init(struct scatter_buf *);
+static void	scatter_buf_init(struct scatter_buf *, const char *);
 static void	scatter_buf_destroy(struct scatter_buf *);
 static int	scatter_buf_set_size(struct scatter_buf *, size_t);
 static paddr_t	scatter_buf_map(struct scatter_buf *, off_t);
@@ -125,6 +125,7 @@ enum video_stream_method {
 struct video_buffer {
 	struct v4l2_buffer		*vb_buf;
 	SIMPLEQ_ENTRY(video_buffer)	entries;
+	u_int				busy;
 };
 
 SIMPLEQ_HEAD(sample_queue, video_buffer);
@@ -301,7 +302,7 @@ static void			video_buffer_free(struct video_buffer *);
 
 
 /* functions for video_stream */
-static void	video_stream_init(struct video_stream *);
+static void	video_stream_init(struct video_stream *, const char *name);
 static void	video_stream_fini(struct video_stream *);
 
 static int	video_stream_setup_bufs(struct video_stream *,
@@ -358,7 +359,7 @@ video_attach(device_t parent, device_t self, void *aux)
 	sc->sc_opencnt = 0;
 	sc->sc_dying = false;
 
-	video_stream_init(&sc->sc_stream_in);
+	video_stream_init(&sc->sc_stream_in, device_xname(self));
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->hw_if->get_devname(sc->hw_softc));
@@ -815,20 +816,29 @@ video_enum_framesizes(struct video_softc *sc, struct v4l2_frmsizeenum *frmdesc)
 	const struct video_hw_if *hw;
 	struct video_format vfmt;
 	struct v4l2_format fmt;
+	u_int32_t n, index;
 	int err;
 
 	hw = sc->hw_if;
 	if (hw->enum_format == NULL)
 		return ENOTTY;
 
-	err = hw->enum_format(sc->hw_softc, frmdesc->index, &vfmt);
-	if (err != 0)
-		return err;
+	/*
+	 * scan all formats for entries with the correct pixel format
+	 * return entry number frmdesc->index
+	 */
+	index = 0;
+	for (n=0; ;++n) {
+		err = hw->enum_format(sc->hw_softc, n, &vfmt);
+		if (err != 0)
+			return err;
 
-	video_format_to_v4l2_format(&vfmt, &fmt);
-	if (fmt.fmt.pix.pixelformat != frmdesc->pixel_format) {
-		printf("video_enum_framesizes: type mismatch %x %x\n",
-		    fmt.fmt.pix.pixelformat, frmdesc->pixel_format);
+		video_format_to_v4l2_format(&vfmt, &fmt);
+		if (fmt.fmt.pix.pixelformat != frmdesc->pixel_format)
+			continue;
+
+		if (index++ == frmdesc->index)
+			break;
 	}
 
 	frmdesc->type = V4L2_FRMSIZE_TYPE_DISCRETE; /* TODO: only one type for now */
@@ -1796,7 +1806,7 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 	struct video_buffer *vb;
 	struct scatter_io sio;
 	int err;
-	size_t len;
+	size_t len, done;
 	off_t offset;
 
 	sc = device_private(device_lookup(&video_cd, VIDEOUNIT(dev)));
@@ -1855,30 +1865,53 @@ retry:
 		goto retry;
 	}
 
-	mutex_exit(&vs->vs_lock);
+	if (vb->busy) {
+		if (vs->vs_flags & O_NONBLOCK) {
+			mutex_exit(&vs->vs_lock);
+			return EAGAIN;
+		}
+
+		while (vb->busy > 0) {
+			err = cv_wait_sig(&vs->vs_sample_cv, &vs->vs_lock);
+			if (err != 0) {
+				mutex_exit(&vs->vs_lock);
+				return EINTR;
+			}
+		}
+	}
+
+	vb->busy++;
 
 	len = uimin(uio->uio_resid, vb->vb_buf->bytesused - vs->vs_bytesread);
 	offset = vb->vb_buf->m.offset + vs->vs_bytesread;
 
+	mutex_exit(&vs->vs_lock);
+
+	done = 0;
 	if (scatter_io_init(&vs->vs_data, offset, len, &sio)) {
 		err = scatter_io_uiomove(&sio, uio);
 		if (err == EFAULT)
 			return EFAULT;
-		vs->vs_bytesread += (len - sio.sio_resid);
+		done = len - sio.sio_resid;
 	} else {
 		DPRINTF(("video: invalid read\n"));
 	}
 
 	/* Move the sample to the ingress queue if everything has
 	 * been read */
+	mutex_enter(&vs->vs_lock);
+
+	if (--vb->busy <= 0)
+		cv_signal(&vs->vs_sample_cv);
+
+	vs->vs_bytesread += done;
 	if (vs->vs_bytesread >= vb->vb_buf->bytesused) {
-		mutex_enter(&vs->vs_lock);
 		vb = video_stream_dequeue(vs);
 		video_stream_enqueue(vs, vb);
-		mutex_exit(&vs->vs_lock);
-
 		vs->vs_bytesread = 0;
 	}
+
+	mutex_exit(&vs->vs_lock);
 
 	return 0;
 }
@@ -2382,7 +2415,7 @@ videommap(dev_t dev, off_t off, int prot)
 /* Allocates buffers and initializes some fields.  The format field
  * must already have been initialized. */
 void
-video_stream_init(struct video_stream *vs)
+video_stream_init(struct video_stream *vs, const char *name)
 {
 	vs->vs_method = VIDEO_STREAM_METHOD_NONE;
 	vs->vs_flags = 0;
@@ -2399,10 +2432,10 @@ video_stream_init(struct video_stream *vs)
 	SIMPLEQ_INIT(&vs->vs_egress);
 
 	mutex_init(&vs->vs_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&vs->vs_sample_cv, "video");
+	cv_init(&vs->vs_sample_cv, name);
 	selinit(&vs->vs_sel);
 
-	scatter_buf_init(&vs->vs_data);
+	scatter_buf_init(&vs->vs_data, name);
 }
 
 void
@@ -2726,10 +2759,10 @@ video_stream_all_queued(struct video_stream *vs)
 
 
 static void
-scatter_buf_init(struct scatter_buf *sb)
+scatter_buf_init(struct scatter_buf *sb, const char *name)
 {
 	sb->sb_pool = pool_cache_init(PAGE_SIZE, 0, 0, 0,
-				      "video", NULL, IPL_VIDEO,
+				      name, NULL, IPL_VIDEO,
 				      NULL, NULL, NULL);
 	sb->sb_size = 0;
 	sb->sb_npages = 0;

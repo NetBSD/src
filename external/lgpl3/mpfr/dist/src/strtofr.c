@@ -242,7 +242,10 @@ parse_string (mpfr_ptr x, struct parsed_string *pstr,
   pstr->mantissa = NULL;
 
   /* Optional leading whitespace */
-  while (isspace((unsigned char) *str)) str++;
+  /* For non-"C" locales, the ISO C standard allows isspace(0) to
+     return true. So we need to stop explicitly on '\0'. */
+  while (*str != '\0' && isspace ((unsigned char) *str))
+    str++;
 
   /* An optional sign `+' or `-' */
   pstr->negative = (*str == '-');
@@ -425,7 +428,8 @@ parse_string (mpfr_ptr x, struct parsed_string *pstr,
   /* Remove 0's at the beginning and end of mantissa[0..prec-1] */
   mant = pstr->mantissa;
   for ( ; (pstr->prec > 0) && (*mant == 0) ; mant++, pstr->prec--)
-    pstr->exp_base--;
+    if (MPFR_LIKELY (pstr->exp_base != MPFR_EXP_MIN))
+      pstr->exp_base--;
   for ( ; (pstr->prec > 0) && (mant[pstr->prec - 1] == 0); pstr->prec--);
   pstr->mant = mant;
 
@@ -738,7 +742,9 @@ parsed_string_to_mpfr (mpfr_ptr x, struct parsed_string *pstr, mpfr_rnd_t rnd)
           MPN_ZERO (y0, ysize);
 
           /* pstr_size - pstr->exp_base can overflow */
-          MPFR_SADD_OVERFLOW (exp_z, (mpfr_exp_t) pstr_size, -pstr->exp_base,
+          exp_z = pstr->exp_base == MPFR_EXP_MIN ?
+            MPFR_EXP_MAX : -pstr->exp_base;  /* avoid integer overflow */
+          MPFR_SADD_OVERFLOW (exp_z, (mpfr_exp_t) pstr_size, exp_z,
                               mpfr_exp_t, mpfr_uexp_t,
                               MPFR_EXP_MIN, MPFR_EXP_MAX,
                               goto underflow, goto overflow);
@@ -862,7 +868,7 @@ parsed_string_to_mpfr (mpfr_ptr x, struct parsed_string *pstr, mpfr_rnd_t rnd)
           err = 0;
         }
 
-      MPFR_LOG_MSG (("exact = %d, err = %d, precx = %Pu\n",
+      MPFR_LOG_MSG (("exact = %d, err = %d, precx = %Pd\n",
                      exact, err, precx));
 
       /* at this point, result is an approximation rounded toward zero

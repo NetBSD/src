@@ -27,7 +27,7 @@ update: ../../bin/$(PROG)
 	cp $(PROG) ../../bin
 
 tests:	test1 test2 fail_test quote_test file_test lmdb_abb_test \
-	lmdb_bulk_test lmdb_incr_test
+	lmdb_bulk_test lmdb_incr_test cdb_bulk_test
 
 root_tests:
 
@@ -74,6 +74,17 @@ file_test: $(PROG) file_test.in file_test.ref
 	diff file_test.ref file_test.tmp
 	rm -f file_test.tmp file_test_map.* postmap-file-1 postmap-file-2
 
+cdb_bulk_test: $(PROG)
+	rm -f cdb_bulk.cdb main.cf
+	tr A-Z a-z < /usr/share/dict/words| \
+	    sed -e 's/.*/&	&/' -e 10000q| LANG=C sort -u >cdb_bulk
+	touch -t 197101010000 main.cf
+	($(SHLIB_ENV) $(VALGRIND) ./postmap -c . cdb:cdb_bulk; \
+	$(SHLIB_ENV) $(VALGRIND) ./postmap -s cdb:cdb_bulk | \
+	    LANG=C sort > cdb_bulk.tmp)
+	cmp cdb_bulk cdb_bulk.tmp
+	rm -f cdb_bulk cdb_bulk.tmp cdb_bulk.cdb main.cf
+
 lmdb_abb_test: $(PROG) lmdb_abb lmdb_abb.ref
 	rm -f lmdb_abb.lmdb
 	($(SHLIB_ENV) $(VALGRIND) ./postmap lmdb:lmdb_abb; \
@@ -86,6 +97,7 @@ lmdb_bulk_test: $(PROG)
 	tr A-Z a-z < /usr/share/dict/words| \
 	    sed -e 's/.*/&	&/' -e 10000q| LANG=C sort -u >lmdb_retry
 	echo lmdb_map_size=10240 >main.cf
+	touch -t 197101010000 main.cf
 	($(SHLIB_ENV) $(VALGRIND) ./postmap -c . lmdb:lmdb_retry; \
 	$(SHLIB_ENV) $(VALGRIND) ./postmap -s lmdb:lmdb_retry | \
 	    LANG=C sort > lmdb_retry.tmp)
@@ -97,25 +109,15 @@ lmdb_incr_test: $(PROG)
 	tr A-Z a-z < /usr/share/dict/words| \
 	    sed -e 's/.*/&	&/' -e 1000q| LANG=C sort -u >lmdb_retry
 	echo lmdb_map_size=10240 >main.cf
+	touch -t 197101010000 main.cf
 	($(SHLIB_ENV) $(VALGRIND) ./postmap -ic . lmdb:lmdb_retry <lmdb_retry; \
 	$(SHLIB_ENV) $(VALGRIND) ./postmap -s lmdb:lmdb_retry | \
 	    LANG=C sort > lmdb_retry.tmp)
 	cmp lmdb_retry lmdb_retry.tmp
 	rm -f lmdb_retry lmdb_retry.tmp lmdb_retry.lmdb main.cf
 
-printfck: $(OBJS) $(PROG)
-	rm -rf printfck
-	mkdir printfck
-	sed '1,/^# do not edit/!d' Makefile >printfck/Makefile
-	set -e; for i in *.c; do printfck -f .printfck $$i >printfck/$$i; done
-	cd printfck; make "INC_DIR=../../../include" `cd ..; ls *.o`
-
-lint:
-	lint $(DEFS) $(SRCS) $(LINTFIX)
-
 clean:
 	rm -f *.o *core $(PROG) $(TESTPROG) *.tmp junk *.db
-	rm -rf printfck
 
 tidy:	clean
 

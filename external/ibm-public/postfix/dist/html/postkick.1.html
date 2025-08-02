@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,13 +7,13 @@
 </head> <body> <pre>
 POSTKICK(1)                                                        POSTKICK(1)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        postkick - kick a Postfix service
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postkick</b> [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-v</b>] <i>class service request</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  <a href="postkick.1.html"><b>postkick</b>(1)</a>  command sends <i>request</i> to the specified <i>service</i> over a
        local transport channel.  This command makes Postfix private IPC acces-
        sible for use in, for example, shell scripts.
@@ -39,17 +39,17 @@ POSTKICK(1)                                                        POSTKICK(1)
        <i>request</i>
               A string. The list of valid requests is service-specific.
 
-<b>DIAGNOSTICS</b>
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems and transactions are logged to the standard error stream.
 
-<b>ENVIRONMENT</b>
+<b><a name="environment">ENVIRONMENT</a></b>
        <b>MAIL_CONFIG</b>
               Directory with Postfix configuration files.
 
        <b>MAIL_VERBOSE</b>
               Enable verbose logging for debugging purposes.
 
-<b>CONFIGURATION PARAMETERS</b>
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
        The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to this pro-
        gram.  The text below provides only  a  parameter  summary.  See  <a href="postconf.5.html"><b>post-</b></a>
        <a href="postconf.5.html"><b>conf</b>(5)</a> for more details including examples.
@@ -63,23 +63,23 @@ POSTKICK(1)                                                        POSTKICK(1)
               the Postfix daemon process input buffer before giving up.
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The  list  of  environment  parameters that a privileged Postfix
+              The  list  of  environment  variables  that a privileged Postfix
               process will  import  from  a  non-Postfix  parent  process,  or
               name=value environment overrides.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
               The location of the Postfix top-level queue directory.
 
-<b>FILES</b>
+<b><a name="files">FILES</a></b>
        /var/spool/postfix/private, private class endpoints
        /var/spool/postfix/public, public class endpoints
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager trigger protocol
        <a href="pickup.8.html">pickup(8)</a>, local pickup daemon
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>

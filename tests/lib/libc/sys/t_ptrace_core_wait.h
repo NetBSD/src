@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_core_wait.h,v 1.9 2024/06/29 07:10:27 rin Exp $	*/
+/*	$NetBSD: t_ptrace_core_wait.h,v 1.9.2.1 2025/08/02 05:58:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -25,7 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 /*
  * Parse the core file and find the requested note.  If the reading or parsing

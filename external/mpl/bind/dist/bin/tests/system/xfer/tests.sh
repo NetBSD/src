@@ -17,7 +17,11 @@ set -e
 
 DIGOPTS="+tcp +noadd +nosea +nostat +noquest +nocomm +nocmd -p ${PORT}"
 RNDCCMD="$RNDC -c ../_common/rndc.conf -p ${CONTROLPORT} -s"
-NS_PARAMS="-X named.lock -m record -c named.conf -d 99 -g -U 4 -T maxcachesize=2097152"
+NS_PARAMS="-m record -c named.conf -d 99 -g -T maxcachesize=2097152"
+
+dig_with_opts() (
+  "$DIG" -p "$PORT" "$@"
+)
 
 status=0
 n=0
@@ -62,14 +66,14 @@ status=$((status + tmp))
 n=$((n + 1))
 echo_i "testing TSIG signed zone transfers ($n)"
 tmp=0
-$DIG $DIGOPTS tsigzone. @10.53.0.2 axfr -y tsigzone.:1234abcd8765 >dig.out.ns2.test$n || tmp=1
+$DIG $DIGOPTS tsigzone. @10.53.0.2 axfr -y "${DEFAULT_HMAC}:tsigzone.:1234abcd8765" >dig.out.ns2.test$n || tmp=1
 grep "^;" dig.out.ns2.test$n | cat_i
 
 #
 # Spin to allow the zone to transfer.
 #
 wait_for_xfer_tsig() {
-  $DIG $DIGOPTS tsigzone. @10.53.0.3 axfr -y tsigzone.:1234abcd8765 >dig.out.ns3.test$n || return 1
+  $DIG $DIGOPTS tsigzone. @10.53.0.3 axfr -y "${DEFAULT_HMAC}:tsigzone.:1234abcd8765" >dig.out.ns3.test$n || return 1
   grep "^;" dig.out.ns3.test$n >/dev/null && return 1
   return 0
 }
@@ -255,7 +259,7 @@ status=$((status + tmp))
 
 n=$((n + 1))
 echo_i "check that a multi-message uncompressable zone transfers ($n)"
-$DIG axfr . -p ${PORT} @10.53.0.4 | grep SOA >axfr.out
+$DIG axfr . -p ${PORT} @10.53.0.4 | grep SOA >axfr.out || tmp=1
 if test $(wc -l <axfr.out) != 2; then
   echo_i "failed"
   status=$((status + 1))
@@ -302,6 +306,25 @@ nextpart ns4/named.run | grep "Transfer status: success" >/dev/null || {
 }
 
 $DIGCMD nil. TXT | grep 'initial AXFR' >/dev/null || {
+  echo_i "failed"
+  status=$((status + 1))
+}
+
+n=$((n + 1))
+echo_i "handle IXFR NOTIMP ($n)"
+
+sendcmd <ans5/ixfrnotimp
+
+$RNDCCMD 10.53.0.4 refresh nil | sed 's/^/ns4 /' | cat_i
+
+sleep 2
+
+nextpart ns4/named.run | grep "zone nil/IN: requesting IXFR from 10.53.0.5" >/dev/null || {
+  echo_i "failed: expected status was not logged"
+  status=$((status + 1))
+}
+
+$DIGCMD nil. TXT | grep 'IXFR NOTIMP' >/dev/null || {
   echo_i "failed"
   status=$((status + 1))
 }
@@ -427,13 +450,13 @@ echo_i "bad message id ($n)"
 sendcmd <ans5/badmessageid
 
 # Uncomment to see AXFR stream with mismatching IDs.
-# $DIG $DIGOPTS @10.53.0.5 -y tsig_key:LSAnCU+Z nil. AXFR +all
+# $DIG $DIGOPTS @10.53.0.5 -y "${DEFAULT_HMAC}:tsig_key:LSAnCU+Z" nil. AXFR +all
 
 $RNDCCMD 10.53.0.4 retransfer nil | sed 's/^/ns4 /' | cat_i
 
 sleep 2
 
-nextpart ns4/named.run | grep "unexpected message id" >/dev/null || {
+nextpart ns4/named.run | grep "Transfer status: unexpected error" >/dev/null || {
   echo_i "failed: expected status was not logged"
   status=$((status + 1))
 }
@@ -463,7 +486,47 @@ $DIGCMD nil. TXT | grep 'SOA mismatch AXFR' >/dev/null && {
 }
 
 n=$((n + 1))
-echo_i "check that we ask for and get a EDNS EXPIRE response ($n)"
+echo_i "handle EDNS NOTIMP ($n)"
+
+$RNDCCMD 10.53.0.4 null testing EDNS NOTIMP | sed 's/^/ns4 /' | cat_i
+
+sendcmd <ans5/ednsnotimp
+
+$RNDCCMD 10.53.0.4 retransfer nil | sed 's/^/ns4 /' | cat_i
+
+sleep 2
+
+nextpart ns4/named.run | grep "Transfer status: NOTIMP" >/dev/null || {
+  echo_i "failed: expected status was not logged"
+  status=$((status + 1))
+}
+
+n=$((n + 1))
+echo_i "handle EDNS FORMERR ($n)"
+
+$RNDCCMD 10.53.0.4 null testing EDNS FORMERR | sed 's/^/ns4 /' | cat_i
+
+sendcmd <ans5/ednsformerr
+
+$RNDCCMD 10.53.0.4 retransfer nil | sed 's/^/ns4 /' | cat_i
+
+sleep 10
+
+$DIGCMD nil. TXT | grep 'EDNS FORMERR' >/dev/null || {
+  echo_i "failed"
+  status=$((status + 1))
+}
+
+n=$((n + 1))
+echo_i "check that we ask for and got a EDNS EXPIRE response when transfering from a secondary ($n)"
+tmp=0
+msg="zone edns-expire/IN: zone transfer finished: success, expire=1814[0-4][0-9][0-9]"
+grep "$msg" ns7/named.run >/dev/null || tmp=1
+[ "$tmp" -ne 0 ] && echo_i "failed"
+status=$((status + tmp))
+
+n=$((n + 1))
+echo_i "check that we ask for and get a EDNS EXPIRE response when refreshing ($n)"
 # force a refresh query
 $RNDCCMD 10.53.0.7 refresh edns-expire 2>&1 | sed 's/^/ns7 /' | cat_i
 sleep 10
@@ -478,7 +541,7 @@ test ${expire:-0} -gt 0 -a ${expire:-0} -lt 1814400 || {
 n=$((n + 1))
 echo_i "test smaller transfer TCP message size ($n)"
 $DIG $DIGOPTS example. @10.53.0.8 axfr \
-  -y key1.:1234abcd8765 >dig.out.msgsize.test$n || status=1
+  -y "${DEFAULT_HMAC}:key1.:1234abcd8765" >dig.out.msgsize.test$n || status=1
 
 bytes=$(wc -c <dig.out.msgsize.test$n)
 if [ $bytes -ne 459357 ]; then
@@ -540,7 +603,7 @@ tmp=0
 # Use -b so that we can discern between incoming and outgoing transfers in ns3
 # logs later on.
 wait_for_xfer() (
-  $DIG $DIGOPTS +noedns +stat -b 10.53.0.2 @10.53.0.3 xfer-stats. AXFR >dig.out.ns3.test$n
+  $DIG $DIGOPTS +edns +nocookie +noexpire +stat -b 10.53.0.2 @10.53.0.3 xfer-stats. AXFR >dig.out.ns3.test$n
   grep "; Transfer failed" dig.out.ns3.test$n >/dev/null || return 0
   return 1
 )
@@ -590,28 +653,85 @@ wait_for_message() (
 nextpart ns6/named.run >/dev/null
 
 n=$((n + 1))
-echo_i "test max-transfer-time-in with 1 second timeout ($n)"
-stop_server ns1
-copy_setports ns1/named2.conf.in ns1/named.conf
-start_server --noclean --restart --port ${PORT} ns1 -- "-D xfer-ns1 $NS_PARAMS -T transferinsecs -T transferslowly"
-sleep 1
-$RNDCCMD 10.53.0.6 retransfer axfr-max-transfer-time 2>&1 | sed 's/^/ns6 /' | cat_i
+echo_i "test that named tries the next primary in the list when the first one fails (XoT -> Do53) ($n)"
 tmp=0
-retry_quiet 10 wait_for_message "maximum transfer time exceeded: timed out" || tmp=1
+$RNDCCMD 10.53.0.6 retransfer xot-primary-try-next 2>&1 | sed 's/^/ns6 /' | cat_i
+msg="'xot-primary-try-next/IN' from 10.53.0.1#${PORT}: Transfer status: success"
+retry_quiet 60 wait_for_message "$msg" || tmp=1
+if test $tmp != 0; then echo_i "failed"; fi
 status=$((status + tmp))
 
 nextpart ns6/named.run >/dev/null
 
 n=$((n + 1))
-echo_i "test max-transfer-idle-in with 50 seconds timeout ($n)"
+echo_i "test that named tries the next primary in the list when the first one is already marked as unreachable (XoT -> Do53) ($n)"
+tmp=0
+$RNDCCMD 10.53.0.6 retransfer xot-primary-try-next 2>&1 | sed 's/^/ns6 /' | cat_i
+msg="'xot-primary-try-next/IN' from 10.53.0.1#${PORT}: Transfer status: success"
+retry_quiet 60 wait_for_message "$msg" || tmp=1
+if test $tmp != 0; then echo_i "failed"; fi
+status=$((status + tmp))
+
+# Restart ns1 with -T transferslowly
+stop_server ns1
+copy_setports ns1/named2.conf.in ns1/named.conf
+start_server --noclean --restart --port ${PORT} ns1 -- "-D xfer-ns1 $NS_PARAMS -T transferinsecs -T transferslowly"
+sleep 1
+
+nextpart ns6/named.run >/dev/null
+
+n=$((n + 1))
+echo_i "test rndc retransfer -force ($n)"
+tmp=0
+$RNDCCMD 10.53.0.6 retransfer axfr-rndc-retransfer-force 2>&1 | sed 's/^/ns6 /' | cat_i
+# Wait for at least one message
+msg="'axfr-rndc-retransfer-force/IN' from 10.53.0.1#${PORT}: received"
+retry_quiet 5 wait_for_message "$msg" || tmp=1
+# Issue a retransfer-force command which should cancel the ongoing transfer and start a new one
+$RNDCCMD 10.53.0.6 retransfer -force axfr-rndc-retransfer-force 2>&1 | sed 's/^/ns6 /' | cat_i
+msg="'axfr-rndc-retransfer-force/IN' from 10.53.0.1#${PORT}: Transfer status: shutting down"
+retry_quiet 5 wait_for_message "$msg" || tmp=1
+# Wait for the new transfer to complete successfully
+msg="'axfr-rndc-retransfer-force/IN' from 10.53.0.1#${PORT}: Transfer status: success"
+retry_quiet 30 wait_for_message "$msg" || tmp=1
+if test $tmp != 0; then echo_i "failed"; fi
+status=$((status + tmp))
+
+nextpart ns6/named.run >/dev/null
+
+n=$((n + 1))
+echo_i "test min-transfer-rate-in with 5 seconds timeout ($n)"
+$RNDCCMD 10.53.0.6 retransfer axfr-min-transfer-rate 2>&1 | sed 's/^/ns6 /' | cat_i
+tmp=0
+retry_quiet 10 wait_for_message "minimum transfer rate reached: timed out" || tmp=1
+if test $tmp != 0; then echo_i "failed"; fi
+status=$((status + tmp))
+
+nextpart ns6/named.run >/dev/null
+
+n=$((n + 1))
+echo_i "test max-transfer-time-in with 1 second timeout ($n)"
+$RNDCCMD 10.53.0.6 retransfer axfr-max-transfer-time 2>&1 | sed 's/^/ns6 /' | cat_i
+tmp=0
+retry_quiet 10 wait_for_message "maximum transfer time exceeded: timed out" || tmp=1
+if test $tmp != 0; then echo_i "failed"; fi
+status=$((status + tmp))
+
+# Restart ns1 with -T transferstuck
 stop_server ns1
 copy_setports ns1/named3.conf.in ns1/named.conf
 start_server --noclean --restart --port ${PORT} ns1 -- "-D xfer-ns1 $NS_PARAMS -T transferinsecs -T transferstuck"
 sleep 1
+
+nextpart ns6/named.run >/dev/null
+
+n=$((n + 1))
+echo_i "test max-transfer-idle-in with 50 seconds timeout ($n)"
 start=$(date +%s)
 $RNDCCMD 10.53.0.6 retransfer axfr-max-idle-time 2>&1 | sed 's/^/ns6 /' | cat_i
 tmp=0
 retry_quiet 60 wait_for_message "maximum idle time exceeded: timed out" || tmp=1
+if test $tmp != 0; then echo_i "failed"; fi
 if [ $tmp -eq 0 ]; then
   now=$(date +%s)
   diff=$((now - start))
@@ -620,6 +740,45 @@ if [ $tmp -eq 0 ]; then
   test $diff -ge 59 && tmp=1
   if test $tmp != 0; then echo_i "unexpected diff value: ${diff}"; fi
 fi
+status=$((status + tmp))
+
+nextpart ns6/named.run >/dev/null
+
+sendcmd() (
+  dig_with_opts "@${1}" "${2}._control." TXT +time=5 +tries=1 +tcp >/dev/null 2>&1
+)
+
+# See #5307#note_558185
+n=$((n + 1))
+echo_i "test reconfiguration when zone transfer is in the middle of a SOA query (part 1) ($n)"
+tmp=0
+# Check that xfr-and-reconfig has been successfully transferred by the secondary.
+grep -F 'zone xfr-and-reconfig/IN: zone transfer finished: success' ns6/named.run 2>&1 >/dev/null || tmp=0
+# Make ans6 receive queries without responding to them.
+sendcmd 10.53.0.9 "disable.send-responses"
+sleep 1
+# Try to reload the zone from an unresponsive primary.
+$RNDCCMD 10.53.0.6 reload xfr-and-reconfig 2>&1 | sed 's/^/ns6 /' | cat_i
+sleep 1
+# Reconfigure named while zone transfer attempt is in progress.
+$RNDCCMD 10.53.0.6 reconfig 2>&1 | sed 's/^/ns6 /' | cat_i
+# Confirm that the ongoing SOA request was canceled, caused by the reconfiguratoin.
+retry_quiet 60 wait_for_message "refresh: request result: operation canceled" || tmp=1
+if test $tmp != 0; then echo_i "failed"; fi
+status=$((status + tmp))
+
+nextpart ns6/named.run >/dev/null
+
+n=$((n + 1))
+echo_i "test reconfiguration when zone transfer is in the middle of a SOA query (part 2) ($n)"
+tmp=0
+# Make ans6 receive queries and respond to them.
+sendcmd 10.53.0.9 "enable.send-responses"
+sleep 1
+# Try to reload the zone from the primary.
+$RNDCCMD 10.53.0.6 reload xfr-and-reconfig 2>&1 | sed 's/^/ns6 /' | cat_i
+retry_quiet 60 wait_for_message "zone xfr-and-reconfig/IN: Transfer started." || tmp=1
+if test $tmp != 0; then echo_i "failed"; fi
 status=$((status + tmp))
 
 echo_i "exit status: $status"

@@ -1,3 +1,5 @@
+/*	$NetBSD: fa_spawn_utils.h,v 1.1.4.1 2025/08/02 05:58:04 perseant Exp $	*/
+
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,5 +29,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-off_t filesize(const char * restrict);
-void empty_outfile(const char * restrict);
+
+#ifndef	FA_SPAWN_UTILS_H
+#define	FA_SPAWN_UTILS_H
+
+off_t filesize(const char *);
+void empty_outfile(const char *);
+
+#endif

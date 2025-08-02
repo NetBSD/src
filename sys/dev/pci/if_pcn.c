@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.78 2024/02/10 09:30:06 andvar Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.78.2.1 2025/08/02 05:56:46 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.78 2024/02/10 09:30:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.78.2.1 2025/08/02 05:56:46 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -957,6 +957,7 @@ pcn_start(struct ifnet *ifp)
 				    device_xname(sc->sc_dev));
 				break;
 			}
+			MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
@@ -992,8 +993,7 @@ pcn_start(struct ifnet *ifp)
 			 * packet.
 			 */
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			if (m != NULL)
-				m_freem(m);
+			m_freem(m);
 			PCN_EVCNT_INCR(&sc->sc_ev_txdstall);
 			break;
 		}
@@ -1496,6 +1496,7 @@ pcn_rxintr(struct pcn_softc *sc)
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL)
 				goto dropit;
+			MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 			m->m_data += 2;
 			memcpy(mtod(m, void *),
 			    mtod(rxs->rxs_mbuf, void *), len);
@@ -1877,6 +1878,7 @@ pcn_add_rxbuf(struct pcn_softc *sc, int idx)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOBUFS;
+	MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {

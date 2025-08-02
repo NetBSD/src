@@ -1,0 +1,7 @@
+# bad NSEC3 owner (:) not in base32hex valid characters
+# header: id=0008 opcode=query questions=1 authority=1
+00 08 00 00 00 01 00 00 00 01 00 00
+# question: ./A/IN
+00 00 01 00 01
+# :./NSEC3/IN/1 length=7 hashtype=240 flags=0 interations=0 salt=- hashlen=1 hash=ff
+01 58 00 00 32 00 01 00 00 00 01 00 07 f0 00 00 00 00 01 ff

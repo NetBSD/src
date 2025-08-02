@@ -68,6 +68,8 @@ options {
 	tcp-initial-timeout 1200;
 };
 
+trust-anchors { };
+
 zone "example0" {
 	type primary;
 	file "example.db";

@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_memset.c,v 1.2 2000/06/14 06:49:08 cgd Exp $ */
+/* $NetBSD: Lint_memset.c,v 1.2.116.1 2025/08/02 05:54:41 perseant Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,10 +9,7 @@
 
 /*ARGSUSED*/
 void *
-memset(b, c, len)
-	void *b;
-	int c;
-	size_t len;
+memset(void *b, int c, size_t len)
 {
-	return (0);
+	return NULL;
 }

@@ -6,7 +6,6 @@
 
 /dts-v1/;
 #include "jh7100-common.dtsi"
-#include <dt-bindings/gpio/gpio.h>
 
 / {
 	model = "BeagleV Starlight Beta";
@@ -15,11 +14,6 @@
 
 &gmac {
 	phy-handle = <&phy>;
-};
-
-&gpio {
-	/* don't reset gpio mux for serial console on uart3 */
-	starfive,keep-gpiomux = <13 14>;
 };
 
 &mdio {

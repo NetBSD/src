@@ -45,7 +45,8 @@ BBuuiillddiinngg PPoossttffiixx oonn ssyysstteemmss tth
 Some UNIXes ship without Berkeley DB support; for historical reasons these use
 DBM files instead. A problem with DBM files is that they can store only limited
 amounts of data. To build Postfix with Berkeley DB support you need to download
-and install the source code from http://www.oracle.com/database/berkeley-db/.
+and install the source code from https://www.oracle.com/database/technologies/
+related/berkeleydb.html.
 
 Warning: some Linux system libraries use Berkeley DB, as do some third-party
 libraries such as SASL. If you compile Postfix with a different Berkeley DB
@@ -169,5 +170,6 @@ Add the "-lpthread" library to the "make makefiles" command.
 
     % make makefiles .... AUXLIBS="... -lpthread"
 
-More information is available at http://www.oracle.com/database/berkeley-db/.
+More information is available at https://www.oracle.com/database/technologies/
+related/berkeleydb.html.
 

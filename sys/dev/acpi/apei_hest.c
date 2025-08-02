@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_hest.c,v 1.3 2024/03/21 02:35:09 riastradh Exp $	*/
+/*	$NetBSD: apei_hest.c,v 1.3.2.1 2025/08/02 05:56:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.3 2024/03/21 02:35:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.3.2.1 2025/08/02 05:56:32 perseant Exp $");
 
 #include <sys/types.h>
 
@@ -265,7 +265,7 @@ apei_hest_ghes_v2_poll(void *cookie)
  * confusion, let's try to have only one CPU process error
  * notifications at a time.
  */
-static __cpu_simple_lock_t apei_hest_nmi_lock;
+static __cpu_simple_lock_t apei_hest_nmi_lock = __SIMPLELOCK_UNLOCKED;
 
 /*
  * apei_hest_ghes_nmi(tf, cookie)
@@ -369,7 +369,7 @@ apei_hest_attach_ghes(struct apei_softc *sc, ACPI_HEST_GENERIC *ghes,
 	}
 
 	/*
-	 * Read the GHES Error Status Addresss.  This is the physical
+	 * Read the GHES Error Status Address.  This is the physical
 	 * address of a GESB, Generic Error Status Block.  Why the
 	 * physical address is exposed via this indirection, and not
 	 * simply stored directly in the GHES, is unclear to me.
@@ -400,6 +400,8 @@ apei_hest_attach_ghes(struct apei_softc *sc, ACPI_HEST_GENERIC *ghes,
 	 */
 	switch (ghes->Notify.Type) {
 	case ACPI_HEST_NOTIFY_POLLED:
+		if (ghes->Notify.PollInterval == 0) /* paranoia */
+			break;
 		callout_init(&src->as_ch, CALLOUT_MPSAFE);
 		callout_setfunc(&src->as_ch, &apei_hest_ghes_poll, src);
 		callout_schedule(&src->as_ch, 0);
@@ -451,6 +453,8 @@ apei_hest_detach_ghes(struct apei_softc *sc, ACPI_HEST_GENERIC *ghes,
 	 */
 	switch (ghes->Notify.Type) {
 	case ACPI_HEST_NOTIFY_POLLED:
+		if (ghes->Notify.PollInterval == 0) /* paranoia */
+			break;
 		callout_halt(&src->as_ch, NULL);
 		callout_destroy(&src->as_ch);
 		break;
@@ -538,7 +542,7 @@ apei_hest_attach_ghes_v2(struct apei_softc *sc, ACPI_HEST_GENERIC_V2 *ghes_v2,
 	}
 
 	/*
-	 * Read the GHESv2 Error Status Addresss.  This is the physical
+	 * Read the GHESv2 Error Status Address.  This is the physical
 	 * address of a GESB, Generic Error Status Block.  Why the
 	 * physical address is exposed via this indirection, and not
 	 * simply stored directly in the GHESv2, is unclear to me.
@@ -583,6 +587,8 @@ apei_hest_attach_ghes_v2(struct apei_softc *sc, ACPI_HEST_GENERIC_V2 *ghes_v2,
 	 */
 	switch (ghes_v2->Notify.Type) {
 	case ACPI_HEST_NOTIFY_POLLED:
+		if (ghes_v2->Notify.PollInterval == 0) /* paranoia */
+			break;
 		callout_init(&src->as_ch, CALLOUT_MPSAFE);
 		callout_setfunc(&src->as_ch, &apei_hest_ghes_v2_poll, src);
 		callout_schedule(&src->as_ch, 0);
@@ -634,6 +640,8 @@ apei_hest_detach_ghes_v2(struct apei_softc *sc, ACPI_HEST_GENERIC_V2 *ghes_v2,
 	 */
 	switch (ghes_v2->Notify.Type) {
 	case ACPI_HEST_NOTIFY_POLLED:
+		if (ghes_v2->Notify.PollInterval == 0) /* paranoia */
+			break;
 		callout_halt(&src->as_ch, NULL);
 		callout_destroy(&src->as_ch);
 		break;
@@ -907,7 +915,7 @@ apei_hest_attach(struct apei_softc *sc)
 	 * limit on it; if you have gigabytes of HEST something is
 	 * probably wrong.
 	 */
-	if (n > INT32_MAX/sizeof(hsc->hsc_source[0])) {
+	if (n > MIN(SIZE_MAX, INT32_MAX)/sizeof(hsc->hsc_source[0])) {
 		aprint_error_dev(sc->sc_dev, "HEST: too many error sources\n");
 		return;
 	}

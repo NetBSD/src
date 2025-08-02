@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.6 2005/02/05 13:47:19 xtraeme Exp $	*/
+/*	$NetBSD: radix.h,v 1.6.104.1 2025/08/02 05:55:08 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -138,7 +138,7 @@ struct radix_node_head {
 
 #define Bcmp(a, b, n) memcmp(((void *)(a)), ((void *)(b)), (n))
 #define Bcopy(a, b, n) memmove(((void *)(b)), ((void *)(a)), (size_t)(n))
-#define Bzero(p, n) memset((void *)(p), 0, (size_t)(n));
+#define Bzero(p, n) memset((void *)(p), 0, (size_t)(n))
 #define Free(p) free((void *)p);
 
 void	 rn_init(void);

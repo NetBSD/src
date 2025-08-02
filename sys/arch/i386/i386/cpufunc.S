@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.51 2023/11/03 09:07:56 chs Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.51.6.1 2025/08/02 05:55:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2020, 2023 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <machine/asm.h>
 #include <machine/frameasm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.51 2023/11/03 09:07:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.51.6.1 2025/08/02 05:55:43 perseant Exp $");
 
 #include "opt_dtrace.h"
 #include "opt_xen.h"
@@ -67,24 +67,50 @@ ENTRY(x86_mfence)
 	ret
 END(x86_mfence)
 
+#ifdef XEN
+ENTRY(xen_mb)
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but without hotpatching
+	 * away the LOCK prefix on uniprocessor boots -- because under
+	 * Xen, we still have to coordinate with a `device' backed by a
+	 * hypervisor that is potentially on another physical CPU even
+	 * if we observe only one virtual CPU as the guest.
+	 *
+	 * See common/lib/libc/arch/i386/atomic/atomic.S for
+	 * rationale and keep this in sync with the implementation
+	 * of membar_sync there.
+	 */
+	lock
+	addl	$0,-4(%esp)
+	ret
+END(xen_mb)
+#endif	/* XEN */
+
+#ifdef KDTRACE_HOOKS
+ENTRY(dtrace_smap_enable)
+#  ifndef XENPV
+	SMAP_ENABLE
+#  endif
+	ret
+END(dtrace_smap_enable)
+
+ENTRY(dtrace_smap_disable)
+#  ifndef XENPV
+	SMAP_DISABLE
+#  endif
+	ret
+END(dtrace_smap_disable)
+#endif
+
 #ifndef XENPV
 ENTRY(lidt)
 	movl	4(%esp), %eax
 	lidt	(%eax)
 	ret
 END(lidt)
-
-#ifdef KDTRACE_HOOKS
-ENTRY(dtrace_smap_enable)
-	SMAP_ENABLE
-	ret
-END(dtrace_smap_enable)
-
-ENTRY(dtrace_smap_disable)
-	SMAP_DISABLE
-	ret
-END(dtrace_smap_disable)
-#endif
 
 ENTRY(x86_hotpatch)
 	/* save EFLAGS, and disable intrs */

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.18 2022/06/01 06:18:04 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.18.10.1 2025/08/02 05:55:42 perseant Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -99,9 +99,18 @@
 #define ALTENTRY(x) ! .export x, entry ! .label x
 #define EXIT(x) ! .exit ! .procend ! .size x, .-x
 
+#ifdef _NETBSD_REVISIONID
+#define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+			.asciz x;					\
+			.ascii "$"; .ascii "NetBSD: "; .ascii __FILE__;	\
+			.ascii " "; .ascii _NETBSD_REVISIONID;		\
+			.asciz " $";					\
+			.popsection
+#else
 #define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
 			.asciz x;					\
 			.popsection
+#endif
 
 #define WEAK_ALIAS(alias,sym)				\
 	.weak alias !					\

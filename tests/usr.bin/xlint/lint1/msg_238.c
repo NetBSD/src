@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_238.c,v 1.6 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_238.c,v 1.6.2.1 2025/08/02 05:58:17 perseant Exp $	*/
 # 3 "msg_238.c"
 
-/* Test for message: initialization of union is illegal in traditional C [238] */
+/* Test for message: initialization of union requires C90 or later [238] */
 
 /* lint1-flags: -tw -X 351 */
 
@@ -13,7 +13,7 @@ struct {
 
 union {
 	int x;
-/* expect+1: warning: initialization of union is illegal in traditional C [238] */
+/* expect+1: warning: initialization of union requires C90 or later [238] */
 } u = {
 	3
 };

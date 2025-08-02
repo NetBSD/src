@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 2024/02/21 22:52:47 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.8.2.1 2025/08/02 05:54:10 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,6 +30,6 @@ typedef struct ns_server       ns_server_t;
 typedef struct ns_stats	       ns_stats_t;
 typedef struct ns_hookasync    ns_hookasync_t;
 
-typedef enum { ns_cookiealg_aes, ns_cookiealg_siphash24 } ns_cookiealg_t;
+typedef enum { ns_cookiealg_siphash24 } ns_cookiealg_t;
 
 #define NS_COOKIE_VERSION_1 1

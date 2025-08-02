@@ -74,6 +74,10 @@ sub handleQuery {
 		$packet->push("answer", new Net::DNS::RR($qname . " 300 A 10.53.0.3"));
 	} elsif ($qname eq "nodata.example.net") {
 		# Do not add a SOA RRset.
+	} elsif ($qname eq "noresponse.example.net") {
+		# Do not response.
+		print "RESPONSE:\n";
+		return "";
 	} elsif ($qname eq "nxdomain.example.net") {
 		# Do not add a SOA RRset.
 		$packet->header->rcode(NXDOMAIN);
@@ -102,6 +106,9 @@ sub handleQuery {
 		$packet->push("answer",
 			      new Net::DNS::RR($qname .
 				       " 300 CNAME goodcname.example.org"));
+	} elsif ($qname =~ /^longcname/) {
+		$cname = $qname =~ s/longcname/longcnamex/r;
+		$packet->push("answer", new Net::DNS::RR($qname . " 300 CNAME " . $cname));
 	} elsif ($qname =~ /^nodata\.example\.net$/i) {
 		$packet->header->aa(1);
 	} elsif ($qname =~ /^nxdomain\.example\.net$/i) {
@@ -142,6 +149,38 @@ sub handleQuery {
 	} elsif ($qname =~ /\.partial-formerr/) {
 		$packet->push("answer",
 			      new Net::DNS::RR($qname .  " 1 A 10.53.0.3"));
+       } elsif ($qname eq "gl6412") {
+                if ($qtype eq "SOA") {
+                        $packet->push("answer",
+                              new Net::DNS::RR($qname . " 300 SOA . . 0 0 0 0 0"));
+                } elsif ($qtype eq "NS") {
+                        $packet->push("answer",
+                              new Net::DNS::RR($qname . " 300 NS ns2" . $qname));
+                        $packet->push("answer",
+                              new Net::DNS::RR($qname . " 300 NS ns3" . $qname));
+                } else {
+                        $packet->push("authority",
+                              new Net::DNS::RR($qname . " 300 SOA . . 0 0 0 0 0"));
+                }
+        } elsif ($qname eq "a.gl6412" || $qname eq "a.a.gl6412") {
+                $packet->push("authority",
+                              new Net::DNS::RR($qname . " 300 SOA . . 0 0 0 0 0"));
+        } elsif ($qname eq "ns2.gl6412") {
+                if ($qtype eq "A") {
+                        $packet->push("answer",
+                                      new Net::DNS::RR($qname . " 300 A 10.53.0.2"));
+                } else {
+                        $packet->push("authority",
+                                      new Net::DNS::RR($qname . " 300 SOA . . 0 0 0 0 0"));
+                }
+        } elsif ($qname eq "ns3.gl6412") {
+                if ($qtype eq "A") {
+                        $packet->push("answer",
+                                      new Net::DNS::RR($qname . " 300 A 10.53.0.3"));
+                } else {
+                        $packet->push("authority",
+                                      new Net::DNS::RR($qname . " 300 SOA . . 0 0 0 0 0"));
+                }
 	} else {
 		$packet->push("answer", new Net::DNS::RR("www.example.com 300 A 1.2.3.4"));
 	}
@@ -182,8 +221,12 @@ for (;;) {
 			print "TCP request\n";
 			my $result = handleQuery($buf);
 			$len = length($result);
-			$conn->syswrite(pack("n", $len), 2);
-			$n = $conn->syswrite($result, $len);
+			if ($len != 0) {
+				$conn->syswrite(pack("n", $len), 2);
+				$n = $conn->syswrite($result, $len);
+			} else {
+				$n = 0;
+			}
 			print "    Sent: $n chars via TCP\n";
 		}
 		$conn->close;

@@ -1,12 +1,18 @@
-#	$NetBSD: files.starfive,v 1.3 2024/02/07 17:17:59 skrll Exp $
+#	$NetBSD: files.starfive,v 1.3.2.1 2025/08/02 05:56:04 perseant Exp $
 #
 # Configuration info for StarFive SoCs
 #
 
-# JH7100 Clock controller
+# JH71x0 Clock controllers
 device	jh7100clkc
 attach	jh7100clkc at fdt with jh7100_clkc
 file	arch/riscv/starfive/jh7100_clkc.c		jh7100_clkc
+
+device	jh7110clkc
+attach	jh7110clkc at fdt with jh7110_clkc
+file	arch/riscv/starfive/jh7110_clkc.c		jh7110_clkc
+
+file	arch/riscv/starfive/jh71x0_clkc.c		jh7100_clkc | jh7110_clkc
 
 # JH71x0 USB
 device	jh71x0usb
@@ -17,3 +23,44 @@ file	arch/riscv/starfive/jh71x0_usb.c		jh71x0_usb
 device	jh7100pinctrl
 attach	jh7100pinctrl at fdt with jh7100_pinctrl
 file	arch/riscv/starfive/jh7100_pinctrl.c		jh7100_pinctrl
+
+# JH7100 Pin control
+device	jh7110pinctrl
+attach	jh7110pinctrl at fdt with jh7110_pinctrl
+file	arch/riscv/starfive/jh7110_pinctrl.c		jh7110_pinctrl
+
+# Ethernet
+# JH7100 GMAC
+attach	awge at fdt with jh7100_gmac
+
+# JH7110 EOQS
+attach	eqos at fdt with jh7110_eqos
+
+file	arch/riscv/starfive/jh7100_gmac.c		jh7100_gmac
+file	arch/riscv/starfive/jh7110_eqos.c		jh7110_eqos
+file	arch/riscv/starfive/jh71x0_eth.c		jh7100_gmac | jh7110_eqos
+
+# JH7110 PCIe PHY
+device	jh7110pciephy
+attach	jh7110pciephy at fdt with jh7110_pciephy
+file	arch/riscv/starfive/jh7110_pciephy.c		jh7110_pciephy
+
+# JH7110 PCIe
+device	jh7110pcie: pcibus, pcihost_fdt
+attach	jh7110pcie at fdt with jh7110_pcie
+file	arch/riscv/starfive/jh7110_pcie.c		jh7110_pcie
+
+# JH7110 system control
+device	jh7110syscon
+attach	jh7110syscon at fdt with jh7110_syscon
+file	arch/riscv/starfive/jh7110_syscon.c		jh7110_syscon
+
+# JH71x0 temperature sensor
+device	jh71x0temp
+attach	jh71x0temp at fdt with jh71x0_temp
+file	arch/riscv/starfive/jh71x0_temp.c		jh71x0_temp
+
+# JH7110 TRNG
+device	jh7110trng
+attach	jh7110trng at fdt with jh7110_trng
+file	arch/riscv/starfive/jh7110_trng.c		jh7110_trng

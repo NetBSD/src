@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.h,v 1.16 2021/02/23 17:14:42 christos Exp $	*/
+/*	$NetBSD: regex.h,v 1.16.8.1 2025/08/02 05:54:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -75,6 +75,7 @@
 #define	_REGEX_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sys/types.h>
 
 /* types */

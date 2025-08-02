@@ -1,3 +1,5 @@
+/*	$NetBSD: vfs_acl.c,v 1.1.26.1 2025/08/02 05:57:43 perseant Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -43,27 +45,27 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/kern/vfs_acl.c 356337 2020-01-03 22:29:58Z mjg $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: vfs_acl.c,v 1.1 2020/05/16 18:31:50 christos Exp $");
-
+__KERNEL_RCSID(0, "$NetBSD: vfs_acl.c,v 1.1.26.1 2025/08/02 05:57:43 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
+#include <sys/acl.h>
 #include <sys/fcntl.h>
-#include <sys/kernel.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/lock.h>
-#include <sys/mutex.h>
-#include <sys/namei.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/kernel.h>
+#include <sys/lock.h>
+#include <sys/mount.h>
+#include <sys/mutex.h>
+#include <sys/namei.h>
 #include <sys/proc.h>
-#include <sys/acl.h>
-
+#include <sys/sdt.h>
 #include <sys/syscallargs.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 __CTASSERT(ACL_MAX_ENTRIES >= OLDACL_MAX_ENTRIES);
-
 
 int
 acl_copy_oldacl_into_acl(const struct oldacl *source, struct acl *dest)
@@ -71,8 +73,8 @@ acl_copy_oldacl_into_acl(const struct oldacl *source, struct acl *dest)
 	int i;
 
 	if (source->acl_cnt < 0 || source->acl_cnt > OLDACL_MAX_ENTRIES)
-		return EINVAL;
-	
+		return SET_ERROR(EINVAL);
+
 	memset(dest, 0, sizeof(*dest));
 
 	dest->acl_cnt = source->acl_cnt;
@@ -93,7 +95,7 @@ acl_copy_acl_into_oldacl(const struct acl *source, struct oldacl *dest)
 	int i;
 
 	if (source->acl_cnt > OLDACL_MAX_ENTRIES)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	memset(dest, 0, sizeof(*dest));
 
@@ -138,7 +140,7 @@ acl_copyin(const void *user_acl, struct acl *kernel_acl, acl_type_t type)
 	default:
 		error = copyin(user_acl, kernel_acl, sizeof(*kernel_acl));
 		if (kernel_acl->acl_maxcnt != ACL_MAX_ENTRIES)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 	}
 
 	return error;
@@ -168,7 +170,7 @@ acl_copyout(const struct acl *kernel_acl, void *user_acl, acl_type_t type)
 		if (error)
 			return error;
 		if (am != ACL_MAX_ENTRIES)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 
 		error = copyout(kernel_acl, user_acl, sizeof(*kernel_acl));
 	}

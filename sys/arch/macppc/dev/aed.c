@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.35 2024/06/05 11:01:47 nat Exp $	*/
+/*	$NetBSD: aed.c,v 1.35.2.1 2025/08/02 05:55:51 perseant Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.35 2024/06/05 11:01:47 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.35.2.1 2025/08/02 05:55:51 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.35 2024/06/05 11:01:47 nat Exp $");
  */
 static int	aedmatch(device_t, cfdata_t, void *);
 static void	aedattach(device_t, device_t, void *);
-static void	aed_emulate_mouse(adb_event_t *event);
+static int	aed_emulate_mouse(adb_event_t *event);
 static void	aed_kbdrpt(void *kstate);
 static void	aed_dokeyupdown(adb_event_t *event);
 static void	aed_handoff(adb_event_t *event);
@@ -132,11 +132,11 @@ aedattach(device_t parent, device_t self, void *aux)
 	sc->sc_rptinterval = 6;
 	sc->sc_repeating = -1;          /* not repeating */
 
-	/* Pull in the options flags. */ 
+	/* Pull in the options flags. */
 	sc->sc_options = (device_cfdata(self)->cf_flags | aed_options);
 
 	sc->sc_ioproc = NULL;
-	
+
 	sc->sc_buttons = 0;
 
 	sc->sc_open = 0;
@@ -149,7 +149,7 @@ aedattach(device_t parent, device_t self, void *aux)
 }
 
 /*
- * Given a keyboard ADB event, record the keycode and call the key 
+ * Given a keyboard ADB event, record the keycode and call the key
  * repeat handler, optionally passing the event through the mouse
  * button emulation handler first.  Pass mouse events directly to
  * the handoff function.
@@ -161,9 +161,9 @@ aed_input(adb_event_t *event)
 
 	switch (event->def_addr) {
 	case ADBADDR_KBD:
-		if (aed_sc->sc_options & AED_MSEMUL)
-			aed_emulate_mouse(&new_event);
-		else
+		if (aed_sc->sc_options & AED_MSEMUL) {
+			rv = aed_emulate_mouse(&new_event);
+		} else
 			aed_dokeyupdown(&new_event);
 		break;
 	case ADBADDR_MS:
@@ -186,11 +186,12 @@ aed_input(adb_event_t *event)
  * 3rd mouse button events while the 1, 2, and 3 keys will generate
  * the corresponding mouse button event.
  */
-static void 
+static int
 aed_emulate_mouse(adb_event_t *event)
 {
 	static int emulmodkey_down = 0;
 	adb_event_t new_event;
+	int result = 0;
 
 	if (event->u.k.key == ADBK_KEYDOWN(ADBK_OPTION)) {
 		emulmodkey_down = 1;
@@ -209,6 +210,7 @@ aed_emulate_mouse(adb_event_t *event)
 		switch(event->u.k.key) {
 #ifdef ALTXBUTTONS
 		case ADBK_KEYDOWN(ADBK_1):
+			result = 1;
 			aed_sc->sc_buttons |= 1;	/* left down */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = aed_sc->sc_buttons;
@@ -217,6 +219,7 @@ aed_emulate_mouse(adb_event_t *event)
 			aed_handoff(&new_event);
 			break;
 		case ADBK_KEYUP(ADBK_1):
+			result = 1;
 			aed_sc->sc_buttons &= ~1;	/* left up */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = aed_sc->sc_buttons;
@@ -229,6 +232,7 @@ aed_emulate_mouse(adb_event_t *event)
 #ifdef ALTXBUTTONS
 		case ADBK_KEYDOWN(ADBK_2):
 #endif
+			result = 1;
 			aed_sc->sc_buttons |= 2;	/* middle down */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = aed_sc->sc_buttons;
@@ -240,6 +244,7 @@ aed_emulate_mouse(adb_event_t *event)
 #ifdef ALTXBUTTONS
 		case ADBK_KEYUP(ADBK_2):
 #endif
+			result = 1;
 			aed_sc->sc_buttons &= ~2;	/* middle up */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = aed_sc->sc_buttons;
@@ -251,6 +256,7 @@ aed_emulate_mouse(adb_event_t *event)
 #ifdef ALTXBUTTONS
 		case ADBK_KEYDOWN(ADBK_3):
 #endif
+			result = 1;
 			aed_sc->sc_buttons |= 4;	/* right down */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = aed_sc->sc_buttons;
@@ -262,6 +268,7 @@ aed_emulate_mouse(adb_event_t *event)
 #ifdef ALTXBUTTONS
 		case ADBK_KEYUP(ADBK_3):
 #endif
+			result = 1;
 			aed_sc->sc_buttons &= ~4;	/* right up */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = aed_sc->sc_buttons;
@@ -315,6 +322,8 @@ aed_emulate_mouse(adb_event_t *event)
 	} else {
 		aed_dokeyupdown(event);
 	}
+
+	return result;
 }
 
 /*
@@ -322,7 +331,7 @@ aed_emulate_mouse(adb_event_t *event)
  * for the repeating key and schedules the next call at sc_rptinterval
  * ticks in the future.
  */
-static void 
+static void
 aed_kbdrpt(void *kstate)
 {
 	struct aed_softc *sc = (struct aed_softc *)kstate;
@@ -341,13 +350,12 @@ aed_kbdrpt(void *kstate)
 	}
 }
 
-
 /*
  * Cancels the currently repeating key event if there is one, schedules
  * a new repeating key event if needed, and hands the event off to the
  * appropriate subsystem.
  */
-static void 
+static void
 aed_dokeyupdown(adb_event_t *event)
 {
 	int     kbd_key;
@@ -386,7 +394,7 @@ aed_handoff(adb_event_t *event)
 /*
  * Place the event in the event queue and wakeup any waiting processes.
  */
-static void 
+static void
 aed_enqevent(adb_event_t *event)
 {
 	int     s;
@@ -416,7 +424,7 @@ aed_enqevent(adb_event_t *event)
 	splx(s);
 }
 
-int 
+int
 aedopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit;
@@ -442,8 +450,7 @@ aedopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return (error);
 }
 
-
-int 
+int
 aedclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int s = spladb();
@@ -455,8 +462,7 @@ aedclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return (0);
 }
 
-
-int 
+int
 aedread(dev_t dev, struct uio *uio, int flag)
 {
 	int s, error;
@@ -501,7 +507,7 @@ aedread(dev_t dev, struct uio *uio, int flag)
 	return (0);
 }
 
-int 
+int
 aedioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	switch (cmd) {
@@ -564,14 +570,13 @@ aedioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return (0);
 }
 
-
-int 
+int
 aedpoll(dev_t dev, int events, struct lwp *l)
 {
 	int s, revents;
 
 	revents = events & (POLLOUT | POLLWRNORM);
-	
+
 	if ((events & (POLLIN | POLLRDNORM)) == 0)
 		return (revents);
 

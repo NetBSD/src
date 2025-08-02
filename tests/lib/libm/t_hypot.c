@@ -1,4 +1,4 @@
-/* $NetBSD: t_hypot.c,v 1.8 2024/05/13 20:28:15 rillig Exp $ */
+/* $NetBSD: t_hypot.c,v 1.8.2.1 2025/08/02 05:58:08 perseant Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 static const float trivial_casesf[] = {
 	0,
-#ifdef __FLT_HAS_DENORM__
+#if __FLT_HAS_DENORM__
 	__FLT_DENORM_MIN__,
 	2*__FLT_DENORM_MIN__,
 	3*__FLT_DENORM_MIN__,
@@ -93,7 +93,7 @@ static const float trivial_casesf[] = {
 
 static const double trivial_cases[] = {
 	0,
-#ifdef __DBL_HAS_DENORM__
+#if __DBL_HAS_DENORM__
 	__DBL_DENORM_MIN__,
 	2*__DBL_DENORM_MIN__,
 	3*__DBL_DENORM_MIN__,
@@ -136,7 +136,7 @@ static const double trivial_cases[] = {
 
 static const long double trivial_casesl[] = {
 	0,
-#ifdef __LDBL_HAS_DENORM__
+#if __LDBL_HAS_DENORM__
 	__LDBL_DENORM_MIN__,
 	2*__LDBL_DENORM_MIN__,
 	3*__LDBL_DENORM_MIN__,

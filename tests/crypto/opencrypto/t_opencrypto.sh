@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.9 2019/12/03 04:20:45 hikaru Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.9.10.1 2025/08/02 05:57:59 perseant Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -301,6 +301,11 @@ ioctl_head() {
 }
 
 ioctl_body() {
+	case `uname -p` in
+	sparc)	atf_expect_fail "PR port-sparc/59311:" \
+		    " t_opencrypto:ioctl test is failing"
+		;;
+	esac
 	common_body h_ioctl
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.87 2022/03/19 13:51:35 hannken Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.87.10.1 2025/08/02 05:56:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.87 2022/03/19 13:51:35 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.87.10.1 2025/08/02 05:56:18 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,7 @@ void
 cpu_bootconf(void)
 {
 #ifdef XEN
-	if (vm_guest == VM_GUEST_XENPVH) {
+	if (pvh_boot) {
 		xen_bootconf();
 		return;
 	}
@@ -601,6 +601,10 @@ device_register(device_t dev, void *aux)
 #if NHYPERV > 0
 	(void)device_hyperv_register(dev, aux);
 #endif
+
+	if (device_is_a(dev, "com") && vm_guest > VM_GUEST_NO)
+		prop_dictionary_set_bool(device_properties(dev),
+		    "skip_attach_delay", true);
 
 	if (isaboot == NULL && pciboot == NULL)
 		return;

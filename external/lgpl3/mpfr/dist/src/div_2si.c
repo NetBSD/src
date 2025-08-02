@@ -28,9 +28,9 @@ mpfr_div_2si (mpfr_ptr y, mpfr_srcptr x, long int n, mpfr_rnd_t rnd_mode)
   int inexact;
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg n=%ld rnd=%d",
+    (("x[%Pd]=%.*Rg n=%ld rnd=%d",
       mpfr_get_prec(x), mpfr_log_prec, x, n, rnd_mode),
-     ("y[%Pu]=%.*Rg inexact=%d",
+     ("y[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec(y), mpfr_log_prec, y, inexact));
 
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))

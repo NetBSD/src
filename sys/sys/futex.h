@@ -1,4 +1,4 @@
-/*	$NetBSD: futex.h,v 1.5 2021/09/28 15:05:42 thorpej Exp $	*/
+/*	$NetBSD: futex.h,v 1.5.10.1 2025/08/02 05:57:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
@@ -43,14 +43,14 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Emmanuel Dreyfus
- * 4. The name of the author may not be used to endorse or promote 
- *    products derived from this software without specific prior written 
+ * 4. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
  *    permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS'' 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+ * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -72,7 +72,7 @@
 
 #include <sys/timespec.h>
 
-#define FUTEX_WAIT			  0 
+#define FUTEX_WAIT			  0
 #define FUTEX_WAKE			  1
 #define FUTEX_FD			  2
 #define FUTEX_REQUEUE			  3
@@ -98,10 +98,10 @@
 #define FUTEX_OP_CMPARG_MASK		__BITS(0,11)
 
 #define FUTEX_OP(op, oparg, cmp, cmparg)		 \
-	(__SHIFTIN(op, FUTEX_OP_OP_MASK)		|\
-	 __SHIFTIN(oparg, FUTEX_OP_OPARG_MASK)		|\
-	 __SHIFTIN(cmp, FUTEX_OP_CMP_MASK)		|\
-	 __SHIFTIN(cmparg, FUTEX_OP_CMPARG_MASK))
+	(__SHIFTIN((op) & 0xf, FUTEX_OP_OP_MASK)	|\
+	 __SHIFTIN((oparg) & 0xfff, FUTEX_OP_OPARG_MASK)|\
+	 __SHIFTIN((cmp) & 0xf, FUTEX_OP_CMP_MASK)	|\
+	 __SHIFTIN((cmparg) & 0xfff, FUTEX_OP_CMPARG_MASK))
 
 #define FUTEX_OP_SET		0
 #define FUTEX_OP_ADD		1

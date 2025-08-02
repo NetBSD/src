@@ -1,4 +1,4 @@
-/*	$NetBSD: __strsignal.c,v 1.25 2012/03/20 17:44:18 matt Exp $	*/
+/*	$NetBSD: __strsignal.c,v 1.25.44.1 2025/08/02 05:54:42 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strsignal.c,v 1.25 2012/03/20 17:44:18 matt Exp $");
+__RCSID("$NetBSD: __strsignal.c,v 1.25.44.1 2025/08/02 05:54:42 perseant Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,10 +49,6 @@ __RCSID("$NetBSD: __strsignal.c,v 1.25 2012/03/20 17:44:18 matt Exp $");
 #include <string.h>
 #include "extern.h"
 #include <signal.h>
-#ifndef SIGRTMIN	/* XXX: Until we remove the #ifdef _KERNEL */
-#define SIGRTMIN	33
-#define SIGRTMAX	63
-#endif
 
 /* ARGSUSED */
 const char *
@@ -75,7 +71,7 @@ __strsignal(int num, char *buf, size_t buflen)
 		(void)strlcpy(buf, catgets(catd, 2, (int)signum,
 		    sys_siglist[signum]), buflen); 
 #else
-		return((char *)sys_siglist[signum]);
+		return sys_siglist[signum];
 #endif
 	} else if (signum >= SIGRTMIN && signum <= SIGRTMAX) {
 #ifdef NLS

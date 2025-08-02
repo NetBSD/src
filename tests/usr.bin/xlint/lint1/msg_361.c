@@ -1,11 +1,11 @@
-/*	$NetBSD: msg_361.c,v 1.2 2024/03/03 00:50:41 rillig Exp $	*/
+/*	$NetBSD: msg_361.c,v 1.2.2.1 2025/08/02 05:58:18 perseant Exp $	*/
 # 3 "msg_361.c"
 
 // Test for message: number base '%.*s' is %ju, must be 8, 10 or 16 [361]
 
 /*
  * The first or second character of the snprintb format specifies the number
- * base.  It must be given in binary.
+ * base.  It must be given as an octal or hexadecimal escape sequence.
  */
 
 /* lint1-extra-flags: -X 351 */
@@ -13,7 +13,7 @@
 typedef typeof(sizeof(0)) size_t;
 typedef unsigned long long uint64_t;
 
-int snprintb(char*, size_t, const char*, uint64_t);
+int snprintb(char *, size_t, const char *, uint64_t);
 
 void
 old_style_number_base(void)

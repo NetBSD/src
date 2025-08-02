@@ -1,4 +1,4 @@
-#	$NetBSD: files.wii,v 1.4 2024/01/25 11:47:53 jmcneill Exp $
+#	$NetBSD: files.wii,v 1.4.4.1 2025/08/02 05:55:35 perseant Exp $
 #
 #
 maxpartitions 16
@@ -61,7 +61,7 @@ device	hollywood: hollywood
 attach	hollywood at mainbus
 file	arch/evbppc/wii/dev/hollywood.c		hollywood
 
-device	resetbtn
+device	resetbtn : sysmon_power, sysmon_taskq
 attach	resetbtn at hollywood
 file	arch/evbppc/wii/dev/resetbtn.c		resetbtn
 
@@ -81,3 +81,7 @@ file	arch/evbppc/wii/dev/sdhc_hollywood.c	sdhc_hollywood
 device	avenc
 attach	avenc at iic
 file	arch/evbppc/wii/dev/avenc.c		avenc
+
+device 	di: scsi
+attach	di at hollywood
+file	arch/evbppc/wii/dev/di.c		di

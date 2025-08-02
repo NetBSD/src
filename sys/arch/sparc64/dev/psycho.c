@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.137 2022/02/23 21:54:40 andvar Exp $	*/
+/*	$NetBSD: psycho.c,v 1.137.10.1 2025/08/02 05:56:09 perseant Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.137 2022/02/23 21:54:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.137.10.1 2025/08/02 05:56:09 perseant Exp $");
 
 #include "opt_ddb.h"
 
@@ -587,7 +587,7 @@ found:
 		 * of a pair of psycho's to arrive here.
 		 *
 		 * We should calculate a TSB size based on amount of RAM
-		 * and number of bus controllers and number an type of
+		 * and number of bus controllers and number and type of
 		 * child devices.
 		 *
 		 * For the moment, 32KB should be more than enough.

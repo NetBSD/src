@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2020/05/24 18:42:20 jmcneill Exp $	*/
+/*	$NetBSD: main.c,v 1.14.8.1 2025/08/02 05:55:06 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.14 2020/05/24 18:42:20 jmcneill Exp $");
+__RCSID("$NetBSD: main.c,v 1.14.8.1 2025/08/02 05:55:06 perseant Exp $");
 #endif
 
 #include <stdio.h>
@@ -50,31 +50,7 @@ __RCSID("$NetBSD: main.c,v 1.14 2020/05/24 18:42:20 jmcneill Exp $");
 #include "map.h"
 #include "gpt.h"
 
-static const struct gpt_cmd c_null;
-
-extern const struct gpt_cmd
-	c_add,
-#ifndef HAVE_NBTOOL_CONFIG_H
-	c_backup,
-#endif
-	c_biosboot,
-	c_create,
-	c_destroy,
-	c_header,
-	c_label,
-	c_migrate,
-	c_recover,
-	c_remove,
-	c_resize,
-	c_resizedisk,
-#ifndef HAVE_NBTOOL_CONFIG_H
-	c_restore,
-#endif
-	c_set,
-	c_show,
-	c_type,
-	c_unset,
-	c_uuid;
+static const struct gpt_cmd c_null = { 0 };
 
 static const struct gpt_cmd *cmdsw[] = {
 	&c_add,

@@ -1,4 +1,4 @@
-/* $NetBSD: Lint___vfork14.c,v 1.4 2024/01/20 14:52:49 christos Exp $ */
+/* $NetBSD: Lint___vfork14.c,v 1.4.2.1 2025/08/02 05:54:42 perseant Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,9 +9,8 @@
 #include <unistd.h>
 #include <compat/include/unistd.h>
 
-/*ARGSUSED*/
 pid_t
 __vfork14(void)
 {
-	return (0);
+	return 0;
 }

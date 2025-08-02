@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.53 2024/06/29 13:46:40 rin Exp $	*/
+/*	$NetBSD: libi386.h,v 1.53.2.1 2025/08/02 05:55:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -98,12 +98,6 @@ struct multiboot_package *probe_multiboot2(const char *);
 /* this is in "user code"! */
 int parsebootfile(const char *, char **, char **, int *, int *, const char **);
 
-#ifdef XMS
-physaddr_t ppbcopy(physaddr_t, physaddr_t, int);
-int checkxms(void);
-physaddr_t xmsalloc(int);
-#endif
-
 /* parseutils.c */
 char *gettrailer(char *);
 int parseopts(const char *, int *);
@@ -155,6 +149,9 @@ void rnd_add(char *);
 void fs_add(char *);
 void userconf_add(char *);
 void module_add_split(const char *, uint8_t);
+
+/* Note: implementations differ in boot2, dosboot & efiboot */
+void command_dev(char *);
 
 struct btinfo_framebuffer;
 void framebuffer_configure(struct btinfo_framebuffer *);

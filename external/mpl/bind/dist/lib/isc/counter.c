@@ -1,4 +1,4 @@
-/*	$NetBSD: counter.c,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: counter.c,v 1.7.4.1 2025/08/02 05:53:51 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -53,7 +53,7 @@ isc_counter_create(isc_mem_t *mctx, int limit, isc_counter_t **counterp) {
 
 	counter->magic = COUNTER_MAGIC;
 	*counterp = counter;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -62,17 +62,17 @@ isc_counter_increment(isc_counter_t *counter) {
 	uint32_t limit = atomic_load_acquire(&counter->limit);
 
 	if (limit != 0 && used >= limit) {
-		return (ISC_R_QUOTA);
+		return ISC_R_QUOTA;
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 unsigned int
 isc_counter_used(isc_counter_t *counter) {
 	REQUIRE(VALID_COUNTER(counter));
 
-	return (atomic_load_acquire(&counter->used));
+	return atomic_load_acquire(&counter->used);
 }
 
 void
@@ -80,6 +80,13 @@ isc_counter_setlimit(isc_counter_t *counter, int limit) {
 	REQUIRE(VALID_COUNTER(counter));
 
 	atomic_store(&counter->limit, limit);
+}
+
+unsigned int
+isc_counter_getlimit(isc_counter_t *counter) {
+	REQUIRE(VALID_COUNTER(counter));
+
+	return atomic_load_acquire(&counter->limit);
 }
 
 void

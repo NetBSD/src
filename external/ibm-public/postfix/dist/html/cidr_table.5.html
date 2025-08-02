@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,15 +7,15 @@
 </head> <body> <pre>
 CIDR_TABLE(5)                                                    CIDR_TABLE(5)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        cidr_table - format of Postfix CIDR tables
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postmap -q "</b><i>string</i><b>" <a href="cidr_table.5.html">cidr</a>:/etc/postfix/</b><i>filename</i>
 
        <b>postmap -q - <a href="cidr_table.5.html">cidr</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
 
-<b>DESCRIPTION</b>
+<b><a name="description">DESCRIPTION</a></b>
        The  Postfix mail system uses optional lookup tables.  These tables are
        usually in <b>dbm</b> or <b>db</b> format.  Alternatively, lookup tables can be spec-
        ified in CIDR (Classless Inter-Domain Routing) form. In this case, each
@@ -28,7 +28,7 @@ CIDR_TABLE(5)                                                    CIDR_TABLE(5)
        To test lookup tables, use the "<b>postmap -q</b>" command as described in the
        SYNOPSIS above.
 
-<b>TABLE FORMAT</b>
+<b><a name="table_format">TABLE FORMAT</a></b>
        The general form of a Postfix CIDR table is:
 
        <i>pattern     result</i>
@@ -73,11 +73,11 @@ CIDR_TABLE(5)                                                    CIDR_TABLE(5)
               A  logical  line  starts  with  non-whitespace text. A line that
               starts with whitespace continues a logical line.
 
-<b>TABLE SEARCH ORDER</b>
+<b><a name="table_search_order">TABLE SEARCH ORDER</a></b>
        Patterns are applied in the order as specified in the  table,  until  a
        pattern is found that matches the search string.
 
-<b>ADDRESS PATTERN SYNTAX</b>
+<b><a name="address_pattern_syntax">ADDRESS PATTERN SYNTAX</a></b>
        Postfix  CIDR  tables  are  pattern-based.  A  pattern is either a <i>net-</i>
        <i>work</i><b>_</b><i>address</i> which requires an exact match, or  a  <i>network</i><b>_</b><i>address/pre-</i>
        <i>fix</i><b>_</b><i>length</i>  where  the  <i>prefix</i><b>_</b><i>length</i>  part specifies the length of the
@@ -99,7 +99,7 @@ CIDR_TABLE(5)                                                    CIDR_TABLE(5)
        Note:  address information may be enclosed inside "[]" but this form is
        not required.
 
-<b>INLINE SPECIFICATION</b>
+<b><a name="inline_specification">INLINE SPECIFICATION</a></b>
        The contents of a table may be specified in the table name (Postfix 3.7
        and later).  The basic syntax is:
 
@@ -109,8 +109,9 @@ CIDR_TABLE(5)                                                    CIDR_TABLE(5)
        <a href="master.5.html">master.cf</a>:
            <b>.. -o {</b> <i>parameter</i> <b>= .. <a href="cidr_table.5.html">cidr</a>:{ {</b> <i>rule-1</i> <b>}, {</b> <i>rule-2</i> <b>} .. } .. } ..</b>
 
-       Postfix  ignores  whitespace  after '{' and before '}', and writes each
-       <i>rule</i> as one text line to an in-memory file:
+       Postfix  recursively  expands any <i>$parametername</i> instances in the above
+       parameter value, ignores whitespace  after  '{'  and  before  '}',  and
+       writes each <i>rule</i> as one text line to an in-memory file:
 
        in-memory file:
            rule-1
@@ -119,10 +120,10 @@ CIDR_TABLE(5)                                                    CIDR_TABLE(5)
 
        Postfix parses the result as if it is a file in /etc/postfix.
 
-       Note: if a rule contains <b>$</b>, specify <b>$$</b> to keep Postfix from  trying  to
+       Note:  if  a rule contains <b>$</b>, specify <b>$$</b> to keep Postfix from trying to
        do <i>$name</i> expansion as it evaluates a parameter value.
 
-<b>EXAMPLE SMTPD ACCESS MAP</b>
+<b><a name="example_smtpd_access_map">EXAMPLE SMTPD ACCESS MAP</a></b>
        /etc/postfix/<a href="postconf.5.html">main.cf</a>:
            <a href="postconf.5.html#smtpd_client_restrictions">smtpd_client_restrictions</a> = ... <a href="cidr_table.5.html">cidr</a>:/etc/postfix/client.cidr ...
 
@@ -134,15 +135,15 @@ CIDR_TABLE(5)                                                    CIDR_TABLE(5)
            2001:db8::1             OK
            2001:db8::/32           REJECT
 
-<b>SEE ALSO</b>
+<b><a name="see_also">SEE ALSO</a></b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
        <a href="regexp_table.5.html">regexp_table(5)</a>, format of regular expression tables
        <a href="pcre_table.5.html">pcre_table(5)</a>, format of PCRE tables
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        CIDR table support was introduced with Postfix version 2.1.
 
 <b>AUTHOR(S)</b>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.13 2013/11/30 20:20:42 joerg Exp $	*/
+/*	$NetBSD: cerror.S,v 1.13.38.1 2025/08/02 05:54:31 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,8 +33,27 @@
 
 #include "SYS.h"
 
+/* { r0, r1 } := -1LL */
+#ifdef __thumb__
+#define MOV_RETVAL_MINUS_1	  \
+	movs	r0, #0		; \
+	mvns	r0, r0		; \
+	movs	r1, r0
+
+#else // !__thumb__
+#define MOV_RETVAL_MINUS_1	  \
+	mvn	r0, #0		; \
+	mov	r1, r0
+#endif
+
+
+/*
+ * Set `errno` and return -1.  See SYS.h for syscall stubs that call this.
+ */
 ENTRY_NP(CERROR)
 #ifdef _REENTRANT
+	/* __errno() returns the address of a thread local variable */
+	.globl	_C_LABEL(__errno)
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.fnstart
 	.cfi_startproc
@@ -46,57 +65,38 @@ ENTRY_NP(CERROR)
 	.cfi_offset 14, -4
 	.cfi_offset 4, -8
 #endif
-	mov	r4, r0
+	movs	r4, r0
 	bl	PLT_SYM(_C_LABEL(__errno))
 	str	r4, [r0]
-#ifdef __thumb__
-	movs	r0, #0
-	mvns	r0, r0
-#else
-	mvn	r0, #0
-#endif
-	mov	r1, r0
+	MOV_RETVAL_MINUS_1
 	pop	{r4, pc}
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_endproc
 	.fnend
 #endif
+
 #else /* !_REENTRANT */
+	/* errno is a global variable */
+	.globl	_C_LABEL(errno)
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.fnstart
 	.cfi_startproc
 #endif
+0:	GOT_INIT(r3, .Lgot)
+	ldr	r1, .Lerrno
 #ifdef __PIC__
-	/* Setup the GOT */
-	ldr	r3, .Lgot
-	add	r3, r3, pc	/* pc = &.LPIC0 */
-	ldr	r1, .Lerrno
-.LPIC0:	ldr	r1, [r3, r1]
-#else
-	ldr	r1, .Lerrno
+	ldr	r1, [r3, r1]
 #endif /* __PIC__ */
 	str	r0, [r1]
-#ifdef __thumb__
-	movs	r0, #0
-	mvns	r0, r0
-#else
-	mvn	r0, #0
-#endif /* __thumb__ */
-	mov	r1, r0
+	MOV_RETVAL_MINUS_1
 	RET
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_endproc
 	.fnend
 #endif
 
-#ifdef __PIC__
-	.align	0
-.Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - .LPIC0
-#endif /* __PIC__ */
-	.globl	_C_LABEL(errno)
-
+	GOT_INITSYM(.Lgot, 0b)
 .Lerrno:
-	.word	PIC_SYM(_C_LABEL(errno), GOT)
+	.word	GOT_SYM(_C_LABEL(errno))
 #endif /* _REENTRANT */
 END(CERROR)

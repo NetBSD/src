@@ -37,7 +37,15 @@ controls {
 	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
+dnssec-policy "dnssec" {
+	keys {
+		ksk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
 dnssec-policy "manykeys" {
+	inline-signing no;
 	keys {
 		ksk lifetime unlimited algorithm 8;
 		zsk lifetime unlimited algorithm 8;
@@ -53,11 +61,9 @@ zone "example" {
 zone "dnssec" {
 	type primary;
 	file "dnssec.db.signed";
-	auto-dnssec maintain;
 	allow-update { any; };
 	zone-statistics full;
-	dnssec-dnskey-kskonly yes;
-	update-check-ksk yes;
+	dnssec-policy "dnssec";
 };
 
 zone "manykeys" {

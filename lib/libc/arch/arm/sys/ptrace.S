@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.12 2013/11/30 20:20:42 joerg Exp $ */
+/*	$NetBSD: ptrace.S,v 1.12.38.1 2025/08/02 05:54:31 perseant Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

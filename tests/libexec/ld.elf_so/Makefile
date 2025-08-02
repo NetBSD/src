@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2023/07/30 09:22:02 riastradh Exp $
+# $NetBSD: Makefile,v 1.21.2.1 2025/08/02 05:58:10 perseant Exp $
 #
 
 NOMAN=		# defined
@@ -7,11 +7,19 @@ NOMAN=		# defined
 
 .if ${MKPIC} != "no"
 
-SUBDIR+=	helper_dso1 helper_dso3 .WAIT helper_dso2 .WAIT \
-		helper_ifunc_dso \
-		helper_symver_dso0 .WAIT helper_symver_dso1 .WAIT \
-		helper_symver_dso2 .WAIT \
-		data
+SUBDIR+=	helper_dso1
+SUBDIR+=	helper_dso3
+SUBDIR+=	.WAIT
+SUBDIR+=	helper_dso2
+SUBDIR+=	.WAIT
+SUBDIR+=	helper_ifunc_dso
+SUBDIR+=	helper_symver_dso0
+SUBDIR+=	.WAIT
+SUBDIR+=	helper_symver_dso1
+SUBDIR+=	.WAIT
+SUBDIR+=	helper_symver_dso2
+SUBDIR+=	.WAIT
+SUBDIR+=	data
 
 SUBDIR+=	helper_def_dynamic
 SUBDIR+=	helper_def_static
@@ -27,10 +35,33 @@ SUBDIR+=	helper_use_static
 
 TESTSDIR=	${TESTSBASE}/libexec/ld.elf_so
 
-TESTS_C+=	t_dlerror-cleared t_dlerror-false t_dlinfo t_dlvsym t_ifunc
-TESTS_C+=	t_rtld_r_debug
-TESTS_C+=	t_tls_extern
+TESTS_C+=	t_dlerror-cleared
+TESTS_C+=	t_dlerror-false
+TESTS_C+=	t_dlinfo
+TESTS_C+=	t_dlvsym
 TESTS_C+=	t_hash
+TESTS_C+=	t_ifunc
+TESTS_C+=	t_ifunc_norelro
+TESTS_C+=	t_ifunc_norelro_now
+TESTS_C+=	t_ifunc_now
+TESTS_C+=	t_rtld_r_debug
+TESTS_C+=	t_rtld_r_debug_nopie
+TESTS_C+=	t_tls_extern
+
+SRCS.t_ifunc_now=		t_ifunc.c
+SRCS.t_ifunc_norelro=		t_ifunc.c
+SRCS.t_ifunc_norelro_now=	t_ifunc.c
+
+LDADD.t_ifunc+=			${${MKRELRO} != "no":?-Wl,-z,relro:}
+LDADD.t_ifunc_now+=		${${MKRELRO} != "no":?-Wl,-z,relro:} -Wl,-z,now
+LDADD.t_ifunc_norelro+=		${${MKRELRO} != "no":?-Wl,-z,norelro:}
+LDADD.t_ifunc_norelro_now+=	${${MKRELRO} != "no":?-Wl,-z,norelro:} -Wl,-z,now
+
+SRCS.t_rtld_r_debug_nopie=	t_rtld_r_debug.c
+
+# If the port doesn't support PIE anyway, well, no big deal, we have
+# two copies of the same tiny test.
+LDADD.t_rtld_r_debug_nopie+=	-Wl,-no-pie
 
 .PATH:	${NETBSDSRCDIR}/libexec/ld.elf_so
 SRCS.t_hash+=	t_hash.c
@@ -41,11 +72,16 @@ COPTS.t_rtld_r_debug.c += ${CC_WNO_MAYBE_UNINITIALIZED}
 
 LDADD.t_dlerror-false=	-Wl,-rpath,/var/nonexistent/lib
 LDADD.t_dlvsym=		-Wl,-rpath,${TESTSDIR}/h_helper_symver_dso2
-LDADD.t_ifunc=		-Wl,-rpath,${TESTSDIR} -lutil
-DPADD.t_ifunc=		${LIBUTIL}
+.for t in t_ifunc t_ifunc_now t_ifunc_norelro t_ifunc_norelro_now
+LDADD.${t}+=		-Wl,-rpath,${TESTSDIR} -lutil
+DPADD.${t}+=		${LIBUTIL}
+.endfor
 LDADD.t_tls_extern+=	-Wl,-rpath,${TESTSDIR}
 
-TESTS_SH+=		t_df_1_noopen t_dl_symver t_thread_local_dtor
+TESTS_SH+=		t_df_1_noopen
+TESTS_SH+=		t_dl_symver
+TESTS_SH+=		t_r_rel
+TESTS_SH+=		t_thread_local_dtor
 
 BINDIR=			${TESTSDIR}
 PROGS+=			h_df_1_noopen1
@@ -81,6 +117,16 @@ PROGS+=			h_dl_symver_v2
 SRCS.h_dl_symver_v2=	h_dl_symver.c
 V2ODIR!=		cd ${.CURDIR}/helper_symver_dso2 && ${PRINTOBJDIR}
 LDADD.h_dl_symver_v2=	-L${V2ODIR} -lh_helper_symver_dso
+
+PROGS+=			h_r_rel_pack
+PROGS+=			h_r_rel_nopack
+
+SRCS.h_r_rel_pack=	h_r_rel.c
+SRCS.h_r_rel_nopack=	h_r_rel.c
+
+h_r_rel_pack: CTFMERGE=:	# PR toolchain/59364: ctf tools needs update
+LDFLAGS.h_r_rel_pack=	${LD_PACK_RELATIVE_RELOCS}
+LDFLAGS.h_r_rel_nopack=	${LD_NOPACK_RELATIVE_RELOCS}
 
 .include <bsd.test.mk>
 

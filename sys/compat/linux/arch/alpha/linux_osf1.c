@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_osf1.c,v 1.5 2021/09/07 11:43:03 riastradh Exp $	*/
+/*	$NetBSD: linux_osf1.c,v 1.5.10.1 2025/08/02 05:56:21 perseant Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_osf1.c,v 1.5 2021/09/07 11:43:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_osf1.c,v 1.5.10.1 2025/08/02 05:56:21 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ linux_sys_osf1_setitimer(struct lwp *l, const struct linux_sys_osf1_setitimer_ar
 		if (error)
 			return error;
 	}
-		
+
 	error = dosetitimer(l->l_proc, which, &b_itv);
 
 	if (error == 0 || SCARG(uap, oitv) == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.6 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: fenv.h,v 1.6.26.1 2025/08/02 05:55:53 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -31,6 +31,7 @@
 #ifndef	_MIPS_FENV_H_
 #define	_MIPS_FENV_H_
 
+#include <sys/featuretest.h>
 #include <sys/stdint.h>
 
 /* Exception flags */

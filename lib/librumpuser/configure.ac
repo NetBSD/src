@@ -28,7 +28,8 @@ AC_CHECK_TYPES([clockid_t, register_t])
 
 AC_CHECK_FUNCS([kqueue chflags strsuftoll setprogname getprogname	\
 	getenv_r posix_memalign memalign aligned_alloc	\
-	arc4random_buf getsubopt fsync_range __quotactl utimensat])
+	arc4random_buf getsubopt fsync_range __quotactl utimensat	\
+	preadv pwritev])
 
 AC_TRY_LINK_FUNC([clock_nanosleep],,
         AC_CHECK_LIB([rt], [clock_nanosleep])

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.32 2012/10/27 17:18:20 chs Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.32.76.1 2025/08/02 05:56:41 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -155,7 +155,7 @@ struct pcic_softc {
 
 	/* for use by underlying chip code for discovering irqs */
 	int intr_detect, intr_false;
-	int intr_mask[PCIC_NSLOTS / 2];	/* probed intterupts if possible */
+	int intr_mask[PCIC_NSLOTS / 2];	/* probed interrupts if possible */
 };
 
 

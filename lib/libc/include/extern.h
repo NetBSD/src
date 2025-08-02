@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.29 2024/01/19 19:31:41 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.29.2.1 2025/08/02 05:54:37 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -24,6 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>	/* off_t */
 #include <stdarg.h>
 #include <ucontext.h>
 
@@ -39,7 +40,7 @@ extern char **environ;
 int __getcwd(char *, size_t);
 int __getlogin(char *, size_t);
 int __setlogin(const char *);
-int __posix_fadvise50(int, int, __off_t, __off_t, int);
+int __posix_fadvise50(int, int, off_t, off_t, int);
 void  __section(".text.startup") __attribute__((__visibility__("hidden")))
     __libc_atomic_init(void);
 void _resumecontext(void) __dead;
@@ -65,18 +66,6 @@ char *__hldtoa(long double, const char *, int, int *, int *,  char **);
 char *__ldtoa(long double *, int, int, int *, int *, char **);
 #endif
 char *__hdtoa(double, const char *, int, int *, int *, char **);
-
-#ifndef __LIBC12_SOURCE__
-struct syslog_data;
-void	syslog_ss(int, struct syslog_data *, const char *, ...)
-    __RENAME(__syslog_ss60) __printflike(3, 4);
-void    vsyslog_ss(int, struct syslog_data *, const char *, va_list) 
-    __RENAME(__vsyslog_ss60) __printflike(3, 0); 
-void	syslogp_ss(int, struct syslog_data *, const char *, const char *, 
-    const char *, ...) __RENAME(__syslogp_ss60) __printflike(5, 0);
-void	vsyslogp_ss(int, struct syslog_data *, const char *, const char *, 
-    const char *, va_list) __RENAME(__vsyslogp_ss60) __printflike(5, 0);
-#endif
 
 void	_malloc_prefork(void);
 void	_malloc_postfork(void);

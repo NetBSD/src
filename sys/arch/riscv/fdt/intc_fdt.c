@@ -1,4 +1,4 @@
-/*	$NetBSD: intc_fdt.c,v 1.6 2024/01/21 08:48:21 skrll Exp $	*/
+/*	$NetBSD: intc_fdt.c,v 1.6.2.1 2025/08/02 05:56:02 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.6 2024/01/21 08:48:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.6.2.1 2025/08/02 05:56:02 perseant Exp $");
 
 #include <sys/param.h>
 
@@ -186,7 +186,7 @@ intc_intr_establish(struct intc_fdt_softc *sc, u_int source, u_int ipl,
 	/*
 	 * XXX interrupt_distribute(9) assumes that any interrupt
 	 * handle can be used as an input to the MD interrupt_distribute
-	 * implementationm, so we are forced to return the handle
+	 * implementation, so we are forced to return the handle
 	 * we got back from intr_establish().  Upshot is that the
 	 * input to bcm2835_icu_fdt_disestablish() is ambiguous for
 	 * shared IRQs, rendering them un-disestablishable.
@@ -234,7 +234,7 @@ intc_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 		return false;
 
 	const u_int source = be32toh(specifier[0]);
-	snprintf(buf, buflen, "cpu%lu/%s #%u", sc->sc_hartid,
+	snprintf(buf, buflen, "cpu%u/%s #%u", cpu_index(sc->sc_ci),
 	    intc_sources[source], source);
 
 	return true;

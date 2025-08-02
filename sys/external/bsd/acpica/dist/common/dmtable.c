@@ -4,9 +4,117 @@
  *
  *****************************************************************************/
 
-/*
- * Copyright (C) 2000 - 2023, Intel Corp.
+/******************************************************************************
+ *
+ * 1. Copyright Notice
+ *
+ * Some or all of this work - Copyright (c) 1999 - 2024, Intel Corp.
  * All rights reserved.
+ *
+ * 2. License
+ *
+ * 2.1. This is your license from Intel Corp. under its intellectual property
+ * rights. You may have additional license terms from the party that provided
+ * you this software, covering your right to use that party's intellectual
+ * property rights.
+ *
+ * 2.2. Intel grants, free of charge, to any person ("Licensee") obtaining a
+ * copy of the source code appearing in this file ("Covered Code") an
+ * irrevocable, perpetual, worldwide license under Intel's copyrights in the
+ * base code distributed originally by Intel ("Original Intel Code") to copy,
+ * make derivatives, distribute, use and display any portion of the Covered
+ * Code in any form, with the right to sublicense such rights; and
+ *
+ * 2.3. Intel grants Licensee a non-exclusive and non-transferable patent
+ * license (with the right to sublicense), under only those claims of Intel
+ * patents that are infringed by the Original Intel Code, to make, use, sell,
+ * offer to sell, and import the Covered Code and derivative works thereof
+ * solely to the minimum extent necessary to exercise the above copyright
+ * license, and in no event shall the patent license extend to any additions
+ * to or modifications of the Original Intel Code. No other license or right
+ * is granted directly or by implication, estoppel or otherwise;
+ *
+ * The above copyright and patent license is granted only if the following
+ * conditions are met:
+ *
+ * 3. Conditions
+ *
+ * 3.1. Redistribution of Source with Rights to Further Distribute Source.
+ * Redistribution of source code of any substantial portion of the Covered
+ * Code or modification with rights to further distribute source must include
+ * the above Copyright Notice, the above License, this list of Conditions,
+ * and the following Disclaimer and Export Compliance provision. In addition,
+ * Licensee must cause all Covered Code to which Licensee contributes to
+ * contain a file documenting the changes Licensee made to create that Covered
+ * Code and the date of any change. Licensee must include in that file the
+ * documentation of any changes made by any predecessor Licensee. Licensee
+ * must include a prominent statement that the modification is derived,
+ * directly or indirectly, from Original Intel Code.
+ *
+ * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
+ * Redistribution of source code of any substantial portion of the Covered
+ * Code or modification without rights to further distribute source must
+ * include the following Disclaimer and Export Compliance provision in the
+ * documentation and/or other materials provided with distribution. In
+ * addition, Licensee may not authorize further sublicense of source of any
+ * portion of the Covered Code, and must include terms to the effect that the
+ * license from Licensee to its licensee is limited to the intellectual
+ * property embodied in the software Licensee provides to its licensee, and
+ * not to intellectual property embodied in modifications its licensee may
+ * make.
+ *
+ * 3.3. Redistribution of Executable. Redistribution in executable form of any
+ * substantial portion of the Covered Code or modification must reproduce the
+ * above Copyright Notice, and the following Disclaimer and Export Compliance
+ * provision in the documentation and/or other materials provided with the
+ * distribution.
+ *
+ * 3.4. Intel retains all right, title, and interest in and to the Original
+ * Intel Code.
+ *
+ * 3.5. Neither the name Intel nor any other trademark owned or controlled by
+ * Intel shall be used in advertising or otherwise to promote the sale, use or
+ * other dealings in products derived from or relating to the Covered Code
+ * without prior written authorization from Intel.
+ *
+ * 4. Disclaimer and Export Compliance
+ *
+ * 4.1. INTEL MAKES NO WARRANTY OF ANY KIND REGARDING ANY SOFTWARE PROVIDED
+ * HERE. ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
+ * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT, ASSISTANCE,
+ * INSTALLATION, TRAINING OR OTHER SERVICES. INTEL WILL NOT PROVIDE ANY
+ * UPDATES, ENHANCEMENTS OR EXTENSIONS. INTEL SPECIFICALLY DISCLAIMS ANY
+ * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
+ * PARTICULAR PURPOSE.
+ *
+ * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
+ * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
+ * COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY INDIRECT,
+ * SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT, UNDER ANY
+ * CAUSE OF ACTION OR THEORY OF LIABILITY, AND IRRESPECTIVE OF WHETHER INTEL
+ * HAS ADVANCE NOTICE OF THE POSSIBILITY OF SUCH DAMAGES. THESE LIMITATIONS
+ * SHALL APPLY NOTWITHSTANDING THE FAILURE OF THE ESSENTIAL PURPOSE OF ANY
+ * LIMITED REMEDY.
+ *
+ * 4.3. Licensee shall not export, either directly or indirectly, any of this
+ * software or system incorporating such software without first obtaining any
+ * required license or other approval from the U. S. Department of Commerce or
+ * any other agency or department of the United States Government. In the
+ * event Licensee exports any such software from the United States or
+ * re-exports any such software from a foreign destination, Licensee shall
+ * ensure that the distribution and export/re-export of the software is in
+ * compliance with all laws, regulations, orders, or other restrictions of the
+ * U.S. Export Administration Regulations. Licensee agrees that neither it nor
+ * any of its subsidiaries will export/re-export any technical data, process,
+ * software, or service, directly or indirectly, to any country for which the
+ * United States government or any agency thereof requires an export license,
+ * other governmental approval, or letter of assurance, without first obtaining
+ * such license, approval or letter.
+ *
+ *****************************************************************************
+ *
+ * Alternatively, you may choose to be licensed under the terms of the
+ * following license:
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,23 +131,23 @@
  *    of any contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
- *
- * NO WARRANTY
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGES.
- */
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Alternatively, you may choose to be licensed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
+ *
+ *****************************************************************************/
 
 #include "acpi.h"
 #include "accommon.h"
@@ -82,6 +190,8 @@ static const char           *AcpiDmAestSubnames[] =
     "SMMU Error Node",
     "Vendor-defined Error Node",
     "GIC Error Node",
+    "PCIE Error Node",
+    "PROXY Error Node",
     "Unknown Subtable Type"         /* Reserved */
 };
 
@@ -106,6 +216,7 @@ static const char           *AcpiDmAestXfaceNames[] =
 {
     "System Register Interface",
     "Memory Mapped Interface",
+    "Single Record Memory Mapped Interface",
     "Unknown Interface Type"        /* Reserved */
 };
 
@@ -149,6 +260,7 @@ static const char           *AcpiDmCedtSubnames[] =
 {
     "CXL Host Bridge Structure",
     "CXL Fixed Memory Window Structure",
+    "CXL XOR Interleave Math Structure",
     "Unknown Subtable Type"         /* Reserved */
 };
 
@@ -353,70 +465,6 @@ static const char           *AcpiDmNfitSubnames[] =
     "Unknown Subtable Type"             /* Reserved */
 };
 
-static const char           *AcpiDmNhltLinkTypeNames[] =
-{
-    "Reserved for HD-Audio",            /* ACPI_NHLT_RESERVED_HD_AUDIO */
-    "Reserved for DSP",                 /* ACPI_NHLT_RESERVED_DSP */
-    "Type PDM",                         /* ACPI_NHLT_PDM */
-    "Type SSP",                         /* ACPI_NHLT_SSP */
-    "Reserved for SlimBus",             /* ACPI_NHLT_RESERVED_SLIMBUS */
-    "Reserved for SoundWire",           /* ACPI_NHLT_RESERVED_SOUNDWIRE */
-    "Unknown Link Type"                 /* Reserved */
-};
-
-static const char           *AcpiDmNhltDirectionNames[] =
-{
-    "Render",                           /* ACPI_NHLT_DIR_RENDER */
-    "Capture",                          /* ACPI_NHLT_DIR_CAPTURE */
-    "Render with Loopback",             /* ACPI_NHLT_DIR_RENDER_LOOPBACK */
-    "Feedback for Render",              /* ACPI_NHLT_DIR_RENDER_FEEDBACK */
-    "Unknown Direction"                 /* Reserved */
-};
-
-static const char           *AcpiDmNhltMicTypeNames[] =
-{
-    "Omnidirectional",                  /* ACPI_NHLT_MIC_OMNIDIRECTIONAL */
-    "Subcardioid",                      /* ACPI_NHLT_MIC_SUBCARDIOID */
-    "Cardioid",                         /* ACPI_NHLT_MIC_CARDIOID */
-    "SuperCardioid",                    /* ACPI_NHLT_MIC_SUPER_CARDIOID */
-    "HyperCardioid",                    /* ACPI_NHLT_MIC_HYPER_CARDIOID */
-    "8 Shaped",                         /* ACPI_NHLT_MIC_8_SHAPED */
-    "Reserved Mic Type",                /* Reserved */
-    "Vendor Defined",                   /* ACPI_NHLT_MIC_VENDOR_DEFINED */
-    "Unknown Mic Type"                  /* ACPI_NHLT_MIC_RESERVED */
-};
-
-static const char           *AcpiDmNhltMicPositionNames[] =
-{
-    "Top",                              /* ACPI_NHLT_MIC_POSITION_TOP */
-    "Bottom",                           /* ACPI_NHLT_MIC_POSITION_BOTTOM */
-    "Left",                             /* ACPI_NHLT_MIC_POSITION_LEFT */
-    "Right",                            /* ACPI_NHLT_MIC_POSITION_RIGHT */
-    "Front",                            /* ACPI_NHLT_MIC_POSITION_FRONT */
-    "Back",                             /* ACPI_NHLT_MIC_POSITION_BACK */
-    "Unknown Mic Position"              /* 6 and above are reserved */
-};
-
-static const char           *AcpiDmNhltMicArrayTypeNames[] =
-{
-    "Unknown Array Type",               /* ACPI_NHLT_ARRAY_TYPE_RESERVED */
-    "Small Linear 2-element",           /* ACPI_NHLT_SMALL_LINEAR_2ELEMENT */
-    "Big Linear 2-element",             /* ACPI_NHLT_BIG_LINEAR_2ELEMENT */
-    "Linear 4-element 1st Geometry",    /* ACPI_NHLT_FIRST_GEOMETRY_LINEAR_4ELEMENT */
-    "Planar L-shaped 4-element",        /* ACPI_NHLT_PLANAR_LSHAPED_4ELEMENT */
-    "Linear 4-element 2nd Geometry",    /* ACPI_NHLT_SECOND_GEOMETRY_LINEAR_4ELEMENT */
-    "Vendor Defined"                    /* ACPI_NHLT_VENDOR_DEFINED */
-};
-
-static const char           *AcpiDmNhltConfigTypeNames[] =
-{
-    "Generic Type",                     /* ACPI_NHLT_CONFIG_TYPE_GENERIC */
-    "Microphone Array",                 /* ACPI_NHLT_CONFIG_TYPE_MIC_ARRAY */
-    "Reserved",                         /* ACPI_NHLT_CONFIG_TYPE_RESERVED */
-    "Render Feedback",                  /* ACPI_NHLT_CONFIG_TYPE_RENDER_FEEDBACK */
-    "Unknown Config Type"               /* ACPI_NHLT_CONFIG_TYPE_RESERVED */
-};
-
 static const char           *AcpiDmPcctSubnames[] =
 {
     "Generic Communications Subspace",  /* ACPI_PCCT_TYPE_GENERIC_SUBSPACE */
@@ -474,6 +522,7 @@ static const char           *AcpiDmSratSubnames[] =
     "GIC ITS Affinity",             /* Acpi 6.2 */
     "Generic Initiator Affinity",   /* Acpi 6.3 */
     "Generic Port Affinity",        /* Acpi 6.4 */
+    "RINTC Affinity",               /* Acpi 6.6 */
     "Unknown Subtable Type"         /* Reserved */
 };
 
@@ -629,7 +678,7 @@ const ACPI_DMTABLE_DATA     AcpiDmTableData[] =
     {ACPI_SIG_MSCT, NULL,                   AcpiDmDumpMsct, DtCompileMsct,  TemplateMsct},
     {ACPI_SIG_MSDM, NULL,                   AcpiDmDumpSlic, DtCompileSlic,  TemplateMsdm},
     {ACPI_SIG_NFIT, AcpiDmTableInfoNfit,    AcpiDmDumpNfit, DtCompileNfit,  TemplateNfit},
-    {ACPI_SIG_NHLT, AcpiDmTableInfoNhlt,    AcpiDmDumpNhlt, DtCompileNhlt,  TemplateNhlt},
+    {ACPI_SIG_NHLT, NULL,                   NULL,           NULL,           NULL},
     {ACPI_SIG_PCCT, AcpiDmTableInfoPcct,    AcpiDmDumpPcct, DtCompilePcct,  TemplatePcct},
     {ACPI_SIG_PDTT, AcpiDmTableInfoPdtt,    AcpiDmDumpPdtt, DtCompilePdtt,  TemplatePdtt},
     {ACPI_SIG_PHAT, NULL,                   AcpiDmDumpPhat, DtCompilePhat,  TemplatePhat},
@@ -637,6 +686,7 @@ const ACPI_DMTABLE_DATA     AcpiDmTableData[] =
     {ACPI_SIG_PPTT, NULL,                   AcpiDmDumpPptt, DtCompilePptt,  TemplatePptt},
     {ACPI_SIG_PRMT, NULL,                   AcpiDmDumpPrmt, DtCompilePrmt,  TemplatePrmt},
     {ACPI_SIG_RASF, AcpiDmTableInfoRasf,    NULL,           NULL,           TemplateRasf},
+    {ACPI_SIG_RAS2, AcpiDmTableInfoRas2,    AcpiDmDumpRas2, DtCompileRas2,  TemplateRas2},
     {ACPI_SIG_RGRT, NULL,                   AcpiDmDumpRgrt, DtCompileRgrt,  TemplateRgrt},
     {ACPI_SIG_RHCT, NULL,                   AcpiDmDumpRhct, DtCompileRhct,  TemplateRhct},
     {ACPI_SIG_RSDT, NULL,                   AcpiDmDumpRsdt, DtCompileRsdt,  TemplateRsdt},
@@ -1036,7 +1086,7 @@ AcpiDmDumpTable (
         {
             AcpiOsPrintf (
                 "/**** ACPI table terminates "
-                "in the middle of a data structure! (dump table) \n"
+                "in the middle of a data structure! (dump table)\n"
                 "CurrentOffset: %X, TableLength: %X ***/", CurrentOffset, TableLength);
             return (AE_BAD_DATA);
         }
@@ -1055,12 +1105,6 @@ AcpiDmDumpTable (
         case ACPI_DMT_GTDT:
         case ACPI_DMT_MADT:
         case ACPI_DMT_MPAM_LOCATOR:
-        case ACPI_DMT_NHLT1:
-        case ACPI_DMT_NHLT1a:
-        case ACPI_DMT_NHLT1b:
-        case ACPI_DMT_NHLT1c:
-        case ACPI_DMT_NHLT1d:
-        case ACPI_DMT_NHLT1f:
         case ACPI_DMT_PCCT:
         case ACPI_DMT_PMTT:
         case ACPI_DMT_PPTT:
@@ -1091,7 +1135,6 @@ AcpiDmDumpTable (
         case ACPI_DMT_HEST:
         case ACPI_DMT_HMAT:
         case ACPI_DMT_NFIT:
-        case ACPI_DMT_NHLT1e:
         case ACPI_DMT_PHAT:
         case ACPI_DMT_RHCT:
 
@@ -1156,6 +1199,16 @@ AcpiDmDumpTable (
         case ACPI_DMT_BUF18:
 
             ByteLength = 18;
+            break;
+
+        case ACPI_DMT_BUF32:
+
+            ByteLength = 32;
+            break;
+
+        case ACPI_DMT_BUF112:
+
+            ByteLength = 112;
             break;
 
         case ACPI_DMT_BUF128:
@@ -1369,6 +1422,8 @@ AcpiDmDumpTable (
         case ACPI_DMT_BUF12:
         case ACPI_DMT_BUF16:
         case ACPI_DMT_BUF18:
+        case ACPI_DMT_BUF32:
+        case ACPI_DMT_BUF112:
         case ACPI_DMT_BUF128:
             /*
              * Buffer: Size depends on the opcode and was set above.
@@ -1856,123 +1911,6 @@ AcpiDmDumpTable (
 
             AcpiOsPrintf (UINT16_FORMAT, ACPI_GET16 (Target),
                 AcpiDmNfitSubnames[Temp16]);
-            break;
-
-        case ACPI_DMT_NHLT1:
-
-            /* NHLT link types */
-
-            Temp8 = *Target;
-            if (Temp8 > ACPI_NHLT_TYPE_RESERVED)
-            {
-                Temp8 = ACPI_NHLT_TYPE_RESERVED;
-            }
-
-            AcpiOsPrintf (UINT8_FORMAT, *Target,
-                AcpiDmNhltLinkTypeNames[Temp8]);
-            break;
-
-        case ACPI_DMT_NHLT1a:
-
-            /* NHLT direction */
-
-            Temp8 = *Target;
-            if (Temp8 > ACPI_NHLT_DIR_RESERVED)
-            {
-                Temp8 = ACPI_NHLT_DIR_RESERVED;
-            }
-
-            AcpiOsPrintf (UINT8_FORMAT, *Target,
-                AcpiDmNhltDirectionNames[Temp8]);
-            break;
-
-        case ACPI_DMT_NHLT1b:
-
-            /* NHLT microphone type */
-
-            Temp8 = *Target;
-            if (Temp8 > ACPI_NHLT_MIC_RESERVED)
-            {
-                Temp8 = ACPI_NHLT_MIC_RESERVED;
-            }
-
-            AcpiOsPrintf (UINT8_FORMAT, *Target,
-                AcpiDmNhltMicTypeNames[Temp8]);
-            break;
-
-        case ACPI_DMT_NHLT1c:
-
-            /* NHLT microphone position */
-
-            Temp8 = *Target;
-            if (Temp8 > ACPI_NHLT_MIC_POSITION_RESERVED)
-            {
-                Temp8 = ACPI_NHLT_MIC_POSITION_RESERVED;
-            }
-
-            AcpiOsPrintf (UINT8_FORMAT, *Target,
-                AcpiDmNhltMicPositionNames[Temp8]);
-            break;
-
-        case ACPI_DMT_NHLT1d:
-
-            /* NHLT microphone array type */
-
-            Temp8 = *Target & ACPI_NHLT_ARRAY_TYPE_MASK;
-            if (Temp8 < ACPI_NHLT_ARRAY_TYPE_RESERVED)
-            {
-                Temp8 = ACPI_NHLT_ARRAY_TYPE_RESERVED;
-            }
-
-            AcpiOsPrintf (UINT8_FORMAT_NO_NEWLINE, *Target,
-                AcpiDmNhltMicArrayTypeNames[Temp8 - ACPI_NHLT_ARRAY_TYPE_RESERVED]);
-
-            Temp8 = *Target;
-            if (Temp8 & ACPI_NHLT_MIC_SNR_SENSITIVITY_EXT)
-            {
-                AcpiOsPrintf (" [%s]", "SNR and Sensitivity");
-            }
-
-            AcpiOsPrintf ("\n");
-            break;
-
-        case ACPI_DMT_NHLT1e:
-
-            /* NHLT Endpoint Device ID */
-
-            Temp16 = ACPI_GET16 (Target);
-            if (Temp16 == 0xAE20)
-            {
-                Name = "PDM DMIC";
-            }
-            else if (Temp16 == 0xAE30)
-            {
-                Name = "BT Sideband";
-            }
-            else if (Temp16 == 0xAE34)
-            {
-                Name = "I2S/TDM Codecs";
-            }
-            else
-            {
-                Name = "Unknown Device ID";
-            }
-
-            AcpiOsPrintf (UINT16_FORMAT, Temp16, Name);
-            break;
-
-        case ACPI_DMT_NHLT1f:
-
-            /* NHLT ConfigType field */
-
-            Temp8 = *Target;
-            if (Temp8 > ACPI_NHLT_CONFIG_TYPE_RESERVED)
-            {
-                Temp8 = ACPI_NHLT_CONFIG_TYPE_RESERVED;
-            }
-
-            AcpiOsPrintf (UINT8_FORMAT, *Target,
-                AcpiDmNhltConfigTypeNames[Temp8]);
             break;
 
         case ACPI_DMT_PCCT:

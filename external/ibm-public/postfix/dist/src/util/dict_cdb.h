@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cdb.h,v 1.2 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: dict_cdb.h,v 1.2.2.1 2025/08/02 05:50:18 perseant Exp $	*/
 
 #ifndef _DICT_CDB_H_INCLUDED_
 #define _DICT_CDB_H_INCLUDED_
@@ -43,4 +43,4 @@ extern MKMAP *mkmap_cdb_open(const char *);
 /*	New York, NY 10011, USA
 /*--*/
 
-#endif /* _DICT_CDB_H_INCLUDED_ */
+#endif					/* _DICT_CDB_H_INCLUDED_ */

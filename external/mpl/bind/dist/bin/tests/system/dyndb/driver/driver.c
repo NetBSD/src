@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.8 2024/02/21 22:51:27 christos Exp $	*/
+/*	$NetBSD: driver.c,v 1.8.2.1 2025/08/02 05:51:47 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -137,10 +137,10 @@ dyndb_init(isc_mem_t *mctx, const char *name, const char *parameters,
 cleanup:
 	isc_mem_free(mctx, s);
 	if (argv != NULL) {
-		isc_mem_put(mctx, argv, argc * sizeof(*argv));
+		isc_mem_cput(mctx, argv, argc, sizeof(*argv));
 	}
 
-	return (result);
+	return result;
 }
 
 /*
@@ -162,5 +162,5 @@ int
 dyndb_version(unsigned int *flags) {
 	UNUSED(flags);
 
-	return (DNS_DYNDB_VERSION);
+	return DNS_DYNDB_VERSION;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.112 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.112.2.1 2025/08/02 05:56:46 perseant Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.112 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.112.2.1 2025/08/02 05:56:46 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -271,6 +271,7 @@ struct vioif_tx_context {
 	void			*txc_deferred_transmit;
 
 	struct evcnt		 txc_defrag_failed;
+	struct evcnt		 txc_pcq_full;
 };
 
 struct vioif_rx_context {
@@ -840,6 +841,7 @@ vioif_transmit(struct ifnet *ifp, struct mbuf *m)
 	txc = netq->netq_ctx;
 
 	if (__predict_false(!pcq_put(txc->txc_intrq, m))) {
+		txc->txc_pcq_full.ev_count++;
 		m_freem(m);
 		return ENOBUFS;
 	}
@@ -1057,6 +1059,9 @@ vioif_setup_stats(struct vioif_softc *sc)
 			evcnt_attach_dynamic(&txc->txc_defrag_failed,
 			    EVCNT_TYPE_MISC, NULL, netq->netq_evgroup,
 			    "m_defrag() failed");
+			evcnt_attach_dynamic(&txc->txc_pcq_full,
+			    EVCNT_TYPE_MISC, NULL, netq->netq_evgroup,
+			    "pcq full");
 			break;
 		}
 	}
@@ -1291,7 +1296,7 @@ vioif_alloc_mems(struct vioif_softc *sc)
 
 		for (i = 0; i < vq_num; i++) {
 			maps[i].vnm_hdr = &hdrs[i];
-	
+
 			r = vioif_dmamap_create_load(sc, &maps[i].vnm_hdr_map,
 			    maps[i].vnm_hdr, sc->sc_hdr_size, 1,
 			    dmaparams[dir].dma_flag, dmaparams[dir].msg_hdr);
@@ -1531,7 +1536,7 @@ err:
 			softint_disestablish(txc->txc_deferred_transmit);
 		if (txc->txc_intrq != NULL)
 			pcq_destroy(txc->txc_intrq);
-		kmem_free(txc, sizeof(txc));
+		kmem_free(txc, sizeof(*txc));
 	}
 
 	vioif_work_set(&netq->netq_work, NULL, NULL);
@@ -1763,6 +1768,7 @@ vioif_populate_rx_mbufs_locked(struct vioif_softc *sc, struct vioif_netqueue *ne
 			rxc->rxc_mbuf_enobufs.ev_count++;
 			break;
 		}
+		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			virtio_enqueue_abort(vsc, vq, slot);

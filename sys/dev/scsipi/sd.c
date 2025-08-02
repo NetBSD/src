@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.336 2024/02/24 22:06:49 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.336.2.1 2025/08/02 05:57:03 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,11 +43,12 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
+ * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au)
+ * Sept 1992
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.336 2024/02/24 22:06:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.336.2.1 2025/08/02 05:57:03 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -105,13 +106,14 @@ static void	sd_iosize(device_t, int *);
 static int	sd_lastclose(device_t);
 static int	sd_firstopen(device_t, dev_t, int, int);
 static void	sd_label(device_t, struct disklabel *);
+static int	sd_discard(device_t, off_t, off_t);
 
 static int	sd_mode_sense(struct sd_softc *, u_int8_t, void *, size_t, int,
 		    int, int *);
-static int	sd_mode_select(struct sd_softc *, u_int8_t, void *, size_t, int,
-		    int);
+static int	sd_mode_select(struct sd_softc *, u_int8_t, void *, size_t,
+		    int, int);
 static int	sd_validate_blksize(struct scsipi_periph *, int);
-static u_int64_t sd_read_capacity(struct scsipi_periph *, int *, int flags);
+static u_int64_t sd_read_capacity(struct sd_softc *, int *, int flags);
 static int	sd_get_simplifiedparms(struct sd_softc *, struct disk_parms *,
 		    int);
 static int	sd_get_capacity(struct sd_softc *, struct disk_parms *, int);
@@ -158,6 +160,7 @@ static dev_type_ioctl(sdioctl);
 static dev_type_strategy(sdstrategy);
 static dev_type_dump(sddump);
 static dev_type_size(sdsize);
+static dev_type_discard(sddiscard);
 
 const struct bdevsw sd_bdevsw = {
 	.d_open = sdopen,
@@ -166,7 +169,7 @@ const struct bdevsw sd_bdevsw = {
 	.d_ioctl = sdioctl,
 	.d_dump = sddump,
 	.d_psize = sdsize,
-	.d_discard = nodiscard,
+	.d_discard = sddiscard,
 	.d_cfdriver = &sd_cd,
 	.d_devtounit = disklabel_dev_unit,
 	.d_flag = D_DISK | D_MPSAFE
@@ -183,7 +186,7 @@ const struct cdevsw sd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
-	.d_discard = nodiscard,
+	.d_discard = sddiscard,
 	.d_cfdriver = &sd_cd,
 	.d_devtounit = disklabel_dev_unit,
 	.d_flag = D_DISK | D_MPSAFE
@@ -200,6 +203,7 @@ static const struct dkdriver sddkdriver = {
 	.d_firstopen = sd_firstopen,
 	.d_lastclose = sd_lastclose,
 	.d_label = sd_label,
+	.d_discard = sd_discard,
 };
 
 static const struct scsipi_periphsw sd_switch = {
@@ -259,10 +263,13 @@ sdattach(device_t parent, device_t self, void *aux)
 
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
 	memcpy(sd->name, sa->sa_inqbuf.product, uimin(16, sizeof(sd->name)));
-	memcpy(sd->typename, sa->sa_inqbuf.product, uimin(16, sizeof(sd->typename)));
+	memcpy(sd->typename, sa->sa_inqbuf.product,
+	    uimin(16, sizeof(sd->typename)));
 
-	if (sd->type == T_SIMPLE_DIRECT)
-		periph->periph_quirks |= PQUIRK_ONLYBIG | PQUIRK_NOBIGMODESENSE;
+	if (sd->type == T_SIMPLE_DIRECT) {
+		periph->periph_quirks |= PQUIRK_ONLYBIG;
+		periph->periph_quirks |= PQUIRK_NOBIGMODESENSE;
+	}
 
 	switch (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(sa->sa_periph))) {
 	case SCSIPI_BUSTYPE_SCSI:
@@ -286,7 +293,8 @@ sdattach(device_t parent, device_t self, void *aux)
 	dk_attach(dksc);
 	disk_attach(&dksc->sc_dkdev);
 
-	bufq_alloc(&dksc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&dksc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT,
+	    BUFQ_SORT_RAWBLOCK);
 
 	callout_init(&sd->sc_callout, 0);
 
@@ -298,11 +306,11 @@ sdattach(device_t parent, device_t self, void *aux)
 	periph->periph_dev = dksc->sc_dev;
 	periph->periph_switch = &sd_switch;
 
-        /*
-         * Increase our openings to the maximum-per-periph
-         * supported by the adapter.  This will either be
-         * clamped down or grown by the adapter if necessary.
-         */
+	/*
+	 * Increase our openings to the maximum-per-periph
+	 * supported by the adapter.  This will either be
+	 * clamped down or grown by the adapter if necessary.
+	 */
 	periph->periph_openings =
 	    SCSIPI_CHAN_MAX_PERIPH(periph->periph_channel);
 	periph->periph_flags |= PERIPH_GROW_OPENINGS;
@@ -329,10 +337,18 @@ sdattach(device_t parent, device_t self, void *aux)
 	case SDGP_RESULT_OK:
 		format_bytes(pbuf, sizeof(pbuf),
 		    (u_int64_t)dp->disksize * dp->blksize);
-	        aprint_normal(
-		"%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect x %llu sectors",
+		aprint_normal("%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect"
+		    " x %llu sectors",
 		    pbuf, dp->cyls, dp->heads, dp->sectors, dp->blksize,
 		    (unsigned long long)dp->disksize);
+		if (dp->lbppbe) {
+			aprint_normal(" (%lu bytes/physsect", dp->blksize <<
+			    dp->lbppbe);
+			if (dp->lalba)
+				aprint_normal("; first aligned sector %u",
+				    dp->lalba);
+			aprint_normal(")");
+		}
 		break;
 
 	case SDGP_RESULT_OFFLINE:
@@ -376,7 +392,8 @@ sddetach(device_t self, int flags)
 	struct scsipi_channel *chan = periph->periph_channel;
 	int bmaj, cmaj, i, mn, rc;
 
-	if ((rc = disk_begindetach(&dksc->sc_dkdev, sd_lastclose, self, flags)) != 0)
+	rc = disk_begindetach(&dksc->sc_dkdev, sd_lastclose, self, flags);
+	if (rc)
 		return rc;
 
 	/* locate the major number */
@@ -951,7 +968,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return (scsipi_prevent(periph,
 			    (*(int *)addr) ?
 			    SPAMR_PREVENT_DT : SPAMR_ALLOW, 0));
-		else 
+		else
 			return (ENOTTY);
 
 	case DIOCEJECT:
@@ -1003,9 +1020,11 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return (0);
 
 	default:
-		error = dk_ioctl(dksc, dev, cmd, addr, flag, l); 
-		if (error == ENOTTY)
-			error = scsipi_do_ioctl(periph, dev, cmd, addr, flag, l);
+		error = dk_ioctl(dksc, dev, cmd, addr, flag, l);
+		if (error == ENOTTY) {
+			error = scsipi_do_ioctl(periph, dev, cmd, addr, flag,
+			    l);
+		}
 		return (error);
 	}
 
@@ -1016,13 +1035,58 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 static void
 sd_label(device_t self, struct disklabel *lp)
-{               
+{
 	struct sd_softc *sd = device_private(self);
 
 	strncpy(lp->d_typename, sd->name, 16);
 	lp->d_rpm = sd->params.rot_rate;
 	if (sd->sc_periph->periph_flags & PERIPH_REMOVABLE)
 		lp->d_flags |= D_REMOVABLE;
+}
+
+static int
+sd_unmap(struct sd_softc *sd, off_t pos, off_t len)
+{
+	struct scsi_unmap_10 cmd;
+	struct scsi_unmap_10_data data;
+	int flags = 0;
+	uint64_t bno;
+	uint32_t size;
+
+	/* round the start up and the end down */
+	bno = (pos + sd->params.blksize - 1) / sd->params.blksize;
+	size = ((pos + len) / sd->params.blksize) - bno;
+
+	if (size == 0)
+		return 0;
+
+	memset(&data, 0, sizeof(data));
+	_lto2b(sizeof(data) - 2, data.unmap_data_length);
+	_lto2b(sizeof(data) - 8, data.unmap_block_descriptor_data_length);
+	_lto8b(bno, data.unmap_block_descriptor[0].addr);
+	_lto4b(size, data.unmap_block_descriptor[0].len);
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = UNMAP_10;
+	cmd.byte2 = 0;
+	_lto2b(sizeof(data), cmd.length);
+
+	scsipi_command(sd->sc_periph,
+	    (void *)&cmd, sizeof(cmd), (void *)&data, sizeof(data),
+	    SDRETRIES, 2000000, NULL,
+	    flags | XS_CTL_DATA_OUT);
+
+	return 0;
+}
+
+static int
+sd_discard(device_t self, off_t pos, off_t len)
+{
+	struct sd_softc *sd = device_private(self);
+	if (sd->flags & SDF_LBPU) {
+		return sd_unmap(sd, pos, len);
+	}
+	return ENODEV;
 }
 
 static bool
@@ -1089,14 +1153,6 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 		xs->xs_control |= XS_CTL_IGNORE_ILLEGAL_REQUEST;
 		return (retval);
 	}
-
-
-
-	/*
-	 * If the device is not open yet, let the generic code handle it.
-	 */
-	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)
-		return (retval);
 
 	/*
 	 * If it isn't a extended or extended/deferred error, let
@@ -1207,10 +1263,13 @@ sd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	struct dk_softc *dksc = &sd->sc_dksc;
 	struct disk_geom *dg = &dksc->sc_dkdev.dk_geom;
 	struct scsipi_rw_10 cmd;	/* write command */
+	struct scsipi_rw_16 cmd16;	/* write command */
+	struct scsipi_generic *cmdp;
 	struct scsipi_xfer *xs;		/* ... convenience */
 	struct scsipi_periph *periph;
 	struct scsipi_channel *chan;
 	size_t sectorsize;
+	int cmdlen;
 
 	periph = sd->sc_periph;
 	chan = periph->periph_channel;
@@ -1223,10 +1282,22 @@ sd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	/*
 	 *  Fill out the scsi command
 	 */
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = WRITE_10;
-	_lto4b(blkno, cmd.addr);
-	_lto2b(nblk, cmd.length);
+	if ((blkno & 0xffffffff) == blkno) {
+		memset(&cmd, 0, sizeof(cmd));
+		cmd.opcode = WRITE_10;
+		_lto4b(blkno, cmd.addr);
+		_lto2b(nblk, cmd.length);
+		cmdlen = sizeof(cmd);
+		cmdp = (struct scsipi_generic *)&cmd;
+	} else {
+		memset(&cmd16, 0, sizeof(cmd16));
+		cmd16.opcode = WRITE_16;
+		_lto8b(blkno, cmd16.addr);
+		_lto4b(nblk, cmd16.length);
+		cmdlen = sizeof(cmd16);
+		cmdp = (struct scsipi_generic *)&cmd16;
+	}
+
 	/*
 	 * Fill out the scsipi_xfer structure
 	 *    Note: we cannot sleep as we may be an interrupt
@@ -1240,8 +1311,8 @@ sd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	xs->xs_periph = periph;
 	xs->xs_retries = SDRETRIES;
 	xs->timeout = 10000;	/* 10000 millisecs for a disk ! */
-	xs->cmd = (struct scsipi_generic *)&cmd;
-	xs->cmdlen = sizeof(cmd);
+	xs->cmd = cmdp;
+	xs->cmdlen = cmdlen;
 	xs->resid = nblk * sectorsize;
 	xs->error = XS_NOERROR;
 	xs->bp = 0;
@@ -1309,13 +1380,13 @@ sd_mode_select(struct sd_softc *sd, u_int8_t byte2, void *sense, size_t size,
 /*
  * sd_validate_blksize:
  *
- *	Validate the block size.  Print error if periph is specified, 
+ *	Validate the block size.  Print error if periph is specified,
  */
 static int
 sd_validate_blksize(struct scsipi_periph *periph, int len)
 {
 
-	if (len >= 256 && powerof2(len) && len <= 4096) {
+	if (len >= 256 && powerof2(len) && len <= MAXPHYS) {
 		return 1;
 	}
 
@@ -1336,8 +1407,9 @@ sd_validate_blksize(struct scsipi_periph *periph, int len)
  *	Find out from the device what its capacity is.
  */
 static u_int64_t
-sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
+sd_read_capacity(struct sd_softc *sd, int *blksize, int flags)
 {
+	struct scsipi_periph *periph = sd->sc_periph;
 	union {
 		struct scsipi_read_capacity_10 cmd;
 		struct scsipi_read_capacity_16 cmd16;
@@ -1347,6 +1419,9 @@ sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
 		struct scsipi_read_capacity_16_data data16;
 	} *datap;
 	uint64_t rv;
+
+	sd->params.lbppbe = 0;
+	sd->params.lalba = 0;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.cmd.opcode = READ_CAPACITY_10;
@@ -1360,6 +1435,9 @@ sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
 	datap = malloc(sizeof(*datap), M_TEMP, M_WAITOK);
 	if (datap == NULL)
 		return 0;
+
+	if (periph->periph_version >= 5) /* SPC-3 */
+		goto rc16;
 
 	/*
 	 * If the command works, interpret the result as a 4 byte
@@ -1383,6 +1461,7 @@ sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
 	 * Try READ CAPACITY (16).
 	 */
 
+ rc16:
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.cmd16.opcode = READ_CAPACITY_16;
 	cmd.cmd16.byte2 = SRC16_SERVICE_ACTION;
@@ -1396,6 +1475,13 @@ sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
 
 	*blksize = _4btol(datap->data16.length);
 	rv = _8btol(datap->data16.addr) + 1;
+	sd->params.lbppbe = datap->data16.byte14 & SRC16D_LBPPB_EXPONENT;
+	sd->params.lalba = _2btol(datap->data16.lowest_aligned) & SRC16D_LALBA;
+	if (_2btol(datap->data16.lowest_aligned) & SRC16D_LBPME) {
+		sd->flags |= SDF_LBPME;
+	} else {
+		sd->flags &= ~SDF_LBPME;
+	}
 
  out:
 	free(datap, M_TEMP);
@@ -1427,7 +1513,7 @@ sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	 * XXX probably differs for removable media
 	 */
 	dp->blksize = SD_DEFAULT_BLKSIZE;
-	if ((blocks = sd_read_capacity(sd->sc_periph, &blksize, flags)) == 0)
+	if ((blocks = sd_read_capacity(sd, &blksize, flags)) == 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	error = scsipi_mode_sense(sd->sc_periph, SMS_DBD, 6,
@@ -1475,8 +1561,7 @@ sd_get_capacity(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	u_int8_t *p;
 #endif
 
-	dp->disksize = blocks = sd_read_capacity(sd->sc_periph, &blksize,
-	    flags);
+	dp->disksize = blocks = sd_read_capacity(sd, &blksize, flags);
 	if (blocks == 0) {
 		struct scsipi_read_format_capacities cmd;
 		struct {
@@ -1529,15 +1614,17 @@ printf("rfc result:"); for (i = sizeof(struct scsipi_capacity_list_header) + dat
 
 		memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 		error = sd_mode_sense(sd, 0, &scsipi_sense,
-		    sizeof(scsipi_sense.blk_desc), 0, flags | XS_CTL_SILENT, &big);
-		if (!error) {
-			if (big) {
-				bdesc = (void *)(&scsipi_sense.header.big + 1);
-				bsize = _2btol(scsipi_sense.header.big.blk_desc_len);
-			} else {
-				bdesc = (void *)(&scsipi_sense.header.small + 1);
-				bsize = scsipi_sense.header.small.blk_desc_len;
-			}
+		    sizeof(scsipi_sense.blk_desc), 0, flags | XS_CTL_SILENT,
+		    &big);
+		if (error)
+			goto next;
+		if (big) {
+			bdesc = (void *)(&scsipi_sense.header.big + 1);
+			bsize = _2btol(scsipi_sense.header.big.blk_desc_len);
+		} else {
+			bdesc = (void *)(&scsipi_sense.header.small + 1);
+			bsize = scsipi_sense.header.small.blk_desc_len;
+		}
 
 #if 0
 printf("page 0 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
@@ -1545,17 +1632,38 @@ printf("page 0 bsize=%d\n", bsize);
 printf("page 0 ok\n");
 #endif
 
-			if (bsize >= 8) {
-				blksize = _3btol(bdesc->blklen);
-			}
+		if (bsize >= 8) {
+			blksize = _3btol(bdesc->blklen);
 		}
 	}
-
+next:
 	if (!sd_validate_blksize(sd->sc_periph, blksize))
 		blksize = SD_DEFAULT_BLKSIZE;
 
 	dp->blksize = blksize;
 	dp->disksize512 = (blocks * dp->blksize) / DEV_BSIZE;
+
+	if ((sd->flags & SDF_LBPME) == 0)
+		goto end;
+	struct scsipi_inquiry cmd;
+	struct scsi_vpd_logical_block_provisioning vpdbuf;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = INQUIRY;
+	cmd.length = sizeof(vpdbuf);
+	cmd.byte2 |= SINQ_EVPD;
+	cmd.pagecode = SINQ_VPD_LOGICAL_PROV;
+
+	sd->flags &= ~SDF_LBPU;
+	if (scsipi_command(sd->sc_periph, (void *)&cmd, sizeof(cmd),
+		(void *)&vpdbuf, sizeof(vpdbuf),
+		SDRETRIES, 100000, NULL,
+		flags | XS_CTL_DATA_IN | XS_CTL_IGNORE_ILLEGAL_REQUEST))
+		goto end;
+
+	if (vpdbuf.flags & VPD_LBP_LBPU)
+		sd->flags |= SDF_LBPU;
+
+end:
 	return (0);
 }
 
@@ -1937,6 +2045,21 @@ sd_set_geometry(struct sd_softc *sd)
 	dg->dg_nsectors = sd->params.sectors;
 	dg->dg_ntracks = sd->params.heads;
 	dg->dg_ncylinders = sd->params.cyls;
+	dg->dg_physsecsize = dg->dg_secsize << sd->params.lbppbe;
+	dg->dg_alignedsec = sd->params.lalba;
 
 	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, sd->typename);
 }
+
+static int
+sddiscard(dev_t dev, off_t pos, off_t len)
+{
+	struct sd_softc *sd;
+	int unit;
+
+	unit = SDUNIT(dev);
+	sd = device_lookup_private(&sd_cd, unit);
+
+	return dk_discard(&sd->sc_dksc, dev, pos, len);
+}
+

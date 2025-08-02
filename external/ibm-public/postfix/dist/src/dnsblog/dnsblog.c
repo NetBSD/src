@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsblog.c,v 1.4 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: dnsblog.c,v 1.4.4.1 2025/08/02 05:50:05 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -45,7 +45,8 @@
 /*	How much time a Postfix daemon process may take to handle a
 /*	request before it is terminated by a built-in watchdog timer.
 /* .IP "\fBpostscreen_dnsbl_sites (empty)\fR"
-/*	Optional list of DNS allow/denylist domains, filters and weight
+/*	Optional list of patterns with DNS allow/denylist domains, filters
+/*	and weight
 /*	factors.
 /* .IP "\fBipc_timeout (3600s)\fR"
 /*	The time limit for sending or receiving information over an internal

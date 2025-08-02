@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.h,v 1.7 2024/02/21 22:52:45 christos Exp $	*/
+/*	$NetBSD: namedconf.h,v 1.7.2.1 2025/08/02 05:54:07 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

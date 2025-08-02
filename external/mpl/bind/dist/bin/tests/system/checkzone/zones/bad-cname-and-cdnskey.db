@@ -1,0 +1,20 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 600
+@		SOA	ns hostmaster 2011012708 3600 1200 604800 1200
+		NS	ns
+ns		A	192.0.2.1
+bad		CDNSKEY	512 ( 255 1 AQMFD5raczCJHViKtLYhWGz8hMY
+			9UGRuniJDBzC7w0aRyzWZriO6i2odGWWQVucZqKV
+			sENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esg
+			a60zyGW6LFe9r8n6paHrlG5ojqf0BaqHT+8= )
+bad		CNAME	@

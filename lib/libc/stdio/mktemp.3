@@ -1,4 +1,4 @@
-.\"	$NetBSD: mktemp.3,v 1.33 2024/05/04 05:50:49 rillig Exp $
+.\"	$NetBSD: mktemp.3,v 1.33.2.1 2025/08/02 05:54:40 perseant Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mktemp.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 4, 2024
+.Dd November 2, 2024
 .Dt MKTEMP 3
 .Os
 .Sh NAME
@@ -310,6 +310,10 @@ The
 .Fn mkdtemp
 function conforms to
 .St -p1003.1-2008 .
+The
+.Fn mkostemp
+function conforms to
+.St -p1003.1-2024 .
 .Sh HISTORY
 A
 .Fn mktemp

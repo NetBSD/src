@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold.c,v 1.16 2024/06/08 06:37:06 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.16.2.1 2025/08/02 05:58:14 perseant Exp $	*/
 # 3 "expr_fold.c"
 
 /*
@@ -275,7 +275,6 @@ fold_bitor(void)
  */
 struct ctassert5_struct {
 	unsigned int member:
-	    /*CONSTCOND*/
 	    0xfffffffeU
 	    <=
 		((1ULL << 63) + 1 < 1 ? ~(1ULL << 63) : ~0ULL) / 0xfffffe00U

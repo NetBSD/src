@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.7.6.1 2025/08/02 05:56:03 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
 	MSG(msg)
 
 #define	MSG(msg)			\
-        .pushsection .rodata.str1.8,"aMS",@progbits,1; \
+	.pushsection .rodata.str1.8,"aMS",@progbits,1; \
 9:	.asciiz	msg;			\
 	.popsection
 
@@ -121,9 +121,18 @@
 	.asciiz str;			\
 	.align	3
 
+#ifdef _NETBSD_REVISIONID
+#define __RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+			.asciz x;					\
+			.ascii "$"; .ascii "NetBSD: "; .ascii __FILE__;	\
+			.ascii " "; .ascii _NETBSD_REVISIONID;		\
+			.asciz " $";					\
+			.popsection
+#else
 #define __RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
 			.asciz x;					\
 			.popsection
+#endif
 #define RCSID(name)	__RCSID(name)
 
 #if defined(_LP64)

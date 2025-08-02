@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.11 2024/05/06 12:11:03 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.11.2.1 2025/08/02 05:58:06 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.11 2024/05/06 12:11:03 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.11.2.1 2025/08/02 05:58:06 perseant Exp $");
 
+#include <dlfcn.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stddef.h>
@@ -43,6 +44,52 @@ sigjmp_buf sigjmp;
 unsigned nentries;
 const char *bailname;
 void (*bailfn)(void) __dead;
+
+/*
+ * Optional compat13 functions from when sigcontext was expanded.
+ * Fortunately the only change visible to the caller is that the size
+ * of jmp_buf increased, so we can always use the old symbols with new
+ * jmp_buf arrays.
+ */
+int (*compat13_sigsetjmp)(sigjmp_buf, int);
+void (*compat13_siglongjmp)(sigjmp_buf, int) __dead;
+int (*compat13_setjmp)(jmp_buf);
+void (*compat13_longjmp)(jmp_buf, int) __dead;
+
+/*
+ * compatsigsys(signo)
+ *
+ *	Signal handler for SIGSYS in case compat_13_sigreturn13 is not
+ *	implemented by the kernel -- we will just skip the test in that
+ *	case.
+ */
+static void
+compatsigsys(int signo)
+{
+
+	atf_tc_skip("no compat syscalls to test");
+}
+
+static void
+compatsetup(void)
+{
+
+	/*
+	 * Grab the libc library symbols if available.
+	 */
+	if ((compat13_sigsetjmp = dlsym(RTLD_SELF, "sigsetjmp")) == NULL ||
+	    (compat13_siglongjmp = dlsym(RTLD_SELF, "siglongjmp")) == NULL ||
+	    (compat13_setjmp = dlsym(RTLD_SELF, "setjmp")) == NULL ||
+	    (compat13_longjmp = dlsym(RTLD_SELF, "longjmp")) == NULL)
+		atf_tc_skip("no compat functions to test");
+
+	/*
+	 * Arrange for SIGSYS to skip the test -- this happens if the
+	 * libc stub has the function, but the kernel isn't built with
+	 * support for the compat13 sigreturn syscall for longjmp.
+	 */
+	REQUIRE_LIBC(signal(SIGSYS, &compatsigsys), SIG_ERR);
+}
 
 static void
 on_sigusr1(int signo, siginfo_t *si, void *ctx)
@@ -77,28 +124,7 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 	 * Ensure that if we enter the signal handler, we are entering
 	 * it from the original stack, not from any of the alternate
 	 * signal stacks.
-	 *
-	 * On some architectures, this is broken.  Those that appear to
-	 * get this right are:
-	 *
-	 *	aarch64
-	 *	alpha
-	 *	arm
-	 *	i386
-	 *	m68k
-	 *	or1k
-	 *	powerpc
-	 *	powerpc64
-	 *	riscv
-	 *	vax
-	 *	x86_64
 	 */
-#if defined __hppa__ || \
-    defined __ia64__ || defined __mips__ || defined __sh3__ || \
-    defined __sparc__ || defined __sparc64__
-	if (nentries > 0)
-		atf_tc_expect_fail("PR lib/57946");
-#endif
 	for (ssp = &ss[0]; ssp < &ss[__arraycount(ss)]; ssp++) {
 		ATF_REQUIRE_MSG((sp < ssp->ss_sp ||
 			sp >= (void *)((char *)ssp->ss_sp + ssp->ss_size)),
@@ -208,6 +234,12 @@ ATF_TC_HEAD(setjmp, tc)
 ATF_TC_BODY(setjmp, tc)
 {
 
+#if defined __ia64__
+	atf_tc_expect_fail("PR lib/57946:"
+	    " longjmp fails to restore stack first before"
+	    " restoring signal mask on most architectures");
+#endif
+
 	/*
 	 * Set up a return point for the signal handler: when the
 	 * signal handler does longjmp(jmp, 1), it comes flying out of
@@ -220,6 +252,49 @@ ATF_TC_BODY(setjmp, tc)
 	 * Run the test with longjmp.
 	 */
 	go("longjmp", &bail_longjmp);
+}
+
+static void __dead
+bail_compat13_longjmp(void)
+{
+
+	(*compat13_longjmp)(jmp, 1);
+}
+
+ATF_TC(compat13_setjmp);
+ATF_TC_HEAD(compat13_setjmp, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test compat13 longjmp restores stack first, then signal mask");
+}
+ATF_TC_BODY(compat13_setjmp, tc)
+{
+
+	compatsetup();
+
+#if defined __arm__ || defined __i386__ || defined __sh3__
+#ifndef __arm__			/* will be exposed once PR 59351 is fixed */
+	atf_tc_expect_fail("PR lib/57946:"
+	    " longjmp fails to restore stack first before"
+	    " restoring signal mask on most architectures");
+#endif
+#endif
+#ifdef __arm__
+	atf_tc_expect_signal(-1, "PR port-arm/59351: compat_setjmp is busted");
+#endif
+
+	/*
+	 * Set up a return point for the signal handler: when the
+	 * signal handler does (*compat13_longjmp)(jmp, 1), it comes
+	 * flying out of here.
+	 */
+	if ((*compat13_setjmp)(jmp) == 1)
+		return;
+
+	/*
+	 * Run the test with compat13_longjmp.
+	 */
+	go("longjmp", &bail_compat13_longjmp);
 }
 
 static void __dead
@@ -238,6 +313,12 @@ ATF_TC_HEAD(sigsetjmp, tc)
 ATF_TC_BODY(sigsetjmp, tc)
 {
 
+#if defined __ia64__
+	atf_tc_expect_fail("PR lib/57946:"
+	    " longjmp fails to restore stack first before"
+	    " restoring signal mask on most architectures");
+#endif
+
 	/*
 	 * Set up a return point for the signal handler: when the
 	 * signal handler does siglongjmp(sigjmp, 1), it comes flying
@@ -252,9 +333,55 @@ ATF_TC_BODY(sigsetjmp, tc)
 	go("siglongjmp", &bail_siglongjmp);
 }
 
+static void __dead
+bail_compat13_siglongjmp(void)
+{
+
+	(*compat13_siglongjmp)(sigjmp, 1);
+}
+
+ATF_TC(compat13_sigsetjmp);
+ATF_TC_HEAD(compat13_sigsetjmp, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test compat13 siglongjmp restores stack first,"
+	    " then signal mask");
+}
+ATF_TC_BODY(compat13_sigsetjmp, tc)
+{
+
+	compatsetup();
+
+#if defined __arm__ || defined __i386__ || defined __sh3__
+#ifndef __arm__			/* will be exposed once PR 59351 is fixed */
+	atf_tc_expect_fail("PR lib/57946:"
+	    " longjmp fails to restore stack first before"
+	    " restoring signal mask on most architectures");
+#endif
+#endif
+#ifdef __arm__
+	atf_tc_expect_signal(-1, "PR port-arm/59351: compat_setjmp is busted");
+#endif
+
+	/*
+	 * Set up a return point for the signal handler: when the
+	 * signal handler does (*compat13_siglongjmp)(sigjmp, 1), it
+	 * comes flying out of here.
+	 */
+	if ((*compat13_sigsetjmp)(sigjmp, /*savesigmask*/1) == 1)
+		return;
+
+	/*
+	 * Run the test with compat13_siglongjmp.
+	 */
+	go("siglongjmp", &bail_compat13_siglongjmp);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, compat13_setjmp);
+	ATF_TP_ADD_TC(tp, compat13_sigsetjmp);
 	ATF_TP_ADD_TC(tp, setjmp);
 	ATF_TP_ADD_TC(tp, sigsetjmp);
 

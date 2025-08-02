@@ -1,4 +1,4 @@
-/*	$NetBSD: slmdb.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: slmdb.c,v 1.4.4.1 2025/08/02 05:50:20 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -283,8 +283,8 @@
   * closest thing that C has to exception handling). The application is then
   * expected to repeat the bulk transaction from scratch.
   * 
-  * When any code aborts a bulk transaction, it must reset slmdb->txn to null
-  * to avoid a use-after-free problem in slmdb_close().
+  * When any code aborts a bulk transaction, it must reset slmdb->txn to null to
+  * avoid a use-after-free problem in slmdb_close().
   */
 
  /*

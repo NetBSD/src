@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.8 2011/04/29 08:05:22 matt Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.8.56.1 2025/08/02 05:54:32 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,14 +31,19 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.8 2011/04/29 08:05:22 matt Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.8.56.1 2025/08/02 05:54:32 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <sys/param.h>
 #include <sys/types.h>
-#include <ucontext.h>
+
 #include <lwp.h>
 #include <stdlib.h>
+#include <ucontext.h>
+
+#include <machine/lwp_private.h>
 
 #if defined(__mips_o32) || defined(__mips_o64)
 #define CALLFRAME_SIZ	(6 * sizeof(void *))
@@ -65,7 +70,7 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	gr[_REG_T9] = (uintptr_t) start; /* required for .abicalls */
 	gr[_REG_RA] = (uintptr_t) _lwp_exit;
 	gr[_REG_A0] = (uintptr_t) arg;
-	gr[_REG_SP] = (uintptr_t) sp;
+	gr[_REG_SP] = (uintptr_t) sp & ~STACK_ALIGNBYTES;
 	u->uc_mcontext._mc_tlsbase =
 	    (uintptr_t)tcb + TLS_TP_OFFSET + sizeof(struct tls_tcb);
 	u->uc_flags |= _UC_TLSBASE;

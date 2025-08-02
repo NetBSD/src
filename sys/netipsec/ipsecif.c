@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.22 2023/09/01 11:23:39 andvar Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.22.6.1 2025/08/02 05:57:51 perseant Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.22 2023/09/01 11:23:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.22.6.1 2025/08/02 05:57:51 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -165,7 +165,7 @@ ipsecif4_prepend_hdr(struct ipsec_variant *var, struct mbuf *m,
 	if (m->m_pkthdr.len < IP_MINFRAGSIZE)
 		ip->ip_id = 0;
 	else
-		ip->ip_id = ip_newid(NULL);
+		ip->ip_id = ip_newid();
 	ip->ip_hl = sizeof(*ip) >> 2;
 	if (ip_ipsec_copy_tos)
 		ip->ip_tos = tos;
@@ -447,7 +447,7 @@ ipsecif4_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	if (error == ENOENT)
 		error = 0;
 	/*
-	 * frangmentation is already done in ipsecif4_fragout(),
+	 * fragmentation is already done in ipsecif4_fragout(),
 	 * so ipsec4_process_packet() must not do fragmentation here.
 	 */
 	KASSERT(sa_mtu == 0);

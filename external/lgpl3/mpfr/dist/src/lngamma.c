@@ -34,8 +34,8 @@ static void
 mpfr_gamma_alpha (mpfr_ptr s, mpfr_prec_t p)
 {
   MPFR_LOG_FUNC
-    (("p=%Pu", p),
-     ("s[%Pu]=%.*Rg", mpfr_get_prec (s), mpfr_log_prec, s));
+    (("p=%Pd", p),
+     ("s[%Pd]=%.*Rg", mpfr_get_prec (s), mpfr_log_prec, s));
 
   if (p <= 100)
     mpfr_set_ui_2exp (s, 614, -10, MPFR_RNDN); /* about 0.6 */
@@ -179,8 +179,8 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
   MPFR_ZIV_DECL (loop);
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec (z0), mpfr_log_prec, z0, rnd),
-     ("y[%Pu]=%.*Rg inexact=%d",
+    (("x[%Pd]=%.*Rg rnd=%d", mpfr_get_prec (z0), mpfr_log_prec, z0, rnd),
+     ("y[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec (y), mpfr_log_prec, y, inexact));
 
   compared = mpfr_cmp_ui (z0, 1);
@@ -723,8 +723,8 @@ mpfr_lngamma (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
   int inex;
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec (x), mpfr_log_prec, x, rnd),
-     ("y[%Pu]=%.*Rg inexact=%d",
+    (("x[%Pd]=%.*Rg rnd=%d", mpfr_get_prec (x), mpfr_log_prec, x, rnd),
+     ("y[%Pd]=%.*Rg inexact=%d",
       mpfr_get_prec (y), mpfr_log_prec, y, inex));
 
   /* special cases */
@@ -763,8 +763,8 @@ mpfr_lgamma (mpfr_ptr y, int *signp, mpfr_srcptr x, mpfr_rnd_t rnd)
   int inex;
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec (x), mpfr_log_prec, x, rnd),
-     ("y[%Pu]=%.*Rg signp=%d inexact=%d",
+    (("x[%Pd]=%.*Rg rnd=%d", mpfr_get_prec (x), mpfr_log_prec, x, rnd),
+     ("y[%Pd]=%.*Rg signp=%d inexact=%d",
       mpfr_get_prec (y), mpfr_log_prec, y, *signp, inex));
 
   *signp = 1;  /* most common case */

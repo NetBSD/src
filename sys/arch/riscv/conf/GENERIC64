@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.9 2024/02/09 08:51:49 skrll Exp $
+# $NetBSD: GENERIC64,v 1.9.2.1 2025/08/02 05:56:02 perseant Exp $
 #
 # GENERIC machine description file
 #
@@ -49,11 +49,34 @@ options 	DEBUG		# expensive debugging checks/support
 # Cache controller
 ccache* 	at fdt?			# SiFive FU[57]40 L2 Cache
 
-# Clock controller
+# Fixed Voltage/Current Regulators
+fregulator* 	at fdt? pass 4
+
+# Clock and reset controller
 jh7100clkc* 	at fdt?	pass 2		# StarFive JH7100 clock controller
+jh7110clkc* 	at fdt?	pass 2		# StarFive JH7110 clock controller
+sun20id1ccu* 	at fdt? pass 2		# Allwinner D1/D1s CCU
+
+# Security ID EFUSE
+sunxisid* 	at fdt? pass 4		# Allwinner SID
+
+# DMA
+sun6idma* 	at fdt? pass 4		# Allwinner DMA controller (sun6i)
+
+# PCIe PHY
+jh7110pciephy* 	at fdt? pass 3		# StarFive JH7110 PCIe PHY
+
+# PCIe
+jh7110pcie* 	at fdt?			# StarFive JH7110 PCIe
 
 # Pin control
 jh7100pinctrl* 	at fdt? pass 2		# StarFive JH7100 pinctrl driver
+jh7110pinctrl* 	at fdt? pass 2		# StarFive JH7110 pinctrl driver
+sunxigpio* 	at fdt? pass 2		# Allwinner GPIO
+gpio* 		at gpiobus?
+
+# System control
+jh7110syscon* 	at fdt? pass 1
 
 # SDMMC
 dwcmmc* 	at fdt?			# DesignWare SD/MMC
@@ -65,14 +88,26 @@ ld3 		at sdmmc3
 ld* 		at sdmmc?
 bwfm* 		at sdmmc?		# Broadcom BCM43xxx WiFi Interface
 
+# USB PHY
+sunxiusbphy* 	at fdt?			# Allwinner USB PHY
+
 # USB
 jh71x0usb* 	at fdt?			# StarFive JH71x0 usb
 
-# USB
-xhci* 		at fdt?			# XHCI
-usb* 		at usbus?
-include "dev/usb/usbdevices.config"
-midi* 		at midibus?
+# Ethernet
+#awge* 		at fdt?			# DesignWare Gigabit Ethernet
+eqos* 		at fdt?			# DesignWare Ethernet QoS
+
+# MII/PHY support
+micphy* 	at mii? phy ?		# Micrel KSZ[89]xxx PHYs
+mcommphy* 	at mii? phy ?		# Motorcomm YT8511C/YT8511H PHYs
+ukphy* 		at mii? phy ?		# generic unknown PHYs
+
+# Temperature sensor
+jh71x0temp* 	at fdt?			# StarFive JH71x0 Temperature sensor
+
+# Random number generators
+jh7110trng* 	at fdt?			# StarFive JH7110 True RNG
 
 # Pull in optional local configuration - always at end
 cinclude 	"arch/riscv/conf/GENERIC64.local"

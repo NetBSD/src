@@ -207,17 +207,14 @@
 # .PP
 #	Other parameters of interest:
 # .IP "\fBinet_interfaces (all)\fR"
-#	The network interface addresses that this mail system receives
-#	mail on.
+#	The local network interface addresses that this mail system
+#	receives mail on.
 # .IP "\fBlocal_header_rewrite_clients (permit_inet_interfaces)\fR"
-#	Rewrite message header addresses in mail from these clients and
-#	update incomplete addresses with the domain name in $myorigin or
-#	$mydomain; either don't rewrite message headers from other clients
-#	at all, or rewrite message headers and update incomplete addresses
-#	with the domain specified in the remote_header_rewrite_domain
-#	parameter.
+#	Rewrite or add message headers in mail from these clients,
+#	updating incomplete addresses with the domain name in $myorigin or
+#	$mydomain, and adding missing headers.
 # .IP "\fBproxy_interfaces (empty)\fR"
-#	The network interface addresses that this mail system receives mail
+#	The remote network interface addresses that this mail system receives mail
 #	on by way of a proxy or network address translation unit.
 # .IP "\fBmasquerade_classes (envelope_sender, header_sender, header_recipient)\fR"
 #	What addresses are subject to address masquerading.
@@ -239,9 +236,10 @@
 #	\fIlistname\fR-request address localparts when the recipient_delimiter
 #	is set to "-".
 # .IP "\fBremote_header_rewrite_domain (empty)\fR"
-#	Don't rewrite message headers from remote clients at all when
-#	this parameter is empty; otherwise, rewrite message headers and
-#	append the specified domain name to incomplete addresses.
+#	Rewrite or add message headers in mail from remote clients if
+#	the remote_header_rewrite_domain parameter value is non-empty,
+#	updating incomplete addresses with the domain specified in the
+#	remote_header_rewrite_domain parameter, and adding missing headers.
 # SEE ALSO
 #	cleanup(8), canonicalize and enqueue mail
 #	postmap(1), Postfix lookup table manager

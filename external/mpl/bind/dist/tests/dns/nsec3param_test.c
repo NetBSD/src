@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3param_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: nsec3param_test.c,v 1.2.6.1 2025/08/02 05:54:11 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -81,7 +81,7 @@ copy_params(nsec3param_rdata_test_params_t from, dns_rdata_nsec3param_t *to,
 	if (from.salt == NULL) {
 		to->salt = NULL;
 	} else if (strcmp(from.salt, "-") == 0) {
-		DE_CONST("-", to->salt);
+		to->salt = (unsigned char *)"-";
 	} else {
 		decode_salt(from.salt, saltbuf, saltlen);
 		to->salt = saltbuf;
@@ -97,7 +97,7 @@ rdata_fromparams(uint8_t hash, uint8_t flags, uint16_t iter, uint8_t saltlen,
 	nsec3param.iterations = iter;
 	nsec3param.salt_length = saltlen;
 	nsec3param.salt = salt;
-	return (nsec3param);
+	return nsec3param;
 }
 
 /*%

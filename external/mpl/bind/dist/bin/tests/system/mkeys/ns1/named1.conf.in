@@ -32,6 +32,8 @@ options {
 	allow-query { allowed; };
 };
 
+trust-anchors { };
+
 key rndc_key {
 	secret "1234abcd8765";
 	algorithm @DEFAULT_HMAC@;
@@ -44,8 +46,6 @@ controls {
 zone "." {
 	type primary;
 	file "root.db.signed";
-	allow-update { any; };
-	auto-dnssec maintain;
 };
 
 zone "tld" {

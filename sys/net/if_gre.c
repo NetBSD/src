@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.185 2024/02/03 19:05:14 jdolecek Exp $ */
+/*	$NetBSD: if_gre.c,v 1.185.2.1 2025/08/02 05:57:47 perseant Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.185 2024/02/03 19:05:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.185.2.1 2025/08/02 05:57:47 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -542,8 +542,7 @@ gre_sosend(struct socket *so, struct mbuf *top)
 	sbunlock(&so->so_snd);
  out:
  	sounlock(so);
-	if (top != NULL)
-		m_freem(top);
+	m_freem(top);
 	return error;
 }
 
@@ -1017,7 +1016,7 @@ gre_fp_recv(struct gre_softc *sc)
 		return false;
 	case GRE_M_SETFP:
 		mutex_exit(&sc->sc_mtx);
-		rc = fd_dup(fp, 0, &fd, 0);
+		rc = fd_dup(fp, 0, &fd, false, false);
 		mutex_enter(&sc->sc_mtx);
 		if (rc != 0) {
 			sc->sc_msg = GRE_M_ERR;

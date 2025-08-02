@@ -1,8 +1,8 @@
-#	$NetBSD: list.crypto,v 1.10 2016/07/02 15:59:21 christos Exp $
+#	$NetBSD: list.crypto,v 1.10.28.1 2025/08/02 05:55:03 perseant Exp $
 
 PROG	scp
 PROG	ssh		slogin
 SPECIAL	scp	srcdir	crypto/external/bsd/openssh/bin/scp
 SPECIAL	ssh	srcdir	crypto/external/bsd/openssh/bin/ssh
 
-LIBS	-lssh -lssl -lcrypto
+LIBS	-lssh -lssl -lcrypto -lpthread

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2016/01/23 21:22:46 christos Exp $
+#	$NetBSD: Makefile,v 1.30.28.1 2025/08/02 05:54:29 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,7 @@ LIB=	${MLIBDIR}
 LIB=	${LIBC_MACHINE_CPU}
 .endif
 SHLIB_VERSION_FILE= ${.CURDIR}/${LIB}/shlib_version
+LIB_EXPSYM=	${LIB}.expsym	# resolved in .PATH
 
 .include <bsd.lib.mk>
 .else

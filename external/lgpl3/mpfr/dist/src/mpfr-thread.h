@@ -64,10 +64,13 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_LOCK_DECL(_lock)                   \
   mtx_t _lock;
 
-#define MPFR_LOCK_C(E)                          \
-  do {                                          \
-    if ((E) != thrd_success)                    \
-      abort ();                                 \
+#define MPFR_LOCK_C(E)                                  \
+  do {                                                  \
+    if ((E) != thrd_success)                            \
+      {                                                 \
+        fprintf (stderr, "MPFR lock failure\n");        \
+        abort ();                                       \
+      }                                                 \
   } while (0)
 
 #define MPFR_LOCK_INIT(_lock)    MPFR_LOCK_C(mtx_init(&(_lock), mtx_plain))
@@ -107,10 +110,13 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_LOCK_DECL(_lock)                   \
   pthread_rwlock_t _lock;
 
-#define MPFR_LOCK_C(E)                          \
-  do {                                          \
-    if ((E) != 0)                               \
-      abort ();                                 \
+#define MPFR_LOCK_C(E)                                  \
+  do {                                                  \
+    if ((E) != 0)                                       \
+      {                                                 \
+        fprintf (stderr, "MPFR lock failure\n");        \
+        abort ();                                       \
+      }                                                 \
   } while (0)
 
 #define MPFR_LOCK_INIT(_lock) MPFR_LOCK_C(pthread_rwlock_init(&(_lock), NULL))

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.99 2022/07/19 22:04:14 riastradh Exp $ */
+/* $NetBSD: pmap.h,v 1.99.10.1 2025/08/02 05:55:22 perseant Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ struct pmap {	/* pmaps are aligned to COHERENCY_UNIT boundaries */
 #define	PMAP_ASN_KERNEL		0	/* kernel-reserved ASN */
 #define	PMAP_ASN_FIRST_USER	1	/* first user ASN */
 #define	PMAP_ASNGEN_INVALID	0	/* reserved (invalid) ASN generation */
-#define	PMAP_ASNGEN_INITIAL	1	/* first valid generatation */
+#define	PMAP_ASNGEN_INITIAL	1	/* first valid generation */
 
 /*
  * For each struct vm_page, there is a list of all currently valid virtual

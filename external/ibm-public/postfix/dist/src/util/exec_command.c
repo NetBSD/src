@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_command.c,v 1.1.1.2 2013/08/21 20:09:58 tron Exp $	*/
+/*	$NetBSD: exec_command.c,v 1.1.1.2.38.1 2025/08/02 05:50:18 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -69,9 +69,9 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ" SPACE_TAB;
 	&& command[strspn(command, SPACE_TAB)] != 0) {
 
 	/*
-	 * No shell meta characters found, so we can try to avoid the overhead
-	 * of running a shell. Just split the command on whitespace and exec
-	 * the result directly.
+	 * No shell meta characters found, so we can try to avoid the
+	 * overhead of running a shell. Just split the command on whitespace
+	 * and exec the result directly.
 	 */
 	argv = argv_split(command, SPACE_TAB);
 	(void) execvp(argv->argv[0], argv->argv);

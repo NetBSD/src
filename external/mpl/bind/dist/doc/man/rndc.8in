@@ -114,6 +114,13 @@ ISC_R_FAILURE, etc.).
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-t timeout
+This option sets the idle timeout period for \fBrndc\fP to
+\fBtimeout\fP seconds. The default is 60 seconds, and the maximum settable
+value is 86400 seconds (1 day). If set to 0, there is no timeout.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-V
 This option enables verbose logging.
 .UNINDENT
@@ -230,6 +237,14 @@ Manual.)
 .UNINDENT
 .INDENT 0.0
 .TP
+.B fetchlimit [view]
+This command dumps a list of servers that are currently being
+rate\-limited as a result of \fBfetches\-per\-server\fP settings, and
+a list of domain names that are currently being rate\-limited as
+a result of \fBfetches\-per\-zone\fP settings.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B flush
 This command flushes the server\(aqs cache.
 .UNINDENT
@@ -271,6 +286,12 @@ See also \fI\%rndc stop\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B skr \-import file zone [class [view]]
+This command allows you to import a SKR file for the specified zone, to
+support offline KSK signing.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B loadkeys [zone [class [view]]]
 This command fetches all DNSSEC keys for the given zone from the key directory. If
 they are within their publication period, they are merged into the
@@ -278,16 +299,15 @@ zone\(aqs DNSKEY RRset. Unlike \fI\%rndc sign\fP, however, the zone is not
 immediately re\-signed by the new keys, but is allowed to
 incrementally re\-sign over time.
 .sp
-This command requires that the zone be configured with a \fBdnssec\-policy\fP, or
-that the \fBauto\-dnssec\fP zone option be set to \fBmaintain\fP, and also requires the
-zone to be configured to allow dynamic DNS. (See \(dqDynamic Update Policies\(dq in
-the Administrator Reference Manual for more details.)
+This command requires that the zone be configured with a \fBdnssec\-policy\fP, and
+also requires the zone to be configured to allow dynamic DNS. (See \(dqDynamic
+Update Policies\(dq in the Administrator Reference Manual for more details.)
 .UNINDENT
 .INDENT 0.0
 .TP
 .B managed\-keys (status | refresh | sync | destroy) [class [view]]
 This command inspects and controls the \(dqmanaged\-keys\(dq database which handles
-\fI\%RFC 5011\fP DNSSEC trust anchor maintenance. If a view is specified, these
+\X'tty: link https://datatracker.ietf.org/doc/html/rfc5011.html'\fI\%RFC 5011\fP\X'tty: link' DNSSEC trust anchor maintenance. If a view is specified, these
 commands are applied to that view; otherwise, they are applied to all
 views.
 .INDENT 7.0
@@ -324,6 +344,20 @@ also be used, for example, to jumpstart the acquisition of new
 keys in the event of a trust anchor rollover, or as a brute\-force
 repair for key maintenance problems.
 .UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B memprof [(on | off | dump)]
+This command controls memory profiling. To have any effect, \fI\%named\fP must be
+built with jemalloc, the library have profiling support enabled and run with the
+\fBprof:true\fP allocator configuration. (either via \fBMALLOC_CONF\fP or \fB/etc/malloc.conf\fP)
+.sp
+The \fBprof_active:false\fP option is recommended to ensure the profiling overhead does
+not affect \fI\%named\fP when not needed.
+.sp
+The \fBon\fP and \fBoff\fP options will start and stop the jemalloc memory profiling respectively.
+When run with the \fIdump\fP option, \fI\%named\fP will dump the profile to the working
+directory. The name will be chosen automatically by jemalloc.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -471,13 +505,35 @@ If no zone is specified, the reloading happens asynchronously.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B retransfer zone [class [view]]
+.B reset\-stats <counter\-name ...>
+This command resets the requested statistics counters.
+.sp
+At least one counter name must be provided. Currently the following counters
+are supported: \fBrecursive\-high\-water\fP, \fBtcp\-high\-water\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B responselog [on | off]
+This command enables or disables response logging. For backward compatibility,
+this command can also be used without an argument to toggle response logging
+on and off.
+.sp
+Unlike query logging, response logging cannot be enabled by explicitly directing
+the \fBresponses\fP \fBcategory\fP to a \fBchannel\fP in the \fBlogging\fP section
+of \fI\%named.conf\fP, but it can still be enabled by specifying
+\fBresponselog yes;\fP in the \fBoptions\fP section of \fI\%named.conf\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B retransfer [\-force] zone [class [view]]
 This command retransfers the given secondary zone from the primary server.
 .sp
 If the zone is configured to use \fBinline\-signing\fP, the signed
 version of the zone is discarded; after the retransfer of the
 unsigned version is complete, the signed version is regenerated
-with new signatures.
+with new signatures. With the optional \fB\-force\fP argument provided
+if there is an ongoing zone transfer it will be aborted before a new zone
+transfer is scheduled.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -535,11 +591,9 @@ Manual). If they are within their publication period, they are merged into
 the zone\(aqs DNSKEY RRset. If the DNSKEY RRset is changed, then the
 zone is automatically re\-signed with the new key set.
 .sp
-This command requires that the zone be configured with a \fBdnssec\-policy\fP, or
-that the \fBauto\-dnssec\fP zone option be set to \fBallow\fP or \fBmaintain\fP,
-and also requires the zone to be configured to allow dynamic DNS. (See
-\(dqDynamic Update Policies\(dq in the BIND 9 Administrator Reference Manual for more
-details.)
+This command requires that the zone be configured with a \fBdnssec\-policy\fP, and
+also requires the zone to be configured to allow dynamic DNS. (See \(dqDynamic
+Update Policies\(dq in the Administrator Reference Manual for more details.)
 .sp
 See also \fI\%rndc loadkeys\fP\&.
 .UNINDENT
@@ -670,19 +724,6 @@ See also \fI\%rndc notrace\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B tsig\-delete keyname [view]
-This command deletes a given TKEY\-negotiated key from the server. This does not
-apply to statically configured TSIG keys.
-.UNINDENT
-.INDENT 0.0
-.TP
-.B tsig\-list
-This command lists the names of all TSIG keys currently configured for use by
-\fI\%named\fP in each view. The list includes both statically configured keys and
-dynamic TKEY\-negotiated keys.
-.UNINDENT
-.INDENT 0.0
-.TP
 .B validation (on | off | status) [view ...]
 This command enables, disables, or checks the current status of DNSSEC validation. By
 default, validation is enabled.
@@ -724,6 +765,6 @@ Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2024, Internet Systems Consortium
+2025, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

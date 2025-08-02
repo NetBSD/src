@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.41 2023/09/17 13:14:08 andvar Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.41.6.1 2025/08/02 05:55:48 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.41 2023/09/17 13:14:08 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.41.6.1 2025/08/02 05:55:48 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -161,32 +161,36 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 	 */
 	if (optype == 0x0000) {
 		/* type=0: generic */
-		if ((sval & 0xc000) == 0xc000) {
-			DPRINTF(("%s: fmovm FPr\n", __func__));
-			sig = fpu_emul_fmovm(&fe, &insn);
-		} else if ((sval & 0xc000) == 0x8000) {
-			DPRINTF(("%s: fmovm FPcr\n", __func__));
-			sig = fpu_emul_fmovmcr(&fe, &insn);
-		} else if ((sval & 0xe000) == 0x6000) {
-			/* fstore = fmove FPn,mem */
-			DPRINTF(("%s: fmove to mem\n", __func__));
-			sig = fpu_emul_fstore(&fe, &insn);
-		} else if ((sval & 0xfc00) == 0x5c00) {
-			/* fmovecr */
-			DPRINTF(("%s: fmovecr\n", __func__));
-			sig = fpu_emul_fmovecr(&fe, &insn);
-		} else if ((sval & 0xa07f) == 0x26) {
-			/* fscale */
-			DPRINTF(("%s: fscale\n", __func__));
-			sig = fpu_emul_fscale(&fe, &insn);
+		if ((sval & 0x8000)) {
+			if ((sval & 0x4000)) {
+				DPRINTF(("%s: fmovm FPr\n", __func__));
+				sig = fpu_emul_fmovm(&fe, &insn);
+			} else {
+				DPRINTF(("%s: fmovm FPcr\n", __func__));
+				sig = fpu_emul_fmovmcr(&fe, &insn);
+			}
 		} else {
-			DPRINTF(("%s: other type0\n", __func__));
-			/* all other type0 insns are arithmetic */
-			sig = fpu_emul_arith(&fe, &insn);
-		}
-		if (sig == 0) {
-			DPRINTF(("%s: type 0 returned 0\n", __func__));
-			sig = fpu_upd_excp(&fe);
+			if ((sval & 0xe000) == 0x6000) {
+				/* fstore = fmove FPn,mem */
+				DPRINTF(("%s: fmove to mem\n", __func__));
+				sig = fpu_emul_fstore(&fe, &insn);
+			} else if ((sval & 0xfc00) == 0x5c00) {
+				/* fmovecr */
+				DPRINTF(("%s: fmovecr\n", __func__));
+				sig = fpu_emul_fmovecr(&fe, &insn);
+			} else if ((sval & 0xa07f) == 0x26) {
+				/* fscale */
+				DPRINTF(("%s: fscale\n", __func__));
+				sig = fpu_emul_fscale(&fe, &insn);
+			} else {
+				DPRINTF(("%s: other type0\n", __func__));
+				/* all other type0 insns are arithmetic */
+				sig = fpu_emul_arith(&fe, &insn);
+			}
+			if (sig == 0) {
+				DPRINTF(("%s: type 0 returned 0\n", __func__));
+				sig = fpu_upd_excp(&fe);
+			}
 		}
 	} else if (optype == 0x0080 || optype == 0x00C0) {
 		/* type=2 or 3: fbcc, short or long disp. */
@@ -197,6 +201,10 @@ fpu_emulate(struct frame *frame, struct fpframe *fpf, ksiginfo_t *ksi)
 		/* type=1: fdbcc, fscc, ftrapcc */
 		DPRINTF(("%s: type1\n", __func__));
 		sig = fpu_emul_type1(&fe, &insn);
+		/* real FTRAPcc raises T_TRAPVINST if the condition is met. */
+		if (sig == SIGFPE) {
+			ksi->ksi_trap = T_TRAPVINST;
+		}
 	} else {
 		/* type=4: fsave    (privileged) */
 		/* type=5: frestore (privileged) */
@@ -328,74 +336,96 @@ fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn)
 	struct fpframe *fpf = fe->fe_fpframe;
 	int sig;
 	int reglist;
+	int regcount;
 	int fpu_to_mem;
+	int modreg;
+	uint32_t tmp[3];
 
 	/* move to/from control registers */
 	reglist = (insn->is_word1 & 0x1c00) >> 10;
 	/* Bit 13 selects direction (FPU to/from Mem) */
 	fpu_to_mem = insn->is_word1 & 0x2000;
 
-	insn->is_datasize = 4;
-	insn->is_advance = 4;
-	sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
-	if (sig)
-		return sig;
-
-	if (reglist != 1 && reglist != 2 && reglist != 4 &&
-	    (insn->is_ea.ea_flags & EA_DIRECT)) {
-		/* attempted to copy more than one FPcr to CPU regs */
-		DPRINTF(("%s: tried to copy too many FPcr\n", __func__));
-		return SIGILL;
-	}
-
-	if (reglist & 4) {
-		/* fpcr */
-		if ((insn->is_ea.ea_flags & EA_DIRECT) &&
-		    insn->is_ea.ea_regnum >= 8 /* address reg */) {
-			/* attempted to copy FPCR to An */
-			DPRINTF(("%s: tried to copy FPCR from/to A%d\n",
-			    __func__, insn->is_ea.ea_regnum & 7));
+	/* Check an illegal mod/reg. */
+	modreg = insn->is_opcode & 077;
+	if (fpu_to_mem) {
+		/* PCrel, #imm are illegal. */
+		if (modreg >= 072) {
 			return SIGILL;
 		}
-		if (fpu_to_mem) {
-			sig = fpu_store_ea(frame, insn, &insn->is_ea,
-			    (char *)&fpf->fpf_fpcr);
-		} else {
-			sig = fpu_load_ea(frame, insn, &insn->is_ea,
-			    (char *)&fpf->fpf_fpcr);
-		}
-	}
-	if (sig)
-		return sig;
-
-	if (reglist & 2) {
-		/* fpsr */
-		if ((insn->is_ea.ea_flags & EA_DIRECT) &&
-		    insn->is_ea.ea_regnum >= 8 /* address reg */) {
-			/* attempted to copy FPSR to An */
-			DPRINTF(("%s: tried to copy FPSR from/to A%d\n",
-			    __func__, insn->is_ea.ea_regnum & 7));
+	} else {
+		/* All mod/reg can be specified. */
+		if (modreg >= 075) {
 			return SIGILL;
 		}
-		if (fpu_to_mem) {
-			sig = fpu_store_ea(frame, insn, &insn->is_ea,
-			    (char *)&fpf->fpf_fpsr);
-		} else {
-			sig = fpu_load_ea(frame, insn, &insn->is_ea,
-			    (char *)&fpf->fpf_fpsr);
-		}
 	}
+
+	/*
+	 * If reglist is 0b000, treat it as FPIAR.  This is not specification
+	 * but the behavior described in the 6888x user's manual.
+	 */
+	if (reglist == 0)
+		reglist = 1;
+
+	if (reglist == 7) {
+		regcount = 3;
+	} else if (reglist == 3 || reglist == 5 || reglist == 6) {
+		regcount = 2;
+	} else {
+		regcount = 1;
+	}
+	insn->is_datasize = regcount * 4;
+	sig = fpu_decode_ea(frame, insn, &insn->is_ea, modreg);
 	if (sig)
 		return sig;
 
-	if (reglist & 1) {
-		/* fpiar - can be moved to/from An */
-		if (fpu_to_mem) {
-			sig = fpu_store_ea(frame, insn, &insn->is_ea,
-			    (char *)&fpf->fpf_fpiar);
+	/*
+	 * For data register, only single register can be transferred.
+	 * For addr register, only FPIAR can be transferred.
+	 */
+	if ((insn->is_ea.ea_flags & EA_DIRECT)) {
+		if (insn->is_ea.ea_regnum < 8) {
+			if (regcount != 1) {
+				return SIGILL;
+			}
 		} else {
-			sig = fpu_load_ea(frame, insn, &insn->is_ea,
-			    (char *)&fpf->fpf_fpiar);
+			if (reglist != 1) {
+				return SIGILL;
+			}
+		}
+	}
+
+	if (fpu_to_mem) {
+		uint32_t *s = &tmp[0];
+
+		if ((reglist & 4)) {
+			*s++ = fpf->fpf_fpcr;
+		}
+		if ((reglist & 2)) {
+			*s++ = fpf->fpf_fpsr;
+		}
+		if ((reglist & 1)) {
+			*s++ = fpf->fpf_fpiar;
+		}
+
+		sig = fpu_store_ea(frame, insn, &insn->is_ea, (char *)tmp);
+	} else {
+		const uint32_t *d = &tmp[0];
+
+		sig = fpu_load_ea(frame, insn, &insn->is_ea, (char *)tmp);
+		if (sig)
+			return sig;
+
+		if ((reglist & 4)) {
+			fpf->fpf_fpcr = *d++;
+			fpf->fpf_fpcr &= 0x0000fff0;
+		}
+		if ((reglist & 2)) {
+			fpf->fpf_fpsr = *d++;
+			fpf->fpf_fpsr &= 0x0ffffff8;
+		}
+		if ((reglist & 1)) {
+			fpf->fpf_fpiar = *d++;
 		}
 	}
 	return sig;
@@ -418,11 +448,11 @@ fpu_emul_fmovm(struct fpemu *fe, struct instruction *insn)
 	struct fpframe *fpf = fe->fe_fpframe;
 	int word1, sig;
 	int reglist, regmask, regnum;
+	int modreg;
 	int fpu_to_mem, order;
 	/* int w1_post_incr; */
 	int *fpregs;
 
-	insn->is_advance = 4;
 	insn->is_datasize = 12;
 	word1 = insn->is_word1;
 
@@ -445,8 +475,22 @@ fpu_emul_fmovm(struct fpemu *fe, struct instruction *insn)
 	}
 	reglist &= 0xFF;
 
-	/* Get effective address. (modreg=opcode&077) */
-	sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
+	/* Check an illegal mod/reg. */
+	modreg = insn->is_opcode & 077;
+	if (fpu_to_mem) {
+		/* Dn, An, (An)+, PCrel, #imm are illegal. */
+		if (modreg < 020 || (modreg >> 3) == 3 || modreg >= 072) {
+			return SIGILL;
+		}
+	} else {
+		/* Dn, An, -(An), #imm are illegal. */
+		if (modreg < 020 || (modreg >> 3) == 4 || modreg >= 074) {
+			return SIGILL;
+		}
+	}
+
+	/* Get effective address. */
+	sig = fpu_decode_ea(frame, insn, &insn->is_ea, modreg);
 	if (sig)
 		return sig;
 
@@ -558,6 +602,7 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 	struct fpn *res;
 	int word1, sig = 0;
 	int regnum, format;
+	int modreg;
 	int discard_result = 0;
 	uint32_t buf[3];
 #ifdef DEBUG_FPE
@@ -611,11 +656,24 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 			return sig;
 		}
 
-		/* Get effective address. (modreg=opcode&077) */
-		sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
+		/* Check an illegal mod/reg. */
+		modreg = insn->is_opcode & 077;
+		if ((modreg >> 3) == 1/*An*/ || modreg >= 075) {
+			return SIGILL;
+		}
+
+		/* Get effective address. */
+		sig = fpu_decode_ea(frame, insn, &insn->is_ea, modreg);
 		if (sig) {
 			DPRINTF(("%s: error in fpu_decode_ea\n", __func__));
 			return sig;
+		}
+
+		if (insn->is_ea.ea_flags == EA_DIRECT &&
+		    insn->is_datasize > 4) {
+			DPRINTF(("%s: attempted to fetch dbl/ext from reg\n",
+			    __func__));
+			return SIGILL;
 		}
 
 		DUMP_INSN(insn);
@@ -902,12 +960,10 @@ fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
 static int
 test_cc(struct fpemu *fe, int pred)
 {
-	int result, sig_bsun, invert;
+	int result, sig_bsun;
 	int fpsr;
 
 	fpsr = fe->fe_fpsr;
-	invert = 0;
-	fpsr &= ~FPSR_EXCP;		/* clear all exceptions */
 	DPRINTF(("%s: fpsr=0x%08x\n", __func__, fpsr));
 	pred &= 0x3f;		/* lowest 6 bits */
 
@@ -926,70 +982,78 @@ test_cc(struct fpemu *fe, int pred)
 		sig_bsun = 0;
 	}
 
-	if (pred & 0x08) {
-		DPRINTF(("Not "));
-		/* predicate is "NOT ..." */
-		pred ^= 0xf;		/* invert */
-		invert = -1;
+	/*
+	 *           condition   real 68882
+	 * mnemonic  in manual   condition
+	 * --------  ----------  ----------
+	 * 0000 F    0           <-         = ~NAN &  0 & ~Z | 0
+	 * 0001 EQ   Z           <-         = ~NAN &  0 |  Z | 0
+	 * 0010 OGT  ~(NAN|Z|N)  <-         = ~NAN & ~N & ~Z | 0
+	 * 0011 OGE  Z|~(NAN|N)  <-         = ~NAN & ~N |  Z | 0
+	 * 0100 OLT  N&~(NAN|Z)  <-         = ~NAN &  N & ~Z | 0
+	 * 0101 OLE  Z|(N&~NAN)  <-         = ~NAN &  N |  Z | 0
+	 * 0110 OGL  ~(NAN|Z)    <-         = ~NAN &  1 & ~Z | 0
+	 * 0111 OR   ~NAN        Z|~NAN     = ~NAN &  1 |  Z | 0
+	 *
+	 * 1000 UN   NAN         <-         =  1   &  0 & ~Z | NAN
+	 * 1001 UEQ  NAN|Z       <-         =  1   &  0 |  Z | NAN
+	 * 1010 UGT  NAN|~(N|Z)  <-         =  1   & ~N & ~Z | NAN
+	 * 1011 UGE  NAN|(Z|~N)  <-         =  1   & ~N |  Z | NAN
+	 * 1100 ULT  NAN|(N&~Z)  <-         =  1   &  N & ~Z | NAN
+	 * 1101 ULE  NAN|(Z|N)   <-         =  1   &  N |  Z | NAN
+	 * 1110 NE   ~Z          NAN|(~Z)   =  1   &  1 & ~Z | NAN
+	 * 1111 T    1           <-         =  1   &  1 |  Z | NAN
+	 */
+	if ((pred & 0x08) == 0) {
+		result = ((fpsr & FPSR_NAN) == 0);
+	} else {
+		result = 1;
 	}
-	switch (pred) {
-	case 0:			/* (Signaling) False */
-		DPRINTF(("False"));
-		result = 0;
+	switch (pred & 0x06) {
+	case 0x00:	/* AND 0 */
+		result &= 0;
 		break;
-	case 1:			/* (Signaling) Equal */
-		DPRINTF(("Equal"));
-		result = -((fpsr & FPSR_ZERO) == FPSR_ZERO);
+	case 0x02:	/* AND ~N */
+		result &= ((fpsr & FPSR_NEG) == 0);
 		break;
-	case 2:			/* Greater Than */
-		DPRINTF(("GT"));
-		result = -((fpsr & (FPSR_NAN|FPSR_ZERO|FPSR_NEG)) == 0);
+	case 0x04:	/* AND N */
+		result &= ((fpsr & FPSR_NEG) != 0);
 		break;
-	case 3:			/* Greater or Equal */
-		DPRINTF(("GE"));
-		result = -((fpsr & FPSR_ZERO) ||
-		    (fpsr & (FPSR_NAN|FPSR_NEG)) == 0);
+	case 0x06:	/* AND 1 */
+		result &= 1;
 		break;
-	case 4:			/* Less Than */
-		DPRINTF(("LT"));
-		result = -((fpsr & (FPSR_NAN|FPSR_ZERO|FPSR_NEG)) == FPSR_NEG);
-		break;
-	case 5:			/* Less or Equal */
-		DPRINTF(("LE"));
-		result = -((fpsr & FPSR_ZERO) ||
-		    ((fpsr & (FPSR_NAN|FPSR_NEG)) == FPSR_NEG));
-		break;
-	case 6:			/* Greater or Less than */
-		DPRINTF(("GLT"));
-		result = -((fpsr & (FPSR_NAN|FPSR_ZERO)) == 0);
-		break;
-	case 7:			/* Greater, Less or Equal */
-		DPRINTF(("GLE"));
-		result = -((fpsr & FPSR_NAN) == 0);
-		break;
-	default:
-		/* invalid predicate */
-		DPRINTF(("Invalid predicate\n"));
-		return SIGILL;
 	}
-	/* if the predicate is "NOT ...", then invert the result */
-	result ^= invert;
+	if ((pred & 0x01) == 0) {
+		result &= ((fpsr & FPSR_ZERO) == 0);
+	} else {
+		result |= ((fpsr & FPSR_ZERO) != 0);
+	}
+	if ((pred & 0x08) != 0) {
+		result |= ((fpsr & FPSR_NAN) != 0);
+	}
+
 	DPRINTF(("=> %s (%d)\n", result ? "true" : "false", result));
 	/* if it's an IEEE unaware test and NAN is set, BSUN is set */
 	if (sig_bsun && (fpsr & FPSR_NAN)) {
 		fpsr |= FPSR_BSUN;
 	}
+	/* if BSUN is set, IOP is set too */
+	if ((fpsr & FPSR_BSUN)) {
+		fpsr |= FPSR_AIOP;
+	}
 
 	/* put fpsr back */
 	fe->fe_fpframe->fpf_fpsr = fe->fe_fpsr = fpsr;
 
-	return result;
+	return -result;
 }
 
 /*
  * type 1: fdbcc, fscc, ftrapcc
  * In this function, we know:
  *   (opcode & 0x01C0) == 0x0040
+ * return SIGILL for an illegal instruction.
+ * return SIGFPE if FTRAPcc's condition is met.
  */
 static int
 fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
@@ -999,17 +1063,17 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 	unsigned short sval;
 
 	branch = test_cc(fe, insn->is_word1);
+	if (branch > 0)
+		return branch;
 	fe->fe_fpframe->fpf_fpsr = fe->fe_fpsr;
 
-	insn->is_advance = 4;
 	sig = 0;
-
 	switch (insn->is_opcode & 070) {
 	case 010:			/* fdbcc */
-		if (branch == -1) {
+		if (branch) {
 			/* advance */
 			insn->is_advance = 6;
-		} else if (!branch) {
+		} else {
 			/* decrement Dn and if (Dn != -1) branch */
 			uint16_t count = frame->f_regs[insn->is_opcode & 7];
 
@@ -1038,8 +1102,6 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 			/* write it back */
 			frame->f_regs[insn->is_opcode & 7] &= 0xffff0000;
 			frame->f_regs[insn->is_opcode & 7] |= (uint32_t)count;
-		} else {		/* got a signal */
-			sig = SIGFPE;
 		}
 		break;
 
@@ -1057,12 +1119,9 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 				return SIGILL;
 				break;
 			}
+			insn->is_advance = advance;
 
-			if (branch == 0) {
-				/* no trap */
-				insn->is_advance = advance;
-				sig = 0;
-			} else {
+			if (branch) {
 				/* trap */
 				sig = SIGFPE;
 			}
@@ -1071,20 +1130,13 @@ fpu_emul_type1(struct fpemu *fe, struct instruction *insn)
 
 		/* FALLTHROUGH */
 	default:			/* fscc */
-		insn->is_advance = 4;
 		insn->is_datasize = 1;	/* always byte */
 		sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
 		if (sig) {
 			break;
 		}
-		if (branch == -1 || branch == 0) {
-			/* set result */
-			sig = fpu_store_ea(frame, insn, &insn->is_ea,
-			    (char *)&branch);
-		} else {
-			/* got an exception */
-			sig = branch;
-		}
+		/* set result */
+		sig = fpu_store_ea(frame, insn, &insn->is_ea, (char *)&branch);
 		break;
 	}
 	return sig;
@@ -1105,7 +1157,6 @@ fpu_emul_brcc(struct fpemu *fe, struct instruction *insn)
 	/*
 	 * Get branch displacement.
 	 */
-	insn->is_advance = 4;
 	displ = insn->is_word1;
 
 	if (insn->is_opcode & 0x40) {

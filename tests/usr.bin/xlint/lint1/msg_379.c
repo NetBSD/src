@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_379.c,v 1.1 2024/05/11 15:53:38 rillig Exp $	*/
+/*	$NetBSD: msg_379.c,v 1.1.2.1 2025/08/02 05:58:19 perseant Exp $	*/
 # 3 "msg_379.c"
 
 // Test for message: comparing integer '%s' to floating point constant %Lg [379]
@@ -18,7 +18,7 @@ int
 comparisons(int x)
 {
 	if (3 > 123.0)
-		/* expect+1: warning: statement not reached [193] */
+		/* expect+1: warning: 'return' statement not reached [193] */
 		return 0;
 	/* expect+1: warning: comparing integer 'int' to floating point constant 123 [379] */
 	if (x > 123.0)

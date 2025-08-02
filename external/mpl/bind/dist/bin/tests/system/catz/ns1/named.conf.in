@@ -30,6 +30,7 @@ options {
 	listen-on tls ephemeral { 10.53.0.1; };
 	listen-on-v6 { none; };
 	notify no;
+	notify-delay 0;
 	recursion no;
 	allow-transfer { any; };
 	dnssec-validation no;
@@ -67,6 +68,16 @@ view "default" {
 	};
 
 	/* catalog5 is missing on purpose */
+
+	zone "catalog6.example" {
+		type primary;
+		file "catalog6.example.db";
+		allow-transfer { any; };
+		allow-update { any; };
+		also-notify { 10.53.0.2; };
+		notify explicit;
+		notify-defer 5;
+	};
 
 	# No "version" property
 	zone "catalog-bad1.example" {

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.79 2022/06/08 21:43:45 wiz Exp $	*/
+/*	$NetBSD: boot2.c,v 1.79.10.1 2025/08/02 05:55:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -103,6 +103,9 @@ static const char * const names[][2] = {
 	{ "netbsd", "netbsd.gz" },
 	{ "onetbsd", "onetbsd.gz" },
 	{ "netbsd.old", "netbsd.old.gz" },
+	{ "netbsd/kernel", "netbsd/kernel.gz" },
+	{ "onetbsd/kernel", "onetbsd/kernel.gz" },
+	{ "netbsd.old/kernel", "netbsd.old/kernel.gz" },
 };
 
 #define NUMNAMES (sizeof(names)/sizeof(names[0]))
@@ -121,6 +124,7 @@ static const char *default_part_name;
 
 char *sprint_bootsel(const char *);
 static void bootit(const char *, int);
+static void bootit2(char *, size_t, int);
 void boot2(int, uint64_t);
 
 void	command_help(char *);
@@ -130,7 +134,6 @@ void	command_ls(char *);
 void	command_quit(char *);
 void	command_boot(char *);
 void	command_pkboot(char *);
-void	command_dev(char *);
 void	command_consdev(char *);
 void	command_root(char *);
 #ifndef SMALL
@@ -283,12 +286,6 @@ bootit(const char *filename, int howto)
 	if (howto & AB_VERBOSE)
 		printf("booting %s (howto 0x%x)\n", sprint_bootsel(filename),
 		    howto);
-#ifdef KERNEL_DIR
-	char path[512];
-	strcpy(path, filename);
-	strcat(path, "/kernel");
-	(void)exec_netbsd(path, 0, howto, boot_biosdev < 0x80, clearit);
-#endif
 
 	if (exec_netbsd(filename, 0, howto, boot_biosdev < 0x80, clearit) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
@@ -474,17 +471,38 @@ command_quit(char *arg)
 	panic("Could not reboot!");
 }
 
+static void
+bootit2(char *path, size_t plen, int howto)
+{
+	bootit(path, howto);
+	snprintf(path, plen, "%s.gz", path);
+	bootit(path, howto | AB_VERBOSE);
+}
+
 void
 command_boot(char *arg)
 {
 	char *filename;
+	char path[512];
 	int howto;
 
 	if (!parseboot(arg, &filename, &howto))
 		return;
 
-	if (filename != NULL) {
-		bootit(filename, howto);
+	if (filename != NULL && filename[0] != '\0') {
+		/* try old locations first to assist atf test beds */
+		snprintf(path, sizeof(path) - 4, "%s", filename);
+		bootit2(path, sizeof(path), howto);
+
+		/*
+		 * now treat given filename as a directory unless there
+		 * is already an embedded path-name separator '/' present
+		 */
+		if (strchr(filename + 1, '/') == NULL) {
+			snprintf(path, sizeof(path) - 4, "%s/kernel",
+			    filename);
+			bootit2(path, sizeof(path), howto);
+		}
 	} else {
 		int i;
 

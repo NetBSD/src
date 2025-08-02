@@ -1,4 +1,4 @@
-/*	$NetBSD: addchnstr.c,v 1.9 2021/09/06 07:03:49 rin Exp $	*/
+/*	$NetBSD: addchnstr.c,v 1.9.4.1 2025/08/02 05:54:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addchnstr.c,v 1.9 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: addchnstr.c,v 1.9.4.1 2025/08/02 05:54:45 perseant Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -139,6 +139,9 @@ waddchnstr(WINDOW *win, const chtype *chstr, int n)
 
 	__CTRACE(__CTRACE_INPUT, "waddchnstr: win = %p, chstr = %p, n = %d\n",
 	    win, chstr, n);
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	if (n >= 0)
 		for (chp = chstr, len = 0; n-- && *chp++; ++len);

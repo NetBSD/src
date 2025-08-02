@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.67 2024/02/04 18:52:36 andvar Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.67.2.1 2025/08/02 05:56:43 perseant Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.67 2024/02/04 18:52:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.67.2.1 2025/08/02 05:56:43 perseant Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -266,7 +266,7 @@ static void mvgbec_attach(device_t, device_t, void *);
 static int mvgbec_print(void *, const char *);
 static int mvgbec_search(device_t, cfdata_t, const int *, void *);
 
-/* MII funcstions */
+/* MII functions */
 static int mvgbec_miibus_readreg(device_t, int, int, uint16_t *);
 static int mvgbec_miibus_writereg(device_t, int, int, uint16_t);
 static void mvgbec_miibus_statchg(struct ifnet *);
@@ -1416,16 +1416,12 @@ mvgbe_stop(struct ifnet *ifp, int disable)
 
 	/* Free RX and TX mbufs still in the queues. */
 	for (i = 0; i < MVGBE_RX_RING_CNT; i++) {
-		if (cdata->mvgbe_rx_chain[i].mvgbe_mbuf != NULL) {
-			m_freem(cdata->mvgbe_rx_chain[i].mvgbe_mbuf);
-			cdata->mvgbe_rx_chain[i].mvgbe_mbuf = NULL;
-		}
+		m_freem(cdata->mvgbe_rx_chain[i].mvgbe_mbuf);
+		cdata->mvgbe_rx_chain[i].mvgbe_mbuf = NULL;
 	}
 	for (i = 0; i < MVGBE_TX_RING_CNT; i++) {
-		if (cdata->mvgbe_tx_chain[i].mvgbe_mbuf != NULL) {
-			m_freem(cdata->mvgbe_tx_chain[i].mvgbe_mbuf);
-			cdata->mvgbe_tx_chain[i].mvgbe_mbuf = NULL;
-		}
+		m_freem(cdata->mvgbe_tx_chain[i].mvgbe_mbuf);
+		cdata->mvgbe_tx_chain[i].mvgbe_mbuf = NULL;
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);

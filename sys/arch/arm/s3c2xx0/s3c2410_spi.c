@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_spi.c,v 1.9 2021/08/07 16:18:45 thorpej Exp $ */
+/* $NetBSD: s3c2410_spi.c,v 1.9.12.1 2025/08/02 05:55:29 perseant Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -30,12 +30,12 @@
  */
 
 /*
- * Support S3C2410's SPI dirver.
+ * Support S3C2410's SPI driver.
  * Real works are done by drivers attached to SPI ports.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.9 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.9.12.1 2025/08/02 05:55:29 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

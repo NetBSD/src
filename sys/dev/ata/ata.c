@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.169 2022/05/31 08:43:15 andvar Exp $	*/
+/*	$NetBSD: ata.c,v 1.169.10.1 2025/08/02 05:56:35 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.169 2022/05/31 08:43:15 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.169.10.1 2025/08/02 05:56:35 perseant Exp $");
 
 #include "opt_ata.h"
 
@@ -84,7 +84,7 @@ int atadebug_mask = ATADEBUG_MASK;
 #define ATADEBUG_PRINT(args, level)
 #endif
 
-#if defined(ATA_DOWNGRADE_MODE) && NATA_DMA
+#if !defined(ATA_NO_DOWNGRADE_MODE) && NATA_DMA
 static int	ata_downgrade_mode(struct ata_drive_datas *, int);
 #endif
 
@@ -966,7 +966,7 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 	 */
 	drvp->n_dmaerrs++;
 	if (drvp->n_dmaerrs >= NERRS_MAX && drvp->n_xfers <= NXFER) {
-#ifdef ATA_DOWNGRADE_MODE
+#if !defined(ATA_NO_DOWNGRADE_MODE)
 		ata_downgrade_mode(drvp, flags);
 		drvp->n_dmaerrs = NERRS_MAX-1;
 #else
@@ -974,7 +974,7 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 		static const struct timeval serrintvl = { 300, 0 };
 
 		if (ratecheck(&last, &serrintvl)) {
-			aprint_error_dev(drvp->drv_softc,
+			device_printf(drvp->drv_softc,
 			    "excessive DMA errors - %d in last %d transfers\n",
 			    drvp->n_dmaerrs, drvp->n_xfers);
 		}
@@ -1769,7 +1769,7 @@ ata_print_modes(struct ata_channel *chp)
 	}
 }
 
-#if defined(ATA_DOWNGRADE_MODE) && NATA_DMA
+#if !defined(ATA_NO_DOWNGRADE_MODE) && NATA_DMA
 /*
  * downgrade the transfer mode of a drive after an error. return 1 if
  * downgrade was possible, 0 otherwise.
@@ -1802,7 +1802,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	 */
 	if ((drvp->drive_flags & ATA_DRIVE_UDMA) && drvp->UDMA_mode >= 2) {
 		drvp->UDMA_mode--;
-		aprint_error_dev(drv_dev,
+		device_printf(drv_dev,
 		    "transfer error, downgrading to Ultra-DMA mode %d\n",
 		    drvp->UDMA_mode);
 	}
@@ -1814,7 +1814,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	else if (drvp->drive_flags & (ATA_DRIVE_DMA | ATA_DRIVE_UDMA)) {
 		drvp->drive_flags &= ~(ATA_DRIVE_DMA | ATA_DRIVE_UDMA);
 		drvp->PIO_mode = drvp->PIO_cap;
-		aprint_error_dev(drv_dev,
+		device_printf(drv_dev,
 		    "transfer error, downgrading to PIO mode %d\n",
 		    drvp->PIO_mode);
 	} else /* already using PIO, can't downgrade */

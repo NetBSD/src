@@ -1,13 +1,13 @@
-/*	$NetBSD: msg_038.c,v 1.4 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: msg_038.c,v 1.4.2.1 2025/08/02 05:58:15 perseant Exp $	*/
 # 3 "msg_038.c"
 
-// Test for message: function illegal in structure or union [38]
+// Test for message: function invalid in structure or union [38]
 
 /* lint1-extra-flags: -X 351 */
 
 typedef void (function)(void);
 
 struct {
-	/* expect+1: error: function illegal in structure or union [38] */
+	/* expect+1: error: function invalid in structure or union [38] */
 	function fn;
 } s;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.57 2023/03/23 19:52:52 riastradh Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.57.6.1 2025/08/02 05:57:52 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,7 +33,6 @@
  *
  *	@(#)nfsm_subs.h	8.2 (Berkeley) 3/30/95
  */
-
 
 #ifndef _NFS_NFSM_SUBS_H_
 #define _NFS_NFSM_SUBS_H_
@@ -447,10 +446,8 @@
 		else \
 		   (void) nfs_rephead((s), nfsd, slp, error, cache, &frev, \
 			mrq, &mb, &bpos); \
-		if (mrep != NULL) { \
-			m_freem(mrep); \
-			mrep = NULL; \
-		} \
+		m_freem(mrep); \
+		mrep = NULL; \
 		mreq = *mrq; \
 		if (error && (!(nfsd->nd_flag & ND_NFSV3) || \
 			error == EBADRPC)) {\
@@ -574,4 +571,4 @@
 			break; \
 		}; }
 
-#endif
+#endif	/* _NFS_NFSM_SUBS_H_ */

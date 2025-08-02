@@ -1,4 +1,4 @@
-/*	$NetBSD: region.h,v 1.7 2024/02/21 22:52:31 christos Exp $	*/
+/*	$NetBSD: region.h,v 1.7.2.1 2025/08/02 05:54:01 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -87,6 +87,8 @@ isc_region_compare(isc_region_t *r1, isc_region_t *r2);
  * Requires:
  *\li	'r1' is a valid region
  *\li	'r2' is a valid region
+ *\li	'r1->base' is not null
+ *\li	'r2->base' is not null
  *
  * Returns:
  *\li	 < 0 if r1 is lexicographically less than r2

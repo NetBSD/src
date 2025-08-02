@@ -42,13 +42,13 @@ On-line resources devoted to the Postfix mail system
 
 Web sites:
 
-    http://www.postfix.org/		current release information
+    https://www.postfix.org/		current release information
 
 Mail addresses (PLEASE send questions to the mailing list)
 
     postfix-users@postfix.org		Postfix users mailing list
 
-In order to subscribe to the mailing list, see http://www.postfix.org/.
+In order to subscribe to the mailing list, see https://www.postfix.org/.
 
 Acknowledgments
 ===============
@@ -89,7 +89,7 @@ The HISTORY file gives a detailed log of changes to the software.
 
 Point your browser at html/index.html for Postfix documentation
 and for hyperlinked versions of Postfix manual pages.  Expect
-to see updated versions on-line at http://www.postfix.org/
+to see updated versions on-line at https://www.postfix.org/
 
 Point your MANPATH environment variable at the `man' directory (use
 an absolute path) for UNIX-style on-line manual pages.  These pages

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.369 2024/06/27 23:58:46 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.369.2.1 2025/08/02 05:55:23 perseant Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369 2024/06/27 23:58:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369.2.1 2025/08/02 05:55:23 perseant Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -612,7 +612,8 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	sp -= sizeof(struct sigframe_siginfo);
 	/* Round down the stackpointer to a multiple of 16 for the ABI. */
-	fp = (struct sigframe_siginfo *)(((unsigned long)sp & ~15) - 8);
+	fp = (struct sigframe_siginfo *)(((unsigned long)sp &
+		~STACK_ALIGNBYTES) - 8);
 
 	memset(&frame, 0, sizeof(frame));
 	frame.sf_ra = (uint64_t)ps->sa_sigdesc[sig].sd_tramp;
@@ -1020,15 +1021,26 @@ int
 dump_header_addseg(paddr_t start, paddr_t size)
 {
 	phys_ram_seg_t seg = { start, size };
+	int error;
 
-	return dump_header_addbytes(&seg, sizeof(seg));
+	error = dump_header_addbytes(&seg, sizeof(seg));
+	if (error) {
+		printf("[seg 0x%"PRIxPADDR" bytes 0x%"PRIxPSIZE" failed,"
+		    " error=%d] ", start, size, error);
+	}
+	return error;
 }
 
 int
 dump_header_finish(void)
 {
+	int error;
+
 	memset(dump_headerbuf_ptr, 0, dump_headerbuf_avail);
-	return dump_header_flush();
+	error = dump_header_flush();
+	if (error)
+		printf("[finish failed, error=%d] ", error);
+	return error;
 }
 
 
@@ -1080,24 +1092,37 @@ cpu_dump(void)
 	kcore_seg_t seg;
 	cpu_kcore_hdr_t cpuhdr;
 	const struct bdevsw *bdev;
+	int error;
 
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		return (ENXIO);
+	if (bdev == NULL) {
+		printf("[device 0x%llx ENXIO] ", (unsigned long long)dumpdev);
+		return ENXIO;
+	}
 
 	/*
 	 * Generate a segment header.
 	 */
 	CORE_SETMAGIC(seg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
 	seg.c_size = dump_header_size - ALIGN(sizeof(seg));
-	(void)dump_header_addbytes(&seg, ALIGN(sizeof(seg)));
+	error = dump_header_addbytes(&seg, ALIGN(sizeof(seg)));
+	if (error) {
+		printf("[segment header %zu bytes failed, error=%d] ",
+		    ALIGN(sizeof(seg)), error);
+		/* blithely proceed (can't fail?) */
+	}
 
 	/*
 	 * Add the machine-dependent header info.
 	 */
 	cpuhdr.ptdpaddr = PDPpaddr;
 	cpuhdr.nmemsegs = dump_nmemsegs;
-	(void)dump_header_addbytes(&cpuhdr, ALIGN(sizeof(cpuhdr)));
+	error = dump_header_addbytes(&cpuhdr, ALIGN(sizeof(cpuhdr)));
+	if (error) {
+		printf("[MD header %zu bytes failed, error=%d] ",
+		    ALIGN(sizeof(cpuhdr)), error);
+		/* blithely proceed (can't fail?) */
+	}
 
 	/*
 	 * Write out the memory segment descriptors.
@@ -1364,6 +1389,9 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	kpreempt_enable();
 
 	tf = l->l_md.md_regs;
+	memset(tf, 0, sizeof(*tf));
+
+	tf->tf_trapno = T_ASTFLT;
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_rdi = 0;
@@ -1515,9 +1543,16 @@ init_x86_64_ksyms(void)
 		ksyms_addsyms_elf(symtab->nsym, (void *)tssym, (void *)tesym);
 	} else {
 		uintptr_t endp = (uintptr_t)(void *)&end;
-
-		ksyms_addsyms_elf(*(long *)endp,
-		    ((long *)endp) + 1, esym);
+#ifdef XEN
+		/*
+		 * cpu_probe() / identify_hypervisor() overrides VM_GUEST_GENPVH,
+		 * we can't rely on vm_guest == VM_GUEST_GENPVH
+		 */
+		if (pvh_boot && vm_guest != VM_GUEST_XENPVH)
+			ksyms_addsyms_elf(0, ((long *)endp) + 1, esym);
+		else
+#endif
+			ksyms_addsyms_elf(*(long *)endp, ((long *)endp) + 1, esym);
 	}
 #endif
 }
@@ -1701,7 +1736,7 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 #ifdef XEN
-	if (vm_guest == VM_GUEST_XENPVH)
+	if (pvh_boot)
 		xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 #endif
 	init_pte();

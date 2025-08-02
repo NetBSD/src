@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181giu.c,v 1.8 2021/08/07 16:18:54 thorpej Exp $ */
+/* $NetBSD: vr4181giu.c,v 1.8.12.1 2025/08/02 05:55:41 perseant Exp $ */
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4181giu.c,v 1.8 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4181giu.c,v 1.8.12.1 2025/08/02 05:55:41 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -166,7 +166,7 @@ vr4181giu_attach(device_t parent, device_t self, void *aux)
 static void
 vr4181giu_callback(device_t self)
 {
-	struct vr4181giu_softc		*sc = (void *) self;
+	struct vr4181giu_softc		*sc = device_private(self);
 
 	sc->sc_haa.haa_busname = "vrisab";
 	config_found(self, &sc->sc_haa, vr4181giu_print, CFARGS_NONE);

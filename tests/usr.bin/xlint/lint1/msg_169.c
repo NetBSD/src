@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_169.c,v 1.8 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: msg_169.c,v 1.8.2.1 2025/08/02 05:58:16 perseant Exp $	*/
 # 3 "msg_169.c"
 
-// Test for message: precedence confusion possible: parenthesize! [169]
+// Test for message: possible precedence confusion between '%s' and '%s' [169]
 
 /* lint1-flags: -g -h -S -w -X 191,351 */
 
@@ -12,60 +12,70 @@ confusing_shift_arith(unsigned a, unsigned b, unsigned c, unsigned char ch)
 {
 	unsigned con, okl, okr;
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '<<' and '+' [169] */
 	con = a + b << c;
 	okl = (a + b) << c;
 	okr = a + (b << c);
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '<<' and '+' [169] */
 	con = a << b + c;
 	okl = (a << b) + c;
 	okr = a << (b + c);
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '>>' and '-' [169] */
 	con = a - b >> c;
 	okl = (a - b) >> c;
 	okr = a - (b >> c);
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '>>' and '-' [169] */
 	con = a >> b - c;
 	okl = (a >> b) - c;
 	okr = a >> (b - c);
 
 	// Parenthesizing the inner operands has no effect on the warning.
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '<<' and '+' [169] */
 	con = (a) + b << c;
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '<<' and '+' [169] */
 	con = a + (b) << c;
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '<<' and '+' [169] */
 	con = a + b << (c);
 
 	// The usual arithmetic promotions have no effect on the warning.
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '<<' and '+' [169] */
 	con = ch + b << c;
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '<<' and '+' [169] */
 	con = a + ch << c;
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '<<' and '+' [169] */
 	con = a + b << ch;
 }
 
 void
-confusing_logical(bool a, bool b, bool c)
+confusing_logical(bool a, bool b, bool c, bool d)
 {
-	bool con, okl, okr, eql;
+	bool con, okl, okr, okb, eql;
 
 	eql = a && b && c;
 	eql = a || b || c;
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '||' and '&&' [169] */
 	con = a && b || c;
 	okl = (a && b) || c;
 	okr = a && (b || c);
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '||' and '&&' [169] */
 	con = a || b && c;
 	okl = (a || b) && c;
 	okr = a || (b && c);
+
+	// When both nested operands have confusing precedence, there's only
+	// a single warning, as that is enough to point to the issue.
+	/* expect+1: warning: possible precedence confusion between '||' and '&&' [169] */
+	con = a && b || c && d;
+	/* expect+1: warning: possible precedence confusion between '||' and '&&' [169] */
+	okl = (a && b) || c && d;
+	/* expect+1: warning: possible precedence confusion between '||' and '&&' [169] */
+	okr = a && b || (c && d);
+	okb = (a && b) || (c && d);
 }
 
 void
@@ -77,48 +87,48 @@ confusing_bitwise(unsigned a, unsigned b, unsigned c)
 	eql = a | b | c;
 	eql = a ^ b ^ c;
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '|' and '^' [169] */
 	con = a | b ^ c;
 	okl = (a | b) ^ c;
 	okr = a | (b ^ c);
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '|' and '&' [169] */
 	con = a | b & c;
 	okl = (a | b) & c;
 	okr = a | (b & c);
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '|' and '^' [169] */
 	con = a ^ b | c;
 	okl = (a ^ b) | c;
 	okr = a ^ (b | c);
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '^' and '&' [169] */
 	con = a ^ b & c;
 	okl = (a ^ b) & c;
 	okr = a ^ (b & c);
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '|' and '&' [169] */
 	con = a & b | c;
 	okl = (a & b) ^ c;
 	okr = a & (b ^ c);
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '^' and '&' [169] */
 	con = a & b ^ c;
 	okl = (a & b) ^ c;
 	okr = a & (b ^ c);
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '&' and '+' [169] */
 	con = a & b + c;
 	okl = (a & b) + c;
 	okr = a & (b + c);
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '|' and '-' [169] */
 	con = a - b | c;
 	okl = (a - b) | c;
 	okr = a - (b | c);
 
 	// This looks like a binomial formula but isn't.
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '^' and '+' [169] */
 	con = a ^ 2 - 2 * a * b + b ^ 2;
 
 	// This isn't a binomial formula either since '^' means xor.
@@ -144,14 +154,14 @@ cast_expressions(char a, char b, char c)
 
 	// Adding casts to the leaf nodes doesn't change anything about the
 	// confusing precedence.
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '|' and '&' [169] */
 	con = (unsigned)a | (unsigned)b & (unsigned)c;
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '|' and '&' [169] */
 	con = (unsigned)a & (unsigned)b | (unsigned)c;
 
 	// Adding a cast around the whole calculation doesn't change the
 	// precedence as well.
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '|' and '&' [169] */
 	con = (unsigned)(a | b & c);
 
 	// Adding a cast around an intermediate result groups the operands
@@ -175,7 +185,7 @@ implicit_conversion_to_long(long la, int a)
 {
 	int ok;
 
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '|' and '&' [169] */
 	ok = a & a | la;
 
 	/*
@@ -185,7 +195,7 @@ implicit_conversion_to_long(long la, int a)
 	 * conversion or an explicit cast between the main operator ('|') and
 	 * the nested operator ('&').
 	 */
-	/* expect+1: warning: precedence confusion possible: parenthesize! [169] */
+	/* expect+1: warning: possible precedence confusion between '|' and '&' [169] */
 	ok = la | a & a;
 
 	ok = (a & a) | la;	/* always ok */

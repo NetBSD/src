@@ -25,7 +25,9 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { fd92:7065:b8e:ffff::2; };
+	allow-transfer { any; };
 	notify no;
+	notify-delay 0;
 	recursion no;
 	serial-query-rate 100;
 	dnssec-validation no;
@@ -74,6 +76,12 @@ view "default" {
 	zone "catalog4.example" {
 		type secondary;
 		file "catalog4.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	zone "catalog6.example" {
+		type secondary;
+		file "catalog6.example.db";
 		primaries { 10.53.0.1; };
 	};
 

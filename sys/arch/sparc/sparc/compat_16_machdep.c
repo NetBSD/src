@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.6 2021/10/27 04:15:00 thorpej Exp $ */
+/*	$NetBSD: compat_16_machdep.c,v 1.6.10.1 2025/08/02 05:56:09 perseant Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6 2021/10/27 04:15:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6.10.1 2025/08/02 05:56:09 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -140,7 +140,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 		fp = (struct sigframe_sigcontext *)oldsp;
 
-	fp = (struct sigframe_sigcontext *)((int)(fp - 1) & ~7);
+	fp = (struct sigframe_sigcontext *)((int)(fp - 1) & ~STACK_ALIGNBYTES);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)

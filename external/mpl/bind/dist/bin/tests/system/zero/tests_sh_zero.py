@@ -9,6 +9,18 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "dig.out*",
+        "query.list",
+        "ans*/ans.run",
+        "ns2/example.db",
+        "ns4/example.bk",
+    ]
+)
+
 
 def test_zero(run_tests_sh):
     run_tests_sh()

@@ -25,6 +25,8 @@ options {
 	minimal-responses no;
 };
 
+trust-anchors { };
+
 acl filterees { 10.53.0.1; };
 
 plugin query "../../../../plugins/.libs/filter-aaaa.so" {

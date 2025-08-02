@@ -66,6 +66,16 @@ zone "example6" {
 	type forward;
 };
 
+zone "example8." {
+	type primary;
+	file "example.db";
+};
+
+zone "example9." {
+	type primary;
+	file "example.db";
+};
+
 zone "diditwork.net" {
 	type primary;
 	file "diditwork.net.db";

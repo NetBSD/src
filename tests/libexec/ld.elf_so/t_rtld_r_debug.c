@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rtld_r_debug.c,v 1.5 2023/11/24 17:40:20 riastradh Exp $	*/
+/*	$NetBSD: t_rtld_r_debug.c,v 1.5.2.1 2025/08/02 05:58:10 perseant Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -26,6 +26,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_rtld_r_debug.c,v 1.5.2.1 2025/08/02 05:58:10 perseant Exp $");
 
 #include <sys/types.h>
 
@@ -60,13 +63,24 @@ get_dynamic_section(void)
 	phdr = (void *)getauxval(AT_PHDR);
 	phnum = (Elf_Half)getauxval(AT_PHNUM);
 
-	ATF_CHECK(phdr != NULL);
-	ATF_CHECK(phnum != (Elf_Half)~0);
+	printf("AT_PHDR=%p\n", phdr);
+	printf("AT_PHNUM=%d\n", phnum);
+
+	ATF_REQUIRE(phdr != NULL);
+	ATF_REQUIRE(phnum != (Elf_Half)~0);
 
 	phlimit = phdr + phnum;
 	dynphdr = NULL;
 
 	for (; phdr < phlimit; ++phdr) {
+		printf("phdr %p: type=%d flags=0x%x"
+		    " vaddr=0x%lx paddr=0x%lx"
+		    " filesz=0x%lx memsz=0x%lx"
+		    " align=0x%lx\n",
+		    phdr, phdr->p_type, phdr->p_flags,
+		    (long)phdr->p_vaddr, (long)phdr->p_paddr,
+		    (long)phdr->p_filesz, (long)phdr->p_memsz,
+		    (long)phdr->p_align);
 		if (phdr->p_type == PT_DYNAMIC)
 			dynphdr = phdr;
 		if (phdr->p_type == PT_PHDR)
@@ -76,34 +90,48 @@ get_dynamic_section(void)
 	return (Elf_Dyn *)((uint8_t *)dynphdr->p_vaddr + relocbase);
 }
 
-static struct r_debug *
+static const struct r_debug *
 get_rtld_r_debug(void)
 {
-	struct r_debug *debug = NULL;
+	const struct r_debug *debug = NULL;
 	Elf_Dyn *dynp;
 
 	for (dynp = get_dynamic_section(); dynp->d_tag != DT_NULL; dynp++) {
+		printf("dynp %p: tag=%ld val=0x%lx\n", dynp,
+		    (long)dynp->d_tag, (long)dynp->d_un.d_val);
+#ifdef __mips__
+		if (dynp->d_tag == DT_MIPS_RLD_MAP) {
+			debug = (const void *)*(Elf_Addr *)dynp->d_un.d_ptr;
+			break;
+		}
+		if (dynp->d_tag == DT_MIPS_RLD_MAP_REL) {
+			debug = (const void *)*(Elf_Addr *)((Elf_Addr)dynp +
+			    dynp->d_un.d_val);
+			break;
+		}
+#else
 		if (dynp->d_tag == DT_DEBUG) {
 			debug = (void *)dynp->d_un.d_val;
 			break;
 		}
+#endif
 	}
-	ATF_CHECK(debug != NULL);
+	ATF_REQUIRE(debug != NULL);
 
 	return debug;
 }
 
 static void
-check_r_debug_return_link_map(const char *name, struct link_map **rmap)
+check_r_debug_return_link_map(const char *name, const struct link_map **rmap)
 {
-	struct r_debug *debug;
-	struct link_map *map;
+	const struct r_debug *debug;
+	const struct link_map *map;
 	void *loader;
 	bool found;
 
 	loader = NULL;
 	debug = get_rtld_r_debug();
-	ATF_CHECK(debug != NULL);
+	ATF_REQUIRE(debug != NULL);
 	ATF_CHECK_EQ_MSG(debug->r_version, R_DEBUG_VERSION,
 	    "debug->r_version=%d R_DEBUG_VERSION=%d",
 	    debug->r_version, R_DEBUG_VERSION);
@@ -144,12 +172,12 @@ ATF_TC(dlopen);
 ATF_TC_HEAD(dlopen, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "check whether r_debug is well-formed after an dlopen(3) call");
+	    "check whether r_debug is well-formed after a dlopen(3) call");
 }
 ATF_TC_BODY(dlopen, tc)
 {
 	void *handle;
-	struct link_map *map, *r_map;
+	const struct link_map *r_map, *map;
 
 	handle = dlopen("libutil.so", RTLD_LAZY);
 	ATF_REQUIRE_MSG(handle, "dlopen: %s", dlerror());

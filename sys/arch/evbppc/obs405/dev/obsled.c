@@ -1,4 +1,4 @@
-/*	$NetBSD: obsled.c,v 1.11 2024/01/15 19:44:07 andvar Exp $	*/
+/*	$NetBSD: obsled.c,v 1.11.2.1 2025/08/02 05:55:35 perseant Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.11 2024/01/15 19:44:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.11.2.1 2025/08/02 05:55:35 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -174,8 +174,8 @@ obs266_led_set(int led)
 	deviter_t di;
 
 	/*
-	 * Sarching "obsled" devices from device tree.
-	 * Do you have something better idea?
+	 * Searching "obsled" devices from device tree.
+	 * Do you have a better idea?
 	 */
         for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
 	     dv = deviter_next(&di)) {

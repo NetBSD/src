@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_pipe.c,v 1.2 2000/06/14 06:49:10 cgd Exp $ */
+/* $NetBSD: Lint_pipe.c,v 1.2.118.1 2025/08/02 05:54:42 perseant Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,8 +9,7 @@
 
 /*ARGSUSED*/
 int
-pipe(filedes)
-	int filedes[2];
+pipe(int filedes[2])
 {
-	return (0);
+	return 0;
 }

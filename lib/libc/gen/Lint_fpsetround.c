@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_fpsetround.c,v 1.2 2000/06/14 06:49:05 cgd Exp $ */
+/* $NetBSD: Lint_fpsetround.c,v 1.2.116.1 2025/08/02 05:54:36 perseant Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,10 +9,9 @@
 
 /*ARGSUSED*/
 fp_rnd
-fpsetround(r)
-	fp_rnd r;
+fpsetround(fp_rnd r)
 {
 	fp_rnd rv = { 0 };
 
-	return (rv);
+	return rv;
 }

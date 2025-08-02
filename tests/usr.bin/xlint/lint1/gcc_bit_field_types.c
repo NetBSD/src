@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_bit_field_types.c,v 1.9 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: gcc_bit_field_types.c,v 1.9.2.1 2025/08/02 05:58:14 perseant Exp $	*/
 # 3 "gcc_bit_field_types.c"
 
 /* lint1-extra-flags: -X 351 */
@@ -24,7 +24,7 @@ struct example {
 	unsigned long unsigned_long_flag: 1;
 	long long long_long_flag: 1;
 	unsigned long long unsigned_long_long_flag: 1;
-	/* expect+1: warning: illegal bit-field type 'double' [35] */
+	/* expect+1: warning: invalid bit-field type 'double' [35] */
 	double double_flag: 1;
 };
 

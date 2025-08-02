@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2019/03/11 09:20:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.14.1 2025/08/02 05:50:38 perseant Exp $
 
 .include <bsd.own.mk>
 
 PROG=	transset
-SRCS=	dsimple.c transSet.c
+SRCS=	dsimple.c transSet.c clientwin.c
 
 CPPFLAGS+=${X11FLAGS.EXTENSION}
 

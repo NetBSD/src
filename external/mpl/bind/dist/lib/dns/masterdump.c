@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.14 2024/02/21 22:52:07 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.14.2.1 2025/08/02 05:53:27 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,25 +19,24 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include <isc/async.h>
 #include <isc/atomic.h>
 #include <isc/buffer.h>
-#include <isc/event.h>
 #include <isc/file.h>
+#include <isc/loop.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
-#include <isc/print.h>
 #include <isc/refcount.h>
 #include <isc/result.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
-#include <isc/task.h>
 #include <isc/time.h>
 #include <isc/types.h>
 #include <isc/util.h>
+#include <isc/work.h>
 
 #include <dns/db.h>
 #include <dns/dbiterator.h>
-#include <dns/events.h>
 #include <dns/fixedname.h>
 #include <dns/log.h>
 #include <dns/master.h>
@@ -151,9 +150,8 @@ const dns_master_style_t dns_master_style_full = {
 
 const dns_master_style_t dns_master_style_explicitttl = {
 	DNS_STYLEFLAG_OMIT_OWNER | DNS_STYLEFLAG_OMIT_CLASS |
-		DNS_STYLEFLAG_REL_OWNER | DNS_STYLEFLAG_REL_DATA |
-		DNS_STYLEFLAG_COMMENT | DNS_STYLEFLAG_RRCOMMENT |
-		DNS_STYLEFLAG_MULTILINE,
+		DNS_STYLEFLAG_CLASS_PERNAME | DNS_STYLEFLAG_COMMENT |
+		DNS_STYLEFLAG_RRCOMMENT | DNS_STYLEFLAG_MULTILINE,
 	24,
 	32,
 	32,
@@ -262,7 +260,6 @@ struct dns_dumpctx {
 	dns_dbversion_t *version;
 	dns_dbiterator_t *dbiter;
 	dns_totext_ctx_t tctx;
-	isc_task_t *task;
 	dns_dumpdonefunc_t done;
 	void *done_arg;
 	/* dns_master_dumpasync() */
@@ -308,8 +305,8 @@ indent(unsigned int *current, unsigned int to, int tabwidth,
 
 	if (ntabs > 0) {
 		isc_buffer_availableregion(target, &r);
-		if (r.length < (unsigned)ntabs) {
-			return (ISC_R_NOSPACE);
+		if (r.length < (unsigned int)ntabs) {
+			return ISC_R_NOSPACE;
 		}
 		p = r.base;
 
@@ -331,8 +328,8 @@ indent(unsigned int *current, unsigned int to, int tabwidth,
 	INSIST(nspaces >= 0);
 
 	isc_buffer_availableregion(target, &r);
-	if (r.length < (unsigned)nspaces) {
-		return (ISC_R_NOSPACE);
+	if (r.length < (unsigned int)nspaces) {
+		return ISC_R_NOSPACE;
 	}
 	p = r.base;
 
@@ -349,7 +346,7 @@ indent(unsigned int *current, unsigned int to, int tabwidth,
 	isc_buffer_add(target, nspaces);
 
 	*current = to;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -385,7 +382,7 @@ totext_ctx_init(const dns_master_style_t *style, const dns_indent_t *indentctx,
 
 		isc_buffer_availableregion(&buf, &r);
 		if (r.length < 1) {
-			return (DNS_R_TEXTTOOLONG);
+			return DNS_R_TEXTTOOLONG;
 		}
 		r.base[0] = '\n';
 		isc_buffer_add(&buf, 1);
@@ -396,7 +393,7 @@ totext_ctx_init(const dns_master_style_t *style, const dns_indent_t *indentctx,
 			unsigned int i, len = strlen(indentctx->string);
 			for (i = 0; i < indentctx->count; i++) {
 				if (isc_buffer_availablelength(&buf) < len) {
-					return (DNS_R_TEXTTOOLONG);
+					return DNS_R_TEXTTOOLONG;
 				}
 				isc_buffer_putstr(&buf, indentctx->string);
 			}
@@ -405,7 +402,7 @@ totext_ctx_init(const dns_master_style_t *style, const dns_indent_t *indentctx,
 		if ((ctx->style.flags & DNS_STYLEFLAG_COMMENTDATA) != 0) {
 			isc_buffer_availableregion(&buf, &r);
 			if (r.length < 1) {
-				return (DNS_R_TEXTTOOLONG);
+				return DNS_R_TEXTTOOLONG;
 			}
 			r.base[0] = ';';
 			isc_buffer_add(&buf, 1);
@@ -421,15 +418,15 @@ totext_ctx_init(const dns_master_style_t *style, const dns_indent_t *indentctx,
 		 * so it won't help.  Use DNS_R_TEXTTOOLONG as a substitute.
 		 */
 		if (result == ISC_R_NOSPACE) {
-			return (DNS_R_TEXTTOOLONG);
+			return DNS_R_TEXTTOOLONG;
 		}
 		if (result != ISC_R_SUCCESS) {
-			return (result);
+			return result;
 		}
 
 		isc_buffer_availableregion(&buf, &r);
 		if (r.length < 1) {
-			return (DNS_R_TEXTTOOLONG);
+			return DNS_R_TEXTTOOLONG;
 		}
 		r.base[0] = '\0';
 		isc_buffer_add(&buf, 1);
@@ -445,7 +442,7 @@ totext_ctx_init(const dns_master_style_t *style, const dns_indent_t *indentctx,
 	ctx->serve_stale_ttl = 0;
 	ctx->indent = *indentctx;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 #define INDENT_TO(col)                                                        \
@@ -469,12 +466,43 @@ str_totext(const char *source, isc_buffer_t *target) {
 	l = strlen(source);
 
 	if (l > region.length) {
-		return (ISC_R_NOSPACE);
+		return ISC_R_NOSPACE;
 	}
 
 	memmove(region.base, source, l);
 	isc_buffer_add(target, l);
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
+}
+
+static isc_result_t
+yaml_stringify(isc_buffer_t *target, char *start) {
+	isc_region_t r;
+	char *s = start;
+	char *tmp = NULL;
+
+	isc_buffer_availableregion(target, &r);
+	if (r.length < 1) {
+		return ISC_R_NOSPACE;
+	}
+
+	/* NUL terminate buffer for string operations below */
+	r.base[0] = '\0';
+
+	/* Escape quotes in string using quote quote */
+	while ((tmp = strchr(s, '\'')) != NULL) {
+		isc_buffer_availableregion(target, &r);
+		/* Space to shift by 1 with trailing NUL? */
+		if (r.length < 2) {
+			return ISC_R_NOSPACE;
+		}
+		memmove(tmp + 1, tmp,
+			(char *)isc_buffer_used(target) - tmp + 1);
+		isc_buffer_add(target, 1);
+		/* We now have "''..." - skip both quotes. */
+		s = tmp + 2;
+	}
+
+	return ISC_R_SUCCESS;
 }
 
 static isc_result_t
@@ -483,6 +511,7 @@ ncache_summary(dns_rdataset_t *rdataset, bool omit_final_dot,
 	isc_result_t result = ISC_R_SUCCESS;
 	dns_rdataset_t rds;
 	dns_name_t name;
+	char *start = NULL;
 
 	dns_rdataset_init(&rds);
 	dns_name_init(&name, NULL);
@@ -503,18 +532,22 @@ ncache_summary(dns_rdataset_t *rdataset, bool omit_final_dot,
 			}
 
 			if ((ctx->style.flags & DNS_STYLEFLAG_YAML) != 0) {
-				CHECK(str_totext("- ", target));
+				CHECK(str_totext("- '", target));
+				start = isc_buffer_used(target);
 			} else {
 				CHECK(str_totext("; ", target));
 			}
 
-			CHECK(dns_name_totext(&name, omit_final_dot, target));
+			CHECK(dns_name_totext(
+				&name,
+				omit_final_dot ? DNS_NAME_OMITFINALDOT : 0,
+				target));
 			CHECK(str_totext(" ", target));
 			CHECK(dns_rdatatype_totext(rds.type, target));
 			if (rds.type == dns_rdatatype_rrsig) {
 				CHECK(str_totext(" ", target));
 				CHECK(dns_rdatatype_totext(rds.covers, target));
-				CHECK(str_totext(" ...\n", target));
+				CHECK(str_totext(" ...", target));
 			} else {
 				dns_rdata_t rdata = DNS_RDATA_INIT;
 				dns_rdataset_current(&rds, &rdata);
@@ -522,8 +555,12 @@ ncache_summary(dns_rdataset_t *rdataset, bool omit_final_dot,
 				CHECK(dns_rdata_tofmttext(&rdata, dns_rootname,
 							  0, 0, 0, " ",
 							  target));
-				CHECK(str_totext("\n", target));
 			}
+			if (start != NULL) {
+				RETERR(yaml_stringify(target, start));
+				CHECK(str_totext("\'", target));
+			}
+			CHECK(str_totext("\n", target));
 		}
 		dns_rdataset_disassociate(&rds);
 		result = dns_rdataset_next(rdataset);
@@ -537,7 +574,7 @@ cleanup:
 		dns_rdataset_disassociate(&rds);
 	}
 
-	return (result);
+	return result;
 }
 
 /*
@@ -561,6 +598,7 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	dns_fixedname_t fixed;
 	dns_name_t *name = NULL;
 	unsigned int i;
+	char *start = NULL;
 
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 
@@ -594,7 +632,8 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		 * YAML or comment prefix?
 		 */
 		if ((ctx->style.flags & DNS_STYLEFLAG_YAML) != 0) {
-			RETERR(str_totext("- ", target));
+			RETERR(str_totext("- '", target));
+			start = isc_buffer_used(target);
 		} else if ((ctx->style.flags & DNS_STYLEFLAG_COMMENTDATA) != 0)
 		{
 			RETERR(str_totext(";", target));
@@ -608,7 +647,10 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		      !first))
 		{
 			unsigned int name_start = target->used;
-			RETERR(dns_name_totext(name, omit_final_dot, target));
+			RETERR(dns_name_totext(
+				name,
+				omit_final_dot ? DNS_NAME_OMITFINALDOT : 0,
+				target));
 			column += target->used - name_start;
 		}
 
@@ -629,7 +671,7 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 				result = dns_ttl_totext(rdataset->ttl, false,
 							false, target);
 				if (result != ISC_R_SUCCESS) {
-					return (result);
+					return result;
 				}
 				column += target->used - length;
 			} else {
@@ -638,7 +680,7 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 				INSIST(length <= sizeof(ttlbuf));
 				isc_buffer_availableregion(target, &r);
 				if (r.length < length) {
-					return (ISC_R_NOSPACE);
+					return ISC_R_NOSPACE;
 				}
 				memmove(r.base, ttlbuf, length);
 				isc_buffer_add(target, length);
@@ -675,7 +717,7 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 					rdataset->rdclass, target);
 			}
 			if (result != ISC_R_SUCCESS) {
-				return (result);
+				return result;
 			}
 			column += (target->used - class_start);
 		}
@@ -702,7 +744,7 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 				if (isc_buffer_availablelength(target) <
 				    (sizeof(KEYDATA) - 1))
 				{
-					return (ISC_R_NOSPACE);
+					return ISC_R_NOSPACE;
 				}
 				isc_buffer_putstr(target, KEYDATA);
 				break;
@@ -718,7 +760,7 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 				result = dns_rdatatype_totext(type, target);
 			}
 			if (result != ISC_R_SUCCESS) {
-				return (result);
+				return result;
 			}
 		}
 		column += (target->used - type_start);
@@ -729,10 +771,17 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		INDENT_TO(rdata_column);
 		if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0) {
 			if (NXDOMAIN(rdataset)) {
-				RETERR(str_totext(";-$NXDOMAIN\n", target));
+				RETERR(str_totext(";-$NXDOMAIN", target));
 			} else {
-				RETERR(str_totext(";-$NXRRSET\n", target));
+				RETERR(str_totext(";-$NXRRSET", target));
 			}
+			if (start != NULL) {
+				RETERR(yaml_stringify(target, start));
+				RETERR(str_totext("'\n", target));
+			} else {
+				RETERR(str_totext("\n", target));
+			}
+
 			/*
 			 * Print a summary of the cached records which make
 			 * up the negative response.
@@ -742,7 +791,6 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			break;
 		} else {
 			dns_rdata_t rdata = DNS_RDATA_INIT;
-			isc_region_t r;
 
 			dns_rdataset_current(rdataset, &rdata);
 
@@ -752,13 +800,12 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 					ctx->style.rdata_column,
 				ctx->style.split_width, ctx->linebreak,
 				target));
-
-			isc_buffer_availableregion(target, &r);
-			if (r.length < 1) {
-				return (ISC_R_NOSPACE);
+			if (start != NULL) {
+				RETERR(yaml_stringify(target, start));
+				RETERR(str_totext("'\n", target));
+			} else {
+				RETERR(str_totext("\n", target));
 			}
-			r.base[0] = '\n';
-			isc_buffer_add(target, 1);
 		}
 
 		first = false;
@@ -766,7 +813,7 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	}
 
 	if (result != ISC_R_NOMORE) {
-		return (result);
+		return result;
 	}
 
 	/*
@@ -780,7 +827,7 @@ rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	ctx->current_ttl = current_ttl;
 	ctx->current_ttl_valid = current_ttl_valid;
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 /*
@@ -794,7 +841,7 @@ question_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		isc_buffer_t *target) {
 	unsigned int column;
 	isc_result_t result;
-	isc_region_t r;
+	char *start = NULL;
 
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	result = dns_rdataset_first(rdataset);
@@ -802,10 +849,16 @@ question_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 
 	column = 0;
 
+	if ((ctx->style.flags & DNS_STYLEFLAG_YAML) != 0) {
+		RETERR(str_totext("- '", target));
+		start = isc_buffer_used(target);
+	}
+
 	/* Owner name */
 	{
 		unsigned int name_start = target->used;
-		RETERR(dns_name_totext(owner_name, omit_final_dot, target));
+		unsigned int opts = omit_final_dot ? DNS_NAME_OMITFINALDOT : 0;
+		RETERR(dns_name_totext(owner_name, opts, target));
 		column += target->used - name_start;
 	}
 
@@ -822,7 +875,7 @@ question_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 						       target);
 		}
 		if (result != ISC_R_SUCCESS) {
-			return (result);
+			return result;
 		}
 		column += (target->used - class_start);
 	}
@@ -839,19 +892,18 @@ question_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			result = dns_rdatatype_totext(rdataset->type, target);
 		}
 		if (result != ISC_R_SUCCESS) {
-			return (result);
+			return result;
 		}
 		column += (target->used - type_start);
 	}
 
-	isc_buffer_availableregion(target, &r);
-	if (r.length < 1) {
-		return (ISC_R_NOSPACE);
+	if (start != NULL) {
+		RETERR(yaml_stringify(target, start));
+		RETERR(str_totext("\'", target));
 	}
-	r.base[0] = '\n';
-	isc_buffer_add(target, 1);
+	RETERR(str_totext("\n", target));
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -862,7 +914,7 @@ dns_rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	result = totext_ctx_init(&dns_master_style_debug, NULL, &ctx);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR("could not set master file style");
-		return (ISC_R_UNEXPECTED);
+		return ISC_R_UNEXPECTED;
 	}
 
 	/*
@@ -876,11 +928,11 @@ dns_rdataset_totext(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	}
 
 	if (question) {
-		return (question_totext(rdataset, owner_name, &ctx,
-					omit_final_dot, target));
+		return question_totext(rdataset, owner_name, &ctx,
+				       omit_final_dot, target);
 	} else {
-		return (rdataset_totext(rdataset, owner_name, &ctx,
-					omit_final_dot, target));
+		return rdataset_totext(rdataset, owner_name, &ctx,
+				       omit_final_dot, target);
 	}
 }
 
@@ -894,10 +946,10 @@ dns_master_rdatasettotext(const dns_name_t *owner_name,
 	result = totext_ctx_init(style, indent, &ctx);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR("could not set master file style");
-		return (ISC_R_UNEXPECTED);
+		return ISC_R_UNEXPECTED;
 	}
 
-	return (rdataset_totext(rdataset, owner_name, &ctx, false, target));
+	return rdataset_totext(rdataset, owner_name, &ctx, false, target);
 }
 
 isc_result_t
@@ -910,10 +962,10 @@ dns_master_questiontotext(const dns_name_t *owner_name,
 	result = totext_ctx_init(style, NULL, &ctx);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR("could not set master file style");
-		return (ISC_R_UNEXPECTED);
+		return ISC_R_UNEXPECTED;
 	}
 
-	return (question_totext(rdataset, owner_name, &ctx, false, target));
+	return question_totext(rdataset, owner_name, &ctx, false, target);
 }
 
 /*
@@ -975,7 +1027,7 @@ dump_rdataset(isc_mem_t *mctx, const dns_name_t *name, dns_rdataset_t *rdataset,
 		isc_buffer_init(buffer, newmem, newlength);
 	}
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	/*
@@ -987,10 +1039,10 @@ dump_rdataset(isc_mem_t *mctx, const dns_name_t *name, dns_rdataset_t *rdataset,
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR("master file write failed: %s",
 				 isc_result_totext(result));
-		return (result);
+		return result;
 	}
 
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 /*
@@ -1024,13 +1076,13 @@ dump_order(const dns_rdataset_t *rds) {
 		t += 2;
 		break;
 	}
-	return ((t << 1) + sig);
+	return (t << 1) + sig;
 }
 
 static int
 dump_order_compare(const void *a, const void *b) {
-	return (dump_order(*((const dns_rdataset_t *const *)a)) -
-		dump_order(*((const dns_rdataset_t *const *)b)));
+	return dump_order(*((const dns_rdataset_t *const *)a)) -
+	       dump_order(*((const dns_rdataset_t *const *)b));
 }
 
 /*
@@ -1060,11 +1112,15 @@ dump_rdatasets_text(isc_mem_t *mctx, const dns_name_t *name,
 
 	if (itresult == ISC_R_SUCCESS && ctx->neworigin != NULL) {
 		isc_buffer_clear(buffer);
-		itresult = dns_name_totext(ctx->neworigin, false, buffer);
+		itresult = dns_name_totext(ctx->neworigin, 0, buffer);
 		RUNTIME_CHECK(itresult == ISC_R_SUCCESS);
 		isc_buffer_usedregion(buffer, &r);
 		fprintf(f, "$ORIGIN %.*s\n", (int)r.length, (char *)r.base);
 		ctx->neworigin = NULL;
+	}
+
+	if ((ctx->style.flags & DNS_STYLEFLAG_CLASS_PERNAME) != 0) {
+		ctx->class_printed = false;
 	}
 
 again:
@@ -1076,7 +1132,6 @@ again:
 		sorted[i] = &rdatasets[i];
 	}
 	n = i;
-	INSIST(n <= MAXSORT);
 
 	qsort(sorted, n, sizeof(sorted[0]), dump_order_compare);
 
@@ -1109,17 +1164,14 @@ again:
 		} else {
 			isc_result_t result;
 			if (STALE(rds)) {
-				fprintf(f, "; stale\n");
-			} else if (ANCIENT(rds)) {
 				isc_buffer_t b;
 				char buf[sizeof("YYYYMMDDHHMMSS")];
 				memset(buf, 0, sizeof(buf));
 				isc_buffer_init(&b, buf, sizeof(buf) - 1);
-				dns_time64_totext((uint64_t)rds->ttl, &b);
-				fprintf(f,
-					"; expired since %s "
-					"(awaiting cleanup)\n",
-					buf);
+				dns_time64_totext((uint64_t)rds->expire, &b);
+				fprintf(f, "; stale since %s\n", buf);
+			} else if (ANCIENT(rds)) {
+				fprintf(f, "; expired (awaiting cleanup)\n");
 			}
 			result = dump_rdataset(mctx, name, rds, ctx, buffer, f);
 			if (result != ISC_R_SUCCESS) {
@@ -1152,7 +1204,7 @@ again:
 	}
 
 	if (dumpresult != ISC_R_SUCCESS) {
-		return (dumpresult);
+		return dumpresult;
 	}
 
 	/*
@@ -1167,7 +1219,7 @@ again:
 		itresult = ISC_R_SUCCESS;
 	}
 
-	return (itresult);
+	return itresult;
 }
 
 /*
@@ -1249,7 +1301,7 @@ restart:
 	} while (result == ISC_R_SUCCESS);
 
 	if (result != ISC_R_NOMORE) {
-		return (result);
+		return result;
 	}
 
 	/*
@@ -1271,10 +1323,10 @@ restart:
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR("raw master file write failed: %s",
 				 isc_result_totext(result));
-		return (result);
+		return result;
 	}
 
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -1306,7 +1358,7 @@ dump_rdatasets_raw(isc_mem_t *mctx, const dns_name_t *owner_name,
 		}
 		dns_rdataset_disassociate(&rdataset);
 		if (result != ISC_R_SUCCESS) {
-			return (result);
+			return result;
 		}
 	}
 
@@ -1314,7 +1366,7 @@ dump_rdatasets_raw(isc_mem_t *mctx, const dns_name_t *owner_name,
 		result = ISC_R_SUCCESS;
 	}
 
-	return (result);
+	return result;
 }
 
 /*
@@ -1341,9 +1393,6 @@ dumpctx_destroy(dns_dumpctx_t *dctx) {
 		dns_db_closeversion(dctx->db, &dctx->version, false);
 	}
 	dns_db_detach(&dctx->db);
-	if (dctx->task != NULL) {
-		isc_task_detach(&dctx->task);
-	}
 	if (dctx->file != NULL) {
 		isc_mem_free(dctx->mctx, dctx->file);
 	}
@@ -1380,13 +1429,13 @@ dns_dumpctx_detach(dns_dumpctx_t **dctxp) {
 dns_dbversion_t *
 dns_dumpctx_version(dns_dumpctx_t *dctx) {
 	REQUIRE(DNS_DCTX_VALID(dctx));
-	return (dctx->version);
+	return dctx->version;
 }
 
 dns_db_t *
 dns_dumpctx_db(dns_dumpctx_t *dctx) {
 	REQUIRE(DNS_DCTX_VALID(dctx));
-	return (dctx->db);
+	return dctx->db;
 }
 
 void
@@ -1434,7 +1483,7 @@ flushandsync(FILE *f, isc_result_t result, const char *temp) {
 				      isc_result_totext(result));
 		}
 	}
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -1470,7 +1519,7 @@ closeandrename(FILE *f, isc_result_t result, const char *temp,
 			      "dumping master file: rename: %s: %s", file,
 			      isc_result_totext(result));
 	}
-	return (result);
+	return result;
 }
 
 /*
@@ -1503,48 +1552,14 @@ master_dump_cb(void *data) {
 }
 
 /*
- * This will run in a network/task manager thread when the dump is complete.
+ * This will run in a loop manager thread when the dump is complete.
  */
 static void
-master_dump_done_cb(void *data, isc_result_t result) {
+master_dump_done_cb(void *data) {
 	dns_dumpctx_t *dctx = data;
 
-	if (result == ISC_R_SUCCESS && dctx->result != ISC_R_SUCCESS) {
-		result = dctx->result;
-	}
-
-	(dctx->done)(dctx->done_arg, result);
+	(dctx->done)(dctx->done_arg, dctx->result);
 	dns_dumpctx_detach(&dctx);
-}
-
-/*
- * This must be run from a network/task manager thread.
- */
-static void
-setup_dump(isc_task_t *task, isc_event_t *event) {
-	dns_dumpctx_t *dctx = NULL;
-
-	REQUIRE(isc_nm_tid() >= 0);
-	REQUIRE(event != NULL);
-
-	dctx = event->ev_arg;
-
-	REQUIRE(DNS_DCTX_VALID(dctx));
-
-	isc_nm_work_offload(isc_task_getnetmgr(task), master_dump_cb,
-			    master_dump_done_cb, dctx);
-
-	isc_event_free(&event);
-}
-
-static isc_result_t
-task_send(dns_dumpctx_t *dctx) {
-	isc_event_t *event;
-
-	event = isc_event_allocate(dctx->mctx, NULL, DNS_EVENT_DUMPQUANTUM,
-				   setup_dump, dctx, sizeof(*event));
-	isc_task_send(dctx->task, &event);
-	return (ISC_R_SUCCESS);
 }
 
 static isc_result_t
@@ -1556,19 +1571,11 @@ dumpctx_create(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 	unsigned int options;
 
 	dctx = isc_mem_get(mctx, sizeof(*dctx));
+	*dctx = (dns_dumpctx_t){
+		.f = f,
+		.format = format,
+	};
 
-	dctx->mctx = NULL;
-	dctx->f = f;
-	dctx->dbiter = NULL;
-	dctx->db = NULL;
-	dctx->version = NULL;
-	dctx->done = NULL;
-	dctx->done_arg = NULL;
-	dctx->task = NULL;
-	atomic_init(&dctx->canceled, false);
-	dctx->file = NULL;
-	dctx->tmpfile = NULL;
-	dctx->format = format;
 	if (header == NULL) {
 		dns_master_initrawheader(&dctx->header);
 	} else {
@@ -1592,7 +1599,7 @@ dumpctx_create(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 		goto cleanup;
 	}
 
-	isc_stdtime_get(&dctx->now);
+	dctx->now = isc_stdtime_now();
 	dns_db_attach(db, &dctx->db);
 
 	dctx->do_date = dns_db_iscache(dctx->db);
@@ -1625,7 +1632,7 @@ dumpctx_create(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 	isc_refcount_init(&dctx->references, 1);
 	dctx->magic = DNS_DCTX_MAGIC;
 	*dctxp = dctx;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 
 cleanup:
 	if (dctx->dbiter != NULL) {
@@ -1635,7 +1642,7 @@ cleanup:
 		dns_db_detach(&dctx->db);
 	}
 	isc_mem_put(mctx, dctx, sizeof(*dctx));
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -1706,7 +1713,7 @@ writeheader(dns_dumpctx_t *dctx) {
 	}
 
 	isc_mem_put(dctx->mctx, buffer.base, buffer.length);
-	return (result);
+	return result;
 }
 
 static isc_result_t
@@ -1782,39 +1789,34 @@ dumptostream(dns_dumpctx_t *dctx) {
 cleanup:
 	RUNTIME_CHECK(dns_dbiterator_pause(dctx->dbiter) == ISC_R_SUCCESS);
 	isc_mem_put(dctx->mctx, buffer.base, buffer.length);
-	return (result);
+	return result;
 }
 
 isc_result_t
 dns_master_dumptostreamasync(isc_mem_t *mctx, dns_db_t *db,
 			     dns_dbversion_t *version,
 			     const dns_master_style_t *style, FILE *f,
-			     isc_task_t *task, dns_dumpdonefunc_t done,
+			     isc_loop_t *loop, dns_dumpdonefunc_t done,
 			     void *done_arg, dns_dumpctx_t **dctxp) {
 	dns_dumpctx_t *dctx = NULL;
 	isc_result_t result;
 
-	REQUIRE(task != NULL);
+	REQUIRE(loop != NULL);
 	REQUIRE(f != NULL);
 	REQUIRE(done != NULL);
 
 	result = dumpctx_create(mctx, db, version, style, f, &dctx,
 				dns_masterformat_text, NULL);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
-	isc_task_attach(task, &dctx->task);
 	dctx->done = done;
 	dctx->done_arg = done_arg;
 
-	result = task_send(dctx);
-	if (result == ISC_R_SUCCESS) {
-		dns_dumpctx_attach(dctx, dctxp);
-		return (DNS_R_CONTINUE);
-	}
+	dns_dumpctx_attach(dctx, dctxp);
+	isc_work_enqueue(loop, master_dump_cb, master_dump_done_cb, dctx);
 
-	dns_dumpctx_detach(&dctx);
-	return (result);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -1828,7 +1830,7 @@ dns_master_dumptostream(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 	result = dumpctx_create(mctx, db, version, style, f, &dctx, format,
 				header);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	result = dumptostream(dctx);
@@ -1836,12 +1838,11 @@ dns_master_dumptostream(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 	dns_dumpctx_detach(&dctx);
 
 	result = flushandsync(f, result, NULL);
-	return (result);
+	return result;
 }
 
 static isc_result_t
-opentmp(isc_mem_t *mctx, dns_masterformat_t format, const char *file,
-	char **tempp, FILE **fp) {
+opentmp(isc_mem_t *mctx, const char *file, char **tempp, FILE **fp) {
 	FILE *f = NULL;
 	isc_result_t result;
 	char *tempname = NULL;
@@ -1855,11 +1856,7 @@ opentmp(isc_mem_t *mctx, dns_masterformat_t format, const char *file,
 		goto cleanup;
 	}
 
-	if (format == dns_masterformat_text) {
-		result = isc_file_openunique(tempname, &f);
-	} else {
-		result = isc_file_bopenunique(tempname, &f);
-	}
+	result = isc_file_openunique(tempname, &f);
 	if (result != ISC_R_SUCCESS) {
 		isc_log_write(dns_lctx, ISC_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_MASTERDUMP, ISC_LOG_ERROR,
@@ -1874,17 +1871,17 @@ opentmp(isc_mem_t *mctx, dns_masterformat_t format, const char *file,
 
 	*tempp = tempname;
 	*fp = f;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 
 cleanup:
 	isc_mem_free(mctx, tempname);
-	return (result);
+	return result;
 }
 
 isc_result_t
 dns_master_dumpasync(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 		     const dns_master_style_t *style, const char *filename,
-		     isc_task_t *task, dns_dumpdonefunc_t done, void *done_arg,
+		     isc_loop_t *loop, dns_dumpdonefunc_t done, void *done_arg,
 		     dns_dumpctx_t **dctxp, dns_masterformat_t format,
 		     dns_masterrawheader_t *header) {
 	FILE *f = NULL;
@@ -1895,44 +1892,36 @@ dns_master_dumpasync(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 
 	file = isc_mem_strdup(mctx, filename);
 
-	result = opentmp(mctx, format, filename, &tempname, &f);
+	result = opentmp(mctx, filename, &tempname, &f);
 	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
+		goto cleanup_file;
 	}
 
 	result = dumpctx_create(mctx, db, version, style, f, &dctx, format,
 				header);
 	if (result != ISC_R_SUCCESS) {
-		(void)isc_stdio_close(f);
-		(void)isc_file_remove(tempname);
-		goto cleanup;
+		goto cleanup_tempname;
 	}
 
-	isc_task_attach(task, &dctx->task);
 	dctx->done = done;
 	dctx->done_arg = done_arg;
 	dctx->file = file;
-	file = NULL;
 	dctx->tmpfile = tempname;
-	tempname = NULL;
 
-	result = task_send(dctx);
-	if (result == ISC_R_SUCCESS) {
-		dns_dumpctx_attach(dctx, dctxp);
-		return (DNS_R_CONTINUE);
-	}
+	dns_dumpctx_attach(dctx, dctxp);
+	isc_work_enqueue(loop, master_dump_cb, master_dump_done_cb, dctx);
 
-cleanup:
-	if (dctx != NULL) {
-		dns_dumpctx_detach(&dctx);
-	}
-	if (file != NULL) {
-		isc_mem_free(mctx, file);
-	}
-	if (tempname != NULL) {
-		isc_mem_free(mctx, tempname);
-	}
-	return (result);
+	return ISC_R_SUCCESS;
+
+cleanup_tempname:
+	(void)isc_stdio_close(f);
+	(void)isc_file_remove(tempname);
+	isc_mem_free(mctx, tempname);
+
+cleanup_file:
+	isc_mem_free(mctx, file);
+
+	return result;
 }
 
 isc_result_t
@@ -1944,9 +1933,9 @@ dns_master_dump(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 	char *tempname;
 	dns_dumpctx_t *dctx = NULL;
 
-	result = opentmp(mctx, format, filename, &tempname, &f);
+	result = opentmp(mctx, filename, &tempname, &f);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		return result;
 	}
 
 	result = dumpctx_create(mctx, db, version, style, f, &dctx, format,
@@ -1963,102 +1952,13 @@ dns_master_dump(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 
 cleanup:
 	isc_mem_free(mctx, tempname);
-	return (result);
-}
-
-/*
- * Dump a database node into a master file.
- * XXX: this function assumes the text format.
- */
-isc_result_t
-dns_master_dumpnodetostream(isc_mem_t *mctx, dns_db_t *db,
-			    dns_dbversion_t *version, dns_dbnode_t *node,
-			    const dns_name_t *name,
-			    const dns_master_style_t *style, FILE *f) {
-	isc_result_t result;
-	isc_buffer_t buffer;
-	char *bufmem;
-	isc_stdtime_t now;
-	dns_totext_ctx_t ctx;
-	dns_rdatasetiter_t *rdsiter = NULL;
-	unsigned int options = DNS_DB_STALEOK;
-
-	if ((style->flags & DNS_STYLEFLAG_EXPIRED) != 0) {
-		options |= DNS_DB_EXPIREDOK;
-	}
-
-	result = totext_ctx_init(style, NULL, &ctx);
-	if (result != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR("could not set master file style");
-		return (ISC_R_UNEXPECTED);
-	}
-
-	isc_stdtime_get(&now);
-
-	bufmem = isc_mem_get(mctx, initial_buffer_length);
-
-	isc_buffer_init(&buffer, bufmem, initial_buffer_length);
-
-	result = dns_db_allrdatasets(db, node, version, options, now, &rdsiter);
-	if (result != ISC_R_SUCCESS) {
-		goto failure;
-	}
-	result = dump_rdatasets_text(mctx, name, rdsiter, &ctx, &buffer, f);
-	if (result != ISC_R_SUCCESS) {
-		goto failure;
-	}
-	dns_rdatasetiter_destroy(&rdsiter);
-
-	result = ISC_R_SUCCESS;
-
-failure:
-	isc_mem_put(mctx, buffer.base, buffer.length);
-	return (result);
-}
-
-isc_result_t
-dns_master_dumpnode(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
-		    dns_dbnode_t *node, const dns_name_t *name,
-		    const dns_master_style_t *style, const char *filename) {
-	FILE *f = NULL;
-	isc_result_t result;
-
-	result = isc_stdio_open(filename, "w", &f);
-	if (result != ISC_R_SUCCESS) {
-		isc_log_write(dns_lctx, ISC_LOGCATEGORY_GENERAL,
-			      DNS_LOGMODULE_MASTERDUMP, ISC_LOG_ERROR,
-			      "dumping node to file: %s: open: %s", filename,
-			      isc_result_totext(result));
-		return (ISC_R_UNEXPECTED);
-	}
-
-	result = dns_master_dumpnodetostream(mctx, db, version, node, name,
-					     style, f);
-	if (result != ISC_R_SUCCESS) {
-		isc_log_write(dns_lctx, ISC_LOGCATEGORY_GENERAL,
-			      DNS_LOGMODULE_MASTERDUMP, ISC_LOG_ERROR,
-			      "dumping master file: %s: dump: %s", filename,
-			      isc_result_totext(result));
-		(void)isc_stdio_close(f);
-		return (ISC_R_UNEXPECTED);
-	}
-
-	result = isc_stdio_close(f);
-	if (result != ISC_R_SUCCESS) {
-		isc_log_write(dns_lctx, ISC_LOGCATEGORY_GENERAL,
-			      DNS_LOGMODULE_MASTERDUMP, ISC_LOG_ERROR,
-			      "dumping master file: %s: close: %s", filename,
-			      isc_result_totext(result));
-		return (ISC_R_UNEXPECTED);
-	}
-
-	return (result);
+	return result;
 }
 
 dns_masterstyle_flags_t
 dns_master_styleflags(const dns_master_style_t *style) {
 	REQUIRE(style != NULL);
-	return (style->flags);
+	return style->flags;
 }
 
 isc_result_t
@@ -2082,7 +1982,7 @@ dns_master_stylecreate(dns_master_style_t **stylep,
 	style->tab_width = tab_width;
 	style->split_width = split_width;
 	*stylep = style;
-	return (ISC_R_SUCCESS);
+	return ISC_R_SUCCESS;
 }
 
 void

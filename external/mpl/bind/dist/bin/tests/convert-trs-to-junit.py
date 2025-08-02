@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
@@ -28,14 +28,14 @@ def read_trs_result(filename):
             items = line.split()
             if len(items) < 2:
                 raise ValueError("unsupported line in trs file", filename, line)
-            if items[0] != (":test-result:"):
+            if items[0] != (":global-test-result:"):
                 continue
             if result is not None:
-                raise NotImplementedError("double :test-result:", filename)
+                raise NotImplementedError("double :global-test-result:", filename)
             result = items[1].upper()
 
     if result is None:
-        raise ValueError(":test-result: not found", filename)
+        raise ValueError(":global-test-result: not found", filename)
 
     return result
 

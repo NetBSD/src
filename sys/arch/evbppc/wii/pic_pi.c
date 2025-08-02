@@ -1,4 +1,4 @@
-/* $NetBSD: pic_pi.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $ */
+/* $NetBSD: pic_pi.c,v 1.1.4.1 2025/08/02 05:55:36 perseant Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pic_pi.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_pi.c,v 1.1.4.1 2025/08/02 05:55:36 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/intr.h>

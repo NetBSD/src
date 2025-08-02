@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.11 2024/02/21 22:52:29 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.11.2.1 2025/08/02 05:53:55 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -224,7 +224,11 @@ static const char *description[ISC_R_NRESULTS] = {
 	[DNS_R_NSEC3BADALG] = "cannot use NSEC3 with key algorithm",
 	[DNS_R_NSEC3RESALT] = "NSEC3 resalt",
 	[DNS_R_INCONSISTENTRR] = "inconsistent resource record",
+	[DNS_R_HAVEPARMKEYS] = "unexpected service parameter keys",
 	[DNS_R_NOALPN] = "no ALPN",
+	[DNS_R_NODOHPATH] = "no DOHPATH",
+	[DNS_R_NOSKRFILE] = "no SKR file",
+	[DNS_R_NOSKRBUNDLE] = "no available SKR bundle",
 
 	[DST_R_UNSUPPORTEDALG] = "algorithm is unsupported",
 	[DST_R_CRYPTOFAILURE] = "crypto failure",
@@ -474,7 +478,11 @@ static const char *identifier[ISC_R_NRESULTS] = {
 	[DNS_R_NSEC3BADALG] = "DNS_R_NSEC3BADALG",
 	[DNS_R_NSEC3RESALT] = "DNS_R_NSEC3RESALT",
 	[DNS_R_INCONSISTENTRR] = "DNS_R_INCONSISTENTRR",
+	[DNS_R_HAVEPARMKEYS] = "DNS_R_HAVEPARMKEYS",
 	[DNS_R_NOALPN] = "DNS_R_NOALPN",
+	[DNS_R_NODOHPATH] = "DNS_R_NODOHPATH",
+	[DNS_R_NOSKRFILE] = "DNS_R_NOSKRFILE",
+	[DNS_R_NOSKRBUNDLE] = "DNS_R_NOSKRBUNDLE",
 
 	[DST_R_UNSUPPORTEDALG] = "DST_R_UNSUPPORTEDALG",
 	[DST_R_CRYPTOFAILURE] = "DST_R_CRYPTOFAILURE",
@@ -523,20 +531,20 @@ static const char *identifier[ISC_R_NRESULTS] = {
 	[ISCCC_R_MAXDEPTH] = "ISCCC_R_MAXDEPTH",
 };
 
-STATIC_ASSERT((DNS_R_SERVFAIL - DNS_R_NOERROR == 2),
+STATIC_ASSERT(DNS_R_SERVFAIL - DNS_R_NOERROR == 2,
 	      "DNS_R_NOERROR has wrong value");
 
-STATIC_ASSERT((DNS_R_BADVERS - DNS_R_NOERROR == 16),
+STATIC_ASSERT(DNS_R_BADVERS - DNS_R_NOERROR == 16,
 	      "DNS_R_BADVERS has wrong value");
 
-STATIC_ASSERT((ISC_R_NRESULTS < INT32_MAX), "result.h enum too big");
+STATIC_ASSERT(ISC_R_NRESULTS < INT32_MAX, "result.h enum too big");
 
 const char *
 isc_result_totext(isc_result_t result) {
-	return (description[result]);
+	return description[result];
 }
 
 const char *
 isc_result_toid(isc_result_t result) {
-	return (identifier[result]);
+	return identifier[result];
 }

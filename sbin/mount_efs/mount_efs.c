@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_efs.c,v 1.5 2011/08/29 14:35:00 joerg Exp $	*/
+/*	$NetBSD: mount_efs.c,v 1.5.54.1 2025/08/02 05:55:07 perseant Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -57,8 +57,6 @@ mount_efs_parseargs(int argc, char **argv,
 	char *canon_dev, char *canon_dir)
 {
 	int ch;
-	extern int optind;
-	extern char *optarg;
 	mntoptparse_t mp;
 
 	memset(args, 0, sizeof(*args));

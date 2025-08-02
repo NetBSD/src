@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.76 2023/12/07 16:54:44 riastradh Exp $
+# $NetBSD: Makefile,v 1.76.2.1 2025/08/02 05:58:06 perseant Exp $
 
 MKMAN=	no
 
@@ -59,6 +59,7 @@ TESTS_C+=		t_pollts
 TESTS_C+=		t_posix_fallocate
 TESTS_C+=		t_ppoll
 TESTS_C+=		t_ptrace
+TESTS_C+=		t_ptrace_kill
 TESTS_C+=		t_ptrace_sigchld
 TESTS_C+=		t_ptrace_wait
 TESTS_C+=		t_ptrace_wait3
@@ -98,6 +99,8 @@ SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT} t_mprotect_helper.c
 LDADD.t_eventfd+=	-lpthread
 LDADD.t_getpid+=	-lpthread
 LDADD.t_mmap+=		-lpthread
+LDADD.t_poll+=		-lpthread
+LDADD.t_ptrace_kill+=	-lpthread
 LDADD.t_timerfd+=	-lpthread
 
 LDADD.t_ptrace_sigchld+=	-pthread -lm
@@ -149,7 +152,8 @@ FILESGRP_truncate_test.root_owned=	wheel
 
 CLEANFILES=   truncate_test.root_owned
 truncate_test.root_owned:
-	dd if=/dev/null bs=1 count=1 of=${.TARGET}
+	@${_MKTARGET_CREATE}
+	touch ${.TARGET}
 
 WARNS=			4
 

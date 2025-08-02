@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.138 2023/10/05 19:41:06 ad Exp $     */
+/*	$NetBSD: trap.c,v 1.138.6.1 2025/08/02 05:56:14 perseant Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -28,7 +28,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.138 2023/10/05 19:41:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.138.6.1 2025/08/02 05:56:14 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -225,7 +225,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 					tf->tf_r0 = rv;
 					return;
 				}
-				printf("r0=%08lx r1=%08lx r2=%08lx r3=%08lx ",
+				printf("r0=%08lx r1=%08lx r2=%08lx r3=%08lx\n",
 				    tf->tf_r0, tf->tf_r1, tf->tf_r2, tf->tf_r3);
 				printf("r4=%08lx r5=%08lx r6=%08lx r7=%08lx\n",
 				    tf->tf_r4, tf->tf_r5, tf->tf_r6, tf->tf_r7);
@@ -371,12 +371,15 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 
+	memset(tf, 0, sizeof(*tf));
+
 	tf->tf_pc = pack->ep_entry + 2;
 	tf->tf_sp = stack;
 	tf->tf_r6 = stack;				/* for ELF */
 	tf->tf_r7 = 0;				/* for ELF */
 	tf->tf_r8 = 0;				/* for ELF */
 	tf->tf_r9 = l->l_proc->p_psstrp;		/* for ELF */
+	tf->tf_psl = PSL_U|PSL_PREVU;
 }
 
 

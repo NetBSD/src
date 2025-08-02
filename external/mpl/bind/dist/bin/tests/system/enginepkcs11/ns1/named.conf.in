@@ -34,3 +34,17 @@ key rndc_key {
 controls {
 	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
+
+key-store "hsm" {
+	directory ".";
+	pkcs11-uri "pkcs11:token=softhsm2-enginepkcs11;pin-value=1234";
+};
+
+key-store "pin" {
+	directory ".";
+	pkcs11-uri "pkcs11:token=softhsm2-enginepkcs11;pin-source=pin";
+};
+
+key-store "disk" {
+	directory "keys";
+};

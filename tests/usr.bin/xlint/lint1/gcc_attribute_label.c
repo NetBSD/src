@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_label.c,v 1.4 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_label.c,v 1.4.2.1 2025/08/02 05:58:14 perseant Exp $	*/
 # 3 "gcc_attribute_label.c"
 
 /*
@@ -17,11 +17,11 @@ test(int i)
 	if (i < 1000)
 		goto hot;
 error:
-	__attribute__((__cold__));
+	__attribute__((__cold__)) __attribute__((__cold__));
 	dead();
 
 hot:
-	__attribute__((__hot__));
+	__attribute__((__hot__)) __attribute__((__hot__));
 	if (i < 0)
 		goto error;
 }

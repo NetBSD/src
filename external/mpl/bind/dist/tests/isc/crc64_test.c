@@ -1,4 +1,4 @@
-/*	$NetBSD: crc64_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
+/*	$NetBSD: crc64_test.c,v 1.2.6.1 2025/08/02 05:54:15 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,7 +27,6 @@
 #include <cmocka.h>
 
 #include <isc/crc64.h>
-#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/util.h>
 
@@ -58,7 +57,7 @@ _crc64(const char *buf, size_t buflen, const char *result, const int repeats) {
 	char hex[16 + 1];
 	snprintf(hex, sizeof(hex), "%016" PRIX64, crc);
 
-	assert_memory_equal(hex, result, (result ? strlen(result) : 0));
+	assert_memory_equal(hex, result, result ? strlen(result) : 0);
 }
 
 /* 64-bit cyclic redundancy check */

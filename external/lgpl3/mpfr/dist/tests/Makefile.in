@@ -159,23 +159,24 @@ am__EXEEXT_1 = tabort_prec_max$(EXEEXT) tassert$(EXEEXT) \
 	toutimpl$(EXEEXT) tpow$(EXEEXT) tpow3$(EXEEXT) tpowr$(EXEEXT) \
 	tpow_all$(EXEEXT) tpow_z$(EXEEXT) tprec_round$(EXEEXT) \
 	tprintf$(EXEEXT) trandom$(EXEEXT) trandom_deviate$(EXEEXT) \
-	trec_sqrt$(EXEEXT) tremquo$(EXEEXT) trint$(EXEEXT) \
-	trndna$(EXEEXT) troot$(EXEEXT) trootn_si$(EXEEXT) \
-	trootn_ui$(EXEEXT) tsec$(EXEEXT) tsech$(EXEEXT) \
-	tset_d$(EXEEXT) tset_f$(EXEEXT) tset_float128$(EXEEXT) \
-	tset_ld$(EXEEXT) tset_q$(EXEEXT) tset_si$(EXEEXT) \
-	tset_sj$(EXEEXT) tset_str$(EXEEXT) tset_z$(EXEEXT) \
-	tset_z_2exp$(EXEEXT) tsi_op$(EXEEXT) tsin$(EXEEXT) \
-	tsin_cos$(EXEEXT) tsinh$(EXEEXT) tsinh_cosh$(EXEEXT) \
-	tsinu$(EXEEXT) tsprintf$(EXEEXT) tsqr$(EXEEXT) tsqrt$(EXEEXT) \
-	tsqrt_ui$(EXEEXT) tstckintc$(EXEEXT) tstdint$(EXEEXT) \
-	tstrtofr$(EXEEXT) tsub$(EXEEXT) tsub1sp$(EXEEXT) \
-	tsub_d$(EXEEXT) tsub_ui$(EXEEXT) tsubnormal$(EXEEXT) \
-	tsum$(EXEEXT) tswap$(EXEEXT) ttan$(EXEEXT) ttanh$(EXEEXT) \
-	ttanu$(EXEEXT) ttotal_order$(EXEEXT) ttrunc$(EXEEXT) \
-	tui_div$(EXEEXT) tui_pow$(EXEEXT) tui_sub$(EXEEXT) \
-	turandom$(EXEEXT) tvalist$(EXEEXT) ty0$(EXEEXT) ty1$(EXEEXT) \
-	tyn$(EXEEXT) tzeta$(EXEEXT) tzeta_ui$(EXEEXT)
+	trec_sqrt$(EXEEXT) treldiff$(EXEEXT) tremquo$(EXEEXT) \
+	trint$(EXEEXT) trndna$(EXEEXT) troot$(EXEEXT) \
+	trootn_si$(EXEEXT) trootn_ui$(EXEEXT) tsec$(EXEEXT) \
+	tsech$(EXEEXT) tset_d$(EXEEXT) tset_f$(EXEEXT) \
+	tset_float128$(EXEEXT) tset_ld$(EXEEXT) tset_q$(EXEEXT) \
+	tset_si$(EXEEXT) tset_sj$(EXEEXT) tset_str$(EXEEXT) \
+	tset_z$(EXEEXT) tset_z_2exp$(EXEEXT) tsi_op$(EXEEXT) \
+	tsin$(EXEEXT) tsin_cos$(EXEEXT) tsinh$(EXEEXT) \
+	tsinh_cosh$(EXEEXT) tsinu$(EXEEXT) tsprintf$(EXEEXT) \
+	tsqr$(EXEEXT) tsqrt$(EXEEXT) tsqrt_ui$(EXEEXT) \
+	tstckintc$(EXEEXT) tstdint$(EXEEXT) tstrtofr$(EXEEXT) \
+	tsub$(EXEEXT) tsub1sp$(EXEEXT) tsub_d$(EXEEXT) \
+	tsub_ui$(EXEEXT) tsubnormal$(EXEEXT) tsum$(EXEEXT) \
+	tswap$(EXEEXT) ttan$(EXEEXT) ttanh$(EXEEXT) ttanu$(EXEEXT) \
+	ttotal_order$(EXEEXT) ttrunc$(EXEEXT) tui_div$(EXEEXT) \
+	tui_pow$(EXEEXT) tui_sub$(EXEEXT) turandom$(EXEEXT) \
+	tvalist$(EXEEXT) ty0$(EXEEXT) ty1$(EXEEXT) tyn$(EXEEXT) \
+	tzeta$(EXEEXT) tzeta_ui$(EXEEXT)
 libfrtests_la_LIBADD =
 am_libfrtests_la_OBJECTS = memory.lo rnd_mode.lo tests.lo cmp_str.lo \
 	random2.lo
@@ -885,6 +886,11 @@ trec_sqrt_OBJECTS = trec_sqrt.$(OBJEXT)
 trec_sqrt_LDADD = $(LDADD)
 trec_sqrt_DEPENDENCIES = libfrtests.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(top_builddir)/src/libmpfr.la
+treldiff_SOURCES = treldiff.c
+treldiff_OBJECTS = treldiff.$(OBJEXT)
+treldiff_LDADD = $(LDADD)
+treldiff_DEPENDENCIES = libfrtests.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/src/libmpfr.la
 tremquo_SOURCES = tremquo.c
 tremquo_OBJECTS = tremquo.$(OBJEXT)
 tremquo_LDADD = $(LDADD)
@@ -1252,17 +1258,18 @@ am__depfiles_remade = ./$(DEPDIR)/cmp_str.Plo ./$(DEPDIR)/memory.Plo \
 	./$(DEPDIR)/tpow_z.Po ./$(DEPDIR)/tpowr.Po \
 	./$(DEPDIR)/tprec_round.Po ./$(DEPDIR)/tprintf.Po \
 	./$(DEPDIR)/trandom.Po ./$(DEPDIR)/trandom_deviate.Po \
-	./$(DEPDIR)/trec_sqrt.Po ./$(DEPDIR)/tremquo.Po \
-	./$(DEPDIR)/trint.Po ./$(DEPDIR)/trndna.Po \
-	./$(DEPDIR)/troot.Po ./$(DEPDIR)/trootn_si.Po \
-	./$(DEPDIR)/trootn_ui.Po ./$(DEPDIR)/tsec.Po \
-	./$(DEPDIR)/tsech.Po ./$(DEPDIR)/tset.Po ./$(DEPDIR)/tset_d.Po \
-	./$(DEPDIR)/tset_exp.Po ./$(DEPDIR)/tset_f.Po \
-	./$(DEPDIR)/tset_float128.Po ./$(DEPDIR)/tset_ld.Po \
-	./$(DEPDIR)/tset_q.Po ./$(DEPDIR)/tset_si.Po \
-	./$(DEPDIR)/tset_sj.Po ./$(DEPDIR)/tset_str.Po \
-	./$(DEPDIR)/tset_z.Po ./$(DEPDIR)/tset_z_2exp.Po \
-	./$(DEPDIR)/tsgn.Po ./$(DEPDIR)/tsi_op.Po ./$(DEPDIR)/tsin.Po \
+	./$(DEPDIR)/trec_sqrt.Po ./$(DEPDIR)/treldiff.Po \
+	./$(DEPDIR)/tremquo.Po ./$(DEPDIR)/trint.Po \
+	./$(DEPDIR)/trndna.Po ./$(DEPDIR)/troot.Po \
+	./$(DEPDIR)/trootn_si.Po ./$(DEPDIR)/trootn_ui.Po \
+	./$(DEPDIR)/tsec.Po ./$(DEPDIR)/tsech.Po ./$(DEPDIR)/tset.Po \
+	./$(DEPDIR)/tset_d.Po ./$(DEPDIR)/tset_exp.Po \
+	./$(DEPDIR)/tset_f.Po ./$(DEPDIR)/tset_float128.Po \
+	./$(DEPDIR)/tset_ld.Po ./$(DEPDIR)/tset_q.Po \
+	./$(DEPDIR)/tset_si.Po ./$(DEPDIR)/tset_sj.Po \
+	./$(DEPDIR)/tset_str.Po ./$(DEPDIR)/tset_z.Po \
+	./$(DEPDIR)/tset_z_2exp.Po ./$(DEPDIR)/tsgn.Po \
+	./$(DEPDIR)/tsi_op.Po ./$(DEPDIR)/tsin.Po \
 	./$(DEPDIR)/tsin_cos.Po ./$(DEPDIR)/tsinh.Po \
 	./$(DEPDIR)/tsinh_cosh.Po ./$(DEPDIR)/tsinu.Po \
 	./$(DEPDIR)/tsprintf.Po ./$(DEPDIR)/tsqr.Po \
@@ -1322,16 +1329,17 @@ SOURCES = $(libfrtests_la_SOURCES) mpf_compat.c mpfr_compat.c reuse.c \
 	tmodf.c tmul.c tmul_2exp.c tmul_d.c tmul_ui.c tnext.c \
 	tnrandom.c tnrandom_chisq.c tout_str.c toutimpl.c tpow.c \
 	tpow3.c tpow_all.c tpow_z.c tpowr.c tprec_round.c tprintf.c \
-	trandom.c trandom_deviate.c trec_sqrt.c tremquo.c trint.c \
-	trndna.c troot.c trootn_si.c trootn_ui.c tsec.c tsech.c tset.c \
-	tset_d.c tset_exp.c tset_f.c tset_float128.c tset_ld.c \
-	tset_q.c tset_si.c tset_sj.c tset_str.c tset_z.c tset_z_2exp.c \
-	tsgn.c tsi_op.c tsin.c tsin_cos.c tsinh.c tsinh_cosh.c tsinu.c \
-	tsprintf.c tsqr.c tsqrt.c tsqrt_ui.c tstckintc.c tstdint.c \
-	tstrtofr.c tsub.c tsub1sp.c tsub_d.c tsub_ui.c tsubnormal.c \
-	tsum.c tswap.c ttan.c ttanh.c ttanu.c ttotal_order.c ttrunc.c \
-	tui_div.c tui_pow.c tui_sub.c turandom.c tvalist.c tversion.c \
-	ty0.c ty1.c tyn.c tzeta.c tzeta_ui.c
+	trandom.c trandom_deviate.c trec_sqrt.c treldiff.c tremquo.c \
+	trint.c trndna.c troot.c trootn_si.c trootn_ui.c tsec.c \
+	tsech.c tset.c tset_d.c tset_exp.c tset_f.c tset_float128.c \
+	tset_ld.c tset_q.c tset_si.c tset_sj.c tset_str.c tset_z.c \
+	tset_z_2exp.c tsgn.c tsi_op.c tsin.c tsin_cos.c tsinh.c \
+	tsinh_cosh.c tsinu.c tsprintf.c tsqr.c tsqrt.c tsqrt_ui.c \
+	tstckintc.c tstdint.c tstrtofr.c tsub.c tsub1sp.c tsub_d.c \
+	tsub_ui.c tsubnormal.c tsum.c tswap.c ttan.c ttanh.c ttanu.c \
+	ttotal_order.c ttrunc.c tui_div.c tui_pow.c tui_sub.c \
+	turandom.c tvalist.c tversion.c ty0.c ty1.c tyn.c tzeta.c \
+	tzeta_ui.c
 DIST_SOURCES = $(libfrtests_la_SOURCES) mpf_compat.c mpfr_compat.c \
 	reuse.c tabort_defalloc1.c tabort_defalloc2.c \
 	tabort_prec_max.c tabs.c tacos.c tacosh.c tacosu.c tadd.c \
@@ -1357,11 +1365,11 @@ DIST_SOURCES = $(libfrtests_la_SOURCES) mpf_compat.c mpfr_compat.c \
 	tmul_2exp.c tmul_d.c tmul_ui.c tnext.c tnrandom.c \
 	tnrandom_chisq.c tout_str.c toutimpl.c tpow.c tpow3.c \
 	tpow_all.c tpow_z.c tpowr.c tprec_round.c tprintf.c trandom.c \
-	trandom_deviate.c trec_sqrt.c tremquo.c trint.c trndna.c \
-	troot.c trootn_si.c trootn_ui.c tsec.c tsech.c tset.c tset_d.c \
-	tset_exp.c tset_f.c tset_float128.c tset_ld.c tset_q.c \
-	tset_si.c tset_sj.c tset_str.c tset_z.c tset_z_2exp.c tsgn.c \
-	tsi_op.c tsin.c tsin_cos.c tsinh.c tsinh_cosh.c tsinu.c \
+	trandom_deviate.c trec_sqrt.c treldiff.c tremquo.c trint.c \
+	trndna.c troot.c trootn_si.c trootn_ui.c tsec.c tsech.c tset.c \
+	tset_d.c tset_exp.c tset_f.c tset_float128.c tset_ld.c \
+	tset_q.c tset_si.c tset_sj.c tset_str.c tset_z.c tset_z_2exp.c \
+	tsgn.c tsi_op.c tsin.c tsin_cos.c tsinh.c tsinh_cosh.c tsinu.c \
 	tsprintf.c tsqr.c tsqrt.c tsqrt_ui.c tstckintc.c tstdint.c \
 	tstrtofr.c tsub.c tsub1sp.c tsub_d.c tsub_ui.c tsubnormal.c \
 	tsum.c tswap.c ttan.c ttanh.c ttanu.c ttotal_order.c ttrunc.c \
@@ -1781,7 +1789,7 @@ TESTS_NO_TVERSION = tabort_prec_max tassert tabort_defalloc1            \
      tlog_ui tmin_prec tminmax tmodf tmul tmul_2exp tmul_d tmul_ui      \
      tnext tnrandom tnrandom_chisq tout_str toutimpl tpow tpow3 tpowr   \
      tpow_all tpow_z tprec_round tprintf trandom trandom_deviate        \
-     trec_sqrt tremquo trint trndna troot trootn_si trootn_ui           \
+     trec_sqrt treldiff tremquo trint trndna troot trootn_si trootn_ui  \
      tsec tsech tset_d tset_f tset_float128 tset_ld tset_q              \
      tset_si tset_sj tset_str tset_z tset_z_2exp tsi_op tsin tsin_cos   \
      tsinh tsinh_cosh tsinu tsprintf tsqr tsqrt tsqrt_ui tstckintc      \
@@ -2469,6 +2477,10 @@ trec_sqrt$(EXEEXT): $(trec_sqrt_OBJECTS) $(trec_sqrt_DEPENDENCIES) $(EXTRA_trec_
 	@rm -f trec_sqrt$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(trec_sqrt_OBJECTS) $(trec_sqrt_LDADD) $(LIBS)
 
+treldiff$(EXEEXT): $(treldiff_OBJECTS) $(treldiff_DEPENDENCIES) $(EXTRA_treldiff_DEPENDENCIES) 
+	@rm -f treldiff$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(treldiff_OBJECTS) $(treldiff_LDADD) $(LIBS)
+
 tremquo$(EXEEXT): $(tremquo_OBJECTS) $(tremquo_DEPENDENCIES) $(EXTRA_tremquo_DEPENDENCIES) 
 	@rm -f tremquo$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(tremquo_OBJECTS) $(tremquo_LDADD) $(LIBS)
@@ -2848,6 +2860,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trandom.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trandom_deviate.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trec_sqrt.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/treldiff.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tremquo.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trint.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trndna.Po@am__quote@ # am--include-marker
@@ -4143,6 +4156,13 @@ trec_sqrt.log: trec_sqrt$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+treldiff.log: treldiff$(EXEEXT)
+	@p='treldiff$(EXEEXT)'; \
+	b='treldiff'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 tremquo.log: tremquo$(EXEEXT)
 	@p='tremquo$(EXEEXT)'; \
 	b='tremquo'; \
@@ -4752,6 +4772,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/trandom.Po
 	-rm -f ./$(DEPDIR)/trandom_deviate.Po
 	-rm -f ./$(DEPDIR)/trec_sqrt.Po
+	-rm -f ./$(DEPDIR)/treldiff.Po
 	-rm -f ./$(DEPDIR)/tremquo.Po
 	-rm -f ./$(DEPDIR)/trint.Po
 	-rm -f ./$(DEPDIR)/trndna.Po
@@ -4999,6 +5020,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/trandom.Po
 	-rm -f ./$(DEPDIR)/trandom_deviate.Po
 	-rm -f ./$(DEPDIR)/trec_sqrt.Po
+	-rm -f ./$(DEPDIR)/treldiff.Po
 	-rm -f ./$(DEPDIR)/tremquo.Po
 	-rm -f ./$(DEPDIR)/trint.Po
 	-rm -f ./$(DEPDIR)/trndna.Po

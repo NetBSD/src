@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2023/12/20 15:34:46 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.2.1 2025/08/02 05:56:20 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2023/12/20 15:34:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.2.1 2025/08/02 05:56:20 perseant Exp $");
 
 #include "opt_md.h"
 
@@ -223,7 +223,7 @@ device_register(device_t dev, void *aux)
 {
 
 	/*
-	 * I2C bus conntected to pxaiic(4) for zaudio(4) devices has
+	 * I2C bus connected to pxaiic(4) for zaudio(4) devices has
 	 * limited capabilities.
 	 */
 	if (device_is_a(dev, "iic") &&

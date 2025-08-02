@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
+#include <net/if_ether.h>
 #endif
 
 struct npf;
@@ -59,6 +60,15 @@ typedef union {
 	uint32_t		word32[4];
 } npf_addr_t;
 
+/*
+ * use a single type for both user id and group id
+ */
+struct r_id {
+	uint32_t		id[2];
+	uint8_t		 op;
+};
+
+typedef struct r_id		rid_t;
 typedef uint8_t			npf_netmask_t;
 
 #define	NPF_MAX_NETMASK		(128)
@@ -142,6 +152,7 @@ int		nbuf_find_tag(nbuf_t *, uint32_t *);
 #define	NPC_ALG_EXEC	0x100	/* ALG execution. */
 
 #define	NPC_FMTERR	0x200	/* Format error. */
+#define	NPC_LAYER2	0x400	/* ether header */
 
 #define	NPC_IP46	(NPC_IP4|NPC_IP6)
 
@@ -152,6 +163,9 @@ typedef struct {
 	npf_t *			npc_ctx;
 	uint32_t		npc_info;
 	nbuf_t *		npc_nbuf;
+
+	struct ether_header	ether;
+	uint8_t			ether_type;
 
 	/*
 	 * Pointers to the IP source and destination addresses,
@@ -214,6 +228,8 @@ bool		npf_autounload_p(void);
 #define	NPF_RULE_RETICMP		0x00000020
 #define	NPF_RULE_DYNAMIC		0x00000040
 #define	NPF_RULE_GSTATEFUL		0x00000080
+#define	NPF_RULE_LAYER_3		0x00000100
+#define	NPF_RULE_LAYER_2		0x00000200
 
 #define	NPF_DYNAMIC_GROUP		(NPF_RULE_GROUP | NPF_RULE_DYNAMIC)
 
@@ -258,10 +274,6 @@ bool		npf_autounload_p(void);
 #define	NPF_TABLE_IFADDR		4
 
 #define	NPF_TABLE_MAXNAMELEN		32
-
-/* Layers. */
-#define	NPF_LAYER_2			2
-#define	NPF_LAYER_3			3
 
 /*
  * Flags passed via nbuf tags.
@@ -343,9 +355,11 @@ typedef enum {
 	NPF_STAT_PASS_DEFAULT,
 	NPF_STAT_PASS_RULESET,
 	NPF_STAT_PASS_CONN,
+	NPF_ETHER_STAT_PASS,
 	/* Packets blocked. */
 	NPF_STAT_BLOCK_DEFAULT,
 	NPF_STAT_BLOCK_RULESET,
+	NPF_ETHER_STAT_BLOCK,
 	/* Connection and NAT entries. */
 	NPF_STAT_CONN_CREATE,
 	NPF_STAT_CONN_DESTROY,
@@ -373,5 +387,18 @@ typedef enum {
 } npf_stats_t;
 
 #define	NPF_STATS_SIZE		(sizeof(uint64_t) * NPF_STATS_COUNT)
+
+/* unary and binary operators */
+enum {
+	NPF_OP_NONE,
+	NPF_OP_EQ,
+	NPF_OP_NE,
+	NPF_OP_LE,
+	NPF_OP_LT,
+	NPF_OP_GE,
+	NPF_OP_GT,
+	NPF_OP_XRG,
+	NPF_OP_IRG
+};
 
 #endif	/* _NPF_NET_H_ */

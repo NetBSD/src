@@ -4,9 +4,117 @@
  *
  *****************************************************************************/
 
-/*
- * Copyright (C) 2000 - 2023, Intel Corp.
+/******************************************************************************
+ *
+ * 1. Copyright Notice
+ *
+ * Some or all of this work - Copyright (c) 1999 - 2024, Intel Corp.
  * All rights reserved.
+ *
+ * 2. License
+ *
+ * 2.1. This is your license from Intel Corp. under its intellectual property
+ * rights. You may have additional license terms from the party that provided
+ * you this software, covering your right to use that party's intellectual
+ * property rights.
+ *
+ * 2.2. Intel grants, free of charge, to any person ("Licensee") obtaining a
+ * copy of the source code appearing in this file ("Covered Code") an
+ * irrevocable, perpetual, worldwide license under Intel's copyrights in the
+ * base code distributed originally by Intel ("Original Intel Code") to copy,
+ * make derivatives, distribute, use and display any portion of the Covered
+ * Code in any form, with the right to sublicense such rights; and
+ *
+ * 2.3. Intel grants Licensee a non-exclusive and non-transferable patent
+ * license (with the right to sublicense), under only those claims of Intel
+ * patents that are infringed by the Original Intel Code, to make, use, sell,
+ * offer to sell, and import the Covered Code and derivative works thereof
+ * solely to the minimum extent necessary to exercise the above copyright
+ * license, and in no event shall the patent license extend to any additions
+ * to or modifications of the Original Intel Code. No other license or right
+ * is granted directly or by implication, estoppel or otherwise;
+ *
+ * The above copyright and patent license is granted only if the following
+ * conditions are met:
+ *
+ * 3. Conditions
+ *
+ * 3.1. Redistribution of Source with Rights to Further Distribute Source.
+ * Redistribution of source code of any substantial portion of the Covered
+ * Code or modification with rights to further distribute source must include
+ * the above Copyright Notice, the above License, this list of Conditions,
+ * and the following Disclaimer and Export Compliance provision. In addition,
+ * Licensee must cause all Covered Code to which Licensee contributes to
+ * contain a file documenting the changes Licensee made to create that Covered
+ * Code and the date of any change. Licensee must include in that file the
+ * documentation of any changes made by any predecessor Licensee. Licensee
+ * must include a prominent statement that the modification is derived,
+ * directly or indirectly, from Original Intel Code.
+ *
+ * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
+ * Redistribution of source code of any substantial portion of the Covered
+ * Code or modification without rights to further distribute source must
+ * include the following Disclaimer and Export Compliance provision in the
+ * documentation and/or other materials provided with distribution. In
+ * addition, Licensee may not authorize further sublicense of source of any
+ * portion of the Covered Code, and must include terms to the effect that the
+ * license from Licensee to its licensee is limited to the intellectual
+ * property embodied in the software Licensee provides to its licensee, and
+ * not to intellectual property embodied in modifications its licensee may
+ * make.
+ *
+ * 3.3. Redistribution of Executable. Redistribution in executable form of any
+ * substantial portion of the Covered Code or modification must reproduce the
+ * above Copyright Notice, and the following Disclaimer and Export Compliance
+ * provision in the documentation and/or other materials provided with the
+ * distribution.
+ *
+ * 3.4. Intel retains all right, title, and interest in and to the Original
+ * Intel Code.
+ *
+ * 3.5. Neither the name Intel nor any other trademark owned or controlled by
+ * Intel shall be used in advertising or otherwise to promote the sale, use or
+ * other dealings in products derived from or relating to the Covered Code
+ * without prior written authorization from Intel.
+ *
+ * 4. Disclaimer and Export Compliance
+ *
+ * 4.1. INTEL MAKES NO WARRANTY OF ANY KIND REGARDING ANY SOFTWARE PROVIDED
+ * HERE. ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
+ * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT, ASSISTANCE,
+ * INSTALLATION, TRAINING OR OTHER SERVICES. INTEL WILL NOT PROVIDE ANY
+ * UPDATES, ENHANCEMENTS OR EXTENSIONS. INTEL SPECIFICALLY DISCLAIMS ANY
+ * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
+ * PARTICULAR PURPOSE.
+ *
+ * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
+ * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
+ * COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY INDIRECT,
+ * SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT, UNDER ANY
+ * CAUSE OF ACTION OR THEORY OF LIABILITY, AND IRRESPECTIVE OF WHETHER INTEL
+ * HAS ADVANCE NOTICE OF THE POSSIBILITY OF SUCH DAMAGES. THESE LIMITATIONS
+ * SHALL APPLY NOTWITHSTANDING THE FAILURE OF THE ESSENTIAL PURPOSE OF ANY
+ * LIMITED REMEDY.
+ *
+ * 4.3. Licensee shall not export, either directly or indirectly, any of this
+ * software or system incorporating such software without first obtaining any
+ * required license or other approval from the U. S. Department of Commerce or
+ * any other agency or department of the United States Government. In the
+ * event Licensee exports any such software from the United States or
+ * re-exports any such software from a foreign destination, Licensee shall
+ * ensure that the distribution and export/re-export of the software is in
+ * compliance with all laws, regulations, orders, or other restrictions of the
+ * U.S. Export Administration Regulations. Licensee agrees that neither it nor
+ * any of its subsidiaries will export/re-export any technical data, process,
+ * software, or service, directly or indirectly, to any country for which the
+ * United States government or any agency thereof requires an export license,
+ * other governmental approval, or letter of assurance, without first obtaining
+ * such license, approval or letter.
+ *
+ *****************************************************************************
+ *
+ * Alternatively, you may choose to be licensed under the terms of the
+ * following license:
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,23 +131,23 @@
  *    of any contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
- *
- * NO WARRANTY
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGES.
- */
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Alternatively, you may choose to be licensed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
+ *
+ *****************************************************************************/
 
 #include "acpi.h"
 #include "accommon.h"
@@ -179,6 +287,16 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoAestVendorError[] =
     ACPI_DMT_TERMINATOR
 };
 
+/* 3: Vendor Defined V2 */
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoAestVendorV2Error[] =
+{
+    {ACPI_DMT_UINT64,   ACPI_AEST3A_OFFSET (AcpiHid),                "ACPI HID", 0},
+    {ACPI_DMT_UINT32,   ACPI_AEST3A_OFFSET (AcpiUid),                "ACPI UID", 0},
+    {ACPI_DMT_BUF16,    ACPI_AEST3A_OFFSET (VendorSpecificData),     "Vendor Specific Data", 0},
+    ACPI_DMT_TERMINATOR
+};
+
 /* 4: Gic Error */
 
 ACPI_DMTABLE_INFO           AcpiDmTableInfoAestGicError[] =
@@ -187,6 +305,31 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoAestGicError[] =
     {ACPI_DMT_UINT32,   ACPI_AEST4_OFFSET (InstanceId),             "Instance ID", 0},
     ACPI_DMT_TERMINATOR
 };
+
+/* 5: PCIe Error */
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoAestPCIeError[] =
+{
+    {ACPI_DMT_UINT32,   ACPI_AEST5_OFFSET (IortNodeReference),      "Iort Node Reference", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+/* 6: Proxy Error */
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoAestProxyError[] =
+{
+    {ACPI_DMT_UINT64,   ACPI_AEST6_OFFSET (NodeAddress),            "Proxy Node Address", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+/* Common AEST structures for subtables */
+
+#define ACPI_DM_AEST_INTERFACE_COMMON(a) \
+    {ACPI_DMT_UINT32,   ACPI_AEST0D##a##_OFFSET (Common.ErrorNodeDevice),               "Arm Error Node Device", 0},\
+    {ACPI_DMT_UINT32,   ACPI_AEST0D##a##_OFFSET (Common.ProcessorAffinity),             "Processor Affinity", 0}, \
+    {ACPI_DMT_UINT64,   ACPI_AEST0D##a##_OFFSET (Common.ErrorGroupRegisterBase),        "Err-Group Register Addr", 0}, \
+    {ACPI_DMT_UINT64,   ACPI_AEST0D##a##_OFFSET (Common.FaultInjectRegisterBase),       "Err-Inject Register Addr", 0}, \
+    {ACPI_DMT_UINT64,   ACPI_AEST0D##a##_OFFSET (Common.InterruptConfigRegisterBase),   "IRQ-Config Register Addr", 0},
 
 /* AestXface: Node Interface Structure */
 
@@ -206,6 +349,60 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoAestXface[] =
     ACPI_DMT_TERMINATOR
 };
 
+/* AestXface: Node Interface Structure V2 Header */
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoAestXfaceHeader[] =
+{
+    {ACPI_DMT_AEST_XFACE, ACPI_AEST0DH_OFFSET (Type),                "Interface Type", 0},
+    {ACPI_DMT_UINT8,    ACPI_AEST0DH_OFFSET (GroupFormat),           "Group Format", 0},
+    {ACPI_DMT_UINT16,   ACPI_AEST0DH_OFFSET (Reserved[0]),           "Reserved", 0},
+    {ACPI_DMT_UINT32,   ACPI_AEST0DH_OFFSET (Flags),                 "Flags (decoded below)", 0},
+    {ACPI_DMT_FLAG0,    ACPI_AEST0D_FLAG_OFFSET (Flags, 0),          "Shared Interface", 0},
+    {ACPI_DMT_FLAG1,    ACPI_AEST0D_FLAG_OFFSET (Flags, 0),          "Clear MISCx Registers", 0},
+    {ACPI_DMT_FLAG2,    ACPI_AEST0D_FLAG_OFFSET (Flags, 0),          "Error Node Device Valid", 0},
+    {ACPI_DMT_FLAG3,    ACPI_AEST0D_FLAG_OFFSET (Flags, 0),          "Affinity Type", 0},
+    {ACPI_DMT_FLAG4,    ACPI_AEST0D_FLAG_OFFSET (Flags, 0),          "Error group Address Valid", 0},
+    {ACPI_DMT_FLAG5,    ACPI_AEST0D_FLAG_OFFSET (Flags, 0),          "Fault Injection Address Valid", 0},
+    {ACPI_DMT_FLAG7,    ACPI_AEST0D_FLAG_OFFSET (Flags, 0),          "Interrupt Config Address valid", 0},
+    {ACPI_DMT_UINT64,   ACPI_AEST0DH_OFFSET (Address),               "Address", 0},
+    {ACPI_DMT_UINT32,   ACPI_AEST0DH_OFFSET (ErrorRecordIndex),      "Error Record Index", 0},
+    {ACPI_DMT_UINT32,   ACPI_AEST0DH_OFFSET (ErrorRecordCount),      "Error Record Count", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+/* AestXface: Node Interface Structure V2 4K Group Format */
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoAestXface4k[] =
+{
+    {ACPI_DMT_UINT64,   ACPI_AEST0D4_OFFSET (ErrorRecordImplemented),"Error Record Implemented", 0},
+    {ACPI_DMT_UINT64,   ACPI_AEST0D4_OFFSET (ErrorStatusReporting),  "Error Status Reporting", 0},
+    {ACPI_DMT_UINT64,   ACPI_AEST0D4_OFFSET (AddressingMode),        "Addressing Mode", 0},
+    ACPI_DM_AEST_INTERFACE_COMMON(4)
+    ACPI_DMT_TERMINATOR
+};
+
+/* AestXface: Node Interface Structure V2 16K Group Format */
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoAestXface16k[] =
+{
+    {ACPI_DMT_BUF32,    ACPI_AEST0D16_OFFSET (ErrorRecordImplemented[0]),"Error Record Implemented", 0},
+    {ACPI_DMT_BUF32,    ACPI_AEST0D16_OFFSET (ErrorStatusReporting[0]),  "Error Status Reporting", 0},
+    {ACPI_DMT_BUF32,    ACPI_AEST0D16_OFFSET (AddressingMode[0]),        "Addressing Mode", 0},
+    ACPI_DM_AEST_INTERFACE_COMMON(16)
+    ACPI_DMT_TERMINATOR
+};
+
+/* AestXface: Node Interface Structure V2 64K Group Format */
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoAestXface64k[] =
+{
+    {ACPI_DMT_BUF112,   ACPI_AEST0D64_OFFSET (ErrorRecordImplemented[0]),"Error Record Implemented", 0},
+    {ACPI_DMT_BUF112,   ACPI_AEST0D64_OFFSET (ErrorStatusReporting[0]),  "Error Status Reporting", 0},
+    {ACPI_DMT_BUF112,   ACPI_AEST0D64_OFFSET (AddressingMode[0]),        "Addressing Mode", 0},
+    ACPI_DM_AEST_INTERFACE_COMMON(64)
+    ACPI_DMT_TERMINATOR
+};
+
 /* AestXrupt: Node Interrupt Structure */
 
 ACPI_DMTABLE_INFO           AcpiDmTableInfoAestXrupt[] =
@@ -217,6 +414,20 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoAestXrupt[] =
     {ACPI_DMT_UINT32,   ACPI_AEST0E_OFFSET (Gsiv),                  "Gsiv", 0},
     {ACPI_DMT_UINT8,    ACPI_AEST0E_OFFSET (IortId),                "IortId", 0},
     {ACPI_DMT_UINT24,   ACPI_AEST0E_OFFSET (Reserved1[0]),          "Reserved", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+
+/* AestXrupt: Node Interrupt Structure V2 */
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoAestXruptV2[] =
+{
+    {ACPI_DMT_AEST_XRUPT, ACPI_AEST0EA_OFFSET (Type),                "Interrupt Type", 0},
+    {ACPI_DMT_UINT16,   ACPI_AEST0EA_OFFSET (Reserved),              "Reserved", 0},
+    {ACPI_DMT_UINT8,    ACPI_AEST0EA_OFFSET (Flags),                 "Flags (decoded below)", 0},
+    {ACPI_DMT_FLAG0,    ACPI_AEST0EA_FLAG_OFFSET (Flags, 0),         "Level Triggered", 0},
+    {ACPI_DMT_UINT32,   ACPI_AEST0EA_OFFSET (Gsiv),                  "Gsiv", 0},
+    {ACPI_DMT_UINT32,   ACPI_AEST0EA_OFFSET (Reserved1[0]),          "Reserved", 0},
     ACPI_DMT_TERMINATOR
 };
 
@@ -581,7 +792,7 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoCedt1[] =
     {ACPI_DMT_UINT32,   ACPI_CEDT1_OFFSET (Reserved1),            "Reserved", 0},
     {ACPI_DMT_UINT64,   ACPI_CEDT1_OFFSET (BaseHpa),              "Window base address", 0},
     {ACPI_DMT_UINT64,   ACPI_CEDT1_OFFSET (WindowSize),           "Window size", 0},
-    {ACPI_DMT_UINT8,    ACPI_CEDT1_OFFSET (InterleaveWays),       "Interleave Members (2^n)", 0},
+    {ACPI_DMT_UINT8,    ACPI_CEDT1_OFFSET (InterleaveWays),       "Interleave Members", 0},
     {ACPI_DMT_UINT8,    ACPI_CEDT1_OFFSET (InterleaveArithmetic), "Interleave Arithmetic", 0},
     {ACPI_DMT_UINT16,   ACPI_CEDT1_OFFSET (Reserved2),            "Reserved", 0},
     {ACPI_DMT_UINT32,   ACPI_CEDT1_OFFSET (Granularity),          "Granularity", 0},
@@ -594,6 +805,23 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoCedt1[] =
 ACPI_DMTABLE_INFO           AcpiDmTableInfoCedt1_te[] =
 {
     {ACPI_DMT_UINT32,   ACPI_CEDT1_TE_OFFSET (InterleaveTarget),  "Next Target", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+/* 2: CXL XOR Interleave Math Structure */
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoCedt2[] =
+{
+    {ACPI_DMT_UINT16,   ACPI_CEDT2_OFFSET (Reserved1),            "Reserved", 0},
+    {ACPI_DMT_UINT8,    ACPI_CEDT2_OFFSET (Hbig),                 "Interleave Granularity", 0},
+    {ACPI_DMT_UINT8,    ACPI_CEDT2_OFFSET (NrXormaps),            "Xormap List Count", 0},
+    {ACPI_DMT_UINT64,   ACPI_CEDT2_OFFSET (XormapList),           "First Xormap", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoCedt2_te[] =
+{
+    {ACPI_DMT_UINT64,   ACPI_CEDT2_TE_OFFSET (Xormap),            "Next Xormap", 0},
     ACPI_DMT_TERMINATOR
 };
 
@@ -1440,7 +1668,7 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoHmat2[] =
     {ACPI_DMT_FLAGS4_8,     ACPI_HMAT2_FLAG_OFFSET (CacheAttributes,0), "Cache Associativity", 0},
     {ACPI_DMT_FLAGS4_12,    ACPI_HMAT2_FLAG_OFFSET (CacheAttributes,0), "Write Policy", 0},
     {ACPI_DMT_FLAGS16_16,   ACPI_HMAT2_FLAG_OFFSET (CacheAttributes,0), "Cache Line Size", 0},
-    {ACPI_DMT_UINT16,       ACPI_HMAT2_OFFSET (Reserved2),              "Reserved2", 0},
+    {ACPI_DMT_UINT16,       ACPI_HMAT2_OFFSET (AddressMode),            "Address Mode", 0},
     {ACPI_DMT_UINT16,       ACPI_HMAT2_OFFSET (NumberOfSMBIOSHandles),  "SMBIOS Handle #", 0},
     ACPI_DMT_TERMINATOR
 };

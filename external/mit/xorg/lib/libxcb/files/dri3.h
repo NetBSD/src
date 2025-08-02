@@ -20,9 +20,20 @@ extern "C" {
 #endif
 
 #define XCB_DRI3_MAJOR_VERSION 1
-#define XCB_DRI3_MINOR_VERSION 3
+#define XCB_DRI3_MINOR_VERSION 4
 
 extern xcb_extension_t xcb_dri3_id;
+
+typedef uint32_t xcb_dri3_syncobj_t;
+
+/**
+ * @brief xcb_dri3_syncobj_iterator_t
+ **/
+typedef struct xcb_dri3_syncobj_iterator_t {
+    xcb_dri3_syncobj_t *data;
+    int                 rem;
+    int                 index;
+} xcb_dri3_syncobj_iterator_t;
 
 /**
  * @brief xcb_dri3_query_version_cookie_t
@@ -311,6 +322,56 @@ typedef struct xcb_dri3_set_drm_device_in_use_request_t {
     uint32_t     drmMajor;
     uint32_t     drmMinor;
 } xcb_dri3_set_drm_device_in_use_request_t;
+
+/** Opcode for xcb_dri3_import_syncobj. */
+#define XCB_DRI3_IMPORT_SYNCOBJ 10
+
+/**
+ * @brief xcb_dri3_import_syncobj_request_t
+ **/
+typedef struct xcb_dri3_import_syncobj_request_t {
+    uint8_t            major_opcode;
+    uint8_t            minor_opcode;
+    uint16_t           length;
+    xcb_dri3_syncobj_t syncobj;
+    xcb_drawable_t     drawable;
+} xcb_dri3_import_syncobj_request_t;
+
+/** Opcode for xcb_dri3_free_syncobj. */
+#define XCB_DRI3_FREE_SYNCOBJ 11
+
+/**
+ * @brief xcb_dri3_free_syncobj_request_t
+ **/
+typedef struct xcb_dri3_free_syncobj_request_t {
+    uint8_t            major_opcode;
+    uint8_t            minor_opcode;
+    uint16_t           length;
+    xcb_dri3_syncobj_t syncobj;
+} xcb_dri3_free_syncobj_request_t;
+
+/**
+ * Get the next element of the iterator
+ * @param i Pointer to a xcb_dri3_syncobj_iterator_t
+ *
+ * Get the next element in the iterator. The member rem is
+ * decreased by one. The member data points to the next
+ * element. The member index is increased by sizeof(xcb_dri3_syncobj_t)
+ */
+void
+xcb_dri3_syncobj_next (xcb_dri3_syncobj_iterator_t *i);
+
+/**
+ * Return the iterator pointing to the last element
+ * @param i An xcb_dri3_syncobj_iterator_t
+ * @return  The iterator pointing to the last element
+ *
+ * Set the current element in the iterator to the last element.
+ * The member rem is set to 0. The member data points to the
+ * last element.
+ */
+xcb_generic_iterator_t
+xcb_dri3_syncobj_end (xcb_dri3_syncobj_iterator_t i);
 
 /**
  *
@@ -871,6 +932,64 @@ xcb_dri3_set_drm_device_in_use (xcb_connection_t *c,
                                 xcb_window_t      window,
                                 uint32_t          drmMajor,
                                 uint32_t          drmMinor);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ *
+ * This form can be used only if the request will not cause
+ * a reply to be generated. Any returned error will be
+ * saved for handling by xcb_request_check().
+ */
+xcb_void_cookie_t
+xcb_dri3_import_syncobj_checked (xcb_connection_t   *c,
+                                 xcb_dri3_syncobj_t  syncobj,
+                                 xcb_drawable_t      drawable,
+                                 int32_t             syncobj_fd);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ *
+ */
+xcb_void_cookie_t
+xcb_dri3_import_syncobj (xcb_connection_t   *c,
+                         xcb_dri3_syncobj_t  syncobj,
+                         xcb_drawable_t      drawable,
+                         int32_t             syncobj_fd);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ *
+ * This form can be used only if the request will not cause
+ * a reply to be generated. Any returned error will be
+ * saved for handling by xcb_request_check().
+ */
+xcb_void_cookie_t
+xcb_dri3_free_syncobj_checked (xcb_connection_t   *c,
+                               xcb_dri3_syncobj_t  syncobj);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ *
+ */
+xcb_void_cookie_t
+xcb_dri3_free_syncobj (xcb_connection_t   *c,
+                       xcb_dri3_syncobj_t  syncobj);
 
 
 #ifdef __cplusplus

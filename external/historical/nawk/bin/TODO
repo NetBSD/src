@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.1 2010/08/26 14:57:16 christos Exp $
+$NetBSD: TODO,v 1.1.58.1 2025/08/02 05:49:42 perseant Exp $
 
 Besides general regression testing to ensure everything still works
 with nawk instead of gawk, following GNU awk extensions should be implemented

@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtobot.c,v 1.31 2022/10/19 06:09:27 blymn Exp $	*/
+/*	$NetBSD: clrtobot.c,v 1.31.4.1 2025/08/02 05:54:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtobot.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtobot.c,v 1.31 2022/10/19 06:09:27 blymn Exp $");
+__RCSID("$NetBSD: clrtobot.c,v 1.31.4.1 2025/08/02 05:54:45 perseant Exp $");
 #endif
 #endif				/* not lint */
 
@@ -67,6 +67,9 @@ wclrtobot(WINDOW *win)
 	__LDATA	*sp, *end, *maxx;
 	wchar_t bch;
 	attr_t	battr;
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	bch = win->bch;
 	if (win != curscr)

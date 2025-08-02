@@ -1,4 +1,4 @@
-/*	$NetBSD: dbiterator_test.c,v 1.2 2024/02/21 22:52:49 christos Exp $	*/
+/*	$NetBSD: dbiterator_test.c,v 1.2.6.1 2025/08/02 05:54:11 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -42,7 +42,7 @@ make_name(const char *src, dns_name_t *name) {
 	isc_buffer_t b;
 	isc_buffer_constinit(&b, src, strlen(src));
 	isc_buffer_add(&b, strlen(src));
-	return (dns_name_fromtext(name, &b, dns_rootname, 0, NULL));
+	return dns_name_fromtext(name, &b, dns_rootname, 0, NULL);
 }
 
 /* create: make sure we can create a dbiterator */
@@ -52,7 +52,7 @@ test_create(const char *filename) {
 	dns_db_t *db = NULL;
 	dns_dbiterator_t *iter = NULL;
 
-	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN, filename);
+	result = dns_test_loaddb(&db, dns_dbtype_zone, TEST_ORIGIN, filename);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_db_createiterator(db, 0, &iter);
@@ -76,7 +76,7 @@ ISC_RUN_TEST_IMPL(create_nsec3) {
 
 /* walk: walk a database */
 static void
-test_walk(const char *filename, int nodes) {
+test_walk(const char *filename, int flags, int nodes) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
 	dns_dbiterator_t *iter = NULL;
@@ -87,19 +87,16 @@ test_walk(const char *filename, int nodes) {
 
 	name = dns_fixedname_initname(&f);
 
-	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN, filename);
+	result = dns_test_loaddb(&db, dns_dbtype_zone, TEST_ORIGIN, filename);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_db_createiterator(db, 0, &iter);
+	result = dns_db_createiterator(db, flags, &iter);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	for (result = dns_dbiterator_first(iter); result == ISC_R_SUCCESS;
 	     result = dns_dbiterator_next(iter))
 	{
 		result = dns_dbiterator_current(iter, &node, name);
-		if (result == DNS_R_NEWORIGIN) {
-			result = ISC_R_SUCCESS;
-		}
 		assert_int_equal(result, ISC_R_SUCCESS);
 		dns_db_detachnode(db, &node);
 		i++;
@@ -114,18 +111,26 @@ test_walk(const char *filename, int nodes) {
 ISC_RUN_TEST_IMPL(walk) {
 	UNUSED(state);
 
-	test_walk(TESTS_DIR "/testdata/dbiterator/zone1.data", 12);
+	test_walk(TESTS_DIR "/testdata/dbiterator/zone1.data", 0, 12);
+	test_walk(TESTS_DIR "/testdata/dbiterator/zone1.data", DNS_DB_NONSEC3,
+		  12);
+	test_walk(TESTS_DIR "/testdata/dbiterator/zone1.data", DNS_DB_NSEC3ONLY,
+		  0);
 }
 
 ISC_RUN_TEST_IMPL(walk_nsec3) {
 	UNUSED(state);
 
-	test_walk(TESTS_DIR "/testdata/dbiterator/zone2.data", 33);
+	test_walk(TESTS_DIR "/testdata/dbiterator/zone2.data", 0, 32);
+	test_walk(TESTS_DIR "/testdata/dbiterator/zone2.data", DNS_DB_NONSEC3,
+		  12);
+	test_walk(TESTS_DIR "/testdata/dbiterator/zone2.data", DNS_DB_NSEC3ONLY,
+		  20);
 }
 
 /* reverse: walk database backwards */
 static void
-test_reverse(const char *filename) {
+test_reverse(const char *filename, int flags, int nodes) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
 	dns_dbiterator_t *iter = NULL;
@@ -136,25 +141,22 @@ test_reverse(const char *filename) {
 
 	name = dns_fixedname_initname(&f);
 
-	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN, filename);
+	result = dns_test_loaddb(&db, dns_dbtype_zone, TEST_ORIGIN, filename);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_db_createiterator(db, 0, &iter);
+	result = dns_db_createiterator(db, flags, &iter);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	for (result = dns_dbiterator_last(iter); result == ISC_R_SUCCESS;
 	     result = dns_dbiterator_prev(iter))
 	{
 		result = dns_dbiterator_current(iter, &node, name);
-		if (result == DNS_R_NEWORIGIN) {
-			result = ISC_R_SUCCESS;
-		}
 		assert_int_equal(result, ISC_R_SUCCESS);
 		dns_db_detachnode(db, &node);
 		i++;
 	}
 
-	assert_int_equal(i, 12);
+	assert_int_equal(i, nodes);
 
 	dns_dbiterator_destroy(&iter);
 	dns_db_detach(&db);
@@ -163,18 +165,26 @@ test_reverse(const char *filename) {
 ISC_RUN_TEST_IMPL(reverse) {
 	UNUSED(state);
 
-	test_reverse(TESTS_DIR "/testdata/dbiterator/zone1.data");
+	test_reverse(TESTS_DIR "/testdata/dbiterator/zone1.data", 0, 12);
+	test_reverse(TESTS_DIR "/testdata/dbiterator/zone1.data",
+		     DNS_DB_NONSEC3, 12);
+	test_reverse(TESTS_DIR "/testdata/dbiterator/zone1.data",
+		     DNS_DB_NSEC3ONLY, 0);
 }
 
 ISC_RUN_TEST_IMPL(reverse_nsec3) {
 	UNUSED(state);
 
-	test_reverse(TESTS_DIR "/testdata/dbiterator/zone2.data");
+	test_reverse(TESTS_DIR "/testdata/dbiterator/zone2.data", 0, 32);
+	test_reverse(TESTS_DIR "/testdata/dbiterator/zone2.data",
+		     DNS_DB_NONSEC3, 12);
+	test_reverse(TESTS_DIR "/testdata/dbiterator/zone2.data",
+		     DNS_DB_NSEC3ONLY, 20);
 }
 
 /* seek: walk database starting at a particular node */
 static void
-test_seek_node(const char *filename, int nodes) {
+test_seek_node(const char *filename, int flags, int nodes) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
 	dns_dbiterator_t *iter = NULL;
@@ -186,26 +196,50 @@ test_seek_node(const char *filename, int nodes) {
 	name = dns_fixedname_initname(&f1);
 	seekname = dns_fixedname_initname(&f2);
 
-	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN, filename);
+	result = dns_test_loaddb(&db, dns_dbtype_zone, TEST_ORIGIN, filename);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_db_createiterator(db, 0, &iter);
+	result = dns_db_createiterator(db, flags, &iter);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = make_name("c." TEST_ORIGIN, seekname);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_dbiterator_seek(iter, seekname);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	if (flags == DNS_DB_NSEC3ONLY) {
+		/* "c" isn't in the NSEC3 tree but the origin node is */
+		assert_int_equal(result, DNS_R_PARTIALMATCH);
+	} else {
+		assert_int_equal(result, ISC_R_SUCCESS);
+	}
 
 	while (result == ISC_R_SUCCESS) {
 		result = dns_dbiterator_current(iter, &node, name);
-		if (result == DNS_R_NEWORIGIN) {
-			result = ISC_R_SUCCESS;
-		}
 		assert_int_equal(result, ISC_R_SUCCESS);
 		dns_db_detachnode(db, &node);
 		result = dns_dbiterator_next(iter);
+		i++;
+	}
+
+	assert_int_equal(i, nodes);
+
+	/* now reset the iterator and walk backwards */
+	i = 0;
+	result = dns_dbiterator_seek(iter, seekname);
+	if (flags == DNS_DB_NSEC3ONLY) {
+		/* "c" isn't in the NSEC3 tree but the origin node is */
+		assert_int_equal(result, DNS_R_PARTIALMATCH);
+		nodes = 0;
+	} else {
+		assert_int_equal(result, ISC_R_SUCCESS);
+		nodes = 4;
+	}
+
+	while (result == ISC_R_SUCCESS) {
+		result = dns_dbiterator_current(iter, &node, name);
+		assert_int_equal(result, ISC_R_SUCCESS);
+		dns_db_detachnode(db, &node);
+		result = dns_dbiterator_prev(iter);
 		i++;
 	}
 
@@ -218,13 +252,21 @@ test_seek_node(const char *filename, int nodes) {
 ISC_RUN_TEST_IMPL(seek_node) {
 	UNUSED(state);
 
-	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone1.data", 9);
+	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone1.data", 0, 9);
+	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone1.data",
+		       DNS_DB_NONSEC3, 9);
+	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone1.data",
+		       DNS_DB_NSEC3ONLY, 0);
 }
 
 ISC_RUN_TEST_IMPL(seek_node_nsec3) {
 	UNUSED(state);
 
-	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone2.data", 30);
+	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone2.data", 0, 29);
+	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone2.data",
+		       DNS_DB_NONSEC3, 9);
+	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone2.data",
+		       DNS_DB_NSEC3ONLY, 0);
 }
 
 /*
@@ -241,7 +283,7 @@ test_seek_empty(const char *filename) {
 
 	seekname = dns_fixedname_initname(&f1);
 
-	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN, filename);
+	result = dns_test_loaddb(&db, dns_dbtype_zone, TEST_ORIGIN, filename);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_db_createiterator(db, 0, &iter);
@@ -282,7 +324,7 @@ test_seek_nx(const char *filename) {
 
 	seekname = dns_fixedname_initname(&f1);
 
-	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN, filename);
+	result = dns_test_loaddb(&db, dns_dbtype_zone, TEST_ORIGIN, filename);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_db_createiterator(db, 0, &iter);

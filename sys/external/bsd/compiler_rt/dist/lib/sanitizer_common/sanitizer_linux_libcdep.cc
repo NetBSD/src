@@ -28,9 +28,6 @@
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
 
-#if SANITIZER_NETBSD
-#define _RTLD_SOURCE  // Fast LWP private pointer getters in ThreadSelfTlsTcb().
-#endif
 
 #include <dlfcn.h>  // for dlsym()
 #include <link.h>
@@ -54,6 +51,8 @@
 #if SANITIZER_NETBSD
 #include <sys/sysctl.h>
 #include <sys/tls.h>
+// Fast LWP private pointer getters in ThreadSelfTlsTcb().
+#include <machine/lwp_private.h>
 #endif
 
 #if SANITIZER_SOLARIS

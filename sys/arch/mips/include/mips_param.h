@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.52 2021/10/04 21:02:40 andvar Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.52.10.1 2025/08/02 05:55:53 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -26,7 +26,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	_MIPS_MIPS_PARAM_H_
+#define	_MIPS_MIPS_PARAM_H_
+
 #ifdef _KERNEL_OPT
+#include "opt_cputype.h"
 #include "opt_param.h"
 #endif
 
@@ -75,6 +79,14 @@
 #undef MACHINE
 #define	MACHINE "mips"
 #endif
+
+#if defined(__mips_n64) || defined(__mips_n32)
+#define	STACK_ALIGNBYTES	(16 - 1)
+#else
+#define	STACK_ALIGNBYTES	(8 - 1)
+#endif
+
+#define	STACK_ALIGNBYTES_O32	(8 - 1)
 
 #define	ALIGNBYTES32		(sizeof(double) - 1)
 #define	ALIGN32(p)		(((uintptr_t)(p) + ALIGNBYTES32) &~ALIGNBYTES32)
@@ -190,3 +202,5 @@
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
 #endif
+
+#endif	/* _MIPS_MIPS_PARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.31 2020/10/27 08:32:36 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.31.12.1 2025/08/02 05:58:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ ATF_TC_BODY(dbregs_print, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	validate_status_stopped(status, sigval);	
+	validate_status_stopped(status, sigval);
 
 	DPRINTF("Call GETDBREGS for the child process\n");
 	SYSCALL_REQUIRE(ptrace(PT_GETDBREGS, child, &r, 0) != -1);
@@ -113,7 +113,6 @@ ATF_TC_BODY(dbregs_print, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
-
 
 enum dbreg_preserve_mode {
 	dbreg_preserve_mode_none,
@@ -222,7 +221,6 @@ dbreg_preserve(int reg, enum dbreg_preserve_mode mode)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-
 ATF_TC(dbregs_preserve_dr0);
 ATF_TC_HEAD(dbregs_preserve_dr0, tc)
 {
@@ -310,7 +308,6 @@ ATF_TC_BODY(dbregs_preserve_dr2_yield, tc)
 	dbreg_preserve(0, dbreg_preserve_mode_yield);
 }
 
-
 ATF_TC(dbregs_preserve_dr3_yield);
 ATF_TC_HEAD(dbregs_preserve_dr3_yield, tc)
 {
@@ -375,7 +372,6 @@ ATF_TC_BODY(dbregs_preserve_dr3_continued, tc)
 {
 	dbreg_preserve(3, dbreg_preserve_mode_continued);
 }
-
 
 static void
 dbregs_trap_variable(int reg, int cond, int len, bool write)
@@ -575,7 +571,7 @@ ATF_TC_BODY(dbregs_dr3_trap_variable_writeonly_byte, tc)
 	/* 0b00 -- 1 byte */
 
 	dbregs_trap_variable(3, 1, 0, true);
-} 
+}
 
 ATF_TC(dbregs_dr0_trap_variable_writeonly_2bytes);
 ATF_TC_HEAD(dbregs_dr0_trap_variable_writeonly_2bytes, tc)
@@ -2015,7 +2011,7 @@ x86_cve_2018_8897_trigger(void)
 	 *
 	 * It means that, in the first instruction of the $4 handler, we
 	 * think we are safe with interrupts disabled. But we aren't, and
-	 * just got interrupted.													        
+	 * just got interrupted.
 	 *
 	 * The new interrupt handler doesn't handle this particular context:
 	 * we are entered in kernel mode, the previous context was kernel
@@ -2093,7 +2089,6 @@ ATF_TC_BODY(x86_cve_2018_8897, tc)
 #endif
 	char *trap_page;
 	struct dbreg db;
-	
 
 	if (!can_we_set_dbregs()) {
 		atf_tc_skip("Either run this test as root or set sysctl(3) "
@@ -2469,8 +2464,8 @@ static __inline void get_fpu_regs(struct x86_test_fpu_registers *out)
 		: "st", "memory"
 	);
 
-	FORKEE_ASSERT(fsave.s87_cw == fxsave.fx_cw);
-	FORKEE_ASSERT(fsave.s87_sw == fxsave.fx_sw);
+	FORKEE_ASSERT_EQ(fsave.s87_cw, fxsave.fx_cw);
+	FORKEE_ASSERT_EQ(fsave.s87_sw, fxsave.fx_sw);
 
 	/* fsave contains full tw */
 	out->cw = fsave.s87_cw;
@@ -3283,230 +3278,238 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 			DPRINTF("Before comparing results\n");
 			switch (regs) {
 			case GPREGS_32:
-				FORKEE_ASSERT(!memcmp(&vals[5].u32,
-				    &expected[5].u32, sizeof(vals->u32)));
-				FORKEE_ASSERT(!memcmp(&vals[4].u32,
-				    &expected[4].u32, sizeof(vals->u32)));
-				FORKEE_ASSERT(!memcmp(&vals[3].u32,
-				    &expected[3].u32, sizeof(vals->u32)));
-				FORKEE_ASSERT(!memcmp(&vals[2].u32,
-				    &expected[2].u32, sizeof(vals->u32)));
+				FORKEE_ASSERT_MEMEQ(&vals[5].u32,
+				    &expected[5].u32, sizeof(vals->u32));
+				FORKEE_ASSERT_MEMEQ(&vals[4].u32,
+				    &expected[4].u32, sizeof(vals->u32));
+				FORKEE_ASSERT_MEMEQ(&vals[3].u32,
+				    &expected[3].u32, sizeof(vals->u32));
+				FORKEE_ASSERT_MEMEQ(&vals[2].u32,
+				    &expected[2].u32, sizeof(vals->u32));
 				/*FALLTHROUGH*/
 			case GPREGS_32_EBP_ESP:
-				FORKEE_ASSERT(!memcmp(&vals[1].u32,
-				    &expected[1].u32, sizeof(vals->u32)));
-				FORKEE_ASSERT(!memcmp(&vals[0].u32,
-				    &expected[0].u32, sizeof(vals->u32)));
+				FORKEE_ASSERT_MEMEQ(&vals[1].u32,
+				    &expected[1].u32, sizeof(vals->u32));
+				FORKEE_ASSERT_MEMEQ(&vals[0].u32,
+				    &expected[0].u32, sizeof(vals->u32));
 				break;
 			case GPREGS_64:
 			case GPREGS_64_R8:
 			case FPREGS_MM:
-				FORKEE_ASSERT(!memcmp(&vals[0].u64,
-				    &expected[0].u64, sizeof(vals->u64)));
-				FORKEE_ASSERT(!memcmp(&vals[1].u64,
-				    &expected[1].u64, sizeof(vals->u64)));
-				FORKEE_ASSERT(!memcmp(&vals[2].u64,
-				    &expected[2].u64, sizeof(vals->u64)));
-				FORKEE_ASSERT(!memcmp(&vals[3].u64,
-				    &expected[3].u64, sizeof(vals->u64)));
-				FORKEE_ASSERT(!memcmp(&vals[4].u64,
-				    &expected[4].u64, sizeof(vals->u64)));
-				FORKEE_ASSERT(!memcmp(&vals[5].u64,
-				    &expected[5].u64, sizeof(vals->u64)));
-				FORKEE_ASSERT(!memcmp(&vals[6].u64,
-				    &expected[6].u64, sizeof(vals->u64)));
-				FORKEE_ASSERT(!memcmp(&vals[7].u64,
-				    &expected[7].u64, sizeof(vals->u64)));
+				FORKEE_ASSERT_MEMEQ(&vals[0].u64,
+				    &expected[0].u64, sizeof(vals->u64));
+				FORKEE_ASSERT_MEMEQ(&vals[1].u64,
+				    &expected[1].u64, sizeof(vals->u64));
+				FORKEE_ASSERT_MEMEQ(&vals[2].u64,
+				    &expected[2].u64, sizeof(vals->u64));
+				FORKEE_ASSERT_MEMEQ(&vals[3].u64,
+				    &expected[3].u64, sizeof(vals->u64));
+				FORKEE_ASSERT_MEMEQ(&vals[4].u64,
+				    &expected[4].u64, sizeof(vals->u64));
+				FORKEE_ASSERT_MEMEQ(&vals[5].u64,
+				    &expected[5].u64, sizeof(vals->u64));
+				FORKEE_ASSERT_MEMEQ(&vals[6].u64,
+				    &expected[6].u64, sizeof(vals->u64));
+				FORKEE_ASSERT_MEMEQ(&vals[7].u64,
+				    &expected[7].u64, sizeof(vals->u64));
 				break;
 			case FPREGS_FPU:
-				FORKEE_ASSERT(vals_fpu.cw == expected_fpu.cw);
-				FORKEE_ASSERT(vals_fpu.sw == expected_fpu.sw);
-				FORKEE_ASSERT(vals_fpu.tw == expected_fpu.tw);
-				FORKEE_ASSERT(vals_fpu.tw_abridged
-				    == expected_fpu.tw_abridged);
-				FORKEE_ASSERT(vals_fpu.ip.fa_64
-				    == expected_fpu.ip.fa_64);
-				FORKEE_ASSERT(vals_fpu.dp.fa_64
-				    == expected_fpu.dp.fa_64);
+				FORKEE_ASSERT_EQ(vals_fpu.cw, expected_fpu.cw);
+				FORKEE_ASSERT_EQ(vals_fpu.sw, expected_fpu.sw);
+				FORKEE_ASSERT_EQ(vals_fpu.tw, expected_fpu.tw);
+				FORKEE_ASSERT_EQ(vals_fpu.tw_abridged,
+				     expected_fpu.tw_abridged);
+				FORKEE_ASSERT_EQ(vals_fpu.ip.fa_64,
+				     expected_fpu.ip.fa_64);
+				FORKEE_ASSERT_EQ(vals_fpu.dp.fa_64,
+				     expected_fpu.dp.fa_64);
 
-				FORKEE_ASSERT(vals_fpu.st[0].sign_exp
-				    == expected_fpu.st[0].sign_exp);
-				FORKEE_ASSERT(vals_fpu.st[0].mantissa
-				    == expected_fpu.st[0].mantissa);
-				FORKEE_ASSERT(vals_fpu.st[1].sign_exp
-				    == expected_fpu.st[1].sign_exp);
-				FORKEE_ASSERT(vals_fpu.st[1].mantissa
-				    == expected_fpu.st[1].mantissa);
-				FORKEE_ASSERT(vals_fpu.st[2].sign_exp
-				    == expected_fpu.st[2].sign_exp);
-				FORKEE_ASSERT(vals_fpu.st[2].mantissa
-				    == expected_fpu.st[2].mantissa);
-				FORKEE_ASSERT(vals_fpu.st[3].sign_exp
-				    == expected_fpu.st[3].sign_exp);
-				FORKEE_ASSERT(vals_fpu.st[3].mantissa
-				    == expected_fpu.st[3].mantissa);
-				FORKEE_ASSERT(vals_fpu.st[4].sign_exp
-				    == expected_fpu.st[4].sign_exp);
-				FORKEE_ASSERT(vals_fpu.st[4].mantissa
-				    == expected_fpu.st[4].mantissa);
-				FORKEE_ASSERT(vals_fpu.st[5].sign_exp
-				    == expected_fpu.st[5].sign_exp);
-				FORKEE_ASSERT(vals_fpu.st[5].mantissa
-				    == expected_fpu.st[5].mantissa);
-				FORKEE_ASSERT(vals_fpu.st[6].sign_exp
-				    == expected_fpu.st[6].sign_exp);
-				FORKEE_ASSERT(vals_fpu.st[6].mantissa
-				    == expected_fpu.st[6].mantissa);
+				FORKEE_ASSERT_EQ(vals_fpu.st[0].sign_exp,
+				     expected_fpu.st[0].sign_exp);
+				FORKEE_ASSERT_EQ(vals_fpu.st[0].mantissa,
+				     expected_fpu.st[0].mantissa);
+				FORKEE_ASSERT_EQ(vals_fpu.st[1].sign_exp,
+				     expected_fpu.st[1].sign_exp);
+				FORKEE_ASSERT_EQ(vals_fpu.st[1].mantissa,
+				     expected_fpu.st[1].mantissa);
+				FORKEE_ASSERT_EQ(vals_fpu.st[2].sign_exp,
+				     expected_fpu.st[2].sign_exp);
+				FORKEE_ASSERT_EQ(vals_fpu.st[2].mantissa,
+				     expected_fpu.st[2].mantissa);
+				FORKEE_ASSERT_EQ(vals_fpu.st[3].sign_exp,
+				     expected_fpu.st[3].sign_exp);
+				FORKEE_ASSERT_EQ(vals_fpu.st[3].mantissa,
+				     expected_fpu.st[3].mantissa);
+				FORKEE_ASSERT_EQ(vals_fpu.st[4].sign_exp,
+				     expected_fpu.st[4].sign_exp);
+				FORKEE_ASSERT_EQ(vals_fpu.st[4].mantissa,
+				     expected_fpu.st[4].mantissa);
+				FORKEE_ASSERT_EQ(vals_fpu.st[5].sign_exp,
+				     expected_fpu.st[5].sign_exp);
+				FORKEE_ASSERT_EQ(vals_fpu.st[5].mantissa,
+				     expected_fpu.st[5].mantissa);
+				FORKEE_ASSERT_EQ(vals_fpu.st[6].sign_exp,
+				     expected_fpu.st[6].sign_exp);
+				FORKEE_ASSERT_EQ(vals_fpu.st[6].mantissa,
+				     expected_fpu.st[6].mantissa);
 				/* st(7) is left empty == undefined */
 				break;
 			case FPREGS_XMM:
-				FORKEE_ASSERT(!memcmp(&vals[0].xmm,
-				    &expected[0].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[1].xmm,
-				    &expected[1].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[2].xmm,
-				    &expected[2].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[3].xmm,
-				    &expected[3].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[4].xmm,
-				    &expected[4].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[5].xmm,
-				    &expected[5].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[6].xmm,
-				    &expected[6].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[7].xmm,
-				    &expected[7].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT_MEMEQ(&vals[0].xmm,
+				    &expected[0].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[1].xmm,
+				    &expected[1].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[2].xmm,
+				    &expected[2].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[3].xmm,
+				    &expected[3].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[4].xmm,
+				    &expected[4].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[5].xmm,
+				    &expected[5].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[6].xmm,
+				    &expected[6].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[7].xmm,
+				    &expected[7].xmm, sizeof(vals->xmm));
 #if defined(__x86_64__)
-				FORKEE_ASSERT(!memcmp(&vals[8].xmm,
-				    &expected[8].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[9].xmm,
-				    &expected[9].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[10].xmm,
-				    &expected[10].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[11].xmm,
-				    &expected[11].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[12].xmm,
-				    &expected[12].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[13].xmm,
-				    &expected[13].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[14].xmm,
-				    &expected[14].xmm, sizeof(vals->xmm)));
-				FORKEE_ASSERT(!memcmp(&vals[15].xmm,
-				    &expected[15].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT_MEMEQ(&vals[8].xmm,
+				    &expected[8].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[9].xmm,
+				    &expected[9].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[10].xmm,
+				    &expected[10].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[11].xmm,
+				    &expected[11].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[12].xmm,
+				    &expected[12].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[13].xmm,
+				    &expected[13].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[14].xmm,
+				    &expected[14].xmm, sizeof(vals->xmm));
+				FORKEE_ASSERT_MEMEQ(&vals[15].xmm,
+				    &expected[15].xmm, sizeof(vals->xmm));
 #endif
 				break;
 			case FPREGS_YMM:
-				FORKEE_ASSERT(!memcmp(&vals[0].ymm,
-				    &expected[0].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[1].ymm,
-				    &expected[1].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[2].ymm,
-				    &expected[2].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[3].ymm,
-				    &expected[3].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[4].ymm,
-				    &expected[4].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[5].ymm,
-				    &expected[5].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[6].ymm,
-				    &expected[6].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[7].ymm,
-				    &expected[7].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT_MEMEQ(&vals[0].ymm,
+				    &expected[0].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[1].ymm,
+				    &expected[1].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[2].ymm,
+				    &expected[2].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[3].ymm,
+				    &expected[3].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[4].ymm,
+				    &expected[4].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[5].ymm,
+				    &expected[5].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[6].ymm,
+				    &expected[6].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[7].ymm,
+				    &expected[7].ymm, sizeof(vals->ymm));
 #if defined(__x86_64__)
-				FORKEE_ASSERT(!memcmp(&vals[8].ymm,
-				    &expected[8].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[9].ymm,
-				    &expected[9].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[10].ymm,
-				    &expected[10].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[11].ymm,
-				    &expected[11].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[12].ymm,
-				    &expected[12].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[13].ymm,
-				    &expected[13].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[14].ymm,
-				    &expected[14].ymm, sizeof(vals->ymm)));
-				FORKEE_ASSERT(!memcmp(&vals[15].ymm,
-				    &expected[15].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT_MEMEQ(&vals[8].ymm,
+				    &expected[8].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[9].ymm,
+				    &expected[9].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[10].ymm,
+				    &expected[10].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[11].ymm,
+				    &expected[11].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[12].ymm,
+				    &expected[12].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[13].ymm,
+				    &expected[13].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[14].ymm,
+				    &expected[14].ymm, sizeof(vals->ymm));
+				FORKEE_ASSERT_MEMEQ(&vals[15].ymm,
+				    &expected[15].ymm, sizeof(vals->ymm));
 #endif
 				break;
 			case FPREGS_ZMM:
-				FORKEE_ASSERT(!memcmp(&vals[0].zmm,
-				    &expected[0].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[1].zmm,
-				    &expected[1].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[2].zmm,
-				    &expected[2].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[3].zmm,
-				    &expected[3].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[4].zmm,
-				    &expected[4].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[5].zmm,
-				    &expected[5].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[6].zmm,
-				    &expected[6].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[7].zmm,
-				    &expected[7].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT_MEMEQ(&vals[0].zmm,
+				    &expected[0].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[1].zmm,
+				    &expected[1].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[2].zmm,
+				    &expected[2].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[3].zmm,
+				    &expected[3].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[4].zmm,
+				    &expected[4].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[5].zmm,
+				    &expected[5].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[6].zmm,
+				    &expected[6].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[7].zmm,
+				    &expected[7].zmm, sizeof(vals->zmm));
 #if defined(__x86_64__)
-				FORKEE_ASSERT(!memcmp(&vals[8].zmm,
-				    &expected[8].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[9].zmm,
-				    &expected[9].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[10].zmm,
-				    &expected[10].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[11].zmm,
-				    &expected[11].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[12].zmm,
-				    &expected[12].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[13].zmm,
-				    &expected[13].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[14].zmm,
-				    &expected[14].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[15].zmm,
-				    &expected[15].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[16].zmm,
-				    &expected[16].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[17].zmm,
-				    &expected[17].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[18].zmm,
-				    &expected[18].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[19].zmm,
-				    &expected[19].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[20].zmm,
-				    &expected[20].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[21].zmm,
-				    &expected[21].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[22].zmm,
-				    &expected[22].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[23].zmm,
-				    &expected[23].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[24].zmm,
-				    &expected[24].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[25].zmm,
-				    &expected[25].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[26].zmm,
-				    &expected[26].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[27].zmm,
-				    &expected[27].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[28].zmm,
-				    &expected[28].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[29].zmm,
-				    &expected[29].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[30].zmm,
-				    &expected[30].zmm, sizeof(vals->zmm)));
-				FORKEE_ASSERT(!memcmp(&vals[31].zmm,
-				    &expected[31].zmm, sizeof(vals->zmm)));
+				FORKEE_ASSERT_MEMEQ(&vals[8].zmm,
+				    &expected[8].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[9].zmm,
+				    &expected[9].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[10].zmm,
+				    &expected[10].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[11].zmm,
+				    &expected[11].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[12].zmm,
+				    &expected[12].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[13].zmm,
+				    &expected[13].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[14].zmm,
+				    &expected[14].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[15].zmm,
+				    &expected[15].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[16].zmm,
+				    &expected[16].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[17].zmm,
+				    &expected[17].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[18].zmm,
+				    &expected[18].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[19].zmm,
+				    &expected[19].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[20].zmm,
+				    &expected[20].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[21].zmm,
+				    &expected[21].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[22].zmm,
+				    &expected[22].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[23].zmm,
+				    &expected[23].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[24].zmm,
+				    &expected[24].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[25].zmm,
+				    &expected[25].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[26].zmm,
+				    &expected[26].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[27].zmm,
+				    &expected[27].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[28].zmm,
+				    &expected[28].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[29].zmm,
+				    &expected[29].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[30].zmm,
+				    &expected[30].zmm, sizeof(vals->zmm));
+				FORKEE_ASSERT_MEMEQ(&vals[31].zmm,
+				    &expected[31].zmm, sizeof(vals->zmm));
 #endif
 				/* k0..k7 */
-				FORKEE_ASSERT(vals[32].zmm.a == expected[32].zmm.a);
-				FORKEE_ASSERT(vals[32].zmm.b == expected[32].zmm.b);
-				FORKEE_ASSERT(vals[32].zmm.c == expected[32].zmm.c);
-				FORKEE_ASSERT(vals[32].zmm.d == expected[32].zmm.d);
-				FORKEE_ASSERT(vals[32].zmm.e == expected[32].zmm.e);
-				FORKEE_ASSERT(vals[32].zmm.f == expected[32].zmm.f);
-				FORKEE_ASSERT(vals[32].zmm.g == expected[32].zmm.g);
-				FORKEE_ASSERT(vals[32].zmm.h == expected[32].zmm.h);
+				FORKEE_ASSERT_EQ(vals[32].zmm.a,
+				    expected[32].zmm.a);
+				FORKEE_ASSERT_EQ(vals[32].zmm.b,
+				    expected[32].zmm.b);
+				FORKEE_ASSERT_EQ(vals[32].zmm.c,
+				    expected[32].zmm.c);
+				FORKEE_ASSERT_EQ(vals[32].zmm.d,
+				    expected[32].zmm.d);
+				FORKEE_ASSERT_EQ(vals[32].zmm.e,
+				    expected[32].zmm.e);
+				FORKEE_ASSERT_EQ(vals[32].zmm.f,
+				    expected[32].zmm.f);
+				FORKEE_ASSERT_EQ(vals[32].zmm.g,
+				    expected[32].zmm.g);
+				FORKEE_ASSERT_EQ(vals[32].zmm.h,
+				    expected[32].zmm.h);
 				break;
 			}
 			break;

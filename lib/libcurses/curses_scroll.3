@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_scroll.3,v 1.4 2003/04/16 13:35:01 wiz Exp $
+.\"	$NetBSD: curses_scroll.3,v 1.4.110.1 2025/08/02 05:54:46 perseant Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,22 +30,26 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd August 12, 2002
+.Dd December 31, 2024
 .Dt CURSES_SCROLL 3
 .Os
 .Sh NAME
 .Nm curses_scroll ,
+.Nm getscrreg ,
 .Nm scrl ,
 .Nm wscrl
 .Nm scroll ,
 .Nm scrollok ,
 .Nm setscrreg ,
+.Nm wgetscrreg
 .Nm wsetscrreg
 .Nd curses window scrolling routines
 .Sh LIBRARY
 .Lb libcurses
 .Sh SYNOPSIS
 .In curses.h
+.Ft int
+.Fn getscrreg "int *top" "int *bottom"
 .Ft int
 .Fn scrl "int n"
 .Ft int
@@ -57,38 +61,46 @@
 .Ft int
 .Fn setscrreg "int top" "int bottom"
 .Ft int
+.Fn wgetscrreg "WINDOW *win" "int *top" "int *bottom"
+.Ft int
 .Fn wsetscrreg "WINDOW *win" "int top" "int bottom"
 .Sh DESCRIPTION
+The
+.Fn getscrreg
+function gets the software scrolling region lines on
+.Va stdscr
+which defines a region of the screen that will be scrolled.
+.Pp
 These functions scroll areas on
-.Dv stdscr
+.Va stdscr
 or on the specified window.
 .Pp
 The
 .Fn scrl
 function scrolls
-.Dv stdscr
+.Va stdscr
 by
 .Fa n
 lines.
 If
 .Fa n
 is positive then then
-.Dv stdscr
+.Va stdscr
 is scrolled up.
 .Fa n
 lines are lost from the top of
-.Dv stdscr
+.Va stdscr
 and
 .Fa n
 blank lines are inserted at the bottom.
 If
 .Fa n
 is negative then
-.Dv stdscr
+.Va stdscr
 is scrolled down.
 .Fa n
 blank lines are inserted at the top of
-.Dv stdscr
+.Va stdscr
 and
 .Fa n
 lines are lost from the bottom.
@@ -123,11 +135,19 @@ then lines that would force a scroll will be truncated.
 The
 .Fn setscrreg
 function sets up a software scrolling region on
-.Dv stdscr
+.Va stdscr
 which will define a region of the screen that will be scrolled.
 The scrolling of this region is also controlled by the
 .Fn scrollok
 function.
+.Pp
+The
+.Fn wgetscrreg
+function does the same as the
+.Fn getscrreg
+function, except that the scrolling region is retrieved from the window
+specified by
+.Fa win .
 .Pp
 The
 .Fn wsetscrreg

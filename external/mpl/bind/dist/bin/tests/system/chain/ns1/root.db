@@ -30,6 +30,10 @@ ns3.example.broken.	A	10.53.0.3
 example.dname.		NS	ns3.example.dname.
 ns3.example.dname.	A	10.53.0.3
 
+; regression test for illegal NS below DNAME
+jeff.dname.		NS	ns.jeff.dname.
+ns.jeff.dname.	        A	10.53.0.3
+
 domain0.nil.		NS	ns2.domain0.nil
 domain1.nil.		NS	ns2.domain0.nil
 domain2.nil.		NS	ns2.domain0.nil

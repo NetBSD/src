@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.178 2022/08/29 09:14:02 knakahara Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.178.10.1 2025/08/02 05:57:49 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.178 2022/08/29 09:14:02 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.178.10.1 2025/08/02 05:57:49 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -318,7 +318,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	/*
 	 * Allocate the mbuf for the new packet.
 	 */
-	m = m_gethdr(M_DONTWAIT, MT_HEADER);
+	MGETHDR(m, M_DONTWAIT, MT_HEADER);
 	if (m && (totlen > MHLEN)) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
@@ -805,16 +805,12 @@ icmp_reflect(struct mbuf *m)
 	 */
 	if (sin == NULL && rcvif) {
 		KASSERT(ia == NULL);
-		s = pserialize_read_enter();
-		IFADDR_READER_FOREACH(ifa, rcvif) {
-			if (ifa->ifa_addr->sa_family != AF_INET)
-				continue;
-			sin = &(ifatoia(ifa)->ia_addr);
+
+		ifa = if_first_addr_psref(rcvif, AF_INET, &psref_ia);
+		if (ifa != NULL) {
 			ia = ifatoia(ifa);
-			ia4_acquire(ia, &psref_ia);
-			break;
+			sin = &(ia->ia_addr);
 		}
-		pserialize_read_exit(s);
 	}
 
 	m_put_rcvif_psref(rcvif, &psref);
@@ -865,7 +861,7 @@ icmp_reflect(struct mbuf *m)
 		 */
 		cp = (u_char *)(ip + 1);
 		if ((opts = ip_srcroute(m)) == NULL &&
-		    (opts = m_gethdr(M_DONTWAIT, MT_HEADER))) {
+		    (MGETHDR(opts, M_DONTWAIT, MT_HEADER))) {
 			MCLAIM(opts, m->m_owner);
 			opts->m_len = sizeof(struct in_addr);
 			*mtod(opts, struct in_addr *) = zeroin_addr;

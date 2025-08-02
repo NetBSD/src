@@ -1,0 +1,2 @@
+arm_drain_writebuf
+arm_sync_icache

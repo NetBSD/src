@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2021/11/13 10:13:42 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.1.10.1 2025/08/02 05:57:09 perseant Exp $
 
 DTSARCH=	riscv
-DTSGNUARCH=	riscv
+DTSGNUARCH=	riscv arm64
 
 ARCHDTSDIR=	$S/external/gpl2/dts/dist/arch/riscv/boot/dts

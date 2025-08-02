@@ -1,0 +1,128 @@
+This is the Postfix 3.8 stable release.
+
+The stable Postfix release is called postfix-3.8.x where 3=major
+release number, 8=minor release number, x=patchlevel. The stable
+release never changes except for patches that address bugs or
+emergencies. Patches change the patchlevel and the release date.
+
+New features are developed in snapshot releases. These are called
+postfix-3.9-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+mm=month, dd=day). Patches are never issued for snapshot releases;
+instead, a new snapshot is released.
+
+The mail_release_date configuration parameter (format: yyyymmdd)
+specifies the release date of a stable release or snapshot release.
+
+If you upgrade from Postfix 3.6 or earlier, please read RELEASE_NOTES-3.7
+before proceeding.
+
+Dual license
+------------
+
+As of Postfix 3.2.5 this software is distributed with a dual license:
+in addition to the historical IBM Public License (IPL) 1.0, it is
+now also distributed with the more recent Eclipse Public License
+(EPL) 2.0. Recipients can choose to take the software under the
+license of their choice. Those who are more comfortable with the
+IPL can continue with that license.
+
+Major changes - documentation and code cleanup
+----------------------------------------------
+
+There are numerous small fixes to Postfix documentation, and small
+code-health changes that should not affect documented behavior but
+may improve Postfix behavior for malformed input, or that make
+Postfix easier to maintain. See the HISTORY file for details.
+
+Major changes - SRV support
+---------------------------
+
+[Feature 20230214] Support to look up DNS SRV records in the Postfix
+SMTP/LMTP client, Based on code by Tomas Korbar (Red Hat).
+
+For example, with "use_srv_lookup = submission" and "relayhost =
+example.com:submission", the Postfix SMTP client will look up DNS
+SRV records for _submission._tcp.example.com, and will relay email
+through the hosts and ports that are specified with those records.
+
+See https://www.postfix.org/postconf.5.html#use_srv_lookup for more
+details, including how to selectively use SRV in a configuration
+that connects to multiple ISP accounts.
+
+SRV support may also be useful inside a cloud-based infrastructure
+when Postfix needs to deliver mail to services that run on a
+dynamically-allocated port.
+
+Major changes - TLS support
+---------------------------
+
+[Incompat 20230304] This introduces the following changes:
+
+- Postfix treats the "export" and "low" cipher grade settings as
+  "medium". The  "export" and "low" grades are no longer supported
+  in OpenSSL 1.1.1, the minimum version that Postfix requires.
+
+- Postfix default settings now exclude the following deprecated or
+  unused ciphers (SEED, IDEA, 3DES, RC2, RC4, RC5), digest (MD5),
+  key exchange algorithms (DH, ECDH), and public key algorithm
+  (DSS).
+
+[Feature 20230108] New configuration parameter tls_ffdhe_auto_groups
+for finite-field Diffie-Hellman ephemeral (FFDHE) support in TLS
+1.3 with OpenSSL 3.0.
+
+Major changes - attack resistance
+---------------------------------
+
+[Feature 20240312] the Postfix SMTP server can now aggregate
+smtpd_client_*_rate and smtpd_client_*_count statistics by network
+block, as specified with smtpd_client_ipv4_prefix_length (default
+32, no aggregation) and smtpd_client_ipv6_prefix_length (default
+84, aggregation by /84 network blocks). The latter raises the bar
+for a memory exhaustion attack.
+
+[Feature 20221023] Unconditionally disable a CPU resource attack
+requesting TLS renegotiation. There's no good reason to support
+this in the middle of an SMTP connection.
+
+Major changes - bit rot
+-----------------------
+
+[Incompat 20221228] Postfix documentation and code have been converted
+to use "grep -E" and "grep -F" instead of the historical forms
+"egrep" and "fgrep". To build Postfix on a system that supports
+only the historical forms, run the script auxiliary/fix-grep/fix-grep.sh
+to revert this change.
+
+Major changes - configuration checks
+------------------------------------
+
+[Feature 20240406] The postconf command now warns for #comment in
+or after a Postfix parameter value. Postfix programs do not support
+#comment after other text, and treat that as input.
+
+Major changes - database support
+--------------------------------
+
+[Incompat 20220509] The PostgreSQL client encoding is now configurable
+with the "encoding" Postfix configuration file attribute. The default
+is "UTF8". Previously the encoding was hard-coded as "LATIN1".
+
+Major changes - logging
+-----------------------
+
+[Incompat 20230308] The postfix(1) and postlog(1) commands now
+produce stderr logging even when stderr is not connected to a
+terminal. This eliminates an inconsistency, and makes these programs
+easier to use in some automated procedures. The canonical example
+is to capture output from "postmulti -p status" to figure out which
+instances are or are not running.
+
+Major changes - source code organization
+----------------------------------------
+
+[Incompat 20220507] Most global/mkmap*.[hc] files are moved to the
+util directory; only global/mkmap_proxy.* remains. The old file
+organization was designed before support for dynamically-loadable
+databases was added, and that code suffered from complexity.
+

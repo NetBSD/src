@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2020/06/07 03:02:42 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.25.26.1 2025/08/02 05:55:37 perseant Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -38,7 +38,7 @@ SRCS		+= boot_device.c floppy_2d.c floppy_2hd_ibmpc.c
 #SRCS		+= floppy_2hc.c
 SRCS		+= console.c cons_rom.c cons_fb.c cons_zskbd.c cons_zs.c
 BINKERNEL_C	= ${COMMON}/binkernel.c
-BINKERNEL_SIZE	= 2143232	# '2 * 1024 * 1024 + 45 * 1024'
+BINKERNEL_SIZE	= 2158592	# '2 * 1024 * 1024 + 60 * 1024'
 BINKERNEL_O	= binkernel.o
 BINKERNEL_DUMMY_O= binkernel_dummy.o
 
@@ -128,7 +128,7 @@ ${PROG}.coff:	${PROG}
 	${_MKTARGET_CREATE}
 	${MIPS_ELF2ECOFF} ${PROG} ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
-	
+
 ${BOOT_KERNEL}.gz: ${BINKERNEL_O} ${OBJS} ${LIBS}
 	${_MKTARGET_LINK}
 	${LD} ${LINKFLAGS} -o ${BOOT_KERNEL}.elf ${OBJS} ${LIBS} \

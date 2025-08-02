@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.315 2024/04/10 20:50:18 jschauma Exp $
+$NetBSD: acronyms,v 1.315.2.1 2025/08/02 05:55:18 perseant Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -78,6 +78,7 @@ BIALW	back in a little while
 BIAS	back in a second
 BIAW	back in a while
 BIDI	boy, I did it
+BLUF	bottom line up front
 BNYA	burned now you are
 BOC	but of course
 BOFH	bastard operator from hell
@@ -615,6 +616,7 @@ VEG	very evil grin
 VIP	very important person
 VLA	variable length array
 VLPR	vehicle license plate recognition
+VPS	virtual private server
 VRI	vehicle recognition identification
 W/	with
 W/E	whatever

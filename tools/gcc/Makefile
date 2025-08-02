@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.113 2024/06/16 16:03:30 gutteridge Exp $
+#	$NetBSD: Makefile,v 1.113.2.1 2025/08/02 05:58:23 perseant Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -65,10 +65,10 @@ COMMON_CONFIGURE_ARGS+=	--with-default-libstdcxx-abi=new
 
 # We enabled isl support for GCC 12.  Move into normal segment when
 # removing GCC 10.
-.if ${HAVE_GCC} < 12
-ISL_CONFIGURE_ARGS+=	--without-isl
+.if ${HAVE_GCC} < 12 || defined(NOGCCISL)
+COMMON_CONFIGURE_ARGS+=	--without-isl
 .else
-ISL_CONFIGURE_ARGS+=	--with-isl=${TOOLDIR}
+COMMON_CONFIGURE_ARGS+=	--with-isl=${TOOLDIR}
 .endif
 
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
@@ -95,7 +95,7 @@ GCC_CPPFLAGS+=	-DNB_FIX_VAX_BACKEND
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 		LIBGCC= LIBGCC1= LIBGCC1_TEST= LIBGCC2= INSTALL_LIBGCC= \
 		EXTRA_PARTS= CPPFLAGS=${GCC_CPPFLAGS:Q} \
-		AR=${HOST_AR:Q} RANLIB=${HOST_RANLIB:Q}
+		AR=${HOST_AR:Q} RANLIB=${HOST_RANLIB:Q} NM=${HOST_NM:Q}
 
 CONFIGURE_ENV+= gcc_cv_libc_provides_ssp=yes \
 		gcc_cv_as_sparc_gotdata_op=no

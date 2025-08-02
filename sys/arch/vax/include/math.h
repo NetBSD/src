@@ -1,9 +1,10 @@
-/*	$NetBSD: math.h,v 1.9 2023/01/24 17:50:18 christos Exp $	*/
+/*	$NetBSD: math.h,v 1.9.6.1 2025/08/02 05:56:13 perseant Exp $	*/
 
 #ifndef _VAX_MATH_H_
 #define _VAX_MATH_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 #if __GNUC_PREREQ__(3, 3)
 #define	__INFINITY	__builtin_huge_valf()

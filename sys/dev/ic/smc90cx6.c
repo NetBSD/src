@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.75 2020/01/30 04:56:11 thorpej Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.75.30.1 2025/08/02 05:56:42 perseant Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.75 2020/01/30 04:56:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.75.30.1 2025/08/02 05:56:42 perseant Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -604,8 +604,7 @@ bah_srint(void *vsc)
 
 cleanup:
 
-	if (head != NULL)
-		m_freem(head);
+	m_freem(head);
 
 	/* mark buffer as invalid by source id 0 */
 	bus_space_write_1(bst_m, mem, buffer*512, 0);
@@ -958,7 +957,7 @@ bah_ioctl(struct ifnet *ifp, u_long cmd, void *data)
  * software has not enabled the Receiver, would make our hardware wait forever
  * Discovered this after 20 times reading the docs.
  *
- * Only thing we do is disable transmitter. We'll get an transmit timeout,
+ * Only thing we do is disable transmitter. We'll get a transmit timeout,
  * and the int handler will have to decide not to retransmit (in case
  * retransmission is implemented).
  *

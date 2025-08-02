@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.43 2021/12/07 10:39:33 gson Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.43.4.1 2025/08/02 05:54:58 perseant Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -75,6 +75,8 @@ mydprintf(const char *fmt, ...)
 {
 	va_list ap;
 
+	if (getenv("RUMPUSER_DEBUG") == NULL)
+		return;
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);

@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2005/12/11 12:18:06 christos Exp $
+#	$NetBSD: Makefile,v 1.7.202.1 2025/08/02 05:55:52 perseant Exp $
 
 .include <bsd.own.mk>
 
 .if (${USETOOLS} != "yes")
-SUBDIR=		fixcoff .WAIT
+SUBDIR=		fixcoff mkboothfs .WAIT
 .endif
 SUBDIR+=	bootxx ofwboot
+SUBDIR+=	boothfs
 
 .include <bsd.subdir.mk>

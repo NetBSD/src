@@ -26,6 +26,8 @@ options {
 	dnssec-validation yes;
 };
 
+trust-anchors { };
+
 zone "." {
 	type primary;
 	file "root.db";
@@ -50,5 +52,3 @@ zone "redirect" {
 	type primary;
 	file "redirect.db";
 };
-
-// include "trusted.conf";

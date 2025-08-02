@@ -13,8 +13,6 @@
 
 . ../../conf.sh
 
-SYSTESTDIR=verify
-
 dumpit() {
   echo_d "${debug}: dumping ${1}"
   cat "${1}" | cat_d
@@ -245,3 +243,14 @@ $4 == "NSEC3" && NF == 9 {
 cat ${file}.tmp >>${file}
 rm -f ${file}.tmp
 $SIGNER -3 - -Px -Z nonsecify -O full -o ${zone} -f ${file} ${file} $zsk >s.out$n || dumpit s.out$n
+
+# sign and verify with journal file
+setup updated other
+$KEYGEN -a ${DEFAULT_ALGORITHM} ${zone} >kg1.out$n 2>&1 || dumpit kg1.out$n
+$KEYGEN -a ${DEFAULT_ALGORITHM} -fK ${zone} >kg2.out$n 2>&1 || dumpit kg2.out$n
+cat unsigned.db $ksk.key $zsk.key >$file
+$SIGNER -SPx -o ${zone} -f $file $file >s.out$n || dumpit s.out$n
+sed -e '/serial/s/0/1/' $file >${file}.update
+echo "extra 3600 IN A 4.3.2.1" >>${file}.update
+$SIGNER -SPx -o ${zone} -f ${file}.update ${file}.update >s.out$n || dumpit s.out$n
+$MAKEJOURNAL updated ${file} ${file}.update ${file}.jnl >mj.out$n 2>&1 || dumpit mj.out$n

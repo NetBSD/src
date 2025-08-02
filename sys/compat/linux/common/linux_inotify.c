@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_inotify.c,v 1.6 2024/02/09 22:08:34 andvar Exp $	*/
+/*	$NetBSD: linux_inotify.c,v 1.6.2.1 2025/08/02 05:56:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.6 2024/02/09 22:08:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.6.2.1 2025/08/02 05:56:25 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -792,7 +792,7 @@ inotify_readdir(file_t *fp, struct dirent *dep, int *done, bool needs_lock)
 		vn_lock(vp, LK_SHARED | LK_RETRY);
 	else
 		/*
-		 * XXX We need to temprarily drop v_interlock because
+		 * XXX We need to temporarily drop v_interlock because
 		 * it may be temporarily acquired by biowait().
 		 */
 		mutex_exit(vp->v_interlock);
@@ -886,7 +886,7 @@ leave:
 	return idep;
 }
 
-static size_t 
+static size_t
 find_entry(struct inotify_dir_entries *i1, struct inotify_dir_entries *i2)
 {
 	for (size_t i = 0; i < i2->ide_count; i++)

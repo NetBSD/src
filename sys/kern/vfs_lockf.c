@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.81 2023/09/23 18:21:11 ad Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.81.6.1 2025/08/02 05:57:44 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,20 +35,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.81 2023/09/23 18:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.81.6.1 2025/08/02 05:57:44 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/file.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-#include <sys/kmem.h>
-#include <sys/fcntl.h>
-#include <sys/lockf.h>
+#include <sys/types.h>
+
 #include <sys/atomic.h>
+#include <sys/fcntl.h>
+#include <sys/file.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/lockf.h>
+#include <sys/proc.h>
+#include <sys/sdt.h>
+#include <sys/systm.h>
 #include <sys/uidinfo.h>
+#include <sys/vnode.h>
 
 /*
  * The lockf structure is a kernel structure which contains the information
@@ -161,10 +164,10 @@ lf_printlist(const char *tag, struct lockf *lock)
 		else
 			printf("file %p", (struct file *)lf->lf_id);
 		printf(", %s, start %jd, end %jd",
-			lf->lf_type == F_RDLCK ? "shared" :
-			lf->lf_type == F_WRLCK ? "exclusive" :
-			lf->lf_type == F_UNLCK ? "unlock" :
-			"unknown", (intmax_t)lf->lf_start, (intmax_t)lf->lf_end);
+		    lf->lf_type == F_RDLCK ? "shared" :
+		    lf->lf_type == F_WRLCK ? "exclusive" :
+		    lf->lf_type == F_UNLCK ? "unlock" :
+		    "unknown", (intmax_t)lf->lf_start, (intmax_t)lf->lf_end);
 		TAILQ_FOREACH(blk, &lf->lf_blkhd, lf_block) {
 			if (blk->lf_flags & F_POSIX)
 				printf("; proc %d",
@@ -172,10 +175,11 @@ lf_printlist(const char *tag, struct lockf *lock)
 			else
 				printf("; file %p", (struct file *)blk->lf_id);
 			printf(", %s, start %jd, end %jd",
-				blk->lf_type == F_RDLCK ? "shared" :
-				blk->lf_type == F_WRLCK ? "exclusive" :
-				blk->lf_type == F_UNLCK ? "unlock" :
-				"unknown", (intmax_t)blk->lf_start, (intmax_t)blk->lf_end);
+			    blk->lf_type == F_RDLCK ? "shared" :
+			    blk->lf_type == F_WRLCK ? "exclusive" :
+			    blk->lf_type == F_UNLCK ? "unlock" :
+			    "unknown",
+			    (intmax_t)blk->lf_start, (intmax_t)blk->lf_end);
 			if (TAILQ_FIRST(&blk->lf_blkhd))
 				 panic("lf_printlist: bad list");
 		}
@@ -520,7 +524,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 		 */
 		if ((lock->lf_flags & F_WAIT) == 0) {
 			lf_free(lock);
-			return EAGAIN;
+			return SET_ERROR(EAGAIN);
 		}
 		/*
 		 * We are blocked. Since flock style locks cover
@@ -565,7 +569,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 				p = (struct proc *)waitblock->lf_id;
 				if (p == curproc) {
 					lf_free(lock);
-					return EDEADLK;
+					return SET_ERROR(EDEADLK);
 				}
 			}
 			/*
@@ -575,7 +579,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 			 */
 			if (i >= maxlockdepth) {
 				lf_free(lock);
-				return EDEADLK;
+				return SET_ERROR(EDEADLK);
 			}
 		}
 		/*
@@ -692,7 +696,9 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 			    overlap->lf_type == F_WRLCK) {
 				lf_wakelock(overlap);
 			} else {
-				while ((ltmp = TAILQ_FIRST(&overlap->lf_blkhd))) {
+				while ((ltmp =
+					TAILQ_FIRST(&overlap->lf_blkhd))
+				    != NULL) {
 					KASSERT(ltmp->lf_next == overlap);
 					TAILQ_REMOVE(&overlap->lf_blkhd, ltmp,
 					    lf_block);
@@ -702,7 +708,8 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 				}
 			}
 			/*
-			 * Add the new lock if necessary and delete the overlap.
+			 * Add the new lock if necessary and delete the
+			 * overlap.
 			 */
 			if (needtolink) {
 				*prev = lock;
@@ -811,12 +818,12 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 
 	case SEEK_END:
 		if (fl->l_start > __type_max(off_t) - size)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		start = size + fl->l_start;
 		break;
 
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	if (fl->l_len == 0)
@@ -825,18 +832,18 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		if (fl->l_len >= 0) {
 			if (start >= 0 &&
 			    fl->l_len - 1 > __type_max(off_t) - start)
-				return EINVAL;
+				return SET_ERROR(EINVAL);
 			end = start + (fl->l_len - 1);
 		} else {
 			/* lockf() allows -ve lengths */
 			if (start < 0)
-				return EINVAL;
+				return SET_ERROR(EINVAL);
 			end = start - 1;
 			start += fl->l_len;
 		}
 	}
 	if (start < 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/*
 	 * Allocate locks before acquiring the interlock.  We need two
@@ -854,7 +861,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 			 */
 			sparelock = lf_alloc(0);
 			if (sparelock == NULL) {
-				error = ENOMEM;
+				error = SET_ERROR(ENOMEM);
 				goto quit;
 			}
 			break;
@@ -866,7 +873,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		break;
 
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	switch (ap->a_op) {
@@ -887,7 +894,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		break;
 	}
 	if (lock == NULL) {
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto quit;
 	}
 
@@ -954,9 +961,11 @@ quit:
 }
 
 /*
- * Initialize subsystem.   XXX We use a global lock.  This could be the
- * vnode interlock, but the deadlock detection code may need to inspect
- * locks belonging to other files.
+ * Initialize subsystem.
+ *
+ * XXX We use a global lock.  This could be the vnode interlock, but
+ * the deadlock detection code may need to inspect locks belonging to
+ * other files.
  */
 void
 lf_init(void)

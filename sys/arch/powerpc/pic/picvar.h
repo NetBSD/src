@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.13 2021/03/22 01:36:10 rin Exp $ */
+/*	$NetBSD: picvar.h,v 1.13.22.1 2025/08/02 05:56:01 perseant Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.13 2021/03/22 01:36:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.13.22.1 2025/08/02 05:56:01 perseant Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -61,6 +61,7 @@ struct intr_source {
 	imask_t is_mask;
 	struct intrhand *is_hand;
 	struct pic_ops *is_pic;
+	bool is_cascaded;
 	struct evcnt is_ev;
 	char is_evname[16];
 	char is_intrid[INTRIDBUF];
@@ -116,6 +117,7 @@ struct pic_ops *setup_prepivr(int);
 struct pic_ops *setup_i8259(void);
 struct pic_ops *setup_mpcpic(void *);
 void mpcpic_reserv16(void);
+struct pic_ops *find_pic_by_cookie(void *);
 
 /* i8259 common decls */
 void i8259_initialize(void);  

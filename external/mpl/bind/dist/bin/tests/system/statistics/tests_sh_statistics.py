@@ -9,6 +9,20 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import pytest
+
+pytestmark = pytest.mark.extra_artifacts(
+    [
+        "curl.out.*",
+        "dig.out.*",
+        "named.stats.*",
+        "stats.xml.out",
+        "xsltproc.out.*",
+        "ans*/ans.run",
+        "ns*/statistics-channels.conf",
+    ]
+)
+
 
 def test_statistics(run_tests_sh):
     run_tests_sh()

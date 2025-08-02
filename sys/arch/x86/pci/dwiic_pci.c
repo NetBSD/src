@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_pci.c,v 1.10 2024/04/29 21:29:48 andvar Exp $ */
+/* $NetBSD: dwiic_pci.c,v 1.10.2.1 2025/08/02 05:56:17 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.10 2024/04/29 21:29:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.10.2.1 2025/08/02 05:56:17 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.10 2024/04/29 21:29:48 andvar Exp $"
 
 #include <dev/ic/dwiic_var.h>
 #include <arch/x86/pci/lpssreg.h>
+
+#include "acpica.h"
 
 //#define DWIIC_DEBUG
 

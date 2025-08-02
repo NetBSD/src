@@ -1,5 +1,5 @@
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+        "https://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -7,18 +7,18 @@
 </head> <body> <pre>
 SOCKETMAP_TABLE(5)                                          SOCKETMAP_TABLE(5)
 
-<b>NAME</b>
+<b><a name="name">NAME</a></b>
        socketmap_table - Postfix socketmap table lookup client
 
-<b>SYNOPSIS</b>
+<b><a name="synopsis">SYNOPSIS</a></b>
        <b>postmap -q "</b><i>string</i><b>" <a href="socketmap_table.html">socketmap</a>:inet:</b><i>host</i><b>:</b><i>port</i><b>:</b><i>name</i>
        <b>postmap -q "</b><i>string</i><b>" <a href="socketmap_table.html">socketmap</a>:unix:</b><i>pathname</i><b>:</b><i>name</i>
 
        <b>postmap -q - <a href="socketmap_table.html">socketmap</a>:inet:</b><i>host</i><b>:</b><i>port</i><b>:</b><i>name</i> &lt;<i>inputfile</i>
        <b>postmap -q - <a href="socketmap_table.html">socketmap</a>:unix:</b><i>pathname</i><b>:</b><i>name</i> &lt;<i>inputfile</i>
 
-<b>DESCRIPTION</b>
-       The  Postfix  mail  system  uses optional tables for address rewriting.
+<b><a name="description">DESCRIPTION</a></b>
+       The  Postfix  mail  system  uses optional tables for address rewriting,
        mail routing or policy lookup.
 
        The Postfix socketmap client expects TCP endpoint  names  of  the  form
@@ -26,12 +26,12 @@ SOCKETMAP_TABLE(5)                                          SOCKETMAP_TABLE(5)
        <i>name</i><b>:</b><i>name</i>.  In both cases, <i>name</i> specifies the name field in a socketmap
        client request (see "REQUEST FORMAT" below).
 
-<b>PROTOCOL</b>
+<b><a name="protocol">PROTOCOL</a></b>
        Socketmaps use a simple protocol: the client sends one request, and the
        server sends one reply.  Each request and each reply are  sent  as  one
        netstring object.
 
-<b>REQUEST FORMAT</b>
+<b><a name="request_format">REQUEST FORMAT</a></b>
        The  socketmap  protocol supports only the lookup request.  The request
        has the following form:
 
@@ -44,10 +44,8 @@ SOCKETMAP_TABLE(5)                                          SOCKETMAP_TABLE(5)
        address  extension  or domain portion. This behavior is also found with
        <a href="cidr_table.5.html">cidr</a>:, <a href="pcre_table.5.html">pcre</a>:, and <a href="regexp_table.5.html">regexp</a>: tables.
 
-<b>REPLY FORMAT</b>
-       The Postfix socketmap client requires that replies are not longer  than
-       100000  characters (not including the netstring encapsulation). Replies
-       must have the following form:
+<b><a name="reply_format">REPLY FORMAT</a></b>
+       Replies must have the following form:
 
        <b>OK</b> &lt;<b>space</b>&gt; <i>data</i>
               The requested data was found.
@@ -63,29 +61,47 @@ SOCKETMAP_TABLE(5)                                          SOCKETMAP_TABLE(5)
               The request failed. The reason,  if  non-empty,  is  descriptive
               text.
 
-<b>SECURITY</b>
-       This map cannot be used for security-sensitive information,
-       because neither the connection nor the server are authenticated.
+<b><a name="protocol_limits">PROTOCOL LIMITS</a></b>
+       The  Postfix  socketmap client requires that replies are no longer than
+       100000 bytes (not including the netstring  encapsulation).  This  limit
+       can  be changed with the <a href="postconf.5.html#socketmap_max_reply_size">socketmap_max_reply_size</a> configuration parame-
+       ter (Postfix 3.10 and later).
 
-<b>SEE ALSO</b>
-       <a href="http://cr.yp.to/proto/netstrings.txt">http://cr.yp.to/proto/netstrings.txt</a>, netstring definition
+       The Postfix socketmap client enforces a 100s time limit to connect to a
+       socketmap  server, to send a request, and to receive a reply. It closes
+       an idle connection after 10s, and closes  an  active  connection  after
+       100s. These limits are not (yet) configurable.
+
+<b><a name="security">SECURITY</a></b>
+       This  map  cannot  be  used for security-sensitive information, because
+       neither the connection nor the server are authenticated.
+
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
+       <b><a href="postconf.5.html#socketmap_max_reply_size">socketmap_max_reply_size</a> (100000)</b>
+              The maximum allowed reply size  from  a  socketmap  server,  not
+              including the netstring encapsulation.
+
+<b><a name="see_also">SEE ALSO</a></b>
+       <a href="https://cr.yp.to/proto/netstrings.txt">https://cr.yp.to/proto/netstrings.txt</a>, netstring definition
        <a href="postconf.1.html">postconf(1)</a>, Postfix supported lookup tables
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
        <a href="regexp_table.5.html">regexp_table(5)</a>, format of regular expression tables
        <a href="pcre_table.5.html">pcre_table(5)</a>, format of PCRE tables
        <a href="cidr_table.5.html">cidr_table(5)</a>, format of CIDR tables
 
-<b>README FILES</b>
+<b><a name="readme_files">README FILES</a></b>
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
 
-<b>BUGS</b>
-       The protocol limits are not yet configurable.
+<b><a name="bugs">BUGS</a></b>
+       The protocol time limits are not yet configurable.
 
-<b>LICENSE</b>
+<b><a name="license">LICENSE</a></b>
        The Secure Mailer license must be distributed with this software.
 
-<b>HISTORY</b>
+<b><a name="history">HISTORY</a></b>
        Socketmap support was introduced with Postfix version 2.10.
+
+       The socketmap protocol was published with Sendmail v8.13.
 
 <b>AUTHOR(S)</b>
        Wietse Venema
@@ -97,6 +113,9 @@ SOCKETMAP_TABLE(5)                                          SOCKETMAP_TABLE(5)
        Google, Inc.
        111 8th Avenue
        New York, NY 10011, USA
+
+       Wietse Venema
+       porcupine.org
 
                                                             SOCKETMAP_TABLE(5)
 </pre> </body> </html>

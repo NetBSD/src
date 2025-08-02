@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.37 2021/08/07 16:19:10 thorpej Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.37.12.1 2025/08/02 05:56:36 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.37 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.37.12.1 2025/08/02 05:56:36 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ CFATTACH_DECL_NEW(ehci_cardbus, sizeof(struct ehci_cardbus_softc),
     ehci_activate);
 
 static TAILQ_HEAD(, usb_cardbus) ehci_cardbus_alldevs =
-	TAILQ_HEAD_INITIALIZER(ehci_cardbus_alldevs);
+    TAILQ_HEAD_INITIALIZER(ehci_cardbus_alldevs);
 
 int
 ehci_cardbus_match(device_t parent, cfdata_t match, void *aux)
@@ -175,6 +175,7 @@ ehci_cardbus_attach(device_t parent, device_t self, void *aux)
 	 * have lower function numbers so they should be enumerated already.
 	 */
 	ncomp = 0;
+	KASSERT(KERNEL_LOCKED_P()); /* XXXSMP ehci_cardbus_alldevs */
 	TAILQ_FOREACH(up, &ehci_cardbus_alldevs, next) {
 		if (up->bus == ca->ca_bus) {
 			DPRINTF(("ehci_cardbus_attach: companion %s\n",
@@ -232,6 +233,9 @@ void
 usb_cardbus_add(struct usb_cardbus *up, struct cardbus_attach_args *ca,
     device_t bu)
 {
+
+	KASSERT(KERNEL_LOCKED_P()); /* XXXSMP ehci_cardbus_alldevs */
+
 	TAILQ_INSERT_TAIL(&ehci_cardbus_alldevs, up, next);
 	up->bus = ca->ca_bus;
 	up->function = ca->ca_function;
@@ -241,5 +245,9 @@ usb_cardbus_add(struct usb_cardbus *up, struct cardbus_attach_args *ca,
 void
 usb_cardbus_rem(struct usb_cardbus *up)
 {
-	TAILQ_REMOVE(&ehci_cardbus_alldevs, up, next);
+
+	KASSERT(KERNEL_LOCKED_P()); /* XXXSMP ehci_cardbus_alldevs */
+
+	if (up->usb)
+		TAILQ_REMOVE(&ehci_cardbus_alldevs, up, next);
 }

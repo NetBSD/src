@@ -25,18 +25,23 @@ important for the operation of Postfix.
 
 An address class is defined by three items.
 
-  * The list of domains that are a member of that address class: for example,
-    all local domains, or all relay domains.
+  * The list of domains that are a member of that address class.
 
-  * The default delivery transport for that address class. For example, the
-    local, virtual or relay delivery transport (delivery transports are defined
-    in master.cf). This helps to keep Postfix configurations simple, by
-    avoiding the need for explicit routing information in transport maps.
+    Examples: all local domains, or all relay domains.
 
-  * The list of valid recipient addresses for that address class. The Postfix
-    SMTP server rejects invalid recipients with "User unknown in <name of
-    address class here> table". This helps to keep the Postfix queue free of
-    undeliverable MAILER-DAEMON messages.
+  * The default delivery transport for domains in that address class.
+
+    Examples: local_transport or relay_transport (these point to services
+    defined in master.cf).
+
+    Benefit: this avoids the need for explicit routing information in transport
+    maps.
+
+  * The list of valid recipient addresses for that address class.
+
+    Benefit: the Postfix SMTP server rejects an invalid recipient with "User
+    unknown in <name of address class> table", and avoids sending a MAILER-
+    DAEMON message with backscatter spam.
 
 WWhhaatt aaddddrreessss ccllaasssseess ddooeess PPoossttffiixx iimmpplleemmeenntt??
 
@@ -56,11 +61,11 @@ The local domain class.
     also includes mail for user@[ipaddress] when the IP address is listed with
     the inet_interfaces or proxy_interfaces parameters.
 
-  * Valid recipient addresses are listed with the local_recipient_maps
-    parameter, as described in LOCAL_RECIPIENT_README. The Postfix SMTP server
-    rejects invalid recipients with "User unknown in local recipient table". If
-    the local_recipient_maps parameter value is empty, then the Postfix SMTP
-    server accepts any address in the local domain class.
+  * Valid recipient addresses for those domains are listed with the
+    local_recipient_maps parameter, as described in LOCAL_RECIPIENT_README. The
+    Postfix SMTP server rejects invalid recipients with "User unknown in local
+    recipient table". If the local_recipient_maps parameter value is empty,
+    then the Postfix SMTP server accepts any address in the local domain class.
 
   * The mail delivery transport is specified with the local_transport
     parameter. The default value is llooccaall::$$mmyyhhoossttnnaammee for delivery with the
@@ -69,20 +74,23 @@ The local domain class.
 The virtual alias domain class.
 
   * Purpose: hosted domains where each recipient address is aliased to an
-    address in a different domain, for example, a local UNIX system account or
-    a remote address. A virtual alias example is given in the VIRTUAL_README
-    file.
+    address in a different domain class, for example, a local UNIX system
+    account or a remote address. A virtual alias example is given in the
+    VIRTUAL_README file.
 
   * Domain names are listed in virtual_alias_domains. The default value is
     $virtual_alias_maps for Postfix 1.1 compatibility.
 
-  * Valid recipient addresses are listed with the virtual_alias_maps parameter.
-    The Postfix SMTP server rejects invalid recipients with "User unknown in
-    virtual alias table". The default value is $virtual_maps for Postfix 1.1
-    compatibility.
+  * Valid recipient addresses for those domains are listed with the
+    virtual_alias_maps parameter. The Postfix SMTP server rejects invalid
+    recipients with "User unknown in virtual alias table". The default value is
+    $virtual_maps for Postfix 1.1 compatibility.
 
-  * There is no mail delivery transport parameter. Every address must be
-    aliased to an address in some other domain.
+        Note: for historical reasons, virtual_alias_maps apply to recipients in
+        all domain classes, not only the virtual alias domain class.
+
+  * There is no configurable mail delivery transport. Every address must be
+    aliased to an address in some other domain class.
 
 The virtual mailbox domain class.
 
@@ -93,11 +101,11 @@ The virtual mailbox domain class.
   * Domain names are listed with the virtual_mailbox_domains parameter. The
     default value is $virtual_mailbox_maps for Postfix 1.1 compatibility.
 
-  * Valid recipient addresses are listed with the virtual_mailbox_maps
-    parameter. The Postfix SMTP server rejects invalid recipients with "User
-    unknown in virtual mailbox table". If this parameter value is empty, the
-    Postfix SMTP server accepts all recipients for domains listed in
-    $virtual_mailbox_domains.
+  * Valid recipient addresses for those domains are listed with the
+    virtual_mailbox_maps parameter. The Postfix SMTP server rejects invalid
+    recipients with "User unknown in virtual mailbox table". If this parameter
+    value is empty, the Postfix SMTP server accepts all recipients for domains
+    listed in $virtual_mailbox_domains.
 
   * The mail delivery transport is specified with the virtual_transport
     parameter. The default value is vviirrttuuaall for delivery with the virtual(8)
@@ -113,11 +121,11 @@ The relay domain class.
 
   * Domain names are listed with the relay_domains parameter.
 
-  * Valid recipient addresses are listed with the relay_recipient_maps
-    parameter. The Postfix SMTP server rejects invalid recipients with "User
-    unknown in relay recipient table". If this parameter value is empty, the
-    Postfix SMTP server accepts all recipients for domains listed with the
-    relay_domains parameter.
+  * Valid recipient addresses for those domains are listed with the
+    relay_recipient_maps parameter. The Postfix SMTP server rejects invalid
+    recipients with "User unknown in relay recipient table". If this parameter
+    value is empty, the Postfix SMTP server accepts all recipients for domains
+    listed with the relay_domains parameter.
 
   * The mail delivery transport is specified with the relay_transport
     parameter. The default value is rreellaayy which is a clone of the smtp(8)

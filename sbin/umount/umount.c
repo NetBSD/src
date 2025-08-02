@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.53 2020/04/23 04:21:13 christos Exp $	*/
+/*	$NetBSD: umount.c,v 1.53.8.1 2025/08/02 05:55:08 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.53 2020/04/23 04:21:13 christos Exp $");
+__RCSID("$NetBSD: umount.c,v 1.53.8.1 2025/08/02 05:55:08 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,10 @@ __RCSID("$NetBSD: umount.c,v 1.53 2020/04/23 04:21:13 christos Exp $");
 #include <rpc/pmap_prot.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfsmount.h>
+
+#include <dev/vndvar.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
 #endif /* !SMALL */
 
 #include <err.h>
@@ -72,7 +76,7 @@ typedef enum { MNTANY, MNTON, MNTFROM } mntwhat;
 #ifndef SMALL
 #include "mountprog.h"
 
-static int	 fake, verbose;
+static int	 dflag, fake, verbose;
 static char	*nfshost;
 static struct addrinfo *nfshost_ai = NULL;
 
@@ -80,9 +84,10 @@ static int	 namematch(const struct addrinfo *);
 static int	 sacmp(const struct sockaddr *, const struct sockaddr *);
 static int	 xdr_dir(XDR *, char *);
 static const char *getmntproto(const char *);
+static int	 vn_detach(const char *);
 #endif /* !SMALL */
 
-static int	 fflag;
+static int	 all, fflag;
 static char	*getmntname(const char *, mntwhat, char **);
 static int	 umountfs(const char *, const char **, int);
 static void	 usage(void) __dead;
@@ -90,7 +95,7 @@ static void	 usage(void) __dead;
 int
 main(int argc, char *argv[])
 {
-	int ch, errs, all = 0, raw = 0;
+	int ch, errs, raw = 0;
 	char mntfromname[MAXPATHLEN];
 #ifndef SMALL
 	int mnts;
@@ -102,7 +107,7 @@ main(int argc, char *argv[])
 #ifdef SMALL
 #define OPTS "fR"
 #else
-#define OPTS "AaFfh:Rt:v"
+#define OPTS "AadFfh:Rt:v"
 #endif
 	while ((ch = getopt(argc, argv, OPTS)) != -1)
 		switch (ch) {
@@ -117,6 +122,9 @@ main(int argc, char *argv[])
 		case 'a':
 			all = 1;
 			break;
+		case 'd':
+			dflag = 1;
+			break;
 		case 'F':
 			fake = 1;
 			break;
@@ -130,7 +138,7 @@ main(int argc, char *argv[])
 			typelist = makevfslist(optarg);
 			break;
 		case 'v':
-			verbose = 1;
+			verbose++;
 			break;
 #endif /* !SMALL */
 		default:
@@ -190,6 +198,7 @@ umountfs(const char *name, const char **typelist, int raw)
 	char *hostp = NULL;
 	struct addrinfo *ai = NULL, hints;
 	const char *proto = NULL;
+	struct statvfs sfs;
 #endif /* !SMALL */
 	const char *mntpt;
 	char *type, rname[MAXPATHLEN], umountprog[MAXPATHLEN];
@@ -273,11 +282,18 @@ umountfs(const char *name, const char **typelist, int raw)
 
 #ifndef SMALL
 	if (verbose) {
-		(void)printf("%s: unmount from %s\n", name, mntpt);
+		(void)printf("%s: %sunmount from %s\n",
+		    name, fake ? "fake " : "", mntpt);
 		/* put this before the test of FAKE */ 
-		if (!raw) {
-			(void)printf("Trying unmount program %s\n",
-			    umountprog);
+		if (!raw && verbose > 1) {
+			int OK = 1;
+			if (fake) {
+				OK = faccessat(AT_FDCWD, umountprog,
+				    X_OK, AT_EACCESS);
+			}
+			(void)printf("Trying unmount program %s%s\n",
+			    umountprog,
+			    (fake && OK < 0) ? ": would fail" : "");
 		}
 	}
 	if (fake)
@@ -308,8 +324,13 @@ umountfs(const char *name, const char **typelist, int raw)
 	}
 
 #ifndef SMALL
-	if (verbose)
+	if (verbose > 1)
 		(void)printf("(No separate unmount program.)\n");
+
+	if (dflag && statvfs(mntpt, &sfs) == -1) {
+		warn("%s: statvfs", mntpt);
+		return 1;
+	}
 #endif
 
 	if (unmount(mntpt, fflag) == -1) {
@@ -335,6 +356,15 @@ umountfs(const char *name, const char **typelist, int raw)
 		}
 		auth_destroy(clp->cl_auth);
 		clnt_destroy(clp);
+	}
+
+	if (dflag) {
+		if (vn_detach(sfs.f_mntfromname) == 0) {
+			if (verbose)
+				(void)printf("%s: detached\n",
+				    sfs.f_mntfromname);
+		} else if (!all)
+			return (-1);
 	}
 #endif /* ! SMALL */
 	return 0;
@@ -444,6 +474,37 @@ getmntproto(const char *name)
 	(void)mount("nfs", name, MNT_GETARGS, &nfsargs, sizeof(nfsargs));
 	return nfsargs.sotype == SOCK_STREAM ? "tcp" : "udp";
 }
+
+int
+vn_detach(const char *dev)
+{
+	struct vnd_ioctl vndio;
+	char rdev[MAXPATHLEN + 1];
+	int fd;
+
+	if (strncmp(dev, "/dev/vnd", sizeof("/dev/vnd") - 1)) {
+		if (!all)
+			warnx("invalid vnd device: %s", dev);
+		return -1;
+	}
+
+	if ((fd = opendisk(dev, O_RDWR, rdev, sizeof(rdev), 0)) == -1) {
+		warn("%s: opendisk", rdev);
+		return -1;
+	}
+
+	memset(&vndio, 0, sizeof(vndio));
+	vndio.vnd_flags = fflag ? VNDIOF_FORCE : 0;
+
+	if (ioctl(fd, VNDIOCCLR, &vndio) == -1) {
+		warn("%s: VNDIOCCLR", rdev);
+		close(fd);
+		return -1;
+	}
+	close(fd);
+
+	return 0;
+}
 #endif /* !SMALL */
 
 static void
@@ -454,8 +515,8 @@ usage(void)
 	    "Usage: %s [-fR]  special | node\n", getprogname());
 #else
 	(void)fprintf(stderr,
-	    "Usage: %s [-fvFR] [-t fstypelist] special | node\n"
-	    "\t %s -a[fvF] [-h host] [-t fstypelist]\n", getprogname(),
+	    "Usage: %s [-dfvFR] [-t fstypelist] special | node\n"
+	    "\t %s -a[dfvF] [-h host] [-t fstypelist]\n", getprogname(),
 	    getprogname());
 #endif /* SMALL */
 	exit(1);

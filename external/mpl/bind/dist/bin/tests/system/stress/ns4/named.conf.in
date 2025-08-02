@@ -26,6 +26,8 @@ options {
 	notify yes;
 };
 
+trust-anchors { };
+
 zone "zone000000.example" {
 	type secondary;
 	file "zone000000.example.bk";

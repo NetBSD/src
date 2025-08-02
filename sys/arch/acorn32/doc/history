@@ -1,4 +1,4 @@
-#	$NetBSD: history,v 1.9 2022/04/04 19:33:44 andvar Exp $
+#	$NetBSD: history,v 1.9.10.1 2025/08/02 05:55:20 perseant Exp $
 ---------------------------------------------------------------------------
 This document is more included as a historical reference and nostalgia :)
 rather than a still worked on list.
@@ -50,7 +50,7 @@ rather than a still worked on list.
 	- section permission faults now cause bus errors
 	- the syscall handler now correctly uses bcopy to copy the register
 	  passed parameters
-	- the copyin() function now validates the uaddrs argumant
+	- the copyin() function now validates the uaddrs argument
 	- the kstack is filled with a know pattern on a fork()
 	- the postmortem code will check the size of the kstack fill pattern
 	- the assembly bcopyinout() now returns EFAULT on error
@@ -69,11 +69,11 @@ rather than a still worked on list.
 	  bootstrap to use.
 	- The 936K kernel size limit has been removed.
 	- Added support for KTRACE in syscall.c
-	- Seondary bootstrap now zeros down its memory
+	- Secondary bootstrap now zeros down its memory
 	- cpu_switch now zeros curpcb while there is no valid process
 	-
 1/10/95
-	- cpuswitch now detects trahsed stacks.
+	- cpuswitch now detects trashed stacks.
 	- new compile option for generation of enhanced postmortem debugging
 	- merged console code 183b
 	- implemented a memcpy routine
@@ -140,7 +140,7 @@ rather than a still worked on list.
 
 03/11/95
 	- ALT-Cursor Left/Right now work the correct way round
-	- ALT-F6 now gernerates the correct code
+	- ALT-F6 now generates the correct code
 	- alpha version of the cumana SCSI II driver added
 	- alpha version of the ether1 driver added
 	- console code upgraded to V191
@@ -174,7 +174,7 @@ rather than a still worked on list.
 	  maps in the system page at 0x00000000
 	- cpu_swapin() and cpu_swapout() moved to vm_machdep.c
 	- pmap_enter_pv() no longer panics on duplicate mapping, it just
-	  prints an warning.
+	  prints a warning.
 	- alpha version of the powertec SCSI driver
 
 15/11/95

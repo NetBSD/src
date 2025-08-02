@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.21 2024/06/09 20:07:33 riastradh Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.21.2.1 2025/08/02 05:56:18 perseant Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,17 +32,23 @@
 /*
  * For reference on VIA XSTORERNG, see the VIA PadLock Programming
  * Guide (`VIA PPG'), August 4, 2005.
- * http://linux.via.com.tw/support/beginDownload.action?eleid=181&fid=261
+ * https://web.archive.org/web/20210322141743/http://linux.via.com.tw/support/beginDownload.action?eleid=181&fid=261
  *
  * For reference on Intel RDRAND/RDSEED, see the Intel Digital Random
  * Number Generator Software Implementation Guide (`Intel DRNG SIG'),
  * Revision 2.1, October 17, 2018.
- * https://software.intel.com/sites/default/files/managed/98/4a/DRNG_Software_Implementation_Guide_2.1.pdf
+ * https://web.archive.org/web/20200505093404/https://software.intel.com/sites/default/files/managed/98/4a/DRNG_Software_Implementation_Guide_2.1.pdf
+ *
+ * Intel's hardware implementation is analyzed by Mike Hamburg, Paul
+ * Kocher, and Mark E. Marson, `Analysis of Intel's Ivy Bridge Digital
+ * Random Number Generator', Cryptography Research, Inc., March 12,
+ * 2012.
+ * https://web.archive.org/web/20141230024150/http://www.cryptography.com/public/pdf/Intel_TRNG_Report_20120312.pdf
  *
  * For reference on AMD RDRAND/RDSEED, which are designed to be
  * compatible with Intel RDRAND/RDSEED, see the somewhat less detailed
  * AMD Random Number Generator documentation, 2017-06-27.
- * https://www.amd.com/system/files/TechDocs/amd-random-number-generator.pdf
+ * https://web.archive.org/web/20220402133945/https://www.amd.com/system/files/TechDocs/amd-random-number-generator.pdf
  */
 
 #include <sys/param.h>

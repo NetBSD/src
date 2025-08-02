@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.143 2024/01/03 18:10:42 andvar Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.143.2.1 2025/08/02 05:57:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.143 2024/01/03 18:10:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.143.2.1 2025/08/02 05:57:43 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -68,19 +68,22 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.143 2024/01/03 18:10:42 andvar Ex
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/file.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
-#include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/domain.h>
+#include <sys/file.h>
+#include <sys/kauth.h>
+#include <sys/mbuf.h>
 #include <sys/poll.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/protosw.h>
+#include <sys/sdt.h>
+#include <sys/signalvar.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/signalvar.h>
-#include <sys/kauth.h>
-#include <sys/pool.h>
+#include <sys/systm.h>
 #include <sys/uidinfo.h>
 
 #ifdef DDB
@@ -516,7 +519,7 @@ soroverflow(struct socket *so)
 
 	so->so_rcv.sb_overflowed++;
 	if (so->so_options & SO_RERROR)  {
-		so->so_rerror = ENOBUFS;
+		so->so_rerror = SET_ERROR(ENOBUFS);
 		sorwakeup(so);
 	}
 }
@@ -576,7 +579,7 @@ sowakeup(struct socket *so, struct sockbuf *sb, int code)
 		band = 0;
 #ifdef DIAGNOSTIC
 		printf("bad siginfo code %d in socket notification.\n", code);
-#endif 
+#endif
 		break;
 	}
 
@@ -646,7 +649,7 @@ sb_max_set(u_long new_sbmax)
 	int s;
 
 	if (new_sbmax < (16 * 1024))
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	s = splsoftnet();
 	sb_max = new_sbmax;
@@ -689,7 +692,7 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
  bad2:
 	sbrelease(&so->so_snd, so);
  bad:
-	return (ENOBUFS);
+	return SET_ERROR(ENOBUFS);
 }
 
 /*
@@ -1167,9 +1170,9 @@ sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
 #endif
 
 		/* Prepend sockaddr to this record (m) of input chain m0 */
-	  	n = m_prepend_sockaddr(sb, m, asa);
+		n = m_prepend_sockaddr(sb, m, asa);
 		if (n == NULL) {
-			error = ENOBUFS;
+			error = SET_ERROR(ENOBUFS);
 			goto bad;
 		}
 
@@ -1207,7 +1210,7 @@ bad:
 	 * the input record chain passed to us as m0.
 	 */
 	while ((n = n0) != NULL) {
-	  	struct mbuf *np;
+		struct mbuf *np;
 
 		/* Undo the sballoc() of this record */
 		for (np = n; np; np = np->m_next)
@@ -1539,7 +1542,7 @@ sblock(struct sockbuf *sb, int wf)
 			return 0;
 		}
 		if (wf != M_WAITOK)
-			return EWOULDBLOCK;
+			return SET_ERROR(EWOULDBLOCK);
 		so = sb->sb_so;
 		lock = so->so_lock;
 		if ((sb->sb_flags & SB_NOINTR) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.44 2020/04/07 08:14:42 jdolecek Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.44.28.1 2025/08/02 05:57:44 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
 typedef enum {
 	KFSkern,		/* the filesystem itself (.) */
 	KFSroot,		/* the filesystem root (..) */
-	KFSnull,		/* none aplicable */
+	KFSnull,		/* none applicable */
 	KFStime,		/* time */
 	KFSboottime,		/* boottime */
 	KFSint,			/* integer */

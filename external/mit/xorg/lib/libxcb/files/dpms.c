@@ -14,6 +14,7 @@
 #include "dpms.h"
 
 #define ALIGNOF(type) offsetof(struct { char dummy; type member; }, member)
+#include "xproto.h"
 
 xcb_extension_t xcb_dpms_id = { "DPMS", 0 };
 
@@ -455,5 +456,57 @@ xcb_dpms_info_reply (xcb_connection_t        *c,
                      xcb_generic_error_t    **e)
 {
     return (xcb_dpms_info_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
+}
+
+xcb_void_cookie_t
+xcb_dpms_select_input_checked (xcb_connection_t *c,
+                               uint32_t          event_mask)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        .count = 2,
+        .ext = &xcb_dpms_id,
+        .opcode = XCB_DPMS_SELECT_INPUT,
+        .isvoid = 1
+    };
+
+    struct iovec xcb_parts[4];
+    xcb_void_cookie_t xcb_ret;
+    xcb_dpms_select_input_request_t xcb_out;
+
+    xcb_out.event_mask = event_mask;
+
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+
+    xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
+}
+
+xcb_void_cookie_t
+xcb_dpms_select_input (xcb_connection_t *c,
+                       uint32_t          event_mask)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        .count = 2,
+        .ext = &xcb_dpms_id,
+        .opcode = XCB_DPMS_SELECT_INPUT,
+        .isvoid = 1
+    };
+
+    struct iovec xcb_parts[4];
+    xcb_void_cookie_t xcb_ret;
+    xcb_dpms_select_input_request_t xcb_out;
+
+    xcb_out.event_mask = event_mask;
+
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+
+    xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
 }
 

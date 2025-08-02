@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_strncpy.c,v 1.1 1997/12/07 00:24:58 matthias Exp $	*/
+/*	$NetBSD: Lint_strncpy.c,v 1.1.124.1 2025/08/02 05:54:42 perseant Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -9,10 +9,7 @@
 
 /*ARGSUSED*/
 char *
-strncpy(dst, src, n)
-	char *dst;
-	const char *src;
-	size_t n;
+strncpy(char *dst, const char *src, size_t n)
 {
-	return (0);
+	return NULL;
 }

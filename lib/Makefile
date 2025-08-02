@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.299 2024/02/26 20:16:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.299.2.1 2025/08/02 05:54:28 perseant Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -92,23 +92,18 @@ SUBDIR+=	../external/mit/expat/lib
 
 SUBDIR+=	../external/gpl2/libmalloc
 
-SUBDIR+=	../external/bsd/jemalloc/lib
+SUBDIR+=	../external/bsd/${EXTERNAL_JEMALLOC_SUBDIR}/lib
 
 .if (${MKGCC} != "no")
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libobjc
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgomp
-# Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
-# specific build area, but we get better parallelism this way.
-# We don't build compat versions of these.
-. if !defined(MLIBDIR) && (${MKGCCCMDS} != "no")
-SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
-SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
-. endif
 .endif
 
 # GCC and GDB >= 13 require GMP.
-.if !defined(MLIBDIR) && (${MKGCCCMDS} != "no" || \
-    (${MKGDB} != "no" && ${HAVE_GDB:U0} >= 1320))
+# We don't build compat versions of these
+.if !defined(MLIBDIR) && (${MKGCCCMDS} != "no" || ${MKGDB} != "no")
+SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
+SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
 SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
 .endif
 
@@ -152,7 +147,7 @@ SUBDIR+=	librumpuser	# depends on libpthread
 SUBDIR+=	libnpf		# depends on libnv
 .endif
 
-OSSL=../crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/
+OSSL=../crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/
 .include "${.CURDIR}/${OSSL}Makefile.subdir" # depends on libcrypt
 
 .if (${MKISCSI} != "no")
@@ -187,27 +182,29 @@ SUBDIR+=	../external/apache2/llvm/include
 
 SUBDIR+=	../external/mit/libcbor/lib
 
-SUBDIR+=	../external/mit/libuv/lib
+SUBDIR+=	../external/bsd/zstd/lib
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
 SUBDIR+=	libwrap
 
 .if (${MKGCC} != "no" && ${MKCXX} != "no" && ${MKLIBSTDCXX} != "no")
+.if ${MKGCCCMDS} != "no"
 .for sanitizer in asan lsan ubsan
 .if exists(../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/lib${sanitizer})
 SUBDIR+= ../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/lib${sanitizer}
 .endif
 .endfor
 .endif
+.endif
 
 .if (${MKLLVMRT} != "no" && (!defined(MLIBDIR) || ${MKCOMPATX11} != "no"))
 SUBDIR+=	../external/apache2/llvm/librt
 .endif
 
-SUBDIR+=	../external/bsd/libarchive/lib	# depends on libxz
+SUBDIR+=	../external/bsd/libarchive/lib	# depends on libxz, zstd
 
-SUBDIR+=	../external/bsd/file/lib	# depends on libz, libbz2, libxz
+SUBDIR+=	../external/bsd/file/lib	# depends on libz, libbz2, libxz, zstd
 
 .if (${MKNPF} != "no")
 SUBDIR+=	npf		# depends on libnpf
@@ -258,6 +255,9 @@ SUBDIR+=        ../external/cddl/osnet/lib/libzfs
 
 SUBDIR+= 	../libexec/httpd/libbozohttpd 	# depends on libssl & libcrypto
 
+SUBDIR+=	../external/mit/libuv/lib
+SUBDIR+=	../external/lgpl2/userspace-rcu/lib
+
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
@@ -265,7 +265,7 @@ SUBDIR+=	../crypto/external/bsd/openssh/lib # depends on libcrypto, libz,
 						   # libfido2
 SUBDIR+=	../crypto/external/bsd/netpgp/bindings/lua  # depends on netpgp/lib
 SUBDIR+=	../external/mpl/bind/lib	# depends on heimdal, libcrypto
-						# libuv
+						# libuv, userspace-rcu
 .if ${MKUNBOUND} != "no"
 SUBDIR+=	../external/bsd/unbound/lib	# depends on libcrypto
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.23 2023/05/14 09:07:54 riastradh Exp $	*/
+/*	$NetBSD: boot.c,v 1.23.6.1 2025/08/02 05:55:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -55,6 +55,9 @@ static const char * const names[][2] = {
 	{ "netbsd", "netbsd.gz" },
 	{ "onetbsd", "onetbsd.gz" },
 	{ "netbsd.old", "netbsd.old.gz" },
+	{ "netbsd/kernel", "netbsd/kernel.gz" },
+	{ "onetbsd/kernel", "onetbsd/kernel.gz" },
+	{ "netbsd.old/kernel", "netbsd.old/kernel.gz" },
 };
 
 #define NUMNAMES	__arraycount(names)
@@ -127,6 +130,7 @@ static const char *default_part_name;
 
 static char *sprint_bootsel(const char *);
 static void bootit(const char *, int);
+static void bootit2(char *, size_t, int);
 
 int
 parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
@@ -442,17 +446,38 @@ command_quit(char *arg)
 	panic("Could not reboot!");
 }
 
+static void
+bootit2(char *path, size_t plen, int howto)
+{
+	bootit(path, howto);
+	snprintf(path, plen, "%s.gz", path);
+	bootit(path, howto | AB_VERBOSE);
+}
+
 void
 command_boot(char *arg)
 {
 	char *filename;
+	char path[512];
 	int howto;
 
 	if (!parseboot(arg, &filename, &howto))
 		return;
 
-	if (filename != NULL) {
-		bootit(filename, howto);
+	if (filename != NULL && filename[0] != '\0') {
+		/* try old locations first to appease atf test beds */
+		snprintf(path, sizeof(path) - 4, "%s", filename);
+		bootit2(path, sizeof(path), howto);
+
+		/*
+		 * now treat given filename as a directory unless there
+		 * is already an embedded path-name separator '/' present
+		 */
+		if (strchr(filename + 1, '/') == NULL) {
+			snprintf(path, sizeof(path) - 4, "%s/kernel",
+			    filename);
+			bootit2(path, sizeof(path), howto);
+		}
 	} else {
 		int i;
 

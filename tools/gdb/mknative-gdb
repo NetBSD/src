@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gdb,v 1.16 2023/07/31 17:09:59 christos Exp $
+#	$NetBSD: mknative-gdb,v 1.16.2.1 2025/08/02 05:58:23 perseant Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/gdb
@@ -220,12 +220,12 @@ get_gdb_libgdb () {
 
 	local _LIBSIM=$_GDB/lib/libsim
 	case $_MACHINE_SUBDIR in
-	powerpc*)
+	xxpowerpc*)
 		mkdir -p $_TOP/$_LIBSIM/arch/$_MACHINE_SUBDIR
 		write_c $_LIBSIM/arch/$_MACHINE_SUBDIR/config.h \
-			<$_TMPDIR/sim/ppc/config.h
-		write_c $_LIBSIM/arch/$_MACHINE_SUBDIR/build-config.h \
-			<$_TMPDIR/sim/ppc/build-config.h
+			<$_TMPDIR/sim/config.h
+		#write_c $_LIBSIM/arch/$_MACHINE_SUBDIR/build-config.h \
+		#	<$_TMPDIR/sim/ppc/build-config.h
 		#write_c $_LIBSIM/arch/$_MACHINE_SUBDIR/cconfig.h \
 		#	<$_TMPDIR/sim/common/cconfig.h
 		;;
@@ -262,6 +262,20 @@ get_gdb_bingdbserver () {
 		<$_TMPDIR/gdbserver/version-generated.cc
 }
 
+# info
+
+get_gdb_info () {
+	local _INFO=$_GDB/info
+	local _SRC=$_TMPDIR/gdb/doc
+
+	mkdir -p $_TOP/$_INFO
+
+	for i in $_SRC/*.info; do
+		j=`basename $i`
+		writefile $_INFO/$j < $i
+	done
+}
+
 ##### main #####
 
 case $1 in
@@ -278,6 +292,7 @@ all|gdb)	# everything (uses "canadian cross" temp environment)
 	get_gdb_libreadline
 	get_gdb_libdecnumber
 	get_gdb_bingdbserver
+	get_gdb_info
 	exit 0
 	;;
 

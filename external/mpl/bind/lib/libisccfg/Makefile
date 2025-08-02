@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 2024/02/21 22:52:54 christos Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2025/08/02 05:54:21 perseant Exp $
 
-NOLINT=yes	# XXX
 LIB=isccfg
 
 .include <bsd.own.mk>
@@ -14,6 +13,7 @@ DIST=	${IDIST}/lib/isccfg
 
 .PATH.c:	${DIST}/unix ${DIST}
 
-SRCS=	aclconf.c duration.c kaspconf.c log.c namedconf.c parser.c dnsconf.c
+SRCS=	aclconf.c check.c duration.c kaspconf.c log.c namedconf.c parser.c \
+	dnsconf.c
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.23 2021/10/27 04:14:59 thorpej Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.23.10.1 2025/08/02 05:55:21 perseant Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.23 2021/10/27 04:14:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.23.10.1 2025/08/02 05:55:21 perseant Exp $");
 
 
 #ifdef DEBUG
@@ -112,8 +112,9 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = l->l_md.md_tf;
-	fp = getframe(l, sig, &onstack);
-	fp--;
+
+	/* Allocate space for the signal handler context. */
+	fp = getframe(l, sig, &onstack, sizeof(*fp), _Alignof(*fp));
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)

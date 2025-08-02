@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.18 2022/06/08 21:55:51 wiz Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.18.10.1 2025/08/02 05:55:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,8 +57,14 @@ extern	const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 static void
 do_bootcfg_command(const char *cmd, char *arg)
 {
-	if (strcmp(cmd, BOOTCFG_CMD_LOAD) == 0)
+	if (strcmp(cmd, BOOTCFG_CMD_DEV) == 0)
+		command_dev(arg);
+	else if (strcmp(cmd, BOOTCFG_CMD_FS) == 0)
+		fs_add(arg);
+	else if (strcmp(cmd, BOOTCFG_CMD_LOAD) == 0)
 		module_add(arg);
+	else if (strcmp(cmd, BOOTCFG_CMD_RNDSEED) == 0)
+		rnd_add(arg);
 	else if (strcmp(cmd, BOOTCFG_CMD_USERCONF) == 0)
 		userconf_add(arg);
 }
@@ -134,19 +140,30 @@ doboottypemenu(void)
 	int choice;
 	char input[80];
 
-	printf("\n");
-	/* Display menu */
-	if (bootcfg_info.menuformat == MENUFORMAT_LETTER) {
-		for (choice = 0; choice < bootcfg_info.nummenu; choice++)
-			printf("    %c. %s\n", choice + 'A',
-			    bootcfg_info.desc[choice]);
-	} else {
-		/* Can't use %2d format string with libsa */
-		for (choice = 0; choice < bootcfg_info.nummenu; choice++)
-			printf("    %s%d. %s\n",
-			    (choice < 9) ?  " " : "",
-			    choice + 1,
-			    bootcfg_info.desc[choice]);
+	/*
+	 * If we have a single menu entry with empty description and
+	 * timeout = 0 we do not display any menu.
+	 */
+	if ((bootcfg_info.nummenu > 0 &&
+	     bootcfg_info.desc[0] != bootcfg_info.command[0] &&
+	     bootcfg_info.desc[0][0] != 0) || bootcfg_info.timeout > 0) {
+		printf("\n");
+
+		/* Display menu */
+		if (bootcfg_info.menuformat == MENUFORMAT_LETTER) {
+			for (choice = 0; choice < bootcfg_info.nummenu;
+			    choice++)
+				printf("    %c. %s\n", choice + 'A',
+				    bootcfg_info.desc[choice]);
+		} else {
+			/* Can't use %2d format string with libsa */
+			for (choice = 0; choice < bootcfg_info.nummenu;
+			    choice++)
+				printf("    %s%d. %s\n",
+				    (choice < 9) ?  " " : "",
+				    choice + 1,
+				    bootcfg_info.desc[choice]);
+		}
 	}
 	choice = -1;
 	for (;;) {

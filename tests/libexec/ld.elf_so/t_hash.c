@@ -1,4 +1,4 @@
-/*	$NetBSD: t_hash.c,v 1.1 2023/07/30 09:22:02 riastradh Exp $	*/
+/*	$NetBSD: t_hash.c,v 1.1.8.1 2025/08/02 05:58:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@ struct kat {
  * illustrate the problem on all systems, not just LP64 ones.
  *
  * https://www.sco.com/developers/devspecs/gabi41.pdf#page=95
+ * https://web.archive.org/web/20241216221811/https://www.sco.com/developers/devspecs/gabi41.pdf#page=95
  */
 static uint64_t
 sysv_broken_hash(const char *name)

@@ -41,10 +41,21 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.7; };
 	listen-on-v6 { none; };
+	dnssec-validation no;
 	recursion no;
 	notify no;
 	try-tcp-refresh no;
 	allow-new-zones yes;
 	sig-signing-nodes 100;
 	sig-signing-signatures 10;
+};
+
+dnssec-policy "nsec3" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm RSASHA256 2048;
+		zsk key-directory lifetime unlimited algorithm RSASHA256 2048;
+		zsk key-directory lifetime unlimited algorithm RSASHA256 4096;
+	};
+
+	nsec3param iterations 0 optout no salt-length 0;
 };

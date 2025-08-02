@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: acpica2netbsd,v 1.1 2014/10/25 21:00:06 christos Exp $
+# $NetBSD: acpica2netbsd,v 1.1.58.1 2025/08/02 05:57:09 perseant Exp $
 #
 #  Copyright (c) 2014 The NetBSD Foundation.
 #  All rights reserved.
@@ -45,3 +45,8 @@ mv source/* .
 mv components/* .
 rmdir source components
 echo; echo
+find . -type f -exec chmod a-x {} +
+if [ -f include/ACPIXF.h ]; then
+    mv include/ACPIXF.h include/acpixf.h
+fi
+echo "Remember to update ACPI_DATE in include/acapps.h"

@@ -277,7 +277,7 @@ nsec03			NSEC	. TYPE1
 nsec04			NSEC	. TYPE127
 
 ; type 48
-dnskey01		DNSKEY	512 ( 255 1 AQMFD5raczCJHViKtLYhWGz8hMY
+@			DNSKEY	512 ( 255 1 AQMFD5raczCJHViKtLYhWGz8hMY
 				9UGRuniJDBzC7w0aRyzWZriO6i2odGWWQVucZqKV
 				sENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esg
 				a60zyGW6LFe9r8n6paHrlG5ojqf0BaqHT+8= )
@@ -365,11 +365,11 @@ openpgpkey		OPENPGPKEY	( AQMFD5raczCJHViKtLYhWGz8hMY
 				sENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esg
 				a60zyGW6LFe9r8n6paHrlG5ojqf0BaqHT+8= )
 
-;type	62
+; type 62
 csync01			CSYNC	0 0 A NS AAAA
 csync02			CSYNC	0 0
 
-;type	63
+; type 63
 zonemd01		ZONEMD	2019020700 1 1 (
                                 C220B8A6ED5728A971902F7E3D4FD93A
                                 DEEA88B0453C2E8E8C863D465AB06CF3
@@ -381,8 +381,15 @@ zonemd02		ZONEMD	2019020700 1 2 (
                                 4E114D884E66F176EAB121CB02DB7D65
                                 2E0CC4827E7A3204F166B47E5613FD27
 				)
+; type 64
+svcb0			SVCB	0 example.net.
+svcb1			SVCB	1 . port=60
 
-; type 64 -- 98 (unassigned)
+; type 65
+https0			HTTPS	0 example.net.
+https1			HTTPS	1 . port=60
+
+; type 66 -- 98 (unassigned)
 
 ; type 99
 spf01			SPF	"v=spf1 -all"
@@ -478,7 +485,16 @@ amtrelay04		AMTRELAY 0 0 2 ::
 amtrelay05		AMTRELAY 0 0 3 example.net.
 amtrelay06		AMTRELAY \# 2 0004
 
-; type 261 -- 32767 (unassigned)
+; type 261
+resinfo			RESINFO	qnamemin exterr=15,16,17 infourl=https://resolver.example.com/guide
+
+; type 262
+wallet			WALLET	currency-identifer wallet-identifier
+wallet-multiple		WALLET	currency-identifer1 wallet-identifier1
+wallet-multiple		WALLET	currency-identifer1 wallet-identifier2
+wallet-multiple		WALLET	currency-identifer2 wallet-identifier3
+
+; type 265 -- 32767 (unassigned)
 
 ; type 32768
 ta			TA	30795 1 1 (
@@ -493,12 +509,6 @@ dlv			DLV	30795 1 1 (
 ; type 32770 -- 65279 (unassigned)
 
 ; type 65280-65534 (private use)
-
-https0			HTTPS	0 example.net.
-https1			HTTPS	1 . port=60
-
-svcb0			SVCB	0 example.net.
-svcb1			SVCB	1 . port=60
 
 ; keydata (internal type used for managed keys)
 keydata			TYPE65533	\# 0

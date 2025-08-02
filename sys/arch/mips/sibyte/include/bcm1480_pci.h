@@ -193,7 +193,7 @@
 #define M_BCM1480_PHB_SIGNAL_INTA            _SB_MAKEMASK1_32(0)
 
 /*
- * PHB External Configuratation Disable Register (Table 120)
+ * PHB External Configuration Disable Register (Table 120)
  */
 
 #define M_BCM1480_PHB_EXT_CONFIG_DIS         _SB_MAKEMASK1_32(0)

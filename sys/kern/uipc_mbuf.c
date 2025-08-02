@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.252 2023/11/27 02:50:27 ozaki-r Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.252.2.1 2025/08/02 05:57:43 perseant Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,29 +62,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.252 2023/11/27 02:50:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.252.2.1 2025/08/02 05:57:43 perseant Exp $");
 
 #ifdef _KERNEL_OPT
+#include "ether.h"
+#include "opt_ddb.h"
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
-#include "opt_ddb.h"
-#include "ether.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/atomic.h>
 #include <sys/cpu.h>
-#include <sys/proc.h>
-#include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
 #include <sys/domain.h>
-#include <sys/protosw.h>
+#include <sys/kernel.h>
+#include <sys/mbuf.h>
 #include <sys/percpu.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/protosw.h>
+#include <sys/sdt.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 
@@ -293,21 +296,21 @@ sysctl_kern_mbuf(SYSCTLFN_ARGS)
 		newval = nmbclusters_limit();
 		break;
 	default:
-		return EOPNOTSUPP;
+		return SET_ERROR(EOPNOTSUPP);
 	}
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
 	if (newval < 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	switch (node.sysctl_num) {
 	case MBUF_NMBCLUSTERS:
 		if (newval < nmbclusters)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		if (newval > nmbclusters_limit())
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		nmbclusters = newval;
 		pool_cache_sethardlimit(mcl_cache, nmbclusters,
 		    mclpool_warnmsg, 60);
@@ -358,9 +361,9 @@ sysctl_kern_mbuf_mowners(SYSCTLFN_ARGS)
 	int error = 0;
 
 	if (namelen != 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (newp != NULL)
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	LIST_FOREACH(mo, &mowners, mo_link) {
 		struct mowner_user mo_user;
@@ -369,7 +372,7 @@ sysctl_kern_mbuf_mowners(SYSCTLFN_ARGS)
 
 		if (oldp != NULL) {
 			if (*oldlenp - len < sizeof(mo_user)) {
-				error = ENOMEM;
+				error = SET_ERROR(ENOMEM);
 				break;
 			}
 			error = copyout(&mo_user, (char *)oldp + len,
@@ -1713,7 +1716,7 @@ out:
 	return 0;
 
 enobufs:
-	return ENOBUFS;
+	return SET_ERROR(ENOBUFS);
 }
 
 /*

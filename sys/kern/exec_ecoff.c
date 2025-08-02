@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.32 2019/11/20 19:37:53 pgoyette Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.32.32.1 2025/08/02 05:57:40 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,17 +33,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.32 2019/11/20 19:37:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.32.32.1 2025/08/02 05:57:40 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
+#include <sys/types.h>
+
 #include <sys/exec.h>
-#include <sys/resourcevar.h>
-#include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/exec_ecoff.h>
+#include <sys/module.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/sdt.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 MODULE(MODULE_CLASS_EXEC, exec_ecoff, NULL);
 
@@ -73,7 +76,7 @@ exec_ecoff_modcmd(modcmd_t cmd, void *arg)
 		return exec_remove(&exec_ecoff_execsw, 1);
 
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
         }
 }
 
@@ -95,10 +98,10 @@ exec_ecoff_makecmds(struct lwp *l, struct exec_package *epp)
 	struct ecoff_exechdr *execp = epp->ep_hdr;
 
 	if (epp->ep_hdrvalid < ECOFF_HDR_SIZE)
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 
 	if (ECOFF_BADMAG(execp))
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 
 	error = (*epp->ep_esch->u.ecoff_probe_func)(l, epp);
 
@@ -128,7 +131,7 @@ exec_ecoff_makecmds(struct lwp *l, struct exec_package *epp)
 		   epp->ep_vp);
 		break;
 	default:
-		return ENOEXEC;
+		return SET_ERROR(ENOEXEC);
 	}
 
 	/* set up the stack */

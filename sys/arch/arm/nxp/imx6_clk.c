@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_clk.c,v 1.6 2023/05/04 13:25:07 bouyer Exp $	*/
+/*	$NetBSD: imx6_clk.c,v 1.6.6.1 2025/08/02 05:55:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.6 2023/05/04 13:25:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.6.6.1 2025/08/02 05:55:29 perseant Exp $");
 
 #include "opt_fdt.h"
 
@@ -617,7 +617,7 @@ static struct imx_clock_id {
 } imx6q_clock_ids[] = {
 	{ IMX6QCLK_DUMMY,		"dummy" },
 	{ IMX6QCLK_CKIL,		"ckil" },
-	{ IMX6QCLK_CKIH,		"ckih" },
+	{ IMX6QCLK_CKIH,		"ckih1" },
 	{ IMX6QCLK_OSC,			"osc" },
 	{ IMX6QCLK_PLL2_PFD0_352M,	"pll2_pfd0_352m" },
 	{ IMX6QCLK_PLL2_PFD1_594M,	"pll2_pfd1_594m" },
@@ -888,7 +888,7 @@ static struct imx6_clk imx6q_clks[] = {
 	CLK_FIXED("dummy", 0),
 
 	CLK_FIXED("ckil", IMX6_CKIL_FREQ),
-	CLK_FIXED("ckih", IMX6_CKIH_FREQ),
+	CLK_FIXED("ckih1", IMX6_CKIH_FREQ),
 	CLK_FIXED("osc", IMX6_OSC_FREQ),
 	CLK_FIXED("anaclk1", IMX6_ANACLK1_FREQ),
 	CLK_FIXED("anaclk2", IMX6_ANACLK2_FREQ),
@@ -1264,7 +1264,7 @@ imx6qccm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	int phandle = OF_finddevice("/soc/aips-bus/anatop");
+	int phandle = OF_finddevice("/soc/bus/anatop");
 
 	if (phandle == -1) {
 		aprint_error(": can't find anatop device\n");
@@ -1275,8 +1275,8 @@ imx6qccm_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't get anatop registers\n");
 		return;
 	}
-		
-	
+
+
 	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh_analog)) {
 		aprint_error(": can't map anatop registers\n");
 		return;
@@ -1285,14 +1285,12 @@ imx6qccm_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Clock Control Module\n");
 
-	imx6ccm_attach_common(self, &imx6q_clks[0], __arraycount(imx6q_clks), 
+	imx6ccm_attach_common(self, &imx6q_clks[0], __arraycount(imx6q_clks),
 	    imxccm6q_init_parents);
 
 	imx6q_clk_fixed_from_fdt(sc, "ckil");
-	imx6q_clk_fixed_from_fdt(sc, "ckih");
+	imx6q_clk_fixed_from_fdt(sc, "ckih1");
 	imx6q_clk_fixed_from_fdt(sc, "osc");
-	imx6q_clk_fixed_from_fdt(sc, "anaclk1");
-	imx6q_clk_fixed_from_fdt(sc, "anaclk2");
 
 	fdtbus_register_clock_controller(self, faa->faa_phandle,
 	    &imx6q_ccm_fdtclock_funcs);

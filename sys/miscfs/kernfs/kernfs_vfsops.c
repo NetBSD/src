@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.100 2020/04/07 08:35:49 jdolecek Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.100.28.1 2025/08/02 05:57:44 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.100 2020/04/07 08:35:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.100.28.1 2025/08/02 05:57:44 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -345,13 +345,9 @@ kernfs_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		error = vfs_attach(&kernfs_vfsops);
-		if (error != 0)
-			break;
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&kernfs_vfsops);
-		if (error != 0)
-			break;
 		break;
 	default:
 		error = ENOTTY;

@@ -1,17 +1,22 @@
-# $NetBSD: Makefile,v 1.55 2022/05/31 13:42:59 riastradh Exp $
+# $NetBSD: Makefile,v 1.55.4.1 2025/08/02 05:58:03 perseant Exp $
+
+NOMAN=		# defined
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/gen
+BINDIR=		${TESTSDIR}
 
 TESTS_SUBDIRS+=	execve
 TESTS_SUBDIRS+=	posix_spawn
 
 TESTS_C+=	t_alarm
+TESTS_C+=	t_arc4random
 TESTS_C+=	t_assert
 TESTS_C+=	t_basedirname
 TESTS_C+=	t_closefrom
 TESTS_C+=	t_cpuset
+TESTS_C+=	t_ctype
 TESTS_C+=	t_dir
 TESTS_C+=	t_floatunditf
 TESTS_C+=	t_fmtcheck
@@ -37,13 +42,19 @@ TESTS_C+=	t_siginfo
 TESTS_C+=	t_sleep
 TESTS_C+=	t_syslog
 TESTS_C+=	t_time
+TESTS_C+=	t_timespec_get
 TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
+
+PROGS+=		h_execsig
 
 .if ${MKSANITIZER:Uno} != "yes" && ${MKLIBCSANITIZER:Uno} != "yes"
 COPTS.t_siginfo.c+=	-DENABLE_TESTS
 .endif
 
+CPPFLAGS.t_arc4random.c+=-I${NETBSDSRCDIR}/lib/libc/include
+CPPFLAGS.t_ctype.c+=	\
+	${"${MKPIC}" == "no" || "${LDSTATIC:U}" == "-static":?-D_CTYPE_GUARD_PAGE=0:}
 CPPFLAGS.t_siginfo.c+=-D__TEST_FENV
 COPTS.t_fpsetround.c+=${${ACTIVE_CC} == "gcc":? -frounding-math :}
 
@@ -54,6 +65,8 @@ DPADD.t_fpclassify+=	${LIBM}
 LDADD.t_fpsetround+=	-lm
 DPADD.t_fpsetround+=	${LIBM}
 
+LDADD.t_arc4random+=	-lpthread
+DPADD.t_arc4random+=	${LIBPTHREAD}
 LDADD.t_nice+=		-lpthread
 DPADD.t_nice+=		${LIBPTHREAD}
 LDADD.t_syslog+=	-lpthread

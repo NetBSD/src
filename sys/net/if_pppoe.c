@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.183 2022/08/15 08:28:41 knakahara Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.183.10.1 2025/08/02 05:57:47 perseant Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.183 2022/08/15 08:28:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.183.10.1 2025/08/02 05:57:47 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1089,8 +1089,7 @@ breakbreak:;
 	}
 
 done:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return;
 }
 

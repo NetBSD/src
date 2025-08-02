@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.27 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.27.2.1 2025/08/02 05:56:36 perseant Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -39,24 +39,26 @@
  * used by arm/at91, arm/zynq SoC
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.27 2024/06/29 12:11:11 riastradh Exp $");
+/*
+ * Lock order:
+ *
+ *	IFNET_LOCK -> sc_mcast_lock
+ *	IFNET_LOCK -> sc_intr_lock
+ */
 
-#include <sys/types.h>
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.27.2.1 2025/08/02 05:56:36 perseant Exp $");
+
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
-#include <sys/time.h>
-#include <sys/device.h>
-#include <uvm/uvm_extern.h>
+#include <sys/types.h>
 
 #include <sys/bus.h>
-#include <machine/intr.h>
-
-#include <arm/cpufunc.h>
+#include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/time.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -79,6 +81,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.27 2024/06/29 12:11:11 riastradh Exp 
 #include <dev/cadence/cemacreg.h>
 #include <dev/cadence/if_cemacvar.h>
 
+#ifndef CEMAC_WATCHDOG_TIMEOUT
+#define CEMAC_WATCHDOG_TIMEOUT 5
+#endif
+static int cemac_watchdog_timeout = CEMAC_WATCHDOG_TIMEOUT;
+
 #define DEFAULT_MDCDIV	32
 
 #define CEMAC_READ(x) \
@@ -86,50 +93,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.27 2024/06/29 12:11:11 riastradh Exp 
 #define CEMAC_WRITE(x, y) \
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, (x), (y))
 #define CEMAC_GEM_WRITE(x, y)						      \
-	do {								      \
-		if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM))		      \
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, (GEM_##x), (y)); \
-		else							      \
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, (ETH_##x), (y)); \
-	} while(0)
-
-#define RX_QLEN 64
-#define	TX_QLEN	2		/* I'm very sorry but that's where we can get */
-
-struct cemac_qmeta {
-	struct mbuf	*m;
-	bus_dmamap_t	m_dmamap;
-};
-
-struct cemac_softc {
-	device_t		sc_dev;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	bus_dma_tag_t		sc_dmat;
-	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
-	struct ethercom		sc_ethercom;
-	mii_data_t		sc_mii;
-
-	void			*rbqpage;
-	unsigned		rbqlen;
-	bus_addr_t		rbqpage_dsaddr;
-	bus_dmamap_t		rbqpage_dmamap;
-	void			*tbqpage;
-	unsigned		tbqlen;
-	bus_addr_t		tbqpage_dsaddr;
-	bus_dmamap_t		tbqpage_dmamap;
-
-	volatile struct eth_dsc *RDSC;
-	int			rxqi;
-	struct cemac_qmeta	rxq[RX_QLEN];
-	volatile struct eth_dsc *TDSC;
-	int			txqi, txqc;
-	struct cemac_qmeta	txq[TX_QLEN];
-	callout_t		cemac_tick_ch;
-	bool			tx_busy;
-
-	int			cemac_flags;
-};
+    do {								      \
+	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM))			      \
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, (GEM_##x), (y));    \
+	else								      \
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, (ETH_##x), (y));    \
+    } while(0)
 
 static void	cemac_init(struct cemac_softc *);
 static int	cemac_gctx(struct cemac_softc *);
@@ -141,6 +110,7 @@ static void	cemac_statchg(struct ifnet *);
 static void	cemac_tick(void *);
 static int	cemac_ifioctl(struct ifnet *, u_long, void *);
 static void	cemac_ifstart(struct ifnet *);
+static void	cemac_ifstart_locked(struct ifnet *);
 static void	cemac_ifwatchdog(struct ifnet *);
 static int	cemac_ifinit(struct ifnet *);
 static void	cemac_ifstop(struct ifnet *, int);
@@ -153,31 +123,40 @@ int cemac_debug = CEMAC_DEBUG;
 #define	DPRINTFN(n, fmt)
 #endif
 
-CFATTACH_DECL_NEW(cemac, sizeof(struct cemac_softc),
-    cemac_match, cemac_attach, NULL, NULL);
-
-int
-cemac_match_common(device_t parent, cfdata_t match, void *aux)
+/*
+ * Perform an interface watchdog reset.
+ */
+static void
+cemac_handle_reset_work(struct work *work, void *arg)
 {
-	if (strcmp(match->cf_name, "cemac") == 0)
-		return 1;
-	return 0;
+	struct cemac_softc * const sc = arg;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
+
+	printf("%s: watchdog timeout -- resetting\n", ifp->if_xname);
+
+	/* Don't want ioctl operations to happen */
+	IFNET_LOCK(ifp);
+
+	/* reset the interface. */
+	cemac_ifinit(ifp);
+
+	IFNET_UNLOCK(ifp);
+
+	/*
+	 * There are still some upper layer processing which call
+	 * ifp->if_start(). e.g. ALTQ or one CPU system
+	 */
+	/* Try to get more packets going. */
+	ifp->if_start(ifp);
+
+	atomic_store_relaxed(&sc->sc_reset_pending, 0);
 }
 
+
 void
-cemac_attach_common(device_t self, bus_space_tag_t iot,
-    bus_space_handle_t ioh, bus_dma_tag_t dmat, int flags)
+cemac_attach_common(struct cemac_softc *sc)
 {
-	struct cemac_softc	*sc = device_private(self);
-	prop_data_t		enaddr;
-	uint32_t		u;
-
-
-	sc->sc_dev = self;
-	sc->sc_ioh = ioh;
-	sc->sc_iot = iot;
-	sc->sc_dmat = dmat;
-	sc->cemac_flags = flags;
+	uint32_t u;
 
 	aprint_naive("\n");
 	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM))
@@ -206,7 +185,8 @@ cemac_attach_common(device_t self, bus_space_tag_t iot,
 	CEMAC_WRITE(ETH_RSR, (u & (ETH_RSR_OVR | ETH_RSR_REC | ETH_RSR_BNA)));
 
 	/* Fetch the Ethernet address from property if set. */
-	enaddr = prop_dictionary_get(device_properties(self), "mac-address");
+	prop_dictionary_t prop = device_properties(sc->sc_dev);
+	prop_data_t enaddr = prop_dictionary_get(prop, "mac-address");
 
 	if (enaddr != NULL) {
 		KASSERT(prop_object_type(enaddr) == PROP_TYPE_DATA);
@@ -261,8 +241,8 @@ cemac_gctx(struct cemac_softc *sc)
 	}
 
 	// mark we're free
-	if (sc->tx_busy) {
-		sc->tx_busy = false;
+	if (sc->sc_txbusy) {
+		sc->sc_txbusy = false;
 		/* Disable transmit-buffer-free interrupt */
 		/*CEMAC_WRITE(ETH_IDR, ETH_ISR_TBRE);*/
 	}
@@ -273,50 +253,74 @@ cemac_gctx(struct cemac_softc *sc)
 int
 cemac_intr(void *arg)
 {
-	struct cemac_softc *sc = (struct cemac_softc *)arg;
-	struct ifnet * ifp = &sc->sc_ethercom.ec_if;
+	struct cemac_softc * const sc = arg;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	uint32_t imr, isr, ctl;
 #ifdef	CEMAC_DEBUG
 	uint32_t rsr;
 #endif
 	int bi;
 
+	mutex_enter(sc->sc_intr_lock);
+	if (sc->sc_stopping) {
+		mutex_exit(sc->sc_intr_lock);
+		return 0;
+	}
+
 	imr = ~CEMAC_READ(ETH_IMR);
 	if (!(imr & (ETH_ISR_RCOM | ETH_ISR_TBRE | ETH_ISR_TIDLE |
 	    ETH_ISR_RBNA | ETH_ISR_ROVR | ETH_ISR_TCOM))) {
 		// interrupt not enabled, can't be us
+		mutex_exit(sc->sc_intr_lock);
 		return 0;
 	}
 
 	isr = CEMAC_READ(ETH_ISR);
 	CEMAC_WRITE(ETH_ISR, isr);
 	isr &= imr;
+
+	if (isr == 0) {
+		mutex_exit(sc->sc_intr_lock);
+		return 0;
+	}
+
 #ifdef	CEMAC_DEBUG
 	rsr = CEMAC_READ(ETH_RSR);		// get receive status register
 #endif
-	DPRINTFN(2, ("%s: isr=0x%08X rsr=0x%08X imr=0x%08X\n", __FUNCTION__, isr, rsr, imr));
+	DPRINTFN(2, ("%s: isr=0x%08X rsr=0x%08X imr=0x%08X\n", __FUNCTION__,
+	    isr, rsr, imr));
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if (isr & ETH_ISR_RBNA) {		// out of receive buffers
-		CEMAC_WRITE(ETH_RSR, ETH_RSR_BNA);	// clear interrupt
-		ctl = CEMAC_READ(ETH_CTL);		// get current control register value
-		CEMAC_WRITE(ETH_CTL, ctl & ~ETH_CTL_RE);	// disable receiver
-		CEMAC_WRITE(ETH_RSR, ETH_RSR_BNA);	// clear BNA bit
-		CEMAC_WRITE(ETH_CTL, ctl |  ETH_CTL_RE);	// re-enable receiver
+	// out of receive buffers
+	if (isr & ETH_ISR_RBNA) {
+		// clear interrupt
+		CEMAC_WRITE(ETH_RSR, ETH_RSR_BNA);
+
+		ctl = CEMAC_READ(ETH_CTL);
+		// disable receiver
+		CEMAC_WRITE(ETH_CTL, ctl & ~ETH_CTL_RE);
+		// clear BNA bit
+		CEMAC_WRITE(ETH_RSR, ETH_RSR_BNA);
+		// re-enable receiver
+		CEMAC_WRITE(ETH_CTL, ctl |  ETH_CTL_RE);
+
 		if_statinc_ref(ifp, nsr, if_ierrors);
 		if_statinc_ref(ifp, nsr, if_ipackets);
 		DPRINTFN(1,("%s: out of receive buffers\n", __FUNCTION__));
 	}
 	if (isr & ETH_ISR_ROVR) {
-		CEMAC_WRITE(ETH_RSR, ETH_RSR_OVR);	// clear interrupt
+		// clear interrupt
+		CEMAC_WRITE(ETH_RSR, ETH_RSR_OVR);
 		if_statinc_ref(ifp, nsr, if_ierrors);
 		if_statinc_ref(ifp, nsr, if_ipackets);
 		DPRINTFN(1,("%s: receive overrun\n", __FUNCTION__));
 	}
 
-	if (isr & ETH_ISR_RCOM) {			// packet has been received!
+	// packet has been received!
+	if (isr & ETH_ISR_RCOM) {
 		uint32_t nfo;
-		DPRINTFN(2,("#2 RDSC[%i].INFO=0x%08X\n", sc->rxqi % RX_QLEN, sc->RDSC[sc->rxqi % RX_QLEN].Info));
+		DPRINTFN(2,("#2 RDSC[%i].INFO=0x%08X\n", sc->rxqi % RX_QLEN,
+		    sc->RDSC[sc->rxqi % RX_QLEN].Info));
 		while (sc->RDSC[(bi = sc->rxqi % RX_QLEN)].Addr & ETH_RDSC_F_USED) {
 			int fl, csum;
 			struct mbuf *m;
@@ -326,10 +330,12 @@ cemac_intr(void *arg)
 			DPRINTFN(2,("## nfo=0x%08X\n", nfo));
 
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if (m != NULL) MCLGET(m, M_DONTWAIT);
+			if (m != NULL)
+				MCLGET(m, M_DONTWAIT);
 			if (m != NULL && (m->m_flags & M_EXT)) {
-				bus_dmamap_sync(sc->sc_dmat, sc->rxq[bi].m_dmamap, 0,
-						MCLBYTES, BUS_DMASYNC_POSTREAD);
+				bus_dmamap_sync(sc->sc_dmat,
+				    sc->rxq[bi].m_dmamap, 0, MCLBYTES,
+				    BUS_DMASYNC_POSTREAD);
 				bus_dmamap_unload(sc->sc_dmat,
 					sc->rxq[bi].m_dmamap);
 				m_set_rcvif(sc->rxq[bi].m, ifp);
@@ -359,21 +365,20 @@ cemac_intr(void *arg)
 					m_adj(m, mtod(m, intptr_t) & 3);
 				sc->rxq[bi].m = m;
 				bus_dmamap_load(sc->sc_dmat,
-					sc->rxq[bi].m_dmamap,
-					m->m_ext.ext_buf, MCLBYTES,
-					NULL, BUS_DMA_NOWAIT);
-				bus_dmamap_sync(sc->sc_dmat, sc->rxq[bi].m_dmamap, 0,
-						MCLBYTES, BUS_DMASYNC_PREREAD);
+				    sc->rxq[bi].m_dmamap, m->m_ext.ext_buf,
+					MCLBYTES, NULL, BUS_DMA_NOWAIT);
+				bus_dmamap_sync(sc->sc_dmat,
+				    sc->rxq[bi].m_dmamap, 0, MCLBYTES,
+				    BUS_DMASYNC_PREREAD);
 				sc->RDSC[bi].Info = 0;
 				sc->RDSC[bi].Addr =
-					sc->rxq[bi].m_dmamap->dm_segs[0].ds_addr
-					| (bi == (RX_QLEN-1) ? ETH_RDSC_F_WRAP : 0);
+				    sc->rxq[bi].m_dmamap->dm_segs[0].ds_addr
+				    | (bi == (RX_QLEN-1) ? ETH_RDSC_F_WRAP : 0);
 			} else {
 				/* Drop packets until we can get replacement
 				 * empty mbufs for the RXDQ.
 				 */
-				if (m != NULL)
-					m_freem(m);
+				m_freem(m);
 				if_statinc_ref(ifp, nsr, if_ierrors);
 			}
 			sc->rxqi++;
@@ -390,23 +395,50 @@ cemac_intr(void *arg)
 		goto begin;
 #endif
 
-	return (1);
+	mutex_exit(sc->sc_intr_lock);
+
+	return 1;
 }
 
+
+static int
+cemac_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet * const ifp = &ec->ec_if;
+	struct cemac_softc * const sc = ifp->if_softc;
+	int ret = 0;
+
+	KASSERT(IFNET_LOCKED(ifp));
+	mutex_enter(sc->sc_mcast_lock);
+
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
+	sc->sc_if_flags = ifp->if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
+		ret = ENETRESET;
+	} else if ((change & IFF_PROMISC) != 0) {
+		if ((sc->sc_if_flags & IFF_RUNNING) != 0)
+			cemac_setaddr(ifp);
+	}
+	mutex_exit(sc->sc_mcast_lock);
+
+	return ret;
+}
 
 static void
 cemac_init(struct cemac_softc *sc)
 {
 	bus_dma_segment_t segs;
 	int rsegs, err, i;
-	struct ifnet * ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data * const mii = &sc->sc_mii;
 	uint32_t u;
 #if 0
 	int mdcdiv = DEFAULT_MDCDIV;
 #endif
 
-	callout_init(&sc->cemac_tick_ch, 0);
+	callout_init(&sc->cemac_tick_ch, CALLOUT_MPSAFE);
+	callout_setfunc(&sc->cemac_tick_ch, cemac_tick, sc);
 
 	// ok...
 	CEMAC_WRITE(ETH_CTL, ETH_CTL_MPE);	// disable everything
@@ -453,14 +485,24 @@ cemac_init(struct cemac_softc *sc)
 	CEMAC_GEM_WRITE(SA4L, 0);
 	CEMAC_GEM_WRITE(SA4H, 0);
 
-	/* Allocate a page of memory for receive queue descriptors */
-	sc->rbqlen = (ETH_DSC_SIZE * (RX_QLEN + 1) * 2 + PAGE_SIZE - 1) / PAGE_SIZE;
-	sc->rbqlen *= PAGE_SIZE;
+	char wqname[MAXCOMLEN];
+	snprintf(wqname, sizeof(wqname), "%sReset", device_xname(sc->sc_dev));
+	int error = workqueue_create(&sc->sc_reset_wq, wqname,
+	    cemac_handle_reset_work, sc, PRI_NONE, IPL_SOFTCLOCK,
+	    WQ_MPSAFE);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create reset workqueue\n");
+		return;
+	}
+
+	/* Allocate memory for receive queue descriptors */
+	sc->rbqlen = roundup(ETH_DSC_SIZE * (RX_QLEN + 1) * 2, PAGE_SIZE);
 	DPRINTFN(1,("%s: rbqlen=%i\n", __FUNCTION__, sc->rbqlen));
 
+	// see EMAC errata why forced to 16384 byte boundary
 	err = bus_dmamem_alloc(sc->sc_dmat, sc->rbqlen, 0,
-	    MAX(16384, PAGE_SIZE),	// see EMAC errata why forced to 16384 byte boundary
-	    &segs, 1, &rsegs, BUS_DMA_WAITOK);
+	    MAX(16384, PAGE_SIZE), &segs, 1, &rsegs, BUS_DMA_WAITOK);
 	if (err == 0) {
 		DPRINTFN(1,("%s: -> bus_dmamem_map\n", __FUNCTION__));
 		err = bus_dmamem_map(sc->sc_dmat, &segs, 1, sc->rbqlen,
@@ -483,14 +525,13 @@ cemac_init(struct cemac_softc *sc)
 	sc->rbqpage_dsaddr = sc->rbqpage_dmamap->dm_segs[0].ds_addr;
 	memset(sc->rbqpage, 0, sc->rbqlen);
 
-	/* Allocate a page of memory for transmit queue descriptors */
-	sc->tbqlen = (ETH_DSC_SIZE * (TX_QLEN + 1) * 2 + PAGE_SIZE - 1) / PAGE_SIZE;
-	sc->tbqlen *= PAGE_SIZE;
+	/* Allocate memory for transmit queue descriptors */
+	sc->tbqlen = roundup(ETH_DSC_SIZE * (TX_QLEN + 1) * 2, PAGE_SIZE);
 	DPRINTFN(1,("%s: tbqlen=%i\n", __FUNCTION__, sc->tbqlen));
 
+	// see EMAC errata why forced to 16384 byte boundary
 	err = bus_dmamem_alloc(sc->sc_dmat, sc->tbqlen, 0,
-	    MAX(16384, PAGE_SIZE),	// see EMAC errata why forced to 16384 byte boundary
-	    &segs, 1, &rsegs, BUS_DMA_WAITOK);
+	    MAX(16384, PAGE_SIZE), &segs, 1, &rsegs, BUS_DMA_WAITOK);
 	if (err == 0) {
 		DPRINTFN(1,("%s: -> bus_dmamem_map\n", __FUNCTION__));
 		err = bus_dmamem_map(sc->sc_dmat, &segs, 1, sc->tbqlen,
@@ -531,10 +572,11 @@ cemac_init(struct cemac_softc *sc)
 	for (i = 0; i < RX_QLEN; i++) {
 		struct mbuf *m;
 
-		err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, PAGE_SIZE,
-		    BUS_DMA_WAITOK, &sc->rxq[i].m_dmamap);
+		err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
+		    PAGE_SIZE, BUS_DMA_WAITOK, &sc->rxq[i].m_dmamap);
 		if (err) {
-			panic("%s: dmamap_create failed: %i\n", __FUNCTION__, err);
+			panic("%s: dmamap_create failed: %i\n", __FUNCTION__,
+			    err);
 		}
 		MGETHDR(m, M_WAIT, MT_DATA);
 		MCLGET(m, M_WAIT);
@@ -571,6 +613,9 @@ cemac_init(struct cemac_softc *sc)
 	CEMAC_WRITE(ETH_RBQP, (uint32_t)sc->rbqpage_dsaddr);
 	CEMAC_WRITE(ETH_TBQP, (uint32_t)sc->tbqpage_dsaddr);
 
+	sc->sc_mcast_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
+	sc->sc_intr_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+
 	/* Divide HCLK by 32 for MDC clock */
 	sc->sc_ethercom.ec_mii = mii;
 	mii->mii_ifp = ifp;
@@ -579,7 +624,7 @@ cemac_init(struct cemac_softc *sc)
 	mii->mii_statchg = cemac_statchg;
 	ifmedia_init(&mii->mii_media, IFM_IMASK, cemac_mediachange,
 	    cemac_mediastatus);
-	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY, 1, 0);
+	mii_attach(sc->sc_dev, mii, 0xffffffff, sc->sc_phyno, MII_OFFSET_ANY, 0);
 	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 #if 0
@@ -610,17 +655,18 @@ cemac_init(struct cemac_softc *sc)
 
 	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_extflags = IFEF_MPSAFE;
 	ifp->if_ioctl = cemac_ifioctl;
 	ifp->if_start = cemac_ifstart;
 	ifp->if_watchdog = cemac_ifwatchdog;
 	ifp->if_init = cemac_ifinit;
 	ifp->if_stop = cemac_ifstop;
-	ifp->if_timer = 0;
 	ifp->if_softc = sc;
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, (sc)->sc_enaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, cemac_ifflags_cb);
 }
 
 static int
@@ -628,13 +674,13 @@ cemac_mediachange(struct ifnet *ifp)
 {
 	if (ifp->if_flags & IFF_UP)
 		cemac_ifinit(ifp);
-	return (0);
+	return 0;
 }
 
 static void
 cemac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	struct cemac_softc *sc = ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
 
 	mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
@@ -645,9 +691,7 @@ cemac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 static int
 cemac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
-	struct cemac_softc *sc;
-
-	sc = device_private(self);
+	struct cemac_softc * const sc = device_private(self);
 
 	CEMAC_WRITE(ETH_MAN, (ETH_MAN_HIGH | ETH_MAN_RW_RD
 			     | ((phy << ETH_MAN_PHYA_SHIFT) & ETH_MAN_PHYA)
@@ -663,9 +707,7 @@ cemac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 static int
 cemac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
-	struct cemac_softc *sc;
-
-	sc = device_private(self);
+	struct cemac_softc * const sc = device_private(self);
 
 	CEMAC_WRITE(ETH_MAN, (ETH_MAN_HIGH | ETH_MAN_RW_WR
 			     | ((phy << ETH_MAN_PHYA_SHIFT) & ETH_MAN_PHYA)
@@ -682,7 +724,7 @@ cemac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 static void
 cemac_statchg(struct ifnet *ifp)
 {
-	struct cemac_softc *sc = ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t reg;
 
@@ -713,12 +755,49 @@ cemac_statchg(struct ifnet *ifp)
 	CEMAC_WRITE(ETH_CFG, reg);
 }
 
+static bool
+cemac_watchdog_check(struct cemac_softc * const sc)
+{
+
+	KASSERT(mutex_owned(sc->sc_intr_lock));
+
+	if (!sc->sc_tx_sending)
+		return true;
+
+	if (time_uptime - sc->sc_tx_lastsent <= cemac_watchdog_timeout)
+		return true;
+
+	return false;
+}
+
+static bool
+cemac_watchdog_tick(struct ifnet *ifp)
+{
+	struct cemac_softc * const sc = ifp->if_softc;
+
+	KASSERT(mutex_owned(sc->sc_intr_lock));
+
+	if (!sc->sc_trigger_reset && cemac_watchdog_check(sc))
+		return true;
+
+	if (atomic_swap_uint(&sc->sc_reset_pending, 1) == 0)
+		workqueue_enqueue(sc->sc_reset_wq, &sc->sc_reset_work, NULL);
+
+	return false;
+}
+
+
 static void
 cemac_tick(void *arg)
 {
-	struct cemac_softc* sc = (struct cemac_softc *)arg;
-	struct ifnet * ifp = &sc->sc_ethercom.ec_if;
-	int s;
+	struct cemac_softc * const sc = arg;
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
+
+	mutex_enter(sc->sc_intr_lock);
+	if (sc->sc_stopping) {
+		mutex_exit(sc->sc_intr_lock);
+		return;
+	}
 
 	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM))
 		if_statadd(ifp, if_collisions,
@@ -734,65 +813,84 @@ cemac_tick(void *arg)
 			aprint_normal_ifnet(ifp, "%d rx misses\n", misses);
 	}
 
-	s = splnet();
-	if (cemac_gctx(sc) > 0 && IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		cemac_ifstart(ifp);
-	splx(s);
-
 	mii_tick(&sc->sc_mii);
-	callout_reset(&sc->cemac_tick_ch, hz, cemac_tick, sc);
+
+	const bool ok = cemac_watchdog_tick(ifp);
+	if (ok)
+		callout_schedule(&sc->cemac_tick_ch, hz);
+
+	mutex_exit(sc->sc_intr_lock);
 }
 
 
 static int
 cemac_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	int s, error;
+	struct cemac_softc * const sc = ifp->if_softc;
+	int error;
 
-	s = splnet();
-	switch (cmd) {
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error != ENETRESET)
-			break;
-		error = 0;
-
-		if (cmd == SIOCSIFCAP) {
-			error = if_init(ifp);
-		} else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
-			;
-		else if (ifp->if_flags & IFF_RUNNING) {
-			cemac_setaddr(ifp);
-		}
+ 	switch (cmd) {
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		break;
+ 	default:
+		KASSERT(IFNET_LOCKED(ifp));
 	}
+
+	const int s = splnet();
+	error = ether_ioctl(ifp, cmd, data);
 	splx(s);
+
+	if (error == ENETRESET) {
+ 		error = 0;
+
+		if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI) {
+			mutex_enter(sc->sc_mcast_lock);
+			if ((sc->sc_if_flags & IFF_RUNNING) != 0)
+				cemac_setaddr(ifp);
+
+			mutex_exit(sc->sc_mcast_lock);
+ 		}
+ 	}
+
 	return error;
 }
+
+
 
 static void
 cemac_ifstart(struct ifnet *ifp)
 {
-	struct cemac_softc *sc = (struct cemac_softc *)ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
+	KASSERT(if_is_mpsafe(ifp));
+
+	mutex_enter(sc->sc_intr_lock);
+	if (!sc->sc_stopping) {
+		cemac_ifstart_locked(ifp);
+	}
+	mutex_exit(sc->sc_intr_lock);
+}
+
+static void
+cemac_ifstart_locked(struct ifnet *ifp)
+{
+	struct cemac_softc * const sc = ifp->if_softc;
 	struct mbuf *m;
 	bus_dma_segment_t *segs;
-	int s, bi, err, nsegs;
+	int bi, err, nsegs;
 
-	s = splnet();
+	KASSERT(mutex_owned(sc->sc_intr_lock));
+
 start:
 	if (cemac_gctx(sc) == 0) {
 		/* Enable transmit-buffer-free interrupt */
 		CEMAC_WRITE(ETH_IER, ETH_ISR_TBRE);
-		sc->tx_busy = true;
-		ifp->if_timer = 10;
-		splx(s);
+		sc->sc_txbusy = true;
 		return;
 	}
 
-	ifp->if_timer = 0;
-
 	IFQ_POLL(&ifp->if_snd, m);
 	if (m == NULL) {
-		splx(s);
 		return;
 	}
 
@@ -808,12 +906,13 @@ start:
 			bus_dmamap_unload(sc->sc_dmat, sc->txq[bi].m_dmamap);
 
 		MGETHDR(mn, M_DONTWAIT, MT_DATA);
-		if (mn == NULL) goto stop;
+		if (mn == NULL)
+			return;
 		if (m->m_pkthdr.len > MHLEN) {
 			MCLGET(mn, M_DONTWAIT);
 			if ((mn->m_flags & M_EXT) == 0) {
 				m_freem(mn);
-				goto stop;
+				return;
 			}
 		}
 		m_copydata(m, 0, m->m_pkthdr.len, mtod(mn, void *));
@@ -837,22 +936,23 @@ start:
 	sc->txq[bi].m = m;
 	sc->txqc++;
 
-	DPRINTFN(2,("%s: start sending idx #%i mbuf %p (txqc=%i, phys %p), len=%u\n",
-		__FUNCTION__, bi, sc->txq[bi].m, sc->txqc, (void*)segs->ds_addr,
-		(unsigned)m->m_pkthdr.len));
+	DPRINTFN(2,("%s: start sending idx #%i mbuf %p (txqc=%i, phys %p), "
+	    "len=%u\n", __FUNCTION__, bi, sc->txq[bi].m, sc->txqc,
+	     (void *)segs->ds_addr, (unsigned)m->m_pkthdr.len));
 #ifdef	DIAGNOSTIC
 	if (sc->txqc > TX_QLEN)
 		panic("%s: txqc %i > %i", __FUNCTION__, sc->txqc, TX_QLEN);
 #endif
 
 	bus_dmamap_sync(sc->sc_dmat, sc->txq[bi].m_dmamap, 0,
-		sc->txq[bi].m_dmamap->dm_mapsize,
-		BUS_DMASYNC_PREWRITE);
+	    sc->txq[bi].m_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM)) {
 		sc->TDSC[bi].Addr = segs->ds_addr;
-		sc->TDSC[bi].Info = __SHIFTIN(m->m_pkthdr.len, ETH_TDSC_I_LEN) |
-		    ETH_TDSC_I_LAST_BUF | (bi == (TX_QLEN - 1) ? ETH_TDSC_I_WRAP : 0);
+		sc->TDSC[bi].Info =
+		    __SHIFTIN(m->m_pkthdr.len, ETH_TDSC_I_LEN) |
+		    ETH_TDSC_I_LAST_BUF |
+		    (bi == (TX_QLEN - 1) ? ETH_TDSC_I_WRAP : 0);
 
 		DPRINTFN(3,("%s: TDSC[%i].Addr 0x%08x\n",
 			__FUNCTION__, bi, sc->TDSC[bi].Addr));
@@ -861,38 +961,42 @@ start:
 
 		uint32_t ctl = CEMAC_READ(ETH_CTL) | GEM_CTL_STARTTX;
 		CEMAC_WRITE(ETH_CTL, ctl);
-		DPRINTFN(3,("%s: ETH_CTL 0x%08x\n", __FUNCTION__, CEMAC_READ(ETH_CTL)));
+		DPRINTFN(3,("%s: ETH_CTL 0x%08x\n", __FUNCTION__,
+		    CEMAC_READ(ETH_CTL)));
 	} else {
 		CEMAC_WRITE(ETH_TAR, segs->ds_addr);
 		CEMAC_WRITE(ETH_TCR, m->m_pkthdr.len);
 	}
+	sc->sc_tx_lastsent = time_uptime;
+
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		goto start;
-stop:
 
-	splx(s);
 	return;
 }
 
 static void
 cemac_ifwatchdog(struct ifnet *ifp)
 {
-	struct cemac_softc *sc = (struct cemac_softc *)ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 	aprint_error_ifnet(ifp, "device timeout, CTL = 0x%08x, CFG = 0x%08x\n",
-		CEMAC_READ(ETH_CTL), CEMAC_READ(ETH_CFG));
+	    CEMAC_READ(ETH_CTL), CEMAC_READ(ETH_CFG));
 }
 
 static int
 cemac_ifinit(struct ifnet *ifp)
 {
-	struct cemac_softc *sc = ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
 	uint32_t dma, cfg;
-	int s = splnet();
 
-	callout_stop(&sc->cemac_tick_ch);
+	ASSERT_SLEEPABLE();
+	KASSERT(IFNET_LOCKED(ifp));
+
+	/* Cancel pending I/O and flush buffers. */
+	cemac_ifstop(ifp, 0);
 
 	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM)) {
 
@@ -909,7 +1013,7 @@ cemac_ifinit(struct ifnet *ifp)
 			IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
 			IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx)) {
 			cfg = CEMAC_READ(ETH_CFG);
-			cfg |= GEM_CFG_RX_CHKSUM_OFFLD_EN;
+			cfg |= GEM_CFG_RXCOEN;
 			CEMAC_WRITE(ETH_CFG, cfg);
 		}
 	}
@@ -926,7 +1030,11 @@ cemac_ifinit(struct ifnet *ifp)
 	mii_mediachg(&sc->sc_mii);
 	callout_reset(&sc->cemac_tick_ch, hz, cemac_tick, sc);
 	ifp->if_flags |= IFF_RUNNING;
-	splx(s);
+
+	mutex_enter(sc->sc_intr_lock);
+	sc->sc_stopping = false;
+	mutex_exit(sc->sc_intr_lock);
+
 	return 0;
 }
 
@@ -934,7 +1042,20 @@ static void
 cemac_ifstop(struct ifnet *ifp, int disable)
 {
 //	uint32_t u;
-	struct cemac_softc *sc = ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
+
+	ASSERT_SLEEPABLE();
+	KASSERT(IFNET_LOCKED(ifp));
+
+	ifp->if_flags &= ~IFF_RUNNING;
+
+	mutex_enter(sc->sc_mcast_lock);
+	sc->sc_if_flags = ifp->if_flags;
+	mutex_exit(sc->sc_mcast_lock);
+
+	mutex_enter(sc->sc_intr_lock);
+	sc->sc_stopping = true;
+	mutex_exit(sc->sc_intr_lock);
 
 #if 0
 	CEMAC_WRITE(ETH_CTL, ETH_CTL_MPE);	// disable everything
@@ -955,21 +1076,20 @@ cemac_ifstop(struct ifnet *ifp, int disable)
 	u = CEMAC_READ(ETH_RSR);
 	CEMAC_WRITE(ETH_RSR, (u & (ETH_RSR_OVR | ETH_RSR_REC | ETH_RSR_BNA)));
 #endif
-	callout_stop(&sc->cemac_tick_ch);
+	callout_halt(&sc->cemac_tick_ch, NULL);
 
 	/* Down the MII. */
 	mii_down(&sc->sc_mii);
 
 	ifp->if_flags &= ~IFF_RUNNING;
-	ifp->if_timer = 0;
-	sc->tx_busy = false;
+	sc->sc_txbusy = false;
 	sc->sc_mii.mii_media_status &= ~IFM_ACTIVE;
 }
 
 static void
 cemac_setaddr(struct ifnet *ifp)
 {
-	struct cemac_softc *sc = ifp->if_softc;
+	struct cemac_softc * const sc = ifp->if_softc;
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -978,12 +1098,14 @@ cemac_setaddr(struct ifnet *ifp)
 	uint32_t ctl = CEMAC_READ(ETH_CTL);
 	uint32_t cfg = CEMAC_READ(ETH_CFG);
 
+	KASSERT(mutex_owned(sc->sc_mcast_lock));
+
 	/* disable receiver temporarily */
 	CEMAC_WRITE(ETH_CTL, ctl & ~ETH_CTL_RE);
 
 	cfg &= ~(ETH_CFG_MTI | ETH_CFG_UNI | ETH_CFG_CAF | ETH_CFG_UNI);
 
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (sc->sc_if_flags & IFF_PROMISC) {
 		cfg |=	ETH_CFG_CAF;
 	} else {
 		cfg &= ~ETH_CFG_CAF;
@@ -991,9 +1113,9 @@ cemac_setaddr(struct ifnet *ifp)
 
 	// ETH_CFG_BIG?
 
-	ifp->if_flags &= ~IFF_ALLMULTI;
-
 	ETHER_LOCK(ec);
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
+
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -1008,8 +1130,8 @@ cemac_setaddr(struct ifnet *ifp)
 			cfg |= ETH_CFG_MTI;
 			hashes[0] = 0xffffffffUL;
 			hashes[1] = 0xffffffffUL;
-			ifp->if_flags |= IFF_ALLMULTI;
 			nma = 0;
+			ec->ec_flags |= ETHER_F_ALLMULTI;
 			break;
 		}
 
@@ -1048,9 +1170,10 @@ cemac_setaddr(struct ifnet *ifp)
 	CEMAC_GEM_WRITE(SA1H, (sc->sc_enaddr[5] << 8)
 	    | (sc->sc_enaddr[4]));
 	if (nma > 0) {
-		DPRINTFN(1,("%s: en1 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
-			ias[0][0], ias[0][1], ias[0][2],
-			ias[0][3], ias[0][4], ias[0][5]));
+		DPRINTFN(1,("%s: en1 %02x:%02x:%02x:%02x:%02x:%02x\n",
+		    __FUNCTION__,
+		    ias[0][0], ias[0][1], ias[0][2],
+		    ias[0][3], ias[0][4], ias[0][5]));
 		CEMAC_WRITE(ETH_SA2L, (ias[0][3] << 24)
 		    | (ias[0][2] << 16) | (ias[0][1] << 8)
 		    | (ias[0][0]));
@@ -1058,9 +1181,10 @@ cemac_setaddr(struct ifnet *ifp)
 		    | (ias[0][5]));
 	}
 	if (nma > 1) {
-		DPRINTFN(1,("%s: en2 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
-			ias[1][0], ias[1][1], ias[1][2],
-			ias[1][3], ias[1][4], ias[1][5]));
+		DPRINTFN(1,("%s: en2 %02x:%02x:%02x:%02x:%02x:%02x\n",
+		    __FUNCTION__,
+		    ias[1][0], ias[1][1], ias[1][2],
+		    ias[1][3], ias[1][4], ias[1][5]));
 		CEMAC_WRITE(ETH_SA3L, (ias[1][3] << 24)
 		    | (ias[1][2] << 16) | (ias[1][1] << 8)
 		    | (ias[1][0]));
@@ -1068,9 +1192,10 @@ cemac_setaddr(struct ifnet *ifp)
 		    | (ias[1][5]));
 	}
 	if (nma > 2) {
-		DPRINTFN(1,("%s: en3 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
-			ias[2][0], ias[2][1], ias[2][2],
-			ias[2][3], ias[2][4], ias[2][5]));
+		DPRINTFN(1,("%s: en3 %02x:%02x:%02x:%02x:%02x:%02x\n",
+		    __FUNCTION__,
+		    ias[2][0], ias[2][1], ias[2][2],
+		    ias[2][3], ias[2][4], ias[2][5]));
 		CEMAC_WRITE(ETH_SA4L, (ias[2][3] << 24)
 		    | (ias[2][2] << 16) | (ias[2][1] << 8)
 		    | (ias[2][0]));

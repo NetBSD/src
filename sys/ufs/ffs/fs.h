@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.72 2024/05/13 00:01:54 msaitoh Exp $	*/
+/*	$NetBSD: fs.h,v 1.72.2.1 2025/08/02 05:57:56 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -251,7 +251,7 @@ struct csum_total {
 
 
 /*
- * Super block for an FFS file system in memory.
+ * Super block for an FFS file system.
  */
 struct fs {
 	int32_t	 fs_firstfield;		/* historic file system linked list, */

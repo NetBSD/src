@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.60 2021/02/28 20:27:40 thorpej Exp $
+#	$NetBSD: Makefile,v 1.60.24.1 2025/08/02 05:55:52 perseant Exp $
+
+NOLIBCSANITIZER=
+NOSANITIZER=
+NOPIE=
 
 S=	${.CURDIR}/../../../..
 
@@ -110,5 +114,7 @@ ${PROG}.xcf: ${OBJS} ${XCOFFXTRAOBJ} ${LIBSA} ${LIBZ} ${LIBKERN}
 	    -e _entry ${XCOFFXTRAOBJ} \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -O aixcoff-rs6000 -R .comment -R .note \
-	    ${PROG}.mrg ${PROG}.xcf
-	${TOOL_MACPPCFIXCOFF} ${PROG}.xcf
+	    --strip-debug --strip-unneeded \
+	    ${PROG}.mrg ${PROG}.xcf.${.MAKE.PID}
+	${TOOL_MACPPCFIXCOFF} ${PROG}.xcf.${.MAKE.PID} && \
+	    mv ${PROG}.xcf.${.MAKE.PID} ${PROG}.xcf

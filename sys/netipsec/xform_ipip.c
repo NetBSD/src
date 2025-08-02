@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.78 2022/05/22 11:39:08 riastradh Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.78.10.1 2025/08/02 05:57:51 perseant Exp $	*/
 /*	$FreeBSD: xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.78 2022/05/22 11:39:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.78.10.1 2025/08/02 05:57:51 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -372,7 +372,7 @@ ipip_output(struct mbuf *m, struct secasvar *sav, struct mbuf **mp)
 		ipo->ip_sum = 0;
 		ipo->ip_src = saidx->src.sin.sin_addr;
 		ipo->ip_dst = saidx->dst.sin.sin_addr;
-		ipo->ip_id = ip_newid(NULL);
+		ipo->ip_id = ip_newid();
 
 		/* If the inner protocol is IP... */
 		if (tp == IPVERSION) {
@@ -509,8 +509,7 @@ nofamily:
 	return 0;
 
 bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	*mp = NULL;
 	return error;
 }
@@ -567,8 +566,7 @@ ipe4_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 {
 	/* This is a rather serious mistake, so no conditional printing. */
 	printf("should never be called\n");
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return EOPNOTSUPP;
 }
 

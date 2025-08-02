@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.20 2022/08/14 11:26:41 jmcneill Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.20.10.1 2025/08/02 05:57:53 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -42,11 +42,6 @@ struct boot_command {
 	void (*c_fn)(char *);
 	const char *c_help;
 };
-
-int arch_prepare_boot(const char *, const char *, u_long *);
-void arch_cleanup_boot(void);
-size_t arch_alloc_size(void);
-void arch_set_virtual_address_map(EFI_MEMORY_DESCRIPTOR *, UINTN, UINTN, UINTN, UINT32);
 
 /* conf.c */
 extern struct fs_ops null_fs_ops;

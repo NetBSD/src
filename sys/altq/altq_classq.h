@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_classq.h,v 1.8 2018/04/19 21:50:06 christos Exp $	*/
+/*	$NetBSD: altq_classq.h,v 1.8.38.1 2025/08/02 05:55:19 perseant Exp $	*/
 /*	$KAME: altq_classq.h,v 1.6 2003/01/07 07:33:38 kjc Exp $	*/
 
 /*
@@ -52,6 +52,8 @@ extern "C" {
 #define	Q_DROPTAIL	0x03
 
 #ifdef _KERNEL
+
+#include <sys/cprng.h>
 
 /*
  * Packet Queue structures and macros to manipulate them.
@@ -109,14 +111,14 @@ _getq(class_queue_t *q)
 	struct mbuf  *m, *m0;
 
 	if ((m = qtail(q)) == NULL)
-		return (NULL);
+		return NULL;
 	if ((m0 = m->m_nextpkt) != m)
 		m->m_nextpkt = m0->m_nextpkt;
 	else
 		qtail(q) = NULL;
 	qlen(q)--;
 	m0->m_nextpkt = NULL;
-	return (m0);
+	return m0;
 }
 
 /* drop a packet at the tail of the queue */
@@ -138,7 +140,7 @@ _getq_tail(class_queue_t *q)
 		qtail(q) = prev;
 	qlen(q)--;
 	m->m_nextpkt = NULL;
-	return (m);
+	return m;
 }
 
 /* randomly select a packet in the queue */
@@ -155,7 +157,7 @@ _getq_random(class_queue_t *q)
 	else {
 		struct mbuf *prev = NULL;
 
-		n = random() % qlen(q) + 1;
+		n = cprng_fast32() % qlen(q) + 1;
 		for (i = 0; i < n; i++) {
 			prev = m;
 			m = m->m_nextpkt;
@@ -166,7 +168,7 @@ _getq_random(class_queue_t *q)
 	}
 	qlen(q)--;
 	m->m_nextpkt = NULL;
-	return (m);
+	return m;
 }
 
 static __inline void

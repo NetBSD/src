@@ -39,3 +39,7 @@ root  root you
  shlib_directory shlib_directory 
  user foo domain user domain domain 
 virtual  virtual alias domain anything right hand content does not matter 
+ skipping unexpected LF LF in DATA from 
+Inbound SMTP smuggling strip extra CR in CR LF CR CR LF 
+Inbound SMTP smuggling don t strip extra CR in CR LF CR CR LF 
+ CR LF CR CR LF to silence false alarms from test tools

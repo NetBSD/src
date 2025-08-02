@@ -1,4 +1,4 @@
-/*	$NetBSD: utf8.h,v 1.3 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: utf8.h,v 1.3.6.1 2025/08/02 05:54:03 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

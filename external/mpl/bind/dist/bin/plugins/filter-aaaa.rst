@@ -30,7 +30,7 @@ Description
 
 Until BIND 9.12, this feature was implemented natively in :iscman:`named` and
 enabled with the ``filter-aaaa`` ACL and the ``filter-aaaa-on-v4`` and
-``filter-aaaa-on-v6`` options. These options are now deprecated in
+``filter-aaaa-on-v6`` options. These options are no longer available in
 :iscman:`named.conf` but can be passed as parameters to the
 ``filter-aaaa.so`` plugin, for example:
 

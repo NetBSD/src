@@ -1,4 +1,4 @@
-/*	$NetBSD: realprot.S,v 1.12 2022/04/01 19:02:12 andvar Exp $	*/
+/*	$NetBSD: realprot.S,v 1.12.10.1 2025/08/02 05:55:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ ENTRY(real_to_prot)
  *
  * Interrupts are enabled while in real mode.
  *
- * Based on the descripton in section 14.5 of the 80386 Programmer's
+ * Based on the description in section 14.5 of the 80386 Programmer's
  * reference book.
  */
 /*

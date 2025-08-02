@@ -1,4 +1,4 @@
-/*	$NetBSD: stream_connect.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: stream_connect.c,v 1.1.1.1.62.1 2025/08/02 05:50:20 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -106,6 +106,6 @@ int     stream_connect(const char *path, int block_mode, int unused_timeout)
      */
     return (pair[0]);
 #else
-    msg_fatal("stream connections are not implemented");
+            msg_fatal("stream connections are not implemented");
 #endif
 }
