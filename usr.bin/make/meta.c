@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.215 2025/06/13 06:13:19 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.216 2025/08/03 21:56:39 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -757,7 +757,7 @@ meta_job_error(Job *job, GNode *gn, bool ignerr, int status)
 }
 
 void
-meta_job_output(Job *job, const char *cp)
+meta_job_output(Job *job, const char *cp, int len)
 {
     BuildMon *pbm;
 
@@ -780,7 +780,11 @@ meta_job_output(Job *job, const char *cp)
 		cp++;
 	    }
 	}
-	fprintf(pbm->mfp, "%s", cp);
+	if (len > 0)
+		fprintf(pbm->mfp, "%.*s", len, cp);
+	else
+		fprintf(pbm->mfp, "%s", cp);
+		
     }
 }
 
@@ -1693,7 +1697,7 @@ meta_compat_parent(pid_t child)
 	    fwrite(buf, 1, (size_t)nread, stdout);
 	    fflush(stdout);
 	    buf[nread] = '\0';
-	    meta_job_output(NULL, buf);
+	    meta_job_output(NULL, buf, 0);
 	} while (false);
 	if (metafd != -1 && FD_ISSET(metafd, &readfds) != 0) {
 	    if (meta_job_event(NULL) <= 0)

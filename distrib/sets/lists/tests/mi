@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1387 2025/07/20 12:25:53 joe Exp $
+# $NetBSD: mi,v 1.1388 2025/08/03 21:57:10 sjg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -6088,6 +6088,8 @@
 ./usr/tests/usr.bin/make/unit-tests/meta-cmd-cmp.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/meta-cmd-cmp.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/meta-ignore.inc				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/meta-output.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/meta-output.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/misc.exp					tests-obsolete		obsolete
 ./usr/tests/usr.bin/make/unit-tests/misc.mk					tests-obsolete		obsolete
 ./usr/tests/usr.bin/make/unit-tests/moderrs.exp					tests-usr.bin-tests	compattestfile,atf

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.369 2025/06/29 09:40:13 rillig Exp $
+# $NetBSD: Makefile,v 1.370 2025/08/03 21:56:39 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -235,6 +235,7 @@ TESTS+=		jobs-error-nested-make
 TESTS+=		lint
 TESTS+=		make-exported
 TESTS+=		meta-cmd-cmp
+TESTS+=		meta-output
 TESTS+=		moderrs
 TESTS+=		modmisc
 .if ${.MAKE.UID} > 0
