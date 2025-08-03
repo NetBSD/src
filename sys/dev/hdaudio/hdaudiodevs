@@ -1,4 +1,4 @@
-$NetBSD: hdaudiodevs,v 1.10 2025/02/22 10:01:39 mlelstv Exp $
+$NetBSD: hdaudiodevs,v 1.11 2025/08/03 08:22:28 nia Exp $
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -73,6 +73,7 @@ product	NVIDIA		MCP67_HDMI	0x0067	MCP67 HDMI
 product	NVIDIA		MCP73_HDMI	0x8001	MCP73 HDMI
 
 /* Realtek */
+product	REALTEK		ALC233		0x0233	ALC233
 product	REALTEK		ALC260		0x0260	ALC260
 product	REALTEK		ALC262		0x0262	ALC262
 product	REALTEK		ALC267		0x0267	ALC267
