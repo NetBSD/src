@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.226 2025/07/04 06:42:01 andvar Exp $
+#	$NetBSD: GENERIC64,v 1.227 2025/08/04 20:03:12 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -585,6 +585,9 @@ virtio* 	at pci? dev ? function ?
 
 include "dev/virtio/virtio.config"
 no viomb* 	at virtio?		# XXX ?
+
+# VMWare devices
+pvscsi* 	at pci? dev ? function?	# PV SCSI device
 
 # SCSI controllers
 mpt*		at pci? dev ? function ?
