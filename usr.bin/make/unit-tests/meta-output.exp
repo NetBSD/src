@@ -2,10 +2,6 @@ Test -B output
 test1:   Done
 test2:   Done
 test3:   Done
-# Meta data file <tmpdir>/obj/output.meta
-CMD @{ echo Test -B output;  for i in 1 2 3; do  echo -n "test$i:  "; sleep 0; echo " Done";  done; }
-CWD <tmpdir>/obj
-TARGET output
 -- command output --
 Test -B output
 test1:   Done
@@ -16,10 +12,6 @@ Test -j1 output
 test1:   Done
 test2:   Done
 test3:   Done
-# Meta data file <tmpdir>/obj/output.meta
-CMD @{ echo Test -j1 output;  for i in 1 2 3; do  echo -n "test$i:  "; sleep 0; echo " Done";  done; }
-CWD <tmpdir>/obj
-TARGET output
 -- command output --
 Test -j1 output
 test1:   Done
