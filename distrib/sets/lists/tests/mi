@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1389 2025/08/04 18:39:54 sjg Exp $
+# $NetBSD: mi,v 1.1390 2025/08/04 22:46:14 sjg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -6031,7 +6031,6 @@
 ./usr/tests/usr.bin/make/unit-tests/doterror.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dotwait.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dotwait.mk					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/echo.inc					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/envfirst.exp				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/make/unit-tests/envfirst.mk					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/make/unit-tests/error.exp					tests-usr.bin-tests	compattestfile,atf
