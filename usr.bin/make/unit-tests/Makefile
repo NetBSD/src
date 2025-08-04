@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.371 2025/08/04 18:39:10 sjg Exp $
+# $NetBSD: Makefile,v 1.372 2025/08/04 22:44:49 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -807,8 +807,7 @@ sync-mi:
 	testsdir="usr.bin/make/unit-tests";				\
 	fmt="./usr/tests/$$testsdir/%s\ttests-usr.bin-tests\tcompattestfile,atf\\n"; \
 	cat "$$mi" > "$$mi.tmp";					\
-	(cd "$$testsdir" && egrep '\.(exp|inc|mk)/' CVS/Entries | \
-	grep -v Makefile | cut -d/ -f2) | \
+	(cd "$$testsdir" && egrep '\.(exp|mk)/' CVS/Entries | cut -d/ -f2) | \
 	xargs printf "$$fmt" >> "$$mi.tmp"; \
 	distrib/sets/fmt-list "$$mi.tmp";				\
 	mv "$$mi.tmp" "$$mi";						\

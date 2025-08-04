@@ -4,7 +4,6 @@
 
 .if make(output)
 .MAKE.MODE= meta curDirOk=true nofilemon
-.include "echo.inc"
 .else
 .MAKE.MODE= compat
 .endif
@@ -15,9 +14,9 @@ _mf := ${.PARSEDIR}/${.PARSEFILE}
 
 # this output should be accurately reflected in the .meta file
 output: .NOPATH
-	@${ECHO_SCRIPT}; { echo Test ${tag} output; \
+	@{ echo Test ${tag} output; \
 	for i in 1 2 3; do \
-	Echo -n "test$$i:  "; sleep 0; echo " Done"; \
+	printf "test$$i:  "; sleep 0; echo " Done"; \
 	done; }
 
 output.-B output.-j1:
