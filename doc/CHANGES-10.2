@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.42 2025/08/01 10:12:11 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.43 2025/08/04 14:19:17 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -966,4 +966,9 @@ sys/net/lagg/if_lagg.c				1.74
 
 	lagg(4): fix locking against myself in lagg_linkstate_changed.
 	[ozaki-r, ticket #1144]
+
+sys/arch/x86/x86/cpu.c				1.208
+
+	x86: call fpuinit_mxcsr_mask only once.
+	[rin, ticket #1145]
 
