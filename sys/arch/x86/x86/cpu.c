@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.206 2022/09/24 11:05:18 riastradh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.206.4.1 2025/08/04 14:18:22 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.206 2022/09/24 11:05:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.206.4.1 2025/08/04 14:18:22 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -701,7 +701,8 @@ cpu_init(struct cpu_info *ci)
 		ci->ci_feat_val[1] = descs[2];
 	}
 
-	if (x86_fpu_save >= FPU_SAVE_FXSAVE) {
+	if (CPU_IS_PRIMARY(ci) &&
+	    x86_fpu_save >= FPU_SAVE_FXSAVE) {
 		fpuinit_mxcsr_mask();
 	}
 
