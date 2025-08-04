@@ -4,13 +4,7 @@
 
 .if make(output)
 .MAKE.MODE= meta curDirOk=true nofilemon
-x!= echo -n ok; echo
-.if ${x:M-n} == ""
-ECHO_SCRIPT= Echo() { echo "$$@"; }
-.else
-ECHO_SCRIPT= Echo() { case "$$1" in -n) shift; echo "$$@\c";; \
-	*) echo "$$@";; esac; }
-.endif
+.include "echo.inc"
 .else
 .MAKE.MODE= compat
 .endif
