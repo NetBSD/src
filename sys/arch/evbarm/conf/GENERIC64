@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.227 2025/08/04 20:03:12 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.228 2025/08/05 15:44:10 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -362,6 +362,7 @@ bsciic* 	at acpi?
 dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
 imxi2c* 	at fdt? pass 4		# IMX I2C
+mesoniic* 	at fdt?			# Amlogic Meson I2C
 nxpiic* 	at acpi?		# NXP Layerscape I2C
 qcomiic*	at acpi?		# Qualcomm I2C
 rkiic*		at fdt? pass 4		# Rockchip I2C
