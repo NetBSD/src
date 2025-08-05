@@ -59,7 +59,7 @@ in the file called LICENSE.GPL.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pvscsi.c,v 1.1 2025/08/04 20:03:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvscsi.c,v 1.2 2025/08/05 08:30:23 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1409,7 +1409,9 @@ pvscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	/*
 	 * Ensure req_prod_idx write (increment) happens before
 	 * IO is kicked (via a write).
-	*/
+	 */
+	membar_producer();
+
 	pvscsi_kick_io(sc, cdb0);
 	mutex_exit(&sc->lock);
 
