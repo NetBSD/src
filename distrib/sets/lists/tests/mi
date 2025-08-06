@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1390 2025/08/04 22:46:14 sjg Exp $
+# $NetBSD: mi,v 1.1391 2025/08/06 05:22:53 charlotte Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -1329,8 +1329,10 @@
 ./usr/tests/bin/tar/t_tar				tests-bin-tests		compattestfile,atf
 ./usr/tests/compat					tests-compat-tests	compattestfile,atf
 ./usr/tests/compat/Atffile				tests-compat-tests	compattestfile,atf
+./usr/tests/compat/Kyuafile				tests-compat-tests	compattestfile,atf,kyua
 ./usr/tests/compat/linux				tests-compat-tests	compattestfile,atf
 ./usr/tests/compat/linux/Atffile			tests-compat-tests	compattestfile,atf
+./usr/tests/compat/linux/Kyuafile			tests-compat-tests	compattestfile,atf,kyua
 ./usr/tests/compat/linux/h_inotify_directory		tests-compat-tests	compattestfile,atf
 ./usr/tests/compat/linux/h_inotify_init			tests-compat-tests	compattestfile,atf
 ./usr/tests/compat/linux/h_inotify_single_file		tests-compat-tests	compattestfile,atf
@@ -4303,8 +4305,10 @@
 ./usr/tests/lib/libutil/t_strpct			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/lua					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/lua/Atffile				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/lua/Kyuafile				tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/lua/libm				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/lua/libm/Atffile			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/lua/libm/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/lua/libm/h_lualibm			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/lua/libm/lualibm.lua			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/lua/libm/t_lualibm			tests-lib-tests		compattestfile,atf
@@ -4940,6 +4944,7 @@
 ./usr/tests/usr.bin/cmp/t_cmp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/col						tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/col/Atffile					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/col/Kyuafile				tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/col/hlf.in					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/col/hlf2.in					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/col/nl.in					tests-usr.bin-tests	compattestfile,atf
@@ -4951,6 +4956,7 @@
 ./usr/tests/usr.bin/col/t_col					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/compress				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/compress/Atffile			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/compress/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/compress/t_pr_19722			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/config				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/config/Atffile			tests-usr.bin-tests	compattestfile,atf
@@ -6590,6 +6596,7 @@
 ./usr/tests/usr.bin/mkdep/t_mkdep			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mtree				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mtree/Atffile			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/mtree/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/mtree/t_sets			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/nbperf				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/nbperf/Atffile			tests-usr.bin-tests	compattestfile,atf
@@ -7829,6 +7836,7 @@
 ./usr/tests/usr.bin/xlint/lint2/t_lint2			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/xlint				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/xlint/Atffile			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/xlint/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/xlint/xlint/t_xlint			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/ztest				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/ztest/Atffile			tests-usr.bin-tests	compattestfile,atf
