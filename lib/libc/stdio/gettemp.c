@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.23 2025/07/17 18:28:58 kre Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.24 2025/08/06 23:51:16 kre Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.23 2025/07/17 18:28:58 kre Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.24 2025/08/06 23:51:16 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,10 +46,6 @@ __RCSID("$NetBSD: gettemp.c,v 1.23 2025/07/17 18:28:58 kre Exp $");
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
-
-#ifndef	O_CLOFORK			/*XXX temporary */
-#define	O_CLOFORK 0			/*XXX temporary */
-#endif					/*XXX temporary */
 
 static const unsigned char padchar[] =
 "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
