@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.12 2021/06/13 14:58:49 simonb Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.13 2025/08/06 11:11:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.12 2021/06/13 14:58:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.13 2025/08/06 11:11:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -134,7 +134,7 @@ hashinit(u_int elements, enum hashtype htype, bool waitok, u_long *hashmask)
 }
 
 /*
- * Free memory from hash table previosly allocated via hashinit().
+ * Free memory from hash table previously allocated via hashinit().
  */
 void
 hashdone(void *hashtbl, enum hashtype htype, u_long hashmask)

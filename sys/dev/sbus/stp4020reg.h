@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020reg.h,v 1.4 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: stp4020reg.h,v 1.5 2025/08/06 11:11:34 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 /*
- * General chip attibutes.
+ * General chip attributes.
  */
 #define	STP4020_NSOCK	2	/* number of PCCARD sockets per STP4020 */
 #define	STP4020_NWIN	3	/* number of windows per socket */
