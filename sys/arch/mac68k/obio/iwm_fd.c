@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.61 2021/08/07 16:18:57 thorpej Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.62 2025/08/06 17:25:38 hauke Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.61 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.62 2025/08/06 17:25:38 hauke Exp $");
 
 #include "locators.h"
 
@@ -276,7 +276,7 @@ struct dkdriver fd_dkDriver = {
  * While here, map the machine-dependent physical IO address of IWM
  * to VM address.
  *
- * We do not match, nor return an IWMBase address for machines whose
+ * We do not match, nor return an IWMBase address, for machines whose
  * SWIM does not support the IWM register set used by this driver
  * (SWIM II/III, SWIM behind IOP, AV models' DMA based controllers).
  * Unfortunately, this distinction does not run cleanly along
@@ -295,16 +295,22 @@ iwm_match(device_t parent, cfdata_t match, void *aux)
 	IWMBase = 0L;
 
 	switch (current_mac_model->class) {
-	case MACH_CLASSPB:	/* Not: 5x0, 190x */
-		if (current_mac_model->machineid == MACH_MACPB500 ||
-		    current_mac_model->machineid == MACH_MACPB190 ||
-		    current_mac_model->machineid == MACH_MACPB190CS)
+	case MACH_CLASSPB:	/* Not: Powerbook 5x0, 190x */
+		if (current_mac_model->machineid != MACH_MACPB500 &&
+		    current_mac_model->machineid != MACH_MACPB190 &&
+		    current_mac_model->machineid != MACH_MACPB190CS) {
+			IWMBase = IOBase + 0x16000;
+		        matched = 1;
 			break;
+		}
 		/* FALLTHROUGH */
 	case MACH_CLASSLC:	/* Only: LC II, Classic II */
-		if (current_mac_model->machineid != MACH_MACLCII &&
-		    current_mac_model->machineid != MACH_MACCLASSICII)
+		if (current_mac_model->machineid == MACH_MACLCII ||
+		    current_mac_model->machineid == MACH_MACCLASSICII) {
+			IWMBase = IOBase + 0x16000;
+		        matched = 1;
 			break;
+		}
 		/* FALLTHROUGH */
 	case MACH_CLASSII:	/* All */
 	case MACH_CLASSIIci:	/* All */
@@ -314,7 +320,7 @@ iwm_match(device_t parent, cfdata_t match, void *aux)
 		IWMBase = IOBase + 0x16000;
 		matched = 1;
 		break;
-	case MACH_CLASSQ:	/* Only: 700 */
+	case MACH_CLASSQ:	/* Only: Quadra 700 */
 		if (current_mac_model->machineid == MACH_MACQ700) {
 			IWMBase = IOBase + 0x1E000;
 			matched = 1;
@@ -326,8 +332,6 @@ iwm_match(device_t parent, cfdata_t match, void *aux)
 	case MACH_CLASSIIfx:	/* None */
 	case MACH_CLASSAV:	/* None */
 	default:
-		IWMBase = 0L;
-		matched = 0;
 		break;
 	}
 
