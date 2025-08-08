@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.616 2025/03/27 12:22:59 riastradh Exp $
+# $NetBSD: GENERIC,v 1.616.2.1 2025/08/08 14:19:54 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.616 $"
+#ident		"GENERIC-$Revision: 1.616.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -1141,6 +1141,9 @@ hvheartbeat*	at vmbus?		# Hyper-V Heartbeat Service
 hvshutdown*	at vmbus?		# Hyper-V Guest Shutdown Service
 hvtimesync*	at vmbus?		# Hyper-V Time Synchronization Service
 #hvkvp*		at vmbus?		# Hyper-V Data Exchange Service
+
+# VMWare devices
+pvscsi* 	at pci? dev ? function?	# PV SCSI device
 
 # Pseudo-Devices
 
