@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.445.2.3 2023/11/03 08:56:36 martin Exp $
+#	$NetBSD: files.pci,v 1.445.2.4 2025/08/08 14:21:39 martin Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -204,6 +204,11 @@ file	dev/pci/esiop_pci.c		esiop_pci
 # Initio INIC-940/950 SCSI controllers
 attach	iha at pci with iha_pci
 file	dev/pci/iha_pci.c		iha_pci
+
+# VMware PVSCSI
+device	pvscsi: scsi
+attach	pvscsi at pci
+file	dev/pci/pvscsi.c		pvscsi
 
 # Tekram DC-395U/UW/F and DC-315/U SCSI controllers
 device	trm: scsi
