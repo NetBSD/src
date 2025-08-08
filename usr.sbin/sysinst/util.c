@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.71.2.2 2023/11/26 12:40:50 bouyer Exp $	*/
+/*	$NetBSD: util.c,v 1.71.2.3 2025/08/08 14:08:52 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2036,12 +2036,11 @@ del_rc_conf(const char *value)
 				hit_enter_to_continue(MSG_rcconf_delete_failed,
 				    NULL);
 			}
-		} else {
-			(void)unlink(bakname);
 		}
 	}
 
 done:
+	(void)unlink(bakname);
 	(void)unlink(tempname);
 	free(rcconf);
 	free(tempname);
