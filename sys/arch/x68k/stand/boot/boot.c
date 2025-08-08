@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.32 2024/01/07 07:58:33 isaki Exp $	*/
+/*	$NetBSD: boot.c,v 1.33 2025/08/08 03:31:20 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -414,17 +414,24 @@ bootmain(int bootdev)
 		default_kernel[3] = 'a';
 		break;
 	case X68K_MAJOR_SD:
+	{
+		int part;
+
 		default_kernel[2] = '0' + B_X68K_SCSI_ID(bootdev);
-		default_kernel[3] =
-			'a' + sd_getbsdpartition(B_X68K_SCSI_ID(bootdev),
-						 B_X68K_SCSI_PART(bootdev));
+		part = sd_getbsdpartition(B_X68K_SCSI_ID(bootdev),
+		    B_X68K_SCSI_PART(bootdev));
+		if (part < 0)
+			goto unknown_bootdev;
+		default_kernel[3] = 'a' + part;
 		break;
+	}
 	case X68K_MAJOR_CD:
 		default_kernel[0] = 'c';
 		default_kernel[2] = '0' + B_X68K_SCSI_ID(bootdev);
 		default_kernel[3] = 'a';
 		break;
 	default:
+	unknown_bootdev:
 		printf("Warning: unknown boot device: %x\n", bootdev);
 	}
 #endif
