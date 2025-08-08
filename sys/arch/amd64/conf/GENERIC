@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.599.4.7 2024/10/09 13:25:12 martin Exp $
+# $NetBSD: GENERIC,v 1.599.4.8 2025/08/08 14:21:39 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.599.4.7 $"
+#ident		"GENERIC-$Revision: 1.599.4.8 $"
 
 maxusers	64		# estimated number of users
 
@@ -1146,6 +1146,9 @@ hvtimesync*	at vmbus?		# Hyper-V Time Synchronization Service
 # Pull in optional local configuration
 cinclude "arch/amd64/conf/GENERIC.local"
 
+
+# VMWare devices
+pvscsi* 	at pci? dev ? function?	# PV SCSI device
 
 # Pseudo-Devices
 

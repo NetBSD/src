@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.206.2.5 2024/10/09 13:25:12 martin Exp $
+#	$NetBSD: GENERIC64,v 1.206.2.6 2025/08/08 14:21:39 martin Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -558,6 +558,9 @@ ld*		at virtio?		# Virtio disk device
 vioif*		at virtio?		# Virtio network device
 viornd* 	at virtio?		# Virtio entropy device
 vioscsi*	at virtio?		# Virtio SCSI device
+
+# VMWare devices
+pvscsi* 	at pci? dev ? function?	# PV SCSI device
 
 # SCSI controllers
 mpt*		at pci? dev ? function ?
