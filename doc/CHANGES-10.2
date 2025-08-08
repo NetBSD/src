@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.43 2025/08/04 14:19:17 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.44 2025/08/08 14:23:16 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -971,4 +971,25 @@ sys/arch/x86/x86/cpu.c				1.208
 
 	x86: call fpuinit_mxcsr_mask only once.
 	[rin, ticket #1145]
+
+usr.sbin/sysinst/util.c				1.78
+
+	sysinst(8): PR 59573: do not leave temporary files behind.
+	[kim, ticket #1146]
+
+etc/named.conf					1.12-1.14
+
+	named(8): adjust the default configuration following
+	recommendations from https://www.dnsflagday.net/2020/.
+	[kim, ticket #1147]
+
+sys/arch/amd64/conf/GENERIC			1.617
+sys/arch/evbarm/conf/GENERIC64			1.227
+sys/dev/pci/files.pci				1.451
+sys/dev/pci/pvscsi.c				1.1,1.2
+sys/dev/pci/pvscsi.h				1.1
+
+	Add support for the VMware PV SCSI controller found
+	in VMware's ESXi product.
+	[skrll, ticket #1148]
 
