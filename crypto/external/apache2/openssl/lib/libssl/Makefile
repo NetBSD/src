@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2025/07/21 22:21:21 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2025/08/09 18:36:03 wiz Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -34,6 +34,8 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto
 .PATH: ${OPENSSLSRC} ${OPENSSLSRC}/crypto/pqueue ${OPENSSLSRC}/include/openssl
 
 .include "srcs.inc"
+
+LIBDPLIBS+=crypto ${.CURDIR}/../libcrypto
 
 AFLAGS+=-DELF
 
