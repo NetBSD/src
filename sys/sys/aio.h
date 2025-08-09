@@ -103,6 +103,7 @@ struct aiowaitgroup {
 
 /* */
 struct aiowaitgrouplk {
+	kmutex_t mtx;		/* */
 	void **wgs;		/* Array of ops */
 	size_t s;		/* Size of ops array */
 	size_t n;		/* Total number of connected ops */
@@ -132,10 +133,6 @@ struct aio_job {
 
 #define AIOSP_SUSPEND_ANY	0x1
 #define AIOSP_SUSPEND_ALL	0x2
-#define AIOSP_SUSPEND_N		0x4
-
-#define AIOSP_SUSPEND_NMASK(N)		((N) & 0xffff) << 16)
-#define AIOSP_SUSPEND_NEXTRACT(FLAGS)	(((FLAGS) >> 16) & 0xffff)
 
 struct aiost;
 struct aiost_file_group {
@@ -163,7 +160,7 @@ struct aiost {
 
 struct aiocbp {
 	TAILQ_ENTRY(aiocbp) list;
-	void *uptr;
+	const void *uptr;
 	struct aio_job *job;
 };
 
@@ -219,14 +216,16 @@ int	aiosp_destroy(struct aiosp *);
 int	aiosp_distribute_jobs(struct aiosp *);
 int	aiosp_enqueue_job(struct aiosp *, struct aio_job *);
 int	aiosp_suspend(struct aiosp *, struct aiocb **, int, struct timespec *,
-		uint32_t);
+		int);
 int	aiosp_flush(struct aiosp *);
-int	aiosp_validate_conflicts(struct aiosp *, void *);
+int	aiosp_validate_conflicts(struct aiosp *, const void *);
+int	aiosp_error (struct aiosp *, const void *, register_t *); 
+int	aiosp_return (struct aiosp *, const void *, register_t *); 
 
 void	aiocbp_destroy(struct aiosp *);
 int	aiocbp_init(struct aiosp *, u_int);
-int 	aiocbp_lookup(struct aiosp *, struct aiocbp **, void *);
-int 	aiocbp_remove(struct aiosp *, void *);
+int 	aiocbp_lookup(struct aiosp *, struct aiocbp **, const void *);
+int 	aiocbp_remove(struct aiosp *, const void *);
 int 	aiocbp_insert(struct aiosp *, struct aiocbp *);
 
 void	aiowaitgroup_init(struct aiowaitgroup *);

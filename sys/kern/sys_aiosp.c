@@ -214,12 +214,13 @@ aiosp_distribute_jobs(struct aiosp *sp)
  */
 int
 aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
-	struct timespec *ts, uint32_t flags)
+	struct timespec *ts, int flags)
 {
 	struct aio_job *job;
 	int error = 0;
 	int timo;
 	size_t target = 0;
+	size_t monitor = 0;
 
 	if (ts) {
 		timo = mstohz((ts->tv_sec * 1000) + (ts->tv_nsec / 1000000));
@@ -235,16 +236,8 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 		timo = 0;
 	}
 
-	if (flags & AIOSP_SUSPEND_ANY) {
-		target = 1;
-	} else if (flags & AIOSP_SUSPEND_ALL) {
-		target = nent;
-	} else if (flags & AIOSP_SUSPEND_N) {
-		target = AIOSP_SUSPEND_NEXTRACT(flags);
-	}
-
 	struct aiowaitgroup *wg = kmem_zalloc(sizeof(*wg), KM_SLEEP);
-	aiowaitgroup_init(wg); 
+	aiowaitgroup_init(wg);
 
 	/*
 	 * We want a hash table that tracks jobs, using uptr as a key. We use
@@ -270,16 +263,26 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 		}
 
 		job = aiocbp->job;
-		KASSERT(job);
+		monitor++;
 
 		mutex_enter(&job->mtx);
 		if (job->completed) {
 			wg->completed++;
+			wg->total++;
 		} else {
-			printf("attaching to job %lx\n", (uintptr_t)&job->lk);
 			aiowaitgroup_join(wg, &job->lk);
 		}
 		mutex_exit(&job->mtx);
+	}
+
+	if (!monitor) {
+		goto done;
+	}
+
+	if (flags & AIOSP_SUSPEND_ANY) {
+		target = 1;
+	} else if (flags & AIOSP_SUSPEND_ALL) {
+		target = monitor;
 	}
 
 	for (; wg->completed < target;) {
@@ -290,9 +293,15 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 	}
 
 done:
-	mutex_exit(&wg->mtx);
-	wg->refcnt--;
 	wg->active = false;
+	wg->refcnt--;
+
+	if (wg->refcnt == 0) {
+		mutex_exit(&wg->mtx);
+		aiowaitgroup_fini(wg);
+	} else {
+		mutex_exit(&wg->mtx);
+	}
 
 	return error;
 }
@@ -457,8 +466,9 @@ aiost_process_singleton (struct aiost *st)
 
 	mutex_enter(&job->mtx);
 	job->completed = true;
-	aiowaitgrouplk_flush(&job->lk);
 	mutex_exit(&job->mtx);
+
+	aiowaitgrouplk_flush(&job->lk);
 
 	aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
 }
@@ -487,8 +497,9 @@ aiost_process_fg (struct aiost *st)
 
 		mutex_enter(&job->mtx);
 		job->completed = true;
-		aiowaitgrouplk_flush(&job->lk);
 		mutex_exit(&job->mtx);
+
+		aiowaitgrouplk_flush(&job->lk);
 
 		aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
 	}
@@ -562,8 +573,6 @@ aiost_entry(void *arg)
 		} else {
 			aiost_process_singleton(st);
 		}
-
-		printf("finished!!!\n");
 
 		st->state = AIOST_STATE_NONE;
 		st->job = NULL;
@@ -719,9 +728,6 @@ done:
 	job->aiocbp._errno = error;
 	job->aiocbp._state = JOB_DONE;
 
-	copyout(&job->aiocbp, job->aiocb_uptr, 
-		sizeof(struct aiocb));
-
 	return 0;
 }
 
@@ -767,9 +773,6 @@ io_read_fallback(struct aio_job *job)
 done:
 	job->aiocbp._errno = error;
 	job->aiocbp._state = JOB_DONE;
-
-	copyout(&job->aiocbp, job->aiocb_uptr, 
-		sizeof(struct aiocb));
 
 	return 0;
 }
@@ -856,7 +859,7 @@ aiost_terminate(struct aiost *st)
  * Ensure that the same job can not be enqueued twice. 
  */
 int
-aiosp_validate_conflicts(struct aiosp *aiosp, void *uptr)
+aiosp_validate_conflicts(struct aiosp *aiosp, const void *uptr)
 {
 	struct aiost *st;
 
@@ -878,10 +881,62 @@ aiosp_validate_conflicts(struct aiosp *aiosp, void *uptr)
 }
 
 /*
+ *
+ */
+int aiosp_error(struct aiosp *aiosp, const void *uptr, register_t *retval)
+{
+	struct aiocbp *aiocbp = NULL;
+	struct aio_job *job;
+	int error;
+
+	error = aiocbp_lookup(aiosp, &aiocbp, uptr);
+	if (error) {
+		return error;
+	}
+
+	job = aiocbp->job;
+	if (job->aiocbp._state == JOB_NONE) {
+		return SET_ERROR(EINVAL);
+	}
+
+	*retval = job->aiocbp._errno;
+
+	return error;
+}
+
+/*
+ *
+ */
+int aiosp_return(struct aiosp *aiosp, const void *uptr, register_t *retval)
+{
+	struct aiocbp *aiocbp = NULL;
+	struct aio_job *job;
+	int error;
+
+	error = aiocbp_lookup(aiosp, &aiocbp, uptr);
+	if (error) {
+		return error;
+	}
+	job = aiocbp->job;
+
+	if (job->aiocbp._errno == EINPROGRESS || job->aiocbp._state != JOB_DONE) {
+		return SET_ERROR(EINVAL);
+	}
+
+	*retval = job->aiocbp._retval;
+
+	job->aiocbp._errno = 0;
+	job->aiocbp._retval = -1;
+	job->aiocbp._state = JOB_NONE;
+
+	return 0;
+}
+
+/*
  * aiocbp hash function
  */
 static inline u_int
-aiocbp_hash(void *uptr)
+aiocbp_hash(const void *uptr)
 {
 	return hash32_buf(&uptr, sizeof(uptr), HASH32_BUF_INIT);
 }
@@ -890,7 +945,7 @@ aiocbp_hash(void *uptr)
  * aiocbp hash lookup
  */
 int
-aiocbp_lookup(struct aiosp *aiosp, struct aiocbp **aiocbpp, void *uptr)
+aiocbp_lookup(struct aiosp *aiosp, struct aiocbp **aiocbpp, const void *uptr)
 {
 	struct aiocbp *aiocbp;
 	u_int hash;
@@ -918,7 +973,7 @@ aiocbp_lookup(struct aiosp *aiosp, struct aiocbp **aiocbpp, void *uptr)
  * aiocbp hash removal
  */
 int
-aiocbp_remove(struct aiosp *aiosp, void *uptr)
+aiocbp_remove(struct aiosp *aiosp, const void *uptr)
 {
 	struct aiocbp *aiocbp;
 	u_int hash;
@@ -946,7 +1001,7 @@ int
 aiocbp_insert(struct aiosp *aiosp, struct aiocbp *aiocbp)
 {
 	struct aiocbp *found;
-	void *uptr;
+	const void *uptr;
 	u_int hash;
 
 	uptr = aiocbp->uptr;
@@ -1073,6 +1128,7 @@ aiowaitgroup_wait(struct aiowaitgroup *wg, int timo)
 void
 aiowaitgrouplk_init(struct aiowaitgrouplk *lk)
 {
+	mutex_init(&lk->mtx, MUTEX_DEFAULT, IPL_NONE);
 	lk->n = 0;
 	lk->s = 2;
 	lk->wgs = kmem_alloc(sizeof(*lk->wgs) * lk->s, KM_SLEEP);
@@ -1084,21 +1140,19 @@ aiowaitgrouplk_init(struct aiowaitgrouplk *lk)
 void
 aiowaitgrouplk_fini(struct aiowaitgrouplk *lk)
 {
-	if (!lk->s) {
-		return;
-	}
+	mutex_destroy(&lk->mtx);
 
-	kmem_free(lk->wgs, sizeof(*lk->wgs) * lk->s);
+	if (lk->s) {
+		kmem_free(lk->wgs, sizeof(*lk->wgs) * lk->s);
+	}
 }
 
-/*
- *
- */
 void
 aiowaitgrouplk_flush(struct aiowaitgrouplk *lk)
 {
 	printf("flushing %lx on %ld\n", (uintptr_t)lk, lk->n);
 
+	mutex_enter(&lk->mtx);
 	for (int i = 0; i < lk->n; i++) {
 		struct aiowaitgroup *wg = lk->wgs[i];
 		if (wg == NULL) {
@@ -1106,28 +1160,29 @@ aiowaitgrouplk_flush(struct aiowaitgrouplk *lk)
 		}
 
 		mutex_enter(&wg->mtx);
-		if (wg->active == false) {
-			lk->wgs[i] = NULL;
+
+		if (wg->active) {
+			wg->completed++;
+			cv_signal(&wg->done_cv);
 		}
 
-		KASSERT(wg->total > wg->completed);
-		wg->completed++;
-		if (!--wg->refcnt) {
+		if (--wg->refcnt == 0) {
 			mutex_exit(&wg->mtx);
 			aiowaitgroup_fini(wg);
 		} else {
 			mutex_exit(&wg->mtx);
-			cv_signal(&wg->done_cv);
 		}
 	}
 
 	if (lk->n) {
-		kmem_free(lk->wgs, lk->s * sizeof(*lk->wgs));
+		kmem_free(lk->wgs, sizeof(*lk->wgs) * lk->s);
 
-		lk->wgs = NULL;
-		lk->s = 0;
 		lk->n = 0;
+		lk->s = 2;
+		lk->wgs = kmem_alloc(sizeof(*lk->wgs) * lk->s, KM_SLEEP);
 	}
+
+	mutex_exit(&lk->mtx);
 }
 
 /*
@@ -1136,7 +1191,8 @@ aiowaitgrouplk_flush(struct aiowaitgrouplk *lk)
 void
 aiowaitgroup_join(struct aiowaitgroup *wg, struct aiowaitgrouplk *lk)
 {
-//	KASSERT(lk->n < lk->s);
+	KASSERT(lk->n < lk->s);
+	mutex_enter(&lk->mtx);
 	if (lk->n == lk->s) {
 		size_t new_size = lk->s * lk->s;
 
@@ -1153,4 +1209,5 @@ aiowaitgroup_join(struct aiowaitgroup *wg, struct aiowaitgrouplk *lk)
 	lk->n++;
 	wg->total++;
 	wg->refcnt++;
+	mutex_exit(&lk->mtx);
 }

@@ -200,8 +200,6 @@ aio_procinit(struct proc *p)
 	}
 #endif
 
-	printf("doing this?\n");
-
 	/* Initialize queue and their synchronization structures */
 	mutex_init(&aio->aio_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&aio->aio_worker_cv, "aiowork");
@@ -335,8 +333,6 @@ aio_worker(void *arg)
 		/* Copy data structure back to the user-space */
 		(void)copyout(&a_job->aiocbp, a_job->aiocb_uptr,
 		    sizeof(struct aiocb));
-
-		printf("I am looking to read this timestamp!\n");
 
 		mutex_enter(&aio->aio_mtx);
 		KASSERT(aio->curjob == a_job);
@@ -795,17 +791,18 @@ sys_aio_error(struct lwp *l, const struct sys_aio_error_args *uap,
 	} */
 	struct proc *p = l->l_proc;
 	struct aioproc *aio = p->p_aio;
-	struct aiocb aiocbp;
-	int error;
 
 	if (aio == NULL)
 		return SET_ERROR(EINVAL);
 
-	error = copyin(SCARG(uap, aiocbp), &aiocbp, sizeof(struct aiocb));
+#ifdef AIOSP
+	const void *uptr = SCARG(uap, aiocbp);
+	return aiosp_error(&aio->aiosp, uptr, retval);
+#else
+	struct aiocb aiocbp;
+	int error = copyin(SCARG(uap, aiocbp), &aiocbp, sizeof(struct aiocb));
 	if (error)
 		return error;
-
-	printf("%d %d\n", aiocbp._state == JOB_NONE, aiocbp._state == JOB_DONE);
 
 	if (aiocbp._state == JOB_NONE)
 		return SET_ERROR(EINVAL);
@@ -813,6 +810,7 @@ sys_aio_error(struct lwp *l, const struct sys_aio_error_args *uap,
 	*retval = aiocbp._errno;
 
 	return 0;
+#endif
 }
 
 int
@@ -856,20 +854,25 @@ sys_aio_return(struct lwp *l, const struct sys_aio_return_args *uap,
 	} */
 	struct proc *p = l->l_proc;
 	struct aioproc *aio = p->p_aio;
+
+	if (aio == NULL) {
+		return SET_ERROR(EINVAL);
+	}
+
+#ifdef AIOSP
+	const void *uptr = SCARG(uap, aiocbp);
+	return aiosp_return(&aio->aiosp, uptr, retval);
+#else
 	struct aiocb aiocbp;
 	int error;
-
-	if (aio == NULL)
-		return SET_ERROR(EINVAL);
-
 	error = copyin(SCARG(uap, aiocbp), &aiocbp, sizeof(struct aiocb));
-	if (error)
+	if (error) {
 		return error;
+	}
 
-	printf("inside kernel %d %d\n", aiocbp._errno == EINPROGRESS, aiocbp._state != JOB_DONE);
-
-	if (aiocbp._errno == EINPROGRESS || aiocbp._state != JOB_DONE)
+	if (aiocbp._errno == EINPROGRESS || aiocbp._state != JOB_DONE) {
 		return SET_ERROR(EINVAL);
+	}
 
 	*retval = aiocbp._retval;
 
@@ -880,6 +883,7 @@ sys_aio_return(struct lwp *l, const struct sys_aio_return_args *uap,
 	error = copyout(&aiocbp, SCARG(uap, aiocbp), sizeof(struct aiocb));
 
 	return error;
+#endif
 }
 
 int
@@ -916,7 +920,7 @@ sys___aio_suspend50(struct lwp *l, const struct sys___aio_suspend50_args *uap,
 	struct aioproc *aio = p->p_aio;
 	KASSERT(aio);
 	error = aiosp_suspend(&aio->aiosp, list, nent, SCARG(uap, timeout) ?
-		&ts : NULL, AIOSP_SUSPEND_ANY);
+		&ts : NULL, AIOSP_SUSPEND_ALL);
 #else
 	error = aio_suspend1(l, list, nent, SCARG(uap, timeout) ? &ts : NULL);
 #endif
