@@ -1,4 +1,4 @@
-/*	$NetBSD: make_exfatfs.c,v 1.1.2.10 2025/08/09 23:02:12 perseant Exp $	*/
+/*	$NetBSD: make_exfatfs.c,v 1.1.2.11 2025/08/09 23:06:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.10 2025/08/09 23:02:12 perseant Exp $");
+__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.11 2025/08/09 23:06:51 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -234,11 +234,11 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 		dirent_bitmap[bi].xd_entryType = XD_ENTRYTYPE_ALLOC_BITMAP
 			| XD_ENTRYTYPE_INUSE_MASK;
 		dirent_bitmap[bi].xd_bitmapFlags = bi; /* Primary bitmap */
-		dirent_bitmap[bi].xd_firstCluster = clust;
-		dirent_bitmap[bi].xd_dataLength = howmany(nclust, NBBY);
+		dirent_bitmap[bi].xd_firstCluster = htole32(clust);
+		dirent_bitmap[bi].xd_dataLength = htole64(howmany(nclust, NBBY));
 		if (Vflag)
 			printf("First cluster of bitmap region #%d: 0x%lx\n", bi,
-			       (unsigned long)dirent_bitmap[bi].xd_firstCluster);
+			       (unsigned long)le32toh(dirent_bitmap[bi].xd_firstCluster));
 		clust += howmany(howmany(nclust, NBBY),
 				 EXFATFS_CSIZE(fs));
 	}
@@ -248,27 +248,28 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 	memset(&dirent_upcase, 0, sizeof(dirent_upcase));
 	dirent_upcase.xd_entryType = XD_ENTRYTYPE_UPCASE_TABLE
 		| XD_ENTRYTYPE_INUSE_MASK;
-	dirent_upcase.xd_firstCluster = clust;
-	dirent_upcase.xd_dataLength = uctablesize;
+	dirent_upcase.xd_firstCluster = htole32(clust);
+	dirent_upcase.xd_dataLength = htole64(uctablesize);
 	dirent_upcase.xd_tableChecksum = 
-		exfatfs_cksum32(0, (uint8_t *)uctable, uctablesize,
-				NULL, 0);
+		htole32(exfatfs_cksum32(0, (uint8_t *)uctable, uctablesize,
+				NULL, 0));
 	if (Vflag)
 		printf("First cluster of upcase map: 0x%lx\n",
-		       (unsigned long)dirent_upcase.xd_firstCluster);
+		       (unsigned long)le32toh(dirent_upcase.xd_firstCluster));
 	/* Size of upcase table, in clusters */
-	clust += howmany(dirent_upcase.xd_dataLength, EXFATFS_CSIZE(fs));
+	clust += howmany(le64toh(dirent_upcase.xd_dataLength),
+		EXFATFS_CSIZE(fs));
 
 	/*
 	 * Write the upcase table to disk.
 	 */
-	daddr = EXFATFS_LC2D(fs, dirent_upcase.xd_firstCluster);
+	daddr = EXFATFS_LC2D(fs, le32toh(dirent_upcase.xd_firstCluster));
 	resid = uctablesize;
 	for (i = 0; resid > 0; i += EXFATFS_LSIZE(fs), resid -= EXFATFS_LSIZE(fs)) {
 		if (!Nflag) {
 			bp = getblk(devvp, daddr, EXFATFS_LSIZE(fs));
  			memset(bp->b_data, 0, EXFATFS_LSIZE(fs));
-			memcpy(bp->b_data, ((const char *)uctable) + i,
+			htole16cpy(bp->b_data, ((const char *)uctable) + i,
 				MIN(EXFATFS_LSIZE(fs), resid));
 			if (Vflag)
 				printf(" write upcase sector size %d (res=%d) at bn 0x%lx\n",
@@ -290,7 +291,7 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 	 */
 	if (!Nflag) {
 		for (bi = 0; bi < fs->xf_NumberOfFats; ++bi) {
-			daddr = EXFATFS_LC2D(fs, dirent_bitmap[bi].xd_firstCluster);
+			daddr = EXFATFS_LC2D(fs, le32toh(dirent_bitmap[bi].xd_firstCluster));
 			bp = getblk(devvp, daddr, EXFATFS_LSIZE(fs));
 			memset(bp->b_data, 0, EXFATFS_LSIZE(fs));
 
@@ -323,9 +324,9 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 			progress = oprogress = 0;
 			start = daddr + EXFATFS_L2D(fs, 1);
 			if (bi == 0 && fs->xf_NumberOfFats > 1)
-				end = EXFATFS_LC2D(fs, dirent_bitmap[1].xd_firstCluster);
+				end = EXFATFS_LC2D(fs, htole32(dirent_bitmap[1].xd_firstCluster));
 			else
-				end = EXFATFS_LC2D(fs, dirent_upcase.xd_firstCluster);
+				end = EXFATFS_LC2D(fs, htole32(dirent_upcase.xd_firstCluster));
 			for (daddr = start; daddr < end; daddr += EXFATFS_L2D(fs, 1)) {
 				if (!Nflag) {
 					size_t size = EXFATFS_LSIZE(fs);
@@ -428,9 +429,9 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 					
 					if (sec == 0) {
 						v = 0xFFFFFFF8;
-					} else if (sec == dirent_bitmap[0].xd_firstCluster - 1
-						|| sec == dirent_bitmap[fs->xf_NumberOfFats - 1].xd_firstCluster - 1
-					   	|| sec == dirent_upcase.xd_firstCluster - 1
+					} else if (sec == htole32(dirent_bitmap[0].xd_firstCluster) - 1
+						|| sec == htole32(dirent_bitmap[fs->xf_NumberOfFats - 1].xd_firstCluster) - 1
+					   	|| sec == htole32(dirent_upcase.xd_firstCluster) - 1
 					   	|| sec == fs->xf_FirstClusterOfRootDirectory - 1
 					   	|| sec >= fs->xf_FirstClusterOfRootDirectory) {
 						/* No file or end of file */
@@ -439,7 +440,7 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 						v = sec + 1;
 					}
 	
-					((uint32_t *)bp->b_data)[j] = v;
+					((uint32_t *)bp->b_data)[j] = htole32(v);
 				}
 				if (Vflag) {
 					printf(" write fat sector size %zd at bn 0x%lx\n",

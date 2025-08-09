@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.c,v 1.1.2.11 2025/05/03 04:31:56 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.c,v 1.1.2.12 2025/08/09 23:06:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022, 2025 The NetBSD Foundation, Inc.
@@ -442,7 +442,7 @@ int exfatfs_mountfs_shared(struct vnode *devvp, struct exfatfs_mount *xmp,
 	for (off = 0; res > 0; off += EXFATFS_LSIZE(fs), res -= EXFATFS_LSIZE(fs)) {
 		bread(fs->xf_upcasevp, EXFATFS_B2L(fs, off),
 		      EXFATFS_LSIZE(fs), 0, &bp);
-		memcpy(uctable + off, bp->b_data, MIN(res, EXFATFS_LSIZE(fs)));
+		le16tohcpy(uctable + off, bp->b_data, MIN(res, EXFATFS_LSIZE(fs)));
 		brelse(bp, 0);
 	}
 	exfatfs_load_uctable(fs, uctable,
@@ -1200,3 +1200,33 @@ exfatfs_write_sb(struct exfatfs *fs, int re_checksum)
 
 	return 0;
 }
+#if BYTE_ORDER != LITTLE_ENDIAN
+/*
+ * Like memcpy(3) but swaps pairs of bytes if the system is big-endian.
+ */
+void *
+htole16cpy(void * restrict dst, const void * restrict src, size_t len)
+{
+	uint16_t *sdst = (uint16_t *)__UNCONST(dst);
+	uint16_t *ssrc = (uint16_t *)__UNCONST(src);
+	size_t i;
+
+	for (i = 0; i < len; i += 2)
+		*sdst++ = htole16(*ssrc++);
+
+	return dst;
+}
+
+void *
+le16tohcpy(void * restrict dst, const void * restrict src, size_t len)
+{
+	uint16_t *sdst = (uint16_t *)__UNCONST(dst);
+	uint16_t *ssrc = (uint16_t *)__UNCONST(src);
+	size_t i;
+
+	for (i = 0; i < len; i += 2)
+		*sdst++ = le16toh(*ssrc++);
+
+	return dst;
+}
+#endif /* BYTE_ORDER != LITTLE_ENDIAN */

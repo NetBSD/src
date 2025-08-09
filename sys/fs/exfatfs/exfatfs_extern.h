@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_extern.h,v 1.1.2.5 2024/08/14 15:37:49 perseant Exp $	*/
+/*	$NetBSD: exfatfs_extern.h,v 1.1.2.6 2025/08/09 23:06:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/vnode.h>
+#include <sys/endian.h>
 #include <fs/exfatfs/exfatfs.h>
 #include <fs/exfatfs/exfatfs_inode.h>
 #include <fs/exfatfs/exfatfs_mount.h>
@@ -53,5 +54,13 @@ int exfatfs_scandir(struct vnode *, off_t, off_t *,
 #define SCANDIR_STOP     0x00000001
 #define SCANDIR_DONTFREE 0x00000002
 int exfatfs_write_sb(struct exfatfs *, int);
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+# define htole16cpy(d, s, n) memcpy((d), (s), (n))
+# define le16tohcpy(d, s, n) memcpy((d), (s), (n))
+#else /* BYTE_ORDER != LITTLE_ENDIAN */
+void *htole16cpy(void * restrict, const void * restrict, size_t);
+void *le16tohcpy(void * restrict, const void * restrict, size_t);
+#endif /* BYTE_ORDER != LITTLE_ENDIAN */
 
 #endif /* EXFATFS_EXTERN_H_ */

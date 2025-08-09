@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck_exfatfs.c,v 1.1.2.6 2025/04/30 18:46:21 perseant Exp $	*/
+/*	$NetBSD: fsck_exfatfs.c,v 1.1.2.7 2025/08/09 23:06:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.6 2025/04/30 18:46:21 perseant Exp $");
+__RCSID("$NetBSD: fsck_exfatfs.c,v 1.1.2.7 2025/08/09 23:06:51 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -353,8 +353,8 @@ main(int argc, char **argv)
 			/* Read the FAT to find the next cluster */
 			bread(fs->xf_devvp, EXFATFS_FATBLK(fs, clust),
 			      FATBSIZE(fs), 0, &bp);
-			clust = ((uint32_t *)bp->b_data)
-				[EXFATFS_FATOFF(clust)];
+			clust = le32toh(((uint32_t *)bp->b_data)
+				[EXFATFS_FATOFF(clust)]);
 			brelse(bp, 0);
 			SET_DSE_DATALENGTH(xip, GET_DSE_DATALENGTH(xip)
 					   + EXFATFS_CSIZE(fs));
@@ -378,9 +378,9 @@ main(int argc, char **argv)
 							 dentp - dentp0);
 				xip->xi_direntp[0] = exfatfs_newdirent();
 				xip->xi_direntp[1] = exfatfs_newdirent();
-				SET_DSE_FIRSTCLUSTER(xip, dentp->xd_firstCluster);
-				SET_DSE_DATALENGTH(xip, dentp->xd_dataLength);
-				SET_DSE_VALIDDATALENGTH(xip, dentp->xd_dataLength);
+				SET_DSE_FIRSTCLUSTER(xip, le32toh(dentp->xd_firstCluster));
+				SET_DSE_DATALENGTH(xip, le64toh(dentp->xd_dataLength));
+				SET_DSE_VALIDDATALENGTH(xip, le64toh(dentp->xd_dataLength));
 				if (dentp->xd_entryType == XD_ENTRYTYPE_ALLOC_BITMAP) {
 					fs->xf_bitmapvp = vget3(fs, INUM(xip), xip);
 					vref(fs->xf_bitmapvp);
@@ -398,11 +398,12 @@ main(int argc, char **argv)
 		if (debug)
 			fprintf(stderr, "bitmap file length %llu (%llu clusters)\n",
 				(long long)GET_DSE_DATALENGTH(VTOXI(fs->xf_bitmapvp)),
-				(long long)EXFATFS_B2C(fs, GET_DSE_DATALENGTH(VTOXI(fs->xf_bitmapvp))));
+				(long long)howmany(GET_DSE_DATALENGTH(VTOXI(fs->xf_bitmapvp)), EXFATFS_CSIZE(fs)));
 		while (clust != 0xFFFFFFFF) {
 			if (debug)
 				fprintf(stderr, "bitmap file cluster %d\n", clust);
 			/* Mark it off in the bitmap */
+			/* XXX check for duplicates here! */
 			setbit(bitmap, clust - 2);
 			++clusters_used;
 			
@@ -411,8 +412,8 @@ main(int argc, char **argv)
 			      FATBSIZE(fs), 0, &bp);
 
 			oclust = clust;
-			clust = ((uint32_t *)bp->b_data)
-				[EXFATFS_FATOFF(clust)];
+			clust = le32toh(((uint32_t *)bp->b_data)
+				[EXFATFS_FATOFF(clust)]);
 			if (clust != 0xFFFFFFFF && clust != oclust + 1) {
 				if (!bitmap_discontiguous)
 					pwarn("WARNING: %lu AND %lu NOT CONSECUTIVE: BITMAP DATA DISCONTIGUOUS\n", (unsigned long)oclust, (unsigned long)clust);
@@ -432,6 +433,7 @@ main(int argc, char **argv)
 		while (clust != 0xFFFFFFFF) {
 			if (debug)
 				fprintf(stderr, "upcase file cluster %d\n", clust);
+			/* XXX check for duplicates here! */
 			/* Mark it off in the bitmap */
 			setbit(bitmap, clust - 2);
 			++clusters_used;
@@ -440,7 +442,7 @@ main(int argc, char **argv)
 			do {
 				bread(fs->xf_devvp, EXFATFS_LC2D(fs, clust)
 					+ EXFATFS_B2D(fs, ucoff & EXFATFS_CMASK(fs)), EXFATFS_LSIZE(fs), 0, &bp);
-				memcpy(uctable + ucoff, bp->b_data, EXFATFS_LSIZE(fs));
+				le16tohcpy(uctable + ucoff, bp->b_data, EXFATFS_LSIZE(fs));
 				brelse(bp, 0);
 				ucoff += EXFATFS_LSIZE(fs);
 			} while (ucoff & EXFATFS_CMASK(fs));
@@ -450,8 +452,8 @@ main(int argc, char **argv)
 			/* Read the FAT to find the next cluster */
 			bread(fs->xf_devvp, EXFATFS_FATBLK(fs, clust),
 			      FATBSIZE(fs), 0, &bp);
-			clust = ((uint32_t *)bp->b_data)
-				[EXFATFS_FATOFF(clust)];
+			clust = le32toh(((uint32_t *)bp->b_data)
+				[EXFATFS_FATOFF(clust)]);
 			brelse(bp, 0);
 		}
 		exfatfs_load_uctable(fs, (uint16_t *)uctable,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass3.c,v 1.1.2.1 2025/04/30 04:42:17 perseant Exp $	*/
+/*	$NetBSD: pass3.c,v 1.1.2.2 2025/08/09 23:06:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -85,7 +85,8 @@ pass3(struct exfatfs *fs)
 
 		default_upcase_table(&uctable, &ucsize);
 		res = ucsize;
-		pwarn("UPCASE TABLE INCORRECT\n");
+		pwarn("UPCASE TABLE INCORRECT (EXPECTED UC(0x%4.4hx) = 0x%4.4hx, FOUND 0x%4.4hx)\n",
+			lc, uc_expected, uc_observed);
 		if (GET_DSE_DATALENGTH(VTOXI(fs->xf_upcasevp)) < res) {
 			/* XXX we should be able to create a new file */
 			pfatal("NO SPACE FOR NEW TABLE\n");
@@ -94,7 +95,7 @@ pass3(struct exfatfs *fs)
 			off = 0;
 			while (res > 0) {
 				bp = getblk(fs->xf_upcasevp, off, EXFATFS_LSIZE(fs));
-				memcpy(bp->b_data, ((char *)uctable) + off, MIN((size_t)EXFATFS_LSIZE(fs), res));
+				htole16cpy(bp->b_data, ((char *)uctable) + off, MIN((size_t)EXFATFS_LSIZE(fs), res));
 				bwrite(bp);
 				off += EXFATFS_LSIZE(fs);
 				res -= EXFATFS_LSIZE(fs);
