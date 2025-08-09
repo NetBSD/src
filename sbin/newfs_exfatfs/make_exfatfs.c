@@ -1,4 +1,4 @@
-/*	$NetBSD: make_exfatfs.c,v 1.1.2.9 2024/09/13 05:20:20 perseant Exp $	*/
+/*	$NetBSD: make_exfatfs.c,v 1.1.2.10 2025/08/09 23:02:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.9 2024/09/13 05:20:20 perseant Exp $");
+__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.10 2025/08/09 23:02:12 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -329,7 +329,7 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 			for (daddr = start; daddr < end; daddr += EXFATFS_L2D(fs, 1)) {
 				if (!Nflag) {
 					size_t size = EXFATFS_LSIZE(fs);
-					if (daddr < EXFATFS_LC2D(fs, end) - MAXPHYS / EXFATFS_LSIZE(fs))
+					if (daddr + MAXPHYS / DEV_BSIZE <= end)
 						size = MAXPHYS;
 					bp = getblk(devvp, daddr, size);
 					memset(bp->b_data, 0, size);
