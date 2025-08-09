@@ -1,4 +1,4 @@
-/*	$NetBSD: etherfun.c,v 1.12 2011/09/29 09:18:17 he Exp $	*/
+/*	$NetBSD: etherfun.c,v 1.13 2025/08/09 15:10:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff
@@ -31,16 +31,16 @@
 
 /* Construct and send a rev arp packet */
 void
-do_rev_arp(void) 
+do_rev_arp(void)
 {
 	int i;
-  
+
 	for (i = 0; i < 6; i++) {
 		eh->ether_dhost[i] = 0xff;
 	}
 	memcpy(eh->ether_shost, myea, 6);
 	eh->ether_type = ETYPE_RARP;
-  
+
 	rarp->ar_hrd = 1;	/* hardware type is 1 */
 	rarp->ar_pro = PTYPE_IP;
 	rarp->ar_hln = 6;	/* length of hardware address is 6 bytes */
@@ -54,11 +54,11 @@ do_rev_arp(void)
 
 	le_put(buf, 76);
 }
-  
+
 /* Receive and disassemble the rev_arp reply */
 
 int
-get_rev_arp(void) 
+get_rev_arp(void)
 {
 
 	le_get(buf, sizeof(buf), 6);
@@ -73,8 +73,8 @@ get_rev_arp(void)
 
 /* Try to get a reply to a rev arp request */
 
-int 
-rev_arp(void) 
+int
+rev_arp(void)
 {
 	int tries = 0;
 
@@ -86,14 +86,14 @@ rev_arp(void)
 		tries++;
 	}
 	return 0;
-} 
+}
 
-/* Send a tftp read request or acknowledgement 
+/* Send a tftp read request or acknowledgement
    mesgtype 0 is a read request, 1 is an aknowledgement */
 const char HEXDIGITS[16] = "0123456789ABCDEF";
 
-void 
-do_send_tftp(int mesgtype) 
+void
+do_send_tftp(int mesgtype)
 {
 	u_long res, iptmp, lcv;
 	u_char *tot;
@@ -113,7 +113,7 @@ do_send_tftp(int mesgtype)
 	eh->ether_type = ETYPE_IP;
 
 	iph->ip_v = IP_VERSION;
-	iph->ip_hl = IP_HLEN;   
+	iph->ip_hl = IP_HLEN;
 	iph->ip_tos = 0;	/* type of service is 0 */
 	iph->ip_id = 0;		/* id field is 0 */
 	iph->ip_off = IP_DF;
@@ -150,7 +150,7 @@ do_send_tftp(int mesgtype)
 /* Attempt to tftp a file and read it into memory */
 
 int
-do_get_file(void) 
+do_get_file(void)
 {
 	int fail = 0, oldlen;
 	char *loadat = (char *)LOAD_ADDR;
@@ -159,7 +159,7 @@ do_get_file(void)
 	do_send_tftp(READ);
 	for (;;) {
 		if (le_get(buf, sizeof(buf), 5) == 0) { /* timeout occurred */
-			if (last_ack) {                          
+			if (last_ack) {
 				do_send_tftp(last_ack);
 			} else {
 				do_send_tftp(READ);
@@ -178,7 +178,7 @@ do_get_file(void)
 			}
 			if (servport == FTP_PORT) servport = udph->uh_sport;
 			if (tftp->info.op_code == FTPOP_ERR) {
-				printf("TFTP: Download error %d: %s\n", 
+				printf("TFTP: Download error %d: %s\n",
 				    tftp->info.block, tftp->data);
 				return 1;
 			}
@@ -212,4 +212,4 @@ do_get_file(void)
 	}
 	printf("\n");
 	return 0;
-} 
+}
