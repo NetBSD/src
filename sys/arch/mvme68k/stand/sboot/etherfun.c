@@ -1,4 +1,4 @@
-/*	$NetBSD: etherfun.c,v 1.13 2025/08/09 15:10:13 skrll Exp $	*/
+/*	$NetBSD: etherfun.c,v 1.14 2025/08/09 15:11:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff
@@ -89,7 +89,7 @@ rev_arp(void)
 }
 
 /* Send a tftp read request or acknowledgement
-   mesgtype 0 is a read request, 1 is an aknowledgement */
+   mesgtype 0 is a read request, 1 is an acknowledgement */
 const char HEXDIGITS[16] = "0123456789ABCDEF";
 
 void
