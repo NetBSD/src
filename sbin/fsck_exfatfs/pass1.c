@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.1.2.5 2024/08/14 15:37:49 perseant Exp $	*/
+/*	$NetBSD: pass1.c,v 1.1.2.6 2025/08/10 20:25:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ validfunc(void *arg, struct xfinode *xip, off_t unused)
 				warn("File 0x%lx", (unsigned long)INUM(xip));
 				goto out;
 			}
-			pcn = ((uint32_t *)bp->b_data)[EXFATFS_FATOFF(pcn)];
+			pcn = le32toh(((uint32_t *)bp->b_data)[EXFATFS_FATOFF(pcn)]);
 			brelse(bp, 0);
 		}	
 	}

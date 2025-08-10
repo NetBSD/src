@@ -1,4 +1,4 @@
-/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.12 2024/09/11 13:50:21 perseant Exp $	*/
+/*	$NetBSD: exfatfs_vnops.c,v 1.1.2.13 2025/08/10 20:25:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.12 2024/09/11 13:50:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vnops.c,v 1.1.2.13 2025/08/10 20:25:45 perseant Exp $");
 
 #include <sys/buf.h>
 #include <sys/dirent.h>
@@ -2362,7 +2362,7 @@ detrunc_fat(struct xfinode *xip, off_t bytes, int ioflags, kauth_cred_t cred)
 		bread(fs->xf_devvp, EXFATFS_FATBLK(fs, pcn), FATBSIZE(fs), 0,
 		      &bp);
 		opcn = pcn;
-		pcn = ((uint32_t *)bp->b_data)[EXFATFS_FATOFF(pcn)];
+		pcn = le32toh(((uint32_t *)bp->b_data)[EXFATFS_FATOFF(pcn)]);
 		if (lcn >= newcount) {
 			/* Deallocate cluster */
 			DPRINTF(("dealloc cluster 0x%x from ino 0x%x coff"
@@ -2473,7 +2473,7 @@ rewrite_fat(struct xfinode *xip, uint32_t clustercount, int ioflags)
 				return error;
 		}
 		((uint32_t *)bp->b_data)[EXFATFS_FATOFF(pcn)]
-			= (lcn == clustercount - 1
+			= htole32(lcn == clustercount - 1
 				? 0xffffffff : pcn + 1);
 		if (EXFATFS_FATBLK(fs, pcn) != EXFATFS_FATBLK(fs, pcn + 1)) {
 			if (ioflags)
@@ -2613,7 +2613,7 @@ deextend(struct xfinode *xip, off_t bytes, int ioflags,
 						   	FATBSIZE(fs), 0, &bp)) != 0)
 						return error;
 					((uint32_t *)bp->b_data)[EXFATFS_FATOFF(opcn)]
-						= pcn;
+						= htole32(pcn);
 					DPRINTF(("FAT %lu -> %lu\n",
 					 	(unsigned long)opcn,
 					 	(unsigned long)pcn));
@@ -2672,7 +2672,7 @@ deextend(struct xfinode *xip, off_t bytes, int ioflags,
 					   EXFATFS_FATBLK(fs, pcn),
 					   FATBSIZE(fs), 0, &bp)) != 0)
 				return error;
-			pcn = ((uint32_t *)bp->b_data)[EXFATFS_FATOFF(pcn)];
+			pcn = le32toh(((uint32_t *)bp->b_data)[EXFATFS_FATOFF(pcn)]);
 			if (pcn != 0xffffffff && pcn >= fs->xf_ClusterCount + 2)
 				printf("pcn %lx -> %lx\n", (unsigned long)lastpcn, (unsigned long)pcn);
 			assert(pcn == 0xffffffff || pcn < fs->xf_ClusterCount + 2);

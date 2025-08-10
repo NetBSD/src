@@ -1,4 +1,4 @@
-/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.8 2024/08/14 15:37:49 perseant Exp $ */
+/* $NetBSD: exfatfs_vfsops.c,v 1.1.2.9 2025/08/10 20:25:45 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.8 2024/08/14 15:37:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfatfs_vfsops.c,v 1.1.2.9 2025/08/10 20:25:45 perseant Exp $");
 
 struct vm_page;
 
@@ -710,8 +710,8 @@ exfatfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 		/* Read the FAT to find the next cluster */
 		bread(fs->xf_devvp, EXFATFS_FATBLK(fs, clust),
 		      FATBSIZE(fs), 0, &bp);
-		clust = ((uint32_t *)bp->b_data)
-			[EXFATFS_FATOFF(clust)];
+		clust = le32toh(((uint32_t *)bp->b_data)
+			[EXFATFS_FATOFF(clust)]);
 		brelse(bp, 0);
 		SET_DSE_DATALENGTH(xip, GET_DSE_DATALENGTH(xip)
 				   + EXFATFS_CSIZE(fs));
