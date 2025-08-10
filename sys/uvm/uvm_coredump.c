@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_coredump.c,v 1.8 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_coredump.c,v 1.9 2025/08/10 19:49:39 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.8 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.9 2025/08/10 19:49:39 andvar Exp $");
 
 /*
  * uvm_coredump.c: glue functions for coredump
@@ -165,7 +165,7 @@ uvm_coredump_walkmap(struct proc *p, int (*func)(struct uvm_coredump_state *),
 					/*
 					 * If we have already encountered an
 					 * uninstantiated page, stop at the
-					 * first instantied page.
+					 * first instantiated page.
 					 */
 					if (anon != NULL &&
 					    state.realend != state.end) {

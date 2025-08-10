@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3gpio.c,v 1.14 2021/08/07 16:19:02 thorpej Exp $	*/
+/*	$NetBSD: pq3gpio.c,v 1.15 2025/08/10 19:49:39 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	GPIO_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.14 2021/08/07 16:19:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.15 2025/08/10 19:49:39 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mpc85xx.h"
@@ -474,14 +474,14 @@ pq3gpio_p1023_attach(device_t self, bus_space_tag_t bst,
 {
 	static const uint32_t gpio2pmuxcr2_map[][3] = {
 		{ __PPCBITS( 0, 1), __PPCBITS( 0, 1), 0 },	/* GPIO_1 */
-		{ __PPCBIT(2),      __PPCBITS( 2, 3), 0 },	/* GPUO_2 */
-		{ __PPCBITS( 4, 5), __PPCBITS( 4, 5), 0 },	/* GPUO_3 */
-		{ __PPCBITS( 6, 7), __PPCBITS( 6, 7), 0 },	/* GPUO_4 */
-		{ __PPCBITS( 8, 9), __PPCBITS( 8, 9), 0 },	/* GPUO_5 */
-		{ __PPCBITS(10,11), __PPCBITS(10,11), 0 },	/* GPUO_6 */
-		{ __PPCBITS(12,13), __PPCBITS(12,13), 0 },	/* GPUO_7 */
-		{ __PPCBITS(14,15), __PPCBITS(14,15), 0 },	/* GPUO_8 */
-		{ __PPCBIT(3),      __PPCBITS(18,19), 0 },	/* GPUO_9 */
+		{ __PPCBIT(2),      __PPCBITS( 2, 3), 0 },	/* GPIO_2 */
+		{ __PPCBITS( 4, 5), __PPCBITS( 4, 5), 0 },	/* GPIO_3 */
+		{ __PPCBITS( 6, 7), __PPCBITS( 6, 7), 0 },	/* GPIO_4 */
+		{ __PPCBITS( 8, 9), __PPCBITS( 8, 9), 0 },	/* GPIO_5 */
+		{ __PPCBITS(10,11), __PPCBITS(10,11), 0 },	/* GPIO_6 */
+		{ __PPCBITS(12,13), __PPCBITS(12,13), 0 },	/* GPIO_7 */
+		{ __PPCBITS(14,15), __PPCBITS(14,15), 0 },	/* GPIO_8 */
+		{ __PPCBIT(3),      __PPCBITS(18,19), 0 },	/* GPIO_9 */
 	};
 
 	uint32_t pinmask = 0xffff0000;	/* assume all bits are valid */

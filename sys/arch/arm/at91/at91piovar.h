@@ -1,9 +1,9 @@
-/*	$NetBSD: at91piovar.h,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
+/*	$NetBSD: at91piovar.h,v 1.3 2025/08/10 19:49:39 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
  *
- * Based on arch/arm/ep93xx/epgiovar.h
+ * Based on arch/arm/ep93xx/epgpiovar.h
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
