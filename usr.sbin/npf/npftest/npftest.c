@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.30 2025/07/20 12:25:54 joe Exp $	*/
+/*	$NetBSD: npftest.c,v 1.31 2025/08/10 09:01:28 mlelstv Exp $	*/
 
 /*
  * NPF testing framework.
@@ -40,19 +40,21 @@ usage(const char *progname)
 {
 	printf("usage:\n"
 	    "  %s [ -q | -v ] [ -c <config> ] "
-	        "[ -i <interface> ] < -b | -t | -s file >\n"
+	        "[ -i <interface> -s <file> ] -b <benchmark> -p <ncpu>\n"
+	    "  %s [ -q | -v ] [ -i <interface> -s <file> ] -t\n"
 	    "  %s -T <testname> -c <config>\n"
 	    "  %s -L\n"
 	    "where:\n"
-	    "\t-b: benchmark\n"
-	    "\t-t: regression test\n"
+	    "\t-b benchmark\n"
+	    "\t-t regression test\n"
 	    "\t-T <testname>: specific test\n"
 	    "\t-s <file>: pcap stream\n"
 	    "\t-c <config>: NPF configuration file\n"
 	    "\t-i <interface>: primary interface\n"
-	    "\t-L: list testnames and description for -T\n"
-	    "\t-q: quiet mode\n"
-	    "\t-v: verbose mode\n",
+	    "\t-L list testnames and description for -T\n"
+	    "\t-q quiet mode\n"
+	    "\t-v verbose mode\n",
+	    "\t-p set RUMP_NCPU\n",
 	    progname, progname, progname);
 	exit(EXIT_FAILURE);
 }
