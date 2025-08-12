@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.68 2025/08/12 11:57:08 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.69 2025/08/12 11:58:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1012,6 +1012,8 @@ AARCH64REG_READ_INLINE(sp_el0)		// EL0 Stack Pointer
 AARCH64REG_WRITE_INLINE(sp_el0)
 AARCH64REG_READ_INLINE(sp_el1)		// EL1 Stack Pointer
 AARCH64REG_WRITE_INLINE(sp_el1)
+AARCH64REG_READ_INLINE(sp_el2)		// EL2 Stack Pointer
+AARCH64REG_WRITE_INLINE(sp_el2)
 
 AARCH64REG_READ_INLINE(spsel)		// Stack Pointer Select
 AARCH64REG_WRITE_INLINE(spsel)
