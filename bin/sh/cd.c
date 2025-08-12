@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.53 2022/01/31 16:54:28 kre Exp $	*/
+/*	$NetBSD: cd.c,v 1.54 2025/08/12 00:32:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.53 2022/01/31 16:54:28 kre Exp $");
+__RCSID("$NetBSD: cd.c,v 1.54 2025/08/12 00:32:16 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,8 +121,10 @@ cdcmd(int argc, char **argv)
 		dest = prevdir ? prevdir : curdir;
 		print = 1;
 	}
+#if 0				/* POSIX 2024 says this must be an error */
 	if (*dest == '\0')
 	        dest = ".";
+#endif
 
 	cp = dest;
 	if (*cp == '.' && *++cp == '.')
