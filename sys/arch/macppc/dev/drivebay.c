@@ -1,4 +1,4 @@
-/* $NetBSD: drivebay.c,v 1.1 2025/08/12 05:47:36 macallan Exp $ */
+/* $NetBSD: drivebay.c,v 1.2 2025/08/12 06:07:37 macallan Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drivebay.c,v 1.1 2025/08/12 05:47:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drivebay.c,v 1.2 2025/08/12 06:07:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,7 @@ static int  sysctl_power(SYSCTLFN_ARGS);
 static int  sysctl_fail(SYSCTLFN_ARGS);
 static int  sysctl_inuse(SYSCTLFN_ARGS);
 static int  sysctl_present(SYSCTLFN_ARGS);
+static int  sysctl_switch(SYSCTLFN_ARGS);
 
 CFATTACH_DECL_NEW(drivebay, sizeof(struct drivebay_softc),
     drivebay_match, drivebay_attach, drivebay_detach, NULL);
@@ -174,9 +175,15 @@ drivebay_attach(device_t parent, device_t self, void *aux)
 	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	ret = sysctl_createv(NULL, 0, NULL, &node,
-	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLFLAG_READONLY | CTLFLAG_OWNDESC,
 	    CTLTYPE_INT, "present", "drive present",
 	    sysctl_present, 1, (void *)sc, 0,
+	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
+
+	ret = sysctl_createv(NULL, 0, NULL, &node,
+	    CTLFLAG_READONLY | CTLFLAG_OWNDESC,
+	    CTLTYPE_INT, "switch", "drive switch",
+	    sysctl_switch, 1, (void *)sc, 0,
 	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
 	__USE(ret);
 
@@ -352,6 +359,27 @@ sysctl_present(SYSCTLFN_ARGS)
 	} else {
 
 		node.sysctl_data = &present;
+		node.sysctl_size = 4;
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
+
+	return 0;
+}
+
+static int
+sysctl_switch(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct drivebay_softc *sc = node.sysctl_data;
+	int reg = drivebay_readreg(sc, PCAGPIO_INPUT);
+	int sw = (reg & I_SWITCH) == 0;
+
+	if (newp) {
+		/* we're asked to write */	
+		return EINVAL;
+	} else {
+
+		node.sysctl_data = &sw;
 		node.sysctl_size = 4;
 		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 	}
