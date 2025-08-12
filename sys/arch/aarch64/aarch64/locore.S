@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.97 2025/08/08 05:56:10 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.98 2025/08/12 07:30:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.97 2025/08/08 05:56:10 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.98 2025/08/12 07:30:06 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -584,7 +584,7 @@ END(cpu_mpstart)
 
 
 /*
- * xprint - print strings pointed to by $PC(LR), and return to the next
+ * xprint - print the string pointed to by $PC(LR), and return to the next
  *          instruction after the end of the string.
  *          "\n" is replaced with "\r\n"
  * e.g.
