@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.60 2025/08/12 10:47:14 joe Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.61 2025/08/12 16:55:38 mlelstv Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -819,6 +819,16 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
     const char *pcap_filter, const char *rproc)
 {
 	nl_rule_t *rl, *cg;
+	const filt_opts_t empty_fopts = {
+		.uid = { .id = { 0, 0 }, .op = NPF_OP_NONE },
+		.gid = { .id = { 0, 0 }, .op = NPF_OP_NONE },
+		.layer = NPF_RULE_LAYER_3,
+		.fo_finvert = true,
+		.fo_tinvert = true
+	};
+
+	if (fopts == NULL)
+		fopts = &empty_fopts;
 
 	attr |= (npf_conf ? 0 : NPF_RULE_DYNAMIC);
 
