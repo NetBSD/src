@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.98 2025/08/12 07:30:06 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.99 2025/08/12 08:26:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.98 2025/08/12 07:30:06 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.99 2025/08/12 08:26:52 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -331,10 +331,10 @@ locore_lock_exit:
 /* print "[CPU$x27] " (x27 for cpuindex) */
 printcpu:
 	stp	x0, lr, [sp, #-16]!
-	PRINT("[CPU");			\
-	mov	x0, x27;		\
-	bl	_printdec_x0;		\
-	PRINT("] ");			\
+	PRINT("[CPU")
+	mov	x0, x27
+	bl	_printdec_x0
+	PRINT("] ")
 	ldp	x0, lr, [sp], #16
 	ret
 
