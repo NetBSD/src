@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.67 2025/02/27 08:39:54 andvar Exp $ */
+/* $NetBSD: armreg.h,v 1.68 2025/08/12 11:57:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -668,7 +668,7 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 #define	 ESR_EC_FP_ACCESS	 0x07	// AXX: Access to SIMD/FP Registers
 #define	 ESR_EC_FPID		 0x08	// A32: MCR/MRC access to CP10 !EC=7
 #define	 ESR_EC_PAUTH		 0x09	// A64: Pointer auth trap (FEAT_PAUTH)
-#define	 ESR_EC_LS64		 0x0a	// AXX: LD64B/ST64B instruction (FEAT_LS64)		// XXXNH
+#define	 ESR_EC_LS64		 0x0a	// A64: LD64B/ST64B instruction (FEAT_LS64)
 #define	 ESR_EC_CP14_RRT	 0x0c	// A32: MRRC access to CP14
 #define	 ESR_EC_BTE_A64		 0x0d	// A64: Branch Target Exception (V8.5)
 #define	 ESR_EC_ILL_STATE	 0x0e	// AXX: Illegal Execution State
