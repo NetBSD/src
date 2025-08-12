@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.124 2025/07/01 13:48:31 macallan Exp $
+#	$NetBSD: files.macppc,v 1.125 2025/08/12 05:47:36 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -343,3 +343,7 @@ attach 	obiofan at obio
 file 	arch/macppc/dev/obiofan.c			obiofan
 defflag opt_obiofan.h OBIOFAN_DEBUG
 
+# Philips PCA9554 GPIO controlling Xserve's drivebays
+device	drivebay: leds
+attach	drivebay at iic
+file	arch/macppc/dev/drivebay.c			drivebay
