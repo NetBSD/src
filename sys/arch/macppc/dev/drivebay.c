@@ -1,7 +1,7 @@
-/* $NetBSD: drivebay.c,v 1.2 2025/08/12 06:07:37 macallan Exp $ */
+/* $NetBSD: drivebay.c,v 1.3 2025/08/13 06:47:28 macallan Exp $ */
 
 /*-
- * Copyright (c) 2020 Michael Lorenz
+ * Copyright (c) 2025 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,11 +27,11 @@
  */
 
 /*
- * a driver for Philips Semiconductor PCA9555 GPIO controllers
+ * a driver for the Xserve G4's drivebays
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drivebay.c,v 1.2 2025/08/12 06:07:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drivebay.c,v 1.3 2025/08/13 06:47:28 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ struct drivebay_softc {
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
 
-	uint32_t	sc_state;
+	uint32_t	sc_state, sc_input, sc_last_update;
 
 #ifdef DRIVEBAY_DEBUG
 	uint32_t	sc_dir, sc_in;
@@ -142,6 +142,7 @@ drivebay_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
+	sc->sc_last_update = 0xffffffff;
 
 	aprint_naive("\n");
 
@@ -231,12 +232,21 @@ drivebay_readreg(struct drivebay_softc *sc, int reg)
 	uint8_t creg;
 	uint32_t ret;
 
+	if (reg == PCAGPIO_INPUT) {
+		if (time_uptime32 == sc->sc_last_update)
+			return sc->sc_input;
+	}
+
 	iic_acquire_bus(sc->sc_i2c, 0);
 	cmd = reg;
 	iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
 		    sc->sc_addr, &cmd, 1, &creg, 1, 0);
 	ret = creg;
 	iic_release_bus(sc->sc_i2c, 0);
+	if (reg == PCAGPIO_INPUT) {
+		sc->sc_last_update = time_uptime32;
+		sc->sc_input = ret;
+	}
 	return ret;
 }
 
