@@ -8,10 +8,10 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *	notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *	notice, this list of conditions and the following disclaimer in the
+ *	documentation and/or other materials provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -93,38 +93,38 @@ struct aiocb {
 
 /* Structure for tracking the status of a collection of OPS */
 struct aiowaitgroup {
-	kmutex_t mtx;		/* Protects this structure */
-	kcondvar_t done_cv;	/* Signals when a job is complete */ 
-	size_t completed;	/* Keeps track of the number of completed jobs */
-	size_t total;		/* Keeps track of the number of total jobs */
-	bool active;
-	int refcnt;
+	kmutex_t mtx;		/* Protects entire structure */
+	kcondvar_t done_cv;	/* Signaled when job completes */
+	size_t completed;	/* Number of completed jobs in this wait group */
+	size_t total;		/* Total jobs being waited on */
+	bool active;		/* False after suspend returns/times out */
+	int refcnt;		/* Reference count */
 };
 
 /* */
 struct aiowaitgrouplk {
-	kmutex_t mtx;		/* */
-	void **wgs;		/* Array of ops */
-	size_t s;		/* Size of ops array */
-	size_t n;		/* Total number of connected ops */
+	kmutex_t mtx;	/* Protects wgs array modifications */
+	void **wgs;	/* Dynamic array of waiting aiowaitgroups */
+	size_t s;	/* Allocated size of wgs array */
+	size_t n;	/* Current number of waitgroups */
 };
 
 /* Structure of AIO job */
 struct aiost;
 struct buf;
 struct aio_job {
-	kmutex_t mtx;		/* Protects this structure */
-	int aio_op;		/* Operation code */
-	struct aiocb aiocbp;	/* AIO data structure */
-	pri_t pri;		/* Job priority */
-	void *aiocb_uptr;	/* User-space pointer for identification of job */
-	struct proc *p;		/* Process that instantiated the job */
-	bool completed;		/* Marks the completion status of this job */
-	struct aiowaitgrouplk lk;
-	struct buf **buf;
-	uint nbuf;
+	kmutex_t mtx;		/* Protects completed flag */
+	int aio_op;		/* Operation type (AIO_READ/WRITE/SYNC) */
+	struct aiocb aiocbp;	/* User-visible AIO control block */
+	pri_t pri;		/* Scheduling priority */
+	void *aiocb_uptr;	/* User pointer for job identification */
+	struct proc *p;		/* Originating process */
+	bool completed;		/* Job completion status */
+	struct aiowaitgrouplk lk; /* List of waitgroups waiting on this job */
+	struct buf **buf;	/* Buffer array for vectored I/O (unused?) */
+	uint nbuf;		/* Number of buffers (unused?) */
 	TAILQ_ENTRY(aio_job) list;
-	struct lio_req *lio;
+	struct lio_req *lio;	/* List I/O request (if part of lio_listio) */
 };
 
 #define AIOST_STATE_NONE	0x1

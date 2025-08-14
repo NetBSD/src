@@ -27,7 +27,62 @@
  */
 
 /*
- * Implementation of service pools to support asynchronous I/O
+ * NetBSD asynchronous I/O service pool implementation
+ * 
+ * Design overview
+ * 
+ * Thread pool architecture:
+ * Each process maintains an aiosp (service pool) with worker threads (aiost)
+ * Workers are recycled via freelist/active lists to minimize thread creation
+ * Workers sleep on service_cv until jobs are assigned
+ * On process termination, all associated service threads are terminated
+ * 
+ * Job distribution strategy:
+ * Jobs are initially queued to aiosp->jobs pending distribution
+ * Regular files: Jobs are grouped by file descriptor for potential coalescing
+ * Multiple jobs on same fp are assigned to one thread via aiost_file_group
+ * Enables future optimizations like request merging and vectored I/O
+ * Nonregular files: Each job gets a dedicated worker (no coalescing)
+ * Distribution occurs when aiosp_distribute_jobs() is called
+ * 
+ * Job tracking:
+ * Hash table (aiocbp_hash) maps userspace aiocb pointers to kernel jobs
+ * Prevents duplicate submissions of same aiocb
+ * Enables O(1) lookup for aio_error/aio_return/aio_suspend operations
+ * Hash collision resolution via chaining (TAILQ per bucket)
+ * 
+ * Completion notification:
+ * Twophase notification: waitgroup signaling then signal delivery
+ * Aiowaitgrouplk attached to each job tracks all waiting suspend operations
+ * On completion, all registered waitgroups are notified atomically
+ * Supports both any (wake on first completion) and all (wake when all done) modes
+ * Waitgroups are reference counted to handle concurrent completion/registration
+ * 
+ * Thread lifecycle:
+ * Threads handle both singleton jobs and filegrouped batches
+ * After processing, threads return to freelist for reuse
+ * Thread termination uses state machine (none->operation->terminate)
+ * Abrupt process termination handled via signal checks in cv_wait_sig()
+ * 
+ * Synchronization model:
+ * Hierarchical locking: aiosp->mtx > aiost->mtx > job->mtx
+ * aiosp->mtx: Protects job queues, thread lists, and file group tree
+ * aiost->mtx: Protects thread state transitions
+ * job->mtx: Protects completion flag only
+ * aiowaitgrouplk->mtx: Protects waitgroup array modifications
+ * 
+ * File group management:
+ * RB tree (aiost_file_tree) maintains active file groups
+ * Groups are created ondemand when regular file jobs are distributed
+ * Groups are destroyed when all jobs for that fp complete
+ * Enables future enhancements like dynamic job appending during processing
+ * 
+ * Implementation notes
+ * 
+ * io_read/write currently use fallback implementations
+ * Buffer array (job->buf) reserved for future vectored I/O support
+ * File groups could be extended for list I/O (lio_listio) kernelside batching
+ * Range locking infrastructure planned but not yet implemented
  */
 
 #include <sys/cdefs.h>
@@ -68,7 +123,7 @@ static int		aiosp_worker_extract(struct aiosp *, struct aiost **);
 static int		io_write(struct aiost *, struct aio_job *);
 static int		io_read(struct aiost *, struct aio_job *);
 static int		io_sync(struct aiost *);
-static int		io_construct(struct aio_job *, struct file **,
+static int		uio_construct(struct aio_job *, struct file **,
 				struct iovec *, struct uio *);
 static int		io_write_fallback(struct aio_job *);
 static int		io_read_fallback(struct aio_job *);
@@ -110,8 +165,9 @@ RB_PROTOTYPE(aiost_file_tree, aiost_file_group, tree, aiost_file_group_cmp);
 RB_GENERATE(aiost_file_tree, aiost_file_group, tree, aiost_file_group_cmp);
 
 /*
- * Group jobs by file handle for coalescing and distribute them among service
- * threads
+ * Group jobs by file descriptor and distribute to service threads.
+ * Regular files are coalesced per-fp, others get individual threads.
+ * Must be called with jobs queued in sp->jobs
  */
 int
 aiosp_distribute_jobs(struct aiosp *sp)
@@ -193,9 +249,10 @@ aiosp_distribute_jobs(struct aiosp *sp)
 			fg->queue_size++;
 		}
 
+		mutex_enter(&aiost->mtx);
 		aiost->freelist = false;
 		aiost->state = AIOST_STATE_OPERATION;
-
+		mutex_exit(&aiost->mtx);
 		cv_signal(&aiost->service_cv);
 	}
 
@@ -205,12 +262,12 @@ aiosp_distribute_jobs(struct aiosp *sp)
 }
 
 /*
- * aiosp_ops represent a collection of operations whose status should be
- * tracked. When the user invokes a suspend, we create a new collection, and
- * then for each aiost referenced within aiocbp_list, when those operations
- * are finished, every aiosp_ops appended to that thread (aiost->ops) gets
- * awoken and the completion count incremented. The completion counter can be
- * incremeneted posthumously as well.
+ * Wait for specified AIO operations to complete
+ * Create a waitgroup to monitor the specified aiocb list.
+ * Returns when timeout expires or completion criteria met
+ *
+ * AIOSP_SUSPEND_ANY return when any job completes
+ * AIOSP_SUSPEND_ALL return when all jobs complete
  */
 int
 aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
@@ -238,14 +295,6 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 
 	struct aiowaitgroup *wg = kmem_zalloc(sizeof(*wg), KM_SLEEP);
 	aiowaitgroup_init(wg);
-
-	/*
-	 * We want a hash table that tracks jobs, using uptr as a key. We use
-	 * this to track job completion status. How do we handle the case where
-	 * a job is completed with one aiost, then completed, then another job
-	 * enqueued and assigned to that exact aiost. This makes it such that
-	 * both aiosts are assigned to both threads.
-	 */
 
 	mutex_enter(&wg->mtx);
 	for (int i = 0; i < nent; i++) {
@@ -323,7 +372,7 @@ aiosp_initialize(struct aiosp *sp)
 }
 
 /*
- *
+ * Extract an available worker thread from pool or create new one
  */
 static int
 aiosp_worker_extract(struct aiosp *sp, struct aiost **aiost)
@@ -445,7 +494,7 @@ aiost_create(struct aiosp *sp, struct aiost **ret)
 }
 
 /*
- *
+ * Process single job without coalescing.
  */
 static void 
 aiost_process_singleton (struct aiost *st)
@@ -465,16 +514,15 @@ aiost_process_singleton (struct aiost *st)
 	}
 
 	mutex_enter(&job->mtx);
+	aiowaitgrouplk_flush(&job->lk);
 	job->completed = true;
 	mutex_exit(&job->mtx);
-
-	aiowaitgrouplk_flush(&job->lk);
 
 	aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
 }
 
 /*
- *
+ * Process all jobs in a file group.
  */
 static void
 aiost_process_fg (struct aiost *st)
@@ -512,9 +560,8 @@ aiost_process_fg (struct aiost *st)
 }
 
 /*
- * Servicing thread entry point. Process the operation. Notify all those
- * blocking on the completion of the operation. Send a signal if necessary. And
- * then mark the current servicing thread as free.
+ * Service thread entry point. Processes assigned jobs until termination.
+ * Handles both singleton jobs and file-grouped job batches.
  */
 static void
 aiost_entry(void *arg)
@@ -553,25 +600,14 @@ aiost_entry(void *arg)
 				st->state);
 		}
 
-		// A MORE LOGICAL SOLUTION FILE GROUPS ARE JUST LISTIO INSIDE
-		// THE KERNEL (OR CAN THEY NOT BE??? HOW ABOUT ADD EXTRA
-		// FUNCTIONALITY TO THEM LIKE BEING ABLE TO DYNAMICALLY APPEND
-		// NEW OPS WHILE EVERYTHING IS IN THE MIDDLE OF BEING
-		// PROCESSED? NO IT IS NOT. IT IS ABOUT COMBINING OBJECTS THAT
-		// HAVE TO BLOCK VERSUS OBJECTS THAT DO. ALSO COMBINE AIOSP AND
-		// AIO TOGETHER THEIR SEPARATENESS IS GETTING ON MY NERVES
-		// STRIP AWAY USELESS MUMBO AI JUMBO AND MAKE WORK I SHOULD BE
-		// ABLE TO ACHIEVE CONCURRENCY ACROSS MULTIPLE FILES
-		// SIMPLIFY AND STREAMLINE DESIGN AND DOCUMENT WHEN NECESSARY 
-		// SEND AN EMAIL OFF TO JASON AND CHISTOS
-		// IMPLEMENT RANGE LOCKS #1
-
-		//printf("%d %d\n", mutex_owned(&sp->mtx), mutex_owned(&st->mtx));
-
 		if (st->fg) {
+			mutex_exit(&st->mtx);
 			aiost_process_fg(st);
+			mutex_enter(&st->mtx);
 		} else {
+			mutex_exit(&st->mtx);
 			aiost_process_singleton(st);
+			mutex_enter(&st->mtx);
 		}
 
 		st->state = AIOST_STATE_NONE;
@@ -583,7 +619,9 @@ aiost_entry(void *arg)
 		 * freelist, dance around locks, then iterate loop and block on
 		 * st->service_cv
 		 */
+		mutex_exit(&st->mtx);
 		mutex_enter(&sp->mtx);
+		mutex_enter(&st->mtx);
 
 		st->freelist = true;
 
@@ -596,6 +634,7 @@ aiost_entry(void *arg)
 		mutex_exit(&sp->mtx);
 	}
 
+	mutex_exit(&st->mtx);
 	mutex_enter(&sp->mtx);
 
 	if (st->freelist) {
@@ -605,11 +644,9 @@ aiost_entry(void *arg)
 		TAILQ_REMOVE(&sp->active, st, list);
 		sp->nthreads_active--;
 	}
-
 	sp->nthreads_total--;
 
 	mutex_exit(&sp->mtx);
-	mutex_exit(&st->mtx);
 	kthread_exit(0);
 }
 
@@ -635,7 +672,7 @@ aiost_sigsend(struct proc *p, struct sigevent *sig)
 }
 
 /*
- *
+ * Process write operation for non-blocking jobs.
  */
 static int
 io_write(struct aiost *aiost, struct aio_job *job)
@@ -644,7 +681,7 @@ io_write(struct aiost *aiost, struct aio_job *job)
 }
 
 /*
- *
+ * Process read operation for non-blocking jobs.
  */
 static int
 io_read(struct aiost *aiost, struct aio_job *job)
@@ -653,10 +690,10 @@ io_read(struct aiost *aiost, struct aio_job *job)
 }
 
 /*
- *
+ * Initialize UIO structure for I/O operation.
  */
 static int
-io_construct(struct aio_job *job, struct file **fp, struct iovec *aiov,
+uio_construct(struct aio_job *job, struct file **fp, struct iovec *aiov,
 	struct uio *auio)
 {
 	struct aiocb *aiocbp = &job->aiocbp;
@@ -686,7 +723,7 @@ io_construct(struct aio_job *job, struct file **fp, struct iovec *aiov,
 }
 
 /*
- *
+ * Perform synchronous write via file operations.
  */
 static int
 io_write_fallback(struct aio_job *job)
@@ -697,8 +734,12 @@ io_write_fallback(struct aio_job *job)
 	struct aiocb *aiocbp;
 	int error;
 
-	error = io_construct(job, &fp, &aiov, &auio);
+	error = uio_construct(job, &fp, &aiov, &auio);
 	if (error) {
+		if (fp) {
+			closef(fp);
+		}
+
 		goto done;
 	}
 
@@ -732,7 +773,7 @@ done:
 }
 
 /*
- *
+ * Perform synchronous read via file operations.
  */
 static int
 io_read_fallback(struct aio_job *job)
@@ -743,8 +784,11 @@ io_read_fallback(struct aio_job *job)
 	struct aiocb *aiocbp;
 	int error;
 
-	error = io_construct(job, &fp, &aiov, &auio);
+	error = uio_construct(job, &fp, &aiov, &auio);
 	if (error) {
+		if (fp) {
+			closef(fp);
+		}
 		goto done;
 	}
 
@@ -778,7 +822,7 @@ done:
 }
 
 /*
- * process sync/dsync
+ * Flush file data to stable storage.
  */
 static int
 io_sync(struct aiost *aiost)
@@ -933,7 +977,7 @@ int aiosp_return(struct aiosp *aiosp, const void *uptr, register_t *retval)
 }
 
 /*
- * aiocbp hash function
+ * Hash function for aiocb user pointers.
  */
 static inline u_int
 aiocbp_hash(const void *uptr)
@@ -942,7 +986,7 @@ aiocbp_hash(const void *uptr)
 }
 
 /*
- * aiocbp hash lookup
+ * Find aiocb entry by user pointer.
  */
 int
 aiocbp_lookup(struct aiosp *aiosp, struct aiocbp **aiocbpp, const void *uptr)
@@ -952,13 +996,9 @@ aiocbp_lookup(struct aiosp *aiosp, struct aiocbp **aiocbpp, const void *uptr)
 
 	hash = aiocbp_hash(uptr) & aiosp->aio_hash_mask;
 
-	//printf("searching element with key {%lx} and hash {%x}\n", (uintptr_t)uptr, hash);
-
 	mutex_enter(&aiosp->aio_hash_mtx);
 	TAILQ_FOREACH(aiocbp, &aiosp->aio_hash[hash], list) {
 		if (aiocbp->uptr == uptr) {
-			//printf("element found {%lx} and the job {%lx} {%lx}\n", (uintptr_t)aiocbp, (uintptr_t)aiocbp->job, (uintptr_t)aiocbp->job->aiost);
-
 			*aiocbpp = aiocbp;
 			mutex_exit(&aiosp->aio_hash_mtx);
 			return 0;
@@ -970,7 +1010,7 @@ aiocbp_lookup(struct aiosp *aiosp, struct aiocbp **aiocbpp, const void *uptr)
 }
 
 /*
- * aiocbp hash removal
+ * Remove aiocb entry from hash table.
  */
 int
 aiocbp_remove(struct aiosp *aiosp, const void *uptr)
@@ -995,7 +1035,7 @@ aiocbp_remove(struct aiosp *aiosp, const void *uptr)
 }
 
 /*
- * aiocbp hash insertion
+ * Insert aiocb entry into hash table.
  */
 int
 aiocbp_insert(struct aiosp *aiosp, struct aiocbp *aiocbp)
@@ -1016,8 +1056,6 @@ aiocbp_insert(struct aiosp *aiosp, struct aiocbp *aiocbp)
 		}
 	}
 
-	//printf("appending element with key {%x} onto hash {%lx} aiocbp {%lx}\n", hash, (uintptr_t)uptr, (uintptr_t)aiocbp);
-
 	TAILQ_INSERT_HEAD(&aiosp->aio_hash[hash], aiocbp, list);
 	mutex_exit(&aiosp->aio_hash_mtx);
 	
@@ -1025,7 +1063,7 @@ aiocbp_insert(struct aiosp *aiosp, struct aiocbp *aiocbp)
 }
 
 /*
- * aiocbp initialise
+ * Initialize aiocb hash table.
  */
 int
 aiocbp_init(struct aiosp *aiosp, u_int hashsize)
@@ -1050,7 +1088,7 @@ aiocbp_init(struct aiosp *aiosp, u_int hashsize)
 }
 
 /*
- * aiocbp destroy
+ * Destroy aiocb hash table and free entries.
  */
 void
 aiocbp_destroy(struct aiosp *aiosp)
@@ -1079,7 +1117,7 @@ aiocbp_destroy(struct aiosp *aiosp)
 }
 
 /*
- *
+ * Initialize wait group for suspend operations.
  */
 void
 aiowaitgroup_init(struct aiowaitgroup *wg)
@@ -1093,7 +1131,7 @@ aiowaitgroup_init(struct aiowaitgroup *wg)
 }
 
 /*
- *
+ * Clean up wait group resources.
  */
 void
 aiowaitgroup_fini(struct aiowaitgroup *wg)
@@ -1104,7 +1142,7 @@ aiowaitgroup_fini(struct aiowaitgroup *wg)
 }
 
 /*
- *
+ * Block until wait group signals completion.
  */
 int
 aiowaitgroup_wait(struct aiowaitgroup *wg, int timo)
@@ -1123,7 +1161,7 @@ aiowaitgroup_wait(struct aiowaitgroup *wg, int timo)
 }
 
 /*
- *
+ * Initialize wait group link for job tracking.
  */
 void
 aiowaitgrouplk_init(struct aiowaitgrouplk *lk)
@@ -1135,7 +1173,7 @@ aiowaitgrouplk_init(struct aiowaitgrouplk *lk)
 }
 
 /*
- *
+ * Clean up wait group link resources.
  */
 void
 aiowaitgrouplk_fini(struct aiowaitgrouplk *lk)
@@ -1147,11 +1185,12 @@ aiowaitgrouplk_fini(struct aiowaitgrouplk *lk)
 	}
 }
 
+/*
+ * Notify all wait groups of job completion.
+ */
 void
 aiowaitgrouplk_flush(struct aiowaitgrouplk *lk)
 {
-	printf("flushing %lx on %ld\n", (uintptr_t)lk, lk->n);
-
 	mutex_enter(&lk->mtx);
 	for (int i = 0; i < lk->n; i++) {
 		struct aiowaitgroup *wg = lk->wgs[i];
@@ -1186,12 +1225,11 @@ aiowaitgrouplk_flush(struct aiowaitgrouplk *lk)
 }
 
 /*
- *
+ * Attach wait group to jobs notification list.
  */
 void
 aiowaitgroup_join(struct aiowaitgroup *wg, struct aiowaitgrouplk *lk)
 {
-	KASSERT(lk->n < lk->s);
 	mutex_enter(&lk->mtx);
 	if (lk->n == lk->s) {
 		size_t new_size = lk->s * lk->s;

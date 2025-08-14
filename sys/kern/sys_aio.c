@@ -801,14 +801,19 @@ sys_aio_error(struct lwp *l, const struct sys_aio_error_args *uap,
 #else
 	struct aiocb aiocbp;
 	int error = copyin(SCARG(uap, aiocbp), &aiocbp, sizeof(struct aiocb));
-	if (error)
+	if (error) {
+		printf("WHAT!\n");
 		return error;
+	}
 
-	if (aiocbp._state == JOB_NONE)
+	if (aiocbp._state == JOB_NONE) {
+		printf("WHA!T!\n");
 		return SET_ERROR(EINVAL);
+	}
 
 	*retval = aiocbp._errno;
 
+	printf("WHY!!\n");
 	return 0;
 #endif
 }
@@ -869,6 +874,8 @@ sys_aio_return(struct lwp *l, const struct sys_aio_return_args *uap,
 	if (error) {
 		return error;
 	}
+	
+	printf("WHAT!\n");
 
 	if (aiocbp._errno == EINPROGRESS || aiocbp._state != JOB_DONE) {
 		return SET_ERROR(EINVAL);
