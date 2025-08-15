@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.44 2020/03/15 20:10:26 martin Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.45 2025/08/15 21:28:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -160,7 +160,15 @@ do {									\
 #define ATF_TP_FSADD(fs,func)						\
   ATF_TP_ADD_TC(tp,fs##_##func)
 
-#define ATF_TC_FSAPPLY_NOZFS(func,desc)					\
+#ifdef WANT_ZFS_TESTS
+# define ATF_TC_FSADD_ZFS(func,desc) ATF_TC_FSADD(zfs,MOUNT_ZFS,func,desc)
+# define ATF_TP_FSADD_ZFS(func) ATF_TP_FSADD(zfs,func); /* semicolon sic */
+#else /* !WANT_ZFS_TESTS */
+# define ATF_TC_FSADD_ZFS(func,desc)
+# define ATF_TP_FSADD_ZFS(func)
+#endif /* WANT_ZFS_TESTS */
+
+#define ATF_TC_FSAPPLY(func,desc)					\
   ATF_TC_FSADD(ext2fs,MOUNT_EXT2FS,func,desc)				\
   ATF_TC_FSADD(ffs,MOUNT_FFS,func,desc)					\
   ATF_TC_FSADD(ffslog,MOUNT_FFS,func,desc)				\
@@ -172,10 +180,10 @@ do {									\
   ATF_TC_FSADD(rumpfs,MOUNT_RUMPFS,func,desc)				\
   ATF_TC_FSADD(sysvbfs,MOUNT_SYSVBFS,func,desc)				\
   ATF_TC_FSADD(tmpfs,MOUNT_TMPFS,func,desc)				\
-  ATF_TC_FSADD(udf,MOUNT_UDF,func,desc)				\
-  ATF_TC_FSADD(v7fs,MOUNT_V7FS,func,desc)
-
-#define ATF_TP_FSAPPLY_NOZFS(func)					\
+  ATF_TC_FSADD(udf,MOUNT_UDF,func,desc)					\
+  ATF_TC_FSADD(v7fs,MOUNT_V7FS,func,desc)				\
+  ATF_TC_FSADD_ZFS(func,desc)
+#define ATF_TP_FSAPPLY(func)						\
   ATF_TP_FSADD(ext2fs,func);						\
   ATF_TP_FSADD(ffs,func);						\
   ATF_TP_FSADD(ffslog,func);						\
@@ -188,25 +196,8 @@ do {									\
   ATF_TP_FSADD(sysvbfs,func);						\
   ATF_TP_FSADD(tmpfs,func);						\
   ATF_TP_FSADD(udf,func);						\
-  ATF_TP_FSADD(v7fs,func);
-
-/* XXX: this will not scale */
-#ifdef WANT_ZFS_TESTS
-#define ATF_TC_FSAPPLY(func,desc)					\
-  ATF_TC_FSAPPLY_NOZFS(func,desc)					\
-  ATF_TC_FSADD(zfs,MOUNT_ZFS,func,desc)
-#define ATF_TP_FSAPPLY(func)						\
-  ATF_TP_FSAPPLY_NOZFS(func)						\
-  ATF_TP_FSADD(zfs,func);
-
-#else /* !WANT_ZFS_TESTS */
-
-#define ATF_TC_FSAPPLY(func,desc)					\
-  ATF_TC_FSAPPLY_NOZFS(func,desc)
-#define ATF_TP_FSAPPLY(func)						\
-  ATF_TP_FSAPPLY_NOZFS(func)
-
-#endif /* WANT_ZFS_TESTS */
+  ATF_TP_FSADD(v7fs,func);						\
+  ATF_TP_FSADD_ZFS(func)
 
 /*
  * Same as above, but generate a file system image first and perform
@@ -227,7 +218,7 @@ do {									\
   ATF_TC_FSADD_RO(nfs,MOUNT_NFS,func,desc,gen)				\
   ATF_TC_FSADD_RO(nfsro,MOUNT_NFS,func,desc,gen)			\
   ATF_TC_FSADD_RO(sysvbfs,MOUNT_SYSVBFS,func,desc,gen)			\
-  ATF_TC_FSADD_RO(udf,MOUNT_UDF,func,desc,gen)			\
+  ATF_TC_FSADD_RO(udf,MOUNT_UDF,func,desc,gen)				\
   ATF_TC_FSADD_RO(v7fs,MOUNT_V7FS,func,desc,gen)
 
 #define ATF_TP_FSAPPLY_RO(func)						\
