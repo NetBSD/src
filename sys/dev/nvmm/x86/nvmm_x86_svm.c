@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.89 2025/04/21 22:55:38 riastradh Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.90 2025/08/15 11:36:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.89 2025/04/21 22:55:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.90 2025/08/15 11:36:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -777,11 +777,11 @@ svm_vcpu_inject(struct nvmm_cpu *vcpu)
 	}
 
 	vmcb->ctrl.eventinj =
-	    __SHIFTIN((uint64_t)vector, VMCB_CTRL_EVENTINJ_VECTOR) |
-	    __SHIFTIN((uint64_t)type, VMCB_CTRL_EVENTINJ_TYPE) |
-	    __SHIFTIN((uint64_t)err, VMCB_CTRL_EVENTINJ_EV) |
-	    __SHIFTIN((uint64_t)1, VMCB_CTRL_EVENTINJ_V) |
-	    __SHIFTIN((uint64_t)error, VMCB_CTRL_EVENTINJ_ERRORCODE);
+	    __SHIFTIN(vector, VMCB_CTRL_EVENTINJ_VECTOR) |
+	    __SHIFTIN(type, VMCB_CTRL_EVENTINJ_TYPE) |
+	    __SHIFTIN(err, VMCB_CTRL_EVENTINJ_EV) |
+	    __SHIFTIN(1, VMCB_CTRL_EVENTINJ_V) |
+	    __SHIFTIN(error, VMCB_CTRL_EVENTINJ_ERRORCODE);
 
 	cpudata->evt_pending = true;
 

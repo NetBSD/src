@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.90 2025/04/21 22:55:38 riastradh Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.91 2025/08/15 11:36:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.90 2025/04/21 22:55:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.91 2025/08/15 11:36:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1115,10 +1115,10 @@ vmx_vcpu_inject(struct nvmm_cpu *vcpu)
 	}
 
 	info =
-	    __SHIFTIN((uint64_t)vector, INTR_INFO_VECTOR) |
-	    __SHIFTIN((uint64_t)type, INTR_INFO_TYPE) |
-	    __SHIFTIN((uint64_t)err, INTR_INFO_ERROR) |
-	    __SHIFTIN((uint64_t)1, INTR_INFO_VALID);
+	    __SHIFTIN(vector, INTR_INFO_VECTOR) |
+	    __SHIFTIN(type, INTR_INFO_TYPE) |
+	    __SHIFTIN(err, INTR_INFO_ERROR) |
+	    __SHIFTIN(1, INTR_INFO_VALID);
 	vmx_vmwrite(VMCS_ENTRY_INTR_INFO, info);
 	vmx_vmwrite(VMCS_ENTRY_EXCEPTION_ERROR, error);
 
