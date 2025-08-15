@@ -121,8 +121,6 @@ struct aio_job {
 	struct proc *p;		/* Originating process */
 	bool completed;		/* Job completion status */
 	struct aiowaitgrouplk lk; /* List of waitgroups waiting on this job */
-	struct buf **buf;	/* Buffer array for vectored I/O (unused?) */
-	uint nbuf;		/* Number of buffers (unused?) */
 	TAILQ_ENTRY(aio_job) list;
 	struct lio_req *lio;	/* List I/O request (if part of lio_listio) */
 };
@@ -193,12 +191,8 @@ struct lio_req {
 /* Structure of AIO data for process */
 struct aioproc {
 	kmutex_t aio_mtx;		/* Protects the entire structure */
-	kcondvar_t aio_worker_cv;	/* Signals on a new job */
-	kcondvar_t done_cv;		/* Signals when the job is done */
 	struct aio_job *curjob;		/* Currently processing AIO job */
 	unsigned int jobs_count;	/* Count of the jobs */
-	TAILQ_HEAD(, aio_job) jobs_queue;/* Queue of the AIO jobs */
-	struct lwp *aio_worker;		/* AIO worker thread */
 	struct aiosp aiosp;		/* Per-process service pool */
 };
 
