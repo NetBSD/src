@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.44.8.1 2024/08/12 22:35:30 perseant Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.44.8.2 2025/08/15 21:30:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -162,29 +162,23 @@ do {									\
   ATF_TP_ADD_TC(tp,fs##_##func)
 
 #ifdef WANT_EXFATFS_TESTS
-# define ATF_TC_FSADD_EXFATFS(func,desc) ATF_TC_FSADD(exfatfs,MOUNT_EXFATFS,func,desc)
-# define ATF_TP_FSADD_EXFATFS(func) ATF_TP_FSADD(exfatfs,func);
-# define ATF_TP_FSADD_EXFATFS(func)  ATF_TP_FSADD(exfatfs,func);
+# define ATF_TC_FSADD_EXFATFS(func,desc) \
+	ATF_TC_FSADD(exfatfs,MOUNT_EXFATFS,func,desc)
+# define ATF_TP_FSADD_EXFATFS(func) ATF_TP_FSADD(exfatfs,func); /* sic */
 # define ATF_TC_FSADD_RO_EXFATFS(func,desc,gen) \
 	ATF_TC_FSADD_RO(exfatfs,MOUNT_EXFATFS,func,desc,gen)
 #else /* !WANT_EXFATFS_TESTS */
 # define ATF_TC_FSADD_EXFATFS(func,desc)
-# define ATF_TP_FSADD_EXFATFS(func)
 # define ATF_TP_FSADD_EXFATFS(func)
 # define ATF_TC_FSADD_RO_EXFATFS(func,desc,gen)
 #endif /* WANT_EXFATFS_TESTS */
 
 #ifdef WANT_ZFS_TESTS
 # define ATF_TC_FSADD_ZFS(func,desc) ATF_TC_FSADD(zfs,MOUNT_ZFS,func,desc)
-# define ATF_TP_FSADD_ZFS(func) ATF_TP_FSADD(zfs,func);
-# define ATF_TP_FSADD_ZFS(func)  ATF_TP_FSADD(zfs,func);
-# define ATF_TC_FSADD_RO_ZFS(func,desc,gen) \
-	ATF_TC_FSADD_RO(zfs,MOUNT_ZFS,func,desc,gen)
+# define ATF_TP_FSADD_ZFS(func) ATF_TP_FSADD(zfs,func); /* semicolon sic */
 #else /* !WANT_ZFS_TESTS */
 # define ATF_TC_FSADD_ZFS(func,desc)
 # define ATF_TP_FSADD_ZFS(func)
-# define ATF_TP_FSADD_ZFS(func)
-# define ATF_TC_FSADD_RO_ZFS(func,desc,gen)
 #endif /* WANT_ZFS_TESTS */
 
 #define ATF_TC_FSAPPLY(func,desc)					\
@@ -240,9 +234,8 @@ do {									\
   ATF_TC_FSADD_RO(nfs,MOUNT_NFS,func,desc,gen)				\
   ATF_TC_FSADD_RO(nfsro,MOUNT_NFS,func,desc,gen)			\
   ATF_TC_FSADD_RO(sysvbfs,MOUNT_SYSVBFS,func,desc,gen)			\
-  ATF_TC_FSADD_RO(udf,MOUNT_UDF,func,desc,gen)			\
-  ATF_TC_FSADD_RO(v7fs,MOUNT_V7FS,func,desc,gen)			\
-  ATF_TC_FSADD_RO_ZFS(func,desc,gen)
+  ATF_TC_FSADD_RO(udf,MOUNT_UDF,func,desc,gen)				\
+  ATF_TC_FSADD_RO(v7fs,MOUNT_V7FS,func,desc,gen)
 
 #define ATF_TP_FSAPPLY_RO(func)						\
   ATF_TP_FSADD_EXFATFS(func)						\
@@ -254,8 +247,7 @@ do {									\
   ATF_TP_FSADD(nfsro,func);						\
   ATF_TP_FSADD(sysvbfs,func);						\
   ATF_TP_FSADD(udf,func);						\
-  ATF_TP_FSADD(v7fs,func);						\
-  ATF_TP_FSADD_ZFS(func)
+  ATF_TP_FSADD(v7fs,func);
 
 #define ATF_FSAPPLY(func,desc)						\
 	ATF_TC_FSAPPLY(func,desc);					\
