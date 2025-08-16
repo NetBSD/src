@@ -290,7 +290,6 @@ aio_procinit(struct proc *p)
 static void
 aio_exit(struct proc *p, void *cookie)
 {
-	//struct aio_job *a_job;
 	struct aioproc *aio;
 
 	if (cookie != NULL)
@@ -298,17 +297,6 @@ aio_exit(struct proc *p, void *cookie)
 	else if ((aio = p->p_aio) == NULL)
 		return;
 
-	/* Free AIO queue */
-	// IMPLEMENT THIS BUT AIOSP	
-
-	/*while (!TAILQ_EMPTY(&aio->jobs_queue)) {
-		a_job = TAILQ_FIRST(&aio->jobs_queue);
-		TAILQ_REMOVE(&aio->jobs_queue, a_job, list);
-		pool_put(&aio_job_pool, a_job);
-		atomic_dec_uint(&aio_jobs_count);
-	}*/
-
-	/* Destroy and free the entire AIO data structure */
 	aiocbp_destroy(&aio->aiosp);
 	aiosp_destroy(&aio->aiosp);
 	mutex_destroy(&aio->aio_mtx);
@@ -793,6 +781,22 @@ aiost_entry(void *arg)
 
 		mutex_exit(&sp->mtx);
 	}
+
+	if (st->job) {
+		pool_put(&aio_job_pool, st->job);
+		atomic_dec_uint(&aio_jobs_count);
+	} else {
+		struct aiost_file_group *fg = st->fg;
+		KASSERT(fg);
+
+		while (!TAILQ_EMPTY(&fg->queue)) {
+			struct aio_job *job = TAILQ_FIRST(&fg->queue);
+			TAILQ_REMOVE(&fg->queue, job, list);
+			pool_put(&aio_job_pool, job);
+			atomic_dec_uint(&aio_jobs_count);
+		}
+	}
+
 
 	mutex_exit(&st->mtx);
 	mutex_enter(&sp->mtx);
