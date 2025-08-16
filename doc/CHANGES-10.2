@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.44 2025/08/08 14:23:16 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.45 2025/08/16 16:29:28 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -992,4 +992,14 @@ sys/dev/pci/pvscsi.h				1.1
 	Add support for the VMware PV SCSI controller found
 	in VMware's ESXi product.
 	[skrll, ticket #1148]
+
+sys/dev/stbi/stb_image.c			1.12
+
+	PR 57859: fix "option SPLASHSCREEN".
+	[hgutch, ticket #1149]
+
+sys/netipsec/ipsec_input.c			1.82
+
+	ipsec: fix "no key association" log.
+	[knakahara, ticket #1150]
 
