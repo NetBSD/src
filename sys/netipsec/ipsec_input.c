@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.78.4.1 2024/07/20 14:34:24 martin Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.78.4.2 2025/08/16 16:27:32 martin Exp $	*/
 /*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.78.4.1 2024/07/20 14:34:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.78.4.2 2025/08/16 16:27:32 martin Exp $");
 
 /*
  * IPsec input processing.
@@ -317,7 +317,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 				    "no key association found for"
 				    " SA %s-%s/SPI 0x%08lx\n",
 				    ipsec_address(&src_address, buf, sizeof(buf)),
-				    ipsec_address(&src_address, buf2, sizeof(buf2)),
+				    ipsec_address(&dst_address, buf2, sizeof(buf2)),
 				    (u_long) ntohl(spi));
 			}
 		} else if (ipsec_debug) {
