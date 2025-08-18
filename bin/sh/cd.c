@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.55 2025/08/12 01:04:35 kre Exp $	*/
+/*	$NetBSD: cd.c,v 1.56 2025/08/18 18:58:59 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.55 2025/08/12 01:04:35 kre Exp $");
+__RCSID("$NetBSD: cd.c,v 1.56 2025/08/18 18:58:59 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,7 +239,7 @@ docd(const char *dest, bool print, bool eopt)
 	}
 	gotpwd = updatepwd(NULL);   /* only do cd -P, no "pretend" -L mode */
 	INTON;
-	if (!gotpwd)
+	if (!gotpwd && eopt)
 		sh_warnx("Unable to determine new working directory");
 	else if (print && (iflag || posix))
 		out1fmt("%s\n", curdir);
