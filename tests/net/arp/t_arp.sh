@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.48 2024/09/09 07:26:42 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.49 2025/08/18 06:48:29 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -871,6 +871,42 @@ test_cache_creation_nodad()
 	test_cache_creation_common true
 }
 
+test_arp_request_count()
+{
+
+	export RUMP_SERVER=$SOCKSRC
+	pkt=$(make_pkt_str_arpreq 10.0.1.2 10.0.1.1)
+
+	extract_new_packets bus1 > ./out
+	atf_check -s not-exit:0 -o ignore -e ignore rump.ping -n -c 1 $IP4DST
+	extract_new_packets bus1 > ./out
+
+	# ARP sends request packets net.inet.arp.nd_bmaxtries times at most.
+	times=$(rump.sysctl -n net.inet.arp.nd_bmaxtries)
+	$DEBUG && echo times=$times
+	$DEBUG && cat ./out
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
+	atf_check -s exit:0 -o match:"$times" sh -c "grep -E '$pkt' ./out |wc -l"
+}
+
+test_resolution()
+{
+
+	rump_server_start $SOCKSRC
+	setup_src_server
+
+	export RUMP_SERVER=$SOCKSRC
+
+	# Test default value of net.inet.arp.nd_bmaxtries
+	test_arp_request_count
+
+	# Test net.inet.arp.nd_bmaxtries=1
+	atf_check -s exit:0 rump.sysctl -wq net.inet.arp.nd_bmaxtries=1
+	test_arp_request_count
+
+	rump_server_destroy_ifaces
+}
+
 add_test()
 {
 	local name=$1
@@ -910,4 +946,5 @@ atf_init_test_cases()
 	add_test stray_entries         "Tests if ARP entries are removed on route change"
 	add_test cache_creation        "Tests for ARP cache creation"
 	add_test cache_creation_nodad  "Tests for ARP cache creation without DAD"
+	add_test resolution            "Tests for ARP resolution"
 }
