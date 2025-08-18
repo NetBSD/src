@@ -1,4 +1,4 @@
-/* $NetBSD: drivebay.c,v 1.3 2025/08/13 06:47:28 macallan Exp $ */
+/* $NetBSD: drivebay.c,v 1.4 2025/08/18 05:29:04 macallan Exp $ */
 
 /*-
  * Copyright (c) 2025 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drivebay.c,v 1.3 2025/08/13 06:47:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drivebay.c,v 1.4 2025/08/18 05:29:04 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,37 +155,37 @@ drivebay_attach(device_t parent, device_t self, void *aux)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
 	    NULL, 0, NULL, 0,
-	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	    CTL_HW, CTL_CREATE, CTL_EOL);
 
 	ret = sysctl_createv(NULL, 0, NULL, &node,
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 	    CTLTYPE_INT, "power", "drive power",
 	    sysctl_power, 1, (void *)sc, 0,
-	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
+	    CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	ret = sysctl_createv(NULL, 0, NULL, &node,
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 	    CTLTYPE_INT, "fail", "drive fail LED",
 	    sysctl_fail, 1, (void *)sc, 0,
-	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
+	    CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	ret = sysctl_createv(NULL, 0, NULL, &node,
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 	    CTLTYPE_INT, "inuse", "drive in use LED",
 	    sysctl_inuse, 1, (void *)sc, 0,
-	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
+	    CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	ret = sysctl_createv(NULL, 0, NULL, &node,
 	    CTLFLAG_READONLY | CTLFLAG_OWNDESC,
 	    CTLTYPE_INT, "present", "drive present",
 	    sysctl_present, 1, (void *)sc, 0,
-	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
+	    CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	ret = sysctl_createv(NULL, 0, NULL, &node,
 	    CTLFLAG_READONLY | CTLFLAG_OWNDESC,
 	    CTLTYPE_INT, "switch", "drive switch",
 	    sysctl_switch, 1, (void *)sc, 0,
-	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
+	    CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
 	__USE(ret);
 
 #ifdef DRIVEBAY_DEBUG
