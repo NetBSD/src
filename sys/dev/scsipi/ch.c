@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.95 2021/09/26 14:57:19 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.96 2025/08/18 20:59:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.95 2021/09/26 14:57:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.96 2025/08/18 20:59:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,7 +541,7 @@ ch_interpret_sense(struct scsipi_xfer *xs)
 		return (EJUSTRETURN);
 
 	/*
-	 * We're only interested in condtions that
+	 * We're only interested in conditions that
 	 * indicate potential inventory violation.
 	 *
 	 * We use ASC/ASCQ codes for this.

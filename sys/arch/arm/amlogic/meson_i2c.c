@@ -1,4 +1,4 @@
-/* $NetBSD: meson_i2c.c,v 1.2 2025/07/10 08:13:12 skrll Exp $ */
+/* $NetBSD: meson_i2c.c,v 1.3 2025/08/18 20:59:56 andvar Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: meson_i2c.c,v 1.2 2025/07/10 08:13:12 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson_i2c.c,v 1.3 2025/08/18 20:59:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -349,7 +349,7 @@ mesoni2c_intr(void *arg)
 			if (sc->sc_sendingCmd && sc->sc_datalen) {
 				/*
 				 * We've just finished transfering the command
-				 * bytes, we must now tranfer the data.
+				 * bytes, we must now transfer the data.
 				 */
 				sc->sc_curlen = sc->sc_datalen;
 				sc->sc_curop = sc->sc_op;

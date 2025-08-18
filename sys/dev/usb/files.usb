@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.182 2025/04/03 16:33:48 bouyer Exp $
+#	$NetBSD: files.usb,v 1.183 2025/08/18 20:59:55 andvar Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -227,7 +227,7 @@ device	ustir: irbus, irdasir
 attach	ustir at usbdevif
 file	dev/usb/ustir.c			ustir
 
-# Windows Media Center IR tranceivers
+# Windows Media Center IR transceivers
 device	irmce: irbus
 attach	irmce at usbifif
 file	dev/usb/irmce.c			irmce

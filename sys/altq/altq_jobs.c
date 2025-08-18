@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.14 2025/01/08 13:00:04 joe Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.15 2025/08/18 20:59:56 andvar Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.14 2025/01/08 13:00:04 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.15 2025/08/18 20:59:56 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -691,7 +691,7 @@ jobs_dequeue(struct ifaltq *ifq, int op)
 	}
 
 	/*
-	 * select the class whose actual tranmissions are the furthest
+	 * select the class whose actual transmissions are the furthest
 	 * from the promised transmissions
 	 */
 

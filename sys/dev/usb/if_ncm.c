@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ncm.c,v 1.1 2025/01/20 13:54:55 maya Exp $	*/
+/*	$NetBSD: if_ncm.c,v 1.2 2025/08/18 20:59:55 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ncm.c,v 1.1 2025/01/20 13:54:55 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ncm.c,v 1.2 2025/08/18 20:59:55 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -221,7 +221,7 @@ ncm_attach(device_t parent, device_t self, void *aux)
 		un->un_eaddr[5] = (uint8_t)(device_unit(un->un_dev));
 	}
 
-	/* Query NTB tranfers sizes */
+	/* Query NTB transfers sizes */
 	req.bmRequestType = UT_READ_CLASS_INTERFACE;
 	req.bRequest = NCM_GET_NTB_PARAMETERS;
 	USETW(req.wValue, 0);

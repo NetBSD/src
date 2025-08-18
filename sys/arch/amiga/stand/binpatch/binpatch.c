@@ -1,4 +1,4 @@
-/*	$NetBSD: binpatch.c,v 1.15 2016/05/30 03:02:58 dholland Exp $	*/
+/*	$NetBSD: binpatch.c,v 1.16 2025/08/18 20:59:56 andvar Exp $	*/
 
 /* Author: Markus Wild mw@eunet.ch ???   */
 /* Modified: Rob Leland leland@mitre.org */
@@ -34,7 +34,7 @@ static char synusage[] =
 static char desusage[] =
 "DESCRIPTION\n"
 "\tAllows the patching of BSD binaries, for example, a distributed\n"
-"\tkernel. Recient additions allows the user to index into an array\n"
+"\tkernel. Recent additions allows the user to index into an array\n"
 "\tand assign a value. Binpatch has internal variables to allow\n"
 "\tyou to test it on itself under NetBSD.\n"
 "OPTIONS\n"

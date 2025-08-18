@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930reg.h,v 1.8 2021/12/05 04:54:21 msaitoh Exp $ */
+/* $NetBSD: am79c930reg.h,v 1.9 2025/08/18 20:59:55 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 /*
  * The 79c930 contains a bus interface unit, a media access
- * controller, and a tranceiver attachment interface.
+ * controller, and a transceiver attachment interface.
  * The MAC contains an 80188 CPU core.
  * typical devices built around this chip typically add 32k or 64k of
  * memory for buffers.
