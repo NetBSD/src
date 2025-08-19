@@ -1,4 +1,4 @@
-# $NetBSD: t_pax.sh,v 1.8 2025/08/18 12:55:54 martin Exp $
+# $NetBSD: t_pax.sh,v 1.9 2025/08/19 13:44:24 christos Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -70,7 +70,7 @@ pr44498_body()
 	chmod 111 foo
 	touch baz/quux
 	atf_check pax -w -x ustar -f baz.tar baz
-	atf_check -e ignore -o 'inline:baz\nbaz/quux\n' \
+	atf_check -o 'inline:baz\nbaz/quux\n' \
 	    sh -c '{ cd foo/bar && exec pax; } <baz.tar'
 }
 
@@ -86,7 +86,7 @@ pr44498_copy_body()
 	mkdir foo foo/bar foo/bar/baz
 	chmod 111 foo
 	touch foo/bar/quux
-	atf_check -e ignore sh -c '{ cd foo/bar && exec pax -rw quux baz/.; }'
+	atf_check sh -c '{ cd foo/bar && exec pax -rw quux baz/.; }'
 }
 
 atf_test_case pr44498_insecureextract
@@ -102,7 +102,7 @@ pr44498_insecureextract_body()
 	chmod 111 foo
 	touch baz/quux
 	atf_check pax -w -x ustar -f baz.tar baz
-	atf_check -e ignore sh -c '{ cd foo/bar && exec pax -r --insecure; } <baz.tar'
+	atf_check sh -c '{ cd foo/bar && exec pax -r --insecure; } <baz.tar'
 }
 
 atf_test_case pr44498_listwd
@@ -117,7 +117,7 @@ pr44498_listwd_body()
 	chmod 111 foo
 	touch baz/quux
 	atf_check pax -w -x ustar -f baz.tar baz
-	atf_check -e ignore -o 'inline:baz\nbaz/quux\n' \
+	atf_check -o 'inline:baz\nbaz/quux\n' \
 	    sh -c '{ cd foo && exec pax; } <baz.tar'
 }
 
@@ -132,7 +132,7 @@ pr44498_write_body()
 	mkdir foo foo/bar
 	touch foo/bar/quux
 	chmod 111 foo
-	atf_check -e ignore sh -c '{ cd foo/bar && pax -w -x ustar .; } >bar.tar'
+	atf_check sh -c '{ cd foo/bar && pax -w -x ustar .; } >bar.tar'
 	atf_check -o 'inline:.\n./quux\n' pax -f bar.tar
 }
 
