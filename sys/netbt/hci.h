@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.46 2019/09/28 07:06:33 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.47 2025/08/19 10:41:45 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.46 2019/09/28 07:06:33 plunky Exp $
+ * $Id: hci.h,v 1.47 2025/08/19 10:41:45 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -984,7 +984,7 @@ typedef struct {
 /* No return parameter(s) */
 
 #define HCI_OCF_SNIFF_SUBRATING				0x0011
-#define HCI_CMD_SNIFF_SUBRATING				0x0810
+#define HCI_CMD_SNIFF_SUBRATING				0x0811
 typedef struct {
 	uint16_t	con_handle;	/* connection handle */
 	uint16_t	max_latency;
