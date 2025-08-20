@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.53 2022/12/28 07:34:42 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.54 2025/08/20 07:53:33 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,16 +32,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.53 2022/12/28 07:34:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.54 2025/08/20 07:53:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/sysctl.h>
+#include <sys/kthread.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/sysmon/sysmonvar.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -51,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.53 2022/12/28 07:34:42 macallan Exp $");
 
 #include <powerpc/cpu.h>
 #include <sys/cpufreq.h>
+#include <dev/led.h>
+#include <macppc/dev/fancontrolvar.h>
 
 #include "opt_obio.h"
 
@@ -69,30 +73,55 @@ struct obio_softc {
 	bus_space_tag_t sc_tag;
 	bus_space_handle_t sc_bh;
 	int sc_node;
-#ifdef OBIO_SPEED_CONTROL
 	int sc_voltage;
 	int sc_busspeed;
 	int sc_spd_hi, sc_spd_lo;
 	struct cpufreq sc_cf;
-#endif
+	/* Xserve G4 pwm fan control */
+	fancontrol_zone_t sc_zones[2];
+	int sc_duty[2];
+	int sc_target[2];
+	int sc_pwm;
+	lwp_t *sc_thread;
+	int sc_dying;
 };
 
 static struct obio_softc *obio0 = NULL;
 
-#ifdef OBIO_SPEED_CONTROL
 static void obio_setup_gpios(struct obio_softc *, int);
 static void obio_set_cpu_speed(struct obio_softc *, int);
 static int  obio_get_cpu_speed(struct obio_softc *);
 static int  sysctl_cpuspeed_temp(SYSCTLFN_ARGS);
 static int  sysctl_cpuspeed_cur(SYSCTLFN_ARGS);
 static int  sysctl_cpuspeed_available(SYSCTLFN_ARGS);
+static int  sysctl_gpio(SYSCTLFN_ARGS);
+#ifdef OBIO_GPIO_DEBUG
+static int  sysctl_level(SYSCTLFN_ARGS);
+#endif
+static int  sysctl_pwm(SYSCTLFN_ARGS);
 static void obio_get_freq(void *, void *);
 static void obio_set_freq(void *, void *);
+static int gpio_get(void *);
+static void gpio_set(void *, int);
+
+static bool is_cpu(const envsys_data_t *);
+static bool is_case(const envsys_data_t *);
+
+static int obio_set_rpm(void *, int, int);
+static int obio_get_rpm(void *, int);
+static int obio_get_pwm(int);
+static void obio_set_pwm(int, int);
+
+static void obio_adjust(void *);
+
 static const char *keylargo[] = {"Keylargo",
 				 "AAPL,Keylargo",
+				 "K2-Keylargo",
 				 NULL};
 
-#endif
+static const char *xserve[] = {"RackMac1,2",
+			       NULL};
+
 
 CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
@@ -129,7 +158,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct confargs ca;
 	bus_space_handle_t bsh;
-	int node, child, namelen, error;
+	int node, child, namelen, error, root, is_xserve = 0;
 	u_int reg[20];
 	int intr[6], parent_intr = 0, parent_nintr = 0;
 	int map_size = 0x1000;
@@ -137,13 +166,14 @@ obio_attach(device_t parent, device_t self, void *aux)
 	char compat[32];
 
 	sc->sc_dev = self;
-#ifdef OBIO_SPEED_CONTROL
 	sc->sc_voltage = -1;
 	sc->sc_busspeed = -1;
 	sc->sc_spd_lo = 600;
 	sc->sc_spd_hi = 800;
-#endif
-
+	sc->sc_dying = 0;
+	root = OF_finddevice("/");
+	is_xserve = of_compatible(root, xserve);
+	
 	switch (PCI_PRODUCT(pa->pa_id)) {
 
 	case PCI_PRODUCT_APPLE_GC:
@@ -244,13 +274,11 @@ obio_attach(device_t parent, device_t self, void *aux)
 		if (namelen >= sizeof(name))
 			continue;
 
-#ifdef OBIO_SPEED_CONTROL
 		if (strcmp(name, "gpio") == 0) {
 
 			obio_setup_gpios(sc, child);
 			continue;
 		}
-#endif
 
 		name[namelen] = 0;
 		ca.ca_name = name;
@@ -274,6 +302,50 @@ obio_attach(device_t parent, device_t self, void *aux)
 
 		config_found(self, &ca, obio_print,
 		    CFARGS(.devhandle = devhandle_from_of(selfh, child)));
+	}
+	if (is_xserve) {
+		struct sysctlnode *me;
+
+		printf("starting Xserve fan control\n");
+
+		sysctl_createv(NULL, 0, NULL, (void *) &me,
+		    CTLFLAG_READWRITE,
+		    CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
+		    NULL, 0, NULL, 0,
+		    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+		sc->sc_zones[0].name = "CPU";
+		sc->sc_zones[0].filter = is_cpu;
+		sc->sc_zones[0].cookie = sc;
+		sc->sc_zones[0].get_rpm = obio_get_rpm;
+		sc->sc_zones[0].set_rpm = obio_set_rpm;
+		sc->sc_zones[0].Tmin = 30;
+		sc->sc_zones[0].Tmax = 60;
+		sc->sc_zones[0].nfans = 1;
+		sc->sc_zones[0].fans[0].name = "CPU fan";
+		sc->sc_zones[0].fans[0].num = 0;
+		sc->sc_zones[0].fans[0].min_rpm = 800;
+		sc->sc_zones[0].fans[0].max_rpm = 6000;
+		sc->sc_duty[0] = obio_get_pwm(0);
+		fancontrol_init_zone(&sc->sc_zones[0], me);
+
+		sc->sc_zones[1].name = "Case";
+		sc->sc_zones[1].filter = is_case;
+		sc->sc_zones[1].cookie = sc;
+		sc->sc_zones[1].get_rpm = obio_get_rpm;
+		sc->sc_zones[1].set_rpm = obio_set_rpm;
+		sc->sc_zones[1].Tmin = 30;
+		sc->sc_zones[1].Tmax = 50;
+		sc->sc_zones[1].nfans = 1;
+		sc->sc_zones[1].fans[0].name = "Case fan";
+		sc->sc_zones[1].fans[0].num = 1;
+		sc->sc_zones[1].fans[0].min_rpm = 800;
+		sc->sc_zones[1].fans[0].max_rpm = 6000;
+		sc->sc_duty[1] = obio_get_pwm(1);
+		fancontrol_init_zone(&sc->sc_zones[1], me);
+
+		kthread_create(PRI_NONE, 0, curcpu(), obio_adjust, sc,
+		    &sc->sc_thread, "fan control");
 	}
 }
 
@@ -350,8 +422,6 @@ obio_space_map(bus_addr_t addr, bus_size_t size, bus_space_handle_t *bh)
 	return bus_space_subregion(obio0->sc_tag, obio0->sc_bh,
 	    addr & 0xfffff, size, bh);
 }
-	
-#ifdef OBIO_SPEED_CONTROL
 
 static void
 obio_setup_cpufreq(device_t dev)
@@ -368,7 +438,7 @@ static void
 obio_setup_gpios(struct obio_softc *sc, int node)
 {
 	uint32_t gpio_base, reg[6];
-	const struct sysctlnode *sysctl_node, *me, *freq;
+	const struct sysctlnode *sysctl_node, *me, *freq, *gpio;
 	struct cpufreq *cf = &sc->sc_cf;
 	char name[32];
 	int child, use_dfs, cpunode, hiclock;
@@ -382,6 +452,51 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 	gpio_base = reg[0];
 	DPRINTF("gpio_base: %02x\n", gpio_base);
 
+	if (sysctl_createv(NULL, 0, NULL, 
+	    &gpio, 
+	    CTLFLAG_READWRITE, CTLTYPE_NODE, "gpio", NULL, NULL,
+	    0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL) != 0)
+		printf("couldn't create 'gpio' node\n");
+#ifdef OBIO_GPIO_DEBUG
+	sysctl_createv(NULL, 0, NULL, &me,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "level0", NULL,
+	    sysctl_level, 1, (void *)0x50, 0, CTL_HW,
+	    gpio->sysctl_num, CTL_CREATE, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, &me,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "level1", NULL,
+	    sysctl_level, 1, (void *)0x54, 0, CTL_HW,
+	    gpio->sysctl_num, CTL_CREATE, CTL_EOL);
+#endif
+	sysctl_createv(NULL, 0, NULL, &me,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "pwm0", NULL,
+	    sysctl_pwm, 1, (void *)0, 0, CTL_HW,
+	    gpio->sysctl_num, CTL_CREATE, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, &me,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "pwm1", NULL,
+	    sysctl_pwm, 1, (void *)1, 0, CTL_HW,
+	    gpio->sysctl_num, CTL_CREATE, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, &me,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "pwm2", NULL,
+	    sysctl_pwm, 1, (void *)2, 0, CTL_HW,
+	    gpio->sysctl_num, CTL_CREATE, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, &me,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "pwm3", NULL,
+	    sysctl_pwm, 1, (void *)3, 0, CTL_HW,
+	    gpio->sysctl_num, CTL_CREATE, CTL_EOL);
+#ifdef OBIO_GPIO_DEBUG
+	sysctl_createv(NULL, 0, NULL, &me,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "prescale", NULL,
+	    sysctl_level, 1, (void *)0x4c, 0, CTL_HW,
+	    gpio->sysctl_num, CTL_CREATE, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, &me,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "tach0", NULL,
+	    sysctl_level, 1, (void *)0x34, 0, CTL_HW,
+	    gpio->sysctl_num, CTL_CREATE, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, &me,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "tach1", NULL,
+	    sysctl_level, 1, (void *)0x2c, 0, CTL_HW,
+	    gpio->sysctl_num, CTL_CREATE, CTL_EOL);
+#endif
 	/* now look for voltage and bus speed gpios */
 	use_dfs = 0;
 	for (child = OF_child(node); child; child = OF_peer(child)) {
@@ -404,17 +519,28 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 		if (strcmp(name, "frequency-gpio") == 0) {
 			DPRINTF("found frequency_gpio at %02x\n", reg[0]);
 			sc->sc_busspeed = gpio_base + reg[0];
-		}
+		} else
 		if (strcmp(name, "voltage-gpio") == 0) {
 			DPRINTF("found voltage_gpio at %02x\n", reg[0]);
 			sc->sc_voltage = gpio_base + reg[0];
-		}
+		} else
 		if (strcmp(name, "cpu-vcore-select") == 0) {
 			DPRINTF("found cpu-vcore-select at %02x\n", reg[0]);
 			sc->sc_voltage = gpio_base + reg[0];
 			/* frequency gpio is not needed, we use cpu's DFS */
 			use_dfs = 1;
-		}
+		} else if (strcmp(name, "indicatorLED-gpio") == 0) {
+			led_attach("indicator", (void *)(gpio_base + reg[0]),
+			    gpio_get, gpio_set);
+		} else {
+			/* attach a sysctl node */
+			if (sysctl_createv(NULL, 0, NULL, &me,
+			    CTLFLAG_READWRITE, CTLTYPE_INT, name, NULL,
+			    sysctl_gpio, 1, (void *)(reg[0] + gpio_base), 0, CTL_HW,
+			    gpio->sysctl_num, CTL_CREATE, CTL_EOL) != 0) {
+			    	printf("failed to create %s node\n", name);
+			}
+		}	
 	}
 
 	if ((sc->sc_voltage < 0) || (sc->sc_busspeed < 0 && !use_dfs))
@@ -648,6 +774,63 @@ sysctl_cpuspeed_available(SYSCTLFN_ARGS)
 	return(sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
+static int
+sysctl_gpio(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	int reg = (int)node.sysctl_data;
+	uint32_t val, ret;
+	DPRINTF("%s: reg %x\n", __func__, reg);
+	val = obio_read_1(reg);
+	if (val & GPIO_DDR_OUTPUT) {
+		ret = (val & GPIO_DATA) != 0;
+	} else
+		ret = (val & GPIO_LEVEL) != 0;
+	node.sysctl_data = &ret;
+	node.sysctl_size = 4;
+	return(sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+#ifdef OBIO_GPIO_DEBUG
+static int
+sysctl_level(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	int reg = (int)node.sysctl_data;
+	uint32_t val;
+	val = obio_read_4(reg);
+	DPRINTF("%s: reg %x %08x\n", __func__, reg, val);
+	node.sysctl_data = &val;
+	node.sysctl_size = 4;
+	return(sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+#endif
+
+static int
+sysctl_pwm(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	int which = (int)node.sysctl_data;
+	uint32_t pwm;
+
+	pwm = obio_get_pwm(which);
+
+	if (newp) {
+		/* we're asked to write */	
+		node.sysctl_data = &pwm;
+		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
+
+			pwm = *(int *)node.sysctl_data;
+			obio_set_pwm(which, pwm);
+			return 0;
+		}
+		return EINVAL;
+	}
+	node.sysctl_data = &pwm;
+	node.sysctl_size = 4;
+	return(sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
 SYSCTL_SETUP(sysctl_ams_setup, "sysctl obio subtree setup")
 {
 
@@ -656,6 +839,161 @@ SYSCTL_SETUP(sysctl_ams_setup, "sysctl obio subtree setup")
 		       CTLTYPE_NODE, "machdep", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "hw", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_HW, CTL_EOL);
 }
 
-#endif /* OBIO_SPEEDCONTROL */
+static int
+gpio_get(void *cookie)
+{
+	uint32_t reg = (uint32_t)cookie;
+
+	return ((obio_read_1(reg) & GPIO_LEVEL) != 0);
+}
+
+static void
+gpio_set(void *cookie, int val)
+{
+	uint32_t reg = (uint32_t)cookie;
+	uint8_t gpio = obio_read_1(reg);
+
+	if (val)  {
+		gpio |= GPIO_DATA;
+	} else
+		gpio &= ~GPIO_DATA;	
+	obio_write_1(reg, gpio);
+}
+
+/* Xserve fan control */
+static bool
+is_cpu(const envsys_data_t *edata)
+{
+	if (edata->units != ENVSYS_STEMP)
+		return false;
+	if ((strstr(edata->desc, "CPU") != NULL) ||
+	    (strstr(edata->desc, "ternal") != NULL))
+		return TRUE;
+	return false;
+}
+
+static bool
+is_case(const envsys_data_t *edata)
+{
+	if (edata->units != ENVSYS_STEMP)
+		return false;
+	if ((strstr(edata->desc, "CASE") != NULL) ||
+	    (strstr(edata->desc, "monitor") != NULL))
+		return TRUE;
+	return false;
+}
+
+static bool
+is_fan0(const envsys_data_t *edata)
+{
+	if (edata->units != ENVSYS_SFANRPM)
+		return false;
+	if (strstr(edata->desc, "FAN1") != NULL)
+		return TRUE;
+	return false;
+}
+
+static bool
+is_fan1(const envsys_data_t *edata)
+{
+	if (edata->units != ENVSYS_SFANRPM)
+		return false;
+	if (strstr(edata->desc, "FAN2") != NULL)
+		return TRUE;
+	return false;
+}
+
+static int
+obio_get_pwm(int which)
+{
+	uint32_t reg, mask;
+	int shift;
+
+	shift = (3 - which) * 8;
+	mask = 0xff << shift;
+	reg = obio_read_4(0x30);
+	return (reg & mask) >> shift;
+}
+
+static void
+obio_set_pwm(int which, int pwm)
+{
+	uint32_t reg, mask;
+	int shift;
+
+	shift = (3 - which) * 8;
+	mask = 0xff << shift;
+	reg = obio_read_4(0x30);
+	reg &= ~mask;
+	reg |= (pwm & 0xff) << shift;
+	obio_write_4(0x30, reg);
+}
+
+static int
+obio_get_rpm(void *cookie, int which)
+{
+	int rpm = 0;
+
+	if (which == 0) {
+		rpm = sysmon_envsys_get_max_value(is_fan0, true);
+	} else
+		rpm = sysmon_envsys_get_max_value(is_fan1, true);
+	return rpm;
+}
+
+static int
+obio_set_rpm(void *cookie, int which, int speed)
+{
+	struct obio_softc *sc = cookie;
+	int diff;
+	unsigned int nduty = sc->sc_duty[which];
+	int current_speed;
+
+	sc->sc_target[which] = speed;
+	current_speed = obio_get_rpm(sc, which);
+	diff = current_speed - speed;
+	DPRINTF("d %d s %d t %d diff %d ", nduty, current_speed, speed, diff);
+	if (diff > 200) {
+		/* slow down */
+		nduty += 2;
+		if (nduty > 200) nduty = 200;
+	}
+	if (diff < -200) {
+		/* speed up */
+		nduty -= 2;
+		if (nduty < 50) nduty = 50;
+	}
+	if (nduty != sc->sc_duty[which]) {
+		sc->sc_duty[which] = nduty;
+		obio_set_pwm(which, nduty);
+		sc->sc_pwm = TRUE;
+	}
+	return 0;
+}
+
+static void
+obio_adjust(void *cookie)
+{
+	struct obio_softc *sc = cookie;
+
+	while (!sc->sc_dying) {
+		sc->sc_pwm = FALSE;
+		fancontrol_adjust_zone(&sc->sc_zones[0]);
+		fancontrol_adjust_zone(&sc->sc_zones[1]);
+		/*
+		 * take a shorter nap if we're in the process of adjusting a
+		 * PWM fan, which relies on measuring speed and then changing
+		 * its duty cycle until we're reasonable close to the target
+		 * speed
+		 */
+		kpause("fanctrl", true, mstohz(sc->sc_pwm ? 1000 : 2000), NULL);
+	}
+	kthread_exit(0);
+}
