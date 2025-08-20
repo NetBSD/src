@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.62 2025/08/20 11:03:59 joe Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.63 2025/08/20 16:25:19 joe Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -320,7 +320,7 @@ build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 		assert(data != NULL);
 
 		switch (type) {
-		case NPFVAR_VAR_ID:
+		case NPFVAR_VAR_ID: {
 			/* allow us to go through nested variables ourselves */
 			npfvar_t *rvp = npfvar_lookup(data);
 			if (rvp == NULL)
@@ -328,6 +328,7 @@ build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 
 			build_vars(ctx, family, rvp, opts);
 			break;
+		}
 		case NPFVAR_FAM: {
 			fam_addr_mask_t *fam = data;
 			npfctl_build_fam(ctx, family, fam, opts);
