@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.5 2025/08/16 16:32:08 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.6 2025/08/20 11:01:31 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -69,4 +69,9 @@ usr.sbin/npf/npfctl/npf_build.c			1.61
 
 	npfctl(8): fix segfault with pcap-filter.
 	[kim, ticket #11]
+
+usr.sbin/npf/npfctl/npf_build.c			1.60
+
+	npfctl(8): PR 59581: set layer 3 bit in dynamic rule attributes.
+	[joe, ticket #12]
 
