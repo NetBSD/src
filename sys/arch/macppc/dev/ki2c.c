@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.38 2025/07/07 01:14:51 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.39 2025/08/20 07:55:19 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -86,7 +86,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 {
 	struct ki2c_softc *sc = device_private(self);
 	struct confargs *ca = aux;
-	int node = ca->ca_node;
+	int node = ca->ca_node, root;
 	uint32_t addr, channel, reg, intr[2];
 	int rate, child, /*namelen,*/ i2cbus[2] = {0, 0};
 	struct i2cbus_attach_args iba;
@@ -96,13 +96,17 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	char compat[256], num[8], descr[32];
 	prop_dictionary_t dev;
 	prop_data_t data;
-	char name[32], intr_xname[32];
+	char name[32], intr_xname[32], model[32];
 	uint32_t picbase;
 
 	sc->sc_dev = self;
 	sc->sc_tag = ca->ca_tag;
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
+	root = OF_finddevice("/");
+	model[0] = 0;
+	OF_getprop(root, "model", model, 32);
+	DPRINTF("model %s\n", model);
 	if (OF_getprop(node, "AAPL,i2c-rate", &rate, 4) != 4) {
 		aprint_error(": cannot get i2c-rate\n");
 		return;
@@ -233,16 +237,24 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 				int i = 0, idx = 0;
 				char buffer[256];
 				memset(buffer, 0, 256);
-				OF_getprop(devs, "hwsensor-location", buffer, 256);
-				while (len > 0) {
-					reg = ids[i];
-					strcpy(descr, &buffer[idx]);
-					idx += strlen(descr) + 1;
-					DPRINTF("found '%s' at %02x\n", descr, reg);
-					snprintf(num, 7, "s%02x", i);
-					prop_dictionary_set_string(dev, num, descr);
-					i++;
-					len -= 4;
+				if (len <= 0) {
+					/* no info, fill in what we may know */
+					if ((strcmp(name, "temp-monitor") == 0) &&
+					    (strcmp(model, "RackMac1,2") == 0)) {
+						prop_dictionary_set_string(dev, "s00", "CASE");   	
+					}
+				} else {
+					OF_getprop(devs, "hwsensor-location", buffer, 256);
+					while (len > 0) {
+						reg = ids[i];
+						strcpy(descr, &buffer[idx]);
+						idx += strlen(descr) + 1;
+						DPRINTF("found '%s' at %02x\n", descr, reg);
+						snprintf(num, 7, "s%02x", i);
+						prop_dictionary_set_string(dev, num, descr);
+						i++;
+						len -= 4;
+					}
 				}
 			} else {
 				while (devc != 0) {
