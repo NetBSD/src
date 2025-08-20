@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.59.2.1 2025/08/16 16:31:01 martin Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.59.2.2 2025/08/20 11:01:09 martin Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -840,6 +840,9 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
 	if (npf_conf) {
 		cg = current_group[rule_nesting_level];
 		attr |= npf_rule_layer_compat(cg, fopts->layer);
+	} else {
+		/* set the layer bit directly for dynamic rules */
+		attr |= fopts->layer;
 	}
 
 	if (attr & NPF_RULE_LAYER_2 && attr & (NPF_RULE_RETRST | NPF_RULE_RETICMP))
