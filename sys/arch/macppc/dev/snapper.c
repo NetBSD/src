@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.67 2023/12/20 15:29:04 thorpej Exp $	*/
+/*	$NetBSD: snapper.c,v 1.68 2025/08/20 07:00:31 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.67 2023/12/20 15:29:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.68 2025/08/20 07:00:31 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -649,24 +649,6 @@ struct tas3004_reg {
 	u_char ACR[1];
 	u_char MCR2[1];
 };
-
-#define GPIO_OUTSEL	0xf0	/* Output select */
-		/*	0x00	GPIO bit0 is output
-			0x10	media-bay power
-			0x20	reserved
-			0x30	MPIC */
-
-#define GPIO_ALTOE	0x08	/* Alternate output enable */
-		/*	0x00	Use DDR
-			0x08	Use output select */
-
-#define GPIO_DDR	0x04	/* Data direction */
-#define GPIO_DDR_OUTPUT	0x04	/* Output */
-#define GPIO_DDR_INPUT	0x00	/* Input */
-
-#define GPIO_LEVEL	0x02	/* Pin level (RO) */
-
-#define	GPIO_DATA	0x01	/* Data */
 
 static int
 snapper_match(device_t parent, struct cfdata *match, void *aux)
