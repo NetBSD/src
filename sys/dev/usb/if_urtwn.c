@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.118 2025/08/21 02:15:06 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.119 2025/08/21 03:06:52 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.118 2025/08/21 02:15:06 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.119 2025/08/21 03:06:52 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2771,7 +2771,7 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct urtwn_tx_data *dummy = NULL;
 	dummy = urtwn_get_dummy_data(sc, pidx);
 	if (dummy == NULL) {
-		device_printf(sc->sc_dev, "no dummy buffers available\n",
+		device_printf(sc->sc_dev, "no dummy buffers available\n");
 		goto done;
 	}
 	
