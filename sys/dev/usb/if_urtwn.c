@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.113 2025/08/21 01:57:25 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.114 2025/08/21 01:58:58 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.113 2025/08/21 01:57:25 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.114 2025/08/21 01:58:58 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3003,6 +3003,7 @@ urtwn_start(struct ifnet *ifp)
 			device_printf(sc->sc_dev,
 			    "unable to transmit packet\n");
 			if_statinc(ifp, if_oerrors);
+			urtwn_put_tx_data(sc, data);
 			continue;
 		}
 		m_freem(m);
