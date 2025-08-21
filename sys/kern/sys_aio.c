@@ -1583,7 +1583,8 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 	struct filedesc	*fdp = p->p_fd;
 	struct aiosp *aiosp;
 	struct aio_job *job;
-	unsigned int fildes;
+	unsigned int fildes, canceled = 0;
+	bool have_active = false;
 	fdtab_t *dt;
 	int error;
 
@@ -1618,6 +1619,12 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 		if (aiocbp) {
 			job = aiocbp->job;
 
+			/*
+			 * If the job is on sp->job (signified by job->on_queue)
+			 * that means that it has been distribtued yet. And if
+			 * it is not on the queue that means it is currently
+			 * beign processed.
+			 */
 			if (job->on_queue) {
 				TAILQ_REMOVE(&aiosp->jobs, job, list);
 				job->on_queue = false;
@@ -1645,7 +1652,45 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 		}
 	}
 
-	/* Cancel all jobs associated with this file handle */
+	/*
+	 * Cancel all queued jobs associated with this file descriptor
+	 */
+	struct aio_job *tmp;
+	TAILQ_FOREACH_SAFE(job, &aiosp->jobs, list, tmp) {
+		if (job->aiocbp.aio_fildes == (int)fildes) {
+			TAILQ_REMOVE(&aiosp->jobs, job, list);
+			job->on_queue = false;
+
+			mutex_enter(&job->mtx);
+			aiowaitgrouplk_flush(&job->lk);
+			job->completed = true;
+			mutex_exit(&job->mtx);
+
+			aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
+			canceled++;
+		}
+	}
+
+	/*
+	 * If there is a live file-group for this fp, then some requests
+	 * are active and could not be canceled.
+	 */
+	{
+		struct file *fp = dt->dt_ff[fildes]->ff_file;
+		struct aiost_file_group find = { 0 }, *fg;
+
+		find.fp = fp;
+		fg = RB_FIND(aiost_file_tree, aiosp->fg_root, &find);
+		have_active = (fg != NULL);
+	}
+
+	if (canceled > 0 && !have_active) {
+		*retval = AIO_CANCELED;
+	} else if (canceled == 0) {
+		*retval = have_active ? AIO_NOTCANCELED : AIO_ALLDONE;
+	} else {
+		*retval = AIO_NOTCANCELED;
+	}
 
 	mutex_exit(&aiosp->mtx);
 	mutex_exit(&aio->aio_mtx);
