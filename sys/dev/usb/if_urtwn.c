@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.115 2025/08/21 02:01:22 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.116 2025/08/21 02:03:43 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.115 2025/08/21 02:01:22 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.116 2025/08/21 02:03:43 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2598,7 +2598,7 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		pktspacing = 128;
 
 	/* Process all of them. */
-	while (npkts-- > 0) {
+	while (npkts-- > 0 && len > 0) {
 		if (__predict_false(len < (int)sizeof(*stat))) {
 			DPRINTFN(DBG_RX, "len(%jd) is short than header",
 			    len, 0, 0, 0);
