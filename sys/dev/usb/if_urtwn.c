@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.114 2025/08/21 01:58:58 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.115 2025/08/21 02:01:22 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.114 2025/08/21 01:58:58 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.115 2025/08/21 02:01:22 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2555,7 +2555,7 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	size_t pidx = data->pidx;
 	uint32_t rxdw0;
 	uint8_t *buf;
-	int len, totlen, pktlen, infosz, npkts;
+	int len, totlen, pktlen, infosz, npkts, pktspacing;
 
 	URTWNHIST_FUNC(); URTWNHIST_CALLED();
 	DPRINTFN(DBG_RX, "status=%jd", status, 0, 0, 0);
@@ -2592,6 +2592,11 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	if (npkts != 0)
 		rnd_add_uint32(&sc->rnd_source, npkts);
 
+	if (ISSET(sc->chip, URTWN_CHIP_92EU))
+		pktspacing = 8;
+	else
+		pktspacing = 128;
+
 	/* Process all of them. */
 	while (npkts-- > 0) {
 		if (__predict_false(len < (int)sizeof(*stat))) {
@@ -2621,8 +2626,7 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		/* Process 802.11 frame. */
 		urtwn_rx_frame(sc, buf, pktlen);
 
-		/* Next chunk is 128-byte aligned. */
-		totlen = roundup2(totlen, 128);
+		totlen = roundup2(totlen, pktspacing);
 		buf += totlen;
 		len -= totlen;
 	}
