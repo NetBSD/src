@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.112 2025/07/29 18:58:40 hgutch Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.113 2025/08/21 01:57:25 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.112 2025/07/29 18:58:40 hgutch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.113 2025/08/21 01:57:25 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -760,6 +760,7 @@ urtwn_alloc_rx_list(struct urtwn_softc *sc)
 			data = &sc->rx_data[j][i];
 
 			data->sc = sc;	/* Backpointer for callbacks. */
+			data->pidx = j;
 
 			error = usbd_create_xfer(sc->rx_pipe[j], URTWN_RXBUFSZ,
 			    0, 0, &data->xfer);
