@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.116 2025/08/21 02:03:43 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.117 2025/08/21 02:06:05 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.116 2025/08/21 02:03:43 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.117 2025/08/21 02:06:05 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3373,7 +3373,7 @@ urtwn_llt_init(struct urtwn_softc *sc)
 	if (sc->chip & URTWN_CHIP_88E)
 		pktbuf_count = R88E_TXPKTBUF_COUNT;
 	else if (sc->chip & URTWN_CHIP_92EU)
-		pktbuf_count = R88E_TXPKTBUF_COUNT;
+		pktbuf_count = R92E_TXPKTBUF_COUNT;
 	else
 		pktbuf_count = R92C_TXPKTBUF_COUNT;
 
