@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.16 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.17 2025/08/21 02:15:06 nat Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  * Driver definitions.
  */
 #define URTWN_RX_LIST_COUNT		1
-#define URTWN_TX_LIST_COUNT		8
+#define URTWN_TX_LIST_COUNT		1
 
 #define URTWN_HOST_CMD_RING_COUNT	32
 
@@ -172,8 +172,10 @@ struct urtwn_softc {
 	int				fwcur;
 	struct urtwn_rx_data		rx_data[R92C_MAX_EPIN][URTWN_RX_LIST_COUNT];
 	struct urtwn_tx_data		tx_data[R92C_MAX_EPOUT][URTWN_TX_LIST_COUNT];
+	struct urtwn_tx_data		dummy_data[R92C_MAX_EPOUT][URTWN_TX_LIST_COUNT];
 	TAILQ_HEAD(, urtwn_tx_data)	tx_free_list[R92C_MAX_EPOUT];
 	TAILQ_HEAD(, urtwn_rx_data)	rx_free_list[R92C_MAX_EPIN];
+	TAILQ_HEAD(, urtwn_tx_data)	dummy_free_list[R92C_MAX_EPOUT];
 
 	struct r92c_rom			rom;
 	uint8_t				r88e_rom[4096];

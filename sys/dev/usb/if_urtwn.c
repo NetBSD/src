@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.117 2025/08/21 02:06:05 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.118 2025/08/21 02:15:06 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.117 2025/08/21 02:06:05 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.118 2025/08/21 02:15:06 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -248,6 +248,8 @@ static int	urtwn_alloc_rx_list(struct urtwn_softc *);
 static void	urtwn_free_rx_list(struct urtwn_softc *);
 static int	urtwn_alloc_tx_list(struct urtwn_softc *);
 static void	urtwn_free_tx_list(struct urtwn_softc *);
+static int	urtwn_alloc_dummy_list(struct urtwn_softc *);
+static void	urtwn_free_dummy_list(struct urtwn_softc *);
 static void	urtwn_task(void *);
 static void	urtwn_do_async(struct urtwn_softc *,
 		    void (*)(struct urtwn_softc *, void *), void *, int);
@@ -302,10 +304,13 @@ static int8_t	urtwn_r88e_get_rssi(struct urtwn_softc *, int, void *);
 static void	urtwn_rx_frame(struct urtwn_softc *, uint8_t *, int);
 static void	urtwn_rxeof(struct usbd_xfer *, void *, usbd_status);
 static void	urtwn_txeof(struct usbd_xfer *, void *, usbd_status);
+static void	urtwn_dummytxeof(struct usbd_xfer *, void *, usbd_status);
 static int	urtwn_tx(struct urtwn_softc *, struct mbuf *,
 		    struct ieee80211_node *, struct urtwn_tx_data *);
 static struct urtwn_tx_data *
 		urtwn_get_tx_data(struct urtwn_softc *, size_t);
+static struct urtwn_tx_data *
+		urtwn_get_dummy_data(struct urtwn_softc *, size_t);
 static void	urtwn_start(struct ifnet *);
 static void	urtwn_watchdog(struct ifnet *);
 static int	urtwn_ioctl(struct ifnet *, u_long, void *);
@@ -792,6 +797,68 @@ urtwn_free_rx_list(struct urtwn_softc *sc)
 		for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
 			CTASSERT(sizeof(xfer) == sizeof(void *));
 			xfer = atomic_swap_ptr(&sc->rx_data[j][i].xfer, NULL);
+			if (xfer != NULL)
+				usbd_destroy_xfer(xfer);
+		}
+	}
+}
+
+static int __noinline
+urtwn_alloc_dummy_list(struct urtwn_softc *sc)
+{
+	struct urtwn_tx_data *data;
+	size_t i;
+	int error = 0;
+
+	URTWNHIST_FUNC(); URTWNHIST_CALLED();
+
+	mutex_enter(&sc->sc_tx_mtx);
+	for (size_t j = 0; j < sc->tx_npipe; j++) {
+		TAILQ_INIT(&sc->dummy_free_list[j]);
+		for (i = 0; i < URTWN_TX_LIST_COUNT; i++) {
+			data = &sc->dummy_data[j][i];
+
+			data->sc = sc;	/* Backpointer for callbacks. */
+			data->pidx = j;
+
+			error = usbd_create_xfer(sc->tx_pipe[j],
+			    4, USBD_FORCE_SHORT_XFER, 0,
+			    &data->xfer);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "could not allocate xfer\n");
+				goto fail;
+			}
+
+			data->buf = usbd_get_buffer(data->xfer);
+
+			/* Append this Tx buffer to our free list. */
+			TAILQ_INSERT_TAIL(&sc->dummy_free_list[j], data, next);
+		}
+	}
+	mutex_exit(&sc->sc_tx_mtx);
+	return 0;
+
+ fail:
+	urtwn_free_dummy_list(sc);
+	mutex_exit(&sc->sc_tx_mtx);
+	return error;
+}
+
+static void
+urtwn_free_dummy_list(struct urtwn_softc *sc)
+{
+	struct usbd_xfer *xfer;
+	size_t i;
+
+	URTWNHIST_FUNC(); URTWNHIST_CALLED();
+
+	/* NB: Caller must abort pipe first. */
+	for (size_t j = 0; j < sc->tx_npipe; j++) {
+		for (i = 0; i < URTWN_TX_LIST_COUNT; i++) {
+			CTASSERT(sizeof(xfer) == sizeof(void *));
+			xfer = atomic_swap_ptr(&sc->dummy_data[j][i].xfer,
+			    NULL);
 			if (xfer != NULL)
 				usbd_destroy_xfer(xfer);
 		}
@@ -2639,6 +2706,17 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 }
 
 static void
+urtwn_put_dummy_data(struct urtwn_softc *sc, struct urtwn_tx_data *data)
+{
+	size_t pidx = data->pidx;
+
+	mutex_enter(&sc->sc_tx_mtx);
+	/* Put this Tx buffer back to our free list. */
+	TAILQ_INSERT_TAIL(&sc->dummy_free_list[pidx], data, next);
+	mutex_exit(&sc->sc_tx_mtx);
+}
+
+static void
 urtwn_put_tx_data(struct urtwn_softc *sc, struct urtwn_tx_data *data)
 {
 	size_t pidx = data->pidx;
@@ -2647,6 +2725,15 @@ urtwn_put_tx_data(struct urtwn_softc *sc, struct urtwn_tx_data *data)
 	/* Put this Tx buffer back to our free list. */
 	TAILQ_INSERT_TAIL(&sc->tx_free_list[pidx], data, next);
 	mutex_exit(&sc->sc_tx_mtx);
+}
+
+static void
+urtwn_dummytxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
+{
+	struct urtwn_tx_data *data = priv;
+	struct urtwn_softc *sc = data->sc;
+
+	urtwn_put_dummy_data(sc, data);
 }
 
 static void
@@ -2681,6 +2768,20 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		return;
 	}
 
+	struct urtwn_tx_data *dummy = NULL;
+	dummy = urtwn_get_dummy_data(sc, pidx);
+	if (dummy == NULL) {
+		device_printf(sc->sc_dev, "no dummy buffers available\n",
+		goto done;
+	}
+	
+	*dummy->buf = 0;
+	usbd_setup_xfer(dummy->xfer, dummy, NULL, 0,
+	    USBD_FORCE_SHORT_XFER | USBD_SYNCHRONOUS_SIG, URTWN_TX_TIMEOUT,
+	    urtwn_dummytxeof);
+	usbd_transfer(dummy->xfer);
+
+done:
 	if_statinc(ifp, if_opackets);
 	urtwn_start(ifp);
 	splx(s);
@@ -2888,6 +2989,21 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	}
 	splx(s);
 	return 0;
+}
+
+struct urtwn_tx_data *
+urtwn_get_dummy_data(struct urtwn_softc *sc, size_t pidx)
+{
+	struct urtwn_tx_data *data = NULL;
+
+	mutex_enter(&sc->sc_tx_mtx);
+	if (!TAILQ_EMPTY(&sc->dummy_free_list[pidx])) {
+		data = TAILQ_FIRST(&sc->dummy_free_list[pidx]);
+		TAILQ_REMOVE(&sc->dummy_free_list[pidx], data, next);
+	}
+	mutex_exit(&sc->sc_tx_mtx);
+
+	return data;
 }
 
 struct urtwn_tx_data *
@@ -4831,6 +4947,13 @@ urtwn_init(struct ifnet *ifp)
 		goto fail;
 	}
 
+	error = urtwn_alloc_dummy_list(sc);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate dummy buffers\n");
+		goto fail;
+	}
+
 	/* Power on adapter. */
 	error = urtwn_power_on(sc);
 	if (error != 0)
@@ -5097,6 +5220,7 @@ urtwn_stop(struct ifnet *ifp, int disable)
 
 	/* Free Tx/Rx buffers. */
 	urtwn_free_tx_list(sc);
+	urtwn_free_dummy_list(sc);
 	urtwn_free_rx_list(sc);
 
 	sc->sc_running = false;
