@@ -120,6 +120,7 @@ struct aio_job {
 	void *aiocb_uptr;	/* User pointer for job identification */
 	struct proc *p;		/* Originating process */
 	bool completed;		/* Job completion status */
+	bool on_queue;		/* Whether or not this job is on sp->jobs */
 	struct aiowaitgrouplk lk; /* List of waitgroups waiting on this job */
 	TAILQ_ENTRY(aio_job) list;
 	struct lio_req *lio;	/* List I/O request (if part of lio_listio) */
@@ -175,6 +176,7 @@ struct aiosp {
 	size_t jobs_pending;		/* Number of pending jobs */
 	kmutex_t mtx;			/* Protects structure */
 	size_t nthreads_total;		/* Number of total servicing threads */
+	volatile u_long njobs_processing;/* Number of total jobs currently being processed*/
 	struct aiocbp_list *aio_hash;	/* Aiocbp hash root */
 	kmutex_t aio_hash_mtx;		/* Protects the hash table */
 	size_t aio_hash_size;		/* Total number of buckets */
@@ -191,7 +193,6 @@ struct lio_req {
 /* Structure of AIO data for process */
 struct aioproc {
 	kmutex_t aio_mtx;		/* Protects the entire structure */
-	struct aio_job *curjob;		/* Currently processing AIO job */
 	unsigned int jobs_count;	/* Count of the jobs */
 	struct aiosp aiosp;		/* Per-process service pool */
 };
@@ -206,7 +207,7 @@ void	aio_print_jobs(void (*)(const char *, ...) __printflike(1, 2));
 int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
 
 int	aiosp_initialize(struct aiosp *);
-int	aiosp_destroy(struct aiosp *);
+int	aiosp_destroy(struct aiosp *, int *);
 int	aiosp_distribute_jobs(struct aiosp *);
 int	aiosp_enqueue_job(struct aiosp *, struct aio_job *);
 int	aiosp_suspend(struct aiosp *, struct aiocb **, int, struct timespec *,

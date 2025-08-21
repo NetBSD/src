@@ -263,7 +263,7 @@ aio_procinit(struct proc *p)
 
 	error = aiocbp_init(&aio->aiosp, 256);
 	if (error) {
-		aiosp_destroy(&aio->aiosp);
+		aiosp_destroy(&aio->aiosp, NULL);
 		kmem_free(aio, sizeof(struct aioproc));
 		return error;
 	}
@@ -298,7 +298,7 @@ aio_exit(struct proc *p, void *cookie)
 		return;
 
 	aiocbp_destroy(&aio->aiosp);
-	aiosp_destroy(&aio->aiosp);
+	aiosp_destroy(&aio->aiosp, NULL);
 	mutex_destroy(&aio->aio_mtx);
 	kmem_free(aio, sizeof(struct aioproc));
 }
@@ -382,6 +382,7 @@ aiosp_distribute_jobs(struct aiosp *sp)
 		 */
 		TAILQ_REMOVE(&sp->jobs, job, list);
 		sp->jobs_pending--;
+		job->on_queue = false;
 
 		if (fg) {
 			TAILQ_INSERT_TAIL(&fg->queue, job, list);
@@ -552,11 +553,12 @@ aiosp_worker_extract(struct aiosp *sp, struct aiost **aiost)
  * must also terminate all of its active and pending asynchronous operation.
  */
 int
-aiosp_destroy(struct aiosp *sp)
+aiosp_destroy(struct aiosp *sp, int *cn)
 {
 	struct aiost *st;
 	struct aiost *tmp;
 	int error = 0;
+	int cnt = 0;
 
 	mutex_enter(&sp->mtx);
 
@@ -570,6 +572,7 @@ aiosp_destroy(struct aiosp *sp)
 			return error;
 		}
 
+		cnt++;
 		kmem_free(st, sizeof(*st));
 	}
 
@@ -580,7 +583,12 @@ aiosp_destroy(struct aiosp *sp)
 			return error;
 		}
 
+		cnt++;
 		kmem_free(st, sizeof(*st));
+	}
+
+	if (cn) {
+		*cn = cnt;
 	}
 
 	mutex_exit(&sp->mtx);
@@ -599,6 +607,7 @@ aiosp_enqueue_job(struct aiosp *aiosp, struct aio_job *job)
 
 	TAILQ_INSERT_TAIL(&aiosp->jobs, job, list);
 	aiosp->jobs_pending++;
+	job->on_queue = true;
 
 	mutex_exit(&aiosp->mtx);
 
@@ -692,10 +701,9 @@ aiost_process_fg (struct aiost *st)
 		}
 
 		mutex_enter(&job->mtx);
+		aiowaitgrouplk_flush(&job->lk);
 		job->completed = true;
 		mutex_exit(&job->mtx);
-
-		aiowaitgrouplk_flush(&job->lk);
 
 		aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
 	}
@@ -1569,6 +1577,79 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 		syscallarg(struct aiocb *) aiocbp;
 	} */
 
+	struct proc *p = l->l_proc;
+	struct aioproc *aio;
+	struct aiocb *aiocbp_uptr;
+	struct filedesc	*fdp = p->p_fd;
+	struct aiosp *aiosp;
+	struct aio_job *job;
+	unsigned int fildes;
+	fdtab_t *dt;
+	int error;
+
+	fildes = (unsigned int)SCARG(uap, fildes);
+	dt = atomic_load_consume(&fdp->fd_dt);
+	if (fildes >= dt->dt_nfiles)
+		return SET_ERROR(EBADF);
+	if (dt->dt_ff[fildes] == NULL || dt->dt_ff[fildes]->ff_file == NULL)
+		return SET_ERROR(EBADF);
+
+	/* Check if AIO structure is initialized */
+	if (p->p_aio == NULL) {
+		*retval = AIO_NOTCANCELED;
+		return 0;
+	}
+
+	aio = p->p_aio;
+	aiocbp_uptr = (struct aiocb *)SCARG(uap, aiocbp);
+	aiosp = &aio->aiosp;
+
+	mutex_enter(&aio->aio_mtx);
+	mutex_enter(&aiosp->mtx);
+
+	if (aiocbp_uptr) {
+		struct aiocbp *aiocbp = NULL;
+		error = aiocbp_lookup(aiosp, &aiocbp, aiocbp_uptr);
+		if (error) {
+			mutex_exit(&aiosp->mtx);
+			mutex_exit(&aio->aio_mtx);
+			return error;
+		}
+		if (aiocbp) {
+			job = aiocbp->job;
+
+			if (job->on_queue) {
+				TAILQ_REMOVE(&aiosp->jobs, job, list);
+				job->on_queue = false;
+
+				mutex_enter(&job->mtx);
+				aiowaitgrouplk_flush(&job->lk);
+				job->completed = true;
+				mutex_exit(&job->mtx);
+
+				aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
+
+				*retval = AIO_CANCELED;
+			} else {
+				if (job->completed) {
+					*retval = AIO_ALLDONE;
+				} else {
+					*retval = AIO_NOTCANCELED;
+				}
+			}
+
+			mutex_exit(&aiosp->mtx);
+			mutex_exit(&aio->aio_mtx);
+			
+			return 0;
+		}
+	}
+
+	/* Cancel all jobs associated with this file handle */
+
+	mutex_exit(&aiosp->mtx);
+	mutex_exit(&aio->aio_mtx);
+
 	return 0;
 }
 
@@ -1791,7 +1872,8 @@ sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap,
 	}
 
 	if (mode == LIO_WAIT) {
-		// IMPLEMENT THIS
+		error = aiosp_suspend(&aio->aiosp, aiocbp_list, nent,
+			NULL, AIOSP_SUSPEND_ALL);
 	}
 
 err:
@@ -1897,5 +1979,93 @@ SYSCTL_SETUP(sysctl_aio_init, "aio sysctl")
 void
 aio_print_jobs(void (*pr)(const char *, ...))
 {
+	struct proc *p = curlwp->l_proc;
+	struct aioproc *aio;
+	struct aiosp *sp;
+	struct aio_job *job;
+
+	if (p == NULL) {
+		(*pr)("AIO: no current process context.\n");
+		return;
+	}
+
+	aio = p->p_aio;
+	if (aio == NULL) {
+		(*pr)("AIO: not initialized (pid=%d).\n", p->p_pid);
+		return;
+	}
+
+	sp = &aio->aiosp;
+
+	(*pr)("AIO: pid=%d\n", p->p_pid);
+	(*pr)("AIO: global jobs=%u, proc jobs=%u\n", aio_jobs_count,
+		aio->jobs_count);
+	(*pr)("AIO: sp{ total_threads=%zu active=%zu free=%zu pending=%zu processing=%lu hash_buckets=%zu mask=%#x }\n",
+		sp->nthreads_total, sp->nthreads_active, sp->nthreads_free,
+		sp->jobs_pending, (u_long)sp->njobs_processing,
+		sp->aio_hash_size, sp->aio_hash_mask);
+
+	/* Pending queue */
+	(*pr)("\nqueue (%zu pending):\n", sp->jobs_pending);
+	TAILQ_FOREACH(job, &sp->jobs, list) {
+		(*pr)("  op=%d err=%d state=%d uptr=%p completed=%d\n",
+			job->aio_op, job->aiocbp._errno, job->aiocbp._state,
+			job->aiocb_uptr, job->completed);
+		(*pr)("    fd=%d off=%llu buf=%p nbytes=%zu pri=%d lio=%p\n",
+			job->aiocbp.aio_fildes,
+			(unsigned long long)job->aiocbp.aio_offset,
+			(void *)job->aiocbp.aio_buf,
+			(size_t)job->aiocbp.aio_nbytes,
+			(int)job->pri, job->lio);
+	}
+
+	/* Active service threads */
+	(*pr)("\nactive threads (%zu):\n", sp->nthreads_active);
+	{
+		struct aiost *st;
+		TAILQ_FOREACH(st, &sp->active, list) {
+			(*pr)("  lwp=%p state=%d freelist=%d\n",
+				(void *)st->lwp, st->state, st->freelist ? 1 : 0);
+
+			if (st->job) {
+				struct aio_job *j = st->job;
+				(*pr)("    job: op=%d err=%d state=%d uptr=%p\n",
+					j->aio_op, j->aiocbp._errno, j->aiocbp._state,
+					j->aiocb_uptr);
+				(*pr)("      fd=%d off=%llu buf=%p nbytes=%zu\n",
+					j->aiocbp.aio_fildes,
+					(unsigned long long)j->aiocbp.aio_offset,
+					(void *)j->aiocbp.aio_buf,
+					(size_t)j->aiocbp.aio_nbytes);
+			}
+
+			if (st->fg) {
+				(*pr)("    file-group: vp=%p fp=%p qlen=%zu\n",
+					(void *)st->fg->vp, (void *)st->fg->fp,
+					st->fg->queue_size);
+			}
+		}
+	}
+
+	/* Freelist summary */
+	(*pr)("\nfree threads (%zu)\n", sp->nthreads_free);
+
+	/* aiocbp hash maps user aiocbp to kernel job */
+	(*pr)("\naiocbp hash: buckets=%zu\n", sp->aio_hash_size);
+	if (sp->aio_hash != NULL && sp->aio_hash_size != 0) {
+		size_t b;
+		for (b = 0; b < sp->aio_hash_size; b++) {
+			struct aiocbp *hc;
+			if (TAILQ_EMPTY(&sp->aio_hash[b])) {
+				continue;
+			}
+
+			(*pr)("  [%zu]:", b);
+			TAILQ_FOREACH(hc, &sp->aio_hash[b], list) {
+				(*pr)(" uptr=%p job=%p", hc->uptr, (void *)hc->job);
+			}
+			(*pr)("\n");
+		}
+	}
 }
 #endif /* defined(DDB) */
