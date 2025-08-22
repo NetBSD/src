@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.33 2023/05/10 00:09:54 riastradh Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.34 2025/08/22 18:39:19 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.33 2023/05/10 00:09:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.34 2025/08/22 18:39:19 uwe Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -281,7 +281,7 @@ hpf1275a_attach(device_t parent, device_t self, void *aux)
 static int
 hpf1275a_detach(device_t self, int flags)
 {
-	struct hpf1275a_softc *sc = device_private(self);
+	// struct hpf1275a_softc *sc = device_private(self);
 	int error;
 
 	error = config_detach_children(self, flags);
