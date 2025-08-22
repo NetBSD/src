@@ -44,6 +44,7 @@ file	net/npf/lpm.c				npf
 file	net/npf/npf_ext_log.c			npf
 file	net/npf/npf_ext_normalize.c		npf
 file	net/npf/npf_ext_rndblock.c		npf
+file	net/npf/npf_ext_route.c			npf
 
 # ALGs
 file	net/npf/npf_alg_icmp.c			npf

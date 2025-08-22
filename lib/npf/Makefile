@@ -4,7 +4,7 @@
 
 .if ${MKPIC} != "no"
 
-SUBDIR=		ext_log ext_normalize ext_rndblock
+SUBDIR=		ext_log ext_normalize ext_rndblock ext_route
 
 .endif
 
