@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.70 2025/08/12 12:23:12 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.71 2025/08/23 06:44:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -512,6 +512,7 @@ AARCH64REG_READ_INLINE(mpidr_el1)
 #define	MIDR_EL1_REVISION	__BITS(3,0)		// Revision
 
 #define	MPIDR_AFF3		__BITS(32,39)
+#define	MPIDR_RES1		__BIT(31)
 #define	MPIDR_U	 		__BIT(30)		// 1 = Uni-Processor System
 #define	MPIDR_MT		__BIT(24)		// 1 = SMT(AFF0 is logical)
 #define	MPIDR_AFF2		__BITS(16,23)
