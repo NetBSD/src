@@ -1,6 +1,6 @@
 /* This file is tc-mcore.h
 
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -39,7 +39,7 @@
 
 extern const struct relax_type md_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_relax_table
-#define md_end	md_mcore_end
+#define md_finish	mcore_md_finish
 
 /* Want the section information too...  */
 #define MD_PCREL_FROM_SECTION(FIX, SEC) md_pcrel_from_section (FIX, SEC)
@@ -86,7 +86,7 @@ struct mcore_tc_sy
 
 #include "write.h"        /* For definition of fixS */
 
-extern void md_mcore_end (void);
+extern void mcore_md_finish (void);
 extern arelent *tc_gen_reloc (asection *, fixS *);
 extern int mcore_force_relocation (fixS *);
 extern bool mcore_fix_adjustable (fixS *);

@@ -41,6 +41,7 @@ objdump.c
 objdump.h
 od-elf32_avr.c
 od-macho.c
+od-pe.c
 od-xcoff.c
 prdbg.c
 rclex.c

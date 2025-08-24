@@ -1,5 +1,5 @@
 /* tc-tic4x.c -- Assemble for the Texas Instruments TMS320C[34]x.
-   Copyright (C) 1997-2022 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
 
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -649,6 +649,7 @@ tic4x_expression (char *str, expressionS *exp)
   t = input_line_pointer;	/* Save line pointer.  */
   input_line_pointer = str;
   expression (exp);
+  resolve_register (exp);
   s = input_line_pointer;
   input_line_pointer = t;	/* Restore line pointer.  */
   return s;			/* Return pointer to where parsing stopped.  */
@@ -709,6 +710,7 @@ tic4x_asg (int x ATTRIBUTE_UNUSED)
   char c;
   char *name;
   char *str;
+  size_t len;
 
   SKIP_WHITESPACE ();
   str = input_line_pointer;
@@ -721,10 +723,11 @@ tic4x_asg (int x ATTRIBUTE_UNUSED)
       as_bad (_("Comma expected\n"));
       return;
     }
-  *input_line_pointer++ = '\0';
+  len = input_line_pointer - str;
+  str = notes_memdup (str, len, len + 1);
+  input_line_pointer++;
   c = get_symbol_name (&name);	/* Get terminator.  */
-  str = xstrdup (str);
-  name = xstrdup (name);
+  name = notes_strdup (name);
   str_hash_insert (tic4x_asg_hash, name, str, 1);
   (void) restore_line_pointer (c);
   demand_empty_rest_of_line ();
@@ -1371,7 +1374,7 @@ md_begin (void)
 }
 
 void
-tic4x_end (void)
+tic4x_md_finish (void)
 {
   bfd_set_arch_mach (stdoutput, bfd_arch_tic4x,
 		     IS_CPU_TIC4X (tic4x_cpu) ? bfd_mach_tic4x : bfd_mach_tic3x);

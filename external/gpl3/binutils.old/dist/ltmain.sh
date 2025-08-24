@@ -2917,7 +2917,7 @@ func_extract_archives ()
 	    darwin_file=
 	    darwin_files=
 	    for darwin_file in $darwin_filelist; do
-	      darwin_files=`find unfat-$$ -name $darwin_file -print | $NL2SP`
+	      darwin_files=`find unfat-$$ -name $darwin_file -print | sort | $NL2SP`
 	      $LIPO -create -output "$darwin_file" $darwin_files
 	    done # $darwin_filelist
 	    $RM -rf unfat-$$
@@ -2932,7 +2932,7 @@ func_extract_archives ()
         func_extract_an_archive "$my_xdir" "$my_xabs"
 	;;
       esac
-      my_oldobjs="$my_oldobjs "`find $my_xdir -name \*.$objext -print -o -name \*.lo -print | $NL2SP`
+      my_oldobjs="$my_oldobjs "`find $my_xdir -name \*.$objext -print -o -name \*.lo -print | sort | $NL2SP`
     done
 
     func_extract_archives_result="$my_oldobjs"
@@ -3425,8 +3425,8 @@ int setenv (const char *, const char *, int);
 # define PATH_SEPARATOR ':'
 #endif
 
-#if defined (_WIN32) || defined (__MSDOS__) || defined (__DJGPP__) || \
-  defined (__OS2__)
+#if (defined (_WIN32) && ! defined(__CYGWIN__)) || defined (__MSDOS__) || \
+  defined (__DJGPP__) || defined (__OS2__)
 # define HAVE_DOS_BASED_FILE_SYSTEM
 # define FOPEN_WB "wb"
 # ifndef DIR_SEPARATOR_2

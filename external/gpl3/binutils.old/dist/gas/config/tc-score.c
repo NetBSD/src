@@ -1,5 +1,5 @@
 /* tc-score.c -- Assembler for Score
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
    Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -24,8 +24,6 @@
 
 #include "tc-score7.c"
 
-static void s3_s_score_bss (int ignore ATTRIBUTE_UNUSED);
-static void s3_s_score_text (int ignore);
 static void s3_score_s_section (int ignore);
 static void s3_s_change_sec (int sec);
 static void s3_s_score_mask (int reg_type ATTRIBUTE_UNUSED);
@@ -39,7 +37,6 @@ static void s3_s_score_gpword (int ignore ATTRIBUTE_UNUSED);
 static void s3_s_score_cpadd (int ignore ATTRIBUTE_UNUSED);
 static void s3_s_score_lcomm (int bytes_p);
 
-static void s_score_bss (int ignore ATTRIBUTE_UNUSED);
 static void s_score_text (int ignore);
 static void s_section (int ignore);
 static void s_change_sec (int sec);
@@ -196,7 +193,6 @@ symbolS *GOT_symbol;
 
 const pseudo_typeS md_pseudo_table[] =
 {
-  {"bss", s_score_bss, 0},
   {"text", s_score_text, 0},
   {"word", cons, 4},
   {"long", cons, 4},
@@ -5532,22 +5528,6 @@ s3_do_dsp3 (char *str)
     s3_inst.relax_inst = 0x8000;
 }
 
-
-/* If we change section we must dump the literal pool first.  */
-static void
-s3_s_score_bss (int ignore ATTRIBUTE_UNUSED)
-{
-  subseg_set (bss_section, (subsegT) get_absolute_expression ());
-  demand_empty_rest_of_line ();
-}
-
-static void
-s3_s_score_text (int ignore)
-{
-  obj_elf_text (ignore);
-  record_alignment (now_seg, 2);
-}
-
 static void
 s3_score_s_section (int ignore)
 {
@@ -6255,20 +6235,14 @@ s3_s_score_lcomm (int bytes_p)
 static void
 s3_insert_reg (const struct s3_reg_entry *r, htab_t htab)
 {
-  int i = 0;
-  int len = strlen (r->name) + 2;
-  char *buf = XNEWVEC (char, len);
-  char *buf2 = XNEWVEC (char, len);
+  char *buf = notes_strdup (r->name);
+  char *p;
 
-  strcpy (buf + i, r->name);
-  for (i = 0; buf[i]; i++)
-    {
-      buf2[i] = TOUPPER (buf[i]);
-    }
-  buf2[i] = '\0';
+  for (p = buf; *p; p++)
+    *p = TOUPPER (*p);
 
+  str_hash_insert (htab, r->name, r, 0);
   str_hash_insert (htab, buf, r, 0);
-  str_hash_insert (htab, buf2, r, 0);
 }
 
 static void
@@ -6286,20 +6260,17 @@ static void
 s3_build_score_ops_hsh (void)
 {
   unsigned int i;
-  static struct obstack insn_obstack;
 
-  obstack_begin (&insn_obstack, 4000);
   for (i = 0; i < sizeof (s3_score_insns) / sizeof (struct s3_asm_opcode); i++)
     {
       const struct s3_asm_opcode *insn = s3_score_insns + i;
-      size_t len = strlen (insn->template_name);
+      size_t len = strlen (insn->template_name) + 1;
       struct s3_asm_opcode *new_opcode;
       char *template_name;
-      new_opcode = (struct s3_asm_opcode *)
-	obstack_alloc (&insn_obstack, sizeof (struct s3_asm_opcode));
-      template_name = (char *) obstack_alloc (& insn_obstack, len + 1);
 
-      strcpy (template_name, insn->template_name);
+      new_opcode = notes_alloc (sizeof (*new_opcode));
+      template_name = notes_memdup (insn->template_name, len, len);
+
       new_opcode->template_name = template_name;
       new_opcode->parms = insn->parms;
       new_opcode->value = insn->value;
@@ -6315,22 +6286,17 @@ static void
 s3_build_dependency_insn_hsh (void)
 {
   unsigned int i;
-  static struct obstack dependency_obstack;
 
-  obstack_begin (&dependency_obstack, 4000);
   for (i = 0; i < sizeof (s3_insn_to_dependency_table) / sizeof (s3_insn_to_dependency_table[0]); i++)
     {
       const struct s3_insn_to_dependency *tmp = s3_insn_to_dependency_table + i;
-      size_t len = strlen (tmp->insn_name);
+      size_t len = strlen (tmp->insn_name) + 1;
       struct s3_insn_to_dependency *new_i2n;
       char *buf;
 
-      new_i2n = (struct s3_insn_to_dependency *)
-	obstack_alloc (&dependency_obstack,
-		       sizeof (struct s3_insn_to_dependency));
-      buf = (char *) obstack_alloc (&dependency_obstack, len + 1);
+      new_i2n = notes_alloc (sizeof (*new_i2n));
+      buf = notes_memdup (tmp->insn_name, len, len);
 
-      strcpy (buf, tmp->insn_name);
       new_i2n->insn_name = buf;
       new_i2n->type = tmp->type;
       str_hash_insert (s3_dependency_insn_hsh, new_i2n->insn_name, new_i2n, 0);
@@ -6338,21 +6304,10 @@ s3_build_dependency_insn_hsh (void)
 }
 
 static void
-s_score_bss (int ignore ATTRIBUTE_UNUSED)
-{
-  if (score3)
-    return s3_s_score_bss (ignore);
-  else
-    return s7_s_score_bss (ignore);
-}
-
-static void
 s_score_text (int ignore)
 {
-  if (score3)
-    return s3_s_score_text (ignore);
-  else
-    return s7_s_score_text (ignore);
+  obj_elf_text (ignore);
+  record_alignment (now_seg, 2);
 }
 
 static void

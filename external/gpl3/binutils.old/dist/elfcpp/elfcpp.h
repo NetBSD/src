@@ -1,6 +1,6 @@
 // elfcpp.h -- main header file for elfcpp    -*- C++ -*-
 
-// Copyright (C) 2006-2022 Free Software Foundation, Inc.
+// Copyright (C) 2006-2024 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of elfcpp.
@@ -465,6 +465,7 @@ enum SHF
 enum
 {
   ELFCOMPRESS_ZLIB = 1,
+  ELFCOMPRESS_ZSTD = 2,
   ELFCOMPRESS_LOOS = 0x60000000,
   ELFCOMPRESS_HIOS = 0x6fffffff,
   ELFCOMPRESS_LOPROC = 0x70000000,
@@ -999,7 +1000,9 @@ enum
   // string.
   NT_GNU_GOLD_VERSION = 4,
   // Program property note, as described in "Linux Extensions to the gABI".
-  NT_GNU_PROPERTY_TYPE_0 = 5
+  NT_GNU_PROPERTY_TYPE_0 = 5,
+  // FDO .note.package notes as defined on https://systemd.io/ELF_PACKAGE_METADATA/
+  FDO_PACKAGING_METADATA = 0xcafe1a7e
 };
 
 // The OS values which may appear in word 0 of a NT_GNU_ABI_TAG note.

@@ -1,5 +1,5 @@
 /* BFD back-end for Intel Hex objects.
-   Copyright (C) 1995-2022 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
    Written by Ian Lance Taylor of Cygnus Support <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -194,14 +194,14 @@ ihex_get_byte (bfd *abfd, bool *errorptr)
 {
   bfd_byte c;
 
-  if (bfd_bread (&c, (bfd_size_type) 1, abfd) != 1)
+  if (bfd_read (&c, 1, abfd) != 1)
     {
       if (bfd_get_error () != bfd_error_file_truncated)
 	*errorptr = true;
       return EOF;
     }
 
-  return (int) (c & 0xff);
+  return c & 0xff;
 }
 
 /* Report a problem in an Intel Hex file.  */
@@ -248,7 +248,7 @@ ihex_scan (bfd *abfd)
   size_t bufsize;
   int c;
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     goto error_return;
 
   abfd->start_address = 0;
@@ -289,7 +289,7 @@ ihex_scan (bfd *abfd)
 	  pos = bfd_tell (abfd) - 1;
 
 	  /* Read the header bytes.  */
-	  if (bfd_bread (hdr, (bfd_size_type) 8, abfd) != 8)
+	  if (bfd_read (hdr, 8, abfd) != 8)
 	    goto error_return;
 
 	  for (i = 0; i < 8; i++)
@@ -309,13 +309,13 @@ ihex_scan (bfd *abfd)
 	  chars = len * 2 + 2;
 	  if (chars >= bufsize)
 	    {
-	      buf = (bfd_byte *) bfd_realloc (buf, (bfd_size_type) chars);
+	      buf = bfd_realloc (buf, chars);
 	      if (buf == NULL)
 		goto error_return;
 	      bufsize = chars;
 	    }
 
-	  if (bfd_bread (buf, (bfd_size_type) chars, abfd) != chars)
+	  if (bfd_read (buf, chars, abfd) != chars)
 	    goto error_return;
 
 	  for (i = 0; i < chars; i++)
@@ -493,9 +493,9 @@ ihex_object_p (bfd *abfd)
 
   ihex_init ();
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     return NULL;
-  if (bfd_bread (b, (bfd_size_type) 9, abfd) != 9)
+  if (bfd_read (b, 9, abfd) != 9)
     {
       if (bfd_get_error () == bfd_error_file_truncated)
 	bfd_set_error (bfd_error_wrong_format);
@@ -568,7 +568,7 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
 	 know the exact format.  */
       BFD_ASSERT (c == ':');
 
-      if (bfd_bread (hdr, (bfd_size_type) 8, abfd) != 8)
+      if (bfd_read (hdr, 8, abfd) != 8)
 	goto error_return;
 
       len = HEX2 (hdr);
@@ -585,13 +585,13 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
 
       if (len * 2 > bufsize)
 	{
-	  buf = (bfd_byte *) bfd_realloc (buf, (bfd_size_type) len * 2);
+	  buf = bfd_realloc (buf, len * 2);
 	  if (buf == NULL)
 	    goto error_return;
 	  bufsize = len * 2;
 	}
 
-      if (bfd_bread (buf, (bfd_size_type) len * 2, abfd) != len * 2)
+      if (bfd_read (buf, len * 2, abfd) != len * 2)
 	goto error_return;
 
       for (i = 0; i < len; i++)
@@ -604,7 +604,7 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
 	}
 
       /* Skip the checksum.  */
-      if (bfd_bread (buf, (bfd_size_type) 2, abfd) != 2)
+      if (bfd_read (buf, 2, abfd) != 2)
 	goto error_return;
     }
 
@@ -745,7 +745,7 @@ ihex_write_record (bfd *abfd,
   p[3] = '\n';
 
   total = 9 + count * 2 + 4;
-  if (bfd_bwrite (buf, (bfd_size_type) total, abfd) != total)
+  if (bfd_write (buf, total, abfd) != total)
     return false;
 
   return true;
@@ -942,6 +942,7 @@ ihex_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 #define ihex_bfd_is_local_label_name		  _bfd_nosymbols_bfd_is_local_label_name
 #define ihex_get_lineno				  _bfd_nosymbols_get_lineno
 #define ihex_find_nearest_line			  _bfd_nosymbols_find_nearest_line
+#define ihex_find_nearest_line_with_alt		  _bfd_nosymbols_find_nearest_line_with_alt
 #define ihex_find_line				  _bfd_nosymbols_find_line
 #define ihex_find_inliner_info			  _bfd_nosymbols_find_inliner_info
 #define ihex_bfd_make_debug_symbol		  _bfd_nosymbols_bfd_make_debug_symbol

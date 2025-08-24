@@ -54,7 +54,8 @@ aarch64_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
   DBG (CALLDEBUG, printf ("[find_call] %s: 0x%lx to 0x%lx\n",
 			  parent->name, (unsigned long) p_lowpc,
 			  (unsigned long) p_highpc));
-
+  p_lowpc = (p_lowpc + 3) & ~3;
+  p_highpc &= ~3;
   for (pc = p_lowpc; pc < p_highpc; pc += 4)
     {
 

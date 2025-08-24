@@ -1,5 +1,5 @@
 /* Xtensa-specific support for 32-bit ELF.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -30,27 +30,15 @@
 #include "elf/xtensa.h"
 #include "splay-tree.h"
 #include "xtensa-isa.h"
-#include "xtensa-config.h"
+#include "xtensa-dynconfig.h"
 
 /* All users of this file have bfd_octets_per_byte (abfd, sec) == 1.  */
 #define OCTETS_PER_BYTE(ABFD, SEC) 1
 
 #define XTENSA_NO_NOP_REMOVAL 0
 
-#ifndef XSHAL_ABI
-#define XSHAL_ABI 0
-#endif
-
 #ifndef XTHAL_ABI_UNDEFINED
 #define XTHAL_ABI_UNDEFINED -1
-#endif
-
-#ifndef XTHAL_ABI_WINDOWED
-#define XTHAL_ABI_WINDOWED 0
-#endif
-
-#ifndef XTHAL_ABI_CALL0
-#define XTHAL_ABI_CALL0 1
 #endif
 
 /* Local helper functions.  */
@@ -1116,7 +1104,7 @@ elf_xtensa_check_relocs (bfd *abfd,
       switch (r_type)
 	{
 	case R_XTENSA_TLSDESC_FN:
-	  if (bfd_link_pic (info))
+	  if (bfd_link_dll (info))
 	    {
 	      tls_type = GOT_TLS_GD;
 	      is_got = true;
@@ -1127,7 +1115,7 @@ elf_xtensa_check_relocs (bfd *abfd,
 	  break;
 
 	case R_XTENSA_TLSDESC_ARG:
-	  if (bfd_link_pic (info))
+	  if (bfd_link_dll (info))
 	    {
 	      tls_type = GOT_TLS_GD;
 	      is_got = true;
@@ -1135,13 +1123,14 @@ elf_xtensa_check_relocs (bfd *abfd,
 	  else
 	    {
 	      tls_type = GOT_TLS_IE;
-	      if (h && elf_xtensa_hash_entry (h) != htab->tlsbase)
+	      if (h && elf_xtensa_hash_entry (h) != htab->tlsbase
+		  && elf_xtensa_dynamic_symbol_p (h, info))
 		is_got = true;
 	    }
 	  break;
 
 	case R_XTENSA_TLS_DTPOFF:
-	  if (bfd_link_pic (info))
+	  if (bfd_link_dll (info))
 	    tls_type = GOT_TLS_GD;
 	  else
 	    tls_type = GOT_TLS_IE;
@@ -1151,7 +1140,7 @@ elf_xtensa_check_relocs (bfd *abfd,
 	  tls_type = GOT_TLS_IE;
 	  if (bfd_link_pic (info))
 	    info->flags |= DF_STATIC_TLS;
-	  if (bfd_link_pic (info) || h)
+	  if (bfd_link_dll (info) || elf_xtensa_dynamic_symbol_p (h, info))
 	    is_got = true;
 	  break;
 
@@ -2884,7 +2873,7 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 
 	case R_XTENSA_TLS_TPOFF:
 	  /* Switch to LE model for local symbols in an executable.  */
-	  if (! bfd_link_pic (info) && ! dynamic_symbol)
+	  if (! bfd_link_dll (info) && ! dynamic_symbol)
 	    {
 	      relocation = tpoff (info, relocation);
 	      break;
@@ -2896,12 +2885,12 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	  {
 	    if (r_type == R_XTENSA_TLSDESC_FN)
 	      {
-		if (! bfd_link_pic (info) || (tls_type & GOT_TLS_IE) != 0)
+		if (! bfd_link_dll (info) || (tls_type & GOT_TLS_IE) != 0)
 		  r_type = R_XTENSA_NONE;
 	      }
 	    else if (r_type == R_XTENSA_TLSDESC_ARG)
 	      {
-		if (bfd_link_pic (info))
+		if (bfd_link_dll (info))
 		  {
 		    if ((tls_type & GOT_TLS_IE) != 0)
 		      r_type = R_XTENSA_TLS_TPOFF;
@@ -2975,7 +2964,7 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	  break;
 
 	case R_XTENSA_TLS_DTPOFF:
-	  if (! bfd_link_pic (info))
+	  if (! bfd_link_dll (info))
 	    /* Switch from LD model to LE model.  */
 	    relocation = tpoff (info, relocation);
 	  else
@@ -5054,12 +5043,9 @@ print_r_reloc (FILE *fp, const r_reloc *r_rel)
   else
     fprintf (fp, " ?? + ");
 
-  fprintf_vma (fp, r_rel->target_offset);
+  fprintf (fp, "%" PRIx64, (uint64_t) r_rel->target_offset);
   if (r_rel->virtual_offset)
-    {
-      fprintf (fp, " + ");
-      fprintf_vma (fp, r_rel->virtual_offset);
-    }
+    fprintf (fp, " + %" PRIx64, (uint64_t) r_rel->virtual_offset);
 
   fprintf (fp, ")");
 }
@@ -5244,6 +5230,13 @@ literal_value_equal (const literal_value *src1,
      (if undefined or weak).  */
   h1 = r_reloc_get_hash_entry (&src1->r_rel);
   h2 = r_reloc_get_hash_entry (&src2->r_rel);
+
+  /* Keep start_stop literals always unique to avoid dropping it due to them
+     having late initialization.
+     Now they are equal because initialized with zeroed values.  */
+  if (h2 && h2->start_stop)
+      return false;
+
   if (r_reloc_is_defined (&src1->r_rel)
       && (final_static_link
 	  || ((!h1 || h1->root.type != bfd_link_hash_defweak)

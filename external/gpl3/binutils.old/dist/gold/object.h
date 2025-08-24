@@ -1,6 +1,6 @@
 // object.h -- support for an object file for linking in gold  -*- C++ -*-
 
-// Copyright (C) 2006-2022 Free Software Foundation, Inc.
+// Copyright (C) 2006-2024 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -2347,7 +2347,7 @@ class Sized_relobj_file : public Sized_relobj<size, big_endian>
   find_kept_section_object(unsigned int shndx, unsigned int* symndx_p) const;
 
   // Return the name of symbol SYMNDX.
-  const char*
+  std::string
   get_symbol_name(unsigned int symndx);
 
   // Compute final local symbol value.  R_SYM is the local symbol index.

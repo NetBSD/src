@@ -1,6 +1,6 @@
 /* Utilities to execute a program in a subprocess (possibly linked by pipes
    with other subprocesses), and wait for it.  Generic Win32 specialization.
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
 This file is part of the libiberty library.
 Libiberty is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@ Boston, MA 02110-1301, USA.  */
 
 #include "pex-common.h"
 
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 #ifdef HAVE_STDLIB_H
@@ -350,7 +351,7 @@ argv_to_cmdline (char *const *argv)
 	 prevent wasting 2 chars per argument of the CreateProcess 32k char
 	 limit.  We need only escape embedded double-quotes and immediately
 	 preceeding backslash characters.  A sequence of backslach characters
-	 that is not follwed by a double quote character will not be
+	 that is not followed by a double quote character will not be
 	 escaped.  */
       needs_quotes = 0;
       for (j = 0; argv[i][j]; j++)
@@ -365,7 +366,7 @@ argv_to_cmdline (char *const *argv)
 	      /* Escape preceeding backslashes.  */
 	      for (k = j - 1; k >= 0 && argv[i][k] == '\\'; k--)
 		cmdline_len++;
-	      /* Escape the qote character.  */
+	      /* Escape the quote character.  */
 	      cmdline_len++;
 	    }
 	}
@@ -568,7 +569,8 @@ env_compare (const void *a_ptr, const void *b_ptr)
  * target is not actually an executable, such as if it is a shell script. */
 
 static pid_t
-win32_spawn (const char *executable,
+win32_spawn (struct pex_obj *obj,
+         const char *executable,
 	     BOOL search,
 	     char *const *argv,
              char *const *env, /* array of strings of the form: VAR=VALUE */
@@ -576,13 +578,11 @@ win32_spawn (const char *executable,
 	     LPSTARTUPINFO si,
 	     LPPROCESS_INFORMATION pi)
 {
-  char *full_executable;
-  char *cmdline;
+  char *full_executable = NULL;
+  char *cmdline = NULL;
+  pid_t pid = (pid_t) -1;
   char **env_copy;
   char *env_block = NULL;
-
-  full_executable = NULL;
-  cmdline = NULL;
 
   if (env)
     {
@@ -621,13 +621,42 @@ win32_spawn (const char *executable,
 
   full_executable = find_executable (executable, search);
   if (!full_executable)
-    goto error;
+    goto exit;
   cmdline = argv_to_cmdline (argv);
   if (!cmdline)
-    goto error;
-    
-  /* Create the child process.  */  
-  if (!CreateProcess (full_executable, cmdline, 
+    goto exit;
+  /* If cmdline is too large, CreateProcess will fail with a bad
+     'No such file or directory' error. Try passing it through a
+     temporary response file instead.  */
+  if (strlen (cmdline) > 32767)
+    {
+      char *response_file = make_temp_file ("");
+      /* Register the file for deletion by pex_free.  */
+      ++obj->remove_count;
+      obj->remove = XRESIZEVEC (char *, obj->remove, obj->remove_count);
+      obj->remove[obj->remove_count - 1] = response_file;
+      int fd = pex_win32_open_write (obj, response_file, 0, 0);
+      if (fd == -1)
+        goto exit;
+      FILE *f = pex_win32_fdopenw (obj, fd, 0);
+      /* Don't write argv[0] (program name) to the response file.  */
+      if (writeargv (&argv[1], f))
+        {
+          fclose (f);
+          goto exit;
+        }
+      fclose (f); /* Also closes fd and the underlying OS handle.  */
+      char *response_arg = concat ("@", response_file, NULL);
+      char *response_argv[3] = {argv[0], response_arg, NULL};
+      free (cmdline);
+      cmdline = argv_to_cmdline (response_argv);
+      free (response_arg);
+      if (!cmdline)
+        goto exit;
+    }
+  
+  /* Create the child process.  */
+  if (CreateProcess (full_executable, cmdline,
 		      /*lpProcessAttributes=*/NULL,
 		      /*lpThreadAttributes=*/NULL,
 		      /*bInheritHandles=*/TRUE,
@@ -637,33 +666,25 @@ win32_spawn (const char *executable,
 		      si,
 		      pi))
     {
-      free (env_block);
-
-      free (full_executable);
-
-      return (pid_t) -1;
+      CloseHandle (pi->hThread);
+      pid = (pid_t) pi->hProcess;
     }
 
+ exit:
   /* Clean up.  */
-  CloseHandle (pi->hThread);
-  free (full_executable);
-  free (env_block);
-
-  return (pid_t) pi->hProcess;
-
- error:
   free (env_block);
   free (cmdline);
   free (full_executable);
-
-  return (pid_t) -1;
+  
+  return pid;
 }
 
 /* Spawn a script.  This simulates the Unix script execution mechanism.
    This function is called as a fallback if win32_spawn fails. */
 
 static pid_t
-spawn_script (const char *executable, char *const *argv,
+spawn_script (struct pex_obj *obj,
+              const char *executable, char *const *argv,
               char* const *env,
 	      DWORD dwCreationFlags,
 	      LPSTARTUPINFO si,
@@ -713,20 +734,20 @@ spawn_script (const char *executable, char *const *argv,
 	      executable = strrchr (executable1, '\\') + 1;
 	      if (!executable)
 		executable = executable1;
-	      pid = win32_spawn (executable, TRUE, argv, env,
+	      pid = win32_spawn (obj, executable, TRUE, argv, env,
 				 dwCreationFlags, si, pi);
 #else
 	      if (strchr (executable1, '\\') == NULL)
-		pid = win32_spawn (executable1, TRUE, argv, env,
+		pid = win32_spawn (obj, executable1, TRUE, argv, env,
 				   dwCreationFlags, si, pi);
 	      else if (executable1[0] != '\\')
-		pid = win32_spawn (executable1, FALSE, argv, env,
+		pid = win32_spawn (obj, executable1, FALSE, argv, env,
 				   dwCreationFlags, si, pi);
 	      else
 		{
 		  const char *newex = mingw_rootify (executable1);
 		  *avhere = newex;
-		  pid = win32_spawn (newex, FALSE, argv, env,
+		  pid = win32_spawn (obj, newex, FALSE, argv, env,
 				     dwCreationFlags, si, pi);
 		  if (executable1 != newex)
 		    free ((char *) newex);
@@ -736,7 +757,7 @@ spawn_script (const char *executable, char *const *argv,
 		      if (newex != executable1)
 			{
 			  *avhere = newex;
-			  pid = win32_spawn (newex, FALSE, argv, env,
+			  pid = win32_spawn (obj, newex, FALSE, argv, env,
 					     dwCreationFlags, si, pi);
 			  free ((char *) newex);
 			}
@@ -755,7 +776,7 @@ spawn_script (const char *executable, char *const *argv,
 /* Execute a child.  */
 
 static pid_t
-pex_win32_exec_child (struct pex_obj *obj ATTRIBUTE_UNUSED, int flags,
+pex_win32_exec_child (struct pex_obj *obj, int flags,
 		      const char *executable, char * const * argv,
                       char* const* env,
 		      int in, int out, int errdes,
@@ -851,10 +872,10 @@ pex_win32_exec_child (struct pex_obj *obj ATTRIBUTE_UNUSED, int flags,
   si.hStdError = stderr_handle;
 
   /* Create the child process.  */  
-  pid = win32_spawn (executable, (flags & PEX_SEARCH) != 0,
+  pid = win32_spawn (obj, executable, (flags & PEX_SEARCH) != 0,
 		     argv, env, dwCreationFlags, &si, &pi);
   if (pid == (pid_t) -1)
-    pid = spawn_script (executable, argv, env, dwCreationFlags,
+    pid = spawn_script (obj, executable, argv, env, dwCreationFlags,
                         &si, &pi);
   if (pid == (pid_t) -1)
     {

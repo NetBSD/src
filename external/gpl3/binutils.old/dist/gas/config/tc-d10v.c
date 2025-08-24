@@ -1,5 +1,5 @@
 /* tc-d10v.c -- Assembler code for the Mitsubishi D10V
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1391,8 +1391,8 @@ find_opcode (struct d10v_opcode *opcode, expressionS myops[])
 	      || myops[i].X_add_number == OPERAND_CONTROL + 12
 	      || myops[i].X_add_number == OPERAND_CONTROL + 13
 	      || myops[i].X_add_number == OPERAND_CONTROL + 15))
-	as_warn (_("cr%ld is a reserved control register"),
-		 myops[i].X_add_number - OPERAND_CONTROL);
+	as_warn (_("cr%d is a reserved control register"),
+		 (int) myops[i].X_add_number - OPERAND_CONTROL);
     }
   return opcode;
 }

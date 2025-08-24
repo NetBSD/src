@@ -1,5 +1,5 @@
 /* tc-nds32.c -- Assemble for the nds32
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of GAS, the GNU Assembler.
@@ -2519,6 +2519,7 @@ parse_expression (char *str, expressionS *exp)
   tmp = input_line_pointer;	/* Save line pointer.  */
   input_line_pointer = str;
   expression (exp);
+  resolve_register (exp);
   s = input_line_pointer;
   input_line_pointer = tmp;	/* Restore line pointer.  */
 
@@ -4284,20 +4285,17 @@ nds32_relax_hint (int mode ATTRIBUTE_UNUSED)
   relocs = str_hash_find (nds32_hint_hash, name);
   if (relocs == NULL)
     {
-      relocs = XNEW (struct nds32_relocs_pattern);
-      memset (relocs, 0, sizeof (struct nds32_relocs_pattern));
+      relocs = notes_calloc (1, sizeof (*relocs));
       str_hash_insert (nds32_hint_hash, name, relocs, 0);
     }
   else
     {
       while (relocs->next)
-	relocs=relocs->next;
-      relocs->next = XNEW (struct nds32_relocs_pattern);
+	relocs = relocs->next;
+      relocs->next = notes_calloc (1, sizeof (*relocs));
       relocs = relocs->next;
-      memset (relocs, 0, sizeof (struct nds32_relocs_pattern));
     }
 
-  relocs->next = NULL;
   *input_line_pointer = saved_char;
   ignore_rest_of_line ();
 
@@ -4574,6 +4572,7 @@ nds32_asm_parse_operand (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
   hold = input_line_pointer;
   input_line_pointer = *pstr;
   expression (pexp);
+  resolve_register (pexp);
   *pstr = input_line_pointer;
   input_line_pointer = hold;
 
@@ -7483,7 +7482,8 @@ nds32_insert_relax_entry (bfd *abfd ATTRIBUTE_UNUSED, asection *sec,
 static void
 nds32_elf_analysis_relax_hint (void)
 {
-  htab_traverse (nds32_hint_hash, nds32_elf_append_relax_relocs_traverse, NULL);
+  htab_traverse_noresize (nds32_hint_hash,
+			  nds32_elf_append_relax_relocs_traverse, NULL);
 }
 
 static void
@@ -7519,7 +7519,7 @@ nds32_elf_insert_final_frag (void)
 }
 
 void
-md_end (void)
+md_finish (void)
 {
   nds32_elf_insert_final_frag ();
   nds32_elf_analysis_relax_hint ();

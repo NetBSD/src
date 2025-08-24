@@ -1,7 +1,6 @@
 @section a.out backends
 
 
-@strong{Description}@*
 BFD supports a number of different flavours of a.out format,
 though the major differences are only the sizes of the
 structures on disk, and the shape of the relocation
@@ -97,7 +96,6 @@ configuration is selected.
 @subsection Relocations
 
 
-@strong{Description}@*
 The file @file{aoutx.h} provides for both the @emph{standard}
 and @emph{extended} forms of a.out relocation records.
 
@@ -108,73 +106,44 @@ integer for an addend.
 @subsection Internal entry points
 
 
-@strong{Description}@*
 @file{aoutx.h} exports several routines for accessing the
 contents of an a.out file, which are gathered and exported in
 turn by various format specific files (eg sunos.c).
 
 @findex aout_@var{size}_swap_exec_header_in
 @subsubsection @code{aout_@var{size}_swap_exec_header_in}
-@strong{Synopsis}
-@example
-void aout_@var{size}_swap_exec_header_in,
-   (bfd *abfd,
-    struct external_exec *bytes,
-    struct internal_exec *execp);
-@end example
-@strong{Description}@*
+@deftypefn {Function} void aout_@var{size}_swap_exec_header_in, (bfd *abfd, struct external_exec *bytes, struct internal_exec *execp); 
 Swap the information in an executable header @var{raw_bytes} taken
 from a raw byte stream memory image into the internal exec header
 structure @var{execp}.
 
+@end deftypefn
 @findex aout_@var{size}_swap_exec_header_out
 @subsubsection @code{aout_@var{size}_swap_exec_header_out}
-@strong{Synopsis}
-@example
-void aout_@var{size}_swap_exec_header_out
-   (bfd *abfd,
-    struct internal_exec *execp,
-    struct external_exec *raw_bytes);
-@end example
-@strong{Description}@*
+@deftypefn {Function} void aout_@var{size}_swap_exec_header_out (bfd *abfd, struct internal_exec *execp, struct external_exec *raw_bytes); 
 Swap the information in an internal exec header structure
 @var{execp} into the buffer @var{raw_bytes} ready for writing to disk.
 
+@end deftypefn
 @findex aout_@var{size}_some_aout_object_p
 @subsubsection @code{aout_@var{size}_some_aout_object_p}
-@strong{Synopsis}
-@example
-const bfd_target *aout_@var{size}_some_aout_object_p
-   (bfd *abfd,
-    struct internal_exec *execp,
-    const bfd_target *(*callback_to_real_object_p) (bfd *));
-@end example
-@strong{Description}@*
+@deftypefn {Function} bfd_cleanup aout_@var{size}_some_aout_object_p (bfd *abfd, struct internal_exec *execp, bfd_cleanup (*callback_to_real_object_p) (bfd *)); 
 Some a.out variant thinks that the file open in @var{abfd}
 checking is an a.out file.  Do some more checking, and set up
 for access if it really is.  Call back to the calling
 environment's "finish up" function just before returning, to
 handle any last-minute setup.
 
+@end deftypefn
 @findex aout_@var{size}_mkobject
 @subsubsection @code{aout_@var{size}_mkobject}
-@strong{Synopsis}
-@example
-bool aout_@var{size}_mkobject, (bfd *abfd);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool aout_@var{size}_mkobject, (bfd *abfd); 
 Initialize BFD @var{abfd} for use with a.out files.
 
+@end deftypefn
 @findex aout_@var{size}_machine_type
 @subsubsection @code{aout_@var{size}_machine_type}
-@strong{Synopsis}
-@example
-enum machine_type  aout_@var{size}_machine_type
-   (enum bfd_architecture arch,
-    unsigned long machine,
-    bool *unknown);
-@end example
-@strong{Description}@*
+@deftypefn {Function} enum machine_type aout_@var{size}_machine_type (enum bfd_architecture arch, unsigned long machine, bool *unknown); 
 Keep track of machine architecture and machine type for
 a.out's. Return the @code{machine_type} for a particular
 architecture and machine, or @code{M_UNKNOWN} if that exact architecture
@@ -183,29 +152,19 @@ and machine can't be represented in a.out format.
 If the architecture is understood, machine type 0 (default)
 is always understood.
 
+@end deftypefn
 @findex aout_@var{size}_set_arch_mach
 @subsubsection @code{aout_@var{size}_set_arch_mach}
-@strong{Synopsis}
-@example
-bool aout_@var{size}_set_arch_mach,
-   (bfd *,
-    enum bfd_architecture arch,
-    unsigned long machine);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool aout_@var{size}_set_arch_mach, (bfd *, enum bfd_architecture arch, unsigned long machine); 
 Set the architecture and the machine of the BFD @var{abfd} to the
 values @var{arch} and @var{machine}.  Verify that @var{abfd}'s format
 can support the architecture required.
 
+@end deftypefn
 @findex aout_@var{size}_new_section_hook
 @subsubsection @code{aout_@var{size}_new_section_hook}
-@strong{Synopsis}
-@example
-bool aout_@var{size}_new_section_hook,
-   (bfd *abfd,
-    asection *newsect);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool aout_@var{size}_new_section_hook, (bfd *abfd, asection *newsect); 
 Called by the BFD in response to a @code{bfd_make_section}
 request.
 
+@end deftypefn

@@ -1,5 +1,5 @@
 /* elfcomm.h -- include file of common code for ELF format file.
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    Originally developed by Eric Youngdale <eric@andante.jic.com>
    Modifications by Nick Clifton <nickc@redhat.com>
@@ -29,16 +29,14 @@
 extern void error (const char *, ...) ATTRIBUTE_PRINTF_1;
 extern void warn (const char *, ...) ATTRIBUTE_PRINTF_1;
 
-typedef unsigned HOST_WIDEST_INT elf_vma;
+extern void (*byte_put) (unsigned char *, uint64_t, unsigned int);
+extern void byte_put_little_endian (unsigned char *, uint64_t, unsigned int);
+extern void byte_put_big_endian (unsigned char *, uint64_t, unsigned int);
 
-extern void (*byte_put) (unsigned char *, elf_vma, unsigned int);
-extern void byte_put_little_endian (unsigned char *, elf_vma, unsigned int);
-extern void byte_put_big_endian (unsigned char *, elf_vma, unsigned int);
-
-extern elf_vma (*byte_get) (const unsigned char *, unsigned int);
-extern elf_vma byte_get_signed (const unsigned char *, unsigned int);
-extern elf_vma byte_get_little_endian (const unsigned char *, unsigned int);
-extern elf_vma byte_get_big_endian (const unsigned char *, unsigned int);
+extern uint64_t (*byte_get) (const unsigned char *, unsigned int);
+extern uint64_t byte_get_signed (const unsigned char *, unsigned int);
+extern uint64_t byte_get_little_endian (const unsigned char *, unsigned int);
+extern uint64_t byte_get_big_endian (const unsigned char *, unsigned int);
 
 #define BYTE_PUT(field, val)	byte_put (field, val, sizeof (field))
 #define BYTE_GET(field)		byte_get (field, sizeof (field))
@@ -51,19 +49,19 @@ extern elf_vma byte_get_big_endian (const unsigned char *, unsigned int);
 
 struct archive_info
 {
-  char * file_name;                     /* Archive file name.  */
-  FILE * file;                          /* Open file descriptor.  */
-  elf_vma index_num;                    /* Number of symbols in table.  */
-  elf_vma * index_array;                /* The array of member offsets.  */
-  char * sym_table;                     /* The symbol table.  */
-  unsigned long sym_size;               /* Size of the symbol table.  */
-  char * longnames;                     /* The long file names table.  */
-  unsigned long longnames_size;         /* Size of the long file names table.  */
-  unsigned long nested_member_origin;   /* Origin in the nested archive of the current member.  */
-  unsigned long next_arhdr_offset;      /* Offset of the next archive header.  */
-  int is_thin_archive;                  /* 1 if this is a thin archive.  */
-  int uses_64bit_indices;               /* 1 if the index table uses 64bit entries.  */
-  struct ar_hdr arhdr;                  /* Current archive header.  */
+  char *file_name;               /* Archive file name.  */
+  FILE *file;                    /* Open file descriptor.  */
+  uint64_t index_num;            /* Number of symbols in table.  */
+  uint64_t *index_array;         /* The array of member offsets.  */
+  char *sym_table;               /* The symbol table.  */
+  uint64_t sym_size;             /* Size of the symbol table.  */
+  char *longnames;               /* The long file names table.  */
+  uint64_t longnames_size;       /* Size of the long file names table.  */
+  uint64_t nested_member_origin; /* Origin in the nested archive of the current member.  */
+  uint64_t next_arhdr_offset;    /* Offset of the next archive header.  */
+  int is_thin_archive;           /* 1 if this is a thin archive.  */
+  int uses_64bit_indices;        /* 1 if the index table uses 64bit entries.  */
+  struct ar_hdr arhdr;           /* Current archive header.  */
 };
 
 /* Return the path name for a proxy entry in a thin archive.  */

@@ -1,5 +1,5 @@
 /* ehopt.c--optimize gcc exception frame information.
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GAS, the GNU Assembler.
@@ -93,8 +93,6 @@ struct cie_info
   unsigned code_alignment;
   int z_augmentation;
 };
-
-static int get_cie_info (struct cie_info *);
 
 /* Extract information from the CIE.  */
 
@@ -238,6 +236,27 @@ enum frame_state
   state_error,
 };
 
+struct frame_data
+{
+  enum frame_state state;
+
+  int cie_info_ok;
+  struct cie_info cie_info;
+
+  symbolS *size_end_sym;
+  fragS *loc4_frag;
+  int loc4_fix;
+
+  int aug_size;
+  int aug_shift;
+};
+
+static struct eh_state
+{
+  struct frame_data eh_data;
+  struct frame_data debug_data;
+} frame;
+
 /* This function is called from emit_expr.  It looks for cases which
    we can optimize.
 
@@ -254,23 +273,6 @@ enum frame_state
 int
 check_eh_frame (expressionS *exp, unsigned int *pnbytes)
 {
-  struct frame_data
-  {
-    enum frame_state state;
-
-    int cie_info_ok;
-    struct cie_info cie_info;
-
-    symbolS *size_end_sym;
-    fragS *loc4_frag;
-    int loc4_fix;
-
-    int aug_size;
-    int aug_shift;
-  };
-
-  static struct frame_data eh_frame_data;
-  static struct frame_data debug_frame_data;
   struct frame_data *d;
 
   /* Don't optimize.  */
@@ -285,9 +287,9 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
   /* Select the proper section data.  */
   if (startswith (segment_name (now_seg), ".eh_frame")
       && segment_name (now_seg)[9] != '_')
-    d = &eh_frame_data;
+    d = &frame.eh_data;
   else if (startswith (segment_name (now_seg), ".debug_frame"))
-    d = &debug_frame_data;
+    d = &frame.debug_data;
   else
     return 0;
 
@@ -384,7 +386,7 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
 	{
 	  /* This might be a DW_CFA_advance_loc4.  Record the frag and the
 	     position within the frag, so that we can change it later.  */
-	  frag_grow (1);
+	  frag_grow (1 + 4);
 	  d->state = state_saw_loc4;
 	  d->loc4_frag = frag_now;
 	  d->loc4_fix = frag_now_fix ();
@@ -569,4 +571,10 @@ eh_frame_convert_frag (fragS *frag)
   frag->fr_type = rs_fill;
   frag->fr_subtype = 0;
   frag->fr_offset = 0;
+}
+
+void
+eh_begin (void)
+{
+  memset (&frame, 0, sizeof (frame));
 }

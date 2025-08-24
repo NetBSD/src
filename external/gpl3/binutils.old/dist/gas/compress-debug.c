@@ -1,5 +1,5 @@
 /* compress-debug.c - compress debug sections
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -20,20 +20,27 @@
 
 #include "config.h"
 #include <stdio.h>
+#include <string.h>
 #include <zlib.h>
+#if HAVE_ZSTD
+#include <zstd.h>
+#endif
 #include "ansidecl.h"
 #include "compress-debug.h"
 
 /* Initialize the compression engine.  */
 
-struct z_stream_s *
-compress_init (void)
+void *
+compress_init (bool use_zstd)
 {
-  static struct z_stream_s strm;
+  if (use_zstd) {
+#if HAVE_ZSTD
+    return ZSTD_createCCtx ();
+#endif
+  }
 
-  strm.zalloc = NULL;
-  strm.zfree = NULL;
-  strm.opaque = NULL;
+  static struct z_stream_s strm;
+  memset (&strm, 0, sizeof (strm));
   deflateInit (&strm, Z_DEFAULT_COMPRESSION);
   return &strm;
 }
@@ -42,22 +49,37 @@ compress_init (void)
    from the engine goes into the current frag on the obstack.  */
 
 int
-compress_data (struct z_stream_s *strm, const char **next_in,
-	       int *avail_in, char **next_out, int *avail_out)
+compress_data (bool use_zstd, void *ctx, const char **next_in, int *avail_in,
+	       char **next_out, int *avail_out)
 {
-  int out_size = 0;
-  int x;
+  if (use_zstd)
+    {
+#if HAVE_ZSTD
+      ZSTD_outBuffer ob = { *next_out, *avail_out, 0 };
+      ZSTD_inBuffer ib = { *next_in, *avail_in, 0 };
+      size_t ret = ZSTD_compressStream2 (ctx, &ob, &ib, ZSTD_e_continue);
+      *next_in += ib.pos;
+      *avail_in -= ib.pos;
+      *next_out += ob.pos;
+      *avail_out -= ob.pos;
+      if (ZSTD_isError (ret))
+	return -1;
+      return (int)ob.pos;
+#endif
+    }
+
+  struct z_stream_s *strm = ctx;
 
   strm->next_in = (Bytef *) (*next_in);
   strm->avail_in = *avail_in;
   strm->next_out = (Bytef *) (*next_out);
   strm->avail_out = *avail_out;
 
-  x = deflate (strm, Z_NO_FLUSH);
+  int x = deflate (strm, Z_NO_FLUSH);
   if (x != Z_OK)
     return -1;
 
-  out_size = *avail_out - strm->avail_out;
+  int out_size = *avail_out - strm->avail_out;
   *next_in = (char *) (strm->next_in);
   *avail_in = strm->avail_in;
   *next_out = (char *) (strm->next_out);
@@ -71,10 +93,28 @@ compress_data (struct z_stream_s *strm, const char **next_in,
    needed.  */
 
 int
-compress_finish (struct z_stream_s *strm, char **next_out,
+compress_finish (bool use_zstd, void *ctx, char **next_out,
 		 int *avail_out, int *out_size)
 {
+  if (use_zstd)
+    {
+#if HAVE_ZSTD
+      ZSTD_outBuffer ob = { *next_out, *avail_out, 0 };
+      ZSTD_inBuffer ib = { 0, 0, 0 };
+      size_t ret = ZSTD_compressStream2 (ctx, &ob, &ib, ZSTD_e_end);
+      *out_size = ob.pos;
+      *next_out += ob.pos;
+      *avail_out -= ob.pos;
+      if (ZSTD_isError (ret))
+	return -1;
+      if (ret == 0)
+	ZSTD_freeCCtx (ctx);
+      return ret ? 1 : 0;
+#endif
+    }
+
   int x;
+  struct z_stream_s *strm = ctx;
 
   strm->avail_in = 0;
   strm->next_out = (Bytef *) (*next_out);

@@ -1,5 +1,5 @@
 /* BFD back-end for CISCO crash dumps.
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -95,10 +95,10 @@ cisco_core_file_validate (bfd *abfd, int crash_info_loc)
   size_t amt;
   flagword flags;
 
-  if (bfd_seek (abfd, (file_ptr) crash_info_loc, SEEK_SET) != 0)
+  if (bfd_seek (abfd, crash_info_loc, SEEK_SET) != 0)
     return NULL;
 
-  nread = bfd_bread (buf, (bfd_size_type) 4, abfd);
+  nread = bfd_read (buf, 4, abfd);
   if (nread != 4)
     {
       if (bfd_get_error () != bfd_error_system_call)
@@ -107,14 +107,14 @@ cisco_core_file_validate (bfd *abfd, int crash_info_loc)
     }
   crashinfo_offset = MASK_ADDR (bfd_get_32 (abfd, buf));
 
-  if (bfd_seek (abfd, (file_ptr) crashinfo_offset, SEEK_SET) != 0)
+  if (bfd_seek (abfd, crashinfo_offset, SEEK_SET) != 0)
     {
       /* Most likely we failed because of a bogus (huge) offset */
       bfd_set_error (bfd_error_wrong_format);
       return NULL;
     }
 
-  nread = bfd_bread (&crashinfo, (bfd_size_type) sizeof (crashinfo), abfd);
+  nread = bfd_read (&crashinfo, sizeof (crashinfo), abfd);
   if (nread != sizeof (crashinfo))
     {
       if (bfd_get_error () != bfd_error_system_call)

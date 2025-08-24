@@ -1,5 +1,5 @@
 /* Native Client support for ELF
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -348,7 +348,7 @@ nacl_final_write_processing (bfd *abfd)
 
 	if (fill == NULL
 	    || bfd_seek (abfd, sec->filepos, SEEK_SET) != 0
-	    || bfd_bwrite (fill, sec->size, abfd) != sec->size)
+	    || bfd_write (fill, sec->size, abfd) != sec->size)
 	  {
 	    /* We don't have a proper way to report an error here.  So
 	       instead fudge things so that elf_write_shdrs_and_ehdr will

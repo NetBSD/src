@@ -1,5 +1,5 @@
 /* tc-bfin.c -- Assembler for the ADI Blackfin.
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -106,16 +106,6 @@ bfin_pic_ptr (int nbytes)
   demand_empty_rest_of_line ();
 }
 
-static void
-bfin_s_bss (int ignore ATTRIBUTE_UNUSED)
-{
-  int temp;
-
-  temp = get_absolute_expression ();
-  subseg_set (bss_section, (subsegT) temp);
-  demand_empty_rest_of_line ();
-}
-
 const pseudo_typeS md_pseudo_table[] = {
   {"align", s_align_bytes, 0},
   {"byte2", cons, 2},
@@ -128,7 +118,6 @@ const pseudo_typeS md_pseudo_table[] = {
   {"p", s_ignore, 0},
   {"pdata", s_ignore, 0},
   {"var", s_ignore, 0},
-  {"bss", bfin_s_bss, 0},
   {0, 0, 0}
 };
 

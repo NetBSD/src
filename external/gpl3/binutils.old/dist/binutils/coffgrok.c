@@ -1,5 +1,5 @@
 /* coffgrok.c
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -341,7 +341,7 @@ static struct coff_type *
 do_type (unsigned int i)
 {
   struct internal_syment *sym;
-  union internal_auxent *aux;
+  combined_entry_type *aux;
   struct coff_type *res = (struct coff_type *) xmalloc (sizeof (struct coff_type));
   int type;
   int which_dt = 0;
@@ -357,7 +357,7 @@ do_type (unsigned int i)
   if (sym->n_numaux == 0 || i >= rawcount -1 || rawsyms[i + 1].is_sym)
     aux = NULL;
   else
-    aux = &rawsyms[i + 1].u.auxent;
+    aux = &rawsyms[i + 1];
 
   type = sym->n_type;
 
@@ -374,7 +374,7 @@ do_type (unsigned int i)
 	  res->type = coff_secdef_type;
 	  if (aux == NULL)
 	    fatal (_("Section definition needs a section length"));
-	  res->size = aux->x_scn.x_scnlen;
+	  res->size = aux->u.auxent.x_scn.x_scnlen;
 
 	  /* PR 17512: file: 081c955d.
 	     Fill in the asecdef structure as well.  */
@@ -426,26 +426,9 @@ do_type (unsigned int i)
 	  if (aux == NULL)
 	    fatal (_("Aggregate definition needs auxiliary information"));
 
-	  if (aux->x_sym.x_tagndx.p)
+	  if (aux->fix_tag)
 	    {
-	      unsigned int idx;
-
-	      /* PR 17512: file: e72f3988.  */
-	      if (aux->x_sym.x_tagndx.l < 0 || aux->x_sym.x_tagndx.p < rawsyms)
-		{
-		  non_fatal (_("Invalid tag index %#lx encountered"), aux->x_sym.x_tagndx.l);
-		  idx = 0;
-		}
-	      else
-		idx = INDEXOF (aux->x_sym.x_tagndx.p);
-
-	      if (idx >= rawcount)
-		{
-		  if (rawcount == 0)
-		    fatal (_("Symbol index %u encountered when there are no symbols"), idx);
-		  non_fatal (_("Invalid symbol index %u encountered"), idx);
-		  idx = 0;
-		}
+	      unsigned int idx = INDEXOF (aux->u.auxent.x_sym.x_tagndx.p);
 
 	      /* Referring to a struct defined elsewhere.  */
 	      res->type = coff_structref_type;
@@ -461,7 +444,7 @@ do_type (unsigned int i)
 	      res->u.astructdef.elements = empty_scope ();
 	      res->u.astructdef.idx = 0;
 	      res->u.astructdef.isstruct = (type & 0xf) == T_STRUCT;
-	      res->size = aux->x_sym.x_misc.x_lnsz.x_size;
+	      res->size = aux->u.auxent.x_sym.x_misc.x_lnsz.x_size;
 	    }
 	}
       else
@@ -475,13 +458,10 @@ do_type (unsigned int i)
     case T_ENUM:
       if (aux == NULL)
 	fatal (_("Enum definition needs auxiliary information"));
-      if (aux->x_sym.x_tagndx.p)
+      if (aux->fix_tag)
 	{
-	  unsigned int idx = INDEXOF (aux->x_sym.x_tagndx.p);
+	  unsigned int idx = INDEXOF (aux->u.auxent.x_sym.x_tagndx.p);
 
-	  /* PR 17512: file: 1ef037c7.  */
-	  if (idx >= rawcount)
-	    fatal (_("Invalid enum symbol index %u encountered"), idx);
 	  /* Referring to a enum defined elsewhere.  */
 	  res->type = coff_enumref_type;
 	  res->u.aenumref.ref = tindex[idx];
@@ -497,7 +477,7 @@ do_type (unsigned int i)
 	  last_enum = res;
 	  res->type = coff_enumdef_type;
 	  res->u.aenumdef.elements = empty_scope ();
-	  res->size = aux->x_sym.x_misc.x_lnsz.x_size;
+	  res->size = aux->u.auxent.x_sym.x_misc.x_lnsz.x_size;
 	}
       break;
     case T_MOE:
@@ -519,7 +499,7 @@ do_type (unsigned int i)
 	    if (aux == NULL)
 	      fatal (_("Array definition needs auxiliary information"));
 	    els = (dimind < DIMNUM
-		   ? aux->x_sym.x_fcnary.x_ary.x_dimen[dimind]
+		   ? aux->u.auxent.x_sym.x_fcnary.x_ary.x_dimen[dimind]
 		   : 0);
 
 	    ++dimind;

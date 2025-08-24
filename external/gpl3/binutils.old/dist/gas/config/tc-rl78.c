@@ -1,5 +1,5 @@
 /* tc-rl78.c -- Assembler for the Renesas RL78
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -375,16 +375,6 @@ md_show_usage (FILE * stream)
 }
 
 static void
-s_bss (int ignore ATTRIBUTE_UNUSED)
-{
-  int temp;
-
-  temp = get_absolute_expression ();
-  subseg_set (bss_section, (subsegT) temp);
-  demand_empty_rest_of_line ();
-}
-
-static void
 rl78_float_cons (int ignore ATTRIBUTE_UNUSED)
 {
   if (elf_flags & E_FLAG_RL78_64BIT_DOUBLES)
@@ -397,7 +387,6 @@ const pseudo_typeS md_pseudo_table[] =
 {
   /* Our "standard" pseudos.  */
   { "double", rl78_float_cons,	'd' },
-  { "bss",    s_bss, 		0 },
   { "3byte",  cons,		3 },
   { "int",    cons,		4 },
   { "word",   cons,		4 },

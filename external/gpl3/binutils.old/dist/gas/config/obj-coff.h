@@ -1,5 +1,5 @@
 /* coff object file format
-   Copyright (C) 1989-2022 Free Software Foundation, Inc.
+   Copyright (C) 1989-2024 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -38,6 +38,10 @@
 #ifndef TARGET_FORMAT
 #define TARGET_FORMAT "coff-arm"
 #endif
+#endif
+
+#ifdef TC_AARCH64
+#include "coff/aarch64.h"
 #endif
 
 #ifdef TC_PPC
@@ -156,7 +160,7 @@
 /* Omit the tv related fields.  */
 /* Accessors.  */
 
-#define SA_GET_SYM_TAGNDX(s)	(SYM_AUXENT (s)->x_sym.x_tagndx.l)
+#define SA_GET_SYM_TAGNDX(s)	(SYM_AUXENT (s)->x_sym.x_tagndx.u32)
 #define SA_GET_SYM_LNNO(s)	(SYM_AUXENT (s)->x_sym.x_misc.x_lnsz.x_lnno)
 #define SA_GET_SYM_SIZE(s)	(SYM_AUXENT (s)->x_sym.x_misc.x_lnsz.x_size)
 #define SA_GET_SYM_FSIZE(s)	(SYM_AUXENT (s)->x_sym.x_misc.x_fsize)
@@ -295,7 +299,7 @@ extern const pseudo_typeS coff_pseudo_table[];
 
 /* We need 12 bytes at the start of the section to hold some initial
    information.  */
-#define INIT_STAB_SECTION(seg) obj_coff_init_stab_section (seg)
+#define INIT_STAB_SECTION(stab, str) obj_coff_init_stab_section (stab, str)
 
 /* Store the number of relocations in the section aux entry.  */
 #ifdef OBJ_XCOFF
@@ -338,7 +342,7 @@ extern segT s_get_segment                (symbolS *);
 extern void tc_coff_symbol_emit_hook     (symbolS *);
 #endif
 extern void obj_coff_pe_handle_link_once (void);
-extern void obj_coff_init_stab_section   (segT);
+extern void obj_coff_init_stab_section   (segT, segT);
 extern void c_section_header             (struct internal_scnhdr *,
 					  char *, long, long, long, long,
 					  long, long, long, long);

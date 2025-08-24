@@ -1,5 +1,5 @@
 /* Stabs in sections linking support.
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -112,7 +112,23 @@ struct stab_section_info
   bfd_size_type stridxs[1];
 };
 
-
+/*
+EXTERNAL
+.{* This structure is used to keep track of stabs in sections
+.   information while linking.  *}
+.
+.struct stab_info
+.{
+.  {* A hash table used to hold stabs strings.  *}
+.  struct bfd_strtab_hash *strings;
+.  {* The header file hash table.  *}
+.  struct bfd_hash_table includes;
+.  {* The first .stabstr section.  *}
+.  struct bfd_section *stabstr;
+.};
+.
+*/
+
 /* The function to create a new entry in the header file hash table.  */
 
 static struct bfd_hash_entry *
@@ -140,9 +156,20 @@ stab_link_includes_newfunc (struct bfd_hash_entry *entry,
 
   return (struct bfd_hash_entry *) ret;
 }
-
-/* This function is called for each input file from the add_symbols
-   pass of the linker.  */
+
+/*
+INTERNAL_FUNCTION
+	_bfd_link_section_stabs
+
+SYNOPSIS
+	bool _bfd_link_section_stabs
+	  (bfd *, struct stab_info *, asection *, asection *, void **,
+	   bfd_size_type *);
+
+DESCRIPTION
+	This function is called for each input file from the add_symbols
+	pass of the linker.
+*/
 
 bool
 _bfd_link_section_stabs (bfd *abfd,
@@ -162,7 +189,9 @@ _bfd_link_section_stabs (bfd *abfd,
   bfd_size_type *pstridx;
 
   if (stabsec->size == 0
-      || stabstrsec->size == 0)
+      || stabstrsec->size == 0
+      || (stabsec->flags & SEC_HAS_CONTENTS) == 0
+      || (stabstrsec->flags & SEC_HAS_CONTENTS) == 0)
     /* This file does not contain stabs debugging information.  */
     return true;
 
@@ -498,11 +527,20 @@ _bfd_link_section_stabs (bfd *abfd,
   free (stabstrbuf);
   return false;
 }
-
-/* This function is called for each input file before the stab
-   section is relocated.  It discards stab entries for discarded
-   functions and variables.  The function returns TRUE iff
-   any entries have been deleted.
+
+/*
+INTERNAL_FUNCTION
+	_bfd_discard_section_stabs
+
+SYNOPSIS
+	bool _bfd_discard_section_stabs
+	  (bfd *, asection *, void *, bool (*) (bfd_vma, void *), void *);
+
+DESCRIPTION
+	This function is called for each input file before the stab
+	section is relocated.  It discards stab entries for discarded
+	functions and variables.  The function returns TRUE iff
+	any entries have been deleted.
 */
 
 bool
@@ -520,7 +558,7 @@ _bfd_discard_section_stabs (bfd *abfd,
   bfd_size_type *pstridx;
   int deleting;
 
-  if (stabsec->size == 0)
+  if (stabsec->size == 0 || (stabsec->flags & SEC_HAS_CONTENTS) == 0)
     /* This file does not contain stabs debugging information.  */
     return false;
 
@@ -650,8 +688,18 @@ _bfd_discard_section_stabs (bfd *abfd,
   return false;
 }
 
-/* Write out the stab section.  This is called with the relocated
-   contents.  */
+/*
+INTERNAL_FUNCTION
+	_bfd_write_section_stabs
+
+SYNOPSIS
+	bool _bfd_write_section_stabs
+	  (bfd *, struct stab_info *, asection *, void **, bfd_byte *);
+
+DESCRIPTION
+	Write out the stab section.  This is called with the relocated
+	contents.
+*/
 
 bool
 _bfd_write_section_stabs (bfd *output_bfd,
@@ -722,7 +770,16 @@ _bfd_write_section_stabs (bfd *output_bfd,
 				   stabsec->size);
 }
 
-/* Write out the .stabstr section.  */
+/*
+INTERNAL_FUNCTION
+	_bfd_write_stab_strings
+
+SYNOPSIS
+	bool _bfd_write_stab_strings (bfd *, struct stab_info *);
+
+DESCRIPTION
+	Write out the .stabstr section.
+*/
 
 bool
 _bfd_write_stab_strings (bfd *output_bfd, struct stab_info *sinfo)
@@ -751,9 +808,18 @@ _bfd_write_stab_strings (bfd *output_bfd, struct stab_info *sinfo)
   return true;
 }
 
-/* Adjust an address in the .stab section.  Given OFFSET within
-   STABSEC, this returns the new offset in the adjusted stab section,
-   or -1 if the address refers to a stab which has been removed.  */
+/*
+INTERNAL_FUNCTION
+	_bfd_stab_section_offset
+
+SYNOPSIS
+	bfd_vma _bfd_stab_section_offset (asection *, void *, bfd_vma);
+
+DESCRIPTION
+	Adjust an address in the .stab section.  Given OFFSET within
+	STABSEC, this returns the new offset in the adjusted stab section,
+	or -1 if the address refers to a stab which has been removed.
+*/
 
 bfd_vma
 _bfd_stab_section_offset (asection *stabsec,

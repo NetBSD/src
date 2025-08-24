@@ -6,6 +6,8 @@ LITTLE_OUTPUT_FORMAT="elf32-littlearm"
 TEXT_START_ADDR=0x8000
 TEMPLATE_NAME=elf
 EXTRA_EM_FILE=armelf
+OTHER_PLT_SECTIONS="
+  .gnu.sgstubs    : { *(.gnu.sgstubs*) }"
 OTHER_TEXT_SECTIONS='*(.glue_7t) *(.glue_7) *(.vfp11_veneer) *(.v4_bx)'
 OTHER_BSS_SYMBOLS="${CREATE_SHLIB+PROVIDE (}__bss_start__ = .${CREATE_SHLIB+)};"
 OTHER_BSS_END_SYMBOLS="${CREATE_SHLIB+PROVIDE (}_bss_end__ = .${CREATE_SHLIB+)}; ${CREATE_SHLIB+PROVIDE (}__bss_end__ = .${CREATE_SHLIB+)};"

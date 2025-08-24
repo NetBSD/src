@@ -1,5 +1,5 @@
 /* Define a target vector and some small routines for a variant of a.out.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -136,7 +136,7 @@ MY (object_p) (bfd *abfd)
   bfd_cleanup cleanup;
   size_t amt = EXEC_BYTES_SIZE;
 
-  if (bfd_bread ((void *) &exec_bytes, amt, abfd) != amt)
+  if (bfd_read (&exec_bytes, amt, abfd) != amt)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_wrong_format);
@@ -475,6 +475,9 @@ MY_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 #ifndef MY_find_nearest_line
 #define MY_find_nearest_line NAME (aout, find_nearest_line)
 #endif
+#ifndef MY_find_nearest_line_with_alt
+#define MY_find_nearest_line_with_alt _bfd_nosymbols_find_nearest_line_with_alt
+#endif
 #ifndef MY_find_line
 #define MY_find_line _bfd_nosymbols_find_line
 #endif
@@ -595,18 +598,7 @@ MY_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 #endif
 
 #ifndef MY_close_and_cleanup
-
-/* Handle closing of a BFD including the resource-releasing parts.  */
-
-static bool
-MY_close_and_cleanup (bfd *abfd)
-{
-  if (!MY_bfd_free_cached_info (abfd))
-    return false;
-
-  return _bfd_generic_close_and_cleanup (abfd);
-}
-
+#define MY_close_and_cleanup _bfd_generic_close_and_cleanup
 #endif
 
 #ifndef MY_get_dynamic_symtab_upper_bound

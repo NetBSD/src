@@ -1,5 +1,5 @@
 /* tc-v850.c -- Assembler code for the NEC V850
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -198,8 +198,6 @@ struct v850_seg_entry v850_seg_table[] =
   { NULL, ".call_table_text",
     SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY | SEC_CODE
     | SEC_HAS_CONTENTS},
-  { NULL, ".bss",
-    SEC_ALLOC }
 };
 
 #define SDATA_SECTION		0
@@ -215,7 +213,6 @@ struct v850_seg_entry v850_seg_table[] =
 #define ZCOMMON_SECTION		10
 #define CALL_TABLE_DATA_SECTION	11
 #define CALL_TABLE_TEXT_SECTION	12
-#define BSS_SECTION		13
 
 static void
 do_v850_seg (int i, subsegT sub)
@@ -578,7 +575,6 @@ const pseudo_typeS md_pseudo_table[] =
   { "zbss",		v850_seg,		ZBSS_SECTION		},
   { "rosdata",		v850_seg,		ROSDATA_SECTION 	},
   { "rozdata",		v850_seg,		ROZDATA_SECTION 	},
-  { "bss",		v850_seg,		BSS_SECTION		},
   { "offset",		v850_offset,		0			},
   { "word",		cons,			4			},
   { "zcomm",		v850_comm,		ZCOMMON_SECTION 	},
@@ -1969,7 +1965,6 @@ md_begin (void)
       op++;
     }
 
-  v850_seg_table[BSS_SECTION].s = bss_section;
   bfd_set_arch_mach (stdoutput, v850_target_arch, machine);
   bfd_set_private_flags (stdoutput, v850_e_flags);
 }
@@ -2909,6 +2904,7 @@ md_assemble (char *str)
 	      else
 		{
 		  expression (&ex);
+		  resolve_register (&ex);
 
 		  if ((operand->flags & V850_NOT_IMM0)
 		      && ex.X_op == O_constant
@@ -3728,7 +3724,7 @@ v850_force_relocation (struct fix *fixP)
 
 /* Create a v850 note section.  */
 void
-v850_md_end (void)
+v850_md_finish (void)
 {
   segT note_sec;
   segT orig_seg = now_seg;

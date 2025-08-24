@@ -1,5 +1,5 @@
 /* seh pdata/xdata coff object file format
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -64,7 +64,7 @@ get_pxdata_name (segT seg, const char *base_name)
   else
     name = dollar;
 
-  sname = concat (base_name, name, NULL);
+  sname = notes_concat (base_name, name, NULL);
 
   return sname;
 }
@@ -75,8 +75,7 @@ alloc_pxdata_item (segT seg, int subseg, char *name)
 {
   struct seh_seg_list *r;
 
-  r = (struct seh_seg_list *)
-    xmalloc (sizeof (struct seh_seg_list) + strlen (name));
+  r = notes_alloc (sizeof (struct seh_seg_list) + strlen (name));
   r->seg = seg;
   r->subseg = subseg;
   r->seg_name = name;
@@ -145,7 +144,7 @@ seh_hash_find_or_make (segT cseg, const char *base_name)
       seh_hash_insert (item->seg_name, item);
     }
   else
-    free (name);
+    notes_free (name);
 
   return item;
 }

@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 #
 
 #
-#   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -134,16 +134,24 @@ am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
 	$(top_srcdir)/../bfd/warning.m4 $(top_srcdir)/../config/acx.m4 \
 	$(top_srcdir)/../config/depstand.m4 \
 	$(top_srcdir)/../config/gettext-sister.m4 \
+	$(top_srcdir)/../config/gettext.m4 \
+	$(top_srcdir)/../config/iconv.m4 \
+	$(top_srcdir)/../config/intlmacosx.m4 \
 	$(top_srcdir)/../config/jobserver.m4 \
 	$(top_srcdir)/../config/largefile.m4 \
 	$(top_srcdir)/../config/lcmessage.m4 \
 	$(top_srcdir)/../config/lead-dot.m4 \
+	$(top_srcdir)/../config/lib-ld.m4 \
+	$(top_srcdir)/../config/lib-link.m4 \
+	$(top_srcdir)/../config/lib-prefix.m4 \
 	$(top_srcdir)/../config/nls.m4 \
 	$(top_srcdir)/../config/override.m4 \
+	$(top_srcdir)/../config/pkg.m4 \
 	$(top_srcdir)/../config/plugins.m4 \
 	$(top_srcdir)/../config/po.m4 \
 	$(top_srcdir)/../config/progtest.m4 \
-	$(top_srcdir)/../config/zlib.m4 $(top_srcdir)/../libtool.m4 \
+	$(top_srcdir)/../config/zlib.m4 \
+	$(top_srcdir)/../config/zstd.m4 $(top_srcdir)/../libtool.m4 \
 	$(top_srcdir)/../ltoptions.m4 $(top_srcdir)/../ltsugar.m4 \
 	$(top_srcdir)/../ltversion.m4 $(top_srcdir)/../lt~obsolete.m4 \
 	$(top_srcdir)/acinclude.m4 $(top_srcdir)/../bfd/version.m4 \
@@ -160,15 +168,18 @@ CONFIG_CLEAN_FILES = gdb.ini .gdbinit po/Makefile.in
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
 am__objects_1 = app.$(OBJEXT) as.$(OBJEXT) atof-generic.$(OBJEXT) \
-	compress-debug.$(OBJEXT) cond.$(OBJEXT) depend.$(OBJEXT) \
-	dwarf2dbg.$(OBJEXT) dw2gencfi.$(OBJEXT) ecoff.$(OBJEXT) \
-	ehopt.$(OBJEXT) expr.$(OBJEXT) flonum-copy.$(OBJEXT) \
-	flonum-konst.$(OBJEXT) flonum-mult.$(OBJEXT) frags.$(OBJEXT) \
-	hash.$(OBJEXT) input-file.$(OBJEXT) input-scrub.$(OBJEXT) \
-	listing.$(OBJEXT) literal.$(OBJEXT) macro.$(OBJEXT) \
-	messages.$(OBJEXT) output-file.$(OBJEXT) read.$(OBJEXT) \
-	remap.$(OBJEXT) sb.$(OBJEXT) stabs.$(OBJEXT) subsegs.$(OBJEXT) \
-	symbols.$(OBJEXT) write.$(OBJEXT)
+	codeview.$(OBJEXT) compress-debug.$(OBJEXT) cond.$(OBJEXT) \
+	depend.$(OBJEXT) dwarf2dbg.$(OBJEXT) dw2gencfi.$(OBJEXT) \
+	ecoff.$(OBJEXT) ehopt.$(OBJEXT) expr.$(OBJEXT) \
+	flonum-copy.$(OBJEXT) flonum-konst.$(OBJEXT) \
+	flonum-mult.$(OBJEXT) frags.$(OBJEXT) gen-sframe.$(OBJEXT) \
+	ginsn.$(OBJEXT) hash.$(OBJEXT) input-file.$(OBJEXT) \
+	input-scrub.$(OBJEXT) listing.$(OBJEXT) literal.$(OBJEXT) \
+	macro.$(OBJEXT) messages.$(OBJEXT) output-file.$(OBJEXT) \
+	read.$(OBJEXT) remap.$(OBJEXT) sb.$(OBJEXT) \
+	scfidw2gen.$(OBJEXT) scfi.$(OBJEXT) sframe-opt.$(OBJEXT) \
+	stabs.$(OBJEXT) subsegs.$(OBJEXT) symbols.$(OBJEXT) \
+	write.$(OBJEXT)
 am_as_new_OBJECTS = $(am__objects_1)
 am__dirstamp = $(am__leading_dot)dirstamp
 as_new_OBJECTS = $(am_as_new_OBJECTS)
@@ -392,12 +403,15 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INSTOBJEXT = @INSTOBJEXT@
+INTLLIBS = @INTLLIBS@
+INTL_MACOSX_LIBS = @INTL_MACOSX_LIBS@
 LARGEFILE_CPPFLAGS = @LARGEFILE_CPPFLAGS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LEX = `if [ -f ../flex/flex ] ; then echo ../flex/flex ; else echo @LEX@ ; fi`
 LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
+LIBICONV = @LIBICONV@
 LIBINTL = @LIBINTL@
 LIBINTL_DEP = @LIBINTL_DEP@
 LIBM = @LIBM@
@@ -406,6 +420,8 @@ LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
+LTLIBICONV = @LTLIBICONV@
+LTLIBINTL = @LTLIBINTL@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
@@ -429,6 +445,9 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 POSUB = @POSUB@
 RANLIB = @RANLIB@
 SED = @SED@
@@ -443,6 +462,8 @@ WARN_WRITE_STRINGS = @WARN_WRITE_STRINGS@
 XGETTEXT = @XGETTEXT@
 YACC = `if [ -f ../bison/bison ] ; then echo ../bison/bison -y -L../bison/bison ; else echo @YACC@ ; fi`
 YFLAGS = @YFLAGS@
+ZSTD_CFLAGS = @ZSTD_CFLAGS@
+ZSTD_LIBS = @ZSTD_LIBS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -524,7 +545,7 @@ ZLIBINC = @zlibinc@
 # maintainer mode is disabled.  Avoid this.
 am__skiplex = 
 am__skipyacc = 
-AM_CFLAGS = $(WARN_CFLAGS) $(ZLIBINC)
+AM_CFLAGS = $(WARN_CFLAGS) $(ZLIBINC) $(ZSTD_CFLAGS)
 TARG_CPU = @target_cpu_type@
 TARG_CPU_C = $(srcdir)/config/tc-@target_cpu_type@.c
 TARG_CPU_O = config/tc-@target_cpu_type@.@OBJEXT@
@@ -547,6 +568,7 @@ GAS_CFILES = \
 	app.c \
 	as.c \
 	atof-generic.c \
+	codeview.c \
 	compress-debug.c \
 	cond.c \
 	depend.c \
@@ -559,6 +581,8 @@ GAS_CFILES = \
 	flonum-konst.c \
 	flonum-mult.c \
 	frags.c \
+	gen-sframe.c \
+	ginsn.c \
 	hash.c \
 	input-file.c \
 	input-scrub.c \
@@ -570,6 +594,9 @@ GAS_CFILES = \
 	read.c \
 	remap.c \
 	sb.c \
+	scfidw2gen.c \
+	scfi.c \
+	sframe-opt.c \
 	stabs.c \
 	subsegs.c \
 	symbols.c \
@@ -582,6 +609,7 @@ HFILES = \
 	bignum.h \
 	bit_fix.h \
 	cgen.h \
+	codeview.h \
 	compress-debug.h \
 	dwarf2dbg.h \
 	dw2gencfi.h \
@@ -591,6 +619,8 @@ HFILES = \
 	expr.h \
 	flonum.h \
 	frags.h \
+	gen-sframe.h \
+	ginsn.h \
 	hash.h \
 	input-file.h \
 	itbl-lex.h \
@@ -601,6 +631,8 @@ HFILES = \
 	output-file.h \
 	read.h \
 	sb.h \
+	scfidw2gen.h \
+	scfi.h \
 	subsegs.h \
 	symbols.h \
 	tc.h \
@@ -633,6 +665,7 @@ TARGET_CPU_CFILES = \
 	config/tc-i386.c \
 	config/tc-ip2k.c \
 	config/tc-iq2000.c \
+	config/tc-kvx.c \
 	config/tc-lm32.c \
 	config/tc-loongarch.c \
 	config/tc-m32c.c \
@@ -708,6 +741,7 @@ TARGET_CPU_HFILES = \
 	config/tc-i386.h \
 	config/tc-ip2k.h \
 	config/tc-iq2000.h \
+	config/tc-kvx.h \
 	config/tc-lm32.h \
 	config/tc-m32c.h \
 	config/tc-m32r.h \
@@ -759,7 +793,9 @@ TARGET_CPU_HFILES = \
 TARGET_EXTRA_FILES = \
 	config/bfin-lex-wrapper.c \
 	config/xtensa-relax.c \
-	config/xtensa-relax.h
+	config/xtensa-relax.h \
+	config/kvx-parse.h \
+	config/kvx-parse.c
 
 
 # OBJ files in config
@@ -814,7 +850,6 @@ TARG_ENV_HFILES = \
 	config/te-pc532mach.h \
 	config/te-pe.h \
 	config/te-solaris.h \
-	config/te-svr4.h \
 	config/te-tmips.h \
 	config/te-vxworks.h \
 	config/te-wince-pe.h
@@ -874,7 +909,7 @@ GASLIBS = @OPCODES_LIB@ ../bfd/libbfd.la ../libiberty/libiberty.a
 STAGESTUFF = *.@OBJEXT@ $(noinst_PROGRAMS)
 as_new_SOURCES = $(GAS_CFILES)
 as_new_LDADD = $(TARG_CPU_O) $(OBJ_FORMAT_O) $(ATOF_TARG_O) \
-	$(extra_objects) $(GASLIBS) $(LIBINTL) $(LIBM) $(ZLIB)
+	$(extra_objects) $(GASLIBS) $(LIBINTL) $(LIBM) $(ZLIB) $(ZSTD_LIBS)
 
 as_new_DEPENDENCIES = $(TARG_CPU_O) $(OBJ_FORMAT_O) $(ATOF_TARG_O) \
 	$(extra_objects) $(GASLIBS) $(LIBINTL_DEP)
@@ -891,6 +926,10 @@ EXTRA_as_new_SOURCES = $(CFILES) $(HFILES) $(TARGET_CPU_CFILES) \
 EXPECT = expect
 RUNTEST = runtest
 RUNTESTFLAGS = 
+i386_tbl_deps = $(srcdir)/../opcodes/i386-opc.tbl \
+	$(srcdir)/../opcodes/i386-reg.tbl \
+	$(srcdir)/../opcodes/i386-gen.c $(srcdir)/../opcodes/i386-opc.h
+
 itbl_test_SOURCES = itbl-parse.y itbl-lex.l
 itbl_test_LDADD = itbl-tops.@OBJEXT@ itbl-test.@OBJEXT@ $(GASLIBS) @LEXLIB@
 
@@ -945,6 +984,7 @@ CPU_DOCS = \
 	doc/c-hppa.texi \
 	doc/c-i386.texi \
 	doc/c-ip2k.texi \
+	doc/c-kvx.texi \
 	doc/c-lm32.texi \
 	doc/c-m32c.texi \
 	doc/c-m32r.texi \
@@ -1111,6 +1151,8 @@ config/tc-ip2k.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/tc-iq2000.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
+config/tc-kvx.$(OBJEXT): config/$(am__dirstamp) \
+	config/$(DEPDIR)/$(am__dirstamp)
 config/tc-lm32.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/tc-loongarch.$(OBJEXT): config/$(am__dirstamp) \
@@ -1213,6 +1255,8 @@ config/bfin-lex-wrapper.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/xtensa-relax.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
+config/kvx-parse.$(OBJEXT): config/$(am__dirstamp) \
+	config/$(DEPDIR)/$(am__dirstamp)
 config/te-vms.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/obj-aout.$(OBJEXT): config/$(am__dirstamp) \
@@ -1283,6 +1327,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/as.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/atof-generic.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cgen.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/codeview.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/compress-debug.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cond.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/depend.Po@am__quote@
@@ -1295,6 +1340,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/flonum-konst.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/flonum-mult.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/frags.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gen-sframe.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ginsn.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/input-file.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/input-scrub.Po@am__quote@
@@ -1309,6 +1356,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/remap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sb.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scfi.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scfidw2gen.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sframe-opt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stabs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/subsegs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/symbols.Po@am__quote@
@@ -1324,6 +1374,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-i386coff.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-i386elf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-mipself.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/kvx-parse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/loongarch-lex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/loongarch-parse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/m68k-parse.Po@am__quote@
@@ -1362,6 +1413,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-ia64.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-ip2k.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-iq2000.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-kvx.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-lm32.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-loongarch.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-m32c.Po@am__quote@
@@ -2047,6 +2099,13 @@ check-DEJAGNU: site.exp
 development.exp: $(BFDDIR)/development.sh
 	$(EGREP) "(development|experimental)=" $(BFDDIR)/development.sh  \
 	  | $(AWK) -F= '{ print "set " $$1 " " $$2 }' > $@
+
+config/tc-i386.o: $(srcdir)/../opcodes/i386-init.h $(srcdir)/../opcodes/i386-tbl.h
+
+$(srcdir)/../opcodes/i386%init.h $(srcdir)/../opcodes/i386%tbl.h $(srcdir)/../opcodes/i386%mnem.h: @MAINT@ $(i386_tbl_deps)
+	@echo '"$@" is outdated wrt "$?"' >&2
+	@echo 'Please rebuild from the top level or in $(CURDIR)/../opcodes/' >&2
+	@false
 config/m68k-parse.c: $(srcdir)/config/m68k-parse.y
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_config_m68k-parse.c:
@@ -2083,6 +2142,8 @@ config/loongarch-lex-wrapper.@OBJEXT@: config/loongarch-lex.c config/loongarch-p
 itbl-lex-wrapper.@OBJEXT@: itbl-lex.c itbl-parse.h
 
 itbl-parse.c: $(srcdir)/itbl-parse.y
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_itbl-parse.c:
 	$(SHELL) $(YLWRAP) $(srcdir)/itbl-parse.y y.tab.c $@ y.tab.h itbl-parse.h -- $(YACCCOMPILE) -d
 
 itbl-parse.h: itbl-parse.c
@@ -2205,7 +2266,7 @@ de-stage3:
 
 doc/asconfig.texi: doc/$(CONFIG).texi doc/$(am__dirstamp)
 	$(AM_V_at)rm -f doc/asconfig.texi
-	$(AM_V_GEN)cp $(srcdir)/doc/$(CONFIG).texi doc/asconfig.texi
+	$(AM_V_GEN)cp $(srcdir)/doc/$(CONFIG).texi doc/asconfig.texi && touch -m -r $(srcdir)/doc/$(CONFIG).texi doc/asconfig.texi
 	$(AM_V_at)chmod u+w doc/asconfig.texi
 
 # Maintenance

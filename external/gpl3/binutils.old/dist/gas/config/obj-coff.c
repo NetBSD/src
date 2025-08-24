@@ -1,5 +1,5 @@
 /* coff object file format
-   Copyright (C) 1989-2022 Free Software Foundation, Inc.
+   Copyright (C) 1989-2024 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -238,7 +238,7 @@ fetch_coff_debug_section (void)
     {
       const asymbol *s;
 
-      s = bfd_make_debug_symbol (stdoutput, NULL, 0);
+      s = bfd_make_debug_symbol (stdoutput);
       gas_assert (s != 0);
       debug_section = s->section;
     }
@@ -1725,7 +1725,8 @@ coff_frob_section (segT sec)
   bfd_vma align_power = (bfd_vma) sec->alignment_power + OCTETS_PER_BYTE_POWER;
   bfd_vma mask = ((bfd_vma) 1 << align_power) - 1;
 
-  if (size & mask)
+  if (!do_not_pad_sections_to_alignment
+      && (size & mask) != 0)
     {
       bfd_vma new_size;
       fragS *last;
@@ -1740,7 +1741,10 @@ coff_frob_section (segT sec)
       while (fragp->fr_next != last)
 	fragp = fragp->fr_next;
       last->fr_address = size;
-      fragp->fr_offset += new_size - size;
+      if ((new_size - size) % fragp->fr_var == 0)
+	fragp->fr_offset += (new_size - size) / fragp->fr_var;
+      else
+	abort ();
     }
 #endif
 
@@ -1800,11 +1804,10 @@ coff_frob_section (segT sec)
 }
 
 void
-obj_coff_init_stab_section (segT seg)
+obj_coff_init_stab_section (segT stab ATTRIBUTE_UNUSED, segT stabstr)
 {
   const char *file;
   char *p;
-  char *stabstr_name;
   unsigned int stroff;
 
   /* Make space for this first symbol.  */
@@ -1812,8 +1815,7 @@ obj_coff_init_stab_section (segT seg)
   /* Zero it out.  */
   memset (p, 0, 12);
   file = as_where ((unsigned int *) NULL);
-  stabstr_name = concat (seg->name, "str", (char *) NULL);
-  stroff = get_stab_string_offset (file, stabstr_name, true);
+  stroff = get_stab_string_offset (file, stabstr);
   know (stroff == 1);
   md_number_to_chars (p, stroff, 4);
 }
@@ -1906,6 +1908,7 @@ const struct format_ops coff_format_ops =
   0,	/* dfl_leading_underscore */
   1,	/* emit_section_symbols */
   0,    /* begin */
+  0,	/* end.  */
   c_dot_file_symbol,
   coff_frob_symbol,
   0,	/* frob_file */

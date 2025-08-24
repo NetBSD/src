@@ -1,5 +1,5 @@
 /* tc-m32c.c -- Assembler for the Renesas M32C.
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by RedHat.
 
    This file is part of GAS, the GNU Assembler.
@@ -100,8 +100,6 @@ set_isa (enum isa_attr isa_num)
   cgen_bitset_set (& m32c_isa, isa_num);
 }
 
-static void s_bss (int);
-
 int
 md_parse_option (int c, const char * arg ATTRIBUTE_UNUSED)
 {
@@ -141,20 +139,9 @@ md_show_usage (FILE * stream)
   fprintf (stream, _(" M32C specific command line options:\n"));
 }
 
-static void
-s_bss (int ignore ATTRIBUTE_UNUSED)
-{
-  int temp;
-
-  temp = get_absolute_expression ();
-  subseg_set (bss_section, (subsegT) temp);
-  demand_empty_rest_of_line ();
-}
-
 /* The target specific pseudo-ops which we support.  */
 const pseudo_typeS md_pseudo_table[] =
 {
-  { "bss",	s_bss, 		0},
   { "3byte",	cons,		3 },
   { "word",	cons,		4 },
   { NULL, 	NULL, 		0 }

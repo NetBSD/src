@@ -1,5 +1,5 @@
 /* ELF core file support for BFD.
-   Copyright (C) 1995-2022 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -95,7 +95,7 @@ elf_core_file_p (bfd *abfd)
   ufile_ptr filesize;
 
   /* Read in the ELF header in external format.  */
-  if (bfd_bread (&x_ehdr, sizeof (x_ehdr), abfd) != sizeof (x_ehdr))
+  if (bfd_read (&x_ehdr, sizeof (x_ehdr), abfd) != sizeof (x_ehdr))
     {
       if (bfd_get_error () != bfd_error_system_call)
 	goto wrong;
@@ -185,7 +185,7 @@ elf_core_file_p (bfd *abfd)
 
       /* Read the first section header at index 0, and convert to internal
 	 form.  */
-      if (bfd_bread (&x_shdr, sizeof (x_shdr), abfd) != sizeof (x_shdr))
+      if (bfd_read (&x_shdr, sizeof (x_shdr), abfd) != sizeof (x_shdr))
 	goto fail;
       elf_swap_shdr_in (abfd, &x_shdr, &i_shdr);
 
@@ -217,12 +217,12 @@ elf_core_file_p (bfd *abfd)
 
       if (bfd_seek (abfd, where, SEEK_SET) != 0)
 	goto fail;
-      if (bfd_bread (&x_phdr, sizeof (x_phdr), abfd) != sizeof (x_phdr))
+      if (bfd_read (&x_phdr, sizeof (x_phdr), abfd) != sizeof (x_phdr))
 	goto fail;
     }
 
   /* Move to the start of the program headers.  */
-  if (bfd_seek (abfd, (file_ptr) i_ehdrp->e_phoff, SEEK_SET) != 0)
+  if (bfd_seek (abfd, i_ehdrp->e_phoff, SEEK_SET) != 0)
     goto wrong;
 
   /* Allocate space for the program headers.  */
@@ -238,7 +238,7 @@ elf_core_file_p (bfd *abfd)
     {
       Elf_External_Phdr x_phdr;
 
-      if (bfd_bread (&x_phdr, sizeof (x_phdr), abfd) != sizeof (x_phdr))
+      if (bfd_read (&x_phdr, sizeof (x_phdr), abfd) != sizeof (x_phdr))
 	goto fail;
 
       elf_swap_phdr_in (abfd, &x_phdr, i_phdrp + phindex);
@@ -315,7 +315,7 @@ NAME(_bfd_elf, core_find_build_id)
     goto fail;
 
   /* Read in the ELF header in external format.  */
-  if (bfd_bread (&x_ehdr, sizeof (x_ehdr), abfd) != sizeof (x_ehdr))
+  if (bfd_read (&x_ehdr, sizeof (x_ehdr), abfd) != sizeof (x_ehdr))
     {
       if (bfd_get_error () != bfd_error_system_call)
 	goto wrong;
@@ -367,7 +367,7 @@ NAME(_bfd_elf, core_find_build_id)
   if (i_phdr == NULL)
     goto fail;
 
-  if (bfd_seek (abfd, (file_ptr) (offset + i_ehdr.e_phoff), SEEK_SET) != 0)
+  if (bfd_seek (abfd, offset + i_ehdr.e_phoff, SEEK_SET) != 0)
     goto fail;
 
   /* Read in program headers and parse notes.  */
@@ -375,7 +375,7 @@ NAME(_bfd_elf, core_find_build_id)
     {
       Elf_External_Phdr x_phdr;
 
-      if (bfd_bread (&x_phdr, sizeof (x_phdr), abfd) != sizeof (x_phdr))
+      if (bfd_read (&x_phdr, sizeof (x_phdr), abfd) != sizeof (x_phdr))
 	goto fail;
       elf_swap_phdr_in (abfd, &x_phdr, i_phdr);
 
@@ -385,8 +385,8 @@ NAME(_bfd_elf, core_find_build_id)
 			  i_phdr->p_filesz, i_phdr->p_align);
 
 	  /* Make sure ABFD returns to processing the program headers.  */
-	  if (bfd_seek (abfd, (file_ptr) (offset + i_ehdr.e_phoff
-					  + (i + 1) * sizeof (x_phdr)),
+	  if (bfd_seek (abfd,
+			offset + i_ehdr.e_phoff + (i + 1) * sizeof (x_phdr),
 			SEEK_SET) != 0)
 	    goto fail;
 

@@ -1,5 +1,5 @@
 /* tc-cris.c -- Assembler code for the CRIS CPU core.
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB, Lund, Sweden.
    Originally written for GAS 1.38.1 by Mikael Asker.
@@ -548,11 +548,11 @@ cris_relax_frag (segT seg ATTRIBUTE_UNUSED, fragS *fragP,
       if (fragP->fr_symbol == NULL
 	  || S_GET_SEGMENT (fragP->fr_symbol) != absolute_section)
 	as_fatal (_("internal inconsistency problem in %s: fr_symbol %lx"),
-		  __FUNCTION__, (long) fragP->fr_symbol);
+		  __func__, (long) fragP->fr_symbol);
       symbolP = fragP->fr_symbol;
       if (symbol_resolved_p (symbolP))
 	as_fatal (_("internal inconsistency problem in %s: resolved symbol"),
-		  __FUNCTION__);
+		  __func__);
       aim = S_GET_VALUE (symbolP);
       break;
 
@@ -562,7 +562,7 @@ cris_relax_frag (segT seg ATTRIBUTE_UNUSED, fragS *fragP,
 
     default:
       as_fatal (_("internal inconsistency problem in %s: fr_subtype %d"),
-		  __FUNCTION__, fragP->fr_subtype);
+		  __func__, fragP->fr_subtype);
     }
 
   /* The rest is stolen from relax_frag.  There's no obvious way to
@@ -962,7 +962,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT sec ATTRIBUTE_UNUSED,
     case ENCODE_RELAX (STATE_BASE_PLUS_DISP_PREFIX, STATE_BYTE):
       if (symbolP == NULL)
 	as_fatal (_("internal inconsistency in %s: bdapq no symbol"),
-		    __FUNCTION__);
+		    __func__);
       opcodep[0] = S_GET_VALUE (symbolP);
       var_part_size = 0;
       break;
@@ -975,7 +975,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT sec ATTRIBUTE_UNUSED,
       opcodep[1] |= BDAP_INCR_HIGH;
       if (symbolP == NULL)
 	as_fatal (_("internal inconsistency in %s: bdap.w with no symbol"),
-		  __FUNCTION__);
+		  __func__);
       md_number_to_chars (var_partp, S_GET_VALUE (symbolP), 2);
       var_part_size = 2;
       break;
@@ -4237,7 +4237,7 @@ s_cris_dtpoff (int bytes)
 
   if (bytes != 4)
     as_fatal (_("internal inconsistency problem: %s called for %d bytes"),
-	      __FUNCTION__, bytes);
+	      __func__, bytes);
 
   expression (&ex);
 

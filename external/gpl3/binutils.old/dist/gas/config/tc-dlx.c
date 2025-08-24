@@ -1,5 +1,5 @@
 /* tc-dlx.c -- Assemble for the DLX
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -632,6 +632,7 @@ parse_operand (char *s, expressionS *operandp)
       /* Normal operand parsing.  */
       input_line_pointer = s;
       (void) expression (operandp);
+      resolve_register (operandp);
     }
 
   new_pos = input_line_pointer;

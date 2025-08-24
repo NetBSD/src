@@ -69,7 +69,7 @@
 /* First part of user prologue.  */
 #line 1 "rcparse.y"
  /* rcparse.y -- parser for Windows rc files
-   Copyright (C) 1997-2022 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Extended by Kai Tietz, Onevision.
 

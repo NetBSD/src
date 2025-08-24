@@ -1,5 +1,5 @@
 /* tc-z80.c -- Assemble code for the Zilog Z80, Z180, EZ80 and ASCII R800
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -538,7 +538,7 @@ md_begin (void)
 }
 
 void
-z80_md_end (void)
+z80_md_finish (void)
 {
   int mach_type;
 
@@ -926,6 +926,7 @@ parse_exp_not_indexed (const char *s, expressionS *op)
     }
   input_line_pointer = (char*) s ;
   expression (op);
+  resolve_register (op);
   switch (op->X_op)
     {
     case O_absent:
@@ -1142,10 +1143,11 @@ emit_data_val (expressionS * val, int size)
 	  but it does help to maintain compatibility with earlier versions
 	  of the assembler.  */
       if (! val->X_extrabit
-	  && is_overflow (val->X_add_number, size*8))
-	as_warn ( _("%d-bit overflow (%+ld)"), size*8, val->X_add_number);
+	  && is_overflow (val->X_add_number, size * 8))
+	as_warn ( _("%d-bit overflow (%+" PRId64 ")"), size * 8,
+		  (int64_t) val->X_add_number);
       for (i = 0; i < size; ++i)
-	p[i] = (char)(val->X_add_number >> (i*8));
+	p[i] = (val->X_add_number >> (i * 8)) & 0xff;
       return;
     }
 
@@ -1249,9 +1251,11 @@ emit_byte (expressionS * val, bfd_reloc_code_real_type r_type)
       if ((val->X_add_number < -128) || (val->X_add_number >= 128))
 	{
 	  if (r_type == BFD_RELOC_Z80_DISP8)
-	    as_bad (_("index overflow (%+ld)"), val->X_add_number);
+	    as_bad (_("index overflow (%+" PRId64 ")"),
+		    (int64_t) val->X_add_number);
 	  else
-	    as_bad (_("offset overflow (%+ld)"), val->X_add_number);
+	    as_bad (_("offset overflow (%+" PRId64 ")"),
+		    (int64_t) val->X_add_number);
 	}
     }
   else
@@ -3479,15 +3483,6 @@ area (int arg)
     psect (arg);
 }
 
-/* Handle the .bss pseudo-op.  */
-
-static void
-s_bss (int ignore ATTRIBUTE_UNUSED)
-{
-  subseg_set (bss_section, 0);
-  demand_empty_rest_of_line ();
-}
-
 /* Port specific pseudo ops.  */
 const pseudo_typeS md_pseudo_table[] =
 {
@@ -3503,7 +3498,6 @@ const pseudo_typeS md_pseudo_table[] =
   { ".hd64", set_inss, INS_Z180},
   { ".z80", set_inss, INS_Z80},
   { ".z80n", set_inss, INS_Z80N},
-  { "bss", s_bss, 0},
   { "db" , emit_data, 1},
   { "d24", z80_cons, 3},
   { "d32", z80_cons, 4},

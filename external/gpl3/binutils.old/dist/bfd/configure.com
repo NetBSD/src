@@ -7,7 +7,7 @@ $!
 $! Written by Klaus K"ampf (kkaempf@rmi.de)
 $! Rewritten by Tristan Gingold (gingold@adacore.com)
 $!
-$!   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+$!   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 $!
 $! This file is free software; you can redistribute it and/or modify
 $! it under the terms of the GNU General Public License as published by
@@ -59,12 +59,6 @@ $DECK
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
       COPY_TEXT('64');
-   ENDIF;
-   match_pos := SEARCH_QUIETLY('@BFD_INT64_FMT@', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-      POSITION(BEGINNING_OF(match_pos));
-      ERASE(match_pos);
-      COPY_TEXT('"l"');
    ENDIF;
    match_pos := SEARCH_QUIETLY('@bfd_file_ptr@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
@@ -119,12 +113,6 @@ $DECK
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
       COPY_TEXT('32');
-   ENDIF;
-   match_pos := SEARCH_QUIETLY('@BFD_INT64_FMT@', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-      POSITION(BEGINNING_OF(match_pos));
-      ERASE(match_pos);
-      COPY_TEXT('"ll"');
    ENDIF;
    match_pos := SEARCH_QUIETLY('@bfd_file_ptr@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;

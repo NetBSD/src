@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#  Copyright (C) 2006-2022 Free Software Foundation, Inc.
+#  Copyright (C) 2006-2024 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,8 +34,8 @@ ZLIBINC = @zlibinc@
 THREADFLAGS = @PTHREAD_CFLAGS@
 THREADLIBS = @PTHREAD_LIBS@
 
-AM_CFLAGS = $(WARN_CFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS) $(ZLIBINC) $(THREADFLAGS)
-AM_CXXFLAGS = $(WARN_CXXFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS) $(ZLIBINC) $(THREADFLAGS)
+AM_CFLAGS = $(WARN_CFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS) $(ZLIBINC) $(ZSTD_CFLAGS) $(THREADFLAGS)
+AM_CXXFLAGS = $(WARN_CXXFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS) $(ZLIBINC) $(ZSTD_CFLAGS) $(THREADFLAGS) $(JANSSON_CFLAGS)
 AM_LDFLAGS = $(THREADFLAGS)
 
 AM_CPPFLAGS = \
@@ -187,7 +187,7 @@ libgold_a_LIBADD = $(LIBOBJS)
 sources_var = main.cc
 deps_var = $(TARGETOBJS) libgold.a $(LIBIBERTY) $(LIBINTL_DEP)
 ldadd_var = $(TARGETOBJS) libgold.a $(LIBIBERTY) $(GOLD_LDADD) $(LIBINTL) \
-	 $(THREADLIBS) $(LIBDL) $(ZLIB)
+	 $(THREADLIBS) $(LIBDL) $(ZLIB) $(ZSTD_LIBS) $(JANSSON_LIBS)
 ldflags_var = $(GOLD_LDFLAGS)
 
 ld_new_SOURCES = $(sources_var)
@@ -201,12 +201,12 @@ incremental_dump_SOURCES = incremental-dump.cc
 incremental_dump_DEPENDENCIES = $(TARGETOBJS) libgold.a $(LIBIBERTY) \
 	$(LIBINTL_DEP)
 incremental_dump_LDADD = $(TARGETOBJS) libgold.a $(LIBIBERTY) $(LIBINTL) \
-	 $(THREADLIBS) $(LIBDL) $(ZLIB)
+	 $(THREADLIBS) $(LIBDL) $(ZLIB) $(ZSTD_LIBS) $(JANSSON_LIBS)
 
 dwp_SOURCES = dwp.cc
 dwp_DEPENDENCIES = libgold.a $(LIBIBERTY) $(LIBINTL_DEP)
 dwp_LDADD = libgold.a $(LIBIBERTY) $(GOLD_LDADD) $(LIBINTL) $(THREADLIBS) \
-	$(LIBDL) $(ZLIB)
+	$(LIBDL) $(ZLIB) $(ZSTD_LIBS) $(JANSSON_LIBS)
 dwp_LDFLAGS = $(GOLD_LDFLAGS)
 
 CONFIG_STATUS_DEPENDENCIES = $(srcdir)/../bfd/development.sh

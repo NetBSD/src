@@ -1,5 +1,5 @@
 /* BFD back-end for verilog hex memory dump files.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Written by Anthony Green <green@moxielogic.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -62,6 +62,10 @@
    Data width in bytes.  */
 unsigned int VerilogDataWidth = 1;
 
+/* Modified by obcopy.c
+   Data endianness.  */
+enum bfd_endian VerilogDataEndianness = BFD_ENDIAN_UNKNOWN;
+
 /* Macros for converting between hex and binary.  */
 
 static const char digs[] = "0123456789ABCDEF";
@@ -105,7 +109,7 @@ verilog_set_arch_mach (bfd *abfd, enum bfd_architecture arch, unsigned long mach
   return true;
 }
 
-/* We have to save up all the outpu for a splurge before output.  */
+/* We have to save up all the output for a splurge before output.  */
 
 static bool
 verilog_set_section_contents (bfd *abfd,
@@ -196,7 +200,7 @@ verilog_write_address (bfd *abfd, bfd_vma address)
   *dst++ = '\n';
   wrlen = dst - buffer;
 
-  return bfd_bwrite ((void *) buffer, wrlen, abfd) == wrlen;
+  return bfd_write (buffer, wrlen, abfd) == wrlen;
 }
 
 /* Write a record of type, of the supplied number of bytes. The
@@ -238,7 +242,8 @@ verilog_write_record (bfd *abfd,
 	    *dst++ = ' ';
 	}
     }
-  else if (bfd_little_endian (abfd))
+  else if ((VerilogDataEndianness == BFD_ENDIAN_UNKNOWN && bfd_little_endian (abfd)) /* FIXME: Can this happen ?  */
+	   || (VerilogDataEndianness == BFD_ENDIAN_LITTLE))
     {
       /* If the input byte stream contains:
 	   05 04 03 02 01 00
@@ -263,8 +268,10 @@ verilog_write_record (bfd *abfd,
 	  TOHEX (dst, *end);
 	  dst += 2;
 	}
+
+      /* FIXME: Should padding bytes be inserted here ?  */
     }
-  else
+  else /* Big endian output.  */
     {
       for (src = data; src < end;)
 	{
@@ -274,13 +281,14 @@ verilog_write_record (bfd *abfd,
 	  if ((src - data) % VerilogDataWidth == 0)
 	    *dst++ = ' ';
 	}
+      /* FIXME: Should padding bytes be inserted here ?  */
     }
 
   *dst++ = '\r';
   *dst++ = '\n';
   wrlen = dst - buffer;
 
-  return bfd_bwrite ((void *) buffer, wrlen, abfd) == wrlen;
+  return bfd_write (buffer, wrlen, abfd) == wrlen;
 }
 
 static bool
@@ -291,7 +299,14 @@ verilog_write_section (bfd *abfd,
   unsigned int octets_written = 0;
   bfd_byte *location = list->data;
 
-  verilog_write_address (abfd, list->where);
+  /* Insist that the starting address is a multiple of the data width.  */
+  if (list->where % VerilogDataWidth)
+    {
+      bfd_set_error (bfd_error_invalid_operation);
+      return false;
+    }
+
+  verilog_write_address (abfd, list->where / VerilogDataWidth);
   while (octets_written < list->size)
     {
       unsigned int octets_this_chunk = list->size - octets_written;
@@ -370,6 +385,7 @@ verilog_mkobject (bfd *abfd)
 #define verilog_bfd_is_local_label_name		     bfd_generic_is_local_label_name
 #define verilog_get_lineno			     _bfd_nosymbols_get_lineno
 #define verilog_find_nearest_line		     _bfd_nosymbols_find_nearest_line
+#define verilog_find_nearest_line_with_alt	     _bfd_nosymbols_find_nearest_line_with_alt
 #define verilog_find_inliner_info		     _bfd_nosymbols_find_inliner_info
 #define verilog_make_empty_symbol		     _bfd_generic_make_empty_symbol
 #define verilog_bfd_make_debug_symbol		     _bfd_nosymbols_bfd_make_debug_symbol

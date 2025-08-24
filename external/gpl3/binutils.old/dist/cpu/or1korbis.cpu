@@ -717,7 +717,7 @@
      ((MACH ORBIS-MACHS))
      "l.swa ${simm16-split}($rA),$rB"
      (+ OPC_SWA rA rB simm16)
-     (sequence ((SI addr) (BI flag))
+     (sequence ((SI addr))
 	       (set addr (load-store-addr rA simm16-split 4))
 	       (set sys-sr-f (and atomic-reserve (eq addr atomic-address)))
 	       (if sys-sr-f

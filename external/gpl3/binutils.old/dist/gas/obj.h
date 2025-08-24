@@ -1,7 +1,7 @@
 /* obj.h - defines the object dependent hooks for all object
    format backends.
 
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -37,11 +37,14 @@ void obj_symbol_to_chars (char **where, symbolS * symbolP);
 
 extern const pseudo_typeS obj_pseudo_table[];
 
+struct ecoff_extr;
+
 struct format_ops {
   int flavor;
   unsigned dfl_leading_underscore : 1;
   unsigned emit_section_symbols : 1;
   void (*begin) (void);
+  void (*end) (void);
   void (*app_file) (const char *);
   void (*frob_symbol) (symbolS *, int *);
   void (*frob_file) (void);
@@ -60,9 +63,9 @@ struct format_ops {
   void (*s_set_type) (symbolS *, int);
   void (*copy_symbol_attributes) (symbolS *, symbolS *);
   void (*generate_asm_lineno) (void);
-  void (*process_stab) (segT, int, const char *, int, int, int);
+  void (*process_stab) (int, const char *, int, int, int);
   int (*separate_stab_sections) (void);
-  void (*init_stab_section) (segT);
+  void (*init_stab_section) (segT, segT);
   int (*sec_sym_ok_for_reloc) (asection *);
   void (*pop_insert) (void);
   /* For configurations using ECOFF_DEBUGGING, this callback is used.  */

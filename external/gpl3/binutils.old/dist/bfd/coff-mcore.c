@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola MCore COFF/PE
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -220,7 +220,7 @@ mcore_emit_base_file_entry (struct bfd_link_info *info,
 		 + input_section->output_offset
 		 + input_section->output_section->vma;
 
-  if (coff_data (output_bfd)->pe)
+  if (obj_pe (output_bfd))
      addr -= pe_data (output_bfd)->pe_opthdr.ImageBase;
 
   if (fwrite (&addr, sizeof (addr), 1, (FILE *) info->base_file) == 1)
@@ -434,7 +434,13 @@ coff_mcore_relocate_section (bfd * output_bfd,
 		my_name = "*unknown*";
 	      else if (   sym->_n._n_n._n_zeroes == 0
 		       && sym->_n._n_n._n_offset != 0)
-		my_name = obj_coff_strings (input_bfd) + sym->_n._n_n._n_offset;
+		{
+		  if (sym->_n._n_n._n_offset < obj_coff_strings_len (input_bfd))
+		    my_name = (obj_coff_strings (input_bfd)
+			       + sym->_n._n_n._n_offset);
+		  else
+		    my_name = "?";
+		}
 	      else
 		{
 		  strncpy (buf, sym->_n._n_name, SYMNMLEN);

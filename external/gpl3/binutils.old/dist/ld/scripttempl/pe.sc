@@ -1,6 +1,6 @@
 # Linker script for PE.
 #
-# Copyright (C) 2014-2022 Free Software Foundation, Inc.
+# Copyright (C) 2014-2024 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -70,7 +70,7 @@ else
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -203,7 +203,7 @@ SECTIONS
     *(.debug\$S)
     *(.debug\$T)
     *(.debug\$F)
-    *(.drectve)
+    ${RELOCATING+ *(.drectve)}
     ${RELOCATING+ *(.note.GNU-stack)}
     ${RELOCATING+ *(.gnu.lto_*)}
   }

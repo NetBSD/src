@@ -1,5 +1,5 @@
 /* Matsushita 10300 specific support for 32-bit ELF
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -2694,7 +2694,8 @@ mn10300_elf_relax_section (bfd *abfd,
 	      if (! ((section->flags & SEC_RELOC) != 0
 		     && section->reloc_count != 0))
 		continue;
-	      if ((section->flags & SEC_ALLOC) == 0)
+	      if ((section->flags & SEC_ALLOC) == 0
+		  || (section->flags & SEC_HAS_CONTENTS) == 0)
 		continue;
 
 	      /* Get cached copy of section contents if it exists.  */
@@ -3034,7 +3035,9 @@ mn10300_elf_relax_section (bfd *abfd,
 	      unsigned int symcount;
 
 	      /* Skip non-code sections and empty sections.  */
-	      if ((section->flags & SEC_CODE) == 0 || section->size == 0)
+	      if ((section->flags & SEC_CODE) == 0
+		  || (section->flags & SEC_HAS_CONTENTS) == 0
+		  || section->size == 0)
 		continue;
 
 	      if (section->reloc_count != 0)
@@ -4431,6 +4434,13 @@ mn10300_elf_get_relocated_section_contents (bfd *output_bfd,
 
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
 
+  bfd_byte *orig_data = data;
+  if (data == NULL)
+    {
+      data = bfd_malloc (input_section->size);
+      if (data == NULL)
+	return NULL;
+    }
   memcpy (data, elf_section_data (input_section)->this_hdr.contents,
 	  (size_t) input_section->size);
 
@@ -4500,6 +4510,8 @@ mn10300_elf_get_relocated_section_contents (bfd *output_bfd,
     free (isymbuf);
   if (internal_relocs != elf_section_data (input_section)->relocs)
     free (internal_relocs);
+  if (orig_data == NULL)
+    free (data);
   return NULL;
 }
 

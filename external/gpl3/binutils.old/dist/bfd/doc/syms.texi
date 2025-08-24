@@ -139,7 +139,6 @@ An @code{asymbol} has the form:
 
 
 @example
-
 typedef struct bfd_symbol
 @{
   /* A pointer to the BFD which owns the symbol. This information
@@ -294,7 +293,6 @@ asymbol;
 
 @findex bfd_get_symtab_upper_bound
 @subsubsection @code{bfd_get_symtab_upper_bound}
-@strong{Description}@*
 Return the number of bytes required to store a vector of pointers
 to @code{asymbols} for all the symbols in the BFD @var{abfd},
 including a terminal NULL pointer. If there are no symbols in
@@ -307,21 +305,14 @@ the BFD, then return 0.  If an error occurs, return -1.
 
 @findex bfd_is_local_label
 @subsubsection @code{bfd_is_local_label}
-@strong{Synopsis}
-@example
-bool bfd_is_local_label (bfd *abfd, asymbol *sym);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_is_local_label (bfd *abfd, asymbol *sym); 
 Return TRUE if the given symbol @var{sym} in the BFD @var{abfd} is
 a compiler generated local label, else return FALSE.
 
+@end deftypefn
 @findex bfd_is_local_label_name
 @subsubsection @code{bfd_is_local_label_name}
-@strong{Synopsis}
-@example
-bool bfd_is_local_label_name (bfd *abfd, const char *name);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_is_local_label_name (bfd *abfd, const char *name); 
 Return TRUE if a symbol with the name @var{name} in the BFD
 @var{abfd} is a compiler generated local label, else return
 FALSE.  This just checks whether the name has the form of a
@@ -332,13 +323,10 @@ local label.
 
 @end example
 
+@end deftypefn
 @findex bfd_is_target_special_symbol
 @subsubsection @code{bfd_is_target_special_symbol}
-@strong{Synopsis}
-@example
-bool bfd_is_target_special_symbol (bfd *abfd, asymbol *sym);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_is_target_special_symbol (bfd *abfd, asymbol *sym); 
 Return TRUE iff a symbol @var{sym} in the BFD @var{abfd} is something
 special to the particular target represented by the BFD.  Such symbols
 should normally not be mentioned to the user.
@@ -348,9 +336,9 @@ should normally not be mentioned to the user.
 
 @end example
 
+@end deftypefn
 @findex bfd_canonicalize_symtab
 @subsubsection @code{bfd_canonicalize_symtab}
-@strong{Description}@*
 Read the symbols from the BFD @var{abfd}, and fills in
 the vector @var{location} with pointers to the symbols and
 a trailing NULL.
@@ -364,29 +352,21 @@ including the NULL.
 
 @findex bfd_set_symtab
 @subsubsection @code{bfd_set_symtab}
-@strong{Synopsis}
-@example
-bool bfd_set_symtab
-   (bfd *abfd, asymbol **location, unsigned int count);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_set_symtab (bfd *abfd, asymbol **location, unsigned int count); 
 Arrange that when the output BFD @var{abfd} is closed,
 the table @var{location} of @var{count} pointers to symbols
 will be written.
 
+@end deftypefn
 @findex bfd_print_symbol_vandf
 @subsubsection @code{bfd_print_symbol_vandf}
-@strong{Synopsis}
-@example
-void bfd_print_symbol_vandf (bfd *abfd, void *file, asymbol *symbol);
-@end example
-@strong{Description}@*
+@deftypefn {Function} void bfd_print_symbol_vandf (bfd *abfd, void *file, asymbol *symbol); 
 Print the value and flags of the @var{symbol} supplied to the
 stream @var{file}.
 
+@end deftypefn
 @findex bfd_make_empty_symbol
 @subsubsection @code{bfd_make_empty_symbol}
-@strong{Description}@*
 Create a new @code{asymbol} structure for the BFD @var{abfd}
 and return a pointer to it.
 
@@ -402,68 +382,49 @@ information, and will cause problems later on.
 
 @findex _bfd_generic_make_empty_symbol
 @subsubsection @code{_bfd_generic_make_empty_symbol}
-@strong{Synopsis}
-@example
-asymbol *_bfd_generic_make_empty_symbol (bfd *);
-@end example
-@strong{Description}@*
+@deftypefn {Function} asymbol *_bfd_generic_make_empty_symbol (bfd *); 
 Create a new @code{asymbol} structure for the BFD @var{abfd}
 and return a pointer to it.  Used by core file routines,
 binary back-end and anywhere else where no private info
 is needed.
 
+@end deftypefn
 @findex bfd_make_debug_symbol
 @subsubsection @code{bfd_make_debug_symbol}
-@strong{Description}@*
 Create a new @code{asymbol} structure for the BFD @var{abfd},
-to be used as a debugging symbol.  Further details of its use have
-yet to be worked out.
+to be used as a debugging symbol.
 @example
-#define bfd_make_debug_symbol(abfd,ptr,size) \
-       BFD_SEND (abfd, _bfd_make_debug_symbol, (abfd, ptr, size))
+#define bfd_make_debug_symbol(abfd) \
+       BFD_SEND (abfd, _bfd_make_debug_symbol, (abfd))
 
 @end example
 
 @findex bfd_decode_symclass
 @subsubsection @code{bfd_decode_symclass}
-@strong{Description}@*
+@deftypefn {Function} int bfd_decode_symclass (asymbol *symbol); 
 Return a character corresponding to the symbol
 class of @var{symbol}, or '?' for an unknown class.
 
-@strong{Synopsis}
-@example
-int bfd_decode_symclass (asymbol *symbol);
-@end example
+@end deftypefn
 @findex bfd_is_undefined_symclass
 @subsubsection @code{bfd_is_undefined_symclass}
-@strong{Description}@*
+@deftypefn {Function} bool bfd_is_undefined_symclass (int symclass); 
 Returns non-zero if the class symbol returned by
 bfd_decode_symclass represents an undefined symbol.
 Returns zero otherwise.
 
-@strong{Synopsis}
-@example
-bool bfd_is_undefined_symclass (int symclass);
-@end example
+@end deftypefn
 @findex bfd_symbol_info
 @subsubsection @code{bfd_symbol_info}
-@strong{Description}@*
+@deftypefn {Function} void bfd_symbol_info (asymbol *symbol, symbol_info *ret); 
 Fill in the basic info about symbol that nm needs.
 Additional info may be added by the back-ends after
 calling this function.
 
-@strong{Synopsis}
-@example
-void bfd_symbol_info (asymbol *symbol, symbol_info *ret);
-@end example
+@end deftypefn
 @findex bfd_copy_private_symbol_data
 @subsubsection @code{bfd_copy_private_symbol_data}
-@strong{Synopsis}
-@example
-bool bfd_copy_private_symbol_data
-   (bfd *ibfd, asymbol *isym, bfd *obfd, asymbol *osym);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_copy_private_symbol_data (bfd *ibfd, asymbol *isym, bfd *obfd, asymbol *osym); 
 Copy private symbol information from @var{isym} in the BFD
 @var{ibfd} to the symbol @var{osym} in the BFD @var{obfd}.
 Return @code{TRUE} on success, @code{FALSE} on error.  Possible error
@@ -482,3 +443,4 @@ Not enough memory exists to create private data for @var{osec}.
 
 @end example
 
+@end deftypefn

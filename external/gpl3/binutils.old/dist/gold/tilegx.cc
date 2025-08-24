@@ -1,6 +1,6 @@
 // tilegx.cc -- tilegx target support for gold.
 
-// Copyright (C) 2012-2022 Free Software Foundation, Inc.
+// Copyright (C) 2012-2024 Free Software Foundation, Inc.
 // Written by Jiong Wang (jiwang@tilera.com)
 
 // This file is part of gold.
@@ -4265,7 +4265,7 @@ Target_tilegx<size, big_endian>::do_finalize_sections(
                                   ? NULL
                                   : this->plt_->rela_plt());
   layout->add_target_dynamic_tags(false, this->got_plt_, rel_plt,
-                                  this->rela_dyn_, true, true);
+				  this->rela_dyn_, true, true, false);
 
   // Emit any relocs we saved in an attempt to avoid generating COPY
   // relocs.
