@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2024, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2025, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -167,7 +167,7 @@ typedef struct osl_table_info
 {
     struct osl_table_info   *Next;
     UINT32                  Instance;
-    char                    Signature[ACPI_NAMESEG_SIZE];
+    char                    Signature[ACPI_NAMESEG_SIZE] ACPI_NONSTRING;
 
 } OSL_TABLE_INFO;
 
@@ -1276,7 +1276,7 @@ OslListCustomizedTables (
 {
     void                    *TableDir;
     UINT32                  Instance;
-    char                    TempName[ACPI_NAMESEG_SIZE];
+    char                    TempName[ACPI_NAMESEG_SIZE] ACPI_NONSTRING;
     char                    *Filename;
     ACPI_STATUS             Status = AE_OK;
 
@@ -1628,7 +1628,7 @@ OslGetCustomizedTable (
 {
     void                    *TableDir;
     UINT32                  CurrentInstance = 0;
-    char                    TempName[ACPI_NAMESEG_SIZE];
+    char                    TempName[ACPI_NAMESEG_SIZE] ACPI_NONSTRING;
     char                    TableFilename[PATH_MAX];
     char                    *Filename;
     ACPI_STATUS             Status;
