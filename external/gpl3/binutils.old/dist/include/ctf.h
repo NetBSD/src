@@ -1,5 +1,5 @@
 /* CTF format description.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -599,13 +599,13 @@ struct ctf_archive
   /* Offset of the name table.  */
   uint64_t ctfa_names;
 
-  /* Offset of the CTF table.  Each element starts with a size (a uint64_t
-     in network byte order) then a ctf_dict_t of that size.  */
+  /* Offset of the CTF table.  Each element starts with a size (a little-
+     endian uint64_t) then a ctf_dict_t of that size.  */
   uint64_t ctfa_ctfs;
 };
 
-/* An array of ctfa_nnamed of this structure lies at
-   ctf_archive[ctf_archive->ctfa_modents] and gives the ctfa_ctfs or
+/* An array of ctfa_ndicts of this structure lies at
+   ctf_archive[sizeof(struct ctf_archive)] and gives the ctfa_ctfs or
    ctfa_names-relative offsets of each name or ctf_dict_t.  */
 
 typedef struct ctf_archive_modent

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <ucontext.h>
 #include <dirent.h>
 
 #include "gp-defs.h"
@@ -52,9 +53,11 @@ typedef struct CollectorUtilFuncs
   char *(*fgets)(char *s, int n, FILE *stream);
   FILE *(*fopen)(const char *filename, const char *mode);
   pid_t (*vfork)();
-  int (*fprintf)(FILE *stream, const char *format, ...);
+  int (*fprintf)(FILE *stream, const char *format, ...)
+	__attribute__ ((format (printf, 2, 3)));
   void (*free)(void *ptr);
   int (*fstat)(int fd, struct stat *buf);
+  int (*getcontext)(ucontext_t *ucp);
   int (*getcpuid)();
   char *(*getcwd)(char *buf, size_t size);
   char *(*getenv)(const char *name);
@@ -66,7 +69,7 @@ typedef struct CollectorUtilFuncs
   int (*mkdir)();
   time_t (*mktime)(struct tm *timeptr);
   void *(*mmap)(void *, size_t, int, int, int, off_t);
-  void *(*mmap64)();
+  void *(*mmap64_)();
   int (*munmap)();
   int (*open)(const char *, int, ...);
   int (*open_bare)(const char *, int, ...);
@@ -75,12 +78,13 @@ typedef struct CollectorUtilFuncs
   FILE *(*popen)(const char *command, const char *mode);
   int (*putenv)(char *string);
   ssize_t (*pwrite)();
-  ssize_t (*pwrite64)();
+  ssize_t (*pwrite64_)();
   ssize_t (*read)();
   int (*setenv)(const char *name, const char *value, int overwrite);
   int (*sigfillset)(sigset_t *set);
   int (*sigprocmask)(int how, const sigset_t *set, sigset_t *oldset);
-  int (*snprintf)(char *str, size_t size, const char *format, ...);
+  int (*snprintf)(char *str, size_t size, const char *format, ...)
+	__attribute__ ((format (printf, 3, 4)));
   int (*stack_getbounds)();
   char *(*strchr)(const char *name, int c);
   int (*strcmp)(const char *s1, const char *s2);
@@ -166,12 +170,13 @@ typedef struct CollectorInterface
   CollectorModule (*registerModule)(struct ModuleInterface*);
   const char *(*getParams)();
   const char *(*getExpDir)();
-  int (*writeLog)(char *format, ...);
+  int (*writeLog)(char *format, ...) __attribute__ ((format (printf, 1, 2)));
   FrameInfo (*getFrameInfo)(CollectorModule modl, HiResTime ts, int mode, void *arg);
   FrameInfo (*getUID)(CM_Array *arg);
   FrameInfo (*getUID2)(CM_Array *arg, FrameInfo uid);
   int (*getStackTrace)(void *buf, int size, void *bptr, void *eptr, void *arg);
-  int (*writeMetaData)(CollectorModule modl, char *format, ...);
+  int (*writeMetaData)(CollectorModule modl, char *format, ...)
+	__attribute__ ((format (printf, 2, 3)));
 
   /* writeDataRecord ensures that the header is filled in, and then calls writeDataPacket */
   int (*writeDataRecord)(CollectorModule modl, struct Common_packet *pckt);
@@ -218,17 +223,6 @@ extern "C"
   CollectorModule __collector_register_module (ModuleInterface *modint);
 #ifdef __cplusplus
 }
-#endif
-
-#ifdef __has_attribute
-# if __has_attribute (__symver__)
-#  define SYMVER_ATTRIBUTE(sym, symver) \
-    __attribute__ ((__symver__ (#symver)))
-# endif
-#endif
-#ifndef SYMVER_ATTRIBUTE
-# define SYMVER_ATTRIBUTE(sym, symver) \
-  __asm__(".symver " #sym "," #symver);
 #endif
 
 #endif /* _COLLECTOR_MODULE_H */

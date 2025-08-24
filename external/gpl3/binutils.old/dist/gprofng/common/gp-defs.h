@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -61,6 +61,12 @@
 # else
 #  define ATTRIBUTE_FALLTHROUGH	/* Fall through */
 # endif
+#endif
+
+#if defined(__MUSL_LIBC)
+#define ino64_t ino_t
+#define off64_t off_t
+#define fpos64_t fpos_t
 #endif
 
 #endif

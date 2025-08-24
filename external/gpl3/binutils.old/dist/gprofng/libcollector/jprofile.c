@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/param.h> /* MAXPATHLEN */
-
+#include <stddef.h>
 #include <jni.h>
 #include <jvmti.h>
 
@@ -285,12 +285,6 @@ __collector_jprofile_start_attach (void)
 	    {
 	      jthread thread;
 	      (*jvmti)->GetCurrentThread (jvmti, &thread);
-#ifdef DEBUG
-	      collector_thread_t tid;
-	      tid = __collector_thr_self ();
-	      TprintfT (0, "jprofile attach: AttachCurrentThread: thread: %lu jni_env=%p jthread=%p\n",
-			(unsigned long) tid, jni_env, thread);
-#endif /* DEBUG */
 	      jvmti_VMInit (jvmti, jni_env, thread);
 	      (*jvmti)->GenerateEvents (jvmti, JVMTI_EVENT_COMPILED_METHOD_LOAD);
 	      (*jvmti)->GenerateEvents (jvmti, JVMTI_EVENT_DYNAMIC_CODE_GENERATED);
@@ -634,8 +628,8 @@ jvmti_ThreadStart (jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread)
 				 group_name,
 				 parent_name,
 				 (unsigned long) tid,
-				 thread,
-				 jni_env
+				 (unsigned long) thread,
+				 (unsigned long) jni_env
 				 );
   TSD_Entry *tsd = collector_interface->getKey (tsd_key);
   if (tsd)
@@ -654,8 +648,8 @@ jvmti_ThreadEnd (jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread)
 				 SP_JCMD_JTHREND,
 				 (unsigned) (hrt / NANOSEC), (unsigned) (hrt % NANOSEC),
 				 (unsigned long) tid,
-				 thread,
-				 jni_env
+				 (unsigned long) thread,
+				 (unsigned long) jni_env
 				 );
   TSD_Entry *tsd = collector_interface->getKey (tsd_key);
   if (tsd)

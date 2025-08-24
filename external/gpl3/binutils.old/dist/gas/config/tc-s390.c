@@ -1,5 +1,5 @@
 /* tc-s390.c -- Assemble for the S390
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -88,7 +88,6 @@ int s390_cie_data_alignment;
 /* Define the prototypes for the pseudo-ops */
 static void s390_byte (int);
 static void s390_elf_cons (int);
-static void s390_bss (int);
 static void s390_insn (int);
 static void s390_literals (int);
 static void s390_machine (int);
@@ -98,7 +97,6 @@ const pseudo_typeS md_pseudo_table[] =
 {
   { "align",        s_align_bytes,      0 },
   /* Pseudo-ops which must be defined.  */
-  { "bss",          s390_bss,           0 },
   { "insn",         s390_insn,          0 },
   /* Pseudo-ops which must be overridden.  */
   { "byte",	    s390_byte,	        0 },
@@ -584,7 +582,7 @@ md_begin (void)
 
 /* Called after all assembly has been done.  */
 void
-s390_md_end (void)
+s390_md_finish (void)
 {
   if (s390_arch_size == 64)
     bfd_set_arch_mach (stdoutput, bfd_arch_s390, bfd_mach_s390_64);
@@ -699,13 +697,17 @@ s390_insert_operand (unsigned char *insn,
   if (operand->flags & S390_OPERAND_OR8)
     uval |= 8;
 
-  /* Duplicate the operand at bit pos 12 to 16.  */
+  /* Duplicate the GPR/VR operand at bit pos 12 to 16.  */
   if (operand->flags & S390_OPERAND_CP16)
     {
-      /* Copy VR operand at bit pos 12 to bit pos 16.  */
+      /* Copy GPR/VR operand at bit pos 12 to bit pos 16.  */
       insn[2] |= uval << 4;
-      /* Copy the flag in the RXB field.  */
-      insn[4] |= (insn[4] & 4) >> 1;
+
+      if (operand->flags & S390_OPERAND_VR)
+        {
+          /* Copy the VR flag in the RXB field.  */
+          insn[4] |= (insn[4] & 4) >> 1;
+        }
     }
 
   /* Insert fragments of the operand byte for byte.  */
@@ -1308,7 +1310,10 @@ md_gather_operands (char *str,
 
       /* Parse the operand.  */
       if (! register_name (&ex))
-	expression (&ex);
+	{
+	  expression (&ex);
+	  resolve_register (&ex);
+	}
 
       str = input_line_pointer;
       input_line_pointer = hold;
@@ -1726,16 +1731,6 @@ md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
   abort ();
 }
 #endif
-
-void
-s390_bss (int ignore ATTRIBUTE_UNUSED)
-{
-  /* We don't support putting frags in the BSS segment, we fake it
-     by marking in_bss, then looking at s_skip for clues.  */
-
-  subseg_set (bss_section, 0);
-  demand_empty_rest_of_line ();
-}
 
 /* Pseudo-op handling.  */
 
@@ -2288,25 +2283,25 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	 We are only prepared to turn a few of the operands into
 	 relocs.  */
       fixP->fx_offset = value;
-      if (operand->bits == 12 && operand->shift == 20)
+      if (operand->bits == 12 && operand->shift == 20 && !fixP->fx_pcrel)
 	{
 	  fixP->fx_size = 2;
 	  fixP->fx_where += 2;
 	  fixP->fx_r_type = BFD_RELOC_390_12;
 	}
-      else if (operand->bits == 12 && operand->shift == 36)
+      else if (operand->bits == 12 && operand->shift == 36 && !fixP->fx_pcrel)
 	{
 	  fixP->fx_size = 2;
 	  fixP->fx_where += 4;
 	  fixP->fx_r_type = BFD_RELOC_390_12;
 	}
-      else if (operand->bits == 20 && operand->shift == 20)
+      else if (operand->bits == 20 && operand->shift == 20 && !fixP->fx_pcrel)
 	{
 	  fixP->fx_size = 4;
 	  fixP->fx_where += 2;
 	  fixP->fx_r_type = BFD_RELOC_390_20;
 	}
-      else if (operand->bits == 8 && operand->shift == 8)
+      else if (operand->bits == 8 && operand->shift == 8 && !fixP->fx_pcrel)
 	{
 	  fixP->fx_size = 1;
 	  fixP->fx_where += 1;
@@ -2328,6 +2323,12 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	  if (operand->flags & S390_OPERAND_PCREL)
 	    {
 	      fixP->fx_r_type = BFD_RELOC_390_PC16DBL;
+	      fixP->fx_offset += 2;
+	      fixP->fx_pcrel_adjust = 2;
+	    }
+	  else if (fixP->fx_pcrel)
+	    {
+	      fixP->fx_r_type = BFD_RELOC_16_PCREL;
 	      fixP->fx_offset += 2;
 	      fixP->fx_pcrel_adjust = 2;
 	    }

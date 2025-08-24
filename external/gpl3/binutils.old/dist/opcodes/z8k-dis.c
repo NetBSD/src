@@ -1,5 +1,5 @@
 /* Disassemble z8000 code.
-   Copyright (C) 1992-2022 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

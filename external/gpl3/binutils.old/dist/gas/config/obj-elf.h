@@ -1,5 +1,5 @@
 /* ELF object file format.
-   Copyright (C) 1992-2022 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -33,7 +33,6 @@
 #define OUTPUT_FLAVOR bfd_target_elf_flavour
 #endif
 
-#define BYTES_IN_WORD 4		/* for now */
 #include "bfd/elf-bfd.h"
 
 #include "targ-cpu.h"
@@ -119,6 +118,11 @@ struct elf_section_match
 #endif
 extern void elf_begin (void);
 
+#ifndef obj_end
+#define obj_end() elf_end ()
+#endif
+extern void elf_end (void);
+
 #ifndef LOCAL_LABEL_PREFIX
 #define LOCAL_LABEL_PREFIX '.'
 #endif
@@ -194,7 +198,7 @@ extern void obj_elf_data (int);
 extern void obj_elf_text (int);
 extern void obj_elf_change_section
   (const char *, unsigned int, bfd_vma, int, struct elf_section_match *,
-   int, int);
+   bool);
 extern void obj_elf_vtable_inherit (int);
 extern void obj_elf_vtable_entry (int);
 extern struct fix * obj_elf_get_vtable_inherit (void);
@@ -238,7 +242,7 @@ void elf_adjust_symtab (void);
 #ifndef SEPARATE_STAB_SECTIONS
 /* Avoid ifndef each separate macro setting by wrapping the whole of the
    stab group on the assumption that whoever sets SEPARATE_STAB_SECTIONS
-   caters to ECOFF_DEBUGGING and the right setting of INIT_STAB_SECTIONS
+   caters to ECOFF_DEBUGGING and the right setting of INIT_STAB_SECTION
    and OBJ_PROCESS_STAB too, without needing the tweaks below.  */
 
 /* Stabs go in a separate section.  */
@@ -246,8 +250,8 @@ void elf_adjust_symtab (void);
 
 /* We need 12 bytes at the start of the section to hold some initial
    information.  */
-extern void obj_elf_init_stab_section (segT);
-#define INIT_STAB_SECTION(seg) obj_elf_init_stab_section (seg)
+extern void obj_elf_init_stab_section (segT, segT);
+#define INIT_STAB_SECTION(stab, str) obj_elf_init_stab_section (stab, str)
 
 #ifdef ECOFF_DEBUGGING
 /* We smuggle stabs in ECOFF rather than using a separate section.
@@ -257,13 +261,13 @@ extern void obj_elf_init_stab_section (segT);
 #define SEPARATE_STAB_SECTIONS (!ECOFF_DEBUGGING)
 
 #undef  INIT_STAB_SECTION
-#define INIT_STAB_SECTION(seg) \
-  ((void) (ECOFF_DEBUGGING ? 0 : (obj_elf_init_stab_section (seg), 0)))
+#define INIT_STAB_SECTION(stab, str) \
+  ((void) (ECOFF_DEBUGGING ? 0 : (obj_elf_init_stab_section (stab, str), 0)))
 
 #undef OBJ_PROCESS_STAB
-#define OBJ_PROCESS_STAB(seg, what, string, type, other, desc)		\
+#define OBJ_PROCESS_STAB(what, string, type, other, desc)		\
   if (ECOFF_DEBUGGING)							\
-    ecoff_stab ((seg), (what), (string), (type), (other), (desc))
+    ecoff_stab ((what), (string), (type), (other), (desc))
 #endif /* ECOFF_DEBUGGING */
 
 #endif /* SEPARATE_STAB_SECTIONS not defined.  */
