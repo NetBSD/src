@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.10 2025/05/21 14:47:34 christos Exp $
+#	$NetBSD: bind2netbsd,v 1.11 2025/08/24 04:24:17 mrg Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,7 +43,7 @@
 
 # U=/usr/src/external/lgpl2/userspace-rcu
 # OBJ=/obj.amd64-x86_64
-# env LIBURCU_CFLAGS="-I$U/include -I$U/dist/include" LIBURCU_LIBS="-L$U/lib/liburcu-memb$OBJ -lurcu-memb -L$U/lib/liburcu-cds$OBJ -lurcu-cds -L$U/lib/liburcu-common$OBJ -lurcu-common" ./configure --enable-querytrace --enable-fixed-rrset
+# env LIBURCU_CFLAGS="-I$U/include -I$U/dist/include" LIBURCU_LIBS="-L$U/lib/liburcu-memb$OBJ -lurcu-mb -L$U/lib/liburcu-cds$OBJ -lurcu-cds -L$U/lib/liburcu-common$OBJ -lurcu-common" ./configure --enable-querytrace --enable-fixed-rrset --with-liburcu=mb
 
 #	$ run make
 #	- use the binclude4netbsd to create and import the new headers in
