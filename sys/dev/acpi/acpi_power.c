@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.36 2022/05/31 20:28:57 mrg Exp $ */
+/* $NetBSD: acpi_power.c,v 1.37 2025/08/24 16:46:23 christos Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.36 2022/05/31 20:28:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.37 2025/08/24 16:46:23 christos Exp $");
 
 #include "pci.h"
 
@@ -280,7 +280,7 @@ acpi_power_get_indirect(struct acpi_devnode *ad)
 	int i;
 
 	CTASSERT(ACPI_STATE_D0 == 0 && ACPI_STATE_D1 == 1);
-	CTASSERT(ACPI_STATE_D2 == 2 && ACPI_STATE_D3 == 3);
+	CTASSERT(ACPI_STATE_D2 == 2 && ACPI_STATE_D3 == 4);
 
 	/*
 	 * The device is in a given D-state if all resources are on.
