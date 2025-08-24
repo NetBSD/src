@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -76,6 +76,7 @@ public:
   DwrSec *debug_abbrevSec;
   DwrSec *debug_strSec;
   DwrSec *debug_lineSec;
+  DwrSec *debug_line_strSec;
   DwrSec *debug_rangesSec;
   Elf *elf;
   Stabs *stabs;

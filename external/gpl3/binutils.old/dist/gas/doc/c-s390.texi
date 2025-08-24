@@ -1,4 +1,4 @@
-@c Copyright (C) 2009-2022 Free Software Foundation, Inc.
+@c Copyright (C) 2009-2024 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -190,7 +190,7 @@ character usually hint at the type of the instruction:
 @item b @tab branch instruction, for example @samp{bc} for branch on condition
 @item c @tab compare or convert instruction, for example @samp{cr} for compare
 register 32-bit
-@item d @tab divide instruction, for example @samp{dlr} devide logical register
+@item d @tab divide instruction, for example @samp{dlr} divide logical register
 64-bit to 32-bit
 @item i @tab insert instruction, for example @samp{ic} insert character
 @item l @tab load instruction, for example @samp{ltr} load and test register

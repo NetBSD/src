@@ -5,7 +5,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-dis.in isn't
 
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -154,8 +154,8 @@ mep_print_vliw_insns (CGEN_CPU_DESC cd, bfd_vma pc, disassemble_info *info,
 	}
       status += my_status;
 
-      /* Print the + to indicate that the following copro insn is   */
-      /* part of a vliw group.                                      */
+      /* Print the + to indicate that the following copro insn is
+	 part of a vliw group.  */
       if (copro1length > 0)
 	(*info->fprintf_func) (info->stream, " + ");
     }
@@ -336,16 +336,16 @@ mep_examine_vliw32_insns (CGEN_CPU_DESC cd, bfd_vma pc, disassemble_info *info)
     {
       if ((indicatorcop32[0] & 0xf0) == 0xf0 && (indicatorcop32[1] & 0x07) == 0x07)
 	{
-          /* We have a 32 bit copro insn.  */
-          corebuflength = 0;
+	  /* We have a 32 bit copro insn.  */
+	  corebuflength = 0;
 	  /* All 4 4ytes are one copro insn. */
-          cop1buflength = 4;
+	  cop1buflength = 4;
 	}
       else
 	{
-          /* We have a 32 bit core.  */
-          corebuflength = 4;
-          cop1buflength = 0;
+	  /* We have a 32 bit core.  */
+	  corebuflength = 4;
+	  cop1buflength = 0;
 	}
     }
   else
@@ -425,16 +425,16 @@ mep_examine_vliw64_insns (CGEN_CPU_DESC cd, bfd_vma pc, disassemble_info *info)
       if ((indicator64[0] & 0xf0) == 0xf0 && (indicator64[1] & 0x07) == 0x07
 	  && ((indicator64[2] & 0xfe) != 0xf0 || (indicator64[3] & 0xf4) != 0))
 	{
-          /* We have a 64 bit copro insn.  */
-          corebuflength = 0;
+	  /* We have a 64 bit copro insn.  */
+	  corebuflength = 0;
 	  /* All 8 bytes are one copro insn.  */
-          cop1buflength = 8;
+	  cop1buflength = 8;
 	}
       else
 	{
-          /* We have a 32 bit core insn and a 32 bit copro insn.  */
-          corebuflength = 4;
-          cop1buflength = 4;
+	  /* We have a 32 bit core insn and a 32 bit copro insn.  */
+	  corebuflength = 4;
+	  cop1buflength = 4;
 	}
     }
   else
@@ -486,10 +486,10 @@ print_slot_insn (CGEN_CPU_DESC cd,
       if ((CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_CONFIG)
 	   && CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_CONFIG) != MEP_CONFIG)
 	  || ! (CGEN_ATTR_CGEN_INSN_SLOTS_VALUE (CGEN_INSN_ATTRS (insn)) & (1 << slot)))
-        {
-          insn_list = CGEN_DIS_NEXT_INSN (insn_list);
+	{
+	  insn_list = CGEN_DIS_NEXT_INSN (insn_list);
 	  continue;
-        }
+	}
 
       if ((insn_value & CGEN_INSN_BASE_MASK (insn))
 	  == CGEN_INSN_BASE_VALUE (insn))
@@ -648,6 +648,20 @@ mep_print_insn (CGEN_CPU_DESC cd, bfd_vma pc, disassemble_info *info)
 	{
 	  mep_config_index = abfd->tdata.elf_obj_data->elf_header->e_flags & EF_MEP_INDEX_MASK;
 	  /* This instantly redefines MEP_CONFIG, MEP_OMASK, .... MEP_VLIW64 */
+
+	  /* mep_config_map is a variable sized array, so we do not know how big it is.
+	     The only safe way to check the index therefore is to iterate over the array.
+	     We do know that the last entry is all null.  */
+	  int i;
+	  for (i = 0; i <= mep_config_index; i++)
+	    if (mep_config_map[i].name == NULL)
+	      break;
+
+	  if (i < mep_config_index)
+	    {
+	      opcodes_error_handler (_("illegal MEP INDEX setting '%x' in ELF header e_flags field"), mep_config_index);
+	      mep_config_index = 0;
+	    }
 
 	  cop_type = abfd->tdata.elf_obj_data->elf_header->e_flags & EF_MEP_COP_MASK;
 	  if (cop_type == EF_MEP_COP_IVC2)

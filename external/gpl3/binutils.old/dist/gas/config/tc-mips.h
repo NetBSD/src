@@ -1,5 +1,5 @@
 /* tc-mips.h -- header file for tc-mips.c.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
    Modified for ECOFF support by Ian Lance Taylor of Cygnus Support.
@@ -163,8 +163,8 @@ extern void mips_elf_final_processing (void);
 
 #endif
 
-extern void md_mips_end (void);
-#define md_end()	md_mips_end()
+extern void mips_md_finish (void);
+#define md_finish()	mips_md_finish()
 
 extern void mips_pop_insert (void);
 #define md_pop_insert()		mips_pop_insert()

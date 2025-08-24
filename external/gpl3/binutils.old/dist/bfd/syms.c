@@ -1,5 +1,5 @@
 /* Generic symbol-table support for the BFD library.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -168,19 +168,12 @@ DOCDD
 INODE
 typedef asymbol, symbol handling functions, Mini Symbols, Symbols
 
-*/
-/*
 SUBSECTION
 	typedef asymbol
 
 	An <<asymbol>> has the form:
 
-*/
-
-/*
 CODE_FRAGMENT
-
-.
 .typedef struct bfd_symbol
 .{
 .  {* A pointer to the BFD which owns the symbol. This information
@@ -326,6 +319,28 @@ CODE_FRAGMENT
 .  udata;
 .}
 .asymbol;
+.
+
+EXTERNAL
+.typedef enum bfd_print_symbol
+.{
+.  bfd_print_symbol_name,
+.  bfd_print_symbol_more,
+.  bfd_print_symbol_all
+.} bfd_print_symbol_type;
+.
+.{* Information about a symbol that nm needs.  *}
+.
+.typedef struct _symbol_info
+.{
+.  symvalue value;
+.  char type;
+.  const char *name;		{* Symbol name.  *}
+.  unsigned char stab_type;	{* Stab type.  *}
+.  char stab_other;		{* Stab other.  *}
+.  short stab_desc;		{* Stab desc.  *}
+.  const char *stab_name;	{* String for stab type.  *}
+.} symbol_info;
 .
 */
 
@@ -554,11 +569,10 @@ FUNCTION
 
 DESCRIPTION
 	Create a new <<asymbol>> structure for the BFD @var{abfd},
-	to be used as a debugging symbol.  Further details of its use have
-	yet to be worked out.
+	to be used as a debugging symbol.
 
-.#define bfd_make_debug_symbol(abfd,ptr,size) \
-.	BFD_SEND (abfd, _bfd_make_debug_symbol, (abfd, ptr, size))
+.#define bfd_make_debug_symbol(abfd) \
+.	BFD_SEND (abfd, _bfd_make_debug_symbol, (abfd))
 .
 */
 
@@ -642,12 +656,12 @@ decode_section_type (const struct bfd_section *section)
 FUNCTION
 	bfd_decode_symclass
 
+SYNOPSIS
+	int bfd_decode_symclass (asymbol *symbol);
+
 DESCRIPTION
 	Return a character corresponding to the symbol
 	class of @var{symbol}, or '?' for an unknown class.
-
-SYNOPSIS
-	int bfd_decode_symclass (asymbol *symbol);
 */
 int
 bfd_decode_symclass (asymbol *symbol)
@@ -725,13 +739,13 @@ bfd_decode_symclass (asymbol *symbol)
 FUNCTION
 	bfd_is_undefined_symclass
 
+SYNOPSIS
+	bool bfd_is_undefined_symclass (int symclass);
+
 DESCRIPTION
 	Returns non-zero if the class symbol returned by
 	bfd_decode_symclass represents an undefined symbol.
 	Returns zero otherwise.
-
-SYNOPSIS
-	bool bfd_is_undefined_symclass (int symclass);
 */
 
 bool
@@ -744,13 +758,13 @@ bfd_is_undefined_symclass (int symclass)
 FUNCTION
 	bfd_symbol_info
 
+SYNOPSIS
+	void bfd_symbol_info (asymbol *symbol, symbol_info *ret);
+
 DESCRIPTION
 	Fill in the basic info about symbol that nm needs.
 	Additional info may be added by the back-ends after
 	calling this function.
-
-SYNOPSIS
-	void bfd_symbol_info (asymbol *symbol, symbol_info *ret);
 */
 
 void
@@ -978,7 +992,7 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
     {
       if (info->stabsec == NULL || info->strsec == NULL)
 	{
-	  /* No stabs debugging information.  */
+	  /* No usable stabs debugging information.  */
 	  return true;
 	}
 
@@ -1000,6 +1014,7 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
       info = (struct stab_find_info *) bfd_zalloc (abfd, amt);
       if (info == NULL)
 	return false;
+      *pinfo = info;
 
       /* FIXME: When using the linker --split-by-file or
 	 --split-by-reloc options, it is possible for the .stab and
@@ -1015,13 +1030,12 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 	  info->strsec  = bfd_get_section_by_name (abfd, "$GDB_STRINGS$");
 
 	  if (info->stabsec == NULL || info->strsec == NULL)
-	    {
-	      /* No stabs debugging information.  Set *pinfo so that we
-		 can return quickly in the info != NULL case above.  */
-	      *pinfo = info;
-	      return true;
-	    }
+	    return true;
 	}
+
+      if ((info->stabsec->flags & SEC_HAS_CONTENTS) == 0
+	  || (info->strsec->flags & SEC_HAS_CONTENTS) == 0)
+	goto out;
 
       stabsize = (info->stabsec->rawsize
 		  ? info->stabsec->rawsize
@@ -1031,16 +1045,13 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 		 ? info->strsec->rawsize
 		 : info->strsec->size);
 
-      info->stabs = (bfd_byte *) bfd_alloc (abfd, stabsize);
-      info->strs = (bfd_byte *) bfd_alloc (abfd, strsize);
-      if (info->stabs == NULL || info->strs == NULL)
-	return false;
+      if (stabsize == 0 || strsize == 0)
+	goto out;
 
-      if (! bfd_get_section_contents (abfd, info->stabsec, info->stabs,
-				      0, stabsize)
-	  || ! bfd_get_section_contents (abfd, info->strsec, info->strs,
-					 0, strsize))
-	return false;
+      if (!bfd_malloc_and_get_section (abfd, info->stabsec, &info->stabs))
+	goto out;
+      if (!bfd_malloc_and_get_section (abfd, info->strsec, &info->strs))
+	goto out1;
 
       /* Stab strings ought to be nul terminated.  Ensure the last one
 	 is, to prevent running off the end of the buffer.  */
@@ -1052,15 +1063,24 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 	 this should be no big deal.  */
       reloc_size = bfd_get_reloc_upper_bound (abfd, info->stabsec);
       if (reloc_size < 0)
-	return false;
+	goto out2;
       reloc_vector = (arelent **) bfd_malloc (reloc_size);
       if (reloc_vector == NULL && reloc_size != 0)
-	return false;
+	goto out2;
       reloc_count = bfd_canonicalize_reloc (abfd, info->stabsec, reloc_vector,
 					    symbols);
       if (reloc_count < 0)
 	{
+	out3:
 	  free (reloc_vector);
+	out2:
+	  free (info->strs);
+	  info->strs = NULL;
+	out1:
+	  free (info->stabs);
+	  info->stabs = NULL;
+	out:
+	  info->stabsec = NULL;
 	  return false;
 	}
       if (reloc_count > 0)
@@ -1086,13 +1106,12 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 		  || r->howto->pc_relative
 		  || r->howto->bitpos != 0
 		  || r->howto->dst_mask != 0xffffffff
-		  || octets + 4 > stabsize)
+		  || octets > stabsize - 4)
 		{
 		  _bfd_error_handler
 		    (_("unsupported .stab relocation"));
 		  bfd_set_error (bfd_error_invalid_operation);
-		  free (reloc_vector);
-		  return false;
+		  goto out3;
 		}
 
 	      val = bfd_get_32 (abfd, info->stabs + octets);
@@ -1146,14 +1165,21 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 	++info->indextablesize;
 
       if (info->indextablesize == 0)
-	return true;
+	{
+	  free (info->strs);
+	  info->strs = NULL;
+	  free (info->stabs);
+	  info->stabs = NULL;
+	  info->stabsec = NULL;
+	  return true;
+	}
       ++info->indextablesize;
 
       amt = info->indextablesize;
       amt *= sizeof (struct indexentry);
-      info->indextable = (struct indexentry *) bfd_alloc (abfd, amt);
+      info->indextable = (struct indexentry *) bfd_malloc (amt);
       if (info->indextable == NULL)
-	return false;
+	goto out3;
 
       file_name = NULL;
       directory_name = NULL;
@@ -1280,8 +1306,6 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
       info->indextablesize = i;
       qsort (info->indextable, (size_t) i, sizeof (struct indexentry),
 	     cmpindexentry);
-
-      *pinfo = info;
     }
 
   /* We are passed a section relative offset.  The offsets in the
@@ -1446,6 +1470,18 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
   return true;
 }
 
+void
+_bfd_stab_cleanup (bfd *abfd ATTRIBUTE_UNUSED, void **pinfo)
+{
+  struct stab_find_info *info = (struct stab_find_info *) *pinfo;
+  if (info == NULL)
+    return;
+
+  free (info->indextable);
+  free (info->strs);
+  free (info->stabs);
+}
+
 long
 _bfd_nosymbols_canonicalize_symtab (bfd *abfd ATTRIBUTE_UNUSED,
 				    asymbol **location ATTRIBUTE_UNUSED)
@@ -1505,6 +1541,21 @@ _bfd_nosymbols_find_nearest_line
 }
 
 bool
+_bfd_nosymbols_find_nearest_line_with_alt
+    (bfd *abfd,
+     const char *alt_filename ATTRIBUTE_UNUSED,
+     asymbol **symbols ATTRIBUTE_UNUSED,
+     asection *section ATTRIBUTE_UNUSED,
+     bfd_vma offset ATTRIBUTE_UNUSED,
+     const char **filename_ptr ATTRIBUTE_UNUSED,
+     const char **functionname_ptr ATTRIBUTE_UNUSED,
+     unsigned int *line_ptr ATTRIBUTE_UNUSED,
+     unsigned int *discriminator_ptr ATTRIBUTE_UNUSED)
+{
+  return _bfd_bool_bfd_false_error (abfd);
+}
+
+bool
 _bfd_nosymbols_find_line (bfd *abfd,
 			  asymbol **symbols ATTRIBUTE_UNUSED,
 			  asymbol *symbol ATTRIBUTE_UNUSED,
@@ -1525,9 +1576,7 @@ _bfd_nosymbols_find_inliner_info
 }
 
 asymbol *
-_bfd_nosymbols_bfd_make_debug_symbol (bfd *abfd,
-				      void *ptr ATTRIBUTE_UNUSED,
-				      unsigned long sz ATTRIBUTE_UNUSED)
+_bfd_nosymbols_bfd_make_debug_symbol (bfd *abfd)
 {
   return (asymbol *) _bfd_ptr_bfd_null_error (abfd);
 }

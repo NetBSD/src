@@ -1,5 +1,5 @@
 /* macro.h - header file for macro support for gas
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
       sac@cygnus.com
@@ -62,10 +62,10 @@ typedef struct macro_struct
 {
   sb sub;				/* Substitution text.  */
   int formal_count;			/* Number of formal args.  */
-  formal_entry *formals;		/* Pointer to list of formal_structs.  */
-  struct htab *formal_hash;		/* Hash table of formals.  */
+  formal_entry *formals;		/* List of formal_structs.  */
+  htab_t formal_hash;			/* Hash table of formals.  */
   const char *name;			/* Macro name.  */
-  const char *file;				/* File the macro was defined in.  */
+  const char *file;			/* File the macro was defined in.  */
   unsigned int line;			/* Line number of definition.  */
 } macro_entry;
 
@@ -79,106 +79,13 @@ extern int macro_nest;
 
 /* The macro hash table.  */
 
-extern struct htab *macro_hash;
-
-struct macro_hash_entry
-{
-  const char *name;
-  macro_entry *macro;
-};
-
-typedef struct macro_hash_entry macro_hash_entry_t;
-
-/* Hash function for a macro_hash_entry.  */
-
-static inline hashval_t
-hash_macro_entry (const void *e)
-{
-  const macro_hash_entry_t *entry = (const macro_hash_entry_t *) e;
-  return htab_hash_string (entry->name);
-}
-
-/* Equality function for a macro_hash_entry.  */
-
-static inline int
-eq_macro_entry (const void *a, const void *b)
-{
-  const macro_hash_entry_t *ea = (const macro_hash_entry_t *) a;
-  const macro_hash_entry_t *eb = (const macro_hash_entry_t *) b;
-
-  return strcmp (ea->name, eb->name) == 0;
-}
-
-static inline macro_hash_entry_t *
-macro_entry_alloc (const char *name, macro_entry *macro)
-{
-  macro_hash_entry_t *entry = XNEW (macro_hash_entry_t);
-  entry->name = name;
-  entry->macro = macro;
-  return entry;
-}
-
-static inline macro_entry *
-macro_entry_find (htab_t table, const char *name)
-{
-  macro_hash_entry_t needle = { name, NULL };
-  macro_hash_entry_t *entry = htab_find (table, &needle);
-  return entry != NULL ? entry->macro : NULL;
-}
-
-struct formal_hash_entry
-{
-  const char *name;
-  formal_entry *formal;
-};
-
-typedef struct formal_hash_entry formal_hash_entry_t;
-
-/* Hash function for a macro_hash_entry.  */
-
-static inline hashval_t
-hash_formal_entry (const void *e)
-{
-  const formal_hash_entry_t *entry = (const formal_hash_entry_t *) e;
-  return htab_hash_string (entry->name);
-}
-
-/* Equality function for a formal_hash_entry.  */
-
-static inline int
-eq_formal_entry (const void *a, const void *b)
-{
-  const formal_hash_entry_t *ea = (const formal_hash_entry_t *) a;
-  const formal_hash_entry_t *eb = (const formal_hash_entry_t *) b;
-
-  return strcmp (ea->name, eb->name) == 0;
-}
-
-static inline formal_hash_entry_t *
-formal_entry_alloc (const char *name, formal_entry *formal)
-{
-  formal_hash_entry_t *entry = XNEW (formal_hash_entry_t);
-  entry->name = name;
-  entry->formal = formal;
-  return entry;
-}
-
-static inline formal_entry *
-formal_entry_find (htab_t table, const char *name)
-{
-  formal_hash_entry_t needle = { name, NULL };
-  formal_hash_entry_t *entry = htab_find (table, &needle);
-  return entry != NULL ? entry->formal : NULL;
-}
+extern htab_t macro_hash;
 
 extern int buffer_and_nest (const char *, const char *, sb *,
 			    size_t (*) (sb *));
-extern void macro_init (int, int, int,
-			size_t (*) (const char *, size_t, sb *, offsetT *));
-extern void macro_set_alternate (int);
-extern void macro_mri_mode (int);
-extern const char *define_macro (size_t, sb *, sb *, size_t (*) (sb *),
-				 const char *, unsigned int, const char **);
+extern void macro_init (void);
+extern void macro_end (void);
+extern macro_entry *define_macro (sb *, sb *, size_t (*) (sb *));
 extern int check_macro (const char *, sb *, const char **, macro_entry **);
 extern void delete_macro (const char *);
 extern const char *expand_irp (int, size_t, sb *, sb *, size_t (*) (sb *));

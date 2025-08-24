@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -1006,7 +1006,7 @@ ClassFile::openFile (const char *fname)
       append_msg (CMSG_ERROR, GTXT ("Cannot open file %s"), fname);
       return;
     }
-  struct stat64 stat_buf;
+  dbe_stat_t stat_buf;
   if ((fstat64 (fd, &stat_buf) == -1) || (stat_buf.st_size == 0))
     {
       close (fd);
@@ -1594,7 +1594,7 @@ ClassFile::get_disasm (uint64_t inst_address, uint64_t end_address,
     {
       append_msg (CMSG_ERROR, GTXT ("Cannot disassemble class file %s (%s), implausible size = %lld"),
 		  get_name (), dbeFile->get_location (),
-		  (end_address - start_address));
+		  (long long) (end_address - start_address));
       inst_size = 0;
       return NULL;
     }

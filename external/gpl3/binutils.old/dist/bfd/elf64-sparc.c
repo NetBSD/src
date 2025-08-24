@@ -1,5 +1,5 @@
 /* SPARC-specific support for 64-bit ELF
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -37,14 +37,25 @@
 static long
 elf64_sparc_get_reloc_upper_bound (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
 {
-#if SIZEOF_LONG == SIZEOF_INT
-  if (sec->reloc_count >= LONG_MAX / 2 / sizeof (arelent *))
+  size_t count, raw;
+
+  count = sec->reloc_count;
+  if (count >= LONG_MAX / 2 / sizeof (arelent *)
+      || _bfd_mul_overflow (count, sizeof (Elf64_External_Rela), &raw))
     {
       bfd_set_error (bfd_error_file_too_big);
       return -1;
     }
-#endif
-  return (sec->reloc_count * 2L + 1) * sizeof (arelent *);
+  if (!bfd_write_p (abfd))
+    {
+      ufile_ptr filesize = bfd_get_file_size (abfd);
+      if (filesize != 0 && raw > filesize)
+	{
+	  bfd_set_error (bfd_error_file_truncated);
+	  return -1;
+	}
+    }
+  return (count * 2 + 1) * sizeof (arelent *);
 }
 
 static long
@@ -311,6 +322,10 @@ elf64_sparc_set_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 {
   asect->orelocation = location;
   canon_reloc_count (asect) = count;
+  if (count != 0)
+    asect->flags |= SEC_RELOC;
+  else
+    asect->flags &= ~SEC_RELOC;
 }
 
 /* Write out the relocs.  */

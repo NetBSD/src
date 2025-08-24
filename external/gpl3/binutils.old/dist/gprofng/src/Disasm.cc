@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -34,6 +34,7 @@
 #include "i18n.h"
 #include "util.h"
 #include "StringBuilder.h"
+#include "Function.h"
 
 struct DisContext
 {
@@ -126,7 +127,49 @@ read_memory_func (bfd_vma memaddr, bfd_byte *myaddr, unsigned int length,
 static void
 print_address_func (bfd_vma addr, disassemble_info *info)
 {
-  (*info->fprintf_func) (info->stream, "0x%llx", (unsigned long long) addr);
+  bfd_signed_vma off;
+  unsigned long long ta;
+  Disasm *dis;
+  switch (info->insn_type)
+    {
+    case dis_branch:
+    case dis_condbranch:
+      off = (bfd_signed_vma) addr;
+      dis = (Disasm *) info->stream;
+      ta = dis->inst_addr + off;
+      (*info->fprintf_func) (info->stream, ".%c0x%llx [ 0x%llx ]",
+		off > 0 ? '+' : '-', (long long) (off > 0 ? off : -off), ta);
+      return;
+    case dis_jsr:
+      off = (bfd_signed_vma) addr;
+      dis = (Disasm *) info->stream;
+      ta = dis->inst_addr + off;
+      const char *nm = NULL;
+      Function *f = dis->map_PC_to_func (ta);
+      if (f)
+	{
+	  if (dis->inst_addr >= f->img_offset
+	      && dis->inst_addr < f->img_offset + f->size)
+	    {	// Same function
+	      (*info->fprintf_func) (info->stream, ".%c0x%llx [ 0x%llx ]",
+		  off > 0 ? '+' : '-', (long long) (off > 0 ? off : -off), ta);
+	      return;
+	    }
+	  if (f->flags & FUNC_FLAG_PLT)
+	    nm = dis->get_funcname_in_plt(ta);
+	  if (nm == NULL)
+	    nm = f->get_name ();
+	}
+      if (nm)
+	(*info->fprintf_func) (info->stream, "%s [ 0x%llx, .%c0x%llx]",
+	    nm, ta, off > 0 ? '+' : '-', (long long) (off > 0 ? off : -off));
+      else
+	(*info->fprintf_func) (info->stream,
+		".%c0x%llx [ 0x%llx ]  // Unable to determine target symbol",
+		off > 0 ? '+' : '-', (long long) (off > 0 ? off : -off), ta);
+      return;
+    }
+  (*info->fprintf_func) (info->stream, "0x%llx", (long long) addr);
 }
 
 static asymbol *
@@ -247,35 +290,6 @@ Disasm::remove_disasm_hndl (void *hndl)
   delete ctx;
 }
 
-#if 0
-int
-Disasm::get_instr_size (uint64_t vaddr, void *hndl)
-{
-  DisContext *ctx = (DisContext *) hndl;
-  if (ctx == NULL || vaddr < ctx->first_pc || vaddr >= ctx->last_pc)
-    return -1;
-  ctx->pc = vaddr;
-  size_t sz = ctx->is_Intel ? sizeof (ctx->codeptr) : 4;
-  if (sz > ctx->last_pc - vaddr)
-    sz = (size_t) (ctx->last_pc - vaddr);
-  if (ctx->elf->get_data (ctx->f_offset + (vaddr - ctx->first_pc),
-			  sz, ctx->codeptr) == NULL)
-    return -1;
-
-  char buf[MAX_DISASM_STR];
-  *buf = 0;
-  uint64_t inst_vaddr = vaddr;
-#if MEZ_NEED_TO_FIX
-  size_t instrs_cnt = 0;
-  disasm_err_code_t status = disasm (handle, &inst_vaddr, ctx->last_pc, 1,
-				     ctx, buf, sizeof (buf), &instrs_cnt);
-  if (instrs_cnt != 1 || status != disasm_err_ok)
-    return -1;
-#endif
-  return (int) (inst_vaddr - vaddr);
-}
-#endif
-
 void
 Disasm::set_addr_end (uint64_t end_address)
 {
@@ -312,6 +326,7 @@ Disasm::get_disasm (uint64_t inst_address, uint64_t end_address,
       printf ("ERROR: unsupported disassemble\n");
       return NULL;
     }
+  inst_addr = inst_address;
   inst_size = disassemble (0, &dis_info);
   if (inst_size <= 0)
     {
@@ -337,83 +352,26 @@ Disasm::get_disasm (uint64_t inst_address, uint64_t end_address,
       sb.appendf (fmt, bytes);
     }
   sb.append (dis_str);
-#if MEZ_NEED_TO_FIX
-  // Write instruction
-  if (ctx.is_Intel)  // longest instruction length for Intel is 7
-    sb.appendf (NTXT ("%-7s %s"), parts_array[1], parts_array[2]);
-  else  // longest instruction length for SPARC is 11
-    sb.appendf (NTXT ("%-11s %s"), parts_array[1], parts_array[2]);
-  if (strcmp (parts_array[1], NTXT ("call")) == 0)
-    {
-      if (strncmp (parts_array[2], NTXT ("0x"), 2) == 0)
-	sb.append (GTXT ("\t! (Unable to determine target symbol)"));
-    }
-#endif
   return sb.toString ();
 }
 
-#if MEZ_NEED_TO_FIX
-void *
-Disasm::get_inst_ptr (disasm_handle_t, uint64_t vaddr, void *pass_through)
+Function *
+Disasm::map_PC_to_func (uint64_t pc)
 {
-  // Actually it fetches only one instruction at a time for sparc,
-  // and one byte at a time for intel.
-  DisContext *ctx = (DisContext*) pass_through;
-  size_t sz = ctx->is_Intel ? 1 : 4;
-  if (vaddr + sz > ctx->last_pc)
-    {
-      ctx->codeptr[0] = -1;
-      return ctx->codeptr;
-    }
-  if (ctx->elf->get_data (ctx->f_offset + (vaddr - ctx->first_pc), sz, ctx->codeptr) == NULL)
-    {
-      ctx->codeptr[0] = -1;
-      return ctx->codeptr;
-    }
-  if (ctx->elf->need_swap_endian && !ctx->is_Intel)
-    ctx->codeptr[0] = ctx->elf->decode (ctx->codeptr[0]);
-  return ctx->codeptr;
+  uint64_t low_pc = 0;
+  if (stabs)
+    return stabs->map_PC_to_func (pc, low_pc, NULL);
+  return NULL;
 }
 
-// get a symbol name for an address
-disasm_err_code_t
-Disasm::get_sym_name (disasm_handle_t,          // an open disassembler handle
-		      uint64_t target_address,  // the target virtual address
-		      uint64_t inst_address,  // virtual address of instruction
-					      // being disassembled
-		      int use_relocation, // flag to use relocation information
-		      char *buffer,             // places the symbol here
-		      size_t buffer_size,       // limit on symbol length
-		      int *,                    // sys/elf_{SPARC.386}.h
-		      uint64_t *offset,       // from the symbol to the address
-		      void *pass_through)       // disassembler context
+const char *
+Disasm::get_funcname_in_plt (uint64_t pc)
 {
-  char buf[MAXPATHLEN];
-  if (!use_relocation)
-    return disasm_err_symbol;
-
-  DisContext *ctxp = (DisContext*) pass_through;
-  char *name = NULL;
-  if (ctxp->stabs)
+  if (stabs)
     {
-      uint64_t addr = ctxp->f_offset + (inst_address - ctxp->first_pc);
-      name = ctxp->stabs->sym_name (target_address, addr, use_relocation);
+      Elf *elf = stabs->openElf (true);
+      if (elf)
+	return elf->get_funcname_in_plt (pc);
     }
-  if (name == NULL)
-    return disasm_err_symbol;
-
-  char *s = NULL;
-  if (*name == '_')
-    s = cplus_demangle (name, DMGL_PARAMS);
-  if (s)
-    {
-      snprintf (buffer, buffer_size, NTXT ("%s"), s);
-      free (s);
-    }
-  else
-    snprintf (buffer, buffer_size, NTXT ("%s"), name);
-
-  *offset = 0;
-  return disasm_err_ok;
+  return NULL;
 }
-#endif
