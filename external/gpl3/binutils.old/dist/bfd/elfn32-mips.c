@@ -1,5 +1,5 @@
 /* MIPS-specific support for 32-bit ELF
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    Most of the information added by Ian Lance Taylor, Cygnus Support,
    <ian@cygnus.com>.
@@ -3302,7 +3302,8 @@ mips_elf_gprel16_reloc (bfd *abfd ATTRIBUTE_UNUSED, arelent *reloc_entry,
   else
     {
       relocatable = false;
-      output_bfd = symbol->section->output_section->owner;
+      if (symbol->section->output_section != NULL)
+	output_bfd = symbol->section->output_section->owner;
     }
 
   ret = mips_elf_final_gp (output_bfd, symbol, relocatable, error_message,
@@ -3342,7 +3343,8 @@ mips_elf_literal_reloc (bfd *abfd, arelent *reloc_entry, asymbol *symbol,
   else
     {
       relocatable = false;
-      output_bfd = symbol->section->output_section->owner;
+      if (symbol->section->output_section != NULL)
+	output_bfd = symbol->section->output_section->owner;
     }
 
   ret = mips_elf_final_gp (output_bfd, symbol, relocatable, error_message,
@@ -3385,7 +3387,8 @@ mips_elf_gprel32_reloc (bfd *abfd, arelent *reloc_entry, asymbol *symbol,
   else
     {
       relocatable = false;
-      output_bfd = symbol->section->output_section->owner;
+      if (symbol->section->output_section != NULL)
+	output_bfd = symbol->section->output_section->owner;
 
       ret = mips_elf_final_gp (output_bfd, symbol, relocatable,
 			       error_message, &gp);
@@ -3410,10 +3413,14 @@ gprel32_with_gp (bfd *abfd, asymbol *symbol, arelent *reloc_entry,
   else
     relocation = symbol->value;
 
-  relocation += symbol->section->output_section->vma;
-  relocation += symbol->section->output_offset;
+  if (symbol->section->output_section != NULL)
+    {
+      relocation += symbol->section->output_section->vma;
+      relocation += symbol->section->output_offset;
+    }
 
-  if (reloc_entry->address > bfd_get_section_limit (abfd, input_section))
+  if (!bfd_reloc_offset_in_range (reloc_entry->howto, abfd, input_section,
+				  reloc_entry->address))
     return bfd_reloc_outofrange;
 
   if (reloc_entry->howto->src_mask == 0)
@@ -3485,13 +3492,18 @@ mips16_gprel_reloc (bfd *abfd, arelent *reloc_entry, asymbol *symbol,
   else
     {
       relocatable = false;
-      output_bfd = symbol->section->output_section->owner;
+       if (symbol->section->output_section != NULL)
+	 output_bfd = symbol->section->output_section->owner;
     }
 
   ret = mips_elf_final_gp (output_bfd, symbol, relocatable, error_message,
 			   &gp);
   if (ret != bfd_reloc_ok)
     return ret;
+
+  if (!_bfd_mips_reloc_offset_in_range (abfd, input_section, reloc_entry,
+					check_shuffle))
+    return bfd_reloc_outofrange;
 
   location = (bfd_byte *) data + reloc_entry->address;
   _bfd_mips_elf_reloc_unshuffle (abfd, reloc_entry->howto->type, false,
@@ -3516,6 +3528,7 @@ static const struct elf_reloc_map mips_reloc_map[] =
 {
   { BFD_RELOC_NONE, R_MIPS_NONE },
   { BFD_RELOC_MIPS_16, R_MIPS_16 },
+  { BFD_RELOC_16, R_MIPS_REL16 },
   { BFD_RELOC_32, R_MIPS_32 },
   /* There is no BFD reloc for R_MIPS_REL32.  */
   { BFD_RELOC_CTOR, R_MIPS_32 },
@@ -4191,6 +4204,8 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define bfd_elf32_bfd_is_target_special_symbol \
 					_bfd_mips_elf_is_target_special_symbol
 #define bfd_elf32_find_nearest_line	_bfd_mips_elf_find_nearest_line
+#define bfd_elf32_find_nearest_line_with_alt \
+				_bfd_mips_elf_find_nearest_line_with_alt
 #define bfd_elf32_find_inliner_info	_bfd_mips_elf_find_inliner_info
 #define bfd_elf32_new_section_hook	_bfd_mips_elf_new_section_hook
 #define bfd_elf32_set_section_contents	_bfd_mips_elf_set_section_contents
@@ -4205,6 +4220,7 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define bfd_elf32_bfd_print_private_bfd_data \
 					_bfd_mips_elf_print_private_bfd_data
 #define bfd_elf32_mkobject		mips_elf_n32_mkobject
+#define bfd_elf32_bfd_free_cached_info	_bfd_mips_elf_free_cached_info
 
 /* Support for SGI-ish mips targets using n32 ABI.  */
 

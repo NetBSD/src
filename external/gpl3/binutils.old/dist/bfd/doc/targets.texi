@@ -1,7 +1,6 @@
 @section Targets
 
 
-@strong{Description}@*
 Each port of BFD to a different machine requires the creation
 of a target back end. All the back end provides to the root
 part of BFD is a structure containing pointers to functions
@@ -60,7 +59,6 @@ type is tried to see if it recognizes the specified format.
 @subsection bfd_target
 
 
-@strong{Description}@*
 This structure contains everything that BFD knows about a
 target. It includes things like its byte order, name, and which
 routines to call to do various operations.
@@ -116,43 +114,9 @@ defines one of these.
 FIXME, these names should be rationalised with the names of
 the entry points which call them. Too bad we can't have one
 macro to define them both!
+
+
 @example
-enum bfd_flavour
-@{
-  /* N.B. Update bfd_flavour_name if you change this.  */
-  bfd_target_unknown_flavour,
-  bfd_target_aout_flavour,
-  bfd_target_coff_flavour,
-  bfd_target_ecoff_flavour,
-  bfd_target_xcoff_flavour,
-  bfd_target_elf_flavour,
-  bfd_target_tekhex_flavour,
-  bfd_target_srec_flavour,
-  bfd_target_verilog_flavour,
-  bfd_target_ihex_flavour,
-  bfd_target_som_flavour,
-  bfd_target_os9k_flavour,
-  bfd_target_versados_flavour,
-  bfd_target_msdos_flavour,
-  bfd_target_ovax_flavour,
-  bfd_target_evax_flavour,
-  bfd_target_mmo_flavour,
-  bfd_target_mach_o_flavour,
-  bfd_target_pef_flavour,
-  bfd_target_pef_xlib_flavour,
-  bfd_target_sym_flavour
-@};
-
-enum bfd_endian @{ BFD_ENDIAN_BIG, BFD_ENDIAN_LITTLE, BFD_ENDIAN_UNKNOWN @};
-
-/* Forward declaration.  */
-typedef struct bfd_link_info _bfd_link_info;
-
-/* Forward declaration.  */
-typedef struct flag_info flag_info;
-
-typedef void (*bfd_cleanup) (bfd *);
-
 typedef struct bfd_target
 @{
   /* Identifies the kind of target, e.g., SunOS4, Ultrix, etc.  */
@@ -234,7 +198,6 @@ typedef struct bfd_target
 The general target vector.  These vectors are initialized using the
 BFD_JUMP_TABLE macros.
 @example
-
   /* Generic entry points.  */
 #define BFD_JUMP_TABLE_GENERIC(NAME) \
   NAME##_close_and_cleanup, \
@@ -349,6 +312,7 @@ BFD_JUMP_TABLE macros.
   NAME##_bfd_is_target_special_symbol, \
   NAME##_get_lineno, \
   NAME##_find_nearest_line, \
+  NAME##_find_nearest_line_with_alt, \
   NAME##_find_line, \
   NAME##_find_inliner_info, \
   NAME##_bfd_make_debug_symbol, \
@@ -379,6 +343,11 @@ BFD_JUMP_TABLE macros.
                                   struct bfd_section *, bfd_vma,
                                   const char **, const char **,
                                   unsigned int *, unsigned int *);
+  bool (*_bfd_find_nearest_line_with_alt) (bfd *, const char *,
+                                           struct bfd_symbol **,
+                                           struct bfd_section *, bfd_vma,
+                                           const char **, const char **,
+                                           unsigned int *, unsigned int *);
   bool (*_bfd_find_line) (bfd *, struct bfd_symbol **,
                           struct bfd_symbol *, const char **,
                           unsigned int *);
@@ -388,7 +357,7 @@ BFD_JUMP_TABLE macros.
     while using BFD for everything else.  Currently used by the assembler
     when creating COFF files.  */
   asymbol *
-       (*_bfd_make_debug_symbol) (bfd *, void *, unsigned long size);
+       (*_bfd_make_debug_symbol) (bfd *);
 #define bfd_read_minisymbols(b, d, m, s) \
        BFD_SEND (b, _read_minisymbols, (b, d, m, s))
   long (*_read_minisymbols) (bfd *, bool, void **, unsigned int *);
@@ -638,25 +607,30 @@ bfd_keep_unused_section_symbols (const bfd *abfd)
 @}
 
 @end example
+@findex _bfd_per_xvec_warn
+@subsubsection @code{_bfd_per_xvec_warn}
+@deftypefn {Function} struct per_xvec_message **_bfd_per_xvec_warn (const bfd_target *, size_t); 
+Return a location for the given target xvec to use for
+warnings specific to that target.  If TARG is NULL, returns
+the array of per_xvec_message pointers, otherwise if ALLOC is
+zero, returns a pointer to a pointer to the list of messages
+for TARG, otherwise (both TARG and ALLOC non-zero), allocates
+a new   per_xvec_message with space for a string of ALLOC
+bytes and returns a pointer to a pointer to it.  May return a
+pointer to a NULL pointer on allocation failure.
 
+@end deftypefn
 @findex bfd_set_default_target
 @subsubsection @code{bfd_set_default_target}
-@strong{Synopsis}
-@example
-bool bfd_set_default_target (const char *name);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_set_default_target (const char *name); 
 Set the default target vector to use when recognizing a BFD.
 This takes the name of the target, which may be a BFD target
 name or a configuration triplet.
 
+@end deftypefn
 @findex bfd_find_target
 @subsubsection @code{bfd_find_target}
-@strong{Synopsis}
-@example
-const bfd_target *bfd_find_target (const char *target_name, bfd *abfd);
-@end example
-@strong{Description}@*
+@deftypefn {Function} const bfd_target *bfd_find_target (const char *target_name, bfd *abfd); 
 Return a pointer to the transfer vector for the object target
 named @var{target_name}.  If @var{target_name} is @code{NULL},
 choose the one in the environment variable @code{GNUTARGET}; if
@@ -668,17 +642,10 @@ set in the BFD if @var{abfd} isn't @code{NULL}.  This causes
 @code{bfd_check_format} to loop over all the targets to find the
 one that matches the file being read.
 
+@end deftypefn
 @findex bfd_get_target_info
 @subsubsection @code{bfd_get_target_info}
-@strong{Synopsis}
-@example
-const bfd_target *bfd_get_target_info (const char *target_name,
-    bfd *abfd,
-    bool *is_bigendian,
-    int *underscoring,
-    const char **def_target_arch);
-@end example
-@strong{Description}@*
+@deftypefn {Function} const bfd_target *bfd_get_target_info (const char *target_name, bfd *abfd, bool *is_bigendian, int *underscoring, const char **def_target_arch); 
 Return a pointer to the transfer vector for the object target
 named @var{target_name}.  If @var{target_name} is @code{NULL},
 choose the one in the environment variable @code{GNUTARGET}; if
@@ -698,37 +665,27 @@ else the value of target vector's symbol underscoring.
 If @var{def_target_arch} is not @code{NULL}, then set it to the architecture
 string specified by the target_name.
 
+@end deftypefn
 @findex bfd_target_list
 @subsubsection @code{bfd_target_list}
-@strong{Synopsis}
-@example
-const char ** bfd_target_list (void);
-@end example
-@strong{Description}@*
+@deftypefn {Function} const char ** bfd_target_list (void); 
 Return a freshly malloced NULL-terminated
 vector of the names of all the valid BFD targets. Do not
 modify the names.
 
+@end deftypefn
 @findex bfd_iterate_over_targets
 @subsubsection @code{bfd_iterate_over_targets}
-@strong{Synopsis}
-@example
-const bfd_target *bfd_iterate_over_targets
-   (int (*func) (const bfd_target *, void *),
-    void *data);
-@end example
-@strong{Description}@*
+@deftypefn {Function} const bfd_target *bfd_iterate_over_targets (int (*func) (const bfd_target *, void *), void *data); 
 Call @var{func} for each target in the list of BFD target
 vectors, passing @var{data} to @var{func}.  Stop iterating if
 @var{func} returns a non-zero result, and return that target
 vector.  Return NULL if @var{func} always returns zero.
 
+@end deftypefn
 @findex bfd_flavour_name
 @subsubsection @code{bfd_flavour_name}
-@strong{Synopsis}
-@example
-const char *bfd_flavour_name (enum bfd_flavour flavour);
-@end example
-@strong{Description}@*
+@deftypefn {Function} const char *bfd_flavour_name (enum bfd_flavour flavour); 
 Return the string form of @var{flavour}.
 
+@end deftypefn

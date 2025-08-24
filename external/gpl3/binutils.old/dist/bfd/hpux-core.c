@@ -1,5 +1,5 @@
 /* BFD back-end for HP/UX core files.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus SUpport
 
@@ -161,8 +161,7 @@ hpux_core_core_file_p (bfd *abfd)
       int val;
       struct corehead core_header;
 
-      val = bfd_bread ((void *) &core_header,
-		      (bfd_size_type) sizeof core_header, abfd);
+      val = bfd_read (&core_header, sizeof core_header, abfd);
       if (val <= 0)
 	break;
       switch (core_header.type)
@@ -170,14 +169,13 @@ hpux_core_core_file_p (bfd *abfd)
 	case CORE_KERNEL:
 	case CORE_FORMAT:
 	  /* Just skip this.  */
-	  bfd_seek (abfd, (file_ptr) core_header.len, SEEK_CUR);
+	  bfd_seek (abfd, core_header.len, SEEK_CUR);
 	  good_sections++;
 	  break;
 	case CORE_EXEC:
 	  {
 	    struct proc_exec proc_exec;
-	    if (bfd_bread ((void *) &proc_exec, (bfd_size_type) core_header.len,
-			  abfd) != core_header.len)
+	    if (bfd_read (&proc_exec, core_header.len, abfd) != core_header.len)
 	      break;
 	    strncpy (core_command (abfd), proc_exec.cmd, MAXCOMLEN + 1);
 	    good_sections++;
@@ -191,13 +189,12 @@ hpux_core_core_file_p (bfd *abfd)
 	    /* We need to read this section, 'cause we need to determine
 	       whether the core-dumped app was threaded before we create
 	       any .reg sections. */
-	    if (bfd_bread (&proc_info, (bfd_size_type) core_header.len, abfd)
-		!= core_header.len)
+	    if (bfd_read (&proc_info, core_header.len, abfd) != core_header.len)
 	      break;
 
 	      /* However, we also want to create those sections with the
 		 file positioned at the start of the record, it seems. */
-	    if (bfd_seek (abfd, -((file_ptr) core_header.len), SEEK_CUR) != 0)
+	    if (bfd_seek (abfd, -(file_ptr) core_header.len, SEEK_CUR) != 0)
 	      break;
 
 #if defined(PROC_INFO_HAS_THREAD_ID)

@@ -1,6 +1,6 @@
 # configure.tgt
 #
-#   Copyright (C) 2013-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ targ64_extra_libpath=
 
 if test "${ac_default_ld_warn_rwx_segments}" = unset; then
   case "${targ}" in
-      # The CRIS default linker script yields just one segment
+      # The CRIS and V850 default linker scripts yields just one segment
       # as intended, so a rwx segment warning is not helpful.
       # The HPPA's and SPARC's PLT sections use a constructed trampoline
       # hence it needs to have a RWX segment.
@@ -55,7 +55,9 @@ if test "${ac_default_ld_warn_rwx_segments}" = unset; then
     cris-*-* | crisv32-*-* | \
     hppa*-*-* | \
     mips*-*-* | \
-    sparc*-*-*)
+    microblaze*-*-* | \
+    sparc*-*-* | \
+    v850*-*-*)
       ac_default_ld_warn_rwx_segments=0
       ;;
     *)
@@ -120,8 +122,21 @@ aarch64-*-linux*)	targ_emul=aarch64linux
 			targ_extra_libpath="aarch64linuxb aarch64linux32 aarch64linux32b armelfb_linux_eabi armelf_linux_eabi"
 			targ_extra_emuls="aarch64elf aarch64elf32 aarch64elf32b aarch64elfb armelf armelfb $targ_extra_libpath"
 			;;
+# This has to come after aarch64-*-linux* for aarch64-*-linux-gnu to hit the Linux branch.
+aarch64-*-gnu*)
+			targ_emul=aarch64gnu
+			targ_extra_emuls="aarch64elf aarch64elfb armelf armelfb"
+			;;
 aarch64-*-haiku*)	targ_emul=aarch64haiku
 			targ_extra_emuls="aarch64elf aarch64elf32 aarch64elf32b aarch64elfb armelf armelfb armelf_haiku $targ_extra_libpath"
+			;;
+aarch64-*-nto*)		targ_emul=aarch64nto
+			targ_extra_emuls="aarch64elf aarch64elf32 aarch64elf32b aarch64elfb armelf armelfb"
+			;;
+aarch64-*-pe* | aarch64-*-mingw*)
+			targ_emul=aarch64pe
+			targ_extra_emuls="arm64pe"
+			targ_extra_ofiles="deffilep.o pep-dll-aarch64.o pe-dll.o pdb.o"
 			;;
 alpha*-*-freebsd* | alpha*-*-kfreebsd*-gnu)
 			targ_emul=elf64alpha_fbsd
@@ -265,7 +280,7 @@ arm*-*-haiku*)		targ_emul=armelf_haiku
 			targ_extra_emuls=armelf
 			;;
 avr-*-*)		targ_emul=avr2
-			targ_extra_emuls="avr1 avr25 avr3 avr31 avr35 avr4 avr5 avr51 avr6 avrxmega1 avrxmega2 avrxmega3 avrxmega4 avrxmega5 avrxmega6 avrxmega7 avrtiny"
+			targ_extra_emuls="avr1 avr25 avr3 avr31 avr35 avr4 avr5 avr51 avr6 avrxmega1 avrxmega2 avrxmega2_flmap avrxmega3 avrxmega4 avrxmega4_flmap avrxmega5 avrxmega6 avrxmega7 avrtiny"
 			;;
 bfin-*-elf | bfin-*-rtems*)
 			targ_emul=elf32bfin
@@ -391,22 +406,13 @@ i[3-7]86-*-linux-*)	targ_emul=elf_i386
 i[3-7]86-*-redox*)	targ_emul=elf_i386
 			targ_extra_emuls=elf_x86_64
 			;;
-i[3-7]86-*-sysv[45]*)	targ_emul=elf_i386
-			targ_extra_emuls=elf_iamcu
-			;;
 i[3-7]86-*-solaris2*)	targ_emul=elf_i386_sol2
 			targ_extra_emuls="elf_i386_ldso elf_i386 elf_iamcu elf_x86_64_sol2 elf_x86_64"
 			targ_extra_libpath=$targ_extra_emuls
 			;;
-i[3-7]86-*-unixware)	targ_emul=elf_i386
-			targ_extra_emuls=elf_iamcu
-			;;
 i[3-7]86-*-solaris*)	targ_emul=elf_i386_ldso
 			targ_extra_emuls="elf_i386"
 			targ_extra_libpath=$targ_extra_emuls
-			;;
-i[3-7]86-*-netbsdpe*)	targ_emul=i386pe
-			targ_extra_ofiles="deffilep.o pe-dll.o"
 			;;
 i[3-7]86-*-netbsd* | \
 i[3-7]86-*-netbsd*-gnu* | \
@@ -440,17 +446,17 @@ i[3-7]86-*-moss*)	targ_emul=i386moss
 			targ_extra_emuls=i386msdos
 			;;
 i[3-7]86-*-winnt*)	targ_emul=i386pe ;
-			targ_extra_ofiles="deffilep.o pe-dll.o"
+			targ_extra_ofiles="deffilep.o pdb.o pe-dll.o"
 			;;
 i[3-7]86-*-pe)		targ_emul=i386pe ;
-			targ_extra_ofiles="deffilep.o pe-dll.o"
+			targ_extra_ofiles="deffilep.o pdb.o pe-dll.o"
 			;;
 i[3-7]86-*-cygwin*)	targ_emul=i386pe ;
-			targ_extra_ofiles="deffilep.o pe-dll.o" ;
+			targ_extra_ofiles="deffilep.o pdb.o pe-dll.o" ;
 			test "$targ" != "$host" && LIB_PATH='${tooldir}/lib/w32api'
 			;;
 i[3-7]86-*-mingw32*)	targ_emul=i386pe ;
-			targ_extra_ofiles="deffilep.o pe-dll.o"
+			targ_extra_ofiles="deffilep.o pdb.o pe-dll.o"
 			;;
 i[3-7]86-*-interix*)	targ_emul=i386pe_posix;
 			targ_extra_ofiles="deffilep.o pe-dll.o"
@@ -494,6 +500,12 @@ lm32-*-*linux*)		targ_emul=elf32lm32fd
 			;;
 lm32-*-*)		targ_emul=elf32lm32
 			targ_extra_emuls="elf32lm32fd"
+			;;
+kvx-*-linux*)		targ_emul=elf64kvx_linux
+			targ_extra_emuls="elf64kvx"
+			;;
+kvx-*-*)		targ_emul=elf64kvx;
+			targ_extra_emuls="elf64kvx_linux elf32kvx"
 			;;
 m32c-*-elf)
 			targ_emul=elf32m32c
@@ -618,8 +630,18 @@ mips*-*-vxworks*)	targ_emul=elf32ebmipvxworks
 			;;
 mips*-*-windiss)	targ_emul=elf32mipswindiss
 			;;
+mips64*el-*-linux-gnuabi64)
+			targ_emul=elf64ltsmip
+			targ_extra_emuls="elf64btsmip elf32ltsmipn32 elf32btsmipn32 elf32ltsmip elf32btsmip"
+			targ_extra_libpath=$targ_extra_emuls
+			;;
 mips64*el-*-linux-*)	targ_emul=elf32ltsmipn32
 			targ_extra_emuls="elf32btsmipn32 elf32ltsmip elf32btsmip elf64ltsmip elf64btsmip"
+			targ_extra_libpath=$targ_extra_emuls
+			;;
+mips64*-*-linux-gnuabi64)
+			targ_emul=elf64btsmip
+			targ_extra_emuls="elf64ltsmip elf32btsmipn32 elf32ltsmipn32 elf32btsmip elf32ltsmip"
 			targ_extra_libpath=$targ_extra_emuls
 			;;
 mips64*-*-linux-*)	targ_emul=elf32btsmipn32
@@ -923,12 +945,6 @@ sh*eb-*-linux*)		targ_emul=shelf_linux
 sh*-*-linux*)		targ_emul=shlelf_linux
 			targ_extra_emuls="shlelf_fd"
 			;;
-sh*l*-*-netbsdaout*)	targ_emul=shl
-			targ_extra_emuls=sh
-			;;
-sh*-*-netbsdaout*)	targ_emul=sh
-			targ_extra_emuls=shl
-			;;
 sh*l*-*-netbsd*)	targ_emul=shlelf_nbsd
 			targ_extra_emuls=shelf_nbsd
 			;;
@@ -1106,16 +1122,21 @@ x86_64-*-freebsd* | x86_64-*-kfreebsd*-gnu)
 			;;
 x86_64-*-pe | x86_64-*-pep) targ_emul=i386pep ;
 			targ_extra_emuls=i386pe ;
-			targ_extra_ofiles="deffilep.o pep-dll.o pe-dll.o"
+			targ_extra_ofiles="deffilep.o pdb.o pep-dll-x86_64.o pe-dll.o"
 			;;
 x86_64-*-cygwin)	targ_emul=i386pep ;
 			targ_extra_emuls=i386pe
-			targ_extra_ofiles="deffilep.o pep-dll.o pe-dll.o"
+			targ_extra_ofiles="deffilep.o pdb.o pep-dll.o pe-dll.o"
 			test "$targ" != "$host" && LIB_PATH='${tooldir}/lib/w32api'
 			;;
 x86_64-*-mingw*)	targ_emul=i386pep ;
 			targ_extra_emuls=i386pe
-			targ_extra_ofiles="deffilep.o pep-dll.o pe-dll.o"
+			targ_extra_ofiles="deffilep.o pdb.o pep-dll.o pe-dll.o"
+			;;
+x86_64-*-gnu*)		targ_emul=elf_x86_64
+			targ_extra_emuls="elf32_x86_64 elf_iamcu elf_i386"
+			targ_extra_libpath="elf_i386 elf32_x86_64"
+			tdir_elf_i386=`echo ${targ_alias} | sed -e 's/x86_64/i386/'`
 			;;
 xgate-*-*)		targ_emul=xgateelf
 			targ_extra_ofiles=ldelfgen.o

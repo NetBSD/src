@@ -1,5 +1,5 @@
 /* This file is tc-alpha.h
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
    Written by Ken Raeburn <raeburn@cygnus.com>.
 
    This file is part of GAS, the GNU Assembler.
@@ -149,8 +149,8 @@ extern void alpha_before_fix (void);
 #endif
 
 #ifdef OBJ_ELF
-#define md_end  alpha_elf_md_end
-extern void alpha_elf_md_end (void);
+#define md_finish  alpha_elf_md_finish
+extern void alpha_elf_md_finish (void);
 #endif
 
 /* New fields for supporting explicit relocations (such as !literal to mark

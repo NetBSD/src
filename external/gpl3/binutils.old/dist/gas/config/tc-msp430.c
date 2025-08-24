@@ -1,6 +1,6 @@
 /* tc-msp430.c -- Assembler code for the Texas Instruments MSP430
 
-  Copyright (C) 2002-2022 Free Software Foundation, Inc.
+  Copyright (C) 2002-2024 Free Software Foundation, Inc.
   Contributed by Dmitry Diky <diwil@mail.ru>
 
   This file is part of GAS, the GNU Assembler.
@@ -415,6 +415,8 @@ parse_exp (char * s, expressionS * op)
   expression (op);
   if (op->X_op == O_absent)
     as_bad (_("missing operand"));
+  else
+    resolve_register (op);
 
   /* Our caller is likely to check that the entire expression was parsed.
      If we have found a hex constant with an 'h' suffix, ilp will be left
@@ -620,7 +622,7 @@ msp430_profiler (int dummy ATTRIBUTE_UNUSED)
   subseg = now_subseg;
 
   /* Now go to .profiler section.  */
-  obj_elf_change_section (".profiler", SHT_PROGBITS, 0, 0, 0, 0, 0);
+  obj_elf_change_section (".profiler", SHT_PROGBITS, 0, 0, 0, false);
 
   /* Save flags.  */
   emit_expr (& exp, 2);
@@ -1613,7 +1615,7 @@ msp430_refsym (int arg ATTRIBUTE_UNUSED)
    This is only used for validating the attributes in the assembly file against
    the options gas has been invoked with.  If the attributes and options are
    compatible then we add the attributes to the assembly file in
-   msp430_md_end.  */
+   msp430_md_finish.  */
 static void
 msp430_object_attribute (int attr_type)
 {
@@ -4868,7 +4870,7 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED,
 
 	if (!cc || !cc->name)
 	  as_fatal (_("internal inconsistency problem in %s: insn %04lx"),
-		    __FUNCTION__, (long) insn);
+		    __func__, (long) insn);
 	where = fragP->fr_literal + fragP->fr_fix;
 	bfd_putl16 (cc->lop0, where);
 	bfd_putl16 (cc->lop1, where + 2);
@@ -4910,7 +4912,7 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED,
 	  }
 	if (!hc || !hc->name)
 	  as_fatal (_("internal inconsistency problem in %s: ext. insn %04lx"),
-	      __FUNCTION__, (long) insn);
+	      __func__, (long) insn);
 	rela = BFD_RELOC_MSP430_10_PCREL;
 	/* Apply a fix for a first label if necessary.
 	   another fix will be applied to the next word of insn anyway.  */
@@ -4942,7 +4944,7 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED,
 	  }
 	if (!hc || !hc->name)
 	  as_fatal (_("internal inconsistency problem in %s: ext. insn %04lx"),
-	      __FUNCTION__, (long) insn);
+	      __func__, (long) insn);
 	rela = BFD_RELOC_MSP430_RL_PCREL;
 	where = fragP->fr_literal + fragP->fr_fix;
 	bfd_putl16 (hc->lop0, where);
@@ -4954,7 +4956,7 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED,
 
     default:
       as_fatal (_("internal inconsistency problem in %s: %lx"),
-		__FUNCTION__, (long) fragP->fr_subtype);
+		__func__, (long) fragP->fr_subtype);
       break;
     }
 
@@ -4991,7 +4993,7 @@ msp430_relax_frag (segT seg ATTRIBUTE_UNUSED, fragS * fragP,
       symbolP = fragP->fr_symbol;
       if (symbol_resolved_p (symbolP))
 	as_fatal (_("internal inconsistency problem in %s: resolved symbol"),
-		  __FUNCTION__);
+		  __func__);
       /* We know the offset. calculate a distance.  */
       aim = S_GET_VALUE (symbolP) - fragP->fr_address - fragP->fr_fix;
     }
@@ -5107,7 +5109,7 @@ msp430_insert_uleb128_fixes (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Called after all assembly has been done.  */
 void
-msp430_md_end (void)
+msp430_md_finish (void)
 {
   if (check_for_nop)
     {
@@ -5128,24 +5130,27 @@ msp430_md_end (void)
   /* We have already emitted an error if any of the following attributes
      disagree with the attributes in the input assembly file.  See
      msp430_object_attribute.  */
-  bfd_elf_add_proc_attr_int (stdoutput, OFBA_MSPABI_Tag_ISA,
-			     target_is_430x () ? OFBA_MSPABI_Val_ISA_MSP430X
-			     : OFBA_MSPABI_Val_ISA_MSP430);
-
-  bfd_elf_add_proc_attr_int (stdoutput, OFBA_MSPABI_Tag_Code_Model,
-			     large_model ? OFBA_MSPABI_Val_Code_Model_LARGE
-			     : OFBA_MSPABI_Val_Code_Model_SMALL);
-
-  bfd_elf_add_proc_attr_int (stdoutput, OFBA_MSPABI_Tag_Data_Model,
-			     large_model ? OFBA_MSPABI_Val_Code_Model_LARGE
-			     : OFBA_MSPABI_Val_Code_Model_SMALL);
-
+  if (!bfd_elf_add_proc_attr_int (stdoutput, OFBA_MSPABI_Tag_ISA,
+				  target_is_430x ()
+				  ? OFBA_MSPABI_Val_ISA_MSP430X
+				  : OFBA_MSPABI_Val_ISA_MSP430)
+      || !bfd_elf_add_proc_attr_int (stdoutput, OFBA_MSPABI_Tag_Code_Model,
+				     large_model
+				     ? OFBA_MSPABI_Val_Code_Model_LARGE
+				     : OFBA_MSPABI_Val_Code_Model_SMALL)
+      || !bfd_elf_add_proc_attr_int (stdoutput, OFBA_MSPABI_Tag_Data_Model,
+				     large_model
+				     ? OFBA_MSPABI_Val_Code_Model_LARGE
+				     : OFBA_MSPABI_Val_Code_Model_SMALL)
   /* The data region GNU attribute is ignored for the small memory model.  */
-  if (large_model)
-    bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_GNU,
-			      Tag_GNU_MSP430_Data_Region, lower_data_region_only
-			      ? Val_GNU_MSP430_Data_Region_Lower
-			      : Val_GNU_MSP430_Data_Region_Any);
+      || (large_model
+	  && !bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_GNU,
+					Tag_GNU_MSP430_Data_Region,
+					lower_data_region_only
+					? Val_GNU_MSP430_Data_Region_Lower
+					: Val_GNU_MSP430_Data_Region_Any)))
+    as_fatal (_("error adding attribute: %s"),
+	      bfd_errmsg (bfd_get_error ()));
 }
 
 /* Returns FALSE if there is a msp430 specific reason why the

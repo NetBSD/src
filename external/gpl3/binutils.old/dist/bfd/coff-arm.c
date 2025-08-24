@@ -1,5 +1,5 @@
 /* BFD back-end for ARM COFF files.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -953,7 +953,7 @@ arm_emit_base_file_entry (struct bfd_link_info *info,
 		  + input_section->output_offset
 		  + input_section->output_section->vma);
 
-  if (coff_data (output_bfd)->pe)
+  if (obj_pe (output_bfd))
      addr -= pe_data (output_bfd)->pe_opthdr.ImageBase;
   if (fwrite (&addr, sizeof (addr), 1, (FILE *) info->base_file) == 1)
     return true;

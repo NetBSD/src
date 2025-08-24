@@ -1,6 +1,5 @@
 @findex struct bfd_iovec
 @subsubsection @code{struct bfd_iovec}
-@strong{Description}@*
 The @code{struct bfd_iovec} contains the internal file I/O class.
 Each @code{BFD} has an instance of this class and all file I/O is
 routed through it (it is assumed that the instance implements
@@ -37,25 +36,59 @@ struct bfd_iovec
                   void **map_addr, bfd_size_type *map_len);
 @};
 extern const struct bfd_iovec _bfd_memory_iovec;
+
 @end example
 
+@findex bfd_read
+@subsubsection @code{bfd_read}
+@deftypefn {Function} bfd_size_type bfd_read (void *, bfd_size_type, bfd *) ATTRIBUTE_WARN_UNUSED_RESULT; 
+Attempt to read SIZE bytes from ABFD's iostream to PTR.
+Return the amount read.
+
+@end deftypefn
+@findex bfd_write
+@subsubsection @code{bfd_write}
+@deftypefn {Function} bfd_size_type bfd_write (const void *, bfd_size_type, bfd *) ATTRIBUTE_WARN_UNUSED_RESULT; 
+Attempt to write SIZE bytes to ABFD's iostream from PTR.
+Return the amount written.
+
+@end deftypefn
+@findex bfd_tell
+@subsubsection @code{bfd_tell}
+@deftypefn {Function} file_ptr bfd_tell (bfd *) ATTRIBUTE_WARN_UNUSED_RESULT; 
+Return ABFD's iostream file position.
+
+@end deftypefn
+@findex bfd_flush
+@subsubsection @code{bfd_flush}
+@deftypefn {Function} int bfd_flush (bfd *); 
+Flush ABFD's iostream pending IO.
+
+@end deftypefn
+@findex bfd_stat
+@subsubsection @code{bfd_stat}
+@deftypefn {Function} int bfd_stat (bfd *, struct stat *) ATTRIBUTE_WARN_UNUSED_RESULT; 
+Call fstat on ABFD's iostream.  Return 0 on success, and a
+negative value on failure.
+
+@end deftypefn
+@findex bfd_seek
+@subsubsection @code{bfd_seek}
+@deftypefn {Function} int bfd_seek (bfd *, file_ptr, int) ATTRIBUTE_WARN_UNUSED_RESULT; 
+Call fseek on ABFD's iostream.  Return 0 on success, and a
+negative value on failure.
+
+@end deftypefn
 @findex bfd_get_mtime
 @subsubsection @code{bfd_get_mtime}
-@strong{Synopsis}
-@example
-long bfd_get_mtime (bfd *abfd);
-@end example
-@strong{Description}@*
+@deftypefn {Function} long bfd_get_mtime (bfd *abfd); 
 Return the file modification time (as read from the file system, or
 from the archive header for archive members).
 
+@end deftypefn
 @findex bfd_get_size
 @subsubsection @code{bfd_get_size}
-@strong{Synopsis}
-@example
-ufile_ptr bfd_get_size (bfd *abfd);
-@end example
-@strong{Description}@*
+@deftypefn {Function} ufile_ptr bfd_get_size (bfd *abfd); 
 Return the file size (as read from file system) for the file
 associated with BFD @var{abfd}.
 
@@ -82,27 +115,32 @@ size reasonable?".
 
 A return value of zero indicates the file size is unknown.
 
+@end deftypefn
 @findex bfd_get_file_size
 @subsubsection @code{bfd_get_file_size}
-@strong{Synopsis}
-@example
-ufile_ptr bfd_get_file_size (bfd *abfd);
-@end example
-@strong{Description}@*
+@deftypefn {Function} ufile_ptr bfd_get_file_size (bfd *abfd); 
 Return the file size (as read from file system) for the file
 associated with BFD @var{abfd}.  It supports both normal files
 and archive elements.
 
+@end deftypefn
 @findex bfd_mmap
 @subsubsection @code{bfd_mmap}
-@strong{Synopsis}
-@example
-void *bfd_mmap (bfd *abfd, void *addr, bfd_size_type len,
-    int prot, int flags, file_ptr offset,
-    void **map_addr, bfd_size_type *map_len);
-@end example
-@strong{Description}@*
+@deftypefn {Function} void *bfd_mmap (bfd *abfd, void *addr, bfd_size_type len, int prot, int flags, file_ptr offset, void **map_addr, bfd_size_type *map_len) ATTRIBUTE_WARN_UNUSED_RESULT; 
 Return mmap()ed region of the file, if possible and implemented.
 LEN and OFFSET do not need to be page aligned.  The page aligned
 address and length are written to MAP_ADDR and MAP_LEN.
 
+@end deftypefn
+@findex bfd_get_current_time
+@subsubsection @code{bfd_get_current_time}
+@deftypefn {Function} time_t bfd_get_current_time (time_t now); 
+Returns the current time.
+
+If the environment variable SOURCE_DATE_EPOCH is defined
+then this is parsed and its value is returned.  Otherwise
+if the paramter NOW is non-zero, then that is returned.
+Otherwise the result of the system call "time(NULL)" is
+returned.
+
+@end deftypefn

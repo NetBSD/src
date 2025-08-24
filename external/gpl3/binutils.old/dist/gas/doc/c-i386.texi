@@ -1,4 +1,4 @@
-@c Copyright (C) 1991-2022 Free Software Foundation, Inc.
+@c Copyright (C) 1991-2024 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -124,6 +124,8 @@ processor names are recognized:
 @code{znver1},
 @code{znver2},
 @code{znver3},
+@code{znver4},
+@code{znver5},
 @code{btver1},
 @code{btver2},
 @code{generic32} and
@@ -137,16 +139,9 @@ accept various extension mnemonics.  For example,
 @code{287},
 @code{387},
 @code{687},
-@code{no87},
-@code{no287},
-@code{no387},
-@code{no687},
 @code{cmov},
-@code{nocmov},
 @code{fxsr},
-@code{nofxsr},
 @code{mmx},
-@code{nommx},
 @code{sse},
 @code{sse2},
 @code{sse3},
@@ -155,18 +150,10 @@ accept various extension mnemonics.  For example,
 @code{sse4.1},
 @code{sse4.2},
 @code{sse4},
-@code{nosse},
-@code{nosse2},
-@code{nosse3},
-@code{nosse4a},
-@code{nossse3},
-@code{nosse4.1},
-@code{nosse4.2},
-@code{nosse4},
 @code{avx},
 @code{avx2},
-@code{noavx},
-@code{noavx2},
+@code{lahf_sahf},
+@code{monitor},
 @code{adx},
 @code{rdseed},
 @code{prfchw},
@@ -189,9 +176,7 @@ accept various extension mnemonics.  For example,
 @code{serialize},
 @code{tsxldtrk},
 @code{kl},
-@code{nokl},
 @code{widekl},
-@code{nowidekl},
 @code{hreset},
 @code{avx512f},
 @code{avx512cd},
@@ -213,37 +198,32 @@ accept various extension mnemonics.  For example,
 @code{avx512_bf16},
 @code{avx_vnni},
 @code{avx512_fp16},
-@code{noavx512f},
-@code{noavx512cd},
-@code{noavx512er},
-@code{noavx512pf},
-@code{noavx512vl},
-@code{noavx512bw},
-@code{noavx512dq},
-@code{noavx512ifma},
-@code{noavx512vbmi},
-@code{noavx512_4fmaps},
-@code{noavx512_4vnniw},
-@code{noavx512_vpopcntdq},
-@code{noavx512_vbmi2},
-@code{noavx512_vnni},
-@code{noavx512_bitalg},
-@code{noavx512_vp2intersect},
-@code{notdx},
-@code{noavx512_bf16},
-@code{noavx_vnni},
-@code{noavx512_fp16},
-@code{noenqcmd},
-@code{noserialize},
-@code{notsxldtrk},
+@code{prefetchi},
+@code{avx_ifma},
+@code{avx_vnni_int8},
+@code{cmpccxadd},
+@code{wrmsrns},
+@code{msrlist},
+@code{avx_ne_convert},
+@code{rao_int},
+@code{fred},
+@code{lkgs},
+@code{avx_vnni_int16},
+@code{sha512},
+@code{sm3},
+@code{sm4},
+@code{pbndkb},
+@code{avx10.1},
+@code{avx10.1/512},
+@code{avx10.1/256},
+@code{avx10.1/128},
+@code{user_msr},
+@code{apx_f},
 @code{amx_int8},
-@code{noamx_int8},
 @code{amx_bf16},
-@code{noamx_bf16},
+@code{amx_fp16},
+@code{amx_complex},
 @code{amx_tile},
-@code{noamx_tile},
-@code{nouintr},
-@code{nohreset},
 @code{vmx},
 @code{vmfunc},
 @code{smx},
@@ -264,6 +244,7 @@ accept various extension mnemonics.  For example,
 @code{popcnt},
 @code{hle},
 @code{rtm},
+@code{tsx},
 @code{invpcid},
 @code{clflush},
 @code{mwaitx},
@@ -291,8 +272,12 @@ accept various extension mnemonics.  For example,
 @code{tlbsync},
 @code{svme} and
 @code{padlock}.
-Note that rather than extending a basic instruction set, the extension
-mnemonics starting with @code{no} revoke the respective functionality.
+Note that these extension mnemonics can be prefixed with @code{no} to revoke
+the respective (and any dependent) functionality.  Note further that the
+suffixes permitted on @code{-march=avx10.<N>} enforce a vector length
+restriction, i.e. despite these otherwise being "enabling" options, using
+these suffixes will disable all insns with wider vector or mask register
+operands.
 
 When the @code{.arch} directive is used with @option{-march}, the
 @code{.arch} directive will take precedent.
@@ -647,6 +632,137 @@ This directive behaves in the same way as the @code{.short} directive,
 taking a series of comma separated expressions and storing them as
 two-byte wide values into the current section.
 
+@cindex @code{insn} directive
+@item .insn [@var{prefix}[,...]] [@var{encoding}] @var{major-opcode}[@code{+r}|@code{/@var{extension}}] [,@var{operand}[,...]]
+This directive allows composing instructions which @code{@value{AS}}
+may not know about yet, or which it has no way of expressing (which
+can be the case for certain alternative encodings).  It assumes certain
+basic structure in how operands are encoded, and it also only
+recognizes - with a few extensions as per below - operands otherwise
+valid for instructions.  Therefore there is no guarantee that
+everything can be expressed (e.g. the original Intel Xeon Phi's MVEX
+encodings cannot be expressed).
+
+@itemize @bullet
+@item
+@var{prefix} expresses one or more opcode prefixes in the usual way.
+Legacy encoding prefixes altering meaning (0x66, 0xF2, 0xF3) may be
+specified as high byte of <major-opcode> (perhaps already including an
+encoding space prefix).  Note that there can only be one such prefix.
+Segment overrides are better specified in the respective memory
+operand, as long as there is one.
+
+@item
+@var{encoding} is used to specify VEX, XOP, or EVEX encodings. The
+syntax tries to resemble that used in documentation:
+@itemize @bullet
+@item @code{VEX}[@code{.@var{len}}][@code{.@var{prefix}}][@code{.@var{space}}][@code{.@var{w}}]
+@item @code{EVEX}[@code{.@var{len}}][@code{.@var{prefix}}][@code{.@var{space}}][@code{.@var{w}}]
+@item @code{XOP}@var{space}[@code{.@var{len}}][@code{.@var{prefix}}][@code{.@var{w}}]
+@end itemize
+
+Here
+@itemize @bullet
+@item @var{len} can be @code{LIG}, @code{128}, @code{256}, or (EVEX
+only) @code{512} as well as @code{L0} / @code{L1} for VEX / XOP and
+@code{L0}...@code{L3} for EVEX
+@item @var{prefix} can be @code{NP}, @code{66}, @code{F3}, or @code{F2}
+@item @var{space} can be
+@itemize @bullet
+@item @code{0f}, @code{0f38}, @code{0f3a}, or @code{M0}...@code{M31}
+for VEX
+@item @code{08}...@code{1f} for XOP
+@item @code{0f}, @code{0f38}, @code{0f3a}, or @code{M0}...@code{M15}
+for EVEX
+@end itemize
+@item @var{w} can be @code{WIG}, @code{W0}, or @code{W1}
+@end itemize
+
+Defaults:
+@itemize @bullet
+@item Omitted @var{len} means "infer from operand size" if there is at
+least one sized vector operand, or @code{LIG} otherwise. (Obviously
+@var{len} has to be omitted when there's EVEX rounding control
+specified later in the operands.)
+@item Omitted @var{prefix} means @code{NP}.
+@item Omitted @var{space} (VEX/EVEX only) implies encoding space is
+taken from @var{major-opcode}.
+@item Omitted @var{w} means "infer from GPR operand size" in 64-bit
+code if there is at least one GPR(-like) operand, or @code{WIG}
+otherwise.
+@end itemize
+
+@item
+@var{major-opcode} is an absolute expression specifying the instruction
+opcode.  Legacy encoding prefixes altering encoding space (0x0f,
+0x0f38, 0x0f3a) have to be specified as high byte(s) here.
+"Degenerate" ModR/M bytes, as present in e.g. certain FPU opcodes or
+sub-spaces like that of major opcode 0x0f01, generally want encoding as
+immediate operand (such opcodes wouldn't normally have non-immediate
+operands); in some cases it may be possible to also encode these as low
+byte of the major opcode, but there are potential ambiguities.  Also
+note that after stripping encoding prefixes, the residual has to fit in
+two bytes (16 bits).  @code{+r} can be suffixed to the major opcode
+expression to specify register-only encoding forms not using a ModR/M
+byte.  @code{/@var{extension}} can alternatively be suffixed to the
+major opcode expression to specify an extension opcode, encoded in bits
+3-5 of the ModR/M byte.
+
+@item
+@var{operand} is an instruction operand expressed the usual way.
+Register operands are primarily used to express register numbers as
+encoded in ModR/M byte and REX/VEX/XOP/EVEX prefixes.  In certain
+cases the register type (really: size) is also used to derive other
+encoding attributes, if these aren't specified explicitly.  Note that
+there is no consistency checking among operands, so entirely bogus
+mixes of operands are possible.  Note further that only operands
+actually encoded in the instruction should be specified.  Operands like
+@samp{%cl} in shift/rotate instructions have to be omitted, or else
+they'll be encoded as an ordinary (register) operand.  Operand order
+may also not match that of the actual instruction (see below).
+@end itemize
+
+Encoding of operands: While for a memory operand (of which there can be
+only one) it is clear how to encode it in the resulting ModR/M byte,
+register operands are encoded strictly in this order (operand counts do
+not include immediate ones in the enumeration below, and if there was an
+extension opcode specified it counts as a register operand; VEX.vvvv
+is meant to cover XOP and EVEX as well):
+
+@itemize @bullet
+@item VEX.vvvv for 1-register-operand VEX/XOP/EVEX insns,
+@item ModR/M.rm, ModR/M.reg for 2-operand insns,
+@item ModR/M.rm, VEX.vvvv, ModR/M.reg for 3-operand insns, and
+@item Imm@{4,5@}, ModR/M.rm, VEX.vvvv, ModR/M.reg for 4-operand insns,
+@end itemize
+
+obviously with the ModR/M.rm slot skipped when there is a memory
+operand, and obviously with the ModR/M.reg slot skipped when there is
+an extension opcode.  For Intel syntax of course the opposite order
+applies.  With @code{+r} (and hence no ModR/M) there can only be a
+single register operand for legacy encodings.  VEX and alike can have
+two register operands, where the second (first in Intel syntax) would
+go into VEX.vvvv.
+
+Immediate operands (including immediate-like displacements, i.e. when
+not part of ModR/M addressing) are emitted in the order specified,
+regardless of AT&T or Intel syntax.  Since it may not be possible to
+infer the size of such immediates, they can be suffixed by
+@code{@{:s@var{n}@}} or @code{@{:u@var{n}@}}, representing signed /
+unsigned immediates of the given number of bits respectively.  When
+emitting such operands, the number of bits will be rounded up to the
+smallest suitable of 8, 16, 32, or 64.  Immediates wider than 32 bits
+are permitted in 64-bit code only.
+
+For EVEX encoding memory operands with a displacement need to know
+Disp8 scaling size in order to use an 8-bit displacement.  For many
+instructions this can be inferred from the types of other operands
+specified.  In Intel syntax @samp{DWORD PTR} and alike can be used to
+specify the respective size.  In AT&T syntax the memory operands can
+be suffixed by @code{@{:d@var{n}@}} to specify the size (in bytes).
+This can be combined with an embedded broadcast specifier:
+@samp{8(%eax)@{1to8:d8@}}.
+
 @c FIXME: Document other x86 specific directives ?  Eg: .code16gcc,
 
 @end table
@@ -870,12 +986,16 @@ instructions (x86-64 only).  Note that this differs from the @samp{rex}
 prefix which generates REX prefix unconditionally.
 
 @item
+@samp{@{rex2@}} -- prefer REX2 prefix for integer and legacy vector
+instructions (APX_F only).
+
+@item
 @samp{@{nooptimize@}} -- disable instruction size optimization.
 @end itemize
 
-Mnemonics of Intel VNNI instructions are encoded with the EVEX prefix
+Mnemonics of Intel VNNI/IFMA instructions are encoded with the EVEX prefix
 by default.  The pseudo @samp{@{vex@}} prefix can be used to encode
-mnemonics of Intel VNNI instructions with the VEX prefix.
+mnemonics of Intel VNNI/IFMA instructions with the VEX prefix.
 
 @cindex conversion instructions, i386
 @cindex i386 conversion instructions
@@ -1513,8 +1633,9 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{k6} @tab @samp{k6_2} @tab @samp{athlon} @tab @samp{k8}
 @item @samp{amdfam10} @tab @samp{bdver1} @tab @samp{bdver2} @tab @samp{bdver3}
 @item @samp{bdver4} @tab @samp{znver1} @tab @samp{znver2} @tab @samp{znver3}
-@item @samp{btver1} @tab @samp{btver2} @tab @samp{generic32} @tab @samp{generic64}
-@item @samp{.cmov} @tab @samp{.fxsr} @tab @samp{.mmx}
+@item @samp{znver4} @tab @samp{znver5} @tab @samp{btver1} @tab @samp{btver2}
+@item @samp{generic32}
+@item @samp{generic64} @tab @samp{.cmov} @tab @samp{.fxsr} @tab @samp{.mmx}
 @item @samp{.sse} @tab @samp{.sse2} @tab @samp{.sse3} @tab @samp{.sse4a}
 @item @samp{.ssse3} @tab @samp{.sse4.1} @tab @samp{.sse4.2} @tab @samp{.sse4}
 @item @samp{.avx} @tab @samp{.vmx} @tab @samp{.smx} @tab @samp{.ept}
@@ -1522,8 +1643,8 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{.aes} @tab @samp{.pclmul} @tab @samp{.fma} @tab @samp{.fsgsbase}
 @item @samp{.rdrnd} @tab @samp{.f16c} @tab @samp{.avx2} @tab @samp{.bmi2}
 @item @samp{.lzcnt} @tab @samp{.popcnt} @tab @samp{.invpcid} @tab @samp{.vmfunc}
-@item @samp{.hle}
-@item @samp{.rtm} @tab @samp{.adx} @tab @samp{.rdseed} @tab @samp{.prfchw}
+@item @samp{.monitor} @tab @samp{.hle} @tab @samp{.rtm} @tab @samp{.tsx}
+@item @samp{.lahf_sahf} @tab @samp{.adx} @tab @samp{.rdseed} @tab @samp{.prfchw}
 @item @samp{.smap} @tab @samp{.mpx} @tab @samp{.sha} @tab @samp{.prefetchwt1}
 @item @samp{.clflushopt} @tab @samp{.xsavec} @tab @samp{.xsaves} @tab @samp{.se1}
 @item @samp{.avx512f} @tab @samp{.avx512cd} @tab @samp{.avx512er} @tab @samp{.avx512pf}
@@ -1531,19 +1652,25 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{.avx512vbmi} @tab @samp{.avx512_4fmaps} @tab @samp{.avx512_4vnniw}
 @item @samp{.avx512_vpopcntdq} @tab @samp{.avx512_vbmi2} @tab @samp{.avx512_vnni}
 @item @samp{.avx512_bitalg} @tab @samp{.avx512_bf16} @tab @samp{.avx512_vp2intersect}
-@item @samp{.tdx} @tab @samp{.avx_vnni}  @tab @samp{.avx512_fp16}
+@item @samp{.tdx} @tab @samp{.avx_vnni} @tab @samp{.avx512_fp16} @tab @samp{.avx10.1}
 @item @samp{.clwb} @tab @samp{.rdpid} @tab @samp{.ptwrite} @tab @samp{.ibt}
+@item @samp{.prefetchi} @tab @samp{.avx_ifma} @tab @samp{.avx_vnni_int8}
+@item @samp{.cmpccxadd} @tab @samp{.wrmsrns} @tab @samp{.msrlist}
+@item @samp{.avx_ne_convert} @tab @samp{.rao_int} @tab @samp{.fred} @tab @samp{.lkgs}
+@item @samp{.avx_vnni_int16} @tab @samp{.sha512} @tab @samp{.sm3} @tab @samp{.sm4}
+@item @samp{.pbndkb} @tab @samp{.user_msr}
 @item @samp{.wbnoinvd} @tab @samp{.pconfig} @tab @samp{.waitpkg} @tab @samp{.cldemote}
 @item @samp{.shstk} @tab @samp{.gfni} @tab @samp{.vaes} @tab @samp{.vpclmulqdq}
 @item @samp{.movdiri} @tab @samp{.movdir64b} @tab @samp{.enqcmd} @tab @samp{.tsxldtrk}
-@item @samp{.amx_int8} @tab @samp{.amx_bf16} @tab @samp{.amx_tile}
+@item @samp{.amx_int8} @tab @samp{.amx_bf16} @tab @samp{.amx_fp16}
+@item @samp{.amx_complex} @tab @samp{.amx_tile}
 @item @samp{.kl} @tab @samp{.widekl} @tab @samp{.uintr} @tab @samp{.hreset}
 @item @samp{.3dnow} @tab @samp{.3dnowa} @tab @samp{.sse4a} @tab @samp{.sse5}
 @item @samp{.syscall} @tab @samp{.rdtscp} @tab @samp{.svme}
 @item @samp{.lwp} @tab @samp{.fma4} @tab @samp{.xop} @tab @samp{.cx16}
 @item @samp{.padlock} @tab @samp{.clzero} @tab @samp{.mwaitx} @tab @samp{.rdpru}
 @item @samp{.mcommit} @tab @samp{.sev_es} @tab @samp{.snp} @tab @samp{.invlpgb}
-@item @samp{.tlbsync}
+@item @samp{.tlbsync} @tab @samp{.apx_f}
 @end multitable
 
 Apart from the warning, there are only two other effects on
@@ -1558,6 +1685,15 @@ Secondly, if you specify @samp{i8086}, @samp{i186}, or @samp{i286},
 conditional jumps will be promoted when necessary to a two instruction
 sequence consisting of a conditional jump of the opposite sense around
 an unconditional jump to the target.
+
+Note that the sub-architecture specifiers (starting with a dot) can be prefixed
+with @code{no} to revoke the respective (and any dependent) functionality.
+Note further that @samp{.avx10.<N>} can be suffixed with a vector length
+restriction (@samp{/256} or @samp{/128}, with @samp{/512} simply restoring the
+default).  Despite these otherwise being "enabling" specifiers, using these
+suffixes will disable all insns with wider vector or mask register operands.
+On SVR4-derived platforms, the separator character @samp{/} can be replaced by
+@samp{:}.
 
 Following the CPU architecture (but not a sub-architecture, which are those
 starting with a dot), you may specify @samp{jumps} or @samp{nojumps} to
@@ -1593,7 +1729,7 @@ syntax.
 
 @item @samp{lfs}, @samp{lgs}, and @samp{lss} similarly allow for 16-
 and 32-bit operand size (32- and 48-bit memory operand) in both ISAs,
-while Intel64 additionally supports 64-bit operand sise (80-bit memory
+while Intel64 additionally supports 64-bit operand size (80-bit memory
 operands).
 
 @end itemize

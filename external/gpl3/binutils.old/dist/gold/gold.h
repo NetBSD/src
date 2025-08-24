@@ -1,6 +1,6 @@
 // gold.h -- general definitions for gold   -*- C++ -*-
 
-// Copyright (C) 2006-2022 Free Software Foundation, Inc.
+// Copyright (C) 2006-2024 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -163,7 +163,7 @@ gold_nomem() ATTRIBUTE_NORETURN;
 #if defined(__GNUC__) && GCC_VERSION < 4003
 #define FUNCTION_NAME static_cast<const char*>(__FUNCTION__)
 #else 
-#define FUNCTION_NAME __FUNCTION__
+#define FUNCTION_NAME __func__
 #endif
 
 // This macro and function are used in cases which can not arise if
