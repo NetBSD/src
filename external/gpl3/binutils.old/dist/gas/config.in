@@ -22,6 +22,9 @@
 /* Default architecture. */
 #undef DEFAULT_ARCH
 
+/* Default compression algorithm for --enable-compressed-debug-sections. */
+#undef DEFAULT_COMPRESSED_DEBUG_ALGORITHM
+
 /* Default CRIS architecture. */
 #undef DEFAULT_CRIS_ARCH
 
@@ -71,6 +74,18 @@
    language is requested. */
 #undef ENABLE_NLS
 
+/* Define to 1 if you have the Mac OS X function
+   CFLocaleCopyPreferredLanguages in the CoreFoundation framework. */
+#undef HAVE_CFLOCALECOPYPREFERREDLANGUAGES
+
+/* Define to 1 if you have the Mac OS X function CFPreferencesCopyAppValue in
+   the CoreFoundation framework. */
+#undef HAVE_CFPREFERENCESCOPYAPPVALUE
+
+/* Define if the GNU dcgettext() function is already present or preinstalled.
+   */
+#undef HAVE_DCGETTEXT
+
 /* Define to 1 if you have the declaration of `asprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_ASPRINTF
@@ -88,6 +103,12 @@
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
+
+/* Define if the GNU gettext() function is already present or preinstalled. */
+#undef HAVE_GETTEXT
+
+/* Define if you have the iconv() function and it works. */
+#undef HAVE_ICONV
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -133,6 +154,9 @@
 
 /* Define to 1 if you have the <windows.h> header file. */
 #undef HAVE_WINDOWS_H
+
+/* Define to 1 if zstd is enabled. */
+#undef HAVE_ZSTD
 
 /* Using i386 COFF? */
 #undef I386COFF
@@ -255,11 +279,11 @@
 /* Use b modifier when opening binary files? */
 #undef USE_BINARY_FOPEN
 
+/* Allow use of EF_MIPS_ABI_O32 on MIPS targets. */
+#undef USE_EF_MIPS_ABI_O32
+
 /* Use emulation support? */
 #undef USE_EMULATIONS
-
-/* Allow use of E_MIPS_ABI_O32 on MIPS targets. */
-#undef USE_E_MIPS_ABI_O32
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE

@@ -1,5 +1,5 @@
 /* tc-tic54x.c -- Assembly code for the Texas Instruments TMS320C54X
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of GAS, the GNU Assembler.
@@ -182,11 +182,34 @@ static symbolS *last_label_seen = NULL;
 static int local_label_id;
 
 static htab_t subsym_recurse_hash; /* Prevent infinite recurse.  */
-static htab_t math_hash; /* Built-in math functions.  */
 /* Allow maximum levels of macro nesting; level 0 is the main substitution
    symbol table.  The other assembler only does 32 levels, so there!  */
 #define MAX_SUBSYM_HASH 100
 static htab_t subsym_hash[MAX_SUBSYM_HASH];
+
+typedef struct
+{
+  const char *name;
+  union {
+    int (*s) (char *, char *);
+    float (*f) (float, float);
+    int (*i) (float, float);
+  } proc;
+  int nargs;
+  int type;
+} subsym_proc_entry;
+
+typedef struct {
+  union {
+    char *s;
+    const subsym_proc_entry *p;
+  } u;
+  unsigned int freekey : 1;
+  unsigned int freeval : 1;
+  unsigned int isproc : 1;
+  unsigned int ismath : 1;
+} subsym_ent_t;
+
 
 /* Keep track of local labels so we can substitute them before GAS sees them
    since macros use their own 'namespace' for local labels, use a separate hash
@@ -197,7 +220,7 @@ static htab_t subsym_hash[MAX_SUBSYM_HASH];
    We use our own macro nesting counter, since GAS overloads it when expanding
    other things (like conditionals and repeat loops).  */
 static int macro_level = 0;
-static htab_t local_label_hash[100];
+static htab_t local_label_hash[MAX_SUBSYM_HASH];
 /* Keep track of struct/union tags.  */
 static htab_t stag_hash;
 static htab_t op_hash;
@@ -223,7 +246,7 @@ static htab_t misc_symbol_hash;
 
 
 static void subsym_create_or_replace (char *, char *);
-static char *subsym_lookup (char *, int);
+static subsym_ent_t *subsym_lookup (char *, int);
 static char *subsym_substitute (char *, int);
 
 
@@ -334,6 +357,7 @@ tic54x_asg (int x ATTRIBUTE_UNUSED)
     }
   else
     {
+      size_t len;
       str = input_line_pointer;
       while ((c = *input_line_pointer) != ',')
 	{
@@ -341,28 +365,30 @@ tic54x_asg (int x ATTRIBUTE_UNUSED)
 	    break;
 	  ++input_line_pointer;
 	}
-      *input_line_pointer = 0;
+      len = input_line_pointer - str;
+      str = notes_memdup (str, len, len + 1);
     }
   if (c != ',')
     {
       as_bad (_("Comma and symbol expected for '.asg STRING, SYMBOL'"));
+      notes_free (str);
       ignore_rest_of_line ();
       return;
     }
 
   ++input_line_pointer;
   c = get_symbol_name (&name);	/* Get terminator.  */
+  name = notes_strdup (name);
+  (void) restore_line_pointer (c);
   if (!ISALPHA (*name))
     {
       as_bad (_("symbols assigned with .asg must begin with a letter"));
+      notes_free (str);
       ignore_rest_of_line ();
       return;
     }
 
-  str = xstrdup (str);
-  name = xstrdup (name);
   subsym_create_or_replace (name, str);
-  (void) restore_line_pointer (c);
   demand_empty_rest_of_line ();
 }
 
@@ -407,15 +433,17 @@ tic54x_eval (int x ATTRIBUTE_UNUSED)
       return;
     }
   c = get_symbol_name (&name);	/* Get terminator.  */
-  name = xstrdup (name);
-  (void) restore_line_pointer (c);
 
   if (!ISALPHA (*name))
     {
       as_bad (_("symbols assigned with .eval must begin with a letter"));
+      (void) restore_line_pointer (c);
       ignore_rest_of_line ();
       return;
     }
+  name = notes_strdup (name);
+  (void) restore_line_pointer (c);
+
   symbolP = symbol_new (name, absolute_section, &zero_address_frag, value);
   SF_SET_LOCAL (symbolP);
   symbol_table_insert (symbolP);
@@ -424,7 +452,7 @@ tic54x_eval (int x ATTRIBUTE_UNUSED)
      But since there's not written rule as to when, don't even bother trying
      to match their behavior.  */
   sprintf (valuestr, "%d", value);
-  tmp = xstrdup (valuestr);
+  tmp = notes_strdup (valuestr);
   subsym_create_or_replace (name, tmp);
 
   demand_empty_rest_of_line ();
@@ -564,11 +592,14 @@ stag_add_field_symbols (struct stag *stag,
 	}
       else
 	{
-	  char *replacement;
-
-	  replacement = concat (S_GET_NAME (rootsym), "+", root_stag_name,
-				name + strlen (S_GET_NAME (rootsym)), NULL);
-	  str_hash_insert (subsym_hash[0], name, replacement, 0);
+	  subsym_ent_t *ent = xmalloc (sizeof (*ent));
+	  ent->u.s = concat (S_GET_NAME (rootsym), "+", root_stag_name,
+			     name + strlen (S_GET_NAME (rootsym)), NULL);
+	  ent->freekey = 1;
+	  ent->freeval = 1;
+	  ent->isproc = 0;
+	  ent->ismath = 0;
+	  str_hash_insert (subsym_hash[0], name, ent, 0);
 	  freename = NULL;
 	}
 
@@ -1115,16 +1146,40 @@ tic54x_global (int type)
   demand_empty_rest_of_line ();
 }
 
-/* Remove the symbol from the local label hash lookup.  */
-
-static int
-tic54x_remove_local_label (void **slot, void *arg ATTRIBUTE_UNUSED)
+static void
+free_subsym_ent (void *ent)
 {
-  string_tuple_t *tuple = *((string_tuple_t **) slot);
-  void *elem = str_hash_find (local_label_hash[macro_level], tuple->key);
-  str_hash_delete (local_label_hash[macro_level], tuple->key);
-  free (elem);
-  return 0;
+  string_tuple_t *tuple = (string_tuple_t *) ent;
+  subsym_ent_t *val = (void *) tuple->value;
+  if (val->freekey)
+    free ((void *) tuple->key);
+  if (val->freeval)
+    free (val->u.s);
+  free (val);
+  free (ent);
+}
+
+static htab_t
+subsym_htab_create (void)
+{
+  return htab_create_alloc (16, hash_string_tuple, eq_string_tuple,
+			    free_subsym_ent, xcalloc, free);
+}
+
+static void
+free_local_label_ent (void *ent)
+{
+  string_tuple_t *tuple = (string_tuple_t *) ent;
+  free ((void *) tuple->key);
+  free ((void *) tuple->value);
+  free (ent);
+}
+
+static htab_t
+local_label_htab_create (void)
+{
+  return htab_create_alloc (16, hash_string_tuple, eq_string_tuple,
+			    free_local_label_ent, xcalloc, free);
 }
 
 /* Reset all local labels.  */
@@ -1132,7 +1187,7 @@ tic54x_remove_local_label (void **slot, void *arg ATTRIBUTE_UNUSED)
 static void
 tic54x_clear_local_labels (int ignored ATTRIBUTE_UNUSED)
 {
-  htab_traverse (local_label_hash[macro_level], tic54x_remove_local_label, NULL);
+  htab_empty (local_label_hash[macro_level]);
 }
 
 /* .text
@@ -1854,35 +1909,22 @@ tic54x_clink (int ignored ATTRIBUTE_UNUSED)
 }
 
 /* Change the default include directory to be the current source file's
-   directory, instead of the current working directory.  If DOT is non-zero,
-   set to "." instead.  */
+   directory.  */
 
 static void
 tic54x_set_default_include (void)
 {
-  char *dir, *tmp = NULL;
-  const char *curfile;
   unsigned lineno;
-
-  curfile = as_where (&lineno);
-  dir = xstrdup (curfile);
-  tmp = strrchr (dir, '/');
+  const char *curfile = as_where (&lineno);
+  const char *tmp = strrchr (curfile, '/');
   if (tmp != NULL)
     {
-      int len;
-
-      *tmp = '\0';
-      len = strlen (dir);
-      if (include_dir_count == 0)
-	{
-	  include_dirs = XNEWVEC (const char *, 1);
-	  include_dir_count = 1;
-	}
-      include_dirs[0] = dir;
+      size_t len = tmp - curfile;
       if (len > include_dir_maxlen)
 	include_dir_maxlen = len;
+      include_dirs[0] = notes_memdup (curfile, len, len + 1);
     }
-  else if (include_dirs != NULL)
+  else
     include_dirs[0] = ".";
 }
 
@@ -2215,7 +2257,6 @@ tic54x_sslist (int show)
 static void
 tic54x_var (int ignore ATTRIBUTE_UNUSED)
 {
-  static char empty[] = "";
   char *name;
   int c;
 
@@ -2236,10 +2277,17 @@ tic54x_var (int ignore ATTRIBUTE_UNUSED)
 	  return;
 	}
       c = get_symbol_name (&name);
-      /* .var symbols start out with a null string.  */
       name = xstrdup (name);
-      str_hash_insert (subsym_hash[macro_level], name, empty, 0);
       c = restore_line_pointer (c);
+
+      /* .var symbols start out with a null string.  */
+      subsym_ent_t *ent = xmalloc (sizeof (*ent));
+      ent->u.s = (char *) "";
+      ent->freekey = 1;
+      ent->freeval = 0;
+      ent->isproc = 0;
+      ent->ismath = 0;
+      str_hash_insert (subsym_hash[macro_level], name, ent, 0);
       if (c == ',')
 	{
 	  ++input_line_pointer;
@@ -2264,7 +2312,7 @@ tic54x_mlib (int ignore ATTRIBUTE_UNUSED)
 {
   char *filename;
   char *path;
-  int len, i;
+  int len;
   bfd *abfd, *mbfd;
 
   ILLEGAL_WITHIN_STRUCT ();
@@ -2292,31 +2340,11 @@ tic54x_mlib (int ignore ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 
   tic54x_set_default_include ();
-  path = XNEWVEC (char, (unsigned long) len + include_dir_maxlen + 5);
+  path = notes_alloc (len + include_dir_maxlen + 2);
+  FILE *try = search_and_open (filename, path);
+  if (try)
+    fclose (try);
 
-  for (i = 0; i < include_dir_count; i++)
-    {
-      FILE *try;
-
-      strcpy (path, include_dirs[i]);
-      strcat (path, "/");
-      strcat (path, filename);
-      if ((try = fopen (path, "r")) != NULL)
-	{
-	  fclose (try);
-	  break;
-	}
-    }
-
-  if (i >= include_dir_count)
-    {
-      free (path);
-      path = filename;
-    }
-
-  /* FIXME: if path is found, malloc'd storage is not freed.  Of course, this
-     happens all over the place, and since the assembler doesn't usually keep
-     running for a very long time, it really doesn't matter.  */
   register_dependency (path);
 
   /* Expand all archive entries to temporary files and include them.  */
@@ -2346,7 +2374,7 @@ tic54x_mlib (int ignore ATTRIBUTE_UNUSED)
       FILE *ftmp;
 
       /* We're not sure how big it is, but it will be smaller than "size".  */
-      size = bfd_bread (buf, size, mbfd);
+      size = bfd_read (buf, size, mbfd);
 
       /* Write to a temporary file, then use s_include to include it
 	 a bit of a hack.  */
@@ -2503,11 +2531,12 @@ tic54x_macro_start (void)
 {
   if (++macro_level >= MAX_SUBSYM_HASH)
     {
+      --macro_level;
       as_fatal (_("Macro nesting is too deep"));
       return;
     }
-  subsym_hash[macro_level] = str_htab_create ();
-  local_label_hash[macro_level] = str_htab_create ();
+  subsym_hash[macro_level] = subsym_htab_create ();
+  local_label_hash[macro_level] = local_label_htab_create ();
 }
 
 void
@@ -2519,11 +2548,14 @@ tic54x_macro_info (const macro_entry *macro)
   for (entry = macro->formals; entry; entry = entry->next)
     {
       char *name = xstrndup (entry->name.ptr, entry->name.len);
-      char *value = xstrndup (entry->actual.ptr, entry->actual.len);
+      subsym_ent_t *ent = xmalloc (sizeof (*ent));
 
-      name[entry->name.len] = '\0';
-      value[entry->actual.len] = '\0';
-      str_hash_insert (subsym_hash[macro_level], name, value, 0);
+      ent->u.s = xstrndup (entry->actual.ptr, entry->actual.len);
+      ent->freekey = 1;
+      ent->freeval = 1;
+      ent->isproc = 0;
+      ent->ismath = 0;
+      str_hash_insert (subsym_hash[macro_level], name, ent, 0);
     }
 }
 
@@ -2594,20 +2626,21 @@ subsym_isdefed (char *a, char *ignore ATTRIBUTE_UNUSED)
 static int
 subsym_ismember (char *sym, char *list)
 {
-  char *elem, *ptr, *listv;
+  char *elem, *ptr;
+  subsym_ent_t *listv;
 
   if (!list)
     return 0;
 
   listv = subsym_lookup (list, macro_level);
-  if (!listv)
+  if (!listv || listv->isproc)
     {
       as_bad (_("Undefined substitution symbol '%s'"), list);
       ignore_rest_of_line ();
       return 0;
     }
 
-  ptr = elem = xstrdup (listv);
+  ptr = elem = notes_strdup (listv->u.s);
   while (*ptr && *ptr != ',')
     ++ptr;
   *ptr++ = 0;
@@ -2728,7 +2761,7 @@ math_ceil (float arg1, float ignore ATTRIBUTE_UNUSED)
   return (float) ceil (arg1);
 }
 
-static float
+static int
 math_cvi (float arg1, float ignore ATTRIBUTE_UNUSED)
 {
   return (int) arg1;
@@ -2746,10 +2779,10 @@ math_fmod (float arg1, float arg2)
   return (int) arg1 % (int) arg2;
 }
 
-static float
+static int
 math_int (float arg1, float ignore ATTRIBUTE_UNUSED)
 {
-  return ((float) ((int) arg1)) == arg1;
+  return arg1 == (float) (int) arg1;
 }
 
 static float
@@ -2758,10 +2791,10 @@ math_round (float arg1, float ignore ATTRIBUTE_UNUSED)
   return arg1 > 0 ? (int) (arg1 + 0.5) : (int) (arg1 - 0.5);
 }
 
-static float
+static int
 math_sgn (float arg1, float ignore ATTRIBUTE_UNUSED)
 {
-  return (arg1 < 0) ? -1 : (arg1 ? 1 : 0);
+  return arg1 < 0.0f ? -1 : arg1 != 0.0f ? 1 : 0;
 }
 
 static float
@@ -2893,72 +2926,53 @@ math_tanh (float arg1, float ignore ATTRIBUTE_UNUSED)
 }
 
 /* Built-in substitution symbol functions and math functions.  */
-typedef struct
-{
-  const char *name;
-  int (*proc) (char *, char *);
-  int nargs;
-} subsym_proc_entry;
-
 static const subsym_proc_entry subsym_procs[] =
 {
   /* Assembler built-in string substitution functions.  */
-  { "$symlen", subsym_symlen, 1,  },
-  { "$symcmp", subsym_symcmp, 2,  },
-  { "$firstch", subsym_firstch, 2,  },
-  { "$lastch", subsym_lastch, 2,  },
-  { "$isdefed", subsym_isdefed, 1,  },
-  { "$ismember", subsym_ismember, 2,  },
-  { "$iscons", subsym_iscons, 1,  },
-  { "$isname", subsym_isname, 1,  },
-  { "$isreg", subsym_isreg, 1,  },
-  { "$structsz", subsym_structsz, 1,  },
-  { "$structacc", subsym_structacc, 1,  },
-  { NULL, NULL, 0 },
-};
+  { "$symlen",    { .s = subsym_symlen },    1, 0 },
+  { "$symcmp",    { .s = subsym_symcmp },    2, 0 },
+  { "$firstch",   { .s = subsym_firstch },   2, 0 },
+  { "$lastch",    { .s = subsym_lastch },    2, 0 },
+  { "$isdefed",   { .s = subsym_isdefed },   1, 0 },
+  { "$ismember",  { .s = subsym_ismember },  2, 0 },
+  { "$iscons",    { .s = subsym_iscons },    1, 0 },
+  { "$isname",    { .s = subsym_isname },    1, 0 },
+  { "$isreg",     { .s = subsym_isreg },     1, 0 },
+  { "$structsz",  { .s = subsym_structsz },  1, 0 },
+  { "$structacc", { .s = subsym_structacc }, 1, 0 },
 
-typedef struct
-{
-  const char *name;
-  float (*proc) (float, float);
-  int nargs;
-  int int_return;
-} math_proc_entry;
-
-static const math_proc_entry math_procs[] =
-{
   /* Integer-returning built-in math functions.  */
-  { "$cvi", math_cvi, 1, 1 },
-  { "$int", math_int, 1, 1 },
-  { "$sgn", math_sgn, 1, 1 },
+  { "$cvi",       { .i = math_cvi },         1, 2 },
+  { "$int",       { .i = math_int },         1, 2 },
+  { "$sgn",       { .i = math_sgn },         1, 2 },
 
   /* Float-returning built-in math functions.  */
-  { "$acos", math_acos, 1, 0 },
-  { "$asin", math_asin, 1, 0 },
-  { "$atan", math_atan, 1, 0 },
-  { "$atan2", math_atan2, 2, 0 },
-  { "$ceil", math_ceil, 1, 0 },
-  { "$cosh", math_cosh, 1, 0 },
-  { "$cos", math_cos, 1, 0 },
-  { "$cvf", math_cvf, 1, 0 },
-  { "$exp", math_exp, 1, 0 },
-  { "$fabs", math_fabs, 1, 0 },
-  { "$floor", math_floor, 1, 0 },
-  { "$fmod", math_fmod, 2, 0 },
-  { "$ldexp", math_ldexp, 2, 0 },
-  { "$log10", math_log10, 1, 0 },
-  { "$log", math_log, 1, 0 },
-  { "$max", math_max, 2, 0 },
-  { "$min", math_min, 2, 0 },
-  { "$pow", math_pow, 2, 0 },
-  { "$round", math_round, 1, 0 },
-  { "$sin", math_sin, 1, 0 },
-  { "$sinh", math_sinh, 1, 0 },
-  { "$sqrt", math_sqrt, 1, 0 },
-  { "$tan", math_tan, 1, 0 },
-  { "$tanh", math_tanh, 1, 0 },
-  { "$trunc", math_trunc, 1, 0 },
-  { NULL, NULL, 0, 0 },
+  { "$acos",      { .f = math_acos },        1, 1 },
+  { "$asin",      { .f = math_asin },        1, 1 },
+  { "$atan",      { .f = math_atan },        1, 1 },
+  { "$atan2",     { .f = math_atan2 },       2, 1 },
+  { "$ceil",      { .f = math_ceil },        1, 1 },
+  { "$cosh",      { .f = math_cosh },        1, 1 },
+  { "$cos",       { .f = math_cos },         1, 1 },
+  { "$cvf",       { .f = math_cvf },         1, 1 },
+  { "$exp",       { .f = math_exp },         1, 1 },
+  { "$fabs",      { .f = math_fabs },        1, 1 },
+  { "$floor",     { .f = math_floor },       1, 1 },
+  { "$fmod",      { .f = math_fmod },        2, 1 },
+  { "$ldexp",     { .f = math_ldexp },       2, 1 },
+  { "$log10",     { .f = math_log10 },       1, 1 },
+  { "$log",       { .f = math_log },         1, 1 },
+  { "$max",       { .f = math_max },         2, 1 },
+  { "$min",       { .f = math_min },         2, 1 },
+  { "$pow",       { .f = math_pow },         2, 1 },
+  { "$round",     { .f = math_round },       1, 1 },
+  { "$sin",       { .f = math_sin },         1, 1 },
+  { "$sinh",      { .f = math_sinh },        1, 1 },
+  { "$sqrt",      { .f = math_sqrt },        1, 1 },
+  { "$tan",       { .f = math_tan },         1, 1 },
+  { "$tanh",      { .f = math_tanh },        1, 1 },
+  { "$trunc",     { .f = math_trunc },       1, 1 },
+  { NULL, { NULL }, 0, 0 },
 };
 
 void
@@ -2967,7 +2981,6 @@ md_begin (void)
   insn_template *tm;
   const tic54x_symbol *sym;
   const subsym_proc_entry *subsym_proc;
-  const math_proc_entry *math_proc;
   const char **symname;
   char *TIC54X_DIR = getenv ("TIC54X_DIR");
   char *A_DIR = TIC54X_DIR ? TIC54X_DIR : getenv ("A_DIR");
@@ -3037,21 +3050,39 @@ md_begin (void)
 
   /* Only the base substitution table and local label table are initialized;
      the others (for local macro substitution) get instantiated as needed.  */
-  local_label_hash[0] = str_htab_create ();
-  subsym_hash[0] = str_htab_create ();
+  local_label_hash[0] = local_label_htab_create ();
+  subsym_hash[0] = subsym_htab_create ();
   for (subsym_proc = subsym_procs; subsym_proc->name; subsym_proc++)
-    str_hash_insert (subsym_hash[0], subsym_proc->name, subsym_proc, 0);
-
-  math_hash = str_htab_create ();
-  for (math_proc = math_procs; math_proc->name; math_proc++)
     {
-      /* Insert into the main subsym hash for recognition; insert into
-	 the math hash to actually store information.  */
-      str_hash_insert (subsym_hash[0], math_proc->name, math_proc, 0);
-      str_hash_insert (math_hash, math_proc->name, math_proc, 0);
+      subsym_ent_t *ent = xmalloc (sizeof (*ent));
+      ent->u.p = subsym_proc;
+      ent->freekey = 0;
+      ent->freeval = 0;
+      ent->isproc = 1;
+      ent->ismath = subsym_proc->type != 0;
+      str_hash_insert (subsym_hash[0], subsym_proc->name, ent, 0);
     }
   subsym_recurse_hash = str_htab_create ();
   stag_hash = str_htab_create ();
+}
+
+void
+tic54x_md_end (void)
+{
+  htab_delete (stag_hash);
+  htab_delete (subsym_recurse_hash);
+  while (macro_level != -1)
+    tic54x_macro_end ();
+  macro_level = 0;
+  htab_delete (misc_symbol_hash);
+  htab_delete (sbit_hash);
+  htab_delete (cc3_hash);
+  htab_delete (cc2_hash);
+  htab_delete (cc_hash);
+  htab_delete (mmreg_hash);
+  htab_delete (reg_hash);
+  htab_delete (parop_hash);
+  htab_delete (op_hash);
 }
 
 static int
@@ -4295,7 +4326,6 @@ subsym_get_arg (char *line, const char *terminators, char **str, int nosub)
   else
     {
       const char *term = terminators;
-      char *value = NULL;
 
       while (*ptr && *ptr != *term)
 	{
@@ -4310,8 +4340,12 @@ subsym_get_arg (char *line, const char *terminators, char **str, int nosub)
       endp = ptr;
       *str = xmemdup0 (line, ptr - line);
       /* Do simple substitution, if available.  */
-      if (!nosub && (value = subsym_lookup (*str, macro_level)) != NULL)
-	*str = value;
+      if (!nosub)
+	{
+	  subsym_ent_t *ent = subsym_lookup (*str, macro_level);
+	  if (ent && !ent->isproc)
+	    *str = ent->u.s;
+	}
     }
 
   return endp;
@@ -4326,24 +4360,30 @@ static void
 subsym_create_or_replace (char *name, char *value)
 {
   int i;
+  subsym_ent_t *ent = xmalloc (sizeof (*ent));
+  ent->u.s = value;
+  ent->freekey = 0;
+  ent->freeval = 0;
+  ent->isproc = 0;
+  ent->ismath = 0;
 
   for (i = macro_level; i > 0; i--)
     if (str_hash_find (subsym_hash[i], name))
       {
-	str_hash_insert (subsym_hash[i], name, value, 1);
+	str_hash_insert (subsym_hash[i], name, ent, 1);
 	return;
       }
-  str_hash_insert (subsym_hash[0], name, value, 1);
+  str_hash_insert (subsym_hash[0], name, ent, 1);
 }
 
 /* Look up the substitution string replacement for the given symbol.
    Start with the innermost macro substitution table given and work
    outwards.  */
 
-static char *
+static subsym_ent_t *
 subsym_lookup (char *name, int nest_level)
 {
-  char *value = str_hash_find (subsym_hash[nest_level], name);
+  void *value = str_hash_find (subsym_hash[nest_level], name);
 
   if (value || nest_level == 0)
     return value;
@@ -4374,11 +4414,7 @@ subsym_substitute (char *line, int forced)
   int recurse = 1;
   int line_conditional = 0;
   char *tmp;
-
-  /* Work with a copy of the input line.  */
-  replacement = xstrdup (line);
-
-  ptr = head = replacement;
+  unsigned char current_char;
 
   /* Flag lines where we might need to replace a single '=' with two;
      GAS uses single '=' to assign macro args values, and possibly other
@@ -4398,7 +4434,10 @@ subsym_substitute (char *line, int forced)
   if (strstr (line, ".macro"))
     return line;
 
-  unsigned char current_char;
+  /* Work with a copy of the input line.  */
+  replacement = xstrdup (line);
+  ptr = head = replacement;
+
   while (!is_end_of_line[(current_char = * (unsigned char *) ptr)])
     {
       /* Need to update this since LINE may have been modified.  */
@@ -4445,6 +4484,7 @@ subsym_substitute (char *line, int forced)
 	  char *name; /* Symbol to be replaced.  */
 	  char *savedp = input_line_pointer;
 	  int c;
+	  subsym_ent_t *ent = NULL;
 	  char *value = NULL;
 	  char *tail; /* Rest of line after symbol.  */
 
@@ -4465,7 +4505,11 @@ subsym_substitute (char *line, int forced)
 	  /* Avoid infinite recursion; if a symbol shows up a second time for
 	     substitution, leave it as is.  */
 	  if (str_hash_find (subsym_recurse_hash, name) == NULL)
-	    value = subsym_lookup (name, macro_level);
+	    {
+	      ent = subsym_lookup (name, macro_level);
+	      if (ent && !ent->isproc)
+		value = ent->u.s;
+	    }
 	  else
 	    as_warn (_("%s symbol recursion stopped at "
 		       "second appearance of '%s'"),
@@ -4499,14 +4543,13 @@ subsym_substitute (char *line, int forced)
 	      ptr = tail;
 	    }
 	  /* Check for built-in subsym and math functions.  */
-	  else if (value != NULL && *name == '$')
+	  else if (ent != NULL && *name == '$')
 	    {
-	      subsym_proc_entry *entry = (subsym_proc_entry *) value;
-	      math_proc_entry *math_entry = str_hash_find (math_hash, name);
+	      const subsym_proc_entry *entry = ent->u.p;
 	      char *arg1, *arg2 = NULL;
 
 	      *ptr = c;
-	      if (entry == NULL)
+	      if (!ent->isproc)
 		{
 		  as_bad (_("Unrecognized substitution symbol function"));
 		  break;
@@ -4517,13 +4560,12 @@ subsym_substitute (char *line, int forced)
 		  break;
 		}
 	      ++ptr;
-	      if (math_entry != NULL)
+	      if (ent->ismath)
 		{
 		  float farg1, farg2 = 0;
-		  volatile float fresult;
 
 		  farg1 = (float) strtod (ptr, &ptr);
-		  if (math_entry->nargs == 2)
+		  if (entry->nargs == 2)
 		    {
 		      if (*ptr++ != ',')
 			{
@@ -4532,12 +4574,17 @@ subsym_substitute (char *line, int forced)
 			}
 		      farg2 = (float) strtod (ptr, &ptr);
 		    }
-		  fresult = (*math_entry->proc) (farg1, farg2);
 		  value = XNEWVEC (char, 128);
-		  if (math_entry->int_return)
-		    sprintf (value, "%d", (int) fresult);
+		  if (entry->type == 2)
+		    {
+		      int result = (*entry->proc.i) (farg1, farg2);
+		      sprintf (value, "%d", result);
+		    }
 		  else
-		    sprintf (value, "%f", fresult);
+		    {
+		      float result = (*entry->proc.f) (farg1, farg2);
+		      sprintf (value, "%f", result);
+		    }
 		  if (*ptr++ != ')')
 		    {
 		      as_bad (_("Extra junk in function call, expecting ')'"));
@@ -4593,7 +4640,7 @@ subsym_substitute (char *line, int forced)
 		      as_bad (_("Extra junk in function call, expecting ')'"));
 		      break;
 		    }
-		  val = (*entry->proc) (arg1, arg2);
+		  val = (*entry->proc.s) (arg1, arg2);
 		  value = XNEWVEC (char, 64);
 		  sprintf (value, "%d", val);
 		}
@@ -4703,8 +4750,9 @@ subsym_substitute (char *line, int forced)
 
   if (changed)
     return replacement;
-  else
-    return line;
+
+  free (replacement);
+  return line;
 }
 
 /* We use this to handle substitution symbols

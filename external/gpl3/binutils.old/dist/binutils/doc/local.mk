@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -169,8 +169,7 @@ TEXI2DVI = texi2dvi -I "$(srcdir)/%D%" -I "$(top_srcdir)/../libiberty" \
 #	else \
 #	  man=$(srcdir)/%D%/cxxfilt.man; \
 #	fi; \
-#	sed -e 's/@PROGRAM@/$(DEMANGLER_NAME)/' \
-#	    -e 's/cxxfilt/$(DEMANGLER_NAME)/' < $$man \
+#	sed -e 's/cxxfilt/$(DEMANGLER_NAME)/' < $$man \
 #		> %D%/$(DEMANGLER_NAME).1
 
 html-local: %D%/binutils/index.html

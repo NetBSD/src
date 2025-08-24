@@ -2,7 +2,7 @@
    of basic-block info to/from gmon.out; computing and formatting of
    basic-block related statistics.
 
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -360,8 +360,7 @@ annotate_with_count (char *buf, unsigned int width, int line_num, void *arg)
 	 execution count (if bb_annotate_all_lines is set).  */
       if (b->is_func)
 	{
-	  sprintf (p, "%lu", b->ncalls);
-	  p += strlen (p);
+	  p += sprintf (p, "%lu", b->ncalls);
 	  last_count = b->ncalls;
 	  last_print = last_count;
 	  ncalls = b->ncalls;
@@ -370,8 +369,7 @@ annotate_with_count (char *buf, unsigned int width, int line_num, void *arg)
       else if (bb_annotate_all_lines
 	       && b->bb_addr[0] && b->bb_addr[0] > b->addr)
 	{
-	  sprintf (p, "%lu", last_count);
-	  p += strlen (p);
+	  p += sprintf (p, "%lu", last_count);
 	  last_print = last_count;
 	  ncalls = last_count;
 	  ncalls_set = 1;
@@ -396,8 +394,7 @@ annotate_with_count (char *buf, unsigned int width, int line_num, void *arg)
 
 	  if (p > tmpbuf)
 	    *p++ = ',';
-	  sprintf (p, "%lu", last_count);
-	  p += strlen (p);
+	  p += sprintf (p, "%lu", last_count);
 
 	  last_print = last_count;
 	}
@@ -410,8 +407,7 @@ annotate_with_count (char *buf, unsigned int width, int line_num, void *arg)
 
       if (bb_annotate_all_lines && p == tmpbuf)
 	{
-	  sprintf (p, "%lu", last_count);
-	  p += strlen (p);
+	  p += sprintf (p, "%lu", last_count);
 	  ncalls = last_count;
 	  ncalls_set = 1;
 	}

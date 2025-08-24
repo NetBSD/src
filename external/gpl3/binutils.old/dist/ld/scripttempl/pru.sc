@@ -24,6 +24,12 @@ ENTRY (_start)
 
 EOF
 
+OUTPUT_SECTION_ALIGN="
+    ${RELOCATING+/* In case this is the last input section,
+      align to keep the loadable segment size a multiple of the common page size.
+      Some SoCs have stricter memory size requirements than others.  */
+    . = ALIGN (CONSTANT (COMMONPAGESIZE));}"
+
 cat <<EOF
 SECTIONS
 {
@@ -147,19 +153,14 @@ SECTIONS
     ${RELOCATING+ *(.rodata:*)}
     ${RELOCATING+*(.gnu.linkonce.d*)}
     ${RELOCATING+*(.gnu.linkonce.r*)}
-    ${RELOCATING+. = ALIGN(4);}
     ${RELOCATING+ PROVIDE (_data_end = .) ; }
-  } ${RELOCATING+ > dmem }
 
-  /* Linux remoteproc loader requires the resource_table section
-     start address to be aligned to 8 bytes.  */
-  .resource_table ${RELOCATING-0} ${RELOCATING+ ALIGN(8)} :
-  {
-    KEEP (*(.resource_table))
-  } ${RELOCATING+ > dmem}
-
-  .bss ${RELOCATING-0} :
-  {
+    ${RELOCATING+/* Merge the bss input sections into the output
+      data section.  The Linux kernel's remoteproc PRU ELF loader
+      will not memzero the bss section.  The CRT0 will not either, in order
+      to reduce the final firmware's instruction memory size.  Hence
+      present bss sections as regular data sections, at the negligible
+      expense of increasing the ELF file size.  */}
     ${RELOCATING+ PROVIDE (_bss_start = .) ; }
     *(.bss)
     ${RELOCATING+ *(.bss.*)}
@@ -167,6 +168,35 @@ SECTIONS
     ${RELOCATING+*(.gnu.linkonce.b*)}
     ${RELOCATING+*(COMMON)}
     ${RELOCATING+ PROVIDE (_bss_end = .) ; }
+
+    ${OUTPUT_SECTION_ALIGN}
+  } ${RELOCATING+ > dmem}
+
+  .eh_frame ${RELOCATING-0} :
+  {
+    KEEP (*(.eh_frame))${RELOCATING+ *(.eh_frame.*)}
+    ${OUTPUT_SECTION_ALIGN}
+  } ${RELOCATING+ > dmem}
+
+  .gnu_extab ${RELOCATING-0} :
+  {
+    *(.gnu_extab)
+    ${OUTPUT_SECTION_ALIGN}
+  } ${RELOCATING+ > dmem}
+
+  .gcc_except_table ${RELOCATING-0} :
+  {
+    *(.gcc_except_table${RELOCATING+ .gcc_except_table.*})
+    ${OUTPUT_SECTION_ALIGN}
+  } ${RELOCATING+ > dmem}
+
+  /* Linux remoteproc loader requires the resource_table section
+     start address to be aligned to 8 bytes for SoCs with AARCH64
+     host processors.  */
+  .resource_table ${RELOCATING-0} ${RELOCATING+ ALIGN (CONSTANT (MAXPAGESIZE))} :
+  {
+    KEEP (*(.resource_table))
+    ${OUTPUT_SECTION_ALIGN}
   } ${RELOCATING+ > dmem}
 
   /* Global data not cleared after reset.  */
@@ -189,18 +219,11 @@ SECTIONS
      place it in the target dmem memory.  */
   .pru_irq_map 0 : { *(.pru_irq_map) }
 
-  /* Stabs debugging sections.  */
-  .stab 0 : { *(.stab) }
-  .stabstr 0 : { *(.stabstr) }
-  .stab.excl 0 : { *(.stab.excl) }
-  .stab.exclstr 0 : { *(.stab.exclstr) }
-  .stab.index 0 : { *(.stab.index) }
-  .stab.indexstr 0 : { *(.stab.indexstr) }
-  .comment 0 : { *(.comment) }
   .note.gnu.build-id ${RELOCATING-0} : { *(.note.gnu.build-id) }
 EOF
 
-. $srcdir/scripttempl/DWARF.sc
+source_sh $srcdir/scripttempl/misc-sections.sc
+source_sh $srcdir/scripttempl/DWARF.sc
 
 cat <<EOF
 }

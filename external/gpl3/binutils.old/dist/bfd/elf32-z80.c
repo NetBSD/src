@@ -1,5 +1,5 @@
 /* Zilog (e)Z80-specific support for 32-bit ELF
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    (Heavily copied from the S12Z port by Sergey Belyashov (sergey.belyashov@gmail.com))
 
    This file is part of BFD, the Binary File Descriptor library.

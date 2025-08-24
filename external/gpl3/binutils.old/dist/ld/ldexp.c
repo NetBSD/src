@@ -1,5 +1,5 @@
 /* This module handles expression trees.
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    This file is part of the GNU Binutils.
@@ -94,6 +94,7 @@ exp_print_token (token_code_type code, int infix_p)
     { RSHIFTEQ, ">>=" },
     { ANDEQ, "&=" },
     { OREQ, "|=" },
+    { XOREQ, "^=" },
     { OROR, "||" },
     { ANDAND, "&&" },
     { EQ, "==" },
@@ -691,6 +692,24 @@ fold_trinary (etree_type *tree)
 		     : tree->trinary.rhs);
 }
 
+static lang_output_section_statement_type *
+output_section_find (const char *name)
+{
+  lang_output_section_statement_type *os = lang_output_section_find (name);
+
+  if (os == NULL && strcmp (name, "NEXT_SECTION") == 0)
+    {
+      os = expld.last_os;
+      if (os != NULL)
+	while ((os = os->next) != NULL)
+	  if (os->constraint >= 0 && os->bfd_section != NULL)
+	    break;
+      if (os == NULL)
+	os = abs_output_section;
+    }
+  return os;
+}
+
 static void
 fold_name (etree_type *tree)
 {
@@ -850,7 +869,7 @@ fold_name (etree_type *tree)
 	{
 	  lang_output_section_statement_type *os;
 
-	  os = lang_output_section_find (tree->name.name);
+	  os = output_section_find (tree->name.name);
 	  if (os == NULL)
 	    {
 	      if (expld.phase == lang_final_phase_enum)
@@ -1270,29 +1289,32 @@ exp_fold_tree_1 (etree_type *tree)
 }
 
 void
-exp_fold_tree (etree_type *tree, asection *current_section, bfd_vma *dotp)
+exp_fold_tree (etree_type *tree, lang_output_section_statement_type *os,
+	       asection *current_section, bfd_vma *dotp)
 {
   expld.rel_from_abs = false;
   expld.dot = *dotp;
   expld.dotp = dotp;
   expld.section = current_section;
+  expld.last_os = os;
   exp_fold_tree_1 (tree);
 }
 
 void
-exp_fold_tree_no_dot (etree_type *tree)
+exp_fold_tree_no_dot (etree_type *tree, lang_output_section_statement_type *os)
 {
   expld.rel_from_abs = false;
   expld.dot = 0;
   expld.dotp = NULL;
   expld.section = bfd_abs_section_ptr;
+  expld.last_os = os;
   exp_fold_tree_1 (tree);
 }
 
 static void
 exp_value_fold (etree_type *tree)
 {
-  exp_fold_tree_no_dot (tree);
+  exp_fold_tree_no_dot (tree, NULL);
   if (expld.result.valid_p)
     {
       tree->type.node_code = INT;
@@ -1547,11 +1569,12 @@ exp_print_tree (etree_type *tree)
 }
 
 bfd_vma
-exp_get_vma (etree_type *tree, bfd_vma def, char *name)
+exp_get_vma (etree_type *tree, lang_output_section_statement_type *os,
+	     bfd_vma def, char *name)
 {
   if (tree != NULL)
     {
-      exp_fold_tree_no_dot (tree);
+      exp_fold_tree_no_dot (tree, os);
       if (expld.result.valid_p)
 	return expld.result.value;
       else if (name != NULL && expld.phase != lang_mark_phase_enum)
@@ -1567,9 +1590,10 @@ exp_get_vma (etree_type *tree, bfd_vma def, char *name)
    NULL or cannot be resolved, return -1.  */
 
 int
-exp_get_power (etree_type *tree, char *name)
+exp_get_power (etree_type *tree, lang_output_section_statement_type *os,
+	       char *name)
 {
-  bfd_vma x = exp_get_vma (tree, -1, name);
+  bfd_vma x = exp_get_vma (tree, os, -1, name);
   bfd_vma p2;
   int n;
 
@@ -1593,7 +1617,7 @@ exp_get_fill (etree_type *tree, fill_type *def, char *name)
   if (tree == NULL)
     return def;
 
-  exp_fold_tree_no_dot (tree);
+  exp_fold_tree_no_dot (tree, NULL);
   if (!expld.result.valid_p)
     {
       if (name != NULL && expld.phase != lang_mark_phase_enum)
@@ -1647,7 +1671,7 @@ exp_get_abs_int (etree_type *tree, int def, char *name)
 {
   if (tree != NULL)
     {
-      exp_fold_tree_no_dot (tree);
+      exp_fold_tree_no_dot (tree, NULL);
 
       if (expld.result.valid_p)
 	{

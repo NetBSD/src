@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -226,21 +226,34 @@ Gprofng::exec_cmd (char *tool_name, int argc, char **argv)
       exit (1);
     }
 
-  const char *aname = app_names[first].app_name;;
+  const char *aname = app_names[first].app_name;
 
-  char **arr = (char **) malloc ((argc + 3) * sizeof (char *));
-  int n = 0;
+  char **arr = (char **) malloc ((argc + 5) * sizeof (char *));
   char *pname = get_name ();
-  arr[n++] = dbe_sprintf ("%.*s%s", (int) (get_basename (pname) - pname),
-			    pname, aname);
+  char *exe_name = dbe_sprintf ("%.*s%s",
+			(int) (get_basename (pname) - pname), pname, aname);
+  int n = 1;
   if (app_names[first].keyword)
     arr[n++] = dbe_sprintf ("--whoami=%s %s %s", whoami, tool_name,
 			    app_names[first].keyword);
   else
     arr[n++] = dbe_sprintf ("--whoami=%s %s", whoami, tool_name);
+  if (strcmp (aname, "gp-display-gui") == 0)
+    {
+      if (access (exe_name, X_OK | F_OK) != 0)
+        { // gprofng GUI can be installed to the other directory.
+	  if (verbose)
+	    printf ("gprofng: Cannot find '%s'\n", exe_name);
+	  free (exe_name);
+	  exe_name = get_realpath (aname);  // Use $PATH to find gprofng GUI
+	}
+      arr[n++] = dbe_sprintf ("--gprofngdir=%.*s",
+			      (int) (get_basename (pname) - pname), pname);
+    }
   for (int i = 1; i < argc; i++)
     arr[n++] = argv[i];
   arr[n] = NULL;
+  arr[0] = exe_name;
   if (verbose)
     {
       printf ("gprofng::exec\n");

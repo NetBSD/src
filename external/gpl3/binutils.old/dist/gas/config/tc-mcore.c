@@ -1,5 +1,5 @@
 /* tc-mcore.c -- Assemble code for M*Core
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1615,7 +1615,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 }
 
 void
-md_mcore_end (void)
+mcore_md_finish (void)
 {
   dump_literals (0);
   subseg_set (text_section, 0);

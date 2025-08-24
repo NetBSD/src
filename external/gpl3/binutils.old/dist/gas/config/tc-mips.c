@@ -1,5 +1,5 @@
 /* tc-mips.c -- assemble code for a MIPS chip.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
    Modified for ECOFF and R4000 support by Ian Lance Taylor of Cygnus
@@ -437,6 +437,7 @@ static int mips_32bitmode = 0;
     || (ISA) == ISA_MIPS64R3		\
     || (ISA) == ISA_MIPS64R5		\
     || (ISA) == ISA_MIPS64R6		\
+    || (CPU) == CPU_ALLEGREX		\
     || (CPU) == CPU_R5900)		\
    && ((CPU) != CPU_GS464		\
     || (CPU) != CPU_GS464E		\
@@ -525,7 +526,7 @@ static int mips_32bitmode = 0;
 #define CPU_HAS_DROR(CPU)	((CPU) == CPU_VR5400 || (CPU) == CPU_VR5500)
 
 /* True if CPU has a ror instruction.  */
-#define CPU_HAS_ROR(CPU)	CPU_HAS_DROR (CPU)
+#define CPU_HAS_ROR(CPU)	(CPU_HAS_DROR (CPU) || (CPU) == CPU_ALLEGREX)
 
 /* True if CPU is in the Octeon family.  */
 #define CPU_IS_OCTEON(CPU) ((CPU) == CPU_OCTEON || (CPU) == CPU_OCTEONP \
@@ -535,8 +536,9 @@ static int mips_32bitmode = 0;
 #define CPU_HAS_SEQ(CPU)	(CPU_IS_OCTEON (CPU))
 
 /* True, if CPU has support for ldc1 and sdc1. */
-#define CPU_HAS_LDC1_SDC1(CPU)	\
-   ((mips_opts.isa != ISA_MIPS1) && ((CPU) != CPU_R5900))
+#define CPU_HAS_LDC1_SDC1(CPU)	(mips_opts.isa != ISA_MIPS1		\
+				 && (CPU) != CPU_ALLEGREX		\
+				 && (CPU) != CPU_R5900)
 
 /* True if mflo and mfhi can be immediately followed by instructions
    which write to the HI and LO registers.
@@ -561,6 +563,7 @@ static int mips_32bitmode = 0;
    || mips_opts.isa == ISA_MIPS64R3                   \
    || mips_opts.isa == ISA_MIPS64R5                   \
    || mips_opts.isa == ISA_MIPS64R6                   \
+   || mips_opts.arch == CPU_ALLEGREX                  \
    || mips_opts.arch == CPU_R4010                     \
    || mips_opts.arch == CPU_R5900                     \
    || mips_opts.arch == CPU_R10000                    \
@@ -2048,7 +2051,7 @@ mips_mark_labels (void)
     mips_compressed_mark_labels ();
 }
 
-static char *expr_end;
+static char *expr_parse_end;
 
 /* An expression in a macro instruction.  This is set by mips_ip and
    mips16_ip and when populated is always an O_constant.  */
@@ -3313,7 +3316,7 @@ mips_parse_argument_token (char *s, char float_format)
 		  set_insn_error (0, _("vector element must be constant"));
 		  return 0;
 		}
-	      s = expr_end;
+	      s = expr_parse_end;
 	      token.u.index = element.X_add_number;
 	      mips_add_token (&token, OT_INTEGER_INDEX);
 	    }
@@ -3354,7 +3357,7 @@ mips_parse_argument_token (char *s, char float_format)
   token.u.integer.relocs[1] = BFD_RELOC_UNUSED;
   token.u.integer.relocs[2] = BFD_RELOC_UNUSED;
   my_getSmallExpression (&token.u.integer.value, token.u.integer.relocs, s);
-  s = expr_end;
+  s = expr_parse_end;
   mips_add_token (&token, OT_INTEGER);
   return s;
 }
@@ -6983,10 +6986,6 @@ fix_loongson3_llsc (struct mips_cl_insn * ip)
       unsigned long lookback = ARRAY_SIZE (history);
       for (i = 0; i < lookback; i++)
 	{
-	  if (streq (history[i].insn_mo->name, "ll")
-	      || streq (history[i].insn_mo->name, "lld"))
-	    break;
-
 	  if (streq (history[i].insn_mo->name, "sc")
 	      || streq (history[i].insn_mo->name, "scd"))
 	    {
@@ -6994,8 +6993,8 @@ fix_loongson3_llsc (struct mips_cl_insn * ip)
 
 	      for (j = i + 1; j < lookback; j++)
 		{
-		  if (streq (history[i].insn_mo->name, "ll")
-		      || streq (history[i].insn_mo->name, "lld"))
+		  if (streq (history[j].insn_mo->name, "ll")
+		      || streq (history[j].insn_mo->name, "lld"))
 		    break;
 
 		  if (delayed_branch_p (&history[j]))
@@ -7034,7 +7033,7 @@ fix_loongson3_llsc (struct mips_cl_insn * ip)
 	      for (j = i + 1; j < lookback; j++)
 		{
 		  if (streq (history[j].insn_mo->name, "ll")
-		      || streq (history[i].insn_mo->name, "lld"))
+		      || streq (history[j].insn_mo->name, "lld"))
 		    break;
 		}
 
@@ -9586,10 +9585,8 @@ load_register (int reg, expressionS *ep, int dbl)
 
   if (!dbl || GPR_SIZE == 32)
     {
-      char value[32];
-
-      sprintf_vma (value, ep->X_add_number);
-      as_bad (_("number (0x%s) larger than 32 bits"), value);
+      as_bad (_("number (0x%" PRIx64 ") larger than 32 bits"),
+	      ep->X_add_number);
       macro_build (ep, "addiu", "t,r,j", reg, 0, BFD_RELOC_LO16);
       return;
     }
@@ -12423,10 +12420,8 @@ macro (struct mips_cl_insn *ip, char *str)
       if (HAVE_32BIT_ADDRESSES
 	  && !IS_SEXT_32BIT_NUM (offset_expr.X_add_number))
 	{
-	  char value [32];
-
-	  sprintf_vma (value, offset_expr.X_add_number);
-	  as_bad (_("number (0x%s) larger than 32 bits"), value);
+	  as_bad (_("number (0x%" PRIx64 ") larger than 32 bits"),
+		  offset_expr.X_add_number);
 	}
 
       /* A constant expression in PIC code can be handled just as it
@@ -13106,10 +13101,8 @@ macro (struct mips_cl_insn *ip, char *str)
       if (HAVE_32BIT_ADDRESSES
 	  && !IS_SEXT_32BIT_NUM (offset_expr.X_add_number))
 	{
-	  char value [32];
-
-	  sprintf_vma (value, offset_expr.X_add_number);
-	  as_bad (_("number (0x%s) larger than 32 bits"), value);
+	  as_bad (_("number (0x%" PRIx64 ") larger than 32 bits"),
+		  offset_expr.X_add_number);
 	}
 
       if (mips_pic == NO_PIC || offset_expr.X_op == O_constant)
@@ -14766,7 +14759,8 @@ parse_relocation (char **str, bfd_reloc_code_real_type *reloc)
    expression in *EP and the relocations in the array starting
    at RELOC.  Return the number of relocation operators used.
 
-   On exit, EXPR_END points to the first character after the expression.  */
+   On exit, EXPR_PARSE_END points to the first character after the
+   expression.  */
 
 static size_t
 my_getSmallExpression (expressionS *ep, bfd_reloc_code_real_type *reloc,
@@ -14800,7 +14794,7 @@ my_getSmallExpression (expressionS *ep, bfd_reloc_code_real_type *reloc,
 	 && parse_relocation (&str, &reversed_reloc[reloc_index]));
 
   my_getExpression (ep, crux);
-  str = expr_end;
+  str = expr_parse_end;
 
   /* Match every open bracket.  */
   while (crux_depth > 0 && (*str == ')' || *str == ' ' || *str == '\t'))
@@ -14810,7 +14804,7 @@ my_getSmallExpression (expressionS *ep, bfd_reloc_code_real_type *reloc,
   if (crux_depth > 0)
     as_bad (_("unclosed '('"));
 
-  expr_end = str;
+  expr_parse_end = str;
 
   for (i = 0; i < reloc_index; i++)
     reloc[i] = reversed_reloc[reloc_index - 1 - i];
@@ -14826,7 +14820,7 @@ my_getExpression (expressionS *ep, char *str)
   save_in = input_line_pointer;
   input_line_pointer = str;
   expression (ep);
-  expr_end = input_line_pointer;
+  expr_parse_end = input_line_pointer;
   input_line_pointer = save_in;
 }
 
@@ -15571,8 +15565,7 @@ mips_frob_file (void)
 	 there isn't supposed to be a matching LO.  Ignore %gots against
 	 constants; we'll report an error for those later.  */
       if (got16_reloc_p (l->fixp->fx_r_type)
-	  && !(l->fixp->fx_addsy
-	       && pic_need_relax (l->fixp->fx_addsy)))
+	  && !pic_need_relax (l->fixp->fx_addsy))
 	continue;
 
       /* Check quickly whether the next fixup happens to be a matching %lo.  */
@@ -16381,6 +16374,8 @@ s_align (int x ATTRIBUTE_UNUSED)
   int temp, fill_value, *fill_ptr;
   long max_alignment = 28;
 
+  file_mips_check_options ();
+
   /* o Note that the assembler pulls down any immediately preceding label
        to the aligned address.
      o It's not documented but auto alignment is reinstated by
@@ -16405,6 +16400,9 @@ s_align (int x ATTRIBUTE_UNUSED)
     }
   else
     fill_ptr = 0;
+
+  mips_mark_labels ();
+
   if (temp)
     {
       segment_info_type *si = seg_info (now_seg);
@@ -16550,7 +16548,7 @@ s_change_section (int ignore ATTRIBUTE_UNUSED)
     section_type = SHT_PROGBITS;
 
   obj_elf_change_section (section_name, section_type, section_flag,
-			  section_entry_size, 0, 0, 0);
+			  section_entry_size, 0, false);
 }
 
 void
@@ -17821,6 +17819,9 @@ static bool
 pic_need_relax (symbolS *sym)
 {
   asection *symsec;
+
+  if (!sym)
+    return false;
 
   /* Handle the case of a symbol equated to another symbol.  */
   while (symbol_equated_reloc_p (sym))
@@ -19646,16 +19647,16 @@ mips_elf_final_processing (void)
     elf_elfheader (stdoutput)->e_flags |= EF_MIPS_ARCH_ASE_MDMX;
 
   /* Set the MIPS ELF ABI flags.  */
-  if (mips_abi == O32_ABI && USE_E_MIPS_ABI_O32)
-    elf_elfheader (stdoutput)->e_flags |= E_MIPS_ABI_O32;
+  if (mips_abi == O32_ABI && USE_EF_MIPS_ABI_O32)
+    elf_elfheader (stdoutput)->e_flags |= EF_MIPS_ABI_O32;
   else if (mips_abi == O64_ABI)
-    elf_elfheader (stdoutput)->e_flags |= E_MIPS_ABI_O64;
+    elf_elfheader (stdoutput)->e_flags |= EF_MIPS_ABI_O64;
   else if (mips_abi == EABI_ABI)
     {
       if (file_mips_opts.gp == 64)
-	elf_elfheader (stdoutput)->e_flags |= E_MIPS_ABI_EABI64;
+	elf_elfheader (stdoutput)->e_flags |= EF_MIPS_ABI_EABI64;
       else
-	elf_elfheader (stdoutput)->e_flags |= E_MIPS_ABI_EABI32;
+	elf_elfheader (stdoutput)->e_flags |= EF_MIPS_ABI_EABI32;
     }
 
   /* Nothing to do for N32_ABI or N64_ABI.  */
@@ -20123,6 +20124,7 @@ static const struct mips_cpu_info mips_cpu_info_table[] =
 
   /* MIPS II */
   { "r6000",          0, 0,			ISA_MIPS2,    CPU_R6000 },
+  { "allegrex",       0, 0,			ISA_MIPS2,    CPU_ALLEGREX },
 
   /* MIPS III */
   { "r4000",          0, 0,			ISA_MIPS3,    CPU_R4000 },
@@ -20687,7 +20689,7 @@ mips_convert_symbolic_attribute (const char *name)
 }
 
 void
-md_mips_end (void)
+mips_md_finish (void)
 {
   int fpabi = Val_GNU_MIPS_ABI_FP_ANY;
 
@@ -20738,8 +20740,10 @@ md_mips_end (void)
 	    }
 	}
 
-      bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_GNU,
-				Tag_GNU_MIPS_ABI_FP, fpabi);
+      if (!bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_GNU,
+				     Tag_GNU_MIPS_ABI_FP, fpabi))
+	as_fatal (_("error adding attribute: %s"),
+		  bfd_errmsg (bfd_get_error ()));
     }
 }
 
