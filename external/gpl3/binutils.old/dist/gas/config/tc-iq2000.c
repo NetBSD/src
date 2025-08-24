@@ -1,5 +1,5 @@
 /* tc-iq2000.c -- Assembler for the Sitera IQ2000.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -229,27 +229,20 @@ iq2000_add_macro (const char *  name,
 		  const char ** arguments)
 {
   macro_entry *macro;
-  sb macro_name;
-  const char *namestr;
 
   macro = XNEW (macro_entry);
+  macro->name = xstrdup (name);
   sb_new (& macro->sub);
-  sb_new (& macro_name);
-
   macro->formal_count = 0;
   macro->formals = 0;
+  macro->formal_hash = str_htab_create ();
+  macro->file = as_where (&macro->line);
 
   sb_add_string (& macro->sub, semantics);
 
   if (arguments != NULL)
     {
       formal_entry ** p = &macro->formals;
-
-      macro->formal_count = 0;
-      macro->formal_hash = htab_create_alloc (7, hash_formal_entry,
-					      eq_formal_entry,
-					      NULL, xcalloc, free);
-
 
       while (*arguments != NULL)
 	{
@@ -264,7 +257,7 @@ iq2000_add_macro (const char *  name,
 	  /* chlm: Added the following to allow defaulted args.  */
 	  if (strchr (*arguments,'='))
 	    {
-	      char * tt_args = strdup (*arguments);
+	      char * tt_args = xstrdup (*arguments);
 	      char * tt_dflt = strchr (tt_args,'=');
 
 	      *tt_dflt = 0;
@@ -275,10 +268,8 @@ iq2000_add_macro (const char *  name,
 	    sb_add_string (& formal->name, *arguments);
 
 	  /* Add to macro's hash table.  */
-	  htab_insert (macro->formal_hash,
-		       formal_entry_alloc (sb_terminate (& formal->name),
-					   formal),
-		       1);
+	  str_hash_insert (macro->formal_hash,
+			   sb_terminate (&formal->name), formal, 1);
 	  formal->index = macro->formal_count;
 	  macro->formal_count++;
 	  *p = formal;
@@ -288,9 +279,7 @@ iq2000_add_macro (const char *  name,
 	}
     }
 
-  sb_add_string (&macro_name, name);
-  namestr = sb_terminate (&macro_name);
-  htab_insert (macro_hash, macro_entry_alloc (namestr, macro), 1);
+  str_hash_insert (macro_hash, macro->name, macro, 1);
 
   macro_defined = 1;
 }

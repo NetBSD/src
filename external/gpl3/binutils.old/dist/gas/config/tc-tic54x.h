@@ -1,5 +1,5 @@
 /* tc-tic54x.h -- Header file for tc-tic54x.c
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@alum.mit.edu)
 
    This file is part of GAS, the GNU Assembler.
@@ -130,5 +130,8 @@ extern void tic54x_convert_frag(bfd *, segT, fragS *);
 #define LISTING_WORD_SIZE 2
 
 extern void tic54x_global (int);
+
+extern void tic54x_md_end (void);
+#define md_end tic54x_md_end
 
 #endif

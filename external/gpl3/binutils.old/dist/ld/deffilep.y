@@ -1,6 +1,6 @@
 %{ /* deffilep.y - parser for .def files */
 
-/*   Copyright (C) 1995-2022 Free Software Foundation, Inc.
+/*   Copyright (C) 1995-2024 Free Software Foundation, Inc.
 
      This file is part of GNU Binutils.
 
@@ -31,6 +31,8 @@
 #define TRACE 0
 
 #define ROUND_UP(a, b) (((a)+((b)-1))&~((b)-1))
+
+#define SYMBOL_LIST_ARRAY_GROW 64
 
 /* Remap normal yacc parser interface names (yyparse, yylex, yyerror, etc),
    as well as gratuitiously global symbol names, so we can have multiple
@@ -101,6 +103,7 @@ static void def_stacksize (int, int);
 static void def_version (int, int);
 static void def_directive (char *);
 static void def_aligncomm (char *str, int align);
+static void def_exclude_symbols (char *str);
 static int def_parse (void);
 static void def_error (const char *);
 static int def_lex (void);
@@ -121,7 +124,7 @@ static const char *lex_parse_string_end = 0;
 
 %token NAME LIBRARY DESCRIPTION STACKSIZE_K HEAPSIZE CODE DATAU DATAL
 %token SECTIONS EXPORTS IMPORTS VERSIONK BASE CONSTANTU CONSTANTL
-%token PRIVATEU PRIVATEL ALIGNCOMM
+%token PRIVATEU PRIVATEL ALIGNCOMM EXCLUDE_SYMBOLS
 %token READ WRITE EXECUTE SHARED_K NONAMEU NONAMEL DIRECTIVE EQUAL
 %token <id> ID
 %token <digits> DIGITS
@@ -131,7 +134,7 @@ static const char *lex_parse_string_end = 0;
 %type  <number> opt_ordinal
 %type  <number> attr attr_list opt_number exp_opt_list exp_opt
 %type  <id> opt_name opt_name2 opt_equal_name anylang_id opt_id
-%type  <id> opt_equalequal_name
+%type  <id> opt_equalequal_name symbol_list
 %type  <id_const> keyword_as_name
 
 %%
@@ -155,6 +158,7 @@ command:
 	|	VERSIONK NUMBER '.' NUMBER { def_version ($2, $4);}
 	|	DIRECTIVE ID { def_directive ($2);}
 	|	ALIGNCOMM anylang_id ',' NUMBER { def_aligncomm ($2, $4);}
+	|	EXCLUDE_SYMBOLS symbol_list
 	;
 
 
@@ -247,6 +251,7 @@ keyword_as_name: BASE { $$ = "BASE"; }
 	 | DATAL { $$ = "data"; }
 	 | DESCRIPTION { $$ = "DESCRIPTION"; }
 	 | DIRECTIVE { $$ = "DIRECTIVE"; }
+	 | EXCLUDE_SYMBOLS { $$ = "EXCLUDE_SYMBOLS"; }
 	 | EXECUTE { $$ = "EXECUTE"; }
 	 | EXPORTS { $$ = "EXPORTS"; }
 	 | HEAPSIZE { $$ = "HEAPSIZE"; }
@@ -331,6 +336,12 @@ anylang_id: ID		{ $$ = $1; }
 	    sprintf (id, "%s.%s%s", $1, $3, $4);
 	    $$ = id;
 	  }
+	;
+
+symbol_list:
+	anylang_id { def_exclude_symbols ($1); }
+	|	symbol_list anylang_id { def_exclude_symbols ($2); }
+	|	symbol_list ',' anylang_id { def_exclude_symbols ($3); }
 	;
 
 opt_digits: DIGITS	{ $$ = $1; }
@@ -431,6 +442,7 @@ void
 def_file_free (def_file *fdef)
 {
   int i;
+  unsigned int ui;
 
   if (!fdef)
     return;
@@ -447,29 +459,23 @@ def_file_free (def_file *fdef)
       free (fdef->section_defs);
     }
 
-  if (fdef->exports)
+  for (i = 0; i < fdef->num_exports; i++)
     {
-      for (i = 0; i < fdef->num_exports; i++)
-	{
-	  if (fdef->exports[i].internal_name != fdef->exports[i].name)
-	    free (fdef->exports[i].internal_name);
-	  free (fdef->exports[i].name);
-	  free (fdef->exports[i].its_name);
-	}
-      free (fdef->exports);
+      if (fdef->exports[i].internal_name != fdef->exports[i].name)
+        free (fdef->exports[i].internal_name);
+      free (fdef->exports[i].name);
+      free (fdef->exports[i].its_name);
     }
+  free (fdef->exports);
 
-  if (fdef->imports)
+  for (i = 0; i < fdef->num_imports; i++)
     {
-      for (i = 0; i < fdef->num_imports; i++)
-	{
-	  if (fdef->imports[i].internal_name != fdef->imports[i].name)
-	    free (fdef->imports[i].internal_name);
-	  free (fdef->imports[i].name);
-	  free (fdef->imports[i].its_name);
-	}
-      free (fdef->imports);
+      if (fdef->imports[i].internal_name != fdef->imports[i].name)
+        free (fdef->imports[i].internal_name);
+      free (fdef->imports[i].name);
+      free (fdef->imports[i].its_name);
     }
+  free (fdef->imports);
 
   while (fdef->modules)
     {
@@ -488,6 +494,12 @@ def_file_free (def_file *fdef)
       free (c);
     }
 
+  for (ui = 0; ui < fdef->num_exclude_symbols; ui++)
+    {
+      free (fdef->exclude_symbols[ui].symbol_name);
+    }
+  free (fdef->exclude_symbols);
+
   free (fdef);
 }
 
@@ -503,11 +515,8 @@ def_file_print (FILE *file, def_file *fdef)
   if (fdef->is_dll != -1)
     fprintf (file, "  is dll: %s\n", fdef->is_dll ? "yes" : "no");
   if (fdef->base_address != (bfd_vma) -1)
-    {
-      fprintf (file, "  base address: 0x");
-      fprintf_vma (file, fdef->base_address);
-      fprintf (file, "\n");
-    }
+    fprintf (file, "  base address: 0x%" PRIx64 "\n",
+	     (uint64_t) fdef->base_address);
   if (fdef->description)
     fprintf (file, "  description: `%s'\n", fdef->description);
   if (fdef->stack_reserve != -1)
@@ -612,22 +621,25 @@ cmp_export_elem (const def_file_export *e, const char *ex_name,
 
 /* Search the position of the identical element, or returns the position
    of the next higher element. If last valid element is smaller, then MAX
-   is returned.  */
+   is returned. The max parameter indicates the number of elements in the
+   array. On return, *is_ident indicates whether the returned array index
+   points at an element which is identical to the one searched for.  */
 
-static int
-find_export_in_list (def_file_export *b, int max,
+static unsigned int
+find_export_in_list (def_file_export *b, unsigned int max,
 		     const char *ex_name, const char *in_name,
-		     const char *its_name, int ord, int *is_ident)
+		     const char *its_name, int ord, bool *is_ident)
 {
-  int e, l, r, p;
+  int e;
+  unsigned int l, r, p;
 
-  *is_ident = 0;
+  *is_ident = false;
   if (!max)
     return 0;
   if ((e = cmp_export_elem (b, ex_name, in_name, its_name, ord)) <= 0)
     {
       if (!e)
-	*is_ident = 1;
+	*is_ident = true;
       return 0;
     }
   if (max == 1)
@@ -637,7 +649,7 @@ find_export_in_list (def_file_export *b, int max,
   else if (!e || max == 2)
     {
       if (!e)
-	*is_ident = 1;
+	*is_ident = true;
       return max - 1;
     }
   l = 0; r = max - 1;
@@ -647,7 +659,7 @@ find_export_in_list (def_file_export *b, int max,
       e = cmp_export_elem (b + p, ex_name, in_name, its_name, ord);
       if (!e)
 	{
-	  *is_ident = 1;
+	  *is_ident = true;
 	  return p;
 	}
       else if (e < 0)
@@ -658,7 +670,7 @@ find_export_in_list (def_file_export *b, int max,
   if ((e = cmp_export_elem (b + l, ex_name, in_name, its_name, ord)) > 0)
     ++l;
   else if (!e)
-    *is_ident = 1;
+    *is_ident = true;
   return l;
 }
 
@@ -668,11 +680,10 @@ def_file_add_export (def_file *fdef,
 		     const char *internal_name,
 		     int ordinal,
 		     const char *its_name,
-		     int *is_dup)
+		     bool *is_dup)
 {
   def_file_export *e;
-  int pos;
-  int max_exports = ROUND_UP(fdef->num_exports, 32);
+  unsigned int pos;
 
   if (internal_name && !external_name)
     external_name = internal_name;
@@ -680,27 +691,27 @@ def_file_add_export (def_file *fdef,
     internal_name = external_name;
 
   /* We need to avoid duplicates.  */
-  *is_dup = 0;
+  *is_dup = false;
   pos = find_export_in_list (fdef->exports, fdef->num_exports,
 		     external_name, internal_name,
 		     its_name, ordinal, is_dup);
 
-  if (*is_dup != 0)
+  if (*is_dup)
     return (fdef->exports + pos);
 
-  if (fdef->num_exports >= max_exports)
+  if ((unsigned)fdef->num_exports >= fdef->max_exports)
     {
-      max_exports = ROUND_UP(fdef->num_exports + 1, 32);
-      if (fdef->exports)
-	fdef->exports = xrealloc (fdef->exports,
-				 max_exports * sizeof (def_file_export));
-      else
-	fdef->exports = xmalloc (max_exports * sizeof (def_file_export));
+      fdef->max_exports += SYMBOL_LIST_ARRAY_GROW;
+      fdef->exports = xrealloc (fdef->exports,
+				fdef->max_exports * sizeof (def_file_export));
     }
 
   e = fdef->exports + pos;
-  if (pos != fdef->num_exports)
+  /* If we're inserting in the middle of the array, we need to move the
+     following elements forward.  */
+  if (pos != (unsigned)fdef->num_exports)
     memmove (&e[1], e, (sizeof (def_file_export) * (fdef->num_exports - pos)));
+  /* Wipe the element for use as a new entry.  */
   memset (e, 0, sizeof (def_file_export));
   e->name = xstrdup (external_name);
   e->internal_name = xstrdup (internal_name);
@@ -757,22 +768,25 @@ cmp_import_elem (const def_file_import *e, const char *ex_name,
 
 /* Search the position of the identical element, or returns the position
    of the next higher element. If last valid element is smaller, then MAX
-   is returned.  */
+   is returned. The max parameter indicates the number of elements in the
+   array. On return, *is_ident indicates whether the returned array index
+   points at an element which is identical to the one searched for.  */
 
-static int
-find_import_in_list (def_file_import *b, int max,
+static unsigned int
+find_import_in_list (def_file_import *b, unsigned int max,
 		     const char *ex_name, const char *in_name,
-		     const char *module, int ord, int *is_ident)
+		     const char *module, int ord, bool *is_ident)
 {
-  int e, l, r, p;
+  int e;
+  unsigned int l, r, p;
 
-  *is_ident = 0;
+  *is_ident = false;
   if (!max)
     return 0;
   if ((e = cmp_import_elem (b, ex_name, in_name, module, ord)) <= 0)
     {
       if (!e)
-	*is_ident = 1;
+	*is_ident = true;
       return 0;
     }
   if (max == 1)
@@ -782,7 +796,7 @@ find_import_in_list (def_file_import *b, int max,
   else if (!e || max == 2)
     {
       if (!e)
-	*is_ident = 1;
+	*is_ident = true;
       return max - 1;
     }
   l = 0; r = max - 1;
@@ -792,7 +806,7 @@ find_import_in_list (def_file_import *b, int max,
       e = cmp_import_elem (b + p, ex_name, in_name, module, ord);
       if (!e)
 	{
-	  *is_ident = 1;
+	  *is_ident = true;
 	  return p;
 	}
       else if (e < 0)
@@ -803,7 +817,7 @@ find_import_in_list (def_file_import *b, int max,
   if ((e = cmp_import_elem (b + l, ex_name, in_name, module, ord)) > 0)
     ++l;
   else if (!e)
-    *is_ident = 1;
+    *is_ident = true;
   return l;
 }
 
@@ -834,33 +848,30 @@ def_file_add_import (def_file *fdef,
 		     int ordinal,
 		     const char *internal_name,
 		     const char *its_name,
-		     int *is_dup)
+		     bool *is_dup)
 {
   def_file_import *i;
-  int pos;
-  int max_imports = ROUND_UP (fdef->num_imports, 16);
+  unsigned int pos;
 
   /* We need to avoid here duplicates.  */
-  *is_dup = 0;
+  *is_dup = false;
   pos = find_import_in_list (fdef->imports, fdef->num_imports,
 			     name,
 			     (!internal_name ? name : internal_name),
 			     module, ordinal, is_dup);
-  if (*is_dup != 0)
+  if (*is_dup)
     return fdef->imports + pos;
 
-  if (fdef->num_imports >= max_imports)
+  if ((unsigned)fdef->num_imports >= fdef->max_imports)
     {
-      max_imports = ROUND_UP (fdef->num_imports+1, 16);
-
-      if (fdef->imports)
-	fdef->imports = xrealloc (fdef->imports,
-				 max_imports * sizeof (def_file_import));
-      else
-	fdef->imports = xmalloc (max_imports * sizeof (def_file_import));
+      fdef->max_imports += SYMBOL_LIST_ARRAY_GROW;
+      fdef->imports = xrealloc (fdef->imports,
+				fdef->max_imports * sizeof (def_file_import));
     }
   i = fdef->imports + pos;
-  if (pos != fdef->num_imports)
+  /* If we're inserting in the middle of the array, we need to move the
+     following elements forward.  */
+  if (pos != (unsigned)fdef->num_imports)
     memmove (i + 1, i, sizeof (def_file_import) * (fdef->num_imports - pos));
 
   fill_in_import (i, name, def_stash_module (fdef, module), ordinal,
@@ -880,36 +891,35 @@ def_file_add_import_from (def_file *fdef,
 			  const char *its_name ATTRIBUTE_UNUSED)
 {
   def_file_import *i;
-  int is_dup;
-  int pos;
-  int max_imports = ROUND_UP (fdef->num_imports, 16);
+  bool is_dup;
+  unsigned int pos;
 
   /* We need to avoid here duplicates.  */
-  is_dup = 0;
+  is_dup = false;
   pos = find_import_in_list (fdef->imports, fdef->num_imports,
 			     name, internal_name ? internal_name : name,
 			     module, ordinal, &is_dup);
-  if (is_dup != 0)
+  if (is_dup)
     return -1;
-  if (fdef->imports && pos != fdef->num_imports)
+  if (fdef->imports && pos != (unsigned)fdef->num_imports)
     {
       i = fdef->imports + pos;
       if (i->module && strcmp (i->module->name, module) == 0)
 	return -1;
     }
 
-  if (fdef->num_imports + num_imports - 1 >= max_imports)
+  if ((unsigned)fdef->num_imports + num_imports - 1 >= fdef->max_imports)
     {
-      max_imports = ROUND_UP (fdef->num_imports + num_imports, 16);
+      fdef->max_imports = fdef->num_imports + num_imports +
+			  SYMBOL_LIST_ARRAY_GROW;
 
-      if (fdef->imports)
-	fdef->imports = xrealloc (fdef->imports,
-				 max_imports * sizeof (def_file_import));
-      else
-	fdef->imports = xmalloc (max_imports * sizeof (def_file_import));
+      fdef->imports = xrealloc (fdef->imports,
+				fdef->max_imports * sizeof (def_file_import));
     }
   i = fdef->imports + pos;
-  if (pos != fdef->num_imports)
+  /* If we're inserting in the middle of the array, we need to move the
+     following elements forward.  */
+  if (pos != (unsigned)fdef->num_imports)
     memmove (i + num_imports, i,
 	     sizeof (def_file_import) * (fdef->num_imports - pos));
 
@@ -934,6 +944,93 @@ def_file_add_import_at (def_file *fdef,
   return i;
 }
 
+/* Search the position of the identical element, or returns the position
+   of the next higher element. If last valid element is smaller, then MAX
+   is returned. The max parameter indicates the number of elements in the
+   array. On return, *is_ident indicates whether the returned array index
+   points at an element which is identical to the one searched for.  */
+
+static unsigned int
+find_exclude_in_list (def_file_exclude_symbol *b, unsigned int max,
+		      const char *name, bool *is_ident)
+{
+  int e;
+  unsigned int l, r, p;
+
+  *is_ident = false;
+  if (!max)
+    return 0;
+  if ((e = strcmp (b[0].symbol_name, name)) <= 0)
+    {
+      if (!e)
+	*is_ident = true;
+      return 0;
+    }
+  if (max == 1)
+    return 1;
+  if ((e = strcmp (b[max - 1].symbol_name, name)) > 0)
+    return max;
+  else if (!e || max == 2)
+    {
+      if (!e)
+	*is_ident = true;
+      return max - 1;
+    }
+  l = 0; r = max - 1;
+  while (l < r)
+    {
+      p = (l + r) / 2;
+      e = strcmp (b[p].symbol_name, name);
+      if (!e)
+	{
+	  *is_ident = true;
+	  return p;
+	}
+      else if (e < 0)
+	r = p - 1;
+      else if (e > 0)
+	l = p + 1;
+    }
+  if ((e = strcmp (b[l].symbol_name, name)) > 0)
+    ++l;
+  else if (!e)
+    *is_ident = true;
+  return l;
+}
+
+static def_file_exclude_symbol *
+def_file_add_exclude_symbol (def_file *fdef, const char *name)
+{
+  def_file_exclude_symbol *e;
+  unsigned pos;
+  bool is_dup = false;
+
+  pos = find_exclude_in_list (fdef->exclude_symbols, fdef->num_exclude_symbols,
+			      name, &is_dup);
+
+  /* We need to avoid duplicates.  */
+  if (is_dup)
+    return (fdef->exclude_symbols + pos);
+
+  if (fdef->num_exclude_symbols >= fdef->max_exclude_symbols)
+    {
+      fdef->max_exclude_symbols += SYMBOL_LIST_ARRAY_GROW;
+      fdef->exclude_symbols = xrealloc (fdef->exclude_symbols,
+					fdef->max_exclude_symbols * sizeof (def_file_exclude_symbol));
+    }
+
+  e = fdef->exclude_symbols + pos;
+  /* If we're inserting in the middle of the array, we need to move the
+     following elements forward.  */
+  if (pos != fdef->num_exclude_symbols)
+    memmove (&e[1], e, (sizeof (def_file_exclude_symbol) * (fdef->num_exclude_symbols - pos)));
+  /* Wipe the element for use as a new entry.  */
+  memset (e, 0, sizeof (def_file_exclude_symbol));
+  e->symbol_name = xstrdup (name);
+  fdef->num_exclude_symbols++;
+  return e;
+}
+
 struct
 {
   char *param;
@@ -946,6 +1043,7 @@ diropts[] =
   { "-attr", SECTIONS },
   { "-export", EXPORTS },
   { "-aligncomm", ALIGNCOMM },
+  { "-exclude-symbols", EXCLUDE_SYMBOLS },
   { 0, 0 }
 };
 
@@ -1036,7 +1134,7 @@ def_image_name (const char *name, bfd_vma base, int is_dll)
       const char* image_name = lbasename (name);
 
       if (image_name != name)
-	einfo ("%s:%d: Warning: path components stripped from %s, '%s'\n",
+	einfo (_("%s:%d: Warning: path components stripped from %s, '%s'\n"),
 	       def_filename, linenumber, is_dll ? "LIBRARY" : "NAME",
 	       name);
       free (def->name);
@@ -1158,7 +1256,7 @@ def_exports (const char *external_name,
 	     const char *its_name)
 {
   def_file_export *dfe;
-  int is_dup = 0;
+  bool is_dup = false;
 
   if (!internal_name && external_name)
     internal_name = external_name;
@@ -1194,7 +1292,7 @@ def_import (const char *internal_name,
 {
   char *buf = 0;
   const char *ext = dllext ? dllext : "dll";
-  int is_dup = 0;
+  bool is_dup = false;
 
   buf = xmalloc (strlen (module) + strlen (ext) + 2);
   sprintf (buf, "%s.%s", module, ext);
@@ -1262,6 +1360,12 @@ def_aligncomm (char *str, int align)
 }
 
 static void
+def_exclude_symbols (char *str)
+{
+  def_file_add_exclude_symbol (def, str);
+}
+
+static void
 def_error (const char *err)
 {
   einfo ("%P: %s:%d: %s\n",
@@ -1309,6 +1413,7 @@ tokens[] =
   { "data", DATAL },
   { "DESCRIPTION", DESCRIPTION },
   { "DIRECTIVE", DIRECTIVE },
+  { "EXCLUDE_SYMBOLS", EXCLUDE_SYMBOLS },
   { "EXECUTE", EXECUTE },
   { "EXPORTS", EXPORTS },
   { "HEAPSIZE", HEAPSIZE },

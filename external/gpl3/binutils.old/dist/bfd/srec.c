@@ -1,5 +1,5 @@
 /* BFD back-end for s-record objects.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -219,7 +219,7 @@ srec_get_byte (bfd *abfd, bool *errorptr)
 {
   bfd_byte c;
 
-  if (bfd_bread (&c, (bfd_size_type) 1, abfd) != 1)
+  if (bfd_read (&c, 1, abfd) != 1)
     {
       if (bfd_get_error () != bfd_error_file_truncated)
 	*errorptr = true;
@@ -303,7 +303,7 @@ srec_scan (bfd *abfd)
   asection *sec = NULL;
   char *symbuf = NULL;
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     goto error_return;
 
   while ((c = srec_get_byte (abfd, &error)) != EOF)
@@ -463,7 +463,7 @@ srec_scan (bfd *abfd)
 
 	    pos = bfd_tell (abfd) - 1;
 
-	    if (bfd_bread (hdr, (bfd_size_type) 3, abfd) != 3)
+	    if (bfd_read (hdr, 3, abfd) != 3)
 	      goto error_return;
 
 	    if (! ISHEX (hdr[1]) || ! ISHEX (hdr[2]))
@@ -494,13 +494,13 @@ srec_scan (bfd *abfd)
 	    if (bytes * 2 > bufsize)
 	      {
 		free (buf);
-		buf = (bfd_byte *) bfd_malloc ((bfd_size_type) bytes * 2);
+		buf = bfd_malloc (bytes * 2);
 		if (buf == NULL)
 		  goto error_return;
 		bufsize = bytes * 2;
 	      }
 
-	    if (bfd_bread (buf, (bfd_size_type) bytes * 2, abfd) != bytes * 2)
+	    if (bfd_read (buf, bytes * 2, abfd) != bytes * 2)
 	      goto error_return;
 
 	    /* Ignore the checksum byte.  */
@@ -647,8 +647,8 @@ srec_object_p (bfd *abfd)
 
   srec_init ();
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
-      || bfd_bread (b, (bfd_size_type) 4, abfd) != 4)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0
+      || bfd_read (b, 4, abfd) != 4)
     return NULL;
 
   if (b[0] != 'S' || !ISHEX (b[1]) || !ISHEX (b[2]) || !ISHEX (b[3]))
@@ -682,8 +682,8 @@ symbolsrec_object_p (bfd *abfd)
 
   srec_init ();
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
-      || bfd_bread (b, (bfd_size_type) 2, abfd) != 2)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0
+      || bfd_read (b, 2, abfd) != 2)
     return NULL;
 
   if (b[0] != '$' || b[1] != '$')
@@ -736,7 +736,7 @@ srec_read_section (bfd *abfd, asection *section, bfd_byte *contents)
       if (c != 'S')
 	goto error_return;
 
-      if (bfd_bread (hdr, (bfd_size_type) 3, abfd) != 3)
+      if (bfd_read (hdr, 3, abfd) != 3)
 	goto error_return;
 
       BFD_ASSERT (ISHEX (hdr[1]) && ISHEX (hdr[2]));
@@ -746,13 +746,13 @@ srec_read_section (bfd *abfd, asection *section, bfd_byte *contents)
       if (bytes * 2 > bufsize)
 	{
 	  free (buf);
-	  buf = (bfd_byte *) bfd_malloc ((bfd_size_type) bytes * 2);
+	  buf = bfd_malloc (bytes * 2);
 	  if (buf == NULL)
 	    goto error_return;
 	  bufsize = bytes * 2;
 	}
 
-      if (bfd_bread (buf, (bfd_size_type) bytes * 2, abfd) != bytes * 2)
+      if (bfd_read (buf, bytes * 2, abfd) != bytes * 2)
 	goto error_return;
 
       address = 0;
@@ -1000,7 +1000,7 @@ srec_write_record (bfd *abfd,
   *dst++ = '\n';
   wrlen = dst - buffer;
 
-  return bfd_bwrite ((void *) buffer, wrlen, abfd) == wrlen;
+  return bfd_write (buffer, wrlen, abfd) == wrlen;
 }
 
 static bool
@@ -1081,9 +1081,9 @@ srec_write_symbols (bfd *abfd)
       asymbol **table = bfd_get_outsymbols (abfd);
 
       len = strlen (bfd_get_filename (abfd));
-      if (bfd_bwrite ("$$ ", (bfd_size_type) 3, abfd) != 3
-	  || bfd_bwrite (bfd_get_filename (abfd), len, abfd) != len
-	  || bfd_bwrite ("\r\n", (bfd_size_type) 2, abfd) != 2)
+      if (bfd_write ("$$ ", 3, abfd) != 3
+	  || bfd_write (bfd_get_filename (abfd), len, abfd) != len
+	  || bfd_write ("\r\n", 2, abfd) != 2)
 	return false;
 
       for (i = 0; i < count; i++)
@@ -1096,30 +1096,23 @@ srec_write_symbols (bfd *abfd)
 	      && s->section->output_section != NULL)
 	    {
 	      /* Just dump out non debug symbols.  */
-	      char buf[43], *p;
+	      char buf[43];
 
 	      len = strlen (s->name);
-	      if (bfd_bwrite ("  ", (bfd_size_type) 2, abfd) != 2
-		  || bfd_bwrite (s->name, len, abfd) != len)
+	      if (bfd_write ("  ", 2, abfd) != 2
+		  || bfd_write (s->name, len, abfd) != len)
 		return false;
 
-	      sprintf_vma (buf + 2, (s->value
-				     + s->section->output_section->lma
-				     + s->section->output_offset));
-	      p = buf + 2;
-	      while (p[0] == '0' && p[1] != 0)
-		p++;
-	      len = strlen (p);
-	      p[len] = '\r';
-	      p[len + 1] = '\n';
-	      *--p = '$';
-	      *--p = ' ';
-	      len += 4;
-	      if (bfd_bwrite (p, len, abfd) != len)
+	      sprintf (buf, " $%" PRIx64 "\r\n",
+		       (uint64_t) (s->value
+				   + s->section->output_section->lma
+				   + s->section->output_offset));
+	      len = strlen (buf);
+	      if (bfd_write (buf, len, abfd) != len)
 		return false;
 	    }
 	}
-      if (bfd_bwrite ("$$ \r\n", (bfd_size_type) 5, abfd) != 5)
+      if (bfd_write ("$$ \r\n", 5, abfd) != 5)
 	return false;
     }
 
@@ -1256,6 +1249,7 @@ srec_print_symbol (bfd *abfd,
 #define srec_bfd_is_local_label_name		  bfd_generic_is_local_label_name
 #define srec_get_lineno				  _bfd_nosymbols_get_lineno
 #define srec_find_nearest_line			  _bfd_nosymbols_find_nearest_line
+#define srec_find_nearest_line_with_alt		  _bfd_nosymbols_find_nearest_line_with_alt
 #define srec_find_line				  _bfd_nosymbols_find_line
 #define srec_find_inliner_info			  _bfd_nosymbols_find_inliner_info
 #define srec_make_empty_symbol			  _bfd_generic_make_empty_symbol

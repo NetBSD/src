@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARC.
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -147,7 +147,7 @@ static bool
 init_arc_disasm_info (struct disassemble_info *info)
 {
   struct arc_disassemble_info *arc_infop
-    = calloc (sizeof (*arc_infop), 1);
+    = calloc (1, sizeof (*arc_infop));
 
   if (arc_infop == NULL)
     return false;
@@ -375,11 +375,12 @@ find_format_from_table (struct disassemble_info *info,
 
   if (warn_p)
     {
-      info->fprintf_func (info->stream,
-			  _("\nWarning: disassembly may be wrong due to "
-			    "guessed opcode class choice.\n"
-			    "Use -M<class[,class]> to select the correct "
-			    "opcode class(es).\n\t\t\t\t"));
+      info->fprintf_styled_func
+	(info->stream, dis_style_text,
+	 _("\nWarning: disassembly may be wrong due to "
+	   "guessed opcode class choice.\n"
+	   "Use -M<class[,class]> to select the correct "
+	   "opcode class(es).\n\t\t\t\t"));
       return t_op;
     }
 
@@ -436,9 +437,10 @@ find_format (bfd_vma                       memaddr,
 	  opcode = arcExtMap_genOpcode (i, isa_mask, &errmsg);
 	  if (opcode == NULL)
 	    {
-	      (*info->fprintf_func) (info->stream,
-				     _("An error occurred while generating the "
-				       "extension instruction operations"));
+	      (*info->fprintf_styled_func)
+		(info->stream, dis_style_text,
+		 _("An error occurred while generating "
+		   "the extension instruction operations"));
 	      *opcode_result = NULL;
 	      return false;
 	    }
@@ -514,7 +516,8 @@ print_flags (const struct arc_opcode *opcode,
 	  name = arcExtMap_condCodeName (value);
 	  if (name)
 	    {
-	      (*info->fprintf_func) (info->stream, ".%s", name);
+	      (*info->fprintf_styled_func) (info->stream, dis_style_mnemonic,
+					    ".%s", name);
 	      continue;
 	    }
 	}
@@ -545,7 +548,8 @@ print_flags (const struct arc_opcode *opcode,
 	    {
 	       /* FIXME!: print correctly nt/t flag.  */
 	      if (!special_flag_p (opcode->name, flg_operand->name))
-		(*info->fprintf_func) (info->stream, ".");
+		(*info->fprintf_styled_func) (info->stream,
+					      dis_style_mnemonic, ".");
 	      else if (info->insn_type == dis_dref)
 		{
 		  switch (flg_operand->name[0])
@@ -580,7 +584,8 @@ print_flags (const struct arc_opcode *opcode,
 	      if (cl_flags->flag_class & F_CLASS_WB)
 		arc_infop->writeback_mode = flg_operand->code;
 
-	      (*info->fprintf_func) (info->stream, "%s", flg_operand->name);
+	      (*info->fprintf_styled_func) (info->stream, dis_style_mnemonic,
+					    "%s", flg_operand->name);
 	    }
 	}
     }
@@ -1061,13 +1066,28 @@ print_insn_arc (bfd_vma memaddr,
       switch (size)
 	{
 	case 1:
-	  (*info->fprintf_func) (info->stream, ".byte\t0x%02lx", data);
+	  (*info->fprintf_styled_func) (info->stream,
+					dis_style_assembler_directive,
+					".byte");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_text, "\t");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					"0x%02lx", data);
 	  break;
 	case 2:
-	  (*info->fprintf_func) (info->stream, ".short\t0x%04lx", data);
+	  (*info->fprintf_styled_func) (info->stream,
+					dis_style_assembler_directive,
+					".short");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_text, "\t");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					"0x%04lx", data);
 	  break;
 	case 4:
-	  (*info->fprintf_func) (info->stream, ".word\t0x%08lx", data);
+	  (*info->fprintf_styled_func) (info->stream,
+					dis_style_assembler_directive,
+					".word");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_text, "\t");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					"0x%08lx", data);
 	  break;
 	default:
 	  return -1;
@@ -1157,27 +1177,45 @@ print_insn_arc (bfd_vma memaddr,
       switch (insn_len)
 	{
 	case 2:
-	  (*info->fprintf_func) (info->stream, ".shor\t%#04llx",
-				 insn & 0xffff);
+	  (*info->fprintf_styled_func) (info->stream,
+					dis_style_assembler_directive,
+					".short");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_text, "\t");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					"0x%04llx", insn & 0xffff);
 	  break;
 
 	case 4:
-	  (*info->fprintf_func) (info->stream, ".word\t%#08llx",
-				 insn & 0xffffffff);
+	  (*info->fprintf_styled_func) (info->stream,
+					dis_style_assembler_directive,
+					".word");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_text, "\t");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					"0x%08llx", insn & 0xffffffff);
 	  break;
 
 	case 6:
-	  (*info->fprintf_func) (info->stream, ".long\t%#08llx",
-				 insn & 0xffffffff);
-	  (*info->fprintf_func) (info->stream, ".long\t%#04llx",
-				 (insn >> 32) & 0xffff);
+	  (*info->fprintf_styled_func) (info->stream,
+					dis_style_assembler_directive,
+					".long");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_text, "\t");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+				       "0x%08llx", insn & 0xffffffff);
+	  (*info->fprintf_styled_func) (info->stream, dis_style_text, " ");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					"0x%04llx", (insn >> 32) & 0xffff);
 	  break;
 
 	case 8:
-	  (*info->fprintf_func) (info->stream, ".long\t%#08llx",
-				 insn & 0xffffffff);
-	  (*info->fprintf_func) (info->stream, ".long\t%#08llx",
-				 insn >> 32);
+	  (*info->fprintf_styled_func) (info->stream,
+					dis_style_assembler_directive,
+					".long");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_text, "\t");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					"0x%08llx", insn & 0xffffffff);
+	  (*info->fprintf_styled_func) (info->stream, dis_style_text, " ");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					"0x%08llx", (insn >> 32));
 	  break;
 
 	default:
@@ -1189,7 +1227,8 @@ print_insn_arc (bfd_vma memaddr,
     }
 
   /* Print the mnemonic.  */
-  (*info->fprintf_func) (info->stream, "%s", opcode->name);
+  (*info->fprintf_styled_func) (info->stream, dis_style_mnemonic,
+				"%s", opcode->name);
 
   /* Preselect the insn class.  */
   info->insn_type = arc_opcode_to_insn_type (opcode);
@@ -1199,7 +1238,7 @@ print_insn_arc (bfd_vma memaddr,
   print_flags (opcode, &insn, info);
 
   if (opcode->operands[0] != 0)
-    (*info->fprintf_func) (info->stream, "\t");
+    (*info->fprintf_styled_func) (info->stream, dis_style_text, "\t");
 
   need_comma = false;
   open_braket = false;
@@ -1212,7 +1251,7 @@ print_insn_arc (bfd_vma memaddr,
     {
       if (open_braket && (operand->flags & ARC_OPERAND_BRAKET))
 	{
-	  (*info->fprintf_func) (info->stream, "]");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_text, "]");
 	  open_braket = false;
 	  continue;
 	}
@@ -1228,16 +1267,16 @@ print_insn_arc (bfd_vma memaddr,
 
       if (operand->flags & ARC_OPERAND_COLON)
 	{
-	  (*info->fprintf_func) (info->stream, ":");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_text, ":");
 	  continue;
 	}
 
       if (need_comma)
-	(*info->fprintf_func) (info->stream, ",");
+	(*info->fprintf_styled_func) (info->stream, dis_style_text,",");
 
       if (!open_braket && (operand->flags & ARC_OPERAND_BRAKET))
 	{
-	  (*info->fprintf_func) (info->stream, "[");
+	  (*info->fprintf_styled_func) (info->stream, dis_style_text, "[");
 	  open_braket = true;
 	  need_comma = false;
 	  continue;
@@ -1268,7 +1307,8 @@ print_insn_arc (bfd_vma memaddr,
 	  rname = arcExtMap_coreRegName (value);
 	  if (!rname)
 	    rname = regnames[value];
-	  (*info->fprintf_func) (info->stream, "%s", rname);
+	  (*info->fprintf_styled_func) (info->stream, dis_style_register,
+					"%s", rname);
 
 	  /* Check if we have a double register to print.  */
 	  if (operand->flags & ARC_OPERAND_TRUNCATE)
@@ -1282,7 +1322,8 @@ print_insn_arc (bfd_vma memaddr,
 	      else
 		rname = _("\nWarning: illegal use of double register "
 			  "pair.\n");
-	      (*info->fprintf_func) (info->stream, "%s", rname);
+	      (*info->fprintf_styled_func) (info->stream, dis_style_register,
+					    "%s", rname);
 	    }
 	  if (value == 63)
 	    rpcl = true;
@@ -1294,10 +1335,12 @@ print_insn_arc (bfd_vma memaddr,
 	  const char *rname = get_auxreg (opcode, value, isa_mask);
 
 	  if (rname && open_braket)
-	    (*info->fprintf_func) (info->stream, "%s", rname);
+	    (*info->fprintf_styled_func) (info->stream, dis_style_register,
+					  "%s", rname);
 	  else
 	    {
-	      (*info->fprintf_func) (info->stream, "%#x", value);
+	      (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					    "%#x", value);
 	      if (info->insn_type == dis_branch
 		  || info->insn_type == dis_jsr)
 		info->target = (bfd_vma) value;
@@ -1307,19 +1350,23 @@ print_insn_arc (bfd_vma memaddr,
 	{
 	  const char *rname = get_auxreg (opcode, value, isa_mask);
 	  if (rname && open_braket)
-	    (*info->fprintf_func) (info->stream, "%s", rname);
+	    (*info->fprintf_styled_func) (info->stream, dis_style_register,
+					  "%s", rname);
 	  else
 	    {
 	      if (print_hex)
-		(*info->fprintf_func) (info->stream, "%#x", value);
+		(*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					      "%#x", value);
 	      else
-		(*info->fprintf_func) (info->stream, "%d", value);
+		(*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					      "%d", value);
 	    }
 	}
       else if (operand->flags & ARC_OPERAND_ADDRTYPE)
 	{
 	  const char *addrtype = get_addrtype (value);
-	  (*info->fprintf_func) (info->stream, "%s", addrtype);
+	  (*info->fprintf_styled_func) (info->stream, dis_style_address,
+					"%s", addrtype);
 	  /* A colon follow an address type.  */
 	  need_comma = false;
 	}
@@ -1337,11 +1384,17 @@ print_insn_arc (bfd_vma memaddr,
 		  need_comma = false;
 		  break;
 		case 1:
-		  (*info->fprintf_func) (info->stream, "r13");
+		  (*info->fprintf_styled_func) (info->stream,
+						dis_style_register, "r13");
 		  break;
 		default:
-		  (*info->fprintf_func) (info->stream, "r13-%s",
-					 regnames[13 + value - 1]);
+		  (*info->fprintf_styled_func) (info->stream,
+						dis_style_register, "r13");
+		  (*info->fprintf_styled_func) (info->stream,
+						dis_style_text, "-");
+		  (*info->fprintf_styled_func) (info->stream,
+						dis_style_register, "%s",
+						regnames[13 + value - 1]);
 		  break;
 		}
 	      rpcl = false;
@@ -1351,9 +1404,11 @@ print_insn_arc (bfd_vma memaddr,
 	    {
 	      const char *rname = get_auxreg (opcode, value, isa_mask);
 	      if (rname && open_braket)
-		(*info->fprintf_func) (info->stream, "%s", rname);
+		(*info->fprintf_styled_func) (info->stream, dis_style_register,
+					      "%s", rname);
 	      else
-		(*info->fprintf_func) (info->stream, "%#x", value);
+		(*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					      "%#x", value);
 	    }
 	}
 
@@ -1387,7 +1442,8 @@ print_insn_arc (bfd_vma memaddr,
 	   the addend is not currently pc-relative.  */
 	memaddr = 0;
 
-      (*info->fprintf_func) (info->stream, "\t;");
+      (*info->fprintf_styled_func) (info->stream,
+				    dis_style_comment_start, "\t;");
       (*info->print_address_func) ((memaddr & ~3) + vpcl, info);
     }
 
@@ -1555,6 +1611,8 @@ print_arc_disassembler_options (FILE *stream)
   for (i = 0; args[i].name != NULL; ++i)
     {
       size_t len = 3;
+      if (args[i].values == NULL)
+	continue;
       fprintf (stream, _("\n\
   For the options above, the following values are supported for \"%s\":\n   "),
 	       args[i].name);
