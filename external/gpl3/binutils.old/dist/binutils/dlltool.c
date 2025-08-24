@@ -1,5 +1,5 @@
 /* dlltool.c -- tool to generate stuff for PE style DLLs
-   Copyright (C) 1995-2022 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -356,6 +356,7 @@ static char *imp_name;
 static char *delayimp_name;
 static char *identify_imp_name;
 static bool identify_strict;
+static bool deterministic = DEFAULT_AR_DETERMINISTIC;
 
 /* Types used to implement a linked list of dllnames associated
    with the specified import lib. Used by the identify_* code.
@@ -439,6 +440,11 @@ static const char *mname = "arm";
 
 #ifdef DLLTOOL_DEFAULT_ARM_WINCE
 static const char *mname = "arm-wince";
+#endif
+
+#ifdef DLLTOOL_DEFAULT_AARCH64
+/* arm64 rather than aarch64 to match llvm-dlltool */
+static const char *mname = "arm64";
 #endif
 
 #ifdef DLLTOOL_DEFAULT_I386
@@ -559,6 +565,14 @@ static const unsigned char mcore_le_jtab[] =
   0x00, 0x00, 0x00, 0x00 /* <address>      */
 };
 
+static const unsigned char aarch64_jtab[] =
+{
+  0x10, 0x00, 0x00, 0x90, /* adrp x16, 0        */
+  0x10, 0x02, 0x00, 0x91, /* add x16, x16, #0x0 */
+  0x10, 0x02, 0x40, 0xf9, /* ldr x16, [x16]     */
+  0x00, 0x02, 0x1f, 0xd6  /* br x16             */
+};
+
 static const char i386_trampoline[] =
   "\tpushl %%ecx\n"
   "\tpushl %%edx\n"
@@ -569,22 +583,48 @@ static const char i386_trampoline[] =
   "\tpopl %%ecx\n"
   "\tjmp *%%eax\n";
 
+/* Save integer arg regs in parameter space reserved by our caller
+   above the return address.  Allocate space for six fp arg regs plus
+   parameter space possibly used by __delayLoadHelper2 plus alignment.
+   We enter with the stack offset from 16-byte alignment by the return
+   address, so allocate 96 + 32 + 8 = 136 bytes.  Note that only the
+   first four xmm regs are used to pass fp args, but the first six
+   vector ymm (zmm too?) are used to pass vector args.  We are
+   assuming that volatile vector regs are not modified inside
+   __delayLoadHelper2.  However, it is known that at least xmm0 and
+   xmm1 are trashed in some versions of Microsoft dlls, and if xmm4 or
+   xmm5 are also used then that would trash the lower bits of ymm4 and
+   ymm5.  If it turns out that vector insns with a vex prefix are used
+   then we'll need to save ymm0-5 here but that can't be done without
+   first testing cpuid and xcr0.  */
 static const char i386_x64_trampoline[] =
-  "\tsubq $72, %%rsp\n"
-  "\t.seh_stackalloc 72\n"
+  "\tsubq $136, %%rsp\n"
+  "\t.seh_stackalloc 136\n"
   "\t.seh_endprologue\n"
-  "\tmovq %%rcx, 64(%%rsp)\n"
-  "\tmovq %%rdx, 56(%%rsp)\n"
-  "\tmovq %%r8, 48(%%rsp)\n"
-  "\tmovq %%r9, 40(%%rsp)\n"
-  "\tmovq  %%rax, %%rdx\n"
-  "\tleaq  __DELAY_IMPORT_DESCRIPTOR_%s(%%rip), %%rcx\n"
+  "\tmovq %%rcx, 136+8(%%rsp)\n"
+  "\tmovq %%rdx, 136+16(%%rsp)\n"
+  "\tmovq %%r8, 136+24(%%rsp)\n"
+  "\tmovq %%r9, 136+32(%%rsp)\n"
+  "\tmovaps %%xmm0, 32(%%rsp)\n"
+  "\tmovaps %%xmm1, 48(%%rsp)\n"
+  "\tmovaps %%xmm2, 64(%%rsp)\n"
+  "\tmovaps %%xmm3, 80(%%rsp)\n"
+  "\tmovaps %%xmm4, 96(%%rsp)\n"
+  "\tmovaps %%xmm5, 112(%%rsp)\n"
+  "\tmovq %%rax, %%rdx\n"
+  "\tleaq __DELAY_IMPORT_DESCRIPTOR_%s(%%rip), %%rcx\n"
   "\tcall __delayLoadHelper2\n"
-  "\tmovq 40(%%rsp), %%r9\n"
-  "\tmovq 48(%%rsp), %%r8\n"
-  "\tmovq 56(%%rsp), %%rdx\n"
-  "\tmovq 64(%%rsp), %%rcx\n"
-  "\taddq $72, %%rsp\n"
+  "\tmovq 136+8(%%rsp), %%rcx\n"
+  "\tmovq 136+16(%%rsp), %%rdx\n"
+  "\tmovq 136+24(%%rsp), %%r8\n"
+  "\tmovq 136+32(%%rsp), %%r9\n"
+  "\tmovaps 32(%%rsp), %%xmm0\n"
+  "\tmovaps 48(%%rsp), %%xmm1\n"
+  "\tmovaps 64(%%rsp), %%xmm2\n"
+  "\tmovaps 80(%%rsp), %%xmm3\n"
+  "\tmovaps 96(%%rsp), %%xmm4\n"
+  "\tmovaps 112(%%rsp), %%xmm5\n"
+  "\taddq $136, %%rsp\n"
   "\tjmp *%%rax\n";
 
 struct mac
@@ -714,6 +754,15 @@ mtable[] =
     "pe-x86-64",bfd_arch_i386,
     i386_jtab, sizeof (i386_jtab), 2,
     i386_x64_dljtab, sizeof (i386_x64_dljtab), 2, 9, 14, true, i386_x64_trampoline
+  }
+  ,
+  {
+#define MAARCH64 10
+    "arm64", ".byte", ".short", ".long", ".asciz", "//",
+    "bl ", ".global", ".space", ".balign\t2", ".balign\t4", "",
+    "pe-aarch64-little", bfd_arch_aarch64,
+    aarch64_jtab, sizeof (aarch64_jtab), 0,
+    0, 0, 0, 0, 0, false, 0
   }
   ,
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
@@ -863,6 +912,7 @@ rvaafter (int mach)
     case MMCORE_ELF:
     case MMCORE_ELF_LE:
     case MARM_WINCE:
+    case MAARCH64:
       break;
     default:
       /* xgettext:c-format */
@@ -887,6 +937,7 @@ rvabefore (int mach)
     case MMCORE_ELF:
     case MMCORE_ELF_LE:
     case MARM_WINCE:
+    case MAARCH64:
       return ".rva\t";
     default:
       /* xgettext:c-format */
@@ -909,6 +960,7 @@ asm_prefix (int mach, const char *name)
     case MMCORE_ELF:
     case MMCORE_ELF_LE:
     case MARM_WINCE:
+    case MAARCH64:
       break;
     case M386:
     case MX86:
@@ -1269,7 +1321,7 @@ run (const char *what, char *args)
   int i;
   const char **argv;
   char *errmsg_fmt = NULL, *errmsg_arg = NULL;
-  char *temp_base = choose_temp_base ();
+  char *temp_base = make_temp_file ("");
 
   inform (_("run: %s %s"), what, args);
 
@@ -1448,7 +1500,8 @@ scan_filtered_symbols (bfd *abfd, void *minisyms, long symcount,
 	bfd_fatal (bfd_get_filename (abfd));
 
       symbol_name = bfd_asymbol_name (sym);
-      if (bfd_get_symbol_leading_char (abfd) == symbol_name[0])
+      if (*symbol_name
+	  && *symbol_name == bfd_get_symbol_leading_char (abfd))
 	++symbol_name;
 
       def_exports (xstrdup (symbol_name) , 0, -1, 0, 0,
@@ -2473,6 +2526,8 @@ make_one_lib_file (export_type *exp, int i, int delay)
 	case TEXT:
 	  if (! exp->data)
 	    {
+	      unsigned int rpp_len;
+
 	      si->size = HOW_JTAB_SIZE;
 	      si->data = xmalloc (HOW_JTAB_SIZE);
 	      memcpy (si->data, HOW_JTAB, HOW_JTAB_SIZE);
@@ -2480,7 +2535,12 @@ make_one_lib_file (export_type *exp, int i, int delay)
 	      /* Add the reloc into idata$5.  */
 	      rel = xmalloc (sizeof (arelent));
 
-	      rpp = xmalloc (sizeof (arelent *) * (delay ? 4 : 2));
+	      rpp_len = delay ? 4 : 2;
+
+	      if (machine == MAARCH64)
+		rpp_len++;
+
+	      rpp = xmalloc (sizeof (arelent *) * rpp_len);
 	      rpp[0] = rel;
 	      rpp[1] = 0;
 
@@ -2506,6 +2566,22 @@ make_one_lib_file (export_type *exp, int i, int delay)
 						      BFD_RELOC_32_PCREL);
 		  rel->sym_ptr_ptr = iname_pp;
 		}
+	      else if (machine == MAARCH64)
+		{
+		  arelent *rel_add;
+
+		  rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_AARCH64_ADR_HI21_NC_PCREL);
+		  rel->sym_ptr_ptr = secdata[IDATA5].sympp;
+
+		  rel_add = xmalloc (sizeof (arelent));
+		  rel_add->address = 4;
+		  rel_add->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_AARCH64_ADD_LO12);
+		  rel_add->sym_ptr_ptr = secdata[IDATA5].sympp;
+		  rel_add->addend = 0;
+
+		  rpp[rpp_len - 2] = rel_add;
+		  rpp[rpp_len - 1] = 0;
+		}
 	      else
 		{
 		  rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32);
@@ -2526,7 +2602,7 @@ make_one_lib_file (export_type *exp, int i, int delay)
 	        }
 
 	      sec->orelocation = rpp;
-	      sec->reloc_count = delay ? 3 : 1;
+	      sec->reloc_count = rpp_len - 1;
 	    }
 	  break;
 
@@ -2942,6 +3018,9 @@ gen_lib_file (int delay)
   outarch->has_armap = 1;
   outarch->is_thin_archive = 0;
 
+  if (deterministic)
+    outarch->flags |= BFD_DETERMINISTIC_OUTPUT;
+
   /* Work out a reasonable size of things to put onto one line.  */
   if (delay)
     {
@@ -3011,20 +3090,22 @@ gen_lib_file (int delay)
   if (dontdeltemps < 2)
     {
       char *name;
+      size_t stub_len = strlen (TMP_STUB);
 
-      name = xmalloc (strlen (TMP_STUB) + 10);
+      name = xmalloc (stub_len + 10);
+      memcpy (name, TMP_STUB, stub_len);
       for (i = 0; (exp = d_exports_lexically[i]); i++)
 	{
 	  /* Don't delete non-existent stubs for PRIVATE entries.  */
           if (exp->private)
 	    continue;
-	  sprintf (name, "%s%05d.o", TMP_STUB, i);
+	  sprintf (name + stub_len, "%05d.o", i);
 	  if (unlink (name) < 0)
 	    /* xgettext:c-format */
 	    non_fatal (_("cannot delete %s: %s"), name, strerror (errno));
 	  if (ext_prefix_alias)
 	    {
-	      sprintf (name, "%s%05d.o", TMP_STUB, i + PREFIX_ALIAS_BASE);
+	      sprintf (name + stub_len, "%05d.o", i + PREFIX_ALIAS_BASE);
 	      if (unlink (name) < 0)
 		/* xgettext:c-format */
 		non_fatal (_("cannot delete %s: %s"), name, strerror (errno));
@@ -3670,10 +3751,20 @@ usage (FILE *file, int status)
   fprintf (file, _("Usage %s <option(s)> <object-file(s)>\n"), program_name);
   /* xgetext:c-format */
   fprintf (file, _("   -m --machine <machine>    Create as DLL for <machine>.  [default: %s]\n"), mname);
-  fprintf (file, _("        possible <machine>: arm[_interwork], i386, mcore[-elf]{-le|-be}, thumb\n"));
+  fprintf (file, _("        possible <machine>: arm[_interwork], arm64, i386, mcore[-elf]{-le|-be}, thumb\n"));
   fprintf (file, _("   -e --output-exp <outname> Generate an export file.\n"));
   fprintf (file, _("   -l --output-lib <outname> Generate an interface library.\n"));
   fprintf (file, _("   -y --output-delaylib <outname> Create a delay-import library.\n"));
+  fprintf (file, _("      --deterministic-libraries\n"));
+  if (DEFAULT_AR_DETERMINISTIC)
+    fprintf (file, _("                             Use zero for timestamps and uids/gids in output libraries (default)\n"));
+  else
+    fprintf (file, _("                             Use zero for timestamps and uids/gids in output libraries\n"));
+  fprintf (file, _("      --non-deterministic-libraries\n"));
+  if (DEFAULT_AR_DETERMINISTIC)
+    fprintf (file, _("                             Use actual timestamps and uids/gids in output libraries\n"));
+  else
+    fprintf (file, _("                             Use actual timestamps and uids/gids in output libraries (default)\n"));
   fprintf (file, _("   -a --add-indirect         Add dll indirects to export file.\n"));
   fprintf (file, _("   -D --dllname <name>       Name of input dll to put into interface lib.\n"));
   fprintf (file, _("   -d --input-def <deffile>  Name of .def file to be read in.\n"));
@@ -3714,55 +3805,61 @@ usage (FILE *file, int status)
   exit (status);
 }
 
-#define OPTION_EXPORT_ALL_SYMS		150
-#define OPTION_NO_EXPORT_ALL_SYMS	(OPTION_EXPORT_ALL_SYMS + 1)
-#define OPTION_EXCLUDE_SYMS		(OPTION_NO_EXPORT_ALL_SYMS + 1)
-#define OPTION_NO_DEFAULT_EXCLUDES	(OPTION_EXCLUDE_SYMS + 1)
-#define OPTION_ADD_STDCALL_UNDERSCORE	(OPTION_NO_DEFAULT_EXCLUDES + 1)
-#define OPTION_USE_NUL_PREFIXED_IMPORT_TABLES \
-  (OPTION_ADD_STDCALL_UNDERSCORE + 1)
-#define OPTION_IDENTIFY_STRICT		(OPTION_USE_NUL_PREFIXED_IMPORT_TABLES + 1)
-#define OPTION_NO_LEADING_UNDERSCORE	(OPTION_IDENTIFY_STRICT + 1)
-#define OPTION_LEADING_UNDERSCORE	(OPTION_NO_LEADING_UNDERSCORE + 1)
+/* 150 isn't special; it's just an arbitrary non-ASCII char value.  */
+enum command_line_switch
+{
+  OPTION_EXPORT_ALL_SYMS = 150,
+  OPTION_NO_EXPORT_ALL_SYMS,
+  OPTION_EXCLUDE_SYMS,
+  OPTION_NO_DEFAULT_EXCLUDES,
+  OPTION_ADD_STDCALL_UNDERSCORE,
+  OPTION_USE_NUL_PREFIXED_IMPORT_TABLES,
+  OPTION_IDENTIFY_STRICT,
+  OPTION_NO_LEADING_UNDERSCORE,
+  OPTION_LEADING_UNDERSCORE,
+  OPTION_DETERMINISTIC_LIBRARIES,
+  OPTION_NON_DETERMINISTIC_LIBRARIES
+};
 
 static const struct option long_options[] =
 {
-  {"no-delete", no_argument, NULL, 'n'},
-  {"dllname", required_argument, NULL, 'D'},
-  {"no-idata4", no_argument, NULL, 'x'},
-  {"no-idata5", no_argument, NULL, 'c'},
-  {"use-nul-prefixed-import-tables", no_argument, NULL,
-   OPTION_USE_NUL_PREFIXED_IMPORT_TABLES},
-  {"output-exp", required_argument, NULL, 'e'},
-  {"output-def", required_argument, NULL, 'z'},
-  {"export-all-symbols", no_argument, NULL, OPTION_EXPORT_ALL_SYMS},
-  {"no-export-all-symbols", no_argument, NULL, OPTION_NO_EXPORT_ALL_SYMS},
-  {"exclude-symbols", required_argument, NULL, OPTION_EXCLUDE_SYMS},
-  {"no-default-excludes", no_argument, NULL, OPTION_NO_DEFAULT_EXCLUDES},
-  {"output-lib", required_argument, NULL, 'l'},
-  {"def", required_argument, NULL, 'd'}, /* for compatibility with older versions */
-  {"input-def", required_argument, NULL, 'd'},
-  {"add-underscore", no_argument, NULL, 'U'},
-  {"add-stdcall-underscore", no_argument, NULL, OPTION_ADD_STDCALL_UNDERSCORE},
-  {"no-leading-underscore", no_argument, NULL, OPTION_NO_LEADING_UNDERSCORE},
-  {"leading-underscore", no_argument, NULL, OPTION_LEADING_UNDERSCORE},
-  {"kill-at", no_argument, NULL, 'k'},
-  {"add-stdcall-alias", no_argument, NULL, 'A'},
-  {"ext-prefix-alias", required_argument, NULL, 'p'},
-  {"identify", required_argument, NULL, 'I'},
-  {"identify-strict", no_argument, NULL, OPTION_IDENTIFY_STRICT},
-  {"verbose", no_argument, NULL, 'v'},
-  {"version", no_argument, NULL, 'V'},
-  {"help", no_argument, NULL, 'h'},
-  {"machine", required_argument, NULL, 'm'},
   {"add-indirect", no_argument, NULL, 'a'},
-  {"base-file", required_argument, NULL, 'b'},
+  {"add-stdcall-alias", no_argument, NULL, 'A'},
+  {"add-stdcall-underscore", no_argument, NULL, OPTION_ADD_STDCALL_UNDERSCORE},
+  {"add-underscore", no_argument, NULL, 'U'},
   {"as", required_argument, NULL, 'S'},
   {"as-flags", required_argument, NULL, 'f'},
-  {"mcore-elf", required_argument, NULL, 'M'},
+  {"base-file", required_argument, NULL, 'b'},
   {"compat-implib", no_argument, NULL, 'C'},
-  {"temp-prefix", required_argument, NULL, 't'},
+  {"def", required_argument, NULL, 'd'},     /* For compatibility with older versions.  */
+  {"deterministic-libraries", no_argument, NULL, OPTION_DETERMINISTIC_LIBRARIES},
+  {"dllname", required_argument, NULL, 'D'},
+  {"exclude-symbols", required_argument, NULL, OPTION_EXCLUDE_SYMS},
+  {"export-all-symbols", no_argument, NULL, OPTION_EXPORT_ALL_SYMS},
+  {"ext-prefix-alias", required_argument, NULL, 'p'},
+  {"help", no_argument, NULL, 'h'},
+  {"identify", required_argument, NULL, 'I'},
+  {"identify-strict", no_argument, NULL, OPTION_IDENTIFY_STRICT},
+  {"input-def", required_argument, NULL, 'd'},
+  {"kill-at", no_argument, NULL, 'k'},
+  {"leading-underscore", no_argument, NULL, OPTION_LEADING_UNDERSCORE},
+  {"machine", required_argument, NULL, 'm'},
+  {"mcore-elf", required_argument, NULL, 'M'},
+  {"no-default-excludes", no_argument, NULL, OPTION_NO_DEFAULT_EXCLUDES},
+  {"no-delete", no_argument, NULL, 'n'},
+  {"no-export-all-symbols", no_argument, NULL, OPTION_NO_EXPORT_ALL_SYMS},
+  {"no-idata4", no_argument, NULL, 'x'},
+  {"no-idata5", no_argument, NULL, 'c'},
+  {"no-leading-underscore", no_argument, NULL, OPTION_NO_LEADING_UNDERSCORE},
+  {"non-deterministic-libraries", no_argument, NULL, OPTION_NON_DETERMINISTIC_LIBRARIES},
+  {"output-def", required_argument, NULL, 'z'},
   {"output-delaylib", required_argument, NULL, 'y'},
+  {"output-exp", required_argument, NULL, 'e'},
+  {"output-lib", required_argument, NULL, 'l'},
+  {"temp-prefix", required_argument, NULL, 't'},
+  {"use-nul-prefixed-import-tables", no_argument, NULL, OPTION_USE_NUL_PREFIXED_IMPORT_TABLES},
+  {"verbose", no_argument, NULL, 'v'},
+  {"version", no_argument, NULL, 'V'},
   {NULL,0,NULL,0}
 };
 
@@ -3924,6 +4021,12 @@ main (int ac, char **av)
 	case 'y':
 	  delayimp_name = optarg;
 	  break;
+	case OPTION_DETERMINISTIC_LIBRARIES:
+	  deterministic = true;
+	  break;
+	case OPTION_NON_DETERMINISTIC_LIBRARIES:
+	  deterministic = false;
+	  break;
 	default:
 	  usage (stderr, 1);
 	  break;
@@ -3941,7 +4044,8 @@ main (int ac, char **av)
   machine = i;
 
   /* Check if we generated PE+.  */
-  create_for_pep = strcmp (mname, "i386:x86-64") == 0;
+  create_for_pep = strcmp (mname, "i386:x86-64") == 0 ||
+		   strcmp (mname, "arm64") == 0;
 
   {
     /* Check the default underscore */
@@ -4085,9 +4189,9 @@ look_for_prog (const char *prog_name, const char *prefix, int end_prefix)
 		 + strlen (EXECUTABLE_SUFFIX)
 #endif
 		 + 10);
-  strcpy (cmd, prefix);
+  memcpy (cmd, prefix, end_prefix);
 
-  sprintf (cmd + end_prefix, "%s", prog_name);
+  strcpy (cmd + end_prefix, prog_name);
 
   if (strchr (cmd, '/') != NULL)
     {

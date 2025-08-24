@@ -1,5 +1,5 @@
 /* 8 and 16 bit COFF relocation functions, for BFD.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -251,11 +251,11 @@ bfd_coff_reloc16_get_relocated_section_contents
   /* Get enough memory to hold the stuff.  */
   bfd *input_bfd = link_order->u.indirect.section->owner;
   asection *input_section = link_order->u.indirect.section;
-  long reloc_size = bfd_get_reloc_upper_bound (input_bfd, input_section);
+  long reloc_size;
   arelent **reloc_vector;
   long reloc_count;
-  bfd_size_type sz;
 
+  reloc_size = bfd_get_reloc_upper_bound (input_bfd, input_section);
   if (reloc_size < 0)
     return NULL;
 
@@ -267,32 +267,35 @@ bfd_coff_reloc16_get_relocated_section_contents
 						       symbols);
 
   /* Read in the section.  */
-  sz = input_section->rawsize ? input_section->rawsize : input_section->size;
-  if (!bfd_get_section_contents (input_bfd, input_section, data, 0, sz))
+  bfd_byte *orig_data = data;
+  if (!bfd_get_full_section_contents (input_bfd, input_section, &data))
     return NULL;
 
-  reloc_vector = (arelent **) bfd_malloc ((bfd_size_type) reloc_size);
-  if (!reloc_vector && reloc_size != 0)
+  if (data == NULL)
     return NULL;
+
+  if (reloc_size == 0)
+    return data;
+
+  reloc_vector = (arelent **) bfd_malloc (reloc_size);
+  if (reloc_vector == NULL)
+    goto error_return;
 
   reloc_count = bfd_canonicalize_reloc (input_bfd,
 					input_section,
 					reloc_vector,
 					symbols);
   if (reloc_count < 0)
-    {
-      free (reloc_vector);
-      return NULL;
-    }
+    goto error_return;
 
   if (reloc_count > 0)
     {
       arelent **parent = reloc_vector;
       arelent *reloc;
-      unsigned int dst_address = 0;
-      unsigned int src_address = 0;
-      unsigned int run;
-      unsigned int idx;
+      size_t dst_address = 0;
+      size_t src_address = 0;
+      size_t run;
+      size_t idx;
 
       /* Find how long a run we can do.  */
       while (dst_address < link_order->size)
@@ -303,6 +306,15 @@ bfd_coff_reloc16_get_relocated_section_contents
 	      /* Note that the relaxing didn't tie up the addresses in the
 		 relocation, so we use the original address to work out the
 		 run of non-relocated data.  */
+	      if (reloc->address > link_order->size
+		  || reloc->address < src_address)
+		{
+		  link_info->callbacks->einfo
+		    /* xgettext:c-format */
+		    (_("%X%P: %pB(%pA): relocation \"%pR\" goes out of range\n"),
+		     input_bfd, input_section, reloc);
+		  goto error_return;
+		}
 	      run = reloc->address - src_address;
 	      parent++;
 	    }
@@ -316,14 +328,19 @@ bfd_coff_reloc16_get_relocated_section_contents
 	    data[dst_address++] = data[src_address++];
 
 	  /* Now do the relocation.  */
-	  if (reloc)
-	    {
-	      bfd_coff_reloc16_extra_cases (input_bfd, link_info, link_order,
-					    reloc, data, &src_address,
-					    &dst_address);
-	    }
+	  if (reloc
+	      && !bfd_coff_reloc16_extra_cases (input_bfd, link_info,
+						link_order, reloc, data,
+						&src_address, &dst_address))
+	    goto error_return;
 	}
     }
-  free ((char *) reloc_vector);
+  free (reloc_vector);
   return data;
+
+ error_return:
+  free (reloc_vector);
+  if (orig_data == NULL)
+    free (data);
+  return NULL;
 }

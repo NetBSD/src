@@ -1,6 +1,6 @@
 /* tc-microblaze.c -- Assemble code for Xilinx MicroBlaze
 
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -135,27 +135,6 @@ microblaze_generate_symbol (char *sym)
 
 /* Handle the section changing pseudo-ops. */
 
-static void
-microblaze_s_text (int ignore ATTRIBUTE_UNUSED)
-{
-#ifdef OBJ_ELF
-  obj_elf_text (ignore);
-#else
-  s_text (ignore);
-#endif
-}
-
-static void
-microblaze_s_data (int ignore ATTRIBUTE_UNUSED)
-{
-#ifdef OBJ_ELF
-  obj_elf_change_section (".data", SHT_PROGBITS, SHF_ALLOC+SHF_WRITE,
-			  0, 0, 0, 0);
-#else
-  s_data (ignore);
-#endif
-}
-
 /* Things in the .sdata segment are always considered to be in the small data section.  */
 
 static void
@@ -163,7 +142,7 @@ microblaze_s_sdata (int ignore ATTRIBUTE_UNUSED)
 {
 #ifdef OBJ_ELF
   obj_elf_change_section (".sdata", SHT_PROGBITS, SHF_ALLOC+SHF_WRITE,
-			  0, 0, 0, 0);
+			  0, 0, false);
 #else
   s_data (ignore);
 #endif
@@ -282,7 +261,7 @@ microblaze_s_rdata (int localvar)
     {
       /* rodata.  */
       obj_elf_change_section (".rodata", SHT_PROGBITS, SHF_ALLOC,
-			      0, 0, 0, 0);
+			      0, 0, false);
       if (rodata_segment == 0)
 	rodata_segment = subseg_new (".rodata", 0);
     }
@@ -290,7 +269,7 @@ microblaze_s_rdata (int localvar)
     {
       /* 1 .sdata2.  */
       obj_elf_change_section (".sdata2", SHT_PROGBITS, SHF_ALLOC,
-			      0, 0, 0, 0);
+			      0, 0, false);
     }
 #else
   s_data (ignore);
@@ -298,20 +277,13 @@ microblaze_s_rdata (int localvar)
 }
 
 static void
-microblaze_s_bss (int localvar)
+microblaze_s_sbss (int ignore ATTRIBUTE_UNUSED)
 {
 #ifdef OBJ_ELF
-  if (localvar == 0) /* bss.  */
-    obj_elf_change_section (".bss", SHT_NOBITS, SHF_ALLOC+SHF_WRITE,
-			    0, 0, 0, 0);
-  else if (localvar == 1)
-    {
-      /* sbss.  */
-      obj_elf_change_section (".sbss", SHT_NOBITS, SHF_ALLOC+SHF_WRITE,
-			      0, 0, 0, 0);
-      if (sbss_segment == 0)
-	sbss_segment = subseg_new (".sbss", 0);
-    }
+  obj_elf_change_section (".sbss", SHT_NOBITS, SHF_ALLOC+SHF_WRITE,
+			  0, 0, false);
+  if (sbss_segment == 0)
+    sbss_segment = subseg_new (".sbss", 0);
 #else
   s_data (ignore);
 #endif
@@ -385,7 +357,6 @@ microblaze_s_weakext (int ignore ATTRIBUTE_UNUSED)
 const pseudo_typeS md_pseudo_table[] =
 {
   {"lcomm", microblaze_s_lcomm, 1},
-  {"data", microblaze_s_data, 0},
   {"data8", cons, 1},      /* Same as byte.  */
   {"data16", cons, 2},     /* Same as hword.  */
   {"data32", cons, 4},     /* Same as word.  */
@@ -396,9 +367,10 @@ const pseudo_typeS md_pseudo_table[] =
   {"rodata", microblaze_s_rdata, 0},
   {"sdata2", microblaze_s_rdata, 1},
   {"sdata", microblaze_s_sdata, 0},
-  {"bss", microblaze_s_bss, 0},
-  {"sbss", microblaze_s_bss, 1},
-  {"text", microblaze_s_text, 0},
+#ifndef OBJ_ELF
+  {"bss", s_data, 0},
+#endif
+  {"sbss", microblaze_s_sbss, 0},
   {"word", cons, 4},
   {"frame", s_ignore, 0},
   {"mask", s_ignore, 0}, /* Emitted by gcc.  */
@@ -755,7 +727,7 @@ parse_imm (char * s, expressionS * e, offsetT min, offsetT max)
       if ((e->X_add_number >> 31) == 1)
 	e->X_add_number |= -((addressT) (1U << 31));
 
-      if (e->X_add_number < min || e->X_add_number > max)
+      if ((int)e->X_add_number < min || (int)e->X_add_number > max)
 	{
 	  as_fatal (_("operand must be absolute in range %lx..%lx, not %lx"),
 		    (long) min, (long) max, (long) e->X_add_number);
@@ -915,7 +887,7 @@ md_assemble (char * str)
   unsigned reg2;
   unsigned reg3;
   unsigned isize;
-  unsigned int immed = 0, temp;
+  unsigned int immed = 0, immed2 = 0, temp;
   expressionS exp;
   char name[20];
 
@@ -1175,6 +1147,87 @@ md_assemble (char * str)
       inst |= (reg1 << RD_LOW) & RD_MASK;
       inst |= (reg2 << RA_LOW) & RA_MASK;
       inst |= (immed << IMM_LOW) & IMM5_MASK;
+      break;
+
+    case INST_TYPE_RD_R1_IMMW_IMMS:
+      if (strcmp (op_end, ""))
+	op_end = parse_reg (op_end + 1, &reg1);  /* Get rd.  */
+      else
+	{
+	  as_fatal (_("Error in statement syntax"));
+	  reg1 = 0;
+	}
+
+      if (strcmp (op_end, ""))
+	op_end = parse_reg (op_end + 1, &reg2);  /* Get r1.  */
+      else
+	{
+	  as_fatal (_("Error in statement syntax"));
+	  reg2 = 0;
+	}
+
+      /* Check for spl registers.  */
+      if (check_spl_reg (&reg1))
+	as_fatal (_("Cannot use special register with this instruction"));
+      if (check_spl_reg (&reg2))
+	as_fatal (_("Cannot use special register with this instruction"));
+
+      /* Width immediate value.  */
+      if (strcmp (op_end, ""))
+	op_end = parse_imm (op_end + 1, &exp, MIN_IMM_WIDTH, MAX_IMM_WIDTH);
+      else
+	as_fatal (_("Error in statement syntax"));
+
+      if (exp.X_op != O_constant)
+	{
+	  as_warn (_(
+	  "Symbol used as immediate width value for bit field instruction"));
+	  immed = 1;
+	}
+      else
+	immed = exp.X_add_number;
+
+      if (opcode->instr == bsefi && immed > 31)
+	as_fatal (_("Width value must be less than 32"));
+
+      /* Shift immediate value.  */
+      if (strcmp (op_end, ""))
+	op_end = parse_imm (op_end + 1, &exp, MIN_IMM, MAX_IMM);
+      else
+	as_fatal (_("Error in statement syntax"));
+
+      if (exp.X_op != O_constant)
+	{
+	  as_warn (_(
+	  "Symbol used as immediate shift value for bit field instruction"));
+	  immed2 = 0;
+	}
+      else
+	{
+	  output = frag_more (isize);
+	  immed2 = exp.X_add_number;
+	}
+
+      if (immed2 != (immed2 % 32))
+	{
+	  as_warn (_("Shift value greater than 32. using <value %% 32>"));
+	  immed2 = immed2 % 32;
+	}
+
+      /* Check combined value.  */
+      if (immed + immed2 > 32)
+	as_fatal (_("Width value + shift value must not be greater than 32"));
+
+      inst |= (reg1 << RD_LOW) & RD_MASK;
+      inst |= (reg2 << RA_LOW) & RA_MASK;
+
+      if (opcode->instr == bsefi)
+	inst |= (immed & IMM5_MASK) << IMM_WIDTH_LOW; /* bsefi */
+      else
+	inst |= ((immed + immed2 - 1) & IMM5_MASK)
+		<< IMM_WIDTH_LOW; /* bsifi */
+
+      inst |= (immed2 << IMM_LOW) & IMM5_MASK;
       break;
 
     case INST_TYPE_R1_R2:
@@ -1854,6 +1907,8 @@ struct option md_longopts[] =
 {
   {"EB", no_argument, NULL, OPTION_EB},
   {"EL", no_argument, NULL, OPTION_EL},
+  {"mlittle-endian", no_argument, NULL, OPTION_EL},
+  {"mbig-endian", no_argument, NULL, OPTION_EB},
   { NULL,          no_argument, NULL, 0}
 };
 
@@ -2207,6 +2262,8 @@ md_apply_fix (fixS *   fixP,
 	 moves code around due to relaxing.  */
       if (fixP->fx_r_type == BFD_RELOC_64_PCREL)
 	fixP->fx_r_type = BFD_RELOC_MICROBLAZE_64_NONE;
+      else if (fixP->fx_r_type == BFD_RELOC_32)
+	fixP->fx_r_type = BFD_RELOC_MICROBLAZE_32_NONE;
       else
 	fixP->fx_r_type = BFD_RELOC_NONE;
       fixP->fx_addsy = section_symbol (absolute_section);
@@ -2430,6 +2487,7 @@ tc_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
   switch (fixp->fx_r_type)
     {
     case BFD_RELOC_NONE:
+    case BFD_RELOC_MICROBLAZE_32_NONE:
     case BFD_RELOC_MICROBLAZE_64_NONE:
     case BFD_RELOC_32:
     case BFD_RELOC_MICROBLAZE_32_LO:
@@ -2524,6 +2582,9 @@ md_show_usage (FILE * stream ATTRIBUTE_UNUSED)
   /*  fprintf(stream, _("\
       MicroBlaze options:\n\
       -noSmall         Data in the comm and data sections do not go into the small data section\n")); */
+  fprintf (stream, _(" MicroBlaze specific assembler options:\n"));
+  fprintf (stream, "  -%-23s%s\n", "mbig-endian", N_("assemble for a big endian cpu"));
+  fprintf (stream, "  -%-23s%s\n", "mlittle-endian", N_("assemble for a little endian cpu"));      
 }
 
 

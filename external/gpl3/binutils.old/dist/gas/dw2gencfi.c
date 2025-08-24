@@ -1,5 +1,5 @@
 /* dw2gencfi.c - Support for generating Dwarf2 CFI information.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
    Contributed by Michal Ludvig <mludvig@suse.cz>
 
    This file is part of GAS, the GNU Assembler.
@@ -23,6 +23,7 @@
 #include "dw2gencfi.h"
 #include "subsegs.h"
 #include "dwarf2dbg.h"
+#include "gen-sframe.h"
 
 #ifdef TARGET_USE_CFIPOP
 
@@ -63,19 +64,8 @@
 #define EH_FRAME_ALIGNMENT (bfd_get_arch_size (stdoutput) == 64 ? 3 : 2)
 #endif
 
-#ifndef tc_cfi_frame_initial_instructions
-#define tc_cfi_frame_initial_instructions() ((void)0)
-#endif
-
-#ifndef tc_cfi_startproc
-# define tc_cfi_startproc() ((void)0)
-#endif
-
-#ifndef tc_cfi_endproc
-# define tc_cfi_endproc(fde) ((void) (fde))
-#endif
-
-#define EH_FRAME_LINKONCE (SUPPORT_FRAME_LINKONCE || compact_eh)
+#define EH_FRAME_LINKONCE (SUPPORT_FRAME_LINKONCE || compact_eh \
+			   || TARGET_MULTIPLE_EH_FRAME_SECTIONS)
 
 #ifndef DWARF2_FORMAT
 #define DWARF2_FORMAT(SEC) dwarf2_format_32bit
@@ -99,6 +89,11 @@
 
 #ifndef tc_cfi_reloc_for_encoding
 #define tc_cfi_reloc_for_encoding(e) BFD_RELOC_NONE
+#endif
+
+/* Targets which support SFrame format will define this and return true.  */
+#ifndef support_sframe_p
+# define support_sframe_p() false
 #endif
 
 /* Private segment collection list.  */
@@ -229,13 +224,10 @@ get_debugseg_name (segT seg, const char *base_name)
   const char * dollar;
   const char * dot;
 
-  if (!seg)
-    return concat (base_name, NULL);
-
-  name = bfd_section_name (seg);
-
-  if (name == NULL || *name == 0)
-    return concat (base_name, NULL);
+  if (!seg
+      || (name = bfd_section_name (seg)) == NULL
+      || *name == 0)
+    return notes_strdup (base_name);
 	
   dollar = strchr (name, '$');
   dot = strchr (name + 1, '.');
@@ -244,7 +236,7 @@ get_debugseg_name (segT seg, const char *base_name)
     {
       if (!strcmp (base_name, ".eh_frame_entry")
 	  && strcmp (name, ".text") != 0)
-	return concat (base_name, ".", name, NULL);
+	return notes_concat (base_name, ".", name, NULL);
 
       name = "";
     }
@@ -257,7 +249,7 @@ get_debugseg_name (segT seg, const char *base_name)
   else
     name = dollar;
 
-  return concat (base_name, name, NULL);
+  return notes_concat (base_name, name, NULL);
 }
 
 /* Allocate a dwcfi_seg_list structure.  */
@@ -267,8 +259,7 @@ alloc_debugseg_item (segT seg, int subseg, char *name)
 {
   struct dwcfi_seg_list *r;
 
-  r = (struct dwcfi_seg_list *)
-    xmalloc (sizeof (struct dwcfi_seg_list) + strlen (name));
+  r = notes_alloc (sizeof (*r) + strlen (name));
   r->seg = seg;
   r->subseg = subseg;
   r->seg_name = name;
@@ -279,6 +270,9 @@ static segT
 is_now_linkonce_segment (void)
 {
   if (compact_eh)
+    return now_seg;
+
+  if (TARGET_MULTIPLE_EH_FRAME_SECTIONS)
     return now_seg;
 
   if ((bfd_section_flags (now_seg)
@@ -351,7 +345,7 @@ dwcfi_hash_find_or_make (segT cseg, const char *base_name, int flags)
       str_hash_insert (dwcfi_hash, item->seg_name, item, 0);
     }
   else
-    free (name);
+    notes_free (name);
 
   return item;
 }
@@ -475,6 +469,13 @@ cfi_end_fde (symbolS *label)
   frchain_now->frch_cfi_data = NULL;
 }
 
+/* Set the last FDE  .*/
+void
+cfi_set_last_fde (struct fde_entry *fde)
+{
+  last_fde = fde;
+}
+
 /* Set the return column for the current FDE.  */
 
 void
@@ -486,6 +487,7 @@ cfi_set_return_column (unsigned regno)
 void
 cfi_set_sections (void)
 {
+  all_cfi_sections |= cfi_sections;
   frchain_now->frch_cfi_data->cur_fde_data->sections = all_cfi_sections;
   cfi_sections_set = true;
 }
@@ -685,7 +687,6 @@ cfi_add_CFA_restore_state (void)
 
 static void dot_cfi (int);
 static void dot_cfi_escape (int);
-static void dot_cfi_sections (int);
 static void dot_cfi_startproc (int);
 static void dot_cfi_endproc (int);
 static void dot_cfi_fde_data (int);
@@ -1204,7 +1205,7 @@ dot_cfi_label (int ignored ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 }
 
-static void
+void
 dot_cfi_sections (int ignored ATTRIBUTE_UNUSED)
 {
   int sections = 0;
@@ -1235,6 +1236,8 @@ dot_cfi_sections (int ignored ATTRIBUTE_UNUSED)
 	else if (strcmp (name, tc_cfi_section_name) == 0)
 	  sections |= CFI_EMIT_target;
 #endif
+	else if (startswith (name, ".sframe"))
+	    sections |= CFI_EMIT_sframe;
 	else
 	  {
 	    *input_line_pointer = c;
@@ -1301,14 +1304,13 @@ dot_cfi_startproc (int ignored ATTRIBUTE_UNUSED)
     }
   demand_empty_rest_of_line ();
 
-  cfi_sections_set = true;
-  all_cfi_sections |= cfi_sections;
   cfi_set_sections ();
+
   frchain_now->frch_cfi_data->cur_cfa_offset = 0;
   if (!simple)
     tc_cfi_frame_initial_instructions ();
 
-  if ((cfi_sections & CFI_EMIT_target) != 0)
+  if ((all_cfi_sections & CFI_EMIT_target) != 0)
     tc_cfi_startproc ();
 }
 
@@ -1322,14 +1324,13 @@ dot_cfi_endproc (int ignored ATTRIBUTE_UNUSED)
       return;
     }
 
-  last_fde = frchain_now->frch_cfi_data->cur_fde_data;
+  cfi_set_last_fde (frchain_now->frch_cfi_data->cur_fde_data);
 
   cfi_end_fde (symbol_temp_new_now ());
 
   demand_empty_rest_of_line ();
 
-  cfi_sections_set = true;
-  if ((cfi_sections & CFI_EMIT_target) != 0)
+  if ((all_cfi_sections & CFI_EMIT_target) != 0)
     tc_cfi_endproc (last_fde);
 }
 
@@ -1337,14 +1338,33 @@ static segT
 get_cfi_seg (segT cseg, const char *base, flagword flags, int align)
 {
   /* Exclude .debug_frame sections for Compact EH.  */
-  if (SUPPORT_FRAME_LINKONCE || ((flags & SEC_DEBUGGING) == 0 && compact_eh))
+  if (SUPPORT_FRAME_LINKONCE || ((flags & SEC_DEBUGGING) == 0 && compact_eh)
+      || ((flags & SEC_DEBUGGING) == 0 && TARGET_MULTIPLE_EH_FRAME_SECTIONS))
     {
+      segT iseg = cseg;
       struct dwcfi_seg_list *l;
 
       l = dwcfi_hash_find_or_make (cseg, base, flags);
 
       cseg = l->seg;
       subseg_set (cseg, l->subseg);
+
+      if (TARGET_MULTIPLE_EH_FRAME_SECTIONS
+	  && (flags & DWARF2_EH_FRAME_READ_ONLY))
+	{
+	  const frchainS *ifrch = seg_info (iseg)->frchainP;
+	  const frchainS *frch = seg_info (cseg)->frchainP;
+	  expressionS exp;
+
+	  exp.X_op = O_symbol;
+	  exp.X_add_symbol = (symbolS *) local_symbol_make (cseg->name, cseg, frch->frch_root, 0);
+	  exp.X_add_number = 0;
+	  subseg_set (iseg, ifrch->frch_subseg);
+	  fix_new_exp (ifrch->frch_root, 0, 0, &exp, 0, BFD_RELOC_NONE);
+
+	  /* Restore the original segment info.  */
+	  subseg_set (cseg, l->subseg);
+	}
     }
   else
     {
@@ -1389,11 +1409,10 @@ dot_cfi_fde_data (int ignored ATTRIBUTE_UNUSED)
       return;
     }
 
-  last_fde = frchain_now->frch_cfi_data->cur_fde_data;
+  cfi_set_last_fde (frchain_now->frch_cfi_data->cur_fde_data);
 
-  cfi_sections_set = true;
-  if ((cfi_sections & CFI_EMIT_target) != 0
-      || (cfi_sections & CFI_EMIT_eh_frame_compact) != 0)
+  if ((all_cfi_sections & CFI_EMIT_target) != 0
+      || (all_cfi_sections & CFI_EMIT_eh_frame_compact) != 0)
     {
       struct cfi_escape_data *head, **tail, *e;
       int num_ops = 0;
@@ -1543,7 +1562,7 @@ dot_cfi_inline_lsda (int ignored ATTRIBUTE_UNUSED)
   if (last_fde->eh_header_type == EH_COMPACT_HAS_LSDA)
     output_compact_unwind_data (last_fde, align);
 
-  last_fde = NULL;
+  cfi_set_last_fde (NULL);
 
   return;
 }
@@ -2288,7 +2307,6 @@ cfi_finish (void)
   if (all_fde_data == 0)
     return;
 
-  cfi_sections_set = true;
   if ((all_cfi_sections & CFI_EMIT_eh_frame) != 0
       || (all_cfi_sections & CFI_EMIT_eh_frame_compact) != 0)
     {
@@ -2475,7 +2493,27 @@ cfi_finish (void)
       flag_traditional_format = save_flag_traditional_format;
     }
 
-  cfi_sections_set = true;
+  /* Generate SFrame section if the user specifies:
+	- the command line option to gas, or
+	- .sframe in the .cfi_sections directive.  */
+  if (flag_gen_sframe || (all_cfi_sections & CFI_EMIT_sframe) != 0)
+    {
+      if (support_sframe_p ())
+	{
+	  segT sframe_seg;
+	  int alignment = ffs (DWARF2_ADDR_SIZE (stdoutput)) - 1;
+
+	  if (!SUPPORT_FRAME_LINKONCE)
+	    sframe_seg = get_cfi_seg (NULL, ".sframe",
+					 (SEC_ALLOC | SEC_LOAD | SEC_DATA
+					  | DWARF2_EH_FRAME_READ_ONLY),
+					 alignment);
+	  output_sframe (sframe_seg);
+	}
+      else
+	as_bad (_(".sframe not supported for target"));
+    }
+
   if ((all_cfi_sections & CFI_EMIT_debug_frame) != 0)
     {
       int alignment = ffs (DWARF2_ADDR_SIZE (stdoutput)) - 1;
@@ -2542,6 +2580,8 @@ cfi_finish (void)
 	for (fde = all_fde_data; fde ; fde = fde->next)
 	  SET_HANDLED (fde, 0);
     }
+  if (dwcfi_hash)
+    htab_delete (dwcfi_hash);
 }
 
 #else /* TARGET_USE_CFIPOP */

@@ -6,6 +6,7 @@ source_sh ${srcdir}/emulparams/call_nop.sh
 source_sh ${srcdir}/emulparams/cet.sh
 source_sh ${srcdir}/emulparams/x86-report-relative.sh
 source_sh ${srcdir}/emulparams/x86-64-level.sh
+source_sh ${srcdir}/emulparams/x86-64-plt.sh
 source_sh ${srcdir}/emulparams/static.sh
 source_sh ${srcdir}/emulparams/dt-relr.sh
 SCRIPT_NAME=elf

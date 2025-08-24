@@ -1,5 +1,5 @@
 /* This file is listing.h
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -29,6 +29,7 @@
 #define LISTING_NOCOND    32
 #define LISTING_MACEXP    64
 #define LISTING_GENERAL  128
+#define LISTING_GINSN_SCFI  256
 
 #define LISTING_DEFAULT    (LISTING_LISTING | LISTING_HLL | LISTING_SYMBOLS)
 

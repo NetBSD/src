@@ -4266,6 +4266,7 @@
      "cmpb$pack $GRi,$GRj,$ICCi_1"
      (+ pack (GRk-null) OP_00 GRi ICCi_1 OPE2_0C GRj)
      (sequence ((QI cc))
+	       (set cc 0)
 	       (set-n cc (eq (and GRi #xff000000) (and GRj #xff000000)))
 	       (set-z cc (eq (and GRi #x00ff0000) (and GRj #x00ff0000)))
 	       (set-v cc (eq (and GRi #x0000ff00) (and GRj #x0000ff00)))

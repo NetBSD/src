@@ -1,5 +1,5 @@
 /* Lattice Mico32-specific support for 32-bit ELF
-   Copyright (C) 2008-2022 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
    Contributed by Jon Beniston <jon@beniston.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -2067,7 +2067,7 @@ lm32_elf_size_dynamic_sections (bfd *output_bfd,
       struct weak_symbol_list *list_start = NULL, *list_end = NULL;
       int rgot_weak_count = 0;
       int r32_count = 0;
-      int rgot_count = 0;
+      int rgot_count ATTRIBUTE_UNUSED = 0;
       /* Look for deleted sections.  */
       for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
 	{
