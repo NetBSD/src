@@ -1,5 +1,5 @@
 /* ldbuildid.c - Build Id support routines
-   Copyright (C) 2013-2022 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -114,7 +114,8 @@ generate_build_id (bfd *abfd,
       struct sha1_ctx ctx;
 
       sha1_init_ctx (&ctx);
-      if (!(*checksum_contents) (abfd, (sum_fn) &sha1_process_bytes, &ctx))
+      if (!(*checksum_contents) (abfd, (sum_fn) sha1_choose_process_bytes (),
+				 &ctx))
 	return false;
       sha1_finish_ctx (&ctx, id_bits);
     }

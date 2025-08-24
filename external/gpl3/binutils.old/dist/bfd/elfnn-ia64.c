@@ -1,5 +1,5 @@
 /* IA-64 support for 64-bit ELF
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -370,8 +370,9 @@ elfNN_ia64_relax_section (bfd *abfd, asection *sec,
 
   /* Nothing to do if there are no relocations or there is no need for
      the current pass.  */
-  if ((sec->flags & SEC_RELOC) == 0
-      || sec->reloc_count == 0
+  if (sec->reloc_count == 0
+      || (sec->flags & SEC_RELOC) == 0
+      || (sec->flags & SEC_HAS_CONTENTS) == 0
       || (link_info->relax_pass == 0 && sec->skip_relax_pass_0)
       || (link_info->relax_pass == 1 && sec->skip_relax_pass_1))
     return true;

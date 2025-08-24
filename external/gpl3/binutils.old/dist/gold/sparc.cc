@@ -1,6 +1,6 @@
 // sparc.cc -- sparc target support for gold.
 
-// Copyright (C) 2008-2022 Free Software Foundation, Inc.
+// Copyright (C) 2008-2024 Free Software Foundation, Inc.
 // Written by David S. Miller <davem@davemloft.net>.
 
 // This file is part of gold.
@@ -3197,7 +3197,7 @@ Target_sparc<size, big_endian>::do_finalize_sections(
 				  ? NULL
 				  : this->plt_->rel_plt());
   layout->add_target_dynamic_tags(false, this->plt_, rel_plt,
-				  this->rela_dyn_, true, true);
+				  this->rela_dyn_, true, true, false);
 
   // Emit any relocs we saved in an attempt to avoid generating COPY
   // relocs.

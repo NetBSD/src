@@ -1,5 +1,5 @@
 /* GAS interface for targets using CGEN: Cpu tools GENerator.
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -384,6 +384,8 @@ gas_cgen_parse_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 #endif
 
   /* FIXME: Need to check `want'.  */
+
+  resolve_register (&exp);
 
   switch (exp.X_op)
     {

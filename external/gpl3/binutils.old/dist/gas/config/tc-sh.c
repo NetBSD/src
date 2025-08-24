@@ -1,5 +1,5 @@
 /* tc-sh.c -- Assemble code for the Renesas / SuperH SH
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1222,6 +1222,10 @@ static char *
 get_operands (sh_opcode_info *info, char *args, sh_operand_info *operand)
 {
   char *ptr = args;
+
+  operand[0].type = 0;
+  operand[1].type = 0;
+  operand[2].type = 0;
   if (info->arg[0])
     {
       /* The pre-processor will eliminate whitespace in front of '@'
@@ -1234,9 +1238,7 @@ get_operands (sh_opcode_info *info, char *args, sh_operand_info *operand)
       if (info->arg[1])
 	{
 	  if (*ptr == ',')
-	    {
-	      ptr++;
-	    }
+	    ptr++;
 	  get_operand (&ptr, operand + 1);
 	  /* ??? Hack: psha/pshl have a varying operand number depending on
 	     the type of the first operand.  We handle this by having the
@@ -1247,27 +1249,10 @@ get_operands (sh_opcode_info *info, char *args, sh_operand_info *operand)
 	  if (info->arg[2] && operand[0].type != A_IMM)
 	    {
 	      if (*ptr == ',')
-		{
-		  ptr++;
-		}
+		ptr++;
 	      get_operand (&ptr, operand + 2);
 	    }
-	  else
-	    {
-	      operand[2].type = 0;
-	    }
 	}
-      else
-	{
-	  operand[1].type = 0;
-	  operand[2].type = 0;
-	}
-    }
-  else
-    {
-      operand[0].type = 0;
-      operand[1].type = 0;
-      operand[2].type = 0;
     }
   return ptr;
 }

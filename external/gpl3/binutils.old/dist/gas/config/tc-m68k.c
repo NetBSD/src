@@ -1,5 +1,5 @@
 /* tc-m68k.c -- Assemble for the m68k family
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -74,6 +74,7 @@ int flag_want_pic;
 static int flag_short_refs;	/* -l option.  */
 static int flag_long_jumps;	/* -S option.  */
 static int flag_keep_pcrel;	/* --pcrel option.  */
+static bool lcfix = false;
 
 #ifdef REGISTER_PREFIX_OPTIONAL
 int flag_reg_prefix_optional = REGISTER_PREFIX_OPTIONAL;
@@ -455,7 +456,6 @@ static int reverse_16_bits (int in);
 static int reverse_8_bits (int in);
 static void install_gen_operand (int mode, int val);
 static void install_operand (int mode, int val);
-static void s_bss (int);
 static void s_data1 (int);
 static void s_data2 (int);
 static void s_even (int);
@@ -862,7 +862,6 @@ const pseudo_typeS md_pseudo_table[] =
 {
   {"data1", s_data1, 0},
   {"data2", s_data2, 0},
-  {"bss", s_bss, 0},
   {"even", s_even, 0},
   {"skip", s_space, 0},
   {"proc", s_proc, 0},
@@ -4274,8 +4273,24 @@ md_assemble (char *str)
 	}
     }
 
+  bool hasnop = false;
+  char nop[4] = "nop";
+  toP = NULL;
+next:
   memset (&the_ins, '\0', sizeof (the_ins));
+
   m68k_ip (str);
+
+  if (lcfix == true && hasnop == false &&
+       (the_ins.opcode[0] & 0xf000) == 0xf000)
+    {
+      memset (&the_ins, '\0', sizeof (the_ins));
+      m68k_ip (nop);
+      hasnop = true;
+    }
+  else
+    hasnop = false;
+
   er = the_ins.error;
   if (!er)
     {
@@ -4351,6 +4366,8 @@ md_assemble (char *str)
 	  if (the_ins.reloc[m].wid == 'B')
 	    fixP->fx_signed = 1;
 	}
+      if (hasnop == true)
+	goto next;
       return;
     }
 
@@ -4449,6 +4466,8 @@ md_assemble (char *str)
 					  the_ins.reloc[m].pic_reloc));
       fixP->fx_pcrel_adjust = the_ins.reloc[m].pcrel_fix;
     }
+  if (hasnop == true)
+    goto next;
 }
 
 /* Comparison function used by qsort to rank the opcode entries by name.  */
@@ -5490,16 +5509,6 @@ static void
 s_data2 (int ignore ATTRIBUTE_UNUSED)
 {
   subseg_set (data_section, 2);
-  demand_empty_rest_of_line ();
-}
-
-static void
-s_bss (int ignore ATTRIBUTE_UNUSED)
-{
-  /* We don't support putting frags in the BSS segment, we fake it
-     by marking in_bss, then looking at s_skip for clues.  */
-
-  subseg_set (bss_section, 0);
   demand_empty_rest_of_line ();
 }
 
@@ -7467,6 +7476,8 @@ md_parse_option (int c, const char *arg)
 	;
       else if (m68k_set_cpu (arg, 0, 1))
 	;
+      else if (startswith (arg, "lcfix"))
+	lcfix = true;
       else
 	return 0;
       break;
@@ -7568,6 +7579,7 @@ md_show_usage (FILE *stream)
   fprintf (stream, _("\
 -march=<arch>		set architecture\n\
 -mcpu=<cpu>		set cpu [default %s]\n\
+-mlcfix		compatability with lc040 nop before f-line\n\
 "), default_cpu);
   for (i = 0; m68k_extensions[i].name; i++)
     fprintf (stream, _("\

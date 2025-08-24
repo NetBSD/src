@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2016/10/26 17:03:45 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2025/08/24 17:07:38 christos Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}
 
@@ -9,6 +9,7 @@ PROG=		gprof
 SRCS=		${G_gprof_OBJECTS:.o=.c}
 
 PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
+PROGDPLIBS+=	sframe	${TOP}/${BFDSUBDIR}/libsframe
 PROGDPLIBS+=	iberty	${TOP}/${BFDSUBDIR}/libiberty
 
 TEXINFO=	${G_TEXINFOS}

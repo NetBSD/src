@@ -1,5 +1,5 @@
 /* PEF support for BFD.
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -41,6 +41,7 @@
 #define bfd_pef_bfd_is_target_special_symbol        _bfd_bool_bfd_asymbol_false
 #define bfd_pef_get_lineno			    _bfd_nosymbols_get_lineno
 #define bfd_pef_find_nearest_line		    _bfd_nosymbols_find_nearest_line
+#define bfd_pef_find_nearest_line_with_alt	    _bfd_nosymbols_find_nearest_line_with_alt
 #define bfd_pef_find_line			    _bfd_nosymbols_find_line
 #define bfd_pef_find_inliner_info		    _bfd_nosymbols_find_inliner_info
 #define bfd_pef_get_symbol_version_string	    _bfd_nosymbols_get_symbol_version_string
@@ -180,7 +181,7 @@ bfd_pef_parse_traceback_table (bfd *abfd,
 
       /* Strip leading period inserted by compiler.  */
       if (namebuf[0] == '.')
-	memmove (namebuf, namebuf + 1, name.name_len + 1);
+	memmove (namebuf, namebuf + 1, name.name_len);
 
       sym->name = namebuf;
 
@@ -385,8 +386,8 @@ bfd_pef_scan_section (bfd *abfd, bfd_pef_section *section)
 {
   unsigned char buf[28];
 
-  bfd_seek (abfd, section->header_offset, SEEK_SET);
-  if (bfd_bread ((void *) buf, 28, abfd) != 28)
+  if (bfd_seek (abfd, section->header_offset, SEEK_SET) != 0
+      || bfd_read (buf, 28, abfd) != 28)
     return -1;
 
   section->name_offset = bfd_h_get_32 (abfd, buf);
@@ -567,9 +568,8 @@ bfd_pef_read_header (bfd *abfd, bfd_pef_header *header)
 {
   unsigned char buf[40];
 
-  bfd_seek (abfd, 0, SEEK_SET);
-
-  if (bfd_bread ((void *) buf, 40, abfd) != 40)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0
+      || bfd_read (buf, 40, abfd) != 40)
     return -1;
 
   header->tag1 = bfd_getb32 (buf);
@@ -750,6 +750,13 @@ bfd_pef_parse_function_stubs (bfd *abfd,
   if (ret < 0)
     goto error;
 
+  if ((loaderlen - 56) / 24 < header.imported_library_count)
+    goto error;
+
+  if ((loaderlen - 56 - header.imported_library_count * 24) / 4
+      < header.total_imported_symbol_count)
+    goto error;
+
   libraries = bfd_malloc
     (header.imported_library_count * sizeof (bfd_pef_imported_library));
   imports = bfd_malloc
@@ -757,8 +764,6 @@ bfd_pef_parse_function_stubs (bfd *abfd,
   if (libraries == NULL || imports == NULL)
     goto error;
 
-  if (loaderlen < (56 + (header.imported_library_count * 24)))
-    goto error;
   for (i = 0; i < header.imported_library_count; i++)
     {
       ret = bfd_pef_parse_imported_library
@@ -767,9 +772,6 @@ bfd_pef_parse_function_stubs (bfd *abfd,
 	goto error;
     }
 
-  if (loaderlen < (56 + (header.imported_library_count * 24)
-		   + (header.total_imported_symbol_count * 4)))
-    goto error;
   for (i = 0; i < header.total_imported_symbol_count; i++)
     {
       ret = (bfd_pef_parse_imported_symbol
@@ -1069,9 +1071,8 @@ bfd_pef_xlib_read_header (bfd *abfd, bfd_pef_xlib_header *header)
 {
   unsigned char buf[80];
 
-  bfd_seek (abfd, 0, SEEK_SET);
-
-  if (bfd_bread ((void *) buf, sizeof buf, abfd) != sizeof buf)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0
+      || bfd_read (buf, sizeof buf, abfd) != sizeof buf)
     return -1;
 
   header->tag1 = bfd_getb32 (buf);
