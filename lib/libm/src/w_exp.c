@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_exp.c,v 1.10 2007/08/20 16:01:40 drochner Exp $");
+__RCSID("$NetBSD: w_exp.c,v 1.11 2025/08/24 21:37:31 nat Exp $");
 #endif
 
 /*
@@ -27,9 +27,11 @@ __RCSID("$NetBSD: w_exp.c,v 1.10 2007/08/20 16:01:40 drochner Exp $");
 __weak_alias(exp, _exp)
 #endif
 
+#ifndef _IEEE_LIBM
 static const double
 o_threshold=  7.09782712893383973096e+02,  /* 0x40862E42, 0xFEFA39EF */
 u_threshold= -7.45133219101941108420e+02;  /* 0xc0874910, 0xD52D3051 */
+#endif
 
 double
 exp(double x)		/* wrapper exp */
