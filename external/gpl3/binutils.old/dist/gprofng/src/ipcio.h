@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -168,6 +168,8 @@ extern int ipc_single_threaded_mode;
 extern DbeThreadPool *responseThreadPool;
 extern DbeThreadPool *ipcThreadPool;
 extern int cancelRequestedChannelID;
+extern int cancellableChannelID;
+extern int error_flag;
 
 void ipc_default_log (const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 void ipc_response_log (IPCTraceLevel, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));

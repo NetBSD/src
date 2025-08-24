@@ -1,5 +1,5 @@
 /* Definitions for TI PRU assembler.
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of GAS, the GNU Assembler.
@@ -47,7 +47,8 @@ extern const char *pru_target_format (void);
 
 /* Function prototypes exported to rest of GAS.  */
 extern void md_assemble (char *op_str);
-extern void md_end (void);
+extern void pru_md_end (void);
+#define md_end pru_md_end
 extern void md_begin (void);
 
 #define tc_fix_adjustable(fixp) pru_fix_adjustable (fixp)

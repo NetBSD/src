@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -25,11 +25,11 @@
 #include <dlfcn.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/syscall.h>
 #include <signal.h>
-#include <ucontext.h>
 
 #include "gp-defs.h"
 #define _STRING_H 1  /* XXX MEZ: temporary workaround */
@@ -378,23 +378,23 @@ static void
 init_ucontexts (void)
 {
   /* initialize dummy context for "collector" frames */
-  getcontext (&expr_dummy_uc);
+  CALL_UTIL (getcontext) (&expr_dummy_uc);
   SETFUNCTIONCONTEXT (&expr_dummy_uc, NULL);
 
   /* initialize dummy context for "out-of-range" frames */
-  getcontext (&expr_out_of_range_uc);
+  CALL_UTIL (getcontext) (&expr_out_of_range_uc);
   SETFUNCTIONCONTEXT (&expr_out_of_range_uc, &__collector_hwcs_out_of_range);
 
   /* initialize dummy context for "frozen" frames */
-  getcontext (&expr_frozen_uc);
+  CALL_UTIL (getcontext) (&expr_frozen_uc);
   SETFUNCTIONCONTEXT (&expr_frozen_uc, &__collector_hwcs_frozen);
 
   /* initialize dummy context for non-program-related frames */
-  getcontext (&expr_nopc_uc);
+  CALL_UTIL (getcontext) (&expr_nopc_uc);
   SETFUNCTIONCONTEXT (&expr_nopc_uc, &__collector_not_program_related);
 
   /* initialize dummy context for lost-counts-related frames */
-  getcontext (&expr_lostcounts_uc);
+  CALL_UTIL (getcontext) (&expr_lostcounts_uc);
   SETFUNCTIONCONTEXT (&expr_lostcounts_uc, &__collector_hwc_samples_lost);
 }
 /* initialize the signal handler */
@@ -824,66 +824,90 @@ hwclogwrite0 ()
   collector_interface->writeLog ("<profdata fname=\"%s\"/>\n",
 				 module_interface.description);
   /* Record Hwcntr_packet description */
-  Hwcntr_packet *pp = NULL;
   collector_interface->writeLog ("<profpckt kind=\"%d\" uname=\"" STXT ("Hardware counter profiling data") "\">\n", HW_PCKT);
   collector_interface->writeLog ("    <field name=\"LWPID\" uname=\"" STXT ("Lightweight process id") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.lwp_id, sizeof (pp->comm.lwp_id) == 4 ? "INT32" : "INT64");
+			(int) offsetof (Hwcntr_packet, comm.lwp_id),
+			fld_sizeof (Hwcntr_packet, comm.lwp_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"THRID\" uname=\"" STXT ("Thread number") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.thr_id, sizeof (pp->comm.thr_id) == 4 ? "INT32" : "INT64");
+			(int) offsetof (Hwcntr_packet, comm.thr_id),
+			fld_sizeof (Hwcntr_packet, comm.thr_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"CPUID\" uname=\"" STXT ("CPU id") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.cpu_id, sizeof (pp->comm.cpu_id) == 4 ? "INT32" : "INT64");
+			(int) offsetof (Hwcntr_packet, comm.cpu_id),
+			fld_sizeof (Hwcntr_packet, comm.cpu_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"TSTAMP\" uname=\"" STXT ("High resolution timestamp") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.tstamp, sizeof (pp->comm.tstamp) == 4 ? "INT32" : "INT64");
+			(int) offsetof (Hwcntr_packet, comm.tstamp),
+			fld_sizeof (Hwcntr_packet, comm.tstamp) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"FRINFO\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.frinfo, sizeof (pp->comm.frinfo) == 4 ? "INT32" : "INT64");
+			(int) offsetof (Hwcntr_packet, comm.frinfo),
+			fld_sizeof (Hwcntr_packet, comm.frinfo) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"HWCTAG\" uname=\"" STXT ("Hardware counter index") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->tag, sizeof (pp->tag) == 4 ? "INT32" : "INT64");
+			(int) offsetof (Hwcntr_packet, tag),
+			fld_sizeof (Hwcntr_packet, tag) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"HWCINT\" uname=\"" STXT ("Hardware counter interval") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->interval, sizeof (pp->interval) == 4 ? "INT32" : "INT64");
+			(int) offsetof (Hwcntr_packet, interval),
+			fld_sizeof (Hwcntr_packet, interval) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("</profpckt>\n");
   if (hwcdef_has_memspace)
     {
       /* Record MHwcntr_packet description */
-      MHwcntr_packet *xpp = NULL;
       collector_interface->writeLog ("<profpckt kind=\"%d\" uname=\"" STXT ("Hardware counter profiling data") "\">\n", MHWC_PCKT);
       collector_interface->writeLog ("    <field name=\"LWPID\" uname=\"" STXT ("Lightweight process id") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->comm.lwp_id, sizeof (xpp->comm.lwp_id) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, comm.lwp_id),
+			fld_sizeof (MHwcntr_packet, comm.lwp_id) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"THRID\" uname=\"" STXT ("Thread number") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->comm.thr_id, sizeof (xpp->comm.thr_id) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, comm.thr_id),
+			fld_sizeof (MHwcntr_packet, comm.thr_id) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"CPUID\" uname=\"" STXT ("CPU id") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->comm.cpu_id, sizeof (xpp->comm.cpu_id) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, comm.cpu_id),
+			fld_sizeof (MHwcntr_packet, comm.cpu_id) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"TSTAMP\" uname=\"" STXT ("High resolution timestamp") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->comm.tstamp, sizeof (xpp->comm.tstamp) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, comm.tstamp),
+			fld_sizeof (MHwcntr_packet, comm.tstamp) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"FRINFO\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->comm.frinfo, sizeof (xpp->comm.frinfo) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, comm.frinfo),
+			fld_sizeof (MHwcntr_packet, comm.frinfo) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"HWCTAG\" uname=\"" STXT ("Hardware counter index") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->tag, sizeof (xpp->tag) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, tag),
+			fld_sizeof (MHwcntr_packet, tag) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"HWCINT\" uname=\"" STXT ("Hardware counter interval") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->interval, sizeof (xpp->interval) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, interval),
+			fld_sizeof (MHwcntr_packet, interval) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"VADDR\" uname=\"" STXT ("Virtual address (data)") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->ea_vaddr, sizeof (xpp->ea_vaddr) == 4 ? "UINT32" : "UINT64");
+			(int) offsetof (MHwcntr_packet, ea_vaddr),
+			fld_sizeof (MHwcntr_packet, ea_vaddr) == 4 ? "UINT32" : "UINT64");
       collector_interface->writeLog ("    <field name=\"PADDR\" uname=\"" STXT ("Physical address (data)") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->ea_paddr, sizeof (xpp->ea_paddr) == 4 ? "UINT32" : "UINT64");
+			(int) offsetof (MHwcntr_packet, ea_paddr),
+			fld_sizeof (MHwcntr_packet, ea_paddr) == 4 ? "UINT32" : "UINT64");
       collector_interface->writeLog ("    <field name=\"VIRTPC\" uname=\"" STXT ("Virtual address (instruction)") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->pc_vaddr, sizeof (xpp->pc_vaddr) == 4 ? "UINT32" : "UINT64");
+			(int) offsetof (MHwcntr_packet, pc_vaddr),
+			fld_sizeof (MHwcntr_packet, pc_vaddr) == 4 ? "UINT32" : "UINT64");
       collector_interface->writeLog ("    <field name=\"PHYSPC\" uname=\"" STXT ("Physical address (instruction)") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->pc_paddr, sizeof (xpp->pc_paddr) == 4 ? "UINT32" : "UINT64");
+			(int) offsetof (MHwcntr_packet, pc_paddr),
+			fld_sizeof (MHwcntr_packet, pc_paddr) == 4 ? "UINT32" : "UINT64");
       collector_interface->writeLog ("    <field name=\"EA_PAGESIZE\" uname=\"" STXT ("Page size (data)") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->ea_pagesz, sizeof (xpp->ea_pagesz) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, ea_pagesz),
+			fld_sizeof (MHwcntr_packet, ea_pagesz) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"PC_PAGESIZE\" uname=\"" STXT ("Page size (instruction)") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->pc_pagesz, sizeof (xpp->pc_pagesz) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, pc_pagesz),
+			fld_sizeof (MHwcntr_packet, pc_pagesz) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"EA_LGRP\" uname=\"" STXT ("Page locality group (data)") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->ea_lgrp, sizeof (xpp->ea_lgrp) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, ea_lgrp),
+			fld_sizeof (MHwcntr_packet, ea_lgrp) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"PC_LGRP\" uname=\"" STXT ("Page locality group (instruction)") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->pc_lgrp, sizeof (xpp->pc_lgrp) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, pc_lgrp),
+			fld_sizeof (MHwcntr_packet, pc_lgrp) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"LWP_LGRP_HOME\" uname=\"" STXT ("LWP home lgroup id") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->lgrp_lwp, sizeof (xpp->lgrp_lwp) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, lgrp_lwp),
+			fld_sizeof (MHwcntr_packet, lgrp_lwp) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"PS_LGRP_HOME\" uname=\"" STXT ("Process home lgroup id") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->lgrp_ps, sizeof (xpp->lgrp_ps) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, lgrp_ps),
+			fld_sizeof (MHwcntr_packet, lgrp_ps) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"MEM_LAT\" uname=\"" STXT ("Memory Latency Cycles") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->latency, sizeof (xpp->latency) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, latency),
+			fld_sizeof (MHwcntr_packet, latency) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("    <field name=\"MEM_SRC\" uname=\"" STXT ("Memory Data Source") "\" offset=\"%d\" type=\"%s\"/>\n",
-				     &xpp->data_source, sizeof (xpp->data_source) == 4 ? "INT32" : "INT64");
+			(int) offsetof (MHwcntr_packet, data_source),
+			fld_sizeof (MHwcntr_packet, data_source) == 4 ? "INT32" : "INT64");
       collector_interface->writeLog ("</profpckt>\n");
     }
 }

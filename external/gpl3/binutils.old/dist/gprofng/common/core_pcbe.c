@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -2597,102 +2597,95 @@ struct events_table_t
 
 static const struct events_table_t *events_table = NULL;
 
-const struct events_table_t events_fam6_mod23[] = {
+static const struct events_table_t events_fam6_mod23[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD23
   NT_END
 };
 
-const struct events_table_t events_fam6_mod28[] = {
+static const struct events_table_t events_fam6_mod28[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD28
   NT_END
 };
 
-const struct events_table_t events_fam6_mod26[] = {
+static const struct events_table_t events_fam6_mod26[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD26
   NT_END
 };
 
-const struct events_table_t events_fam6_mod46[] = {
+static const struct events_table_t events_fam6_mod46[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD26
   EVENTS_FAM6_MOD46_ONLY
   NT_END
 };
 
-const struct events_table_t events_fam6_mod37[] = {
+static const struct events_table_t events_fam6_mod37[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD37
   EVENTS_FAM6_MOD37_ALSO
   NT_END
 };
 
-const struct events_table_t events_fam6_mod47[] = {
+static const struct events_table_t events_fam6_mod47[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD37
   NT_END
 };
 
-const struct events_table_t events_fam6_mod42[] = {
+static const struct events_table_t events_fam6_mod42[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD42
   EVENTS_FAM6_MOD42_ONLY
   NT_END
 };
 
-const struct events_table_t events_fam6_mod45[] = {
+static const struct events_table_t events_fam6_mod45[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD42
   EVENTS_FAM6_MOD45_ONLY
   NT_END
 };
 
-const struct events_table_t events_fam6_mod58[] = {
+static const struct events_table_t events_fam6_mod58[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD58
   NT_END
 };
 
-const struct events_table_t events_fam6_mod62[] = {
+static const struct events_table_t events_fam6_mod62[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD58
   EVENTS_FAM6_MOD62_ONLY
   NT_END
 };
 
-const struct events_table_t events_fam6_mod60[] = {
+static const struct events_table_t events_fam6_mod60[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD60
   NT_END
 };
 
-const struct events_table_t events_fam6_mod61[] = {
+static const struct events_table_t events_fam6_mod61[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD61
   NT_END
 };
 
-const struct events_table_t events_fam6_mod78[] = {
+static const struct events_table_t events_fam6_mod78[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD78
   NT_END
 };
 
-const struct events_table_t events_fam6_unknown[] = {
+static const struct events_table_t events_fam6_unknown[] = {
   ARCH_EVENTS
   NT_END
 };
 
-const struct events_table_t events_fam_arm[] = {
-//	ARCH_EVENTS
-//    *eventnum = pevent->eventselect;
-//    *eventnum |= (pevent->unitmask << PERFCTR_UMASK_SHIFT);
-//    *eventnum |= (pevent->attrs << 16);
-//    *eventnum |= (pevent->cmask << 24);
-// eventselect, unitmask, supported_counters, name, cmask, attrs, msr_offset
-
+const struct events_table_t events_generic[] = {
 // Hardware event
 #define HWE(nm, id)     { id, 0, C_ALL, nm, PERF_TYPE_HARDWARE, 0, 0 },
   HWE("branch-instructions",    PERF_COUNT_HW_BRANCH_INSTRUCTIONS)
@@ -2741,13 +2734,20 @@ core_pcbe_init (void)
 {
   switch (cpuid_getvendor ())
     {
+    case X86_VENDOR_AMD:
+      snprintf (core_impl_name, sizeof (core_impl_name), "%s", X86_VENDORSTR_AMD);
+      events_table = events_generic;
+      num_gpc = 4;
+      num_ffc = 0;
+      total_pmc = num_gpc + num_ffc;
+      return 0;
     case ARM_CPU_IMP_ARM:
     case ARM_CPU_IMP_BRCM:
     case ARM_CPU_IMP_CAVIUM:
     case ARM_CPU_IMP_APM:
     case ARM_CPU_IMP_QCOM:
       snprintf (core_impl_name, sizeof (core_impl_name), "%s", AARCH64_VENDORSTR_ARM);
-      events_table = events_fam_arm;
+      events_table = events_generic;
       num_gpc = 4;  // MEZ: a real implementation is needed
       num_ffc = 0;
       total_pmc = num_gpc + num_ffc;
@@ -2937,6 +2937,8 @@ core_pcbe_cpuref (void)
       return
       GTXT ("See Chapter 19 of the \"Intel 64 and IA-32 Architectures Software Developer's Manual Volume 3B: System Programming Guide, Part 2\"\nOrder Number: 253669-045US, January 2013");
     }
+#else
+  return GTXT ("Unknown cpu model");
 #endif
 }
 

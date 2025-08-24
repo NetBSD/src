@@ -1,5 +1,5 @@
 /* Symbol, variable and name lookup.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -143,7 +143,7 @@ ctf_lookup_by_name_internal (ctf_dict_t *fp, ctf_dict_t *child,
   ctf_id_t ntype, ptype;
 
   if (name == NULL)
-    return (ctf_set_errno (fp, EINVAL));
+    return (ctf_set_typed_errno (fp, EINVAL));
 
   for (p = name, end = name + strlen (name); *p != '\0'; p = q)
     {
@@ -273,10 +273,7 @@ ctf_lookup_by_name_internal (ctf_dict_t *fp, ctf_dict_t *child,
 		  free (fp->ctf_tmp_typeslice);
 		  fp->ctf_tmp_typeslice = xstrndup (p, (size_t) (q - p));
 		  if (fp->ctf_tmp_typeslice == NULL)
-		    {
-		      ctf_set_errno (fp, ENOMEM);
-		      return CTF_ERR;
-		    }
+		    return ctf_set_typed_errno (fp, ENOMEM);
 		}
 
 	      if ((type = ctf_lookup_by_rawhash (fp, lp->ctl_hash,
@@ -292,7 +289,7 @@ ctf_lookup_by_name_internal (ctf_dict_t *fp, ctf_dict_t *child,
     }
 
   if (*p != '\0' || type == 0)
-    return (ctf_set_errno (fp, ECTF_SYNTAX));
+    return (ctf_set_typed_errno (fp, ECTF_SYNTAX));
 
   return type;
 
@@ -306,13 +303,13 @@ ctf_lookup_by_name_internal (ctf_dict_t *fp, ctf_dict_t *child,
       if (fp->ctf_pptrtab_typemax < fp->ctf_typemax)
 	{
 	  if (refresh_pptrtab (fp, fp->ctf_parent) < 0)
-	    return -1;			/* errno is set for us.  */
+	    return CTF_ERR;			/* errno is set for us.  */
 	}
 
       if ((ptype = ctf_lookup_by_name_internal (fp->ctf_parent, fp,
 						name)) != CTF_ERR)
 	return ptype;
-      return (ctf_set_errno (fp, ctf_errno (fp->ctf_parent)));
+      return (ctf_set_typed_errno (fp, ctf_errno (fp->ctf_parent)));
     }
 
   return CTF_ERR;
@@ -402,9 +399,15 @@ ctf_lookup_variable (ctf_dict_t *fp, const char *name)
   if (ent == NULL)
     {
       if (fp->ctf_parent != NULL)
-	return ctf_lookup_variable (fp->ctf_parent, name);
+        {
+          ctf_id_t ptype;
 
-      return (ctf_set_errno (fp, ECTF_NOTYPEDAT));
+          if ((ptype = ctf_lookup_variable (fp->ctf_parent, name)) != CTF_ERR)
+            return ptype;
+          return (ctf_set_typed_errno (fp, ctf_errno (fp->ctf_parent)));
+        }
+
+      return (ctf_set_typed_errno (fp, ECTF_NOTYPEDAT));
     }
 
   return ent->ctv_type;
@@ -626,7 +629,16 @@ ctf_lookup_symbol_idx (ctf_dict_t *fp, const char *symname)
 
  try_parent:
   if (fp->ctf_parent)
-    return ctf_lookup_symbol_idx (fp->ctf_parent, symname);
+    {
+      unsigned long psym;
+
+      if ((psym = ctf_lookup_symbol_idx (fp->ctf_parent, symname))
+          != (unsigned long) -1)
+        return psym;
+
+      ctf_set_errno (fp, ctf_errno (fp->ctf_parent));
+      return (unsigned long) -1;
+    }
   else
     {
       ctf_set_errno (fp, err);
@@ -651,14 +663,14 @@ ctf_id_t
 ctf_symbol_next (ctf_dict_t *fp, ctf_next_t **it, const char **name,
 		 int functions)
 {
-  ctf_id_t sym;
+  ctf_id_t sym = CTF_ERR;
   ctf_next_t *i = *it;
   int err;
 
   if (!i)
     {
       if ((i = ctf_next_create ()) == NULL)
-	return ctf_set_errno (fp, ENOMEM);
+	return ctf_set_typed_errno (fp, ENOMEM);
 
       i->cu.ctn_fp = fp;
       i->ctn_iter_fun = (void (*) (void)) ctf_symbol_next;
@@ -667,10 +679,10 @@ ctf_symbol_next (ctf_dict_t *fp, ctf_next_t **it, const char **name,
     }
 
   if ((void (*) (void)) ctf_symbol_next != i->ctn_iter_fun)
-    return (ctf_set_errno (fp, ECTF_NEXT_WRONGFUN));
+    return (ctf_set_typed_errno (fp, ECTF_NEXT_WRONGFUN));
 
   if (fp != i->cu.ctn_fp)
-    return (ctf_set_errno (fp, ECTF_NEXT_WRONGFP));
+    return (ctf_set_typed_errno (fp, ECTF_NEXT_WRONGFP));
 
   /* We intentionally use raw access, not ctf_lookup_by_symbol, to avoid
      incurring additional sorting cost for unsorted symtypetabs coming from the
@@ -686,7 +698,7 @@ ctf_symbol_next (ctf_dict_t *fp, ctf_next_t **it, const char **name,
       if (!dynh)
 	{
 	  ctf_next_destroy (i);
-	  return (ctf_set_errno (fp, ECTF_NEXT_END));
+	  return (ctf_set_typed_errno (fp, ECTF_NEXT_END));
 	}
 
       err = ctf_dynhash_next (dynh, &i->ctn_next, &dyn_name, &dyn_value);
@@ -695,7 +707,7 @@ ctf_symbol_next (ctf_dict_t *fp, ctf_next_t **it, const char **name,
 	{
 	  ctf_next_destroy (i);
 	  *it = NULL;
-	  return ctf_set_errno (fp, err);
+	  return ctf_set_typed_errno (fp, err);
 	}
 
       *name = dyn_name;
@@ -771,7 +783,7 @@ ctf_symbol_next (ctf_dict_t *fp, ctf_next_t **it, const char **name,
  end:
   ctf_next_destroy (i);
   *it = NULL;
-  return (ctf_set_errno (fp, ECTF_NEXT_END));
+  return (ctf_set_typed_errno (fp, ECTF_NEXT_END));
 }
 
 /* A bsearch function for function and object index names.  */
@@ -806,7 +818,7 @@ ctf_try_lookup_indexed (ctf_dict_t *fp, unsigned long symidx,
 	       "indexed symtypetab\n", symidx, symname);
 
   if (symname[0] == '\0')
-    return -1;					/* errno is set for us.  */
+    return CTF_ERR;					/* errno is set for us.  */
 
   if (is_function)
     {
@@ -820,7 +832,7 @@ ctf_try_lookup_indexed (ctf_dict_t *fp, unsigned long symidx,
 	      == NULL)
 	    {
 	      ctf_err_warn (fp, 0, 0, _("cannot sort function symidx"));
-	      return -1;				/* errno is set for us.  */
+	      return CTF_ERR;				/* errno is set for us.  */
 	    }
 	}
       symtypetab = (uint32_t *) (fp->ctf_buf + hp->cth_funcoff);
@@ -840,7 +852,7 @@ ctf_try_lookup_indexed (ctf_dict_t *fp, unsigned long symidx,
 	      == NULL)
 	    {
 	      ctf_err_warn (fp, 0, 0, _("cannot sort object symidx"));
-	      return -1;				/* errno is set for us. */
+	      return CTF_ERR;				/* errno is set for us. */
 	    }
 	}
 
@@ -863,7 +875,7 @@ ctf_try_lookup_indexed (ctf_dict_t *fp, unsigned long symidx,
 
   /* Should be impossible, but be paranoid.  */
   if ((idx - sxlate) > (ptrdiff_t) nidx)
-    return (ctf_set_errno (fp, ECTF_CORRUPT));
+    return (ctf_set_typed_errno (fp, ECTF_CORRUPT));
 
   ctf_dprintf ("Symbol %lx (%s) is of type %x\n", symidx, symname,
 	       symtypetab[*idx]);
@@ -999,7 +1011,7 @@ ctf_lookup_by_sym_or_name (ctf_dict_t *fp, unsigned long symidx,
       return ret;
     }
   else
-    return (ctf_set_errno (fp, err));
+    return (ctf_set_typed_errno (fp, err));
 }
 
 /* Given a symbol table index, return the type of the function or data object

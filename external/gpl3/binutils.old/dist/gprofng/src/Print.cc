@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -2209,14 +2209,14 @@ print_anno_file (char *name, const char *sel, const char *srcFile,
 	    {
 	      fitem = func->getDefSrc ();
 	      found = (func->line_first > 0)
-		      && strcmp (basename (srcFile),
-				 basename (fitem->get_name ())) == 0;
+		      && strcmp (get_basename (srcFile),
+				 get_basename (fitem->get_name ())) == 0;
 	    }
 	  else
 	    {
 	      Vec_loop (SourceFile*, sources, index, fitem)
 	      {
-		if (strcmp (basename (srcFile), basename (fitem->get_name ())) == 0)
+		if (strcmp (get_basename (srcFile), get_basename (fitem->get_name ())) == 0)
 		  {
 		    found = true;
 		    break;
