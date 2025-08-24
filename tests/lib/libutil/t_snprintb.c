@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.37 2024/12/31 08:56:21 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.38 2025/08/24 16:19:31 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.37 2024/12/31 08:56:21 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.38 2025/08/24 16:19:31 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -678,9 +678,10 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style bit-field, 'F' with non-exhaustive ':'
 	//
-	// A bit-field that does not match any values generates multiple commas
-	// in a row, which looks confusing. The ':' conversions should either be
-	// exhaustive, or there should be a '*' catch-all conversion.
+	// A bit-field that does not match any values generates multiple
+	// commas in a row, which looks confusing. The ':' conversions should
+	// either be exhaustive, or there should be a '*' catch-all
+	// conversion.
 	h_snprintb(
 	    "\177\020"
 	    "b\000bit0\0"
@@ -741,11 +742,10 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style bit-field, difference between '=' and ':'
 	//
-	// The ':' conversion can almost emulate the '=' conversion, without the
-	// numeric output and with a different separator.
-	//
-	// The 'f' and '=' conversions are used together, the 'F' and ':'
-	// conversions are used together, but these two groups cannot be mixed.
+	// The ':' conversion can almost emulate the '=' conversion by
+	// starting its description with '=', excluding the numeric value of
+	// the field. The 'f' and '=' conversions mix well, and so do 'F' and
+	// ':'. Other combinations don't mix well and are thus erroneous.
 	h_snprintb(
 	    "\177\020"
 	    "f\000\004field\0"
@@ -789,7 +789,7 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style bit-field default, can never match
 	//
-	// The '=' conversion are exhaustive, making the '*' redundant.
+	// The '=' conversions are exhaustive, making the '*' redundant.
 	h_snprintb(
 	    "\177\020"
 	    "f\010\002f\0"
@@ -948,7 +948,7 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style combinations, 'f' '*' '='
 	//
-	// After a catch-all '*' conversions, there must not be further '='
+	// After a catch-all '*' conversion, there must not be further '='
 	// conversions.
 	h_snprintb_val_error(
 	    "\177\020"
