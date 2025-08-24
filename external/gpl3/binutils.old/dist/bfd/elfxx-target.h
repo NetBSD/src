@@ -1,5 +1,5 @@
 /* Target definitions for NN-bit ELF
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -28,10 +28,10 @@
    one for little-endian machines.   */
 
 #ifndef bfd_elfNN_close_and_cleanup
-#define	bfd_elfNN_close_and_cleanup _bfd_elf_close_and_cleanup
+#define	bfd_elfNN_close_and_cleanup _bfd_generic_close_and_cleanup
 #endif
 #ifndef bfd_elfNN_bfd_free_cached_info
-#define bfd_elfNN_bfd_free_cached_info _bfd_free_cached_info
+#define bfd_elfNN_bfd_free_cached_info _bfd_elf_free_cached_info
 #endif
 #ifndef bfd_elfNN_get_section_contents
 #define bfd_elfNN_get_section_contents _bfd_generic_get_section_contents
@@ -51,6 +51,10 @@
 #endif
 #ifndef bfd_elfNN_find_nearest_line
 #define bfd_elfNN_find_nearest_line	_bfd_elf_find_nearest_line
+#endif
+#ifndef bfd_elfNN_find_nearest_line_with_alt
+#define bfd_elfNN_find_nearest_line_with_alt \
+  _bfd_elf_find_nearest_line_with_alt
 #endif
 #ifndef bfd_elfNN_find_line
 #define bfd_elfNN_find_line		_bfd_elf_find_line
@@ -654,11 +658,18 @@
 #ifndef elf_backend_can_make_lsda_relative_eh_frame
 #define elf_backend_can_make_lsda_relative_eh_frame	_bfd_elf_can_make_relative
 #endif
+#ifndef elf_backend_can_make_multiple_eh_frame
+#define elf_backend_can_make_multiple_eh_frame 0
+#endif
 #ifndef elf_backend_encode_eh_address
 #define elf_backend_encode_eh_address		_bfd_elf_encode_eh_address
 #endif
 #ifndef elf_backend_write_section
 #define elf_backend_write_section		NULL
+#endif
+#ifndef elf_backend_add_glibc_version_dependency
+#define elf_backend_add_glibc_version_dependency \
+  _bfd_elf_link_add_dt_relr_dependency
 #endif
 #ifndef elf_backend_elfsym_local_is_section
 #define elf_backend_elfsym_local_is_section	NULL
@@ -887,8 +898,10 @@ static const struct elf_backend_data elfNN_bed =
   elf_backend_eh_frame_address_size,
   elf_backend_can_make_relative_eh_frame,
   elf_backend_can_make_lsda_relative_eh_frame,
+  elf_backend_can_make_multiple_eh_frame,
   elf_backend_encode_eh_address,
   elf_backend_write_section,
+  elf_backend_add_glibc_version_dependency,
   elf_backend_elfsym_local_is_section,
   elf_backend_mips_irix_compat,
   elf_backend_mips_rtype_to_howto,
@@ -985,7 +998,8 @@ const bfd_target TARGET_BIG_SYM =
   /* object_flags: mask of all file flags */
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
    | DYNAMIC | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS
-   | BFD_COMPRESS_GABI | BFD_CONVERT_ELF_COMMON | BFD_USE_ELF_STT_COMMON),
+   | BFD_COMPRESS_GABI | BFD_COMPRESS_ZSTD | BFD_CONVERT_ELF_COMMON
+   | BFD_USE_ELF_STT_COMMON | BFD_NO_SECTION_HEADER),
 
   /* section_flags: mask of all section flags */
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY
@@ -1089,7 +1103,8 @@ const bfd_target TARGET_LITTLE_SYM =
   /* object_flags: mask of all file flags */
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
    | DYNAMIC | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS
-   | BFD_COMPRESS_GABI | BFD_CONVERT_ELF_COMMON | BFD_USE_ELF_STT_COMMON),
+   | BFD_COMPRESS_GABI | BFD_COMPRESS_ZSTD | BFD_CONVERT_ELF_COMMON
+   | BFD_USE_ELF_STT_COMMON | BFD_NO_SECTION_HEADER),
 
   /* section_flags: mask of all section flags */
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY

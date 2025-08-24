@@ -17,6 +17,7 @@ EXTRA_EM_FILE=s390
 IREL_IN_PLT=
 SEPARATE_GOTPLT=0
 test -z "$RELRO" && unset SEPARATE_GOTPLT
+SYMBOL_ABI_ALIGNMENT=2
 
 # Treat a host that matches the target with the possible exception of "x"
 # in the name as if it were native.

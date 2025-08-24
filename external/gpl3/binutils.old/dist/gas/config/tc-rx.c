@@ -1,5 +1,5 @@
 /* tc-rx.c -- Assembler for the Renesas RX
-   Copyright (C) 2008-2022 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -222,16 +222,6 @@ md_show_usage (FILE * stream)
 }
 
 static void
-s_bss (int ignore ATTRIBUTE_UNUSED)
-{
-  int temp;
-
-  temp = get_absolute_expression ();
-  subseg_set (bss_section, (subsegT) temp);
-  demand_empty_rest_of_line ();
-}
-
-static void
 rx_float_cons (int ignore ATTRIBUTE_UNUSED)
 {
   if (elf_flags & E_FLAG_RX_64BIT_DOUBLES)
@@ -380,9 +370,7 @@ rx_include (int ignore)
 
       if (try == NULL)
 	{
-	  int i;
-
-	  for (i = 0; i < include_dir_count; i++)
+	  for (size_t i = 0; i < include_dir_count; i++)
 	    {
 	      sprintf (path, "%s/%s", include_dirs[i], f);
 	      if ((try = fopen (path, FOPEN_RT)) != NULL)
@@ -490,7 +478,7 @@ parse_rx_section (char * name)
       else
 	type = SHT_NOBITS;
 
-      obj_elf_change_section (name, type, attr, 0, NULL, false, false);
+      obj_elf_change_section (name, type, attr, 0, NULL, false);
     }
   else /* Try not to redefine a section, especially B_1.  */
     {
@@ -505,7 +493,7 @@ parse_rx_section (char * name)
 	| ((flags & SEC_STRINGS) ? SHF_STRINGS : 0)
 	| ((flags & SEC_THREAD_LOCAL) ? SHF_TLS : 0);
 
-      obj_elf_change_section (name, type, attr, 0, NULL, false, false);
+      obj_elf_change_section (name, type, attr, 0, NULL, false);
     }
 
   bfd_set_section_alignment (now_seg, align);
@@ -652,7 +640,6 @@ const pseudo_typeS md_pseudo_table[] =
 
   /* Our "standard" pseudos. */
   { "double",   rx_float_cons,  0 },
-  { "bss",	s_bss, 		0 },
   { "3byte",	cons,		3 },
   { "int",	cons,		4 },
   { "word",	cons,		4 },

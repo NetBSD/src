@@ -1,6 +1,6 @@
 #!/bin/sh
 # genscripts.sh - generate the ld-emulation-target specific files
-# Copyright (C) 2004-2022 Free Software Foundation, Inc.
+# Copyright (C) 2004-2024 Free Software Foundation, Inc.
 #
 # This file is part of the Gnu Linker.
 #
@@ -142,12 +142,6 @@ fi
 # Include the emulation-specific parameters:
 CUSTOMIZER_SCRIPT="${srcdir}/emulparams/${EMULATION_NAME}.sh"
 source_sh ${CUSTOMIZER_SCRIPT}
-
-if test -d ldscripts; then
-  true
-else
-  mkdir ldscripts
-fi
 
 # Set some flags for the emultempl scripts.  USE_LIBPATH will
 # be set for any libpath-using emulation; NATIVE will be set for a

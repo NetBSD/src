@@ -1,5 +1,5 @@
 /* SOM object file format.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -205,7 +205,7 @@ obj_som_copyright (int unused ATTRIBUTE_UNUSED)
    which BFD does not understand.  */
 
 void
-obj_som_init_stab_section (segT seg)
+obj_som_init_stab_section (segT stab, segT stabstr)
 {
   segT saved_seg = now_seg;
   segT space;
@@ -234,8 +234,8 @@ obj_som_init_stab_section (segT seg)
      (just created above).  Also set some attributes which BFD does
      not understand.  In particular, access bits, sort keys, and load
      quadrant.  */
-  obj_set_subsection_attributes (seg, space, 0x1f, 73, 0, 0, 0, 0);
-  bfd_set_section_alignment (seg, 2);
+  obj_set_subsection_attributes (stab, space, 0x1f, 73, 0, 0, 0, 0);
+  bfd_set_section_alignment (stab, 2);
 
   /* Make some space for the first special stab entry and zero the memory.
      It contains information about the length of this file's
@@ -247,18 +247,17 @@ obj_som_init_stab_section (segT seg)
   p = frag_more (12);
   memset (p, 0, 12);
   file = as_where ((unsigned int *) NULL);
-  stroff = get_stab_string_offset (file, "$GDB_STRINGS$", false);
+  stroff = get_stab_string_offset (file, stabstr);
   know (stroff == 1);
   md_number_to_chars (p, stroff, 4);
-  seg_info (seg)->stabu.p = p;
+  seg_info (stab)->stabu.p = p;
 
   /* Set the containing space for both stab sections to be $GDB_DEBUG$
      (just created above).  Also set some attributes which BFD does
      not understand.  In particular, access bits, sort keys, and load
      quadrant.  */
-  seg = bfd_get_section_by_name (stdoutput, "$GDB_STRINGS$");
-  obj_set_subsection_attributes (seg, space, 0x1f, 72, 0, 0, 0, 0);
-  bfd_set_section_alignment (seg, 2);
+  obj_set_subsection_attributes (stabstr, space, 0x1f, 72, 0, 0, 0, 0);
+  bfd_set_section_alignment (stabstr, 2);
 
   subseg_set (saved_seg, saved_subseg);
 }

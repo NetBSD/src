@@ -1,5 +1,5 @@
 /* CTF string table management.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -170,8 +170,10 @@ ctf_str_add_ref_internal (ctf_dict_t *fp, const char *str,
 
   if (flags & CTF_STR_ADD_REF)
     {
-      if ((aref = malloc (sizeof (struct ctf_str_atom_ref))) == NULL)
+      if ((aref = malloc (sizeof (struct ctf_str_atom_ref))) == NULL) {
+	ctf_set_errno (fp, ENOMEM);
 	return NULL;
+      }
       aref->caf_ref = ref;
     }
 

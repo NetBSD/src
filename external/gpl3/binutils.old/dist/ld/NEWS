@@ -1,5 +1,80 @@
 -*- text -*-
 
+Changes in 2.42:
+
+* Add -z mark-plt/-z nomark-plt options to x86-64 ELF linker to mark PLT
+  entries with DT_X86_64_PLT, DT_X86_64_PLTSZ and DT_X86_64_PLTENT dynamic
+  tags.  Also added --enable-mark-plt configure option to mark PLT entries
+  by default.
+
+* Support Intel APX relocations.
+
+* On RISC-V, add ld target option --[no-]check-uleb128.  Should rebuild the
+  objects by binutils 2.42 and up if enabling the option and get warnings,
+  since the non-zero addend of SUB_ULEB128 shouldn't be generated from .uleb128
+  directives.
+
+* Add support for the KVX instruction set.
+
+* A new linker script sorting directive has been added: REVERSE.  This reverses
+  the order of the sorting.  It may be combined with either SORT_BY_NAME or
+  SORT_BY_INIT_PRIORITY.
+
+* Added --warn-execstack-objects to warn about executable stacks only when an
+  input object file requests one.  Also added --error-execstack and
+  --error-rxw-segments options to convert warnings about executable stacks and
+  segments into errors.
+
+  Also added --enable-error-execstack=[yes|no] and
+  --enable-error-rwx-segments=[yes|no] configure options to set the default for
+  converting warnings into errors.
+
+* On LoongArch, various linker relaxation bugs are fixed; the most notable
+  of which is BZ 30944 (incorrect .balign semantics).
+
+* On LoongArch, the LoongArch ABI v2.30 (LoongArch ELF psABI v20231219) is
+  now implemented. This includes new relocation types, and changed
+  semantics for PC-relative relocations handling the higher half of 64-bit
+  offsets.
+
+* On LoongArch, link-time TLS optimization and TLS relaxation are now
+  supported.
+
+Changes in 2.41:
+
+* The linker now accepts a command line option of --remap-inputs
+  <PATTERN>=<FILE> to relace any input file that matches <PATTERN> with
+  <FILE>.  In addition the option --remap-inputs-file=<FILE> can be used to
+  specify a file containing any number of these remapping directives.
+
+* The linker command line option --print-map-locals can be used to include
+  local symbols in a linker map.  (ELF targets only).
+
+* For most ELF based targets, if the --enable-linker-version option is used
+  then the version of the linker will be inserted as a string into the .comment
+  section.
+
+* The linker script syntax has a new command for output sections: ASCIZ "string"
+  This will insert a zero-terminated string at the current location.
+
+* Add command-line option, -z nosectionheader, to omit ELF section
+  header.
+
+Changes in 2.40:
+
+* The linker has a new command line option to suppress the generation of any
+  warning or error messages.  This can be useful when there is a need to create
+  a known non-working binary.  The option is -w or --no-warnings.
+
+* ld now supports zstd compressed debug sections.  The new option
+  --compress-debug-sections=zstd compresses debug sections with zstd.
+
+* Add --enable-default-compressed-debug-sections-algorithm={zlib,zstd}
+  that selects the default compression algorithm
+  for --enable-compressed-debug-sections.
+
+* Remove support for -z bndplt (MPX prefix instructions).
+
 Changes in 2.39:
 
 * The ELF linker will now generate a warning message if the stack is made
@@ -27,10 +102,10 @@ Changes in 2.39:
   --enable-warn-rwx-segments=no
      will make --no-warn-rwx-segments enabled by default.
      
-  --enable-defaul-execstack=no
+  --enable-default-execstack=no
      will stop the creation of an executable stack simply because an input file
      is missing a .note.GNU-stack section, even on architectures where this
-     ehaviour is the default.
+     behaviour is the default.
 
 * TYPE=<type> is now supported in an output section description to set the
   section type value.
@@ -931,7 +1006,7 @@ Changes in version 2.1:
   other utilities should work on Risc/Ultrix and Irix.
 
 
-Copyright (C) 2012-2022 Free Software Foundation, Inc.
+Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

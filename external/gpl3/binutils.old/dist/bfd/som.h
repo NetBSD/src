@@ -1,5 +1,5 @@
 /* HP PA-RISC SOM object file format:  definitions internal to BFD.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -81,7 +81,7 @@ typedef struct som_symbol
 
   /* During object file writing, the offset of the name of this symbol
      in the SOM string table.  */
-  int stringtab_offset;
+  unsigned int stringtab_offset;
 }
 som_symbol_type;
 
@@ -229,6 +229,9 @@ struct som_section_data_struct
 #define R_HPPA_END_BRTAB		R_END_BRTAB
 #define R_HPPA_BEGIN_TRY		R_BEGIN_TRY
 #define R_HPPA_END_TRY			R_END_TRY
+
+#define som_find_nearest_line_with_alt \
+  _bfd_nosymbols_find_nearest_line_with_alt
 
 /* Exported functions, mostly for use by GAS.  */
 bool bfd_som_set_section_attributes

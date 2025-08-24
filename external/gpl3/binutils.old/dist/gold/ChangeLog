@@ -1,3 +1,73 @@
+2024-01-15  Nick Clifton  <nickc@redhat.com>
+
+	* po/gold.pot: Regenerate.
+
+2024-01-15  Nick Clifton  <nickc@redhat.com>
+
+	* 2.42 branch point.
+
+2023-11-17  YunQiang Su  <yunqiang.su@cipunited.com>
+
+	* configure.tgt (mips targets): Set targ_extra_size=64.
+
+2023-11-15  Arsen Arsenović  <arsen@aarsen.me>
+
+	* aclocal.m4: Regenerate.
+	* configure: Regenerate.
+	* po/Make-in ($(srcdir)/$(PACKAGE).pot): Output to a .pot
+	temporary file, to suppress xgettext checking charset names.
+
+2023-11-10  YunQiang Su  <yunqiang.su@cipunited.com>
+
+	* configure.tgt (mips targets): Set targ_machine to EM_MIPS for
+	little endian mips targets.
+
+2023-09-05  Roland McGrath  <mcgrathr@google.com>
+
+	The std::basic_string template type is only specified for
+	instantiations using character types.  Newer (LLVM) libc++
+	implementations no longer allow non-character integer types
+	to be used.
+	* output.cc: Include <uchar.h>.
+	(Output_section::add_merge_input_section): Use char16_t and
+	char32_t for 2- and 4-byte entry size, respectively.
+	* stringpool.cc: Include <uchar.h>.
+	(Stringpool_template): Explicitly instantiate for char16_t,
+	char32_t instead of uint16_t, uint32_t.
+	* merge.cc (Output_merge_string): Likewise.
+
+2023-07-03  Nick Clifton  <nickc@redhat.com>
+
+	* po/gold.pot: Regenerate.
+
+2023-07-03  Nick Clifton  <nickc@redhat.com>
+
+	2.41 Branch Point.
+
+2023-06-28  Nick Clifton  <nickc@redhat.com>
+
+	* po/fr.po: Updated French translation.
+
+2023-03-27  Nick Clifton  <nickc@redhat.com>
+
+	PR 30187
+	* options.h (class General_options): Add enable-linker-version.
+	* layout.cc (Layout::create_gold_note): If linker-version is
+	enabled put the version string into the .comment section.
+
+2023-01-03  Nick Clifton  <nickc@redhat.com>
+
+	* po/ro.po: Updated Romainian translation.
+	* po/uk.po: Updated Ukrainian translation.
+
+2022-12-31  Nick Clifton  <nickc@redhat.com>
+
+	* 2.40 branch created.
+
+2022-12-19  Nick Clifton  <nickc@redhat.com>
+
+	* po/ro.po: New file: Romainian translation.
+
 2022-07-08  Nick Clifton  <nickc@redhat.com>
 
 	* 2.39 branch created.
@@ -231,7 +301,7 @@
 
 For older changes see ChangeLog-2020
 
-Copyright (C) 2021-2022 Free Software Foundation, Inc.
+Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
