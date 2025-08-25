@@ -1,5 +1,5 @@
 /* tc-vax.c - vax-specific -
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -279,7 +279,7 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
 {
   valueT value = * valueP;
 
-  if (fixP->fx_subsy != (symbolS *) NULL)
+  if (fixP->fx_subsy != NULL)
     as_bad_subtract (fixP);
 
   if (fixP->fx_pcrel)
@@ -356,8 +356,7 @@ bignum_copy (LITTLENUM_TYPE *in,
       LITTLENUM_TYPE *p;	/* -> most significant (non-zero) input
 				      littlenum.  */
 
-      memcpy ((void *) out, (void *) in,
-	      (unsigned int) out_length << LITTLENUM_SHIFT);
+      memcpy (out, in, (unsigned int) out_length << LITTLENUM_SHIFT);
       for (p = in + in_length - 1; p >= in; --p)
 	{
 	  if (*p)
@@ -370,11 +369,10 @@ bignum_copy (LITTLENUM_TYPE *in,
     }
   else
     {
-      memcpy ((char *) out, (char *) in,
-	      (unsigned int) in_length << LITTLENUM_SHIFT);
+      memcpy (out, in, (unsigned int) in_length << LITTLENUM_SHIFT);
 
       if (out_length > in_length)
-	memset ((char *) (out + in_length), '\0',
+	memset (out + in_length, 0,
 		(unsigned int) (out_length - in_length) << LITTLENUM_SHIFT);
 
       significant_littlenums_dropped = 0;
@@ -1048,10 +1046,6 @@ vax_reg_parse (char c1, char c2, char c3, char c4)
   c2 = c3;
   c3 = c4;
 #endif
-#ifdef OBJ_VMS
-  if (c4 != 0)		/* Register prefixes are not allowed under VMS.  */
-    return retval;
-#endif
 #ifdef OBJ_AOUT
   if (c1 == '%')	/* Register prefixes are optional under a.out.  */
     {
@@ -1384,13 +1378,13 @@ vip_op (char *optext, struct vop *vopP)
 
   p = optext;
 
-  if (*p == ' ')		/* Expect all whitespace reduced to ' '.  */
+  if (is_whitespace (*p))
     p++;			/* skip over whitespace */
 
   if ((at = INDIRECTP (*p)) != 0)
     {				/* 1 if *p=='@'(or '*' for Un*x) */
       p++;			/* at is determined */
-      if (*p == ' ')		/* Expect all whitespace reduced to ' '.  */
+      if (is_whitespace (*p))
 	p++;			/* skip over whitespace */
     }
 
@@ -1408,7 +1402,7 @@ vip_op (char *optext, struct vop *vopP)
       len = ' ';		/* Len is determined.  */
   }
 
-  if (*p == ' ')		/* Expect all whitespace reduced to ' '.  */
+  if (is_whitespace (*p))
     p++;
 
   if ((hash = IMMEDIATEP (*p)) != 0)	/* 1 if *p=='#' ('$' for Un*x) */
@@ -1424,7 +1418,7 @@ vip_op (char *optext, struct vop *vopP)
     ;
   q--;				/* Now q points at last char of text.  */
 
-  if (*q == ' ' && q >= p)	/* Expect all whitespace reduced to ' '.  */
+  if (is_whitespace (*q) && q >= p)
     q--;
 
   /* Reverse over whitespace, but don't.  */
@@ -1474,7 +1468,7 @@ vip_op (char *optext, struct vop *vopP)
      Otherwise ndx == -1 if there was no "[...]".
      Otherwise, ndx is index register number, and q points before "[...]".  */
 
-  if (*q == ' ' && q >= p)	/* Expect all whitespace reduced to ' '.  */
+  if (is_whitespace (*q) && q >= p)
     q--;
   /* Reverse over whitespace, but don't.  */
   /* Run back over *p.  */
@@ -1560,7 +1554,7 @@ vip_op (char *optext, struct vop *vopP)
 	     We remember to save q, in case we didn't want "Rn" anyway.  */
 	  if (!paren)
 	    {
-	      if (*q == ' ' && q >= p)	/* Expect all whitespace reduced to ' '.  */
+	      if (is_whitespace (*q) && q >= p)
 		q--;
 	      /* Reverse over whitespace, but don't.  */
 	      /* Run back over *p.  */
@@ -1966,11 +1960,11 @@ vip (struct vit *vitP,		/* We build an exploded instruction here.  */
   /* Op-code of this instruction.  */
   vax_opcodeT oc;
 
-  if (*instring == ' ')
+  if (is_whitespace (*instring))
     ++instring;
 
   /* MUST end in end-of-string or exactly 1 space.  */
-  for (p = instring; *p && *p != ' '; p++)
+  for (p = instring; *p && !is_whitespace (*p); p++)
     ;
 
   /* Scanned up to end of operation-code.  */
@@ -1988,7 +1982,7 @@ vip (struct vit *vitP,		/* We build an exploded instruction here.  */
       /* Here with instring pointing to what better be an op-name, and p
          pointing to character just past that.
          We trust instring points to an op-name, with no whitespace.  */
-      vwP = (struct vot_wot *) str_hash_find (op_hash, instring);
+      vwP = str_hash_find (op_hash, instring);
       /* Restore char after op-code.  */
       *p = c;
       if (vwP == 0)
@@ -2045,7 +2039,7 @@ vip (struct vit *vitP,		/* We build an exploded instruction here.  */
 	    }
 	  if (!*alloperr)
 	    {
-	      if (*instring == ' ')
+	      if (is_whitespace (*instring))
 		instring++;
 	      if (*instring)
 		alloperr = _("Too many operands");
@@ -2295,22 +2289,19 @@ md_create_long_jump (char *ptr,
   md_number_to_chars (ptr, offset, 4);
 }
 
-#ifdef OBJ_VMS
-const char *md_shortopts = "d:STt:V+1h:Hv::";
-#elif defined(OBJ_ELF)
-const char *md_shortopts = "d:STt:VkKQ:";
+#ifdef OBJ_ELF
+const char md_shortopts[] = "d:STt:VkQ:";
 #else
-const char *md_shortopts = "d:STt:V";
+const char md_shortopts[] = "d:STt:V";
 #endif
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
 #ifdef OBJ_ELF
-#define OPTION_PIC (OPTION_MD_BASE)
-  { "pic", no_argument, NULL, OPTION_PIC },
+  { "pic", no_argument, NULL, 'k' },
 #endif
   { NULL, no_argument, NULL, 0 }
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (int c, const char *arg)
@@ -2337,40 +2328,7 @@ md_parse_option (int c, const char *arg)
       as_warn (_("I don't use an interpass file! -V ignored"));
       break;
 
-#ifdef OBJ_VMS
-    case '+':			/* For g++.  Hash any name > 31 chars long.  */
-      flag_hash_long_names = 1;
-      break;
-
-    case '1':			/* For backward compatibility.  */
-      flag_one = 1;
-      break;
-
-    case 'H':			/* Show new symbol after hash truncation.  */
-      flag_show_after_trunc = 1;
-      break;
-
-    case 'h':			/* No hashing of mixed-case names.  */
-      {
-	extern char vms_name_mapping;
-	vms_name_mapping = atoi (arg);
-	flag_no_hash_mixed_case = 1;
-      }
-      break;
-
-    case 'v':
-      {
-	extern char *compiler_version_string;
-
-	if (!arg || !*arg || access (arg, 0) == 0)
-	  return 0;		/* Have caller show the assembler version.  */
-	compiler_version_string = arg;
-      }
-      break;
-#endif
-
 #ifdef OBJ_ELF
-    case OPTION_PIC:
     case 'k':
       flag_want_pic = 1;
       break;			/* -pic, Position Independent Code.  */
@@ -2399,15 +2357,11 @@ VAX options:\n\
 -t FILE			ignored\n\
 -T			ignored\n\
 -V			ignored\n"));
-#ifdef OBJ_VMS
+#ifdef OBJ_ELF
   fprintf (stream, _("\
-VMS options:\n\
--+			hash encode names longer than 31 characters\n\
--1			`const' handling compatible with gcc 1.x\n\
--H			show new symbol after hash truncation\n\
--h NUM			don't hash mixed-case names, and adjust case:\n\
-			0 = upper, 2 = lower, 3 = preserve case\n\
--v\"VERSION\"		code being assembled was produced by compiler \"VERSION\"\n"));
+ELF options:\n\
+-k -pic			enable PIC mode\n\
+-Q[y|n]			ignored\n"));
 #endif
 }
 
@@ -2491,8 +2445,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 #undef F
 #undef MAP
 
-  reloc = XNEW (arelent);
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 #ifndef OBJ_ELF
@@ -3447,7 +3401,7 @@ vax_cons (expressionS *exp, int size)
 	      char *end = ++input_line_pointer;
 	      int npar = 0;
 
-	      while (! is_end_of_line[(c = *end)])
+	      while (! is_end_of_stmt (c = *end))
 		{
 		  if (c == '(')
 	  	    npar++;
@@ -3478,7 +3432,7 @@ vax_cons (expressionS *exp, int size)
 		      input_line_pointer++;
 		      SKIP_WHITESPACE ();
 		      c = *input_line_pointer;
-		      if (! is_end_of_line[c] && c != ',')
+		      if (! is_end_of_stmt (c) && c != ',')
 			as_bad (_("Illegal operands: garbage after %%r_%s%d()"),
 			        vax_cons_special_reloc, size * 8);
 		    }
@@ -3537,7 +3491,7 @@ vax_cons_fix_new (fragS *frag, int where, unsigned int nbytes, expressionS *exp,
       break;
     }
 
-  fix_new_exp (frag, where, (int) nbytes, exp, pcrel, r);
+  fix_new_exp (frag, where, nbytes, exp, 0, r);
 }
 
 const char *

@@ -1,6 +1,6 @@
 # config.bfd
 #
-#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,7 +48,6 @@ targ_underscore=no
 
 # Catch obsolete configurations.
 case $targ in
- *-*-beos* | \
  null)
     if test "x$enable_obsolete" != xyes; then
       echo "*** Configuration $targ is obsolete." >&2
@@ -79,6 +78,7 @@ case $targ in
     # Not obsolete
     ;;
  *-adobe-* | \
+ *-*-beos* | \
  *-go32-rtems* | \
  *-sony-* | \
  *-tandem-* | \
@@ -151,6 +151,7 @@ case $targ in
  mips*-sgi-* | \
  mips*el-*-rtems* | \
  m32c-*-rtems* | \
+ nios2*-*-* | \
  ns32k-*-netbsd* | \
  openrisc-*-* | \
  or32-*-* | \
@@ -204,7 +205,6 @@ m68*)		 targ_archs=bfd_m68k_arch ;;
 microblaze*)	 targ_archs=bfd_microblaze_arch ;;
 mips*)		 targ_archs=bfd_mips_arch ;;
 nds32*)		 targ_archs=bfd_nds32_arch ;;
-nios2*)          targ_archs=bfd_nios2_arch ;;
 or1k*|or1knd*)	 targ_archs=bfd_or1k_arch ;;
 pdp11*)		 targ_archs=bfd_pdp11_arch ;;
 pj*)		 targ_archs="bfd_pj_arch bfd_i386_arch";;
@@ -975,7 +975,6 @@ case "${targ}" in
   mips64*el-*-linux*-gnuabi64)
     targ_defvec=mips_elf64_trad_le_vec
     targ_selvecs="mips_elf64_trad_be_vec mips_elf32_ntrad_le_vec mips_elf32_ntrad_be_vec mips_elf32_trad_le_vec mips_elf32_trad_be_vec"
-    want64=true
     ;;
   mips64*el-*-linux*)
     targ_defvec=mips_elf32_ntrad_le_vec
@@ -984,7 +983,6 @@ case "${targ}" in
   mips64*-*-linux*-gnuabi64)
     targ_defvec=mips_elf64_trad_be_vec
     targ_selvecs="mips_elf64_trad_le_vec mips_elf32_ntrad_be_vec mips_elf32_ntrad_le_vec mips_elf32_trad_be_vec mips_elf32_trad_le_vec"
-    want64=true
     ;;
   mips64*-*-linux*)
     targ_defvec=mips_elf32_ntrad_be_vec
@@ -1084,21 +1082,6 @@ case "${targ}" in
   ns32k-*-lites* | ns32k-*-*bsd*)
     targ_defvec=ns32k_aout_pc532nbsd_vec
     targ_underscore=yes
-    ;;
-
-  nios2eb-*-*)
-    targ_defvec=nios2_elf32_be_vec
-    targ_selvecs=nios2_elf32_le_vec
-    ;;
-
-  nios2el-*-*)
-    targ_defvec=nios2_elf32_le_vec
-    targ_selvecs=nios2_elf32_be_vec
-    ;;
-
-  nios2-*-*)
-    targ_defvec=nios2_elf32_le_vec
-    targ_selvecs=nios2_elf32_be_vec
     ;;
 
   or1k-*-elf | or1k-*-linux* | or1k-*-rtems* | or1k*-*-netbsd*)

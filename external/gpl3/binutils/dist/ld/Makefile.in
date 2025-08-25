@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -126,7 +126,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
 	$(top_srcdir)/../config/lib-ld.m4 \
 	$(top_srcdir)/../config/lib-link.m4 \
 	$(top_srcdir)/../config/lib-prefix.m4 \
-	$(top_srcdir)/../config/nls.m4 \
+	$(top_srcdir)/../config/mmap.m4 $(top_srcdir)/../config/nls.m4 \
 	$(top_srcdir)/../config/override.m4 \
 	$(top_srcdir)/../config/pkg.m4 \
 	$(top_srcdir)/../config/plugins.m4 \
@@ -850,8 +850,6 @@ ALL_EMULATION_SOURCES = \
 	ends32elf.c \
 	ends32elf16m.c \
 	ends32elf_linux.c \
-	enios2elf.c \
-	enios2linux.c \
 	ens32knbsd.c \
 	epc532macha.c \
 	epdp11.c \
@@ -1044,7 +1042,7 @@ ld_new_SOURCES = ldgram.y ldlex-wrapper.c lexsup.c ldlang.c mri.c ldctor.c ldmai
 	ldbuildid.c
 
 ld_new_DEPENDENCIES = $(EMULATION_OFILES) $(EMUL_EXTRA_OFILES) \
-		      $(BFDLIB) $(LIBCTF) $(LIBIBERTY) $(LIBINTL_DEP) $(JANSSON_LIBS)
+		      $(BFDLIB) $(LIBCTF) $(LIBIBERTY) $(LIBINTL_DEP)
 
 ld_new_LDADD = $(EMULATION_OFILES) $(EMUL_EXTRA_OFILES) $(BFDLIB) $(LIBCTF) \
 	       $(LIBIBERTY) $(LIBINTL) $(ZLIB) $(ZSTD_LIBS) $(JANSSON_LIBS)
@@ -1561,8 +1559,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ends32elf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ends32elf16m.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ends32elf_linux.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/enios2elf.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/enios2linux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ens32knbsd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/epc532macha.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/epdp11.Po@am__quote@

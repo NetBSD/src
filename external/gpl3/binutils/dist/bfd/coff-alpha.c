@@ -1,5 +1,5 @@
 /* BFD back-end for ALPHA Extended-Coff files.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
    Modified from coff-mips.c by Steve Chamberlain <sac@cygnus.com> and
    Ian Lance Taylor <ian@cygnus.com>.
 
@@ -517,8 +517,7 @@ alpha_ecoff_swap_reloc_in (bfd *abfd,
 	 value is not actually a symbol index, but is instead a
 	 special code.  We put the code in the r_size field, and
 	 clobber the symndx.  */
-      if (intern->r_size != 0)
-	abort ();
+      BFD_ASSERT (intern->r_size == 0);
       intern->r_size = intern->r_symndx;
       intern->r_symndx = RELOC_SECTION_NONE;
     }
@@ -526,11 +525,15 @@ alpha_ecoff_swap_reloc_in (bfd *abfd,
     {
       /* The IGNORE reloc generally follows a GPDISP reloc, and is
 	 against the .lita section.  The section is irrelevant.  */
-      if (! intern->r_extern &&
-	  intern->r_symndx == RELOC_SECTION_ABS)
-	abort ();
+      BFD_ASSERT (intern->r_extern || intern->r_symndx != RELOC_SECTION_ABS);
       if (! intern->r_extern && intern->r_symndx == RELOC_SECTION_LITA)
 	intern->r_symndx = RELOC_SECTION_ABS;
+    }
+  else if (intern->r_type == ALPHA_R_OP_STORE)
+    {
+      /* Size of 64 bits is encoded as 0 in this 6-bit field.  */
+      if (intern->r_size == 0)
+	intern->r_size = 64;
     }
 }
 
@@ -666,7 +669,7 @@ alpha_adjust_reloc_in (bfd *abfd,
 	 some reason the address of this reloc type is not adjusted by
 	 the section vma.  We record the gp value for this object file
 	 here, for convenience when doing the GPDISP relocation.  */
-      rptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+      rptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
       rptr->address = intern->r_vaddr;
       rptr->addend = ecoff_data (abfd)->gp;
       break;
@@ -713,6 +716,50 @@ alpha_adjust_reloc_out (bfd *abfd ATTRIBUTE_UNUSED,
     default:
       break;
     }
+}
+
+/* Write VAL to a little-endian bitfield specified by BITOFFSET and
+   BITSIZE at CONTENTS + SECOFFSET.  Verify that these parameter are
+   valid for SEC in ABFD.  */
+
+static bool
+write_bit_field (bfd *abfd, asection *sec,
+		 bfd_byte *contents, bfd_size_type secoffset,
+		 unsigned int bitoffset, unsigned int bitsize, uint64_t val)
+{
+  if (bitsize == 0)
+    return true;
+
+  bfd_size_type secsize = bfd_get_section_limit_octets (abfd, sec);
+  unsigned int startbyte = bitoffset >> 3;
+  unsigned int endbyte = (bitoffset + bitsize - 1) >> 3;
+
+  if (secoffset > secsize || secsize - secoffset <= endbyte)
+    return false;
+
+  unsigned int startbit = bitoffset & 7;
+  unsigned int endbit = (bitoffset + bitsize - 1) & 7;
+  unsigned int mask = -1u << startbit;
+  unsigned char *p = contents + secoffset;
+  if (startbyte != endbyte)
+    {
+      p[startbyte] = (p[startbyte] & ~mask) | ((val << startbit) & mask);
+      val = val >> (8 - startbit);
+
+      for (unsigned int off = startbyte + 1; off < endbyte; ++off)
+	{
+	  p[off] = val;
+	  val >>= 8;
+	}
+      mask = ~(-1u << (1 + endbit));
+    }
+  else
+    {
+      val = val << startbit;
+      mask = mask & ~(-1u << (1 + endbit));
+    }
+  p[endbyte] = (p[endbyte] & ~mask) | (val & mask);
+  return true;
 }
 
 /* The size of the stack for the relocation evaluator.  */
@@ -1007,31 +1054,10 @@ alpha_ecoff_get_relocated_section_contents (bfd *abfd,
 	       into the addend field by alpha_adjust_reloc_in.  */
 	    unsigned int offset = (rel->addend >> 8) & 0xff;
 	    unsigned int size = rel->addend & 0xff;
-	    unsigned int startbyte = offset >> 3;
-	    unsigned int endbyte = (offset + size + 7) >> 3;
-	    unsigned int bytes = endbyte + 1 - startbyte;
 
-	    if (bytes <= 8
-		&& rel->address + startbyte + bytes >= rel->address
-		&& (rel->address + startbyte + bytes
-		    <= bfd_get_section_limit_octets (input_bfd, input_section)))
-	      {
-		uint64_t val = 0;
-		for (int off = bytes - 1; off >= 0; --off)
-		  val = (val << 8) | data[rel->address + startbyte + off];
-
-		offset -= startbyte << 3;
-		size -= startbyte << 3;
-		uint64_t mask = (((uint64_t) 1 << size) - 1) << offset;
-		val = (val & ~mask) | ((stack[--tos] << offset) & mask);
-
-		for (unsigned int off = 0; off < bytes; ++off)
-		  {
-		    data[rel->address + startbyte + off] = val & 0xff;
-		    val >>= 8;
-		  }
-	      }
-	    else
+	    if (!write_bit_field (input_bfd, input_section,
+				  data, rel->address,
+				  offset, size, stack[--tos]))
 	      r = bfd_reloc_outofrange;
 	  }
 	  break;
@@ -1781,33 +1807,12 @@ alpha_relocate_section (bfd *output_bfd,
 	     adjust the address of the reloc.  */
 	  if (! bfd_link_relocatable (info))
 	    {
-	      unsigned int startbyte = r_offset >> 3;
-	      unsigned int endbyte = (r_offset + r_size + 7) >> 3;
-	      unsigned int bytes = endbyte + 1 - startbyte;
-
-	      if (bytes <= 8
-		  && r_vaddr >= input_section->vma
-		  && r_vaddr - input_section->vma < input_section->size
-		  && (input_section->size - (r_vaddr - input_section->vma)
-		      >= startbyte + bytes))
-		{
-		  bfd_byte *p = contents + (r_vaddr - input_section->vma);
-		  uint64_t val = 0;
-		  for (int off = bytes - 1; off >= 0; --off)
-		    val = (val << 8) | p[startbyte + off];
-
-		  r_offset -= startbyte << 3;
-		  r_size -= startbyte << 3;
-		  uint64_t mask = (((uint64_t) 1 << r_size) - 1) << r_offset;
-		  val = (val & ~mask) | ((stack[--tos] << r_offset) & mask);
-
-		  for (unsigned int off = 0; off < bytes; ++off)
-		    {
-		      p[startbyte + off] = val & 0xff;
-		      val >>= 8;
-		    }
-		}
-	      else
+	      if (tos == 0)
+		r = bfd_reloc_notsupported;
+	      else if (!write_bit_field (input_bfd, input_section,
+					 contents,
+					 r_vaddr - input_section->vma,
+					 r_offset, r_size, stack[--tos]))
 		r = bfd_reloc_outofrange;
 	    }
 	  break;
@@ -2361,7 +2366,7 @@ static const struct ecoff_backend_data alpha_ecoff_backend_data =
     alpha_ecoff_mkobject_hook, _bfd_ecoff_styp_to_sec_flags,
     _bfd_ecoff_set_alignment_hook, _bfd_ecoff_slurp_symbol_table,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL
+    NULL, NULL, NULL,
   },
   /* Supported architecture.  */
   bfd_arch_alpha,
@@ -2441,10 +2446,6 @@ static const struct ecoff_backend_data alpha_ecoff_backend_data =
 /* So is getting relocated section contents.  */
 #define _bfd_ecoff_bfd_get_relocated_section_contents \
   alpha_ecoff_get_relocated_section_contents
-
-/* Handling file windows is generic.  */
-#define _bfd_ecoff_get_section_contents_in_window \
-  _bfd_generic_get_section_contents_in_window
 
 /* Input section flag lookup is generic.  */
 #define _bfd_ecoff_bfd_lookup_section_flags bfd_generic_lookup_section_flags

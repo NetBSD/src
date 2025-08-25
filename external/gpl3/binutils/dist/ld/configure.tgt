@@ -1,6 +1,6 @@
 # configure.tgt
 #
-#   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2013-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -708,10 +708,6 @@ nds32*le-*-linux-gnu*)	targ_emul=nds32elf_linux
 			;;
 nds32*be-*-linux-gnu*)	targ_emul=nds32belf_linux
 			;;
-nios2*-*-linux*)	targ_emul=nios2linux
-			;;
-nios2*-*-*)		targ_emul=nios2elf
-			;;
 ns32k-pc532-mach* | ns32k-pc532-ux*)  targ_emul=pc532macha
 			targ_extra_ofiles=
 			;;
@@ -1177,7 +1173,7 @@ case "${target}" in
   ;;
 
 *-*-freebsd*)
-  NATIVE_LIB_DIRS='/lib /usr/lib /usr/local/lib'
+  NATIVE_LIB_DIRS='/lib /usr/lib /usr/local/lib /usr/lib32'
   ;;
 
 hppa*64*-*-hpux11*)

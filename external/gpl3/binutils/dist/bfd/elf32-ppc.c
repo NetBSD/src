@@ -1,5 +1,5 @@
 /* PowerPC-specific support for 32-bit ELF
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1052,8 +1052,7 @@ struct ppc_elf_obj_tdata
 static bool
 ppc_elf_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct ppc_elf_obj_tdata),
-				  PPC32_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct ppc_elf_obj_tdata));
 }
 
 /* When defaulting arch/mach, decode apuinfo to find a better match.  */
@@ -2279,8 +2278,7 @@ ppc_elf_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd,
 				      ppc_elf_link_hash_newfunc,
-				      sizeof (struct ppc_elf_link_hash_entry),
-				      PPC32_ELF_DATA))
+				      sizeof (struct ppc_elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -4352,7 +4350,7 @@ ppc_elf_tls_setup (bfd *obfd, struct bfd_link_info *info)
 		      _bfd_elf_strtab_delref (elf_hash_table (info)->dynstr,
 					      opt->dynstr_index);
 		      if (!bfd_elf_link_record_dynamic_symbol (info, opt))
-			return false;
+			return NULL;
 		    }
 		  htab->tls_get_addr = opt;
 		}
@@ -4987,7 +4985,7 @@ add_stub_sym (struct plt_entry *ent,
   len3 = 0;
   if (ent->sec)
     len3 = strlen (ent->sec->name);
-  name = bfd_malloc (len1 + len2 + len3 + 9);
+  name = bfd_alloc (info->output_bfd, len1 + len2 + len3 + 9);
   if (name == NULL)
     return false;
   sprintf (name, "%08x", (unsigned) ent->addend & 0xffffffff);
@@ -5479,8 +5477,8 @@ static const unsigned char glink_eh_frame_cie[] =
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-ppc_elf_size_dynamic_sections (bfd *output_bfd,
-			       struct bfd_link_info *info)
+ppc_elf_late_size_sections (bfd *output_bfd,
+			    struct bfd_link_info *info)
 {
   struct ppc_elf_link_hash_table *htab;
   asection *s;
@@ -5488,11 +5486,12 @@ ppc_elf_size_dynamic_sections (bfd *output_bfd,
   bfd *ibfd;
 
 #ifdef DEBUG
-  fprintf (stderr, "ppc_elf_size_dynamic_sections called\n");
+  fprintf (stderr, "ppc_elf_late_size_sections called\n");
 #endif
 
   htab = ppc_elf_hash_table (info);
-  BFD_ASSERT (htab->elf.dynobj != NULL);
+  if (htab->elf.dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -5503,6 +5502,7 @@ ppc_elf_size_dynamic_sections (bfd *output_bfd,
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -5882,6 +5882,7 @@ ppc_elf_size_dynamic_sections (bfd *output_bfd,
       s->contents = bfd_zalloc (htab->elf.dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   if (htab->elf.dynamic_sections_created)
@@ -6628,26 +6629,15 @@ ppc_elf_relax_section (bfd *abfd,
     {
       /* Append sufficient NOP relocs so we can write out relocation
 	 information for the trampolines.  */
-      Elf_Internal_Shdr *rel_hdr;
-      Elf_Internal_Rela *new_relocs = bfd_malloc ((changes + isec->reloc_count)
-						  * sizeof (*new_relocs));
-      unsigned ix;
-
-      if (!new_relocs)
+      size_t old_size = isec->reloc_count * sizeof (*internal_relocs);
+      size_t extra_size = changes * sizeof (*internal_relocs);
+      internal_relocs = bfd_realloc (internal_relocs, old_size + extra_size);
+      elf_section_data (isec)->relocs = internal_relocs;
+      if (!internal_relocs)
 	goto error_return;
-      memcpy (new_relocs, internal_relocs,
-	      isec->reloc_count * sizeof (*new_relocs));
-      for (ix = changes; ix--;)
-	{
-	  irel = new_relocs + ix + isec->reloc_count;
-
-	  irel->r_info = ELF32_R_INFO (0, R_PPC_NONE);
-	}
-      if (internal_relocs != elf_section_data (isec)->relocs)
-	free (internal_relocs);
-      elf_section_data (isec)->relocs = new_relocs;
+      memset ((char *) internal_relocs + old_size, 0, extra_size);
       isec->reloc_count += changes;
-      rel_hdr = _bfd_elf_single_rel_hdr (isec);
+      Elf_Internal_Shdr *rel_hdr = _bfd_elf_single_rel_hdr (isec);
       rel_hdr->sh_size += changes * rel_hdr->sh_entsize;
     }
   else if (elf_section_data (isec)->relocs != internal_relocs)
@@ -10433,7 +10423,7 @@ ppc_elf_finish_dynamic_sections (bfd *output_bfd,
 #define elf_backend_copy_indirect_symbol	ppc_elf_copy_indirect_symbol
 #define elf_backend_adjust_dynamic_symbol	ppc_elf_adjust_dynamic_symbol
 #define elf_backend_add_symbol_hook		ppc_elf_add_symbol_hook
-#define elf_backend_size_dynamic_sections	ppc_elf_size_dynamic_sections
+#define elf_backend_late_size_sections		ppc_elf_late_size_sections
 #define elf_backend_hash_symbol			ppc_elf_hash_symbol
 #define elf_backend_finish_dynamic_symbol	ppc_elf_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_sections	ppc_elf_finish_dynamic_sections

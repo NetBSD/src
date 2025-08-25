@@ -1,5 +1,5 @@
 /* macro.c - macro support for gas
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
       sac@cygnus.com
@@ -29,10 +29,8 @@
 /* The routines in this file handle macro definition and expansion.
    They are called by gas.  */
 
-#define ISWHITE(x) ((x) == ' ' || (x) == '\t')
-
 #define ISSEP(x) \
- ((x) == ' ' || (x) == '\t' || (x) == ',' || (x) == '"' || (x) == ';' \
+ (is_whitespace (x) || (x) == ',' || (x) == '"' || (x) == ';' \
   || (x) == ')' || (x) == '(' \
   || ((flag_macro_alternate || flag_mri) && ((x) == '<' || (x) == '>')))
 
@@ -56,7 +54,7 @@ int macro_defined;
 
 /* Number of macro expansions that have been done.  */
 
-static int macro_number;
+static unsigned int macro_number;
 
 static void free_macro (macro_entry *);
 
@@ -139,8 +137,7 @@ buffer_and_nest (const char *from, const char *to, sb *ptr,
       if (! LABELS_WITHOUT_COLONS)
 	{
 	  /* Skip leading whitespace.  */
-	  while (i < ptr->len && ISWHITE (ptr->ptr[i]))
-	    i++;
+	  i = sb_skip_white (i, ptr);
 	}
 
       for (;;)
@@ -154,8 +151,7 @@ buffer_and_nest (const char *from, const char *to, sb *ptr,
 	  if (i < ptr->len && is_name_ender (ptr->ptr[i]))
 	    i++;
 	  /* Skip whitespace.  */
-	  while (i < ptr->len && ISWHITE (ptr->ptr[i]))
-	    i++;
+	  i = sb_skip_white (i, ptr);
 	  /* Check for the colon.  */
 	  if (i >= ptr->len || ptr->ptr[i] != ':')
 	    {
@@ -174,8 +170,7 @@ buffer_and_nest (const char *from, const char *to, sb *ptr,
 	}
 
       /* Skip trailing whitespace.  */
-      while (i < ptr->len && ISWHITE (ptr->ptr[i]))
-	i++;
+      i = sb_skip_white (i, ptr);
 
       if (i < ptr->len && (ptr->ptr[i] == '.'
 			   || NO_PSEUDO_DOT
@@ -220,6 +215,11 @@ buffer_and_nest (const char *from, const char *to, sb *ptr,
 		{
 		  /* Reset the string to not include the ending rune.  */
 		  ptr->len = line_start;
+
+		  /* With the ending directive consumed here, announce the
+		     line for macro-expanded listings. */
+		  if (listing & LISTING_MACEXP)
+		    listing_newline (NULL);
 		  break;
 		}
 	    }
@@ -419,9 +419,7 @@ get_any_string (size_t idx, sb *in, sb *out)
 
 	  *in_br = '\0';
 	  while (idx < in->len
-		 && (*in_br
-		     || (in->ptr[idx] != ' '
-			 && in->ptr[idx] != '\t'))
+		 && (*in_br || !is_whitespace (in->ptr[idx]))
 		 && in->ptr[idx] != ','
 		 && (in->ptr[idx] != '<'
 		     || (! flag_macro_alternate && ! flag_mri)))
@@ -668,6 +666,7 @@ define_macro (sb *in, sb *label, size_t (*get_line) (sb *))
   macro->formal_count = 0;
   macro->formals = 0;
   macro->formal_hash = str_htab_create ();
+  macro->count = 0;
 
   idx = sb_skip_white (0, in);
   if (! buffer_and_nest ("MACRO", "ENDM", &macro->sub, get_line))
@@ -797,7 +796,8 @@ sub_actual (size_t start, sb *in, sb *t, struct htab *formal_hash,
 
 static const char *
 macro_expand_body (sb *in, sb *out, formal_entry *formals,
-		   struct htab *formal_hash, const macro_entry *macro)
+		   struct htab *formal_hash, const macro_entry *macro,
+		   unsigned int instance)
 {
   sb t;
   size_t src = 0;
@@ -846,11 +846,20 @@ macro_expand_body (sb *in, sb *out, formal_entry *formals,
 	    }
 	  else if (src < in->len && in->ptr[src] == '@')
 	    {
-	      /* Sub in the macro invocation number.  */
+	      /* Sub in the total macro invocation number.  */
 
 	      char buffer[12];
 	      src++;
-	      sprintf (buffer, "%d", macro_number);
+	      sprintf (buffer, "%u", macro_number);
+	      sb_add_string (out, buffer);
+	    }
+	  else if (src < in->len && in->ptr[src] == '+')
+	    {
+	      /* Sub in the current macro invocation number.  */
+
+	      char buffer[12];
+	      src++;
+	      sprintf (buffer, "%d", instance);
 	      sb_add_string (out, buffer);
 	    }
 	  else if (src < in->len && in->ptr[src] == '&')
@@ -900,7 +909,7 @@ macro_expand_body (sb *in, sb *out, formal_entry *formals,
 	  if (! macro
 	      || src + 5 >= in->len
 	      || strncasecmp (in->ptr + src, "LOCAL", 5) != 0
-	      || ! ISWHITE (in->ptr[src + 5])
+	      || ! is_whitespace (in->ptr[src + 5])
 	      /* PR 11507: Skip keyword LOCAL if it is found inside a quoted string.  */
 	      || inquote)
 	    {
@@ -1053,9 +1062,7 @@ macro_expand (size_t idx, sb *in, macro_entry *m, sb *out)
 	  /* The Microtec assembler ignores this if followed by a white space.
 	     (Macro invocation with empty extension) */
 	  idx++;
-	  if (    idx < in->len
-		  && in->ptr[idx] != ' '
-		  && in->ptr[idx] != '\t')
+	  if (idx < in->len && !is_whitespace (in->ptr[idx]))
 	    {
 	      formal_entry *n = new_formal ();
 
@@ -1176,7 +1183,7 @@ macro_expand (size_t idx, sb *in, macro_entry *m, sb *out)
 	{
 	  if (idx < in->len && in->ptr[idx] == ',')
 	    ++idx;
-	  if (idx < in->len && ISWHITE (in->ptr[idx]))
+	  if (idx < in->len && is_whitespace (in->ptr[idx]))
 	    break;
 	}
     }
@@ -1203,7 +1210,8 @@ macro_expand (size_t idx, sb *in, macro_entry *m, sb *out)
 	    }
 	}
 
-      err = macro_expand_body (&m->sub, out, m->formals, m->formal_hash, m);
+      err = macro_expand_body (&m->sub, out, m->formals, m->formal_hash, m,
+			       m->count);
     }
 
   /* Discard any unnamed formal arguments.  */
@@ -1227,7 +1235,10 @@ macro_expand (size_t idx, sb *in, macro_entry *m, sb *out)
 
   sb_kill (&t);
   if (!err)
-    macro_number++;
+    {
+      macro_number++;
+      m->count++;
+    }
 
   return err;
 }
@@ -1350,17 +1361,12 @@ expand_irp (int irpc, size_t idx, sb *in, sb *out, size_t (*get_line) (sb *))
   if (idx >= in->len)
     {
       /* Expand once with a null string.  */
-      err = macro_expand_body (&sub, out, &f, h, 0);
+      err = macro_expand_body (&sub, out, &f, h, NULL, 0);
     }
   else
     {
       bool in_quotes = false;
-
-      if (irpc && in->ptr[idx] == '"')
-	{
-	  in_quotes = true;
-	  ++idx;
-	}
+      unsigned int instance = 0;
 
       while (idx < in->len)
 	{
@@ -1370,24 +1376,24 @@ expand_irp (int irpc, size_t idx, sb *in, sb *out, size_t (*get_line) (sb *))
 	    {
 	      if (in->ptr[idx] == '"')
 		{
-		  size_t nxt;
+		  in_quotes = ! in_quotes;
+		  ++idx;
 
-		  if (irpc)
-		    in_quotes = ! in_quotes;
-
-		  nxt = sb_skip_white (idx + 1, in);
-		  if (nxt >= in->len)
+		  if (! in_quotes)
 		    {
-		      idx = nxt;
-		      break;
+		      idx = sb_skip_white (idx, in);
+		      if (idx >= in->len)
+			break;
 		    }
+		  continue;
 		}
 	      sb_reset (&f.actual);
 	      sb_add_char (&f.actual, in->ptr[idx]);
 	      ++idx;
 	    }
 
-	  err = macro_expand_body (&sub, out, &f, h, 0);
+	  err = macro_expand_body (&sub, out, &f, h, NULL, instance);
+	  ++instance;
 	  if (err != NULL)
 	    break;
 	  if (!irpc)

@@ -1,5 +1,5 @@
 /* Motorola 68k series support for 32-bit ELF
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -977,8 +977,7 @@ elf_m68k_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      elf_m68k_link_hash_newfunc,
-				      sizeof (struct elf_m68k_link_hash_entry),
-				      M68K_ELF_DATA))
+				      sizeof (struct elf_m68k_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -2940,7 +2939,7 @@ elf_m68k_get_plt_info (bfd *output_bfd)
    It's a convenient place to determine the PLT style.  */
 
 static bool
-elf_m68k_always_size_sections (bfd *output_bfd, struct bfd_link_info *info)
+elf_m68k_early_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 {
   /* Bind input BFDs to GOTs and calculate sizes of .got and .rela.got
      sections.  */
@@ -3114,15 +3113,16 @@ elf_m68k_adjust_dynamic_symbol (struct bfd_link_info *info,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf_m68k_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				struct bfd_link_info *info)
+elf_m68k_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			     struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
   bool relocs;
 
   dynobj = elf_hash_table (info)->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -3133,6 +3133,7 @@ elf_m68k_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
   else
@@ -3223,6 +3224,7 @@ elf_m68k_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
@@ -4411,6 +4413,7 @@ bfd_m68k_elf32_create_embedded_relocs (bfd *abfd, struct bfd_link_info *info,
   relsec->contents = (bfd_byte *) bfd_alloc (abfd, amt);
   if (relsec->contents == NULL)
     goto error_return;
+  relsec->alloced = 1;
 
   p = relsec->contents;
 
@@ -4639,12 +4642,11 @@ elf_m68k_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #define bfd_elf32_bfd_final_link	bfd_elf_final_link
 
 #define elf_backend_check_relocs	elf_m68k_check_relocs
-#define elf_backend_always_size_sections \
-					elf_m68k_always_size_sections
+#define elf_backend_early_size_sections \
+					elf_m68k_early_size_sections
 #define elf_backend_adjust_dynamic_symbol \
 					elf_m68k_adjust_dynamic_symbol
-#define elf_backend_size_dynamic_sections \
-					elf_m68k_size_dynamic_sections
+#define elf_backend_late_size_sections	elf_m68k_late_size_sections
 #define elf_backend_final_write_processing	elf_m68k_final_write_processing
 #define elf_backend_init_index_section	_bfd_elf_init_1_index_section
 #define elf_backend_relocate_section	elf_m68k_relocate_section
