@@ -1,5 +1,5 @@
 /* tc-m68k.c -- Assemble for the m68k family
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1282,8 +1282,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 #undef F
 #undef MAP
 
-  reloc = XNEW (arelent);
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   if (!fixp->fx_pcrel)
@@ -1324,7 +1324,7 @@ m68k_ip (char *instring)
   LITTLENUM_TYPE *wordp;
   unsigned long ok_arch = 0;
 
-  if (*instring == ' ')
+  if (is_whitespace (*instring))
     instring++;			/* Skip leading whitespace.  */
 
   /* Scan up to end of operation-code, which MUST end in end-of-string
@@ -1332,7 +1332,7 @@ m68k_ip (char *instring)
   pdot = 0;
   for (p = instring; *p != '\0'; p++)
     {
-      if (*p == ' ')
+      if (is_whitespace (*p))
 	break;
       if (*p == '.')
 	pdot = p;
@@ -1357,7 +1357,7 @@ m68k_ip (char *instring)
 
   c = *p;
   *p = '\0';
-  opcode = (const struct m68k_incant *) str_hash_find (op_hash, instring);
+  opcode = str_hash_find (op_hash, instring);
   *p = c;
 
   if (pdot != NULL)
@@ -1375,7 +1375,7 @@ m68k_ip (char *instring)
     }
 
   /* Found a legitimate opcode, start matching operands.  */
-  while (*p == ' ')
+  while (is_whitespace (*p))
     ++p;
 
   if (opcode->m_operands == 0)
@@ -2358,7 +2358,7 @@ m68k_ip (char *instring)
 		  /* We ran out of space, so replace the end of the list
 		     with ellipsis.  */
 		  buf -= 4;
-		  while (*buf != ' ')
+		  while (is_whitespace (*buf))
 		    buf--;
 		  strcpy (buf, " ...");
 		}
@@ -4249,7 +4249,7 @@ md_assemble (char *str)
 
       for (s = str; *s != '\0'; s++)
 	{
-	  if ((*s == ' ' || *s == '\t') && ! inquote)
+	  if (is_whitespace (*s) && ! inquote)
 	    {
 	      if (infield)
 		{
@@ -4410,7 +4410,7 @@ md_assemble (char *str)
 	  fixP->fx_pcrel_adjust = the_ins.reloc[m].pcrel_fix;
 	}
       (void) frag_var (rs_machine_dependent, FRAG_VAR_SIZE, 0,
-		       (relax_substateT) (the_ins.fragb[n].fragty),
+		       the_ins.fragb[n].fragty,
 		       the_ins.fragb[n].fadd, the_ins.fragb[n].foff, to_beg_P);
     }
   gas_assert (the_ins.nfrag >= 1);
@@ -4560,7 +4560,7 @@ md_begin (void)
     {
       const char *name = m68k_opcode_aliases[i].primary;
       const char *alias = m68k_opcode_aliases[i].alias;
-      void *val = (void *) str_hash_find (op_hash, name);
+      void *val = str_hash_find (op_hash, name);
 
       if (!val)
 	as_fatal (_("Internal Error: Can't find %s in hash table"), name);
@@ -4598,7 +4598,7 @@ md_begin (void)
 	{
 	  const char *name = mri_aliases[i].primary;
 	  const char *alias = mri_aliases[i].alias;
-	  void *val = (void *) str_hash_find (op_hash, name);
+	  void *val = str_hash_find (op_hash, name);
 
 	  if (!val)
 	    as_fatal (_("Internal Error: Can't find %s in hash table"), name);
@@ -5772,7 +5772,7 @@ static void
 skip_to_comma (int arg ATTRIBUTE_UNUSED, int on ATTRIBUTE_UNUSED)
 {
   while (*input_line_pointer != ','
-	 && ! is_end_of_line[(unsigned char) *input_line_pointer])
+	 && ! is_end_of_stmt (*input_line_pointer))
     ++input_line_pointer;
 }
 
@@ -6043,7 +6043,7 @@ mri_assemble (char *str)
   char *s;
 
   /* md_assemble expects the opcode to be in lower case.  */
-  for (s = str; *s != ' ' && *s != '\0'; s++)
+  for (s = str; !is_whitespace (*s) && !is_end_of_stmt (*s); s++)
     *s = TOLOWER (*s);
 
   md_assemble (str);
@@ -6168,7 +6168,7 @@ parse_mri_control_operand (int *pcc, char **leftstart, char **leftstop,
   *leftstart = input_line_pointer;
   *leftstop = s;
   if (*leftstop > *leftstart
-      && ((*leftstop)[-1] == ' ' || (*leftstop)[-1] == '\t'))
+      && is_whitespace ((*leftstop)[-1]))
     --*leftstop;
 
   input_line_pointer = s;
@@ -6182,8 +6182,7 @@ parse_mri_control_operand (int *pcc, char **leftstart, char **leftstop,
          if d0 <eq> #FOOAND and d1 <ne> #BAROR then
                         ^^^                 ^^ */
       if ((s == input_line_pointer
-	   || *(s-1) == ' '
-	   || *(s-1) == '\t')
+	   || is_whitespace (*(s-1)))
 	  && ((strncasecmp (s, "AND", 3) == 0
 	       && (s[3] == '.' || ! is_part_of_name (s[3])))
 	      || (strncasecmp (s, "OR", 2) == 0
@@ -6194,7 +6193,7 @@ parse_mri_control_operand (int *pcc, char **leftstart, char **leftstop,
   *rightstart = input_line_pointer;
   *rightstop = s;
   if (*rightstop > *rightstart
-      && ((*rightstop)[-1] == ' ' || (*rightstop)[-1] == '\t'))
+      && is_whitespace ((*rightstop)[-1]))
     --*rightstop;
 
   input_line_pointer = s;
@@ -6418,7 +6417,7 @@ parse_mri_control_expression (char *stop, int qual, const char *truelab,
 	flab = mri_control_label ();
 
       build_mri_control_operand (qual, cc, leftstart, leftstop, rightstart,
-				 rightstop, (const char *) NULL, flab, extent);
+				 rightstop, NULL, flab, extent);
 
       input_line_pointer += 3;
       if (*input_line_pointer != '.'
@@ -6453,7 +6452,7 @@ parse_mri_control_expression (char *stop, int qual, const char *truelab,
 	tlab = mri_control_label ();
 
       build_mri_control_operand (qual, cc, leftstart, leftstop, rightstart,
-				 rightstop, tlab, (const char *) NULL, extent);
+				 rightstop, tlab, NULL, extent);
 
       input_line_pointer += 2;
       if (*input_line_pointer != '.'
@@ -6508,15 +6507,14 @@ s_mri_if (int qual)
      This is important when assembling:
        if d0 <ne> 12(a0,d0*2) then
        if d0 <ne> #CONST*20   then.  */
-  while (! (is_end_of_line[(unsigned char) *s]
+  while (! (is_end_of_stmt (*s)
             || (flag_mri
                 && *s == '*'
                 && (s == input_line_pointer
-                    || *(s-1) == ' '
-                    || *(s-1) == '\t'))))
+                    || is_whitespace (*(s-1))))))
     ++s;
   --s;
-  while (s > input_line_pointer && (*s == ' ' || *s == '\t'))
+  while (s > input_line_pointer && is_whitespace (*s))
     --s;
 
   if (s - input_line_pointer > 1
@@ -6547,7 +6545,7 @@ s_mri_if (int qual)
   if (ignore_input ())
     {
       *input_line_pointer = c;
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
       demand_empty_rest_of_line ();
       return;
@@ -6556,7 +6554,7 @@ s_mri_if (int qual)
 
   n = push_mri_control (mri_if);
 
-  parse_mri_control_expression (s - 3, qual, (const char *) NULL,
+  parse_mri_control_expression (s - 3, qual, NULL,
 				n->next, s[1] == '.' ? s[2] : '\0');
 
   if (s[1] == '.')
@@ -6566,7 +6564,7 @@ s_mri_if (int qual)
 
   if (flag_mri)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
 
@@ -6598,7 +6596,7 @@ s_mri_else (int qual)
   if (ignore_input ())
     {
       *input_line_pointer = c;
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
       demand_empty_rest_of_line ();
       return;
@@ -6627,7 +6625,7 @@ s_mri_else (int qual)
 
   if (flag_mri)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
 
@@ -6658,7 +6656,7 @@ s_mri_endi (int ignore ATTRIBUTE_UNUSED)
 
   if (flag_mri)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
 
@@ -6696,7 +6694,7 @@ s_mri_break (int extent)
 
   if (flag_mri)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
 
@@ -6734,7 +6732,7 @@ s_mri_next (int extent)
 
   if (flag_mri)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
 
@@ -6756,7 +6754,6 @@ s_mri_for (int qual)
   struct mri_control_info *n;
   char *buf;
   char *s;
-  char ex[2];
 
   /* The syntax is
        FOR.q var = init { TO | DOWNTO } end [ BY by ] DO.e
@@ -6766,7 +6763,7 @@ s_mri_for (int qual)
   varstart = input_line_pointer;
 
   /* Look for the '='.  */
-  while (! is_end_of_line[(unsigned char) *input_line_pointer]
+  while (! is_end_of_stmt (*input_line_pointer)
 	 && *input_line_pointer != '=')
     ++input_line_pointer;
   if (*input_line_pointer != '=')
@@ -6778,7 +6775,7 @@ s_mri_for (int qual)
 
   varstop = input_line_pointer;
   if (varstop > varstart
-      && (varstop[-1] == ' ' || varstop[-1] == '\t'))
+      && is_whitespace (varstop[-1]))
     --varstop;
 
   ++input_line_pointer;
@@ -6788,7 +6785,7 @@ s_mri_for (int qual)
   /* Look for TO or DOWNTO.  */
   up = 1;
   initstop = NULL;
-  while (! is_end_of_line[(unsigned char) *input_line_pointer])
+  while (! is_end_of_stmt (*input_line_pointer))
     {
       if (strncasecmp (input_line_pointer, "TO", 2) == 0
 	  && ! is_part_of_name (input_line_pointer[2]))
@@ -6814,7 +6811,7 @@ s_mri_for (int qual)
       return;
     }
   if (initstop > initstart
-      && (initstop[-1] == ' ' || initstop[-1] == '\t'))
+      && is_whitespace (initstop[-1]))
     --initstop;
 
   SKIP_WHITESPACE ();
@@ -6823,7 +6820,7 @@ s_mri_for (int qual)
   /* Look for BY or DO.  */
   by = 0;
   endstop = NULL;
-  while (! is_end_of_line[(unsigned char) *input_line_pointer])
+  while (! is_end_of_stmt (*input_line_pointer))
     {
       if (strncasecmp (input_line_pointer, "BY", 2) == 0
 	  && ! is_part_of_name (input_line_pointer[2]))
@@ -6850,7 +6847,7 @@ s_mri_for (int qual)
       return;
     }
   if (endstop > endstart
-      && (endstop[-1] == ' ' || endstop[-1] == '\t'))
+      && is_whitespace (endstop[-1]))
     --endstop;
 
   if (! by)
@@ -6865,7 +6862,7 @@ s_mri_for (int qual)
 
       /* Look for DO.  */
       bystop = NULL;
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	{
 	  if (strncasecmp (input_line_pointer, "DO", 2) == 0
 	      && (input_line_pointer[2] == '.'
@@ -6884,7 +6881,7 @@ s_mri_for (int qual)
 	  return;
 	}
       if (bystop > bystart
-	  && (bystop[-1] == ' ' || bystop[-1] == '\t'))
+	  && is_whitespace (bystop[-1]))
 	--bystop;
     }
 
@@ -6937,12 +6934,14 @@ s_mri_for (int qual)
   mri_assemble (buf);
 
   /* bcc bottom.  */
-  ex[0] = TOLOWER (extent);
-  ex[1] = '\0';
-  if (up)
-    sprintf (buf, "blt%s %s", ex, n->bottom);
-  else
-    sprintf (buf, "bgt%s %s", ex, n->bottom);
+  s = buf;
+  *s++ = 'b';
+  *s++ = up ? 'l' : 'g';
+  *s++ = 't';
+  if (extent != '\0')
+    *s++ = TOLOWER (extent);
+  *s++ = ' ';
+  strcpy (s, n->bottom);
   mri_assemble (buf);
 
   /* Put together the add or sub instruction used by ENDF.  */
@@ -6965,7 +6964,7 @@ s_mri_for (int qual)
 
   if (flag_mri)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
 
@@ -7000,7 +6999,7 @@ s_mri_endf (int ignore ATTRIBUTE_UNUSED)
 
   if (flag_mri)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
 
@@ -7018,7 +7017,7 @@ s_mri_repeat (int ignore ATTRIBUTE_UNUSED)
   colon (n->top);
   if (flag_mri)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
   demand_empty_rest_of_line ();
@@ -7041,10 +7040,10 @@ s_mri_until (int qual)
 
   colon (mri_control_stack->next);
 
-  for (s = input_line_pointer; ! is_end_of_line[(unsigned char) *s]; s++)
+  for (s = input_line_pointer; ! is_end_of_stmt (*s); s++)
     ;
 
-  parse_mri_control_expression (s, qual, (const char *) NULL,
+  parse_mri_control_expression (s, qual, NULL,
 				mri_control_stack->top, '\0');
 
   colon (mri_control_stack->bottom);
@@ -7055,7 +7054,7 @@ s_mri_until (int qual)
 
   if (flag_mri)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
 
@@ -7077,15 +7076,14 @@ s_mri_while (int qual)
      This is important when assembling:
        while d0 <ne> 12(a0,d0*2) do
        while d0 <ne> #CONST*20   do.  */
-  while (! (is_end_of_line[(unsigned char) *s]
+  while (! (is_end_of_stmt (*s)
 	    || (flag_mri
 		&& *s == '*'
 		&& (s == input_line_pointer
-		    || *(s-1) == ' '
-		    || *(s-1) == '\t'))))
+		    || is_whitespace (*(s-1))))))
     s++;
   --s;
-  while (*s == ' ' || *s == '\t')
+  while (is_whitespace (*s))
     --s;
   if (s - input_line_pointer > 1
       && s[-1] == '.')
@@ -7102,7 +7100,7 @@ s_mri_while (int qual)
 
   colon (n->next);
 
-  parse_mri_control_expression (s - 1, qual, (const char *) NULL, n->bottom,
+  parse_mri_control_expression (s - 1, qual, NULL, n->bottom,
 				s[1] == '.' ? s[2] : '\0');
 
   input_line_pointer = s + 1;
@@ -7111,7 +7109,7 @@ s_mri_while (int qual)
 
   if (flag_mri)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
 
@@ -7144,7 +7142,7 @@ s_mri_endw (int ignore ATTRIBUTE_UNUSED)
 
   if (flag_mri)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
 
@@ -7167,7 +7165,8 @@ s_m68k_cpu (int ignored ATTRIBUTE_UNUSED)
     }
 
   name = input_line_pointer;
-  while (*input_line_pointer && !ISSPACE(*input_line_pointer))
+  while (!is_end_of_stmt (*input_line_pointer)
+	 && !is_whitespace (*input_line_pointer))
     input_line_pointer++;
   saved_char = *input_line_pointer;
   *input_line_pointer = 0;
@@ -7195,8 +7194,9 @@ s_m68k_arch (int ignored ATTRIBUTE_UNUSED)
     }
 
   name = input_line_pointer;
-  while (*input_line_pointer && *input_line_pointer != ','
-	 && !ISSPACE (*input_line_pointer))
+  while (!is_end_of_stmt (*input_line_pointer)
+	 && *input_line_pointer != ','
+	 && !is_whitespace (*input_line_pointer))
     input_line_pointer++;
   saved_char = *input_line_pointer;
   *input_line_pointer = 0;
@@ -7207,11 +7207,13 @@ s_m68k_arch (int ignored ATTRIBUTE_UNUSED)
       do
 	{
 	  *input_line_pointer++ = saved_char;
-	  if (!*input_line_pointer || ISSPACE (*input_line_pointer))
+	  if (is_end_of_stmt (*input_line_pointer)
+	      || is_whitespace (*input_line_pointer))
 	    break;
 	  name = input_line_pointer;
-	  while (*input_line_pointer && *input_line_pointer != ','
-		 && !ISSPACE (*input_line_pointer))
+	  while (!is_end_of_stmt (*input_line_pointer)
+		 && *input_line_pointer != ','
+		 && !is_whitespace (*input_line_pointer))
 	    input_line_pointer++;
 	  saved_char = *input_line_pointer;
 	  *input_line_pointer = 0;
@@ -7331,7 +7333,7 @@ m68k_set_extension (char const *name, int allow_m, int silent)
 
   if (negated)
     not_current_architecture |= (ext->control_regs
-				 ? *(unsigned *)ext->control_regs: ext->arch);
+				 ? *ext->control_regs: ext->arch);
   else
     current_architecture |= ext->arch;
   return 1;
@@ -7341,9 +7343,9 @@ m68k_set_extension (char const *name, int allow_m, int silent)
    Invocation line includes a switch not recognized by the base assembler.
  */
 
-const char *md_shortopts = "lSA:m:kQ:V";
+const char md_shortopts[] = "lSA:m:kQ:V";
 
-struct option md_longopts[] = {
+const struct option md_longopts[] = {
 #define OPTION_PIC (OPTION_MD_BASE)
   {"pic", no_argument, NULL, OPTION_PIC},
 #define OPTION_REGISTER_PREFIX_OPTIONAL (OPTION_MD_BASE + 1)
@@ -7363,7 +7365,7 @@ struct option md_longopts[] = {
   {"pcrel", no_argument, NULL, OPTION_PCREL},
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (int c, const char *arg)
@@ -7665,9 +7667,9 @@ main (void)
 int
 is_label (char *str)
 {
-  while (*str == ' ')
+  while (is_whitespace (*str))
     str++;
-  while (*str && *str != ' ')
+  while (!is_end_of_stmt (*str) && !is_whitespace (*str))
     str++;
   if (str[-1] == ':' || str[1] == '=')
     return 1;
@@ -7902,7 +7904,7 @@ m68k_elf_cons (int nbytes /* 4=.long */)
 	    }
 	}
       else
-	emit_expr (&exp, (unsigned int) nbytes);
+	emit_expr (&exp, nbytes);
     }
   while (*input_line_pointer++ == ',');
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -94,6 +94,8 @@ Platform_t DbeSession::platform =
 	Sparc;
 #elif ARCH(Aarch64)
 	Aarch64;
+#elif ARCH(RISCV)
+	RISCV;
 #else   // ARCH(Intel)
 	Intel;
 #endif
@@ -1162,8 +1164,6 @@ DbeSession::open_experiment (Experiment *exp, char *path)
   closedir (exp_dir);
   exp_names->sort (dir_name_cmp);
   Experiment **t_exp_list = new Experiment *[exp_names->size ()];
-  int nsubexps = 0;
-
   for (int j = 0, jsz = exp_names->size (); j < jsz; j++)
     {
       t_exp_list[j] = NULL;
@@ -1220,7 +1220,6 @@ DbeSession::open_experiment (Experiment *exp, char *path)
 	dexp->open (dpath);
       append (dexp);
       t_exp_list[j] = dexp;
-      nsubexps++;
       dexp->set_clock (exp->clock);
 
       // DbeView add_experiment() is split into two parts
@@ -1246,7 +1245,7 @@ DbeSession::open_experiment (Experiment *exp, char *path)
     {
       if (t_exp_list[j] == NULL) continue;
       Experiment *dexp = t_exp_list[j];
-      exp_ctx *new_ctx = (exp_ctx*) malloc (sizeof (exp_ctx));
+      exp_ctx *new_ctx = (exp_ctx*) xmalloc (sizeof (exp_ctx));
       new_ctx->path = NULL;
       new_ctx->exp = dexp;
       new_ctx->ds = this;
@@ -2015,6 +2014,17 @@ DbeSession::is_omp_available ()
 	}
     }
   return status_ompavail == 1;
+}
+
+bool
+DbeSession::is_bigendian ()
+{
+#ifdef WORDS_BIGENDIAN
+  return true;
+#else
+  return false;
+#endif
+
 }
 
 bool

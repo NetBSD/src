@@ -1,5 +1,5 @@
 /* ldwrite.c -- write out the linked file
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
    Written by Steve Chamberlain sac@cygnus.com
 
    This file is part of the GNU Binutils.
@@ -57,14 +57,14 @@ build_link_order (lang_statement_union_type *statement)
 
 	link_order = bfd_new_link_order (link_info.output_bfd, output_section);
 	if (link_order == NULL)
-	  einfo (_("%F%P: bfd_new_link_order failed: %E\n"));
+	  fatal (_("%P: bfd_new_link_order failed: %E\n"));
 
 	link_order->type = bfd_data_link_order;
 	link_order->offset = statement->data_statement.output_offset;
 	link_order->u.data.contents = bfd_alloc (link_info.output_bfd,
 						 QUAD_SIZE);
 	if (link_order->u.data.contents == NULL)
-	  einfo (_("%F%P: bfd_new_link_order failed: %E\n"));
+	  fatal (_("%P: bfd_new_link_order failed: %E\n"));
 
 	value = statement->data_statement.value;
 
@@ -170,7 +170,7 @@ build_link_order (lang_statement_union_type *statement)
 
 	link_order = bfd_new_link_order (link_info.output_bfd, output_section);
 	if (link_order == NULL)
-	  einfo (_("%F%P: bfd_new_link_order failed: %E\n"));
+	  fatal (_("%P: bfd_new_link_order failed: %E\n"));
 
 	link_order->offset = rs->output_offset;
 	link_order->size = bfd_get_reloc_size (rs->howto);
@@ -178,7 +178,7 @@ build_link_order (lang_statement_union_type *statement)
 	link_order->u.reloc.p = (struct bfd_link_order_reloc *)
 	  bfd_alloc (link_info.output_bfd, sizeof (struct bfd_link_order_reloc));
 	if (link_order->u.reloc.p == NULL)
-	  einfo (_("%F%P: bfd_new_link_order failed: %E\n"));
+	  fatal (_("%P: bfd_new_link_order failed: %E\n"));
 
 	link_order->u.reloc.p->reloc = rs->reloc;
 	link_order->u.reloc.p->addend = rs->addend_value;
@@ -224,7 +224,7 @@ build_link_order (lang_statement_union_type *statement)
 	    link_order = bfd_new_link_order (link_info.output_bfd,
 					     output_section);
 	    if (link_order == NULL)
-	      einfo (_("%F%P: bfd_new_link_order failed: %E\n"));
+	      fatal (_("%P: bfd_new_link_order failed: %E\n"));
 
 	    if ((i->flags & SEC_NEVER_LOAD) != 0
 		&& (i->flags & SEC_DEBUGGING) == 0)
@@ -265,7 +265,7 @@ build_link_order (lang_statement_union_type *statement)
 	link_order = bfd_new_link_order (link_info.output_bfd,
 					 output_section);
 	if (link_order == NULL)
-	  einfo (_("%F%P: bfd_new_link_order failed: %E\n"));
+	  fatal (_("%P: bfd_new_link_order failed: %E\n"));
 	link_order->type = bfd_data_link_order;
 	link_order->size = statement->padding_statement.size;
 	link_order->offset = statement->padding_statement.output_offset;
@@ -334,8 +334,7 @@ clone_section (bfd *abfd, asection *s, const char *name, int *count)
       if (startswith (name, ".stab")
 	  || strcmp (name, "$GDB_SYMBOLS$") == 0)
 	{
-	  einfo (_ ("%F%P: cannot create split section name for %s\n"), name);
-	  /* Silence gcc warnings.  einfo exits, so we never reach here.  */
+	  fatal (_ ("%P: cannot create split section name for %s\n"), name);
 	  return NULL;
 	}
       tname[5] = 0;
@@ -346,8 +345,7 @@ clone_section (bfd *abfd, asection *s, const char *name, int *count)
       || (h = bfd_link_hash_lookup (link_info.hash,
 				    sname, true, true, false)) == NULL)
     {
-      einfo (_("%F%P: clone section failed: %E\n"));
-      /* Silence gcc warnings.  einfo exits, so we never reach here.  */
+      fatal (_("%P: clone section failed: %E\n"));
       return NULL;
     }
   free (tname);
@@ -368,7 +366,7 @@ clone_section (bfd *abfd, asection *s, const char *name, int *count)
   n->reloc_count = 0;
   n->alignment_power = s->alignment_power;
 
-  bfd_copy_private_section_data (abfd, s, abfd, n);
+  bfd_copy_private_section_data (abfd, s, abfd, n, NULL);
 
   return n;
 }
@@ -549,13 +547,9 @@ ldwrite (void)
     split_sections (link_info.output_bfd, &link_info);
   if (!bfd_final_link (link_info.output_bfd, &link_info))
     {
-      /* If there was an error recorded, print it out.  Otherwise assume
-	 an appropriate error message like unknown symbol was printed
-	 out.  */
-
       if (bfd_get_error () != bfd_error_no_error)
-	einfo (_("%F%P: final link failed: %E\n"));
+	fatal (_("%P: final link failed: %E\n"));
       else
-	xexit (1);
+	fatal (_("%P: final link failed\n"));
     }
 }

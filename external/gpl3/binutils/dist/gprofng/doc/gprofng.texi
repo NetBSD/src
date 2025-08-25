@@ -242,8 +242,8 @@ to this configuration file to a non-default location.  If this is the case,
 the user may set the @code{GPROFNG_SYSCONFDIR} environment variable to point
 to this location.
 
-Otherwise, the @command{gp-display-text}, @command{gp-display-src}, and
-@command{gp-archive} tools cannot find this file.
+Otherwise, the @command{gprofng display text}, @command{gprofng display src},
+and @command{gprofng archive} tools cannot find this file.
 
 @end table
 
@@ -264,8 +264,8 @@ The gprofng driver supports the following commands.
 @end iftex
 
 @c The man pages for the commands below can be viewed using the command name
-@c with "gprofng" replaced by "gp" and the spaces replaced by a dash ("-").
-@c For example the man page name for "gprofng collect app" is "gp-collect-app".
+@c with the spaces replaced by a dash ("-").  For example
+@c the man page name for "gprofng collect app" is "gprofng-collect-app".
 
 @i{Collect performance data:}
 
@@ -308,6 +308,11 @@ It is also possible to invoke the lower level commands directly, but since
 these are subject to change, in particular the options, we recommend to
 use the driver.
 
+The @emph{gprofng GUI} is an optional tool that provides a graphical interface
+for @code{gprofng}.  It is easy to use and supports many views into the
+performance data.  For those interested in this GUI, we
+recommend to search for @code{gprofng-gui} how to obtain, install and use it.
+
 @c man end
 @ManPageEnd{}
 
@@ -318,12 +323,12 @@ use the driver.
 @ManPageStart{SEE ALSO}
 @c man begin SEEALSO
 
-gp-archive(1),
-gp-collect-app(1),
-gp-display-gui(1),
-gp-display-html(1),
-gp-display-src(1),
-gp-display-text(1)
+gprofng-archive(1),
+gprofng-collect-app(1),
+@c -- gprofng-display-gui(1),
+gprofng-display-html(1),
+gprofng-display-src(1),
+gprofng-display-text(1)
 
 @iftex
 @vspace{1}
@@ -353,7 +358,7 @@ command @command{info gprofng} should give access to this document.
 @ManPageStart{COPYRIGHT}
 @c man begin COPYRIGHT
 
-Copyright @copyright{} 2022-2024 Free Software Foundation, Inc.
+Copyright @copyright{} 2022-2025 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3

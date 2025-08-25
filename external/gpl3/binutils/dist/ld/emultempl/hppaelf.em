@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+#   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -82,7 +82,7 @@ hppaelf_create_output_section_statements (void)
 			      bfd_get_arch (link_info.output_bfd),
 			      bfd_get_mach (link_info.output_bfd)))
     {
-      einfo (_("%F%P: can not create BFD: %E\n"));
+      fatal (_("%P: can not create BFD: %E\n"));
       return;
     }
 
@@ -314,11 +314,6 @@ EOF
 # Define some shell vars to insert bits of code into the standard elf
 # parse_args and list_options functions.
 #
-PARSE_AND_LIST_PROLOGUE='
-#define OPTION_MULTI_SUBSPACE		301
-#define OPTION_STUBGROUP_SIZE		(OPTION_MULTI_SUBSPACE + 1)
-'
-
 PARSE_AND_LIST_LONGOPTS='
   { "multi-subspace", no_argument, NULL, OPTION_MULTI_SUBSPACE },
   { "stub-group-size", required_argument, NULL, OPTION_STUBGROUP_SIZE },
@@ -351,7 +346,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	const char *end;
 	group_size = bfd_scan_vma (optarg, &end, 0);
 	if (*end)
-	  einfo (_("%F%P: invalid number `%s'\''\n"), optarg);
+	  fatal (_("%P: invalid number `%s'\''\n"), optarg);
       }
       break;
 '

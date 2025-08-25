@@ -1,5 +1,5 @@
 /* ldcref.c -- output a cross reference table
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>
 
    This file is part of the GNU Binutils.
@@ -514,7 +514,7 @@ check_local_sym_xref (lang_input_statement_type *statement)
     return;
 
   if (!bfd_generic_link_read_symbols (abfd))
-    einfo (_("%F%P: %pB: could not read symbols: %E\n"), abfd);
+    fatal (_("%P: %pB: could not read symbols: %E\n"), abfd);
 
   for (syms = bfd_get_outsymbols (abfd); *syms; ++syms)
     {
@@ -625,7 +625,7 @@ check_refs (const char *name,
      BFD might contain a prohibited cross reference.  */
 
   if (!bfd_generic_link_read_symbols (abfd))
-    einfo (_("%F%P: %pB: could not read symbols: %E\n"), abfd);
+    fatal (_("%P: %pB: could not read symbols: %E\n"), abfd);
 
   info.sym_name = name;
   info.global = global;
@@ -687,14 +687,14 @@ check_reloc_refs (bfd *abfd, asection *sec, void *iarg)
 
   relsize = bfd_get_reloc_upper_bound (abfd, sec);
   if (relsize < 0)
-    einfo (_("%F%P: %pB: could not read relocs: %E\n"), abfd);
+    fatal (_("%P: %pB: could not read relocs: %E\n"), abfd);
   if (relsize == 0)
     return;
 
   relpp = (arelent **) xmalloc (relsize);
   relcount = bfd_canonicalize_reloc (abfd, sec, relpp, info->asymbols);
   if (relcount < 0)
-    einfo (_("%F%P: %pB: could not read relocs: %E\n"), abfd);
+    fatal (_("%P: %pB: could not read relocs: %E\n"), abfd);
 
   p = relpp;
   pend = p + relcount;

@@ -1,5 +1,5 @@
 /* LoongArch opcode support.
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of the GNU opcodes library.
@@ -95,13 +95,18 @@ static int
 parse_loongarch_dis_option (const char *option)
 {
   if (strcmp (option, "no-aliases") == 0)
-    loongarch_dis_show_aliases = false;
+    {
+      loongarch_dis_show_aliases = false;
+      return 0;
+    }
 
   if (strcmp (option, "numeric") == 0)
     {
       loongarch_r_disname = loongarch_r_normal_name;
       loongarch_f_disname = loongarch_f_normal_name;
+      return 0;
     }
+
   return -1;
 }
 

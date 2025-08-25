@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -255,7 +255,7 @@ LDADD = $(BFDLIB) $(LIBIBERTY) $(LIBINTL)
 
 size_SOURCES = size.c $(BULIBS)
 
-objcopy_SOURCES = objcopy.c not-strip.c rename.c $(WRITE_DEBUG_SRCS) $(BULIBS)
+objcopy_SOURCES = not-strip.c rename.c $(WRITE_DEBUG_SRCS) $(BULIBS)
 
 strings_SOURCES = strings.c $(BULIBS)
 
@@ -265,7 +265,7 @@ readelf_LDADD   = $(LIBCTF_NOBFD) $(LIBINTL) $(LIBIBERTY) $(ZLIB) $(ZSTD_LIBS) $
 elfedit_SOURCES = elfedit.c version.c $(ELFLIBS)
 elfedit_LDADD = $(LIBINTL) $(LIBIBERTY)
 
-strip_new_SOURCES = objcopy.c is-strip.c rename.c $(WRITE_DEBUG_SRCS) $(BULIBS)
+strip_new_SOURCES = is-strip.c rename.c $(WRITE_DEBUG_SRCS) $(BULIBS)
 
 nm_new_SOURCES = nm.c demanguse.c $(BULIBS)
 
@@ -287,13 +287,13 @@ endif
 
 cxxfilt_SOURCES = cxxfilt.c $(BULIBS)
 
-ar_SOURCES = arparse.y arlex.l ar.c not-ranlib.c arsup.c rename.c binemul.c \
+ar_SOURCES = arparse.y arlex.l not-ranlib.c arsup.c rename.c binemul.c \
 	emul_$(EMULATION).c $(BULIBS)
 EXTRA_ar_SOURCES = $(CFILES)
 ar_LDADD = $(BFDLIB) $(LIBIBERTY) $(LEXLIB) $(LIBINTL)
 
-ranlib_SOURCES = ar.c is-ranlib.c arparse.y arlex.l arsup.c rename.c \
-	binemul.c emul_$(EMULATION).c $(BULIBS)
+ranlib_SOURCES = arparse.y arlex.l is-ranlib.c arsup.c rename.c binemul.c \
+	emul_$(EMULATION).c $(BULIBS)
 ranlib_LDADD = $(BFDLIB) $(LIBIBERTY) $(LEXLIB) $(LIBINTL)
 
 addr2line_SOURCES = addr2line.c $(BULIBS)

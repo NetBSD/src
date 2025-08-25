@@ -2345,7 +2345,7 @@ yylex (void)
   int c = 0;
   int tail = 0;
 
-  if (*str == ' ')
+  if (is_whitespace (*str))
     ++str;
 
   if (*str == '\0')

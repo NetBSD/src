@@ -1,6 +1,6 @@
 /* tc-msp430.c -- Assembler code for the Texas Instruments MSP430
 
-  Copyright (C) 2002-2024 Free Software Foundation, Inc.
+  Copyright (C) 2002-2025 Free Software Foundation, Inc.
   Contributed by Dmitry Diky <diwil@mail.ru>
 
   This file is part of GAS, the GNU Assembler.
@@ -436,11 +436,11 @@ del_spaces (char * s)
 {
   while (*s)
     {
-      if (ISSPACE (*s))
+      if (is_whitespace (*s))
 	{
 	  char *m = s + 1;
 
-	  while (ISSPACE (*m) && *m)
+	  while (is_whitespace (*m) && *m)
 	    m++;
 	  memmove (s, m, strlen (m) + 1);
 	}
@@ -452,7 +452,7 @@ del_spaces (char * s)
 static inline char *
 skip_space (char * s)
 {
-  while (ISSPACE (*s))
+  while (is_whitespace (*s))
     ++s;
   return s;
 }
@@ -1742,9 +1742,9 @@ const pseudo_typeS md_pseudo_table[] =
   {NULL, NULL, 0}
 };
 
-const char *md_shortopts = "mm:,mP,mQ,ml,mN,mn,my,mY,mu,mU";
+const char md_shortopts[] = "mm:,mP,mQ,ml,mN,mn,my,mY,mu,mU";
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   {"msilicon-errata", required_argument, NULL, OPTION_SILICON_ERRATA},
   {"msilicon-errata-warn", required_argument, NULL, OPTION_SILICON_ERRATA_WARN},
@@ -1764,7 +1764,7 @@ struct option md_longopts[] =
   {NULL, no_argument, NULL, 0}
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 void
 md_show_usage (FILE * stream)
@@ -1813,7 +1813,7 @@ extract_cmd (char * from, char * to, int limit)
 {
   int size = 0;
 
-  while (*from && ! ISSPACE (*from) && *from != '.' && limit > size)
+  while (*from && ! is_whitespace (*from) && *from != '.' && limit > size)
     {
       *(to + size) = *from;
       from++;
@@ -2454,15 +2454,15 @@ try_encode_mova (bool imm_op,
 	      if (op1->exp.X_op == O_constant)
 		{
 		  bin |= ((op1->exp.X_add_number >> 16) & 0xf) << 8;
-		  bfd_putl16 ((bfd_vma) bin, frag);
+		  bfd_putl16 (bin, frag);
 		  bfd_putl16 (op1->exp.X_add_number & 0xffff, frag + 2);
 		}
 	      else
 		{
-		  bfd_putl16 ((bfd_vma) bin, frag);
+		  bfd_putl16 (bin, frag);
 		  fix_new_exp (frag_now, where, 4, &(op1->exp), false,
 			       BFD_RELOC_MSP430X_ABS20_ADR_SRC);
-		  bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
+		  bfd_putl16 (ZEROS, frag + 2);
 		}
 
 	      return 4;
@@ -2473,7 +2473,7 @@ try_encode_mova (bool imm_op,
 	      bin |= 0x30 | (op1->reg << 8) | op2->reg;
 	      frag = frag_more (4);
 	      where = frag - frag_now->fr_literal;
-	      bfd_putl16 ((bfd_vma) bin, frag);
+	      bfd_putl16 (bin, frag);
 	      if (op1->exp.X_op == O_constant)
 		{
 		  if (op1->exp.X_add_number > 0xffff
@@ -2487,7 +2487,7 @@ try_encode_mova (bool imm_op,
 		}
 	      else
 		{
-		  bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
+		  bfd_putl16 (ZEROS, frag + 2);
 		  fix_new_exp (frag_now, where + 2, 2, &(op1->exp), false,
 			       op1->reg == 0 ?
 			       BFD_RELOC_MSP430X_PCR16 :
@@ -2508,7 +2508,7 @@ try_encode_mova (bool imm_op,
 	      bin |= 0xc0 | (op1->reg << 8) | op2->reg;
 	      frag = frag_more (2);
 	      where = frag - frag_now->fr_literal;
-	      bfd_putl16 ((bfd_vma) bin, frag);
+	      bfd_putl16 (bin, frag);
 	      return 2;
 	    }
 	  else if (op2->am == 1)
@@ -2522,13 +2522,13 @@ try_encode_mova (bool imm_op,
 		  if (op2->exp.X_op == O_constant)
 		    {
 		      bin |= (op2->exp.X_add_number >> 16) & 0xf;
-		      bfd_putl16 ((bfd_vma) bin, frag);
+		      bfd_putl16 (bin, frag);
 		      bfd_putl16 (op2->exp.X_add_number & 0xffff, frag + 2);
 		    }
 		  else
 		    {
-		      bfd_putl16 ((bfd_vma) bin, frag);
-		      bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
+		      bfd_putl16 (bin, frag);
+		      bfd_putl16 (ZEROS, frag + 2);
 		      fix_new_exp (frag_now, where, 4, &(op2->exp), false,
 				   BFD_RELOC_MSP430X_ABS20_ADR_DST);
 		    }
@@ -2539,7 +2539,7 @@ try_encode_mova (bool imm_op,
 	      bin |= 0x70 | (op1->reg << 8) | op2->reg;
 	      frag = frag_more (4);
 	      where = frag - frag_now->fr_literal;
-	      bfd_putl16 ((bfd_vma) bin, frag);
+	      bfd_putl16 (bin, frag);
 	      if (op2->exp.X_op == O_constant)
 		{
 		  if (op2->exp.X_add_number > 0xffff
@@ -2553,7 +2553,7 @@ try_encode_mova (bool imm_op,
 		}
 	      else
 		{
-		  bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
+		  bfd_putl16 (ZEROS, frag + 2);
 		  fix_new_exp (frag_now, where + 2, 2, &(op2->exp), false,
 			       op2->reg == 0 ?
 			       BFD_RELOC_MSP430X_PCR16 :
@@ -2593,13 +2593,13 @@ try_encode_mova (bool imm_op,
       if (op1->exp.X_op == O_constant)
 	{
 	  bin |= ((op1->exp.X_add_number >> 16) & 0xf) << 8;
-	  bfd_putl16 ((bfd_vma) bin, frag);
+	  bfd_putl16 (bin, frag);
 	  bfd_putl16 (op1->exp.X_add_number & 0xffff, frag + 2);
 	}
       else
 	{
-	  bfd_putl16 ((bfd_vma) bin, frag);
-	  bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
+	  bfd_putl16 (bin, frag);
+	  bfd_putl16 (ZEROS, frag + 2);
 	  fix_new_exp (frag_now, where, 4, &(op1->exp), false,
 		       BFD_RELOC_MSP430X_ABS20_ADR_SRC);
 	}
@@ -2634,7 +2634,7 @@ try_encode_mova (bool imm_op,
 	  bin |= 0x10 | (op1->reg << 8) | op2->reg;
 	  frag = frag_more (2);
 	  where = frag - frag_now->fr_literal;
-	  bfd_putl16 ((bfd_vma) bin, frag);
+	  bfd_putl16 (bin, frag);
 	  return 2;
 	}
       else if (op1->am == 2)
@@ -2664,7 +2664,7 @@ try_encode_mova (bool imm_op,
 	  bin |= (op1->reg << 8) | op2->reg;
 	  frag = frag_more (2);
 	  where = frag - frag_now->fr_literal;
-	  bfd_putl16 ((bfd_vma) bin, frag);
+	  bfd_putl16 (bin, frag);
 	  return 2;
 	}
     }
@@ -2715,7 +2715,7 @@ gen_nop (void)
 {
   char *frag;
   frag = frag_more (2);
-  bfd_putl16 ((bfd_vma) 0x4303 /* NOP */, frag);
+  bfd_putl16 (0x4303 /* NOP */, frag);
   dwarf2_emit_insn (2);
 }
 
@@ -2833,14 +2833,12 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	  check = true;
 	  break;
 
-	case 0:
-	case ' ':
-	case '\n':
-	case '\r':
-	  as_warn (_("no size modifier after period, .w assumed"));
-	  break;
-
 	default:
+	  if (is_whitespace (*line) || is_end_of_stmt(*line))
+	    {
+	      as_warn (_("no size modifier after period, .w assumed"));
+	      break;
+	    }
 	  as_bad (_("unrecognised instruction size modifier .%c"),
 		   * line);
 	  return 0;
@@ -2853,7 +2851,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	}
     }
 
-  if (*line && ! ISSPACE (*line))
+  if (*line && ! is_whitespace (*line))
     {
       as_bad (_("junk found after instruction: %s.%s"),
 	      opcode->name, line);
@@ -3048,7 +3046,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 
 	  insn_length += 2;
 	  frag = frag_more (2);
-	  bfd_putl16 ((bfd_vma) bin, frag);
+	  bfd_putl16 (bin, frag);
 	  dwarf2_emit_insn (insn_length);
 	  break;
 
@@ -3126,7 +3124,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	      where += 2;
 	    }
 
-	  bfd_putl16 ((bfd_vma) bin, frag);
+	  bfd_putl16 (bin, frag);
 	  frag += 2;
 	  where += 2;
 
@@ -3138,7 +3136,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 		}
 	      else
 		{
-		  bfd_putl16 ((bfd_vma) ZEROS, frag);
+		  bfd_putl16 (ZEROS, frag);
 
 		  if (!extended_op)
 		    {
@@ -3243,7 +3241,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	    }
 
 	  bin |= (op2.reg | (op1.reg << 8) | (op1.am << 4) | (op2.am << 7));
-	  bfd_putl16 ((bfd_vma) bin, frag);
+	  bfd_putl16 (bin, frag);
 	  frag += 2;
 	  where += 2;
 
@@ -3255,7 +3253,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 		}
 	      else
 		{
-		  bfd_putl16 ((bfd_vma) ZEROS, frag);
+		  bfd_putl16 (ZEROS, frag);
 
 		  if (!extended_op)
 		    {
@@ -3279,7 +3277,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 		}
 	      else
 		{
-		  bfd_putl16 ((bfd_vma) ZEROS, frag);
+		  bfd_putl16 (ZEROS, frag);
 
 		  if (!extended_op)
 		    {
@@ -3315,7 +3313,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	  op_length = 2 + 2 * op1.ol;
 	  frag = frag_more (op_length);
 	  where = frag - frag_now->fr_literal;
-	  bfd_putl16 ((bfd_vma) bin, frag);
+	  bfd_putl16 (bin, frag);
 
 	  if (op1.mode == OP_EXP)
 	    {
@@ -3327,7 +3325,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 		{
 		  where += 2;
 
-		  bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
+		  bfd_putl16 (ZEROS, frag + 2);
 
 		  if (op1.reg || op1.am == 3)
 		    fix_new_exp (frag_now, where, 2,
@@ -3398,7 +3396,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	  else if (op1.am == 3)
 	    bin |= 0x70 | op1.reg;
 
-	  bfd_putl16 ((bfd_vma) bin, frag);
+	  bfd_putl16 (bin, frag);
 
 	  if (op1.mode == OP_EXP)
 	    {
@@ -3408,7 +3406,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 		  break;
 		}
 
-	      bfd_putl16 ((bfd_vma) ZEROS, frag + 2);
+	      bfd_putl16 (ZEROS, frag + 2);
 
 	      if (! fix_emitted)
 		fix_new_exp (frag_now, where + 2, 2,
@@ -3483,7 +3481,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 		bin |= (reg - n + 1);
 	      }
 
-	    bfd_putl16 ((bfd_vma) bin, frag);
+	    bfd_putl16 (bin, frag);
 	    dwarf2_emit_insn (op_length);
 	    break;
 	  }
@@ -3551,7 +3549,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	    bin |= (n - 1) << 10;
 	    bin |= reg;
 
-	    bfd_putl16 ((bfd_vma) bin, frag);
+	    bfd_putl16 (bin, frag);
 	    dwarf2_emit_insn (op_length);
 	    break;
 	  }
@@ -3586,7 +3584,13 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 		if (op1.exp.X_op == O_constant)
 		  {
 		    n = op1.exp.X_add_number;
-		    if (n > 0xfffff || n < - (0x7ffff))
+		    /* Strictly speaking the positive value test should be for "n > 0x7ffff"
+		       but traditionally when specifying immediates as hex values any valid
+		       bit pattern is allowed.  Hence "suba #0xfffff, r6" is allowed, and so
+		       the positive value test has to be "n > 0xfffff".
+		       FIXME: We could pre-parse the expression to find out if it starts with
+		       0x and only then allow positive values > 0x7fffff.  */
+		    if (n > 0xfffff || n < -0x80000)
 		      {
 			as_bad (_("expected value of first argument of %s to fit into 20-bits"),
 				opcode->name);
@@ -3630,9 +3634,9 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	      fix_new_exp (frag_now, where, 4, &(op1.exp), false,
 			   BFD_RELOC_MSP430X_ABS20_ADR_SRC);
 
-	    bfd_putl16 ((bfd_vma) bin, frag);
+	    bfd_putl16 (bin, frag);
 	    if (op_length == 4)
-	      bfd_putl16 ((bfd_vma) (n & 0xffff), frag + 2);
+	      bfd_putl16 (n & 0xffff, frag + 2);
 	    dwarf2_emit_insn (op_length);
 	    break;
 	  }
@@ -3922,7 +3926,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	  frag += 2;
 	}
 
-      bfd_putl16 ((bfd_vma) bin, frag);
+      bfd_putl16 (bin, frag);
       where += 2;
       frag += 2;
 
@@ -3934,7 +3938,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	    }
 	  else
 	    {
-	      bfd_putl16 ((bfd_vma) ZEROS, frag);
+	      bfd_putl16 (ZEROS, frag);
 
 	      if (!extended_op)
 		{
@@ -3959,7 +3963,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	    }
 	  else
 	    {
-	      bfd_putl16 ((bfd_vma) ZEROS, frag);
+	      bfd_putl16 (ZEROS, frag);
 
 	      if (!extended_op)
 		{
@@ -3988,7 +3992,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	  /* reti instruction.  */
 	  insn_length += 2;
 	  frag = frag_more (2);
-	  bfd_putl16 ((bfd_vma) bin, frag);
+	  bfd_putl16 (bin, frag);
 	  dwarf2_emit_insn (insn_length);
 	  break;
 	}
@@ -4075,7 +4079,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	}
 
       bin |= op1.reg | (op1.am << 4);
-      bfd_putl16 ((bfd_vma) bin, frag);
+      bfd_putl16 (bin, frag);
       frag += 2;
       where += 2;
 
@@ -4087,7 +4091,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	    }
 	  else
 	    {
-	      bfd_putl16 ((bfd_vma) ZEROS, frag);
+	      bfd_putl16 (ZEROS, frag);
 
 	      if (!extended_op)
 		{
@@ -4168,7 +4172,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	      frag = frag_more (2);	/* Instr size is 1 word.  */
 
 	      bin |= x & 0x3ff;
-	      bfd_putl16 ((bfd_vma) bin, frag);
+	      bfd_putl16 (bin, frag);
 	    }
 	  else if (exp.X_op == O_symbol && *l1 != '$')
 	    {
@@ -4178,7 +4182,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	      fix_new_exp (frag_now, where, 2,
 			   &exp, true, BFD_RELOC_MSP430_10_PCREL);
 
-	      bfd_putl16 ((bfd_vma) bin, frag);
+	      bfd_putl16 (bin, frag);
 	    }
 	  else if (*l1 == '$')
 	    {
@@ -4235,7 +4239,7 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	      insn_length += 8;
 	      frag = frag_more (8);
 	      dwarf2_emit_insn (0);
-	      bfd_putl16 ((bfd_vma) rc.sop, frag);
+	      bfd_putl16 (rc.sop, frag);
 	      frag = frag_variant (rs_machine_dependent, 8, 2,
 				    /* Wild guess.  */
 				   ENCODE_RELAX (rc.lpos, STATE_BITS10),
@@ -4282,8 +4286,8 @@ msp430_operands (struct msp430_opcode_s * opcode, char * line)
 	      insn_length += 8;
 	      frag = frag_more (8);
 	      dwarf2_emit_insn (0);
-	      bfd_putl16 ((bfd_vma) hc.op0, frag);
-	      bfd_putl16 ((bfd_vma) hc.op1, frag+2);
+	      bfd_putl16 (hc.op0, frag);
+	      bfd_putl16 (hc.op1, frag + 2);
 
 	      frag = frag_variant (rs_machine_dependent, 8, 2,
 				   ENCODE_RELAX (STATE_EMUL_BRANCH, STATE_BITS10), /* Wild guess.  */
@@ -4356,7 +4360,7 @@ md_assemble (char * str)
       return;
     }
 
-  opcode = (struct msp430_opcode_s *) str_hash_find (msp430_hash, cmd);
+  opcode = str_hash_find (msp430_hash, cmd);
 
   if (opcode == NULL)
     {
@@ -4380,7 +4384,7 @@ md_section_align (asection * seg, valueT addr)
 {
   int align = bfd_section_alignment (seg);
 
-  return ((addr + (1 << align) - 1) & -(1 << align));
+  return (addr + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }
 
 /* If you define this macro, it should return the offset between the
@@ -4392,7 +4396,7 @@ md_section_align (asection * seg, valueT addr)
 long
 md_pcrel_from_section (fixS * fixp, segT sec)
 {
-  if (fixp->fx_addsy != (symbolS *) NULL
+  if (fixp->fx_addsy != NULL
       && (!S_IS_DEFINED (fixp->fx_addsy)
 	  || (S_GET_SEGMENT (fixp->fx_addsy) != sec)))
     return 0;
@@ -4427,7 +4431,7 @@ md_apply_fix (fixS * fixp, valueT * valuep, segT seg)
   unsigned long insn;
   long value;
 
-  if (fixp->fx_addsy == (symbolS *) NULL)
+  if (fixp->fx_addsy == NULL)
     {
       value = *valuep;
       fixp->fx_done = 1;
@@ -4460,7 +4464,7 @@ md_apply_fix (fixS * fixp, valueT * valuep, segT seg)
     {
       value = fixp->fx_offset;
 
-      if (fixp->fx_subsy != (symbolS *) NULL)
+      if (fixp->fx_subsy != NULL)
 	{
 	  if (S_GET_SEGMENT (fixp->fx_subsy) == absolute_section)
 	    {
@@ -4508,7 +4512,7 @@ md_apply_fix (fixS * fixp, valueT * valuep, segT seg)
 			  _("operand out of range: %ld"), value);
 
 	  value &= 0x3ff;	/* get rid of extended sign */
-	  bfd_putl16 ((bfd_vma) (value | insn), where);
+	  bfd_putl16 (value | insn, where);
 	  break;
 
 	case BFD_RELOC_MSP430X_PCR16:
@@ -4531,66 +4535,66 @@ md_apply_fix (fixS * fixp, valueT * valuep, segT seg)
 	case BFD_RELOC_16:
 	case BFD_RELOC_MSP430_16_BYTE:
 	  value &= 0xffff;	/* Get rid of extended sign.  */
-	  bfd_putl16 ((bfd_vma) value, where);
+	  bfd_putl16 (value, where);
 	  break;
 
 	case BFD_RELOC_MSP430_ABS_HI16:
 	  value >>= 16;
 	  value &= 0xffff;	/* Get rid of extended sign.  */
-	  bfd_putl16 ((bfd_vma) value, where);
+	  bfd_putl16 (value, where);
 	  break;
 
 	case BFD_RELOC_32:
-	  bfd_putl16 ((bfd_vma) value, where);
+	  bfd_putl32 (value, where);
 	  break;
 
 	case BFD_RELOC_MSP430_ABS8:
 	case BFD_RELOC_8:
-	  bfd_put_8 (NULL, (bfd_vma) value, where);
+	  bfd_put_8 (NULL, value, where);
 	  break;
 
 	case BFD_RELOC_MSP430X_ABS20_EXT_SRC:
 	case BFD_RELOC_MSP430X_PCR20_EXT_SRC:
-	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 4);
+	  bfd_putl16 (value & 0xffff, where + 4);
 	  value >>= 16;
-	  bfd_putl16 ((bfd_vma) (((value & 0xf) << 7) | insn), where);
+	  bfd_putl16 (((value & 0xf) << 7) | insn, where);
 	  break;
 
 	case BFD_RELOC_MSP430X_ABS20_ADR_SRC:
-	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 2);
+	  bfd_putl16 (value & 0xffff, where + 2);
 	  value >>= 16;
-	  bfd_putl16 ((bfd_vma) (((value & 0xf) << 8) | insn), where);
+	  bfd_putl16 (((value & 0xf) << 8) | insn, where);
 	  break;
 
 	case BFD_RELOC_MSP430X_ABS20_EXT_ODST:
-	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 6);
+	  bfd_putl16 (value & 0xffff, where + 6);
 	  value >>= 16;
-	  bfd_putl16 ((bfd_vma) ((value & 0xf) | insn), where);
+	  bfd_putl16 ((value & 0xf) | insn, where);
 	  break;
 
 	case BFD_RELOC_MSP430X_PCR20_CALL:
-	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 2);
+	  bfd_putl16 (value & 0xffff, where + 2);
 	  value >>= 16;
-	  bfd_putl16 ((bfd_vma) ((value & 0xf) | insn), where);
+	  bfd_putl16 ((value & 0xf) | insn, where);
 	  break;
 
 	case BFD_RELOC_MSP430X_ABS20_EXT_DST:
 	case BFD_RELOC_MSP430X_PCR20_EXT_DST:
-	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 4);
+	  bfd_putl16 (value & 0xffff, where + 4);
 	  value >>= 16;
-	  bfd_putl16 ((bfd_vma) ((value & 0xf) | insn), where);
+	  bfd_putl16 ((value & 0xf) | insn, where);
 	  break;
 
 	case BFD_RELOC_MSP430X_PCR20_EXT_ODST:
-	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 6);
+	  bfd_putl16 (value & 0xffff, where + 6);
 	  value >>= 16;
-	  bfd_putl16 ((bfd_vma) ((value & 0xf) | insn), where);
+	  bfd_putl16 ((value & 0xf) | insn, where);
 	  break;
 
 	case BFD_RELOC_MSP430X_ABS20_ADR_DST:
-	  bfd_putl16 ((bfd_vma) (value & 0xffff), where + 2);
+	  bfd_putl16 (value & 0xffff, where + 2);
 	  value >>= 16;
-	  bfd_putl16 ((bfd_vma) ((value & 0xf) | insn), where);
+	  bfd_putl16 ((value & 0xf) | insn, where);
 	  break;
 
 	default:
@@ -4629,23 +4633,22 @@ S_IS_GAS_LOCAL (symbolS * s)
    then it is done here.  */
 
 arelent **
-tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
+tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 {
-  static arelent * no_relocs = NULL;
-  static arelent * relocs[MAX_RELOC_EXPANSION + 1];
+  static arelent *no_relocs = NULL;
+  static arelent *relocs[MAX_RELOC_EXPANSION + 1];
   arelent *reloc;
 
-  reloc = XNEW (arelent);
+  reloc = notes_alloc (sizeof (arelent));
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
 
-  if (reloc->howto == (reloc_howto_type *) NULL)
+  if (reloc->howto == NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
 		    _("reloc %d not supported by object file format"),
 		    (int) fixp->fx_r_type);
-      free (reloc);
-      return & no_relocs;
+      return &no_relocs;
     }
 
   relocs[0] = reloc;
@@ -4686,7 +4689,7 @@ tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
 	  && ! S_IS_GAS_LOCAL (fixp->fx_addsy)
 	  && ! S_IS_GAS_LOCAL (fixp->fx_subsy))
 	{
-	  arelent * reloc2 = XNEW (arelent);
+	  arelent *reloc2 = notes_alloc (sizeof (arelent));
 
 	  relocs[0] = reloc2;
 	  relocs[1] = reloc;
@@ -4697,10 +4700,10 @@ tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
 	  reloc2->addend = - S_GET_VALUE (fixp->fx_subsy);
 
 	  if (ssec == absolute_section)
-	    reloc2->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	    reloc2->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	  else
 	    {
-	      reloc2->sym_ptr_ptr = XNEW (asymbol *);
+	      reloc2->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
 	      *reloc2->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_subsy);
 	    }
 
@@ -4708,11 +4711,11 @@ tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
 	  if (asec == absolute_section)
 	    {
 	      reloc->addend += S_GET_VALUE (fixp->fx_addsy);
-	      reloc->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	      reloc->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	    }
 	  else
 	    {
-	      reloc->sym_ptr_ptr = XNEW (asymbol *);
+	      reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
 	      *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
 	    }
 
@@ -4746,13 +4749,11 @@ tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
 	      break;
 
 	    default:
-	      reloc->sym_ptr_ptr
-		= (asymbol **) bfd_abs_section_ptr->symbol_ptr_ptr;
+	      reloc->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	      return relocs;
 	    }
 
-	  free (reloc);
-	  return & no_relocs;
+	  return &no_relocs;
 	}
     }
   else
@@ -4765,11 +4766,10 @@ tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
 	  char *fixpos = fixp->fx_where + fixp->fx_frag->fr_literal;
 
 	  md_number_to_chars (fixpos, amount, 2);
-	  free (reloc);
-	  return & no_relocs;
+	  return &no_relocs;
 	}
 #endif
-      reloc->sym_ptr_ptr = XNEW (asymbol *);
+      reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
       *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
       reloc->addend = fixp->fx_offset;
 

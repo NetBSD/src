@@ -1,5 +1,5 @@
 /* TI PRU assembler.
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
    Based on tc-nios2.c
 
@@ -75,7 +75,7 @@ struct pru_opt_s
 
 static struct pru_opt_s pru_opt = { true, true };
 
-const char *md_shortopts = "r";
+const char md_shortopts[] = "r";
 
 enum options
 {
@@ -84,7 +84,7 @@ enum options
   OPTION_NO_WARN_REGNAME_LABEL,
 };
 
-struct option md_longopts[] = {
+const struct option md_longopts[] = {
   { "mlink-relax",  no_argument, NULL, OPTION_LINK_RELAX  },
   { "mno-link-relax",  no_argument, NULL, OPTION_NO_LINK_RELAX  },
   { "mno-warn-regname-label",  no_argument, NULL,
@@ -92,7 +92,7 @@ struct option md_longopts[] = {
   { NULL, no_argument, NULL, 0 }
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 typedef struct pru_insn_reloc
 {
@@ -134,12 +134,12 @@ typedef struct pru_insn_info
 /* Opcode hash table.  */
 static htab_t pru_opcode_hash = NULL;
 #define pru_opcode_lookup(NAME) \
-  ((struct pru_opcode *) str_hash_find (pru_opcode_hash, (NAME)))
+  (str_hash_find (pru_opcode_hash, (NAME)))
 
 /* Register hash table.  */
 static htab_t pru_reg_hash = NULL;
 #define pru_reg_lookup(NAME) \
-  ((struct pru_reg *) str_hash_find (pru_reg_hash, (NAME)))
+  (str_hash_find (pru_reg_hash, (NAME)))
 
 /* The known current alignment of the current section.  */
 static int pru_current_align;
@@ -255,7 +255,7 @@ pru_align (int log_size, const char *pfill, symbolS *label)
 
 	  old_frag = symbol_get_frag (label);
 	  old_value = S_GET_VALUE (label);
-	  new_value = (valueT) frag_now_fix ();
+	  new_value = frag_now_fix ();
 
 	  /* It is possible to have more than one label at a particular
 	     address, especially if debugging is enabled, so we must
@@ -341,10 +341,10 @@ s_pru_align (int ignore ATTRIBUTE_UNUSED)
     {
       input_line_pointer++;
       fill = get_absolute_expression ();
-      pfill = (const char *) &fill;
+      pfill = &fill;
     }
   else if (subseg_text_p (now_seg))
-    pfill = (const char *) &nop;
+    pfill = nop;
   else
     {
       pfill = NULL;
@@ -423,7 +423,7 @@ s_pru_set (int equiv)
      trying a directive.  This prevents
      us from polluting the name space.  */
   SKIP_WHITESPACE ();
-  if (is_end_of_line[(unsigned char) *input_line_pointer])
+  if (is_end_of_stmt (*input_line_pointer))
     {
       bool done = true;
       *endline = 0;
@@ -680,7 +680,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
   /* In general, fix instructions with immediate
      constants.  But leave LDI32 for the linker,
      which is prepared to shorten insns.  */
-  if (fixP->fx_addsy == (symbolS *) NULL
+  if (fixP->fx_addsy == NULL
       && fixP->fx_r_type != BFD_RELOC_PRU_LDI32)
     fixP->fx_done = 1;
 
@@ -751,7 +751,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
       fixP->fx_subsy = NULL;
   }
   /* We don't actually support subtracting a symbol.  */
-  if (fixP->fx_subsy != (symbolS *) NULL)
+  if (fixP->fx_subsy != NULL)
     as_bad_subtract (fixP);
 
   /* For the DIFF relocs, write the value into the object file while still
@@ -765,11 +765,11 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
       break;
     case BFD_RELOC_PRU_GNU_DIFF16:
     case BFD_RELOC_PRU_GNU_DIFF16_PMEM:
-      bfd_putl16 ((bfd_vma) value, where);
+      bfd_putl16 (value, where);
       break;
     case BFD_RELOC_PRU_GNU_DIFF32:
     case BFD_RELOC_PRU_GNU_DIFF32_PMEM:
-      bfd_putl32 ((bfd_vma) value, where);
+      bfd_putl32 (value, where);
       break;
     default:
       break;
@@ -949,7 +949,7 @@ pru_assemble_expression (const char *exprstr,
   if (pru_mode == PRU_MODE_TEST && ep->X_op == O_constant)
     value = ep->X_add_number;
 
-  return (unsigned long) value;
+  return value;
 }
 
 /* Try to parse a non-relocatable expression.  */
@@ -1100,7 +1100,6 @@ pru_assemble_arg_b (pru_insn_infoS *insn_info, const char *argstr)
       SET_INSN_FIELD (RS2, insn_info->insn_code, src2->index);
       SET_INSN_FIELD (RS2SEL, insn_info->insn_code, src2->regsel);
     }
-
 }
 
 static void
@@ -1401,6 +1400,7 @@ pru_parse_args (pru_insn_infoS *insn ATTRIBUTE_UNUSED, char *argstr,
   char *p;
   char *end = NULL;
   int i;
+  size_t len;
   p = argstr;
   i = 0;
   bool terminate = false;
@@ -1436,6 +1436,13 @@ pru_parse_args (pru_insn_infoS *insn ATTRIBUTE_UNUSED, char *argstr,
 	  if (end != NULL)
 	    as_bad (_("too many arguments"));
 	}
+
+      /* Strip trailing whitespace.  */
+      len = strlen (parsed_args[i]);
+      for (char *temp = parsed_args[i] + len - 1;
+	   len && is_whitespace (*temp);
+	   temp--, len--)
+	*temp = '\0';
 
       if (*parsestr == '\0' || (p != NULL && *p == '\0'))
 	terminate = true;
@@ -1546,7 +1553,6 @@ md_show_usage (FILE *stream)
       "  -mlink-relax     generate relocations for linker relaxation (default).\n"
       "  -mno-link-relax  don't generate relocations for linker relaxation.\n"
     ));
-
 }
 
 /* This function is called once, at assembler startup time.
@@ -1758,10 +1764,11 @@ pru_fix_adjustable (fixS *fixp)
 arelent *
 tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 {
-  arelent *reloc = XNEW (arelent);
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
-  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
+  arelent *reloc;
 
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
+  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->addend = fixp->fx_offset;  /* fixp->fx_addnumber; */
 
@@ -1808,7 +1815,7 @@ pru_frob_label (symbolS *lab)
 
   /* Update the label's address with the current output pointer.  */
   symbol_set_frag (lab, frag_now);
-  S_SET_VALUE (lab, (valueT) frag_now_fix ());
+  S_SET_VALUE (lab, frag_now_fix ());
 
   /* Record this label for future adjustment after we find out what
      kind of data it references, and the required alignment therewith.  */
@@ -1821,7 +1828,7 @@ pru_frob_label (symbolS *lab)
 static inline char *
 skip_space (char *s)
 {
-  while (*s == ' ' || *s == '\t')
+  while (is_whitespace (*s))
     ++s;
   return s;
 }

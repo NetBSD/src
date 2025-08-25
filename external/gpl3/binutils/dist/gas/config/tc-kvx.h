@@ -1,6 +1,6 @@
 /* tc-kvx.h -- Header file for tc-kvx.c
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by Kalray SA.
 
    This file is part of GAS.
@@ -296,8 +296,8 @@ extern void kvx_cons_fix_new (fragS *f, int where, int nbytes,
 
 /* Enable special handling for the alignment directive.  */
 extern void kvx_handle_align (fragS *);
-#undef HANDLE_ALIGN
-#define HANDLE_ALIGN kvx_handle_align
+#define HANDLE_ALIGN(s, f) kvx_handle_align (f)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (3 + 12 + 16)
 
 #ifdef OBJ_ELF
 

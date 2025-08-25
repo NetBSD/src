@@ -1,6 +1,6 @@
 LIBSFRAME_0.0 { };
 
-LIBSFRAME_1.0 {
+LIBSFRAME_2.0 {
   global:
     sframe_decoder_free;
     sframe_fde_create_func_info;
@@ -11,12 +11,13 @@ LIBSFRAME_1.0 {
     sframe_fre_get_ra_offset;
     sframe_fre_get_ra_mangled_p;
     sframe_decode;
+    sframe_decoder_get_flags;
     sframe_decoder_get_hdr_size;
     sframe_decoder_get_abi_arch;
     sframe_decoder_get_version;
+    sframe_decoder_get_offsetof_fde_start_addr;
     sframe_decoder_get_fixed_fp_offset;
     sframe_decoder_get_fixed_ra_offset;
-    sframe_get_funcdesc_with_addr;
     sframe_find_fre;
     sframe_decoder_get_num_fidx;
     sframe_decoder_get_funcdesc;
@@ -24,9 +25,11 @@ LIBSFRAME_1.0 {
     sframe_decoder_get_fre;
     sframe_encode;
     sframe_encoder_free;
+    sframe_encoder_get_flags;
     sframe_encoder_get_hdr_size;
     sframe_encoder_get_abi_arch;
     sframe_encoder_get_version;
+    sframe_encoder_get_offsetof_fde_start_addr;
     sframe_encoder_get_num_fidx;
     sframe_encoder_add_fre;
     sframe_encoder_add_funcdesc;

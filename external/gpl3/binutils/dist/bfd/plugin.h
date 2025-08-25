@@ -1,5 +1,5 @@
 /* Plugin support for BFD.
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -34,6 +34,8 @@ typedef struct plugin_data_struct
 {
   int nsyms;
   const struct ld_plugin_symbol *syms;
+  int object_only_nsyms;
+  asymbol **object_only_syms;
 }
 plugin_data_struct;
 

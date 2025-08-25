@@ -1,5 +1,5 @@
 /* cond.c - conditional assembly pseudo-ops, and .include
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -110,8 +110,7 @@ s_ifdef (int test_defined)
       cframe.ignoring = ! (test_defined ^ is_defined);
     }
 
-  current_cframe =
-    (struct conditional_frame *) obstack_alloc (&cond_obstack, sizeof cframe);
+  current_cframe = obstack_alloc (&cond_obstack, sizeof cframe);
   memcpy (current_cframe, &cframe, sizeof cframe);
 
   if (LISTING_SKIP_COND ()
@@ -141,7 +140,7 @@ s_if (int arg)
   if (current_cframe != NULL && current_cframe->ignoring)
     {
       operand.X_add_number = 0;
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
   else
@@ -168,8 +167,7 @@ s_if (int arg)
      using an undefined result.  No big deal.  */
   initialize_cframe (&cframe);
   cframe.ignoring = cframe.dead_tree || ! t;
-  current_cframe =
-    (struct conditional_frame *) obstack_alloc (&cond_obstack, sizeof cframe);
+  current_cframe = obstack_alloc (&cond_obstack, sizeof cframe);
   memcpy (current_cframe, & cframe, sizeof cframe);
 
   if (LISTING_SKIP_COND ()
@@ -201,12 +199,11 @@ s_ifb (int test_blank)
       int is_eol;
 
       SKIP_WHITESPACE ();
-      is_eol = is_end_of_line[(unsigned char) *input_line_pointer];
+      is_eol = is_end_of_stmt (*input_line_pointer);
       cframe.ignoring = (test_blank == !is_eol);
     }
 
-  current_cframe =
-    (struct conditional_frame *) obstack_alloc (&cond_obstack, sizeof cframe);
+  current_cframe = obstack_alloc (&cond_obstack, sizeof cframe);
   memcpy (current_cframe, &cframe, sizeof cframe);
 
   if (LISTING_SKIP_COND ()
@@ -232,7 +229,7 @@ get_mri_string (int terminator, int *len)
     {
       ++s;
       ++input_line_pointer;
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	{
 	  *s++ = *input_line_pointer++;
 	  if (s[-1] == '\'')
@@ -247,10 +244,10 @@ get_mri_string (int terminator, int *len)
   else
     {
       while (*input_line_pointer != terminator
-	     && ! is_end_of_line[(unsigned char) *input_line_pointer])
+	     && ! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
       s = input_line_pointer;
-      while (s > ret && (s[-1] == ' ' || s[-1] == '\t'))
+      while (s > ret && is_whitespace (s[-1]))
 	--s;
     }
 
@@ -286,8 +283,7 @@ s_ifc (int arg)
 
   initialize_cframe (&cframe);
   cframe.ignoring = cframe.dead_tree || ! (res ^ arg);
-  current_cframe =
-    (struct conditional_frame *) obstack_alloc (&cond_obstack, sizeof cframe);
+  current_cframe = obstack_alloc (&cond_obstack, sizeof cframe);
   memcpy (current_cframe, &cframe, sizeof cframe);
   
  if (LISTING_SKIP_COND ()
@@ -330,7 +326,7 @@ s_elseif (int arg)
 
   if (current_cframe == NULL || current_cframe->ignoring)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
 
       if (current_cframe == NULL)
@@ -348,7 +344,7 @@ s_elseif (int arg)
       if (operand.X_op != O_constant)
 	as_bad (_("non-constant expression in \".elseif\" statement"));
 
-      switch ((operatorT) arg)
+      switch (arg)
 	{
 	case O_eq: t = operand.X_add_number == 0; break;
 	case O_ne: t = operand.X_add_number != 0; break;
@@ -401,7 +397,7 @@ s_endif (int arg ATTRIBUTE_UNUSED)
 
   if (flag_mri)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
 
@@ -448,7 +444,7 @@ s_else (int arg ATTRIBUTE_UNUSED)
 
   if (flag_mri)
     {
-      while (! is_end_of_line[(unsigned char) *input_line_pointer])
+      while (! is_end_of_stmt (*input_line_pointer))
 	++input_line_pointer;
     }
 
@@ -481,8 +477,7 @@ s_ifeqs (int arg)
 
   initialize_cframe (&cframe);
   cframe.ignoring = cframe.dead_tree || ! (res ^ arg);
-  current_cframe =
-    (struct conditional_frame *) obstack_alloc (&cond_obstack, sizeof cframe);
+  current_cframe = obstack_alloc (&cond_obstack, sizeof cframe);
   memcpy (current_cframe, &cframe, sizeof cframe);
 
   if (LISTING_SKIP_COND ()
@@ -509,7 +504,7 @@ ignore_input (void)
   else
     {
       if (s[-1] != '.')
-	return (current_cframe != NULL) && (current_cframe->ignoring);
+	return current_cframe != NULL && current_cframe->ignoring;
     }
 
   /* We cannot ignore certain pseudo ops.  */
@@ -531,15 +526,14 @@ ignore_input (void)
       break;
     }
 
-  return (current_cframe != NULL) && (current_cframe->ignoring);
+  return current_cframe != NULL && current_cframe->ignoring;
 }
 
 static void
 initialize_cframe (struct conditional_frame *cframe)
 {
   memset (cframe, 0, sizeof (*cframe));
-  cframe->if_file_line.file
-	    = as_where (&cframe->if_file_line.line);
+  cframe->if_file_line.file = as_where (&cframe->if_file_line.line);
   cframe->previous_cframe = current_cframe;
   cframe->dead_tree = current_cframe != NULL && current_cframe->ignoring;
   cframe->macro_nest = macro_nest;

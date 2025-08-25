@@ -1,14 +1,14 @@
-This is binutils.info, produced by makeinfo version 7.0.2 from
+This is binutils.info, produced by makeinfo version 7.1.1 from
 binutils.texi.
 
-Copyright © 1991-2024 Free Software Foundation, Inc.
+Copyright © 1991-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
-Texts.  A copy of the license is included in the section entitled “GNU
-Free Documentation License”.
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
 
 INFO-DIR-SECTION Software development
 START-INFO-DIR-ENTRY
@@ -42,11 +42,11 @@ Introduction
 ************
 
 This brief manual contains documentation for the GNU binary utilities
-(GNU Binutils) version 2.42:
+(GNU Binutils) version 2.45:
 
    This document is distributed under the terms of the GNU Free
 Documentation License version 1.3.  A copy of the license is included in
-the section entitled “GNU Free Documentation License”.
+the section entitled "GNU Free Documentation License".
 
 * Menu:
 
@@ -87,7 +87,7 @@ An “archive” is a single file holding a collection of other files in a
 structure that makes it possible to retrieve the original individual
 files (called “members” of the archive).
 
-   The original files’ contents, mode (permissions), timestamp, owner,
+   The original files' contents, mode (permissions), timestamp, owner,
 and group are preserved in the archive, and can be restored on
 extraction.
 
@@ -140,7 +140,7 @@ archive itself.
 You can control its activity using command-line options, like the
 different varieties of ‘ar’ on Unix systems; or, if you specify the
 single command-line option ‘-M’, you can control it with a script
-supplied via standard input, like the MRI “librarian” program.
+supplied via standard input, like the MRI "librarian" program.
 
 * Menu:
 
@@ -210,7 +210,7 @@ the following, but you must specify only one of them:
      The modifier ‘v’ makes ‘ar’ list each file as it is appended.
 
      Since the point of this operation is speed, implementations of ‘ar’
-     have the option of not updating the archive’s symbol table if one
+     have the option of not updating the archive's symbol table if one
      exists.  Too many different systems however assume that symbol
      tables are always up-to-date, so GNU ‘ar’ will rebuild the table
      even with a quick append.
@@ -257,7 +257,7 @@ the following, but you must specify only one of them:
 
      If there is more than one file with the same name (say, ‘fie’) in
      an archive (say ‘b.a’), ‘ar t b.a fie’ lists only the first
-     instance; to see them all, you must ask for a complete listing—in
+     instance; to see them all, you must ask for a complete listing--in
      our example, ‘ar t b.a’.
 
 ‘x’
@@ -276,7 +276,7 @@ the following, but you must specify only one of them:
      output directory.
 
    A number of modifiers (MOD) may immediately follow the P keyletter,
-to specify variations on an operation’s behavior:
+to specify variations on an operation's behavior:
 
 ‘a’
      Add new files _after_ an existing member of the archive.  If you
@@ -301,7 +301,7 @@ to specify variations on an operation’s behavior:
      index use zero for UIDs, GIDs, timestamps, and use consistent file
      modes for all files.  When this option is used, if ‘ar’ is used
      with identical options and identical input files, multiple runs
-     will create identical output files regardless of the input files’
+     will create identical output files regardless of the input files'
      owners, groups, file modes, or modification times.
 
      If ‘binutils’ was configured with
@@ -326,7 +326,7 @@ to specify variations on an operation’s behavior:
      immediately follow this option character, must use the same syntax
      as the linker command line, and must be specified within a single
      argument.  I.e., if multiple items are needed, they must be quoted
-     to form a single command line argument.  For example ‘L
+     to form a single command line argument.  For example ‘l
      "-L/usr/local/lib -lmydep1 -lmydep2"’
 
 ‘N’
@@ -437,7 +437,7 @@ specific ways:
      question is used.
 
      Please note that this plugin search directory is _not_ the one used
-     by ‘ld’’s ‘-plugin’ option.  In order to make ‘ar’ use the linker
+     by ‘ld’'s ‘-plugin’ option.  In order to make ‘ar’ use the linker
      plugin it must be copied into the ‘${libdir}/bfd-plugins’
      directory.  For GCC based compilations the linker plugin is called
      ‘liblto_plugin.so.0.0.0’.  For Clang based compilations it is
@@ -448,7 +448,7 @@ specific ways:
 ‘--target TARGET’
      The optional command-line switch ‘--target BFDNAME’ specifies that
      the archive members are in an object code format different from
-     your system’s default format.  See *Note Target Selection::, for
+     your system's default format.  See *Note Target Selection::, for
      more information.
 
 ‘--output DIRNAME’
@@ -489,7 +489,7 @@ abandons execution (with a nonzero exit code) on any error.
 command-line options; in fact, it provides somewhat less control over
 archives.  The only purpose of the command language is to ease the
 transition to GNU ‘ar’ for developers who already have scripts written
-for the MRI “librarian” program.
+for the MRI "librarian" program.
 
    The syntax for the ‘ar’ command language is straightforward:
    • commands are recognized in upper or lower case; for example, ‘LIST’
@@ -578,7 +578,7 @@ file required for most of the other commands.
      Requires prior use of ‘OPEN’ or ‘CREATE’.
 
 ‘LIST’
-     Display full contents of the current archive, in “verbose” style
+     Display full contents of the current archive, in "verbose" style
      regardless of the state of ‘VERBOSE’.  The effect is like ‘ar tv
      ARCHIVE’.  (This single command is a GNU ‘ar’ enhancement, rather
      than present for MRI compatibility.)
@@ -667,7 +667,7 @@ object files are listed as arguments, ‘nm’ assumes the file ‘a.out’.
      shown for special global symbols (‘u’, ‘v’ and ‘w’).
 
      ‘A’
-          The symbol’s value is absolute, and will not be changed by
+          The symbol's value is absolute, and will not be changed by
           further linking.
 
      ‘B’
@@ -682,9 +682,9 @@ object files are listed as arguments, ‘nm’ assumes the file ‘a.out’.
           When linking, multiple common symbols may appear with the same
           name.  If the symbol is defined anywhere, the common symbols
           are treated as undefined references.  For more details on
-          common symbols, see the discussion of –warn-common in *note
-          Linker options: (ld.info)Options.  The lower case C character
-          is used when the symbol is in a special section for small
+          common symbols, see the discussion of -warn-common in *note
+          Linker options: (ld)Options.  The lower case C character is
+          used when the symbol is in a special section for small
           commons.
 
      ‘D’
@@ -957,7 +957,7 @@ equivalent.
      question is used.
 
      Please note that this plugin search directory is _not_ the one used
-     by ‘ld’’s ‘-plugin’ option.  In order to make ‘nm’ use the linker
+     by ‘ld’'s ‘-plugin’ option.  In order to make ‘nm’ use the linker
      plugin it must be copied into the ‘${libdir}/bfd-plugins’
      directory.  For GCC based compilations the linker plugin is called
      ‘liblto_plugin.so.0.0.0’.  For Clang based compilations it is
@@ -987,7 +987,7 @@ equivalent.
 ‘--synthetic’
      Include synthetic symbols in the output.  These are special symbols
      created by the linker for various purposes.  They are not shown by
-     default since they are not part of the binary’s original source
+     default since they are not part of the binary's original source
      code.
 
 ‘--unicode=[DEFAULT|INVALID|LOCALE|ESCAPE|HEX|HIGHLIGHT]’
@@ -1020,7 +1020,7 @@ equivalent.
      default, symbol version information is displayed.
 
 ‘--target=BFDNAME’
-     Specify an object code format other than your system’s default
+     Specify an object code format other than your system's default
      format.  *Note Target Selection::, for more information.
 
 
@@ -1134,7 +1134,7 @@ not work as expected.
 them afterward.  ‘objcopy’ uses BFD to do all its translation work; it
 has access to all the formats described in BFD and thus is able to
 recognize most formats without being told explicitly.  *Note BFD:
-(ld.info)BFD.
+(ld)BFD.
 
    ‘objcopy’ can be used to generate S-records by using an output target
 of ‘srec’ (e.g., use ‘-O srec’).
@@ -1151,7 +1151,7 @@ to use ‘-S’ to remove sections containing debugging information.  In
 some cases ‘-R’ will be useful to remove sections which contain
 information that is not needed by the binary file.
 
-   Note—‘objcopy’ is not able to change the endianness of its input
+   Note--‘objcopy’ is not able to change the endianness of its input
 files.  If the input format has an endianness (some formats do not),
 ‘objcopy’ can only copy the inputs into file formats that have the same
 endianness or which have no endianness (e.g., ‘srec’).  (However, see
@@ -1165,7 +1165,7 @@ the ‘--reverse-bytes’ option.)
 
 ‘-I BFDNAME’
 ‘--input-target=BFDNAME’
-     Consider the source file’s object format to be BFDNAME, rather than
+     Consider the source file's object format to be BFDNAME, rather than
      attempting to deduce it.  *Note Target Selection::, for more
      information.
 
@@ -1206,8 +1206,8 @@ the ‘--reverse-bytes’ option.)
 
             --only-section=.text.* --only-section=!.text.foo
 
-     will copy all sectinos matching ’.text.*’ but not the section
-     ’.text.foo’.
+     will copy all sectinos matching '.text.*' but not the section
+     '.text.foo'.
 
 ‘-R SECTIONPATTERN’
 ‘--remove-section=SECTIONPATTERN’
@@ -1224,8 +1224,8 @@ the ‘--reverse-bytes’ option.)
 
             --remove-section=.text.* --remove-section=!.text.foo
 
-     will remove all sections matching the pattern ’.text.*’, but will
-     not remove the section ’.text.foo’.
+     will remove all sections matching the pattern '.text.*', but will
+     not remove the section '.text.foo'.
 
 ‘--keep-section=SECTIONPATTERN’
      When removing sections from the output file, keep sections that
@@ -1243,7 +1243,7 @@ the ‘--reverse-bytes’ option.)
             --remove-relocations=.text.*
 
      will remove the relocations for all sections matching the pattern
-     ’.text.*’.
+     '.text.*'.
 
      If the first character of SECTIONPATTERN is the exclamation point
      (!)  then matching sections will not have their relocation removed
@@ -1254,8 +1254,8 @@ the ‘--reverse-bytes’ option.)
             --remove-relocations=.text.* --remove-relocations=!.text.foo
 
      will remove all relocations for sections matching the pattern
-     ’.text.*’, but will not remove relocations for the section
-     ’.text.foo’.
+     '.text.*', but will not remove relocations for the section
+     '.text.foo'.
 
 ‘--strip-section-headers’
      Strip section header This option is specific to ELF files.  Implies
@@ -1330,8 +1330,8 @@ the ‘--reverse-bytes’ option.)
 
             -w -W !foo -W fo*
 
-     would cause objcopy to weaken all symbols that start with “fo”
-     except for the symbol “foo”.
+     would cause objcopy to weaken all symbols that start with "fo"
+     except for the symbol "foo".
 
 ‘-x’
 ‘--discard-all’
@@ -1377,15 +1377,15 @@ the ‘--reverse-bytes’ option.)
      This option can be used to create images for two 16-bit flashes
      interleaved in a 32-bit bus by passing ‘-b 0 -i 4
      --interleave-width=2’ and ‘-b 2 -i 4 --interleave-width=2’ to two
-     ‘objcopy’ commands.  If the input was ’12345678’ then the outputs
-     would be ’1256’ and ’3478’ respectively.
+     ‘objcopy’ commands.  If the input was '12345678' then the outputs
+     would be '1256' and '3478' respectively.
 
 ‘-p’
 ‘--preserve-dates’
      Set the access and modification dates of the output file to be the
      same as those of the input file.
 
-     This option also copies the date stored in a PE format file’s
+     This option also copies the date stored in a PE format file's
      header, unless the SOURCE_DATE_EPOCH environment variable is
      defined.  If it is defined then this variable will be used as the
      date stored in the header, interpreted as the number of seconds
@@ -1484,6 +1484,10 @@ the ‘--reverse-bytes’ option.)
      match any sections in the input file, a warning will be issued,
      unless ‘--no-change-warnings’ is used.
 
+     Note - changing the VMA of sections in a fully linked binary can be
+     dangerous since there may be code that expects the sections to be
+     located at their old address.
+
 ‘--change-warnings’
 ‘--adjust-warnings’
      If ‘--change-section-address’ or ‘--change-section-lma’ or
@@ -1503,7 +1507,7 @@ the ‘--reverse-bytes’ option.)
      ‘code’, ‘data’, ‘rom’, ‘exclude’, ‘share’, ‘debug’, and ‘large’.
      You can set the ‘contents’ flag for a section which does not have
      contents, but it is not meaningful to clear the ‘contents’ flag of
-     a section which does have contents–just remove the section instead.
+     a section which does have contents-just remove the section instead.
      Not all flags are meaningful for all object file formats.  In
      particular the ‘share’ flag is only meaningful for COFF format
      files and not for ELF format files.  The ELF x86-64 specific flag
@@ -1513,6 +1517,13 @@ the ‘--reverse-bytes’ option.)
      Set the alignment for any sections matching SECTIONPATTERN.  ALIGN
      specifies the alignment in bytes and must be a power of two, i.e.
      1, 2, 4, 8....
+
+     Note - setting a section's alignment will not automatically align
+     its LMA or VMA addresses.  If those need to be changed as well then
+     the ‘--change-section-lma’ and/or ‘--change-section-vma’ options
+     should be used.  Also note that changing VMAs can cause problems in
+     fully linked binaries where there may be code that expects the
+     contents of the sections to be located at their old address.
 
 ‘--add-section SECTIONNAME=FILENAME’
      Add a new section named SECTIONNAME while copying the file.  The
@@ -1555,13 +1566,13 @@ the ‘--reverse-bytes’ option.)
      value, it will be taken as specified.  Symbol flags can be
      specified and not all flags will be meaningful for all object file
      formats.  By default, the symbol will be global.  The special flag
-     ’before=OTHERSYM’ will insert the new symbol in front of the
+     'before=OTHERSYM' will insert the new symbol in front of the
      specified OTHERSYM, otherwise the symbol(s) will be added at the
      end of the symbol table in the order they appear.
 
 ‘--rename-section OLDNAME=NEWNAME[,FLAGS]’
      Rename a section from OLDNAME to NEWNAME, optionally changing the
-     section’s flags to FLAGS in the process.  This has the advantage
+     section's flags to FLAGS in the process.  This has the advantage
      over using a linker script to perform the rename in that the output
      stays as an object file and does not become a linked executable.
      This option accepts the same set of flags as the
@@ -1717,19 +1728,19 @@ the ‘--reverse-bytes’ option.)
      be stored in the e_machine field of the ELF header.
 
 ‘--writable-text’
-     Mark the output text as writable.  This option isn’t meaningful for
+     Mark the output text as writable.  This option isn't meaningful for
      all object file formats.
 
 ‘--readonly-text’
-     Make the output text write protected.  This option isn’t meaningful
+     Make the output text write protected.  This option isn't meaningful
      for all object file formats.
 
 ‘--pure’
-     Mark the output file as demand paged.  This option isn’t meaningful
+     Mark the output file as demand paged.  This option isn't meaningful
      for all object file formats.
 
 ‘--impure’
-     Mark the output file as impure.  This option isn’t meaningful for
+     Mark the output file as impure.  This option isn't meaningful for
      all object file formats.
 
 ‘--prefix-symbols=STRING’
@@ -1775,7 +1786,7 @@ the ‘--reverse-bytes’ option.)
      locations before the debugger is run everything should work
      correctly.
 
-‘--keep-section-symbils’
+‘--keep-section-symbols’
      When stripping a file, perhaps with ‘--strip-debug’ or
      ‘--strip-unneeded’, retain any symbols specifying section names,
      which would otherwise get stripped.
@@ -1813,7 +1824,7 @@ the ‘--reverse-bytes’ option.)
        4. Run ‘objcopy --add-gnu-debuglink=foo.dbg foo’ to add a link to
           the debugging info into the stripped executable.
 
-     Note—the choice of ‘.dbg’ as an extension for the debug info file
+     Note--the choice of ‘.dbg’ as an extension for the debug info file
      is arbitrary.  Also the ‘--only-keep-debug’ step is optional.  You
      could instead do this:
 
@@ -1826,7 +1837,7 @@ the ‘--reverse-bytes’ option.)
      full executable.  It does not have to be a file created by the
      ‘--only-keep-debug’ switch.
 
-     Note—this switch is only intended for use on fully linked files.
+     Note--this switch is only intended for use on fully linked files.
      It does not make sense to use it on object files where the
      debugging information may be incomplete.  Besides the gnu_debuglink
      feature currently only supports the presence of one filename
@@ -1867,10 +1878,17 @@ the ‘--reverse-bytes’ option.)
      and 0x10000000 for dlls.  [This option is specific to PE targets.]
 
 ‘--section-alignment NUM’
-     Sets the section alignment field in the PE header.  Sections in
-     memory will always begin at addresses which are a multiple of this
-     number.  Defaults to 0x1000.  [This option is specific to PE
-     targets.]
+     [This option is specific to PE targets.]
+
+     Sets the section alignment field in the PE header - if one is
+     present in the binary.  Sections in memory will always begin at
+     addresses which are a multiple of this number.  Defaults to 0x1000.
+
+     Note - if a section's LMA or VMA addresses are no longer aligned,
+     and those addresses have not been set via the ‘--set-section-lma’
+     or ‘--set-section-vma’ options, and the file has been fully
+     relocated then a warning message will be issued.  It will then be
+     up to the user to decide if the LMA and VMA need updating.
 
 ‘--stack RESERVE’
 ‘--stack RESERVE,COMMIT’
@@ -1888,12 +1906,12 @@ the ‘--reverse-bytes’ option.)
      accepted for WHICH.  [This option is specific to PE targets.]
 
 ‘--extract-symbol’
-     Keep the file’s section flags and symbols but remove all section
+     Keep the file's section flags and symbols but remove all section
      data.  Specifically, the option:
 
         • removes the contents of all sections;
         • sets the size of every section to zero; and
-        • sets the file’s start address to zero.
+        • sets the file's start address to zero.
 
      This option is used to build a ‘.sym’ file for a VxWorks kernel.
      It can also be a useful way of reducing the size of a
@@ -2114,11 +2132,12 @@ given.
      Display the assembler mnemonics for the machine instructions from
      the input file.  This option only disassembles those sections which
      are expected to contain instructions.  If the optional SYMBOL
-     argument is given, then display the assembler mnemonics starting at
-     SYMBOL.  If SYMBOL is a function name then disassembly will stop at
-     the end of the function, otherwise it will stop when the next
-     symbol is encountered.  If there are no matches for SYMBOL then
-     nothing will be displayed.
+     argument is given (perhaps multiple times), then display the
+     assembler mnemonics starting at (all the) SYMBOL.  If SYMBOL is a
+     function name then disassembly will stop at the end of the
+     function, otherwise it will stop when the next symbol is
+     encountered.  If there are no matches for any SYMBOL then nothing
+     will be displayed.
 
      Note if the ‘--dwarf=follow-links’ option is enabled then any
      symbol tables in linked debug info files will be read in and used
@@ -2148,7 +2167,7 @@ given.
      when disassembling.
 
 ‘--no-addresses’
-     When disassembling, don’t print addresses on each line or for
+     When disassembling, don't print addresses on each line or for
      symbols and relocation offsets.  In combination with
      ‘--no-show-raw-insn’ this may be useful for comparing compiler
      output.
@@ -2283,9 +2302,9 @@ given.
      If the target is an ARM architecture then this switch can be used
      to select which register name set is used during disassembler.
      Specifying ‘-M reg-names-std’ (the default) will select the
-     register names as used in ARM’s instruction set documentation, but
-     with register 13 called ’sp’, register 14 called ’lr’ and register
-     15 called ’pc’.  Specifying ‘-M reg-names-apcs’ will select the
+     register names as used in ARM's instruction set documentation, but
+     with register 13 called 'sp', register 14 called 'lr' and register
+     15 called 'pc'.  Specifying ‘-M reg-names-apcs’ will select the
      name set used by the ARM Procedure Call Standard, whilst specifying
      ‘-M reg-names-raw’ will just use ‘r’ followed by the register
      number.
@@ -2341,7 +2360,7 @@ given.
           When in AT&T mode and also for a limited set of instructions
           when in Intel mode, instructs the disassembler to print a
           mnemonic suffix even when the suffix could be inferred by the
-          operands or, for certain instructions, the execution mode’s
+          operands or, for certain instructions, the execution mode's
           defaults.
 
      For PowerPC, the ‘-M’ argument ‘raw’ selects disasssembly of
@@ -2353,18 +2372,43 @@ given.
      ‘860’, ‘a2’, ‘booke’, ‘booke32’, ‘cell’, ‘com’, ‘e200z2’, ‘e200z4’,
      ‘e300’, ‘e500’, ‘e500mc’, ‘e500mc64’, ‘e500x2’, ‘e5500’, ‘e6500’,
      ‘efs’, ‘power4’, ‘power5’, ‘power6’, ‘power7’, ‘power8’, ‘power9’,
-     ‘power10’, ‘ppc’, ‘ppc32’, ‘ppc64’, ‘ppc64bridge’, ‘ppcps’, ‘pwr’,
-     ‘pwr2’, ‘pwr4’, ‘pwr5’, ‘pwr5x’, ‘pwr6’, ‘pwr7’, ‘pwr8’, ‘pwr9’,
-     ‘pwr10’, ‘pwrx’, ‘titan’, ‘vle’, and ‘future’.  ‘32’ and ‘64’
-     modify the default or a prior CPU selection, disabling and enabling
-     64-bit insns respectively.  In addition, ‘altivec’, ‘any’, ‘lsp’,
-     ‘htm’, ‘vsx’, ‘spe’ and ‘spe2’ add capabilities to a previous _or
-     later_ CPU selection.  ‘any’ will disassemble any opcode known to
-     binutils, but in cases where an opcode has two different meanings
-     or different arguments, you may not see the disassembly you expect.
-     If you disassemble without giving a CPU selection, a default will
-     be chosen from information gleaned by BFD from the object files
-     headers, but the result again may not be as you expect.
+     ‘power10’, ‘power11’, ‘ppc’, ‘ppc32’, ‘ppc64’, ‘ppc64bridge’,
+     ‘ppcps’, ‘pwr’, ‘pwr2’, ‘pwr4’, ‘pwr5’, ‘pwr5x’, ‘pwr6’, ‘pwr7’,
+     ‘pwr8’, ‘pwr9’, ‘pwr10’, ‘pwr11’, ‘pwrx’, ‘titan’, ‘vle’, and
+     ‘future’.  ‘32’ and ‘64’ modify the default or a prior CPU
+     selection, disabling and enabling 64-bit insns respectively.  In
+     addition, ‘altivec’, ‘any’, ‘lsp’, ‘htm’, ‘vsx’, ‘spe’ and ‘spe2’
+     add capabilities to a previous _or later_ CPU selection.  ‘any’
+     will disassemble any opcode known to binutils, but in cases where
+     an opcode has two different meanings or different arguments, you
+     may not see the disassembly you expect.  If you disassemble without
+     giving a CPU selection, a default will be chosen from information
+     gleaned by BFD from the object files headers, but the result again
+     may not be as you expect.
+
+     For RISC-V, the following options are supported:
+
+     ‘max’
+          Disassemble without checking architecture string.  This is a
+          best effort mode, so for overlapping ISA extensions the first
+          match (possibly incorrect in a given context) will be used to
+          decode the instruction.  It's useful, if the ELF file doesn't
+          expose ISA string, preventing automatic ISA subset deduction,
+          and the default fallback ISA string (‘rv64gc’) doesn't cover
+          all instructions in the binary.
+
+     ‘numeric’
+          Print numeric register names, rather than ABI names (e.g.,
+          print ‘x2’ instead of ‘sp’).
+
+     ‘no-aliases’
+          Disassemble only into canonical instructions.  For example,
+          compressed instructions will be represented as such (‘addi
+          sp,sp,-128’ will be ‘c.addi16sp sp,-128’).
+
+     ‘priv-spec=SPEC’
+          Print the CSR according to the chosen privilege spec version
+          (e.g., ‘1.10’, ‘1.11’, ‘1.12’, ‘1.13’).
 
      For MIPS, this option controls the printing of instruction mnemonic
      names and register names in disassembled instructions.  Multiple
@@ -2372,9 +2416,9 @@ given.
      string, and invalid options are ignored:
 
      ‘no-aliases’
-          Print the ’raw’ instruction mnemonic instead of some pseudo
-          instruction mnemonic.  I.e., print ’daddu’ or ’or’ instead of
-          ’move’, ’sll’ instead of ’nop’, etc.
+          Print the 'raw' instruction mnemonic instead of some pseudo
+          instruction mnemonic.  I.e., print 'daddu' or 'or' instead of
+          'move', 'sll' instead of 'nop', etc.
 
      ‘msa’
           Disassemble MSA instructions.
@@ -2422,7 +2466,7 @@ given.
 
      For VAX, you can specify function entry addresses with ‘-M
      entry:0xf00ba’.  You can use this multiple times to properly
-     disassemble VAX binary files that don’t contain symbol tables (like
+     disassemble VAX binary files that don't contain symbol tables (like
      ROM dumps).  In these cases, the function entry mask would
      otherwise be decoded as VAX instructions, which would probably lead
      the rest of the function being wrongly disassembled.
@@ -2473,6 +2517,9 @@ given.
      libraries.  As for ‘-r’, if used with ‘-d’ or ‘-D’, the relocations
      are printed interspersed with the disassembly.
 
+     Note: ‘objdump’ does not support displaying RELR type relocations.
+     These can be displayed by the ‘readelf’ program.
+
 ‘-s’
 ‘--full-contents’
      Display the full contents of sections, often used in combination
@@ -2495,7 +2542,7 @@ given.
      Like the ‘-S’ option, but all source code lines are displayed with
      a prefix of TXT.  Typically TXT will be a comment string which can
      be used to distinguish the assembler code from the source code.  If
-     TXT is not provided then a default string of “# “ (hash followed by
+     TXT is not provided then a default string of "# " (hash followed by
      a space), will be used.
 
 ‘--prefix=PREFIX’
@@ -2532,7 +2579,7 @@ given.
 ‘--disassembler-color=off’
 ‘--disassembler-color=terminal’
 ‘--disassembler-color=on|color|colour’
-‘--disassembler-color=extened|extended-color|extened-colour’
+‘--disassembler-color=extended|extended-color|extended-colour’
      Enables or disables the use of colored syntax highlighting in
      disassembly output.  The default behaviour is determined via a
      configure time option.  Note, not all architectures support colored
@@ -2745,6 +2792,17 @@ given.
      uses the name changer to rename the parent archive member,
      ‘--ctf-parent’ can be used to specify the name used for the parent.
 
+‘--ctf-parent-section=SECTION’
+
+     This option lets you pick a completely different section for the
+     CTF parent dictionary containing unambiguous types than for the
+     child dictionaries that contain the ambiguous remainder.  The
+     linker does not emit ELF objects structured like this, but some
+     third-party linkers may.  It's also convenient to inspect CTF
+     written out as multiple raw files to compose them with objcopy,
+     which can put them in different ELF sections but not in different
+     members of a single CTF dict.
+
 ‘--sframe[=SECTION]’
 
      Display the contents of the specified SFrame section.
@@ -2783,10 +2841,10 @@ given.
 
      where the number inside the square brackets is the number of the
      entry in the symbol table, the SEC number is the section number,
-     the FL value are the symbol’s flag bits, the TY number is the
-     symbol’s type, the SCL number is the symbol’s storage class and the
+     the FL value are the symbol's flag bits, the TY number is the
+     symbol's type, the SCL number is the symbol's storage class and the
      NX value is the number of auxiliary entries associated with the
-     symbol.  The last two fields are the symbol’s value and its name.
+     symbol.  The last two fields are the symbol's value and its name.
 
      The other common output format, usually seen with ELF based files,
      looks like this:
@@ -2794,7 +2852,7 @@ given.
           00000000 l    d  .bss   00000000 .bss
           00000000 g       .text  00000000 fred
 
-     Here the first number is the symbol’s value (sometimes referred to
+     Here the first number is the symbol's value (sometimes referred to
      as its address).  The next field is actually a set of characters
      and spaces indicating the flag bits that are set on the symbol.
      These characters are described below.  Next is the section with
@@ -2805,7 +2863,7 @@ given.
 
      After the section name comes another field, a number, which for
      common symbols is the alignment and for other symbol is the size.
-     Finally the symbol’s name is displayed.
+     Finally the symbol's name is displayed.
 
      The flag characters are divided into 7 groups as follows:
      ‘l’
@@ -2831,7 +2889,7 @@ given.
 
      ‘W’
           The symbol is a warning (W) or a normal symbol (a space).  A
-          warning symbol’s name is a message to be displayed if the
+          warning symbol's name is a message to be displayed if the
           symbol following the warning symbol is ever referenced.
 
      ‘I’
@@ -2859,11 +2917,11 @@ given.
      program when given the ‘-D’ (‘--dynamic’) option.
 
      The output format is similar to that produced by the ‘--syms’
-     option, except that an extra field is inserted before the symbol’s
+     option, except that an extra field is inserted before the symbol's
      name, giving the version information associated with the symbol.
      If the version is the default version to be used when resolving
-     unversioned references to the symbol then it’s displayed as is,
-     otherwise it’s put into parentheses.
+     unversioned references to the symbol then it's displayed as is,
+     otherwise it's put into parentheses.
 
 ‘--special-syms’
      When displaying symbols include those which the target considers to
@@ -2946,7 +3004,7 @@ their placement in the archive.
      Show the version number of ‘ranlib’.
 
 ‘-D’
-     Operate in _deterministic_ mode.  The symbol map archive member’s
+     Operate in _deterministic_ mode.  The symbol map archive member's
      header will show zero for the UID, GID, and timestamp.  When this
      option is used, multiple runs will produce identical output files.
 
@@ -2998,8 +3056,8 @@ file ‘a.out’ will be used instead.
      GNU ‘size’ resembles output from System V ‘size’ (using ‘-A’, or
      ‘--format=sysv’), or Berkeley ‘size’ (using ‘-B’, or
      ‘--format=berkeley’).  The default is the one-line format similar
-     to Berkeley’s.  Alternatively, you can choose the GNU format output
-     (using ‘-G’, or ‘--format=gnu’), this is similar to Berkeley’s
+     to Berkeley's.  Alternatively, you can choose the GNU format output
+     (using ‘-G’, or ‘--format=gnu’), this is similar to Berkeley's
      output format, but sizes are counted differently.
 
      Here is an example of the Berkeley (default) format of output from
@@ -3060,7 +3118,7 @@ file ‘a.out’ will be used instead.
      ‘--radix=NUMBER’, only the three values (8, 10, 16) are supported.
      The total size is always given in two radices; decimal and
      hexadecimal for ‘-d’ or ‘-x’ output, or octal and hexadecimal if
-     you’re using ‘-o’.
+     you're using ‘-o’.
 
 ‘--common’
      Print total size of common symbols in each file.  When using
@@ -3169,8 +3227,8 @@ files.
 ‘-t RADIX’
 ‘--radix=RADIX’
      Print the offset within the file before each string.  The single
-     character argument specifies the radix of the offset—‘o’ for octal,
-     ‘x’ for hexadecimal, or ‘d’ for decimal.
+     character argument specifies the radix of the offset--‘o’ for
+     octal, ‘x’ for hexadecimal, or ‘d’ for decimal.
 
 ‘-e ENCODING’
 ‘--encoding=ENCODING’
@@ -3205,7 +3263,7 @@ files.
 
 ‘-T BFDNAME’
 ‘--target=BFDNAME’
-     Specify an object code format other than your system’s default
+     Specify an object code format other than your system's default
      format.  *Note Target Selection::, for more information.
 
 ‘-v’
@@ -3225,7 +3283,7 @@ files.
 ‘--output-separator’
      By default, output strings are delimited by a new-line.  This
      option allows you to supply any string to be used as the output
-     record separator.  Useful with –include-all-whitespace where
+     record separator.  Useful with -include-all-whitespace where
      strings may contain new-lines internally.
 
 
@@ -3255,6 +3313,7 @@ File: binutils.info,  Node: strip,  Next: c++filt,  Prev: strings,  Up: Top
            [--keep-section-symbols]
            [--keep-file-symbols]
            [--only-keep-debug]
+           [--plugin NAME]
            [-v |--verbose] [-V|--version]
            [--help] [--info]
            OBJFILE...
@@ -3305,8 +3364,8 @@ modified copies under different names.
 
             --remove-section=.text.* --remove-section=!.text.foo
 
-     will remove all sections matching the pattern ’.text.*’, but will
-     not remove the section ’.text.foo’.
+     will remove all sections matching the pattern '.text.*', but will
+     not remove the section '.text.foo'.
 
 ‘--keep-section=SECTIONPATTERN’
      When removing sections from the output file, keep sections that
@@ -3322,7 +3381,7 @@ modified copies under different names.
             --remove-relocations=.text.*
 
      will remove the relocations for all sections matching the patter
-     ’.text.*’.
+     '.text.*'.
 
      If the first character of SECTIONPATTERN is the exclamation point
      (!)  then matching sections will not have their relocation removed
@@ -3333,8 +3392,8 @@ modified copies under different names.
             --remove-relocations=.text.* --remove-relocations=!.text.foo
 
      will remove all relocations for sections matching the pattern
-     ’.text.*’, but will not remove relocations for the section
-     ’.text.foo’.
+     '.text.*', but will not remove relocations for the section
+     '.text.foo'.
 
 ‘--strip-section-headers’
      Strip section headers.  This option is specific to ELF files.
@@ -3421,7 +3480,7 @@ modified copies under different names.
             -w -K !foo -K fo*
 
      would cause strip to only keep symbols that start with the letters
-     “fo”, but to discard the symbol “foo”.
+     "fo", but to discard the symbol "foo".
 
 ‘-x’
 ‘--discard-all’
@@ -3470,7 +3529,7 @@ modified copies under different names.
        4. Run ‘objcopy --add-gnu-debuglink=foo.dbg foo’ to add a link to
           the debugging info into the stripped executable.
 
-     Note—the choice of ‘.dbg’ as an extension for the debug info file
+     Note--the choice of ‘.dbg’ as an extension for the debug info file
      is arbitrary.  Also the ‘--only-keep-debug’ step is optional.  You
      could instead do this:
 
@@ -3483,12 +3542,31 @@ modified copies under different names.
      full executable.  It does not have to be a file created by the
      ‘--only-keep-debug’ switch.
 
-     Note—this switch is only intended for use on fully linked files.
+     Note--this switch is only intended for use on fully linked files.
      It does not make sense to use it on object files where the
      debugging information may be incomplete.  Besides the gnu_debuglink
      feature currently only supports the presence of one filename
      containing debugging information, not multiple filenames on a
      one-per-object-file basis.
+
+‘--plugin NAME’
+     Load the plugin called NAME to add support for extra target types.
+     This option is only available if the toolchain has been built with
+     plugin support enabled.
+
+     If ‘--plugin’ is not provided, but plugin support has been enabled
+     then ‘strip’ iterates over the files in ‘${libdir}/bfd-plugins’ in
+     alphabetic order and the first plugin that claims the object in
+     question is used.
+
+     Please note that this plugin search directory is _not_ the one used
+     by ‘ld’'s ‘-plugin’ option.  In order to make ‘strip’ use the
+     linker plugin it must be copied into the ‘${libdir}/bfd-plugins’
+     directory.  For GCC based compilations the linker plugin is called
+     ‘liblto_plugin.so.0.0.0’.  For Clang based compilations it is
+     called ‘LLVMgold.so’.  The GCC plugin is always backwards
+     compatible with earlier versions, so it is sufficient to just copy
+     the newest one.
 
 ‘-V’
 ‘--version’
@@ -3546,7 +3624,7 @@ performed to separate them from surrounding text.  Thus for example:
 
      c++filt -n _Z1fv
 
-   will work and demangle the name to “f()” whereas:
+   will work and demangle the name to "f()" whereas:
 
      c++filt -n _Z1fv,
 
@@ -3555,7 +3633,7 @@ which makes it invalid).  This command however will work:
 
      echo _Z1fv, | c++filt -n
 
-   and will display “f(),”, i.e., the demangled name followed by a
+   and will display "f(),", i.e., the demangled name followed by a
 trailing comma.  This behaviour is because when the names are read from
 the standard input it is expected that they might be part of an
 assembler source file where there might be extra, extraneous characters
@@ -3578,15 +3656,15 @@ trailing after a mangled name.  For example:
 ‘-p’
 ‘--no-params’
      When demangling the name of a function, do not display the types of
-     the function’s parameters.
+     the function's parameters.
 
 ‘-t’
 ‘--types’
      Attempt to demangle types as well as function names.  This is
      disabled by default since mangled types are normally only used
      internally in the compiler, and they can be confused with
-     non-mangled names.  For example, a function called “a” treated as a
-     mangled type name would be demangled to “signed char”.
+     non-mangled names.  For example, a function called "a" treated as a
+     mangled type name would be demangled to "signed char".
 
 ‘-i’
 ‘--no-verbose’
@@ -3848,7 +3926,7 @@ four kinds:
      specific message language.
 
 ‘dbg’
-     A C include file that maps message id’s to their symbolic name.
+     A C include file that maps message id's to their symbolic name.
 
    The exact description of these different formats is available in
 documentation from Microsoft.
@@ -3874,7 +3952,7 @@ Compiler.
 
 ‘-c’
 ‘--customflag’
-     Sets the customer bit in all message id’s.
+     Sets the customer bit in all message id's.
 
 ‘-C CODEPAGE’
 ‘--codepage_in CODEPAGE’
@@ -3953,7 +4031,7 @@ Compiler.
 
 ‘-x PATH’
 ‘--xdgb PATH’
-     The path of the ‘dbg’ C include file that maps message id’s to the
+     The path of the ‘dbg’ C include file that maps message id's to the
      symbolic name.  No such file is generated without specifying the
      switch.
 
@@ -4090,7 +4168,7 @@ available to Windows.
 
 ‘-v’
      Enable verbose mode.  This tells you what the preprocessor is if
-     you didn’t specify one.
+     you didn't specify one.
 
 ‘-c VAL’
 ‘--codepage VAL’
@@ -4212,7 +4290,7 @@ This is a binary file and it can be created by giving the ‘-e’ option to
 
    The third file needed for DLL creation is the library file that
 programs will link with in order to access the functions in the DLL (an
-‘import library’).  This file can be created by giving the ‘-l’ option
+'import library').  This file can be created by giving the ‘-l’ option
 to dlltool when it is creating or reading in a ‘.def’ file.
 
    If the ‘-y’ option is specified, dlltool generates a delay-import
@@ -4450,7 +4528,7 @@ description of the ‘-I’ or ‘--identify’ option.
 
 ‘-V’
 ‘--version’
-     Displays dlltool’s version number and then exits.
+     Displays dlltool's version number and then exits.
 
 * Menu:
 
@@ -4541,6 +4619,7 @@ File: binutils.info,  Node: readelf,  Next: elfedit,  Prev: dlltool,  Up: Top
              [-x <number or name>|--hex-dump=<number or name>]
              [-p <number or name>|--string-dump=<number or name>]
              [-R <number or name>|--relocated-dump=<number or name>]
+             [-j <number or name>|--display-section=<number or name>]
              [-z|--decompress]
              [-c|--archive-index]
              [-w[lLiaprmfFsoORtUuTgAck]|
@@ -4596,7 +4675,7 @@ equivalent.  At least one option besides ‘-v’ or ‘-H’ must be given.
 ‘-l’
 ‘--program-headers’
 ‘--segments’
-     Displays the information contained in the file’s segment headers,
+     Displays the information contained in the file's segment headers,
      if it has any.
 
 ‘--quiet’
@@ -4605,12 +4684,12 @@ equivalent.  At least one option besides ‘-v’ or ‘-H’ must be given.
 ‘-S’
 ‘--sections’
 ‘--section-headers’
-     Displays the information contained in the file’s section headers,
+     Displays the information contained in the file's section headers,
      if it has any.
 
 ‘-g’
 ‘--section-groups’
-     Displays the information contained in the file’s section groups, if
+     Displays the information contained in the file's section groups, if
      it has any.
 
 ‘-t’
@@ -4703,7 +4782,7 @@ equivalent.  At least one option besides ‘-v’ or ‘-H’ must be given.
 ‘--extra-sym-info’
      When displaying details of symbols, include extra information not
      normally presented.  Currently this just adds the name of the
-     section referenced by the symbol’s index field, if there is one.
+     section referenced by the symbol's index field, if there is one.
      In the future more information may be displayed when this option is
      enabled.
 
@@ -4724,12 +4803,12 @@ equivalent.  At least one option besides ‘-v’ or ‘-H’ must be given.
 
 ‘-r’
 ‘--relocs’
-     Displays the contents of the file’s relocation section, if it has
+     Displays the contents of the file's relocation section, if it has
      one.
 
 ‘-u’
 ‘--unwind’
-     Displays the contents of the file’s unwind section, if it has one.
+     Displays the contents of the file's unwind section, if it has one.
      Only the unwind sections for IA64 ELF files, as well as ARM unwind
      tables (‘.ARM.exidx’ / ‘.ARM.extab’) are currently supported.  If
      support is not yet implemented for your architecture you could try
@@ -4738,7 +4817,7 @@ equivalent.  At least one option besides ‘-v’ or ‘-H’ must be given.
 
 ‘-d’
 ‘--dynamic’
-     Displays the contents of the file’s dynamic section, if it has one.
+     Displays the contents of the file's dynamic section, if it has one.
 
 ‘-V’
 ‘--version-info’
@@ -4753,7 +4832,7 @@ equivalent.  At least one option besides ‘-v’ or ‘-H’ must be given.
 ‘-D’
 ‘--use-dynamic’
      When displaying symbols, this option makes ‘readelf’ use the symbol
-     hash tables in the file’s dynamic section, rather than the symbol
+     hash tables in the file's dynamic section, rather than the symbol
      table sections.
 
      When displaying relocations, this option makes ‘readelf’ display
@@ -4773,7 +4852,8 @@ equivalent.  At least one option besides ‘-v’ or ‘-H’ must be given.
      Displays the contents of the indicated section as a hexadecimal
      bytes.  A number identifies a particular section by index in the
      section table; any other string identifies all sections with that
-     name in the object file.
+     name in the object file.  This option can be repeated multiple
+     times on the command line in order to request multiple hex dumps.
 
 ‘-R <number or name>’
 ‘--relocated-dump=<number or name>’
@@ -4781,14 +4861,33 @@ equivalent.  At least one option besides ‘-v’ or ‘-H’ must be given.
      bytes.  A number identifies a particular section by index in the
      section table; any other string identifies all sections with that
      name in the object file.  The contents of the section will be
-     relocated before they are displayed.
+     relocated before they are displayed.  This option can be repeated
+     multiple times on the command line in order to request multiple
+     relocated dumps.
 
 ‘-p <number or name>’
 ‘--string-dump=<number or name>’
      Displays the contents of the indicated section as printable
      strings.  A number identifies a particular section by index in the
      section table; any other string identifies all sections with that
-     name in the object file.
+     name in the object file.  This option can be repeated multiple
+     times on the command line in order to request multiple string
+     dumps.
+
+‘-j <number or name>’
+‘--display-section’
+     Displays the contents of the indicated section according to its
+     section header type.  Sections containing relocations will be
+     displayed as if the ‘--relocations’ option had been used, sections
+     contains symbols will be displayed as if the ‘--syms’ option had
+     been used and so on.
+
+     A number identifies a particular section by index in the section
+     table; any other string identifies all sections with that name in
+     the input file(s).
+
+     This option can be repeated multiple times on the command line in
+     order to request multiple section dumps.
 
 ‘-z’
 ‘--decompress’
@@ -5001,6 +5100,17 @@ equivalent.  At least one option besides ‘-v’ or ‘-H’ must be given.
      looking at CTF archives that have been created by a linker that
      uses the name changer to rename the parent archive member,
      ‘--ctf-parent’ can be used to specify the name used for the parent.
+
+‘--ctf-parent-section=SECTION’
+
+     This option lets you pick a completely different section for the
+     CTF parent dictionary containing unambiguous types than for the
+     child dictionaries that contain the ambiguous remainder.  The
+     linker does not emit ELF objects structured like this, but some
+     third-party linkers may.  It's also convenient to inspect CTF
+     written out as multiple raw files to compose them with objcopy,
+     which can put them in different ELF sections but not in different
+     members of a single CTF dict.
 ‘--ctf-symbols=SECTION’
 ‘--ctf-strings=SECTION’
      Specify the name of another section from which the CTF file can
@@ -5021,7 +5131,7 @@ equivalent.  At least one option besides ‘-v’ or ‘-H’ must be given.
 
 ‘-W’
 ‘--wide’
-     Don’t break output lines to fit into 80 columns.  By default
+     Don't break output lines to fit into 80 columns.  By default
      ‘readelf’ breaks section header and segment listing lines for
      64-bit ELF files, so that they fit into 80 columns.  This option
      causes ‘readelf’ to print each section header resp.  each segment
@@ -5076,7 +5186,7 @@ equivalent.  At least one of the ‘--output-mach’, ‘--output-type’,
 
 ‘--input-mach=MACHINE’
      Set the matching input ELF machine type to MACHINE.  If
-     ‘--input-mach’ isn’t specified, it will match any ELF machine
+     ‘--input-mach’ isn't specified, it will match any ELF machine
      types.
 
      The supported ELF machine types are, I386, IAMCU, L1OM, K1OM and
@@ -5088,7 +5198,7 @@ equivalent.  At least one of the ‘--output-mach’, ‘--output-type’,
 
 ‘--input-type=TYPE’
      Set the matching input ELF file type to TYPE.  If ‘--input-type’
-     isn’t specified, it will match any ELF file types.
+     isn't specified, it will match any ELF file types.
 
      The supported ELF file types are, REL, EXEC and DYN.
 
@@ -5098,7 +5208,7 @@ equivalent.  At least one of the ‘--output-mach’, ‘--output-type’,
 
 ‘--input-osabi=OSABI’
      Set the matching input ELF file OSABI to OSABI.  If ‘--input-osabi’
-     isn’t specified, it will match any ELF OSABIs.
+     isn't specified, it will match any ELF OSABIs.
 
      The supported ELF OSABIs are, NONE, HPUX, NETBSD, GNU, LINUX (alias
      for GNU), SOLARIS, AIX, IRIX, FREEBSD, TRU64, MODESTO, OPENBSD,
@@ -5110,7 +5220,7 @@ equivalent.  At least one of the ‘--output-mach’, ‘--output-type’,
 
 ‘--input-abiversion=VERSION’
      Set the matching input ELF file ABIVERSION to VERSION.  VERSION
-     must be between 0 and 255.  If ‘--input-abiversion’ isn’t
+     must be between 0 and 255.  If ‘--input-abiversion’ isn't
      specified, it will match any ELF ABIVERSIONs.
 
 ‘--output-abiversion=VERSION’
@@ -5253,7 +5363,7 @@ Ways to specify:
   1. command-line options: ‘-O’ or ‘--output-target’, or ‘-F’ or
      ‘--target’
 
-  2. the input target (see “‘objcopy’ and ‘strip’ Input Target” above)
+  2. the input target (see "‘objcopy’ and ‘strip’ Input Target" above)
 
   3. environment variable ‘GNUTARGET’
 
@@ -5319,7 +5429,7 @@ query debuginfod servers for separate debug files when the files are
 otherwise not found.
 
    debuginfod is packaged with elfutils, starting with version 0.178.
-You can get the latest version from ‘https://sourceware.org/elfutils/’.
+You can get the latest version from 'https://sourceware.org/elfutils/'.
 
    The DWARF info dumping tools (‘readelf’ and ‘objdump’) have options
 to control when they should access the debuginfod servers.  By default
@@ -5401,8 +5511,8 @@ and the most helpful.
 the bug if it is new to us.  Therefore, always write your bug reports on
 the assumption that the bug has not been reported previously.
 
-   Sometimes people give a few sketchy facts and ask, “Does this ring a
-bell?” This cannot help us fix a bug, so it is basically useless.  We
+   Sometimes people give a few sketchy facts and ask, "Does this ring a
+bell?"  This cannot help us fix a bug, so it is basically useless.  We
 respond by asking for enough details to enable us to investigate.  You
 might as well expedite matters by sending them to begin with.
 
@@ -5421,7 +5531,7 @@ might as well expedite matters by sending them to begin with.
      and version number.
 
    • What compiler (and its version) was used to compile the
-     utilities—e.g.  “‘gcc-2.7’”.
+     utilities--e.g.  "‘gcc-2.7’".
 
    • The command arguments you gave the utility to observe the bug.  To
      guarantee you will not omit something important, list them all.  A
@@ -5442,7 +5552,7 @@ might as well expedite matters by sending them to begin with.
      configured.
 
    • A description of what behavior you observe that you believe is
-     incorrect.  For example, “It gets a fatal signal.”
+     incorrect.  For example, "It gets a fatal signal."
 
      Of course, if the bug is that the utility gets a fatal signal, then
      we will certainly notice it.  But if the bug is incorrect output,
@@ -5538,7 +5648,7 @@ Appendix A GNU Free Documentation License
      author and publisher a way to get credit for their work, while not
      being considered responsible for modifications made by others.
 
-     This License is a kind of “copyleft”, which means that derivative
+     This License is a kind of "copyleft", which means that derivative
      works of the document must themselves be free in the same sense.
      It complements the GNU General Public License, which is a copyleft
      license designed for free software.
@@ -5559,18 +5669,18 @@ Appendix A GNU Free Documentation License
      be distributed under the terms of this License.  Such a notice
      grants a world-wide, royalty-free license, unlimited in duration,
      to use that work under the conditions stated herein.  The
-     “Document”, below, refers to any such manual or work.  Any member
-     of the public is a licensee, and is addressed as “you”.  You accept
+     "Document", below, refers to any such manual or work.  Any member
+     of the public is a licensee, and is addressed as "you".  You accept
      the license if you copy, modify or distribute the work in a way
      requiring permission under copyright law.
 
-     A “Modified Version” of the Document means any work containing the
+     A "Modified Version" of the Document means any work containing the
      Document or a portion of it, either copied verbatim, or with
      modifications and/or translated into another language.
 
-     A “Secondary Section” is a named appendix or a front-matter section
+     A "Secondary Section" is a named appendix or a front-matter section
      of the Document that deals exclusively with the relationship of the
-     publishers or authors of the Document to the Document’s overall
+     publishers or authors of the Document to the Document's overall
      subject (or to related matters) and contains nothing that could
      fall directly within that overall subject.  (Thus, if the Document
      is in part a textbook of mathematics, a Secondary Section may not
@@ -5579,7 +5689,7 @@ Appendix A GNU Free Documentation License
      of legal, commercial, philosophical, ethical or political position
      regarding them.
 
-     The “Invariant Sections” are certain Secondary Sections whose
+     The "Invariant Sections" are certain Secondary Sections whose
      titles are designated, as being those of Invariant Sections, in the
      notice that says that the Document is released under this License.
      If a section does not fit the above definition of Secondary then it
@@ -5587,13 +5697,13 @@ Appendix A GNU Free Documentation License
      contain zero Invariant Sections.  If the Document does not identify
      any Invariant Sections then there are none.
 
-     The “Cover Texts” are certain short passages of text that are
+     The "Cover Texts" are certain short passages of text that are
      listed, as Front-Cover Texts or Back-Cover Texts, in the notice
      that says that the Document is released under this License.  A
      Front-Cover Text may be at most 5 words, and a Back-Cover Text may
      be at most 25 words.
 
-     A “Transparent” copy of the Document means a machine-readable copy,
+     A "Transparent" copy of the Document means a machine-readable copy,
      represented in a format whose specification is available to the
      general public, that is suitable for revising the document
      straightforwardly with generic text editors or (for images composed
@@ -5605,7 +5715,7 @@ Appendix A GNU Free Documentation License
      been arranged to thwart or discourage subsequent modification by
      readers is not Transparent.  An image format is not Transparent if
      used for any substantial amount of text.  A copy that is not
-     “Transparent” is called “Opaque”.
+     "Transparent" is called "Opaque".
 
      Examples of suitable formats for Transparent copies include plain
      ASCII without markup, Texinfo input format, LaTeX input format,
@@ -5618,23 +5728,23 @@ Appendix A GNU Free Documentation License
      the machine-generated HTML, PostScript or PDF produced by some word
      processors for output purposes only.
 
-     The “Title Page” means, for a printed book, the title page itself,
+     The "Title Page" means, for a printed book, the title page itself,
      plus such following pages as are needed to hold, legibly, the
      material this License requires to appear in the title page.  For
-     works in formats which do not have any title page as such, “Title
-     Page” means the text near the most prominent appearance of the
-     work’s title, preceding the beginning of the body of the text.
+     works in formats which do not have any title page as such, "Title
+     Page" means the text near the most prominent appearance of the
+     work's title, preceding the beginning of the body of the text.
 
-     The “publisher” means any person or entity that distributes copies
+     The "publisher" means any person or entity that distributes copies
      of the Document to the public.
 
-     A section “Entitled XYZ” means a named subunit of the Document
+     A section "Entitled XYZ" means a named subunit of the Document
      whose title either is precisely XYZ or contains XYZ in parentheses
      following text that translates XYZ in another language.  (Here XYZ
      stands for a specific section name mentioned below, such as
-     “Acknowledgements”, “Dedications”, “Endorsements”, or “History”.)
-     To “Preserve the Title” of such a section when you modify the
-     Document means that it remains a section “Entitled XYZ” according
+     "Acknowledgements", "Dedications", "Endorsements", or "History".)
+     To "Preserve the Title" of such a section when you modify the
+     Document means that it remains a section "Entitled XYZ" according
      to this definition.
 
      The Document may include Warranty Disclaimers next to the notice
@@ -5664,7 +5774,7 @@ Appendix A GNU Free Documentation License
 
      If you publish printed copies (or copies in media that commonly
      have printed covers) of the Document, numbering more than 100, and
-     the Document’s license notice requires Cover Texts, you must
+     the Document's license notice requires Cover Texts, you must
      enclose the copies in covers that carry, clearly and legibly, all
      these Cover Texts: Front-Cover Texts on the front cover, and
      Back-Cover Texts on the back cover.  Both covers must also clearly
@@ -5736,15 +5846,15 @@ Appendix A GNU Free Documentation License
           the Addendum below.
 
        G. Preserve in that license notice the full lists of Invariant
-          Sections and required Cover Texts given in the Document’s
+          Sections and required Cover Texts given in the Document's
           license notice.
 
        H. Include an unaltered copy of this License.
 
-       I. Preserve the section Entitled “History”, Preserve its Title,
+       I. Preserve the section Entitled "History", Preserve its Title,
           and add to it an item stating at least the title, year, new
           authors, and publisher of the Modified Version as given on the
-          Title Page.  If there is no section Entitled “History” in the
+          Title Page.  If there is no section Entitled "History" in the
           Document, create one stating the title, year, authors, and
           publisher of the Document as given on its Title Page, then add
           an item describing the Modified Version as stated in the
@@ -5754,12 +5864,12 @@ Appendix A GNU Free Documentation License
           for public access to a Transparent copy of the Document, and
           likewise the network locations given in the Document for
           previous versions it was based on.  These may be placed in the
-          “History” section.  You may omit a network location for a work
+          "History" section.  You may omit a network location for a work
           that was published at least four years before the Document
           itself, or if the original publisher of the version it refers
           to gives permission.
 
-       K. For any section Entitled “Acknowledgements” or “Dedications”,
+       K. For any section Entitled "Acknowledgements" or "Dedications",
           Preserve the Title of the section, and preserve in the section
           all the substance and tone of each of the contributor
           acknowledgements and/or dedications given therein.
@@ -5768,11 +5878,11 @@ Appendix A GNU Free Documentation License
           in their text and in their titles.  Section numbers or the
           equivalent are not considered part of the section titles.
 
-       M. Delete any section Entitled “Endorsements”.  Such a section
+       M. Delete any section Entitled "Endorsements".  Such a section
           may not be included in the Modified Version.
 
        N. Do not retitle any existing section to be Entitled
-          “Endorsements” or to conflict in title with any Invariant
+          "Endorsements" or to conflict in title with any Invariant
           Section.
 
        O. Preserve any Warranty Disclaimers.
@@ -5781,15 +5891,15 @@ Appendix A GNU Free Documentation License
      appendices that qualify as Secondary Sections and contain no
      material copied from the Document, you may at your option designate
      some or all of these sections as invariant.  To do this, add their
-     titles to the list of Invariant Sections in the Modified Version’s
+     titles to the list of Invariant Sections in the Modified Version's
      license notice.  These titles must be distinct from any other
      section titles.
 
-     You may add a section Entitled “Endorsements”, provided it contains
+     You may add a section Entitled "Endorsements", provided it contains
      nothing but endorsements of your Modified Version by various
-     parties—for example, statements of peer review or that the text has
-     been approved by an organization as the authoritative definition of
-     a standard.
+     parties--for example, statements of peer review or that the text
+     has been approved by an organization as the authoritative
+     definition of a standard.
 
      You may add a passage of up to five words as a Front-Cover Text,
      and a passage of up to 25 words as a Back-Cover Text, to the end of
@@ -5827,10 +5937,10 @@ Appendix A GNU Free Documentation License
      combined work.
 
      In the combination, you must combine any sections Entitled
-     “History” in the various original documents, forming one section
-     Entitled “History”; likewise combine any sections Entitled
-     “Acknowledgements”, and any sections Entitled “Dedications”.  You
-     must delete all sections Entitled “Endorsements.”
+     "History" in the various original documents, forming one section
+     Entitled "History"; likewise combine any sections Entitled
+     "Acknowledgements", and any sections Entitled "Dedications".  You
+     must delete all sections Entitled "Endorsements."
 
   6. COLLECTIONS OF DOCUMENTS
 
@@ -5851,16 +5961,16 @@ Appendix A GNU Free Documentation License
 
      A compilation of the Document or its derivatives with other
      separate and independent documents or works, in or on a volume of a
-     storage or distribution medium, is called an “aggregate” if the
+     storage or distribution medium, is called an "aggregate" if the
      copyright resulting from the compilation is not used to limit the
-     legal rights of the compilation’s users beyond what the individual
+     legal rights of the compilation's users beyond what the individual
      works permit.  When the Document is included in an aggregate, this
      License does not apply to the other works in the aggregate which
      are not themselves derivative works of the Document.
 
      If the Cover Text requirement of section 3 is applicable to these
      copies of the Document, then if the Document is less than one half
-     of the entire aggregate, the Document’s Cover Texts may be placed
+     of the entire aggregate, the Document's Cover Texts may be placed
      on covers that bracket the Document within the aggregate, or the
      electronic equivalent of covers if the Document is in electronic
      form.  Otherwise they must appear on printed covers that bracket
@@ -5882,8 +5992,8 @@ Appendix A GNU Free Documentation License
      this License or a notice or disclaimer, the original version will
      prevail.
 
-     If a section in the Document is Entitled “Acknowledgements”,
-     “Dedications”, or “History”, the requirement (section 4) to
+     If a section in the Document is Entitled "Acknowledgements",
+     "Dedications", or "History", the requirement (section 4) to
      Preserve its Title (section 1) will typically require changing the
      actual title.
 
@@ -5924,7 +6034,7 @@ Appendix A GNU Free Documentation License
 
      Each version of the License is given a distinguishing version
      number.  If the Document specifies that a particular numbered
-     version of this License “or any later version” applies to it, you
+     version of this License "or any later version" applies to it, you
      have the option of following the terms and conditions either of
      that specified version or of any later version that has been
      published (not as a draft) by the Free Software Foundation.  If the
@@ -5932,29 +6042,29 @@ Appendix A GNU Free Documentation License
      choose any version ever published (not as a draft) by the Free
      Software Foundation.  If the Document specifies that a proxy can
      decide which future versions of this License can be used, that
-     proxy’s public statement of acceptance of a version permanently
+     proxy's public statement of acceptance of a version permanently
      authorizes you to choose that version for the Document.
 
   11. RELICENSING
 
-     “Massive Multiauthor Collaboration Site” (or “MMC Site”) means any
+     "Massive Multiauthor Collaboration Site" (or "MMC Site") means any
      World Wide Web server that publishes copyrightable works and also
      provides prominent facilities for anybody to edit those works.  A
      public wiki that anybody can edit is an example of such a server.
-     A “Massive Multiauthor Collaboration” (or “MMC”) contained in the
+     A "Massive Multiauthor Collaboration" (or "MMC") contained in the
      site means any set of copyrightable works thus published on the MMC
      site.
 
-     “CC-BY-SA” means the Creative Commons Attribution-Share Alike 3.0
+     "CC-BY-SA" means the Creative Commons Attribution-Share Alike 3.0
      license published by Creative Commons Corporation, a not-for-profit
      corporation with a principal place of business in San Francisco,
      California, as well as future copyleft versions of that license
      published by that same organization.
 
-     “Incorporate” means to publish or republish a Document, in whole or
+     "Incorporate" means to publish or republish a Document, in whole or
      in part, as part of another Document.
 
-     An MMC is “eligible for relicensing” if it is licensed under this
+     An MMC is "eligible for relicensing" if it is licensed under this
      License, and if all works that were first published under this
      License somewhere other than this MMC, and subsequently
      incorporated in whole or in part into the MMC, (1) had no cover
@@ -5981,7 +6091,7 @@ notices just after the title page:
        Free Documentation License''.
 
    If you have Invariant Sections, Front-Cover Texts and Back-Cover
-Texts, replace the “with...Texts.” line with this:
+Texts, replace the "with...Texts."  line with this:
 
          with the Invariant Sections being LIST THEIR TITLES, with
          the Front-Cover Texts being LIST, and with the Back-Cover Texts
@@ -6005,25 +6115,25 @@ Binutils Index
  [index ]
 * Menu:
 
-* –enable-deterministic-archives:        ar cmdline.          (line 150)
-* –enable-deterministic-archives <1>:    ar cmdline.          (line 242)
-* –enable-deterministic-archives <2>:    objcopy.             (line 370)
-* –enable-deterministic-archives <3>:    objcopy.             (line 380)
-* –enable-deterministic-archives <4>:    ranlib.              (line  32)
-* –enable-deterministic-archives <5>:    ranlib.              (line  44)
-* –enable-deterministic-archives <6>:    strip.               (line 163)
-* –enable-deterministic-archives <7>:    strip.               (line 173)
-* .stab:                                 objdump.             (line 797)
-* Add prefix to absolute paths:          objdump.             (line 542)
+* -enable-deterministic-archives:        ar cmdline.          (line 150)
+* -enable-deterministic-archives <1>:    ar cmdline.          (line 242)
+* -enable-deterministic-archives <2>:    objcopy.             (line 370)
+* -enable-deterministic-archives <3>:    objcopy.             (line 380)
+* -enable-deterministic-archives <4>:    ranlib.              (line  32)
+* -enable-deterministic-archives <5>:    ranlib.              (line  44)
+* -enable-deterministic-archives <6>:    strip.               (line 164)
+* -enable-deterministic-archives <7>:    strip.               (line 174)
+* .stab:                                 objdump.             (line 837)
+* Add prefix to absolute paths:          objdump.             (line 571)
 * addr2line:                             addr2line.           (line   6)
 * address to file name and line number:  addr2line.           (line   6)
-* all header information, object file:   objdump.             (line 935)
+* all header information, object file:   objdump.             (line 975)
 * ar:                                    ar.                  (line   6)
 * ar compatibility:                      ar.                  (line  63)
-* architecture:                          objdump.             (line 276)
-* architectures available:               objdump.             (line 253)
+* architecture:                          objdump.             (line 277)
+* architectures available:               objdump.             (line 254)
 * archive contents:                      ranlib.              (line   6)
-* Archive file symbol index information: readelf.             (line 289)
+* Archive file symbol index information: readelf.             (line 310)
 * archive headers:                       objdump.             (line  85)
 * archives:                              ar.                  (line   6)
 * base files:                            dlltool.             (line 125)
@@ -6038,24 +6148,24 @@ Binutils Index
 * changing section VMA:                  objcopy.             (line 449)
 * changing start address:                objcopy.             (line 411)
 * collections of files:                  ar.                  (line   6)
-* Compact Type Format:                   objdump.             (line 768)
-* Compact Type Format <1>:               readelf.             (line 473)
+* Compact Type Format:                   objdump.             (line 797)
+* Compact Type Format <1>:               readelf.             (line 494)
 * compatibility, ar:                     ar.                  (line  63)
-* compressed section contents:           objdump.             (line 953)
+* compressed section contents:           objdump.             (line 993)
 * contents of archive:                   ar cmdline.          (line  97)
 * crash:                                 Bug Criteria.        (line   9)
 * creating archives:                     ar cmdline.          (line 144)
 * creating thin archive:                 ar cmdline.          (line 318)
-* CTF:                                   objdump.             (line 768)
-* CTF <1>:                               readelf.             (line 473)
+* CTF:                                   objdump.             (line 797)
+* CTF <1>:                               readelf.             (line 494)
 * cxxfilt:                               c++filt.             (line  16)
 * dates in archive:                      ar cmdline.          (line 188)
-* debug symbols:                         objdump.             (line 797)
+* debug symbols:                         objdump.             (line 837)
 * debugging symbols:                     nm.                  (line 190)
 * deleting from archive:                 ar cmdline.          (line  26)
 * demangling C++ symbols:                c++filt.             (line   6)
 * demangling in nm:                      nm.                  (line 198)
-* demangling in nm <1>:                  readelf.             (line 141)
+* demangling in nm <1>:                  readelf.             (line 142)
 * demangling in objdump:                 objdump.             (line 113)
 * demangling in objdump <1>:             addr2line.           (line  91)
 * deterministic archives:                ar cmdline.          (line 150)
@@ -6064,35 +6174,35 @@ Binutils Index
 * deterministic archives <3>:            objcopy.             (line 380)
 * deterministic archives <4>:            ranlib.              (line  32)
 * deterministic archives <5>:            ranlib.              (line  44)
-* deterministic archives <6>:            strip.               (line 163)
-* deterministic archives <7>:            strip.               (line 173)
+* deterministic archives <6>:            strip.               (line 164)
+* deterministic archives <7>:            strip.               (line 174)
 * disassembling object code:             objdump.             (line 154)
-* disassembly architecture:              objdump.             (line 276)
-* disassembly endianness:                objdump.             (line 203)
-* disassembly, with source:              objdump.             (line 527)
-* disassembly, with source <1>:          objdump.             (line 535)
+* disassembly architecture:              objdump.             (line 277)
+* disassembly endianness:                objdump.             (line 204)
+* disassembly, with source:              objdump.             (line 556)
+* disassembly, with source <1>:          objdump.             (line 564)
 * discarding symbols:                    strip.               (line   6)
 * DLL:                                   dlltool.             (line   6)
 * dlltool:                               dlltool.             (line   6)
-* dynamic relocation entries, in object file: objdump.        (line 511)
-* dynamic symbol table entries, printing: objdump.            (line 896)
+* dynamic relocation entries, in object file: objdump.        (line 537)
+* dynamic symbol table entries, printing: objdump.            (line 936)
 * dynamic symbols:                       nm.                  (line 228)
-* ELF dynamic section information:       readelf.             (line 229)
-* ELF dynamic symbol table information:  readelf.             (line 121)
-* ELF file header information:           readelf.             (line  81)
+* ELF dynamic section information:       readelf.             (line 230)
+* ELF dynamic symbol table information:  readelf.             (line 122)
+* ELF file header information:           readelf.             (line  82)
 * ELF file information:                  readelf.             (line   6)
-* ELF notes:                             readelf.             (line 211)
-* ELF object file format:                objdump.             (line 797)
-* ELF program header information:        readelf.             (line  87)
-* ELF reloc information:                 readelf.             (line 215)
-* ELF section group information:         readelf.             (line 101)
-* ELF section information:               readelf.             (line  96)
-* ELF section information <1>:           readelf.             (line 106)
-* ELF segment information:               readelf.             (line  87)
-* ELF symbol table information:          readelf.             (line 111)
-* ELF version sections information:      readelf.             (line 233)
+* ELF notes:                             readelf.             (line 212)
+* ELF object file format:                objdump.             (line 837)
+* ELF program header information:        readelf.             (line  88)
+* ELF reloc information:                 readelf.             (line 216)
+* ELF section group information:         readelf.             (line 102)
+* ELF section information:               readelf.             (line  97)
+* ELF section information <1>:           readelf.             (line 107)
+* ELF segment information:               readelf.             (line  88)
+* ELF symbol table information:          readelf.             (line 112)
+* ELF version sections information:      readelf.             (line 234)
 * elfedit:                               elfedit.             (line   6)
-* endianness:                            objdump.             (line 203)
+* endianness:                            objdump.             (line 204)
 * error on valid input:                  Bug Criteria.        (line  12)
 * external symbols:                      nm.                  (line 240)
 * external symbols <1>:                  nm.                  (line 316)
@@ -6100,13 +6210,13 @@ Binutils Index
 * extract from archive:                  ar cmdline.          (line 114)
 * fatal signal:                          Bug Criteria.        (line   9)
 * file name:                             nm.                  (line 184)
-* header information, all:               objdump.             (line 935)
+* header information, all:               objdump.             (line 975)
 * input .def file:                       dlltool.             (line 121)
 * input file name:                       nm.                  (line 184)
-* Instruction width:                     objdump.             (line 559)
+* Instruction width:                     objdump.             (line 588)
 * libraries:                             ar.                  (line  25)
 * listings strings:                      strings.             (line   6)
-* LTO symbol table:                      readelf.             (line 126)
+* LTO symbol table:                      readelf.             (line 127)
 * machine instructions:                  objdump.             (line 154)
 * moving in archive:                     ar cmdline.          (line  34)
 * MRI compatibility, ar:                 ar scripts.          (line   8)
@@ -6125,108 +6235,109 @@ Binutils Index
 * object code format <2>:                size.                (line 107)
 * object code format <3>:                strings.             (line 120)
 * object code format <4>:                addr2line.           (line  86)
-* object file header:                    objdump.             (line 209)
+* object file header:                    objdump.             (line 210)
 * object file information:               objdump.             (line   6)
-* object file offsets:                   objdump.             (line 214)
-* object file sections:                  objdump.             (line 518)
-* object file sections <1>:              objdump.             (line 953)
-* object formats available:              objdump.             (line 253)
+* object file offsets:                   objdump.             (line 215)
+* object file sections:                  objdump.             (line 547)
+* object file sections <1>:              objdump.             (line 993)
+* object formats available:              objdump.             (line 254)
 * offsets of files:                      ar cmdline.          (line 193)
 * operations on archive:                 ar cmdline.          (line  22)
 * plugins:                               ar cmdline.          (line 276)
 * plugins <1>:                           nm.                  (line 336)
+* plugins <2>:                           strip.               (line 264)
 * printing from archive:                 ar cmdline.          (line  46)
 * printing strings:                      strings.             (line   6)
 * quick append to archive:               ar cmdline.          (line  54)
-* quiet:                                 readelf.             (line  91)
+* quiet:                                 readelf.             (line  92)
 * radix for section sizes:               size.                (line  89)
 * ranlib:                                ranlib.              (line   6)
 * ranlib <1>:                            ar cmdline.          (line  91)
 * readelf:                               readelf.             (line   6)
 * relative placement in archive:         ar cmdline.          (line 132)
-* relocation entries, in object file:    objdump.             (line 505)
+* relocation entries, in object file:    objdump.             (line 531)
 * removing symbols:                      strip.               (line   6)
 * repeated names in archive:             ar cmdline.          (line 108)
 * replacement in archive:                ar cmdline.          (line  73)
 * reporting bugs:                        Reporting Bugs.      (line   6)
 * scripts, ar:                           ar scripts.          (line   8)
 * section addresses in objdump:          objdump.             (line  91)
-* section headers:                       objdump.             (line 230)
-* section information:                   objdump.             (line 258)
+* section headers:                       objdump.             (line 231)
+* section information:                   objdump.             (line 259)
 * section sizes:                         size.                (line   6)
-* sections, full contents:               objdump.             (line 518)
-* sections, full contents <1>:           objdump.             (line 953)
+* sections, full contents:               objdump.             (line 547)
+* sections, full contents <1>:           objdump.             (line 993)
 * separate debug files:                  debuginfod.          (line   6)
-* SFrame:                                objdump.             (line 789)
+* SFrame:                                objdump.             (line 829)
 * size:                                  size.                (line   6)
 * size display format:                   size.                (line  29)
 * size number format:                    size.                (line  89)
 * sorting symbols:                       nm.                  (line 283)
-* source code context:                   objdump.             (line 223)
-* source disassembly:                    objdump.             (line 527)
-* source disassembly <1>:                objdump.             (line 535)
+* source code context:                   objdump.             (line 224)
+* source disassembly:                    objdump.             (line 556)
+* source disassembly <1>:                objdump.             (line 564)
 * source file name:                      nm.                  (line 184)
-* source filenames for object files:     objdump.             (line 270)
-* stab:                                  objdump.             (line 797)
-* start-address:                         objdump.             (line 806)
-* stop-address:                          objdump.             (line 810)
+* source filenames for object files:     objdump.             (line 271)
+* stab:                                  objdump.             (line 837)
+* start-address:                         objdump.             (line 846)
+* stop-address:                          objdump.             (line 850)
 * strings:                               strings.             (line   6)
 * strings, printing:                     strings.             (line   6)
 * strip:                                 strip.               (line   6)
-* Strip absolute paths:                  objdump.             (line 545)
+* Strip absolute paths:                  objdump.             (line 574)
 * symbol index:                          ar.                  (line  31)
 * symbol index <1>:                      ranlib.              (line   6)
 * symbol index, listing:                 nm.                  (line 305)
 * symbol line numbers:                   nm.                  (line 260)
-* symbol table entries, printing:        objdump.             (line 815)
-* symbol table size base:                readelf.             (line 129)
+* symbol table entries, printing:        objdump.             (line 855)
+* symbol table size base:                readelf.             (line 130)
 * symbols:                               nm.                  (line   6)
 * symbols, discarding:                   strip.               (line   6)
 * thin archives:                         ar.                  (line  43)
 * undefined symbols:                     nm.                  (line 316)
 * undefined symbols <1>:                 nm.                  (line 322)
 * Unix compatibility, ar:                ar cmdline.          (line   8)
-* unwind information:                    readelf.             (line 220)
+* unwind information:                    readelf.             (line 221)
 * Update ELF header:                     elfedit.             (line   6)
 * updating an archive:                   ar cmdline.          (line 229)
 * version:                               Top.                 (line   6)
 * VMA in objdump:                        objdump.             (line  91)
-* wide output, printing:                 objdump.             (line 941)
+* wide output, printing:                 objdump.             (line 981)
 * writing archive index:                 ar cmdline.          (line 211)
 
 
 
 Tag Table:
-Node: Top1839
-Node: ar3577
-Node: ar cmdline7009
-Node: ar scripts21099
-Node: nm27105
-Node: objcopy43431
-Node: objdump86331
-Node: ranlib126585
-Node: size128282
-Node: strings132668
-Node: strip138756
-Node: c++filt149155
-Ref: c++filt-Footnote-1155218
-Node: addr2line155332
-Node: windmc161535
-Node: windres165468
-Node: dlltool172476
-Node: def file format186531
-Node: readelf189281
-Node: elfedit209984
-Node: Common Options213554
-Node: Selecting the Target System214600
-Node: Target Selection215540
-Node: Architecture Selection217665
-Node: debuginfod218541
-Node: Reporting Bugs219575
-Node: Bug Criteria220337
-Node: Bug Reporting220896
-Node: GNU Free Documentation License227853
-Node: Binutils Index253216
+Node: Top1835
+Node: ar3569
+Node: ar cmdline6995
+Node: ar scripts21074
+Node: nm27072
+Node: objcopy43383
+Node: objdump87198
+Node: ranlib129223
+Node: size130918
+Node: strings135298
+Node: strip141381
+Node: c++filt152750
+Ref: c++filt-Footnote-1158795
+Node: addr2line158909
+Node: windmc165112
+Node: windres169039
+Node: dlltool176045
+Node: def file format190094
+Node: readelf192844
+Node: elfedit215146
+Node: Common Options218708
+Node: Selecting the Target System219754
+Node: Target Selection220694
+Node: Architecture Selection222815
+Node: debuginfod223691
+Node: Reporting Bugs224721
+Node: Bug Criteria225483
+Node: Bug Reporting226042
+Node: GNU Free Documentation License232987
+Node: Binutils Index258150
 
 End Tag Table
 

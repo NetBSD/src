@@ -1,5 +1,5 @@
 /* tc-tic4x.c -- Assemble for the Texas Instruments TMS320C[34]x.
-   Copyright (C) 1997-2024 Free Software Foundation, Inc.
+   Copyright (C) 1997-2025 Free Software Foundation, Inc.
 
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -77,8 +77,8 @@ static unsigned long tic4x_oplevel = 0;   /* Opcode level */
 #define OPTION_ENHANCED (OPTION_MD_BASE + 7)
 #define OPTION_REV      (OPTION_MD_BASE + 8)
 
-const char *md_shortopts = "bm:prs";
-struct option md_longopts[] =
+const char md_shortopts[] = "bm:prs";
+const struct option md_longopts[] =
 {
   { "mcpu",   required_argument, NULL, OPTION_CPU },
   { "mdsp",   required_argument, NULL, OPTION_CPU },
@@ -93,8 +93,7 @@ struct option md_longopts[] =
   { NULL, no_argument, NULL, 0 }
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
-
+const size_t md_longopts_size = sizeof (md_longopts);
 
 typedef enum
   {
@@ -696,9 +695,7 @@ tic4x_seg_alloc (char *name ATTRIBUTE_UNUSED,
     {
       char *p;
 
-      p = frag_var (rs_fill, 1, 1, (relax_substateT) 0,
-		    (symbolS *) symbolP,
-		    size * OCTETS_PER_BYTE, (char *) 0);
+      p = frag_var (rs_fill, 1, 1, 0, symbolP, size * OCTETS_PER_BYTE, NULL);
       *p = 0;
     }
 }
@@ -773,8 +770,7 @@ tic4x_bss (int x ATTRIBUTE_UNUSED)
 
   symbol_set_frag (symbolP, frag_now);
 
-  p = frag_var (rs_org, 1, 1, (relax_substateT) 0, symbolP,
-		size * OCTETS_PER_BYTE, (char *) 0);
+  p = frag_var (rs_org, 1, 1, 0, symbolP, size * OCTETS_PER_BYTE, NULL);
   *p = 0;			/* Fill char.  */
 
   S_SET_SEGMENT (symbolP, bss_section);
@@ -800,8 +796,8 @@ tic4x_globl (int ignore ATTRIBUTE_UNUSED)
     {
       c = get_symbol_name (&name);
       symbolP = symbol_find_or_make (name);
-      *input_line_pointer = c;
-      SKIP_WHITESPACE_AFTER_NAME ();
+      restore_line_pointer (c);
+      SKIP_WHITESPACE ();
       S_SET_STORAGE_CLASS (symbolP, C_EXT);
       S_SET_EXTERNAL (symbolP);
       if (c == ',')
@@ -1011,7 +1007,7 @@ tic4x_sect (int x ATTRIBUTE_UNUSED)
      recognised and scanning extends into the next line, stopping with
      an error (blame Volker Kuhlmann <v.kuhlmann@elec.canterbury.ac.nz>
      if this is not true).  */
-  if (is_end_of_line[(unsigned char) c])
+  if (is_end_of_stmt (c))
     *(--input_line_pointer) = c;
 
   demand_empty_rest_of_line ();
@@ -1473,7 +1469,7 @@ tic4x_indirect_parse (tic4x_operand_t *operand,
 	  s++;
 	}
     }
-  if (*s != ' ' && *s != ',' && *s != '\0')
+  if (!is_whitespace (*s) && *s != ',' && !is_end_of_stmt (*s))
     return 0;
   input_line_pointer = s;
   return 1;
@@ -2429,7 +2425,7 @@ md_assemble (char *str)
       /* Find mnemonic (second part of parallel instruction).  */
       s = str;
       /* Skip past instruction mnemonic.  */
-      while (*s && *s != ' ')
+      while (!is_end_of_stmt (*s) && !is_whitespace (*s))
 	s++;
       if (*s)			/* Null terminate for str_hash_find.  */
 	*s++ = '\0';		/* and skip past null.  */
@@ -2451,8 +2447,7 @@ md_assemble (char *str)
 
   if (insn->in_use)
     {
-      if ((insn->inst = (struct tic4x_inst *)
-	   str_hash_find (tic4x_op_hash, insn->name)) == NULL)
+      if ((insn->inst = str_hash_find (tic4x_op_hash, insn->name)) == NULL)
 	{
 	  as_bad (_("Unknown opcode `%s'."), insn->name);
 	  insn->parallel = 0;
@@ -2493,7 +2488,7 @@ md_assemble (char *str)
     {
       /* Find mnemonic.  */
       s = str;
-      while (*s && *s != ' ')	/* Skip past instruction mnemonic.  */
+      while (!is_end_of_stmt (*s) && !is_whitespace (*s))	/* Skip past instruction mnemonic.  */
 	s++;
       if (*s)			/* Null terminate for str_hash_find.  */
 	*s++ = '\0';		/* and skip past null.  */
@@ -2586,15 +2581,13 @@ md_atof (int type, char *litP, int *sizeP)
   for (wordP = words; wordP<(words+prec) ; wordP+=2)
     {
       if (wordP < (words + prec - 1)) /* Dump wordP[1] (if we have one).  */
-        {
-          md_number_to_chars (litP, (valueT) (wordP[1]),
-                              sizeof (LITTLENUM_TYPE));
-          litP += sizeof (LITTLENUM_TYPE);
-        }
+	{
+	  md_number_to_chars (litP, wordP[1], sizeof (LITTLENUM_TYPE));
+	  litP += sizeof (LITTLENUM_TYPE);
+	}
 
       /* Dump wordP[0] */
-      md_number_to_chars (litP, (valueT) (wordP[0]),
-                          sizeof (LITTLENUM_TYPE));
+      md_number_to_chars (litP, wordP[0], sizeof (LITTLENUM_TYPE));
       litP += sizeof (LITTLENUM_TYPE);
     }
   return NULL;
@@ -2821,7 +2814,7 @@ md_undefined_symbol (char *name)
       char *s = name + 1;
       int lab = 0;
 
-      while (ISDIGIT ((unsigned char) *s))
+      while (ISDIGIT (*s))
 	{
 	  lab = lab * 10 + *s - '0';
 	  s++;
@@ -2999,14 +2992,13 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixP)
 {
   arelent *reloc;
 
-  reloc = XNEW (arelent);
-
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
   reloc->address = fixP->fx_frag->fr_address + fixP->fx_where;
   reloc->address /= OCTETS_PER_BYTE;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixP->fx_r_type);
-  if (reloc->howto == (reloc_howto_type *) NULL)
+  if (reloc->howto == NULL)
     {
       as_bad_where (fixP->fx_file, fixP->fx_line,
 		    _("Reloc %d not supported by object file format"),

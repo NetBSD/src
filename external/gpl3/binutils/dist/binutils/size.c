@@ -1,5 +1,5 @@
 /* size.c -- report size of various sections of an executable file.
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -368,16 +368,15 @@ display_bfd (bfd *abfd)
 static void
 display_archive (bfd *file)
 {
-  bfd *arfile = (bfd *) NULL;
-  bfd *last_arfile = (bfd *) NULL;
-
+  bfd *last_arfile = NULL;
   for (;;)
     {
-      bfd_set_error (bfd_error_no_error);
-
-      arfile = bfd_openr_next_archived_file (file, arfile);
-      if (arfile == NULL)
+      bfd *arfile = bfd_openr_next_archived_file (file, last_arfile);
+      if (arfile == NULL
+	  || arfile == last_arfile)
 	{
+	  if (arfile != NULL)
+	    bfd_set_error (bfd_error_malformed_archive);
 	  if (bfd_get_error () != bfd_error_no_more_archived_files)
 	    {
 	      bfd_nonfatal (bfd_get_filename (file));
@@ -386,17 +385,10 @@ display_archive (bfd *file)
 	  break;
 	}
 
-      display_bfd (arfile);
-
       if (last_arfile != NULL)
-	{
-	  bfd_close (last_arfile);
+	bfd_close (last_arfile);
 
-	  /* PR 17512: file: a244edbc.  */
-	  if (last_arfile == arfile)
-	    return;
-	}
-
+      display_bfd (arfile);
       last_arfile = arfile;
     }
 

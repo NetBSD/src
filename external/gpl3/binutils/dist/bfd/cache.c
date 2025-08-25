@@ -1,6 +1,6 @@
 /* BFD library -- caching of file descriptors.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Hacked by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
@@ -44,10 +44,6 @@ SUBSECTION
 #include "bfd.h"
 #include "libbfd.h"
 #include "libiberty.h"
-
-#ifdef HAVE_MMAP
-#include <sys/mman.h>
-#endif
 
 static FILE *_bfd_open_file_unlocked (bfd *abfd);
 
@@ -230,6 +226,20 @@ close_one (void)
    ? (FILE *) (bfd_last_cache->iostream)	\
    : bfd_cache_lookup_worker (x, flag))
 
+/* A helper function that returns true if ABFD can possibly be cached
+   -- that is, whether bfd_cache_lookup_worker will accept it.  */
+
+static bool
+possibly_cached (bfd *abfd)
+{
+  if ((abfd->flags & BFD_IN_MEMORY) != 0)
+    return false;
+  if (abfd->my_archive != NULL
+      && !bfd_is_thin_archive (abfd->my_archive))
+    return false;
+  return true;
+}
+
 /* Called when the macro <<bfd_cache_lookup>> fails to find a
    quick answer.  Find a file descriptor for @var{abfd}.  If
    necessary, it open it.  If there are already more than
@@ -240,12 +250,17 @@ close_one (void)
 static FILE *
 bfd_cache_lookup_worker (bfd *abfd, enum cache_flag flag)
 {
-  if ((abfd->flags & BFD_IN_MEMORY) != 0)
+  if (!possibly_cached (abfd))
     abort ();
 
-  if (abfd->my_archive != NULL
-      && !bfd_is_thin_archive (abfd->my_archive))
-    abort ();
+  /* If the BFD is being processed by bfd_check_format_matches, it
+     must already be open and won't be on the list.  */
+  if (abfd->in_format_matches)
+    {
+      if (abfd->iostream == NULL)
+	abort ();
+      return (FILE *) abfd->iostream;
+    }
 
   if (abfd->iostream != NULL)
     {
@@ -482,14 +497,14 @@ cache_bstat (struct bfd *abfd, struct stat *sb)
 static void *
 cache_bmmap (struct bfd *abfd ATTRIBUTE_UNUSED,
 	     void *addr ATTRIBUTE_UNUSED,
-	     bfd_size_type len ATTRIBUTE_UNUSED,
+	     size_t len ATTRIBUTE_UNUSED,
 	     int prot ATTRIBUTE_UNUSED,
 	     int flags ATTRIBUTE_UNUSED,
 	     file_ptr offset ATTRIBUTE_UNUSED,
 	     void **map_addr ATTRIBUTE_UNUSED,
-	     bfd_size_type *map_len ATTRIBUTE_UNUSED)
+	     size_t *map_len ATTRIBUTE_UNUSED)
 {
-  void *ret = (void *) -1;
+  void *ret = MAP_FAILED;
 
   if (!bfd_lock ())
     return ret;
@@ -498,10 +513,10 @@ cache_bmmap (struct bfd *abfd ATTRIBUTE_UNUSED,
 #ifdef HAVE_MMAP
   else
     {
-      static uintptr_t pagesize_m1;
+      uintptr_t pagesize_m1 = _bfd_pagesize_m1;
       FILE *f;
       file_ptr pg_offset;
-      bfd_size_type pg_len;
+      size_t pg_len;
 
       f = bfd_cache_lookup (abfd, CACHE_NO_SEEK_ERROR);
       if (f == NULL)
@@ -510,15 +525,12 @@ cache_bmmap (struct bfd *abfd ATTRIBUTE_UNUSED,
 	  return ret;
 	}
 
-      if (pagesize_m1 == 0)
-	pagesize_m1 = getpagesize () - 1;
-
       /* Align.  */
       pg_offset = offset & ~pagesize_m1;
       pg_len = (len + (offset - pg_offset) + pagesize_m1) & ~pagesize_m1;
 
       ret = mmap (addr, pg_len, prot, flags, fileno (f), pg_offset);
-      if (ret == (void *) -1)
+      if (ret == MAP_FAILED)
 	bfd_set_error (bfd_error_system_call);
       else
 	{
@@ -530,7 +542,7 @@ cache_bmmap (struct bfd *abfd ATTRIBUTE_UNUSED,
 #endif
 
   if (!bfd_unlock ())
-    return (void *) -1;
+    return MAP_FAILED;
   return ret;
 }
 
@@ -659,6 +671,63 @@ bfd_cache_close_all (void)
   if (!bfd_unlock ())
     return false;
   return ret;
+}
+
+/*
+INTERNAL_FUNCTION
+	bfd_cache_set_uncloseable
+
+SYNOPSIS
+	bool bfd_cache_set_uncloseable (bfd *abfd, bool value, bool *old);
+
+DESCRIPTION
+	Internal function to mark ABFD as either closeable or not.
+	This is used by bfd_check_format_matches to avoid races
+	where bfd_cache_close_all is called in another thread.
+	VALUE is true to mark the BFD as temporarily uncloseable
+	by the cache; false to mark it as closeable once again.
+	OLD, if non-NULL, is set to the previous value of the flag.
+	Returns false on error, true on success.
+*/
+
+bool
+bfd_cache_set_uncloseable (bfd *abfd, bool value, bool *old)
+{
+  bool result = true;
+
+  if (!bfd_lock ())
+    return false;
+  if (old != NULL)
+    *old = abfd->in_format_matches;
+
+  /* Only perform any action when the state changes,and only when this
+     BFD is actually using the cache.  */
+  if (value != abfd->in_format_matches
+      && abfd->iovec == &cache_iovec
+      && possibly_cached (abfd))
+    {
+      if (value)
+	{
+	  /* Marking as uncloseable for the first time.  Ensure the
+	     file is open, and remove from the cache list.  */
+	  FILE *f = bfd_cache_lookup (abfd, CACHE_NORMAL);
+	  if (f == NULL)
+	    result = false;
+	  else
+	    snip (abfd);
+	}
+      else
+	{
+	  /* Mark as closeable again.  */
+	  insert (abfd);
+	}
+
+      abfd->in_format_matches = value;
+    }
+
+  if (!bfd_unlock ())
+    return false;
+  return result;
 }
 
 /*

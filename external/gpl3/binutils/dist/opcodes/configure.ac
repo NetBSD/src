@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ dnl <http://www.gnu.org/licenses/>.
 dnl
 
 m4_include([../bfd/version.m4])
-AC_INIT([opcodes], BFD_VERSION)
+AC_INIT([opcodes], [BFD_VERSION])
 AC_CONFIG_SRCDIR([z8k-dis.c])
 
 AC_CANONICAL_TARGET
@@ -27,7 +27,6 @@ AM_INIT_AUTOMAKE
 AM_SILENT_RULES([yes])
 
 AC_PROG_CC
-AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
 
 dnl These must be called before LT_INIT, because it may want
@@ -87,8 +86,8 @@ AC_EXEEXT
 # host-specific stuff:
 
 ALL_LINGUAS="da de es fi fr ga id it nl pt_BR ro sr sv tr uk vi zh_CN"
-ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
+ZW_GNU_GETTEXT_SISTER_DIR
 
 . ${srcdir}/../bfd/configure.host
 
@@ -312,7 +311,6 @@ if test x${all_targets} = xfalse ; then
 	bfd_msp430_arch)	ta="$ta msp430-dis.lo msp430-decode.lo" ;;
 	bfd_nds32_arch)		ta="$ta nds32-asm.lo nds32-dis.lo" ;;
 	bfd_nfp_arch)		ta="$ta nfp-dis.lo" ;;
-	bfd_nios2_arch)		ta="$ta nios2-dis.lo nios2-opc.lo" ;;
 	bfd_ns32k_arch)		ta="$ta ns32k-dis.lo" ;;
 	bfd_or1k_arch)		ta="$ta or1k-asm.lo or1k-desc.lo or1k-dis.lo or1k-ibld.lo or1k-opc.lo" using_cgen=yes ;;
 	bfd_pdp11_arch)		ta="$ta pdp11-dis.lo pdp11-opc.lo" ;;
@@ -385,7 +383,7 @@ if test x${all_targets} = xfalse ; then
 
 else	# all_targets is true
     archdefs=-DARCH_all
-    if test "$enable_64_bit_bfd" = "yes" ; then
+    if test "$have_64_bit_bfd" = "yes" ; then
 	BFD_MACHINES='$(ALL32_MACHINES) $(ALL64_MACHINES)'
     else
 	BFD_MACHINES='$(ALL32_MACHINES)'

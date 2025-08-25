@@ -1,5 +1,5 @@
 /* bfdlink.h -- header file for BFD link routines
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
    Written by Steve Chamberlain and Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -116,6 +116,9 @@ struct bfd_link_hash_entry
 
   /* The symbol, SYM, is referenced by __real_SYM in an object file.  */
   unsigned int ref_real : 1;
+
+  /* The symbol is a wrapper symbol, __wrap_SYM.  */
+  unsigned int wrapper_symbol : 1;
 
   /* Symbol is a built-in define.  These will be overridden by PROVIDE
      in a linker script.  */
@@ -422,6 +425,12 @@ struct bfd_link_info
 
   /* TRUE if separate code segment should be created.  */
   unsigned int separate_code: 1;
+
+  /* TRUE if only one read-only, non-code segment should be created.  */
+  unsigned int one_rosegment: 1;
+
+  /* TRUE if GNU_PROPERTY_MEMORY_SEAL should be generated.  */
+  unsigned int memory_seal: 1;
 
   /* Nonzero if .eh_frame_hdr section and PT_GNU_EH_FRAME ELF segment
      should be created.  1 for DWARF2 tables, 2 for compact tables.  */
@@ -868,6 +877,9 @@ struct bfd_link_callbacks
     (struct bfd_link_info *, struct bfd_link_hash_entry *h,
      struct bfd_link_hash_entry *inh,
      bfd *abfd, asection *section, bfd_vma address, flagword flags);
+  /* Fatal error.  */
+  void (*fatal)
+    (const char *fmt, ...) ATTRIBUTE_NORETURN;
   /* Error or warning link info message.  */
   void (*einfo)
     (const char *fmt, ...);

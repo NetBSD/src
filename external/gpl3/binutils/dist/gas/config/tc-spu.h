@@ -1,6 +1,6 @@
 /* spu.h -- Assembler for spu
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -102,8 +102,8 @@ extern symbolS *section_symbol (asection *);
 
 /* Fill in rs_align_code fragments.  */
 extern void spu_handle_align (fragS *);
-#define HANDLE_ALIGN(frag)  spu_handle_align (frag)
+#define HANDLE_ALIGN(sec, frag)  spu_handle_align (frag)
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE  (7 + 8)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (7 + 8)
 
 #endif /* TC_SPU */

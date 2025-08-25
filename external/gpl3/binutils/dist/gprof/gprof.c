@@ -527,17 +527,6 @@ This program is free software.  This program has absolutely no warranty.\n"));
   if (ignore_direct_calls)
     core_get_text_space (core_bfd);
 
-  /* Create symbols from core image.  */
-  if (external_symbol_table)
-    core_create_syms_from (external_symbol_table);
-  else if (line_granularity)
-    core_create_line_syms ();
-  else
-    core_create_function_syms ();
-
-  /* Translate sym specs into syms.  */
-  sym_id_parse ();
-
   if (file_format == FF_PROF)
     {
       fprintf (stderr,
@@ -642,6 +631,23 @@ This program is free software.  This program has absolutely no warranty.\n"));
     cg_print_file_ordering ();
 
   return 0;
+}
+
+/* Initialize the symbol table.  */
+
+void
+symtab_init (void)
+{
+  /* Create symbols from core image.  */
+  if (external_symbol_table)
+    core_create_syms_from (external_symbol_table);
+  else if (line_granularity)
+    core_create_line_syms ();
+  else
+    core_create_function_syms ();
+
+  /* Translate sym specs into syms.  */
+  sym_id_parse ();
 }
 
 void

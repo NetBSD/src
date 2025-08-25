@@ -1,5 +1,5 @@
 /* seh pdata/xdata coff object file format
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -64,7 +64,7 @@ get_pxdata_name (segT seg, const char *base_name)
   else
     name = dollar;
 
-  sname = notes_concat (base_name, name, NULL);
+  sname = notes_concat (base_name, name, (const char *) NULL);
 
   return sname;
 }
@@ -121,7 +121,7 @@ seh_hash_insert (const char *name, struct seh_seg_list *item)
 static struct seh_seg_list *
 seh_hash_find (char *name)
 {
-  return (struct seh_seg_list *) str_hash_find (seh_hash, name);
+  return str_hash_find (seh_hash, name);
 }
 
 static struct seh_seg_list *
@@ -196,12 +196,15 @@ seh_get_target_kind (void)
 {
   if (!stdoutput)
     return seh_kind_unknown;
+
   switch (bfd_get_arch (stdoutput))
     {
+    case bfd_arch_aarch64:
     case bfd_arch_arm:
     case bfd_arch_powerpc:
     case bfd_arch_sh:
       return seh_kind_arm;
+
     case bfd_arch_i386:
       switch (bfd_get_mach (stdoutput))
 	{
@@ -214,13 +217,29 @@ seh_get_target_kind (void)
       /* FALL THROUGH.  */
     case bfd_arch_mips:
       return seh_kind_mips;
+
     case bfd_arch_ia64:
       /* Should return seh_kind_x64.  But not implemented yet.  */
       return seh_kind_unknown;
+
     default:
       break;
     }
   return seh_kind_unknown;
+}
+
+/* Verify that seh directives are supported.  */
+
+static bool
+verify_target (const char *directive)
+{
+  if (seh_get_target_kind () == seh_kind_unknown)
+    {
+      as_warn (_("%s ignored for this target"), directive);
+      ignore_rest_of_line ();
+      return false;
+    }
+  return true;
 }
 
 /* Verify that we're in the context of a seh_proc.  */
@@ -310,7 +329,8 @@ obj_coff_seh_handler (int what ATTRIBUTE_UNUSED)
   char *symbol_name;
   char name_end;
 
-  if (!verify_context (".seh_handler"))
+  if (!verify_target (".seh_handler")
+      || !verify_context (".seh_handler"))
     return;
 
   if (*input_line_pointer == 0 || *input_line_pointer == '\n')
@@ -397,12 +417,17 @@ do_seh_endproc (void)
 
   write_function_xdata (seh_ctx_cur);
   write_function_pdata (seh_ctx_cur);
+  free (seh_ctx_cur->elems);
+  free (seh_ctx_cur->func_name);
+  free (seh_ctx_cur);
   seh_ctx_cur = NULL;
 }
 
 static void
 obj_coff_seh_endproc (int what ATTRIBUTE_UNUSED)
 {
+  if (!verify_target (".seh_endproc"))
+    return;
   demand_empty_rest_of_line ();
   if (seh_ctx_cur == NULL)
     {
@@ -421,6 +446,8 @@ obj_coff_seh_proc (int what ATTRIBUTE_UNUSED)
   char *symbol_name;
   char name_end;
 
+  if (!verify_target (".seh_proc"))
+    return;
   if (seh_ctx_cur != NULL)
     {
       as_bad (_("previous SEH entry not closed (missing .seh_endproc)"));
@@ -461,7 +488,8 @@ obj_coff_seh_proc (int what ATTRIBUTE_UNUSED)
 static void
 obj_coff_seh_endprologue (int what ATTRIBUTE_UNUSED)
 {
-  if (!verify_context (".seh_endprologue")
+  if (!verify_target (".seh_endprologue")
+      || !verify_context (".seh_endprologue")
       || !seh_validate_seg (".seh_endprologue"))
     return;
   demand_empty_rest_of_line ();

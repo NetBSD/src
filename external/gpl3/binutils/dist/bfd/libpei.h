@@ -1,5 +1,5 @@
 /* Support for the generic parts of PE/PEI; common header information.
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -473,7 +473,7 @@ CODEVIEW_INFO *_bfd_XXi_slurp_codeview_record
 unsigned _bfd_XX_only_swap_filehdr_out  (bfd *, void *, void *);
 unsigned _bfd_XXi_only_swap_filehdr_out (bfd *, void *, void *);
 bool _bfd_XX_bfd_copy_private_section_data
-  (bfd *, asection *, bfd *, asection *);
+  (bfd *, asection *, bfd *, asection *, struct bfd_link_info *);
 
 bool _bfd_pe_print_ce_compressed_pdata (bfd *, void *);
 bool _bfd_pe64_print_ce_compressed_pdata (bfd *, void *);

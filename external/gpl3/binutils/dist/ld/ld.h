@@ -1,5 +1,5 @@
 /* ld.h -- general linker header file
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -196,6 +196,9 @@ typedef struct
 
   /* Default linker script.  */
   char *default_script;
+
+  /* Linker script fragment provided by the --section-order command line option.  */
+  char *section_ordering_file;
 } args_type;
 
 extern args_type command_line;
@@ -292,6 +295,10 @@ typedef struct
   char *map_filename;
   FILE *map_file;
 
+  char *stats_filename;
+  /* If non-NULL then resource use information should be written to this file.  */
+  FILE *stats_file;
+
   char *dependency_file;
 
   unsigned int split_by_reloc;
@@ -299,6 +306,15 @@ typedef struct
 
   /* The size of the hash table to use.  */
   unsigned long hash_table_size;
+
+  /* If set, store plugin intermediate files permanently.  */
+  bool plugin_save_temps;
+
+  /* If set, if the .gnu_object_only section should be created.  */
+  bool emit_gnu_object_only;
+
+  /* If set, if the .gnu_object_only section is being created.  */
+  bool emitting_gnu_object_only;
 
   /* If set, print discarded sections in map file output.  */
   bool print_map_discarded;
@@ -318,10 +334,44 @@ typedef struct
   enum compressed_debug_section_type compress_debug;
 } ld_config_type;
 
+/* An enumeration of the linker phases for which resource usage information
+   is recorded.  PHASE_ALL is special as it covers the entire link process.
+
+   Instructions for adding a new phase:
+     1. Add an entry to this enumeration.
+     2. Add an entry for the phase to the phase_data[] structure in ldmain.c.
+     3. Add calls to ld_start_phase(PHASE_xxx) and ld_stop_phase(PHASE_xxx)
+        at the appropriate place(s) in the code.  It does not matter if the
+	new phase overlaps with or is contained by any other phase.
+
+    Instructions for adding a new resource:
+      1. If necessary add a new field to the phase_data structure defined in
+         ldmain.c.
+      2. Add code to initialise the field in ld_main.c:ld_start_phase().
+      3. Add code to finalise the field in ld_main.c:ld_stop_phase().
+      4. Add code to report the field in ld_main.c:report_phases().  */
+typedef enum
+{
+  PHASE_ALL = 0,
+  PHASE_CTF,
+  PHASE_MERGE,
+  PHASE_PARSE,
+  PHASE_PLUGINS,
+  PHASE_PROCESS,
+  PHASE_WRITE,
+
+  NUM_PHASES /* This must be the last entry.  */
+}
+ld_phase;
+
+extern void ld_start_phase (ld_phase);
+extern void ld_stop_phase (ld_phase);
+
 extern ld_config_type config;
 
 extern FILE * saved_script_handle;
 extern bool force_make_executable;
+extern bool in_section_ordering;
 
 extern int yyparse (void);
 extern void add_cref (const char *, bfd *, asection *, bfd_vma);

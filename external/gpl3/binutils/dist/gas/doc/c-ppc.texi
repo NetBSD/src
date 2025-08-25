@@ -1,4 +1,4 @@
-@c Copyright (C) 2001-2024 Free Software Foundation, Inc.
+@c Copyright (C) 2001-2025 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -155,6 +155,9 @@ Generate code for Power9 architecture.
 
 @item -mpower10, -mpwr10
 Generate code for Power10 architecture.
+
+@item -mpower11, -mpwr11
+Generate code for Power11 architecture.
 
 @item -mfuture
 Generate code for 'future' architecture.

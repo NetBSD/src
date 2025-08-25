@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -123,7 +123,7 @@ extern void __collector_terminate_expt ();
 extern void __collector_terminate_hook ();
 extern void __collector_sample (char *name);
 extern void __collector_pause ();
-extern void __collector_pause_m ();
+extern void __collector_pause_m (const char *reason);
 extern void __collector_resume ();
 extern int collector_sigemt_sigaction (const struct sigaction*,
 				       struct sigaction*);

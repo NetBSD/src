@@ -76,3 +76,21 @@ gprofng
 @end indentedblock
 @end ifclear
 @end macro
+
+@ifnothtml
+@macro mycartouche{text}
+@smallexample
+\text\
+@end smallexample
+@end macro
+@end ifnothtml
+
+@ifhtml
+@macro mycartouche{text}
+@cartouche
+@smallexample
+\text\
+@end smallexample
+@end cartouche
+@end macro
+@end ifhtml

@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,6 +68,7 @@ if TCL_TRY
 		CLOCK_GETTIME_LINK="$(CLOCK_GETTIME_LINK)" \
 		CHECK_TARGET=$@ \
 		PREFIX="$(prefix)" \
+		BASH="$(BASH)" \
 		GPROFNG_BROKEN_JAVAC="$(GPROFNG_BROKEN_JAVAC)" \
 		MAKE="$(MAKE)" CC="$(CC)" CFLAGS="$(CFLAGS) $(PTHREAD_CFLAGS)" \
 		LDFLAGS="$(LDFLAGS)" LIBS="$(PTHREAD_LIBS) $(LIBS)" \

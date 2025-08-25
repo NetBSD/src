@@ -1,5 +1,5 @@
 /* ginsn.h - GAS instruction representation.
-   Copyright (C) 2023 Free Software Foundation, Inc.
+   Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -179,9 +179,8 @@ ginsnS *
 label_ginsn_map_find (const symbolS *label)
 {
   const char *name = S_GET_NAME (label);
-  ginsnS *ginsn
-    = (ginsnS *) str_hash_find (frchain_now->frch_ginsn_data->label_ginsn_map,
-				name);
+  ginsnS *ginsn = str_hash_find (frchain_now->frch_ginsn_data->label_ginsn_map,
+				 name);
   return ginsn;
 }
 
@@ -444,22 +443,33 @@ ginsn_indirect_jump_p (ginsnS *ginsn)
   return ret_p;
 }
 
+/* Return whether the GINSN is an unconditional jump to a label which is
+   defined locally in the scope of the block of insns, which are currently
+   being processed for GCFG creation.  */
+
 static bool
 ginsn_direct_local_jump_p (ginsnS *ginsn)
 {
-  bool ret_p = false;
-  if (!ginsn)
-    return ret_p;
+  bool local_p = false;
+  const symbolS *taken_label;
 
-  ret_p |= (ginsn->type == GINSN_TYPE_JUMP
-	    && ginsn->src[0].type == GINSN_SRC_SYMBOL);
-  return ret_p;
+  if (!ginsn)
+    return local_p;
+
+  if (ginsn->type == GINSN_TYPE_JUMP
+      && ginsn->src[0].type == GINSN_SRC_SYMBOL)
+    {
+      taken_label = ginsn->src[0].sym;
+      local_p = (label_ginsn_map_find (taken_label) != NULL);
+    }
+  return local_p;
 }
 
 static char *
 ginsn_src_print (struct ginsn_src *src)
 {
-  size_t len = 40;
+  int str_size = 0;
+  const size_t len = GINSN_LISTING_OPND_LEN;
   char *src_str = XNEWVEC (char, len);
 
   memset (src_str, 0, len);
@@ -467,19 +477,22 @@ ginsn_src_print (struct ginsn_src *src)
   switch (src->type)
     {
     case GINSN_SRC_REG:
-      snprintf (src_str, len, "%%r%d, ", ginsn_get_src_reg (src));
+      str_size = snprintf (src_str, len, "%%r%d", ginsn_get_src_reg (src));
       break;
     case GINSN_SRC_IMM:
-      snprintf (src_str, len, "%lld, ",
-		(long long int) ginsn_get_src_imm (src));
+      str_size = snprintf (src_str, len, "%lld",
+			   (long long int) ginsn_get_src_imm (src));
       break;
     case GINSN_SRC_INDIRECT:
-      snprintf (src_str, len, "[%%r%d+%lld], ", ginsn_get_src_reg (src),
-		(long long int) ginsn_get_src_disp (src));
+      str_size = snprintf (src_str, len, "[%%r%d+%lld]",
+			   ginsn_get_src_reg (src),
+			   (long long int) ginsn_get_src_disp (src));
       break;
     default:
       break;
     }
+
+  gas_assert (str_size >= 0 && str_size < (int)len);
 
   return src_str;
 }
@@ -487,26 +500,31 @@ ginsn_src_print (struct ginsn_src *src)
 static char*
 ginsn_dst_print (struct ginsn_dst *dst)
 {
-  size_t len = GINSN_LISTING_OPND_LEN;
+  int str_size = 0;
+  const size_t len = GINSN_LISTING_OPND_LEN;
   char *dst_str = XNEWVEC (char, len);
 
   memset (dst_str, 0, len);
 
-  if (dst->type == GINSN_DST_REG)
+  switch (dst->type)
     {
-      char *buf = XNEWVEC (char, 32);
-      sprintf (buf, "%%r%d", ginsn_get_dst_reg (dst));
-      strcat (dst_str, buf);
-    }
-  else if (dst->type == GINSN_DST_INDIRECT)
-    {
-      char *buf = XNEWVEC (char, 32);
-      sprintf (buf, "[%%r%d+%lld]", ginsn_get_dst_reg (dst),
-		 (long long int) ginsn_get_dst_disp (dst));
-      strcat (dst_str, buf);
+    case GINSN_DST_REG:
+      str_size = snprintf (dst_str, len,
+			   "%%r%d", ginsn_get_dst_reg (dst));
+      break;
+    case GINSN_DST_INDIRECT:
+      str_size = snprintf (dst_str, len,
+			   "[%%r%d+%lld]", ginsn_get_dst_reg (dst),
+			   (long long int) ginsn_get_dst_disp (dst));
+      break;
+    default:
+      /* Other dst types are unexpected.  */
+      gas_assert (dst->type == GINSN_DST_UNKNOWN);
+      break;
     }
 
-  gas_assert (strlen (dst_str) < GINSN_LISTING_OPND_LEN);
+  /* str_size will remain 0 when GINSN_DST_UNKNOWN.  */
+  gas_assert (str_size >= 0 && str_size < (int)len);
 
   return dst_str;
 }
@@ -560,20 +578,32 @@ ginsn_print (ginsnS *ginsn)
 
   /* src 1.  */
   src = ginsn_get_src1 (ginsn);
+  char *src_buf = ginsn_src_print (src);
   str_size += snprintf (ginsn_str + str_size, GINSN_LISTING_LEN - str_size,
-			" %s", ginsn_src_print (src));
+			" %s", src_buf);
+  free (src_buf);
   gas_assert (str_size >= 0 && str_size < GINSN_LISTING_LEN);
 
   /* src 2.  */
   src = ginsn_get_src2 (ginsn);
-  str_size += snprintf (ginsn_str + str_size, GINSN_LISTING_LEN - str_size,
-			"%s", ginsn_src_print (src));
+  src_buf = ginsn_src_print (src);
+  if (strlen (src_buf))
+    {
+      str_size += snprintf (ginsn_str + str_size, GINSN_LISTING_LEN - str_size,
+			    ", %s", src_buf);
+    }
+  free (src_buf);
   gas_assert (str_size >= 0 && str_size < GINSN_LISTING_LEN);
 
   /* dst.  */
   dst = ginsn_get_dst (ginsn);
-  str_size += snprintf (ginsn_str + str_size, GINSN_LISTING_LEN - str_size,
-			"%s", ginsn_dst_print (dst));
+  char *dst_buf = ginsn_dst_print (dst);
+  if (strlen (dst_buf))
+    {
+      str_size += snprintf (ginsn_str + str_size, GINSN_LISTING_LEN - str_size,
+			    ", %s", dst_buf);
+    }
+  free (dst_buf);
 
 end:
   gas_assert (str_size >= 0 && str_size < GINSN_LISTING_LEN);
@@ -604,6 +634,8 @@ gbb_cleanup (gbbS **bbp)
   *bbp = NULL;
 }
 
+/* Add an edge from the source bb FROM_BB to the sink bb TO_BB.  */
+
 static void
 bb_add_edge (gbbS* from_bb, gbbS *to_bb)
 {
@@ -628,7 +660,7 @@ bb_add_edge (gbbS* from_bb, gbbS *to_bb)
     }
   else
     {
-      /* Get the tail of the list.  */
+      /* Get the head of the list.  */
       tmpedge = from_bb->out_gedges;
       while (tmpedge)
 	{
@@ -679,6 +711,9 @@ static gbbS *
 add_bb_at_ginsn (const symbolS *func, gcfgS *gcfg, ginsnS *ginsn, gbbS *prev_bb,
 		 int *errp);
 
+/* Return the already existing basic block (if present), which begins with
+   GINSN, in the given GCFG.  Return NULL otherwise.  */
+
 static gbbS *
 find_bb (gcfgS *gcfg, ginsnS *ginsn)
 {
@@ -698,12 +733,17 @@ find_bb (gcfgS *gcfg, ginsnS *ginsn)
 	      break;
 	    }
 	}
-      /* Must be found if ginsn is visited.  */
+      /* Must be found because ginsn is visited.  */
       gas_assert (found_bb);
     }
 
   return found_bb;
 }
+
+/* Get the basic block starting at GINSN in the GCFG.
+
+   If not already present, the function will make one, while adding an edge
+   from the PREV_BB to it.  */
 
 static gbbS *
 find_or_make_bb (const symbolS *func, gcfgS *gcfg, ginsnS *ginsn, gbbS *prev_bb,
@@ -712,25 +752,39 @@ find_or_make_bb (const symbolS *func, gcfgS *gcfg, ginsnS *ginsn, gbbS *prev_bb,
   gbbS *found_bb = NULL;
 
   found_bb = find_bb (gcfg, ginsn);
-  if (found_bb)
-    return found_bb;
+  if (!found_bb)
+    found_bb = add_bb_at_ginsn (func, gcfg, ginsn, prev_bb, errp);
 
-  return add_bb_at_ginsn (func, gcfg, ginsn, prev_bb, errp);
+  gas_assert (found_bb);
+  gas_assert (found_bb->first_ginsn == ginsn);
+
+  return found_bb;
 }
 
-/* Add the basic block starting at GINSN to the given GCFG.
-   Also adds an edge from the PREV_BB to the newly added basic block.
+/* Add basic block(s) for all reachable, unvisited ginsns, starting from GINSN,
+   to the given GCFG.  Also add an edge from the PREV_BB to the root of the
+   newly added basic block(s).
 
-   This is a recursive function which returns the root of the added
-   basic blocks.  */
+   This is a recursive function which returns the root of the added basic
+   blocks.  */
 
 static gbbS *
 add_bb_at_ginsn (const symbolS *func, gcfgS *gcfg, ginsnS *ginsn, gbbS *prev_bb,
 		 int *errp)
 {
+  gbbS *root_bb = NULL;
   gbbS *current_bb = NULL;
   ginsnS *target_ginsn = NULL;
   const symbolS *taken_label;
+
+  /* Create a new bb.  N.B. The caller must ensure bb with this ginsn does not
+     already exist.  */
+  gas_assert (!find_bb (gcfg, ginsn));
+  root_bb = XCNEW (gbbS);
+  cfg_add_bb (gcfg, root_bb);
+  root_bb->first_ginsn = ginsn;
+
+  current_bb = root_bb;
 
   while (ginsn)
     {
@@ -739,6 +793,8 @@ add_bb_at_ginsn (const symbolS *func, gcfgS *gcfg, ginsnS *ginsn, gbbS *prev_bb,
 	 end of bb, and a logical exit from function.  */
       if (GINSN_F_FUNC_END_P (ginsn))
 	{
+	  /* Dont mark them visited yet though, leaving the option of these
+	     being visited via other control flows as applicable.  */
 	  ginsn = ginsn->next;
 	  continue;
 	}
@@ -755,26 +811,26 @@ add_bb_at_ginsn (const symbolS *func, gcfgS *gcfg, ginsnS *ginsn, gbbS *prev_bb,
 	    bb_add_edge (prev_bb, current_bb);
 	  break;
 	}
-      else if (current_bb && GINSN_F_USER_LABEL_P (ginsn))
+      else if (current_bb && current_bb->first_ginsn != ginsn
+	       && GINSN_F_USER_LABEL_P (ginsn))
 	{
-	  /* Create new bb starting at this label ginsn.  */
+	  /* Create new bb starting at ginsn for (user-defined) label.  This is
+	     likely going to be a destination of a some control flow.  */
 	  prev_bb = current_bb;
-	  find_or_make_bb (func, gcfg, ginsn, prev_bb, errp);
+	  current_bb = find_or_make_bb (func, gcfg, ginsn, prev_bb, errp);
+	  bb_add_edge (prev_bb, current_bb);
 	  break;
 	}
 
       if (current_bb == NULL)
 	{
-	  /* Create a new bb.  */
 	  current_bb = XCNEW (gbbS);
 	  cfg_add_bb (gcfg, current_bb);
+	  current_bb->first_ginsn = ginsn;
 	  /* Add edge for the Not Taken, or Fall-through path.  */
 	  if (prev_bb)
 	    bb_add_edge (prev_bb, current_bb);
 	}
-
-      if (current_bb->first_ginsn == NULL)
-	current_bb->first_ginsn = ginsn;
 
       ginsn->visited = true;
       current_bb->num_ginsns++;
@@ -785,16 +841,13 @@ add_bb_at_ginsn (const symbolS *func, gcfgS *gcfg, ginsnS *ginsn, gbbS *prev_bb,
 	  || ginsn->type == GINSN_TYPE_JUMP_COND
 	  || ginsn->type == GINSN_TYPE_RETURN)
 	{
-	  /* Indirect Jumps or direct jumps to symbols non-local to the
-	     function must not be seen here.  The caller must have already
-	     checked for that.  */
+	  /* Indirect jumps must not be seen here.  The caller must have
+	     already checked for that.  */
 	  gas_assert (!ginsn_indirect_jump_p (ginsn));
-	  if (ginsn->type == GINSN_TYPE_JUMP)
-	    gas_assert (ginsn_direct_local_jump_p (ginsn));
 
-	  /* Direct Jumps.  May include conditional or unconditional change of
-	     flow.  What is important for CFG creation is that the target be
-	     local to function.  */
+	  /* Handle direct jumps.  For unconditional direct jumps, where the
+	     target is not local to the function, treat them later as similar
+	     to an exit from function (in the else block).  */
 	  if (ginsn->type == GINSN_TYPE_JUMP_COND
 	      || ginsn_direct_local_jump_p (ginsn))
 	    {
@@ -802,16 +855,21 @@ add_bb_at_ginsn (const symbolS *func, gcfgS *gcfg, ginsnS *ginsn, gbbS *prev_bb,
 	      taken_label = ginsn->src[0].sym;
 	      gas_assert (taken_label);
 
-	      /* Preserve the prev_bb to be the dominator bb as we are
-		 going to follow the taken path of the conditional branch
-		 soon.  */
+	      /* Preserve the prev_bb to be the source bb as we are going to
+		 follow the taken path of the conditional branch soon.  */
 	      prev_bb = current_bb;
 
 	      /* Follow the target on the taken path.  */
 	      target_ginsn = label_ginsn_map_find (taken_label);
 	      /* Add the bb for the target of the taken branch.  */
 	      if (target_ginsn)
-		find_or_make_bb (func, gcfg, target_ginsn, prev_bb, errp);
+		{
+		  current_bb = find_or_make_bb (func, gcfg, target_ginsn,
+						prev_bb, errp);
+		  gas_assert (prev_bb);
+		  bb_add_edge (prev_bb, current_bb);
+		  current_bb = NULL;
+		}
 	      else
 		{
 		  *errp = GCFG_JLABEL_NOT_PRESENT;
@@ -819,23 +877,45 @@ add_bb_at_ginsn (const symbolS *func, gcfgS *gcfg, ginsnS *ginsn, gbbS *prev_bb,
 				 _("missing label '%s' in func '%s' may result in imprecise cfg"),
 				 S_GET_NAME (taken_label), S_GET_NAME (func));
 		}
-	      /* Add the bb for the fall through path.  */
-	      find_or_make_bb (func, gcfg, ginsn->next, prev_bb, errp);
+
+	      if (ginsn->type == GINSN_TYPE_JUMP_COND)
+		{
+		  /* Add the bb for the fall through path.  */
+		  current_bb = find_or_make_bb (func, gcfg, ginsn->next,
+						prev_bb, errp);
+		  gas_assert (prev_bb);
+		  bb_add_edge (prev_bb, current_bb);
+		  current_bb = NULL;
+		}
+	      else
+		{
+		  /* Unconditional jump.  Current BB has been processed.  */
+		  current_bb = NULL;
+		  /* We'll come back to the ginsns following these (local)
+		     unconditional jmps from another path if they are indeed
+		     reachable code.  */
+		  break;
+		}
 	    }
-	 else if (ginsn->type == GINSN_TYPE_RETURN)
+	 else
 	   {
-	     /* We'll come back to the ginsns following GINSN_TYPE_RETURN
-		from another path if they are indeed reachable code.  */
+	     gas_assert (ginsn->type == GINSN_TYPE_RETURN
+			 || (ginsn->type == GINSN_TYPE_JUMP
+			     && !ginsn_direct_local_jump_p (ginsn)));
+	     /* Current BB has been processed.  */
+	     current_bb = NULL;
+
+	     /* We'll come back to the ginsns following GINSN_TYPE_RETURN or
+		other (non-local) unconditional jmps from another path if they
+		are indeed reachable code.  */
 	     break;
 	   }
-
-	 /* Current BB has been processed.  */
-	 current_bb = NULL;
 	}
+
       ginsn = ginsn->next;
     }
 
-  return current_bb;
+  return root_bb;
 }
 
 static int
@@ -1083,9 +1163,7 @@ frch_ginsn_data_append (ginsnS *ginsn)
     {
       temp->id = ++id;
 
-      if (ginsn_indirect_jump_p (temp)
-	  || (ginsn->type == GINSN_TYPE_JUMP
-	      && !ginsn_direct_local_jump_p (temp)))
+      if (ginsn_indirect_jump_p (temp))
 	frchain_now->frch_ginsn_data->gcfg_apt_p = false;
 
       if (listing & LISTING_GINSN_SCFI)

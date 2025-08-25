@@ -1,5 +1,5 @@
 /* scfi.c - Support for synthesizing DWARF CFI for hand-written asm.
-   Copyright (C) 2023 Free Software Foundation, Inc.
+   Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -141,10 +141,13 @@ scfi_ops_cleanup (scfi_opS **head)
 
   while (op)
     {
+      free (op->op_data);
       free (op);
       op = next;
       next = op ? op->next : NULL;
     }
+
+  free (head);
 }
 
 /* Compare two SCFI states.  */
@@ -155,7 +158,7 @@ cmp_scfi_state (scfi_stateS *state1, scfi_stateS *state2)
   int ret;
 
   if (!state1 || !state2)
-    ret = 1;
+    return 1;
 
   /* Skip comparing the scratch[] value of registers.  The user visible
      unwind information is derived from the regs[] from the SCFI state.  */
@@ -164,10 +167,12 @@ cmp_scfi_state (scfi_stateS *state1, scfi_stateS *state2)
 
   /* For user functions which perform dynamic stack allocation, after switching
      t REG_FP based CFA tracking, it is perfectly possible to have stack usage
-     in some control flows.  However, double-checking that all control flows
-     have the same idea of CFA tracking before this wont hurt.  */
-  gas_assert (state1->regs[REG_CFA].base == state2->regs[REG_CFA].base);
-  if (state1->regs[REG_CFA].base == REG_SP)
+     in some control flows.  Further, the different control flows may even not
+     have the same idea of CFA tracking (likely later necessitating generation
+     of .cfi_remember_state / .cfi_restore_state pair).  */
+  ret |= state1->regs[REG_CFA].base != state2->regs[REG_CFA].base;
+
+  if (!ret && state1->regs[REG_CFA].base == REG_SP)
     ret |= state1->stack_size != state2->stack_size;
 
   ret |= state1->traceable_p != state2->traceable_p;
@@ -218,11 +223,12 @@ scfi_state_restore_reg (scfi_stateS *state, unsigned int reg)
   gas_assert (state->regs[reg].state == CFI_ON_STACK);
   gas_assert (state->regs[reg].base == REG_CFA);
 
-  state->regs[reg].base = reg;
+  /* PS: the register may still be on stack much after the restore.  Reset the
+     SCFI state to CFI_UNDEFINED, however, to indicate that the most updated
+     source of value is register itself from here onwards.  */
+  state->regs[reg].base = 0;
   state->regs[reg].offset = 0;
-  /* PS: the register may still be on stack much after the restore, but the
-     SCFI state keeps the state as 'in register'.  */
-  state->regs[reg].state = CFI_IN_REG;
+  state->regs[reg].state = CFI_UNDEFINED;
 }
 
 /* Identify if the given GAS instruction GINSN saves a register
@@ -472,13 +478,28 @@ verify_heuristic_traceable_reg_fp (ginsnS *ginsn, scfi_stateS *state)
 {
   /* The function uses this variable to issue error to user right away.  */
   int fp_traceable_p = 0;
-  struct ginsn_dst *dst;
+  enum ginsn_type gtype;
   struct ginsn_src *src1;
   struct ginsn_src *src2;
+  struct ginsn_dst *dst;
+  unsigned int src1_reg;
+  unsigned int dst_reg;
+  enum ginsn_src_type src1_type;
+  enum ginsn_src_type src2_type;
+  enum ginsn_dst_type dst_type;
+
+  gtype = ginsn->type;
 
   src1 = ginsn_get_src1 (ginsn);
   src2 = ginsn_get_src2 (ginsn);
   dst = ginsn_get_dst (ginsn);
+
+  src1_reg = ginsn_get_src_reg (src1);
+  dst_reg = ginsn_get_dst_reg (dst);
+
+  src1_type = ginsn_get_src_type (src1);
+  src2_type = ginsn_get_src_type (src2);
+  dst_type = ginsn_get_dst_type (dst);
 
   /* Stack manipulation can be done in a variety of ways.  A program may
      allocate stack statically or may perform dynamic stack allocation in
@@ -492,25 +513,26 @@ verify_heuristic_traceable_reg_fp (ginsnS *ginsn, scfi_stateS *state)
 
   /* Check all applicable instructions with dest REG_FP, when the CFA base
      register is REG_FP.  */
-  if (state->regs[REG_CFA].base == REG_FP && ginsn_get_dst_reg (dst) == REG_FP)
+  if (state->regs[REG_CFA].base == REG_FP
+      && (dst_type == GINSN_DST_REG || dst_type == GINSN_DST_INDIRECT)
+      && dst_reg == REG_FP)
     {
       /* Excuse the add/sub with imm usage: They are OK.  */
-      if ((ginsn->type == GINSN_TYPE_ADD || ginsn->type == GINSN_TYPE_SUB)
-	  && ginsn_get_src_reg (src1) == REG_FP
-	  && ginsn_get_src_type (src2) == GINSN_SRC_IMM)
+      if ((gtype == GINSN_TYPE_ADD || gtype == GINSN_TYPE_SUB)
+	  && src1_type == GINSN_SRC_REG && src1_reg == REG_FP
+	  && src2_type == GINSN_SRC_IMM)
 	fp_traceable_p = 0;
       /* REG_FP restore is OK too.  */
       else if (ginsn->type == GINSN_TYPE_LOAD)
 	fp_traceable_p = 0;
       /* mov's to memory with REG_FP base do not make REG_FP untraceable.  */
-      else if (ginsn_get_dst_type (dst) == GINSN_DST_INDIRECT
-	       && (ginsn->type == GINSN_TYPE_MOV
-		   || ginsn->type == GINSN_TYPE_STORE))
+      else if (dst_type == GINSN_DST_INDIRECT
+	       && (gtype == GINSN_TYPE_MOV || gtype == GINSN_TYPE_STORE))
 	fp_traceable_p = 0;
       /* Manipulations of the values possibly on stack are OK too.  */
-      else if ((ginsn->type == GINSN_TYPE_ADD || ginsn->type == GINSN_TYPE_SUB
-		|| ginsn->type == GINSN_TYPE_AND)
-	       && ginsn_get_dst_type (dst) == GINSN_DST_INDIRECT)
+      else if ((gtype == GINSN_TYPE_ADD || gtype == GINSN_TYPE_SUB
+		|| gtype == GINSN_TYPE_AND)
+	       && dst_type == GINSN_DST_INDIRECT)
 	fp_traceable_p = 0;
       /* All other ginsns with REG_FP as destination make REG_FP not
 	 traceable.  */
@@ -532,13 +554,28 @@ verify_heuristic_traceable_stack_manipulation (ginsnS *ginsn,
   /* The function uses this variable to issue error to user right away.  */
   int sp_untraceable_p = 0;
   bool possibly_untraceable = false;
+  enum ginsn_type gtype;
   struct ginsn_dst *dst;
   struct ginsn_src *src1;
   struct ginsn_src *src2;
+  unsigned int src1_reg;
+  unsigned int dst_reg;
+  enum ginsn_src_type src1_type;
+  enum ginsn_src_type src2_type;
+  enum ginsn_dst_type dst_type;
+
+  gtype = ginsn->type;
 
   src1 = ginsn_get_src1 (ginsn);
   src2 = ginsn_get_src2 (ginsn);
   dst = ginsn_get_dst (ginsn);
+
+  src1_reg = ginsn_get_src_reg (src1);
+  dst_reg = ginsn_get_dst_reg (dst);
+
+  src1_type = ginsn_get_src_type (src1);
+  src2_type = ginsn_get_src_type (src2);
+  dst_type = ginsn_get_dst_type (dst);
 
   /* Stack manipulation can be done in a variety of ways.  A program may
      allocate stack statically in prologue or may need to do dynamic stack
@@ -553,31 +590,24 @@ verify_heuristic_traceable_stack_manipulation (ginsnS *ginsn,
        amount of stack usage (and hence, the value of rsp) must be known at
        all times.  */
 
-  if (ginsn->type == GINSN_TYPE_MOV
-      && ginsn_get_dst_type (dst) == GINSN_DST_REG
-      && ginsn_get_dst_reg (dst) == REG_SP
-      && ginsn_get_src_type (src1) == GINSN_SRC_REG
+  if (gtype == GINSN_TYPE_MOV
+      && dst_type == GINSN_DST_REG && dst_reg == REG_SP
       /* Exclude mov %rbp, %rsp from this check.  */
-      && ginsn_get_src_reg (src1) != REG_FP)
+      && src1_type == GINSN_SRC_REG && src1_reg != REG_FP)
     {
-      /* mov %reg, %rsp.  */
       /* A previous mov %rsp, %reg must have been seen earlier for this to be
 	 an OK for stack manipulation.  */
-      if (state->scratch[ginsn_get_src_reg (src1)].base != REG_CFA
-	  || state->scratch[ginsn_get_src_reg (src1)].state != CFI_IN_REG)
-	{
-	  possibly_untraceable = true;
-	}
+      if (state->scratch[src1_reg].base != REG_CFA
+	  || state->scratch[src1_reg].state != CFI_IN_REG)
+	possibly_untraceable = true;
     }
   /* Check add/sub/and insn usage when CFA base register is REG_SP.
      Any stack size manipulation, including stack realignment is not allowed
      if CFA base register is REG_SP.  */
-  else if (ginsn_get_dst_type (dst) == GINSN_DST_REG
-	   && ginsn_get_dst_reg (dst) == REG_SP
-	   && (((ginsn->type == GINSN_TYPE_ADD || ginsn->type == GINSN_TYPE_SUB)
-		&& ginsn_get_src_type (src2) != GINSN_SRC_IMM)
-	       || ginsn->type == GINSN_TYPE_AND
-	       || ginsn->type == GINSN_TYPE_OTHER))
+  else if (dst_type == GINSN_DST_REG && dst_reg == REG_SP
+	   && (((gtype == GINSN_TYPE_ADD || gtype == GINSN_TYPE_SUB)
+		&& src2_type != GINSN_SRC_IMM)
+	       || gtype == GINSN_TYPE_AND || gtype == GINSN_TYPE_OTHER))
     possibly_untraceable = true;
   /* If a register save operation is seen when REG_SP is untraceable,
      CFI cannot be synthesized for register saves, hence bail out.  */
@@ -587,19 +617,15 @@ verify_heuristic_traceable_stack_manipulation (ginsnS *ginsn,
       /* If, however, the register save is an REG_FP-based, indirect mov
 	 like: mov reg, disp(%rbp) and CFA base register is REG_BP,
 	 untraceable REG_SP is not a problem.  */
-      if (ginsn->type == GINSN_TYPE_MOV
-	  && ginsn_get_dst_type (dst) == GINSN_DST_INDIRECT
-	  && (ginsn_get_dst_reg (dst) == REG_FP
-	      && state->regs[REG_CFA].base == REG_FP))
+      if (gtype == GINSN_TYPE_MOV && state->regs[REG_CFA].base == REG_FP
+	  && dst_type == GINSN_DST_INDIRECT && dst_reg == REG_FP)
 	sp_untraceable_p = 0;
     }
   else if (ginsn_scfi_restore_reg_p (ginsn, state) && !state->traceable_p)
     {
-      if (ginsn->type == GINSN_TYPE_MOV
-	  && ginsn_get_dst_type (dst) == GINSN_DST_INDIRECT
-	  && (ginsn_get_src_reg (src1) == REG_SP
-	      || (ginsn_get_src_reg (src1) == REG_FP
-		  && state->regs[REG_CFA].base != REG_FP)))
+      if (gtype == GINSN_TYPE_MOV && dst_type == GINSN_DST_INDIRECT
+	  && (src1_reg == REG_SP
+	      || (src1_reg == REG_FP && state->regs[REG_CFA].base != REG_FP)))
 	sp_untraceable_p = 1;
     }
 
@@ -700,6 +726,11 @@ gen_scfi_ops (ginsnS *ginsn, scfi_stateS *state)
   struct ginsn_src *src1;
   struct ginsn_src *src2;
   struct ginsn_dst *dst;
+  unsigned int src1_reg;
+  unsigned int dst_reg;
+  enum ginsn_src_type src1_type;
+  enum ginsn_src_type src2_type;
+  enum ginsn_dst_type dst_type;
 
   if (!ginsn || !state)
     ret = 1;
@@ -718,6 +749,13 @@ gen_scfi_ops (ginsnS *ginsn, scfi_stateS *state)
   src2 = ginsn_get_src2 (ginsn);
   dst = ginsn_get_dst (ginsn);
 
+  src1_reg = ginsn_get_src_reg (src1);
+  dst_reg = ginsn_get_dst_reg (dst);
+
+  src1_type = ginsn_get_src_type (src1);
+  src2_type = ginsn_get_src_type (src2);
+  dst_type = ginsn_get_dst_type (dst);
+
   ret = verify_heuristic_traceable_stack_manipulation (ginsn, state);
   if (ret)
     return ret;
@@ -726,68 +764,63 @@ gen_scfi_ops (ginsnS *ginsn, scfi_stateS *state)
   if (ret)
     return ret;
 
-  switch (ginsn->dst.type)
+  switch (dst_type)
     {
     case GINSN_DST_REG:
       switch (ginsn->type)
 	{
 	case GINSN_TYPE_MOV:
-	  if (ginsn_get_src_type (src1) == GINSN_SRC_REG
-	      && ginsn_get_src_reg (src1) == REG_SP
-	      && ginsn_get_dst_reg (dst) == REG_FP
+	  if (src1_type == GINSN_SRC_REG && src1_reg == REG_SP
+	      && dst_type == GINSN_DST_REG && dst_reg == REG_FP
 	      && state->regs[REG_CFA].base == REG_SP)
 	    {
 	      /* mov %rsp, %rbp.  */
-	      scfi_op_add_def_cfa_reg (state, ginsn, ginsn_get_dst_reg (dst));
+	      scfi_op_add_def_cfa_reg (state, ginsn, dst_reg);
 	    }
-	  else if (ginsn_get_src_type (src1) == GINSN_SRC_REG
-		   && ginsn_get_src_reg (src1) == REG_FP
-		   && ginsn_get_dst_reg (dst) == REG_SP
+	  else if (src1_type == GINSN_SRC_REG && src1_reg == REG_FP
+		   && dst_type == GINSN_DST_REG && dst_reg == REG_SP
 		   && state->regs[REG_CFA].base == REG_FP)
 	    {
 	      /* mov %rbp, %rsp.  */
 	      state->stack_size = -state->regs[REG_FP].offset;
-	      scfi_op_add_def_cfa_reg (state, ginsn, ginsn_get_dst_reg (dst));
+	      scfi_op_add_def_cfa_reg (state, ginsn, dst_reg);
 	      state->traceable_p = true;
 	    }
-	  else if (ginsn_get_src_type (src1) == GINSN_SRC_INDIRECT
-		   && (ginsn_get_src_reg (src1) == REG_SP
-		       || ginsn_get_src_reg (src1) == REG_FP)
-		   && ginsn_track_reg_p (ginsn_get_dst_reg (dst), GINSN_GEN_SCFI))
+	  else if (src1_type == GINSN_SRC_INDIRECT
+		   && (src1_reg == REG_SP || src1_reg == REG_FP)
+		   && ginsn_track_reg_p (dst_reg, GINSN_GEN_SCFI))
 	    {
 	      /* mov disp(%rsp), reg.  */
 	      /* mov disp(%rbp), reg.  */
 	      if (verify_heuristic_symmetrical_restore_reg (state, ginsn))
 		{
-		  scfi_state_restore_reg (state, ginsn_get_dst_reg (dst));
-		  scfi_op_add_cfa_restore (ginsn, ginsn_get_dst_reg (dst));
+		  scfi_state_restore_reg (state, dst_reg);
+		  scfi_op_add_cfa_restore (ginsn, dst_reg);
 		}
 	      else
 		as_warn_where (ginsn->file, ginsn->line,
 			       _("SCFI: asymetrical register restore"));
 	    }
-	  else if (ginsn_get_src_type (src1) == GINSN_SRC_REG
-		   && ginsn_get_dst_type (dst) == GINSN_DST_REG
-		   && ginsn_get_src_reg (src1) == REG_SP)
+	  else if (src1_type == GINSN_SRC_REG && src1_reg == REG_SP
+		   && dst_type == GINSN_DST_REG)
 	    {
 	      /* mov %rsp, %reg.  */
 	      /* The value of rsp is taken directly from state->stack_size.
 		 IMP: The workflow in gen_scfi_ops must keep it updated.
 		 PS: Not taking the value from state->scratch[REG_SP] is
 		 intentional.  */
-	      state->scratch[ginsn_get_dst_reg (dst)].base = REG_CFA;
-	      state->scratch[ginsn_get_dst_reg (dst)].offset = -state->stack_size;
-	      state->scratch[ginsn_get_dst_reg (dst)].state = CFI_IN_REG;
+	      state->scratch[dst_reg].base = REG_CFA;
+	      state->scratch[dst_reg].offset = -state->stack_size;
+	      state->scratch[dst_reg].state = CFI_IN_REG;
 	    }
-	  else if (ginsn_get_src_type (src1) == GINSN_SRC_REG
-		   && ginsn_get_dst_type (dst) == GINSN_DST_REG
-		   && ginsn_get_dst_reg (dst) == REG_SP)
+	  else if (src1_type == GINSN_SRC_REG
+		   && dst_type == GINSN_DST_REG && dst_reg == REG_SP)
 	    {
 	      /* mov %reg, %rsp.  */
 	      /* Keep the value of REG_SP updated.  */
-	      if (state->scratch[ginsn_get_src_reg (src1)].state == CFI_IN_REG)
+	      if (state->scratch[src1_reg].state == CFI_IN_REG)
 		{
-		  state->stack_size = -state->scratch[ginsn_get_src_reg (src1)].offset;
+		  state->stack_size = -state->scratch[src1_reg].offset;
 		  state->traceable_p = true;
 		}
 # if 0
@@ -799,8 +832,9 @@ gen_scfi_ops (ginsnS *ginsn, scfi_stateS *state)
 	    }
 	  break;
 	case GINSN_TYPE_SUB:
-	  if (ginsn_get_src_reg (src1) == REG_SP
-	      && ginsn_get_dst_reg (dst) == REG_SP)
+	  if (src1_type == GINSN_SRC_REG && src1_reg == REG_SP
+	      && dst_type == GINSN_DST_REG && dst_reg == REG_SP
+	      && src2_type == GINSN_SRC_IMM)
 	    {
 	      /* Stack inc/dec offset, when generated due to stack push and pop is
 		 target-specific.  Use the value encoded in the ginsn.  */
@@ -813,8 +847,9 @@ gen_scfi_ops (ginsnS *ginsn, scfi_stateS *state)
 	    }
 	  break;
 	case GINSN_TYPE_ADD:
-	  if (ginsn_get_src_reg (src1) == REG_SP
-	      && ginsn_get_dst_reg (dst) == REG_SP)
+	  if (src1_type == GINSN_SRC_REG && src1_reg == REG_SP
+	      && dst_type == GINSN_DST_REG && dst_reg == REG_SP
+	      && src2_type == GINSN_SRC_IMM)
 	    {
 	      /* Stack inc/dec offset is target-specific.  Use the value
 		 encoded in the ginsn.  */
@@ -826,8 +861,8 @@ gen_scfi_ops (ginsnS *ginsn, scfi_stateS *state)
 		  scfi_op_add_cfa_offset_inc (state, ginsn, ginsn_get_src_imm (src2));
 		}
 	    }
-	  else if (ginsn_get_src_reg (src1) == REG_FP
-		   && ginsn_get_dst_reg (dst) == REG_SP
+	  else if (src1_type == GINSN_SRC_REG && src1_reg == REG_FP
+		   && dst_type == GINSN_DST_REG && dst_reg == REG_SP
 		   && state->regs[REG_CFA].base == REG_FP)
 	    {
 	      /* FIXME - what is this for ? */
@@ -836,26 +871,25 @@ gen_scfi_ops (ginsnS *ginsn, scfi_stateS *state)
 	  break;
 	case GINSN_TYPE_LOAD:
 	  /* If this is a load from stack.  */
-	  if (ginsn_get_src_type (src1) == GINSN_SRC_INDIRECT
-	      && (ginsn_get_src_reg (src1) == REG_SP
-		  || (ginsn_get_src_reg (src1) == REG_FP
-		      && state->regs[REG_CFA].base == REG_FP)))
+	  if (src1_type == GINSN_SRC_INDIRECT
+	      && ((src1_reg == REG_FP && state->regs[REG_CFA].base == REG_FP)
+		  || src1_reg == REG_SP))
+
 	    {
 	      /* pop %rbp when CFA tracking is REG_FP based.  */
-	      if (ginsn_get_dst_reg (dst) == REG_FP
-		  && state->regs[REG_CFA].base == REG_FP)
+	      if (dst_reg == REG_FP && state->regs[REG_CFA].base == REG_FP)
 		{
 		  scfi_op_add_def_cfa_reg (state, ginsn, REG_SP);
 		  if (state->regs[REG_CFA].offset != state->stack_size)
 		    scfi_op_add_cfa_offset_inc (state, ginsn,
 						(state->regs[REG_CFA].offset - state->stack_size));
 		}
-	      if (ginsn_track_reg_p (ginsn_get_dst_reg (dst), GINSN_GEN_SCFI))
+	      if (ginsn_track_reg_p (dst_reg, GINSN_GEN_SCFI))
 		{
 		  if (verify_heuristic_symmetrical_restore_reg (state, ginsn))
 		    {
-		      scfi_state_restore_reg (state, ginsn_get_dst_reg (dst));
-		      scfi_op_add_cfa_restore (ginsn, ginsn_get_dst_reg (dst));
+		      scfi_state_restore_reg (state, dst_reg);
+		      scfi_op_add_cfa_restore (ginsn, dst_reg);
 		    }
 		  else
 		    as_warn_where (ginsn->file, ginsn->line,
@@ -884,20 +918,20 @@ gen_scfi_ops (ginsnS *ginsn, scfi_stateS *state)
       /* mov reg, disp(%rsp) */
       if (ginsn_scfi_save_reg_p (ginsn, state))
 	{
-	  if (ginsn_get_dst_reg (dst) == REG_SP)
+	  if (dst_reg == REG_SP)
 	    {
 	      /* mov reg, disp(%rsp) */
 	      offset = 0 - state->stack_size + ginsn_get_dst_disp (dst);
-	      scfi_state_save_reg (state, ginsn_get_src_reg (src1), REG_CFA, offset);
-	      scfi_op_add_cfi_offset (state, ginsn, ginsn_get_src_reg (src1));
+	      scfi_state_save_reg (state, src1_reg, REG_CFA, offset);
+	      scfi_op_add_cfi_offset (state, ginsn, src1_reg);
 	    }
-	  else if (ginsn_get_dst_reg (dst) == REG_FP)
+	  else if (dst_reg == REG_FP)
 	    {
 	      gas_assert (state->regs[REG_CFA].base == REG_FP);
 	      /* mov reg, disp(%rbp) */
 	      offset = 0 - state->regs[REG_CFA].offset + ginsn_get_dst_disp (dst);
-	      scfi_state_save_reg (state, ginsn_get_src_reg (src1), REG_CFA, offset);
-	      scfi_op_add_cfi_offset (state, ginsn, ginsn_get_src_reg (src1));
+	      scfi_state_save_reg (state, src1_reg, REG_CFA, offset);
+	      scfi_op_add_cfi_offset (state, ginsn, src1_reg);
 	    }
 	}
       break;
@@ -911,11 +945,11 @@ gen_scfi_ops (ginsnS *ginsn, scfi_stateS *state)
   return ret;
 }
 
-/* Recursively perform forward flow of the (unwind information) SCFI state
+/* Recursively perform forward flow of the (unwind information) SCFI STATE
    starting at basic block GBB.
 
-   The forward flow process propagates the SCFI state at exit of a basic block
-   to the successor basic block.
+   The core of forward flow process takes the SCFI state at the entry of a bb
+   and updates it incrementally as per the semantics of each ginsn in the bb.
 
    Returns error code, if any.  */
 
@@ -961,6 +995,8 @@ forward_flow_scfi_state (gcfgS *gcfg, gbbS *gbb, scfi_stateS *state)
       bb_for_each_edge(gbb, gedge)
 	{
 	  gbb = gedge->dst_bb;
+	  /* Ensure that the state is the one from the exit of the prev bb.  */
+	  memcpy (state, prev_bb->exit_state, sizeof (scfi_stateS));
 	  if (gbb->visited)
 	    {
 	      ret = cmp_scfi_state (gbb->entry_state, state);
@@ -1137,6 +1173,7 @@ handle_scfi_dot_cfi (ginsnS *ginsn)
 	  break;
 	case CFI_label:
 	  scfi_dot_cfi (CFI_label, 0, 0, 0, op->op_data->name, ginsn->sym);
+	  free ((char *) op->op_data->name);
 	  break;
 	case CFI_signal_frame:
 	  scfi_dot_cfi (CFI_signal_frame, 0, 0, 0, NULL, ginsn->sym);

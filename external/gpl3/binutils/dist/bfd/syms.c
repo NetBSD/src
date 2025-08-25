@@ -1,5 +1,5 @@
 /* Generic symbol-table support for the BFD library.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -342,6 +342,11 @@ EXTERNAL
 .  const char *stab_name;	{* String for stab type.  *}
 .} symbol_info;
 .
+.{* An empty string that will not match the address of any other
+.   symbol name, even unnamed local symbols which will also have empty
+.   string names.  This can be used to flag a symbol as corrupt if its
+.   name uses an out of range string table index.  *}
+.extern const char bfd_symbol_error_name[];
 */
 
 #include "sysdep.h"
@@ -350,6 +355,8 @@ EXTERNAL
 #include "safe-ctype.h"
 #include "bfdlink.h"
 #include "aout/stab_gnu.h"
+
+const char bfd_symbol_error_name[] = { 0 };
 
 /*
 DOCDD
@@ -394,7 +401,7 @@ bfd_is_local_label (bfd *abfd, asymbol *sym)
      if we didn't reject them here.  */
   if ((sym->flags & (BSF_GLOBAL | BSF_WEAK | BSF_FILE | BSF_SECTION_SYM)) != 0)
     return false;
-  if (sym->name == NULL)
+  if (sym->name == NULL || sym->name == bfd_symbol_error_name)
     return false;
   return bfd_is_local_label_name (abfd, sym->name);
 }
@@ -587,6 +594,7 @@ struct section_to_type
    adding entries.  Since it is so short, a linear search is used.  */
 static const struct section_to_type stt[] =
 {
+  {".didat", 'i'},		/* MSVC's .didat (delay import) section */
   {".drectve", 'i'},		/* MSVC's .drective section */
   {".edata", 'e'},		/* MSVC's .edata (export) section */
   {".idata", 'i'},		/* MSVC's .idata (import) section */
@@ -777,7 +785,8 @@ bfd_symbol_info (asymbol *symbol, symbol_info *ret)
   else
     ret->value = symbol->value + symbol->section->vma;
 
-  ret->name = symbol->name;
+  ret->name = (symbol->name != bfd_symbol_error_name
+	       ? symbol->name : _("<corrupt>"));
 }
 
 /*

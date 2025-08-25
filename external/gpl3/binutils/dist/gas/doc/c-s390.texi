@@ -1,4 +1,4 @@
-@c Copyright (C) 2009-2024 Free Software Foundation, Inc.
+@c Copyright (C) 2009-2025 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -18,7 +18,8 @@ and eleven chip levels. The architecture modes are the Enterprise System
 Architecture (ESA) and the newer z/Architecture mode. The chip levels
 are g5 (or arch3), g6, z900 (or arch5), z990 (or arch6), z9-109, z9-ec
 (or arch7), z10 (or arch8), z196 (or arch9), zEC12 (or arch10), z13
-(or arch11), z14 (or arch12), z15 (or arch13), or z16 (or arch14).
+(or arch11), z14 (or arch12), z15 (or arch13), z16 (or arch14), or
+z17 (arch15).
 
 @menu
 * s390 Options::                Command-line Options.
@@ -71,8 +72,9 @@ are recognized:
 @code{zEC12} (or @code{arch10}),
 @code{z13} (or @code{arch11}),
 @code{z14} (or @code{arch12}),
-@code{z15} (or @code{arch13}), and
-@code{z16} (or @code{arch14}).
+@code{z15} (or @code{arch13}),
+@code{z16} (or @code{arch14}), and
+@code{z17} (or @code{arch15}).
 
 Assembling an instruction that is not supported on the target
 processor results in an error message.
@@ -300,10 +302,11 @@ field. The notation changes as follows:
 @display
 @multitable @columnfractions 0.30 0.30
 @headitem full notation @tab short notation
-@item Dn(0,Bn) @tab Dn(Bn)
+@item Dn(Xn,0) @tab Dn(Xn,)
+@item Dn(0,Bn) @tab Dn(,Bn) or Dn(Bn)
 @item Dn(0,0) @tab Dn
 @item Dn(0) @tab Dn
-@item Dn(Ln,0) @tab Dn(Ln)
+@item Dn(Ln,0) @tab Dn(Ln,) or Dn(Ln)
 @end multitable
 @end display
 

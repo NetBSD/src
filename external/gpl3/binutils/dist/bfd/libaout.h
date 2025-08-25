@@ -1,5 +1,5 @@
 /* BFD back-end data structures for a.out (and similar) files.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -176,13 +176,6 @@ struct aout_backend_data
   bool (*add_dynamic_symbols)
     (bfd *, struct bfd_link_info *, struct external_nlist **,
      bfd_size_type *, char **);
-
-  /* Callback from the add symbols phase of the linker code to handle
-     adding a single symbol to the global linker hash table.  */
-  bool (*add_one_symbol)
-    (struct bfd_link_info *, bfd *, const char *, flagword,
-     asection *, bfd_vma, const char *, bool, bool,
-     struct bfd_link_hash_entry **);
 
   /* Called to handle linking a dynamic object.  */
   bool (*link_dynamic_object)
@@ -408,10 +401,8 @@ struct aoutdata
   /* The external symbol information.  */
   struct external_nlist *external_syms;
   bfd_size_type external_sym_count;
-  bfd_window sym_window;
   char *external_strings;
   bfd_size_type external_string_size;
-  bfd_window string_window;
   struct aout_link_hash_entry **sym_hashes;
 
   /* A pointer for shared library information.  */
@@ -442,31 +433,14 @@ struct  aout_data_struct
 #define obj_aout_subformat(bfd)		   (adata (bfd).subformat)
 #define obj_aout_external_syms(bfd)	   (adata (bfd).external_syms)
 #define obj_aout_external_sym_count(bfd)   (adata (bfd).external_sym_count)
-#define obj_aout_sym_window(bfd)	   (adata (bfd).sym_window)
 #define obj_aout_external_strings(bfd)	   (adata (bfd).external_strings)
 #define obj_aout_external_string_size(bfd) (adata (bfd).external_string_size)
-#define obj_aout_string_window(bfd)	   (adata (bfd).string_window)
 #define obj_aout_sym_hashes(bfd)	   (adata (bfd).sym_hashes)
 #define obj_aout_dynamic_info(bfd)	   (adata (bfd).dynamic_info)
 
 /* We take the address of the first element of an asymbol to ensure that the
    macro is only ever applied to an asymbol.  */
 #define aout_symbol(asymbol) ((aout_symbol_type *)(&(asymbol)->the_bfd))
-
-/* Information we keep for each a.out section.  This is currently only
-   used by the a.out backend linker.  */
-
-struct aout_section_data_struct
-{
-  /* The unswapped relocation entries for this section.  */
-  void * relocs;
-};
-
-#define aout_section_data(s) \
-  ((struct aout_section_data_struct *) (s)->used_by_bfd)
-
-#define set_aout_section_data(s,v) \
-  ((s)->used_by_bfd = (void *)&(v)->relocs)
 
 /* Prototype declarations for functions defined in aoutx.h.  */
 
@@ -570,7 +544,7 @@ extern bool NAME (aout, adjust_sizes_and_vmas)
 extern void NAME (aout, swap_exec_header_in)
   (bfd *, struct external_exec *, struct internal_exec *);
 
-extern void NAME (aout, swap_exec_header_out)
+extern bool NAME (aout, swap_exec_header_out)
   (bfd *, struct internal_exec *, struct external_exec *);
 
 extern struct bfd_hash_entry * NAME (aout, link_hash_newfunc)
@@ -631,7 +605,8 @@ extern bool NAME (aout, bfd_free_cached_info)
 		       * obj_reloc_entry_size (abfd));			\
     execp->a_drsize = ((obj_datasec (abfd)->reloc_count)		\
 		       * obj_reloc_entry_size (abfd));			\
-    NAME (aout, swap_exec_header_out) (abfd, execp, &exec_bytes);	\
+    if (!NAME (aout, swap_exec_header_out) (abfd, execp, &exec_bytes))	\
+      return false;							\
 									\
     if (bfd_seek (abfd, 0, SEEK_SET) != 0				\
 	|| bfd_write (&exec_bytes, EXEC_BYTES_SIZE,			\

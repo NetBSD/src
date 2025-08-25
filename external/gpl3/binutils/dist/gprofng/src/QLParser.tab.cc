@@ -37,11 +37,12 @@
 // "%code top" blocks.
 #line 28 "QLParser.yy"
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include <string>
 
-#line 45 "QLParser.tab.cc"
+#line 46 "QLParser.tab.cc"
 
 
 
@@ -50,7 +51,7 @@
 
 
 // Unqualified %code blocks.
-#line 42 "QLParser.yy"
+#line 44 "QLParser.yy"
 
 namespace QL
 {
@@ -74,7 +75,7 @@ namespace QL
   }
 }
 
-#line 78 "QLParser.tab.cc"
+#line 79 "QLParser.tab.cc"
 
 
 #ifndef YY_
@@ -146,9 +147,9 @@ namespace QL
 #define YYERROR         goto yyerrorlab
 #define YYRECOVERING()  (!!yyerrstatus_)
 
-#line 67 "QLParser.yy"
+#line 69 "QLParser.yy"
 namespace QL {
-#line 152 "QLParser.tab.cc"
+#line 153 "QLParser.tab.cc"
 
   /// Build a parser object.
   Parser::Parser (QL::Result &result_yyarg)
@@ -613,272 +614,272 @@ namespace QL {
           switch (yyn)
             {
   case 2: // S: %empty
-#line 120 "QLParser.yy"
+#line 122 "QLParser.yy"
                                 { result.out = new Expression (Expression::OP_NUM, (uint64_t) 1); }
-#line 619 "QLParser.tab.cc"
+#line 620 "QLParser.tab.cc"
     break;
 
   case 3: // S: exp
-#line 121 "QLParser.yy"
+#line 123 "QLParser.yy"
                                 { result.out = yystack_[0].value.as < Expression * > (); }
-#line 625 "QLParser.tab.cc"
+#line 626 "QLParser.tab.cc"
     break;
 
   case 4: // exp: exp DEG exp
-#line 123 "QLParser.yy"
+#line 125 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_DEG, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 631 "QLParser.tab.cc"
+#line 632 "QLParser.tab.cc"
     break;
 
   case 5: // exp: exp MUL exp
-#line 124 "QLParser.yy"
+#line 126 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_MUL, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 637 "QLParser.tab.cc"
+#line 638 "QLParser.tab.cc"
     break;
 
   case 6: // exp: exp DIV exp
-#line 125 "QLParser.yy"
+#line 127 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_DIV, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 643 "QLParser.tab.cc"
+#line 644 "QLParser.tab.cc"
     break;
 
   case 7: // exp: exp REM exp
-#line 126 "QLParser.yy"
+#line 128 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_REM, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 649 "QLParser.tab.cc"
+#line 650 "QLParser.tab.cc"
     break;
 
   case 8: // exp: exp ADD exp
-#line 127 "QLParser.yy"
+#line 129 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_ADD, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 655 "QLParser.tab.cc"
+#line 656 "QLParser.tab.cc"
     break;
 
   case 9: // exp: exp MINUS exp
-#line 128 "QLParser.yy"
+#line 130 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_MINUS, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 661 "QLParser.tab.cc"
+#line 662 "QLParser.tab.cc"
     break;
 
   case 10: // exp: exp LS exp
-#line 129 "QLParser.yy"
+#line 131 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_LS, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 667 "QLParser.tab.cc"
+#line 668 "QLParser.tab.cc"
     break;
 
   case 11: // exp: exp RS exp
-#line 130 "QLParser.yy"
+#line 132 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_RS, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 673 "QLParser.tab.cc"
+#line 674 "QLParser.tab.cc"
     break;
 
   case 12: // exp: exp LT exp
-#line 131 "QLParser.yy"
+#line 133 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_LT, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 679 "QLParser.tab.cc"
+#line 680 "QLParser.tab.cc"
     break;
 
   case 13: // exp: exp LE exp
-#line 132 "QLParser.yy"
+#line 134 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_LE, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 685 "QLParser.tab.cc"
+#line 686 "QLParser.tab.cc"
     break;
 
   case 14: // exp: exp GT exp
-#line 133 "QLParser.yy"
+#line 135 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_GT, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 691 "QLParser.tab.cc"
+#line 692 "QLParser.tab.cc"
     break;
 
   case 15: // exp: exp GE exp
-#line 134 "QLParser.yy"
+#line 136 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_GE, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 697 "QLParser.tab.cc"
+#line 698 "QLParser.tab.cc"
     break;
 
   case 16: // exp: exp EQ exp
-#line 135 "QLParser.yy"
+#line 137 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_EQ, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 703 "QLParser.tab.cc"
+#line 704 "QLParser.tab.cc"
     break;
 
   case 17: // exp: exp NE exp
-#line 136 "QLParser.yy"
+#line 138 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_NE, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 709 "QLParser.tab.cc"
+#line 710 "QLParser.tab.cc"
     break;
 
   case 18: // exp: exp BITAND exp
-#line 137 "QLParser.yy"
+#line 139 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_BITAND, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 715 "QLParser.tab.cc"
+#line 716 "QLParser.tab.cc"
     break;
 
   case 19: // exp: exp BITXOR exp
-#line 138 "QLParser.yy"
+#line 140 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_BITXOR, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 721 "QLParser.tab.cc"
+#line 722 "QLParser.tab.cc"
     break;
 
   case 20: // exp: exp BITOR exp
-#line 139 "QLParser.yy"
+#line 141 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_BITOR, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 727 "QLParser.tab.cc"
+#line 728 "QLParser.tab.cc"
     break;
 
   case 21: // exp: exp AND exp
-#line 140 "QLParser.yy"
+#line 142 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_AND, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 733 "QLParser.tab.cc"
+#line 734 "QLParser.tab.cc"
     break;
 
   case 22: // exp: exp OR exp
-#line 141 "QLParser.yy"
+#line 143 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_OR, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 739 "QLParser.tab.cc"
+#line 740 "QLParser.tab.cc"
     break;
 
   case 23: // exp: exp NEQV exp
-#line 142 "QLParser.yy"
+#line 144 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_NEQV, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 745 "QLParser.tab.cc"
+#line 746 "QLParser.tab.cc"
     break;
 
   case 24: // exp: exp EQV exp
-#line 143 "QLParser.yy"
+#line 145 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_EQV, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 751 "QLParser.tab.cc"
+#line 752 "QLParser.tab.cc"
     break;
 
   case 25: // exp: exp QWE exp COLON exp
-#line 145 "QLParser.yy"
+#line 147 "QLParser.yy"
           {
 	     yylhs.value.as < Expression * > () = new Expression (Expression::OP_QWE, yystack_[4].value.as < Expression * > (),
 				  new Expression (Expression::OP_COLON, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()));
 	  }
-#line 760 "QLParser.tab.cc"
+#line 761 "QLParser.tab.cc"
     break;
 
   case 26: // exp: exp COMMA exp
-#line 149 "QLParser.yy"
+#line 151 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_COMMA, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 766 "QLParser.tab.cc"
+#line 767 "QLParser.tab.cc"
     break;
 
   case 27: // exp: exp IN exp
-#line 150 "QLParser.yy"
+#line 152 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_IN, yystack_[2].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 772 "QLParser.tab.cc"
+#line 773 "QLParser.tab.cc"
     break;
 
   case 28: // exp: exp SOME IN exp
-#line 151 "QLParser.yy"
+#line 153 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_SOMEIN, yystack_[3].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 778 "QLParser.tab.cc"
+#line 779 "QLParser.tab.cc"
     break;
 
   case 29: // exp: exp ORDR IN exp
-#line 152 "QLParser.yy"
+#line 154 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_ORDRIN, yystack_[3].value.as < Expression * > (), yystack_[0].value.as < Expression * > ()); }
-#line 784 "QLParser.tab.cc"
+#line 785 "QLParser.tab.cc"
     break;
 
   case 30: // exp: term
-#line 153 "QLParser.yy"
+#line 155 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = yystack_[0].value.as < Expression * > (); }
-#line 790 "QLParser.tab.cc"
+#line 791 "QLParser.tab.cc"
     break;
 
   case 31: // term: MINUS term
-#line 156 "QLParser.yy"
+#line 158 "QLParser.yy"
           {
 	     yylhs.value.as < Expression * > () = new Expression (Expression::OP_MINUS,
 				  new Expression (Expression::OP_NUM, (uint64_t) 0), yystack_[0].value.as < Expression * > ());
 	  }
-#line 799 "QLParser.tab.cc"
+#line 800 "QLParser.tab.cc"
     break;
 
   case 32: // term: NOT term
-#line 160 "QLParser.yy"
+#line 162 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_NOT, yystack_[0].value.as < Expression * > ()); }
-#line 805 "QLParser.tab.cc"
+#line 806 "QLParser.tab.cc"
     break;
 
   case 33: // term: BITNOT term
-#line 161 "QLParser.yy"
+#line 163 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_BITNOT, yystack_[0].value.as < Expression * > ()); }
-#line 811 "QLParser.tab.cc"
+#line 812 "QLParser.tab.cc"
     break;
 
   case 34: // term: "(" exp ")"
-#line 162 "QLParser.yy"
+#line 164 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = yystack_[1].value.as < Expression * > (); }
-#line 817 "QLParser.tab.cc"
+#line 818 "QLParser.tab.cc"
     break;
 
   case 35: // term: FNAME "(" QSTR ")"
-#line 164 "QLParser.yy"
+#line 166 "QLParser.yy"
           {
 	    yylhs.value.as < Expression * > () = new Expression (Expression::OP_FUNC,
 				 new Expression (Expression::OP_NUM, yystack_[3].value.as < uint64_t > ()),
 				 new Expression (Expression::OP_NUM, yystack_[1].value.as < uint64_t > ()));
 	  }
-#line 827 "QLParser.tab.cc"
+#line 828 "QLParser.tab.cc"
     break;
 
   case 36: // term: HASPROP "(" NAME ")"
-#line 170 "QLParser.yy"
+#line 172 "QLParser.yy"
           {
 	    yylhs.value.as < Expression * > () = new Expression (Expression::OP_HASPROP,
 				 new Expression (Expression::OP_NUM, processName(yystack_[1].value.as < std::string > ())));
 	  }
-#line 836 "QLParser.tab.cc"
+#line 837 "QLParser.tab.cc"
     break;
 
   case 37: // term: JGROUP "(" QSTR ")"
-#line 175 "QLParser.yy"
+#line 177 "QLParser.yy"
           {
 	    yylhs.value.as < Expression * > () = new Expression (Expression::OP_JAVA,
 				 new Expression (Expression::OP_NUM, yystack_[3].value.as < uint64_t > ()),
 				 new Expression (Expression::OP_NUM, yystack_[1].value.as < uint64_t > ()));
 	  }
-#line 846 "QLParser.tab.cc"
+#line 847 "QLParser.tab.cc"
     break;
 
   case 38: // term: JPARENT "(" QSTR ")"
-#line 181 "QLParser.yy"
+#line 183 "QLParser.yy"
           {
 	     yylhs.value.as < Expression * > () = new Expression (Expression::OP_JAVA,
 				  new Expression (Expression::OP_NUM, yystack_[3].value.as < uint64_t > ()),
 				  new Expression (Expression::OP_NUM, yystack_[1].value.as < uint64_t > ()));
 	  }
-#line 856 "QLParser.tab.cc"
+#line 857 "QLParser.tab.cc"
     break;
 
   case 39: // term: FILEIOVFD "(" QSTR ")"
-#line 187 "QLParser.yy"
+#line 189 "QLParser.yy"
           {
 	    yylhs.value.as < Expression * > () = new Expression (Expression::OP_FILE,
 				 new Expression (Expression::OP_NUM, (uint64_t) 0),
 				 new Expression (Expression::OP_NUM, yystack_[1].value.as < uint64_t > ()));
 	  }
-#line 866 "QLParser.tab.cc"
+#line 867 "QLParser.tab.cc"
     break;
 
   case 40: // term: NUM
-#line 192 "QLParser.yy"
+#line 194 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = new Expression (Expression::OP_NUM, yystack_[0].value.as < uint64_t > ()); }
-#line 872 "QLParser.tab.cc"
+#line 873 "QLParser.tab.cc"
     break;
 
   case 41: // term: NAME
-#line 193 "QLParser.yy"
+#line 195 "QLParser.yy"
                                 { yylhs.value.as < Expression * > () = processName(yystack_[0].value.as < std::string > ()); }
-#line 878 "QLParser.tab.cc"
+#line 879 "QLParser.tab.cc"
     break;
 
 
-#line 882 "QLParser.tab.cc"
+#line 883 "QLParser.tab.cc"
 
             default:
               break;
@@ -1238,11 +1239,11 @@ namespace QL {
   const unsigned char
   Parser::yyrline_[] =
   {
-       0,   120,   120,   121,   123,   124,   125,   126,   127,   128,
-     129,   130,   131,   132,   133,   134,   135,   136,   137,   138,
-     139,   140,   141,   142,   143,   144,   149,   150,   151,   152,
-     153,   155,   160,   161,   162,   163,   169,   174,   180,   186,
-     192,   193
+       0,   122,   122,   123,   125,   126,   127,   128,   129,   130,
+     131,   132,   133,   134,   135,   136,   137,   138,   139,   140,
+     141,   142,   143,   144,   145,   146,   151,   152,   153,   154,
+     155,   157,   162,   163,   164,   165,   171,   176,   182,   188,
+     194,   195
   };
 
   void
@@ -1273,11 +1274,11 @@ namespace QL {
 #endif // YYDEBUG
 
 
-#line 67 "QLParser.yy"
+#line 69 "QLParser.yy"
 } // QL
-#line 1279 "QLParser.tab.cc"
+#line 1280 "QLParser.tab.cc"
 
-#line 195 "QLParser.yy"
+#line 197 "QLParser.yy"
 
 
 namespace QL
@@ -1360,7 +1361,7 @@ namespace QL
       case '"':
 	{
 	  int  maxsz = 16;
-	  char *str = (char *) malloc (maxsz);
+	  char *str = (char *) xmalloc (maxsz);
 	  char *ptr = str;
 
 	  for (;;)
@@ -1387,7 +1388,7 @@ namespace QL
 		    {
 		      size_t len = ptr - str;
 		      maxsz = maxsz > 8192 ? maxsz + 8192 : maxsz * 2;
-		      char *new_s = (char *) realloc (str, maxsz);
+		      char *new_s = (char *) xrealloc (str, maxsz);
 		      str = new_s;
 		      ptr = str + len;
 		    }

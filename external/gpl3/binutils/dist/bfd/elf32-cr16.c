@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CR16 ELF
-   Copyright (C) 2007-2024 Free Software Foundation, Inc.
+   Copyright (C) 2007-2025 Free Software Foundation, Inc.
    Written by M R Swami Reddy.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1617,8 +1617,7 @@ elf32_cr16_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (ret, abfd,
 				      elf32_cr16_link_hash_newfunc,
-				      sizeof (struct elf32_cr16_link_hash_entry),
-				      GENERIC_ELF_DATA))
+				      sizeof (struct elf32_cr16_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -2391,15 +2390,16 @@ _bfd_cr16_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-_bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
-				     struct bfd_link_info * info)
+_bfd_cr16_elf_late_size_sections (bfd * output_bfd,
+				  struct bfd_link_info * info)
 {
   bfd * dynobj;
   asection * s;
   bool relocs;
 
   dynobj = elf_hash_table (info)->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -2411,6 +2411,7 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 #endif
 	}
     }
@@ -2491,6 +2492,7 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
@@ -2699,6 +2701,7 @@ bfd_cr16_elf32_create_embedded_relocs (bfd *abfd,
   relsec->contents = (bfd_byte *) bfd_alloc (abfd, amt);
   if (relsec->contents == NULL)
     goto error_return;
+  relsec->alloced = 1;
 
   p = relsec->contents;
 
@@ -2803,6 +2806,7 @@ _bfd_cr16_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSE
 #define TARGET_LITTLE_SYM		  cr16_elf32_vec
 #define TARGET_LITTLE_NAME		  "elf32-cr16"
 #define ELF_ARCH			  bfd_arch_cr16
+#define ELF_TARGET_ID			  CR16_ELF_DATA
 #define ELF_MACHINE_CODE		  EM_CR16
 #define ELF_MACHINE_ALT1		  EM_CR16_OLD
 #define ELF_MAXPAGESIZE			  0x1
@@ -2836,8 +2840,8 @@ _bfd_cr16_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSE
 				  _bfd_cr16_elf_create_dynamic_sections
 #define elf_backend_adjust_dynamic_symbol \
 				  _bfd_cr16_elf_adjust_dynamic_symbol
-#define elf_backend_size_dynamic_sections \
-				  _bfd_cr16_elf_size_dynamic_sections
+#define elf_backend_late_size_sections \
+				  _bfd_cr16_elf_late_size_sections
 #define elf_backend_omit_section_dynsym _bfd_elf_omit_section_dynsym_all
 #define elf_backend_finish_dynamic_symbol \
 				   _bfd_cr16_elf_finish_dynamic_symbol

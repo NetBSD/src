@@ -1,6 +1,6 @@
 /* tc-kvx.c -- Assemble for the KVX ISA
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by Kalray SA.
 
    This file is part of GAS.
@@ -233,7 +233,7 @@ struct label_fix
 /*   OPTIONS PROCESSING                              */
 /*****************************************************/
 
-const char *md_shortopts = "hV";	/* catted to std short options */
+const char md_shortopts[] = "hV";	/* catted to std short options */
 
 /* added to std long options */
 
@@ -254,7 +254,7 @@ const char *md_shortopts = "hV";	/* catted to std short options */
 #define OPTION_MORE                  (OPTION_MD_BASE + 19)
 #define OPTION_NO_MORE               (OPTION_MD_BASE + 20)
 
-struct option md_longopts[] = {
+const struct option md_longopts[] = {
   { "march",                 required_argument, NULL, OPTION_MARCH                 },
   { "check-resources",       no_argument,       NULL, OPTION_CHECK_RESOURCES       },
   { "no-check-resources",    no_argument,       NULL, OPTION_NO_CHECK_RESOURCES    },
@@ -273,7 +273,7 @@ struct option md_longopts[] = {
   { NULL,                    no_argument,       NULL, 0                            }
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (int c, const char *arg ATTRIBUTE_UNUSED)
@@ -509,7 +509,7 @@ insert_operand (struct kvxinsn *insn, struct kvx_operand *opdef,
       {
 	char *ilp_save = input_line_pointer;
 	input_line_pointer = tok->tok;
-	expressionS exp = { 0 };
+	expressionS exp;
 	expression (&exp);
 	input_line_pointer = ilp_save;
 
@@ -700,7 +700,7 @@ assemble_insn (const struct kvxopc * opcode, struct token_list *tok, struct kvxi
   insn->immx1 = NOIMMX;
 
   struct token_list *tok_ = tok;
-  struct kvx_operand **format = (struct kvx_operand **) opcode->format;
+  struct kvx_operand *const *format = opcode->format;
 
   while (tok_)
     {
@@ -1021,7 +1021,7 @@ kvx_print_insn (struct kvxopc * op ATTRIBUTE_UNUSED)
 
   /* This is a hack which works because the Bundling is the same for all cores
      for now.  */
-  switch ((int) op->bundling)
+  switch (op->bundling)
     {
     case Bundling_kv3_v1_ALL:
       insn_type = "ALL  ";
@@ -1109,7 +1109,7 @@ kvx_reorder_bundle (struct kvxinsn *bundle_insn[], int bundle_insncnt)
       tag = -1, exu = -1;
       /* This is a hack. It works because all the Bundling are the same for all
          cores for now.  */
-      switch ((int) find_bundling (kvxinsn))
+      switch (find_bundling (kvxinsn))
 	{
 	case Bundling_kv3_v1_ALL:
 	  if (bundle_insncnt > 1)
@@ -1279,7 +1279,7 @@ md_assemble (char *line)
   if (get_byte_counter (now_seg) & 3)
     as_fatal ("code segment not word aligned in md_assemble");
 
-  while (line_cursor && line_cursor[0] && (line_cursor[0] == ' '))
+  while (is_whitespace (line_cursor[0]))
     line_cursor++;
 
   /* ;; was converted to "be" by line hook          */
@@ -1441,8 +1441,8 @@ kvx_set_cpu (void)
 static int
 kvxop_compar (const void *a, const void *b)
 {
-  const struct kvxopc *opa = (const struct kvxopc *) a;
-  const struct kvxopc *opb = (const struct kvxopc *) b;
+  const struct kvxopc *opa = a;
+  const struct kvxopc *opb = b;
   int res = strcmp (opa->as_op, opb->as_op);
 
   if (res)
@@ -1644,7 +1644,7 @@ md_apply_fix (fixS * fixP, valueT * valueP, segT segmentP ATTRIBUTE_UNUSED)
   valueT image;
   arelent *rel;
 
-  rel = (arelent *) xmalloc (sizeof (arelent));
+  rel = xmalloc (sizeof (arelent));
 
   rel->howto = bfd_reloc_type_lookup (stdoutput, fixP->fx_r_type);
   if (rel->howto == NULL)
@@ -1825,6 +1825,7 @@ md_apply_fix (fixS * fixP, valueT * valueP, segT segmentP ATTRIBUTE_UNUSED)
 		    fixP->fx_r_type);
 	}
     }
+  xfree (rel);
 }
 
 /*
@@ -1913,9 +1914,8 @@ tc_gen_reloc (asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
   arelent *reloc;
   bfd_reloc_code_real_type code;
 
-  reloc = (arelent *) xmalloc (sizeof (arelent));
-
-  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
@@ -2106,21 +2106,13 @@ kvx_check_label (symbolS *sym)
 void
 kvx_emit_single_noop (void)
 {
-  char *nop;
-  char *end_of_bundle;
-
-  if (asprintf (&nop, "nop") < 0)
-    as_fatal ("%s", xstrerror (errno));
-
-  if (asprintf (&end_of_bundle, "be") < 0)
-    as_fatal ("%s", xstrerror (errno));
+  char nop[] = "nop";
+  char end_of_bundle[] = "be";
 
   char *saved_ilp = input_line_pointer;
   md_assemble (nop);
   md_assemble (end_of_bundle);
   input_line_pointer = saved_ilp;
-  free (nop);
-  free (end_of_bundle);
 }
 
 /*  edit out some syntactic sugar that confuses GAS       */
@@ -2133,7 +2125,7 @@ kvx_md_start_line_hook (void)
 {
   char *t;
 
-  for (t = input_line_pointer; t && t[0] == ' '; t++);
+  for (t = input_line_pointer; is_whitespace (t[0]); t++);
 
   /* Detect illegal syntax patterns:
    * - two bundle ends on the same line: ;; ;;
@@ -2152,9 +2144,9 @@ kvx_md_start_line_hook (void)
       while (tmp_t && tmp_t[0])
 	{
 	  while (tmp_t && tmp_t[0] &&
-		 ((tmp_t[0] == ' ') || (tmp_t[0] == '\n')))
+		 (is_whitespace (tmp_t[0]) || is_end_of_stmt (tmp_t[0])))
 	    {
-	      if (tmp_t[0] == '\n')
+	      if (is_end_of_stmt (tmp_t[0]))
 		newline_seen = true;
 	      tmp_t++;
 	    }
@@ -2363,16 +2355,11 @@ kvx_endp (int start ATTRIBUTE_UNUSED)
 	if (exp.X_op == O_constant)
 	  {
 	    S_SET_SIZE (last_proc_sym, exp.X_add_number);
-	    if (symbol_get_obj (last_proc_sym)->size)
-	      {
-		xfree (symbol_get_obj (last_proc_sym)->size);
-		symbol_get_obj (last_proc_sym)->size = NULL;
-	      }
+	    symbol_get_obj (last_proc_sym)->size = NULL;
 	  }
 	else
 	  {
-	    symbol_get_obj (last_proc_sym)->size =
-	      (expressionS *) xmalloc (sizeof (expressionS));
+	    symbol_get_obj (last_proc_sym)->size = notes_alloc (sizeof (exp));
 	    *symbol_get_obj (last_proc_sym)->size = exp;
 	  }
 
@@ -2526,20 +2513,18 @@ kvx_force_reloc_sub_same (fixS * fixP, segT sec)
   return 1;
 }
 
-/* Implement HANDLE_ALIGN.  */
+/* Pads code section with bundle of nops when possible, 0 if not. */
 
-static void
-kvx_make_nops (char *buf, bfd_vma bytes)
+void
+kvx_handle_align (fragS *fragP)
 {
-  bfd_vma i = 0;
-  unsigned int j;
+  if (fragP->fr_type != rs_align_code)
+    return;
 
   static unsigned int nop_single = 0;
-
   if (!nop_single)
     {
-      const struct kvxopc *opcode =
-	(struct kvxopc *) str_hash_find (env.opcode_hash, "nop");
+      const struct kvxopc *opcode = str_hash_find (env.opcode_hash, "nop");
 
       if (opcode == NULL)
 	as_fatal
@@ -2548,52 +2533,49 @@ kvx_make_nops (char *buf, bfd_vma bytes)
       nop_single = opcode->codewords[0].opcode;
     }
 
-  /* KVX instructions are always 4-bytes aligned. If we are at a position */
-  /* that is not 4 bytes aligned, it means this is not part of an instruction, */
-  /* so it is safe to use a zero byte for padding. */
+  bfd_signed_vma bytes = (fragP->fr_next->fr_address
+			  - fragP->fr_address - fragP->fr_fix);
+  if (bytes <= 0)
+    return;
 
-  for (j = bytes % 4; j > 0; j--)
-    buf[i++] = 0;
+  char *p = fragP->fr_literal + fragP->fr_fix;
 
-  for (j = 0; j < (bytes - i); j += 4)
+  /* KVX instructions are always 4-bytes aligned.  If we are at a
+     position that is not 4 bytes aligned, it means this is not part
+     of an instruction, so it is safe to use a zero byte for padding.  */
+  int fix = bytes & 3;
+  if (fix != 0)
     {
-      unsigned nop = nop_single;
-
-      // nop has bundle end only if #4 nop or last padding nop.
-      // Sets the parallel bit when neither conditions are matched.
-      // 4*4 = biggest nop bundle we can get
-      // 12 = offset when writting the last nop possible in a 4 nops bundle
-      // bytes-i-4 = offset for the last 4-words in the padding
-      if (j % (4 * 4) != 12 && j != (bytes - i - 4))
-	nop |= PARALLEL_BIT;
-
-      memcpy (buf + i + j, &nop, sizeof (nop));
+      memset (p, 0, fix);
+      p += fix;
+      bytes -= fix;
     }
-}
 
-/* Pads code section with bundle of nops when possible, 0 if not. */
-void
-kvx_handle_align (fragS *fragP)
-{
-  switch (fragP->fr_type)
+  /* Output any nops that don't make a full bundle.  */
+  while (bytes & 15)
     {
-    case rs_align_code:
-      {
-	bfd_signed_vma bytes = (fragP->fr_next->fr_address
-				- fragP->fr_address - fragP->fr_fix);
-	char *p = fragP->fr_literal + fragP->fr_fix;
+      unsigned int nop = nop_single;
+      bytes -= 4;
+      if (bytes & 15)
+	nop |= PARALLEL_BIT;
+      memcpy (p, &nop, 4);
+      p += 4;
+      fix += 4;
+    }
+  fragP->fr_fix += fix;
 
-	if (bytes <= 0)
-	  break;
-
-	/* Insert zeros or nops to get 4 byte alignment.  */
-	kvx_make_nops (p, bytes);
-	fragP->fr_fix += bytes;
-      }
-      break;
-
-    default:
-      break;
+  /* Any more are repeated copies of this full bundle of nops.  */
+  if (bytes)
+    {
+      unsigned int nop = nop_single | PARALLEL_BIT;
+      memcpy (p, &nop, 4);
+      p += 4;
+      memcpy (p, &nop, 4);
+      p += 4;
+      memcpy (p, &nop, 4);
+      p += 4;
+      memcpy (p, &nop_single, 4);
+      fragP->fr_var = 16;
     }
 }
 /*

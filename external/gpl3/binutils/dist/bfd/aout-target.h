@@ -1,5 +1,5 @@
 /* Define a target vector and some small routines for a variant of a.out.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -214,9 +214,11 @@ static bool
 MY_bfd_copy_private_section_data (bfd *ibfd,
 				  asection *isec ATTRIBUTE_UNUSED,
 				  bfd *obfd,
-				  asection *osec ATTRIBUTE_UNUSED)
+				  asection *osec ATTRIBUTE_UNUSED,
+				  struct bfd_link_info *link_info)
 {
-  if (bfd_get_flavour (ibfd) == bfd_target_aout_flavour
+  if (link_info == NULL
+      && bfd_get_flavour (ibfd) == bfd_target_aout_flavour
       && bfd_get_flavour (obfd) == bfd_target_aout_flavour)
     obj_aout_subformat (obfd) = obj_aout_subformat (ibfd);
   return true;
@@ -286,9 +288,6 @@ MY (set_sizes) (bfd *abfd)
 #ifndef MY_add_dynamic_symbols
 #define MY_add_dynamic_symbols 0
 #endif
-#ifndef MY_add_one_symbol
-#define MY_add_one_symbol 0
-#endif
 #ifndef MY_link_dynamic_object
 #define MY_link_dynamic_object 0
 #endif
@@ -312,7 +311,6 @@ static const struct aout_backend_data MY (backend_data) =
   MY_set_sizes,
   MY_exec_header_not_counted,
   MY_add_dynamic_symbols,
-  MY_add_one_symbol,
   MY_link_dynamic_object,
   MY_write_dynamic_symbol,
   MY_check_dynamic_reloc,
@@ -431,9 +429,6 @@ MY_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 #endif
 #ifndef MY_get_section_contents
 #define MY_get_section_contents NAME (aout, get_section_contents)
-#endif
-#ifndef MY_get_section_contents_in_window
-#define MY_get_section_contents_in_window _bfd_generic_get_section_contents_in_window
 #endif
 #ifndef MY_new_section_hook
 #define MY_new_section_hook NAME (aout, new_section_hook)

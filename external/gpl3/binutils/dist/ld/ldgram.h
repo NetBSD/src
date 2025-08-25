@@ -181,15 +181,16 @@ extern int yydebug;
     LOCAL = 382,                   /* LOCAL  */
     VERSIONK = 383,                /* VERSIONK  */
     INPUT_VERSION_SCRIPT = 384,    /* INPUT_VERSION_SCRIPT  */
-    KEEP = 385,                    /* KEEP  */
-    ONLY_IF_RO = 386,              /* ONLY_IF_RO  */
-    ONLY_IF_RW = 387,              /* ONLY_IF_RW  */
-    SPECIAL = 388,                 /* SPECIAL  */
-    INPUT_SECTION_FLAGS = 389,     /* INPUT_SECTION_FLAGS  */
-    ALIGN_WITH_INPUT = 390,        /* ALIGN_WITH_INPUT  */
-    EXCLUDE_FILE = 391,            /* EXCLUDE_FILE  */
-    CONSTANT = 392,                /* CONSTANT  */
-    INPUT_DYNAMIC_LIST = 393       /* INPUT_DYNAMIC_LIST  */
+    INPUT_SECTION_ORDERING_SCRIPT = 385, /* INPUT_SECTION_ORDERING_SCRIPT  */
+    KEEP = 386,                    /* KEEP  */
+    ONLY_IF_RO = 387,              /* ONLY_IF_RO  */
+    ONLY_IF_RW = 388,              /* ONLY_IF_RW  */
+    SPECIAL = 389,                 /* SPECIAL  */
+    INPUT_SECTION_FLAGS = 390,     /* INPUT_SECTION_FLAGS  */
+    ALIGN_WITH_INPUT = 391,        /* ALIGN_WITH_INPUT  */
+    EXCLUDE_FILE = 392,            /* EXCLUDE_FILE  */
+    CONSTANT = 393,                /* CONSTANT  */
+    INPUT_DYNAMIC_LIST = 394       /* INPUT_DYNAMIC_LIST  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -325,15 +326,16 @@ extern int yydebug;
 #define LOCAL 382
 #define VERSIONK 383
 #define INPUT_VERSION_SCRIPT 384
-#define KEEP 385
-#define ONLY_IF_RO 386
-#define ONLY_IF_RW 387
-#define SPECIAL 388
-#define INPUT_SECTION_FLAGS 389
-#define ALIGN_WITH_INPUT 390
-#define EXCLUDE_FILE 391
-#define CONSTANT 392
-#define INPUT_DYNAMIC_LIST 393
+#define INPUT_SECTION_ORDERING_SCRIPT 385
+#define KEEP 386
+#define ONLY_IF_RO 387
+#define ONLY_IF_RW 388
+#define SPECIAL 389
+#define INPUT_SECTION_FLAGS 390
+#define ALIGN_WITH_INPUT 391
+#define EXCLUDE_FILE 392
+#define CONSTANT 393
+#define INPUT_DYNAMIC_LIST 394
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -370,7 +372,7 @@ union YYSTYPE
   struct bfd_elf_version_expr *versyms;
   struct bfd_elf_version_tree *versnode;
 
-#line 374 "ldgram.h"
+#line 376 "ldgram.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

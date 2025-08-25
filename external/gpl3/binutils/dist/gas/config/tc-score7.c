@@ -1,5 +1,5 @@
 /* tc-score7.c -- Assembler for Score7
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -90,7 +90,7 @@ static void s7_do_lw_pic (char *);
 #define s7_GP                     28
 #define s7_PIC_CALL_REG           29
 #define s7_MAX_LITERAL_POOL_SIZE  1024
-#define s7_FAIL	               0x80000000
+#define s7_FAIL	           -2147483648
 #define s7_SUCCESS         0
 #define s7_INSN_SIZE       4
 #define s7_INSN16_SIZE     2
@@ -104,7 +104,7 @@ static void s7_do_lw_pic (char *);
 #define s7_BAD_SKIP_COMMA            s7_BAD_ARGS
 #define s7_BAD_GARBAGE               _("garbage following instruction");
 
-#define s7_skip_whitespace(str)  while (*(str) == ' ') ++(str)
+#define s7_skip_whitespace(str)  while (is_whitespace (*(str))) ++(str)
 
 /* The name of the readonly data section.  */
 #define s7_RDATA_SECTION_NAME (OUTPUT_FLAVOR == bfd_target_aout_flavour \
@@ -1102,7 +1102,7 @@ s7_end_of_line (char *str)
   s7_skip_whitespace (str);
   if (*str != '\0')
     {
-      retval = (int) s7_FAIL;
+      retval = s7_FAIL;
 
       if (!s7_inst.error)
         s7_inst.error = s7_BAD_GARBAGE;
@@ -1121,7 +1121,7 @@ s7_score_reg_parse (char **ccp, htab_t htab)
 
   p = start;
   if (!ISALPHA (*p) || !is_name_beginner (*p))
-    return (int) s7_FAIL;
+    return s7_FAIL;
 
   c = *p++;
 
@@ -1129,7 +1129,7 @@ s7_score_reg_parse (char **ccp, htab_t htab)
     c = *p++;
 
   *--p = 0;
-  reg = (struct s7_reg_entry *) str_hash_find (htab, start);
+  reg = str_hash_find (htab, start);
   *p = c;
 
   if (reg)
@@ -1137,7 +1137,7 @@ s7_score_reg_parse (char **ccp, htab_t htab)
       *ccp = p;
       return reg->number;
     }
-  return (int) s7_FAIL;
+  return s7_FAIL;
 }
 
 /* If shift <= 0, only return reg.  */
@@ -1145,10 +1145,10 @@ static int
 s7_reg_required_here (char **str, int shift, enum s7_score_reg_type reg_type)
 {
   static char buff[s7_MAX_LITERAL_POOL_SIZE];
-  int reg = (int) s7_FAIL;
+  int reg = s7_FAIL;
   char *start = *str;
 
-  if ((reg = s7_score_reg_parse (str, s7_all_reg_maps[reg_type].htab)) != (int) s7_FAIL)
+  if ((reg = s7_score_reg_parse (str, s7_all_reg_maps[reg_type].htab)) != s7_FAIL)
     {
       if (reg_type == s7_REG_TYPE_SCORE)
         {
@@ -1187,24 +1187,24 @@ s7_skip_past_comma (char **str)
   char c;
   int comma = 0;
 
-  while ((c = *p) == ' ' || c == ',')
+  while (is_whitespace (c = *p) || c == ',')
     {
       p++;
       if (c == ',' && comma++)
         {
           s7_inst.error = s7_BAD_SKIP_COMMA;
-          return (int) s7_FAIL;
+          return s7_FAIL;
         }
     }
 
   if ((c == '\0') || (comma == 0))
     {
       s7_inst.error = s7_BAD_SKIP_COMMA;
-      return (int) s7_FAIL;
+      return s7_FAIL;
     }
 
   *str = p;
-  return comma ? s7_SUCCESS : (int) s7_FAIL;
+  return comma ? s7_SUCCESS : s7_FAIL;
 }
 
 static void
@@ -1212,12 +1212,12 @@ s7_do_rdrsrs (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_reg_required_here (&str, 10, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_reg_required_here (&str, 10, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     {
       return;
     }
@@ -1271,7 +1271,7 @@ s7_my_get_expression (expressionS * ep, char **str)
       *str = input_line_pointer;
       input_line_pointer = save_in;
       s7_inst.error = _("illegal expression");
-      return (int) s7_FAIL;
+      return s7_FAIL;
     }
   /* Get rid of any bignums now, so that we don't generate an error for which
      we can't establish a line number later on.  Big numbers are never valid
@@ -1284,7 +1284,7 @@ s7_my_get_expression (expressionS * ep, char **str)
       s7_inst.error = _("invalid constant");
       *str = input_line_pointer;
       input_line_pointer = save_in;
-      return (int) s7_FAIL;
+      return s7_FAIL;
     }
 
   if ((ep->X_add_symbol != NULL)
@@ -1300,7 +1300,7 @@ s7_my_get_expression (expressionS * ep, char **str)
       s7_inst.error = s7_BAD_ARGS;
       *str = input_line_pointer;
       input_line_pointer = save_in;
-      return (int) s7_FAIL;
+      return s7_FAIL;
     }
 
   *str = input_line_pointer;
@@ -1340,14 +1340,14 @@ s7_validate_immediate (bfd_signed_vma val, unsigned int data_type, int hex_p)
         {
           if (!(val >= -0x800 && val <= 0xfff))
             {
-              return (int) s7_FAIL;
+              return s7_FAIL;
             }
         }
       else
         {
           if (!(val >= -2048 && val <= 2047))
             {
-              return (int) s7_FAIL;
+              return s7_FAIL;
             }
         }
 
@@ -1359,14 +1359,14 @@ s7_validate_immediate (bfd_signed_vma val, unsigned int data_type, int hex_p)
         {
           if (!(val >= -0x2000 && val <= 0x3fff))
             {
-              return (int) s7_FAIL;
+              return s7_FAIL;
             }
         }
       else
         {
           if (!(val >= -8192 && val <= 8191))
             {
-              return (int) s7_FAIL;
+              return s7_FAIL;
             }
         }
 
@@ -1378,14 +1378,14 @@ s7_validate_immediate (bfd_signed_vma val, unsigned int data_type, int hex_p)
         {
           if (!(val >= -0x4000 && val <= 0x7fff))
             {
-              return (int) s7_FAIL;
+              return s7_FAIL;
             }
         }
       else
         {
           if (!(val >= -16384 && val <= 16383))
             {
-              return (int) s7_FAIL;
+              return s7_FAIL;
             }
         }
 
@@ -1397,14 +1397,14 @@ s7_validate_immediate (bfd_signed_vma val, unsigned int data_type, int hex_p)
         {
           if (!(val >= -0x8000 && val <= 0xffff))
             {
-              return (int) s7_FAIL;
+              return s7_FAIL;
             }
         }
       else
         {
           if (!(val >= -32768 && val <= 32767))
             {
-              return (int) s7_FAIL;
+              return s7_FAIL;
             }
         }
 
@@ -1416,14 +1416,14 @@ s7_validate_immediate (bfd_signed_vma val, unsigned int data_type, int hex_p)
         {
           if (!(val >= -0x7fff && val <= 0xffff && val != 0x8000))
             {
-              return (int) s7_FAIL;
+              return s7_FAIL;
             }
         }
       else
         {
           if (!(val >= -32767 && val <= 32768))
             {
-              return (int) s7_FAIL;
+              return s7_FAIL;
             }
         }
 
@@ -1438,7 +1438,7 @@ s7_validate_immediate (bfd_signed_vma val, unsigned int data_type, int hex_p)
         }
       else
         {
-          return (int) s7_FAIL;
+          return s7_FAIL;
         }
 
     default:
@@ -1452,7 +1452,7 @@ s7_validate_immediate (bfd_signed_vma val, unsigned int data_type, int hex_p)
       break;
     }
 
-  return (int) s7_FAIL;
+  return s7_FAIL;
 }
 
 static int
@@ -1483,25 +1483,25 @@ s7_data_op2 (char **str, int shift, enum score_data_type data_type)
 
   if (*dataptr == '|')          /* process PCE */
     {
-      if (s7_my_get_expression (&s7_inst.reloc.exp, &pp) == (int) s7_FAIL)
-        return (int) s7_FAIL;
+      if (s7_my_get_expression (&s7_inst.reloc.exp, &pp) == s7_FAIL)
+        return s7_FAIL;
       s7_end_of_line (pp);
       if (s7_inst.error != 0)
-        return (int) s7_FAIL;       /* to ouptut_inst to printf out the error */
+        return s7_FAIL;         /* to ouptut_inst to printf out the error */
       *str = dataptr;
     }
   else                          /* process  16 bit */
     {
-      if (s7_my_get_expression (&s7_inst.reloc.exp, str) == (int) s7_FAIL)
+      if (s7_my_get_expression (&s7_inst.reloc.exp, str) == s7_FAIL)
         {
-          return (int) s7_FAIL;
+          return s7_FAIL;
         }
 
       dataptr = (char *) data_exp;
       for (; *dataptr != '\0'; dataptr++)
         {
           *dataptr = TOLOWER (*dataptr);
-          if (*dataptr == '!' || *dataptr == ' ')
+          if (*dataptr == '!' || is_whitespace (*dataptr))
             break;
         }
       dataptr = (char *) data_exp;
@@ -1546,7 +1546,7 @@ s7_data_op2 (char **str, int shift, enum score_data_type data_type)
              || ((*dataptr == '-') && (*(dataptr + 1) != '0'))))
         {
           s7_inst.error = s7_BAD_ARGS;
-          return (int) s7_FAIL;
+          return s7_FAIL;
         }
     }
 
@@ -1564,7 +1564,7 @@ s7_data_op2 (char **str, int shift, enum score_data_type data_type)
           || (data_type == _IMM4)))
     {
       s7_inst.error = s7_BAD_ARGS;
-      return (int) s7_FAIL;
+      return s7_FAIL;
     }
 
   if (s7_inst.reloc.exp.X_add_symbol)
@@ -1572,7 +1572,7 @@ s7_data_op2 (char **str, int shift, enum score_data_type data_type)
       switch (data_type)
         {
         case _SIMM16_LA:
-          return (int) s7_FAIL;
+          return s7_FAIL;
         case _VALUE_HI16:
           s7_inst.reloc.type = BFD_RELOC_HI16_S;
           s7_inst.reloc.pc_rel = 0;
@@ -1607,7 +1607,7 @@ s7_data_op2 (char **str, int shift, enum score_data_type data_type)
       if (data_type == _SIMM16_LA && s7_inst.reloc.exp.X_unsigned == 1)
         {
           value = s7_validate_immediate (s7_inst.reloc.exp.X_add_number, _SIMM16_LA_POS, hex_p);
-          if (value == (int) s7_FAIL)       /* for advance to check if this is ldis */
+          if (value == s7_FAIL)       /* for advance to check if this is ldis */
             if ((s7_inst.reloc.exp.X_add_number & 0xffff) == 0)
               {
                 s7_inst.instruction |= 0x8000000;
@@ -1620,7 +1620,7 @@ s7_data_op2 (char **str, int shift, enum score_data_type data_type)
           value = s7_validate_immediate (s7_inst.reloc.exp.X_add_number, data_type, hex_p);
         }
 
-      if (value == (int) s7_FAIL)
+      if (value == s7_FAIL)
         {
           if ((data_type != _SIMM14_NEG) && (data_type != _SIMM16_NEG) && (data_type != _IMM16_NEG))
             {
@@ -1638,7 +1638,7 @@ s7_data_op2 (char **str, int shift, enum score_data_type data_type)
             }
 
           s7_inst.error = s7_err_msg;
-          return (int) s7_FAIL;
+          return s7_FAIL;
         }
 
       if ((s7_score_df_range[data_type].range[0] != 0) || (data_type == _IMM5_RANGE_8_31))
@@ -1673,7 +1673,7 @@ s7_data_op2 (char **str, int shift, enum score_data_type data_type)
           && (((s7_inst.instruction >> 20) & 0x1F) != 0x1f))
         {
           s7_inst.error = _("invalid constant: bit expression not defined");
-          return (int) s7_FAIL;
+          return s7_FAIL;
         }
     }
 
@@ -1687,10 +1687,10 @@ s7_do_rdsi16 (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_data_op2 (&str, 1, _SIMM16) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_data_op2 (&str, 1, _SIMM16) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     return;
 
   /* ldi.  */
@@ -1720,9 +1720,9 @@ s7_do_sub_rdsi16 (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL
-      && s7_data_op2 (&str, 1, _SIMM16_NEG) != (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL
+      && s7_data_op2 (&str, 1, _SIMM16_NEG) != s7_FAIL)
     s7_end_of_line (str);
 }
 
@@ -1734,10 +1734,10 @@ s7_do_rdrssi14 (char *str)         /* -(2^13)~((2^13)-1) */
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL
-      && s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL
+      && s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL)
     s7_data_op2 (&str, 1, _SIMM14);
 }
 
@@ -1748,11 +1748,11 @@ s7_do_sub_rdrssi14 (char *str)     /* -(2^13)~((2^13)-1) */
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL
-      && s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL
-      && s7_data_op2 (&str, 1, _SIMM14_NEG) != (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL
+      && s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL
+      && s7_data_op2 (&str, 1, _SIMM14_NEG) != s7_FAIL)
     s7_end_of_line (str);
 }
 
@@ -1763,12 +1763,12 @@ s7_do_rdrsi5 (char *str)           /* 0~((2^14)-1) */
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_data_op2 (&str, 10, _IMM5) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_data_op2 (&str, 10, _IMM5) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     return;
 
   if ((((s7_inst.instruction >> 20) & 0x1f) == ((s7_inst.instruction >> 15) & 0x1f))
@@ -1788,11 +1788,11 @@ s7_do_rdrsi14 (char *str)          /* 0 ~ ((2^14)-1)  */
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL
-      && s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL
-      && s7_data_op2 (&str, 1, _IMM14) != (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL
+      && s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL
+      && s7_data_op2 (&str, 1, _IMM14) != s7_FAIL)
     s7_end_of_line (str);
 }
 
@@ -1803,10 +1803,10 @@ s7_do_xrsi5 (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_data_op2 (&str, 10, _IMM5) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_data_op2 (&str, 10, _IMM5) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     return;
 
   if ((s7_inst.relax_inst != 0x8000) && (((s7_inst.instruction >> 15) & 0x10) == 0))
@@ -1825,10 +1825,10 @@ s7_do_rdi16 (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_data_op2 (&str, 1, _IMM16) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_data_op2 (&str, 1, _IMM16) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     return;
 }
 
@@ -1838,8 +1838,8 @@ s7_do_macro_rdi32hi (char *str)
   s7_skip_whitespace (str);
 
   /* Do not handle s7_end_of_line().  */
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL)
     s7_data_op2 (&str, 1, _VALUE_HI16);
 }
 
@@ -1849,8 +1849,8 @@ s7_do_macro_rdi32lo (char *str)
   s7_skip_whitespace (str);
 
   /* Do not handle s7_end_of_line().  */
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL)
     s7_data_op2 (&str, 1, _VALUE_LO16);
 }
 
@@ -1861,9 +1861,9 @@ s7_do_rdi16_pic (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL
-      && s7_data_op2 (&str, 1, _IMM16_pic) != (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL
+      && s7_data_op2 (&str, 1, _IMM16_pic) != s7_FAIL)
     s7_end_of_line (str);
 }
 
@@ -1874,9 +1874,9 @@ s7_do_addi_s_pic (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL
-      && s7_data_op2 (&str, 1, _SIMM16_pic) != (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL
+      && s7_data_op2 (&str, 1, _SIMM16_pic) != s7_FAIL)
     s7_end_of_line (str);
 }
 
@@ -1887,9 +1887,9 @@ s7_do_addi_u_pic (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL
-      && s7_data_op2 (&str, 1, _IMM16_LO16_pic) != (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL
+      && s7_data_op2 (&str, 1, _IMM16_LO16_pic) != s7_FAIL)
     s7_end_of_line (str);
 }
 
@@ -1900,7 +1900,7 @@ s7_do_rd (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != s7_FAIL)
     s7_end_of_line (str);
 }
 
@@ -1909,8 +1909,8 @@ s7_do_rs (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     return;
 
   if ((s7_inst.relax_inst != 0x8000) && (((s7_inst.instruction >> 15) & 0x10) == 0))
@@ -1927,7 +1927,7 @@ s7_do_i15 (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_data_op2 (&str, 10, _IMM15) != (int) s7_FAIL)
+  if (s7_data_op2 (&str, 10, _IMM15) != s7_FAIL)
     s7_end_of_line (str);
 }
 
@@ -1936,7 +1936,7 @@ s7_do_xi5x (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_data_op2 (&str, 15, _IMM5) == (int) s7_FAIL || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_data_op2 (&str, 15, _IMM5) == s7_FAIL || s7_end_of_line (str) == s7_FAIL)
     return;
 
   if (s7_inst.relax_inst != 0x8000)
@@ -1951,10 +1951,10 @@ s7_do_rdrs (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     return;
 
   if (s7_inst.relax_inst != 0x8000)
@@ -2005,9 +2005,9 @@ s7_do_rdcrs (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL
-      && s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE_CR) != (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL
+      && s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE_CR) != s7_FAIL)
     s7_end_of_line (str);
 }
 
@@ -2021,15 +2021,15 @@ s7_do_rdsrs (char *str)
   /* mfsr */
   if ((s7_inst.instruction & 0xff) == 0x50)
     {
-      if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-          && s7_skip_past_comma (&str) != (int) s7_FAIL
-          && s7_reg_required_here (&str, 10, s7_REG_TYPE_SCORE_SR) != (int) s7_FAIL)
+      if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) != s7_FAIL
+          && s7_skip_past_comma (&str) != s7_FAIL
+          && s7_reg_required_here (&str, 10, s7_REG_TYPE_SCORE_SR) != s7_FAIL)
 	s7_end_of_line (str);
     }
   else
     {
-      if (s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) != (int) s7_FAIL
-          && s7_skip_past_comma (&str) != (int) s7_FAIL)
+      if (s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) != s7_FAIL
+          && s7_skip_past_comma (&str) != s7_FAIL)
 	s7_reg_required_here (&str, 10, s7_REG_TYPE_SCORE_SR);
     }
 }
@@ -2041,10 +2041,10 @@ s7_do_rdxrs (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_reg_required_here (&str, 10, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_reg_required_here (&str, 10, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     return;
 
   if ((s7_inst.relax_inst != 0x8000) && (((s7_inst.instruction >> 10) & 0x10) == 0)
@@ -2063,10 +2063,10 @@ s7_do_rsrs (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_reg_required_here (&str, 10, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_reg_required_here (&str, 10, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     return;
 
   if ((s7_inst.relax_inst != 0x8000) && (((s7_inst.instruction >> 20) & 0x1f) == 3)
@@ -2087,23 +2087,23 @@ s7_do_ceinst (char *str)
   strbak = str;
   s7_skip_whitespace (str);
 
-  if (s7_data_op2 (&str, 20, _IMM5) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_reg_required_here (&str, 10, s7_REG_TYPE_SCORE) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_data_op2 (&str, 5, _IMM5) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_data_op2 (&str, 0, _IMM5) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_data_op2 (&str, 20, _IMM5) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_reg_required_here (&str, 10, s7_REG_TYPE_SCORE) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_data_op2 (&str, 5, _IMM5) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_data_op2 (&str, 0, _IMM5) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     {
       return;
     }
   else
     {
       str = strbak;
-      if (s7_data_op2 (&str, 0, _IMM25) == (int) s7_FAIL)
+      if (s7_data_op2 (&str, 0, _IMM25) == s7_FAIL)
 	return;
     }
 }
@@ -2115,7 +2115,7 @@ s7_reglow_required_here (char **str, int shift)
   int reg;
   char *start = *str;
 
-  if ((reg = s7_score_reg_parse (str, s7_all_reg_maps[s7_REG_TYPE_SCORE].htab)) != (int) s7_FAIL)
+  if ((reg = s7_score_reg_parse (str, s7_all_reg_maps[s7_REG_TYPE_SCORE].htab)) != s7_FAIL)
     {
       if ((reg == 1) && (s7_nor1 == 1) && (s7_inst.bwarn == 0))
         {
@@ -2135,7 +2135,7 @@ s7_reglow_required_here (char **str, int shift)
   *str = start;
   sprintf (buff, _("low register(r0-r15)expected, not '%.100s'"), start);
   s7_inst.error = buff;
-  return (int) s7_FAIL;
+  return s7_FAIL;
 }
 
 /* Handle addc!/add!/and!/cmp!/neg!/not!/or!/sll!/srl!/sra!/xor!/sub!.  */
@@ -2145,10 +2145,10 @@ s7_do16_rdrs (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reglow_required_here (&str, 8) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_reglow_required_here (&str, 4) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_reglow_required_here (&str, 8) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_reglow_required_here (&str, 4) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     {
       return;
     }
@@ -2185,8 +2185,8 @@ s7_do16_rs (char *str)
 
   s7_skip_whitespace (str);
 
-  if ((rd = s7_reglow_required_here (&str, 4)) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if ((rd = s7_reglow_required_here (&str, 4)) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     {
       return;
     }
@@ -2204,7 +2204,7 @@ s7_do16_xrs (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reglow_required_here (&str, 4) == (int) s7_FAIL || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_reglow_required_here (&str, 4) == s7_FAIL || s7_end_of_line (str) == s7_FAIL)
     {
       return;
     }
@@ -2223,7 +2223,7 @@ s7_reghigh_required_here (char **str, int shift)
   int reg;
   char *start = *str;
 
-  if ((reg = s7_score_reg_parse (str, s7_all_reg_maps[s7_REG_TYPE_SCORE].htab)) != (int) s7_FAIL)
+  if ((reg = s7_score_reg_parse (str, s7_all_reg_maps[s7_REG_TYPE_SCORE].htab)) != s7_FAIL)
     {
       if (15 < reg && reg < 32)
         {
@@ -2237,7 +2237,7 @@ s7_reghigh_required_here (char **str, int shift)
   *str = start;
   sprintf (buff, _("high register(r16-r31)expected, not '%.100s'"), start);
   s7_inst.error = buff;
-  return (int) s7_FAIL;
+  return s7_FAIL;
 }
 
 /* Handle mhfl!.  */
@@ -2247,10 +2247,10 @@ s7_do16_hrdrs (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reghigh_required_here (&str, 8) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL
-      && s7_reglow_required_here (&str, 4) != (int) s7_FAIL
-      && s7_end_of_line (str) != (int) s7_FAIL)
+  if (s7_reghigh_required_here (&str, 8) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL
+      && s7_reglow_required_here (&str, 4) != s7_FAIL
+      && s7_end_of_line (str) != s7_FAIL)
     {
       s7_inst.relax_inst |= ((((s7_inst.instruction >> 8) & 0xf) | 0x10) << 20)
         | (((s7_inst.instruction >> 4) & 0xf) << 15) | (0xf << 10);
@@ -2265,10 +2265,10 @@ s7_do16_rdhrs (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reglow_required_here (&str, 8) != (int) s7_FAIL
-      && s7_skip_past_comma (&str) != (int) s7_FAIL
-      && s7_reghigh_required_here (&str, 4) != (int) s7_FAIL
-      && s7_end_of_line (str) != (int) s7_FAIL)
+  if (s7_reglow_required_here (&str, 8) != s7_FAIL
+      && s7_skip_past_comma (&str) != s7_FAIL
+      && s7_reghigh_required_here (&str, 4) != s7_FAIL
+      && s7_end_of_line (str) != s7_FAIL)
     {
       s7_inst.relax_inst |= (((s7_inst.instruction >> 8) & 0xf) << 20)
         | ((((s7_inst.instruction >> 4) & 0xf) | 0x10) << 15) | (0xf << 10);
@@ -2321,8 +2321,7 @@ s7_dependency_type_from_insn (char *insn_name)
   const struct s7_insn_to_dependency *tmp;
 
   strcpy (name, insn_name);
-  tmp = (const struct s7_insn_to_dependency *)
-    str_hash_find (s7_dependency_insn_hsh, name);
+  tmp = str_hash_find (s7_dependency_insn_hsh, name);
 
   if (tmp)
     return tmp->type;
@@ -2545,7 +2544,7 @@ s7_handle_dependency (struct s7_score_it *theinst)
 static enum insn_class
 s7_get_insn_class_from_type (enum score_insn_type type)
 {
-  enum insn_class retval = (int) s7_FAIL;
+  enum insn_class retval = s7_FAIL;
 
   switch (type)
     {
@@ -2781,7 +2780,7 @@ s7_parse_16_32_inst (char *insnstr, bool gen_frag_p)
   s7_skip_whitespace (operator);
 
   for (p = operator; *p != '\0'; p++)
-    if ((*p == ' ') || (*p == '!'))
+    if (is_whitespace (*p) || (*p == '!'))
       break;
 
   if (*p == '!')
@@ -2790,8 +2789,7 @@ s7_parse_16_32_inst (char *insnstr, bool gen_frag_p)
   c = *p;
   *p = '\0';
 
-  opcode = (const struct s7_asm_opcode *) str_hash_find (s7_score_ops_hsh,
-							 operator);
+  opcode = str_hash_find (s7_score_ops_hsh, operator);
   *p = c;
 
   memset (&s7_inst, '\0', sizeof (s7_inst));
@@ -2828,7 +2826,7 @@ s7_append_insn (char *str, bool gen_frag_p)
 
   if (s7_inst.error)
     {
-      retval = (int) s7_FAIL;
+      retval = s7_FAIL;
       as_bad (_("%s -- `%s'"), s7_inst.error, s7_inst.str);
       s7_inst.error = NULL;
     }
@@ -2849,10 +2847,10 @@ s7_do16_mv_rdrs (char *str)
   backupstr = str;
   s7_skip_whitespace (str);
 
-  if ((reg_rd = s7_reg_required_here (&str, 8, s7_REG_TYPE_SCORE)) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || (reg_rs = s7_reg_required_here (&str, 4, s7_REG_TYPE_SCORE)) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if ((reg_rd = s7_reg_required_here (&str, 8, s7_REG_TYPE_SCORE)) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || (reg_rs = s7_reg_required_here (&str, 4, s7_REG_TYPE_SCORE)) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     {
       return;
     }
@@ -2872,7 +2870,7 @@ s7_do16_mv_rdrs (char *str)
               char append_str[s7_MAX_LITERAL_POOL_SIZE];
 
               sprintf (append_str, "mlfh! %s", backupstr);
-              if (s7_append_insn (append_str, true) == (int) s7_FAIL)
+              if (s7_append_insn (append_str, true) == s7_FAIL)
 		return;
               /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
               s7_inst.bwarn = -1;
@@ -2891,7 +2889,7 @@ s7_do16_mv_rdrs (char *str)
               char append_str[s7_MAX_LITERAL_POOL_SIZE];
 
               sprintf (append_str, "mhfl! %s", backupstr);
-              if (s7_append_insn (append_str, true) == (int) s7_FAIL)
+              if (s7_append_insn (append_str, true) == s7_FAIL)
 		return;
 
               /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
@@ -2906,10 +2904,10 @@ s7_do16_rdi4 (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reglow_required_here (&str, 8) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_data_op2 (&str, 3, _IMM4) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_reglow_required_here (&str, 8) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_data_op2 (&str, 3, _IMM4) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     {
       return;
     }
@@ -2949,10 +2947,10 @@ s7_do16_rdi5 (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_reglow_required_here (&str, 8) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_data_op2 (&str, 3, _IMM5) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_reglow_required_here (&str, 8) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_data_op2 (&str, 3, _IMM5) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     return;
   else
     {
@@ -2969,7 +2967,7 @@ s7_do16_xi5 (char *str)
 {
   s7_skip_whitespace (str);
 
-  if (s7_data_op2 (&str, 3, _IMM5) == (int) s7_FAIL || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_data_op2 (&str, 3, _IMM5) == s7_FAIL || s7_end_of_line (str) == s7_FAIL)
     return;
   else
     {
@@ -2989,7 +2987,7 @@ s7_validate_immediate_align (int val, unsigned int data_type)
       if (val % 2)
         {
           s7_inst.error = _("address offset must be half word alignment");
-          return (int) s7_FAIL;
+          return s7_FAIL;
         }
     }
   else if ((data_type == _IMM5_RSHIFT_2) || (data_type == _IMM10_RSHIFT_2))
@@ -2997,7 +2995,7 @@ s7_validate_immediate_align (int val, unsigned int data_type)
       if (val % 4)
         {
           s7_inst.error = _("address offset must be word alignment");
-          return (int) s7_FAIL;
+          return s7_FAIL;
         }
     }
 
@@ -3037,19 +3035,19 @@ s7_exp_ldst_offset (char **str, int shift, unsigned int data_type)
         }
     }
 
-  if (s7_my_get_expression (&s7_inst.reloc.exp, str) == (int) s7_FAIL)
-    return (int) s7_FAIL;
+  if (s7_my_get_expression (&s7_inst.reloc.exp, str) == s7_FAIL)
+    return s7_FAIL;
 
   if (s7_inst.reloc.exp.X_op == O_constant)
     {
       /* Need to check the immediate align.  */
       int value = s7_validate_immediate_align (s7_inst.reloc.exp.X_add_number, data_type);
 
-      if (value == (int) s7_FAIL)
-	return (int) s7_FAIL;
+      if (value == s7_FAIL)
+	return s7_FAIL;
 
       value = s7_validate_immediate (s7_inst.reloc.exp.X_add_number, data_type, hex_p);
-      if (value == (int) s7_FAIL)
+      if (value == s7_FAIL)
         {
           if (data_type < 30)
             sprintf (s7_err_msg,
@@ -3062,7 +3060,7 @@ s7_exp_ldst_offset (char **str, int shift, unsigned int data_type)
                      s7_score_df_range[data_type - 24].bits,
                      s7_score_df_range[data_type - 24].range[0], s7_score_df_range[data_type - 24].range[1]);
           s7_inst.error = s7_err_msg;
-          return (int) s7_FAIL;
+          return s7_FAIL;
         }
 
       if (data_type == _IMM5_RSHIFT_1)
@@ -3104,8 +3102,8 @@ s7_do_ldst_insn (char *str)
 
   s7_skip_whitespace (str);
 
-  if (((conflict_reg = s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
-      || (s7_skip_past_comma (&str) == (int) s7_FAIL))
+  if (((conflict_reg = s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE)) == s7_FAIL)
+      || (s7_skip_past_comma (&str) == s7_FAIL))
     return;
 
   /* ld/sw rD, [rA, simm15]    ld/sw rD, [rA]+, simm12     ld/sw rD, [rA, simm12]+.  */
@@ -3114,7 +3112,7 @@ s7_do_ldst_insn (char *str)
       str++;
       s7_skip_whitespace (str);
 
-      if ((reg = s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
+      if ((reg = s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE)) == s7_FAIL)
 	return;
 
       /* Conflicts can occur on stores as well as loads.  */
@@ -3132,8 +3130,8 @@ s7_do_ldst_insn (char *str)
               /* ld/sw rD, [rA]+, simm12.  */
               if (s7_skip_past_comma (&str) == s7_SUCCESS)
                 {
-                  if ((s7_exp_ldst_offset (&str, 3, _SIMM12) == (int) s7_FAIL)
-                      || (s7_end_of_line (str) == (int) s7_FAIL))
+                  if ((s7_exp_ldst_offset (&str, 3, _SIMM12) == s7_FAIL)
+                      || (s7_end_of_line (str) == s7_FAIL))
 		    return;
 
                   if (conflict_reg)
@@ -3185,7 +3183,7 @@ s7_do_ldst_insn (char *str)
               else
                 {
                   s7_SET_INSN_ERROR (NULL);
-                  if (s7_end_of_line (str) == (int) s7_FAIL)
+                  if (s7_end_of_line (str) == s7_FAIL)
                     {
                       return;
                     }
@@ -3204,7 +3202,7 @@ s7_do_ldst_insn (char *str)
           /* ld/sw rD, [rA] convert to ld/sw rD, [rA, simm15].  */
           else
             {
-              if (s7_end_of_line (str) == (int) s7_FAIL)
+              if (s7_end_of_line (str) == s7_FAIL)
 		return;
 
               ldst_idx = s7_inst.instruction & OPC_PSEUDOLDST_MASK;
@@ -3261,13 +3259,13 @@ s7_do_ldst_insn (char *str)
       /* ld/sw rD, [rA, simm15]    ld/sw rD, [rA, simm12]+.  */
       else
         {
-          if (s7_skip_past_comma (&str) == (int) s7_FAIL)
+          if (s7_skip_past_comma (&str) == s7_FAIL)
             {
               s7_inst.error = _("pre-indexed expression expected");
               return;
             }
 
-          if (s7_my_get_expression (&s7_inst.reloc.exp, &str) == (int) s7_FAIL)
+          if (s7_my_get_expression (&s7_inst.reloc.exp, &str) == s7_FAIL)
 	    return;
 
           s7_skip_whitespace (str);
@@ -3299,7 +3297,7 @@ s7_do_ldst_insn (char *str)
                 }
             }
 
-          if (s7_end_of_line (str) == (int) s7_FAIL)
+          if (s7_end_of_line (str) == s7_FAIL)
 	    return;
 
           if (s7_inst.reloc.exp.X_op == O_constant)
@@ -3338,7 +3336,7 @@ s7_do_ldst_insn (char *str)
               }
 
               value = s7_validate_immediate (s7_inst.reloc.exp.X_add_number, data_type, hex_p);
-              if (value == (int) s7_FAIL)
+              if (value == s7_FAIL)
                 {
                   if (data_type < 30)
                     sprintf (s7_err_msg,
@@ -3608,7 +3606,7 @@ s7_do_cache (char *str)
 {
   s7_skip_whitespace (str);
 
-  if ((s7_data_op2 (&str, 20, _IMM5) == (int) s7_FAIL) || (s7_skip_past_comma (&str) == (int) s7_FAIL))
+  if ((s7_data_op2 (&str, 20, _IMM5) == s7_FAIL) || (s7_skip_past_comma (&str) == s7_FAIL))
     {
       return;
     }
@@ -3625,13 +3623,13 @@ s7_do_cache (char *str)
       str++;
       s7_skip_whitespace (str);
 
-      if (s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == (int) s7_FAIL)
+      if (s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == s7_FAIL)
 	return;
 
       s7_skip_whitespace (str);
 
       /* cache op, [rA]  */
-      if (s7_skip_past_comma (&str) == (int) s7_FAIL)
+      if (s7_skip_past_comma (&str) == s7_FAIL)
         {
           s7_SET_INSN_ERROR (NULL);
           if (*str != ']')
@@ -3644,7 +3642,7 @@ s7_do_cache (char *str)
       /* cache op, [rA, simm15]  */
       else
         {
-          if (s7_exp_ldst_offset (&str, 0, _SIMM15) == (int) s7_FAIL)
+          if (s7_exp_ldst_offset (&str, 0, _SIMM15) == s7_FAIL)
             {
               return;
             }
@@ -3657,7 +3655,7 @@ s7_do_cache (char *str)
             }
         }
 
-      if (s7_end_of_line (str) == (int) s7_FAIL)
+      if (s7_end_of_line (str) == s7_FAIL)
 	return;
     }
   else
@@ -3674,21 +3672,21 @@ s7_do_crdcrscrsimm5 (char *str)
   strbak = str;
   s7_skip_whitespace (str);
 
-  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE_CR) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE_CR) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL
-      || s7_reg_required_here (&str, 10, s7_REG_TYPE_SCORE_CR) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL)
+  if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE_CR) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE_CR) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL
+      || s7_reg_required_here (&str, 10, s7_REG_TYPE_SCORE_CR) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL)
     {
       str = strbak;
       /* cop1 cop_code20.  */
-      if (s7_data_op2 (&str, 5, _IMM20) == (int) s7_FAIL)
+      if (s7_data_op2 (&str, 5, _IMM20) == s7_FAIL)
 	return;
     }
   else
     {
-      if (s7_data_op2 (&str, 5, _IMM5) == (int) s7_FAIL)
+      if (s7_data_op2 (&str, 5, _IMM5) == s7_FAIL)
 	return;
     }
 
@@ -3701,8 +3699,8 @@ s7_do_ldst_cop (char *str)
 {
   s7_skip_whitespace (str);
 
-  if ((s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE_CR) == (int) s7_FAIL)
-      || (s7_skip_past_comma (&str) == (int) s7_FAIL))
+  if ((s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE_CR) == s7_FAIL)
+      || (s7_skip_past_comma (&str) == s7_FAIL))
     return;
 
   if (*str == '[')
@@ -3710,14 +3708,14 @@ s7_do_ldst_cop (char *str)
       str++;
       s7_skip_whitespace (str);
 
-      if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == (int) s7_FAIL)
+      if (s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == s7_FAIL)
 	return;
 
       s7_skip_whitespace (str);
 
       if (*str++ != ']')
         {
-          if (s7_exp_ldst_offset (&str, 5, _IMM10_RSHIFT_2) == (int) s7_FAIL)
+          if (s7_exp_ldst_offset (&str, 5, _IMM10_RSHIFT_2) == s7_FAIL)
 	    return;
 
           s7_skip_whitespace (str);
@@ -3739,7 +3737,7 @@ s7_do16_ldst_insn (char *str)
 {
   s7_skip_whitespace (str);
 
-  if ((s7_reglow_required_here (&str, 8) == (int) s7_FAIL) || (s7_skip_past_comma (&str) == (int) s7_FAIL))
+  if ((s7_reglow_required_here (&str, 8) == s7_FAIL) || (s7_skip_past_comma (&str) == s7_FAIL))
     return;
 
   if (*str == '[')
@@ -3749,13 +3747,13 @@ s7_do16_ldst_insn (char *str)
       str++;
       s7_skip_whitespace (str);
 
-      if ((reg = s7_reglow_required_here (&str, 4)) == (int) s7_FAIL)
+      if ((reg = s7_reglow_required_here (&str, 4)) == s7_FAIL)
 	return;
 
       s7_skip_whitespace (str);
       if (*str++ == ']')
         {
-          if (s7_end_of_line (str) == (int) s7_FAIL)
+          if (s7_end_of_line (str) == s7_FAIL)
 	    return;
           else
             {
@@ -3784,13 +3782,13 @@ s7_do16_ldst_imm_insn (char *str)
   int reg_rd;
   char *dataptr = NULL, *pp = NULL;
   int cnt = 0;
-  int assign_data = (int) s7_FAIL;
+  int assign_data = s7_FAIL;
   unsigned int ldst_func;
 
   s7_skip_whitespace (str);
 
-  if (((reg_rd = s7_reglow_required_here (&str, 8)) == (int) s7_FAIL)
-      || (s7_skip_past_comma (&str) == (int) s7_FAIL))
+  if (((reg_rd = s7_reglow_required_here (&str, 8)) == s7_FAIL)
+      || (s7_skip_past_comma (&str) == s7_FAIL))
     return;
 
   s7_skip_whitespace (str);
@@ -3818,7 +3816,7 @@ s7_do16_ldst_imm_insn (char *str)
   else
     assign_data = s7_exp_ldst_offset (&pp, 3, _IMM5);
 
-  if ((assign_data == (int) s7_FAIL) || (s7_end_of_line (pp) == (int) s7_FAIL))
+  if ((assign_data == s7_FAIL) || (s7_end_of_line (pp) == s7_FAIL))
     return;
   else
     {
@@ -3857,8 +3855,8 @@ s7_do16_push_pop (char *str)
   int H_bit_mask = 0;
 
   s7_skip_whitespace (str);
-  if (((reg_rd = s7_reg_required_here (&str, 8, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
-      || (s7_skip_past_comma (&str) == (int) s7_FAIL))
+  if (((reg_rd = s7_reg_required_here (&str, 8, s7_REG_TYPE_SCORE)) == s7_FAIL)
+      || (s7_skip_past_comma (&str) == s7_FAIL))
     return;
 
   if (reg_rd >= 16)
@@ -3875,7 +3873,7 @@ s7_do16_push_pop (char *str)
 
       str++;
       s7_skip_whitespace (str);
-      if ((reg = s7_reg_required_here (&str, 4, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
+      if ((reg = s7_reg_required_here (&str, 4, s7_REG_TYPE_SCORE)) == s7_FAIL)
 	return;
       else if (reg > 7)
         {
@@ -3886,7 +3884,7 @@ s7_do16_push_pop (char *str)
         }
 
       s7_skip_whitespace (str);
-      if ((*str++ != ']') || (s7_end_of_line (str) == (int) s7_FAIL))
+      if ((*str++ != ']') || (s7_end_of_line (str) == s7_FAIL))
         {
           if (!s7_inst.error)
 	    s7_inst.error = _("missing ]");
@@ -3950,7 +3948,7 @@ s7_do_ldst_unalign (char *str)
       str++;
       s7_skip_whitespace (str);
 
-      if (s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == (int) s7_FAIL)
+      if (s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE) == s7_FAIL)
 	return;
 
       if (*str++ == ']')
@@ -3967,14 +3965,14 @@ s7_do_ldst_unalign (char *str)
           return;
         }
 
-      if (s7_end_of_line (str) == (int) s7_FAIL)
+      if (s7_end_of_line (str) == s7_FAIL)
 	return;
     }
   /* lcw/lce/scb/sce rD, [rA]+.  */
   else
     {
-      if (((conflict_reg = s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
-          || (s7_skip_past_comma (&str) == (int) s7_FAIL))
+      if (((conflict_reg = s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE)) == s7_FAIL)
+          || (s7_skip_past_comma (&str) == s7_FAIL))
         {
           return;
         }
@@ -3985,7 +3983,7 @@ s7_do_ldst_unalign (char *str)
           int reg;
 
           s7_skip_whitespace (str);
-          if ((reg = s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
+          if ((reg = s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE)) == s7_FAIL)
             {
               return;
             }
@@ -4012,7 +4010,7 @@ s7_do_ldst_unalign (char *str)
                   return;
                 }
 
-              if (s7_end_of_line (str) == (int) s7_FAIL)
+              if (s7_end_of_line (str) == s7_FAIL)
 		return;
             }
           else
@@ -4042,8 +4040,8 @@ s7_do_ldst_atomic (char *str)
 
   s7_skip_whitespace (str);
 
-  if ((s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == (int) s7_FAIL)
-      || (s7_skip_past_comma (&str) == (int) s7_FAIL))
+  if ((s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE) == s7_FAIL)
+      || (s7_skip_past_comma (&str) == s7_FAIL))
     {
       return;
     }
@@ -4056,7 +4054,7 @@ s7_do_ldst_atomic (char *str)
           int reg;
 
           s7_skip_whitespace (str);
-          if ((reg = s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
+          if ((reg = s7_reg_required_here (&str, 15, s7_REG_TYPE_SCORE)) == s7_FAIL)
             {
               return;
             }
@@ -4201,7 +4199,7 @@ s7_build_la_pic (int reg_rd, expressionS exp)
          For an external symbol: lw rD, <sym>($gp)
                                  (BFD_RELOC_SCORE_GOT15 or BFD_RELOC_SCORE_CALL15)  */
       sprintf (tmp, "lw_pic r%d, %s", reg_rd, S_GET_NAME (add_symbol));
-      if (s7_append_insn (tmp, false) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, false) == s7_FAIL)
 	return;
 
       if (reg_rd == s7_PIC_CALL_REG)
@@ -4215,7 +4213,7 @@ s7_build_la_pic (int reg_rd, expressionS exp)
       s7_inst.reloc.type = BFD_RELOC_SCORE_GOT15;
       memcpy (&var_insts[0], &s7_inst, sizeof (struct s7_score_it));
       sprintf (tmp, "addi_s_pic r%d, %s", reg_rd, S_GET_NAME (add_symbol));
-      if (s7_append_insn (tmp, false) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, false) == s7_FAIL)
 	return;
 
       memcpy (&var_insts[1], &s7_inst, sizeof (struct s7_score_it));
@@ -4225,7 +4223,7 @@ s7_build_la_pic (int reg_rd, expressionS exp)
     {
       /* Insn 1: lw rD, <sym>($gp)    (BFD_RELOC_SCORE_GOT15)  */
       sprintf (tmp, "lw_pic r%d, %s", reg_rd, S_GET_NAME (add_symbol));
-      if (s7_append_insn (tmp, true) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, true) == s7_FAIL)
 	return;
 
       /* Insn 2  */
@@ -4234,7 +4232,7 @@ s7_build_la_pic (int reg_rd, expressionS exp)
       /* Fix part
          For an external symbol: addi rD, <constant> */
       sprintf (tmp, "addi r%d, %d", reg_rd, (int) add_number);
-      if (s7_append_insn (tmp, false) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, false) == s7_FAIL)
 	return;
 
       memcpy (&fix_insts[0], &s7_inst, sizeof (struct s7_score_it));
@@ -4243,7 +4241,7 @@ s7_build_la_pic (int reg_rd, expressionS exp)
  	 For a local symbol: addi rD, <sym>+<constant>    (BFD_RELOC_GOT_LO16)  */
       sprintf (tmp, "addi_s_pic r%d, %s + %d", reg_rd,
 	       S_GET_NAME (add_symbol), (int) add_number);
-      if (s7_append_insn (tmp, false) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, false) == s7_FAIL)
 	return;
 
       memcpy (&var_insts[0], &s7_inst, sizeof (struct s7_score_it));
@@ -4256,7 +4254,7 @@ s7_build_la_pic (int reg_rd, expressionS exp)
 
       /* Insn 1: lw rD, <sym>($gp)    (BFD_RELOC_SCORE_GOT15)  */
       sprintf (tmp, "lw_pic r%d, %s", reg_rd, S_GET_NAME (add_symbol));
-      if (s7_append_insn (tmp, true) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, true) == s7_FAIL)
 	return;
 
       /* Insn 2  */
@@ -4265,7 +4263,7 @@ s7_build_la_pic (int reg_rd, expressionS exp)
       /* Fix part
 	 For an external symbol: ldis r1, HI%<constant>  */
       sprintf (tmp, "ldis r1, %d", hi);
-      if (s7_append_insn (tmp, false) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, false) == s7_FAIL)
 	return;
 
       memcpy (&fix_insts[0], &s7_inst, sizeof (struct s7_score_it));
@@ -4278,7 +4276,7 @@ s7_build_la_pic (int reg_rd, expressionS exp)
 	  hi += 1;
 	}
       sprintf (tmp, "ldis_pic r1, %d", hi);
-      if (s7_append_insn (tmp, false) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, false) == s7_FAIL)
 	return;
 
       memcpy (&var_insts[0], &s7_inst, sizeof (struct s7_score_it));
@@ -4290,7 +4288,7 @@ s7_build_la_pic (int reg_rd, expressionS exp)
       /* Fix part
 	 For an external symbol: ori r1, LO%<constant>  */
       sprintf (tmp, "ori r1, %d", lo);
-      if (s7_append_insn (tmp, false) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, false) == s7_FAIL)
 	return;
 
       memcpy (&fix_insts[0], &s7_inst, sizeof (struct s7_score_it));
@@ -4298,7 +4296,7 @@ s7_build_la_pic (int reg_rd, expressionS exp)
       /* Var part
   	 For a local symbol: addi r1, <sym>+LO%<constant>    (BFD_RELOC_GOT_LO16)  */
       sprintf (tmp, "addi_u_pic r1, %s + %d", S_GET_NAME (add_symbol), lo);
-      if (s7_append_insn (tmp, false) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, false) == s7_FAIL)
 	return;
 
       memcpy (&var_insts[0], &s7_inst, sizeof (struct s7_score_it));
@@ -4306,7 +4304,7 @@ s7_build_la_pic (int reg_rd, expressionS exp)
 
       /* Insn 4: add rD, rD, r1  */
       sprintf (tmp, "add r%d, r%d, r1", reg_rd, reg_rd);
-      if (s7_append_insn (tmp, true) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, true) == s7_FAIL)
 	return;
 
      /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
@@ -4324,8 +4322,8 @@ s7_do_macro_la_rdi32 (char *str)
   int reg_rd;
 
   s7_skip_whitespace (str);
-  if ((reg_rd = s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE)) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL)
+  if ((reg_rd = s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE)) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL)
     {
       return;
     }
@@ -4335,13 +4333,13 @@ s7_do_macro_la_rdi32 (char *str)
       char *keep_data = str;
 
       /* Check immediate value.  */
-      if (s7_my_get_expression (&s7_inst.reloc.exp, &str) == (int) s7_FAIL)
+      if (s7_my_get_expression (&s7_inst.reloc.exp, &str) == s7_FAIL)
         {
           s7_inst.error = _("expression error");
           return;
         }
       else if ((s7_inst.reloc.exp.X_add_symbol == NULL)
-               && (s7_validate_immediate (s7_inst.reloc.exp.X_add_number, _IMM32, 0) == (int) s7_FAIL))
+               && (s7_validate_immediate (s7_inst.reloc.exp.X_add_number, _IMM32, 0) == s7_FAIL))
         {
           s7_inst.error = _("value not in range [0, 0xffffffff]");
           return;
@@ -4351,7 +4349,7 @@ s7_do_macro_la_rdi32 (char *str)
       str = keep_data;
 
       /* la rd, simm16.  */
-      if (s7_data_op2 (&str, 1, _SIMM16_LA) != (int) s7_FAIL)
+      if (s7_data_op2 (&str, 1, _SIMM16_LA) != s7_FAIL)
         {
           s7_end_of_line (str);
           return;
@@ -4361,8 +4359,8 @@ s7_do_macro_la_rdi32 (char *str)
         {
           s7_SET_INSN_ERROR (NULL);
           str = keep_data;
-          if ((s7_data_op2 (&str, 1, _VALUE_HI16) == (int) s7_FAIL)
-              || (s7_end_of_line (str) == (int) s7_FAIL))
+          if ((s7_data_op2 (&str, 1, _VALUE_HI16) == s7_FAIL)
+              || (s7_end_of_line (str) == s7_FAIL))
             {
               return;
             }
@@ -4371,11 +4369,11 @@ s7_do_macro_la_rdi32 (char *str)
               if ((s7_score_pic == s7_NO_PIC) || (!s7_inst.reloc.exp.X_add_symbol))
                 {
                   sprintf (append_str, "ld_i32hi r%d, %s", reg_rd, keep_data);
-                  if (s7_append_insn (append_str, true) == (int) s7_FAIL)
+                  if (s7_append_insn (append_str, true) == s7_FAIL)
 		    return;
 
                   sprintf (append_str, "ld_i32lo r%d, %s", reg_rd, keep_data);
-                  if (s7_append_insn (append_str, true) == (int) s7_FAIL)
+                  if (s7_append_insn (append_str, true) == s7_FAIL)
 		    return;
 		}
 	      else
@@ -4399,8 +4397,8 @@ s7_do_macro_li_rdi32 (char *str)
   int reg_rd;
 
   s7_skip_whitespace (str);
-  if ((reg_rd = s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE)) == (int) s7_FAIL
-      || s7_skip_past_comma (&str) == (int) s7_FAIL)
+  if ((reg_rd = s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE)) == s7_FAIL
+      || s7_skip_past_comma (&str) == s7_FAIL)
     {
       return;
     }
@@ -4409,7 +4407,7 @@ s7_do_macro_li_rdi32 (char *str)
       char *keep_data = str;
 
       /* Check immediate value.  */
-      if (s7_my_get_expression (&s7_inst.reloc.exp, &str) == (int) s7_FAIL)
+      if (s7_my_get_expression (&s7_inst.reloc.exp, &str) == s7_FAIL)
         {
           s7_inst.error = _("expression error");
           return;
@@ -4425,7 +4423,7 @@ s7_do_macro_li_rdi32 (char *str)
       str = keep_data;
 
       /* li rd, simm16.  */
-      if (s7_data_op2 (&str, 1, _SIMM16_LA) != (int) s7_FAIL)
+      if (s7_data_op2 (&str, 1, _SIMM16_LA) != s7_FAIL)
         {
           s7_end_of_line (str);
           return;
@@ -4437,8 +4435,8 @@ s7_do_macro_li_rdi32 (char *str)
 
           str = keep_data;
 
-          if ((s7_data_op2 (&str, 1, _VALUE_HI16) == (int) s7_FAIL)
-              || (s7_end_of_line (str) == (int) s7_FAIL))
+          if ((s7_data_op2 (&str, 1, _VALUE_HI16) == s7_FAIL)
+              || (s7_end_of_line (str) == s7_FAIL))
             {
               return;
             }
@@ -4451,12 +4449,12 @@ s7_do_macro_li_rdi32 (char *str)
             {
               sprintf (append_str, "ld_i32hi r%d, %s", reg_rd, keep_data);
 
-              if (s7_append_insn (append_str, true) == (int) s7_FAIL)
+              if (s7_append_insn (append_str, true) == s7_FAIL)
 		return;
               else
                 {
                   sprintf (append_str, "ld_i32lo r%d, %s", reg_rd, keep_data);
-                  if (s7_append_insn (append_str, true) == (int) s7_FAIL)
+                  if (s7_append_insn (append_str, true) == s7_FAIL)
 		    return;
 
                   /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
@@ -4484,15 +4482,15 @@ s7_do_macro_mul_rdrsrs (char *str)
   strcpy (append_str, str);
   backupstr = append_str;
   s7_skip_whitespace (backupstr);
-  if (((reg_rd = s7_reg_required_here (&backupstr, -1, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
-      || (s7_skip_past_comma (&backupstr) == (int) s7_FAIL)
-      || ((reg_rs1 = s7_reg_required_here (&backupstr, -1, s7_REG_TYPE_SCORE)) == (int) s7_FAIL))
+  if (((reg_rd = s7_reg_required_here (&backupstr, -1, s7_REG_TYPE_SCORE)) == s7_FAIL)
+      || (s7_skip_past_comma (&backupstr) == s7_FAIL)
+      || ((reg_rs1 = s7_reg_required_here (&backupstr, -1, s7_REG_TYPE_SCORE)) == s7_FAIL))
     {
       s7_inst.error = s7_BAD_ARGS;
       return;
     }
 
-  if (s7_skip_past_comma (&backupstr) == (int) s7_FAIL)
+  if (s7_skip_past_comma (&backupstr) == s7_FAIL)
     {
       /* rem/remu rA, rB is error format.  */
       if (strcmp (s7_inst.name, "rem") == 0 || strcmp (s7_inst.name, "remu") == 0)
@@ -4509,8 +4507,8 @@ s7_do_macro_mul_rdrsrs (char *str)
   else
     {
       s7_SET_INSN_ERROR (NULL);
-      if (((reg_rs2 = s7_reg_required_here (&backupstr, -1, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
-          || (s7_end_of_line (backupstr) == (int) s7_FAIL))
+      if (((reg_rs2 = s7_reg_required_here (&backupstr, -1, s7_REG_TYPE_SCORE)) == s7_FAIL)
+          || (s7_end_of_line (backupstr) == s7_FAIL))
         {
           return;
         }
@@ -4535,11 +4533,11 @@ s7_do_macro_mul_rdrsrs (char *str)
             }
 
           /* Output mul/mulu or div/divu or rem/remu.  */
-          if (s7_append_insn (append_str, true) == (int) s7_FAIL)
+          if (s7_append_insn (append_str, true) == s7_FAIL)
 	    return;
 
           /* Output mfcel or mfceh.  */
-          if (s7_append_insn (append_str1, true) == (int) s7_FAIL)
+          if (s7_append_insn (append_str1, true) == s7_FAIL)
 	    return;
 
           /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
@@ -4565,11 +4563,11 @@ s7_exp_macro_ldst_abs (char *str)
   strcpy (verifystr, str);
   backupstr = verifystr;
   s7_skip_whitespace (backupstr);
-  if ((reg_rd = s7_reg_required_here (&backupstr, -1, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
+  if ((reg_rd = s7_reg_required_here (&backupstr, -1, s7_REG_TYPE_SCORE)) == s7_FAIL)
     return;
 
   tmp = backupstr;
-  if (s7_skip_past_comma (&backupstr) == (int) s7_FAIL)
+  if (s7_skip_past_comma (&backupstr) == s7_FAIL)
     return;
 
   backupstr = tmp;
@@ -4663,7 +4661,7 @@ s7_build_lwst_pic (int reg_rd, expressionS exp, const char *insn_name)
          For an external symbol: lw rD, <sym>($gp)
                                  (BFD_RELOC_SCORE_GOT15)  */
       sprintf (tmp, "lw_pic r1, %s", S_GET_NAME (add_symbol));
-      if (s7_append_insn (tmp, false) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, false) == s7_FAIL)
         return;
 
       memcpy (&fix_insts[0], &s7_inst, sizeof (struct s7_score_it));
@@ -4675,7 +4673,7 @@ s7_build_lwst_pic (int reg_rd, expressionS exp, const char *insn_name)
       s7_inst.reloc.type = BFD_RELOC_SCORE_GOT15;
       memcpy (&var_insts[0], &s7_inst, sizeof (struct s7_score_it));
       sprintf (tmp, "addi_s_pic r1, %s", S_GET_NAME (add_symbol));
-      if (s7_append_insn (tmp, false) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, false) == s7_FAIL)
         return;
 
       memcpy (&var_insts[1], &s7_inst, sizeof (struct s7_score_it));
@@ -4683,7 +4681,7 @@ s7_build_lwst_pic (int reg_rd, expressionS exp, const char *insn_name)
 
       /* Insn 2 or Insn 3: lw/st rD, [r1, constant]  */
       sprintf (tmp, "%s r%d, [r1, %d]", insn_name, reg_rd, add_number);
-      if (s7_append_insn (tmp, true) == (int) s7_FAIL)
+      if (s7_append_insn (tmp, true) == s7_FAIL)
         return;
 
       /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
@@ -4719,10 +4717,10 @@ s7_do_macro_ldst_label (char *str)
   backup_str = verifystr;
 
   s7_skip_whitespace (backup_str);
-  if ((reg_rd = s7_reg_required_here (&backup_str, -1, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
+  if ((reg_rd = s7_reg_required_here (&backup_str, -1, s7_REG_TYPE_SCORE)) == s7_FAIL)
     return;
 
-  if (s7_skip_past_comma (&backup_str) == (int) s7_FAIL)
+  if (s7_skip_past_comma (&backup_str) == s7_FAIL)
     return;
 
   label_str = backup_str;
@@ -4739,18 +4737,18 @@ s7_do_macro_ldst_label (char *str)
   absolute_value = backup_str;
   s7_inst.type = Rd_rvalueRs_SI15;
 
-  if (s7_my_get_expression (&s7_inst.reloc.exp, &backup_str) == (int) s7_FAIL)
+  if (s7_my_get_expression (&s7_inst.reloc.exp, &backup_str) == s7_FAIL)
     {
       s7_inst.error = _("expression error");
       return;
     }
   else if ((s7_inst.reloc.exp.X_add_symbol == NULL)
-           && (s7_validate_immediate (s7_inst.reloc.exp.X_add_number, _VALUE, 0) == (int) s7_FAIL))
+           && (s7_validate_immediate (s7_inst.reloc.exp.X_add_number, _VALUE, 0) == s7_FAIL))
     {
       s7_inst.error = _("value not in range [0, 0x7fffffff]");
       return;
     }
-  else if (s7_end_of_line (backup_str) == (int) s7_FAIL)
+  else if (s7_end_of_line (backup_str) == s7_FAIL)
     {
       s7_inst.error = _("end on line error");
       return;
@@ -4768,8 +4766,8 @@ s7_do_macro_ldst_label (char *str)
   /* Ld/st rD, label.  */
   s7_inst.type = Rd_rvalueRs_SI15;
   backup_str = absolute_value;
-  if ((s7_data_op2 (&backup_str, 1, _GP_IMM15) == (int) s7_FAIL)
-      || (s7_end_of_line (backup_str) == (int) s7_FAIL))
+  if ((s7_data_op2 (&backup_str, 1, _GP_IMM15) == s7_FAIL)
+      || (s7_end_of_line (backup_str) == s7_FAIL))
     {
       return;
     }
@@ -4827,7 +4825,7 @@ s7_do_macro_ldst_label (char *str)
      ld/st rd, [r1, 0]  */
   for (i = 0; i < 3; i++)
     {
-      if (s7_append_insn (append_str[i], false) == (int) s7_FAIL)
+      if (s7_append_insn (append_str[i], false) == s7_FAIL)
 	return;
 
       memcpy (&inst_expand[i], &s7_inst, sizeof (struct s7_score_it));
@@ -4905,10 +4903,10 @@ s7_do_lw_pic (char *str)
   int reg_rd;
 
   s7_skip_whitespace (str);
-  if (((reg_rd = s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
-      || (s7_skip_past_comma (&str) == (int) s7_FAIL)
-      || (s7_my_get_expression (&s7_inst.reloc.exp, &str) == (int) s7_FAIL)
-      || (s7_end_of_line (str) == (int) s7_FAIL))
+  if (((reg_rd = s7_reg_required_here (&str, 20, s7_REG_TYPE_SCORE)) == s7_FAIL)
+      || (s7_skip_past_comma (&str) == s7_FAIL)
+      || (s7_my_get_expression (&s7_inst.reloc.exp, &str) == s7_FAIL)
+      || (s7_end_of_line (str) == s7_FAIL))
     {
       return;
     }
@@ -4942,7 +4940,7 @@ s7_do_empty (char *str)
           return;
         }
     }
-  if (s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_end_of_line (str) == s7_FAIL)
     return;
 
   if (s7_inst.relax_inst != 0x8000)
@@ -4964,8 +4962,8 @@ s7_do_jump (char *str)
   char *save_in;
 
   s7_skip_whitespace (str);
-  if (s7_my_get_expression (&s7_inst.reloc.exp, &str) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_my_get_expression (&s7_inst.reloc.exp, &str) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     return;
 
   if (s7_inst.reloc.exp.X_add_symbol == 0)
@@ -4992,8 +4990,8 @@ static void
 s7_do16_jump (char *str)
 {
   s7_skip_whitespace (str);
-  if (s7_my_get_expression (&s7_inst.reloc.exp, &str) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_my_get_expression (&s7_inst.reloc.exp, &str) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     {
       return;
     }
@@ -5018,8 +5016,8 @@ s7_do_branch (char *str)
 {
   unsigned long abs_value = 0;
 
-  if (s7_my_get_expression (&s7_inst.reloc.exp, &str) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL)
+  if (s7_my_get_expression (&s7_inst.reloc.exp, &str) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL)
     {
       return;
     }
@@ -5057,8 +5055,8 @@ s7_do_branch (char *str)
 static void
 s7_do16_branch (char *str)
 {
-  if ((s7_my_get_expression (&s7_inst.reloc.exp, &str) == (int) s7_FAIL
-      || s7_end_of_line (str) == (int) s7_FAIL))
+  if ((s7_my_get_expression (&s7_inst.reloc.exp, &str) == s7_FAIL
+      || s7_end_of_line (str) == s7_FAIL))
     {
       ;
     }
@@ -5132,14 +5130,13 @@ static valueT
 s7_md_chars_to_number (char *buf, int n)
 {
   valueT result = 0;
-  unsigned char *where = (unsigned char *) buf;
 
   if (target_big_endian)
     {
       while (n--)
         {
           result <<= 8;
-          result |= (*where++ & 255);
+          result |= (*buf++ & 255);
         }
     }
   else
@@ -5147,7 +5144,7 @@ s7_md_chars_to_number (char *buf, int n)
       while (n--)
         {
           result <<= 8;
-          result |= (where[n] & 255);
+          result |= (buf[n] & 255);
         }
     }
 
@@ -5254,7 +5251,7 @@ s7_b32_relax_to_b16 (fragS * fragp)
   if (s == NULL)
     frag_addr = 0;
   else
-    symbol_address = (addressT) symbol_get_frag (s)->fr_address;
+    symbol_address = symbol_get_frag (s)->fr_address;
 
   value = s7_md_chars_to_number (fragp->fr_literal, s7_INSN_SIZE);
 
@@ -5393,7 +5390,7 @@ s7_s_change_sec (int sec)
   switch (sec)
     {
     case 'r':
-      seg = subseg_new (s7_RDATA_SECTION_NAME, (subsegT) get_absolute_expression ());
+      seg = subseg_new (s7_RDATA_SECTION_NAME, get_absolute_expression ());
       bfd_set_section_flags (seg, (SEC_ALLOC | SEC_LOAD | SEC_READONLY
 				   | SEC_RELOC | SEC_DATA));
       if (strcmp (TARGET_OS, "elf") != 0)
@@ -5401,7 +5398,7 @@ s7_s_change_sec (int sec)
       demand_empty_rest_of_line ();
       break;
     case 's':
-      seg = subseg_new (".sdata", (subsegT) get_absolute_expression ());
+      seg = subseg_new (".sdata", get_absolute_expression ());
       bfd_set_section_flags (seg, (SEC_ALLOC | SEC_LOAD | SEC_RELOC
 				   | SEC_DATA | SEC_SMALL_DATA));
       if (strcmp (TARGET_OS, "elf") != 0)
@@ -5443,7 +5440,7 @@ s7_get_symbol (void)
   symbolS *p;
 
   c = get_symbol_name (&name);
-  p = (symbolS *) symbol_find_or_make (name);
+  p = symbol_find_or_make (name);
   (void) restore_line_pointer (c);
   return p;
 }
@@ -5608,7 +5605,7 @@ s7_s_score_end (int x ATTRIBUTE_UNUSED)
   expressionS exp;
   char *fragp;
 
-  if (!is_end_of_line[(unsigned char)*input_line_pointer])
+  if (!is_end_of_stmt (*input_line_pointer))
     {
       p = s7_get_symbol ();
       demand_empty_rest_of_line ();
@@ -5657,13 +5654,13 @@ s7_s_score_end (int x ATTRIBUTE_UNUSED)
       exp.X_add_number = 0;
       emit_expr (&exp, 4);
       fragp = frag_more (7 * 4);
-      s7_number_to_chars (fragp, (valueT) s7_cur_proc_ptr->reg_mask, 4);
-      s7_number_to_chars (fragp + 4, (valueT) s7_cur_proc_ptr->reg_offset, 4);
-      s7_number_to_chars (fragp + 8, (valueT) s7_cur_proc_ptr->fpreg_mask, 4);
-      s7_number_to_chars (fragp + 12, (valueT) s7_cur_proc_ptr->leaf, 4);
-      s7_number_to_chars (fragp + 16, (valueT) s7_cur_proc_ptr->frame_offset, 4);
-      s7_number_to_chars (fragp + 20, (valueT) s7_cur_proc_ptr->frame_reg, 4);
-      s7_number_to_chars (fragp + 24, (valueT) s7_cur_proc_ptr->pc_reg, 4);
+      s7_number_to_chars (fragp, s7_cur_proc_ptr->reg_mask, 4);
+      s7_number_to_chars (fragp + 4, s7_cur_proc_ptr->reg_offset, 4);
+      s7_number_to_chars (fragp + 8, s7_cur_proc_ptr->fpreg_mask, 4);
+      s7_number_to_chars (fragp + 12, s7_cur_proc_ptr->leaf, 4);
+      s7_number_to_chars (fragp + 16, s7_cur_proc_ptr->frame_offset, 4);
+      s7_number_to_chars (fragp + 20, s7_cur_proc_ptr->frame_reg, 4);
+      s7_number_to_chars (fragp + 24, s7_cur_proc_ptr->pc_reg, 4);
       subseg_set (saved_seg, saved_subseg);
 
     }
@@ -5679,9 +5676,9 @@ s7_s_score_set (int x ATTRIBUTE_UNUSED)
   char name[s7_MAX_LITERAL_POOL_SIZE];
   char * orig_ilp = input_line_pointer;
 
-  while (!is_end_of_line[(unsigned char)*input_line_pointer])
+  while (!is_end_of_stmt (*input_line_pointer))
     {
-      name[i] = (char) * input_line_pointer;
+      name[i] = *input_line_pointer;
       i++;
       ++input_line_pointer;
     }
@@ -5749,21 +5746,21 @@ s7_s_score_cpload (int ignore ATTRIBUTE_UNUSED)
       return;
     }
 
-  if ((reg = s7_reg_required_here (&input_line_pointer, -1, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
+  if ((reg = s7_reg_required_here (&input_line_pointer, -1, s7_REG_TYPE_SCORE)) == s7_FAIL)
     return;
 
   demand_empty_rest_of_line ();
 
   sprintf (insn_str, "ld_i32hi r%d, %s", s7_GP, GP_DISP_LABEL);
-  if (s7_append_insn (insn_str, true) == (int) s7_FAIL)
+  if (s7_append_insn (insn_str, true) == s7_FAIL)
     return;
 
   sprintf (insn_str, "ld_i32lo r%d, %s", s7_GP, GP_DISP_LABEL);
-  if (s7_append_insn (insn_str, true) == (int) s7_FAIL)
+  if (s7_append_insn (insn_str, true) == s7_FAIL)
     return;
 
   sprintf (insn_str, "add r%d, r%d, r%d", s7_GP, s7_GP, reg);
-  if (s7_append_insn (insn_str, true) == (int) s7_FAIL)
+  if (s7_append_insn (insn_str, true) == s7_FAIL)
     return;
 }
 
@@ -5785,8 +5782,8 @@ s7_s_score_cprestore (int ignore ATTRIBUTE_UNUSED)
       return;
     }
 
-  if ((reg = s7_reg_required_here (&input_line_pointer, -1, s7_REG_TYPE_SCORE)) == (int) s7_FAIL
-      || s7_skip_past_comma (&input_line_pointer) == (int) s7_FAIL)
+  if ((reg = s7_reg_required_here (&input_line_pointer, -1, s7_REG_TYPE_SCORE)) == s7_FAIL
+      || s7_skip_past_comma (&input_line_pointer) == s7_FAIL)
     {
       return;
     }
@@ -5796,7 +5793,7 @@ s7_s_score_cprestore (int ignore ATTRIBUTE_UNUSED)
   if (cprestore_offset <= 0x3fff)
     {
       sprintf (insn_str, "sw r%d, [r%d, %d]", s7_GP, reg, cprestore_offset);
-      if (s7_append_insn (insn_str, true) == (int) s7_FAIL)
+      if (s7_append_insn (insn_str, true) == s7_FAIL)
         return;
     }
   else
@@ -5807,15 +5804,15 @@ s7_s_score_cprestore (int ignore ATTRIBUTE_UNUSED)
       s7_nor1 = 0;
 
       sprintf (insn_str, "li r1, %d", cprestore_offset);
-      if (s7_append_insn (insn_str, true) == (int) s7_FAIL)
+      if (s7_append_insn (insn_str, true) == s7_FAIL)
         return;
 
       sprintf (insn_str, "add r1, r1, r%d", reg);
-      if (s7_append_insn (insn_str, true) == (int) s7_FAIL)
+      if (s7_append_insn (insn_str, true) == s7_FAIL)
         return;
 
       sprintf (insn_str, "sw r%d, [r1]", s7_GP);
-      if (s7_append_insn (insn_str, true) == (int) s7_FAIL)
+      if (s7_append_insn (insn_str, true) == s7_FAIL)
         return;
 
       s7_nor1 = r1_bak;
@@ -5846,7 +5843,7 @@ s7_s_score_gpword (int ignore ATTRIBUTE_UNUSED)
       ignore_rest_of_line ();
     }
   p = frag_more (4);
-  s7_number_to_chars (p, (valueT) 0, 4);
+  s7_number_to_chars (p, 0, 4);
   fix_new_exp (frag_now, p - frag_now->fr_literal, 4, &ex, false, BFD_RELOC_GPREL32);
   demand_empty_rest_of_line ();
 }
@@ -5867,7 +5864,7 @@ s7_s_score_cpadd (int ignore ATTRIBUTE_UNUSED)
       return;
     }
 
-  if ((reg = s7_reg_required_here (&input_line_pointer, -1, s7_REG_TYPE_SCORE)) == (int) s7_FAIL)
+  if ((reg = s7_reg_required_here (&input_line_pointer, -1, s7_REG_TYPE_SCORE)) == s7_FAIL)
     {
       return;
     }
@@ -5875,7 +5872,7 @@ s7_s_score_cpadd (int ignore ATTRIBUTE_UNUSED)
 
   /* Add $gp to the register named as an argument.  */
   sprintf (insn_str, "add r%d, r%d, r%d", reg, reg, s7_GP);
-  if (s7_append_insn (insn_str, true) == (int) s7_FAIL)
+  if (s7_append_insn (insn_str, true) == s7_FAIL)
     return;
 }
 
@@ -5912,7 +5909,7 @@ s7_s_score_lcomm (int bytes_p)
 
   c = get_symbol_name (&name);
   p = input_line_pointer;
-  *p = c;
+  restore_line_pointer (c);
 
   if (name == p)
     {
@@ -5921,7 +5918,7 @@ s7_s_score_lcomm (int bytes_p)
       return;
     }
 
-  SKIP_WHITESPACE_AFTER_NAME ();
+  SKIP_WHITESPACE ();
 
   /* Accept an optional comma after the name.  The comma used to be
      required, but Irix 5 cc does not generate it.  */
@@ -5931,7 +5928,7 @@ s7_s_score_lcomm (int bytes_p)
       SKIP_WHITESPACE ();
     }
 
-  if (is_end_of_line[(unsigned char)*input_line_pointer])
+  if (is_end_of_stmt (*input_line_pointer))
     {
       as_bad (_("missing size expression"));
       return;
@@ -5965,7 +5962,7 @@ s7_s_score_lcomm (int bytes_p)
       ++input_line_pointer;
       SKIP_WHITESPACE ();
 
-      if (is_end_of_line[(unsigned char)*input_line_pointer])
+      if (is_end_of_stmt (*input_line_pointer))
         {
           as_bad (_("missing alignment"));
           return;
@@ -6014,18 +6011,6 @@ s7_s_score_lcomm (int bytes_p)
 
       record_alignment (bss_seg, align);
     }
-  else
-    {
-      /* Assume some objects may require alignment on some systems.  */
-#if defined (TC_ALPHA) && ! defined (VMS)
-      if (temp > 1)
-        {
-          align = ffs (temp) - 1;
-          if (temp % (1 << align))
-            abort ();
-        }
-#endif
-    }
 
   *p = 0;
   symbolP = symbol_find_or_make (name);
@@ -6050,7 +6035,7 @@ s7_s_score_lcomm (int bytes_p)
         symbol_get_frag (symbolP)->fr_symbol = NULL;
 
       symbol_set_frag (symbolP, frag_now);
-      pfrag = frag_var (rs_org, 1, 1, (relax_substateT) 0, symbolP, (offsetT) temp, NULL);
+      pfrag = frag_var (rs_org, 1, 1, 0, symbolP, temp, NULL);
       *pfrag = 0;
 
 
@@ -6095,7 +6080,7 @@ s7_begin (void)
 
   s7_build_dependency_insn_hsh ();
 
-  for (i = (int) REG_TYPE_FIRST; i < (int) s7_REG_TYPE_MAX; i++)
+  for (i = REG_TYPE_FIRST; i < s7_REG_TYPE_MAX; i++)
     s7_build_reg_hsh (s7_all_reg_maps + i);
 
   /* Initialize dependency vector.  */
@@ -6104,7 +6089,7 @@ s7_begin (void)
   bfd_set_arch_mach (stdoutput, TARGET_ARCH, 0);
   seg = now_seg;
   subseg = now_subseg;
-  s7_pdr_seg = subseg_new (".pdr", (subsegT) 0);
+  s7_pdr_seg = subseg_new (".pdr", 0);
   bfd_set_section_flags (s7_pdr_seg, SEC_READONLY | SEC_RELOC | SEC_DEBUGGING);
   bfd_set_section_alignment (s7_pdr_seg, 2);
   subseg_set (seg, subseg);
@@ -6198,19 +6183,19 @@ s7_atof (int type, char *litP, int *sizeP)
   if (target_big_endian)
     {
       for (i = 0; i < prec; i++)
-        {
-          s7_number_to_chars (litP, (valueT) words[i], 2);
-          litP += 2;
-        }
+	{
+	  s7_number_to_chars (litP, words[i], 2);
+	  litP += 2;
+	}
     }
   else
     {
       for (i = 0; i < prec; i += 2)
-        {
-          s7_number_to_chars (litP, (valueT) words[i + 1], 2);
-          s7_number_to_chars (litP + 2, (valueT) words[i], 2);
-          litP += 4;
-        }
+	{
+	  s7_number_to_chars (litP, words[i + 1], 2);
+	  s7_number_to_chars (litP + 2, words[i], 2);
+	  litP += 4;
+	}
     }
 
   return 0;
@@ -6825,10 +6810,10 @@ s7_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
   bfd_reloc_code_real_type code;
   const char *type;
 
-  reloc = retval[0] = XNEW (arelent);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
+  retval[0] = reloc;
   retval[1] = NULL;
-
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->addend = fixp->fx_offset;
@@ -6856,9 +6841,9 @@ s7_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
       newval |= (((off >> 14) & 0x3) << 16);
       s7_number_to_chars (buf, newval, s7_INSN_SIZE);
 
-      retval[1] = XNEW (arelent);
+      retval[1] = notes_alloc (sizeof (arelent));
+      retval[1]->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
       retval[2] = NULL;
-      retval[1]->sym_ptr_ptr = XNEW (asymbol *);
       *retval[1]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
       retval[1]->address = (reloc->address + s7_RELAX_RELOC2 (fixp->fx_frag->fr_subtype));
 

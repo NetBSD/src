@@ -1,5 +1,5 @@
 /* macro.h - header file for macro support for gas
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
       sac@cygnus.com
@@ -60,13 +60,14 @@ typedef struct formal_struct {
 
 typedef struct macro_struct
 {
-  sb sub;				/* Substitution text.  */
-  int formal_count;			/* Number of formal args.  */
-  formal_entry *formals;		/* List of formal_structs.  */
-  htab_t formal_hash;			/* Hash table of formals.  */
-  const char *name;			/* Macro name.  */
-  const char *file;			/* File the macro was defined in.  */
-  unsigned int line;			/* Line number of definition.  */
+  sb              sub;			/* Substitution text.  */
+  int             formal_count;		/* Number of formal args.  */
+  formal_entry *  formals;		/* List of formal_structs.  */
+  htab_t          formal_hash;		/* Hash table of formals.  */
+  const char *    name;			/* Macro name.  */
+  const char *    file;			/* File the macro was defined in.  */
+  unsigned int    line;			/* Line number of definition.  */
+  unsigned int    count;                /* Invocation count.  */
 } macro_entry;
 
 /* Whether any macros have been defined.  */

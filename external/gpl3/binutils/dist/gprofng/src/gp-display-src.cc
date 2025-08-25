@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -75,14 +75,6 @@ private:
   bool v_opt;
   int multiple;
   char *str_compcom;
-  bool hex_visible;
-  int src_visible;
-  int vis_src;
-  int vis_dis;
-  int threshold_src;
-  int threshold_dis;
-  int threshold;
-  int vis_bits;
 };
 
 static int
@@ -97,6 +89,7 @@ real_main (int argc, char *argv[])
 int
 main (int argc, char *argv[])
 {
+  xmalloc_set_program_name (argv[0]);
   return catch_out_of_memory (real_main, argc, argv);
 }
 
@@ -178,7 +171,9 @@ er_src::usage ()
     "\n"
     "See also:\n"
     "\n"
-    "gprofng(1), gp-archive(1), gp-collect-app(1), gp-display-html(1), gp-display-text(1)\n"));
+    "gprofng(1), gprofng-archive(1), gprofng-collect-app(1), "
+    "gprofng-display-html(1), gprofng-display-text(1)\n"
+    "\nReport bugs to <https://sourceware.org/bugzilla/>\n"));
 /*
   printf (GTXT ("Usage: %s [OPTION] a.out/.so/.o/.class\n\n"), whoami);
   printf (GTXT ("    -func                     List all the functions from the given object\n"
@@ -224,7 +219,7 @@ er_src::set_outfile (char *cmd, FILE *&set_file)
       else if ((fname = strstr (cmd, "~")) != NULL && home != NULL)
 	cmdpath = dbe_sprintf ("/home/%s", fname + 1);
       else
-	cmdpath = strdup (cmd);
+	cmdpath = xstrdup (cmd);
       new_file = fopen (cmdpath, "w");
       if (new_file == NULL)
 	{
@@ -319,11 +314,7 @@ er_src::proc_cmd (CmdType cmd_type, bool first, char *arg1,
       break;
     case VERSION_cmd:
       if (out_file != stdout)
-// Ruud
 	Application::print_version_info ();
-/*
-	fprintf (out_file, "GNU %s version %s\n", get_basename (prog_name), VERSION);
-*/
       break;
     default:
       fprintf (stderr, GTXT ("Invalid option"));
@@ -674,7 +665,7 @@ er_src::open (char *exe)
   Vector<Histable*> *module_lst;
 
   // Construct the Segment structure
-  char *path = strdup (exe);
+  char *path = xstrdup (exe);
   lo = dbeSession->createLoadObject (path);
   if (NULL == lo->dbeFile->find_file (lo->dbeFile->get_name ()))
     {

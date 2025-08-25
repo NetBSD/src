@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -695,20 +695,6 @@ Experiment::process_seg_map_cmd (char */*cmd*/, hrtime_t ts, Vaddr vaddr,
   LoadObject *lo = loadObjMap->get (nm);
   if (lo == NULL)
     {
-      if (chk == 0)
-	{
-	  char *archName = checkFileInArchive (nm, false);
-	  if (archName)
-	    {
-	      Elf *elf = new Elf (archName);
-	      if (elf->status == Elf::ELF_ERR_NONE)
-		{
-		  chk = elf->elf_checksum ();
-		}
-	      free (archName);
-	      delete elf;
-	    }
-	}
       lo = dbeSession->find_lobj_by_name (nm, chk);
       if (lo == NULL)
 	{
@@ -751,15 +737,6 @@ Experiment::process_seg_map_cmd (char */*cmd*/, hrtime_t ts, Vaddr vaddr,
 	      lo->dbeFile->check_access (archName); // init 'sbuf'
 	      lo->dbeFile->sbuf.st_mtime = 0; // Don't check timestamps
 	      free (archName);
-	    }
-	  else
-	    {
-	      archName = checkFileInArchive (nm, true);
-	      if (archName)
-		{
-		  lo->set_archname (archName);
-		  lo->need_swap_endian = need_swap_endian;
-		}
 	    }
 	  if (!dbeSession->archive_mode)
 	    lo->sync_read_stabs ();

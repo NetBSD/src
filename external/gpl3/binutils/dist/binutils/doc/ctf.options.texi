@@ -22,3 +22,13 @@ function at link time.  When looking at CTF archives that have been
 created by a linker that uses the name changer to rename the parent
 archive member, @option{--ctf-parent} can be used to specify the name
 used for the parent.
+
+@item --ctf-parent-section=@var{section}
+
+This option lets you pick a completely different section for the CTF
+parent dictionary containing unambiguous types than for the child
+dictionaries that contain the ambiguous remainder.  The linker does
+not emit ELF objects structured like this, but some third-party linkers
+may.  It's also convenient to inspect CTF written out as multiple raw
+files to compose them with objcopy, which can put them in different
+ELF sections but not in different members of a single CTF dict.

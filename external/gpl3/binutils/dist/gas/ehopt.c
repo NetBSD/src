@@ -1,5 +1,5 @@
 /* ehopt.c--optimize gcc exception frame information.
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GAS, the GNU Assembler.
@@ -90,17 +90,17 @@ __FRAME_BEGIN__:
 
 struct cie_info
 {
+  fragS *f;
   unsigned code_alignment;
   int z_augmentation;
 };
 
 /* Extract information from the CIE.  */
 
-static int
+static bool
 get_cie_info (struct cie_info *info)
 {
   fragS *f;
-  fixS *fix;
   unsigned int offset;
   char CIE_id;
   char augmentation[10];
@@ -110,9 +110,10 @@ get_cie_info (struct cie_info *info)
   /* We should find the CIE at the start of the section.  */
 
   f = seg_info (now_seg)->frchainP->frch_root;
-  fix = seg_info (now_seg)->frchainP->fix_root;
-
-  /* Look through the frags of the section to find the code alignment.  */
+  while (f != NULL && f->fr_fix == 0)
+    f = f->fr_next;
+  if (f != info->f)
+    return false;
 
   /* First make sure that the CIE Identifier Tag is 0/-1.  */
 
@@ -133,7 +134,7 @@ get_cie_info (struct cie_info *info)
       || f->fr_literal[offset + 1] != CIE_id
       || f->fr_literal[offset + 2] != CIE_id
       || f->fr_literal[offset + 3] != CIE_id)
-    return 0;
+    return false;
 
   /* Next make sure the CIE version number is 1.  */
 
@@ -146,7 +147,7 @@ get_cie_info (struct cie_info *info)
   if (f == NULL
       || f->fr_fix - offset < 1
       || f->fr_literal[offset] != 1)
-    return 0;
+    return false;
 
   /* Skip the augmentation (a null terminated string).  */
 
@@ -160,7 +161,7 @@ get_cie_info (struct cie_info *info)
 	  f = f->fr_next;
 	}
       if (f == NULL)
-	return 0;
+	return false;
 
       while (offset < f->fr_fix && f->fr_literal[offset] != '\0')
 	{
@@ -181,7 +182,7 @@ get_cie_info (struct cie_info *info)
       f = f->fr_next;
     }
   if (f == NULL)
-    return 0;
+    return false;
 
   augmentation[iaug] = '\0';
   if (augmentation[0] == '\0')
@@ -192,6 +193,7 @@ get_cie_info (struct cie_info *info)
     {
       /* We have to skip a pointer.  Unfortunately, we don't know how
 	 large it is.  We find out by looking for a matching fixup.  */
+      fixS *fix = seg_info (now_seg)->frchainP->fix_root;
       while (fix != NULL
 	     && (fix->fx_frag != f || fix->fx_where != offset))
 	fix = fix->fx_next;
@@ -205,10 +207,10 @@ get_cie_info (struct cie_info *info)
 	  f = f->fr_next;
 	}
       if (f == NULL)
-	return 0;
+	return false;
     }
   else if (augmentation[0] != 'z')
-    return 0;
+    return false;
 
   /* We're now at the code alignment factor, which is a ULEB128.  If
      it isn't a single byte, forget it.  */
@@ -220,7 +222,7 @@ get_cie_info (struct cie_info *info)
   info->code_alignment = code_alignment;
   info->z_augmentation = (augmentation[0] == 'z');
 
-  return 1;
+  return true;
 }
 
 enum frame_state
@@ -240,7 +242,7 @@ struct frame_data
 {
   enum frame_state state;
 
-  int cie_info_ok;
+  bool cie_info_ok;
   struct cie_info cie_info;
 
   symbolS *size_end_sym;
@@ -320,20 +322,27 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
 	    {
 	      d->state = state_saw_size;
 	      d->size_end_sym = exp->X_add_symbol;
+	      if (!d->cie_info.f)
+		d->cie_info.f = frag_now;
 	    }
 	}
       break;
 
     case state_saw_size:
     case state_saw_cie_offset:
-      /* Assume whatever form it appears in, it appears atomically.  */
-      d->state = (enum frame_state) (d->state + 1);
+      if (!(*pnbytes == 4 || *pnbytes == 8))
+	/* Stop scanning if we don't see the expected FDE fields.  */
+	d->state = state_error;
+      else
+	d->state++;
       break;
 
     case state_saw_pc_begin:
       /* Decide whether we should see an augmentation.  */
-      if (! d->cie_info_ok
-	  && ! (d->cie_info_ok = get_cie_info (&d->cie_info)))
+      if (!(*pnbytes == 4 || *pnbytes == 8))
+	d->state = state_error;
+      else if (!d->cie_info_ok
+	       && !(d->cie_info_ok = get_cie_info (&d->cie_info)))
 	d->state = state_error;
       else if (d->cie_info.z_augmentation)
 	{
@@ -347,7 +356,7 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
 
     case state_seeing_aug_size:
       /* Bytes == -1 means this comes from an leb128 directive.  */
-      if ((int)*pnbytes == -1 && exp->X_op == O_constant)
+      if ((int) *pnbytes == -1 && exp->X_op == O_constant)
 	{
 	  d->aug_size = exp->X_add_number;
 	  d->state = state_skipping_aug;
@@ -367,7 +376,7 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
       break;
 
     case state_skipping_aug:
-      if ((int)*pnbytes < 0)
+      if ((int) *pnbytes < 0)
 	d->state = state_error;
       else
 	{
@@ -528,7 +537,7 @@ eh_frame_convert_frag (fragS *frag)
   int loc4_fix, ca;
 
   loc4_frag = (fragS *) frag->fr_opcode;
-  loc4_fix = (int) frag->fr_offset;
+  loc4_fix = frag->fr_offset;
 
   diff = resolve_symbol_value (frag->fr_symbol);
 

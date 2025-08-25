@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -32,7 +32,6 @@ class Coll_Ctrl;
 class Elf;
 
 #define MAXLABELS       10      /* maximum number of -C arguments */
-#define STDEBUFSIZE     24000
 
 enum { MAX_LD_PRELOAD_TYPES = 3 };
 

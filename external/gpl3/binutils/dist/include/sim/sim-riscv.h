@@ -1,6 +1,6 @@
 /* This file defines the interface between the RISC-V simulator and GDB.
 
-   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
    Contributed by Mike Frysinger.
 
    This file is part of GDB.

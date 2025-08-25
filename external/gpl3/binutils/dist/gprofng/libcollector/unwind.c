@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -59,12 +59,6 @@ struct frame
   unsigned long fr_savpc;
 };
 #endif
-
-/* Set the debug trace level */
-#define DBG_LT0 0
-#define DBG_LT1	1
-#define DBG_LT2	2
-#define DBG_LT3	3
 
 int (*__collector_VM_ReadByteInstruction)(unsigned char *) = NULL;
 #define VM_NO_ACCESS        (-1)
@@ -186,6 +180,11 @@ memory_error_func (int status ATTRIBUTE_UNUSED, bfd_vma addr ATTRIBUTE_UNUSED,
 #define GET_PC(ctx) (((ucontext_t*)ctx)->uc_mcontext.regs[15])
 #define GET_SP(ctx) (((ucontext_t*)ctx)->uc_mcontext.regs[13])
 #define GET_FP(ctx) (((ucontext_t*)ctx)->uc_mcontext.regs[14])
+
+#elif ARCH(RISCV)
+#define GET_PC(ctx) (((ucontext_t*)ctx)->uc_mcontext.__gregs[REG_PC])
+#define GET_SP(ctx) (((ucontext_t*)ctx)->uc_mcontext.__gregs[2])
+#define GET_FP(ctx) (((ucontext_t*)ctx)->uc_mcontext.__gregs[8])
 #endif /* ARCH() */
 
 /*
@@ -238,6 +237,12 @@ typedef uint64_t __u64;
 #define FILL_CONTEXT(context) \
     { CALL_UTIL (getcontext) (context);  \
       context->uc_mcontext.sp = (__u64) __builtin_frame_address(0); \
+    }
+
+#elif ARCH(RISCV)
+#define FILL_CONTEXT(context) \
+    { CALL_UTIL(getcontext)(context);  \
+      context->uc_mcontext.__gregs[2] = (uint64_t) __builtin_frame_address(0); \
     }
 
 #endif /* ARCH() */
@@ -416,7 +421,7 @@ __collector_ext_unwind_init (int record)
   omp_no_walk = 1;
 
   if (__collector_VM_ReadByteInstruction == NULL)
-    __collector_VM_ReadByteInstruction = (int(*)()) dlsym (RTLD_DEFAULT, "Async_VM_ReadByteInstruction");
+    __collector_VM_ReadByteInstruction = (int(*)(unsigned char*)) dlsym (RTLD_DEFAULT, "Async_VM_ReadByteInstruction");
 
 #if ARCH(SPARC)
 #if WSIZE(64)
@@ -1550,8 +1555,8 @@ read_int (unsigned char *pc, int w)
   if (w == 1)
     return *((char *) pc);
   if (w == 2)
-    return *(short*) pc;
-  return *(int*) pc;
+    return pc[0] | (pc[1] << 8);
+  return pc[0] | (pc[1] << 8) | (pc[2] << 16) | (pc[3] << 24);
 }
 
 /* Return codes */
