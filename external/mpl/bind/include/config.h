@@ -565,10 +565,10 @@
 #define RCU_FLAVOR "liburcu"
 
 /* Build with mb Userspace-RCU flavor */
-/* #undef RCU_MB */
+#define RCU_MB 1
 
 /* Build with membarrier Userspace-RCU flavor */
-#define RCU_MEMBARRIER 1
+/* #undef RCU_MEMBARRIER */
 
 /* Build with QSBR Userspace-RCU flavor */
 /* #undef RCU_QSBR */
