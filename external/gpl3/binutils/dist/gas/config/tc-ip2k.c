@@ -1,5 +1,5 @@
 /* tc-ip2k.c -- Assembler for the Scenix IP2xxx.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -101,15 +101,15 @@ enum options
   OPTION_CPU_IP2022EXT
 };
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   { "mip2022",     no_argument, NULL, OPTION_CPU_IP2022 },
   { "mip2022ext",  no_argument, NULL, OPTION_CPU_IP2022EXT },
   { NULL,           no_argument, NULL, 0 },
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
-const char * md_shortopts = "";
+const char md_shortopts[] = "";
 
 int
 md_parse_option (int c ATTRIBUTE_UNUSED, const char * arg ATTRIBUTE_UNUSED)

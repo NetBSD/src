@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -60,6 +60,7 @@ class LoadObject;
 class Module;
 class DwrCU;
 class DwrSec;
+class Range;
 
 class Dwarf
 {
@@ -69,12 +70,15 @@ public:
   bool archive_Dwarf (LoadObject *lo);
   void srcline_Dwarf (Module *module);
   void read_hwcprof_info (Module *module);
+  Vector<Range *> *get_ranges (uint64_t offset);
+  Vector <Dwr_rng_entry *> *get_debug_rnglists ();
 
   Stabs::Stab_status status;
   Vector<DwrCU *> *dwrCUs;
   DwrSec *debug_infoSec;
   DwrSec *debug_abbrevSec;
   DwrSec *debug_strSec;
+  DwrSec *debug_alt_strSec;
   DwrSec *debug_lineSec;
   DwrSec *debug_line_strSec;
   DwrSec *debug_rangesSec;
@@ -82,6 +86,7 @@ public:
   Stabs *stabs;
 
 private:
+  Vector <Dwr_rng_entry *> *debug_rnglists;
   DwrSec *dwrGetSec (const char *sec_name);
 };
 

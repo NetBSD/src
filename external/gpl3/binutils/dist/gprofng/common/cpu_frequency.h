@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -41,7 +41,7 @@ extern "C"
 #define COL_CPUFREQ_SCALING     0x0001
 #define COL_CPUFREQ_TURBO       0x0002
 
-#if defined(__i386__) || defined(__x86_64)
+#if defined(__i386__) || defined(__x86_64__)
   // XXXX This is a rough table to estimate frequency increment due to intel turbo boost.
   // CPU with different stepping and different core number have different turbo increment.
   //  It is used internally here, and is not implemented on SPARC
@@ -129,7 +129,7 @@ extern "C"
       {
 	char temp[1024];
 	int cpu = -1;
-#if defined(__i386__) || defined(__x86_64)
+#if defined(__i386__) || defined(__x86_64__)
 	int model = -1;
 	int family = -1;
 #endif
@@ -140,7 +140,7 @@ extern "C"
 		char *val = strchr (temp, ':');
 		cpu = val ? atoi (val + 1) : -1;
 	      }
-#if defined(__i386__) || defined(__x86_64)
+#if defined(__i386__) || defined(__x86_64__)
 	    else if (strncmp (temp, "model", strlen ("model")) == 0
 		     && strstr (temp, "name") == 0)
 	      {
@@ -241,7 +241,7 @@ extern "C"
 							  frequency_scaling = 1;
 							if (tmpmhz > 1000)
 							  {
-#if defined(__i386__) || defined(__x86_64)
+#if defined(__i386__) || defined(__x86_64__)
 							    if (family == 6)
 							      {
 							        // test turbo mode

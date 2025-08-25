@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -17,6 +17,5 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
-/* Linked with ar.o to flag that this program is 'ar' (not 'ranlib').  */
-
-int is_ranlib = 0;
+#define is_ranlib 0
+#include "ar.c"

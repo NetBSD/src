@@ -1,5 +1,5 @@
 /* codeview.c - CodeView debug support
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -531,6 +531,90 @@ codeview_generate_asm_lineno (void)
 
   lf->lines_tail = l;
   lf->num_lines++;
+}
+
+/* Output a compressed CodeView integer.  The return value is the number of
+   bytes used.  */
+
+unsigned int
+output_cv_comp (char *p, offsetT value, int sign)
+{
+  char *orig = p;
+
+  if (sign)
+    {
+      if (value < -0xfffffff || value > 0xfffffff)
+	{
+	  as_bad (_("value cannot be expressed as a .cv_scomp"));
+	  return 0;
+	}
+    }
+  else
+    {
+      if (value < 0 || value > 0x1fffffff)
+	{
+	  as_bad (_("value cannot be expressed as a .cv_ucomp"));
+	  return 0;
+	}
+    }
+
+  if (sign)
+    {
+      if (value >= 0)
+	value <<= 1;
+      else
+	value = (-value << 1) | 1;
+    }
+
+  if (value <= 0x7f)
+    {
+      *p++ = value;
+    }
+  else if (value <= 0x3fff)
+    {
+      *p++ = 0x80 | (value >> 8);
+      *p++ = value & 0xff;
+    }
+  else
+    {
+      *p++ = 0xc0 | (value >> 24);
+      *p++ = (value >> 16) & 0xff;
+      *p++ = (value >> 8) & 0xff;
+      *p++ = value & 0xff;
+    }
+
+  return p - orig;
+}
+
+/* Return the size needed to output a compressed CodeView integer.  */
+
+unsigned int
+sizeof_cv_comp (offsetT value, int sign)
+{
+  if (sign)
+    {
+      if (value < -0xfffffff || value > 0xfffffff)
+	return 0;
+
+      if (value >= 0)
+	value <<= 1;
+      else
+	value = (-value << 1) | 1;
+    }
+  else
+    {
+      if (value > 0x1fffffff)
+	return 0;
+    }
+
+  if (value <= 0x7f)
+    return 1;
+  else if (value <= 0x3fff)
+    return 2;
+  else if (value <= 0x1fffffff)
+    return 4;
+  else
+    return 0;
 }
 
 #else

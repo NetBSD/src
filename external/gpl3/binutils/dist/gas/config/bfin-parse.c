@@ -639,76 +639,75 @@ extern int yydebug;
     _AMPERSAND_ASSIGN = 356,       /* _AMPERSAND_ASSIGN  */
     _MINUS_ASSIGN = 357,           /* _MINUS_ASSIGN  */
     _PLUS_ASSIGN = 358,            /* _PLUS_ASSIGN  */
-    _ASSIGN_BANG = 359,            /* _ASSIGN_BANG  */
-    _LESS_THAN_ASSIGN = 360,       /* _LESS_THAN_ASSIGN  */
-    _ASSIGN_ASSIGN = 361,          /* _ASSIGN_ASSIGN  */
-    GE = 362,                      /* GE  */
-    LT = 363,                      /* LT  */
-    LE = 364,                      /* LE  */
-    GT = 365,                      /* GT  */
-    LESS_THAN = 366,               /* LESS_THAN  */
-    FLUSHINV = 367,                /* FLUSHINV  */
-    FLUSH = 368,                   /* FLUSH  */
-    IFLUSH = 369,                  /* IFLUSH  */
-    PREFETCH = 370,                /* PREFETCH  */
-    PRNT = 371,                    /* PRNT  */
-    OUTC = 372,                    /* OUTC  */
-    WHATREG = 373,                 /* WHATREG  */
-    TESTSET = 374,                 /* TESTSET  */
-    ASL = 375,                     /* ASL  */
-    ASR = 376,                     /* ASR  */
-    B = 377,                       /* B  */
-    W = 378,                       /* W  */
-    NS = 379,                      /* NS  */
-    S = 380,                       /* S  */
-    CO = 381,                      /* CO  */
-    SCO = 382,                     /* SCO  */
-    TH = 383,                      /* TH  */
-    TL = 384,                      /* TL  */
-    BP = 385,                      /* BP  */
-    BREV = 386,                    /* BREV  */
-    X = 387,                       /* X  */
-    Z = 388,                       /* Z  */
-    M = 389,                       /* M  */
-    MMOD = 390,                    /* MMOD  */
-    R = 391,                       /* R  */
-    RND = 392,                     /* RND  */
-    RNDL = 393,                    /* RNDL  */
-    RNDH = 394,                    /* RNDH  */
-    RND12 = 395,                   /* RND12  */
-    RND20 = 396,                   /* RND20  */
-    V = 397,                       /* V  */
-    LO = 398,                      /* LO  */
-    HI = 399,                      /* HI  */
-    BITTGL = 400,                  /* BITTGL  */
-    BITCLR = 401,                  /* BITCLR  */
-    BITSET = 402,                  /* BITSET  */
-    BITTST = 403,                  /* BITTST  */
-    BITMUX = 404,                  /* BITMUX  */
-    DBGAL = 405,                   /* DBGAL  */
-    DBGAH = 406,                   /* DBGAH  */
-    DBGHALT = 407,                 /* DBGHALT  */
-    DBG = 408,                     /* DBG  */
-    DBGA = 409,                    /* DBGA  */
-    DBGCMPLX = 410,                /* DBGCMPLX  */
-    IF = 411,                      /* IF  */
-    COMMA = 412,                   /* COMMA  */
-    BY = 413,                      /* BY  */
-    COLON = 414,                   /* COLON  */
-    SEMICOLON = 415,               /* SEMICOLON  */
-    RPAREN = 416,                  /* RPAREN  */
-    LPAREN = 417,                  /* LPAREN  */
-    LBRACK = 418,                  /* LBRACK  */
-    RBRACK = 419,                  /* RBRACK  */
-    STATUS_REG = 420,              /* STATUS_REG  */
-    MNOP = 421,                    /* MNOP  */
-    SYMBOL = 422,                  /* SYMBOL  */
-    NUMBER = 423,                  /* NUMBER  */
-    GOT = 424,                     /* GOT  */
-    GOT17M4 = 425,                 /* GOT17M4  */
-    FUNCDESC_GOT17M4 = 426,        /* FUNCDESC_GOT17M4  */
-    AT = 427,                      /* AT  */
-    PLTPC = 428                    /* PLTPC  */
+    _LESS_THAN_ASSIGN = 359,       /* _LESS_THAN_ASSIGN  */
+    _ASSIGN_ASSIGN = 360,          /* _ASSIGN_ASSIGN  */
+    GE = 361,                      /* GE  */
+    LT = 362,                      /* LT  */
+    LE = 363,                      /* LE  */
+    GT = 364,                      /* GT  */
+    LESS_THAN = 365,               /* LESS_THAN  */
+    FLUSHINV = 366,                /* FLUSHINV  */
+    FLUSH = 367,                   /* FLUSH  */
+    IFLUSH = 368,                  /* IFLUSH  */
+    PREFETCH = 369,                /* PREFETCH  */
+    PRNT = 370,                    /* PRNT  */
+    OUTC = 371,                    /* OUTC  */
+    WHATREG = 372,                 /* WHATREG  */
+    TESTSET = 373,                 /* TESTSET  */
+    ASL = 374,                     /* ASL  */
+    ASR = 375,                     /* ASR  */
+    B = 376,                       /* B  */
+    W = 377,                       /* W  */
+    NS = 378,                      /* NS  */
+    S = 379,                       /* S  */
+    CO = 380,                      /* CO  */
+    SCO = 381,                     /* SCO  */
+    TH = 382,                      /* TH  */
+    TL = 383,                      /* TL  */
+    BP = 384,                      /* BP  */
+    BREV = 385,                    /* BREV  */
+    X = 386,                       /* X  */
+    Z = 387,                       /* Z  */
+    M = 388,                       /* M  */
+    MMOD = 389,                    /* MMOD  */
+    R = 390,                       /* R  */
+    RND = 391,                     /* RND  */
+    RNDL = 392,                    /* RNDL  */
+    RNDH = 393,                    /* RNDH  */
+    RND12 = 394,                   /* RND12  */
+    RND20 = 395,                   /* RND20  */
+    V = 396,                       /* V  */
+    LO = 397,                      /* LO  */
+    HI = 398,                      /* HI  */
+    BITTGL = 399,                  /* BITTGL  */
+    BITCLR = 400,                  /* BITCLR  */
+    BITSET = 401,                  /* BITSET  */
+    BITTST = 402,                  /* BITTST  */
+    BITMUX = 403,                  /* BITMUX  */
+    DBGAL = 404,                   /* DBGAL  */
+    DBGAH = 405,                   /* DBGAH  */
+    DBGHALT = 406,                 /* DBGHALT  */
+    DBG = 407,                     /* DBG  */
+    DBGA = 408,                    /* DBGA  */
+    DBGCMPLX = 409,                /* DBGCMPLX  */
+    IF = 410,                      /* IF  */
+    COMMA = 411,                   /* COMMA  */
+    BY = 412,                      /* BY  */
+    COLON = 413,                   /* COLON  */
+    SEMICOLON = 414,               /* SEMICOLON  */
+    RPAREN = 415,                  /* RPAREN  */
+    LPAREN = 416,                  /* LPAREN  */
+    LBRACK = 417,                  /* LBRACK  */
+    RBRACK = 418,                  /* RBRACK  */
+    STATUS_REG = 419,              /* STATUS_REG  */
+    MNOP = 420,                    /* MNOP  */
+    SYMBOL = 421,                  /* SYMBOL  */
+    NUMBER = 422,                  /* NUMBER  */
+    GOT = 423,                     /* GOT  */
+    GOT17M4 = 424,                 /* GOT17M4  */
+    FUNCDESC_GOT17M4 = 425,        /* FUNCDESC_GOT17M4  */
+    AT = 426,                      /* AT  */
+    PLTPC = 427                    /* PLTPC  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -818,76 +817,75 @@ extern int yydebug;
 #define _AMPERSAND_ASSIGN 356
 #define _MINUS_ASSIGN 357
 #define _PLUS_ASSIGN 358
-#define _ASSIGN_BANG 359
-#define _LESS_THAN_ASSIGN 360
-#define _ASSIGN_ASSIGN 361
-#define GE 362
-#define LT 363
-#define LE 364
-#define GT 365
-#define LESS_THAN 366
-#define FLUSHINV 367
-#define FLUSH 368
-#define IFLUSH 369
-#define PREFETCH 370
-#define PRNT 371
-#define OUTC 372
-#define WHATREG 373
-#define TESTSET 374
-#define ASL 375
-#define ASR 376
-#define B 377
-#define W 378
-#define NS 379
-#define S 380
-#define CO 381
-#define SCO 382
-#define TH 383
-#define TL 384
-#define BP 385
-#define BREV 386
-#define X 387
-#define Z 388
-#define M 389
-#define MMOD 390
-#define R 391
-#define RND 392
-#define RNDL 393
-#define RNDH 394
-#define RND12 395
-#define RND20 396
-#define V 397
-#define LO 398
-#define HI 399
-#define BITTGL 400
-#define BITCLR 401
-#define BITSET 402
-#define BITTST 403
-#define BITMUX 404
-#define DBGAL 405
-#define DBGAH 406
-#define DBGHALT 407
-#define DBG 408
-#define DBGA 409
-#define DBGCMPLX 410
-#define IF 411
-#define COMMA 412
-#define BY 413
-#define COLON 414
-#define SEMICOLON 415
-#define RPAREN 416
-#define LPAREN 417
-#define LBRACK 418
-#define RBRACK 419
-#define STATUS_REG 420
-#define MNOP 421
-#define SYMBOL 422
-#define NUMBER 423
-#define GOT 424
-#define GOT17M4 425
-#define FUNCDESC_GOT17M4 426
-#define AT 427
-#define PLTPC 428
+#define _LESS_THAN_ASSIGN 359
+#define _ASSIGN_ASSIGN 360
+#define GE 361
+#define LT 362
+#define LE 363
+#define GT 364
+#define LESS_THAN 365
+#define FLUSHINV 366
+#define FLUSH 367
+#define IFLUSH 368
+#define PREFETCH 369
+#define PRNT 370
+#define OUTC 371
+#define WHATREG 372
+#define TESTSET 373
+#define ASL 374
+#define ASR 375
+#define B 376
+#define W 377
+#define NS 378
+#define S 379
+#define CO 380
+#define SCO 381
+#define TH 382
+#define TL 383
+#define BP 384
+#define BREV 385
+#define X 386
+#define Z 387
+#define M 388
+#define MMOD 389
+#define R 390
+#define RND 391
+#define RNDL 392
+#define RNDH 393
+#define RND12 394
+#define RND20 395
+#define V 396
+#define LO 397
+#define HI 398
+#define BITTGL 399
+#define BITCLR 400
+#define BITSET 401
+#define BITTST 402
+#define BITMUX 403
+#define DBGAL 404
+#define DBGAH 405
+#define DBGHALT 406
+#define DBG 407
+#define DBGA 408
+#define DBGCMPLX 409
+#define IF 410
+#define COMMA 411
+#define BY 412
+#define COLON 413
+#define SEMICOLON 414
+#define RPAREN 415
+#define LPAREN 416
+#define LBRACK 417
+#define RBRACK 418
+#define STATUS_REG 419
+#define MNOP 420
+#define SYMBOL 421
+#define NUMBER 422
+#define GOT 423
+#define GOT17M4 424
+#define FUNCDESC_GOT17M4 425
+#define AT 426
+#define PLTPC 427
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -905,7 +903,7 @@ union YYSTYPE
   struct { int r0; } r0;
   Opt_mode mod;
 
-#line 909 "config/bfin-parse.c"
+#line 907 "config/bfin-parse.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -1029,123 +1027,122 @@ enum yysymbol_kind_t
   YYSYMBOL__AMPERSAND_ASSIGN = 101,        /* _AMPERSAND_ASSIGN  */
   YYSYMBOL__MINUS_ASSIGN = 102,            /* _MINUS_ASSIGN  */
   YYSYMBOL__PLUS_ASSIGN = 103,             /* _PLUS_ASSIGN  */
-  YYSYMBOL__ASSIGN_BANG = 104,             /* _ASSIGN_BANG  */
-  YYSYMBOL__LESS_THAN_ASSIGN = 105,        /* _LESS_THAN_ASSIGN  */
-  YYSYMBOL__ASSIGN_ASSIGN = 106,           /* _ASSIGN_ASSIGN  */
-  YYSYMBOL_GE = 107,                       /* GE  */
-  YYSYMBOL_LT = 108,                       /* LT  */
-  YYSYMBOL_LE = 109,                       /* LE  */
-  YYSYMBOL_GT = 110,                       /* GT  */
-  YYSYMBOL_LESS_THAN = 111,                /* LESS_THAN  */
-  YYSYMBOL_FLUSHINV = 112,                 /* FLUSHINV  */
-  YYSYMBOL_FLUSH = 113,                    /* FLUSH  */
-  YYSYMBOL_IFLUSH = 114,                   /* IFLUSH  */
-  YYSYMBOL_PREFETCH = 115,                 /* PREFETCH  */
-  YYSYMBOL_PRNT = 116,                     /* PRNT  */
-  YYSYMBOL_OUTC = 117,                     /* OUTC  */
-  YYSYMBOL_WHATREG = 118,                  /* WHATREG  */
-  YYSYMBOL_TESTSET = 119,                  /* TESTSET  */
-  YYSYMBOL_ASL = 120,                      /* ASL  */
-  YYSYMBOL_ASR = 121,                      /* ASR  */
-  YYSYMBOL_B = 122,                        /* B  */
-  YYSYMBOL_W = 123,                        /* W  */
-  YYSYMBOL_NS = 124,                       /* NS  */
-  YYSYMBOL_S = 125,                        /* S  */
-  YYSYMBOL_CO = 126,                       /* CO  */
-  YYSYMBOL_SCO = 127,                      /* SCO  */
-  YYSYMBOL_TH = 128,                       /* TH  */
-  YYSYMBOL_TL = 129,                       /* TL  */
-  YYSYMBOL_BP = 130,                       /* BP  */
-  YYSYMBOL_BREV = 131,                     /* BREV  */
-  YYSYMBOL_X = 132,                        /* X  */
-  YYSYMBOL_Z = 133,                        /* Z  */
-  YYSYMBOL_M = 134,                        /* M  */
-  YYSYMBOL_MMOD = 135,                     /* MMOD  */
-  YYSYMBOL_R = 136,                        /* R  */
-  YYSYMBOL_RND = 137,                      /* RND  */
-  YYSYMBOL_RNDL = 138,                     /* RNDL  */
-  YYSYMBOL_RNDH = 139,                     /* RNDH  */
-  YYSYMBOL_RND12 = 140,                    /* RND12  */
-  YYSYMBOL_RND20 = 141,                    /* RND20  */
-  YYSYMBOL_V = 142,                        /* V  */
-  YYSYMBOL_LO = 143,                       /* LO  */
-  YYSYMBOL_HI = 144,                       /* HI  */
-  YYSYMBOL_BITTGL = 145,                   /* BITTGL  */
-  YYSYMBOL_BITCLR = 146,                   /* BITCLR  */
-  YYSYMBOL_BITSET = 147,                   /* BITSET  */
-  YYSYMBOL_BITTST = 148,                   /* BITTST  */
-  YYSYMBOL_BITMUX = 149,                   /* BITMUX  */
-  YYSYMBOL_DBGAL = 150,                    /* DBGAL  */
-  YYSYMBOL_DBGAH = 151,                    /* DBGAH  */
-  YYSYMBOL_DBGHALT = 152,                  /* DBGHALT  */
-  YYSYMBOL_DBG = 153,                      /* DBG  */
-  YYSYMBOL_DBGA = 154,                     /* DBGA  */
-  YYSYMBOL_DBGCMPLX = 155,                 /* DBGCMPLX  */
-  YYSYMBOL_IF = 156,                       /* IF  */
-  YYSYMBOL_COMMA = 157,                    /* COMMA  */
-  YYSYMBOL_BY = 158,                       /* BY  */
-  YYSYMBOL_COLON = 159,                    /* COLON  */
-  YYSYMBOL_SEMICOLON = 160,                /* SEMICOLON  */
-  YYSYMBOL_RPAREN = 161,                   /* RPAREN  */
-  YYSYMBOL_LPAREN = 162,                   /* LPAREN  */
-  YYSYMBOL_LBRACK = 163,                   /* LBRACK  */
-  YYSYMBOL_RBRACK = 164,                   /* RBRACK  */
-  YYSYMBOL_STATUS_REG = 165,               /* STATUS_REG  */
-  YYSYMBOL_MNOP = 166,                     /* MNOP  */
-  YYSYMBOL_SYMBOL = 167,                   /* SYMBOL  */
-  YYSYMBOL_NUMBER = 168,                   /* NUMBER  */
-  YYSYMBOL_GOT = 169,                      /* GOT  */
-  YYSYMBOL_GOT17M4 = 170,                  /* GOT17M4  */
-  YYSYMBOL_FUNCDESC_GOT17M4 = 171,         /* FUNCDESC_GOT17M4  */
-  YYSYMBOL_AT = 172,                       /* AT  */
-  YYSYMBOL_PLTPC = 173,                    /* PLTPC  */
-  YYSYMBOL_YYACCEPT = 174,                 /* $accept  */
-  YYSYMBOL_statement = 175,                /* statement  */
-  YYSYMBOL_asm = 176,                      /* asm  */
-  YYSYMBOL_asm_1 = 177,                    /* asm_1  */
-  YYSYMBOL_REG_A = 178,                    /* REG_A  */
-  YYSYMBOL_opt_mode = 179,                 /* opt_mode  */
-  YYSYMBOL_asr_asl = 180,                  /* asr_asl  */
-  YYSYMBOL_sco = 181,                      /* sco  */
-  YYSYMBOL_asr_asl_0 = 182,                /* asr_asl_0  */
-  YYSYMBOL_amod0 = 183,                    /* amod0  */
-  YYSYMBOL_amod1 = 184,                    /* amod1  */
-  YYSYMBOL_amod2 = 185,                    /* amod2  */
-  YYSYMBOL_xpmod = 186,                    /* xpmod  */
-  YYSYMBOL_xpmod1 = 187,                   /* xpmod1  */
-  YYSYMBOL_vsmod = 188,                    /* vsmod  */
-  YYSYMBOL_vmod = 189,                     /* vmod  */
-  YYSYMBOL_smod = 190,                     /* smod  */
-  YYSYMBOL_searchmod = 191,                /* searchmod  */
-  YYSYMBOL_aligndir = 192,                 /* aligndir  */
-  YYSYMBOL_byteop_mod = 193,               /* byteop_mod  */
-  YYSYMBOL_c_align = 194,                  /* c_align  */
-  YYSYMBOL_w32_or_nothing = 195,           /* w32_or_nothing  */
-  YYSYMBOL_iu_or_nothing = 196,            /* iu_or_nothing  */
-  YYSYMBOL_reg_with_predec = 197,          /* reg_with_predec  */
-  YYSYMBOL_reg_with_postinc = 198,         /* reg_with_postinc  */
-  YYSYMBOL_min_max = 199,                  /* min_max  */
-  YYSYMBOL_op_bar_op = 200,                /* op_bar_op  */
-  YYSYMBOL_plus_minus = 201,               /* plus_minus  */
-  YYSYMBOL_rnd_op = 202,                   /* rnd_op  */
-  YYSYMBOL_b3_op = 203,                    /* b3_op  */
-  YYSYMBOL_post_op = 204,                  /* post_op  */
-  YYSYMBOL_a_assign = 205,                 /* a_assign  */
-  YYSYMBOL_a_minusassign = 206,            /* a_minusassign  */
-  YYSYMBOL_a_plusassign = 207,             /* a_plusassign  */
-  YYSYMBOL_assign_macfunc = 208,           /* assign_macfunc  */
-  YYSYMBOL_a_macfunc = 209,                /* a_macfunc  */
-  YYSYMBOL_multiply_halfregs = 210,        /* multiply_halfregs  */
-  YYSYMBOL_cc_op = 211,                    /* cc_op  */
-  YYSYMBOL_ccstat = 212,                   /* ccstat  */
-  YYSYMBOL_symbol = 213,                   /* symbol  */
-  YYSYMBOL_any_gotrel = 214,               /* any_gotrel  */
-  YYSYMBOL_got = 215,                      /* got  */
-  YYSYMBOL_got_or_expr = 216,              /* got_or_expr  */
-  YYSYMBOL_pltpc = 217,                    /* pltpc  */
-  YYSYMBOL_eterm = 218,                    /* eterm  */
-  YYSYMBOL_expr = 219,                     /* expr  */
-  YYSYMBOL_expr_1 = 220                    /* expr_1  */
+  YYSYMBOL__LESS_THAN_ASSIGN = 104,        /* _LESS_THAN_ASSIGN  */
+  YYSYMBOL__ASSIGN_ASSIGN = 105,           /* _ASSIGN_ASSIGN  */
+  YYSYMBOL_GE = 106,                       /* GE  */
+  YYSYMBOL_LT = 107,                       /* LT  */
+  YYSYMBOL_LE = 108,                       /* LE  */
+  YYSYMBOL_GT = 109,                       /* GT  */
+  YYSYMBOL_LESS_THAN = 110,                /* LESS_THAN  */
+  YYSYMBOL_FLUSHINV = 111,                 /* FLUSHINV  */
+  YYSYMBOL_FLUSH = 112,                    /* FLUSH  */
+  YYSYMBOL_IFLUSH = 113,                   /* IFLUSH  */
+  YYSYMBOL_PREFETCH = 114,                 /* PREFETCH  */
+  YYSYMBOL_PRNT = 115,                     /* PRNT  */
+  YYSYMBOL_OUTC = 116,                     /* OUTC  */
+  YYSYMBOL_WHATREG = 117,                  /* WHATREG  */
+  YYSYMBOL_TESTSET = 118,                  /* TESTSET  */
+  YYSYMBOL_ASL = 119,                      /* ASL  */
+  YYSYMBOL_ASR = 120,                      /* ASR  */
+  YYSYMBOL_B = 121,                        /* B  */
+  YYSYMBOL_W = 122,                        /* W  */
+  YYSYMBOL_NS = 123,                       /* NS  */
+  YYSYMBOL_S = 124,                        /* S  */
+  YYSYMBOL_CO = 125,                       /* CO  */
+  YYSYMBOL_SCO = 126,                      /* SCO  */
+  YYSYMBOL_TH = 127,                       /* TH  */
+  YYSYMBOL_TL = 128,                       /* TL  */
+  YYSYMBOL_BP = 129,                       /* BP  */
+  YYSYMBOL_BREV = 130,                     /* BREV  */
+  YYSYMBOL_X = 131,                        /* X  */
+  YYSYMBOL_Z = 132,                        /* Z  */
+  YYSYMBOL_M = 133,                        /* M  */
+  YYSYMBOL_MMOD = 134,                     /* MMOD  */
+  YYSYMBOL_R = 135,                        /* R  */
+  YYSYMBOL_RND = 136,                      /* RND  */
+  YYSYMBOL_RNDL = 137,                     /* RNDL  */
+  YYSYMBOL_RNDH = 138,                     /* RNDH  */
+  YYSYMBOL_RND12 = 139,                    /* RND12  */
+  YYSYMBOL_RND20 = 140,                    /* RND20  */
+  YYSYMBOL_V = 141,                        /* V  */
+  YYSYMBOL_LO = 142,                       /* LO  */
+  YYSYMBOL_HI = 143,                       /* HI  */
+  YYSYMBOL_BITTGL = 144,                   /* BITTGL  */
+  YYSYMBOL_BITCLR = 145,                   /* BITCLR  */
+  YYSYMBOL_BITSET = 146,                   /* BITSET  */
+  YYSYMBOL_BITTST = 147,                   /* BITTST  */
+  YYSYMBOL_BITMUX = 148,                   /* BITMUX  */
+  YYSYMBOL_DBGAL = 149,                    /* DBGAL  */
+  YYSYMBOL_DBGAH = 150,                    /* DBGAH  */
+  YYSYMBOL_DBGHALT = 151,                  /* DBGHALT  */
+  YYSYMBOL_DBG = 152,                      /* DBG  */
+  YYSYMBOL_DBGA = 153,                     /* DBGA  */
+  YYSYMBOL_DBGCMPLX = 154,                 /* DBGCMPLX  */
+  YYSYMBOL_IF = 155,                       /* IF  */
+  YYSYMBOL_COMMA = 156,                    /* COMMA  */
+  YYSYMBOL_BY = 157,                       /* BY  */
+  YYSYMBOL_COLON = 158,                    /* COLON  */
+  YYSYMBOL_SEMICOLON = 159,                /* SEMICOLON  */
+  YYSYMBOL_RPAREN = 160,                   /* RPAREN  */
+  YYSYMBOL_LPAREN = 161,                   /* LPAREN  */
+  YYSYMBOL_LBRACK = 162,                   /* LBRACK  */
+  YYSYMBOL_RBRACK = 163,                   /* RBRACK  */
+  YYSYMBOL_STATUS_REG = 164,               /* STATUS_REG  */
+  YYSYMBOL_MNOP = 165,                     /* MNOP  */
+  YYSYMBOL_SYMBOL = 166,                   /* SYMBOL  */
+  YYSYMBOL_NUMBER = 167,                   /* NUMBER  */
+  YYSYMBOL_GOT = 168,                      /* GOT  */
+  YYSYMBOL_GOT17M4 = 169,                  /* GOT17M4  */
+  YYSYMBOL_FUNCDESC_GOT17M4 = 170,         /* FUNCDESC_GOT17M4  */
+  YYSYMBOL_AT = 171,                       /* AT  */
+  YYSYMBOL_PLTPC = 172,                    /* PLTPC  */
+  YYSYMBOL_YYACCEPT = 173,                 /* $accept  */
+  YYSYMBOL_statement = 174,                /* statement  */
+  YYSYMBOL_asm = 175,                      /* asm  */
+  YYSYMBOL_asm_1 = 176,                    /* asm_1  */
+  YYSYMBOL_REG_A = 177,                    /* REG_A  */
+  YYSYMBOL_opt_mode = 178,                 /* opt_mode  */
+  YYSYMBOL_asr_asl = 179,                  /* asr_asl  */
+  YYSYMBOL_sco = 180,                      /* sco  */
+  YYSYMBOL_asr_asl_0 = 181,                /* asr_asl_0  */
+  YYSYMBOL_amod0 = 182,                    /* amod0  */
+  YYSYMBOL_amod1 = 183,                    /* amod1  */
+  YYSYMBOL_amod2 = 184,                    /* amod2  */
+  YYSYMBOL_xpmod = 185,                    /* xpmod  */
+  YYSYMBOL_xpmod1 = 186,                   /* xpmod1  */
+  YYSYMBOL_vsmod = 187,                    /* vsmod  */
+  YYSYMBOL_vmod = 188,                     /* vmod  */
+  YYSYMBOL_smod = 189,                     /* smod  */
+  YYSYMBOL_searchmod = 190,                /* searchmod  */
+  YYSYMBOL_aligndir = 191,                 /* aligndir  */
+  YYSYMBOL_byteop_mod = 192,               /* byteop_mod  */
+  YYSYMBOL_c_align = 193,                  /* c_align  */
+  YYSYMBOL_w32_or_nothing = 194,           /* w32_or_nothing  */
+  YYSYMBOL_iu_or_nothing = 195,            /* iu_or_nothing  */
+  YYSYMBOL_reg_with_predec = 196,          /* reg_with_predec  */
+  YYSYMBOL_reg_with_postinc = 197,         /* reg_with_postinc  */
+  YYSYMBOL_min_max = 198,                  /* min_max  */
+  YYSYMBOL_op_bar_op = 199,                /* op_bar_op  */
+  YYSYMBOL_plus_minus = 200,               /* plus_minus  */
+  YYSYMBOL_rnd_op = 201,                   /* rnd_op  */
+  YYSYMBOL_b3_op = 202,                    /* b3_op  */
+  YYSYMBOL_post_op = 203,                  /* post_op  */
+  YYSYMBOL_a_assign = 204,                 /* a_assign  */
+  YYSYMBOL_a_minusassign = 205,            /* a_minusassign  */
+  YYSYMBOL_a_plusassign = 206,             /* a_plusassign  */
+  YYSYMBOL_assign_macfunc = 207,           /* assign_macfunc  */
+  YYSYMBOL_a_macfunc = 208,                /* a_macfunc  */
+  YYSYMBOL_multiply_halfregs = 209,        /* multiply_halfregs  */
+  YYSYMBOL_cc_op = 210,                    /* cc_op  */
+  YYSYMBOL_ccstat = 211,                   /* ccstat  */
+  YYSYMBOL_symbol = 212,                   /* symbol  */
+  YYSYMBOL_any_gotrel = 213,               /* any_gotrel  */
+  YYSYMBOL_got = 214,                      /* got  */
+  YYSYMBOL_got_or_expr = 215,              /* got_or_expr  */
+  YYSYMBOL_pltpc = 216,                    /* pltpc  */
+  YYSYMBOL_eterm = 217,                    /* eterm  */
+  YYSYMBOL_expr = 218,                     /* expr  */
+  YYSYMBOL_expr_1 = 219                    /* expr_1  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -1471,12 +1468,12 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  156
+#define YYFINAL  155
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   1309
+#define YYLAST   1292
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  174
+#define YYNTOKENS  173
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  47
 /* YYNRULES -- Number of rules.  */
@@ -1485,7 +1482,7 @@ union yyalloc
 #define YYNSTATES  1021
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   428
+#define YYMAXUTOK   427
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -1541,7 +1538,7 @@ static const yytype_uint8 yytranslate[] =
      135,   136,   137,   138,   139,   140,   141,   142,   143,   144,
      145,   146,   147,   148,   149,   150,   151,   152,   153,   154,
      155,   156,   157,   158,   159,   160,   161,   162,   163,   164,
-     165,   166,   167,   168,   169,   170,   171,   172,   173
+     165,   166,   167,   168,   169,   170,   171,   172
 };
 
 #if YYDEBUG
@@ -1617,24 +1614,23 @@ static const char *const yytname[] =
   "LESS_LESS", "GREATER_GREATER", "_GREATER_GREATER_GREATER",
   "_LESS_LESS_ASSIGN", "_GREATER_GREATER_ASSIGN", "DIVS", "DIVQ", "ASSIGN",
   "_STAR_ASSIGN", "_BAR_ASSIGN", "_CARET_ASSIGN", "_AMPERSAND_ASSIGN",
-  "_MINUS_ASSIGN", "_PLUS_ASSIGN", "_ASSIGN_BANG", "_LESS_THAN_ASSIGN",
-  "_ASSIGN_ASSIGN", "GE", "LT", "LE", "GT", "LESS_THAN", "FLUSHINV",
-  "FLUSH", "IFLUSH", "PREFETCH", "PRNT", "OUTC", "WHATREG", "TESTSET",
-  "ASL", "ASR", "B", "W", "NS", "S", "CO", "SCO", "TH", "TL", "BP", "BREV",
-  "X", "Z", "M", "MMOD", "R", "RND", "RNDL", "RNDH", "RND12", "RND20", "V",
-  "LO", "HI", "BITTGL", "BITCLR", "BITSET", "BITTST", "BITMUX", "DBGAL",
-  "DBGAH", "DBGHALT", "DBG", "DBGA", "DBGCMPLX", "IF", "COMMA", "BY",
-  "COLON", "SEMICOLON", "RPAREN", "LPAREN", "LBRACK", "RBRACK",
-  "STATUS_REG", "MNOP", "SYMBOL", "NUMBER", "GOT", "GOT17M4",
-  "FUNCDESC_GOT17M4", "AT", "PLTPC", "$accept", "statement", "asm",
-  "asm_1", "REG_A", "opt_mode", "asr_asl", "sco", "asr_asl_0", "amod0",
-  "amod1", "amod2", "xpmod", "xpmod1", "vsmod", "vmod", "smod",
-  "searchmod", "aligndir", "byteop_mod", "c_align", "w32_or_nothing",
-  "iu_or_nothing", "reg_with_predec", "reg_with_postinc", "min_max",
-  "op_bar_op", "plus_minus", "rnd_op", "b3_op", "post_op", "a_assign",
-  "a_minusassign", "a_plusassign", "assign_macfunc", "a_macfunc",
-  "multiply_halfregs", "cc_op", "ccstat", "symbol", "any_gotrel", "got",
-  "got_or_expr", "pltpc", "eterm", "expr", "expr_1", YY_NULLPTR
+  "_MINUS_ASSIGN", "_PLUS_ASSIGN", "_LESS_THAN_ASSIGN", "_ASSIGN_ASSIGN",
+  "GE", "LT", "LE", "GT", "LESS_THAN", "FLUSHINV", "FLUSH", "IFLUSH",
+  "PREFETCH", "PRNT", "OUTC", "WHATREG", "TESTSET", "ASL", "ASR", "B", "W",
+  "NS", "S", "CO", "SCO", "TH", "TL", "BP", "BREV", "X", "Z", "M", "MMOD",
+  "R", "RND", "RNDL", "RNDH", "RND12", "RND20", "V", "LO", "HI", "BITTGL",
+  "BITCLR", "BITSET", "BITTST", "BITMUX", "DBGAL", "DBGAH", "DBGHALT",
+  "DBG", "DBGA", "DBGCMPLX", "IF", "COMMA", "BY", "COLON", "SEMICOLON",
+  "RPAREN", "LPAREN", "LBRACK", "RBRACK", "STATUS_REG", "MNOP", "SYMBOL",
+  "NUMBER", "GOT", "GOT17M4", "FUNCDESC_GOT17M4", "AT", "PLTPC", "$accept",
+  "statement", "asm", "asm_1", "REG_A", "opt_mode", "asr_asl", "sco",
+  "asr_asl_0", "amod0", "amod1", "amod2", "xpmod", "xpmod1", "vsmod",
+  "vmod", "smod", "searchmod", "aligndir", "byteop_mod", "c_align",
+  "w32_or_nothing", "iu_or_nothing", "reg_with_predec", "reg_with_postinc",
+  "min_max", "op_bar_op", "plus_minus", "rnd_op", "b3_op", "post_op",
+  "a_assign", "a_minusassign", "a_plusassign", "assign_macfunc",
+  "a_macfunc", "multiply_halfregs", "cc_op", "ccstat", "symbol",
+  "any_gotrel", "got", "got_or_expr", "pltpc", "eterm", "expr", "expr_1", YY_NULLPTR
 };
 
 static const char *
@@ -1644,7 +1640,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-869)
+#define YYPACT_NINF (-858)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -1658,109 +1654,109 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     862,  -869,   -96,   -14,  -869,   653,   618,  -869,  -869,   -22,
-      -7,    20,    71,    85,  -869,  -869,  -869,  -869,  -869,  -869,
-    -869,  -869,    58,   176,  -869,  -869,  -869,   -14,   -14,    48,
-     -14,   167,   231,  -869,   327,   -14,   -14,   376,  -869,    53,
-      56,    94,    96,   120,   126,   114,    64,   139,   144,   419,
-     115,   171,   185,   199,   207,   230,  -869,   324,   250,   258,
-      43,   358,    25,   419,  -869,   387,  -869,   -39,    13,   325,
-     223,   245,   390,   300,  -869,  -869,   443,   -14,   -14,   -14,
-    -869,  -869,  -869,  -869,  -869,   582,   152,   170,   178,   496,
-     453,   203,   259,     7,  -869,  -869,  -869,    26,   -46,   448,
-     455,   458,   464,   111,  -869,  -869,  -869,  -869,   -14,   463,
-     -10,  -869,    -9,  -869,    32,  -869,  -869,   308,  -869,  -869,
-     102,  -869,  -869,   479,   492,   497,  -869,   505,  -869,   508,
-    -869,   523,  -869,  -869,  -869,   526,   541,   561,  -869,   530,
-     567,   581,   586,   602,   611,   625,  -869,  -869,   549,   632,
-      57,   589,   221,   172,   637,   614,  -869,  1008,  -869,  -869,
-    -869,   365,     4,  -869,   584,   394,   365,   365,   365,   498,
-     365,    -6,   -14,  -869,  -869,   507,  -869,  -869,   301,   510,
-     519,  -869,  -869,   524,   -14,   -14,   -14,   -14,   -14,   -14,
-     -14,   -14,   -14,   -14,  -869,  -869,  -869,  -869,  -869,  -869,
-     548,   554,   563,   576,   583,  -869,  -869,  -869,   587,   592,
-     597,   601,  -869,   598,   673,   -19,   279,   293,  -869,  -869,
-     663,   698,   719,   723,   728,   594,   599,    63,   733,   691,
-     603,   604,   300,   605,  -869,  -869,  -869,   606,  -869,   225,
-     607,   271,  -869,   608,  -869,  -869,  -869,  -869,  -869,  -869,
-     609,   610,   739,   208,   -25,   676,   538,   740,   741,   615,
-     394,  -869,   300,  -869,   617,   680,   620,   709,   612,   621,
-     710,   626,   627,   -41,    -3,    14,    17,   628,   281,   349,
-    -869,   631,   633,   634,   636,   638,   639,   640,   641,   690,
-     -14,    62,   767,   -14,  -869,  -869,  -869,   769,   -14,   643,
-     644,  -869,    -8,   507,  -869,   773,   764,   646,   647,   648,
-     651,   365,   652,   -14,   -14,   -14,   675,  -869,   666,  -869,
-     134,   166,   276,   -14,  -869,   630,   642,  -869,   483,   368,
-     368,  -869,  -869,   532,   532,   780,   786,   787,   788,   779,
-     790,   791,   792,   793,   794,   795,   659,  -869,  -869,  -869,
-    -869,   -14,   -14,   -14,   797,   798,   318,  -869,   799,  -869,
-    -869,   662,   664,   667,   669,   670,   671,   806,   807,   765,
-     340,   390,   390,   245,   677,   384,   365,   809,   811,   682,
-     493,  -869,   706,   297,   317,   319,   815,   365,   365,   365,
-     816,   817,   226,  -869,  -869,  -869,  -869,   707,   818,    37,
-     -14,   -14,   -14,   824,   812,   688,   692,   823,   245,   693,
-     694,   -14,   827,  -869,   828,  -869,  -869,   830,   831,   833,
-     685,  -869,  -869,  -869,  -869,  -869,  -869,   -14,   697,   842,
-     -14,   704,   -14,   -14,   -14,   844,   -14,   -14,   -14,  -869,
-     845,   712,   774,   -14,   714,   182,   715,   716,   785,  -869,
-    1008,  -869,  -869,   724,  -869,   365,   365,   849,   853,   766,
-     100,  -869,  -869,  -869,   729,   763,   796,  -869,   800,  -869,
-     829,   832,   300,   768,   771,   776,   777,   770,   775,   781,
-     783,   784,  -869,  -869,  -869,   903,   662,   664,   662,   -58,
-     -15,   772,   782,   789,    33,  -869,   802,  -869,   902,   907,
-     910,   472,   281,   445,   924,  -869,   801,  -869,   925,   -14,
-     803,   804,   808,   813,   926,   805,   810,   819,   820,   820,
-    -869,  -869,   820,   820,   821,  -869,  -869,  -869,   826,   825,
-     834,   835,   836,   837,   838,   839,   840,  -869,   840,   841,
-     843,   917,   918,   562,   859,  -869,   919,   860,   864,   861,
-     865,   868,   869,  -869,   846,   863,   870,   872,   866,   908,
-     909,   911,   914,   912,   913,   915,  -869,   857,   931,   916,
-     867,   934,   871,   875,   876,   944,   920,   -14,   891,   921,
-     922,  -869,  -869,   365,  -869,  -869,   927,  -869,   928,   929,
-       5,    10,  -869,   964,   -14,   -14,   -14,   968,   959,   970,
-     961,   981,   933,  -869,  -869,  -869,  1050,   119,  -869,  1052,
-     559,  -869,  -869,  -869,  1054,   930,   211,   247,   932,  -869,
-     664,   662,  -869,  -869,   -14,   923,  1056,   -14,   935,   936,
-    -869,   937,   938,  -869,   941,  -869,  -869,  1057,  1058,  1060,
-     989,  -869,  -869,  -869,   953,  -869,  -869,  -869,  -869,   -14,
-     -14,   940,  1059,  1061,  -869,   546,   365,   365,   967,  -869,
-    -869,  1063,  -869,  -869,   840,  1070,   942,  -869,  1003,  1082,
-     -14,  -869,  -869,  -869,  -869,  1011,  1084,  1014,  1015,   278,
-    -869,  -869,  -869,   365,  -869,  -869,  -869,   952,  -869,   984,
-     216,   956,   954,  1091,  1093,  -869,  -869,   287,   365,   365,
-     962,   365,  -869,  -869,   365,  -869,   365,   965,   969,   971,
-     972,   973,   974,   975,   976,   977,   -14,  1035,  -869,  -869,
-    -869,   978,  1036,   979,   980,  1045,  -869,  1001,  -869,  1019,
-    -869,  -869,  -869,  -869,   982,   598,   983,   985,   598,  1055,
-    -869,   407,  -869,  1051,   990,   991,   390,   995,  1004,  1005,
-     574,  -869,  1006,  1007,  1016,  1017,  1012,  1018,  1020,  1021,
-    -869,  1022,  -869,   390,  1075,  -869,  1151,  -869,  1144,  1155,
-    -869,  -869,  1023,  -869,  1024,  1025,  1026,  1158,  1164,   -14,
-    1165,  -869,  -869,  -869,  1166,  -869,  -869,  -869,  1167,   365,
-     -14,  1168,  1170,  1171,  -869,  -869,   940,   598,  1030,  1037,
-    1172,  -869,  1174,  -869,  -869,  1169,  1040,  1041,   598,  -869,
-     598,   598,  -869,   -14,  -869,  -869,  -869,  -869,   365,  -869,
-     664,   300,  -869,  -869,  -869,  1042,  1043,   664,  -869,  -869,
-    -869,   372,  1180,  -869,  1135,  -869,   300,  1182,  -869,  -869,
-    -869,   940,  -869,  1183,  1184,  1053,  1048,  1062,  1128,  1065,
-    1064,  1066,  1068,  1067,  1071,  1072,  -869,  -869,  1081,  -869,
-     596,   635,  1145,  -869,  -869,  -869,  -869,  -869,  -869,  1147,
-    -869,  -869,  -869,  -869,  -869,  1073,  1076,  1074,  1179,  -869,
-    1126,  -869,  1077,  1078,   -14,   619,  1121,   -14,  -869,  1094,
-    1079,   -14,   -14,   -14,  1083,  1195,  1196,  1190,   365,  -869,
-    1200,  -869,  1162,   -14,   -14,   -14,  1079,  -869,  -869,  -869,
-    -869,  1085,   954,  1086,  1087,  1102,  -869,  1088,  1089,  1090,
-    -869,  1080,   843,  -869,   843,  1092,  1218,  -869,  1095,  1097,
-    -869,  -869,  -869,  -869,  -869,  1096,  1098,  1099,  1100,   350,
-    -869,  -869,  -869,  -869,  1101,  1215,  1220,  -869,   595,  -869,
-      84,  -869,   591,  -869,  -869,  -869,   312,   375,  1208,  1105,
-    1106,   378,   402,   403,   418,   426,   460,   476,   481,   616,
-    -869,   119,  -869,  1107,   -14,   -14,  1119,  -869,  1123,  -869,
-    1120,  -869,  1130,  -869,  1131,  -869,  1133,  -869,  1134,  -869,
-    1136,  -869,  1110,  1112,  1188,  1113,  1114,  1115,  1116,  1117,
-    1118,  1122,  1124,  1125,  1127,  -869,  -869,  1245,  1079,  1079,
-    -869,  -869,  -869,  -869,  -869,  -869,  -869,  -869,  -869,  -869,
-    -869
+     861,  -858,  -116,   -18,  -858,   377,   503,  -858,  -858,   -10,
+      -3,    19,    45,    63,  -858,  -858,  -858,  -858,  -858,  -858,
+    -858,  -858,    54,   192,  -858,  -858,  -858,   -18,   -18,    96,
+     -18,   324,   380,  -858,   392,   -18,   -18,   425,  -858,   104,
+     134,    57,   139,   141,   155,    88,   158,   163,   166,   508,
+     190,   202,   246,   251,   259,   276,  -858,   340,   287,   289,
+      20,   328,    72,   508,  -858,   462,  -858,   -21,   288,   370,
+      77,   252,   442,   345,  -858,  -858,   515,   -18,   -18,   -18,
+    -858,  -858,  -858,  -858,  -858,   606,   130,   143,   191,   495,
+     527,   214,   231,    25,  -858,  -858,  -858,    47,   498,   513,
+     519,   525,   105,  -858,  -858,  -858,  -858,   -18,   560,   -14,
+    -858,    27,  -858,    59,  -858,  -858,   419,  -858,  -858,    67,
+    -858,  -858,   568,   581,   588,  -858,   602,  -858,   615,  -858,
+     623,  -858,  -858,  -858,   655,   656,   667,  -858,   666,   670,
+     683,   685,   691,   692,   700,  -858,  -858,   693,   705,    33,
+     704,   -55,    26,   707,   708,  -858,  1006,  -858,  -858,  -858,
+      23,     9,  -858,   665,   201,    23,    23,    23,   576,    23,
+     145,   -18,  -858,  -858,   577,  -858,  -858,   245,   583,   582,
+    -858,  -858,   559,   -18,   -18,   -18,   -18,   -18,   -18,   -18,
+     -18,   -18,   -18,  -858,  -858,  -858,  -858,  -858,  -858,   580,
+     584,   585,   586,   587,  -858,  -858,  -858,   589,   591,   593,
+     574,  -858,   594,   674,   -35,   264,   267,  -858,  -858,   724,
+     728,   731,   732,   733,   597,   598,    48,   736,   694,   604,
+     605,   345,   607,  -858,  -858,  -858,   608,  -858,   272,     0,
+     609,   348,  -858,  -858,  -858,  -858,  -858,  -858,   610,   611,
+     738,   359,   -28,   676,   132,   739,   740,   614,   201,  -858,
+     345,  -858,   621,   681,   619,   697,   612,   620,   711,   626,
+     627,   -26,    -2,    41,    58,   628,   229,   238,  -858,   630,
+     631,   633,   634,   635,   636,   637,   638,   698,   -18,    42,
+     769,   -18,  -858,  -858,  -858,   771,   -18,   639,   640,  -858,
+      38,   577,  -858,   772,   764,   644,   645,   647,   648,    23,
+     649,   -18,   -18,   -18,   684,  -858,   673,  -858,    50,   185,
+     410,   -18,  -858,   652,   465,  -858,   643,   472,   472,  -858,
+    -858,   506,   506,   784,   785,   786,   787,   778,   789,   790,
+     791,   793,   794,   795,   660,  -858,  -858,  -858,  -858,   -18,
+     -18,   -18,   797,   798,   295,  -858,   792,  -858,  -858,   663,
+     664,   671,   672,   675,   677,   802,   805,   761,   448,   442,
+     442,   252,   678,   261,    23,   808,   810,   680,   357,  -858,
+     709,   277,   280,   302,  -858,   679,   812,    23,    23,    23,
+     816,   227,  -858,  -858,  -858,  -858,   706,   818,   164,   -18,
+     -18,   -18,   823,   813,   688,   690,   824,   252,   695,   696,
+     -18,   825,  -858,   826,  -858,  -858,   828,   829,   831,   710,
+    -858,  -858,  -858,  -858,  -858,  -858,   -18,   712,   833,   -18,
+     716,   -18,   -18,   -18,   838,   -18,   -18,   -18,  -858,   842,
+     713,   773,   -18,   720,   299,   719,   726,   774,  -858,  1006,
+    -858,  -858,   725,  -858,    23,    23,   834,   852,   766,   352,
+    -858,  -858,  -858,   763,   765,   734,  -858,   796,  -858,   827,
+     835,   345,   770,   775,   776,   777,   780,   781,   782,   783,
+     788,  -858,  -858,  -858,   903,   663,   664,   663,   176,   240,
+     799,   800,   806,   117,  -858,   801,  -858,   895,   896,   905,
+     360,   229,   265,   916,  -858,   803,  -858,   918,   -18,   804,
+     809,   814,   815,   920,   820,   821,   830,   807,   807,  -858,
+    -858,   807,   807,   921,   822,  -858,  -858,  -858,   832,   837,
+     839,   836,   840,   843,   847,   857,  -858,   857,   858,   859,
+     914,   915,   278,   864,  -858,   917,   867,   860,   868,   872,
+     874,   907,  -858,   906,   856,   908,   909,   869,   910,   913,
+     919,   841,   922,   923,   924,  -858,   855,   929,   925,   879,
+     930,   888,   889,   890,   933,   844,   -18,   891,   892,   893,
+    -858,  -858,    23,  -858,  -858,   865,  -858,   927,   928,     8,
+      10,  -858,   939,   -18,   -18,   -18,   964,   956,   969,   963,
+     974,   978,  -858,  -858,  -858,   975,   372,  -858,  1049,   439,
+    -858,  -858,  -858,  1050,   931,   304,   316,   932,  -858,   664,
+     663,  -858,  -858,   -18,   926,  1051,   -18,   934,   935,  -858,
+     936,   937,  -858,   940,  -858,  -858,  1052,  1053,  1055,   984,
+    -858,  -858,  -858,   951,  -858,  -858,  -858,  -858,   938,   -18,
+     943,  1058,  1061,  -858,   434,    23,    23,   966,  -858,  -858,
+    1063,  -858,  -858,   857,  1075,   942,  -858,  1009,  1082,   -18,
+    -858,  -858,  -858,  -858,  1012,  1085,  1014,  1015,   315,  -858,
+    -858,  -858,    23,  -858,  -858,  -858,   953,  -858,   985,   271,
+     957,   954,  1096,  1098,  -858,  -858,   326,    23,    23,   970,
+      23,  -858,  -858,    23,  -858,    23,   967,   973,   976,   977,
+     971,   979,   980,   981,   982,   -18,  1033,  -858,  -858,  -858,
+     983,  1037,   986,   988,  1038,  -858,   995,  -858,  1013,  -858,
+    -858,  -858,  -858,   990,   594,   999,  1000,   594,  1048,  -858,
+     535,  -858,  1047,   989,  1004,   442,  1005,   -18,  1016,   501,
+    -858,  1017,  1018,  1019,  1020,  1010,  1025,  1022,  1023,  -858,
+    1011,  -858,   442,  1072,  -858,  1120,  -858,  1137,  1148,  -858,
+    -858,  1024,  -858,  1026,  1027,  1028,  1150,  1160,   -18,  1162,
+    -858,  -858,  -858,  1165,  -858,  -858,  -858,  1164,    23,   -18,
+    1167,  1168,  1169,  -858,  -858,   943,   594,  1034,  1036,  1172,
+    -858,  1173,  -858,  -858,  1170,  1039,  1040,   594,  -858,   594,
+     594,  -858,   -18,  -858,  -858,  -858,  -858,    23,  -858,   664,
+     345,  -858,  1042,  -858,  1043,  1044,   664,  -858,  -858,  -858,
+     394,  1180,  -858,  1135,  -858,   345,  1182,  -858,  -858,  -858,
+     943,  -858,  1183,  1184,  1054,  1056,  1059,  1127,  1057,  1060,
+    1062,  1064,  1067,  1068,  1069,  -858,  -858,  1080,  -858,   436,
+     565,  1143,  -858,  -858,  -858,  -858,  -858,  -858,  1145,  -858,
+    -858,  -858,  -858,  -858,  -858,  1070,  1065,  1071,  1181,  -858,
+    1131,  -858,  1074,  1076,   -18,   592,  1121,   -18,  -858,  1104,
+    1077,   -18,   -18,   -18,  1073,  1204,  1210,  1205,    23,  -858,
+    1209,  -858,  1171,   -18,   -18,   -18,  1077,  -858,  -858,  -858,
+    -858,  1079,   954,  1083,  1084,  1105,  -858,  1086,  1087,  1088,
+    -858,  1081,   859,  -858,   859,  1089,  1224,  -858,  1094,  1095,
+    -858,  -858,  -858,  -858,  -858,  1092,  1093,  1097,  1099,   463,
+    -858,  -858,  -858,  -858,  1100,  1228,  1230,  -858,   511,  -858,
+     140,  -858,   516,  -858,  -858,  -858,   343,   405,  1221,  1101,
+    1106,   476,   477,   491,   507,   523,   526,   531,   534,   549,
+    -858,   372,  -858,  1102,   -18,   -18,  1122,  -858,  1129,  -858,
+    1130,  -858,  1132,  -858,  1133,  -858,  1134,  -858,  1136,  -858,
+    1138,  -858,  1110,  1112,  1195,  1114,  1115,  1116,  1117,  1118,
+    1119,  1123,  1124,  1125,  1126,  -858,  -858,  1245,  1077,  1077,
+    -858,  -858,  -858,  -858,  -858,  -858,  -858,  -858,  -858,  -858,
+    -858
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -1778,84 +1774,84 @@ static const yytype_int16 yydefact[] =
        0,     0,     0,   229,   314,    79,     0,     0,     0,     0,
      330,   338,   339,   354,   203,   343,     0,     0,     0,     0,
        0,     0,     0,   322,   323,   325,   324,     0,     0,     0,
-       0,     0,     0,     0,   147,   146,   152,   153,     0,     0,
-     338,   212,   338,   214,     0,   155,   156,   339,   158,   157,
-       0,   160,   159,     0,     0,     0,   174,     0,   172,     0,
-     176,     0,   178,   226,   225,     0,     0,     0,   322,     0,
-       0,     0,     0,     0,     0,     0,   218,   217,     0,     0,
-       0,     0,     0,   307,     0,     0,     1,     0,     4,   310,
-     311,   312,     0,    45,     0,     0,     0,     0,     0,     0,
-       0,    44,     0,   318,    48,   281,   320,   319,     0,     9,
-       0,   341,   342,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,   167,   170,   168,   169,   165,   166,
-       0,     0,     0,     0,     0,   278,   279,   280,     0,     0,
-       0,    80,    82,   252,     0,   252,     0,     0,   287,   288,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,   313,
-       0,     0,   229,   255,    62,    58,    56,    60,    61,    81,
-       0,     0,    83,     0,   327,   326,    26,    14,    27,    15,
-       0,     0,     0,     0,    50,     0,     0,     0,     0,     0,
-       0,   317,   229,    47,     0,   208,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,   307,   307,
-     329,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,   294,   293,   309,   308,     0,     0,
-       0,   328,     0,   281,   202,     0,     0,    37,    25,     0,
-       0,     0,     0,     0,     0,     0,     0,    39,     0,    55,
-       0,     0,     0,     0,   340,   351,   353,   346,   352,   348,
-     347,   344,   345,   349,   350,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,   293,   289,   290,   291,
-     292,     0,     0,     0,     0,     0,     0,    52,     0,    46,
-     164,   258,   264,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,   307,     0,     0,     0,    85,
-       0,    49,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,   109,   119,   120,   118,     0,     0,     0,
+       0,     0,     0,   147,   146,   152,   153,     0,     0,   338,
+     212,   338,   214,     0,   155,   156,   339,   158,   157,     0,
+     160,   159,     0,     0,     0,   174,     0,   172,     0,   176,
+       0,   178,   226,   225,     0,     0,     0,   322,     0,     0,
+       0,     0,     0,     0,     0,   218,   217,     0,     0,     0,
+       0,     0,   307,     0,     0,     1,     0,     4,   310,   311,
+     312,     0,    45,     0,     0,     0,     0,     0,     0,     0,
+      44,     0,   318,    48,   281,   320,   319,     0,     9,     0,
+     341,   342,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,   167,   170,   168,   169,   165,   166,     0,
+       0,     0,     0,     0,   278,   279,   280,     0,     0,     0,
+      80,    82,   252,     0,   252,     0,     0,   287,   288,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,   313,     0,
+       0,   229,   255,    62,    58,    56,    60,    61,    81,     0,
+       0,     0,   327,   326,    26,    14,    27,    15,     0,     0,
+       0,     0,    50,     0,     0,     0,     0,     0,     0,   317,
+     229,    47,     0,   208,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,   307,   307,   329,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-      84,     0,     0,   148,     0,   337,   149,     0,     0,     0,
-       0,   173,   171,   175,   177,   154,   308,     0,     0,   308,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,   219,
-       0,   134,     0,     0,     0,     0,     0,     0,     0,   285,
-       0,     6,    59,     0,   321,     0,     0,     0,     0,     0,
-       0,    90,   104,    99,     0,     0,     0,   233,     0,   232,
-       0,     0,   229,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,    78,    66,    67,     0,   258,   264,   258,   242,
-     244,     0,     0,     0,     0,   163,     0,    24,     0,     0,
-       0,     0,   307,   307,     0,   312,     0,   315,   308,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,   283,   283,
-      73,    74,   283,   283,     0,    75,    69,    70,     0,     0,
-       0,     0,     0,     0,     0,     0,   266,   106,   266,     0,
-     244,     0,     0,   307,     0,   316,     0,     0,   209,     0,
-       0,     0,     0,   286,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,   131,     0,     0,   132,
+       0,     0,   294,   293,   309,   308,     0,     0,     0,   328,
+       0,   281,   202,     0,     0,    37,    25,     0,     0,     0,
+       0,     0,     0,     0,     0,    39,     0,    55,     0,     0,
+       0,     0,   340,   351,   353,   346,   352,   348,   347,   344,
+     345,   349,   350,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,   293,   289,   290,   291,   292,     0,
+       0,     0,     0,     0,     0,    52,     0,    46,   164,   258,
+     264,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,   307,     0,     0,     0,    85,     0,    49,
+       0,     0,     0,     0,    83,     0,     0,     0,     0,     0,
+       0,     0,   109,   119,   120,   118,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,    84,
+       0,     0,   148,     0,   337,   149,     0,     0,     0,     0,
+     173,   171,   175,   177,   154,   308,     0,     0,   308,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,   219,     0,
+     134,     0,     0,     0,     0,     0,     0,     0,   285,     0,
+       6,    59,     0,   321,     0,     0,     0,     0,     0,     0,
+      90,   104,    99,     0,     0,     0,   233,     0,   232,     0,
+       0,   229,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,    78,    66,    67,     0,   258,   264,   258,   242,   244,
+       0,     0,     0,     0,   163,     0,    24,     0,     0,     0,
+       0,   307,   307,     0,   312,     0,   315,   308,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,   283,   283,    73,
+      74,   283,   283,     0,     0,    75,    69,    70,     0,     0,
+       0,     0,     0,     0,     0,   266,   106,   266,     0,   244,
+       0,     0,   307,     0,   316,     0,     0,   209,     0,     0,
+       0,     0,   286,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,   131,     0,     0,   132,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,   100,    88,     0,   114,   116,    40,   282,     0,     0,
-       0,     0,    10,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,    91,   105,   108,     0,   236,    51,     0,
-       0,    35,   254,   253,     0,     0,     0,     0,     0,   103,
-     264,   258,   115,   117,     0,     0,   308,     0,     0,     0,
-      12,     0,   339,   335,     0,   336,   197,     0,     0,     0,
-       0,   256,   257,    57,     0,    76,    77,    71,    72,     0,
-       0,     0,     0,     0,    41,     0,     0,     0,     0,    92,
-     107,     0,    38,   101,   266,   308,     0,    13,     0,     0,
-       0,   151,   150,   162,   161,     0,     0,     0,     0,     0,
-     127,   125,   126,     0,   224,   223,   222,     0,   130,     0,
-       0,     0,     0,     0,     0,   190,     5,     0,     0,     0,
-       0,     0,   230,   231,     0,   313,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,   237,   238,
-     239,     0,     0,     0,     0,     0,   259,     0,   260,     0,
-     261,   265,   102,    93,     0,   252,     0,     0,   252,     0,
-     195,     0,   196,     0,     0,     0,     0,     0,     0,     0,
-       0,   121,     0,     0,     0,     0,     0,     0,     0,     0,
-      89,     0,   186,     0,   205,   210,     0,   179,     0,     0,
-     182,   183,     0,   135,     0,     0,     0,     0,     0,     0,
-       0,   201,   191,   184,     0,   199,    54,    53,     0,     0,
-       0,     0,     0,     0,    33,   110,     0,   252,    96,     0,
-       0,   243,     0,   245,   246,     0,     0,     0,   252,   194,
-     252,   252,   187,     0,   331,   332,   333,   334,     0,    28,
-     264,   229,   284,   129,   128,     0,     0,   264,    95,    42,
-      43,     0,     0,   267,     0,   189,   229,     0,   180,   192,
-     181,     0,   133,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,   122,    98,     0,    68,
-       0,     0,     0,   263,   262,   193,   188,   185,    65,     0,
-      36,    87,   234,   235,    94,     0,     0,     0,     0,    86,
+     100,    88,     0,   114,   116,    40,   282,     0,     0,     0,
+       0,    10,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,    91,   105,   108,     0,   236,    51,     0,     0,
+      35,   254,   253,     0,     0,     0,     0,     0,   103,   264,
+     258,   115,   117,     0,     0,   308,     0,     0,     0,    12,
+       0,   339,   335,     0,   336,   197,     0,     0,     0,     0,
+     256,   257,    57,     0,    76,    77,    71,    72,     0,     0,
+       0,     0,     0,    41,     0,     0,     0,     0,    92,   107,
+       0,    38,   101,   266,   308,     0,    13,     0,     0,     0,
+     151,   150,   162,   161,     0,     0,     0,     0,     0,   127,
+     125,   126,     0,   224,   223,   222,     0,   130,     0,     0,
+       0,     0,     0,     0,   190,     5,     0,     0,     0,     0,
+       0,   230,   231,     0,   313,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,   237,   238,   239,
+       0,     0,     0,     0,     0,   259,     0,   260,     0,   261,
+     265,   102,    93,     0,   252,     0,     0,   252,     0,   195,
+       0,   196,     0,     0,     0,     0,     0,     0,     0,     0,
+     121,     0,     0,     0,     0,     0,     0,     0,     0,    89,
+       0,   186,     0,   205,   210,     0,   179,     0,     0,   182,
+     183,     0,   135,     0,     0,     0,     0,     0,     0,     0,
+     201,   191,   184,     0,   199,    54,    53,     0,     0,     0,
+       0,     0,     0,    33,   110,     0,   252,    96,     0,     0,
+     243,     0,   245,   246,     0,     0,     0,   252,   194,   252,
+     252,   187,     0,   331,   332,   333,   334,     0,    28,   264,
+     229,   284,     0,   129,     0,     0,   264,    95,    42,    43,
+       0,     0,   267,     0,   189,   229,     0,   180,   192,   181,
+       0,   133,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,   122,    98,     0,    68,     0,
+       0,     0,   263,   262,   193,   188,   185,    65,     0,    36,
+      87,   128,   234,   235,    94,     0,     0,     0,     0,    86,
      206,   123,     0,     0,     0,     0,     0,     0,   124,     0,
      272,     0,     0,     0,     0,     0,     0,     0,     0,   112,
        0,   111,     0,     0,     0,     0,   272,   268,   271,   270,
@@ -1876,21 +1872,21 @@ static const yytype_int16 yydefact[] =
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
-    -869,  -869,  -869,  -133,    41,  -216,  -733,  -868,   313,  -869,
-    -509,  -869,  -198,  -869,  -458,  -460,  -515,  -869,  -804,  -869,
-    -869,   986,    23,  -869,   -31,  -869,   421,  -205,  -869,  -869,
-    -253,     2,    22,  -171,   987,  -206,   -56,    46,  -869,   -17,
-    -869,  -869,  -869,  1247,  -869,   -27,     0
+    -858,  -858,  -858,  -131,    29,  -225,  -764,  -726,   312,  -858,
+    -511,  -858,  -195,  -858,  -455,  -460,  -463,  -858,  -857,  -858,
+    -858,   987,    76,  -858,   -31,  -858,   423,  -186,  -858,  -858,
+    -254,     2,    17,  -144,   972,  -210,   -56,   210,  -858,   -16,
+    -858,  -858,  -858,  1250,  -858,   -27,    -8
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int16 yydefgoto[] =
 {
-       0,    65,    66,    67,   370,   179,   751,   721,   957,   608,
-     611,   940,   357,   381,   495,   497,   659,   911,   916,   949,
-     230,   319,   645,    69,   126,   231,   354,   298,   951,   953,
-     299,   371,   372,    72,    73,    74,   177,    98,    75,    82,
-     817,   633,   634,   118,    83,    84,    85
+       0,    65,    66,    67,   368,   178,   750,   720,   957,   607,
+     610,   940,   355,   379,   494,   496,   658,   911,   916,   949,
+     229,   317,   644,    69,   125,   230,   352,   296,   951,   953,
+     297,   369,   370,    72,    73,    74,   176,    97,    75,    82,
+     816,   632,   633,   117,    83,    84,    85
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -1898,272 +1894,270 @@ static const yytype_int16 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
-     106,   107,    70,   109,   111,   113,   355,   115,   116,   119,
-     122,   128,   130,   132,   173,   176,   379,   359,   134,   117,
-     117,   374,    71,   660,   302,   428,   431,   604,   603,   304,
-     605,   662,   239,   232,     7,     8,     7,     8,   157,     7,
-       8,    68,   420,   174,   294,   295,   410,   262,    77,   398,
-     153,   404,   306,   242,   409,    78,   373,   266,   267,   195,
-     197,   199,   233,   856,   236,   238,    76,  -211,  -213,   450,
-     150,   956,   172,   427,   430,    99,   263,   181,   182,   183,
-     420,   264,   289,   104,   313,   314,   315,   442,   369,   408,
-     100,   159,     7,     8,    77,   139,   244,   420,   147,   606,
-     420,    78,   930,   993,   607,   534,   151,   154,   881,   155,
-     159,   171,   175,   290,   183,   160,   161,   101,   443,   245,
-     183,   158,   510,   421,   535,    77,   250,   269,   270,   251,
-     229,   252,    78,   253,   241,   584,   254,   397,   255,   133,
-       7,     8,   609,   356,   261,   317,   256,   610,    79,   760,
-    -211,  -213,   451,    80,    81,   240,   316,   615,   616,    70,
-     732,   422,    77,   733,    77,   182,   305,   704,   102,    78,
-     509,    78,   706,    77,   243,   617,    77,   194,   423,    71,
-      78,   424,   103,    78,   325,   326,   327,   328,   329,   330,
-     331,   332,   333,   334,    79,   196,   257,   258,    68,    80,
-      81,   105,   303,   198,  1019,  1020,   307,   308,   309,   310,
-     108,   312,   963,   964,    77,   123,   181,   182,   124,   775,
-     776,    78,   965,   966,   777,    79,   135,   183,   235,    77,
-      80,    81,    77,   394,   259,   778,    78,     7,     8,    78,
-      77,   294,   295,   395,   718,   719,   720,    78,   163,   625,
-     628,   530,     7,     8,   296,   297,   592,   125,   164,   127,
-     183,   531,    79,   441,    79,    77,   445,    80,    81,    80,
-      81,   447,    78,   260,     7,     8,    79,   140,    80,    81,
-     164,    80,    81,   129,   237,    77,   461,   462,   463,   131,
-     666,   466,   165,    77,   396,   467,   473,   624,   627,   166,
-      78,   470,   136,   770,   360,     7,     8,   137,   167,   168,
-     169,   471,   170,   771,    79,   173,   176,   576,   361,    80,
-      81,    77,   518,   468,   486,   487,   488,   469,    78,    79,
-     383,   384,    79,   141,    80,   110,   385,    80,    81,   571,
-      79,    77,   520,   572,   522,    80,    81,   142,    78,   146,
-     294,   295,   459,     7,     8,    77,   519,   521,   523,    77,
-     870,   143,    78,   296,   426,    79,    78,   874,   727,   144,
-      80,    81,   728,   536,   537,   538,   387,   388,   292,    77,
-     293,    77,   389,   152,   547,    79,    78,   156,    78,    77,
-      80,    81,   145,    79,     7,     8,    78,   875,    80,   112,
-     554,     7,     8,   557,   729,   559,   560,   561,   730,   563,
-     564,   565,   148,   941,   506,   942,   569,   511,   294,   295,
-     149,    79,   162,     7,     8,   164,    80,    81,   525,   526,
-     527,   296,   429,   585,   186,   320,   321,   159,    77,   190,
-     191,    79,   160,   505,   784,    78,    80,    81,   785,   544,
-     491,   492,    70,   294,   295,    79,    77,   579,   580,    79,
-      80,    81,   178,    78,    80,    81,   296,   508,   180,   969,
-     954,   955,    71,   970,   623,   718,   719,   720,   234,    79,
-     268,    79,   635,   246,    80,    81,    80,    81,   265,   114,
-     247,    68,   632,   248,    80,    81,   578,   578,   374,   249,
-     409,   200,   201,   202,   271,   203,   204,   622,   205,   206,
-     207,   208,   209,   210,   294,   295,   138,   272,    94,    95,
-      96,   211,   273,   212,   213,     7,     8,   296,   626,   214,
-     274,   215,   971,   275,    77,   976,   972,   809,   120,   977,
-     812,    78,   646,    80,    81,   647,   648,   184,   276,   186,
-     697,   277,   188,   189,   190,   191,    79,   280,   216,   978,
-     980,    80,    81,   979,   981,   217,   278,   708,   709,   710,
-     218,   219,   220,   192,   193,   982,   814,   815,   816,   983,
-     221,   222,   223,   984,   287,   224,   279,   985,   184,   185,
-     186,   187,   281,   188,   189,   190,   191,   734,   186,   857,
-     737,   188,   189,   190,   191,   871,   282,   294,   295,   306,
-     865,   283,   866,   867,   192,   193,   291,   986,   225,   226,
-     879,   987,   748,   749,   700,   515,   516,   284,   400,   401,
-     402,   705,   261,   988,    79,   403,   285,   989,   990,    80,
-      81,   301,   991,   765,   296,   665,   184,   185,   186,   187,
-     286,   188,   189,   190,   191,   306,   896,   288,   227,   228,
-     311,   781,   300,    80,    81,   343,   344,   322,   345,   318,
-     294,   346,   192,   193,   347,   348,   349,   350,   323,   347,
-     348,   349,   350,   723,   724,   324,   754,   755,   362,   799,
-     821,   351,   352,   353,   825,   826,   186,   756,   757,   188,
-     189,   190,   191,   789,   294,   295,   184,   836,   186,   187,
-     335,   188,   189,   190,   191,    93,   336,    94,    95,    96,
-     192,   193,    97,   363,   772,   337,   907,   908,   909,   910,
-     961,   962,   192,   193,   967,   968,   954,   955,   338,   786,
-     787,    86,   578,   358,   364,   339,    87,    88,   365,   340,
-      89,    90,   847,   366,   341,    91,    92,   367,   375,   342,
-     356,   376,   368,   852,   393,   377,   378,   380,   382,   386,
-     390,   391,   392,   399,   411,   405,   406,   412,   407,   414,
-     417,   413,   416,   418,   419,   415,   868,   440,   432,   425,
-     433,   434,   444,   435,   446,   436,   437,   438,   453,   454,
-     464,   465,   439,   455,   456,   474,   457,   448,   449,   458,
-     460,   475,   476,   477,   478,   479,   480,   481,   482,   483,
-     484,   485,   489,   490,   494,   498,   496,   499,   500,   501,
-     851,   502,   503,   493,   512,   504,   513,   517,   507,   514,
-     524,   528,   529,   533,   532,   539,   541,   540,   543,   553,
-     542,   546,   548,   549,   545,   550,   551,   906,   552,   869,
-     913,   555,    -2,     1,   917,   918,   919,   556,   558,   562,
-     566,   568,   876,     2,   567,   570,   927,   928,   929,   573,
-     574,   932,   575,   577,   581,     3,     4,     5,   582,     6,
-     586,     7,     8,     9,    10,    11,    12,    13,    14,    15,
-      16,    17,    18,    19,    20,    21,    22,    23,    24,    25,
-      26,    27,    28,    29,    30,    31,    32,    33,    34,    35,
-      36,    37,    38,   583,   587,   593,   590,   597,   602,   591,
-     594,   588,   598,   612,   589,   595,   596,   619,   599,   924,
-     600,   601,   620,   613,   618,   621,   614,   995,   996,   629,
-     631,   640,   663,   664,   668,   670,   688,    39,    40,   691,
-     676,   637,   630,   679,   690,   638,   641,   636,   692,   695,
-     639,   642,   693,   694,    41,    42,    43,    44,   649,    45,
-     643,    46,   644,   650,    47,    48,   651,   687,   159,   707,
-     698,   652,   653,   711,   712,   713,   714,   654,   699,   655,
-     656,   657,   658,   661,    49,   610,   715,    50,    51,    52,
-     675,    53,    54,    55,    56,    57,    58,    59,    60,     2,
-     667,   669,   671,   716,    61,    62,   672,    63,    64,   673,
-     674,     3,     4,     5,   677,     6,   678,     7,     8,     9,
-      10,    11,    12,    13,    14,    15,    16,    17,    18,    19,
-      20,    21,    22,    23,    24,    25,    26,    27,    28,    29,
-      30,    31,    32,    33,    34,    35,    36,    37,    38,   680,
-     681,   683,   682,   684,   685,   717,   686,   722,   689,   725,
-     696,   736,   743,   744,   701,   745,   746,   735,   747,   702,
-     703,   726,   758,   731,   752,   761,   753,   739,   759,   738,
-     763,   740,   750,    39,    40,   742,   762,   764,   766,   767,
-     741,   768,   769,   773,   774,   779,   782,   780,   783,   788,
-      41,    42,    43,    44,   790,    45,   791,    46,   792,   793,
-      47,    48,   800,   802,   794,   795,   796,   797,   798,   801,
-     803,   804,   805,   806,   807,   813,   808,   810,   818,   811,
-      49,   819,   820,    50,    51,    52,   822,    53,    54,    55,
-      56,    57,    58,    59,    60,   823,   824,   827,   828,   831,
-      61,    62,   837,    63,    64,   832,   838,   829,   830,   839,
-     840,   833,   834,   845,   841,   842,   835,   843,   844,   846,
-     848,   849,   858,   853,   850,   854,   855,   860,   859,   861,
-     862,   863,   864,   872,   873,   877,   878,   880,   882,   883,
-     885,   420,   884,   894,   902,   897,   898,   903,   912,   914,
-     921,   922,   923,   886,   887,   888,   891,   925,   889,   890,
-     892,   893,   926,   900,   899,   901,   904,   905,   935,   944,
-     959,   915,   939,   973,   920,   960,   931,   933,   934,   936,
-     937,   938,   945,   943,   946,   997,   999,   947,   998,  1007,
-     948,   950,   952,   958,   974,   975,  1000,  1001,   994,  1002,
-    1003,  1005,  1004,  1006,  1008,  1009,  1010,  1011,  1012,  1013,
-    1018,   895,   992,  1014,   121,  1015,  1016,     0,  1017,   452,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,   472
+     105,   106,    70,   108,   110,   112,   377,   114,   115,   118,
+     121,   127,   129,   131,   172,   175,   372,    71,   133,   357,
+     116,   116,   427,   430,   353,   300,   603,   384,   661,    68,
+     602,   855,   604,   231,   302,   409,   304,     7,     8,     7,
+       8,   292,   293,   173,    77,    76,   260,   149,   408,   930,
+     238,    78,     7,     8,     7,     8,   156,   419,   287,   194,
+     196,   198,   232,  -211,   235,   237,   397,   441,   403,   180,
+     181,   182,   171,   367,   659,   261,   881,     7,     8,   103,
+     262,   419,   371,   150,   264,   265,   146,    98,   239,   288,
+     426,   429,   267,   268,    99,   292,   293,   152,   442,   170,
+     174,   290,   162,   291,  -213,   182,     7,     8,   294,   295,
+      77,   182,   163,   132,   407,   449,   100,    78,   228,   509,
+     248,    77,   241,   249,   419,   250,   354,   251,    78,    77,
+     252,   259,   253,   396,     7,     8,    78,   420,   157,    77,
+     254,   419,   101,    79,   315,  -211,   164,   385,    80,    81,
+      77,  1019,  1020,   165,   153,   193,   181,    78,    70,   731,
+     102,   421,   166,   167,   168,   732,   169,    77,   195,   703,
+     303,   705,   240,    71,    78,   323,   324,   325,   326,   327,
+     328,   329,   330,   331,   332,    68,  -213,   508,   242,   301,
+     255,   256,    77,   305,   306,   307,   308,   450,   310,    78,
+     759,   292,   293,   304,   422,    77,   465,   180,   181,    79,
+     466,   243,    78,   956,    80,    81,   197,   104,   182,   124,
+      79,   423,   399,   400,   401,    80,    81,   257,    79,   402,
+       7,     8,   533,    80,    81,   311,   312,   313,    79,   234,
+     614,   615,   158,    80,    81,   993,   591,   624,   627,    79,
+     182,   534,   529,    77,    80,    81,   236,   107,   616,   138,
+      78,   440,   530,    77,   444,   122,   258,   963,   964,   446,
+      78,    80,    81,   154,   774,   775,    77,   965,   966,   776,
+     395,     7,     8,    78,   460,   461,   462,   163,   665,   358,
+     777,    79,   359,    77,   472,   123,    80,    81,   292,   293,
+      78,   126,   517,   128,    79,   519,   314,   292,   293,    80,
+      81,   294,   425,   172,   175,   623,   626,   130,   575,   134,
+     294,   428,   485,   486,   487,   135,    77,   521,   136,    77,
+     292,   293,   605,    78,   292,   293,    78,   606,   458,    77,
+     769,   467,    77,   294,   507,   468,    78,   294,   625,    78,
+     770,   139,    79,   151,   518,   520,   522,    80,    81,   869,
+     294,   664,    79,   140,    77,   145,   874,    80,    81,     7,
+       8,    78,   535,   536,   537,    79,   381,   382,   318,   319,
+      80,    81,   383,   546,   393,   158,    77,   583,     7,     8,
+     159,   160,    79,    78,   394,   621,   608,    80,    81,   553,
+     505,   609,   556,   510,   558,   559,   560,   141,   562,   563,
+     564,   941,   142,   942,    77,   568,   525,   526,   527,   875,
+     143,    78,    77,     7,     8,    79,   490,   491,    79,    78,
+      80,    81,   584,    80,    81,   469,   543,   144,    79,     7,
+       8,    79,    77,    80,    81,   470,    80,    81,   147,    78,
+     148,    70,   387,   388,    77,   570,   578,   579,   389,   571,
+     726,    78,   155,    79,   727,    86,    71,   161,    80,    81,
+      87,    88,   728,   622,    89,    90,   729,   163,    68,    91,
+      92,   634,   783,   577,   577,    79,   784,    77,   514,   515,
+      80,   109,   631,   372,    78,   408,   717,   718,   719,   969,
+     199,   200,   201,   970,   202,   203,   177,   204,   205,   206,
+     207,   208,   209,    79,   345,   346,   347,   348,    80,    81,
+     210,    79,   211,   212,     7,     8,    80,    81,   213,   183,
+     214,   185,   186,   244,   187,   188,   189,   190,   185,   808,
+     179,    79,   811,   189,   190,   158,    80,   111,   245,   696,
+     159,   504,   233,   113,   246,   191,   192,   215,    80,    81,
+     247,   971,   722,   723,   216,   972,   707,   708,   709,   217,
+     218,   219,   185,   753,   754,   187,   188,   189,   190,   220,
+     221,   222,   954,   955,   223,   263,   119,   717,   718,   719,
+     266,    80,    81,   269,   645,   870,   733,   646,   647,   736,
+      93,   856,    94,    95,    96,   137,   270,    94,    95,    96,
+     879,   699,   864,   271,   865,   866,   224,   225,   704,   259,
+     824,   825,   748,   183,   184,   185,   186,   272,   187,   188,
+     189,   190,   976,   978,   292,   293,   977,   979,   341,   342,
+     273,   343,   764,   292,   344,   961,   962,   980,   274,   191,
+     192,   981,   345,   346,   347,   348,   226,   227,   967,   968,
+     780,    80,    81,   982,   349,   350,   351,   983,   954,   955,
+     183,   184,   185,   186,   896,   187,   188,   189,   190,   984,
+     275,   276,   986,   985,   755,   756,   987,   988,   798,   820,
+     990,   989,   277,   278,   991,   279,   191,   192,   907,   908,
+     909,   910,   788,   813,   814,   815,   835,   183,   280,   185,
+     281,   771,   187,   188,   189,   190,   282,   283,   185,   322,
+     822,   187,   188,   189,   190,   284,   785,   786,   285,   577,
+     286,   289,   298,   191,   192,   299,   304,   309,   316,   320,
+     321,   333,   191,   192,   356,   334,   335,   336,   337,   360,
+     338,   846,   339,   361,   340,   354,   362,   363,   364,   365,
+     366,   373,   851,   392,   374,   375,   376,   413,   378,   380,
+     386,   390,   391,   398,   404,   405,   406,   410,   411,   412,
+     415,   416,   417,   418,   414,   867,   431,   432,   424,   433,
+     434,   435,   436,   437,   443,   439,   445,   452,   438,   453,
+     454,   455,   447,   448,   456,   457,   459,   464,   463,   473,
+     474,   475,   476,   477,   478,   479,   480,   850,   481,   482,
+     483,   484,   488,   489,   493,   495,   492,   501,   497,   498,
+     502,   503,   499,   511,   500,   512,   513,   524,   506,   516,
+     523,   528,   531,   532,   538,   540,   868,   541,   539,   542,
+     547,   548,   545,   549,   550,   544,   551,   906,   555,   876,
+     913,    -2,     1,   561,   917,   918,   919,   565,   587,   580,
+     567,   574,     2,   552,   566,   554,   927,   928,   929,   557,
+     569,   932,   572,   576,     3,     4,     5,   581,     6,   573,
+       7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
+      17,    18,    19,    20,    21,    22,    23,    24,    25,    26,
+      27,    28,    29,    30,    31,    32,    33,    34,    35,    36,
+      37,    38,   582,   585,   589,   586,   592,   924,   601,   588,
+     618,   619,   590,   593,   594,   595,   596,   597,   598,   599,
+     620,   628,   617,   630,   600,   639,   648,   995,   996,   662,
+     663,   669,   667,   675,   687,   690,    39,    40,   694,   611,
+     612,   697,   613,   629,   706,   636,   678,   635,   643,   698,
+     637,   638,    41,    42,    43,    44,   689,    45,   649,    46,
+     640,   641,    47,    48,   686,   691,   692,   693,   158,   710,
+     642,   711,   650,   651,   712,   652,   653,   682,   713,   714,
+     716,   654,    49,   695,   655,    50,    51,    52,   656,    53,
+      54,    55,    56,    57,    58,    59,    60,     2,   657,   660,
+     609,   700,    61,    62,   666,    63,    64,   668,   670,     3,
+       4,     5,   671,     6,   672,     7,     8,     9,    10,    11,
+      12,    13,    14,    15,    16,    17,    18,    19,    20,    21,
+      22,    23,    24,    25,    26,    27,    28,    29,    30,    31,
+      32,    33,    34,    35,    36,    37,    38,   673,   715,   674,
+     679,   676,   677,   680,   721,   724,   735,   742,   743,   681,
+     744,   745,   683,   684,   685,   746,   688,   701,   702,   734,
+     757,   725,   730,   751,   747,   738,   752,   737,   758,   739,
+     760,    39,    40,   741,   749,   761,   762,   763,   740,   765,
+     766,   767,   768,   772,   773,   778,   779,    41,    42,    43,
+      44,   781,    45,   782,    46,   789,   787,    47,    48,   790,
+     799,   793,   791,   792,   801,   804,   805,   806,   812,   794,
+     795,   796,   797,   800,   817,   837,   802,    49,   803,   818,
+      50,    51,    52,   807,    53,    54,    55,    56,    57,    58,
+      59,    60,   809,   810,   819,   821,   830,    61,    62,   836,
+      63,    64,   838,   839,   834,   844,   823,   826,   827,   828,
+     829,   831,   832,   833,   840,   845,   841,   847,   842,   843,
+     848,   849,   852,   853,   854,   857,   858,   859,   860,   862,
+     863,   861,   871,   872,   873,   877,   878,   880,   882,   883,
+     419,   894,   884,   897,   898,   887,   902,   885,   912,   886,
+     888,   900,   903,   889,   890,   891,   892,   893,   914,   921,
+     899,   901,   904,   920,   905,   922,   925,   923,   915,   931,
+     935,   926,   939,   933,   934,   944,   936,   937,   938,   943,
+     945,   946,   947,   959,   948,   960,   973,   997,   950,   974,
+     952,   958,   994,   998,   975,   999,  1007,  1000,  1001,  1002,
+    1005,  1003,  1006,  1004,  1008,  1009,  1010,  1011,  1012,  1013,
+    1018,   992,   895,  1014,  1015,  1016,  1017,   120,   451,     0,
+       0,     0,   471
 };
 
 static const yytype_int16 yycheck[] =
 {
-      27,    28,     0,    30,    31,    32,   211,    34,    35,    36,
-      37,    42,    43,    44,    70,    71,   232,   215,    45,    36,
-      37,   227,     0,   538,   157,   278,   279,   487,   486,    25,
-     488,   540,    25,    89,    29,    30,    29,    30,    77,    29,
-      30,     0,    83,    70,    69,    70,   262,   103,    62,   254,
-      25,   256,    71,    27,   260,    69,   227,    25,    26,    86,
-      87,    88,    89,   796,    91,    92,   162,    77,    77,    77,
-      27,   939,    70,   278,   279,    97,   103,    77,    78,    79,
-      83,   108,    25,    25,    90,    91,    92,    25,    25,   260,
-      97,    97,    29,    30,    62,    49,   142,    83,    57,   157,
-      83,    69,   906,   971,   162,    68,    63,    82,   841,    63,
-      97,    70,    71,    56,   114,   102,   103,    97,    56,   165,
-     120,   160,   375,   164,    87,    62,    15,    25,    26,    18,
-      89,    20,    69,    22,    93,    35,    25,   162,    27,    25,
-      29,    30,   157,   162,   103,   172,    35,   162,   162,   664,
-     160,   160,   160,   167,   168,   148,   162,   124,   125,   157,
-     620,   164,    62,   621,    62,   165,   162,   162,    97,    69,
-     375,    69,   162,    62,   148,   142,    62,    25,   164,   157,
-      69,   164,    97,    69,   184,   185,   186,   187,   188,   189,
-     190,   191,   192,   193,   162,    25,    85,    86,   157,   167,
-     168,    25,   161,    25,  1008,  1009,   165,   166,   167,   168,
-     162,   170,   128,   129,    62,   162,   216,   217,   162,     3,
-       4,    69,   138,   139,     8,   162,   162,   227,    25,    62,
-     167,   168,    62,    25,   123,    19,    69,    29,    30,    69,
-      62,    69,    70,    35,   125,   126,   127,    69,    25,   502,
-     503,    25,    29,    30,    82,    83,   472,   163,    35,   163,
-     260,    35,   162,   290,   162,    62,   293,   167,   168,   167,
-     168,   298,    69,   162,    29,    30,   162,   162,   167,   168,
-      35,   167,   168,   163,    25,    62,   313,   314,   315,   163,
-     543,   157,    69,    62,   253,   161,   323,   502,   503,    76,
-      69,    25,   163,    25,    25,    29,    30,   163,    85,    86,
-      87,    35,    89,    35,   162,   371,   372,   450,    25,   167,
-     168,    62,    25,   157,   351,   352,   353,   161,    69,   162,
-     105,   106,   162,   162,   167,   168,   111,   167,   168,   157,
-     162,    62,    25,   161,    25,   167,   168,   162,    69,    25,
-      69,    70,   311,    29,    30,    62,   383,   384,   385,    62,
-     820,   162,    69,    82,    83,   162,    69,   827,   157,   162,
-     167,   168,   161,   400,   401,   402,   105,   106,   157,    62,
-     159,    62,   111,    25,   411,   162,    69,     0,    69,    62,
-     167,   168,   162,   162,    29,    30,    69,    25,   167,   168,
-     427,    29,    30,   430,   157,   432,   433,   434,   161,   436,
-     437,   438,   162,   922,   373,   924,   443,   376,    69,    70,
-     162,   162,    97,    29,    30,    35,   167,   168,   387,   388,
-     389,    82,    83,   460,    66,   134,   135,    97,    62,    71,
-      72,   162,   102,   103,   157,    69,   167,   168,   161,   408,
-     132,   133,   450,    69,    70,   162,    62,   455,   456,   162,
-     167,   168,   162,    69,   167,   168,    82,    83,    25,   157,
-     120,   121,   450,   161,   501,   125,   126,   127,    25,   162,
-     172,   162,   509,    35,   167,   168,   167,   168,    25,   162,
-      35,   450,   509,    35,   167,   168,   455,   456,   704,    35,
-     706,     5,     6,     7,    25,     9,    10,    35,    12,    13,
-      14,    15,    16,    17,    69,    70,    97,    25,    99,   100,
-     101,    25,    25,    27,    28,    29,    30,    82,    83,    33,
-      25,    35,   157,    25,    62,   157,   161,   735,   162,   161,
-     738,    69,   519,   167,   168,   522,   523,    64,    25,    66,
-     577,    25,    69,    70,    71,    72,   162,    27,    62,   157,
-     157,   167,   168,   161,   161,    69,    25,   594,   595,   596,
-      74,    75,    76,    90,    91,   157,   169,   170,   171,   161,
-      84,    85,    86,   157,    35,    89,    25,   161,    64,    65,
-      66,    67,    25,    69,    70,    71,    72,   624,    66,   797,
-     627,    69,    70,    71,    72,   821,    25,    69,    70,    71,
-     808,    25,   810,   811,    90,    91,    27,   157,   122,   123,
-     836,   161,   649,   650,   583,   132,   133,    25,    90,    91,
-      92,   590,   591,   157,   162,    97,    25,   161,   157,   167,
-     168,    27,   161,   670,    82,    83,    64,    65,    66,    67,
-      25,    69,    70,    71,    72,    71,   861,    25,   162,   163,
-     162,   692,    25,   167,   168,    64,    65,   157,    67,   162,
-      69,    70,    90,    91,    78,    79,    80,    81,   159,    78,
-      79,    80,    81,   124,   125,   161,   140,   141,    25,   716,
-     746,    90,    91,    92,   120,   121,    66,   656,   657,    69,
-      70,    71,    72,   701,    69,    70,    64,   763,    66,    67,
-     162,    69,    70,    71,    72,    97,   162,    99,   100,   101,
-      90,    91,   104,    25,   683,   162,   107,   108,   109,   110,
-     135,   136,    90,    91,   143,   144,   120,   121,   162,   698,
-     699,    88,   701,    70,    25,   162,    93,    94,    25,   162,
-      97,    98,   779,    25,   162,   102,   103,   163,    25,   162,
-     162,    70,   163,   790,    25,   162,   162,   162,   162,   162,
-     162,   162,   162,    97,   157,    35,    35,    97,   163,    70,
-      70,   161,   161,   157,   157,   173,   813,    97,   157,   161,
-     157,   157,    25,   157,    25,   157,   157,   157,    25,    35,
-     125,   135,   161,   157,   157,    25,   158,   164,   164,   158,
-     158,    25,    25,    25,    35,    25,    25,    25,    25,    25,
-      25,   162,    25,    25,   162,   158,   162,   158,   158,   158,
-     789,    25,    25,    34,    25,    70,    25,   131,   161,   157,
-      25,    25,    25,    25,   137,    21,   158,    35,    25,   164,
-     158,   157,    25,    25,   161,    25,    25,   884,    25,   818,
-     887,   164,     0,     1,   891,   892,   893,    25,   164,    25,
-      25,    97,   831,    11,   162,   161,   903,   904,   905,   164,
-     164,   912,    97,   159,    35,    23,    24,    25,    35,    27,
-     161,    29,    30,    31,    32,    33,    34,    35,    36,    37,
-      38,    39,    40,    41,    42,    43,    44,    45,    46,    47,
-      48,    49,    50,    51,    52,    53,    54,    55,    56,    57,
-      58,    59,    60,   157,   161,   157,    97,   157,    25,    97,
-     159,   135,   157,   161,   134,   159,   159,    35,   157,   898,
-     157,   157,    35,   161,   142,    35,   157,   974,   975,    25,
-      25,    25,    35,    35,    35,    91,    25,    95,    96,    25,
-      97,   157,   161,    97,    97,   157,   161,   164,    97,    25,
-     157,   161,    97,    97,   112,   113,   114,   115,   157,   117,
-     161,   119,   162,   157,   122,   123,   161,   130,    97,    25,
-      69,   157,   157,    25,    35,    25,    35,   161,    76,   162,
-     162,   162,   162,   162,   142,   162,    25,   145,   146,   147,
-     164,   149,   150,   151,   152,   153,   154,   155,   156,    11,
-     161,   161,   161,    90,   162,   163,   161,   165,   166,   161,
-     161,    23,    24,    25,   164,    27,   164,    29,    30,    31,
-      32,    33,    34,    35,    36,    37,    38,    39,    40,    41,
-      42,    43,    44,    45,    46,    47,    48,    49,    50,    51,
-      52,    53,    54,    55,    56,    57,    58,    59,    60,   161,
-     161,   157,   161,   161,   161,    25,   161,    25,   162,    25,
-     160,    25,    25,    25,   157,    25,    97,   164,   135,   161,
-     161,   161,   125,   161,    35,    25,    35,   161,    35,   164,
-      97,   164,   162,    95,    96,   164,   164,    25,    97,    25,
-     172,    97,    97,   161,   130,   159,    25,   163,    25,   157,
-     112,   113,   114,   115,   159,   117,   157,   119,   157,   157,
-     122,   123,    97,    97,   161,   161,   161,   161,   161,   161,
-     161,   161,    97,   142,   125,    90,   164,   164,    97,   164,
-     142,   161,   161,   145,   146,   147,   161,   149,   150,   151,
-     152,   153,   154,   155,   156,   161,   161,   161,   161,   157,
-     162,   163,    97,   165,   166,   157,    25,   161,   161,    35,
-      25,   161,   161,    25,   161,   161,   164,   162,   162,    25,
-      25,    25,   162,    25,    27,    25,    25,    25,   161,    25,
-      31,   161,   161,   161,   161,    25,    71,    25,    25,    25,
-     162,    83,   159,   132,    35,    70,    69,    91,    97,   125,
-      25,    25,    32,   161,   159,   161,   159,    27,   162,   161,
-     159,   159,    70,   157,   161,   161,   159,   159,   136,    21,
-      25,   162,   162,    35,   161,    25,   161,   161,   161,   161,
-     161,   161,   157,   161,   157,   136,   136,   161,   135,    71,
-     162,   162,   162,   162,   159,   159,   136,   136,   161,   136,
-     136,   161,   136,   161,   161,   161,   161,   161,   161,   161,
-      35,   860,   969,   161,    37,   161,   161,    -1,   161,   303,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,   322
+      27,    28,     0,    30,    31,    32,   231,    34,    35,    36,
+      37,    42,    43,    44,    70,    71,   226,     0,    45,   214,
+      36,    37,   276,   277,   210,   156,   486,    27,   539,     0,
+     485,   795,   487,    89,    25,   260,    71,    29,    30,    29,
+      30,    69,    70,    70,    62,   161,   102,    27,   258,   906,
+      25,    69,    29,    30,    29,    30,    77,    83,    25,    86,
+      87,    88,    89,    77,    91,    92,   252,    25,   254,    77,
+      78,    79,    70,    25,   537,   102,   840,    29,    30,    25,
+     107,    83,   226,    63,    25,    26,    57,    97,    63,    56,
+     276,   277,    25,    26,    97,    69,    70,    25,    56,    70,
+      71,   156,    25,   158,    77,   113,    29,    30,    82,    83,
+      62,   119,    35,    25,   258,    77,    97,    69,    89,   373,
+      15,    62,    93,    18,    83,    20,   161,    22,    69,    62,
+      25,   102,    27,   161,    29,    30,    69,   163,   159,    62,
+      35,    83,    97,   161,   171,   159,    69,   147,   166,   167,
+      62,  1008,  1009,    76,    82,    25,   164,    69,   156,   619,
+      97,   163,    85,    86,    87,   620,    89,    62,    25,   161,
+     161,   161,   147,   156,    69,   183,   184,   185,   186,   187,
+     188,   189,   190,   191,   192,   156,   159,   373,   141,   160,
+      85,    86,    62,   164,   165,   166,   167,   159,   169,    69,
+     663,    69,    70,    71,   163,    62,   156,   215,   216,   161,
+     160,   164,    69,   939,   166,   167,    25,    25,   226,   162,
+     161,   163,    90,    91,    92,   166,   167,   122,   161,    97,
+      29,    30,    68,   166,   167,    90,    91,    92,   161,    25,
+     123,   124,    97,   166,   167,   971,   471,   501,   502,   161,
+     258,    87,    25,    62,   166,   167,    25,   161,   141,    49,
+      69,   288,    35,    62,   291,   161,   161,   127,   128,   296,
+      69,   166,   167,    63,     3,     4,    62,   137,   138,     8,
+     251,    29,    30,    69,   311,   312,   313,    35,   542,    25,
+      19,   161,    25,    62,   321,   161,   166,   167,    69,    70,
+      69,   162,    25,   162,   161,    25,   161,    69,    70,   166,
+     167,    82,    83,   369,   370,   501,   502,   162,   449,   161,
+      82,    83,   349,   350,   351,   162,    62,    25,   162,    62,
+      69,    70,   156,    69,    69,    70,    69,   161,   309,    62,
+      25,   156,    62,    82,    83,   160,    69,    82,    83,    69,
+      35,   161,   161,    25,   381,   382,   383,   166,   167,   819,
+      82,    83,   161,   161,    62,    25,   826,   166,   167,    29,
+      30,    69,   399,   400,   401,   161,   104,   105,   133,   134,
+     166,   167,   110,   410,    25,    97,    62,    35,    29,    30,
+     102,   103,   161,    69,    35,    35,   156,   166,   167,   426,
+     371,   161,   429,   374,   431,   432,   433,   161,   435,   436,
+     437,   922,   161,   924,    62,   442,   387,   388,   389,    25,
+     161,    69,    62,    29,    30,   161,   131,   132,   161,    69,
+     166,   167,   459,   166,   167,    25,   407,   161,   161,    29,
+      30,   161,    62,   166,   167,    35,   166,   167,   161,    69,
+     161,   449,   104,   105,    62,   156,   454,   455,   110,   160,
+     156,    69,     0,   161,   160,    88,   449,    97,   166,   167,
+      93,    94,   156,   500,    97,    98,   160,    35,   449,   102,
+     103,   508,   156,   454,   455,   161,   160,    62,   131,   132,
+     166,   167,   508,   703,    69,   705,   124,   125,   126,   156,
+       5,     6,     7,   160,     9,    10,   161,    12,    13,    14,
+      15,    16,    17,   161,    78,    79,    80,    81,   166,   167,
+      25,   161,    27,    28,    29,    30,   166,   167,    33,    64,
+      35,    66,    67,    35,    69,    70,    71,    72,    66,   734,
+      25,   161,   737,    71,    72,    97,   166,   167,    35,   576,
+     102,   103,    25,   161,    35,    90,    91,    62,   166,   167,
+      35,   156,   123,   124,    69,   160,   593,   594,   595,    74,
+      75,    76,    66,   139,   140,    69,    70,    71,    72,    84,
+      85,    86,   119,   120,    89,    25,   161,   124,   125,   126,
+     171,   166,   167,    25,   518,   820,   623,   521,   522,   626,
+      97,   796,    99,   100,   101,    97,    25,    99,   100,   101,
+     835,   582,   807,    25,   809,   810,   121,   122,   589,   590,
+     119,   120,   649,    64,    65,    66,    67,    25,    69,    70,
+      71,    72,   156,   156,    69,    70,   160,   160,    64,    65,
+      25,    67,   669,    69,    70,   134,   135,   156,    25,    90,
+      91,   160,    78,    79,    80,    81,   161,   162,   142,   143,
+     691,   166,   167,   156,    90,    91,    92,   160,   119,   120,
+      64,    65,    66,    67,   860,    69,    70,    71,    72,   156,
+      25,    25,   156,   160,   655,   656,   160,   156,   715,   745,
+     156,   160,    25,    27,   160,    25,    90,    91,   106,   107,
+     108,   109,   700,   168,   169,   170,   762,    64,    25,    66,
+      25,   682,    69,    70,    71,    72,    25,    25,    66,   160,
+     747,    69,    70,    71,    72,    25,   697,   698,    35,   700,
+      25,    27,    25,    90,    91,    27,    71,   161,   161,   156,
+     158,   161,    90,    91,    70,   161,   161,   161,   161,    25,
+     161,   778,   161,    25,   161,   161,    25,    25,    25,   162,
+     162,    25,   789,    25,    70,   161,   161,    70,   161,   161,
+     161,   161,   161,    97,    35,    35,   162,   156,    97,   160,
+     160,    70,   156,   156,   172,   812,   156,   156,   160,   156,
+     156,   156,   156,   156,    25,    97,    25,    25,   160,    35,
+     156,   156,   163,   163,   157,   157,   157,   134,   124,    25,
+      25,    25,    25,    35,    25,    25,    25,   788,    25,    25,
+      25,   161,    25,    25,   161,   161,    34,    25,   157,   157,
+      25,    70,   157,    25,   157,    25,   156,    25,   160,   130,
+     161,    25,   136,    25,    21,   157,   817,   157,    35,    25,
+      25,    25,   156,    25,    25,   160,    25,   884,    25,   830,
+     887,     0,     1,    25,   891,   892,   893,    25,   134,    35,
+      97,    97,    11,   163,   161,   163,   903,   904,   905,   163,
+     160,   912,   163,   158,    23,    24,    25,    35,    27,   163,
+      29,    30,    31,    32,    33,    34,    35,    36,    37,    38,
+      39,    40,    41,    42,    43,    44,    45,    46,    47,    48,
+      49,    50,    51,    52,    53,    54,    55,    56,    57,    58,
+      59,    60,   156,   160,    97,   160,   156,   898,    25,   133,
+      35,    35,    97,   158,   158,   158,   156,   156,   156,   156,
+      35,    25,   141,    25,   156,    25,    25,   974,   975,    35,
+      35,    91,    35,    97,    25,    25,    95,    96,    25,   160,
+     160,    69,   156,   160,    25,   156,    97,   163,   161,    76,
+     156,   156,   111,   112,   113,   114,    97,   116,   156,   118,
+     160,   160,   121,   122,   129,    97,    97,    97,    97,    25,
+     160,    35,   160,   156,    25,   156,   160,   156,    35,    25,
+      25,   161,   141,   159,   161,   144,   145,   146,   161,   148,
+     149,   150,   151,   152,   153,   154,   155,    11,   161,   161,
+     161,   156,   161,   162,   160,   164,   165,   160,   160,    23,
+      24,    25,   160,    27,   160,    29,    30,    31,    32,    33,
+      34,    35,    36,    37,    38,    39,    40,    41,    42,    43,
+      44,    45,    46,    47,    48,    49,    50,    51,    52,    53,
+      54,    55,    56,    57,    58,    59,    60,   160,    90,   163,
+     160,   163,   163,   160,    25,    25,    25,    25,    25,   160,
+      25,    97,   160,   160,   160,   134,   161,   160,   160,   163,
+     124,   160,   160,    35,   156,   160,    35,   163,    35,   163,
+      25,    95,    96,   163,   161,   163,    97,    25,   171,    97,
+      25,    97,    97,   160,   129,   158,   162,   111,   112,   113,
+     114,    25,   116,    25,   118,   158,   156,   121,   122,   156,
+      97,   160,   156,   156,    97,    97,   141,   124,    90,   160,
+     160,   160,   160,   160,    97,    25,   160,   141,   160,   160,
+     144,   145,   146,   163,   148,   149,   150,   151,   152,   153,
+     154,   155,   163,   163,   160,   160,   156,   161,   162,    97,
+     164,   165,    35,    25,   163,    25,   160,   160,   160,   160,
+     160,   156,   160,   160,   160,    25,   160,    25,   161,   161,
+      25,    27,    25,    25,    25,   161,   160,    25,    25,   160,
+     160,    31,   160,   160,   160,    25,    71,    25,    25,    25,
+      83,   131,   158,    70,    69,   158,    35,   161,    97,   160,
+     160,   156,    91,   161,   160,   158,   158,   158,   124,    25,
+     160,   160,   158,   160,   158,    25,    27,    32,   161,   160,
+     135,    70,   161,   160,   160,    21,   160,   160,   160,   160,
+     156,   156,   160,    25,   161,    25,    35,   135,   161,   158,
+     161,   161,   160,   134,   158,   135,    71,   135,   135,   135,
+     160,   135,   160,   135,   160,   160,   160,   160,   160,   160,
+      35,   969,   859,   160,   160,   160,   160,    37,   301,    -1,
+      -1,    -1,   320
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
@@ -2174,146 +2168,146 @@ static const yytype_uint8 yystos[] =
       32,    33,    34,    35,    36,    37,    38,    39,    40,    41,
       42,    43,    44,    45,    46,    47,    48,    49,    50,    51,
       52,    53,    54,    55,    56,    57,    58,    59,    60,    95,
-      96,   112,   113,   114,   115,   117,   119,   122,   123,   142,
-     145,   146,   147,   149,   150,   151,   152,   153,   154,   155,
-     156,   162,   163,   165,   166,   175,   176,   177,   178,   197,
-     205,   206,   207,   208,   209,   212,   162,    62,    69,   162,
-     167,   168,   213,   218,   219,   220,    88,    93,    94,    97,
-      98,   102,   103,    97,    99,   100,   101,   104,   211,    97,
-      97,    97,    97,    97,    25,    25,   219,   219,   162,   219,
-     168,   219,   168,   219,   162,   219,   219,   213,   217,   219,
-     162,   217,   219,   162,   162,   163,   198,   163,   198,   163,
-     198,   163,   198,    25,   219,   162,   163,   163,    97,   211,
-     162,   162,   162,   162,   162,   162,    25,   178,   162,   162,
-      27,    63,    25,    25,    82,   211,     0,    77,   160,    97,
-     102,   103,    97,    25,    35,    69,    76,    85,    86,    87,
-      89,   178,   205,   210,   219,   178,   210,   210,   162,   179,
-      25,   220,   220,   220,    64,    65,    66,    67,    69,    70,
-      71,    72,    90,    91,    25,   219,    25,   219,    25,   219,
-       5,     6,     7,     9,    10,    12,    13,    14,    15,    16,
-      17,    25,    27,    28,    33,    35,    62,    69,    74,    75,
-      76,    84,    85,    86,    89,   122,   123,   162,   163,   178,
-     194,   199,   210,   219,    25,    25,   219,    25,   219,    25,
-     148,   178,    27,   148,   142,   165,    35,    35,    35,    35,
-      15,    18,    20,    22,    25,    27,    35,    85,    86,   123,
-     162,   178,   210,   219,   219,    25,    25,    26,   172,    25,
-      26,    25,    25,    25,    25,    25,    25,    25,    25,    25,
-      27,    25,    25,    25,    25,    25,    25,    35,    25,    25,
-      56,    27,   157,   159,    69,    70,    82,    83,   201,   204,
-      25,    27,   177,   178,    25,   162,    71,   178,   178,   178,
-     178,   162,   178,    90,    91,    92,   162,   219,   162,   195,
-     134,   135,   157,   159,   161,   220,   220,   220,   220,   220,
-     220,   220,   220,   220,   220,   162,   162,   162,   162,   162,
-     162,   162,   162,    64,    65,    67,    70,    78,    79,    80,
-      81,    90,    91,    92,   200,   201,   162,   186,    70,   186,
-      25,    25,    25,    25,    25,    25,    25,   163,   163,    25,
-     178,   205,   206,   207,   209,    25,    70,   162,   162,   179,
-     162,   187,   162,   105,   106,   111,   162,   105,   106,   111,
-     162,   162,   162,    25,    25,    35,   178,   162,   201,    97,
-      90,    91,    92,    97,   201,    35,    35,   163,   207,   209,
-     179,   157,    97,   161,    70,   173,   161,    70,   157,   157,
-      83,   164,   164,   164,   164,   161,    83,   201,   204,    83,
-     201,   204,   157,   157,   157,   157,   157,   157,   157,   161,
-      97,   219,    25,    56,    25,   219,    25,   219,   164,   164,
-      77,   160,   195,    25,    35,   157,   157,   158,   158,   178,
-     158,   219,   219,   219,   125,   135,   157,   161,   157,   161,
-      25,    35,   208,   219,    25,    25,    25,    25,    35,    25,
-      25,    25,    25,    25,    25,   162,   219,   219,   219,    25,
-      25,   132,   133,    34,   162,   188,   162,   189,   158,   158,
-     158,   158,    25,    25,    70,   103,   178,   161,    83,   201,
-     204,   178,    25,    25,   157,   132,   133,   131,    25,   219,
-      25,   219,    25,   219,    25,   178,   178,   178,    25,    25,
-      25,    35,   137,    25,    68,    87,   219,   219,   219,    21,
-      35,   158,   158,    25,   178,   161,   157,   219,    25,    25,
-      25,    25,    25,   164,   219,   164,    25,   219,   164,   219,
-     219,   219,    25,   219,   219,   219,    25,   162,    97,   219,
-     161,   157,   161,   164,   164,    97,   177,   159,   178,   205,
-     205,    35,    35,   157,    35,   219,   161,   161,   135,   134,
-      97,    97,   179,   157,   159,   159,   159,   157,   157,   157,
-     157,   157,    25,   188,   189,   188,   157,   162,   183,   157,
-     162,   184,   161,   161,   157,   124,   125,   142,   142,    35,
-      35,    35,    35,   219,   201,   204,    83,   201,   204,    25,
-     161,    25,   213,   215,   216,   219,   164,   157,   157,   157,
-      25,   161,   161,   161,   162,   196,   196,   196,   196,   157,
-     157,   161,   157,   157,   161,   162,   162,   162,   162,   190,
-     190,   162,   184,    35,    35,    83,   204,   161,    35,   161,
-      91,   161,   161,   161,   161,   164,    97,   164,   164,    97,
-     161,   161,   161,   157,   161,   161,   161,   130,    25,   162,
-      97,    25,    97,    97,    97,    25,   160,   219,    69,    76,
-     178,   157,   161,   161,   162,   178,   162,    25,   219,   219,
-     219,    25,    35,    25,    35,    25,    90,    25,   125,   126,
-     127,   181,    25,   124,   125,    25,   161,   157,   161,   157,
-     161,   161,   189,   188,   219,   164,    25,   219,   164,   161,
-     164,   172,   164,    25,    25,    25,    97,   135,   219,   219,
-     162,   180,    35,    35,   140,   141,   178,   178,   125,    35,
-     190,    25,   164,    97,    25,   219,    97,    25,    97,    97,
-      25,    35,   178,   161,   130,     3,     4,     8,    19,   159,
-     163,   198,    25,    25,   157,   161,   178,   178,   157,   205,
-     159,   157,   157,   157,   161,   161,   161,   161,   161,   219,
-      97,   161,    97,   161,   161,    97,   142,   125,   164,   186,
-     164,   164,   186,    90,   169,   170,   171,   214,    97,   161,
-     161,   210,   161,   161,   161,   120,   121,   161,   161,   161,
-     161,   157,   157,   161,   161,   164,   210,    97,    25,    35,
-      25,   161,   161,   162,   162,    25,    25,   219,    25,    25,
-      27,   178,   219,    25,    25,    25,   180,   186,   162,   161,
-      25,    25,    31,   161,   161,   186,   186,   186,   219,   178,
-     189,   179,   161,   161,   189,    25,   178,    25,    71,   179,
-      25,   180,    25,    25,   159,   162,   161,   159,   161,   162,
-     161,   159,   159,   159,   132,   200,   201,    70,    69,   161,
-     157,   161,    35,    91,   159,   159,   219,   107,   108,   109,
-     110,   191,    97,   219,   125,   162,   192,   219,   219,   219,
-     161,    25,    25,    32,   178,    27,    70,   219,   219,   219,
-     192,   161,   198,   161,   161,   136,   161,   161,   161,   162,
-     185,   184,   184,   161,    21,   157,   157,   161,   162,   193,
-     162,   202,   162,   203,   120,   121,   181,   182,   162,    25,
-      25,   135,   136,   128,   129,   138,   139,   143,   144,   157,
-     161,   157,   161,    35,   159,   159,   157,   161,   157,   161,
-     157,   161,   157,   161,   157,   161,   157,   161,   157,   161,
-     157,   161,   182,   181,   161,   219,   219,   136,   135,   136,
-     136,   136,   136,   136,   136,   161,   161,    71,   161,   161,
-     161,   161,   161,   161,   161,   161,   161,   161,    35,   192,
-     192
+      96,   111,   112,   113,   114,   116,   118,   121,   122,   141,
+     144,   145,   146,   148,   149,   150,   151,   152,   153,   154,
+     155,   161,   162,   164,   165,   174,   175,   176,   177,   196,
+     204,   205,   206,   207,   208,   211,   161,    62,    69,   161,
+     166,   167,   212,   217,   218,   219,    88,    93,    94,    97,
+      98,   102,   103,    97,    99,   100,   101,   210,    97,    97,
+      97,    97,    97,    25,    25,   218,   218,   161,   218,   167,
+     218,   167,   218,   161,   218,   218,   212,   216,   218,   161,
+     216,   218,   161,   161,   162,   197,   162,   197,   162,   197,
+     162,   197,    25,   218,   161,   162,   162,    97,   210,   161,
+     161,   161,   161,   161,   161,    25,   177,   161,   161,    27,
+      63,    25,    25,    82,   210,     0,    77,   159,    97,   102,
+     103,    97,    25,    35,    69,    76,    85,    86,    87,    89,
+     177,   204,   209,   218,   177,   209,   209,   161,   178,    25,
+     219,   219,   219,    64,    65,    66,    67,    69,    70,    71,
+      72,    90,    91,    25,   218,    25,   218,    25,   218,     5,
+       6,     7,     9,    10,    12,    13,    14,    15,    16,    17,
+      25,    27,    28,    33,    35,    62,    69,    74,    75,    76,
+      84,    85,    86,    89,   121,   122,   161,   162,   177,   193,
+     198,   209,   218,    25,    25,   218,    25,   218,    25,    63,
+     147,   177,   141,   164,    35,    35,    35,    35,    15,    18,
+      20,    22,    25,    27,    35,    85,    86,   122,   161,   177,
+     209,   218,   218,    25,    25,    26,   171,    25,    26,    25,
+      25,    25,    25,    25,    25,    25,    25,    25,    27,    25,
+      25,    25,    25,    25,    25,    35,    25,    25,    56,    27,
+     156,   158,    69,    70,    82,    83,   200,   203,    25,    27,
+     176,   177,    25,   161,    71,   177,   177,   177,   177,   161,
+     177,    90,    91,    92,   161,   218,   161,   194,   133,   134,
+     156,   158,   160,   219,   219,   219,   219,   219,   219,   219,
+     219,   219,   219,   161,   161,   161,   161,   161,   161,   161,
+     161,    64,    65,    67,    70,    78,    79,    80,    81,    90,
+      91,    92,   199,   200,   161,   185,    70,   185,    25,    25,
+      25,    25,    25,    25,    25,   162,   162,    25,   177,   204,
+     205,   206,   208,    25,    70,   161,   161,   178,   161,   186,
+     161,   104,   105,   110,    27,   147,   161,   104,   105,   110,
+     161,   161,    25,    25,    35,   177,   161,   200,    97,    90,
+      91,    92,    97,   200,    35,    35,   162,   206,   208,   178,
+     156,    97,   160,    70,   172,   160,    70,   156,   156,    83,
+     163,   163,   163,   163,   160,    83,   200,   203,    83,   200,
+     203,   156,   156,   156,   156,   156,   156,   156,   160,    97,
+     218,    25,    56,    25,   218,    25,   218,   163,   163,    77,
+     159,   194,    25,    35,   156,   156,   157,   157,   177,   157,
+     218,   218,   218,   124,   134,   156,   160,   156,   160,    25,
+      35,   207,   218,    25,    25,    25,    25,    35,    25,    25,
+      25,    25,    25,    25,   161,   218,   218,   218,    25,    25,
+     131,   132,    34,   161,   187,   161,   188,   157,   157,   157,
+     157,    25,    25,    70,   103,   177,   160,    83,   200,   203,
+     177,    25,    25,   156,   131,   132,   130,    25,   218,    25,
+     218,    25,   218,   161,    25,   177,   177,   177,    25,    25,
+      35,   136,    25,    68,    87,   218,   218,   218,    21,    35,
+     157,   157,    25,   177,   160,   156,   218,    25,    25,    25,
+      25,    25,   163,   218,   163,    25,   218,   163,   218,   218,
+     218,    25,   218,   218,   218,    25,   161,    97,   218,   160,
+     156,   160,   163,   163,    97,   176,   158,   177,   204,   204,
+      35,    35,   156,    35,   218,   160,   160,   134,   133,    97,
+      97,   178,   156,   158,   158,   158,   156,   156,   156,   156,
+     156,    25,   187,   188,   187,   156,   161,   182,   156,   161,
+     183,   160,   160,   156,   123,   124,   141,   141,    35,    35,
+      35,    35,   218,   200,   203,    83,   200,   203,    25,   160,
+      25,   212,   214,   215,   218,   163,   156,   156,   156,    25,
+     160,   160,   160,   161,   195,   195,   195,   195,    25,   156,
+     160,   156,   156,   160,   161,   161,   161,   161,   189,   189,
+     161,   183,    35,    35,    83,   203,   160,    35,   160,    91,
+     160,   160,   160,   160,   163,    97,   163,   163,    97,   160,
+     160,   160,   156,   160,   160,   160,   129,    25,   161,    97,
+      25,    97,    97,    97,    25,   159,   218,    69,    76,   177,
+     156,   160,   160,   161,   177,   161,    25,   218,   218,   218,
+      25,    35,    25,    35,    25,    90,    25,   124,   125,   126,
+     180,    25,   123,   124,    25,   160,   156,   160,   156,   160,
+     160,   188,   187,   218,   163,    25,   218,   163,   160,   163,
+     171,   163,    25,    25,    25,    97,   134,   156,   218,   161,
+     179,    35,    35,   139,   140,   177,   177,   124,    35,   189,
+      25,   163,    97,    25,   218,    97,    25,    97,    97,    25,
+      35,   177,   160,   129,     3,     4,     8,    19,   158,   162,
+     197,    25,    25,   156,   160,   177,   177,   156,   204,   158,
+     156,   156,   156,   160,   160,   160,   160,   160,   218,    97,
+     160,    97,   160,   160,    97,   141,   124,   163,   185,   163,
+     163,   185,    90,   168,   169,   170,   213,    97,   160,   160,
+     209,   160,   218,   160,   119,   120,   160,   160,   160,   160,
+     156,   156,   160,   160,   163,   209,    97,    25,    35,    25,
+     160,   160,   161,   161,    25,    25,   218,    25,    25,    27,
+     177,   218,    25,    25,    25,   179,   185,   161,   160,    25,
+      25,    31,   160,   160,   185,   185,   185,   218,   177,   188,
+     178,   160,   160,   160,   188,    25,   177,    25,    71,   178,
+      25,   179,    25,    25,   158,   161,   160,   158,   160,   161,
+     160,   158,   158,   158,   131,   199,   200,    70,    69,   160,
+     156,   160,    35,    91,   158,   158,   218,   106,   107,   108,
+     109,   190,    97,   218,   124,   161,   191,   218,   218,   218,
+     160,    25,    25,    32,   177,    27,    70,   218,   218,   218,
+     191,   160,   197,   160,   160,   135,   160,   160,   160,   161,
+     184,   183,   183,   160,    21,   156,   156,   160,   161,   192,
+     161,   201,   161,   202,   119,   120,   180,   181,   161,    25,
+      25,   134,   135,   127,   128,   137,   138,   142,   143,   156,
+     160,   156,   160,    35,   158,   158,   156,   160,   156,   160,
+     156,   160,   156,   160,   156,   160,   156,   160,   156,   160,
+     156,   160,   181,   180,   160,   218,   218,   135,   134,   135,
+     135,   135,   135,   135,   135,   160,   160,    71,   160,   160,
+     160,   160,   160,   160,   160,   160,   160,   160,    35,   191,
+     191
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,   174,   175,   175,   176,   176,   176,   176,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,   177,   177,   177,   178,   178,   179,
-     179,   179,   179,   179,   180,   180,   181,   181,   181,   181,
-     182,   182,   183,   183,   184,   184,   184,   185,   185,   185,
-     185,   185,   186,   186,   186,   187,   187,   187,   188,   188,
-     188,   188,   188,   188,   189,   189,   190,   190,   191,   191,
-     191,   191,   192,   192,   193,   193,   193,   193,   194,   194,
-     194,   195,   195,   196,   196,   197,   198,   199,   199,   200,
-     200,   200,   200,   201,   201,   202,   202,   202,   202,   202,
-     202,   202,   202,   203,   203,   203,   203,   204,   204,   204,
-     205,   206,   207,   208,   208,   208,   208,   208,   209,   209,
-     209,   210,   211,   211,   211,   211,   212,   212,   212,   212,
-     213,   214,   214,   214,   215,   216,   216,   217,   218,   218,
-     218,   218,   218,   219,   220,   220,   220,   220,   220,   220,
-     220,   220,   220,   220,   220
+       0,   173,   174,   174,   175,   175,   175,   175,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   176,   176,   176,
+     176,   176,   176,   176,   176,   176,   176,   177,   177,   178,
+     178,   178,   178,   178,   179,   179,   180,   180,   180,   180,
+     181,   181,   182,   182,   183,   183,   183,   184,   184,   184,
+     184,   184,   185,   185,   185,   186,   186,   186,   187,   187,
+     187,   187,   187,   187,   188,   188,   189,   189,   190,   190,
+     190,   190,   191,   191,   192,   192,   192,   192,   193,   193,
+     193,   194,   194,   195,   195,   196,   197,   198,   198,   199,
+     199,   199,   199,   200,   200,   201,   201,   201,   201,   201,
+     201,   201,   201,   202,   202,   202,   202,   203,   203,   203,
+     204,   205,   206,   207,   207,   207,   207,   207,   208,   208,
+     208,   209,   210,   210,   210,   210,   211,   211,   211,   211,
+     212,   213,   213,   213,   214,   215,   215,   216,   217,   217,
+     217,   217,   217,   218,   219,   219,   219,   219,   219,   219,
+     219,   219,   219,   219,   219
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
@@ -2327,11 +2321,11 @@ static const yytype_int8 yyr2[] =
        3,     6,     4,     7,     7,     3,     3,     6,     3,     4,
        3,     3,     3,    11,    11,     9,     5,     5,     9,     5,
        5,     6,     6,     5,     5,     5,     6,     6,     5,     1,
-       3,     3,     3,     3,     4,     4,     9,     9,     5,     7,
+       3,     3,     3,     4,     4,     4,     9,     9,     5,     7,
        4,     6,     6,     7,     9,     8,     8,    11,     9,     4,
        5,     6,     7,     6,     4,     6,     5,     6,     6,     4,
        8,    10,    10,    12,     5,     6,     5,     6,     4,     4,
-       4,     7,     9,     9,     9,     6,     6,     6,     8,     8,
+       4,     7,     9,     9,     9,     6,     6,     6,     9,     8,
        6,     5,     5,     8,     4,     7,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     2,     2,     4,     4,
        6,     6,     2,     2,     4,     2,     2,     2,     2,     2,
@@ -2828,7 +2822,7 @@ yyreduce:
 	  else
 	    return INSN_GENERATED;
 	}
-#line 2832 "config/bfin-parse.c"
+#line 2826 "config/bfin-parse.c"
     break;
 
   case 5: /* asm: asm_1 DOUBLE_BAR asm_1 DOUBLE_BAR asm_1 SEMICOLON  */
@@ -2864,7 +2858,7 @@ yyreduce:
 	  else
 	    error ("\nIllegal Multi Issue Construct, at least any one of the slot must be DSP32 instruction group\n");
 	}
-#line 2868 "config/bfin-parse.c"
+#line 2862 "config/bfin-parse.c"
     break;
 
   case 6: /* asm: asm_1 DOUBLE_BAR asm_1 SEMICOLON  */
@@ -2895,7 +2889,7 @@ yyreduce:
 	  else
 	    return yyerror ("Wrong 16 bit instructions groups, slot 1 and slot 2 must be the 16-bit instruction group");
 	}
-#line 2899 "config/bfin-parse.c"
+#line 2893 "config/bfin-parse.c"
     break;
 
   case 7: /* asm: error  */
@@ -2905,7 +2899,7 @@ yyreduce:
 	yyerror ("");
 	yyerrok;
 	}
-#line 2909 "config/bfin-parse.c"
+#line 2903 "config/bfin-parse.c"
     break;
 
   case 8: /* asm_1: MNOP  */
@@ -2913,7 +2907,7 @@ yyreduce:
         {
 	  (yyval.instr) = DSP32MAC (3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0);
 	}
-#line 2917 "config/bfin-parse.c"
+#line 2911 "config/bfin-parse.c"
     break;
 
   case 9: /* asm_1: assign_macfunc opt_mode  */
@@ -2951,7 +2945,7 @@ yyreduce:
 	  (yyval.instr) = DSP32MAC (op1, (yyvsp[0].mod).MM, (yyvsp[0].mod).mod, w1, (yyvsp[-1].macfunc).P, h01, h11, h00, h10,
 			 &(yyvsp[-1].macfunc).dst, op0, &(yyvsp[-1].macfunc).s0, &(yyvsp[-1].macfunc).s1, w0);
 	}
-#line 2955 "config/bfin-parse.c"
+#line 2949 "config/bfin-parse.c"
     break;
 
   case 10: /* asm_1: assign_macfunc opt_mode COMMA assign_macfunc opt_mode  */
@@ -2972,7 +2966,7 @@ yyreduce:
 			 IS_H ((yyvsp[-4].macfunc).s0),  IS_H ((yyvsp[-4].macfunc).s1), IS_H ((yyvsp[-1].macfunc).s0), IS_H ((yyvsp[-1].macfunc).s1),
 			 dst, (yyvsp[-1].macfunc).op, &(yyvsp[-4].macfunc).s0, &(yyvsp[-4].macfunc).s1, (yyvsp[-1].macfunc).w);
 	}
-#line 2976 "config/bfin-parse.c"
+#line 2970 "config/bfin-parse.c"
     break;
 
   case 11: /* asm_1: DISALGNEXCPT  */
@@ -2981,7 +2975,7 @@ yyreduce:
 	  notethat ("dsp32alu: DISALGNEXCPT\n");
 	  (yyval.instr) = DSP32ALU (18, 0, 0, 0, 0, 0, 0, 0, 3);
 	}
-#line 2985 "config/bfin-parse.c"
+#line 2979 "config/bfin-parse.c"
     break;
 
   case 12: /* asm_1: REG ASSIGN LPAREN a_plusassign REG_A RPAREN  */
@@ -2995,7 +2989,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 2999 "config/bfin-parse.c"
+#line 2993 "config/bfin-parse.c"
     break;
 
   case 13: /* asm_1: HALF_REG ASSIGN LPAREN a_plusassign REG_A RPAREN  */
@@ -3009,7 +3003,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3013 "config/bfin-parse.c"
+#line 3007 "config/bfin-parse.c"
     break;
 
   case 14: /* asm_1: A_ZERO_DOT_H ASSIGN HALF_REG  */
@@ -3018,7 +3012,7 @@ yyreduce:
 	  notethat ("dsp32alu: A_ZERO_DOT_H = dregs_hi\n");
 	  (yyval.instr) = DSP32ALU (9, IS_H ((yyvsp[0].reg)), 0, 0, &(yyvsp[0].reg), 0, 0, 0, 0);
 	}
-#line 3022 "config/bfin-parse.c"
+#line 3016 "config/bfin-parse.c"
     break;
 
   case 15: /* asm_1: A_ONE_DOT_H ASSIGN HALF_REG  */
@@ -3027,7 +3021,7 @@ yyreduce:
 	  notethat ("dsp32alu: A_ZERO_DOT_H = dregs_hi\n");
 	  (yyval.instr) = DSP32ALU (9, IS_H ((yyvsp[0].reg)), 0, 0, &(yyvsp[0].reg), 0, 0, 0, 2);
 	}
-#line 3031 "config/bfin-parse.c"
+#line 3025 "config/bfin-parse.c"
     break;
 
   case 16: /* asm_1: LPAREN REG COMMA REG RPAREN ASSIGN BYTEOP16P LPAREN REG COLON expr COMMA REG COLON expr RPAREN aligndir  */
@@ -3047,7 +3041,7 @@ yyreduce:
 	      (yyval.instr) = DSP32ALU (21, 0, &(yyvsp[-15].reg), &(yyvsp[-13].reg), &(yyvsp[-8].reg), &(yyvsp[-4].reg), (yyvsp[0].r0).r0, 0, 0);
 	    }
 	}
-#line 3051 "config/bfin-parse.c"
+#line 3045 "config/bfin-parse.c"
     break;
 
   case 17: /* asm_1: LPAREN REG COMMA REG RPAREN ASSIGN BYTEOP16M LPAREN REG COLON expr COMMA REG COLON expr RPAREN aligndir  */
@@ -3067,7 +3061,7 @@ yyreduce:
 	      (yyval.instr) = DSP32ALU (21, 0, &(yyvsp[-15].reg), &(yyvsp[-13].reg), &(yyvsp[-8].reg), &(yyvsp[-4].reg), (yyvsp[0].r0).r0, 0, 1);
 	    }
 	}
-#line 3071 "config/bfin-parse.c"
+#line 3065 "config/bfin-parse.c"
     break;
 
   case 18: /* asm_1: LPAREN REG COMMA REG RPAREN ASSIGN BYTEUNPACK REG COLON expr aligndir  */
@@ -3085,7 +3079,7 @@ yyreduce:
 	      (yyval.instr) = DSP32ALU (24, 0, &(yyvsp[-9].reg), &(yyvsp[-7].reg), &(yyvsp[-3].reg), 0, (yyvsp[0].r0).r0, 0, 1);
 	    }
 	}
-#line 3089 "config/bfin-parse.c"
+#line 3083 "config/bfin-parse.c"
     break;
 
   case 19: /* asm_1: LPAREN REG COMMA REG RPAREN ASSIGN SEARCH REG LPAREN searchmod RPAREN  */
@@ -3102,7 +3096,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3106 "config/bfin-parse.c"
+#line 3100 "config/bfin-parse.c"
     break;
 
   case 20: /* asm_1: REG ASSIGN A_ONE_DOT_L PLUS A_ONE_DOT_H COMMA REG ASSIGN A_ZERO_DOT_L PLUS A_ZERO_DOT_H  */
@@ -3119,7 +3113,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3123 "config/bfin-parse.c"
+#line 3117 "config/bfin-parse.c"
     break;
 
   case 21: /* asm_1: REG ASSIGN REG_A PLUS REG_A COMMA REG ASSIGN REG_A MINUS REG_A amod1  */
@@ -3144,7 +3138,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3148 "config/bfin-parse.c"
+#line 3142 "config/bfin-parse.c"
     break;
 
   case 22: /* asm_1: REG ASSIGN REG plus_minus REG COMMA REG ASSIGN REG plus_minus REG amod1  */
@@ -3163,7 +3157,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3167 "config/bfin-parse.c"
+#line 3161 "config/bfin-parse.c"
     break;
 
   case 23: /* asm_1: REG ASSIGN REG op_bar_op REG COMMA REG ASSIGN REG op_bar_op REG amod2  */
@@ -3191,7 +3185,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bar operand mismatch");
 	}
-#line 3195 "config/bfin-parse.c"
+#line 3189 "config/bfin-parse.c"
     break;
 
   case 24: /* asm_1: REG ASSIGN ABS REG vmod  */
@@ -3217,7 +3211,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 3221 "config/bfin-parse.c"
+#line 3215 "config/bfin-parse.c"
     break;
 
   case 25: /* asm_1: a_assign ABS REG_A  */
@@ -3226,7 +3220,7 @@ yyreduce:
 	  notethat ("dsp32alu: Ax = ABS Ax\n");
 	  (yyval.instr) = DSP32ALU (16, IS_A1 ((yyvsp[-2].reg)), 0, 0, &reg7, &reg7, 0, 0, IS_A1 ((yyvsp[0].reg)));
 	}
-#line 3230 "config/bfin-parse.c"
+#line 3224 "config/bfin-parse.c"
     break;
 
   case 26: /* asm_1: A_ZERO_DOT_L ASSIGN HALF_REG  */
@@ -3240,7 +3234,7 @@ yyreduce:
 	  else
 	    return yyerror ("A0.l = Rx.l expected");
 	}
-#line 3244 "config/bfin-parse.c"
+#line 3238 "config/bfin-parse.c"
     break;
 
   case 27: /* asm_1: A_ONE_DOT_L ASSIGN HALF_REG  */
@@ -3254,7 +3248,7 @@ yyreduce:
 	  else
 	    return yyerror ("A1.l = Rx.l expected");
 	}
-#line 3258 "config/bfin-parse.c"
+#line 3252 "config/bfin-parse.c"
     break;
 
   case 28: /* asm_1: REG ASSIGN c_align LPAREN REG COMMA REG RPAREN  */
@@ -3268,7 +3262,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 3272 "config/bfin-parse.c"
+#line 3266 "config/bfin-parse.c"
     break;
 
   case 29: /* asm_1: REG ASSIGN BYTEOP1P LPAREN REG COLON expr COMMA REG COLON expr RPAREN byteop_mod  */
@@ -3286,7 +3280,7 @@ yyreduce:
 	      (yyval.instr) = DSP32ALU (20, 0, 0, &(yyvsp[-12].reg), &(yyvsp[-8].reg), &(yyvsp[-4].reg), (yyvsp[0].modcodes).s0, 0, (yyvsp[0].modcodes).r0);
 	    }
 	}
-#line 3290 "config/bfin-parse.c"
+#line 3284 "config/bfin-parse.c"
     break;
 
   case 30: /* asm_1: REG ASSIGN BYTEOP1P LPAREN REG COLON expr COMMA REG COLON expr RPAREN  */
@@ -3304,7 +3298,7 @@ yyreduce:
 	      (yyval.instr) = DSP32ALU (20, 0, 0, &(yyvsp[-11].reg), &(yyvsp[-7].reg), &(yyvsp[-3].reg), 0, 0, 0);
 	    }
 	}
-#line 3308 "config/bfin-parse.c"
+#line 3302 "config/bfin-parse.c"
     break;
 
   case 31: /* asm_1: REG ASSIGN BYTEOP2P LPAREN REG COLON expr COMMA REG COLON expr RPAREN rnd_op  */
@@ -3322,7 +3316,7 @@ yyreduce:
 	      (yyval.instr) = DSP32ALU (22, (yyvsp[0].modcodes).r0, 0, &(yyvsp[-12].reg), &(yyvsp[-8].reg), &(yyvsp[-4].reg), (yyvsp[0].modcodes).s0, (yyvsp[0].modcodes).x0, (yyvsp[0].modcodes).aop);
 	    }
 	}
-#line 3326 "config/bfin-parse.c"
+#line 3320 "config/bfin-parse.c"
     break;
 
   case 32: /* asm_1: REG ASSIGN BYTEOP3P LPAREN REG COLON expr COMMA REG COLON expr RPAREN b3_op  */
@@ -3340,7 +3334,7 @@ yyreduce:
 	      (yyval.instr) = DSP32ALU (23, (yyvsp[0].modcodes).x0, 0, &(yyvsp[-12].reg), &(yyvsp[-8].reg), &(yyvsp[-4].reg), (yyvsp[0].modcodes).s0, 0, 0);
 	    }
 	}
-#line 3344 "config/bfin-parse.c"
+#line 3338 "config/bfin-parse.c"
     break;
 
   case 33: /* asm_1: REG ASSIGN BYTEPACK LPAREN REG COMMA REG RPAREN  */
@@ -3354,7 +3348,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 3358 "config/bfin-parse.c"
+#line 3352 "config/bfin-parse.c"
     break;
 
   case 34: /* asm_1: HALF_REG ASSIGN HALF_REG ASSIGN SIGN LPAREN HALF_REG RPAREN STAR HALF_REG PLUS SIGN LPAREN HALF_REG RPAREN STAR HALF_REG  */
@@ -3371,7 +3365,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 3375 "config/bfin-parse.c"
+#line 3369 "config/bfin-parse.c"
     break;
 
   case 35: /* asm_1: REG ASSIGN REG plus_minus REG amod1  */
@@ -3401,7 +3395,7 @@ yyreduce:
 	    else
 	      return yyerror ("Dregs expected");
 	}
-#line 3405 "config/bfin-parse.c"
+#line 3399 "config/bfin-parse.c"
     break;
 
   case 36: /* asm_1: REG ASSIGN min_max LPAREN REG COMMA REG RPAREN vmod  */
@@ -3422,7 +3416,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 3426 "config/bfin-parse.c"
+#line 3420 "config/bfin-parse.c"
     break;
 
   case 37: /* asm_1: a_assign MINUS REG_A  */
@@ -3431,7 +3425,7 @@ yyreduce:
 	  notethat ("dsp32alu: Ax = - Ax\n");
 	  (yyval.instr) = DSP32ALU (14, IS_A1 ((yyvsp[-2].reg)), 0, 0, &reg7, &reg7, 0, 0, IS_A1 ((yyvsp[0].reg)));
 	}
-#line 3435 "config/bfin-parse.c"
+#line 3429 "config/bfin-parse.c"
     break;
 
   case 38: /* asm_1: HALF_REG ASSIGN HALF_REG plus_minus HALF_REG amod1  */
@@ -3441,7 +3435,7 @@ yyreduce:
 	  (yyval.instr) = DSP32ALU (2 | (yyvsp[-2].r0).r0, IS_H ((yyvsp[-5].reg)), 0, &(yyvsp[-5].reg), &(yyvsp[-3].reg), &(yyvsp[-1].reg),
 			 (yyvsp[0].modcodes).s0, (yyvsp[0].modcodes).x0, HL2 ((yyvsp[-3].reg), (yyvsp[-1].reg)));
 	}
-#line 3445 "config/bfin-parse.c"
+#line 3439 "config/bfin-parse.c"
     break;
 
   case 39: /* asm_1: a_assign a_assign expr  */
@@ -3455,7 +3449,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad value, 0 expected");
 	}
-#line 3459 "config/bfin-parse.c"
+#line 3453 "config/bfin-parse.c"
     break;
 
   case 40: /* asm_1: a_assign REG_A LPAREN S RPAREN  */
@@ -3469,7 +3463,7 @@ yyreduce:
 	  else
 	    return yyerror ("Registers must be equal");
 	}
-#line 3473 "config/bfin-parse.c"
+#line 3467 "config/bfin-parse.c"
     break;
 
   case 41: /* asm_1: HALF_REG ASSIGN REG LPAREN RND RPAREN  */
@@ -3483,7 +3477,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 3487 "config/bfin-parse.c"
+#line 3481 "config/bfin-parse.c"
     break;
 
   case 42: /* asm_1: HALF_REG ASSIGN REG plus_minus REG LPAREN RND12 RPAREN  */
@@ -3497,7 +3491,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 3501 "config/bfin-parse.c"
+#line 3495 "config/bfin-parse.c"
     break;
 
   case 43: /* asm_1: HALF_REG ASSIGN REG plus_minus REG LPAREN RND20 RPAREN  */
@@ -3511,7 +3505,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 3515 "config/bfin-parse.c"
+#line 3509 "config/bfin-parse.c"
     break;
 
   case 44: /* asm_1: a_assign REG_A  */
@@ -3525,7 +3519,7 @@ yyreduce:
 	  else
 	    return yyerror ("Accu reg arguments must differ");
 	}
-#line 3529 "config/bfin-parse.c"
+#line 3523 "config/bfin-parse.c"
     break;
 
   case 45: /* asm_1: a_assign REG  */
@@ -3539,7 +3533,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 3543 "config/bfin-parse.c"
+#line 3537 "config/bfin-parse.c"
     break;
 
   case 46: /* asm_1: REG ASSIGN HALF_REG xpmod  */
@@ -3568,7 +3562,7 @@ yyreduce:
 	  else
 	    return yyerror ("Low reg expected");
 	}
-#line 3572 "config/bfin-parse.c"
+#line 3566 "config/bfin-parse.c"
     break;
 
   case 47: /* asm_1: HALF_REG ASSIGN expr  */
@@ -3585,7 +3579,7 @@ yyreduce:
 
 	  (yyval.instr) = LDIMMHALF_R (&(yyvsp[-2].reg), IS_H ((yyvsp[-2].reg)), 0, 0, (yyvsp[0].expr));
 	}
-#line 3589 "config/bfin-parse.c"
+#line 3583 "config/bfin-parse.c"
     break;
 
   case 48: /* asm_1: a_assign expr  */
@@ -3598,7 +3592,7 @@ yyreduce:
 
 	  (yyval.instr) = DSP32ALU (8, 0, 0, 0, 0, 0, 0, 0, IS_A1 ((yyvsp[-1].reg)));
 	}
-#line 3602 "config/bfin-parse.c"
+#line 3596 "config/bfin-parse.c"
     break;
 
   case 49: /* asm_1: REG ASSIGN expr xpmod1  */
@@ -3646,7 +3640,7 @@ yyreduce:
 	      (yyval.instr) = LDIMMHALF_R5 (&(yyvsp[-3].reg), 0, 0, 1, (yyvsp[-1].expr));
 	    }
 	}
-#line 3650 "config/bfin-parse.c"
+#line 3644 "config/bfin-parse.c"
     break;
 
   case 50: /* asm_1: HALF_REG ASSIGN REG  */
@@ -3668,7 +3662,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3672 "config/bfin-parse.c"
+#line 3666 "config/bfin-parse.c"
     break;
 
   case 51: /* asm_1: REG ASSIGN REG op_bar_op REG amod0  */
@@ -3682,7 +3676,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3686 "config/bfin-parse.c"
+#line 3680 "config/bfin-parse.c"
     break;
 
   case 52: /* asm_1: REG ASSIGN BYTE_DREG xpmod  */
@@ -3696,7 +3690,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3700 "config/bfin-parse.c"
+#line 3694 "config/bfin-parse.c"
     break;
 
   case 53: /* asm_1: a_assign ABS REG_A COMMA a_assign ABS REG_A  */
@@ -3710,7 +3704,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3714 "config/bfin-parse.c"
+#line 3708 "config/bfin-parse.c"
     break;
 
   case 54: /* asm_1: a_assign MINUS REG_A COMMA a_assign MINUS REG_A  */
@@ -3724,7 +3718,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3728 "config/bfin-parse.c"
+#line 3722 "config/bfin-parse.c"
     break;
 
   case 55: /* asm_1: a_minusassign REG_A w32_or_nothing  */
@@ -3738,7 +3732,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3742 "config/bfin-parse.c"
+#line 3736 "config/bfin-parse.c"
     break;
 
   case 56: /* asm_1: REG _MINUS_ASSIGN expr  */
@@ -3757,7 +3751,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register or value mismatch");
 	}
-#line 3761 "config/bfin-parse.c"
+#line 3755 "config/bfin-parse.c"
     break;
 
   case 57: /* asm_1: REG _PLUS_ASSIGN REG LPAREN BREV RPAREN  */
@@ -3777,7 +3771,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3781 "config/bfin-parse.c"
+#line 3775 "config/bfin-parse.c"
     break;
 
   case 58: /* asm_1: REG _MINUS_ASSIGN REG  */
@@ -3796,7 +3790,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3800 "config/bfin-parse.c"
+#line 3794 "config/bfin-parse.c"
     break;
 
   case 59: /* asm_1: REG_A _PLUS_ASSIGN REG_A w32_or_nothing  */
@@ -3810,7 +3804,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3814 "config/bfin-parse.c"
+#line 3808 "config/bfin-parse.c"
     break;
 
   case 60: /* asm_1: REG _PLUS_ASSIGN REG  */
@@ -3824,7 +3818,7 @@ yyreduce:
 	  else
 	    return yyerror ("iregs += mregs expected");
 	}
-#line 3828 "config/bfin-parse.c"
+#line 3822 "config/bfin-parse.c"
     break;
 
   case 61: /* asm_1: REG _PLUS_ASSIGN expr  */
@@ -3860,7 +3854,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3864 "config/bfin-parse.c"
+#line 3858 "config/bfin-parse.c"
     break;
 
   case 62: /* asm_1: REG _STAR_ASSIGN REG  */
@@ -3874,7 +3868,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3878 "config/bfin-parse.c"
+#line 3872 "config/bfin-parse.c"
     break;
 
   case 63: /* asm_1: SAA LPAREN REG COLON expr COMMA REG COLON expr RPAREN aligndir  */
@@ -3890,7 +3884,7 @@ yyreduce:
 	      (yyval.instr) = DSP32ALU (18, 0, 0, 0, &(yyvsp[-8].reg), &(yyvsp[-4].reg), (yyvsp[0].r0).r0, 0, 0);
 	    }
 	}
-#line 3894 "config/bfin-parse.c"
+#line 3888 "config/bfin-parse.c"
     break;
 
   case 64: /* asm_1: a_assign REG_A LPAREN S RPAREN COMMA a_assign REG_A LPAREN S RPAREN  */
@@ -3904,7 +3898,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3908 "config/bfin-parse.c"
+#line 3902 "config/bfin-parse.c"
     break;
 
   case 65: /* asm_1: REG ASSIGN LPAREN REG PLUS REG RPAREN LESS_LESS expr  */
@@ -3945,7 +3939,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 3949 "config/bfin-parse.c"
+#line 3943 "config/bfin-parse.c"
     break;
 
   case 66: /* asm_1: REG ASSIGN REG BAR REG  */
@@ -3959,7 +3953,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 3963 "config/bfin-parse.c"
+#line 3957 "config/bfin-parse.c"
     break;
 
   case 67: /* asm_1: REG ASSIGN REG CARET REG  */
@@ -3973,7 +3967,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 3977 "config/bfin-parse.c"
+#line 3971 "config/bfin-parse.c"
     break;
 
   case 68: /* asm_1: REG ASSIGN REG PLUS LPAREN REG LESS_LESS expr RPAREN  */
@@ -3997,7 +3991,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 4001 "config/bfin-parse.c"
+#line 3995 "config/bfin-parse.c"
     break;
 
   case 69: /* asm_1: CCREG ASSIGN REG_A _ASSIGN_ASSIGN REG_A  */
@@ -4011,7 +4005,7 @@ yyreduce:
 	  else
 	    return yyerror ("AREGs are in bad order or same");
 	}
-#line 4015 "config/bfin-parse.c"
+#line 4009 "config/bfin-parse.c"
     break;
 
   case 70: /* asm_1: CCREG ASSIGN REG_A LESS_THAN REG_A  */
@@ -4025,7 +4019,7 @@ yyreduce:
 	  else
 	    return yyerror ("AREGs are in bad order or same");
 	}
-#line 4029 "config/bfin-parse.c"
+#line 4023 "config/bfin-parse.c"
     break;
 
   case 71: /* asm_1: CCREG ASSIGN REG LESS_THAN REG iu_or_nothing  */
@@ -4040,7 +4034,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register in comparison");
 	}
-#line 4044 "config/bfin-parse.c"
+#line 4038 "config/bfin-parse.c"
     break;
 
   case 72: /* asm_1: CCREG ASSIGN REG LESS_THAN expr iu_or_nothing  */
@@ -4058,7 +4052,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad constant value");
 	}
-#line 4062 "config/bfin-parse.c"
+#line 4056 "config/bfin-parse.c"
     break;
 
   case 73: /* asm_1: CCREG ASSIGN REG _ASSIGN_ASSIGN REG  */
@@ -4073,7 +4067,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register in comparison");
 	}
-#line 4077 "config/bfin-parse.c"
+#line 4071 "config/bfin-parse.c"
     break;
 
   case 74: /* asm_1: CCREG ASSIGN REG _ASSIGN_ASSIGN expr  */
@@ -4090,7 +4084,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad constant range");
 	}
-#line 4094 "config/bfin-parse.c"
+#line 4088 "config/bfin-parse.c"
     break;
 
   case 75: /* asm_1: CCREG ASSIGN REG_A _LESS_THAN_ASSIGN REG_A  */
@@ -4104,7 +4098,7 @@ yyreduce:
 	  else
 	    return yyerror ("AREGs are in bad order or same");
 	}
-#line 4108 "config/bfin-parse.c"
+#line 4102 "config/bfin-parse.c"
     break;
 
   case 76: /* asm_1: CCREG ASSIGN REG _LESS_THAN_ASSIGN REG iu_or_nothing  */
@@ -4120,7 +4114,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register in comparison");
 	}
-#line 4124 "config/bfin-parse.c"
+#line 4118 "config/bfin-parse.c"
     break;
 
   case 77: /* asm_1: CCREG ASSIGN REG _LESS_THAN_ASSIGN expr iu_or_nothing  */
@@ -4138,7 +4132,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad constant value");
 	}
-#line 4142 "config/bfin-parse.c"
+#line 4136 "config/bfin-parse.c"
     break;
 
   case 78: /* asm_1: REG ASSIGN REG AMPERSAND REG  */
@@ -4152,7 +4146,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 4156 "config/bfin-parse.c"
+#line 4150 "config/bfin-parse.c"
     break;
 
   case 79: /* asm_1: ccstat  */
@@ -4161,7 +4155,7 @@ yyreduce:
 	  notethat ("CC2stat operation\n");
 	  (yyval.instr) = bfin_gen_cc2stat ((yyvsp[0].modcodes).r0, (yyvsp[0].modcodes).x0, (yyvsp[0].modcodes).s0);
 	}
-#line 4165 "config/bfin-parse.c"
+#line 4159 "config/bfin-parse.c"
     break;
 
   case 80: /* asm_1: REG ASSIGN REG  */
@@ -4186,7 +4180,7 @@ yyreduce:
 	  else
 	    return yyerror ("Unsupported register move");
 	}
-#line 4190 "config/bfin-parse.c"
+#line 4184 "config/bfin-parse.c"
     break;
 
   case 81: /* asm_1: CCREG ASSIGN REG  */
@@ -4200,7 +4194,7 @@ yyreduce:
 	  else
 	    return yyerror ("Only 'CC = Dreg' supported");
 	}
-#line 4204 "config/bfin-parse.c"
+#line 4198 "config/bfin-parse.c"
     break;
 
   case 82: /* asm_1: REG ASSIGN CCREG  */
@@ -4214,16 +4208,16 @@ yyreduce:
 	  else
 	    return yyerror ("Only 'Dreg = CC' supported");
 	}
-#line 4218 "config/bfin-parse.c"
+#line 4212 "config/bfin-parse.c"
     break;
 
-  case 83: /* asm_1: CCREG _ASSIGN_BANG CCREG  */
+  case 83: /* asm_1: CCREG ASSIGN BANG CCREG  */
 #line 1808 "./config/bfin-parse.y"
         {
 	  notethat ("CC2dreg: CC =! CC\n");
 	  (yyval.instr) = bfin_gen_cc2dreg (3, 0);
 	}
-#line 4227 "config/bfin-parse.c"
+#line 4221 "config/bfin-parse.c"
     break;
 
   case 84: /* asm_1: HALF_REG ASSIGN multiply_halfregs opt_mode  */
@@ -4252,7 +4246,7 @@ yyreduce:
 			      &(yyvsp[-3].reg), 0, &(yyvsp[-1].macfunc).s0, &(yyvsp[-1].macfunc).s1, 1);
 	    }
 	}
-#line 4256 "config/bfin-parse.c"
+#line 4250 "config/bfin-parse.c"
     break;
 
   case 85: /* asm_1: REG ASSIGN multiply_halfregs opt_mode  */
@@ -4285,7 +4279,7 @@ yyreduce:
 			      &(yyvsp[-3].reg),  0, &(yyvsp[-1].macfunc).s0, &(yyvsp[-1].macfunc).s1, 1);
 	    }
 	}
-#line 4289 "config/bfin-parse.c"
+#line 4283 "config/bfin-parse.c"
     break;
 
   case 86: /* asm_1: HALF_REG ASSIGN multiply_halfregs opt_mode COMMA HALF_REG ASSIGN multiply_halfregs opt_mode  */
@@ -4316,7 +4310,7 @@ yyreduce:
 			    IS_H ((yyvsp[-1].macfunc).s0), IS_H ((yyvsp[-1].macfunc).s1), IS_H ((yyvsp[-6].macfunc).s0), IS_H ((yyvsp[-6].macfunc).s1),
 			    &(yyvsp[-8].reg), 0, &(yyvsp[-6].macfunc).s0, &(yyvsp[-6].macfunc).s1, 1);
 	}
-#line 4320 "config/bfin-parse.c"
+#line 4314 "config/bfin-parse.c"
     break;
 
   case 87: /* asm_1: REG ASSIGN multiply_halfregs opt_mode COMMA REG ASSIGN multiply_halfregs opt_mode  */
@@ -4348,7 +4342,7 @@ yyreduce:
 			    IS_H ((yyvsp[-6].macfunc).s0), IS_H ((yyvsp[-6].macfunc).s1), IS_H ((yyvsp[-1].macfunc).s0), IS_H ((yyvsp[-1].macfunc).s1),
 			    &(yyvsp[-8].reg), 0, &(yyvsp[-6].macfunc).s0, &(yyvsp[-6].macfunc).s1, 1);
 	}
-#line 4352 "config/bfin-parse.c"
+#line 4346 "config/bfin-parse.c"
     break;
 
   case 88: /* asm_1: a_assign ASHIFT REG_A BY HALF_REG  */
@@ -4365,7 +4359,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 4369 "config/bfin-parse.c"
+#line 4363 "config/bfin-parse.c"
     break;
 
   case 89: /* asm_1: HALF_REG ASSIGN ASHIFT HALF_REG BY HALF_REG smod  */
@@ -4379,7 +4373,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 4383 "config/bfin-parse.c"
+#line 4377 "config/bfin-parse.c"
     break;
 
   case 90: /* asm_1: a_assign REG_A LESS_LESS expr  */
@@ -4396,7 +4390,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad shift value");
 	}
-#line 4400 "config/bfin-parse.c"
+#line 4394 "config/bfin-parse.c"
     break;
 
   case 91: /* asm_1: REG ASSIGN REG LESS_LESS expr vsmod  */
@@ -4434,7 +4428,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad shift value or register");
 	}
-#line 4438 "config/bfin-parse.c"
+#line 4432 "config/bfin-parse.c"
     break;
 
   case 92: /* asm_1: HALF_REG ASSIGN HALF_REG LESS_LESS expr smod  */
@@ -4456,7 +4450,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad shift value");
 	}
-#line 4460 "config/bfin-parse.c"
+#line 4454 "config/bfin-parse.c"
     break;
 
   case 93: /* asm_1: REG ASSIGN ASHIFT REG BY HALF_REG vsmod  */
@@ -4483,7 +4477,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 4487 "config/bfin-parse.c"
+#line 4481 "config/bfin-parse.c"
     break;
 
   case 94: /* asm_1: HALF_REG ASSIGN EXPADJ LPAREN REG COMMA HALF_REG RPAREN vmod  */
@@ -4497,7 +4491,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad shift value or register");
 	}
-#line 4501 "config/bfin-parse.c"
+#line 4495 "config/bfin-parse.c"
     break;
 
   case 95: /* asm_1: HALF_REG ASSIGN EXPADJ LPAREN HALF_REG COMMA HALF_REG RPAREN  */
@@ -4516,7 +4510,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad shift value or register");
 	}
-#line 4520 "config/bfin-parse.c"
+#line 4514 "config/bfin-parse.c"
     break;
 
   case 96: /* asm_1: REG ASSIGN DEPOSIT LPAREN REG COMMA REG RPAREN  */
@@ -4530,7 +4524,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4534 "config/bfin-parse.c"
+#line 4528 "config/bfin-parse.c"
     break;
 
   case 97: /* asm_1: REG ASSIGN DEPOSIT LPAREN REG COMMA REG RPAREN LPAREN X RPAREN  */
@@ -4544,7 +4538,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4548 "config/bfin-parse.c"
+#line 4542 "config/bfin-parse.c"
     break;
 
   case 98: /* asm_1: REG ASSIGN EXTRACT LPAREN REG COMMA HALF_REG RPAREN xpmod  */
@@ -4558,7 +4552,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4562 "config/bfin-parse.c"
+#line 4556 "config/bfin-parse.c"
     break;
 
   case 99: /* asm_1: a_assign REG_A _GREATER_GREATER_GREATER expr  */
@@ -4575,7 +4569,7 @@ yyreduce:
 	  else
 	    return yyerror ("Shift value range error");
 	}
-#line 4579 "config/bfin-parse.c"
+#line 4573 "config/bfin-parse.c"
     break;
 
   case 100: /* asm_1: a_assign LSHIFT REG_A BY HALF_REG  */
@@ -4589,7 +4583,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4593 "config/bfin-parse.c"
+#line 4587 "config/bfin-parse.c"
     break;
 
   case 101: /* asm_1: HALF_REG ASSIGN LSHIFT HALF_REG BY HALF_REG  */
@@ -4603,7 +4597,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4607 "config/bfin-parse.c"
+#line 4601 "config/bfin-parse.c"
     break;
 
   case 102: /* asm_1: REG ASSIGN LSHIFT REG BY HALF_REG vmod  */
@@ -4617,7 +4611,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4621 "config/bfin-parse.c"
+#line 4615 "config/bfin-parse.c"
     break;
 
   case 103: /* asm_1: REG ASSIGN SHIFT REG BY HALF_REG  */
@@ -4631,7 +4625,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4635 "config/bfin-parse.c"
+#line 4629 "config/bfin-parse.c"
     break;
 
   case 104: /* asm_1: a_assign REG_A GREATER_GREATER expr  */
@@ -4645,7 +4639,7 @@ yyreduce:
 	  else
 	    return yyerror ("Accu register expected");
 	}
-#line 4649 "config/bfin-parse.c"
+#line 4643 "config/bfin-parse.c"
     break;
 
   case 105: /* asm_1: REG ASSIGN REG GREATER_GREATER expr vmod  */
@@ -4682,7 +4676,7 @@ yyreduce:
 	        return yyerror ("Register mismatch");
 	    }
 	}
-#line 4686 "config/bfin-parse.c"
+#line 4680 "config/bfin-parse.c"
     break;
 
   case 106: /* asm_1: HALF_REG ASSIGN HALF_REG GREATER_GREATER expr  */
@@ -4696,7 +4690,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4700 "config/bfin-parse.c"
+#line 4694 "config/bfin-parse.c"
     break;
 
   case 107: /* asm_1: HALF_REG ASSIGN HALF_REG _GREATER_GREATER_GREATER expr smod  */
@@ -4711,7 +4705,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register or modifier mismatch");
 	}
-#line 4715 "config/bfin-parse.c"
+#line 4709 "config/bfin-parse.c"
     break;
 
   case 108: /* asm_1: REG ASSIGN REG _GREATER_GREATER_GREATER expr vsmod  */
@@ -4734,7 +4728,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4738 "config/bfin-parse.c"
+#line 4732 "config/bfin-parse.c"
     break;
 
   case 109: /* asm_1: HALF_REG ASSIGN ONES REG  */
@@ -4748,7 +4742,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4752 "config/bfin-parse.c"
+#line 4746 "config/bfin-parse.c"
     break;
 
   case 110: /* asm_1: REG ASSIGN PACK LPAREN HALF_REG COMMA HALF_REG RPAREN  */
@@ -4762,7 +4756,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4766 "config/bfin-parse.c"
+#line 4760 "config/bfin-parse.c"
     break;
 
   case 111: /* asm_1: HALF_REG ASSIGN CCREG ASSIGN BXORSHIFT LPAREN REG_A COMMA REG RPAREN  */
@@ -4778,7 +4772,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4782 "config/bfin-parse.c"
+#line 4776 "config/bfin-parse.c"
     break;
 
   case 112: /* asm_1: HALF_REG ASSIGN CCREG ASSIGN BXOR LPAREN REG_A COMMA REG RPAREN  */
@@ -4794,7 +4788,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4798 "config/bfin-parse.c"
+#line 4792 "config/bfin-parse.c"
     break;
 
   case 113: /* asm_1: HALF_REG ASSIGN CCREG ASSIGN BXOR LPAREN REG_A COMMA REG_A COMMA CCREG RPAREN  */
@@ -4808,7 +4802,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4812 "config/bfin-parse.c"
+#line 4806 "config/bfin-parse.c"
     break;
 
   case 114: /* asm_1: a_assign ROT REG_A BY HALF_REG  */
@@ -4822,7 +4816,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4826 "config/bfin-parse.c"
+#line 4820 "config/bfin-parse.c"
     break;
 
   case 115: /* asm_1: REG ASSIGN ROT REG BY HALF_REG  */
@@ -4836,7 +4830,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4840 "config/bfin-parse.c"
+#line 4834 "config/bfin-parse.c"
     break;
 
   case 116: /* asm_1: a_assign ROT REG_A BY expr  */
@@ -4850,7 +4844,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4854 "config/bfin-parse.c"
+#line 4848 "config/bfin-parse.c"
     break;
 
   case 117: /* asm_1: REG ASSIGN ROT REG BY expr  */
@@ -4863,7 +4857,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4867 "config/bfin-parse.c"
+#line 4861 "config/bfin-parse.c"
     break;
 
   case 118: /* asm_1: HALF_REG ASSIGN SIGNBITS REG_A  */
@@ -4877,7 +4871,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4881 "config/bfin-parse.c"
+#line 4875 "config/bfin-parse.c"
     break;
 
   case 119: /* asm_1: HALF_REG ASSIGN SIGNBITS REG  */
@@ -4891,7 +4885,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4895 "config/bfin-parse.c"
+#line 4889 "config/bfin-parse.c"
     break;
 
   case 120: /* asm_1: HALF_REG ASSIGN SIGNBITS HALF_REG  */
@@ -4905,7 +4899,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4909 "config/bfin-parse.c"
+#line 4903 "config/bfin-parse.c"
     break;
 
   case 121: /* asm_1: HALF_REG ASSIGN VIT_MAX LPAREN REG RPAREN asr_asl  */
@@ -4919,7 +4913,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4923 "config/bfin-parse.c"
+#line 4917 "config/bfin-parse.c"
     break;
 
   case 122: /* asm_1: REG ASSIGN VIT_MAX LPAREN REG COMMA REG RPAREN asr_asl  */
@@ -4933,7 +4927,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4937 "config/bfin-parse.c"
+#line 4931 "config/bfin-parse.c"
     break;
 
   case 123: /* asm_1: BITMUX LPAREN REG COMMA REG COMMA REG_A RPAREN asr_asl  */
@@ -4950,7 +4944,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4954 "config/bfin-parse.c"
+#line 4948 "config/bfin-parse.c"
     break;
 
   case 124: /* asm_1: a_assign BXORSHIFT LPAREN REG_A COMMA REG_A COMMA CCREG RPAREN  */
@@ -4964,7 +4958,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 4968 "config/bfin-parse.c"
+#line 4962 "config/bfin-parse.c"
     break;
 
   case 125: /* asm_1: BITCLR LPAREN REG COMMA expr RPAREN  */
@@ -4978,7 +4972,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4982 "config/bfin-parse.c"
+#line 4976 "config/bfin-parse.c"
     break;
 
   case 126: /* asm_1: BITSET LPAREN REG COMMA expr RPAREN  */
@@ -4992,7 +4986,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 4996 "config/bfin-parse.c"
+#line 4990 "config/bfin-parse.c"
     break;
 
   case 127: /* asm_1: BITTGL LPAREN REG COMMA expr RPAREN  */
@@ -5006,10 +5000,10 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 5010 "config/bfin-parse.c"
+#line 5004 "config/bfin-parse.c"
     break;
 
-  case 128: /* asm_1: CCREG _ASSIGN_BANG BITTST LPAREN REG COMMA expr RPAREN  */
+  case 128: /* asm_1: CCREG ASSIGN BANG BITTST LPAREN REG COMMA expr RPAREN  */
 #line 2475 "./config/bfin-parse.y"
         {
 	  if (IS_DREG ((yyvsp[-3].reg)) && IS_UIMM ((yyvsp[-1].expr), 5))
@@ -5020,7 +5014,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch or value error");
 	}
-#line 5024 "config/bfin-parse.c"
+#line 5018 "config/bfin-parse.c"
     break;
 
   case 129: /* asm_1: CCREG ASSIGN BITTST LPAREN REG COMMA expr RPAREN  */
@@ -5034,7 +5028,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch or value error");
 	}
-#line 5038 "config/bfin-parse.c"
+#line 5032 "config/bfin-parse.c"
     break;
 
   case 130: /* asm_1: IF BANG CCREG REG ASSIGN REG  */
@@ -5049,7 +5043,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 5053 "config/bfin-parse.c"
+#line 5047 "config/bfin-parse.c"
     break;
 
   case 131: /* asm_1: IF CCREG REG ASSIGN REG  */
@@ -5064,7 +5058,7 @@ yyreduce:
 	  else
 	    return yyerror ("Register mismatch");
 	}
-#line 5068 "config/bfin-parse.c"
+#line 5062 "config/bfin-parse.c"
     break;
 
   case 132: /* asm_1: IF BANG CCREG JUMP expr  */
@@ -5078,7 +5072,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad jump offset");
 	}
-#line 5082 "config/bfin-parse.c"
+#line 5076 "config/bfin-parse.c"
     break;
 
   case 133: /* asm_1: IF BANG CCREG JUMP expr LPAREN BP RPAREN  */
@@ -5092,7 +5086,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad jump offset");
 	}
-#line 5096 "config/bfin-parse.c"
+#line 5090 "config/bfin-parse.c"
     break;
 
   case 134: /* asm_1: IF CCREG JUMP expr  */
@@ -5106,7 +5100,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad jump offset");
 	}
-#line 5110 "config/bfin-parse.c"
+#line 5104 "config/bfin-parse.c"
     break;
 
   case 135: /* asm_1: IF CCREG JUMP expr LPAREN BP RPAREN  */
@@ -5120,7 +5114,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad jump offset");
 	}
-#line 5124 "config/bfin-parse.c"
+#line 5118 "config/bfin-parse.c"
     break;
 
   case 136: /* asm_1: NOP  */
@@ -5129,7 +5123,7 @@ yyreduce:
 	  notethat ("ProgCtrl: NOP\n");
 	  (yyval.instr) = PROGCTRL (0, 0);
 	}
-#line 5133 "config/bfin-parse.c"
+#line 5127 "config/bfin-parse.c"
     break;
 
   case 137: /* asm_1: RTS  */
@@ -5138,7 +5132,7 @@ yyreduce:
 	  notethat ("ProgCtrl: RTS\n");
 	  (yyval.instr) = PROGCTRL (1, 0);
 	}
-#line 5142 "config/bfin-parse.c"
+#line 5136 "config/bfin-parse.c"
     break;
 
   case 138: /* asm_1: RTI  */
@@ -5147,7 +5141,7 @@ yyreduce:
 	  notethat ("ProgCtrl: RTI\n");
 	  (yyval.instr) = PROGCTRL (1, 1);
 	}
-#line 5151 "config/bfin-parse.c"
+#line 5145 "config/bfin-parse.c"
     break;
 
   case 139: /* asm_1: RTX  */
@@ -5156,7 +5150,7 @@ yyreduce:
 	  notethat ("ProgCtrl: RTX\n");
 	  (yyval.instr) = PROGCTRL (1, 2);
 	}
-#line 5160 "config/bfin-parse.c"
+#line 5154 "config/bfin-parse.c"
     break;
 
   case 140: /* asm_1: RTN  */
@@ -5165,7 +5159,7 @@ yyreduce:
 	  notethat ("ProgCtrl: RTN\n");
 	  (yyval.instr) = PROGCTRL (1, 3);
 	}
-#line 5169 "config/bfin-parse.c"
+#line 5163 "config/bfin-parse.c"
     break;
 
   case 141: /* asm_1: RTE  */
@@ -5174,7 +5168,7 @@ yyreduce:
 	  notethat ("ProgCtrl: RTE\n");
 	  (yyval.instr) = PROGCTRL (1, 4);
 	}
-#line 5178 "config/bfin-parse.c"
+#line 5172 "config/bfin-parse.c"
     break;
 
   case 142: /* asm_1: IDLE  */
@@ -5183,7 +5177,7 @@ yyreduce:
 	  notethat ("ProgCtrl: IDLE\n");
 	  (yyval.instr) = PROGCTRL (2, 0);
 	}
-#line 5187 "config/bfin-parse.c"
+#line 5181 "config/bfin-parse.c"
     break;
 
   case 143: /* asm_1: CSYNC  */
@@ -5192,7 +5186,7 @@ yyreduce:
 	  notethat ("ProgCtrl: CSYNC\n");
 	  (yyval.instr) = PROGCTRL (2, 3);
 	}
-#line 5196 "config/bfin-parse.c"
+#line 5190 "config/bfin-parse.c"
     break;
 
   case 144: /* asm_1: SSYNC  */
@@ -5201,7 +5195,7 @@ yyreduce:
 	  notethat ("ProgCtrl: SSYNC\n");
 	  (yyval.instr) = PROGCTRL (2, 4);
 	}
-#line 5205 "config/bfin-parse.c"
+#line 5199 "config/bfin-parse.c"
     break;
 
   case 145: /* asm_1: EMUEXCPT  */
@@ -5210,7 +5204,7 @@ yyreduce:
 	  notethat ("ProgCtrl: EMUEXCPT\n");
 	  (yyval.instr) = PROGCTRL (2, 5);
 	}
-#line 5214 "config/bfin-parse.c"
+#line 5208 "config/bfin-parse.c"
     break;
 
   case 146: /* asm_1: CLI REG  */
@@ -5224,7 +5218,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dreg expected for CLI");
 	}
-#line 5228 "config/bfin-parse.c"
+#line 5222 "config/bfin-parse.c"
     break;
 
   case 147: /* asm_1: STI REG  */
@@ -5238,7 +5232,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dreg expected for STI");
 	}
-#line 5242 "config/bfin-parse.c"
+#line 5236 "config/bfin-parse.c"
     break;
 
   case 148: /* asm_1: JUMP LPAREN REG RPAREN  */
@@ -5252,7 +5246,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register for indirect jump");
 	}
-#line 5256 "config/bfin-parse.c"
+#line 5250 "config/bfin-parse.c"
     break;
 
   case 149: /* asm_1: CALL LPAREN REG RPAREN  */
@@ -5266,7 +5260,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register for indirect call");
 	}
-#line 5270 "config/bfin-parse.c"
+#line 5264 "config/bfin-parse.c"
     break;
 
   case 150: /* asm_1: CALL LPAREN PC PLUS REG RPAREN  */
@@ -5280,7 +5274,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register for indirect call");
 	}
-#line 5284 "config/bfin-parse.c"
+#line 5278 "config/bfin-parse.c"
     break;
 
   case 151: /* asm_1: JUMP LPAREN PC PLUS REG RPAREN  */
@@ -5294,7 +5288,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register for indirect jump");
 	}
-#line 5298 "config/bfin-parse.c"
+#line 5292 "config/bfin-parse.c"
     break;
 
   case 152: /* asm_1: RAISE expr  */
@@ -5308,7 +5302,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad value for RAISE");
 	}
-#line 5312 "config/bfin-parse.c"
+#line 5306 "config/bfin-parse.c"
     break;
 
   case 153: /* asm_1: EXCPT expr  */
@@ -5317,7 +5311,7 @@ yyreduce:
 		notethat ("ProgCtrl: EMUEXCPT\n");
 		(yyval.instr) = PROGCTRL (10, uimm4 ((yyvsp[0].expr)));
 	}
-#line 5321 "config/bfin-parse.c"
+#line 5315 "config/bfin-parse.c"
     break;
 
   case 154: /* asm_1: TESTSET LPAREN REG RPAREN  */
@@ -5334,7 +5328,7 @@ yyreduce:
 	  else
 	    return yyerror ("Preg expected");
 	}
-#line 5338 "config/bfin-parse.c"
+#line 5332 "config/bfin-parse.c"
     break;
 
   case 155: /* asm_1: JUMP expr  */
@@ -5348,7 +5342,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad value for relative jump");
 	}
-#line 5352 "config/bfin-parse.c"
+#line 5346 "config/bfin-parse.c"
     break;
 
   case 156: /* asm_1: JUMP_DOT_S expr  */
@@ -5362,7 +5356,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad value for relative jump");
 	}
-#line 5366 "config/bfin-parse.c"
+#line 5360 "config/bfin-parse.c"
     break;
 
   case 157: /* asm_1: JUMP_DOT_L expr  */
@@ -5376,7 +5370,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad value for long jump");
 	}
-#line 5380 "config/bfin-parse.c"
+#line 5374 "config/bfin-parse.c"
     break;
 
   case 158: /* asm_1: JUMP_DOT_L pltpc  */
@@ -5390,7 +5384,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad value for long jump");
 	}
-#line 5394 "config/bfin-parse.c"
+#line 5388 "config/bfin-parse.c"
     break;
 
   case 159: /* asm_1: CALL expr  */
@@ -5404,7 +5398,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad call address");
 	}
-#line 5408 "config/bfin-parse.c"
+#line 5402 "config/bfin-parse.c"
     break;
 
   case 160: /* asm_1: CALL pltpc  */
@@ -5418,7 +5412,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad call address");
 	}
-#line 5422 "config/bfin-parse.c"
+#line 5416 "config/bfin-parse.c"
     break;
 
   case 161: /* asm_1: DIVQ LPAREN REG COMMA REG RPAREN  */
@@ -5429,7 +5423,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad registers for DIVQ");
 	}
-#line 5433 "config/bfin-parse.c"
+#line 5427 "config/bfin-parse.c"
     break;
 
   case 162: /* asm_1: DIVS LPAREN REG COMMA REG RPAREN  */
@@ -5440,7 +5434,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad registers for DIVS");
 	}
-#line 5444 "config/bfin-parse.c"
+#line 5438 "config/bfin-parse.c"
     break;
 
   case 163: /* asm_1: REG ASSIGN MINUS REG vsmod  */
@@ -5467,7 +5461,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 5471 "config/bfin-parse.c"
+#line 5465 "config/bfin-parse.c"
     break;
 
   case 164: /* asm_1: REG ASSIGN TILDA REG  */
@@ -5481,7 +5475,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 5485 "config/bfin-parse.c"
+#line 5479 "config/bfin-parse.c"
     break;
 
   case 165: /* asm_1: REG _GREATER_GREATER_ASSIGN REG  */
@@ -5495,7 +5489,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 5499 "config/bfin-parse.c"
+#line 5493 "config/bfin-parse.c"
     break;
 
   case 166: /* asm_1: REG _GREATER_GREATER_ASSIGN expr  */
@@ -5509,7 +5503,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected or value error");
 	}
-#line 5513 "config/bfin-parse.c"
+#line 5507 "config/bfin-parse.c"
     break;
 
   case 167: /* asm_1: REG _GREATER_GREATER_GREATER_THAN_ASSIGN REG  */
@@ -5523,7 +5517,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 5527 "config/bfin-parse.c"
+#line 5521 "config/bfin-parse.c"
     break;
 
   case 168: /* asm_1: REG _LESS_LESS_ASSIGN REG  */
@@ -5537,7 +5531,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 5541 "config/bfin-parse.c"
+#line 5535 "config/bfin-parse.c"
     break;
 
   case 169: /* asm_1: REG _LESS_LESS_ASSIGN expr  */
@@ -5551,7 +5545,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected or const value error");
 	}
-#line 5555 "config/bfin-parse.c"
+#line 5549 "config/bfin-parse.c"
     break;
 
   case 170: /* asm_1: REG _GREATER_GREATER_GREATER_THAN_ASSIGN expr  */
@@ -5565,7 +5559,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 5569 "config/bfin-parse.c"
+#line 5563 "config/bfin-parse.c"
     break;
 
   case 171: /* asm_1: FLUSH LBRACK REG RBRACK  */
@@ -5577,7 +5571,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register(s) for FLUSH");
 	}
-#line 5581 "config/bfin-parse.c"
+#line 5575 "config/bfin-parse.c"
     break;
 
   case 172: /* asm_1: FLUSH reg_with_postinc  */
@@ -5591,7 +5585,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register(s) for FLUSH");
 	}
-#line 5595 "config/bfin-parse.c"
+#line 5589 "config/bfin-parse.c"
     break;
 
   case 173: /* asm_1: FLUSHINV LBRACK REG RBRACK  */
@@ -5605,7 +5599,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register(s) for FLUSH");
 	}
-#line 5609 "config/bfin-parse.c"
+#line 5603 "config/bfin-parse.c"
     break;
 
   case 174: /* asm_1: FLUSHINV reg_with_postinc  */
@@ -5619,7 +5613,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register(s) for FLUSH");
 	}
-#line 5623 "config/bfin-parse.c"
+#line 5617 "config/bfin-parse.c"
     break;
 
   case 175: /* asm_1: IFLUSH LBRACK REG RBRACK  */
@@ -5633,7 +5627,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register(s) for FLUSH");
 	}
-#line 5637 "config/bfin-parse.c"
+#line 5631 "config/bfin-parse.c"
     break;
 
   case 176: /* asm_1: IFLUSH reg_with_postinc  */
@@ -5647,7 +5641,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register(s) for FLUSH");
 	}
-#line 5651 "config/bfin-parse.c"
+#line 5645 "config/bfin-parse.c"
     break;
 
   case 177: /* asm_1: PREFETCH LBRACK REG RBRACK  */
@@ -5661,7 +5655,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register(s) for PREFETCH");
 	}
-#line 5665 "config/bfin-parse.c"
+#line 5659 "config/bfin-parse.c"
     break;
 
   case 178: /* asm_1: PREFETCH reg_with_postinc  */
@@ -5675,7 +5669,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register(s) for PREFETCH");
 	}
-#line 5679 "config/bfin-parse.c"
+#line 5673 "config/bfin-parse.c"
     break;
 
   case 179: /* asm_1: B LBRACK REG post_op RBRACK ASSIGN REG  */
@@ -5689,7 +5683,7 @@ yyreduce:
 	  notethat ("LDST: B [ pregs <post_op> ] = dregs\n");
 	  (yyval.instr) = LDST (&(yyvsp[-4].reg), &(yyvsp[0].reg), (yyvsp[-3].modcodes).x0, 2, 0, 1);
 	}
-#line 5693 "config/bfin-parse.c"
+#line 5687 "config/bfin-parse.c"
     break;
 
   case 180: /* asm_1: B LBRACK REG plus_minus expr RBRACK ASSIGN REG  */
@@ -5716,7 +5710,7 @@ yyreduce:
 	  else
 	    return yyerror ("Displacement out of range");
 	}
-#line 5720 "config/bfin-parse.c"
+#line 5714 "config/bfin-parse.c"
     break;
 
   case 181: /* asm_1: W LBRACK REG plus_minus expr RBRACK ASSIGN REG  */
@@ -5748,7 +5742,7 @@ yyreduce:
 	  else
 	    return yyerror ("Displacement out of range");
 	}
-#line 5752 "config/bfin-parse.c"
+#line 5746 "config/bfin-parse.c"
     break;
 
   case 182: /* asm_1: W LBRACK REG post_op RBRACK ASSIGN REG  */
@@ -5762,7 +5756,7 @@ yyreduce:
 	  notethat ("LDST: W [ pregs <post_op> ] = dregs\n");
 	  (yyval.instr) = LDST (&(yyvsp[-4].reg), &(yyvsp[0].reg), (yyvsp[-3].modcodes).x0, 1, 0, 1);
 	}
-#line 5766 "config/bfin-parse.c"
+#line 5760 "config/bfin-parse.c"
     break;
 
   case 183: /* asm_1: W LBRACK REG post_op RBRACK ASSIGN HALF_REG  */
@@ -5789,7 +5783,7 @@ yyreduce:
 	      (yyval.instr) = LDSTPMOD (&(yyvsp[-4].reg), &(yyvsp[0].reg), &(yyvsp[-4].reg), 1 + IS_H ((yyvsp[0].reg)), 1);
 	    }
 	}
-#line 5793 "config/bfin-parse.c"
+#line 5787 "config/bfin-parse.c"
     break;
 
   case 184: /* asm_1: LBRACK REG plus_minus expr RBRACK ASSIGN REG  */
@@ -5829,7 +5823,7 @@ yyreduce:
 	  else
 	    return yyerror ("Displacement out of range");
 	}
-#line 5833 "config/bfin-parse.c"
+#line 5827 "config/bfin-parse.c"
     break;
 
   case 185: /* asm_1: REG ASSIGN W LBRACK REG plus_minus expr RBRACK xpmod  */
@@ -5860,7 +5854,7 @@ yyreduce:
 	  else
 	    return yyerror ("Displacement out of range");
 	}
-#line 5864 "config/bfin-parse.c"
+#line 5858 "config/bfin-parse.c"
     break;
 
   case 186: /* asm_1: HALF_REG ASSIGN W LBRACK REG post_op RBRACK  */
@@ -5887,7 +5881,7 @@ yyreduce:
 	      (yyval.instr) = LDSTPMOD (&(yyvsp[-2].reg), &(yyvsp[-6].reg), &(yyvsp[-2].reg), 1 + IS_H ((yyvsp[-6].reg)), 0);
 	    }
 	}
-#line 5891 "config/bfin-parse.c"
+#line 5885 "config/bfin-parse.c"
     break;
 
   case 187: /* asm_1: REG ASSIGN W LBRACK REG post_op RBRACK xpmod  */
@@ -5901,7 +5895,7 @@ yyreduce:
 	  notethat ("LDST: dregs = W [ pregs <post_op> ] (.)\n");
 	  (yyval.instr) = LDST (&(yyvsp[-3].reg), &(yyvsp[-7].reg), (yyvsp[-2].modcodes).x0, 1, (yyvsp[0].r0).r0, 0);
 	}
-#line 5905 "config/bfin-parse.c"
+#line 5899 "config/bfin-parse.c"
     break;
 
   case 188: /* asm_1: REG ASSIGN W LBRACK REG _PLUS_PLUS REG RBRACK xpmod  */
@@ -5915,7 +5909,7 @@ yyreduce:
 	  notethat ("LDSTpmod: dregs = W [ pregs ++ pregs ] (.)\n");
 	  (yyval.instr) = LDSTPMOD (&(yyvsp[-4].reg), &(yyvsp[-8].reg), &(yyvsp[-2].reg), 3, (yyvsp[0].r0).r0);
 	}
-#line 5919 "config/bfin-parse.c"
+#line 5913 "config/bfin-parse.c"
     break;
 
   case 189: /* asm_1: HALF_REG ASSIGN W LBRACK REG _PLUS_PLUS REG RBRACK  */
@@ -5929,7 +5923,7 @@ yyreduce:
 	  notethat ("LDSTpmod: dregs_half = W [ pregs ++ pregs ]\n");
 	  (yyval.instr) = LDSTPMOD (&(yyvsp[-3].reg), &(yyvsp[-7].reg), &(yyvsp[-1].reg), 1 + IS_H ((yyvsp[-7].reg)), 0);
 	}
-#line 5933 "config/bfin-parse.c"
+#line 5927 "config/bfin-parse.c"
     break;
 
   case 190: /* asm_1: LBRACK REG post_op RBRACK ASSIGN REG  */
@@ -5958,7 +5952,7 @@ yyreduce:
 	      (yyval.instr) = LDST (&(yyvsp[-4].reg), &(yyvsp[0].reg), (yyvsp[-3].modcodes).x0, 0, 1, 1);
 	    }
 	}
-#line 5962 "config/bfin-parse.c"
+#line 5956 "config/bfin-parse.c"
     break;
 
   case 191: /* asm_1: LBRACK REG _PLUS_PLUS REG RBRACK ASSIGN REG  */
@@ -5980,7 +5974,7 @@ yyreduce:
 	  else
 	    return yyerror ("Preg ++ Preg or Ireg ++ Mreg expected in address");
 	}
-#line 5984 "config/bfin-parse.c"
+#line 5978 "config/bfin-parse.c"
     break;
 
   case 192: /* asm_1: W LBRACK REG _PLUS_PLUS REG RBRACK ASSIGN HALF_REG  */
@@ -5997,7 +5991,7 @@ yyreduce:
 	  else
 	    return yyerror ("Preg ++ Preg expected in address");
 	}
-#line 6001 "config/bfin-parse.c"
+#line 5995 "config/bfin-parse.c"
     break;
 
   case 193: /* asm_1: REG ASSIGN B LBRACK REG plus_minus expr RBRACK xpmod  */
@@ -6024,7 +6018,7 @@ yyreduce:
 	  else
 	    return yyerror ("Displacement out of range");
 	}
-#line 6028 "config/bfin-parse.c"
+#line 6022 "config/bfin-parse.c"
     break;
 
   case 194: /* asm_1: REG ASSIGN B LBRACK REG post_op RBRACK xpmod  */
@@ -6039,7 +6033,7 @@ yyreduce:
 		    (yyvsp[0].r0).r0 ? 'X' : 'Z');
 	  (yyval.instr) = LDST (&(yyvsp[-3].reg), &(yyvsp[-7].reg), (yyvsp[-2].modcodes).x0, 2, (yyvsp[0].r0).r0, 0);
 	}
-#line 6043 "config/bfin-parse.c"
+#line 6037 "config/bfin-parse.c"
     break;
 
   case 195: /* asm_1: REG ASSIGN LBRACK REG _PLUS_PLUS REG RBRACK  */
@@ -6061,7 +6055,7 @@ yyreduce:
 	  else
 	    return yyerror ("Preg ++ Preg or Ireg ++ Mreg expected in address");
 	}
-#line 6065 "config/bfin-parse.c"
+#line 6059 "config/bfin-parse.c"
     break;
 
   case 196: /* asm_1: REG ASSIGN LBRACK REG plus_minus got_or_expr RBRACK  */
@@ -6110,7 +6104,7 @@ yyreduce:
 	  else
 	    return yyerror ("Displacement out of range");
 	}
-#line 6114 "config/bfin-parse.c"
+#line 6108 "config/bfin-parse.c"
     break;
 
   case 197: /* asm_1: REG ASSIGN LBRACK REG post_op RBRACK  */
@@ -6148,7 +6142,7 @@ yyreduce:
 	      (yyval.instr) = PUSHPOPREG (&(yyvsp[-5].reg), 0);
 	    }
 	}
-#line 6152 "config/bfin-parse.c"
+#line 6146 "config/bfin-parse.c"
     break;
 
   case 198: /* asm_1: reg_with_predec ASSIGN LPAREN REG COLON expr COMMA REG COLON expr RPAREN  */
@@ -6167,7 +6161,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register for PushPopMultiple");
 	}
-#line 6171 "config/bfin-parse.c"
+#line 6165 "config/bfin-parse.c"
     break;
 
   case 199: /* asm_1: reg_with_predec ASSIGN LPAREN REG COLON expr RPAREN  */
@@ -6189,7 +6183,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register for PushPopMultiple");
 	}
-#line 6193 "config/bfin-parse.c"
+#line 6187 "config/bfin-parse.c"
     break;
 
   case 200: /* asm_1: LPAREN REG COLON expr COMMA REG COLON expr RPAREN ASSIGN reg_with_postinc  */
@@ -6206,7 +6200,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register range for PushPopMultiple");
 	}
-#line 6210 "config/bfin-parse.c"
+#line 6204 "config/bfin-parse.c"
     break;
 
   case 201: /* asm_1: LPAREN REG COLON expr RPAREN ASSIGN reg_with_postinc  */
@@ -6228,7 +6222,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register range for PushPopMultiple");
 	}
-#line 6232 "config/bfin-parse.c"
+#line 6226 "config/bfin-parse.c"
     break;
 
   case 202: /* asm_1: reg_with_predec ASSIGN REG  */
@@ -6245,7 +6239,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register for PushPopReg");
 	}
-#line 6249 "config/bfin-parse.c"
+#line 6243 "config/bfin-parse.c"
     break;
 
   case 203: /* asm_1: LINK expr  */
@@ -6256,7 +6250,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad constant for LINK");
 	}
-#line 6260 "config/bfin-parse.c"
+#line 6254 "config/bfin-parse.c"
     break;
 
   case 204: /* asm_1: UNLINK  */
@@ -6265,7 +6259,7 @@ yyreduce:
 		notethat ("linkage: UNLINK\n");
 		(yyval.instr) = LINKAGE (1, 0);
 	}
-#line 6269 "config/bfin-parse.c"
+#line 6263 "config/bfin-parse.c"
     break;
 
   case 205: /* asm_1: LSETUP LPAREN expr COMMA expr RPAREN REG  */
@@ -6280,7 +6274,7 @@ yyreduce:
 	    return yyerror ("Bad register or values for LSETUP");
 
 	}
-#line 6284 "config/bfin-parse.c"
+#line 6278 "config/bfin-parse.c"
     break;
 
   case 206: /* asm_1: LSETUP LPAREN expr COMMA expr RPAREN REG ASSIGN REG  */
@@ -6295,7 +6289,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register or values for LSETUP");
 	}
-#line 6299 "config/bfin-parse.c"
+#line 6293 "config/bfin-parse.c"
     break;
 
   case 207: /* asm_1: LSETUP LPAREN expr COMMA expr RPAREN REG ASSIGN REG GREATER_GREATER expr  */
@@ -6311,7 +6305,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register or values for LSETUP");
 	}
-#line 6315 "config/bfin-parse.c"
+#line 6309 "config/bfin-parse.c"
     break;
 
   case 208: /* asm_1: LOOP expr REG  */
@@ -6323,7 +6317,7 @@ yyreduce:
             return yyerror ("Invalid loop counter register");
 	(yyval.instr) = bfin_gen_loop ((yyvsp[-1].expr), &(yyvsp[0].reg), 0, 0);
 	}
-#line 6327 "config/bfin-parse.c"
+#line 6321 "config/bfin-parse.c"
     break;
 
   case 209: /* asm_1: LOOP expr REG ASSIGN REG  */
@@ -6337,7 +6331,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register or values for LOOP");
 	}
-#line 6341 "config/bfin-parse.c"
+#line 6335 "config/bfin-parse.c"
     break;
 
   case 210: /* asm_1: LOOP expr REG ASSIGN REG GREATER_GREATER expr  */
@@ -6351,7 +6345,7 @@ yyreduce:
 	  else
 	    return yyerror ("Bad register or values for LOOP");
 	}
-#line 6355 "config/bfin-parse.c"
+#line 6349 "config/bfin-parse.c"
     break;
 
   case 211: /* asm_1: LOOP_BEGIN NUMBER  */
@@ -6366,7 +6360,7 @@ yyreduce:
 	  bfin_loop_beginend (tmp, 1);
 	  (yyval.instr) = 0;
 	}
-#line 6370 "config/bfin-parse.c"
+#line 6364 "config/bfin-parse.c"
     break;
 
   case 212: /* asm_1: LOOP_BEGIN expr  */
@@ -6378,7 +6372,7 @@ yyreduce:
 	  bfin_loop_beginend ((yyvsp[0].expr), 1);
 	  (yyval.instr) = 0;
 	}
-#line 6382 "config/bfin-parse.c"
+#line 6376 "config/bfin-parse.c"
     break;
 
   case 213: /* asm_1: LOOP_END NUMBER  */
@@ -6393,7 +6387,7 @@ yyreduce:
 	  bfin_loop_beginend (tmp, 0);
 	  (yyval.instr) = 0;
 	}
-#line 6397 "config/bfin-parse.c"
+#line 6391 "config/bfin-parse.c"
     break;
 
   case 214: /* asm_1: LOOP_END expr  */
@@ -6405,7 +6399,7 @@ yyreduce:
 	  bfin_loop_beginend ((yyvsp[0].expr), 0);
 	  (yyval.instr) = 0;
 	}
-#line 6409 "config/bfin-parse.c"
+#line 6403 "config/bfin-parse.c"
     break;
 
   case 215: /* asm_1: ABORT  */
@@ -6414,7 +6408,7 @@ yyreduce:
 	  notethat ("psedoDEBUG: ABORT\n");
 	  (yyval.instr) = bfin_gen_pseudodbg (3, 3, 0);
 	}
-#line 6418 "config/bfin-parse.c"
+#line 6412 "config/bfin-parse.c"
     break;
 
   case 216: /* asm_1: DBG  */
@@ -6423,7 +6417,7 @@ yyreduce:
 	  notethat ("pseudoDEBUG: DBG\n");
 	  (yyval.instr) = bfin_gen_pseudodbg (3, 7, 0);
 	}
-#line 6427 "config/bfin-parse.c"
+#line 6421 "config/bfin-parse.c"
     break;
 
   case 217: /* asm_1: DBG REG_A  */
@@ -6432,7 +6426,7 @@ yyreduce:
 	  notethat ("pseudoDEBUG: DBG REG_A\n");
 	  (yyval.instr) = bfin_gen_pseudodbg (3, IS_A1 ((yyvsp[0].reg)), 0);
 	}
-#line 6436 "config/bfin-parse.c"
+#line 6430 "config/bfin-parse.c"
     break;
 
   case 218: /* asm_1: DBG REG  */
@@ -6441,7 +6435,7 @@ yyreduce:
 	  notethat ("pseudoDEBUG: DBG allregs\n");
 	  (yyval.instr) = bfin_gen_pseudodbg (0, (yyvsp[0].reg).regno & CODE_MASK, ((yyvsp[0].reg).regno & CLASS_MASK) >> 4);
 	}
-#line 6445 "config/bfin-parse.c"
+#line 6439 "config/bfin-parse.c"
     break;
 
   case 219: /* asm_1: DBGCMPLX LPAREN REG RPAREN  */
@@ -6452,7 +6446,7 @@ yyreduce:
 	  notethat ("pseudoDEBUG: DBGCMPLX (dregs )\n");
 	  (yyval.instr) = bfin_gen_pseudodbg (3, 6, ((yyvsp[-1].reg).regno & CODE_MASK) >> 4);
 	}
-#line 6456 "config/bfin-parse.c"
+#line 6450 "config/bfin-parse.c"
     break;
 
   case 220: /* asm_1: DBGHALT  */
@@ -6461,7 +6455,7 @@ yyreduce:
 	  notethat ("psedoDEBUG: DBGHALT\n");
 	  (yyval.instr) = bfin_gen_pseudodbg (3, 5, 0);
 	}
-#line 6465 "config/bfin-parse.c"
+#line 6459 "config/bfin-parse.c"
     break;
 
   case 221: /* asm_1: HLT  */
@@ -6470,7 +6464,7 @@ yyreduce:
 	  notethat ("psedoDEBUG: HLT\n");
 	  (yyval.instr) = bfin_gen_pseudodbg (3, 4, 0);
 	}
-#line 6474 "config/bfin-parse.c"
+#line 6468 "config/bfin-parse.c"
     break;
 
   case 222: /* asm_1: DBGA LPAREN HALF_REG COMMA expr RPAREN  */
@@ -6479,7 +6473,7 @@ yyreduce:
 	  notethat ("pseudodbg_assert: DBGA (regs_lo/hi , uimm16 )\n");
 	  (yyval.instr) = bfin_gen_pseudodbg_assert (IS_H ((yyvsp[-3].reg)), &(yyvsp[-3].reg), uimm16 ((yyvsp[-1].expr)));
 	}
-#line 6483 "config/bfin-parse.c"
+#line 6477 "config/bfin-parse.c"
     break;
 
   case 223: /* asm_1: DBGAH LPAREN REG COMMA expr RPAREN  */
@@ -6488,7 +6482,7 @@ yyreduce:
 	  notethat ("pseudodbg_assert: DBGAH (regs , uimm16 )\n");
 	  (yyval.instr) = bfin_gen_pseudodbg_assert (3, &(yyvsp[-3].reg), uimm16 ((yyvsp[-1].expr)));
 	}
-#line 6492 "config/bfin-parse.c"
+#line 6486 "config/bfin-parse.c"
     break;
 
   case 224: /* asm_1: DBGAL LPAREN REG COMMA expr RPAREN  */
@@ -6497,7 +6491,7 @@ yyreduce:
 	  notethat ("psedodbg_assert: DBGAL (regs , uimm16 )\n");
 	  (yyval.instr) = bfin_gen_pseudodbg_assert (2, &(yyvsp[-3].reg), uimm16 ((yyvsp[-1].expr)));
 	}
-#line 6501 "config/bfin-parse.c"
+#line 6495 "config/bfin-parse.c"
     break;
 
   case 225: /* asm_1: OUTC expr  */
@@ -6508,7 +6502,7 @@ yyreduce:
 	  notethat ("psedodbg_assert: OUTC uimm8\n");
 	  (yyval.instr) = bfin_gen_pseudochr (uimm8 ((yyvsp[0].expr)));
 	}
-#line 6512 "config/bfin-parse.c"
+#line 6506 "config/bfin-parse.c"
     break;
 
   case 226: /* asm_1: OUTC REG  */
@@ -6519,7 +6513,7 @@ yyreduce:
 	  notethat ("psedodbg_assert: OUTC dreg\n");
 	  (yyval.instr) = bfin_gen_pseudodbg (2, (yyvsp[0].reg).regno & CODE_MASK, 0);
 	}
-#line 6523 "config/bfin-parse.c"
+#line 6517 "config/bfin-parse.c"
     break;
 
   case 227: /* REG_A: REG_A_DOUBLE_ZERO  */
@@ -6527,7 +6521,7 @@ yyreduce:
         {
 	(yyval.reg) = (yyvsp[0].reg);
 	}
-#line 6531 "config/bfin-parse.c"
+#line 6525 "config/bfin-parse.c"
     break;
 
   case 228: /* REG_A: REG_A_DOUBLE_ONE  */
@@ -6535,7 +6529,7 @@ yyreduce:
         {
 	(yyval.reg) = (yyvsp[0].reg);
 	}
-#line 6539 "config/bfin-parse.c"
+#line 6533 "config/bfin-parse.c"
     break;
 
   case 229: /* opt_mode: %empty  */
@@ -6544,7 +6538,7 @@ yyreduce:
 	(yyval.mod).MM = 0;
 	(yyval.mod).mod = 0;
 	}
-#line 6548 "config/bfin-parse.c"
+#line 6542 "config/bfin-parse.c"
     break;
 
   case 230: /* opt_mode: LPAREN M COMMA MMOD RPAREN  */
@@ -6553,7 +6547,7 @@ yyreduce:
 	(yyval.mod).MM = 1;
 	(yyval.mod).mod = (yyvsp[-1].value);
 	}
-#line 6557 "config/bfin-parse.c"
+#line 6551 "config/bfin-parse.c"
     break;
 
   case 231: /* opt_mode: LPAREN MMOD COMMA M RPAREN  */
@@ -6562,7 +6556,7 @@ yyreduce:
 	(yyval.mod).MM = 1;
 	(yyval.mod).mod = (yyvsp[-3].value);
 	}
-#line 6566 "config/bfin-parse.c"
+#line 6560 "config/bfin-parse.c"
     break;
 
   case 232: /* opt_mode: LPAREN MMOD RPAREN  */
@@ -6571,7 +6565,7 @@ yyreduce:
 	(yyval.mod).MM = 0;
 	(yyval.mod).mod = (yyvsp[-1].value);
 	}
-#line 6575 "config/bfin-parse.c"
+#line 6569 "config/bfin-parse.c"
     break;
 
   case 233: /* opt_mode: LPAREN M RPAREN  */
@@ -6580,7 +6574,7 @@ yyreduce:
 	(yyval.mod).MM = 1;
 	(yyval.mod).mod = 0;
 	}
-#line 6584 "config/bfin-parse.c"
+#line 6578 "config/bfin-parse.c"
     break;
 
   case 234: /* asr_asl: LPAREN ASL RPAREN  */
@@ -6588,7 +6582,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 1;
 	}
-#line 6592 "config/bfin-parse.c"
+#line 6586 "config/bfin-parse.c"
     break;
 
   case 235: /* asr_asl: LPAREN ASR RPAREN  */
@@ -6596,7 +6590,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 6600 "config/bfin-parse.c"
+#line 6594 "config/bfin-parse.c"
     break;
 
   case 236: /* sco: %empty  */
@@ -6605,7 +6599,7 @@ yyreduce:
 	(yyval.modcodes).s0 = 0;
 	(yyval.modcodes).x0 = 0;
 	}
-#line 6609 "config/bfin-parse.c"
+#line 6603 "config/bfin-parse.c"
     break;
 
   case 237: /* sco: S  */
@@ -6614,7 +6608,7 @@ yyreduce:
 	(yyval.modcodes).s0 = 1;
 	(yyval.modcodes).x0 = 0;
 	}
-#line 6618 "config/bfin-parse.c"
+#line 6612 "config/bfin-parse.c"
     break;
 
   case 238: /* sco: CO  */
@@ -6623,7 +6617,7 @@ yyreduce:
 	(yyval.modcodes).s0 = 0;
 	(yyval.modcodes).x0 = 1;
 	}
-#line 6627 "config/bfin-parse.c"
+#line 6621 "config/bfin-parse.c"
     break;
 
   case 239: /* sco: SCO  */
@@ -6632,7 +6626,7 @@ yyreduce:
 	(yyval.modcodes).s0 = 1;
 	(yyval.modcodes).x0 = 1;
 	}
-#line 6636 "config/bfin-parse.c"
+#line 6630 "config/bfin-parse.c"
     break;
 
   case 240: /* asr_asl_0: ASL  */
@@ -6640,7 +6634,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 1;
 	}
-#line 6644 "config/bfin-parse.c"
+#line 6638 "config/bfin-parse.c"
     break;
 
   case 241: /* asr_asl_0: ASR  */
@@ -6648,7 +6642,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 6652 "config/bfin-parse.c"
+#line 6646 "config/bfin-parse.c"
     break;
 
   case 242: /* amod0: %empty  */
@@ -6657,7 +6651,7 @@ yyreduce:
 	(yyval.modcodes).s0 = 0;
 	(yyval.modcodes).x0 = 0;
 	}
-#line 6661 "config/bfin-parse.c"
+#line 6655 "config/bfin-parse.c"
     break;
 
   case 243: /* amod0: LPAREN sco RPAREN  */
@@ -6666,7 +6660,7 @@ yyreduce:
 	(yyval.modcodes).s0 = (yyvsp[-1].modcodes).s0;
 	(yyval.modcodes).x0 = (yyvsp[-1].modcodes).x0;
 	}
-#line 6670 "config/bfin-parse.c"
+#line 6664 "config/bfin-parse.c"
     break;
 
   case 244: /* amod1: %empty  */
@@ -6676,7 +6670,7 @@ yyreduce:
 	(yyval.modcodes).x0 = 0;
 	(yyval.modcodes).aop = 0;
 	}
-#line 6680 "config/bfin-parse.c"
+#line 6674 "config/bfin-parse.c"
     break;
 
   case 245: /* amod1: LPAREN NS RPAREN  */
@@ -6686,7 +6680,7 @@ yyreduce:
 	(yyval.modcodes).x0 = 0;
 	(yyval.modcodes).aop = 1;
 	}
-#line 6690 "config/bfin-parse.c"
+#line 6684 "config/bfin-parse.c"
     break;
 
   case 246: /* amod1: LPAREN S RPAREN  */
@@ -6696,7 +6690,7 @@ yyreduce:
 	(yyval.modcodes).x0 = 0;
 	(yyval.modcodes).aop = 1;
 	}
-#line 6700 "config/bfin-parse.c"
+#line 6694 "config/bfin-parse.c"
     break;
 
   case 247: /* amod2: %empty  */
@@ -6706,7 +6700,7 @@ yyreduce:
 	(yyval.modcodes).s0 = 0;
 	(yyval.modcodes).x0 = 0;
 	}
-#line 6710 "config/bfin-parse.c"
+#line 6704 "config/bfin-parse.c"
     break;
 
   case 248: /* amod2: LPAREN asr_asl_0 RPAREN  */
@@ -6716,7 +6710,7 @@ yyreduce:
 	(yyval.modcodes).s0 = 0;
 	(yyval.modcodes).x0 = 0;
 	}
-#line 6720 "config/bfin-parse.c"
+#line 6714 "config/bfin-parse.c"
     break;
 
   case 249: /* amod2: LPAREN sco RPAREN  */
@@ -6726,7 +6720,7 @@ yyreduce:
 	(yyval.modcodes).s0 = (yyvsp[-1].modcodes).s0;
 	(yyval.modcodes).x0 = (yyvsp[-1].modcodes).x0;
 	}
-#line 6730 "config/bfin-parse.c"
+#line 6724 "config/bfin-parse.c"
     break;
 
   case 250: /* amod2: LPAREN asr_asl_0 COMMA sco RPAREN  */
@@ -6736,7 +6730,7 @@ yyreduce:
 	(yyval.modcodes).s0 = (yyvsp[-1].modcodes).s0;
 	(yyval.modcodes).x0 = (yyvsp[-1].modcodes).x0;
 	}
-#line 6740 "config/bfin-parse.c"
+#line 6734 "config/bfin-parse.c"
     break;
 
   case 251: /* amod2: LPAREN sco COMMA asr_asl_0 RPAREN  */
@@ -6746,7 +6740,7 @@ yyreduce:
 	(yyval.modcodes).s0 = (yyvsp[-3].modcodes).s0;
 	(yyval.modcodes).x0 = (yyvsp[-3].modcodes).x0;
 	}
-#line 6750 "config/bfin-parse.c"
+#line 6744 "config/bfin-parse.c"
     break;
 
   case 252: /* xpmod: %empty  */
@@ -6754,7 +6748,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 6758 "config/bfin-parse.c"
+#line 6752 "config/bfin-parse.c"
     break;
 
   case 253: /* xpmod: LPAREN Z RPAREN  */
@@ -6762,7 +6756,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 6766 "config/bfin-parse.c"
+#line 6760 "config/bfin-parse.c"
     break;
 
   case 254: /* xpmod: LPAREN X RPAREN  */
@@ -6770,7 +6764,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 1;
 	}
-#line 6774 "config/bfin-parse.c"
+#line 6768 "config/bfin-parse.c"
     break;
 
   case 255: /* xpmod1: %empty  */
@@ -6778,7 +6772,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 6782 "config/bfin-parse.c"
+#line 6776 "config/bfin-parse.c"
     break;
 
   case 256: /* xpmod1: LPAREN X RPAREN  */
@@ -6786,7 +6780,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 6790 "config/bfin-parse.c"
+#line 6784 "config/bfin-parse.c"
     break;
 
   case 257: /* xpmod1: LPAREN Z RPAREN  */
@@ -6794,7 +6788,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 1;
 	}
-#line 6798 "config/bfin-parse.c"
+#line 6792 "config/bfin-parse.c"
     break;
 
   case 258: /* vsmod: %empty  */
@@ -6804,7 +6798,7 @@ yyreduce:
 	(yyval.modcodes).s0 = 0;
 	(yyval.modcodes).aop = 0;
 	}
-#line 6808 "config/bfin-parse.c"
+#line 6802 "config/bfin-parse.c"
     break;
 
   case 259: /* vsmod: LPAREN NS RPAREN  */
@@ -6814,7 +6808,7 @@ yyreduce:
 	(yyval.modcodes).s0 = 0;
 	(yyval.modcodes).aop = 3;
 	}
-#line 6818 "config/bfin-parse.c"
+#line 6812 "config/bfin-parse.c"
     break;
 
   case 260: /* vsmod: LPAREN S RPAREN  */
@@ -6824,7 +6818,7 @@ yyreduce:
 	(yyval.modcodes).s0 = 1;
 	(yyval.modcodes).aop = 3;
 	}
-#line 6828 "config/bfin-parse.c"
+#line 6822 "config/bfin-parse.c"
     break;
 
   case 261: /* vsmod: LPAREN V RPAREN  */
@@ -6834,7 +6828,7 @@ yyreduce:
 	(yyval.modcodes).s0 = 0;
 	(yyval.modcodes).aop = 3;
 	}
-#line 6838 "config/bfin-parse.c"
+#line 6832 "config/bfin-parse.c"
     break;
 
   case 262: /* vsmod: LPAREN V COMMA S RPAREN  */
@@ -6843,7 +6837,7 @@ yyreduce:
 	(yyval.modcodes).r0 = 1;
 	(yyval.modcodes).s0 = 1;
 	}
-#line 6847 "config/bfin-parse.c"
+#line 6841 "config/bfin-parse.c"
     break;
 
   case 263: /* vsmod: LPAREN S COMMA V RPAREN  */
@@ -6852,7 +6846,7 @@ yyreduce:
 	(yyval.modcodes).r0 = 1;
 	(yyval.modcodes).s0 = 1;
 	}
-#line 6856 "config/bfin-parse.c"
+#line 6850 "config/bfin-parse.c"
     break;
 
   case 264: /* vmod: %empty  */
@@ -6860,7 +6854,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 6864 "config/bfin-parse.c"
+#line 6858 "config/bfin-parse.c"
     break;
 
   case 265: /* vmod: LPAREN V RPAREN  */
@@ -6868,7 +6862,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 1;
 	}
-#line 6872 "config/bfin-parse.c"
+#line 6866 "config/bfin-parse.c"
     break;
 
   case 266: /* smod: %empty  */
@@ -6876,7 +6870,7 @@ yyreduce:
         {
 	(yyval.modcodes).s0 = 0;
 	}
-#line 6880 "config/bfin-parse.c"
+#line 6874 "config/bfin-parse.c"
     break;
 
   case 267: /* smod: LPAREN S RPAREN  */
@@ -6884,7 +6878,7 @@ yyreduce:
         {
 	(yyval.modcodes).s0 = 1;
 	}
-#line 6888 "config/bfin-parse.c"
+#line 6882 "config/bfin-parse.c"
     break;
 
   case 268: /* searchmod: GE  */
@@ -6892,7 +6886,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 1;
 	}
-#line 6896 "config/bfin-parse.c"
+#line 6890 "config/bfin-parse.c"
     break;
 
   case 269: /* searchmod: GT  */
@@ -6900,7 +6894,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 6904 "config/bfin-parse.c"
+#line 6898 "config/bfin-parse.c"
     break;
 
   case 270: /* searchmod: LE  */
@@ -6908,7 +6902,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 3;
 	}
-#line 6912 "config/bfin-parse.c"
+#line 6906 "config/bfin-parse.c"
     break;
 
   case 271: /* searchmod: LT  */
@@ -6916,7 +6910,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 2;
 	}
-#line 6920 "config/bfin-parse.c"
+#line 6914 "config/bfin-parse.c"
     break;
 
   case 272: /* aligndir: %empty  */
@@ -6924,7 +6918,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 6928 "config/bfin-parse.c"
+#line 6922 "config/bfin-parse.c"
     break;
 
   case 273: /* aligndir: LPAREN R RPAREN  */
@@ -6932,7 +6926,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 1;
 	}
-#line 6936 "config/bfin-parse.c"
+#line 6930 "config/bfin-parse.c"
     break;
 
   case 274: /* byteop_mod: LPAREN R RPAREN  */
@@ -6941,7 +6935,7 @@ yyreduce:
 	(yyval.modcodes).r0 = 0;
 	(yyval.modcodes).s0 = 1;
 	}
-#line 6945 "config/bfin-parse.c"
+#line 6939 "config/bfin-parse.c"
     break;
 
   case 275: /* byteop_mod: LPAREN MMOD RPAREN  */
@@ -6952,7 +6946,7 @@ yyreduce:
 	(yyval.modcodes).r0 = 1;
 	(yyval.modcodes).s0 = 0;
 	}
-#line 6956 "config/bfin-parse.c"
+#line 6950 "config/bfin-parse.c"
     break;
 
   case 276: /* byteop_mod: LPAREN MMOD COMMA R RPAREN  */
@@ -6963,7 +6957,7 @@ yyreduce:
 	(yyval.modcodes).r0 = 1;
 	(yyval.modcodes).s0 = 1;
 	}
-#line 6967 "config/bfin-parse.c"
+#line 6961 "config/bfin-parse.c"
     break;
 
   case 277: /* byteop_mod: LPAREN R COMMA MMOD RPAREN  */
@@ -6974,7 +6968,7 @@ yyreduce:
 	(yyval.modcodes).r0 = 1;
 	(yyval.modcodes).s0 = 1;
 	}
-#line 6978 "config/bfin-parse.c"
+#line 6972 "config/bfin-parse.c"
     break;
 
   case 278: /* c_align: ALIGN8  */
@@ -6982,7 +6976,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 6986 "config/bfin-parse.c"
+#line 6980 "config/bfin-parse.c"
     break;
 
   case 279: /* c_align: ALIGN16  */
@@ -6990,7 +6984,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 1;
 	}
-#line 6994 "config/bfin-parse.c"
+#line 6988 "config/bfin-parse.c"
     break;
 
   case 280: /* c_align: ALIGN24  */
@@ -6998,7 +6992,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 2;
 	}
-#line 7002 "config/bfin-parse.c"
+#line 6996 "config/bfin-parse.c"
     break;
 
   case 281: /* w32_or_nothing: %empty  */
@@ -7006,7 +7000,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 7010 "config/bfin-parse.c"
+#line 7004 "config/bfin-parse.c"
     break;
 
   case 282: /* w32_or_nothing: LPAREN MMOD RPAREN  */
@@ -7017,7 +7011,7 @@ yyreduce:
 	  else
 	    return yyerror ("Only (W32) allowed");
 	}
-#line 7021 "config/bfin-parse.c"
+#line 7015 "config/bfin-parse.c"
     break;
 
   case 283: /* iu_or_nothing: %empty  */
@@ -7025,7 +7019,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 1;
 	}
-#line 7029 "config/bfin-parse.c"
+#line 7023 "config/bfin-parse.c"
     break;
 
   case 284: /* iu_or_nothing: LPAREN MMOD RPAREN  */
@@ -7036,7 +7030,7 @@ yyreduce:
 	  else
 	    return yyerror ("(IU) expected");
 	}
-#line 7040 "config/bfin-parse.c"
+#line 7034 "config/bfin-parse.c"
     break;
 
   case 285: /* reg_with_predec: LBRACK _MINUS_MINUS REG RBRACK  */
@@ -7044,7 +7038,7 @@ yyreduce:
         {
 	(yyval.reg) = (yyvsp[-1].reg);
 	}
-#line 7048 "config/bfin-parse.c"
+#line 7042 "config/bfin-parse.c"
     break;
 
   case 286: /* reg_with_postinc: LBRACK REG _PLUS_PLUS RBRACK  */
@@ -7052,7 +7046,7 @@ yyreduce:
         {
 	(yyval.reg) = (yyvsp[-2].reg);
 	}
-#line 7056 "config/bfin-parse.c"
+#line 7050 "config/bfin-parse.c"
     break;
 
   case 287: /* min_max: MIN  */
@@ -7060,7 +7054,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 1;
 	}
-#line 7064 "config/bfin-parse.c"
+#line 7058 "config/bfin-parse.c"
     break;
 
   case 288: /* min_max: MAX  */
@@ -7068,7 +7062,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 7072 "config/bfin-parse.c"
+#line 7066 "config/bfin-parse.c"
     break;
 
   case 289: /* op_bar_op: _PLUS_BAR_PLUS  */
@@ -7076,7 +7070,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 7080 "config/bfin-parse.c"
+#line 7074 "config/bfin-parse.c"
     break;
 
   case 290: /* op_bar_op: _PLUS_BAR_MINUS  */
@@ -7084,7 +7078,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 1;
 	}
-#line 7088 "config/bfin-parse.c"
+#line 7082 "config/bfin-parse.c"
     break;
 
   case 291: /* op_bar_op: _MINUS_BAR_PLUS  */
@@ -7092,7 +7086,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 2;
 	}
-#line 7096 "config/bfin-parse.c"
+#line 7090 "config/bfin-parse.c"
     break;
 
   case 292: /* op_bar_op: _MINUS_BAR_MINUS  */
@@ -7100,7 +7094,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 3;
 	}
-#line 7104 "config/bfin-parse.c"
+#line 7098 "config/bfin-parse.c"
     break;
 
   case 293: /* plus_minus: PLUS  */
@@ -7108,7 +7102,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 7112 "config/bfin-parse.c"
+#line 7106 "config/bfin-parse.c"
     break;
 
   case 294: /* plus_minus: MINUS  */
@@ -7116,7 +7110,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 1;
 	}
-#line 7120 "config/bfin-parse.c"
+#line 7114 "config/bfin-parse.c"
     break;
 
   case 295: /* rnd_op: LPAREN RNDH RPAREN  */
@@ -7127,7 +7121,7 @@ yyreduce:
 	  (yyval.modcodes).x0 = 0;	/* x.  */
 	  (yyval.modcodes).aop = 0;	/* aop.  */
 	}
-#line 7131 "config/bfin-parse.c"
+#line 7125 "config/bfin-parse.c"
     break;
 
   case 296: /* rnd_op: LPAREN TH RPAREN  */
@@ -7138,7 +7132,7 @@ yyreduce:
 	  (yyval.modcodes).x0 = 0;	/* x.  */
 	  (yyval.modcodes).aop = 1;	/* aop.  */
 	}
-#line 7142 "config/bfin-parse.c"
+#line 7136 "config/bfin-parse.c"
     break;
 
   case 297: /* rnd_op: LPAREN RNDL RPAREN  */
@@ -7149,7 +7143,7 @@ yyreduce:
 	  (yyval.modcodes).x0 = 0;	/* x.  */
 	  (yyval.modcodes).aop = 0;	/* aop.  */
 	}
-#line 7153 "config/bfin-parse.c"
+#line 7147 "config/bfin-parse.c"
     break;
 
   case 298: /* rnd_op: LPAREN TL RPAREN  */
@@ -7160,7 +7154,7 @@ yyreduce:
 	  (yyval.modcodes).x0 = 0;	/* x.  */
 	  (yyval.modcodes).aop = 1;
 	}
-#line 7164 "config/bfin-parse.c"
+#line 7158 "config/bfin-parse.c"
     break;
 
   case 299: /* rnd_op: LPAREN RNDH COMMA R RPAREN  */
@@ -7171,7 +7165,7 @@ yyreduce:
 	  (yyval.modcodes).x0 = 0;	/* x.  */
 	  (yyval.modcodes).aop = 0;	/* aop.  */
 	}
-#line 7175 "config/bfin-parse.c"
+#line 7169 "config/bfin-parse.c"
     break;
 
   case 300: /* rnd_op: LPAREN TH COMMA R RPAREN  */
@@ -7182,7 +7176,7 @@ yyreduce:
 	  (yyval.modcodes).x0 = 0;	/* x.  */
 	  (yyval.modcodes).aop = 1;	/* aop.  */
 	}
-#line 7186 "config/bfin-parse.c"
+#line 7180 "config/bfin-parse.c"
     break;
 
   case 301: /* rnd_op: LPAREN RNDL COMMA R RPAREN  */
@@ -7193,7 +7187,7 @@ yyreduce:
 	  (yyval.modcodes).x0 = 0;	/* x.  */
 	  (yyval.modcodes).aop = 0;	/* aop.  */
 	}
-#line 7197 "config/bfin-parse.c"
+#line 7191 "config/bfin-parse.c"
     break;
 
   case 302: /* rnd_op: LPAREN TL COMMA R RPAREN  */
@@ -7204,7 +7198,7 @@ yyreduce:
 	  (yyval.modcodes).x0 = 0;	/* x.  */
 	  (yyval.modcodes).aop = 1;	/* aop.  */
 	}
-#line 7208 "config/bfin-parse.c"
+#line 7202 "config/bfin-parse.c"
     break;
 
   case 303: /* b3_op: LPAREN LO RPAREN  */
@@ -7213,7 +7207,7 @@ yyreduce:
 	  (yyval.modcodes).s0 = 0;	/* s.  */
 	  (yyval.modcodes).x0 = 0;	/* HL.  */
 	}
-#line 7217 "config/bfin-parse.c"
+#line 7211 "config/bfin-parse.c"
     break;
 
   case 304: /* b3_op: LPAREN HI RPAREN  */
@@ -7222,7 +7216,7 @@ yyreduce:
 	  (yyval.modcodes).s0 = 0;	/* s.  */
 	  (yyval.modcodes).x0 = 1;	/* HL.  */
 	}
-#line 7226 "config/bfin-parse.c"
+#line 7220 "config/bfin-parse.c"
     break;
 
   case 305: /* b3_op: LPAREN LO COMMA R RPAREN  */
@@ -7231,7 +7225,7 @@ yyreduce:
 	  (yyval.modcodes).s0 = 1;	/* s.  */
 	  (yyval.modcodes).x0 = 0;	/* HL.  */
 	}
-#line 7235 "config/bfin-parse.c"
+#line 7229 "config/bfin-parse.c"
     break;
 
   case 306: /* b3_op: LPAREN HI COMMA R RPAREN  */
@@ -7240,7 +7234,7 @@ yyreduce:
 	  (yyval.modcodes).s0 = 1;	/* s.  */
 	  (yyval.modcodes).x0 = 1;	/* HL.  */
 	}
-#line 7244 "config/bfin-parse.c"
+#line 7238 "config/bfin-parse.c"
     break;
 
   case 307: /* post_op: %empty  */
@@ -7248,7 +7242,7 @@ yyreduce:
         {
 	(yyval.modcodes).x0 = 2;
 	}
-#line 7252 "config/bfin-parse.c"
+#line 7246 "config/bfin-parse.c"
     break;
 
   case 308: /* post_op: _PLUS_PLUS  */
@@ -7256,7 +7250,7 @@ yyreduce:
         {
 	(yyval.modcodes).x0 = 0;
 	}
-#line 7260 "config/bfin-parse.c"
+#line 7254 "config/bfin-parse.c"
     break;
 
   case 309: /* post_op: _MINUS_MINUS  */
@@ -7264,7 +7258,7 @@ yyreduce:
         {
 	(yyval.modcodes).x0 = 1;
 	}
-#line 7268 "config/bfin-parse.c"
+#line 7262 "config/bfin-parse.c"
     break;
 
   case 310: /* a_assign: REG_A ASSIGN  */
@@ -7272,7 +7266,7 @@ yyreduce:
         {
 	(yyval.reg) = (yyvsp[-1].reg);
 	}
-#line 7276 "config/bfin-parse.c"
+#line 7270 "config/bfin-parse.c"
     break;
 
   case 311: /* a_minusassign: REG_A _MINUS_ASSIGN  */
@@ -7280,7 +7274,7 @@ yyreduce:
         {
 	(yyval.reg) = (yyvsp[-1].reg);
 	}
-#line 7284 "config/bfin-parse.c"
+#line 7278 "config/bfin-parse.c"
     break;
 
   case 312: /* a_plusassign: REG_A _PLUS_ASSIGN  */
@@ -7288,7 +7282,7 @@ yyreduce:
         {
 	(yyval.reg) = (yyvsp[-1].reg);
 	}
-#line 7292 "config/bfin-parse.c"
+#line 7286 "config/bfin-parse.c"
     break;
 
   case 313: /* assign_macfunc: REG ASSIGN REG_A  */
@@ -7307,7 +7301,7 @@ yyreduce:
 	  (yyval.macfunc).s0.regno = 0;
           (yyval.macfunc).s1.regno = 0;
 	}
-#line 7311 "config/bfin-parse.c"
+#line 7305 "config/bfin-parse.c"
     break;
 
   case 314: /* assign_macfunc: a_macfunc  */
@@ -7317,7 +7311,7 @@ yyreduce:
 	  (yyval.macfunc).w = 0; (yyval.macfunc).P = 0;
 	  (yyval.macfunc).dst.regno = 0;
 	}
-#line 7321 "config/bfin-parse.c"
+#line 7315 "config/bfin-parse.c"
     break;
 
   case 315: /* assign_macfunc: REG ASSIGN LPAREN a_macfunc RPAREN  */
@@ -7333,7 +7327,7 @@ yyreduce:
           (yyval.macfunc).P = 1;
           (yyval.macfunc).dst = (yyvsp[-4].reg);
 	}
-#line 7337 "config/bfin-parse.c"
+#line 7331 "config/bfin-parse.c"
     break;
 
   case 316: /* assign_macfunc: HALF_REG ASSIGN LPAREN a_macfunc RPAREN  */
@@ -7349,7 +7343,7 @@ yyreduce:
 	  (yyval.macfunc).P = 0;
           (yyval.macfunc).dst = (yyvsp[-4].reg);
 	}
-#line 7353 "config/bfin-parse.c"
+#line 7347 "config/bfin-parse.c"
     break;
 
   case 317: /* assign_macfunc: HALF_REG ASSIGN REG_A  */
@@ -7368,7 +7362,7 @@ yyreduce:
 	  (yyval.macfunc).s0.regno = 0;
           (yyval.macfunc).s1.regno = 0;
 	}
-#line 7372 "config/bfin-parse.c"
+#line 7366 "config/bfin-parse.c"
     break;
 
   case 318: /* a_macfunc: a_assign multiply_halfregs  */
@@ -7379,7 +7373,7 @@ yyreduce:
 	  (yyval.macfunc).s0 = (yyvsp[0].macfunc).s0;
 	  (yyval.macfunc).s1 = (yyvsp[0].macfunc).s1;
 	}
-#line 7383 "config/bfin-parse.c"
+#line 7377 "config/bfin-parse.c"
     break;
 
   case 319: /* a_macfunc: a_plusassign multiply_halfregs  */
@@ -7390,7 +7384,7 @@ yyreduce:
 	  (yyval.macfunc).s0 = (yyvsp[0].macfunc).s0;
 	  (yyval.macfunc).s1 = (yyvsp[0].macfunc).s1;
 	}
-#line 7394 "config/bfin-parse.c"
+#line 7388 "config/bfin-parse.c"
     break;
 
   case 320: /* a_macfunc: a_minusassign multiply_halfregs  */
@@ -7401,7 +7395,7 @@ yyreduce:
 	  (yyval.macfunc).s0 = (yyvsp[0].macfunc).s0;
 	  (yyval.macfunc).s1 = (yyvsp[0].macfunc).s1;
 	}
-#line 7405 "config/bfin-parse.c"
+#line 7399 "config/bfin-parse.c"
     break;
 
   case 321: /* multiply_halfregs: HALF_REG STAR HALF_REG  */
@@ -7415,7 +7409,7 @@ yyreduce:
 	  else
 	    return yyerror ("Dregs expected");
 	}
-#line 7419 "config/bfin-parse.c"
+#line 7413 "config/bfin-parse.c"
     break;
 
   case 322: /* cc_op: ASSIGN  */
@@ -7423,7 +7417,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 0;
 	}
-#line 7427 "config/bfin-parse.c"
+#line 7421 "config/bfin-parse.c"
     break;
 
   case 323: /* cc_op: _BAR_ASSIGN  */
@@ -7431,7 +7425,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 1;
 	}
-#line 7435 "config/bfin-parse.c"
+#line 7429 "config/bfin-parse.c"
     break;
 
   case 324: /* cc_op: _AMPERSAND_ASSIGN  */
@@ -7439,7 +7433,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 2;
 	}
-#line 7443 "config/bfin-parse.c"
+#line 7437 "config/bfin-parse.c"
     break;
 
   case 325: /* cc_op: _CARET_ASSIGN  */
@@ -7447,7 +7441,7 @@ yyreduce:
         {
 	(yyval.r0).r0 = 3;
 	}
-#line 7451 "config/bfin-parse.c"
+#line 7445 "config/bfin-parse.c"
     break;
 
   case 326: /* ccstat: CCREG cc_op STATUS_REG  */
@@ -7457,7 +7451,7 @@ yyreduce:
 	  (yyval.modcodes).x0 = (yyvsp[-1].r0).r0;
 	  (yyval.modcodes).s0 = 0;
 	}
-#line 7461 "config/bfin-parse.c"
+#line 7455 "config/bfin-parse.c"
     break;
 
   case 327: /* ccstat: CCREG cc_op V  */
@@ -7467,7 +7461,7 @@ yyreduce:
 	  (yyval.modcodes).x0 = (yyvsp[-1].r0).r0;
 	  (yyval.modcodes).s0 = 0;
 	}
-#line 7471 "config/bfin-parse.c"
+#line 7465 "config/bfin-parse.c"
     break;
 
   case 328: /* ccstat: STATUS_REG cc_op CCREG  */
@@ -7477,7 +7471,7 @@ yyreduce:
 	  (yyval.modcodes).x0 = (yyvsp[-1].r0).r0;
 	  (yyval.modcodes).s0 = 1;
 	}
-#line 7481 "config/bfin-parse.c"
+#line 7475 "config/bfin-parse.c"
     break;
 
   case 329: /* ccstat: V cc_op CCREG  */
@@ -7487,7 +7481,7 @@ yyreduce:
 	  (yyval.modcodes).x0 = (yyvsp[-1].r0).r0;
 	  (yyval.modcodes).s0 = 1;
 	}
-#line 7491 "config/bfin-parse.c"
+#line 7485 "config/bfin-parse.c"
     break;
 
   case 330: /* symbol: SYMBOL  */
@@ -7497,25 +7491,25 @@ yyreduce:
 	val.s_value = S_GET_NAME((yyvsp[0].symbol));
 	(yyval.expr) = Expr_Node_Create (Expr_Node_Reloc, val, NULL, NULL);
 	}
-#line 7501 "config/bfin-parse.c"
+#line 7495 "config/bfin-parse.c"
     break;
 
   case 331: /* any_gotrel: GOT  */
 #line 4385 "./config/bfin-parse.y"
         { (yyval.value) = BFD_RELOC_BFIN_GOT; }
-#line 7507 "config/bfin-parse.c"
+#line 7501 "config/bfin-parse.c"
     break;
 
   case 332: /* any_gotrel: GOT17M4  */
 #line 4387 "./config/bfin-parse.y"
         { (yyval.value) = BFD_RELOC_BFIN_GOT17M4; }
-#line 7513 "config/bfin-parse.c"
+#line 7507 "config/bfin-parse.c"
     break;
 
   case 333: /* any_gotrel: FUNCDESC_GOT17M4  */
 #line 4389 "./config/bfin-parse.y"
         { (yyval.value) = BFD_RELOC_BFIN_FUNCDESC_GOT17M4; }
-#line 7519 "config/bfin-parse.c"
+#line 7513 "config/bfin-parse.c"
     break;
 
   case 334: /* got: symbol AT any_gotrel  */
@@ -7525,7 +7519,7 @@ yyreduce:
 	val.i_value = (yyvsp[0].value);
 	(yyval.expr) = Expr_Node_Create (Expr_Node_GOT_Reloc, val, (yyvsp[-2].expr), NULL);
 	}
-#line 7529 "config/bfin-parse.c"
+#line 7523 "config/bfin-parse.c"
     break;
 
   case 335: /* got_or_expr: got  */
@@ -7533,7 +7527,7 @@ yyreduce:
         {
 	(yyval.expr) = (yyvsp[0].expr);
 	}
-#line 7537 "config/bfin-parse.c"
+#line 7531 "config/bfin-parse.c"
     break;
 
   case 336: /* got_or_expr: expr  */
@@ -7541,7 +7535,7 @@ yyreduce:
         {
 	(yyval.expr) = (yyvsp[0].expr);
 	}
-#line 7545 "config/bfin-parse.c"
+#line 7539 "config/bfin-parse.c"
     break;
 
   case 337: /* pltpc: symbol AT PLTPC  */
@@ -7549,7 +7543,7 @@ yyreduce:
         {
 	(yyval.expr) = (yyvsp[-2].expr);
 	}
-#line 7553 "config/bfin-parse.c"
+#line 7547 "config/bfin-parse.c"
     break;
 
   case 338: /* eterm: NUMBER  */
@@ -7559,7 +7553,7 @@ yyreduce:
 	val.i_value = (yyvsp[0].value);
 	(yyval.expr) = Expr_Node_Create (Expr_Node_Constant, val, NULL, NULL);
 	}
-#line 7563 "config/bfin-parse.c"
+#line 7557 "config/bfin-parse.c"
     break;
 
   case 339: /* eterm: symbol  */
@@ -7567,7 +7561,7 @@ yyreduce:
         {
 	(yyval.expr) = (yyvsp[0].expr);
 	}
-#line 7571 "config/bfin-parse.c"
+#line 7565 "config/bfin-parse.c"
     break;
 
   case 340: /* eterm: LPAREN expr_1 RPAREN  */
@@ -7575,7 +7569,7 @@ yyreduce:
         {
 	(yyval.expr) = (yyvsp[-1].expr);
 	}
-#line 7579 "config/bfin-parse.c"
+#line 7573 "config/bfin-parse.c"
     break;
 
   case 341: /* eterm: TILDA expr_1  */
@@ -7583,7 +7577,7 @@ yyreduce:
         {
 	(yyval.expr) = unary (Expr_Op_Type_COMP, (yyvsp[0].expr));
 	}
-#line 7587 "config/bfin-parse.c"
+#line 7581 "config/bfin-parse.c"
     break;
 
   case 342: /* eterm: MINUS expr_1  */
@@ -7591,7 +7585,7 @@ yyreduce:
         {
 	(yyval.expr) = unary (Expr_Op_Type_NEG, (yyvsp[0].expr));
 	}
-#line 7595 "config/bfin-parse.c"
+#line 7589 "config/bfin-parse.c"
     break;
 
   case 343: /* expr: expr_1  */
@@ -7599,7 +7593,7 @@ yyreduce:
         {
 	(yyval.expr) = (yyvsp[0].expr);
 	}
-#line 7603 "config/bfin-parse.c"
+#line 7597 "config/bfin-parse.c"
     break;
 
   case 344: /* expr_1: expr_1 STAR expr_1  */
@@ -7607,7 +7601,7 @@ yyreduce:
         {
 	(yyval.expr) = binary (Expr_Op_Type_Mult, (yyvsp[-2].expr), (yyvsp[0].expr));
 	}
-#line 7611 "config/bfin-parse.c"
+#line 7605 "config/bfin-parse.c"
     break;
 
   case 345: /* expr_1: expr_1 SLASH expr_1  */
@@ -7615,7 +7609,7 @@ yyreduce:
         {
 	(yyval.expr) = binary (Expr_Op_Type_Div, (yyvsp[-2].expr), (yyvsp[0].expr));
 	}
-#line 7619 "config/bfin-parse.c"
+#line 7613 "config/bfin-parse.c"
     break;
 
   case 346: /* expr_1: expr_1 PERCENT expr_1  */
@@ -7623,7 +7617,7 @@ yyreduce:
         {
 	(yyval.expr) = binary (Expr_Op_Type_Mod, (yyvsp[-2].expr), (yyvsp[0].expr));
 	}
-#line 7627 "config/bfin-parse.c"
+#line 7621 "config/bfin-parse.c"
     break;
 
   case 347: /* expr_1: expr_1 PLUS expr_1  */
@@ -7631,7 +7625,7 @@ yyreduce:
         {
 	(yyval.expr) = binary (Expr_Op_Type_Add, (yyvsp[-2].expr), (yyvsp[0].expr));
 	}
-#line 7635 "config/bfin-parse.c"
+#line 7629 "config/bfin-parse.c"
     break;
 
   case 348: /* expr_1: expr_1 MINUS expr_1  */
@@ -7639,7 +7633,7 @@ yyreduce:
         {
 	(yyval.expr) = binary (Expr_Op_Type_Sub, (yyvsp[-2].expr), (yyvsp[0].expr));
 	}
-#line 7643 "config/bfin-parse.c"
+#line 7637 "config/bfin-parse.c"
     break;
 
   case 349: /* expr_1: expr_1 LESS_LESS expr_1  */
@@ -7647,7 +7641,7 @@ yyreduce:
         {
 	(yyval.expr) = binary (Expr_Op_Type_Lshift, (yyvsp[-2].expr), (yyvsp[0].expr));
 	}
-#line 7651 "config/bfin-parse.c"
+#line 7645 "config/bfin-parse.c"
     break;
 
   case 350: /* expr_1: expr_1 GREATER_GREATER expr_1  */
@@ -7655,7 +7649,7 @@ yyreduce:
         {
 	(yyval.expr) = binary (Expr_Op_Type_Rshift, (yyvsp[-2].expr), (yyvsp[0].expr));
 	}
-#line 7659 "config/bfin-parse.c"
+#line 7653 "config/bfin-parse.c"
     break;
 
   case 351: /* expr_1: expr_1 AMPERSAND expr_1  */
@@ -7663,7 +7657,7 @@ yyreduce:
         {
 	(yyval.expr) = binary (Expr_Op_Type_BAND, (yyvsp[-2].expr), (yyvsp[0].expr));
 	}
-#line 7667 "config/bfin-parse.c"
+#line 7661 "config/bfin-parse.c"
     break;
 
   case 352: /* expr_1: expr_1 CARET expr_1  */
@@ -7671,7 +7665,7 @@ yyreduce:
         {
 	(yyval.expr) = binary (Expr_Op_Type_LOR, (yyvsp[-2].expr), (yyvsp[0].expr));
 	}
-#line 7675 "config/bfin-parse.c"
+#line 7669 "config/bfin-parse.c"
     break;
 
   case 353: /* expr_1: expr_1 BAR expr_1  */
@@ -7679,7 +7673,7 @@ yyreduce:
         {
 	(yyval.expr) = binary (Expr_Op_Type_BOR, (yyvsp[-2].expr), (yyvsp[0].expr));
 	}
-#line 7683 "config/bfin-parse.c"
+#line 7677 "config/bfin-parse.c"
     break;
 
   case 354: /* expr_1: eterm  */
@@ -7687,11 +7681,11 @@ yyreduce:
         {
 	(yyval.expr) = (yyvsp[0].expr);
 	}
-#line 7691 "config/bfin-parse.c"
+#line 7685 "config/bfin-parse.c"
     break;
 
 
-#line 7695 "config/bfin-parse.c"
+#line 7689 "config/bfin-parse.c"
 
       default: break;
     }

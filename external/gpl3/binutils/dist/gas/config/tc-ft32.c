@@ -1,5 +1,5 @@
 /* tc-ft32.c -- Assemble code for ft32
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -212,15 +212,14 @@ md_assemble (char *str)
   bool can_sc;
 
   /* Drop leading whitespace.  */
-  while (*str == ' ')
+  while (is_whitespace (*str))
     str++;
 
   /* Find the op code end.  */
   op_start = str;
   for (op_end = str;
-       *op_end
-       && !is_end_of_line[*op_end & 0xff]
-       && *op_end != ' '
+       !is_end_of_stmt (*op_end)
+       && !is_whitespace (*op_end)
        && *op_end != '.';
        op_end++)
     nlen++;
@@ -231,7 +230,7 @@ md_assemble (char *str)
   if (nlen == 0)
     as_bad (_("can't find opcode "));
 
-  opcode = (ft32_opc_info_t *) str_hash_find (opcode_hash_control, op_start);
+  opcode = str_hash_find (opcode_hash_control, op_start);
   *op_end = pend;
 
   if (opcode == NULL)
@@ -273,7 +272,7 @@ md_assemble (char *str)
       b |= dw << FT32_FLD_DW_BIT;
     }
 
-  while (ISSPACE (*op_end))
+  while (is_whitespace (*op_end))
     op_end++;
 
   output = frag_more (4);
@@ -392,7 +391,7 @@ md_assemble (char *str)
 
           if (f)
             {
-              while (ISSPACE (*op_end))
+              while (is_whitespace (*op_end))
                 op_end++;
 
               if (*op_end != ',')
@@ -402,13 +401,13 @@ md_assemble (char *str)
                 }
 
               op_end++;
-              while (ISSPACE (*op_end))
+              while (is_whitespace (*op_end))
                 op_end++;
             }
         }
     }
 
-  if (*op_end != 0)
+  if (!is_end_of_stmt (*op_end))
     as_warn (_("extra stuff on line ignored"));
 
   can_sc = ft32_shortcode (b, &sc);
@@ -434,10 +433,10 @@ md_assemble (char *str)
 
   dwarf2_emit_insn (4);
 
-  while (ISSPACE (*op_end))
+  while (is_whitespace (*op_end))
     op_end++;
 
-  if (*op_end != 0)
+  if (!is_end_of_stmt (*op_end))
     as_warn ("extra stuff on line ignored");
 
   if (pending_reloc)
@@ -487,16 +486,16 @@ md_atof (int type, char *litP, int *sizeP)
   return NULL;
 }
 
-const char *md_shortopts = "";
+const char md_shortopts[] = "";
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
 #define OPTION_NORELAX (OPTION_MD_BASE)
   {"norelax", no_argument, NULL, OPTION_NORELAX},
   {"no-relax", no_argument, NULL, OPTION_NORELAX},
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 /* We have no target specific options yet, so these next
    two functions are empty.  */
@@ -531,12 +530,11 @@ static valueT
 md_chars_to_number (char * buf, int n)
 {
   valueT result = 0;
-  unsigned char * where = (unsigned char *) buf;
 
   while (n--)
     {
       result <<= 8;
-      result |= (where[n] & 255);
+      result |= (buf[n] & 255);
     }
 
   return result;
@@ -582,7 +580,7 @@ md_apply_fix (fixS *fixP ATTRIBUTE_UNUSED,
   }
 
   /* We don't actually support subtracting a symbol.  */
-  if (fixP->fx_subsy != (symbolS *) NULL)
+  if (fixP->fx_subsy != NULL)
     as_bad_subtract (fixP);
 
   switch (fixP->fx_r_type)
@@ -690,9 +688,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixP)
       return NULL;
     }
 
-  relP = XNEW (arelent);
-  gas_assert (relP != 0);
-  relP->sym_ptr_ptr = XNEW (asymbol *);
+  relP = notes_alloc (sizeof (arelent));
+  relP->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *relP->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
   relP->address = fixP->fx_frag->fr_address + fixP->fx_where;
 

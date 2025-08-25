@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -24,6 +24,7 @@
 fragment <<EOF
 #include "libiberty.h"
 #include "getopt.h"
+#include "ldlex.h"
 
 static void
 gld${EMULATION_NAME}_before_parse (void)
@@ -125,7 +126,6 @@ vms_place_orphan (asection *s,
 }
 
 /* VMS specific options.  */
-#define OPTION_IDENTIFICATION		(300  + 1)
 
 static void
 gld${EMULATION_NAME}_add_options
@@ -197,11 +197,10 @@ gld${EMULATION_NAME}_before_allocation (void)
 
   /* The backend must work out the sizes of all the other dynamic
      sections.  */
-  if (elf_hash_table (&link_info)->dynamic_sections_created
-      && bed->elf_backend_size_dynamic_sections
-      && ! (*bed->elf_backend_size_dynamic_sections) (link_info.output_bfd,
-						      &link_info))
-    einfo (_("%F%P: failed to set dynamic section sizes: %E\n"));
+  if (bed->elf_backend_late_size_sections
+      && !bed->elf_backend_late_size_sections (link_info.output_bfd,
+					       &link_info))
+    fatal (_("%P: failed to set dynamic section sizes: %E\n"));
 
   before_allocation_default ();
 }

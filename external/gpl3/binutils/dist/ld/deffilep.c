@@ -70,7 +70,7 @@
 #line 1 "deffilep.y"
  /* deffilep.y - parser for .def files */
 
-/*   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+/*   Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
      This file is part of GNU Binutils.
 
@@ -2456,11 +2456,10 @@ cmp_export_elem (const def_file_export *e, const char *ex_name,
 {
   int r;
 
-  if ((r = are_names_equal (ex_name, e->name)) != 0)
+  if ((r = are_names_equal (its_name ? its_name : ex_name,
+			    e->its_name ? e->its_name : e->name)) != 0)
     return r;
   if ((r = are_names_equal (in_name, e->internal_name)) != 0)
-    return r;
-  if ((r = are_names_equal (its_name, e->its_name)) != 0)
     return r;
   return (ord - e->ordinal);
 }

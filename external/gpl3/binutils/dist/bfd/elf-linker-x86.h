@@ -1,5 +1,5 @@
 /* x86-specific ELF linker support between ld and bfd.
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -26,6 +26,14 @@ enum elf_x86_prop_report
   prop_report_error	= 1 << 1,   /* Issue an error.  */
   prop_report_ibt	= 1 << 2,   /* Report missing IBT property.  */
   prop_report_shstk	= 1 << 3    /* Report missing SHSTK property.  */
+};
+
+/* ISA level report control.  */
+enum elf_x86_isa_level_report
+{
+  isa_level_report_none	  = 0,		/* Do nothing.  */
+  isa_level_report_needed = 1 << 0,	/* Needed x86-64 ISA level.  */
+  isa_level_report_used	  = 1 << 1 	/* Used x86-64 ISA level.  */
 };
 
 /* Used to pass x86-specific linker options from ld to bfd.  */
@@ -66,6 +74,9 @@ struct elf_linker_x86_params
 
   /* X86-64 ISA level needed.  */
   unsigned int isa_level;
+
+  /* Report needed and used x86-64 ISA levels.  */
+  enum elf_x86_isa_level_report isa_level_report;
 
   /* Report missing IBT and SHSTK properties.  */
   enum elf_x86_prop_report cet_report;

@@ -1,5 +1,5 @@
 /* tc-cr16.c -- Assembler code for the CR16 CPU core.
-   Copyright (C) 2007-2024 Free Software Foundation, Inc.
+   Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    Contributed by M R Swami Reddy <MR.Swami.Reddy@nsc.com>
 
@@ -109,12 +109,12 @@ symbolS * GOT_symbol;
 #endif
 
 /* Target-specific multicharacter options, not const-declared at usage.  */
-const char *md_shortopts = "";
-struct option md_longopts[] =
+const char md_shortopts[] = "";
+const struct option md_longopts[] =
 {
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 static void
 l_cons (int nbytes)
@@ -235,7 +235,7 @@ l_cons (int nbytes)
 
       if ((*(input_line_pointer) == '@') && (*(input_line_pointer +1) == 'c'))
 	code_label = 1;
-      emit_expr (&exp, (unsigned int) nbytes);
+      emit_expr (&exp, nbytes);
       ++c;
       if ((*(input_line_pointer) == '@') && (*(input_line_pointer +1) == 'c'))
 	{
@@ -329,7 +329,7 @@ get_register (char *reg_name)
 {
   const reg_entry *rreg;
 
-  rreg = (const reg_entry *) str_hash_find (reg_hash, reg_name);
+  rreg = str_hash_find (reg_hash, reg_name);
 
   if (rreg != NULL)
     return rreg->value.reg_val;
@@ -350,10 +350,10 @@ get_register_pair (char *reg_name)
       tmp_rp[0] = '(';
       strcat (tmp_rp, reg_name);
       strcat (tmp_rp,")");
-      rreg = (const reg_entry *) str_hash_find (regp_hash, tmp_rp);
+      rreg = str_hash_find (regp_hash, tmp_rp);
     }
   else
-    rreg = (const reg_entry *) str_hash_find (regp_hash, reg_name);
+    rreg = str_hash_find (regp_hash, reg_name);
 
   if (rreg != NULL)
     return rreg->value.reg_val;
@@ -368,7 +368,7 @@ get_index_register (char *reg_name)
 {
   const reg_entry *rreg;
 
-  rreg = (const reg_entry *) str_hash_find (reg_hash, reg_name);
+  rreg = str_hash_find (reg_hash, reg_name);
 
   if ((rreg != NULL)
       && ((rreg->value.reg_val == 12) || (rreg->value.reg_val == 13)))
@@ -383,7 +383,7 @@ get_index_register_pair (char *reg_name)
 {
   const reg_entry *rreg;
 
-  rreg = (const reg_entry *) str_hash_find (regp_hash, reg_name);
+  rreg = str_hash_find (regp_hash, reg_name);
 
   if (rreg != NULL)
     {
@@ -404,7 +404,7 @@ get_pregister (char *preg_name)
 {
   const reg_entry *prreg;
 
-  prreg = (const reg_entry *) str_hash_find (preg_hash, preg_name);
+  prreg = str_hash_find (preg_hash, preg_name);
 
   if (prreg != NULL)
     return prreg->value.preg_val;
@@ -419,7 +419,7 @@ get_pregisterp (char *preg_name)
 {
   const reg_entry *prreg;
 
-  prreg = (const reg_entry *) str_hash_find (pregp_hash, preg_name);
+  prreg = str_hash_find (pregp_hash, preg_name);
 
   if (prreg != NULL)
     return prreg->value.preg_val;
@@ -537,8 +537,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS * fixP)
 	   && (S_GET_SEGMENT (fixP->fx_subsy) == absolute_section)))
     return NULL;
 
-  reloc = XNEW (arelent);
-  reloc->sym_ptr_ptr  = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
   reloc->address = fixP->fx_frag->fr_address + fixP->fx_where;
   reloc->addend = fixP->fx_offset;
@@ -574,8 +574,6 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS * fixP)
 	{
 	  /* We only resolve difference expressions in the same section.  */
 	  as_bad_subtract (fixP);
-	  free (reloc->sym_ptr_ptr);
-	  free (reloc);
 	  return NULL;
 	}
     }
@@ -638,14 +636,14 @@ md_estimate_size_before_relax (fragS *fragp, asection *seg)
 }
 
 void
-md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, asection *sec, fragS *fragP)
+md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
+		 asection *sec ATTRIBUTE_UNUSED,
+		 fragS *fragP)
 {
   /* 'opcode' points to the start of the instruction, whether
      we need to change the instruction's fixed encoding.  */
   char *opcode = &fragP->fr_literal[0] + fragP->fr_fix;
   bfd_reloc_code_real_type reloc;
-
-  subseg_change (sec, 0);
 
   switch (fragP->fr_subtype)
     {
@@ -762,7 +760,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg)
       switch (fixP->fx_r_type)
 	{
 	case BFD_RELOC_CR16_NUM8:
-	  bfd_put_8 (stdoutput, (unsigned char) val, buf);
+	  bfd_put_8 (stdoutput, val, buf);
 	  break;
 	case BFD_RELOC_CR16_NUM16:
 	  bfd_put_16 (stdoutput, val, buf);
@@ -1221,7 +1219,7 @@ set_operand (char *operand, ins * cr16_ins)
       /* Set register pair base.  */
       if ((strchr (operandS,'(') != NULL))
 	{
-	  while ((*operandE != '(') && (! ISSPACE (*operandE)))
+	  while ((*operandE != '(') && (! is_whitespace (*operandE)))
 	    operandE++;
 	  if ((cur_arg->rp = get_index_register_pair (operandE)) == nullregister)
 	    as_bad (_("Illegal register pair `%s' in Instruction `%s'"),
@@ -1402,7 +1400,7 @@ parse_operands (ins * cr16_ins, char *operands)
 	  continue;
 	}
 
-      if (*operandT == ' ')
+      if (is_whitespace (*operandT))
 	as_bad (_("Illegal operands (whitespace): `%s'"), ins_parse);
 
       if (*operandT == '(')
@@ -1547,12 +1545,13 @@ check_cinv_options (char * operand)
       switch (*p)
 	{
 	case ',':
-	case ' ':
 	case 'i':
 	case 'u':
 	case 'd':
 	  break;
 	default:
+	  if (is_whitespace (*p))
+	    break;
 	  as_bad (_("Illegal `cinv' parameter: `%c'"), *p);
 	}
     }
@@ -2457,7 +2456,7 @@ print_insn (ins *insn)
   /* Write the instruction encoding to frag.  */
   for (i = 0; i < insn_size; i++)
     {
-      md_number_to_chars (this_frag, (valueT) words[i], 2);
+      md_number_to_chars (this_frag, words[i], 2);
       this_frag += 2;
     }
 }
@@ -2470,7 +2469,7 @@ cr16_assemble (const char *op, char *param)
   ins cr16_ins;
 
   /* Find the instruction.  */
-  instruction = (const inst *) str_hash_find (cr16_inst_hash, op);
+  instruction = str_hash_find (cr16_inst_hash, op);
   if (instruction == NULL)
     {
       as_bad (_("Unknown opcode: `%s'"), op);
@@ -2505,7 +2504,7 @@ md_assemble (char *op)
   reset_vars (op);
 
   /* Strip the mnemonic.  */
-  for (param = op; *param != 0 && !ISSPACE (*param); param++)
+  for (param = op; *param != 0 && !is_whitespace (*param); param++)
     ;
   *param++ = '\0';
 
@@ -2515,7 +2514,7 @@ md_assemble (char *op)
       strcpy (param1, get_b_cc (op));
       strcat (param1,",");
       strcat (param1, param);
-      param = (char *) &param1;
+      param = param1;
       cr16_assemble ("b", param);
       return;
     }
@@ -2540,7 +2539,7 @@ md_assemble (char *op)
     {
       strcpy (param1, param);
       /* Find the instruction.  */
-      instruction = (const inst *) str_hash_find (cr16_inst_hash, op);
+      instruction = str_hash_find (cr16_inst_hash, op);
       parse_operands (&cr16_ins, param1);
       if (((&cr16_ins)->arg[0].type == arg_ic)
 	  && ((&cr16_ins)->arg[0].constant >= 0))

@@ -1,5 +1,5 @@
 /* tc-frv.c -- Assembler for the Fujitsu FRV.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -175,7 +175,7 @@ static flagword frv_flags = DEFAULT_FLAGS | DEFAULT_FDPIC;
 
 static int frv_user_set_flags_p = 0;
 static int frv_pic_p = 0;
-static const char *frv_pic_flag = DEFAULT_FDPIC ? "-mfdpic" : (const char *)0;
+static const char *frv_pic_flag = DEFAULT_FDPIC ? "-mfdpic" : NULL;
 
 /* Print tomcat-specific debugging info.  */
 static int tomcat_debug = 0;
@@ -200,7 +200,7 @@ const pseudo_typeS md_pseudo_table[] =
 
 
 #define FRV_SHORTOPTS "G:"
-const char * md_shortopts = FRV_SHORTOPTS;
+const char md_shortopts[] = FRV_SHORTOPTS;
 
 #define OPTION_GPR_32		(OPTION_MD_BASE)
 #define OPTION_GPR_64		(OPTION_MD_BASE + 1)
@@ -226,7 +226,7 @@ const char * md_shortopts = FRV_SHORTOPTS;
 #define OPTION_FDPIC		(OPTION_MD_BASE + 21)
 #define OPTION_NOPIC		(OPTION_MD_BASE + 22)
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   { "mgpr-32",		no_argument,		NULL, OPTION_GPR_32        },
   { "mgpr-64",		no_argument,		NULL, OPTION_GPR_64        },
@@ -255,7 +255,7 @@ struct option md_longopts[] =
   { NULL,		no_argument,		NULL, 0                 },
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 /* What value to give to bfd_set_gp_size.  */
 static int g_switch_value = 8;
@@ -1226,7 +1226,7 @@ valueT
 md_section_align (segT segment, valueT size)
 {
   int align = bfd_section_alignment (segment);
-  return ((size + (1 << align) - 1) & -(1 << align));
+  return (size + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }
 
 symbolS *
@@ -1311,7 +1311,7 @@ long
 md_pcrel_from_section (fixS *fixP, segT sec)
 {
   if (TC_FORCE_RELOCATION (fixP)
-      || (fixP->fx_addsy != (symbolS *) NULL
+      || (fixP->fx_addsy != NULL
 	  && S_GET_SEGMENT (fixP->fx_addsy) != sec))
     {
       /* If we can't adjust this relocation, or if it references a
@@ -1523,10 +1523,10 @@ frv_fix_adjustable (fixS *fixP)
 {
   bfd_reloc_code_real_type reloc_type;
 
-  if ((int) fixP->fx_r_type >= (int) BFD_RELOC_UNUSED)
+  if (fixP->fx_r_type >= BFD_RELOC_UNUSED)
     {
       const CGEN_INSN *insn = NULL;
-      int opindex = (int) fixP->fx_r_type - (int) BFD_RELOC_UNUSED;
+      int opindex = fixP->fx_r_type - BFD_RELOC_UNUSED;
       const CGEN_OPERAND *operand = cgen_operand_lookup_by_num(gas_cgen_cpu_desc, opindex);
       reloc_type = md_cgen_lookup_reloc (insn, operand, fixP);
     }
@@ -1705,7 +1705,7 @@ frv_frob_file_section (bfd *abfd, asection *sec, void *ptr ATTRIBUTE_UNUSED)
 	}
       else
 	{
-	  opindex = (int) fixp->fx_r_type - (int) BFD_RELOC_UNUSED;
+	  opindex = fixp->fx_r_type - BFD_RELOC_UNUSED;
 	  operand = cgen_operand_lookup_by_num (cd, opindex);
 	  reloc = md_cgen_lookup_reloc (insn, operand, fixp);
 	}
@@ -1790,7 +1790,7 @@ frv_frob_file_section (bfd *abfd, asection *sec, void *ptr ATTRIBUTE_UNUSED)
 void
 frv_frob_file (void)
 {
-  bfd_map_over_sections (stdoutput, frv_frob_file_section, (void *) 0);
+  bfd_map_over_sections (stdoutput, frv_frob_file_section, NULL);
 }
 
 void

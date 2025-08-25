@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright (C) 2002-2024 Free Software Foundation, Inc.
+# Copyright (C) 2002-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -91,7 +91,7 @@ ppc_create_output_section_statements (void)
 			     bfd_get_arch (link_info.output_bfd),
 			     bfd_get_mach (link_info.output_bfd)))
     {
-      einfo (_("%F%P: can not create BFD: %E\n"));
+      fatal (_("%P: can not create BFD: %E\n"));
       return;
     }
 
@@ -101,7 +101,7 @@ ppc_create_output_section_statements (void)
   if (params.save_restore_funcs < 0)
     params.save_restore_funcs = !bfd_link_relocatable (&link_info);
   if (!ppc64_elf_init_stub_bfd (&link_info, &params))
-    einfo (_("%F%P: can not init BFD: %E\n"));
+    fatal (_("%P: can not init BFD: %E\n"));
 }
 
 /* Called after opening files but before mapping sections.  */
@@ -606,17 +606,18 @@ gld${EMULATION_NAME}_finish (void)
     einfo (_("%X%P: can not build stubs: %E\n"));
 
   fflush (stdout);
+  FILE * out = config.stats_file ? config.stats_file : stderr;
   for (line = msg; line != NULL; line = endline)
     {
       endline = strchr (line, '\n');
       if (endline != NULL)
 	*endline++ = '\0';
-      fprintf (stderr, "%s: %s\n", program_name, line);
+      fprintf (out, "%s: %s\n", program_name, line);
     }
-  fflush (stderr);
+  fflush (out);
   free (msg);
 
-  finish_default ();
+  ldelf_finish ();
 }
 
 
@@ -684,41 +685,6 @@ fi
 # Define some shell vars to insert bits of code into the standard elf
 # parse_args and list_options functions.
 #
-PARSE_AND_LIST_PROLOGUE=${PARSE_AND_LIST_PROLOGUE}'
-enum ppc64_opt
-{
-  OPTION_STUBGROUP_SIZE = 321,
-  OPTION_PLT_STATIC_CHAIN,
-  OPTION_NO_PLT_STATIC_CHAIN,
-  OPTION_PLT_THREAD_SAFE,
-  OPTION_NO_PLT_THREAD_SAFE,
-  OPTION_PLT_ALIGN,
-  OPTION_NO_PLT_ALIGN,
-  OPTION_PLT_LOCALENTRY,
-  OPTION_NO_PLT_LOCALENTRY,
-  OPTION_POWER10_STUBS,
-  OPTION_NO_POWER10_STUBS,
-  OPTION_NO_PCREL_OPT,
-  OPTION_STUBSYMS,
-  OPTION_NO_STUBSYMS,
-  OPTION_SAVRES,
-  OPTION_NO_SAVRES,
-  OPTION_DOTSYMS,
-  OPTION_NO_DOTSYMS,
-  OPTION_NO_TLS_OPT,
-  OPTION_TLS_GET_ADDR_OPT,
-  OPTION_NO_TLS_GET_ADDR_OPT,
-  OPTION_TLS_GET_ADDR_REGSAVE,
-  OPTION_NO_TLS_GET_ADDR_REGSAVE,
-  OPTION_NO_OPD_OPT,
-  OPTION_NO_INLINE_OPT,
-  OPTION_NO_TOC_OPT,
-  OPTION_NO_MULTI_TOC,
-  OPTION_NO_TOC_SORT,
-  OPTION_NON_OVERLAPPING_OPD
-};
-'
-
 PARSE_AND_LIST_LONGOPTS=${PARSE_AND_LIST_LONGOPTS}'
   { "stub-group-size", required_argument, NULL, OPTION_STUBGROUP_SIZE },
   { "plt-static-chain", no_argument, NULL, OPTION_PLT_STATIC_CHAIN },
@@ -860,7 +826,7 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
 	const char *end;
 	params.group_size = bfd_scan_vma (optarg, &end, 0);
 	if (*end)
-	  einfo (_("%F%P: invalid number `%s'\''\n"), optarg);
+	  fatal (_("%P: invalid number `%s'\''\n"), optarg);
       }
       break;
 
@@ -886,7 +852,7 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
 	  char *end;
 	  long val = strtol (optarg, &end, 0);
 	  if (*end || (unsigned long) val + 8 > 16)
-	    einfo (_("%F%P: invalid --plt-align `%s'\''\n"), optarg);
+	    fatal (_("%P: invalid --plt-align `%s'\''\n"), optarg);
 	  params.plt_stub_align = val;
 	}
       else
@@ -915,7 +881,7 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
 	  else if (strcasecmp (optarg, "no") == 0)
 	    params.power10_stubs = 0;
 	  else
-	    einfo (_("%F%P: invalid --power10-stubs argument `%s'\''\n"),
+	    fatal (_("%P: invalid --power10-stubs argument `%s'\''\n"),
 		   optarg);
 	}
       else

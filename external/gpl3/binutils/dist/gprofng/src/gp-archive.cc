@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -139,11 +139,9 @@ er_archive::usage ()
     "\n"
     "See also:\n"
     "\n"
-    "gprofng(1), gp-collect-app(1), gp-display-html(1), gp-display-src(1), gp-display-text(1)\n"));
-// Ruud
-/*
-  fprintf (stderr, GTXT ("GNU %s version %s\n"), get_basename (prog_name), VERSION);
-*/
+    "gprofng(1), gprofng-collect-app(1), gprofng-display-html(1), "
+    "gprofng-display-src(1), gprofng-display-text(1)\n"
+    "\nReport bugs to <https://sourceware.org/bugzilla/>\n"));
   exit (1);
 }
 
@@ -359,25 +357,59 @@ er_archive::start (int argc, char *argv[])
 	}
       lo->sync_read_stabs ();
       Elf *elf = lo->get_elf ();
-      if (elf && (lo->checksum != 0) && (lo->checksum != elf->elf_checksum ()))
+      if (elf == NULL)
 	{
 	  if (!quiet)
-	    fprintf (stderr, GTXT ("gp-archive: '%s' has an unexpected checksum value; perhaps it was rebuilt. File ignored\n"),
+	    fprintf (stderr, GTXT ("gp-archive: Cannot open \"%s\"\n"),
 		       df->get_location ());
+	  Dprintf (DEBUG_ARCHIVE,
+		  " loadObjs[%ld]: not found '%s'\n", i, df->get_location ());
 	  continue;
 	}
-      copy_files->append (df);
-      if (elf)
+      else if (df->inArchive)
 	{
-	  Elf *f = elf->find_ancillary_files (lo->get_pathname ());
-	  if (f)
-	    copy_files->append (f->dbeFile);
-	  for (long i1 = 0, sz1 = VecSize(elf->ancillary_files); i1 < sz1; i1++)
+	  Dprintf (DEBUG_ARCHIVE,
+		  " loadObjs[%ld]: inArchive=1 '%s'\n", i, df->get_name ());
+	  continue;
+	}
+      else if (!mask_is_on (df->get_name ()))
+	{
+	  Dprintf (DEBUG_ARCHIVE,
+		" loadObjs[%ld]: mask_is_on=0 '%s'\n", i, df->get_name ());
+	  continue;
+	}
+      char *fnm = elf->get_location ();
+      char *anm = founder_exp->getNameInArchive (fnm);
+      archive_file (fnm, anm);
+
+      // archive gnu_debug and gnu_debugalt files
+      if (elf->gnu_debug_file)
+	{
+	  char *arch_nm = dbe_sprintf ("%s_debug", anm);
+	  archive_file (elf->gnu_debug_file->get_location (), arch_nm);
+	  free (arch_nm);
+	  if (elf->gnu_debug_file->gnu_debugalt_file)
 	    {
-	      Elf *ancElf = elf->ancillary_files->get (i1);
-	      copy_files->append (ancElf->dbeFile);
+	      arch_nm = dbe_sprintf ("%s_debug_alt", anm);
+	      archive_file (elf->gnu_debug_file->gnu_debugalt_file->get_location (), arch_nm);
+	      free (arch_nm);
 	    }
 	}
+      if (elf->gnu_debugalt_file)
+	{
+	  char *arch_nm = dbe_sprintf ("%s_alt", anm);
+	  archive_file (elf->gnu_debugalt_file->get_location (), arch_nm);
+	  free (arch_nm);
+	}
+      free (anm);
+
+      elf->find_ancillary_files (lo->get_pathname ());
+      for (long i1 = 0, sz1 = VecSize (elf->ancillary_files); i1 < sz1; i1++)
+	{
+	  Elf *ancElf = elf->ancillary_files->get (i1);
+	  copy_files->append (ancElf->dbeFile);
+	}
+
       Vector<Module*> *modules = lo->seg_modules;
       for (long i1 = 0, sz1 = VecSize(modules); i1 < sz1; i1++)
 	{
@@ -471,7 +503,7 @@ er_archive::start (int argc, char *argv[])
       int res = founder_exp->copy_file (fnm, anm, quiet, common_archive_dir, use_relative_path);
       if (0 == res)  // file successfully archived
 	df->inArchive = 1;
-      delete anm;
+      free (anm);
     }
   delete copy_files;
 
@@ -489,6 +521,15 @@ er_archive::start (int argc, char *argv[])
 	      " See the gp-archive man page for more details.\n"));
     }
   delete notfound_files;
+}
+
+int
+er_archive::archive_file (const char *from, const char *to)
+{
+  if (force)
+    unlink (to);
+  return Experiment::copy_file (from, to, quiet, common_archive_dir,
+			  use_relative_path);
 }
 
 int
@@ -528,7 +569,7 @@ er_archive::check_args (int argc, char *argv[])
 	  if (dseen)
 	    fprintf (stderr, GTXT ("Warning: option -d was specified several times. Last value is used.\n"));
 	  free (common_archive_dir);
-	  common_archive_dir = strdup (optarg);
+	  common_archive_dir = xstrdup (optarg);
 	  dseen = 1;
 	  break;
 	case 'q':
@@ -546,7 +587,7 @@ er_archive::check_args (int argc, char *argv[])
 	  if (rseen)
 	    fprintf (stderr, GTXT ("Warning: option -r was specified several times. Last value is used.\n"));
 	  free (common_archive_dir);
-	  common_archive_dir = strdup (optarg);
+	  common_archive_dir = xstrdup (optarg);
 	  use_relative_path = 1;
 	  rseen = 1;
 	  break;
@@ -617,11 +658,7 @@ er_archive::check_args (int argc, char *argv[])
 	    break;
 	  }
 	case 'V':
-// Ruud
 	  Application::print_version_info ();
-/*
-	  printf (GTXT ("GNU %s version %s\n"), get_basename (prog_name), VERSION);
-*/
 	  exit (0);
 	case 'w':
 	  whoami = optarg;
@@ -667,7 +704,7 @@ er_archive::check_env_var ()
     }
   if (opts->size () > 0)
     {
-      char **arr = (char **) malloc (sizeof (char *) *opts->size ());
+      char **arr = (char **) xmalloc (sizeof (char *) *opts->size ());
       for (long i = 0; i < opts->size (); i++)
 	arr[i] = opts->get (i);
       if (-1 == check_args (opts->size (), arr))
@@ -697,5 +734,6 @@ real_main (int argc, char *argv[])
 int
 main (int argc, char *argv[])
 {
+  xmalloc_set_program_name (argv[0]);
   return catch_out_of_memory (real_main, argc, argv);
 }

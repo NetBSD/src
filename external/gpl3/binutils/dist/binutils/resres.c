@@ -1,5 +1,5 @@
 /* resres.c: read_res_file and write_res_file implementation for windres.
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
    Written by Anders Norlander <anorland@hem2.passagen.se>.
    Rewritten by Kai Tietz, Onevision.
 
@@ -109,14 +109,14 @@ read_res_file (const char *fn)
 }
 
 /* Write resource file */
-void
+bool
 write_res_file (const char *fn,const rc_res_directory *resdir)
 {
   asection *sec;
   rc_uint_type language;
   bfd *abfd;
   windres_bfd wrbfd;
-  unsigned long sec_length = 0,sec_length_wrote;
+  rc_uint_type sec_length = 0, sec_length_wrote;
   static const bfd_byte sign[] =
   {0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
    0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00,
@@ -130,7 +130,10 @@ write_res_file (const char *fn,const rc_res_directory *resdir)
 				     (SEC_HAS_CONTENTS | SEC_ALLOC
 				      | SEC_LOAD | SEC_DATA));
   if (sec == NULL)
-    bfd_fatal ("bfd_make_section");
+    {
+      bfd_nonfatal ("bfd_make_section");
+      return false;
+    }
   /* Requiring this is probably a bug in BFD.  */
   sec->output_section = sec;
 
@@ -142,8 +145,13 @@ write_res_file (const char *fn,const rc_res_directory *resdir)
   sec_length = write_res_directory ((windres_bfd *) NULL, 0x20UL, resdir,
 				    (const rc_res_id *) NULL,
 				    (const rc_res_id *) NULL, &language, 1);
+  if (sec_length == (rc_uint_type) -1)
+    return false;
   if (!bfd_set_section_size (sec, (sec_length + 3) & ~3))
-    bfd_fatal ("bfd_set_section_size");
+    {
+      bfd_nonfatal ("bfd_set_section_size");
+      return false;
+    }
   if ((sec_length & 3) != 0)
     set_windres_bfd_content (&wrbfd, sign, sec_length, 4-(sec_length & 3));
   set_windres_bfd_content (&wrbfd, sign, 0, sizeof (sign));
@@ -152,12 +160,16 @@ write_res_file (const char *fn,const rc_res_directory *resdir)
 					  (const rc_res_id *) NULL,
 					  (const rc_res_id *) NULL,
 					  &language, 1);
+  if (sec_length_wrote == (rc_uint_type) -1)
+    return false;
   if (sec_length != sec_length_wrote)
-    fatal ("res write failed with different sizes (%lu/%lu).",
-	   (unsigned long) sec_length, (unsigned long) sec_length_wrote);
+    {
+      non_fatal ("res write failed with different sizes (%lu/%lu).",
+		 (unsigned long) sec_length, (unsigned long) sec_length_wrote);
+      return false;
+    }
 
-  bfd_close (abfd);
-  return;
+  return bfd_close (abfd);
 }
 
 /* Read a resource entry, returns 0 when all resources are read */
@@ -189,11 +201,11 @@ read_resource_entry (windres_bfd *wrbfd, rc_uint_type *off, rc_uint_type omax)
 
   /* Read additional resource header */
   read_res_data (wrbfd, off, omax, &l, BIN_RES_INFO_SIZE);
-  resinfo.version = windres_get_32 (wrbfd, l.version, 4);
-  resinfo.memflags = windres_get_16 (wrbfd, l.memflags, 2);
-  resinfo.language = windres_get_16 (wrbfd, l.language, 2);
-  /* resinfo.version2 = windres_get_32 (wrbfd, l.version2, 4); */
-  resinfo.characteristics = windres_get_32 (wrbfd, l.characteristics, 4);
+  resinfo.version = windres_get_32 (wrbfd, l.version);
+  resinfo.memflags = windres_get_16 (wrbfd, l.memflags);
+  resinfo.language = windres_get_16 (wrbfd, l.language);
+  /* resinfo.version2 = windres_get_32 (wrbfd, l.version2); */
+  resinfo.characteristics = windres_get_32 (wrbfd, l.characteristics);
 
   off[0] = (off[0] + 3) & ~3;
 
@@ -252,8 +264,12 @@ write_res_directory (windres_bfd *wrbfd, rc_uint_type off, const rc_res_director
 	}
 
       if (re->subdir)
-	off = write_res_directory (wrbfd, off, re->u.dir, type, name, language,
-				   level + 1);
+	{
+	  off = write_res_directory (wrbfd, off, re->u.dir, type, name, language,
+				     level + 1);
+	  if (off == (rc_uint_type) -1)
+	    return off;
+	}
       else
 	{
 	  if (level == 3)
@@ -265,12 +281,16 @@ write_res_directory (windres_bfd *wrbfd, rc_uint_type off, const rc_res_director
 	         resource itself records if anything.  */
 	      off = write_res_resource (wrbfd, off, type, name, re->u.res,
 	      				language);
+	      if (off == (rc_uint_type) -1)
+		return off;
 	    }
 	  else
 	    {
 	      fprintf (stderr, "// Resource at unexpected level %d\n", level);
 	      off = write_res_resource (wrbfd, off, type, (rc_res_id *) NULL,
 	      				re->u.res, language);
+	      if (off == (rc_uint_type) -1)
+		return off;
 	    }
 	}
     }
@@ -378,6 +398,8 @@ write_res_bin (windres_bfd *wrbfd, rc_uint_type off, const rc_res_resource *res,
   rc_uint_type datasize = 0;
 
   noff = res_to_bin ((windres_bfd *) NULL, off, res);
+  if (noff == (rc_uint_type) -1)
+    return noff;
   datasize = noff - off;
 
   off = write_res_header (wrbfd, off, datasize, type, name, resinfo);
@@ -442,8 +464,8 @@ read_res_data_hdr (windres_bfd *wrbfd, rc_uint_type *off, rc_uint_type omax,
     fatal ("%s: unexpected end of file %ld/%ld", filename,(long) off[0], (long) omax);
 
   get_windres_bfd_content (wrbfd, &brh, off[0], BIN_RES_HDR_SIZE);
-  reshdr->data_size = windres_get_32 (wrbfd, brh.data_size, 4);
-  reshdr->header_size = windres_get_32 (wrbfd, brh.header_size, 4);
+  reshdr->data_size = windres_get_32 (wrbfd, brh.data_size);
+  reshdr->header_size = windres_get_32 (wrbfd, brh.header_size);
   off[0] += BIN_RES_HDR_SIZE;
 }
 
@@ -474,6 +496,7 @@ write_res_id (windres_bfd *wrbfd, rc_uint_type off, const rc_res_id *id)
 	    windres_put_16 (wrbfd, d + (i * sizeof (unichar)), id->u.n.name[i]);
 	  windres_put_16 (wrbfd, d + (i * sizeof (unichar)), 0);
 	  set_windres_bfd_content (wrbfd, d, off, (len * sizeof (unichar)));
+	  free (d);
 	}
       off += (len * sizeof (unichar));
     }
@@ -519,12 +542,12 @@ read_res_id (windres_bfd *wrbfd, rc_uint_type *off, rc_uint_type omax, rc_res_id
   rc_uint_type len;
 
   read_res_data (wrbfd, off, omax, &bid, BIN_RES_ID - 2);
-  ord = (unsigned short) windres_get_16 (wrbfd, bid.sig, 2);
+  ord = (unsigned short) windres_get_16 (wrbfd, bid.sig);
   if (ord == 0xFFFF)		/* an ordinal id */
     {
       read_res_data (wrbfd, off, omax, bid.id, BIN_RES_ID - 2);
       id->named = 0;
-      id->u.id = windres_get_16 (wrbfd, bid.id, 2);
+      id->u.id = windres_get_16 (wrbfd, bid.id);
     }
   else
     /* named id */
@@ -552,7 +575,7 @@ read_unistring (windres_bfd *wrbfd, rc_uint_type *off, rc_uint_type omax,
   do
     {
       read_res_data (wrbfd, &soff, omax, d, sizeof (unichar));
-      c = windres_get_16 (wrbfd, d, 2);
+      c = windres_get_16 (wrbfd, d);
     }
   while (c != 0);
   l = ((soff - off[0]) / sizeof (unichar));
@@ -562,7 +585,7 @@ read_unistring (windres_bfd *wrbfd, rc_uint_type *off, rc_uint_type omax,
   do
     {
       read_res_data (wrbfd, off, omax, d, sizeof (unichar));
-      c = windres_get_16 (wrbfd, d, 2);
+      c = windres_get_16 (wrbfd, d);
       *p++ = c;
     }
   while (c != 0);

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -28,6 +28,8 @@
 #include "Map.h"
 #include "StringBuilder.h"
 #include "DbeFile.h"
+#include "DbeSession.h"
+#include "Dwarf.h"
 
 typedef uint32_t Elf32_Word;
 typedef uint32_t Elf64_Word;
@@ -83,55 +85,30 @@ struct S_Elf64_Dyn
   } d_un;
 };
 
+#ifndef DEBUGDIR
+#define DEBUGDIR "/lib/debug"
+#endif
+#ifndef EXTRA_DEBUG_ROOT1
+#define EXTRA_DEBUG_ROOT1 "/usr/lib/debug"
+#endif
+#ifndef EXTRA_DEBUG_ROOT2
+#define EXTRA_DEBUG_ROOT2 "/usr/lib/debug/usr"
+#endif
 
-// Symbol table
-typedef struct
+static const char *debug_dirs[] = {
+  DEBUGDIR, EXTRA_DEBUG_ROOT1, EXTRA_DEBUG_ROOT2, "."
+};
+
+template<> void Vector<asymbol *>::dump (const char *msg)
 {
-  Elf32_Word st_name;
-  Elf32_Addr st_value;
-  Elf32_Word st_size;
-  unsigned char st_info;    /* bind, type: ELF_32_ST_... */
-  unsigned char st_other;
-  Elf32_Half st_shndx;      /* SHN_... */
-} Elf32_Sym;
-
-typedef struct
-{
-  Elf64_Word st_name;
-  unsigned char st_info;    /* bind, type: ELF_64_ST_... */
-  unsigned char st_other;
-  Elf64_Half st_shndx;      /* SHN_... */
-  Elf64_Addr st_value;
-  Elf64_Xword st_size;
-} Elf64_Sym;
-
-
-// Relocation
-typedef struct
-{
-  Elf32_Addr r_offset;
-  Elf32_Word r_info;        /* sym, type: ELF32_R_... */
-} Elf32_Rel;
-
-typedef struct
-{
-  Elf32_Addr r_offset;
-  Elf32_Word r_info;        /* sym, type: ELF32_R_... */
-  Elf32_Sword r_addend;
-} Elf32_Rela;
-
-typedef struct
-{
-  Elf64_Addr r_offset;
-  Elf64_Xword r_info;       /* sym, type: ELF64_R_... */
-} Elf64_Rel;
-
-typedef struct
-{
-  Elf64_Addr r_offset;
-  Elf64_Xword r_info;       /* sym, type: ELF64_R_... */
-  Elf64_Sxword r_addend;
-} Elf64_Rela;
+  Dprintf (1, NTXT ("\nFile: %s Vector<asymbol *> [%ld]\n"),
+	   msg ? msg : "NULL", (long) size ());
+  for (long i = 0, sz = size (); i < sz; i++)
+    {
+      asymbol *sym = get (i);
+      Dprintf (1, "  %3ld %s\n", i, sym->name);
+    }
+}
 
 int Elf::bfd_status = -1;
 
@@ -149,6 +126,8 @@ Elf::Elf (char *filename) : DbeMessages (), Data_window (filename)
   ancillary_files = NULL;
   elfSymbols = NULL;
   gnu_debug_file = NULL;
+  gnu_debugalt_file = NULL;
+  sections = NULL;
   dbeFile = NULL;
   abfd = NULL;
   bfd_symcnt = -1;
@@ -196,23 +175,13 @@ Elf::Elf (char *filename) : DbeMessages (), Data_window (filename)
     }
   status = ELF_ERR_NONE;
 
-#if ARCH(SPARC)
-  need_swap_endian = is_Intel ();
-#else
-  need_swap_endian = !is_Intel ();
-#endif
-
+  need_swap_endian = DbeSession::is_bigendian () != bfd_big_endian (abfd);
   analyzerInfo = 0;
-  SUNW_ldynsym = 0;
-  gnuLink = 0;
   stab = 0;
-  stabStr = 0;
   stabIndex = 0;
   stabIndexStr = 0;
   stabExcl = 0;
   stabExclStr = 0;
-  symtab = 0;
-  dynsym = 0;
   info = 0;
   plt = 0;
   dwarf = false;
@@ -234,20 +203,12 @@ Elf::Elf (char *filename) : DbeMessages (), Data_window (filename)
 	stabExcl = sec;
       else if (streq (name, NTXT (".stab.exclstr")))
 	stabExclStr = sec;
-      else if (streq (name, NTXT (".gnu_debuglink")))
-	gnuLink = sec;
       else if (streq (name, NTXT (".__analyzer_info")))
 	analyzerInfo = sec;
       else if (streq (name, NTXT (".info")))
 	info = true;
       else if (streq (name, NTXT (".plt")))
 	plt = sec;
-      else if (streq (name, NTXT (".SUNW_ldynsym")))
-	SUNW_ldynsym = sec;
-      else if (streq (name, NTXT (".dynsym")))
-	dynsym = sec;
-      else if (streq (name, NTXT (".symtab")))
-	symtab = sec;
       else if (strncmp (name, NTXT (".debug"), 6) == 0)
 	dwarf = true;
     }
@@ -265,11 +226,22 @@ Elf::~Elf ()
       for (int i = 0; i < (int) ehdrp->e_shnum; i++)
 	{
 	  Elf_Data *p = data[i];
-	  if (p && !mmap_on_file && (p->d_flags & SHF_SUNW_ABSENT) == 0)
-	    free (p->d_buf);
-	  delete p;
+	  if (p)
+	    {
+	      if (p->d_flags & SEC_DECOMPRESSED)
+		free (p->d_buf);
+	      else if (!mmap_on_file && (p->d_flags & SHF_SUNW_ABSENT) == 0)
+		free (p->d_buf);
+	      delete p;
+	    }
 	}
       free (data);
+    }
+  if (sections)
+    {
+      for (int i = 0; i < (int) ehdrp->e_shnum; i++)
+	delete sections[i];
+      free (sections);
     }
   if (ancillary_files)
     {
@@ -278,6 +250,7 @@ Elf::~Elf ()
     }
   delete elfSymbols;
   delete gnu_debug_file;
+  delete gnu_debugalt_file;
   delete dbeFile;
   delete synthsym;
   free (bfd_sym);
@@ -400,12 +373,39 @@ Elf::get_sec_name (unsigned int sec)
   return elf_strptr (ehdrp->e_shstrndx, shdr->sh_name);
 }
 
+DwrSec *
+Elf::get_dwr_section (const char *sec_name)
+{
+  int sec_num = elf_get_sec_num (sec_name);
+  if (sec_num > 0)
+    {
+      if (sections == NULL)
+	{
+	  sections = (DwrSec **) xmalloc (ehdrp->e_shnum * sizeof (DwrSec *));
+	  for (int i = 0; i < (int) ehdrp->e_shnum; i++)
+	    sections[i] = NULL;
+	}
+      if (sections[sec_num] == NULL)
+	{
+	  Elf_Data *elfData = elf_getdata (sec_num);
+	  if (elfData)
+	    sections[sec_num] = new DwrSec ((unsigned char *) elfData->d_buf,
+				    elfData->d_size, need_swap_endian,
+				    elf_getclass () == ELFCLASS32);
+	}
+      return sections[sec_num];
+    }
+  return NULL;
+}
+
 Elf_Data *
 Elf::elf_getdata (unsigned int sec)
 {
+  if (sec == 0)
+    return NULL;
   if (data == NULL)
     {
-      data = (Elf_Data **) malloc (ehdrp->e_shnum * sizeof (Elf_Data *));
+      data = (Elf_Data **) xmalloc (ehdrp->e_shnum * sizeof (Elf_Data *));
       for (int i = 0; i < (int) ehdrp->e_shnum; i++)
 	data[i] = NULL;
     }
@@ -443,11 +443,28 @@ Elf::elf_getdata (unsigned int sec)
 		}
 	    }
 	}
-      edta->d_buf = get_data (shdr->sh_offset, (size_t) shdr->sh_size, NULL);
-      edta->d_flags = shdr->sh_flags;
-      edta->d_size = ((edta->d_buf == NULL) || (shdr->sh_type == SHT_NOBITS)) ? 0 : shdr->sh_size;
-      edta->d_off = shdr->sh_offset;
-      edta->d_align = shdr->sh_addralign;
+
+      sec_ptr sp = shdr->bfd_section;
+      if (sp && bfd_is_section_compressed (abfd, sp))
+	{
+	  bfd_byte *p = NULL;
+	  if (bfd_get_full_section_contents (abfd, sp, &p))
+	    {
+	      edta->d_buf = p;
+	      edta->d_size = p ? sp->size : 0;
+	      edta->d_off = 0;
+	      edta->d_flags = shdr->sh_flags | SEC_DECOMPRESSED;
+	      edta->d_align = shdr->sh_addralign;
+	    }
+	}
+      else
+	{
+	  edta->d_buf = get_data (shdr->sh_offset, (size_t) shdr->sh_size, NULL);
+	  edta->d_flags = shdr->sh_flags;
+	  edta->d_size = ((edta->d_buf == NULL) || (shdr->sh_type == SHT_NOBITS)) ? 0 : shdr->sh_size;
+	  edta->d_off = shdr->sh_offset;
+	  edta->d_align = shdr->sh_addralign;
+	}
     }
   return edta;
 }
@@ -511,86 +528,43 @@ Elf::elf_strptr (unsigned int sec, uint64_t off)
   return NULL;
 }
 
-Elf_Internal_Sym *
-Elf::elf_getsym (Elf_Data *edta, unsigned int ndx, Elf_Internal_Sym *dst)
+long
+Elf::elf_getSymCount (bool is_dynamic)
 {
-  if (dst == NULL || edta == NULL)
-    return NULL;
-  if (elf_getclass () == ELFCLASS32)
-    {
-      if (edta->d_size <= ndx * sizeof (Elf32_Sym))
-	return NULL;
-      Elf32_Sym *hdr = (Elf32_Sym*) bind (edta->d_off + ndx * sizeof (Elf32_Sym), sizeof (Elf32_Sym));
-      if (hdr == NULL)
-	return NULL;
-      dst->st_name = decode (hdr->st_name);
-      dst->st_value = decode (hdr->st_value);
-      dst->st_size = decode (hdr->st_size);
-      dst->st_info = ELF64_ST_INFO (ELF32_ST_BIND (decode (hdr->st_info)),
-				    ELF32_ST_TYPE (decode (hdr->st_info)));
-      dst->st_other = decode (hdr->st_other);
-      dst->st_shndx = decode (hdr->st_shndx);
-    }
-  else
-    {
-      if (edta->d_size <= ndx * sizeof (Elf64_Sym))
-	return NULL;
-      Elf64_Sym *hdr = (Elf64_Sym*) bind (edta->d_off + ndx * sizeof (Elf64_Sym),
-					  sizeof (Elf64_Sym));
-      if (hdr == NULL)
-	return NULL;
-      dst->st_name = decode (hdr->st_name);
-      dst->st_value = decode (hdr->st_value);
-      dst->st_size = decode (hdr->st_size);
-      dst->st_info = decode (hdr->st_info);
-      dst->st_other = decode (hdr->st_other);
-      dst->st_shndx = decode (hdr->st_shndx);
-    }
-  return dst;
+  if (bfd_dynsym == NULL && bfd_sym == NULL)
+    get_bfd_symbols ();
+  if (is_dynamic)
+    return bfd_dynsymcnt;
+  return bfd_symcnt;
 }
 
-Elf_Internal_Rela *
-Elf::elf_getrel (Elf_Data *edta, unsigned int ndx, Elf_Internal_Rela *dst)
-{
-  if (dst == NULL || edta == NULL || edta->d_buf == NULL)
-    return NULL;
-  if (elf_getclass () == ELFCLASS32)
-    {
-      Elf32_Rel *rel = ((Elf32_Rel *) edta->d_buf) + ndx;
-      dst->r_offset = decode (rel->r_offset);
-      dst->r_info = ELF64_R_INFO (ELF32_R_SYM (decode (rel->r_info)),
-				  ELF32_R_TYPE (decode (rel->r_info)));
-    }
-  else
-    {
-      Elf64_Rel *rel = ((Elf64_Rel *) edta->d_buf) + ndx;
-      dst->r_offset = decode (rel->r_offset);
-      dst->r_info = decode (rel->r_info);
-    }
-  return dst;
-}
+/* Returns an ASYMBOL on index NDX if it exists.  If DST is defined,
+   the internal elf symbol at intex NDX is copied into it.  IS_DYNAMIC
+   selects the type of the symbol.  */
 
-Elf_Internal_Rela *
-Elf::elf_getrela (Elf_Data *edta, unsigned int ndx, Elf_Internal_Rela *dst)
+asymbol *
+Elf::elf_getsym (unsigned int ndx, Elf_Internal_Sym *dst, bool is_dynamic)
 {
-  if (dst == NULL || edta == NULL || edta->d_buf == NULL)
-    return NULL;
-  if (elf_getclass () == ELFCLASS32)
-    {
-      Elf32_Rela *rela = ((Elf32_Rela *) edta->d_buf) + ndx;
-      dst->r_offset = decode (rela->r_offset);
-      dst->r_addend = decode (rela->r_addend);
-      dst->r_info = ELF64_R_INFO (ELF32_R_SYM (decode (rela->r_info)),
-				  ELF32_R_TYPE (decode (rela->r_info)));
-    }
+  asymbol *asym;
+
+  if (bfd_dynsym == NULL && bfd_sym == NULL)
+    get_bfd_symbols ();
+
+  if (is_dynamic)
+    if (ndx < bfd_dynsymcnt)
+      asym = bfd_dynsym[ndx];
+    else
+      return NULL;
   else
-    {
-      Elf64_Rela *rela = ((Elf64_Rela *) edta->d_buf) + ndx;
-      dst->r_offset = decode (rela->r_offset);
-      dst->r_addend = decode (rela->r_addend);
-      dst->r_info = decode (rela->r_info);
-    }
-  return dst;
+    if (ndx < bfd_symcnt)
+      asym = bfd_sym[ndx];
+    else
+      return NULL;
+
+  if (dst != NULL)
+    *dst = ((elf_symbol_type *) asym)->internal_elf_sym;
+
+  return asym;
 }
 
 Elf64_Ancillary *
@@ -653,25 +627,54 @@ Elf::get_related_file (const char *lo_name, const char *nm)
   return NULL;
 }
 
-Elf *
-Elf::find_ancillary_files (char *lo_name)
+static char *
+find_file (char *(bfd_func) (bfd *, const char *), bfd *abfd)
 {
-  // read the .gnu_debuglink and .SUNW_ancillary seections
-  if (gnu_debug_file)
-    return gnu_debug_file;
-  unsigned int sec = elf_get_sec_num (NTXT (".gnu_debuglink"));
-  if (sec > 0)
+  char *fnm = NULL;
+  for (size_t i = 0; i < ARR_SIZE (debug_dirs); i++)
     {
-      Elf_Data *dp = elf_getdata (sec);
-      if (dp)
+      fnm = bfd_func (abfd, debug_dirs[i]);
+      if (fnm)
+	break;
+    }
+  Dprintf (DUMP_DWARFLIB, "FOUND: gnu_debug_file: %s --> %s\n",
+	   abfd->filename, fnm);
+  return fnm;
+}
+
+void
+Elf::find_gnu_debug_files ()
+{
+  char *fnm;
+  if (gnu_debug_file == NULL)
+    {
+      fnm = find_file (bfd_follow_gnu_debuglink, abfd);
+      if (fnm)
 	{
-	  gnu_debug_file = get_related_file (lo_name, (char *) (dp->d_buf));
+	  gnu_debug_file = Elf::elf_begin (fnm);
+	  free (fnm);
 	  if (gnu_debug_file)
-	    return gnu_debug_file;
+	    gnu_debug_file->find_gnu_debug_files ();
 	}
     }
+  if (gnu_debugalt_file == NULL)
+    {
+      fnm = find_file (bfd_follow_gnu_debugaltlink, abfd);
+      if (fnm)
+	{
+	  gnu_debugalt_file = Elf::elf_begin (fnm);
+	  free (fnm);
+	}
+    }
+}
 
-  sec = elf_get_sec_num (NTXT (".SUNW_ancillary"));
+void
+Elf::find_ancillary_files (const char *lo_name)
+{
+  // read the .SUNW_ancillary section
+  if (ancillary_files != NULL)
+    return;
+  unsigned int sec = elf_get_sec_num (".SUNW_ancillary");
   if (sec > 0)
     {
       Elf_Internal_Shdr *shdr = get_shdr (sec);
@@ -732,7 +735,6 @@ Elf::find_ancillary_files (char *lo_name)
 	    }
 	}
     }
-  return NULL;
 }
 
 void
@@ -744,7 +746,7 @@ Elf::get_bfd_symbols()
 	bfd_symcnt = bfd_get_symtab_upper_bound (abfd);
       if (bfd_symcnt > 0)
 	{
-	  bfd_sym = (asymbol **) malloc (bfd_symcnt);
+	  bfd_sym = (asymbol **) xmalloc (bfd_symcnt);
 	  bfd_symcnt = bfd_canonicalize_symtab (abfd, bfd_sym);
 	  if (bfd_symcnt < 0)
 	    {
@@ -761,7 +763,7 @@ Elf::get_bfd_symbols()
       bfd_dynsymcnt = bfd_get_dynamic_symtab_upper_bound (abfd);
       if (bfd_dynsymcnt > 0)
 	{
-	  bfd_dynsym = (asymbol **) malloc (bfd_dynsymcnt);
+	  bfd_dynsym = (asymbol **) xmalloc (bfd_dynsymcnt);
 	  bfd_dynsymcnt = bfd_canonicalize_dynamic_symtab (abfd, bfd_dynsym);
 	  if (bfd_dynsymcnt < 0)
 	    {
@@ -805,6 +807,8 @@ Elf::get_funcname_in_plt (uint64_t pc)
       for (long i = 0; i < bfd_synthcnt; i++)
 	synthsym->append (bfd_synthsym + i);
       synthsym->sort (cmp_sym_addr);
+      if (DUMP_ELF_SYM)
+	synthsym->dump (get_location ());
     }
 
   asymbol sym, *symp = &sym;

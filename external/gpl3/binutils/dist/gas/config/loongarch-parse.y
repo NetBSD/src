@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -42,7 +42,7 @@ is_const (struct reloc_info *info)
 }
 
 int
-loongarch_parse_expr (const char *expr,
+loongarch_parse_expr (const char *exp,
 		      struct reloc_info *reloc_stack_top,
 		      size_t max_reloc_num,
 		      size_t *reloc_num,
@@ -52,7 +52,7 @@ loongarch_parse_expr (const char *expr,
   struct yy_buffer_state *buffstate;
   top = reloc_stack_top;
   end = top + max_reloc_num;
-  buffstate = yy_scan_string (expr);
+  buffstate = yy_scan_string (exp);
   ret = yyparse ();
 
   if (ret == 0)
@@ -207,26 +207,41 @@ emit_bin (int op)
       switch (op)
 	{
 	case '*':
-	  opr1 = opr1 * opr2;
+	  opr1 = (valueT) opr1 * (valueT) opr2;
 	  break;
 	case '/':
-	  opr1 = opr1 / opr2;
+	  if (opr2 == 0)
+	    {
+	      as_warn (_("Divide by zero!"));
+	      opr1 = 0;
+	    }
+	  else
+	    opr1 = opr1 / opr2;
 	  break;
 	case '%':
-	  opr1 = opr1 % opr2;
+	  if (opr2 == 0)
+	    {
+	      as_warn (_("Divide by zero!"));
+	      opr1 = 0;
+	    }
+	  else
+	    opr1 = opr1 % opr2;
 	  break;
 	case '+':
-	  opr1 = opr1 + opr2;
+	  opr1 = (valueT) opr1 + (valueT) opr2;
 	  break;
 	case '-':
-	  opr1 = opr1 - opr2;
+	  opr1 = (valueT) opr1 - (valueT) opr2;
 	  break;
 	case LEFT_OP:
-	  opr1 = opr1 << opr2;
+	  opr1 = (valueT) opr1 << opr2;
 	  break;
 	case RIGHT_OP:
-	  /* Algorithm right shift.  */
-	  opr1 = (offsetT)opr1 >> (offsetT)opr2;
+	  if (opr1 < 0)
+	    as_warn (_("Right shift of negative numbers may be changed "
+		       "from arithmetic right shift to logical right shift!"));
+	  /* Arithmetic right shift.  */
+	  opr1 = opr1 >> opr2;
 	  break;
 	case '<':
 	  opr1 = opr1 < opr2;
@@ -368,24 +383,24 @@ multiplicative_expression
 	| multiplicative_expression '%' unary_expression {emit_bin ('%');}
 	;
 
-additive_expression
+shift_expression
 	: multiplicative_expression
-	| additive_expression '+' multiplicative_expression {emit_bin ('+');}
-	| additive_expression '-' multiplicative_expression {emit_bin ('-');}
+	| shift_expression LEFT_OP multiplicative_expression {emit_bin (LEFT_OP);}
+	| shift_expression RIGHT_OP multiplicative_expression {emit_bin (RIGHT_OP);}
 	;
 
-shift_expression
-	: additive_expression
-	| shift_expression LEFT_OP additive_expression {emit_bin (LEFT_OP);}
-	| shift_expression RIGHT_OP additive_expression {emit_bin (RIGHT_OP);}
+additive_expression
+	: shift_expression
+	| additive_expression '+' shift_expression {emit_bin ('+');}
+	| additive_expression '-' shift_expression {emit_bin ('-');}
 	;
 
 relational_expression
-	: shift_expression
-	| relational_expression '<' shift_expression {emit_bin ('<');}
-	| relational_expression '>' shift_expression {emit_bin ('>');}
-	| relational_expression LE_OP shift_expression {emit_bin (LE_OP);}
-	| relational_expression GE_OP shift_expression {emit_bin (GE_OP);}
+	: additive_expression
+	| relational_expression '<' additive_expression {emit_bin ('<');}
+	| relational_expression '>' additive_expression {emit_bin ('>');}
+	| relational_expression LE_OP additive_expression {emit_bin (LE_OP);}
+	| relational_expression GE_OP additive_expression {emit_bin (GE_OP);}
 	;
 
 equality_expression

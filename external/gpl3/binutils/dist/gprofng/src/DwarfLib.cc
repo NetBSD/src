@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -27,37 +27,12 @@
 #include "Elf.h"
 #include "Function.h"
 #include "Module.h"
-#include "StringBuilder.h"
 #include "DbeArray.h"
 #include "DbeSession.h"
+#include "Symbol.h"
 
 #define NO_STMT_LIST ((uint64_t) -1)
 #define CASE_S(x)   case x: s = (char *) #x; break
-
-static char *
-gelf_st_type2str (int type)
-{
-  static char buf[128];
-  char *s;
-  switch (type)
-    {
-      CASE_S (STT_NOTYPE);
-      CASE_S (STT_OBJECT);
-      CASE_S (STT_FUNC);
-      CASE_S (STT_SECTION);
-      CASE_S (STT_FILE);
-      CASE_S (STT_COMMON);
-      CASE_S (STT_TLS);
-      //    CASE_S(STT_NUM);
-      CASE_S (STT_LOPROC);
-      CASE_S (STT_HIPROC);
-    default: s = NTXT ("???");
-      break;
-    }
-  snprintf (buf, sizeof (buf), NTXT ("%s(%d)"), s, type);
-  buf[sizeof (buf) - 1] = 0;
-  return buf;
-}
 
 static char *
 special_opcode2str (int opcode)
@@ -78,6 +53,7 @@ extended_opcode2str (int opcode)
       CASE_S (DW_LNE_end_sequence);
       CASE_S (DW_LNE_set_address);
       CASE_S (DW_LNE_define_file);
+      CASE_S (DW_LNS_set_file);
     default:
       snprintf (buf, sizeof (buf), NTXT ("??? (%d)"), opcode);
       buf[sizeof (buf) - 1] = 0;
@@ -164,246 +140,6 @@ get_string (DwrSec *sec, uint64_t off)
       return sec->GetString ();
     }
   return NULL;
-}
-
-  
-//////////////////////////////////////////////////////////
-//  class ElfReloc
-
-ElfReloc::ElfReloc (Elf *_elf)
-{
-  elf = _elf;
-  reloc = NULL;
-  cur_reloc_ind = 0;
-}
-
-ElfReloc::~ElfReloc ()
-{
-  if (reloc)
-    {
-      reloc->destroy ();
-      delete reloc;
-    }
-}
-
-void
-ElfReloc::dump_rela_debug_sec (int sec)
-{
-  if (!DUMP_RELA_SEC)
-    return;
-  Elf_Internal_Shdr *shdr = elf->get_shdr (sec);
-  if (shdr == NULL)
-    return;
-
-  Elf_Data *data = elf->elf_getdata (sec);
-  if (data == NULL)
-    return;
-
-  uint64_t ScnSize = data->d_size;
-  uint64_t EntSize = shdr->sh_entsize;
-  if (ScnSize == 0 || EntSize == 0)
-    return;
-
-  Elf_Internal_Shdr *shdr_sym = elf->get_shdr (shdr->sh_link);
-  if (shdr_sym == NULL)
-    return;
-  Elf_Data *data_sym = elf->elf_getdata (shdr->sh_link);
-  Elf_Data *data_str = elf->elf_getdata (shdr_sym->sh_link);
-  char *Strtab = data_str ? (char*) data_str->d_buf : NULL;
-  Elf_Internal_Rela rela;
-  int n, cnt = (int) (ScnSize / EntSize);
-
-  char *sec_name = elf->get_sec_name (sec);
-  if (sec_name == NULL) // It can not be, but let's check
-    return;
-  Dprintf (DUMP_RELA_SEC,
-	   "======= DwarfLib::dump_rela_debug_sec  Section:%2d  '%s'\n",
-	   sec, sec_name);
-  Dprintf (DUMP_RELA_SEC,
-	   " N |addend|   offset   |       r_info      |    stt_type   |\n");
-  for (n = 0; n < cnt; n++)
-    {
-      if (strncmp (sec_name, NTXT (".rela."), 6) == 0)
-	elf->elf_getrela (data, n, &rela);
-      else
-	{
-	  elf->elf_getrel (data, n, &rela);
-	  rela.r_addend = 0;
-	}
-      int ndx = (int) GELF_R_SYM (rela.r_info);
-      Elf_Internal_Shdr *secHdr;
-      Elf_Internal_Sym sym;
-      elf->elf_getsym (data_sym, ndx, &sym);
-      Dprintf (DUMP_RELA_SEC, NTXT ("%3d:%5d |%11lld |0x%016llx | %-15s|"),
-	       n, (int) rela.r_addend,
-	       (long long) rela.r_offset, (long long) rela.r_info,
-	       gelf_st_type2str ((int) GELF_ST_TYPE (sym.st_info)));
-      switch (GELF_ST_TYPE (sym.st_info))
-	{
-	case STT_FUNC:
-	case STT_OBJECT:
-	case STT_NOTYPE:
-	  secHdr = elf->get_shdr (sym.st_shndx);
-	  if (secHdr)
-	    Dprintf (DUMP_RELA_SEC, NTXT (" img_offset=0x%llx"),
-		     (long long) (sym.st_value + secHdr->sh_offset));
-	  if (Strtab && sym.st_name)
-	    Dprintf (DUMP_RELA_SEC, NTXT ("  %s"), Strtab + sym.st_name);
-	  break;
-	case STT_SECTION:
-	  secHdr = elf->get_shdr (sym.st_shndx);
-	  if (secHdr)
-	    {
-	      Dprintf (DUMP_RELA_SEC, NTXT ("       value=0x%016llx (%lld)"),
-		       (long long) (secHdr->sh_offset + rela.r_addend),
-		       (long long) (secHdr->sh_offset + rela.r_addend));
-	    }
-	  break;
-	default:
-	  break;
-	}
-      Dprintf (DUMP_RELA_SEC, NTXT ("\n"));
-    }
-  Dprintf (DUMP_RELA_SEC, NTXT ("\n"));
-}
-
-void
-ElfReloc::dump ()
-{
-  if (!DUMP_ELF_RELOC || (reloc == NULL) || (reloc->size () == 0))
-    return;
-  Dprintf (DUMP_ELF_RELOC, NTXT ("======= ElfReloc::dump\n"));
-  Dprintf (DUMP_ELF_RELOC, NTXT (" N |   offset   |    value   | STT_TYPE\n"));
-  for (int i = 0; i < reloc->size (); i++)
-    {
-      Sreloc *srlc = reloc->fetch (i);
-      Dprintf (DUMP_ELF_RELOC, NTXT ("%3d:%11lld |%11lld | %s\n"),
-	       i, (long long) srlc->offset, (long long) srlc->value,
-	       gelf_st_type2str (srlc->stt_type));
-    }
-  Dprintf (DUMP_ELF_RELOC, NTXT ("\n"));
-}
-
-static int
-DwrRelocOffsetCmp (const void *a, const void *b)
-{
-  ElfReloc::Sreloc *item1 = *((ElfReloc::Sreloc **) a);
-  ElfReloc::Sreloc *item2 = *((ElfReloc::Sreloc **) b);
-  return item1->offset < item2->offset ? -1 :
-	 item1->offset == item2->offset ? 0 : 1;
-}
-
-ElfReloc *
-ElfReloc::get_elf_reloc (Elf *elfp, char *sec_name, ElfReloc *rlc)
-{
-  int et = elfp->elf_getehdr ()->e_type;
-  if (et == ET_EXEC || et == ET_DYN)
-    return rlc;
-  int sec = elfp->elf_get_sec_num (sec_name);
-  if (sec == 0)
-    return rlc;
-  Elf_Internal_Shdr *shdr = elfp->get_shdr (sec);
-  if (shdr == NULL || shdr->sh_entsize == 0)
-    return rlc;
-
-  Elf_Data *data = elfp->elf_getdata (sec);
-  if (data == NULL || data->d_size == 0)
-    return rlc;
-
-  int cnt = (int) (data->d_size / shdr->sh_entsize);
-  Elf_Internal_Shdr *shdr_sym = elfp->get_shdr (shdr->sh_link);
-  if (shdr_sym == NULL)
-    return rlc;
-  Elf_Data *data_sym = elfp->elf_getdata (shdr->sh_link);
-  Vector<Sreloc *> *vp = NULL;
-
-  for (int n = 0; n < cnt; n++)
-    {
-      Elf_Internal_Shdr *secHdr;
-      Sreloc *srlc;
-      Elf_Internal_Rela rela;
-      if (strncmp (sec_name, NTXT (".rela."), 6) == 0)
-	elfp->elf_getrela (data, n, &rela);
-      else
-	{
-	  elfp->elf_getrel (data, n, &rela);
-	  rela.r_addend = 0;
-	}
-      int ndx = (int) GELF_R_SYM (rela.r_info);
-      Elf_Internal_Sym sym;
-      elfp->elf_getsym (data_sym, ndx, &sym);
-
-      srlc = new Sreloc;
-      srlc->offset = rela.r_offset;
-      srlc->value = 0;
-      srlc->stt_type = (int) GELF_ST_TYPE (sym.st_info);
-      switch (GELF_ST_TYPE (sym.st_info))
-	{
-	case STT_FUNC:
-	  secHdr = elfp->get_shdr (sym.st_shndx);
-	  if (secHdr)
-	    srlc->value = secHdr->sh_offset + sym.st_value;
-	  break;
-	case STT_OBJECT:
-	case STT_NOTYPE:
-	  secHdr = elfp->get_shdr (shdr->sh_info);
-	  if (secHdr)
-	    {
-	      srlc->offset = rela.r_info;
-	      srlc->value = secHdr->sh_offset + rela.r_addend;
-	    }
-	  break;
-	case STT_SECTION:
-	  secHdr = elfp->get_shdr (sym.st_shndx);
-	  if (secHdr)
-	    srlc->value = rela.r_addend;
-	  break;
-	default:
-	  srlc->value = 0;
-	  break;
-	}
-      if (rlc == NULL)
-	{
-	  rlc = new ElfReloc (elfp);
-	  vp = rlc->reloc;
-	}
-      if (vp == NULL)
-	{
-	  vp = new Vector<Sreloc*>;
-	  rlc->reloc = vp;
-	}
-      vp->append (srlc);
-    }
-  if (vp)
-    vp->sort (DwrRelocOffsetCmp);
-  if (rlc)
-    {
-      rlc->dump_rela_debug_sec (sec);
-      rlc->dump ();
-    }
-  return rlc;
-}
-
-long long
-ElfReloc::get_reloc_addr (long long offset)
-{
-  Sreloc *srlc;
-  int i = cur_reloc_ind - 1;
-  if (i >= 0 && i < reloc->size ())
-    {
-      srlc = reloc->fetch (i);
-      if (srlc->offset > offset)  // need to reset
-	cur_reloc_ind = 0;
-    }
-  for (; cur_reloc_ind < reloc->size (); cur_reloc_ind++)
-    {
-      srlc = reloc->fetch (cur_reloc_ind);
-      if (srlc->offset == offset)
-	return srlc->value;
-      if (srlc->offset > offset)
-	return 0;
-    }
-  return 0;
 }
 
 DwrLocation *
@@ -948,6 +684,8 @@ DwrCU::form2str (int tag)
       CASE_S (DW_FORM_strp);
       CASE_S (DW_FORM_udata);
       CASE_S (DW_FORM_ref_addr);
+      CASE_S (DW_FORM_GNU_ref_alt);
+      CASE_S (DW_FORM_GNU_strp_alt);
       CASE_S (DW_FORM_ref1);
       CASE_S (DW_FORM_ref2);
       CASE_S (DW_FORM_ref4);
@@ -1005,8 +743,12 @@ Dwr_Tag::dump ()
 	case DW_FORM_strp:
 	case DW_FORM_string:
 	case DW_FORM_line_strp:
+	case DW_FORM_GNU_strp_alt:
 	case DW_FORM_strp_sup:
-	case DW_FORM_implicit_const:
+	case DW_FORM_strx1:
+	case DW_FORM_strx2:
+	case DW_FORM_strx3:
+	case DW_FORM_strx4:
 	  Dprintf (DUMP_DWARFLIB, "  \"%s\"", atrp->u.str ? atrp->u.str : "<NULL>");
 	  break;
 	case DW_FORM_block:
@@ -1018,6 +760,15 @@ Dwr_Tag::dump ()
 		   atrp->u.str);
 	  break;
 	case DW_FORM_addr:
+	case DW_FORM_addrx:
+	case DW_FORM_addrx1:
+	case DW_FORM_addrx2:
+	case DW_FORM_addrx3:
+	case DW_FORM_addrx4:
+	case DW_FORM_ref_sup4:
+	case DW_FORM_ref_sup8:
+	case DW_FORM_loclistx:
+	case DW_FORM_rnglistx:
 	case DW_FORM_data2:
 	case DW_FORM_data4:
 	case DW_FORM_data8:
@@ -1033,9 +784,11 @@ Dwr_Tag::dump ()
 	case DW_FORM_ref_udata:
 	case DW_FORM_indirect:
 	case DW_FORM_sec_offset:
+	case DW_FORM_GNU_ref_alt:
 	case DW_FORM_exprloc:
 	case DW_FORM_ref_sig8:
 	case DW_FORM_flag_present:
+	case DW_FORM_implicit_const:
 	  Dprintf (DUMP_DWARFLIB, "  0x%llx (%lld)", (long long) atrp->u.val,
 		   (long long) atrp->u.val);
 	  break;
@@ -1057,34 +810,28 @@ Dwr_Tag::dump ()
 
 DwrSec::DwrSec (unsigned char *_data, uint64_t _size, bool _need_swap_endian, bool _addr32)
 {
-  isCopy = false;
   data = _data;
   sizeSec = _size;
   size = (data ? _size : 0);
   offset = 0;
   fmt64 = false;
-  reloc = NULL;
   need_swap_endian = _need_swap_endian;
   addr32 = _addr32;
 }
 
 DwrSec::DwrSec (DwrSec *secp, uint64_t _offset)
 {
-  isCopy = true;
   data = secp->data;
   sizeSec = secp->sizeSec;
   size = secp->size;
   offset = _offset;
   fmt64 = secp->fmt64;
-  reloc = secp->reloc;
   need_swap_endian = secp->need_swap_endian;
   addr32 = secp->addr32;
 }
 
 DwrSec::~DwrSec ()
 {
-  if (!isCopy)
-    delete reloc;
 }
 
 bool
@@ -1094,6 +841,7 @@ DwrSec::bounds_violation (uint64_t sz)
     {
       Dprintf (DEBUG_ERR_MSG, "DwrSec::bounds_violation: offset=%lld + sz=%lld > size=%lld\n",
 	       (long long) offset, (long long) sz, (long long) size);
+      offset = size;
       return true;
     }
   return false;
@@ -1211,17 +959,13 @@ DwrSec::GetLong ()
 uint64_t
 DwrSec::GetADDR_32 ()
 {
-  uint64_t res = reloc ? reloc->get_reloc_addr (offset) : 0;
-  res += Get_32 ();
-  return res;
+  return Get_32 ();
 }
 
 uint64_t
 DwrSec::GetADDR_64 ()
 {
-  uint64_t res = reloc ? reloc->get_reloc_addr (offset) : 0;
-  res += Get_64 ();
-  return res;
+  return Get_64 ();
 }
 
 uint64_t
@@ -1281,6 +1025,7 @@ DwrSec::get_value (int dw_form)
     case DW_FORM_line_strp:
     case DW_FORM_strp:
     case DW_FORM_strp_sup:
+    case DW_FORM_GNU_strp_alt:
       return GetRef ();
     case DW_FORM_data1:
       return Get_8 ();
@@ -1510,7 +1255,7 @@ DwrLineRegs::read_file_names_dwarf5 ()
 	   (long long) debug_lineSec->offset, efmt_cnt);
   if (efmt_cnt == 0)
     return NULL;
-  t_entry_fmt *efmt = (t_entry_fmt *) malloc (sizeof (t_entry_fmt) * efmt_cnt);
+  t_entry_fmt *efmt = (t_entry_fmt *) xmalloc (sizeof (t_entry_fmt) * efmt_cnt);
   for (int i = 0; i < efmt_cnt; i++)
     {
       efmt[i].type_code = debug_lineSec->GetULEB128 ();
@@ -1544,6 +1289,8 @@ DwrLineRegs::read_file_names_dwarf5 ()
 		  nm = get_string (dwarf->debug_line_strSec, off);
 		else if (efmt[k].form_code == DW_FORM_strp)
 		  nm = get_string (dwarf->debug_strSec, off);
+		else if (efmt[k].form_code == DW_FORM_GNU_strp_alt)
+		  nm = get_string (dwarf->debug_alt_strSec, off);
 	      }
 	    break;
 	  case DW_LNCT_directory_index:
@@ -1794,6 +1541,12 @@ DwrLineRegs::getPath (int fn)
 DwrCU::DwrCU (Dwarf *_dwarf)
 {
   dwarf = _dwarf;
+  tmp_syms = new Vector<Symbol*>();
+  rng_list = NULL;
+  rng_list_inited = false;
+  base_address = 0;
+  symbols = NULL;
+  symbols_sorted_by_name = NULL;
   cu_offset = dwarf->debug_infoSec->offset;
   debug_infoSec = new DwrSec (dwarf->debug_infoSec, cu_offset);
   next_cu_offset = debug_infoSec->ReadLength ();
@@ -1835,7 +1588,7 @@ DwrCU::DwrCU (Dwarf *_dwarf)
   if (DUMP_DWARFLIB)
     {
       Dprintf (DUMP_DWARFLIB,
-	       "CU_HEADER: header_offset = 0x%08llx %lld"
+	       "File: %s\nCU_HEADER: header_offset = 0x%08llx %lld"
 	       " next_header_offset=0x%08llx %lld\n"
 	       "    abbrev_offset = 0x%08llx %lld\n"
 	       "    unit_length   = %lld\n"
@@ -1843,10 +1596,11 @@ DwrCU::DwrCU (Dwarf *_dwarf)
 	       "    address_size  = %d\n"
 	       "    fmt64         = %s\n"
 	       "debug_info:   need_swap_endian=%s  fmt64=%s addr32=%s\n",
+	       dwarf->elf->get_location (),
 	       (long long) cu_offset, (long long) cu_offset,
 	       (long long) next_cu_offset, (long long) next_cu_offset,
 	       (long long) debug_abbrev_offset, (long long) debug_abbrev_offset,
-	       (long long) (next_cu_offset - cu_offset),
+	       (long long) (next_cu_offset),
 	       (int) version, (int) address_size,
 	       debug_infoSec->fmt64 ? "true" : "false",
 	       debug_infoSec->need_swap_endian ? "true" : "false",
@@ -1882,6 +1636,9 @@ DwrCU::~DwrCU ()
   Destroy (dwrInlinedSubrs);
   delete srcFiles;
   delete dwrLineReg;
+  delete symbols;
+  delete symbols_sorted_by_name;
+  delete tmp_syms;
   free (comp_dir);
 }
 
@@ -1924,7 +1681,7 @@ DwrCU::build_abbrevTable (DwrSec *_debug_abbrevSec, uint64_t _offset)
 	  switch (atf.at_form)
 	    {
 	    case DW_FORM_implicit_const:
-	      atf.len = debug_abbrevSec->GetSLEB128 ();
+	      atf.u.val = debug_abbrevSec->GetSLEB128 ();
 	      break;
 	    }
 	  abbrevAtForm->append (atf);
@@ -1944,7 +1701,7 @@ DwrCU::set_die (Dwarf_Die die)
       || debug_infoSec->offset >= debug_infoSec->size)
     return DW_DLV_ERROR;
   dwrTag.offset = debug_infoSec->offset;
-  dwrTag.die = debug_infoSec->offset - cu_offset;
+  dwrTag.die = debug_infoSec->offset;
   dwrTag.num = debug_infoSec->GetULEB128_32 ();
   if (dwrTag.num == 0)
     return DW_DLV_NO_ENTRY;
@@ -1993,19 +1750,19 @@ DwrCU::set_die (Dwarf_Die die)
 	  atf->u.str = debug_infoSec->GetData (atf->len);
 	  break;
 	case DW_FORM_ref1:
-	  atf->u.offset = debug_infoSec->Get_8 ();
+	  atf->u.offset = debug_infoSec->Get_8 () + cu_offset;
 	  break;
 	case DW_FORM_ref2:
-	  atf->u.offset = debug_infoSec->Get_16 ();
+	  atf->u.offset = debug_infoSec->Get_16 () + cu_offset;
 	  break;
 	case DW_FORM_ref4:
-	  atf->u.offset = debug_infoSec->Get_32 ();
+	  atf->u.offset = debug_infoSec->Get_32 () + cu_offset;
 	  break;
 	case DW_FORM_ref8:
-	  atf->u.offset = debug_infoSec->Get_64 ();
+	  atf->u.offset = debug_infoSec->Get_64 () + cu_offset;
 	  break;
 	case DW_FORM_ref_udata:
-	  atf->u.offset = debug_infoSec->GetULEB128 ();
+	  atf->u.offset = debug_infoSec->GetULEB128 () + cu_offset;
 	  break;
 	case DW_FORM_data1:
 	  atf->u.offset = debug_infoSec->Get_8 ();
@@ -2039,6 +1796,9 @@ DwrCU::set_die (Dwarf_Die die)
 	  else
 	    atf->u.offset = debug_infoSec->GetADDR ();
 	  break;
+	case DW_FORM_GNU_ref_alt:
+	  atf->u.offset = debug_infoSec->GetRef ();
+	  break;
 	case DW_FORM_sec_offset:
 	  atf->u.offset = debug_infoSec->GetRef ();
 	  break;
@@ -2058,25 +1818,44 @@ DwrCU::set_die (Dwarf_Die die)
 	  (void) debug_infoSec->Get_64 ();
 	  break;
 	case DW_FORM_addrx:
-	case DW_FORM_strx:
 	case DW_FORM_loclistx:
 	case DW_FORM_rnglistx:
 	  atf->u.offset = debug_infoSec->GetULEB128 ();
 	  break;
-	case DW_FORM_addrx1:
+	case DW_FORM_GNU_strp_alt:
+	  atf->u.offset = debug_infoSec->GetRef ();
+	  atf->u.str = get_string (dwarf->debug_alt_strSec, atf->u.offset);
+	  break;
+	case DW_FORM_strx:
+	  atf->u.offset = debug_infoSec->GetULEB128 ();
+	  atf->u.str = get_string (dwarf->debug_strSec, atf->u.offset);
+	  break;
 	case DW_FORM_strx1:
+	  atf->u.offset = debug_infoSec->Get_8 ();
+	  atf->u.str = get_string (dwarf->debug_strSec, atf->u.offset);
+	  break;
+	case DW_FORM_strx2:
+	  atf->u.offset = debug_infoSec->Get_16 ();
+	  atf->u.str = get_string (dwarf->debug_strSec, atf->u.offset);
+	  break;
+	case DW_FORM_strx3:
+	  atf->u.offset = debug_infoSec->Get_24 ();
+	  atf->u.str = get_string (dwarf->debug_strSec, atf->u.offset);
+	  break;
+	case DW_FORM_strx4:
+	  atf->u.offset = debug_infoSec->Get_32 ();
+	  atf->u.str = get_string (dwarf->debug_strSec, atf->u.offset);
+	  break;
+	case DW_FORM_addrx1:
 	  atf->u.offset = debug_infoSec->Get_8 ();
 	  break;
 	case DW_FORM_addrx2:
-	case DW_FORM_strx2:
 	  atf->u.offset = debug_infoSec->Get_16 ();
 	  break;
 	case DW_FORM_addrx3:
-	case DW_FORM_strx3:
 	  atf->u.offset = debug_infoSec->Get_24 ();
 	  break;
 	case DW_FORM_addrx4:
-	case DW_FORM_strx4:
 	case DW_FORM_ref_sup4:
 	  atf->u.offset = debug_infoSec->Get_32 ();
 	  break;
@@ -2093,7 +1872,7 @@ DwrCU::set_die (Dwarf_Die die)
 	  atf->len = 0;
 	  break;
 	case DW_FORM_implicit_const:
-	  atf->u.str = NULL;
+	  // atf->u.val is already set
 	  break;
 	default:
 	  DEBUG_CODE
@@ -2171,7 +1950,239 @@ DwrCU::parse_cu_header (LoadObject *lo)
   else
     path = dbe_strdup (dwarf->stabs->path);
   module->set_name (path);
+
+  // create a list of functions in this CU
+  base_address = get_low_pc ();
+  Vector <Range *> *ranges = get_ranges ();
+  if (ranges)
+    {
+      Vector <Symbol *> *syms = dwarf->stabs->get_symbols ();
+      symbols = Symbol::find_symbols (syms, ranges, new Vector <Symbol *> ());
+      symbols_sorted_by_name = Symbol::sort_by_name (symbols);
+      if (DUMP_ELF_SYM)
+	symbols->dump ("DwrCU::parse_cu_header: symbols");
+      Destroy (ranges);
+    }
   return module;
+}
+
+
+static int
+cmp_ExtRange (const void *a, const void *b)
+{
+  uint64_t a1 = *((uint64_t *) a);
+  ExtRange *rng = *((ExtRange **) b);
+  uint64_t b1 = rng->offset;
+  return a1 < b1 ? -1 : (a1 == b1 ? 0 : 1);
+}
+
+static int
+cmp_offset (const void *a, const void *b)
+{
+  uint64_t off = *((uint64_t *) a);
+  Dwr_rng_entry *rng = *((Dwr_rng_entry **) b);
+  return off < rng->offset ? -1 : (off < rng->length ? 0 : 1);
+}
+
+static int
+rangeCmp (const void *a, const void *b)
+{
+  Range *item1 = *((Range **) a);
+  Range *item2 = *((Range **) b);
+  return item1->low < item2->low ? -1 : (item1->low == item2->low ? 0 : 1);
+}
+
+Vector <Range *> *
+DwrCU::get_ranges ()
+{
+  Vector <Range *> *ranges = NULL;
+  Dwr_Attr *dwrAttr = dwrTag.get_attr (DW_AT_ranges);
+  if (dwrAttr)
+    {
+      uint64_t offset = dwrAttr->u.offset;
+      Dprintf (DUMP_DWARFLIB, "DwrCU::get_ranges: 0x%llx\n", (long long) offset);
+      if (version < 5)
+	ranges = dwarf->get_ranges (offset);
+      else
+	{
+	  if (rng_list == NULL && !rng_list_inited)
+	    {
+	      rng_list_inited = true;
+	      // Find the corresponding section in .debug_rnglists
+	      Vector <Dwr_rng_entry *> *rng_entrys = dwarf->get_debug_rnglists ();
+	      if (rng_entrys == NULL)
+		return NULL;
+	      int ind = rng_entrys->bisearch (0, -1, &offset, cmp_offset);
+	      if (ind != -1)
+		rng_list = rng_entrys->get (ind);
+	      else
+		{
+		  Dprintf (1, "Cannot find rnglist. DW_AT_ranges=0x%llx\n",
+			   (long long) offset);
+		  return NULL;
+		}
+	    }
+	  if (rng_list == NULL)
+	    return NULL;
+	  int ind = rng_list->ranges->bisearch (0, -1, &offset, cmp_ExtRange);
+	  if (ind == -1)
+	    {
+	      Dprintf (1, "Cannot find rnglist. DW_AT_ranges=0x%llx\n",
+		       (long long) offset);
+	      return NULL;
+	    }
+	  ranges = new Vector <Range *> ();
+	  for (long i = ind, sz = VecSize (rng_list->ranges); i < sz; i++)
+	    {
+	      ExtRange *r = rng_list->ranges->get (i);
+	      if (r->high == 0)
+		break;
+	      ranges->append (new Range (r->low + base_address,
+				       r->high + base_address));
+	    }
+	}
+    }
+  else
+    {
+      uint64_t low_pc = Dwarf_addr (DW_AT_low_pc);
+      if (low_pc > 0)
+	{
+	  uint64_t high_pc = get_high_pc (low_pc);
+	  ranges = new Vector <Range *> (1);
+	  ranges->append (new Range (low_pc, high_pc));
+	  Dprintf (DUMP_DWARFLIB, "DwrCU::get_ranges: pc=0x%llx\n",
+		   (long long) low_pc);
+	}
+    }
+  if (ranges)
+    {
+      ranges->sort (rangeCmp);
+      if (DUMP_DWARFLIB)
+	ranges->dump ("DwrCU::get_ranges:");
+    }
+  return ranges;
+}
+
+Vector<Symbol *> *
+DwrCU::get_symbols (Vector<Symbol *> *syms)
+{
+  if (syms)
+    syms->reset ();
+  Vector <Range *> *ranges = get_ranges ();
+  if (ranges)
+    {
+      syms = Symbol::find_symbols (symbols, ranges, syms);
+      Destroy (ranges);
+    }
+  if (syms)
+    {
+      Symbol *sym = Symbol::get_symbol (symbols_sorted_by_name,
+					get_linkage_name ());
+      if (sym)
+	syms->append (sym);
+    }
+  if (syms && DUMP_ELF_SYM)
+    syms->dump ("DwrCU::get_symbols:");
+  return syms;
+}
+
+void
+DwrCU::set_source (Function *func)
+{
+  int lineno = (int) Dwarf_data (DW_AT_decl_line);
+  func->setLineFirst (lineno);
+
+  int fileno = (int) Dwarf_data (DW_AT_decl_file);
+  func->setDefSrc (get_source (fileno));
+}
+
+SourceFile *
+DwrCU::get_source (int fileno)
+{
+  if (fileno > 0 && fileno < VecSize (srcFiles))
+    return srcFiles->get (fileno);
+  return NULL;
+}
+
+void
+DwrCU::inherit_prop (int64_t offset, source_t *src)
+{
+  if (src->lineno == 0)
+    src->lineno = (int) Dwarf_data (DW_AT_decl_line);
+  if (src->sf == NULL)
+    src->sf = get_source ((int) Dwarf_data (DW_AT_decl_file));
+
+  int64_t old_offset = dwrTag.offset;
+  if (set_die (offset) == DW_DLV_OK)
+    {
+      if (src->lineno == 0)
+	src->lineno = (int) Dwarf_data (DW_AT_decl_line);
+      if (src->sf == NULL)
+	src->sf = get_source ((int) Dwarf_data (DW_AT_decl_file));
+
+      Dwr_Attr *dwrAttr = dwrTag.get_attr (DW_AT_specification);
+      if (dwrAttr)
+	inherit_prop (dwrAttr->u.offset, src);
+      else
+	{
+	  Symbol *sym = Symbol::get_symbol (symbols_sorted_by_name,
+					  get_linkage_name ());
+	  if (sym)
+	    update_source (sym, src);
+	}
+    }
+  set_die (old_offset);
+}
+
+void
+DwrCU::set_up_funcs (int64_t offset)
+{
+  // get symbols from DW_AT_ranges, DW_AT_low_pc, DW_AT_linkage_name
+  Vector<Symbol *> *syms = get_symbols (tmp_syms);
+  if (VecSize (syms) == 0)
+    return;
+
+  // Find previous declaration to inherit settings.
+  source_t src = {.lineno = 0, .sf = NULL};
+  inherit_prop (offset, &src);
+
+  for (int i = 0, sz = VecSize (syms); i < sz; i++)
+    {
+      Symbol *sym = syms->get (i);
+      update_source (sym, &src);
+      if (sym->alias)
+	update_source (sym->alias, &src);
+    }
+}
+
+/* Create a function if necessary.
+ * Update the source information  */
+void
+DwrCU::update_source (Symbol *sym, source_t *src)
+{
+  Function *f = sym->createFunction (module);
+  f->setLineFirst (src->lineno);
+  f->setDefSrc (src->sf);
+}
+
+Symbol *
+DwrCU::find_declaration (int64_t offset, source_t *src)
+{
+  int64_t old_offset = dwrTag.offset;
+  Symbol *sym = NULL;
+  if (set_die (offset) == DW_DLV_OK)
+    {
+      if (src->lineno == 0)
+	src->lineno = (int) Dwarf_data (DW_AT_decl_line);
+      if (src->sf == NULL)
+	src->sf = get_source ((int) Dwarf_data (DW_AT_decl_file));
+
+      sym = Symbol::get_symbol (symbols_sorted_by_name, get_linkage_name ());
+      if (sym && sym->func == NULL)
+	update_source (sym, src);
+    }
+  set_die (old_offset);
+  return sym;
 }
 
 Dwr_Attr *
@@ -2253,6 +2264,7 @@ DwrCU::read_data_attr (Dwarf_Half attr, int64_t *retVal)
       case DW_FORM_data16:
       case DW_FORM_udata:
       case DW_FORM_sec_offset:
+      case DW_FORM_implicit_const:
 	*retVal = dwrAttr->u.val;
 	return DW_DLV_OK;
 
@@ -2322,8 +2334,8 @@ DwrCU::map_dwarf_lines (Module *mod)
   if (isGNU && (inlinedSubrCnt > 0))
     {
       Function *func = NULL;
-      mod->inlinedSubr = (InlinedSubr *) malloc (inlinedSubrCnt
-						 * sizeof (InlinedSubr));
+      mod->inlinedSubr = (InlinedSubr *) xmalloc (inlinedSubrCnt
+						  * sizeof (InlinedSubr));
       for (long i = 0; i < inlinedSubrCnt; i++)
 	{
 	  DwrInlinedSubr *inlinedSubr = dwrInlinedSubrs->get (i);
@@ -2341,7 +2353,7 @@ DwrCU::map_dwarf_lines (Module *mod)
 	  InlinedSubr *p = func->inlinedSubr + func->inlinedSubrCnt;
 	  func->inlinedSubrCnt++;
 	  int fileno = inlinedSubr->file - 1;
-	  SourceFile *sf = ((fileno >= 0) && (fileno < VecSize (srcFiles))) ?
+	  SourceFile *sf = ((fileno > 0) && (fileno < VecSize (srcFiles))) ?
 		  srcFiles->get (fileno) : dbeSession->get_Unknown_Source ();
 	  p->dbeLine = sf->find_dbeline (inlinedSubr->line);
 	  p->high_pc = inlinedSubr->high_pc - low_pc;
@@ -2486,3 +2498,69 @@ DwrInlinedSubr::dump ()
 	   (int) level, (long long) abstract_origin, (long long) low_pc,
 	   (long long) high_pc, (int) file, (int) line);
 }
+
+
+//////////////////////////////////////////////////////////
+//  class Dwr_rng_entry
+Dwr_rng_entry::Dwr_rng_entry ()
+{
+  ranges = new Vector <ExtRange *>();
+}
+
+Dwr_rng_entry::~Dwr_rng_entry ()
+{
+  delete ranges;
+}
+
+void
+Dwr_rng_entry::dump ()
+{
+  Dprintf (DUMP_DWARFLIB, "offset=0x%08llx length=0x%08llx fmt=%d version=%d "
+	   "addr_size=%d seg_size=%d offset_entry_count=0x%llx\n",
+	   (long long) offset, (long long) (length - offset), fmt64 ? 64 : 32,
+	   (int) version, (int) address_size, (int) segment_selector_size,
+	   (long long) offset_entry_count);
+  for (long i = 0, sz = VecSize (ranges); i < sz; i++)
+    {
+      ExtRange *p = ranges->get (i);
+      Dprintf (DUMP_DWARFLIB, " %8ld: 0x%08llx 0x%08llx-0x%08llx [%lld-%lld)\n",
+	     i, (long long) p->offset, (long long) p->low, (long long) p->high,
+	     (long long) p->low, (long long) p->high);
+    }
+}
+
+char *
+Dwr_rng_entry::rng_entry2str (int val)
+{
+  char *s;
+  switch (val)
+    {
+      CASE_S (DW_RLE_end_of_list);
+      CASE_S (DW_RLE_base_address);
+      CASE_S (DW_RLE_start_length);
+      CASE_S (DW_RLE_offset_pair);
+      CASE_S (DW_RLE_start_end);
+      CASE_S (DW_RLE_base_addressx);
+      CASE_S (DW_RLE_startx_endx);
+      CASE_S (DW_RLE_startx_length);
+    default: s = (char *) "???";
+      break;
+    }
+  return s;
+}
+
+template<> void Vector<Dwr_rng_entry *>::dump (const char *msg)
+{
+  if (!DUMP_DWARFLIB)
+    return;
+  if (msg == NULL)
+    msg = "#";
+  Dprintf (1, NTXT ("\n%s Vector<Dwr_rng_entry *> [%lld]\n"), msg, (long long) size ());
+  for (long i = 0, sz = size (); i < sz; i++)
+    {
+      Dwr_rng_entry *p = get (i);
+      Dprintf (1, "  %3ld ", i);
+      p->dump ();
+    }
+}
+

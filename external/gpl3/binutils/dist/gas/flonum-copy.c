@@ -1,5 +1,5 @@
 /* flonum_copy.c - copy a flonum
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -46,12 +46,11 @@ flonum_copy (FLONUM_TYPE *in, FLONUM_TYPE *out)
 	       and wasting time, so why bother???  */
 	    if (in_length < out_length)
 	      {
-		memset ((char *) (out->low + in_length + 1), '\0',
-			out_length - in_length);
+		memset (out->low + in_length + 1, 0, out_length - in_length);
 	      }
 	  }
-	  memcpy ((void *) (out->low), (void *) (in->low),
-		  ((in_length + 1) * sizeof (LITTLENUM_TYPE)));
+	  memcpy (out->low, in->low,
+		  (in_length + 1) * sizeof (LITTLENUM_TYPE));
 	  out->exponent = in->exponent;
 	  out->leader = in->leader - in->low + out->low;
 	}
@@ -61,8 +60,8 @@ flonum_copy (FLONUM_TYPE *in, FLONUM_TYPE *out)
 
 	  shorten = in_length - out_length;
 	  /* Assume out_length >= 0 ! */
-	  memcpy ((void *) (out->low), (void *) (in->low + shorten),
-		  ((out_length + 1) * sizeof (LITTLENUM_TYPE)));
+	  memcpy (out->low, in->low + shorten,
+		  (out_length + 1) * sizeof (LITTLENUM_TYPE));
 	  out->leader = out->high;
 	  out->exponent = in->exponent + shorten;
 	}

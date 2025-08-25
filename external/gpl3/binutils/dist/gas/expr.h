@@ -1,5 +1,5 @@
 /* expr.h -> header file for expr.c
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -131,10 +131,12 @@ typedef struct expressionS
   unsigned char X_op;
 #endif
 
-  /* Non-zero if X_add_number should be regarded as unsigned.  This is
-     only valid for O_constant expressions.  It is only used when an
-     O_constant must be extended into a bignum (i.e., it is not used
-     when performing arithmetic on these values).
+  /* Non-zero if the expression value should be regarded as unsigned.  This is
+     only valid for
+     - O_constant expressions, where it is only used when an O_constant must be
+       extended into a bignum (i.e., it is not used when performing arithmetic
+       on these values),
+     - O_big integer expressions, i.e. when X_add_number is positive.
      FIXME: This field is not set very reliably.  */
   unsigned int X_unsigned : 1;
   /* This is used to implement "word size + 1 bit" arithmetic, so that e.g.
@@ -153,8 +155,11 @@ enum expr_mode
 {
   expr_evaluate,
   expr_normal,
-  expr_defer
+  expr_defer,
+  expr_defer_incl_dot,
 };
+
+#define expr_defer_p(m) ((m) >= expr_defer)
 
 /* "result" should be type (expressionS *).  */
 #define expression(result) expr (0, result, expr_normal)
@@ -184,7 +189,7 @@ extern segT expr (int, expressionS *, enum expr_mode);
 extern unsigned int get_single_number (void);
 extern symbolS *make_expr_symbol (const expressionS * expressionP);
 extern int expr_symbol_where (symbolS *, const char **, unsigned int *);
-extern void current_location (expressionS *);
+extern void current_location (expressionS *, enum expr_mode);
 extern symbolS *expr_build_uconstant (offsetT);
 extern symbolS *expr_build_dot (void);
 extern uint32_t generic_bignum_to_int32 (void);

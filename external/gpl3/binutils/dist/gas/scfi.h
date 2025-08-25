@@ -1,5 +1,5 @@
 /* scfi.h - Support for synthesizing CFI for asm.
-   Copyright (C) 2023 Free Software Foundation, Inc.
+   Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

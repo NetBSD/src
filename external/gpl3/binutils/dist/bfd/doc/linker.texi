@@ -344,6 +344,46 @@ traversing the global hash table with the function
 while writing out the symbols, which is written to the output
 file at the end of @code{NAME(aout,final_link)}.
 
+@findex _bfd_generic_link_add_one_symbol
+@subsubsection @code{_bfd_generic_link_add_one_symbol}
+@deftypefn {Function} bool _bfd_generic_link_add_one_symbol (struct bfd_link_info *info, bfd *abfd, const char *name, flagword flags, asection *section, bfd_vma value, const char *string, bool copy, bool collect, struct bfd_link_hash_entry **hashp); 
+Add a symbol to the global hash table.
+ABFD is the BFD the symbol comes from.
+NAME is the name of the symbol.
+FLAGS is the BSF_* bits associated with the symbol.
+SECTION is the section in which the symbol is defined; this may be
+bfd_und_section_ptr or bfd_com_section_ptr.
+VALUE is the value of the symbol, relative to the section.
+STRING is used for either an indirect symbol, in which case it is
+the name of the symbol to indirect to, or a warning symbol, in
+which case it is the warning string.
+COPY is TRUE if NAME or STRING must be copied into locally
+allocated memory if they need to be saved.
+COLLECT is TRUE if we should automatically collect gcc constructor
+or destructor names as collect2 does.
+HASHP, if not NULL, is a place to store the created hash table
+entry; if *HASHP is not NULL, the caller has already looked up
+the hash table entry, and stored it in *HASHP.
+
+@end deftypefn
+@findex bfd_link_align_section
+@subsubsection @code{bfd_link_align_section}
+@deftypefn {Function} bool bfd_link_align_section (asection *, unsigned int); 
+Increase section alignment if the current section alignment is
+less than the requested value.  Adjust output section
+alignment too, so that linker layout adjusts for alignment on
+the current lang_size_sections pass.  This is important for
+lang_size_relro_segment.  If the output section alignment
+isn't adjusted, the linker will place the output section at an
+address depending on its current alignment.  When sizing the
+output section, input sections attached transfer any increase
+in alignment to the output section, which will affect layout
+for the next sizing pass.  Which is all well and good except
+that lang_size_relro_segment for the current sizing pass uses
+that possibly increased alignment with a layout that doesn't
+suit.
+
+@end deftypefn
 @findex bfd_link_split_section
 @subsubsection @code{bfd_link_split_section}
 @deftypefn {Function} bool bfd_link_split_section (bfd *abfd, asection *sec); 

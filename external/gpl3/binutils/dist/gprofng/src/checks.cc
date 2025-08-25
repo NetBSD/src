@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -51,7 +51,7 @@ collect::check_target (int argc, char **argv)
     {
     case EXEC_OK:
       njargs = cc->get_java_arg_cnt ();
-      arglist = (char **) calloc (nargs + 5 + njargs, sizeof (char *));
+      arglist = (char **) xcalloc (nargs + 5 + njargs, sizeof (char *));
       jargs = cc->get_java_args ();
 
       // store the first argument -- target name
@@ -96,7 +96,7 @@ collect::check_target (int argc, char **argv)
 	  exit (1);
 	}
       njargs = cc->get_java_arg_cnt ();
-      arglist = (char **) calloc (nargs + 5 + njargs, sizeof (char *));
+      arglist = (char **) xcalloc (nargs + 5 + njargs, sizeof (char *));
       jargs = cc->get_java_args ();
 
       a = find_java ();
@@ -140,7 +140,7 @@ collect::check_target (int argc, char **argv)
 	}
       jargs = cc->get_java_args ();
       njargs = cc->get_java_arg_cnt ();
-      arglist = (char **) calloc (nargs + 4 + njargs, sizeof (char *));
+      arglist = (char **) xcalloc (nargs + 4 + njargs, sizeof (char *));
 
       a = find_java ();
       if (a == NULL)
@@ -332,6 +332,10 @@ collect::check_executable_arch (Elf *elf)
     case EM_AARCH64:
       is_64 = true;
       break;
+#elif ARCH(RISCV)
+    case EM_RISCV:
+      is_64 = true;
+      break;
 #endif
     default:
       return EXEC_ELF_ARCH;
@@ -373,7 +377,7 @@ collect::status_str (Exec_status rv, char *target_name)
     case EXEC_OPEN_FAIL:
       return dbe_sprintf (GTXT ("Can't open target executable `%s'\n"), target_name);
     case EXEC_ELF_LIB:
-      return strdup (GTXT ("Internal error: Not a working version of ELF library\n"));
+      return xstrdup (GTXT ("Internal error: Not a working version of ELF library\n"));
     case EXEC_ELF_HEADER:
       return dbe_sprintf (GTXT ("Target `%s' is not a valid ELF executable\n"), target_name);
     case EXEC_ELF_ARCH:
@@ -446,11 +450,11 @@ collect::find_java (void)
   switch (rv)
     {
     case EXEC_OK:
-      java_path = strdup (buf);
+      java_path = xstrdup (buf);
       if (verbose == 1)
 	dbe_write (2, GTXT ("Path to `%s' (set from %s) used for Java profiling\n"),
 		   java_path, java_how);
-      return ( strdup (buf));
+      return xstrdup (buf);
     default:
       dbe_write (2, GTXT ("Path to `%s' (set from %s) does not point to a JVM executable\n"),
 		 buf, java_how);

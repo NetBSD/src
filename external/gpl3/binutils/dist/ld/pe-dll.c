@@ -1,5 +1,5 @@
 /* Routines to help build PEI-format DLLs (Win32 etc)
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
    Written by DJ Delorie <dj@cygnus.com>
 
    This file is part of the GNU Binutils.
@@ -185,6 +185,9 @@ typedef struct
   const char *target_name;
   const char *object_target;
   unsigned int imagebase_reloc;
+  unsigned int secrel_reloc_lo;
+  unsigned int secrel_reloc_hi;
+  unsigned int section_reloc;
   int pe_arch;
   int bfd_arch;
   bool underscored;
@@ -257,11 +260,16 @@ static pe_details_type pe_detail_list[] =
 #ifdef pe_use_plus
     "pei-x86-64",
     "pe-x86-64",
-    3 /* R_IMAGEBASE */,
+    3 /* R_AMD64_IMAGEBASE */,
+    11 /* R_AMD64_SECREL32 */,
+    12 /* R_AMD64_SECREL7 */,
+    10 /* R_AMD64_SECTION */,
 #else
     "pei-i386",
     "pe-i386",
     7 /* R_IMAGEBASE */,
+    11, 11 /* R_SECREL32 */,
+    10 /* R_SECTION */,
 #endif
     PE_ARCH_i386,
     bfd_arch_i386,
@@ -276,7 +284,10 @@ static pe_details_type pe_detail_list[] =
   {
     "pei-x86-64",
     "pe-bigobj-x86-64",
-    3 /* R_IMAGEBASE */,
+    3 /* R_AMD64_IMAGEBASE */,
+    11 /* R_AMD64_SECREL32 */,
+    12 /* R_AMD64_SECREL7 */,
+    10 /* R_AMD64_SECTION */,
     PE_ARCH_i386,
     bfd_arch_i386,
     false,
@@ -287,6 +298,8 @@ static pe_details_type pe_detail_list[] =
     "pei-i386",
     "pe-bigobj-i386",
     7 /* R_IMAGEBASE */,
+    11, 11 /* R_SECREL32 */,
+    10 /* R_SECTION */,
     PE_ARCH_i386,
     bfd_arch_i386,
     true,
@@ -297,6 +310,7 @@ static pe_details_type pe_detail_list[] =
     "pei-shl",
     "pe-shl",
     16 /* R_SH_IMAGEBASE */,
+    ~0, 0, ~0, /* none */
     PE_ARCH_sh,
     bfd_arch_sh,
     true,
@@ -306,6 +320,7 @@ static pe_details_type pe_detail_list[] =
     "pei-mips",
     "pe-mips",
     34 /* MIPS_R_RVA */,
+    ~0, 0, ~0, /* none */
     PE_ARCH_mips,
     bfd_arch_mips,
     false,
@@ -315,6 +330,7 @@ static pe_details_type pe_detail_list[] =
     "pei-arm-little",
     "pe-arm-little",
     11 /* ARM_RVA32 */,
+    ~0, 0, ~0, /* none */
     PE_ARCH_arm,
     bfd_arch_arm,
     true,
@@ -324,6 +340,8 @@ static pe_details_type pe_detail_list[] =
     "pei-arm-wince-little",
     "pe-arm-wince-little",
     2,  /* ARM_RVA32 on Windows CE, see bfd/coff-arm.c.  */
+    15, 15, /* ARM_SECREL (dito) */
+    14, /* ARM_SECTION (dito) */
     PE_ARCH_arm_wince,
     bfd_arch_arm,
     false,
@@ -332,13 +350,16 @@ static pe_details_type pe_detail_list[] =
   {
     "pei-aarch64-little",
     "pe-aarch64-little",
-    2,  /* ARM64_RVA32 */
+    2,  /* IMAGE_REL_ARM64_ADDR32NB */
+    8,  /* IMAGE_REL_ARM64_SECREL */
+    11, /* IMAGE_REL_ARM64_SECREL_LOW12L */
+    13, /* IMAGE_REL_ARM64_SECTION */
     PE_ARCH_aarch64,
     bfd_arch_aarch64,
     false,
     autofilter_symbollist_generic
   },
-  { NULL, NULL, 0, 0, 0, false, NULL }
+  { NULL, NULL, 0, 0, 0, 0, 0, 0, false, NULL }
 };
 
 static const pe_details_type *pe_details;
@@ -360,7 +381,10 @@ static const autofilter_entry_type autofilter_liblist[] =
   { STRING_COMMA_LEN ("libmsvcrt") },
   { STRING_COMMA_LEN ("libmsvcrt-os") },
   { STRING_COMMA_LEN ("libucrt") },
+  { STRING_COMMA_LEN ("libucrtapp") },
   { STRING_COMMA_LEN ("libucrtbase") },
+  { STRING_COMMA_LEN ("libpthread") },
+  { STRING_COMMA_LEN ("libwinpthread") },
   { NULL, 0 }
 };
 
@@ -756,7 +780,7 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
 
 	  if (!bfd_generic_link_read_symbols (b))
 	    {
-	      einfo (_("%F%P: %pB: could not read symbols: %E\n"), b);
+	      fatal (_("%P: %pB: could not read symbols: %E\n"), b);
 	      return;
 	    }
 
@@ -1048,7 +1072,7 @@ build_filler_bfd (bool include_edata)
 			     bfd_get_arch (link_info.output_bfd),
 			     bfd_get_mach (link_info.output_bfd)))
     {
-      einfo (_("%F%P: can not create BFD: %E\n"));
+      fatal (_("%P: can not create BFD: %E\n"));
       return;
     }
 
@@ -1326,7 +1350,7 @@ pe_walk_relocs (struct bfd_link_info *info,
 
       if (!bfd_generic_link_read_symbols (b))
 	{
-	  einfo (_("%F%P: %pB: could not read symbols: %E\n"), b);
+	  fatal (_("%P: %pB: could not read symbols: %E\n"), b);
 	  return;
 	}
 
@@ -1407,7 +1431,7 @@ pe_find_data_imports (const char *symhead,
       if (!bfd_hash_table_init (import_hash,
 				bfd_hash_newfunc,
 				sizeof (struct bfd_hash_entry)))
-	einfo (_("%F%P: bfd_hash_table_init failed: %E\n"));
+	fatal (_("%P: bfd_hash_table_init failed: %E\n"));
     }
   else
     import_hash = NULL;
@@ -1447,7 +1471,7 @@ pe_find_data_imports (const char *symhead,
 
 		if (!bfd_generic_link_read_symbols (b))
 		  {
-		    einfo (_("%F%P: %pB: could not read symbols: %E\n"), b);
+		    fatal (_("%P: %pB: could not read symbols: %E\n"), b);
 		    return;
 		  }
 
@@ -1549,7 +1573,7 @@ generate_reloc (bfd *abfd, struct bfd_link_info *info)
 
       if (!bfd_generic_link_read_symbols (b))
 	{
-	  einfo (_("%F%P: %pB: could not read symbols: %E\n"), b);
+	  fatal (_("%P: %pB: could not read symbols: %E\n"), b);
 	  return;
 	}
 
@@ -1596,7 +1620,11 @@ generate_reloc (bfd *abfd, struct bfd_link_info *info)
 		  printf ("rel: %s\n", sym->name);
 		}
 	      if (!relocs[i]->howto->pc_relative
-		  && relocs[i]->howto->type != pe_details->imagebase_reloc)
+		  && (bfd_get_flavour (b) != bfd_target_coff_flavour
+		      || (relocs[i]->howto->type != pe_details->imagebase_reloc
+			  && (relocs[i]->howto->type < pe_details->secrel_reloc_lo
+			      || relocs[i]->howto->type > pe_details->secrel_reloc_hi)
+			  && relocs[i]->howto->type != pe_details->section_reloc)))
 		{
 		  struct bfd_symbol *sym = *relocs[i]->sym_ptr_ptr;
 		  const struct bfd_link_hash_entry *blhe
@@ -2101,12 +2129,7 @@ make_head (bfd *parent)
   char *oname;
   bfd *abfd;
 
-  if (asprintf (&oname, "%s_d%06d.o", dll_symname, tmp_seq) < 4)
-    /* In theory we should return NULL here at let our caller decide what to
-       do.  But currently the return value is not checked, just used, and
-       besides, this condition only happens when the system has run out of
-       memory.  So just give up.  */
-    exit (EXIT_FAILURE);
+  oname = xasprintf ("%s_d%06d.o", dll_symname, tmp_seq);
   tmp_seq++;
 
   abfd = bfd_create (oname, parent);
@@ -2195,12 +2218,7 @@ make_tail (bfd *parent)
   char *oname;
   bfd *abfd;
 
-  if (asprintf (&oname, "%s_d%06d.o", dll_symname, tmp_seq) < 4)
-    /* In theory we should return NULL here at let our caller decide what to
-       do.  But currently the return value is not checked, just used, and
-       besides, this condition only happens when the system has run out of
-       memory.  So just give up.  */
-    exit (EXIT_FAILURE);
+  oname = xasprintf ("%s_d%06d.o", dll_symname, tmp_seq);
   tmp_seq++;
 
   abfd = bfd_create (oname, parent);
@@ -2388,12 +2406,7 @@ make_one (def_file_export *exp, bfd *parent, bool include_jmp_stub)
 	}
     }
 
-  if (asprintf (&oname, "%s_d%06d.o", dll_symname, tmp_seq) < 4)
-    /* In theory we should return NULL here at let our caller decide what to
-       do.  But currently the return value is not checked, just used, and
-       besides, this condition only happens when the system has run out of
-       memory.  So just give up.  */
-    exit (EXIT_FAILURE);
+  oname = xasprintf ("%s_d%06d.o", dll_symname, tmp_seq);
   tmp_seq++;
 
   abfd = bfd_create (oname, parent);
@@ -2534,9 +2547,7 @@ make_one (def_file_export *exp, bfd *parent, bool include_jmp_stub)
     }
   else
     {
-      int ord;
-
-      /* { short, asciz }  */
+      /* { short, asciz } = { hint, name }  */
       if (exp->its_name)
 	len = 2 + strlen (exp->its_name) + 1;
       else
@@ -2547,13 +2558,8 @@ make_one (def_file_export *exp, bfd *parent, bool include_jmp_stub)
       d6 = xmalloc (len);
       id6->contents = d6;
       memset (d6, 0, len);
-
-      /* PR 20880:  Use exp->hint as a backup, just in case exp->ordinal
-	 contains an invalid value (-1).  */
-      ord = (exp->ordinal >= 0) ? exp->ordinal : exp->hint;
-      d6[0] = ord;
-      d6[1] = ord >> 8;
-
+      d6[0] = exp->hint & 0xff;
+      d6[1] = exp->hint >> 8;
       if (exp->its_name)
 	strcpy ((char*) d6 + 2, exp->its_name);
       else
@@ -2583,12 +2589,7 @@ make_singleton_name_thunk (const char *import, bfd *parent)
   char *oname;
   bfd *abfd;
 
-  if (asprintf (&oname, "%s_nmth%06d.o", dll_symname, tmp_seq) < 4)
-    /* In theory we should return NULL here at let our caller decide what to
-       do.  But currently the return value is not checked, just used, and
-       besides, this condition only happens when the system has run out of
-       memory.  So just give up.  */
-    exit (EXIT_FAILURE);
+  oname = xasprintf ("%s_nmth%06d.o", dll_symname, tmp_seq);
   tmp_seq++;
 
   abfd = bfd_create (oname, parent);
@@ -2639,9 +2640,9 @@ make_import_fixup_mark (arelent *rel, char *name)
   memcpy (fixup_name, buf, prefix_len);
 
   bh = NULL;
-  bfd_coff_link_add_one_symbol (&link_info, abfd, fixup_name, BSF_GLOBAL,
-				current_sec, /* sym->section, */
-				rel->address, NULL, true, false, &bh);
+  _bfd_generic_link_add_one_symbol (&link_info, abfd, fixup_name, BSF_GLOBAL,
+				    current_sec, /* sym->section, */
+				    rel->address, NULL, true, false, &bh);
 
   return bh->root.string;
 }
@@ -2664,12 +2665,7 @@ make_import_fixup_entry (const char *name,
   char *oname;
   bfd *abfd;
 
-  if (asprintf (&oname, "%s_fu%06d.o", dll_symname, tmp_seq) < 4)
-    /* In theory we should return NULL here at let our caller decide what to
-       do.  But currently the return value is not checked, just used, and
-       besides, this condition only happens when the system has run out of
-       memory.  So just give up.  */
-    exit (EXIT_FAILURE);
+  oname = xasprintf ("%s_fu%06d.o", dll_symname, tmp_seq);
   tmp_seq++;
 
   abfd = bfd_create (oname, parent);
@@ -2723,12 +2719,7 @@ make_runtime_pseudo_reloc (const char *name ATTRIBUTE_UNUSED,
   bfd *abfd;
   bfd_size_type size;
 
-  if (asprintf (&oname, "%s_rtr%06d.o", dll_symname, tmp_seq) < 4)
-    /* In theory we should return NULL here at let our caller decide what to
-       do.  But currently the return value is not checked, just used, and
-       besides, this condition only happens when the system has run out of
-       memory.  So just give up.  */
-    exit (EXIT_FAILURE);
+  oname = xasprintf ("%s_rtr%06d.o", dll_symname, tmp_seq);
   tmp_seq++;
 
   abfd = bfd_create (oname, parent);
@@ -2816,12 +2807,7 @@ pe_create_runtime_relocator_reference (bfd *parent)
   char *oname;
   bfd *abfd;
 
-  if (asprintf (&oname, "%s_ertr%06d.o", dll_symname, tmp_seq) < 4)
-    /* In theory we should return NULL here at let our caller decide what to
-       do.  But currently the return value is not checked, just used, and
-       besides, this condition only happens when the system has run out of
-       memory.  So just give up.  */
-    exit (EXIT_FAILURE);
+  oname = xasprintf ("%s_ertr%06d.o", dll_symname, tmp_seq);
   tmp_seq++;
 
   abfd = bfd_create (oname, parent);
@@ -3076,13 +3062,6 @@ pe_dll_generate_implib (def_file *def, const char *impfilename, struct bfd_link_
 
   if (! bfd_close (outarch))
     einfo ("%X%P: bfd_close %s: %E\n", impfilename);
-
-  while (head != NULL)
-    {
-      bfd *n = head->archive_next;
-      bfd_close (head);
-      head = n;
-    }
 }
 
 static int undef_count = 0;

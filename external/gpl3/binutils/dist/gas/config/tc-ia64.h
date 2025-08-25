@@ -1,5 +1,5 @@
 /* tc-ia64.h -- Header file for tc-ia64.c.
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -154,7 +154,7 @@ extern void ia64_convert_frag (fragS *);
 #define MD_PCREL_FROM_SECTION(fix,sec)	ia64_pcrel_from_section (fix, sec)
 #define md_section_align(seg,size)	(size)
 #define md_do_align(n,f,l,m,j)		ia64_md_do_align (n,f,l,m)
-#define HANDLE_ALIGN(f)			ia64_handle_align (f)
+#define HANDLE_ALIGN(s, f)		ia64_handle_align (f)
 #define md_elf_section_type(str,len)	ia64_elf_section_type (str, len)
 #define md_after_parse_args()		ia64_after_parse_args ()
 #define TC_DWARF2_EMIT_OFFSET		ia64_dwarf2_emit_offset
@@ -176,7 +176,7 @@ void ia64_vms_note (void);
      as_bad_where ((FRAGP)->fr_file, (FRAGP)->fr_line,			\
 		   _("instruction address is not a multiple of 16"));
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE  (15 + 16)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (15 + 16)
 
 #define WORKING_DOT_WORD	/* don't do broken word processing for now */
 

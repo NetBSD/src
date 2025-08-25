@@ -52,6 +52,7 @@ i386_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
   unsigned char *instructp;
   Sym *child;
   bfd_vma pc, destpc;
+  Sym_Table *symtab = get_symtab ();
 
   DBG (CALLDEBUG, printf ("[findcall] %s: 0x%lx to 0x%lx\n",
 			  parent->name, (unsigned long) p_lowpc,
@@ -76,7 +77,7 @@ i386_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
 	  destpc = bfd_get_32 (core_bfd, instructp + 1) + pc + 5;
 	  if (hist_check_address (destpc))
 	    {
-	      child = sym_lookup (&symtab, destpc);
+	      child = sym_lookup (symtab, destpc);
 	      if (child && child->addr == destpc)
 		{
 		  /*

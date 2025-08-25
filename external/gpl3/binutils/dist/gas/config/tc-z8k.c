@@ -1,5 +1,5 @@
 /* tc-z8k.c -- Assemble code for the Zilog Z800n
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -164,7 +164,7 @@ md_begin (void)
       opcode_entry_type *fake_opcode;
       fake_opcode = XNEW (opcode_entry_type);
       fake_opcode->name = md_pseudo_table[idx].poc_name;
-      fake_opcode->func = (void *) (md_pseudo_table + idx);
+      fake_opcode->p = md_pseudo_table + idx;
       fake_opcode->opcode = 250;
       str_hash_insert (opcode_hash_control, fake_opcode->name, fake_opcode, 0);
     }
@@ -429,7 +429,7 @@ get_ctrl_operand (char **ptr, struct z8k_op *mode, unsigned int dst ATTRIBUTE_UN
   char *src = *ptr;
   int i, l;
 
-  while (*src == ' ')
+  while (is_whitespace (*src))
     src++;
 
   mode->mode = CLASS_CTRL;
@@ -472,7 +472,7 @@ get_flags_operand (char **ptr, struct z8k_op *mode, unsigned int dst ATTRIBUTE_U
   int i;
   int j;
 
-  while (*src == ' ')
+  while (is_whitespace (*src))
     src++;
 
   mode->mode = CLASS_FLAGS;
@@ -517,7 +517,7 @@ get_interrupt_operand (char **ptr, struct z8k_op *mode, unsigned int dst ATTRIBU
   char *src = *ptr;
   int i, l;
 
-  while (*src == ' ')
+  while (is_whitespace (*src))
     src++;
 
   mode->mode = CLASS_IMM;
@@ -536,7 +536,7 @@ get_interrupt_operand (char **ptr, struct z8k_op *mode, unsigned int dst ATTRIBU
 		  *ptr = src + l;
 		invalid:
 		  as_bad (_("unknown interrupt %s"), src);
-		  while (**ptr && ! is_end_of_line[(unsigned char) **ptr])
+		  while (! is_end_of_stmt (**ptr))
 		    (*ptr)++;	 /* Consume rest of line.  */
 		  return;
 		}
@@ -607,7 +607,7 @@ get_cc_operand (char **ptr, struct z8k_op *mode, unsigned int dst ATTRIBUTE_UNUS
   char *src = *ptr;
   int i, l;
 
-  while (*src == ' ')
+  while (is_whitespace (*src))
     src++;
 
   mode->mode = CLASS_CC;
@@ -634,7 +634,7 @@ get_operand (char **ptr, struct z8k_op *mode, unsigned int dst ATTRIBUTE_UNUSED)
 
   mode->mode = 0;
 
-  while (*src == ' ')
+  while (is_whitespace (*src))
     src++;
   if (*src == '#')
     {
@@ -737,7 +737,7 @@ get_operands (const opcode_entry_type *opcode, char *op_end, op_type *operand)
     case 0:
       operand[0].mode = 0;
       operand[1].mode = 0;
-      while (*ptr == ' ')
+      while (is_whitespace (*ptr))
         ptr++;
       break;
 
@@ -745,24 +745,24 @@ get_operands (const opcode_entry_type *opcode, char *op_end, op_type *operand)
       if (opcode->arg_info[0] == CLASS_CC)
         {
           get_cc_operand (&ptr, operand + 0, 0);
-          while (*ptr == ' ')
+          while (is_whitespace (*ptr))
             ptr++;
-          if (*ptr && ! is_end_of_line[(unsigned char) *ptr])
+          if (! is_end_of_stmt (*ptr))
             {
               as_bad (_("invalid condition code '%s'"), ptr);
-              while (*ptr && ! is_end_of_line[(unsigned char) *ptr])
+              while (! is_end_of_stmt (*ptr))
                 ptr++;   /* Consume rest of line.  */
             }
         }
       else if (opcode->arg_info[0] == CLASS_FLAGS)
 	{
 	  get_flags_operand (&ptr, operand + 0, 0);
-	  while (*ptr == ' ')
+	  while (is_whitespace (*ptr))
 	    ptr++;
-	  if (*ptr && ! is_end_of_line[(unsigned char) *ptr])
+	  if (! is_end_of_stmt (*ptr))
 	    {
 	      as_bad (_("invalid flag '%s'"), ptr);
-	      while (*ptr && ! is_end_of_line[(unsigned char) *ptr])
+	      while (*ptr && ! is_end_of_stmt (*ptr))
 		ptr++;	 /* Consume rest of line.  */
 	    }
 	}
@@ -779,7 +779,7 @@ get_operands (const opcode_entry_type *opcode, char *op_end, op_type *operand)
       if (opcode->arg_info[0] == CLASS_CC)
         {
           get_cc_operand (&ptr, operand + 0, 0);
-          while (*ptr == ' ')
+          while (is_whitespace (*ptr))
             ptr++;
           if (*ptr != ',' && strchr (ptr + 1, ','))
             {
@@ -1219,12 +1219,12 @@ md_assemble (char *str)
   opcode_entry_type *opcode;
 
   /* Drop leading whitespace.  */
-  while (*str == ' ')
+  while (is_whitespace (*str))
     str++;
 
   /* Find the op code end.  */
   for (op_start = op_end = str;
-       *op_end != 0 && *op_end != ' ' && ! is_end_of_line[(unsigned char) *op_end];
+       ! is_whitespace (*op_end) && ! is_end_of_stmt (*op_end);
        op_end++)
     ;
 
@@ -1236,7 +1236,7 @@ md_assemble (char *str)
 
   *op_end = 0;  /* Zero-terminate op code string for str_hash_find() call.  */
 
-  opcode = (opcode_entry_type *) str_hash_find (opcode_hash_control, op_start);
+  opcode = str_hash_find (opcode_hash_control, op_start);
 
   if (opcode == NULL)
     {
@@ -1248,7 +1248,7 @@ md_assemble (char *str)
 
   if (opcode->opcode == 250)
     {
-      pseudo_typeS *p;
+      const pseudo_typeS *p;
       char oc;
       char *old = input_line_pointer;
 
@@ -1258,9 +1258,9 @@ md_assemble (char *str)
 
       oc = *old;
       *old = '\n';
-      while (*input_line_pointer == ' ')
+      while (is_whitespace (*input_line_pointer))
 	input_line_pointer++;
-      p = (pseudo_typeS *) (opcode->func);
+      p = opcode->p;
 
       (p->poc_handler) (p->poc_val);
       input_line_pointer = old;
@@ -1309,16 +1309,16 @@ md_atof (int type, char *litP, int *sizeP)
   return ieee_md_atof (type, litP, sizeP, true);
 }
 
-const char *md_shortopts = "z:";
+const char md_shortopts[] = "z:";
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
   {
 #define OPTION_RELAX  (OPTION_MD_BASE)
     {"linkrelax", no_argument, NULL, OPTION_RELAX},
     {NULL, no_argument, NULL, 0}
   };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (int c, const char *arg)
@@ -1375,8 +1375,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED,
 {
   arelent *reloc;
 
-  reloc = XNEW (arelent);
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->addend = fixp->fx_offset;
@@ -1407,7 +1407,7 @@ md_section_align (segT seg, valueT size)
 void
 md_apply_fix (fixS *fixP, valueT *valP, segT segment ATTRIBUTE_UNUSED)
 {
-  long val = * (long *) valP;
+  offsetT val = *valP;
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
 
   switch (fixP->fx_r_type)

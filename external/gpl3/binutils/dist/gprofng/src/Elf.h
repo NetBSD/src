@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -32,15 +32,15 @@
 
 class Symbol;
 class DbeFile;
+class DwrSec;
 template <class ITEM> class Vector;
 template <typename Key_t, typename Value_t> class Map;
 
-#define GELF_R_SYM(info)    ((info)>>32)
 #define GELF_ST_TYPE(info)  ((info) & 0xf)
 #define GELF_ST_BIND(info)  ((info) >> 4)
-#define GELF_R_TYPE(info)   ((((uint64_t)(info))<<56)>>56)
 
 #define	SHF_SUNW_ABSENT		0x00200000	/* section data not present */
+#define	SEC_DECOMPRESSED	0x00400000	/* bfd allocated this memory */
 
 // Ancillary values.
 #define ANC_SUNW_NULL       0
@@ -91,11 +91,17 @@ public:
   int64_t elf_checksum ();
   uint64_t get_baseAddr();
   char *elf_strptr (unsigned int sec, uint64_t off);
-  Elf_Internal_Sym *elf_getsym (Elf_Data *edta, unsigned int ndx, Elf_Internal_Sym *dst);
-  Elf_Internal_Rela *elf_getrel (Elf_Data *edta, unsigned int ndx, Elf_Internal_Rela *dst);
-  Elf_Internal_Rela *elf_getrela (Elf_Data *edta, unsigned int ndx, Elf_Internal_Rela *dst);
+  long elf_getSymCount (bool is_dynamic);
+  asymbol *elf_getsym (unsigned int ndx, Elf_Internal_Sym *dst, bool is_dynamic);
   Elf64_Ancillary *elf_getancillary (Elf_Data *edta, unsigned int ndx, Elf64_Ancillary *dst);
-  Elf *find_ancillary_files (char *lo_name); // read the .gnu_debuglink and .SUNW_ancillary seections
+
+  // read the .SUNW_ancillary section
+  void find_ancillary_files (const char *lo_name);
+
+  // read the .gnu_debuglink and .gnu_debugaltlink sections
+  void find_gnu_debug_files ();
+
+  DwrSec *get_dwr_section (const char *sec_name);  // Used in Dwarf reader
   const char *get_funcname_in_plt (uint64_t pc);
   char *get_location ();
   char *dump ();
@@ -128,9 +134,10 @@ public:
   Elf_status status;
   Vector<Elf*> *ancillary_files;
   Elf *gnu_debug_file;
+  Elf *gnu_debugalt_file;  // if the .gun_debugaltlink section presents
   DbeFile *dbeFile;
   Map<const char*, Symbol*> *elfSymbols;
-  unsigned int gnuLink, analyzerInfo, SUNW_ldynsym, stab, stabStr, symtab, dynsym;
+  unsigned int analyzerInfo, stab, stabStr;
   unsigned int stabIndex, stabIndexStr, stabExcl, stabExclStr, info, plt;
   bool dwarf;
 
@@ -141,6 +148,7 @@ protected:
   int elf_datatype;
   Elf_Internal_Ehdr *ehdrp;
   Elf_Data **data;
+  DwrSec **sections;
   bfd *abfd;
   static int bfd_status;
   long bfd_symcnt;
@@ -150,30 +158,6 @@ protected:
   asymbol **bfd_dynsym;
   asymbol *bfd_synthsym;
   Vector <asymbol *> *synthsym;
-};
-
-
-class ElfReloc
-{
-public:
-  struct Sreloc
-  {
-    long long offset;
-    long long value;
-    int stt_type;
-  };
-
-  static ElfReloc *get_elf_reloc (Elf *elf, char *sec_name, ElfReloc *rlc);
-  ElfReloc (Elf *_elf);
-  ~ElfReloc ();
-  long long get_reloc_addr (long long offset);
-  void dump ();
-  void dump_rela_debug_sec (int sec);
-
-private:
-  Elf *elf;
-  Vector<Sreloc *> *reloc;
-  int cur_reloc_ind;
 };
 
 #endif

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -40,12 +40,12 @@ struct tm;
  * If you add any, please put it in the right place */
 typedef struct CollectorUtilFuncs
 {
-  int (*access)();
+  int (*access)(const char *, int);
   int (*atoi)(const char *nptr);
   void *(*calloc)(size_t nelem, size_t elsize);
   int (*clearenv)(void);
   int (*close)(int);
-  int (*closedir)();
+  int (*closedir)(DIR *);
   int (*execv)(const char *path, char *const argv[]);
   void (*exit)(int status);
   int (*fclose)(FILE *stream);
@@ -66,20 +66,20 @@ typedef struct CollectorUtilFuncs
   off_t (*lseek)(int fd, off_t offset, int whence);
   void *(*malloc)(size_t size);
   void *(*memset)(void *s1, int c, size_t n);
-  int (*mkdir)();
+  int (*mkdir)(const char *, mode_t);
   time_t (*mktime)(struct tm *timeptr);
   void *(*mmap)(void *, size_t, int, int, int, off_t);
-  void *(*mmap64_)();
-  int (*munmap)();
+  void *(*mmap64_)(void *, size_t, int, int, int, off_t);
+  int (*munmap)(void *, size_t);
   int (*open)(const char *, int, ...);
   int (*open_bare)(const char *, int, ...);
-  DIR *(*opendir)();
+  DIR *(*opendir)(const char *);
   int (*pclose)(FILE *stream);
   FILE *(*popen)(const char *command, const char *mode);
   int (*putenv)(char *string);
-  ssize_t (*pwrite)();
-  ssize_t (*pwrite64_)();
-  ssize_t (*read)();
+  ssize_t (*pwrite)(int, const void *, size_t, off_t);
+  ssize_t (*pwrite64_)(int, const void *, size_t, off_t);
+  ssize_t (*read)(int, void *, size_t);
   int (*setenv)(const char *name, const char *value, int overwrite);
   int (*sigfillset)(sigset_t *set);
   int (*sigprocmask)(int how, const sigset_t *set, sigset_t *oldset);
@@ -107,12 +107,11 @@ typedef struct CollectorUtilFuncs
   int (*symlink)(const char *s1, const char *s2);
   int (*syscall)(int number, ...);
   long (*sysconf)(int name);
-  long (*sysinfo)(int command, char *buf, long count);
   time_t (*time)(time_t *tloc);
   int (*unsetenv)(const char *name);
-  int (*vsnprintf)(char *str, size_t size, const char *format, va_list ap);
+  int (*vsnprintf)(char *str, size_t size, const char *format, ...);
   pid_t (*waitpid)(pid_t pid, int *stat_loc, int options);
-  ssize_t (*write)();
+  ssize_t (*write)(int, void *, size_t);
   double (*atof)();
   void *n_a;
 } CollectorUtilFuncs;

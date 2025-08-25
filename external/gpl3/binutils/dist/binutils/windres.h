@@ -1,5 +1,5 @@
 /* windres.h -- header file for windres program.
-   Copyright (C) 1997-2024 Free Software Foundation, Inc.
+   Copyright (C) 1997-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
 
@@ -35,9 +35,9 @@ extern int verbose;
 extern rc_res_directory *read_rc_file (const char *, const char *, const char *, int, int);
 extern rc_res_directory *read_res_file (const char *);
 extern rc_res_directory *read_coff_rsrc (const char *, const char *);
-extern void write_rc_file (const char *, const rc_res_directory *);
-extern void write_res_file (const char *, const rc_res_directory *);
-extern void write_coff_file (const char *, const char *, const rc_res_directory *);
+extern bool write_rc_file (const char *, const rc_res_directory *);
+extern bool write_res_file (const char *, const rc_res_directory *);
+extern bool write_coff_file (const char *, const char *, const rc_res_directory *);
 
 extern rc_res_resource *bin_to_res (windres_bfd *, rc_res_id, const bfd_byte *,
 				    rc_uint_type);

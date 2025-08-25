@@ -1,5 +1,5 @@
 /* SPARC-specific support for 64-bit ELF
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -123,7 +123,7 @@ elf64_sparc_slurp_one_reloc_table (bfd *abfd, asection *asect,
 	relent->address = rela.r_offset - asect->vma;
 
       if (ELF64_R_SYM (rela.r_info) == STN_UNDEF)
-	relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	relent->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
       else if (/* PR 17512: file: 996185f8.  */
 	       ELF64_R_SYM (rela.r_info) > (dynamic
 					    ? bfd_get_dynamic_symcount (abfd)
@@ -134,7 +134,7 @@ elf64_sparc_slurp_one_reloc_table (bfd *abfd, asection *asect,
 	    (_("%pB(%pA): relocation %d has invalid symbol index %ld"),
 	     abfd, asect, i, (long) ELF64_R_SYM (rela.r_info));
 	  bfd_set_error (bfd_error_bad_value);
-	  relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  relent->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	}
       else
 	{
@@ -147,7 +147,7 @@ elf64_sparc_slurp_one_reloc_table (bfd *abfd, asection *asect,
 	  if ((s->flags & BSF_SECTION_SYM) == 0)
 	    relent->sym_ptr_ptr = ps;
 	  else
-	    relent->sym_ptr_ptr = s->section->symbol_ptr_ptr;
+	    relent->sym_ptr_ptr = &s->section->symbol;
 	}
 
       relent->addend = rela.r_addend;
@@ -158,7 +158,7 @@ elf64_sparc_slurp_one_reloc_table (bfd *abfd, asection *asect,
 	  relent->howto = _bfd_sparc_elf_info_to_howto_ptr (abfd, R_SPARC_LO10);
 	  relent[1].address = relent->address;
 	  relent++;
-	  relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  relent->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	  relent->addend = ELF64_R_TYPE_DATA (rela.r_info);
 	  relent->howto = _bfd_sparc_elf_info_to_howto_ptr (abfd, R_SPARC_13);
 	}
@@ -888,6 +888,7 @@ const struct elf_size_info elf64_sparc_size_info =
 #define TARGET_BIG_SYM	sparc_elf64_vec
 #define TARGET_BIG_NAME	"elf64-sparc"
 #define ELF_ARCH	bfd_arch_sparc
+#define ELF_TARGET_ID	SPARC_ELF_DATA
 #define ELF_MAXPAGESIZE 0x100000
 #define ELF_COMMONPAGESIZE 0x2000
 
@@ -953,8 +954,8 @@ const struct elf_size_info elf64_sparc_size_info =
   _bfd_sparc_elf_adjust_dynamic_symbol
 #define elf_backend_omit_section_dynsym \
   _bfd_sparc_elf_omit_section_dynsym
-#define elf_backend_size_dynamic_sections \
-  _bfd_sparc_elf_size_dynamic_sections
+#define elf_backend_late_size_sections \
+  _bfd_sparc_elf_late_size_sections
 #define elf_backend_relocate_section \
   _bfd_sparc_elf_relocate_section
 #define elf_backend_finish_dynamic_symbol \
@@ -1006,6 +1007,9 @@ const struct elf_size_info elf64_sparc_size_info =
 #define	TARGET_BIG_SYM				sparc_elf64_sol2_vec
 #undef	TARGET_BIG_NAME
 #define	TARGET_BIG_NAME				"elf64-sparc-sol2"
+
+#undef ELF_TARGET_OS
+#define ELF_TARGET_OS				is_solaris
 
 /* Restore default: we cannot use ELFOSABI_SOLARIS, otherwise ELFOSABI_NONE
    objects won't be recognized.  */

@@ -1,7 +1,7 @@
 dnl                                            -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+dnl   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -18,8 +18,11 @@ dnl along with this program; see the file COPYING.  If not see
 dnl <http://www.gnu.org/licenses/>.
 dnl
 
-AC_INIT([libsframe], BFD_VERSION)
+AC_INIT([libsframe], [BFD_VERSION])
 AC_CONFIG_SRCDIR(sframe.c)
+
+AC_CANONICAL_TARGET
+
 AC_USE_SYSTEM_EXTENSIONS
 AM_INIT_AUTOMAKE
 AM_SILENT_RULES([yes])
@@ -112,7 +115,7 @@ AM_CONDITIONAL(HAVE_LD_VERSION_SCRIPT, test "$have_ld_version_script" = "yes")
 AM_MAINTAINER_MODE
 AM_INSTALL_LIBBFD
 
-AC_FUNC_MMAP
+GCC_AC_FUNC_MMAP
 AC_CHECK_HEADERS(byteswap.h endian.h)
 
 dnl Check for bswap_{16,32,64}

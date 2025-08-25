@@ -1,6 +1,6 @@
 /* Internal format of XCOFF object file data structures for BFD.
 
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -204,30 +204,30 @@ struct internal_ldhdr
   /* The version number: 
      1 : 32 bit
      2 : 64 bit */
-  unsigned long l_version;
+  unsigned int l_version;
 
   /* The number of symbol table entries.  */
-  bfd_size_type l_nsyms;
+  size_t l_nsyms;
 
   /* The number of relocation table entries.  */
-  bfd_size_type l_nreloc;
+  size_t l_nreloc;
 
   /* The length of the import file string table.  */
-  bfd_size_type l_istlen;
+  size_t l_istlen;
 
   /* The number of import files.  */
-  bfd_size_type l_nimpid;
+  size_t l_nimpid;
+
+  /* The length of the string table.  */
+  size_t l_stlen;
 
   /* The offset from the start of the .loader section to the first
      entry in the import file table.  */
-  bfd_size_type l_impoff;
-
-  /* The length of the string table.  */
-  bfd_size_type l_stlen;
+  bfd_vma l_impoff;
 
   /* The offset from the start of the .loader section to the first
      entry in the string table.  */
-  bfd_size_type l_stoff;
+  bfd_vma l_stoff;
 
   /* The offset to start of the symbol table, only in XCOFF64 */
   bfd_vma l_symoff;
@@ -248,11 +248,11 @@ struct internal_ldsym
     struct
     {
       /* Zero if the symbol name is more than SYMNMLEN characters.  */
-	long _l_zeroes;
+      uint32_t _l_zeroes;
       
       /* The offset in the string table if the symbol name is more
 	 than SYMNMLEN characters.  */
-      long _l_offset;
+      uint32_t _l_offset;
     } 
     _l_l;
   }
@@ -298,13 +298,13 @@ struct internal_ldrel
   bfd_vma l_vaddr;
 
   /* The symbol table index in the .loader section symbol table.  */
-  bfd_size_type l_symndx;
+  uint32_t l_symndx;
 
   /* The relocation type and size.  */
-  short l_rtype;
+  int16_t l_rtype;
 
   /* The section number this relocation applies to.  */
-  short l_rsecnm;
+  int16_t l_rsecnm;
 };
 
 /* An entry in the XCOFF linker hash table.  */

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -37,10 +37,10 @@
 #define LT_MAXNAMELEN 1024
 #define LT_MAXPATHLEN 1024
 
-int __collector_linetrace_shutdown_hwcs_6830763_XXXX = 0;
+static int __collector_linetrace_shutdown_hwcs_6830763_XXXX = 0;
 int dbg_current_mode = FOLLOW_NONE; /* for debug only */
 unsigned line_key = COLLECTOR_TSD_INVALID_KEY;
-line_mode_t line_mode = LM_DORMANT;
+static line_mode_t line_mode = LM_DORMANT;
 int user_follow_mode = FOLLOW_ON;
 int java_mode = 0;
 
@@ -1207,7 +1207,7 @@ __collector_vfork (void)
 }
 
 /*------------------------------------------------------------- execve */
-int execve () __attribute__ ((weak, alias ("__collector_execve")));
+int execve (const char *, char *const [], char *const []) __attribute__ ((weak, alias ("__collector_execve")));
 
 int
 __collector_execve (const char* path, char *const argv[], char *const envp[])
@@ -1237,7 +1237,7 @@ __collector_execve (const char* path, char *const argv[], char *const envp[])
   return ret;
 }
 
-int execvp () __attribute__ ((weak, alias ("__collector_execvp")));
+int execvp (const char *, char *const []) __attribute__ ((weak, alias ("__collector_execvp")));
 
 int
 __collector_execvp (const char* file, char *const argv[])
@@ -1269,7 +1269,7 @@ __collector_execvp (const char* file, char *const argv[])
   return ret;
 }
 
-int execv () __attribute__ ((weak, alias ("__collector_execv")));
+int execv (const char *, char *const []) __attribute__ ((weak, alias ("__collector_execv")));
 
 int
 __collector_execv (const char* path, char *const argv[])
@@ -1408,7 +1408,10 @@ __collector_execl (const char* path, const char *arg0, ...)
 /*-------------------------------------------------------- posix_spawn */
 // map interposed symbol versions
 static int
-gprofng_posix_spawn (int(real_posix_spawn) (),
+gprofng_posix_spawn (int(real_posix_spawn) (pid_t *, const char *,
+				const posix_spawn_file_actions_t *,
+				const posix_spawnattr_t *,
+				char *const [], char *const []),
 		     pid_t *pidp, const char *path,
 		     const posix_spawn_file_actions_t *file_actions,
 		     const posix_spawnattr_t *attrp,
@@ -1466,7 +1469,10 @@ DCL_POSIX_SPAWN (posix_spawn)
 
 /*-------------------------------------------------------- posix_spawnp */
 static int
-gprofng_posix_spawnp (int (real_posix_spawnp) (),
+gprofng_posix_spawnp (int (real_posix_spawnp) (pid_t *, const char *,
+				const posix_spawn_file_actions_t *,
+				const posix_spawnattr_t *,
+				char *const [], char *const []),
                       pid_t *pidp, const char *path,
                       const posix_spawn_file_actions_t *file_actions,
                       const posix_spawnattr_t *attrp,
@@ -1521,7 +1527,7 @@ DCL_FUNC_VER (DCL_POSIX_SPAWNP, posix_spawnp_2_2, posix_spawnp@GLIBC_2.2)
 DCL_POSIX_SPAWNP (posix_spawnp)
 
 /*------------------------------------------------------------- system */
-int system () __attribute__ ((weak, alias ("__collector_system")));
+int system (const char *cmd) __attribute__ ((weak, alias ("__collector_system")));
 
 int
 __collector_system (const char *cmd)
@@ -1576,10 +1582,10 @@ DCL_FUNC_VER (DCL_POPEN, popen_2_0, popen@GLIBC_2.0)
 DCL_POPEN (popen)
 
 /*------------------------------------------------------------- grantpt */
-int grantpt () __attribute__ ((weak, alias ("__collector_grantpt")));
+int grantpt (int fildes) __attribute__ ((weak, alias ("__collector_grantpt")));
 
 int
-__collector_grantpt (const int fildes)
+__collector_grantpt (int fildes)
 {
   if (NULL_PTR (grantpt))
     init_lineage_intf ();
@@ -1601,10 +1607,10 @@ __collector_grantpt (const int fildes)
 }
 
 /*------------------------------------------------------------- ptsname */
-char *ptsname () __attribute__ ((weak, alias ("__collector_ptsname")));
+char *ptsname (int fildes) __attribute__ ((weak, alias ("__collector_ptsname")));
 
 char *
-__collector_ptsname (const int fildes)
+__collector_ptsname (int fildes)
 {
   if (NULL_PTR (ptsname))
     init_lineage_intf ();
@@ -1754,8 +1760,8 @@ __collector_clone (int (*fn)(void *), void *child_stack, int flags, void *arg,
 }
 
 /*-------------------------------------------------------------------- setuid */
-int setuid () __attribute__ ((weak, alias ("__collector_setuid")));
-int _setuid () __attribute__ ((weak, alias ("__collector_setuid")));
+int setuid (uid_t) __attribute__ ((weak, alias ("__collector_setuid")));
+int _setuid (uid_t) __attribute__ ((weak, alias ("__collector_setuid")));
 
 int
 __collector_setuid (uid_t ruid)
@@ -1770,8 +1776,8 @@ __collector_setuid (uid_t ruid)
 }
 
 /*------------------------------------------------------------------- seteuid */
-int seteuid () __attribute__ ((weak, alias ("__collector_seteuid")));
-int _seteuid () __attribute__ ((weak, alias ("__collector_seteuid")));
+int seteuid (uid_t) __attribute__ ((weak, alias ("__collector_seteuid")));
+int _seteuid (uid_t) __attribute__ ((weak, alias ("__collector_seteuid")));
 
 int
 __collector_seteuid (uid_t euid)
@@ -1786,8 +1792,8 @@ __collector_seteuid (uid_t euid)
 }
 
 /*------------------------------------------------------------------ setreuid */
-int setreuid () __attribute__ ((weak, alias ("__collector_setreuid")));
-int _setreuid () __attribute__ ((weak, alias ("__collector_setreuid")));
+int setreuid (uid_t, uid_t) __attribute__ ((weak, alias ("__collector_setreuid")));
+int _setreuid (uid_t, uid_t) __attribute__ ((weak, alias ("__collector_setreuid")));
 
 int
 __collector_setreuid (uid_t ruid, uid_t euid)
@@ -1802,8 +1808,8 @@ __collector_setreuid (uid_t ruid, uid_t euid)
 }
 
 /*-------------------------------------------------------------------- setgid */
-int setgid () __attribute__ ((weak, alias ("__collector_setgid")));
-int _setgid () __attribute__ ((weak, alias ("__collector_setgid")));
+int setgid (gid_t) __attribute__ ((weak, alias ("__collector_setgid")));
+int _setgid (gid_t) __attribute__ ((weak, alias ("__collector_setgid")));
 
 int
 __collector_setgid (gid_t rgid)
@@ -1818,8 +1824,8 @@ __collector_setgid (gid_t rgid)
 }
 
 /*------------------------------------------------------------------- setegid */
-int setegid () __attribute__ ((weak, alias ("__collector_setegid")));
-int _setegid () __attribute__ ((weak, alias ("__collector_setegid")));
+int setegid (gid_t) __attribute__ ((weak, alias ("__collector_setegid")));
+int _setegid (gid_t) __attribute__ ((weak, alias ("__collector_setegid")));
 
 int
 __collector_setegid (gid_t egid)
@@ -1834,8 +1840,8 @@ __collector_setegid (gid_t egid)
 }
 
 /*------------------------------------------------------------------ setregid */
-int setregid () __attribute__ ((weak, alias ("__collector_setregid")));
-int _setregid () __attribute__ ((weak, alias ("__collector_setregid")));
+int setregid (gid_t, gid_t) __attribute__ ((weak, alias ("__collector_setregid")));
+int _setregid (gid_t, gid_t) __attribute__ ((weak, alias ("__collector_setregid")));
 
 int
 __collector_setregid (gid_t rgid, gid_t egid)

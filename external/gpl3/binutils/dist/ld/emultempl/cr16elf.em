@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright (C) 2007-2024 Free Software Foundation, Inc.
+# Copyright (C) 2007-2025 Free Software Foundation, Inc.
 # Contributed by M R Swami Reddy <MR.Swami.Reddy@nsc.com>
 #
 # This file is part of the GNU Binutils.
@@ -58,7 +58,7 @@ cr16_elf_after_open (void)
 	     COFF and ELF.  */
 	  if (bfd_get_flavour (abfd) != bfd_target_coff_flavour
 	      && bfd_get_flavour (abfd) != bfd_target_elf_flavour)
-	    einfo (_("%F%P: %pB: all input objects must be COFF or ELF "
+	    fatal (_("%P: %pB: all input objects must be COFF or ELF "
 		     "for --embedded-relocs\n"));
 
 	  datasec = bfd_get_section_by_name (abfd, ".data.rel");
@@ -82,7 +82,7 @@ cr16_elf_after_open (void)
 						      | SEC_IN_MEMORY))
 		  || !bfd_set_section_alignment (relsec, 2)
 		  || !bfd_set_section_size (relsec, datasec->reloc_count * 8))
-		einfo (_("%F%P: %pB: can not create .emreloc section: %E\n"));
+		fatal (_("%P: %pB: can not create .emreloc section: %E\n"));
 	    }
 
 	  /* Double check that all other data sections are empty, as is

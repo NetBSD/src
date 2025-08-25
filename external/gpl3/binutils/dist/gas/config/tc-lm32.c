@@ -1,5 +1,5 @@
 /* tc-lm32.c - Lattice Mico32 assembler.
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
    Contributed by Jon Beniston <jon@beniston.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -80,14 +80,14 @@ const pseudo_typeS md_pseudo_table[] =
   { "hword",   cons,                2 },
   { "word",    cons,                4 },
   { "dword",   cons,                8 },
-  {(char *)0 , (void(*)(int))0,     0}
+  { NULL,      NULL,                0 }
 };
 
 /* Target specific command line options.  */
 
-const char * md_shortopts = "";
+const char md_shortopts[] = "";
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
 #define OPTION_MULTIPLY_ENABLED         (OPTION_MD_BASE + 1)
   { "mmultiply-enabled",            no_argument, NULL, OPTION_MULTIPLY_ENABLED },
@@ -109,7 +109,7 @@ struct option md_longopts[] =
   { "mall-enabled",                 no_argument, NULL, OPTION_ALL_ENABLED },
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 /* Display architecture specific options.  */
 
@@ -246,8 +246,7 @@ md_atof (int type, char *litP, int *sizeP)
     {
       for (i = 0; i < prec; i++)
 	{
-	  md_number_to_chars (litP, (valueT) words[i],
-			      sizeof (LITTLENUM_TYPE));
+	  md_number_to_chars (litP, words[i], sizeof (LITTLENUM_TYPE));
 	  litP += sizeof (LITTLENUM_TYPE);
 	}
     }
@@ -255,8 +254,7 @@ md_atof (int type, char *litP, int *sizeP)
     {
       for (i = prec - 1; i >= 0; i--)
 	{
-	  md_number_to_chars (litP, (valueT) words[i],
-			      sizeof (LITTLENUM_TYPE));
+	  md_number_to_chars (litP, words[i], sizeof (LITTLENUM_TYPE));
 	  litP += sizeof (LITTLENUM_TYPE);
 	}
     }
@@ -278,7 +276,7 @@ valueT
 md_section_align (asection *seg, valueT addr)
 {
   int align = bfd_section_alignment (seg);
-  return ((addr + (1 << align) - 1) & -(1 << align));
+  return (addr + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }
 
 /* This function assembles the instructions. It emits the frags/bytes to the
@@ -357,7 +355,7 @@ md_pcrel_from (fixS *fixP)
 long
 md_pcrel_from_section (fixS * fixP, segT sec)
 {
-  if ((fixP->fx_addsy != (symbolS *) NULL)
+  if ((fixP->fx_addsy != NULL)
       && (! S_IS_DEFINED (fixP->fx_addsy)
 	  || (S_GET_SEGMENT (fixP->fx_addsy) != sec)))
     {
@@ -368,7 +366,7 @@ md_pcrel_from_section (fixS * fixP, segT sec)
 
   /*fprintf(stderr, "%s extern %d local %d\n", S_GET_NAME (fixP->fx_addsy), S_IS_EXTERN (fixP->fx_addsy), S_IS_LOCAL (fixP->fx_addsy));*/
   /* FIXME: Weak problem? */
-  if ((fixP->fx_addsy != (symbolS *) NULL)
+  if ((fixP->fx_addsy != NULL)
       && S_IS_EXTERNAL (fixP->fx_addsy))
     {
       /* If the symbol is external, let the linker handle it.  */

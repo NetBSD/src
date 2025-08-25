@@ -1,6 +1,6 @@
 /* Public API to SFrame.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of libsframe.
 
@@ -124,6 +124,22 @@ sframe_decoder_get_abi_arch (sframe_decoder_ctx *dctx);
 extern uint8_t
 sframe_decoder_get_version (sframe_decoder_ctx *dctx);
 
+/* Get the section flags from the SFrame decoder context DCTX.  */
+extern uint8_t
+sframe_decoder_get_flags (sframe_decoder_ctx *dctx);
+
+/* Get the offset of the sfde_func_start_address field (from the start of the
+   on-disk layout of the SFrame section) of the FDE at FUNC_IDX in the decoder
+   context DCTX.
+
+   If FUNC_IDX is more than the number of SFrame FDEs in the section, sets
+   error code in ERRP, but returns the (hypothetical) offset.  This is useful
+   for the linker when arranging input FDEs into the output section to be
+   emitted.  */
+uint32_t
+sframe_decoder_get_offsetof_fde_start_addr (sframe_decoder_ctx *dctx,
+					    uint32_t func_idx, int *errp);
+
 /* Return the number of function descriptor entries in the SFrame decoder
    DCTX.  */
 extern uint32_t
@@ -136,14 +152,6 @@ sframe_decoder_get_fixed_fp_offset (sframe_decoder_ctx *dctx);
 /* Get the fixed RA offset from the decoder context DCTX.  */
 extern int8_t
 sframe_decoder_get_fixed_ra_offset (sframe_decoder_ctx *dctx);
-
-/* Find the function descriptor entry which contains the specified address.
-
-   Note: This function is deprecated and will be removed from future release
-   X+2 of the library.  */
-extern void *
-sframe_get_funcdesc_with_addr (sframe_decoder_ctx *dctx, int32_t addr,
-			       int *errp);
 
 /* Find the SFrame Frame Row Entry which contains the PC.  Returns
    SFRAME_ERR if failure.  */
@@ -198,12 +206,20 @@ extern int32_t
 sframe_fre_get_cfa_offset (sframe_decoder_ctx *dtcx,
 			   sframe_frame_row_entry *fre, int *errp);
 
-/* Get the FP offset from the FRE.  If the offset is invalid, sets errp.  */
+/* Get the FP offset from the FRE.  If the offset is invalid, sets errp.
+
+   For s390x the offset may be an encoded register number, indicated by
+   LSB set to one, which is only valid in the topmost frame.  */
 extern int32_t
 sframe_fre_get_fp_offset (sframe_decoder_ctx *dctx,
 			  sframe_frame_row_entry *fre, int *errp);
 
-/* Get the RA offset from the FRE.  If the offset is invalid, sets errp.  */
+/* Get the RA offset from the FRE.  If the offset is invalid, sets errp.
+
+   For s390x an RA offset value of SFRAME_FRE_RA_OFFSET_INVALID indicates
+   that the RA is not saved, which is only valid in the topmost frame.
+   For s390x the offset may be an encoded register number, indicated by
+   LSB set to one, which is only valid in the topmost frame.  */
 extern int32_t
 sframe_fre_get_ra_offset (sframe_decoder_ctx *dctx,
 			  sframe_frame_row_entry *fre, int *errp);
@@ -237,6 +253,22 @@ sframe_encoder_get_abi_arch (sframe_encoder_ctx *encoder);
 /* Get the format version from the SFrame encoder context ENCODER.  */
 extern uint8_t
 sframe_encoder_get_version (sframe_encoder_ctx *encoder);
+
+/* Get the section flags from the SFrame encoder context ENCODER.  */
+extern uint8_t
+sframe_encoder_get_flags (sframe_encoder_ctx *encoder);
+
+/* Get the offset of the sfde_func_start_address field (from the start of the
+   on-disk layout of the SFrame section) of the FDE at FUNC_IDX in the encoder
+   context ENCODER.
+
+   If FUNC_IDX is more than the number of SFrame FDEs in the section, sets
+   error code in ERRP, but returns the (hypothetical) offset.  This is useful
+   for the linker when arranging input FDEs into the output section to be
+   emitted.  */
+uint32_t
+sframe_encoder_get_offsetof_fde_start_addr (sframe_encoder_ctx *encoder,
+					    uint32_t func_idx, int *errp);
 
 /* Return the number of function descriptor entries in the SFrame encoder
    ENCODER.  */

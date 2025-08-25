@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -238,7 +238,7 @@ ppc_finish (void)
     lang_for_each_statement (no_zero_padding);
   if (!ppc_finish_symbols (&link_info))
     einfo (_("%X%P: ppc_finish_symbols problem %E\n"));
-  finish_default ();
+  ldelf_finish ();
 }
 
 EOF
@@ -264,26 +264,6 @@ fi
 # Define some shell vars to insert bits of code into the standard elf
 # parse_args and list_options functions.
 #
-PARSE_AND_LIST_PROLOGUE=${PARSE_AND_LIST_PROLOGUE}'
-enum ppc32_opt
-{
-  OPTION_NO_TLS_OPT = 321,
-  OPTION_NO_TLS_GET_ADDR_OPT,
-  OPTION_NEW_PLT,
-  OPTION_OLD_PLT,
-  OPTION_PLT_ALIGN,
-  OPTION_NO_PLT_ALIGN,
-  OPTION_NO_INLINE_OPT,
-  OPTION_OLD_GOT,
-  OPTION_STUBSYMS,
-  OPTION_NO_STUBSYMS,
-  OPTION_PPC476_WORKAROUND,
-  OPTION_NO_PPC476_WORKAROUND,
-  OPTION_NO_PICFIXUP,
-  OPTION_VLE_RELOC_FIXUP
-};
-'
-
 PARSE_AND_LIST_LONGOPTS=${PARSE_AND_LIST_LONGOPTS}'
   { "emit-stub-syms", no_argument, NULL, OPTION_STUBSYMS },
   { "no-emit-stub-syms", no_argument, NULL, OPTION_NO_STUBSYMS },
@@ -386,7 +366,7 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
 	  char *end;
 	  unsigned long val = strtoul (optarg, &end, 0);
 	  if (*end || val > 5)
-	    einfo (_("%F%P: invalid --plt-align `%s'\''\n"), optarg);
+	    fatal (_("%P: invalid --plt-align `%s'\''\n"), optarg);
 	  params.plt_stub_align = val;
 	}
       else
@@ -419,7 +399,7 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
 	  if (*end
 	      || (params.pagesize < 4096 && params.pagesize != 0)
 	      || params.pagesize != (params.pagesize & -params.pagesize))
-	    einfo (_("%F%P: invalid pagesize `%s'\''\n"), optarg);
+	    fatal (_("%P: invalid pagesize `%s'\''\n"), optarg);
 	}
       break;
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -505,64 +505,6 @@ typedef struct
   unsigned int type : 16;
   unsigned int size : 16;
 } ARCH_common;
-
-/* The maximum value that fits into ARCH_common.size */
-#define ARCH_MAX_SIZE 0xffff
-
-#define ARCH_SEGMENT ARCH_TYPE(SEGMENT, 0)
-
-typedef struct
-{
-  ARCH_common common;
-  int version;
-  uint32_t inode;
-  uint32_t textsz;      /* text segment size */
-  uint32_t platform;    /* sparc, intel, etc. */
-} ARCH_segment;
-
-#define ARCH_MSG ARCH_TYPE(MSG, 0)
-
-typedef struct
-{
-  ARCH_common common;
-  uint32_t errcode;
-} ARCH_message;
-
-#define ARCH_INF ARCH_TYPE(INF, 0)
-
-typedef struct
-{
-  ARCH_common common;
-} ARCH_info;
-
-#define ARCH_MODULE ARCH_TYPE(MODULE, 0)
-
-typedef struct
-{
-  ARCH_common common;
-  unsigned int lang_code;
-  unsigned int fragmented;
-} ARCH_module;
-
-#define ARCH_FUNCTION ARCH_TYPE(FUNCTION, 0)
-
-typedef struct
-{
-  ARCH_common common;
-  uint32_t offset;
-  uint32_t size;
-  uint32_t save_addr;
-} ARCH_function;
-
-#define ARCH_LDINSTR  ARCH_TYPE(LDINSTR, 0)
-#define ARCH_STINSTR  ARCH_TYPE(STINSTR, 0)
-#define ARCH_PREFETCH ARCH_TYPE(PREFETCH, 0)
-#define ARCH_BRTARGET ARCH_TYPE(BRTARGET, 0)
-
-typedef struct
-{
-  ARCH_common common;
-} ARCH_aninfo;
 
 #define ARCH_JCLASS_LOCATION ARCH_TYPE(JCLASS_LOCATION, 3)
 

@@ -1,5 +1,5 @@
 /* This file is tc-wasm32.h.
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -75,7 +75,6 @@ extern int wasm32_force_relocation (struct fix *);
 #define elf_tc_final_processing()
 #define md_post_relax_hook
 #define md_start_line_hook()
-#define HANDLE_ALIGN(fragP)
 
 
 extern bool wasm32_fix_adjustable (struct fix *);

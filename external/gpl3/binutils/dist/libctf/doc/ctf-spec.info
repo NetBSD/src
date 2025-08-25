@@ -1,13 +1,13 @@
-This is ctf-spec.info, produced by makeinfo version 7.0.2 from
+This is ctf-spec.info, produced by makeinfo version 7.1.1 from
 ctf-spec.texi.
 
-Copyright © 2021-2024 Free Software Foundation, Inc.
+Copyright © 2021-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU General Public License, Version 3 or any
 later version published by the Free Software Foundation.  A copy of the
-license is included in the section entitled “GNU General Public
-License”.
+license is included in the section entitled "GNU General Public
+License".
 
 INFO-DIR-SECTION Software development
 START-INFO-DIR-ENTRY
@@ -30,6 +30,39 @@ consume at runtime.
 * CTF archive::
 * CTF dictionaries::
 * Index::
+
+ -- The Detailed Node Listing --
+
+CTF dictionaries
+
+* CTF Preamble::
+* CTF header::
+* The type section::
+* The symtypetab sections::
+* The variable section::
+* The label section::
+* The string section::
+* Data models::
+* Limits of CTF::
+
+CTF Preamble
+
+* CTF file-wide flags::
+
+The type section
+
+* The info word::
+* Type indexes and type IDs::
+* Type kinds::
+* Integer types::
+* Floating-point types::
+* Slices::
+* Pointers typedefs and cvr-quals::
+* Arrays::
+* Function pointers::
+* Enums::
+* Structs and unions::
+* Forward declarations::
 
 
 File: ctf-spec.info,  Node: Overview,  Next: CTF archive,  Prev: Top,  Up: Top
@@ -58,7 +91,7 @@ needed.
 
    The associated API to generate, merge together, and query this file
 format will be described in the accompanying ‘libctf’ manual once it is
-written.  There is no API to modify dictionaries once they’ve been
+written.  There is no API to modify dictionaries once they've been
 written out: CTF is a write-once file format.  (However, it is always
 possible to dynamically create a new child dictionary on the fly and
 attach it to a pre-existing, read-only parent.)
@@ -303,7 +336,7 @@ same values may be reused for other flags in v4+.
 Flag                  Versions   Value   Meaning
 ---------------------------------------------------------------------------------------
 ‘CTF_F_COMPRESS’      All        0x1     Compressed with zlib
-‘CTF_F_NEWFUNCINFO’   3 only     0x2     “New-format” func info section.
+‘CTF_F_NEWFUNCINFO’   3 only     0x2     "New-format" func info section.
 ‘CTF_F_IDXSORTED’     3+         0x4     The index section is in sorted order
 ‘CTF_F_DYNSTR’        3 only     0x8     The external strtab is in ‘.dynstr’ and the
                                          symtab used is ‘.dynsym’.
@@ -419,7 +452,7 @@ Offset   Name                            Description
 
    Everything from this point on (until the end of the file at
 ‘cth_stroff’ + ‘cth_strlen’) is compressed with zlib if ‘CTF_F_COMPRESS’
-is set in the preamble’s ‘ctp_flags’.
+is set in the preamble's ‘ctp_flags’.
 
 
 File: ctf-spec.info,  Node: The type section,  Next: The symtypetab sections,  Prev: CTF header,  Up: CTF dictionaries
@@ -437,7 +470,7 @@ can walk through the types in sequence at opening time.
 
    Each type structure is one of a set of overlapping structures in a
 discriminated union of sorts: the variable-length data for each type
-immediately follows the type’s type structure.  Here’s the largest of
+immediately follows the type's type structure.  Here's the largest of
 the overlapping structures, which is only needed for huge types and so
 is very rarely seen:
 
@@ -455,7 +488,7 @@ typedef struct ctf_type
   uint32_t ctt_lsizelo;
 } ctf_type_t;
 
-   Here’s the much more common smaller form:
+   Here's the much more common smaller form:
 
 typedef struct ctf_stype
 {
@@ -467,12 +500,12 @@ typedef struct ctf_stype
     uint32_t ctt_size;
     uint32_t ctt_type;
   };
-} ctf_type_t;
+} ctf_stype_t;
 
    If ‘ctt_size’ is the #define ‘CTF_LSIZE_SENT’, 0xffffffff, this type
 is described by a ‘ctf_type_t’: otherwise, a ‘ctf_stype_t’.
 
-   Here’s what the fields mean:
+   Here's what the fields mean:
 
 Offset               Name                     Description
 -----------------------------------------------------------------------------------------------------
@@ -485,7 +518,7 @@ Offset               Name                     Description
                                               
 0x08                 ‘uint32_t ctt_size’      The size of this type, if this type is of a kind for
                                               which a size needs to be recorded (constant-size
-                                              types don’t need one).  If this is ‘CTF_LSIZE_SENT’,
+                                              types don't need one).  If this is ‘CTF_LSIZE_SENT’,
                                               this type is a huge type described by ‘ctf_type_t’.
                                               
 0x08                 ‘uint32_t ctt_type’      The type this type refers to, if this type is of a
@@ -536,11 +569,11 @@ The info word is a bitfield split into three parts.  From MSB to LSB:
 
 Bit offset   Name       Description
 ------------------------------------------------------------------------------------------
-26–31        ‘kind’     Type kind: *note Type kinds::.
+26-31        ‘kind’     Type kind: *note Type kinds::.
                         
 25           ‘isroot’   1 if this type is visible to name lookup
                         
-0–24         ‘vlen’     Length of variable-length data for this type (some kinds only).
+0-24         ‘vlen’     Length of variable-length data for this type (some kinds only).
                         The variable-length data directly follows the ‘ctf_type_t’ or
                         ‘ctf_stype_t’.  This is a kind-dependent array length value,
                         not a length in bytes.  Some kinds have no variable-length
@@ -549,7 +582,7 @@ Bit offset   Name       Description
 
    The most mysterious of these is undoubtedly ‘isroot’.  This indicates
 whether types with names (nonzero ‘ctt_name’) are visible to name
-lookup: if zero, this type is considered a “non-root type” and you can’t
+lookup: if zero, this type is considered a “non-root type” and you can't
 look it up by name at all.  Multiple types with the same name in the
 same C namespace (struct, union, enum, other) can exist in a single
 dictionary, but only one of them may have a nonzero value for ‘isroot’.
@@ -590,7 +623,7 @@ this range.
 
    These IDs appear in ‘ctf_type_t.ctt_type’ (*note The type section::),
 but the types themselves have no visible ID: quite intentionally,
-because adding an ID uses space, and every ID is different so they don’t
+because adding an ID uses space, and every ID is different so they don't
 compress well.  The IDs are implicit: at open time, the consumer walks
 through the entire type section and counts the types in the type
 section.  The type section is an array of variable-length elements, so
@@ -607,16 +640,16 @@ the top bit and look up the index in the child.
    These properties mean that the same dictionary can be used as a
 parent of child dictionaries and can also be used directly with no
 children at all, but a dictionary created as a child dictionary must
-always be associated with a parent — usually, the same parent — because
-its references to its own types have the high bit turned on and this is
-only flipped off again if this is a child dictionary.  (This is not a
-problem, because if you _don’t_ associate the child with a parent, any
-references within it to its parent types will fail, and there are almost
-certain to be many such references, or why is it a child at all?)
+always be associated with a parent -- usually, the same parent --
+because its references to its own types have the high bit turned on and
+this is only flipped off again if this is a child dictionary.  (This is
+not a problem, because if you _don't_ associate the child with a parent,
+any references within it to its parent types will fail, and there are
+almost certain to be many such references, or why is it a child at all?)
 
    This does mean that consumers should keep a close eye on the
 distinction between type IDs and type indexes: if you mix them up,
-everything will appear to work as long as you’re only using parent
+everything will appear to work as long as you're only using parent
 dictionaries or standalone dictionaries, but as soon as you start using
 children, everything will fail horribly.
 
@@ -657,9 +690,9 @@ their numerical values in a later release of this format, to move more
 frequently-used kinds like structures and cv-quals towards the top of
 the space, and move rarely-used kinds like integers downwards.  Yes,
 integers are rare: how many kinds of ‘int’ are there in a program?
-They’re just very frequently _referenced_.)
+They're just very frequently _referenced_.)
 
-   Here’s the set of kinds so far.  Each kind has a ‘#define’ associated
+   Here's the set of kinds so far.  Each kind has a ‘#define’ associated
 with it, also given here.
 
 Kind   Macro              Purpose
@@ -675,7 +708,7 @@ Kind   Macro              Purpose
                           
 3      ‘CTF_K_POINTER’    A pointer.  *Note Pointers typedefs and cvr-quals::.
                           
-4      ‘CTF_K_ARRAY’      An array.  *Note Arrays::.
+4      ‘CTF_K_ARRAY’      An array or SIMD vector.  *Note Arrays::.
                           
 5      ‘CTF_K_FUNCTION’   A function pointer.  *Note Function pointers::.
                           
@@ -722,16 +755,16 @@ it much like the info word does.
 
 Bit offset   Name       Description
 -----------------------------------------------------------------------------------
-24–31        Encoding   The desired display representation of this integer.  You
+24-31        Encoding   The desired display representation of this integer.  You
                         can extract this field with the ‘CTF_INT_ENCODING’
                         macro.  See below.
                         
-16–23        Offset     The offset of this integral type in bits from the start
+16-23        Offset     The offset of this integral type in bits from the start
                         of its enclosing structure field, adjusted for
                         endianness: *note Structs and unions::.  You can extract
                         this field with the ‘CTF_INT_OFFSET’ macro.
                         
-0–15         Bit-width  The width of this integral type in bits.  You can
+0-15         Bit-width  The width of this integral type in bits.  You can
                         extract this field with the ‘CTF_INT_BITS’ macro.
 
    If you choose, bitfields can be represented using the things above as
@@ -767,7 +800,7 @@ Offset   Name                Description
                              This is not currently produced or consumed by anything that we know of:
                              it is set aside for future use.
 
-   The GCC “‘Complex int’” and fixed-point extensions are not yet
+   The GCC "‘Complex int’" and fixed-point extensions are not yet
 supported: references to such types will be emitted as type 0.
 
 
@@ -789,15 +822,15 @@ just like integers do:
 
 Bit offset   Name       Description
 -------------------------------------------------------------------------------------------
-24–31        Encoding   The desired display representation of this float.  You can
+24-31        Encoding   The desired display representation of this float.  You can
                         extract this field with the ‘CTF_FP_ENCODING’ macro.  See below.
                         
-16–23        Offset     The offset of this floating-point type in bits from the start of
+16-23        Offset     The offset of this floating-point type in bits from the start of
                         its enclosing structure field, adjusted for endianness:
                         *note Structs and unions::.  You can extract this field with the
                         ‘CTF_FP_OFFSET’ macro.
                         
-0–15         Bit-width  The width of this floating-point type in bits.  You can extract
+0-15         Bit-width  The width of this floating-point type in bits.  You can extract
                         this field with the ‘CTF_FP_BITS’ macro.
 
    The purpose of the floating-point offset and bit-width is somewhat
@@ -820,7 +853,8 @@ Offset   Name                Description
 3        ‘CTF_FP_CPLX’       This is a ‘Complex float’.
 4        ‘CTF_FP_DCPLX’      This is a ‘Complex double’.
 5        ‘CTF_FP_LDCPLX’     This is a ‘Complex long double’.
-6        ‘CTF_FP_LDOUBLE’    This is a ‘long double’.
+6        ‘CTF_FP_LDOUBLE’    This is a ‘long double’, or quad-precision IEEE 754-2008
+                             ‘__float128’.
 7        ‘CTF_FP_INTRVL’     This is a ‘float’ interval type, a Solaris-specific extension.
                              Unused: will be recycled.
 8        ‘CTF_FP_DINTRVL’    This is a ‘double’ interval type, a Solaris-specific
@@ -836,7 +870,7 @@ Offset   Name                Description
 
    The use of the complex floating-point encodings is obscure: it is
 possible that ‘CTF_FP_CPLX’ is meant to be used for only the real part
-of complex types, and ‘CTF_FP_IMAGRY’ et al for the imaginary part – but
+of complex types, and ‘CTF_FP_IMAGRY’ et al for the imaginary part - but
 for now, we are emitting ‘CTF_FP_CPLX’ to cover the entire type, with no
 way to get at its constituent parts.  There appear to be no uses of
 these encodings anywhere, so they are quite likely to change
@@ -943,6 +977,11 @@ Both size and kind for arrays are zero.  The variable-length data is a
 ‘ctf_array_t’: ‘vlen’ in the info word should be disregarded and is
 always zero.
 
+   SIMD vectors are also encoded as types of kind ‘CTF_K_ARRAY’ in a
+‘ctf_stype_t’.  Both size and kind for arrays are zero.  The
+variable-length data is a ‘ctf_array_t’: ‘vlen’ in the info word should
+be disregarded and is always zero.
+
 typedef struct ctf_array
 {
   uint32_t cta_contents;
@@ -1030,7 +1069,7 @@ File: ctf-spec.info,  Node: Structs and unions,  Next: Forward declarations,  Pr
 
 Structures and unions are represnted as types of kind ‘CTF_K_STRUCT’ and
 ‘CTF_K_UNION’: their representation is otherwise identical, and it is
-perfectly allowed for “structs” to contain overlapping fields etc, so we
+perfectly allowed for "structs" to contain overlapping fields etc, so we
 will treat them together for the rest of this section.
 
    They fill out ‘ctt_size’, and use ‘ctf_type_t’ in preference to
@@ -1044,7 +1083,7 @@ size of the structure: truly huge structures, greater than
 ‘CTF_LSTRUCT_THRESH’ bytes in length, use a different type.
 (‘CTF_LSTRUCT_THRESH’ is 536870912, so such structures are vanishingly
 rare: in v4, this representation will change somewhat for greater
-compactness.  It’s inherited from v1, where the limits were much lower.)
+compactness.  It's inherited from v1, where the limits were much lower.)
 
    Most structures can get away with using ‘ctf_member_t’:
 
@@ -1067,7 +1106,7 @@ typedef struct ctf_lmember_v2
   uint32_t ctlm_offsetlo;
 } ctf_lmember_t;
 
-   Here’s what the fields of ‘ctf_member’ mean:
+   Here's what the fields of ‘ctf_member’ mean:
 
 Offset   Name                    Description
 ---------------------------------------------------------------------------------------------------------
@@ -1079,7 +1118,7 @@ Offset   Name                    Description
                                  
 0x08     ‘uint32_t ctm_type’     The type ID of the type of the field.
 
-   Here’s what the fields of the very similar ‘ctf_lmember’ mean:
+   Here's what the fields of the very similar ‘ctf_lmember’ mean:
 
 Offset   Name                       Description
 ------------------------------------------------------------------------------------------------------------
@@ -1097,9 +1136,9 @@ Offset   Name                       Description
 ‘ctf_type_t’.
 
    Unnamed structure and union fields are simply implemented by
-collapsing the unnamed field’s members into the containing structure or
+collapsing the unnamed field's members into the containing structure or
 union: this does mean that a structure containing an unnamed union can
-end up being a “structure” with multiple members at the same offset.  (A
+end up being a "structure" with multiple members at the same offset.  (A
 future format revision may collapse ‘CTF_K_STRUCT’ and ‘CTF_K_UNION’
 into the same kind and decide among them based on whether their members
 do in fact overlap.)
@@ -1124,7 +1163,7 @@ non-root-visible forwards indicate that a non-forward is coming.
 
    After link time, forwards are fused with their corresponding
 non-forwards by the deduplicator where possible.  They are kept if there
-is no non-forward definition (maybe it’s not visible from any TU at all)
+is no non-forward definition (maybe it's not visible from any TU at all)
 or if ‘multiple’ conflicting structures with the same name might match
 it.  Otherwise, all other forwards are converted to structures, unions,
 or enums as appropriate, even across TUs if only one structure could
@@ -1133,9 +1172,9 @@ the same dictionary unless they conflict, so promoting forwards to their
 concrete type seems most helpful).
 
    A forward has a rather strange representation: it is encoded with a
-‘ctf_stype_t’ but the ‘ctt_type’ is populated not with a type (if it’s a
-forward, we don’t have an underlying type yet: if we did, we’d have
-promoted it and this wouldn’t be a forward any more) but with the ‘kind’
+‘ctf_stype_t’ but the ‘ctt_type’ is populated not with a type (if it's a
+forward, we don't have an underlying type yet: if we did, we'd have
+promoted it and this wouldn't be a forward any more) but with the ‘kind’
 of the forward.  This means that we can distinguish forwards to structs,
 enums and unions reliably and ensure they land in the appropriate
 namespace even before the actual struct, union or enum is found.
@@ -1160,7 +1199,7 @@ table offsets, each giving the name of the symbol whose type is at the
 same offset in the corresponding non-index section: users can look up
 symbols in such a table by name.  The index section and corresponding
 symtypetab section is usually ASCIIbetically sorted (indicated by the
-‘CTF_F_IDXSORTED’ flag in the header): if it’s sorted, it can be
+‘CTF_F_IDXSORTED’ flag in the header): if it's sorted, it can be
 bsearched for a symbol name rather than having to use a slower linear
 search.
 
@@ -1169,7 +1208,7 @@ object and function info sections are associated 1:1 with ELF symbols of
 type ‘STT_OBJECT’ (for data object) or ‘STT_FUNC’ (for function info)
 with a nonzero value: the linker shuffles the symtypetab sections to
 correspond with the order of the symbols in the ELF file.  Symbols with
-no name, undefined symbols and symbols named “‘_START_’” and “‘_END_’”
+no name, undefined symbols and symbols named "‘_START_’" and "‘_END_’"
 are skipped and never appear in either section.  Symbols that have no
 corresponding type are represented by type ID 0.  The section may have
 fewer entries than the symbol table, in which case no later entries have
@@ -1182,18 +1221,18 @@ wrong!
    The compiler always emits indexed symtypetab tables, because there is
 no symbol table yet.  The linker will always have to read them all in
 and always works through them from start to end, so there is no benefit
-having the compiler sort them either.  The linker (actually, ‘libctf’’s
+having the compiler sort them either.  The linker (actually, ‘libctf’'s
 linking machinery) will automatically sort unsorted indexed sections,
 and convert indexed sections that contain a lot of pads into the more
 compact, unindexed form.
 
    If child dicts are in use, only symbols that use types actually
-mentioned in the child appear in the child’s symtypetab: symbols that
-use only types in the parent appear in the parent’s symtypetab instead.
-So the child’s symtypetab will almost always be very sparse, and thus
+mentioned in the child appear in the child's symtypetab: symbols that
+use only types in the parent appear in the parent's symtypetab instead.
+So the child's symtypetab will almost always be very sparse, and thus
 will usually use the indexed form even in fully linked objects.  (It is,
 of course, impossible for symbols to exist that use types from multiple
-child dicts at once, since it’s impossible to declare a function in C
+child dicts at once, since it's impossible to declare a function in C
 that uses types that are only visible in two different, disjoint
 translation units.)
 
@@ -1356,45 +1395,24 @@ Index
 * Complex, unsigned float:               Floating-point types. (line  6)
 * const:                                 Pointers typedefs and cvr-quals.
                                                                (line  6)
-* cta_contents:                          Arrays.               (line 20)
-* cta_index:                             Arrays.               (line 22)
-* cta_nelems:                            Arrays.               (line 29)
+* cta_contents:                          Arrays.               (line 25)
+* cta_index:                             Arrays.               (line 27)
+* cta_nelems:                            Arrays.               (line 34)
 * cte_name:                              Enums.                (line 21)
 * cte_value:                             Enums.                (line 24)
 * CTF header:                            CTF header.           (line  6)
 * CTF versions, versions:                CTF Preamble.         (line 46)
-* ctfa_ctfs:                             CTF archive.          (line 76)
-* ctfa_magic:                            CTF archive.          (line 63)
-* CTFA_MAGIC:                            CTF archive.          (line 64)
-* ctfa_model:                            CTF archive.          (line 66)
-* ctfa_names:                            CTF archive.          (line 72)
-* ctfa_nfiles:                           CTF archive.          (line 71)
 * ctf_archive_modent_t:                  CTF archive.          (line 83)
 * ctf_archive_modent_t, ctf_offset:      CTF archive.          (line 88)
 * ctf_archive_modent_t, name_offset:     CTF archive.          (line 86)
-* ctf_array_t:                           Arrays.               (line 18)
-* ctf_array_t, cta_contents:             Arrays.               (line 20)
-* ctf_array_t, cta_index:                Arrays.               (line 22)
-* ctf_array_t, cta_nelems:               Arrays.               (line 29)
+* ctf_array_t:                           Arrays.               (line 23)
+* ctf_array_t, cta_contents:             Arrays.               (line 25)
+* ctf_array_t, cta_index:                Arrays.               (line 27)
+* ctf_array_t, cta_nelems:               Arrays.               (line 34)
 * CTF_CHAR:                              Integer types.        (line 53)
 * ctf_enum_t:                            Enums.                (line 18)
 * ctf_enum_t, cte_name:                  Enums.                (line 21)
 * ctf_enum_t, cte_value:                 Enums.                (line 24)
-* CTF_FP_BITS:                           Floating-point types. (line 28)
-* CTF_FP_CPLX:                           Floating-point types. (line 47)
-* CTF_FP_DCPLX:                          Floating-point types. (line 48)
-* CTF_FP_DIMAGRY:                        Floating-point types. (line 60)
-* CTF_FP_DINTRVL:                        Floating-point types. (line 54)
-* CTF_FP_DOUBLE:                         Floating-point types. (line 46)
-* CTF_FP_ENCODING:                       Floating-point types. (line 21)
-* CTF_FP_IMAGRY:                         Floating-point types. (line 58)
-* CTF_FP_INTRVL:                         Floating-point types. (line 52)
-* CTF_FP_LDCPLX:                         Floating-point types. (line 49)
-* CTF_FP_LDIMAGRY:                       Floating-point types. (line 62)
-* CTF_FP_LDINTRVL:                       Floating-point types. (line 56)
-* CTF_FP_LDOUBLE:                        Floating-point types. (line 50)
-* CTF_FP_OFFSET:                         Floating-point types. (line 25)
-* CTF_FP_SINGLE:                         Floating-point types. (line 45)
 * CTF_F_COMPRESS:                        CTF file-wide flags.  (line 17)
 * CTF_F_DYNSTR:                          CTF file-wide flags.  (line 21)
 * CTF_F_DYNSTR <1>:                      The symtypetab sections.
@@ -1404,6 +1422,21 @@ Index
 * CTF_F_IDXSORTED <1>:                   The symtypetab sections.
                                                                (line  6)
 * CTF_F_NEWFUNCINFO:                     CTF file-wide flags.  (line 19)
+* CTF_FP_BITS:                           Floating-point types. (line 28)
+* CTF_FP_CPLX:                           Floating-point types. (line 47)
+* CTF_FP_DCPLX:                          Floating-point types. (line 48)
+* CTF_FP_DIMAGRY:                        Floating-point types. (line 61)
+* CTF_FP_DINTRVL:                        Floating-point types. (line 55)
+* CTF_FP_DOUBLE:                         Floating-point types. (line 46)
+* CTF_FP_ENCODING:                       Floating-point types. (line 21)
+* CTF_FP_IMAGRY:                         Floating-point types. (line 59)
+* CTF_FP_INTRVL:                         Floating-point types. (line 53)
+* CTF_FP_LDCPLX:                         Floating-point types. (line 49)
+* CTF_FP_LDIMAGRY:                       Floating-point types. (line 63)
+* CTF_FP_LDINTRVL:                       Floating-point types. (line 57)
+* CTF_FP_LDOUBLE:                        Floating-point types. (line 51)
+* CTF_FP_OFFSET:                         Floating-point types. (line 25)
+* CTF_FP_SINGLE:                         Floating-point types. (line 45)
 * ctf_header_t:                          CTF header.           (line 44)
 * ctf_header_t, cth_cuname:              CTF header.           (line 61)
 * ctf_header_t, cth_flags:               CTF Preamble.         (line 30)
@@ -1502,6 +1535,12 @@ Index
 * ctf_varent_t, ctv_name:                The variable section. (line 24)
 * ctf_varent_t, ctv_type:                The variable section. (line 26)
 * CTF_VERSION_3:                         CTF Preamble.         (line 46)
+* ctfa_ctfs:                             CTF archive.          (line 76)
+* ctfa_magic:                            CTF archive.          (line 63)
+* CTFA_MAGIC:                            CTF archive.          (line 64)
+* ctfa_model:                            CTF archive.          (line 66)
+* ctfa_names:                            CTF archive.          (line 72)
+* ctfa_nfiles:                           CTF archive.          (line 71)
 * cth_cuname:                            CTF header.           (line 61)
 * cth_flags:                             CTF Preamble.         (line 30)
 * cth_funcidxoff:                        CTF header.           (line 82)
@@ -1518,11 +1557,11 @@ Index
 * cth_typeoff:                           CTF header.           (line 91)
 * cth_varoff:                            CTF header.           (line 87)
 * cth_version:                           CTF Preamble.         (line 28)
+* ctl_label:                             The label section.    (line 19)
+* ctl_type:                              The label section.    (line 20)
 * ctlm_name:                             Structs and unions.   (line 61)
 * ctlm_offsethi:                         Structs and unions.   (line 64)
 * ctlm_offsetlo:                         Structs and unions.   (line 68)
-* ctl_label:                             The label section.    (line 19)
-* ctl_type:                              The label section.    (line 20)
 * ctm_name:                              Structs and unions.   (line 49)
 * ctm_offset:                            Structs and unions.   (line 52)
 * ctm_type:                              Structs and unions.   (line 55)
@@ -1609,18 +1648,18 @@ Index
 * struct:                                Structs and unions.   (line  6)
 * struct <1>:                            Forward declarations. (line  6)
 * struct ctf_archive:                    CTF archive.          (line 61)
+* struct ctf_archive_modent:             CTF archive.          (line 83)
+* struct ctf_archive_modent, ctf_offset: CTF archive.          (line 88)
+* struct ctf_archive_modent, name_offset: CTF archive.         (line 86)
 * struct ctf_archive, ctfa_ctfs:         CTF archive.          (line 76)
 * struct ctf_archive, ctfa_magic:        CTF archive.          (line 63)
 * struct ctf_archive, ctfa_model:        CTF archive.          (line 66)
 * struct ctf_archive, ctfa_names:        CTF archive.          (line 72)
 * struct ctf_archive, ctfa_nfiles:       CTF archive.          (line 71)
-* struct ctf_archive_modent:             CTF archive.          (line 83)
-* struct ctf_archive_modent, ctf_offset: CTF archive.          (line 88)
-* struct ctf_archive_modent, name_offset: CTF archive.         (line 86)
-* struct ctf_array:                      Arrays.               (line 18)
-* struct ctf_array, cta_contents:        Arrays.               (line 20)
-* struct ctf_array, cta_index:           Arrays.               (line 22)
-* struct ctf_array, cta_nelems:          Arrays.               (line 29)
+* struct ctf_array:                      Arrays.               (line 23)
+* struct ctf_array, cta_contents:        Arrays.               (line 25)
+* struct ctf_array, cta_index:           Arrays.               (line 27)
+* struct ctf_array, cta_nelems:          Arrays.               (line 34)
 * struct ctf_enum:                       Enums.                (line 18)
 * struct ctf_enum, cte_name:             Enums.                (line 21)
 * struct ctf_enum, cte_value:            Enums.                (line 24)
@@ -1706,12 +1745,12 @@ Index
 * unsigned long:                         Integer types.        (line  6)
 * unsigned long long:                    Integer types.        (line  6)
 * unsigned short:                        Integer types.        (line  6)
-* Unused bits:                           Floating-point types. (line 52)
-* Unused bits <1>:                       Floating-point types. (line 54)
-* Unused bits <2>:                       Floating-point types. (line 56)
-* Unused bits <3>:                       Floating-point types. (line 58)
-* Unused bits <4>:                       Floating-point types. (line 60)
-* Unused bits <5>:                       Floating-point types. (line 62)
+* Unused bits:                           Floating-point types. (line 53)
+* Unused bits <1>:                       Floating-point types. (line 55)
+* Unused bits <2>:                       Floating-point types. (line 57)
+* Unused bits <3>:                       Floating-point types. (line 59)
+* Unused bits <4>:                       Floating-point types. (line 61)
+* Unused bits <5>:                       Floating-point types. (line 63)
 * Variable section:                      The variable section. (line  6)
 * volatile:                              Pointers typedefs and cvr-quals.
                                                                (line  6)
@@ -1719,33 +1758,33 @@ Index
 
 
 Tag Table:
-Node: Top553
-Node: Overview883
-Node: CTF archive4220
-Node: CTF dictionaries8938
-Node: CTF Preamble9355
-Node: CTF file-wide flags12041
-Node: CTF header13539
-Node: The type section19533
-Node: The info word24320
-Node: Type indexes and type IDs26932
-Node: Type kinds30352
-Node: Integer types33733
-Node: Floating-point types37391
-Node: Slices41572
-Node: Pointers typedefs and cvr-quals45136
-Node: Arrays46355
-Node: Function pointers48130
-Node: Enums48819
-Node: Structs and unions50129
-Node: Forward declarations54118
-Node: The symtypetab sections55727
-Node: The variable section58853
-Node: The label section59999
-Node: The string section60986
-Node: Data models62260
-Node: Limits of CTF62933
-Node: Index64010
+Node: Top549
+Node: Overview1419
+Node: CTF archive4754
+Node: CTF dictionaries9472
+Node: CTF Preamble9889
+Node: CTF file-wide flags12575
+Node: CTF header14069
+Node: The type section20061
+Node: The info word24839
+Node: Type indexes and type IDs27445
+Node: Type kinds30857
+Node: Integer types34249
+Node: Floating-point types37897
+Node: Slices42149
+Node: Pointers typedefs and cvr-quals45713
+Node: Arrays46932
+Node: Function pointers48961
+Node: Enums49650
+Node: Structs and unions50960
+Node: Forward declarations54933
+Node: The symtypetab sections56532
+Node: The variable section59638
+Node: The label section60784
+Node: The string section61771
+Node: Data models63045
+Node: Limits of CTF63718
+Node: Index64795
 
 End Tag Table
 

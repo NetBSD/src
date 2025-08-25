@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -109,6 +109,7 @@ enum
   DISPATCH_TST = 2      /* dispatcher installed, and enabled in testing mode */
 };
 
+static struct sigaction sigaction_0;
 static int dispatch_mode = DISPATCH_NYI;   /* controls SIGPROF dispatching */
 static int itimer_period_requested = 0;    /* dispatcher itimer period */
 static int itimer_period_actual = 0;       /* actual dispatcher itimer period */
@@ -263,8 +264,7 @@ __collector_sigprof_install ()
     TprintfT (DBG_LT1, "dispatcher: __collector_ext_dispatcher_install() collector_sigprof_dispatcher already installed\n");
   else
     {
-      struct sigaction c_act;
-      CALL_UTIL (memset)(&c_act, 0, sizeof c_act);
+      struct sigaction c_act = sigaction_0;
       sigemptyset (&c_act.sa_mask);
       sigaddset (&c_act.sa_mask, HWCFUNCS_SIGNAL); /* block SIGEMT delivery in handler */
       c_act.sa_sigaction = collector_sigprof_dispatcher;
@@ -358,8 +358,7 @@ void
 __collector_SIGDFL_handler (int sig)
 {
   /* remove our dispatcher, replacing it with the default disposition */
-  struct sigaction act;
-  CALL_UTIL (memset)(&act, 0, sizeof (act));
+  struct sigaction act =  sigaction_0;
   act.sa_handler = SIG_DFL;
   if (__collector_sigaction (sig, &act, NULL))
     {
@@ -909,8 +908,9 @@ sigset (int sig, sighandler_t handler)
 
 // map interposed symbol versions
 static int
-gprofng_timer_create (int (real_func) (), clockid_t clockid,
-                      struct sigevent *sevp, timer_t *timerid)
+gprofng_timer_create (int (real_func) (clockid_t, struct sigevent *, timer_t *),
+		      clockid_t clockid,
+		      struct sigevent *sevp, timer_t *timerid)
 {
   // collector reserves SIGPROF
   if (sevp == NULL || sevp->sigev_notify != SIGEV_SIGNAL ||
@@ -1045,7 +1045,7 @@ __collector_thr_sigsetmask (int how, const sigset_t* iset, sigset_t* oset)
 // map interposed symbol versions
 
 static int
-gprofng_pthread_sigmask (int (real_func) (),
+gprofng_pthread_sigmask (int (real_func) (int, const sigset_t *, sigset_t*),
                          int how, const sigset_t *iset, sigset_t* oset)
 {
   sigset_t lsigset;
@@ -1140,9 +1140,10 @@ collector_root (void *cargs)
 // map interposed symbol versions
 
 static int
-gprofng_pthread_create (int (real_func) (), pthread_t *thread,
-                        const pthread_attr_t *attr,
-                        void *(*func)(void*), void *arg)
+gprofng_pthread_create (int (real_func) (pthread_t *, const pthread_attr_t *,
+					 void *(*)(void *), void *),
+			pthread_t *thread, const pthread_attr_t *attr,
+			void *(*func)(void*), void *arg)
 {
   TprintfT (DBG_LTT, "gprofng_pthread_create @%p\n", real_func);
   if (dispatch_mode != DISPATCH_ON)
@@ -1277,6 +1278,6 @@ __collector_ext_clone_pthread (int (*fn)(void *), void *child_stack, int flags, 
 }
 
 // weak symbols:
-int sigprocmask () __attribute__ ((weak, alias ("__collector_sigprocmask")));
-int thr_sigsetmask () __attribute__ ((weak, alias ("__collector_thr_sigsetmask")));
-int setitimer () __attribute__ ((weak, alias ("_setitimer")));
+int sigprocmask (int, const sigset_t*, sigset_t*) __attribute__ ((weak, alias ("__collector_sigprocmask")));
+int thr_sigsetmask (int, const sigset_t*, sigset_t*) __attribute__ ((weak, alias ("__collector_thr_sigsetmask")));
+__typeof(setitimer) setitimer __attribute__ ((weak, alias ("_setitimer")));

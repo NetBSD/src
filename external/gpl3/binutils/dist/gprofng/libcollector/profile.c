@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -40,12 +40,6 @@
 #include "libcol_util.h"
 #include "hwprofile.h"
 #include "tsd.h"
-
-/* TprintfT(<level>,...) definitions.  Adjust per module as needed */
-#define DBG_LT0 0 // for high-level configuration, unexpected errors/warnings
-#define DBG_LT1 1 // for configuration details, warnings
-#define DBG_LT2 2
-#define DBG_LT3 3
 
 static int init_interface (CollectorInterface*);
 static int open_experiment (const char *);
@@ -268,7 +262,7 @@ __collector_ext_profile_handler (siginfo_t *info, ucontext_t *context)
       return;
     }
   PUSH_REENTRANCE (guard);
-  TprintfT (DBG_LT3, "__collector_ext_profile_handler\n");
+  TprintfT (0, "__collector_ext_profile_handler\n");
   ucontext_t uctxmem;
   if (context == NULL)
     {
@@ -278,10 +272,9 @@ __collector_ext_profile_handler (siginfo_t *info, ucontext_t *context)
       CALL_UTIL (getcontext) (context);     /* initialize dummy context */
       SETFUNCTIONCONTEXT (context, &__collector_lost_profile_context);
     }
-  ClockPacket pckt;
-  CALL_UTIL (memset)(&pckt, 0, sizeof ( pckt));
-  pckt.comm.tsize = sizeof ( pckt);
-  pckt.comm.type = CLOCK_TYPE;
+  static ClockPacket clock_pckt_0 = {.comm.type = CLOCK_TYPE,
+				     .comm.tsize = sizeof (ClockPacket)};
+  ClockPacket pckt = clock_pckt_0;
   pckt.lwp_id = __collector_lwp_self ();
   pckt.thr_id = __collector_thr_self ();
   pckt.cpu_id = CALL_UTIL (getcpuid)();

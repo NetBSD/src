@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -152,7 +152,7 @@ mips_add_stub_section (const char *stub_sec_name, asection *input_section,
 				 bfd_get_arch (link_info.output_bfd),
 				 bfd_get_mach (link_info.output_bfd)))
 	{
-	  einfo (_("%F%P: can not create BFD: %E\n"));
+	  fatal (_("%P: can not create BFD: %E\n"));
 	  return NULL;
 	}
       stub_bfd->flags |= BFD_LINKER_CREATED;
@@ -232,18 +232,6 @@ EOF
 # Define some shell vars to insert bits of code into the standard elf
 # parse_args and list_options functions.
 #
-PARSE_AND_LIST_PROLOGUE='
-enum
-  {
-    OPTION_INSN32 = 301,
-    OPTION_NO_INSN32,
-    OPTION_IGNORE_BRANCH_ISA,
-    OPTION_NO_IGNORE_BRANCH_ISA,
-    OPTION_COMPACT_BRANCHES,
-    OPTION_NO_COMPACT_BRANCHES
-  };
-'
-
 PARSE_AND_LIST_LONGOPTS='
   { "insn32", no_argument, NULL, OPTION_INSN32 },
   { "no-insn32", no_argument, NULL, OPTION_NO_INSN32 },

@@ -1,5 +1,5 @@
 /* tc-bpf.c -- Assembler for the Linux eBPF.
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
    Contributed by Oracle, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -126,7 +126,7 @@ enum options
   OPTION_NO_RELAX,
 };
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   { "EL", no_argument, NULL, OPTION_LITTLE_ENDIAN },
   { "EB", no_argument, NULL, OPTION_BIG_ENDIAN },
@@ -137,9 +137,9 @@ struct option md_longopts[] =
   { NULL,          no_argument, NULL, 0 },
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
-const char * md_shortopts = "";
+const char md_shortopts[] = "";
 
 /* BPF supports little-endian and big-endian variants.  The following
    global records what endianness to use.  It can be configured using
@@ -315,7 +315,7 @@ immediate_overflow (int64_t value, unsigned bits)
 long
 md_pcrel_from_section (fixS *fixP, segT sec)
 {
-  if (fixP->fx_addsy != (symbolS *) NULL
+  if (fixP->fx_addsy != NULL
       && (! S_IS_DEFINED (fixP->fx_addsy)
           || (S_GET_SEGMENT (fixP->fx_addsy) != sec)
           || S_IS_EXTERNAL (fixP->fx_addsy)
@@ -346,7 +346,9 @@ tc_gen_reloc (asection *sec ATTRIBUTE_UNUSED, fixS *fixP)
   bfd_reloc_code_real_type r_type = fixP->fx_r_type;
   arelent *reloc;
 
-  reloc = XNEW (arelent);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
+  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
 
   if (fixP->fx_pcrel)
    {
@@ -360,17 +362,12 @@ tc_gen_reloc (asection *sec ATTRIBUTE_UNUSED, fixS *fixP)
 
   reloc->howto = bfd_reloc_type_lookup (stdoutput, r_type);
 
-  if (reloc->howto == (reloc_howto_type *) NULL)
+  if (reloc->howto == NULL)
     {
       as_bad_where (fixP->fx_file, fixP->fx_line,
 		    _("relocation is not supported"));
       return NULL;
     }
-
-  //XXX  gas_assert (!fixP->fx_pcrel == !reloc->howto->pc_relative);
-
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
-  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
 
   /* Use fx_offset for these cases.  */
   if (fixP->fx_r_type == BFD_RELOC_VTABLE_ENTRY
@@ -434,6 +431,7 @@ relaxed_branch_length (fragS *fragp, asection *sec, int update)
           && sec == S_GET_SEGMENT (fragp->fr_symbol))
         {
           offsetT val = S_GET_VALUE (fragp->fr_symbol) + fragp->fr_offset;
+          val -= fragp->fr_address + fragp->fr_fix;
 
           /* Convert to 64-bit words, minus one.  */
           val = (val - 8) / 8;
@@ -518,17 +516,6 @@ encode_int32 (int32_t value, char *buffer)
     }
 }
 
-/* Write a BPF instruction to BUF.  */
-
-static void
-write_insn_bytes (bfd_byte *buf, char *bytes)
-{
-  int i;
-
-  for (i = 0; i < 8; ++i)
-    md_number_to_chars ((char *) buf + i, (valueT) bytes[i], 1);
-}
-
 /* *FRAGP has been relaxed to its final size, and now needs to have
    the bytes inside it modified to conform to the new size.
 
@@ -578,6 +565,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
            && sec == S_GET_SEGMENT (fragp->fr_symbol))
     {
       offsetT val = S_GET_VALUE (fragp->fr_symbol) + fragp->fr_offset;
+      val -= fragp->fr_address + fragp->fr_fix;
       /* Convert to 64-bit blocks minus one.  */
       disp_to_target = (val - 8) / 8;
       disp_is_known = 1;
@@ -626,15 +614,28 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
             {
               /* 16-bit disp is known and not in range.  Turn the JA
                  into a JAL with a 32-bit displacement.  */
-              char bytes[8];
+	      buf[0] = ((BPF_CLASS_JMP32|BPF_CODE_JA|BPF_SRC_K) >> 56) & 0xff;
+	      buf[1] = (word >> 48) & 0xff;
+	      buf[2] = 0; /* disp16 high */
+	      buf[3] = 0; /* disp16 lo */
+	      buf[4] = 0;
+	      buf[5] = 0;
+	      buf[6] = 0;
+	      buf[7] = 0;
 
-              bytes[0] = ((BPF_CLASS_JMP32|BPF_CODE_JA|BPF_SRC_K) >> 56) & 0xff;
-              bytes[1] = (word >> 48) & 0xff;
-              bytes[2] = 0; /* disp16 high */
-              bytes[3] = 0; /* disp16 lo */
-              encode_int32 ((int32_t) disp_to_target, bytes + 4);
+              /* Install fixup for the JAL.  */
+              reloc_howto_type *reloc_howto
+                = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_BPF_DISP32);
+              if (!reloc_howto)
+                abort();
 
-              write_insn_bytes (buf, bytes);
+              fixp = fix_new_exp (fragp, buf - (bfd_byte *) fragp->fr_literal,
+                                  bfd_get_reloc_size (reloc_howto),
+                                  &exp,
+                                  reloc_howto->pc_relative,
+                                  BFD_RELOC_BPF_DISP32);
+              fixp->fx_file = fragp->fr_file;
+              fixp->fx_line = fragp->fr_line;
             }
         }
       else
@@ -702,8 +703,6 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
               /* 16-bit disp is known and not in range.  Turn the JXX
                  into a sequence JXX +1; JA +1; JAL d32.  */
 
-              char bytes[8];
-
               /* First, set the 16-bit offset in the current
                  instruction to 1.  */
 
@@ -715,24 +714,40 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
 
               /* Then, write the JA + 1  */
 
-              bytes[0] = 0x05; /* JA */
-              bytes[1] = 0x0;
-              encode_int16 (1, bytes + 2);
-              bytes[4] = 0x0;
-              bytes[5] = 0x0;
-              bytes[6] = 0x0;
-              bytes[7] = 0x0;
-              write_insn_bytes (buf, bytes);
+	      buf[0] = 0x05; /* JA */
+	      buf[1] = 0x0;
+	      encode_int16 (1, (char *) buf + 2);
+	      buf[4] = 0x0;
+	      buf[5] = 0x0;
+	      buf[6] = 0x0;
+	      buf[7] = 0x0;
               buf += 8;
 
               /* Finally, write the JAL to the target. */
 
-              bytes[0] = ((BPF_CLASS_JMP32|BPF_CODE_JA|BPF_SRC_K) >> 56) & 0xff;
-              bytes[1] = 0;
-              bytes[2] = 0;
-              bytes[3] = 0;
-              encode_int32 ((int32_t) disp_to_target, bytes + 4);
-              write_insn_bytes (buf, bytes);
+	      buf[0] = ((BPF_CLASS_JMP32|BPF_CODE_JA|BPF_SRC_K) >> 56) & 0xff;
+	      buf[1] = 0;
+	      buf[2] = 0;
+	      buf[3] = 0;
+	      buf[4] = 0;
+	      buf[5] = 0;
+	      buf[6] = 0;
+	      buf[7] = 0;
+
+              /* Install fixup for the JAL.  */
+              reloc_howto_type *reloc_howto
+                = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_BPF_DISP32);
+              if (!reloc_howto)
+                abort();
+
+              fixp = fix_new_exp (fragp, buf - (bfd_byte *) fragp->fr_literal,
+                                  bfd_get_reloc_size (reloc_howto),
+                                  &exp,
+                                  reloc_howto->pc_relative,
+                                  BFD_RELOC_BPF_DISP32);
+              fixp->fx_file = fragp->fr_file;
+              fixp->fx_line = fragp->fr_line;
+
               buf += 8;
             }
         }
@@ -822,7 +837,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
       break;
     }
 
-  if (fixP->fx_addsy == (symbolS *) NULL)
+  if (fixP->fx_addsy == NULL)
     fixP->fx_done = 1;
 
   if (fixP->fx_done)
@@ -844,14 +859,14 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	  md_number_to_chars (where, *valP, 8);
 	  break;
         case BFD_RELOC_BPF_DISP16:
-          md_number_to_chars (where + 2, (uint16_t) *valP, 2);
+	  md_number_to_chars (where + 2, *valP, 2);
           break;
         case BFD_RELOC_BPF_DISP32:
         case BFD_RELOC_BPF_DISPCALL32:
-          md_number_to_chars (where + 4, (uint32_t) *valP, 4);
+	  md_number_to_chars (where + 4, *valP, 4);
           break;
         case BFD_RELOC_16_PCREL:
-          md_number_to_chars (where + 2, (uint32_t) *valP, 2);
+	  md_number_to_chars (where + 2, *valP, 2);
           break;
 	default:
 	  as_bad_where (fixP->fx_file, fixP->fx_line,
@@ -935,7 +950,7 @@ encode_insn (struct bpf_insn *insn, char *bytes,
       if (immediate_overflow (imm, 32))
         as_bad (_("immediate out of range, shall fit in 32 bits"));
       else
-        encode_int32 (insn->imm32.X_add_number, bytes + 4);        
+        encode_int32 (insn->imm32.X_add_number, bytes + 4);
     }
 
   if (insn->has_disp32 && insn->disp32.X_op == O_constant)
@@ -1169,13 +1184,11 @@ add_fixed_insn (struct bpf_insn *insn)
 {
   char *this_frag = frag_more (insn->size);
   char bytes[16];
-  int i;
 
   /* First encode the known parts of the instruction, including
      opcodes and constant immediates, and write them to the frag.  */
   encode_insn (insn, bytes, 0 /* relax */);
-  for (i = 0; i < insn->size; ++i)
-    md_number_to_chars (this_frag + i, (valueT) bytes[i], 1);
+  memcpy (this_frag, bytes, insn->size);
 
   /* Now install the instruction fixups.  */
   install_insn_fixups (insn, frag_now,
@@ -1188,7 +1201,6 @@ static void
 add_relaxed_insn (struct bpf_insn *insn, expressionS *exp)
 {
   char bytes[16];
-  int i;
   char *this_frag;
   unsigned worst_case = relaxed_branch_length (NULL, NULL, 0);
   unsigned best_case = insn->size;
@@ -1205,8 +1217,7 @@ add_relaxed_insn (struct bpf_insn *insn, expressionS *exp)
   /* First encode the known parts of the instruction, including
      opcodes and constant immediates, and write them to the frag.  */
   encode_insn (insn, bytes, 1 /* relax */);
-  for (i = 0; i < insn->size; ++i)
-    md_number_to_chars (this_frag + i, (valueT) bytes[i], 1);
+  memcpy (this_frag, bytes, insn->size);
 
   /* Note that instruction fixups will be applied once the frag is
      relaxed, in md_convert_frag.  */
@@ -1240,7 +1251,7 @@ parse_expression (char *s, expressionS *exp)
   s = input_line_pointer;
   input_line_pointer = saved_input_line_pointer;
 
-  switch (exp->X_op == O_absent || exp_parse_failed)
+  if (exp->X_op == O_absent || exp_parse_failed)
     return NULL;
 
   /* The expression parser may consume trailing whitespaces.  We have
@@ -1248,7 +1259,7 @@ parse_expression (char *s, expressionS *exp)
      these whitespaces.  */
   {
     char *p;
-    for (p = s - 1; p >= saved_s && *p == ' '; --p)
+    for (p = s - 1; p >= saved_s && is_whitespace (*p); --p)
       --s;
   }
 
@@ -1454,7 +1465,7 @@ md_assemble (char *str ATTRIBUTE_UNUSED)
   partial_match_length = 0;
   errmsg = NULL;
 
-#define PARSE_ERROR(...) parse_error (s - str, __VA_ARGS__)
+#define PARSE_ERROR(...) parse_error (s > str ? s - str : 0, __VA_ARGS__)
 
   while ((opcode = bpf_get_opcode (idx++)) != NULL)
     {
@@ -1475,7 +1486,7 @@ md_assemble (char *str ATTRIBUTE_UNUSED)
           if (*p == ' ')
             {
               /* Expect zero or more spaces.  */
-              while (*s != '\0' && (*s == ' ' || *s == '\t'))
+              while (is_whitespace (*s))
                 s += 1;
               p += 1;
             }
@@ -1494,20 +1505,20 @@ md_assemble (char *str ATTRIBUTE_UNUSED)
               else if (*(p + 1) == 'w')
                 {
                   /* Expect zero or more spaces.  */
-                  while (*s != '\0' && (*s == ' ' || *s == '\t'))
+                  while (is_whitespace (*s))
                     s += 1;
                   p += 2;
                 }
               else if (*(p + 1) == 'W')
                 {
                   /* Expect one or more spaces.  */
-                  if (*s != ' ' && *s != '\t')
+                  if (!is_whitespace (*s))
                     {
                       PARSE_ERROR ("expected white space, got '%s'",
                                    s);
                       break;
                     }
-                  while (*s != '\0' && (*s == ' ' || *s == '\t'))
+                  while (is_whitespace (*s))
                     s += 1;
                   p += 2;
                 }
@@ -1590,9 +1601,11 @@ md_assemble (char *str ATTRIBUTE_UNUSED)
               else if (strncmp (p, "%i32", 4) == 0
                        || strncmp (p, "%I32", 4) == 0)
                 {
+                  char *exp = NULL;
+
                   if (p[1] == 'I')
                     {
-                      while (*s == ' ' || *s == '\t')
+                      while (is_whitespace (*s))
                         s += 1;
                       if (*s != '+' && *s != '-')
                         {
@@ -1601,18 +1614,21 @@ md_assemble (char *str ATTRIBUTE_UNUSED)
                         }
                     }
 
-                  s = parse_expression (s, &insn.imm32);
-                  if (s == NULL)
+                  exp = parse_expression (s, &insn.imm32);
+                  if (exp == NULL)
                     {
                       PARSE_ERROR ("expected signed 32-bit immediate");
                       break;
                     }
+                  s = exp;
                   insn.has_imm32 = 1;
                   p += 4;
                 }
               else if (strncmp (p, "%o16", 4) == 0)
                 {
-                  while (*s == ' ' || *s == '\t')
+                  char *exp = NULL;
+
+                  while (is_whitespace (*s))
                     s += 1;
                   if (*s != '+' && *s != '-')
                     {
@@ -1620,46 +1636,53 @@ md_assemble (char *str ATTRIBUTE_UNUSED)
                       break;
                     }
 
-                  s = parse_expression (s, &insn.offset16);
-                  if (s == NULL)
+                  exp = parse_expression (s, &insn.offset16);
+                  if (exp == NULL)
                     {
                       PARSE_ERROR ("expected signed 16-bit offset");
                       break;
                     }
+                  s = exp;
                   insn.has_offset16 = 1;
                   p += 4;
                 }
               else if (strncmp (p, "%d16", 4) == 0)
                 {
-                  s = parse_expression (s, &insn.disp16);
-                  if (s == NULL)
+                  char *exp = parse_expression (s, &insn.disp16);
+
+                  if (exp == NULL)
                     {
                       PARSE_ERROR ("expected signed 16-bit displacement");
                       break;
                     }
+                  s = exp;
                   insn.has_disp16 = 1;
                   insn.is_relaxable = (insn.disp16.X_op != O_constant);
                   p += 4;
                 }
               else if (strncmp (p, "%d32", 4) == 0)
                 {
-                  s = parse_expression (s, &insn.disp32);
-                  if (s == NULL)
+                  char *exp = parse_expression (s, &insn.disp32);
+
+                  if (exp == NULL)
                     {
                       PARSE_ERROR ("expected signed 32-bit displacement");
                       break;
                     }
+                  s = exp;
                   insn.has_disp32 = 1;
                   p += 4;
                 }
               else if (strncmp (p, "%i64", 4) == 0)
                 {
-                  s = parse_expression (s, &insn.imm64);
-                  if (s == NULL)
+                  char *exp = parse_expression (s, &insn.imm64);
+
+                  if (exp == NULL)
                     {
                       PARSE_ERROR ("expected signed 64-bit immediate");
                       break;
                     }
+                  s = exp;
                   insn.has_imm64 = 1;
                   insn.size = 16;
                   p += 4;
@@ -1697,9 +1720,9 @@ md_assemble (char *str ATTRIBUTE_UNUSED)
       if (*p == '\0')
         {
           /* Allow white spaces at the end of the line.  */
-          while (*s != '\0' && (*s == ' ' || *s == '\t'))
+          while (is_whitespace (*s))
             s += 1;
-          if (*s == '\0')
+          if (is_end_of_stmt (*s))
             /* We parsed an instruction successfully.  */
             break;
           PARSE_ERROR ("extra junk at end of line");
@@ -1717,6 +1740,7 @@ md_assemble (char *str ATTRIBUTE_UNUSED)
         {
           as_bad ("%s", errmsg);
           free (errmsg);
+          errmsg = NULL;
         }
 
       return;

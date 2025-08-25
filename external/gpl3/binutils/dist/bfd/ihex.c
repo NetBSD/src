@@ -1,5 +1,5 @@
 /* BFD back-end for Intel Hex objects.
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor of Cygnus Support <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -486,7 +486,6 @@ ihex_scan (bfd *abfd)
 static bfd_cleanup
 ihex_object_p (bfd *abfd)
 {
-  void * tdata_save;
   bfd_byte b[9];
   unsigned int i;
   unsigned int type;
@@ -525,12 +524,12 @@ ihex_object_p (bfd *abfd)
     }
 
   /* OK, it looks like it really is an Intel Hex file.  */
-  tdata_save = abfd->tdata.any;
-  if (! ihex_mkobject (abfd) || ! ihex_scan (abfd))
+  if (!ihex_mkobject (abfd))
+    return NULL;
+
+  if (!ihex_scan (abfd))
     {
-      if (abfd->tdata.any != tdata_save && abfd->tdata.any != NULL)
-	bfd_release (abfd, abfd->tdata.any);
-      abfd->tdata.any = tdata_save;
+      bfd_release (abfd, abfd->tdata.any);
       return NULL;
     }
 
@@ -917,37 +916,12 @@ ihex_set_arch_mach (bfd *abfd,
   return true;
 }
 
-/* Get the size of the headers, for the linker.  */
-
-static int
-ihex_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
-		     struct bfd_link_info *info ATTRIBUTE_UNUSED)
-{
-  return 0;
-}
-
 /* Some random definitions for the target vector.  */
 
 #define	ihex_close_and_cleanup			  _bfd_generic_close_and_cleanup
 #define ihex_bfd_free_cached_info		  _bfd_generic_bfd_free_cached_info
 #define ihex_new_section_hook			  _bfd_generic_new_section_hook
-#define ihex_get_section_contents_in_window	  _bfd_generic_get_section_contents_in_window
-#define ihex_get_symtab_upper_bound		  _bfd_long_bfd_0
-#define ihex_canonicalize_symtab		  _bfd_nosymbols_canonicalize_symtab
-#define ihex_make_empty_symbol			  _bfd_generic_make_empty_symbol
-#define ihex_print_symbol			  _bfd_nosymbols_print_symbol
-#define ihex_get_symbol_info			  _bfd_nosymbols_get_symbol_info
-#define ihex_get_symbol_version_string		  _bfd_nosymbols_get_symbol_version_string
-#define ihex_bfd_is_target_special_symbol	  _bfd_bool_bfd_asymbol_false
-#define ihex_bfd_is_local_label_name		  _bfd_nosymbols_bfd_is_local_label_name
-#define ihex_get_lineno				  _bfd_nosymbols_get_lineno
-#define ihex_find_nearest_line			  _bfd_nosymbols_find_nearest_line
-#define ihex_find_nearest_line_with_alt		  _bfd_nosymbols_find_nearest_line_with_alt
-#define ihex_find_line				  _bfd_nosymbols_find_line
-#define ihex_find_inliner_info			  _bfd_nosymbols_find_inliner_info
-#define ihex_bfd_make_debug_symbol		  _bfd_nosymbols_bfd_make_debug_symbol
-#define ihex_read_minisymbols			  _bfd_nosymbols_read_minisymbols
-#define ihex_minisymbol_to_symbol		  _bfd_nosymbols_minisymbol_to_symbol
+#define ihex_sizeof_headers			  _bfd_nolink_sizeof_headers
 #define ihex_bfd_get_relocated_section_contents	  bfd_generic_get_relocated_section_contents
 #define ihex_bfd_relax_section			  bfd_generic_relax_section
 #define ihex_bfd_gc_sections			  bfd_generic_gc_sections
@@ -999,13 +973,13 @@ const bfd_target ihex_vec =
   {
     _bfd_bool_bfd_false_error,
     ihex_mkobject,
-    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents.  */
     _bfd_bool_bfd_false_error,
     ihex_write_object_contents,
-    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
   },
 
@@ -1013,7 +987,7 @@ const bfd_target ihex_vec =
   BFD_JUMP_TABLE_COPY (_bfd_generic),
   BFD_JUMP_TABLE_CORE (_bfd_nocore),
   BFD_JUMP_TABLE_ARCHIVE (_bfd_noarchive),
-  BFD_JUMP_TABLE_SYMBOLS (ihex),
+  BFD_JUMP_TABLE_SYMBOLS (_bfd_nosymbols),
   BFD_JUMP_TABLE_RELOCS (_bfd_norelocs),
   BFD_JUMP_TABLE_WRITE (ihex),
   BFD_JUMP_TABLE_LINK (ihex),

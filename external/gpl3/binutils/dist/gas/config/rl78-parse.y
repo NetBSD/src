@@ -1,5 +1,5 @@
 /* rl78-parse.y  Renesas RL78 parser
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1379,7 +1379,7 @@ find_bit_index (char *tok)
 	{
 	  last_digit = tok;
 	}
-      else if (ISSPACE (*tok))
+      else if (is_whitespace (*tok))
 	{
 	  /* skip */
 	}
@@ -1403,7 +1403,7 @@ rl78_lex (void)
   char * save_input_pointer;
   char * bit = NULL;
 
-  while (ISSPACE (*rl78_lex_start)
+  while (is_whitespace (*rl78_lex_start)
 	 && rl78_lex_start != rl78_lex_end)
     rl78_lex_start ++;
 
