@@ -116,11 +116,12 @@ struct aio_job {
 	kmutex_t mtx;		/* Protects completed flag */
 	int aio_op;		/* Operation type (AIO_READ/WRITE/SYNC) */
 	struct aiocb aiocbp;	/* User-visible AIO control block */
-	pri_t pri;		/* Scheduling priority */
 	void *aiocb_uptr;	/* User pointer for job identification */
 	struct proc *p;		/* Originating process */
 	bool completed;		/* Job completion status */
 	bool on_queue;		/* Whether or not this job is on sp->jobs */
+	struct file *fp;
+	struct vnode *vp;
 	struct aiowaitgrouplk lk; /* List of waitgroups waiting on this job */
 	TAILQ_ENTRY(aio_job) list;
 	struct lio_req *lio;	/* List I/O request (if part of lio_listio) */
