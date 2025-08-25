@@ -1,4 +1,4 @@
-.Dd March 3 2020
+ .Dd March 3 2020
 .Dt NTPTRACE 8 User Commands
 .Os
 .\"  EDIT THIS FILE WITH CAUTION  (ntptrace-opts.mdoc)
@@ -42,12 +42,12 @@ estimated error relative to the primary source. These terms are precisely
 defined in RFC\-1305.
 .Sh "OPTIONS"
 .Bl -tag
-.It  Fl n , Fl \-numeric 
+.It  Fl n , Fl \-numeric
 Print IP addresses instead of hostnames.
 .sp
 Output hosts as dotted\-quad numeric format rather than converting to
 the canonical host names.
-.It  Fl m Ar number , Fl \-max\-hosts Ns = Ns Ar number 
+.It  Fl m Ar number , Fl \-max\-hosts Ns = Ns Ar number
 Maximum number of peers to trace.
 This option takes an integer number as its argument.
 The default
@@ -57,7 +57,7 @@ for this option is:
  99
 .sp
 This option has not been fully documented.
-.It  Fl r Ar string , Fl \-host Ns = Ns Ar string 
+.It  Fl r Ar string , Fl \-host Ns = Ns Ar string
 Single remote host.
 The default
 .Ar string
