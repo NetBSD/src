@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.37 2025/08/24 16:46:23 christos Exp $ */
+/* $NetBSD: acpi_power.c,v 1.38 2025/08/25 21:27:11 christos Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.37 2025/08/24 16:46:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.38 2025/08/25 21:27:11 christos Exp $");
 
 #include "pci.h"
 
@@ -280,12 +280,14 @@ acpi_power_get_indirect(struct acpi_devnode *ad)
 	int i;
 
 	CTASSERT(ACPI_STATE_D0 == 0 && ACPI_STATE_D1 == 1);
-	CTASSERT(ACPI_STATE_D2 == 2 && ACPI_STATE_D3 == 4);
+	CTASSERT(ACPI_STATE_D2 == 2 && ACPI_STATE_D3_HOT == 3);
+	CTASSERT(ACPI_STATE_D3_COLD == 4 &&
+	    ACPI_STATE_D3_COLD == ACPI_STATE_D3);
 
 	/*
 	 * The device is in a given D-state if all resources are on.
 	 * To derive this, evaluate all elements in each _PRx package
-	 * (x = 0 ... 3) and break if the noted condition becomes true.
+	 * (x = 0 ... 4) and break if the noted condition becomes true.
 	 */
 	for (ad->ad_state = ACPI_STATE_D3, i = 0; i < ACPI_STATE_D3; i++) {
 
