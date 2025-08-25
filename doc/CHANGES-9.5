@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.71 2025/07/30 10:57:01 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.72 2025/08/25 16:13:02 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -940,4 +940,9 @@ sys/dev/usb/usbdevs_data.h			(regen)
 
 	urtwn(4): add support for Asus USB-N10 Nano B1.
 	[hgutch, ticket #1965]
+
+sys/netbt/hci.h					1.47
+
+	blutooth: fix definition of Sniff Subrating command.
+	[plunky, ticket #1966]
 
