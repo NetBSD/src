@@ -313,7 +313,9 @@ aiosp_fg_teardown_locked(struct aiosp *sp, struct aiost_file_group *fg)
 		return;
 	}
 
+	printf("WHAT!\n");
 	RB_REMOVE(aiost_file_tree, sp->fg_root, fg);
+	printf("WHAT! I AM OUT!!!\n");
 	kmem_free(fg, sizeof(*fg));
 }
 
@@ -700,6 +702,8 @@ aiost_process_fg (struct aiost *st)
 	struct aiost_file_group *fg = st->fg;
 	struct aio_job *job;
 
+	st->fg = NULL;
+
 	struct aio_job *tmp;
 	TAILQ_FOREACH_SAFE(job, &fg->queue, list, tmp) {
 		TAILQ_REMOVE(&fg->queue, job, list);
@@ -819,15 +823,16 @@ aiost_entry(void *arg)
 		atomic_dec_uint(&aio_jobs_count);
 	} else if (st->fg) {
 		struct aiost_file_group *fg = st->fg;
+		st->fg = NULL;
 
 		while (!TAILQ_EMPTY(&fg->queue)) {
 			struct aio_job *job = TAILQ_FIRST(&fg->queue);
 			TAILQ_REMOVE(&fg->queue, job, list);
 
-			if (st->job->fp) {
-				closef(st->job->fp);
-				st->job->fp = NULL;
-				st->job->vp = NULL;
+			if (job->fp) {
+				closef(job->fp);
+				job->fp = NULL;
+				job->vp = NULL;
 			}
 
 			pool_put(&aio_job_pool, job);
@@ -835,7 +840,6 @@ aiost_entry(void *arg)
 		}
 
 		aiosp_fg_teardown(sp, fg);
-		st->fg = NULL;
 	}
 
 
@@ -1686,8 +1690,6 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 					*retval = AIO_NOTCANCELED;
 				}
 			}
-		
-			aiosp_fg_teardown_locked(aiosp, fg);
 
 			mutex_exit(&aiosp->mtx);
 			mutex_exit(&aio->aio_mtx);
@@ -1715,8 +1717,6 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 			canceled++;
 		}
 	}
-
-	aiosp_fg_teardown_locked(aiosp, fg);
 
 	if (canceled > 0 && !have_active) {
 		*retval = AIO_CANCELED;
