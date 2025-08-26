@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.140.6.1 2023/09/04 17:33:28 martin Exp $
+.\"	$NetBSD: hier.7,v 1.140.6.2 2025/08/26 10:36:46 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd May 12, 2020
+.Dd August 26, 2025
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -1231,6 +1231,11 @@ Rwho data files; see
 .Xr rwho 1 ,
 and
 .Xr ruptime 1 .
+.Pp
+.It Pa shm/
+Used as backing store for POSIX shared memory; see
+.Xr shm_open 3 .
+.Pp
 .It Pa spool/
 Miscellaneous printer and mail system spooling directories.
 .Pp
