@@ -121,7 +121,6 @@ struct aio_job {
 	bool completed;		/* Job completion status */
 	bool on_queue;		/* Whether or not this job is on sp->jobs */
 	struct file *fp;	/* File pointer associated with the job */
-	struct vnode *vp;	/* Vnode pointer associated with the job */
 	struct aiowaitgrouplk lk; /* List of waitgroups waiting on this job */
 	TAILQ_ENTRY(aio_job) list;
 	struct lio_req *lio;	/* List I/O request (if part of lio_listio) */
