@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.7 2025/08/25 16:18:32 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.8 2025/08/26 10:34:54 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -99,4 +99,9 @@ external/mpl/bind/include/config.h		1.24
 
 	named: use liburcu-mb on netbsd.
 	[mrg, ticket #16]
+
+share/man/man7/hier.7				1.145
+
+	hier(7): add entry for /var/shm.
+	[kim, ticket #17]
 
