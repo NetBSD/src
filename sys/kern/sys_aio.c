@@ -304,7 +304,7 @@ aio_exit(struct proc *p, void *cookie)
 }
 
 /*
- *
+ * Remove file group from tree locked
  */
 static inline void
 aiosp_fg_teardown_locked(struct aiosp *sp, struct aiost_file_group *fg)
@@ -318,7 +318,7 @@ aiosp_fg_teardown_locked(struct aiosp *sp, struct aiost_file_group *fg)
 }
 
 /*
- *
+ * Remove file group from tree
  */
 static inline void
 aiosp_fg_teardown(struct aiosp *sp, struct aiost_file_group *fg)
@@ -355,14 +355,15 @@ aiosp_distribute_jobs(struct aiosp *sp)
 		if (fp == NULL) {
 			mutex_enter(&job->mtx);
 			job->completed = true;
-			job->aiocbp._errno  = SET_ERROR(EBADF);
+			job->aiocbp._errno = SET_ERROR(EBADF);
 			job->aiocbp._retval = -1;
-			aiowaitgrouplk_flush(&job->lk);
 			mutex_exit(&job->mtx);
+			aiowaitgrouplk_flush(&job->lk);
 
 			TAILQ_REMOVE(&sp->jobs, job, list);
 			sp->jobs_pending--;
 			job->on_queue = false;
+
 			continue;
 		}
 
@@ -389,7 +390,7 @@ aiosp_distribute_jobs(struct aiosp *sp)
 				RB_INSERT(aiost_file_tree, sp->fg_root, fg);
 				fg->aiost = aiost;
 
-				aiost->fg  = fg;
+				aiost->fg = fg;
 				aiost->job = NULL;
 			} else {
 				aiost = fg->aiost;
@@ -400,7 +401,7 @@ aiosp_distribute_jobs(struct aiosp *sp)
 				mutex_exit(&sp->mtx);
 				return error;
 			}
-			aiost->fg  = NULL;
+			aiost->fg = NULL;
 			aiost->job = job;
 		}
 
@@ -984,10 +985,8 @@ io_read_fallback(struct aio_job *job)
 	error = (*fp->f_ops->fo_read)(fp, &aiocbp->aio_offset,
 		&auio, fp->f_cred, FOF_UPDATE_OFFSET);
 
-	/* result */
 	job->aiocbp.aio_nbytes -= auio.uio_resid;
 	job->aiocbp._retval = (error == 0) ? job->aiocbp.aio_nbytes : -1;
-
 done:
 	job->aiocbp._errno = error;
 	job->aiocbp._state = JOB_DONE;
@@ -1137,23 +1136,21 @@ aiosp_return(struct aiosp *aiosp, const void *uptr, register_t *retval)
 		return SET_ERROR(EINVAL);
 
 	*retval = job->aiocbp._retval;
+	aiocbp_remove(aiosp, uptr);
 
-	/* Remove from lookup and free mapping */
-	(void)aiocbp_remove(aiosp, uptr);
-
-	/* Release job’s durable file ref (submit -> return) */
 	if (job->fp) {
 		closef(job->fp);
 		job->fp = NULL;
 		job->vp = NULL;
 	}
 
-	job->aiocbp._errno  = 0;
+	job->aiocbp._errno = 0;
 	job->aiocbp._retval = -1;
-	job->aiocbp._state  = JOB_NONE;
+	job->aiocbp._state = JOB_NONE;
 
 	pool_put(&aio_job_pool, job);
 	atomic_dec_uint(&aio_jobs_count);
+
 	return 0;
 }
 
@@ -1435,9 +1432,6 @@ aiowaitgroup_join(struct aiowaitgroup *wg, struct aiowaitgrouplk *lk)
 /*
  * Enqueue the job.
  */
-/*
- * Enqueue the job.
- */
 static int
 aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 {
@@ -1483,7 +1477,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	}
 
 	/*
-	 * Look for already existing job.  If found - the job is in-progress.
+	 * Look for already existing job. If found the job is in-progress.
 	 * According to POSIX this is invalid, so return the error.
 	 */
 	aio = p->p_aio;
@@ -1494,21 +1488,21 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	}
 
 	/*
-	 * Check if AIO structure is initialized, if not - initialize it.
-	 * In LIO case, we did that already.  We will recheck this with
-	 * the lock in aio_procinit().
+	 * Check if AIO structure is initialized, if not initialize it
 	 */
-	if (lio == NULL && p->p_aio == NULL)
-		if (aio_procinit(p))
+	if (p->p_aio == NULL) {
+		if (aio_procinit(p)) {
 			return SET_ERROR(EAGAIN);
+		}
+	}
 	aio = p->p_aio;
 
 	/*
 	 * Set the state with errno, and copy data
 	 * structure back to the user-space.
 	 */
-	aiocb._state  = JOB_WIP;
-	aiocb._errno  = SET_ERROR(EINPROGRESS);
+	aiocb._state = JOB_WIP;
+	aiocb._errno = SET_ERROR(EINPROGRESS);
 	aiocb._retval = -1;
 	error = copyout(&aiocb, aiocb_uptr, sizeof(struct aiocb));
 	if (error)
@@ -1517,11 +1511,6 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	/* Allocate and initialize a new AIO job */
 	a_job = pool_get(&aio_job_pool, PR_WAITOK | PR_ZERO);
 
-	/*
-	 * Set the data.
-	 * Store the user-space pointer for searching.  Since we
-	 * are storing only per proc pointers - it is safe.
-	 */
 	memcpy(&a_job->aiocbp, &aiocb, sizeof(struct aiocb));
 	a_job->aiocb_uptr = aiocb_uptr;
 	a_job->aio_op |= op;
@@ -1541,16 +1530,13 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 			pool_put(&aio_job_pool, a_job);
 			return SET_ERROR(EBADF);
 		}
-		mutex_enter(&fp->f_lock);
-		fp->f_count++;
-		mutex_exit(&fp->f_lock);
 
 		a_job->fp = fp;
 		a_job->vp = fp->f_vnode;
 	}
 
 	struct aiocbp *aiocbp = kmem_zalloc(sizeof(struct aiocbp), KM_SLEEP);
-	aiocbp->job  = a_job;
+	aiocbp->job = a_job;
 	aiocbp->uptr = aiocb_uptr;
 	error = aiocbp_insert(&aio->aiosp, aiocbp);
 	if (error) {
@@ -1567,17 +1553,20 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	 * notify the AIO worker thread to handle the job.
 	 */
 	mutex_enter(&aio->aio_mtx);
-
 	if (atomic_inc_uint_nv(&aio_jobs_count) > aio_max ||
 		aio->jobs_count >= aio_listio_max) {
 		atomic_dec_uint(&aio_jobs_count);
+
 		mutex_exit(&aio->aio_mtx);
 		aiocbp_remove(&aio->aiosp, aiocb_uptr);
+
 		closef(a_job->fp);
 		a_job->fp = NULL;
 		a_job->vp = NULL;
+
 		kmem_free(aiocbp, sizeof(*aiocbp));
 		pool_put(&aio_job_pool, a_job);
+
 		return SET_ERROR(EAGAIN);
 	}
 
@@ -1585,12 +1574,15 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 
 	error = aiosp_enqueue_job(&aio->aiosp, a_job);
 	if (error) {
-		(void)aiocbp_remove(&aio->aiosp, aiocb_uptr);
+		aiocbp_remove(&aio->aiosp, aiocb_uptr);
 		closef(a_job->fp);
+
 		a_job->fp = NULL;
 		a_job->vp = NULL;
+
 		kmem_free(aiocbp, sizeof(*aiocbp));
 		pool_put(&aio_job_pool, a_job);
+
 		return SET_ERROR(error);
 	}
 
@@ -1813,18 +1805,20 @@ int
 sys___aio_suspend50(struct lwp *l, const struct sys___aio_suspend50_args *uap,
 	register_t *retval)
 {
-	/* {
-		syscallarg(const struct aiocb *const[]) list;
-		syscallarg(int) nent;
-		syscallarg(const struct timespec *) timeout;
-	} */
+	struct proc *p = l->l_proc;
+	struct aioproc *aio = p->p_aio;
 	struct aiocb **list;
 	struct timespec ts;
 	int error, nent;
 
 	nent = SCARG(uap, nent);
-	if (nent <= 0 || nent > aio_listio_max)
+	if (nent <= 0 || nent > aio_listio_max) {
 		return SET_ERROR(EAGAIN);
+	}
+
+	if (aio == NULL) {
+		return SET_ERROR(EINVAL);
+	}
 
 	if (SCARG(uap, timeout)) {
 		/* Convert timespec to ticks */
@@ -1836,14 +1830,12 @@ sys___aio_suspend50(struct lwp *l, const struct sys___aio_suspend50_args *uap,
 
 	list = kmem_alloc(nent * sizeof(*list), KM_SLEEP);
 	error = copyin(SCARG(uap, list), list, nent * sizeof(*list));
-	if (error)
+	if (error) {
 		goto out;
+	}
 
-	struct proc *p = l->l_proc;
-	struct aioproc *aio = p->p_aio;
-	KASSERT(aio);
 	error = aiosp_suspend(&aio->aiosp, list, nent, SCARG(uap, timeout) ?
-		&ts : NULL, AIOSP_SUSPEND_ALL);
+		&ts : NULL, AIOSP_SUSPEND_ANY);
 out:
 	kmem_free(list, nent * sizeof(*list));
 	return error;
@@ -1891,10 +1883,12 @@ sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap,
 	if (aio_jobs_count + nent > aio_max)
 		return SET_ERROR(EAGAIN);
 
-	/* Check if AIO structure is initialized, if not - initialize it */
-	if (p->p_aio == NULL)
-		if (aio_procinit(p))
+	/* Check if AIO structure is initialized, if not initialize it */
+	if (p->p_aio == NULL) {
+		if (aio_procinit(p)) {
 			return SET_ERROR(EAGAIN);
+		}
+	}
 	aio = p->p_aio;
 
 	/* Create a LIO structure */
@@ -1986,7 +1980,6 @@ err:
 /*
  * SysCtl
  */
-
 static int
 sysctl_aio_listio_max(SYSCTLFN_ARGS)
 {
