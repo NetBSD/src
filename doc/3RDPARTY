@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2127 2025/08/24 16:48:23 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2128 2025/08/26 13:51:28 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -507,12 +507,12 @@ When updating GDB, it is imperative to test that:
 	  ("options KGDB") works correctly.
 
 Package:	binutils
-Version:	2.42
+Version:	2.45
 Current Vers:	2.45
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	https://www.gnu.org/software/binutils/
-Date:		2024-09-09
+Date:		2025-08-26
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	thorpej, mrg
 License:	GPLv3, LGPLv3, GPLv2, LGPLv2, BSD
