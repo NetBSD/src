@@ -131,9 +131,9 @@ static void		aiost_entry(void *);
 static void		aiost_sigsend(struct proc *, struct sigevent *);
 static int		aiosp_worker_extract(struct aiosp *, struct aiost **);
 
-static int		io_write(struct aiost *, struct aio_job *);
-static int		io_read(struct aiost *, struct aio_job *);
-static int		io_sync(struct aiost *);
+static int		io_write(struct aio_job *);
+static int		io_read(struct aio_job *);
+static int		io_sync(struct aio_job *);
 static int		uio_construct(struct aio_job *, struct file **,
 				struct iovec *, struct uio *);
 static int		io_write_fallback(struct aio_job *);
@@ -668,18 +668,15 @@ aiost_create(struct aiosp *sp, struct aiost **ret)
  * Process single job without coalescing.
  */
 static void 
-aiost_process_singleton (struct aiost *st)
+aiost_process_singleton (struct aio_job *job)
 {
-	struct aio_job *job;
-
-	job = st->job;
-	KASSERT(job != NULL);
+	KASSERT(job);
 	if (job->aio_op & AIO_READ) {
 		io_read_fallback(job);
 	} else if (job->aio_op & AIO_WRITE) {
 		io_write_fallback(job);
 	} else if (job->aio_op & AIO_SYNC) {
-		io_sync(st);
+		io_sync(job);
 	} else {
 		panic("aio_process: invalid operation code\n");
 	}
@@ -696,24 +693,19 @@ aiost_process_singleton (struct aiost *st)
  * Process all jobs in a file group.
  */
 static void
-aiost_process_fg (struct aiost *st)
+aiost_process_fg (struct aiosp *sp, struct aiost_file_group *fg)
 {
-	struct aiosp *sp = st->aiosp;
-	struct aiost_file_group *fg = st->fg;
 	struct aio_job *job;
-
-	st->fg = NULL;
-
 	struct aio_job *tmp;
 	TAILQ_FOREACH_SAFE(job, &fg->queue, list, tmp) {
 		TAILQ_REMOVE(&fg->queue, job, list);
 
-		if (job->aio_op & AIO_READ) {
-			io_read(st, job);
-		} else if (job->aio_op & AIO_WRITE) {
-			io_write(st, job);
-		} else if (job->aio_op & AIO_SYNC) {
-			io_sync(st);
+		if ((job->aio_op & AIO_READ) == AIO_READ) {
+			io_read(job);
+		} else if ((job->aio_op & AIO_WRITE) == AIO_WRITE) {
+			io_write(job);
+		} else if ((job->aio_op & AIO_SYNC) == AIO_SYNC) {
+			io_sync(job);
 		} else {
 			panic("aio_process: invalid operation code\n");
 		}
@@ -725,8 +717,6 @@ aiost_process_fg (struct aiost *st)
 
 		aiost_sigsend(job->p, &job->aiocbp.aio_sigevent);
 	}
-
-	aiosp_fg_teardown(sp, fg);
 }
 
 /*
@@ -771,12 +761,19 @@ aiost_entry(void *arg)
 		}
 
 		if (st->fg) {
+			struct aiost_file_group *fg = st->fg;
+
+			st->fg = NULL;
+			aiosp_fg_teardown(sp, fg);
+
 			mutex_exit(&st->mtx);
-			aiost_process_fg(st);
+			aiost_process_fg(sp, fg);
 			mutex_enter(&st->mtx);
 		} else {
+			struct aio_job *job = st->job;
+
 			mutex_exit(&st->mtx);
-			aiost_process_singleton(st);
+			aiost_process_singleton(job);
 			mutex_enter(&st->mtx);
 		}
 
@@ -884,7 +881,7 @@ aiost_sigsend(struct proc *p, struct sigevent *sig)
  * Process write operation for non-blocking jobs.
  */
 static int
-io_write(struct aiost *aiost, struct aio_job *job)
+io_write(struct aio_job *job)
 {
 	return io_write_fallback(job);
 }
@@ -893,7 +890,7 @@ io_write(struct aiost *aiost, struct aio_job *job)
  * Process read operation for non-blocking jobs.
  */
 static int
-io_read(struct aiost *aiost, struct aio_job *job)
+io_read(struct aio_job *job)
 {
 	return io_read_fallback(job);
 }
@@ -1001,9 +998,8 @@ done:
  * Perform sync via file operations
  */
 static int
-io_sync(struct aiost *aiost)
+io_sync(struct aio_job *job)
 {
-	struct aio_job *job = aiost->job;
 	struct file *fp = job->fp;
 	int error = 0;
 
