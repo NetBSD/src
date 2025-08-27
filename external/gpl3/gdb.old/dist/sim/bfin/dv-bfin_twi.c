@@ -1,6 +1,6 @@
 /* Blackfin Two Wire Interface (TWI) model
 
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -118,6 +118,7 @@ bfin_twi_io_write_buffer (struct hw *me, const void *source, int space,
       break;
     case mmr_offset(xmt_data8):
       value &= 0xff;
+      ATTRIBUTE_FALLTHROUGH;
     case mmr_offset(xmt_data16):
       twi->xmt_fifo = value;
       break;

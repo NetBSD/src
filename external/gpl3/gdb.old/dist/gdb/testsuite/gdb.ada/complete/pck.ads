@@ -1,4 +1,4 @@
---  Copyright 2008-2023 Free Software Foundation, Inc.
+--  Copyright 2008-2024 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@ package Pck is
 
    My_Global_Variable : Integer := 1;
 
-   Exported_Capitalized : Integer := 2;
-   pragma Export (C, Exported_Capitalized, "Exported_Capitalized");
+   Internal_Capitalized : Integer := 2;
+   pragma Export (C, Internal_Capitalized, "Exported_Capitalized");
 
    Local_Identical_One : Integer := 4;
    Local_Identical_Two : Integer := 8;

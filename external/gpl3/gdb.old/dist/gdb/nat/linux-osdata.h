@@ -1,6 +1,6 @@
 /* Linux-specific functions to retrieve OS data.
    
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,10 @@
 #ifndef NAT_LINUX_OSDATA_H
 #define NAT_LINUX_OSDATA_H
 
+/* Returns the CPU core that thread PTID is currently running on.  */
+
 extern int linux_common_core_of_thread (ptid_t ptid);
+
 extern LONGEST linux_common_xfer_osdata (const char *annex, gdb_byte *readbuf,
 					 ULONGEST offset, ULONGEST len);
 

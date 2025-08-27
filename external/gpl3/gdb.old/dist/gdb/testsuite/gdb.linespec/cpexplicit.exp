@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +15,7 @@
 
 # Tests for explicit linespecs
 
-if {[skip_cplus_tests]} {
-    unsupported "skipping C++ tests"
-    return
-}
+require allow_cplus_tests
 
 standard_testfile .cc
 set exefile $testfile
@@ -34,8 +31,8 @@ namespace eval $testfile {
     # at LOCATION.
     proc test_breakpoint {linespec location} {
 
-	# Delete all breakpoints, set a new breakpoint at LINESPEC,
-	# and attempt to run to it.
+	# Delete all breakpoints, watchpoints, tracepoints, and catchpoints,
+	# set a new breakpoint at LINESPEC, and attempt to run to it.
 	delete_breakpoints
 	gdb_breakpoint $linespec
 	gdb_continue_to_breakpoint $linespec $location

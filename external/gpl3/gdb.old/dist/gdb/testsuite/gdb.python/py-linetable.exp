@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 load_lib gdb-python.exp
+require allow_python_tests
 set opts {}
 standard_testfile .S
 
@@ -21,9 +22,8 @@ if [info exists COMPILE] {
     # make check RUNTESTFLAGS="gdb.python/py-linetable.exp COMPILE=1"
     standard_testfile
     lappend opts debug optimize=-O2
-} elseif { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
-    verbose "Skipping ${testfile}."
-    return
+} else {
+    require is_x86_64_m64_target
 }
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $opts] } {
@@ -33,9 +33,6 @@ if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $opts] } {
 if ![runto_main] {
     return -1
 }
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 gdb_py_test_silent_cmd "python lt = gdb.selected_frame().find_sal().symtab.linetable()" \
     "get instruction" 0

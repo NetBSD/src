@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,13 +15,13 @@
 
 # Test case for forgotten hw-watchpoints after fork()-off of a process.
 
-# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# The allow_hw_watchpoint_tests checks if watchpoints are supported by the
 # processor.  On PowerPC, the check runs a small test program under gdb
 # to determine if the Power processor supports HW watchpoints.  The check
 # must be done before starting the test so as to not disrupt the execution
 # of the actual test.
 
-set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
+set allow_hw_watchpoint_tests_p [allow_hw_watchpoint_tests]
 
 set testfile watchpoint-fork
 
@@ -29,7 +29,7 @@ set testfile watchpoint-fork
 set debug 0
 
 proc test {type symbol} {
-    global skip_hw_watchpoint_tests_p
+    global allow_hw_watchpoint_tests_p
     global debug
     with_test_prefix "$type" {
 	global testfile subdir srcdir gdb_prompt
@@ -50,7 +50,7 @@ proc test {type symbol} {
 
 	    clean_restart $executable
 
-	    if {$skip_hw_watchpoint_tests_p} {
+	    if {!$allow_hw_watchpoint_tests_p} {
 		# The software watchpoint functionality is in GDB an unrelated test.
 		gdb_test_no_output "set can-use-hw-watchpoints 0"
 		# Software watchpoints can be quite slow on remote targets
@@ -74,7 +74,7 @@ proc test {type symbol} {
 	    gdb_test "watch var" "atchpoint \[0-9\]+: var" "set the watchpoint"
 
 	    # It is never hit but it should not be left over in the fork()ed-off child.
-	    if [skip_hw_breakpoint_tests] {
+	    if {![allow_hw_breakpoint_tests]} {
 		set hbreak "break"
 	    } else {
 		set hbreak "hbreak"
@@ -102,7 +102,7 @@ proc test {type symbol} {
 
 	# threads
 
-	if {$skip_hw_watchpoint_tests_p} {
+	if {!$allow_hw_watchpoint_tests_p} {
 	    # Watchpoint hits would get detected in unexpected threads.
 	    return
 	}

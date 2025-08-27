@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 standard_testfile .c entry-values-dw.S
 
@@ -31,14 +29,7 @@ if  {[gdb_compile [list ${binfile}1.o] \
     return -1
 }
 
-# Start GDB and load executable file, compute the offset of the
-# instruction in bar returned from foo.  It is needed in the Dwarf
-# Assembler.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}1
+clean_restart ${binfile}1
 
 set returned_from_foo ""
 
@@ -84,8 +75,6 @@ if { [string equal $returned_from_foo ""] } {
     # the target architecture.
     return -1
 }
-
-gdb_exit
 
 # Make some DWARF for the test.
 set asm_file [standard_output_file $srcfile2]

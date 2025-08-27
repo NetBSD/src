@@ -1,6 +1,6 @@
 /* This file is part of SIS (SPARC instruction simulator)
 
-   Copyright (C) 1995-2023 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
    Contributed by Jiri Gaisler, European Space Agency
 
    This program is free software; you can redistribute it and/or modify
@@ -281,6 +281,7 @@ main(int argc, char **argv)
 	    break;
 	case CTRL_C:
 	    printf("\b\bInterrupt!\n");
+	    ATTRIBUTE_FALLTHROUGH;
 	case TIME_OUT:
 	    printf(" Stopped at time %" PRIu64 " (%.3f ms)\n", ebase.simtime,
 	      ((double) ebase.simtime / (double) sregs.freq) / 1000.0);

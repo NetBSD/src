@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2023 Free Software Foundation, Inc.
+   Copyright 2008-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -79,6 +79,8 @@ int func2 (int arg1, int arg2)
 
 char **save_argv;
 
+int shadowed = 23;
+
 int
 main (int argc, char *argv[])
 {
@@ -96,6 +98,7 @@ main (int argc, char *argv[])
   int i = 2;
   int *ptr_i = &i;
   struct str *xstr;
+  int shadowed = 97;
 
   /* Prevent gcc from optimizing argv[] out.  */
 

@@ -1,5 +1,5 @@
 /* Support for HPPA 64-bit ELF
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -26,6 +26,10 @@
 #include "libhppa.h"
 #include "elf64-hppa.h"
 #include "libiberty.h"
+
+/* Target vectors for HPUX and non-HPUX versions of HPPA ELF binaries.  */
+extern const bfd_target hppa_elf64_vec;
+extern const bfd_target hppa_elf64_linux_vec;
 
 #define ARCH_SIZE	       64
 
@@ -176,9 +180,6 @@ static bool elf64_hppa_adjust_dynamic_symbol
 static bool elf64_hppa_mark_milli_and_exported_functions
   (struct elf_link_hash_entry *, void *);
 
-static bool elf64_hppa_size_dynamic_sections
-  (bfd *, struct bfd_link_info *);
-
 static int elf64_hppa_link_output_symbol_hook
   (struct bfd_link_info *, const char *, Elf_Internal_Sym *,
    asection *, struct elf_link_hash_entry *);
@@ -319,7 +320,7 @@ elf64_hppa_object_p (bfd *abfd)
   unsigned int flags;
 
   i_ehdrp = elf_elfheader (abfd);
-  if (strcmp (bfd_get_target (abfd), "elf64-hppa-linux") == 0)
+  if (abfd->xvec == & hppa_elf64_linux_vec)
     {
       /* GCC on hppa-linux produces binaries with OSABI=GNU,
 	 but the kernel produces corefiles with OSABI=SysV.  */
@@ -1520,7 +1521,7 @@ elf64_hppa_mark_milli_and_exported_functions (struct elf_link_hash_entry *eh,
    the contents of our special sections.  */
 
 static bool
-elf64_hppa_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
+elf64_hppa_late_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 {
   struct elf64_hppa_link_hash_table *hppa_info;
   struct elf64_hppa_allocate_data data;
@@ -1534,7 +1535,8 @@ elf64_hppa_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
     return false;
 
   dynobj = hppa_info->root.dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   /* Mark each function this program exports so that we will allocate
      space in the .opd section for each function's FPTR.  If we are
@@ -1835,9 +1837,13 @@ elf64_hppa_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	}
 
       /* Force DT_FLAGS to always be set.
-	 Required by HPUX 11.00 patch PHSS_26559.  */
-      if (!add_dynamic_entry (DT_FLAGS, (info)->flags))
-	return false;
+	 Required by HPUX 11.00 patch PHSS_26559.
+	 PR 30743: But do not set them for non-HPUX targets.  */
+      if (output_bfd->xvec == & hppa_elf64_vec)
+	{
+	  if (!add_dynamic_entry (DT_FLAGS, (info)->flags))
+	    return false;
+	}
     }
 #undef add_dynamic_entry
 
@@ -1898,8 +1904,6 @@ elf64_hppa_finish_dynamic_symbol (bfd *output_bfd,
   struct elf64_hppa_link_hash_table *hppa_info;
 
   hppa_info = hppa_link_hash_table (info);
-  if (hppa_info == NULL)
-    return false;
 
   stub = hppa_info->stub_sec;
   splt = hppa_info->root.splt;
@@ -2720,7 +2724,7 @@ elf64_hppa_section_from_phdr (bfd *abfd, Elf_Internal_Phdr *hdr, int sec_index,
 
       if (bfd_seek (abfd, hdr->p_offset, SEEK_SET) != 0)
 	return false;
-      if (bfd_bread (&sig, 4, abfd) != 4)
+      if (bfd_read (&sig, 4, abfd) != 4)
 	return false;
 
       elf_tdata (abfd)->core->signal = sig;
@@ -3984,8 +3988,7 @@ const struct elf_size_info hppa64_elf_size_info =
 #define elf_backend_adjust_dynamic_symbol \
 					elf64_hppa_adjust_dynamic_symbol
 
-#define elf_backend_size_dynamic_sections \
-					elf64_hppa_size_dynamic_sections
+#define elf_backend_late_size_sections	elf64_hppa_late_size_sections
 
 #define elf_backend_finish_dynamic_symbol \
 					elf64_hppa_finish_dynamic_symbol

@@ -1,5 +1,5 @@
 /* Low level interface to Windows debugging, for gdbserver.
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    Contributed by Leo Zayas.  Based on "win32-nat.c" from GDB.
 
@@ -18,7 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "regcache.h"
 #include "gdbsupport/fileio.h"
 #include "mem-break.h"
@@ -324,8 +323,7 @@ do_initial_child_stuff (HANDLE proch, DWORD pid, int attached)
   if (!IsWow64Process (proch, &wow64))
     {
       DWORD err = GetLastError ();
-      error ("Check if WOW64 process failed (error %d): %s\n",
-	     (int) err, strwinerror (err));
+      throw_winerror_with_name ("Check if WOW64 process failed", err);
     }
   windows_process.wow64_process = wow64;
 
@@ -579,8 +577,9 @@ win32_process_target::create_inferior (const char *program,
 
   if (!ret)
     {
-      error ("Error creating process \"%s %s\", (error %d): %s\n",
-	     program, args, (int) err, strwinerror (err));
+      std::string msg = string_printf (_("Error creating process \"%s %s\""),
+				       program, args);
+      throw_winerror_with_name (msg.c_str (), err);
     }
   else
     {
@@ -627,8 +626,7 @@ win32_process_target::attach (unsigned long pid)
     }
 
   err = GetLastError ();
-  error ("Attach to process failed (error %d): %s\n",
-	 (int) err, strwinerror (err));
+  throw_winerror_with_name ("Attach to process failed", err);
 }
 
 /* See nat/windows-nat.h.  */
@@ -735,9 +733,9 @@ win32_process_target::detach (process_info *process)
     return -1;
 
   DebugSetProcessKillOnExit (FALSE);
+  win32_clear_inferiors ();
   remove_process (process);
 
-  win32_clear_inferiors ();
   return 0;
 }
 
@@ -1019,7 +1017,7 @@ get_child_debug_event (DWORD *continue_status,
 
   windows_process.attaching = 0;
   {
-    gdb::optional<pending_stop> stop
+    std::optional<pending_stop> stop
       = windows_process.fetch_pending_stop (debug_threads);
     if (stop.has_value ())
       {
@@ -1039,7 +1037,7 @@ get_child_debug_event (DWORD *continue_status,
 
 	if (e == ERROR_PIPE_NOT_CONNECTED)
 	  {
-	    /* This will happen if the loader fails to succesfully
+	    /* This will happen if the loader fails to successfully
 	       load the application, e.g., if the main executable
 	       tries to pull in a non-existing export from a
 	       DLL.  */
@@ -1238,7 +1236,7 @@ win32_process_target::wait (ptid_t ptid, target_waitstatus *ourstatus,
 	default:
 	  OUTMSG (("Ignoring unknown internal event, %d\n",
 		  ourstatus->kind ()));
-	  /* fall-through */
+	  [[fallthrough]];
 	case TARGET_WAITKIND_SPURIOUS:
 	  /* do nothing, just continue */
 	  child_continue (continue_status,

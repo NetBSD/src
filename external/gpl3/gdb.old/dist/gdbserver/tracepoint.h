@@ -1,5 +1,5 @@
 /* Tracepoint code for remote server for GDB.
-   Copyright (C) 1993-2023 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,11 +38,7 @@ void initialize_tracepoint (void);
 #if defined _WIN32 || defined __CYGWIN__
 # define EXPORTED_SYMBOL __declspec (dllexport)
 #else
-# if __GNUC__ >= 4
-#  define EXPORTED_SYMBOL __attribute__ ((visibility ("default")))
-# else
-#  define EXPORTED_SYMBOL
-# endif
+# define EXPORTED_SYMBOL __attribute__ ((visibility ("default")))
 #endif
 
 /* Use these to make sure the functions and variables the IPA needs to
@@ -55,12 +51,12 @@ void initialize_tracepoint (void);
    must also be exported with C linkage.  As we can't both use extern
    "C" and initialize a variable in the same statement, variables that
    don't have a separate declaration must use
-   EXTERN_C_PUSH/EXTERN_C_POP around their definition.  */
+   extern "C" {...} around their definition.  */
 
 #ifdef IN_PROCESS_AGENT
-# define IP_AGENT_EXPORT_FUNC EXTERN_C EXPORTED_SYMBOL ATTR_NOINLINE ATTR_USED
+# define IP_AGENT_EXPORT_FUNC extern "C" EXPORTED_SYMBOL ATTR_NOINLINE ATTR_USED
 # define IP_AGENT_EXPORT_VAR EXPORTED_SYMBOL ATTR_USED
-# define IP_AGENT_EXPORT_VAR_DECL EXTERN_C EXPORTED_SYMBOL
+# define IP_AGENT_EXPORT_VAR_DECL extern "C" EXPORTED_SYMBOL
 #else
 # define IP_AGENT_EXPORT_FUNC static
 # define IP_AGENT_EXPORT_VAR
@@ -95,7 +91,7 @@ int traceframe_read_sdata (int tfnum, ULONGEST offset,
 			   unsigned char *buf, ULONGEST length,
 			   ULONGEST *nbytes);
 
-int traceframe_read_info (int tfnum, struct buffer *buffer);
+int traceframe_read_info (int tfnum, std::string *buffer);
 
 /* If a thread is determined to be collecting a fast tracepoint, this
    structure holds the collect status.  */
@@ -161,8 +157,13 @@ void gdb_agent_about_to_close (int pid);
 struct traceframe;
 struct eval_agent_expr_context;
 
-/* Do memory copies for bytecodes.  */
-/* Do the recording of memory blocks for actions and bytecodes.  */
+/* When TO is not NULL, do memory copies for bytecodes, read LEN bytes
+   starting at address FROM, and place the result in the buffer TO.
+   Return 0 on success, otherwise a non-zero error code.
+
+   When TO is NULL, do the recording of memory blocks for actions and
+   bytecodes into a new traceframe block.  Return 0 on success, otherwise,
+   return 1 if there is an error.  */
 
 int agent_mem_read (struct eval_agent_expr_context *ctx,
 		    unsigned char *to, CORE_ADDR from,

@@ -1,6 +1,6 @@
 /* Support for printing Pascal values for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,14 +19,14 @@
 
 /* This file is derived from c-valprint.c */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "gdbsupport/gdb_obstack.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
 #include "value.h"
 #include "command.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "gdbcore.h"
 #include "demangle.h"
 #include "valprint.h"
@@ -69,7 +69,7 @@ pascal_language::value_print_inner (struct value *val,
 				    const struct value_print_options *options) const
 
 {
-  struct type *type = check_typedef (value_type (val));
+  struct type *type = check_typedef (val->type ());
   struct gdbarch *gdbarch = type->arch ();
   enum bfd_endian byte_order = type_byte_order (type);
   unsigned int i = 0;	/* Number of characters printed */
@@ -80,7 +80,7 @@ pascal_language::value_print_inner (struct value *val,
   struct type *char_type;
   CORE_ADDR addr;
   int want_space = 0;
-  const gdb_byte *valaddr = value_contents_for_printing (val).data ();
+  const gdb_byte *valaddr = val->contents_for_printing ().data ();
 
   switch (type->code ())
     {
@@ -105,13 +105,16 @@ pascal_language::value_print_inner (struct value *val,
 		   elements up to it.  */
 		if (options->stop_print_at_null)
 		  {
+		    unsigned int print_max_chars
+		      = get_print_max_chars (options);
 		    unsigned int temp_len;
 
 		    /* Look for a NULL char.  */
 		    for (temp_len = 0;
-			 extract_unsigned_integer (valaddr + temp_len * eltlen,
-						   eltlen, byte_order)
-			   && temp_len < len && temp_len < options->print_max;
+			 (extract_unsigned_integer
+			    (valaddr + temp_len * eltlen, eltlen, byte_order)
+			  && temp_len < len
+			  && temp_len < print_max_chars);
 			 temp_len++);
 		    len = temp_len;
 		  }
@@ -140,7 +143,7 @@ pascal_language::value_print_inner (struct value *val,
 	    break;
 	  }
 	/* Array of unspecified length: treat like pointer to first elt.  */
-	addr = value_address (val);
+	addr = val->address ();
       }
       goto print_unpacked_pointer;
 
@@ -250,7 +253,7 @@ pascal_language::value_print_inner (struct value *val,
 		{
 		  const char *search_name = msymbol.minsym->search_name ();
 		  wsym = lookup_symbol_search_name (search_name, NULL,
-						    VAR_DOMAIN).symbol;
+						    SEARCH_VFT).symbol;
 		}
 
 	      if (wsym)
@@ -295,7 +298,7 @@ pascal_language::value_print_inner (struct value *val,
 	  gdb_printf (stream, "{...}");
 	  break;
 	}
-      /* Fall through.  */
+      [[fallthrough]];
     case TYPE_CODE_STRUCT:
       if (options->vtblprint && pascal_object_is_vtbl_ptr_type (type))
 	{
@@ -405,10 +408,10 @@ void
 pascal_language::value_print (struct value *val, struct ui_file *stream,
 			      const struct value_print_options *options) const
 {
-  struct type *type = value_type (val);
+  struct type *type = val->type ();
   struct value_print_options opts = *options;
 
-  opts.deref_ref = 1;
+  opts.deref_ref = true;
 
   /* If it is a pointer, indicate what it points to.
 
@@ -518,7 +521,7 @@ pascal_object_print_value_fields (struct value *val, struct ui_file *stream,
   char *last_dont_print
     = (char *) obstack_next_free (&dont_print_statmem_obstack);
 
-  struct type *type = check_typedef (value_type (val));
+  struct type *type = check_typedef (val->type ());
 
   gdb_printf (stream, "{");
   len = type->num_fields ();
@@ -536,7 +539,7 @@ pascal_object_print_value_fields (struct value *val, struct ui_file *stream,
     {
       struct obstack tmp_obstack = dont_print_statmem_obstack;
       int fields_seen = 0;
-      const gdb_byte *valaddr = value_contents_for_printing (val).data ();
+      const gdb_byte *valaddr = val->contents_for_printing ().data ();
 
       if (dont_print_statmem == 0)
 	{
@@ -550,7 +553,7 @@ pascal_object_print_value_fields (struct value *val, struct ui_file *stream,
 	{
 	  /* If requested, skip printing of static fields.  */
 	  if (!options->pascal_static_field_print
-	      && field_is_static (&type->field (i)))
+	      && type->field (i).is_static ())
 	    continue;
 	  if (fields_seen)
 	    gdb_printf (stream, ", ");
@@ -579,7 +582,7 @@ pascal_object_print_value_fields (struct value *val, struct ui_file *stream,
 
 	  annotate_field_begin (type->field (i).type ());
 
-	  if (field_is_static (&type->field (i)))
+	  if (type->field (i).is_static ())
 	    {
 	      gdb_puts ("static ", stream);
 	      fprintf_symbol (stream,
@@ -594,21 +597,21 @@ pascal_object_print_value_fields (struct value *val, struct ui_file *stream,
 	  gdb_puts (" = ", stream);
 	  annotate_field_value ();
 
-	  if (!field_is_static (&type->field (i))
-	      && TYPE_FIELD_PACKED (type, i))
+	  if (!type->field (i).is_static ()
+	      && type->field (i).is_packed ())
 	    {
 	      struct value *v;
 
 	      /* Bitfields require special handling, especially due to byte
 		 order problems.  */
-	      if (TYPE_FIELD_IGNORE (type, i))
+	      if (type->field (i).is_ignored ())
 		{
 		  fputs_styled ("<optimized out or zero length>",
 				metadata_style.style (), stream);
 		}
-	      else if (value_bits_synthetic_pointer
-			 (val, type->field (i).loc_bitpos (),
-			  TYPE_FIELD_BITSIZE (type, i)))
+	      else if (val->bits_synthetic_pointer
+		       (type->field (i).loc_bitpos (),
+			type->field (i).bitsize ()))
 		{
 		  fputs_styled (_("<synthetic pointer>"),
 				metadata_style.style (), stream);
@@ -619,19 +622,19 @@ pascal_object_print_value_fields (struct value *val, struct ui_file *stream,
 
 		  v = value_field_bitfield (type, i, valaddr, 0, val);
 
-		  opts.deref_ref = 0;
+		  opts.deref_ref = false;
 		  common_val_print (v, stream, recurse + 1, &opts,
 				    current_language);
 		}
 	    }
 	  else
 	    {
-	      if (TYPE_FIELD_IGNORE (type, i))
+	      if (type->field (i).is_ignored ())
 		{
 		  fputs_styled ("<optimized out or zero length>",
 				metadata_style.style (), stream);
 		}
-	      else if (field_is_static (&type->field (i)))
+	      else if (type->field (i).is_static ())
 		{
 		  /* struct value *v = value_static_field (type, i);
 		     v4.17 specific.  */
@@ -649,10 +652,10 @@ pascal_object_print_value_fields (struct value *val, struct ui_file *stream,
 		{
 		  struct value_print_options opts = *options;
 
-		  opts.deref_ref = 0;
+		  opts.deref_ref = false;
 
-		  struct value *v = value_primitive_field (val, 0, i,
-							   value_type (val));
+		  struct value *v = val->primitive_field (0, i,
+							  val->type ());
 		  common_val_print (v, stream, recurse + 1, &opts,
 				    current_language);
 		}
@@ -689,7 +692,7 @@ pascal_object_print_value (struct value *val, struct ui_file *stream,
   struct type **last_dont_print
     = (struct type **) obstack_next_free (&dont_print_vb_obstack);
   struct obstack tmp_obstack = dont_print_vb_obstack;
-  struct type *type = check_typedef (value_type (val));
+  struct type *type = check_typedef (val->type ());
   int i, n_baseclasses = TYPE_N_BASECLASSES (type);
 
   if (dont_print_vb == 0)
@@ -726,7 +729,7 @@ pascal_object_print_value (struct value *val, struct ui_file *stream,
       struct value *base_value;
       try
 	{
-	  base_value = value_primitive_field (val, 0, i, type);
+	  base_value = val->primitive_field (0, i, type);
 	}
       catch (const gdb_exception_error &ex)
 	{
@@ -745,7 +748,7 @@ pascal_object_print_value (struct value *val, struct ui_file *stream,
 
 	  if (boffset < 0 || boffset >= type->length ())
 	    {
-	      CORE_ADDR address= value_address (val);
+	      CORE_ADDR address= val->address ();
 	      gdb::byte_vector buf (baseclass->length ());
 
 	      if (target_read_memory (address + boffset, buf.data (),
@@ -754,7 +757,7 @@ pascal_object_print_value (struct value *val, struct ui_file *stream,
 	      base_value = value_from_contents_and_address (baseclass,
 							    buf.data (),
 							    address + boffset);
-	      baseclass = value_type (base_value);
+	      baseclass = base_value->type ();
 	      boffset = 0;
 	    }
 	}
@@ -812,10 +815,10 @@ pascal_object_print_static_field (struct value *val,
 				  int recurse,
 				  const struct value_print_options *options)
 {
-  struct type *type = value_type (val);
+  struct type *type = val->type ();
   struct value_print_options opts;
 
-  if (value_entirely_optimized_out (val))
+  if (val->entirely_optimized_out ())
     {
       val_print_optimized_out (val, stream);
       return;
@@ -833,7 +836,7 @@ pascal_object_print_static_field (struct value *val,
 
       while (--i >= 0)
 	{
-	  if (value_address (val) == first_dont_print[i])
+	  if (val->address () == first_dont_print[i])
 	    {
 	      fputs_styled (_("\
 <same as static member of an already seen type>"),
@@ -842,7 +845,7 @@ pascal_object_print_static_field (struct value *val,
 	    }
 	}
 
-      addr = value_address (val);
+      addr = val->address ();
       obstack_grow (&dont_print_statmem_obstack, (char *) &addr,
 		    sizeof (CORE_ADDR));
 
@@ -853,7 +856,7 @@ pascal_object_print_static_field (struct value *val,
     }
 
   opts = *options;
-  opts.deref_ref = 0;
+  opts.deref_ref = false;
   common_val_print (val, stream, recurse, &opts, current_language);
 }
 

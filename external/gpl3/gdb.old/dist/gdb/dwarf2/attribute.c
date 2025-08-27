@@ -1,6 +1,6 @@
 /* DWARF attributes
 
-   Copyright (C) 1994-2023 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -24,17 +24,16 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "dwarf2/attribute.h"
 #include "dwarf2/stringify.h"
 #include "complaints.h"
 
 /* See attribute.h.  */
 
-CORE_ADDR
+unrelocated_addr
 attribute::as_address () const
 {
-  CORE_ADDR addr;
+  unrelocated_addr addr;
 
   gdb_assert (!requires_reprocessing);
 
@@ -53,7 +52,7 @@ attribute::as_address () const
 	 as well as update callers to pass in at least the CU's DWARF
 	 version.  This is more overhead than what we're willing to
 	 expand for a pretty rare case.  */
-      addr = u.unsnd;
+      addr = (unrelocated_addr) u.unsnd;
     }
   else
     addr = u.addr;

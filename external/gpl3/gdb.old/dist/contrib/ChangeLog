@@ -1,3 +1,8 @@
+2024-03-11  Sam James  <sam@gentoo.org>
+
+	* dg-extract-results.py: Sync with GCC.
+	* dg-extract-results.sh: Sync with GCC.
+
 2020-09-25  Simon Marchi  <simon.marchi@polymtl.ca>
 
 	* mklog.py: New file, imported from gcc.

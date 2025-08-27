@@ -1,5 +1,5 @@
 /* m6811_cpu.c -- 68HC11&68HC12 CPU Emulation
-   Copyright 1999-2023 Free Software Foundation, Inc.
+   Copyright 1999-2024 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -20,13 +20,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 /* This must come before any other includes.  */
 #include "defs.h"
 
+#include <stdlib.h>
+
 #include "sim-main.h"
 #include "sim-assert.h"
 #include "sim-module.h"
 #include "sim-options.h"
 #include "sim-signal.h"
 
-#include <stdlib.h>
+#include "m68hc11-sim.h"
 
 enum {
   OPTION_CPU_RESET = OPTION_START,
@@ -64,6 +66,7 @@ static SIM_RC
 cpu_option_handler (SIM_DESC sd, sim_cpu *cpu,
                     int opt, char *arg, int is_command)
 {
+  struct m68hc11_sim_cpu *m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   int val;
   
   cpu = STATE_CPU (sd, 0);
@@ -74,22 +77,22 @@ cpu_option_handler (SIM_DESC sd, sim_cpu *cpu,
       break;
 
     case OPTION_EMUL_OS:
-      cpu->cpu_emul_syscall = 1;
+      m68hc11_cpu->cpu_emul_syscall = 1;
       break;
 
     case OPTION_CPU_CONFIG:
       if (sscanf(arg, "0x%x", &val) == 1
           || sscanf(arg, "%d", &val) == 1)
         {
-          cpu->cpu_config = val;
-          cpu->cpu_use_local_config = 1;
+          m68hc11_cpu->cpu_config = val;
+          m68hc11_cpu->cpu_use_local_config = 1;
         }
       else
-        cpu->cpu_use_local_config = 0;
+        m68hc11_cpu->cpu_use_local_config = 0;
       break;
 
     case OPTION_CPU_BOOTSTRAP:
-       cpu->cpu_start_mode = "bootstrap";
+       m68hc11_cpu->cpu_start_mode = "bootstrap";
        break;
 
     case OPTION_CPU_MODE:
@@ -116,7 +119,7 @@ cpu_return (sim_cpu *cpu)
 void
 cpu_set_sp (sim_cpu *cpu, uint16_t val)
 {
-  cpu->cpu_regs.sp = val;
+  M68HC11_SIM_CPU (cpu)->cpu_regs.sp = val;
 }
 
 static uint16_t
@@ -465,27 +468,28 @@ cpu_move16 (sim_cpu *cpu, uint8_t code)
 int
 cpu_initialize (SIM_DESC sd, sim_cpu *cpu)
 {
+  struct m68hc11_sim_cpu *m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   sim_add_option_table (sd, 0, cpu_options);
 
-  memset (&cpu->cpu_regs, 0, sizeof(cpu->cpu_regs));
+  memset (&m68hc11_cpu->cpu_regs, 0, sizeof(m68hc11_cpu->cpu_regs));
 
-  cpu->cpu_absolute_cycle = 0;
-  cpu->cpu_current_cycle  = 0;
-  cpu->cpu_emul_syscall   = 1;
-  cpu->cpu_running        = 1;
-  cpu->cpu_stop_on_interrupt = 0;
-  cpu->cpu_frequency = 8 * 1000 * 1000;
-  cpu->cpu_use_elf_start = 0;
-  cpu->cpu_elf_start     = 0;
-  cpu->cpu_use_local_config = 0;
-  cpu->bank_start = 0;
-  cpu->bank_end   = 0;
-  cpu->bank_shift = 0;
-  cpu->cpu_config        = M6811_NOSEC | M6811_NOCOP | M6811_ROMON |
+  m68hc11_cpu->cpu_absolute_cycle = 0;
+  m68hc11_cpu->cpu_current_cycle  = 0;
+  m68hc11_cpu->cpu_emul_syscall   = 1;
+  m68hc11_cpu->cpu_running        = 1;
+  m68hc11_cpu->cpu_stop_on_interrupt = 0;
+  m68hc11_cpu->cpu_frequency = 8 * 1000 * 1000;
+  m68hc11_cpu->cpu_use_elf_start = 0;
+  m68hc11_cpu->cpu_elf_start     = 0;
+  m68hc11_cpu->cpu_use_local_config = 0;
+  m68hc11_cpu->bank_start = 0;
+  m68hc11_cpu->bank_end   = 0;
+  m68hc11_cpu->bank_shift = 0;
+  m68hc11_cpu->cpu_config        = M6811_NOSEC | M6811_NOCOP | M6811_ROMON |
     M6811_EEON;
   interrupts_initialize (sd, cpu);
 
-  cpu->cpu_is_initialized = 1;
+  m68hc11_cpu->cpu_is_initialized = 1;
   return 0;
 }
 
@@ -494,35 +498,37 @@ cpu_initialize (SIM_DESC sd, sim_cpu *cpu)
 int
 cpu_reset (sim_cpu *cpu)
 {
+  struct m68hc11_sim_cpu *m68hc11_cpu = M68HC11_SIM_CPU (cpu);
+
   /* Initialize the config register.
      It is only initialized at reset time.  */
-  memset (cpu->ios, 0, sizeof (cpu->ios));
-  if (cpu->cpu_configured_arch->arch == bfd_arch_m68hc11)
-    cpu->ios[M6811_INIT] = 0x1;
+  memset (m68hc11_cpu->ios, 0, sizeof (m68hc11_cpu->ios));
+  if (m68hc11_cpu->cpu_configured_arch->arch == bfd_arch_m68hc11)
+    m68hc11_cpu->ios[M6811_INIT] = 0x1;
   else
-    cpu->ios[M6811_INIT] = 0;
+    m68hc11_cpu->ios[M6811_INIT] = 0;
 
   /* Output compare registers set to 0xFFFF.  */
-  cpu->ios[M6811_TOC1_H] = 0xFF;
-  cpu->ios[M6811_TOC1_L] = 0xFF;
-  cpu->ios[M6811_TOC2_H] = 0xFF;
-  cpu->ios[M6811_TOC2_L] = 0xFF;
-  cpu->ios[M6811_TOC3_H] = 0xFF;
-  cpu->ios[M6811_TOC4_L] = 0xFF;
-  cpu->ios[M6811_TOC5_H] = 0xFF;
-  cpu->ios[M6811_TOC5_L] = 0xFF;
+  m68hc11_cpu->ios[M6811_TOC1_H] = 0xFF;
+  m68hc11_cpu->ios[M6811_TOC1_L] = 0xFF;
+  m68hc11_cpu->ios[M6811_TOC2_H] = 0xFF;
+  m68hc11_cpu->ios[M6811_TOC2_L] = 0xFF;
+  m68hc11_cpu->ios[M6811_TOC3_H] = 0xFF;
+  m68hc11_cpu->ios[M6811_TOC4_L] = 0xFF;
+  m68hc11_cpu->ios[M6811_TOC5_H] = 0xFF;
+  m68hc11_cpu->ios[M6811_TOC5_L] = 0xFF;
 
   /* Setup the processor registers.  */
-  memset (&cpu->cpu_regs, 0, sizeof(cpu->cpu_regs));
-  cpu->cpu_absolute_cycle = 0;
-  cpu->cpu_current_cycle  = 0;
-  cpu->cpu_is_initialized = 0;
+  memset (&m68hc11_cpu->cpu_regs, 0, sizeof(m68hc11_cpu->cpu_regs));
+  m68hc11_cpu->cpu_absolute_cycle = 0;
+  m68hc11_cpu->cpu_current_cycle  = 0;
+  m68hc11_cpu->cpu_is_initialized = 0;
 
   /* Reset interrupts.  */
-  interrupts_reset (&cpu->cpu_interrupts);
+  interrupts_reset (&m68hc11_cpu->cpu_interrupts);
 
   /* Reinitialize the CPU operating mode.  */
-  cpu->ios[M6811_HPRIO] = cpu->cpu_mode;
+  m68hc11_cpu->ios[M6811_HPRIO] = m68hc11_cpu->cpu_mode;
   return 0;
 }
 
@@ -530,12 +536,13 @@ cpu_reset (sim_cpu *cpu)
 int
 cpu_restart (sim_cpu *cpu)
 {
+  struct m68hc11_sim_cpu *m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   uint16_t addr;
 
   /* Get CPU starting address depending on the CPU mode.  */
-  if (cpu->cpu_use_elf_start == 0)
+  if (m68hc11_cpu->cpu_use_elf_start == 0)
     {
-      switch ((cpu->ios[M6811_HPRIO]) & (M6811_SMOD | M6811_MDA))
+      switch ((m68hc11_cpu->ios[M6811_HPRIO]) & (M6811_SMOD | M6811_MDA))
         {
           /* Single Chip  */
         default:
@@ -561,16 +568,16 @@ cpu_restart (sim_cpu *cpu)
     }
   else
     {
-      addr = cpu->cpu_elf_start;
+      addr = m68hc11_cpu->cpu_elf_start;
     }
   
   /* Setup the processor registers.  */
-  cpu->cpu_insn_pc  = addr;
-  cpu->cpu_regs.pc  = addr;
-  cpu->cpu_regs.ccr = M6811_X_BIT | M6811_I_BIT | M6811_S_BIT;
-  cpu->cpu_absolute_cycle = 0;
-  cpu->cpu_is_initialized = 1;
-  cpu->cpu_current_cycle  = 0;
+  m68hc11_cpu->cpu_insn_pc  = addr;
+  m68hc11_cpu->cpu_regs.pc  = addr;
+  m68hc11_cpu->cpu_regs.ccr = M6811_X_BIT | M6811_I_BIT | M6811_S_BIT;
+  m68hc11_cpu->cpu_absolute_cycle = 0;
+  m68hc11_cpu->cpu_is_initialized = 1;
+  m68hc11_cpu->cpu_current_cycle  = 0;
 
   cpu_call (cpu, addr);
   
@@ -625,7 +632,7 @@ cpu_fetch_relbranch (sim_cpu *cpu)
     {
       addr |= 0xFF00;
     }
-  addr += cpu->cpu_regs.pc;
+  addr += M68HC11_SIM_CPU (cpu)->cpu_regs.pc;
   return addr;
 }
 
@@ -634,7 +641,7 @@ cpu_fetch_relbranch16 (sim_cpu *cpu)
 {
   uint16_t addr = cpu_fetch16 (cpu);
 
-  addr += cpu->cpu_regs.pc;
+  addr += M68HC11_SIM_CPU (cpu)->cpu_regs.pc;
   return addr;
 }
 
@@ -642,21 +649,23 @@ cpu_fetch_relbranch16 (sim_cpu *cpu)
 void
 cpu_push_all (sim_cpu *cpu)
 {
-  if (cpu->cpu_configured_arch->arch == bfd_arch_m68hc11)
+  struct m68hc11_sim_cpu *m68hc11_cpu = M68HC11_SIM_CPU (cpu);
+
+  if (m68hc11_cpu->cpu_configured_arch->arch == bfd_arch_m68hc11)
     {
-      cpu_m68hc11_push_uint16 (cpu, cpu->cpu_regs.pc);
-      cpu_m68hc11_push_uint16 (cpu, cpu->cpu_regs.iy);
-      cpu_m68hc11_push_uint16 (cpu, cpu->cpu_regs.ix);
-      cpu_m68hc11_push_uint16 (cpu, cpu->cpu_regs.d);
-      cpu_m68hc11_push_uint8 (cpu, cpu->cpu_regs.ccr);
+      cpu_m68hc11_push_uint16 (cpu, m68hc11_cpu->cpu_regs.pc);
+      cpu_m68hc11_push_uint16 (cpu, m68hc11_cpu->cpu_regs.iy);
+      cpu_m68hc11_push_uint16 (cpu, m68hc11_cpu->cpu_regs.ix);
+      cpu_m68hc11_push_uint16 (cpu, m68hc11_cpu->cpu_regs.d);
+      cpu_m68hc11_push_uint8 (cpu, m68hc11_cpu->cpu_regs.ccr);
     }
   else
     {
-      cpu_m68hc12_push_uint16 (cpu, cpu->cpu_regs.pc);
-      cpu_m68hc12_push_uint16 (cpu, cpu->cpu_regs.iy);
-      cpu_m68hc12_push_uint16 (cpu, cpu->cpu_regs.ix);
-      cpu_m68hc12_push_uint16 (cpu, cpu->cpu_regs.d);
-      cpu_m68hc12_push_uint8 (cpu, cpu->cpu_regs.ccr);
+      cpu_m68hc12_push_uint16 (cpu, m68hc11_cpu->cpu_regs.pc);
+      cpu_m68hc12_push_uint16 (cpu, m68hc11_cpu->cpu_regs.iy);
+      cpu_m68hc12_push_uint16 (cpu, m68hc11_cpu->cpu_regs.ix);
+      cpu_m68hc12_push_uint16 (cpu, m68hc11_cpu->cpu_regs.d);
+      cpu_m68hc12_push_uint8 (cpu, m68hc11_cpu->cpu_regs.ccr);
     }
 }
 
@@ -737,6 +746,8 @@ cpu_exg (sim_cpu *cpu, uint8_t code)
 void
 cpu_special (sim_cpu *cpu, enum M6811_Special special)
 {
+  struct m68hc11_sim_cpu *m68hc11_cpu = M68HC11_SIM_CPU (cpu);
+
   switch (special)
     {
     case M6811_RTI:
@@ -770,9 +781,9 @@ cpu_special (sim_cpu *cpu, enum M6811_Special special)
     case M6811_WAI:
       /* In the ELF-start mode, we are in a special mode where
 	 the WAI corresponds to an exit.  */
-      if (cpu->cpu_use_elf_start)
+      if (m68hc11_cpu->cpu_use_elf_start)
         {
-          cpu_set_pc (cpu, cpu->cpu_insn_pc);
+          cpu_set_pc (cpu, m68hc11_cpu->cpu_insn_pc);
           sim_engine_halt (CPU_STATE (cpu), cpu,
                            NULL, NULL_CIA, sim_exited,
                            cpu_get_d (cpu));
@@ -783,19 +794,19 @@ cpu_special (sim_cpu *cpu, enum M6811_Special special)
       break;
       
     case M6811_SWI:
-      interrupts_raise (&cpu->cpu_interrupts, M6811_INT_SWI);
-      interrupts_process (&cpu->cpu_interrupts);
+      interrupts_raise (&m68hc11_cpu->cpu_interrupts, M6811_INT_SWI);
+      interrupts_process (&m68hc11_cpu->cpu_interrupts);
       break;
       
     case M6811_EMUL_SYSCALL:
     case M6811_ILLEGAL:
-      if (cpu->cpu_emul_syscall)
+      if (m68hc11_cpu->cpu_emul_syscall)
         {
           uint8_t op = memory_read8 (cpu,
                                    cpu_get_pc (cpu) - 1);
           if (op == 0x41)
             {
-	      cpu_set_pc (cpu, cpu->cpu_insn_pc);
+	      cpu_set_pc (cpu, m68hc11_cpu->cpu_insn_pc);
 	      sim_engine_halt (CPU_STATE (cpu), cpu,
 			       NULL, NULL_CIA, sim_exited,
 			       cpu_get_d (cpu));
@@ -808,8 +819,8 @@ cpu_special (sim_cpu *cpu, enum M6811_Special special)
           return;
         }
       
-      interrupts_raise (&cpu->cpu_interrupts, M6811_INT_ILLEGAL);
-      interrupts_process (&cpu->cpu_interrupts);
+      interrupts_raise (&m68hc11_cpu->cpu_interrupts, M6811_INT_ILLEGAL);
+      interrupts_process (&m68hc11_cpu->cpu_interrupts);
       break;
 
     case M6811_TEST:
@@ -822,7 +833,7 @@ cpu_special (sim_cpu *cpu, enum M6811_Special special)
         /* Breakpoint instruction if we are under gdb.  */
         if (STATE_OPEN_KIND (sd) == SIM_OPEN_DEBUG)
           {
-            cpu->cpu_regs.pc --;
+            m68hc11_cpu->cpu_regs.pc --;
             sim_engine_halt (CPU_STATE (cpu), cpu,
                              0, cpu_get_pc (cpu), sim_stopped,
                              SIM_SIGTRAP);
@@ -1000,20 +1011,22 @@ cpu_special (sim_cpu *cpu, enum M6811_Special special)
 void
 cpu_single_step (sim_cpu *cpu)
 {
-  cpu->cpu_current_cycle = 0;
-  cpu->cpu_insn_pc = cpu_get_pc (cpu);
+  struct m68hc11_sim_cpu *m68hc11_cpu = M68HC11_SIM_CPU (cpu);
+
+  m68hc11_cpu->cpu_current_cycle = 0;
+  m68hc11_cpu->cpu_insn_pc = cpu_get_pc (cpu);
 
   /* Handle the pending interrupts.  If an interrupt is handled,
      treat this as an single step.  */
-  if (interrupts_process (&cpu->cpu_interrupts))
+  if (interrupts_process (&m68hc11_cpu->cpu_interrupts))
     {
-      cpu->cpu_absolute_cycle += cpu->cpu_current_cycle;
+      m68hc11_cpu->cpu_absolute_cycle += m68hc11_cpu->cpu_current_cycle;
       return;
     }
   
   /*  printf("PC = 0x%04x\n", cpu_get_pc (cpu));*/
-  cpu->cpu_interpretor (cpu);
-  cpu->cpu_absolute_cycle += cpu->cpu_current_cycle;
+  m68hc11_cpu->cpu_interpretor (cpu);
+  m68hc11_cpu->cpu_absolute_cycle += m68hc11_cpu->cpu_current_cycle;
 }
 
 /* VARARGS */
@@ -1037,40 +1050,44 @@ void
 cpu_memory_exception (sim_cpu *cpu, SIM_SIGNAL excep,
                       uint16_t addr, const char *message)
 {
-  if (cpu->cpu_running == 0)
+  struct m68hc11_sim_cpu *m68hc11_cpu = M68HC11_SIM_CPU (cpu);
+
+  if (m68hc11_cpu->cpu_running == 0)
     return;
 
-  cpu_set_pc (cpu, cpu->cpu_insn_pc);
+  cpu_set_pc (cpu, m68hc11_cpu->cpu_insn_pc);
   sim_engine_halt (CPU_STATE (cpu), cpu, NULL,
                    cpu_get_pc (cpu), sim_stopped, excep);
   
 #if 0
-  cpu->mem_exception = excep;
-  cpu->fault_addr    = addr;
-  cpu->fault_msg     = strdup (message);
+  m68hc11_cpu->mem_exception = excep;
+  m68hc11_cpu->fault_addr    = addr;
+  m68hc11_cpu->fault_msg     = strdup (message);
 
-  if (cpu->cpu_use_handler)
+  if (m68hc11_cpu->cpu_use_handler)
     {
-      longjmp (&cpu->cpu_exception_handler, 1);
+      longjmp (&m68hc11_cpu->cpu_exception_handler, 1);
     }
-  (* cpu->callback->printf_filtered)
-    (cpu->callback, "Fault at 0x%04x: %s\n", addr, message);
+  (* m68hc11_cpu->callback->printf_filtered)
+    (m68hc11_cpu->callback, "Fault at 0x%04x: %s\n", addr, message);
 #endif
 }
 
 void
 cpu_info (SIM_DESC sd, sim_cpu *cpu)
 {
+  struct m68hc11_sim_cpu *m68hc11_cpu = M68HC11_SIM_CPU (cpu);
+
   sim_io_printf (sd, "CPU info:\n");
   sim_io_printf (sd, "  Absolute cycle: %s\n",
-                 cycle_to_string (cpu, cpu->cpu_absolute_cycle,
+                 cycle_to_string (cpu, m68hc11_cpu->cpu_absolute_cycle,
                                   PRINT_TIME | PRINT_CYCLE));
   
   sim_io_printf (sd, "  Syscall emulation: %s\n",
-                 cpu->cpu_emul_syscall ? "yes, via 0xcd <n>" : "no");
+                 m68hc11_cpu->cpu_emul_syscall ? "yes, via 0xcd <n>" : "no");
   sim_io_printf (sd, "  Memory errors detection: %s\n",
-                 cpu->cpu_check_memory ? "yes" : "no");
+                 m68hc11_cpu->cpu_check_memory ? "yes" : "no");
   sim_io_printf (sd, "  Stop on interrupt: %s\n",
-                 cpu->cpu_stop_on_interrupt ? "yes" : "no");
+                 m68hc11_cpu->cpu_stop_on_interrupt ? "yes" : "no");
 }
 

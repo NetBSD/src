@@ -1,4 +1,4 @@
-#   Copyright 2016-2023 Free Software Foundation, Inc.
+#   Copyright 2016-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ gdb_test "break _exit" "Breakpoint $decimal at .*"
 # Hit the breakpoint on _exit.  The address of syscall insn is recorded.
 
 gdb_test "continue" \
-    "Continuing\\..*Breakpoint $decimal.*_exit \\(.*\\).*" \
+    "Continuing\\..*Breakpoint $decimal.*_\[eE\]xit \\(.*\\).*" \
     "continue to exit"
 
 gdb_test "display/i \$pc" ".*"

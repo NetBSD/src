@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -19,7 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-
+#ifndef IGEN_LD_INSN_H
+#define IGEN_LD_INSN_H
 
 typedef uint64_t insn_uint;
 
@@ -705,3 +706,5 @@ void dump_cache_entries
 
 void dump_insn_table
   (lf *file, const char *prefix, const insn_table *isa, const char *suffix);
+
+#endif /* IGEN_LD_INSN_H */

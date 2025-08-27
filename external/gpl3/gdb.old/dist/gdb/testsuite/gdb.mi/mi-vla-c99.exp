@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # Contributed by Intel Corp. <keven.boell@intel.com>
 #
@@ -21,11 +21,6 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    return
-}
-
 standard_testfile vla.c
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" \
@@ -34,9 +29,9 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" \
      return -1
 }
 
-mi_delete_breakpoints
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load ${binfile}
+if {[mi_clean_restart $binfile]} {
+    return
+}
 
 set bp_lineno [gdb_get_line_number "vla-filled"]
 
@@ -80,4 +75,3 @@ mi_list_array_varobj_children "vla" "5" "int" \
     "get children of vla"
 
 mi_gdb_exit
-return 0

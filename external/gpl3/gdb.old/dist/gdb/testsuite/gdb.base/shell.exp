@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,6 +39,42 @@ if { ! [ishost *-*-mingw*] } {
     gdb_test_no_output "! kill -2 $$"
     gdb_test "p \$_shell_exitcode" " = void" "shell interrupt exitcode"
     gdb_test "p \$_shell_exitsignal" " = 2" "shell interrupt exitsignal"
+}
+
+# Test the $_shell convenience function.
+
+with_test_prefix "\$_shell convenience function" {
+    # Simple commands, check the result code.
+    gdb_test "p \$_shell(\"true\")" " = 0"
+    gdb_test "p \$_shell(\"false\")" " = 1"
+
+    # Test command with arguments.
+    gdb_test "p \$_shell(\"echo foo\")" "foo\r\n\\$${decimal} = 0"
+
+    # Check the type of the result.
+    gdb_test "ptype \$_shell(\"true\")" "type = int"
+
+    # Test passing a non-literal string as command name.
+    gdb_test "p \$cmd = \"echo bar\"" " = \"echo bar\""
+    gdb_test "p \$_shell(\$cmd)" "bar\r\n\\$${decimal} = 0"
+
+    # Test executing a non-existing command.  The result is
+    # shell-dependent, but most (all?) POSIX-like shells return 127 in
+    # this case.
+    gdb_test "p \$_shell(\"non-existing-command-foo-bar-qux\")" " = 127"
+
+    gdb_test "p \$_shell" \
+	" = <internal function _shell>"
+    gdb_test "ptype \$_shell" \
+	"type = <internal function>"
+
+    # Test error scenarios.
+    gdb_test "p \$_shell()" \
+	"You must provide one argument for \\\$_shell\\\."
+    gdb_test "p \$_shell(\"a\", \"b\")" \
+	"You must provide one argument for \\\$_shell\\\."
+    gdb_test "p \$_shell(1)" \
+	"Argument must be a string\\\."
 }
 
 # Define the user command "foo", used to test "pipe" command.

@@ -1,6 +1,6 @@
 /* Perform an inferior function call, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "infcall.h"
 #include "breakpoint.h"
 #include "tracepoint.h"
@@ -29,7 +28,7 @@
 #include "gdbcore.h"
 #include "language.h"
 #include "objfiles.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "command.h"
 #include "dummy-frame.h"
 #include "ada-lang.h"
@@ -38,6 +37,7 @@
 #include "event-top.h"
 #include "observable.h"
 #include "top.h"
+#include "ui.h"
 #include "interps.h"
 #include "thread-fsm.h"
 #include <algorithm>
@@ -93,6 +93,53 @@ show_may_call_functions_p (struct ui_file *file, int from_tty,
   gdb_printf (file,
 	      _("Permission to call functions in the program is %s.\n"),
 	      value);
+}
+
+/* A timeout (in seconds) for direct inferior calls.  A direct inferior
+   call is one the user triggers from the prompt, e.g. with a 'call' or
+   'print' command.  Compare with the definition of indirect calls below.  */
+
+static unsigned int direct_call_timeout = UINT_MAX;
+
+/* Implement 'show direct-call-timeout'.  */
+
+static void
+show_direct_call_timeout (struct ui_file *file, int from_tty,
+			  struct cmd_list_element *c, const char *value)
+{
+  if (target_has_execution () && !target_can_async_p ())
+    gdb_printf (file, _("Current target does not support async mode, timeout "
+			"for direct inferior calls is \"unlimited\".\n"));
+  else if (direct_call_timeout == UINT_MAX)
+    gdb_printf (file, _("Timeout for direct inferior function calls "
+			"is \"unlimited\".\n"));
+  else
+    gdb_printf (file, _("Timeout for direct inferior function calls "
+			"is \"%s seconds\".\n"), value);
+}
+
+/* A timeout (in seconds) for indirect inferior calls.  An indirect inferior
+   call is one that originates from within GDB, for example, when
+   evaluating an expression for a conditional breakpoint.  Compare with
+   the definition of direct calls above.  */
+
+static unsigned int indirect_call_timeout = 30;
+
+/* Implement 'show indirect-call-timeout'.  */
+
+static void
+show_indirect_call_timeout (struct ui_file *file, int from_tty,
+			  struct cmd_list_element *c, const char *value)
+{
+  if (target_has_execution () && !target_can_async_p ())
+    gdb_printf (file, _("Current target does not support async mode, timeout "
+			"for indirect inferior calls is \"unlimited\".\n"));
+  else if (indirect_call_timeout == UINT_MAX)
+    gdb_printf (file, _("Timeout for indirect inferior function calls "
+			"is \"unlimited\".\n"));
+  else
+    gdb_printf (file, _("Timeout for indirect inferior function calls "
+			"is \"%s seconds\".\n"), value);
 }
 
 /* How you should pass arguments to a function depends on whether it
@@ -170,6 +217,27 @@ show_unwind_on_terminating_exception_p (struct ui_file *file, int from_tty,
 	      value);
 }
 
+/* This boolean tells GDB what to do if an inferior function, called from
+   GDB, times out.  If true, GDB unwinds the stack and restores the context
+   to what it was before the call.  When false, GDB leaves the thread as it
+   is at the point of the timeout.
+
+   The default is to stop in the frame where the timeout occurred.  */
+
+static bool unwind_on_timeout_p = false;
+
+/* Implement 'show unwind-on-timeout'.  */
+
+static void
+show_unwind_on_timeout_p (struct ui_file *file, int from_tty,
+			  struct cmd_list_element *c, const char *value)
+{
+  gdb_printf (file,
+	      _("Unwinding of stack if a timeout occurs "
+		"while in a call dummy is %s.\n"),
+	      value);
+}
+
 /* Perform the standard coercions that are specified
    for arguments to be passed to C, Ada or Fortran functions.
 
@@ -181,7 +249,7 @@ value_arg_coerce (struct gdbarch *gdbarch, struct value *arg,
 		  struct type *param_type, int is_prototyped)
 {
   const struct builtin_type *builtin = builtin_type (gdbarch);
-  struct type *arg_type = check_typedef (value_type (arg));
+  struct type *arg_type = check_typedef (arg->type ());
   struct type *type
     = param_type ? check_typedef (param_type) : arg_type;
 
@@ -278,7 +346,7 @@ find_function_addr (struct value *function,
 		    struct type **retval_type,
 		    struct type **function_type)
 {
-  struct type *ftype = check_typedef (value_type (function));
+  struct type *ftype = check_typedef (function->type ());
   struct gdbarch *gdbarch = ftype->arch ();
   struct type *value_type = NULL;
   /* Initialize it just to avoid a GCC false warning.  */
@@ -290,7 +358,7 @@ find_function_addr (struct value *function,
   /* Determine address to call.  */
   if (ftype->code () == TYPE_CODE_FUNC
       || ftype->code () == TYPE_CODE_METHOD)
-    funaddr = value_address (function);
+    funaddr = function->address ();
   else if (ftype->code () == TYPE_CODE_PTR)
     {
       funaddr = value_as_address (function);
@@ -343,7 +411,7 @@ find_function_addr (struct value *function,
 	  int found_descriptor = 0;
 
 	  funaddr = 0;	/* pacify "gcc -Werror" */
-	  if (VALUE_LVAL (function) == lval_memory)
+	  if (function->lval () == lval_memory)
 	    {
 	      CORE_ADDR nfunaddr;
 
@@ -466,7 +534,7 @@ get_call_return_value (struct call_return_meta_info *ri)
   bool stack_temporaries = thread_stack_temporaries_enabled_p (thr);
 
   if (ri->value_type->code () == TYPE_CODE_VOID)
-    retval = allocate_value (ri->value_type);
+    retval = value::allocate (ri->value_type);
   else if (ri->struct_return_p)
     {
       if (stack_temporaries)
@@ -476,19 +544,13 @@ get_call_return_value (struct call_return_meta_info *ri)
 	  push_thread_stack_temporary (thr, retval);
 	}
       else
-	{
-	  retval = allocate_value (ri->value_type);
-	  read_value_memory (retval, 0, 1, ri->struct_addr,
-			     value_contents_raw (retval).data (),
-			     ri->value_type->length ());
-	}
+	retval = value_at_non_lval (ri->value_type, ri->struct_addr);
     }
   else
     {
-      retval = allocate_value (ri->value_type);
-      gdbarch_return_value (ri->gdbarch, ri->function, ri->value_type,
-			    get_current_regcache (),
-			    value_contents_raw (retval).data (), NULL);
+      gdbarch_return_value_as_value (ri->gdbarch, ri->function, ri->value_type,
+				     get_thread_regcache (inferior_thread ()),
+				     &retval, NULL);
       if (stack_temporaries && class_or_union_p (ri->value_type))
 	{
 	  /* Values of class type returned in registers are copied onto
@@ -498,7 +560,7 @@ get_call_return_value (struct call_return_meta_info *ri)
 	     requiring GDB to evaluate the "this" pointer.  To evaluate
 	     the this pointer, GDB needs the memory address of the
 	     value.  */
-	  value_force_lval (retval, ri->struct_addr);
+	  retval->force_lval (ri->struct_addr);
 	  push_thread_stack_temporary (thr, retval);
 	}
     }
@@ -532,6 +594,16 @@ struct call_thread_fsm : public thread_fsm
   bool should_stop (struct thread_info *thread) override;
 
   bool should_notify_stop () override;
+
+  /* Record that this thread timed out while performing an infcall.  */
+  void timed_out ()
+  {
+    m_timed_out = true;
+  }
+
+private:
+  /* Set true if the thread timed out while performing an infcall.  */
+  bool m_timed_out = false;
 };
 
 /* Allocate a new call_thread_fsm object.  */
@@ -568,11 +640,23 @@ call_thread_fsm::should_stop (struct thread_info *thread)
 	 registers are restored to what they were before the
 	 call..  */
       return_value = get_call_return_value (&return_meta_info);
+    }
 
-      /* Break out of wait_sync_command_done.  */
+  /* We are always going to stop this thread, but we might not be planning
+     to call call normal_stop, which is only done if should_notify_stop
+     returns true.
+
+     As normal_stop is responsible for calling async_enable_stdin, which
+     would break us out of wait_sync_command_done, then, if we don't plan
+     to call normal_stop, we should call async_enable_stdin here instead.
+
+     Unlike normal_stop, we only call async_enable_stdin on WAITING_UI, but
+     that is sufficient for wait_sync_command_done.  */
+  if (!this->should_notify_stop ())
+    {
       scoped_restore save_ui = make_scoped_restore (&current_ui, waiting_ui);
-      target_terminal::ours ();
-      waiting_ui->prompt_state = PROMPT_NEEDED;
+      gdb_assert (current_ui->prompt_state == PROMPT_BLOCKED);
+      async_enable_stdin ();
     }
 
   return true;
@@ -583,10 +667,29 @@ call_thread_fsm::should_stop (struct thread_info *thread)
 bool
 call_thread_fsm::should_notify_stop ()
 {
+  INFCALL_SCOPED_DEBUG_ENTER_EXIT;
+
   if (finished_p ())
     {
       /* Infcall succeeded.  Be silent and proceed with evaluating the
 	 expression.  */
+      infcall_debug_printf ("inferior call has finished, don't notify");
+      return false;
+    }
+
+  infcall_debug_printf ("inferior call didn't complete fully");
+
+  if ((stopped_by_random_signal && unwind_on_signal_p)
+      || (m_timed_out && unwind_on_timeout_p))
+    {
+      infcall_debug_printf ("unwind-on-signal is on, don't notify");
+      return false;
+    }
+
+  if (stop_stack_dummy == STOP_STD_TERMINATE
+      && unwind_on_terminating_exception_p)
+    {
+      infcall_debug_printf ("unwind-on-terminating-exception is on, don't notify");
       return false;
     }
 
@@ -594,6 +697,88 @@ call_thread_fsm::should_notify_stop ()
      triggered, or a signal was intercepted.  Notify the stop.  */
   return true;
 }
+
+/* A class to control creation of a timer that will interrupt a thread
+   during an inferior call.  */
+struct infcall_timer_controller
+{
+  /* Setup an event-loop timer that will interrupt PTID if the inferior
+     call takes too long.  DIRECT_CALL_P is true when this inferior call is
+     a result of the user using a 'print' or 'call' command, and false when
+     this inferior call is a result of e.g. a conditional breakpoint
+     expression, this is used to select which timeout to use.  */
+  infcall_timer_controller (thread_info *thr, bool direct_call_p)
+    : m_thread (thr)
+  {
+    unsigned int timeout
+      = direct_call_p ? direct_call_timeout : indirect_call_timeout;
+    if (timeout < UINT_MAX && target_can_async_p ())
+      {
+	int ms = timeout * 1000;
+	int id = create_timer (ms, infcall_timer_controller::timed_out, this);
+	m_timer_id.emplace (id);
+	infcall_debug_printf ("Setting up infcall timeout timer for "
+			      "ptid %s: %d milliseconds",
+			      m_thread->ptid.to_string ().c_str (), ms);
+      }
+  }
+
+  /* Destructor.  Ensure that the timer is removed from the event loop.  */
+  ~infcall_timer_controller ()
+  {
+    /* If the timer has already triggered, then it will have already been
+       deleted from the event loop.  If the timer has not triggered, then
+       delete it now.  */
+    if (m_timer_id.has_value () && !m_triggered)
+      delete_timer (*m_timer_id);
+
+    /* Just for clarity, discard the timer id now.  */
+    m_timer_id.reset ();
+  }
+
+  /* Return true if there was a timer in place, and the timer triggered,
+     otherwise, return false.  */
+  bool triggered_p ()
+  {
+    gdb_assert (!m_triggered || m_timer_id.has_value ());
+    return m_triggered;
+  }
+
+private:
+  /* The thread we should interrupt.  */
+  thread_info *m_thread;
+
+  /* Set true when the timer is triggered.  */
+  bool m_triggered = false;
+
+  /* Given a value when a timer is in place.  */
+  std::optional<int> m_timer_id;
+
+  /* Callback for the timer, forwards to ::trigger below.  */
+  static void
+  timed_out (gdb_client_data context)
+  {
+    infcall_timer_controller *ctrl
+      = static_cast<infcall_timer_controller *> (context);
+    ctrl->trigger ();
+  }
+
+  /* Called when the timer goes off.  Stop thread M_THREAD.  */
+  void
+  trigger ()
+  {
+    m_triggered = true;
+
+    scoped_disable_commit_resumed disable_commit_resumed ("infcall timeout");
+
+    infcall_debug_printf ("Stopping thread %s",
+			  m_thread->ptid.to_string ().c_str ());
+    call_thread_fsm *fsm
+      = gdb::checked_static_cast<call_thread_fsm *> (m_thread->thread_fsm ());
+    fsm->timed_out ();
+    target_stop (m_thread->ptid);
+  }
+};
 
 /* Subroutine of call_function_by_hand to simplify it.
    Start up the inferior and wait for it to stop.
@@ -605,13 +790,15 @@ call_thread_fsm::should_notify_stop ()
 
 static struct gdb_exception
 run_inferior_call (std::unique_ptr<call_thread_fsm> sm,
-		   struct thread_info *call_thread, CORE_ADDR real_pc)
+		   struct thread_info *call_thread, CORE_ADDR real_pc,
+		   bool *timed_out_p)
 {
   INFCALL_SCOPED_DEBUG_ENTER_EXIT;
 
   struct gdb_exception caught_error;
   ptid_t call_thread_ptid = call_thread->ptid;
   int was_running = call_thread->state == THREAD_RUNNING;
+  *timed_out_p = false;
 
   infcall_debug_printf ("call function at %s in thread %s, was_running = %d",
 			core_addr_to_string (real_pc),
@@ -647,14 +834,32 @@ run_inferior_call (std::unique_ptr<call_thread_fsm> sm,
 
       proceed (real_pc, GDB_SIGNAL_0);
 
+      /* Enable commit resume, but pass true for the force flag.  This
+	 ensures any thread we set running in proceed will actually be
+	 committed to the target, even if some other thread in the current
+	 target has a pending event.  */
+      scoped_enable_commit_resumed enable ("infcall", true);
+
       infrun_debug_show_threads ("non-exited threads after proceed for inferior-call",
 				 all_non_exited_threads ());
+
+      /* Setup a timer (if possible, and if the settings allow) to prevent
+	 the inferior call running forever.  */
+      bool direct_call_p = !call_thread->control.in_cond_eval;
+      infcall_timer_controller infcall_timer (call_thread, direct_call_p);
 
       /* Inferior function calls are always synchronous, even if the
 	 target supports asynchronous execution.  */
       wait_sync_command_done ();
 
-      infcall_debug_printf ("inferior call completed successfully");
+      /* If the timer triggered then the inferior call failed.  */
+      if (infcall_timer.triggered_p ())
+	{
+	  infcall_debug_printf ("inferior call timed out");
+	  *timed_out_p = true;
+	}
+      else
+	infcall_debug_printf ("inferior call completed successfully");
     }
   catch (gdb_exception &e)
     {
@@ -666,14 +871,32 @@ run_inferior_call (std::unique_ptr<call_thread_fsm> sm,
   infcall_debug_printf ("thread is now: %s",
 			inferior_ptid.to_string ().c_str ());
 
-  /* If GDB has the prompt blocked before, then ensure that it remains
-     so.  normal_stop calls async_enable_stdin, so reset the prompt
-     state again here.  In other cases, stdin will be re-enabled by
-     inferior_event_handler, when an exception is thrown.  */
+  /* After the inferior call finished, async_enable_stdin has been
+     called, either from normal_stop or from
+     call_thread_fsm::should_stop, and the prompt state has been
+     restored by the scoped_restore in the try block above.
+
+     If the inferior call finished successfully, then we should
+     disable stdin as we don't know yet whether the inferior will be
+     stopping.  Calling async_disable_stdin restores things to how
+     they were when this function was called.
+
+     If the inferior call didn't complete successfully, then
+     normal_stop has already been called, and we know for sure that we
+     are going to present this stop to the user.  In this case, we
+     call async_enable_stdin.  This changes the prompt state to
+     PROMPT_NEEDED.
+
+     If the previous prompt state was PROMPT_NEEDED, then as
+     async_enable_stdin has already been called, nothing additional
+     needs to be done here.  */
   if (current_ui->prompt_state == PROMPT_BLOCKED)
-    current_ui->unregister_file_handler ();
-  else
-    current_ui->register_file_handler ();
+    {
+      if (call_thread->thread_fsm ()->finished_p ())
+	async_disable_stdin ();
+      else
+	async_enable_stdin ();
+    }
 
   /* If the infcall does NOT succeed, normal_stop will have already
      finished the thread states.  However, on success, normal_stop
@@ -724,7 +947,7 @@ reserve_stack_space (const type *values_type, CORE_ADDR &sp)
   struct gdbarch *gdbarch = get_frame_arch (frame);
   CORE_ADDR addr = 0;
 
-  if (gdbarch_inner_than (gdbarch, 1, 2))
+  if (gdbarch_stack_grows_down (gdbarch))
     {
       /* Stack grows downward.  Align STRUCT_ADDR and SP after
 	 making space.  */
@@ -848,7 +1071,6 @@ call_function_by_hand_dummy (struct value *function,
   bool stack_temporaries = thread_stack_temporaries_enabled_p (call_thread.get ());
 
   frame = get_current_frame ();
-  frame.prepare_reinflate ();
   gdbarch = get_frame_arch (frame);
 
   if (!gdbarch_push_dummy_call_p (gdbarch))
@@ -863,8 +1085,6 @@ call_function_by_hand_dummy (struct value *function,
     error (_("Cannot call the function '%s' which does not follow the "
 	     "target calling convention."),
 	   get_function_name (funaddr, name_buf, sizeof (name_buf)));
-
-  frame.reinflate ();
 
   if (values_type == NULL || values_type->is_stub ())
     values_type = default_return_type;
@@ -908,7 +1128,7 @@ call_function_by_hand_dummy (struct value *function,
 	   address.  AMD64 called that region the "red zone".  Skip at
 	   least the "red zone" size before allocating any space on
 	   the stack.  */
-	if (gdbarch_inner_than (gdbarch, 1, 2))
+	if (gdbarch_stack_grows_down (gdbarch))
 	  sp -= gdbarch_frame_red_zone_size (gdbarch);
 	else
 	  sp += gdbarch_frame_red_zone_size (gdbarch);
@@ -936,11 +1156,9 @@ call_function_by_hand_dummy (struct value *function,
 	   to pay :-).  */
 	if (sp == old_sp)
 	  {
-	    if (gdbarch_inner_than (gdbarch, 1, 2))
-	      /* Stack grows down.  */
+	    if (gdbarch_stack_grows_down (gdbarch))
 	      sp = gdbarch_frame_align (gdbarch, old_sp - 1);
 	    else
-	      /* Stack grows up.  */
 	      sp = gdbarch_frame_align (gdbarch, old_sp + 1);
 	  }
 	/* SP may have underflown address zero here from OLD_SP.  Memory access
@@ -971,9 +1189,9 @@ call_function_by_hand_dummy (struct value *function,
 	lastval = get_last_thread_stack_temporary (call_thread.get ());
 	if (lastval != NULL)
 	  {
-	    CORE_ADDR lastval_addr = value_address (lastval);
+	    CORE_ADDR lastval_addr = lastval->address ();
 
-	    if (gdbarch_inner_than (gdbarch, 1, 2))
+	    if (gdbarch_stack_grows_down (gdbarch))
 	      {
 		gdb_assert (sp >= lastval_addr);
 		sp = lastval_addr;
@@ -981,7 +1199,7 @@ call_function_by_hand_dummy (struct value *function,
 	    else
 	      {
 		gdb_assert (sp <= lastval_addr);
-		sp = lastval_addr + value_type (lastval)->length ();
+		sp = lastval_addr + lastval->type ()->length ();
 	      }
 
 	    if (gdbarch_frame_align_p (gdbarch))
@@ -1028,7 +1246,7 @@ call_function_by_hand_dummy (struct value *function,
 
 	sp = push_dummy_code (gdbarch, sp, funaddr, args,
 			      target_values_type, &real_pc, &bp_addr,
-			      get_current_regcache ());
+			      get_thread_regcache (inferior_thread ()));
 
 	/* Write a legitimate instruction at the point where the infcall
 	   breakpoint is going to be inserted.  While this instruction
@@ -1139,7 +1357,7 @@ call_function_by_hand_dummy (struct value *function,
       if (info.trivially_copy_constructible)
 	{
 	  int length = param_type->length ();
-	  write_memory (addr, value_contents (args[i]).data (), length);
+	  write_memory (addr, args[i]->contents ().data (), length);
 	}
       else
 	{
@@ -1220,7 +1438,7 @@ call_function_by_hand_dummy (struct value *function,
   if (return_method == return_method_hidden_param)
     {
       /* Add the new argument to the front of the argument list.  */
-      new_args.reserve (args.size ());
+      new_args.reserve (1 + args.size ());
       new_args.push_back
 	(value_from_pointer (lookup_pointer_type (values_type), struct_addr));
       new_args.insert (new_args.end (), args.begin (), args.end ());
@@ -1230,7 +1448,8 @@ call_function_by_hand_dummy (struct value *function,
   /* Create the dummy stack frame.  Pass in the call dummy address as,
      presumably, the ABI code knows where, in the call dummy, the
      return address should be pointed.  */
-  sp = gdbarch_push_dummy_call (gdbarch, function, get_current_regcache (),
+  sp = gdbarch_push_dummy_call (gdbarch, function,
+				get_thread_regcache (inferior_thread ()),
 				bp_addr, args.size (), args.data (),
 				sp, return_method, struct_addr);
 
@@ -1258,9 +1477,6 @@ call_function_by_hand_dummy (struct value *function,
     breakpoint *bpt
       = set_momentary_breakpoint (gdbarch, sal,
 				  dummy_id, bp_call_dummy).release ();
-
-    /* set_momentary_breakpoint invalidates FRAME.  */
-    frame = NULL;
 
     bpt->disposition = disp_del;
     gdb_assert (bpt->related_breakpoint == bpt);
@@ -1302,6 +1518,19 @@ call_function_by_hand_dummy (struct value *function,
   /* Register a clean-up for unwind_on_terminating_exception_breakpoint.  */
   SCOPE_EXIT { delete_std_terminate_breakpoint (); };
 
+  /* The stopped_by_random_signal variable is global.  If we are here
+     as part of a breakpoint condition check then the global will have
+     already been setup as part of the original breakpoint stop.  By
+     making the inferior call the global will be changed when GDB
+     handles the stop after the inferior call.  Avoid confusion by
+     restoring the current value after the inferior call.  */
+  scoped_restore restore_stopped_by_random_signal
+    = make_scoped_restore (&stopped_by_random_signal, 0);
+
+  /* Set to true by the call to run_inferior_call below if the inferior
+     call is artificially interrupted by GDB due to taking too long.  */
+  bool timed_out_p = false;
+
   /* - SNIP - SNIP - SNIP - SNIP - SNIP - SNIP - SNIP - SNIP - SNIP -
      If you're looking to implement asynchronous dummy-frames, then
      just below is the place to chop this function in two..  */
@@ -1328,7 +1557,8 @@ call_function_by_hand_dummy (struct value *function,
 			      struct_addr);
     {
       std::unique_ptr<call_thread_fsm> sm_up (sm);
-      e = run_inferior_call (std::move (sm_up), call_thread.get (), real_pc);
+      e = run_inferior_call (std::move (sm_up), call_thread.get (), real_pc,
+			     &timed_out_p);
     }
 
     if (e.reason < 0)
@@ -1338,6 +1568,13 @@ call_function_by_hand_dummy (struct value *function,
 			  thread_state_string (call_thread->state));
 
     gdb::observers::inferior_call_post.notify (call_thread_ptid, funaddr);
+
+
+    /* As the inferior call failed, we are about to throw an error, which
+       will be caught and printed somewhere else in GDB.  We want new threads
+       to be printed before the error message, otherwise it looks odd; the
+       threads appear after GDB has reported a stop.  */
+    update_thread_list ();
 
     if (call_thread->state != THREAD_EXITED)
       {
@@ -1360,7 +1597,7 @@ call_function_by_hand_dummy (struct value *function,
 	    /* Get the return value.  */
 	    retval = sm->return_value;
 
-	    /* Restore the original FSM and clean up / destroh the call FSM.
+	    /* Restore the original FSM and clean up / destroy the call FSM.
 	       Doing it in this order ensures that if the call to clean_up
 	       throws, the original FSM is properly restored.  */
 	    {
@@ -1480,7 +1717,10 @@ When the function is done executing, GDB will silently stop."),
       std::string name = get_function_name (funaddr, name_buf,
 					    sizeof (name_buf));
 
-      if (stopped_by_random_signal)
+      /* If the inferior call timed out then it will have been interrupted
+	 by a signal, but we want to report this differently to the user,
+	 which is done later in this function.  */
+      if (stopped_by_random_signal && !timed_out_p)
 	{
 	  /* We stopped inside the FUNCTION because of a random
 	     signal.  Further execution of the FUNCTION is not
@@ -1489,6 +1729,11 @@ When the function is done executing, GDB will silently stop."),
 	  if (unwind_on_signal_p)
 	    {
 	      /* The user wants the context restored.  */
+
+	      /* Capture details of the signal so we can include them in
+		 the error message.  Calling dummy_frame_pop will restore
+		 the previous stop signal details.  */
+	      gdb_signal stop_signal = call_thread->stop_signal ();
 
 	      /* We must get back to the frame we were before the
 		 dummy call.  */
@@ -1501,11 +1746,13 @@ When the function is done executing, GDB will silently stop."),
 	      /* FIXME: Insert a bunch of wrap_here; name can be very
 		 long if it's a C++ name with arguments and stuff.  */
 	      error (_("\
-The program being debugged was signaled while in a function called from GDB.\n\
-GDB has restored the context to what it was before the call.\n\
-To change this behavior use \"set unwindonsignal off\".\n\
-Evaluation of the expression containing the function\n\
-(%s) will be abandoned."),
+The program being debugged received signal %s, %s\n\
+while in a function called from GDB.  GDB has restored the context\n\
+to what it was before the call.  To change this behavior use\n\
+\"set unwind-on-signal off\".  Evaluation of the expression containing\n\
+the function (%s) will be abandoned."),
+		     gdb_signal_to_name (stop_signal),
+		     gdb_signal_to_string (stop_signal),
 		     name.c_str ());
 	    }
 	  else
@@ -1521,7 +1768,50 @@ Evaluation of the expression containing the function\n\
 	      error (_("\
 The program being debugged was signaled while in a function called from GDB.\n\
 GDB remains in the frame where the signal was received.\n\
-To change this behavior use \"set unwindonsignal on\".\n\
+To change this behavior use \"set unwind-on-signal on\".\n\
+Evaluation of the expression containing the function\n\
+(%s) will be abandoned.\n\
+When the function is done executing, GDB will silently stop."),
+		     name.c_str ());
+	    }
+	}
+
+      if (timed_out_p)
+	{
+	  /* A timeout results in a signal being sent to the inferior.  */
+	  gdb_assert (stopped_by_random_signal);
+
+	  if (unwind_on_timeout_p)
+	    {
+	      /* The user wants the context restored.  */
+
+	      /* We must get back to the frame we were before the
+		 dummy call.  */
+	      dummy_frame_pop (dummy_id, call_thread.get ());
+
+	      /* We also need to restore inferior status to that before the
+		 dummy call.  */
+	      restore_infcall_control_state (inf_status.release ());
+
+	      error (_("\
+The program being debugged timed out while in a function called from GDB.\n\
+GDB has restored the context to what it was before the call.\n\
+To change this behavior use \"set unwind-on-timeout off\".\n\
+Evaluation of the expression containing the function\n\
+(%s) will be abandoned."),
+		     name.c_str ());
+	    }
+	  else
+	    {
+	      /* The user wants to stay in the frame where we stopped
+		 (default).  Discard inferior status, we're not at the same
+		 point we started at.  */
+	      discard_infcall_control_state (inf_status.release ());
+
+	      error (_("\
+The program being debugged timed out while in a function called from GDB.\n\
+GDB remains in the frame where the timeout occurred.\n\
+To change this behavior use \"set unwind-on-timeout on\".\n\
 Evaluation of the expression containing the function\n\
 (%s) will be abandoned.\n\
 When the function is done executing, GDB will silently stop."),
@@ -1610,17 +1900,22 @@ The default is to perform the conversion."),
 			   show_coerce_float_to_double_p,
 			   &setlist, &showlist);
 
-  add_setshow_boolean_cmd ("unwindonsignal", no_class,
-			   &unwind_on_signal_p, _("\
+  set_show_commands setshow_unwind_on_signal_cmds
+    = add_setshow_boolean_cmd ("unwind-on-signal", no_class,
+			       &unwind_on_signal_p, _("\
 Set unwinding of stack if a signal is received while in a call dummy."), _("\
 Show unwinding of stack if a signal is received while in a call dummy."), _("\
-The unwindonsignal lets the user determine what gdb should do if a signal\n\
+The unwind-on-signal lets the user determine what gdb should do if a signal\n\
 is received while in a function called from gdb (call dummy).  If set, gdb\n\
 unwinds the stack and restore the context to what as it was before the call.\n\
 The default is to stop in the frame where the signal was received."),
-			   NULL,
-			   show_unwind_on_signal_p,
-			   &setlist, &showlist);
+			       NULL,
+			       show_unwind_on_signal_p,
+			       &setlist, &showlist);
+  add_alias_cmd ("unwindonsignal", setshow_unwind_on_signal_cmds.set,
+		 no_class, 1, &setlist);
+  add_alias_cmd ("unwindonsignal", setshow_unwind_on_signal_cmds.show,
+		 no_class, 1, &showlist);
 
   add_setshow_boolean_cmd ("unwind-on-terminating-exception", no_class,
 			   &unwind_on_terminating_exception_p, _("\
@@ -1636,6 +1931,44 @@ The default is to unwind the frame."),
 			   NULL,
 			   show_unwind_on_terminating_exception_p,
 			   &setlist, &showlist);
+
+  add_setshow_boolean_cmd ("unwind-on-timeout", no_class,
+			   &unwind_on_timeout_p, _("\
+Set unwinding of stack if a timeout occurs while in a call dummy."), _("\
+Show unwinding of stack if a timeout occurs while in a call dummy."),
+			   _("\
+The unwind on timeout flag lets the user determine what gdb should do if\n\
+gdb times out while in a function called from gdb.  If set, gdb unwinds\n\
+the stack and restores the context to what it was before the call.  If\n\
+unset, gdb leaves the inferior in the frame where the timeout occurred.\n\
+The default is to stop in the frame where the timeout occurred."),
+			   NULL,
+			   show_unwind_on_timeout_p,
+			   &setlist, &showlist);
+
+  add_setshow_uinteger_cmd ("direct-call-timeout", no_class,
+			    &direct_call_timeout, _("\
+Set the timeout, for direct calls to inferior function calls."), _("\
+Show the timeout, for direct calls to inferior function calls."), _("\
+If running on a target that supports, and is running in, async mode\n\
+then this timeout is used for any inferior function calls triggered\n\
+directly from the prompt, i.e. from a 'call' or 'print' command.  The\n\
+timeout is specified in seconds."),
+			    nullptr,
+			    show_direct_call_timeout,
+			    &setlist, &showlist);
+
+  add_setshow_uinteger_cmd ("indirect-call-timeout", no_class,
+			    &indirect_call_timeout, _("\
+Set the timeout, for indirect calls to inferior function calls."), _("\
+Show the timeout, for indirect calls to inferior function calls."), _("\
+If running on a target that supports, and is running in, async mode\n\
+then this timeout is used for any inferior function calls triggered\n\
+indirectly, i.e. being made as part of a breakpoint, or watchpoint,\n\
+condition expression.  The timeout is specified in seconds."),
+			    nullptr,
+			    show_indirect_call_timeout,
+			    &setlist, &showlist);
 
   add_setshow_boolean_cmd
     ("infcall", class_maintenance, &debug_infcall,

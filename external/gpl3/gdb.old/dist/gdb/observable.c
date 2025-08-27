@@ -1,6 +1,6 @@
 /* GDB Notifications to Observers.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "observable.h"
 #include "command.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 
 namespace gdb
 {
@@ -34,43 +33,36 @@ bool observer_debug = false;
 
 DEFINE_OBSERVABLE (normal_stop);
 DEFINE_OBSERVABLE (signal_received);
-DEFINE_OBSERVABLE (end_stepping_range);
-DEFINE_OBSERVABLE (signal_exited);
-DEFINE_OBSERVABLE (exited);
-DEFINE_OBSERVABLE (no_history);
-DEFINE_OBSERVABLE (sync_execution_done);
-DEFINE_OBSERVABLE (command_error);
 DEFINE_OBSERVABLE (target_changed);
 DEFINE_OBSERVABLE (executable_changed);
 DEFINE_OBSERVABLE (inferior_created);
 DEFINE_OBSERVABLE (inferior_execd);
-DEFINE_OBSERVABLE (record_changed);
+DEFINE_OBSERVABLE (inferior_forked);
 DEFINE_OBSERVABLE (solib_loaded);
 DEFINE_OBSERVABLE (solib_unloaded);
 DEFINE_OBSERVABLE (new_objfile);
+DEFINE_OBSERVABLE (all_objfiles_removed);
 DEFINE_OBSERVABLE (free_objfile);
 DEFINE_OBSERVABLE (new_thread);
 DEFINE_OBSERVABLE (thread_exit);
+DEFINE_OBSERVABLE (thread_deleted);
 DEFINE_OBSERVABLE (thread_stop_requested);
 DEFINE_OBSERVABLE (target_resumed);
 DEFINE_OBSERVABLE (about_to_proceed);
 DEFINE_OBSERVABLE (breakpoint_created);
 DEFINE_OBSERVABLE (breakpoint_deleted);
 DEFINE_OBSERVABLE (breakpoint_modified);
-DEFINE_OBSERVABLE (traceframe_changed);
-DEFINE_OBSERVABLE (architecture_changed);
+DEFINE_OBSERVABLE (new_architecture);
 DEFINE_OBSERVABLE (thread_ptid_changed);
 DEFINE_OBSERVABLE (inferior_added);
 DEFINE_OBSERVABLE (inferior_appeared);
+DEFINE_OBSERVABLE (inferior_pre_detach);
 DEFINE_OBSERVABLE (inferior_exit);
 DEFINE_OBSERVABLE (inferior_removed);
+DEFINE_OBSERVABLE (inferior_cloned);
 DEFINE_OBSERVABLE (memory_changed);
 DEFINE_OBSERVABLE (before_prompt);
 DEFINE_OBSERVABLE (gdb_datadir_changed);
-DEFINE_OBSERVABLE (command_param_changed);
-DEFINE_OBSERVABLE (tsv_created);
-DEFINE_OBSERVABLE (tsv_deleted);
-DEFINE_OBSERVABLE (tsv_modified);
 DEFINE_OBSERVABLE (inferior_call_pre);
 DEFINE_OBSERVABLE (inferior_call_post);
 DEFINE_OBSERVABLE (register_changed);
@@ -81,6 +73,8 @@ DEFINE_OBSERVABLE (gdb_exiting);
 DEFINE_OBSERVABLE (connection_removed);
 DEFINE_OBSERVABLE (target_pre_wait);
 DEFINE_OBSERVABLE (target_post_wait);
+DEFINE_OBSERVABLE (new_program_space);
+DEFINE_OBSERVABLE (free_program_space);
 
 } /* namespace observers */
 } /* namespace gdb */

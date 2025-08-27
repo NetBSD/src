@@ -1,5 +1,5 @@
 /* M16C/M32C specific support for 32-bit ELF.
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -773,8 +773,8 @@ m32c_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
 }
 
 static bool
-m32c_elf_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-			       struct bfd_link_info *info)
+m32c_elf_early_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			      struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *splt;
@@ -1459,8 +1459,9 @@ m32c_elf_relax_section (bfd *abfd,
      this section does not have relocs, or if this is not a
      code section.  */
   if (bfd_link_relocatable (link_info)
-      || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
+      || (sec->flags & SEC_RELOC) == 0
+      || (sec->flags & SEC_HAS_CONTENTS) == 0
       || (sec->flags & SEC_CODE) == 0)
     return true;
 
@@ -2131,8 +2132,8 @@ _bfd_m32c_elf_eh_frame_address_size (bfd *abfd,
 #define elf_backend_check_relocs		m32c_elf_check_relocs
 #define elf_backend_object_p			m32c_elf_object_p
 #define elf_symbol_leading_char			('_')
-#define elf_backend_always_size_sections \
-  m32c_elf_always_size_sections
+#define elf_backend_early_size_sections \
+  m32c_elf_early_size_sections
 #define elf_backend_finish_dynamic_sections \
   m32c_elf_finish_dynamic_sections
 

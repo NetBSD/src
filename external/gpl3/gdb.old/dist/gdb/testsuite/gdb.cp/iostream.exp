@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # This file is part of the gdb testsuite.
 # It tests various aspects of iostream that have caused problems for gdb.
 
-if { [skip_cplus_tests] } { return }
+require allow_cplus_tests
 
 standard_testfile .cc
 

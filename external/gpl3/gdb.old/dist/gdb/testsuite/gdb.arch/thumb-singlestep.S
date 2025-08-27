@@ -1,6 +1,6 @@
 /* Test program with deliberately incorrect execution mode transition
 
-   Copyright 2011-2023 Free Software Foundation, Inc.
+   Copyright 2011-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,4 +38,4 @@ main:
         pop	{r3, pc}
 	.size	main, .-main
 
-	.section	.note.GNU-stack,"",@progbits
+	.section	.note.GNU-stack,"",%progbits

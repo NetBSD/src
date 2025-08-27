@@ -1,6 +1,6 @@
 /* Read a symbol table in MIPS' format (Third-Eye).
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    Contributed by Alessandro Forin (af@cs.cmu.edu) at CMU.  Major work
    by Per Bothner, John Gilmore and Ian Lance Taylor at Cygnus Support.
@@ -23,7 +23,6 @@
 /* Read symbols from an ECOFF file.  Most of the work is done in
    mdebugread.c.  */
 
-#include "defs.h"
 #include "bfd.h"
 #include "symtab.h"
 #include "objfiles.h"
@@ -33,13 +32,11 @@
 #include "coff/sym.h"
 #include "coff/internal.h"
 #include "coff/ecoff.h"
-#include "libcoff.h"		/* Private BFD COFF information.  */
-#include "libecoff.h"		/* Private BFD ECOFF information.  */
+#include "libcoff.h"
+#include "libecoff.h"
 #include "elf/common.h"
 #include "elf/internal.h"
 #include "elf/mips.h"
-
-#include "psymtab.h"
 
 static void
 read_alphacoff_dynamic_symtab (minimal_symbol_reader &,
@@ -358,7 +355,7 @@ read_alphacoff_dynamic_symtab (minimal_symbol_reader &reader,
 	    }
 	}
 
-      reader.record (name, sym_value, ms_type);
+      reader.record (name, unrelocated_addr (sym_value), ms_type);
     }
 }
 

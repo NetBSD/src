@@ -1,6 +1,6 @@
 /* Convert types from GDB to GCC
 
-   Copyright (C) 2014-2023 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#include "defs.h"
 #include "gdbsupport/preprocessor.h"
 #include "gdbtypes.h"
 #include "compile-internal.h"
@@ -30,7 +29,7 @@
 #include "cp-abi.h"
 #include "objfiles.h"
 #include "block.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "c-lang.h"
 #include "compile-c.h"
 #include <algorithm>
@@ -73,9 +72,10 @@ compile_cplus_instance::decl_name (const char *natural)
 static enum gcc_cp_symbol_kind
 get_field_access_flag (const struct type *type, int num)
 {
-  if (TYPE_FIELD_PROTECTED (type, num))
+  field &fld = type->field (num);
+  if (fld.is_protected ())
     return GCC_CP_ACCESS_PROTECTED;
-  else if (TYPE_FIELD_PRIVATE (type, num))
+  else if (fld.is_private ())
     return GCC_CP_ACCESS_PRIVATE;
 
   /* GDB assumes everything else is public.  */
@@ -153,7 +153,7 @@ type_name_to_scope (const char *type_name, const struct block *block)
 
       /* Look up the resulting name.  */
       struct block_symbol bsymbol
-	= lookup_symbol (lookup_name.c_str (), block, VAR_DOMAIN, nullptr);
+	= lookup_symbol (lookup_name.c_str (), block, SEARCH_VFT, nullptr);
 
       if (bsymbol.symbol != nullptr)
 	{
@@ -383,7 +383,7 @@ compile_cplus_instance::new_scope (const char *type_name, struct type *type)
 	  scope_component comp
 	    = {
 		decl_name (type->name ()).get (),
-		lookup_symbol (type->name (), block (), VAR_DOMAIN, nullptr)
+		lookup_symbol (type->name (), block (), SEARCH_VFT, nullptr)
 	      };
 	  scope.push_back (comp);
 	}
@@ -455,7 +455,7 @@ compile_cplus_convert_array (compile_cplus_instance *instance,
   struct type *range = type->index_type ();
   gcc_type element_type = instance->convert_type (type->target_type ());
 
-  if (range->bounds ()->low.kind () != PROP_CONST)
+  if (!range->bounds ()->low.is_constant ())
     {
       const char *s = _("array type with non-constant"
 			" lower bound is not supported");
@@ -583,8 +583,8 @@ compile_cplus_convert_struct_or_union_members
     {
       const char *field_name = type->field (i).name ();
 
-      if (TYPE_FIELD_IGNORE (type, i)
-	  || TYPE_FIELD_ARTIFICIAL (type, i))
+      if (type->field (i).is_ignored ()
+	  || type->field (i).is_artificial ())
 	continue;
 
       /* GDB records unnamed/anonymous fields with empty string names.  */
@@ -594,7 +594,7 @@ compile_cplus_convert_struct_or_union_members
       gcc_type field_type
 	= instance->convert_type (type->field (i).type ());
 
-      if (field_is_static (&type->field (i)))
+      if (type->field (i).is_static ())
 	{
 	  CORE_ADDR physaddr;
 
@@ -616,7 +616,7 @@ compile_cplus_convert_struct_or_union_members
 		const char *physname = type->field (i).loc_physname ();
 		struct block_symbol sym
 		  = lookup_symbol (physname, instance->block (),
-				   VAR_DOMAIN, nullptr);
+				   SEARCH_VFT, nullptr);
 
 		if (sym.symbol == nullptr)
 		  {
@@ -642,7 +642,7 @@ compile_cplus_convert_struct_or_union_members
 	}
       else
 	{
-	  unsigned long bitsize = TYPE_FIELD_BITSIZE (type, i);
+	  unsigned long bitsize = type->field (i).bitsize ();
 	  enum gcc_cp_symbol_kind field_flags = GCC_CP_SYMBOL_FIELD
 	    | get_field_access_flag (type, i);
 
@@ -728,7 +728,7 @@ compile_cplus_convert_struct_or_union_methods (compile_cplus_instance *instance,
 	  gcc_type method_type;
 	  struct block_symbol sym
 	    = lookup_symbol (TYPE_FN_FIELD_PHYSNAME (methods, j),
-			     instance->block (), VAR_DOMAIN, nullptr);
+			     instance->block (), SEARCH_VFT, nullptr);
 
 	  if (sym.symbol == nullptr)
 	    {
@@ -802,7 +802,7 @@ compile_cplus_convert_struct_or_union (compile_cplus_instance *instance,
 				       enum gcc_cp_symbol_kind nested_access)
 {
   const char *filename = nullptr;
-  unsigned short line = 0;
+  unsigned int line = 0;
 
   /* Get the decl name of this type.  */
   gdb::unique_xmalloc_ptr<char> name
@@ -969,10 +969,7 @@ compile_cplus_convert_func (compile_cplus_instance *instance,
      GDB's parser used to do.  */
   if (target_type == nullptr)
     {
-      if (type->is_objfile_owned ())
-	target_type = objfile_type (type->objfile_owner ())->builtin_int;
-      else
-	target_type = builtin_type (type->arch_owner ())->builtin_int;
+      target_type = builtin_type (type->arch ())->builtin_int;
       warning (_("function has unknown return type; assuming int"));
     }
 
@@ -981,11 +978,11 @@ compile_cplus_convert_func (compile_cplus_instance *instance,
   gcc_type return_type = instance->convert_type (target_type);
 
   std::vector<gcc_type> elements (type->num_fields ());
-  struct gcc_type_array array = { type->num_fields (), elements.data () };
+  struct gcc_type_array array = { (int) type->num_fields (), elements.data () };
   int artificials = 0;
   for (int i = 0; i < type->num_fields (); ++i)
     {
-      if (strip_artificial && TYPE_FIELD_ARTIFICIAL (type, i))
+      if (strip_artificial && type->field (i).is_artificial ())
 	{
 	  --array.n_elements;
 	  ++artificials;

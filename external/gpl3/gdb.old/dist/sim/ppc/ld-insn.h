@@ -56,7 +56,7 @@
 /* Global constants */
 
 enum {
-  max_insn_bit_size = 32,
+  ppc_max_insn_bit_size = 32,
 };
 
 
@@ -77,7 +77,7 @@ struct _insn_field {
 
 typedef struct _insn_fields insn_fields;
 struct _insn_fields {
-  insn_field *bits[max_insn_bit_size];
+  insn_field *bits[ppc_max_insn_bit_size];
   insn_field *first;
   insn_field *last;
   unsigned value;

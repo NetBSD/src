@@ -1,6 +1,6 @@
 /* Target-dependent code for Analog Devices Blackfin processor, for GDB.
 
-   Copyright (C) 2005-2023 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
 
    Contributed by Analog Devices, Inc.
 
@@ -19,7 +19,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "inferior.h"
 #include "gdbcore.h"
 #include "arch-utils.h"
@@ -30,7 +30,7 @@
 #include "trad-frame.h"
 #include "dis-asm.h"
 #include "sim-regno.h"
-#include "gdb/sim-bfin.h"
+#include "sim/sim-bfin.h"
 #include "dwarf2/frame.h"
 #include "symtab.h"
 #include "elf-bfd.h"
@@ -288,7 +288,7 @@ bfin_alloc_frame_cache (void)
 }
 
 static struct bfin_frame_cache *
-bfin_frame_cache (frame_info_ptr this_frame, void **this_cache)
+bfin_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct bfin_frame_cache *cache;
   int i;
@@ -340,7 +340,7 @@ bfin_frame_cache (frame_info_ptr this_frame, void **this_cache)
 }
 
 static void
-bfin_frame_this_id (frame_info_ptr this_frame,
+bfin_frame_this_id (const frame_info_ptr &this_frame,
 		    void **this_cache,
 		    struct frame_id *this_id)
 {
@@ -355,7 +355,7 @@ bfin_frame_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-bfin_frame_prev_register (frame_info_ptr this_frame,
+bfin_frame_prev_register (const frame_info_ptr &this_frame,
 			  void **this_cache,
 			  int regnum)
 {
@@ -509,7 +509,7 @@ bfin_push_dummy_call (struct gdbarch *gdbarch,
 
   for (i = nargs - 1; i >= 0; i--)
     {
-      struct type *value_type = value_enclosing_type (args[i]);
+      struct type *value_type = args[i]->enclosing_type ();
 
       total_len += align_up (value_type->length (), 4);
     }
@@ -525,12 +525,12 @@ bfin_push_dummy_call (struct gdbarch *gdbarch,
 
   for (i = nargs - 1; i >= 0; i--)
     {
-      struct type *value_type = value_enclosing_type (args[i]);
+      struct type *value_type = args[i]->enclosing_type ();
       struct type *arg_type = check_typedef (value_type);
       int container_len = align_up (arg_type->length (), 4);
 
       sp -= container_len;
-      write_memory (sp, value_contents (args[i]).data (), container_len);
+      write_memory (sp, args[i]->contents ().data (), container_len);
     }
 
   /* Initialize R0, R1, and R2 to the first 3 words of parameters.  */
@@ -724,7 +724,7 @@ bfin_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 }
 
 static CORE_ADDR
-bfin_frame_base_address (frame_info_ptr this_frame, void **this_cache)
+bfin_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct bfin_frame_cache *cache = bfin_frame_cache (this_frame, this_cache);
 
@@ -732,7 +732,7 @@ bfin_frame_base_address (frame_info_ptr this_frame, void **this_cache)
 }
 
 static CORE_ADDR
-bfin_frame_local_address (frame_info_ptr this_frame, void **this_cache)
+bfin_frame_local_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct bfin_frame_cache *cache = bfin_frame_cache (this_frame, this_cache);
 
@@ -740,7 +740,7 @@ bfin_frame_local_address (frame_info_ptr this_frame, void **this_cache)
 }
 
 static CORE_ADDR
-bfin_frame_args_address (frame_info_ptr this_frame, void **this_cache)
+bfin_frame_args_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct bfin_frame_cache *cache = bfin_frame_cache (this_frame, this_cache);
 
@@ -778,7 +778,6 @@ bfin_abi (struct gdbarch *gdbarch)
 static struct gdbarch *
 bfin_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  struct gdbarch *gdbarch;
   enum bfin_abi abi;
 
   abi = BFIN_ABI_FLAT;
@@ -798,14 +797,16 @@ bfin_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       return arches->gdbarch;
     }
 
-  bfin_gdbarch_tdep *tdep = new bfin_gdbarch_tdep;
-  gdbarch = gdbarch_alloc (&info, tdep);
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info, gdbarch_tdep_up (new bfin_gdbarch_tdep));
+  bfin_gdbarch_tdep *tdep = gdbarch_tdep<bfin_gdbarch_tdep> (gdbarch);
 
   tdep->bfin_abi = abi;
 
   set_gdbarch_num_regs (gdbarch, BFIN_NUM_REGS);
   set_gdbarch_pseudo_register_read (gdbarch, bfin_pseudo_register_read);
-  set_gdbarch_pseudo_register_write (gdbarch, bfin_pseudo_register_write);
+  set_gdbarch_deprecated_pseudo_register_write (gdbarch,
+						bfin_pseudo_register_write);
   set_gdbarch_num_pseudo_regs (gdbarch, BFIN_NUM_PSEUDO_REGS);
   set_gdbarch_sp_regnum (gdbarch, BFIN_SP_REGNUM);
   set_gdbarch_pc_regnum (gdbarch, BFIN_PC_REGNUM);

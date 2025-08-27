@@ -1,6 +1,6 @@
 /* Do various things to symbol tables (other than lookup), for GDB.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "event-top.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "bfd.h"
@@ -34,7 +34,7 @@
 #include <sys/stat.h>
 #include "dictionary.h"
 #include "typeprint.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "source.h"
 #include "readline/tilde.h"
 #include <cli/cli-style.h>
@@ -201,7 +201,7 @@ dump_msymbols (struct objfile *objfile, struct ui_file *outfile)
 
       /* Use the relocated address as shown in the symbol here -- do
 	 not try to respect copy relocations.  */
-      CORE_ADDR addr = (msymbol->value_raw_address ()
+      CORE_ADDR addr = (CORE_ADDR (msymbol->unrelocated_address ())
 			+ objfile->section_offsets[msymbol->section_index ()]);
       gdb_puts (paddress (gdbarch, addr), outfile);
       gdb_printf (outfile, " %s", msymbol->linkage_name ());
@@ -212,7 +212,7 @@ dump_msymbols (struct objfile *objfile, struct ui_file *outfile)
 			bfd_section_name (section->the_bfd_section));
 	  else
 	    gdb_printf (outfile, " spurious section %ld",
-			(long) (section - objfile->sections));
+			(long) (section - objfile->sections_start));
 	}
       if (msymbol->demangled_name () != NULL)
 	{
@@ -236,9 +236,7 @@ dump_symtab_1 (struct symtab *symtab, struct ui_file *outfile)
 {
   struct objfile *objfile = symtab->compunit ()->objfile ();
   struct gdbarch *gdbarch = objfile->arch ();
-  struct mdict_iterator miter;
-  struct linetable *l;
-  struct symbol *sym;
+  const struct linetable *l;
   int depth;
 
   gdb_printf (outfile, "\nSymtab for file %s at %s\n",
@@ -263,7 +261,7 @@ dump_symtab_1 (struct symtab *symtab, struct ui_file *outfile)
       for (int i = 0; i < len; i++)
 	{
 	  gdb_printf (outfile, " line %d at ", l->item[i].line);
-	  gdb_puts (paddress (gdbarch, l->item[i].pc), outfile);
+	  gdb_puts (paddress (gdbarch, l->item[i].pc (objfile)), outfile);
 	  if (l->item[i].is_stmt)
 	    gdb_printf (outfile, "\t(stmt)");
 	  gdb_printf (outfile, "\n");
@@ -288,7 +286,7 @@ dump_symtab_1 (struct symtab *symtab, struct ui_file *outfile)
 	  /* drow/2002-07-10: We could save the total symbols count
 	     even if we're using a hashtable, but nothing else but this message
 	     wants it.  */
-	  gdb_printf (outfile, ", %d syms/buckets in ",
+	  gdb_printf (outfile, ", %d symbols in ",
 		      mdict_size (b->multidict ()));
 	  gdb_puts (paddress (gdbarch, b->start ()), outfile);
 	  gdb_printf (outfile, "..");
@@ -307,7 +305,7 @@ dump_symtab_1 (struct symtab *symtab, struct ui_file *outfile)
 	  /* Now print each symbol in this block (in no particular order, if
 	     we're using a hashtable).  Note that we only want this
 	     block, not any blocks from included symtabs.  */
-	  ALL_DICT_SYMBOLS (b->multidict (), miter, sym)
+	  for (struct symbol *sym : b->multidict_symbols ())
 	    {
 	      try
 		{
@@ -365,8 +363,7 @@ dump_symtab (struct symtab *symtab, struct ui_file *outfile)
      because certain routines used during dump_symtab() use the current
      language to print an image of the symbol.  We'll restore it later.
      But use only real languages, not placeholders.  */
-  if (symtab->language () != language_unknown
-      && symtab->language () != language_auto)
+  if (symtab->language () != language_unknown)
     {
       scoped_restore_current_language save_lang;
       set_language (symtab->language ());
@@ -922,8 +919,7 @@ maintenance_expand_symtabs (const char *args, int from_tty)
 	 NULL,
 	 NULL,
 	 SEARCH_GLOBAL_BLOCK | SEARCH_STATIC_BLOCK,
-	 UNDEF_DOMAIN,
-	 ALL_DOMAIN);
+	 SEARCH_ALL_DOMAINS);
 }
 
 
@@ -948,7 +944,7 @@ block_depth (const struct block *block)
 static int
 maintenance_print_one_line_table (struct symtab *symtab, void *data)
 {
-  struct linetable *linetable;
+  const struct linetable *linetable;
   struct objfile *objfile;
 
   objfile = symtab->compunit ()->objfile ();
@@ -976,17 +972,19 @@ maintenance_print_one_line_table (struct symtab *symtab, void *data)
       /* Leave space for 6 digits of index and line number.  After that the
 	 tables will just not format as well.  */
       struct ui_out *uiout = current_uiout;
-      ui_out_emit_table table_emitter (uiout, 5, -1, "line-table");
+      ui_out_emit_table table_emitter (uiout, 7, -1, "line-table");
       uiout->table_header (6, ui_left, "index", _("INDEX"));
       uiout->table_header (6, ui_left, "line", _("LINE"));
-      uiout->table_header (18, ui_left, "address", _("ADDRESS"));
+      uiout->table_header (18, ui_left, "rel-address", _("REL-ADDRESS"));
+      uiout->table_header (18, ui_left, "unrel-address", _("UNREL-ADDRESS"));
       uiout->table_header (7, ui_left, "is-stmt", _("IS-STMT"));
       uiout->table_header (12, ui_left, "prologue-end", _("PROLOGUE-END"));
+      uiout->table_header (14, ui_left, "epilogue-begin", _("EPILOGUE-BEGIN"));
       uiout->table_body ();
 
       for (int i = 0; i < linetable->nitems; ++i)
 	{
-	  struct linetable_entry *item;
+	  const linetable_entry *item;
 
 	  item = &linetable->item [i];
 	  ui_out_emit_tuple tuple_emitter (uiout, nullptr);
@@ -995,10 +993,13 @@ maintenance_print_one_line_table (struct symtab *symtab, void *data)
 	    uiout->field_signed ("line", item->line);
 	  else
 	    uiout->field_string ("line", _("END"));
-	  uiout->field_core_addr ("address", objfile->arch (),
-				  item->pc);
+	  uiout->field_core_addr ("rel-address", objfile->arch (),
+				  item->pc (objfile));
+	  uiout->field_core_addr ("unrel-address", objfile->arch (),
+				  CORE_ADDR (item->unrelocated_pc ()));
 	  uiout->field_string ("is-stmt", item->is_stmt ? "Y" : "");
 	  uiout->field_string ("prologue-end", item->prologue_end ? "Y" : "");
+	  uiout->field_string ("epilogue-begin", item->epilogue_begin ? "Y" : "");
 	  uiout->text ("\n");
 	}
     }
@@ -1050,9 +1051,9 @@ Usage: mt print symbols [-pc ADDRESS] [--] [OUTFILE]\n\
        mt print symbols [-objfile OBJFILE] [-source SOURCE] [--] [OUTFILE]\n\
 Entries in the full symbol table are dumped to file OUTFILE,\n\
 or the terminal if OUTFILE is unspecified.\n\
-If ADDRESS is provided, dump only the file for that address.\n\
+If ADDRESS is provided, dump only the symbols for the file with code at that address.\n\
 If SOURCE is provided, dump only that file's symbols.\n\
-If OBJFILE is provided, dump only that file's minimal symbols."),
+If OBJFILE is provided, dump only that object file's symbols."),
 	   &maintenanceprintlist);
 
   add_cmd ("msymbols", class_maintenance, maintenance_print_msymbols, _("\

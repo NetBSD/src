@@ -1,5 +1,5 @@
 /* sysdep.h -- handle host dependencies for the BFD library
-   Copyright (C) 1995-2022 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -84,6 +84,22 @@
 #endif
 #ifndef SEEK_CUR
 #define SEEK_CUR 1
+#endif
+
+#ifdef HAVE_MMAP
+#include <sys/mman.h>
+#endif
+
+#ifndef MAP_FILE
+#define MAP_FILE 0
+#endif
+
+#ifndef MAP_FAILED
+#define MAP_FAILED ((void *) -1)
+#endif
+
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS  MAP_ANON
 #endif
 
 #include "filenames.h"

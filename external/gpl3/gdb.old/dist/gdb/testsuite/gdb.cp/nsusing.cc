@@ -10,8 +10,9 @@ namespace N
 
 int marker10 ()
 {
+  int y = 1; // marker10 stop
   using namespace M;
-  int y = x + 1; // marker10 stop
+  y += x;
   using namespace N;
   return y;
 }

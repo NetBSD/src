@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -19,6 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef IGEN_IGEN_H
+#define IGEN_IGEN_H
 
 /* code-generation options: */
 
@@ -249,3 +251,5 @@ do { \
   options.gen.icache_size = 1024; \
   options.warning = warning; \
 } while (0)
+
+#endif /* IGEN_IGEN_H */

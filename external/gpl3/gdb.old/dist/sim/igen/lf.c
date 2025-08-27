@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -20,7 +20,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
@@ -37,7 +37,9 @@ struct _lf
   int line_nr;			/* nr complete lines written, curr line is line_nr+1 */
   int indent;
   int line_blank;
-  const char *name;
+  const char *name;		/* Output name with diagnostics.  */
+  const char *filename;		/* Output filename.  */
+  char *tmpname;		/* Temporary output filename.  */
   const char *program;
   lf_file_references references;
   lf_file_type type;
@@ -56,6 +58,7 @@ lf_open (const char *name,
   new_lf->references = references;
   new_lf->type = type;
   new_lf->name = (real_name == NULL ? name : real_name);
+  new_lf->filename = name;
   new_lf->program = program;
   /* attach to stdout if pipe */
   if (!strcmp (name, "-"))
@@ -65,7 +68,11 @@ lf_open (const char *name,
   else
     {
       /* create a new file */
-      new_lf->stream = fopen (name, "w");
+      char *tmpname = zalloc (strlen (name) + 5);
+      sprintf (tmpname, "%s.tmp", name);
+      new_lf->filename = name;
+      new_lf->tmpname = tmpname;
+      new_lf->stream = fopen (tmpname, "w+");
       if (new_lf->stream == NULL)
 	{
 	  perror (name);
@@ -86,15 +93,73 @@ lf_get_file_type (const lf *file)
 void
 lf_close (lf *file)
 {
-  if (file->stream != stdout)
+  FILE *fp;
+  bool update = true;
+
+  /* If we wrote to stdout, no house keeping needed.  */
+  if (file->stream == stdout)
+    return;
+
+  /* Rename the temp file to the real file if it's changed.  */
+  fp = fopen (file->filename, "r");
+  if (fp != NULL)
     {
-      if (fclose (file->stream))
+      off_t len;
+
+      fseek (fp, 0, SEEK_END);
+      len = ftell (fp);
+
+      if (len == ftell (file->stream))
 	{
-	  perror ("lf_close.fclose");
+	  off_t off;
+	  size_t cnt;
+	  char *oldbuf = zalloc (len);
+	  char *newbuf = zalloc (len);
+
+	  rewind (fp);
+	  off = 0;
+	  while ((cnt = fread (oldbuf + off, 1, len - off, fp)) > 0)
+	    off += cnt;
+	  ASSERT (off == len);
+
+	  rewind (file->stream);
+	  off = 0;
+	  while ((cnt = fread (newbuf + off, 1, len - off, file->stream)) > 0)
+	    off += cnt;
+	  ASSERT (off == len);
+
+	  if (memcmp (oldbuf, newbuf, len) == 0)
+	    update = false;
+	}
+
+      fclose (fp);
+    }
+
+  if (fclose (file->stream))
+    {
+      perror ("lf_close.fclose");
+      exit (1);
+    }
+
+  if (update)
+    {
+      if (rename (file->tmpname, file->filename) != 0)
+	{
+	  perror ("lf_close.rename");
 	  exit (1);
 	}
-      free (file);
     }
+  else
+    {
+      if (remove (file->tmpname) != 0)
+	{
+	  perror ("lf_close.unlink");
+	  exit (1);
+	}
+    }
+
+  free (file->tmpname);
+  free (file);
 }
 
 

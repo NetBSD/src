@@ -16,6 +16,7 @@ int64_t int64_search_buf[100];
 static char *search_buf;
 static int search_buf_size;
 
+int8_t int8_global = 42;
 
 int f2 (int a)
 {

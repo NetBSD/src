@@ -1,6 +1,6 @@
 /* This file is part of SIS (SPARC instruction simulator)
 
-   Copyright (C) 1995-2023 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
    Contributed by Jiri Gaisler, European Space Agency
 
    This program is free software; you can redistribute it and/or modify
@@ -707,7 +707,7 @@ dispatch_instruction(struct pstate *sregs)
 	    case DIVScc:
 		{
 		  int sign;
-		  uint32_t result, remainder;
+		  uint32_t uresult, remainder;
 		  int c0, y31;
 
 		  if (!sparclite) {
@@ -723,7 +723,7 @@ dispatch_instruction(struct pstate *sregs)
 		     Otherwise, calculate remainder + divisor.  */
 		  if (sign == 0)
 		    operand2 = ~operand2 + 1;
-		  result = remainder + operand2;
+		  uresult = remainder + operand2;
 
 		  /* The SPARClite User's Manual is not clear on how
 		     the "carry out" of the above ALU operation is to
@@ -733,24 +733,23 @@ dispatch_instruction(struct pstate *sregs)
 		     even in cases where the divisor is subtracted
 		     from the remainder.  FIXME: get the true story
 		     from Fujitsu. */
-		  c0 = result < (uint32_t) remainder
-		       || result < (uint32_t) operand2;
+		  c0 = uresult < remainder || uresult < (uint32_t) operand2;
 
-		  if (result & 0x80000000)
+		  if (uresult & 0x80000000)
 		    sregs->psr |= PSR_N;
 		  else
 		    sregs->psr &= ~PSR_N;
 
 		  y31 = (sregs->y & 0x80000000) == 0x80000000;
 
-		  if (result == 0 && sign == y31)
+		  if (uresult == 0 && sign == y31)
 		    sregs->psr |= PSR_Z;
 		  else
 		    sregs->psr &= ~PSR_Z;
 
 		  sign = (sign && !y31) || (!c0 && (sign || !y31));
 
-		  if (sign ^ (result >> 31))
+		  if (sign ^ (uresult >> 31))
 		    sregs->psr |= PSR_V;
 		  else
 		    sregs->psr &= ~PSR_V;
@@ -760,7 +759,7 @@ dispatch_instruction(struct pstate *sregs)
 		  else
 		    sregs->psr &= ~PSR_C;
 
-		  sregs->y = result;
+		  sregs->y = uresult;
 
 		  if (rd != 0)
 		    *rdd = (rs1 << 1) | !sign;
@@ -773,21 +772,21 @@ dispatch_instruction(struct pstate *sregs)
 		break;
 	    case SMULCC:
 		{
-		  uint32_t result;
+		  uint32_t uresult;
 
-		  mul64 (rs1, operand2, &sregs->y, &result, 1);
+		  mul64 (rs1, operand2, &sregs->y, &uresult, 1);
 
-		  if (result & 0x80000000)
+		  if (uresult & 0x80000000)
 		    sregs->psr |= PSR_N;
 		  else
 		    sregs->psr &= ~PSR_N;
 
-		  if (result == 0)
+		  if (uresult == 0)
 		    sregs->psr |= PSR_Z;
 		  else
 		    sregs->psr &= ~PSR_Z;
 
-		  *rdd = result;
+		  *rdd = uresult;
 		}
 		break;
 	    case UMUL:
@@ -797,21 +796,21 @@ dispatch_instruction(struct pstate *sregs)
 		break;
 	    case UMULCC:
 		{
-		  uint32_t result;
+		  uint32_t uresult;
 
-		  mul64 (rs1, operand2, &sregs->y, &result, 0);
+		  mul64 (rs1, operand2, &sregs->y, &uresult, 0);
 
-		  if (result & 0x80000000)
+		  if (uresult & 0x80000000)
 		    sregs->psr |= PSR_N;
 		  else
 		    sregs->psr &= ~PSR_N;
 
-		  if (result == 0)
+		  if (uresult == 0)
 		    sregs->psr |= PSR_Z;
 		  else
 		    sregs->psr &= ~PSR_Z;
 
-		  *rdd = result;
+		  *rdd = uresult;
 		}
 		break;
 	    case SDIV:
@@ -831,7 +830,7 @@ dispatch_instruction(struct pstate *sregs)
 		break;
 	    case SDIVCC:
 		{
-		  uint32_t result;
+		  uint32_t uresult;
 
 		  if (sparclite) {
 		     sregs->trap = TRAP_UNIMP;
@@ -843,14 +842,14 @@ dispatch_instruction(struct pstate *sregs)
 		    break;
 		  }
 
-		  div64 (sregs->y, rs1, operand2, &result, 1);
+		  div64 (sregs->y, rs1, operand2, &uresult, 1);
 
-		  if (result & 0x80000000)
+		  if (uresult & 0x80000000)
 		    sregs->psr |= PSR_N;
 		  else
 		    sregs->psr &= ~PSR_N;
 
-		  if (result == 0)
+		  if (uresult == 0)
 		    sregs->psr |= PSR_Z;
 		  else
 		    sregs->psr &= ~PSR_Z;
@@ -858,7 +857,7 @@ dispatch_instruction(struct pstate *sregs)
 		  /* FIXME: should set overflow flag correctly.  */
 		  sregs->psr &= ~(PSR_C | PSR_V);
 
-		  *rdd = result;
+		  *rdd = uresult;
 		}
 		break;
 	    case UDIV:
@@ -878,7 +877,7 @@ dispatch_instruction(struct pstate *sregs)
 		break;
 	    case UDIVCC:
 		{
-		  uint32_t result;
+		  uint32_t uresult;
 
 		  if (sparclite) {
 		     sregs->trap = TRAP_UNIMP;
@@ -890,14 +889,14 @@ dispatch_instruction(struct pstate *sregs)
 		    break;
 		  }
 
-		  div64 (sregs->y, rs1, operand2, &result, 0);
+		  div64 (sregs->y, rs1, operand2, &uresult, 0);
 
-		  if (result & 0x80000000)
+		  if (uresult & 0x80000000)
 		    sregs->psr |= PSR_N;
 		  else
 		    sregs->psr &= ~PSR_N;
 
-		  if (result == 0)
+		  if (uresult == 0)
 		    sregs->psr |= PSR_Z;
 		  else
 		    sregs->psr &= ~PSR_Z;
@@ -905,7 +904,7 @@ dispatch_instruction(struct pstate *sregs)
 		  /* FIXME: should set overflow flag correctly.  */
 		  sregs->psr &= ~(PSR_C | PSR_V);
 
-		  *rdd = result;
+		  *rdd = uresult;
 		}
 		break;
 	    case IXNOR:
@@ -1168,7 +1167,7 @@ dispatch_instruction(struct pstate *sregs)
 
 	    case SCAN:
 		{
-		  uint32_t result, mask;
+		  uint32_t uresult, mask;
 		  int i;
 
 		  if (!sparclite) {
@@ -1176,12 +1175,12 @@ dispatch_instruction(struct pstate *sregs)
                      break;
 		  }
 		  mask = (operand2 & 0x80000000) | (operand2 >> 1);
-		  result = rs1 ^ mask;
+		  uresult = rs1 ^ mask;
 
 		  for (i = 0; i < 32; i++) {
-		    if (result & 0x80000000)
+		    if (uresult & 0x80000000)
 		      break;
-		    result <<= 1;
+		    uresult <<= 1;
 		  }
 
 		  *rdd = i == 32 ? 63 : i;
@@ -1220,6 +1219,7 @@ dispatch_instruction(struct pstate *sregs)
 	switch (op3) {
 	case LDDA:
 	    if (!chk_asi(sregs, &asi, op3)) break;
+	    ATTRIBUTE_FALLTHROUGH;
 	case LDD:
 	    if (address & 0x7) {
 		sregs->trap = TRAP_UNALI;
@@ -1250,6 +1250,7 @@ dispatch_instruction(struct pstate *sregs)
 
 	case LDA:
 	    if (!chk_asi(sregs, &asi, op3)) break;
+	    ATTRIBUTE_FALLTHROUGH;
 	case LD:
 	    if (address & 0x3) {
 		sregs->trap = TRAP_UNALI;
@@ -1265,6 +1266,7 @@ dispatch_instruction(struct pstate *sregs)
 	    break;
 	case LDSTUBA:
 	    if (!chk_asi(sregs, &asi, op3)) break;
+	    ATTRIBUTE_FALLTHROUGH;
 	case LDSTUB:
 	    mexc = memory_read(asi, address, &data, 0, &ws);
 	    sregs->hold += ws;
@@ -1288,6 +1290,7 @@ dispatch_instruction(struct pstate *sregs)
 	case LDSBA:
 	case LDUBA:
 	    if (!chk_asi(sregs, &asi, op3)) break;
+	    ATTRIBUTE_FALLTHROUGH;
 	case LDSB:
 	case LDUB:
 	    mexc = memory_read(asi, address, &data, 0, &ws);
@@ -1305,6 +1308,7 @@ dispatch_instruction(struct pstate *sregs)
 	case LDSHA:
 	case LDUHA:
 	    if (!chk_asi(sregs, &asi, op3)) break;
+	    ATTRIBUTE_FALLTHROUGH;
 	case LDSH:
 	case LDUH:
 	    if (address & 0x1) {
@@ -1426,6 +1430,7 @@ dispatch_instruction(struct pstate *sregs)
 
 	case STA:
 	    if (!chk_asi(sregs, &asi, op3)) break;
+	    ATTRIBUTE_FALLTHROUGH;
 	case ST:
 	    if (address & 0x3) {
 		sregs->trap = TRAP_UNALI;
@@ -1439,6 +1444,7 @@ dispatch_instruction(struct pstate *sregs)
 	    break;
 	case STBA:
 	    if (!chk_asi(sregs, &asi, op3)) break;
+	    ATTRIBUTE_FALLTHROUGH;
 	case STB:
 	    mexc = memory_write(asi, address, rdd, 0, &ws);
 	    sregs->hold += ws;
@@ -1448,6 +1454,7 @@ dispatch_instruction(struct pstate *sregs)
 	    break;
 	case STDA:
 	    if (!chk_asi(sregs, &asi, op3)) break;
+	    ATTRIBUTE_FALLTHROUGH;
 	case STD:
 	    if (address & 0x7) {
 		sregs->trap = TRAP_UNALI;
@@ -1505,6 +1512,7 @@ dispatch_instruction(struct pstate *sregs)
 	    break;
 	case STHA:
 	    if (!chk_asi(sregs, &asi, op3)) break;
+	    ATTRIBUTE_FALLTHROUGH;
 	case STH:
 	    if (address & 0x1) {
 		sregs->trap = TRAP_UNALI;
@@ -1561,6 +1569,7 @@ dispatch_instruction(struct pstate *sregs)
 	    break;
 	case SWAPA:
 	    if (!chk_asi(sregs, &asi, op3)) break;
+	    ATTRIBUTE_FALLTHROUGH;
 	case SWAP:
 	    if (address & 0x3) {
 		sregs->trap = TRAP_UNALI;

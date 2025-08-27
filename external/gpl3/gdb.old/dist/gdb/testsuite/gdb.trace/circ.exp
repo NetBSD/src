@@ -1,4 +1,4 @@
-# Copyright 1998-2023 Free Software Foundation, Inc.
+# Copyright 1998-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -115,45 +115,59 @@ gdb_test "show circular-trace-buffer" \
     "Target's use of circular trace buffer is on." \
     "show circular-trace-buffer (on)"
 
+# Use 'set trace-buffer-size' to change the trace buffer size to
+# REQUIRED_SIZE.  Return -1 if the current target doesn't support
+# adjusting the trace buffer size.  Return 0 if the adjustment failed
+# for some other reason.  Return 1 if the trace buffer size was
+# correctly adjusted.
+#
+# If this proc returns -1 then a suitable call to the unsupported proc
+# will have already been made.
+proc set_trace_buffer_size { required_size } {
+    set test_passed false
+    gdb_test_multiple "set trace-buffer-size $required_size" "" {
+	-re -wrap ".*Target does not support this command.*" {
+	    unsupported "target does not support changing trace buffer size"
+	    return -1
+	}
+	-re -wrap "" {
+	    pass $gdb_test_name
+	    set test_passed true
+	}
+    }
+
+    if { !$test_passed } {
+	return 0
+    }
+
+    set test_passed false
+    gdb_test_multiple "tstatus" "check trace-buffer-size is $required_size" {
+	-re -wrap ".*Trace buffer has ($::decimal) bytes of ($::decimal) bytes free.*" {
+	    set total_size $expect_out(2,string)
+	    if { $required_size != $total_size } {
+		unsupported "target does not support changing trace buffer size"
+		return -1
+	    }
+	    pass $gdb_test_name
+	    set test_passed true
+	}
+    }
+
+    if { !$test_passed } {
+	return 0
+    }
+
+    return 1
+}
+
 # Check if changing the trace buffer size is supported.  This step is
 # repeated twice.  This helps in case the trace buffer size is 100.
-set test_size 100
-set test "change buffer size to $test_size"
-gdb_test_multiple "set trace-buffer-size $test_size" $test {
-    -re ".*Target does not support this command.*$gdb_prompt $" {
-	unsupported "target does not support changing trace buffer size"
-	return 1
-    }
-    -re "$gdb_prompt $" {
-	pass $test
-    }
+if {[set_trace_buffer_size 100] < 0} {
+    return
 }
 
-set test "check whether setting trace buffer size is supported"
-gdb_test_multiple "tstatus" $test {
-    -re ".*Trace buffer has ($decimal) bytes of ($decimal) bytes free.*$gdb_prompt $" {
-	set total_size $expect_out(2,string)
-	if { $test_size != $total_size } {
-	    unsupported "target does not support changing trace buffer size"
-	    return 1
-	}
-	pass $test
-    }
-}
-
-set test_size 400
-gdb_test_no_output "set trace-buffer-size $test_size" \
-    "change buffer size to $test_size"
-
-gdb_test_multiple "tstatus" $test {
-    -re ".*Trace buffer has ($decimal) bytes of ($decimal) bytes free.*$gdb_prompt $" {
-	set total_size $expect_out(2,string)
-	if { $test_size != $total_size } {
-	    unsupported "target does not support changing trace buffer size"
-	    return 1
-	}
-	pass $test
-    }
+if {[set_trace_buffer_size 400] < 0} {
+    return
 }
 
 gdb_test_no_output "set circular-trace-buffer off" \

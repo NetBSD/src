@@ -1,4 +1,4 @@
-# Copyright 1992-2023 Free Software Foundation, Inc.
+# Copyright 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 set nl		"\[\r\n\]+"
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests
 
 load_lib "cp-support.exp"
 
@@ -228,7 +228,7 @@ proc test_virtual_calls {} {
 proc make_one_vtable_result {name args} {
     global hex
 
-    set nls "\[\r\n\]+"
+    set nls "\r\n"
 
     set result "vtable for '${name}' @ $hex .subobject @ $hex.:$nls"
     set count 0
@@ -237,7 +237,18 @@ proc make_one_vtable_result {name args} {
 	incr count
     }
 
+    # Remove the last instance of $nls.
+    if {$count > 0} {
+	set result [string range $result 0 end-[string length $nls]]
+    }
+
+    verbose -log "APB: result: '$result'"
+
     return $result
+}
+
+proc vtable_seq { args } {
+    return [join "\r\n\r\n" $args]
 }
 
 # Test "info vtbl".
@@ -255,12 +266,12 @@ proc test_info_vtbl {} {
     set vt_D2 [make_one_vtable_result D "non-virtual thunk to E::vg" D::vd]
     set vt_E [make_one_vtable_result E E::f E::vg E::vv]
 
-    gdb_test "info vtbl a" "${vt_A}${vt_V}"
-    gdb_test "info vtbl b" "${vt_B}${vt_V}"
+    gdb_test "info vtbl a" [vtable_seq ${vt_A} ${vt_V}]
+    gdb_test "info vtbl b" [vtable_seq ${vt_B} ${vt_V}]
     gdb_test "info vtbl c" "${vt_V}"
-    gdb_test "info vtbl d" "${vt_D}${vt_V}"
-    gdb_test "info vtbl e" "${vt_E}${vt_D2}${vt_V2}"
-    gdb_test "info vtbl pEe" "${vt_E}${vt_D2}${vt_V2}"
+    gdb_test "info vtbl d" [vtable_seq ${vt_D} ${vt_V}]
+    gdb_test "info vtbl e" [vtable_seq ${vt_E} ${vt_D2} ${vt_V2}]
+    gdb_test "info vtbl pEe" [vtable_seq ${vt_E} ${vt_D2} ${vt_V2}]
 
     gdb_test "info vtbl" "Argument required.*"
     gdb_test "info vtbl va" \

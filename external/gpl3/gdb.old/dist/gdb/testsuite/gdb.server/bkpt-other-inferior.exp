@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,14 +21,13 @@ load_lib gdbserver-support.exp
 
 standard_testfile server.c
 
-if { [skip_gdbserver_tests] } {
-    return 0
-}
+require allow_gdbserver_tests
 
 if { [prepare_for_testing "failed to prepare" ${binfile} "${srcfile}" \
 	  {debug pthreads}] } {
     return
 }
+set host_binfile [gdb_remote_download host $binfile]
 
 # Make sure we're disconnected, in case we're testing with an
 # extended-remote board, therefore already connected.
@@ -41,7 +40,7 @@ gdb_test "add-inferior" "Added inferior 2" \
     "add inferior 2"
 gdb_test "inferior 2" "Switching to inferior 2.*" \
     "switch to inferior 2"
-gdb_test "file ${binfile}" ".*" "load file in inferior 2"
+gdb_test "file ${host_binfile}" ".*" "load file in inferior 2"
 
 set target_exec [gdbserver_download_current_prog]
 

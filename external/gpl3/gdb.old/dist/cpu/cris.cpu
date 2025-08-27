@@ -550,7 +550,8 @@
 	 (condn condc)
 	 ((eq tmpcond condn) (set condres (.sym condc -condition))))
 	(.iota 16)
-	cris-condition-codes)))
+	cris-condition-codes))
+      (else (error "Unknown condition code")))
      condres)
 )
 
@@ -2598,10 +2599,11 @@
      "move ${Ps},${Rd-sfield}"
      (+ Ps RFIX_MOVE_S_R MODE_REGISTER SIZE_FIXED Rd-sfield)
      (sequence
-       ((SI grno) (SI prno) (SI newval))
+       ((SI prno) (SI newval))
        (set prno (regno Ps))
-       ; CGEN-FIXME: Can't use the following and then "grno" below because
-       ; CGEN will emit a "tmp_grno" *also* in decodev32.c:crisv32f_decode
+       ; CGEN-FIXME: Can't declare (SI grno), then the following, and then
+       ; "grno" below because CGEN will emit a "tmp_grno" *also* in
+       ; decodev32.c:crisv32f_decode.  So inline RD-sfield below.
        ; (set grno (regno Rd-sfield))
        (set newval Ps)
        (.splice
@@ -3666,10 +3668,10 @@
   "Perform word-wise swap within each dword"
   (sequence
     SI
-    ((SI tmpb))
-    (set tmpb x)
-    (or (and (sll tmpb 16) #xffff0000)
-	(and (srl tmpb 16) #xffff)))
+    ((SI tmpw))
+    (set tmpw x)
+    (or (and (sll tmpw 16) #xffff0000)
+	(and (srl tmpw 16) #xffff)))
 )
 
 (define-pmacro (swap-_ x)
@@ -3709,7 +3711,8 @@
 	((eq tmpcode x-swapcode)
 	 (set tmpres ((.sym swap- x-swap) tmpval))))
        (.iota 16)
-       (.splice _ (.unsplice cris-swap-codes)))))
+       (.splice _ (.unsplice cris-swap-codes))))
+     (else (error "Unknown swapcode")))
     tmpres)
 )
 
@@ -3838,7 +3841,8 @@
  (+ Rd MODE_REGISTER RFIX_BTST SIZE_FIXED Rs)
  (sequence
    ((SI tmpd) (SI cnt))
-   (set tmpd (sll Rd (sub 31 (and Rs 31))))
+   (set cnt (sub 31 (and Rs 31)))
+   (set tmpd (sll Rd cnt))
    (setf-move SI tmpd))
 )
 

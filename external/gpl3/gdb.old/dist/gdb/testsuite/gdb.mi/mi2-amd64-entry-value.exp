@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,11 +16,6 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi2"
 
-gdb_exit
-if [mi_gdb_start] {
-    return
-}
-
 standard_testfile .s
 set opts {}
 
@@ -28,19 +23,17 @@ if [info exists COMPILE] {
     # make check RUNTESTFLAGS="gdb.mi/mi2-amd64-entry-value.exp COMPILE=1"
     set srcfile ${testfile}.c
     lappend opts debug optimize=-O2
-} elseif { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
-    verbose "Skipping mi2-amd64-entry-value."
-    return
+} else {
+    require is_x86_64_m64_target
 }
 
-set executable ${testfile}
-
-if [build_executable ${testfile}.exp ${executable} ${srcfile} $opts] {
+if [build_executable ${testfile}.exp ${binfile} ${srcfile} $opts] {
     return -1
 }
 
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load ${binfile}
+if {[mi_clean_restart $binfile]} {
+    return
+}
 
 foreach name {different breakhere_different breakhere_validity breakhere_invalid} {
     mi_create_breakpoint $name "break $name"

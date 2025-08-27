@@ -1,6 +1,6 @@
 # Test `info auxv' and related functionality.
 
-# Copyright (C) 1992-2023 Free Software Foundation, Inc.
+# Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,11 +18,7 @@
 # This file is based on corefile.exp which was written by Fred
 # Fish. (fnf@cygnus.com)
 
-if { ! [istarget "*-*-linux*"] && ! [istarget "*-*-solaris*"] } {
-    verbose "Skipping auxv.exp because of lack of support."
-    return
-}
-
+require {is_any_target "*-*-linux*" "*-*-solaris*"}
 
 standard_testfile .c
 

@@ -1,5 +1,5 @@
 /* bfd back-end for mips support
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -108,6 +108,7 @@ enum
   I_mipsocteon3,
   I_xlr,
   I_interaptiv_mr2,
+  I_allegrex,
   I_micromips
 };
 
@@ -163,6 +164,7 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (64, 64, bfd_mach_mips_xlr, "mips:xlr",	   false, NN(I_xlr)),
   N (32, 32, bfd_mach_mips_interaptiv_mr2, "mips:interaptiv-mr2", false,
      NN(I_interaptiv_mr2)),
+  N (32, 32, bfd_mach_mips_allegrex, "mips:allegrex", false, NN(I_allegrex)),
   N (64, 64, bfd_mach_mips_micromips, "mips:micromips", false, NULL)
 };
 

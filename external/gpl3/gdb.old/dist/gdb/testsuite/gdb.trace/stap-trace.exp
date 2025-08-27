@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,13 +19,10 @@ standard_testfile
 set executable ""
 
 set ws "\[\r\n\t \]+"
-set cr "\[\r\n\]+"
 
 # Only x86 and x86_64 targets are supported for now.
 
-if { ![istarget "x86_64-*"] && ![istarget "i?86-*"] } {
-    return
-}
+require {is_any_target "x86_64-*" "i?86-*"}
 
 proc compile_stap_bin {exec_name {arg ""}} {
     global srcfile
@@ -75,8 +72,7 @@ proc run_trace_experiment { test_probe msg } {
     gdb_test "continue" \
 	    "Continuing.*Breakpoint \[0-9\]+.*" \
 	    "collect $msg: run trace experiment"
-    gdb_test "tstop" \
-	    "\[\r\n\]+" \
+    gdb_test_no_output "tstop" \
 	    "collect $msg: stop trace experiment"
     gdb_test "tfind start" \
 	    "#0 .*" \
@@ -85,7 +81,6 @@ proc run_trace_experiment { test_probe msg } {
 
 proc gdb_collect_probe_arg { msg probe val_arg0 } {
     global gdb_prompt
-    global cr
 
     prepare_for_trace_test
 
@@ -100,7 +95,7 @@ proc gdb_collect_probe_arg { msg probe val_arg0 } {
     run_trace_experiment $msg $probe
 
     gdb_test "print \$_probe_arg0" \
-	    "\\$\[0-9\]+ = $val_arg0$cr" \
+	    "\\$\[0-9\]+ = $val_arg0" \
 	    "collect $msg: collected probe arg0"
 }
 
@@ -117,6 +112,7 @@ if { ![runto_main] } {
 
 if { ![gdb_target_supports_trace] } {
     # Test cannot run on this target.
+    unsupported "test requires trace"
     return 1
 }
 

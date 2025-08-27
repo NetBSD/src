@@ -1,5 +1,5 @@
 /* List lines of source files for GDB, the GNU debugger.
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,14 +16,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
 #include "symtab.h"
 #include "expression.h"
 #include "language.h"
 #include "command.h"
 #include "source.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "frame.h"
 #include "value.h"
 #include "gdbsupport/filestuff.h"
@@ -37,7 +36,7 @@
 #include "annotate.h"
 #include "gdbtypes.h"
 #include "linespec.h"
-#include "filenames.h"		/* for DOSish file names */
+#include "filenames.h"
 #include "completer.h"
 #include "ui-out.h"
 #include "readline/tilde.h"
@@ -51,6 +50,7 @@
 #include "build-id.h"
 #include "debuginfod-support.h"
 #include "gdbsupport/buildargv.h"
+#include "interps.h"
 
 #define OPEN_MODE (O_RDONLY | O_BINARY)
 #define FDOPEN_MODE FOPEN_RB
@@ -266,7 +266,7 @@ set_default_source_symtab_and_line (void)
   /* Pull in a current source symtab if necessary.  */
   current_source_location *loc = get_source_location (current_program_space);
   if (loc->symtab () == nullptr)
-    select_source_symtab (0);
+    select_source_symtab ();
 }
 
 /* Return the current default file for listing and next line to list
@@ -307,24 +307,17 @@ clear_current_source_symtab_and_line (void)
 /* See source.h.  */
 
 void
-select_source_symtab (struct symtab *s)
+select_source_symtab ()
 {
-  if (s)
-    {
-      current_source_location *loc
-	= get_source_location (s->compunit ()->objfile ()->pspace);
-      loc->set (s, 1);
-      return;
-    }
-
   current_source_location *loc = get_source_location (current_program_space);
   if (loc->symtab () != nullptr)
     return;
 
   /* Make the default place to list be the function `main'
      if one exists.  */
-  block_symbol bsym = lookup_symbol (main_name (), 0, VAR_DOMAIN, 0);
-  if (bsym.symbol != nullptr && bsym.symbol->aclass () == LOC_BLOCK)
+  block_symbol bsym = lookup_symbol (main_name (), nullptr,
+				     SEARCH_FUNCTION_DOMAIN, nullptr);
+  if (bsym.symbol != nullptr)
     {
       symtab_and_line sal = find_function_start_sal (bsym.symbol, true);
       if (sal.symtab == NULL)
@@ -363,7 +356,7 @@ select_source_symtab (struct symtab *s)
 
   for (objfile *objfile : current_program_space->objfiles ())
     {
-      s = objfile->find_last_source_symtab ();
+      symtab *s = objfile->find_last_source_symtab ();
       if (s)
 	new_symtab = s;
     }
@@ -421,33 +414,11 @@ show_directories_command (struct ui_file *file, int from_tty,
 /* See source.h.  */
 
 void
-forget_cached_source_info_for_objfile (struct objfile *objfile)
-{
-  for (compunit_symtab *cu : objfile->compunits ())
-    {
-      for (symtab *s : cu->filetabs ())
-	{
-	  if (s->fullname != NULL)
-	    {
-	      xfree (s->fullname);
-	      s->fullname = NULL;
-	    }
-	}
-    }
-
-  objfile->forget_cached_source_info ();
-}
-
-/* See source.h.  */
-
-void
 forget_cached_source_info (void)
 {
   for (struct program_space *pspace : program_spaces)
     for (objfile *objfile : pspace->objfiles ())
-      {
-	forget_cached_source_info_for_objfile (objfile);
-      }
+      objfile->forget_cached_source_info ();
 
   g_source_cache.clear ();
   last_source_visited = NULL;
@@ -484,8 +455,8 @@ directory_command (const char *dirname, int from_tty)
     }
   if (value_changed)
     {
-      gdb::observers::command_param_changed.notify ("directories",
-						    source_path.c_str ());
+      interps_notify_param_changed ("directories", source_path.c_str ());
+
       if (from_tty)
 	show_directories_1 (gdb_stdout, (char *) 0, from_tty);
     }
@@ -588,7 +559,7 @@ add_path (const char *dirname, char **which_path, int parse_separators)
 	}
 
       if (name[0] == '\0')
-        goto skip_dup;
+	goto skip_dup;
       if (name[0] == '~')
 	new_name_holder
 	  = gdb::unique_xmalloc_ptr<char[]> (tilde_expand (name)).get ();
@@ -616,14 +587,10 @@ add_path (const char *dirname, char **which_path, int parse_separators)
 	     a directory/etc, then having them in the path should be
 	     harmless.  */
 	  if (stat (name, &st) < 0)
-	    {
-	      int save_errno = errno;
-
-	      gdb_printf (gdb_stderr, "Warning: ");
-	      print_sys_errmsg (name, save_errno);
-	    }
+	    warning_filename_and_errno (name, errno);
 	  else if ((st.st_mode & S_IFMT) != S_IFDIR)
-	    warning (_("%s is not a directory."), name);
+	    warning (_("%ps is not a directory."),
+		     styled_string (file_name_style.style (), name));
 	}
 
     append:
@@ -1069,7 +1036,7 @@ find_and_open_source (const char *filename,
      the attempt to read this source file failed.  GDB will then display
      the filename and line number instead.  */
   if (!source_open)
-    return scoped_fd (-1);
+    return scoped_fd (-ECANCELED);
 
   /* Quick way out if we already know its full name.  */
   if (*fullname)
@@ -1160,11 +1127,15 @@ find_and_open_source (const char *filename,
 			OPEN_MODE, fullname);
     }
 
+  /* If the file wasn't found, then openp will have set errno accordingly.  */
+  if (result < 0)
+    result = -errno;
+
   return scoped_fd (result);
 }
 
 /* Open a source file given a symtab S.  Returns a file descriptor or
-   negative number for error.  
+   negative errno for error.
    
    This function is a convenience function to find_and_open_source.  */
 
@@ -1172,7 +1143,7 @@ scoped_fd
 open_source_file (struct symtab *s)
 {
   if (!s)
-    return scoped_fd (-1);
+    return scoped_fd (-EINVAL);
 
   gdb::unique_xmalloc_ptr<char> fullname (s->fullname);
   s->fullname = NULL;
@@ -1200,10 +1171,21 @@ open_source_file (struct symtab *s)
 
 	  /* Query debuginfod for the source file.  */
 	  if (build_id != nullptr && !srcpath.empty ())
-	    fd = debuginfod_source_query (build_id->data,
-					  build_id->size,
-					  srcpath.c_str (),
-					  &fullname);
+	    {
+	      scoped_fd query_fd
+		= debuginfod_source_query (build_id->data,
+					   build_id->size,
+					   srcpath.c_str (),
+					   &fullname);
+
+	      /* Don't return a negative errno from debuginfod_source_query.
+		 It handles the reporting of its own errors.  */
+	      if (query_fd.get () >= 0)
+		{
+		  s->fullname = fullname.release ();
+		  return query_fd;
+		}
+	    }
 	}
     }
 
@@ -1306,6 +1288,7 @@ print_source_lines_base (struct symtab *s, int line, int stopline,
 			 print_source_lines_flags flags)
 {
   bool noprint = false;
+  int errcode = ENOENT;
   int nlines = stopline - line;
   struct ui_out *uiout = current_uiout;
 
@@ -1336,7 +1319,10 @@ print_source_lines_base (struct symtab *s, int line, int stopline,
 	  scoped_fd desc = open_source_file (s);
 	  last_source_error = desc.get () < 0;
 	  if (last_source_error)
-	    noprint = true;
+	    {
+	      noprint = true;
+	      errcode = -desc.get ();
+	    }
 	}
     }
   else
@@ -1350,36 +1336,25 @@ print_source_lines_base (struct symtab *s, int line, int stopline,
       if (!(flags & PRINT_SOURCE_LINES_NOERROR))
 	{
 	  const char *filename = symtab_to_filename_for_display (s);
-	  int len = strlen (filename) + 100;
-	  char *name = (char *) alloca (len);
-
-	  xsnprintf (name, len, "%d\t%s", line, filename);
-	  print_sys_errmsg (name, errno);
+	  warning (_("%d\t%ps: %s"), line,
+		   styled_string (file_name_style.style (), filename),
+		   safe_strerror (errcode));
 	}
-      else
+      else if (uiout->is_mi_like_p () || uiout->test_flags (ui_source_list))
 	{
+	  /* CLI expects only the "file" field.  MI expects both
+	     fields.  ui_source_list is set only for CLI, not for
+	     TUI.  */
+
 	  uiout->field_signed ("line", line);
 	  uiout->text ("\tin ");
 
-	  /* CLI expects only the "file" field.  TUI expects only the
-	     "fullname" field (and TUI does break if "file" is printed).
-	     MI expects both fields.  ui_source_list is set only for CLI,
-	     not for TUI.  */
-	  if (uiout->is_mi_like_p () || uiout->test_flags (ui_source_list))
-	    uiout->field_string ("file", symtab_to_filename_for_display (s),
-				 file_name_style.style ());
-	  if (uiout->is_mi_like_p () || !uiout->test_flags (ui_source_list))
+	  uiout->field_string ("file", symtab_to_filename_for_display (s),
+			       file_name_style.style ());
+	  if (uiout->is_mi_like_p ())
 	    {
 	      const char *s_fullname = symtab_to_fullname (s);
-	      char *local_fullname;
-
-	      /* ui_out_field_string may free S_FULLNAME by calling
-		 open_source_file for it again.  See e.g.,
-		 tui_field_string->tui_show_source.  */
-	      local_fullname = (char *) alloca (strlen (s_fullname) + 1);
-	      strcpy (local_fullname, s_fullname);
-
-	      uiout->field_string ("fullname", local_fullname);
+	      uiout->field_string ("fullname", s_fullname);
 	    }
 
 	  uiout->text ("\n");
@@ -1492,6 +1467,22 @@ print_source_lines (struct symtab *s, source_lines_range line_range,
 {
   print_source_lines_base (s, line_range.startline (),
 			   line_range.stopline (), flags);
+}
+
+/* See source.h.  */
+
+int
+last_symtab_line (struct symtab *s)
+{
+  const std::vector<off_t> *offsets;
+
+  /* Try to get the offsets for the start of each line.  */
+  if (!g_source_cache.get_line_charpos (s, &offsets))
+    return false;
+  if (offsets == nullptr)
+    return false;
+
+  return offsets->size ();
 }
 
 
@@ -1620,14 +1611,15 @@ search_command_helper (const char *regex, int from_tty, bool forward)
   current_source_location *loc
     = get_source_location (current_program_space);
   if (loc->symtab () == nullptr)
-    select_source_symtab (0);
+    select_source_symtab ();
 
   if (!source_open)
     error (_("source code access disabled"));
 
   scoped_fd desc (open_source_file (loc->symtab ()));
   if (desc.get () < 0)
-    perror_with_name (symtab_to_filename_for_display (loc->symtab ()));
+    perror_with_name (symtab_to_filename_for_display (loc->symtab ()),
+		      -desc.get ());
 
   int line = (forward
 	      ? last_line_listed + 1
@@ -2023,12 +2015,12 @@ By default, relative filenames are displayed."),
 			&setlist, &showlist);
 
   add_prefix_cmd ("source", no_class, set_source,
-                  _("Generic command for setting how sources are handled."),
-                  &setsourcelist, 0, &setlist);
+		  _("Generic command for setting how sources are handled."),
+		  &setsourcelist, 0, &setlist);
 
   add_prefix_cmd ("source", no_class, show_source,
-                  _("Generic command for showing source settings."),
-                  &showsourcelist, 0, &showlist);
+		  _("Generic command for showing source settings."),
+		  &showsourcelist, 0, &showlist);
 
   add_setshow_boolean_cmd ("open", class_files, &source_open, _("\
 Set whether GDB should open source files."), _("\
@@ -2040,7 +2032,7 @@ When this option is off GDB will not try to open source files, instead\n\
 GDB will print the file and line number that would have been displayed.\n\
 This can be useful if access to source code files is slow, for example\n\
 due to the source being located over a slow network connection."),
-                           NULL,
-                           show_source_open,
-                           &setsourcelist, &showsourcelist);
+			   NULL,
+			   show_source_open,
+			   &setsourcelist, &showsourcelist);
 }

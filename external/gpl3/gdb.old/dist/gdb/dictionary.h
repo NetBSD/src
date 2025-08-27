@@ -1,6 +1,6 @@
 /* Routines for name->symbol lookups in GDB.
    
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    Contributed by David Carlton <carlton@bactrian.org> and by Kealia,
    Inc.
@@ -159,21 +159,53 @@ extern struct symbol *
 extern struct symbol *mdict_iter_match_next (const lookup_name_info &name,
 					     struct mdict_iterator *miterator);
 
-/* Return some notion of the size of the multidictionary: the number of
-   symbols if we have that, the number of hash buckets otherwise.  */
+/* Return the number of symbols in multidictionary MDICT.  */
 
 extern int mdict_size (const struct multidictionary *mdict);
 
-/* Macro to loop through all symbols in a dictionary DICT, in no
-   particular order.  ITER is a struct dict_iterator (NOTE: __not__ a
-   struct dict_iterator *), and SYM points to the current symbol.
+/* An iterator that wraps an mdict_iterator.  The naming here is
+   unfortunate, but mdict_iterator was named before gdb switched to
+   C++.  */
+struct mdict_iterator_wrapper
+{
+  typedef mdict_iterator_wrapper self_type;
+  typedef struct symbol *value_type;
 
-   It's implemented as a single loop, so you can terminate the loop
-   early by a break if you desire.  */
+  explicit mdict_iterator_wrapper (const struct multidictionary *mdict)
+    : m_sym (mdict_iterator_first (mdict, &m_iter))
+  {
+  }
 
-#define ALL_DICT_SYMBOLS(dict, iter, sym)			\
-	for ((sym) = mdict_iterator_first ((dict), &(iter));	\
-	     (sym);						\
-	     (sym) = mdict_iterator_next (&(iter)))
+  mdict_iterator_wrapper ()
+    : m_sym (nullptr)
+  {
+  }
+
+  value_type operator* () const
+  {
+    return m_sym;
+  }
+
+  bool operator== (const self_type &other) const
+  {
+    return m_sym == other.m_sym;
+  }
+
+  bool operator!= (const self_type &other) const
+  {
+    return m_sym != other.m_sym;
+  }
+
+  self_type &operator++ ()
+  {
+    m_sym = mdict_iterator_next (&m_iter);
+    return *this;
+  }
+
+private:
+
+  struct symbol *m_sym;
+  struct mdict_iterator m_iter;
+};
 
 #endif /* DICTIONARY_H */

@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2023 Free Software Foundation, Inc.
+# Copyright (C) 2002-2024 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,11 +21,7 @@
 # This file uses altivec-regs.c for input.
 #
 
-
-if {![istarget "powerpc*"] || [skip_altivec_tests]} {
-    verbose "Skipping altivec register tests."
-    return
-}
+require allow_altivec_tests
 
 standard_testfile
 
@@ -55,6 +51,9 @@ gdb_load ${binfile}
 if {![runto_main]} {
     return 0
 }
+
+gdb_breakpoint [gdb_get_line_number "start here"]
+gdb_continue_to_breakpoint "start here"
 
 gdb_test "set print frame-arguments all"
 
@@ -123,7 +122,7 @@ send_gdb "info vector\n"
 gdb_expect_list "info vector" ".*$gdb_prompt $" $pattern_list
 
 gdb_test "break vector_fun" \
- "Breakpoint 2 at.*altivec-regs.c, line \[0-9\]+\\." \
+ "Breakpoint $decimal at.*altivec-regs.c, line \[0-9\]+\\." \
  "set breakpoint at vector_fun"
 
 # Actually it is nuch easier to see these results printed in hex.
@@ -132,7 +131,7 @@ gdb_test "set output-radix 16" \
   "set output radix to hex"
 
 gdb_test "continue" \
-  "Breakpoint 2, vector_fun .a=.0xfefefefe, 0xfefefefe, 0xfefefefe, 0xfefefefe., b=.0x1010101, 0x1010101, 0x1010101, 0x1010101.*altivec-regs.c.*vec_splat_u8.2..;" \
+  "Breakpoint $decimal, vector_fun .a=.0xfefefefe, 0xfefefefe, 0xfefefefe, 0xfefefefe., b=.0x1010101, 0x1010101, 0x1010101, 0x1010101.*altivec-regs.c.*vec_splat_u8.2..;" \
   "continue to vector_fun"
 
 # Do a next over the assignment to vector 'a'. 

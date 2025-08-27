@@ -1,5 +1,5 @@
 /* xtensa-dis.c.  Disassembly functions for Xtensa.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
    Contributed by Bob Wilson at Tensilica, Inc. (bwilson@tensilica.com)
 
    This file is part of the GNU opcodes library.
@@ -238,24 +238,28 @@ print_xtensa_operand (bfd_vma memaddr,
       else
 	{
 	  if ((signed_operand_val > -256) && (signed_operand_val < 256))
-	    (*info->fprintf_func) (info->stream, "%d", signed_operand_val);
+	    (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					  "%d", signed_operand_val);
 	  else
-	    (*info->fprintf_func) (info->stream, "0x%x", signed_operand_val);
+	    (*info->fprintf_styled_func) (info->stream, dis_style_immediate,
+					  "0x%x", signed_operand_val);
 	}
     }
   else
     {
       int i = 1;
       xtensa_regfile opnd_rf = xtensa_operand_regfile (isa, opc, opnd);
-      (*info->fprintf_func) (info->stream, "%s%u",
-			     xtensa_regfile_shortname (isa, opnd_rf),
-			     operand_val);
+      (*info->fprintf_styled_func) (info->stream, dis_style_register,
+				    "%s%u",
+				    xtensa_regfile_shortname (isa, opnd_rf),
+				    operand_val);
       while (i < xtensa_operand_num_regs (isa, opc, opnd))
 	{
 	  operand_val++;
-	  (*info->fprintf_func) (info->stream, ":%s%u",
-				 xtensa_regfile_shortname (isa, opnd_rf),
-				 operand_val);
+	  (*info->fprintf_styled_func) (info->stream, dis_style_register,
+					":%s%u",
+					xtensa_regfile_shortname (isa, opnd_rf),
+					operand_val);
 	  i++;
 	}
     }
@@ -279,6 +283,8 @@ print_insn_xtensa (bfd_vma memaddr, struct disassemble_info *info)
   static xtensa_insnbuf slot_buffer = NULL;
   int first, first_slot, valid_insn;
   property_table_entry *insn_block;
+  enum dis_insn_type insn_type;
+  bfd_vma target;
 
   if (!xtensa_default_isa)
     xtensa_default_isa = xtensa_isa_init (0, 0);
@@ -404,7 +410,13 @@ print_insn_xtensa (bfd_vma memaddr, struct disassemble_info *info)
 	}
       else
 	{
-	  (*info->fprintf_func) (info->stream, ".byte %#02x", priv.byte_buf[0]);
+	  (*info->fprintf_styled_func) (info->stream,
+					dis_style_assembler_directive,
+					".byte");
+	  (*info->fprintf_func) (info->stream, "\t");
+	  (*info->fprintf_styled_func) (info->stream,
+					dis_style_immediate,
+					"%#02x", priv.byte_buf[0]);
 	  return 1;
 	}
     }
@@ -412,12 +424,13 @@ print_insn_xtensa (bfd_vma memaddr, struct disassemble_info *info)
   if (nslots > 1)
     (*info->fprintf_func) (info->stream, "{ ");
 
-  info->insn_type = dis_nonbranch;
-  info->insn_info_valid = 1;
-
+  insn_type = dis_nonbranch;
+  target = 0;
   first_slot = 1;
   for (n = 0; n < nslots; n++)
     {
+      int imm_pcrel = 0;
+
       if (first_slot)
 	first_slot = 0;
       else
@@ -425,8 +438,9 @@ print_insn_xtensa (bfd_vma memaddr, struct disassemble_info *info)
 
       xtensa_format_get_slot (isa, fmt, n, insn_buffer, slot_buffer);
       opc = xtensa_opcode_decode (isa, fmt, n, slot_buffer);
-      (*info->fprintf_func) (info->stream, "%s",
-			     xtensa_opcode_name (isa, opc));
+      (*info->fprintf_styled_func) (info->stream,
+				    dis_style_mnemonic, "%s",
+				    xtensa_opcode_name (isa, opc));
 
       if (xtensa_opcode_is_branch (isa, opc))
 	info->insn_type = dis_condbranch;
@@ -434,6 +448,8 @@ print_insn_xtensa (bfd_vma memaddr, struct disassemble_info *info)
 	info->insn_type = dis_branch;
       else if (xtensa_opcode_is_call (isa, opc))
 	info->insn_type = dis_jsr;
+      else
+	info->insn_type = dis_nonbranch;
 
       /* Print the operands (if any).  */
       noperands = xtensa_opcode_num_operands (isa, opc);
@@ -453,8 +469,20 @@ print_insn_xtensa (bfd_vma memaddr, struct disassemble_info *info)
 					   slot_buffer, &operand_val);
 
 	  print_xtensa_operand (memaddr, info, opc, i, operand_val);
+	  if (xtensa_operand_is_PCrelative (isa, opc, i))
+	    ++imm_pcrel;
+	}
+      if (!imm_pcrel)
+	info->insn_type = dis_nonbranch;
+      if (info->insn_type != dis_nonbranch)
+	{
+	  insn_type = info->insn_type;
+	  target = info->target;
 	}
     }
+  info->insn_type = insn_type;
+  info->target = target;
+  info->insn_info_valid = 1;
 
   if (nslots > 1)
     (*info->fprintf_func) (info->stream, " }");

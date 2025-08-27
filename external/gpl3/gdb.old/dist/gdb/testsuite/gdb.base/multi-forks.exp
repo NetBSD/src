@@ -1,4 +1,4 @@
-#   Copyright 2005-2023 Free Software Foundation, Inc.
+#   Copyright 2005-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,14 +16,16 @@
 # Until "set follow-fork-mode" and "catch fork" are implemented on
 # other targets...
 #
-if {![istarget "*-*-linux*"]} {
-    return
-}
+require {istarget "*-*-linux*"}
 
 
 standard_testfile .c
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+set flags {}
+lappend flags debug
+lappend_include_file flags $srcdir/lib/unbuffer_output.c
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $flags] != "" } {
      untested "failed to compile"
      return -1
 }
@@ -197,5 +199,3 @@ for {set i 6} { $i <= 16} {incr i} {
     gdb_test_no_output "kill inferior $i" "kill $i"
     gdb_test "info inferior $i" "<null>.*" "did kill $i"
 }
-
-return 0

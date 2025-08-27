@@ -1,6 +1,6 @@
 /* Remote File-I/O communications
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,8 +19,9 @@
 
 /* See the GDB User Guide for details of the GDB remote protocol.  */
 
-#include "defs.h"
-#include "gdbcmd.h"
+#include "event-top.h"
+#include "extract-store-integer.h"
+#include "cli/cli-cmds.h"
 #include "remote.h"
 #include "gdbsupport/gdb_wait.h"
 #include <sys/stat.h>
@@ -33,7 +34,7 @@
 #include <fcntl.h>
 #include "gdbsupport/gdb_sys_time.h"
 #ifdef __CYGWIN__
-#include <sys/cygwin.h>		/* For cygwin_conv_path.  */
+#include <sys/cygwin.h>
 #endif
 #include <signal.h>
 
@@ -316,7 +317,7 @@ static void
 remote_fileio_reply (remote_target *remote, int retcode, int error)
 {
   char buf[32];
-  int ctrl_c = check_quit_flag ();
+  bool ctrl_c = check_quit_flag ();
 
   strcpy (buf, "F");
   if (retcode < 0)
@@ -640,7 +641,7 @@ remote_fileio_func_write (remote_target *remote, char *buf)
 	return;
       case FIO_FD_CONSOLE_OUT:
 	{
-	  ui_file *file = target_fd == 1 ? gdb_stdtarg : gdb_stdtargerr;
+	  ui_file *file = gdb_stdtarg;
 	  file->write ((char *) buffer, length);
 	  file->flush ();
 	  ret = length;
@@ -1191,12 +1192,17 @@ remote_fileio_request (remote_target *remote, char *buf, int ctrlc_pending_p)
 	{
 	  do_remote_fileio_request (remote, buf);
 	}
+      catch (const gdb_exception_forced_quit &ex)
+	{
+	  throw;
+	}
+      catch (const gdb_exception_quit &ex)
+	{
+	  remote_fileio_reply (remote, -1, FILEIO_EINTR);
+	}
       catch (const gdb_exception &ex)
 	{
-	  if (ex.reason == RETURN_QUIT)
-	    remote_fileio_reply (remote, -1, FILEIO_EINTR);
-	  else
-	    remote_fileio_reply (remote, -1, FILEIO_EIO);
+	  remote_fileio_reply (remote, -1, FILEIO_EIO);
 	}
     }
 

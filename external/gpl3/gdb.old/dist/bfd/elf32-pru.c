@@ -1,5 +1,5 @@
 /* 32-bit ELF support for TI PRU.
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
    Based on elf32-nios2.c
 
@@ -1354,8 +1354,10 @@ pru_elf32_relax_section (bfd *abfd, asection *sec,
      this section does not have relocs, or if this is not a
      code section.  */
   if (bfd_link_relocatable (link_info)
-    || (sec->flags & SEC_RELOC) == 0
-    || sec->reloc_count == 0 || (sec->flags & SEC_CODE) == 0)
+      || sec->reloc_count == 0
+      || (sec->flags & SEC_RELOC) == 0
+      || (sec->flags & SEC_HAS_CONTENTS) == 0
+      || (sec->flags & SEC_CODE) == 0)
     return true;
 
   symtab_hdr = & elf_tdata (abfd)->symtab_hdr;

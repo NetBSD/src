@@ -1,5 +1,5 @@
 /* Memory breakpoint interfaces for the remote server for GDB.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -216,7 +216,8 @@ void check_mem_read (CORE_ADDR mem_addr, unsigned char *buf, int mem_len);
 void check_mem_write (CORE_ADDR mem_addr,
 		      unsigned char *buf, const unsigned char *myaddr, int mem_len);
 
-/* Delete all breakpoints.  */
+/* Delete all breakpoints, watchpoints, tracepoints, and catchpoints,
+   and un-insert them from the inferior.  */
 
 void delete_all_breakpoints (void);
 
@@ -224,8 +225,8 @@ void delete_all_breakpoints (void);
 
 void mark_breakpoints_out (struct process_info *proc);
 
-/* Delete all breakpoints, but do not try to un-insert them from the
-   inferior.  */
+/* Delete all breakpoints, watchpoints, tracepoints, and catchpoints,
+   but do not try to un-insert them from the inferior.  */
 
 void free_all_breakpoints (struct process_info *proc);
 

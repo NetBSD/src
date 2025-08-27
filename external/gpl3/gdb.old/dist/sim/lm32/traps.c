@@ -1,7 +1,7 @@
 /* Lattice Mico32 exception and system call support.
    Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,7 +48,6 @@ USI
 lm32bf_divu_insn (SIM_CPU * current_cpu, IADDR pc, USI r0, USI r1, USI r2)
 {
   SIM_DESC sd = CPU_STATE (current_cpu);
-  host_callback *cb = STATE_CALLBACK (sd);
 
   /* Check for divide by zero */
   if (GET_H_GR (r1) == 0)
@@ -76,7 +75,6 @@ USI
 lm32bf_modu_insn (SIM_CPU * current_cpu, IADDR pc, USI r0, USI r1, USI r2)
 {
   SIM_DESC sd = CPU_STATE (current_cpu);
-  host_callback *cb = STATE_CALLBACK (sd);
 
   /* Check for divide by zero.  */
   if (GET_H_GR (r1) == 0)
@@ -106,7 +104,7 @@ USI
 lm32bf_break_insn (SIM_CPU * current_cpu, IADDR pc)
 {
   SIM_DESC sd = CPU_STATE (current_cpu);
-  host_callback *cb = STATE_CALLBACK (sd);
+
   /* Breakpoint.  */
   if (STATE_ENVIRONMENT (sd) != OPERATING_ENVIRONMENT)
     {
@@ -130,7 +128,6 @@ USI
 lm32bf_scall_insn (SIM_CPU * current_cpu, IADDR pc)
 {
   SIM_DESC sd = CPU_STATE (current_cpu);
-  host_callback *cb = STATE_CALLBACK (sd);
 
   if ((STATE_ENVIRONMENT (sd) != OPERATING_ENVIRONMENT)
       || (GET_H_GR (8) == TARGET_NEWLIB_SYS_exit))
@@ -167,9 +164,6 @@ lm32bf_scall_insn (SIM_CPU * current_cpu, IADDR pc)
 USI
 lm32bf_b_insn (SIM_CPU * current_cpu, USI r0, USI f_r0)
 {
-  SIM_DESC sd = CPU_STATE (current_cpu);
-  host_callback *cb = STATE_CALLBACK (sd);
-
   /* Restore interrupt enable.  */
   if (f_r0 == 30)
     SET_H_CSR (LM32_CSR_IE, (GET_H_CSR (LM32_CSR_IE) & 2) >> 1);
@@ -183,9 +177,6 @@ lm32bf_b_insn (SIM_CPU * current_cpu, USI r0, USI f_r0)
 void
 lm32bf_wcsr_insn (SIM_CPU * current_cpu, USI f_csr, USI r1)
 {
-  SIM_DESC sd = CPU_STATE (current_cpu);
-  host_callback *cb = STATE_CALLBACK (sd);
-
   /* Writing a 1 to IP CSR clears a bit, writing 0 has no effect.  */
   if (f_csr == LM32_CSR_IP)
     SET_H_CSR (f_csr, GET_H_CSR (f_csr) & ~r1);

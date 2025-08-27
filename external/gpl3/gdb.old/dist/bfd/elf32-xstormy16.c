@@ -1,5 +1,5 @@
 /* Xstormy16-specific support for 32-bit ELF.
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -706,8 +706,8 @@ xstormy16_elf_relax_section (bfd *dynobj,
 }
 
 static bool
-xstormy16_elf_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				    struct bfd_link_info *info)
+xstormy16_elf_early_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+				   struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *splt;
@@ -1013,8 +1013,8 @@ xstormy16_elf_gc_mark_hook (asection *sec,
 #define elf_backend_relocate_section		xstormy16_elf_relocate_section
 #define elf_backend_gc_mark_hook		xstormy16_elf_gc_mark_hook
 #define elf_backend_check_relocs		xstormy16_elf_check_relocs
-#define elf_backend_always_size_sections \
-  xstormy16_elf_always_size_sections
+#define elf_backend_early_size_sections \
+  xstormy16_elf_early_size_sections
 #define elf_backend_omit_section_dynsym \
   _bfd_elf_omit_section_dynsym_all
 #define elf_backend_finish_dynamic_sections \

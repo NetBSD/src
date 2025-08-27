@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -145,7 +145,7 @@ gdb_test_no_output "set charset ASCII"
 
 with_test_prefix "char-width=1, print-max=20" {
     gdb_test_no_output "set print elements 20"
-    gdb_test_sequence "x/6s &TestStrings" "take 6 strings forward" {
+    gdb_test_sequence "x/6s TestStrings" "take 6 strings forward" {
         "\"ABCDEFGHIJKLMNOPQRST\"\.\.\."
         "\"UVWXYZ\""
         "\"\""
@@ -162,7 +162,7 @@ with_test_prefix "char-width=1, print-max=20" {
         "\"[^\"]+\""
         "\"01234567890123456789\"\.\.\."
     }
-    gdb_test_sequence "x/6s &TestStrings" "take 6 strings forward again" {
+    gdb_test_sequence "x/6s TestStrings" "take 6 strings forward again" {
         "\"ABCDEFGHIJKLMNOPQRST\"\.\.\."
         "\"UVWXYZ\""
         "\"\""
@@ -187,7 +187,7 @@ with_test_prefix "char-width=1, print-max=20" {
 
 with_test_prefix "char-width=2, print-max=20" {
     gdb_test_no_output "set print elements 20"
-    gdb_test_sequence "x/6sh &TestStringsH" "take 6 strings forward" {
+    gdb_test_sequence "x/6sh TestStringsH" "take 6 strings forward" {
         "u\"ABCDEFGHIJKLMNOPQRST\"\.\.\."
         "u\"UVWXYZ\""
         "u\"\""
@@ -204,7 +204,7 @@ with_test_prefix "char-width=2, print-max=20" {
         "u\"[^\"]+\""
         "u\"01234567890123456789\"\.\.\."
     }
-    gdb_test_sequence "x/6sh &TestStringsH" "take 6 strings forward again" {
+    gdb_test_sequence "x/6sh TestStringsH" "take 6 strings forward again" {
         "u\"ABCDEFGHIJKLMNOPQRST\"\.\.\."
         "u\"UVWXYZ\""
         "u\"\""
@@ -229,7 +229,7 @@ with_test_prefix "char-width=2, print-max=20" {
 
 with_test_prefix "char-width=4, print-max=20" {
     gdb_test_no_output "set print elements 20"
-    gdb_test_sequence "x/6sw &TestStringsW" "take 6 strings forward" {
+    gdb_test_sequence "x/6sw TestStringsW" "take 6 strings forward" {
         "U\"ABCDEFGHIJKLMNOPQRST\"\.\.\."
         "U\"UVWXYZ\""
         "U\"\""
@@ -246,7 +246,7 @@ with_test_prefix "char-width=4, print-max=20" {
         "U\"[^\"]+\""
         "U\"01234567890123456789\"\.\.\."
     }
-    gdb_test_sequence "x/6sw &TestStringsW" "take 6 strings forward again" {
+    gdb_test_sequence "x/6sw TestStringsW" "take 6 strings forward again" {
         "U\"ABCDEFGHIJKLMNOPQRST\"\.\.\."
         "U\"UVWXYZ\""
         "U\"\""
@@ -271,7 +271,7 @@ with_test_prefix "char-width=4, print-max=20" {
 
 with_test_prefix "char-width=2, print-max=0" {
     gdb_test_no_output "set print elements 0"
-    gdb_test_sequence "x/6sh &TestStringsH" "take 6 strings forward" {
+    gdb_test_sequence "x/6sh TestStringsH" "take 6 strings forward" {
         "u\"ABCDEFGHIJKLMNOPQRSTUVWXYZ\""
         "u\"\""
         "u\"\""
@@ -289,7 +289,7 @@ with_test_prefix "char-width=2, print-max=0" {
         "u\"012345678901234567890123456789\""
         "u\"!!!!!!\""
     }
-    gdb_test_sequence "x/6sh &TestStringsH" "take 6 strings forward again" {
+    gdb_test_sequence "x/6sh TestStringsH" "take 6 strings forward again" {
         "u\"ABCDEFGHIJKLMNOPQRSTUVWXYZ\""
         "u\"\""
         "u\"\""
@@ -314,7 +314,7 @@ with_test_prefix "char-width=2, print-max=0" {
 
 with_test_prefix "char-width=1, print-max=4" {
     gdb_test_no_output "set print elements 4"
-    gdb_test_sequence "x/9s &TestStrings" "take 9 strings forward" {
+    gdb_test_sequence "x/9s TestStrings" "take 9 strings forward" {
         "\"ABCD\"\.\.\."
         "\"EFGH\"\.\.\."
         "\"IJKL\"\.\.\."

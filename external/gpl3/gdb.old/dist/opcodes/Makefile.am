@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -59,7 +59,6 @@ BUILD_LIB_DEPS = @BUILD_LIB_DEPS@
 # Header files.
 HFILES = \
 	aarch64-asm.h aarch64-dis.h aarch64-opc.h aarch64-tbl.h \
-	bpf-desc.h bpf-opc.h \
 	cris-desc.h cris-opc.h \
 	epiphany-desc.h epiphany-opc.h \
 	fr30-desc.h fr30-opc.h \
@@ -94,10 +93,7 @@ TARGET64_LIBOPCODES_CFILES = \
 	aarch64-opc-2.c \
 	alpha-dis.c \
 	alpha-opc.c \
-	bpf-asm.c \
-	bpf-desc.c \
 	bpf-dis.c \
-	bpf-ibld.c \
 	bpf-opc.c \
 	ia64-dis.c \
 	ia64-opc.c \
@@ -170,6 +166,8 @@ TARGET32_LIBOPCODES_CFILES = \
 	iq2000-dis.c \
 	iq2000-ibld.c \
 	iq2000-opc.c \
+	kvx-opc.c \
+	kvx-dis.c \
 	lm32-asm.c \
 	lm32-desc.c \
 	lm32-dis.c \
@@ -277,22 +275,6 @@ LIBOPCODES_CFILES = \
 	dis-init.c \
 	disassemble.c
 
-# C source files that correspond to .o's.
-CFILES = \
-	$(LIBOPCODES_CFILES) \
-	aarch64-gen.c \
-	i386-gen.c \
-	ia64-asmtab.c \
-	ia64-gen.c \
-	ia64-opc-a.c \
-	ia64-opc-b.c \
-	ia64-opc-f.c \
-	ia64-opc-i.c \
-	ia64-opc-m.c \
-	ia64-opc-d.c \
-	s390-mkopc.c \
-	z8kgen.c
-
 ALL32_MACHINES = $(TARGET32_LIBOPCODES_CFILES:.c=.lo)
 ALL64_MACHINES = $(TARGET64_LIBOPCODES_CFILES:.c=.lo)
 
@@ -341,7 +323,7 @@ stamp-lib: libopcodes.la
 
 libopcodes.a: stamp-lib ; @true
 
-POTFILES = $(HFILES) $(CFILES)
+POTFILES = $(HFILES) $(LIBOPCODES_CFILES)
 po/POTFILES.in: @MAINT@ Makefile
 	for f in $(POTFILES); do echo $$f; done | LC_ALL=C sort > tmp \
 	  && mv tmp $(srcdir)/po/POTFILES.in
@@ -354,7 +336,7 @@ CLEANFILES = \
 
 CGENDIR = @cgendir@
 CPUDIR = $(srcdir)/../cpu
-GUILE = `if test -f ../guile/libguile/guile ; then echo ../guile/libguile/guile; else echo guile ; fi`
+GUILE = guile
 CGEN = "$(GUILE) -l ${cgendir}/guile.scm -s"
 CGENFLAGS = -v
 
@@ -368,7 +350,6 @@ CGENDEPS = \
 CGEN_CPUS = cris epiphany fr30 frv ip2k iq2000 lm32 m32c m32r mep mt or1k xstormy16
 
 if CGEN_MAINT
-BPF_DEPS = stamp-bpf
 CRIS_DEPS = stamp-cris
 EPIPHANY_DEPS = stamp-epiphany
 FR30_DEPS = stamp-fr30
@@ -383,7 +364,6 @@ MT_DEPS = stamp-mt
 OR1K_DEPS = stamp-or1k
 XSTORMY16_DEPS = stamp-xstormy16
 else
-BPF_DEPS =
 CRIS_DEPS =
 EPIPHANY_DEPS =
 FR30_DEPS =
@@ -415,15 +395,6 @@ run-cgen-all:
 .PHONY: run-cgen-all
 
 # For now, require developers to configure with --enable-cgen-maint.
-
-$(srcdir)/bpf-desc.h $(srcdir)/bpf-desc.c $(srcdir)/bpf-opc.h \
-		$(srcdir)/bpf-opc.c $(srcdir)/bpf-ibld.c \
-		$(srcdir)/bpf-asm.c $(srcdir)/bpf-dis.c: $(BPF_DEPS)
-	@true
-
-stamp-bpf: $(CGENDEPS) $(CPUDIR)/bpf.cpu $(CPUDIR)/bpf.opc
-	$(MAKE) run-cgen arch=bpf prefix=bpf \
-		archfile=$(CPUDIR)/bpf.cpu opcfile=$(CPUDIR)/bpf.opc
 
 $(srcdir)/cris-desc.h $(srcdir)/cris-desc.c $(srcdir)/cris-opc.h: $(CRIS_DEPS)
 	@true
@@ -523,14 +494,15 @@ MOSTLYCLEANFILES = aarch64-gen$(EXEEXT_FOR_BUILD) i386-gen$(EXEEXT_FOR_BUILD) \
 	z8kgen$(EXEEXT_FOR_BUILD) opc2c$(EXEEXT_FOR_BUILD)
 
 MAINTAINERCLEANFILES = $(srcdir)/aarch64-asm-2.c $(srcdir)/aarch64-dis-2.c \
-	$(srcdir)/aarch64-opc-2.c $(srcdir)/i386-tbl.h $(srcdir)/i386-init.h \
+	$(srcdir)/aarch64-opc-2.c \
+	$(srcdir)/i386-tbl.h $(srcdir)/i386-init.h $(srcdir)/i386-mnem.h \
 	$(srcdir)/ia64-asmtab.c $(srcdir)/z8k-opc.h \
 	$(srcdir)/msp430-decode.c \
 	$(srcdir)/rl78-decode.c \
 	$(srcdir)/rx-decode.c
 
 aarch64-gen$(EXEEXT_FOR_BUILD): aarch64-gen.o $(BUILD_LIB_DEPS)
-	$(LINK_FOR_BUILD) aarch64-gen.o $(BUILD_LIBS)
+	$(AM_V_CCLD)$(LINK_FOR_BUILD) aarch64-gen.o $(BUILD_LIBS)
 
 aarch64-gen.o: aarch64-gen.c $(BFD_H) $(INCDIR)/getopt.h $(INCDIR)/libiberty.h\
 	$(INCDIR)/opcode/aarch64.h config.h aarch64-opc.h aarch64-tbl.h
@@ -550,18 +522,19 @@ i386-gen.o: i386-gen.c i386-opc.h $(srcdir)/../include/opcode/i386.h \
 	$(INCDIR)/ansidecl.h $(INCDIR)/getopt.h $(INCDIR)/hashtab.h \
 	$(INCDIR)/libiberty.h $(INCDIR)/opcode/i386.h $(INCDIR)/safe-ctype.h \
 	config.h sysdep.h
-	$(COMPILE_FOR_BUILD) -c $(srcdir)/i386-gen.c
+	$(AM_V_CC)$(COMPILE_FOR_BUILD) -c $(srcdir)/i386-gen.c
 
-# i386-gen will generate both headers in one go.  Use a pattern rule to properly
+# i386-gen will generate all headers in one go.  Use a pattern rule to properly
 # express this, with the inner dash ('-') arbitrarily chosen to be the stem.
-$(srcdir)/i386%tbl.h $(srcdir)/i386%init.h: @MAINT@ i386-gen$(EXEEXT_FOR_BUILD) i386-opc.tbl i386-reg.tbl i386-opc.h
+$(srcdir)/i386%tbl.h $(srcdir)/i386%init.h $(srcdir)/i386%mnem.h: \
+		@MAINT@ i386-gen$(EXEEXT_FOR_BUILD) i386-opc.tbl i386-reg.tbl i386-opc.h
 	$(AM_V_GEN)$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) - \
 		< $(srcdir)/i386-opc.tbl \
 		| ./i386-gen$(EXEEXT_FOR_BUILD) --srcdir $(srcdir)
 
-# While not really dependencies, specify i386-{init,tbl}.h here as well to
-# make sure they are re-generated as necessary.
-i386-dis.lo: $(srcdir)/i386-tbl.h $(srcdir)/i386-init.h
+# While not really dependencies, specify other generated i386-*.h here as well
+# to make sure they are re-generated as necessary.
+i386-dis.lo: $(srcdir)/i386-tbl.h $(srcdir)/i386-init.h $(srcdir)/i386-mnem.h
 
 ia64-gen$(EXEEXT_FOR_BUILD): ia64-gen.o $(BUILD_LIB_DEPS)
 	$(AM_V_CCLD)$(LINK_FOR_BUILD) ia64-gen.o $(BUILD_LIBS)
@@ -571,7 +544,7 @@ ia64-gen.o: ia64-gen.c $(BFD_H) $(INCDIR)/ansidecl.h $(INCDIR)/getopt.h \
 	$(INCDIR)/symcat.h config.h ia64-opc-a.c ia64-opc-b.c \
 	ia64-opc-d.c ia64-opc-f.c ia64-opc-i.c ia64-opc-m.c \
 	ia64-opc-x.c ia64-opc.h sysdep.h
-	$(COMPILE_FOR_BUILD) -c $(srcdir)/ia64-gen.c
+	$(AM_V_CC)$(COMPILE_FOR_BUILD) -c $(srcdir)/ia64-gen.c
 
 # Use a helper variable for the dependencies to avoid 'make' issues
 # with continuations in comments, as @MAINT@ can be expanded to '#'.
@@ -597,8 +570,11 @@ opc2c$(EXEEXT_FOR_BUILD): opc2c.o $(BUILD_LIBS_DEPS)
 opc2c.o: opc2c.c $(INCDIR)/libiberty.h
 	$(AM_V_CC)$(COMPILE_FOR_BUILD) -c $(srcdir)/opc2c.c
 
-s390-mkopc$(EXEEXT_FOR_BUILD): s390-mkopc.c
-	$(AM_V_CCLD)$(COMPILE_FOR_BUILD) -o s390-mkopc $(srcdir)/s390-mkopc.c
+s390-mkopc$(EXEEXT_FOR_BUILD): s390-mkopc.o
+	$(AM_V_CCLD)$(LINK_FOR_BUILD) s390-mkopc.o
+
+s390-mkopc.o: s390-mkopc.c $(INCDIR)/opcode/s390.h
+	$(AM_V_CC)$(COMPILE_FOR_BUILD) -c $(srcdir)/s390-mkopc.c
 
 s390-opc.tab: s390-mkopc$(EXEEXT_FOR_BUILD) s390-opc.txt
 	$(AM_V_GEN)./s390-mkopc$(EXEEXT_FOR_BUILD) < $(srcdir)/s390-opc.txt > s390-opc.tab

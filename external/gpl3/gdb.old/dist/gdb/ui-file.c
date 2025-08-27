@@ -1,6 +1,6 @@
 /* UI_FILE - a generic STDIO like output stream.
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 
 /* Implement the ``struct ui_file'' object.  */
 
-#include "defs.h"
 #include "ui-file.h"
 #include "gdbsupport/gdb_obstack.h"
 #include "gdbsupport/gdb_select.h"

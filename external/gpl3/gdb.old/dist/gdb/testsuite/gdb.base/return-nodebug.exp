@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2023 Free Software Foundation, Inc.
+# Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set skip_float_test [gdb_skip_float_test]
+set allow_float_test [allow_float_test]
 
 proc do_test {type} {
     set typenospace [string map {{ } -} $type]
@@ -49,7 +49,7 @@ proc do_test {type} {
 }
 
 foreach type {{signed char} {short} {int} {long} {long long} {float} {double}} {
-    if { $skip_float_test && ($type == "float" || $type == "double") } {
+    if { !$allow_float_test && ($type == "float" || $type == "double") } {
 	continue
     }
     set typenospace_dash \

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,7 +13,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "python-internal.h"
 #include "varobj.h"
 #include "varobj-iter.h"
@@ -170,7 +169,5 @@ py_varobj_get_iterator (struct varobj *var, PyObject *printer,
       error (_("Could not get children iterator"));
     }
 
-  return std::unique_ptr<varobj_iter> (new py_varobj_iter (var,
-							   std::move (iter),
-							   opts));
+  return std::make_unique<py_varobj_iter> (var, std::move (iter), opts);
 }

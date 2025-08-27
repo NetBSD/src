@@ -1,5 +1,5 @@
 /* Register support routines for the remote server for GDB.
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -50,10 +50,10 @@ struct regcache : public reg_buffer_common
   enum register_status get_register_status (int regnum) const override;
 
   /* See gdbsupport/common-regcache.h.  */
-  void raw_supply (int regnum, const void *buf) override;
+  void raw_supply (int regnum, gdb::array_view<const gdb_byte> src) override;
 
   /* See gdbsupport/common-regcache.h.  */
-  void raw_collect (int regnum, void *buf) const override;
+  void raw_collect (int regnum, gdb::array_view<gdb_byte> dst) const override;
 
   /* See gdbsupport/common-regcache.h.  */
   bool raw_compare (int regnum, const void *buf, int offset) const override;
@@ -112,7 +112,7 @@ int register_size (const struct target_desc *tdesc, int n);
 
 /* No throw version of find_regno.  If NAME is not a known register, return
    an empty value.  */
-gdb::optional<int> find_regno_no_throw (const struct target_desc *tdesc,
+std::optional<int> find_regno_no_throw (const struct target_desc *tdesc,
 					const char *name);
 
 int find_regno (const struct target_desc *tdesc, const char *name);

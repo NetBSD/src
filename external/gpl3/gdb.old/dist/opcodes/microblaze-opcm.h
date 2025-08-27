@@ -1,6 +1,6 @@
 /* microblaze-opcm.h -- Header used in microblaze-opc.h
 
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -27,19 +27,19 @@ enum microblaze_instr
 {
   add, rsub, addc, rsubc, addk, rsubk, addkc, rsubkc, clz, cmp, cmpu,
   addi, rsubi, addic, rsubic, addik, rsubik, addikc, rsubikc, mul,
-  mulh, mulhu, mulhsu,swapb,swaph,
+  mulh, mulhu, mulhsu, swapb, swaph,
   idiv, idivu, bsll, bsra, bsrl, get, put, nget, nput, cget, cput,
-  ncget, ncput, muli, bslli, bsrai, bsrli, mului,
+  ncget, ncput, muli, bslli, bsrai, bsrli, bsefi, bsifi, mului,
   /* 'or/and/xor' are C++ keywords.  */
   microblaze_or, microblaze_and, microblaze_xor,
   andn, pcmpbf, pcmpbc, pcmpeq, pcmpne, sra, src, srl, sext8, sext16,
-  wic, wdc, wdcclear, wdcflush, mts, mfs, mbar, br, brd,
-  brld, bra, brad, brald, microblaze_brk, beq, beqd, bne, bned, blt,
-  bltd, ble, bled, bgt, bgtd, bge, bged, ori, andi, xori, andni,
+  wic, wdc, wdcclear, wdcextclear, wdcflush, wdcextflush, wdcclearea, mts, mtse,
+  mfs, mfse, mbar, br, brd, brld, bra, brad, brald, microblaze_brk, beq, beqd,
+  bne, bned, blt, bltd, ble, bled, bgt, bgtd, bge, bged, ori, andi, xori, andni,
   imm, rtsd, rtid, rtbd, rted, bri, brid, brlid, brai, braid, bralid,
   brki, beqi, beqid, bnei, bneid, blti, bltid, blei, bleid, bgti,
-  bgtid, bgei, bgeid, lbu, lbur, lhu, lhur, lw, lwr, lwx, sb, sbr, sh,
-  shr, sw, swr, swx, lbui, lhui, lwi,
+  bgtid, bgei, bgeid, lbu, lbuea, lbur, lhu, lhuea, lhur, lw, lwea, lwr, lwx,
+  sb, sbea, sbr, sh, shea, shr, sw, swea, swr, swx, lbui, lhui, lwi,
   sbi, shi, swi, msrset, msrclr, tuqula, mbi_fadd, frsub, mbi_fmul, mbi_fdiv,
   fcmp_lt, fcmp_eq, fcmp_le, fcmp_gt, fcmp_ne, fcmp_ge, fcmp_un, flt,
   /* 'fsqrt' is a glibc:math.h symbol.  */
@@ -130,6 +130,7 @@ enum microblaze_instr_type
 #define RB_LOW  11 /* Low bit for RB.  */
 #define IMM_LOW  0 /* Low bit for immediate.  */
 #define IMM_MBAR 21 /* low bit for mbar instruction.  */
+#define IMM_WIDTH_LOW 6 /* Low bit for immediate width */
 
 #define RD_MASK 0x03E00000
 #define RA_MASK 0x001F0000
@@ -141,6 +142,9 @@ enum microblaze_instr_type
 
 /* Imm mask for mbar.  */
 #define IMM5_MBAR_MASK 0x03E00000
+
+/* Imm mask for extract/insert width. */
+#define IMM5_WIDTH_MASK 0x000007C0
 
 /* FSL imm mask for get, put instructions.  */
 #define  RFSL_MASK 0x000000F

@@ -1,6 +1,6 @@
 ;; Verify that preprocessor symbols are defined in config.in.
 
-;; Copyright (C) 2020-2023 Free Software Foundation, Inc.
+;; Copyright (C) 2020-2024 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GDB.
 ;;
@@ -35,8 +35,6 @@
 (put (intern "HAVE_USEFUL_SBRK") :check-ok t)
 (put (intern "HAVE_SOCKETS") :check-ok t)
 (put (intern "HAVE_F_GETFD") :check-ok t)
-(put (intern "HAVE_IS_TRIVIALLY_COPYABLE") :check-ok t)
-(put (intern "HAVE_IS_TRIVIALLY_CONSTRUCTIBLE") :check-ok t)
 (put (intern "HAVE_DOS_BASED_FILE_SYSTEM") :check-ok t)
 
 (defun check-read-config.in (file)

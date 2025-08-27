@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <!DOCTYPE syscalls_info SYSTEM "gdb-syscalls.dtd">
-<!-- Copyright (C) 2015-2023 Free Software Foundation, Inc.
+<!-- Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
      notice and this notice are preserved.  This file is offered as-is,
      without any warranty. -->
 <syscalls_info>
-  <syscall name="io_setup" number="0"/>
-  <syscall name="io_destroy" number="1"/>
+  <syscall name="io_setup" number="0" groups="memory"/>
+  <syscall name="io_destroy" number="1" groups="memory"/>
   <syscall name="io_submit" number="2"/>
   <syscall name="io_cancel" number="3"/>
   <syscall name="io_getevents" number="4"/>
@@ -34,7 +34,7 @@
   <syscall name="dup3" number="24" groups="descriptor"/>
   <syscall name="fcntl" number="25" groups="descriptor"/>
   <syscall name="inotify_init1" number="26" groups="descriptor"/>
-  <syscall name="inotify_add_watch" number="27" groups="descriptor"/>
+  <syscall name="inotify_add_watch" number="27" groups="descriptor,file"/>
   <syscall name="inotify_rm_watch" number="28" groups="descriptor"/>
   <syscall name="ioctl" number="29" groups="descriptor"/>
   <syscall name="ioprio_set" number="30"/>
@@ -104,7 +104,7 @@
   <syscall name="exit_group" number="94" groups="process"/>
   <syscall name="waitid" number="95" groups="process"/>
   <syscall name="set_tid_address" number="96"/>
-  <syscall name="unshare" number="97" groups="process"/>
+  <syscall name="unshare" number="97"/>
   <syscall name="futex" number="98"/>
   <syscall name="set_robust_list" number="99"/>
   <syscall name="get_robust_list" number="100"/>
@@ -136,16 +136,16 @@
   <syscall name="sched_get_priority_min" number="126"/>
   <syscall name="sched_rr_get_interval" number="127"/>
   <syscall name="restart_syscall" number="128"/>
-  <syscall name="kill" number="129" groups="signal"/>
-  <syscall name="tkill" number="130" groups="signal"/>
-  <syscall name="tgkill" number="131" groups="signal"/>
+  <syscall name="kill" number="129" groups="signal,process"/>
+  <syscall name="tkill" number="130" groups="signal,process"/>
+  <syscall name="tgkill" number="131" groups="signal,process"/>
   <syscall name="sigaltstack" number="132" groups="signal"/>
   <syscall name="rt_sigsuspend" number="133" groups="signal"/>
   <syscall name="rt_sigaction" number="134" groups="signal"/>
   <syscall name="rt_sigprocmask" number="135" groups="signal"/>
   <syscall name="rt_sigpending" number="136" groups="signal"/>
   <syscall name="rt_sigtimedwait" number="137" groups="signal"/>
-  <syscall name="rt_sigqueueinfo" number="138" groups="signal"/>
+  <syscall name="rt_sigqueueinfo" number="138" groups="signal,process"/>
   <syscall name="rt_sigreturn" number="139" groups="signal"/>
   <syscall name="setpriority" number="140"/>
   <syscall name="getpriority" number="141"/>
@@ -187,12 +187,12 @@
   <syscall name="getegid" number="177"/>
   <syscall name="gettid" number="178"/>
   <syscall name="sysinfo" number="179"/>
-  <syscall name="mq_open" number="180"/>
+  <syscall name="mq_open" number="180" groups="descriptor"/>
   <syscall name="mq_unlink" number="181"/>
-  <syscall name="mq_timedsend" number="182"/>
-  <syscall name="mq_timedreceive" number="183"/>
-  <syscall name="mq_notify" number="184"/>
-  <syscall name="mq_getsetattr" number="185"/>
+  <syscall name="mq_timedsend" number="182" groups="descriptor"/>
+  <syscall name="mq_timedreceive" number="183" groups="descriptor"/>
+  <syscall name="mq_notify" number="184" groups="descriptor"/>
+  <syscall name="mq_getsetattr" number="185" groups="descriptor"/>
   <syscall name="msgget" number="186" groups="ipc"/>
   <syscall name="msgctl" number="187" groups="ipc"/>
   <syscall name="msgrcv" number="188" groups="ipc"/>

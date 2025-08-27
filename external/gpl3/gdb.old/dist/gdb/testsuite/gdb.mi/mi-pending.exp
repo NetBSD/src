@@ -1,4 +1,4 @@
-# Copyright 2007-2023 Free Software Foundation, Inc.
+# Copyright 2007-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,7 @@ set MIFLAGS "-i=mi"
 # test running programs
 #
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
 standard_testfile mi-pending.c
 
@@ -47,27 +45,57 @@ if { [gdb_compile_pthreads $srcdir/$subdir/$srcfile $binfile executable $exec_op
 }
 
 # Start with a fresh gdb.
-gdb_exit
-mi_gdb_start
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load ${binfile}
+if {[mi_clean_restart $binfile]} {
+    return
+}
 mi_load_shlibs $lib_sl1
 mi_load_shlibs $lib_sl2
 
 # Set pending breakpoint via MI.
-mi_gdb_test "-break-insert -f pendfunc1" \
-    ".*\\^done,bkpt=\{number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"<PENDING>\",pending=\"pendfunc1\",times=\"0\",original-location=\"pendfunc1\"\}"\
-    "MI pending breakpoint on pendfunc1"
+mi_create_breakpoint_pending "-f pendfunc1" \
+    "MI pending breakpoint on pendfunc1" \
+    -number "1" \
+    -type "breakpoint" \
+    -disp "keep" \
+    -enabled "y" \
+    -pending "pendfunc1" \
+    -original-location "pendfunc1"
+
+# Add some commands to the pending breakpoint, use -break-info to
+# check that the commands show up, then clear the commands again.
+mi_gdb_test "-break-commands 1 \"print 1\" \"print 2\" \"print 3\""\
+    "\\^done" \
+    "set breakpoint commands on pending breakpoint"
+set bp [mi_make_breakpoint_pending -number 1 -disp keep -func pendfunc1 \
+	    -disp keep -enabled y -original-location pendfunc1 \
+	    -script {\["print 1","print 2","print 3"\]}]
+mi_gdb_test "-break-info 1" \
+    "\\^done,[mi_make_breakpoint_table [list $bp]]" \
+    "breakpoint commands: check that commands are set"
+mi_gdb_test "-break-commands 1"\
+    "\\^done" \
+    "clear breakpoint commands on pending breakpoint"
 
 # Set pending breakpoint with a condition via MI.
-mi_gdb_test "-break-insert -f -c x==4 ${libfile1}.c:pendfunc2" \
-    ".*\\^done,bkpt=\{number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"<PENDING>\",pending=\"${libfile1}.c:pendfunc2\",cond=\"x==4\",times=\"0\",original-location=\"${libfile1}.c:pendfunc2\"\}"\
-    "MI pending breakpoint on ${libfile1}.c:pendfunc2 if x==4"
+mi_create_breakpoint_pending "-f -c x==4 ${libfile1}.c:pendfunc2" \
+    "MI pending breakpoint on ${libfile1}.c:pendfunc2 if x==4" \
+    -number "2" \
+    -type "breakpoint" \
+    -disp "keep" \
+    -enabled "y" \
+    -pending "${libfile1}.c:pendfunc2" \
+    -cond "x==4" \
+    -original-location "${libfile1}.c:pendfunc2"
 
 # Set breakpoint so that we can stop when the thread is created
-mi_gdb_test "-break-insert -f thread_func" \
-    ".*\\^done,bkpt=\{number=\"3\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"${hex}\",func=\"thread_func\".*\}"\
-    "MI pending breakpoint on thread_func"
+mi_create_breakpoint "-f thread_func" \
+    "MI breakpoint on thread_func" \
+    -number "3" \
+    -type "breakpoint" \
+    -disp "keep" \
+    -enabled "y" \
+    -addr "$hex" \
+    -func "thread_func"
 
 mi_run_cmd
 
@@ -100,8 +128,10 @@ mi_expect_stop "breakpoint-hit" "thread_func" ".*" ".*" ".*" \
 mi_gdb_test "-break-delete 3" "\\^done" "delete breakpoint 3"
 
 # Set pending breakpoint with a thread via MI.
-mi_gdb_test "-break-insert -p 2 -f pendfunc3" \
-    ".*\\^done,bkpt=\{number=\"4\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"<PENDING>\",pending=\"pendfunc3\",thread=\"2\",thread=\"2\",times=\"0\",original-location=\"pendfunc3\"\}"\
+set bp [mi_make_breakpoint_pending -number "4" -type "breakpoint" \
+	    -disp "keep" -enabled "y" -pending "pendfunc3" -thread "2" \
+	    -times "0" -original-location "pendfunc3"]
+mi_gdb_test "-break-insert -p 2 -f pendfunc3" ".*\\^done,$bp"\
     "MI pending breakpoint on pendfunc3"
 
 mi_send_resuming_command "exec-continue" "continuing execution to thread condition"

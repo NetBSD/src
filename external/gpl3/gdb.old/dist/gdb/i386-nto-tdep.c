@@ -1,6 +1,6 @@
 /* Target-dependent code for QNX Neutrino x86.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -19,7 +19,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "osabi.h"
 #include "regcache.h"
@@ -270,7 +270,7 @@ i386nto_regset_fill (const struct regcache *regcache, int regset, char *data)
    routine.  */
 
 static int
-i386nto_sigtramp_p (frame_info_ptr this_frame)
+i386nto_sigtramp_p (const frame_info_ptr &this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   const char *name;
@@ -283,7 +283,7 @@ i386nto_sigtramp_p (frame_info_ptr this_frame)
    address of the associated sigcontext structure.  */
 
 static CORE_ADDR
-i386nto_sigcontext_addr (frame_info_ptr this_frame)
+i386nto_sigcontext_addr (const frame_info_ptr &this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -316,7 +316,7 @@ static void
 i386nto_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
-  static struct target_so_ops nto_svr4_so_ops;
+  static solib_ops nto_svr4_so_ops;
 
   /* Deal with our strange signals.  */
   nto_initialize_signals ();

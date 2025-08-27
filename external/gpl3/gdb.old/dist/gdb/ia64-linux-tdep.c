@@ -1,6 +1,6 @@
 /* Target-dependent code for the IA-64 for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "ia64-tdep.h"
 #include "arch-utils.h"
 #include "gdbcore.h"
@@ -127,9 +127,9 @@ ia64_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
 static int
 ia64_linux_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
 {
-  return ((isdigit (*s) && s[1] == '[' && s[2] == 'r') /* Displacement.  */
+  return ((isdigit ((unsigned char)*s) && s[1] == '[' && s[2] == 'r') /* Displacement.  */
 	  || *s == 'r' /* Register value.  */
-	  || isdigit (*s));  /* Literal number.  */
+	  || isdigit ((unsigned char)*s));  /* Literal number.  */
 }
 
 /* Core file support. */

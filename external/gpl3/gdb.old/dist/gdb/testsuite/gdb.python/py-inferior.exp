@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2023 Free Software Foundation, Inc.
+# Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 
 load_lib gdb-python.exp
 
+require allow_python_tests
+
 standard_testfile
 
 if { [gdb_compile_pthreads ${srcdir}/${subdir}/${srcfile} ${binfile} executable {debug}] != "" } {
@@ -25,20 +27,55 @@ if { [gdb_compile_pthreads ${srcdir}/${subdir}/${srcfile} ${binfile} executable 
 }
 
 # Start with a fresh gdb.
-clean_restart ${testfile}
+save_vars { env(ASAN_OPTIONS) } {
+    # The call to gdb.selected_inferior().read_memory (0, 0xffffffffffffffff)
+    # triggers address sanitizer.  Suppress the error, leaving us with just
+    # this warning:
+    #   WARNING: AddressSanitizer failed to allocate 0xffffffffffffffff bytes
+    set_sanitizer ASAN_OPTIONS allocator_may_return_null 1
 
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
+    clean_restart ${testfile}
+}
 
 switch [get_endianness] {
     little { set python_pack_char "<" }
     big { set python_pack_char ">" }
 }
 
+gdb_test \
+    "python gdb.selected_inferior().read_memory (0, 0xffffffffffffffff)" \
+    [multi_line \
+	 [string_to_regexp "Python Exception <class 'MemoryError'>: "] \
+	 [string_to_regexp "Error occurred in Python."]]
+
+# Test memory read operations without execution.
+
+gdb_py_test_silent_cmd "python addr = gdb.lookup_global_symbol ('int8_global').value().address" \
+  "get global variable address" 0
+gdb_test "python \
+	    int8_global_mv = gdb.selected_inferior().read_memory (addr, 1); \
+	    print(int.from_bytes(int8_global_mv\[0\], byteorder='little'))" \
+    "\r\n42" \
+    "read memory without execution"
+
 # The following tests require execution.
 
 if {![runto_main]} {
     return 0
+}
+
+# The most recently added inferior.
+set most_recent_inf 1
+
+# A helper function that adds a new inferior.  It returns the expected
+# number of the new inferior.  ARG is a string to pass to
+# add-inferior.
+proc add_inferior {{arg ""}} {
+    global most_recent_inf
+    incr most_recent_inf
+    gdb_test "add-inferior $arg" "Added inferior $most_recent_inf.*" \
+	"add inferior $most_recent_inf"
+    return $most_recent_inf
 }
 
 # Test basic gdb.Inferior attributes and methods.
@@ -55,10 +92,26 @@ gdb_test "python print ('result = %s' % (i0.connection_num == i0.connection.num)
     "Inferior.connection_num equals Inferior.connection.num"
 gdb_test "python print ('result = %s' % i0.pid)" " = \[0-9\]+" "test Inferior.pid"
 gdb_test "python print ('result = %s' % i0.was_attached)" " = False" "test Inferior.was_attached"
-gdb_test "python print (i0.threads ())" "\\(<gdb.InferiorThread object at 0x\[\[:xdigit:\]\]+>,\\)" "test Inferior.threads"
+gdb_test "python print (i0.threads ())" \
+    "\\(<gdb.InferiorThread id=${decimal}\\.${decimal} target-id=\"\[^\r\n\]*\">,\\)" \
+    "test Inferior.threads"
 
 gdb_test "python print (i0.progspace)" "<gdb.Progspace object at $hex>"
 gdb_test "python print (i0.progspace == gdb.progspaces()\[0\])" "True"
+
+# Add a user defined attribute to the inferior, and check the
+# attribute can be read back.
+gdb_test_no_output "python i0._user_attr = 123" \
+    "add a user defined attribute to the inferior object"
+gdb_test "python print(i0._user_attr)" \
+    "123" "read back user defined attribute from i0"
+gdb_test "python print(gdb.inferiors()\[0\]._user_attr)" \
+    "123" "read back user defined attribute from gdb.inferiors"
+
+# Record the main thread, and check its __repr__ while we're at it.
+gdb_test_no_output "python main_thread = gdb.inferiors()\[0\].threads()\[0\]"
+gdb_test "python print(main_thread)" \
+    "<gdb.InferiorThread id=${decimal}\\.${decimal} target-id=\"\[^\r\n\]*\">" \
 
 # Test the number of inferior threads.
 
@@ -66,23 +119,68 @@ gdb_breakpoint check_threads
 gdb_continue_to_breakpoint "cont to check_threads" ".*pthread_barrier_wait.*"
 gdb_test "python print (len (i0.threads ()))" "\r\n9" "test Inferior.threads 2"
 
+# Grab a worker thread from the thread list.  A worker thread is the
+# first thread that is not the main thread.  The worker thread object
+# will become invalid when the corresponding thread exits.
+gdb_test_no_output "python worker_thread = next(filter(lambda thr : thr != main_thread, i0.threads()))"
+gdb_test "python print(worker_thread)" \
+    "<gdb.InferiorThread id=${decimal}\\.${decimal} target-id=\"\[^\r\n\]*\">" \
+    "test repr of a valid thread"
+
+# Add a user defined attribute to the worker thread, check the
+# attribute can be read back, and check the attribute is not present
+# on the main thread.
+gdb_test_no_output "python worker_thread._user_attribute = 123" \
+    "add user defined attribute to InferiorThread object"
+gdb_test "python print(worker_thread._user_attribute)" "123" \
+    "read back user defined attribute"
+gdb_test "python print(main_thread._user_attribute)" \
+    [multi_line \
+	 "AttributeError.*: 'gdb\\.InferiorThread' object has no attribute '_user_attribute'" \
+	 "Error occurred in Python.*"] \
+    "attempt to read non-existent user defined attribute"
+
 # Proceed to the next test.
 
 gdb_breakpoint [gdb_get_line_number "Break here."]
 gdb_continue_to_breakpoint "cont to Break here." ".*Break here\..*"
 
+# Check the repr() for an invalid gdb.InferiorThread object.
+gdb_test "python print(worker_thread)" "<gdb.InferiorThread \\(invalid\\)>" \
+    "test repr of an invalid thread"
+
+# Check the user defined attribute is still present on the invalid thread object.
+gdb_test "python print(worker_thread._user_attribute)" "123" \
+    "check user defined attribute on an invalid InferiorThread object"
+
 # Test memory read and write operations.
 
 gdb_py_test_silent_cmd "python addr = gdb.selected_frame ().read_var ('str')" \
   "read str address" 0
-gdb_py_test_silent_cmd "python str = gdb.inferiors()\[0\].read_memory (addr, 5); print(str)" \
-  "read str contents" 1
+gdb_test "python astr = gdb.inferiors()\[0\].read_memory (addr, 5); print(astr)" \
+    "<memory at $hex>" \
+    "read str contents"
+gdb_test "python print(astr\[0\])" "b'h'"
 gdb_py_test_silent_cmd "python a = bytes('a', 'ascii')" "" 0
-gdb_py_test_silent_cmd "python str\[1\] = a" "change str" 0
-gdb_py_test_silent_cmd "python gdb.inferiors()\[0\].write_memory (addr, str)" \
+gdb_py_test_silent_cmd "python astr\[1\] = a" "change str" 0
+gdb_py_test_silent_cmd "python gdb.inferiors()\[0\].write_memory (addr, astr)" \
   "write str" 1
-gdb_test "print (str)" " = \"hallo, testsuite\"" \
+gdb_test "print str" " = \"hallo, testsuite\"" \
   "ensure str was changed in the inferior"
+
+# Add a new inferior here, so we can test that operations work on the
+# correct inferior.
+set num [add_inferior]
+
+# Confirm the new inferior doesn't have the user defined attribute,
+# but that the first inferior does still have the attribute.
+gdb_test "python print(gdb.inferiors()\[1\]._user_attr)" \
+    [multi_line \
+	 "AttributeError.*: 'gdb\\.Inferior' object has no attribute '_user_attr'" \
+	 "Error occurred in Python.*"] \
+    "check new inferior doesn't have user defined attribute"
+gdb_test "python print(gdb.inferiors()\[0\]._user_attr)" \
+    "123" "read back user defined attribute again"
 
 # Test memory search.
 
@@ -101,6 +199,10 @@ with_test_prefix "string" {
     gdb_test_no_output "py start_addr = search_buf.address"
     gdb_test_no_output "py length = search_buf.type.sizeof"
 
+    # Switch to the new inferior before testing.
+    gdb_test "inferior $num" "Switching to inferior $num.*" \
+	"switch to inferior $num"
+
     gdb_test "py print (gdb.inferiors()\[0\].search_memory (start_addr, length, 'aaa'))" \
 	"${one_pattern_found}" "find string pattern"
 
@@ -113,6 +215,24 @@ with_test_prefix "string" {
     gdb_test "py print (gdb.inferiors()\[0\].search_memory (start_addr, 10+3+1, 'aaa'))" \
 	"${one_pattern_found}" "pattern found at end of range"
 }
+
+# While still in the new inferior, test reading and writing memory
+# again.
+gdb_test "python astr = gdb.inferiors()\[0\].read_memory (addr, 5); print(astr)" \
+    "<memory at $hex>" \
+    "read str while other inferior selected"
+gdb_test "python print(astr\[1\])" "b'a'" \
+    "print a character from the string"
+gdb_py_test_silent_cmd "python astr\[1\] = b'X'" "change str again" 0
+gdb_py_test_silent_cmd "python gdb.inferiors()\[0\].write_memory (addr, astr)" \
+    "write str while other inferior selected" 1
+
+gdb_test "inferior 1" "Switching to inferior 1.*" "switch back to inferior 1"
+
+gdb_test "print str" " = \"hXllo, testsuite\"" \
+    "ensure str was changed while other inferior selected"
+
+gdb_test_no_output "remove-inferiors $num" "remove-inferiors $num"
 
 # Import struct to pack the following patterns.
 gdb_test_no_output "py from struct import *"
@@ -207,8 +327,7 @@ if [isnative] {
     }
 }
 
-# Test Inferior is_valid.  This must always be the last test in
-# this testcase as it kills the inferior.
+# Test Inferior is_valid.
 
 with_test_prefix "is_valid" {
     gdb_py_test_silent_cmd "python inf_list = gdb.inferiors()" "get initial list" 1
@@ -236,7 +355,7 @@ with_test_prefix "is_valid" {
 	"gdb.events.inferior_deleted.connect(del_inf_handler)" "" \
 	"end" ""
 
-    gdb_test "add-inferior" "Added inferior 2.*" "add empty inferior 2"
+    set num [add_inferior]
     gdb_py_test_silent_cmd "python inf_list = gdb.inferiors()" "get new list" 1
     gdb_test "python print (len(inf_list))" "2" "get inferior list length 2"
     gdb_test "python print (inf_list\[0\].is_valid())" "True" \
@@ -248,7 +367,7 @@ with_test_prefix "is_valid" {
     gdb_test "python print (inf_list\[1\].is_valid())" "True" \
 	"check inferior validity 3"
 
-    gdb_test_no_output "remove-inferiors 2" "remove-inferiors 3"
+    gdb_test_no_output "remove-inferiors $num"
     gdb_test "python print (inf_list\[0\].is_valid())" "True" \
 	"check inferior validity 4"
 
@@ -261,21 +380,21 @@ with_test_prefix "is_valid" {
     # Test that other properties and methods handle the removed inferior
     # correctly.
     gdb_test "python print (inf_list\[1\].num)" \
-	"RuntimeError: Inferior no longer exists.*"
+	"RuntimeError.*: Inferior no longer exists.*"
     gdb_test "python print (inf_list\[1\].connection_num)" \
-	"RuntimeError: Inferior no longer exists.*"
+	"RuntimeError.*: Inferior no longer exists.*"
     gdb_test "python print (inf_list\[1\].connection)" \
-	"RuntimeError: Inferior no longer exists.*"
+	"RuntimeError.*: Inferior no longer exists.*"
     gdb_test "python print (inf_list\[1\].pid)" \
-	"RuntimeError: Inferior no longer exists.*"
+	"RuntimeError.*: Inferior no longer exists.*"
     gdb_test "python print (inf_list\[1\].was_attached)" \
-	"RuntimeError: Inferior no longer exists.*"
+	"RuntimeError.*: Inferior no longer exists.*"
     gdb_test "python print (inf_list\[1\].progspace)" \
-	"RuntimeError: Inferior no longer exists.*"
+	"RuntimeError.*: Inferior no longer exists.*"
     gdb_test "python print (inf_list\[1\].threads ())" \
-	"RuntimeError: Inferior no longer exists.*"
+	"RuntimeError.*: Inferior no longer exists.*"
     gdb_test "python print (inf_list\[1\].thread_from_thread_handle (1))" \
-	"RuntimeError: Inferior no longer exists.*"
+	"RuntimeError.*: Inferior no longer exists.*"
 }
 
 # Test gdb.selected_inferior()
@@ -287,17 +406,18 @@ with_test_prefix "selected_inferior" {
     gdb_test "py print (gdb.selected_inferior().connection.num)" "1" \
 	"first inferior's connection number, though connection object"
     # Figure out if inf 1 has a native target.
-    set inf_1_is_native [gdb_is_target_native]
+    set inf_1_is_native [gdb_protocol_is_native]
 
-    gdb_test "add-inferior -no-connection" "Added inferior 3" "create new inferior"
-    gdb_test "inferior 3" ".*" "switch to third inferior"
-    gdb_test "py print (gdb.selected_inferior().num)" "3" "third inferior selected"
+    set num [add_inferior "-no-connection"]
+    gdb_test "inferior $num" ".*" "switch to inferior $num"
+    gdb_test "py print (gdb.selected_inferior().num)" "$num" \
+	"inferior $num selected"
     gdb_test "py print (gdb.selected_inferior().connection_num)" "None" \
-	"third inferior's None connection number"
+	"inferior $num's None connection number"
     gdb_test "py print (gdb.selected_inferior().connection)" "None" \
-	"third inferior's None connection"
+	"inferior $num's None connection"
     gdb_test "target native" "Done.  Use the \"run\" command to start a process." \
-	"target for the third inferior"
+	"target for inferior $num"
 
     # If inf 1 has a native target, inf 3's target is shared with 1's.
     # Otherwise, it must have created a new target with a new number.
@@ -308,10 +428,10 @@ with_test_prefix "selected_inferior" {
     }
     gdb_test "py print (gdb.selected_inferior().connection_num)" \
 	"$expected_connection_num" \
-	"third inferior's native connection number"
+	"inferior $num's native connection number"
     gdb_test "py print (gdb.selected_inferior().connection.num)" \
 	"$expected_connection_num" \
-	"third inferior's native connection number, though connection object"
+	"inferior $num's native connection number, though connection object"
 
     # Test printing of gdb.TargetConnection object.
     gdb_test "py print (gdb.selected_inferior().connection)" \
@@ -319,18 +439,18 @@ with_test_prefix "selected_inferior" {
 	"print a connection object"
 
     gdb_test "inferior 1" ".*" "switch back to first inferior"
-    gdb_test_no_output "remove-inferiors 3" "remove second inferior"
+    gdb_test_no_output "remove-inferiors $num"
 }
 
 # Test repr()/str()
 with_test_prefix "__repr__" {
-    gdb_test "add-inferior" "Added inferior 4 on connection .*" "add inferior 4"
+    set num [add_inferior]
     gdb_py_test_silent_cmd "python infs = gdb.inferiors()" "get inferior list" 1
     gdb_test "python print (infs\[0\])" "<gdb.Inferior num=1, pid=$decimal>"
     gdb_test "python print (infs)" \
-	"\\\(<gdb.Inferior num=1, pid=$decimal>, <gdb.Inferior num=4, pid=$decimal>\\\)" \
+	"\\\(<gdb.Inferior num=1, pid=$decimal>, <gdb.Inferior num=$num, pid=$decimal>\\\)" \
 	"print all inferiors 1"
-    gdb_test_no_output "remove-inferiors 4"
+    gdb_test_no_output "remove-inferiors $num"
     gdb_test "python print (infs)" \
 	"\\\(<gdb.Inferior num=1, pid=$decimal>, <gdb.Inferior \\\(invalid\\\)>\\\)" \
 	"print all inferiors 2"
@@ -343,3 +463,39 @@ with_test_prefix "architecture" {
 	"True" \
 	"inferior architecture matches frame architecture"
 }
+
+gdb_test "python print(gdb.selected_inferior().main_name)" \
+    "main" \
+    "print main name"
+
+gdb_test_no_output "set args x y z"
+gdb_test "python print(gdb.selected_inferior().arguments)" \
+    "x y z" \
+    "print arguments"
+
+gdb_test_no_output "python gdb.selected_inferior().arguments = 'a b c'" \
+    "set arguments from string"
+gdb_test "show args" \
+    [string_to_regexp "Argument list to give program being debugged when it is started is \"a b c\"."] \
+    "show args from string"
+
+gdb_test_no_output "python gdb.selected_inferior().arguments = \['a', 'b c'\]" \
+    "set arguments from list"
+gdb_test "show args" \
+    [string_to_regexp "Argument list to give program being debugged when it is started is \"a b\\ c\"."] \
+    "show args from list"
+
+gdb_test_no_output "python gdb.selected_inferior().clear_env()" \
+    "clear environment"
+gdb_test_no_output "show environment"
+
+gdb_test_no_output "python gdb.selected_inferior().set_env('DEI', 'value')" \
+    "set environment variable"
+gdb_test "show environment" \
+    "DEI=value" \
+    "examine environment variable"
+
+gdb_test_no_output "python gdb.selected_inferior().unset_env('DEI')" \
+    "unset environment variable"
+gdb_test_no_output "show environment" \
+    "environment is empty again"

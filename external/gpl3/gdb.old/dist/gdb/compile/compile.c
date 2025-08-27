@@ -1,6 +1,6 @@
 /* General Compile and inject code
 
-   Copyright (C) 2014-2023 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,15 +17,14 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
-#include "top.h"
+#include "ui.h"
 #include "ui-out.h"
 #include "command.h"
 #include "cli/cli-script.h"
 #include "cli/cli-utils.h"
 #include "cli/cli-option.h"
 #include "completer.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "compile.h"
 #include "compile-internal.h"
 #include "compile-object-load.h"
@@ -40,7 +39,7 @@
 #include "osabi.h"
 #include "gdbsupport/gdb_wait.h"
 #include "valprint.h"
-#include "gdbsupport/gdb_optional.h"
+#include <optional>
 #include "gdbsupport/gdb_unlinker.h"
 #include "gdbsupport/pathstuff.h"
 #include "gdbsupport/scoped_ignore_signal.h"
@@ -72,6 +71,19 @@ struct symbol_error
      hash table.  */
 
   char *message;
+};
+
+/* An object that maps a gdb type to a gcc type.  */
+
+struct type_map_instance
+{
+  /* The gdb type.  */
+
+  struct type *type;
+
+  /* The corresponding gcc type handle.  */
+
+  gcc_type gcc_type_handle;
 };
 
 /* Hash a type_map_instance.  */
@@ -414,23 +426,6 @@ compile_print_command (const char *arg, int from_tty)
     }
 }
 
-/* A cleanup function to remove a directory and all its contents.  */
-
-static void
-do_rmdir (void *arg)
-{
-  const char *dir = (const char *) arg;
-  char *zap;
-  int wstat;
-
-  gdb_assert (startswith (dir, TMP_PREFIX));
-  zap = concat ("rm -rf ", dir, (char *) NULL);
-  wstat = system (zap);
-  if (wstat == -1 || !WIFEXITED (wstat) || WEXITSTATUS (wstat) != 0)
-    warning (_("Could not remove temporary directory %s"), dir);
-  XDELETEVEC (zap);
-}
-
 /* Return the name of the temporary directory to use for .o files, and
    arrange for the directory to be removed at shutdown.  */
 
@@ -452,7 +447,18 @@ get_compile_file_tempdir (void)
     perror_with_name (_("Could not make temporary directory"));
 
   tempdir_name = xstrdup (tempdir_name);
-  make_final_cleanup (do_rmdir, tempdir_name);
+  add_final_cleanup ([] ()
+    {
+      char *zap;
+      int wstat;
+
+      gdb_assert (startswith (tempdir_name, TMP_PREFIX));
+      zap = concat ("rm -rf ", tempdir_name, (char *) NULL);
+      wstat = system (zap);
+      if (wstat == -1 || !WIFEXITED (wstat) || WEXITSTATUS (wstat) != 0)
+	warning (_("Could not remove temporary directory %s"), tempdir_name);
+      XDELETEVEC (zap);
+    });
   return tempdir_name;
 }
 
@@ -755,7 +761,7 @@ compile_to_object (struct command_line *cmd, const char *cmd_string,
 
   compile_file_names fnames = get_new_file_names ();
 
-  gdb::optional<gdb::unlinker> source_remover;
+  std::optional<gdb::unlinker> source_remover;
 
   {
     gdb_file_up src = gdb_fopen_cloexec (fnames.source_file (), "w");

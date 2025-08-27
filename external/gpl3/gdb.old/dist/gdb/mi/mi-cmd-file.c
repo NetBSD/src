@@ -1,5 +1,5 @@
 /* MI Command Set - file commands.
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "mi-cmds.h"
 #include "mi-getopt.h"
 #include "mi-interp.h"
@@ -25,7 +24,6 @@
 #include "symtab.h"
 #include "source.h"
 #include "objfiles.h"
-#include "psymtab.h"
 #include "solib.h"
 #include "solist.h"
 #include "gdbsupport/gdb_regex.h"
@@ -34,7 +32,8 @@
    current file being executed.  */
 
 void
-mi_cmd_file_list_exec_source_file (const char *command, char **argv, int argc)
+mi_cmd_file_list_exec_source_file (const char *command,
+				   const char *const *argv, int argc)
 {
   struct symtab_and_line st;
   struct ui_out *uiout = current_uiout;
@@ -65,7 +64,8 @@ mi_cmd_file_list_exec_source_file (const char *command, char **argv, int argc)
 /* Implement -file-list-exec-source-files command.  */
 
 void
-mi_cmd_file_list_exec_source_files (const char *command, char **argv, int argc)
+mi_cmd_file_list_exec_source_files (const char *command,
+				    const char *const *argv, int argc)
 {
   enum opt
     {
@@ -83,7 +83,7 @@ mi_cmd_file_list_exec_source_files (const char *command, char **argv, int argc)
 
   /* Parse arguments.  */
   int oind = 0;
-  char *oarg;
+  const char *oarg;
 
   bool group_by_objfile = false;
   bool match_on_basename = false;
@@ -131,7 +131,8 @@ mi_cmd_file_list_exec_source_files (const char *command, char **argv, int argc)
 /* See mi-cmds.h.  */
 
 void
-mi_cmd_file_list_shared_libraries (const char *command, char **argv, int argc)
+mi_cmd_file_list_shared_libraries (const char *command,
+				   const char *const *argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
   const char *pattern;
@@ -161,11 +162,12 @@ mi_cmd_file_list_shared_libraries (const char *command, char **argv, int argc)
   /* Print the table header.  */
   ui_out_emit_list list_emitter (uiout, "shared-libraries");
 
-  for (struct so_list *so : current_program_space->solibs ())
+  for (const solib &so : current_program_space->solibs ())
     {
-      if (so->so_name[0] == '\0')
+      if (so.so_name.empty ())
 	continue;
-      if (pattern != NULL && !re_exec (so->so_name))
+
+      if (pattern != nullptr && !re_exec (so.so_name.c_str ()))
 	continue;
 
       ui_out_emit_tuple tuple_emitter (uiout, NULL);

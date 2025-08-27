@@ -1,6 +1,6 @@
 /* Interface between GDB and target environments, including files and processes
 
-   Copyright (C) 1990-2023 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by John Gilmore.
 
@@ -18,6 +18,28 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+/* This include file defines the interface between the main part of
+   the debugger, and the part which is target-specific, or specific to
+   the communications interface between us and the target.
+
+   A TARGET is an interface between the debugger and a particular
+   kind of file or process.  Targets can be STACKED in STRATA,
+   so that more than one target can potentially respond to a request.
+   In particular, memory accesses will walk down the stack of targets
+   until they find a target that is interested in handling that particular
+   address.  STRATA are artificial boundaries on the stack, within
+   which particular kinds of targets live.  Strata exist so that
+   people don't get confused by pushing e.g. a process target and then
+   a file target, and wondering why they can't see the current values
+   of variables any more (the file target is handling them and they
+   never get to the process target).  So when you push a file target,
+   it goes into the file stratum, which is always below the process
+   stratum.
+
+   Note that rather than allow an empty stack, we always have the
+   dummy target at the bottom stratum, so we can call the target
+   methods without checking them.  */
 
 #if !defined (TARGET_H)
 #define TARGET_H
@@ -39,35 +61,15 @@ struct expression;
 struct dcache_struct;
 struct inferior;
 
-#include "infrun.h" /* For enum exec_direction_kind.  */
-#include "breakpoint.h" /* For enum bptype.  */
+/* Define const gdb_byte using one identifier, to make it easy for
+   make-target-delegates.py to parse.  */
+typedef const gdb_byte const_gdb_byte;
+
+#include "infrun.h"
+#include "breakpoint.h"
 #include "gdbsupport/scoped_restore.h"
 #include "gdbsupport/refcounted-object.h"
 #include "target-section.h"
-
-/* This include file defines the interface between the main part
-   of the debugger, and the part which is target-specific, or
-   specific to the communications interface between us and the
-   target.
-
-   A TARGET is an interface between the debugger and a particular
-   kind of file or process.  Targets can be STACKED in STRATA,
-   so that more than one target can potentially respond to a request.
-   In particular, memory accesses will walk down the stack of targets
-   until they find a target that is interested in handling that particular
-   address.  STRATA are artificial boundaries on the stack, within
-   which particular kinds of targets live.  Strata exist so that
-   people don't get confused by pushing e.g. a process target and then
-   a file target, and wondering why they can't see the current values
-   of variables any more (the file target is handling them and they
-   never get to the process target).  So when you push a file target,
-   it goes into the file stratum, which is always below the process
-   stratum.
-
-   Note that rather than allow an empty stack, we always have the
-   dummy target at the bottom stratum, so we can call the target
-   methods without checking them.  */
-
 #include "target/target.h"
 #include "target/resume.h"
 #include "target/wait.h"
@@ -82,8 +84,9 @@ struct inferior;
 #include "disasm-flags.h"
 #include "tracepoint.h"
 #include "gdbsupport/fileio.h"
+#include "gdbsupport/x86-xstate.h"
 
-#include "gdbsupport/break-common.h" /* For enum target_hw_bp_type.  */
+#include "gdbsupport/break-common.h"
 
 enum strata
   {
@@ -340,7 +343,7 @@ LONGEST target_write_with_progress (struct target_ops *ops,
    size is known in advance.  Don't try to read TARGET_OBJECT_MEMORY
    through this function.  */
 
-extern gdb::optional<gdb::byte_vector> target_read_alloc
+extern std::optional<gdb::byte_vector> target_read_alloc
     (struct target_ops *ops, enum target_object object, const char *annex);
 
 /* Read OBJECT/ANNEX using OPS.  The result is a NUL-terminated character vector
@@ -350,7 +353,7 @@ extern gdb::optional<gdb::byte_vector> target_read_alloc
    the returned vector is guaranteed to have at least one element.  A warning is
    issued if the result contains any embedded NUL bytes.  */
 
-extern gdb::optional<gdb::char_vector> target_read_stralloc
+extern std::optional<gdb::char_vector> target_read_stralloc
     (struct target_ops *ops, enum target_object object, const char *annex);
 
 /* See target_ops->to_xfer_partial.  */
@@ -427,6 +430,24 @@ struct target_info
      with a one-line description (probably similar to longname).  */
   const char *doc;
 };
+
+/* A GDB target.
+
+   Each inferior has a stack of these.  See overall description at the
+   top.
+
+   Most target methods traverse the current inferior's target stack;
+   you call the method on the top target (normally via one of the
+   target_foo wrapper free functions), and the implementation of said
+   method does its work and returns, or defers to the same method on
+   the target beneath on the current inferior's target stack.  Thus,
+   the inferior you want to call the target method on must be made the
+   current inferior before calling a target method, so that the stack
+   traversal works correctly.
+
+   Methods that traverse the stack have a TARGET_DEFAULT_XXX marker in
+   their declaration below.  See the macros' description above, where
+   they're defined.  */
 
 struct target_ops
   : public refcounted_object
@@ -637,6 +658,13 @@ struct target_ops
       TARGET_DEFAULT_RETURN (1);
     virtual void follow_fork (inferior *, ptid_t, target_waitkind, bool, bool)
       TARGET_DEFAULT_FUNC (default_follow_fork);
+
+    /* Add CHILD_PTID to the thread list, after handling a
+       TARGET_WAITKIND_THREAD_CLONE event for the clone parent.  The
+       parent is inferior_ptid.  */
+    virtual void follow_clone (ptid_t child_ptid)
+      TARGET_DEFAULT_FUNC (default_follow_clone);
+
     virtual int insert_exec_catchpoint (int)
       TARGET_DEFAULT_RETURN (1);
     virtual int remove_exec_catchpoint (int)
@@ -679,8 +707,8 @@ struct target_ops
 						       inferior *inf)
       TARGET_DEFAULT_RETURN (NULL);
     /* See target_thread_info_to_thread_handle.  */
-    virtual gdb::byte_vector thread_info_to_thread_handle (struct thread_info *)
-      TARGET_DEFAULT_RETURN (gdb::byte_vector ());
+    virtual gdb::array_view<const_gdb_byte> thread_info_to_thread_handle (struct thread_info *)
+      TARGET_DEFAULT_RETURN (gdb::array_view<const gdb_byte> ());
     virtual void stop (ptid_t)
       TARGET_DEFAULT_IGNORE ();
     virtual void interrupt ()
@@ -693,7 +721,7 @@ struct target_ops
       TARGET_DEFAULT_RETURN (NULL);
     virtual void log_command (const char *)
       TARGET_DEFAULT_IGNORE ();
-    virtual const target_section_table *get_section_table ()
+    virtual const std::vector<target_section> *get_section_table ()
       TARGET_DEFAULT_RETURN (default_get_section_table ());
 
     /* Provide default values for all "must have" methods.  */
@@ -729,6 +757,10 @@ struct target_ops
       TARGET_DEFAULT_RETURN (false);
     virtual void thread_events (int)
       TARGET_DEFAULT_IGNORE ();
+    /* Returns true if the target supports setting thread options
+       OPTIONS, false otherwise.  */
+    virtual bool supports_set_thread_options (gdb_thread_options options)
+      TARGET_DEFAULT_RETURN (false);
     /* This method must be implemented in some situations.  See the
        comment on 'can_run'.  */
     virtual bool supports_non_stop ()
@@ -767,6 +799,17 @@ struct target_ops
        1 byte long.  The OFFSET, for a seekable object, specifies the
        starting point.  The ANNEX can be used to provide additional
        data-specific information to the target.
+
+       When accessing memory, inferior_ptid indicates which process's
+       memory is to be accessed.  This is usually the same process as
+       the current inferior, however it may also be a process that is
+       a fork child of the current inferior, at a moment that the
+       child does not exist in GDB's inferior lists.  This happens
+       when we remove software breakpoints from the address space of a
+       fork child process that we're not going to stay attached to.
+       Because the fork child is a clone of the fork parent, we can
+       use the fork parent inferior's stack for target method
+       delegation.
 
        Return the transferred status, error or OK (an
        'enum target_xfer_status' value).  Save the number of addressable units
@@ -929,12 +972,8 @@ struct target_ops
        the target is currently stopped at.  The architecture information is
        used to perform decr_pc_after_break adjustment, and also to determine
        the frame architecture of the innermost frame.  ptrace operations need to
-       operate according to target_gdbarch ().  */
+       operate according to the current inferior's gdbarch.  */
     virtual struct gdbarch *thread_architecture (ptid_t)
-      TARGET_DEFAULT_RETURN (NULL);
-
-    /* Determine current address space of thread PTID.  */
-    virtual struct address_space *thread_address_space (ptid_t)
       TARGET_DEFAULT_RETURN (NULL);
 
     /* Target file operations.  */
@@ -989,7 +1028,7 @@ struct target_ops
        seen by the debugger (GDB or, for remote targets, the remote
        stub).  Return a string, or an empty optional if an error
        occurs (and set *TARGET_ERRNO).  */
-    virtual gdb::optional<std::string> fileio_readlink (struct inferior *inf,
+    virtual std::optional<std::string> fileio_readlink (struct inferior *inf,
 							const char *filename,
 							fileio_error *target_errno);
 
@@ -1038,7 +1077,7 @@ struct target_ops
     virtual int get_trace_status (struct trace_status *ts)
       TARGET_DEFAULT_RETURN (-1);
 
-    virtual void get_tracepoint_status (struct breakpoint *tp,
+    virtual void get_tracepoint_status (tracepoint *tp,
 					struct uploaded_tp *utp)
       TARGET_DEFAULT_NORETURN (tcomplain ());
 
@@ -1321,6 +1360,14 @@ struct target_ops
     virtual bool store_memtags (CORE_ADDR address, size_t len,
 				const gdb::byte_vector &tags, int type)
       TARGET_DEFAULT_NORETURN (tcomplain ());
+
+    /* Returns true if ADDRESS is tagged, otherwise returns false.  */
+    virtual bool is_address_tagged (gdbarch *gdbarch, CORE_ADDR address)
+      TARGET_DEFAULT_NORETURN (tcomplain ());
+
+    /* Return the x86 XSAVE extended state area layout.  */
+    virtual x86_xsave_layout fetch_x86_xsave_layout ()
+      TARGET_DEFAULT_RETURN (x86_xsave_layout ());
   };
 
 /* Deleter for std::unique_ptr.  See comments in
@@ -1409,15 +1456,6 @@ extern target_ops *get_dummy_target ();
 /* Define easy words for doing these operations on our current target.  */
 
 extern const char *target_shortname ();
-
-/* Does whatever cleanup is required for a target that we are no
-   longer going to be calling.  This routine is automatically always
-   called after popping the target off the target stack - the target's
-   own methods are no longer available through the target vector.
-   Closing file descriptors and freeing all memory allocated memory are
-   typical things it should do.  */
-
-void target_close (struct target_ops *targ);
 
 /* Find the correct target to use for "attach".  If a target on the
    current stack supports attaching, then it is returned.  Otherwise,
@@ -1532,10 +1570,6 @@ extern void target_store_registers (struct regcache *regcache, int regs);
    debugged.  */
 
 extern void target_prepare_to_store (regcache *regcache);
-
-/* Determine current address space of thread PTID.  */
-
-struct address_space *target_thread_address_space (ptid_t);
 
 /* Implement the "info proc" command.  This returns one if the request
    was handled, and zero otherwise.  It can also throw an exception if
@@ -1888,6 +1922,10 @@ extern void target_async (bool enable);
 /* Enables/disables thread create and exit events.  */
 extern void target_thread_events (int enable);
 
+/* Returns true if the target supports setting thread options
+   OPTIONS.  */
+extern bool target_supports_set_thread_options (gdb_thread_options options);
+
 /* Whether support for controlling the target backends always in
    non-stop mode is enabled.  */
 extern enum auto_boolean target_non_stop_enabled;
@@ -1933,7 +1971,7 @@ extern struct thread_info *target_thread_handle_to_thread_info
 /* Given a thread, return the thread handle, a target-specific sequence of
    bytes which serves as a thread identifier within the program being
    debugged.  */
-extern gdb::byte_vector target_thread_info_to_thread_handle
+extern gdb::array_view<const gdb_byte> target_thread_info_to_thread_handle
   (struct thread_info *);
 
 /* Attempts to find the pathname of the executable file
@@ -2034,7 +2072,7 @@ extern bool target_have_steppable_watchpoint ();
 
 /* Provide defaults for hardware watchpoint functions.  */
 
-/* If the *_hw_beakpoint functions have not been defined
+/* If the *_hw_breakpoint functions have not been defined
    elsewhere use the definitions in the target vector.  */
 
 /* Returns positive if we can set a hardware watchpoint of type TYPE.
@@ -2199,7 +2237,7 @@ extern int target_fileio_unlink (struct inferior *inf,
    by the debugger (GDB or, for remote targets, the remote stub).
    Return a null-terminated string allocated via xmalloc, or NULL if
    an error occurs (and set *TARGET_ERRNO).  */
-extern gdb::optional<std::string> target_fileio_readlink
+extern std::optional<std::string> target_fileio_readlink
     (struct inferior *inf, const char *filename, fileio_error *target_errno);
 
 /* Read target file FILENAME, in the filesystem as seen by INF.  If
@@ -2255,7 +2293,7 @@ extern void target_trace_set_readonly_regions ();
 
 extern int target_get_trace_status (trace_status *ts);
 
-extern void target_get_tracepoint_status (breakpoint *tp, uploaded_tp *utp);
+extern void target_get_tracepoint_status (tracepoint *tp, uploaded_tp *utp);
 
 extern void target_trace_stop ();
 
@@ -2309,6 +2347,10 @@ extern bool target_fetch_memtags (CORE_ADDR address, size_t len,
 
 extern bool target_store_memtags (CORE_ADDR address, size_t len,
 				  const gdb::byte_vector &tags, int type);
+
+extern bool target_is_address_tagged (gdbarch *gdbarch, CORE_ADDR address);
+
+extern x86_xsave_layout target_fetch_x86_xsave_layout ();
 
 /* Command logging facility.  */
 
@@ -2399,12 +2441,12 @@ const struct target_section *target_section_by_addr (struct target_ops *target,
 /* Return the target section table this target (or the targets
    beneath) currently manipulate.  */
 
-extern const target_section_table *target_get_section_table
+extern const std::vector<target_section> *target_get_section_table
   (struct target_ops *target);
 
 /* Default implementation of get_section_table for dummy_target.  */
 
-extern const target_section_table *default_get_section_table ();
+extern const std::vector<target_section> *default_get_section_table ();
 
 /* From mem-break.c */
 
@@ -2460,7 +2502,7 @@ struct target_ops *find_target_at (enum strata stratum);
 /* Read OS data object of type TYPE from the target, and return it in XML
    format.  The return value follows the same rules as target_read_stralloc.  */
 
-extern gdb::optional<gdb::char_vector> target_get_osdata (const char *type);
+extern std::optional<gdb::char_vector> target_get_osdata (const char *type);
 
 /* Stuff that should be shared among the various remote targets.  */
 
@@ -2474,6 +2516,10 @@ extern int remote_timeout;
    scoped_restore to restore it back to the current value.  */
 extern scoped_restore_tmpl<int>
     make_scoped_restore_show_memory_breakpoints (int show);
+
+/* True if we should trust readonly sections from the
+   executable when reading memory.  */
+extern bool trust_readonly;
 
 extern bool may_write_registers;
 extern bool may_write_memory;

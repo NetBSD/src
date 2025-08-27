@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -99,4 +99,113 @@ proc gdb_get_bp_addr { num } {
 	}
     }
     return ""
+}
+
+# Compare the version numbers in L1 to those in L2 using OP, and
+# return 1 if the comparison is true.  OP can be "<", "<=", or "==".
+# It is ok if the lengths of the lists differ.
+
+proc version_compare { l1 op l2 } {
+    switch -exact $op {
+	"=="    -
+	"<="    -
+	"<"     {}
+	default { error "unsupported op: $op" }
+    }
+
+    # Handle ops < and ==.
+    foreach v1 $l1 v2 $l2 {
+	if {$v1 == ""} {
+	    # This is: "1.2 OP 1.2.1".
+	    if {$op != "=="} {
+		return 1
+	    }
+	    return 0
+	}
+	if {$v2 == ""} {
+	    # This is: "1.2.1 OP 1.2".
+	    return 0
+	}
+	if {$v1 == $v2} {
+	    continue
+	}
+	return [expr $v1 $op $v2]
+    }
+
+    if {$op == "<"} {
+	# They are equal.
+	return 0
+    }
+    return 1
+}
+
+# Acquire lock file LOCKFILE.  Tries forever until the lock file is
+# successfully created.
+
+proc lock_file_acquire {lockfile} {
+    verbose -log "acquiring lock file: $::subdir/${::gdb_test_file_name}.exp"
+    while {true} {
+	if {![catch {open $lockfile {WRONLY CREAT EXCL}} rc]} {
+	    set msg "locked by $::subdir/${::gdb_test_file_name}.exp"
+	    verbose -log "lock file: $msg"
+	    # For debugging, put info in the lockfile about who owns
+	    # it.
+	    puts  $rc $msg
+	    flush $rc
+	    return [list $rc $lockfile]
+	}
+	after 10
+    }
+}
+
+# Release a lock file.
+
+proc lock_file_release {info} {
+    verbose -log "releasing lock file: $::subdir/${::gdb_test_file_name}.exp"
+
+    if {![catch {fconfigure [lindex $info 0]}]} {
+	if {![catch {
+	    close [lindex $info 0]
+	    file delete -force [lindex $info 1]
+	} rc]} {
+	    return ""
+	} else {
+	    return -code error "Error releasing lockfile: '$rc'"
+	}
+    } else {
+	error "invalid lock"
+    }
+}
+
+# Return directory where we keep lock files.
+
+proc lock_dir {} {
+    if { [info exists ::GDB_LOCK_DIR] } {
+	# When using check//.
+	return $::GDB_LOCK_DIR
+    }
+
+    return [make_gdb_parallel_path cache]
+}
+
+# Run body under lock LOCK_FILE.
+
+proc with_lock { lock_file body } {
+    if {[info exists ::GDB_PARALLEL]} {
+	set lock_file [file join [lock_dir] $lock_file]
+	set lock_rc [lock_file_acquire $lock_file]
+    }
+
+    set code [catch {uplevel 1 $body} result]
+
+    if {[info exists ::GDB_PARALLEL]} {
+	lock_file_release $lock_rc
+    }
+
+    if {$code == 1} {
+	global errorInfo errorCode
+	return -code $code -errorinfo $errorInfo -errorcode $errorCode $result
+    } else {
+	return -code $code $result
+    }
 }

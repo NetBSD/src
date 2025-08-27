@@ -2,7 +2,7 @@
    This does not include symbol information, found in sym.h and
    symconst.h.
 
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -299,7 +299,10 @@ struct ecoff_debug_info
      all pointers to arrays, not single structures.  They will be NULL
      if there are no instances of the relevant structure.  These
      fields are also used by the assembler to output ECOFF debugging
-     information.  */
+     information.  If alloc_syments is true then the pointers are to
+     objalloc memory, or into a single malloc'd buffer, or otherwise
+     should not be freed.  */
+  bool alloc_syments;
   unsigned char *line;
   void *external_dnr;	/* struct dnr_ext */
   void *external_pdr;	/* struct pdr_ext */

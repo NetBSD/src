@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #include "traits.h"
 #include <algorithm>
 #include <type_traits>
+#include "gdbsupport/gdb_assert.h"
 
 /* An array_view is an abstraction that provides a non-owning view
    over a sequence of contiguous objects.
@@ -152,18 +153,17 @@ public:
     : m_array (c.data ()), m_size (c.size ())
   {}
 
-  /* Observer methods.  Some of these can't be constexpr until we
-     require C++14.  */
-  /*constexpr14*/ T *data () noexcept { return m_array; }
+  /* Observer methods.  */
+  constexpr T *data () noexcept { return m_array; }
   constexpr const T *data () const noexcept { return m_array; }
 
-  /*constexpr14*/ T *begin () noexcept { return m_array; }
+  constexpr T *begin () noexcept { return m_array; }
   constexpr const T *begin () const noexcept { return m_array; }
 
-  /*constexpr14*/ T *end () noexcept { return m_array + m_size; }
+  constexpr T *end () noexcept { return m_array + m_size; }
   constexpr const T *end () const noexcept { return m_array + m_size; }
 
-  /*constexpr14*/ reference operator[] (size_t index) noexcept
+  constexpr reference operator[] (size_t index) noexcept
   {
 #if defined(_GLIBCXX_DEBUG)
     gdb_assert (index < m_size);
@@ -172,7 +172,7 @@ public:
   }
   constexpr const_reference operator[] (size_t index) const noexcept
   {
-#if defined(_GLIBCXX_DEBUG) && __cplusplus >= 201402L
+#if defined(_GLIBCXX_DEBUG)
     gdb_assert (index < m_size);
 #endif
     return m_array[index];
@@ -184,9 +184,10 @@ public:
   /* Slice an array view.  */
 
   /* Return a new array view over SIZE elements starting at START.  */
+  [[nodiscard]]
   constexpr array_view<T> slice (size_type start, size_type size) const noexcept
   {
-#if defined(_GLIBCXX_DEBUG) && __cplusplus >= 201402L
+#if defined(_GLIBCXX_DEBUG)
     gdb_assert (start + size <= m_size);
 #endif
     return {m_array + start, size};
@@ -194,9 +195,10 @@ public:
 
   /* Return a new array view over all the elements after START,
      inclusive.  */
+  [[nodiscard]]
   constexpr array_view<T> slice (size_type start) const noexcept
   {
-#if defined(_GLIBCXX_DEBUG) && __cplusplus >= 201402L
+#if defined(_GLIBCXX_DEBUG)
     gdb_assert (start <= m_size);
 #endif
     return {m_array + start, size () - start};
@@ -278,7 +280,7 @@ operator!= (const gdb::array_view<T> &lhs, const gdb::array_view<T> &rhs)
      foo (1, 2, gdb::array_view<value *>(values, nargs));
 
    Or, better, using make_array_view, which has the advantage of
-   inferring the arrav_view element's type:
+   inferring the array_view element's type:
 
      foo (1, 2, gdb::make_array_view (values, nargs));
 */

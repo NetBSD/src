@@ -1,3 +1,157 @@
+2024-02-15 Will Hawkins  <hawkinsw@obs.cr>
+
+	* bpf-opc.c: Move callx into the v1 BPF CPU variant.
+
+2024-02-14  Yuriy Kolerov  <ykolerov@synopsys.com>
+
+	* arc-tbl.h (dbnz): Use "DBNZ" class.
+	* arc-dis.c (arc_opcode_to_insn_type): Handle "DBNZ" class.
+
+2024-01-29  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf-opc.c (bpf_opcodes): Remove BPF_INSN_LDINDDW and
+	BPF_INSN_LDABSDW instructions.
+
+2024-01-15  Nick Clifton  <nickc@redhat.com>
+
+	* configure: Regenerate.
+	* po/opcodes.pot: Regenerate.
+
+2024-01-15  Nick Clifton  <nickc@redhat.com>
+
+	* 2.42 branch point.
+
+2023-11-15  Arsen Arsenović  <arsen@aarsen.me>
+
+	* aclocal.m4: Regenerate.
+	* po/Make-in ($(srcdir)/$(PACKAGE).pot): Output to a .pot
+	temporary file to suppress xgettext checking charset names.
+	* configure.ac (SHARED_LIBADD): Use LTLIBINTL rather than
+	LIBINTL.
+	* configure: Regenerate.
+	* po/Make-in ($(srcdir)/$(PACKAGE).pot): Output to a .pot
+	temporary file, to suppress xgettext checking charset names.
+
+2023-10-05  Neal frager  <neal.frager@amd.com>
+
+	* microblaze-opcm.h (struct op_code_struct): Tidy and remove
+	redundant entries.
+	* microblaze-opc.h (MAX_OPCODES): Increase to 300.
+	(op_code_struct): Add address extension instructions.
+
+2023-10-04  Neal frager  <neal.frager@amd.com>
+
+	* microblaze-opc.h (struct op_code_struct): Add hiberante
+	and suspend entries.
+	* microblaze-opcm.h (enum microblaze_instr): Add microblaze_sleep,
+	hibernate, suspend entries.
+
+2023-08-24  Tom Tromey  <tom@tromey.com>
+
+	* cgen.sh: Don't pass "-s" to cgen.
+	* Makefile.in: Rebuild.
+	* Makefile.am (GUILE): Simplify.
+
+2023-07-31  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	PR 30705
+	* bpf-dis.c (print_insn_bpf): Check that info->section->owner is
+	actually available before using it.
+
+2023-07-30  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf-dis.c: Initialize asm_bpf_version to -1.
+	(print_insn_bpf): Set BPF ISA version from the cpu version ELF
+	header flags if no explicit version set in the command line.
+	* disassemble.c (disassemble_init_for_target): Remove unused code.
+
+2023-07-26  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf-opc.c (bpf_opcodes): Fix BPF_INSN_NEGR to not use a src
+	register.
+
+2023-07-24  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf-opc.c (bpf_opcodes): Add entries for the BSWAP*
+	instructions.
+
+2023-07-24  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf-opc.c (bpf_opcodes): Fix pseudo-c syntax for MOVS* and LDXS*
+	instructions.
+
+2023-07-23  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf-opc.c (bpf_opcodes): Add entry for jal.
+
+2023-07-21  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf-opc.c (bpf_opcodes): Add entries for LDXS{B,W,H,DW}
+	instructions.
+
+2023-07-21  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf-opc.c (bpf_opcodes): Add entries for MOVS{8,16,32}R and
+	MOVS32{8,16,32}R instructions.  and MOVS32I instructions.
+
+2023-07-21  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* Makefile.am (TARGET64_LIBOPCODES_CFILES): Add missing bpf-dis.c
+	* Makefile.in: Regenerate.
+
+2023-07-03  Nick Clifton  <nickc@redhat.com>
+
+	* configure: Regenerate.
+	* po/opcodes.pot: Regenerate.
+
+2023-07-03  Nick Clifton  <nickc@redhat.com>
+
+	2.41 Branch Point.
+
+2023-05-23  Nick Clifton  <nickc@redhat.com>
+
+	* po/sv.po: Updated translation.
+
+2023-04-21  Tom Tromey  <tromey@adacore.com>
+
+	* i386-dis.c (OP_J): Check result of get16.
+
+2023-04-12  Claudiu Zissulescu  <claziss@synopsys.com>
+
+	* arc-tbl.h: Remove vadds2, vadds2h, vadds4h, vaddsubs,
+	vaddsubs2h, vaddsubs4h, vsubadds, vsubadds2h, vsubadds4h, vsubs2,
+	vsubs2h, and vsubs4h instructions.
+
+2023-04-11  Nick Clifton  <nickc@redhat.com>
+
+	PR 30310
+	* nfp-dis.c (init_nfp6000_priv): Check that the output section
+	exists.
+
+2023-03-15  Nick Clifton  <nickc@redhat.com>
+
+	PR 30231
+	* mep-dis.c: Regenerate.
+
+2023-03-15  Nick Clifton  <nickc@redhat.com>
+
+	PR 30230
+	* arm-dis.c (get_sym_code_type): Check for non-ELF symbols.
+
+2023-02-28  Richard Ball  <richard.ball@arm.com>
+
+	* aarch64-opc.c: Add MEC system registers.
+
+2023-01-03  Nick Clifton  <nickc@redhat.com>
+
+	* po/de.po: Updated German translation.
+	* po/ro.po: Updated Romainian translation.
+	* po/uk.po: Updated Ukrainian translation.
+
+2022-12-31  Nick Clifton  <nickc@redhat.com>
+
+	* 2.40 branch created.
+
 2022-11-22  Shahab Vahedi  <shahab@synopsys.com>
 
 	* arc-regs.h: Change isa_config address to 0xc1.
@@ -1328,7 +1482,7 @@
 
 For older changes see ChangeLog-2020
 
-Copyright (C) 2021-2022 Free Software Foundation, Inc.
+Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

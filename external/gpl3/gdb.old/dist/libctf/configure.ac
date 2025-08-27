@@ -1,7 +1,7 @@
 dnl                                            -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+dnl   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ AM_MAINTAINER_MODE
 AM_INSTALL_LIBBFD
 ACX_PROG_CC_WARNING_OPTS([-Wall], [ac_libctf_warn_cflags])
 
-AC_FUNC_MMAP
+GCC_AC_FUNC_MMAP
 # Needed for BFD capability checks.
 AC_SEARCH_LIBS(dlsym, dl)
 AM_ZLIB
@@ -184,7 +184,7 @@ changequote(,)
     # We require texinfo to be 6.3 or later, for a working synindex
     # and validatemenus: otherwise we fall back to /bin/true.
     if ${MAKEINFO} --version \
-       | egrep 'texinfo[^0-9]*(6\.[3-9]|[7-9][0-9])' >/dev/null 2>&1; then
+       | egrep 'texinfo[^0-9]*(6\.[3-9]|[7-9]|[1-6][0-9])' >/dev/null 2>&1; then
       build_info=yes
     else
         build_info=
@@ -220,7 +220,7 @@ changequote([,])dnl
   fi
 fi
 
-CTF_LIBADD="$CTF_LIBADD $LIBINTL"
+CTF_LIBADD="$CTF_LIBADD $LTLIBINTL"
 
 if test "$enable_shared" = "yes"; then
   case "${host}" in
@@ -241,10 +241,18 @@ if @<:@llength @<:@info commands try@:>@@:>@ then { puts yes } else { puts no }
 EOF
 fi`
 ])
-AM_CONDITIONAL(TCL_TRY, test "${ac_cv_libctf_tcl_try}" = yes)
+
+HAVE_TCL_TRY=false
+if test "${ac_cv_libctf_tcl_try}" = "yes"; then
+    HAVE_TCL_TRY=true
+fi
+AC_SUBST(HAVE_TCL_TRY)
 
 # Use a version script, if possible, or an -export-symbols-regex otherwise.
+# First figure out the version script flag: then massage the script, if
+# needed.
 decommented_version_script=
+no_version_script=
 AC_CACHE_CHECK([for linker versioning flags], [ac_cv_libctf_version_script],
   [echo 'FOO { global: mai*; local: ctf_fo*; };' > conftest.ver
    old_LDFLAGS="$LDFLAGS"
@@ -253,7 +261,7 @@ AC_CACHE_CHECK([for linker versioning flags], [ac_cv_libctf_version_script],
    CFLAGS="$CFLAGS -fPIC"
    AC_LINK_IFELSE([AC_LANG_SOURCE([[int ctf_foo (void) { return 0; }
 				    int main (void) { return ctf_foo(); }]])],
-		  [ac_cv_libctf_version_script="-Wl,--version-script='$srcdir/libctf.ver'"],
+		  [ac_cv_libctf_version_script="-Wl,--version-script"],
 		  [])
    LDFLAGS="$old_LDFLAGS"
 
@@ -270,19 +278,27 @@ AC_CACHE_CHECK([for linker versioning flags], [ac_cv_libctf_version_script],
 
    if test -z "$ac_cv_libctf_version_script"; then
      ac_cv_libctf_version_script='-export-symbols-regex ctf_.*'
+     no_version_script=t
    fi
    rm -f conftest.ver])
+
+# Ensure that no symbols exist in the version script for libctf-nobfd.so
+# that do not exist in the shared library itself, since some linkers (Solaris)
+# add such symbols with type NOTYPE, and others (LLVM) complain loudly
+# and fail to link.
+grep -v 'libctf only' $srcdir/libctf.ver > libctf-nobfd.ver
+
 if test -n "$decommented_version_script"; then
    # Solaris's version scripts use shell-style comments rather than the C-style
    # used by GNU ld.  Use cpp to strip the comments out.  (cpp exists under this
    # name on all platforms that support ld -z gnu-version-script.)
-   # Also ensure that no symbols exist in the version script for libctf-nobfd.so
-   # that do not exist in the shared library itself, since some linkers add such
-   # symbols with type NOTYPE.
    /lib/cpp < $srcdir/libctf.ver > libctf-decommented.ver
-   grep -v 'libctf only' $srcdir/libctf.ver | /lib/cpp > libctf-nobfd-decommented.ver
+   /lib/cpp < $srcdir/libctf-nobfd.ver > libctf-nobfd-decommented.ver
    VERSION_FLAGS="$ac_cv_libctf_version_script='libctf-decommented.ver'"
    VERSION_FLAGS_NOBFD="$ac_cv_libctf_version_script='libctf-nobfd-decommented.ver'"
+elif test -z "$no_version_script"; then
+   VERSION_FLAGS="$ac_cv_libctf_version_script='$srcdir/libctf.ver'"
+   VERSION_FLAGS_NOBFD="$ac_cv_libctf_version_script='libctf-nobfd.ver'"
 else
    VERSION_FLAGS="$ac_cv_libctf_version_script"
    VERSION_FLAGS_NOBFD="$ac_cv_libctf_version_script"

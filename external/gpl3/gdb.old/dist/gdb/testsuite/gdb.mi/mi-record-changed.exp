@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,9 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if ![supports_process_record] {
-    return
-}
+require supports_process_record
 
 standard_testfile basics.c
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
@@ -39,5 +37,3 @@ mi_gdb_test "record stop" \
 mi_gdb_test "target record" \
     ".*=record-started,thread-group=\"i${decimal}\",method=\"full\".*\\^done" \
     "target record"
-
-return 0

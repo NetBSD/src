@@ -1,5 +1,5 @@
 /* IA-64 support for OpenVMS
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -370,8 +370,9 @@ elf64_ia64_relax_section (bfd *abfd, asection *sec,
 
   /* Nothing to do if there are no relocations or there is no need for
      the current pass.  */
-  if ((sec->flags & SEC_RELOC) == 0
-      || sec->reloc_count == 0
+  if (sec->reloc_count == 0
+      || (sec->flags & SEC_RELOC) == 0
+      || (sec->flags & SEC_HAS_CONTENTS) == 0
       || (link_info->relax_pass == 0 && sec->skip_relax_pass_0)
       || (link_info->relax_pass == 1 && sec->skip_relax_pass_1))
     return true;
@@ -2590,8 +2591,8 @@ elf64_ia64_adjust_dynamic_symbol (struct bfd_link_info *info ATTRIBUTE_UNUSED,
 }
 
 static bool
-elf64_ia64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				  struct bfd_link_info *info)
+elf64_ia64_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			       struct bfd_link_info *info)
 {
   struct elf64_ia64_allocate_data data;
   struct elf64_ia64_link_hash_table *ia64_info;
@@ -2600,11 +2601,12 @@ elf64_ia64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   struct elf_link_hash_table *hash_table;
 
   hash_table = elf_hash_table (info);
-  dynobj = hash_table->dynobj;
   ia64_info = elf64_ia64_hash_table (info);
   if (ia64_info == NULL)
     return false;
-  BFD_ASSERT(dynobj != NULL);
+  dynobj = hash_table->dynobj;
+  if (dynobj == NULL)
+    return true;
   data.info = info;
 
   /* Allocate the GOT entries.  */
@@ -4002,8 +4004,6 @@ elf64_ia64_finish_dynamic_symbol (bfd *output_bfd,
   struct elf64_ia64_dyn_sym_info *dyn_i;
 
   ia64_info = elf64_ia64_hash_table (info);
-  if (ia64_info == NULL)
-    return false;
 
   dyn_i = get_dyn_sym_info (ia64_info, h, NULL, NULL, false);
 
@@ -4702,7 +4702,7 @@ elf64_vms_write_shdrs_and_ehdr (bfd *abfd)
   bfd_putl64 (elf_ia64_vms_tdata (abfd)->needed_count, needed_count);
 
   if (bfd_seek (abfd, sizeof (Elf64_External_Ehdr), SEEK_SET) != 0
-      || bfd_bwrite (needed_count, 8, abfd) != 8)
+      || bfd_write (needed_count, 8, abfd) != 8)
     return false;
 
   return true;
@@ -4711,7 +4711,9 @@ elf64_vms_write_shdrs_and_ehdr (bfd *abfd)
 static bool
 elf64_vms_close_and_cleanup (bfd *abfd)
 {
-  if (bfd_get_format (abfd) == bfd_object)
+  bool ret = true;
+  if (bfd_get_format (abfd) == bfd_object
+      && bfd_write_p (abfd))
     {
       long isize;
 
@@ -4719,15 +4721,16 @@ elf64_vms_close_and_cleanup (bfd *abfd)
       isize = bfd_get_size (abfd);
       if ((isize & 7) != 0)
 	{
-	  int ishort = 8 - (isize & 7);
+	  unsigned int ishort = 8 - (isize & 7);
 	  uint64_t pad = 0;
 
-	  bfd_seek (abfd, isize, SEEK_SET);
-	  bfd_bwrite (&pad, ishort, abfd);
+	  if (bfd_seek (abfd, isize, SEEK_SET) != 0
+	      || bfd_write (&pad, ishort, abfd) != ishort)
+	    ret = false;
 	}
     }
 
-  return _bfd_elf_close_and_cleanup (abfd);
+  return _bfd_generic_close_and_cleanup (abfd) && ret;
 }
 
 /* Add symbols from an ELF object file to the linker hash table.  */
@@ -5484,8 +5487,8 @@ static const struct elf_size_info elf64_ia64_vms_size_info = {
 	elf64_ia64_check_relocs
 #define elf_backend_adjust_dynamic_symbol \
 	elf64_ia64_adjust_dynamic_symbol
-#define elf_backend_size_dynamic_sections \
-	elf64_ia64_size_dynamic_sections
+#define elf_backend_late_size_sections \
+	elf64_ia64_late_size_sections
 #define elf_backend_omit_section_dynsym \
 	_bfd_elf_omit_section_dynsym_all
 #define elf_backend_relocate_section \

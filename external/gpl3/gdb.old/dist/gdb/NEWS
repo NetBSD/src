@@ -1,6 +1,569 @@
 		What has changed in GDB?
 	     (Organized release by release)
 
+*** Changes in GDB 15
+
+* The MPX commands "show/set mpx bound" have been deprecated, as Intel
+  listed MPX as removed in 2019.
+
+* Building GDB and GDBserver now requires a C++17 compiler.
+  For example, GCC 9 or later.
+
+* GDB index now contains information about the main function.  This speeds up
+  startup when it is being used for some large binaries.
+
+* On hosts where threading is available, DWARF reading is now done in
+  the background, resulting in faster startup.  This can be controlled
+  using "maint set dwarf synchronous".
+
+* Changed commands
+
+disassemble
+  Attempting to use both the 'r' and 'b' flags with the disassemble
+  command will now give an error.  Previously the 'b' flag would
+  always override the 'r' flag.
+
+gcore
+generate-core-file
+  GDB now generates sparse core files, on systems that support it.
+
+maintenance info line-table
+  Add an EPILOGUE-BEGIN column to the output of the command.  It indicates
+  if the line is considered the start of the epilgoue, and thus a point at
+  which the frame can be considered destroyed.
+
+set unwindonsignal on|off
+show unwindonsignal
+  These commands are now aliases for the new set/show unwind-on-signal.
+
+target record-full
+  This command now gives an error if any unexpected arguments are
+  found after the command.
+
+list .
+  When using the command "list ." in a location that has no debug information
+  or no file loaded, GDB now says that there is no debug information to print
+  lines.  This makes it more obvious that there is no information, as opposed
+  to implying there is no inferior loaded.
+
+* New commands
+
+info missing-debug-handler
+  List all the registered missing debug handlers.
+
+enable missing-debug-handler LOCUS HANDLER
+disable missing-debug-handler LOCUS HANDLER
+  Enable or disable a missing debug handler with a name matching the
+  regular expression HANDLER, in LOCUS.
+
+  LOCUS can be 'global' to operate on global missing debug handler,
+  'progspace' to operate on handlers within the current program space,
+  or can be a regular expression which is matched against the filename
+  of the primary executable in each program space.
+
+maintenance info linux-lwps
+  List all LWPs under control of the linux-nat target.
+
+set remote thread-options-packet
+show remote thread-options-packet
+  Set/show the use of the thread options packet.
+
+set direct-call-timeout SECONDS
+show direct-call-timeout
+set indirect-call-timeout SECONDS
+show indirect-call-timeout
+  These new settings can be used to limit how long GDB will wait for
+  an inferior function call to complete.  The direct timeout is used
+  for inferior function calls from e.g. 'call' and 'print' commands,
+  while the indirect timeout is used for inferior function calls from
+  within a conditional breakpoint expression.
+
+  The default for the direct timeout is unlimited, while the default
+  for the indirect timeout is 30 seconds.
+
+  These timeouts will only have an effect for targets that are
+  operating in async mode.  For non-async targets the timeouts are
+  ignored, GDB will wait indefinitely for an inferior function to
+  complete, unless interrupted by the user using Ctrl-C.
+
+set unwind-on-timeout on|off
+show unwind-on-timeout
+  These commands control whether GDB should unwind the stack when a
+  timeout occurs during an inferior function call.  The default is
+  off, in which case the inferior will remain in the frame where the
+  timeout occurred.  When on, GDB will unwind the stack removing the
+  dummy frame that was added for the inferior call, and restoring the
+  inferior state to how it was before the inferior call started.
+
+set unwind-on-signal on|off
+show unwind-on-signal
+  These new commands replaces the existing set/show unwindonsignal.  The
+  old command is maintained as an alias.
+
+* New features in the GDB remote stub, GDBserver
+
+  ** The --remote-debug and --event-loop-debug command line options
+     have been removed.
+
+  ** The --debug command line option now takes an optional comma
+     separated list of components to emit debug for.  The currently
+     supported components are: all, threads, event-loop, and remote.
+     If no components are given then threads is assumed.
+
+  ** The 'monitor set remote-debug' and 'monitor set event-loop-debug'
+     command have been removed.
+
+  ** The 'monitor set debug 0|1' command has been extended to take a
+     component name, e.g.: 'monitor set debug COMPONENT off|on'.
+     Possible component names are: all, threads, event-loop, and
+     remote.
+
+* Python API
+
+  ** New function gdb.notify_mi(NAME, DATA), that emits custom
+     GDB/MI async notification.
+
+  ** New read/write attribute gdb.Value.bytes that contains a bytes
+     object holding the contents of this value.
+
+  ** New module gdb.missing_debug that facilitates dealing with
+     objfiles that are missing any debug information.
+
+  ** New function gdb.missing_debug.register_handler that can register
+     an instance of a sub-class of gdb.missing_debug.MissingDebugInfo
+     as a handler for objfiles that are missing debug information.
+
+  ** New class gdb.missing_debug.MissingDebugInfo which can be
+     sub-classed to create handlers for objfiles with missing debug
+     information.
+
+  ** Stop events now have a "details" attribute that holds a
+     dictionary that carries the same information as an MI "*stopped"
+     event.
+
+  ** New function gdb.interrupt(), that interrupts GDB as if the user
+     typed control-c.
+
+  ** New gdb.InferiorThread.ptid_string attribute.  This read-only
+     attribute contains the string that appears in the 'Target Id'
+     column of the 'info threads' command output.
+
+  ** It is no longer possible to create new gdb.Progspace object using
+     'gdb.Progspace()', this will result in a TypeError.  Progspace
+     objects can still be obtained through calling other API
+     functions, for example 'gdb.current_progspace()'.
+
+  ** User defined attributes can be added to a gdb.Inferior object,
+     these will be stored in the object's new Inferior.__dict__
+     attribute.
+
+  ** User defined attributes can be added to a gdb.InferiorThread
+     object, these will be stored in the object's new
+     InferiorThread.__dict__ attribute.
+
+  ** New constants gdb.SYMBOL_TYPE_DOMAIN, gdb.SYMBOL_FUNCTION_DOMAIN,
+     and gdb.SEARCH_*_DOMAIN corresponding to all the existing symbol
+     domains.  Symbol lookup can now search in multiple domains at
+     once, and can also narrowly search for just a type or function.
+
+* Debugger Adapter Protocol changes
+
+  ** GDB now emits the "process" event.
+
+  ** GDB now supports the "cancel" request.
+
+  ** The "attach" request now supports specifying the program.
+
+  ** New command "set debug dap-log-level" controls DAP logging.
+
+  ** The "set debug dap-log-file" command is now documented.  This
+     command was available in GDB 14 but not documented.
+
+* Guile API
+
+  ** New constants SYMBOL_TYPE_DOMAIN, SYMBOL_FUNCTION_DOMAIN, and
+     SEARCH_*_DOMAIN corresponding to all the existing symbol domains.
+     Symbol lookup can now search in multiple domains at once, and can
+     also narrowly search for just a type or function.
+
+* New remote packets
+
+New stop reason: clone
+  Indicates that a clone system call was executed.
+
+QThreadOptions
+  Enable/disable optional event reporting, on a per-thread basis.
+  Currently supported options are GDB_THREAD_OPTION_CLONE, to enable
+  clone event reporting, and GDB_THREAD_OPTION_EXIT to enable thread
+  exit event reporting.
+
+QThreadOptions in qSupported
+  The qSupported packet allows GDB to inform the stub it supports the
+  QThreadOptions packet, and the qSupported response can contain the
+  set of thread options the remote stub supports.
+
+qIsAddressTagged
+  This new packet allows GDB to query the stub about a given address to check
+  if it is tagged or not.  Many memory tagging-related GDB commands need to
+  perform this check before they read/write the allocation tag related to an
+  address.  Currently, however, this is done through a 'vFile' request to read
+  the file /proc/<PID>/smaps and check if the address is in a region reported
+  as memory tagged.  Since not all targets have a notion of what the smaps
+  file is about, this new packet provides a more generic way to perform such
+  a check.
+
+*** Changes in GDB 14
+
+* GDB now supports the AArch64 Scalable Matrix Extension 2 (SME2), which
+  includes a new 512 bit lookup table register named ZT0.
+
+* GDB now supports the AArch64 Scalable Matrix Extension (SME), which includes
+  a new matrix register named ZA, a new thread register TPIDR2 and a new vector
+  length register SVG (streaming vector granule).  GDB also supports tracking
+  ZA state across signal frames.
+
+  Some features are still under development or are dependent on ABI specs that
+  are still in alpha stage.  For example, manual function calls with ZA state
+  don't have any special handling, and tracking of SVG changes based on
+  DWARF information is still not implemented, but there are plans to do so in
+  the future.
+
+* GDB now recognizes the NO_COLOR environment variable and disables
+  styling according to the spec.  See https://no-color.org/.
+  Styling can be re-enabled with "set style enabled on".
+
+* The AArch64 'org.gnu.gdb.aarch64.pauth' Pointer Authentication feature string
+  has been deprecated in favor of the 'org.gnu.gdb.aarch64.pauth_v2' feature
+  string.
+
+* GDB now has some support for integer types larger than 64 bits.
+
+* Removed targets and native configurations
+
+  GDB no longer supports AIX 4.x, AIX 5.x and AIX 6.x.  The minimum supported
+  AIX version is now AIX 7.1.
+
+* Multi-target feature configuration
+
+  GDB now supports the individual configuration of remote targets' feature
+  sets.  Based on the current selection of a target, the commands 'set remote
+  <name>-packet (on|off|auto)' and 'show remote <name>-packet' can be used to
+  configure a target's feature packet and to display its configuration,
+  respectively.
+
+  The individual packet sizes can be configured and shown using the commands
+    ** 'set remote memory-read-packet-size (number of bytes|fixed|limit)'
+    ** 'set remote memory-write-packet-size (number of bytes|fixed|limit)'
+    ** 'show remote memory-read-packet-size'
+    ** 'show remote memory-write-packet-size'.
+
+  The configuration of the packet itself, as well as the size of a memory-read
+  or memory-write packet applies to the currently selected target (if
+  available).  If no target is selected, it applies to future remote
+  connections.  Similarly, the show commands print the configuration of the
+  currently selected target.  If no remote target is selected, the default
+  configuration for future connections is shown.
+
+* GDB has initial built-in support for the Debugger Adapter Protocol.
+  This support requires that GDB be built with Python scripting
+  enabled.
+
+* For the break command, multiple uses of the 'thread' or 'task'
+  keywords will now give an error instead of just using the thread or
+  task id from the last instance of the keyword.  E.g.:
+    break foo thread 1 thread 2
+  will now give an error rather than using 'thread 2'.
+
+* For the watch command, multiple uses of the 'task' keyword will now
+  give an error instead of just using the task id from the last
+  instance of the keyword.  E.g.:
+    watch my_var task 1 task 2
+  will now give an error rather than using 'task 2'.  The 'thread'
+  keyword already gave an error when used multiple times with the
+  watch command, this remains unchanged.
+
+* The 'set print elements' setting now helps when printing large arrays.
+  If an array would otherwise exceed max-value-size, but 'print elements'
+  is set such that the size of elements to print is less than or equal
+  to 'max-value-size', GDB will now still print the array, however only
+  'max-value-size' worth of data will be added into the value history.
+
+* For both the break and watch commands, it is now invalid to use both
+  the 'thread' and 'task' keywords within the same command.  For
+  example the following commnds will now give an error:
+    break foo thread 1 task 1
+    watch var thread 2 task 3
+
+* The printf command now accepts a '%V' output format which will
+  format an expression just as the 'print' command would.  Print
+  options can be placed withing '[...]' after the '%V' to modify how
+  the value is printed.  E.g:
+    printf "%V", some_array
+    printf "%V[-array-indexes on]", some_array
+  will print the array without, or with array indexes included, just
+  as the array would be printed by the 'print' command.  This
+  functionality is also available for dprintf when dprintf-style is
+  'gdb'.
+
+* When the printf command requires a string to be fetched from the
+  inferior, GDB now uses the existing 'max-value-size' setting to the
+  limit the memory allocated within GDB.  The default 'max-value-size'
+  is 64k.  To print longer strings you should increase
+  'max-value-size'.
+
+* The Ada 2022 Enum_Rep and Enum_Val attributes are now supported.
+
+* The Ada 2022 target name symbol ('@') is now supported by the Ada
+  expression parser.
+
+* The 'list' command now accepts '.' as an argument, which tells GDB to
+  print the location around the point of execution within the current frame.
+  If the inferior hasn't started yet, the command will print around the
+  beginning of the 'main' function.
+
+* Using the 'list' command with no arguments in a situation where the
+  command would attempt to list past the end of the file now warns the
+  user that the end of file has been reached, refers the user to the
+  newly added '.' argument
+
+* Breakpoints can now be inferior-specific.  This is similar to the
+  existing thread-specific breakpoint support.  Breakpoint conditions
+  can include the 'inferior' keyword followed by an inferior id (as
+  displayed in the 'info inferiors' output).  It is invalid to use the
+  'inferior' keyword with either the 'thread' or 'task' keywords when
+  creating a breakpoint.
+
+* New convenience function "$_shell", to execute a shell command and
+  return the result.  This lets you run shell commands in expressions.
+  Some examples:
+
+   (gdb) p $_shell("true")
+   $1 = 0
+   (gdb) p $_shell("false")
+   $2 = 1
+   (gdb) break func if $_shell("some command") == 0
+
+* Configure changes
+
+--additional-debug-dirs=PATHs
+
+  Provide a colon-separated list of additional directories to search for
+  separate debug info.  These directories are added to the default value of
+  the 'debug-file-directory' GDB parameter.
+
+* New commands
+
+set debug breakpoint on|off
+  show debug breakpoint
+  Print additional debug messages about breakpoint insertion and removal.
+
+maintenance print record-instruction [ N ]
+  Print the recorded information for a given instruction.  If N is not given
+  prints how GDB would undo the last instruction executed.  If N is negative,
+  prints how GDB would undo the N-th previous instruction, and if N is
+  positive, it prints how GDB will redo the N-th following instruction.
+
+maintenance info frame-unwinders
+  List the frame unwinders currently in effect, starting with the highest
+  priority.
+
+maintenance wait-for-index-cache
+  Wait until all pending writes to the index cache have completed.
+
+set always-read-ctf on|off
+show always-read-ctf
+  When off, CTF is only read if DWARF is not present.  When on, CTF is
+  read regardless of whether DWARF is present.  Off by default.
+
+info main
+  Get main symbol to identify entry point into program.
+
+set tui mouse-events [on|off]
+show tui mouse-events
+  When on (default), mouse clicks control the TUI and can be accessed by
+  Python extensions.  When off, mouse clicks are handled by the terminal,
+  enabling terminal-native text selection.
+
+* MI changes
+
+** MI version 1 has been removed.
+
+** mi now reports 'no-history' as a stop reason when hitting the end of the
+   reverse execution history.
+
+** When creating a thread-specific breakpoint using the '-p' option,
+   the -break-insert command would report the 'thread' field twice in
+   the reply.  The content of both fields was always identical.  This
+   has now been fixed; the 'thread' field will be reported just once
+   for thread-specific breakpoints, or not at all for breakpoints
+   without a thread restriction.  The same is also true for the 'task'
+   field of an Ada task-specific breakpoint.
+
+** It is no longer possible to create a thread-specific breakpoint for
+   a thread that doesn't exist using '-break-insert -p ID'.  Creating
+   breakpoints for non-existent threads is not allowed when using the
+   CLI, that the MI allowed it was a long standing bug, which has now
+   been fixed.
+
+** The '--simple-values' argument to the '-stack-list-arguments',
+   '-stack-list-locals', '-stack-list-variables', and '-var-list-children'
+   commands now takes reference types into account: that is, a value is now
+   considered simple if it is neither an array, structure, or union, nor a
+   reference to an array, structure, or union.  (Previously all references were
+   considered simple.)  Support for this feature can be verified by using the
+   '-list-features' command, which should contain "simple-values-ref-types".
+
+** The -break-insert command now accepts a '-g thread-group-id' option
+   to allow for the creation of inferior-specific breakpoints.
+
+** The bkpt tuple, which appears in breakpoint-created notifications,
+   and in the result of the -break-insert command can now include an
+   optional 'inferior' field for both the main breakpoint, and each
+   location, when the breakpoint is inferior-specific.
+
+* Python API
+
+  ** gdb.ThreadExitedEvent added.  Emits a ThreadEvent.
+
+  ** The gdb.unwinder.Unwinder.name attribute is now read-only.
+
+  ** The name argument passed to gdb.unwinder.Unwinder.__init__ must
+     now be of type 'str' otherwise a TypeError will be raised.
+
+  ** The gdb.unwinder.Unwinder.enabled attribute can now only accept
+     values of type 'bool'.  Changing this attribute will now
+     invalidate GDB's frame-cache, which means GDB will need to
+     rebuild its frame-cache when next required - either with, or
+     without the particular unwinder, depending on how 'enabled' was
+     changed.
+
+  ** New methods added to the gdb.PendingFrame class.  These methods
+     have the same behaviour as the corresponding methods on
+     gdb.Frame.  The new methods are:
+
+     - gdb.PendingFrame.name: Return the name for the frame's
+       function, or None.
+     - gdb.PendingFrame.is_valid: Return True if the pending frame
+       object is valid.
+     - gdb.PendingFrame.pc: Return the $pc register value for this
+       frame.
+     - gdb.PendingFrame.language: Return a string containing the
+       language for this frame, or None.
+     - gdb.PendingFrame.find_sal: Return a gdb.Symtab_and_line
+       object for the current location within the pending frame, or
+       None.
+     - gdb.PendingFrame.block: Return a gdb.Block for the current
+       pending frame, or None.
+     - gdb.PendingFrame.function: Return a gdb.Symbol for the
+       current pending frame, or None.
+
+  ** The frame-id passed to gdb.PendingFrame.create_unwind_info can
+     now use either an integer or a gdb.Value object for each of its
+     'sp', 'pc', and 'special' attributes.
+
+  ** A new class gdb.unwinder.FrameId has been added.  Instances of
+     this class are constructed with 'sp' (stack-pointer) and 'pc'
+     (program-counter) values, and can be used as the frame-id when
+     calling gdb.PendingFrame.create_unwind_info.
+
+  ** It is now no longer possible to sub-class the
+     gdb.disassembler.DisassemblerResult type.
+
+  ** The Disassembler API from the gdb.disassembler module has been
+     extended to include styling support:
+
+     - The DisassemblerResult class can now be initialized with a list
+       of parts.  Each part represents part of the disassembled
+       instruction along with the associated style information.  This
+       list of parts can be accessed with the new
+       DisassemblerResult.parts property.
+
+     - New constants gdb.disassembler.STYLE_* representing all the
+       different styles part of an instruction might have.
+
+     - New methods DisassembleInfo.text_part and
+       DisassembleInfo.address_part which are used to create the new
+       styled parts of a disassembled instruction.
+
+     - Changes are backwards compatible, the older API can still be
+       used to disassemble instructions without styling.
+
+  ** New function gdb.execute_mi(COMMAND, [ARG]...), that invokes a
+     GDB/MI command and returns the output as a Python dictionary.
+
+  ** New function gdb.block_signals().  This returns a context manager
+     that blocks any signals that GDB needs to handle itself.
+
+  ** New class gdb.Thread.  This is a subclass of threading.Thread
+     that calls gdb.block_signals in its "start" method.
+
+  ** gdb.parse_and_eval now has a new "global_context" parameter.
+     This can be used to request that the parse only examine global
+     symbols.
+
+  ** gdb.Inferior now has a new "arguments" attribute.  This holds the
+     command-line arguments to the inferior, if known.
+
+  ** gdb.Inferior now has a new "main_name" attribute.  This holds the
+     name of the inferior's "main", if known.
+
+  ** gdb.Inferior now has new methods "clear_env", "set_env", and
+     "unset_env".  These can be used to modify the inferior's
+     environment before it is started.
+
+  ** gdb.Value now has the 'assign' method.
+
+  ** gdb.Value now has the 'to_array' method.  This converts an
+     array-like Value to an array.
+
+  ** gdb.Progspace now has the new method "objfile_for_address".  This
+     returns the gdb.Objfile, if any, that covers a given address.
+
+  ** gdb.Breakpoint now has an "inferior" attribute.  If the
+     Breakpoint object is inferior specific then this attribute holds
+     the inferior-id (an integer).  If the Breakpoint object is not
+     inferior specific, then this field contains None.  This field can
+     be written too.
+
+  ** gdb.Type now has the "is_array_like" and "is_string_like"
+     methods.  These reflect GDB's internal idea of whether a type
+     might be array- or string-like, even if they do not have the
+     corresponding type code.
+
+  ** gdb.ValuePrinter is a new class that can be used as the base
+     class for the result of applying a pretty-printer.  As a base
+     class, it signals to gdb that the printer may implement new
+     pretty-printer methods.
+
+  ** New attribute Progspace.symbol_file.  This attribute holds the
+     gdb.Objfile that corresponds to Progspace.filename (when
+     Progspace.filename is not None), otherwise, this attribute is
+     itself None.
+
+  ** New attribute Progspace.executable_filename.  This attribute
+     holds a string containing a file name set by the "exec-file" or
+     "file" commands, or None if no executable file is set.  This
+     isn't the exact string passed by the user to these commands; the
+     file name will have been partially resolved to an absolute file
+     name.
+
+  ** A new executable_changed event registry is available.  This event
+     emits ExecutableChangedEvent objects, which have 'progspace' (a
+     gdb.Progspace) and 'reload' (a Boolean) attributes.  This event
+     is emitted when gdb.Progspace.executable_filename changes.
+
+  ** New event registries gdb.events.new_progspace and
+     gdb.events.free_progspace, these emit NewProgspaceEvent and
+     FreeProgspaceEvent event types respectively.  Both of these event
+     types have a single 'progspace' attribute, which is the
+     gdb.Progspace that is either being added to GDB, or removed from
+     GDB.
+
+  ** gdb.LazyString now implements the __str__ method.
+
+  ** New method gdb.Frame.static_link that returns the outer frame
+     of a nested function frame.
+
 *** Changes in GDB 13
 
 * MI version 1 is deprecated, and will be removed in GDB 14.
@@ -14,6 +577,13 @@
   the core file in the event of a crash or if GDB generates a core file
   from the current process state.  GDB will show this additional information
   automatically, or through one of the memory-tag subcommands.
+
+* Scheduler-locking and new threads
+
+  When scheduler-locking is in effect, only the current thread may run
+  when the inferior is resumed.  However, previously, new threads
+  created by the resumed thread would still be able to run free.  Now,
+  they are held stopped.
 
 * "info breakpoints" now displays enabled breakpoint locations of
   disabled breakpoints as in the "y-" state.  For example:
@@ -153,6 +723,20 @@ set style tui-current-position [on|off]
   Whether to style the source and assembly code highlighted by the
   TUI's current position indicator.  The default is off.
 
+set print characters LIMIT
+show print characters
+  This new setting is like 'set print elements', but controls how many
+  characters of a string are printed.  This functionality used to be
+  covered by 'set print elements', but it can be controlled separately
+  now.  LIMIT can be set to a numerical value to request that particular
+  character count, to 'unlimited' to print all characters of a string,
+  or to 'elements', which is also the default, to follow the setting of
+ 'set print elements' as it used to be.
+
+print -characters LIMIT
+  This new option to the 'print' command has the same effect as a temporary
+  use of 'set print characters'.
+
 * Changed commands
 
 document user-defined
@@ -187,6 +771,8 @@ maintenance info program-spaces
 GNU/Linux/LoongArch (gdbserver)	loongarch*-*-linux*
 
 GNU/Linux/CSKY (gdbserver) csky*-*linux*
+
+AMDGPU amdgcn-*-*
 
 * MI changes
 
@@ -281,6 +867,11 @@ GNU/Linux/CSKY (gdbserver) csky*-*linux*
 * LoongArch floating-point support
 
 GDB now supports floating-point on LoongArch GNU/Linux.
+
+* AMD GPU ROCm debugging support
+
+GDB now supports debugging programs offloaded to AMD GPUs using the ROCm
+platform.
 
 *** Changes in GDB 12
 

@@ -1,6 +1,6 @@
 /* Read DWARF macro information
 
-   Copyright (C) 1994-2023 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -24,7 +24,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "dwarf2/read.h"
 #include "dwarf2/leb.h"
 #include "dwarf2/expr.h"
@@ -444,7 +443,7 @@ dwarf_decode_macro_bytes (dwarf2_per_objfile *per_objfile,
 			  unsigned int offset_size,
 			  struct dwarf2_section_info *str_section,
 			  struct dwarf2_section_info *str_offsets_section,
-			  gdb::optional<ULONGEST> str_offsets_base,
+			  std::optional<ULONGEST> str_offsets_base,
 			  htab_t include_hash, struct dwarf2_cu *cu)
 {
   struct objfile *objfile = per_objfile->objfile;
@@ -735,8 +734,6 @@ dwarf_decode_macro_bytes (dwarf2_per_objfile *per_objfile,
 		dwz_file *dwz = dwarf2_get_dwz_file (per_objfile->per_bfd,
 						     true);
 
-		dwz->macro.read (objfile);
-
 		include_section = &dwz->macro;
 		include_bfd = include_section->get_bfd_owner ();
 		include_mac_end = dwz->macro.buffer + dwz->macro.size;
@@ -784,7 +781,7 @@ dwarf_decode_macro_bytes (dwarf2_per_objfile *per_objfile,
 	      /* We don't recognize any vendor extensions.  */
 	      break;
 	    }
-	  /* FALLTHROUGH */
+	  [[fallthrough]];
 
 	default:
 	  mac_ptr = skip_unknown_opcode (macinfo_type, opcode_definitions,
@@ -805,7 +802,7 @@ dwarf_decode_macros (dwarf2_per_objfile *per_objfile,
 		     const struct line_header *lh, unsigned int offset_size,
 		     unsigned int offset, struct dwarf2_section_info *str_section,
 		     struct dwarf2_section_info *str_offsets_section,
-		     gdb::optional<ULONGEST> str_offsets_base,
+		     std::optional<ULONGEST> str_offsets_base,
 		     int section_is_gnu, struct dwarf2_cu *cu)
 {
   bfd *abfd;
@@ -939,7 +936,7 @@ dwarf_decode_macros (dwarf2_per_objfile *per_objfile,
 	      read_direct_string (abfd, mac_ptr, &bytes_read);
 	      mac_ptr += bytes_read;
 	    }
-	  /* FALLTHROUGH */
+	  [[fallthrough]];
 
 	default:
 	  mac_ptr = skip_unknown_opcode (macinfo_type, opcode_definitions,

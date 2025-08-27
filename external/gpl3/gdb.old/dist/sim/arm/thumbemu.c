@@ -308,7 +308,7 @@ handle_T2_insn (ARMul_State * state,
 	  * pvalid = t_branch;
 	  break;
 	}
-      /* Fall through.  */
+      ATTRIBUTE_FALLTHROUGH;
     case 0x42:
     case 0x43:
     case 0x47:
@@ -2131,14 +2131,11 @@ ARMul_ThumbDecode (ARMul_State * state,
       if ((tinstr & (1 << 10)) == 0)
 	{
 	  /* Format 4 */
-	  struct
-	  {
+	  struct insn_format {
 	    ARMword opcode;
-	    enum
-	    { t_norm, t_shift, t_neg, t_mul }
-	    otype;
-	  }
-	  subset[16] =
+	    enum { t_norm, t_shift, t_neg, t_mul } otype;
+	  };
+	  static const struct insn_format subset[16] =
 	  {
 	    { 0xE0100000, t_norm},			/* ANDS Rd,Rd,Rs     */
 	    { 0xE0300000, t_norm},			/* EORS Rd,Rd,Rs     */
@@ -2161,14 +2158,7 @@ ARMul_ThumbDecode (ARMul_State * state,
 
 	  if (in_IT_block ())
 	    {
-	      struct
-	      {
-		ARMword opcode;
-		enum
-		  { t_norm, t_shift, t_neg, t_mul }
-		  otype;
-	      }
-	      subset[16] =
+	      static const struct insn_format it_subset[16] =
 		{
 		  { 0xE0000000, t_norm},	/* AND  Rd,Rd,Rs     */
 		  { 0xE0200000, t_norm},	/* EOR  Rd,Rd,Rs     */
@@ -2187,7 +2177,7 @@ ARMul_ThumbDecode (ARMul_State * state,
 		  { 0xE1C00000, t_norm},	/* BIC  Rd,Rd,Rs     */
 		  { 0xE1E00000, t_norm}		/* MVN  Rd,Rs        */
 		};
-	      *ainstr = subset[(tinstr & 0x03C0) >> 6].opcode;	/* base */
+	      *ainstr = it_subset[(tinstr & 0x03C0) >> 6].opcode;	/* base */
 	    }
 
 	  switch (subset[(tinstr & 0x03C0) >> 6].otype)
@@ -2261,7 +2251,7 @@ ARMul_ThumbDecode (ARMul_State * state,
 		    | ((tinstr & 0x0078) >> 3);	/* Rd */
 		  break;
 		}
-	      /* Drop through.  */
+	      ATTRIBUTE_FALLTHROUGH;
 	    default:
 	    case 0x0:		/* UNDEFINED */
 	    case 0x4:		/* UNDEFINED */
@@ -2415,7 +2405,7 @@ ARMul_ThumbDecode (ARMul_State * state,
 		* ainstr = 0xE1200070 | ((tinstr & 0xf0) << 4) | (tinstr & 0xf);
 	      break;
 	    }
-	  /* Drop through.  */
+	  ATTRIBUTE_FALLTHROUGH;
 	default:
 	  /* Everything else is an undefined instruction.  */
 	  handle_v6_thumb_insn (state, tinstr, next_instr, pc, ainstr, & valid);
@@ -2601,6 +2591,7 @@ ARMul_ThumbDecode (ARMul_State * state,
 	}
       /* else we fall through to process the second half of the BL */
       pc += 2;			/* point the pc at the 2nd half */
+      ATTRIBUTE_FALLTHROUGH;
     case 31:			/* BL instruction 2 */
       if (state->is_v6)
 	{

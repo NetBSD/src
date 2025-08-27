@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -217,7 +217,7 @@ proc locate_exec_from_core_build_id {corefile buildid suffix \
 # of shared and/or stripped/.debug executables.
 
 proc do_corefile_buildid_tests {args} {
-    global binfile testfile srcfile execdir sharedir
+    global binfile testfile srcfile execdir sharedir hex
 
     # Parse options.
     parse_args [list {sepdebug} {shared}]
@@ -266,6 +266,18 @@ proc do_corefile_buildid_tests {args} {
 	}
 	verbose -log "corefile is $corefile"
 
+	if { [catch "exec [gdb_find_eu-unstrip] -n --core $corefile" output] == 0 } {
+	    set line [lindex [split $output "\n"] 0]
+	    set binfile_re (?:[string_to_regexp $program_to_run]|\\\[(?:exe|pie)\\\])
+	    if { ![regexp "^${hex}\\+${hex} \[a-f0-9\]+@${hex}.*$binfile_re$" $line] } {
+		unsupported "build id for exec"
+		return
+	    }
+	} else {
+	    unsupported "eu-unstrip execution"
+	    return
+	}
+
 	# Grab the build-id from the binary, removing ".debug" from the end.
 	set buildid [build_id_debug_filename_get $program_to_run]
 	if {$buildid == ""} {
@@ -296,7 +308,7 @@ build_corefile_buildid_exec
 do_corefile_buildid_tests
 do_corefile_buildid_tests -sepdebug
 
-if {![skip_shlib_tests]} {
+if {[allow_shlib_tests]} {
     build_corefile_buildid_shared
     do_corefile_buildid_tests -shared
     do_corefile_buildid_tests -shared -sepdebug

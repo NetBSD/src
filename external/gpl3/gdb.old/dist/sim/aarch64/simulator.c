@@ -1,6 +1,6 @@
 /* simulator.c -- Interface for the AArch64 simulator.
 
-   Copyright (C) 2015-2023 Free Software Foundation, Inc.
+   Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -30,6 +30,7 @@
 #include <time.h>
 #include <limits.h>
 
+#include "aarch64-sim.h"
 #include "simulator.h"
 #include "cpustate.h"
 #include "memory.h"
@@ -84,7 +85,7 @@
   while (0)
 
 static uint64_t
-expand_logical_immediate (uint32_t S, uint32_t R, uint32_t N)
+expand_logical_immediate (uint32_t s, uint32_t r, uint32_t n)
 {
   uint64_t mask;
   uint64_t imm;
@@ -92,47 +93,47 @@ expand_logical_immediate (uint32_t S, uint32_t R, uint32_t N)
 
   /* The immediate value is S+1 bits to 1, left rotated by SIMDsize - R
      (in other words, right rotated by R), then replicated. */
-  if (N != 0)
+  if (n != 0)
     {
       simd_size = 64;
       mask = 0xffffffffffffffffull;
     }
   else
     {
-      switch (S)
+      switch (s)
 	{
 	case 0x00 ... 0x1f: /* 0xxxxx */ simd_size = 32;           break;
-	case 0x20 ... 0x2f: /* 10xxxx */ simd_size = 16; S &= 0xf; break;
-	case 0x30 ... 0x37: /* 110xxx */ simd_size =  8; S &= 0x7; break;
-	case 0x38 ... 0x3b: /* 1110xx */ simd_size =  4; S &= 0x3; break;
-	case 0x3c ... 0x3d: /* 11110x */ simd_size =  2; S &= 0x1; break;
+	case 0x20 ... 0x2f: /* 10xxxx */ simd_size = 16; s &= 0xf; break;
+	case 0x30 ... 0x37: /* 110xxx */ simd_size =  8; s &= 0x7; break;
+	case 0x38 ... 0x3b: /* 1110xx */ simd_size =  4; s &= 0x3; break;
+	case 0x3c ... 0x3d: /* 11110x */ simd_size =  2; s &= 0x1; break;
 	default: return 0;
 	}
       mask = (1ull << simd_size) - 1;
       /* Top bits are IGNORED.  */
-      R &= simd_size - 1;
+      r &= simd_size - 1;
     }
 
   /* NOTE: if S = simd_size - 1 we get 0xf..f which is rejected.  */
-  if (S == simd_size - 1)
+  if (s == simd_size - 1)
     return 0;
 
   /* S+1 consecutive bits to 1.  */
   /* NOTE: S can't be 63 due to detection above.  */
-  imm = (1ull << (S + 1)) - 1;
+  imm = (1ull << (s + 1)) - 1;
 
   /* Rotate to the left by simd_size - R.  */
-  if (R != 0)
-    imm = ((imm << (simd_size - R)) & mask) | (imm >> R);
+  if (r != 0)
+    imm = ((imm << (simd_size - r)) & mask) | (imm >> r);
 
   /* Replicate the value according to SIMD size.  */
   switch (simd_size)
     {
-    case  2: imm = (imm <<  2) | imm;
-    case  4: imm = (imm <<  4) | imm;
-    case  8: imm = (imm <<  8) | imm;
-    case 16: imm = (imm << 16) | imm;
-    case 32: imm = (imm << 32) | imm;
+    case  2: imm = (imm <<  2) | imm; ATTRIBUTE_FALLTHROUGH;
+    case  4: imm = (imm <<  4) | imm; ATTRIBUTE_FALLTHROUGH;
+    case  8: imm = (imm <<  8) | imm; ATTRIBUTE_FALLTHROUGH;
+    case 16: imm = (imm << 16) | imm; ATTRIBUTE_FALLTHROUGH;
+    case 32: imm = (imm << 32) | imm; ATTRIBUTE_FALLTHROUGH;
     case 64: break;
     default: return 0;
     }
@@ -152,11 +153,11 @@ aarch64_init_LIT_table (void)
 
   for (index = 0; index < LI_TABLE_SIZE; index++)
     {
-      uint32_t N    = uimm (index, 12, 12);
+      uint32_t n    = uimm (index, 12, 12);
       uint32_t immr = uimm (index, 11, 6);
       uint32_t imms = uimm (index, 5, 0);
 
-      LITable [index] = expand_logical_immediate (imms, immr, N);
+      LITable [index] = expand_logical_immediate (imms, immr, n);
     }
 }
 
@@ -2039,12 +2040,12 @@ extreg32 (sim_cpu *cpu, unsigned int lo, Extension extension)
     {
     case UXTB: return aarch64_get_reg_u8  (cpu, lo, NO_SP);
     case UXTH: return aarch64_get_reg_u16 (cpu, lo, NO_SP);
-    case UXTW: /* Fall through.  */
+    case UXTW: ATTRIBUTE_FALLTHROUGH;
     case UXTX: return aarch64_get_reg_u32 (cpu, lo, NO_SP);
     case SXTB: return aarch64_get_reg_s8  (cpu, lo, NO_SP);
     case SXTH: return aarch64_get_reg_s16 (cpu, lo, NO_SP);
-    case SXTW: /* Fall through.  */
-    case SXTX: /* Fall through.  */
+    case SXTW: ATTRIBUTE_FALLTHROUGH;
+    case SXTX: ATTRIBUTE_FALLTHROUGH;
     default:   return aarch64_get_reg_s32 (cpu, lo, NO_SP);
   }
 }
@@ -3345,7 +3346,7 @@ do_vec_MOV_immediate (sim_cpu *cpu)
 
     case 0xa: /* 16-bit, shift by 8.  */
       val <<= 8;
-      /* Fall through.  */
+      ATTRIBUTE_FALLTHROUGH;
     case 0x8: /* 16-bit, no shift.  */
       for (i = 0; i < (full ? 8 : 4); i++)
 	aarch64_set_vec_u16 (cpu, vd, i, val);
@@ -3354,7 +3355,7 @@ do_vec_MOV_immediate (sim_cpu *cpu)
     case 0xd: /* 32-bit, mask shift by 16.  */
       val <<= 8;
       val |= 0xFF;
-      /* Fall through.  */
+      ATTRIBUTE_FALLTHROUGH;
     case 0xc: /* 32-bit, mask shift by 8. */
       val <<= 8;
       val |= 0xFF;
@@ -3415,6 +3416,7 @@ do_vec_MVNI (sim_cpu *cpu)
 
     case 0xa: /* 16-bit, 8 bit shift. */
       val <<= 8;
+      ATTRIBUTE_FALLTHROUGH;
     case 0x8: /* 16-bit, no shift. */
       val = ~ val;
       for (i = 0; i < (full ? 8 : 4); i++)
@@ -3424,6 +3426,7 @@ do_vec_MVNI (sim_cpu *cpu)
     case 0xd: /* 32-bit, mask shift by 16.  */
       val <<= 8;
       val |= 0xFF;
+      ATTRIBUTE_FALLTHROUGH;
     case 0xc: /* 32-bit, mask shift by 8. */
       val <<= 8;
       val |= 0xFF;
@@ -4690,6 +4693,8 @@ do_vec_SCVTF (sim_cpu *cpu)
 				 aarch64_get_vec_##SOURCE##64 (cpu, vm, i) \
 				 ? -1ULL : 0);				\
 	  return;							\
+	default:							\
+	  HALT_UNALLOC;							\
 	}								\
     }									\
   while (0)
@@ -4725,6 +4730,8 @@ do_vec_SCVTF (sim_cpu *cpu)
 				 aarch64_get_vec_##SOURCE##64 (cpu, vn, i) \
 				 CMP 0 ? -1ULL : 0);			\
 	  return;							\
+	default:							\
+	  HALT_UNALLOC;							\
 	}								\
     }									\
   while (0)
@@ -5315,6 +5322,7 @@ do_vec_sub_long (sim_cpu *cpu)
     {
     case 2: /* SSUBL2.  */
       bias = 2;
+      ATTRIBUTE_FALLTHROUGH;
     case 0: /* SSUBL.  */
       switch (size)
 	{
@@ -5348,6 +5356,7 @@ do_vec_sub_long (sim_cpu *cpu)
 
     case 3: /* USUBL2.  */
       bias = 2;
+      ATTRIBUTE_FALLTHROUGH;
     case 1: /* USUBL.  */
       switch (size)
 	{
@@ -5394,6 +5403,7 @@ do_vec_ADDP (sim_cpu *cpu)
      instr[9,5]   = Vn
      instr[4,0]   = V dest.  */
 
+  struct aarch64_sim_cpu *aarch64_cpu = AARCH64_SIM_CPU (cpu);
   FRegister copy_vn;
   FRegister copy_vm;
   unsigned full = INSTR (30, 30);
@@ -5408,8 +5418,8 @@ do_vec_ADDP (sim_cpu *cpu)
   NYI_assert (15, 10, 0x2F);
 
   /* Make copies of the source registers in case vd == vn/vm.  */
-  copy_vn = cpu->fr[vn];
-  copy_vm = cpu->fr[vm];
+  copy_vn = aarch64_cpu->fr[vn];
+  copy_vm = aarch64_cpu->fr[vm];
 
   TRACE_DECODE (cpu, "emulated at line %d", __LINE__);
   switch (size)
@@ -5809,6 +5819,7 @@ do_vec_xtl (sim_cpu *cpu)
     {
     case 2: /* SXTL2, SSHLL2.  */
       bias = 2;
+      ATTRIBUTE_FALLTHROUGH;
     case 0: /* SXTL, SSHLL.  */
       if (INSTR (21, 21))
 	{
@@ -5825,7 +5836,6 @@ do_vec_xtl (sim_cpu *cpu)
       else if (INSTR (20, 20))
 	{
 	  int32_t v[4];
-	  int32_t v1,v2,v3,v4;
 
 	  shift = INSTR (19, 16);
 	  bias *= 2;
@@ -5850,6 +5860,7 @@ do_vec_xtl (sim_cpu *cpu)
 
     case 3: /* UXTL2, USHLL2.  */
       bias = 2;
+      ATTRIBUTE_FALLTHROUGH;
     case 1: /* UXTL, USHLL.  */
       if (INSTR (21, 21))
 	{
@@ -7931,44 +7942,44 @@ do_FRINT (sim_cpu *cpu)
   TRACE_DECODE (cpu, "emulated at line %d", __LINE__);
   if (INSTR (22, 22))
     {
-      double val = aarch64_get_FP_double (cpu, rs);
+      double dval = aarch64_get_FP_double (cpu, rs);
 
       switch (rmode)
 	{
 	case 0: /* mode N: nearest or even.  */
 	  {
-	    double rval = round (val);
+	    double rval = round (dval);
 
-	    if (val - rval == 0.5)
+	    if (dval - rval == 0.5)
 	      {
 		if (((rval / 2.0) * 2.0) != rval)
 		  rval += 1.0;
 	      }
 
-	    aarch64_set_FP_double (cpu, rd, round (val));
+	    aarch64_set_FP_double (cpu, rd, round (dval));
 	    return;
 	  }
 
 	case 1: /* mode P: towards +inf.  */
-	  if (val < 0.0)
-	    aarch64_set_FP_double (cpu, rd, trunc (val));
+	  if (dval < 0.0)
+	    aarch64_set_FP_double (cpu, rd, trunc (dval));
 	  else
-	    aarch64_set_FP_double (cpu, rd, round (val));
+	    aarch64_set_FP_double (cpu, rd, round (dval));
 	  return;
 
 	case 2: /* mode M: towards -inf.  */
-	  if (val < 0.0)
-	    aarch64_set_FP_double (cpu, rd, round (val));
+	  if (dval < 0.0)
+	    aarch64_set_FP_double (cpu, rd, round (dval));
 	  else
-	    aarch64_set_FP_double (cpu, rd, trunc (val));
+	    aarch64_set_FP_double (cpu, rd, trunc (dval));
 	  return;
 
 	case 3: /* mode Z: towards 0.  */
-	  aarch64_set_FP_double (cpu, rd, trunc (val));
+	  aarch64_set_FP_double (cpu, rd, trunc (dval));
 	  return;
 
 	case 4: /* mode A: away from 0.  */
-	  aarch64_set_FP_double (cpu, rd, round (val));
+	  aarch64_set_FP_double (cpu, rd, round (dval));
 	  return;
 
 	case 6: /* mode X: use FPCR with exactness check.  */
@@ -8567,6 +8578,7 @@ dexSimpleFPIntegerConvert (sim_cpu *cpu)
 	case 1: scvtd32 (cpu); return;
 	case 2: scvtf (cpu); return;
 	case 3: scvtd (cpu); return;
+	default: HALT_UNALLOC;
 	}
 
     case 6:			/* FMOV GR, Vec.  */
@@ -8592,6 +8604,7 @@ dexSimpleFPIntegerConvert (sim_cpu *cpu)
 	case 1: fcvtszd32 (cpu); return;
 	case 2: fcvtszs (cpu); return;
 	case 3: fcvtszd (cpu); return;
+	default: HALT_UNALLOC;
 	}
 
     case 25: do_fcvtzu (cpu); return;
@@ -9173,29 +9186,29 @@ do_scalar_FCM (sim_cpu *cpu)
   TRACE_DECODE (cpu, "emulated at line %d", __LINE__);
   if (INSTR (22, 22))
     {
-      double val1 = aarch64_get_FP_double (cpu, rn);
-      double val2 = aarch64_get_FP_double (cpu, rm);
+      double dval1 = aarch64_get_FP_double (cpu, rn);
+      double dval2 = aarch64_get_FP_double (cpu, rm);
 
       switch (EUac)
 	{
 	case 0: /* 000 */
-	  result = val1 == val2;
+	  result = dval1 == dval2;
 	  break;
 
 	case 3: /* 011 */
-	  val1 = fabs (val1);
-	  val2 = fabs (val2);
-	  /* Fall through. */
+	  dval1 = fabs (dval1);
+	  dval2 = fabs (dval2);
+	  ATTRIBUTE_FALLTHROUGH;
 	case 2: /* 010 */
-	  result = val1 >= val2;
+	  result = dval1 >= dval2;
 	  break;
 
 	case 7: /* 111 */
-	  val1 = fabs (val1);
-	  val2 = fabs (val2);
-	  /* Fall through. */
+	  dval1 = fabs (dval1);
+	  dval2 = fabs (dval2);
+	  ATTRIBUTE_FALLTHROUGH;
 	case 6: /* 110 */
-	  result = val1 > val2;
+	  result = dval1 > dval2;
 	  break;
 
 	default:
@@ -9218,7 +9231,7 @@ do_scalar_FCM (sim_cpu *cpu)
     case 3: /* 011 */
       val1 = fabsf (val1);
       val2 = fabsf (val2);
-      /* Fall through. */
+      ATTRIBUTE_FALLTHROUGH;
     case 2: /* 010 */
       result = val1 >= val2;
       break;
@@ -9226,7 +9239,7 @@ do_scalar_FCM (sim_cpu *cpu)
     case 7: /* 111 */
       val1 = fabsf (val1);
       val2 = fabsf (val2);
-      /* Fall through. */
+      ATTRIBUTE_FALLTHROUGH;
     case 6: /* 110 */
       result = val1 > val2;
       break;
@@ -9912,14 +9925,14 @@ dexLogicalImmediate (sim_cpu *cpu)
 
   /* 32 bit operations must have N = 0 or else we have an UNALLOC.  */
   uint32_t size = INSTR (31, 31);
-  uint32_t N = INSTR (22, 22);
+  uint32_t n = INSTR (22, 22);
   /* uint32_t immr = INSTR (21, 16);.  */
   /* uint32_t imms = INSTR (15, 10);.  */
   uint32_t index = INSTR (22, 10);
   uint64_t bimm64 = LITable [index];
   uint32_t dispatch = INSTR (30, 29);
 
-  if (~size & N)
+  if (~size & n)
     HALT_UNALLOC;
 
   if (!bimm64)
@@ -10263,8 +10276,7 @@ bfm32 (sim_cpu *cpu, uint32_t r, uint32_t s)
   value2 |= value;
 
   TRACE_DECODE (cpu, "emulated at line %d", __LINE__);
-  aarch64_set_reg_u64
-    (cpu, rd, NO_SP, (aarch64_get_reg_u32 (cpu, rd, NO_SP) & ~mask) | value);
+  aarch64_set_reg_u64 (cpu, rd, NO_SP, value2);
 }
 
 /* 64 bit bitfield move, non-affected bits left as is.
@@ -10326,12 +10338,12 @@ dexBitfieldImmediate (sim_cpu *cpu)
   uint32_t dispatch;
   uint32_t imms;
   uint32_t size = INSTR (31, 31);
-  uint32_t N = INSTR (22, 22);
+  uint32_t n = INSTR (22, 22);
   /* 32 bit operations must have immr[5] = 0 and imms[5] = 0.  */
   /* or else we have an UNALLOC.  */
   uint32_t immr = INSTR (21, 16);
 
-  if (~size & N)
+  if (~size & n)
     HALT_UNALLOC;
 
   if (!size && uimm (immr, 5, 5))
@@ -10417,12 +10429,12 @@ dexExtractImmediate (sim_cpu *cpu)
   /* 64 bit operations must have N = 1 or else we have an UNALLOC.  */
   uint32_t dispatch;
   uint32_t size = INSTR (31, 31);
-  uint32_t N = INSTR (22, 22);
+  uint32_t n = INSTR (22, 22);
   /* 32 bit operations must have imms[5] = 0
      or else we have an UNALLOC.  */
   uint32_t imms = INSTR (15, 10);
 
-  if (size ^ N)
+  if (size ^ n)
     HALT_UNALLOC;
 
   if (!size && uimm (imms, 5, 5))
@@ -10497,11 +10509,11 @@ dexLoadUnscaledImmediate (sim_cpu *cpu)
      instr[20,12] = simm9
      instr[9,5] = rn may be SP.  */
   /* unsigned rt = INSTR (4, 0);  */
-  uint32_t V = INSTR (26, 26);
+  uint32_t v = INSTR (26, 26);
   uint32_t dispatch = ((INSTR (31, 30) << 2) | INSTR (23, 22));
   int32_t imm = simm32 (aarch64_get_instr (cpu), 20, 12);
 
-  if (!V)
+  if (!v)
     {
       /* GReg operations.  */
       switch (dispatch)
@@ -10867,12 +10879,12 @@ dexLoadImmediatePrePost (sim_cpu *cpu)
      instr[9,5]   = Rn may be SP.
      instr[4,0]   = Rt */
 
-  uint32_t  V        = INSTR (26, 26);
+  uint32_t  v        = INSTR (26, 26);
   uint32_t  dispatch = ((INSTR (31, 30) << 2) | INSTR (23, 22));
   int32_t   imm      = simm32 (aarch64_get_instr (cpu), 20, 12);
   WriteBack wb       = INSTR (11, 11);
 
-  if (!V)
+  if (!v)
     {
       /* GReg operations.  */
       switch (dispatch)
@@ -10944,7 +10956,7 @@ dexLoadRegisterOffset (sim_cpu *cpu)
      instr[9,5]   = rn
      instr[4,0]   = rt.  */
 
-  uint32_t  V = INSTR (26, 26);
+  uint32_t  v = INSTR (26, 26);
   uint32_t  dispatch = ((INSTR (31, 30) << 2) | INSTR (23, 22));
   Scaling   scale = INSTR (12, 12);
   Extension extensionType = INSTR (15, 13);
@@ -10956,7 +10968,7 @@ dexLoadRegisterOffset (sim_cpu *cpu)
   if (extensionType == UXTX || extensionType == SXTX)
     extensionType = NoExtension;
 
-  if (!V)
+  if (!v)
     {
       /* GReg operations.  */
       switch (dispatch)
@@ -11022,11 +11034,11 @@ dexLoadUnsignedImmediate (sim_cpu *cpu)
      instr[9,5]   = rn may be SP.
      instr[4,0]   = rt.  */
 
-  uint32_t V = INSTR (26,26);
+  uint32_t v = INSTR (26,26);
   uint32_t dispatch = ((INSTR (31, 30) << 2) | INSTR (23, 22));
   uint32_t imm = INSTR (21, 10);
 
-  if (!V)
+  if (!v)
     {
       /* GReg operations.  */
       switch (dispatch)
@@ -11514,13 +11526,13 @@ vec_reg (unsigned v, unsigned o)
 
 /* Load multiple N-element structures to M consecutive registers.  */
 static void
-vec_load (sim_cpu *cpu, uint64_t address, unsigned N, unsigned M)
+vec_load (sim_cpu *cpu, uint64_t address, unsigned n, unsigned m)
 {
   int      all  = INSTR (30, 30);
   unsigned size = INSTR (11, 10);
   unsigned vd   = INSTR (4, 0);
-  unsigned rpt = (N == M) ? 1 : M;
-  unsigned selem = N;
+  unsigned rpt = (n == m) ? 1 : m;
+  unsigned selem = n;
   unsigned i, j, k;
 
   switch (size)
@@ -11622,13 +11634,13 @@ LD1_4 (sim_cpu *cpu, uint64_t address)
 
 /* Store multiple N-element structures from M consecutive registers.  */
 static void
-vec_store (sim_cpu *cpu, uint64_t address, unsigned N, unsigned M)
+vec_store (sim_cpu *cpu, uint64_t address, unsigned n, unsigned m)
 {
   int      all  = INSTR (30, 30);
   unsigned size = INSTR (11, 10);
   unsigned vd   = INSTR (4, 0);
-  unsigned rpt = (N == M) ? 1 : M;
-  unsigned selem = N;
+  unsigned rpt = (n == m) ? 1 : m;
+  unsigned selem = n;
   unsigned i, j, k;
 
   switch (size)

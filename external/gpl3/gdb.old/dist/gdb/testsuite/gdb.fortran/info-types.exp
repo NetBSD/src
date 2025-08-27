@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 load_lib "fortran.exp"
 load_lib "sym-info-cmds.exp"
 
-if { [skip_fortran_tests] } { return }
+require allow_fortran_tests
 
 standard_testfile info-types.f90 info-types-2.f90
 
@@ -44,7 +44,7 @@ GDBInfoSymbols::check_header "All defined types:"
 GDBInfoSymbols::check_optional_entry "${srcfile}" "" "${character1}"
 GDBInfoSymbols::check_entry "${srcfile}" "" "${integer4}"
 GDBInfoSymbols::check_entry "${srcfile}" "" "${logical4}"
-GDBInfoSymbols::check_entry "${srcfile}" "$decimal" "Type m1t1;"
+GDBInfoSymbols::check_entry "${srcfile}" "$decimal" "Type m1t1"
 GDBInfoSymbols::check_entry "${srcfile}" "" "${real4}"
 
 # The emission of the 'Type s1' at global scope is actually not expected.  The
@@ -61,20 +61,3 @@ if { [test_compiler_info {gfortran-*} f90] } {
     setup_xfail *-*-* gcc/105454
     GDBInfoSymbols::check_entry "${srcfile}" "41" "Type s1;"
 }
-
-return 0
-
-gdb_test "info types" \
-    [multi_line \
-	 "All defined types:" \
-	 "" \
-	 "File .*:" \
-	 "\[\t \]+${character1}" \
-	 "\[\t \]+${integer4}" \
-	 "(\[\t \]+${integer8}" \
-	 ")?\[\t \]+${logical4}" \
-	 "(35:\[\t \]+Type __vtype_mod1_M1t1;" \
-	 ")?$decimal:\[\t \]+Type m1t1;" \
-	 "\[\t \]+${real4}" \
-	 "41:\[\t \]+Type s1;(" \
-	 ".*)?"]

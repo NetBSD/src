@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2023 Free Software Foundation, Inc.
+# Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -76,9 +76,9 @@ proc test_step_over { displaced } {
 
     set after_addr [get_pc "get after PC"]
 
-    gdb_assert {{[regexp "^${hex}$" $before_addr] \
-		 && [regexp "^${hex}$" $after_addr] \
-		 && $before_addr != $after_addr}} "advanced"
+    gdb_assert {[regexp "^${hex}$" $before_addr] \
+		    && [regexp "^${hex}$" $after_addr] \
+		    && $before_addr != $after_addr} "advanced"
 }
 
 foreach displaced { "off" "on" "auto" } {

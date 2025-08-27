@@ -93,7 +93,7 @@ extern void psim_run
 
 extern void psim_restart
 (psim *system,
- int cpu_nr);
+ int cpu_nr) ATTRIBUTE_NORETURN;
 
 extern void psim_set_halt_and_restart
 (psim *system,
@@ -110,7 +110,7 @@ extern void psim_halt
 (psim *system,
  int cpu_nr,
  stop_reason reason,
- int signal);
+ int signal) ATTRIBUTE_NORETURN;
 
 extern int psim_last_cpu
 (psim *system);

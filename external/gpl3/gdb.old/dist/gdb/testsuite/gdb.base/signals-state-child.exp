@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -59,15 +59,33 @@ if {[build_executable $testfile.exp $testfile-standalone $srcfile $options]} {
 # Run the program directly, and dump its initial signal actions and
 # mask in "standalone.txt".
 
+if { [is_remote target] } {
+    set target_binfile_standalone \
+	[gdb_remote_download target $binfile-standalone]
+
+    # Ensure that target_binfile_standalone is absolute, to work around
+    # current dir not being included in PATH.
+    set target_binfile_standalone \
+	[remote_file target absolute $target_binfile_standalone]
+    if { $target_binfile_standalone == "" } {
+	# Not supported by default, but supported in for instance
+	# remote-gdbserver-on-localhost.exp.
+	unsupported "require failed: remote_file target absolute"
+	return
+    }
+} else {
+    set target_binfile_standalone $binfile-standalone
+}
+
 # Use remote_spawn instead of remote_exec, like how we spawn gdb.
 # This is in order to take the same code code paths in dejagnu
 # compared to when running the program through gdb.  E.g., because
 # local_exec uses -ignore SIGHUP, while remote_spawn does not, if we
 # used remote_exec, the test program would start with SIGHUP ignored
 # when run standalone, but not when run through gdb.
-set res [remote_spawn target "$binfile-standalone"]
+set res [remote_spawn target "$target_binfile_standalone"]
 if { $res < 0 || $res == "" } {
-    untested "spawning $binfile-standalone failed"
+    untested "spawning \$target_binfile_standalone failed"
     return 1
 }
 
@@ -103,3 +121,8 @@ if {!$purely_local} {
 gdb_test "shell diff -s $standalone_txt $gdb_txt" \
     "Files .* are identical.*" \
     $test
+
+if { [is_remote target] } {
+    remote_file target delete gdb.txt
+    remote_file target delete standalone.txt
+}

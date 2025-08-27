@@ -1,6 +1,6 @@
 /* Inline frame unwinder for GDB.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "breakpoint.h"
 #include "inline-frame.h"
 #include "addrmap.h"
@@ -150,7 +149,7 @@ clear_inline_frame_state (thread_info *thread)
 }
 
 static void
-inline_frame_this_id (frame_info_ptr this_frame,
+inline_frame_this_id (const frame_info_ptr &this_frame,
 		      void **this_cache,
 		      struct frame_id *this_id)
 {
@@ -186,7 +185,7 @@ inline_frame_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-inline_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
+inline_frame_prev_register (const frame_info_ptr &this_frame, void **this_cache,
 			    int regnum)
 {
   /* Use get_frame_register_value instead of
@@ -208,7 +207,7 @@ inline_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
 
 static int
 inline_frame_sniffer (const struct frame_unwind *self,
-		      frame_info_ptr this_frame,
+		      const frame_info_ptr &this_frame,
 		      void **this_cache)
 {
   CORE_ADDR this_pc;
@@ -228,7 +227,7 @@ inline_frame_sniffer (const struct frame_unwind *self,
   cur_block = frame_block;
   while (cur_block->superblock ())
     {
-      if (block_inlined_p (cur_block))
+      if (cur_block->inlined_p ())
 	depth++;
       else if (cur_block->function () != NULL)
 	break;
@@ -293,7 +292,7 @@ block_starting_point_at (CORE_ADDR pc, const struct block *block)
   if (new_block == NULL)
     return 1;
 
-  if (new_block == block || contained_in (new_block, block))
+  if (new_block == block || block->contains (new_block))
     return 0;
 
   /* The immediately preceding address belongs to a different block,
@@ -357,7 +356,7 @@ skip_inline_frames (thread_info *thread, bpstat *stop_chain)
       cur_block = frame_block;
       while (cur_block->superblock ())
 	{
-	  if (block_inlined_p (cur_block))
+	  if (cur_block->inlined_p ())
 	    {
 	      /* See comments in inline_frame_this_id about this use
 		 of BLOCK_ENTRY_PC.  */
@@ -441,7 +440,7 @@ inline_skipped_symbol (thread_info *thread)
    skip_inline_frames).  */
 
 int
-frame_inlined_callees (frame_info_ptr this_frame)
+frame_inlined_callees (const frame_info_ptr &this_frame)
 {
   frame_info_ptr next_frame;
   int inline_count = 0;

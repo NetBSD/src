@@ -1,6 +1,6 @@
 /* CLI Definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2016-2023 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,6 +33,15 @@ public:
   void pre_command_loop () override;
   bool supports_command_editing () override;
 
+  void on_signal_received (gdb_signal sig) override;
+  void on_signal_exited (gdb_signal sig) override;
+  void on_normal_stop (bpstat *bs, int print_frame) override;
+  void on_exited (int status) override;
+  void on_no_history () override;
+  void on_sync_execution_done () override;
+  void on_command_error () override;
+  void on_user_selected_context_changed (user_selected_what selection) override;
+
 private:
   struct saved_output_files
   {
@@ -41,7 +50,6 @@ private:
     ui_file *err;
     ui_file *log;
     ui_file *targ;
-    ui_file *targerr;
     /* When redirecting, some or all of these may be non-null
        depending on the logging mode.  */
     ui_file_up stdout_holder;

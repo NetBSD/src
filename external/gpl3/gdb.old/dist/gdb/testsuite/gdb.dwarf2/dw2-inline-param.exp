@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0  
-}
+require dwarf2_support
 
 standard_testfile .S -main.c
 
@@ -55,6 +53,13 @@ gdb_load ${binfile_stripped}
 
 if ![runto "*${break_at}"] {
     return -1
+}
+
+set index [have_index $binfile_stripped]
+if {$index == "debug_names"} {
+    # This test doesn't include .debug_aranges, so it doesn't cause CU
+    # expansion and thus won't work with .debug_names.
+    setup_kfail "symtab/31132" *-*-*
 }
 
 gdb_test "bt" "#0  (0x\[0-9a-f\]+ in )?func \\(funcparam=<optimized out>\\)\r\n#1  main \\(mainparam=<optimized out>\\)\[^\r\n\]*"

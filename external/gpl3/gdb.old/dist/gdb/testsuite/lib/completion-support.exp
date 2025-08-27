@@ -1,4 +1,4 @@
-# Copyright 2017-2023 Free Software Foundation, Inc.
+# Copyright 2017-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ namespace eval completion {
     # List of all quote chars, including no-quote at all.
     variable maybe_quoted_list {"" "'" "\""}
 
-    variable keyword_list {"-force-condition" "if" "task" "thread"}
+    variable keyword_list {"-force-condition" "if" "inferior" "task" "thread"}
 
     variable explicit_opts_list \
 	{"-function" "-label" "-line" "-qualified" "-source"}
@@ -50,7 +50,6 @@ proc make_tab_completion_list_re { completion_list } {
 	append completion_list_re [string_to_regexp $c]
 	append completion_list_re $ws
     }
-    append completion_list_re $ws
 
     return $completion_list_re
 }
@@ -85,18 +84,25 @@ proc clear_input_line { test } {
 
 # Test that completing LINE with TAB completes to nothing.
 
-proc test_gdb_complete_tab_none { line } {
+proc test_gdb_complete_tab_none { line { testname "" } } {
     set line_re [string_to_regexp $line]
 
-    set test "tab complete \"$line\""
+    if { $testname eq "" } {
+	set testname "tab complete \"$line\""
+    } else {
+	set testname "tab complete: $testname"
+    }
     send_gdb "$line\t"
-    gdb_test_multiple "" "$test" {
+    gdb_test_multiple "" "$testname" {
 	-re "^$line_re$completion::bell_re$" {
-	    pass "$test"
+	    pass $gdb_test_name
+	}
+	-re "$line_re\[^ \]+ $" {
+	    fail $gdb_test_name
 	}
     }
 
-    clear_input_line $test
+    clear_input_line $testname
 }
 
 # Test that completing INPUT_LINE with TAB completes to
@@ -104,22 +110,26 @@ proc test_gdb_complete_tab_none { line } {
 # appended after EXPECTED_OUTPUT.  Normally that's a whitespace, but
 # in some cases it's some other character, like a colon.
 
-proc test_gdb_complete_tab_unique { input_line complete_line_re append_char_re } {
+proc test_gdb_complete_tab_unique { input_line complete_line_re append_char_re {testname ""} } {
 
-    set test "tab complete \"$input_line\""
+    if { $testname eq "" } {
+	set testname "tab complete \"$input_line\""
+    } else {
+	set testname "tab complete: $testname"
+    }
     send_gdb "$input_line\t"
     set res 1
-    gdb_test_multiple "" "$test" {
+    gdb_test_multiple "" "$testname" {
 	-re "^$complete_line_re$append_char_re$" {
-	    pass "$test"
+	    pass $gdb_test_name
 	}
 	timeout {
-	    fail "$test (timeout)"
+	    fail "$gdb_test_name (timeout)"
 	    set res -1
 	}
     }
 
-    clear_input_line $test
+    clear_input_line $testname
     return $res
 }
 
@@ -129,7 +139,8 @@ proc test_gdb_complete_tab_unique { input_line complete_line_re append_char_re }
 # to hit the max-completions limit.
 
 proc test_gdb_complete_tab_multiple { input_line add_completed_line \
-					  completion_list {max_completions 0}} {
+					  completion_list {max_completions false} \
+					  {testname ""} } {
     global gdb_prompt
 
     set input_line_re [string_to_regexp $input_line]
@@ -143,9 +154,13 @@ proc test_gdb_complete_tab_multiple { input_line add_completed_line \
 	    "\\*\\*\\* List may be truncated, max-completions reached\\. \\*\\*\\*"
     }
 
-    set test "tab complete \"$input_line\""
+    if { $testname eq "" } {
+	set testname "tab complete \"$input_line\""
+    } else {
+	set testname "tab complete: $testname"
+    }
     send_gdb "$input_line\t"
-    gdb_test_multiple "" "$test (first tab)" {
+    gdb_test_multiple "" "$testname (first tab)" {
 	-re "^${input_line_re}${completion::bell_re}$add_completed_line_re$" {
 	    send_gdb "\t"
 	    # If we auto-completed to an ambiguous prefix, we need an
@@ -156,42 +171,65 @@ proc test_gdb_complete_tab_multiple { input_line add_completed_line \
 	    } else {
 		set maybe_bell ""
 	    }
-	    gdb_test_multiple "" "$test (second tab)" {
+	    gdb_test_multiple "" "$testname (second tab)" {
 		-re "^${maybe_bell}\r\n$expected_re\r\n$gdb_prompt " {
-		    gdb_test_multiple "" "$test (second tab)" {
+		    gdb_test_multiple "" "$testname (second tab)" {
 			-re "^$input_line_re$add_completed_line_re$" {
-			    pass "$test"
+			    pass $gdb_test_name
 			}
 		    }
+		}
+		-re "${maybe_bell}\r\n.+\r\n$gdb_prompt $" {
+		    fail $gdb_test_name
 		}
 	    }
 	}
     }
 
-    clear_input_line $test
+    clear_input_line $testname
 }
 
 # Test that completing LINE with the complete command completes to
 # nothing.
 
-proc test_gdb_complete_cmd_none { line } {
-    gdb_test_no_output "complete $line" "cmd complete \"$line\""
+proc test_gdb_complete_cmd_none { line { testname "" } } {
+    if { $testname eq "" } {
+	set testname "cmd complete \"$line\""
+    } else {
+	set testname "cmd complete: $testname"
+    }
+    gdb_test_no_output "complete $line" $testname
 }
 
 # Test that completing LINE with the complete command completes to
 # COMPLETE_LINE_RE.
+# Returns 1 if the test passed, 0 if it failed, -1 if it timed out.
 
-proc test_gdb_complete_cmd_unique { input_line complete_line_re } {
+proc test_gdb_complete_cmd_unique { input_line complete_line_re {testname ""} } {
     global gdb_prompt
 
+    set res 0
     set cmd "complete $input_line"
     set cmd_re [string_to_regexp $cmd]
-    set test "cmd complete \"$input_line\""
-    gdb_test_multiple $cmd $test {
+    if { $testname eq "" } {
+	set testname "cmd complete \"$input_line\""
+    } else {
+	set testname "cmd complete: $testname"
+    }
+    gdb_test_multiple $cmd $testname {
 	-re "^$cmd_re\r\n$complete_line_re\r\n$gdb_prompt $" {
-	    pass $test
+	    pass $gdb_test_name
+	    set res 1
+	}
+	-re "$gdb_prompt $" {
+	    fail $gdb_test_name
+	}
+	timeout {
+	    fail "$gdb_test_name (timeout)"
+	    set res -1
 	}
     }
+    return $res
 }
 
 # Test that completing "CMD_PREFIX + COMPLETION_WORD" with the
@@ -200,7 +238,7 @@ proc test_gdb_complete_cmd_unique { input_line complete_line_re } {
 # MAX_COMPLETIONS then we expect the completion to hit the
 # max-completions limit.
 
-proc test_gdb_complete_cmd_multiple { cmd_prefix completion_word completion_list {start_quote_char ""} {end_quote_char ""} {max_completions 0}} {
+proc test_gdb_complete_cmd_multiple { cmd_prefix completion_word completion_list {start_quote_char ""} {end_quote_char ""} {max_completions false} {testname ""} } {
     global gdb_prompt
 
     set expected_re [make_cmd_completion_list_re $cmd_prefix $completion_list $start_quote_char $end_quote_char]
@@ -212,21 +250,28 @@ proc test_gdb_complete_cmd_multiple { cmd_prefix completion_word completion_list
     }
 
     set cmd_re [string_to_regexp "complete $cmd_prefix$completion_word"]
-    set test "cmd complete \"$cmd_prefix$completion_word\""
-    gdb_test_multiple "complete $cmd_prefix$completion_word" $test {
+    if { $testname eq "" } {
+	set testname "cmd complete \"$cmd_prefix$completion_word\""
+    } else {
+	set testname "cmd complete: $testname"
+    }
+    gdb_test_multiple "complete $cmd_prefix$completion_word" $testname {
 	-re "^$cmd_re\r\n$expected_re$gdb_prompt $" {
-	    pass $test
+	    pass $gdb_test_name
+	}
+	-re "$gdb_prompt $" {
+	    fail $gdb_test_name
 	}
     }
 }
 
 # Test that completing LINE completes to nothing.
 
-proc test_gdb_complete_none { input_line } {
+proc test_gdb_complete_none { input_line { testname "" } } {
     if { [readline_is_used] } {
-	test_gdb_complete_tab_none $input_line
+	test_gdb_complete_tab_none $input_line $testname
     }
-    test_gdb_complete_cmd_none $input_line
+    test_gdb_complete_cmd_none $input_line $testname
 }
 
 # Test that completing INPUT_LINE completes to COMPLETE_LINE_RE.
@@ -245,14 +290,8 @@ proc test_gdb_complete_none { input_line } {
 # of a regular expression (as COMPLETE_LINE_RE).  See
 # test_gdb_complete_unique below.
 
-proc test_gdb_complete_unique_re { input_line complete_line_re {append_char " "} {max_completions 0}} {
+proc test_gdb_complete_unique_re { input_line complete_line_re {append_char " "} {max_completions false} {testname ""} } {
     set append_char_re [string_to_regexp $append_char]
-    if { [readline_is_used] } {
-	if { [test_gdb_complete_tab_unique $input_line $complete_line_re \
-		  $append_char_re] == -1 } {
-	    return -1
-	}
-    }
 
     # Trim COMPLETE LINE, for the case we're completing a command with leading
     # whitespace.  Leading command whitespace is discarded by GDB.
@@ -272,16 +311,30 @@ proc test_gdb_complete_unique_re { input_line complete_line_re {append_char " "}
 	    "\r\n$input_line_re $max_completion_reached_msg_re"
     }
 
-    test_gdb_complete_cmd_unique $input_line $expected_output_re
-    return 1
+    # First test completion with the command, then with tab.
+    # It is done in this order because cmd_complete knows when the output
+    # from GDB is over, so it can fail without requiring a timeout, which
+    # speeds up testing if necessary.
+
+    set test_result [test_gdb_complete_cmd_unique $input_line\
+		$expected_output_re $testname]
+    if { $test_result != 1 } {
+	return $test_result
+    }
+
+    if { [readline_is_used] } {
+	set test_result [test_gdb_complete_tab_unique $input_line \
+		$complete_line_re $append_char_re $testname]
+    }
+    return $test_result
 }
 
 # Like TEST_GDB_COMPLETE_UNIQUE_RE, but COMPLETE_LINE is a string, not
 # a regular expression.
 
-proc test_gdb_complete_unique { input_line complete_line {append_char " "} {max_completions 0}} {
+proc test_gdb_complete_unique { input_line complete_line {append_char " "} {max_completions false} {testname ""} } {
     set complete_line_re [string_to_regexp $complete_line]
-    test_gdb_complete_unique_re $input_line $complete_line_re $append_char $max_completions
+    test_gdb_complete_unique_re $input_line $complete_line_re $append_char $max_completions $testname
 }
 
 # Test that completing "CMD_PREFIX + COMPLETION_WORD" adds
@@ -292,17 +345,18 @@ proc test_gdb_complete_unique { input_line complete_line {append_char " "} {max_
 
 proc test_gdb_complete_multiple {
   cmd_prefix completion_word add_completed_line completion_list
-  {start_quote_char ""} {end_quote_char ""} {max_completions 0}
+  {start_quote_char ""} {end_quote_char ""} {max_completions false}
+  {testname ""}
 } {
     if { [readline_is_used] } {
-      test_gdb_complete_tab_multiple "$cmd_prefix$completion_word" $add_completed_line $completion_list $max_completions
+      test_gdb_complete_tab_multiple "$cmd_prefix$completion_word" $add_completed_line $completion_list $max_completions $testname
     }
-    test_gdb_complete_cmd_multiple $cmd_prefix $completion_word $completion_list $start_quote_char $end_quote_char $max_completions
+    test_gdb_complete_cmd_multiple $cmd_prefix $completion_word $completion_list $start_quote_char $end_quote_char $max_completions $testname
 }
 
 # Test that all the substring prefixes of INPUT from [0..START) to
 # [0..END) complete to COMPLETION_RE (a regular expression).  If END
-# is ommitted, default to the length of INPUT.
+# is omitted, default to the length of INPUT.
 
 proc test_complete_prefix_range_re {input completion_re start {end -1}} {
     if {$end == -1} {
@@ -329,7 +383,7 @@ proc test_complete_prefix_range_re {input completion_re start {end -1}} {
 }
 
 # Test that all the substring prefixes of COMPLETION from [0..START)
-# to [0..END) complete to COMPLETION.  If END is ommitted, default to
+# to [0..END) complete to COMPLETION.  If END is omitted, default to
 # the length of COMPLETION.
 
 proc test_complete_prefix_range {completion start {end -1}} {
@@ -555,7 +609,7 @@ proc test_gdb_completion_offers_commands {input_line} {
 
     # TUI adds additional commands to the possible completions, so we
     # need different patterns depending on whether or not it is enabled.
-    if { [skip_tui_tests] } {
+    if { ![allow_tui_tests] } {
 	test_gdb_complete_multiple $input_line "" "" {
 	    "!"
 	    "actions"

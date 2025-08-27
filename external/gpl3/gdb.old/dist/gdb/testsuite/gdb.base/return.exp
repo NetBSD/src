@@ -1,4 +1,4 @@
-# Copyright (C) 1992-2023 Free Software Foundation, Inc.
+# Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,10 +19,10 @@ if { [prepare_for_testing "failed to prepare" "return"] } {
     return -1
 }
 
-set skip_float_test [gdb_skip_float_test]
+set allow_float_test [allow_float_test]
 
 proc return_tests { } {
-    global gdb_prompt skip_float_test
+    global gdb_prompt allow_float_test
 
 
     if {![runto func1]} { return 0 }
@@ -90,7 +90,7 @@ proc return_tests { } {
     # is not xfailed.
 
     setup_xfail "sparc-*-solaris2.3*" "sparc-*-solaris2.4*" "m6811-*-*"
-    if {!$skip_float_test} {
+    if {$allow_float_test} {
 	gdb_test "p tmp3" ".* = 5.*" \
 	    "correct value returned double test (known problem with sparc solaris)"
     }

@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARC.
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -147,7 +147,7 @@ static bool
 init_arc_disasm_info (struct disassemble_info *info)
 {
   struct arc_disassemble_info *arc_infop
-    = calloc (sizeof (*arc_infop), 1);
+    = calloc (1, sizeof (*arc_infop));
 
   if (arc_infop == NULL)
     return false;
@@ -894,6 +894,7 @@ arc_opcode_to_insn_type (const struct arc_opcode *opcode)
     case BI:
     case BIH:
     case BRCC:
+    case DBNZ:
     case EI:
     case JLI:
     case JUMP:

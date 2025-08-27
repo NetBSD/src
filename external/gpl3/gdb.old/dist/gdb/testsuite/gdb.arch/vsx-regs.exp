@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2023 Free Software Foundation, Inc.
+# Copyright (C) 2008-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,10 +19,7 @@
 #
 
 
-if {![istarget "powerpc*"] || [skip_vsx_tests]} {
-    verbose "Skipping vsx register tests."
-    return
-}
+require {istarget "powerpc*"} allow_vsx_tests
 
 standard_testfile
 
@@ -187,10 +184,7 @@ if {!$core_supported} {
   return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart $binfile
 
 set core_loaded [gdb_core_cmd "$corefile" "re-load generated corefile"]
 if { $core_loaded == -1 } {

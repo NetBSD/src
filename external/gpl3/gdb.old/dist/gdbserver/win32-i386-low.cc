@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,7 +15,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "win32-low.h"
 #include "x86-low.h"
 #include "gdbsupport/x86-xstate.h"
@@ -32,8 +31,17 @@ using namespace windows_nat;
 #define CONTEXT_EXTENDED_REGISTERS 0
 #endif
 
-#define FCS_REGNUM 27
-#define FOP_REGNUM 31
+#define I386_FISEG_REGNUM 27
+#define I386_FOP_REGNUM 31
+
+#define I386_CS_REGNUM 10
+#define I386_GS_REGNUM 15
+
+#define AMD64_FISEG_REGNUM 35
+#define AMD64_FOP_REGNUM 39
+
+#define AMD64_CS_REGNUM 18
+#define AMD64_GS_REGNUM 23
 
 #define FLAG_TRACE_BIT 0x100
 
@@ -459,6 +467,42 @@ static const int amd64_mappings[] =
 
 #endif /* __x86_64__ */
 
+/* Return true if R is the FISEG register.  */
+static bool
+is_fiseg_register (int r)
+{
+#ifdef __x86_64__
+  if (!windows_process.wow64_process)
+    return r == AMD64_FISEG_REGNUM;
+  else
+#endif
+    return r == I386_FISEG_REGNUM;
+}
+
+/* Return true if R is the FOP register.  */
+static bool
+is_fop_register (int r)
+{
+#ifdef __x86_64__
+  if (!windows_process.wow64_process)
+    return r == AMD64_FOP_REGNUM;
+  else
+#endif
+    return r == I386_FOP_REGNUM;
+}
+
+/* Return true if R is a segment register.  */
+static bool
+is_segment_register (int r)
+{
+#ifdef __x86_64__
+  if (!windows_process.wow64_process)
+    return r >= AMD64_CS_REGNUM && r <= AMD64_GS_REGNUM;
+  else
+#endif
+    return r >= I386_CS_REGNUM && r <= I386_GS_REGNUM;
+}
+
 /* Fetch register from gdbserver regcache data.  */
 static void
 i386_fetch_inferior_register (struct regcache *regcache,
@@ -480,15 +524,18 @@ i386_fetch_inferior_register (struct regcache *regcache,
 #endif
     context_offset = (char *) &th->context + mappings[r];
 
-  long l;
-  if (r == FCS_REGNUM)
+  /* GDB treats some registers as 32-bit, where they are in fact only
+     16 bits long.  These cases must be handled specially to avoid
+     reading extraneous bits from the context.  */
+  if (is_fiseg_register (r) || is_segment_register (r))
     {
-      l = *((long *) context_offset) & 0xffff;
-      supply_register (regcache, r, (char *) &l);
+      gdb_byte bytes[4] = {};
+      memcpy (bytes, context_offset, 2);
+      supply_register (regcache, r, bytes);
     }
-  else if (r == FOP_REGNUM)
+  else if (is_fop_register (r))
     {
-      l = (*((long *) context_offset) >> 16) & ((1 << 11) - 1);
+      long l = (*((long *) context_offset) >> 16) & ((1 << 11) - 1);
       supply_register (regcache, r, (char *) &l);
     }
   else
@@ -516,7 +563,26 @@ i386_store_inferior_register (struct regcache *regcache,
 #endif
     context_offset = (char *) &th->context + mappings[r];
 
-  collect_register (regcache, r, context_offset);
+  /* GDB treats some registers as 32-bit, where they are in fact only
+     16 bits long.  These cases must be handled specially to avoid
+     overwriting other registers in the context.  */
+  if (is_fiseg_register (r) || is_segment_register (r))
+    {
+      gdb_byte bytes[4];
+      collect_register (regcache, r, bytes);
+      memcpy (context_offset, bytes, 2);
+    }
+  else if (is_fop_register (r))
+    {
+      gdb_byte bytes[4];
+      collect_register (regcache, r, bytes);
+      /* The value of FOP occupies the top two bytes in the context,
+	 so write the two low-order bytes from the cache into the
+	 appropriate spot.  */
+      memcpy (context_offset + 2, bytes, 2);
+    }
+  else
+    collect_register (regcache, r, context_offset);
 }
 
 static const unsigned char i386_win32_breakpoint = 0xcc;

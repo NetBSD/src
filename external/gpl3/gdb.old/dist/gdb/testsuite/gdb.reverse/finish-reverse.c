@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2023 Free Software Foundation, Inc.
+   Copyright 2008-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -123,6 +123,6 @@ int main (int argc, char **argv)
   testval.double_testval = 3.14159265358979323846; /* float_checkpoint */
   double_resultval    = double_func ();		
   main_test = 1;				/* double_checkpoint */
-  return 0;
-} /* end of main */
+  return 0;					/* end of main */
+}
 

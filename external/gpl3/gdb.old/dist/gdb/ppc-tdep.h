@@ -1,6 +1,6 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -175,7 +175,9 @@ extern void ppc_collect_vsxregset (const struct regset *regset,
 				  const struct regcache *regcache,
 				  int regnum, void *vsxregs, size_t len);
 
-extern CORE_ADDR ppc64_sysv_get_return_buf_addr (type*, frame_info_ptr);
+/* Implementation of the gdbarch get_return_buf_addr hook.  */
+
+extern CORE_ADDR ppc_sysv_get_return_buf_addr (type*, const frame_info_ptr &);
 
 /* Private data that this module attaches to struct gdbarch.  */
 
@@ -422,7 +424,7 @@ struct ppc_insn_pattern
   int optional;                 /* If non-zero, this insn may be absent.  */
 };
 
-extern int ppc_insns_match_pattern (frame_info_ptr frame, CORE_ADDR pc,
+extern int ppc_insns_match_pattern (const frame_info_ptr &frame, CORE_ADDR pc,
 				    const struct ppc_insn_pattern *pattern,
 				    unsigned int *insns);
 extern CORE_ADDR ppc_insn_d_field (unsigned int insn);
@@ -445,9 +447,15 @@ struct ppc_inferior_data
   /* This is an optional in case we add more fields to ppc_inferior_data, we
      don't want it instantiated as soon as we get the ppc_inferior_data for an
      inferior.  */
-  gdb::optional<displaced_step_buffers> disp_step_buf;
+  std::optional<displaced_step_buffers> disp_step_buf;
 };
 
 extern ppc_inferior_data * get_ppc_per_inferior (inferior *inf);
+
+extern const struct target_desc *tdesc_powerpc_vsx64l;
+extern const struct target_desc *tdesc_powerpc_vsx64;
+extern const struct target_desc *tdesc_powerpc_vsx32;
+extern const struct target_desc *tdesc_powerpc_altivec64;
+extern const struct target_desc *tdesc_powerpc_altivec32;
 
 #endif /* ppc-tdep.h */

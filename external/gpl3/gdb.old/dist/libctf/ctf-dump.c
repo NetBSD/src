@@ -1,5 +1,5 @@
 /* Textual dumping of CTF data.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -239,7 +239,8 @@ ctf_dump_format_type (ctf_dict_t *fp, ctf_id_t id, int flag)
  oom:
   ctf_set_errno (fp, errno);
  err:
-  ctf_err_warn (fp, 1, 0, _("cannot format name dumping type 0x%lx"), id);
+  ctf_err_warn (fp, 1, ctf_errno (fp), _("cannot format name dumping type 0x%lx"),
+		id);
   free (buf);
   free (str);
   free (bit);
@@ -333,13 +334,12 @@ ctf_dump_header (ctf_dict_t *fp, ctf_dump_state_t *state)
 		    ? ", " : "",
 		    fp->ctf_openflags & CTF_F_NEWFUNCINFO
 		    ? "CTF_F_NEWFUNCINFO" : "",
-		    (fp->ctf_openflags & (CTF_F_COMPRESS | CTF_F_NEWFUNCINFO))
+		    (fp->ctf_openflags & (CTF_F_NEWFUNCINFO))
 		    && (fp->ctf_openflags & ~(CTF_F_COMPRESS | CTF_F_NEWFUNCINFO))
 		    ? ", " : "",
 		    fp->ctf_openflags & CTF_F_IDXSORTED
 		    ? "CTF_F_IDXSORTED" : "",
-		    fp->ctf_openflags & (CTF_F_COMPRESS | CTF_F_NEWFUNCINFO
-					 | CTF_F_IDXSORTED)
+		    fp->ctf_openflags & (CTF_F_IDXSORTED)
 		    && (fp->ctf_openflags & ~(CTF_F_COMPRESS | CTF_F_NEWFUNCINFO
 					      | CTF_F_IDXSORTED))
 		    ? ", " : "",
@@ -441,7 +441,7 @@ ctf_dump_objts (ctf_dict_t *fp, ctf_dump_state_t *state, int functions)
   if ((functions && fp->ctf_funcidx_names)
       || (!functions && fp->ctf_objtidx_names))
     str = str_append (str, _("Section is indexed.\n"));
-  else if (fp->ctf_symtab.cts_data == NULL)
+  else if (fp->ctf_ext_symtab.cts_data == NULL)
     str = str_append (str, _("No symbol table.\n"));
 
   while ((id = ctf_symbol_next (fp, &i, &name, functions)) != CTF_ERR)

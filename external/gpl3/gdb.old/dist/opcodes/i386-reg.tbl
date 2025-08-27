@@ -1,5 +1,5 @@
 // i386 register table.
-// Copyright (C) 2007-2022 Free Software Foundation, Inc.
+// Copyright (C) 2007-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU opcodes library.
 //
@@ -17,6 +17,9 @@
 // along with GAS; see the file COPYING.  If not, write to the Free
 // Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
 // 02110-1301, USA.
+
+// The code in gas backend for SCFI relies on the relative ordering
+// of 8 bit / 16 bit / 32 bit / 64 bit regs
 
 // 8 bit regs
 al, Class=Reg|Instance=Accum|Byte, 0, 0, Dw2Inval, Dw2Inval
@@ -43,6 +46,22 @@ r12b, Class=Reg|Byte, RegRex|RegRex64, 4, Dw2Inval, Dw2Inval
 r13b, Class=Reg|Byte, RegRex|RegRex64, 5, Dw2Inval, Dw2Inval
 r14b, Class=Reg|Byte, RegRex|RegRex64, 6, Dw2Inval, Dw2Inval
 r15b, Class=Reg|Byte, RegRex|RegRex64, 7, Dw2Inval, Dw2Inval
+r16b, Class=Reg|Byte, RegRex2|RegRex64, 0, Dw2Inval, Dw2Inval
+r17b, Class=Reg|Byte, RegRex2|RegRex64, 1, Dw2Inval, Dw2Inval
+r18b, Class=Reg|Byte, RegRex2|RegRex64, 2, Dw2Inval, Dw2Inval
+r19b, Class=Reg|Byte, RegRex2|RegRex64, 3, Dw2Inval, Dw2Inval
+r20b, Class=Reg|Byte, RegRex2|RegRex64, 4, Dw2Inval, Dw2Inval
+r21b, Class=Reg|Byte, RegRex2|RegRex64, 5, Dw2Inval, Dw2Inval
+r22b, Class=Reg|Byte, RegRex2|RegRex64, 6, Dw2Inval, Dw2Inval
+r23b, Class=Reg|Byte, RegRex2|RegRex64, 7, Dw2Inval, Dw2Inval
+r24b, Class=Reg|Byte, RegRex2|RegRex64|RegRex, 0, Dw2Inval, Dw2Inval
+r25b, Class=Reg|Byte, RegRex2|RegRex64|RegRex, 1, Dw2Inval, Dw2Inval
+r26b, Class=Reg|Byte, RegRex2|RegRex64|RegRex, 2, Dw2Inval, Dw2Inval
+r27b, Class=Reg|Byte, RegRex2|RegRex64|RegRex, 3, Dw2Inval, Dw2Inval
+r28b, Class=Reg|Byte, RegRex2|RegRex64|RegRex, 4, Dw2Inval, Dw2Inval
+r29b, Class=Reg|Byte, RegRex2|RegRex64|RegRex, 5, Dw2Inval, Dw2Inval
+r30b, Class=Reg|Byte, RegRex2|RegRex64|RegRex, 6, Dw2Inval, Dw2Inval
+r31b, Class=Reg|Byte, RegRex2|RegRex64|RegRex, 7, Dw2Inval, Dw2Inval
 // 16 bit regs
 ax, Class=Reg|Instance=Accum|Word, 0, 0, Dw2Inval, Dw2Inval
 cx, Class=Reg|Word, 0, 1, Dw2Inval, Dw2Inval
@@ -60,6 +79,22 @@ r12w, Class=Reg|Word, RegRex, 4, Dw2Inval, Dw2Inval
 r13w, Class=Reg|Word, RegRex, 5, Dw2Inval, Dw2Inval
 r14w, Class=Reg|Word, RegRex, 6, Dw2Inval, Dw2Inval
 r15w, Class=Reg|Word, RegRex, 7, Dw2Inval, Dw2Inval
+r16w, Class=Reg|Word, RegRex2, 0, Dw2Inval, Dw2Inval
+r17w, Class=Reg|Word, RegRex2, 1, Dw2Inval, Dw2Inval
+r18w, Class=Reg|Word, RegRex2, 2, Dw2Inval, Dw2Inval
+r19w, Class=Reg|Word, RegRex2, 3, Dw2Inval, Dw2Inval
+r20w, Class=Reg|Word, RegRex2, 4, Dw2Inval, Dw2Inval
+r21w, Class=Reg|Word, RegRex2, 5, Dw2Inval, Dw2Inval
+r22w, Class=Reg|Word, RegRex2, 6, Dw2Inval, Dw2Inval
+r23w, Class=Reg|Word, RegRex2, 7, Dw2Inval, Dw2Inval
+r24w, Class=Reg|Word, RegRex2|RegRex, 0, Dw2Inval, Dw2Inval
+r25w, Class=Reg|Word, RegRex2|RegRex, 1, Dw2Inval, Dw2Inval
+r26w, Class=Reg|Word, RegRex2|RegRex, 2, Dw2Inval, Dw2Inval
+r27w, Class=Reg|Word, RegRex2|RegRex, 3, Dw2Inval, Dw2Inval
+r28w, Class=Reg|Word, RegRex2|RegRex, 4, Dw2Inval, Dw2Inval
+r29w, Class=Reg|Word, RegRex2|RegRex, 5, Dw2Inval, Dw2Inval
+r30w, Class=Reg|Word, RegRex2|RegRex, 6, Dw2Inval, Dw2Inval
+r31w, Class=Reg|Word, RegRex2|RegRex, 7, Dw2Inval, Dw2Inval
 // 32 bit regs
 eax, Class=Reg|Instance=Accum|Dword|BaseIndex, 0, 0, 0, Dw2Inval
 ecx, Class=Reg|Instance=RegC|Dword|BaseIndex, 0, 1, 1, Dw2Inval
@@ -77,6 +112,22 @@ r12d, Class=Reg|Dword|BaseIndex, RegRex, 4, Dw2Inval, Dw2Inval
 r13d, Class=Reg|Dword|BaseIndex, RegRex, 5, Dw2Inval, Dw2Inval
 r14d, Class=Reg|Dword|BaseIndex, RegRex, 6, Dw2Inval, Dw2Inval
 r15d, Class=Reg|Dword|BaseIndex, RegRex, 7, Dw2Inval, Dw2Inval
+r16d, Class=Reg|Dword|BaseIndex, RegRex2, 0, Dw2Inval, Dw2Inval
+r17d, Class=Reg|Dword|BaseIndex, RegRex2, 1, Dw2Inval, Dw2Inval
+r18d, Class=Reg|Dword|BaseIndex, RegRex2, 2, Dw2Inval, Dw2Inval
+r19d, Class=Reg|Dword|BaseIndex, RegRex2, 3, Dw2Inval, Dw2Inval
+r20d, Class=Reg|Dword|BaseIndex, RegRex2, 4, Dw2Inval, Dw2Inval
+r21d, Class=Reg|Dword|BaseIndex, RegRex2, 5, Dw2Inval, Dw2Inval
+r22d, Class=Reg|Dword|BaseIndex, RegRex2, 6, Dw2Inval, Dw2Inval
+r23d, Class=Reg|Dword|BaseIndex, RegRex2, 7, Dw2Inval, Dw2Inval
+r24d, Class=Reg|Dword|BaseIndex, RegRex2|RegRex, 0, Dw2Inval, Dw2Inval
+r25d, Class=Reg|Dword|BaseIndex, RegRex2|RegRex, 1, Dw2Inval, Dw2Inval
+r26d, Class=Reg|Dword|BaseIndex, RegRex2|RegRex, 2, Dw2Inval, Dw2Inval
+r27d, Class=Reg|Dword|BaseIndex, RegRex2|RegRex, 3, Dw2Inval, Dw2Inval
+r28d, Class=Reg|Dword|BaseIndex, RegRex2|RegRex, 4, Dw2Inval, Dw2Inval
+r29d, Class=Reg|Dword|BaseIndex, RegRex2|RegRex, 5, Dw2Inval, Dw2Inval
+r30d, Class=Reg|Dword|BaseIndex, RegRex2|RegRex, 6, Dw2Inval, Dw2Inval
+r31d, Class=Reg|Dword|BaseIndex, RegRex2|RegRex, 7, Dw2Inval, Dw2Inval
 rax, Class=Reg|Instance=Accum|Qword|BaseIndex, 0, 0, Dw2Inval, 0
 rcx, Class=Reg|Instance=RegC|Qword|BaseIndex, 0, 1, Dw2Inval, 2
 rdx, Class=Reg|Instance=RegD|Qword|BaseIndex, 0, 2, Dw2Inval, 1
@@ -93,6 +144,22 @@ r12, Class=Reg|Qword|BaseIndex, RegRex, 4, Dw2Inval, 12
 r13, Class=Reg|Qword|BaseIndex, RegRex, 5, Dw2Inval, 13
 r14, Class=Reg|Qword|BaseIndex, RegRex, 6, Dw2Inval, 14
 r15, Class=Reg|Qword|BaseIndex, RegRex, 7, Dw2Inval, 15
+r16, Class=Reg|Qword|BaseIndex, RegRex2, 0, Dw2Inval, 130
+r17, Class=Reg|Qword|BaseIndex, RegRex2, 1, Dw2Inval, 131
+r18, Class=Reg|Qword|BaseIndex, RegRex2, 2, Dw2Inval, 132
+r19, Class=Reg|Qword|BaseIndex, RegRex2, 3, Dw2Inval, 133
+r20, Class=Reg|Qword|BaseIndex, RegRex2, 4, Dw2Inval, 134
+r21, Class=Reg|Qword|BaseIndex, RegRex2, 5, Dw2Inval, 135
+r22, Class=Reg|Qword|BaseIndex, RegRex2, 6, Dw2Inval, 136
+r23, Class=Reg|Qword|BaseIndex, RegRex2, 7, Dw2Inval, 137
+r24, Class=Reg|Qword|BaseIndex, RegRex2|RegRex, 0, Dw2Inval, 138
+r25, Class=Reg|Qword|BaseIndex, RegRex2|RegRex, 1, Dw2Inval, 139
+r26, Class=Reg|Qword|BaseIndex, RegRex2|RegRex, 2, Dw2Inval, 140
+r27, Class=Reg|Qword|BaseIndex, RegRex2|RegRex, 3, Dw2Inval, 141
+r28, Class=Reg|Qword|BaseIndex, RegRex2|RegRex, 4, Dw2Inval, 142
+r29, Class=Reg|Qword|BaseIndex, RegRex2|RegRex, 5, Dw2Inval, 143
+r30, Class=Reg|Qword|BaseIndex, RegRex2|RegRex, 6, Dw2Inval, 144
+r31, Class=Reg|Qword|BaseIndex, RegRex2|RegRex, 7, Dw2Inval, 145
 // Vector mask registers.
 k0, Class=RegMask, 0, 0, 93, 118
 k1, Class=RegMask, 0, 1, 94, 119
@@ -211,71 +278,72 @@ xmm29, Class=RegSIMD|Xmmword, RegVRex|RegRex, 5, Dw2Inval, 80
 xmm30, Class=RegSIMD|Xmmword, RegVRex|RegRex, 6, Dw2Inval, 81
 xmm31, Class=RegSIMD|Xmmword, RegVRex|RegRex, 7, Dw2Inval, 82
 // AVX registers.
-ymm0, Class=RegSIMD|Ymmword, 0, 0, Dw2Inval, Dw2Inval
-ymm1, Class=RegSIMD|Ymmword, 0, 1, Dw2Inval, Dw2Inval
-ymm2, Class=RegSIMD|Ymmword, 0, 2, Dw2Inval, Dw2Inval
-ymm3, Class=RegSIMD|Ymmword, 0, 3, Dw2Inval, Dw2Inval
-ymm4, Class=RegSIMD|Ymmword, 0, 4, Dw2Inval, Dw2Inval
-ymm5, Class=RegSIMD|Ymmword, 0, 5, Dw2Inval, Dw2Inval
-ymm6, Class=RegSIMD|Ymmword, 0, 6, Dw2Inval, Dw2Inval
-ymm7, Class=RegSIMD|Ymmword, 0, 7, Dw2Inval, Dw2Inval
-ymm8, Class=RegSIMD|Ymmword, RegRex, 0, Dw2Inval, Dw2Inval
-ymm9, Class=RegSIMD|Ymmword, RegRex, 1, Dw2Inval, Dw2Inval
-ymm10, Class=RegSIMD|Ymmword, RegRex, 2, Dw2Inval, Dw2Inval
-ymm11, Class=RegSIMD|Ymmword, RegRex, 3, Dw2Inval, Dw2Inval
-ymm12, Class=RegSIMD|Ymmword, RegRex, 4, Dw2Inval, Dw2Inval
-ymm13, Class=RegSIMD|Ymmword, RegRex, 5, Dw2Inval, Dw2Inval
-ymm14, Class=RegSIMD|Ymmword, RegRex, 6, Dw2Inval, Dw2Inval
-ymm15, Class=RegSIMD|Ymmword, RegRex, 7, Dw2Inval, Dw2Inval
-ymm16, Class=RegSIMD|Ymmword, RegVRex, 0, Dw2Inval, Dw2Inval
-ymm17, Class=RegSIMD|Ymmword, RegVRex, 1, Dw2Inval, Dw2Inval
-ymm18, Class=RegSIMD|Ymmword, RegVRex, 2, Dw2Inval, Dw2Inval
-ymm19, Class=RegSIMD|Ymmword, RegVRex, 3, Dw2Inval, Dw2Inval
-ymm20, Class=RegSIMD|Ymmword, RegVRex, 4, Dw2Inval, Dw2Inval
-ymm21, Class=RegSIMD|Ymmword, RegVRex, 5, Dw2Inval, Dw2Inval
-ymm22, Class=RegSIMD|Ymmword, RegVRex, 6, Dw2Inval, Dw2Inval
-ymm23, Class=RegSIMD|Ymmword, RegVRex, 7, Dw2Inval, Dw2Inval
-ymm24, Class=RegSIMD|Ymmword, RegVRex|RegRex, 0, Dw2Inval, Dw2Inval
-ymm25, Class=RegSIMD|Ymmword, RegVRex|RegRex, 1, Dw2Inval, Dw2Inval
-ymm26, Class=RegSIMD|Ymmword, RegVRex|RegRex, 2, Dw2Inval, Dw2Inval
-ymm27, Class=RegSIMD|Ymmword, RegVRex|RegRex, 3, Dw2Inval, Dw2Inval
-ymm28, Class=RegSIMD|Ymmword, RegVRex|RegRex, 4, Dw2Inval, Dw2Inval
-ymm29, Class=RegSIMD|Ymmword, RegVRex|RegRex, 5, Dw2Inval, Dw2Inval
-ymm30, Class=RegSIMD|Ymmword, RegVRex|RegRex, 6, Dw2Inval, Dw2Inval
-ymm31, Class=RegSIMD|Ymmword, RegVRex|RegRex, 7, Dw2Inval, Dw2Inval
+ymm0, Class=RegSIMD|Ymmword, 0, 0, 21, 17
+ymm1, Class=RegSIMD|Ymmword, 0, 1, 22, 18
+ymm2, Class=RegSIMD|Ymmword, 0, 2, 23, 19
+ymm3, Class=RegSIMD|Ymmword, 0, 3, 24, 20
+ymm4, Class=RegSIMD|Ymmword, 0, 4, 25, 21
+ymm5, Class=RegSIMD|Ymmword, 0, 5, 26, 22
+ymm6, Class=RegSIMD|Ymmword, 0, 6, 27, 23
+ymm7, Class=RegSIMD|Ymmword, 0, 7, 28, 24
+ymm8, Class=RegSIMD|Ymmword, RegRex, 0, Dw2Inval, 25
+ymm9, Class=RegSIMD|Ymmword, RegRex, 1, Dw2Inval, 26
+ymm10, Class=RegSIMD|Ymmword, RegRex, 2, Dw2Inval, 27
+ymm11, Class=RegSIMD|Ymmword, RegRex, 3, Dw2Inval, 28
+ymm12, Class=RegSIMD|Ymmword, RegRex, 4, Dw2Inval, 29
+ymm13, Class=RegSIMD|Ymmword, RegRex, 5, Dw2Inval, 30
+ymm14, Class=RegSIMD|Ymmword, RegRex, 6, Dw2Inval, 31
+ymm15, Class=RegSIMD|Ymmword, RegRex, 7, Dw2Inval, 32
+// AVX512 / AVX10 registers.
+ymm16, Class=RegSIMD|Ymmword, RegVRex, 0, Dw2Inval, 67
+ymm17, Class=RegSIMD|Ymmword, RegVRex, 1, Dw2Inval, 68
+ymm18, Class=RegSIMD|Ymmword, RegVRex, 2, Dw2Inval, 69
+ymm19, Class=RegSIMD|Ymmword, RegVRex, 3, Dw2Inval, 70
+ymm20, Class=RegSIMD|Ymmword, RegVRex, 4, Dw2Inval, 71
+ymm21, Class=RegSIMD|Ymmword, RegVRex, 5, Dw2Inval, 72
+ymm22, Class=RegSIMD|Ymmword, RegVRex, 6, Dw2Inval, 73
+ymm23, Class=RegSIMD|Ymmword, RegVRex, 7, Dw2Inval, 74
+ymm24, Class=RegSIMD|Ymmword, RegVRex|RegRex, 0, Dw2Inval, 75
+ymm25, Class=RegSIMD|Ymmword, RegVRex|RegRex, 1, Dw2Inval, 76
+ymm26, Class=RegSIMD|Ymmword, RegVRex|RegRex, 2, Dw2Inval, 77
+ymm27, Class=RegSIMD|Ymmword, RegVRex|RegRex, 3, Dw2Inval, 78
+ymm28, Class=RegSIMD|Ymmword, RegVRex|RegRex, 4, Dw2Inval, 79
+ymm29, Class=RegSIMD|Ymmword, RegVRex|RegRex, 5, Dw2Inval, 80
+ymm30, Class=RegSIMD|Ymmword, RegVRex|RegRex, 6, Dw2Inval, 81
+ymm31, Class=RegSIMD|Ymmword, RegVRex|RegRex, 7, Dw2Inval, 82
 // AVX512 registers.
-zmm0, Class=RegSIMD|Zmmword, 0, 0, Dw2Inval, Dw2Inval
-zmm1, Class=RegSIMD|Zmmword, 0, 1, Dw2Inval, Dw2Inval
-zmm2, Class=RegSIMD|Zmmword, 0, 2, Dw2Inval, Dw2Inval
-zmm3, Class=RegSIMD|Zmmword, 0, 3, Dw2Inval, Dw2Inval
-zmm4, Class=RegSIMD|Zmmword, 0, 4, Dw2Inval, Dw2Inval
-zmm5, Class=RegSIMD|Zmmword, 0, 5, Dw2Inval, Dw2Inval
-zmm6, Class=RegSIMD|Zmmword, 0, 6, Dw2Inval, Dw2Inval
-zmm7, Class=RegSIMD|Zmmword, 0, 7, Dw2Inval, Dw2Inval
-zmm8, Class=RegSIMD|Zmmword, RegRex, 0, Dw2Inval, Dw2Inval
-zmm9, Class=RegSIMD|Zmmword, RegRex, 1, Dw2Inval, Dw2Inval
-zmm10, Class=RegSIMD|Zmmword, RegRex, 2, Dw2Inval, Dw2Inval
-zmm11, Class=RegSIMD|Zmmword, RegRex, 3, Dw2Inval, Dw2Inval
-zmm12, Class=RegSIMD|Zmmword, RegRex, 4, Dw2Inval, Dw2Inval
-zmm13, Class=RegSIMD|Zmmword, RegRex, 5, Dw2Inval, Dw2Inval
-zmm14, Class=RegSIMD|Zmmword, RegRex, 6, Dw2Inval, Dw2Inval
-zmm15, Class=RegSIMD|Zmmword, RegRex, 7, Dw2Inval, Dw2Inval
-zmm16, Class=RegSIMD|Zmmword, RegVRex, 0, Dw2Inval, Dw2Inval
-zmm17, Class=RegSIMD|Zmmword, RegVRex, 1, Dw2Inval, Dw2Inval
-zmm18, Class=RegSIMD|Zmmword, RegVRex, 2, Dw2Inval, Dw2Inval
-zmm19, Class=RegSIMD|Zmmword, RegVRex, 3, Dw2Inval, Dw2Inval
-zmm20, Class=RegSIMD|Zmmword, RegVRex, 4, Dw2Inval, Dw2Inval
-zmm21, Class=RegSIMD|Zmmword, RegVRex, 5, Dw2Inval, Dw2Inval
-zmm22, Class=RegSIMD|Zmmword, RegVRex, 6, Dw2Inval, Dw2Inval
-zmm23, Class=RegSIMD|Zmmword, RegVRex, 7, Dw2Inval, Dw2Inval
-zmm24, Class=RegSIMD|Zmmword, RegVRex|RegRex, 0, Dw2Inval, Dw2Inval
-zmm25, Class=RegSIMD|Zmmword, RegVRex|RegRex, 1, Dw2Inval, Dw2Inval
-zmm26, Class=RegSIMD|Zmmword, RegVRex|RegRex, 2, Dw2Inval, Dw2Inval
-zmm27, Class=RegSIMD|Zmmword, RegVRex|RegRex, 3, Dw2Inval, Dw2Inval
-zmm28, Class=RegSIMD|Zmmword, RegVRex|RegRex, 4, Dw2Inval, Dw2Inval
-zmm29, Class=RegSIMD|Zmmword, RegVRex|RegRex, 5, Dw2Inval, Dw2Inval
-zmm30, Class=RegSIMD|Zmmword, RegVRex|RegRex, 6, Dw2Inval, Dw2Inval
-zmm31, Class=RegSIMD|Zmmword, RegVRex|RegRex, 7, Dw2Inval, Dw2Inval
+zmm0, Class=RegSIMD|Zmmword, 0, 0, 21, 17
+zmm1, Class=RegSIMD|Zmmword, 0, 1, 22, 18
+zmm2, Class=RegSIMD|Zmmword, 0, 2, 23, 19
+zmm3, Class=RegSIMD|Zmmword, 0, 3, 24, 20
+zmm4, Class=RegSIMD|Zmmword, 0, 4, 25, 21
+zmm5, Class=RegSIMD|Zmmword, 0, 5, 26, 22
+zmm6, Class=RegSIMD|Zmmword, 0, 6, 27, 23
+zmm7, Class=RegSIMD|Zmmword, 0, 7, 28, 24
+zmm8, Class=RegSIMD|Zmmword, RegRex, 0, Dw2Inval, 25
+zmm9, Class=RegSIMD|Zmmword, RegRex, 1, Dw2Inval, 26
+zmm10, Class=RegSIMD|Zmmword, RegRex, 2, Dw2Inval, 27
+zmm11, Class=RegSIMD|Zmmword, RegRex, 3, Dw2Inval, 28
+zmm12, Class=RegSIMD|Zmmword, RegRex, 4, Dw2Inval, 29
+zmm13, Class=RegSIMD|Zmmword, RegRex, 5, Dw2Inval, 30
+zmm14, Class=RegSIMD|Zmmword, RegRex, 6, Dw2Inval, 31
+zmm15, Class=RegSIMD|Zmmword, RegRex, 7, Dw2Inval, 32
+zmm16, Class=RegSIMD|Zmmword, RegVRex, 0, Dw2Inval, 67
+zmm17, Class=RegSIMD|Zmmword, RegVRex, 1, Dw2Inval, 68
+zmm18, Class=RegSIMD|Zmmword, RegVRex, 2, Dw2Inval, 69
+zmm19, Class=RegSIMD|Zmmword, RegVRex, 3, Dw2Inval, 70
+zmm20, Class=RegSIMD|Zmmword, RegVRex, 4, Dw2Inval, 71
+zmm21, Class=RegSIMD|Zmmword, RegVRex, 5, Dw2Inval, 72
+zmm22, Class=RegSIMD|Zmmword, RegVRex, 6, Dw2Inval, 73
+zmm23, Class=RegSIMD|Zmmword, RegVRex, 7, Dw2Inval, 74
+zmm24, Class=RegSIMD|Zmmword, RegVRex|RegRex, 0, Dw2Inval, 75
+zmm25, Class=RegSIMD|Zmmword, RegVRex|RegRex, 1, Dw2Inval, 76
+zmm26, Class=RegSIMD|Zmmword, RegVRex|RegRex, 2, Dw2Inval, 77
+zmm27, Class=RegSIMD|Zmmword, RegVRex|RegRex, 3, Dw2Inval, 78
+zmm28, Class=RegSIMD|Zmmword, RegVRex|RegRex, 4, Dw2Inval, 79
+zmm29, Class=RegSIMD|Zmmword, RegVRex|RegRex, 5, Dw2Inval, 80
+zmm30, Class=RegSIMD|Zmmword, RegVRex|RegRex, 6, Dw2Inval, 81
+zmm31, Class=RegSIMD|Zmmword, RegVRex|RegRex, 7, Dw2Inval, 82
 // TMM registers for AMX
 tmm0, Class=RegSIMD|Tmmword, 0, 0, Dw2Inval, Dw2Inval
 tmm1, Class=RegSIMD|Tmmword, 0, 1, Dw2Inval, Dw2Inval
@@ -286,10 +354,10 @@ tmm5, Class=RegSIMD|Tmmword, 0, 5, Dw2Inval, Dw2Inval
 tmm6, Class=RegSIMD|Tmmword, 0, 6, Dw2Inval, Dw2Inval
 tmm7, Class=RegSIMD|Tmmword, 0, 7, Dw2Inval, Dw2Inval
 // Bound registers for MPX
-bnd0, Class=RegBND, 0, 0, Dw2Inval, Dw2Inval
-bnd1, Class=RegBND, 0, 1, Dw2Inval, Dw2Inval
-bnd2, Class=RegBND, 0, 2, Dw2Inval, Dw2Inval
-bnd3, Class=RegBND, 0, 3, Dw2Inval, Dw2Inval
+bnd0, Class=RegBND, 0, 0, Dw2Inval, 126
+bnd1, Class=RegBND, 0, 1, Dw2Inval, 127
+bnd2, Class=RegBND, 0, 2, Dw2Inval, 128
+bnd3, Class=RegBND, 0, 3, Dw2Inval, 129
 // No Class=Reg will make these registers rejected for all purposes except
 // for addressing.  This saves creating one extra type for RIP/EIP.
 rip, Qword, RegRex64, RegIP, Dw2Inval, 16

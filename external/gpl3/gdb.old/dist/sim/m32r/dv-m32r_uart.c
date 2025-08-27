@@ -1,6 +1,6 @@
 /* UART model.
 
-   Copyright (C) 1996-2023 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions and Mike Frysinger.
 
    This file is part of simulators.
@@ -36,7 +36,6 @@ m32r_uart_io_write_buffer (struct hw *me, const void *source,
 			   int space, address_word addr, unsigned nr_bytes)
 {
   SIM_DESC sd = hw_system (me);
-  struct m32r_uart *uart = hw_data (me);
   int status = dv_sockser_status (sd);
 
   switch (addr)
@@ -65,7 +64,6 @@ m32r_uart_io_read_buffer (struct hw *me, void *dest,
 			  int space, address_word addr, unsigned nr_bytes)
 {
   SIM_DESC sd = hw_system (me);
-  struct m32r_uart *uart = hw_data (me);
   int status = dv_sockser_status (sd);
 
   switch (addr)

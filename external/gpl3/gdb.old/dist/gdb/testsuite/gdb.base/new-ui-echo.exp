@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -103,10 +103,10 @@ proc echo_test {driver} {
 
     # Ensure echo remains enabled in both consoles.
     with_spawn_id $con1_spawn_id {
-	gdb_test "print 1" "^print 1\r\n\\\$1 = 1" "print on $con1_name echoes"
+	gdb_test "print 1" "\\\$1 = 1" "print on $con1_name echoes"
     }
     with_spawn_id $con2_spawn_id {
-	gdb_test "print 2" "^print 2\r\n\\\$2 = 2" "print on $con2_name echoes"
+	gdb_test "print 2" "\\\$2 = 2" "print on $con2_name echoes"
     }
 }
 

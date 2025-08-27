@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "frame.h"
 #include "symtab.h"
 #include "inferior.h"
@@ -52,7 +51,7 @@ sol2_pc_in_sigtramp (CORE_ADDR pc, const char *name)
 /* Return whether THIS_FRAME corresponds to a Solaris sigtramp routine.  */
 
 int
-sol2_sigtramp_p (frame_info_ptr this_frame)
+sol2_sigtramp_p (const frame_info_ptr &this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   const char *name;

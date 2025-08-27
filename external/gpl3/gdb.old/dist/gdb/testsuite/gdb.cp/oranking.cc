@@ -14,7 +14,7 @@ dummy ()
   free (p);
 }
 
-/* 1. A standard covnersion sequence is better than a user-defined sequence
+/* 1. A standard conversion sequence is better than a user-defined sequence
       which is better than an elipses conversion sequence.  */
 
 class A{};
@@ -37,7 +37,7 @@ int test2(){
   return foo2(b); // 13
 }
 
-/* 2. Standard Conversion squence S1 is better than standard Conversion
+/* 2. Standard Conversion sequence S1 is better than standard Conversion
       S2 if:  */
 
 //      - S1 has a better rank than S2
@@ -58,7 +58,7 @@ int test4 () {
 }
 
 //      - S1 and S2 have the same rank but:
-//        - S2 is a conversion of pointer or memeber-pointer to bool
+//        - S2 is a conversion of pointer or member-pointer to bool
 int foo5 (bool)  { return 25; }
 int foo5 (void*) { return 26; }
 int test5 () {

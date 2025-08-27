@@ -1,4 +1,4 @@
-# Copyright 2009-2023 Free Software Foundation, Inc.
+# Copyright 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@ load_lib dwarf.exp
 # Test DW_OP_call2 and DW_OP_call4, PR gdb/10640.
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0   
-}
+require dwarf2_support
 
 standard_testfile .S main.c
 

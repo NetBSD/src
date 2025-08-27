@@ -1,4 +1,4 @@
-# Copyright 2006-2023 Free Software Foundation, Inc.
+# Copyright 2006-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,27 +69,33 @@ gdb_test "show trace-commands" \
 gdb_test "echo hi\\n" {\+echo hi\\n[\r\n]+hi} "simple trace-commands test"
 
 # Nested test
-gdb_test_sequence "if 1\nset \$i = 0\nwhile \$i < 5\nfunc \$i\nset \$i += 1\nend\nend" \
-    "nested trace-commands test" {
-  {[\r\n]\+if 1}
-  {[\r\n]\+\+set \$i = 0}
-  {[\r\n]\+\+while \$i < 5}
-  {[\r\n]\+\+\+func \$i}
-  {[\r\n]\+\+\+\+echo in func \$i\\n}
-  {[\r\n]\+\+\+set \$i \+= 1}
-  {[\r\n]\+\+\+func \$i}
-  {[\r\n]\+\+\+\+echo in func \$i\\n}
-  {[\r\n]\+\+\+set \$i \+= 1}
-  {[\r\n]\+\+\+func \$i}
-  {[\r\n]\+\+\+\+echo in func \$i\\n}
-  {[\r\n]\+\+\+set \$i \+= 1}
-  {[\r\n]\+\+\+func \$i}
-  {[\r\n]\+\+\+\+echo in func \$i\\n}
-  {[\r\n]\+\+\+set \$i \+= 1}
-  {[\r\n]\+\+\+func \$i}
-  {[\r\n]\+\+\+\+echo in func \$i\\n}
-  {[\r\n]\+\+\+set \$i \+= 1}
+set strings {
+    {+if 1}
+    {++set $i = 0}
+    {++while $i < 5}
+    {+++func $i}
+    {++++echo in func $i\n}
+    {+++set $i += 1}
+    {+++func $i}
+    {++++echo in func $i\n}
+    {+++set $i += 1}
+    {+++func $i}
+    {++++echo in func $i\n}
+    {+++set $i += 1}
+    {+++func $i}
+    {++++echo in func $i\n}
+    {+++set $i += 1}
+    {+++func $i}
+    {++++echo in func $i\n}
+    {+++set $i += 1}
 }
+set re {}
+foreach string $strings {
+    lappend re [string_to_regexp $string]
+}
+set re [join $re "\r\n(.*\r\n)?"]
+set cmd "if 1\nset \$i = 0\nwhile \$i < 5\nfunc \$i\nset \$i += 1\nend\nend"
+gdb_test $cmd $re "nested trace-commands test"
 
 # Function with source works
 gdb_test_sequence "define topfunc\nsource $tracecommandsscript\nend" \
@@ -111,13 +117,20 @@ gdb_test_sequence "topfunc" "nested trace-commands test with source" {
 }
 
 # Test nest depth resets properly on error
-gdb_test_sequence "if 1\nif 2\nload\necho should not get here\\n\nend\nend" \
-    "depth resets on error part 1" {
-  {[\r\n]\+if 1}
-  {[\r\n]\+\+if 2}
-  {[\r\n]\+\+\+load}
-  {[\r\n]No executable file specified\.}
-  {[\r\n]Use the "file" or "exec-file" command\.}
+set cmd "if 1\nif 2\nload\necho should not get here\\n\nend\nend"
+set strings {
+  {+if 1}
+  {++if 2}
+  {+++load}
+  {No executable file specified.}
+  {Use the "file" or "exec-file" command.}
 }
+set re {}
+foreach string $strings {
+    lappend re [string_to_regexp $string]
+}
+set re [join $re "\r\n(.*\r\n)?"]
+gdb_test $cmd $re "depth resets on error part 1"
+
 gdb_test "echo hi\\n" {[\r\n]\+echo hi\\n[\r\n]+hi} \
 	 "depth resets on error part 2"

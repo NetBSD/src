@@ -1,6 +1,6 @@
 /* Wrapper around libiberty's safe-ctype.h for GDB, the GNU debugger.
 
-   Copyright (C) 2019-2023 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,9 @@
 /* After safe-ctype.h is included, we can no longer use the host's
    ctype routines.  Trying to do so results in compile errors.  Code
    that uses safe-ctype.h that wants to refer to the locale-dependent
-   ctype functions must call these wrapper versions instead.  */
+   ctype functions must call these wrapper versions instead.
+   When compiling in C++ mode, also include <locale> before "safe-ctype.h"
+   which also defines is* functions.  */
 
 static inline int
 gdb_isprint (int ch)
@@ -41,6 +43,7 @@ gdb_isprint (int ch)
 #undef ISUPPER
 #undef ISXDIGIT
 
+#include <locale>
 #include "safe-ctype.h"
 
 #endif

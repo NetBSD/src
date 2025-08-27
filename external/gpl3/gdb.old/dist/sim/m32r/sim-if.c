@@ -1,5 +1,5 @@
 /* Main simulator entry points specific to the M32R.
-   Copyright (C) 1996-2023 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB, the GNU debugger.
@@ -25,16 +25,18 @@
 
 #include "sim/callback.h"
 #include "sim-main.h"
+#include "sim-hw.h"
 #include "sim-options.h"
 #include "libiberty.h"
 #include "bfd.h"
 
+#include "m32r-sim.h"
 #include "dv-m32r_uart.h"
 
 #define M32R_DEFAULT_MEM_SIZE 0x2000000 /* 32M */
 
 static void free_state (SIM_DESC);
-static void print_m32r_misc_cpu (SIM_CPU *cpu, int verbose);
+static void print_m32r_misc_cpu (SIM_CPU *cpu, bool verbose);
 
 /* Cover function of sim_state_free to free the cpu buffers as well.  */
 
@@ -66,7 +68,8 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
   current_target_byte_order = BFD_ENDIAN_BIG;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct m32r_sim_cpu))
+      != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -131,7 +134,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
     m32r_cgen_init_dis (cd);
   }
 
-  for (c = 0; c < MAX_NR_PROCESSORS; ++c)
+  for (i = 0; i < MAX_NR_PROCESSORS; ++i)
     {
       /* Only needed for profiling, but the structure member is small.  */
       memset (CPU_M32R_MISC_PROFILE (STATE_CPU (sd, i)), 0,
@@ -150,7 +153,7 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd, char * const *argv,
 {
   SIM_CPU *current_cpu = STATE_CPU (sd, 0);
   host_callback *cb = STATE_CALLBACK (sd);
-  SIM_ADDR addr;
+  bfd_vma addr;
 
   if (abfd != NULL)
     addr = bfd_get_start_address (abfd);
@@ -191,7 +194,7 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd, char * const *argv,
 /* PROFILE_CPU_CALLBACK */
 
 static void
-print_m32r_misc_cpu (SIM_CPU *cpu, int verbose)
+print_m32r_misc_cpu (SIM_CPU *cpu, bool verbose)
 {
   SIM_DESC sd = CPU_STATE (cpu);
   char buf[20];

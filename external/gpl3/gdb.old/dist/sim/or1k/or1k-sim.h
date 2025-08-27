@@ -1,5 +1,5 @@
 /* OpenRISC simulator support code header
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -88,5 +88,32 @@ USI or1k32bf_make_load_store_addr (sim_cpu *current_cpu, USI base, SI offset,
 
 USI or1k32bf_ff1 (sim_cpu *current_cpu, USI val);
 USI or1k32bf_fl1 (sim_cpu *current_cpu, USI val);
+
+#define OR1K_DEFAULT_MEM_SIZE 0x800000	/* 8M */
+
+struct or1k_sim_cpu
+{
+  OR1K_MISC_PROFILE or1k_misc_profile;
+#define CPU_OR1K_MISC_PROFILE(cpu) (& OR1K_SIM_CPU (cpu)->or1k_misc_profile)
+
+  /* CPU specific parts go here.
+     Note that in files that don't need to access these pieces WANT_CPU_FOO
+     won't be defined and thus these parts won't appear.  This is ok in the
+     sense that things work.  It is a source of bugs though.
+     One has to of course be careful to not take the size of this
+     struct and no structure members accessed in non-cpu specific files can
+     go after here.  Oh for a better language.  */
+  UWI spr[NUM_SPR];
+
+  /* Next instruction will be in delay slot.  */
+  BI next_delay_slot;
+  /* Currently in delay slot.  */
+  BI delay_slot;
+
+#ifdef WANT_CPU_OR1K32BF
+  OR1K32BF_CPU_DATA cpu_data;
+#endif
+};
+#define OR1K_SIM_CPU(cpu) ((struct or1k_sim_cpu *) CPU_ARCH_DATA (cpu))
 
 #endif /* OR1K_SIM_H */

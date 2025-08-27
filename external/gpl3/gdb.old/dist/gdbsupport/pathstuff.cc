@@ -1,6 +1,6 @@
 /* Path manipulation routines for GDB and gdbserver.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
 #include "pathstuff.h"
 #include "host-defs.h"
 #include "filenames.h"
@@ -41,7 +40,7 @@ gdb_realpath (const char *filename)
 
    But the situation is slightly more complex on Windows, due to some
    versions of GCC which were reported to generate paths where
-   backlashes (the directory separator) were doubled.  For instance:
+   backslashes (the directory separator) were doubled.  For instance:
       c:\\some\\double\\slashes\\dir
    ... instead of ...
       c:\some\double\slashes\dir

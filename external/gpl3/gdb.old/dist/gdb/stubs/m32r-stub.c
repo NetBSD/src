@@ -46,7 +46,7 @@
  *
  *  Because gdb will sometimes write to the stack area to execute function
  *  calls, this program cannot rely on using the supervisor stack so it
- *  uses it's own stack area reserved in the int array remcomStack.
+ *  uses its own stack area reserved in the int array remcomStack.
  *
  *************
  *
@@ -168,7 +168,7 @@ static volatile int mem_err = 0;
 int gdb_m32r_vector = -1;
 
 #if 0
-#include "syscall.h"		/* for SYS_exit, SYS_write etc. */
+#include "syscall.h"
 #endif
 
 /* Global entry points:
@@ -1261,7 +1261,7 @@ struct PSWreg
 /* Upon entry the value for LR to save has been pushed.
    We unpush that so that the value for the stack pointer saved is correct.
    Upon entry, all other registers are assumed to have not been modified
-   since the interrupt/trap occured.  */
+   since the interrupt/trap occurred.  */
 
 asm ("\n\
 stash_registers:\n\

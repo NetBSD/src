@@ -1,7 +1,7 @@
 /*  Lattice Mico32 CPU model.
     Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -143,8 +143,6 @@ deliver_lm32cpu_interrupt (struct hw *me, void *data)
   struct lm32cpu *controller = hw_data (me);
   SIM_DESC sd = hw_system (me);
   sim_cpu *cpu = STATE_CPU (sd, 0);	/* NB: fix CPU 0.  */
-  address_word cia = CPU_PC_GET (cpu);
-  int interrupt = (uintptr_t) data;
 
 
   HW_TRACE ((me, "interrupt-check event"));
@@ -198,7 +196,6 @@ lm32cpu_port_event (struct hw *me,
   struct lm32cpu *controller = hw_data (me);
   SIM_DESC sd = hw_system (me);
   sim_cpu *cpu = STATE_CPU (sd, 0);	/* NB: fix CPU 0.  */
-  address_word cia = CPU_PC_GET (cpu);
 
 
   HW_TRACE ((me, "interrupt event on port %d, level %d", my_port, level));

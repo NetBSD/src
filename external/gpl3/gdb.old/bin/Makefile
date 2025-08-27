@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2023/03/21 16:37:18 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2025/08/27 14:46:08 christos Exp $
+
+.include <bsd.own.mk>
 
 .include "../Makefile.inc"
 
@@ -9,13 +11,13 @@ SUBDIR+=  gdb
 SUBDIR+= gdbtui
 .endif
 
-.if ${MACHINE} == "amd64"
+.if ${MKGDBSERVER} != "no"
 SUBDIR+= gdbserver
 .endif
 
-.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle || \
-    ${MACHINE_ARCH} == powerpc64
-SUBDIR+= psim
-.endif
+#.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle || \
+#    ${MACHINE_ARCH} == powerpc64
+#SUBDIR+= psim
+#.endif
 
 .include <bsd.subdir.mk>

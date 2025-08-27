@@ -1,5 +1,5 @@
 /* riscv.h.  RISC-V opcode list for GDB, the GNU debugger.
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
    Contributed by Andrew Waterman
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -100,12 +100,25 @@ static inline unsigned int riscv_insn_length (insn_t insn)
   (RV_X(x, 15, 5) | (-RV_X(x, 19, 1) << 5))
 #define EXTRACT_RVV_VI_UIMM(x) \
   (RV_X(x, 15, 5))
+#define EXTRACT_RVV_VI_UIMM6(x) \
+  (RV_X(x, 15, 5) | (RV_X(x, 26, 1) << 5))
 #define EXTRACT_RVV_OFFSET(x) \
   (RV_X(x, 29, 3))
 #define EXTRACT_RVV_VB_IMM(x) \
   (RV_X(x, 20, 10))
 #define EXTRACT_RVV_VC_IMM(x) \
   (RV_X(x, 20, 11))
+#define EXTRACT_ZCB_BYTE_UIMM(x) \
+  (RV_X(x, 6, 1) | (RV_X(x, 5, 1) << 1))
+#define EXTRACT_ZCB_HALFWORD_UIMM(x) \
+  (RV_X(x, 5, 1) << 1)
+#define EXTRACT_ZCMP_SPIMM(x) \
+  (RV_X(x, 2, 2) << 4)
+/* Vendor-specific (CORE-V) extract macros.  */
+#define EXTRACT_CV_IS2_UIMM5(x) \
+  (RV_X(x, 20, 5))
+#define EXTRACT_CV_IS3_UIMM5(x) \
+  (RV_X(x, 25, 5))
 
 #define ENCODE_ITYPE_IMM(x) \
   (RV_X(x, 0, 12) << 20)
@@ -151,6 +164,19 @@ static inline unsigned int riscv_insn_length (insn_t insn)
   (RV_X(x, 0, 10) << 20)
 #define ENCODE_RVV_VC_IMM(x) \
   (RV_X(x, 0, 11) << 20)
+#define ENCODE_RVV_VI_UIMM6(x) \
+  (RV_X(x, 0, 5) << 15 | RV_X(x, 5, 1) << 26)
+#define ENCODE_ZCB_BYTE_UIMM(x) \
+  ((RV_X(x, 0, 1) << 6) | (RV_X(x, 1, 1) << 5))
+#define ENCODE_ZCB_HALFWORD_UIMM(x) \
+  (RV_X(x, 1, 1) << 5)
+#define ENCODE_ZCMP_SPIMM(x) \
+  (RV_X(x, 4, 2) << 2)
+/* Vendor-specific (CORE-V) encode macros.  */
+#define ENCODE_CV_IS2_UIMM5(x) \
+  (RV_X(x, 0, 5) << 20)
+#define ENCODE_CV_IS3_UIMM5(x) \
+  (RV_X(x, 0, 5) << 25)
 
 #define VALID_ITYPE_IMM(x) (EXTRACT_ITYPE_IMM(ENCODE_ITYPE_IMM(x)) == (x))
 #define VALID_STYPE_IMM(x) (EXTRACT_STYPE_IMM(ENCODE_STYPE_IMM(x)) == (x))
@@ -176,6 +202,9 @@ static inline unsigned int riscv_insn_length (insn_t insn)
 #define VALID_CJTYPE_IMM(x) (EXTRACT_CJTYPE_IMM(ENCODE_CJTYPE_IMM(x)) == (x))
 #define VALID_RVV_VB_IMM(x) (EXTRACT_RVV_VB_IMM(ENCODE_RVV_VB_IMM(x)) == (x))
 #define VALID_RVV_VC_IMM(x) (EXTRACT_RVV_VC_IMM(ENCODE_RVV_VC_IMM(x)) == (x))
+#define VALID_ZCB_BYTE_UIMM(x) (EXTRACT_ZCB_BYTE_UIMM(ENCODE_ZCB_BYTE_UIMM(x)) == (x))
+#define VALID_ZCB_HALFWORD_UIMM(x) (EXTRACT_ZCB_HALFWORD_UIMM(ENCODE_ZCB_HALFWORD_UIMM(x)) == (x))
+#define VALID_ZCMP_SPIMM(x) (EXTRACT_ZCMP_SPIMM(ENCODE_ZCMP_SPIMM(x)) == (x))
 
 #define RISCV_RTYPE(insn, rd, rs1, rs2) \
   ((MATCH_ ## insn) | ((rd) << OP_SH_RD) | ((rs1) << OP_SH_RS1) | ((rs2) << OP_SH_RS2))
@@ -304,8 +333,28 @@ static inline unsigned int riscv_insn_length (insn_t insn)
 #define OP_MASK_VWD		0x1
 #define OP_SH_VWD		26
 
+#define OP_MASK_XTHEADVLMUL	0x3
+#define OP_SH_XTHEADVLMUL	0
+#define OP_MASK_XTHEADVSEW	0x7
+#define OP_SH_XTHEADVSEW	2
+#define OP_MASK_XTHEADVEDIV	0x3
+#define OP_SH_XTHEADVEDIV	5
+#define OP_MASK_XTHEADVTYPE_RES	0xf
+#define OP_SH_XTHEADVTYPE_RES	7
+
+/* Zc fields.  */
+#define OP_MASK_REG_LIST	0xf
+#define OP_SH_REG_LIST		4
+#define ZCMP_SP_ALIGNMENT	16
+
 #define NVECR 32
 #define NVECM 1
+
+/* SiFive fields.  */
+#define OP_MASK_XSO2            0x3
+#define OP_SH_XSO2              26
+#define OP_MASK_XSO1            0x1
+#define OP_SH_XSO1              26
 
 /* ABI names for selected x-registers.  */
 
@@ -316,6 +365,11 @@ static inline unsigned int riscv_insn_length (insn_t insn)
 #define X_T0 5
 #define X_T1 6
 #define X_T2 7
+#define X_S0 8
+#define X_S1 9
+#define X_S2 18
+#define X_S10 26
+#define X_S11 27
 #define X_T3 28
 
 #define NGPR 32
@@ -340,7 +394,7 @@ static inline unsigned int riscv_insn_length (insn_t insn)
 
 /* Extract the operand given by FIELD from integer INSN.  */
 #define EXTRACT_OPERAND(FIELD, INSN) \
-  EXTRACT_BITS ((INSN), OP_MASK_##FIELD, OP_SH_##FIELD)
+  ((unsigned int) EXTRACT_BITS ((INSN), OP_MASK_##FIELD, OP_SH_##FIELD))
 
 /* Extract an unsigned immediate operand on position s with n bits.  */
 #define EXTRACT_U_IMM(n, s, l) \
@@ -368,17 +422,21 @@ enum riscv_insn_class
 
   INSN_CLASS_I,
   INSN_CLASS_C,
-  INSN_CLASS_A,
   INSN_CLASS_M,
   INSN_CLASS_F,
   INSN_CLASS_D,
   INSN_CLASS_Q,
   INSN_CLASS_F_AND_C,
   INSN_CLASS_D_AND_C,
+  INSN_CLASS_ZICOND,
   INSN_CLASS_ZICSR,
   INSN_CLASS_ZIFENCEI,
+  INSN_CLASS_ZIHINTNTL,
+  INSN_CLASS_ZIHINTNTL_AND_C,
   INSN_CLASS_ZIHINTPAUSE,
   INSN_CLASS_ZMMUL,
+  INSN_CLASS_ZAAMO,
+  INSN_CLASS_ZALRSC,
   INSN_CLASS_ZAWRS,
   INSN_CLASS_F_INX,
   INSN_CLASS_D_INX,
@@ -388,6 +446,11 @@ enum riscv_insn_class
   INSN_CLASS_ZFHMIN_INX,
   INSN_CLASS_ZFHMIN_AND_D_INX,
   INSN_CLASS_ZFHMIN_AND_Q_INX,
+  INSN_CLASS_ZFA,
+  INSN_CLASS_D_AND_ZFA,
+  INSN_CLASS_Q_AND_ZFA,
+  INSN_CLASS_ZFH_AND_ZFA,
+  INSN_CLASS_ZFH_OR_ZVFH_AND_ZFA,
   INSN_CLASS_ZBA,
   INSN_CLASS_ZBB,
   INSN_CLASS_ZBC,
@@ -405,11 +468,27 @@ enum riscv_insn_class
   INSN_CLASS_ZKND_OR_ZKNE,
   INSN_CLASS_V,
   INSN_CLASS_ZVEF,
+  INSN_CLASS_ZVBB,
+  INSN_CLASS_ZVBC,
+  INSN_CLASS_ZVKB,
+  INSN_CLASS_ZVKG,
+  INSN_CLASS_ZVKNED,
+  INSN_CLASS_ZVKNHA_OR_ZVKNHB,
+  INSN_CLASS_ZVKSED,
+  INSN_CLASS_ZVKSH,
+  INSN_CLASS_ZCB,
+  INSN_CLASS_ZCB_AND_ZBA,
+  INSN_CLASS_ZCB_AND_ZBB,
+  INSN_CLASS_ZCB_AND_ZMMUL,
+  INSN_CLASS_ZCMP,
   INSN_CLASS_SVINVAL,
   INSN_CLASS_ZICBOM,
   INSN_CLASS_ZICBOP,
   INSN_CLASS_ZICBOZ,
+  INSN_CLASS_ZABHA,
   INSN_CLASS_H,
+  INSN_CLASS_XCVMAC,
+  INSN_CLASS_XCVALU,
   INSN_CLASS_XTHEADBA,
   INSN_CLASS_XTHEADBB,
   INSN_CLASS_XTHEADBS,
@@ -422,6 +501,10 @@ enum riscv_insn_class
   INSN_CLASS_XTHEADMEMIDX,
   INSN_CLASS_XTHEADMEMPAIR,
   INSN_CLASS_XTHEADSYNC,
+  INSN_CLASS_XTHEADVECTOR,
+  INSN_CLASS_XTHEADZVAMO,
+  INSN_CLASS_XVENTANACONDOPS,
+  INSN_CLASS_XSFVCP,
 };
 
 /* This structure holds information for a particular instruction.  */
@@ -501,36 +584,19 @@ enum
 {
   M_LA,
   M_LLA,
+  M_LGA,
   M_LA_TLS_GD,
   M_LA_TLS_IE,
-  M_LB,
-  M_LBU,
-  M_LH,
-  M_LHU,
-  M_LW,
-  M_LWU,
-  M_LD,
-  M_SB,
-  M_SH,
-  M_SW,
-  M_SD,
-  M_FLW,
-  M_FLD,
-  M_FLQ,
-  M_FSW,
-  M_FSD,
-  M_FSQ,
+  M_Lx,
+  M_FLx,
+  M_Sx_FSx,
   M_CALL,
   M_J,
   M_LI,
-  M_ZEXTH,
+  M_EXTH,
   M_ZEXTW,
   M_SEXTB,
-  M_SEXTH,
   M_VMSGE,
-  M_VMSGEU,
-  M_FLH,
-  M_FSH,
   M_NUM_MACROS
 };
 
@@ -542,20 +608,28 @@ enum riscv_seg_mstate
   MAP_INSN,		/* Instructions.  */
 };
 
-extern const char * const riscv_gpr_names_numeric[NGPR];
-extern const char * const riscv_gpr_names_abi[NGPR];
-extern const char * const riscv_fpr_names_numeric[NFPR];
-extern const char * const riscv_fpr_names_abi[NFPR];
+#define NRC (4 + 1)     /* Max characters in register names, incl nul.  */
+
+extern const char riscv_gpr_names_numeric[NGPR][NRC];
+extern const char riscv_gpr_names_abi[NGPR][NRC];
+extern const char riscv_fpr_names_numeric[NFPR][NRC];
+extern const char riscv_fpr_names_abi[NFPR][NRC];
 extern const char * const riscv_rm[8];
 extern const char * const riscv_pred_succ[16];
-extern const char * const riscv_vecr_names_numeric[NVECR];
-extern const char * const riscv_vecm_names_numeric[NVECM];
+extern const char riscv_vecr_names_numeric[NVECR][NRC];
+extern const char riscv_vecm_names_numeric[NVECM][NRC];
 extern const char * const riscv_vsew[8];
 extern const char * const riscv_vlmul[8];
 extern const char * const riscv_vta[2];
 extern const char * const riscv_vma[2];
+extern const char * const riscv_th_vlen[4];
+extern const char * const riscv_th_vediv[4];
+extern const char * const riscv_fli_symval[32];
+extern const float riscv_fli_numval[32];
 
 extern const struct riscv_opcode riscv_opcodes[];
 extern const struct riscv_opcode riscv_insn_types[];
+
+extern unsigned int riscv_get_sp_base (insn_t, unsigned int);
 
 #endif /* _RISCV_H_ */

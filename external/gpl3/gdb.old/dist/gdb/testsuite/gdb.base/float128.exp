@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,40 +73,5 @@ gdb_test_multiple "set var f128=20.375l" "$test" {
 gdb_test "print ld" ".* = 10\\.375.*" "the value of ld is changed to 10.375"
 gdb_test "print f128" ".* = 20\\.375.*" "the value of f128 is changed to 20.375"
 
-set mpfr_supported -1
-gdb_test_multiple "show configuration" "" {
-    -wrap -re "--with-mpfr\r\n.*" {
-       set mpfr_supported 1
-    }
-    -wrap -re "--without-mpfr\r\n.*" {
-       set mpfr_supported 0
-    }
-}
-
 # Test that we can correctly handle the largest IEEE-128 value
-# Note: If we get "inf" instead of the correct result, we may have run into
-# an internal overflow.  This typically happens on host platforms without
-# native IEEE-128 support where GDB was built without MPFR support.
-set test "print large128"
-gdb_test_multiple "print large128" "$test" {
-    -re ".* = 1\\.18973149535723176508575932662800702e\\+4932.*$gdb_prompt $" {
-	pass "$test"
-    }
-    -re ".* = inf.*$gdb_prompt $" {
-       if { $mpfr_supported == 0 } {
-	   # If the host platform has native 128-bit float support (as is
-	   # the case for some versions of s390 and powerpc), the
-	   # "print large128" test should be passing, even without MPFR
-	   # support.  So, in those cases we should have fail here rather than
-	   # unsupported.  However, given that we don't have a way to readily
-	   # test for this, we fall back to unsupported.
-	   unsupported "$test (Missing MPFR support)"
-       } else {
-           fail $test
-       }
-    }
-    -re ".*$gdb_prompt $" {
-	fail "$test"
-    }
-}
-
+gdb_test "print large128" ".* = 1\\.18973149535723176508575932662800702e\\+4932"

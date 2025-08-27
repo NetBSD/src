@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD x86.
 
-   Copyright (C) 2015-2023 Free Software Foundation, Inc.
+   Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,10 +20,20 @@
 #ifndef I386_FBSD_TDEP_H
 #define I386_FBSD_TDEP_H
 
+#include "gdbsupport/x86-xstate.h"
 #include "regset.h"
 
-/* Get XSAVE extended state xcr0 from core dump.  */
-extern uint64_t i386fbsd_core_read_xcr0 (bfd *abfd);
+/* Read the XSAVE extended state xcr0 value from the ABFD core file.
+   If it appears to be valid, return it and fill LAYOUT with values
+   inferred from that value.
+
+   Otherwise, return 0 to indicate no state was found and leave LAYOUT
+   untouched.  */
+uint64_t i386_fbsd_core_read_xsave_info (bfd *abfd, x86_xsave_layout &layout);
+
+/* Implement the core_read_x86_xsave_layout gdbarch method.  */
+bool i386_fbsd_core_read_x86_xsave_layout (struct gdbarch *gdbarch,
+					   x86_xsave_layout &layout);
 
 /* The format of the XSAVE extended area is determined by hardware.
    Cores store the XSAVE extended area in a NT_X86_XSTATE note that

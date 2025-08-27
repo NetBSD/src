@@ -1,5 +1,5 @@
 /* GNU/Linux/ARM specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2023 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "linux-low.h"
 #include "arch/arm.h"
 #include "arch/arm-linux.h"
@@ -24,6 +23,7 @@
 #include "linux-aarch32-low.h"
 #include "linux-aarch32-tdesc.h"
 #include "linux-arm-tdesc.h"
+#include "gdbsupport/gdb-checked-static-cast.h"
 
 #include <sys/uio.h>
 /* Don't include elf.h if linux/elf.h got included by gdb_proc_service.h.
@@ -913,7 +913,8 @@ get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self)
   CORE_ADDR pc = regcache_read_pc (self->regcache);
   int is_thumb = arm_is_thumb_mode ();
   ULONGEST svc_number = 0;
-  struct regcache *regcache = self->regcache;
+  regcache *regcache
+    = gdb::checked_static_cast<struct regcache *> (self->regcache);
 
   if (is_thumb)
     {
@@ -958,7 +959,7 @@ get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self)
 static const struct target_desc *
 arm_read_description (void)
 {
-  unsigned long arm_hwcap = linux_get_hwcap (4);
+  unsigned long arm_hwcap = linux_get_hwcap (current_thread->id.pid (), 4);
 
   if (arm_hwcap & HWCAP_IWMMXT)
     return arm_linux_read_description (ARM_FP_TYPE_IWMMXT);
@@ -1005,9 +1006,9 @@ arm_target::low_arch_setup ()
 
   /* Check if PTRACE_GETREGSET works.  */
   if (ptrace (PTRACE_GETREGSET, tid, NT_PRSTATUS, &iov) == 0)
-    have_ptrace_getregset = 1;
+    have_ptrace_getregset = TRIBOOL_TRUE;
   else
-    have_ptrace_getregset = 0;
+    have_ptrace_getregset = TRIBOOL_FALSE;
 }
 
 bool
@@ -1120,7 +1121,7 @@ arm_target::get_regs_info ()
 {
   const struct target_desc *tdesc = current_process ()->tdesc;
 
-  if (have_ptrace_getregset == 1
+  if (have_ptrace_getregset == TRIBOOL_TRUE
       && (is_aarch32_linux_description (tdesc)
 	  || arm_linux_get_tdesc_fp_type (tdesc) == ARM_FP_TYPE_VFPV3))
     return &regs_info_aarch32;

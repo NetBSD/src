@@ -1,7 +1,6 @@
 /* THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi:set ro:
   Original: rs6000.xml */
 
-#include "defs.h"
 #include "osabi.h"
 #include "target-descriptions.h"
 

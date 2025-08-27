@@ -1,5 +1,5 @@
 /* Common code for PA ELF implementations.
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -984,7 +984,8 @@ elf_hppa_sort_unwind (bfd *abfd)
      Consider what happens if someone inept creates a linker script
      that puts unwind information in .text.  */
   s = bfd_get_section_by_name (abfd, ".PARISC.unwind");
-  if (s != NULL)
+  if (s != NULL && (s->flags & SEC_HAS_CONTENTS) != 0)
+
     {
       bfd_size_type size;
       bfd_byte *contents;

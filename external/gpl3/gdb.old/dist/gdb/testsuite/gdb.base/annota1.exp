@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Free Software Foundation, Inc.
+# Copyright 1999-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,7 @@
 # This testcase cannot use runto_main because of the different prompt
 # we get when using annotation level 2.
 #
-if ![target_can_use_run_cmd] {
-    return 0
-}
+require target_can_use_run_cmd
 
 set breakpoints_invalid "\r\n\032\032breakpoints-invalid\r\n"
 
@@ -286,9 +284,52 @@ gdb_test_multiple "continue" "continue to printf" {
 # annotate-frame-address
 # annotate-frame-address-end
 #
-set pat_begin "\r\n\032\032post-prompt\r\n\r\n\032\032frame-begin 0 $hex\r\n.0  \r\n(\032\032frame-address\r\n$hex\r\n\032\032frame-address-end\r\n in \r\n)*\032\032frame-function-name\r\n.*printf(@.*)?\r\n\032\032frame-args\r\n \\(.*frame-end\r\n\r\n\032\032frame-begin 1 $hex\r\n.1  \r\n\032\032frame-address\r\n$hex\r\n\032\032frame-address-end\r\n in \r\n\032\032frame-function-name\r\nmain\r\n\032\032frame-args\r\n \\(\\)\r\n\032\032frame-source-begin\r\n at \r\n\032\032frame-source-file\r\n"
+set pat_begin \
+    [list \
+	 "\r\n\032\032post-prompt\r\n" \
+	 "\r\n\032\032frame-begin 0 $hex\r\n" \
+	 ".0  \r\n" \
+	 "(" \
+	 "\032\032frame-address\r\n" \
+	 "${hex}( \\\[PAC\\\])?" \
+	 "\r\n\032\032frame-address-end\r\n" \
+	 " in \r\n" \
+	 ")*" \
+	 "\032\032frame-function-name\r\n" \
+	 ".*printf(@.*)?" \
+	 "\r\n\032\032frame-args\r\n" \
+	 " \\(.*frame-end\r\n" \
+	 "\r\n\032\032frame-begin 1 $hex\r\n" \
+	 ".1  " \
+	 "\r\n\032\032frame-address\r\n" \
+	 "${hex}( \\\[PAC\\\])?" \
+	 "\r\n\032\032frame-address-end\r\n" \
+	 " in " \
+	 "\r\n\032\032frame-function-name\r\n" \
+	 "main" \
+	 "\r\n\032\032frame-args\r\n" \
+	 " \\(\\)" \
+	 "\r\n\032\032frame-source-begin\r\n" \
+	 " at " \
+	 "\r\n\032\032frame-source-file\r\n"]
 
-set pat_end "\r\n\032\032frame-source-file-end\r\n:\r\n\032\032frame-source-line\r\n.*\r\n\032\032frame-source-end\r\n\r\n\r\n\032\032frame-end\r\n(\r\n\032\032frame-begin .*\r\n\r\n\032\032frame-end\r\n)*$gdb_prompt$"
+set pat_begin [join $pat_begin ""]
+
+set pat_end \
+    [list \
+	 "\r\n\032\032frame-source-file-end\r\n" \
+	 ":" \
+	 "\r\n\032\032frame-source-line\r\n" \
+	 ".*" \
+	 "\r\n\032\032frame-source-end\r\n\r\n" \
+	 "\r\n\032\032frame-end\r\n" \
+	 "(" \
+	 "\r\n\032\032frame-begin .*\r\n" \
+	 "\r\n\032\032frame-end\r\n" \
+	 ")*" \
+	 "$gdb_prompt$"]
+
+set pat_end [join $pat_end ""]
 
 gdb_test_multiple "backtrace" "backtrace from shlibrary" {
     -re "$pat_begin$escapedsrcfile$pat_end" {
@@ -497,10 +538,7 @@ proc thread_test {} {
 
     if { [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] == "" } {
 
-	gdb_exit
-	gdb_start
-	gdb_reinitialize_dir $srcdir/$subdir
-	gdb_load ${binfile}
+	clean_restart $binfile
 	if {![runto_main]} {
 	    return
 	}

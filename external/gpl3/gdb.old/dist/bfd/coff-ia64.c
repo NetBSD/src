@@ -1,5 +1,5 @@
 /* BFD back-end for HP/Intel IA-64 COFF files.
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Contributed by David Mosberger <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -76,9 +76,8 @@ ia64coff_object_p (bfd *abfd)
     struct external_PEI_IMAGE_hdr image_hdr;
     file_ptr offset;
 
-    if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
-	|| (bfd_bread (&dos_hdr, (bfd_size_type) sizeof (dos_hdr), abfd)
-	    != sizeof (dos_hdr)))
+    if (bfd_seek (abfd, 0, SEEK_SET) != 0
+	|| (bfd_read (&dos_hdr, sizeof (dos_hdr), abfd) != sizeof (dos_hdr)))
       {
 	if (bfd_get_error () != bfd_error_system_call)
 	  bfd_set_error (bfd_error_wrong_format);
@@ -103,7 +102,7 @@ ia64coff_object_p (bfd *abfd)
 
     offset = H_GET_32 (abfd, dos_hdr.e_lfanew);
     if (bfd_seek (abfd, offset, SEEK_SET) != 0
-	|| (bfd_bread (&image_hdr, (bfd_size_type) sizeof (image_hdr), abfd)
+	|| (bfd_read (&image_hdr, sizeof (image_hdr), abfd)
 	    != sizeof (image_hdr)))
       {
 	if (bfd_get_error () != bfd_error_system_call)

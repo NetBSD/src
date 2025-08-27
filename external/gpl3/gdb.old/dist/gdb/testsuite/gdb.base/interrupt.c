@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "../lib/unbuffer_output.c"
+#include "unbuffer_output.c"
 
 #ifdef SIGNALS
 #include <signal.h>

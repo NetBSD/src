@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2023 Free Software Foundation, Inc.
+# Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,11 +55,22 @@ gdb_test_no_output "next&" "next& over inf loop"
 set test "switch to main thread"
 gdb_test_multiple "thread 1" $test {
     -re "Cannot execute this command while the target is running.*$gdb_prompt $" {
-	unsupported $test
-
+	
 	# With remote targets, we can't send any other remote packet
 	# until the target stops.  Switching thread wants to ask the
 	# remote side whether the thread is alive.
+	unsupported $gdb_test_name
+
+	# Interrupt running target to allow subsequent "monitor exit" to
+	# succeed.
+	gdb_test_multiple interrupt "" {
+	    -re -wrap "" {
+		exp_continue
+	    }
+	    -re "received signal SIGINT, Interrupt\\.\r\n.*" {
+		pass $gdb_test_name
+	    }
+	}
 	return
     }
     -re "Switching to thread 1.*\\(running\\)\r\n$gdb_prompt " {

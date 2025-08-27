@@ -1,5 +1,5 @@
 /* Tracepoint code for remote server for GDB.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "tracepoint.h"
 #include "gdbthread.h"
 #include "gdbsupport/rsp-low.h"
@@ -344,6 +343,8 @@ tracepoint_look_up_symbols (void)
    GDBserver side.  */
 
 #ifdef IN_PROCESS_AGENT
+/* See target.h.  */
+
 int
 read_inferior_memory (CORE_ADDR memaddr, unsigned char *myaddr, int len)
 {
@@ -824,7 +825,7 @@ struct wstep_state
 
 #endif
 
-EXTERN_C_PUSH
+extern "C" {
 
 /* The linked list of all tracepoints.  Marked explicitly as used as
    the in-process library doesn't use it for the fast tracepoints
@@ -846,7 +847,7 @@ IP_AGENT_EXPORT_VAR int trace_buffer_is_full;
    enum eval_result_type values.  */
 IP_AGENT_EXPORT_VAR int expr_eval_result = expr_eval_no_error;
 
-EXTERN_C_POP
+}
 
 #ifndef IN_PROCESS_AGENT
 
@@ -857,23 +858,18 @@ static struct tracepoint *last_tracepoint;
 
 static const char * const eval_result_names[] =
   {
-    "terror:in the attic",  /* this should never be reported */
-    "terror:empty expression",
-    "terror:empty stack",
-    "terror:stack overflow",
-    "terror:stack underflow",
-    "terror:unhandled opcode",
-    "terror:unrecognized opcode",
-    "terror:divide by zero"
+#define AX_RESULT_TYPE(ENUM,STR) STR,
+#include "ax-result-types.def"
+#undef AX_RESULT_TYPE
   };
 
 #endif
 
 /* The tracepoint in which the error occurred.  */
 
-EXTERN_C_PUSH
+extern "C" {
 IP_AGENT_EXPORT_VAR struct tracepoint *error_tracepoint;
-EXTERN_C_POP
+}
 
 struct trace_state_variable
 {
@@ -985,7 +981,7 @@ static int circular_trace_buffer;
 
 static LONGEST trace_buffer_size;
 
-EXTERN_C_PUSH
+extern "C" {
 
 /* Pointer to the block of memory that traceframes all go into.  */
 
@@ -996,7 +992,7 @@ IP_AGENT_EXPORT_VAR unsigned char *trace_buffer_lo;
 
 IP_AGENT_EXPORT_VAR unsigned char *trace_buffer_hi;
 
-EXTERN_C_POP
+}
 
 /* Control structure holding the read/write/etc. pointers into the
    trace buffer.  We need more than one of these to implement a
@@ -4686,9 +4682,9 @@ collect_data_at_step (struct tracepoint_hit_ctx *ctx,
 #ifdef IN_PROCESS_AGENT
 /* The target description index for IPA.  Passed from gdbserver, used
    to select ipa_tdesc.  */
-EXTERN_C_PUSH
+extern "C" {
 IP_AGENT_EXPORT_VAR int ipa_tdesc_idx;
-EXTERN_C_POP
+}
 #endif
 
 static struct regcache *
@@ -4912,8 +4908,7 @@ condition_true_at_tracepoint (struct tracepoint_hit_ctx *ctx,
   return (value ? 1 : 0);
 }
 
-/* Do memory copies for bytecodes.  */
-/* Do the recording of memory blocks for actions and bytecodes.  */
+/* See tracepoint.h.  */
 
 int
 agent_mem_read (struct eval_agent_expr_context *ctx,
@@ -4925,10 +4920,7 @@ agent_mem_read (struct eval_agent_expr_context *ctx,
 
   /* If a 'to' buffer is specified, use it.  */
   if (to != NULL)
-    {
-      read_inferior_memory (from, to, len);
-      return 0;
-    }
+    return read_inferior_memory (from, to, len);
 
   /* Otherwise, create a new memory block in the trace buffer.  */
   while (remaining > 0)
@@ -4949,7 +4941,8 @@ agent_mem_read (struct eval_agent_expr_context *ctx,
       memcpy (mspace, &blocklen, sizeof (blocklen));
       mspace += sizeof (blocklen);
       /* Record the memory block proper.  */
-      read_inferior_memory (from, mspace, blocklen);
+      if (read_inferior_memory (from, mspace, blocklen) != 0)
+	return 1;
       trace_debug ("%d bytes recorded", blocklen);
       remaining -= blocklen;
       from += blocklen;
@@ -5388,13 +5381,13 @@ traceframe_read_sdata (int tfnum, ULONGEST offset,
 }
 
 /* Callback for traceframe_walk_blocks.  Builds a traceframe-info
-   object.  DATA is pointer to a struct buffer holding the
-   traceframe-info object being built.  */
+   object.  DATA is pointer to a string holding the traceframe-info
+   object being built.  */
 
 static int
 build_traceframe_info_xml (char blocktype, unsigned char *dataptr, void *data)
 {
-  struct buffer *buffer = (struct buffer *) data;
+  std::string *buffer = (std::string *) data;
 
   switch (blocktype)
     {
@@ -5407,9 +5400,9 @@ build_traceframe_info_xml (char blocktype, unsigned char *dataptr, void *data)
 	dataptr += sizeof (maddr);
 	memcpy (&mlen, dataptr, sizeof (mlen));
 	dataptr += sizeof (mlen);
-	buffer_xml_printf (buffer,
-			   "<memory start=\"0x%s\" length=\"0x%s\"/>\n",
-			   paddress (maddr), phex_nz (mlen, sizeof (mlen)));
+	string_xml_appendf (*buffer,
+			    "<memory start=\"0x%s\" length=\"0x%s\"/>\n",
+			    paddress (maddr), phex_nz (mlen, sizeof (mlen)));
 	break;
       }
     case 'V':
@@ -5417,7 +5410,7 @@ build_traceframe_info_xml (char blocktype, unsigned char *dataptr, void *data)
 	int vnum;
 
 	memcpy (&vnum, dataptr, sizeof (vnum));
-	buffer_xml_printf (buffer, "<tvar id=\"%d\"/>\n", vnum);
+	string_xml_appendf (*buffer, "<tvar id=\"%d\"/>\n", vnum);
 	break;
       }
     case 'R':
@@ -5439,7 +5432,7 @@ build_traceframe_info_xml (char blocktype, unsigned char *dataptr, void *data)
    BUFFER.  */
 
 int
-traceframe_read_info (int tfnum, struct buffer *buffer)
+traceframe_read_info (int tfnum, std::string *buffer)
 {
   struct traceframe *tframe;
 
@@ -5453,10 +5446,10 @@ traceframe_read_info (int tfnum, struct buffer *buffer)
       return 1;
     }
 
-  buffer_grow_str (buffer, "<traceframe-info>\n");
+  *buffer += "<traceframe-info>\n";
   traceframe_walk_blocks (tframe->data, tframe->data_size,
 			  tfnum, build_traceframe_info_xml, buffer);
-  buffer_grow_str0 (buffer, "</traceframe-info>\n");
+  *buffer += "</traceframe-info>\n";
   return 0;
 }
 
@@ -5755,9 +5748,9 @@ fast_tracepoint_collecting, returning continue-until-break at %s",
    NULL if it isn't locked.  Note that this lock *must* be set while
    executing any *function other than the jump pad.  See
    fast_tracepoint_collecting.  */
-EXTERN_C_PUSH
+extern "C" {
 IP_AGENT_EXPORT_VAR collecting_t *collecting;
-EXTERN_C_POP
+}
 
 /* This is needed for -Wmissing-declarations.  */
 IP_AGENT_EXPORT_FUNC void gdb_collect (struct tracepoint *tpoint,
@@ -5846,14 +5839,14 @@ typedef ULONGEST (*get_raw_reg_ptr_type) (const unsigned char *, int);
 typedef LONGEST (*get_trace_state_variable_value_ptr_type) (int);
 typedef void (*set_trace_state_variable_value_ptr_type) (int, LONGEST);
 
-EXTERN_C_PUSH
+extern "C" {
 IP_AGENT_EXPORT_VAR gdb_collect_ptr_type gdb_collect_ptr = gdb_collect;
 IP_AGENT_EXPORT_VAR get_raw_reg_ptr_type get_raw_reg_ptr = get_raw_reg;
 IP_AGENT_EXPORT_VAR get_trace_state_variable_value_ptr_type
   get_trace_state_variable_value_ptr = get_trace_state_variable_value;
 IP_AGENT_EXPORT_VAR set_trace_state_variable_value_ptr_type
   set_trace_state_variable_value_ptr = set_trace_state_variable_value;
-EXTERN_C_POP
+}
 
 #endif
 
@@ -6339,7 +6332,7 @@ upload_fast_traceframes (void)
     unsigned int prev, counter;
 
     /* Update the token, with new counters, and the GDBserver stamp
-       bit.  Alway reuse the current TBC index.  */
+       bit.  Always reuse the current TBC index.  */
     prev = ipa_trace_buffer_ctrl_curr & GDBSERVER_FLUSH_COUNT_MASK_CURR;
     counter = (prev + 0x100) & GDBSERVER_FLUSH_COUNT_MASK_CURR;
 
@@ -6818,7 +6811,7 @@ run_inferior_command (char *cmd, int len)
   target_pause_all (false);
   uninsert_all_breakpoints ();
 
-  err = agent_run_command (pid, (const char *) cmd, len);
+  err = agent_run_command (pid, cmd, len);
 
   reinsert_all_breakpoints ();
   target_unpause_all (false);
@@ -6840,9 +6833,9 @@ run_inferior_command (char *cmd, int len)
 
 /* Thread ID of the helper thread.  GDBserver reads this to know which
    is the help thread.  This is an LWP id on Linux.  */
-EXTERN_C_PUSH
+extern "C" {
 IP_AGENT_EXPORT_VAR int helper_thread_id;
-EXTERN_C_POP
+}
 
 static int
 init_named_socket (const char *name)
@@ -7271,9 +7264,9 @@ gdb_agent_helper_thread (void *arg)
 #include <signal.h>
 #include <pthread.h>
 
-EXTERN_C_PUSH
+extern "C" {
 IP_AGENT_EXPORT_VAR int gdb_agent_capability = AGENT_CAPA_STATIC_TRACE;
-EXTERN_C_POP
+}
 
 static void
 gdb_agent_init (void)

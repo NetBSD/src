@@ -1,5 +1,5 @@
 /* mips.h.  Mips opcode list for GDB, the GNU debugger.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
    Contributed by Ralph Campbell and OSF
    Commented and modified by Ian Lance Taylor, Cygnus Support
 
@@ -1265,6 +1265,8 @@ static const unsigned int mips_isa_table[] = {
 #define INSN_XLR                 0x00000020
 /* Imagination interAptiv MR2.  */
 #define INSN_INTERAPTIV_MR2	  0x04000000
+/* Sony PSP Allegrex instruction.  */
+#define INSN_ALLEGREX		  0x08000000
 
 /* DSP ASE */
 #define ASE_DSP			0x00000001
@@ -1377,6 +1379,7 @@ static const unsigned int mips_isa_table[] = {
 #define CPU_MIPS64R3	66
 #define CPU_MIPS64R5	68
 #define CPU_MIPS64R6	69
+#define CPU_ALLEGREX	10111431	/* octal 'AL', 31. */
 #define CPU_SB1         12310201        /* octal 'SB', 01.  */
 #define CPU_LOONGSON_2E 3001
 #define CPU_LOONGSON_2F 3002
@@ -1458,6 +1461,9 @@ cpu_is_member (int cpu, unsigned int mask)
 
     case CPU_INTERAPTIV_MR2:
       return (mask & INSN_INTERAPTIV_MR2) != 0;
+
+    case CPU_ALLEGREX:
+      return (mask & INSN_ALLEGREX) != 0;
 
     default:
       return false;

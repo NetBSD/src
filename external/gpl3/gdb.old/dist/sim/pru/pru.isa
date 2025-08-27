@@ -1,4 +1,4 @@
-/* Copyright 2016-2023 Free Software Foundation, Inc.
+/* Copyright 2016-2024 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of the PRU simulator.
@@ -40,26 +40,30 @@ INSTRUCTION (sub,
 	     OP2 = (IO ? IMM8 : RS2);
 	     RD = RS1 - OP2;
 	     CARRY = (((uint64_t) RS1 - (uint64_t) OP2) >> RD_WIDTH) & 1;
+	     CARRY = !CARRY;
 	     PC++)
 
 INSTRUCTION (suc,
 	     OP2 = (IO ? IMM8 : RS2);
-	     RD = RS1 - OP2 - CARRY;
-	     CARRY = (((uint64_t) RS1 - (uint64_t) OP2 - (uint64_t) CARRY)
+	     RD = RS1 - OP2 - !CARRY;
+	     CARRY = (((uint64_t) RS1 - (uint64_t) OP2 - (uint64_t) !CARRY)
 		      >> RD_WIDTH) & 1;
+	     CARRY = !CARRY;
 	     PC++)
 
 INSTRUCTION (rsb,
 	     OP2 = (IO ? IMM8 : RS2);
 	     RD = OP2 - RS1;
 	     CARRY = (((uint64_t) OP2 - (uint64_t) RS1) >> RD_WIDTH) & 1;
+	     CARRY = !CARRY;
 	     PC++)
 
 INSTRUCTION (rsc,
 	     OP2 = (IO ? IMM8 : RS2);
-	     RD = OP2 - RS1 - CARRY;
-	     CARRY = (((uint64_t) OP2 - (uint64_t) RS1 - (uint64_t) CARRY)
+	     RD = OP2 - RS1 - !CARRY;
+	     CARRY = (((uint64_t) OP2 - (uint64_t) RS1 - (uint64_t) !CARRY)
 		      >> RD_WIDTH) & 1;
+	     CARRY = !CARRY;
 	     PC++)
 
 INSTRUCTION (lsl,

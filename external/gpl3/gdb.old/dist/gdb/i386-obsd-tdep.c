@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/i386.
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "gdbcore.h"
@@ -64,7 +64,7 @@ static const int i386obsd_sigreturn_offset[] = {
    routine.  */
 
 static int
-i386obsd_sigtramp_p (frame_info_ptr this_frame)
+i386obsd_sigtramp_p (const frame_info_ptr &this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   CORE_ADDR start_pc = (pc & ~(i386obsd_page_size - 1));
@@ -303,7 +303,7 @@ static int i386obsd_tf_reg_offset[] =
 };
 
 static struct trad_frame_cache *
-i386obsd_trapframe_cache (frame_info_ptr this_frame, void **this_cache)
+i386obsd_trapframe_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -350,7 +350,7 @@ i386obsd_trapframe_cache (frame_info_ptr this_frame, void **this_cache)
 }
 
 static void
-i386obsd_trapframe_this_id (frame_info_ptr this_frame,
+i386obsd_trapframe_this_id (const frame_info_ptr &this_frame,
 			    void **this_cache, struct frame_id *this_id)
 {
   struct trad_frame_cache *cache =
@@ -360,7 +360,7 @@ i386obsd_trapframe_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-i386obsd_trapframe_prev_register (frame_info_ptr this_frame,
+i386obsd_trapframe_prev_register (const frame_info_ptr &this_frame,
 				  void **this_cache, int regnum)
 {
   struct trad_frame_cache *cache =
@@ -371,7 +371,7 @@ i386obsd_trapframe_prev_register (frame_info_ptr this_frame,
 
 static int
 i386obsd_trapframe_sniffer (const struct frame_unwind *self,
-			    frame_info_ptr this_frame,
+			    const frame_info_ptr &this_frame,
 			    void **this_prologue_cache)
 {
   ULONGEST cs;

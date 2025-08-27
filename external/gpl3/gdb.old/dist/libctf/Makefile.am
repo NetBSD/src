@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in.
 #
-#   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +20,11 @@
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
 
 AUTOMAKE_OPTIONS = dejagnu foreign info-in-builddir no-texinfo.tex
+
+# Suppress 'configure.ac: error: AM_GNU_GETTEXT used but SUBDIRS not defined'
+# from Automake, as libctf uses AM_GNU_GETTEXT (through
+# ZW_GNU_GETTEXT_SISTER_DIR) but has no po/ subdir (currently).
+SUBDIRS =
 
 # Variables that we might accumulate conditionally or in subdirs.
 info_TEXINFOS =
@@ -72,7 +77,6 @@ EXPECT = expect
 RUNTEST = runtest
 RUNTESTFLAGS =
 
-if TCL_TRY
 CC_FOR_TARGET = ` \
   if [ -f $$r/../gcc/xgcc ] ; then \
     if [ -f $$r/../newlib/Makefile ] ; then \
@@ -93,10 +97,15 @@ check-DEJAGNU: site.exp development.exp
 	r=`pwd`; export r; \
 	LC_ALL=C; export LC_ALL; \
 	EXPECT=$(EXPECT); export EXPECT; \
+	if [ "@host@" = "@target@" ] ; then \
+	  TEST_CROSS=no; \
+	else \
+	  TEST_CROSS=yes; \
+	fi; \
 	runtest=$(RUNTEST); \
 	if $(SHELL) -c "$$runtest --version" > /dev/null 2>&1; then \
 	  $$runtest --tool $(DEJATOOL) --srcdir $${srcroot}/testsuite \
-		CC="$(CC)" CC_FOR_TARGET="$(CC_FOR_TARGET)" \
+		CC="$(CC)" CC_FOR_TARGET="$(CC_FOR_TARGET)" TEST_CROSS="$${TEST_CROSS}" \
 		CFLAGS="$(CFLAGS) -I$(INCDIR) -I$(srcdir) -I$(builddir) -I$(builddir)/../bfd $(ZLIBINC)" \
 		LIBS="$(libctf_nobfd_la_LIBADD) $(LIBS)" $(RUNTESTFLAGS); \
 	else echo "WARNING: could not find \`runtest'" 1>&2; :;\
@@ -105,6 +114,7 @@ check-DEJAGNU: site.exp development.exp
 development.exp: $(BFDDIR)/development.sh
 	$(AM_V_GEN)$(EGREP) "(development|experimental)=" $(BFDDIR)/development.sh  \
 	  | $(AWK) -F= '{ print "set " $$1 " " $$2 }' > $@
+	echo "set have_tcl_try @HAVE_TCL_TRY@" >> $@
 
 # development.sh is used to determine -Werror default.
 CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/development.sh
@@ -112,6 +122,5 @@ CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/development.sh
 EXTRA_DEJAGNU_SITE_CONFIG = development.exp
 
 DISTCLEANFILES += site.exp development.exp
-endif
 
 include doc/local.mk

@@ -1,5 +1,5 @@
 /* Inferior process information for the remote server for GDB.
-   Copyright (C) 1993-2023 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -70,7 +70,7 @@ struct process_info
   /* Private target data.  */
   struct process_info_private *priv = NULL;
 
-  /* DLLs thats are loaded for this proc.  */
+  /* DLLs that are loaded for this proc.  */
   std::list<dll_info> all_dlls;
 
   /* Flag to mark that the DLL list has changed.  */

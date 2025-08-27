@@ -1,5 +1,5 @@
 /* BFD back-end for IBM RS/6000 "XCOFF64" files.
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Written Clinton Popetz.
    Contributed by Cygnus Support.
 
@@ -411,10 +411,10 @@ _bfd_xcoff64_swap_aux_in (bfd *abfd, void *ext1, int type ATTRIBUTE_UNUSED,
 	  if (auxtype != _AUX_CSECT)
 	    goto error;
 
-	  bfd_vma h = H_GET_S32 (abfd, ext->x_csect.x_scnlen_hi);
+	  bfd_vma h = H_GET_32 (abfd, ext->x_csect.x_scnlen_hi);
 	  bfd_vma l = H_GET_32 (abfd, ext->x_csect.x_scnlen_lo);
 
-	  in->x_csect.x_scnlen.l = h << 32 | (l & 0xffffffff);
+	  in->x_csect.x_scnlen.u64 = h << 32 | (l & 0xffffffff);
 
 	  in->x_csect.x_parmhash = H_GET_32 (abfd, ext->x_csect.x_parmhash);
 	  in->x_csect.x_snhash = H_GET_16 (abfd, ext->x_csect.x_snhash);
@@ -436,7 +436,7 @@ _bfd_xcoff64_swap_aux_in (bfd *abfd, void *ext1, int type ATTRIBUTE_UNUSED,
 	    = H_GET_64 (abfd, ext->x_fcn.x_lnnoptr);
 	  in->x_sym.x_misc.x_fsize
 	    = H_GET_32 (abfd, ext->x_fcn.x_fsize);
-	  in->x_sym.x_fcnary.x_fcn.x_endndx.l
+	  in->x_sym.x_fcnary.x_fcn.x_endndx.u32
 	    = H_GET_32 (abfd, ext->x_fcn.x_endndx);
 	}
       break;
@@ -524,9 +524,9 @@ _bfd_xcoff64_swap_aux_out (bfd *abfd, void *inp, int type ATTRIBUTE_UNUSED,
 	{
 	  bfd_vma temp;
 
-	  temp = in->x_csect.x_scnlen.l & 0xffffffff;
+	  temp = in->x_csect.x_scnlen.u64 & 0xffffffff;
 	  H_PUT_32 (abfd, temp, ext->x_csect.x_scnlen_lo);
-	  temp = in->x_csect.x_scnlen.l >> 32;
+	  temp = in->x_csect.x_scnlen.u64 >> 32;
 	  H_PUT_32 (abfd, temp, ext->x_csect.x_scnlen_hi);
 	  H_PUT_32 (abfd, in->x_csect.x_parmhash, ext->x_csect.x_parmhash);
 	  H_PUT_16 (abfd, in->x_csect.x_snhash, ext->x_csect.x_snhash);
@@ -542,7 +542,7 @@ _bfd_xcoff64_swap_aux_out (bfd *abfd, void *inp, int type ATTRIBUTE_UNUSED,
 	  H_PUT_64 (abfd, in->x_sym.x_fcnary.x_fcn.x_lnnoptr,
 		    ext->x_fcn.x_lnnoptr);
 	  H_PUT_32 (abfd, in->x_sym.x_misc.x_fsize, ext->x_fcn.x_fsize);
-	  H_PUT_32 (abfd, in->x_sym.x_fcnary.x_fcn.x_endndx.l,
+	  H_PUT_32 (abfd, in->x_sym.x_fcnary.x_fcn.x_endndx.u32,
 		    ext->x_fcn.x_endndx);
 	  H_PUT_8 (abfd, _AUX_FCN, ext->x_csect.x_auxtype);
 	}
@@ -1811,13 +1811,13 @@ xcoff64_slurp_armap (bfd *abfd)
   /* This is for the new format.  */
   struct xcoff_ar_hdr_big hdr;
 
-  if (xcoff_ardata (abfd) == NULL)
+  if (x_artdata (abfd) == NULL)
     {
       abfd->has_armap = false;
       return true;
     }
 
-  off = bfd_scan_vma (xcoff_ardata_big (abfd)->symoff64,
+  off = bfd_scan_vma (x_artdata (abfd)->u.bhdr.symoff64,
 		      (const char **) NULL, 10);
   if (off == 0)
     {
@@ -1829,8 +1829,7 @@ xcoff64_slurp_armap (bfd *abfd)
     return false;
 
   /* The symbol table starts with a normal archive header.  */
-  if (bfd_bread (&hdr, (bfd_size_type) SIZEOF_AR_HDR_BIG, abfd)
-      != SIZEOF_AR_HDR_BIG)
+  if (bfd_read (&hdr, SIZEOF_AR_HDR_BIG, abfd) != SIZEOF_AR_HDR_BIG)
     return false;
 
   /* Skip the name (normally empty).  */
@@ -1907,7 +1906,7 @@ xcoff64_archive_p (bfd *abfd)
   struct xcoff_ar_file_hdr_big hdr;
   size_t amt = SXCOFFARMAG;
 
-  if (bfd_bread (magic, amt, abfd) != amt)
+  if (bfd_read (magic, amt, abfd) != amt)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_wrong_format);
@@ -1925,7 +1924,7 @@ xcoff64_archive_p (bfd *abfd)
 
   /* Now read the rest of the file header.  */
   amt = SIZEOF_AR_FILE_HDR_BIG - SXCOFFARMAG;
-  if (bfd_bread (&hdr.memoff, amt, abfd) != amt)
+  if (bfd_read (&hdr.memoff, amt, abfd) != amt)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_wrong_format);
@@ -1939,22 +1938,16 @@ xcoff64_archive_p (bfd *abfd)
   if (bfd_ardata (abfd) == (struct artdata *) NULL)
     goto error_ret_restore;
 
-  /* Already cleared by bfd_zalloc above.
-     bfd_ardata (abfd)->cache = NULL;
-     bfd_ardata (abfd)->archive_head = NULL;
-     bfd_ardata (abfd)->symdefs = NULL;
-     bfd_ardata (abfd)->extended_names = NULL;
-     bfd_ardata (abfd)->extended_names_size = 0;  */
   bfd_ardata (abfd)->first_file_filepos = bfd_scan_vma (hdr.firstmemoff,
 							(const char **) NULL,
 							10);
 
-  amt = SIZEOF_AR_FILE_HDR_BIG;
+  amt = sizeof (struct xcoff_artdata);
   bfd_ardata (abfd)->tdata = bfd_zalloc (abfd, amt);
   if (bfd_ardata (abfd)->tdata == NULL)
     goto error_ret;
 
-  memcpy (bfd_ardata (abfd)->tdata, &hdr, SIZEOF_AR_FILE_HDR_BIG);
+  memcpy (&x_artdata (abfd)->u.bhdr, &hdr, SIZEOF_AR_FILE_HDR_BIG);
 
   if (! xcoff64_slurp_armap (abfd))
     {
@@ -1974,7 +1967,7 @@ xcoff64_archive_p (bfd *abfd)
 static bfd *
 xcoff64_openr_next_archived_file (bfd *archive, bfd *last_file)
 {
-  if ((xcoff_ardata (archive) == NULL)
+  if (x_artdata (archive) == NULL
       || ! xcoff_big_format_p (archive))
     {
       bfd_set_error (bfd_error_invalid_operation);
@@ -2239,7 +2232,10 @@ xcoff64_generate_rtinit (bfd *abfd, const char *init, const char *fini,
 
   string_table = (bfd_byte *) bfd_zmalloc (string_table_size);
   if (string_table == NULL)
-    return false;
+    {
+      free (data_buffer);
+      return false;
+    }
 
   val = string_table_size;
   bfd_put_32 (abfd, val, &string_table[0]);
@@ -2265,7 +2261,7 @@ xcoff64_generate_rtinit (bfd *abfd, const char *init, const char *fini,
   syment.n_scnum = 2;
   syment.n_sclass = C_HIDEXT;
   syment.n_numaux = 1;
-  auxent.x_csect.x_scnlen.l = data_buffer_size;
+  auxent.x_csect.x_scnlen.u64 = data_buffer_size;
   auxent.x_csect.x_smtyp = 3 << 3 | XTY_SD;
   auxent.x_csect.x_smclas = XMC_RW;
   bfd_coff_swap_sym_out (abfd, &syment,
@@ -2390,20 +2386,23 @@ xcoff64_generate_rtinit (bfd *abfd, const char *init, const char *fini,
   filehdr.f_symptr = data_scnhdr.s_relptr + data_scnhdr.s_nreloc * RELSZ;
 
   bfd_coff_swap_filehdr_out (abfd, &filehdr, filehdr_ext);
-  bfd_bwrite (filehdr_ext, FILHSZ, abfd);
   bfd_coff_swap_scnhdr_out (abfd, &text_scnhdr, &scnhdr_ext[SCNHSZ * 0]);
   bfd_coff_swap_scnhdr_out (abfd, &data_scnhdr, &scnhdr_ext[SCNHSZ * 1]);
   bfd_coff_swap_scnhdr_out (abfd, &bss_scnhdr, &scnhdr_ext[SCNHSZ * 2]);
-  bfd_bwrite (scnhdr_ext, 3 * SCNHSZ, abfd);
-  bfd_bwrite (data_buffer, data_buffer_size, abfd);
-  bfd_bwrite (reloc_ext, data_scnhdr.s_nreloc * RELSZ, abfd);
-  bfd_bwrite (syment_ext, filehdr.f_nsyms * SYMESZ, abfd);
-  bfd_bwrite (string_table, string_table_size, abfd);
+  bool ret = true;
+  if (bfd_write (filehdr_ext, FILHSZ, abfd) != FILHSZ
+      || bfd_write (scnhdr_ext, 3 * SCNHSZ, abfd) != 3 * SCNHSZ
+      || bfd_write (data_buffer, data_buffer_size, abfd) != data_buffer_size
+      || (bfd_write (reloc_ext, data_scnhdr.s_nreloc * RELSZ, abfd)
+	  != data_scnhdr.s_nreloc * RELSZ)
+      || (bfd_write (syment_ext, filehdr.f_nsyms * SYMESZ, abfd)
+	  != (bfd_size_type) filehdr.f_nsyms * SYMESZ)
+      || bfd_write (string_table, string_table_size, abfd) != string_table_size)
+    ret = false;
 
+  free (string_table);
   free (data_buffer);
-  data_buffer = NULL;
-
-  return true;
+  return ret;
 }
 
 /* The typical dynamic reloc.  */
@@ -2624,11 +2623,10 @@ const bfd_target rs6000_xcoff64_vec =
     },
 
     /* Generic */
-    _bfd_archive_close_and_cleanup,
-    _bfd_bool_bfd_true,
+    coff_close_and_cleanup,
+    coff_bfd_free_cached_info,
     coff_new_section_hook,
     _bfd_generic_get_section_contents,
-    _bfd_generic_get_section_contents_in_window,
 
     /* Copy */
     _bfd_xcoff_copy_private_bfd_data,
@@ -2897,11 +2895,10 @@ const bfd_target rs6000_xcoff64_aix_vec =
     },
 
     /* Generic */
-    _bfd_archive_close_and_cleanup,
-    _bfd_bool_bfd_true,
+    coff_close_and_cleanup,
+    coff_bfd_free_cached_info,
     coff_new_section_hook,
     _bfd_generic_get_section_contents,
-    _bfd_generic_get_section_contents_in_window,
 
     /* Copy */
     _bfd_xcoff_copy_private_bfd_data,

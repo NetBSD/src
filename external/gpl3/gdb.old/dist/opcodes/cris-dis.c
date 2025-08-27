@@ -1,5 +1,5 @@
 /* Disassembler code for CRIS.
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Axis Communications AB, Lund, Sweden.
    Written by Hans-Peter Nilsson.
 
@@ -563,13 +563,11 @@ format_hex (unsigned long number,
   /* Truncate negative numbers on >32-bit hosts.  */
   number &= 0xffffffff;
 
-  sprintf (outbuffer, "0x%lx", number);
-
   /* Save this value for the "case" support.  */
   if (TRACE_CASE)
     last_immediate = number;
 
-  return outbuffer + strlen (outbuffer);
+  return outbuffer + sprintf (outbuffer, "0x%lx", number);
 }
 
 /* Format number as decimal into outbuffer.  Parameter signedp says
@@ -580,12 +578,7 @@ static char *
 format_dec (long number, char *outbuffer, int signedp)
 {
   last_immediate = number;
-  if (signedp)
-    sprintf (outbuffer, "%ld", number);
-  else
-    sprintf (outbuffer, "%lu", (unsigned long) number);
-
-  return outbuffer + strlen (outbuffer);
+  return outbuffer + sprintf (outbuffer, signedp ? "%ld" : "%lu", number);
 }
 
 /* Format the name of the general register regno into outbuffer.  */
@@ -593,11 +586,9 @@ format_dec (long number, char *outbuffer, int signedp)
 static char *
 format_reg (struct cris_disasm_data *disdata,
 	    int regno,
-	    char *outbuffer_start,
+	    char *outbuffer,
 	    bool with_reg_prefix)
 {
-  char *outbuffer = outbuffer_start;
-
   if (with_reg_prefix)
     *outbuffer++ = REGISTER_PREFIX_CHAR;
 
@@ -606,31 +597,30 @@ format_reg (struct cris_disasm_data *disdata,
     case 15:
       /* For v32, there is no context in which we output PC.  */
       if (disdata->distype == cris_dis_v32)
-	strcpy (outbuffer, "acr");
+	outbuffer = stpcpy (outbuffer, "acr");
       else
-	strcpy (outbuffer, "pc");
+	outbuffer = stpcpy (outbuffer, "pc");
       break;
 
     case 14:
-      strcpy (outbuffer, "sp");
+      outbuffer = stpcpy (outbuffer, "sp");
       break;
 
     default:
-      sprintf (outbuffer, "r%d", regno);
+      outbuffer += sprintf (outbuffer, "r%d", regno);
       break;
     }
 
-  return outbuffer_start + strlen (outbuffer_start);
+  return outbuffer;
 }
 
 /* Format the name of a support register into outbuffer.  */
 
 static char *
 format_sup_reg (unsigned int regno,
-		char *outbuffer_start,
+		char *outbuffer,
 		bool with_reg_prefix)
 {
-  char *outbuffer = outbuffer_start;
   int i;
 
   if (with_reg_prefix)
@@ -638,15 +628,11 @@ format_sup_reg (unsigned int regno,
 
   for (i = 0; cris_support_regs[i].name != NULL; i++)
     if (cris_support_regs[i].number == regno)
-      {
-	sprintf (outbuffer, "%s", cris_support_regs[i].name);
-	return outbuffer_start + strlen (outbuffer_start);
-      }
+      return stpcpy (outbuffer, cris_support_regs[i].name);
 
   /* There's supposed to be register names covering all numbers, though
      some may be generic names.  */
-  sprintf (outbuffer, "format_sup_reg-BUG");
-  return outbuffer_start + strlen (outbuffer_start);
+  return stpcpy (outbuffer, "format_sup_reg-BUG");
 }
 
 /* Return the length of an instruction.  */

@@ -625,6 +625,8 @@ ac_includes_default="\
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 PICFLAG
+enable_host_pie
+enable_host_shared
 ADDITIONAL_OBJS
 enable_decimal_float
 target_os
@@ -704,6 +706,7 @@ enable_werror_always
 enable_maintainer_mode
 enable_decimal_float
 enable_host_shared
+enable_host_pie
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1335,6 +1338,7 @@ Optional Features:
 			or 'dpd' choses which decimal floating point format
 			to use
   --enable-host-shared    build host code as shared libraries
+  --enable-host-pie       build host code as PIE
 
 Some influential environment variables:
   CC          C compiler command
@@ -5044,7 +5048,23 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
 # Enable --enable-host-shared.
 # Check whether --enable-host-shared was given.
 if test "${enable_host_shared+set}" = set; then :
-  enableval=$enable_host_shared; PICFLAG=-fPIC
+  enableval=$enable_host_shared;
+fi
+
+
+
+# Enable --enable-host-pie.
+# Check whether --enable-host-pie was given.
+if test "${enable_host_pie+set}" = set; then :
+  enableval=$enable_host_pie;
+fi
+
+
+
+if test x$enable_host_shared = xyes; then
+  PICFLAG=-fPIC
+elif test x$enable_host_pie = xyes; then
+  PICFLAG=-fPIE
 else
   PICFLAG=
 fi

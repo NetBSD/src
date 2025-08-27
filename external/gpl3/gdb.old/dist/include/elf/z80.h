@@ -1,5 +1,5 @@
 /* Z80 ELF support for BFD.
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Contributed by Sergey Belyashov <sergey.belyashov@gmail.com>
 
    This file is part of BFD, the Binary File Descriptor library.

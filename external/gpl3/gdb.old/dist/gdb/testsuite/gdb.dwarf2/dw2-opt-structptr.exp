@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,9 +24,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 standard_testfile .c -dw.S
 
@@ -170,19 +168,12 @@ proc do_mi_test {} {
     set MIFLAGS "-i=mi"
 
     global mi_gdb_prompt
-    global srcdir
-    global subdir
     global binfile
     
     with_test_prefix "mi" {
-	gdb_exit
-	if {[mi_gdb_start]} {
-	    return -1
+	if {[mi_clean_restart $binfile]} {
+	    return
 	}
-	
-	mi_delete_breakpoints
-	mi_gdb_reinitialize_dir $srcdir/$subdir
-	mi_gdb_load $binfile
 	
 	# This causes GDB to dereference a pointer-to-structure when doing
 	# -var-create.

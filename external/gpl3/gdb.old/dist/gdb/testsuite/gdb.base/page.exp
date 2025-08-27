@@ -1,4 +1,4 @@
-# Copyright 1992-2023 Free Software Foundation, Inc.
+# Copyright 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ gdb_test_no_output "set width 30"
 send_gdb "printf \"$str\"\n"
 gdb_expect_list "paged count for interrupt" \
     ".*$pagination_prompt" \
-    [list 1\r\n 2\r\n 3\r\n 444444444444444444444444444444]
+    [list 1\r\n 2\r\n 3\r\n [string repeat 4 30]]
 
 gdb_test "q" "Quit" "quit while paging"
 

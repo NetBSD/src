@@ -1,4 +1,4 @@
-# Copyright 2004-2023 Free Software Foundation, Inc.
+# Copyright 2004-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 # This contains tests for breakpoints in C++.
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests
 
 #
 # test running programs
@@ -53,4 +53,3 @@ gdb_test "print i_" "\\\$2 = 3" "check the member variable from within C1::bar"
 
 
 gdb_exit
-return 0

@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2023 Free Software Foundation, Inc.
+Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -72,7 +72,7 @@ SET_H_SPR ((((index)) + (ORSI (SLLSI (SPR_GROUP_SYS, 11), SPR_INDEX_SYS_GPR0))),
 #define GET_H_ROFF1() CPU (h_roff1)
 #define SET_H_ROFF1(x) (CPU (h_roff1) = (x))
   } hardware;
-#define CPU_CGEN_HW(cpu) (& (cpu)->cpu_data.hardware)
+#define CPU_CGEN_HW(cpu) (& OR1K_SIM_CPU (cpu)->cpu_data.hardware)
 } OR1K32BF_CPU_DATA;
 
 /* Virtual regs.  */
@@ -4647,7 +4647,7 @@ struct scache {
 #define EXTRACT_IFMT_L_J_CODE \
   length = 4; \
   f_opcode = EXTRACT_LSB0_UINT (insn, 32, 31, 6); \
-  f_disp26 = ((((EXTRACT_LSB0_SINT (insn, 32, 25, 26)) << (2))) + (pc)); \
+  f_disp26 = ((((EXTRACT_LSB0_SINT (insn, 32, 25, 26)) * (4))) + (pc)); \
 
 #define EXTRACT_IFMT_L_ADRP_VARS \
   UINT f_opcode; \
@@ -4658,7 +4658,7 @@ struct scache {
   length = 4; \
   f_opcode = EXTRACT_LSB0_UINT (insn, 32, 31, 6); \
   f_r1 = EXTRACT_LSB0_UINT (insn, 32, 25, 5); \
-  f_disp21 = ((((EXTRACT_LSB0_SINT (insn, 32, 20, 21)) + (((SI) (pc) >> (13))))) << (13)); \
+  f_disp21 = ((((EXTRACT_LSB0_SINT (insn, 32, 20, 21)) + (((SI) (pc) >> (13))))) * (8192)); \
 
 #define EXTRACT_IFMT_L_JR_VARS \
   UINT f_opcode; \

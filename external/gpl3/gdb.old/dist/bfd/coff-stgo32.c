@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 386 COFF files (DJGPP variant with a stub).
-   Copyright (C) 1997-2022 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
    Written by Robert Hoehne.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -248,6 +248,7 @@ static void
 go32exe_cleanup (bfd *abfd)
 {
   abfd->origin = 0;
+  coff_object_cleanup (abfd);
 
   free (go32exe_temp_stub);
   go32exe_temp_stub = NULL;
@@ -277,7 +278,7 @@ go32exe_check_format (bfd *abfd)
   bfd_set_error (bfd_error_system_call);
 
   /* Read in the stub file header, which is a DOS MZ executable.  */
-  if (bfd_bread (&filehdr_dos, DOS_HDR_SIZE, abfd) != DOS_HDR_SIZE)
+  if (bfd_read (&filehdr_dos, DOS_HDR_SIZE, abfd) != DOS_HDR_SIZE)
     goto fail;
 
   /* Make sure that this is an MZ executable.  */
@@ -298,11 +299,12 @@ go32exe_check_format (bfd *abfd)
   /* Save now the stub to be used later.  Put the stub data to a temporary
      location first as tdata still does not exist.  It may not even
      be ever created if we are just checking the file format of ABFD.  */
-  bfd_seek (abfd, 0, SEEK_SET);
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
+    goto fail;
   go32exe_temp_stub = bfd_malloc (stubsize);
   if (go32exe_temp_stub == NULL)
     goto fail;
-  if (bfd_bread (go32exe_temp_stub, stubsize, abfd) != stubsize)
+  if (bfd_read (go32exe_temp_stub, stubsize, abfd) != stubsize)
     goto fail;
   go32exe_temp_stub_size = stubsize;
 
@@ -323,7 +325,7 @@ go32exe_check_format (bfd *abfd)
   bfd_cleanup cleanup = coff_object_p (abfd);
   if (cleanup == NULL)
     goto fail;
-  BFD_ASSERT (cleanup == _bfd_no_cleanup);
+  BFD_ASSERT (cleanup == coff_object_cleanup);
 
   return go32exe_cleanup;
 
@@ -350,7 +352,7 @@ go32exe_write_object_contents (bfd *abfd)
   abfd->origin = 0;
   if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     return false;
-  if (bfd_bwrite (coff_data (abfd)->stub, stubsize, abfd) != stubsize)
+  if (bfd_write (coff_data (abfd)->stub, stubsize, abfd) != stubsize)
     return false;
 
   /* Seek back to where we were.  */

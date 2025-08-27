@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Free Software Foundation, Inc.
+/* Copyright 2012-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -460,4 +460,8 @@ SYMBOL(main):
 .Ldebug_addr0:
 	.4byte	.LFB0	/* DW_AT_low_pc */
 	.4byte	SYMBOL(baz)	/* DW_AT_location */
+#ifdef __arm__
+	.section	.note.GNU-stack,"",%progbits
+#else
 	.section	.note.GNU-stack,"",@progbits
+#endif

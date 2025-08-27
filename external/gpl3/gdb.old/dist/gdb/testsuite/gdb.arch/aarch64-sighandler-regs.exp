@@ -1,4 +1,4 @@
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,14 +15,11 @@
 #
 # This file is part of the gdb testsuite.
 
-if {![is_aarch64_target]} {
-    verbose "Skipping ${gdb_test_file_name}."
-    return -1
-}
+require is_aarch64_target
 
 set compile_flags {debug}
 
-if { [skip_aarch64_sve_tests] } {
+if { ![allow_aarch64_sve_tests] } {
     unsupported "target does not support SVE"
     set sve_hw 0
 } else {

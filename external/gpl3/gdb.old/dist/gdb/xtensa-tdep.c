@@ -1,6 +1,6 @@
 /* Target-dependent code for the Xtensa port of GDB, the GNU debugger.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "solib-svr4.h"
 #include "symtab.h"
@@ -37,7 +37,7 @@
 #include "gdbarch.h"
 
 #include "command.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 
 #include "xtensa-isa.h"
 #include "xtensa-tdep.h"
@@ -161,7 +161,8 @@ xtensa_read_register (int regnum)
 {
   ULONGEST value;
 
-  regcache_raw_read_unsigned (get_current_regcache (), regnum, &value);
+  regcache_raw_read_unsigned (get_thread_regcache (inferior_thread ()), regnum,
+			      &value);
   return (unsigned long) value;
 }
 
@@ -169,7 +170,8 @@ xtensa_read_register (int regnum)
 static void
 xtensa_write_register (int regnum, ULONGEST value)
 {
-  regcache_raw_write_unsigned (get_current_regcache (), regnum, value);
+  regcache_raw_write_unsigned (get_thread_regcache (inferior_thread ()), regnum,
+			       value);
 }
 
 /* Return the window size of the previous call to the function from which we
@@ -312,8 +314,9 @@ xtensa_register_type (struct gdbarch *gdbarch, int regnum)
 		  tp->next = tdep->type_entries;
 		  tdep->type_entries = tp;
 		  tp->size = size;
+		  type_allocator alloc (gdbarch);
 		  tp->virtual_type
-		    = arch_integer_type (gdbarch, size * 8, 1, name.c_str ());
+		    = init_integer_type (alloc, size * 8, 1, name.c_str ());
 		}
 
 	      reg->ctype = tp->virtual_type;
@@ -559,7 +562,7 @@ xtensa_pseudo_register_read (struct gdbarch *gdbarch,
   if (regnum >= 0 && regnum < gdbarch_num_regs (gdbarch))
     return regcache->raw_read (regnum, buffer);
 
-  /* We have to find out how to deal with priveleged registers.
+  /* We have to find out how to deal with privileged registers.
      Let's treat them as pseudo-registers, but we cannot read/write them.  */
      
   else if (tdep->call_abi == CallAbiCall0Only
@@ -647,7 +650,7 @@ xtensa_pseudo_register_write (struct gdbarch *gdbarch,
   if (regnum >= 0 && regnum < gdbarch_num_regs (gdbarch))
     regcache->raw_write (regnum, buffer);
 
-  /* We have to find out how to deal with priveleged registers.
+  /* We have to find out how to deal with privileged registers.
      Let's treat them as pseudo-registers, but we cannot read/write them.  */
 
   else if (regnum < tdep->a0_base)
@@ -1023,7 +1026,7 @@ xtensa_frame_align (struct gdbarch *gdbarch, CORE_ADDR address)
 
 
 static CORE_ADDR
-xtensa_unwind_pc (struct gdbarch *gdbarch, frame_info_ptr next_frame)
+xtensa_unwind_pc (struct gdbarch *gdbarch, const frame_info_ptr &next_frame)
 {
   gdb_byte buf[8];
   CORE_ADDR pc;
@@ -1041,7 +1044,7 @@ xtensa_unwind_pc (struct gdbarch *gdbarch, frame_info_ptr next_frame)
 
 
 static struct frame_id
-xtensa_dummy_id (struct gdbarch *gdbarch, frame_info_ptr this_frame)
+xtensa_dummy_id (struct gdbarch *gdbarch, const frame_info_ptr &this_frame)
 {
   CORE_ADDR pc, fp;
   xtensa_gdbarch_tdep *tdep = gdbarch_tdep<xtensa_gdbarch_tdep> (gdbarch);
@@ -1214,16 +1217,16 @@ done:
 	cache->prev_sp = SP of the previous frame.  */
 
 static void
-call0_frame_cache (frame_info_ptr this_frame,
+call0_frame_cache (const frame_info_ptr &this_frame,
 		   xtensa_frame_cache_t *cache, CORE_ADDR pc);
 
 static void
-xtensa_window_interrupt_frame_cache (frame_info_ptr this_frame,
+xtensa_window_interrupt_frame_cache (const frame_info_ptr &this_frame,
 				     xtensa_frame_cache_t *cache,
 				     CORE_ADDR pc);
 
 static struct xtensa_frame_cache *
-xtensa_frame_cache (frame_info_ptr this_frame, void **this_cache)
+xtensa_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   xtensa_frame_cache_t *cache;
   CORE_ADDR ra, wb, ws, pc, sp, ps;
@@ -1389,7 +1392,7 @@ This message will not be repeated in this session.\n"));
 
 
 static void
-xtensa_frame_this_id (frame_info_ptr this_frame,
+xtensa_frame_this_id (const frame_info_ptr &this_frame,
 		      void **this_cache,
 		      struct frame_id *this_id)
 {
@@ -1403,7 +1406,7 @@ xtensa_frame_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-xtensa_frame_prev_register (frame_info_ptr this_frame,
+xtensa_frame_prev_register (const frame_info_ptr &this_frame,
 			    void **this_cache,
 			    int regnum)
 {
@@ -1506,7 +1509,7 @@ xtensa_unwind =
 };
 
 static CORE_ADDR
-xtensa_frame_base_address (frame_info_ptr this_frame, void **this_cache)
+xtensa_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct xtensa_frame_cache *cache =
     xtensa_frame_cache (this_frame, this_cache);
@@ -1712,7 +1715,7 @@ xtensa_push_dummy_call (struct gdbarch *gdbarch,
       for (int i = 0; i < nargs; i++)
 	{
 	  struct value *arg = args[i];
-	  struct type *arg_type = check_typedef (value_type (arg));
+	  struct type *arg_type = check_typedef (arg->type ());
 	  gdb_printf (gdb_stdlog, "%2d: %s %3s ", i,
 		      host_address_to_string (arg),
 		      pulongest (arg_type->length ()));
@@ -1729,7 +1732,7 @@ xtensa_push_dummy_call (struct gdbarch *gdbarch,
 	      break;
 	    }
 	  gdb_printf (gdb_stdlog, " %s\n",
-		      host_address_to_string (value_contents (arg).data ()));
+		      host_address_to_string (arg->contents ().data ()));
 	}
     }
 
@@ -1748,7 +1751,7 @@ xtensa_push_dummy_call (struct gdbarch *gdbarch,
     {
       struct argument_info *info = &arg_info[i];
       struct value *arg = args[i];
-      struct type *arg_type = check_typedef (value_type (arg));
+      struct type *arg_type = check_typedef (arg->type ());
 
       switch (arg_type->code ())
 	{
@@ -1785,7 +1788,7 @@ xtensa_push_dummy_call (struct gdbarch *gdbarch,
 	  break;
 	}
       info->length = arg_type->length ();
-      info->contents = value_contents (arg).data ();
+      info->contents = arg->contents ().data ();
 
       /* Align size and onstack_size.  */
       size = (size + info->align - 1) & ~(info->align - 1);
@@ -2540,7 +2543,7 @@ done:
 /* Initialize frame cache for the current frame in CALL0 ABI.  */
 
 static void
-call0_frame_cache (frame_info_ptr this_frame,
+call0_frame_cache (const frame_info_ptr &this_frame,
 		   xtensa_frame_cache_t *cache, CORE_ADDR pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
@@ -2889,7 +2892,7 @@ execute_code (struct gdbarch *gdbarch, CORE_ADDR current_pc, CORE_ADDR wb)
 /* Handle Window Overflow / Underflow exception frames.  */
 
 static void
-xtensa_window_interrupt_frame_cache (frame_info_ptr this_frame,
+xtensa_window_interrupt_frame_cache (const frame_info_ptr &this_frame,
 				     xtensa_frame_cache_t *cache,
 				     CORE_ADDR pc)
 {
@@ -3145,13 +3148,11 @@ xtensa_derive_tdep (xtensa_gdbarch_tdep *tdep)
 
 /* Module "constructor" function.  */
 
-extern xtensa_gdbarch_tdep xtensa_tdep;
+extern xtensa_register_t xtensa_rmap[];
 
 static struct gdbarch *
 xtensa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  struct gdbarch *gdbarch;
-
   DEBUGTRACE ("gdbarch_init()\n");
 
   if (!xtensa_default_isa)
@@ -3160,8 +3161,10 @@ xtensa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* We have to set the byte order before we call gdbarch_alloc.  */
   info.byte_order = XCHAL_HAVE_BE ? BFD_ENDIAN_BIG : BFD_ENDIAN_LITTLE;
 
-  xtensa_gdbarch_tdep *tdep = &xtensa_tdep;
-  gdbarch = gdbarch_alloc (&info, tdep);
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info,
+		     gdbarch_tdep_up (new xtensa_gdbarch_tdep (xtensa_rmap)));
+  xtensa_gdbarch_tdep *tdep = gdbarch_tdep<xtensa_gdbarch_tdep> (gdbarch);
   xtensa_derive_tdep (tdep);
 
   /* Verify our configuration.  */
@@ -3173,7 +3176,8 @@ xtensa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Pseudo-Register read/write.  */
   set_gdbarch_pseudo_register_read (gdbarch, xtensa_pseudo_register_read);
-  set_gdbarch_pseudo_register_write (gdbarch, xtensa_pseudo_register_write);
+  set_gdbarch_deprecated_pseudo_register_write (gdbarch,
+						xtensa_pseudo_register_write);
 
   /* Set target information.  */
   set_gdbarch_num_regs (gdbarch, tdep->num_regs);

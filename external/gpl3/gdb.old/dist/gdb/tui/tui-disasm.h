@@ -1,6 +1,6 @@
 /* Disassembly display.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    
    Contributed by Hewlett-Packard Company.
 
@@ -41,7 +41,7 @@ struct tui_disasm_window : public tui_source_window_base
 
   bool location_matches_p (struct bp_location *loc, int line_no) override;
 
-  void maybe_update (frame_info_ptr fi, symtab_and_line sal) override;
+  void maybe_update (const frame_info_ptr &fi, symtab_and_line sal) override;
 
   void erase_source_content () override
   {

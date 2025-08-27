@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,15 +15,9 @@
 
 standard_testfile .c
 
-if { ![can_single_step_to_signal_handler] } {
-    untested "cannot single-step to signal handler"
-    return
-}
+require can_single_step_to_signal_handler
 
-if [target_info exists gdb,nosignals] {
-    verbose "Skipping kill-after-signal.exp because of nosignals."
-    return
-}
+require {!target_info exists gdb,nosignals}
 
 if [prepare_for_testing "failed to prepare" ${testfile}] {
     return -1

@@ -1,5 +1,5 @@
 /* Base class of intrusively reference-counted objects.
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -64,6 +64,23 @@ struct refcounted_object_ref_policy
   static void decref (refcounted_object *ptr)
   {
     ptr->decref ();
+  }
+};
+
+/* A policy class to interface gdb::ref_ptr with a refcounted_object, that
+   deletes the object once the refcount reaches 0..  */
+
+template<typename T>
+struct refcounted_object_delete_ref_policy
+{
+  static void incref (T *obj)
+  { obj->incref (); }
+
+  static void decref (T *obj)
+  {
+    obj->decref ();
+    if (obj->refcount () == 0)
+      delete obj;
   }
 };
 

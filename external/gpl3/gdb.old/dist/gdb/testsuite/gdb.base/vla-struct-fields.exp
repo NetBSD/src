@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,7 @@
 standard_testfile
 
 # Clang says it will never support variable length arrays in structures.
-if {[test_compiler_info clang*]} {
-    unsupported "compiler does not support variable length arrays in structure"
-    return
-}
+require {!test_compiler_info clang*}
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
     return -1

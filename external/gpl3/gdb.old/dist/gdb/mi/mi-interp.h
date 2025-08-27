@@ -1,6 +1,6 @@
 /* MI Interpreter Definitions and Commands for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,11 +36,43 @@ public:
   void init (bool top_level) override;
   void resume () override;
   void suspend () override;
-  gdb_exception exec (const char *command_str) override;
+  void exec (const char *command_str) override;
   ui_out *interp_ui_out () override;
   void set_logging (ui_file_up logfile, bool logging_redirect,
 		    bool debug_redirect) override;
   void pre_command_loop () override;
+
+  void on_signal_received (gdb_signal sig) override;
+  void on_signal_exited (gdb_signal sig) override;
+  void on_normal_stop (struct bpstat *bs, int print_frame) override;
+  void on_exited (int status) override;
+  void on_no_history () override;
+  void on_sync_execution_done () override;
+  void on_command_error () override;
+  void on_user_selected_context_changed (user_selected_what selection) override;
+  void on_new_thread (thread_info *t) override;
+  void on_thread_exited (thread_info *t, std::optional<ULONGEST> exit_code,
+			 int silent) override;
+  void on_inferior_added (inferior *inf) override;
+  void on_inferior_appeared (inferior *inf) override;
+  void on_inferior_disappeared (inferior *inf) override;
+  void on_inferior_removed (inferior *inf) override;
+  void on_record_changed (inferior *inf, int started, const char *method,
+			  const char *format) override;
+  void on_target_resumed (ptid_t ptid) override;
+  void on_solib_loaded (const solib &so) override;
+  void on_solib_unloaded (const solib &so) override;
+  void on_about_to_proceed () override;
+  void on_traceframe_changed (int tfnum, int tpnum) override;
+  void on_tsv_created (const trace_state_variable *tsv) override;
+  void on_tsv_deleted (const trace_state_variable *tsv) override;
+  void on_tsv_modified (const trace_state_variable *tsv) override;
+  void on_breakpoint_created (breakpoint *b) override;
+  void on_breakpoint_deleted (breakpoint *b) override;
+  void on_breakpoint_modified (breakpoint *b) override;
+  void on_param_changed (const char *param, const char *value) override;
+  void on_memory_changed (inferior *inf, CORE_ADDR addr, ssize_t len,
+			  const bfd_byte *data) override;
 
   /* MI's output channels */
   mi_console_file *out;
@@ -64,10 +96,27 @@ public:
 
   /* MI's CLI builder (wraps OUT).  */
   struct ui_out *cli_uiout;
+
+  int running_result_record_printed = 1;
+
+  /* Flag indicating that the target has proceeded since the last
+     command was issued.  */
+  int mi_proceeded;
+
+  const char *current_token;
 };
 
 /* Output the shared object attributes to UIOUT.  */
 
-void mi_output_solib_attribs (ui_out *uiout, struct so_list *solib);
+void mi_output_solib_attribs (ui_out *uiout, const solib &solib);
+
+/* Returns the INTERP's data cast as mi_interp if INTERP is an MI, and
+   returns NULL otherwise.  */
+
+static inline struct mi_interp *
+as_mi_interp (struct interp *interp)
+{
+  return dynamic_cast<mi_interp *> (interp);
+}
 
 #endif /* MI_MI_INTERP_H */

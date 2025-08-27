@@ -1,6 +1,6 @@
 /* This test script is part of GDB, the GNU debugger.
 
-   Copyright 2006-2023 Free Software Foundation, Inc.
+   Copyright 2006-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+#include <stdarg.h>
 
 int func(int x)
 {
@@ -33,6 +35,29 @@ extern "C" {
   int foo(int);
 }
 
+int sum_vararg_int (int count, ...)
+{
+  va_list va;
+  int sum = 0;
+
+  va_start (va, count);
+  for (int i = 0; i < count; i++)
+    sum += va_arg (va, int);
+  va_end (va);
+
+  return sum;
+}
+
+int vararg_func (int a, ...)
+{
+  return 1;
+}
+
+int vararg_func (int a, int b, ...)
+{
+  return 2;
+}
+
 int main()
 {
     Foo f;
@@ -41,5 +66,6 @@ int main()
     FooHandle handle = pf;
     rf->func(); /* set breakpoint here */
     foo(0);
+    sum_vararg_int (1, 5);
     return func(0);
 }

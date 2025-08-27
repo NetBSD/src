@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2023 Free Software Foundation, Inc.
+Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -17,7 +17,8 @@ This file is part of the GNU simulators.
    License for more details.
 
    You should have received a copy of the GNU General Public License along
-   with this program; if not, see <http://www.gnu.org/licenses/>.
+   with this program; if not, write to the Free Software Foundation, Inc.,
+   51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
 
 */
 
@@ -80,8 +81,8 @@ typedef enum iq2000bf_sfmt_type {
  , IQ2000BF_SFMT_BBI, IQ2000BF_SFMT_BBV, IQ2000BF_SFMT_BGEZ, IQ2000BF_SFMT_BGEZAL
  , IQ2000BF_SFMT_JALR, IQ2000BF_SFMT_JR, IQ2000BF_SFMT_LB, IQ2000BF_SFMT_LH
  , IQ2000BF_SFMT_LUI, IQ2000BF_SFMT_LW, IQ2000BF_SFMT_SB, IQ2000BF_SFMT_SH
- , IQ2000BF_SFMT_SW, IQ2000BF_SFMT_BREAK, IQ2000BF_SFMT_SYSCALL, IQ2000BF_SFMT_ANDOUI
- , IQ2000BF_SFMT_MRGB, IQ2000BF_SFMT_BCTXT, IQ2000BF_SFMT_LDW, IQ2000BF_SFMT_SDW
+ , IQ2000BF_SFMT_SW, IQ2000BF_SFMT_BREAK, IQ2000BF_SFMT_ANDOUI, IQ2000BF_SFMT_MRGB
+ , IQ2000BF_SFMT_BCTXT, IQ2000BF_SFMT_CFC0, IQ2000BF_SFMT_LDW, IQ2000BF_SFMT_SDW
  , IQ2000BF_SFMT_J, IQ2000BF_SFMT_JAL
 } IQ2000BF_SFMT_TYPE;
 

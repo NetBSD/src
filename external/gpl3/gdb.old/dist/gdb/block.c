@@ -1,6 +1,6 @@
 /* Block-related functions for the GNU debugger, GDB.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "block.h"
 #include "symtab.h"
 #include "symfile.h"
@@ -31,56 +30,52 @@
    C++ files, namely using declarations and the current namespace in
    scope.  */
 
-struct block_namespace_info : public allocate_on_obstack
+struct block_namespace_info : public allocate_on_obstack<block_namespace_info>
 {
   const char *scope = nullptr;
   struct using_direct *using_decl = nullptr;
 };
 
-static void block_initialize_namespace (struct block *block,
-					struct obstack *obstack);
-
 /* See block.h.  */
 
 struct objfile *
-block_objfile (const struct block *block)
+block::objfile () const
 {
   const struct global_block *global_block;
 
-  if (block->function () != nullptr)
-    return block->function ()->objfile ();
+  if (function () != nullptr)
+    return function ()->objfile ();
 
-  global_block = (struct global_block *) block_global_block (block);
+  global_block = (struct global_block *) this->global_block ();
   return global_block->compunit_symtab->objfile ();
 }
 
 /* See block.  */
 
 struct gdbarch *
-block_gdbarch (const struct block *block)
+block::gdbarch () const
 {
-  if (block->function () != nullptr)
-    return block->function ()->arch ();
+  if (function () != nullptr)
+    return function ()->arch ();
 
-  return block_objfile (block)->arch ();
+  return objfile ()->arch ();
 }
 
 /* See block.h.  */
 
 bool
-contained_in (const struct block *a, const struct block *b,
-	      bool allow_nested)
+block::contains (const struct block *a, bool allow_nested) const
 {
-  if (!a || !b)
+  if (a == nullptr)
     return false;
 
   do
     {
-      if (a == b)
+      if (a == this)
 	return true;
       /* If A is a function block, then A cannot be contained in B,
 	 except if A was inlined.  */
-      if (!allow_nested && a->function () != NULL && !block_inlined_p (a))
+      if (!allow_nested && a->function () != NULL && !a->inlined_p ())
 	return false;
       a = a->superblock ();
     }
@@ -89,42 +84,39 @@ contained_in (const struct block *a, const struct block *b,
   return false;
 }
 
-
-/* Return the symbol for the function which contains a specified
-   lexical block, described by a struct block BL.  The return value
-   will not be an inlined function; the containing function will be
-   returned instead.  */
+/* See block.h.  */
 
 struct symbol *
-block_linkage_function (const struct block *bl)
+block::linkage_function () const
 {
-  while ((bl->function () == NULL || block_inlined_p (bl))
+  const block *bl = this;
+
+  while ((bl->function () == NULL || bl->inlined_p ())
 	 && bl->superblock () != NULL)
     bl = bl->superblock ();
 
   return bl->function ();
 }
 
-/* Return the symbol for the function which contains a specified
-   block, described by a struct block BL.  The return value will be
-   the closest enclosing function, which might be an inline
-   function.  */
+/* See block.h.  */
 
 struct symbol *
-block_containing_function (const struct block *bl)
+block::containing_function () const
 {
+  const block *bl = this;
+
   while (bl->function () == NULL && bl->superblock () != NULL)
     bl = bl->superblock ();
 
   return bl->function ();
 }
 
-/* Return one if BL represents an inlined function.  */
+/* See block.h.  */
 
-int
-block_inlined_p (const struct block *bl)
+bool
+block::inlined_p () const
 {
-  return bl->function () != NULL && bl->function ()->is_inlined ();
+  return function () != nullptr && function ()->is_inlined ();
 }
 
 /* A helper function that checks whether PC is in the blockvector BL.
@@ -288,95 +280,94 @@ block_for_pc (CORE_ADDR pc)
 /* Now come some functions designed to deal with C++ namespace issues.
    The accessors are safe to use even in the non-C++ case.  */
 
-/* This returns the namespace that BLOCK is enclosed in, or "" if it
-   isn't enclosed in a namespace at all.  This travels the chain of
-   superblocks looking for a scope, if necessary.  */
+/* See block.h.  */
 
 const char *
-block_scope (const struct block *block)
+block::scope () const
 {
-  for (; block != NULL; block = block->superblock ())
+  for (const block *block = this;
+       block != nullptr;
+       block = block->superblock ())
     {
-      if (block->namespace_info () != NULL
-	  && block->namespace_info ()->scope != NULL)
-	return block->namespace_info ()->scope;
+      if (block->m_namespace_info != nullptr
+	  && block->m_namespace_info->scope != nullptr)
+	return block->m_namespace_info->scope;
     }
 
   return "";
 }
 
-/* Set BLOCK's scope member to SCOPE; if needed, allocate memory via
-   OBSTACK.  (It won't make a copy of SCOPE, however, so that already
-   has to be allocated correctly.)  */
+/* See block.h.  */
 
 void
-block_set_scope (struct block *block, const char *scope,
-		 struct obstack *obstack)
+block::initialize_namespace (struct obstack *obstack)
 {
-  block_initialize_namespace (block, obstack);
-
-  block->namespace_info ()->scope = scope;
+  if (m_namespace_info == nullptr)
+    m_namespace_info = new (obstack) struct block_namespace_info;
 }
 
-/* This returns the using directives list associated with BLOCK, if
-   any.  */
+/* See block.h.  */
+
+void
+block::set_scope (const char *scope, struct obstack *obstack)
+{
+  if (scope == nullptr || scope[0] == '\0')
+    {
+      /* Don't bother.  */
+      return;
+    }
+
+  initialize_namespace (obstack);
+  m_namespace_info->scope = scope;
+}
+
+/* See block.h.  */
 
 struct using_direct *
-block_using (const struct block *block)
+block::get_using () const
 {
-  if (block == NULL || block->namespace_info () == NULL)
-    return NULL;
+  if (m_namespace_info == nullptr)
+    return nullptr;
   else
-    return block->namespace_info ()->using_decl;
+    return m_namespace_info->using_decl;
 }
 
-/* Set BLOCK's using member to USING; if needed, allocate memory via
-   OBSTACK.  (It won't make a copy of USING, however, so that already
-   has to be allocated correctly.)  */
+/* See block.h.  */
 
 void
-block_set_using (struct block *block,
-		 struct using_direct *using_decl,
-		 struct obstack *obstack)
+block::set_using (struct using_direct *using_decl, struct obstack *obstack)
 {
-  block_initialize_namespace (block, obstack);
+  if (using_decl == nullptr)
+    {
+      /* Don't bother.  */
+      return;
+    }
 
-  block->namespace_info ()->using_decl = using_decl;
+  initialize_namespace (obstack);
+  m_namespace_info->using_decl = using_decl;
 }
 
-/* If block->namespace_info () is NULL, allocate it via OBSTACK and
-   initialize its members to zero.  */
-
-static void
-block_initialize_namespace (struct block *block, struct obstack *obstack)
-{
-  if (block->namespace_info () == NULL)
-    block->set_namespace_info (new (obstack) struct block_namespace_info ());
-}
-
-/* Return the static block associated to BLOCK.  Return NULL if block
-   is NULL or if block is a global block.  */
+/* See block.h.  */
 
 const struct block *
-block_static_block (const struct block *block)
+block::static_block () const
 {
-  if (block == NULL || block->superblock () == NULL)
-    return NULL;
+  if (superblock () == nullptr)
+    return nullptr;
 
+  const block *block = this;
   while (block->superblock ()->superblock () != NULL)
     block = block->superblock ();
 
   return block;
 }
 
-/* Return the static block associated to BLOCK.  Return NULL if block
-   is NULL.  */
+/* See block.h.  */
 
 const struct block *
-block_global_block (const struct block *block)
+block::global_block () const
 {
-  if (block == NULL)
-    return NULL;
+  const block *block = this;
 
   while (block->superblock () != NULL)
     block = block->superblock ();
@@ -384,42 +375,28 @@ block_global_block (const struct block *block)
   return block;
 }
 
-/* Allocate a block on OBSTACK, and initialize its elements to
-   zero/NULL.  This is useful for creating "dummy" blocks that don't
-   correspond to actual source files.
+/* See block.h.  */
 
-   Warning: it sets the block's BLOCK_MULTIDICT to NULL, which isn't a
-   valid value.  If you really don't want the block to have a
-   dictionary, then you should subsequently set its BLOCK_MULTIDICT to
-   dict_create_linear (obstack, NULL).  */
-
-struct block *
-allocate_block (struct obstack *obstack)
+const struct block *
+block::function_block () const
 {
-  struct block *bl = OBSTACK_ZALLOC (obstack, struct block);
+  const block *block = this;
 
-  return bl;
+  while (block != nullptr && block->function () == nullptr)
+    block = block->superblock ();
+
+  return block;
 }
 
-/* Allocate a global block.  */
-
-struct block *
-allocate_global_block (struct obstack *obstack)
-{
-  struct global_block *bl = OBSTACK_ZALLOC (obstack, struct global_block);
-
-  return &bl->block;
-}
-
-/* Set the compunit of the global block.  */
+/* See block.h.  */
 
 void
-set_block_compunit_symtab (struct block *block, struct compunit_symtab *cu)
+block::set_compunit_symtab (struct compunit_symtab *cu)
 {
   struct global_block *gb;
 
-  gdb_assert (block->superblock () == NULL);
-  gb = (struct global_block *) block;
+  gdb_assert (superblock () == NULL);
+  gb = (struct global_block *) this;
   gdb_assert (gb->compunit_symtab == NULL);
   gb->compunit_symtab = cu;
 }
@@ -427,16 +404,16 @@ set_block_compunit_symtab (struct block *block, struct compunit_symtab *cu)
 /* See block.h.  */
 
 struct dynamic_prop *
-block_static_link (const struct block *block)
+block::static_link () const
 {
-  struct objfile *objfile = block_objfile (block);
+  struct objfile *objfile = this->objfile ();
 
   /* Only objfile-owned blocks that materialize top function scopes can have
      static links.  */
-  if (objfile == NULL || block->function () == NULL)
+  if (objfile == NULL || function () == NULL)
     return NULL;
 
-  return (struct dynamic_prop *) objfile_lookup_static_link (objfile, block);
+  return (struct dynamic_prop *) objfile_lookup_static_link (objfile, this);
 }
 
 /* Return the compunit of the global block.  */
@@ -460,12 +437,14 @@ get_block_compunit_symtab (const struct block *block)
 
 static void
 initialize_block_iterator (const struct block *block,
-			   struct block_iterator *iter)
+			   struct block_iterator *iter,
+			   const lookup_name_info *name = nullptr)
 {
   enum block_enum which;
   struct compunit_symtab *cu;
 
   iter->idx = -1;
+  iter->name = name;
 
   if (block->superblock () == NULL)
     {
@@ -561,38 +540,12 @@ block_iterator_step (struct block_iterator *iterator, int first)
     }
 }
 
-/* See block.h.  */
-
-struct symbol *
-block_iterator_first (const struct block *block,
-		      struct block_iterator *iterator)
-{
-  initialize_block_iterator (block, iterator);
-
-  if (iterator->which == FIRST_LOCAL_BLOCK)
-    return mdict_iterator_first (block->multidict (), &iterator->mdict_iter);
-
-  return block_iterator_step (iterator, 1);
-}
-
-/* See block.h.  */
-
-struct symbol *
-block_iterator_next (struct block_iterator *iterator)
-{
-  if (iterator->which == FIRST_LOCAL_BLOCK)
-    return mdict_iterator_next (&iterator->mdict_iter);
-
-  return block_iterator_step (iterator, 0);
-}
-
 /* Perform a single step for a "match" block iterator, iterating
    across symbol tables as needed.  Returns the next symbol, or NULL
    when iteration is complete.  */
 
 static struct symbol *
 block_iter_match_step (struct block_iterator *iterator,
-		       const lookup_name_info &name,
 		       int first)
 {
   struct symbol *sym;
@@ -612,11 +565,11 @@ block_iter_match_step (struct block_iterator *iterator,
 	    return  NULL;
 
 	  block = cust->blockvector ()->block (iterator->which);
-	  sym = mdict_iter_match_first (block->multidict (), name,
+	  sym = mdict_iter_match_first (block->multidict (), *iterator->name,
 					&iterator->mdict_iter);
 	}
       else
-	sym = mdict_iter_match_next (name, &iterator->mdict_iter);
+	sym = mdict_iter_match_next (*iterator->name, &iterator->mdict_iter);
 
       if (sym != NULL)
 	return sym;
@@ -632,54 +585,76 @@ block_iter_match_step (struct block_iterator *iterator,
 /* See block.h.  */
 
 struct symbol *
-block_iter_match_first (const struct block *block,
-			const lookup_name_info &name,
-			struct block_iterator *iterator)
+block_iterator_first (const struct block *block,
+		      struct block_iterator *iterator,
+		      const lookup_name_info *name)
 {
-  initialize_block_iterator (block, iterator);
+  initialize_block_iterator (block, iterator, name);
+
+  if (name == nullptr)
+    {
+      if (iterator->which == FIRST_LOCAL_BLOCK)
+	return mdict_iterator_first (block->multidict (),
+				     &iterator->mdict_iter);
+
+      return block_iterator_step (iterator, 1);
+    }
 
   if (iterator->which == FIRST_LOCAL_BLOCK)
-    return mdict_iter_match_first (block->multidict (), name,
+    return mdict_iter_match_first (block->multidict (), *name,
 				   &iterator->mdict_iter);
 
-  return block_iter_match_step (iterator, name, 1);
+  return block_iter_match_step (iterator, 1);
 }
 
 /* See block.h.  */
 
 struct symbol *
-block_iter_match_next (const lookup_name_info &name,
-		       struct block_iterator *iterator)
+block_iterator_next (struct block_iterator *iterator)
 {
-  if (iterator->which == FIRST_LOCAL_BLOCK)
-    return mdict_iter_match_next (name, &iterator->mdict_iter);
+  if (iterator->name == nullptr)
+    {
+      if (iterator->which == FIRST_LOCAL_BLOCK)
+	return mdict_iterator_next (&iterator->mdict_iter);
 
-  return block_iter_match_step (iterator, name, 0);
+      return block_iterator_step (iterator, 0);
+    }
+
+  if (iterator->which == FIRST_LOCAL_BLOCK)
+    return mdict_iter_match_next (*iterator->name, &iterator->mdict_iter);
+
+  return block_iter_match_step (iterator, 0);
 }
 
 /* See block.h.  */
 
 bool
-best_symbol (struct symbol *a, const domain_enum domain)
+best_symbol (struct symbol *a, const domain_search_flags domain)
 {
-  return (a->domain () == domain
-	  && a->aclass () != LOC_UNRESOLVED);
+  if (a->aclass () == LOC_UNRESOLVED)
+    return false;
+
+  if ((domain & SEARCH_VAR_DOMAIN) != 0)
+    return a->domain () == VAR_DOMAIN;
+
+  return a->matches (domain);
 }
 
 /* See block.h.  */
 
 struct symbol *
-better_symbol (struct symbol *a, struct symbol *b, const domain_enum domain)
+better_symbol (struct symbol *a, struct symbol *b,
+	       const domain_search_flags domain)
 {
   if (a == NULL)
     return b;
   if (b == NULL)
     return a;
 
-  if (a->domain () == domain && b->domain () != domain)
+  if (a->matches (domain) && !b->matches (domain))
     return a;
 
-  if (b->domain () == domain && a->domain () != domain)
+  if (b->matches (domain) && !a->matches (domain))
     return b;
 
   if (a->aclass () != LOC_UNRESOLVED && b->aclass () == LOC_UNRESOLVED)
@@ -703,20 +678,14 @@ better_symbol (struct symbol *a, struct symbol *b, const domain_enum domain)
    non-encoded names tested for a match.  */
 
 struct symbol *
-block_lookup_symbol (const struct block *block, const char *name,
-		     symbol_name_match_type match_type,
-		     const domain_enum domain)
+block_lookup_symbol (const struct block *block, const lookup_name_info &name,
+		     const domain_search_flags domain)
 {
-  struct block_iterator iter;
-  struct symbol *sym;
-
-  lookup_name_info lookup_name (name, match_type);
-
   if (!block->function ())
     {
       struct symbol *other = NULL;
 
-      ALL_BLOCK_SYMBOLS_WITH_NAME (block, lookup_name, iter, sym)
+      for (struct symbol *sym : block_iterator_range (block, &name))
 	{
 	  /* See comment related to PR gcc/debug/91507 in
 	     block_lookup_symbol_primary.  */
@@ -726,8 +695,7 @@ block_lookup_symbol (const struct block *block, const char *name,
 	     STRUCT vs VAR domain symbols.  So if a matching symbol is found,
 	     make sure there is no "better" matching symbol, i.e., one with
 	     exactly the same domain.  PR 16253.  */
-	  if (symbol_matches_domain (sym->language (),
-				     sym->domain (), domain))
+	  if (sym->matches (domain))
 	    other = better_symbol (other, sym, domain);
 	}
       return other;
@@ -745,10 +713,9 @@ block_lookup_symbol (const struct block *block, const char *name,
 
       struct symbol *sym_found = NULL;
 
-      ALL_BLOCK_SYMBOLS_WITH_NAME (block, lookup_name, iter, sym)
+      for (struct symbol *sym : block_iterator_range (block, &name))
 	{
-	  if (symbol_matches_domain (sym->language (),
-				     sym->domain (), domain))
+	  if (sym->matches (domain))
 	    {
 	      sym_found = sym;
 	      if (!sym->is_argument ())
@@ -765,7 +732,7 @@ block_lookup_symbol (const struct block *block, const char *name,
 
 struct symbol *
 block_lookup_symbol_primary (const struct block *block, const char *name,
-			     const domain_enum domain)
+			     const domain_search_flags domain)
 {
   struct symbol *sym, *other;
   struct mdict_iterator mdict_iter;
@@ -812,11 +779,11 @@ block_lookup_symbol_primary (const struct block *block, const char *name,
       if (best_symbol (sym, domain))
 	return sym;
 
-      /* This is a bit of a hack, but symbol_matches_domain might ignore
+      /* This is a bit of a hack, but 'matches' might ignore
 	 STRUCT vs VAR domain symbols.  So if a matching symbol is found,
 	 make sure there is no "better" matching symbol, i.e., one with
 	 exactly the same domain.  PR 16253.  */
-      if (symbol_matches_domain (sym->language (), sym->domain (), domain))
+      if (sym->matches (domain))
 	other = better_symbol (other, sym, domain);
     }
 
@@ -826,49 +793,25 @@ block_lookup_symbol_primary (const struct block *block, const char *name,
 /* See block.h.  */
 
 struct symbol *
-block_find_symbol (const struct block *block, const char *name,
-		   const domain_enum domain,
-		   block_symbol_matcher_ftype *matcher, void *data)
+block_find_symbol (const struct block *block, const lookup_name_info &name,
+		   const domain_search_flags domain, struct symbol **stub)
 {
-  struct block_iterator iter;
-  struct symbol *sym;
-
-  lookup_name_info lookup_name (name, symbol_name_match_type::FULL);
-
   /* Verify BLOCK is STATIC_BLOCK or GLOBAL_BLOCK.  */
   gdb_assert (block->superblock () == NULL
 	      || block->superblock ()->superblock () == NULL);
 
-  ALL_BLOCK_SYMBOLS_WITH_NAME (block, lookup_name, iter, sym)
+  for (struct symbol *sym : block_iterator_range (block, &name))
     {
-      /* MATCHER is deliberately called second here so that it never sees
-	 a non-domain-matching symbol.  */
-      if (symbol_matches_domain (sym->language (), sym->domain (), domain)
-	  && matcher (sym, data))
+      if (!sym->matches (domain))
+	continue;
+
+      if (!TYPE_IS_OPAQUE (sym->type ()))
 	return sym;
+
+      if (stub != nullptr)
+	*stub = sym;
     }
-  return NULL;
-}
-
-/* See block.h.  */
-
-int
-block_find_non_opaque_type (struct symbol *sym, void *data)
-{
-  return !TYPE_IS_OPAQUE (sym->type ());
-}
-
-/* See block.h.  */
-
-int
-block_find_non_opaque_type_preferred (struct symbol *sym, void *data)
-{
-  struct symbol **best = (struct symbol **) data;
-
-  if (!TYPE_IS_OPAQUE (sym->type ()))
-    return 1;
-  *best = sym;
-  return 0;
+  return nullptr;
 }
 
 /* See block.h.  */

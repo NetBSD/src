@@ -1,4 +1,4 @@
-#   Copyright 1988-2023 Free Software Foundation, Inc.
+#   Copyright 1988-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -259,6 +259,7 @@ gdb_test {print *v_int_array_init@2} { = \{10, 20\}}
 gdb_test {print v_int_array_init[0]@1} { = \{10\}}
 gdb_test {print v_int_array_init[0]@2} { = \{10, 20\}}
 gdb_test {print v_int_array_init[1]@1} { = \{20\}}
+gdb_test {print ((int &) v_int_array_init[0])@2} { = \{10, 20\}}
 
 # gdb's {} extension
 gdb_test_no_output "set variable v_short_array\[0\] = 42"
@@ -275,3 +276,11 @@ gdb_test "print null_t_struct && null_t_struct->v_int_member == 0" \
 # Regression test for unusual function-call parse that caused a crash.
 gdb_test "print v_short++(97)" \
     "cast the call to its declared return type"
+
+# Test for a syntax error at the end of an expression.
+gdb_test "print v_short + " \
+    "A syntax error in expression, near the end of `v_short \\+'\\."
+
+# Test for a syntax error in the middle of an expression.
+gdb_test "print v_short =}{= 3" \
+    "A syntax error in expression, near `\\}\\{= 3'\\."

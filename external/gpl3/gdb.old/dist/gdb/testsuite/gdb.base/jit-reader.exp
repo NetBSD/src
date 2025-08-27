@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,17 +18,9 @@ load_lib gdb-python.exp
 
 standard_testfile jit-reader-host.c
 
-if { (![istarget x86_64-*-*] && ![istarget i?86-*-*]) || ![is_lp64_target] } {
-    return -1;
-}
+require {is_any_target "i?86-*-*" "x86_64-*-*"} is_lp64_target
 
-if {[skip_shlib_tests]} {
-    return -1
-}
-
-if { ![isnative] } {
-    return -1
-}
+require allow_shlib_tests isnative
 
 # Increase this to see more detail.
 set test_verbose 0
@@ -225,7 +217,7 @@ proc jit_reader_test {} {
 		    "cannot assign to register"
 	    }
 
-	    if { ![skip_python_tests] } {
+	    if { [allow_python_tests] } {
 		gdb_test "python print(gdb.objfiles())" \
 		    "$any<gdb.Objfile filename=<< JIT compiled code at $hex >>>$any" \
 		    "python gdb.Objfile.__repr__ ()"
@@ -233,6 +225,10 @@ proc jit_reader_test {} {
 		gdb_test "python print(list(map(lambda objf : objf.filename, gdb.objfiles())))" \
 		    "$any'<< JIT compiled code at $hex >>'$any" \
 		    "python gdb.Objfile.filename"
+
+		gdb_test "python print( \[o for o in gdb.objfiles() if o.filename.startswith('<< JIT compiled code')\]\[0\].build_id )" \
+		    "None" \
+		    "python gdb.Objfile.build_id"
 	    }
 	}
     }
@@ -269,7 +265,7 @@ proc jit_reader_test {} {
 		]
     }
 
-    if {![skip_python_tests]} {
+    if {[allow_python_tests]} {
 	gdb_test "python print(any(\[not x.is_file for x in gdb.objfiles()\]))" \
 	    "True" \
 	    "at least one non-file objfile"

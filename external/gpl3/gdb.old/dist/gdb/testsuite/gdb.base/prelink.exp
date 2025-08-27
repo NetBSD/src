@@ -1,4 +1,4 @@
-# Copyright 2006-2023 Free Software Foundation, Inc.
+# Copyright 2006-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,14 +19,8 @@
 # This file was written by Alexandre Oliva <aoliva@redhat.com>
 
 
-if { ![isnative] || [is_remote host] || [skip_shlib_tests]} {
-    return
-}
-
-if {![is_c_compiler_gcc]} {
-    unsupported "gcc compiler is required"
-    return -1
-}
+require isnative allow_shlib_tests is_c_compiler_gcc
+require {!is_remote host}
 
 load_lib prelink-support.exp
 
@@ -35,10 +29,8 @@ set testfile "prelink"
 set libsrcfile ${testfile}-lib.c
 set libfile [standard_output_file ${testfile}.so]
 
-# Use -soname so that the new library gets copied by build_executable_own_libs.
-
-if { [gdb_compile_shlib "${srcdir}/${subdir}/${libsrcfile}" "${libfile}" [list debug "ldflags=-Wl,-soname,[file tail ${libfile}]"]] != ""} {
-    # If creating the shared library fails, maybe we don't have the right tools
+if {[build_executable "build library" ${libfile} ${libsrcfile} \
+	 {debug shlib}] == -1} {
     return -1
 }
 

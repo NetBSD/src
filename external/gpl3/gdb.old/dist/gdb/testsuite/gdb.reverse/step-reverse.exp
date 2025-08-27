@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,7 @@
 # Test step and next in reverse
 #
 
-if ![supports_reverse] {
-    return
-}
+require supports_reverse
 
 standard_testfile
 
@@ -31,7 +29,6 @@ if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
 }
 
 runto_main
-set target_remote [gdb_is_target_remote]
 
 if [supports_process_record] {
     # Activate process record/replay
@@ -177,11 +174,21 @@ gdb_test_multiple "stepi" "$test_message" {
 
 # stepi backward out of a function call
 
+# When testing stepi, we dont want to infinitely step if we're not moving
+# so we store the starting PC, in case we land on the same line as above
+set start_pc [get_hexadecimal_valueof "\$pc" 0 "get PC at start"]
+set get_pc_count 0
 set stepi_location  [gdb_get_line_number "STEPI TEST" "$srcfile"]
 set test_message "reverse stepi from a function call"
 gdb_test_multiple "stepi" "$test_message" {
     -re "ARRIVED IN CALLEE.*$gdb_prompt $" {
-	fail "$test_message (start statement)"
+	incr get_pc_count
+	if { [get_hexadecimal_valueof "\$pc" 0 "get PC again $get_pc_count"] == $start_pc } {
+	    fail "$test_message (start statement)"
+	} else {
+	    send_gdb "stepi\n"
+	    exp_continue
+	}
     }
     -re "ENTER CALLEE.*$gdb_prompt $" {
 	send_gdb "stepi\n" 
@@ -250,6 +257,7 @@ gdb_test_multiple "step" "$test_message" {
 gdb_test "next" ".*NEXT OVER THIS CALL.*" "reverse next over call"
 
 set step_out 0
+set max_iterations 1000
 gdb_test_multiple "next" "reverse next over recursion" {
     -re -wrap ".*NEXT OVER THIS RECURSION.*" {
 	pass "$gdb_test_name"
@@ -260,11 +268,19 @@ gdb_test_multiple "next" "reverse next over recursion" {
     }
 }
 if { "$step_out" == 1 } {
+    set iterations 0
     gdb_test_multiple "next" "stepping out of recursion" {
-	-re -wrap "NEXT OVER THIS RECURSION.*" {
+	-re -wrap "^main.*NEXT OVER THIS RECURSION.*" {
 	    set step_out 0
+	    pass "$gdb_test_name"
 	}
-	-re -wrap ".*" {
+	-re -wrap "^\[0-9\].*" {
+	    incr iterations
+	    if { $iterations == $max_iterations } {
+		fail "$gdb_test_name (reached $max_iterations iterations)"
+		return
+	    }
+
 	    send_gdb "next\n"
 	    exp_continue
 	}
@@ -274,28 +290,21 @@ if { "$step_out" == 1 } {
 # Step forward over recursion again so we can test stepping over calls
 # inside the recursion itself.
 gdb_test_no_output "set exec-dir forward" "forward again to test recursion"
-if {$target_remote} {
-    # gdb doesn't record the change of return pointer for remote targets,
-    # so we can't next forward over functions.
-    setup_kfail gdb/29745 *-*-*
-}
 gdb_test "next" "NEXT OVER THIS CALL.*" "reverse next over recursion again"
 gdb_test_no_output "set exec-dir reverse" "reverse again to test recursion"
 
-if {$target_remote} {
-    # Because of the above mentioned KFAIL, the inferior is now out of sync
-    setup_kfail gdb/29745 *-*-*
-}
 gdb_test "step" ".*EXIT RECURSIVE FUNCTION.*" "enter recursive function"
 set seen_recursive_call 0
-if {$target_remote} {
-    # Because of the above mentioned KFAIL, the inferior is now out of sync
-    # The fail state below will resync the inferior.
-    setup_kfail gdb/29745 *-*-*
-}
+set iterations 0
 gdb_test_multiple "next" "step over recursion inside the recursion" {
     -re -wrap ".*RECURSIVE CALL.*" {
 	incr seen_recursive_call
+	incr iterations
+	if { $iterations == $max_iterations } {
+	    fail "$gdb_test_name (reached $max_iterations iterations)"
+	    return
+	}
+
 	send_gdb "next\n"
 	exp_continue
     }
@@ -303,7 +312,13 @@ gdb_test_multiple "next" "step over recursion inside the recursion" {
 	gdb_assert {"$seen_recursive_call" == 1} \
 	    "step over recursion inside the recursion"
     }
-    -re -wrap ".*" {
+    -re -wrap "^\[0-9\].*" {
+	incr iterations
+	if { $iterations == $max_iterations } {
+	    fail "$gdb_test_name (reached $max_iterations iterations)"
+	    return
+	}
+
 	send_gdb "next\n"
 	exp_continue
     }

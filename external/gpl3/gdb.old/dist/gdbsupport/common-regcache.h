@@ -1,6 +1,6 @@
 /* Cache and manage the values of registers
 
-   Copyright (C) 2014-2023 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,8 @@
 
 #ifndef COMMON_COMMON_REGCACHE_H
 #define COMMON_COMMON_REGCACHE_H
+
+struct reg_buffer_common;
 
 /* This header is a stopgap until we have an independent regcache.  */
 
@@ -44,28 +46,29 @@ enum register_status : signed char
    thread specified by PTID.  This function must be provided by
    the client.  */
 
-extern struct regcache *get_thread_regcache_for_ptid (ptid_t ptid);
+extern reg_buffer_common *get_thread_regcache_for_ptid (ptid_t ptid);
 
 /* Return the size of register numbered N in REGCACHE.  This function
    must be provided by the client.  */
 
-extern int regcache_register_size (const struct regcache *regcache, int n);
+extern int regcache_register_size (const reg_buffer_common *regcache, int n);
 
 /* Read the PC register.  This function must be provided by the
    client.  */
 
-extern CORE_ADDR regcache_read_pc (struct regcache *regcache);
+extern CORE_ADDR regcache_read_pc (reg_buffer_common *regcache);
 
 /* Read the PC register.  If PC cannot be read, return 0.
    This is a wrapper around 'regcache_read_pc'.  */
 
-extern CORE_ADDR regcache_read_pc_protected (regcache *regcache);
+extern CORE_ADDR regcache_read_pc_protected (reg_buffer_common *regcache);
 
 /* Read a raw register into a unsigned integer.  */
-extern enum register_status regcache_raw_read_unsigned
-  (struct regcache *regcache, int regnum, ULONGEST *val);
+extern enum register_status
+regcache_raw_read_unsigned (reg_buffer_common *regcache, int regnum,
+			    ULONGEST *val);
 
-ULONGEST regcache_raw_get_unsigned (struct regcache *regcache, int regnum);
+ULONGEST regcache_raw_get_unsigned (reg_buffer_common *regcache, int regnum);
 
 struct reg_buffer_common
 {
@@ -75,11 +78,41 @@ struct reg_buffer_common
      buffer.  */
   virtual register_status get_register_status (int regnum) const = 0;
 
-  /* Supply register REGNUM, whose contents are stored in BUF, to REGCACHE.  */
-  virtual void raw_supply (int regnum, const void *buf) = 0;
+  /* Supply register REGNUM, whose contents are stored in SRC, to this register
+     buffer.  */
+  virtual void raw_supply (int regnum, gdb::array_view<const gdb_byte> src)
+    = 0;
 
-  /* Collect register REGNUM from REGCACHE and store its contents in BUF.  */
-  virtual void raw_collect (int regnum, void *buf) const = 0;
+  void raw_supply (int regnum, const uint64_t *src)
+  {
+    raw_supply (regnum,
+		gdb::make_array_view ((const gdb_byte *) src, sizeof (*src)));
+  }
+
+  void raw_supply (int regnum, const gdb_byte *src)
+  {
+    raw_supply (regnum,
+		gdb::make_array_view (src,
+				      regcache_register_size (this, regnum)));
+  }
+
+  /* Collect register REGNUM from this register buffer and store its contents in
+     DST.  */
+  virtual void raw_collect (int regnum, gdb::array_view<gdb_byte> dst) const
+    = 0;
+
+  void raw_collect (int regnum, uint64_t *dst) const
+  {
+    raw_collect (regnum,
+		 gdb::make_array_view ((gdb_byte *) dst, sizeof (*dst)));
+  };
+
+  void raw_collect (int regnum, gdb_byte *dst)
+  {
+    raw_collect (regnum,
+		 gdb::make_array_view (dst,
+				       regcache_register_size (this, regnum)));
+  }
 
   /* Compare the contents of the register stored in the regcache (ignoring the
      first OFFSET bytes) to the contents of BUF (without any offset).  Returns

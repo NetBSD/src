@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,12 +35,10 @@ proc test_async_run {} {
 
 	set GDBFLAGS [concat $GDBFLAGS " -ex \"set mi-async on\""]
 
-	gdb_exit
-	if [mi_gdb_start] {
+	if {[mi_clean_restart $binfile]} {
 	    return
 	}
 
-	mi_gdb_load ${binfile}
 	mi_run_cmd
 	mi_gdb_test "123-exec-interrupt --all" "123\\^done" "send interrupt command"
 	mi_expect_interrupt "expect interrupt"

@@ -1,6 +1,6 @@
 /* Scheme interface to architecture.
 
-   Copyright (C) 2014-2023 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,12 +20,11 @@
 /* See README file in this directory for implementation notes, coding
    conventions, et.al.  */
 
-#include "defs.h"
 #include "arch-utils.h"
 #include "disasm.h"
 #include "dis-asm.h"
 #include "gdbarch.h"
-#include "gdbcore.h" /* Why is memory_error here? */
+#include "gdbcore.h"
 #include "guile-internal.h"
 
 static SCM port_keyword;

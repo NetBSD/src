@@ -1,6 +1,6 @@
 /* Low-level RSP routines for GDB, the GNU debugger.
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -53,6 +53,8 @@ extern std::string hex2str (const char *hex, int count);
    character.  Returns the number of bytes actually converted.  */
 
 extern int bin2hex (const gdb_byte *bin, char *hex, int count);
+
+extern int bin2hex (gdb::array_view<gdb_byte> bin, char *hex);
 
 /* Overloaded version of bin2hex that returns a std::string.  */
 

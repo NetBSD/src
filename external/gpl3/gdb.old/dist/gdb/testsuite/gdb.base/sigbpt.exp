@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2004-2023 Free Software Foundation, Inc.
+# Copyright 2004-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,10 +28,7 @@
 # instruction.  Since the kernel problems can be "fixed" using
 # software single-step this is KFAILed rather than XFAILed.
 
-if [target_info exists gdb,nosignals] {
-    verbose "Skipping sigbpt.exp because of nosignals."
-    return
-}
+require {!target_info exists gdb,nosignals}
 
 
 standard_testfile

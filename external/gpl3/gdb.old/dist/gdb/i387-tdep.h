@@ -1,6 +1,6 @@
 /* Target-dependent code for the i387.
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,7 @@ class frame_info_ptr;
 struct regcache;
 struct type;
 struct ui_file;
+struct x86_xsave_layout;
 
 /* Number of i387 floating point registers.  */
 #define I387_NUM_REGS	16
@@ -50,6 +51,7 @@ struct ui_file;
 #define I387_K0_REGNUM(tdep) ((tdep)->k0_regnum)
 #define I387_NUM_ZMMH_REGS(tdep) ((tdep)->num_zmm_regs)
 #define I387_ZMM0H_REGNUM(tdep) ((tdep)->zmm0h_regnum)
+#define I387_ZMM16H_REGNUM(tdep) ((tdep)->zmm0h_regnum + 16)
 #define I387_NUM_YMM_AVX512_REGS(tdep) ((tdep)->num_ymm_avx512_regs)
 #define I387_YMM16H_REGNUM(tdep) ((tdep)->ymm16h_regnum)
 
@@ -88,7 +90,7 @@ struct ui_file;
 
 extern void i387_print_float_info (struct gdbarch *gdbarch,
 				   struct ui_file *file,
-				   frame_info_ptr frame,
+				   const frame_info_ptr &frame,
 				   const char *args);
 
 /* Return nonzero if a value of type TYPE stored in register REGNUM
@@ -100,14 +102,14 @@ extern int i387_convert_register_p (struct gdbarch *gdbarch, int regnum,
 /* Read a value of type TYPE from register REGNUM in frame FRAME, and
    return its contents in TO.  */
 
-extern int i387_register_to_value (frame_info_ptr frame, int regnum,
+extern int i387_register_to_value (const frame_info_ptr &frame, int regnum,
 				   struct type *type, gdb_byte *to,
 				   int *optimizedp, int *unavailablep);
 
 /* Write the contents FROM of a value of type TYPE into register
    REGNUM in frame FRAME.  */
 
-extern void i387_value_to_register (frame_info_ptr frame, int regnum,
+extern void i387_value_to_register (const frame_info_ptr &frame, int regnum,
 				    struct type *type, const gdb_byte *from);
 
 
@@ -137,6 +139,18 @@ extern void i387_collect_fsave (const struct regcache *regcache, int regnum,
 
 extern void i387_supply_fxsave (struct regcache *regcache, int regnum,
 				const void *fxsave);
+
+/* Select an XSAVE layout based on the XCR0 bitmask and total XSAVE
+   extended state size.  Returns true if the bitmask and size matched
+   a known layout.  */
+
+extern bool i387_guess_xsave_layout (uint64_t xcr0, size_t xsave_size,
+				     x86_xsave_layout &layout);
+
+/* Compute an XSAVE layout based on the XCR0 bitmask.  This is used
+   as a fallback if a target does not provide an XSAVE layout.  */
+
+extern x86_xsave_layout i387_fallback_xsave_layout (uint64_t xcr0);
 
 /* Similar to i387_supply_fxsave, but use XSAVE extended state.  */
 

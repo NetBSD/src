@@ -1,5 +1,5 @@
 /* Profile header for simulators using common framework.
-   Copyright (C) 1996-2023 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -120,7 +120,7 @@ SIM_RC sim_profile_set_option (SIM_DESC sd_, const char *name_, int idx_,
 
 typedef void (PROFILE_INFO_CALLBACK_FN) (SIM_DESC, int);
 struct _sim_cpu; /* forward reference */
-typedef void (PROFILE_INFO_CPU_CALLBACK_FN) (struct _sim_cpu *cpu, int verbose);
+typedef void (PROFILE_INFO_CPU_CALLBACK_FN) (struct _sim_cpu *cpu, bool verbose);
 
 
 /* Struct containing most profiling data.

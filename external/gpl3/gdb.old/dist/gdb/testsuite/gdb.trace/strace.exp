@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -14,9 +14,7 @@
 
 load_lib "trace-support.exp"
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
 standard_testfile
 set executable $testfile
@@ -126,6 +124,7 @@ proc strace_info_marker { } {
 	global executable
 	global gdb_prompt
 	global libipa
+	global tdlabel_re
 
 	# Restart with a fresh gdb.
 	clean_restart $executable
@@ -141,7 +140,7 @@ proc strace_info_marker { } {
 	# List all the thread.  It is expected to get three threads without
 	# any errors.
 	gdb_test_multiple "info threads 3 2 1" "info threads" {
-	    -re "3\[ \t\]+Thread .*2\[ \t\]+Thread .*1\[ \t\]+Thread .*${gdb_prompt} $" {
+	    -re "3\[ \t\]+${tdlabel_re} .*2\[ \t\]+${tdlabel_re} .*1\[ \t\]+${tdlabel_re} .*${gdb_prompt} $" {
 		pass "info threads"
 	    }
 	}

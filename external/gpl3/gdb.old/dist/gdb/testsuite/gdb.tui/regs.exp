@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,6 +30,9 @@ if {![runto_main]} {
     return
 }
 
+# This is convenient later on.
+gdb_test_no_output "set confirm off"
+
 if {![Term::enter_tui]} {
     unsupported "TUI not supported"
     return
@@ -41,10 +44,20 @@ Term::command "layout regs"
 Term::check_box "register box" 0 0 80 8
 Term::check_box "source box in regs layout" 0 7 80 8
 
-set text [Term::get_line 1]
-# Just check for any register window content at all.
-Term::check_contents "any register contents" "\\|.*\[^ \].*\\|"
+# The current frame is main, check that registers are available.
+set re_reg_vals_unavailable \
+    [string_to_regexp \
+	 [string cat \
+	      [string repeat " " 23] \
+	      {[ Register Values Unavailable ]}]]
+gdb_assert \
+    { ![Term::check_region_contents_p 0 0 80 8 $re_reg_vals_unavailable] } \
+    "Register values available"
 
+Term::command "kill"
+gdb_assert \
+    { [Term::check_region_contents_p 0 0 80 8 $re_reg_vals_unavailable] } \
+    "Register values no longer available"
 
 # Check that we can successfully cause the register window to appear
 # using the 'tui reg next' and 'tui reg prev' commands.

@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,10 +37,7 @@
 #
 # 4. Indentation of lines will be preserved so your input file needs
 #    to follow the expected indentation.
-if {[gdb_skip_xml_test]} {
-    unsupported "xml tests not being run"
-    return -1
-}
+require allow_xml_test
 
 gdb_start
 

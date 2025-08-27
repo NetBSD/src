@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 load_lib "ada.exp"
 
-if { [skip_ada_tests] } { return -1 }
+require allow_ada_tests gnat_runtime_has_debug_info
 
 standard_ada_testfile foo
 
@@ -23,36 +23,9 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug additional
   return -1
 }
 
-# Some global variables used to simplify the maintenance of some of
+# A global variable used to simplify the maintenance of some of
 # the regular expressions below.
 set any_nb "\[0-9\]+"
-set eol "\[\r\n\]+"
-
-# Before going any further, verify that we can insert exception
-# catchpoints...  That way, we won't have to do this while doing
-# the actual GDB/MI testing.
-
-clean_restart ${testfile}
-
-if {![runto_main]} {
-   return 0
-}
-
-set msg "insert catchpoint on all Ada exceptions"
-gdb_test_multiple "catch exception" $msg {
-    -re "Catchpoint $any_nb: all Ada exceptions$eol$gdb_prompt $" {
-	pass $msg
-    }
-    -re "Your Ada runtime appears to be missing some debugging information.*\[\r\n\]+$gdb_prompt $" {
-	# If the runtime was not built with enough debug information,
-	# or if it was stripped, we can not test exception
-	# catchpoints.
-	unsupported $msg
-	return -1
-    }
-}
-
-# Now, we can start the GDB/MI testing itself...
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
@@ -92,7 +65,7 @@ proc continue_to_exception { exception_name exception_message test } {
 
     # Now MI stream output.
     mi_expect_stop \
-	"breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb\",exception-name=\"$exception_name\(\",exception-message=\"$exception_message\)?" \
+	"\"breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb\",exception-name=\"$exception_name\(\",exception-message=\"$exception_message\)?\"" \
 	"foo" "" ".*" ".*" \
 	".*" \
 	$test
@@ -140,19 +113,19 @@ mi_gdb_test "-catch-exception -u" \
             "catch unhandled exceptions"
 
 mi_execute_to "exec-continue" \
-              "breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb\",exception-name=\"PROGRAM_ERROR(\",exception-message=\"foo\\.adb:$decimal explicit raise)?" \
+              "\"breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb\",exception-name=\"PROGRAM_ERROR(\",exception-message=\"foo\\.adb:$decimal explicit raise)?\"" \
               "foo" "" ".*" ".*" \
               ".*" \
               "continue to exception catchpoint hit"
 
 mi_execute_to "exec-continue" \
-              "breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb" \
+              "\"breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb\"" \
               "foo" "" ".*" ".*" \
               ".*" \
               "continue to assert failure catchpoint hit"
 
 mi_execute_to "exec-continue" \
-              "breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb\",exception-name=\"CONSTRAINT_ERROR" \
+              "\"breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb\",exception-name=\"CONSTRAINT_ERROR\"" \
               "foo" "" ".*" ".*" \
               ".*" \
               "continue to unhandled exception catchpoint hit"

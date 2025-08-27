@@ -1,4 +1,4 @@
-! Copyright 2009-2023 Free Software Foundation, Inc.
+! Copyright 2009-2024 Free Software Foundation, Inc.
 ! 
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -40,18 +40,19 @@ end module moduse
         subroutine sub1
         use mod1
         if (var_i .ne. 1) call abort
-        var_i = var_i                         ! i-is-1
+        var_i = 1                         ! i-is-1
         end
 
         subroutine sub2
         use mod2
         if (var_i .ne. 2) call abort
-        var_i = var_i                         ! i-is-2
+        var_i = 2                         ! i-is-2
         end
 
         subroutine sub3
-        USE mod3
-        var_i = var_i                         ! i-is-3
+        use mod3
+        if (var_i .ne. 3) call abort
+        var_i = 3                         ! i-is-3
         END
 
         program module
@@ -68,5 +69,5 @@ end module moduse
         if (var_i .ne. 14) call abort
         if (var_x .ne. 30) call abort
         if (var_z .ne. 31) call abort
-        var_b = var_b                         ! a-b-c-d
+        var_b = 11                         ! a-b-c-d
 end

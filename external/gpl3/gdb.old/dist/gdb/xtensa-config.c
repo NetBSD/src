@@ -1,6 +1,6 @@
 /* Configuration for the Xtensa architecture for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 
 #define XTENSA_CONFIG_VERSION 0x60
 
@@ -62,7 +61,7 @@ const xtensa_mask_t xtensa_mask15 = { 1, xtensa_submask15 };
 
 
 /* Register map.  */
-static xtensa_register_t rmap[] =
+xtensa_register_t xtensa_rmap[] =
 {
   /*    idx ofs bi sz al targno  flags cp typ group name  */
   XTREG(  0,  0,32, 4, 4,0x0020,0x0006,-2, 9,0x0100,pc,          0,0,0,0,0,0)
@@ -212,5 +211,3 @@ static xtensa_register_t rmap[] =
 	    0,0,&xtensa_mask15,0,0,0)
   XTREG_END
 };
-
-xtensa_gdbarch_tdep xtensa_tdep (rmap);

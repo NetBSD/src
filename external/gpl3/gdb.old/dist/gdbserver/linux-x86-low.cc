@@ -1,6 +1,6 @@
 /* GNU/Linux/x86-64 specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include <signal.h>
 #include <limits.h>
 #include <inttypes.h>
@@ -25,6 +24,7 @@
 #include "i387-fp.h"
 #include "x86-low.h"
 #include "gdbsupport/x86-xstate.h"
+#include "nat/x86-xstate.h"
 #include "nat/gdb_ptrace.h"
 
 #ifdef __x86_64__
@@ -873,6 +873,7 @@ x86_linux_read_description (void)
   int xcr0_features;
   int tid;
   static uint64_t xcr0;
+  static int xsave_len;
   struct regset_info *regset;
 
   tid = lwpid_of (current_thread);
@@ -897,7 +898,7 @@ x86_linux_read_description (void)
       if (ptrace (PTRACE_GETFPXREGS, tid, 0, (long) &fpxregs) < 0)
 	{
 	  have_ptrace_getfpxregs = 0;
-	  have_ptrace_getregset = 0;
+	  have_ptrace_getregset = TRIBOOL_FALSE;
 	  return i386_linux_read_description (X86_XSTATE_X87);
 	}
       else
@@ -907,8 +908,6 @@ x86_linux_read_description (void)
 
   if (!use_xml)
     {
-      x86_xcr0 = X86_XSTATE_SSE_MASK;
-
       /* Don't use XML.  */
 #ifdef __x86_64__
       if (machine == EM_X86_64)
@@ -918,7 +917,7 @@ x86_linux_read_description (void)
 	return tdesc_i386_linux_no_xml.get ();
     }
 
-  if (have_ptrace_getregset == -1)
+  if (have_ptrace_getregset == TRIBOOL_UNKNOWN)
     {
       uint64_t xstateregs[(X86_XSTATE_SSE_SIZE / sizeof (uint64_t))];
       struct iovec iov;
@@ -929,31 +928,37 @@ x86_linux_read_description (void)
       /* Check if PTRACE_GETREGSET works.  */
       if (ptrace (PTRACE_GETREGSET, tid,
 		  (unsigned int) NT_X86_XSTATE, (long) &iov) < 0)
-	have_ptrace_getregset = 0;
+	have_ptrace_getregset = TRIBOOL_FALSE;
       else
 	{
-	  have_ptrace_getregset = 1;
+	  have_ptrace_getregset = TRIBOOL_TRUE;
 
 	  /* Get XCR0 from XSAVE extended state.  */
 	  xcr0 = xstateregs[(I386_LINUX_XSAVE_XCR0_OFFSET
 			     / sizeof (uint64_t))];
 
+	  /* No MPX on x32.  */
+	  if (machine == EM_X86_64 && !is_elf64)
+	    xcr0 &= ~X86_XSTATE_MPX;
+
+	  xsave_len = x86_xsave_length ();
+
 	  /* Use PTRACE_GETREGSET if it is available.  */
 	  for (regset = x86_regsets;
 	       regset->fill_function != NULL; regset++)
 	    if (regset->get_request == PTRACE_GETREGSET)
-	      regset->size = X86_XSTATE_SIZE (xcr0);
+	      regset->size = xsave_len;
 	    else if (regset->type != GENERAL_REGS)
 	      regset->size = 0;
 	}
     }
 
   /* Check the native XCR0 only if PTRACE_GETREGSET is available.  */
-  xcr0_features = (have_ptrace_getregset
+  xcr0_features = (have_ptrace_getregset == TRIBOOL_TRUE
 		   && (xcr0 & X86_XSTATE_ALL_MASK));
 
   if (xcr0_features)
-    x86_xcr0 = xcr0;
+    i387_set_xsave_mask (xcr0, xsave_len);
 
   if (machine == EM_X86_64)
     {

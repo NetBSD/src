@@ -1,5 +1,5 @@
 /* Remote target callback routines.
-   Copyright 1995-2023 Free Software Foundation, Inc.
+   Copyright 1995-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GDB.
@@ -34,9 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <sys/stat.h>
 #include <sys/types.h>
 

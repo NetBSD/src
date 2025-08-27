@@ -1,5 +1,5 @@
 /*  dv-m68hc11.c -- CPU 68HC11&68HC12 as a device.
-    Copyright (C) 1999-2023 Free Software Foundation, Inc.
+    Copyright (C) 1999-2024 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@nerim.fr)
     (From a driver model Contributed by Cygnus Solutions.)
     
@@ -28,6 +28,8 @@
 #include "hw-base.h"
 #include <limits.h>
 #include <stdlib.h>
+
+#include "m68hc11-sim.h"
 
 /* DEVICE
 
@@ -254,18 +256,6 @@ dv_m6811_attach_address_callback (struct hw *me,
 }
 
 static void
-dv_m6811_detach_address_callback (struct hw *me,
-                                  int level,
-                                  int space,
-                                  address_word addr,
-                                  address_word nr_bytes,
-                                  struct hw *client)
-{
-  sim_core_detach (hw_system (me), NULL, /*cpu*/
-                   level, space, addr);
-}
-
-static void
 m68hc11_delete (struct hw* me)
 {
   struct m68hc11cpu *controller;
@@ -286,6 +276,7 @@ attach_m68hc11_regs (struct hw *me,
 {
   SIM_DESC sd;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   reg_property_spec reg;
   const char *cpu_mode;
   
@@ -314,20 +305,21 @@ attach_m68hc11_regs (struct hw *me,
   /* Get cpu frequency.  */
   sd = hw_system (me);
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   if (hw_find_property (me, "clock") != NULL)
     {
-      cpu->cpu_frequency = hw_find_integer_property (me, "clock");
+      m68hc11_cpu->cpu_frequency = hw_find_integer_property (me, "clock");
     }
   else
     {
-      cpu->cpu_frequency = 8*1000*1000;
+      m68hc11_cpu->cpu_frequency = 8*1000*1000;
     }
 
   if (hw_find_property (me, "use_bank") != NULL)
     hw_attach_address (hw_parent (me), 0,
                        exec_map,
-                       cpu->bank_start,
-                       cpu->bank_end - cpu->bank_start,
+                       m68hc11_cpu->bank_start,
+                       m68hc11_cpu->bank_end - m68hc11_cpu->bank_start,
                        me);
 
   cpu_mode = "expanded";
@@ -335,13 +327,13 @@ attach_m68hc11_regs (struct hw *me,
     cpu_mode = hw_find_string_property (me, "mode");
 
   if (strcmp (cpu_mode, "test") == 0)
-    cpu->cpu_mode = M6811_MDA | M6811_SMOD;
+    m68hc11_cpu->cpu_mode = M6811_MDA | M6811_SMOD;
   else if (strcmp (cpu_mode, "bootstrap") == 0)
-    cpu->cpu_mode = M6811_SMOD;
+    m68hc11_cpu->cpu_mode = M6811_SMOD;
   else if (strcmp (cpu_mode, "single") == 0)
-    cpu->cpu_mode = 0;
+    m68hc11_cpu->cpu_mode = 0;
   else
-    cpu->cpu_mode = M6811_MDA;
+    m68hc11_cpu->cpu_mode = M6811_MDA;
 
   controller->last_oscillator = 0;
 
@@ -387,7 +379,6 @@ m68hc11cpu_finish (struct hw *me)
   set_hw_ports (me, m68hc11cpu_ports);
   set_hw_port_event (me, m68hc11cpu_port_event);
   set_hw_attach_address (me, dv_m6811_attach_address_callback);
-  set_hw_detach_address (me, dv_m6811_detach_address_callback);
 #ifdef set_hw_ioctl
   set_hw_ioctl (me, m68hc11_ioctl);
 #else
@@ -445,15 +436,17 @@ oscillator_handler (struct hw *me, void *data)
   struct input_osc *osc = (struct input_osc*) data;
   SIM_DESC sd;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   int64_t dt;
   uint8_t val;
 
   sd = hw_system (me);
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
 
   /* Change the input bit.  */
   osc->value ^= osc->mask;
-  val = cpu->ios[osc->addr] & ~osc->mask;
+  val = m68hc11_cpu->ios[osc->addr] & ~osc->mask;
   val |= osc->value;
   m68hc11cpu_set_port (me, cpu, osc->addr, val);
 
@@ -595,19 +588,19 @@ m68hc11_info (struct hw *me)
   SIM_DESC sd;
   uint16_t base = 0;
   sim_cpu *cpu;
-  struct m68hc11sio *controller;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   uint8_t val;
   
   sd = hw_system (me);
   cpu = STATE_CPU (sd, 0);
-  controller = hw_data (me);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
 
   base = cpu_get_io_base (cpu);
   sim_io_printf (sd, "M68HC11:\n");
 
-  val = cpu->ios[M6811_HPRIO];
+  val = m68hc11_cpu->ios[M6811_HPRIO];
   print_io_byte (sd, "HPRIO ", hprio_desc, val, base + M6811_HPRIO);
-  switch (cpu->cpu_mode)
+  switch (m68hc11_cpu->cpu_mode)
     {
     case M6811_MDA | M6811_SMOD:
       sim_io_printf (sd, "[test]\n");
@@ -623,15 +616,15 @@ m68hc11_info (struct hw *me)
       break;
     }
 
-  val = cpu->ios[M6811_CONFIG];
+  val = m68hc11_cpu->ios[M6811_CONFIG];
   print_io_byte (sd, "CONFIG", config_desc, val, base + M6811_CONFIG);
   sim_io_printf (sd, "\n");
 
-  val = cpu->ios[M6811_OPTION];
+  val = m68hc11_cpu->ios[M6811_OPTION];
   print_io_byte (sd, "OPTION", option_desc, val, base + M6811_OPTION);
   sim_io_printf (sd, "\n");
 
-  val = cpu->ios[M6811_INIT];
+  val = m68hc11_cpu->ios[M6811_INIT];
   print_io_byte (sd, "INIT  ", 0, val, base + M6811_INIT);
   sim_io_printf (sd, "Ram = 0x%04x IO = 0x%04x\n",
 		 (((uint16_t) (val & 0xF0)) << 8),
@@ -639,7 +632,7 @@ m68hc11_info (struct hw *me)
 
 
   cpu_info (sd, cpu);
-  interrupts_info (sd, &cpu->cpu_interrupts);
+  interrupts_info (sd, &m68hc11_cpu->cpu_interrupts);
 }
 
 static int
@@ -665,33 +658,35 @@ m68hc11cpu_set_oscillator (SIM_DESC sd, const char *port,
                            double ton, double toff, int64_t repeat)
 {
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   struct input_osc *osc;
   double f;
 
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
 
   /* Find oscillator that corresponds to the input port.  */
-  osc = find_oscillator (hw_data (cpu->hw_cpu), port);
+  osc = find_oscillator (hw_data (m68hc11_cpu->hw_cpu), port);
   if (osc == 0)
     return -1;
 
   /* Compute the ON time in cpu cycles.  */
-  f = (double) (cpu->cpu_frequency) * ton;
+  f = (double) (m68hc11_cpu->cpu_frequency) * ton;
   osc->on_time = (int64_t) (f / 4.0);
   if (osc->on_time < 1)
     osc->on_time = 1;
 
   /* Compute the OFF time in cpu cycles.  */
-  f = (double) (cpu->cpu_frequency) * toff;
+  f = (double) (m68hc11_cpu->cpu_frequency) * toff;
   osc->off_time = (int64_t) (f / 4.0);
   if (osc->off_time < 1)
     osc->off_time = 1;
 
   osc->repeat = repeat;
   if (osc->event)
-    hw_event_queue_deschedule (cpu->hw_cpu, osc->event);
+    hw_event_queue_deschedule (m68hc11_cpu->hw_cpu, osc->event);
 
-  osc->event = hw_event_queue_schedule (cpu->hw_cpu,
+  osc->event = hw_event_queue_schedule (m68hc11_cpu->hw_cpu,
                                         osc->value ? osc->on_time
                                         : osc->off_time,
                                         oscillator_handler, osc);
@@ -703,15 +698,17 @@ int
 m68hc11cpu_clear_oscillator (SIM_DESC sd, const char *port)
 {
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   struct input_osc *osc;
 
   cpu = STATE_CPU (sd, 0);
-  osc = find_oscillator (hw_data (cpu->hw_cpu), port);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
+  osc = find_oscillator (hw_data (m68hc11_cpu->hw_cpu), port);
   if (osc == 0)
     return -1;
 
   if (osc->event)
-    hw_event_queue_deschedule (cpu->hw_cpu, osc->event);
+    hw_event_queue_deschedule (m68hc11_cpu->hw_cpu, osc->event);
   osc->event = 0;
   osc->repeat = 0;
   return 0;
@@ -742,6 +739,7 @@ static SIM_RC
 m68hc11_option_handler (SIM_DESC sd, sim_cpu *cpu,
                         int opt, char *arg, int is_command)
 {
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   struct m68hc11cpu *controller;
   double f;
   char *p;
@@ -750,8 +748,9 @@ m68hc11_option_handler (SIM_DESC sd, sim_cpu *cpu,
   
   if (cpu == 0)
     cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
 
-  controller = hw_data (cpu->hw_cpu);
+  controller = hw_data (m68hc11_cpu->hw_cpu);
   switch (opt)
     {
     case OPTION_OSC_SET:
@@ -783,7 +782,6 @@ m68hc11_option_handler (SIM_DESC sd, sim_cpu *cpu,
           osc = &controller->oscillators[i];
           if (osc->event)
             {
-              double f;
               int cur_value;
               int next_value;
               char freq[32];
@@ -796,8 +794,8 @@ m68hc11_option_handler (SIM_DESC sd, sim_cpu *cpu,
                 }
 
               f = (double) (osc->on_time + osc->off_time);
-              f = (double) (cpu->cpu_frequency / 4) / f;
-              t = hw_event_remain_time (cpu->hw_cpu, osc->event);
+              f = (double) (m68hc11_cpu->cpu_frequency / 4) / f;
+              t = hw_event_remain_time (m68hc11_cpu->hw_cpu, osc->event);
 
               if (f > 10000.0)
                 sprintf (freq, "%6.2f", f / 1000.0);
@@ -839,6 +837,7 @@ m68hc11cpu_io_read_buffer (struct hw *me,
   SIM_DESC sd;
   struct m68hc11cpu *controller = hw_data (me);
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   unsigned byte = 0;
   int result;
   
@@ -846,8 +845,9 @@ m68hc11cpu_io_read_buffer (struct hw *me,
 
   sd  = hw_system (me);
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
 
-  if (base >= cpu->bank_start && base < cpu->bank_end)
+  if (base >= m68hc11_cpu->bank_start && base < m68hc11_cpu->bank_end)
     {
       address_word virt_addr = phys_to_virt (cpu, base);
       if (virt_addr != base)
@@ -867,7 +867,7 @@ m68hc11cpu_io_read_buffer (struct hw *me,
       if (base >= controller->attach_size)
 	break;
 
-      memcpy (dest, &cpu->ios[base], 1);
+      memcpy (dest, &m68hc11_cpu->ios[base], 1);
       dest = (char*) dest + 1;
       base++;
       byte++;
@@ -880,6 +880,7 @@ void
 m68hc11cpu_set_port (struct hw *me, sim_cpu *cpu,
                      unsigned addr, uint8_t val)
 {
+  struct m68hc11_sim_cpu *m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   uint8_t mask;
   uint8_t delta;
   int check_interrupts = 0;
@@ -888,35 +889,35 @@ m68hc11cpu_set_port (struct hw *me, sim_cpu *cpu,
   switch (addr)
     {
     case M6811_PORTA:
-      if (cpu->ios[M6811_PACTL] & M6811_DDRA7)
+      if (m68hc11_cpu->ios[M6811_PACTL] & M6811_DDRA7)
         mask = 3;
       else
         mask = 0x83;
 
       val = val & mask;
-      val |= cpu->ios[M6811_PORTA] & ~mask;
-      delta = val ^ cpu->ios[M6811_PORTA];
-      cpu->ios[M6811_PORTA] = val;
+      val |= m68hc11_cpu->ios[M6811_PORTA] & ~mask;
+      delta = val ^ m68hc11_cpu->ios[M6811_PORTA];
+      m68hc11_cpu->ios[M6811_PORTA] = val;
       if (delta & 0x80)
         {
           /* Pulse accumulator is enabled.  */
-          if ((cpu->ios[M6811_PACTL] & M6811_PAEN)
-              && !(cpu->ios[M6811_PACTL] & M6811_PAMOD))
+          if ((m68hc11_cpu->ios[M6811_PACTL] & M6811_PAEN)
+              && !(m68hc11_cpu->ios[M6811_PACTL] & M6811_PAMOD))
             {
               int inc;
 
               /* Increment event counter according to rising/falling edge.  */
-              if (cpu->ios[M6811_PACTL] & M6811_PEDGE)
+              if (m68hc11_cpu->ios[M6811_PACTL] & M6811_PEDGE)
                 inc = (val & 0x80) ? 1 : 0;
               else
                 inc = (val & 0x80) ? 0 : 1;
 
-              cpu->ios[M6811_PACNT] += inc;
+              m68hc11_cpu->ios[M6811_PACNT] += inc;
 
               /* Event counter overflowed.  */
-              if (inc && cpu->ios[M6811_PACNT] == 0)
+              if (inc && m68hc11_cpu->ios[M6811_PACNT] == 0)
                 {
-                  cpu->ios[M6811_TFLG2] |= M6811_PAOVI;
+                  m68hc11_cpu->ios[M6811_TFLG2] |= M6811_PAOVI;
                   check_interrupts = 1;
                 }
             }
@@ -925,14 +926,14 @@ m68hc11cpu_set_port (struct hw *me, sim_cpu *cpu,
       /* Scan IC3, IC2 and IC1.  Bit number is 3 - i.  */
       for (i = 0; i < 3; i++)
         {
-          uint8_t mask = (1 << i);
+          mask = (1 << i);
           
           if (delta & mask)
             {
               uint8_t edge;
               int captured;
 
-              edge = cpu->ios[M6811_TCTL2];
+              edge = m68hc11_cpu->ios[M6811_TCTL2];
               edge = (edge >> (2 * i)) & 0x3;
               switch (edge)
                 {
@@ -951,7 +952,7 @@ m68hc11cpu_set_port (struct hw *me, sim_cpu *cpu,
                 }
               if (captured)
                 {
-                  cpu->ios[M6811_TFLG1] |= (1 << i);
+                  m68hc11_cpu->ios[M6811_TFLG1] |= (1 << i);
                   hw_port_event (me, CAPTURE, M6811_TIC1 + 3 - i);
                   check_interrupts = 1;
                 }
@@ -960,17 +961,17 @@ m68hc11cpu_set_port (struct hw *me, sim_cpu *cpu,
       break;
 
     case M6811_PORTC:
-      mask = cpu->ios[M6811_DDRC];
+      mask = m68hc11_cpu->ios[M6811_DDRC];
       val = val & mask;
-      val |= cpu->ios[M6811_PORTC] & ~mask;
-      cpu->ios[M6811_PORTC] = val;
+      val |= m68hc11_cpu->ios[M6811_PORTC] & ~mask;
+      m68hc11_cpu->ios[M6811_PORTC] = val;
       break;
 
     case M6811_PORTD:
-      mask = cpu->ios[M6811_DDRD];
+      mask = m68hc11_cpu->ios[M6811_DDRD];
       val = val & mask;
-      val |= cpu->ios[M6811_PORTD] & ~mask;
-      cpu->ios[M6811_PORTD] = val;
+      val |= m68hc11_cpu->ios[M6811_PORTD] & ~mask;
+      m68hc11_cpu->ios[M6811_PORTD] = val;
       break;
 
     default:
@@ -978,13 +979,15 @@ m68hc11cpu_set_port (struct hw *me, sim_cpu *cpu,
     }
 
   if (check_interrupts)
-    interrupts_update_pending (&cpu->cpu_interrupts);
+    interrupts_update_pending (&m68hc11_cpu->cpu_interrupts);
 }
 
 static void
 m68hc11cpu_io_write (struct hw *me, sim_cpu *cpu,
                      unsigned_word addr, uint8_t val)
 {
+  struct m68hc11_sim_cpu *m68hc11_cpu = M68HC11_SIM_CPU (cpu);
+
   switch (addr)
     {
     case M6811_PORTA:
@@ -1022,9 +1025,9 @@ m68hc11cpu_io_write (struct hw *me, sim_cpu *cpu,
       /* Change the RAM and I/O mapping.  */
     case M6811_INIT:
       {
-	uint8_t old_bank = cpu->ios[M6811_INIT];
+	uint8_t old_bank = m68hc11_cpu->ios[M6811_INIT];
 	
-	cpu->ios[M6811_INIT] = val;
+	m68hc11_cpu->ios[M6811_INIT] = val;
 
 	/* Update IO mapping.  Detach from the old address
 	   and attach to the new one.  */
@@ -1063,7 +1066,7 @@ m68hc11cpu_io_write (struct hw *me, sim_cpu *cpu,
 
       /* COP reset.  */
     case M6811_COPRST:
-      if (val == 0xAA && cpu->ios[addr] == 0x55)
+      if (val == 0xAA && m68hc11_cpu->ios[addr] == 0x55)
 	{
           val = 0;
           /* COP reset here.  */
@@ -1074,7 +1077,7 @@ m68hc11cpu_io_write (struct hw *me, sim_cpu *cpu,
       break;
 
     }
-  cpu->ios[addr] = val;
+  m68hc11_cpu->ios[addr] = val;
 }
 
 static unsigned
@@ -1088,14 +1091,16 @@ m68hc11cpu_io_write_buffer (struct hw *me,
   struct m68hc11cpu *controller = hw_data (me);
   unsigned byte;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   int result;
 
   HW_TRACE ((me, "write 0x%08lx %d", (long) base, (int) nr_bytes));
 
   sd = hw_system (me); 
   cpu = STATE_CPU (sd, 0);  
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
 
-  if (base >= cpu->bank_start && base < cpu->bank_end)
+  if (base >= m68hc11_cpu->bank_start && base < m68hc11_cpu->bank_end)
     {
       address_word virt_addr = phys_to_virt (cpu, base);
       if (virt_addr != base)

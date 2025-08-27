@@ -1,5 +1,5 @@
 /* Opening CTF files.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -438,7 +438,7 @@ upgrade_types_v1 (ctf_dict_t *fp, ctf_header_t *cth)
   tbuf = (ctf_type_v1_t *) (fp->ctf_buf + cth->cth_typeoff);
   tend = (ctf_type_v1_t *) (fp->ctf_buf + cth->cth_stroff);
 
-  /* Much like init_types(), this is a two-pass process.
+  /* Much like init_static_types(), this is a two-pass process.
 
      First, figure out the new type-section size needed.  (It is possible,
      in theory, for it to be less than the old size, but this is very
@@ -636,7 +636,7 @@ upgrade_types_v1 (ctf_dict_t *fp, ctf_header_t *cth)
 
   /* Verify that the entire region was converted.  If not, we are either
      converting too much, or too little (leading to a buffer overrun either here
-     or at read time, in init_types().) */
+     or at read time, in init_static_types().) */
 
   assert ((size_t) t2p - (size_t) fp->ctf_buf == cth->cth_stroff);
 
@@ -670,13 +670,15 @@ upgrade_types (ctf_dict_t *fp, ctf_header_t *cth)
   return 0;
 }
 
-/* Initialize the type ID translation table with the byte offset of each type,
+/* Populate statically-defined types (those loaded from a saved buffer).
+
+   Initialize the type ID translation table with the byte offset of each type,
    and initialize the hash tables of each named type.  Upgrade the type table to
    the latest supported representation in the process, if needed, and if this
    recension of libctf supports upgrading.  */
 
 static int
-init_types (ctf_dict_t *fp, ctf_header_t *cth)
+init_static_types (ctf_dict_t *fp, ctf_header_t *cth)
 {
   const ctf_type_t *tbuf;
   const ctf_type_t *tend;
@@ -685,6 +687,7 @@ init_types (ctf_dict_t *fp, ctf_header_t *cth)
   const ctf_type_t *tp;
   uint32_t id;
   uint32_t *xp;
+  unsigned long typemax = 0;
 
   /* We determine whether the dict is a child or a parent based on the value of
      cth_parname.  */
@@ -692,8 +695,6 @@ init_types (ctf_dict_t *fp, ctf_header_t *cth)
   int child = cth->cth_parname != 0;
   int nlstructs = 0, nlunions = 0;
   int err;
-
-  assert (!(fp->ctf_flags & LCTF_RDWR));
 
   if (_libctf_unlikely_ (fp->ctf_version == CTF_VERSION_1))
     {
@@ -708,7 +709,7 @@ init_types (ctf_dict_t *fp, ctf_header_t *cth)
   /* We make two passes through the entire type section.  In this first
      pass, we count the number of each type and the total number of types.  */
 
-  for (tp = tbuf; tp < tend; fp->ctf_typemax++)
+  for (tp = tbuf; tp < tend; typemax++)
     {
       unsigned short kind = LCTF_INFO_KIND (fp, tp->ctt_info);
       unsigned long vlen = LCTF_INFO_VLEN (fp, tp->ctt_info);
@@ -740,38 +741,45 @@ init_types (ctf_dict_t *fp, ctf_header_t *cth)
   /* Now that we've counted up the number of each type, we can allocate
      the hash tables, type translation table, and pointer table.  */
 
-  if ((fp->ctf_structs.ctn_readonly
-       = ctf_hash_create (pop[CTF_K_STRUCT], ctf_hash_string,
-			  ctf_hash_eq_string)) == NULL)
+  if ((fp->ctf_structs
+       = ctf_dynhash_create_sized (pop[CTF_K_STRUCT], ctf_hash_string,
+				   ctf_hash_eq_string, NULL, NULL)) == NULL)
     return ENOMEM;
 
-  if ((fp->ctf_unions.ctn_readonly
-       = ctf_hash_create (pop[CTF_K_UNION], ctf_hash_string,
-			  ctf_hash_eq_string)) == NULL)
+  if ((fp->ctf_unions
+       = ctf_dynhash_create_sized (pop[CTF_K_UNION], ctf_hash_string,
+				   ctf_hash_eq_string, NULL, NULL)) == NULL)
     return ENOMEM;
 
-  if ((fp->ctf_enums.ctn_readonly
-       = ctf_hash_create (pop[CTF_K_ENUM], ctf_hash_string,
-			  ctf_hash_eq_string)) == NULL)
+  if ((fp->ctf_enums
+       = ctf_dynhash_create_sized (pop[CTF_K_ENUM], ctf_hash_string,
+				   ctf_hash_eq_string, NULL, NULL)) == NULL)
     return ENOMEM;
 
-  if ((fp->ctf_names.ctn_readonly
-       = ctf_hash_create (pop[CTF_K_UNKNOWN] +
-			  pop[CTF_K_INTEGER] +
-			  pop[CTF_K_FLOAT] +
-			  pop[CTF_K_FUNCTION] +
-			  pop[CTF_K_TYPEDEF] +
-			  pop[CTF_K_POINTER] +
-			  pop[CTF_K_VOLATILE] +
-			  pop[CTF_K_CONST] +
-			  pop[CTF_K_RESTRICT],
-			  ctf_hash_string,
-			  ctf_hash_eq_string)) == NULL)
+  if ((fp->ctf_names
+       = ctf_dynhash_create_sized (pop[CTF_K_UNKNOWN] +
+				   pop[CTF_K_INTEGER] +
+				   pop[CTF_K_FLOAT] +
+				   pop[CTF_K_FUNCTION] +
+				   pop[CTF_K_TYPEDEF] +
+				   pop[CTF_K_POINTER] +
+				   pop[CTF_K_VOLATILE] +
+				   pop[CTF_K_CONST] +
+				   pop[CTF_K_RESTRICT],
+				   ctf_hash_string,
+				   ctf_hash_eq_string, NULL, NULL)) == NULL)
     return ENOMEM;
 
-  fp->ctf_txlate = malloc (sizeof (uint32_t) * (fp->ctf_typemax + 1));
-  fp->ctf_ptrtab_len = fp->ctf_typemax + 1;
+  /* The ptrtab and txlate can be appropriately sized for precisely this set
+     of types: the txlate because it is only used to look up static types,
+     so dynamic types added later will never go through it, and the ptrtab
+     because later-added types will call grow_ptrtab() automatically, as
+     needed.  */
+
+  fp->ctf_txlate = malloc (sizeof (uint32_t) * (typemax + 1));
+  fp->ctf_ptrtab_len = typemax + 1;
   fp->ctf_ptrtab = malloc (sizeof (uint32_t) * fp->ctf_ptrtab_len);
+  fp->ctf_stypes = typemax;
 
   if (fp->ctf_txlate == NULL || fp->ctf_ptrtab == NULL)
     return ENOMEM;		/* Memory allocation failed.  */
@@ -779,13 +787,17 @@ init_types (ctf_dict_t *fp, ctf_header_t *cth)
   xp = fp->ctf_txlate;
   *xp++ = 0;			/* Type id 0 is used as a sentinel value.  */
 
-  memset (fp->ctf_txlate, 0, sizeof (uint32_t) * (fp->ctf_typemax + 1));
-  memset (fp->ctf_ptrtab, 0, sizeof (uint32_t) * (fp->ctf_typemax + 1));
+  memset (fp->ctf_txlate, 0, sizeof (uint32_t) * (typemax + 1));
+  memset (fp->ctf_ptrtab, 0, sizeof (uint32_t) * (typemax + 1));
 
   /* In the second pass through the types, we fill in each entry of the
-     type and pointer tables and add names to the appropriate hashes.  */
+     type and pointer tables and add names to the appropriate hashes.
 
-  for (id = 1, tp = tbuf; tp < tend; xp++, id++)
+     Bump ctf_typemax as we go, but keep it one higher than normal, so that
+     the type being read in is considered a valid type and it is at least
+     barely possible to run simple lookups on it.  */
+
+  for (id = 1, fp->ctf_typemax = 1, tp = tbuf; tp < tend; xp++, id++, fp->ctf_typemax++)
     {
       unsigned short kind = LCTF_INFO_KIND (fp, tp->ctt_info);
       unsigned short isroot = LCTF_INFO_ISROOT (fp, tp->ctt_info);
@@ -799,28 +811,47 @@ init_types (ctf_dict_t *fp, ctf_header_t *cth)
       /* Cannot fail: shielded by call in loop above.  */
       vbytes = LCTF_VBYTES (fp, kind, size, vlen);
 
+      *xp = (uint32_t) ((uintptr_t) tp - (uintptr_t) fp->ctf_buf);
+
       switch (kind)
 	{
 	case CTF_K_UNKNOWN:
 	case CTF_K_INTEGER:
 	case CTF_K_FLOAT:
-	  /* Names are reused by bit-fields, which are differentiated by their
-	     encodings, and so typically we'd record only the first instance of
-	     a given intrinsic.  However, we replace an existing type with a
-	     root-visible version so that we can be sure to find it when
-	     checking for conflicting definitions in ctf_add_type().  */
+	  {
+	    ctf_id_t existing;
+	    ctf_encoding_t existing_en;
+	    ctf_encoding_t this_en;
 
-	  if (((ctf_hash_lookup_type (fp->ctf_names.ctn_readonly,
-				      fp, name)) == 0)
-	      || isroot)
-	    {
-	      err = ctf_hash_define_type (fp->ctf_names.ctn_readonly, fp,
-					  LCTF_INDEX_TO_TYPE (fp, id, child),
-					  tp->ctt_name);
-	      if (err != 0)
-		return err;
-	    }
-	  break;
+	    if (!isroot)
+	      break;
+
+	    /* Names are reused by bitfields, which are differentiated by
+	       their encodings.  So check for the type already existing, and
+	       iff the new type is a root-visible non-bitfield, replace the
+	       old one.  It's a little hard to figure out whether a type is
+	       a non-bitfield without already knowing that type's native
+	       width, but we can converge on it by replacing an existing
+	       type as long as the new type is zero-offset and has a
+	       bit-width wider than the existing one, since the native type
+	       must necessarily have a bit-width at least as wide as any
+	       bitfield based on it. */
+
+	    if (((existing = ctf_dynhash_lookup_type (fp->ctf_names, name)) == 0)
+		|| ctf_type_encoding (fp, existing, &existing_en) != 0
+		|| (ctf_type_encoding (fp, LCTF_INDEX_TO_TYPE (fp, id, child), &this_en) == 0
+		    && this_en.cte_offset == 0
+		    && (existing_en.cte_offset != 0
+			|| existing_en.cte_bits < this_en.cte_bits)))
+	      {
+		err = ctf_dynhash_insert_type (fp, fp->ctf_names,
+					       LCTF_INDEX_TO_TYPE (fp, id, child),
+					       tp->ctt_name);
+		if (err != 0)
+		  return err;
+	      }
+	    break;
+	  }
 
 	  /* These kinds have no name, so do not need interning into any
 	     hashtables.  */
@@ -832,9 +863,9 @@ init_types (ctf_dict_t *fp, ctf_header_t *cth)
 	  if (!isroot)
 	    break;
 
-	  err = ctf_hash_insert_type (fp->ctf_names.ctn_readonly, fp,
-				      LCTF_INDEX_TO_TYPE (fp, id, child),
-				      tp->ctt_name);
+	  err = ctf_dynhash_insert_type (fp, fp->ctf_names,
+					 LCTF_INDEX_TO_TYPE (fp, id, child),
+					 tp->ctt_name);
 	  if (err != 0)
 	    return err;
 	  break;
@@ -846,9 +877,9 @@ init_types (ctf_dict_t *fp, ctf_header_t *cth)
 	  if (!isroot)
 	    break;
 
-	  err = ctf_hash_define_type (fp->ctf_structs.ctn_readonly, fp,
-				      LCTF_INDEX_TO_TYPE (fp, id, child),
-				      tp->ctt_name);
+	  err = ctf_dynhash_insert_type (fp, fp->ctf_structs,
+					 LCTF_INDEX_TO_TYPE (fp, id, child),
+					 tp->ctt_name);
 
 	  if (err != 0)
 	    return err;
@@ -862,9 +893,9 @@ init_types (ctf_dict_t *fp, ctf_header_t *cth)
 	  if (!isroot)
 	    break;
 
-	  err = ctf_hash_define_type (fp->ctf_unions.ctn_readonly, fp,
-				      LCTF_INDEX_TO_TYPE (fp, id, child),
-				      tp->ctt_name);
+	  err = ctf_dynhash_insert_type (fp, fp->ctf_unions,
+					 LCTF_INDEX_TO_TYPE (fp, id, child),
+					 tp->ctt_name);
 
 	  if (err != 0)
 	    return err;
@@ -874,9 +905,9 @@ init_types (ctf_dict_t *fp, ctf_header_t *cth)
 	  if (!isroot)
 	    break;
 
-	  err = ctf_hash_define_type (fp->ctf_enums.ctn_readonly, fp,
-				      LCTF_INDEX_TO_TYPE (fp, id, child),
-				      tp->ctt_name);
+	  err = ctf_dynhash_insert_type (fp, fp->ctf_enums,
+					 LCTF_INDEX_TO_TYPE (fp, id, child),
+					 tp->ctt_name);
 
 	  if (err != 0)
 	    return err;
@@ -886,27 +917,26 @@ init_types (ctf_dict_t *fp, ctf_header_t *cth)
 	  if (!isroot)
 	    break;
 
-	  err = ctf_hash_insert_type (fp->ctf_names.ctn_readonly, fp,
-				      LCTF_INDEX_TO_TYPE (fp, id, child),
-				      tp->ctt_name);
+	  err = ctf_dynhash_insert_type (fp, fp->ctf_names,
+					 LCTF_INDEX_TO_TYPE (fp, id, child),
+					 tp->ctt_name);
 	  if (err != 0)
 	    return err;
 	  break;
 
 	case CTF_K_FORWARD:
 	  {
-	    ctf_names_t *np = ctf_name_table (fp, tp->ctt_type);
+	    ctf_dynhash_t *h = ctf_name_table (fp, tp->ctt_type);
 
 	    if (!isroot)
 	      break;
 
 	    /* Only insert forward tags into the given hash if the type or tag
 	       name is not already present.  */
-	    if (ctf_hash_lookup_type (np->ctn_readonly, fp, name) == 0)
+	    if (ctf_dynhash_lookup_type (h, name) == 0)
 	      {
-		err = ctf_hash_insert_type (np->ctn_readonly, fp,
-					    LCTF_INDEX_TO_TYPE (fp, id, child),
-					    tp->ctt_name);
+		err = ctf_dynhash_insert_type (fp, h, LCTF_INDEX_TO_TYPE (fp, id, child),
+					       tp->ctt_name);
 		if (err != 0)
 		  return err;
 	      }
@@ -929,31 +959,31 @@ init_types (ctf_dict_t *fp, ctf_header_t *cth)
 	  if (!isroot)
 	    break;
 
-	  err = ctf_hash_insert_type (fp->ctf_names.ctn_readonly, fp,
-				      LCTF_INDEX_TO_TYPE (fp, id, child),
-				      tp->ctt_name);
+	  err = ctf_dynhash_insert_type (fp, fp->ctf_names,
+					 LCTF_INDEX_TO_TYPE (fp, id, child),
+					 tp->ctt_name);
 	  if (err != 0)
 	    return err;
 	  break;
 	default:
 	  ctf_err_warn (fp, 0, ECTF_CORRUPT,
-			_("init_types(): unhandled CTF kind: %x"), kind);
+			_("init_static_types(): unhandled CTF kind: %x"), kind);
 	  return ECTF_CORRUPT;
 	}
-
-      *xp = (uint32_t) ((uintptr_t) tp - (uintptr_t) fp->ctf_buf);
       tp = (ctf_type_t *) ((uintptr_t) tp + increment + vbytes);
     }
+  fp->ctf_typemax--;
+  assert (fp->ctf_typemax == typemax);
 
   ctf_dprintf ("%lu total types processed\n", fp->ctf_typemax);
-  ctf_dprintf ("%u enum names hashed\n",
-	       ctf_hash_size (fp->ctf_enums.ctn_readonly));
-  ctf_dprintf ("%u struct names hashed (%d long)\n",
-	       ctf_hash_size (fp->ctf_structs.ctn_readonly), nlstructs);
-  ctf_dprintf ("%u union names hashed (%d long)\n",
-	       ctf_hash_size (fp->ctf_unions.ctn_readonly), nlunions);
-  ctf_dprintf ("%u base type names hashed\n",
-	       ctf_hash_size (fp->ctf_names.ctn_readonly));
+  ctf_dprintf ("%zu enum names hashed\n",
+	       ctf_dynhash_elements (fp->ctf_enums));
+  ctf_dprintf ("%zu struct names hashed (%d long)\n",
+	       ctf_dynhash_elements (fp->ctf_structs), nlstructs);
+  ctf_dprintf ("%zu union names hashed (%d long)\n",
+	       ctf_dynhash_elements (fp->ctf_unions), nlunions);
+  ctf_dprintf ("%zu base type names hashed\n",
+	       ctf_dynhash_elements (fp->ctf_names));
 
   return 0;
 }
@@ -1203,9 +1233,8 @@ flip_types (ctf_dict_t *fp, void *start, size_t len, int to_foreign)
   return 0;
 }
 
-/* Flip the endianness of BUF, given the offsets in the (already endian-
-   converted) CTH.  If TO_FOREIGN is set, flip to foreign-endianness; if not,
-   flip away.
+/* Flip the endianness of BUF, given the offsets in the (native-endianness) CTH.
+   If TO_FOREIGN is set, flip to foreign-endianness; if not, flip away.
 
    All of this stuff happens before the header is fully initialized, so the
    LCTF_*() macros cannot be used yet.  Since we do not try to endian-convert v1
@@ -1235,16 +1264,16 @@ void ctf_set_ctl_hashes (ctf_dict_t *fp)
      array of type name prefixes and the corresponding ctf_hash to use.  */
   fp->ctf_lookups[0].ctl_prefix = "struct";
   fp->ctf_lookups[0].ctl_len = strlen (fp->ctf_lookups[0].ctl_prefix);
-  fp->ctf_lookups[0].ctl_hash = &fp->ctf_structs;
+  fp->ctf_lookups[0].ctl_hash = fp->ctf_structs;
   fp->ctf_lookups[1].ctl_prefix = "union";
   fp->ctf_lookups[1].ctl_len = strlen (fp->ctf_lookups[1].ctl_prefix);
-  fp->ctf_lookups[1].ctl_hash = &fp->ctf_unions;
+  fp->ctf_lookups[1].ctl_hash = fp->ctf_unions;
   fp->ctf_lookups[2].ctl_prefix = "enum";
   fp->ctf_lookups[2].ctl_len = strlen (fp->ctf_lookups[2].ctl_prefix);
-  fp->ctf_lookups[2].ctl_hash = &fp->ctf_enums;
+  fp->ctf_lookups[2].ctl_hash = fp->ctf_enums;
   fp->ctf_lookups[3].ctl_prefix = _CTF_NULLSTR;
   fp->ctf_lookups[3].ctl_len = strlen (fp->ctf_lookups[3].ctl_prefix);
-  fp->ctf_lookups[3].ctl_hash = &fp->ctf_names;
+  fp->ctf_lookups[3].ctl_hash = fp->ctf_names;
   fp->ctf_lookups[4].ctl_prefix = NULL;
   fp->ctf_lookups[4].ctl_len = 0;
   fp->ctf_lookups[4].ctl_hash = NULL;
@@ -1257,21 +1286,6 @@ ctf_dict_t *ctf_simple_open (const char *ctfsect, size_t ctfsect_size,
 			     size_t symsect_entsize,
 			     const char *strsect, size_t strsect_size,
 			     int *errp)
-{
-  return ctf_simple_open_internal (ctfsect, ctfsect_size, symsect, symsect_size,
-				   symsect_entsize, strsect, strsect_size, NULL,
-				   0, errp);
-}
-
-/* Open a CTF file, mocking up a suitable ctf_sect and overriding the external
-   strtab with a synthetic one.  */
-
-ctf_dict_t *ctf_simple_open_internal (const char *ctfsect, size_t ctfsect_size,
-				      const char *symsect, size_t symsect_size,
-				      size_t symsect_entsize,
-				      const char *strsect, size_t strsect_size,
-				      ctf_dynhash_t *syn_strtab, int writable,
-				      int *errp)
 {
   ctf_sect_t skeleton;
 
@@ -1308,8 +1322,7 @@ ctf_dict_t *ctf_simple_open_internal (const char *ctfsect, size_t ctfsect_size,
       strsectp = &str_sect;
     }
 
-  return ctf_bufopen_internal (ctfsectp, symsectp, strsectp, syn_strtab,
-			       writable, errp);
+  return ctf_bufopen (ctfsectp, symsectp, strsectp, errp);
 }
 
 /* Decode the specified CTF buffer and optional symbol table, and create a new
@@ -1321,16 +1334,6 @@ ctf_dict_t *
 ctf_bufopen (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
 	     const ctf_sect_t *strsect, int *errp)
 {
-  return ctf_bufopen_internal (ctfsect, symsect, strsect, NULL, 0, errp);
-}
-
-/* Like ctf_bufopen, but overriding the external strtab with a synthetic one.  */
-
-ctf_dict_t *
-ctf_bufopen_internal (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
-		      const ctf_sect_t *strsect, ctf_dynhash_t *syn_strtab,
-		      int writable, int *errp)
-{
   const ctf_preamble_t *pp;
   size_t hdrsz = sizeof (ctf_header_t);
   ctf_header_t *hp;
@@ -1340,8 +1343,7 @@ ctf_bufopen_internal (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
 
   libctf_init_debug();
 
-  if ((ctfsect == NULL) || ((symsect != NULL) &&
-			    ((strsect == NULL) && syn_strtab == NULL)))
+  if ((ctfsect == NULL) || ((symsect != NULL) && (strsect == NULL)))
     return (ctf_set_open_errno (errp, EINVAL));
 
   if (symsect != NULL && symsect->cts_entsize != sizeof (Elf32_Sym) &&
@@ -1354,7 +1356,8 @@ ctf_bufopen_internal (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
   if (strsect != NULL && strsect->cts_data == NULL)
     return (ctf_set_open_errno (errp, ECTF_STRBAD));
 
-  if (ctfsect->cts_size < sizeof (ctf_preamble_t))
+  if (ctfsect->cts_data == NULL
+      || ctfsect->cts_size < sizeof (ctf_preamble_t))
     return (ctf_set_open_errno (errp, ECTF_NOCTFBUF));
 
   pp = (const ctf_preamble_t *) ctfsect->cts_data;
@@ -1416,9 +1419,6 @@ ctf_bufopen_internal (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
     return (ctf_set_open_errno (errp, ENOMEM));
 
   memset (fp, 0, sizeof (ctf_dict_t));
-
-  if (writable)
-    fp->ctf_flags |= LCTF_RDWR;
 
   if ((fp->ctf_header = malloc (sizeof (struct ctf_header))) == NULL)
     {
@@ -1502,7 +1502,7 @@ ctf_bufopen_internal (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
      section's buffer pointer into ctf_buf, below.  */
 
   /* Note: if this is a v1 buffer, it will be reallocated and expanded by
-     init_types().  */
+     init_static_types().  */
 
   if (hp->cth_flags & CTF_F_COMPRESS)
     {
@@ -1583,11 +1583,18 @@ ctf_bufopen_internal (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
      proceed with initializing the ctf_dict_t we allocated above.
 
      Nothing that depends on buf or base should be set directly in this function
-     before the init_types() call, because it may be reallocated during
+     before the init_static_types() call, because it may be reallocated during
      transparent upgrade if this recension of libctf is so configured: see
      ctf_set_base().  */
 
   ctf_set_version (fp, hp, hp->cth_version);
+
+  /* Temporary assignment, just enough to be able to initialize
+     the atoms table.  */
+
+  fp->ctf_str[CTF_STRTAB_0].cts_strs = (const char *) fp->ctf_buf
+    + hp->cth_stroff;
+  fp->ctf_str[CTF_STRTAB_0].cts_len = hp->cth_strlen;
   if (ctf_str_create_atoms (fp) < 0)
     {
       err = ENOMEM;
@@ -1599,8 +1606,8 @@ ctf_bufopen_internal (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
 
   if (symsect != NULL)
     {
-      memcpy (&fp->ctf_symtab, symsect, sizeof (ctf_sect_t));
-      memcpy (&fp->ctf_strtab, strsect, sizeof (ctf_sect_t));
+      memcpy (&fp->ctf_ext_symtab, symsect, sizeof (ctf_sect_t));
+      memcpy (&fp->ctf_ext_strtab, strsect, sizeof (ctf_sect_t));
     }
 
   if (fp->ctf_data.cts_name != NULL)
@@ -1609,14 +1616,14 @@ ctf_bufopen_internal (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
 	err = ENOMEM;
 	goto bad;
       }
-  if (fp->ctf_symtab.cts_name != NULL)
-    if ((fp->ctf_symtab.cts_name = strdup (fp->ctf_symtab.cts_name)) == NULL)
+  if (fp->ctf_ext_symtab.cts_name != NULL)
+    if ((fp->ctf_ext_symtab.cts_name = strdup (fp->ctf_ext_symtab.cts_name)) == NULL)
       {
 	err = ENOMEM;
 	goto bad;
       }
-  if (fp->ctf_strtab.cts_name != NULL)
-    if ((fp->ctf_strtab.cts_name = strdup (fp->ctf_strtab.cts_name)) == NULL)
+  if (fp->ctf_ext_strtab.cts_name != NULL)
+    if ((fp->ctf_ext_strtab.cts_name = strdup (fp->ctf_ext_strtab.cts_name)) == NULL)
       {
 	err = ENOMEM;
 	goto bad;
@@ -1624,17 +1631,36 @@ ctf_bufopen_internal (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
 
   if (fp->ctf_data.cts_name == NULL)
     fp->ctf_data.cts_name = _CTF_NULLSTR;
-  if (fp->ctf_symtab.cts_name == NULL)
-    fp->ctf_symtab.cts_name = _CTF_NULLSTR;
-  if (fp->ctf_strtab.cts_name == NULL)
-    fp->ctf_strtab.cts_name = _CTF_NULLSTR;
+  if (fp->ctf_ext_symtab.cts_name == NULL)
+    fp->ctf_ext_symtab.cts_name = _CTF_NULLSTR;
+  if (fp->ctf_ext_strtab.cts_name == NULL)
+    fp->ctf_ext_strtab.cts_name = _CTF_NULLSTR;
 
   if (strsect != NULL)
     {
       fp->ctf_str[CTF_STRTAB_1].cts_strs = strsect->cts_data;
       fp->ctf_str[CTF_STRTAB_1].cts_len = strsect->cts_size;
     }
-  fp->ctf_syn_ext_strtab = syn_strtab;
+
+  /* Dynamic state, for dynamic addition to this dict after loading.  */
+
+  fp->ctf_dthash = ctf_dynhash_create (ctf_hash_integer, ctf_hash_eq_integer,
+				       NULL, NULL);
+  fp->ctf_dvhash = ctf_dynhash_create (ctf_hash_string, ctf_hash_eq_string,
+				       NULL, NULL);
+  fp->ctf_snapshots = 1;
+
+  fp->ctf_objthash = ctf_dynhash_create (ctf_hash_string, ctf_hash_eq_string,
+					   free, NULL);
+  fp->ctf_funchash = ctf_dynhash_create (ctf_hash_string, ctf_hash_eq_string,
+					 free, NULL);
+
+  if (!fp->ctf_dthash || !fp->ctf_dvhash || !fp->ctf_snapshots ||
+      !fp->ctf_objthash || !fp->ctf_funchash)
+    {
+      err = ENOMEM;
+      goto bad;
+    }
 
   if (foreign_endian &&
       (err = ctf_flip (fp, hp, fp->ctf_buf, 0)) != 0)
@@ -1649,15 +1675,7 @@ ctf_bufopen_internal (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
 
   ctf_set_base (fp, hp, fp->ctf_base);
 
-  /* No need to do anything else for dynamic dicts: they do not support symbol
-     lookups, and the type table is maintained in the dthashes.  */
-  if (fp->ctf_flags & LCTF_RDWR)
-    {
-      fp->ctf_refcnt = 1;
-      return fp;
-    }
-
-  if ((err = init_types (fp, hp)) != 0)
+  if ((err = init_static_types (fp, hp)) != 0)
     goto bad;
 
   /* Allocate and initialize the symtab translation table, pointed to by
@@ -1706,6 +1724,10 @@ ctf_bufopen_internal (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
 bad:
   ctf_set_open_errno (errp, err);
   ctf_err_warn_to_open (fp);
+  /* Without this, the refcnt is zero on entry and ctf_dict_close() won't
+     actually do anything on the grounds that this is a recursive call via
+     another dict being closed.  */
+  fp->ctf_refcnt = 1;
   ctf_dict_close (fp);
   return NULL;
 }
@@ -1763,20 +1785,11 @@ ctf_dict_close (ctf_dict_t *fp)
       ctf_dtd_delete (fp, dtd);
     }
   ctf_dynhash_destroy (fp->ctf_dthash);
-  if (fp->ctf_flags & LCTF_RDWR)
-    {
-      ctf_dynhash_destroy (fp->ctf_structs.ctn_writable);
-      ctf_dynhash_destroy (fp->ctf_unions.ctn_writable);
-      ctf_dynhash_destroy (fp->ctf_enums.ctn_writable);
-      ctf_dynhash_destroy (fp->ctf_names.ctn_writable);
-    }
-  else
-    {
-      ctf_hash_destroy (fp->ctf_structs.ctn_readonly);
-      ctf_hash_destroy (fp->ctf_unions.ctn_readonly);
-      ctf_hash_destroy (fp->ctf_enums.ctn_readonly);
-      ctf_hash_destroy (fp->ctf_names.ctn_readonly);
-    }
+
+  ctf_dynhash_destroy (fp->ctf_structs);
+  ctf_dynhash_destroy (fp->ctf_unions);
+  ctf_dynhash_destroy (fp->ctf_enums);
+  ctf_dynhash_destroy (fp->ctf_names);
 
   for (dvd = ctf_list_next (&fp->ctf_dvdefs); dvd != NULL; dvd = nvd)
     {
@@ -1785,7 +1798,8 @@ ctf_dict_close (ctf_dict_t *fp)
     }
   ctf_dynhash_destroy (fp->ctf_dvhash);
 
-  ctf_dynhash_destroy (fp->ctf_symhash);
+  ctf_dynhash_destroy (fp->ctf_symhash_func);
+  ctf_dynhash_destroy (fp->ctf_symhash_objt);
   free (fp->ctf_funcidx_sxlate);
   free (fp->ctf_objtidx_sxlate);
   ctf_dynhash_destroy (fp->ctf_objthash);
@@ -1805,11 +1819,11 @@ ctf_dict_close (ctf_dict_t *fp)
   if (fp->ctf_data.cts_name != _CTF_NULLSTR)
     free ((char *) fp->ctf_data.cts_name);
 
-  if (fp->ctf_symtab.cts_name != _CTF_NULLSTR)
-    free ((char *) fp->ctf_symtab.cts_name);
+  if (fp->ctf_ext_symtab.cts_name != _CTF_NULLSTR)
+    free ((char *) fp->ctf_ext_symtab.cts_name);
 
-  if (fp->ctf_strtab.cts_name != _CTF_NULLSTR)
-    free ((char *) fp->ctf_strtab.cts_name);
+  if (fp->ctf_ext_strtab.cts_name != _CTF_NULLSTR)
+    free ((char *) fp->ctf_ext_strtab.cts_name);
   else if (fp->ctf_data_mmapped)
     ctf_munmap (fp->ctf_data_mmapped, fp->ctf_data_mmapped_len);
 
@@ -1878,13 +1892,13 @@ ctf_getdatasect (const ctf_dict_t *fp)
 ctf_sect_t
 ctf_getsymsect (const ctf_dict_t *fp)
 {
-  return fp->ctf_symtab;
+  return fp->ctf_ext_symtab;
 }
 
 ctf_sect_t
 ctf_getstrsect (const ctf_dict_t *fp)
 {
-  return fp->ctf_strtab;
+  return fp->ctf_ext_strtab;
 }
 
 /* Set the endianness of the symbol table attached to FP.  */
@@ -1899,8 +1913,8 @@ ctf_symsect_endianness (ctf_dict_t *fp, int little_endian)
      our idea of the endianness has changed.  */
 
   if (old_endianness != fp->ctf_symsect_little_endian
-      && fp->ctf_sxlate != NULL && fp->ctf_symtab.cts_data != NULL)
-    assert (init_symtab (fp, fp->ctf_header, &fp->ctf_symtab) == 0);
+      && fp->ctf_sxlate != NULL && fp->ctf_ext_symtab.cts_data != NULL)
+    assert (init_symtab (fp, fp->ctf_header, &fp->ctf_ext_symtab) == 0);
 }
 
 /* Return the CTF handle for the parent CTF dict, if one exists.  Otherwise

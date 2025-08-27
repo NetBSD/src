@@ -1,5 +1,5 @@
 #  S/390 opcodes list. Use s390-mkopc to convert it into the opcode table.
-#  Copyright (C) 2000-2022 Free Software Foundation, Inc.
+#  Copyright (C) 2000-2024 Free Software Foundation, Inc.
 #  Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 5a a RX_RRRD "add" g5 esa,zarch
 6a ad RX_FRRD "add normalized (long)" g5 esa,zarch
@@ -144,14 +144,14 @@ d3 mvz SS_L0RDRD "move zones" g5 esa,zarch
 67 mxd RX_FERRD "multiply (long to ext.)" g5 esa,zarch
 27 mxdr RR_FEF "multiply (long to ext.)" g5 esa,zarch
 26 mxr RR_FEFE "multiply (ext.)" g5 esa,zarch
-54 n RX_RRRD "AND" g5 esa,zarch
-d4 nc SS_L0RDRD "AND" g5 esa,zarch
-94 ni SI_URD "AND" g5 esa,zarch
-14 nr RR_RR "AND" g5 esa,zarch
-56 o RX_RRRD "OR" g5 esa,zarch
-d6 oc SS_L0RDRD "OR" g5 esa,zarch
-96 oi SI_URD "OR" g5 esa,zarch
-16 or RR_RR "OR" g5 esa,zarch
+54 n RX_RRRD "and" g5 esa,zarch
+d4 nc SS_L0RDRD "and" g5 esa,zarch
+94 ni SI_URD "and" g5 esa,zarch
+14 nr RR_RR "and" g5 esa,zarch
+56 o RX_RRRD "or" g5 esa,zarch
+d6 oc SS_L0RDRD "or" g5 esa,zarch
+96 oi SI_URD "or" g5 esa,zarch
+16 or RR_RR "or" g5 esa,zarch
 f2 pack SS_LLRDRD "pack" g5 esa,zarch
 b248 palb RRE_00 "purge ALB" g5 esa,zarch
 b218 pc S_RD "program call" g5 esa,zarch
@@ -215,8 +215,8 @@ b6 stctl RS_CCRD "store control" g5 esa,zarch
 40 sth RX_RRRD "store halfword" g5 esa,zarch
 b202 stidp S_RD "store CPU id" g5 esa,zarch
 90 stm RS_RRRD "store multiple" g5 esa,zarch
-ac stnsm SI_URD "store then AND system mask" g5 esa,zarch
-ad stosm SI_URD "store then OR system mask" g5 esa,zarch
+ac stnsm SI_URD "store then and system mask" g5 esa,zarch
+ad stosm SI_URD "store then or system mask" g5 esa,zarch
 b209 stpt S_RD "store CPU timer" g5 esa,zarch
 b211 stpx S_RD "store prefix" g5 esa,zarch
 b234 stsch S_RD "store subchannel" g5 esa,zarch
@@ -239,21 +239,21 @@ dd trt SS_L0RDRD "translate and test" g5 esa,zarch
 b235 tsch S_RD "test subchannel" g5 esa,zarch
 f3 unpk SS_LLRDRD "unpack" g5 esa,zarch
 0102 upt E "update tree" g5 esa,zarch
-57 x RX_RRRD "exclusive OR" g5 esa,zarch
-d7 xc SS_L0RDRD "exclusive OR" g5 esa,zarch
-97 xi SI_URD "exclusive OR" g5 esa,zarch
-17 xr RR_RR "exclusive OR" g5 esa,zarch
+57 x RX_RRRD "exclusive or" g5 esa,zarch
+d7 xc SS_L0RDRD "exclusive or" g5 esa,zarch
+97 xi SI_URD "exclusive or" g5 esa,zarch
+17 xr RR_RR "exclusive or" g5 esa,zarch
 f8 zap SS_LLRDRD "zero and add" g5 esa,zarch
 a70a ahi RI_RI "add halfword immediate" g5 esa,zarch
-84 brxh RSI_RRP "branch relative on index high" g5 esa,zarch
-84 jxh RSI_RRP "branch relative on index high" g5 esa,zarch
-85 brxle RSI_RRP "branch relative on index low or equal" g5 esa,zarch
-85 jxle RSI_RRP "branch relative on index low or equal" g5 esa,zarch
-a705 bras RI_RP "branch relative and save" g5 esa,zarch
-a705 jas RI_RP "branch relative and save" g5 esa,zarch
-a704 brc RI_UP "branch relative on condition" g5 esa,zarch
-a706 brct RI_RP "branch relative on count" g5 esa,zarch
-a706 jct RI_RP "branch relative on count" g5 esa,zarch
+84 brxh RSI_RRP "branch relative on index high" g5 esa,zarch condjump
+84 jxh RSI_RRP "branch relative on index high" g5 esa,zarch condjump
+85 brxle RSI_RRP "branch relative on index low or equal" g5 esa,zarch condjump
+85 jxle RSI_RRP "branch relative on index low or equal" g5 esa,zarch condjump
+a705 bras RI_RP "branch relative and save" g5 esa,zarch jumpsr
+a705 jas RI_RP "branch relative and save" g5 esa,zarch jumpsr
+a704 brc RI_UP "branch relative on condition" g5 esa,zarch condjump
+a706 brct RI_RP "branch relative on count" g5 esa,zarch condjump
+a706 jct RI_RP "branch relative on count" g5 esa,zarch condjump
 b241 cksm RRE_RR "checksum" g5 esa,zarch
 a70e chi RI_RI "compare halfword immediate" g5 esa,zarch
 a9 clcle RS_RRRD "compare logical long extended" g5 esa,zarch
@@ -272,11 +272,12 @@ a701 tml RI_RU "test under mask low" g5 esa,zarch
 4700 nop RX_0RRD "no operation" g5 esa,zarch optparm
 4700 b*8 RX_0RRD "conditional branch" g5 esa,zarch
 47f0 b RX_0RRD "unconditional branch" g5 esa,zarch
+a704 jc RI_UP "conditional jump" g5 esa,zarch condjump
 a704 jnop RI_0P "nop jump" g5 esa,zarch
-a704 j*8 RI_0P "conditional jump" g5 esa,zarch
-a704 br*8 RI_0P "conditional jump" g5 esa,zarch
-a7f4 j RI_0P "unconditional jump" g5 esa,zarch
-a7f4 bru RI_0P "unconditional jump" g5 esa,zarch
+a704 j*8 RI_0P "conditional jump" g5 esa,zarch condjump
+a704 br*8 RI_0P "conditional jump" g5 esa,zarch condjump
+a7f4 j RI_0P "unconditional jump" g5 esa,zarch jump
+a7f4 bru RI_0P "unconditional jump" g5 esa,zarch jump
 b34a axbr RRE_FEFE "add extended bfp" g5 esa,zarch
 b31a adbr RRE_FF "add long bfp" g5 esa,zarch
 ed000000001a adb RXE_FRRD "add long bfp" g5 esa,zarch
@@ -305,6 +306,7 @@ b30d debr RRE_FF "divide short bfp" g5 esa,zarch
 ed000000000d deb RXE_FRRD "divide short bfp" g5 esa,zarch
 b35b didbr RRF_FUFF "divide to integer long bfp" g5 esa,zarch
 b353 diebr RRF_FUFF "divide to integer short bfp" g5 esa,zarch
+# efpc and sfpc have only one operand; retain RR register format for compatibility
 b38c efpc RRE_RR "extract fpc" g5 esa,zarch optparm
 b342 ltxbr RRE_FEFE "load and test extended bfp" g5 esa,zarch
 b312 ltdbr RRE_FF "load and test long bfp" g5 esa,zarch
@@ -348,6 +350,7 @@ b31f msdbr RRF_F0FF "multiply and subtract long bfp" g5 esa,zarch
 ed000000001f msdb RXF_FRRDF "multiply and subtract long bfp" g5 esa,zarch
 b30f msebr RRF_F0FF "multiply and subtract short bfp" g5 esa,zarch
 ed000000000f mseb RXF_FRRDF "multiply and subtract short bfp" g5 esa,zarch
+# efpc and sfpc have only one operand; retain RR register format for compatibility
 b384 sfpc RRE_RR "set fpc" g5 esa,zarch optparm
 b299 srnm S_RD "set rounding mode" g5 esa,zarch
 b316 sqxbr RRE_FEFE "square root extended bfp" g5 esa,zarch
@@ -443,10 +446,10 @@ e3000000000b slg RXE_RRRD "subtract logical 64" z900 zarch
 e3000000001b slgf RXE_RRRD "subtract logical 64<32" z900 zarch
 e3000000000c msg RXE_RRRD "multiply single 64" z900 zarch
 e3000000001c msgf RXE_RRRD "multiply single 64<32" z900 zarch
-ec0000000044 brxhg RIE_RRP "branch relative on index high 64" z900 zarch
-ec0000000044 jxhg RIE_RRP "branch relative on index high 64" z900 zarch
-ec0000000045 brxlg RIE_RRP "branch relative on index low or equal 64" z900 zarch
-ec0000000045 jxleg RIE_RRP "branch relative on index low or equal 64" z900 zarch
+ec0000000044 brxhg RIE_RRP "branch relative on index high 64" z900 zarch condjump
+ec0000000044 jxhg RIE_RRP "branch relative on index high 64" z900 zarch condjump
+ec0000000045 brxlg RIE_RRP "branch relative on index low or equal 64" z900 zarch condjump
+ec0000000045 jxleg RIE_RRP "branch relative on index low or equal 64" z900 zarch condjump
 eb0000000044 bxhg RSE_RRRD "branch on index high 64" z900 zarch
 eb0000000045 bxleg RSE_RRRD "branch on index low or equal 64" z900 zarch
 eb000000000c srlg RSE_RRRD "shift right single logical 64" z900 zarch
@@ -470,16 +473,18 @@ eb000000002c stcmh RSE_RURD "store characters under mask high" z900 zarch
 eb0000000080 icmh RSE_RURD "insert characters under mask high" z900 zarch
 a702 tmhh RI_RU "test under mask high high" z900 zarch
 a703 tmhl RI_RU "test under mask high low" z900 zarch
-c004 brcl RIL_UP "branch relative on condition long" z900 esa,zarch
+c004 brcl RIL_UP "branch relative on condition long" z900 esa,zarch condjump
+# jlc omitted due to missing jl* (see jl*8) and not added as non-standard jgc
 c004 jgnop RIL_0P "nop jump long" z900 esa,zarch
-c004 jg*8 RIL_0P "conditional jump long" z900 esa,zarch
-c004 br*8l RIL_0P "conditional jump long" z900 esa,zarch
-c0f4 jg RIL_0P "unconditional jump long" z900 esa,zarch
-c0f4 brul RIL_0P "unconditional jump long" z900 esa,zarch
-c005 brasl RIL_RP "branch relative and save long" z900 esa,zarch
-c005 jasl RIL_RP "branch relative and save long" z900 esa,zarch
-a707 brctg RI_RP "branch relative on count 64" z900 zarch
-a707 jctg RI_RP "branch relative on count 64" z900 zarch
+c004 jg*8 RIL_0P "conditional jump long" z900 esa,zarch condjump
+# jl*8 omitted due to clash with non-standard j*8 flavors jle and jlh; exists as non-standard jg*8 instead
+c004 br*8l RIL_0P "conditional jump long" z900 esa,zarch condjump
+c0f4 jg RIL_0P "unconditional jump long" z900 esa,zarch jump
+c0f4 brul RIL_0P "unconditional jump long" z900 esa,zarch jump
+c005 brasl RIL_RP "branch relative and save long" z900 esa,zarch jumpsr
+c005 jasl RIL_RP "branch relative and save long" z900 esa,zarch jumpsr
+a707 brctg RI_RP "branch relative on count 64" z900 zarch condjump
+a707 jctg RI_RP "branch relative on count 64" z900 zarch condjump
 a709 lghi RI_RI "load halfword immediate 64" z900 zarch
 a70b aghi RI_RI "add halfword immediate 64" z900 zarch
 a70d mghi RI_RI "multiply halfword immediate 64" z900 zarch
@@ -521,6 +526,7 @@ a50c llihh RI_RU "load logical immediate high high" z900 zarch
 a50d llihl RI_RU "load logical immediate high low" z900 zarch
 a50e llilh RI_RU "load logical immediate low high" z900 zarch
 a50f llill RI_RU "load logical immediate low low" z900 zarch
+a50f llghi RI_RU "load logical immediate" z900 zarch
 b2b1 stfl S_RD "store facility list" z900 esa,zarch
 b2b2 lpswe S_RD "load psw extended" z900 zarch
 b90d dsgr RRE_RER "divide single 64" z900 zarch
@@ -748,6 +754,7 @@ c006 xihf RIL_RU "exclusive or immediate high" z9-109 zarch
 c007 xilf RIL_RU "exclusive or immediate low" z9-109 zarch
 c008 iihf RIL_RU "insert immediate high" z9-109 zarch
 c009 iilf RIL_RU "insert immediate low" z9-109 zarch
+c009 lfi RIL_RU "insert immediate 32" z9-109 zarch
 # z9-109 misc instruction
 b983 flogr RRE_RER "find leftmost one" z9-109 zarch
 e30000000012 lt RXY_RRRD "load and test 32" z9-109 zarch
@@ -765,6 +772,7 @@ b995 llhr RRE_RR "load logical halfword 32" z9-109 zarch
 b985 llghr RRE_RR "load logical halfword 64" z9-109 zarch
 c00e llihf RIL_RU "load logical immediate high" z9-109 zarch
 c00f llilf RIL_RU "load logical immediate low" z9-109 zarch
+c00f llgfi RIL_RU "load logical immediate" z9-109 zarch
 c00c oihf RIL_RU "or immediate high" z9-109 zarch
 c00d oilf RIL_RU "or immediate low" z9-109 zarch
 c205 slfi RIL_RU "subtract logical immediate 32" z9-109 zarch
@@ -813,8 +821,8 @@ b370 lpdfr RRE_FF "load positive no cc" z9-ec zarch
 b371 lndfr RRE_FF "load negative no cc" z9-ec zarch
 b372 cpsdr RRF_F0FF2 "copy sign" z9-ec zarch
 b373 lcdfr RRE_FF "load complement no cc" z9-ec zarch
-b3c1 ldgr RRE_FR "load fpr from gr" z9-ec zarch
-b3cd lgdr RRE_RF "load gr from fpr" z9-ec zarch
+b3c1 ldgr RRE_FR "load FPR from GR" z9-ec zarch
+b3cd lgdr RRE_RF "load GR from FPR" z9-ec zarch
 b3d2 adtr RRR_F0FF "add long dfp" z9-ec zarch
 b3da axtr RRR_FE0FEFE "add extended dfp" z9-ec zarch
 b3e4 cdtr RRE_FF "compare long dfp" z9-ec zarch
@@ -888,18 +896,18 @@ ec00000000f6 crb$32 RRS_RRRD0 "compare and branch (32)" z10 zarch
 ec00000000f6 crb RRS_RRRDU "compare and branch (32)" z10 zarch
 ec00000000e4 cgrb$32 RRS_RRRD0 "compare and branch (64)" z10 zarch
 ec00000000e4 cgrb RRS_RRRDU "compare and branch (64)" z10 zarch
-ec0000000076 crj$32 RIE_RRP0 "compare and branch relative (32)" z10 zarch
-ec0000000076 crj RIE_RRPU "compare and branch relative (32)" z10 zarch
-ec0000000064 cgrj$32 RIE_RRP0 "compare and branch relative (64)" z10 zarch
-ec0000000064 cgrj RIE_RRPU "compare and branch relative (64)" z10 zarch
+ec0000000076 crj$32 RIE_RRP0 "compare and branch relative (32)" z10 zarch condjump
+ec0000000076 crj RIE_RRPU "compare and branch relative (32)" z10 zarch condjump
+ec0000000064 cgrj$32 RIE_RRP0 "compare and branch relative (64)" z10 zarch condjump
+ec0000000064 cgrj RIE_RRPU "compare and branch relative (64)" z10 zarch condjump
 ec00000000fe cib$12 RIS_R0RDI "compare immediate and branch (32<8)" z10 zarch
 ec00000000fe cib RIS_RURDI "compare immediate and branch (32<8)" z10 zarch
 ec00000000fc cgib$12 RIS_R0RDI "compare immediate and branch (64<8)" z10 zarch
 ec00000000fc cgib RIS_RURDI "compare immediate and branch (64<8)" z10 zarch
-ec000000007e cij$12 RIE_R0PI "compare immediate and branch relative (32<8)" z10 zarch
-ec000000007e cij RIE_RUPI "compare immediate and branch relative (32<8)" z10 zarch
-ec000000007c cgij$12 RIE_R0PI "compare immediate and branch relative (64<8)" z10 zarch
-ec000000007c cgij RIE_RUPI "compare immediate and branch relative (64<8)" z10 zarch
+ec000000007e cij$12 RIE_R0PI "compare immediate and branch relative (32<8)" z10 zarch condjump
+ec000000007e cij RIE_RUPI "compare immediate and branch relative (32<8)" z10 zarch condjump
+ec000000007c cgij$12 RIE_R0PI "compare immediate and branch relative (64<8)" z10 zarch condjump
+ec000000007c cgij RIE_RUPI "compare immediate and branch relative (64<8)" z10 zarch condjump
 b9720000 crt$16 RRF_00RR "compare and trap" z10 zarch
 b972 crt RRF_U0RR "compare and trap" z10 zarch
 b9600000 cgrt$16 RRF_00RR "compare and trap 64" z10 zarch
@@ -926,18 +934,18 @@ ec00000000f7 clrb$32 RRS_RRRD0 "compare logical and branch (32)" z10 zarch
 ec00000000f7 clrb RRS_RRRDU "compare logical and branch (32)" z10 zarch
 ec00000000e5 clgrb$32 RRS_RRRD0 "compare logical and branch (64)" z10 zarch
 ec00000000e5 clgrb RRS_RRRDU "compare logical and branch (64)" z10 zarch
-ec0000000077 clrj$32 RIE_RRP0 "compare logical and branch relative (32)" z10 zarch
-ec0000000077 clrj RIE_RRPU "compare logical and branch relative (32)" z10 zarch
-ec0000000065 clgrj$32 RIE_RRP0 "compare logical and branch relative (64)" z10 zarch
-ec0000000065 clgrj RIE_RRPU "compare logical and branch relative (64)" z10 zarch
+ec0000000077 clrj$32 RIE_RRP0 "compare logical and branch relative (32)" z10 zarch condjump
+ec0000000077 clrj RIE_RRPU "compare logical and branch relative (32)" z10 zarch condjump
+ec0000000065 clgrj$32 RIE_RRP0 "compare logical and branch relative (64)" z10 zarch condjump
+ec0000000065 clgrj RIE_RRPU "compare logical and branch relative (64)" z10 zarch condjump
 ec00000000ff clib$12 RIS_R0RDU "compare logical immediate and branch (32<8)" z10 zarch
 ec00000000ff clib RIS_RURDU "compare logical immediate and branch (32<8)" z10 zarch
 ec00000000fd clgib$12 RIS_R0RDU "compare logical immediate and branch (64<8)" z10 zarch
 ec00000000fd clgib RIS_RURDU "compare logical immediate and branch (64<8)" z10 zarch
-ec000000007f clij$12 RIE_R0PU "compare logical immediate and branch relative (32<8)" z10 zarch
-ec000000007f clij RIE_RUPU "compare logical immediate and branch relative (32<8)" z10 zarch
-ec000000007d clgij$12 RIE_R0PU "compare logical immediate and branch relative (64<8)" z10 zarch
-ec000000007d clgij RIE_RUPU "compare logical immediate and branch relative (64<8)" z10 zarch
+ec000000007f clij$12 RIE_R0PU "compare logical immediate and branch relative (32<8)" z10 zarch condjump
+ec000000007f clij RIE_RUPU "compare logical immediate and branch relative (32<8)" z10 zarch condjump
+ec000000007d clgij$12 RIE_R0PU "compare logical immediate and branch relative (64<8)" z10 zarch condjump
+ec000000007d clgij RIE_RUPU "compare logical immediate and branch relative (64<8)" z10 zarch condjump
 b9730000 clrt$16 RRF_00RR "compare logical and trap (32)" z10 zarch
 b973 clrt RRF_U0RR "compare logical and trap (32)" z10 zarch
 b9610000 clgrt$16 RRF_00RR "compare logical and trap (64)" z10 zarch
@@ -966,11 +974,14 @@ c201 msfi RIL_RI "multiply single immediate (32)" z10 zarch
 c200 msgfi RIL_RI "multiply single immediate (64)" z10 zarch
 e30000000036 pfd RXY_URRD "prefetch data" z10 zarch
 c602 pfdrl RIL_UP "prefetch data relative long" z10 zarch
-ec0000000054 rnsbg RIE_RRUUU "rotate then and selected bits" z10 zarch
-ec0000000057 rxsbg RIE_RRUUU "rotate then exclusive or selected bits" z10 zarch
-ec0000000056 rosbg RIE_RRUUU "rotate then or selected bits" z10 zarch
-ec0000000055 risbg RIE_RRUUU "rotate then insert selected bits" z10 zarch
-ec0000800055 risbgz RIE_RRUUU2 "rotate then insert selected bits and zero remaining bits" z10 zarch
+ec0000000054 rnsbg RIE_RRUUU "rotate then and selected bits" z10 zarch optparm
+ec0080000054 rnsbgt RIE_RRUUU4 "rotate then and selected bits and test results" z10 zarch optparm
+ec0000000057 rxsbg RIE_RRUUU "rotate then exclusive or selected bits" z10 zarch optparm
+ec0080000057 rxsbgt RIE_RRUUU4 "rotate then exclusive or selected bits and test results" z10 zarch optparm
+ec0000000056 rosbg RIE_RRUUU "rotate then or selected bits" z10 zarch optparm
+ec0080000056 rosbgt RIE_RRUUU4 "rotate then or selected bits and test results" z10 zarch optparm
+ec0000000055 risbg RIE_RRUUU "rotate then insert selected bits" z10 zarch optparm
+ec0000800055 risbgz RIE_RRUUU2 "rotate then insert selected bits and zero remaining bits" z10 zarch optparm
 c40f strl RIL_RP "store relative long (32)" z10 zarch
 c40b stgrl RIL_RP "store relative long (64)" z10 zarch
 c407 sthrl RIL_RP "store halfword relative long" z10 zarch
@@ -1000,7 +1011,8 @@ b9ca alhhhr RRF_R0RR2 "add logical high high" z196 zarch
 b9da alhhlr RRF_R0RR2 "add logical high low" z196 zarch
 cc0a alsih RIL_RI "add logical with signed immediate high with cc" z196 zarch
 cc0b alsihn RIL_RI "add logical with signed immediate high no cc" z196 zarch
-cc06 brcth RIL_RP "branch relative on count high" z196 zarch
+cc06 brcth RIL_RP "branch relative on count high" z196 zarch condjump
+cc06 jcth RIL_RP "jump on count high" z196 zarch condjump
 b9cd chhr RRE_RR "compare high high" z196 zarch
 b9dd chlr RRE_RR "compare high low" z196 zarch
 e300000000cd chf RXY_RRRD "compare high" z196 zarch
@@ -1014,8 +1026,10 @@ e300000000c4 lhh RXY_RRRD "load halfword high" z196 zarch
 e300000000ca lfh RXY_RRRD "load high" z196 zarch
 e300000000c2 llch RXY_RRRD "load logical character high" z196 zarch
 e300000000c6 llhh RXY_RRRD "load logical halfword high" z196 zarch
-ec000000005d risbhg RIE_RRUUU "rotate then insert selected bits high" z196 zarch
-ec0000000051 risblg RIE_RRUUU "rotate then insert selected bits low" z196 zarch
+ec000000005d risbhg RIE_RRUUU "rotate then insert selected bits high" z196 zarch optparm
+ec000080005d risbhgz RIE_RRUUU3 "rotate then insert selected bits high and zero remaining bits" z196 zarch optparm
+ec0000000051 risblg RIE_RRUUU "rotate then insert selected bits low" z196 zarch optparm
+ec0000800051 risblgz RIE_RRUUU3 "rotate then insert selected bits low and zero remaining bits" z196 zarch optparm
 e300000000c3 stch RXY_RRRD "store character high" z196 zarch
 e300000000c7 sthh RXY_RRRD "store halfword high" z196 zarch
 e300000000cb stfh RXY_RRRD "store high" z196 zarch
@@ -1153,8 +1167,8 @@ eb0000000023 clt RSY_RURD "compare logical and trap 32 bit reg-mem" zEC12 zarch
 eb0000000023 clt$12 RSY_R0RD "compare logical and trap 32 bit reg-mem" zEC12 zarch
 eb000000002b clgt RSY_RURD "compare logical and trap 64 bit reg-mem" zEC12 zarch
 eb000000002b clgt$12 RSY_R0RD "compare logical and trap 64 bit reg-mem" zEC12 zarch
-ec0000000059 risbgn RIE_RRUUU "rotate then insert selected bits nocc" zEC12 zarch
-ec0000800059 risbgnz RIE_RRUUU2 "rotate then insert selected bits and zero remaining bits nocc" zEC12 zarch
+ec0000000059 risbgn RIE_RRUUU "rotate then insert selected bits nocc" zEC12 zarch optparm
+ec0000800059 risbgnz RIE_RRUUU2 "rotate then insert selected bits and zero remaining bits nocc" zEC12 zarch optparm
 ed00000000aa cdzt RSL_LRDFU "convert from zoned long" zEC12 zarch
 ed00000000ab cxzt RSL_LRDFEU "convert from zoned extended" zEC12 zarch
 ed00000000a8 czdt RSL_LRDFU "convert to zoned long" zEC12 zarch
@@ -1189,11 +1203,11 @@ e70000000040 vleib VRI_V0IU "vector load byte element immediate" z13 zarch vx
 e70000000041 vleih VRI_V0IU "vector load halfword element immediate" z13 zarch vx
 e70000000043 vleif VRI_V0IU "vector load word element immediate" z13 zarch vx
 e70000000042 vleig VRI_V0IU "vector load double word element immediate" z13 zarch vx
-e70000000021 vlgv VRS_RVRDU "vector load gr from vr element" z13 zarch vx
-e70000000021 vlgvb VRS_RVRD "vector load gr from vr byte element" z13 zarch vx
-e70000001021 vlgvh VRS_RVRD "vector load gr from vr halfword element" z13 zarch vx
-e70000002021 vlgvf VRS_RVRD "vector load gr from vr word element" z13 zarch vx
-e70000003021 vlgvg VRS_RVRD "vector load gr from vr double word element" z13 zarch vx
+e70000000021 vlgv VRS_RVRDU "vector load GR from VR element" z13 zarch vx
+e70000000021 vlgvb VRS_RVRD "vector load GR from VR byte element" z13 zarch vx
+e70000001021 vlgvh VRS_RVRD "vector load GR from VR halfword element" z13 zarch vx
+e70000002021 vlgvf VRS_RVRD "vector load GR from VR word element" z13 zarch vx
+e70000003021 vlgvg VRS_RVRD "vector load GR from VR double word element" z13 zarch vx
 e70000000004 vllez VRX_VRRDU "vector load logical element and zero" z13 zarch vx
 e70000000004 vllezb VRX_VRRD "vector load logical byte element and zero" z13 zarch vx
 e70000001004 vllezh VRX_VRRD "vector load logical halfword element and zero" z13 zarch vx
@@ -1896,7 +1910,7 @@ e30000000049 stgsc RXY_RRRD "store guarded storage controls" arch12 zarch
 
 b929 kma RRF_R0RR "cipher message with galois counter mode" arch12 zarch
 
-b93c prno RRE_RR "perform pseudorandom number operation" arch12 zarch
+b93c prno RRE_RR "perform random number operation" arch12 zarch
 b9a1 tpei RRE_RR "test pending external interruption" arch12 zarch
 b9ac irbm RRE_RR "insert reference bits multiple" arch12 zarch
 
@@ -1911,7 +1925,9 @@ e50a mvcrl SSE_RDRD "move right to left" arch13 zarch
 b974 nnrk RRF_R0RR2 "nand 32 bit" arch13 zarch
 b964 nngrk RRF_R0RR2 "nand 64 bit" arch13 zarch
 b976 nork RRF_R0RR2 "nor 32 bit" arch13 zarch
+b976 notr RRF_R0RR4 "not 32 bit" arch13 zarch
 b966 nogrk RRF_R0RR2 "nor 64 bit" arch13 zarch
+b966 notgr RRF_R0RR4 "not 64 bit" arch13 zarch
 b977 nxrk RRF_R0RR2 "not exclusive or 32 bit" arch13 zarch
 b967 nxgrk RRF_R0RR2 "not exclusive or 64 bit" arch13 zarch
 b975 ocrk RRF_R0RR2 "or with complement 32 bit" arch13 zarch
@@ -2018,31 +2034,41 @@ e60000000052 vcvbg VRR_RV0UU "vector convert to binary 64 bit" arch13 zarch optp
 b93a kdsa RRE_RR "compute digital signature authentication" arch13 zarch
 
 
-# arch14 instructions
+# arch14 (z16) instructions
 
-e60000000074 vschp VRR_VVV0U0U " " arch14 zarch
-e60000002074 vschsp VRR_VVV0U0 " " arch14 zarch
-e60000003074 vschdp VRR_VVV0U0 " " arch14 zarch
-e60000004074 vschxp VRR_VVV0U0 " " arch14 zarch
-e6000000007c vscshp VRR_VVV " " arch14 zarch
-e6000000007d vcsph VRR_VVV0U0 " " arch14 zarch
-e60000000051 vclzdp VRR_VV0U2 " " arch14 zarch
-e60000000070 vpkzr VRI_VVV0UU2 " " arch14 zarch
-e60000000072 vsrpr VRI_VVV0UU2 " " arch14 zarch
-e60000000054 vupkzh VRR_VV0U2 " " arch14 zarch
-e6000000005c vupkzl VRR_VV0U2 " " arch14 zarch
+# Vector-Packed-Decimal-Enhancement Facility 2
 
-b93b nnpa RRE_00 " " arch14 zarch
-e60000000056 vclfnh VRR_VV0UU2 " " arch14 zarch
-e6000000005e vclfnl VRR_VV0UU2 " " arch14 zarch
-e60000000075 vcrnf VRR_VVV0UU " " arch14 zarch
-e6000000005d vcfn VRR_VV0UU2 " " arch14 zarch
-e60000000055 vcnf VRR_VV0UU2 " " arch14 zarch
+e60000000074 vschp VRR_VVV0U0U "decimal scale and convert to hfp" arch14 zarch
+e60000002074 vschsp VRR_VVV0U0 "decimal scale and convert to short hfp" arch14 zarch
+e60000003074 vschdp VRR_VVV0U0 "decimal scale and convert to long hfp" arch14 zarch
+e60000004074 vschxp VRR_VVV0U0 "decimal scale and convert to extended hfp" arch14 zarch
+e6000000007c vscshp VRR_VVV "decimal scale and convert and split to hfp" arch14 zarch
+e6000000007d vcsph VRR_VVV0U0 "vector convert hfp to scaled decimal" arch14 zarch
+e60000000051 vclzdp VRR_VV0U2 "vector count leading zero digits" arch14 zarch
+e60000000070 vpkzr VRI_VVV0UU2 "vector pack zoned register" arch14 zarch
+e60000000072 vsrpr VRI_VVV0UU2 "vector shift and round decimal register" arch14 zarch
+e60000000054 vupkzh VRR_VV0U2 "vector unpack zoned high" arch14 zarch
+e6000000005c vupkzl VRR_VV0U2 "vector unpack zoned low" arch14 zarch
 
-b98B rdp RRF_RURR2 " " arch14 zarch optparm
+# Neural-Network-Processing-Assist Facility
 
-eb0000000071 lpswey SIY_RD " " arch14 zarch
-b200 lbear S_RD " " arch14 zarch
-b201 stbear S_RD " " arch14 zarch
+b93b nnpa RRE_00 "neural network processing assist" arch14 zarch
+e60000000056 vclfnh VRR_VV0UU2 "vector fp convert and lengthen from nnp high" arch14 zarch
+e6000000005e vclfnl VRR_VV0UU2 "vector fp convert and lengthen from nnp low" arch14 zarch
+e60000000075 vcrnf VRR_VVV0UU "vector fp convert and round to nnp" arch14 zarch
+e6000000005d vcfn VRR_VV0UU2 "vector fp convert from nnp" arch14 zarch
+e60000000055 vcnf VRR_VV0UU2 "vector fp convert to nnp" arch14 zarch
 
-b28f qpaci S_RD " " arch14 zarch
+# Reset-DAT-Protection Facility
+
+b98B rdp RRF_RURR2 "reset dat protection" arch14 zarch optparm
+
+# BEAR-Enhancement Facility
+
+eb0000000071 lpswey SIY_RD "load PSW extended" arch14 zarch
+b200 lbear S_RD "load bear" arch14 zarch
+b201 stbear S_RD "store bear" arch14 zarch
+
+# Processor-Activity-Instrumentation Facility
+
+b28f qpaci S_RD "query processor activity counter information" arch14 zarch

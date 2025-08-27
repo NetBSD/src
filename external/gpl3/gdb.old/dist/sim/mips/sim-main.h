@@ -1,5 +1,5 @@
 /* MIPS Simulator definition.
-   Copyright (C) 1997-2023 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of the MIPS sim.
@@ -25,8 +25,7 @@ mips_core_signal ((SD), (CPU), (CIA), (MAP), (NR_BYTES), (ADDR), (TRANSFER), (ER
 
 #include "sim-basics.h"
 #include "sim-base.h"
-#include "bfd.h"
-#include "elf-bfd.h"
+#include "bfd/elf-bfd.h"
 #include "elf/mips.h"
 
 /* Deprecated macros and types for manipulating 64bit values.  Use
@@ -171,20 +170,20 @@ typedef struct _pending_write_queue {
 #ifndef PENDING_TRACE
 #define PENDING_TRACE 0
 #endif
-#define PENDING_IN ((CPU)->pending.in)
-#define PENDING_OUT ((CPU)->pending.out)
-#define PENDING_TOTAL ((CPU)->pending.total)
-#define PENDING_SLOT_SIZE ((CPU)->pending.slot_size)
-#define PENDING_SLOT_BIT ((CPU)->pending.slot_bit)
-#define PENDING_SLOT_DELAY ((CPU)->pending.slot_delay)
-#define PENDING_SLOT_DEST ((CPU)->pending.slot_dest)
-#define PENDING_SLOT_VALUE ((CPU)->pending.slot_value)
+#define PENDING_IN (MIPS_SIM_CPU (CPU)->pending.in)
+#define PENDING_OUT (MIPS_SIM_CPU (CPU)->pending.out)
+#define PENDING_TOTAL (MIPS_SIM_CPU (CPU)->pending.total)
+#define PENDING_SLOT_SIZE (MIPS_SIM_CPU (CPU)->pending.slot_size)
+#define PENDING_SLOT_BIT (MIPS_SIM_CPU (CPU)->pending.slot_bit)
+#define PENDING_SLOT_DELAY (MIPS_SIM_CPU (CPU)->pending.slot_delay)
+#define PENDING_SLOT_DEST (MIPS_SIM_CPU (CPU)->pending.slot_dest)
+#define PENDING_SLOT_VALUE (MIPS_SIM_CPU (CPU)->pending.slot_value)
 
 /* Invalidate the pending write queue, all pending writes are
    discarded. */
 
 #define PENDING_INVALIDATE() \
-memset (&(CPU)->pending, 0, sizeof ((CPU)->pending))
+memset (&MIPS_SIM_CPU (CPU)->pending, 0, sizeof (MIPS_SIM_CPU (CPU)->pending))
 
 /* Schedule a write to DEST for N cycles time.  For 64 bit
    destinations, schedule two writes.  For floating point registers,
@@ -258,12 +257,11 @@ typedef union {
 #define SIM_STATE  sim_cpu *cpu, address_word cia
 #define SIM_ARGS   CPU, cia
 
-struct _sim_cpu {
-
+struct mips_sim_cpu {
 
   /* The following are internal simulator state variables: */
   address_word dspc;  /* delay-slot PC */
-#define DSPC ((CPU)->dspc)
+#define DSPC (MIPS_SIM_CPU (CPU)->dspc)
 
 #define DELAY_SLOT(TARGET) NIA = delayslot32 (SD_, (TARGET))
 #define FORBIDDEN_SLOT() { NIA = forbiddenslot32 (SD_); }
@@ -273,8 +271,8 @@ struct _sim_cpu {
   /* State of the simulator */
   unsigned int state;
   unsigned int dsstate;
-#define STATE ((CPU)->state)
-#define DSSTATE ((CPU)->dsstate)
+#define STATE (MIPS_SIM_CPU (CPU)->state)
+#define DSSTATE (MIPS_SIM_CPU (CPU)->dsstate)
 
 /* Flags in the "state" variable: */
 #define simHALTEX        (1 << 2)  /* 0 = run; 1 = halt on exception */
@@ -331,7 +329,7 @@ struct _sim_cpu {
   unsigned_word registers[LAST_EMBED_REGNUM + 1];
 
   int register_widths[NUM_REGS];
-#define REGISTERS       ((CPU)->registers)
+#define REGISTERS       (MIPS_SIM_CPU (CPU)->registers)
 
 #define GPR     (&REGISTERS[0])
 #define GPR_SET(N,VAL) (REGISTERS[(N)] = (VAL))
@@ -409,7 +407,7 @@ struct _sim_cpu {
 #define SIM_CPU_EXCEPTION_RESUME(SD,CPU,EXC) mips_cpu_exception_resume(SD,CPU,EXC)
 
   unsigned_word c0_config_reg;
-#define C0_CONFIG ((CPU)->c0_config_reg)
+#define C0_CONFIG (MIPS_SIM_CPU (CPU)->c0_config_reg)
 
 /* The following are pseudonyms for standard registers */
 #define ZERO    (REGISTERS[0])
@@ -431,7 +429,7 @@ struct _sim_cpu {
 
 #define NR_COP0_GPR	32
   unsigned_word cop0_gpr[NR_COP0_GPR];
-#define COP0_GPR	((CPU)->cop0_gpr)
+#define COP0_GPR	(MIPS_SIM_CPU (CPU)->cop0_gpr)
 #define COP0_BADVADDR	(COP0_GPR[8])
 
   /* While space is allocated for the floating point registers in the
@@ -441,17 +439,17 @@ struct _sim_cpu {
 #define NR_FGR    (32)
 #define FGR_BASE  FP0_REGNUM
   fp_word fgr[NR_FGR];
-#define FGR       ((CPU)->fgr)
+#define FGR       (MIPS_SIM_CPU (CPU)->fgr)
 
   /* Keep the current format state for each register: */
   FP_formats fpr_state[32];
-#define FPR_STATE ((CPU)->fpr_state)
+#define FPR_STATE (MIPS_SIM_CPU (CPU)->fpr_state)
 
   pending_write_queue pending;
 
   /* The MDMX accumulator (used only for MDMX ASE).  */
   MDMX_accumulator acc;
-#define ACC             ((CPU)->acc)
+#define ACC             (MIPS_SIM_CPU (CPU)->acc)
 
   /* LLBIT = Load-Linked bit. A bit of "virtual" state used by atomic
      read-write instructions. It is set when a linked load occurs. It
@@ -460,7 +458,7 @@ struct _sim_cpu {
      no longer be atomic. In particular, it is cleared by exception
      return instructions. */
   int llbit;
-#define LLBIT ((CPU)->llbit)
+#define LLBIT (MIPS_SIM_CPU (CPU)->llbit)
 
 
 /* The HIHISTORY and LOHISTORY timestamps are used to ensure that
@@ -468,13 +466,11 @@ struct _sim_cpu {
    following operation is spotted. See mips.igen for more details. */
 
   hilo_history hi_history;
-#define HIHISTORY (&(CPU)->hi_history)
+#define HIHISTORY (&MIPS_SIM_CPU (CPU)->hi_history)
   hilo_history lo_history;
-#define LOHISTORY (&(CPU)->lo_history)
-
-
-  sim_cpu_base base;
+#define LOHISTORY (&MIPS_SIM_CPU (CPU)->lo_history)
 };
+#define MIPS_SIM_CPU(cpu) ((struct mips_sim_cpu *) CPU_ARCH_DATA (cpu))
 
 extern void mips_sim_close (SIM_DESC sd, int quitting);
 #define SIM_CLOSE_HOOK(...) mips_sim_close (__VA_ARGS__)
@@ -1032,7 +1028,7 @@ address_word micromips_instruction_decode (SIM_DESC sd, sim_cpu * cpu,
 					   int instruction_size);
 
 #if WITH_TRACE_ANY_P
-void dotrace (SIM_DESC sd, sim_cpu *cpu, FILE *tracefh, int type, SIM_ADDR address, int width, const char *comment, ...) ATTRIBUTE_PRINTF (7, 8);
+void dotrace (SIM_DESC sd, sim_cpu *cpu, FILE *tracefh, int type, address_word address, int width, const char *comment, ...) ATTRIBUTE_PRINTF (7, 8);
 extern FILE *tracefh;
 #else
 #define dotrace(sd, cpu, tracefh, type, address, width, comment, ...)
@@ -1042,9 +1038,9 @@ extern int DSPLO_REGNUM[4];
 extern int DSPHI_REGNUM[4];
 
 INLINE_SIM_MAIN (void) pending_tick (SIM_DESC sd, sim_cpu *cpu, address_word cia);
-extern SIM_CORE_SIGNAL_FN mips_core_signal;
+extern SIM_CORE_SIGNAL_FN mips_core_signal ATTRIBUTE_NORETURN;
 
-char* pr_addr (SIM_ADDR addr);
+char* pr_addr (address_word addr);
 char* pr_uword64 (uword64 addr);
 
 
@@ -1054,24 +1050,17 @@ void mips_cpu_exception_trigger(SIM_DESC sd, sim_cpu* cpu, address_word pc);
 void mips_cpu_exception_suspend(SIM_DESC sd, sim_cpu* cpu, int exception);
 void mips_cpu_exception_resume(SIM_DESC sd, sim_cpu* cpu, int exception);
 
-#ifdef MIPS_MACH_MULTI
-extern int mips_mach_multi(SIM_DESC sd);
-#define MIPS_MACH(SD)	mips_mach_multi(SD)
-#else
-#define	MIPS_MACH(SD)	MIPS_MACH_DEFAULT
-#endif
-
 /* Macros for determining whether a MIPS IV or MIPS V part is subject
    to the hi/lo restrictions described in mips.igen.  */
 
 #define MIPS_MACH_HAS_MT_HILO_HAZARD(SD) \
-  (MIPS_MACH (SD) != bfd_mach_mips5500)
+  (STATE_ARCHITECTURE (SD)->mach != bfd_mach_mips5500)
 
 #define MIPS_MACH_HAS_MULT_HILO_HAZARD(SD) \
-  (MIPS_MACH (SD) != bfd_mach_mips5500)
+  (STATE_ARCHITECTURE (SD)->mach != bfd_mach_mips5500)
 
 #define MIPS_MACH_HAS_DIV_HILO_HAZARD(SD) \
-  (MIPS_MACH (SD) != bfd_mach_mips5500)
+  (STATE_ARCHITECTURE (SD)->mach != bfd_mach_mips5500)
 
 #if H_REVEALS_MODULE_P (SIM_MAIN_INLINE)
 #include "sim-main.c"

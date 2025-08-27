@@ -1,5 +1,5 @@
 /* BFD back-end for AMD 64 COFF files.
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -20,10 +20,6 @@
 
    Written by Kai Tietz, OneVision Software GmbH&CoKg.  */
 
-/* Note we have to make sure not to include headers twice.
-   Not all headers are wrapped in #ifdef guards, so we define
-   PEI_HEADERS to prevent double including here.  */
-#ifndef PEI_HEADERS
 #include "sysdep.h"
 #include "bfd.h"
 #include "libbfd.h"
@@ -31,7 +27,6 @@
 #include "coff/internal.h"
 #include "libcoff.h"
 #include "libiberty.h"
-#endif
 
 #define BADMAG(x) AMD64BADMAG(x)
 
@@ -139,15 +134,19 @@ coff_amd64_reloc (bfd *abfd,
 	  break;
 	case bfd_target_elf_flavour:
 	  /* Subtract __ImageBase.  */
+	  h = NULL;
 	  link_info = _bfd_get_link_info (obfd);
-	  if (link_info == NULL)
-	    return bfd_reloc_dangerous;
-	  h = bfd_link_hash_lookup (link_info->hash, "__ImageBase",
-				    false, false, false);
-	  if (h == NULL)
-	    return bfd_reloc_dangerous;
-	  while (h->type == bfd_link_hash_indirect)
-	    h = h->u.i.link;
+	  if (link_info != NULL)
+	    h = bfd_link_hash_lookup (link_info->hash, "__ImageBase",
+				      false, false, true);
+	  if (h == NULL
+	      || (h->type != bfd_link_hash_defined
+		  && h->type != bfd_link_hash_defweak))
+	    {
+	      *error_message
+		= (char *) _("R_AMD64_IMAGEBASE with __ImageBase undefined");
+	      return bfd_reloc_dangerous;
+	    }
 	  /* ELF symbols in relocatable files are section relative,
 	     but in nonrelocatable files they are virtual addresses.  */
 	  diff -= (h->u.def.value
@@ -543,7 +542,8 @@ static reloc_howto_type howto_table[] =
       cache_ptr->addend = - coffsym->native->u.syment.n_value;	\
     else if (ptr && bfd_asymbol_bfd (ptr) == abfd		\
 	     && ptr->section != NULL)				\
-      cache_ptr->addend = - (ptr->section->vma + ptr->value);	\
+      cache_ptr->addend = - (ptr->section->vma			\
+			     + COFF_PE_ADDEND_BIAS (ptr));	\
     else							\
       cache_ptr->addend = 0;					\
     if (ptr && reloc.r_type < NUM_HOWTOS			\
@@ -652,6 +652,20 @@ coff_pe_amd64_relocate_section (bfd *output_bfd,
 
 #define coff_relocate_section coff_pe_amd64_relocate_section
 
+static hashval_t
+htab_hash_section_index (const void * entry)
+{
+  const struct bfd_section * sec = entry;
+  return sec->index;
+}
+
+static int
+htab_eq_section_index (const void * e1, const void * e2)
+{
+  const struct bfd_section * sec1 = e1;
+  const struct bfd_section * sec2 = e2;
+  return sec1->index == sec2->index;
+}
 #endif /* COFF_WITH_PE */
 
 /* Convert an rtype to howto for the COFF backend linker.  */
@@ -741,22 +755,43 @@ coff_amd64_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 
   if (rel->r_type == R_AMD64_SECREL)
     {
-      bfd_vma osect_vma;
+      bfd_vma osect_vma = 0;
 
-      if (h && (h->root.type == bfd_link_hash_defined
-		|| h->root.type == bfd_link_hash_defweak))
+      if (h != NULL
+	  && (h->root.type == bfd_link_hash_defined
+	      || h->root.type == bfd_link_hash_defweak))
 	osect_vma = h->root.u.def.section->output_section->vma;
       else
 	{
+	  htab_t table = coff_data (abfd)->section_by_index;
 	  asection *s;
-	  int i;
 
-	  /* Sigh, the only way to get the section to offset against
-	     is to find it the hard way.  */
-	  for (s = abfd->sections, i = 1; i < sym->n_scnum; i++)
-	    s = s->next;
+	  if (!table)
+	    {
+	      table = htab_create (10, htab_hash_section_index,
+				   htab_eq_section_index, NULL);
+	      if (table == NULL)
+		return NULL;
+	      coff_data (abfd)->section_by_index = table;
+	    }
 
-	  osect_vma = s->output_section->vma;
+	  if (htab_elements (table) == 0)
+	    {
+	      for (s = abfd->sections; s != NULL; s = s->next)
+		{
+		  void ** slot = htab_find_slot (table, s, INSERT);
+
+		  if (slot != NULL)
+		    *slot = s;
+		}
+	    }
+
+	  struct bfd_section needle;
+
+	  needle.index = sym->n_scnum - 1;
+	  s = htab_find (table, &needle);
+	  if (s != NULL)
+	    osect_vma = s->output_section->vma;
 	}
 
       *addendp -= osect_vma;

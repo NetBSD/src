@@ -1,5 +1,5 @@
 /* YACC parser for Ada expressions, for GDB.
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,16 +35,13 @@
 
 %{
 
-#include "defs.h"
 #include <ctype.h>
+#include <unordered_map>
 #include "expression.h"
 #include "value.h"
 #include "parser-defs.h"
 #include "language.h"
 #include "ada-lang.h"
-#include "bfd.h" /* Required by objfiles.h.  */
-#include "symfile.h" /* Required by objfiles.h.  */
-#include "objfiles.h" /* For have_full_symbols and have_partial_symbols */
 #include "frame.h"
 #include "block.h"
 #include "ada-exp.h"
@@ -68,8 +65,68 @@ struct name_info {
 
 static struct parser_state *pstate = NULL;
 
-/* The original expression string.  */
-static const char *original_expr;
+using namespace expr;
+
+/* A convenience typedef.  */
+typedef std::unique_ptr<ada_assign_operation> ada_assign_up;
+
+/* Data that must be held for the duration of a parse.  */
+
+struct ada_parse_state
+{
+  explicit ada_parse_state (const char *expr)
+    : m_original_expr (expr)
+  {
+  }
+
+  std::string find_completion_bounds ();
+
+  const gdb_mpz *push_integer (gdb_mpz &&val)
+  {
+    auto &result = m_int_storage.emplace_back (new gdb_mpz (std::move (val)));
+    return result.get ();
+  }
+
+  /* The components being constructed during this parse.  */
+  std::vector<ada_component_up> components;
+
+  /* The associations being constructed during this parse.  */
+  std::vector<ada_association_up> associations;
+
+  /* The stack of currently active assignment expressions.  This is used
+     to implement '@', the target name symbol.  */
+  std::vector<ada_assign_up> assignments;
+
+  /* Track currently active iterated assignment names.  */
+  std::unordered_map<std::string, std::vector<ada_index_var_operation *>>
+       iterated_associations;
+
+  auto_obstack temp_space;
+
+  /* Depth of parentheses, used by the lexer.  */
+  int paren_depth = 0;
+
+  /* When completing, we'll return a special character at the end of the
+     input, to signal the completion position to the lexer.  This is
+     done because flex does not have a generally useful way to detect
+     EOF in a pattern.  This variable records whether the special
+     character has been emitted.  */
+  bool returned_complete = false;
+
+private:
+
+  /* We don't have a good way to manage non-POD data in Yacc, so store
+     values here.  The storage here is only valid for the duration of
+     the parse.  */
+  std::vector<std::unique_ptr<gdb_mpz>> m_int_storage;
+
+  /* The original expression string.  */
+  const char *m_original_expr;
+};
+
+/* The current Ada parser object.  */
+
+static ada_parse_state *ada_parser;
 
 int yyparse (void);
 
@@ -96,23 +153,9 @@ static const struct block *block_lookup (const struct block *, const char *);
 static void write_ambiguous_var (struct parser_state *,
 				 const struct block *, const char *, int);
 
-static struct type *type_int (struct parser_state *);
-
-static struct type *type_long (struct parser_state *);
-
-static struct type *type_long_long (struct parser_state *);
-
-static struct type *type_long_double (struct parser_state *);
-
 static struct type *type_for_char (struct parser_state *, ULONGEST);
 
-static struct type *type_boolean (struct parser_state *);
-
 static struct type *type_system_address (struct parser_state *);
-
-static std::string find_completion_bounds (struct parser_state *);
-
-using namespace expr;
 
 /* Handle Ada type resolution for OP.  DEPROCEDURE_P and CONTEXT_TYPE
    are passed to the resolve method, if called.  */
@@ -303,7 +346,7 @@ ada_funcall (int nargs)
       struct value *callee_v = callee->evaluate (nullptr,
 						 pstate->expout.get (),
 						 EVAL_AVOID_SIDE_EFFECTS);
-      callee_t = ada_check_typedef (value_type (callee_v));
+      callee_t = ada_check_typedef (callee_v->type ());
       array_arity = ada_array_arity (callee_t);
     }
 
@@ -322,16 +365,13 @@ ada_funcall (int nargs)
   pstate->push (std::move (funcall));
 }
 
-/* The components being constructed during this parse.  */
-static std::vector<ada_component_up> components;
-
 /* Create a new ada_component_up of the indicated type and arguments,
    and push it on the global 'components' vector.  */
 template<typename T, typename... Arg>
 void
 push_component (Arg... args)
 {
-  components.emplace_back (new T (std::forward<Arg> (args)...));
+  ada_parser->components.emplace_back (new T (std::forward<Arg> (args)...));
 }
 
 /* Examine the final element of the 'components' vector, and return it
@@ -341,7 +381,7 @@ push_component (Arg... args)
 static ada_choices_component *
 choice_component ()
 {
-  ada_component *last = components.back ().get ();
+  ada_component *last = ada_parser->components.back ().get ();
   return gdb::checked_static_cast<ada_choices_component *> (last);
 }
 
@@ -350,8 +390,8 @@ choice_component ()
 static ada_component_up
 pop_component ()
 {
-  ada_component_up result = std::move (components.back ());
-  components.pop_back ();
+  ada_component_up result = std::move (ada_parser->components.back ());
+  ada_parser->components.pop_back ();
   return result;
 }
 
@@ -366,16 +406,13 @@ pop_components (int n)
   return result;
 }
 
-/* The associations being constructed during this parse.  */
-static std::vector<ada_association_up> associations;
-
 /* Create a new ada_association_up of the indicated type and
    arguments, and push it on the global 'associations' vector.  */
 template<typename T, typename... Arg>
 void
 push_association (Arg... args)
 {
-  associations.emplace_back (new T (std::forward<Arg> (args)...));
+  ada_parser->associations.emplace_back (new T (std::forward<Arg> (args)...));
 }
 
 /* Pop the most recent association from the global stack, and return
@@ -383,8 +420,8 @@ push_association (Arg... args)
 static ada_association_up
 pop_association ()
 {
-  ada_association_up result = std::move (associations.back ());
-  associations.pop_back ();
+  ada_association_up result = std::move (ada_parser->associations.back ());
+  ada_parser->associations.pop_back ();
   return result;
 }
 
@@ -429,9 +466,13 @@ make_tick_completer (struct stoken tok)
   {
     LONGEST lval;
     struct {
-      LONGEST val;
+      const gdb_mpz *val;
       struct type *type;
     } typed_val;
+    struct {
+      LONGEST val;
+      struct type *type;
+    } typed_char;
     struct {
       gdb_byte val[16];
       struct type *type;
@@ -446,9 +487,11 @@ make_tick_completer (struct stoken tok)
 %type <lval> aggregate_component_list 
 %type <tval> var_or_type type_prefix opt_type_prefix
 
-%token <typed_val> INT NULL_PTR CHARLIT
+%token <typed_val> INT NULL_PTR
+%token <typed_char> CHARLIT
 %token <typed_val_float> FLOAT
 %token TRUEKEYWORD FALSEKEYWORD
+%token WITH DELTA
 %token COLONCOLON
 %token <sval> STRING NAME DOT_ID TICK_COMPLETE DOT_COMPLETE NAME_COMPLETE
 %type <bval> block
@@ -477,13 +520,13 @@ make_tick_completer (struct stoken tok)
 %right TICK_ACCESS TICK_ADDRESS TICK_FIRST TICK_LAST TICK_LENGTH
 %right TICK_MAX TICK_MIN TICK_MODULUS
 %right TICK_POS TICK_RANGE TICK_SIZE TICK_TAG TICK_VAL
-%right TICK_COMPLETE
+%right TICK_COMPLETE TICK_ENUM_REP TICK_ENUM_VAL
  /* The following are right-associative only so that reductions at this
     precedence have lower precedence than '.' and '('.  The syntax still
     forces a.b.c, e.g., to be LEFT-associated.  */
 %right '.' '(' '[' DOT_ID DOT_COMPLETE
 
-%token NEW OTHERS
+%token NEW OTHERS FOR
 
 
 %%
@@ -495,17 +538,25 @@ start   :	exp1
 exp1	:	exp
 	|	exp1 ';' exp
 			{ ada_wrap2<comma_operation> (BINOP_COMMA); }
-	| 	primary ASSIGN exp   /* Extension for convenience */
+	| 	primary ASSIGN
 			{
+			  ada_parser->assignments.emplace_back
+			    (new ada_assign_operation (ada_pop (), nullptr));
+			}
+		exp   /* Extension for convenience */
+			{
+			  ada_assign_up assign
+			    = std::move (ada_parser->assignments.back ());
+			  ada_parser->assignments.pop_back ();
+			  value *lhs_val = (assign->eval_for_resolution
+					    (pstate->expout.get ()));
+
 			  operation_up rhs = pstate->pop ();
-			  operation_up lhs = ada_pop ();
-			  value *lhs_val
-			    = lhs->evaluate (nullptr, pstate->expout.get (),
-					     EVAL_AVOID_SIDE_EFFECTS);
 			  rhs = resolve (std::move (rhs), true,
-					 value_type (lhs_val));
-			  pstate->push_new<ada_assign_operation>
-			    (std::move (lhs), std::move (rhs));
+					 lhs_val->type ());
+
+			  assign->set_rhs (std::move (rhs));
+			  pstate->push (std::move (assign));
 			}
 	;
 
@@ -532,7 +583,7 @@ primary :	primary DOT_COMPLETE
 			  ada_structop_operation *str_op
 			    = (new ada_structop_operation
 			       (std::move (arg), copy_name ($2)));
-			  str_op->set_prefix (find_completion_bounds (pstate));
+			  str_op->set_prefix (ada_parser->find_completion_bounds ());
 			  pstate->push (operation_up (str_op));
 			  pstate->mark_struct_expression (str_op);
 			}
@@ -604,6 +655,17 @@ primary :     	aggregate
 			    (pop_component ());
 			}
 	;        
+
+primary :	'@'
+			{
+			  if (ada_parser->assignments.empty ())
+			    error (_("the target name symbol ('@') may only "
+				     "appear in an assignment context"));
+			  ada_assign_operation *current
+			    = ada_parser->assignments.back ().get ();
+			  pstate->push_new<ada_target_operation> (current);
+			}
+	;
 
 simple_exp : 	primary
 	;
@@ -777,10 +839,10 @@ exp	:	relation
 
 and_exp :
 		relation _AND_ relation 
-			{ ada_wrap2<ada_bitwise_and_operation>
+			{ ada_wrap2<bitwise_and_operation>
 			    (BINOP_BITWISE_AND); }
 	|	and_exp _AND_ relation
-			{ ada_wrap2<ada_bitwise_and_operation>
+			{ ada_wrap2<bitwise_and_operation>
 			    (BINOP_BITWISE_AND); }
 	;
 
@@ -795,10 +857,10 @@ and_then_exp :
 
 or_exp :
 		relation OR relation 
-			{ ada_wrap2<ada_bitwise_ior_operation>
+			{ ada_wrap2<bitwise_ior_operation>
 			    (BINOP_BITWISE_IOR); }
 	|	or_exp OR relation
-			{ ada_wrap2<ada_bitwise_ior_operation>
+			{ ada_wrap2<bitwise_ior_operation>
 			    (BINOP_BITWISE_IOR); }
 	;
 
@@ -810,10 +872,10 @@ or_else_exp :
 	;
 
 xor_exp :       relation XOR relation
-			{ ada_wrap2<ada_bitwise_xor_operation>
+			{ ada_wrap2<bitwise_xor_operation>
 			    (BINOP_BITWISE_XOR); }
 	|	xor_exp XOR relation
-			{ ada_wrap2<ada_bitwise_xor_operation>
+			{ ada_wrap2<bitwise_xor_operation>
 			    (BINOP_BITWISE_XOR); }
 	;
 
@@ -867,6 +929,18 @@ primary :	primary TICK_ACCESS
 			  pstate->push_new<ada_atr_val_operation>
 			    ($1, std::move (arg));
 			}
+	|	type_prefix TICK_ENUM_REP '(' exp ')'
+			{
+			  operation_up arg = ada_pop (true, $1);
+			  pstate->push_new<ada_atr_enum_rep_operation>
+			    ($1, std::move (arg));
+			}
+	|	type_prefix TICK_ENUM_VAL '(' exp ')'
+			{
+			  operation_up arg = ada_pop (true, $1);
+			  pstate->push_new<ada_atr_enum_val_operation>
+			    ($1, std::move (arg));
+			}
 	|	type_prefix TICK_MODULUS
 			{
 			  struct type *type_arg = check_typedef ($1);
@@ -880,7 +954,7 @@ primary :	primary TICK_ACCESS
 tick_arglist :			%prec '('
 			{ $$ = 1; }
 	| 	'(' INT ')'
-			{ $$ = $2.val; }
+			{ $$ = $2.val->as_integer<LONGEST> (); }
 	;
 
 type_prefix :
@@ -901,7 +975,10 @@ opt_type_prefix :
 
 
 primary	:	INT
-			{ write_int (pstate, (LONGEST) $1.val, $1.type); }
+			{
+			  pstate->push_new<long_const_operation> ($1.type, *$1.val);
+			  ada_wrap<ada_wrapped_operation> ();
+			}
 	;
 
 primary	:	CHARLIT
@@ -937,9 +1014,15 @@ primary	:	STRING
 	;
 
 primary :	TRUEKEYWORD
-			{ write_int (pstate, 1, type_boolean (pstate)); }
+			{
+			  write_int (pstate, 1,
+				     parse_type (pstate)->builtin_bool);
+			}
 	|	FALSEKEYWORD
-			{ write_int (pstate, 0, type_boolean (pstate)); }
+			{
+			  write_int (pstate, 0,
+				     parse_type (pstate)->builtin_bool);
+			}
 	;
 
 primary	: 	NEW NAME
@@ -988,7 +1071,16 @@ block   :       NAME COLONCOLON
 	;
 
 aggregate :
-		'(' aggregate_component_list ')'  
+		'(' exp WITH DELTA aggregate_component_list ')'
+			{
+			  std::vector<ada_component_up> components
+			    = pop_components ($5);
+			  operation_up base = ada_pop ();
+
+			  push_component<ada_aggregate_component>
+			    (std::move (base), std::move (components));
+			}
+	|	'(' aggregate_component_list ')'
 			{
 			  std::vector<ada_component_up> components
 			    = pop_components ($2);
@@ -1043,6 +1135,33 @@ component_group :
 			{
 			  ada_choices_component *choices = choice_component ();
 			  choices->set_associations (pop_associations ($1));
+			}
+	|	FOR NAME IN
+			{
+			  std::string name = copy_name ($2);
+
+			  auto iter = ada_parser->iterated_associations.find (name);
+			  if (iter != ada_parser->iterated_associations.end ())
+			    error (_("Nested use of index parameter '%s'"),
+				   name.c_str ());
+
+			  ada_parser->iterated_associations[name] = {};
+			}
+		component_associations
+			{
+			  std::string name = copy_name ($2);
+
+			  ada_choices_component *choices = choice_component ();
+			  choices->set_associations (pop_associations ($5));
+
+			  auto iter = ada_parser->iterated_associations.find (name);
+			  gdb_assert (iter != ada_parser->iterated_associations.end ());
+			  for (ada_index_var_operation *var : iter->second)
+			    var->set_choices (choices);
+
+			  ada_parser->iterated_associations.erase (name);
+
+			  choices->set_name (std::move (name));
 			}
 	;
 
@@ -1127,8 +1246,6 @@ primary	:	'*' primary		%prec '.'
 #define yyrestart ada_yyrestart
 #define yytext ada_yytext
 
-static struct obstack temp_parse_space;
-
 /* The following kludge was found necessary to prevent conflicts between */
 /* defs.h and non-standard stdlib.h files.  */
 #define qsort __qsort__dummy
@@ -1138,19 +1255,16 @@ int
 ada_parse (struct parser_state *par_state)
 {
   /* Setting up the parser state.  */
-  scoped_restore pstate_restore = make_scoped_restore (&pstate);
+  scoped_restore pstate_restore = make_scoped_restore (&pstate, par_state);
   gdb_assert (par_state != NULL);
-  pstate = par_state;
-  original_expr = par_state->lexptr;
+
+  ada_parse_state parser (par_state->lexptr);
+  scoped_restore parser_restore = make_scoped_restore (&ada_parser, &parser);
 
   scoped_restore restore_yydebug = make_scoped_restore (&yydebug,
-							parser_debug);
+							par_state->debug);
 
   lexer_init (yyin);		/* (Re-)initialize lexer.  */
-  obstack_free (&temp_parse_space, NULL);
-  obstack_init (&temp_parse_space);
-  components.clear ();
-  associations.clear ();
 
   int result = yyparse ();
   if (!result)
@@ -1166,7 +1280,7 @@ ada_parse (struct parser_state *par_state)
 static void
 yyerror (const char *msg)
 {
-  error (_("Error in expression, near `%s'."), pstate->lexptr);
+  pstate->parse_error (msg);
 }
 
 /* Emit expression to access an instance of SYM, in block BLOCK (if
@@ -1217,9 +1331,9 @@ write_object_renaming (struct parser_state *par_state,
   if (orig_left_context == NULL)
     orig_left_context = get_selected_block (NULL);
 
-  name = obstack_strndup (&temp_parse_space, renamed_entity,
+  name = obstack_strndup (&ada_parser->temp_space, renamed_entity,
 			  renamed_entity_len);
-  ada_lookup_encoded_symbol (name, orig_left_context, VAR_DOMAIN, &sym_info);
+  ada_lookup_encoded_symbol (name, orig_left_context, SEARCH_VFT, &sym_info);
   if (sym_info.symbol == NULL)
     error (_("Could not find renamed variable: %s"), ada_decode (name).c_str ());
   else if (sym_info.symbol->aclass () == LOC_TYPEDEF)
@@ -1261,7 +1375,7 @@ write_object_renaming (struct parser_state *par_state,
 	break;
       case 'L':
 	slice_state = LOWER_BOUND;
-	/* FALLTHROUGH */
+	[[fallthrough]];
       case 'S':
 	renaming_expr += 1;
 	if (isdigit (*renaming_expr))
@@ -1271,7 +1385,7 @@ write_object_renaming (struct parser_state *par_state,
 	    if (next == renaming_expr)
 	      goto BadEncoding;
 	    renaming_expr = next;
-	    write_int (par_state, val, type_int (par_state));
+	    write_int (par_state, val, parse_type (par_state)->builtin_int);
 	  }
 	else
 	  {
@@ -1283,12 +1397,13 @@ write_object_renaming (struct parser_state *par_state,
 	    if (end == NULL)
 	      end = renaming_expr + strlen (renaming_expr);
 
-	    index_name = obstack_strndup (&temp_parse_space, renaming_expr,
+	    index_name = obstack_strndup (&ada_parser->temp_space,
+					  renaming_expr,
 					  end - renaming_expr);
 	    renaming_expr = end;
 
 	    ada_lookup_encoded_symbol (index_name, orig_left_context,
-				       VAR_DOMAIN, &index_sym_info);
+				       SEARCH_VFT, &index_sym_info);
 	    if (index_sym_info.symbol == NULL)
 	      error (_("Could not find %s"), index_name);
 	    else if (index_sym_info.symbol->aclass () == LOC_TYPEDEF)
@@ -1358,7 +1473,7 @@ block_lookup (const struct block *context, const char *raw_name)
     }
 
   std::vector<struct block_symbol> syms
-    = ada_lookup_symbol_list (name, context, VAR_DOMAIN);
+    = ada_lookup_symbol_list (name, context, SEARCH_FUNCTION_DOMAIN);
 
   if (context == NULL
       && (syms.empty () || syms[0].symbol->aclass () != LOC_BLOCK))
@@ -1437,7 +1552,7 @@ find_primitive_type (struct parser_state *par_state, const char *name)
 	(char *) alloca (strlen (name) + sizeof ("standard__"));
       strcpy (expanded_name, "standard__");
       strcat (expanded_name, name);
-      sym = ada_lookup_symbol (expanded_name, NULL, VAR_DOMAIN).symbol;
+      sym = ada_lookup_symbol (expanded_name, NULL, SEARCH_TYPE_DOMAIN).symbol;
       if (sym != NULL && sym->aclass () == LOC_TYPEDEF)
 	type = sym->type ();
     }
@@ -1502,10 +1617,10 @@ static void
 write_ambiguous_var (struct parser_state *par_state,
 		     const struct block *block, const char *name, int len)
 {
-  struct symbol *sym = new (&temp_parse_space) symbol ();
+  struct symbol *sym = new (&ada_parser->temp_space) symbol ();
 
   sym->set_domain (UNDEF_DOMAIN);
-  sym->set_linkage_name (obstack_strndup (&temp_parse_space, name, len));
+  sym->set_linkage_name (obstack_strndup (&ada_parser->temp_space, name, len));
   sym->set_language (language_ada, nullptr);
 
   block_symbol bsym { sym, block };
@@ -1596,12 +1711,25 @@ write_var_or_type (struct parser_state *par_state,
   char *encoded_name;
   int name_len;
 
-  if (block == NULL)
-    block = par_state->expression_context_block;
-
   std::string name_storage = ada_encode (name0.ptr);
+
+  if (block == nullptr)
+    {
+      auto iter = ada_parser->iterated_associations.find (name_storage);
+      if (iter != ada_parser->iterated_associations.end ())
+	{
+	  auto op = std::make_unique<ada_index_var_operation> ();
+	  iter->second.push_back (op.get ());
+	  par_state->push (std::move (op));
+	  return nullptr;
+	}
+
+      block = par_state->expression_context_block;
+    }
+
   name_len = name_storage.size ();
-  encoded_name = obstack_strndup (&temp_parse_space, name_storage.c_str (),
+  encoded_name = obstack_strndup (&ada_parser->temp_space,
+				  name_storage.c_str (),
 				  name_len);
   for (depth = 0; depth < MAX_RENAMING_CHAIN_LENGTH; depth += 1)
     {
@@ -1624,7 +1752,8 @@ write_var_or_type (struct parser_state *par_state,
 	  encoded_name[tail_index] = terminator;
 
 	  std::vector<struct block_symbol> syms
-	    = ada_lookup_symbol_list (decoded_name.c_str (), block, VAR_DOMAIN);
+	    = ada_lookup_symbol_list (decoded_name.c_str (), block,
+				      SEARCH_VFT);
 
 	  type_sym = select_possible_type_sym (syms);
 
@@ -1646,7 +1775,8 @@ write_var_or_type (struct parser_state *par_state,
 	      {
 		int alloc_len = renaming_len + name_len - tail_index + 1;
 		char *new_name
-		  = (char *) obstack_alloc (&temp_parse_space, alloc_len);
+		  = (char *) obstack_alloc (&ada_parser->temp_space,
+					    alloc_len);
 		strncpy (new_name, renaming, renaming_len);
 		strcpy (new_name + renaming_len, encoded_name + tail_index);
 		encoded_name = new_name;
@@ -1699,7 +1829,7 @@ write_var_or_type (struct parser_state *par_state,
 	    {
 	      struct objfile *objfile = nullptr;
 	      if (block != nullptr)
-		objfile = block_objfile (block);
+		objfile = block->objfile ();
 
 	      struct bound_minimal_symbol msym
 		= ada_lookup_simple_minsym (decoded_name.c_str (), objfile);
@@ -1748,13 +1878,13 @@ write_var_or_type (struct parser_state *par_state,
    Without this, an attempt like "complete print abc.d" will give a
    result like "print def" rather than "print abc.def".  */
 
-static std::string
-find_completion_bounds (struct parser_state *par_state)
+std::string
+ada_parse_state::find_completion_bounds ()
 {
   const char *end = pstate->lexptr;
   /* First the end of the prefix.  Here we stop at the token start or
      at '.' or space.  */
-  for (; end > original_expr && end[-1] != '.' && !isspace (end[-1]); --end)
+  for (; end > m_original_expr && end[-1] != '.' && !isspace (end[-1]); --end)
     {
       /* Nothing.  */
     }
@@ -1762,11 +1892,11 @@ find_completion_bounds (struct parser_state *par_state)
   const char *ptr = end;
   /* Here we allow '.'.  */
   for (;
-       ptr > original_expr && (ptr[-1] == '.'
-			       || ptr[-1] == '_'
-			       || (ptr[-1] >= 'a' && ptr[-1] <= 'z')
-			       || (ptr[-1] >= 'A' && ptr[-1] <= 'Z')
-			       || (ptr[-1] & 0xff) >= 0x80);
+       ptr > m_original_expr && (ptr[-1] == '.'
+				 || ptr[-1] == '_'
+				 || (ptr[-1] >= 'a' && ptr[-1] <= 'z')
+				 || (ptr[-1] >= 'A' && ptr[-1] <= 'Z')
+				 || (ptr[-1] & 0xff) >= 0x80);
        --ptr)
     {
       /* Nothing.  */
@@ -1802,7 +1932,7 @@ write_var_or_type_completion (struct parser_state *par_state,
 
   ada_structop_operation *op = write_selectors (par_state,
 						name0.ptr + tail_index);
-  op->set_prefix (find_completion_bounds (par_state));
+  op->set_prefix (ada_parser->find_completion_bounds ());
   par_state->mark_struct_expression (op);
   return nullptr;
 }
@@ -1830,7 +1960,7 @@ write_name_assoc (struct parser_state *par_state, struct stoken name)
       std::vector<struct block_symbol> syms
 	= ada_lookup_symbol_list (name.ptr,
 				  par_state->expression_context_block,
-				  VAR_DOMAIN);
+				  SEARCH_VFT);
 
       if (syms.size () != 1 || syms[0].symbol->aclass () == LOC_TYPEDEF)
 	pstate->push_new<ada_string_operation> (copy_name (name));
@@ -1842,30 +1972,6 @@ write_name_assoc (struct parser_state *par_state, struct stoken name)
       error (_("Invalid use of type."));
 
   push_association<ada_name_association> (ada_pop ());
-}
-
-static struct type *
-type_int (struct parser_state *par_state)
-{
-  return parse_type (par_state)->builtin_int;
-}
-
-static struct type *
-type_long (struct parser_state *par_state)
-{
-  return parse_type (par_state)->builtin_long;
-}
-
-static struct type *
-type_long_long (struct parser_state *par_state)
-{
-  return parse_type (par_state)->builtin_long_long;
-}
-
-static struct type *
-type_long_double (struct parser_state *par_state)
-{
-  return parse_type (par_state)->builtin_long_double;
 }
 
 static struct type *
@@ -1884,12 +1990,6 @@ type_for_char (struct parser_state *par_state, ULONGEST value)
 }
 
 static struct type *
-type_boolean (struct parser_state *par_state)
-{
-  return parse_type (par_state)->builtin_bool;
-}
-
-static struct type *
 type_system_address (struct parser_state *par_state)
 {
   struct type *type 
@@ -1897,11 +1997,4 @@ type_system_address (struct parser_state *par_state)
 				      par_state->gdbarch (),
 				      "system__address");
   return  type != NULL ? type : parse_type (par_state)->builtin_data_ptr;
-}
-
-void _initialize_ada_exp ();
-void
-_initialize_ada_exp ()
-{
-  obstack_init (&temp_parse_space);
 }

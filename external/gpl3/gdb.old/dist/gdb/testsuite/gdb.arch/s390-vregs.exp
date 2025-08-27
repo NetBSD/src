@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +15,7 @@
 
 # Test vector register access for s390 platforms.
 
-if { ![istarget s390-*-*] && ![istarget s390x-*-* ] } {
-    verbose "Skipping s390 vector register tests."
-    return
-}
+require {is_any_target s390-*-* s390x-*-*}
 
 standard_testfile .S
 

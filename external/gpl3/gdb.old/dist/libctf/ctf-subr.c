@@ -1,5 +1,5 @@
 /* Simple subrs.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -225,7 +225,7 @@ ctf_err_warn (ctf_dict_t *fp, int is_warning, int err,
     }
   va_end (alist);
 
-  /* Include the error code only if there is one; if this is not a warning,
+  /* Include the error code only if there is one; if this is a warning,
      only use the error code if it was explicitly passed and is nonzero.
      (Warnings may not have a meaningful error code, since the warning may not
      lead to unwinding up to the user.)  */
@@ -340,7 +340,7 @@ void
 ctf_assert_fail_internal (ctf_dict_t *fp, const char *file, size_t line,
 			  const char *exprstr)
 {
-  ctf_err_warn (fp, 0, ECTF_INTERNAL, _("%s: %lu: libctf assertion failed: %s"),
-		file, (long unsigned int) line, exprstr);
   ctf_set_errno (fp, ECTF_INTERNAL);
+  ctf_err_warn (fp, 0, 0, _("%s: %lu: libctf assertion failed: %s"),
+		file, (long unsigned int) line, exprstr);
 }

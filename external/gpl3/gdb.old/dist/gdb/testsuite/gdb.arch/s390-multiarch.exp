@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,15 +23,10 @@
 # running native.  It should be executed on a sufficiently new Linux
 # kernel that provides the 'system_call' regset.
 
-if { ![isnative] || ![istarget s390x-*-* ] } {
-    verbose "Skipping s390 multi-arch tests."
-    return
-}
+require isnative {istarget s390x-*-*}
 
 standard_testfile
 set binprefix $binfile
-
-gdb_exit
 
 proc compile_and_dump {variant ccopts binfile} {
     global srcdir subdir srcfile
@@ -139,8 +134,7 @@ if { $core31 != "" } {
     remote_exec host "$binfile ${core31}.2 ${core31}.3 774"
 }
 
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 
 if { $core64 != "" } {
     test_all_core64 $core64 "no exec"

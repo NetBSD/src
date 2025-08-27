@@ -1,5 +1,5 @@
 /* ELF executable support for BFD.
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -266,6 +266,7 @@ elf_swap_ehdr_out (bfd *abfd,
 {
   unsigned int tmp;
   int signed_vma = get_elf_backend_data (abfd)->sign_extend_vma;
+  bool no_section_header = (abfd->flags & BFD_NO_SECTION_HEADER) != 0;
   memcpy (dst->e_ident, src->e_ident, EI_NIDENT);
   /* note that all elements of dst are *arrays of unsigned char* already...  */
   H_PUT_16 (abfd, src->e_type, dst->e_type);
@@ -276,7 +277,10 @@ elf_swap_ehdr_out (bfd *abfd,
   else
     H_PUT_WORD (abfd, src->e_entry, dst->e_entry);
   H_PUT_WORD (abfd, src->e_phoff, dst->e_phoff);
-  H_PUT_WORD (abfd, src->e_shoff, dst->e_shoff);
+  if (no_section_header)
+    H_PUT_WORD (abfd, 0, dst->e_shoff);
+  else
+    H_PUT_WORD (abfd, src->e_shoff, dst->e_shoff);
   H_PUT_32 (abfd, src->e_flags, dst->e_flags);
   H_PUT_16 (abfd, src->e_ehsize, dst->e_ehsize);
   H_PUT_16 (abfd, src->e_phentsize, dst->e_phentsize);
@@ -284,15 +288,24 @@ elf_swap_ehdr_out (bfd *abfd,
   if (tmp > PN_XNUM)
     tmp = PN_XNUM;
   H_PUT_16 (abfd, tmp, dst->e_phnum);
-  H_PUT_16 (abfd, src->e_shentsize, dst->e_shentsize);
-  tmp = src->e_shnum;
-  if (tmp >= (SHN_LORESERVE & 0xffff))
-    tmp = SHN_UNDEF;
-  H_PUT_16 (abfd, tmp, dst->e_shnum);
-  tmp = src->e_shstrndx;
-  if (tmp >= (SHN_LORESERVE & 0xffff))
-    tmp = SHN_XINDEX & 0xffff;
-  H_PUT_16 (abfd, tmp, dst->e_shstrndx);
+  if (no_section_header)
+    {
+      H_PUT_16 (abfd, 0, dst->e_shentsize);
+      H_PUT_16 (abfd, 0, dst->e_shnum);
+      H_PUT_16 (abfd, 0, dst->e_shstrndx);
+    }
+  else
+    {
+      H_PUT_16 (abfd, src->e_shentsize, dst->e_shentsize);
+      tmp = src->e_shnum;
+      if (tmp >= (SHN_LORESERVE & 0xffff))
+	tmp = SHN_UNDEF;
+      H_PUT_16 (abfd, tmp, dst->e_shnum);
+      tmp = src->e_shstrndx;
+      if (tmp >= (SHN_LORESERVE & 0xffff))
+	tmp = SHN_XINDEX & 0xffff;
+      H_PUT_16 (abfd, tmp, dst->e_shstrndx);
+    }
 }
 
 /* Translate an ELF section header table entry in external format into an
@@ -516,7 +529,7 @@ elf_object_p (bfd *abfd)
 
   /* Read in the ELF header in external format.  */
 
-  if (bfd_bread (&x_ehdr, sizeof (x_ehdr), abfd) != sizeof (x_ehdr))
+  if (bfd_read (&x_ehdr, sizeof (x_ehdr), abfd) != sizeof (x_ehdr))
     {
       if (bfd_get_error () != bfd_error_system_call)
 	goto got_wrong_format_error;
@@ -629,7 +642,7 @@ elf_object_p (bfd *abfd)
 
       /* Read the first section header at index 0, and convert to internal
 	 form.  */
-      if (bfd_bread (&x_shdr, sizeof x_shdr, abfd) != sizeof (x_shdr))
+      if (bfd_read (&x_shdr, sizeof x_shdr, abfd) != sizeof (x_shdr))
 	goto got_no_match;
       elf_swap_shdr_in (abfd, &x_shdr, &i_shdr);
 
@@ -675,7 +688,7 @@ elf_object_p (bfd *abfd)
 
 	  if (bfd_seek (abfd, where, SEEK_SET) != 0)
 	    goto got_no_match;
-	  if (bfd_bread (&x_shdr, sizeof x_shdr, abfd) != sizeof (x_shdr))
+	  if (bfd_read (&x_shdr, sizeof x_shdr, abfd) != sizeof (x_shdr))
 	    goto got_no_match;
 
 	  /* Back to where we were.  */
@@ -717,7 +730,7 @@ elf_object_p (bfd *abfd)
 	 to internal form.  */
       for (shindex = 1; shindex < i_ehdrp->e_shnum; shindex++)
 	{
-	  if (bfd_bread (&x_shdr, sizeof x_shdr, abfd) != sizeof (x_shdr))
+	  if (bfd_read (&x_shdr, sizeof x_shdr, abfd) != sizeof (x_shdr))
 	    goto got_no_match;
 	  elf_swap_shdr_in (abfd, &x_shdr, i_shdrp + shindex);
 
@@ -804,14 +817,15 @@ elf_object_p (bfd *abfd)
 	= (Elf_Internal_Phdr *) bfd_alloc (abfd, amt);
       if (elf_tdata (abfd)->phdr == NULL)
 	goto got_no_match;
-      if (bfd_seek (abfd, (file_ptr) i_ehdrp->e_phoff, SEEK_SET) != 0)
+      if (bfd_seek (abfd, i_ehdrp->e_phoff, SEEK_SET) != 0)
 	goto got_no_match;
+      bool eu_strip_broken_phdrs = false;
       i_phdr = elf_tdata (abfd)->phdr;
       for (i = 0; i < i_ehdrp->e_phnum; i++, i_phdr++)
 	{
 	  Elf_External_Phdr x_phdr;
 
-	  if (bfd_bread (&x_phdr, sizeof x_phdr, abfd) != sizeof x_phdr)
+	  if (bfd_read (&x_phdr, sizeof x_phdr, abfd) != sizeof x_phdr)
 	    goto got_no_match;
 	  elf_swap_phdr_in (abfd, &x_phdr, i_phdr);
 	  /* Too much code in BFD relies on alignment being a power of
@@ -826,6 +840,31 @@ elf_object_p (bfd *abfd)
 		  abfd->read_only = 1;
 		}
 	    }
+	  /* Detect eu-strip -f debug files, which have program
+	     headers that describe the original file.  */
+	  if (i_phdr->p_filesz != 0
+	      && (i_phdr->p_filesz > filesize
+		  || i_phdr->p_offset > filesize - i_phdr->p_filesz))
+	    eu_strip_broken_phdrs = true;
+	}
+      if (!eu_strip_broken_phdrs
+	  && i_ehdrp->e_shoff == 0
+	  && i_ehdrp->e_shstrndx == 0)
+	{
+	  /* Try to reconstruct dynamic symbol table from PT_DYNAMIC
+	     segment if there is no section header.  */
+	  i_phdr = elf_tdata (abfd)->phdr;
+	  for (i = 0; i < i_ehdrp->e_phnum; i++, i_phdr++)
+	    if (i_phdr->p_type == PT_DYNAMIC)
+	      {
+		if (i_phdr->p_filesz != 0
+		    && !_bfd_elf_get_dynamic_symbols (abfd, i_phdr,
+						      elf_tdata (abfd)->phdr,
+						      i_ehdrp->e_phnum,
+						      filesize))
+		  goto got_no_match;
+		break;
+	      }
 	}
     }
 
@@ -975,7 +1014,13 @@ elf_write_relocs (bfd *abfd, asection *sec, void *data)
       sym = *ptr->sym_ptr_ptr;
       if (sym == last_sym)
 	n = last_sym_idx;
-      else if (bfd_is_abs_section (sym->section) && sym->value == 0)
+      /* If the relocation is against an absolute symbol whoes value is
+	 zero, then the symbol can be dropped, simplifying the reloc.
+	 PR 31106: Except for complex relocations where the symbols
+	 itself might be significant.  */
+      else if (bfd_is_abs_section (sym->section)
+	       && sym->value == 0
+	       && (sym->flags & BSF_RELC) == 0)
 	n = STN_UNDEF;
       else
 	{
@@ -1043,7 +1088,7 @@ elf_write_out_phdrs (bfd *abfd,
       Elf_External_Phdr extphdr;
 
       elf_swap_phdr_out (abfd, phdr, &extphdr);
-      if (bfd_bwrite (&extphdr, sizeof (Elf_External_Phdr), abfd)
+      if (bfd_write (&extphdr, sizeof (Elf_External_Phdr), abfd)
 	  != sizeof (Elf_External_Phdr))
 	return -1;
       phdr++;
@@ -1073,9 +1118,12 @@ elf_write_shdrs_and_ehdr (bfd *abfd)
 #endif
   elf_swap_ehdr_out (abfd, i_ehdrp, &x_ehdr);
   amt = sizeof (x_ehdr);
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
-      || bfd_bwrite (&x_ehdr, amt, abfd) != amt)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0
+      || bfd_write (&x_ehdr, amt, abfd) != amt)
     return false;
+
+  if ((abfd->flags & BFD_NO_SECTION_HEADER) != 0)
+    return true;
 
   /* Some fields in the first section header handle overflow of ehdr
      fields.  */
@@ -1104,8 +1152,8 @@ elf_write_shdrs_and_ehdr (bfd *abfd)
       elf_swap_shdr_out (abfd, *i_shdrp, x_shdrp + count);
     }
   amt = (bfd_size_type) i_ehdrp->e_shnum * sizeof (*x_shdrp);
-  if (bfd_seek (abfd, (file_ptr) i_ehdrp->e_shoff, SEEK_SET) != 0
-      || bfd_bwrite (x_shdrp, amt, abfd) != amt)
+  if (bfd_seek (abfd, i_ehdrp->e_shoff, SEEK_SET) != 0
+      || bfd_write (x_shdrp, amt, abfd) != amt)
     return false;
 
   /* need to dump the string table too...  */
@@ -1147,6 +1195,7 @@ elf_checksum_contents (bfd *abfd,
       Elf_Internal_Shdr i_shdr;
       Elf_External_Shdr x_shdr;
       bfd_byte *contents, *free_contents;
+      asection *sec = NULL;
 
       i_shdr = *i_shdrp[count];
       i_shdr.sh_offset = 0;
@@ -1162,8 +1211,6 @@ elf_checksum_contents (bfd *abfd,
       contents = i_shdr.contents;
       if (contents == NULL)
 	{
-	  asection *sec;
-
 	  sec = bfd_section_from_elf_index (abfd, count);
 	  if (sec != NULL)
 	    {
@@ -1172,7 +1219,7 @@ elf_checksum_contents (bfd *abfd,
 		{
 		  /* Force rereading from file.  */
 		  sec->flags &= ~SEC_IN_MEMORY;
-		  if (!bfd_malloc_and_get_section (abfd, sec, &free_contents))
+		  if (!_bfd_elf_mmap_section_contents (abfd, sec, &free_contents))
 		    continue;
 		  contents = free_contents;
 		}
@@ -1181,7 +1228,7 @@ elf_checksum_contents (bfd *abfd,
       if (contents != NULL)
 	{
 	  (*process) (contents, i_shdr.sh_size, arg);
-	  free (free_contents);
+	  _bfd_elf_munmap_section_contents (sec, free_contents);
 	}
     }
 
@@ -1213,11 +1260,13 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bool dynamic)
      symbols.  We actually use all the ELF symbols, so there will be no
      space left over at the end.  When we have all the symbols, we
      build the caller's pointer vector.  */
+  ebd = get_elf_backend_data (abfd);
 
   if (! dynamic)
     {
       hdr = &elf_tdata (abfd)->symtab_hdr;
       verhdr = NULL;
+      symcount = hdr->sh_size / ebd->s->sizeof_sym;
     }
   else
     {
@@ -1229,19 +1278,26 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bool dynamic)
       if ((elf_dynverdef (abfd) != 0
 	   && elf_tdata (abfd)->verdef == NULL)
 	  || (elf_dynverref (abfd) != 0
-	      && elf_tdata (abfd)->verref == NULL))
+	      && elf_tdata (abfd)->verref == NULL)
+	  || elf_tdata (abfd)->dt_verdef != NULL
+	  || elf_tdata (abfd)->dt_verneed != NULL)
 	{
 	  if (!_bfd_elf_slurp_version_tables (abfd, false))
 	    return -1;
 	}
+
+      symcount = elf_tdata (abfd)->dt_symtab_count;
     }
 
-  ebd = get_elf_backend_data (abfd);
-  symcount = hdr->sh_size / sizeof (Elf_External_Sym);
+  if (symcount == 0)
+    symcount = hdr->sh_size / sizeof (Elf_External_Sym);
+
   if (symcount == 0)
     sym = symbase = NULL;
   else
     {
+      size_t i;
+
       isymbuf = bfd_elf_get_elf_syms (abfd, hdr, symcount, 0,
 				      NULL, NULL, NULL);
       if (isymbuf == NULL)
@@ -1288,12 +1344,18 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bool dynamic)
       if (xver != NULL)
 	++xver;
       isymend = isymbuf + symcount;
-      for (isym = isymbuf + 1, sym = symbase; isym < isymend; isym++, sym++)
+      for (isym = isymbuf + 1, sym = symbase, i = 1;
+	   isym < isymend;
+	   isym++, sym++, i++)
 	{
 	  memcpy (&sym->internal_elf_sym, isym, sizeof (Elf_Internal_Sym));
 
 	  sym->symbol.the_bfd = abfd;
-	  sym->symbol.name = bfd_elf_sym_name (abfd, hdr, isym, NULL);
+	  if (elf_use_dt_symtab_p (abfd))
+	    sym->symbol.name = (elf_tdata (abfd)->dt_strtab
+				+ isym->st_name);
+	  else
+	    sym->symbol.name = bfd_elf_sym_name (abfd, hdr, isym, NULL);
 	  sym->symbol.value = isym->st_value;
 
 	  if (isym->st_shndx == SHN_UNDEF)
@@ -1326,6 +1388,15 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bool dynamic)
 		 size in the value field, and doesn't care (at the
 		 moment) about the alignment.  */
 	      sym->symbol.value = isym->st_size;
+	    }
+	  else if (elf_use_dt_symtab_p (abfd))
+	    {
+	      asection *sec;
+	      sec = _bfd_elf_get_section_from_dynamic_symbol (abfd,
+							      isym);
+	      if (sec == NULL)
+		goto error_return;
+	      sym->symbol.section = sec;
 	    }
 	  else
 	    {
@@ -1407,7 +1478,10 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bool dynamic)
 	  if (dynamic)
 	    sym->symbol.flags |= BSF_DYNAMIC;
 
-	  if (xver != NULL)
+	  if (elf_tdata (abfd)->dt_versym)
+	    sym->version = bfd_get_16 (abfd,
+				       elf_tdata (abfd)->dt_versym + 2 * i);
+	  else if (xver != NULL)
 	    {
 	      Elf_Internal_Versym iversym;
 
@@ -1445,13 +1519,15 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bool dynamic)
     }
 
   free (xverbuf);
-  if (hdr->contents != (unsigned char *) isymbuf)
+  if (hdr->contents != (unsigned char *) isymbuf
+      && !elf_use_dt_symtab_p (abfd))
     free (isymbuf);
   return symcount;
 
  error_return:
   free (xverbuf);
-  if (hdr->contents != (unsigned char *) isymbuf)
+  if (hdr->contents != (unsigned char *) isymbuf
+      && !elf_use_dt_symtab_p (abfd))
     free (isymbuf);
   return -1;
 }

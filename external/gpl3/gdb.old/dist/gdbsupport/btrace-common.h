@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2023 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>.
 
@@ -214,7 +214,23 @@ private:
 };
 
 /* Target specific branch trace information.  */
-struct btrace_target_info;
+struct btrace_target_info
+{
+  btrace_target_info (ptid_t ptid) : ptid (ptid)
+    {}
+
+  btrace_target_info (ptid_t ptid, btrace_config conf)
+    : ptid (ptid), conf (conf)
+    {}
+
+  virtual ~btrace_target_info () = default;
+
+  /* The ptid of this thread.  */
+  ptid_t ptid {};
+
+  /* The obtained branch trace configuration.  */
+  btrace_config conf {};
+};
 
 /* Enumeration of btrace read types.  */
 

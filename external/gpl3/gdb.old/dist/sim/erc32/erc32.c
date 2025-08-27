@@ -1,6 +1,6 @@
 /* This file is part of SIS (SPARC instruction simulator)
 
-   Copyright (C) 1995-2023 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
    Contributed by Jiri Gaisler, European Space Agency
 
    This program is free software; you can redistribute it and/or modify
@@ -799,6 +799,7 @@ mec_write(uint32_t addr, uint32_t data)
     case MEC_UARTA:
     case MEC_UARTB:
         if (data & 0xFFFFFF00) mecparerror();
+        ATTRIBUTE_FALLTHROUGH;
     case MEC_UART_CTRL:
         if (data & 0xFF00FF00) mecparerror();
 	write_uart(addr, data);
@@ -1042,10 +1043,6 @@ port_init(void)
 static uint32_t
 read_uart(uint32_t addr)
 {
-
-    unsigned        tmp;
-
-    tmp = 0;
     switch (addr & 0xff) {
 
     case 0xE0:			/* UART 1 */
@@ -1071,7 +1068,7 @@ read_uart(uint32_t addr)
 
 	}
 #else
-	tmp = uarta_data;
+	unsigned tmp = uarta_data;
 	uarta_data &= ~UART_DR;
 	uart_stat_reg &= ~UARTA_DR;
 	return tmp;
@@ -1103,7 +1100,7 @@ read_uart(uint32_t addr)
 
 	}
 #else
-	tmp = uartb_data;
+	unsigned tmp = uartb_data;
 	uartb_data &= ~UART_DR;
 	uart_stat_reg &= ~UARTB_DR;
 	return tmp;
@@ -1636,10 +1633,7 @@ memory_read(int32_t asi, uint32_t addr, void *data, int32_t sz, int32_t *ws)
 int
 memory_write(int32_t asi, uint32_t addr, uint32_t *data, int32_t sz, int32_t *ws)
 {
-    uint32_t          byte_addr;
-    uint32_t          byte_mask;
     uint32_t          waddr;
-    uint32_t         *ram;
     int32_t           mexc;
     int             i;
     int             wphit[2];

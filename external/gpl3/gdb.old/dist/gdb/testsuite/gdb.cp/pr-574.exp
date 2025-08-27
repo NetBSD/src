@@ -1,4 +1,4 @@
-# Copyright 2002-2023 Free Software Foundation, Inc.
+# Copyright 2002-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 
 # This file is part of the gdb testsuite
 
-if { [skip_cplus_tests] } { return }
+require allow_cplus_tests
 
 #
 # test running programs
@@ -55,4 +55,3 @@ gdb_continue_to_breakpoint "end of constructors"
 gdb_test "print *theB" "\\$\[0-9\]* = {<A> = {\[^}\]*}, static b = <optimized out>}" "PR gdb/574"
 
 gdb_exit
-return 0

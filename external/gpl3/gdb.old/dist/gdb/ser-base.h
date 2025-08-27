@@ -1,6 +1,6 @@
 /* Generic serial interface functions.
 
-   Copyright (C) 2005-2023 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #ifndef SER_BASE_H
 #define SER_BASE_H
 
-#include "serial.h"  /* For serial_ttystate.  */
+#include "serial.h"
 
 struct serial;
 struct ui_file;
@@ -30,7 +30,7 @@ extern int generic_readchar (struct serial *scb, int timeout,
 						 int timeout));
 extern int ser_base_flush_output (struct serial *scb);
 extern int ser_base_flush_input (struct serial *scb);
-extern int ser_base_send_break (struct serial *scb);
+extern void ser_base_send_break (struct serial *scb);
 extern void ser_base_raw (struct serial *scb);
 extern serial_ttystate ser_base_get_tty_state (struct serial *scb);
 extern serial_ttystate ser_base_copy_tty_state (struct serial *scb,
@@ -40,12 +40,12 @@ extern int ser_base_set_tty_state (struct serial *scb,
 extern void ser_base_print_tty_state (struct serial *scb,
 				      serial_ttystate ttystate,
 				      struct ui_file *stream);
-extern int ser_base_setbaudrate (struct serial *scb, int rate);
+extern void ser_base_setbaudrate (struct serial *scb, int rate);
 extern int ser_base_setstopbits (struct serial *scb, int num);
 extern int ser_base_setparity (struct serial *scb, int parity);
 extern int ser_base_drain_output (struct serial *scb);
 
-extern int ser_base_write (struct serial *scb, const void *buf, size_t count);
+extern void ser_base_write (struct serial *scb, const void *buf, size_t count);
 
 extern void ser_base_async (struct serial *scb, int async_p);
 extern int ser_base_readchar (struct serial *scb, int timeout);

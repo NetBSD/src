@@ -1,4 +1,4 @@
-# Copyright 2009-2023 Free Software Foundation, Inc.
+# Copyright 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,12 +17,7 @@
 # with shared libraries and a logfile.
 
 # This test suitable only for process record-replay
-if ![supports_process_record] {
-    return
-}
-if {[skip_shlib_tests]} {
-    return
-}
+require supports_process_record allow_shlib_tests
 
 standard_testfile solib-reverse.c
 set precsave [standard_output_file solib.precsave]
@@ -58,11 +53,6 @@ if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable \
     return -1
 }
      
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-
 # Note: The test previously did "set debug-file-directory" to (try to)
 # ensure the debug info for the dynamic loader and libc weren't found.
 # This doesn't work if the debug info is in the .debug subdirectory.
@@ -70,17 +60,14 @@ gdb_start
 # and is no longer attempted.  Instead, the test does not make assumptions
 # about whether the debug info is present or not.
 
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart $binfile
 gdb_load_shlib $library1
 gdb_load_shlib $library2
 
 runto_main
 
-if [supports_process_record] {
-    # Activate process record/replay
-    gdb_test_no_output "record" "turn on process record"
-}
+# Activate process record/replay
+gdb_test_no_output "record" "turn on process record"
 
 set end_of_main [gdb_get_line_number "end of main" ]
 gdb_test "break $end_of_main" \
@@ -153,8 +140,17 @@ gdb_test_multiple "reverse-step" "reverse-step into solib function one" {
 	pass $gdb_test_name
     }
 }
-gdb_test "reverse-step" "return 2.x.*" "reverse-step within solib function one"
-gdb_test "reverse-step" " middle part two.*" "reverse-step back to main one"
+# Depending on wether the closing } has a line associated, we might have
+# different acceptable results here
+gdb_test_multiple "reverse-step" "reverse-step within solib function one" {
+    -re -wrap "return y;.*" {
+	pass $gdb_test_name
+    }
+    -re -wrap "int y =.*" {
+	pass $gdb_test_name
+    }
+}
+repeat_cmd_until "reverse-step" "" "main .. at" "reverse-step back to main one"
 
 gdb_test_multiple "reverse-step" "reverse-step into solib function two" {
     -re -wrap "begin part two.*" {
@@ -165,8 +161,15 @@ gdb_test_multiple "reverse-step" "reverse-step into solib function two" {
 	pass $gdb_test_name
     }
 }
-gdb_test "reverse-step" "return 2.x.*" "reverse-step within solib function two"
-gdb_test "reverse-step" " begin part two.*" "reverse-step back to main two"
+gdb_test_multiple "reverse-step" "reverse-step within solib function two" {
+    -re -wrap "return y;.*" {
+	pass $gdb_test_name
+    }
+    -re -wrap "int y =.*" {
+	pass $gdb_test_name
+    }
+}
+repeat_cmd_until "reverse-step" "" "main .. at" "reverse-step back to main two"
 
 #
 # Test reverse-next over debuggable solib function

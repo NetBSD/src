@@ -1,4 +1,4 @@
-# Copyright 1997-2023 Free Software Foundation, Inc.
+# Copyright 1997-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -273,15 +273,11 @@ if  { [gdb_compile "${srcfile}" "${binfile}" object ""] != "" } {
 
 remote_file build delete ${srcfile}
 
-# Start with a fresh gdb
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 
-set binfile [gdb_remote_download host ${binfile} \
-		 [standard_output_file object.o]]
-set binfile_re [string_to_regexp $binfile]
-send_gdb "file $binfile\n"
+set binfile_host [gdb_remote_download host $binfile]
+set binfile_re [string_to_regexp $binfile_host]
+send_gdb "file $binfile_host\n"
 # If $binfile is very long, a \r (but not a \n) will echo in the
 # middle of the echo of the command.  So to match the echo, we
 # would like to match anything not containing \n
@@ -311,5 +307,3 @@ gdb_expect 60 {
 }
 
 do_tests
-
-return 0

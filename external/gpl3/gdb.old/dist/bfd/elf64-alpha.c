@@ -1,5 +1,5 @@
 /* Alpha specific support for 64-bit ELF
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@tamu.edu>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1425,17 +1425,7 @@ elf64_alpha_read_ecoff_info (bfd *abfd, asection *section,
 
  error_return:
   free (ext_hdr);
-  free (debug->line);
-  free (debug->external_dnr);
-  free (debug->external_pdr);
-  free (debug->external_sym);
-  free (debug->external_opt);
-  free (debug->external_aux);
-  free (debug->ss);
-  free (debug->ssext);
-  free (debug->external_fdr);
-  free (debug->external_rfd);
-  free (debug->external_ext);
+  _bfd_ecoff_free_ecoff_debug_info (debug);
   return false;
 }
 
@@ -1519,13 +1509,6 @@ elf64_alpha_find_nearest_line (bfd *abfd, asymbol **symbols,
 	    (*swap->swap_fdr_in) (abfd, fraw_src, fdr_ptr);
 
 	  alpha_elf_tdata (abfd)->find_line_info = fi;
-
-	  /* Note that we don't bother to ever free this information.
-	     find_nearest_line is either called all the time, as in
-	     objdump -l, so the information should be saved, or it is
-	     rarely called, as in ld error messages, so the memory
-	     wasted is unimportant.  Still, it would probably be a
-	     good idea for free_cached_info to throw it away.  */
 	}
 
       if (_bfd_ecoff_locate_line (abfd, section, offset, &fi->d, swap,
@@ -1999,9 +1982,9 @@ elf64_alpha_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		{
 		  info->flags |= DF_TEXTREL;
 		  info->callbacks->minfo
-		    (_("%pB: dynamic relocation against `%pT' in "
+		    (_("%pB: dynamic relocation against a local symbol in "
 		       "read-only section `%pA'\n"),
-		     sec->owner, h->root.root.root.string, sec);
+		     sec->owner, sec);
 		}
 	    }
 	}
@@ -2579,8 +2562,8 @@ elf64_alpha_size_plt_section (struct bfd_link_info *info)
 }
 
 static bool
-elf64_alpha_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				  struct bfd_link_info *info)
+elf64_alpha_early_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+				 struct bfd_link_info *info)
 {
   bfd *i;
   struct alpha_elf_link_hash_table * htab;
@@ -2806,8 +2789,8 @@ elf64_alpha_size_rela_got_section (struct bfd_link_info *info)
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf64_alpha_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				   struct bfd_link_info *info)
+elf64_alpha_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+				struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
@@ -2819,7 +2802,8 @@ elf64_alpha_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
     return false;
 
   dynobj = elf_hash_table(info)->dynobj;
-  BFD_ASSERT(dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -3726,8 +3710,8 @@ elf64_alpha_relax_section (bfd *abfd, asection *sec,
   *again = false;
 
   if (bfd_link_relocatable (link_info)
-      || ((sec->flags & (SEC_CODE | SEC_RELOC | SEC_ALLOC))
-	  != (SEC_CODE | SEC_RELOC | SEC_ALLOC))
+      || ((sec->flags & (SEC_CODE | SEC_RELOC | SEC_ALLOC | SEC_HAS_CONTENTS))
+	  != (SEC_CODE | SEC_RELOC | SEC_ALLOC | SEC_HAS_CONTENTS))
       || sec->reloc_count == 0)
     return true;
 
@@ -5465,10 +5449,10 @@ static const struct elf_size_info alpha_elf_size_info =
   elf64_alpha_merge_symbol_attribute
 #define elf_backend_copy_indirect_symbol \
   elf64_alpha_copy_indirect_symbol
-#define elf_backend_always_size_sections \
-  elf64_alpha_always_size_sections
-#define elf_backend_size_dynamic_sections \
-  elf64_alpha_size_dynamic_sections
+#define elf_backend_early_size_sections \
+  elf64_alpha_early_size_sections
+#define elf_backend_late_size_sections \
+  elf64_alpha_late_size_sections
 #define elf_backend_omit_section_dynsym \
   _bfd_elf_omit_section_dynsym_all
 #define elf_backend_relocate_section \

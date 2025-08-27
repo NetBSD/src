@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 #
 
 #
-#   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -127,10 +127,9 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @NEED_CTF_QSORT_R_TRUE@am__append_1 = ctf-qsort_r.c
-@TCL_TRY_TRUE@am__append_2 = site.exp development.exp
-@BUILD_INFO_TRUE@am__append_3 = doc/ctf-spec.texi
-@BUILD_INFO_TRUE@am__append_4 = texput.log
-@BUILD_INFO_TRUE@am__append_5 = doc/ctf-spec.info
+@BUILD_INFO_TRUE@am__append_2 = doc/ctf-spec.texi
+@BUILD_INFO_TRUE@am__append_3 = texput.log
+@BUILD_INFO_TRUE@am__append_4 = doc/ctf-spec.info
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
@@ -138,9 +137,18 @@ am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
 	$(top_srcdir)/../config/depstand.m4 \
 	$(top_srcdir)/../config/enable.m4 \
 	$(top_srcdir)/../config/gettext-sister.m4 \
+	$(top_srcdir)/../config/gettext.m4 \
+	$(top_srcdir)/../config/iconv.m4 \
+	$(top_srcdir)/../config/intlmacosx.m4 \
 	$(top_srcdir)/../config/jobserver.m4 \
 	$(top_srcdir)/../config/lead-dot.m4 \
+	$(top_srcdir)/../config/lib-ld.m4 \
+	$(top_srcdir)/../config/lib-link.m4 \
+	$(top_srcdir)/../config/lib-prefix.m4 \
+	$(top_srcdir)/../config/mmap.m4 $(top_srcdir)/../config/nls.m4 \
 	$(top_srcdir)/../config/override.m4 \
+	$(top_srcdir)/../config/po.m4 \
+	$(top_srcdir)/../config/progtest.m4 \
 	$(top_srcdir)/../config/warnings.m4 \
 	$(top_srcdir)/../config/zlib.m4 $(top_srcdir)/../libtool.m4 \
 	$(top_srcdir)/../ltoptions.m4 $(top_srcdir)/../ltsugar.m4 \
@@ -312,12 +320,20 @@ DVIS = doc/ctf-spec.dvi
 PDFS = doc/ctf-spec.pdf
 PSS = doc/ctf-spec.ps
 HTMLS = doc/ctf-spec.html
-TEXINFOS = $(am__append_3)
+TEXINFOS = $(am__append_2)
 TEXI2DVI = texi2dvi
 TEXI2PDF = $(TEXI2DVI) --pdf --batch
 MAKEINFOHTML = $(MAKEINFO) --html
 AM_MAKEINFOHTMLFLAGS = $(AM_MAKEINFOFLAGS)
 DVIPS = dvips
+RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
+	ctags-recursive dvi-recursive html-recursive info-recursive \
+	install-data-recursive install-dvi-recursive \
+	install-exec-recursive install-html-recursive \
+	install-info-recursive install-pdf-recursive \
+	install-ps-recursive install-recursive installcheck-recursive \
+	installdirs-recursive pdf-recursive ps-recursive \
+	tags-recursive uninstall-recursive
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -325,6 +341,14 @@ am__can_run_installinfo = \
   esac
 am__include_HEADERS_DIST = $(INCDIR)/ctf.h $(INCDIR)/ctf-api.h
 HEADERS = $(include_HEADERS)
+RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
+  distclean-recursive maintainer-clean-recursive
+am__recursive_targets = \
+  $(RECURSIVE_TARGETS) \
+  $(RECURSIVE_CLEAN_TARGETS) \
+  $(am__extra_recursive_targets)
+AM_RECURSIVE_TARGETS = $(am__recursive_targets:-recursive=) TAGS CTAGS \
+	cscope distdir dist dist-all distcheck
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) \
 	$(LISP)config.h.in
 # Read a list of newline-separated strings from the standard input,
@@ -346,9 +370,9 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
-AM_RECURSIVE_TARGETS = cscope
 DEJATOOL = $(PACKAGE)
 RUNTESTDEFAULTFLAGS = --tool $$tool --srcdir $$srcdir
+DIST_SUBDIRS = $(SUBDIRS)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(srcdir)/doc/local.mk $(top_srcdir)/../ar-lib \
 	$(top_srcdir)/../compile $(top_srcdir)/../config.guess \
@@ -366,6 +390,31 @@ am__remove_distdir = \
       || { sleep 5 && rm -rf "$(distdir)"; }; \
   else :; fi
 am__post_remove_distdir = $(am__remove_distdir)
+am__relativize = \
+  dir0=`pwd`; \
+  sed_first='s,^\([^/]*\)/.*$$,\1,'; \
+  sed_rest='s,^[^/]*/*,,'; \
+  sed_last='s,^.*/\([^/]*\)$$,\1,'; \
+  sed_butlast='s,/*[^/]*$$,,'; \
+  while test -n "$$dir1"; do \
+    first=`echo "$$dir1" | sed -e "$$sed_first"`; \
+    if test "$$first" != "."; then \
+      if test "$$first" = ".."; then \
+        dir2=`echo "$$dir0" | sed -e "$$sed_last"`/"$$dir2"; \
+        dir0=`echo "$$dir0" | sed -e "$$sed_butlast"`; \
+      else \
+        first2=`echo "$$dir2" | sed -e "$$sed_first"`; \
+        if test "$$first2" = "$$first"; then \
+          dir2=`echo "$$dir2" | sed -e "$$sed_rest"`; \
+        else \
+          dir2="../$$dir2"; \
+        fi; \
+        dir0="$$dir0"/"$$first"; \
+      fi; \
+    fi; \
+    dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
+  done; \
+  reldir="$$dir2"
 DIST_ARCHIVES = $(distdir).tar.gz
 GZIP_ENV = --best
 DIST_TARGETS = dist-gzip
@@ -407,6 +456,7 @@ FGREP = @FGREP@
 GENCAT = @GENCAT@
 GMSGFMT = @GMSGFMT@
 GREP = @GREP@
+HAVE_TCL_TRY = @HAVE_TCL_TRY@
 INCINTL = @INCINTL@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -414,8 +464,11 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INSTOBJEXT = @INSTOBJEXT@
+INTLLIBS = @INTLLIBS@
+INTL_MACOSX_LIBS = @INTL_MACOSX_LIBS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LIBICONV = @LIBICONV@
 LIBINTL = @LIBINTL@
 LIBINTL_DEP = @LIBINTL_DEP@
 LIBOBJS = @LIBOBJS@
@@ -423,10 +476,15 @@ LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
+LTLIBICONV = @LTLIBICONV@
+LTLIBINTL = @LTLIBINTL@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
+MKINSTALLDIRS = @MKINSTALLDIRS@
+MSGFMT = @MSGFMT@
+MSGMERGE = @MSGMERGE@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -521,10 +579,15 @@ zlibinc = @zlibinc@
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
 AUTOMAKE_OPTIONS = dejagnu foreign info-in-builddir no-texinfo.tex
 
+# Suppress 'configure.ac: error: AM_GNU_GETTEXT used but SUBDIRS not defined'
+# from Automake, as libctf uses AM_GNU_GETTEXT (through
+# ZW_GNU_GETTEXT_SISTER_DIR) but has no po/ subdir (currently).
+SUBDIRS = 
+
 # Variables that we might accumulate conditionally or in subdirs.
-info_TEXINFOS = $(am__append_3)
-DISTCLEANFILES = $(am__append_2) $(am__append_4)
-MAINTAINERCLEANFILES = $(am__append_5)
+info_TEXINFOS = $(am__append_2)
+DISTCLEANFILES = site.exp development.exp $(am__append_3)
+MAINTAINERCLEANFILES = $(am__append_4)
 
 # This is where we get zlib from.  zlibdir is -L../zlib and zlibinc is
 # -I../zlib, unless we were configured with --with-system-zlib, in which
@@ -559,28 +622,28 @@ libctf_la_LDFLAGS = $(libctf_ldflags_nover) @VERSION_FLAGS@
 libctf_la_SOURCES = $(libctf_nobfd_la_SOURCES) ctf-open-bfd.c
 RUNTEST = runtest
 RUNTESTFLAGS = 
-@TCL_TRY_TRUE@CC_FOR_TARGET = ` \
-@TCL_TRY_TRUE@  if [ -f $$r/../gcc/xgcc ] ; then \
-@TCL_TRY_TRUE@    if [ -f $$r/../newlib/Makefile ] ; then \
-@TCL_TRY_TRUE@      echo $$r/../gcc/xgcc -B$$r/../gcc/ -idirafter $$r/../newlib/targ-include -idirafter $${srcroot}/../newlib/libc/include -nostdinc; \
-@TCL_TRY_TRUE@    else \
-@TCL_TRY_TRUE@      echo $$r/../gcc/xgcc -B$$r/../gcc/; \
-@TCL_TRY_TRUE@    fi; \
-@TCL_TRY_TRUE@  else \
-@TCL_TRY_TRUE@    if [ "@host@" = "@target@" ] ; then \
-@TCL_TRY_TRUE@      echo $(CC); \
-@TCL_TRY_TRUE@    else \
-@TCL_TRY_TRUE@      echo gcc | sed '$(transform)'; \
-@TCL_TRY_TRUE@    fi; \
-@TCL_TRY_TRUE@  fi`
+CC_FOR_TARGET = ` \
+  if [ -f $$r/../gcc/xgcc ] ; then \
+    if [ -f $$r/../newlib/Makefile ] ; then \
+      echo $$r/../gcc/xgcc -B$$r/../gcc/ -idirafter $$r/../newlib/targ-include -idirafter $${srcroot}/../newlib/libc/include -nostdinc; \
+    else \
+      echo $$r/../gcc/xgcc -B$$r/../gcc/; \
+    fi; \
+  else \
+    if [ "@host@" = "@target@" ] ; then \
+      echo $(CC); \
+    else \
+      echo gcc | sed '$(transform)'; \
+    fi; \
+  fi`
 
 
 # development.sh is used to determine -Werror default.
-@TCL_TRY_TRUE@CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/development.sh
-@TCL_TRY_TRUE@EXTRA_DEJAGNU_SITE_CONFIG = development.exp
+CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/development.sh
+EXTRA_DEJAGNU_SITE_CONFIG = development.exp
 @BUILD_INFO_TRUE@AM_MAKEINFOFLAGS = --no-split
 all: config.h
-	$(MAKE) $(AM_MAKEFLAGS) all-am
+	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
 .SUFFIXES: .c .dvi .lo .o .obj .ps
@@ -1177,14 +1240,61 @@ uninstall-includeHEADERS:
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	dir='$(DESTDIR)$(includedir)'; $(am__uninstall_files_from_dir)
 
+# This directory's subdirectories are mostly independent; you can cd
+# into them and run 'make' without going through this Makefile.
+# To change the values of 'make' variables: instead of editing Makefiles,
+# (1) if the variable is set in 'config.status', edit 'config.status'
+#     (which will cause the Makefiles to be regenerated when you run 'make');
+# (2) otherwise, pass the desired values on the 'make' command line.
+$(am__recursive_targets):
+	@fail=; \
+	if $(am__make_keepgoing); then \
+	  failcom='fail=yes'; \
+	else \
+	  failcom='exit 1'; \
+	fi; \
+	dot_seen=no; \
+	target=`echo $@ | sed s/-recursive//`; \
+	case "$@" in \
+	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
+	  *) list='$(SUBDIRS)' ;; \
+	esac; \
+	for subdir in $$list; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    dot_seen=yes; \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  ($(am__cd) $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	  || eval $$failcom; \
+	done; \
+	if test "$$dot_seen" = "no"; then \
+	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
+	fi; test -z "$$fail"
+
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
-tags: tags-am
+tags: tags-recursive
 TAGS: tags
 
 tags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
 	set x; \
 	here=`pwd`; \
+	if ($(ETAGS) --etags-include --version) >/dev/null 2>&1; then \
+	  include_option=--etags-include; \
+	  empty_fix=.; \
+	else \
+	  include_option=--include; \
+	  empty_fix=; \
+	fi; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    test ! -f $$subdir/TAGS || \
+	      set "$$@" "$$include_option=$$here/$$subdir/TAGS"; \
+	  fi; \
+	done; \
 	$(am__define_uniq_tagged_files); \
 	shift; \
 	if test -z "$(ETAGS_ARGS)$$*$$unique"; then :; else \
@@ -1197,7 +1307,7 @@ tags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
 	      $$unique; \
 	  fi; \
 	fi
-ctags: ctags-am
+ctags: ctags-recursive
 
 CTAGS: ctags
 ctags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
@@ -1216,7 +1326,7 @@ cscope: cscope.files
 clean-cscope:
 	-rm -f cscope.files
 cscope.files: clean-cscope cscopelist
-cscopelist: cscopelist-am
+cscopelist: cscopelist-recursive
 
 cscopelist-am: $(am__tagged_files)
 	list='$(am__tagged_files)'; \
@@ -1235,18 +1345,6 @@ cscopelist-am: $(am__tagged_files)
 distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 	-rm -f cscope.out cscope.in.out cscope.po.out cscope.files
-
-@TCL_TRY_FALSE@check-DEJAGNU: site.exp
-@TCL_TRY_FALSE@	srcdir='$(srcdir)'; export srcdir; \
-@TCL_TRY_FALSE@	EXPECT=$(EXPECT); export EXPECT; \
-@TCL_TRY_FALSE@	if $(SHELL) -c "$(RUNTEST) --version" > /dev/null 2>&1; then \
-@TCL_TRY_FALSE@	  exit_status=0; l='$(DEJATOOL)'; for tool in $$l; do \
-@TCL_TRY_FALSE@	    if $(RUNTEST) $(AM_RUNTESTFLAGS) $(RUNTESTDEFAULTFLAGS) $(RUNTESTFLAGS); \
-@TCL_TRY_FALSE@	    then :; else exit_status=1; fi; \
-@TCL_TRY_FALSE@	  done; \
-@TCL_TRY_FALSE@	else echo "WARNING: could not find '$(RUNTEST)'" 1>&2; :;\
-@TCL_TRY_FALSE@	fi; \
-@TCL_TRY_FALSE@	exit $$exit_status
 site.exp: Makefile $(EXTRA_DEJAGNU_SITE_CONFIG)
 	@echo 'Making a new site.exp file ...'
 	@echo '## these variables are automatically generated by make ##' >site.tmp
@@ -1310,6 +1408,31 @@ distdir: $(DISTFILES)
 	    test -f "$(distdir)/$$file" \
 	    || cp -p $$d/$$file "$(distdir)/$$file" \
 	    || exit 1; \
+	  fi; \
+	done
+	@list='$(DIST_SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    $(am__make_dryrun) \
+	      || test -d "$(distdir)/$$subdir" \
+	      || $(MKDIR_P) "$(distdir)/$$subdir" \
+	      || exit 1; \
+	    dir1=$$subdir; dir2="$(distdir)/$$subdir"; \
+	    $(am__relativize); \
+	    new_distdir=$$reldir; \
+	    dir1=$$subdir; dir2="$(top_distdir)"; \
+	    $(am__relativize); \
+	    new_top_distdir=$$reldir; \
+	    echo " (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) top_distdir="$$new_top_distdir" distdir="$$new_distdir" \\"; \
+	    echo "     am__remove_distdir=: am__skip_length_check=: am__skip_mode_fix=: distdir)"; \
+	    ($(am__cd) $$subdir && \
+	      $(MAKE) $(AM_MAKEFLAGS) \
+	        top_distdir="$$new_top_distdir" \
+	        distdir="$$new_distdir" \
+		am__remove_distdir=: \
+		am__skip_length_check=: \
+		am__skip_mode_fix=: \
+	        distdir) \
+	      || exit 1; \
 	  fi; \
 	done
 	$(MAKE) $(AM_MAKEFLAGS) \
@@ -1448,21 +1571,22 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) check-DEJAGNU
-check: check-am
+check: check-recursive
 all-am: Makefile $(INFO_DEPS) $(LTLIBRARIES) $(HEADERS) config.h
-installdirs:
+installdirs: installdirs-recursive
+installdirs-am:
 	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(infodir)" "$(DESTDIR)$(includedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-am
-install-exec: install-exec-am
-install-data: install-data-am
-uninstall: uninstall-am
+install: install-recursive
+install-exec: install-exec-recursive
+install-data: install-data-recursive
+uninstall: uninstall-recursive
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 
-installcheck: installcheck-am
+installcheck: installcheck-recursive
 install-strip:
 	if test -z '$(STRIP)'; then \
 	  $(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
@@ -1488,12 +1612,12 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 @BUILD_INFO_FALSE@html-local:
-clean: clean-am
+clean: clean-recursive
 
 clean-am: clean-aminfo clean-generic clean-libLTLIBRARIES \
 	clean-libtool clean-noinstLTLIBRARIES mostlyclean-am
 
-distclean: distclean-am
+distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
@@ -1501,21 +1625,21 @@ distclean-am: clean-am distclean-DEJAGNU distclean-compile \
 	distclean-generic distclean-hdr distclean-libtool \
 	distclean-tags
 
-dvi: dvi-am
+dvi: dvi-recursive
 
 dvi-am: $(DVIS)
 
-html: html-am
+html: html-recursive
 
 html-am: $(HTMLS) html-local
 
-info: info-am
+info: info-recursive
 
 info-am: $(INFO_DEPS)
 
 install-data-am: install-includeHEADERS install-info-am
 
-install-dvi: install-dvi-am
+install-dvi: install-dvi-recursive
 
 install-dvi-am: $(DVIS)
 	@$(NORMAL_INSTALL)
@@ -1534,7 +1658,7 @@ install-dvi-am: $(DVIS)
 	done
 install-exec-am: install-libLTLIBRARIES
 
-install-html: install-html-am
+install-html: install-html-recursive
 
 install-html-am: $(HTMLS)
 	@$(NORMAL_INSTALL)
@@ -1561,7 +1685,7 @@ install-html-am: $(HTMLS)
 	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(htmldir)'"; \
 	  $(INSTALL_DATA) $$files "$(DESTDIR)$(htmldir)" || exit $$?; \
 	done; }
-install-info: install-info-am
+install-info: install-info-recursive
 
 install-info-am: $(INFO_DEPS)
 	@$(NORMAL_INSTALL)
@@ -1598,7 +1722,7 @@ install-info-am: $(INFO_DEPS)
 	else : ; fi
 install-man:
 
-install-pdf: install-pdf-am
+install-pdf: install-pdf-recursive
 
 install-pdf-am: $(PDFS)
 	@$(NORMAL_INSTALL)
@@ -1614,7 +1738,7 @@ install-pdf-am: $(PDFS)
 	while read files; do \
 	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(pdfdir)'"; \
 	  $(INSTALL_DATA) $$files "$(DESTDIR)$(pdfdir)" || exit $$?; done
-install-ps: install-ps-am
+install-ps: install-ps-recursive
 
 install-ps-am: $(PSS)
 	@$(NORMAL_INSTALL)
@@ -1632,7 +1756,7 @@ install-ps-am: $(PSS)
 	  $(INSTALL_DATA) $$files "$(DESTDIR)$(psdir)" || exit $$?; done
 installcheck-am:
 
-maintainer-clean: maintainer-clean-am
+maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
 	-rm -rf ./$(DEPDIR)
@@ -1640,16 +1764,16 @@ maintainer-clean: maintainer-clean-am
 maintainer-clean-am: distclean-am maintainer-clean-aminfo \
 	maintainer-clean-generic
 
-mostlyclean: mostlyclean-am
+mostlyclean: mostlyclean-recursive
 
 mostlyclean-am: mostlyclean-aminfo mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool
 
-pdf: pdf-am
+pdf: pdf-recursive
 
 pdf-am: $(PDFS)
 
-ps: ps-am
+ps: ps-recursive
 
 ps-am: $(PSS)
 
@@ -1657,51 +1781,57 @@ uninstall-am: uninstall-dvi-am uninstall-html-am \
 	uninstall-includeHEADERS uninstall-info-am \
 	uninstall-libLTLIBRARIES uninstall-pdf-am uninstall-ps-am
 
-.MAKE: all check-am install-am install-strip
+.MAKE: $(am__recursive_targets) all check-am install-am install-strip
 
-.PHONY: CTAGS GTAGS TAGS all all-am am--refresh check check-DEJAGNU \
-	check-am clean clean-aminfo clean-cscope clean-generic \
-	clean-libLTLIBRARIES clean-libtool clean-noinstLTLIBRARIES \
-	cscope cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
-	dist-gzip dist-info dist-lzip dist-shar dist-tarZ dist-xz \
-	dist-zip distcheck distclean distclean-DEJAGNU \
-	distclean-compile distclean-generic distclean-hdr \
-	distclean-libtool distclean-tags distcleancheck distdir \
-	distuninstallcheck dvi dvi-am html html-am html-local info \
-	info-am install install-am install-data install-data-am \
+.PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
+	am--refresh check check-DEJAGNU check-am clean clean-aminfo \
+	clean-cscope clean-generic clean-libLTLIBRARIES clean-libtool \
+	clean-noinstLTLIBRARIES cscope cscopelist-am ctags ctags-am \
+	dist dist-all dist-bzip2 dist-gzip dist-info dist-lzip \
+	dist-shar dist-tarZ dist-xz dist-zip distcheck distclean \
+	distclean-DEJAGNU distclean-compile distclean-generic \
+	distclean-hdr distclean-libtool distclean-tags distcleancheck \
+	distdir distuninstallcheck dvi dvi-am html html-am html-local \
+	info info-am install install-am install-data install-data-am \
 	install-dvi install-dvi-am install-exec install-exec-am \
 	install-html install-html-am install-includeHEADERS \
 	install-info install-info-am install-libLTLIBRARIES \
 	install-man install-pdf install-pdf-am install-ps \
 	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-aminfo \
-	maintainer-clean-generic mostlyclean mostlyclean-aminfo \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-dvi-am uninstall-html-am uninstall-includeHEADERS \
-	uninstall-info-am uninstall-libLTLIBRARIES uninstall-pdf-am \
-	uninstall-ps-am
+	installdirs installdirs-am maintainer-clean \
+	maintainer-clean-aminfo maintainer-clean-generic mostlyclean \
+	mostlyclean-aminfo mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-dvi-am uninstall-html-am \
+	uninstall-includeHEADERS uninstall-info-am \
+	uninstall-libLTLIBRARIES uninstall-pdf-am uninstall-ps-am
 
 .PRECIOUS: Makefile
 
 
-@TCL_TRY_TRUE@check-DEJAGNU: site.exp development.exp
-@TCL_TRY_TRUE@	srcroot=`cd $(srcdir) && pwd`; export srcroot; \
-@TCL_TRY_TRUE@	r=`pwd`; export r; \
-@TCL_TRY_TRUE@	LC_ALL=C; export LC_ALL; \
-@TCL_TRY_TRUE@	EXPECT=$(EXPECT); export EXPECT; \
-@TCL_TRY_TRUE@	runtest=$(RUNTEST); \
-@TCL_TRY_TRUE@	if $(SHELL) -c "$$runtest --version" > /dev/null 2>&1; then \
-@TCL_TRY_TRUE@	  $$runtest --tool $(DEJATOOL) --srcdir $${srcroot}/testsuite \
-@TCL_TRY_TRUE@		CC="$(CC)" CC_FOR_TARGET="$(CC_FOR_TARGET)" \
-@TCL_TRY_TRUE@		CFLAGS="$(CFLAGS) -I$(INCDIR) -I$(srcdir) -I$(builddir) -I$(builddir)/../bfd $(ZLIBINC)" \
-@TCL_TRY_TRUE@		LIBS="$(libctf_nobfd_la_LIBADD) $(LIBS)" $(RUNTESTFLAGS); \
-@TCL_TRY_TRUE@	else echo "WARNING: could not find \`runtest'" 1>&2; :;\
-@TCL_TRY_TRUE@	fi
+check-DEJAGNU: site.exp development.exp
+	srcroot=`cd $(srcdir) && pwd`; export srcroot; \
+	r=`pwd`; export r; \
+	LC_ALL=C; export LC_ALL; \
+	EXPECT=$(EXPECT); export EXPECT; \
+	if [ "@host@" = "@target@" ] ; then \
+	  TEST_CROSS=no; \
+	else \
+	  TEST_CROSS=yes; \
+	fi; \
+	runtest=$(RUNTEST); \
+	if $(SHELL) -c "$$runtest --version" > /dev/null 2>&1; then \
+	  $$runtest --tool $(DEJATOOL) --srcdir $${srcroot}/testsuite \
+		CC="$(CC)" CC_FOR_TARGET="$(CC_FOR_TARGET)" TEST_CROSS="$${TEST_CROSS}" \
+		CFLAGS="$(CFLAGS) -I$(INCDIR) -I$(srcdir) -I$(builddir) -I$(builddir)/../bfd $(ZLIBINC)" \
+		LIBS="$(libctf_nobfd_la_LIBADD) $(LIBS)" $(RUNTESTFLAGS); \
+	else echo "WARNING: could not find \`runtest'" 1>&2; :;\
+	fi
 
-@TCL_TRY_TRUE@development.exp: $(BFDDIR)/development.sh
-@TCL_TRY_TRUE@	$(AM_V_GEN)$(EGREP) "(development|experimental)=" $(BFDDIR)/development.sh  \
-@TCL_TRY_TRUE@	  | $(AWK) -F= '{ print "set " $$1 " " $$2 }' > $@
+development.exp: $(BFDDIR)/development.sh
+	$(AM_V_GEN)$(EGREP) "(development|experimental)=" $(BFDDIR)/development.sh  \
+	  | $(AWK) -F= '{ print "set " $$1 " " $$2 }' > $@
+	echo "set have_tcl_try @HAVE_TCL_TRY@" >> $@
 
 @BUILD_INFO_TRUE@html-local: doc/ctf-spec/index.html
 @BUILD_INFO_TRUE@doc/ctf-spec/index.html: doc/ctf-spec.texi doc/$(am__dirstamp)

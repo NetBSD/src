@@ -1,5 +1,5 @@
 /* MI Command Set - breakpoint and watchpoint commands.
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
 #include "mi-cmds.h"
 #include "ui-out.h"
@@ -58,7 +57,7 @@ breakpoint_notify (struct breakpoint *b)
 	{
 	  print_breakpoint (b);
 	}
-      catch (const gdb_exception &ex)
+      catch (const gdb_exception_error &ex)
 	{
 	  exception_print (gdb_stderr, ex);
 	}
@@ -93,18 +92,18 @@ setup_breakpoint_reporting (void)
 }
 
 
-/* Convert arguments in ARGV to the string in "format",argv,argv...
-   and return it.  */
+/* Convert arguments in ARGV to a string suitable for parsing by
+   dprintf like "FORMAT",ARG,ARG... and return it.  */
 
 static std::string
-mi_argv_to_format (char **argv, int argc)
+mi_argv_to_format (const char *const *argv, int argc)
 {
   int i;
   std::string result;
 
-  /* Convert ARGV[OIND + 1] to format string and save to FORMAT.  */
+  /* Convert ARGV[0] to format string and save to FORMAT.  */
   result += '\"';
-  for (i = 0; i < strlen (argv[0]); i++)
+  for (i = 0; argv[0][i] != '\0'; i++)
     {
       switch (argv[0][i])
 	{
@@ -151,7 +150,7 @@ mi_argv_to_format (char **argv, int argc)
     }
   result += '\"';
 
-  /* Apply other argv to FORMAT.  */
+  /* Append other arguments.  */
   for (i = 1; i < argc; i++)
     {
       result += ',';
@@ -166,14 +165,16 @@ mi_argv_to_format (char **argv, int argc)
    If not, it will insert other type breakpoint.  */
 
 static void
-mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
+mi_cmd_break_insert_1 (int dprintf, const char *command,
+		       const char *const *argv, int argc)
 {
   const char *address = NULL;
   int hardware = 0;
   int temp_p = 0;
   int thread = -1;
+  int thread_group = -1;
   int ignore_count = 0;
-  char *condition = NULL;
+  const char *condition = NULL;
   int pending = 0;
   int enabled = 1;
   int tracepoint = 0;
@@ -190,7 +191,8 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
   enum opt
     {
       HARDWARE_OPT, TEMP_OPT, CONDITION_OPT,
-      IGNORE_COUNT_OPT, THREAD_OPT, PENDING_OPT, DISABLE_OPT,
+      IGNORE_COUNT_OPT, THREAD_OPT, THREAD_GROUP_OPT,
+      PENDING_OPT, DISABLE_OPT,
       TRACEPOINT_OPT,
       FORCE_CONDITION_OPT,
       QUALIFIED_OPT,
@@ -204,6 +206,7 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
     {"c", CONDITION_OPT, 1},
     {"i", IGNORE_COUNT_OPT, 1},
     {"p", THREAD_OPT, 1},
+    {"g", THREAD_GROUP_OPT, 1},
     {"f", PENDING_OPT, 0},
     {"d", DISABLE_OPT, 0},
     {"a", TRACEPOINT_OPT, 0},
@@ -219,7 +222,7 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
   /* Parse arguments. It could be -r or -h or -t, <location> or ``--''
      to denote the end of the option list. */
   int oind = 0;
-  char *oarg;
+  const char *oarg;
 
   while (1)
     {
@@ -243,6 +246,11 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
 	  break;
 	case THREAD_OPT:
 	  thread = atol (oarg);
+	  if (!valid_global_thread_id (thread))
+	    error (_("Unknown thread %d."), thread);
+	  break;
+	case THREAD_GROUP_OPT:
+	  thread_group = mi_parse_thread_group_id (oarg);
 	  break;
 	case PENDING_OPT:
 	  pending = 1;
@@ -258,15 +266,15 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
 	  break;
 	case EXPLICIT_SOURCE_OPT:
 	  is_explicit = 1;
-	  explicit_loc->source_filename = xstrdup (oarg);
+	  explicit_loc->source_filename = make_unique_xstrdup (oarg);
 	  break;
 	case EXPLICIT_FUNC_OPT:
 	  is_explicit = 1;
-	  explicit_loc->function_name = xstrdup (oarg);
+	  explicit_loc->function_name = make_unique_xstrdup (oarg);
 	  break;
 	case EXPLICIT_LABEL_OPT:
 	  is_explicit = 1;
-	  explicit_loc->label_name = xstrdup (oarg);
+	  explicit_loc->label_name = make_unique_xstrdup (oarg);
 	  break;
 	case EXPLICIT_LINE_OPT:
 	  is_explicit = 1;
@@ -357,7 +365,8 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
 	error (_("Garbage '%s' at end of location"), address);
     }
 
-  create_breakpoint (get_current_arch (), locspec.get (), condition, thread,
+  create_breakpoint (get_current_arch (), locspec.get (), condition,
+		     thread, thread_group,
 		     extra_string.c_str (),
 		     force_condition,
 		     0 /* condition and thread are valid.  */,
@@ -371,7 +380,7 @@ mi_cmd_break_insert_1 (int dprintf, const char *command, char **argv, int argc)
    See the MI manual for the list of possible options.  */
 
 void
-mi_cmd_break_insert (const char *command, char **argv, int argc)
+mi_cmd_break_insert (const char *command, const char *const *argv, int argc)
 {
   mi_cmd_break_insert_1 (0, command, argv, argc);
 }
@@ -380,7 +389,7 @@ mi_cmd_break_insert (const char *command, char **argv, int argc)
    See the MI manual for the list of possible options.  */
 
 void
-mi_cmd_dprintf_insert (const char *command, char **argv, int argc)
+mi_cmd_dprintf_insert (const char *command, const char *const *argv, int argc)
 {
   mi_cmd_break_insert_1 (1, command, argv, argc);
 }
@@ -389,7 +398,8 @@ mi_cmd_dprintf_insert (const char *command, char **argv, int argc)
    See the MI manual for the list of options.  */
 
 void
-mi_cmd_break_condition (const char *command, char **argv, int argc)
+mi_cmd_break_condition (const char *command, const char *const *argv,
+			int argc)
 {
   enum option
     {
@@ -404,7 +414,7 @@ mi_cmd_break_condition (const char *command, char **argv, int argc)
 
   /* Parse arguments.  */
   int oind = 0;
-  char *oarg;
+  const char *oarg;
   bool force_condition = false;
 
   while (true)
@@ -449,7 +459,8 @@ enum wp_type
 };
 
 void
-mi_cmd_break_passcount (const char *command, char **argv, int argc)
+mi_cmd_break_passcount (const char *command, const char *const *argv,
+			int argc)
 {
   int n;
   int p;
@@ -465,7 +476,7 @@ mi_cmd_break_passcount (const char *command, char **argv, int argc)
   if (t)
     {
       t->pass_count = p;
-      gdb::observers::breakpoint_modified.notify (t);
+      notify_breakpoint_modified (t);
     }
   else
     {
@@ -480,9 +491,9 @@ mi_cmd_break_passcount (const char *command, char **argv, int argc)
    -break-watch -a <expr> --> insert an access wp.  */
 
 void
-mi_cmd_break_watch (const char *command, char **argv, int argc)
+mi_cmd_break_watch (const char *command, const char *const *argv, int argc)
 {
-  char *expr = NULL;
+  const char *expr = NULL;
   enum wp_type type = REG_WP;
   enum opt
     {
@@ -497,7 +508,7 @@ mi_cmd_break_watch (const char *command, char **argv, int argc)
 
   /* Parse arguments. */
   int oind = 0;
-  char *oarg;
+  const char *oarg;
 
   while (1)
     {
@@ -540,7 +551,7 @@ mi_cmd_break_watch (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_break_commands (const char *command, char **argv, int argc)
+mi_cmd_break_commands (const char *command, const char *const *argv, int argc)
 {
   counted_command_line break_command;
   char *endptr;
@@ -573,11 +584,14 @@ mi_cmd_break_commands (const char *command, char **argv, int argc)
       };
 
   if (is_tracepoint (b))
-    break_command = read_command_lines_1 (reader, 1,
-					  [=] (const char *line)
+    {
+      tracepoint *t = gdb::checked_static_cast<tracepoint *> (b);
+      break_command = read_command_lines_1 (reader, 1,
+					    [=] (const char *line)
 					    {
-					      validate_actionline (line, b);
+					      validate_actionline (line, t);
 					    });
+    }
   else
     break_command = read_command_lines_1 (reader, 1, 0);
 

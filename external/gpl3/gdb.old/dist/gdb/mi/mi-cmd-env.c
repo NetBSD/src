@@ -1,5 +1,5 @@
 /* MI Command Set - environment commands.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Red Hat Inc.
 
@@ -18,7 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "inferior.h"
 #include "value.h"
 #include "mi-out.h"
@@ -58,21 +57,13 @@ env_execute_cli_command (const char *cmd, const char *args)
 /* Print working directory.  */
 
 void
-mi_cmd_env_pwd (const char *command, char **argv, int argc)
+mi_cmd_env_pwd (const char *command, const char *const *argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
 
   if (argc > 0)
     error (_("-environment-pwd: No arguments allowed"));
 	  
-  if (mi_version (uiout) < 2)
-    {
-      env_execute_cli_command ("pwd", NULL);
-      return;
-    }
-     
-  /* Otherwise the mi level is 2 or higher.  */
-
   gdb::unique_xmalloc_ptr<char> cwd (getcwd (NULL, 0));
   if (cwd == NULL)
     error (_("-environment-pwd: error finding name of working directory: %s"),
@@ -84,7 +75,7 @@ mi_cmd_env_pwd (const char *command, char **argv, int argc)
 /* Change working directory.  */
 
 void
-mi_cmd_env_cd (const char *command, char **argv, int argc)
+mi_cmd_env_cd (const char *command, const char *const *argv, int argc)
 {
   if (argc == 0 || argc > 1)
     error (_("-environment-cd: Usage DIRECTORY"));
@@ -106,14 +97,14 @@ env_mod_path (const char *dirname, std::string &which_path)
 /* Add one or more directories to start of executable search path.  */
 
 void
-mi_cmd_env_path (const char *command, char **argv, int argc)
+mi_cmd_env_path (const char *command, const char *const *argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
   const char *env;
   int reset = 0;
   int oind = 0;
   int i;
-  char *oarg;
+  const char *oarg;
   enum opt
     {
       RESET_OPT
@@ -126,14 +117,6 @@ mi_cmd_env_path (const char *command, char **argv, int argc)
 
   dont_repeat ();
 
-  if (mi_version (uiout) < 2)
-    {
-      for (i = argc - 1; i >= 0; --i)
-	env_execute_cli_command ("path", argv[i]);
-      return;
-    }
-
-  /* Otherwise the mi level is 2 or higher.  */
   while (1)
     {
       int opt = mi_getopt ("-environment-path", argc, argv, opts,
@@ -180,13 +163,13 @@ mi_cmd_env_path (const char *command, char **argv, int argc)
 /* Add zero or more directories to the front of the source path.  */
 
 void
-mi_cmd_env_dir (const char *command, char **argv, int argc)
+mi_cmd_env_dir (const char *command, const char *const *argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
   int i;
   int oind = 0;
   int reset = 0;
-  char *oarg;
+  const char *oarg;
   enum opt
     {
       RESET_OPT
@@ -199,14 +182,6 @@ mi_cmd_env_dir (const char *command, char **argv, int argc)
 
   dont_repeat ();
 
-  if (mi_version (uiout) < 2)
-    {
-      for (i = argc - 1; i >= 0; --i)
-	env_execute_cli_command ("dir", argv[i]);
-      return;
-    }
-
-  /* Otherwise mi level is 2 or higher.  */
   while (1)
     {
       int opt = mi_getopt ("-environment-directory", argc, argv, opts,
@@ -240,7 +215,8 @@ mi_cmd_env_dir (const char *command, char **argv, int argc)
 /* Set the inferior terminal device name.  */
 
 void
-mi_cmd_inferior_tty_set (const char *command, char **argv, int argc)
+mi_cmd_inferior_tty_set (const char *command, const char *const *argv,
+			 int argc)
 {
   if (argc > 0)
     current_inferior ()->set_tty (argv[0]);
@@ -251,7 +227,8 @@ mi_cmd_inferior_tty_set (const char *command, char **argv, int argc)
 /* Print the inferior terminal device name.  */
 
 void
-mi_cmd_inferior_tty_show (const char *command, char **argv, int argc)
+mi_cmd_inferior_tty_show (const char *command, const char *const *argv,
+			  int argc)
 {
   if ( !mi_valid_noargs ("-inferior-tty-show", argc, argv))
     error (_("-inferior-tty-show: Usage: No args"));

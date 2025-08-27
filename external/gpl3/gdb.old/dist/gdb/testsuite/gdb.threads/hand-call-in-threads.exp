@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2023 Free Software Foundation, Inc.
+# Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,15 +19,12 @@ set NR_THREADS 4
 
 standard_testfile
 
-if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug "additional_flags=-DNR_THREADS=$NR_THREADS"]] != "" } {
-    return -1
-}
-
 # Some targets can't do function calls, so don't even bother with this
 # test.
-if [target_info exists gdb,cannot_call_functions] {
-    unsupported "this target can not call functions"
-    return
+require {!target_info exists gdb,cannot_call_functions}
+
+if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug "additional_flags=-DNR_THREADS=$NR_THREADS"]] != "" } {
+    return -1
 }
 
 proc get_dummy_frame_number { } {
@@ -159,5 +156,3 @@ gdb_test "show scheduler-locking" ".* locking scheduler .* is \"off\"." "show sc
 #gdb_test "thread 1" ".*" "set thread to 1, prepare to resume"
 #
 #gdb_continue_to_end "hand-call-in-threads"
-
-return 0

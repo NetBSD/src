@@ -1,5 +1,5 @@
 /* Generic simulator halt/resume.
-   Copyright (C) 1997-2023 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -88,7 +88,7 @@ extern void sim_engine_restart
 (SIM_DESC sd,
  sim_cpu *last_cpu, /* NULL -> in event-mgr */
  sim_cpu *next_cpu, /* NULL -> succ (last_cpu) or event-mgr */
- sim_cia cia);
+ sim_cia cia) ATTRIBUTE_NORETURN;
 
 /* Restart hook - allow target specific operation when restarting a
    simulator */

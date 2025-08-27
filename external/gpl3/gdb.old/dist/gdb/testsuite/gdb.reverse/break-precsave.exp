@@ -1,4 +1,4 @@
-#   Copyright 2008-2023 Free Software Foundation, Inc.
+#   Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@
 # with breakpoints in a process record logfile.
 
 # This test suitable only for process record-replay
-if ![supports_process_record] {
-    return
-}
+require supports_process_record
 
 standard_testfile break-reverse.c
 set precsave [standard_output_file break.precsave]
@@ -39,10 +37,8 @@ proc precsave_tests {} {
 
     runto_main
 
-    if [supports_process_record] {
-	# Activate process record/replay
-	gdb_test_no_output "record" "turn on process record"
-    }
+    # Activate process record/replay
+    gdb_test_no_output "record" "turn on process record"
 
     gdb_test "break $end_location" \
 	"Breakpoint $decimal at .*$srcfile, line $end_location\." \
