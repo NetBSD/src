@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_subr.s,v 1.3 2025/07/08 11:45:26 thorpej Exp $	*/
+/*	$NetBSD: mmu_subr.s,v 1.3.2.1 2025/08/27 12:55:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -127,8 +127,9 @@ ENTRY_NOPROFILE(mmu_load_urp51)
 #ifdef M68030
 ENTRY_NOPROFILE(mmu_load_tt30)
 	movl	%sp@(4),%a0		| get pointer to TT value array
-	.long 0xf0180800		| pmove %a0@+,%tt0
-	.long 0xf0180c00		| pmove %a0@+,%tt1
+	.long 0xf0100800		| pmove %a0@,%tt0
+	addql	#4,%a0
+	.long 0xf0100c00		| pmove %a0@,%tt1
 	rts
 #endif /* M68030 */
 #endif /* M68020 || M68030 */
