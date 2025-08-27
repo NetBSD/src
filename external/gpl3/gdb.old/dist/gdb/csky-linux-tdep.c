@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on CSKY.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
@@ -19,7 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "osabi.h"
 #include "glibc-tdep.h"
 #include "linux-tdep.h"
@@ -310,7 +309,7 @@ csky_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
 static void
 csky_linux_rt_sigreturn_init (const struct tramp_frame *self,
-			      frame_info_ptr this_frame,
+			      const frame_info_ptr &this_frame,
 			      struct trad_frame_cache *this_cache,
 			      CORE_ADDR func)
 {
@@ -355,7 +354,7 @@ csky_linux_rt_sigreturn_tramp_frame = {
 
 static void
 csky_linux_rt_sigreturn_init_pt_regs (const struct tramp_frame *self,
-				      frame_info_ptr this_frame,
+				      const frame_info_ptr &this_frame,
 				      struct trad_frame_cache *this_cache,
 				      CORE_ADDR func)
 {

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2020-2023 Free Software Foundation, Inc.
+   Copyright 2020-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "../lib/my-syscalls.h"
+#include "my-syscalls.h"
 
 #if (!defined(LEADER_DOES_EXEC) && !defined(OTHER_DOES_EXEC) \
      || defined(LEADER_DOES_EXEC) && defined(OTHER_DOES_EXEC))

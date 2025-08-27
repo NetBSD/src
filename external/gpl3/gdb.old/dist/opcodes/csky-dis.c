@@ -1,5 +1,5 @@
 /* C-SKY disassembler.
-   Copyright (C) 1988-2022 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of the GNU opcodes library.
@@ -519,7 +519,7 @@ csky_output_operand (char *str, struct operand const *oprnd,
     case OPRND_TYPE_FCONSTANT:
       {
 	int shift = oprnd->shift;
-	char ibytes[8];
+	bfd_byte ibytes[8];
 	int status;
 	bfd_vma addr;
 	int nbytes;
@@ -538,19 +538,13 @@ csky_output_operand (char *str, struct operand const *oprnd,
 	else
 	  nbytes = 4;
 
-	status = dis_info.info->read_memory_func (addr, (bfd_byte *)ibytes,
+	status = dis_info.info->read_memory_func (addr, ibytes,
 						  nbytes, dis_info.info);
 	if (status != 0)
 	  /* Address out of bounds.  -> lrw rx, [pc, 0ffset]. */
 	  sprintf (buf, "[pc, %d]\t// from address pool at %x", (int)value,
 		   (unsigned int)addr);
-	else
-	  {
-	    dis_info.value = addr;
-	    value = csky_chars_to_number ((unsigned char *)ibytes, 4);
-	  }
-
-	if (oprnd->type == OPRND_TYPE_FCONSTANT)
+	else if (oprnd->type == OPRND_TYPE_FCONSTANT)
 	  {
 	    double f;
 
@@ -569,8 +563,10 @@ csky_output_operand (char *str, struct operand const *oprnd,
 	  }
 	else
 	  {
+	    dis_info.value = addr;
 	    dis_info.need_output_symbol = 1;
-	    sprintf (buf, "0x%x", (unsigned int)value);
+	    value = csky_chars_to_number (ibytes, 4);
+	    sprintf (buf, "0x%x", (unsigned int) value);
 	  }
 
 	strcat (str, buf);

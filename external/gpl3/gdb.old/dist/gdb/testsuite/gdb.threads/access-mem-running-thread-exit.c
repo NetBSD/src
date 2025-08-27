@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2021-2023 Free Software Foundation, Inc.
+   Copyright 2021-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -101,6 +101,8 @@ int
 main (void)
 {
   int i;
+
+  global_var++;
 
   for (i = 0; i < 4; i++)
     {

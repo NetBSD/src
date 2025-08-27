@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2013-2023 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -41,7 +41,6 @@ set -e
 
 echo "/* Do not modify this file.  */"
 echo "/* It is created automatically by the Makefile.  */"
-echo "#include \"defs.h\"      /* For initialize_file_ftype.  */"
 echo "#include <algorithm>"
 echo ""
 sed -n -e 's/^\(_initialize_[a-zA-Z0-9_]*\) ()$/\1/p' "$@" | while read -r name; do

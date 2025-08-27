@@ -1,6 +1,6 @@
 /*  Run function for the micromips simulator
 
-    Copyright (C) 2005-2023 Free Software Foundation, Inc.
+    Copyright (C) 2005-2024 Free Software Foundation, Inc.
     Contributed by Imagination Technologies, Ltd.
     Written by Andrew Bennett <andrew.bennett@imgtec.com>.
 
@@ -120,10 +120,6 @@ sim_engine_run (SIM_DESC sd, int next_cpu_nr, int nr_cpus,
 	default:
 	  nia = NULL_CIA;
 	}
-
-#if defined (ENGINE_ISSUE_POSTFIX_HOOK)
-      ENGINE_ISSUE_POSTFIX_HOOK ();
-#endif
 
       /* Update the instruction address */
       cia = nia;

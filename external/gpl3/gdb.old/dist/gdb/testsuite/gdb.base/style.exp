@@ -1,4 +1,4 @@
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,10 +69,7 @@ proc run_style_tests { } {
     global testfile srcfile hex binfile
     global currently_disabled_style decimal hex
 
-    save_vars { env(TERM) } {
-	# We need an ANSI-capable terminal to get the output.
-	setenv TERM ansi
-
+    with_ansi_styling_terminal {
 	# Restart GDB with the correct TERM variable setting, this
 	# means that GDB will enable styling.
 	clean_restart_and_disable "restart 1" ${binfile}
@@ -92,7 +89,7 @@ proc run_style_tests { } {
 
 	set argv ""
 	gdb_test_multiple "frame" "frame without styling" {
-	    -re -wrap "main \\(argc=.*, (argv=$hex)\\).*style\\.c:\[0-9\].*" {
+	    -re -wrap "main \\(argc=.*, (argv=$hex.*)\\).*style\\.c:\[0-9\].*" {
 		set argv $expect_out(1,string)
 		pass $gdb_test_name
 	    }
@@ -105,9 +102,13 @@ proc run_style_tests { } {
 	set file_expr "$base_file_expr:\[0-9\]+"
 	set arg_expr [limited_style "arg." variable]
 
+	# On some embedded targets that don't fully support argc/argv,
+	# argv may print as "0x0" or as an address with a symbol name
+	# following, so use a regexp general enough to match that and
+	# do not make assumptions about how long the address string is.
 	gdb_test "frame" \
 	    [multi_line \
-		 "#0\\s+$main_expr\\s+\\($arg_expr=$decimal,\\s+$arg_expr=$hex\\)\\s+at\\s+$file_expr" \
+		 "#0\\s+$main_expr\\s+\\($arg_expr=$decimal,\\s+$arg_expr=$hex.*\\)\\s+at\\s+$file_expr" \
 		 "\[0-9\]+\\s+.*return.* break here .*"]
 	gdb_test "info breakpoints" "$main_expr at $file_expr.*"
 
@@ -134,16 +135,21 @@ proc run_style_tests { } {
 	    # the line listing; this is why the words from the source
 	    # code are spelled out in the final result line of the
 	    # test.
+	    set re0_styled \
+		[multi_line \
+		     "#0\\s+$main_expr\\s+\\($arg_expr=$decimal,\\s+$arg_expr=$hex\\)" \
+		     "\\s+at\\s+$file_expr" \
+		     "\[0-9\]+\\s+.*return.* break here .*"]
 	    set re1_styled \
 		[multi_line \
 		     "#0\\s+$main_expr\\s+\\($arg_expr=$decimal,\\s+" \
-		     "\\s+$arg_expr=$hex\\)" \
+		     "\\s+$arg_expr=$hex.*\\)" \
 		     "\\s+at\\s+$file_expr" \
 		     "\[0-9\]+\\s+.*return.* break here .*"]
 	    set re2_styled \
 		[multi_line \
 		     "#0\\s+$main_expr\\s+\\($arg_expr=.*" \
-		     "\\s+$arg_expr=$hex\\)\\s+at\\s+$file_expr" \
+		     "\\s+$arg_expr=$hex.*\\)\\s+at\\s+$file_expr" \
 		     "\[0-9\]+\\s+.*return.* break here .*"]
 
 	    # The length of the line containing argv containing:
@@ -152,7 +158,11 @@ proc run_style_tests { } {
 	    # - closing parenthesis
 	    set line_len [expr 4 + $argv_len + 1]
 
-	    if { $line_len > $width } {
+	    if { $argv == "argv=0x0" && $width >= 27 } {
+		# Embedded target with no argv support.
+		# #0  main (argc=0, argv=0x0)
+		set re_styled $re0_styled
+	    } elseif { $line_len > $width } {
 		# At on the next line.
 		set re_styled $re1_styled
 	    } else {
@@ -196,8 +206,9 @@ proc run_style_tests { } {
 	set sfield [limited_style string_field variable]
 	set efield [limited_style e_field variable]
 	set evalue [limited_style VALUE_TWO variable]
+	set lhs [limited_style "\\\$$decimal" variable]
 	gdb_test "print struct_value" \
-	    "\{$ifield = 23,.*$sfield = .*,.*$efield = $evalue.*"
+	    "$lhs = \{$ifield = 23,.*$sfield = .*,.*$efield = $evalue.*"
 
 	set ffield [limited_style field variable]
 	set cstart [string_to_regexp "/* XXX "]
@@ -306,9 +317,10 @@ proc run_style_tests { } {
 # Python pygments module is not available, so, when we disable
 # disassembler styling, we should always see a change in output.
 proc test_disable_disassembler_styling { } {
-    save_vars { env(TERM) } {
+    save_vars { env(TERM) env(NO_COLOR) } {
 	# We need an ANSI-capable terminal to get the output.
 	setenv TERM ansi
+	setenv NO_COLOR ""
 
 	# Restart GDB with the correct TERM variable setting, this
 	# means that GDB will enable styling.
@@ -414,9 +426,10 @@ proc test_disassembler_error_handling { } {
 	return
     }
 
-    save_vars { env(TERM) } {
+    save_vars { env(TERM) env(NO_COLOR) } {
 	# We need an ANSI-capable terminal to get the output.
 	setenv TERM ansi
+	setenv NO_COLOR ""
 
 	# Restart GDB with the correct TERM variable setting, this
 	# means that GDB will enable styling.
@@ -459,7 +472,12 @@ proc test_disassembler_error_handling { } {
 # startup process).
 proc test_startup_version_string { } {
     gdb_exit
-    gdb_spawn
+
+    save_vars { ::INTERNAL_GDBFLAGS } {
+	set ::INTERNAL_GDBFLAGS [string map {"-q" ""} $::INTERNAL_GDBFLAGS]
+
+	gdb_spawn
+    }
 
     # Deliberate use of base STYLE proc here as the style of the
     # startup version string can't (currently) be controlled.
@@ -471,7 +489,7 @@ proc test_startup_version_string { } {
 # expected or not, this styling requires Python support in GDB, and
 # the Python pygments module to be available.
 clean_restart ${binfile}
-if {![skip_python_tests] && [gdb_py_module_available "pygments"]} {
+if {[allow_python_tests] && [gdb_py_module_available "pygments"]} {
     set python_disassembly_styling true
 } else {
     set python_disassembly_styling false

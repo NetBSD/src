@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2022-2023 Free Software Foundation, Inc.
+# Copyright (C) 2022-2024 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -152,6 +152,10 @@ for f in *.in; do
 	    ;;
 	arm-linux.xml.in)
 	    echo "Skipping $f, use arm-linux.py instead"
+	    continue
+	    ;;
+	loongarch-linux.xml.in)
+	    echo "Skipping $f, no syscall.tbl"
 	    continue
 	    ;;
 	linux-defaults.xml.in)

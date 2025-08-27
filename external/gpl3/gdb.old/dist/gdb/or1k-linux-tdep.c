@@ -1,5 +1,5 @@
 /* Target-dependent code for GNU/Linux on OpenRISC processors.
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "or1k-tdep.h"
 #include "osabi.h"
 #include "glibc-tdep.h"
@@ -31,7 +30,7 @@
 
 /* Define the general register mapping.  The kernel and GDB put registers
    r1 to r31 in the same place.  The NPC register is stored at index 32 in
-   linux and 33 in GDB, in GDB 32 is for PPC which is not popupated from linux.
+   linux and 33 in GDB, in GDB 32 is for PPC which is not populated from linux.
    Register r0 is always 0 and can be ignored.  */
 
 static const struct regcache_map_entry or1k_linux_gregmap[] =
@@ -62,7 +61,7 @@ or1k_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 /* Signal trampoline support.  */
 
 static void or1k_linux_sigframe_init (const struct tramp_frame *self,
-				       frame_info_ptr this_frame,
+				       const frame_info_ptr &this_frame,
 				       struct trad_frame_cache *this_cache,
 				       CORE_ADDR func);
 
@@ -116,7 +115,7 @@ static const struct tramp_frame or1k_linux_sigframe = {
 
 static void
 or1k_linux_sigframe_init (const struct tramp_frame *self,
-			   frame_info_ptr this_frame,
+			   const frame_info_ptr &this_frame,
 			   struct trad_frame_cache *this_cache,
 			   CORE_ADDR func)
 {

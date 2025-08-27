@@ -1,5 +1,5 @@
 # Support routines for libctf testsuite.
-#   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+#   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -100,8 +100,21 @@ proc compile_link_one_host_cc { src output additional_args } {
 #   link_flags:
 #	If set, extra flags to pass to the linker.
 #
+#   lookup_link:
+#       If set, extra libraries to link the lookup program with.
+#
 #   xfail: GLOB|PROC ...
 #	This test is expected to fail on a specified list of targets.
+#
+#   no_cross:
+#       If set, do not run this test when host != target.
+#
+#   host:
+#       If set, only run this test on hosts matching the given glob.
+#
+#   wrapper:
+#       Wrap invocations of LOOKUP in this command.  (Useful for valgrind
+#       invocations, etc.)
 #
 # Each option may occur at most once unless otherwise mentioned.
 #
@@ -110,7 +123,7 @@ proc compile_link_one_host_cc { src output additional_args } {
 # regexps in FILE.d.
 #
 proc run_lookup_test { name } {
-    global CC_FOR_TARGET CFLAGS_FOR_TARGET LIBS
+    global CC_FOR_TARGET CFLAGS_FOR_TARGET LIBS TEST_CROSS
     global copyfile env runtests srcdir subdir verbose
 
     if ![runtest_file_p $runtests $name] then {
@@ -134,11 +147,15 @@ proc run_lookup_test { name } {
     set shared "-shared"
     set opts(link) {}
     set opts(link_flags) {}
+    set opts(lookup_link) {}
     set opts(nonshared) {}
     set opts(lookup) {}
     set opts(name) {}
     set opts(source) {}
     set opts(xfail) {}
+    set opts(no_cross) {}
+    set opts(host) {}
+    set opts(wrapper) {}
 
     foreach i $opt_array {
 	set opt_name [lindex $i 0]
@@ -154,6 +171,17 @@ proc run_lookup_test { name } {
 	}
 
 	set opts($opt_name) [concat $opts($opt_name) $opt_val]
+    }
+
+    if { [llength $opts(no_cross)] != 0
+	 && "$TEST_CROSS" eq "yes" } {
+	untested "$subdir/$name not tested when cross-compiling"
+	return
+    }
+
+    if { [llength $opts(host)] != 0 && ![ishost $opts(host)] } {
+	untested "$subdir/$name only runs on $opts(host)"
+	return
     }
 
     if { [llength $opts(lookup)] == 0 } {
@@ -181,7 +209,7 @@ proc run_lookup_test { name } {
     }
 
     # Compile and link the lookup program.
-    set comp_output [prune_warnings [compile_link_one_host_cc $opts(lookup) "tmpdir/lookup" "libctf.la"]]
+    set comp_output [prune_warnings [compile_link_one_host_cc $opts(lookup) "tmpdir/lookup" "libctf.la $opts(lookup_link)"]]
 
     if { $comp_output != ""} {
 	send_log "compilation of lookup program $opts(lookup) failed with <$comp_output>"
@@ -234,9 +262,13 @@ proc run_lookup_test { name } {
 	}
     }
 
-    # Invoke the lookup program on the outputs.
+    # Invoke the lookup program on the outputs, possibly through the wrapper.
 
-    set results [run_host_cmd tmpdir/lookup $lookup_output]
+    if { [llength $opts(wrapper)] == 0 } {
+	set results [run_host_cmd tmpdir/lookup $lookup_output]
+    } else {
+	set results [run_host_cmd "$opts(wrapper) tmpdir/lookup" $lookup_output]
+    }
 
     set f [open "tmpdir/lookup.out" "w"]
     puts $f $results

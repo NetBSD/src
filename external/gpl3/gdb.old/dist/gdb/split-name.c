@@ -1,6 +1,6 @@
 /* Split a symbol name.
 
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,16 +17,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "split-name.h"
 #include "cp-support.h"
 
 /* See split-name.h.  */
 
-std::vector<gdb::string_view>
+std::vector<std::string_view>
 split_name (const char *name, split_style style)
 {
-  std::vector<gdb::string_view> result;
+  std::vector<std::string_view> result;
   unsigned int previous_len = 0;
 
   switch (style)
@@ -45,20 +44,7 @@ split_name (const char *name, split_style style)
 	}
       break;
 
-    case split_style::UNDERSCORE:
-      /* Handle the Ada encoded (aka mangled) form here.  */
-      for (const char *iter = strstr (name, "__");
-	   iter != nullptr;
-	   iter = strstr (iter, "__"))
-	{
-	  result.emplace_back (&name[previous_len],
-			       iter - &name[previous_len]);
-	  iter += 2;
-	  previous_len = iter - name;
-	}
-      break;
-
-    case split_style::DOT:
+    case split_style::DOT_STYLE:
       /* D and Go-style names.  */
       for (const char *iter = strchr (name, '.');
 	   iter != nullptr;

@@ -1,5 +1,5 @@
 /*  maverick.h -- Cirrus/DSP co-processor interface header
-    Copyright (C) 2003-2023 Free Software Foundation, Inc.
+    Copyright (C) 2003-2024 Free Software Foundation, Inc.
     Contributed by Aldy Hernandez (aldyh@redhat.com).
 
     This program is free software; you can redistribute it and/or modify

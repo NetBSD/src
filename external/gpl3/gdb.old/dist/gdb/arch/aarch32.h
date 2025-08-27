@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,6 @@
 
 /* Create the AArch32 target description.  */
 
-target_desc *aarch32_create_target_description ();
+target_desc *aarch32_create_target_description (bool tls);
 
 #endif /* aarch32.h.  */

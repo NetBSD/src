@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/amd64.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
 #include "frame.h"
 #include "gdbcore.h"
@@ -37,7 +36,7 @@
    routine.  */
 
 static int
-amd64nbsd_sigtramp_p (frame_info_ptr this_frame)
+amd64nbsd_sigtramp_p (const frame_info_ptr &this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   const char *name;
@@ -50,7 +49,7 @@ amd64nbsd_sigtramp_p (frame_info_ptr this_frame)
    return the address of the associated mcontext structure.  */
 
 static CORE_ADDR
-amd64nbsd_mcontext_addr (frame_info_ptr this_frame)
+amd64nbsd_mcontext_addr (const frame_info_ptr &this_frame)
 {
   CORE_ADDR addr;
 
@@ -215,7 +214,7 @@ amd64nbsd_trapframe_cache(frame_info_ptr this_frame, void **this_cache)
 }
 
 static void
-amd64nbsd_trapframe_this_id (frame_info_ptr this_frame,
+amd64nbsd_trapframe_this_id (const frame_info_ptr& this_frame,
 			     void **this_cache,
 			     struct frame_id *this_id)
 {
@@ -226,7 +225,7 @@ amd64nbsd_trapframe_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-amd64nbsd_trapframe_prev_register (frame_info_ptr this_frame,
+amd64nbsd_trapframe_prev_register (const frame_info_ptr& this_frame,
 				   void **this_cache, int regnum) 
 {
   struct trad_frame_cache *cache =
@@ -237,7 +236,7 @@ amd64nbsd_trapframe_prev_register (frame_info_ptr this_frame,
 
 static int
 amd64nbsd_trapframe_sniffer (const struct frame_unwind *self,
-			     frame_info_ptr this_frame,
+			     const frame_info_ptr& this_frame,
 			     void **this_prologue_cache)
 {
   ULONGEST cs = 0;

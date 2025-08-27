@@ -1,0 +1,105 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test DAP disassembly.
+
+require allow_dap_tests
+
+load_lib dap-support.exp
+
+standard_testfile
+
+if {[build_executable ${testfile}.exp $testfile] == -1} {
+    return
+}
+
+if {[dap_initialize] == ""} {
+    return
+}
+
+set obj [dap_check_request_and_response "set breakpoint" \
+	     setFunctionBreakpoints \
+	     {o breakpoints [a [o name [s main]]]}]
+set fn_bpno [dap_get_breakpoint_number $obj]
+
+dap_check_request_and_response "configurationDone" configurationDone
+
+if {[dap_launch $testfile] == ""} {
+    return
+}
+dap_wait_for_event_and_check "inferior started" thread "body reason" started
+
+dap_wait_for_event_and_check "stopped at line breakpoint" stopped \
+    "body reason" breakpoint \
+    "body hitBreakpointIds" $fn_bpno
+
+# Find out how many lines of disassembly we should request.  This is
+# kind of lame but DAP doesn't really provide tools to do this, and
+# gdb's DAP implementation doesn't try to figure out what memory might
+# not really be part of a function.
+set obj [dap_check_request_and_response "disassemble using CLI" \
+	     evaluate {o expression [s {disassemble &return_value}] \
+			   context [s repl]}]
+set output [dict get [lindex $obj 0] body result]
+# The result will have literal "\" "n" sequences, turn these into
+# newlines.
+set with_nl [string map [list "\\n" "\n"] $output]
+# The value we want is the number of lines starting with an address.
+set insn_count 0
+foreach line [split $with_nl "\n"] {
+    if {[regexp "^ *0x" $line]} {
+	incr insn_count
+    }
+}
+
+set obj [dap_check_request_and_response "find function address" \
+	     evaluate {o expression [s "&return_value"]}]
+set pc [dict get [lindex $obj 0] body memoryReference]
+
+set obj [dap_check_request_and_response "disassemble the function" \
+	     disassemble \
+	     [format {o memoryReference [s %s] instructionCount [i %d]} \
+		  $pc $insn_count]]
+set response [lindex $obj 0]
+
+set seen_labels(_) _
+set insn_no 1
+foreach insn [dict get $response body instructions] {
+    with_test_prefix $insn_no {
+	gdb_assert {[dict exists $insn line]} \
+	    "line in disassemble output"
+	gdb_assert {[dict exists $insn location]} \
+	    "location in disassemble output"
+	if {[dict exists $insn symbol]} {
+	    set seen_labels([dict get $insn symbol]) 1
+	}
+    }
+    incr insn_no
+}
+
+proc require_label {name} {
+    global seen_labels
+    if {[info exists seen_labels($name)]} {
+	pass "saw label $name"
+    } else {
+	fail "saw label $name"
+    }
+}
+
+require_label return_value
+require_label compute
+require_label out_label
+
+dap_shutdown

@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2023 Free Software Foundation, Inc.
+# Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,12 +18,12 @@
 
 load_lib gdb-python.exp
 
+require allow_python_tests
+
 standard_testfile
 
-# Skip all tests if Python scripting is not enabled.
 gdb_exit
 gdb_start
-if { [skip_python_tests] } { continue }
 
 # Build inferior to language specification.
 proc build_inferior {exefile lang} {
@@ -47,10 +47,7 @@ proc build_inferior {exefile lang} {
 proc prepare_gdb {exefile} {
   global srcdir subdir srcfile testfile hex
 
-  gdb_exit
-  gdb_start
-  gdb_reinitialize_dir $srcdir/$subdir
-  gdb_load ${exefile}
+  clean_restart $exefile
 
   if {![runto_main]} {
       return
@@ -704,13 +701,17 @@ proc_with_prefix test_static_members {} {
 }
 
 # Test the max_elements option for gdb.Value.format_string.
-proc_with_prefix test_max_elements {} {
+# SETTING is the print setting to verify, either "elements"
+# or "characters".  UNLIMITED is the numeric value to use
+# for the "unlimited" setting.
+
+proc test_max_string_one { setting unlimited } {
   global current_lang
   global default_pointer_regexp
 
   # 200 is the default maximum number of elements, so setting it should
   # not change the output.
-  set opts "max_elements=200"
+  set opts "max_$setting=200"
   with_test_prefix $opts {
     check_format_string "a_point_t" $opts
     check_format_string "a_point_t_pointer" $opts
@@ -721,8 +722,10 @@ proc_with_prefix test_max_elements {} {
     check_format_string "a_binary_string" $opts
     check_format_string "a_binary_string_array" $opts
     check_format_string "a_big_string" $opts
-    check_format_string "an_array" $opts
-    check_format_string "an_array_with_repetition" $opts
+    if { $setting == "elements" } {
+      check_format_string "an_array" $opts
+      check_format_string "an_array_with_repetition" $opts
+    }
     check_format_string "a_symbol_pointer" $opts
 
     if { $current_lang == "c++" } {
@@ -731,7 +734,7 @@ proc_with_prefix test_max_elements {} {
     }
   }
 
-  set opts "max_elements=3"
+  set opts "max_$setting=3"
   with_test_prefix $opts {
     check_format_string "a_point_t" $opts
     check_format_string "a_point_t_pointer" $opts
@@ -742,15 +745,15 @@ proc_with_prefix test_max_elements {} {
       "${default_pointer_regexp} \"hel\"..."
     check_format_string "a_binary_string" $opts \
       "${default_pointer_regexp} \"hel\"..."
-    # This will print four characters instead of three, see
-    # <https://sourceware.org/bugzilla/show_bug.cgi?id=24331>.
     check_format_string "a_binary_string_array" $opts \
-      "\"hell\"..."
+      "\"hel\"..."
     check_format_string "a_big_string" $opts \
       [get_cut_big_string 3]
-    check_format_string "an_array" $opts
-    check_format_string "an_array_with_repetition" $opts \
-      "\\{1, 3 <repeats 12 times>...\\}"
+    if { $setting == "elements"} {
+      check_format_string "an_array" $opts
+      check_format_string "an_array_with_repetition" $opts \
+	"\\{1, 3 <repeats 12 times>...\\}"
+    }
     check_format_string "a_symbol_pointer" $opts
 
     if { $current_lang == "c++" } {
@@ -759,9 +762,9 @@ proc_with_prefix test_max_elements {} {
     }
   }
 
-  # Both 1,000 (we don't have that many elements) and 0 (unlimited) should
+  # Both 1,000 (we don't have that many elements) and unlimited should
   # mean no truncation.
-  foreach opts { "max_elements=1000" "max_elements=0" } {
+  foreach opts [list "max_$setting=1000" "max_$setting=$unlimited"] {
     with_test_prefix $opts {
       check_format_string "a_point_t" $opts
       check_format_string "a_point_t_pointer" $opts
@@ -773,8 +776,10 @@ proc_with_prefix test_max_elements {} {
       check_format_string "a_binary_string_array" $opts
       check_format_string "a_big_string" $opts \
         [get_cut_big_string 1000]
-      check_format_string "an_array" $opts
-      check_format_string "an_array_with_repetition" $opts
+      if { $setting == "elements"} {
+	check_format_string "an_array" $opts
+	check_format_string "an_array_with_repetition" $opts
+      }
       check_format_string "a_symbol_pointer" $opts
 
       if { $current_lang == "c++" } {
@@ -784,15 +789,24 @@ proc_with_prefix test_max_elements {} {
     }
   }
 
-  with_temp_option "set print elements 4" "set print elements 200" {
+  with_temp_option "set print $setting 4" "set print $setting 200" {
     check_format_string "a_string" "" \
       "${default_pointer_regexp} \"hell\"..."
     check_format_string "a_binary_string" "" \
       "${default_pointer_regexp} \"hell\"..."
     check_format_string "a_binary_string_array" "" \
       "\"hell\"..."
-    check_format_string "an_array_with_repetition" "" \
-      "\\{1, 3 <repeats 12 times>...\\}"
+    if { $setting == "elements"} {
+      check_format_string "an_array_with_repetition" "" \
+	"\\{1, 3 <repeats 12 times>...\\}"
+    }
+  }
+}
+
+proc_with_prefix test_max_string {} {
+  foreach_with_prefix setting { "elements" "characters" } {
+    test_max_string_one $setting \
+      [string map {elements 0 characters 4294967295} $setting]
   }
 }
 
@@ -1088,22 +1102,22 @@ proc_with_prefix test_invalid_args {} {
   check_format_string \
     "a_point_t" \
     "12" \
-    "TypeError: format_string\\(\\) takes 0 positional arguments but 1 were given.*"
+    "TypeError.*: format_string\\(\\) takes 0 positional arguments but 1 were given.*"
 
   check_format_string \
     "a_point_t" \
     "invalid=True" \
-    "TypeError: 'invalid' is an invalid keyword argument for this function.*"
+    "TypeError.*: 'invalid' is an invalid keyword argument for this function.*"
 
   check_format_string \
     "a_point_t" \
     "raw='hello'" \
-    "TypeError: argument 1 must be bool, not str.*"
+    "TypeError.*: argument 1 must be bool, not str.*"
 
   check_format_string \
     "a_point_t" \
     "format='xd'" \
-    "ValueError: a single character is required.*"
+    "ValueError.*: a single character is required.*"
 }
 
 # Check the styling argument to format_string.  This function needs to
@@ -1152,7 +1166,7 @@ proc_with_prefix test_all_common {} {
   test_deref_refs
   test_actual_objects
   test_static_members
-  test_max_elements
+  test_max_string
   test_max_depth
   test_repeat_threshold
   test_format
@@ -1170,11 +1184,10 @@ with_test_prefix "format_string" {
   # Perform C Tests.
   if { [build_inferior "${binfile}" "c"] == 0 } {
     with_test_prefix "lang_c" {
-      save_vars { env(TERM) } {
+      with_ansi_styling_terminal {
 	# We run all of these tests in an environment where styling
 	# could work, but we only expect the final call to
 	# test_styling to actually produce any styled output.
-	setenv TERM ansi
 	set current_lang "c"
 	prepare_gdb "${binfile}"
 	test_all_common

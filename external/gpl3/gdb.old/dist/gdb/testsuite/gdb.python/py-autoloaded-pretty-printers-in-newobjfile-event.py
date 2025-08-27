@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2023 Free Software Foundation, Inc.
+# Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,8 +18,9 @@
 # registered when a custom event handler for the new_objfile event
 # is called.
 
-import gdb
 import os
+
+import gdb
 
 
 def new_objfile_handler(event):

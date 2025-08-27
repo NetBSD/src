@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,11 +15,10 @@
 
 load_lib gdb-python.exp
 
+require allow_python_tests
+
 gdb_exit
 gdb_start
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 # Each test data has 4 parts:
 # 1. The string used in 'show XXX-charset' command,

@@ -1,5 +1,5 @@
 /* General utility routines for the remote server for GDB.
-   Copyright (C) 1993-2023 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,6 @@
 #ifndef GDBSERVER_UTILS_H
 #define GDBSERVER_UTILS_H
 
-char *paddress (CORE_ADDR addr);
+const char *paddress (CORE_ADDR addr);
 
 #endif /* GDBSERVER_UTILS_H */

@@ -1,6 +1,6 @@
 /* Shared general utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
 #include "common-utils.h"
 #include "host-defs.h"
-#include "safe-ctype.h"
+#include "gdbsupport/gdb-safe-ctype.h"
 #include "gdbsupport/gdb-xfree.h"
 
 void *
@@ -444,4 +443,22 @@ hex2bin (const char *hex)
   hex2bin (hex, bin.data (), bin_len);
 
   return bin;
+}
+
+/* See gdbsupport/common-utils.h.  */
+
+std::string
+bytes_to_string (gdb::array_view<const gdb_byte> bytes)
+{
+  std::string ret;
+
+  for (size_t i = 0; i < bytes.size (); i++)
+    {
+      if (i == 0)
+	ret += string_printf ("%02x", bytes[i]);
+      else
+	ret += string_printf (" %02x", bytes[i]);
+    }
+
+  return ret;
 }

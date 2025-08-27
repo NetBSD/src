@@ -1,6 +1,6 @@
 /* memory.h -- Prototypes for AArch64 memory accessor functions.
 
-   Copyright (C) 2015-2023 Free Software Foundation, Inc.
+   Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 

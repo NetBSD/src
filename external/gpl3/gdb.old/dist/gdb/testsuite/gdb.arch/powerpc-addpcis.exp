@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,10 +24,7 @@
 # lnia Rx == addpcis Rx,0
 # subcis Rx,value == addpcis Rx,-value
 
-if { ![istarget powerpc*-*] } {
-    verbose "Skipping powerpc addpcis test."
-    return
-}
+require {istarget powerpc*-*}
 
 set retval 0
 
