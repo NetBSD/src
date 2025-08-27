@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.187 2024/03/24 12:53:20 martin Exp $
+.\"	$NetBSD: contents,v 1.187.4.1 2025/08/27 05:56:22 martin Exp $
 .\"
 .\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,6 +60,7 @@ The installation kernel.
 .			It Pa netbsd-INSTALL_XEN3_DOMU.gz
 .			It Pa netbsd-XEN3_DOM0.gz
 .			It Pa netbsd-XEN3_DOMU.gz
+.			It Pa netbsd-MICROVM.gz
 .\} \" amd64
 .if \n[hpcmips] \{\
 This kernel runs on Vr41xx and TX3922 CPUs only.
@@ -94,6 +95,7 @@ The installation kernel.
 .			It Pa netbsd-INSTALL_XEN3PAE_DOMU.gz
 .			It Pa netbsd-XEN3PAE_DOM0.gz
 .			It Pa netbsd-XEN3PAE_DOMU.gz
+.			It Pa netbsd-MICROVM.gz
 .\}
 .if \n[mac68k] \{\
 .			It Pa netbsd-GENERIC.gz
