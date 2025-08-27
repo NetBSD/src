@@ -1351,14 +1351,25 @@ m68k_osabi_sniffer (bfd *abfd)
 {
   /* XXX NetBSD uses ELFOSABI_NONE == ELFOSABI_SYSV. Therefore, do not
      fall back to EABI here.  */
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+  rturn GDB_OSABI_UNKNOWN;
+#else
   unsigned int elfosabi = elf_elfheader (abfd)->e_ident[EI_OSABI];
+  enum gdb_osabi osabi = GDB_OSABI_UNKNOWN;
 
   if (elfosabi == ELFOSABI_NONE)
     return GDB_OSABI_SVR4;
-#endif
+    {
+      /* Check note sections.  */
+      for (asection *sect : gdb_bfd_sections (abfd))
+	generic_elf_osabi_sniff_abi_tag_sections (abfd, sect, &osabi);
 
-  return GDB_OSABI_UNKNOWN;
+      if (osabi == GDB_OSABI_UNKNOWN)
+	osabi = GDB_OSABI_SVR4;
+    }
+
+  return osabi;
+#endif
 }
 
 void _initialize_m68k_tdep ();

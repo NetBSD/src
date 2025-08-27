@@ -66,8 +66,14 @@ MAKEHTMLFLAGS =
 # where to find texi2roff, ditto
 TEXI2ROFF=texi2roff
 
-# where to find texi2dvi, ditto
+# Where to find texi2dvi.  The use of --build and --build-dir options
+# mean that at least texinfo 4.9 is required.
 TEXI2DVI=texi2dvi
+TEXI2DVI_TMPDIR=texi2dvi_tmpdir
+TEXI2DVI_CMD = rm -fr $(TEXI2DVI_TMPDIR)/$(subst .,_,$@) \
+		&& mkdir -p $(TEXI2DVI_TMPDIR)/$(subst .,_,$@) \
+		&& $(TEXI2DVI) --build=tidy \
+			       --build-dir=$(TEXI2DVI_TMPDIR)/$(subst .,_,$@)
 
 # Package to install the docs under
 PACKAGE = @PACKAGE@
@@ -176,15 +182,13 @@ ANNOTATE_DOC_FILES = \
 MANCONF = -Dman
 
 TEXI2POD = perl $(srcdir)/../../etc/texi2pod.pl \
-		$(MAKEINFOFLAGS) $(MAKEINFO_EXTRA_FLAGS)
+		$(MAKEINFOFLAGS) $(MAKEINFO_EXTRA_FLAGS) -I $(srcdir)
 
-POD2MAN1 = pod2man --center="GNU Development Tools" \
-		   --release="gdb-`sed q version.subst`" --section=1
-POD2MAN5 = pod2man --center="GNU Development Tools" \
-		   --release="gdb-`sed q version.subst`" --section=5
+
+POD2MAN = pod2man --center="GNU Development Tools"
 
 # List of man pages generated from gdb.texi
-MAN1S = gdb.1 gdbserver.1 gcore.1 gdb-add-index.1
+MAN1S = gdb.1 gdbserver.1 gcore.1 gstack.1 gdb-add-index.1
 MAN5S = gdbinit.5
 MANS = $(MAN1S) $(MAN5S)
 
@@ -195,6 +199,7 @@ POD_FILE_TMPS = $(patsubst %.1,%.pod,$(MAN1S)) \
 
 HAVE_NATIVE_GCORE_TARGET = @HAVE_NATIVE_GCORE_TARGET@
 HAVE_NATIVE_GCORE_HOST = @HAVE_NATIVE_GCORE_HOST@
+HAVE_GSTACK = @HAVE_GSTACK@
 
 ###
 
@@ -244,7 +249,7 @@ Doxyfile-gdb-xref:	$(srcdir)/Doxyfile-gdb-xref.in
 Doxyfile-gdbserver:	$(srcdir)/Doxyfile-gdbserver.in
 	$(doxyedit) $(srcdir)/Doxyfile-gdbserver.in >Doxyfile-gdbserver
 
-all-doc: info dvi ps pdf
+all-doc: info man dvi ps pdf html
 diststuff: info man
 
 install-info: $(INFO_DEPS)
@@ -336,6 +341,10 @@ install-man1: $(MAN1S)
 		  -a "$$p" = gcore.1; then \
 	    continue; \
 	  fi; \
+	  if test "x$(HAVE_GSTACK)" = x \
+		  -a "$$p" = gstack.1; then \
+	    continue; \
+	  fi; \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  f=`echo $$p | sed -e 's|^.*/||' -e '$(transform)'`; \
 	  echo " $(INSTALL_DATA) '$$d$$p' '$(DESTDIR)$(man1dir)/$$f'"; \
@@ -358,6 +367,10 @@ uninstall-man1:
 	files=`{ l2='$(MAN1S)'; for i in $$l2; do \
 	  if test "x$(HAVE_NATIVE_GCORE_TARGET)$(HAVE_NATIVE_GCORE_HOST)" = x \
 		  -a "$$i" = gcore.1; then \
+	    continue; \
+	  fi; \
+	  if test "x$(HAVE_GSTACK)" = x \
+		  -a "$$i" = gstack.1; then \
 	    continue; \
 	  fi; \
 	  echo "$$i"; \
@@ -411,40 +424,46 @@ de-stage3: force
 	-(cd stage3 ; mv -f * ..)
 	-rmdir stage3
 
-# GDB QUICK REFERENCE (dvi output)
-refcard.dvi : refcard.tex $(REFEDITS)
-	$(SILENCE) echo > tmp.sed
+
+sedref.tex : refcard.tex $(REFEDITS)
+	$(SILENCE) echo > refcard.sed
 	$(SILENCE) for f in x $(REFEDITS) ; do \
 		test x$$f = xx && continue ; \
-		cat $(srcdir)/$$f >>tmp.sed ; \
+		cat $(srcdir)/$$f >>refcard.sed ; \
 	done
-	$(SILENCE) sed -f tmp.sed $(srcdir)/refcard.tex >sedref.tex
-	$(ECHO_TEX) $(SET_TEXINPUTS) $(TEX) sedref.tex
-	$(SILENCE) mv sedref.dvi refcard.dvi
-	$(SILENCE) rm -f sedref.log sedref.tex tmp.sed
+	$(ECHO_GEN) sed -f refcard.sed $(srcdir)/refcard.tex >$@
+	$(SILENCE) rm -f refcard.sed
+
+
+# GDB QUICK REFERENCE (dvi output)
+refcard.dvi : sedref.tex
+	$(SILENCE) rm -f sedref_dvi.*
+	$(SILENCE) cp $< sedref_dvi.tex
+	$(ECHO_TEX) $(SET_TEXINPUTS) $(TEX) sedref_dvi.tex && \
+		mv sedref_dvi.dvi $@
 
 refcard.ps : refcard.dvi
 	$(ECHO_DVIPS) $(DVIPS) $(SILENT_Q_FLAG) -t landscape -o $@ $?
 
-refcard.pdf : refcard.tex $(REFEDITS)
-	$(SILENCE) echo > tmp.sed
-	$(SILENCE) for f in x $(REFEDITS) ; do \
-		test x$$f = xx && continue ; \
-		cat $(srcdir)/$$f >>tmp.sed ; \
-	done
-	$(SILENCE) sed -f tmp.sed $(srcdir)/refcard.tex >sedref.tex
-	$(ECHO_PDFTEX) $(SET_TEXINPUTS) $(PDFTEX) sedref.tex
-	$(SILENCE) mv sedref.pdf refcard.pdf
-	$(SILENCE) rm -f sedref.log sedref.tex tmp.sed
+refcard.pdf : sedref.tex
+	$(SILENCE) rm -f sedref_pdf.*
+	$(SILENCE) cp $< sedref_pdf.tex
+	$(ECHO_PDFTEX) $(SET_TEXINPUTS) $(PDFTEX) sedref_pdf.tex && \
+		mv sedref_pdf.pdf $@
 
 # File to record current GDB version number.
+#
+# It is important that version.subst be the first dependency so that
+# $< can be used in the recipe, this allows us to find version.subst
+# in either the source tree or the build tree as this file is
+# included, pre-built, as part of a release.
 GDBvn.texi : version.subst
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_GDBvn.texi:
 	echo "@set GDBVN `sed q version.subst`" > ./GDBvn.new
 	if [ -n "$(PKGVERSION)" ]; then \
 	$(ECHO_GEN)
-	$(SILENCE) echo "@set GDBVN `sed q version.subst`" > ./GDBvn.new
+	$(SILENCE) echo "@set GDBVN `sed q $<`" > ./GDBvn.new
 	$(SILENCE) if [ -n "$(PKGVERSION)" ]; then \
 	  echo "@set VERSION_PACKAGE $(PKGVERSION)" >> ./GDBvn.new; \
 	fi
@@ -482,41 +501,17 @@ gdb-cfg.texi: ${srcdir}/${DOC_CONFIG}-cfg.texi
 	ln ${srcdir}/${DOC_CONFIG}-cfg.texi gdb-cfg.texi || \
 	cp ${srcdir}/${DOC_CONFIG}-cfg.texi gdb-cfg.texi
 
-# GDB MANUAL: texinfo source, using @set/@clear/@value/@ifset/@ifclear
-# If your texinfo or makeinfo don't support these, get a new texinfo release
-#
-# The nonsense with GDBvn.texi gets this to run with both Sun and GNU make.
-#   Note that we can *generate* GDBvn.texi, but since we distribute one in the
-#   source directory for the benefit of people who *don't* use this makefile,
-#   VPATH will often tell make not to bother building it, because the one
-#   in the srcdir is up to date.  (if not, then make should build one here).
-
-# Clean these up before each run.  Avoids a catch 22 with not being
-# able to re-generate these files (to fix a corruption) because these
-# files contain a corruption.
-GDB_TEX_TMPS = gdb.aux gdb.cp* gdb.fn* gdb.ky* gdb.log gdb.pg* gdb.toc \
-	gdb.tp* gdb.vr*
-
 # GDB MANUAL: TeX dvi file
 gdb.dvi: ${GDB_DOC_FILES}
-	$(SILENCE) if [ ! -f ./GDBvn.texi ]; then \
-		(test "$(LN_S)" = "ln -s" && ln -s $(srcdir)/GDBvn.texi .) || \
-		ln $(srcdir)/GDBvn.texi . || \
-		cp $(srcdir)/GDBvn.texi . ; else true; fi
-	$(SILENCE) rm -f $(GDB_TEX_TMPS)
-	$(ECHO_TEXI2DVI) $(TEXI2DVI) $(SILENT_Q_FLAG) $(READLINE_TEXI_INCFLAG) \
-		-I ${GDBMI_DIR} -I $(srcdir) $(srcdir)/gdb.texinfo
+	$(ECHO_TEXI2DVI) $(TEXI2DVI_CMD) $(SILENT_Q_FLAG) \
+		$(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) \
+		$(srcdir)/gdb.texinfo
 
 gdb.ps: gdb.dvi
 	$(ECHO_DVIPS) $(DVIPS) $(SILENT_Q_FLAG) -o $@ $?
 
 gdb.pdf: ${GDB_DOC_FILES}
-	$(SILENCE) if [ ! -f ./GDBvn.texi ]; then \
-		(test "$(LN_S)" = "ln -s" && ln -s $(srcdir)/GDBvn.texi .) || \
-		ln $(srcdir)/GDBvn.texi . || \
-		cp $(srcdir)/GDBvn.texi . ; else true; fi
-	$(SILENCE) rm -f $(GDB_TEX_TMPS)
-	$(ECHO_TEXI2DVI) $(TEXI2DVI) $(SILENT_Q_FLAG) --pdf \
+	$(ECHO_TEXI2DVI) $(TEXI2DVI_CMD) $(SILENT_Q_FLAG) --pdf \
 		$(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) \
 		$(srcdir)/gdb.texinfo
 
@@ -614,44 +609,28 @@ stabs/index.html: $(STABS_DOC_FILES)
 		-I $(srcdir) \
 		$(srcdir)/stabs.texinfo
 
-# Clean these up before each run.  Avoids a catch 22 with not being
-# able to re-generate these files (to fix a corruption) because these
-# files contain a corruption.
-STABS_TEX_TMPS = stabs.aux stabs.cp* stabs.fn* stabs.ky* \
-	stabs.log stabs.pg* stabs.toc stabs.tp* stabs.vr*
-
 # STABS DOCUMENTATION: TeX dvi file
 stabs.dvi : $(STABS_DOC_FILES)
-	$(SILENCE) rm -f $(STABS_TEX_TMPS)
-	$(ECHO_TEXI2DVI) $(TEXI2DVI) $(SILENT_Q_FLAG) -I $(srcdir) \
+	$(ECHO_TEXI2DVI) $(TEXI2DVI_CMD) $(SILENT_Q_FLAG) -I $(srcdir) \
 		$(srcdir)/stabs.texinfo
 
 stabs.ps: stabs.dvi
 	$(ECHO_DVIPS) $(DVIPS) $(SILENT_Q_FLAG) -o $@ $?
 
 stabs.pdf: $(STABS_DOC_FILES)
-	$(SILENCE) rm -f $(STABS_TEX_TMPS)
-	$(ECHO_TEXI2DVI) $(TEXI2DVI) $(SILENT_Q_FLAG) --pdf -I $(srcdir) \
+	$(ECHO_TEXI2DVI) $(TEXI2DVI_CMD) $(SILENT_Q_FLAG) --pdf -I $(srcdir) \
 		$(srcdir)/stabs.texinfo
-
-# Clean these up before each run.  Avoids a catch 22 with not being
-# able to re-generate these files (to fix a corruption) because these
-# files contain a corruption.
-ANNOTATE_TEX_TMPS = annotate.aux annotate.cp* annotate.fn* annotate.ky* \
-	annotate.log annotate.pg* annotate.toc annotate.tp* annotate.vr*
 
 # ANNOTATE DOCUMENTATION: TeX dvi file
 annotate.dvi : $(ANNOTATE_DOC_FILES)
-	$(SILENCE) rm -f $(ANNOTATE_TEX_TMPS)
-	$(ECHO_TEXI2DVI) $(TEXI2DVI) $(SILENT_Q_FLAG) -I $(srcdir) \
+	$(ECHO_TEXI2DVI) $(TEXI2DVI_CMD) $(SILENT_Q_FLAG) -I $(srcdir) \
 		$(srcdir)/annotate.texinfo
 
 annotate.ps: annotate.dvi
 	$(ECHO_DVIPS) $(DVIPS) $(SILENT_Q_FLAG) -o $@ $?
 
 annotate.pdf: $(ANNOTATE_DOC_FILES)
-	$(SILENCE) rm -f $(ANNOTATE_TEX_TMPS)
-	$(ECHO_TEXI2DVI) $(TEXI2DVI) $(SILENT_Q_FLAG) --pdf -I $(srcdir) \
+	$(ECHO_TEXI2DVI) $(TEXI2DVI_CMD) $(SILENT_Q_FLAG) --pdf -I $(srcdir) \
 		$(srcdir)/annotate.texinfo
 
 annotate.info: $(ANNOTATE_DOC_FILES)
@@ -676,21 +655,20 @@ annotate/index.html: $(ANNOTATE_DOC_FILES)
 # pages, then the .pod files must become a dependency, this will
 # trigger an attempt to rebuild these files while building and
 # installing a release of GDB, which is something we don't want.
-$(MAN1S) : %.1 : $(GDB_DOC_FILES)
+#
+# It is important that version.subst be the first dependency so that
+# $< can be used in the recipe, this allows us to find version.subst
+# in either the source tree or the build tree as this file is
+# included, pre-built, as part of a release.
+$(MAN1S) $(MAN5S) : version.subst $(GDB_DOC_FILES)
 	@echo "NOT REBUILDING $@"
-NetBSD_DISABLED_MAN1S:
-	$(ECHO_TEXI2POD) $(TEXI2POD) $(MANCONF) -D$* < $(srcdir)/gdb.texinfo > $*.pod
-	$(ECHO_TEXI2MAN) ($(POD2MAN1) $*.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+	$(ECHO_TEXI2POD) $(TEXI2POD) $(MANCONF) -D$(basename $@) \
+		< $(srcdir)/gdb.texinfo > $(basename $@).pod
+	$(ECHO_TEXI2MAN) ($(POD2MAN) --section=$(subst .,,$(suffix $@)) \
+			--release="gdb-`sed q $<`" $(basename $@).pod | \
+		sed -e '/^.if n .na/d' > $@.T$$$$ && \
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
-	$(SILENCE) rm -f $*.pod
-
-$(MAN5S) : %.5 : $(GDB_DOC_FILES)
-	@echo "NOT REBUILDING $@"
-NetBSD_DISABLED_MAN5S:
-	$(ECHO_TEXI2POD) $(TEXI2POD) $(MANCONF) -D$* < $(srcdir)/gdb.texinfo > $*.pod
-	$(ECHO_TEXI2MAN) ($(POD2MAN5) $*.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
-		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
-	$(SILENCE) rm -f $*.pod
+	$(SILENCE) rm -f $(basename $@).pod
 
 force:
 
@@ -703,10 +681,8 @@ Makefile: Makefile.in $(host_makefile_frag) ../config.status
 
 mostlyclean:
 	rm -f gdb.mm gdb.ms gdb.me links2roff
-	rm -f $(GDB_TEX_TMPS)
-	rm -f $(STABS_TEX_TMPS)
-	rm -f $(ANNOTATE_TEX_TMPS)
-	rm -f sedref.dvi sedref.tex tmp.sed sedref.log
+	rm -fr $(TEXI2DVI_TMPDIR)
+	rm -f refcard.sed sedref.tex sedref_dvi.* sedref_pdf.*
 	rm -f $(POD_FILE_TMPS)
 
 clean: mostlyclean

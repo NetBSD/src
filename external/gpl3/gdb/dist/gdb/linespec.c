@@ -23,7 +23,6 @@
 #include "symfile.h"
 #include "objfiles.h"
 #include "source.h"
-#include "demangle.h"
 #include "value.h"
 #include "completer.h"
 #include "cp-abi.h"
@@ -34,7 +33,6 @@
 #include "linespec.h"
 #include "language.h"
 #include "interps.h"
-#include "mi/mi-cmds.h"
 #include "target.h"
 #include "arch-utils.h"
 #include <ctype.h>
@@ -47,6 +45,7 @@
 #include "gdbsupport/def-vector.h"
 #include <algorithm>
 #include "inferior.h"
+#include "gdbsupport/unordered_set.h"
 
 /* An enumeration of the various things a user might attempt to
    complete for a linespec location.  */
@@ -275,9 +274,6 @@ struct linespec_token
   } data;
 };
 
-#define LS_TOKEN_STOKEN(TOK) (TOK).data.string
-#define LS_TOKEN_KEYWORD(TOK) (TOK).data.keyword
-
 /* An instance of the linespec parser.  */
 
 struct linespec_parser
@@ -300,7 +296,6 @@ struct linespec_parser
 
     /* Head of the input stream.  */
     const char *stream;
-#define PARSER_STREAM(P) ((P)->lexer.stream)
 
     /* The current token.  */
     linespec_token current;
@@ -311,11 +306,9 @@ struct linespec_parser
 
   /* The state of the parse.  */
   struct linespec_state state {};
-#define PARSER_STATE(PPTR) (&(PPTR)->state)
 
   /* The result of the parse.  */
   linespec result;
-#define PARSER_RESULT(PPTR) (&(PPTR)->result)
 
   /* What the parser believes the current word point should complete
      to.  */
@@ -340,10 +333,6 @@ struct linespec_parser
      tracker.  Otherwise, this is NULL.  */
   struct completion_tracker *completion_tracker = nullptr;
 };
-
-/* A convenience macro for accessing the explicit location spec result
-   of the parser.  */
-#define PARSER_EXPLICIT(PPTR) (&PARSER_RESULT ((PPTR))->explicit_loc)
 
 /* Prototypes for local functions.  */
 
@@ -434,30 +423,30 @@ static int
 linespec_lexer_lex_number (linespec_parser *parser, linespec_token *tokenp)
 {
   tokenp->type = LSTOKEN_NUMBER;
-  LS_TOKEN_STOKEN (*tokenp).length = 0;
-  LS_TOKEN_STOKEN (*tokenp).ptr = PARSER_STREAM (parser);
+  tokenp->data.string.length = 0;
+  tokenp->data.string.ptr = parser->lexer.stream;
 
   /* Keep any sign at the start of the stream.  */
-  if (*PARSER_STREAM (parser) == '+' || *PARSER_STREAM (parser) == '-')
+  if (*parser->lexer.stream == '+' || *parser->lexer.stream == '-')
     {
-      ++LS_TOKEN_STOKEN (*tokenp).length;
-      ++(PARSER_STREAM (parser));
+      ++tokenp->data.string.length;
+      ++(parser->lexer.stream);
     }
 
-  while (isdigit ((unsigned char)*PARSER_STREAM (parser)))
+  while (isdigit ((unsigned char)*parser->lexer.stream))
     {
-      ++LS_TOKEN_STOKEN (*tokenp).length;
-      ++(PARSER_STREAM (parser));
+      ++tokenp->data.string.length;
+      ++(parser->lexer.stream);
     }
 
   /* If the next character in the input buffer is not a space, comma,
      quote, or colon, this input does not represent a number.  */
-  if (*PARSER_STREAM (parser) != '\0'
-      && !isspace ((unsigned char)*PARSER_STREAM (parser)) && *PARSER_STREAM (parser) != ','
-      && *PARSER_STREAM (parser) != ':'
-      && !strchr (linespec_quote_characters, *PARSER_STREAM (parser)))
+  if (*parser->lexer.stream != '\0'
+      && !isspace ((unsigned char)*parser->lexer.stream) && *parser->lexer.stream != ','
+      && *parser->lexer.stream != ':'
+      && !strchr (linespec_quote_characters, *parser->lexer.stream))
     {
-      PARSER_STREAM (parser) = LS_TOKEN_STOKEN (*tokenp).ptr;
+      parser->lexer.stream = tokenp->data.string.ptr;
       return 0;
     }
 
@@ -579,10 +568,10 @@ copy_token_string (linespec_token token)
   const char *str, *s;
 
   if (token.type == LSTOKEN_KEYWORD)
-    return make_unique_xstrdup (LS_TOKEN_KEYWORD (token));
+    return make_unique_xstrdup (token.data.keyword);
 
-  str = LS_TOKEN_STOKEN (token).ptr;
-  s = remove_trailing_whitespace (str, str + LS_TOKEN_STOKEN (token).length);
+  str = token.data.string.ptr;
+  s = remove_trailing_whitespace (str, str + token.data.string.length);
 
   return gdb::unique_xmalloc_ptr<char> (savestring (str, s - str));
 }
@@ -668,30 +657,30 @@ static linespec_token
 linespec_lexer_lex_string (linespec_parser *parser)
 {
   linespec_token token;
-  const char *start = PARSER_STREAM (parser);
+  const char *start = parser->lexer.stream;
 
   token.type = LSTOKEN_STRING;
 
   /* If the input stream starts with a quote character, skip to the next
      quote character, regardless of the content.  */
-  if (strchr (linespec_quote_characters, *PARSER_STREAM (parser)))
+  if (strchr (linespec_quote_characters, *parser->lexer.stream))
     {
       const char *end;
-      char quote_char = *PARSER_STREAM (parser);
+      char quote_char = *parser->lexer.stream;
 
       /* Special case: Ada operators.  */
-      if (PARSER_STATE (parser)->language->la_language == language_ada
+      if (parser->state.language->la_language == language_ada
 	  && quote_char == '\"')
 	{
-	  int len = is_ada_operator (PARSER_STREAM (parser));
+	  int len = is_ada_operator (parser->lexer.stream);
 
 	  if (len != 0)
 	    {
 	      /* The input is an Ada operator.  Return the quoted string
 		 as-is.  */
-	      LS_TOKEN_STOKEN (token).ptr = PARSER_STREAM (parser);
-	      LS_TOKEN_STOKEN (token).length = len;
-	      PARSER_STREAM (parser) += len;
+	      token.data.string.ptr = parser->lexer.stream;
+	      token.data.string.length = len;
+	      parser->lexer.stream += len;
 	      return token;
 	    }
 
@@ -700,13 +689,13 @@ linespec_lexer_lex_string (linespec_parser *parser)
 	}
 
       /* Skip past the beginning quote.  */
-      ++(PARSER_STREAM (parser));
+      ++(parser->lexer.stream);
 
       /* Mark the start of the string.  */
-      LS_TOKEN_STOKEN (token).ptr = PARSER_STREAM (parser);
+      token.data.string.ptr = parser->lexer.stream;
 
       /* Skip to the ending quote.  */
-      end = skip_quote_char (PARSER_STREAM (parser), quote_char);
+      end = skip_quote_char (parser->lexer.stream, quote_char);
 
       /* This helps the completer mode decide whether we have a
 	 complete string.  */
@@ -723,15 +712,15 @@ linespec_lexer_lex_string (linespec_parser *parser)
 	  /* In completion mode, we'll try to complete the incomplete
 	     token.  */
 	  token.type = LSTOKEN_STRING;
-	  while (*PARSER_STREAM (parser) != '\0')
-	    PARSER_STREAM (parser)++;
-	  LS_TOKEN_STOKEN (token).length = PARSER_STREAM (parser) - 1 - start;
+	  while (*parser->lexer.stream != '\0')
+	    parser->lexer.stream++;
+	  token.data.string.length = parser->lexer.stream - 1 - start;
 	}
       else
 	{
 	  /* Skip over the ending quote and mark the length of the string.  */
-	  PARSER_STREAM (parser) = (char *) ++end;
-	  LS_TOKEN_STOKEN (token).length = PARSER_STREAM (parser) - 2 - start;
+	  parser->lexer.stream = (char *) ++end;
+	  token.data.string.length = parser->lexer.stream - 2 - start;
 	}
     }
   else
@@ -748,42 +737,42 @@ linespec_lexer_lex_string (linespec_parser *parser)
 
       while (1)
 	{
-	  if (isspace ((unsigned char)*PARSER_STREAM (parser)))
+	  if (isspace ((unsigned char)*parser->lexer.stream))
 	    {
-	      p = skip_spaces (PARSER_STREAM (parser));
+	      p = skip_spaces (parser->lexer.stream);
 	      /* When we get here we know we've found something followed by
 		 a space (we skip over parens and templates below).
 		 So if we find a keyword now, we know it is a keyword and not,
 		 say, a function name.  */
 	      if (linespec_lexer_lex_keyword (p) != NULL)
 		{
-		  LS_TOKEN_STOKEN (token).ptr = start;
-		  LS_TOKEN_STOKEN (token).length
-		    = PARSER_STREAM (parser) - start;
+		  token.data.string.ptr = start;
+		  token.data.string.length
+		    = parser->lexer.stream - start;
 		  return token;
 		}
 
 	      /* Advance past the whitespace.  */
-	      PARSER_STREAM (parser) = p;
+	      parser->lexer.stream = p;
 	    }
 
 	  /* If the next character is EOI or (single) ':', the
 	     string is complete;  return the token.  */
-	  if (*PARSER_STREAM (parser) == 0)
+	  if (*parser->lexer.stream == 0)
 	    {
-	      LS_TOKEN_STOKEN (token).ptr = start;
-	      LS_TOKEN_STOKEN (token).length = PARSER_STREAM (parser) - start;
+	      token.data.string.ptr = start;
+	      token.data.string.length = parser->lexer.stream - start;
 	      return token;
 	    }
-	  else if (PARSER_STREAM (parser)[0] == ':')
+	  else if (parser->lexer.stream[0] == ':')
 	    {
 	      /* Do not tokenize the C++ scope operator. */
-	      if (PARSER_STREAM (parser)[1] == ':')
-		++(PARSER_STREAM (parser));
+	      if (parser->lexer.stream[1] == ':')
+		++(parser->lexer.stream);
 
 	      /* Do not tokenize ABI tags such as "[abi:cxx11]".  */
-	      else if (PARSER_STREAM (parser) - start > 4
-		       && startswith (PARSER_STREAM (parser) - 4, "[abi"))
+	      else if (parser->lexer.stream - start > 4
+		       && startswith (parser->lexer.stream - 4, "[abi"))
 		{
 		  /* Nothing.  */
 		}
@@ -792,39 +781,39 @@ linespec_lexer_lex_string (linespec_parser *parser)
 		 (i.e, a single-letter drive name) and the next character
 		 is a directory separator.  This allows Windows-style
 		 paths to be recognized as filenames without quoting it.  */
-	      else if ((PARSER_STREAM (parser) - start) != 1
-		       || !IS_DIR_SEPARATOR (PARSER_STREAM (parser)[1]))
+	      else if ((parser->lexer.stream - start) != 1
+		       || !IS_DIR_SEPARATOR (parser->lexer.stream[1]))
 		{
-		  LS_TOKEN_STOKEN (token).ptr = start;
-		  LS_TOKEN_STOKEN (token).length
-		    = PARSER_STREAM (parser) - start;
+		  token.data.string.ptr = start;
+		  token.data.string.length
+		    = parser->lexer.stream - start;
 		  return token;
 		}
 	    }
 	  /* Special case: permit quote-enclosed linespecs.  */
 	  else if (parser->is_quote_enclosed
 		   && strchr (linespec_quote_characters,
-			      *PARSER_STREAM (parser))
-		   && is_closing_quote_enclosed (PARSER_STREAM (parser)))
+			      *parser->lexer.stream)
+		   && is_closing_quote_enclosed (parser->lexer.stream))
 	    {
-	      LS_TOKEN_STOKEN (token).ptr = start;
-	      LS_TOKEN_STOKEN (token).length = PARSER_STREAM (parser) - start;
+	      token.data.string.ptr = start;
+	      token.data.string.length = parser->lexer.stream - start;
 	      return token;
 	    }
 	  /* Because commas may terminate a linespec and appear in
 	     the middle of valid string input, special cases for
 	     '<' and '(' are necessary.  */
-	  else if (*PARSER_STREAM (parser) == '<'
-		   || *PARSER_STREAM (parser) == '(')
+	  else if (*parser->lexer.stream == '<'
+		   || *parser->lexer.stream == '(')
 	    {
 	      /* Don't interpret 'operator<' / 'operator<<' as a
 		 template parameter list though.  */
-	      if (*PARSER_STREAM (parser) == '<'
-		  && (PARSER_STATE (parser)->language->la_language
+	      if (*parser->lexer.stream == '<'
+		  && (parser->state.language->la_language
 		      == language_cplus)
-		  && (PARSER_STREAM (parser) - start) >= CP_OPERATOR_LEN)
+		  && (parser->lexer.stream - start) >= CP_OPERATOR_LEN)
 		{
-		  const char *op = PARSER_STREAM (parser);
+		  const char *op = parser->lexer.stream;
 
 		  while (op > start && isspace ((unsigned char)op[-1]))
 		    op--;
@@ -836,16 +825,16 @@ linespec_lexer_lex_string (linespec_parser *parser)
 			      || !(isalnum ((unsigned char)op[-1]) || op[-1] == '_')))
 			{
 			  /* This is an operator name.  Keep going.  */
-			  ++(PARSER_STREAM (parser));
-			  if (*PARSER_STREAM (parser) == '<')
-			    ++(PARSER_STREAM (parser));
+			  ++(parser->lexer.stream);
+			  if (*parser->lexer.stream == '<')
+			    ++(parser->lexer.stream);
 			  continue;
 			}
 		    }
 		}
 
-	      const char *end = find_parameter_list_end (PARSER_STREAM (parser));
-	      PARSER_STREAM (parser) = end;
+	      const char *end = find_parameter_list_end (parser->lexer.stream);
+	      parser->lexer.stream = end;
 
 	      /* Don't loop around to the normal \0 case above because
 		 we don't want to misinterpret a potential keyword at
@@ -854,9 +843,9 @@ linespec_lexer_lex_string (linespec_parser *parser)
 		 function(thread<tab>" in completion mode.  */
 	      if (*end == '\0')
 		{
-		  LS_TOKEN_STOKEN (token).ptr = start;
-		  LS_TOKEN_STOKEN (token).length
-		    = PARSER_STREAM (parser) - start;
+		  token.data.string.ptr = start;
+		  token.data.string.length
+		    = parser->lexer.stream - start;
 		  return token;
 		}
 	      else
@@ -864,31 +853,31 @@ linespec_lexer_lex_string (linespec_parser *parser)
 	    }
 	  /* Commas are terminators, but not if they are part of an
 	     operator name.  */
-	  else if (*PARSER_STREAM (parser) == ',')
+	  else if (*parser->lexer.stream == ',')
 	    {
-	      if ((PARSER_STATE (parser)->language->la_language
+	      if ((parser->state.language->la_language
 		   == language_cplus)
-		  && (PARSER_STREAM (parser) - start) > CP_OPERATOR_LEN)
+		  && (parser->lexer.stream - start) > CP_OPERATOR_LEN)
 		{
 		  const char *op = strstr (start, CP_OPERATOR_STR);
 
 		  if (op != NULL && is_operator_name (op))
 		    {
 		      /* This is an operator name.  Keep going.  */
-		      ++(PARSER_STREAM (parser));
+		      ++(parser->lexer.stream);
 		      continue;
 		    }
 		}
 
 	      /* Comma terminates the string.  */
-	      LS_TOKEN_STOKEN (token).ptr = start;
-	      LS_TOKEN_STOKEN (token).length = PARSER_STREAM (parser) - start;
+	      token.data.string.ptr = start;
+	      token.data.string.length = parser->lexer.stream - start;
 	      return token;
 	    }
 
 	  /* Advance the stream.  */
-	  gdb_assert (*(PARSER_STREAM (parser)) != '\0');
-	  ++(PARSER_STREAM (parser));
+	  gdb_assert (*(parser->lexer.stream) != '\0');
+	  ++(parser->lexer.stream);
 	}
     }
 
@@ -905,24 +894,24 @@ linespec_lexer_lex_one (linespec_parser *parser)
   if (parser->lexer.current.type == LSTOKEN_CONSUMED)
     {
       /* Skip any whitespace.  */
-      PARSER_STREAM (parser) = skip_spaces (PARSER_STREAM (parser));
+      parser->lexer.stream = skip_spaces (parser->lexer.stream);
 
       /* Check for a keyword, they end the linespec.  */
-      keyword = linespec_lexer_lex_keyword (PARSER_STREAM (parser));
+      keyword = linespec_lexer_lex_keyword (parser->lexer.stream);
       if (keyword != NULL)
 	{
 	  parser->lexer.current.type = LSTOKEN_KEYWORD;
-	  LS_TOKEN_KEYWORD (parser->lexer.current) = keyword;
+	  parser->lexer.current.data.keyword = keyword;
 	  /* We do not advance the stream here intentionally:
 	     we would like lexing to stop when a keyword is seen.
 
-	     PARSER_STREAM (parser) +=  strlen (keyword);  */
+	     parser->lexer.stream +=  strlen (keyword);  */
 
 	  return parser->lexer.current;
 	}
 
       /* Handle other tokens.  */
-      switch (*PARSER_STREAM (parser))
+      switch (*parser->lexer.stream)
 	{
 	case 0:
 	  parser->lexer.current.type = LSTOKEN_EOI;
@@ -938,21 +927,21 @@ linespec_lexer_lex_one (linespec_parser *parser)
 	case ':':
 	  /* If we have a scope operator, lex the input as a string.
 	     Otherwise, return LSTOKEN_COLON.  */
-	  if (PARSER_STREAM (parser)[1] == ':')
+	  if (parser->lexer.stream[1] == ':')
 	    parser->lexer.current = linespec_lexer_lex_string (parser);
 	  else
 	    {
 	      parser->lexer.current.type = LSTOKEN_COLON;
-	      ++(PARSER_STREAM (parser));
+	      ++(parser->lexer.stream);
 	    }
 	  break;
 
 	case '\'': case '\"':
 	  /* Special case: permit quote-enclosed linespecs.  */
 	  if (parser->is_quote_enclosed
-	      && is_closing_quote_enclosed (PARSER_STREAM (parser)))
+	      && is_closing_quote_enclosed (parser->lexer.stream))
 	    {
-	      ++(PARSER_STREAM (parser));
+	      ++(parser->lexer.stream);
 	      parser->lexer.current.type = LSTOKEN_EOI;
 	    }
 	  else
@@ -961,10 +950,10 @@ linespec_lexer_lex_one (linespec_parser *parser)
 
 	case ',':
 	  parser->lexer.current.type = LSTOKEN_COMMA;
-	  LS_TOKEN_STOKEN (parser->lexer.current).ptr
-	    = PARSER_STREAM (parser);
-	  LS_TOKEN_STOKEN (parser->lexer.current).length = 1;
-	  ++(PARSER_STREAM (parser));
+	  parser->lexer.current.data.string.ptr
+	    = parser->lexer.stream;
+	  parser->lexer.current.data.string.length = 1;
+	  ++(parser->lexer.stream);
 	  break;
 
 	default:
@@ -988,7 +977,7 @@ linespec_lexer_consume_token (linespec_parser *parser)
   gdb_assert (parser->lexer.current.type != LSTOKEN_EOI);
 
   bool advance_word = (parser->lexer.current.type != LSTOKEN_STRING
-		       || *PARSER_STREAM (parser) != '\0');
+		       || *parser->lexer.stream != '\0');
 
   /* If we're moving past a string to some other token, it must be the
      quote was terminated.  */
@@ -998,7 +987,7 @@ linespec_lexer_consume_token (linespec_parser *parser)
 
       /* If the string was the last (non-EOI) token, we're past the
 	 quote, but remember that for later.  */
-      if (*PARSER_STREAM (parser) != '\0')
+      if (*parser->lexer.stream != '\0')
 	{
 	  parser->completion_quote_char = '\0';
 	  parser->completion_quote_end = NULL;;
@@ -1012,12 +1001,12 @@ linespec_lexer_consume_token (linespec_parser *parser)
     {
       /* Advance the completion word past a potential initial
 	 quote-char.  */
-      parser->completion_word = LS_TOKEN_STOKEN (parser->lexer.current).ptr;
+      parser->completion_word = parser->lexer.current.data.string.ptr;
     }
   else if (advance_word)
     {
       /* Advance the completion word past any whitespace.  */
-      parser->completion_word = PARSER_STREAM (parser);
+      parser->completion_word = parser->lexer.stream;
     }
 
   return parser->lexer.current;
@@ -1029,14 +1018,14 @@ static linespec_token
 linespec_lexer_peek_token (linespec_parser *parser)
 {
   linespec_token next;
-  const char *saved_stream = PARSER_STREAM (parser);
+  const char *saved_stream = parser->lexer.stream;
   linespec_token saved_token = parser->lexer.current;
   int saved_completion_quote_char = parser->completion_quote_char;
   const char *saved_completion_quote_end = parser->completion_quote_end;
   const char *saved_completion_word = parser->completion_word;
 
   next = linespec_lexer_consume_token (parser);
-  PARSER_STREAM (parser) = saved_stream;
+  parser->lexer.stream = saved_stream;
   parser->lexer.current = saved_token;
   parser->completion_quote_char = saved_completion_quote_char;
   parser->completion_quote_end = saved_completion_quote_end;
@@ -1166,7 +1155,7 @@ iterate_over_all_matching_symtabs
 
       set_current_program_space (pspace);
 
-      for (objfile *objfile : current_program_space->objfiles ())
+      for (objfile *objfile : pspace->objfiles ())
 	{
 	  objfile->expand_symtabs_matching (NULL, &lookup_name, NULL, NULL,
 					    (SEARCH_GLOBAL_BLOCK
@@ -1398,6 +1387,14 @@ struct decode_line_2_item
   {
   }
 
+  /* Used for sorting.  */
+  bool operator< (const decode_line_2_item &other) const
+  {
+    if (displayform != other.displayform)
+      return displayform < other.displayform;
+    return fullform < other.fullform;
+  }
+
   /* The form using symtab_to_fullname.  */
   std::string fullform;
 
@@ -1408,18 +1405,6 @@ struct decode_line_2_item
      requested breakpoint for this entry.  */
   unsigned int selected : 1;
 };
-
-/* Helper for std::sort to sort decode_line_2_item entries by
-   DISPLAYFORM and secondarily by FULLFORM.  */
-
-static bool
-decode_line_2_compare_items (const decode_line_2_item &a,
-			     const decode_line_2_item &b)
-{
-  if (a.displayform != b.displayform)
-    return a.displayform < b.displayform;
-  return a.fullform < b.fullform;
-}
 
 /* Handle multiple results in RESULT depending on SELECT_MODE.  This
    will either return normally, throw an exception on multiple
@@ -1468,7 +1453,7 @@ decode_line_2 (struct linespec_state *self,
     }
 
   /* Sort the list of method names.  */
-  std::sort (items.begin (), items.end (), decode_line_2_compare_items);
+  std::sort (items.begin (), items.end ());
 
   /* Remove entries with the same FULLFORM.  */
   items.erase (std::unique (items.begin (), items.end (),
@@ -1554,15 +1539,15 @@ decode_line_2 (struct linespec_state *self,
 /* Throw an appropriate error when SYMBOL is not found (optionally in
    FILENAME).  */
 
-static void ATTRIBUTE_NORETURN
+[[noreturn]] static void
 symbol_not_found_error (const char *symbol, const char *filename)
 {
   if (symbol == NULL)
     symbol = "";
 
-  if (!have_full_symbols ()
-      && !have_partial_symbols ()
-      && !have_minimal_symbols ())
+  if (!have_full_symbols (current_program_space)
+      && !have_partial_symbols (current_program_space)
+      && !have_minimal_symbols (current_program_space))
     throw_error (NOT_FOUND_ERROR,
 		 _("No symbol table is loaded.  Use the \"file\" command."));
 
@@ -1596,7 +1581,7 @@ symbol_not_found_error (const char *symbol, const char *filename)
 /* Throw an appropriate error when an unexpected token is encountered 
    in the input.  */
 
-static void ATTRIBUTE_NORETURN
+[[noreturn]] static void
 unexpected_linespec_error (linespec_parser *parser)
 {
   linespec_token token;
@@ -1623,7 +1608,7 @@ unexpected_linespec_error (linespec_parser *parser)
 
 /* Throw an undefined label error.  */
 
-static void ATTRIBUTE_NORETURN
+[[noreturn]] static void
 undefined_label_error (const char *function, const char *label)
 {
   if (function != NULL)
@@ -1638,7 +1623,7 @@ undefined_label_error (const char *function, const char *label)
 
 /* Throw a source file not found error.  */
 
-static void ATTRIBUTE_NORETURN
+[[noreturn]] static void
 source_file_not_found_error (const char *name)
 {
   throw_error (NOT_FOUND_ERROR, _("No source file named %s."), name);
@@ -1651,7 +1636,7 @@ static linespec_token
 save_stream_and_consume_token (linespec_parser *parser)
 {
   if (linespec_lexer_peek_token (parser).type != LSTOKEN_EOI)
-    parser->completion_word = PARSER_STREAM (parser);
+    parser->completion_word = parser->lexer.stream;
   return linespec_lexer_consume_token (parser);
 }
 
@@ -1692,14 +1677,14 @@ static void
 set_completion_after_number (linespec_parser *parser,
 			     linespec_complete_what next)
 {
-  if (*PARSER_STREAM (parser) == ' ')
+  if (*parser->lexer.stream == ' ')
     {
-      parser->completion_word = skip_spaces (PARSER_STREAM (parser) + 1);
+      parser->completion_word = skip_spaces (parser->lexer.stream + 1);
       parser->complete_what = next;
     }
   else
     {
-      parser->completion_word = PARSER_STREAM (parser);
+      parser->completion_word = parser->lexer.stream;
       parser->complete_what = linespec_complete_what::NOTHING;
     }
 }
@@ -1732,7 +1717,7 @@ linespec_parse_basic (linespec_parser *parser)
 
       /* Record the line offset and get the next token.  */
       name = copy_token_string (token);
-      PARSER_EXPLICIT (parser)->line_offset
+      parser->result.explicit_loc.line_offset
 	= linespec_parse_line_offset (name.get ());
 
       /* Get the next token.  */
@@ -1779,13 +1764,13 @@ linespec_parse_basic (linespec_parser *parser)
 	 it part of the function name/token.  */
 
       if (!parser->completion_quote_char
-	  && strcmp (PARSER_STREAM (parser), ":") == 0)
+	  && strcmp (parser->lexer.stream, ":") == 0)
 	{
 	  completion_tracker tmp_tracker (false);
 	  const char *source_filename
-	    = PARSER_EXPLICIT (parser)->source_filename.get ();
+	    = parser->result.explicit_loc.source_filename.get ();
 	  symbol_name_match_type match_type
-	    = PARSER_EXPLICIT (parser)->func_name_match_type;
+	    = parser->result.explicit_loc.func_name_match_type;
 
 	  linespec_complete_function (tmp_tracker,
 				      parser->completion_word,
@@ -1794,16 +1779,16 @@ linespec_parse_basic (linespec_parser *parser)
 
 	  if (tmp_tracker.have_completions ())
 	    {
-	      PARSER_STREAM (parser)++;
-	      LS_TOKEN_STOKEN (token).length++;
+	      parser->lexer.stream++;
+	      token.data.string.length++;
 
 	      name.reset (savestring (parser->completion_word,
-				      (PARSER_STREAM (parser)
+				      (parser->lexer.stream
 				       - parser->completion_word)));
 	    }
 	}
 
-      PARSER_EXPLICIT (parser)->function_name = std::move (name);
+      parser->result.explicit_loc.function_name = std::move (name);
     }
   else
     {
@@ -1811,44 +1796,44 @@ linespec_parse_basic (linespec_parser *parser)
       std::vector<bound_minimal_symbol> minimal_symbols;
 
       /* Try looking it up as a function/method.  */
-      find_linespec_symbols (PARSER_STATE (parser),
-			     PARSER_RESULT (parser)->file_symtabs, name.get (),
-			     PARSER_EXPLICIT (parser)->func_name_match_type,
+      find_linespec_symbols (&parser->state,
+			     parser->result.file_symtabs, name.get (),
+			     parser->result.explicit_loc.func_name_match_type,
 			     &symbols, &minimal_symbols);
 
       if (!symbols.empty () || !minimal_symbols.empty ())
 	{
-	  PARSER_RESULT (parser)->function_symbols = std::move (symbols);
-	  PARSER_RESULT (parser)->minimal_symbols = std::move (minimal_symbols);
-	  PARSER_EXPLICIT (parser)->function_name = std::move (name);
+	  parser->result.function_symbols = std::move (symbols);
+	  parser->result.minimal_symbols = std::move (minimal_symbols);
+	  parser->result.explicit_loc.function_name = std::move (name);
 	}
       else
 	{
 	  /* NAME was not a function or a method.  So it must be a label
 	     name or user specified variable like "break foo.c:$zippo".  */
 	  std::vector<block_symbol> labels
-	    = find_label_symbols (PARSER_STATE (parser), {}, &symbols,
+	    = find_label_symbols (&parser->state, {}, &symbols,
 				  name.get ());
 
 	  if (!labels.empty ())
 	    {
-	      PARSER_RESULT (parser)->labels.label_symbols = std::move (labels);
-	      PARSER_RESULT (parser)->labels.function_symbols
-		  = std::move (symbols);
-	      PARSER_EXPLICIT (parser)->label_name = std::move (name);
+	      parser->result.labels.label_symbols = std::move (labels);
+	      parser->result.labels.function_symbols = std::move (symbols);
+	      parser->result.explicit_loc.label_name = std::move (name);
 	    }
 	  else if (token.type == LSTOKEN_STRING
-		   && *LS_TOKEN_STOKEN (token).ptr == '$')
+		   && *token.data.string.ptr == '$')
 	    {
 	      /* User specified a convenience variable or history value.  */
-	      PARSER_EXPLICIT (parser)->line_offset
-		= linespec_parse_variable (PARSER_STATE (parser), name.get ());
+	      parser->result.explicit_loc.line_offset
+		= linespec_parse_variable (&parser->state, name.get ());
 
-	      if (PARSER_EXPLICIT (parser)->line_offset.sign == LINE_OFFSET_UNKNOWN)
+	      if (parser->result.explicit_loc.line_offset.sign
+		  == LINE_OFFSET_UNKNOWN)
 		{
 		  /* The user-specified variable was not valid.  Do not
 		     throw an error here.  parse_linespec will do it for us.  */
-		  PARSER_EXPLICIT (parser)->function_name = std::move (name);
+		  parser->result.explicit_loc.function_name = std::move (name);
 		  return;
 		}
 	    }
@@ -1858,7 +1843,7 @@ linespec_parse_basic (linespec_parser *parser)
 		 an error here.  parse_linespec will do it for us.  */
 
 	      /* Save a copy of the name we were trying to lookup.  */
-	      PARSER_EXPLICIT (parser)->function_name = std::move (name);
+	      parser->result.explicit_loc.function_name = std::move (name);
 	      return;
 	    }
 	}
@@ -1886,7 +1871,7 @@ linespec_parse_basic (linespec_parser *parser)
 	  set_completion_after_number (parser, linespec_complete_what::KEYWORD);
 
 	  name = copy_token_string (token);
-	  PARSER_EXPLICIT (parser)->line_offset
+	  parser->result.explicit_loc.line_offset
 	    = linespec_parse_line_offset (name.get ());
 
 	  /* Get the next token.  */
@@ -1907,13 +1892,13 @@ linespec_parse_basic (linespec_parser *parser)
 	     garbage.  */
 	  if (parser->completion_quote_char == '\0')
 	    {
-	      const char *ptr = LS_TOKEN_STOKEN (token).ptr;
-	      for (size_t i = 0; i < LS_TOKEN_STOKEN (token).length; i++)
+	      const char *ptr = token.data.string.ptr;
+	      for (size_t i = 0; i < token.data.string.length; i++)
 		{
 		  if (ptr[i] == ' ')
 		    {
-		      LS_TOKEN_STOKEN (token).length = i;
-		      PARSER_STREAM (parser) = skip_spaces (ptr + i + 1);
+		      token.data.string.length = i;
+		      parser->lexer.stream = skip_spaces (ptr + i + 1);
 		      break;
 		    }
 		}
@@ -1921,9 +1906,9 @@ linespec_parse_basic (linespec_parser *parser)
 
 	  if (parser->completion_tracker != NULL)
 	    {
-	      if (PARSER_STREAM (parser)[-1] == ' ')
+	      if (parser->lexer.stream[-1] == ' ')
 		{
-		  parser->completion_word = PARSER_STREAM (parser);
+		  parser->completion_word = parser->lexer.stream;
 		  parser->complete_what = linespec_complete_what::KEYWORD;
 		}
 	    }
@@ -1934,23 +1919,21 @@ linespec_parse_basic (linespec_parser *parser)
 	      /* Grab a copy of the label's name and look it up.  */
 	      name = copy_token_string (token);
 	      std::vector<block_symbol> labels
-		= find_label_symbols (PARSER_STATE (parser),
-				      PARSER_RESULT (parser)->function_symbols,
+		= find_label_symbols (&parser->state,
+				      parser->result.function_symbols,
 				      &symbols, name.get ());
 
 	      if (!labels.empty ())
 		{
-		  PARSER_RESULT (parser)->labels.label_symbols
-		    = std::move (labels);
-		  PARSER_RESULT (parser)->labels.function_symbols
-		    = std::move (symbols);
-		  PARSER_EXPLICIT (parser)->label_name = std::move (name);
+		  parser->result.labels.label_symbols = std::move (labels);
+		  parser->result.labels.function_symbols = std::move (symbols);
+		  parser->result.explicit_loc.label_name = std::move (name);
 		}
 	      else
 		{
 		  /* We don't know what it was, but it isn't a label.  */
 		  undefined_label_error
-		    (PARSER_EXPLICIT (parser)->function_name.get (),
+		    (parser->result.explicit_loc.function_name.get (),
 		     name.get ());
 		}
 
@@ -1970,7 +1953,7 @@ linespec_parse_basic (linespec_parser *parser)
 	      /* Record the line offset and get the next token.  */
 	      name = copy_token_string (token);
 
-	      PARSER_EXPLICIT (parser)->line_offset
+	      parser->result.explicit_loc.line_offset
 		= linespec_parse_line_offset (name.get ());
 
 	      /* Get the next token.  */
@@ -2081,12 +2064,19 @@ create_sals_line_offset (struct linespec_state *self,
       const linetable_entry *best_entry = NULL;
       int i, j;
 
+      /* True if the provided line gave an exact match.  False if we had to
+	 search for the next following line with code.  */
+      bool was_exact = true;
+
       std::vector<symtab_and_line> intermediate_results
 	= decode_digits_ordinary (self, ls, val.line, &best_entry);
       if (intermediate_results.empty () && best_entry != NULL)
-	intermediate_results = decode_digits_ordinary (self, ls,
-						       best_entry->line,
-						       &best_entry);
+	{
+	  was_exact = false;
+	  intermediate_results = decode_digits_ordinary (self, ls,
+							 best_entry->line,
+							 &best_entry);
+	}
 
       /* For optimized code, the compiler can scatter one source line
 	 across disjoint ranges of PC values, even when no duplicate
@@ -2129,11 +2119,45 @@ create_sals_line_offset (struct linespec_state *self,
 	    struct symbol *sym = (blocks[i]
 				  ? blocks[i]->containing_function ()
 				  : NULL);
+	    symtab_and_line &sal = intermediate_results[i];
+
+	    /* Don't consider a match if:
+
+	       - the provided line did not give an exact match (so we
+		 started looking for lines below until we found one with
+		 code associated to it)
+	       - the found location is exactly the start of a function
+	       - the provided line is above the declaration line of the
+		 function
+
+	       Consider the following source:
+
+	       10 } // end of a previous function
+	       11
+	       12 int
+	       13 main (void)
+	       14 {
+	       15   int i = 1;
+	       16
+	       17   return 0;
+	       18 }
+
+	       The intent of this heuristic is that a breakpoint requested on
+	       line 11 and 12 will not result in a breakpoint on main, but a
+	       breakpoint on line 13 will.  A breakpoint requested on the empty
+	       line 16 will also result in a breakpoint in main, at line 17.  */
+	    if (!was_exact
+		&& sym != nullptr
+		&& sym->aclass () == LOC_BLOCK
+		&& sal.pc == sym->value_block ()->entry_pc ()
+		&& val.line < sym->line ())
+	      continue;
 
 	    if (self->funfirstline)
-	      skip_prologue_sal (&intermediate_results[i]);
-	    intermediate_results[i].symbol = sym;
-	    add_sal_to_sals (self, &values, &intermediate_results[i],
+	      skip_prologue_sal (&sal);
+
+	    sal.symbol = sym;
+	    add_sal_to_sals (self, &values, &sal,
 			     sym ? sym->natural_name () : NULL, 0);
 	  }
     }
@@ -2141,10 +2165,12 @@ create_sals_line_offset (struct linespec_state *self,
   if (values.empty ())
     {
       if (ls->explicit_loc.source_filename)
-	throw_error (NOT_FOUND_ERROR, _("No line %d in file \"%s\"."),
+	throw_error (NOT_FOUND_ERROR,
+		     _("No compiled code for line %d in file \"%s\"."),
 		     val.line, ls->explicit_loc.source_filename.get ());
       else
-	throw_error (NOT_FOUND_ERROR, _("No line %d in the current file."),
+	throw_error (NOT_FOUND_ERROR,
+		     _("No compiled code for line %d in the current file."),
 		     val.line);
     }
 
@@ -2184,7 +2210,7 @@ convert_linespec_to_sals (struct linespec_state *state, linespec *ls)
       for (const auto &sym : ls->labels.label_symbols)
 	{
 	  struct program_space *pspace
-	    = sym.symbol->symtab ()->compunit ()->objfile ()->pspace;
+	    = sym.symbol->symtab ()->compunit ()->objfile ()->pspace ();
 
 	  if (symbol_to_sal (&sal, state->funfirstline, sym.symbol)
 	      && maybe_add_address (state->addr_set, pspace, sal.pc))
@@ -2206,7 +2232,7 @@ convert_linespec_to_sals (struct linespec_state *state, linespec *ls)
 	  for (const auto &sym : ls->function_symbols)
 	    {
 	      program_space *pspace
-		= sym.symbol->symtab ()->compunit ()->objfile ()->pspace;
+		= sym.symbol->symtab ()->compunit ()->objfile ()->pspace ();
 	      set_current_program_space (pspace);
 
 	      /* Don't skip to the first line of the function if we
@@ -2268,7 +2294,7 @@ convert_linespec_to_sals (struct linespec_state *state, linespec *ls)
 
 	  for (const auto &elem : ls->minimal_symbols)
 	    {
-	      program_space *pspace = elem.objfile->pspace;
+	      program_space *pspace = elem.objfile->pspace ();
 	      set_current_program_space (pspace);
 	      minsym_found (state, elem.objfile, elem.minsym, &sals);
 	    }
@@ -2479,17 +2505,17 @@ parse_linespec (linespec_parser *parser, const char *arg,
   parser->lexer.stream = arg;
   parser->completion_word = arg;
   parser->complete_what = linespec_complete_what::FUNCTION;
-  PARSER_EXPLICIT (parser)->func_name_match_type = match_type;
+  parser->result.explicit_loc.func_name_match_type = match_type;
 
   /* Initialize the default symtab and line offset.  */
-  initialize_defaults (&PARSER_STATE (parser)->default_symtab,
-		       &PARSER_STATE (parser)->default_line);
+  initialize_defaults (&parser->state.default_symtab,
+		       &parser->state.default_line);
 
   /* Objective-C shortcut.  */
   if (parser->completion_tracker == NULL)
     {
       std::vector<symtab_and_line> values
-	= decode_objc (PARSER_STATE (parser), PARSER_RESULT (parser), arg);
+	= decode_objc (&parser->state, &parser->result, arg);
       if (!values.empty ())
 	return values;
     }
@@ -2509,20 +2535,20 @@ parse_linespec (linespec_parser *parser, const char *arg,
   linespec_token token = linespec_lexer_consume_token (parser);
 
   /* It must be either LSTOKEN_STRING or LSTOKEN_NUMBER.  */
-  if (token.type == LSTOKEN_STRING && *LS_TOKEN_STOKEN (token).ptr == '$')
+  if (token.type == LSTOKEN_STRING && *token.data.string.ptr == '$')
     {
       /* A NULL entry means to use GLOBAL_DEFAULT_SYMTAB.  */
       if (parser->completion_tracker == NULL)
-	PARSER_RESULT (parser)->file_symtabs.push_back (nullptr);
+	parser->result.file_symtabs.push_back (nullptr);
 
       /* User specified a convenience variable or history value.  */
       gdb::unique_xmalloc_ptr<char> var = copy_token_string (token);
-      PARSER_EXPLICIT (parser)->line_offset
-	= linespec_parse_variable (PARSER_STATE (parser), var.get ());
+      parser->result.explicit_loc.line_offset
+	= linespec_parse_variable (&parser->state, var.get ());
 
       /* If a line_offset wasn't found (VAR is the name of a user
 	 variable/function), then skip to normal symbol processing.  */
-      if (PARSER_EXPLICIT (parser)->line_offset.sign != LINE_OFFSET_UNKNOWN)
+      if (parser->result.explicit_loc.line_offset.sign != LINE_OFFSET_UNKNOWN)
 	{
 	  /* Consume this token.  */
 	  linespec_lexer_consume_token (parser);
@@ -2554,9 +2580,9 @@ parse_linespec (linespec_parser *parser, const char *arg,
       /* Check if the input is a filename.  */
       try
 	{
-	  PARSER_RESULT (parser)->file_symtabs
+	  parser->result.file_symtabs
 	    = symtabs_from_filename (user_filename.get (),
-				     PARSER_STATE (parser)->search_pspace);
+				     parser->state.search_pspace);
 	}
       catch (gdb_exception_error &ex)
 	{
@@ -2566,7 +2592,7 @@ parse_linespec (linespec_parser *parser, const char *arg,
       if (file_exception.reason >= 0)
 	{
 	  /* Symtabs were found for the file.  Record the filename.  */
-	  PARSER_EXPLICIT (parser)->source_filename = std::move (user_filename);
+	  parser->result.explicit_loc.source_filename = std::move (user_filename);
 
 	  /* Get the next token.  */
 	  token = linespec_lexer_consume_token (parser);
@@ -2577,7 +2603,7 @@ parse_linespec (linespec_parser *parser, const char *arg,
       else
 	{
 	  /* A NULL entry means to use GLOBAL_DEFAULT_SYMTAB.  */
-	  PARSER_RESULT (parser)->file_symtabs.push_back (nullptr);
+	  parser->result.file_symtabs.push_back (nullptr);
 	}
     }
   /* If the next token is not EOI, KEYWORD, or COMMA, issue an error.  */
@@ -2593,17 +2619,17 @@ parse_linespec (linespec_parser *parser, const char *arg,
   else
     {
       /* A NULL entry means to use GLOBAL_DEFAULT_SYMTAB.  */
-      PARSER_RESULT (parser)->file_symtabs.push_back (nullptr);
+      parser->result.file_symtabs.push_back (nullptr);
     }
 
   /* Parse the rest of the linespec.  */
   linespec_parse_basic (parser);
 
   if (parser->completion_tracker == NULL
-      && PARSER_RESULT (parser)->function_symbols.empty ()
-      && PARSER_RESULT (parser)->labels.label_symbols.empty ()
-      && PARSER_EXPLICIT (parser)->line_offset.sign == LINE_OFFSET_UNKNOWN
-      && PARSER_RESULT (parser)->minimal_symbols.empty ())
+      && parser->result.function_symbols.empty ()
+      && parser->result.labels.label_symbols.empty ()
+      && parser->result.explicit_loc.line_offset.sign == LINE_OFFSET_UNKNOWN
+      && parser->result.minimal_symbols.empty ())
     {
       /* The linespec didn't parse.  Re-throw the file exception if
 	 there was one.  */
@@ -2612,8 +2638,8 @@ parse_linespec (linespec_parser *parser, const char *arg,
 
       /* Otherwise, the symbol is not found.  */
       symbol_not_found_error
-	(PARSER_EXPLICIT (parser)->function_name.get (),
-	 PARSER_EXPLICIT (parser)->source_filename.get ());
+	(parser->result.explicit_loc.function_name.get (),
+	 parser->result.explicit_loc.source_filename.get ());
     }
 
  convert_to_sals:
@@ -2629,14 +2655,13 @@ parse_linespec (linespec_parser *parser, const char *arg,
 	 advances past a keyword automatically, so skip it
 	 manually.  */
       parser->completion_word
-	= skip_spaces (skip_to_space (PARSER_STREAM (parser)));
+	= skip_spaces (skip_to_space (parser->lexer.stream));
       parser->complete_what = linespec_complete_what::EXPRESSION;
     }
 
-  /* Convert the data in PARSER_RESULT to SALs.  */
+  /* Convert the data in the parser's result to SALs.  */
   if (parser->completion_tracker == NULL)
-    return convert_linespec_to_sals (PARSER_STATE (parser),
-				     PARSER_RESULT (parser));
+    return convert_linespec_to_sals (&parser->state, &parser->result);
 
   return {};
 }
@@ -2676,10 +2701,10 @@ linespec_parser::linespec_parser (int flags,
 				  struct linespec_result *canonical)
 {
   lexer.current.type = LSTOKEN_CONSUMED;
-  PARSER_EXPLICIT (this)->func_name_match_type
+  result.explicit_loc.func_name_match_type
     = symbol_name_match_type::WILD;
-  PARSER_EXPLICIT (this)->line_offset.sign = LINE_OFFSET_UNKNOWN;
-  linespec_state_constructor (PARSER_STATE (this), flags, language,
+  result.explicit_loc.line_offset.sign = LINE_OFFSET_UNKNOWN;
+  linespec_state_constructor (&state, flags, language,
 			      search_pspace,
 			      default_symtab, default_line, canonical);
 }
@@ -2697,7 +2722,7 @@ linespec_state_destructor (struct linespec_state *self)
 
 linespec_parser::~linespec_parser ()
 {
-  linespec_state_destructor (PARSER_STATE (this));
+  linespec_state_destructor (&state);
 }
 
 /* See description in linespec.h.  */
@@ -2713,7 +2738,7 @@ linespec_lex_to_end (const char **stringp)
 
   linespec_parser parser (0, current_language, NULL, NULL, 0, NULL);
   parser.lexer.saved_arg = *stringp;
-  PARSER_STREAM (&parser) = orig = *stringp;
+  parser.lexer.stream = orig = *stringp;
 
   do
     {
@@ -2726,7 +2751,7 @@ linespec_lex_to_end (const char **stringp)
     }
   while (token.type != LSTOKEN_EOI && token.type != LSTOKEN_KEYWORD);
 
-  *stringp += PARSER_STREAM (&parser) - orig;
+  *stringp += parser.lexer.stream - orig;
 }
 
 /* See linespec.h.  */
@@ -2777,7 +2802,7 @@ complete_linespec_component (linespec_parser *parser,
       completion_list fn_list;
 
       symbol_name_match_type match_type
-	= PARSER_EXPLICIT (parser)->func_name_match_type;
+	= parser->result.explicit_loc.func_name_match_type;
       linespec_complete_function (tracker, text, match_type, source_filename);
       if (source_filename == NULL)
 	{
@@ -2826,8 +2851,8 @@ complete_label (completion_tracker &tracker,
 {
   std::vector<block_symbol> label_function_symbols;
   std::vector<block_symbol> labels
-    = find_label_symbols (PARSER_STATE (parser),
-			  PARSER_RESULT (parser)->function_symbols,
+    = find_label_symbols (&parser->state,
+			  parser->result.function_symbols,
 			  &label_function_symbols,
 			  label_name, true);
 
@@ -2854,8 +2879,8 @@ linespec_complete_label (completion_tracker &tracker,
 
   try
     {
-      convert_explicit_location_spec_to_linespec (PARSER_STATE (&parser),
-						  PARSER_RESULT (&parser),
+      convert_explicit_location_spec_to_linespec (&parser.state,
+						  &parser.result,
 						  source_filename,
 						  function_name,
 						  func_name_match_type,
@@ -2879,11 +2904,11 @@ linespec_complete (completion_tracker &tracker, const char *text,
 
   linespec_parser parser (0, current_language, NULL, NULL, 0, NULL);
   parser.lexer.saved_arg = text;
-  PARSER_EXPLICIT (&parser)->func_name_match_type = match_type;
-  PARSER_STREAM (&parser) = text;
+  parser.result.explicit_loc.func_name_match_type = match_type;
+  parser.lexer.stream = text;
 
   parser.completion_tracker = &tracker;
-  PARSER_STATE (&parser)->is_linespec = 1;
+  parser.state.is_linespec = 1;
 
   /* Parse as much as possible.  parser.completion_word will hold
      furthest completion point we managed to parse to.  */
@@ -2930,18 +2955,17 @@ linespec_complete (completion_tracker &tracker, const char *text,
     {
       parser.complete_what = linespec_complete_what::NOTHING;
 
-      const char *func_name = PARSER_EXPLICIT (&parser)->function_name.get ();
+      const char *func_name = parser.result.explicit_loc.function_name.get ();
 
       std::vector<block_symbol> function_symbols;
       std::vector<bound_minimal_symbol> minimal_symbols;
-      find_linespec_symbols (PARSER_STATE (&parser),
-			     PARSER_RESULT (&parser)->file_symtabs,
+      find_linespec_symbols (&parser.state,
+			     parser.result.file_symtabs,
 			     func_name, match_type,
 			     &function_symbols, &minimal_symbols);
 
-      PARSER_RESULT (&parser)->function_symbols = std::move (function_symbols);
-      PARSER_RESULT (&parser)->minimal_symbols = std::move (minimal_symbols);
-
+      parser.result.function_symbols = std::move (function_symbols);
+      parser.result.minimal_symbols = std::move (minimal_symbols);
       complete_label (tracker, &parser, parser.completion_word);
     }
   else if (parser.complete_what == linespec_complete_what::FUNCTION)
@@ -2991,7 +3015,7 @@ linespec_complete (completion_tracker &tracker, const char *text,
 	(&parser, tracker,
 	 parser.completion_word,
 	 linespec_complete_what::FUNCTION,
-	 PARSER_EXPLICIT (&parser)->source_filename.get ());
+	 parser.result.explicit_loc.source_filename.get ());
 
       parser.complete_what = linespec_complete_what::NOTHING;
 
@@ -3035,7 +3059,7 @@ linespec_complete (completion_tracker &tracker, const char *text,
     (&parser, tracker,
      parser.completion_word,
      parser.complete_what,
-     PARSER_EXPLICIT (&parser)->source_filename.get ());
+     parser.result.explicit_loc.source_filename.get ());
 
   /* If we're past the "filename:function:label:offset" linespec, and
      didn't find any match, then assume the user might want to create
@@ -3075,7 +3099,7 @@ location_spec_to_sals (linespec_parser *parser,
     case LINESPEC_LOCATION_SPEC:
       {
 	const linespec_location_spec *ls = as_linespec_location_spec (locspec);
-	PARSER_STATE (parser)->is_linespec = 1;
+	parser->state.is_linespec = 1;
 	result = parse_linespec (parser, ls->spec_string.get (),
 				 ls->match_type);
       }
@@ -3091,13 +3115,13 @@ location_spec_to_sals (linespec_parser *parser,
 	if (addr_string != NULL)
 	  {
 	    addr = linespec_expression_to_pc (&addr_string);
-	    if (PARSER_STATE (parser)->canonical != NULL)
-	      PARSER_STATE (parser)->canonical->locspec	= locspec->clone ();
+	    if (parser->state.canonical != NULL)
+	      parser->state.canonical->locspec	= locspec->clone ();
 	  }
 	else
 	  addr = addr_spec->address;
 
-	result = convert_address_location_to_sals (PARSER_STATE (parser),
+	result = convert_address_location_to_sals (&parser->state,
 						   addr);
       }
       break;
@@ -3106,8 +3130,8 @@ location_spec_to_sals (linespec_parser *parser,
       {
 	const explicit_location_spec *explicit_locspec
 	  = as_explicit_location_spec (locspec);
-	result = convert_explicit_location_spec_to_sals (PARSER_STATE (parser),
-							 PARSER_RESULT (parser),
+	result = convert_explicit_location_spec_to_sals (&parser->state,
+							 &parser->result,
 							 explicit_locspec);
       }
       break;
@@ -3135,7 +3159,6 @@ decode_line_full (struct location_spec *locspec, int flags,
 		  const char *filter)
 {
   std::vector<const char *> filters;
-  struct linespec_state *state;
 
   gdb_assert (canonical != NULL);
   /* The filter only makes sense for 'all'.  */
@@ -3154,7 +3177,7 @@ decode_line_full (struct location_spec *locspec, int flags,
 
   std::vector<symtab_and_line> result = location_spec_to_sals (&parser,
 							       locspec);
-  state = PARSER_STATE (&parser);
+  linespec_state *state = &parser.state;
 
   if (result.size () == 0)
     throw_error (NOT_SUPPORTED_ERROR, _("Location %s not available"),
@@ -3220,7 +3243,8 @@ decode_line_with_current_source (const char *string, int flags)
 
   /* We use whatever is set as the current source line.  We do not try
      and get a default source symtab+line or it will recursively call us!  */
-  symtab_and_line cursal = get_current_source_symtab_and_line ();
+  symtab_and_line cursal
+    = get_current_source_symtab_and_line (current_program_space);
 
   location_spec_up locspec = string_to_location_spec (&string,
 						      current_language);
@@ -3270,9 +3294,9 @@ initialize_defaults (struct symtab **default_symtab, int *default_line)
       /* Use whatever we have for the default source line.  We don't use
 	 get_current_or_default_symtab_and_line as it can recurse and call
 	 us back!  */
-      struct symtab_and_line cursal = 
-	get_current_source_symtab_and_line ();
-      
+      symtab_and_line cursal
+	= get_current_source_symtab_and_line (current_program_space);
+
       *default_symtab = cursal.symtab;
       *default_line = cursal.line;
     }
@@ -3377,12 +3401,9 @@ namespace {
 class decode_compound_collector
 {
 public:
-  decode_compound_collector ()
-    : m_unique_syms (htab_create_alloc (1, htab_hash_pointer,
-					htab_eq_pointer, NULL,
-					xcalloc, xfree))
-  {
-  }
+  decode_compound_collector () = default;
+
+  DISABLE_COPY_AND_ASSIGN (decode_compound_collector);
 
   /* Return all symbols collected.  */
   std::vector<block_symbol> release_symbols ()
@@ -3396,7 +3417,7 @@ public:
 private:
   /* A hash table of all symbols we found.  We use this to avoid
      adding any symbol more than once.  */
-  htab_up m_unique_syms;
+  gdb::unordered_set<const symbol *> m_unique_syms;
 
   /* The result vector.  */
   std::vector<block_symbol>  m_symbols;
@@ -3405,7 +3426,6 @@ private:
 bool
 decode_compound_collector::operator () (block_symbol *bsym)
 {
-  void **slot;
   struct type *t;
   struct symbol *sym = bsym->symbol;
 
@@ -3419,12 +3439,8 @@ decode_compound_collector::operator () (block_symbol *bsym)
       && t->code () != TYPE_CODE_NAMESPACE)
     return true; /* Continue iterating.  */
 
-  slot = htab_find_slot (m_unique_syms.get (), sym, INSERT);
-  if (!*slot)
-    {
-      *slot = sym;
-      m_symbols.push_back (*bsym);
-    }
+  if (m_unique_syms.insert (sym).second)
+    m_symbols.push_back (*bsym);
 
   return true; /* Continue iterating.  */
 }
@@ -3452,7 +3468,7 @@ lookup_prefix_sym (struct linespec_state *state,
 	{
 	  /* Program spaces that are executing startup should have
 	     been filtered out earlier.  */
-	  program_space *pspace = elt->compunit ()->objfile ()->pspace;
+	  program_space *pspace = elt->compunit ()->objfile ()->pspace ();
 
 	  gdb_assert (!pspace->executing_startup);
 	  set_current_program_space (pspace);
@@ -3474,8 +3490,8 @@ compare_symbols (const block_symbol &a, const block_symbol &b)
 {
   uintptr_t uia, uib;
 
-  uia = (uintptr_t) a.symbol->symtab ()->compunit ()->objfile ()->pspace;
-  uib = (uintptr_t) b.symbol->symtab ()->compunit ()->objfile ()->pspace;
+  uia = (uintptr_t) a.symbol->symtab ()->compunit ()->objfile ()->pspace ();
+  uib = (uintptr_t) b.symbol->symtab ()->compunit ()->objfile ()->pspace ();
 
   if (uia < uib)
     return true;
@@ -3498,8 +3514,8 @@ compare_msymbols (const bound_minimal_symbol &a, const bound_minimal_symbol &b)
 {
   uintptr_t uia, uib;
 
-  uia = (uintptr_t) a.objfile->pspace;
-  uib = (uintptr_t) a.objfile->pspace;
+  uia = (uintptr_t) a.objfile->pspace ();
+  uib = (uintptr_t) a.objfile->pspace ();
 
   if (uia < uib)
     return true;
@@ -3599,7 +3615,7 @@ find_method (struct linespec_state *self,
 
       /* Program spaces that are executing startup should have
 	 been filtered out earlier.  */
-      pspace = sym->symtab ()->compunit ()->objfile ()->pspace;
+      pspace = sym->symtab ()->compunit ()->objfile ()->pspace ();
       gdb_assert (!pspace->executing_startup);
       set_current_program_space (pspace);
       t = check_typedef (sym->type ());
@@ -3611,7 +3627,7 @@ find_method (struct linespec_state *self,
       if (ix == sym_classes->size () - 1
 	  || (pspace
 	      != (sym_classes->at (ix + 1).symbol->symtab ()
-		  ->compunit ()->objfile ()->pspace)))
+		  ->compunit ()->objfile ()->pspace ())))
 	{
 	  /* If we did not find a direct implementation anywhere in
 	     this program space, consider superclasses.  */
@@ -3648,14 +3664,18 @@ namespace {
 class symtab_collector
 {
 public:
-  symtab_collector ()
-    : m_symtab_table (htab_create (1, htab_hash_pointer, htab_eq_pointer,
-				   NULL))
-  {
-  }
+  symtab_collector () = default;
+
+  DISABLE_COPY_AND_ASSIGN (symtab_collector);
 
   /* Callable as a symbol_found_callback_ftype callback.  */
-  bool operator () (symtab *sym);
+  bool operator () (struct symtab *symtab)
+  {
+    if (m_symtab_table.insert (symtab).second)
+      m_symtabs.push_back (symtab);
+
+    return false;
+  }
 
   /* Return an rvalue reference to the collected symtabs.  */
   std::vector<symtab *> &&release_symtabs ()
@@ -3668,23 +3688,8 @@ private:
   std::vector<symtab *> m_symtabs;
 
   /* This is used to ensure the symtabs are unique.  */
-  htab_up m_symtab_table;
+  gdb::unordered_set<const symtab *> m_symtab_table;
 };
-
-bool
-symtab_collector::operator () (struct symtab *symtab)
-{
-  void **slot;
-
-  slot = htab_find_slot (m_symtab_table.get (), symtab, INSERT);
-  if (!*slot)
-    {
-      *slot = symtab;
-      m_symtabs.push_back (symtab);
-    }
-
-  return false;
-}
 
 } // namespace
 
@@ -3706,15 +3711,11 @@ collect_symtabs_from_filename (const char *file,
 	  if (pspace->executing_startup)
 	    continue;
 
-	  set_current_program_space (pspace);
-	  iterate_over_symtabs (file, collector);
+	  iterate_over_symtabs (pspace, file, collector);
 	}
     }
   else
-    {
-      set_current_program_space (search_pspace);
-      iterate_over_symtabs (file, collector);
-    }
+    iterate_over_symtabs (search_pspace, file, collector);
 
   return collector.release_symtabs ();
 }
@@ -3731,7 +3732,8 @@ symtabs_from_filename (const char *filename,
 
   if (result.empty ())
     {
-      if (!have_full_symbols () && !have_partial_symbols ())
+      if (!have_full_symbols (current_program_space)
+	  && !have_partial_symbols (current_program_space))
 	throw_error (NOT_FOUND_ERROR,
 		     _("No symbol table is loaded.  "
 		       "Use the \"file\" command."));
@@ -3978,7 +3980,7 @@ find_label_symbols (struct linespec_state *self,
 	{
 	  fn_sym = elt.symbol;
 	  set_current_program_space
-	    (fn_sym->symtab ()->compunit ()->objfile ()->pspace);
+	    (fn_sym->symtab ()->compunit ()->objfile ()->pspace ());
 	  block = fn_sym->value_block ();
 
 	  find_label_symbols_in_block (block, name, fn_sym, completion_mode,
@@ -4007,11 +4009,11 @@ decode_digits_list_mode (struct linespec_state *self,
       /* The logic above should ensure this.  */
       gdb_assert (elt != NULL);
 
-      program_space *pspace = elt->compunit ()->objfile ()->pspace;
+      program_space *pspace = elt->compunit ()->objfile ()->pspace ();
       set_current_program_space (pspace);
 
       /* Simplistic search just for the list command.  */
-      val.symtab = find_line_symtab (elt, val.line, NULL, NULL);
+      val.symtab = find_line_symtab (elt, val.line, nullptr);
       if (val.symtab == NULL)
 	val.symtab = elt;
       val.pspace = pspace;
@@ -4042,7 +4044,7 @@ decode_digits_ordinary (struct linespec_state *self,
       /* The logic above should ensure this.  */
       gdb_assert (elt != NULL);
 
-      program_space *pspace = elt->compunit ()->objfile ()->pspace;
+      program_space *pspace = elt->compunit ()->objfile ()->pspace ();
       set_current_program_space (pspace);
 
       pcs = find_pcs_for_symtab_line (elt, line, best_entry);
@@ -4168,7 +4170,7 @@ minsym_found (struct linespec_state *self, struct objfile *objfile,
 
   sal.section = msymbol->obj_section (objfile);
 
-  if (maybe_add_address (self->addr_set, objfile->pspace, sal.pc))
+  if (maybe_add_address (self->addr_set, objfile->pspace (), sal.pc))
     add_sal_to_sals (self, result, &sal, msymbol->natural_name (), 0);
 }
 
@@ -4178,7 +4180,7 @@ minsym_found (struct linespec_state *self, struct objfile *objfile,
 static void
 add_minsym (struct minimal_symbol *minsym, struct objfile *objfile,
 	    struct symtab *symtab, int list_mode,
-	    std::vector<struct bound_minimal_symbol> *msyms)
+	    std::vector<bound_minimal_symbol> *msyms)
 {
   if (symtab != NULL)
     {
@@ -4215,7 +4217,7 @@ search_minsyms_for_name (struct collect_info *info,
 			 struct program_space *search_pspace,
 			 struct symtab *symtab)
 {
-  std::vector<struct bound_minimal_symbol> minsyms;
+  std::vector<bound_minimal_symbol> minsyms;
 
   if (symtab == NULL)
     {
@@ -4228,7 +4230,7 @@ search_minsyms_for_name (struct collect_info *info,
 
 	  set_current_program_space (pspace);
 
-	  for (objfile *objfile : current_program_space->objfiles ())
+	  for (objfile *objfile : pspace->objfiles ())
 	    {
 	      iterate_over_minimal_symbols (objfile, name,
 					    [&] (struct minimal_symbol *msym)
@@ -4243,7 +4245,7 @@ search_minsyms_for_name (struct collect_info *info,
     }
   else
     {
-      program_space *pspace = symtab->compunit ()->objfile ()->pspace;
+      program_space *pspace = symtab->compunit ()->objfile ()->pspace ();
 
       if (search_pspace == NULL || pspace == search_pspace)
 	{
@@ -4337,13 +4339,13 @@ add_matching_symbols_to_info (const char *name,
 	    { return info->add_symbol (bsym); });
 	  search_minsyms_for_name (info, lookup_name, pspace, NULL);
 	}
-      else if (pspace == NULL || pspace == elt->compunit ()->objfile ()->pspace)
+      else if (pspace == NULL || pspace == elt->compunit ()->objfile ()->pspace ())
 	{
 	  int prev_len = info->result.symbols->size ();
 
 	  /* Program spaces that are executing startup should have
 	     been filtered out earlier.  */
-	  program_space *elt_pspace = elt->compunit ()->objfile ()->pspace;
+	  program_space *elt_pspace = elt->compunit ()->objfile ()->pspace ();
 	  gdb_assert (!elt_pspace->executing_startup);
 	  set_current_program_space (elt_pspace);
 	  iterate_over_file_blocks (elt, lookup_name, SEARCH_VFT,
@@ -4384,7 +4386,7 @@ symbol_to_sal (struct symtab_and_line *result,
 	  result->symbol = sym;
 	  result->line = sym->line ();
 	  result->pc = sym->value_address ();
-	  result->pspace = result->symtab->compunit ()->objfile ()->pspace;
+	  result->pspace = result->symtab->compunit ()->objfile ()->pspace ();
 	  result->explicit_pc = 1;
 	  return 1;
 	}
@@ -4400,7 +4402,7 @@ symbol_to_sal (struct symtab_and_line *result,
 	  result->symbol = sym;
 	  result->line = sym->line ();
 	  result->pc = sym->value_address ();
-	  result->pspace = result->symtab->compunit ()->objfile ()->pspace;
+	  result->pspace = result->symtab->compunit ()->objfile ()->pspace ();
 	  return 1;
 	}
     }

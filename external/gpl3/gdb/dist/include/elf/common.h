@@ -76,19 +76,19 @@
 #define ELFOSABI_CLOUDABI    17 /* Nuxi CloudABI */
 #define ELFOSABI_OPENVOS     18 /* Stratus Technologies OpenVOS */
 
-#define ELFOSABI_C6000_ELFABI 64 /* Bare-metal TMS320C6000 */
-#define ELFOSABI_AMDGPU_HSA  64 /* AMD HSA Runtime */
-#define ELFOSABI_C6000_LINUX 65 /* Linux TMS320C6000 */
-#define ELFOSABI_AMDGPU_PAL  65 /* AMD PAL Runtime */
-#define ELFOSABI_ARM_FDPIC   65 /* ARM FDPIC */
+#define ELFOSABI_CUDA          51 /* NVIDIA CUDA architecture.  */
+#define ELFOSABI_C6000_ELFABI  64 /* Bare-metal TMS320C6000 */
+#define ELFOSABI_AMDGPU_HSA    64 /* AMD HSA Runtime */
+#define ELFOSABI_C6000_LINUX   65 /* Linux TMS320C6000 */
+#define ELFOSABI_AMDGPU_PAL    65 /* AMD PAL Runtime */
+#define ELFOSABI_ARM_FDPIC     65 /* ARM FDPIC */
 #define ELFOSABI_AMDGPU_MESA3D 66 /* AMD Mesa3D Runtime */
-#define ELFOSABI_ARM	     97	/* ARM */
-#define ELFOSABI_STANDALONE 255	/* Standalone (embedded) application */
+#define ELFOSABI_ARM	       97 /* ARM */
+#define ELFOSABI_STANDALONE   255 /* Standalone (embedded) application */
 
 #define EI_ABIVERSION	8	/* ABI version */
 
 #define EI_PAD		9	/* Start of padding bytes */
-
 
 /* Values for e_type, which identifies the object file type.  */
 
@@ -479,11 +479,12 @@
 #define PT_SHLIB	5		/* Reserved, unspecified semantics */
 #define PT_PHDR		6		/* Entry for header table itself */
 #define PT_TLS		7		/* Thread local storage segment */
+#define	PT_NUM		8		/* Number of defined types.  */
+
 #define PT_LOOS		0x60000000	/* OS-specific */
 #define PT_HIOS		0x6fffffff	/* OS-specific */
-#define PT_LOPROC	0x70000000	/* Processor-specific */
-#define PT_HIPROC	0x7FFFFFFF	/* Processor-specific */
 
+#define PT_SUNW_UNWIND  (PT_LOOS + 0x464e550)
 #define PT_GNU_EH_FRAME	(PT_LOOS + 0x474e550) /* Frame unwind information */
 #define PT_SUNW_EH_FRAME PT_GNU_EH_FRAME      /* Solaris uses the same value */
 #define PT_GNU_STACK	(PT_LOOS + 0x474e551) /* Stack flags */
@@ -499,10 +500,19 @@
 #define PT_OPENBSD_SYSCALLS  (PT_LOOS + 0x5a3dbe9)  /* System call sites.  */
 #define PT_OPENBSD_BOOTDATA  (PT_LOOS + 0x5a41be6)  /* Section for boot arguments.  */
 
+/* Solaris segment types.  */
+#define PT_SUNWBSS	(PT_LOOS + 0xffffffa)	/* Sun Specific segment.  */
+#define PT_SUNWSTACK	(PT_LOOS + 0xffffffb)	/* Stack segment.  */
+#define PT_SUNWDTRACE   (PT_LOOS + 0xffffffc)
+#define PT_SUNWCAP      (PT_LOOS + 0xffffffd)
+
 /* Mbind segments */
 #define PT_GNU_MBIND_NUM 4096
 #define PT_GNU_MBIND_LO (PT_LOOS + 0x474e555)
 #define PT_GNU_MBIND_HI (PT_GNU_MBIND_LO + PT_GNU_MBIND_NUM - 1)
+
+#define PT_LOPROC	0x70000000	/* Processor-specific */
+#define PT_HIPROC	0x7FFFFFFF	/* Processor-specific */
 
 /* Program segment permissions, in program header p_flags field.  */
 
@@ -538,17 +548,40 @@
 #define SHT_LOOS	0x60000000	/* First of OS specific semantics */
 #define SHT_HIOS	0x6fffffff	/* Last of OS specific semantics */
 
-#define SHT_GNU_INCREMENTAL_INPUTS 0x6fff4700   /* incremental build data */
-#define SHT_GNU_ATTRIBUTES 0x6ffffff5	/* Object attributes */
-#define SHT_GNU_HASH	0x6ffffff6	/* GNU style symbol hash table */
-#define SHT_GNU_LIBLIST	0x6ffffff7	/* List of prelink dependencies */
+#define SHT_ANDROID_REL              0x60000001
+#define SHT_ANDROID_RELA             0x60000002
 
+#define SHT_GNU_INCREMENTAL_INPUTS   0x6fff4700 /* Incremental build data */
+
+#define SHT_LLVM_ODRTAB              0x6fff4c00 /* LLVM ODR table.  */
+#define SHT_LLVM_LINKER_OPTIONS      0x6fff4c01 /* LLVM Linker Options.  */
+#define SHT_LLVM_ADDRSIG             0x6fff4c03 /* List of address-significant symbols for safe ICF.  */
+#define SHT_LLVM_DEPENDENT_LIBRARIES 0x6fff4c04 /* LLVM Dependent Library Specifiers.  */
+#define SHT_LLVM_SYMPART             0x6fff4c05 /* Symbol partition specification.  */
+#define SHT_LLVM_PART_EHDR           0x6fff4c06 /* ELF header for loadable partition.  */
+#define SHT_LLVM_PART_PHDR           0x6fff4c07 /* Phdrs for loadable partition.  */
+#define SHT_LLVM_BB_ADDR_MAP_V0      0x6fff4c08 /* LLVM Basic Block Address Map.  */
+#define SHT_LLVM_CALL_GRAPH_PROFILE  0x6fff4c09 /* LLVM Call Graph Profile.  */
+#define SHT_LLVM_BB_ADDR_MAP         0x6fff4c0a /* LLVM Basic Block Address Map.  */
+#define SHT_LLVM_OFFLOADING          0x6fff4c0b /* LLVM device offloading data.  */
+#define SHT_LLVM_LTO                 0x6fff4c0c /* .llvm.lto for fat LTO.  */
+
+#define SHT_ANDROID_RELR             0x6fffff00
+
+#define SHT_GNU_ATTRIBUTES           0x6ffffff5	/* Object attributes */
+#define SHT_GNU_HASH	             0x6ffffff6	/* GNU style symbol hash table */
+#define SHT_GNU_LIBLIST	             0x6ffffff7	/* List of prelink dependencies */
+#define SHT_CHECKSUM	             0x6ffffff8	/* Checksum for DSO content.  */
+
+#define SHT_SUNW_move	             0x6ffffffa
+#define SHT_SUNW_COMDAT              0x6ffffffb
+#define SHT_SUNW_syminfo             0x6ffffffc
 /* The next three section types are defined by Solaris, and are named
    SHT_SUNW*.  We use them in GNU code, so we also define SHT_GNU*
    versions.  */
-#define SHT_SUNW_verdef	0x6ffffffd	/* Versions defined by file */
-#define SHT_SUNW_verneed 0x6ffffffe	/* Versions needed by file */
-#define SHT_SUNW_versym	0x6fffffff	/* Symbol versions */
+#define SHT_SUNW_verdef	             0x6ffffffd	/* Versions defined by file */
+#define SHT_SUNW_verneed             0x6ffffffe	/* Versions needed by file */
+#define SHT_SUNW_versym	             0x6fffffff	/* Symbol versions */
 
 #define SHT_GNU_verdef	SHT_SUNW_verdef
 #define SHT_GNU_verneed	SHT_SUNW_verneed
@@ -556,6 +589,7 @@
 
 #define SHT_LOPROC	0x70000000	/* Processor-specific semantics, lo */
 #define SHT_HIPROC	0x7FFFFFFF	/* Processor-specific semantics, hi */
+
 #define SHT_LOUSER	0x80000000	/* Application-specific semantics */
 /* #define SHT_HIUSER	0x8FFFFFFF    *//* Application-specific semantics */
 #define SHT_HIUSER	0xFFFFFFFF	/* New value, defined in Oct 4, 1999 Draft */
@@ -576,19 +610,16 @@
 
 /* #define SHF_MASKOS	0x0F000000    *//* OS-specific semantics */
 #define SHF_MASKOS	0x0FF00000	/* New value, Oct 4, 1999 Draft */
-#define SHF_GNU_RETAIN	      (1 << 21)	/* Section should not be garbage collected by the linker.  */
+#define SHF_GNU_RETAIN	(1 << 21)	/* Section should not be garbage collected by the linker.  */
+#define SHF_GNU_MBIND	(1 << 24)	/* Mbind section.  */
+
 #define SHF_MASKPROC	0xF0000000	/* Processor-specific semantics */
-
 /* This used to be implemented as a processor specific section flag.
-   We just make it generic.  */
-#define SHF_EXCLUDE	0x80000000	/* Link editor is to exclude
-					   this section from executable
-					   and shared library that it
-					   builds when those objects
-					   are not to be further
-					   relocated.  */
+   We just make it generic.  The definition is:	the link editor is
+   to exclude this section from executable and shared libraries that
+   it builds when those objects are not to be further relocated.  */
+#define SHF_EXCLUDE	(1U << 31)
 
-#define SHF_GNU_MBIND	0x01000000	/* Mbind section.  */
 
 /* Compression types.  */
 #define ELFCOMPRESS_ZLIB   1		/* Compressed with zlib.  */
@@ -720,6 +751,10 @@
 					/*   note name must be "LINUX".  */
 #define NT_LARCH_LBT    0xa04		/* LoongArch Binary Translation registers */
 					/*   note name must be "CORE".  */
+#define NT_LOONGARCH_HW_BREAK   0xa05	/* LoongArch hardware breakpoint registers */
+					/*   note name must be "LINUX".  */
+#define NT_LOONGARCH_HW_WATCH   0xa06	/* LoongArch hardware watchpoint registers */
+					/*   note name must be "LINUX".  */
 #define NT_RISCV_CSR    0x900		/* RISC-V Control and Status Registers */
 					/*   note name must be "LINUX".  */
 #define NT_SIGINFO	0x53494749	/* Fields of siginfo_t.  */
@@ -1002,6 +1037,7 @@
 
 #define GNU_PROPERTY_AARCH64_FEATURE_1_BTI	(1U << 0)
 #define GNU_PROPERTY_AARCH64_FEATURE_1_PAC	(1U << 1)
+#define GNU_PROPERTY_AARCH64_FEATURE_1_GCS	(1U << 2)
 
 /* Values used in GNU .note.ABI-tag notes (NT_GNU_ABI_TAG).  */
 #define GNU_ABI_TAG_LINUX	0
