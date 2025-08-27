@@ -1,5 +1,5 @@
 /* mmix-dis.c -- Disassemble MMIX instructions.
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com)
 
    This file is part of the GNU opcodes library.
@@ -117,6 +117,7 @@ initialize_mmix_dis_info (struct disassemble_info *info)
 		  && minfop->reg_name[syms[i]->value] == NULL)
 		minfop->reg_name[syms[i]->value] = syms[i]->name;
 	    }
+	  free (syms);
 	}
     }
 

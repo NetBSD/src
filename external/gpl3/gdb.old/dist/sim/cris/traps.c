@@ -1,5 +1,5 @@
 /* CRIS exception, interrupt, and trap (EIT) support
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -32,18 +32,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdlib.h>
 #include <stdarg.h>
 #include <errno.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 /* For PATH_MAX, originally. */
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
@@ -160,7 +156,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Milliseconds since start of run.  We use the number of syscalls to
    avoid introducing noise in the execution time.  */
-#define TARGET_TIME_MS(cpu) ((cpu)->syscalls)
+#define TARGET_TIME_MS(cpu) (CRIS_SIM_CPU (cpu)->syscalls)
 
 /* Seconds as in time(2).  */
 #define TARGET_TIME(cpu) (TARGET_EPOCH + TARGET_TIME_MS (cpu) / 1000)
@@ -936,10 +932,11 @@ void cris_dump_map (SIM_CPU *current_cpu);
 void
 cris_dump_map (SIM_CPU *current_cpu)
 {
+  struct cris_sim_cpu *cris_cpu = CRIS_SIM_CPU (current_cpu);
   struct cris_sim_mmapped_page *mapp;
   USI start, end;
 
-  for (mapp = current_cpu->highest_mmapped_page,
+  for (mapp = cris_cpu->highest_mmapped_page,
 	 start = mapp == NULL ? 0 : mapp->addr + 8192,
 	 end = mapp == NULL ? 0 : mapp->addr + 8191;
        mapp != NULL;
@@ -954,7 +951,7 @@ cris_dump_map (SIM_CPU *current_cpu)
       start = mapp->addr;
     }
 
-  if (current_cpu->highest_mmapped_page != NULL)
+  if (cris_cpu->highest_mmapped_page != NULL)
     sim_io_eprintf (CPU_STATE (current_cpu), "0x%x..0x%x\n", start, end);
 }
 
@@ -1077,6 +1074,8 @@ sim_engine_invalid_insn (SIM_CPU *current_cpu, IADDR cia, SEM_PC vpc)
 static void
 schedule (SIM_CPU *current_cpu, int next)
 {
+  struct cris_sim_cpu *cris_cpu = CRIS_SIM_CPU (current_cpu);
+
   /* Need to mark context-switches in the trace output.  */
   if ((CPU_CRIS_MISC_PROFILE (current_cpu)->flags
        & FLAG_CRIS_MISC_PROFILE_XSIM_TRACE))
@@ -1084,34 +1083,34 @@ schedule (SIM_CPU *current_cpu, int next)
 		       "\t#:%d\n", next);
 
   /* Copy the current context (if there is one) to its slot.  */
-  if (current_cpu->thread_data[current_cpu->threadno].cpu_context)
-    memcpy (current_cpu->thread_data[current_cpu->threadno].cpu_context,
-	    &current_cpu->cpu_data_placeholder,
-	    current_cpu->thread_cpu_data_size);
+  if (cris_cpu->thread_data[cris_cpu->threadno].cpu_context)
+    memcpy (cris_cpu->thread_data[cris_cpu->threadno].cpu_context,
+	    &cris_cpu->cpu_data_placeholder,
+	    cris_cpu->thread_cpu_data_size);
 
   /* Copy the new context from its slot.  */
-  memcpy (&current_cpu->cpu_data_placeholder,
-	  current_cpu->thread_data[next].cpu_context,
-	  current_cpu->thread_cpu_data_size);
+  memcpy (&cris_cpu->cpu_data_placeholder,
+	  cris_cpu->thread_data[next].cpu_context,
+	  cris_cpu->thread_cpu_data_size);
 
   /* Update needed stuff to indicate the new context.  */
-  current_cpu->threadno = next;
+  cris_cpu->threadno = next;
 
   /* Handle pending signals.  */
-  if (current_cpu->thread_data[next].sigpending
+  if (cris_cpu->thread_data[next].sigpending
       /* We don't run nested signal handlers.  This means that pause(2)
 	 and sigsuspend(2) do not work in sighandlers, but that
 	 shouldn't be too hard a restriction.  It also greatly
 	 simplifies the code.  */
-      && current_cpu->thread_data[next].cpu_context_atsignal == NULL)
+      && cris_cpu->thread_data[next].cpu_context_atsignal == NULL)
   {
     int sig;
 
     /* See if there's really a pending, non-blocked handler.  We don't
        queue signals, so just use the first one in ascending order.  */
     for (sig = 0; sig < 64; sig++)
-      if (current_cpu->thread_data[next].sigdata[sig].pending
-	  && !current_cpu->thread_data[next].sigdata[sig].blocked)
+      if (cris_cpu->thread_data[next].sigdata[sig].pending
+	  && !cris_cpu->thread_data[next].sigdata[sig].blocked)
       {
 	bfd_byte regbuf[4];
 	USI sp;
@@ -1121,11 +1120,10 @@ schedule (SIM_CPU *current_cpu, int next)
 
 	/* It's simpler to save the CPU context inside the simulator
 	   than on the stack.  */
-	current_cpu->thread_data[next].cpu_context_atsignal
-	  = (*current_cpu
-	     ->make_thread_cpu_data) (current_cpu,
-				      current_cpu->thread_data[next]
-				      .cpu_context);
+	cris_cpu->thread_data[next].cpu_context_atsignal
+	  = (*cris_cpu->make_thread_cpu_data) (current_cpu,
+					       cris_cpu->thread_data[next]
+					       .cpu_context);
 
 	(*CPU_REG_FETCH (current_cpu)) (current_cpu, H_GR_SP, regbuf, 4);
 	sp = bfd_getl32 (regbuf);
@@ -1146,12 +1144,12 @@ schedule (SIM_CPU *current_cpu, int next)
 	blocked = 0;
 	for (i = 0; i < 32; i++)
 	  blocked
-	    |= current_cpu->thread_data[next].sigdata[i + 1].blocked << i;
+	    |= cris_cpu->thread_data[next].sigdata[i + 1].blocked << i;
 	sim_core_write_aligned_4 (current_cpu, pc, 0, sp, blocked);
 	blocked = 0;
 	for (i = 0; i < 31; i++)
 	  blocked
-	    |= current_cpu->thread_data[next].sigdata[i + 33].blocked << i;
+	    |= cris_cpu->thread_data[next].sigdata[i + 33].blocked << i;
 	sim_core_write_aligned_4 (current_cpu, pc, 0, sp + 4, blocked);
 
 	/* Then, the actual instructions.  This is CPU-specific, but we
@@ -1180,12 +1178,12 @@ schedule (SIM_CPU *current_cpu, int next)
 	(*CPU_REG_STORE (current_cpu)) (current_cpu, TARGET_SRP_REGNUM,
 					regbuf, 4);
 
-	current_cpu->thread_data[next].sigdata[sig].pending = 0;
+	cris_cpu->thread_data[next].sigdata[sig].pending = 0;
 
 	/* Block this signal (for the duration of the sighandler).  */
-	current_cpu->thread_data[next].sigdata[sig].blocked = 1;
+	cris_cpu->thread_data[next].sigdata[sig].blocked = 1;
 
-	sim_pc_set (current_cpu, current_cpu->sighandler[sig]);
+	sim_pc_set (current_cpu, cris_cpu->sighandler[sig]);
 	bfd_putl32 (sig, regbuf);
 	(*CPU_REG_STORE (current_cpu)) (current_cpu, H_GR_R10,
 					regbuf, 4);
@@ -1211,7 +1209,7 @@ schedule (SIM_CPU *current_cpu, int next)
 
     /* No, there actually was no pending signal for this thread.  Reset
        this flag.  */
-    current_cpu->thread_data[next].sigpending = 0;
+    cris_cpu->thread_data[next].sigpending = 0;
   }
 }
 
@@ -1226,25 +1224,26 @@ static void
 reschedule (SIM_CPU *current_cpu)
 {
   SIM_DESC sd = CPU_STATE (current_cpu);
+  struct cris_sim_cpu *cris_cpu = CRIS_SIM_CPU (current_cpu);
   int i;
 
   /* Iterate over all thread slots, because after a few thread creations
      and exits, we don't know where the live ones are.  */
-  for (i = (current_cpu->threadno + 1) % SIM_TARGET_MAX_THREADS;
-       i != current_cpu->threadno;
+  for (i = (cris_cpu->threadno + 1) % SIM_TARGET_MAX_THREADS;
+       i != cris_cpu->threadno;
        i = (i + 1) % SIM_TARGET_MAX_THREADS)
-    if (current_cpu->thread_data[i].cpu_context
-	&& current_cpu->thread_data[i].at_syscall == 0)
+    if (cris_cpu->thread_data[i].cpu_context
+	&& cris_cpu->thread_data[i].at_syscall == 0)
       {
 	schedule (current_cpu, i);
 	return;
       }
 
   /* Pick any next live thread.  */
-  for (i = (current_cpu->threadno + 1) % SIM_TARGET_MAX_THREADS;
-       i != current_cpu->threadno;
+  for (i = (cris_cpu->threadno + 1) % SIM_TARGET_MAX_THREADS;
+       i != cris_cpu->threadno;
        i = (i + 1) % SIM_TARGET_MAX_THREADS)
-    if (current_cpu->thread_data[i].cpu_context)
+    if (cris_cpu->thread_data[i].cpu_context)
       {
 	schedule (current_cpu, i);
 	return;
@@ -1260,18 +1259,18 @@ reschedule (SIM_CPU *current_cpu)
 static int
 deliver_signal (SIM_CPU *current_cpu, int sig, unsigned int pid)
 {
+  struct cris_sim_cpu *cris_cpu = CRIS_SIM_CPU (current_cpu);
   int i;
   USI pc = sim_pc_get (current_cpu);
 
   /* Find the thread index of the pid. */
   for (i = 0; i < SIM_TARGET_MAX_THREADS; i++)
     /* Apparently it's ok to send signals to zombies (so a check for
-       current_cpu->thread_data[i].cpu_context != NULL would be
-       wrong). */
-    if (current_cpu->thread_data[i].threadid == pid - TARGET_PID)
+       cris_cpu->thread_data[i].cpu_context != NULL would be wrong).  */
+    if (cris_cpu->thread_data[i].threadid == pid - TARGET_PID)
       {
 	if (sig < 64)
-	  switch (current_cpu->sighandler[sig])
+	  switch (cris_cpu->sighandler[sig])
 	    {
 	    case TARGET_SIG_DFL:
 	      switch (sig)
@@ -1340,8 +1339,8 @@ deliver_signal (SIM_CPU *current_cpu, int sig, unsigned int pid)
 	      /* Mark the signal as pending, making schedule () check
 		 closer.  The signal will be handled when the thread is
 		 scheduled and the signal is unblocked.  */
-	      current_cpu->thread_data[i].sigdata[sig].pending = 1;
-	      current_cpu->thread_data[i].sigpending = 1;
+	      cris_cpu->thread_data[i].sigdata[sig].pending = 1;
+	      cris_cpu->thread_data[i].sigpending = 1;
 	      return 0;
 	    }
 	else
@@ -1364,15 +1363,14 @@ static void
 make_first_thread (SIM_CPU *current_cpu)
 {
   SIM_DESC sd = CPU_STATE (current_cpu);
-  current_cpu->thread_data
-    = xcalloc (1,
-	       SIM_TARGET_MAX_THREADS
-	       * sizeof (current_cpu->thread_data[0]));
-  current_cpu->thread_data[0].cpu_context
-    = (*current_cpu->make_thread_cpu_data) (current_cpu,
-					    &current_cpu
-					    ->cpu_data_placeholder);
-  current_cpu->thread_data[0].parent_threadid = -1;
+  struct cris_sim_cpu *cris_cpu = CRIS_SIM_CPU (current_cpu);
+
+  cris_cpu->thread_data
+    = xcalloc (1, SIM_TARGET_MAX_THREADS * sizeof (cris_cpu->thread_data[0]));
+  cris_cpu->thread_data[0].cpu_context
+    = (*cris_cpu->make_thread_cpu_data) (current_cpu,
+					 &cris_cpu->cpu_data_placeholder);
+  cris_cpu->thread_data[0].parent_threadid = -1;
 
   /* For good measure.  */
   if (TARGET_SIG_DFL != 0)
@@ -1413,11 +1411,12 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 {
   CB_SYSCALL s;
   SIM_DESC sd = CPU_STATE (current_cpu);
+  struct cris_sim_cpu *cris_cpu = CRIS_SIM_CPU (current_cpu);
   host_callback *cb = STATE_CALLBACK (sd);
   int retval;
-  int threadno = current_cpu->threadno;
+  int threadno = cris_cpu->threadno;
 
-  current_cpu->syscalls++;
+  cris_cpu->syscalls++;
 
   CB_SYSCALL_INIT (&s);
   s.func = callnum;
@@ -1434,7 +1433,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
     s.arg2 = (SI) arg2;
 
   if (callnum == TARGET_SYS_exit_group
-      || (callnum == TARGET_SYS_exit && current_cpu->m1threads == 0))
+      || (callnum == TARGET_SYS_exit && cris_cpu->m1threads == 0))
     {
       if (CPU_CRIS_MISC_PROFILE (current_cpu)->flags
 	  & FLAG_CRIS_MISC_PROFILE_ALL)
@@ -1477,8 +1476,8 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	     forever"; we re-run this insn.  The wait is ended by a
 	     callback.  Sanity check that this is the reason we got
 	     here. */
-	  if (current_cpu->thread_data == NULL
-	      || (current_cpu->thread_data[threadno].pipe_write_fd == 0))
+	  if (cris_cpu->thread_data == NULL
+	      || (cris_cpu->thread_data[threadno].pipe_write_fd == 0))
 	    goto unimplemented_syscall;
 
 	  sim_pc_set (current_cpu, pc);
@@ -1507,10 +1506,10 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 
 	    case 3:
 	      /* F_GETFL.  Check for the special case for open+fdopen.  */
-	      if (current_cpu->last_syscall == TARGET_SYS_open
-		  && arg1 == current_cpu->last_open_fd)
+	      if (cris_cpu->last_syscall == TARGET_SYS_open
+		  && arg1 == cris_cpu->last_open_fd)
 		{
-		  retval = current_cpu->last_open_flags & TARGET_O_ACCMODE;
+		  retval = cris_cpu->last_open_flags & TARGET_O_ACCMODE;
 		  break;
 		}
 	      else if (arg1 == 0)
@@ -1528,7 +1527,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		  retval = TARGET_O_WRONLY;
 		  break;
 		}
-	      /* FALLTHROUGH */
+	      ATTRIBUTE_FALLTHROUGH;
 	    default:
 	      /* Nothing else is implemented.  */
 	      retval
@@ -1598,9 +1597,9 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	  retval = arg1;
 
 	  if (arg1 == 0)
-	    retval = current_cpu->endbrk;
-	  else if (arg1 <= current_cpu->endmem)
-	    current_cpu->endbrk = arg1;
+	    retval = cris_cpu->endbrk;
+	  else if (arg1 <= cris_cpu->endmem)
+	    cris_cpu->endbrk = arg1;
 	  else
 	    {
 	      USI new_end = (arg1 + 8191) & ~8191;
@@ -1608,35 +1607,35 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	      /* If the simulator wants to brk more than a certain very
 		 large amount, something is wrong.  FIXME: Return an error
 		 or abort?  Have command-line selectable?  */
-	      if (new_end - current_cpu->endmem > SIM_MAX_ALLOC_CHUNK)
+	      if (new_end - cris_cpu->endmem > SIM_MAX_ALLOC_CHUNK)
 		{
-		  current_cpu->endbrk = current_cpu->endmem;
-		  retval = current_cpu->endmem;
+		  cris_cpu->endbrk = cris_cpu->endmem;
+		  retval = cris_cpu->endmem;
 		  break;
 		}
 
 	      sim_core_attach (sd, NULL, 0, access_read_write_exec, 0,
-			       current_cpu->endmem,
-			       new_end - current_cpu->endmem,
+			       cris_cpu->endmem,
+			       new_end - cris_cpu->endmem,
 			       0, NULL, NULL);
-	      current_cpu->endbrk = arg1;
-	      current_cpu->endmem = new_end;
+	      cris_cpu->endbrk = arg1;
+	      cris_cpu->endmem = new_end;
 	    }
 	  break;
 
 	case TARGET_SYS_getpid:
 	  /* Correct until CLONE_THREAD is implemented.  */
-	  retval = current_cpu->thread_data == NULL
+	  retval = cris_cpu->thread_data == NULL
 	    ? TARGET_PID
-	    : TARGET_PID + current_cpu->thread_data[threadno].threadid;
+	    : TARGET_PID + cris_cpu->thread_data[threadno].threadid;
 	  break;
 
 	case TARGET_SYS_getppid:
 	  /* Correct until CLONE_THREAD is implemented.  */
-	  retval = current_cpu->thread_data == NULL
+	  retval = cris_cpu->thread_data == NULL
 	    ? TARGET_PID - 1
 	    : (TARGET_PID
-	       + current_cpu->thread_data[threadno].parent_threadid);
+	       + cris_cpu->thread_data[threadno].parent_threadid);
 	  break;
 
 	case TARGET_SYS_mmap2:
@@ -1714,14 +1713,14 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		  abort ();
 
 		if (flags & TARGET_MAP_FIXED)
-		  unmap_pages (sd, &current_cpu->highest_mmapped_page,
+		  unmap_pages (sd, &cris_cpu->highest_mmapped_page,
 			       addr, newlen);
-		else if (is_mapped (sd, &current_cpu->highest_mmapped_page,
+		else if (is_mapped (sd, &cris_cpu->highest_mmapped_page,
 				    addr, newlen))
 		  addr = 0;
 
 		newaddr
-		  = create_map (sd, &current_cpu->highest_mmapped_page,
+		  = create_map (sd, &cris_cpu->highest_mmapped_page,
 				addr != 0 || (flags & TARGET_MAP_FIXED)
 				? addr : -1,
 				newlen);
@@ -1737,7 +1736,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		if ((flags & TARGET_MAP_FIXED) && newaddr != addr)
 		  {
 		    abort ();
-		    unmap_pages (sd, &current_cpu->highest_mmapped_page,
+		    unmap_pages (sd, &cris_cpu->highest_mmapped_page,
 				 newaddr, newlen);
 		    retval = -cb_host_to_target_errno (cb, EINVAL);
 		    break;
@@ -1799,13 +1798,13 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		USI newaddr;
 
 		if (flags & TARGET_MAP_FIXED)
-		  unmap_pages (sd, &current_cpu->highest_mmapped_page,
+		  unmap_pages (sd, &cris_cpu->highest_mmapped_page,
 			       addr, newlen);
-		else if (is_mapped (sd, &current_cpu->highest_mmapped_page,
+		else if (is_mapped (sd, &cris_cpu->highest_mmapped_page,
 				    addr, newlen))
 		  addr = 0;
 
-		newaddr = create_map (sd, &current_cpu->highest_mmapped_page,
+		newaddr = create_map (sd, &cris_cpu->highest_mmapped_page,
 				      addr != 0 || (flags & TARGET_MAP_FIXED)
 				      ? addr : -1,
 				      newlen);
@@ -1818,7 +1817,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		if ((flags & TARGET_MAP_FIXED) && newaddr != addr)
 		  {
 		    abort ();
-		    unmap_pages (sd, &current_cpu->highest_mmapped_page,
+		    unmap_pages (sd, &cris_cpu->highest_mmapped_page,
 				 newaddr, newlen);
 		    retval = -cb_host_to_target_errno (cb, EINVAL);
 		    break;
@@ -1838,7 +1837,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	    USI prot = arg3;
 
 	    if (prot != TARGET_PROT_NONE
-		|| !is_mapped_only (sd, &current_cpu->highest_mmapped_page,
+		|| !is_mapped_only (sd, &cris_cpu->highest_mmapped_page,
 				    addr, (len + 8191) & ~8191))
 	      {
 		retval
@@ -1880,7 +1879,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	    USI addr = arg1;
 	    USI len = arg2;
 	    USI result
-	      = unmap_pages (sd, &current_cpu->highest_mmapped_page, addr,
+	      = unmap_pages (sd, &cris_cpu->highest_mmapped_page, addr,
 			     len);
 	    retval = result != 0 ? -cb_host_to_target_errno (cb, result) : 0;
 	    break;
@@ -1904,7 +1903,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		      && (options == TARGET___WCLONE
 			  || options == TARGET___WALL)))
 		|| rusagep != 0
-		|| current_cpu->thread_data == NULL)
+		|| cris_cpu->thread_data == NULL)
 	      {
 		retval
 		  = cris_unknown_syscall (current_cpu, pc,
@@ -1920,20 +1919,20 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	    if (pid == (USI) -1)
 	      for (i = 1; i < SIM_TARGET_MAX_THREADS; i++)
 		{
-		  if (current_cpu->thread_data[threadno].threadid
-		      == current_cpu->thread_data[i].parent_threadid
-		      && current_cpu->thread_data[i].threadid != 0
-		      && current_cpu->thread_data[i].cpu_context == NULL)
+		  if (cris_cpu->thread_data[threadno].threadid
+		      == cris_cpu->thread_data[i].parent_threadid
+		      && cris_cpu->thread_data[i].threadid != 0
+		      && cris_cpu->thread_data[i].cpu_context == NULL)
 		    {
 		      /* A zombied child.  Get the exit value and clear the
 			 zombied entry so it will be reused.  */
 		      sim_core_write_unaligned_4 (current_cpu, pc, 0, saddr,
-						  current_cpu
+						  cris_cpu
 						  ->thread_data[i].exitval);
 		      retval
-			= current_cpu->thread_data[i].threadid + TARGET_PID;
-		      memset (&current_cpu->thread_data[i], 0,
-			      sizeof (current_cpu->thread_data[i]));
+			= cris_cpu->thread_data[i].threadid + TARGET_PID;
+		      memset (&cris_cpu->thread_data[i], 0,
+			      sizeof (cris_cpu->thread_data[i]));
 		      goto outer_break;
 		    }
 		}
@@ -1942,21 +1941,20 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		/* We're waiting for a specific PID.  If we don't find
 		   it zombied on this run, rerun the syscall.  */
 		for (i = 1; i < SIM_TARGET_MAX_THREADS; i++)
-		  if (pid == current_cpu->thread_data[i].threadid + TARGET_PID
-		      && current_cpu->thread_data[i].cpu_context == NULL)
+		  if (pid == cris_cpu->thread_data[i].threadid + TARGET_PID
+		      && cris_cpu->thread_data[i].cpu_context == NULL)
 		    {
 		      if (saddr != 0)
 			/* Get the exit value if the caller wants it.  */
 			sim_core_write_unaligned_4 (current_cpu, pc, 0,
 						    saddr,
-						    current_cpu
-						    ->thread_data[i]
-						    .exitval);
+						    cris_cpu
+						      ->thread_data[i].exitval);
 
 		      retval
-			= current_cpu->thread_data[i].threadid + TARGET_PID;
-		      memset (&current_cpu->thread_data[i], 0,
-			      sizeof (current_cpu->thread_data[i]));
+			= cris_cpu->thread_data[i].threadid + TARGET_PID;
+		      memset (&cris_cpu->thread_data[i], 0,
+			      sizeof (cris_cpu->thread_data[i]));
 
 		      goto outer_break;
 		    }
@@ -1986,7 +1984,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	    if (old_sa != 0)
 	      {
 		sim_core_write_unaligned_4 (current_cpu, pc, 0, old_sa + 0,
-					    current_cpu->sighandler[signum]);
+					    cris_cpu->sighandler[signum]);
 		sim_core_write_unaligned_4 (current_cpu, pc, 0, arg3 + 4, 0);
 		sim_core_write_unaligned_4 (current_cpu, pc, 0, arg3 + 8, 0);
 
@@ -2037,12 +2035,12 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		    break;
 		  }
 
-		current_cpu->sighandler[signum] = target_sa_handler;
+		cris_cpu->sighandler[signum] = target_sa_handler;
 
 		/* Because we may have unblocked signals, one may now be
 		   pending, if there are threads, that is.  */
-		if (current_cpu->thread_data)
-		  current_cpu->thread_data[threadno].sigpending = 1;
+		if (cris_cpu->thread_data)
+		  cris_cpu->thread_data[threadno].sigpending = 1;
 	      }
 	    retval = 0;
 	    break;
@@ -2065,18 +2063,18 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	    else if (new_len < old_len)
 	      {
 		/* Shrinking is easy.  */
-		if (unmap_pages (sd, &current_cpu->highest_mmapped_page,
+		if (unmap_pages (sd, &cris_cpu->highest_mmapped_page,
 				 addr + new_len, old_len - new_len) != 0)
 		  retval = -cb_host_to_target_errno (cb, EINVAL);
 		else
 		  retval = addr;
 	      }
-	    else if (! is_mapped (sd, &current_cpu->highest_mmapped_page,
+	    else if (! is_mapped (sd, &cris_cpu->highest_mmapped_page,
 				  addr + old_len, new_len - old_len))
 	      {
 		/* If the extension isn't mapped, we can just add it.  */
 		mapped_addr
-		  = create_map (sd, &current_cpu->highest_mmapped_page,
+		  = create_map (sd, &cris_cpu->highest_mmapped_page,
 				addr + old_len, new_len - old_len);
 
 		if (mapped_addr > (USI) -8192)
@@ -2094,7 +2092,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		USI prev_len = old_len;
 
 		mapped_addr
-		  = create_map (sd, &current_cpu->highest_mmapped_page,
+		  = create_map (sd, &cris_cpu->highest_mmapped_page,
 				-1, new_len);
 
 		if (mapped_addr > (USI) -8192)
@@ -2115,7 +2113,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		      abort ();
 		  }
 
-		if (unmap_pages (sd, &current_cpu->highest_mmapped_page,
+		if (unmap_pages (sd, &cris_cpu->highest_mmapped_page,
 				 prev_addr, prev_len) != 0)
 		  abort ();
 	      }
@@ -2153,7 +2151,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		    != TARGET_POLLIN)
 		|| ((cb->to_fstat) (cb, fd, &buf) != 0
 		    || (buf.st_mode & S_IFIFO) == 0)
-		|| current_cpu->thread_data == NULL)
+		|| cris_cpu->thread_data == NULL)
 	      {
 		retval
 		  = cris_unknown_syscall (current_cpu, pc,
@@ -2171,8 +2169,8 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	    /* Iterate over threads; find a marker that a writer is
 	       sleeping, waiting for a reader.  */
 	    for (i = 0; i < SIM_TARGET_MAX_THREADS; i++)
-	      if (current_cpu->thread_data[i].cpu_context != NULL
-		  && current_cpu->thread_data[i].pipe_read_fd == fd)
+	      if (cris_cpu->thread_data[i].cpu_context != NULL
+		  && cris_cpu->thread_data[i].pipe_read_fd == fd)
 		{
 		  revents = TARGET_POLLIN;
 		  retval = 1;
@@ -2186,7 +2184,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	       case.  */
 	    timeout
 	      -= (TARGET_TIME_MS (current_cpu)
-		  - (current_cpu->thread_data[threadno].last_execution));
+		  - (cris_cpu->thread_data[threadno].last_execution));
 
 	    /* Arrange to repeat this syscall until timeout or event,
                decreasing timeout at each iteration.  */
@@ -2347,7 +2345,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	    /* At kill(2), glibc sets signal masks such that the thread
 	       machinery is initialized.  Still, there is and was only
 	       one thread.  */
-	    if (current_cpu->max_threadid == 0)
+	    if (cris_cpu->max_threadid == 0)
 	      {
 		if (pid != TARGET_PID)
 		  {
@@ -2406,26 +2404,26 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 
 		/* The sigmask is kept in the per-thread data, so we may
 		   need to create the first one.  */
-		if (current_cpu->thread_data == NULL)
+		if (cris_cpu->thread_data == NULL)
 		  make_first_thread (current_cpu);
 
 		if (how == TARGET_SIG_SETMASK)
 		  for (i = 0; i < 64; i++)
-		    current_cpu->thread_data[threadno].sigdata[i].blocked = 0;
+		    cris_cpu->thread_data[threadno].sigdata[i].blocked = 0;
 
 		for (i = 0; i < 32; i++)
 		  if ((set_low & (1 << i)))
-		    current_cpu->thread_data[threadno].sigdata[i + 1].blocked
+		    cris_cpu->thread_data[threadno].sigdata[i + 1].blocked
 		      = (how != TARGET_SIG_UNBLOCK);
 
 		for (i = 0; i < 31; i++)
 		  if ((set_high & (1 << i)))
-		    current_cpu->thread_data[threadno].sigdata[i + 33].blocked
+		    cris_cpu->thread_data[threadno].sigdata[i + 33].blocked
 		      = (how != TARGET_SIG_UNBLOCK);
 
 		/* The mask changed, so a signal may be unblocked for
                    execution.  */
-		current_cpu->thread_data[threadno].sigpending = 1;
+		cris_cpu->thread_data[threadno].sigpending = 1;
 	      }
 
 	    if (oldsetp != 0)
@@ -2434,11 +2432,11 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		USI set_high = 0;
 
 		for (i = 0; i < 32; i++)
-		  if (current_cpu->thread_data[threadno]
+		  if (cris_cpu->thread_data[threadno]
 		      .sigdata[i + 1].blocked)
 		    set_low |= 1 << i;
 		for (i = 0; i < 31; i++)
-		  if (current_cpu->thread_data[threadno]
+		  if (cris_cpu->thread_data[threadno]
 		      .sigdata[i + 33].blocked)
 		    set_high |= 1 << i;
 
@@ -2456,10 +2454,10 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	    bfd_byte regbuf[4];
 	    int was_sigsuspended;
 
-	    if (current_cpu->thread_data == NULL
+	    if (cris_cpu->thread_data == NULL
 		/* The CPU context is saved with the simulator data, not
 		   on the stack as in the real world.  */
-		|| (current_cpu->thread_data[threadno].cpu_context_atsignal
+		|| (cris_cpu->thread_data[threadno].cpu_context_atsignal
 		    == NULL))
 	      {
 		retval
@@ -2478,17 +2476,17 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	      }
 
 	    was_sigsuspended
-	      = current_cpu->thread_data[threadno].sigsuspended;
+	      = cris_cpu->thread_data[threadno].sigsuspended;
 
 	    /* Restore the sigmask, either from the stack copy made when
 	       the sighandler was called, or from the saved state
 	       specifically for sigsuspend(2).  */
 	    if (was_sigsuspended)
 	      {
-		current_cpu->thread_data[threadno].sigsuspended = 0;
+		cris_cpu->thread_data[threadno].sigsuspended = 0;
 		for (i = 0; i < 64; i++)
-		  current_cpu->thread_data[threadno].sigdata[i].blocked
-		    = current_cpu->thread_data[threadno]
+		  cris_cpu->thread_data[threadno].sigdata[i].blocked
+		    = cris_cpu->thread_data[threadno]
 		    .sigdata[i].blocked_suspendsave;
 	      }
 	    else
@@ -2506,22 +2504,22 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		  = sim_core_read_unaligned_4 (current_cpu, pc, 0, sp + 4);
 
 		for (i = 0; i < 32; i++)
-		  current_cpu->thread_data[threadno].sigdata[i + 1].blocked
+		  cris_cpu->thread_data[threadno].sigdata[i + 1].blocked
 		    = (set_low & (1 << i)) != 0;
 		for (i = 0; i < 31; i++)
-		  current_cpu->thread_data[threadno].sigdata[i + 33].blocked
+		  cris_cpu->thread_data[threadno].sigdata[i + 33].blocked
 		    = (set_high & (1 << i)) != 0;
 	      }
 
 	    /* The mask changed, so a signal may be unblocked for
 	       execution.  */
-	    current_cpu->thread_data[threadno].sigpending = 1;
+	    cris_cpu->thread_data[threadno].sigpending = 1;
 
-	    memcpy (&current_cpu->cpu_data_placeholder,
-		    current_cpu->thread_data[threadno].cpu_context_atsignal,
-		    current_cpu->thread_cpu_data_size);
-	    free (current_cpu->thread_data[threadno].cpu_context_atsignal);
-	    current_cpu->thread_data[threadno].cpu_context_atsignal = NULL;
+	    memcpy (&cris_cpu->cpu_data_placeholder,
+		    cris_cpu->thread_data[threadno].cpu_context_atsignal,
+		    cris_cpu->thread_cpu_data_size);
+	    free (cris_cpu->thread_data[threadno].cpu_context_atsignal);
+	    cris_cpu->thread_data[threadno].cpu_context_atsignal = NULL;
 
 	    /* The return value must come from the saved R10.  */
 	    (*CPU_REG_FETCH (current_cpu)) (current_cpu, H_GR_R10, regbuf, 4);
@@ -2551,7 +2549,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 
 	    /* Don't change the signal mask if we're already in
 	       sigsuspend state (i.e. this syscall is a rerun).  */
-	    else if (!current_cpu->thread_data[threadno].sigsuspended)
+	    else if (!cris_cpu->thread_data[threadno].sigsuspended)
 	      {
 		USI set_low
 		  = sim_core_read_unaligned_4 (current_cpu, pc, 0,
@@ -2565,29 +2563,29 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
                    one.  */
 		for (i = 0; i < 32; i++)
 		  {
-		    current_cpu->thread_data[threadno]
+		    cris_cpu->thread_data[threadno]
 		      .sigdata[i + 1].blocked_suspendsave
-		      = current_cpu->thread_data[threadno]
+		      = cris_cpu->thread_data[threadno]
 		      .sigdata[i + 1].blocked;
 
-		    current_cpu->thread_data[threadno]
+		    cris_cpu->thread_data[threadno]
 		      .sigdata[i + 1].blocked = (set_low & (1 << i)) != 0;
 		  }
 		for (i = 0; i < 31; i++)
 		  {
-		    current_cpu->thread_data[threadno]
+		    cris_cpu->thread_data[threadno]
 		      .sigdata[i + 33].blocked_suspendsave
-		      = current_cpu->thread_data[threadno]
+		      = cris_cpu->thread_data[threadno]
 		      .sigdata[i + 33].blocked;
-		    current_cpu->thread_data[threadno]
+		    cris_cpu->thread_data[threadno]
 		      .sigdata[i + 33].blocked = (set_high & (1 << i)) != 0;
 		  }
 
-		current_cpu->thread_data[threadno].sigsuspended = 1;
+		cris_cpu->thread_data[threadno].sigsuspended = 1;
 
 		/* The mask changed, so a signal may be unblocked for
                    execution. */
-		current_cpu->thread_data[threadno].sigpending = 1;
+		cris_cpu->thread_data[threadno].sigpending = 1;
 	      }
 
 	    /* Because we don't use arg1 (newsetp) when this syscall is
@@ -2837,8 +2835,8 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		/* FIXME: Save scheduler setting before threads are
 		   created too.  */
 		sim_core_write_unaligned_4 (current_cpu, pc, 0, paramp,
-					    current_cpu->thread_data != NULL
-					    ? (current_cpu
+					    cris_cpu->thread_data != NULL
+					    ? (cris_cpu
 					       ->thread_data[threadno]
 					       .priority)
 					    : 0);
@@ -3005,24 +3003,24 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	    /* Here for all but the last thread.  */
 	    int i;
 	    int pid
-	      = current_cpu->thread_data[threadno].threadid + TARGET_PID;
+	      = cris_cpu->thread_data[threadno].threadid + TARGET_PID;
 	    int ppid
-	      = (current_cpu->thread_data[threadno].parent_threadid
+	      = (cris_cpu->thread_data[threadno].parent_threadid
 		 + TARGET_PID);
-	    int exitsig = current_cpu->thread_data[threadno].exitsig;
+	    int exitsig = cris_cpu->thread_data[threadno].exitsig;
 
 	    /* Any children are now all orphans.  */
 	    for (i = 0; i < SIM_TARGET_MAX_THREADS; i++)
-	      if (current_cpu->thread_data[i].parent_threadid
-		  == current_cpu->thread_data[threadno].threadid)
+	      if (cris_cpu->thread_data[i].parent_threadid
+		  == cris_cpu->thread_data[threadno].threadid)
 		/* Make getppid(2) return 1 for them, poor little ones.  */
-		current_cpu->thread_data[i].parent_threadid = -TARGET_PID + 1;
+		cris_cpu->thread_data[i].parent_threadid = -TARGET_PID + 1;
 
 	    /* Free the cpu context data.  When the parent has received
 	       the exit status, we'll clear the entry too.  */
-	    free (current_cpu->thread_data[threadno].cpu_context);
-	    current_cpu->thread_data[threadno].cpu_context = NULL;
-	    current_cpu->m1threads--;
+	    free (cris_cpu->thread_data[threadno].cpu_context);
+	    cris_cpu->thread_data[threadno].cpu_context = NULL;
+	    cris_cpu->m1threads--;
 	    if (arg1 != 0)
 	      {
 		sim_io_eprintf (sd, "Thread %d exited with status %d\n",
@@ -3032,7 +3030,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	      }
 
 	    /* Still, we may want to support non-zero exit values.  */
-	    current_cpu->thread_data[threadno].exitval = arg1 << 8;
+	    cris_cpu->thread_data[threadno].exitval = arg1 << 8;
 
 	    if (exitsig)
 	      deliver_signal (current_cpu, exitsig, ppid);
@@ -3041,7 +3039,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 
 	case TARGET_SYS_clone:
 	  {
-	    int nthreads = current_cpu->m1threads + 1;
+	    int nthreads = cris_cpu->m1threads + 1;
 	    void *thread_cpu_data;
 	    bfd_byte old_sp_buf[4];
 	    bfd_byte sp_buf[4];
@@ -3078,7 +3076,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 		break;
 	      }
 
-	    if (current_cpu->thread_data == NULL)
+	    if (cris_cpu->thread_data == NULL)
 	      make_first_thread (current_cpu);
 
 	    /* The created thread will get the new SP and a cleared R10.
@@ -3095,39 +3093,39 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	    (*CPU_REG_STORE (current_cpu)) (current_cpu,
 					    H_GR_R10, (bfd_byte *) zeros, 4);
 	    thread_cpu_data
-	      = (*current_cpu
+	      = (*cris_cpu
 		 ->make_thread_cpu_data) (current_cpu,
-					  &current_cpu->cpu_data_placeholder);
+					  &cris_cpu->cpu_data_placeholder);
 	    (*CPU_REG_STORE (current_cpu)) (current_cpu,
 					    H_GR_SP, old_sp_buf, 4);
 
-	    retval = ++current_cpu->max_threadid + TARGET_PID;
+	    retval = ++cris_cpu->max_threadid + TARGET_PID;
 
 	    /* Find an unused slot.  After a few threads have been created
 	       and exited, the array is expected to be a bit fragmented.
 	       We don't reuse the first entry, though, that of the
 	       original thread.  */
 	    for (i = 1; i < SIM_TARGET_MAX_THREADS; i++)
-	      if (current_cpu->thread_data[i].cpu_context == NULL
+	      if (cris_cpu->thread_data[i].cpu_context == NULL
 		  /* Don't reuse a zombied entry.  */
-		  && current_cpu->thread_data[i].threadid == 0)
+		  && cris_cpu->thread_data[i].threadid == 0)
 		break;
 
-	    memcpy (&current_cpu->thread_data[i],
-		    &current_cpu->thread_data[threadno],
-		    sizeof (current_cpu->thread_data[i]));
-	    current_cpu->thread_data[i].cpu_context = thread_cpu_data;
-	    current_cpu->thread_data[i].cpu_context_atsignal = NULL;
-	    current_cpu->thread_data[i].threadid = current_cpu->max_threadid;
-	    current_cpu->thread_data[i].parent_threadid
-	      = current_cpu->thread_data[threadno].threadid;
-	    current_cpu->thread_data[i].pipe_read_fd = 0;
-	    current_cpu->thread_data[i].pipe_write_fd = 0;
-	    current_cpu->thread_data[i].at_syscall = 0;
-	    current_cpu->thread_data[i].sigpending = 0;
-	    current_cpu->thread_data[i].sigsuspended = 0;
-	    current_cpu->thread_data[i].exitsig = flags & TARGET_CSIGNAL;
-	    current_cpu->m1threads = nthreads;
+	    memcpy (&cris_cpu->thread_data[i],
+		    &cris_cpu->thread_data[threadno],
+		    sizeof (cris_cpu->thread_data[i]));
+	    cris_cpu->thread_data[i].cpu_context = thread_cpu_data;
+	    cris_cpu->thread_data[i].cpu_context_atsignal = NULL;
+	    cris_cpu->thread_data[i].threadid = cris_cpu->max_threadid;
+	    cris_cpu->thread_data[i].parent_threadid
+	      = cris_cpu->thread_data[threadno].threadid;
+	    cris_cpu->thread_data[i].pipe_read_fd = 0;
+	    cris_cpu->thread_data[i].pipe_write_fd = 0;
+	    cris_cpu->thread_data[i].at_syscall = 0;
+	    cris_cpu->thread_data[i].sigpending = 0;
+	    cris_cpu->thread_data[i].sigsuspended = 0;
+	    cris_cpu->thread_data[i].exitsig = flags & TARGET_CSIGNAL;
+	    cris_cpu->m1threads = nthreads;
 	    break;
 	  }
 
@@ -3143,7 +3141,7 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 	      retval = -cb_host_to_target_errno (cb, EINVAL);
 	      break;
 	    }
-	  (*current_cpu->set_target_thread_data) (current_cpu, arg1);
+	  (*cris_cpu->set_target_thread_data) (current_cpu, arg1);
 	  retval = 0;
 	  break;
 
@@ -3161,28 +3159,28 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
   /* Minimal support for fcntl F_GETFL as used in open+fdopen.  */
   if (callnum == TARGET_SYS_open)
     {
-      current_cpu->last_open_fd = retval;
-      current_cpu->last_open_flags = arg2;
+      cris_cpu->last_open_fd = retval;
+      cris_cpu->last_open_flags = arg2;
     }
 
-  current_cpu->last_syscall = callnum;
+  cris_cpu->last_syscall = callnum;
 
   /* A system call is a rescheduling point.  For the time being, we don't
      reschedule anywhere else.  */
-  if (current_cpu->m1threads != 0
+  if (cris_cpu->m1threads != 0
       /* We need to schedule off from an exiting thread that is the
 	 second-last one.  */
-      || (current_cpu->thread_data != NULL
-	  && current_cpu->thread_data[threadno].cpu_context == NULL))
+      || (cris_cpu->thread_data != NULL
+	  && cris_cpu->thread_data[threadno].cpu_context == NULL))
     {
       bfd_byte retval_buf[4];
 
-      current_cpu->thread_data[threadno].last_execution
+      cris_cpu->thread_data[threadno].last_execution
 	= TARGET_TIME_MS (current_cpu);
       bfd_putl32 (retval, retval_buf);
       (*CPU_REG_STORE (current_cpu)) (current_cpu, H_GR_R10, retval_buf, 4);
 
-      current_cpu->thread_data[threadno].at_syscall = 1;
+      cris_cpu->thread_data[threadno].at_syscall = 1;
       reschedule (current_cpu);
 
       (*CPU_REG_FETCH (current_cpu)) (current_cpu, H_GR_R10, retval_buf, 4);
@@ -3202,6 +3200,7 @@ cris_pipe_nonempty (host_callback *cb ATTRIBUTE_UNUSED,
 		    int reader, int writer)
 {
   SIM_CPU *cpu = current_cpu_for_cb_callback;
+  struct cris_sim_cpu *cris_cpu = CRIS_SIM_CPU (cpu);
   const bfd_byte zeros[4] = { 0, 0, 0, 0 };
 
   /* It's the current thread: we just have to re-run the current
@@ -3213,7 +3212,7 @@ cris_pipe_nonempty (host_callback *cb ATTRIBUTE_UNUSED,
      This function may be called multiple times between cris_pipe_empty,
      but we must avoid e.g. decreasing PC every time.  Check fd markers
      to tell.  */
-  if (cpu->thread_data == NULL)
+  if (cris_cpu->thread_data == NULL)
     {
       sim_io_eprintf (CPU_STATE (cpu),
 		      "Terminating simulation due to writing pipe rd:wr %d:%d"
@@ -3221,10 +3220,10 @@ cris_pipe_nonempty (host_callback *cb ATTRIBUTE_UNUSED,
       sim_engine_halt (CPU_STATE (cpu), cpu,
 		       NULL, sim_pc_get (cpu), sim_stopped, SIM_SIGILL);
     }
-  else if (cpu->thread_data[cpu->threadno].pipe_write_fd == 0)
+  else if (cris_cpu->thread_data[cris_cpu->threadno].pipe_write_fd == 0)
     {
-      cpu->thread_data[cpu->threadno].pipe_write_fd = writer;
-      cpu->thread_data[cpu->threadno].pipe_read_fd = reader;
+      cris_cpu->thread_data[cris_cpu->threadno].pipe_write_fd = writer;
+      cris_cpu->thread_data[cris_cpu->threadno].pipe_read_fd = reader;
       /* FIXME: We really shouldn't change registers other than R10 in
 	 syscalls (like R9), here or elsewhere.  */
       (*CPU_REG_STORE (cpu)) (cpu, H_GR_R9, (bfd_byte *) zeros, 4);
@@ -3244,6 +3243,7 @@ cris_pipe_empty (host_callback *cb,
 {
   int i;
   SIM_CPU *cpu = current_cpu_for_cb_callback;
+  struct cris_sim_cpu *cris_cpu = CRIS_SIM_CPU (cpu);
   SIM_DESC sd = CPU_STATE (current_cpu_for_cb_callback);
   bfd_byte r10_buf[4];
   int remaining
@@ -3251,20 +3251,20 @@ cris_pipe_empty (host_callback *cb,
 
   /* We need to find the thread that waits for this pipe.  */
   for (i = 0; i < SIM_TARGET_MAX_THREADS; i++)
-    if (cpu->thread_data[i].cpu_context
-	&& cpu->thread_data[i].pipe_write_fd == writer)
+    if (cris_cpu->thread_data[i].cpu_context
+	&& cris_cpu->thread_data[i].pipe_write_fd == writer)
       {
 	int retval;
 
 	/* Temporarily switch to this cpu context, so we can change the
 	   PC by ordinary calls.  */
 
-	memcpy (cpu->thread_data[cpu->threadno].cpu_context,
-		&cpu->cpu_data_placeholder,
-		cpu->thread_cpu_data_size);
-	memcpy (&cpu->cpu_data_placeholder,
-		cpu->thread_data[i].cpu_context,
-		cpu->thread_cpu_data_size);
+	memcpy (cris_cpu->thread_data[cris_cpu->threadno].cpu_context,
+		&cris_cpu->cpu_data_placeholder,
+		cris_cpu->thread_cpu_data_size);
+	memcpy (&cris_cpu->cpu_data_placeholder,
+		cris_cpu->thread_data[i].cpu_context,
+		cris_cpu->thread_cpu_data_size);
 
 	/* The return value is supposed to contain the number of
 	   written bytes, which is the number of bytes requested and
@@ -3286,14 +3286,14 @@ cris_pipe_empty (host_callback *cb,
 	    (*CPU_REG_STORE (cpu)) (cpu, H_GR_R10, r10_buf, 4);
 	  }
 	sim_pc_set (cpu, sim_pc_get (cpu) + 2);
-	memcpy (cpu->thread_data[i].cpu_context,
-		&cpu->cpu_data_placeholder,
-		cpu->thread_cpu_data_size);
-	memcpy (&cpu->cpu_data_placeholder,
-		cpu->thread_data[cpu->threadno].cpu_context,
-		cpu->thread_cpu_data_size);
-	cpu->thread_data[i].pipe_read_fd = 0;
-	cpu->thread_data[i].pipe_write_fd = 0;
+	memcpy (cris_cpu->thread_data[i].cpu_context,
+		&cris_cpu->cpu_data_placeholder,
+		cris_cpu->thread_cpu_data_size);
+	memcpy (&cris_cpu->cpu_data_placeholder,
+		cris_cpu->thread_data[cris_cpu->threadno].cpu_context,
+		cris_cpu->thread_cpu_data_size);
+	cris_cpu->thread_data[i].pipe_read_fd = 0;
+	cris_cpu->thread_data[i].pipe_write_fd = 0;
 	return;
       }
 

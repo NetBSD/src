@@ -1,6 +1,6 @@
 /* Target-dependent code for Renesas Super-H, for GDB.
 
-   Copyright (C) 1993-2023 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,14 +20,14 @@
 /* Contributed by Steve Chamberlain
    sac@cygnus.com.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
 #include "dwarf2/frame.h"
 #include "symtab.h"
 #include "gdbtypes.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "gdbcore.h"
 #include "value.h"
 #include "dis-asm.h"
@@ -49,7 +49,7 @@
 #include "elf/sh.h"
 #include "dwarf2.h"
 /* registers numbers shared with the simulator.  */
-#include "gdb/sim-sh.h"
+#include "sim/sim-sh.h"
 #include <algorithm>
 
 /* List of "set sh ..." and "show sh ..." commands.  */
@@ -883,12 +883,12 @@ sh_justify_value_in_reg (struct gdbarch *gdbarch, struct value *val, int len)
     {
       /* value gets right-justified in the register or stack word.  */
       if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
-	memcpy (valbuf + (4 - len), value_contents (val).data (), len);
+	memcpy (valbuf + (4 - len), val->contents ().data (), len);
       else
-	memcpy (valbuf, value_contents (val).data (), len);
+	memcpy (valbuf, val->contents ().data (), len);
       return valbuf;
     }
-  return value_contents (val).data ();
+  return val->contents ().data ();
 }
 
 /* Helper function to eval number of bytes to allocate on stack.  */
@@ -897,7 +897,7 @@ sh_stack_allocsize (int nargs, struct value **args)
 {
   int stack_alloc = 0;
   while (nargs-- > 0)
-    stack_alloc += ((value_type (args[nargs])->length () + 3) & ~3);
+    stack_alloc += ((args[nargs]->type ()->length () + 3) & ~3);
   return stack_alloc;
 }
 
@@ -1030,7 +1030,7 @@ sh_push_dummy_call_fpu (struct gdbarch *gdbarch,
   int argreg = ARG0_REGNUM;
   int flt_argreg = 0;
   int argnum;
-  struct type *func_type = value_type (function);
+  struct type *func_type = function->type ();
   struct type *type;
   CORE_ADDR regval;
   const gdb_byte *val;
@@ -1060,7 +1060,7 @@ sh_push_dummy_call_fpu (struct gdbarch *gdbarch,
      in four registers available.  Loop thru args from first to last.  */
   for (argnum = 0; argnum < nargs; argnum++)
     {
-      type = value_type (args[argnum]);
+      type = args[argnum]->type ();
       len = type->length ();
       val = sh_justify_value_in_reg (gdbarch, args[argnum], len);
 
@@ -1172,7 +1172,7 @@ sh_push_dummy_call_nofpu (struct gdbarch *gdbarch,
   int stack_offset = 0;
   int argreg = ARG0_REGNUM;
   int argnum;
-  struct type *func_type = value_type (function);
+  struct type *func_type = function->type ();
   struct type *type;
   CORE_ADDR regval;
   const gdb_byte *val;
@@ -1198,7 +1198,7 @@ sh_push_dummy_call_nofpu (struct gdbarch *gdbarch,
      in four registers available.  Loop thru args from first to last.  */
   for (argnum = 0; argnum < nargs; argnum++)
     {
-      type = value_type (args[argnum]);
+      type = args[argnum]->type ();
       len = type->length ();
       val = sh_justify_value_in_reg (gdbarch, args[argnum], len);
 
@@ -1364,7 +1364,7 @@ sh_return_value_nofpu (struct gdbarch *gdbarch, struct value *function,
 		       struct type *type, struct regcache *regcache,
 		       gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  struct type *func_type = function ? value_type (function) : NULL;
+  struct type *func_type = function ? function->type () : NULL;
 
   if (sh_use_struct_convention_nofpu
 	(sh_is_renesas_calling_convention (func_type), type))
@@ -1381,7 +1381,7 @@ sh_return_value_fpu (struct gdbarch *gdbarch, struct value *function,
 		     struct type *type, struct regcache *regcache,
 		     gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  struct type *func_type = function ? value_type (function) : NULL;
+  struct type *func_type = function ? function->type () : NULL;
 
   if (sh_use_struct_convention (
 	sh_is_renesas_calling_convention (func_type), type))
@@ -1401,6 +1401,11 @@ sh_sh2a_register_type (struct gdbarch *gdbarch, int reg_nr)
     return builtin_type (gdbarch)->builtin_float;
   else if (reg_nr >= DR0_REGNUM && reg_nr <= DR_LAST_REGNUM)
     return builtin_type (gdbarch)->builtin_double;
+  else if (reg_nr == PC_REGNUM || reg_nr == PR_REGNUM || reg_nr == VBR_REGNUM
+	   || reg_nr == SPC_REGNUM)
+    return builtin_type (gdbarch)->builtin_func_ptr;
+  else if (reg_nr == R0_REGNUM + 15 || reg_nr == GBR_REGNUM)
+    return builtin_type (gdbarch)->builtin_data_ptr;
   else
     return builtin_type (gdbarch)->builtin_int;
 }
@@ -1413,6 +1418,11 @@ sh_sh3e_register_type (struct gdbarch *gdbarch, int reg_nr)
   if ((reg_nr >= gdbarch_fp0_regnum (gdbarch)
        && (reg_nr <= FP_LAST_REGNUM)) || (reg_nr == FPUL_REGNUM))
     return builtin_type (gdbarch)->builtin_float;
+  else if (reg_nr == PC_REGNUM || reg_nr == PR_REGNUM || reg_nr == VBR_REGNUM
+	   || reg_nr == SPC_REGNUM)
+    return builtin_type (gdbarch)->builtin_func_ptr;
+  else if (reg_nr == R0_REGNUM + 15 || reg_nr == GBR_REGNUM)
+    return builtin_type (gdbarch)->builtin_data_ptr;
   else
     return builtin_type (gdbarch)->builtin_int;
 }
@@ -1434,6 +1444,11 @@ sh_sh4_register_type (struct gdbarch *gdbarch, int reg_nr)
     return builtin_type (gdbarch)->builtin_double;
   else if (reg_nr >= FV0_REGNUM && reg_nr <= FV_LAST_REGNUM)
     return sh_sh4_build_float_register_type (gdbarch, 3);
+  else if (reg_nr == PC_REGNUM || reg_nr == PR_REGNUM || reg_nr == VBR_REGNUM
+	   || reg_nr == SPC_REGNUM)
+    return builtin_type (gdbarch)->builtin_func_ptr;
+  else if (reg_nr == R0_REGNUM + 15 || reg_nr == GBR_REGNUM)
+    return builtin_type (gdbarch)->builtin_data_ptr;
   else
     return builtin_type (gdbarch)->builtin_int;
 }
@@ -1441,7 +1456,13 @@ sh_sh4_register_type (struct gdbarch *gdbarch, int reg_nr)
 static struct type *
 sh_default_register_type (struct gdbarch *gdbarch, int reg_nr)
 {
-  return builtin_type (gdbarch)->builtin_int;
+  if (reg_nr == PC_REGNUM || reg_nr == PR_REGNUM || reg_nr == VBR_REGNUM
+      || reg_nr == SPC_REGNUM)
+    return builtin_type (gdbarch)->builtin_func_ptr;
+  else if (reg_nr == R0_REGNUM + 15 || reg_nr == GBR_REGNUM)
+    return builtin_type (gdbarch)->builtin_data_ptr;
+  else
+    return builtin_type (gdbarch)->builtin_int;
 }
 
 /* Is a register in a reggroup?
@@ -1516,9 +1537,12 @@ sh_littlebyte_bigword_type (struct gdbarch *gdbarch)
   sh_gdbarch_tdep *tdep = gdbarch_tdep<sh_gdbarch_tdep> (gdbarch);
 
   if (tdep->sh_littlebyte_bigword_type == NULL)
-    tdep->sh_littlebyte_bigword_type
-      = arch_float_type (gdbarch, -1, "builtin_type_sh_littlebyte_bigword",
-			 floatformats_ieee_double_littlebyte_bigword);
+    {
+      type_allocator alloc (gdbarch);
+      tdep->sh_littlebyte_bigword_type
+	= init_float_type (alloc, -1, "builtin_type_sh_littlebyte_bigword",
+			   floatformats_ieee_double_littlebyte_bigword);
+    }
 
   return tdep->sh_littlebyte_bigword_type;
 }
@@ -1752,7 +1776,7 @@ sh_sh2a_register_sim_regno (struct gdbarch *gdbarch, int nr)
 static void
 sh_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
 			  struct dwarf2_frame_state_reg *reg,
-			  frame_info_ptr this_frame)
+			  const frame_info_ptr &this_frame)
 {
   /* Mark the PC as the destination for the return address.  */
   if (regnum == gdbarch_pc_regnum (gdbarch))
@@ -1822,7 +1846,7 @@ sh_alloc_frame_cache (void)
 }
 
 static struct sh_frame_cache *
-sh_frame_cache (frame_info_ptr this_frame, void **this_cache)
+sh_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct sh_frame_cache *cache;
@@ -1889,7 +1913,7 @@ sh_frame_cache (frame_info_ptr this_frame, void **this_cache)
 }
 
 static struct value *
-sh_frame_prev_register (frame_info_ptr this_frame,
+sh_frame_prev_register (const frame_info_ptr &this_frame,
 			void **this_cache, int regnum)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
@@ -1914,7 +1938,7 @@ sh_frame_prev_register (frame_info_ptr this_frame,
 }
 
 static void
-sh_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+sh_frame_this_id (const frame_info_ptr &this_frame, void **this_cache,
 		  struct frame_id *this_id)
 {
   struct sh_frame_cache *cache = sh_frame_cache (this_frame, this_cache);
@@ -1937,7 +1961,7 @@ static const struct frame_unwind sh_frame_unwind = {
 };
 
 static CORE_ADDR
-sh_frame_base_address (frame_info_ptr this_frame, void **this_cache)
+sh_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct sh_frame_cache *cache = sh_frame_cache (this_frame, this_cache);
 
@@ -1952,7 +1976,7 @@ static const struct frame_base sh_frame_base = {
 };
 
 static struct sh_frame_cache *
-sh_make_stub_cache (frame_info_ptr this_frame)
+sh_make_stub_cache (const frame_info_ptr &this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct sh_frame_cache *cache;
@@ -1966,7 +1990,7 @@ sh_make_stub_cache (frame_info_ptr this_frame)
 }
 
 static void
-sh_stub_this_id (frame_info_ptr this_frame, void **this_cache,
+sh_stub_this_id (const frame_info_ptr &this_frame, void **this_cache,
 		 struct frame_id *this_id)
 {
   struct sh_frame_cache *cache;
@@ -1980,7 +2004,7 @@ sh_stub_this_id (frame_info_ptr this_frame, void **this_cache,
 
 static int
 sh_stub_unwind_sniffer (const struct frame_unwind *self,
-			frame_info_ptr this_frame,
+			const frame_info_ptr &this_frame,
 			void **this_prologue_cache)
 {
   CORE_ADDR addr_in_block;
@@ -2195,8 +2219,6 @@ sh_return_in_first_hidden_param_p (struct gdbarch *gdbarch,
 static struct gdbarch *
 sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  struct gdbarch *gdbarch;
-
   /* If there is already a candidate, use it.  */
   arches = gdbarch_list_lookup_by_info (arches, &info);
   if (arches != NULL)
@@ -2204,8 +2226,8 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* None found, create a new architecture from the information
      provided.  */
-  sh_gdbarch_tdep *tdep = new sh_gdbarch_tdep;
-  gdbarch = gdbarch_alloc (&info, tdep);
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info, gdbarch_tdep_up (new sh_gdbarch_tdep));
 
   set_gdbarch_short_bit (gdbarch, 2 * TARGET_CHAR_BIT);
   set_gdbarch_int_bit (gdbarch, 4 * TARGET_CHAR_BIT);
@@ -2285,7 +2307,8 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       set_gdbarch_fp0_regnum (gdbarch, 25);
       set_gdbarch_num_pseudo_regs (gdbarch, 9);
       set_gdbarch_pseudo_register_read (gdbarch, sh_pseudo_register_read);
-      set_gdbarch_pseudo_register_write (gdbarch, sh_pseudo_register_write);
+      set_gdbarch_deprecated_pseudo_register_write (gdbarch,
+						    sh_pseudo_register_write);
       set_gdbarch_return_value (gdbarch, sh_return_value_fpu);
       set_gdbarch_push_dummy_call (gdbarch, sh_push_dummy_call_fpu);
       break;
@@ -2296,7 +2319,8 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
       set_gdbarch_num_pseudo_regs (gdbarch, 1);
       set_gdbarch_pseudo_register_read (gdbarch, sh_pseudo_register_read);
-      set_gdbarch_pseudo_register_write (gdbarch, sh_pseudo_register_write);
+      set_gdbarch_deprecated_pseudo_register_write (gdbarch,
+						    sh_pseudo_register_write);
       break;
 
     case bfd_mach_sh_dsp:
@@ -2336,7 +2360,8 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       set_gdbarch_fp0_regnum (gdbarch, 25);
       set_gdbarch_num_pseudo_regs (gdbarch, 13);
       set_gdbarch_pseudo_register_read (gdbarch, sh_pseudo_register_read);
-      set_gdbarch_pseudo_register_write (gdbarch, sh_pseudo_register_write);
+      set_gdbarch_deprecated_pseudo_register_write (gdbarch,
+						    sh_pseudo_register_write);
       set_gdbarch_return_value (gdbarch, sh_return_value_fpu);
       set_gdbarch_push_dummy_call (gdbarch, sh_push_dummy_call_fpu);
       break;

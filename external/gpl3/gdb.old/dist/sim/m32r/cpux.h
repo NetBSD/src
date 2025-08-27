@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2023 Free Software Foundation, Inc.
+Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -17,7 +17,8 @@ This file is part of the GNU simulators.
    License for more details.
 
    You should have received a copy of the GNU General Public License along
-   with this program; if not, see <http://www.gnu.org/licenses/>.
+   with this program; if not, write to the Free Software Foundation, Inc.,
+   51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
 
 */
 
@@ -94,7 +95,7 @@ m32rxf_h_psw_set_handler (current_cpu, (x));\
 #define GET_H_LOCK() CPU (h_lock)
 #define SET_H_LOCK(x) (CPU (h_lock) = (x))
   } hardware;
-#define CPU_CGEN_HW(cpu) (& (cpu)->cpu_data.hardware)
+#define CPU_CGEN_HW(cpu) (& M32R_SIM_CPU (cpu)->cpu_data.hardware)
 } M32RXF_CPU_DATA;
 
 /* Cover fns for register access.  */
@@ -428,7 +429,7 @@ struct scache {
   length = 2; \
   f_op1 = EXTRACT_MSB0_UINT (insn, 16, 0, 4); \
   f_r1 = EXTRACT_MSB0_UINT (insn, 16, 4, 4); \
-  f_disp8 = ((((EXTRACT_MSB0_SINT (insn, 16, 8, 8)) << (2))) + (((pc) & (-4)))); \
+  f_disp8 = ((((EXTRACT_MSB0_SINT (insn, 16, 8, 8)) * (4))) + (((pc) & (-4)))); \
 
 #define EXTRACT_IFMT_BC24_VARS \
   UINT f_op1; \
@@ -439,7 +440,7 @@ struct scache {
   length = 4; \
   f_op1 = EXTRACT_MSB0_UINT (insn, 32, 0, 4); \
   f_r1 = EXTRACT_MSB0_UINT (insn, 32, 4, 4); \
-  f_disp24 = ((((EXTRACT_MSB0_SINT (insn, 32, 8, 24)) << (2))) + (pc)); \
+  f_disp24 = ((((EXTRACT_MSB0_SINT (insn, 32, 8, 24)) * (4))) + (pc)); \
 
 #define EXTRACT_IFMT_BEQ_VARS \
   UINT f_op1; \
@@ -454,7 +455,7 @@ struct scache {
   f_r1 = EXTRACT_MSB0_UINT (insn, 32, 4, 4); \
   f_op2 = EXTRACT_MSB0_UINT (insn, 32, 8, 4); \
   f_r2 = EXTRACT_MSB0_UINT (insn, 32, 12, 4); \
-  f_disp16 = ((((EXTRACT_MSB0_SINT (insn, 32, 16, 16)) << (2))) + (pc)); \
+  f_disp16 = ((((EXTRACT_MSB0_SINT (insn, 32, 16, 16)) * (4))) + (pc)); \
 
 #define EXTRACT_IFMT_BEQZ_VARS \
   UINT f_op1; \
@@ -469,7 +470,7 @@ struct scache {
   f_r1 = EXTRACT_MSB0_UINT (insn, 32, 4, 4); \
   f_op2 = EXTRACT_MSB0_UINT (insn, 32, 8, 4); \
   f_r2 = EXTRACT_MSB0_UINT (insn, 32, 12, 4); \
-  f_disp16 = ((((EXTRACT_MSB0_SINT (insn, 32, 16, 16)) << (2))) + (pc)); \
+  f_disp16 = ((((EXTRACT_MSB0_SINT (insn, 32, 16, 16)) * (4))) + (pc)); \
 
 #define EXTRACT_IFMT_CMP_VARS \
   UINT f_op1; \

@@ -1,4 +1,4 @@
-# Copyright 2002-2023 Free Software Foundation, Inc.
+# Copyright 2002-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-if { ![support_displaced_stepping] } { 
-    unsupported "displaced stepping"
-    return -1
-}
+require support_displaced_stepping
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
@@ -129,7 +126,7 @@ mi_gdb_test "-thread-select 2" "\\^done.*" "select first worker thread"
 mi_gdb_test "-gdb-set --thread 3 variable exit_first_thread=1" ".*\\^done" "ask the second thread to exit"
 
 set test "wait for thread exit"
-if { [mi_is_target_remote] } {
+if { [gdb_protocol_is_remote] } {
     # The remote protocol doesn't have support for thread exit
     # notifications.
     unsupported $test

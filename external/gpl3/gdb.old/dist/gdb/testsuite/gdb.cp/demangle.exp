@@ -1,4 +1,4 @@
-# Copyright (C) 1992-2023 Free Software Foundation, Inc.
+# Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests
 
 ### The demangling style we last sent to GDB.
 set current_demangling_style none

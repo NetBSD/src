@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,15 +23,7 @@ if {![istarget *-*-linux*]} {
 }
 
 # Support for XML-output is needed to run this test.
-if {[gdb_skip_xml_test]} {
-    unsupported "mi-info-os.exp"
-    return -1
-}
-
-gdb_exit
-if [mi_gdb_start] {
-    return
-}
+require allow_xml_test
 
 standard_testfile basics.c
 
@@ -39,9 +31,11 @@ if [build_executable "Failed to build $testfile" $testfile $srcfile \
 	debug] {
     return -1;
 }
-if {[mi_gdb_load $binfile] < 0} {
-    return -1
+
+if {[mi_clean_restart $binfile]} {
+    return
 }
+
 # When testing a cross configuration, we need to be sure to first
 # connect to the target.  If we didn't do that, GDB would try running
 # the command against the default run target.  The usual way to do

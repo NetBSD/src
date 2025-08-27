@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,9 +18,7 @@
 # with watchpoints.
 
 
-if ![supports_reverse] {
-    return
-}
+require supports_reverse
 
 standard_testfile
 
@@ -120,7 +118,11 @@ gdb_test "continue" \
     ".*\[Ww\]atchpoint.*ival3.*Old value = 0.*New value = -1.*ival3 = count; ival4 = count;.*" \
     "watchpoint hit in reverse, fifth time"
 
+gdb_test_no_output "disable \$bpnum" "disable non-hw watchpoint"
+
 gdb_test_no_output "set can-use-hw-watchpoints 1" "enable hw watchpoints"
+
+gdb_test_no_output "enable \$bpnum" "enable hw watchpoint"
 
 ###
 ###

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2023 Free Software Foundation, Inc.
+   Copyright 2011-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,9 +17,13 @@
 
 #include <iostream>
 
+int i;
+
 void
 throw_exception_1 (int e)
 {
+  i += 1; /* Finish breakpoint is set here.  */
+  i += 1; /* Break before exception.  */
   throw new int (e);
 }
 
@@ -32,7 +36,6 @@ throw_exception (int e)
 int
 main (void)
 {
-  int i;
   try
     {
       throw_exception_1 (10);

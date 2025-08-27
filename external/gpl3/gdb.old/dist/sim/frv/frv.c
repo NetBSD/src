@@ -1,5 +1,5 @@
 /* frv simulator support code
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
 This file is part of the GNU simulators.
@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "cgen-engine.h"
 #include "cgen-par.h"
 #include "bfd.h"
-#include "gdb/sim-frv.h"
+#include "sim/sim-frv.h"
 #include <math.h>
 #include <stdlib.h>
 
@@ -656,8 +656,6 @@ spr_ccr_get_handler (SIM_CPU *current_cpu)
 void
 spr_ccr_set_handler (SIM_CPU *current_cpu, USI newval)
 {
-  int ccr = newval;
-
   SET_H_ICCR (H_ICCR_ICC3, (newval >> 28) & 0xf);
   SET_H_ICCR (H_ICCR_ICC2, (newval >> 24) & 0xf);
   SET_H_ICCR (H_ICCR_ICC1, (newval >> 20) & 0xf);
@@ -715,8 +713,6 @@ spr_cccr_get_handler (SIM_CPU *current_cpu)
 void
 spr_cccr_set_handler (SIM_CPU *current_cpu, USI newval)
 {
-  int cccr = newval;
-
   SET_H_CCCR (H_CCCR_CC7, (newval >> 14) & 0x3);
   SET_H_CCCR (H_CCCR_CC6, (newval >> 12) & 0x3);
   SET_H_CCCR (H_CCCR_CC5, (newval >> 10) & 0x3);

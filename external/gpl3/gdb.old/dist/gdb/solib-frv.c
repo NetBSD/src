@@ -1,5 +1,5 @@
 /* Handle FR-V (FDPIC) shared libraries for GDB, the GNU Debugger.
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,19 +17,16 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#include "defs.h"
-#include "inferior.h"
+#include "extract-store-integer.h"
 #include "gdbcore.h"
 #include "solib.h"
 #include "solist.h"
 #include "frv-tdep.h"
 #include "objfiles.h"
 #include "symtab.h"
-#include "language.h"
-#include "command.h"
-#include "gdbcmd.h"
 #include "elf/frv.h"
 #include "gdb_bfd.h"
+#include "inferior.h"
 
 /* FR-V pointers are four bytes wide.  */
 enum { FRV_PTR_SIZE = 4 };
@@ -93,7 +90,7 @@ struct int_elf32_fdpic_loadmap {
 static struct int_elf32_fdpic_loadmap *
 fetch_loadmap (CORE_ADDR ldmaddr)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  bfd_endian byte_order = gdbarch_byte_order (current_inferior ()->arch ());
   struct ext_elf32_fdpic_loadmap ext_ldmbuf_partial;
   struct ext_elf32_fdpic_loadmap *ext_ldmbuf;
   struct int_elf32_fdpic_loadmap *int_ldmbuf;
@@ -199,7 +196,7 @@ struct ext_link_map
 
 /* Link map info to include in an allocated so_list entry.  */
 
-struct lm_info_frv : public lm_info_base
+struct lm_info_frv final : public lm_info
 {
   ~lm_info_frv ()
   {
@@ -240,7 +237,7 @@ static void frv_relocate_main_executable (void);
 static CORE_ADDR main_got (void);
 static int enable_break2 (void);
 
-/* Implement the "open_symbol_file_object" target_so_ops method.  */
+/* Implement the "open_symbol_file_object" solib_ops method.  */
 
 static int
 open_symbol_file_object (int from_tty)
@@ -266,7 +263,7 @@ static CORE_ADDR main_lm_addr = 0;
 static CORE_ADDR
 lm_base (void)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  bfd_endian byte_order = gdbarch_byte_order (current_inferior ()->arch ());
   struct bound_minimal_symbol got_sym;
   CORE_ADDR addr;
   gdb_byte buf[FRV_PTR_SIZE];
@@ -307,15 +304,14 @@ lm_base (void)
 }
 
 
-/* Implement the "current_sos" target_so_ops method.  */
+/* Implement the "current_sos" solib_ops method.  */
 
-static struct so_list *
-frv_current_sos (void)
+static intrusive_list<solib>
+frv_current_sos ()
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  bfd_endian byte_order = gdbarch_byte_order (current_inferior ()->arch ());
   CORE_ADDR lm_addr, mgot;
-  struct so_list *sos_head = NULL;
-  struct so_list **sos_next_ptr = &sos_head;
+  intrusive_list<solib> sos;
 
   /* Make sure that the main executable has been relocated.  This is
      required in order to find the address of the global offset table,
@@ -329,7 +325,8 @@ frv_current_sos (void)
      frv_current_sos, and also precedes the call to
      solib_create_inferior_hook().   (See post_create_inferior() in
      infcmd.c.)  */
-  if (main_executable_lm_info == 0 && core_bfd != NULL)
+  if (main_executable_lm_info == 0
+      && current_program_space->core_bfd () != nullptr)
     frv_relocate_main_executable ();
 
   /* Fetch the GOT corresponding to the main executable.  */
@@ -366,7 +363,6 @@ frv_current_sos (void)
       if (got_addr != mgot)
 	{
 	  struct int_elf32_fdpic_loadmap *loadmap;
-	  struct so_list *sop;
 	  CORE_ADDR addr;
 
 	  /* Fetch the load map address.  */
@@ -381,9 +377,8 @@ frv_current_sos (void)
 	      break;
 	    }
 
-	  sop = XCNEW (struct so_list);
-	  lm_info_frv *li = new lm_info_frv;
-	  sop->lm_info = li;
+	  solib *sop = new solib;
+	  auto li = std::make_unique<lm_info_frv> ();
 	  li->map = loadmap;
 	  li->got_value = got_addr;
 	  li->lm_addr = lm_addr;
@@ -400,14 +395,11 @@ frv_current_sos (void)
 	    warning (_("Can't read pathname for link map entry."));
 	  else
 	    {
-	      strncpy (sop->so_name, name_buf.get (),
-		       SO_NAME_MAX_PATH_SIZE - 1);
-	      sop->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-	      strcpy (sop->so_original_name, sop->so_name);
+	      sop->so_name = name_buf.get ();
+	      sop->so_original_name = sop->so_name;
 	    }
 
-	  *sos_next_ptr = sop;
-	  sos_next_ptr = &sop->next;
+	  sos.push_back (*sop);
 	}
       else
 	{
@@ -420,7 +412,7 @@ frv_current_sos (void)
 
   enable_break2 ();
 
-  return sos_head;
+  return sos;
 }
 
 
@@ -472,14 +464,6 @@ enable_break_failure_warning (void)
 	   "and track explicitly loaded dynamic code."));
 }
 
-/* Helper function for gdb_bfd_lookup_symbol.  */
-
-static int
-cmp_name (const asymbol *sym, const void *data)
-{
-  return (strcmp (sym->name, (const char *) data) == 0);
-}
-
 /* Arrange for dynamic linker to hit breakpoint.
 
    The dynamic linkers has, as part of its debugger interface, support
@@ -507,7 +491,7 @@ static int enable_break2_done = 0;
 static int
 enable_break2 (void)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  bfd_endian byte_order = gdbarch_byte_order (current_inferior ()->arch ());
   asection *interp_sect;
 
   if (enable_break2_done)
@@ -560,7 +544,7 @@ enable_break2 (void)
 	  return 0;
 	}
 
-      status = frv_fdpic_loadmap_addresses (target_gdbarch (),
+      status = frv_fdpic_loadmap_addresses (current_inferior ()->arch (),
 					    &interp_loadmap_addr, 0);
       if (status < 0)
 	{
@@ -602,7 +586,12 @@ enable_break2 (void)
 	    interp_plt_sect_low + bfd_section_size (interp_sect);
 	}
 
-      addr = gdb_bfd_lookup_symbol (tmp_bfd.get (), cmp_name, "_dl_debug_addr");
+      addr = (gdb_bfd_lookup_symbol
+	      (tmp_bfd.get (),
+	       [] (const asymbol *sym)
+	       {
+		 return strcmp (sym->name, "_dl_debug_addr") == 0;
+	       }));
 
       if (addr == 0)
 	{
@@ -672,7 +661,7 @@ enable_break2 (void)
       remove_solib_event_breakpoints ();
 
       /* Now (finally!) create the solib breakpoint.  */
-      create_solib_event_breakpoint (target_gdbarch (), addr);
+      create_solib_event_breakpoint (current_inferior ()->arch (), addr);
 
       enable_break2_done = 1;
 
@@ -716,7 +705,7 @@ enable_break (void)
       return 0;
     }
 
-  create_solib_event_breakpoint (target_gdbarch (), entry_point);
+  create_solib_event_breakpoint (current_inferior ()->arch (), entry_point);
 
   solib_debug_printf ("solib event breakpoint placed at entry point: %s",
 		      hex_string_custom (entry_point, 8));
@@ -730,9 +719,8 @@ frv_relocate_main_executable (void)
   CORE_ADDR exec_addr, interp_addr;
   struct int_elf32_fdpic_loadmap *ldm;
   int changed;
-  struct obj_section *osect;
 
-  status = frv_fdpic_loadmap_addresses (target_gdbarch (),
+  status = frv_fdpic_loadmap_addresses (current_inferior ()->arch (),
 					&interp_addr, &exec_addr);
 
   if (status < 0 || (exec_addr == 0 && interp_addr == 0))
@@ -754,13 +742,13 @@ frv_relocate_main_executable (void)
   section_offsets new_offsets (objf->section_offsets.size ());
   changed = 0;
 
-  ALL_OBJFILE_OSECTIONS (objf, osect)
+  for (obj_section *osect : objf->sections ())
     {
       CORE_ADDR orig_addr, addr, offset;
       int osect_idx;
       int seg;
       
-      osect_idx = osect - objf->sections;
+      osect_idx = osect - objf->sections_start;
 
       /* Current address of section.  */
       addr = osect->addr ();
@@ -813,7 +801,7 @@ frv_solib_create_inferior_hook (int from_tty)
 }
 
 static void
-frv_clear_solib (void)
+frv_clear_solib (program_space *pspace)
 {
   lm_base_cache = 0;
   enable_break2_done = 0;
@@ -824,19 +812,10 @@ frv_clear_solib (void)
 }
 
 static void
-frv_free_so (struct so_list *so)
-{
-  lm_info_frv *li = (lm_info_frv *) so->lm_info;
-
-  delete li;
-}
-
-static void
-frv_relocate_section_addresses (struct so_list *so,
-				 struct target_section *sec)
+frv_relocate_section_addresses (solib &so, target_section *sec)
 {
   int seg;
-  lm_info_frv *li = (lm_info_frv *) so->lm_info;
+  auto *li = gdb::checked_static_cast<lm_info_frv *> (so.lm_info.get ());
   int_elf32_fdpic_loadmap *map = li->map;
 
   for (seg = 0; seg < map->nsegs; seg++)
@@ -874,10 +853,10 @@ main_got (void)
 CORE_ADDR
 frv_fdpic_find_global_pointer (CORE_ADDR addr)
 {
-  for (struct so_list *so : current_program_space->solibs ())
+  for (const solib &so : current_program_space->solibs ())
     {
       int seg;
-      lm_info_frv *li = (lm_info_frv *) so->lm_info;
+      auto *li = gdb::checked_static_cast<lm_info_frv *> (so.lm_info.get ());
       int_elf32_fdpic_loadmap *map = li->map;
 
       for (seg = 0; seg < map->nsegs; seg++)
@@ -931,12 +910,12 @@ frv_fdpic_find_canonical_descriptor (CORE_ADDR entry_point)
      in list of shared objects.  */
   if (addr == 0)
     {
-      for (struct so_list *so : current_program_space->solibs ())
+      for (const solib &so : current_program_space->solibs ())
 	{
-	  lm_info_frv *li = (lm_info_frv *) so->lm_info;
+	  auto *li = gdb::checked_static_cast<lm_info_frv *> (so.lm_info.get ());
 
 	  addr = find_canonical_descriptor_in_load_object
-		   (entry_point, got_value, name, so->abfd, li);
+		   (entry_point, got_value, name, so.abfd.get(), li);
 
 	  if (addr != 0)
 	    break;
@@ -951,7 +930,7 @@ find_canonical_descriptor_in_load_object
   (CORE_ADDR entry_point, CORE_ADDR got_value, const char *name, bfd *abfd,
    lm_info_frv *lm)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  bfd_endian byte_order = gdbarch_byte_order (current_inferior ()->arch ());
   arelent *rel;
   unsigned int i;
   CORE_ADDR addr = 0;
@@ -1083,11 +1062,11 @@ frv_fetch_objfile_link_map (struct objfile *objfile)
 
   /* The other link map addresses may be found by examining the list
      of shared libraries.  */
-  for (struct so_list *so : current_program_space->solibs ())
+  for (const solib &so : current_program_space->solibs ())
     {
-      lm_info_frv *li = (lm_info_frv *) so->lm_info;
+      auto *li = gdb::checked_static_cast<lm_info_frv *> (so.lm_info.get ());
 
-      if (so->objfile == objfile)
+      if (so.objfile == objfile)
 	return li->lm_addr;
     }
 
@@ -1095,10 +1074,9 @@ frv_fetch_objfile_link_map (struct objfile *objfile)
   return 0;
 }
 
-const struct target_so_ops frv_so_ops =
+const solib_ops frv_so_ops =
 {
   frv_relocate_section_addresses,
-  frv_free_so,
   nullptr,
   frv_clear_solib,
   frv_solib_create_inferior_hook,

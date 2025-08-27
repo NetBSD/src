@@ -1,6 +1,6 @@
 /* load.c --- loading object files into the RL78 simulator.
 
-   Copyright (C) 2005-2023 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of the GNU simulators.
@@ -28,7 +28,7 @@
 
 #include "libiberty.h"
 #include "bfd.h"
-#include "elf-bfd.h"
+#include "bfd/elf-bfd.h"
 #include "elf/rl78.h"
 #include "cpu.h"
 #include "mem.h"
@@ -149,7 +149,7 @@ rl78_load (bfd *prog, host_callback *callbacks, const char * const simname)
 	  continue;
 	}
 
-      if (bfd_bread (buf, size, prog) != size)
+      if (bfd_read (buf, size, prog) != size)
 	{
 	  fprintf (stderr, "%s: Failed to read %" PRIx64 " bytes\n",
 		   simname, (uint64_t) size);

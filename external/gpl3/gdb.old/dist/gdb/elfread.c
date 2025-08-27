@@ -1,6 +1,6 @@
 /* Read ELF (Executable and Linking Format) object files for GDB.
 
-   Copyright (C) 1991-2023 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    Written by Fred Fish at Cygnus Support.
 
@@ -19,18 +19,17 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "bfd.h"
 #include "elf-bfd.h"
 #include "elf/common.h"
 #include "elf/internal.h"
 #include "elf/mips.h"
+#include "extract-store-integer.h"
 #include "symtab.h"
 #include "symfile.h"
 #include "objfiles.h"
 #include "stabsread.h"
 #include "demangle.h"
-#include "psympriv.h"
 #include "filenames.h"
 #include "probe.h"
 #include "arch-utils.h"
@@ -42,15 +41,17 @@
 #include "regcache.h"
 #include "bcache.h"
 #include "gdb_bfd.h"
-#include "build-id.h"
 #include "location.h"
 #include "auxv.h"
 #include "mdebugread.h"
 #include "ctfread.h"
-#include "gdbsupport/gdb_string_view.h"
+#include <string_view>
 #include "gdbsupport/scoped_fd.h"
-#include "debuginfod-support.h"
 #include "dwarf2/public.h"
+#include "cli/cli-cmds.h"
+
+/* Whether ctf should always be read, or only if no dwarf is present.  */
+static bool always_read_ctf;
 
 /* The struct elfinfo is available only during ELF symbol table and
    psymtab reading.  It is destroyed at the completion of psymtab-reading.
@@ -194,8 +195,8 @@ elf_locate_sections (asection *sectp, struct elfinfo *ei)
 
 static struct minimal_symbol *
 record_minimal_symbol (minimal_symbol_reader &reader,
-		       gdb::string_view name, bool copy_name,
-		       CORE_ADDR address,
+		       std::string_view name, bool copy_name,
+		       unrelocated_addr address,
 		       enum minimal_symbol_type ms_type,
 		       asection *bfd_section, struct objfile *objfile)
 {
@@ -203,23 +204,20 @@ record_minimal_symbol (minimal_symbol_reader &reader,
 
   if (ms_type == mst_text || ms_type == mst_file_text
       || ms_type == mst_text_gnu_ifunc)
-    address = gdbarch_addr_bits_remove (gdbarch, address);
+    address
+      = unrelocated_addr (gdbarch_addr_bits_remove (gdbarch,
+						    CORE_ADDR (address)));
 
   /* We only setup section information for allocatable sections.  Usually
      we'd only expect to find msymbols for allocatable sections, but if the
      ELF is malformed then this might not be the case.  In that case don't
      create an msymbol that references an uninitialised section object.  */
   int section_index = 0;
-  if ((bfd_section_flags (bfd_section) & SEC_ALLOC) == SEC_ALLOC)
+  if ((bfd_section_flags (bfd_section) & SEC_ALLOC) == SEC_ALLOC
+      || bfd_section == bfd_abs_section_ptr)
     section_index = gdb_bfd_section_index (objfile->obfd.get (), bfd_section);
 
-  struct minimal_symbol *result
-    = reader.record_full (name, copy_name, address, ms_type, section_index);
-  if ((objfile->flags & OBJF_MAINLINE) == 0
-      && (ms_type == mst_data || ms_type == mst_bss))
-    result->maybe_copied = 1;
-
-  return result;
+  return reader.record_full (name, copy_name, address, ms_type, section_index);
 }
 
 /* Read the symbol table of an ELF file.
@@ -334,7 +332,8 @@ elf_symtab_read (minimal_symbol_reader &reader,
 
 	  msym = record_minimal_symbol
 	    (reader, sym->name, copy_names,
-	     symaddr, mst_solib_trampoline, sect, objfile);
+	     unrelocated_addr (symaddr),
+	     mst_solib_trampoline, sect, objfile);
 	  if (msym != NULL)
 	    {
 	      msym->filename = filesymname;
@@ -473,7 +472,7 @@ elf_symtab_read (minimal_symbol_reader &reader,
 	      continue;	/* Skip this symbol.  */
 	    }
 	  msym = record_minimal_symbol
-	    (reader, sym->name, copy_names, symaddr,
+	    (reader, sym->name, copy_names, unrelocated_addr (symaddr),
 	     ms_type, sym->section, objfile);
 
 	  if (msym)
@@ -504,9 +503,9 @@ elf_symtab_read (minimal_symbol_reader &reader,
 		  && !is_plt
 		  && (elf_sym->version & VERSYM_HIDDEN) == 0)
 		record_minimal_symbol (reader,
-				       gdb::string_view (sym->name, len),
-				       true, symaddr, ms_type, sym->section,
-				       objfile);
+				       std::string_view (sym->name, len),
+				       true, unrelocated_addr (symaddr),
+				       ms_type, sym->section, objfile);
 	      else if (is_plt)
 		{
 		  /* For @plt symbols, also record a trampoline to the
@@ -518,8 +517,9 @@ elf_symtab_read (minimal_symbol_reader &reader,
 		      struct minimal_symbol *mtramp;
 
 		      mtramp = record_minimal_symbol
-			(reader, gdb::string_view (sym->name, len), true,
-			 symaddr, mst_solib_trampoline, sym->section, objfile);
+			(reader, std::string_view (sym->name, len), true,
+			 unrelocated_addr (symaddr),
+			 mst_solib_trampoline, sym->section, objfile);
 		      if (mtramp)
 			{
 			  mtramp->set_size (msym->size());
@@ -637,8 +637,8 @@ elf_rel_plt_read (minimal_symbol_reader &reader,
       string_buffer.append (got_suffix, got_suffix + got_suffix_len);
 
       msym = record_minimal_symbol (reader, string_buffer,
-				    true, address, mst_slot_got_plt,
-				    msym_section, objfile);
+				    true, unrelocated_addr (address),
+				    mst_slot_got_plt, msym_section, objfile);
       if (msym)
 	msym->set_size (ptr_size);
     }
@@ -718,6 +718,9 @@ elf_gnu_ifunc_record_cache (const char *name, CORE_ADDR addr)
   if (len > 4 && strcmp (target_name + len - 4, "@plt") == 0)
     return 0;
 
+  if (strcmp (target_name, "_PROCEDURE_LINKAGE_TABLE_") == 0)
+    return 0;
+
   htab = elf_objfile_gnu_ifunc_cache_data.get (objfile);
   if (htab == NULL)
     {
@@ -776,7 +779,7 @@ elf_gnu_ifunc_resolve_by_cache (const char *name, CORE_ADDR *addr_p)
      To search other namespaces, we would need to provide context, e.g. in
      form of an objfile in that namespace.  */
   gdbarch_iterate_over_objfiles_in_search_order
-    (target_gdbarch (),
+    (current_inferior ()->arch (),
      [name, &addr_p, &found] (struct objfile *objfile)
        {
 	 htab_t htab;
@@ -830,7 +833,7 @@ elf_gnu_ifunc_resolve_by_got (const char *name, CORE_ADDR *addr_p)
      To search other namespaces, we would need to provide context, e.g. in
      form of an objfile in that namespace.  */
   gdbarch_iterate_over_objfiles_in_search_order
-    (target_gdbarch (),
+    (current_inferior ()->arch (),
      [name, name_got_plt, &addr_p, &found] (struct objfile *objfile)
        {
 	 bfd *obfd = objfile->obfd.get ();
@@ -922,9 +925,9 @@ elf_gnu_ifunc_resolve_addr (struct gdbarch *gdbarch, CORE_ADDR pc)
   else
     name_at_pc = NULL;
 
-  function = allocate_value (func_func_type);
-  VALUE_LVAL (function) = lval_memory;
-  set_value_address (function, pc);
+  function = value::allocate (func_func_type);
+  function->set_lval (lval_memory);
+  function->set_address (pc);
 
   /* STT_GNU_IFUNC resolver functions usually receive the HWCAP vector as
      parameter.  FUNCTION is the function entry address.  ADDRESS may be a
@@ -962,11 +965,11 @@ elf_gnu_ifunc_resolver_stop (code_breakpoint *b)
        b_return = b_return->related_breakpoint)
     {
       gdb_assert (b_return->type == bp_gnu_ifunc_resolver_return);
-      gdb_assert (b_return->loc != NULL && b_return->loc->next == NULL);
+      gdb_assert (b_return->has_single_location ());
       gdb_assert (frame_id_p (b_return->frame_id));
 
       if (b_return->thread == thread_id
-	  && b_return->loc->requested_address == prev_pc
+	  && b_return->first_loc ().requested_address == prev_pc
 	  && b_return->frame_id == prev_frame_id)
 	break;
     }
@@ -986,8 +989,6 @@ elf_gnu_ifunc_resolver_stop (code_breakpoint *b)
 				    prev_frame_id,
 				    bp_gnu_ifunc_resolver_return).release ();
 
-      /* set_momentary_breakpoint invalidates PREV_FRAME.  */
-      prev_frame = NULL;
 
       /* Add new b_return to the ring list b->related_breakpoint.  */
       gdb_assert (b_return->related_breakpoint == b_return);
@@ -1028,18 +1029,18 @@ elf_gnu_ifunc_resolver_return_stop (code_breakpoint *b)
 			    "gnu-indirect-function breakpoint type %d"),
 			  (int) b->type);
 	}
-      b = (code_breakpoint *) b_next;
+      b = gdb::checked_static_cast<code_breakpoint *> (b_next);
     }
   gdb_assert (b->type == bp_gnu_ifunc_resolver);
-  gdb_assert (b->loc->next == NULL);
+  gdb_assert (b->has_single_location ());
 
-  func_func = allocate_value (func_func_type);
-  VALUE_LVAL (func_func) = lval_memory;
-  set_value_address (func_func, b->loc->related_address);
+  func_func = value::allocate (func_func_type);
+  func_func->set_lval (lval_memory);
+  func_func->set_address (b->first_loc ().related_address);
 
-  value = allocate_value (value_type);
-  gdbarch_return_value (gdbarch, func_func, value_type, regcache,
-			value_contents_raw (value).data (), NULL);
+  value = value::allocate (value_type);
+  gdbarch_return_value_as_value (gdbarch, func_func, value_type, regcache,
+				 &value, NULL);
   resolved_address = value_as_address (value);
   resolved_pc = gdbarch_convert_from_func_ptr_addr
     (gdbarch, resolved_address, current_inferior ()->top_target ());
@@ -1195,8 +1196,10 @@ elf_symfile_read_dwarf2 (struct objfile *objfile,
 {
   bool has_dwarf2 = true;
 
-  if (dwarf2_has_info (objfile, NULL, true))
-    dwarf2_initialize_objfile (objfile);
+  if (dwarf2_initialize_objfile (objfile, nullptr, true))
+    {
+      /* Nothing.  */
+    }
   /* If the file has its own symbol tables it has no separate debug
      info.  `.dynsym'/`.symtab' go to MSYMBOLS, `.debug_info' goes to
      SYMTABS/PSYMTABS.	`.gnu_debuglink' may no longer be present with
@@ -1213,51 +1216,10 @@ elf_symfile_read_dwarf2 (struct objfile *objfile,
 	   && objfile->separate_debug_objfile == NULL
 	   && objfile->separate_debug_objfile_backlink == NULL)
     {
-      std::string debugfile = find_separate_debug_file_by_buildid (objfile);
-
-      if (debugfile.empty ())
-	debugfile = find_separate_debug_file_by_debuglink (objfile);
-
-      if (!debugfile.empty ())
-	{
-	  gdb_bfd_ref_ptr debug_bfd (symfile_bfd_open (debugfile.c_str ()));
-
-	  symbol_file_add_separate (debug_bfd, debugfile.c_str (),
-				    symfile_flags, objfile);
-	}
+      if (objfile->find_and_add_separate_symbol_file (symfile_flags))
+	gdb_assert (objfile->separate_debug_objfile != nullptr);
       else
-	{
-	  has_dwarf2 = false;
-	  const struct bfd_build_id *build_id
-	    = build_id_bfd_get (objfile->obfd.get ());
-	  const char *filename = bfd_get_filename (objfile->obfd.get ());
-
-	  if (build_id != nullptr)
-	    {
-	      gdb::unique_xmalloc_ptr<char> symfile_path;
-	      scoped_fd fd (debuginfod_debuginfo_query (build_id->data,
-							build_id->size,
-							filename,
-							&symfile_path));
-
-	      if (fd.get () >= 0)
-		{
-		  /* File successfully retrieved from server.  */
-		  gdb_bfd_ref_ptr debug_bfd (symfile_bfd_open (symfile_path.get ()));
-
-		  if (debug_bfd == nullptr)
-		    warning (_("File \"%s\" from debuginfod cannot be opened as bfd"),
-			     filename);
-		  else if (build_id_verify (debug_bfd.get (), build_id->size,
-					    build_id->data))
-		    {
-		      symbol_file_add_separate (debug_bfd, symfile_path.get (),
-						symfile_flags, objfile);
-		      has_dwarf2 = true;
-		    }
-		}
-	    }
-	}
+	has_dwarf2 = false;
     }
 
   return has_dwarf2;
@@ -1340,13 +1302,23 @@ elf_symfile_read (struct objfile *objfile, symfile_add_flags symfile_flags)
 				bfd_section_size (str_sect));
     }
 
-  bool has_dwarf2 = elf_symfile_read_dwarf2 (objfile, symfile_flags);
-
   /* Read the CTF section only if there is no DWARF info.  */
-  if (!has_dwarf2 && ei.ctfsect)
+  if (always_read_ctf && ei.ctfsect)
     {
       elfctf_build_psymtabs (objfile);
     }
+
+  bool has_dwarf2 = elf_symfile_read_dwarf2 (objfile, symfile_flags);
+
+  /* Read the CTF section only if there is no DWARF info.  */
+  if (!always_read_ctf && !has_dwarf2 && ei.ctfsect)
+    {
+      elfctf_build_psymtabs (objfile);
+    }
+
+  /* Copy relocations are used by some ABIs using the ELF format, so
+     set the objfile flag indicating this fact.  */
+  objfile->object_format_has_copy_relocs = true;
 }
 
 /* Initialize anything that needs initializing when a completely new symbol
@@ -1373,10 +1345,6 @@ elf_symfile_finish (struct objfile *objfile)
 static void
 elf_symfile_init (struct objfile *objfile)
 {
-  /* ELF objects may be reordered, so set OBJF_REORDERED.  If we
-     find this causes a significant slowdown in gdb then we could
-     set it in the debug symbol readers only when necessary.  */
-  objfile->flags |= OBJF_REORDERED;
 }
 
 /* Implementation of `sym_get_probes', as documented in symfile.h.  */
@@ -1440,4 +1408,16 @@ _initialize_elfread ()
   add_symtab_fns (bfd_target_elf_flavour, &elf_sym_fns);
 
   gnu_ifunc_fns_p = &elf_gnu_ifunc_fns;
+
+  /* Add "set always-read-ctf on/off".  */
+  add_setshow_boolean_cmd ("always-read-ctf", class_support, &always_read_ctf,
+			   _("\
+Set whether CTF is always read."),
+			   _("\
+Show whether CTF is always read."),
+			   _("\
+When off, CTF is only read if DWARF is not present.  When on, CTF is read\
+ regardless of whether DWARF is present."),
+			   nullptr /* set_func */, nullptr /* show_func */,
+			   &setlist, &showlist);
 }
