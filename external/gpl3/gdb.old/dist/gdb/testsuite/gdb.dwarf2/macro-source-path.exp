@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,7 @@
 
 load_lib dwarf.exp
 
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 standard_testfile .c
 
@@ -127,6 +125,7 @@ proc do_test { test_name lines_version DW_AT_name main_file_idx directories
 			# PR 29034).  We're not trying to replicate that here,
 			# this is not in the scope of this test.
 			define 0 "ONE 1"
+			define_strp 0 "THREE 3"
 			start_file 0 $::main_file_idx
 			    # A macro defined at line 1 of the main file.
 			    define 1 "TWO 2"
@@ -140,12 +139,24 @@ proc do_test { test_name lines_version DW_AT_name main_file_idx directories
 		return
 	    }
 
+	    with_complaints 5 {
+		gdb_test_multiple "print main" "no complaints" {
+		    -wrap -re "During symbol reading: .*" {
+			fail $gdb_test_name
+		    }
+		    -wrap -re "" {
+			pass $gdb_test_name
+		    }
+		}
+	    }
+
 	    if ![runto_main] {
 		return
 	    }
 
 	    gdb_test "print ONE" " = 1"
 	    gdb_test "print TWO" " = 2"
+	    gdb_test "print THREE" " = 3"
 	}
     }
 }

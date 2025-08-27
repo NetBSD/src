@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 load_lib "ada.exp"
 
-if { [skip_ada_tests] } { return -1 }
+require allow_ada_tests
 
 standard_ada_testfile foo_o224_021
 
@@ -34,7 +34,7 @@ foreach_with_prefix scenario {all minimal} {
 
     gdb_run_cmd
     gdb_test "" \
-	"Breakpoint $decimal, ($hex in )?foo_o224_021\\.child1\\.child2 \\(s=\\.\\.\\.\\).*" \
+	"Breakpoint ($decimal|$bkptno_num_re), ($hex in )?foo_o224_021\\.child1\\.child2 \\(s=\\.\\.\\.\\).*" \
 	"run to foo_o224_021.child1.child2"
 
     set opt_addr_in "($hex in)?"

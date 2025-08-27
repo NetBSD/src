@@ -1,6 +1,6 @@
 /* Target dependent code for GNU/Linux ARC.
 
-   Copyright 2020-2023 Free Software Foundation, Inc.
+   Copyright 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,7 @@ void arc_linux_supply_gregset (const struct regset *regset,
 			       struct regcache *regcache, int regnum,
 			       const void *gregs, size_t size);
 
-/* Reads regsiters from the NT_ARC_V2 data array into the regcache.  */
+/* Reads registers from the NT_ARC_V2 data array into the regcache.  */
 
 void arc_linux_supply_v2_regset (const struct regset *regset,
 				 struct regcache *regcache, int regnum,

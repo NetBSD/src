@@ -1,6 +1,6 @@
 /* Low-level DWARF 2 reading code
 
-   Copyright (C) 1994-2023 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -27,55 +27,73 @@
 #ifndef GDB_DWARF2_COMP_UNIT_H
 #define GDB_DWARF2_COMP_UNIT_H
 
+#include "dwarf2.h"
 #include "dwarf2/leb.h"
-#include "gdbtypes.h"
+#include "dwarf2/types.h"
+
+struct dwarf2_per_objfile;
 
 /* The data in a compilation unit header, after target2host
    translation, looks like this.  */
 struct comp_unit_head
 {
-  unsigned int length;
-  unsigned char version;
-  unsigned char addr_size;
-  unsigned char signed_addr_p;
-  sect_offset abbrev_sect_off;
+private:
+  unsigned int m_length = 0;
+public:
+  unsigned char version = 0;
+  unsigned char addr_size = 0;
+  unsigned char signed_addr_p = 0;
+  sect_offset abbrev_sect_off {};
 
   /* Size of file offsets; either 4 or 8.  */
-  unsigned int offset_size;
+  unsigned int offset_size = 0;
 
   /* Size of the length field; either 4 or 12.  */
-  unsigned int initial_length_size;
+  unsigned int initial_length_size = 0;
 
-  enum dwarf_unit_type unit_type;
+  enum dwarf_unit_type unit_type {};
 
   /* Offset to first die in this cu from the start of the cu.
      This will be the first byte following the compilation unit header.  */
-  cu_offset first_die_cu_offset;
+  cu_offset first_die_cu_offset {};
 
   /* Offset to the first byte of this compilation unit header in the
      .debug_info section, for resolving relative reference dies.  */
-  sect_offset sect_off;
+  sect_offset sect_off {};
 
   /* For types, offset in the type's DIE of the type defined by this TU.  */
-  cu_offset type_cu_offset_in_tu;
+  cu_offset type_cu_offset_in_tu {};
 
   /* 64-bit signature of this unit. For type units, it denotes the signature of
      the type (DW_UT_type in DWARF 4, additionally DW_UT_split_type in DWARF 5).
      Also used in DWARF 5, to denote the dwo id when the unit type is
      DW_UT_skeleton or DW_UT_split_compile.  */
-  ULONGEST signature;
+  ULONGEST signature = 0;
 
-  /* Return the total length of the CU described by this header.  */
-  unsigned int get_length () const
+  void set_length (unsigned int length)
   {
-    return initial_length_size + length;
+    m_length = length;
+  }
+
+  /* Return the total length of the CU described by this header, including the
+     initial length field.  */
+  unsigned int get_length_with_initial () const
+  {
+    return m_length + initial_length_size;
+  }
+
+  /* Return the total length of the CU described by this header, excluding the
+     initial length field.  */
+  unsigned int get_length_without_initial () const
+  {
+    return m_length;
   }
 
   /* Return TRUE if OFF is within this CU.  */
   bool offset_in_cu_p (sect_offset off) const
   {
     sect_offset bottom = sect_off;
-    sect_offset top = sect_off + get_length ();
+    sect_offset top = sect_off + get_length_with_initial ();
     return off >= bottom && off < top;
   }
 
@@ -90,8 +108,8 @@ struct comp_unit_head
   }
 
   /* Read an address from BUF.  BYTES_READ is updated.  */
-  CORE_ADDR read_address (bfd *abfd, const gdb_byte *buf,
-			  unsigned int *bytes_read) const;
+  unrelocated_addr read_address (bfd *abfd, const gdb_byte *buf,
+				 unsigned int *bytes_read) const;
 };
 
 /* Expected enum dwarf_unit_type for read_comp_unit_head.  */

@@ -1,4 +1,4 @@
---  Copyright 2022-2023 Free Software Foundation, Inc.
+--  Copyright 2022-2024 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -18,4 +18,5 @@ with Callee;
 procedure Caller is
 begin
    Callee;
-end Caller;
+end Caller;    -- CALLEE_LOC, this is where the inlined callee breakpoint
+               -- is located.

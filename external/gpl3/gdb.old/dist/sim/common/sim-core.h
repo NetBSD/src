@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -23,6 +23,7 @@
 #ifndef SIM_CORE_H
 #define SIM_CORE_H
 
+#include "symcat.h"
 
 /* core signals (error conditions)
    Define SIM_CORE_SIGNAL to catch these signals - see sim-core.c for
@@ -39,7 +40,7 @@ typedef void (SIM_CORE_SIGNAL_FN)
      (SIM_DESC sd, sim_cpu *cpu, sim_cia cia, unsigned map, int nr_bytes,
       address_word addr, transfer_type transfer, sim_core_signals sig);
 
-extern SIM_CORE_SIGNAL_FN sim_core_signal;
+extern SIM_CORE_SIGNAL_FN sim_core_signal ATTRIBUTE_NORETURN;
 
 
 /* basic types */

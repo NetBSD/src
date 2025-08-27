@@ -18,6 +18,7 @@
 
 #include "defs.h"
 #include "netbsd-tdep.h"
+#include "extract-store-integer.h"
 #include "osabi.h"
 #include "riscv-tdep.h"
 #include "riscv-netbsd-tdep.h"
@@ -115,7 +116,7 @@ riscv_nbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
 static void
 riscv_nbsd_sigframe_init (const struct tramp_frame *self,
-			  frame_info_ptr this_frame,
+			  const frame_info_ptr& this_frame,
 			  struct trad_frame_cache *this_cache,
 			  CORE_ADDR func)
 {

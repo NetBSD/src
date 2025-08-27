@@ -1,5 +1,5 @@
 /* BFD back-end for Zilog Z800n COFF binaries.
-   Copyright (C) 1992-2022 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
@@ -193,16 +193,28 @@ reloc_processing (arelent *relent,
   relent->address -= section->vma;
 }
 
-static void
+static bool
 extra_case (bfd *in_abfd,
 	    struct bfd_link_info *link_info,
 	    struct bfd_link_order *link_order,
 	    arelent *reloc,
 	    bfd_byte *data,
-	    unsigned int *src_ptr,
-	    unsigned int *dst_ptr)
+	    size_t *src_ptr,
+	    size_t *dst_ptr)
 {
   asection * input_section = link_order->u.indirect.section;
+  bfd_size_type end = bfd_get_section_limit_octets (in_abfd, input_section);
+  bfd_size_type reloc_size = bfd_get_reloc_size (reloc->howto);
+
+  if (*src_ptr > end
+      || reloc_size > end - *src_ptr)
+    {
+      link_info->callbacks->einfo
+	/* xgettext:c-format */
+	(_("%X%P: %pB(%pA): relocation \"%pR\" goes out of range\n"),
+	 in_abfd, input_section, reloc);
+      return false;
+    }
 
   switch (reloc->howto->type)
     {
@@ -210,8 +222,8 @@ extra_case (bfd *in_abfd,
       bfd_put_8 (in_abfd,
 		 bfd_coff_reloc16_get_value (reloc, link_info, input_section),
 		 data + *dst_ptr);
-      (*dst_ptr) += 1;
-      (*src_ptr) += 1;
+      *dst_ptr += 1;
+      *src_ptr += 1;
       break;
 
     case R_IMM32:
@@ -234,27 +246,26 @@ extra_case (bfd *in_abfd,
 	  dst = (dst & 0xffff) | ((dst & 0xff0000) << 8) | 0x80000000;
 	  bfd_put_32 (in_abfd, dst, data + *dst_ptr);
 	}
-      (*dst_ptr) += 4;
-      (*src_ptr) += 4;
+      *dst_ptr += 4;
+      *src_ptr += 4;
       break;
 
     case R_IMM4L:
       bfd_put_8 (in_abfd,
 		 ((bfd_get_8 (in_abfd, data + *dst_ptr) & 0xf0)
-		  | (0x0f
-		     & bfd_coff_reloc16_get_value (reloc, link_info,
-						   input_section))),
+		  | (0x0f & bfd_coff_reloc16_get_value (reloc, link_info,
+							input_section))),
 		 data + *dst_ptr);
-      (*dst_ptr) += 1;
-      (*src_ptr) += 1;
+      *dst_ptr += 1;
+      *src_ptr += 1;
       break;
 
     case R_IMM16:
       bfd_put_16 (in_abfd,
 		  bfd_coff_reloc16_get_value (reloc, link_info, input_section),
 		  data + *dst_ptr);
-      (*dst_ptr) += 2;
-      (*src_ptr) += 2;
+      *dst_ptr += 2;
+      *src_ptr += 2;
       break;
 
     case R_JR:
@@ -264,21 +275,22 @@ extra_case (bfd *in_abfd,
 	bfd_vma dot = (*dst_ptr
 		       + input_section->output_offset
 		       + input_section->output_section->vma);
-	int gap = dst - dot - 1;  /* -1, since we're in the odd byte of the
-				     word and the pc's been incremented.  */
+	/* -1, since we're in the odd byte of the word and the pc has
+	   been incremented.  */
+	bfd_signed_vma gap = dst - dot - 1;
 
-	if (gap & 1)
-	  abort ();
-	gap /= 2;
-	if (gap > 127 || gap < -128)
-	  (*link_info->callbacks->reloc_overflow)
-	    (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
-	     reloc->howto->name, reloc->addend, input_section->owner,
-	     input_section, reloc->address);
+	if ((gap & 1) != 0 || gap > 254 || gap < -256)
+	  {
+	    link_info->callbacks->reloc_overflow
+	      (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+	       reloc->howto->name, reloc->addend, input_section->owner,
+	       input_section, reloc->address);
+	    return false;
+	  }
 
-	bfd_put_8 (in_abfd, gap, data + *dst_ptr);
-	(*dst_ptr)++;
-	(*src_ptr)++;
+	bfd_put_8 (in_abfd, gap / 2, data + *dst_ptr);
+	*dst_ptr += 1;
+	*src_ptr += 1;
 	break;
       }
 
@@ -289,24 +301,23 @@ extra_case (bfd *in_abfd,
 	bfd_vma dot = (*dst_ptr
 		       + input_section->output_offset
 		       + input_section->output_section->vma);
-	int gap = dst - dot - 1;  /* -1, since we're in the odd byte of the
-				     word and the pc's been incremented.  */
+	bfd_signed_vma gap = dst - dot - 1;
 
-	if (gap & 1)
-	  abort ();
-	gap /= 2;
-
-	if (gap > 0 || gap < -127)
-	  (*link_info->callbacks->reloc_overflow)
-	    (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
-	     reloc->howto->name, reloc->addend, input_section->owner,
-	     input_section, reloc->address);
+	if ((gap & 1) != 0 || gap > 0 || gap < -254)
+	  {
+	    link_info->callbacks->reloc_overflow
+	      (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+	       reloc->howto->name, reloc->addend, input_section->owner,
+	       input_section, reloc->address);
+	    return false;
+	  }
 
 	bfd_put_8 (in_abfd,
-		   (bfd_get_8 ( in_abfd, data + *dst_ptr) & 0x80) + (-gap & 0x7f),
+		   ((bfd_get_8 (in_abfd, data + *dst_ptr) & 0x80)
+		    + (-gap / 2 & 0x7f)),
 		   data + *dst_ptr);
-	(*dst_ptr)++;
-	(*src_ptr)++;
+	*dst_ptr += 1;
+	*src_ptr += 1;
 	break;
       }
 
@@ -317,22 +328,23 @@ extra_case (bfd *in_abfd,
 	bfd_vma dot = (*dst_ptr
 		       + input_section->output_offset
 		       + input_section->output_section->vma);
-	int gap = dst - dot - 2;
+	bfd_signed_vma gap = dst - dot - 2;
 
-	if (gap & 1)
-	  abort ();
-	if (gap > 4096 || gap < -4095)
-	  (*link_info->callbacks->reloc_overflow)
-	    (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
-	     reloc->howto->name, reloc->addend, input_section->owner,
-	     input_section, reloc->address);
+	if ((gap & 1) != 0 || gap > 4096 || gap < -4095)
+	  {
+	    link_info->callbacks->reloc_overflow
+	      (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+	       reloc->howto->name, reloc->addend, input_section->owner,
+	       input_section, reloc->address);
+	    return false;
+	  }
 
-	gap /= 2;
 	bfd_put_16 (in_abfd,
-		    (bfd_get_16 ( in_abfd, data + *dst_ptr) & 0xf000) | (-gap & 0x0fff),
+		    ((bfd_get_16 (in_abfd, data + *dst_ptr) & 0xf000)
+		     | (-gap / 2 & 0x0fff)),
 		    data + *dst_ptr);
-	(*dst_ptr) += 2;
-	(*src_ptr) += 2;
+	*dst_ptr += 2;
+	*src_ptr += 2;
 	break;
       }
 
@@ -343,23 +355,31 @@ extra_case (bfd *in_abfd,
 	bfd_vma dot = (*dst_ptr
 		       + input_section->output_offset
 		       + input_section->output_section->vma);
-	int gap = dst - dot - 2;
+	bfd_signed_vma gap = dst - dot - 2;
 
 	if (gap > 32767 || gap < -32768)
-	  (*link_info->callbacks->reloc_overflow)
-	    (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
-	     reloc->howto->name, reloc->addend, input_section->owner,
-	     input_section, reloc->address);
+	  {
+	    link_info->callbacks->reloc_overflow
+	      (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+	       reloc->howto->name, reloc->addend, input_section->owner,
+	       input_section, reloc->address);
+	    return false;
+	  }
 
-	bfd_put_16 (in_abfd, (bfd_vma) gap, data + *dst_ptr);
-	(*dst_ptr) += 2;
-	(*src_ptr) += 2;
+	bfd_put_16 (in_abfd, gap, data + *dst_ptr);
+	*dst_ptr += 2;
+	*src_ptr += 2;
 	break;
       }
 
     default:
-      abort ();
+      link_info->callbacks->einfo
+	/* xgettext:c-format */
+	(_("%X%P: %pB(%pA): relocation \"%pR\" is not supported\n"),
+	 in_abfd, input_section, reloc);
+      return false;
     }
+  return true;
 }
 
 #define coff_reloc16_extra_cases    extra_case

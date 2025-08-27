@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on MIPS processors.
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "gdbcore.h"
 #include "target.h"
 #include "solib-svr4.h"
@@ -39,13 +39,14 @@
 #include "linux-tdep.h"
 #include "xml-syscall.h"
 #include "gdbsupport/gdb_signals.h"
+#include "inferior.h"
 
 #include "features/mips-linux.c"
 #include "features/mips-dsp-linux.c"
 #include "features/mips64-linux.c"
 #include "features/mips64-dsp-linux.c"
 
-static struct target_so_ops mips_svr4_so_ops;
+static solib_ops mips_svr4_so_ops;
 
 /* This enum represents the signals' numbers on the MIPS
    architecture.  It just contains the signal definitions which are
@@ -93,7 +94,7 @@ enum
 #define MIPS_LINUX_JB_PC 0
 
 static int
-mips_linux_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
+mips_linux_get_longjmp_target (const frame_info_ptr &frame, CORE_ADDR *pc)
 {
   CORE_ADDR jb_addr;
   struct gdbarch *gdbarch = get_frame_arch (frame);
@@ -246,7 +247,7 @@ mips_fill_gregset_wrapper (const struct regset *regset,
 #define MIPS64_LINUX_JB_PC 0
 
 static int
-mips64_linux_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
+mips64_linux_get_longjmp_target (const frame_info_ptr &frame, CORE_ADDR *pc)
 {
   CORE_ADDR jb_addr;
   struct gdbarch *gdbarch = get_frame_arch (frame);
@@ -599,8 +600,8 @@ mips_linux_in_dynsym_stub (CORE_ADDR pc)
 {
   gdb_byte buf[28], *p;
   ULONGEST insn, insn1;
-  int n64 = (mips_abi (target_gdbarch ()) == MIPS_ABI_N64);
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  int n64 = (mips_abi (current_inferior ()->arch ()) == MIPS_ABI_N64);
+  bfd_endian byte_order = gdbarch_byte_order (current_inferior ()->arch ());
 
   if (in_mips_stubs_section (pc))
     return 1;
@@ -713,21 +714,21 @@ mips_linux_skip_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
    efficient way, but simplest.  First, declare all the unwinders.  */
 
 static void mips_linux_o32_sigframe_init (const struct tramp_frame *self,
-					  frame_info_ptr this_frame,
+					  const frame_info_ptr &this_frame,
 					  struct trad_frame_cache *this_cache,
 					  CORE_ADDR func);
 
 static void mips_linux_n32n64_sigframe_init (const struct tramp_frame *self,
-					     frame_info_ptr this_frame,
+					     const frame_info_ptr &this_frame,
 					     struct trad_frame_cache *this_cache,
 					     CORE_ADDR func);
 
 static int mips_linux_sigframe_validate (const struct tramp_frame *self,
-					 frame_info_ptr this_frame,
+					 const frame_info_ptr &this_frame,
 					 CORE_ADDR *pc);
 
 static int micromips_linux_sigframe_validate (const struct tramp_frame *self,
-					      frame_info_ptr this_frame,
+					      const frame_info_ptr &this_frame,
 					      CORE_ADDR *pc);
 
 #define MIPS_NR_LINUX 4000
@@ -852,7 +853,6 @@ static const struct tramp_frame micromips_linux_n64_rt_sigframe = {
   micromips_linux_sigframe_validate
 };
 
-/* *INDENT-OFF* */
 /* The unwinder for o32 signal frames.  The legacy structures look
    like this:
 
@@ -927,7 +927,6 @@ static const struct tramp_frame micromips_linux_n64_rt_sigframe = {
      struct sigcontext uc_mcontext;
      sigset_t          uc_sigmask;
    };  */
-/* *INDENT-ON* */
 
 #define SIGFRAME_SIGCONTEXT_OFFSET   (6 * 4)
 
@@ -958,7 +957,7 @@ static const struct tramp_frame micromips_linux_n64_rt_sigframe = {
 
 static void
 mips_linux_o32_sigframe_init (const struct tramp_frame *self,
-			      frame_info_ptr this_frame,
+			      const frame_info_ptr &this_frame,
 			      struct trad_frame_cache *this_cache,
 			      CORE_ADDR func)
 {
@@ -1066,7 +1065,6 @@ mips_linux_o32_sigframe_init (const struct tramp_frame *self,
   trad_frame_set_id (this_cache, frame_id_build (frame_sp, func));
 }
 
-/* *INDENT-OFF* */
 /* For N32/N64 things look different.  There is no non-rt signal frame.
 
   struct rt_sigframe_n32 {
@@ -1122,7 +1120,6 @@ mips_linux_o32_sigframe_init (const struct tramp_frame *self,
   That is the post-2.6.12 definition of the 64-bit sigcontext; before
   then, there were no hi1-hi3 or lo1-lo3.  Cause and badvaddr were
   included too.  */
-/* *INDENT-ON* */
 
 #define N32_STACK_T_SIZE		STACK_T_SIZE
 #define N64_STACK_T_SIZE		(2 * 8 + 4)
@@ -1153,7 +1150,7 @@ mips_linux_o32_sigframe_init (const struct tramp_frame *self,
 
 static void
 mips_linux_n32n64_sigframe_init (const struct tramp_frame *self,
-				 frame_info_ptr this_frame,
+				 const frame_info_ptr &this_frame,
 				 struct trad_frame_cache *this_cache,
 				 CORE_ADDR func)
 {
@@ -1238,7 +1235,7 @@ mips_linux_n32n64_sigframe_init (const struct tramp_frame *self,
 
 static int
 mips_linux_sigframe_validate (const struct tramp_frame *self,
-			      frame_info_ptr this_frame,
+			      const frame_info_ptr &this_frame,
 			      CORE_ADDR *pc)
 {
   return mips_pc_is_mips (*pc);
@@ -1248,7 +1245,7 @@ mips_linux_sigframe_validate (const struct tramp_frame *self,
 
 static int
 micromips_linux_sigframe_validate (const struct tramp_frame *self,
-				   frame_info_ptr this_frame,
+				   const frame_info_ptr &this_frame,
 				   CORE_ADDR *pc)
 {
   if (mips_pc_is_micromips (get_frame_arch (this_frame), *pc))
@@ -1293,7 +1290,7 @@ mips_linux_restart_reg_p (struct gdbarch *gdbarch)
    instruction to be executed.  */
 
 static CORE_ADDR
-mips_linux_syscall_next_pc (frame_info_ptr frame)
+mips_linux_syscall_next_pc (const frame_info_ptr &frame)
 {
   CORE_ADDR pc = get_frame_pc (frame);
   ULONGEST v0 = get_frame_register_unsigned (frame, MIPS_V0_REGNUM);

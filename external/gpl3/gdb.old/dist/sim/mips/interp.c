@@ -47,12 +47,12 @@ code on the hardware.
 #include "getopt.h"
 #include "libiberty.h"
 #include "bfd.h"
-#include "elf-bfd.h"
+#include "bfd/elf-bfd.h"
 #include "sim/callback.h"   /* GDB simulator callback interface */
 #include "sim/sim.h" /* GDB simulator interface */
 #include "sim-syscall.h"   /* Simulator system call support */
 
-char* pr_addr (SIM_ADDR addr);
+char* pr_addr (address_word addr);
 char* pr_uword64 (uword64 addr);
 
 
@@ -134,9 +134,9 @@ static void ColdReset (SIM_DESC sd);
     The RSVD_INSTRUCTION... macros specify the magic instructions we
     use at the monitor entry points.  */
 static int firmware_option_p = 0;
-static SIM_ADDR idt_monitor_base =     0xBFC00000;
-static SIM_ADDR pmon_monitor_base =    0xBFC00500;
-static SIM_ADDR lsipmon_monitor_base = 0xBFC00200;
+static address_word idt_monitor_base =     0xBFC00000;
+static address_word pmon_monitor_base =    0xBFC00500;
+static address_word lsipmon_monitor_base = 0xBFC00200;
 
 static SIM_RC sim_firmware_command (SIM_DESC sd, char* arg);
 
@@ -184,7 +184,7 @@ mips_option_handler (SIM_DESC sd, sim_cpu *cpu, int opt, char *arg,
 	 etc.). */
       for (cpu_nr = 0; cpu_nr < MAX_NR_PROCESSORS; cpu_nr++)
 	{
-	  sim_cpu *cpu = STATE_CPU (sd, cpu_nr);
+	  cpu = STATE_CPU (sd, cpu_nr);
 	  if (arg == NULL)
 	    STATE |= simTRACE;
 	  else if (strcmp (arg, "yes") == 0)
@@ -351,7 +351,8 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct mips_sim_cpu))
+      != SIM_RC_OK)
     return 0;
 
   cpu = STATE_CPU (sd, 0); /* FIXME */
@@ -399,8 +400,6 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
 	  /* If we find an entry at address 0, then we will end up
 	     allocating a new buffer in the "memory alias" command
 	     below. The region at address 0 will be deleted. */
-	  address_word size = (entry->modulo != 0
-			       ? entry->modulo : entry->nr_bytes);
 	  if (entry->addr == 0
 	      && (!match || entry->level < match->level))
 	    match = entry;
@@ -449,8 +448,6 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
   else if (board != NULL
 	   && (strcmp(board, BOARD_BSP) == 0))
     {
-      int i;
-
       STATE_ENVIRONMENT (sd) = OPERATING_ENVIRONMENT;
 
       /* ROM: 0x9FC0_0000 - 0x9FFF_FFFF and 0xBFC0_0000 - 0xBFFF_FFFF */
@@ -482,7 +479,6 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
 	       strcmp(board, BOARD_JMR3904_DEBUG) == 0))
     {
       /* match VIRTUAL memory layout of JMR-TX3904 board */
-      int i;
 
       /* --- disable monitor unless forced on by user --- */
 
@@ -666,19 +662,21 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
     int rn;
     for (rn = 0; (rn < (LAST_EMBED_REGNUM + 1)); rn++)
       {
+	struct mips_sim_cpu *mips_cpu = MIPS_SIM_CPU (cpu);
+
 	if (rn < 32)
-	  cpu->register_widths[rn] = WITH_TARGET_WORD_BITSIZE;
+	  mips_cpu->register_widths[rn] = WITH_TARGET_WORD_BITSIZE;
 	else if ((rn >= FGR_BASE) && (rn < (FGR_BASE + NR_FGR)))
-	  cpu->register_widths[rn] = WITH_TARGET_FLOATING_POINT_BITSIZE;
+	  mips_cpu->register_widths[rn] = WITH_TARGET_FLOATING_POINT_BITSIZE;
 	else if ((rn >= 33) && (rn <= 37))
-	  cpu->register_widths[rn] = WITH_TARGET_WORD_BITSIZE;
+	  mips_cpu->register_widths[rn] = WITH_TARGET_WORD_BITSIZE;
 	else if ((rn == SRIDX)
 		 || (rn == FCR0IDX)
 		 || (rn == FCR31IDX)
 		 || ((rn >= 72) && (rn <= 89)))
-	  cpu->register_widths[rn] = 32;
+	  mips_cpu->register_widths[rn] = 32;
 	else
-	  cpu->register_widths[rn] = 0;
+	  mips_cpu->register_widths[rn] = 0;
       }
 
 
@@ -704,11 +702,11 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
 
       /* the default monitor region */
       if (WITH_TARGET_WORD_BITSIZE == 64)
-	sim_do_commandf (sd, "memory alias 0x%x,0x%" PRIxTW ",0x%" PRIxTA,
+	sim_do_commandf (sd, "memory alias %#" PRIxTA ",%#" PRIxTA ",%#" PRIxTA,
 			 idt_monitor_base, idt_monitor_size,
 			 EXTENDED (idt_monitor_base));
       else
-	sim_do_commandf (sd, "memory region 0x%x,0x%" PRIxTA,
+	sim_do_commandf (sd, "memory region %#" PRIxTA ",%#" PRIxTA,
 			 idt_monitor_base, idt_monitor_size);
 
       /* Entry into the IDT monitor is via fixed address vectors, and
@@ -804,7 +802,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
   /* CPU specific initialization.  */
   for (i = 0; i < MAX_NR_PROCESSORS; ++i)
     {
-      SIM_CPU *cpu = STATE_CPU (sd, i);
+      cpu = STATE_CPU (sd, i);
 
       CPU_REG_FETCH (cpu) = mips_reg_fetch;
       CPU_REG_STORE (cpu) = mips_reg_store;
@@ -855,7 +853,9 @@ mips_reg_store (SIM_CPU *cpu, int rn, const void *memory, int length)
      numbering one. We need to know what the width of each logical
      register number is for the architecture being simulated. */
 
-  if (cpu->register_widths[rn] == 0)
+  struct mips_sim_cpu *mips_cpu = MIPS_SIM_CPU (cpu);
+
+  if (mips_cpu->register_widths[rn] == 0)
     {
       sim_io_eprintf (CPU_STATE (cpu), "Invalid register width for %d (register store ignored)\n", rn);
       return 0;
@@ -863,18 +863,18 @@ mips_reg_store (SIM_CPU *cpu, int rn, const void *memory, int length)
 
   if (rn >= FGR_BASE && rn < FGR_BASE + NR_FGR)
     {
-      cpu->fpr_state[rn - FGR_BASE] = fmt_uninterpreted;
-      if (cpu->register_widths[rn] == 32)
+      mips_cpu->fpr_state[rn - FGR_BASE] = fmt_uninterpreted;
+      if (mips_cpu->register_widths[rn] == 32)
 	{
 	  if (length == 8)
 	    {
-	      cpu->fgr[rn - FGR_BASE] =
+	      mips_cpu->fgr[rn - FGR_BASE] =
 		(uint32_t) T2H_8 (*(uint64_t*)memory);
 	      return 8;
 	    }
 	  else
 	    {
-	      cpu->fgr[rn - FGR_BASE] = T2H_4 (*(uint32_t*)memory);
+	      mips_cpu->fgr[rn - FGR_BASE] = T2H_4 (*(uint32_t*)memory);
 	      return 4;
 	    }
 	}
@@ -882,28 +882,28 @@ mips_reg_store (SIM_CPU *cpu, int rn, const void *memory, int length)
 	{
           if (length == 8)
 	    {
-	      cpu->fgr[rn - FGR_BASE] = T2H_8 (*(uint64_t*)memory);
+	      mips_cpu->fgr[rn - FGR_BASE] = T2H_8 (*(uint64_t*)memory);
 	      return 8;
 	    }
 	  else
 	    {
-	      cpu->fgr[rn - FGR_BASE] = T2H_4 (*(uint32_t*)memory);
+	      mips_cpu->fgr[rn - FGR_BASE] = T2H_4 (*(uint32_t*)memory);
 	      return 4;
 	    }
 	}
     }
 
-  if (cpu->register_widths[rn] == 32)
+  if (mips_cpu->register_widths[rn] == 32)
     {
       if (length == 8)
 	{
-	  cpu->registers[rn] =
+	  mips_cpu->registers[rn] =
 	    (uint32_t) T2H_8 (*(uint64_t*)memory);
 	  return 8;
 	}
       else
 	{
-	  cpu->registers[rn] = T2H_4 (*(uint32_t*)memory);
+	  mips_cpu->registers[rn] = T2H_4 (*(uint32_t*)memory);
 	  return 4;
 	}
     }
@@ -911,12 +911,12 @@ mips_reg_store (SIM_CPU *cpu, int rn, const void *memory, int length)
     {
       if (length == 8)
 	{
-	  cpu->registers[rn] = T2H_8 (*(uint64_t*)memory);
+	  mips_cpu->registers[rn] = T2H_8 (*(uint64_t*)memory);
 	  return 8;
 	}
       else
 	{
-	  cpu->registers[rn] = (int32_t) T2H_4(*(uint32_t*)memory);
+	  mips_cpu->registers[rn] = (int32_t) T2H_4(*(uint32_t*)memory);
 	  return 4;
 	}
     }
@@ -930,7 +930,9 @@ mips_reg_fetch (SIM_CPU *cpu, int rn, void *memory, int length)
   /* NOTE: gdb (the client) stores registers in target byte order
      while the simulator uses host byte order */
 
-  if (cpu->register_widths[rn] == 0)
+  struct mips_sim_cpu *mips_cpu = MIPS_SIM_CPU (cpu);
+
+  if (mips_cpu->register_widths[rn] == 0)
     {
       sim_io_eprintf (CPU_STATE (cpu), "Invalid register width for %d (register fetch ignored)\n", rn);
       return 0;
@@ -939,17 +941,17 @@ mips_reg_fetch (SIM_CPU *cpu, int rn, void *memory, int length)
   /* Any floating point register */
   if (rn >= FGR_BASE && rn < FGR_BASE + NR_FGR)
     {
-      if (cpu->register_widths[rn] == 32)
+      if (mips_cpu->register_widths[rn] == 32)
 	{
 	  if (length == 8)
 	    {
 	      *(uint64_t*)memory =
-		H2T_8 ((uint32_t) (cpu->fgr[rn - FGR_BASE]));
+		H2T_8 ((uint32_t) (mips_cpu->fgr[rn - FGR_BASE]));
 	      return 8;
 	    }
 	  else
 	    {
-	      *(uint32_t*)memory = H2T_4 (cpu->fgr[rn - FGR_BASE]);
+	      *(uint32_t*)memory = H2T_4 (mips_cpu->fgr[rn - FGR_BASE]);
 	      return 4;
 	    }
 	}
@@ -957,28 +959,28 @@ mips_reg_fetch (SIM_CPU *cpu, int rn, void *memory, int length)
 	{
 	  if (length == 8)
 	    {
-	      *(uint64_t*)memory = H2T_8 (cpu->fgr[rn - FGR_BASE]);
+	      *(uint64_t*)memory = H2T_8 (mips_cpu->fgr[rn - FGR_BASE]);
 	      return 8;
 	    }
 	  else
 	    {
-	      *(uint32_t*)memory = H2T_4 ((uint32_t)(cpu->fgr[rn - FGR_BASE]));
+	      *(uint32_t*)memory = H2T_4 ((uint32_t)(mips_cpu->fgr[rn - FGR_BASE]));
 	      return 4;
 	    }
 	}
     }
 
-  if (cpu->register_widths[rn] == 32)
+  if (mips_cpu->register_widths[rn] == 32)
     {
       if (length == 8)
 	{
 	  *(uint64_t*)memory =
-	    H2T_8 ((uint32_t) (cpu->registers[rn]));
+	    H2T_8 ((uint32_t) (mips_cpu->registers[rn]));
 	  return 8;
 	}
       else
 	{
-	  *(uint32_t*)memory = H2T_4 ((uint32_t)(cpu->registers[rn]));
+	  *(uint32_t*)memory = H2T_4 ((uint32_t)(mips_cpu->registers[rn]));
 	  return 4;
 	}
     }
@@ -987,12 +989,12 @@ mips_reg_fetch (SIM_CPU *cpu, int rn, void *memory, int length)
       if (length == 8)
 	{
 	  *(uint64_t*)memory =
-	    H2T_8 ((uint64_t) (cpu->registers[rn]));
+	    H2T_8 ((uint64_t) (mips_cpu->registers[rn]));
 	  return 8;
 	}
       else
 	{
-	  *(uint32_t*)memory = H2T_4 ((uint32_t)(cpu->registers[rn]));
+	  *(uint32_t*)memory = H2T_4 ((uint32_t)(mips_cpu->registers[rn]));
 	  return 4;
 	}
     }
@@ -1081,7 +1083,7 @@ static SIM_RC
 sim_firmware_command (SIM_DESC sd, char *arg)
 {
   int address_present = 0;
-  SIM_ADDR address;
+  address_word address;
 
   /* Signal occurrence of this option. */
   firmware_option_p = 1;
@@ -1242,7 +1244,7 @@ sim_monitor (SIM_DESC sd,
 	if (A0 == 0)	/* waitflag == NOWAIT */
 	  V0 = (unsigned_word)-1;
       }
-     /* Drop through to case 11 */
+     ATTRIBUTE_FALLTHROUGH;
 
     case 11: /* char inbyte(void) */
       {
@@ -1396,18 +1398,20 @@ sim_monitor (SIM_DESC sd,
             if (c == '%')
 	      {
 		char tmp[40];
+		/* The format logic isn't passed down.
 		enum {FMT_RJUST, FMT_LJUST, FMT_RJUST0, FMT_CENTER} fmt = FMT_RJUST;
+		*/
 		int width = 0, trunc = 0, haddot = 0, longlong = 0;
 		while (sim_read (sd, s++, &c, 1) && c != '\0')
 		  {
 		    if (strchr ("dobxXulscefg%", c))
 		      break;
 		    else if (c == '-')
-		      fmt = FMT_LJUST;
+		      /* fmt = FMT_LJUST */;
 		    else if (c == '0')
-		      fmt = FMT_RJUST0;
+		      /* fmt = FMT_RJUST0 */;
 		    else if (c == '~')
-		      fmt = FMT_CENTER;
+		      /* fmt = FMT_CENTER */;
 		    else if (c == '*')
 		      {
 			if (haddot)
@@ -1550,8 +1554,8 @@ store_word (SIM_DESC sd,
 }
 
 #define MIPSR6_P(abfd) \
-  ((elf_elfheader (abfd)->e_flags & EF_MIPS_ARCH) == E_MIPS_ARCH_32R6 \
-    || (elf_elfheader (abfd)->e_flags & EF_MIPS_ARCH) == E_MIPS_ARCH_64R6)
+  ((elf_elfheader (abfd)->e_flags & EF_MIPS_ARCH) == EF_MIPS_ARCH_32R6 \
+    || (elf_elfheader (abfd)->e_flags & EF_MIPS_ARCH) == EF_MIPS_ARCH_64R6)
 
 /* Load a word from memory.  */
 
@@ -1721,7 +1725,7 @@ dotrace (SIM_DESC sd,
 	 sim_cpu *cpu,
 	 FILE *tracefh,
 	 int type,
-	 SIM_ADDR address,
+	 address_word address,
 	 int width,
 	 const char *comment, ...)
 {
@@ -1897,6 +1901,7 @@ signal_exception (SIM_DESC sd,
 	 }
        /* else fall through to normal exception processing */
        sim_io_eprintf(sd,"ReservedInstruction at PC = 0x%s\n", pr_addr (cia));
+       ATTRIBUTE_FALLTHROUGH;
      }
 
     default:
@@ -2322,6 +2327,7 @@ decode_coproc (SIM_DESC sd,
 				  "Warning: PC 0x%lx:interp.c decode_coproc DEADC0DE\n",
 				  (unsigned long)cia);
 		GPR[rt] = 0xDEADC0DE; /* CPR[0,rd] */
+		ATTRIBUTE_FALLTHROUGH;
 		/* CPR[0,rd] = GPR[rt]; */
 	      default:
 		if (op == cp0_mfc0 || op == cp0_dmfc0)
@@ -2453,28 +2459,11 @@ get_cell (void)
 
 /* Print routines to handle variable size regs, etc */
 
-/* Eliminate warning from compiler on 32-bit systems */
-static int thirty_two = 32;
-
 char*
-pr_addr (SIM_ADDR addr)
+pr_addr (address_word addr)
 {
   char *paddr_str=get_cell();
-  switch (sizeof(addr))
-    {
-      case 8:
-        sprintf(paddr_str,"%08lx%08lx",
-		(unsigned long)(addr>>thirty_two),(unsigned long)(addr&0xffffffff));
-	break;
-      case 4:
-        sprintf(paddr_str,"%08lx",(unsigned long)addr);
-	break;
-      case 2:
-        sprintf(paddr_str,"%04x",(unsigned short)(addr&0xffff));
-	break;
-      default:
-        sprintf(paddr_str,"%x",addr);
-    }
+  sprintf (paddr_str, "%0*" PRIxTA, (int) (sizeof (addr) * 2), addr);
   return paddr_str;
 }
 
@@ -2482,8 +2471,7 @@ char*
 pr_uword64 (uword64 addr)
 {
   char *paddr_str=get_cell();
-  sprintf(paddr_str,"%08lx%08lx",
-          (unsigned long)(addr>>thirty_two),(unsigned long)(addr&0xffffffff));
+  sprintf (paddr_str, "%016" PRIx64, addr);
   return paddr_str;
 }
 
@@ -2509,7 +2497,8 @@ mips_core_signal (SIM_DESC sd,
 		      (unsigned long) addr, (unsigned long) ip);
       COP0_BADVADDR = addr;
       SignalExceptionDataReference();
-      break;
+      /* Shouldn't actually be reached.  */
+      abort ();
 
     case sim_core_unaligned_signal:
       sim_io_eprintf (sd, "mips-core: %d byte %s to unaligned address 0x%lx at 0x%lx\n",
@@ -2520,7 +2509,8 @@ mips_core_signal (SIM_DESC sd,
 	SignalExceptionAddressLoad();
       else
 	SignalExceptionAddressStore();
-      break;
+      /* Shouldn't actually be reached.  */
+      abort ();
 
     default:
       sim_engine_abort (sd, cpu, cia,
@@ -2532,55 +2522,66 @@ mips_core_signal (SIM_DESC sd,
 void
 mips_cpu_exception_trigger(SIM_DESC sd, sim_cpu* cpu, address_word cia)
 {
+  struct mips_sim_cpu *mips_cpu = MIPS_SIM_CPU (cpu);
+
   ASSERT(cpu != NULL);
 
-  if (cpu->exc_suspended > 0)
-    sim_io_eprintf(sd, "Warning, nested exception triggered (%d)\n", cpu->exc_suspended);
+  if (mips_cpu->exc_suspended > 0)
+    sim_io_eprintf (sd, "Warning, nested exception triggered (%d)\n",
+		    mips_cpu->exc_suspended);
 
   PC = cia;
-  memcpy(cpu->exc_trigger_registers, cpu->registers, sizeof(cpu->exc_trigger_registers));
-  cpu->exc_suspended = 0;
+  memcpy (mips_cpu->exc_trigger_registers, mips_cpu->registers,
+	  sizeof (mips_cpu->exc_trigger_registers));
+  mips_cpu->exc_suspended = 0;
 }
 
 void
 mips_cpu_exception_suspend(SIM_DESC sd, sim_cpu* cpu, int exception)
 {
+  struct mips_sim_cpu *mips_cpu = MIPS_SIM_CPU (cpu);
+
   ASSERT(cpu != NULL);
 
-  if (cpu->exc_suspended > 0)
+  if (mips_cpu->exc_suspended > 0)
     sim_io_eprintf(sd, "Warning, nested exception signal (%d then %d)\n",
-		   cpu->exc_suspended, exception);
+		   mips_cpu->exc_suspended, exception);
 
-  memcpy(cpu->exc_suspend_registers, cpu->registers, sizeof(cpu->exc_suspend_registers));
-  memcpy(cpu->registers, cpu->exc_trigger_registers, sizeof(cpu->registers));
-  cpu->exc_suspended = exception;
+  memcpy (mips_cpu->exc_suspend_registers, mips_cpu->registers,
+	  sizeof (mips_cpu->exc_suspend_registers));
+  memcpy (mips_cpu->registers, mips_cpu->exc_trigger_registers,
+	  sizeof (mips_cpu->registers));
+  mips_cpu->exc_suspended = exception;
 }
 
 void
 mips_cpu_exception_resume(SIM_DESC sd, sim_cpu* cpu, int exception)
 {
+  struct mips_sim_cpu *mips_cpu = MIPS_SIM_CPU (cpu);
+
   ASSERT(cpu != NULL);
 
-  if (exception == 0 && cpu->exc_suspended > 0)
+  if (exception == 0 && mips_cpu->exc_suspended > 0)
     {
       /* warn not for breakpoints */
-      if (cpu->exc_suspended != sim_signal_to_host(sd, SIM_SIGTRAP))
+      if (mips_cpu->exc_suspended != sim_signal_to_host(sd, SIM_SIGTRAP))
 	sim_io_eprintf(sd, "Warning, resuming but ignoring pending exception signal (%d)\n",
-		       cpu->exc_suspended);
+		       mips_cpu->exc_suspended);
     }
-  else if (exception != 0 && cpu->exc_suspended > 0)
+  else if (exception != 0 && mips_cpu->exc_suspended > 0)
     {
-      if (exception != cpu->exc_suspended)
+      if (exception != mips_cpu->exc_suspended)
 	sim_io_eprintf(sd, "Warning, resuming with mismatched exception signal (%d vs %d)\n",
-		       cpu->exc_suspended, exception);
+		       mips_cpu->exc_suspended, exception);
 
-      memcpy(cpu->registers, cpu->exc_suspend_registers, sizeof(cpu->registers));
+      memcpy (mips_cpu->registers, mips_cpu->exc_suspend_registers,
+	      sizeof (mips_cpu->registers));
     }
-  else if (exception != 0 && cpu->exc_suspended == 0)
+  else if (exception != 0 && mips_cpu->exc_suspended == 0)
     {
       sim_io_eprintf(sd, "Warning, ignoring spontanous exception signal (%d)\n", exception);
     }
-  cpu->exc_suspended = 0;
+  mips_cpu->exc_suspended = 0;
 }
 
 

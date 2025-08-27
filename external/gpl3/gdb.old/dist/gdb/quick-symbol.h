@@ -1,6 +1,6 @@
 /* "Quick" symbol functions
 
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,11 +29,6 @@ enum block_search_flag_values
 };
 
 DEF_ENUM_FLAGS_TYPE (enum block_search_flag_values, block_search_flags);
-
-/* Comparison function for symbol look ups.  */
-
-typedef int (symbol_compare_ftype) (const char *string1,
-				    const char *string2);
 
 /* Callback for quick_symbol_functions->map_symbol_filenames.  */
 
@@ -101,14 +96,14 @@ struct quick_symbol_functions
 
   /* Check to see if the global symbol is defined in a "partial" symbol table
      of OBJFILE. NAME is the name of the symbol to look for.  DOMAIN
-     indicates what sort of symbol to search for.
+     indicates what sorts of symbols to search for.
 
      If found, sets *symbol_found_p to true and returns the symbol language.
      defined, or NULL if no such symbol table exists.  */
   virtual enum language lookup_global_symbol_language
        (struct objfile *objfile,
 	const char *name,
-	domain_enum domain,
+	domain_search_flags domain,
 	bool *symbol_found_p) = 0;
 
   /* Print statistics about any indices loaded for OBJFILE.  The
@@ -125,28 +120,6 @@ struct quick_symbol_functions
   /* Read all symbol tables associated with OBJFILE.  */
   virtual void expand_all_symtabs (struct objfile *objfile) = 0;
 
-  /* Find global or static symbols in all tables that are in DOMAIN
-     and for which MATCH (symbol name, NAME) == 0, reading in partial
-     symbol tables as needed.  Look through global symbols if GLOBAL
-     and otherwise static symbols.
-
-     MATCH must be weaker than strcmp_iw_ordered in the sense that
-     strcmp_iw_ordered(x,y) == 0 --> MATCH(x,y) == 0.  ORDERED_COMPARE,
-     if non-null, must be an ordering relation compatible with
-     strcmp_iw_ordered in the sense that
-	    strcmp_iw_ordered(x,y) == 0 --> ORDERED_COMPARE(x,y) == 0
-     and 
-	    strcmp_iw_ordered(x,y) <= 0 --> ORDERED_COMPARE(x,y) <= 0
-     (allowing strcmp_iw_ordered(x,y) < 0 while ORDERED_COMPARE(x, y) == 0).
-  */
-
-  virtual void expand_matching_symbols
-    (struct objfile *,
-     const lookup_name_info &lookup_name,
-     domain_enum domain,
-     int global,
-     symbol_compare_ftype *ordered_compare) = 0;
-
   /* Expand all symbol tables in OBJFILE matching some criteria.
 
      FILE_MATCHER is called for each file in OBJFILE.  The file name
@@ -161,8 +134,7 @@ struct quick_symbol_functions
 
      Otherwise, individual symbols are considered.
 
-     If DOMAIN or KIND do not match, the symbol is skipped.
-     If DOMAIN is UNDEF_DOMAIN, that is treated as a wildcard.
+     If DOMAIN does not match, the symbol is skipped.
 
      If the symbol name does not match LOOKUP_NAME, the symbol is skipped.
 
@@ -182,8 +154,7 @@ struct quick_symbol_functions
      gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
      gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
      block_search_flags search_flags,
-     domain_enum domain,
-     enum search_domain kind) = 0;
+     domain_search_flags domain) = 0;
 
   /* Return the comp unit from OBJFILE that contains PC and
      SECTION.  Return NULL if there is no such compunit.  This
@@ -212,24 +183,12 @@ struct quick_symbol_functions
 	gdb::function_view<symbol_filename_ftype> fun,
 	bool need_fullname) = 0;
 
-  /* This is called when the objfile is relocated.  It can be used to
-     clean up any internal caches.  */
-  virtual void relocated ()
-  {
-    /* Do nothing.  */
-  }
-
-  /* Return true if this class can lazily read the symbols.  This may
-     only return true if there are in fact symbols to be read, because
-     this is used in the implementation of 'has_partial_symbols'.  */
-  virtual bool can_lazily_read_symbols ()
-  {
-    return false;
-  }
-
-  /* Read the partial symbols for OBJFILE.  This will only ever be
-     called if can_lazily_read_symbols returns true.  */
-  virtual void read_partial_symbols (struct objfile *objfile)
+  /* Compute the name and language of the main function for the given
+     objfile.  Normally this is done during symbol reading, but this
+     method exists in case this work is done in a worker thread and
+     must be waited for.  The implementation can call
+     set_objfile_main_name if results are found.  */
+  virtual void compute_main_name (struct objfile *objfile)
   {
   }
 };

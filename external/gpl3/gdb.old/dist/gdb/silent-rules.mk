@@ -17,7 +17,25 @@ ECHO_YACC =   @echo "  YACC   $@";
 ECHO_LEX  =   @echo "  LEX    $@";
 ECHO_AR =     @echo "  AR     $@";
 ECHO_RANLIB = @echo "  RANLIB $@";
+ECHO_DVIPS =  @echo "  DVIPS    $@";
+ECHO_TEX =    @echo "  TEX      $@";
+ECHO_PDFTEX = @echo "  PDFTEX   $@";
+ECHO_TEXI2DVI = \
+              @echo "  TEXI2DVI $@";
+ECHO_MAKEHTML = \
+              @echo "  MAKEHTML $@";
+ECHO_TEXI2POD = \
+              @echo "  TEXI2POD $@";
+ECHO_TEXI2MAN = \
+              @echo "  TEXI2MAN $@";
+ECHO_MAKEINFO = \
+              @echo "  MAKEINFO $@";
 SILENCE = @
 # Silence libtool.
 SILENT_FLAG = --silent
+SILENT_Q_FLAG = -q
+# Used in shell snippets instead of 'echo'.
+SILENT_ECHO = true
+else
+SILENT_ECHO = echo
 endif

@@ -1,6 +1,6 @@
 /* Everything about exec catchpoints, for GDB.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 
 #include "annotate.h"
 #include "arch-utils.h"
@@ -49,7 +48,7 @@ struct exec_catchpoint : public catchpoint
 		      CORE_ADDR bp_addr,
 		      const target_waitstatus &ws) override;
   enum print_stop_action print_it (const bpstat *bs) const override;
-  bool print_one (bp_location **) const override;
+  bool print_one (const bp_location **) const override;
   void print_mention () const override;
   void print_recreate (struct ui_file *fp) const override;
 
@@ -110,7 +109,7 @@ exec_catchpoint::print_it (const bpstat *bs) const
 }
 
 bool
-exec_catchpoint::print_one (bp_location **last_loc) const
+exec_catchpoint::print_one (const bp_location **last_loc) const
 {
   struct value_print_options opts;
   struct ui_out *uiout = current_uiout;
@@ -165,7 +164,7 @@ ep_parse_optional_if_clause (const char **arg)
 {
   const char *cond_string;
 
-  if (((*arg)[0] != 'i') || ((*arg)[1] != 'f') || !isspace ((*arg)[2]))
+  if (((*arg)[0] != 'i') || ((*arg)[1] != 'f') || !isspace ((unsigned char)(*arg)[2]))
     return NULL;
 
   /* Skip the "if" keyword.  */
@@ -205,7 +204,7 @@ catch_exec_command_1 (const char *arg, int from_tty,
      First, check if there's an if clause.  */
   cond_string = ep_parse_optional_if_clause (&arg);
 
-  if ((*arg != '\0') && !isspace (*arg))
+  if ((*arg != '\0') && !isspace ((unsigned char)*arg))
     error (_("Junk at end of arguments."));
 
   std::unique_ptr<exec_catchpoint> c

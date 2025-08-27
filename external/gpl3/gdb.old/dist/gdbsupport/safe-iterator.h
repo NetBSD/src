@@ -1,5 +1,5 @@
 /* A safe iterator for GDB, the GNU debugger.
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,8 @@
 
 #ifndef COMMON_SAFE_ITERATOR_H
 #define COMMON_SAFE_ITERATOR_H
+
+#include <type_traits>
 
 /* A forward iterator that wraps Iterator, such that when iterating
    with iterator IT, it is possible to delete *IT without invalidating
@@ -75,7 +77,9 @@ public:
   basic_safe_iterator ()
   {}
 
-  value_type operator* () const { return *m_it; }
+  typename std::invoke_result<decltype(&Iterator::operator*), Iterator>::type
+    operator* () const
+  { return *m_it; }
 
   self_type &operator++ ()
   {

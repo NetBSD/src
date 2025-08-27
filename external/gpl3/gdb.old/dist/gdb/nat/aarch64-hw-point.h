@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -58,6 +58,9 @@
 #define AARCH64_DEBUG_ARCH_V8_1 0x7
 #define AARCH64_DEBUG_ARCH_V8_2 0x8
 #define AARCH64_DEBUG_ARCH_V8_4 0x9
+#define AARCH64_DEBUG_ARCH_V8_8 0xa
+/* Armv8.9 debug architecture.  */
+#define AARCH64_DEBUG_ARCH_V8_9 0xb
 
 /* ptrace expects control registers to be formatted as follows:
 
@@ -70,6 +73,7 @@
 
 #define DR_CONTROL_ENABLED(ctrl)	(((ctrl) & 0x1) == 1)
 #define DR_CONTROL_MASK(ctrl)		(((ctrl) >> 5) & 0xff)
+#define DR_CONTROL_TYPE(ctrl)		(((ctrl) >> 3) & 0x3)
 
 /* Structure for managing the hardware breakpoint/watchpoint resources.
    DR_ADDR_* stores the address, DR_CTRL_* stores the control register
@@ -104,6 +108,15 @@ void aarch64_notify_debug_reg_change (ptid_t ptid, int is_watchpoint,
 
 unsigned int aarch64_watchpoint_offset (unsigned int ctrl);
 unsigned int aarch64_watchpoint_length (unsigned int ctrl);
+enum target_hw_bp_type aarch64_watchpoint_type (unsigned int ctrl);
+
+/* Helper for the "stopped_data_address" target method.  Returns TRUE
+   if a hardware watchpoint trap at ADDR_TRAP matches a set
+   watchpoint.  The address of the matched watchpoint is returned in
+   *ADDR_P.  */
+
+bool aarch64_stopped_data_address (const struct aarch64_debug_reg_state *state,
+				   CORE_ADDR addr_trap, CORE_ADDR *addr_p);
 
 int aarch64_handle_breakpoint (enum target_hw_bp_type type, CORE_ADDR addr,
 			       int len, int is_insert, ptid_t ptid,

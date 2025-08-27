@@ -1,6 +1,6 @@
 /* PPC GNU/Linux native support.
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "inferior.h"
 #include "gdbthread.h"
@@ -178,7 +178,6 @@ struct ppc_hw_breakpoint
 
    The layout is like this (where x is the actual value of the vscr reg): */
 
-/* *INDENT-OFF* */
 /*
 Big-Endian:
    |.|.|.|.|.....|.|.|.|.||.|.|.|x||.|
@@ -189,7 +188,6 @@ Little-Endian:
    <------->     <-------><-------><->
      VR0           VR31     VSCR    VRSAVE
 */
-/* *INDENT-ON* */
 
 typedef char gdb_vrregset_t[PPC_LINUX_SIZEOF_VRREGSET];
 
@@ -335,7 +333,7 @@ public:
 
   /* One and only one of these three functions returns true, indicating
      whether the corresponding interface is the one we detected.  The
-     interface must already have been detected as a precontidion.  */
+     interface must already have been detected as a precondition.  */
 
   bool hwdebug_p ()
   {
@@ -456,7 +454,7 @@ private:
 
      UNAVAILABLE can indicate that the kernel doesn't support any of the
      two sets of requests or that there was an error when we tried to
-     detect wich interface is available.  */
+     detect which interface is available.  */
 
   enum debug_reg_interface
     {
@@ -466,7 +464,7 @@ private:
     };
 
   /* The interface option.  Initialized if has_value () returns true.  */
-  gdb::optional<enum debug_reg_interface> m_interface;
+  std::optional<enum debug_reg_interface> m_interface;
 
   /* The info returned by the kernel with PPC_PTRACE_GETHWDBGINFO.  Only
      valid if we determined that the interface is HWDEBUG.  */
@@ -487,7 +485,7 @@ struct ppc_linux_process_info
   /* The watchpoint value that GDB requested for this process.
 
      Only used when the interface is DEBUGREG.  */
-  gdb::optional<long> requested_wp_val;
+  std::optional<long> requested_wp_val;
 };
 
 struct ppc_linux_nat_target final : public linux_nat_target
@@ -546,6 +544,8 @@ struct ppc_linux_nat_target final : public linux_nat_target
   void low_new_fork (struct lwp_info *, pid_t) override;
 
   void low_new_clone (struct lwp_info *, pid_t) override;
+
+  void low_init_process (pid_t pid) override;
 
   void low_forget_process (pid_t pid) override;
 
@@ -628,7 +628,6 @@ private:
 
 static ppc_linux_nat_target the_ppc_linux_nat_target;
 
-/* *INDENT-OFF* */
 /* registers layout, as presented by the ptrace interface:
 PT_R0, PT_R1, PT_R2, PT_R3, PT_R4, PT_R5, PT_R6, PT_R7,
 PT_R8, PT_R9, PT_R10, PT_R11, PT_R12, PT_R13, PT_R14, PT_R15,
@@ -643,7 +642,6 @@ PT_FPR0 + 40, PT_FPR0 + 42, PT_FPR0 + 44, PT_FPR0 + 46,
 PT_FPR0 + 48, PT_FPR0 + 50, PT_FPR0 + 52, PT_FPR0 + 54,
 PT_FPR0 + 56, PT_FPR0 + 58, PT_FPR0 + 60, PT_FPR0 + 62,
 PT_NIP, PT_MSR, PT_CCR, PT_LNK, PT_CTR, PT_XER, PT_MQ */
-/* *INDENT_ON * */
 
 static int
 ppc_register_u_addr (struct gdbarch *gdbarch, int regno)
@@ -1918,13 +1916,15 @@ ppc_linux_nat_target::auxv_parse (const gdb_byte **readptr,
 				  const gdb_byte *endptr, CORE_ADDR *typep,
 				  CORE_ADDR *valp)
 {
+  gdb_assert (inferior_ptid != null_ptid);
+
   int tid = inferior_ptid.lwp ();
   if (tid == 0)
     tid = inferior_ptid.pid ();
 
   int sizeof_auxv_field = ppc_linux_target_wordsize (tid);
 
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  bfd_endian byte_order = gdbarch_byte_order (current_inferior ()->arch ());
   const gdb_byte *ptr = *readptr;
 
   if (endptr == ptr)
@@ -1945,6 +1945,9 @@ ppc_linux_nat_target::auxv_parse (const gdb_byte **readptr,
 const struct target_desc *
 ppc_linux_nat_target::read_description ()
 {
+  if (inferior_ptid == null_ptid)
+    return this->beneath ()->read_description ();
+
   int tid = inferior_ptid.pid ();
 
   if (have_ptrace_getsetevrregs)
@@ -2130,7 +2133,7 @@ ppc_linux_nat_target::region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
 	  /* DAWR interface allows to watch up to 512 byte wide ranges.  */
 	  region_size = 512;
 	  /* DAWR interface allows to watch up to 512 byte wide ranges which
-	     can't cross a 512 byte bondary on machines that doesn't have a
+	     can't cross a 512 byte boundary on machines that don't have a
 	     second DAWR (P9 or less).  */
 	  if (!(hwdebug_info.features & PPC_DEBUG_FEATURE_DATA_BP_ARCH_31))
 	    region_align = 512;
@@ -2357,8 +2360,8 @@ ppc_linux_nat_target::can_use_watchpoint_cond_accel (void)
 
   auto process_it = m_process_info.find (inferior_ptid.pid ());
 
-  /* No breakpoints or watchpoints have been requested for this process,
-     we have at least one free DVC register.  */
+  /* No breakpoints, watchpoints, tracepoints, or catchpoints have been
+     requested for this process, we have at least one free DVC register.  */
   if (process_it == m_process_info.end ())
     return true;
 
@@ -2455,14 +2458,14 @@ ppc_linux_nat_target::num_memory_accesses (const std::vector<value_ref_ptr>
       struct value *v = iter.get ();
 
       /* Constants and values from the history are fine.  */
-      if (VALUE_LVAL (v) == not_lval || deprecated_value_modifiable (v) == 0)
+      if (v->lval () == not_lval || !v->deprecated_modifiable ())
 	continue;
-      else if (VALUE_LVAL (v) == lval_memory)
+      else if (v->lval () == lval_memory)
 	{
 	  /* A lazy memory lvalue is one that GDB never needed to fetch;
 	     we either just used its address (e.g., `a' in `a.b') or
 	     we never needed it at all (e.g., `a' in `a,b').  */
-	  if (!value_lazy (v))
+	  if (!v->lazy ())
 	    found_memory_cnt++;
 	}
       /* Other kinds of values are not fine.  */
@@ -2509,24 +2512,24 @@ ppc_linux_nat_target::check_condition (CORE_ADDR watch_addr,
     return 0;
 
   if (num_accesses_left == 1 && num_accesses_right == 0
-      && VALUE_LVAL (left_val) == lval_memory
-      && value_address (left_val) == watch_addr)
+      && left_val->lval () == lval_memory
+      && left_val->address () == watch_addr)
     {
       *data_value = value_as_long (right_val);
 
       /* DATA_VALUE is the constant in RIGHT_VAL, but actually has
 	 the same type as the memory region referenced by LEFT_VAL.  */
-      *len = check_typedef (value_type (left_val))->length ();
+      *len = check_typedef (left_val->type ())->length ();
     }
   else if (num_accesses_left == 0 && num_accesses_right == 1
-	   && VALUE_LVAL (right_val) == lval_memory
-	   && value_address (right_val) == watch_addr)
+	   && right_val->lval () == lval_memory
+	   && right_val->address () == watch_addr)
     {
       *data_value = value_as_long (left_val);
 
       /* DATA_VALUE is the constant in LEFT_VAL, but actually has
 	 the same type as the memory region referenced by RIGHT_VAL.  */
-      *len = check_typedef (value_type (right_val))->length ();
+      *len = check_typedef (right_val->type ())->length ();
     }
   else
     return 0;
@@ -2704,6 +2707,19 @@ ppc_linux_nat_target::remove_watchpoint (CORE_ADDR addr, int len,
   return 0;
 }
 
+/* Implement the "low_init_process" target_ops method.  */
+
+void
+ppc_linux_nat_target::low_init_process (pid_t pid)
+{
+  /* Set the hardware debug register capacity.  This requires the process to be
+     ptrace-stopped, otherwise detection will fail and software watchpoints will
+     be used instead of hardware.  If we allow this to be done lazily, we
+     cannot guarantee that it's called when the process is ptrace-stopped, so
+     do it now.  */
+  m_dreg_interface.detect (ptid_t (pid, pid));
+}
+
 /* Clean up the per-process info associated with PID.  When using the
    HWDEBUG interface, we also erase the per-thread state of installed
    debug registers for all the threads that belong to the group of PID.
@@ -2737,7 +2753,7 @@ ppc_linux_nat_target::low_forget_process (pid_t pid)
 }
 
 /* Copy the per-process state associated with the pid of PARENT to the
-   sate of CHILD_PID.  GDB expects that a forked process will have the
+   state of CHILD_PID.  GDB expects that a forked process will have the
    same hardware breakpoints and watchpoints as the parent.
 
    If we're using the HWDEBUG interface, also copy the thread debug
@@ -2884,7 +2900,7 @@ ppc_linux_nat_target::low_prepare_to_resume (struct lwp_info *lp)
 		  perror_with_name (_("Error deleting hardware "
 				      "breakpoint or watchpoint"));
 
-	      /* We erase the entries one at a time after successfuly
+	      /* We erase the entries one at a time after successfully
 		 removing the corresponding slot form the thread so that
 		 if we throw an exception above in a future iteration the
 		 map remains consistent.  */

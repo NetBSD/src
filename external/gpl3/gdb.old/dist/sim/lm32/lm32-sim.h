@@ -1,6 +1,6 @@
 /* Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #ifndef LM32_SIM_H
 #define LM32_SIM_H
 
-#include "gdb/sim-lm32.h"
+#include "sim/sim-lm32.h"
 
 /* CSRs.  */
 #define LM32_CSR_IE             0

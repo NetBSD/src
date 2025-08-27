@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Free Software Foundation, Inc.
+# Copyright (C) 2023-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,12 +16,12 @@
 # Test "start" for Rust.
 
 load_lib rust-support.exp
-if {[skip_rust_tests]} {
-    return
-}
+require allow_rust_tests
+require {can_compile rust}
+
 # This testcase verifies the behavior of the `start' command, which
 # does not work when we use the gdb stub...
-require use_gdb_stub 0
+require !use_gdb_stub
 
 standard_testfile simple.rs
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug rust}]} {

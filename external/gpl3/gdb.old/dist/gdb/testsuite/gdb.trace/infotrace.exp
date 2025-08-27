@@ -1,4 +1,4 @@
-#   Copyright 1998-2023 Free Software Foundation, Inc.
+#   Copyright 1998-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,26 +18,17 @@
 load_lib "trace-support.exp"
 
 
-gdb_exit
-gdb_start
-
 standard_testfile actions.c
 
-if ![gdb_trace_common_supports_arch] {
-    unsupported "no trace-common.h support for arch"
-    return -1
-}
+require gdb_trace_common_supports_arch
 
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 	  executable {debug nowarnings}] != "" } {
     untested "failed to compile"
     return -1
 }
-gdb_reinitialize_dir $srcdir/$subdir
 
-# If testing on a remote host, download the source file.
-# remote_download host $srcdir/$subdir/$srcfile
-
+clean_restart
 gdb_file_cmd $binfile
 
 #
@@ -58,20 +49,20 @@ gdb_test "info tracepoints" \
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+.
 \[\t \]+not installed on target.
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target." \
+\[\t \]+not installed on target" \
     "2.1: info tracepoints (all)"
 
 # 2.2 info tracepoint (specific)
 gdb_test "info tracepoint $c_test_num" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target." \
+\[\t \]+not installed on target" \
     "2.2a: info tracepoint $c_test_num (gdb_c_test)"
 
 gdb_test "info tracepoint $asm_test_num" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target." \
+\[\t \]+not installed on target" \
     "2.2b: info tracepoint $asm_test_num (gdb_asm_test)"
 
 # 2.3 info tracepoint (invalid tracepoint number)
@@ -123,12 +114,13 @@ gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" \
 gdb_test_no_output "tstop"
 gdb_test "tstatus"
 gdb_test "info tracepoints" \
-    "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+.
-\[\t \]+tracepoint already hit 1 time.
-\[\t \]+trace buffer usage ${decimal} bytes.
-\[\t \]+collect gdb_struct1_test.
-\tinstalled on target.
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+.
-\tinstalled on target." \
+    [multi_line \
+	 "Num     Type\[ \]+Disp Enb Address\[ \]+What.*" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+" \
+	 "\[\t \]+tracepoint already hit 1 time" \
+	 "\[\t \]+trace buffer usage ${decimal} bytes" \
+	 "\[\t \]+collect gdb_struct1_test" \
+	 "\tinstalled on target" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+" \
+	 "\tinstalled on target"] \
     "2.6: info tracepoints (trace buffer usage)"

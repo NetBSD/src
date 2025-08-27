@@ -1,5 +1,5 @@
 /* BFD back-end for rs6000 support
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Written by Mimi Phuong-Thao Vo of IBM
    and John Gilmore of Cygnus Support.
 

@@ -1,6 +1,6 @@
 /* Handle SVR4 shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 1990-2023 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 
 #include "elf/external.h"
 #include "elf/common.h"
 #include "elf/mips.h"
 
+#include "extract-store-integer.h"
 #include "symtab.h"
 #include "bfd.h"
 #include "symfile.h"
@@ -32,7 +32,6 @@
 #include "inferior.h"
 #include "infrun.h"
 #include "regcache.h"
-#include "gdbthread.h"
 #include "observable.h"
 
 #include "solist.h"
@@ -51,7 +50,6 @@
 static struct link_map_offsets *svr4_fetch_link_map_offsets (void);
 static int svr4_have_link_map_offsets (void);
 static void svr4_relocate_main_executable (void);
-static void svr4_free_library_list (so_list *solist);
 static void probes_table_remove_objfile_probes (struct objfile *objfile);
 static void svr4_iterate_over_objfiles_in_search_order
   (gdbarch *gdbarch, iterate_over_objfiles_in_search_order_cb_ftype cb,
@@ -173,37 +171,49 @@ svr4_same_1 (const char *gdb_so_name, const char *inferior_so_name)
   return 0;
 }
 
-static int
-svr4_same (struct so_list *gdb, struct so_list *inferior)
+static bool
+svr4_same (const char *gdb_name, const char *inferior_name,
+	   const lm_info_svr4 &gdb_lm_info,
+	   const lm_info_svr4 &inferior_lm_info)
 {
-  if (!svr4_same_1 (gdb->so_original_name, inferior->so_original_name))
+  if (!svr4_same_1 (gdb_name, inferior_name))
     return false;
 
   /* There may be different instances of the same library, in different
      namespaces.  Each instance, however, must have been loaded at a
      different address so its relocation offset would be different.  */
-  const lm_info_svr4 *lmg = (const lm_info_svr4 *) gdb->lm_info;
-  const lm_info_svr4 *lmi = (const lm_info_svr4 *) inferior->lm_info;
-
-  return (lmg->l_addr_inferior == lmi->l_addr_inferior);
+  return gdb_lm_info.l_addr_inferior == inferior_lm_info.l_addr_inferior;
 }
 
-static std::unique_ptr<lm_info_svr4>
+static int
+svr4_same (const solib &gdb, const solib &inferior)
+{
+  auto *lmg
+    = gdb::checked_static_cast<const lm_info_svr4 *> (gdb.lm_info.get ());
+  auto *lmi
+    = gdb::checked_static_cast<const lm_info_svr4 *> (inferior.lm_info.get ());
+
+  return svr4_same (gdb.so_original_name.c_str (),
+		    inferior.so_original_name.c_str (), *lmg, *lmi);
+}
+
+static lm_info_svr4_up
 lm_info_read (CORE_ADDR lm_addr)
 {
   struct link_map_offsets *lmo = svr4_fetch_link_map_offsets ();
-  std::unique_ptr<lm_info_svr4> lm_info;
+  lm_info_svr4_up lm_info;
 
   gdb::byte_vector lm (lmo->link_map_size);
 
   if (target_read_memory (lm_addr, lm.data (), lmo->link_map_size) != 0)
     warning (_("Error reading shared library list entry at %s"),
-	     paddress (target_gdbarch (), lm_addr));
+	     paddress (current_inferior ()->arch (), lm_addr));
   else
     {
-      struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
+      type *ptr_type
+	= builtin_type (current_inferior ()->arch ())->builtin_data_ptr;
 
-      lm_info.reset (new lm_info_svr4);
+      lm_info = std::make_unique<lm_info_svr4> ();
       lm_info->lm_addr = lm_addr;
 
       lm_info->l_addr_inferior = extract_typed_address (&lm[lmo->l_addr_offset],
@@ -229,9 +239,9 @@ has_lm_dynamic_from_link_map (void)
 }
 
 static CORE_ADDR
-lm_addr_check (const struct so_list *so, bfd *abfd)
+lm_addr_check (const solib &so, bfd *abfd)
 {
-  lm_info_svr4 *li = (lm_info_svr4 *) so->lm_info;
+  auto *li = gdb::checked_static_cast<lm_info_svr4 *> (so.lm_info.get ());
 
   if (!li->l_addr_p)
     {
@@ -305,8 +315,8 @@ lm_addr_check (const struct so_list *so, bfd *abfd)
 	      if (info_verbose)
 		gdb_printf (_("Using PIC (Position Independent Code) "
 			      "prelink displacement %s for \"%s\".\n"),
-			    paddress (target_gdbarch (), l_addr),
-			    so->so_name);
+			    paddress (current_inferior ()->arch (), l_addr),
+			    so.so_name.c_str ());
 	    }
 	  else
 	    {
@@ -321,7 +331,8 @@ lm_addr_check (const struct so_list *so, bfd *abfd)
 
 	      warning (_(".dynamic section for \"%s\" "
 			 "is not at the expected address "
-			 "(wrong library or version mismatch?)"), so->so_name);
+			 "(wrong library or version mismatch?)"),
+			 so.so_name.c_str ());
 	    }
 	}
 
@@ -333,13 +344,20 @@ lm_addr_check (const struct so_list *so, bfd *abfd)
   return li->l_addr;
 }
 
+struct svr4_so
+{
+  svr4_so (const char *name, lm_info_svr4_up lm_info)
+    : name (name), lm_info (std::move (lm_info))
+  {}
+
+  std::string name;
+  lm_info_svr4_up lm_info;
+};
+
 /* Per pspace SVR4 specific data.  */
 
 struct svr4_info
 {
-  svr4_info () = default;
-  ~svr4_info ();
-
   /* Base of dynamic linker structures in default namespace.  */
   CORE_ADDR debug_base = 0;
 
@@ -374,7 +392,7 @@ struct svr4_info
      probes-based interface.
 
      The namespace is represented by the address of its corresponding
-     r_debug[_ext] object.  We get the namespace id as agrument to the
+     r_debug[_ext] object.  We get the namespace id as argument to the
      'reloc_complete' probe but we don't get it when scanning the load map
      on attach.
 
@@ -385,7 +403,7 @@ struct svr4_info
 
      The special entry zero is reserved for a linear list to support
      gdbstubs that do not support namespaces.  */
-  std::map<CORE_ADDR, so_list *> solib_lists;
+  std::map<CORE_ADDR, std::vector<svr4_so>> solib_lists;
 };
 
 /* Per-program-space data key.  */
@@ -405,23 +423,6 @@ static void
 free_probes_table (struct svr4_info *info)
 {
   info->probes_table.reset (nullptr);
-}
-
-/* Free the solib lists for all namespaces.  */
-
-static void
-free_solib_lists (svr4_info *info)
-{
-  for (const std::pair<CORE_ADDR, so_list *> tuple
-	 : info->solib_lists)
-    svr4_free_library_list (tuple.second);
-
-  info->solib_lists.clear ();
-}
-
-svr4_info::~svr4_info ()
-{
-  free_solib_lists (this);
 }
 
 /* Get the svr4 data for program space PSPACE.  If none is found yet, add it now.
@@ -453,10 +454,10 @@ static int match_main (const char *);
    architecture size (32-bit or 64-bit) is returned to *P_ARCH_SIZE.  Likewise,
    the base address of the section is returned in *BASE_ADDR.  */
 
-static gdb::optional<gdb::byte_vector>
+static std::optional<gdb::byte_vector>
 read_program_header (int type, int *p_arch_size, CORE_ADDR *base_addr)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  bfd_endian byte_order = gdbarch_byte_order (current_inferior ()->arch ());
   CORE_ADDR at_phdr, at_phent, at_phnum, pt_phdr = 0;
   int arch_size, sect_size;
   CORE_ADDR sect_addr;
@@ -620,7 +621,7 @@ read_program_header (int type, int *p_arch_size, CORE_ADDR *base_addr)
 
 
 /* Return program interpreter string.  */
-static gdb::optional<gdb::byte_vector>
+static std::optional<gdb::byte_vector>
 find_program_interpreter (void)
 {
   /* If we have a current exec_bfd, use its section table.  */
@@ -658,14 +659,14 @@ static int
 scan_dyntag_auxv (const int desired_dyntag, CORE_ADDR *ptr,
 		  CORE_ADDR *ptr_addr)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  bfd_endian byte_order = gdbarch_byte_order (current_inferior ()->arch ());
   int arch_size, step;
   long current_dyntag;
   CORE_ADDR dyn_ptr;
   CORE_ADDR base_addr;
 
   /* Read in .dynamic section.  */
-  gdb::optional<gdb::byte_vector> ph_data
+  std::optional<gdb::byte_vector> ph_data
     = read_program_header (PT_DYNAMIC, &arch_size, &base_addr);
   if (!ph_data)
     return 0;
@@ -741,7 +742,8 @@ elf_locate_base (void)
 			       &dyn_ptr, NULL)
       || scan_dyntag_auxv (DT_MIPS_RLD_MAP, &dyn_ptr, NULL))
     {
-      struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
+      type *ptr_type
+	= builtin_type (current_inferior ()->arch ())->builtin_data_ptr;
       gdb_byte *pbuf;
       int pbuf_size = ptr_type->length ();
 
@@ -761,7 +763,8 @@ elf_locate_base (void)
 			       &dyn_ptr, &dyn_ptr_addr)
       || scan_dyntag_auxv (DT_MIPS_RLD_MAP_REL, &dyn_ptr, &dyn_ptr_addr))
     {
-      struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
+      type *ptr_type
+	= builtin_type (current_inferior ()->arch ())->builtin_data_ptr;
       gdb_byte *pbuf;
       int pbuf_size = ptr_type->length ();
 
@@ -802,7 +805,8 @@ static CORE_ADDR
 solib_svr4_r_map (CORE_ADDR debug_base)
 {
   struct link_map_offsets *lmo = svr4_fetch_link_map_offsets ();
-  struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
+  type *ptr_type
+    = builtin_type (current_inferior ()->arch ())->builtin_data_ptr;
   CORE_ADDR addr = 0;
 
   try
@@ -824,7 +828,8 @@ static CORE_ADDR
 solib_svr4_r_brk (struct svr4_info *info)
 {
   struct link_map_offsets *lmo = svr4_fetch_link_map_offsets ();
-  struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
+  type *ptr_type
+    = builtin_type (current_inferior ()->arch ())->builtin_data_ptr;
 
   return read_memory_typed_address (info->debug_base + lmo->r_brk_offset,
 				    ptr_type);
@@ -837,7 +842,8 @@ static CORE_ADDR
 solib_svr4_r_ldsomap (struct svr4_info *info)
 {
   struct link_map_offsets *lmo = svr4_fetch_link_map_offsets ();
-  struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
+  type *ptr_type
+    = builtin_type (current_inferior ()->arch ())->builtin_data_ptr;
   enum bfd_endian byte_order = type_byte_order (ptr_type);
   ULONGEST version = 0;
 
@@ -867,7 +873,8 @@ static CORE_ADDR
 solib_svr4_r_next (CORE_ADDR debug_base)
 {
   link_map_offsets *lmo = svr4_fetch_link_map_offsets ();
-  type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
+  type *ptr_type
+    = builtin_type (current_inferior ()->arch ())->builtin_data_ptr;
   bfd_endian byte_order = type_byte_order (ptr_type);
   ULONGEST version = 0;
 
@@ -927,7 +934,8 @@ open_symbol_file_object (int from_tty)
 {
   CORE_ADDR lm, l_name;
   struct link_map_offsets *lmo = svr4_fetch_link_map_offsets ();
-  struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
+  type *ptr_type
+    = builtin_type (current_inferior ()->arch ())->builtin_data_ptr;
   int l_name_size = ptr_type->length ();
   gdb::byte_vector l_name_buf (l_name_size);
   struct svr4_info *info = get_svr4_info (current_program_space);
@@ -980,9 +988,9 @@ open_symbol_file_object (int from_tty)
 
 struct svr4_library_list
 {
-  /* The tail pointer of the current namespace.  This is internal to XML
+  /* The so list for the current namespace.  This is internal to XML
      parsing.  */
-  so_list **tailp;
+  std::vector<svr4_so> *cur_list;
 
   /* Inferior address of struct link_map used for the main executable.  It is
      NULL if not known.  */
@@ -992,7 +1000,7 @@ struct svr4_library_list
      not include any default sos.
 
      See comment on struct svr4_info.solib_lists.  */
-  std::map<CORE_ADDR, so_list *> solib_lists;
+  std::map<CORE_ADDR, std::vector<svr4_so>> solib_lists;
 };
 
 /* This module's 'free_objfile' observer.  */
@@ -1003,64 +1011,33 @@ svr4_free_objfile_observer (struct objfile *objfile)
   probes_table_remove_objfile_probes (objfile);
 }
 
-/* Implementation for target_so_ops.free_so.  */
+/* Implement solib_ops.clear_so.  */
 
 static void
-svr4_free_so (struct so_list *so)
+svr4_clear_so (const solib &so)
 {
-  lm_info_svr4 *li = (lm_info_svr4 *) so->lm_info;
-
-  delete li;
-}
-
-/* Implement target_so_ops.clear_so.  */
-
-static void
-svr4_clear_so (struct so_list *so)
-{
-  lm_info_svr4 *li = (lm_info_svr4 *) so->lm_info;
+  auto *li = gdb::checked_static_cast<lm_info_svr4 *> (so.lm_info.get ());
 
   if (li != NULL)
     li->l_addr_p = 0;
 }
 
-/* Free so_list built so far.  */
+/* Create the so_list objects equivalent to the svr4_sos in SOS.  */
 
-static void
-svr4_free_library_list (so_list *list)
+static intrusive_list<solib>
+so_list_from_svr4_sos (const std::vector<svr4_so> &sos)
 {
-  while (list != NULL)
+  intrusive_list<solib> dst;
+
+  for (const svr4_so &so : sos)
     {
-      struct so_list *next = list->next;
+      struct solib *newobj = new struct solib;
 
-      free_so (list);
-      list = next;
-    }
-}
+      newobj->so_name = so.name;
+      newobj->so_original_name = so.name;
+      newobj->lm_info = std::make_unique<lm_info_svr4> (*so.lm_info);
 
-/* Copy library list.  */
-
-static struct so_list *
-svr4_copy_library_list (struct so_list *src)
-{
-  struct so_list *dst = NULL;
-  struct so_list **link = &dst;
-
-  while (src != NULL)
-    {
-      struct so_list *newobj;
-
-      newobj = XNEW (struct so_list);
-      memcpy (newobj, src, sizeof (struct so_list));
-
-      lm_info_svr4 *src_li = (lm_info_svr4 *) src->lm_info;
-      newobj->lm_info = new lm_info_svr4 (*src_li);
-
-      newobj->next = NULL;
-      *link = newobj;
-      link = &newobj->next;
-
-      src = src->next;
+      dst.push_back (*newobj);
     }
 
   return dst;
@@ -1088,50 +1065,26 @@ library_list_start_library (struct gdb_xml_parser *parser,
     = (ULONGEST *) xml_find_attribute (attributes, "l_addr")->value.get ();
   ULONGEST *l_ldp
     = (ULONGEST *) xml_find_attribute (attributes, "l_ld")->value.get ();
-  struct so_list *new_elem;
 
-  new_elem = XCNEW (struct so_list);
-  lm_info_svr4 *li = new lm_info_svr4;
-  new_elem->lm_info = li;
+  lm_info_svr4_up li = std::make_unique<lm_info_svr4> ();
   li->lm_addr = *lmp;
   li->l_addr_inferior = *l_addrp;
   li->l_ld = *l_ldp;
 
-  strncpy (new_elem->so_name, name, sizeof (new_elem->so_name) - 1);
-  new_elem->so_name[sizeof (new_elem->so_name) - 1] = 0;
-  strcpy (new_elem->so_original_name, new_elem->so_name);
+  std::vector<svr4_so> *solist;
 
   /* Older versions did not supply lmid.  Put the element into the flat
      list of the special namespace zero in that case.  */
   gdb_xml_value *at_lmid = xml_find_attribute (attributes, "lmid");
   if (at_lmid == nullptr)
-    {
-      *list->tailp = new_elem;
-      list->tailp = &new_elem->next;
-    }
+    solist = list->cur_list;
   else
     {
       ULONGEST lmid = *(ULONGEST *) at_lmid->value.get ();
-
-      /* Ensure that the element is actually initialized.  */
-      if (list->solib_lists.find (lmid) == list->solib_lists.end ())
-	list->solib_lists[lmid] = nullptr;
-
-      so_list **psolist = &list->solib_lists[lmid];
-      so_list **pnext = psolist;
-
-      /* Walk to the end of the list if we have one.  */
-      so_list *solist = *psolist;
-      if (solist != nullptr)
-	{
-	  for (; solist->next != nullptr; solist = solist->next)
-	    /* Nothing.  */;
-
-	  pnext = &solist->next;
-	}
-
-      *pnext = new_elem;
+      solist = &list->solib_lists[lmid];
     }
+
+  solist->emplace_back (name, std::move (li));
 }
 
 /* Handle the start of a <library-list-svr4> element.  */
@@ -1157,9 +1110,7 @@ svr4_library_list_start_list (struct gdb_xml_parser *parser,
 
   /* Older gdbserver do not support namespaces.  We use the special
      namespace zero for a linear list of libraries.  */
-  so_list **solist = &list->solib_lists[0];
-  *solist = nullptr;
-  list->tailp = solist;
+  list->cur_list = &list->solib_lists[0];
 }
 
 /* The allowed elements and attributes for an XML library list.
@@ -1209,13 +1160,9 @@ static int
 svr4_parse_libraries (const char *document, struct svr4_library_list *list)
 {
   auto cleanup = make_scope_exit ([list] ()
-    {
-      for (const std::pair<CORE_ADDR, so_list *> tuple
-	     : list->solib_lists)
-	svr4_free_library_list (tuple.second);
-    });
+    {  list->solib_lists.clear (); });
 
-  list->tailp = nullptr;
+  list->cur_list = nullptr;
   list->main_lm = 0;
   list->solib_lists.clear ();
   if (gdb_xml_parse_quick (_("target library list"), "library-list-svr4.dtd",
@@ -1246,7 +1193,7 @@ svr4_current_sos_via_xfer_libraries (struct svr4_library_list *list,
   gdb_assert (annex == NULL || target_augmented_libraries_svr4_read ());
 
   /* Fetch the list of shared libraries.  */
-  gdb::optional<gdb::char_vector> svr4_library_document
+  std::optional<gdb::char_vector> svr4_library_document
     = target_read_stralloc (current_inferior ()->top_target (),
 			    TARGET_OBJECT_LIBRARIES_SVR4,
 			    annex);
@@ -1270,50 +1217,46 @@ svr4_current_sos_via_xfer_libraries (struct svr4_library_list *list,
 /* If no shared library information is available from the dynamic
    linker, build a fallback list from other sources.  */
 
-static struct so_list *
+static intrusive_list<solib>
 svr4_default_sos (svr4_info *info)
 {
-  struct so_list *newobj;
-
   if (!info->debug_loader_offset_p)
-    return NULL;
+    return {};
 
-  newobj = XCNEW (struct so_list);
-  lm_info_svr4 *li = new lm_info_svr4;
-  newobj->lm_info = li;
+  solib *newobj = new solib;
+  auto li = std::make_unique<lm_info_svr4> ();
 
   /* Nothing will ever check the other fields if we set l_addr_p.  */
   li->l_addr = li->l_addr_inferior = info->debug_loader_offset;
   li->l_addr_p = 1;
 
-  strncpy (newobj->so_name, info->debug_loader_name, SO_NAME_MAX_PATH_SIZE - 1);
-  newobj->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-  strcpy (newobj->so_original_name, newobj->so_name);
+  newobj->lm_info = std::move (li);
+  newobj->so_name = info->debug_loader_name;
+  newobj->so_original_name = newobj->so_name;
 
-  return newobj;
+  intrusive_list<solib> sos;
+  sos.push_back (*newobj);
+
+  return sos;
 }
 
 /* Read the whole inferior libraries chain starting at address LM.
    Expect the first entry in the chain's previous entry to be PREV_LM.
-   Add the entries to the tail referenced by LINK_PTR_PTR.  Ignore the
-   first entry if IGNORE_FIRST and set global MAIN_LM_ADDR according
-   to it.  Returns nonzero upon success.  If zero is returned the
-   entries stored to LINK_PTR_PTR are still valid although they may
+   Add the entries to SOS.  Ignore the first entry if IGNORE_FIRST and set
+   global MAIN_LM_ADDR according to it.  Returns nonzero upon success.  If zero
+   is returned the entries stored to LINK_PTR_PTR are still valid although they may
    represent only part of the inferior library list.  */
 
 static int
 svr4_read_so_list (svr4_info *info, CORE_ADDR lm, CORE_ADDR prev_lm,
-		   struct so_list ***link_ptr_ptr, int ignore_first)
+		   std::vector<svr4_so> &sos, int ignore_first)
 {
   CORE_ADDR first_l_name = 0;
   CORE_ADDR next_lm;
 
   for (; lm != 0; prev_lm = lm, lm = next_lm)
     {
-      so_list_up newobj (XCNEW (struct so_list));
-
-      lm_info_svr4 *li = lm_info_read (lm).release ();
-      newobj->lm_info = li;
+      lm_info_svr4_up li = lm_info_read (lm);
       if (li == NULL)
 	return 0;
 
@@ -1322,8 +1265,8 @@ svr4_read_so_list (svr4_info *info, CORE_ADDR lm, CORE_ADDR prev_lm,
       if (li->l_prev != prev_lm)
 	{
 	  warning (_("Corrupted shared library list: %s != %s"),
-		   paddress (target_gdbarch (), prev_lm),
-		   paddress (target_gdbarch (), li->l_prev));
+		   paddress (current_inferior ()->arch (), prev_lm),
+		   paddress (current_inferior ()->arch (), li->l_prev));
 	  return 0;
 	}
 
@@ -1340,9 +1283,9 @@ svr4_read_so_list (svr4_info *info, CORE_ADDR lm, CORE_ADDR prev_lm,
 	}
 
       /* Extract this shared object's name.  */
-      gdb::unique_xmalloc_ptr<char> buffer
+      gdb::unique_xmalloc_ptr<char> name
 	= target_read_string (li->l_name, SO_NAME_MAX_PATH_SIZE - 1);
-      if (buffer == nullptr)
+      if (name == nullptr)
 	{
 	  /* If this entry's l_name address matches that of the
 	     inferior executable, then this is not a normal shared
@@ -1353,19 +1296,12 @@ svr4_read_so_list (svr4_info *info, CORE_ADDR lm, CORE_ADDR prev_lm,
 	  continue;
 	}
 
-      strncpy (newobj->so_name, buffer.get (), SO_NAME_MAX_PATH_SIZE - 1);
-      newobj->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-      strcpy (newobj->so_original_name, newobj->so_name);
-
       /* If this entry has no name, or its name matches the name
 	 for the main executable, don't include it in the list.  */
-      if (! newobj->so_name[0] || match_main (newobj->so_name))
+      if (*name == '\0' || match_main (name.get ()))
 	continue;
 
-      newobj->next = 0;
-      /* Don't free it now.  */
-      **link_ptr_ptr = newobj.release ();
-      *link_ptr_ptr = &(**link_ptr_ptr)->next;
+      sos.emplace_back (name.get (), std::move (li));
     }
 
   return 1;
@@ -1384,7 +1320,7 @@ svr4_current_sos_direct (struct svr4_info *info)
   struct svr4_library_list library_list;
 
   /* Remove any old libraries.  We're going to read them back in again.  */
-  free_solib_lists (info);
+  info->solib_lists.clear ();
 
   /* Fall back to manual examination of the target if the packet is not
      supported or gdbserver failed to find DT_DEBUG.  gdb.server/solib-list.exp
@@ -1404,10 +1340,10 @@ svr4_current_sos_direct (struct svr4_info *info)
       /* Remove an empty special zero namespace so we know that when there
 	 is one, it is actually used, and we have a flat list without
 	 namespace information.  */
-      if ((library_list.solib_lists.find (0)
-	   != library_list.solib_lists.end ())
-	  && (library_list.solib_lists[0] == nullptr))
-	library_list.solib_lists.erase (0);
+      auto it_0 = library_list.solib_lists.find (0);
+      if (it_0 != library_list.solib_lists.end ()
+	  && it_0->second.empty ())
+	library_list.solib_lists.erase (it_0);
 
       /* Replace the (empty) solib_lists in INFO with the one generated
 	 from the target.  We don't want to copy it on assignment and then
@@ -1433,9 +1369,7 @@ svr4_current_sos_direct (struct svr4_info *info)
     ignore_first = true;
 
   auto cleanup = make_scope_exit ([info] ()
-    {
-      free_solib_lists (info);
-    });
+    { info->solib_lists.clear (); });
 
   /* Collect the sos in each namespace.  */
   CORE_ADDR debug_base = info->debug_base;
@@ -1445,12 +1379,8 @@ svr4_current_sos_direct (struct svr4_info *info)
       /* Walk the inferior's link map list, and build our so_list list.  */
       lm = solib_svr4_r_map (debug_base);
       if (lm != 0)
-	{
-	  so_list **sos = &info->solib_lists[debug_base];
-	  *sos = nullptr;
-
-	  svr4_read_so_list (info, lm, 0, &sos, ignore_first);
-	}
+	svr4_read_so_list (info, lm, 0, info->solib_lists[debug_base],
+			   ignore_first);
     }
 
   /* On Solaris, the dynamic linker is not in the normal list of
@@ -1467,11 +1397,8 @@ svr4_current_sos_direct (struct svr4_info *info)
     {
       /* Add the dynamic linker's namespace unless we already did.  */
       if (info->solib_lists.find (debug_base) == info->solib_lists.end ())
-	{
-	  so_list **sos = &info->solib_lists[debug_base];
-	  *sos = nullptr;
-	  svr4_read_so_list (info, debug_base, 0, &sos, 0);
-	}
+	svr4_read_so_list (info, debug_base, 0, info->solib_lists[debug_base],
+			   0);
     }
 
   cleanup.release ();
@@ -1479,45 +1406,27 @@ svr4_current_sos_direct (struct svr4_info *info)
 
 /* Collect sos read and stored by the probes interface.  */
 
-static so_list *
+static intrusive_list<solib>
 svr4_collect_probes_sos (svr4_info *info)
 {
-  so_list *sos = nullptr;
-  so_list **pnext = &sos;
+  intrusive_list<solib> res;
 
-  for (const std::pair<CORE_ADDR, so_list *> tuple
-	 : info->solib_lists)
+  for (const auto &tuple : info->solib_lists)
     {
-      so_list *solist = tuple.second;
-
-      /* Allow the linker to report empty namespaces.  */
-      if (solist == nullptr)
-	continue;
-
-      *pnext = svr4_copy_library_list (solist);
-
-      /* Update PNEXT to point to the next member of the last element.  */
-      gdb_assert (*pnext != nullptr);
-      for (;;)
-	{
-	  so_list *next = *pnext;
-	  if (next == nullptr)
-	    break;
-
-	  pnext = &next->next;
-	}
+      const std::vector<svr4_so> &sos = tuple.second;
+      res.splice (so_list_from_svr4_sos (sos));
     }
 
-  return sos;
+  return res;
 }
 
-/* Implement the main part of the "current_sos" target_so_ops
+/* Implement the main part of the "current_sos" solib_ops
    method.  */
 
-static struct so_list *
+static intrusive_list<solib>
 svr4_current_sos_1 (svr4_info *info)
 {
-  so_list *sos = nullptr;
+  intrusive_list<solib> sos;
 
   /* If we're using the probes interface, we can use the cache as it will
      be maintained by probe update/reload actions.  */
@@ -1527,40 +1436,35 @@ svr4_current_sos_1 (svr4_info *info)
   /* If we're not using the probes interface or if we didn't cache
      anything, read the sos to fill the cache, then collect them from the
      cache.  */
-  if (sos == nullptr)
+  if (sos.empty ())
     {
       svr4_current_sos_direct (info);
 
       sos = svr4_collect_probes_sos (info);
-      if (sos == nullptr)
+      if (sos.empty ())
 	sos = svr4_default_sos (info);
     }
 
   return sos;
 }
 
-/* Implement the "current_sos" target_so_ops method.  */
+/* Implement the "current_sos" solib_ops method.  */
 
-static struct so_list *
-svr4_current_sos (void)
+static intrusive_list<solib>
+svr4_current_sos ()
 {
   svr4_info *info = get_svr4_info (current_program_space);
-  struct so_list *so_head = svr4_current_sos_1 (info);
+  intrusive_list<solib> sos = svr4_current_sos_1 (info);
   struct mem_range vsyscall_range;
 
   /* Filter out the vDSO module, if present.  Its symbol file would
      not be found on disk.  The vDSO/vsyscall's OBJFILE is instead
      managed by symfile-mem.c:add_vsyscall_page.  */
-  if (gdbarch_vsyscall_range (target_gdbarch (), &vsyscall_range)
+  if (gdbarch_vsyscall_range (current_inferior ()->arch (), &vsyscall_range)
       && vsyscall_range.length != 0)
     {
-      struct so_list **sop;
-
-      sop = &so_head;
-      while (*sop != NULL)
+      for (auto so = sos.begin (); so != sos.end (); )
 	{
-	  struct so_list *so = *sop;
-
 	  /* We can't simply match the vDSO by starting address alone,
 	     because lm_info->l_addr_inferior (and also l_addr) do not
 	     necessarily represent the real starting address of the
@@ -1603,20 +1507,21 @@ svr4_current_sos (void)
 		[ 9] .dynamic DYNAMIC ffffffffff700580 000580 0000f0
 	  */
 
-	  lm_info_svr4 *li = (lm_info_svr4 *) so->lm_info;
+	  auto *li = gdb::checked_static_cast<lm_info_svr4 *> (so->lm_info.get ());
 
-	  if (address_in_mem_range (li->l_ld, &vsyscall_range))
+	  if (vsyscall_range.contains (li->l_ld))
 	    {
-	      *sop = so->next;
-	      free_so (so);
+	      auto next = sos.erase (so);
+	      delete &*so;
+	      so = next;
 	      break;
 	    }
 
-	  sop = &so->next;
+	  ++so;
 	}
     }
 
-  return so_head;
+  return sos;
 }
 
 /* Get the address of the link_map for a given OBJFILE.  */
@@ -1636,10 +1541,11 @@ svr4_fetch_objfile_link_map (struct objfile *objfile)
 
   /* The other link map addresses may be found by examining the list
      of shared libraries.  */
-  for (struct so_list *so : current_program_space->solibs ())
-    if (so->objfile == objfile)
+  for (const solib &so : current_program_space->solibs ())
+    if (so.objfile == objfile)
       {
-	lm_info_svr4 *li = (lm_info_svr4 *) so->lm_info;
+	auto *li
+	  = gdb::checked_static_cast<lm_info_svr4 *> (so.lm_info.get ());
 
 	return li->lm_addr;
       }
@@ -1698,10 +1604,10 @@ exec_entry_point (struct bfd *abfd, struct target_ops *targ)
      gdbarch_convert_from_func_ptr_addr().  The method
      gdbarch_convert_from_func_ptr_addr() is the merely the identify
      function for targets which don't use function descriptors.  */
-  addr = gdbarch_convert_from_func_ptr_addr (target_gdbarch (),
+  addr = gdbarch_convert_from_func_ptr_addr (current_inferior ()->arch (),
 					     bfd_get_start_address (abfd),
 					     targ);
-  return gdbarch_addr_bits_remove (target_gdbarch (), addr);
+  return gdbarch_addr_bits_remove (current_inferior ()->arch (), addr);
 }
 
 /* A probe and its associated action.  */
@@ -1895,16 +1801,10 @@ solist_update_incremental (svr4_info *info, CORE_ADDR debug_base,
   if (info->solib_lists.find (0) != info->solib_lists.end ())
     return 0;
 
-  /* Ensure that the element is actually initialized.  */
-  if (info->solib_lists.find (debug_base) == info->solib_lists.end ())
-    info->solib_lists[debug_base] = nullptr;
-
-  so_list **psolist = &info->solib_lists[debug_base];
-  so_list **pnext = nullptr;
-  so_list *solist = *psolist;
+  std::vector<svr4_so> &solist = info->solib_lists[debug_base];
   CORE_ADDR prev_lm;
 
-  if (solist == nullptr)
+  if (solist.empty ())
     {
       /* svr4_current_sos_direct contains logic to handle a number of
 	 special cases relating to the first elements of the list in
@@ -1914,18 +1814,9 @@ solist_update_incremental (svr4_info *info, CORE_ADDR debug_base,
 	return 0;
 
       prev_lm = 0;
-      pnext = psolist;
     }
   else
-    {
-      /* Walk to the end of the list.  */
-      for (; solist->next != nullptr; solist = solist->next)
-	/* Nothing.  */;
-
-      lm_info_svr4 *li = (lm_info_svr4 *) solist->lm_info;
-      prev_lm = li->lm_addr;
-      pnext = &solist->next;
-    }
+    prev_lm = solist.back ().lm_info->lm_addr;
 
   /* Read the new objects.  */
   if (info->using_xfer)
@@ -1942,29 +1833,28 @@ solist_update_incremental (svr4_info *info, CORE_ADDR debug_base,
 	return 0;
 
       /* Get the so list from the target.  We replace the list in the
-         target response so we can easily check that the response only
-         covers one namespace.
+	 target response so we can easily check that the response only
+	 covers one namespace.
 
 	 We expect gdbserver to provide updates for the namespace that
-	 contains LM, which whould be this namespace...  */
-      so_list *sos = nullptr;
-      if (library_list.solib_lists.find (debug_base)
-	  != library_list.solib_lists.end ())
-	std::swap (sos, library_list.solib_lists[debug_base]);
-      if (sos == nullptr)
+	 contains LM, which would be this namespace...  */
+      std::vector<svr4_so> sos;
+      auto it_debug_base = library_list.solib_lists.find (debug_base);
+      if (it_debug_base != library_list.solib_lists.end ())
+	std::swap (sos, it_debug_base->second);
+      else
 	{
 	  /* ...or for the special zero namespace for earlier versions...  */
-	  if (library_list.solib_lists.find (0)
-	      != library_list.solib_lists.end ())
-	    std::swap (sos, library_list.solib_lists[0]);
+	  auto it_0 = library_list.solib_lists.find (0);
+	  if (it_0 != library_list.solib_lists.end ())
+	    std::swap (sos, it_0->second);
 	}
 
       /* ...but nothing else.  */
-      for (const std::pair<CORE_ADDR, so_list *> tuple
-	     : library_list.solib_lists)
-	gdb_assert (tuple.second == nullptr);
+      for (const auto &tuple : library_list.solib_lists)
+	gdb_assert (tuple.second.empty ());
 
-      *pnext = sos;
+      std::move (sos.begin (), sos.end (), std::back_inserter (solist));
     }
   else
     {
@@ -1972,7 +1862,7 @@ solist_update_incremental (svr4_info *info, CORE_ADDR debug_base,
 	 above check and deferral to solist_update_full ensures
 	 that this call to svr4_read_so_list will never see the
 	 first element.  */
-      if (!svr4_read_so_list (info, lm, prev_lm, &pnext, 0))
+      if (!svr4_read_so_list (info, lm, prev_lm, solist, 0))
 	return 0;
     }
 
@@ -1990,7 +1880,7 @@ disable_probes_interface (svr4_info *info)
 	     "Reverting to original interface."));
 
   free_probes_table (info);
-  free_solib_lists (info);
+  info->solib_lists.clear ();
 }
 
 /* Update the solib list as appropriate when using the
@@ -2011,17 +1901,22 @@ svr4_handle_solib_event (void)
   if (info->probes_table == NULL)
     return;
 
+  pc = regcache_read_pc (get_thread_regcache (inferior_thread ()));
+  pa = solib_event_probe_at (info, pc);
+  if (pa == nullptr)
+    {
+      /* When some solib ops sits above us, it can respond to a solib event
+	 by calling in here.  This is done assuming that if the current event
+	 is not an SVR4 solib event, calling here should be a no-op.  */
+      return;
+    }
+
   /* If anything goes wrong we revert to the original linker
      interface.  */
   auto cleanup = make_scope_exit ([info] ()
     {
       disable_probes_interface (info);
     });
-
-  pc = regcache_read_pc (get_current_regcache ());
-  pa = solib_event_probe_at (info, pc);
-  if (pa == NULL)
-    return;
 
   action = solib_event_probe_action (pa);
   if (action == PROBES_INTERFACE_FAILED)
@@ -2146,16 +2041,16 @@ svr4_update_solib_event_breakpoint (struct breakpoint *b)
       return false;
     }
 
-  for (bp_location *loc : b->locations ())
+  for (bp_location &loc : b->locations ())
     {
       struct svr4_info *info;
       struct probe_and_action *pa;
 
-      info = solib_svr4_pspace_data.get (loc->pspace);
+      info = solib_svr4_pspace_data.get (loc.pspace);
       if (info == NULL || info->probes_table == NULL)
 	continue;
 
-      pa = solib_event_probe_at (info, loc->address);
+      pa = solib_event_probe_at (info, loc.address);
       if (pa == NULL)
 	continue;
 
@@ -2180,8 +2075,8 @@ svr4_update_solib_event_breakpoint (struct breakpoint *b)
 static void
 svr4_update_solib_event_breakpoints (void)
 {
-  for (breakpoint *bp : all_breakpoints_safe ())
-    svr4_update_solib_event_breakpoint (bp);
+  for (breakpoint &bp : all_breakpoints_safe ())
+    svr4_update_solib_event_breakpoint (&bp);
 }
 
 /* Create and register solib event breakpoints.  PROBES is an array
@@ -2330,14 +2225,6 @@ svr4_create_solib_event_breakpoints (svr4_info *info, struct gdbarch *gdbarch,
     }
 }
 
-/* Helper function for gdb_bfd_lookup_symbol.  */
-
-static int
-cmp_name_and_sec_flags (const asymbol *sym, const void *data)
-{
-  return (strcmp (sym->name, (const char *) data) == 0
-	  && (sym->section->flags & (SEC_CODE | SEC_DATA)) != 0);
-}
 /* Arrange for dynamic linker to hit breakpoint.
 
    Both the SunOS and the SVR4 dynamic linkers have, as part of their
@@ -2349,7 +2236,7 @@ cmp_name_and_sec_flags (const asymbol *sym, const void *data)
    set to 1.  When the dynamic linker sees this flag set, it will set
    a breakpoint at a location known only to itself, after saving the
    original contents of that place and the breakpoint address itself,
-   in it's own internal structures.  When we resume the inferior, it
+   in its own internal structures.  When we resume the inferior, it
    will eventually take a SIGTRAP when it runs into the breakpoint.
    We handle this (in a different place) by restoring the contents of
    the breakpointed location (which is only known after it stops),
@@ -2396,9 +2283,10 @@ enable_break (struct svr4_info *info, int from_tty)
       struct obj_section *os;
 
       sym_addr = gdbarch_addr_bits_remove
-	(target_gdbarch (),
+	(current_inferior ()->arch (),
 	 gdbarch_convert_from_func_ptr_addr
-	   (target_gdbarch (), sym_addr, current_inferior ()->top_target ()));
+	   (current_inferior ()->arch (), sym_addr,
+	    current_inferior ()->top_target ()));
 
       /* On at least some versions of Solaris there's a dynamic relocation
 	 on _r_debug.r_brk and SYM_ADDR may not be relocated yet, e.g., if
@@ -2447,14 +2335,15 @@ enable_break (struct svr4_info *info, int from_tty)
 		= info->interp_plt_sect_low + bfd_section_size (interp_sect);
 	    }
 
-	  svr4_create_solib_event_breakpoints (info, target_gdbarch (), sym_addr);
+	  svr4_create_solib_event_breakpoints
+	    (info, current_inferior ()->arch (), sym_addr);
 	  return 1;
 	}
     }
 
   /* Find the program interpreter; if not found, warn the user and drop
      into the old breakpoint at symbol code.  */
-  gdb::optional<gdb::byte_vector> interp_name_holder
+  std::optional<gdb::byte_vector> interp_name_holder
     = find_program_interpreter ();
   if (interp_name_holder)
     {
@@ -2462,7 +2351,7 @@ enable_break (struct svr4_info *info, int from_tty)
       CORE_ADDR load_addr = 0;
       int load_addr_found = 0;
       int loader_found_in_list = 0;
-      struct target_ops *tmp_bfd_target;
+      target_ops_up tmp_bfd_target;
 
       sym_addr = 0;
 
@@ -2493,9 +2382,9 @@ enable_break (struct svr4_info *info, int from_tty)
 
       /* On a running target, we can get the dynamic linker's base
 	 address from the shared library table.  */
-      for (struct so_list *so : current_program_space->solibs ())
+      for (const solib &so : current_program_space->solibs ())
 	{
-	  if (svr4_same_1 (interp_name, so->so_original_name))
+	  if (svr4_same_1 (interp_name, so.so_original_name.c_str ()))
 	    {
 	      load_addr_found = 1;
 	      loader_found_in_list = 1;
@@ -2509,7 +2398,7 @@ enable_break (struct svr4_info *info, int from_tty)
       if (!load_addr_found)
 	if (target_auxv_search (AT_BASE, &load_addr) > 0)
 	  {
-	    int addr_bit = gdbarch_addr_bit (target_gdbarch ());
+	    int addr_bit = gdbarch_addr_bit (current_inferior ()->arch ());
 
 	    /* Ensure LOAD_ADDR has proper sign in its possible upper bits so
 	       that `+ load_addr' will overflow CORE_ADDR width not creating
@@ -2519,8 +2408,8 @@ enable_break (struct svr4_info *info, int from_tty)
 	    if (addr_bit < (sizeof (CORE_ADDR) * HOST_CHAR_BIT))
 	      {
 		CORE_ADDR space_size = (CORE_ADDR) 1 << addr_bit;
-		CORE_ADDR tmp_entry_point = exec_entry_point (tmp_bfd.get (),
-							      tmp_bfd_target);
+		CORE_ADDR tmp_entry_point
+		  = exec_entry_point (tmp_bfd.get (), tmp_bfd_target.get ());
 
 		gdb_assert (load_addr < space_size);
 
@@ -2544,12 +2433,13 @@ enable_break (struct svr4_info *info, int from_tty)
 	 most cases.  */
       if (!load_addr_found)
 	{
-	  struct regcache *regcache
-	    = get_thread_arch_regcache (current_inferior ()->process_target (),
-					inferior_ptid, target_gdbarch ());
+	  regcache *regcache
+	    = get_thread_arch_regcache (current_inferior (), inferior_ptid,
+					current_inferior ()->arch ());
 
 	  load_addr = (regcache_read_pc (regcache)
-		       - exec_entry_point (tmp_bfd.get (), tmp_bfd_target));
+		       - exec_entry_point (tmp_bfd.get (),
+					   tmp_bfd_target.get ()));
 	}
 
       if (!loader_found_in_list)
@@ -2582,9 +2472,15 @@ enable_break (struct svr4_info *info, int from_tty)
       /* Now try to set a breakpoint in the dynamic linker.  */
       for (bkpt_namep = solib_break_names; *bkpt_namep != NULL; bkpt_namep++)
 	{
-	  sym_addr = gdb_bfd_lookup_symbol (tmp_bfd.get (),
-					    cmp_name_and_sec_flags,
-					    *bkpt_namep);
+	  sym_addr
+	    = (gdb_bfd_lookup_symbol
+	       (tmp_bfd.get (),
+		[=] (const asymbol *sym)
+		{
+		  return (strcmp (sym->name, *bkpt_namep) == 0
+			  && ((sym->section->flags & (SEC_CODE | SEC_DATA))
+			      != 0));
+		}));
 	  if (sym_addr != 0)
 	    break;
 	}
@@ -2593,18 +2489,14 @@ enable_break (struct svr4_info *info, int from_tty)
 	/* Convert 'sym_addr' from a function pointer to an address.
 	   Because we pass tmp_bfd_target instead of the current
 	   target, this will always produce an unrelocated value.  */
-	sym_addr = gdbarch_convert_from_func_ptr_addr (target_gdbarch (),
-						       sym_addr,
-						       tmp_bfd_target);
-
-      /* We're done with both the temporary bfd and target.  Closing
-	 the target closes the underlying bfd, because it holds the
-	 only remaining reference.  */
-      target_close (tmp_bfd_target);
+	sym_addr = gdbarch_convert_from_func_ptr_addr
+		     (current_inferior ()->arch (), sym_addr,
+		      tmp_bfd_target.get ());
 
       if (sym_addr != 0)
 	{
-	  svr4_create_solib_event_breakpoints (info, target_gdbarch (),
+	  svr4_create_solib_event_breakpoints (info,
+					       current_inferior ()->arch (),
 					       load_addr + sym_addr);
 	  return 1;
 	}
@@ -2629,8 +2521,10 @@ enable_break (struct svr4_info *info, int from_tty)
 	{
 	  sym_addr = msymbol.value_address ();
 	  sym_addr = gdbarch_convert_from_func_ptr_addr
-	    (target_gdbarch (), sym_addr, current_inferior ()->top_target ());
-	  svr4_create_solib_event_breakpoints (info, target_gdbarch (),
+	    (current_inferior ()->arch (), sym_addr,
+	     current_inferior ()->top_target ());
+	  svr4_create_solib_event_breakpoints (info,
+					       current_inferior ()->arch (),
 					       sym_addr);
 	  return 1;
 	}
@@ -2646,10 +2540,10 @@ enable_break (struct svr4_info *info, int from_tty)
 	    {
 	      sym_addr = msymbol.value_address ();
 	      sym_addr = gdbarch_convert_from_func_ptr_addr
-		(target_gdbarch (), sym_addr,
+		(current_inferior ()->arch (), sym_addr,
 		 current_inferior ()->top_target ());
-	      svr4_create_solib_event_breakpoints (info, target_gdbarch (),
-						   sym_addr);
+	      svr4_create_solib_event_breakpoints
+		(info, current_inferior ()->arch (), sym_addr);
 	      return 1;
 	    }
 	}
@@ -2659,7 +2553,7 @@ enable_break (struct svr4_info *info, int from_tty)
 
 /* Read the ELF program headers from ABFD.  */
 
-static gdb::optional<gdb::byte_vector>
+static std::optional<gdb::byte_vector>
 read_program_headers_from_bfd (bfd *abfd)
 {
   Elf_Internal_Ehdr *ehdr = elf_elfheader (abfd);
@@ -2669,7 +2563,7 @@ read_program_headers_from_bfd (bfd *abfd)
 
   gdb::byte_vector buf (phdrs_size);
   if (bfd_seek (abfd, ehdr->e_phoff, SEEK_SET) != 0
-      || bfd_bread (buf.data (), phdrs_size, abfd) != phdrs_size)
+      || bfd_read (buf.data (), phdrs_size, abfd) != phdrs_size)
     return {};
 
   return buf;
@@ -2715,7 +2609,7 @@ read_program_headers_from_bfd (bfd *abfd)
      whose e_type member in the ELF header is not ET_DYN.  There may
      be a time in the future when it is desirable to do relocations
      on other types of files as well in which case this condition
-     should either be removed or modified to accomodate the new file
+     should either be removed or modified to accommodate the new file
      type.  - Kevin, Nov 2000. ]  */
 
 static int
@@ -2772,13 +2666,13 @@ svr4_exec_displacement (CORE_ADDR *displacementp)
 	 really do not match.  */
       int arch_size;
 
-      gdb::optional<gdb::byte_vector> phdrs_target
+      std::optional<gdb::byte_vector> phdrs_target
 	= read_program_header (-1, &arch_size, NULL);
-      gdb::optional<gdb::byte_vector> phdrs_binary
+      std::optional<gdb::byte_vector> phdrs_binary
 	= read_program_headers_from_bfd (current_program_space->exec_bfd ());
       if (phdrs_target && phdrs_binary)
 	{
-	  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+	  bfd_endian byte_order = gdbarch_byte_order (current_inferior ()->arch ());
 
 	  /* We are dealing with three different addresses.  EXEC_BFD
 	     represents current address in on-disk file.  target memory content
@@ -3086,7 +2980,7 @@ svr4_exec_displacement (CORE_ADDR *displacementp)
 
       gdb_printf (_("Using PIE (Position Independent Executable) "
 		    "displacement %s for \"%s\".\n"),
-		  paddress (target_gdbarch (), exec_displacement),
+		  paddress (current_inferior ()->arch (), exec_displacement),
 		  bfd_get_filename (current_program_space->exec_bfd ()));
     }
 
@@ -3182,7 +3076,7 @@ svr4_solib_create_inferior_hook (int from_tty)
 
   /* Clear the probes-based interface's state.  */
   free_probes_table (info);
-  free_solib_lists (info);
+  info->solib_lists.clear ();
 
   /* Relocate the main executable if necessary.  */
   svr4_relocate_main_executable ();
@@ -3200,11 +3094,9 @@ svr4_solib_create_inferior_hook (int from_tty)
 }
 
 static void
-svr4_clear_solib (void)
+svr4_clear_solib (program_space *pspace)
 {
-  struct svr4_info *info;
-
-  info = get_svr4_info (current_program_space);
+  svr4_info *info = get_svr4_info (pspace);
   info->debug_base = 0;
   info->debug_loader_offset_p = 0;
   info->debug_loader_offset = 0;
@@ -3228,18 +3120,17 @@ svr4_clear_solib (void)
 static CORE_ADDR
 svr4_truncate_ptr (CORE_ADDR addr)
 {
-  if (gdbarch_ptr_bit (target_gdbarch ()) == sizeof (CORE_ADDR) * 8)
+  if (gdbarch_ptr_bit (current_inferior ()->arch ()) == sizeof (CORE_ADDR) * 8)
     /* We don't need to truncate anything, and the bit twiddling below
        will fail due to overflow problems.  */
     return addr;
   else
-    return addr & (((CORE_ADDR) 1 << gdbarch_ptr_bit (target_gdbarch ())) - 1);
+    return addr & (((CORE_ADDR) 1 << gdbarch_ptr_bit (current_inferior ()->arch ())) - 1);
 }
 
 
 static void
-svr4_relocate_section_addresses (struct so_list *so,
-				 struct target_section *sec)
+svr4_relocate_section_addresses (solib &so, target_section *sec)
 {
   bfd *abfd = sec->the_bfd_section->owner;
 
@@ -3292,7 +3183,7 @@ set_solib_svr4_fetch_link_map_offsets (struct gdbarch *gdbarch,
 static struct link_map_offsets *
 svr4_fetch_link_map_offsets (void)
 {
-  struct solib_svr4_ops *ops = get_ops (target_gdbarch ());
+  struct solib_svr4_ops *ops = get_ops (current_inferior ()->arch ());
 
   gdb_assert (ops->fetch_link_map_offsets);
   return ops->fetch_link_map_offsets ();
@@ -3303,7 +3194,7 @@ svr4_fetch_link_map_offsets (void)
 static int
 svr4_have_link_map_offsets (void)
 {
-  struct solib_svr4_ops *ops = get_ops (target_gdbarch ());
+  struct solib_svr4_ops *ops = get_ops (current_inferior ()->arch ());
 
   return (ops->fetch_link_map_offsets != NULL);
 }
@@ -3380,7 +3271,7 @@ svr4_lp64_fetch_link_map_offsets (void)
 
 /* Return the DSO matching OBJFILE or nullptr if none can be found.  */
 
-static so_list *
+static const solib *
 find_solib_for_objfile (struct objfile *objfile)
 {
   if (objfile == nullptr)
@@ -3391,9 +3282,9 @@ find_solib_for_objfile (struct objfile *objfile)
   if (objfile->separate_debug_objfile_backlink != nullptr)
     objfile = objfile->separate_debug_objfile_backlink;
 
-  for (so_list *so : current_program_space->solibs ())
-    if (so->objfile == objfile)
-      return so;
+  for (const solib &so : current_program_space->solibs ())
+    if (so.objfile == objfile)
+      return &so;
 
   return nullptr;
 }
@@ -3406,21 +3297,25 @@ find_solib_for_objfile (struct objfile *objfile)
    right thing for the main executable.  */
 
 static CORE_ADDR
-find_debug_base_for_solib (so_list *solib)
+find_debug_base_for_solib (const solib *solib)
 {
   if (solib == nullptr)
     return 0;
 
   svr4_info *info = get_svr4_info (current_program_space);
   gdb_assert (info != nullptr);
-  for (const std::pair<CORE_ADDR, so_list *> tuple
-	 : info->solib_lists)
+
+  auto *lm_info
+    = gdb::checked_static_cast<const lm_info_svr4 *> (solib->lm_info.get ());
+
+  for (const auto &tuple : info->solib_lists)
     {
       CORE_ADDR debug_base = tuple.first;
-      so_list *solist = tuple.second;
+      const std::vector<svr4_so> &sos = tuple.second;
 
-      for (; solist != nullptr; solist = solist->next)
-	if (svr4_same (solib, solist))
+      for (const svr4_so &so : sos)
+	if (svr4_same (solib->so_original_name.c_str (), so.name.c_str (),
+		       *lm_info, *so.lm_info))
 	  return debug_base;
     }
 
@@ -3463,7 +3358,7 @@ svr4_iterate_over_objfiles_in_search_order
   /* The linker namespace to iterate identified by the address of its
      r_debug object, defaulting to the initial namespace.  */
   CORE_ADDR initial = elf_locate_base ();
-  so_list *curr_solib = find_solib_for_objfile (current_objfile);
+  const solib *curr_solib = find_solib_for_objfile (current_objfile);
   CORE_ADDR debug_base = find_debug_base_for_solib (curr_solib);
   if (debug_base == 0)
     debug_base = initial;
@@ -3478,7 +3373,7 @@ svr4_iterate_over_objfiles_in_search_order
 	 If we fail, e.g. for manually added symbol files or for the main
 	 executable, we assume that they were added to the initial
 	 namespace.  */
-      so_list *solib = find_solib_for_objfile (objfile);
+      const solib *solib = find_solib_for_objfile (objfile);
       CORE_ADDR solib_base = find_debug_base_for_solib (solib);
       if (solib_base == 0)
 	solib_base = initial;
@@ -3492,10 +3387,9 @@ svr4_iterate_over_objfiles_in_search_order
     }
 }
 
-const struct target_so_ops svr4_so_ops =
+const struct solib_ops svr4_so_ops =
 {
   svr4_relocate_section_addresses,
-  svr4_free_so,
   svr4_clear_so,
   svr4_clear_solib,
   svr4_solib_create_inferior_hook,

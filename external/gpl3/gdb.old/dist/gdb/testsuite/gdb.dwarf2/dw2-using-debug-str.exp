@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 standard_testfile .c -dw.S
 
@@ -100,12 +98,14 @@ if ![runto_main] {
 # field names, all of which are stored in the .debug_str section.
 gdb_test "p global_var" " = \\{aa = 0, bb = 0, cc = 0\\}"
 
+set host_binfile [gdb_remote_download host $binfile]
+
 # Verify that the executable actually contains a .debug_str section, before
 # trying to remove it.  This can be missing with target boards
 # cc-with-dwz-m.exp and cc-with-gnu-debuglink.exp.  Handle this by
 # skipping the remainder of the test-case.
-set debug_str_section "${binfile}-debug-str"
-set args "--dump-section .debug_str=${debug_str_section} $binfile"
+set debug_str_section "${host_binfile}-debug-str"
+set args "--dump-section .debug_str=${debug_str_section} $host_binfile"
 set result [remote_exec host "[gdb_find_objcopy] $args"]
 set status [lindex $result 0]
 set output [lindex $result 1]
@@ -117,8 +117,8 @@ if { $status == 0 && ![string equal $output ""] } {
 # creates an executable with an invalid DWARF configuration.  GDB
 # should give an error when trying to read the debug information from
 # this executable.
-set binfile_no_debug_str "${binfile}-no-debug-str"
-set args "--remove-section .debug_str $binfile ${binfile_no_debug_str}"
+set binfile_no_debug_str "${host_binfile}-no-debug-str"
+set args "--remove-section .debug_str $host_binfile ${binfile_no_debug_str}"
 if {[run_on_host "objcopy" [gdb_find_objcopy] "$args"]} {
     perror "failed to run objcopy"
     return -1
@@ -127,6 +127,8 @@ if {[run_on_host "objcopy" [gdb_find_objcopy] "$args"]} {
 # Restart GDB, but don't load an executable.  When we do load the
 # executable we're going to get an error, which we check for below.
 clean_restart
+
+gdb_test_no_output "maint set dwarf synchronous on"
 
 set line1 "Reading symbols from \[^\r\n\]+"
 set dwarf_error "Dwarf Error: DW_FORM_strp used without required section"

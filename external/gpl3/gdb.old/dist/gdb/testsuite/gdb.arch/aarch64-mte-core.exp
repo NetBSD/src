@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2023 Free Software Foundation, Inc.
+# Copyright (C) 2018-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -164,10 +164,9 @@ proc test_mode { mode } {
 
 }
 
-if {![is_aarch64_target]} {
-    verbose "Skipping ${gdb_test_file_name}."
-    return
-}
+require is_aarch64_target
+
+require {have_compile_flag -march=armv8.5-a+memtag}
 
 # Run tests
 foreach_with_prefix mode {"sync" "async"} {

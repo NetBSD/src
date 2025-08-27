@@ -1,5 +1,5 @@
 /* Target-dependent code for the GNU Hurd.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "gdbcore.h"
 #include "osabi.h"
 #include "solib-svr4.h"
@@ -56,7 +56,7 @@ static const gdb_byte gnu_sigtramp_code[] =
    start of the routine.  Otherwise, return 0.  */
 
 static CORE_ADDR
-i386_gnu_sigtramp_start (frame_info_ptr this_frame)
+i386_gnu_sigtramp_start (const frame_info_ptr &this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   gdb_byte buf[GNU_SIGTRAMP_LEN];
@@ -76,7 +76,7 @@ i386_gnu_sigtramp_start (frame_info_ptr this_frame)
    routine.  */
 
 static int
-i386_gnu_sigtramp_p (frame_info_ptr this_frame)
+i386_gnu_sigtramp_p (const frame_info_ptr &this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   const char *name;
@@ -97,7 +97,7 @@ i386_gnu_sigtramp_p (frame_info_ptr this_frame)
    address of the associated sigcontext structure.  */
 
 static CORE_ADDR
-i386_gnu_sigcontext_addr (frame_info_ptr this_frame)
+i386_gnu_sigcontext_addr (const frame_info_ptr &this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);

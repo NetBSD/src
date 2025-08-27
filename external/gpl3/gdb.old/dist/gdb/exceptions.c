@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "exceptions.h"
 #include "breakpoint.h"
 #include "target.h"
@@ -26,8 +25,8 @@
 #include "ui-out.h"
 #include "serial.h"
 #include "gdbthread.h"
-#include "top.h"
-#include "gdbsupport/gdb_optional.h"
+#include "ui.h"
+#include <optional>
 
 static void
 print_flush (void)
@@ -38,7 +37,7 @@ print_flush (void)
   if (deprecated_error_begin_hook)
     deprecated_error_begin_hook ();
 
-  gdb::optional<target_terminal::scoped_restore_terminal_state> term_state;
+  std::optional<target_terminal::scoped_restore_terminal_state> term_state;
   if (target_supports_terminal_ours ())
     {
       term_state.emplace ();
@@ -90,6 +89,7 @@ print_exception (struct ui_file *file, const struct gdb_exception &e)
   switch (e.reason)
     {
     case RETURN_QUIT:
+    case RETURN_FORCED_QUIT:
       annotate_quit ();
       break;
     case RETURN_ERROR:

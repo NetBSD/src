@@ -1,5 +1,5 @@
 /* Simulator for Xilinx MicroBlaze processor
-   Copyright 2009-2023 Free Software Foundation, Inc.
+   Copyright 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -19,7 +19,6 @@
 /* This must come before any other includes.  */
 #include "defs.h"
 
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -33,7 +32,8 @@
 #include "sim-signal.h"
 #include "sim-syscall.h"
 
-#include "microblaze-dis.h"
+#include "microblaze-sim.h"
+#include "opcodes/microblaze-dis.h"
 
 #define target_big_endian (CURRENT_TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
 
@@ -97,7 +97,6 @@ static void
 set_initial_gprs (SIM_CPU *cpu)
 {
   int i;
-  long space;
 
   /* Set up machine just out of reset.  */
   PC = 0;
@@ -120,19 +119,14 @@ sim_engine_run (SIM_DESC sd,
 		int siggnal) /* ignore  */
 {
   SIM_CPU *cpu = STATE_CPU (sd, 0);
-  int needfetch;
   signed_4 inst;
   enum microblaze_instr op;
   int memops;
   int bonus_cycles;
   int insts;
-  int w;
-  int cycs;
-  signed_4 WLhash;
   unsigned_1 carry;
   bool imm_unsigned;
   short ra, rb, rd;
-  long immword;
   unsigned_4 oldpc, newpc;
   short delay_slot_enable;
   short branch_taken;
@@ -368,7 +362,7 @@ microblaze_reg_fetch (SIM_CPU *cpu, int rn, void *memory, int length)
 }
 
 void
-sim_info (SIM_DESC sd, int verbose)
+sim_info (SIM_DESC sd, bool verbose)
 {
   SIM_CPU *cpu = STATE_CPU (sd, 0);
   host_callback *callback = STATE_CALLBACK (sd);
@@ -382,13 +376,13 @@ sim_info (SIM_DESC sd, int verbose)
 static sim_cia
 microblaze_pc_get (sim_cpu *cpu)
 {
-  return cpu->microblaze_cpu.spregs[0];
+  return MICROBLAZE_SIM_CPU (cpu)->spregs[0];
 }
 
 static void
 microblaze_pc_set (sim_cpu *cpu, sim_cia pc)
 {
-  cpu->microblaze_cpu.spregs[0] = pc;
+  MICROBLAZE_SIM_CPU (cpu)->spregs[0] = pc;
 }
 
 static void
@@ -409,7 +403,8 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct microblaze_regset))
+      != SIM_RC_OK)
     {
       free_state (sd);
       return 0;

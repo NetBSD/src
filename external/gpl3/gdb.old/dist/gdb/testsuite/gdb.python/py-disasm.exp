@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2023 Free Software Foundation, Inc.
+# Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,13 @@
 
 load_lib gdb-python.exp
 
+require allow_python_tests
+
 standard_testfile
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} "debug"] } {
     return -1
 }
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 if {![runto_main]} {
     fail "can't run to main"
@@ -66,14 +65,34 @@ proc py_remove_all_disassemblers {} {
 #
 # Each different disassembler tests some different feature of the
 # Python disassembler API.
-set nop "(nop|nop\t0)"
+set nop "(nop|nop\t0|[string_to_regexp nop\t{0}])"
 set unknown_error_pattern "unknown disassembler error \\(error = -1\\)"
 set addr_pattern "\r\n=> ${curr_pc_pattern} <\[^>\]+>:\\s+"
 set base_pattern "${addr_pattern}${nop}"
+
+# Helper proc to format a Python exception of TYPE with MSG.
+proc make_exception_pattern { type msg } {
+    return "${::addr_pattern}Python Exception <class '$type'>: $msg\r\n\r\n${::unknown_error_pattern}"
+}
+
+# Helper proc to build a pattern for the text Python emits when a
+# function argument is missing.  This string changed in Python 3.7 and
+# later.  NAME is the parameter name, and POS is its integer position
+# in the argument list.
+proc missing_arg_pattern { name pos } {
+    set pattern_1 "function missing required argument '$name' \\(pos $pos\\)"
+    set pattern_2 "Required argument '$name' \\(pos $pos\\) not found"
+    return "(?:${pattern_1}|${pattern_2})"
+}
+
 set test_plans \
     [list \
 	 [list "" "${base_pattern}\r\n.*"] \
 	 [list "GlobalNullDisassembler" "${base_pattern}\r\n.*"] \
+	 [list "ShowInfoRepr" "${base_pattern}\\s+## <gdb.disassembler.DisassembleInfo address=$hex architecture=\[^>\]+>\r\n.*"] \
+	 [list "ShowInfoSubClassRepr" "${base_pattern}\\s+## <MyInfo address=$hex architecture=\[^>\]+>\r\n.*"] \
+	 [list "ShowResultRepr" "${base_pattern}\\s+## <gdb.disassembler.DisassemblerResult length=$decimal string=\"\[^\r\n\]+\">\r\n.*"] \
+	 [list "ShowResultStr" "${base_pattern}\\s+## ${nop}\r\n.*"] \
 	 [list "GlobalPreInfoDisassembler" "${base_pattern}\\s+## ad = $hex, ar = ${curr_arch}\r\n.*"] \
 	 [list "GlobalPostInfoDisassembler" "${base_pattern}\\s+## ad = $hex, ar = ${curr_arch}\r\n.*"] \
 	 [list "GlobalReadDisassembler" "${base_pattern}\\s+## bytes =( $hex)+\r\n.*"] \
@@ -87,15 +106,40 @@ set test_plans \
 	 [list "RethrowMemoryErrorDisassembler" "${addr_pattern}Cannot access memory at address $hex"] \
 	 [list "ReadMemoryMemoryErrorDisassembler" "${addr_pattern}Cannot access memory at address ${curr_pc_pattern}"] \
 	 [list "ReadMemoryGdbErrorDisassembler" "${addr_pattern}read_memory raised GdbError\r\n${unknown_error_pattern}"] \
-	 [list "ReadMemoryRuntimeErrorDisassembler" "${addr_pattern}Python Exception <class 'RuntimeError'>: read_memory raised RuntimeError\r\n\r\n${unknown_error_pattern}"] \
+	 [list "ReadMemoryRuntimeErrorDisassembler" \
+	      [make_exception_pattern "RuntimeError" \
+		   "read_memory raised RuntimeError"]] \
 	 [list "ReadMemoryCaughtMemoryErrorDisassembler" "${addr_pattern}${nop}\r\n.*"] \
 	 [list "ReadMemoryCaughtGdbErrorDisassembler" "${addr_pattern}${nop}\r\n.*"] \
 	 [list "ReadMemoryCaughtRuntimeErrorDisassembler" "${addr_pattern}${nop}\r\n.*"] \
-	 [list "MemorySourceNotABufferDisassembler" "${addr_pattern}Python Exception <class 'TypeError'>: Result from read_memory is not a buffer\r\n\r\n${unknown_error_pattern}"] \
-	 [list "MemorySourceBufferTooLongDisassembler" "${addr_pattern}Python Exception <class 'ValueError'>: Buffer returned from read_memory is sized $decimal instead of the expected $decimal\r\n\r\n${unknown_error_pattern}"] \
-	 [list "ResultOfWrongType" "${addr_pattern}Python Exception <class 'TypeError'>: Result is not a DisassemblerResult.\r\n.*"] \
-	 [list "ResultWithInvalidLength" "${addr_pattern}Python Exception <class 'ValueError'>: Invalid length attribute: length must be greater than 0.\r\n.*"] \
-	 [list "ResultWithInvalidString" "${addr_pattern}Python Exception <class 'ValueError'>: String attribute must not be empty.\r\n.*"]]
+	 [list "MemorySourceNotABufferDisassembler" \
+	      [make_exception_pattern "TypeError" \
+		   "Result from read_memory is not a buffer"]] \
+	 [list "MemorySourceBufferTooLongDisassembler" \
+	      [make_exception_pattern "ValueError" \
+		   "Buffer returned from read_memory is sized $decimal instead of the expected $decimal"]] \
+	 [list "ResultOfWrongType" \
+	      [make_exception_pattern "TypeError" \
+		   "Result is not a DisassemblerResult."]] \
+	 [list "ErrorCreatingTextPart_NoArgs" \
+	      [make_exception_pattern "TypeError" \
+		   [missing_arg_pattern "style" 1]]] \
+	 [list "ErrorCreatingAddressPart_NoArgs" \
+	      [make_exception_pattern "TypeError" \
+		   [missing_arg_pattern "address" 1]]] \
+	 [list "ErrorCreatingTextPart_NoString" \
+	      [make_exception_pattern "TypeError" \
+		   [missing_arg_pattern "string" 2]]] \
+	 [list "ErrorCreatingTextPart_NoStyle" \
+	      [make_exception_pattern "TypeError" \
+		   [missing_arg_pattern "style" 1]]] \
+	 [list "All_Text_Part_Styles" "${addr_pattern}p1p2p3p4p5p6p7p8p9p10\r\n.*"] \
+	 [list "ErrorCreatingTextPart_StringAndParts" \
+	      [make_exception_pattern "ValueError" \
+		  "Cannot use 'string' and 'parts' when creating gdb\\.disassembler\\.DisassemblerResult\\."]] \
+	 [list "Build_Result_Using_All_Parts" \
+	      "${addr_pattern}fake\treg, ${curr_pc_pattern}(?: <\[^>\]+>)?, 123\r\n.*"] \
+	]
 
 # Now execute each test plan.
 foreach plan $test_plans {
@@ -120,16 +164,16 @@ foreach plan $test_plans {
 with_test_prefix "DisassemblerResult errors" {
     gdb_test "python gdb.disassembler.DisassemblerResult(0, 'abc')" \
 	[multi_line \
-	     "ValueError: Length must be greater than 0." \
-	     "Error while executing Python code."]
+	     "ValueError.*: Length must be greater than 0." \
+	     "Error occurred in Python.*"]
     gdb_test "python gdb.disassembler.DisassemblerResult(-1, 'abc')" \
 	[multi_line \
-	     "ValueError: Length must be greater than 0." \
-	     "Error while executing Python code."]
+	     "ValueError.*: Length must be greater than 0." \
+	     "Error occurred in Python.*"]
     gdb_test "python gdb.disassembler.DisassemblerResult(1, '')" \
 	[multi_line \
-	     "ValueError: String must not be empty." \
-	     "Error while executing Python code."]
+	     "ValueError.*: String must not be empty.*" \
+	     "Error occurred in Python.*"]
 }
 
 # Check that the architecture specific disassemblers can override the
@@ -211,6 +255,52 @@ with_test_prefix "Bad DisassembleInfo creation" {
     gdb_test "python print(my_info.is_valid())" "True"
     gdb_test "python gdb.disassembler.builtin_disassemble(my_info)" \
 	[multi_line \
-	     "RuntimeError: DisassembleInfo is no longer valid\\." \
-	     "Error while executing Python code\\."]
+	     "RuntimeError.*: DisassembleInfo is no longer valid\\." \
+	     "Error occurred in Python.*"]
+}
+
+# Some of the disassembler related types should not be sub-typed,
+# check these now.
+with_test_prefix "check inheritance" {
+    foreach_with_prefix type {gdb.disassembler.DisassemblerResult \
+				  gdb.disassembler.DisassemblerPart
+				  gdb.disassembler.DisassemblerTextPart \
+				  gdb.disassembler.DisassemblerAddressPart} {
+	set type_ptn [string_to_regexp $type]
+	gdb_test_multiline "Sub-class a breakpoint" \
+	    "python" "" \
+	    "class InvalidResultType($type):" "" \
+	    "   def __init__(self):" "" \
+	    "     pass" "" \
+	    "end" \
+	    [multi_line \
+		 "TypeError.*: type '${type_ptn}' is not an acceptable base type" \
+		 "Error occurred in Python.*"]
+    }
+}
+
+
+# Test some error conditions when creating a DisassemblerResult object.
+gdb_test "python result = gdb.disassembler.DisassemblerResult()" \
+    [multi_line \
+	 "TypeError.*: [missing_arg_pattern length 1]" \
+	 "Error occurred in Python.*"] \
+    "try to create a DisassemblerResult without a length argument"
+
+foreach len {0 -1} {
+    gdb_test "python result = gdb.disassembler.DisassemblerResult($len)" \
+	[multi_line \
+	     "ValueError.*: Length must be greater than 0\\." \
+	     "Error occurred in Python.*"] \
+	"try to create a DisassemblerResult with length $len"
+}
+
+# Check we can't directly create DisassemblerTextPart or
+# DisassemblerAddressPart objects.
+foreach type {DisassemblerTextPart DisassemblerAddressPart} {
+    gdb_test "python result = gdb.disassembler.${type}()" \
+	[multi_line \
+	     "RuntimeError.*: Cannot create instances of DisassemblerPart\\." \
+	     "Error occurred in Python.*"] \
+	 "try to create an instance of ${type}"
 }

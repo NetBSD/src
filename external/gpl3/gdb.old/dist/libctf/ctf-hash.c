@@ -1,5 +1,5 @@
 /* Interface to hashtable implementations.
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -22,25 +22,22 @@
 #include "libiberty.h"
 #include "hashtab.h"
 
-/* We have three hashtable implementations:
-
-   - ctf_hash_* is an interface to a fixed-size hash from const char * ->
-     ctf_id_t with number of elements specified at creation time, that should
-     support addition of items but need not support removal.
+/* We have two hashtable implementations:
 
    - ctf_dynhash_* is an interface to a dynamically-expanding hash with
-     unknown size that should support addition of large numbers of items, and
-     removal as well, and is used only at type-insertion time and during
-     linking.
+     unknown size that should support addition of large numbers of items,
+     and removal as well, and is used only at type-insertion time and during
+     linking.  It can be constructed with an expected initial number of
+     elements, but need not be.
 
    - ctf_dynset_* is an interface to a dynamically-expanding hash that contains
      only keys: no values.
 
    These can be implemented by the same underlying hashmap if you wish.  */
 
-/* The helem is used for general key/value mappings in both the ctf_hash and
-   ctf_dynhash: the owner may not have space allocated for it, and will be
-   garbage (not NULL!) in that case.  */
+/* The helem is used for general key/value mappings in the ctf_dynhash: the
+   owner may not have space allocated for it, and will be garbage (not
+   NULL!) in that case.  */
 
 typedef struct ctf_helem
 {
@@ -157,8 +154,9 @@ ctf_dynhash_item_free (void *item)
 }
 
 ctf_dynhash_t *
-ctf_dynhash_create (ctf_hash_fun hash_fun, ctf_hash_eq_fun eq_fun,
-                    ctf_hash_free_fun key_free, ctf_hash_free_fun value_free)
+ctf_dynhash_create_sized (unsigned long nelems, ctf_hash_fun hash_fun,
+			  ctf_hash_eq_fun eq_fun, ctf_hash_free_fun key_free,
+			  ctf_hash_free_fun value_free)
 {
   ctf_dynhash_t *dynhash;
   htab_del del = ctf_dynhash_item_free;
@@ -173,8 +171,7 @@ ctf_dynhash_create (ctf_hash_fun hash_fun, ctf_hash_eq_fun eq_fun,
   if (key_free == NULL && value_free == NULL)
     del = free;
 
-  /* 7 is arbitrary and untested for now.  */
-  if ((dynhash->htab = htab_create_alloc (7, (htab_hash) hash_fun, eq_fun,
+  if ((dynhash->htab = htab_create_alloc (nelems, (htab_hash) hash_fun, eq_fun,
 					  del, xcalloc, free)) == NULL)
     {
       free (dynhash);
@@ -188,6 +185,15 @@ ctf_dynhash_create (ctf_hash_fun hash_fun, ctf_hash_eq_fun eq_fun,
     }
 
   return dynhash;
+}
+
+ctf_dynhash_t *
+ctf_dynhash_create (ctf_hash_fun hash_fun, ctf_hash_eq_fun eq_fun,
+		    ctf_hash_free_fun key_free, ctf_hash_free_fun value_free)
+{
+  /* 7 is arbitrary and not benchmarked yet.  */
+
+  return ctf_dynhash_create_sized (7, hash_fun, eq_fun, key_free, value_free);
 }
 
 static ctf_helem_t **
@@ -663,12 +669,6 @@ ctf_dynset_lookup (ctf_dynset_t *hp, const void *key)
   return NULL;
 }
 
-size_t
-ctf_dynset_elements (ctf_dynset_t *hp)
-{
-  return htab_elements ((struct htab *) hp);
-}
-
 /* TRUE/FALSE return.  */
 int
 ctf_dynset_exists (ctf_dynset_t *hp, const void *key, const void **orig_key)
@@ -767,80 +767,38 @@ ctf_dynset_next (ctf_dynset_t *hp, ctf_next_t **it, void **key)
   return ECTF_NEXT_END;
 }
 
-/* ctf_hash, used for fixed-size maps from const char * -> ctf_id_t without
-   removal.  This is a straight cast of a hashtab.  */
-
-ctf_hash_t *
-ctf_hash_create (unsigned long nelems, ctf_hash_fun hash_fun,
-		 ctf_hash_eq_fun eq_fun)
-{
-  return (ctf_hash_t *) htab_create_alloc (nelems, (htab_hash) hash_fun,
-					   eq_fun, free, xcalloc, free);
-}
-
-uint32_t
-ctf_hash_size (const ctf_hash_t *hp)
-{
-  return htab_elements ((struct htab *) hp);
-}
+/* Helper functions for insertion/removal of types.  */
 
 int
-ctf_hash_insert_type (ctf_hash_t *hp, ctf_dict_t *fp, uint32_t type,
-		      uint32_t name)
+ctf_dynhash_insert_type (ctf_dict_t *fp, ctf_dynhash_t *hp, uint32_t type,
+			 uint32_t name)
 {
-  const char *str = ctf_strraw (fp, name);
+  const char *str;
+  int err;
 
   if (type == 0)
     return EINVAL;
 
-  if (str == NULL
-      && CTF_NAME_STID (name) == CTF_STRTAB_1
-      && fp->ctf_syn_ext_strtab == NULL
-      && fp->ctf_str[CTF_NAME_STID (name)].cts_strs == NULL)
-    return ECTF_STRTAB;
-
-  if (str == NULL)
-    return ECTF_BADNAME;
+  if ((str = ctf_strptr_validate (fp, name)) == NULL)
+    return ctf_errno (fp);
 
   if (str[0] == '\0')
     return 0;		   /* Just ignore empty strings on behalf of caller.  */
 
-  if (ctf_hashtab_insert ((struct htab *) hp, (char *) str,
-			  (void *) (ptrdiff_t) type, NULL, NULL) != NULL)
+  if ((err = ctf_dynhash_insert (hp, (char *) str,
+				 (void *) (ptrdiff_t) type)) == 0)
     return 0;
-  return errno;
-}
 
-/* if the key is already in the hash, override the previous definition with
-   this new official definition. If the key is not present, then call
-   ctf_hash_insert_type and hash it in.  */
-int
-ctf_hash_define_type (ctf_hash_t *hp, ctf_dict_t *fp, uint32_t type,
-                      uint32_t name)
-{
-  /* This matches the semantics of ctf_hash_insert_type in this
-     implementation anyway.  */
-
-  return ctf_hash_insert_type (hp, fp, type, name);
+  return err;
 }
 
 ctf_id_t
-ctf_hash_lookup_type (ctf_hash_t *hp, ctf_dict_t *fp __attribute__ ((__unused__)),
-		      const char *key)
+ctf_dynhash_lookup_type (ctf_dynhash_t *hp, const char *key)
 {
-  ctf_helem_t **slot;
+  void *value;
 
-  slot = ctf_hashtab_lookup ((struct htab *) hp, key, NO_INSERT);
-
-  if (slot)
-    return (ctf_id_t) (uintptr_t) ((*slot)->value);
+  if (ctf_dynhash_lookup_kv (hp, key, NULL, &value))
+    return (ctf_id_t) (uintptr_t) value;
 
   return 0;
-}
-
-void
-ctf_hash_destroy (ctf_hash_t *hp)
-{
-  if (hp != NULL)
-    htab_delete ((struct htab *) hp);
 }

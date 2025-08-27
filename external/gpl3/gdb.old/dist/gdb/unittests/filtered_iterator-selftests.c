@@ -1,6 +1,6 @@
 /* Self tests for the filtered_iterator class.
 
-   Copyright (C) 2019-2023 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "gdbsupport/selftest.h"
 #include "gdbsupport/filtered-iterator.h"
 
@@ -59,7 +58,7 @@ struct int_array_iterator
     /* If they are both not past-the-end, make sure they iterate on the
        same array (we shouldn't compare iterators that iterate on different
        things).  */
-    gdb_assert (m_array == other.m_array);
+    SELF_CHECK (m_array == other.m_array);
 
     /* They are equal if they have the same current index.  */
     return m_cur_idx == other.m_cur_idx;
@@ -73,7 +72,7 @@ struct int_array_iterator
   void operator++ ()
   {
     /* Make sure nothing tries to increment a past the end iterator. */
-    gdb_assert (m_cur_idx < m_size);
+    SELF_CHECK (m_cur_idx < m_size);
 
     m_cur_idx++;
 
@@ -85,7 +84,7 @@ struct int_array_iterator
   int operator* () const
   {
     /* Make sure nothing tries to dereference a past the end iterator.  */
-    gdb_assert (m_cur_idx < m_size);
+    SELF_CHECK (m_cur_idx < m_size);
 
     return m_array[m_cur_idx];
   }
@@ -123,7 +122,7 @@ test_filtered_iterator ()
   for (; iter != end; ++iter)
     even_ints.push_back (*iter);
 
-  gdb_assert (even_ints == expected_even_ints);
+  SELF_CHECK (even_ints == expected_even_ints);
 }
 
 /* Test operator== and operator!=. */
@@ -139,18 +138,18 @@ test_filtered_iterator_eq ()
     iter2(array, ARRAY_SIZE (array));
 
   /* They start equal.  */
-  gdb_assert (iter1 == iter2);
-  gdb_assert (!(iter1 != iter2));
+  SELF_CHECK (iter1 == iter2);
+  SELF_CHECK (!(iter1 != iter2));
 
   /* Advance 1, now they aren't equal (despite pointing to equal values).  */
   ++iter1;
-  gdb_assert (!(iter1 == iter2));
-  gdb_assert (iter1 != iter2);
+  SELF_CHECK (!(iter1 == iter2));
+  SELF_CHECK (iter1 != iter2);
 
   /* Advance 2, now they are equal again.  */
   ++iter2;
-  gdb_assert (iter1 == iter2);
-  gdb_assert (!(iter1 != iter2));
+  SELF_CHECK (iter1 == iter2);
+  SELF_CHECK (!(iter1 != iter2));
 }
 
 } /* namespace selftests */

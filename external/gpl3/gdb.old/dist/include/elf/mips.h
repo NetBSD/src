@@ -1,5 +1,5 @@
 /* MIPS ELF support for BFD.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    By Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>, from
    information in the System V Application Binary Interface, MIPS
@@ -223,52 +223,70 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
 #define EF_MIPS_ARCH		0xf0000000
 
 /* -mips1 code.  */
-#define E_MIPS_ARCH_1		0x00000000
+#define EF_MIPS_ARCH_1		0x00000000
 
 /* -mips2 code.  */
-#define E_MIPS_ARCH_2		0x10000000
+#define EF_MIPS_ARCH_2		0x10000000
 
 /* -mips3 code.  */
-#define E_MIPS_ARCH_3		0x20000000
+#define EF_MIPS_ARCH_3		0x20000000
 
 /* -mips4 code.  */
-#define E_MIPS_ARCH_4		0x30000000
+#define EF_MIPS_ARCH_4		0x30000000
 
 /* -mips5 code.  */
-#define E_MIPS_ARCH_5           0x40000000
+#define EF_MIPS_ARCH_5           0x40000000
 
 /* -mips32 code.  */
-#define E_MIPS_ARCH_32          0x50000000
+#define EF_MIPS_ARCH_32          0x50000000
 
 /* -mips64 code.  */
-#define E_MIPS_ARCH_64          0x60000000
+#define EF_MIPS_ARCH_64          0x60000000
 
 /* -mips32r2 code.  */
-#define E_MIPS_ARCH_32R2        0x70000000
+#define EF_MIPS_ARCH_32R2        0x70000000
 
 /* -mips64r2 code.  */
-#define E_MIPS_ARCH_64R2        0x80000000
+#define EF_MIPS_ARCH_64R2        0x80000000
 
 /* -mips32r6 code.  */
-#define E_MIPS_ARCH_32R6        0x90000000
+#define EF_MIPS_ARCH_32R6        0x90000000
 
 /* -mips64r6 code.  */
-#define E_MIPS_ARCH_64R6        0xa0000000
+#define EF_MIPS_ARCH_64R6        0xa0000000
 
 /* The ABI of the file.  Also see EF_MIPS_ABI2 above. */
 #define EF_MIPS_ABI		0x0000F000
 
 /* The original o32 abi. */
-#define E_MIPS_ABI_O32          0x00001000
+#define EF_MIPS_ABI_O32          0x00001000
 
 /* O32 extended to work on 64 bit architectures */
-#define E_MIPS_ABI_O64          0x00002000
+#define EF_MIPS_ABI_O64          0x00002000
 
 /* EABI in 32 bit mode */
-#define E_MIPS_ABI_EABI32       0x00003000
+#define EF_MIPS_ABI_EABI32       0x00003000
 
 /* EABI in 64 bit mode */
-#define E_MIPS_ABI_EABI64       0x00004000
+#define EF_MIPS_ABI_EABI64       0x00004000
+
+/* In order to support backwards compatibility we also
+   define the old versions of some of these constants.  */
+#define E_MIPS_ARCH_1     EF_MIPS_ARCH_1
+#define E_MIPS_ARCH_2     EF_MIPS_ARCH_2
+#define E_MIPS_ARCH_3     EF_MIPS_ARCH_3
+#define E_MIPS_ARCH_4     EF_MIPS_ARCH_4
+#define E_MIPS_ARCH_5     EF_MIPS_ARCH_5
+#define E_MIPS_ARCH_32    EF_MIPS_ARCH_32
+#define E_MIPS_ARCH_64    EF_MIPS_ARCH_64
+#define E_MIPS_ARCH_32R2  EF_MIPS_ARCH_32R2
+#define E_MIPS_ARCH_64R2  EF_MIPS_ARCH_64R2
+#define E_MIPS_ARCH_32R6  EF_MIPS_ARCH_32R6
+#define E_MIPS_ARCH_64R6  EF_MIPS_ARCH_64R6
+#define E_MIPS_ABI_O32    EF_MIPS_ABI_O32
+#define E_MIPS_ABI_O64    EF_MIPS_ABI_O64
+#define E_MIPS_ABI_EABI32 EF_MIPS_ABI_EABI32
+#define E_MIPS_ABI_EABI64 EF_MIPS_ABI_EABI64
 
 
 /* Machine variant if we know it.  This field was invented at Cygnus,
@@ -281,28 +299,54 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
    00 - 7F should be left for a future standard;
    the rest are open. */
 
-#define E_MIPS_MACH_3900	0x00810000
-#define E_MIPS_MACH_4010	0x00820000
-#define E_MIPS_MACH_4100	0x00830000
-#define E_MIPS_MACH_4650	0x00850000
-#define E_MIPS_MACH_4120	0x00870000
-#define E_MIPS_MACH_4111	0x00880000
-#define E_MIPS_MACH_SB1         0x008a0000
-#define E_MIPS_MACH_OCTEON	0x008b0000
-#define E_MIPS_MACH_XLR     	0x008c0000
-#define E_MIPS_MACH_OCTEON2	0x008d0000
-#define E_MIPS_MACH_OCTEON3	0x008e0000
-#define E_MIPS_MACH_5400	0x00910000
-#define E_MIPS_MACH_5900	0x00920000
-#define E_MIPS_MACH_IAMR2	0x00930000
-#define E_MIPS_MACH_5500	0x00980000
-#define E_MIPS_MACH_9000	0x00990000
-#define E_MIPS_MACH_LS2E        0x00A00000
-#define E_MIPS_MACH_LS2F        0x00A10000
-#define E_MIPS_MACH_GS464       0x00A20000
-#define E_MIPS_MACH_GS464E	0x00A30000
-#define E_MIPS_MACH_GS264E	0x00A40000
-
+#define EF_MIPS_MACH_3900	0x00810000
+#define EF_MIPS_MACH_4010	0x00820000
+#define EF_MIPS_MACH_4100	0x00830000
+#define EF_MIPS_MACH_ALLEGREX	0x00840000
+#define EF_MIPS_MACH_4650	0x00850000
+#define EF_MIPS_MACH_4120	0x00870000
+#define EF_MIPS_MACH_4111	0x00880000
+#define EF_MIPS_MACH_SB1         0x008a0000
+#define EF_MIPS_MACH_OCTEON	0x008b0000
+#define EF_MIPS_MACH_XLR     	0x008c0000
+#define EF_MIPS_MACH_OCTEON2	0x008d0000
+#define EF_MIPS_MACH_OCTEON3	0x008e0000
+#define EF_MIPS_MACH_5400	0x00910000
+#define EF_MIPS_MACH_5900	0x00920000
+#define EF_MIPS_MACH_IAMR2	0x00930000
+#define EF_MIPS_MACH_5500	0x00980000
+#define EF_MIPS_MACH_9000	0x00990000
+#define EF_MIPS_MACH_LS2E        0x00A00000
+#define EF_MIPS_MACH_LS2F        0x00A10000
+#define EF_MIPS_MACH_GS464       0x00A20000
+#define EF_MIPS_MACH_GS464E	0x00A30000
+#define EF_MIPS_MACH_GS264E	0x00A40000
+
+/* In order to support backwards compatibility we also
+   define the old versions of some of these constants.  */
+#define E_MIPS_MACH_3900      EF_MIPS_MACH_3900 
+#define E_MIPS_MACH_4010      EF_MIPS_MACH_4010 
+#define E_MIPS_MACH_4100      EF_MIPS_MACH_4100 
+#define E_MIPS_MACH_ALLEGREX  EF_MIPS_MACH_ALLEGREX 
+#define E_MIPS_MACH_4650      EF_MIPS_MACH_4650 
+#define E_MIPS_MACH_4120      EF_MIPS_MACH_4120 
+#define E_MIPS_MACH_4111      EF_MIPS_MACH_4111 
+#define E_MIPS_MACH_SB1       EF_MIPS_MACH_SB1 
+#define E_MIPS_MACH_OCTEON    EF_MIPS_MACH_OCTEON 
+#define E_MIPS_MACH_XLR       EF_MIPS_MACH_XLR 
+#define E_MIPS_MACH_OCTEON2   EF_MIPS_MACH_OCTEON2 
+#define E_MIPS_MACH_OCTEON3   EF_MIPS_MACH_OCTEON3 
+#define E_MIPS_MACH_5400      EF_MIPS_MACH_5400 
+#define E_MIPS_MACH_5900      EF_MIPS_MACH_5900 
+#define E_MIPS_MACH_IAMR2     EF_MIPS_MACH_IAMR2 
+#define E_MIPS_MACH_5500      EF_MIPS_MACH_5500 
+#define E_MIPS_MACH_9000      EF_MIPS_MACH_9000 
+#define E_MIPS_MACH_LS2E      EF_MIPS_MACH_LS2E 
+#define E_MIPS_MACH_LS2F      EF_MIPS_MACH_LS2F 
+#define E_MIPS_MACH_GS464     EF_MIPS_MACH_GS464 
+#define E_MIPS_MACH_GS464E    EF_MIPS_MACH_GS464E 
+#define E_MIPS_MACH_GS264E    EF_MIPS_MACH_GS264E 
+
 /* Processor specific section indices.  These sections do not actually
    exist.  Symbols with a st_shndx field corresponding to one of these
    values have a special meaning.  */

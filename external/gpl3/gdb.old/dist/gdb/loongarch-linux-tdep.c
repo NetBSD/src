@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on LoongArch processors.
 
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of GDB.
@@ -18,7 +18,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "glibc-tdep.h"
 #include "inferior.h"
 #include "linux-tdep.h"
@@ -27,6 +27,10 @@
 #include "target-descriptions.h"
 #include "trad-frame.h"
 #include "tramp-frame.h"
+#include "xml-syscall.h"
+
+/* The syscall's XML filename for LoongArch.  */
+#define XML_SYSCALL_FILENAME_LOONGARCH "syscalls/loongarch-linux.xml"
 
 /* Unpack an elf_gregset_t into GDB's register cache.  */
 
@@ -215,6 +219,230 @@ const struct regset loongarch_fpregset =
   loongarch_fill_fpregset,
 };
 
+/* Unpack elf_lsxregset_t into GDB's register cache.  */
+
+static void
+loongarch_supply_lsxregset (const struct regset *regset,
+			    struct regcache *regcache, int regnum,
+			    const void *lsxrs, size_t len)
+{
+  int lsxrsize = register_size (regcache->arch (), LOONGARCH_FIRST_LSX_REGNUM);
+  const gdb_byte *buf = nullptr;
+
+  if (regnum == -1)
+    {
+      for (int i = 0; i < LOONGARCH_LINUX_NUM_LSXREGSET; i++)
+	{
+	  buf = (const gdb_byte*) lsxrs + lsxrsize * i;
+	  regcache->raw_supply (LOONGARCH_FIRST_LSX_REGNUM + i, (const void *) buf);
+	}
+
+    }
+  else if (regnum >= LOONGARCH_FIRST_LSX_REGNUM && regnum < LOONGARCH_FIRST_LASX_REGNUM)
+    {
+      buf = (const gdb_byte*) lsxrs + lsxrsize * (regnum - LOONGARCH_FIRST_LSX_REGNUM);
+      regcache->raw_supply (regnum, (const void *) buf);
+    }
+}
+
+/* Pack the GDB's register cache value into an elf_lsxregset_t.  */
+
+static void
+loongarch_fill_lsxregset (const struct regset *regset,
+			  const struct regcache *regcache, int regnum,
+			  void *lsxrs, size_t len)
+{
+  int lsxrsize = register_size (regcache->arch (), LOONGARCH_FIRST_LSX_REGNUM);
+  gdb_byte *buf = nullptr;
+
+  if (regnum == -1)
+    {
+      for (int i = 0; i < LOONGARCH_LINUX_NUM_LSXREGSET; i++)
+	{
+	  buf = (gdb_byte *) lsxrs + lsxrsize * i;
+	  regcache->raw_collect (LOONGARCH_FIRST_LSX_REGNUM + i, (void *) buf);
+	}
+    }
+  else if (regnum >= LOONGARCH_FIRST_LSX_REGNUM && regnum < LOONGARCH_FIRST_LASX_REGNUM)
+    {
+      buf = (gdb_byte *) lsxrs + lsxrsize * (regnum - LOONGARCH_FIRST_LSX_REGNUM);
+      regcache->raw_collect (regnum, (void *) buf);
+    }
+}
+
+/* Define the Loongson SIMD Extension register regset.  */
+
+const struct regset loongarch_lsxregset =
+{
+  nullptr,
+  loongarch_supply_lsxregset,
+  loongarch_fill_lsxregset,
+};
+
+/* Unpack elf_lasxregset_t into GDB's register cache.  */
+
+static void
+loongarch_supply_lasxregset (const struct regset *regset,
+			    struct regcache *regcache, int regnum,
+			    const void *lasxrs, size_t len)
+{
+  int lasxrsize = register_size (regcache->arch (), LOONGARCH_FIRST_LASX_REGNUM);
+  const gdb_byte *buf = nullptr;
+
+  if (regnum == -1)
+    {
+      for (int i = 0; i < LOONGARCH_LINUX_NUM_LASXREGSET; i++)
+	{
+	  buf = (const gdb_byte*) lasxrs + lasxrsize * i;
+	  regcache->raw_supply (LOONGARCH_FIRST_LASX_REGNUM + i, (const void *) buf);
+	}
+
+    }
+  else if (regnum >= LOONGARCH_FIRST_LASX_REGNUM
+	   && regnum < LOONGARCH_FIRST_LASX_REGNUM + LOONGARCH_LINUX_NUM_LASXREGSET)
+    {
+      buf = (const gdb_byte*) lasxrs + lasxrsize * (regnum - LOONGARCH_FIRST_LASX_REGNUM);
+      regcache->raw_supply (regnum, (const void *) buf);
+    }
+}
+
+/* Pack the GDB's register cache value into an elf_lasxregset_t.  */
+
+static void
+loongarch_fill_lasxregset (const struct regset *regset,
+			  const struct regcache *regcache, int regnum,
+			  void *lasxrs, size_t len)
+{
+  int lasxrsize = register_size (regcache->arch (), LOONGARCH_FIRST_LASX_REGNUM);
+  gdb_byte *buf = nullptr;
+
+  if (regnum == -1)
+    {
+      for (int i = 0; i < LOONGARCH_LINUX_NUM_LASXREGSET; i++)
+	{
+	  buf = (gdb_byte *) lasxrs + lasxrsize * i;
+	  regcache->raw_collect (LOONGARCH_FIRST_LASX_REGNUM + i, (void *) buf);
+	}
+    }
+  else if (regnum >= LOONGARCH_FIRST_LASX_REGNUM
+	   && regnum < LOONGARCH_FIRST_LASX_REGNUM + LOONGARCH_LINUX_NUM_LASXREGSET)
+
+    {
+      buf = (gdb_byte *) lasxrs + lasxrsize * (regnum - LOONGARCH_FIRST_LASX_REGNUM);
+      regcache->raw_collect (regnum, (void *) buf);
+    }
+}
+
+/* Define the Loongson Advanced SIMD Extension register regset.  */
+
+const struct regset loongarch_lasxregset =
+{
+  nullptr,
+  loongarch_supply_lasxregset,
+  loongarch_fill_lasxregset,
+};
+
+/* Unpack an lbt regset into GDB's register cache.  */
+
+static void
+loongarch_supply_lbtregset (const struct regset *regset,
+			    struct regcache *regcache, int regnum,
+			    const void *regs, size_t len)
+{
+  int scrsize = register_size (regcache->arch (), LOONGARCH_FIRST_SCR_REGNUM);
+  int eflagssize = register_size (regcache->arch (), LOONGARCH_EFLAGS_REGNUM);
+  const gdb_byte *buf = nullptr;
+
+  if (regnum == -1)
+    {
+      for (int i = 0; i < LOONGARCH_LINUX_NUM_SCR; i++)
+	{
+	  buf = (const gdb_byte *) regs + scrsize * i;
+	  regcache->raw_supply (LOONGARCH_FIRST_SCR_REGNUM + i,
+				(const void *) buf);
+	}
+
+      buf = (const gdb_byte*) regs + scrsize * LOONGARCH_LINUX_NUM_SCR;
+      regcache->raw_supply (LOONGARCH_EFLAGS_REGNUM, (const void *) buf);
+
+      buf = (const gdb_byte*) regs
+	    + scrsize * LOONGARCH_LINUX_NUM_SCR
+	    + eflagssize;
+      regcache->raw_supply (LOONGARCH_FTOP_REGNUM, (const void *) buf);
+    }
+  else if (regnum >= LOONGARCH_FIRST_SCR_REGNUM
+	   && regnum <= LOONGARCH_LAST_SCR_REGNUM)
+    {
+      buf = (const gdb_byte*) regs
+	    + scrsize * (regnum - LOONGARCH_FIRST_SCR_REGNUM);
+      regcache->raw_supply (regnum, (const void *) buf);
+    }
+  else if (regnum == LOONGARCH_EFLAGS_REGNUM)
+    {
+      buf = (const gdb_byte*) regs + scrsize * LOONGARCH_LINUX_NUM_SCR;
+      regcache->raw_supply (regnum, (const void *) buf);
+    }
+  else if (regnum == LOONGARCH_FTOP_REGNUM)
+    {
+      buf = (const gdb_byte*) regs
+	    + scrsize * LOONGARCH_LINUX_NUM_SCR
+	    + eflagssize;
+      regcache->raw_supply (regnum, (const void *) buf);
+    }
+}
+
+/* Pack the GDB's register cache value into an lbt regset.  */
+
+static void
+loongarch_fill_lbtregset (const struct regset *regset,
+			  const struct regcache *regcache, int regnum,
+			  void *regs, size_t len)
+{
+  int scrsize = register_size (regcache->arch (), LOONGARCH_FIRST_SCR_REGNUM);
+  int eflagssize = register_size (regcache->arch (), LOONGARCH_EFLAGS_REGNUM);
+  gdb_byte *buf = nullptr;
+
+  if (regnum == -1)
+    {
+      for (int i = 0; i < LOONGARCH_LINUX_NUM_SCR; i++)
+	{
+	  buf = (gdb_byte *) regs + scrsize * i;
+	  regcache->raw_collect (LOONGARCH_FIRST_SCR_REGNUM + i, (void *) buf);
+	}
+
+      buf = (gdb_byte *) regs + scrsize * LOONGARCH_LINUX_NUM_SCR;
+      regcache->raw_collect (LOONGARCH_EFLAGS_REGNUM, (void *) buf);
+
+      buf = (gdb_byte *) regs + scrsize * LOONGARCH_LINUX_NUM_SCR + eflagssize;
+      regcache->raw_collect (LOONGARCH_FTOP_REGNUM, (void *) buf);
+    }
+  else if (regnum >= LOONGARCH_FIRST_SCR_REGNUM
+	   && regnum <= LOONGARCH_LAST_SCR_REGNUM)
+    {
+      buf = (gdb_byte *) regs + scrsize * (regnum - LOONGARCH_FIRST_SCR_REGNUM);
+      regcache->raw_collect (regnum, (void *) buf);
+    }
+  else if (regnum == LOONGARCH_EFLAGS_REGNUM)
+    {
+      buf = (gdb_byte *) regs + scrsize * LOONGARCH_LINUX_NUM_SCR;
+      regcache->raw_collect (regnum, (void *) buf);
+    }
+  else if (regnum == LOONGARCH_FTOP_REGNUM)
+    {
+      buf = (gdb_byte *) regs + scrsize * LOONGARCH_LINUX_NUM_SCR + eflagssize;
+      regcache->raw_collect (regnum, (void *) buf);
+    }
+}
+
+/* Define the lbt register regset.  */
+
+const struct regset loongarch_lbtregset =
+{
+  nullptr,
+  loongarch_supply_lbtregset,
+  loongarch_fill_lbtregset,
+};
+
 /* Implement the "init" method of struct tramp_frame.  */
 
 #define LOONGARCH_RT_SIGFRAME_UCONTEXT_OFFSET	128
@@ -222,7 +450,7 @@ const struct regset loongarch_fpregset =
 
 static void
 loongarch_linux_rt_sigframe_init (const struct tramp_frame *self,
-				  frame_info_ptr this_frame,
+				  const frame_info_ptr &this_frame,
 				  struct trad_frame_cache *this_cache,
 				  CORE_ADDR func)
 {
@@ -264,15 +492,31 @@ loongarch_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					const struct regcache *regcache)
 {
   int gprsize = register_size (gdbarch, 0);
+  int gpsize = gprsize * LOONGARCH_LINUX_NUM_GREGSET;
   int fprsize = register_size (gdbarch, LOONGARCH_FIRST_FP_REGNUM);
   int fccsize = register_size (gdbarch, LOONGARCH_FIRST_FCC_REGNUM);
   int fcsrsize = register_size (gdbarch, LOONGARCH_FCSR_REGNUM);
   int fpsize = fprsize * LOONGARCH_LINUX_NUM_FPREGSET +
-    fccsize * LOONGARCH_LINUX_NUM_FCC + fcsrsize;
+	       fccsize * LOONGARCH_LINUX_NUM_FCC + fcsrsize;
+  int lsxrsize = register_size (gdbarch, LOONGARCH_FIRST_LSX_REGNUM);
+  int lsxsize = lsxrsize * LOONGARCH_LINUX_NUM_LSXREGSET;
+  int lasxrsize = register_size (gdbarch, LOONGARCH_FIRST_LASX_REGNUM);
+  int lasxsize = lasxrsize * LOONGARCH_LINUX_NUM_LASXREGSET;
+  int scrsize = register_size (gdbarch, LOONGARCH_FIRST_SCR_REGNUM);
+  int eflagssize = register_size (gdbarch, LOONGARCH_EFLAGS_REGNUM);
+  int ftopsize = register_size (gdbarch, LOONGARCH_FTOP_REGNUM);
+  int lbtsize = scrsize * LOONGARCH_LINUX_NUM_SCR + eflagssize + ftopsize;
 
-  cb (".reg", LOONGARCH_LINUX_NUM_GREGSET * gprsize,
-      LOONGARCH_LINUX_NUM_GREGSET * gprsize, &loongarch_gregset, nullptr, cb_data);
-  cb (".reg2", fpsize, fpsize, &loongarch_fpregset, nullptr, cb_data);
+  cb (".reg", gpsize, gpsize,
+      &loongarch_gregset, nullptr, cb_data);
+  cb (".reg2", fpsize, fpsize,
+      &loongarch_fpregset, nullptr, cb_data);
+  cb (".reg-loongarch-lsx", lsxsize, lsxsize,
+      &loongarch_lsxregset, nullptr, cb_data);
+  cb (".reg-loongarch-lasx", lasxsize, lasxsize,
+      &loongarch_lasxregset, nullptr, cb_data);
+  cb (".reg-loongarch-lbt", lbtsize, lbtsize,
+      &loongarch_lbtregset, nullptr, cb_data);
 }
 
 /* The following value is derived from __NR_rt_sigreturn in
@@ -284,7 +528,7 @@ loongarch_iterate_over_regset_sections (struct gdbarch *gdbarch,
    instruction to be executed.  */
 
 static CORE_ADDR
-loongarch_linux_syscall_next_pc (frame_info_ptr frame)
+loongarch_linux_syscall_next_pc (const frame_info_ptr &frame)
 {
   const CORE_ADDR pc = get_frame_pc (frame);
   ULONGEST a7 = get_frame_register_unsigned (frame, LOONGARCH_A7_REGNUM);
@@ -295,6 +539,31 @@ loongarch_linux_syscall_next_pc (frame_info_ptr frame)
     return frame_unwind_caller_pc (frame);
 
   return pc + 4;
+}
+
+/* Implement the "get_syscall_number" gdbarch method.  */
+
+static LONGEST
+loongarch_linux_get_syscall_number (struct gdbarch *gdbarch, thread_info *thread)
+{
+  struct regcache *regcache = get_thread_regcache (thread);
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  int regsize = register_size (gdbarch, LOONGARCH_A7_REGNUM);
+  /* The content of a register.  */
+  gdb_byte buf[8];
+  /* The result.  */
+  LONGEST ret;
+
+  gdb_assert (regsize <= sizeof (buf));
+
+  /* Getting the system call number from the register.
+     When dealing with the LoongArch architecture, this information
+     is stored at the a7 register.  */
+  regcache->cooked_read (LOONGARCH_A7_REGNUM, buf);
+
+  ret = extract_signed_integer (buf, regsize, byte_order);
+
+  return ret;
 }
 
 /* Initialize LoongArch Linux ABI info.  */
@@ -327,6 +596,12 @@ loongarch_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_iterate_over_regset_sections (gdbarch, loongarch_iterate_over_regset_sections);
 
   tdep->syscall_next_pc = loongarch_linux_syscall_next_pc;
+
+  /* Set the correct XML syscall filename.  */
+  set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_LOONGARCH);
+
+  /* Get the syscall number from the arch's register.  */
+  set_gdbarch_get_syscall_number (gdbarch, loongarch_linux_get_syscall_number);
 }
 
 /* Initialize LoongArch Linux target support.  */
@@ -336,7 +611,7 @@ void
 _initialize_loongarch_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_loongarch, bfd_mach_loongarch32,
-                          GDB_OSABI_LINUX, loongarch_linux_init_abi);
+			  GDB_OSABI_LINUX, loongarch_linux_init_abi);
   gdbarch_register_osabi (bfd_arch_loongarch, bfd_mach_loongarch64,
-                          GDB_OSABI_LINUX, loongarch_linux_init_abi);
+			  GDB_OSABI_LINUX, loongarch_linux_init_abi);
 }
