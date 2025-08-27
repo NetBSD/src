@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2004-2023 Free Software Foundation, Inc.
+# Copyright 2004-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,14 +22,11 @@
 # Some targets can't call functions, so don't even bother with this
 # test.
 
-if [target_info exists gdb,cannot_call_functions] {
-    unsupported "this target can not call functions"
-    return
-}
+require {!target_info exists gdb,cannot_call_functions}
 
 standard_testfile .c
 
-set skip_float_test [gdb_skip_float_test]
+set allow_float_test [allow_float_test]
 
 # Compile a variant of scalars.c using TYPE to specify the type of the
 # parameter and return-type.  Run the compiled program up to "main".
@@ -425,7 +422,7 @@ test tl
 # Approx size: 8, 16, ...
 test tll
 
-if {!$skip_float_test} {
+if {$allow_float_test} {
     # Approx size: 4, 8, ...
     test tf
 
@@ -438,5 +435,3 @@ if {!$skip_float_test} {
 
 # Approx size: 4, 8, ...
 test te
-
-return 0

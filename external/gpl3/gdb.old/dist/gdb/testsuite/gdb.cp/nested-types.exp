@@ -1,4 +1,4 @@
-# Copyright 2017-2023 Free Software Foundation, Inc.
+# Copyright 2017-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # the corresponding source file.  It then walks the nodes of this tree
 # to construct input suitable for passing to cp_test_ptype_class.
 
-if {[skip_cplus_tests]} { continue }
+require allow_cplus_tests
 
 load_lib "cp-support.exp"
 

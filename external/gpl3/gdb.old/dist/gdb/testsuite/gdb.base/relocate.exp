@@ -1,4 +1,4 @@
-# Copyright 2002-2023 Free Software Foundation, Inc.
+# Copyright 2002-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,9 +25,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {debug}] 
      return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 
 #Check that invalid options are rejected.
 foreach x {"-raednow" "readnow" "foo" "-readnow s"} {
@@ -194,9 +192,7 @@ if { "${function_foo_addr}" == "${function_bar_addr}" } {
 # Now use a variable as an offset to add-symbol-file, and check that
 # the functions' addresses change.
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 
 gdb_test_no_output "set \$offset = 0x10000"
 
@@ -317,9 +313,7 @@ with_test_prefix "global vars, 3rd" {
 # Now try loading the object as an exec-file; we should be able to print
 # the values of variables after we do this.
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 gdb_file_cmd ${binfile}
 
 # Check the values of the variables.

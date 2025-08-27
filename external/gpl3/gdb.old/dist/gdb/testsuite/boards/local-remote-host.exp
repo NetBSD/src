@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,35 +22,46 @@
 
 # Like local-remote-host-notty, but with readline/editing enabled.
 
-global GDB
-set GDB [file join [pwd] "../gdb"]
+set GDB [file normalize [file join [pwd] "../gdb"]]
 
-set_board_info hostname 127.0.0.1
+set_board_info hostname localhost
 
-set_board_info username $env(USER)
+if { [info exists REMOTE_HOST_USERNAME] } {
+    set_board_info username $REMOTE_HOST_USERNAME
+} else {
+    set_board_info username $env(USER)
+}
 
-# The ssh key should be correctly set up that you ssh to 127.0.0.1
+# The ssh key should be correctly set up that you ssh to localhost
 # without having to type password.
 set_board_info rsh_prog /usr/bin/ssh
 set_board_info rcp_prog /usr/bin/scp
 set_board_info file_transfer "rsh"
 
-proc ${board}_file { dest op args } {
-    if { $op == "delete" } {
-	return 0
-    }
-    return [eval [list standard_file $dest $op] $args]
-}
+save_vars {rsh_cmd res} {
+    set rsh_cmd \
+	[join \
+	     [list \
+		  [board_info $board rsh_prog] \
+		  -l [board_info $board username] \
+		  [board_info $board hostname]]]
 
-proc ${board}_download { board src dest } {
+    # Handle separate test account.
+    if { [board_info $board username] != $env(USER) } {
+	# We're pretending that some local user account is remote host.
+	# Make things a bit more realistic by restricting file permissions.
 
-    # If file name is a relative, convert it to absolute, otherwise file can't
-    # be found on host, because the current directory usually is /home/$USER.
-    # This also bypasses the real download to the host.
-    if { [file pathtype $src] == "relative" } {
-	return [file join [pwd] $src]
-    } else {
-	return $src
+	# Make sure remote host can't see files on build.
+	set res [remote_exec build "chmod go-rx $objdir"]
+	if { [lindex $res 0] != 0 } {
+	    error "Couldn't remove permissions for $objdir on build"
+	}
+
+	# Make sure build can't see files on remote host.
+	set res [remote_exec build $rsh_cmd "chmod go-rx ."]
+	if { [lindex $res 0] != 0 } {
+	    error "Couldn't remove permissions for . on host"
+	}
     }
 }
 

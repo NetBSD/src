@@ -1,6 +1,6 @@
 /* Simulator for TI MSP430 and MSP430X
 
-   Copyright (C) 2013-2023 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Based on sim/bfin/bfin-sim.c which was contributed by Analog Devices, Inc.
 
@@ -30,38 +30,45 @@
 #include <assert.h>
 #include "opcode/msp430-decode.h"
 #include "sim-main.h"
+#include "sim-options.h"
 #include "sim-signal.h"
 #include "sim-syscall.h"
+#include "msp430-sim.h"
 
 static sim_cia
 msp430_pc_fetch (SIM_CPU *cpu)
 {
-  return cpu->state.regs[0];
+  struct msp430_cpu_state *msp430_cpu = MSP430_SIM_CPU (cpu);
+
+  return msp430_cpu->regs[0];
 }
 
 static void
 msp430_pc_store (SIM_CPU *cpu, sim_cia newpc)
 {
-  cpu->state.regs[0] = newpc;
+  struct msp430_cpu_state *msp430_cpu = MSP430_SIM_CPU (cpu);
+
+  msp430_cpu->regs[0] = newpc;
 }
 
 static int
 msp430_reg_fetch (SIM_CPU *cpu, int regno, void *buf, int len)
 {
+  struct msp430_cpu_state *msp430_cpu = MSP430_SIM_CPU (cpu);
   unsigned char *memory = buf;
 
   if (0 <= regno && regno < 16)
     {
       if (len == 2)
 	{
-	  int val = cpu->state.regs[regno];
+	  int val = msp430_cpu->regs[regno];
 	  memory[0] = val & 0xff;
 	  memory[1] = (val >> 8) & 0xff;
 	  return 0;
 	}
       else if (len == 4)
 	{
-	  int val = cpu->state.regs[regno];
+	  int val = msp430_cpu->regs[regno];
 	  memory[0] = val & 0xff;
 	  memory[1] = (val >> 8) & 0xff;
 	  memory[2] = (val >> 16) & 0x0f; /* Registers are only 20 bits wide.  */
@@ -78,31 +85,26 @@ msp430_reg_fetch (SIM_CPU *cpu, int regno, void *buf, int len)
 static int
 msp430_reg_store (SIM_CPU *cpu, int regno, const void *buf, int len)
 {
+  struct msp430_cpu_state *msp430_cpu = MSP430_SIM_CPU (cpu);
   const unsigned char *memory = buf;
 
   if (0 <= regno && regno < 16)
     {
       if (len == 2)
 	{
-	  cpu->state.regs[regno] = (memory[1] << 8) | memory[0];
+	  msp430_cpu->regs[regno] = (memory[1] << 8) | memory[0];
 	  return len;
 	}
 
       if (len == 4)
 	{
-	  cpu->state.regs[regno] = ((memory[2] << 16) & 0xf0000)
-				   | (memory[1] << 8) | memory[0];
+	  msp430_cpu->regs[regno] = ((memory[2] << 16) & 0xf0000)
+				     | (memory[1] << 8) | memory[0];
 	  return len;
 	}
     }
 
   return -1;
-}
-
-static inline void
-msp430_initialize_cpu (SIM_DESC sd, SIM_CPU *cpu)
-{
-  memset (&cpu->state, 0, sizeof (cpu->state));
 }
 
 SIM_DESC
@@ -112,14 +114,17 @@ sim_open (SIM_OPEN_KIND kind,
 	  char * const *argv)
 {
   SIM_DESC sd = sim_state_alloc (kind, callback);
+  struct msp430_cpu_state *msp430_cpu;
   char c;
+  int i;
 
   /* Initialise the simulator.  */
 
   /* Set default options before parsing user options.  */
   current_target_byte_order = BFD_ENDIAN_LITTLE;
 
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct msp430_cpu_state))
+      != SIM_RC_OK)
     {
       sim_state_free (sd);
       return 0;
@@ -137,22 +142,17 @@ sim_open (SIM_OPEN_KIND kind,
       return 0;
     }
 
-  CPU_PC_FETCH (MSP430_CPU (sd)) = msp430_pc_fetch;
-  CPU_PC_STORE (MSP430_CPU (sd)) = msp430_pc_store;
-  CPU_REG_FETCH (MSP430_CPU (sd)) = msp430_reg_fetch;
-  CPU_REG_STORE (MSP430_CPU (sd)) = msp430_reg_store;
-
   /* Allocate memory if none specified by user.
      Note - these values match the memory regions in the libgloss/msp430/msp430[xl]-sim.ld scripts.  */
-  if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0x2, 1) == 0)
+  if (sim_core_read_buffer (sd, STATE_CPU (sd, 0), read_map, &c, 0x2, 1) == 0)
     sim_do_commandf (sd, "memory-region 0,0x20"); /* Needed by the GDB testsuite.  */
-  if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0x500, 1) == 0)
+  if (sim_core_read_buffer (sd, STATE_CPU (sd, 0), read_map, &c, 0x500, 1) == 0)
     sim_do_commandf (sd, "memory-region 0x500,0xfac0");  /* RAM and/or ROM */
-  if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0xfffe, 1) == 0)
+  if (sim_core_read_buffer (sd, STATE_CPU (sd, 0), read_map, &c, 0xfffe, 1) == 0)
     sim_do_commandf (sd, "memory-region 0xffc0,0x40"); /* VECTORS.  */
-  if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0x10000, 1) == 0)
+  if (sim_core_read_buffer (sd, STATE_CPU (sd, 0), read_map, &c, 0x10000, 1) == 0)
     sim_do_commandf (sd, "memory-region 0x10000,0x80000"); /* HIGH FLASH RAM.  */
-  if (sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, &c, 0x90000, 1) == 0)
+  if (sim_core_read_buffer (sd, STATE_CPU (sd, 0), read_map, &c, 0x90000, 1) == 0)
     sim_do_commandf (sd, "memory-region 0x90000,0x70000"); /* HIGH ROM.  */
 
   /* Check for/establish the a reference program image.  */
@@ -176,13 +176,21 @@ sim_open (SIM_OPEN_KIND kind,
     }
 
   /* CPU specific initialization.  */
-  assert (MAX_NR_PROCESSORS == 1);
-  msp430_initialize_cpu (sd, MSP430_CPU (sd));
+  for (i = 0; i < MAX_NR_PROCESSORS; ++i)
+    {
+      SIM_CPU *cpu = STATE_CPU (sd, i);
 
-  MSP430_CPU (sd)->state.cio_breakpoint = trace_sym_value (sd, "C$$IO$$");
-  MSP430_CPU (sd)->state.cio_buffer = trace_sym_value (sd, "__CIOBUF__");
-  if (MSP430_CPU (sd)->state.cio_buffer == -1)
-    MSP430_CPU (sd)->state.cio_buffer = trace_sym_value (sd, "_CIOBUF_");
+      CPU_PC_FETCH (cpu) = msp430_pc_fetch;
+      CPU_PC_STORE (cpu) = msp430_pc_store;
+      CPU_REG_FETCH (cpu) = msp430_reg_fetch;
+      CPU_REG_STORE (cpu) = msp430_reg_store;
+
+      msp430_cpu = MSP430_SIM_CPU (cpu);
+      msp430_cpu->cio_breakpoint = trace_sym_value (sd, "C$$IO$$");
+      msp430_cpu->cio_buffer = trace_sym_value (sd, "__CIOBUF__");
+      if (msp430_cpu->cio_buffer == -1)
+	msp430_cpu->cio_buffer = trace_sym_value (sd, "_CIOBUF_");
+    }
 
   return sd;
 }
@@ -194,19 +202,18 @@ sim_create_inferior (SIM_DESC sd,
 		     char * const *env)
 {
   unsigned char resetv[2];
-  int c;
   int new_pc;
 
   /* Set the PC to the default reset vector if available.  */
-  c = sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, resetv, 0xfffe, 2);
+  sim_core_read_buffer (sd, STATE_CPU (sd, 0), read_map, resetv, 0xfffe, 2);
   new_pc = resetv[0] + 256 * resetv[1];
 
   /* If the reset vector isn't initialized, then use the ELF entry.  */
   if (abfd != NULL && !new_pc)
     new_pc = bfd_get_start_address (abfd);
 
-  sim_pc_set (MSP430_CPU (sd), new_pc);
-  msp430_pc_store (MSP430_CPU (sd), new_pc);
+  sim_pc_set (STATE_CPU (sd, 0), new_pc);
+  msp430_pc_store (STATE_CPU (sd, 0), new_pc);
 
   return SIM_RC_OK;
 }
@@ -224,12 +231,12 @@ msp430_getbyte (void *vld)
   char buf[1];
   SIM_DESC sd = ld->sd;
 
-  sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, buf, ld->gb_addr, 1);
+  sim_core_read_buffer (sd, STATE_CPU (sd, 0), read_map, buf, ld->gb_addr, 1);
   ld->gb_addr ++;
   return buf[0];
 }
 
-#define REG(N) MSP430_CPU (sd)->state.regs[(N)]
+#define REG(N) MSP430_SIM_CPU (STATE_CPU (sd, 0))->regs[N]
 #define PC REG(MSR_PC)
 #define SP REG(MSR_SP)
 #define SR REG(MSR_SR)
@@ -244,14 +251,14 @@ register_names[] =
 static void
 trace_reg_put (SIM_DESC sd, int n, unsigned int v)
 {
-  TRACE_REGISTER (MSP430_CPU (sd), "PUT: %#x -> %s", v, register_names[n]);
+  TRACE_REGISTER (STATE_CPU (sd, 0), "PUT: %#x -> %s", v, register_names[n]);
   REG (n) = v;
 }
 
 static unsigned int
 trace_reg_get (SIM_DESC sd, int n)
 {
-  TRACE_REGISTER (MSP430_CPU (sd), "GET: %s -> %#x", register_names[n], REG (n));
+  TRACE_REGISTER (STATE_CPU (sd, 0), "GET: %s -> %#x", register_names[n], REG (n));
   return REG (n);
 }
 
@@ -326,16 +333,16 @@ get_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n)
       switch (opc->size)
 	{
 	case 8:
-	  sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, buf, addr, 1);
+	  sim_core_read_buffer (sd, STATE_CPU (sd, 0), read_map, buf, addr, 1);
 	  rv = buf[0];
 	  break;
 	case 16:
-	  sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, buf, addr, 2);
+	  sim_core_read_buffer (sd, STATE_CPU (sd, 0), read_map, buf, addr, 2);
 	  rv = buf[0] | (buf[1] << 8);
 	  break;
 	case 20:
 	case 32:
-	  sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, buf, addr, 4);
+	  sim_core_read_buffer (sd, STATE_CPU (sd, 0), read_map, buf, addr, 4);
 	  rv = buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
 	  break;
 	default:
@@ -432,7 +439,7 @@ get_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n)
 	    }
 	}
 
-      TRACE_MEMORY (MSP430_CPU (sd), "GET: [%#x].%d -> %#x", addr, opc->size,
+      TRACE_MEMORY (STATE_CPU (sd, 0), "GET: [%#x].%d -> %#x", addr, opc->size,
 		    rv);
       break;
 
@@ -525,7 +532,7 @@ put_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n, int val)
 	}
       addr &= 0xfffff;
 
-      TRACE_MEMORY (MSP430_CPU (sd), "PUT: [%#x].%d <- %#x", addr, opc->size,
+      TRACE_MEMORY (STATE_CPU (sd, 0), "PUT: [%#x].%d <- %#x", addr, opc->size,
 		    val);
 #if 0
       /* Hack - MSP430X5438 serial port transmit register.  */
@@ -685,12 +692,12 @@ put_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n, int val)
 	{
 	case 8:
 	  buf[0] = val;
-	  sim_core_write_buffer (sd, MSP430_CPU (sd), write_map, buf, addr, 1);
+	  sim_core_write_buffer (sd, STATE_CPU (sd, 0), write_map, buf, addr, 1);
 	  break;
 	case 16:
 	  buf[0] = val;
 	  buf[1] = val >> 8;
-	  sim_core_write_buffer (sd, MSP430_CPU (sd), write_map, buf, addr, 2);
+	  sim_core_write_buffer (sd, STATE_CPU (sd, 0), write_map, buf, addr, 2);
 	  break;
 	case 20:
 	case 32:
@@ -698,7 +705,7 @@ put_op (SIM_DESC sd, MSP430_Opcode_Decoded *opc, int n, int val)
 	  buf[1] = val >> 8;
 	  buf[2] = val >> 16;
 	  buf[3] = val >> 24;
-	  sim_core_write_buffer (sd, MSP430_CPU (sd), write_map, buf, addr, 4);
+	  sim_core_write_buffer (sd, STATE_CPU (sd, 0), write_map, buf, addr, 4);
 	  break;
 	default:
 	  assert (! opc->size);
@@ -787,25 +794,21 @@ msp430_cio (SIM_DESC sd)
 {
   /* A block of data at __CIOBUF__ describes the I/O operation to
      perform.  */
-
-  unsigned char raw_parms[13];
+  sim_cpu *cpu = STATE_CPU (sd, 0);
+  struct msp430_cpu_state *msp430_cpu = MSP430_SIM_CPU (cpu);
   unsigned char parms[8];
   long length;
   int command;
   unsigned char buffer[512];
   long ret_buflen = 0;
-  long fd, addr, len, rv;
+  long fd, len, rv;
 
-  sim_core_read_buffer (sd, MSP430_CPU (sd), 0, parms,
-			MSP430_CPU (sd)->state.cio_buffer, 5);
+  sim_core_read_buffer (sd, cpu, 0, parms, msp430_cpu->cio_buffer, 5);
   length = CIO_I (0);
   command = parms[2];
 
-  sim_core_read_buffer (sd, MSP430_CPU (sd), 0, parms,
-			MSP430_CPU (sd)->state.cio_buffer + 3, 8);
-
-  sim_core_read_buffer (sd, MSP430_CPU (sd), 0, buffer,
-			MSP430_CPU (sd)->state.cio_buffer + 11, length);
+  sim_core_read_buffer (sd, cpu, 0, parms, msp430_cpu->cio_buffer + 3, 8);
+  sim_core_read_buffer (sd, cpu, 0, buffer, msp430_cpu->cio_buffer + 11, length);
 
   switch (command)
     {
@@ -820,11 +823,10 @@ msp430_cio (SIM_DESC sd)
       break;
     }
 
-  sim_core_write_buffer (sd, MSP430_CPU (sd), 0, parms,
-			 MSP430_CPU (sd)->state.cio_buffer + 4, 8);
+  sim_core_write_buffer (sd, cpu, 0, parms, msp430_cpu->cio_buffer + 4, 8);
   if (ret_buflen)
-    sim_core_write_buffer (sd, MSP430_CPU (sd), 0, buffer,
-			   MSP430_CPU (sd)->state.cio_buffer + 12, ret_buflen);
+    sim_core_write_buffer (sd, cpu, 0, buffer, msp430_cpu->cio_buffer + 12,
+			   ret_buflen);
 }
 
 #define SRC     get_op (sd, opcode, 1)
@@ -836,7 +838,7 @@ msp430_cio (SIM_DESC sd)
     int s1 = DSRC;							\
     int s2 = SRC;							\
     int result = s1 OP s2 MORE;						\
-    TRACE_ALU (MSP430_CPU (sd), "ALU: %#x %s %#x %s = %#x", s1, SOP,	\
+    TRACE_ALU (STATE_CPU (sd, 0), "ALU: %#x %s %#x %s = %#x", s1, SOP,	\
 	       s2, #MORE, result); \
     DEST (result);							\
   }
@@ -900,10 +902,10 @@ do_flags (SIM_DESC sd,
 
   new_f = f | (new_f & opcode->flags_set);
   if (SR != new_f)
-    TRACE_ALU (MSP430_CPU (sd), "FLAGS: %s -> %s", flags2string (SR),
+    TRACE_ALU (STATE_CPU (sd, 0), "FLAGS: %s -> %s", flags2string (SR),
 	       flags2string (new_f));
   else
-    TRACE_ALU (MSP430_CPU (sd), "FLAGS: %s", flags2string (new_f));
+    TRACE_ALU (STATE_CPU (sd, 0), "FLAGS: %s", flags2string (new_f));
   SR = new_f;
 }
 
@@ -966,6 +968,9 @@ cond_string (int cond)
 static int
 maybe_perform_syscall (SIM_DESC sd, int call_addr)
 {
+  sim_cpu *cpu = STATE_CPU (sd, 0);
+  struct msp430_cpu_state *msp430_cpu = MSP430_SIM_CPU (cpu);
+
   if (call_addr == 0x00160)
     {
       int i;
@@ -974,13 +979,13 @@ maybe_perform_syscall (SIM_DESC sd, int call_addr)
 	{
 	  if (i % 4 == 0)
 	    fprintf (stderr, "\t");
-	  fprintf (stderr, "R%-2d %05x   ", i, MSP430_CPU (sd)->state.regs[i]);
+	  fprintf (stderr, "R%-2d %05x   ", i, msp430_cpu->regs[i]);
 	  if (i % 4 == 3)
 	    {
 	      int sp = SP + (3 - (i / 4)) * 2;
 	      unsigned char buf[2];
 
-	      sim_core_read_buffer (sd, MSP430_CPU (sd), read_map, buf, sp, 2);
+	      sim_core_read_buffer (sd, cpu, read_map, buf, sp, 2);
 
 	      fprintf (stderr, "\tSP%+d: %04x", sp - SP,
 		       buf[0] + buf[1] * 256);
@@ -1012,22 +1017,21 @@ maybe_perform_syscall (SIM_DESC sd, int call_addr)
 	 See slaa534.pdf distributed by TI.  */
       if (syscall_num == 2)
 	{
-	  arg1 = MSP430_CPU (sd)->state.regs[12];
+	  arg1 = msp430_cpu->regs[12];
 	  arg2 = mem_get_val (sd, SP, 16);
 	  arg3 = mem_get_val (sd, SP + 2, 16);
 	  arg4 = mem_get_val (sd, SP + 4, 16);
 	}
       else
 	{
-	  arg1 = MSP430_CPU (sd)->state.regs[12];
-	  arg2 = MSP430_CPU (sd)->state.regs[13];
-	  arg3 = MSP430_CPU (sd)->state.regs[14];
-	  arg4 = MSP430_CPU (sd)->state.regs[15];
+	  arg1 = msp430_cpu->regs[12];
+	  arg2 = msp430_cpu->regs[13];
+	  arg3 = msp430_cpu->regs[14];
+	  arg4 = msp430_cpu->regs[15];
 	}
 
-      MSP430_CPU (sd)->state.regs[12] = sim_syscall (MSP430_CPU (sd),
-						     syscall_num, arg1, arg2,
-						     arg3, arg4);
+      msp430_cpu->regs[12] = sim_syscall (cpu, syscall_num, arg1, arg2, arg3,
+					  arg4);
       return 1;
     }
 
@@ -1037,8 +1041,9 @@ maybe_perform_syscall (SIM_DESC sd, int call_addr)
 static void
 msp430_step_once (SIM_DESC sd)
 {
+  sim_cpu *cpu = STATE_CPU (sd, 0);
+  struct msp430_cpu_state *msp430_cpu = MSP430_SIM_CPU (cpu);
   Get_Byte_Local_Data ld;
-  unsigned char buf[100];
   int i;
   int opsize;
   unsigned int opcode_pc;
@@ -1046,8 +1051,7 @@ msp430_step_once (SIM_DESC sd)
   MSP430_Opcode_Decoded *opcode = &opcode_buf;
   int s1, s2, result;
   int u1 = 0, u2, uresult;
-  int c = 0, reg;
-  int sp;
+  int c = 0;
   int carry_to_use;
   int n_repeats;
   int rept;
@@ -1059,32 +1063,27 @@ msp430_step_once (SIM_DESC sd)
   if (opcode_pc < 0x10)
     {
       fprintf (stderr, "Fault: PC(%#x) is less than 0x10\n", opcode_pc);
-      sim_engine_halt (sd, MSP430_CPU (sd), NULL,
-		       MSP430_CPU (sd)->state.regs[0],
-		       sim_exited, -1);
+      sim_engine_halt (sd, cpu, NULL, msp430_cpu->regs[0], sim_exited, -1);
       return;
     }
 
-  if (PC == MSP430_CPU (sd)->state.cio_breakpoint
-      && STATE_OPEN_KIND (sd) != SIM_OPEN_DEBUG)
+  if (PC == msp430_cpu->cio_breakpoint && STATE_OPEN_KIND (sd) != SIM_OPEN_DEBUG)
     msp430_cio (sd);
 
   ld.sd = sd;
   ld.gb_addr = PC;
-  opsize = msp430_decode_opcode (MSP430_CPU (sd)->state.regs[0],
-				 opcode, msp430_getbyte, &ld);
+  opsize = msp430_decode_opcode (msp430_cpu->regs[0], opcode, msp430_getbyte,
+				 &ld);
   PC += opsize;
   if (opsize <= 0)
     {
       fprintf (stderr, "Fault: undecodable opcode at %#x\n", opcode_pc);
-      sim_engine_halt (sd, MSP430_CPU (sd), NULL,
-		       MSP430_CPU (sd)->state.regs[0],
-		       sim_exited, -1);
+      sim_engine_halt (sd, cpu, NULL, msp430_cpu->regs[0], sim_exited, -1);
       return;
     }
 
   if (opcode->repeat_reg)
-    n_repeats = (MSP430_CPU (sd)->state.regs[opcode->repeats] & 0x000f) + 1;
+    n_repeats = (msp430_cpu->regs[opcode->repeats] & 0x000f) + 1;
   else
     n_repeats = opcode->repeats + 1;
 
@@ -1103,11 +1102,11 @@ msp430_step_once (SIM_DESC sd)
       break;
     }
 
-  if (TRACE_ANY_P (MSP430_CPU (sd)))
-    trace_prefix (sd, MSP430_CPU (sd), NULL_CIA, opcode_pc,
-		  TRACE_LINENUM_P (MSP430_CPU (sd)), NULL, 0, " ");
+  if (TRACE_ANY_P (cpu))
+    trace_prefix (sd, cpu, NULL_CIA, opcode_pc, TRACE_LINENUM_P (cpu), NULL,
+		  0, " ");
 
-  TRACE_DISASM (MSP430_CPU (sd), opcode_pc);
+  TRACE_DISASM (cpu, opcode_pc);
 
   carry_to_use = 0;
   switch (opcode->id)
@@ -1127,10 +1126,8 @@ msp430_step_once (SIM_DESC sd)
 	{
 	  /* This is the designated software breakpoint instruction.  */
 	  PC -= opsize;
-	  sim_engine_halt (sd, MSP430_CPU (sd), NULL,
-			   MSP430_CPU (sd)->state.regs[0],
-			   sim_stopped, SIM_SIGTRAP);
-
+	  sim_engine_halt (sd, cpu, NULL, msp430_cpu->regs[0], sim_stopped,
+			   SIM_SIGTRAP);
 	}
       else
 	{
@@ -1152,7 +1149,7 @@ msp430_step_once (SIM_DESC sd)
 	  s2 = SX (u2);
 	  uresult = u1 + u2 + carry_to_use;
 	  result = s1 + s2 + carry_to_use;
-	  TRACE_ALU (MSP430_CPU (sd), "ADDC: %#x + %#x + %d = %#x",
+	  TRACE_ALU (cpu, "ADDC: %#x + %#x + %d = %#x",
 		     u1, u2, carry_to_use, uresult);
 	  DEST (result);
 	  FLAGS (result, uresult != ZX (uresult));
@@ -1168,8 +1165,7 @@ msp430_step_once (SIM_DESC sd)
 	  s2 = SX (u2);
 	  uresult = u1 + u2;
 	  result = s1 + s2;
-	  TRACE_ALU (MSP430_CPU (sd), "ADD: %#x + %#x = %#x",
-		     u1, u2, uresult);
+	  TRACE_ALU (cpu, "ADD: %#x + %#x = %#x", u1, u2, uresult);
 	  DEST (result);
 	  FLAGS (result, uresult != ZX (uresult));
 	}
@@ -1185,7 +1181,7 @@ msp430_step_once (SIM_DESC sd)
 	  s2 = SX (u2);
 	  uresult = ZX (~u2) + u1 + carry_to_use;
 	  result = s1 - s2 + (carry_to_use - 1);
-	  TRACE_ALU (MSP430_CPU (sd), "SUBC: %#x - %#x + %d = %#x",
+	  TRACE_ALU (cpu, "SUBC: %#x - %#x + %d = %#x",
 		     u1, u2, carry_to_use, uresult);
 	  DEST (result);
 	  FLAGS (result, uresult != ZX (uresult));
@@ -1201,7 +1197,7 @@ msp430_step_once (SIM_DESC sd)
 	  s2 = SX (u2);
 	  uresult = ZX (~u2) + u1 + 1;
 	  result = SX (uresult);
-	  TRACE_ALU (MSP430_CPU (sd), "SUB: %#x - %#x = %#x",
+	  TRACE_ALU (cpu, "SUB: %#x - %#x = %#x",
 		     u1, u2, uresult);
 	  DEST (result);
 	  FLAGS (result, uresult != ZX (uresult));
@@ -1217,7 +1213,7 @@ msp430_step_once (SIM_DESC sd)
 	  s2 = SX (u2);
 	  uresult = ZX (~u2) + u1 + 1;
 	  result = s1 - s2;
-	  TRACE_ALU (MSP430_CPU (sd), "CMP: %#x - %#x = %x",
+	  TRACE_ALU (cpu, "CMP: %#x - %#x = %x",
 		     u1, u2, uresult);
 	  FLAGS (result, uresult != ZX (uresult));
 	}
@@ -1231,7 +1227,7 @@ msp430_step_once (SIM_DESC sd)
 	  u2 = SRC;
 	  uresult = bcd_to_binary (u1) + bcd_to_binary (u2) + carry_to_use;
 	  result = binary_to_bcd (uresult);
-	  TRACE_ALU (MSP430_CPU (sd), "DADD: %#x + %#x + %d = %#x",
+	  TRACE_ALU (cpu, "DADD: %#x + %#x + %d = %#x",
 		     u1, u2, carry_to_use, result);
 	  DEST (result);
 	  FLAGS (result, uresult > ((opcode->size == 8) ? 99 : 9999));
@@ -1244,7 +1240,7 @@ msp430_step_once (SIM_DESC sd)
 	  u1 = DSRC;
 	  u2 = SRC;
 	  uresult = u1 & u2;
-	  TRACE_ALU (MSP430_CPU (sd), "AND: %#x & %#x = %#x",
+	  TRACE_ALU (cpu, "AND: %#x & %#x = %#x",
 		     u1, u2, uresult);
 	  DEST (uresult);
 	  FLAGS (uresult, uresult != 0);
@@ -1257,7 +1253,7 @@ msp430_step_once (SIM_DESC sd)
 	  u1 = DSRC;
 	  u2 = SRC;
 	  uresult = u1 & u2;
-	  TRACE_ALU (MSP430_CPU (sd), "BIT: %#x & %#x -> %#x",
+	  TRACE_ALU (cpu, "BIT: %#x & %#x -> %#x",
 		     u1, u2, uresult);
 	  FLAGS (uresult, uresult != 0);
 	}
@@ -1269,7 +1265,7 @@ msp430_step_once (SIM_DESC sd)
 	  u1 = DSRC;
 	  u2 = SRC;
 	  uresult = u1 & ~ u2;
-	  TRACE_ALU (MSP430_CPU (sd), "BIC: %#x & ~ %#x = %#x",
+	  TRACE_ALU (cpu, "BIC: %#x & ~ %#x = %#x",
 		     u1, u2, uresult);
 	  DEST (uresult);
 	}
@@ -1281,7 +1277,7 @@ msp430_step_once (SIM_DESC sd)
 	  u1 = DSRC;
 	  u2 = SRC;
 	  uresult = u1 | u2;
-	  TRACE_ALU (MSP430_CPU (sd), "BIS: %#x | %#x = %#x",
+	  TRACE_ALU (cpu, "BIS: %#x | %#x = %#x",
 		     u1, u2, uresult);
 	  DEST (uresult);
 	}
@@ -1294,7 +1290,7 @@ msp430_step_once (SIM_DESC sd)
 	  u1 = DSRC;
 	  u2 = SRC;
 	  uresult = u1 ^ u2;
-	  TRACE_ALU (MSP430_CPU (sd), "XOR: %#x & %#x = %#x",
+	  TRACE_ALU (cpu, "XOR: %#x & %#x = %#x",
 		     u1, u2, uresult);
 	  DEST (uresult);
 	  FLAGSV (uresult, uresult != 0, (u1 & s1) && (u2 & s1));
@@ -1314,7 +1310,7 @@ msp430_step_once (SIM_DESC sd)
 	     RRUX, so the carry bit must be ignored.  */
 	  if (opcode->zc == 0 && (SR & MSP430_FLAG_C))
 	    uresult |= (1 << (opcode->size - 1));
-	  TRACE_ALU (MSP430_CPU (sd), "RRC: %#x >>= %#x",
+	  TRACE_ALU (cpu, "RRC: %#x >>= %#x",
 		     u1, uresult);
 	  DEST (uresult);
 	  FLAGS (uresult, carry_to_use);
@@ -1326,7 +1322,7 @@ msp430_step_once (SIM_DESC sd)
 	{
 	  u1 = SRC;
 	  uresult = ((u1 >> 8) & 0x00ff) | ((u1 << 8) & 0xff00);
-	  TRACE_ALU (MSP430_CPU (sd), "SWPB: %#x -> %#x",
+	  TRACE_ALU (cpu, "SWPB: %#x -> %#x",
 		     u1, uresult);
 	  DEST (uresult);
 	}
@@ -1339,7 +1335,7 @@ msp430_step_once (SIM_DESC sd)
 	  c = u1 & 1;
 	  s1 = 1 << (opcode->size - 1);
 	  uresult = (u1 >> 1) | (u1 & s1);
-	  TRACE_ALU (MSP430_CPU (sd), "RRA: %#x >>= %#x",
+	  TRACE_ALU (cpu, "RRA: %#x >>= %#x",
 		     u1, uresult);
 	  DEST (uresult);
 	  FLAGS (uresult, c);
@@ -1352,7 +1348,7 @@ msp430_step_once (SIM_DESC sd)
 	  u1 = SRC;
 	  c = u1 & 1;
 	  uresult = (u1 >> 1);
-	  TRACE_ALU (MSP430_CPU (sd), "RRU: %#x >>= %#x",
+	  TRACE_ALU (cpu, "RRU: %#x >>= %#x",
 		     u1, uresult);
 	  DEST (uresult);
 	  FLAGS (uresult, c);
@@ -1367,8 +1363,7 @@ msp430_step_once (SIM_DESC sd)
 	    uresult = u1 | 0xfff00;
 	  else
 	    uresult = u1 & 0x000ff;
-	  TRACE_ALU (MSP430_CPU (sd), "SXT: %#x -> %#x",
-		     u1, uresult);
+	  TRACE_ALU (cpu, "SXT: %#x -> %#x", u1, uresult);
 	  DEST (uresult);
 	  FLAGS (uresult, c);
 	}
@@ -1416,7 +1411,7 @@ msp430_step_once (SIM_DESC sd)
 
       REG_PUT (MSR_SP, REG_GET (MSR_SP) - op_bytes);
       mem_put_val (sd, SP, PC, op_bits);
-      TRACE_ALU (MSP430_CPU (sd), "CALL: func %#x ret %#x, sp %#x",
+      TRACE_ALU (cpu, "CALL: func %#x ret %#x, sp %#x",
 	         u1, PC, SP);
       REG_PUT (MSR_PC, u1);
       break;
@@ -1432,8 +1427,7 @@ msp430_step_once (SIM_DESC sd)
 	 8-bits of SR will have been written to the stack here, and will
 	 have been read as 0.  */
       PC |= (u1 & 0xF000) << 4;
-      TRACE_ALU (MSP430_CPU (sd), "RETI: pc %#x sr %#x",
-	         PC, SR);
+      TRACE_ALU (cpu, "RETI: pc %#x sr %#x", PC, SR);
       break;
 
       /* Jumps.  */
@@ -1470,14 +1464,14 @@ msp430_step_once (SIM_DESC sd)
 
       if (u1)
 	{
-	  TRACE_BRANCH (MSP430_CPU (sd), "J%s: pc %#x -> %#x sr %#x, taken",
+	  TRACE_BRANCH (cpu, "J%s: pc %#x -> %#x sr %#x, taken",
 			cond_string (opcode->cond), PC, i, SR);
 	  PC = i;
 	  if (PC == opcode_pc)
 	    exit (0);
 	}
       else
-	TRACE_BRANCH (MSP430_CPU (sd), "J%s: pc %#x to %#x sr %#x, not taken",
+	TRACE_BRANCH (cpu, "J%s: pc %#x to %#x sr %#x, not taken",
 		      cond_string (opcode->cond), PC, i, SR);
       break;
 

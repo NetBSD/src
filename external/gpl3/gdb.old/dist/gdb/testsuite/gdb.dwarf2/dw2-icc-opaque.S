@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -252,4 +252,8 @@ debug_info_seg3_end:
 	.byte 0x08	/* DW_FORM_string. */
 	.2byte 0x0000	/* End abbrev. */
 	.byte 0x00	/* End abbrev table. */
+#ifdef __arm__
+	.section	.note.GNU-stack,"",%progbits
+#else
 	.section	.note.GNU-stack,"",@progbits
+#endif

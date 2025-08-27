@@ -113,7 +113,7 @@ autovars (int bcd, int abc)
     int i96 = useit (96), i97 = useit (97), i98 = useit (98);
     int i99 = useit (99);
 
-    /* Use all 100 of the local variables to derail agressive optimizers.  */
+    /* Use all 100 of the local variables to derail aggressive optimizers.  */
 
     useit ( i0); useit ( i1); useit ( i2); useit ( i3); useit ( i4);
     useit ( i5); useit ( i6); useit ( i7); useit ( i8); useit ( i9);

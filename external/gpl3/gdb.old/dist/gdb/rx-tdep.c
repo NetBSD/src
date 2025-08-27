@@ -1,6 +1,6 @@
 /* Target-dependent code for the Renesas RX for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
+#include "extract-store-integer.h"
 #include "prologue-value.h"
 #include "target.h"
 #include "regcache.h"
@@ -36,6 +36,7 @@
 #include "remote.h"
 #include "target-descriptions.h"
 #include "gdbarch.h"
+#include "inferior.h"
 
 #include "elf/rx.h"
 #include "elf-bfd.h"
@@ -142,7 +143,7 @@ check_for_saved (void *result_untyped, pv_t addr, CORE_ADDR size, pv_t value)
   if (value.kind == pvk_register
       && value.k == 0
       && pv_is_register (addr, RX_SP_REGNUM)
-      && size == register_size (target_gdbarch (), value.reg))
+      && size == register_size (current_inferior ()->arch (), value.reg))
     result->reg_offset[value.reg] = addr.k;
 }
 
@@ -198,7 +199,7 @@ rx_analyze_prologue (CORE_ADDR start_pc, CORE_ADDR limit_pc,
       result->reg_offset[rn] = 1;
     }
 
-  pv_area stack (RX_SP_REGNUM, gdbarch_addr_bit (target_gdbarch ()));
+  pv_area stack (RX_SP_REGNUM, gdbarch_addr_bit (current_inferior ()->arch ()));
 
   if (frame_type == RX_FRAME_TYPE_FAST_INTERRUPT)
     {
@@ -382,7 +383,7 @@ rx_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
    return that struct as the value of this function.  */
 
 static struct rx_prologue *
-rx_analyze_frame_prologue (frame_info_ptr this_frame,
+rx_analyze_frame_prologue (const frame_info_ptr &this_frame,
 			   enum rx_frame_type frame_type,
 			   void **this_prologue_cache)
 {
@@ -411,7 +412,7 @@ rx_analyze_frame_prologue (frame_info_ptr this_frame,
    instruction.  */
 
 static enum rx_frame_type
-rx_frame_type (frame_info_ptr this_frame, void **this_cache)
+rx_frame_type (const frame_info_ptr &this_frame, void **this_cache)
 {
   const char *name;
   CORE_ADDR pc, start_pc, lim_pc;
@@ -465,7 +466,7 @@ rx_frame_type (frame_info_ptr this_frame, void **this_cache)
    base.  */
 
 static CORE_ADDR
-rx_frame_base (frame_info_ptr this_frame, void **this_cache)
+rx_frame_base (const frame_info_ptr &this_frame, void **this_cache)
 {
   enum rx_frame_type frame_type = rx_frame_type (this_frame, this_cache);
   struct rx_prologue *p
@@ -492,7 +493,7 @@ rx_frame_base (frame_info_ptr this_frame, void **this_cache)
 /* Implement the "frame_this_id" method for unwinding frames.  */
 
 static void
-rx_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+rx_frame_this_id (const frame_info_ptr &this_frame, void **this_cache,
 		  struct frame_id *this_id)
 {
   *this_id = frame_id_build (rx_frame_base (this_frame, this_cache),
@@ -502,7 +503,7 @@ rx_frame_this_id (frame_info_ptr this_frame, void **this_cache,
 /* Implement the "frame_prev_register" method for unwinding frames.  */
 
 static struct value *
-rx_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
+rx_frame_prev_register (const frame_info_ptr &this_frame, void **this_cache,
 			int regnum)
 {
   enum rx_frame_type frame_type = rx_frame_type (this_frame, this_cache);
@@ -520,7 +521,7 @@ rx_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
 	  psw_val = rx_frame_prev_register (this_frame, this_cache,
 					    RX_PSW_REGNUM);
 	  psw = extract_unsigned_integer
-	    (value_contents_all (psw_val).data (), 4,
+	    (psw_val->contents_all ().data (), 4,
 	     gdbarch_byte_order (get_frame_arch (this_frame)));
 
 	  if ((psw & 0x20000 /* U bit */) != 0)
@@ -576,7 +577,7 @@ exception_frame_p (enum rx_frame_type frame_type)
 
 static int
 rx_frame_sniffer_common (const struct frame_unwind *self,
-			 frame_info_ptr this_frame,
+			 const frame_info_ptr &this_frame,
 			 void **this_cache,
 			 int (*sniff_p)(enum rx_frame_type) )
 {
@@ -609,7 +610,7 @@ rx_frame_sniffer_common (const struct frame_unwind *self,
 
 static int
 rx_frame_sniffer (const struct frame_unwind *self,
-		  frame_info_ptr this_frame,
+		  const frame_info_ptr &this_frame,
 		  void **this_cache)
 {
   return rx_frame_sniffer_common (self, this_frame, this_cache,
@@ -620,7 +621,7 @@ rx_frame_sniffer (const struct frame_unwind *self,
 
 static int
 rx_exception_sniffer (const struct frame_unwind *self,
-			     frame_info_ptr this_frame,
+			     const frame_info_ptr &this_frame,
 			     void **this_cache)
 {
   return rx_frame_sniffer_common (self, this_frame, this_cache,
@@ -668,7 +669,7 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   CORE_ADDR cfa;
   int num_register_candidate_args;
 
-  struct type *func_type = value_type (function);
+  struct type *func_type = function->type ();
 
   /* Dereference function pointer types.  */
   while (func_type->code () == TYPE_CODE_PTR)
@@ -725,8 +726,8 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       for (i = 0; i < nargs; i++)
 	{
 	  struct value *arg = args[i];
-	  const gdb_byte *arg_bits = value_contents_all (arg).data ();
-	  struct type *arg_type = check_typedef (value_type (arg));
+	  const gdb_byte *arg_bits = arg->contents_all ().data ();
+	  struct type *arg_type = check_typedef (arg->type ());
 	  ULONGEST arg_size = arg_type->length ();
 
 	  if (i == 0 && struct_addr != 0
@@ -944,7 +945,6 @@ rx_dwarf_reg_to_regnum (struct gdbarch *gdbarch, int reg)
 static struct gdbarch *
 rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-  struct gdbarch *gdbarch;
   int elf_flags;
   tdesc_arch_data_up tdesc_data;
   const struct target_desc *tdesc = info.target_desc;
@@ -997,8 +997,10 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   gdb_assert(tdesc_data != NULL);
 
-  rx_gdbarch_tdep *tdep = new rx_gdbarch_tdep;
-  gdbarch = gdbarch_alloc (&info, tdep);
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info, gdbarch_tdep_up (new rx_gdbarch_tdep));
+  rx_gdbarch_tdep *tdep = gdbarch_tdep<rx_gdbarch_tdep> (gdbarch);
+
   tdep->elf_flags = elf_flags;
 
   set_gdbarch_num_regs (gdbarch, RX_NUM_REGS);

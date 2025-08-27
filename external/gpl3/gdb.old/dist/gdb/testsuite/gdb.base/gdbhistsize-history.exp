@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,11 +20,7 @@
 
 # We cannot expect remote hosts to see environment variables set on the
 # local machine.
-
-if { [is_remote host] } {
-    unsupported "can't set environment variables on remote host"
-    return -1
-}
+require {!is_remote host}
 
 # Check that the history size is properly set to SIZE when the environment
 # variable ENV_VAR is set to GDBHISTSIZE.
@@ -38,6 +34,10 @@ proc test_histsize_history_setting { histsize size { env_var "GDBHISTSIZE" } } {
 	# set.
 	unset -nocomplain env(GDBHISTFILE)
 	unset -nocomplain env(GDBHISTSIZE)
+
+	# Ensure we don't accidentally pick up a .gdb_history from the
+	# testsuite directory.
+	set env(GDBHISTFILE) [standard_output_file .gdb_history]
 
 	set env($env_var) $histsize
 

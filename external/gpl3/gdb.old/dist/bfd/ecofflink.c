@@ -1,5 +1,5 @@
 /* Routines to link ECOFF debugging information.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1460,7 +1460,7 @@ ecoff_write_symhdr (bfd *abfd,
     goto error_return;
 
   (*swap->swap_hdr_out) (abfd, symhdr, buff);
-  if (bfd_bwrite (buff, swap->external_hdr_size, abfd)
+  if (bfd_write (buff, swap->external_hdr_size, abfd)
       != swap->external_hdr_size)
     goto error_return;
 
@@ -1492,9 +1492,8 @@ bfd_ecoff_write_debug (bfd *abfd,
   BFD_ASSERT (symhdr->offset == 0				\
 	      || (bfd_vma) bfd_tell (abfd) == symhdr->offset);	\
   if (symhdr->count != 0					\
-      && bfd_bwrite (debug->ptr,				\
-		     (bfd_size_type) size * symhdr->count,	\
-		     abfd) != size * symhdr->count)		\
+      && bfd_write (debug->ptr, size * symhdr->count,		\
+		    abfd) != size * symhdr->count)		\
     return false;
 
   WRITE (line, cbLine, sizeof (unsigned char), cbLineOffset);
@@ -1502,8 +1501,7 @@ bfd_ecoff_write_debug (bfd *abfd,
   WRITE (external_pdr, ipdMax, swap->external_pdr_size, cbPdOffset);
   WRITE (external_sym, isymMax, swap->external_sym_size, cbSymOffset);
   WRITE (external_opt, ioptMax, swap->external_opt_size, cbOptOffset);
-  WRITE (external_aux, iauxMax, (bfd_size_type) sizeof (union aux_ext),
-	 cbAuxOffset);
+  WRITE (external_aux, iauxMax, sizeof (union aux_ext), cbAuxOffset);
   WRITE (ss, issMax, sizeof (char), cbSsOffset);
   WRITE (ssext, issExtMax, sizeof (char), cbSsExtOffset);
   WRITE (external_fdr, ifdMax, swap->external_fdr_size, cbFdOffset);
@@ -1524,23 +1522,21 @@ ecoff_write_shuffle (bfd *abfd,
 		     void * space)
 {
   struct shuffle *l;
-  unsigned long total;
+  size_t total;
 
   total = 0;
-  for (l = shuffle; l != (struct shuffle *) NULL; l = l->next)
+  for (l = shuffle; l != NULL; l = l->next)
     {
       if (! l->filep)
 	{
-	  if (bfd_bwrite (l->u.memory, (bfd_size_type) l->size, abfd)
-	      != l->size)
+	  if (bfd_write (l->u.memory, l->size, abfd) != l->size)
 	    return false;
 	}
       else
 	{
 	  if (bfd_seek (l->u.file.input_bfd, l->u.file.offset, SEEK_SET) != 0
-	      || bfd_bread (space, (bfd_size_type) l->size,
-			   l->u.file.input_bfd) != l->size
-	      || bfd_bwrite (space, (bfd_size_type) l->size, abfd) != l->size)
+	      || bfd_read (space, l->size, l->u.file.input_bfd) != l->size
+	      || bfd_write (space, l->size, abfd) != l->size)
 	    return false;
 	}
       total += l->size;
@@ -1548,15 +1544,15 @@ ecoff_write_shuffle (bfd *abfd,
 
   if ((total & (swap->debug_align - 1)) != 0)
     {
-      unsigned int i;
+      size_t i;
       bfd_byte *s;
 
       i = swap->debug_align - (total & (swap->debug_align - 1));
-      s = (bfd_byte *) bfd_zmalloc ((bfd_size_type) i);
+      s = bfd_zmalloc (i);
       if (s == NULL && i != 0)
 	return false;
 
-      if (bfd_bwrite (s, (bfd_size_type) i, abfd) != i)
+      if (bfd_write (s, i, abfd) != i)
 	{
 	  free (s);
 	  return false;
@@ -1611,36 +1607,34 @@ bfd_ecoff_write_accumulated_debug (void * handle,
       bfd_byte null;
       struct string_hash_entry *sh;
 
-      BFD_ASSERT (ainfo->ss == (struct shuffle *) NULL);
+      BFD_ASSERT (ainfo->ss == NULL);
       null = 0;
-      if (bfd_bwrite (&null, (bfd_size_type) 1, abfd) != 1)
+      if (bfd_write (&null, 1, abfd) != 1)
 	goto error_return;
       total = 1;
       BFD_ASSERT (ainfo->ss_hash == NULL || ainfo->ss_hash->val == 1);
-      for (sh = ainfo->ss_hash;
-	   sh != (struct string_hash_entry *) NULL;
-	   sh = sh->next)
+      for (sh = ainfo->ss_hash; sh != NULL; sh = sh->next)
 	{
 	  size_t len;
 
 	  len = strlen (sh->root.string);
 	  amt = len + 1;
-	  if (bfd_bwrite (sh->root.string, amt, abfd) != amt)
+	  if (bfd_write (sh->root.string, amt, abfd) != amt)
 	    goto error_return;
 	  total += len + 1;
 	}
 
       if ((total & (swap->debug_align - 1)) != 0)
 	{
-	  unsigned int i;
+	  size_t i;
 	  bfd_byte *s;
 
 	  i = swap->debug_align - (total & (swap->debug_align - 1));
-	  s = (bfd_byte *) bfd_zmalloc ((bfd_size_type) i);
+	  s = bfd_zmalloc (i);
 	  if (s == NULL && i != 0)
 	    goto error_return;
 
-	  if (bfd_bwrite (s, (bfd_size_type) i, abfd) != i)
+	  if (bfd_write (s, i, abfd) != i)
 	    {
 	      free (s);
 	      goto error_return;
@@ -1652,20 +1646,20 @@ bfd_ecoff_write_accumulated_debug (void * handle,
   /* The external strings and symbol are not converted over to using
      shuffles.  FIXME: They probably should be.  */
   amt = debug->symbolic_header.issExtMax;
-  if (amt != 0 && bfd_bwrite (debug->ssext, amt, abfd) != amt)
+  if (amt != 0 && bfd_write (debug->ssext, amt, abfd) != amt)
     goto error_return;
   if ((debug->symbolic_header.issExtMax & (swap->debug_align - 1)) != 0)
     {
-      unsigned int i;
+      size_t i;
       bfd_byte *s;
 
       i = (swap->debug_align
 	   - (debug->symbolic_header.issExtMax & (swap->debug_align - 1)));
-      s = (bfd_byte *) bfd_zmalloc ((bfd_size_type) i);
+      s = bfd_zmalloc (i);
       if (s == NULL && i != 0)
 	goto error_return;
 
-      if (bfd_bwrite (s, (bfd_size_type) i, abfd) != i)
+      if (bfd_write (s, i, abfd) != i)
 	{
 	  free (s);
 	  goto error_return;
@@ -1682,7 +1676,7 @@ bfd_ecoff_write_accumulated_debug (void * handle,
 		  == (bfd_vma) bfd_tell (abfd)));
 
   amt = debug->symbolic_header.iextMax * swap->external_ext_size;
-  if (amt != 0 && bfd_bwrite (debug->external_ext, amt, abfd) != amt)
+  if (amt != 0 && bfd_write (debug->external_ext, amt, abfd) != amt)
     goto error_return;
 
   free (space);
@@ -1695,6 +1689,38 @@ bfd_ecoff_write_accumulated_debug (void * handle,
 
 /* Handle the find_nearest_line function for both ECOFF and MIPS ELF
    files.  */
+
+/* Free ECOFF debugging info used by find_nearest_line.  */
+
+void
+_bfd_ecoff_free_ecoff_debug_info (struct ecoff_debug_info *debug)
+{
+  if (!debug->alloc_syments)
+    {
+      free (debug->line);
+      free (debug->external_dnr);
+      free (debug->external_pdr);
+      free (debug->external_sym);
+      free (debug->external_opt);
+      free (debug->external_aux);
+      free (debug->ss);
+      free (debug->ssext);
+      free (debug->external_fdr);
+      free (debug->external_rfd);
+      free (debug->external_ext);
+    }
+  debug->line= NULL;
+  debug->external_dnr= NULL;
+  debug->external_pdr= NULL;
+  debug->external_sym= NULL;
+  debug->external_opt= NULL;
+  debug->external_aux= NULL;
+  debug->ss= NULL;
+  debug->ssext= NULL;
+  debug->external_fdr= NULL;
+  debug->external_rfd= NULL;
+  debug->external_ext= NULL;
+}
 
 /* Compare FDR entries.  This is called via qsort.  */
 
@@ -1730,8 +1756,8 @@ mk_fdrtab (bfd *abfd,
   FDR *fdr_start;
   FDR *fdr_end;
   bool stabs;
-  long len;
-  bfd_size_type amt;
+  size_t len;
+  size_t amt;
 
   fdr_start = debug_info->fdr;
   fdr_end = fdr_start + debug_info->symbolic_header.ifdMax;
@@ -1739,17 +1765,27 @@ mk_fdrtab (bfd *abfd,
   /* First, let's see how long the table needs to be.  */
   for (len = 0, fdr_ptr = fdr_start; fdr_ptr < fdr_end; fdr_ptr++)
     {
-      if (fdr_ptr->cpd == 0)	/* Skip FDRs that have no PDRs.  */
+      /* Sanity check fdr procedure descriptor pointer.  */
+      long ipdMax = debug_info->symbolic_header.ipdMax;
+      if (fdr_ptr->ipdFirst >= ipdMax
+	  || fdr_ptr->cpd < 0
+	  || fdr_ptr->cpd > ipdMax - fdr_ptr->ipdFirst)
+	fdr_ptr->cpd = 0;
+      /* Skip FDRs that have no PDRs.  */
+      if (fdr_ptr->cpd == 0)
 	continue;
       ++len;
     }
 
   /* Now, create and fill in the table.  */
-  amt = (bfd_size_type) len * sizeof (struct ecoff_fdrtab_entry);
+  if (_bfd_mul_overflow (len, sizeof (struct ecoff_fdrtab_entry), &amt))
+    {
+      bfd_set_error (bfd_error_file_too_big);
+      return false;
+    }
   line_info->fdrtab = (struct ecoff_fdrtab_entry*) bfd_zalloc (abfd, amt);
   if (line_info->fdrtab == NULL)
     return false;
-  line_info->fdrtab_len = len;
 
   tab = line_info->fdrtab;
   for (fdr_ptr = fdr_start; fdr_ptr < fdr_end; fdr_ptr++)
@@ -1766,11 +1802,20 @@ mk_fdrtab (bfd *abfd,
 	  char *sym_ptr;
 	  SYMR sym;
 
+	  if ((long) ((unsigned long) fdr_ptr->isymBase + 1) <= 0
+	      || fdr_ptr->isymBase + 1 >= debug_info->symbolic_header.isymMax)
+	    continue;
+
 	  sym_ptr = ((char *) debug_info->external_sym
 		     + (fdr_ptr->isymBase + 1) * debug_swap->external_sym_size);
 	  (*debug_swap->swap_sym_in) (abfd, sym_ptr, &sym);
-	  if (strcmp (debug_info->ss + fdr_ptr->issBase + sym.iss,
-		      STABS_SYMBOL) == 0)
+	  if (fdr_ptr->issBase >= 0
+	      && fdr_ptr->issBase < debug_info->symbolic_header.issMax
+	      && sym.iss >= 0
+	      && sym.iss < (debug_info->symbolic_header.issMax
+			    - fdr_ptr->issBase)
+	      && strcmp (debug_info->ss + fdr_ptr->issBase + sym.iss,
+			 STABS_SYMBOL) == 0)
 	    stabs = true;
 	}
 
@@ -1797,12 +1842,14 @@ mk_fdrtab (bfd *abfd,
       tab->fdr = fdr_ptr;
       ++tab;
     }
+  len = tab - line_info->fdrtab;
+  line_info->fdrtab_len = len;
 
   /* Finally, the table is sorted in increasing memory-address order.
      The table is mostly sorted already, but there are cases (e.g.,
      static functions in include files), where this does not hold.
      Use "odump -PFv" to verify...  */
-  qsort (line_info->fdrtab, (size_t) len,
+  qsort (line_info->fdrtab, len,
 	 sizeof (struct ecoff_fdrtab_entry), cmp_fdrtab_entry);
 
   return true;
@@ -1966,13 +2013,26 @@ lookup_line (bfd *abfd,
       char *sym_ptr;
       SYMR sym;
 
-      sym_ptr = ((char *) debug_info->external_sym
-		 + (fdr_ptr->isymBase + 1) * debug_swap->external_sym_size);
-      (*debug_swap->swap_sym_in) (abfd, sym_ptr, &sym);
-      if (strcmp (debug_info->ss + fdr_ptr->issBase + sym.iss,
-		  STABS_SYMBOL) == 0)
-	stabs = true;
+      if ((long) ((unsigned long) fdr_ptr->isymBase + 1) > 0
+	  && fdr_ptr->isymBase + 1 < debug_info->symbolic_header.isymMax)
+	{
+	  sym_ptr = ((char *) debug_info->external_sym
+		     + (fdr_ptr->isymBase + 1) * debug_swap->external_sym_size);
+	  (*debug_swap->swap_sym_in) (abfd, sym_ptr, &sym);
+	  if (fdr_ptr->issBase >= 0
+	      && fdr_ptr->issBase < debug_info->symbolic_header.issMax
+	      && sym.iss >= 0
+	      && sym.iss < (debug_info->symbolic_header.issMax
+			    - fdr_ptr->issBase)
+	      && strcmp (debug_info->ss + fdr_ptr->issBase + sym.iss,
+			 STABS_SYMBOL) == 0)
+	    stabs = true;
+	}
     }
+
+  line_info->cache.filename = NULL;
+  line_info->cache.functionname = NULL;
+  line_info->cache.line_num = 0;
 
   if (!stabs)
     {
@@ -2060,7 +2120,7 @@ lookup_line (bfd *abfd,
 	     because we iterate over every FDR rather than just ones
 	     with a base address less than or equal to 'offset'.  */
 	  bfd_signed_vma dist = -1, min_dist = -1;
-	  char *pdr_hold;
+	  char *pdr_hold = NULL;
 	  char *pdr_end;
 
 	  fdr_ptr = tab[i].fdr;
@@ -2068,17 +2128,14 @@ lookup_line (bfd *abfd,
 	  pdr_ptr = ((char *) debug_info->external_pdr
 		     + fdr_ptr->ipdFirst * external_pdr_size);
 	  pdr_end = pdr_ptr + fdr_ptr->cpd * external_pdr_size;
-	  (*debug_swap->swap_pdr_in) (abfd, pdr_ptr, &pdr);
 	  /* Find PDR that is closest to OFFSET.  If pdr.prof is set,
 	     the procedure entry-point *may* be 0x10 below pdr.adr.  We
 	     simply pretend that pdr.prof *implies* a lower entry-point.
 	     This is safe because it just means that may identify 4 NOPs
 	     in front of the function as belonging to the function.  */
-	  for (pdr_hold = NULL;
-	       pdr_ptr < pdr_end;
-	       (pdr_ptr += external_pdr_size,
-		(*debug_swap->swap_pdr_in) (abfd, pdr_ptr, &pdr)))
+	  for (; pdr_ptr < pdr_end; pdr_ptr += external_pdr_size)
 	    {
+	      (*debug_swap->swap_pdr_in) (abfd, pdr_ptr, &pdr);
 	      if (offset >= (pdr.adr - 0x10 * pdr.prof))
 		{
 		  dist = offset - (pdr.adr - 0x10 * pdr.prof);
@@ -2116,12 +2173,20 @@ lookup_line (bfd *abfd,
 	 are stored in a very funky format, which I won't try to
 	 describe.  The search is bounded by the end of the FDRs line
 	 number entries.  */
-      line_end = debug_info->line + fdr_ptr->cbLineOffset + fdr_ptr->cbLine;
+      line_ptr = line_end = debug_info->line;
+      if (fdr_ptr->cbLineOffset < debug_info->symbolic_header.cbLine
+	  && fdr_ptr->cbLine <= (debug_info->symbolic_header.cbLine
+				 - fdr_ptr->cbLineOffset)
+	  && pdr.cbLineOffset <= (debug_info->symbolic_header.cbLine
+				  - fdr_ptr->cbLineOffset))
+	{
+	  line_end += fdr_ptr->cbLineOffset + fdr_ptr->cbLine;
+	  line_ptr += fdr_ptr->cbLineOffset + pdr.cbLineOffset;
+	}
 
       /* Make offset relative to procedure entry.  */
       offset -= pdr.adr - 0x10 * pdr.prof;
       lineno = pdr.lnLow;
-      line_ptr = debug_info->line + fdr_ptr->cbLineOffset + pdr.cbLineOffset;
       while (line_ptr < line_end)
 	{
 	  int delta;
@@ -2152,38 +2217,50 @@ lookup_line (bfd *abfd,
 	 symbols, at least according to gdb/mipsread.c.  */
       if (fdr_ptr->rss == -1)
 	{
-	  line_info->cache.filename = NULL;
-	  if (pdr.isym == -1)
-	    line_info->cache.functionname = NULL;
-	  else
-	    {
-	      EXTR proc_ext;
+	  EXTR proc_ext;
 
+	  if (pdr.isym >= 0
+	      && pdr.isym < debug_info->symbolic_header.iextMax)
+	    {
 	      (*debug_swap->swap_ext_in)
-		(abfd,
-		 ((char *) debug_info->external_ext
-		  + pdr.isym * debug_swap->external_ext_size),
+		(abfd, ((char *) debug_info->external_ext
+			+ pdr.isym * debug_swap->external_ext_size),
 		 &proc_ext);
-	      line_info->cache.functionname = (debug_info->ssext
-					       + proc_ext.asym.iss);
+	      if (proc_ext.asym.iss >= 0
+		  && proc_ext.asym.iss < debug_info->symbolic_header.issExtMax)
+		line_info->cache.functionname = (debug_info->ssext
+						 + proc_ext.asym.iss);
 	    }
 	}
-      else
+      else if (fdr_ptr->issBase >= 0
+	       && fdr_ptr->issBase < debug_info->symbolic_header.issMax
+	       && fdr_ptr->rss >= 0
+	       && fdr_ptr->rss < (debug_info->symbolic_header.issMax
+				  - fdr_ptr->issBase))
 	{
 	  SYMR proc_sym;
 
 	  line_info->cache.filename = (debug_info->ss
 				       + fdr_ptr->issBase
 				       + fdr_ptr->rss);
-	  (*debug_swap->swap_sym_in)
-	    (abfd,
-	     ((char *) debug_info->external_sym
-	      + ((fdr_ptr->isymBase + pdr.isym)
-		 * debug_swap->external_sym_size)),
-	     &proc_sym);
-	  line_info->cache.functionname = (debug_info->ss
-					   + fdr_ptr->issBase
-					   + proc_sym.iss);
+	  if (fdr_ptr->isymBase >= 0
+	      && fdr_ptr->isymBase < debug_info->symbolic_header.isymMax
+	      && pdr.isym >= 0
+	      && pdr.isym < (debug_info->symbolic_header.isymMax
+			     - fdr_ptr->isymBase))
+	    {
+	      (*debug_swap->swap_sym_in)
+		(abfd, ((char *) debug_info->external_sym
+			+ ((fdr_ptr->isymBase + pdr.isym)
+			   * debug_swap->external_sym_size)),
+		 &proc_sym);
+	      if (proc_sym.iss >= 0
+		  && proc_sym.iss < (debug_info->symbolic_header.issMax
+				     - fdr_ptr->issBase))
+		line_info->cache.functionname = (debug_info->ss
+						 + fdr_ptr->issBase
+						 + proc_sym.iss);
+	    }
 	}
       if (lineno == ilineNil)
 	lineno = 0;
@@ -2215,10 +2292,6 @@ lookup_line (bfd *abfd,
 	 looking through the symbols until we find both a line number
 	 and a function name which are beyond the address we want.  */
 
-      line_info->cache.filename = NULL;
-      line_info->cache.functionname = NULL;
-      line_info->cache.line_num = 0;
-
       directory_name = NULL;
       main_file_name = NULL;
       current_file_name = NULL;
@@ -2231,9 +2304,21 @@ lookup_line (bfd *abfd,
 
       external_sym_size = debug_swap->external_sym_size;
 
-      sym_ptr = ((char *) debug_info->external_sym
-		 + (fdr_ptr->isymBase + 2) * external_sym_size);
-      sym_ptr_end = sym_ptr + (fdr_ptr->csym - 2) * external_sym_size;
+      if (fdr_ptr->isymBase >= 0
+	  && fdr_ptr->isymBase < debug_info->symbolic_header.isymMax
+	  && fdr_ptr->csym >= 2
+	  && fdr_ptr->csym < (debug_info->symbolic_header.isymMax
+			      - fdr_ptr->isymBase))
+	{
+	  sym_ptr = ((char *) debug_info->external_sym
+		     + (fdr_ptr->isymBase + 2) * external_sym_size);
+	  sym_ptr_end = sym_ptr + (fdr_ptr->csym - 2) * external_sym_size;
+	}
+      else
+	{
+	  sym_ptr = NULL;
+	  sym_ptr_end = sym_ptr;
+	}
       for (;
 	   sym_ptr < sym_ptr_end && (! past_line || ! past_fn);
 	   sym_ptr += external_sym_size)
@@ -2247,8 +2332,13 @@ lookup_line (bfd *abfd,
 	      switch (ECOFF_UNMARK_STAB (sym.index))
 		{
 		case N_SO:
-		  main_file_name = current_file_name =
-		    debug_info->ss + fdr_ptr->issBase + sym.iss;
+		  if (fdr_ptr->issBase >= 0
+		      && fdr_ptr->issBase < debug_info->symbolic_header.issMax
+		      && sym.iss >= 0
+		      && sym.iss < (debug_info->symbolic_header.issMax
+				    - fdr_ptr->issBase))
+		    main_file_name = current_file_name
+		      = debug_info->ss + fdr_ptr->issBase + sym.iss;
 
 		  /* Check the next symbol to see if it is also an
 		     N_SO symbol.  */
@@ -2263,16 +2353,26 @@ lookup_line (bfd *abfd,
 			  && ECOFF_UNMARK_STAB (nextsym.index) == N_SO)
 			{
 			  directory_name = current_file_name;
-			  main_file_name = current_file_name =
-			    debug_info->ss + fdr_ptr->issBase + nextsym.iss;
+			  if (fdr_ptr->issBase >= 0
+			      && fdr_ptr->issBase < debug_info->symbolic_header.issMax
+			      && nextsym.iss >= 0
+			      && nextsym.iss < (debug_info->symbolic_header.issMax
+						- fdr_ptr->issBase))
+			  main_file_name = current_file_name
+			    = debug_info->ss + fdr_ptr->issBase + nextsym.iss;
 			  sym_ptr += external_sym_size;
 			}
 		    }
 		  break;
 
 		case N_SOL:
-		  current_file_name =
-		    debug_info->ss + fdr_ptr->issBase + sym.iss;
+		  if (fdr_ptr->issBase >= 0
+		      && fdr_ptr->issBase < debug_info->symbolic_header.issMax
+		      && sym.iss >= 0
+		      && sym.iss < (debug_info->symbolic_header.issMax
+				    - fdr_ptr->issBase))
+		    current_file_name
+		      = debug_info->ss + fdr_ptr->issBase + sym.iss;
 		  break;
 
 		case N_FUN:
@@ -2281,8 +2381,13 @@ lookup_line (bfd *abfd,
 		  else if (sym.value >= low_func_vma)
 		    {
 		      low_func_vma = sym.value;
-		      function_name =
-			debug_info->ss + fdr_ptr->issBase + sym.iss;
+		      if (fdr_ptr->issBase >= 0
+			  && fdr_ptr->issBase < debug_info->symbolic_header.issMax
+			  && sym.iss >= 0
+			  && sym.iss < (debug_info->symbolic_header.issMax
+					- fdr_ptr->issBase))
+			function_name
+			  = debug_info->ss + fdr_ptr->issBase + sym.iss;
 		    }
 		  break;
 		}
@@ -2409,8 +2514,7 @@ ecoff_collect_shuffle (struct shuffle *l, bfd_byte *buff)
       else
 	{
 	  if (bfd_seek (l->u.file.input_bfd, l->u.file.offset, SEEK_SET) != 0
-	      || (bfd_bread (buff, (bfd_size_type) l->size, l->u.file.input_bfd)
-		  != l->size))
+	      || bfd_read (buff, l->size, l->u.file.input_bfd) != l->size)
 	    return false;
 	}
       buff += l->size;

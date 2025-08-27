@@ -1,6 +1,6 @@
 /* Dump-to-file commands, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -19,7 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "cli/cli-decode.h"
 #include "cli/cli-cmds.h"
 #include "value.h"
@@ -33,6 +32,7 @@
 #include "gdbsupport/filestuff.h"
 #include "gdbsupport/byte-vector.h"
 #include "gdbarch.h"
+#include "inferior.h"
 
 static gdb::unique_xmalloc_ptr<char>
 scan_expression (const char **cmd, const char *def)
@@ -224,15 +224,15 @@ dump_value_to_file (const char *cmd, const char *mode, const char *file_format)
 
   /* Have everything.  Open/write the data.  */
   if (file_format == NULL || strcmp (file_format, "binary") == 0)
-    dump_binary_file (filename.get (), mode, value_contents (val).data (),
-		      value_type (val)->length ());
+    dump_binary_file (filename.get (), mode, val->contents ().data (),
+		      val->type ()->length ());
   else
     {
       CORE_ADDR vaddr;
 
-      if (VALUE_LVAL (val))
+      if (val->lval ())
 	{
-	  vaddr = value_address (val);
+	  vaddr = val->address ();
 	}
       else
 	{
@@ -241,8 +241,8 @@ dump_value_to_file (const char *cmd, const char *mode, const char *file_format)
 	}
 
       dump_bfd_file (filename.get (), mode, file_format, vaddr,
-		     value_contents (val).data (), 
-		     value_type (val)->length ());
+		     val->contents ().data (), 
+		     val->type ()->length ());
     }
 }
 
@@ -426,10 +426,10 @@ restore_one_section (bfd *ibfd, asection *isec,
 
   if (load_offset != 0 || load_start != 0 || load_end != 0)
     gdb_printf (" into memory (%s to %s)\n",
-		paddress (target_gdbarch (),
+		paddress (current_inferior ()->arch (),
 			  (unsigned long) sec_start
 			  + sec_offset + load_offset),
-		paddress (target_gdbarch (),
+		paddress (current_inferior ()->arch (),
 			  (unsigned long) sec_start + sec_offset
 			  + load_offset + sec_load_count));
   else

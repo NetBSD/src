@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/i386.
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
 #include "target.h"
@@ -31,7 +30,6 @@
 #include "i386-fbsd-tdep.h"
 #include "i387-tdep.h"
 #include "x86-nat.h"
-#include "gdbsupport/x86-xstate.h"
 #include "x86-fbsd-nat.h"
 
 class i386_fbsd_nat_target final : public x86_fbsd_nat_target
@@ -46,10 +44,6 @@ public:
 };
 
 static i386_fbsd_nat_target the_i386_fbsd_nat_target;
-
-#ifdef PT_GETXSTATE_INFO
-static size_t xsave_len;
-#endif
 
 static int have_ptrace_xmmregs;
 
@@ -102,9 +96,9 @@ i386_fbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
      fetching the FPU/XSAVE state unnecessarily.  */
 
 #ifdef PT_GETXSTATE_INFO
-  if (xsave_len != 0)
+  if (m_xsave_info.xsave_len != 0)
     {
-      void *xstateregs = alloca (xsave_len);
+      void *xstateregs = alloca (m_xsave_info.xsave_len);
 
       if (ptrace (PT_GETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs, 0) == -1)
 	perror_with_name (_("Couldn't get extended state status"));
@@ -181,17 +175,17 @@ i386_fbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
      fetching the FPU/XSAVE state unnecessarily.  */
 
 #ifdef PT_GETXSTATE_INFO
-  if (xsave_len != 0)
+  if (m_xsave_info.xsave_len != 0)
     {
-      void *xstateregs = alloca (xsave_len);
+      void *xstateregs = alloca (m_xsave_info.xsave_len);
 
       if (ptrace (PT_GETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs, 0) == -1)
 	perror_with_name (_("Couldn't get extended state status"));
 
       i387_collect_xsave (regcache, regnum, xstateregs, 0);
 
-      if (ptrace (PT_SETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs, xsave_len)
-	  == -1)
+      if (ptrace (PT_SETXSTATE, pid, (PTRACE_TYPE_ARG3) xstateregs,
+		  m_xsave_info.xsave_len) == -1)
 	perror_with_name (_("Couldn't write extended state status"));
       return;
     }
@@ -238,7 +232,7 @@ i386_fbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
 
   if (!step)
     {
-      struct regcache *regcache = get_current_regcache ();
+      regcache *regcache = get_thread_regcache (inferior_thread ());
       ULONGEST eflags;
 
       /* Workaround for a bug in FreeBSD.  Make sure that the trace
@@ -309,28 +303,15 @@ i386fbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 const struct target_desc *
 i386_fbsd_nat_target::read_description ()
 {
-#ifdef PT_GETXSTATE_INFO
-  static int xsave_probed;
-  static uint64_t xcr0;
-#endif
   static int xmm_probed;
 
+  if (inferior_ptid == null_ptid)
+    return this->beneath ()->read_description ();
+
 #ifdef PT_GETXSTATE_INFO
-  if (!xsave_probed)
-    {
-      struct ptrace_xstate_info info;
-
-      if (ptrace (PT_GETXSTATE_INFO, inferior_ptid.pid (),
-		  (PTRACE_TYPE_ARG3) &info, sizeof (info)) == 0)
-	{
-	  xsave_len = info.xsave_len;
-	  xcr0 = info.xsave_mask;
-	}
-      xsave_probed = 1;
-    }
-
-  if (xsave_len != 0)
-    return i386_target_description (xcr0, true);
+  probe_xsave_layout (inferior_ptid.pid ());
+  if (m_xsave_info.xsave_len != 0)
+    return i386_target_description (m_xsave_info.xsave_mask, true);
 #endif
 
   if (!xmm_probed)

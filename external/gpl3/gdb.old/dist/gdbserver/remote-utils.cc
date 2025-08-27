@@ -1,5 +1,5 @@
 /* Remote utility routines for the remote server for GDB.
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #if HAVE_TERMIOS_H
 #include <termios.h>
 #endif
@@ -1053,8 +1052,9 @@ void
 prepare_resume_reply (char *buf, ptid_t ptid, const target_waitstatus &status)
 {
   client_state &cs = get_client_state ();
-  threads_debug_printf ("Writing resume reply for %s:%d",
-			target_pid_to_str (ptid).c_str (), status.kind ());
+  threads_debug_printf ("Writing resume reply for %s: %s",
+			target_pid_to_str (ptid).c_str (),
+			status.to_string ().c_str ());
 
   switch (status.kind ())
     {
@@ -1062,22 +1062,39 @@ prepare_resume_reply (char *buf, ptid_t ptid, const target_waitstatus &status)
     case TARGET_WAITKIND_FORKED:
     case TARGET_WAITKIND_VFORKED:
     case TARGET_WAITKIND_VFORK_DONE:
+    case TARGET_WAITKIND_THREAD_CLONED:
     case TARGET_WAITKIND_EXECD:
     case TARGET_WAITKIND_THREAD_CREATED:
     case TARGET_WAITKIND_SYSCALL_ENTRY:
     case TARGET_WAITKIND_SYSCALL_RETURN:
       {
-	const char **regp;
 	struct regcache *regcache;
 	char *buf_start = buf;
 
-	if ((status.kind () == TARGET_WAITKIND_FORKED && cs.report_fork_events)
+	if ((status.kind () == TARGET_WAITKIND_FORKED
+	     && cs.report_fork_events)
 	    || (status.kind () == TARGET_WAITKIND_VFORKED
-		&& cs.report_vfork_events))
+		&& cs.report_vfork_events)
+	    || status.kind () == TARGET_WAITKIND_THREAD_CLONED)
 	  {
 	    enum gdb_signal signal = GDB_SIGNAL_TRAP;
-	    const char *event = (status.kind () == TARGET_WAITKIND_FORKED
-				 ? "fork" : "vfork");
+
+	    auto kind_remote_str = [] (target_waitkind kind)
+	    {
+	      switch (kind)
+		{
+		case TARGET_WAITKIND_FORKED:
+		  return "fork";
+		case TARGET_WAITKIND_VFORKED:
+		  return "vfork";
+		case TARGET_WAITKIND_THREAD_CLONED:
+		  return "clone";
+		default:
+		  gdb_assert_not_reached ("unhandled kind");
+		}
+	    };
+
+	    const char *event = kind_remote_str (status.kind ());
 
 	    sprintf (buf, "T%02x%s:", signal, event);
 	    buf += strlen (buf);
@@ -1154,8 +1171,6 @@ prepare_resume_reply (char *buf, ptid_t ptid, const target_waitstatus &status)
 
 	switch_to_thread (the_target, ptid);
 
-	regp = current_target_desc ()->expedite_regs;
-
 	regcache = get_thread_regcache (current_thread, 1);
 
 	if (the_target->stopped_by_watchpoint ())
@@ -1187,18 +1202,18 @@ prepare_resume_reply (char *buf, ptid_t ptid, const target_waitstatus &status)
 	    buf += strlen (buf);
 	  }
 
-	while (*regp)
-	  {
-	    buf = outreg (regcache, find_regno (regcache->tdesc, *regp), buf);
-	    regp ++;
-	  }
+	/* Handle the expedited registers.  */
+	for (const std::string &expedited_reg :
+	     current_target_desc ()->expedite_regs)
+	  buf = outreg (regcache, find_regno (regcache->tdesc,
+					      expedited_reg.c_str ()), buf);
 	*buf = '\0';
 
 	/* Formerly, if the debugger had not used any thread features
 	   we would not burden it with a thread status response.  This
 	   was for the benefit of GDB 4.13 and older.  However, in
 	   recent GDB versions the check (``if (cont_thread != 0)'')
-	   does not have the desired effect because of sillyness in
+	   does not have the desired effect because of silliness in
 	   the way that the remote protocol handles specifying a
 	   thread.  Since thread support relies on qSymbol support
 	   anyway, assume GDB can handle threads.  */

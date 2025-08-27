@@ -1,6 +1,6 @@
 /* Shared utility routines for GDB to interact with agent.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,7 @@
 
 #include "gdbsupport/preprocessor.h"
 
-int agent_run_command (int pid, const char *cmd, int len);
+int agent_run_command (int pid, char *cmd, int len);
 
 int agent_look_up_symbols (void *);
 

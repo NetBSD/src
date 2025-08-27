@@ -1,6 +1,6 @@
 /* Observers
 
-   Copyright (C) 2016-2023 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -194,14 +194,14 @@ private:
     for (const token *dep : m_observers[index].dependencies)
       {
 	/* ... find the observer that has token DEP.  If found, visit it.  */
-        auto it_dep
-            = std::find_if (m_observers.begin (), m_observers.end (),
-                            [&] (observer o) { return o.token == dep; });
-        if (it_dep != m_observers.end ())
-          {
-            int i = std::distance (m_observers.begin (), it_dep);
-            visit_for_sorting (sorted_observers, visit_states, i);
-          }
+	auto it_dep
+	  = std::find_if (m_observers.begin (), m_observers.end (),
+			    [&] (observer o) { return o.token == dep; });
+	if (it_dep != m_observers.end ())
+	{
+	  int i = std::distance (m_observers.begin (), it_dep);
+	  visit_for_sorting (sorted_observers, visit_states, i);
+	}
       }
 
     visit_states[index] = detail::visit_state::VISITED;
@@ -226,11 +226,11 @@ private:
   }
 
   void attach (const func_type &f, const token *t, const char *name,
-               const std::vector<const struct token *> &dependencies)
+	       const std::vector<const struct token *> &dependencies)
   {
 
     observer_debug_printf ("Attaching observable %s to observer %s",
-                           name, m_name);
+			   name, m_name);
 
     m_observers.emplace_back (t, f, name, dependencies);
 

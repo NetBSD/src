@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -16,10 +16,7 @@ standard_testfile insn-reloc.c
 set executable $testfile
 set expfile $testfile.exp
 
-if { ![support_displaced_stepping] } {
-    unsupported "displaced stepping"
-    return -1
-}
+require support_displaced_stepping
 
 # Some targets have leading underscores on assembly symbols.
 set additional_flags [gdb_target_symbol_prefix_flags]

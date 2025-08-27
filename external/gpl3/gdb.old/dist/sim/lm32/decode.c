@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2023 Free Software Foundation, Inc.
+Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -17,7 +17,8 @@ This file is part of the GNU simulators.
    License for more details.
 
    You should have received a copy of the GNU General Public License along
-   with this program; if not, see <http://www.gnu.org/licenses/>.
+   with this program; if not, write to the Free Software Foundation, Inc.,
+   51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
 
 */
 
@@ -26,6 +27,8 @@ This file is part of the GNU simulators.
 
 #include "sim-main.h"
 #include "sim-assert.h"
+#include "cgen-mem.h"
+#include "cgen-ops.h"
 
 /* The instruction descriptor array.
    This is computed at runtime.  Space for it is not malloc'd to save a
@@ -184,161 +187,161 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
     CGEN_INSN_WORD insn = base_insn;
 
     {
-      unsigned int val = (((insn >> 26) & (63 << 0)));
-      switch (val)
+      unsigned int val0 = (((insn >> 26) & (63 << 0)));
+      switch (val0)
       {
-      case 0 : itype = LM32BF_INSN_SRUI; goto extract_sfmt_addi;
-      case 1 : itype = LM32BF_INSN_NORI; goto extract_sfmt_andi;
-      case 2 : itype = LM32BF_INSN_MULI; goto extract_sfmt_addi;
-      case 3 : itype = LM32BF_INSN_SH; goto extract_sfmt_sh;
-      case 4 : itype = LM32BF_INSN_LB; goto extract_sfmt_lb;
-      case 5 : itype = LM32BF_INSN_SRI; goto extract_sfmt_addi;
-      case 6 : itype = LM32BF_INSN_XORI; goto extract_sfmt_andi;
-      case 7 : itype = LM32BF_INSN_LH; goto extract_sfmt_lh;
-      case 8 : itype = LM32BF_INSN_ANDI; goto extract_sfmt_andi;
-      case 9 : itype = LM32BF_INSN_XNORI; goto extract_sfmt_andi;
-      case 10 : itype = LM32BF_INSN_LW; goto extract_sfmt_lw;
-      case 11 : itype = LM32BF_INSN_LHU; goto extract_sfmt_lh;
-      case 12 : itype = LM32BF_INSN_SB; goto extract_sfmt_sb;
-      case 13 : itype = LM32BF_INSN_ADDI; goto extract_sfmt_addi;
-      case 14 : itype = LM32BF_INSN_ORI; goto extract_sfmt_ori;
-      case 15 : itype = LM32BF_INSN_SLI; goto extract_sfmt_addi;
-      case 16 : itype = LM32BF_INSN_LBU; goto extract_sfmt_lb;
-      case 17 : itype = LM32BF_INSN_BE; goto extract_sfmt_be;
-      case 18 : itype = LM32BF_INSN_BG; goto extract_sfmt_be;
-      case 19 : itype = LM32BF_INSN_BGE; goto extract_sfmt_be;
-      case 20 : itype = LM32BF_INSN_BGEU; goto extract_sfmt_be;
-      case 21 : itype = LM32BF_INSN_BGU; goto extract_sfmt_be;
-      case 22 : itype = LM32BF_INSN_SW; goto extract_sfmt_sw;
-      case 23 : itype = LM32BF_INSN_BNE; goto extract_sfmt_be;
-      case 24 : itype = LM32BF_INSN_ANDHII; goto extract_sfmt_andhii;
-      case 25 : itype = LM32BF_INSN_CMPEI; goto extract_sfmt_addi;
-      case 26 : itype = LM32BF_INSN_CMPGI; goto extract_sfmt_addi;
-      case 27 : itype = LM32BF_INSN_CMPGEI; goto extract_sfmt_addi;
-      case 28 : itype = LM32BF_INSN_CMPGEUI; goto extract_sfmt_andi;
-      case 29 : itype = LM32BF_INSN_CMPGUI; goto extract_sfmt_andi;
-      case 30 : itype = LM32BF_INSN_ORHII; goto extract_sfmt_andhii;
-      case 31 : itype = LM32BF_INSN_CMPNEI; goto extract_sfmt_addi;
-      case 32 :
+      case 0: itype = LM32BF_INSN_SRUI; goto extract_sfmt_addi;
+      case 1: itype = LM32BF_INSN_NORI; goto extract_sfmt_andi;
+      case 2: itype = LM32BF_INSN_MULI; goto extract_sfmt_addi;
+      case 3: itype = LM32BF_INSN_SH; goto extract_sfmt_sh;
+      case 4: itype = LM32BF_INSN_LB; goto extract_sfmt_lb;
+      case 5: itype = LM32BF_INSN_SRI; goto extract_sfmt_addi;
+      case 6: itype = LM32BF_INSN_XORI; goto extract_sfmt_andi;
+      case 7: itype = LM32BF_INSN_LH; goto extract_sfmt_lh;
+      case 8: itype = LM32BF_INSN_ANDI; goto extract_sfmt_andi;
+      case 9: itype = LM32BF_INSN_XNORI; goto extract_sfmt_andi;
+      case 10: itype = LM32BF_INSN_LW; goto extract_sfmt_lw;
+      case 11: itype = LM32BF_INSN_LHU; goto extract_sfmt_lh;
+      case 12: itype = LM32BF_INSN_SB; goto extract_sfmt_sb;
+      case 13: itype = LM32BF_INSN_ADDI; goto extract_sfmt_addi;
+      case 14: itype = LM32BF_INSN_ORI; goto extract_sfmt_ori;
+      case 15: itype = LM32BF_INSN_SLI; goto extract_sfmt_addi;
+      case 16: itype = LM32BF_INSN_LBU; goto extract_sfmt_lb;
+      case 17: itype = LM32BF_INSN_BE; goto extract_sfmt_be;
+      case 18: itype = LM32BF_INSN_BG; goto extract_sfmt_be;
+      case 19: itype = LM32BF_INSN_BGE; goto extract_sfmt_be;
+      case 20: itype = LM32BF_INSN_BGEU; goto extract_sfmt_be;
+      case 21: itype = LM32BF_INSN_BGU; goto extract_sfmt_be;
+      case 22: itype = LM32BF_INSN_SW; goto extract_sfmt_sw;
+      case 23: itype = LM32BF_INSN_BNE; goto extract_sfmt_be;
+      case 24: itype = LM32BF_INSN_ANDHII; goto extract_sfmt_andhii;
+      case 25: itype = LM32BF_INSN_CMPEI; goto extract_sfmt_addi;
+      case 26: itype = LM32BF_INSN_CMPGI; goto extract_sfmt_addi;
+      case 27: itype = LM32BF_INSN_CMPGEI; goto extract_sfmt_addi;
+      case 28: itype = LM32BF_INSN_CMPGEUI; goto extract_sfmt_andi;
+      case 29: itype = LM32BF_INSN_CMPGUI; goto extract_sfmt_andi;
+      case 30: itype = LM32BF_INSN_ORHII; goto extract_sfmt_andhii;
+      case 31: itype = LM32BF_INSN_CMPNEI; goto extract_sfmt_addi;
+      case 32:
         if ((entire_insn & 0xfc0007ff) == 0x80000000)
           { itype = LM32BF_INSN_SRU; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 33 :
+      case 33:
         if ((entire_insn & 0xfc0007ff) == 0x84000000)
           { itype = LM32BF_INSN_NOR; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 34 :
+      case 34:
         if ((entire_insn & 0xfc0007ff) == 0x88000000)
           { itype = LM32BF_INSN_MUL; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 35 :
+      case 35:
         if ((entire_insn & 0xfc0007ff) == 0x8c000000)
           { itype = LM32BF_INSN_DIVU; goto extract_sfmt_divu; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 36 :
+      case 36:
         if ((entire_insn & 0xfc1f07ff) == 0x90000000)
           { itype = LM32BF_INSN_RCSR; goto extract_sfmt_rcsr; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 37 :
+      case 37:
         if ((entire_insn & 0xfc0007ff) == 0x94000000)
           { itype = LM32BF_INSN_SR; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 38 :
+      case 38:
         if ((entire_insn & 0xfc0007ff) == 0x98000000)
           { itype = LM32BF_INSN_XOR; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 40 :
+      case 40:
         if ((entire_insn & 0xfc0007ff) == 0xa0000000)
           { itype = LM32BF_INSN_AND; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 41 :
+      case 41:
         if ((entire_insn & 0xfc0007ff) == 0xa4000000)
           { itype = LM32BF_INSN_XNOR; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 43 :
+      case 43:
         {
-          unsigned int val = (((insn >> 1) & (1 << 1)) | ((insn >> 0) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 1) & (1 << 1)) | ((insn >> 0) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffffffff) == 0xac000002)
               { itype = LM32BF_INSN_BREAK; goto extract_sfmt_break; }
             itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 3 :
+          case 3:
             if ((entire_insn & 0xffffffff) == 0xac000007)
               { itype = LM32BF_INSN_SCALL; goto extract_sfmt_break; }
             itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 44 :
+      case 44:
         if ((entire_insn & 0xfc1f07ff) == 0xb0000000)
           { itype = LM32BF_INSN_SEXTB; goto extract_sfmt_sextb; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 45 :
+      case 45:
         if ((entire_insn & 0xfc0007ff) == 0xb4000000)
           { itype = LM32BF_INSN_ADD; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 46 :
+      case 46:
         if ((entire_insn & 0xfc0007ff) == 0xb8000000)
           { itype = LM32BF_INSN_OR; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 47 :
+      case 47:
         if ((entire_insn & 0xfc0007ff) == 0xbc000000)
           { itype = LM32BF_INSN_SL; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 48 :
+      case 48:
         if ((entire_insn & 0xfc1fffff) == 0xc0000000)
           { itype = LM32BF_INSN_B; goto extract_sfmt_b; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 49 :
+      case 49:
         if ((entire_insn & 0xfc0007ff) == 0xc4000000)
           { itype = LM32BF_INSN_MODU; goto extract_sfmt_divu; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 50 :
+      case 50:
         if ((entire_insn & 0xfc0007ff) == 0xc8000000)
           { itype = LM32BF_INSN_SUB; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 51 : itype = LM32BF_INSN_USER; goto extract_sfmt_user;
-      case 52 :
+      case 51: itype = LM32BF_INSN_USER; goto extract_sfmt_user;
+      case 52:
         if ((entire_insn & 0xfc00ffff) == 0xd0000000)
           { itype = LM32BF_INSN_WCSR; goto extract_sfmt_wcsr; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 54 :
+      case 54:
         if ((entire_insn & 0xfc1fffff) == 0xd8000000)
           { itype = LM32BF_INSN_CALL; goto extract_sfmt_call; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 55 :
+      case 55:
         if ((entire_insn & 0xfc1f07ff) == 0xdc000000)
           { itype = LM32BF_INSN_SEXTH; goto extract_sfmt_sextb; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 56 : itype = LM32BF_INSN_BI; goto extract_sfmt_bi;
-      case 57 :
+      case 56: itype = LM32BF_INSN_BI; goto extract_sfmt_bi;
+      case 57:
         if ((entire_insn & 0xfc0007ff) == 0xe4000000)
           { itype = LM32BF_INSN_CMPE; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 58 :
+      case 58:
         if ((entire_insn & 0xfc0007ff) == 0xe8000000)
           { itype = LM32BF_INSN_CMPG; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 59 :
+      case 59:
         if ((entire_insn & 0xfc0007ff) == 0xec000000)
           { itype = LM32BF_INSN_CMPGE; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 60 :
+      case 60:
         if ((entire_insn & 0xfc0007ff) == 0xf0000000)
           { itype = LM32BF_INSN_CMPGEU; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 61 :
+      case 61:
         if ((entire_insn & 0xfc0007ff) == 0xf4000000)
           { itype = LM32BF_INSN_CMPGU; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 62 : itype = LM32BF_INSN_CALLI; goto extract_sfmt_calli;
-      case 63 :
+      case 62: itype = LM32BF_INSN_CALLI; goto extract_sfmt_calli;
+      case 63:
         if ((entire_insn & 0xfc0007ff) == 0xfc000000)
           { itype = LM32BF_INSN_CMPNE; goto extract_sfmt_add; }
         itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      default : itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+      default: itype = LM32BF_INSN_X_INVALID; goto extract_sfmt_empty;
       }
     }
   }
@@ -474,7 +477,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
 #define FLD(f) abuf->fields.sfmt_bi.f
     SI f_call;
 
-    f_call = ((pc) + (((SI) (((EXTRACT_LSB0_SINT (insn, 32, 25, 26)) << (6))) >> (4))));
+    f_call = ((pc) + (((((((((EXTRACT_LSB0_SINT (insn, 32, 25, 26)) & (67108863))) << (2))) ^ (134217728))) - (134217728))));
 
   /* Record the fields for the semantic handler.  */
   FLD (i_call) = f_call;
@@ -495,7 +498,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
 
     f_r0 = EXTRACT_LSB0_UINT (insn, 32, 25, 5);
     f_r1 = EXTRACT_LSB0_UINT (insn, 32, 20, 5);
-    f_branch = ((pc) + (((SI) (((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) << (16))) >> (14))));
+    f_branch = ((pc) + (((((((((EXTRACT_LSB0_SINT (insn, 32, 15, 16)) & (65535))) << (2))) ^ (131072))) - (131072))));
 
   /* Record the fields for the semantic handler.  */
   FLD (f_r0) = f_r0;
@@ -531,7 +534,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
 #define FLD(f) abuf->fields.sfmt_bi.f
     SI f_call;
 
-    f_call = ((pc) + (((SI) (((EXTRACT_LSB0_SINT (insn, 32, 25, 26)) << (6))) >> (4))));
+    f_call = ((pc) + (((((((((EXTRACT_LSB0_SINT (insn, 32, 25, 26)) & (67108863))) << (2))) ^ (134217728))) - (134217728))));
 
   /* Record the fields for the semantic handler.  */
   FLD (i_call) = f_call;

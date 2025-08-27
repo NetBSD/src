@@ -1,6 +1,6 @@
 /* Interface between gdb and its extension languages.
 
-   Copyright (C) 2014-2023 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +20,10 @@
 #ifndef EXTENSION_H
 #define EXTENSION_H
 
-#include "mi/mi-cmds.h" /* For PRINT_NO_VALUES, etc.  */
+#include "mi/mi-cmds.h"
 #include "gdbsupport/array-view.h"
-#include "gdbsupport/gdb_optional.h"
+#include "hashtab.h"
+#include <optional>
 
 struct breakpoint;
 struct command_line;
@@ -103,6 +104,10 @@ enum frame_filter_flag
 
     /* Set this flag if elided frames should not be printed.  */
     PRINT_HIDE = 1 << 5,
+
+    /* Set this flag if pretty printers for frame arguments should not
+       be invoked.  */
+    PRINT_RAW_FRAME_ARGUMENTS = 1 << 6,
   };
 
 DEF_ENUM_FLAGS_TYPE (enum frame_filter_flag, frame_filter_flags);
@@ -278,12 +283,15 @@ extern bool ext_lang_auto_load_enabled (const struct extension_language_defn *);
 
 extern void ext_lang_initialization (void);
 
+/* Shut down all extension languages.  */
+extern void ext_lang_shutdown ();
+
 extern void eval_ext_lang_from_control_command (struct command_line *cmd);
 
 extern void auto_load_ext_lang_scripts_for_objfile (struct objfile *);
 
-extern char *apply_ext_lang_type_printers (struct ext_lang_type_printers *,
-					   struct type *);
+extern gdb::unique_xmalloc_ptr<char> apply_ext_lang_type_printers
+     (struct ext_lang_type_printers *, struct type *);
 
 extern int apply_ext_lang_val_pretty_printer
   (struct value *value, struct ui_file *stream, int recurse,
@@ -291,7 +299,7 @@ extern int apply_ext_lang_val_pretty_printer
    const struct language_defn *language);
 
 extern enum ext_lang_bt_status apply_ext_lang_frame_filter
-  (frame_info_ptr frame, frame_filter_flags flags,
+  (const frame_info_ptr &frame, frame_filter_flags flags,
    enum ext_lang_frame_args args_type,
    struct ui_out *out, int frame_low, int frame_high);
 
@@ -300,7 +308,7 @@ extern void preserve_ext_lang_values (struct objfile *, htab_t copied_types);
 extern const struct extension_language_defn *get_breakpoint_cond_ext_lang
   (struct breakpoint *b, enum extension_language skip_lang);
 
-extern int breakpoint_ext_lang_cond_says_stop (struct breakpoint *);
+extern bool breakpoint_ext_lang_cond_says_stop (struct breakpoint *);
 
 /* If a method with name METHOD_NAME is to be invoked on an object of type
    TYPE, then all extension languages are searched for implementations of
@@ -316,7 +324,7 @@ extern void get_matching_xmethod_workers
    either a colorized (using ANSI terminal escapes) version of the
    source code, or an empty value if colorizing could not be done.  */
 
-extern gdb::optional<std::string> ext_lang_colorize
+extern std::optional<std::string> ext_lang_colorize
   (const std::string &filename, const std::string &contents);
 
 /* Try to colorize a single line of disassembler output, CONTENT for
@@ -324,7 +332,7 @@ extern gdb::optional<std::string> ext_lang_colorize
    escapes) version of CONTENT, or an empty value if colorizing could not
    be done.  */
 
-extern gdb::optional<std::string> ext_lang_colorize_disasm
+extern std::optional<std::string> ext_lang_colorize_disasm
   (const std::string &content, gdbarch *gdbarch);
 
 /* Calls extension_language_ops::print_insn for each extension language,
@@ -334,13 +342,121 @@ extern gdb::optional<std::string> ext_lang_colorize_disasm
    All arguments are forwarded to extension_language_ops::print_insn, see
    that function for a full description.  */
 
-extern gdb::optional<int> ext_lang_print_insn
+extern std::optional<int> ext_lang_print_insn
   (struct gdbarch *gdbarch, CORE_ADDR address, struct disassemble_info *info);
+
+/* When GDB calls into an extension language because an objfile was
+   discovered for which GDB couldn't find any debug information, this
+   structure holds the result that the extension language returns.
+
+   There are three possible actions that might be returned by an extension;
+   first an extension can return a filename, this is the path to the file
+   containing the required debug  information.  The second possibility is
+   to return a flag indicating that GDB should check again for the missing
+   debug information, this would imply that the extension has installed
+   the debug information into a location where GDB can be expected to find
+   it.  And the third option is for the extension to just return a null
+   result, indication there is nothing the extension can do to provide the
+   missing debug information.  */
+struct ext_lang_missing_debuginfo_result
+{
+  /* Default result.  The extension was unable to provide the missing debug
+     info.  */
+  ext_lang_missing_debuginfo_result ()
+  { /* Nothing.  */ }
+
+  /* When TRY_AGAIN is true GDB should try searching again, the extension
+     may have installed the missing debug info into a suitable location.
+     When TRY_AGAIN is false this is equivalent to the default, no
+     argument, constructor.  */
+  ext_lang_missing_debuginfo_result (bool try_again)
+    : m_try_again (try_again)
+  { /* Nothing.  */ }
+
+  /* Look in FILENAME for the missing debug info.  */
+  ext_lang_missing_debuginfo_result (std::string &&filename)
+    : m_filename (std::move (filename))
+  { /* Nothing.  */ }
+
+  /* The filename where GDB can find the missing debuginfo.  This is empty
+     if the extension didn't suggest a file that can be used.  */
+  const std::string &
+  filename () const
+  {
+    return m_filename;
+  }
+
+  /* Returns true if GDB should look again for the debug information.  */
+  const bool
+  try_again () const
+  {
+    return m_try_again;
+  }
+
+private:
+  /* The filename where the missing debuginfo can now be found.  */
+  std::string m_filename;
+
+  /* When true GDB will search again for the debuginfo using its standard
+     techniques.  When false GDB will not search again.  */
+  bool m_try_again = false;
+};
+
+/* Called when GDB failed to find any debug information for OBJFILE.  */
+
+extern ext_lang_missing_debuginfo_result ext_lang_handle_missing_debuginfo
+  (struct objfile *objfile);
 
 #if GDB_SELF_TEST
 namespace selftests {
 extern void (*hook_set_active_ext_lang) ();
 }
 #endif
+
+/* Temporarily disable cooperative SIGINT handling.  Needed when we
+   don't want a SIGINT to interrupt the currently active extension
+   language.  */
+class scoped_disable_cooperative_sigint_handling
+{
+public:
+  scoped_disable_cooperative_sigint_handling ();
+  ~scoped_disable_cooperative_sigint_handling ();
+
+  DISABLE_COPY_AND_ASSIGN (scoped_disable_cooperative_sigint_handling);
+
+private:
+  struct active_ext_lang_state *m_prev_active_ext_lang_state;
+  bool m_prev_cooperative_sigint_handling_disabled;
+};
+
+/* GDB's SIGINT handler basically sets a flag; code that might take a
+   long time before it gets back to the event loop, and which ought to
+   be interruptible, checks this flag using the QUIT macro, which, if
+   GDB has the terminal, throws a quit exception.
+
+   In addition to setting a flag, the SIGINT handler also marks a
+   select/poll-able file descriptor as read-ready.  That is used by
+   interruptible_select in order to support interrupting blocking I/O
+   in a race-free manner.
+
+   These functions use the extension_language_ops API to allow extension
+   language(s) and GDB SIGINT handling to coexist seamlessly.  */
+
+/* Return true if the quit flag has been set, false otherwise.
+   Note: The flag is cleared as a side-effect.
+   The flag is checked in all extension languages that support cooperative
+   SIGINT handling, not just the current one.  This simplifies transitions.  */
+
+extern bool check_quit_flag ();
+
+/* Set the quit flag.
+   This only sets the flag in the currently active extension language.
+   If the currently active extension language does not have cooperative
+   SIGINT handling, then GDB's global flag is set, and it is up to the
+   extension language to call check_quit_flag.  The extension language
+   is free to install its own SIGINT handler, but we still need to handle
+   the transition.  */
+
+extern void set_quit_flag ();
 
 #endif /* EXTENSION_H */

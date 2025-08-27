@@ -1,6 +1,6 @@
 /* Header file for command creation.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -84,15 +84,17 @@ enum var_types
        value.  */
     var_auto_boolean,
 
-    /* Unsigned Integer.  *VAR is an unsigned int.  The user can type
-       0 to mean "unlimited", which is stored in *VAR as UINT_MAX.  */
+    /* Unsigned Integer.  *VAR is an unsigned int.  In the Guile and Python
+       APIs 0 means unlimited, which is stored in *VAR as UINT_MAX.  */
     var_uinteger,
 
-    /* Like var_uinteger but signed.  *VAR is an int.  The user can
-       type 0 to mean "unlimited", which is stored in *VAR as
-       INT_MAX.  The only remaining use of it is the Python API.
-       Don't use it elsewhere.  */
+    /* Like var_uinteger but signed.  *VAR is an int.  In the Guile and
+       Python APIs 0 means unlimited, which is stored in *VAR as INT_MAX.  */
     var_integer,
+
+    /* Like var_integer but negative numbers are not allowed,
+       except for special values.  *VAR is an int.  */
+    var_pinteger,
 
     /* String which the user enters with escapes (e.g. the user types
        \n and it is a real newline in the stored string).
@@ -106,21 +108,26 @@ enum var_types
     var_optional_filename,
     /* String which stores a filename.  (*VAR) is a std::string.  */
     var_filename,
-    /* ZeroableInteger.  *VAR is an int.  Like var_integer except
-       that zero really means zero.  */
-    var_zinteger,
-    /* ZeroableUnsignedInteger.  *VAR is an unsigned int.  Zero really
-       means zero.  */
-    var_zuinteger,
-    /* ZeroableUnsignedInteger with unlimited value.  *VAR is an int,
-       but its range is [0, INT_MAX].  -1 stands for unlimited and
-       other negative numbers are not allowed.  */
-    var_zuinteger_unlimited,
     /* Enumerated type.  Can only have one of the specified values.
        *VAR is a char pointer to the name of the element that we
        find.  */
     var_enum
   };
+
+/* A structure describing an extra literal accepted and shown in place
+   of a number.  */
+struct literal_def
+{
+  /* The literal to define, e.g. "unlimited".  */
+  const char *literal;
+
+  /* The number to substitute internally for LITERAL or VAL;
+     the use of this number is not allowed (unless the same as VAL).  */
+  LONGEST use;
+
+  /* An optional number accepted that stands for the literal.  */
+  std::optional<LONGEST> val;
+};
 
 /* Return true if a setting of type VAR_TYPE is backed with type T.
 
@@ -152,15 +159,14 @@ inline bool var_type_uses<enum auto_boolean> (var_types t)
 template<>
 inline bool var_type_uses<unsigned int> (var_types t)
 {
-  return (t == var_uinteger || t == var_zinteger || t == var_zuinteger);
+  return t == var_uinteger;
 }
 
 /* Return true if a setting of type T is backed by an int variable.  */
 template<>
 inline bool var_type_uses<int> (var_types t)
 {
-  return (t == var_integer || t == var_zinteger
-	  || t == var_zuinteger_unlimited);
+  return t == var_integer || t == var_pinteger;
 }
 
 /* Return true if a setting of type T is backed by a std::string variable.  */
@@ -218,8 +224,9 @@ struct setting
 
      Type T must match the var type VAR_TYPE (see VAR_TYPE_USES).  */
   template<typename T>
-  setting (var_types var_type, T *var)
-    : m_var_type (var_type), m_var (var)
+  setting (var_types var_type, T *var,
+	   const literal_def *extra_literals = nullptr)
+    : m_var_type (var_type), m_var (var), m_extra_literals (extra_literals)
   {
     gdb_assert (var != nullptr);
     gdb_assert (var_type_uses<T> (var_type));
@@ -258,12 +265,14 @@ struct setting
     };
   }
 
-  /* Create a setting backed by pre-validated type-erased args.
-     ERASED_VAR's fields' real types must match the var type VAR_TYPE
-     (see VAR_TYPE_USES).  */
-  setting (var_types var_type, const erased_args &args)
+  /* Create a setting backed by pre-validated type-erased args and using
+     EXTRA_LITERALS.  ERASED_VAR's fields' real types must match the var
+     type VAR_TYPE (see VAR_TYPE_USES).  */
+  setting (var_types var_type, const literal_def *extra_literals,
+	   const erased_args &args)
     : m_var_type (var_type),
       m_var (args.var),
+      m_extra_literals (extra_literals),
       m_getter (args.getter),
       m_setter (args.setter)
   {
@@ -283,8 +292,8 @@ struct setting
     /* Getters and setters are cast to and from the arbitrary `void (*) ()`
        function pointer type.  Make sure that the two types are really of the
        same size.  */
-    gdb_static_assert (sizeof (m_getter) == sizeof (getter));
-    gdb_static_assert (sizeof (m_setter) == sizeof (setter));
+    static_assert (sizeof (m_getter) == sizeof (getter));
+    static_assert (sizeof (m_setter) == sizeof (setter));
 
     m_getter = reinterpret_cast<erased_func> (getter);
     m_setter = reinterpret_cast<erased_func> (setter);
@@ -293,6 +302,10 @@ struct setting
   /* Access the type of the current setting.  */
   var_types type () const
   { return m_var_type; }
+
+  /* Access any extra literals accepted.  */
+  const literal_def *extra_literals () const
+  { return m_extra_literals; }
 
   /* Return the current value.
 
@@ -355,6 +368,9 @@ private:
      Either M_VAR is non-nullptr, or both M_GETTER and M_SETTER are
      non-nullptr.  */
   void *m_var = nullptr;
+
+  /* Any extra literals accepted.  */
+  const literal_def *m_extra_literals = nullptr;
 
   /* Pointer to a user provided getter.  */
   erased_func m_getter = nullptr;
@@ -617,7 +633,7 @@ extern cmd_list_element *add_com_alias (const char *name,
 extern struct cmd_list_element *add_com_suppress_notification
 		       (const char *name, enum command_class theclass,
 			cmd_simple_func_ftype *fun, const char *doc,
-			bool *supress_notification);
+			bool *suppress_notification);
 
 extern struct cmd_list_element *add_info (const char *,
 					  cmd_simple_func_ftype *fun,
@@ -640,16 +656,16 @@ extern void complete_on_enum (completion_tracker &tracker,
 extern void help_list (struct cmd_list_element *, const char *,
 		       enum command_class, struct ui_file *);
 
-/* Method for show a set/show variable's VALUE on FILE.  If this
-   method isn't supplied deprecated_show_value_hack() is called (which
-   is not good).  */
+/* Method for show a set/show variable's VALUE on FILE.  */
 typedef void (show_value_ftype) (struct ui_file *file,
 				 int from_tty,
 				 struct cmd_list_element *cmd,
 				 const char *value);
-/* NOTE: i18n: This function is not i18n friendly.  Callers should
-   instead print the value out directly.  */
-extern show_value_ftype deprecated_show_value_hack;
+
+/* Various sets of extra literals accepted.  */
+extern const literal_def integer_unlimited_literals[];
+extern const literal_def uinteger_unlimited_literals[];
+extern const literal_def pinteger_unlimited_literals[];
 
 extern set_show_commands add_setshow_enum_cmd
   (const char *name, command_class theclass, const char *const *enumlist,
@@ -747,6 +763,20 @@ extern set_show_commands add_setshow_optional_filename_cmd
    cmd_list_element **show_list);
 
 extern set_show_commands add_setshow_integer_cmd
+  (const char *name, command_class theclass, int *var,
+   const literal_def *extra_literals, const char *set_doc,
+   const char *show_doc, const char *help_doc, cmd_func_ftype *set_func,
+   show_value_ftype *show_func, cmd_list_element **set_list,
+   cmd_list_element **show_list);
+
+extern set_show_commands add_setshow_integer_cmd
+  (const char *name, command_class theclass, const literal_def *extra_literals,
+   const char *set_doc, const char *show_doc, const char *help_doc,
+   setting_func_types<int>::set set_func,
+   setting_func_types<int>::get get_func, show_value_ftype *show_func,
+   cmd_list_element **set_list, cmd_list_element **show_list);
+
+extern set_show_commands add_setshow_integer_cmd
   (const char *name, command_class theclass, int *var, const char *set_doc,
    const char *show_doc, const char *help_doc, cmd_func_ftype *set_func,
    show_value_ftype *show_func, cmd_list_element **set_list,
@@ -757,6 +787,34 @@ extern set_show_commands add_setshow_integer_cmd
    const char *show_doc, const char *help_doc,
    setting_func_types<int>::set set_func,
    setting_func_types<int>::get get_func, show_value_ftype *show_func,
+   cmd_list_element **set_list, cmd_list_element **show_list);
+
+extern set_show_commands add_setshow_pinteger_cmd
+  (const char *name, command_class theclass, int *var,
+   const literal_def *extra_literals, const char *set_doc,
+   const char *show_doc, const char *help_doc, cmd_func_ftype *set_func,
+   show_value_ftype *show_func, cmd_list_element **set_list,
+   cmd_list_element **show_list);
+
+extern set_show_commands add_setshow_pinteger_cmd
+  (const char *name, command_class theclass, const literal_def *extra_literals,
+   const char *set_doc, const char *show_doc, const char *help_doc,
+   setting_func_types<int>::set set_func,
+   setting_func_types<int>::get get_func, show_value_ftype *show_func,
+   cmd_list_element **set_list, cmd_list_element **show_list);
+
+extern set_show_commands add_setshow_uinteger_cmd
+  (const char *name, command_class theclass, unsigned int *var,
+   const literal_def *extra_literals,
+   const char *set_doc, const char *show_doc, const char *help_doc,
+   cmd_func_ftype *set_func, show_value_ftype *show_func,
+   cmd_list_element **set_list, cmd_list_element **show_list);
+
+extern set_show_commands add_setshow_uinteger_cmd
+  (const char *name, command_class theclass, const literal_def *extra_literals,
+   const char *set_doc, const char *show_doc, const char *help_doc,
+   setting_func_types<unsigned int>::set set_func,
+   setting_func_types<unsigned int>::get get_func, show_value_ftype *show_func,
    cmd_list_element **set_list, cmd_list_element **show_list);
 
 extern set_show_commands add_setshow_uinteger_cmd

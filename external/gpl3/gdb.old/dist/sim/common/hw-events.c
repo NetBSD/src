@@ -1,5 +1,5 @@
 /* Hardware event manager.
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdarg.h>
 #include <string.h>
+
+#include "sim/callback.h"
 
 #include "hw-main.h"
 #include "hw-base.h"

@@ -1,5 +1,5 @@
 /* Internal interfaces for the Windows code
-   Copyright (C) 1995-2023 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "nat/windows-nat.h"
 #include "gdbsupport/common-debug.h"
 #include "target/target.h"
@@ -206,8 +205,7 @@ windows_process_info::get_exec_module_filename (char *exe_name_ret,
     if (len == 0)
       {
 	unsigned err = (unsigned) GetLastError ();
-	error (_("Error getting executable filename (error %u): %s"),
-	       err, strwinerror (err));
+	throw_winerror_with_name (_("Error getting executable filename"), err);
       }
     if (cygwin_conv_path (CCP_WIN_W_TO_POSIX, pathbuf, exe_name_ret,
 			  exe_name_max_len) < 0)
@@ -219,8 +217,7 @@ windows_process_info::get_exec_module_filename (char *exe_name_ret,
   if (len == 0)
     {
       unsigned err = (unsigned) GetLastError ();
-      error (_("Error getting executable filename (error %u): %s"),
-	     err, strwinerror (err));
+      throw_winerror_with_name (_("Error getting executable filename"), err);
     }
 #endif
 
@@ -456,7 +453,7 @@ windows_process_info::handle_exception (struct target_waitstatus *ourstatus,
 	  break;
 	}
 #endif
-      /* FALLTHROUGH */
+      [[fallthrough]];
     case STATUS_WX86_BREAKPOINT:
       DEBUG_EXCEPTION_SIMPLE ("EXCEPTION_BREAKPOINT");
       ourstatus->set_stopped (GDB_SIGNAL_TRAP);
@@ -495,7 +492,7 @@ windows_process_info::handle_exception (struct target_waitstatus *ourstatus,
 	  break;
 	}
 	/* treat improperly formed exception as unknown */
-	/* FALLTHROUGH */
+	[[fallthrough]];
     default:
       /* Treat unhandled first chance exceptions specially.  */
       if (current_event.u.Exception.dwFirstChance)
@@ -698,10 +695,10 @@ windows_process_info::matching_pending_stop (bool debug_events)
 
 /* See nat/windows-nat.h.  */
 
-gdb::optional<pending_stop>
+std::optional<pending_stop>
 windows_process_info::fetch_pending_stop (bool debug_events)
 {
-  gdb::optional<pending_stop> result;
+  std::optional<pending_stop> result;
   for (auto iter = pending_stops.begin ();
        iter != pending_stops.end ();
        ++iter)
@@ -818,7 +815,7 @@ create_process_wrapper (FUNC *do_create_process, const CHAR *image,
 	  InitializeProcThreadAttributeList (info_ex.lpAttributeList,
 					     1, 0, &size);
 
-	  gdb::optional<BOOL> return_value;
+	  std::optional<BOOL> return_value;
 	  DWORD attr_flags = relocate_aslr_flags;
 	  if (!UpdateProcThreadAttribute (info_ex.lpAttributeList, 0,
 					  mitigation_policy,

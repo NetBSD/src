@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,11 +16,9 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
+if {[mi_clean_restart]} {
     return
 }
-
 
 # First, verify that the debugger correctly advertises support
 # for the "undefined-command" error code...

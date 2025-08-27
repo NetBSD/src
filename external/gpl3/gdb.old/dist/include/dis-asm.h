@@ -1,6 +1,6 @@
 /* Interface between the opcode library and its callers.
 
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -385,9 +385,11 @@ extern void print_ppc_disassembler_options (FILE *);
 extern void print_riscv_disassembler_options (FILE *);
 extern void print_arm_disassembler_options (FILE *);
 extern void print_arc_disassembler_options (FILE *);
+extern void print_kvx_disassembler_options(FILE *);
 extern void print_s390_disassembler_options (FILE *);
 extern void print_wasm32_disassembler_options (FILE *);
 extern void print_loongarch_disassembler_options (FILE *);
+extern void print_bpf_disassembler_options (FILE *);
 extern bool aarch64_symbol_is_valid (asymbol *, struct disassemble_info *);
 extern bool arm_symbol_is_valid (asymbol *, struct disassemble_info *);
 extern bool csky_symbol_is_valid (asymbol *, struct disassemble_info *);

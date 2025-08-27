@@ -1,6 +1,6 @@
 /* Abstract base class inherited by all process_stratum targets
 
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -51,11 +51,8 @@ public:
   bool supports_non_stop () override { return false; }
   bool supports_disable_randomization () override { return false; }
 
-  /* This default implementation returns the inferior's address
-     space.  */
-  struct address_space *thread_address_space (ptid_t ptid) override;
-
-  /* This default implementation always returns target_gdbarch ().  */
+  /* This default implementation always returns the current inferior's
+     gdbarch.  */
   struct gdbarch *thread_architecture (ptid_t ptid) override;
 
   /* Default implementations for process_stratum targets.  Return true
@@ -107,6 +104,9 @@ public:
      and matching FILTER_PTID.  */
   thread_info *random_resumed_with_pending_wait_status
     (inferior *inf, ptid_t filter_ptid);
+
+  /* Search function to lookup a (non-exited) thread by 'ptid'.  */
+  thread_info *find_thread (ptid_t ptid);
 
   /* The connection number.  Visible in "info connections".  */
   int connection_number = 0;

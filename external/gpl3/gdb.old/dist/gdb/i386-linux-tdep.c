@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux i386.
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "gdbcore.h"
 #include "frame.h"
 #include "value.h"
@@ -122,7 +122,7 @@ static const gdb_byte linux_sigtramp_code[] =
    start of the routine.  Otherwise, return 0.  */
 
 static CORE_ADDR
-i386_linux_sigtramp_start (frame_info_ptr this_frame)
+i386_linux_sigtramp_start (const frame_info_ptr &this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   gdb_byte buf[LINUX_SIGTRAMP_LEN];
@@ -190,7 +190,7 @@ static const gdb_byte linux_rt_sigtramp_code[] =
    start of the routine.  Otherwise, return 0.  */
 
 static CORE_ADDR
-i386_linux_rt_sigtramp_start (frame_info_ptr this_frame)
+i386_linux_rt_sigtramp_start (const frame_info_ptr &this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   gdb_byte buf[LINUX_RT_SIGTRAMP_LEN];
@@ -227,7 +227,7 @@ i386_linux_rt_sigtramp_start (frame_info_ptr this_frame)
    routine.  */
 
 static int
-i386_linux_sigtramp_p (frame_info_ptr this_frame)
+i386_linux_sigtramp_p (const frame_info_ptr &this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   const char *name;
@@ -252,7 +252,7 @@ i386_linux_sigtramp_p (frame_info_ptr this_frame)
 
 static int
 i386_linux_dwarf_signal_frame_p (struct gdbarch *gdbarch,
-				 frame_info_ptr this_frame)
+				 const frame_info_ptr &this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   const char *name;
@@ -275,7 +275,7 @@ i386_linux_dwarf_signal_frame_p (struct gdbarch *gdbarch,
    address of the associated sigcontext structure.  */
 
 static CORE_ADDR
-i386_linux_sigcontext_addr (frame_info_ptr this_frame)
+i386_linux_sigcontext_addr (const frame_info_ptr &this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -386,7 +386,7 @@ i386_canonicalize_syscall (int syscall)
 
 /* Value of the sigcode in case of a boundary fault.  */
 
-#define SIG_CODE_BONDARY_FAULT 3
+#define SIG_CODE_BOUNDARY_FAULT 3
 
 /* i386 GNU/Linux implementation of the report_signal_info
    gdbarch hook.  Displays information related to MPX bound
@@ -415,13 +415,13 @@ i386_linux_report_signal_info (struct gdbarch *gdbarch, struct ui_out *uiout,
       access
 	= parse_and_eval_long ("$_siginfo._sifields._sigfault.si_addr");
     }
-  catch (const gdb_exception &exception)
+  catch (const gdb_exception_error &exception)
     {
       return;
     }
 
   /* If this is not a boundary violation just return.  */
-  if (sig_code != SIG_CODE_BONDARY_FAULT)
+  if (sig_code != SIG_CODE_BOUNDARY_FAULT)
     return;
 
   is_upper = (access > upper_bound ? 1 : 0);
@@ -638,41 +638,45 @@ static int i386_linux_sc_reg_offset[] =
   0 * 4				/* %gs */
 };
 
-/* Get XSAVE extended state xcr0 from core dump.  */
+/* See i386-linux-tdep.h.  */
 
 uint64_t
-i386_linux_core_read_xcr0 (bfd *abfd)
+i386_linux_core_read_xsave_info (bfd *abfd, x86_xsave_layout &layout)
 {
   asection *xstate = bfd_get_section_by_name (abfd, ".reg-xstate");
-  uint64_t xcr0;
+  if (xstate == nullptr)
+    return 0;
 
-  if (xstate)
+  /* Check extended state size.  */
+  size_t size = bfd_section_size (xstate);
+  if (size < X86_XSTATE_AVX_SIZE)
+    return 0;
+
+  char contents[8];
+  if (! bfd_get_section_contents (abfd, xstate, contents,
+				  I386_LINUX_XSAVE_XCR0_OFFSET, 8))
     {
-      size_t size = bfd_section_size (xstate);
-
-      /* Check extended state size.  */
-      if (size < X86_XSTATE_AVX_SIZE)
-	xcr0 = X86_XSTATE_SSE_MASK;
-      else
-	{
-	  char contents[8];
-
-	  if (! bfd_get_section_contents (abfd, xstate, contents,
-					  I386_LINUX_XSAVE_XCR0_OFFSET,
-					  8))
-	    {
-	      warning (_("Couldn't read `xcr0' bytes from "
-			 "`.reg-xstate' section in core file."));
-	      return 0;
-	    }
-
-	  xcr0 = bfd_get_64 (abfd, contents);
-	}
+      warning (_("Couldn't read `xcr0' bytes from "
+		 "`.reg-xstate' section in core file."));
+      return 0;
     }
-  else
-    xcr0 = 0;
+
+  uint64_t xcr0 = bfd_get_64 (abfd, contents);
+
+  if (!i387_guess_xsave_layout (xcr0, size, layout))
+    return 0;
 
   return xcr0;
+}
+
+/* See i386-linux-tdep.h.  */
+
+bool
+i386_linux_core_read_x86_xsave_layout (struct gdbarch *gdbarch,
+				       x86_xsave_layout &layout)
+{
+  return i386_linux_core_read_xsave_info (current_program_space->core_bfd (),
+					  layout) != 0;
 }
 
 /* See i386-linux-tdep.h.  */
@@ -708,7 +712,8 @@ i386_linux_core_read_description (struct gdbarch *gdbarch,
 				  bfd *abfd)
 {
   /* Linux/i386.  */
-  uint64_t xcr0 = i386_linux_core_read_xcr0 (abfd);
+  x86_xsave_layout layout;
+  uint64_t xcr0 = i386_linux_core_read_xsave_info (abfd, layout);
   const struct target_desc *tdesc = i386_linux_read_description (xcr0);
 
   if (tdesc != NULL)
@@ -767,9 +772,9 @@ i386_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
   cb (".reg", 68, 68, &i386_gregset, NULL, cb_data);
 
-  if (tdep->xcr0 & X86_XSTATE_AVX)
-    cb (".reg-xstate", X86_XSTATE_SIZE (tdep->xcr0),
-	X86_XSTATE_SIZE (tdep->xcr0), &i386_linux_xstateregset,
+  if (tdep->xsave_layout.sizeof_xsave != 0)
+    cb (".reg-xstate", tdep->xsave_layout.sizeof_xsave,
+	tdep->xsave_layout.sizeof_xsave, &i386_linux_xstateregset,
 	"XSAVE extended state", cb_data);
   else if (tdep->xcr0 & X86_XSTATE_SSE)
     cb (".reg-xfp", 512, 512, &i386_fpregset, "extended floating-point",
@@ -872,6 +877,8 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->sc_num_regs = ARRAY_SIZE (i386_linux_sc_reg_offset);
 
   tdep->xsave_xcr0_offset = I386_LINUX_XSAVE_XCR0_OFFSET;
+  set_gdbarch_core_read_x86_xsave_layout
+    (gdbarch, i386_linux_core_read_x86_xsave_layout);
 
   set_gdbarch_process_record (gdbarch, i386_process_record);
   set_gdbarch_process_record_signal (gdbarch, i386_linux_record_signal);

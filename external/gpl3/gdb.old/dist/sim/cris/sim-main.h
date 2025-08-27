@@ -1,5 +1,5 @@
 /* Main header for the CRIS simulator, based on the m32r header.
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -29,11 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
    one of -scache/-pbb.  */
 #define WITH_SCACHE_PBB 1
 
-#include "symcat.h"
 #include "sim-basics.h"
-#include "cgen-types.h"
-#include "cris-desc.h"
-#include "cris-opc.h"
+#include "opcodes/cris-desc.h"
+#include "opcodes/cris-opc.h"
 #include "arch.h"
 #include "sim-base.h"
 #include "cgen-sim.h"
@@ -103,24 +101,18 @@ typedef int (*cris_interrupt_delivery_fn) (SIM_CPU *,
 					   enum cris_interrupt_type,
 					   unsigned int);
 
-struct _sim_cpu {
-  /* sim/common cpu base.  */
-  sim_cpu_base base;
-
-  /* Static parts of cgen.  */
-  CGEN_CPU cgen_cpu;
-
+struct cris_sim_cpu {
   CRIS_MISC_PROFILE cris_misc_profile;
-#define CPU_CRIS_MISC_PROFILE(cpu) (& (cpu)->cris_misc_profile)
+#define CPU_CRIS_MISC_PROFILE(cpu) (& CRIS_SIM_CPU (cpu)->cris_misc_profile)
 
   /* Copy of previous data; only valid when emitting trace-data after
      each insn.  */
   CRIS_MISC_PROFILE cris_prev_misc_profile;
-#define CPU_CRIS_PREV_MISC_PROFILE(cpu) (& (cpu)->cris_prev_misc_profile)
+#define CPU_CRIS_PREV_MISC_PROFILE(cpu) (& CRIS_SIM_CPU (cpu)->cris_prev_misc_profile)
 
 #if WITH_HW
   cris_interrupt_delivery_fn deliver_interrupt;
-#define CPU_CRIS_DELIVER_INTERRUPT(cpu) (cpu->deliver_interrupt)
+#define CPU_CRIS_DELIVER_INTERRUPT(cpu) (CRIS_SIM_CPU (cpu)->deliver_interrupt)
 #endif
 
   /* Simulator environment data.  */
@@ -204,11 +196,12 @@ struct _sim_cpu {
   union { void *dummy[16]; } cpu_data_placeholder;
 #endif
 };
+#define CRIS_SIM_CPU(cpu) ((struct cris_sim_cpu *) CPU_ARCH_DATA (cpu))
 
 /* Misc.  */
 
 /* Catch address exceptions.  */
-extern SIM_CORE_SIGNAL_FN cris_core_signal;
+extern SIM_CORE_SIGNAL_FN cris_core_signal ATTRIBUTE_NORETURN;
 #define SIM_CORE_SIGNAL(SD,CPU,CIA,MAP,NR_BYTES,ADDR,TRANSFER,ERROR) \
 cris_core_signal ((SD), (CPU), (CIA), (MAP), (NR_BYTES), (ADDR), \
 		  (TRANSFER), (ERROR))

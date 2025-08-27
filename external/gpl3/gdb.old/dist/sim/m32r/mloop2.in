@@ -1,6 +1,6 @@
 # Simulator main loop for m32r2. -*- C -*-
 #
-# Copyright 1996-2023 Free Software Foundation, Inc.
+# Copyright 1996-2024 Free Software Foundation, Inc.
 #
 # This file is part of GDB, the GNU debugger.
 #
@@ -41,6 +41,7 @@ case "x$1" in
 xsupport)
 
 cat <<EOF
+#line $LINENO "$0"
 
 /* Emit insns to write back the results of insns executed in parallel.
    SC points to a sufficient number of scache entries for the writeback
@@ -90,8 +91,7 @@ emit_full16 (SIM_CPU *current_cpu, PCADDR pc, CGEN_INSN_INT insn, SCACHE *sc,
   @cpu@_emit_before (current_cpu, sc, pc, 1);
   id = emit_16 (current_cpu, pc, insn, sc + 1, 0, 0);
   @cpu@_emit_after (current_cpu, sc + 2, pc);
-  sc[1].argbuf.trace_p = trace_p;
-  sc[1].argbuf.profile_p = profile_p;
+  @cpu@_fill_argbuf_tp (current_cpu, &sc[1].argbuf, trace_p, profile_p);
   return id;
 }
 
@@ -140,15 +140,13 @@ emit_full_parallel (SIM_CPU *current_cpu, PCADDR pc, CGEN_INSN_INT insn,
 
   /* FIXME: No need to handle this parallelly if second is nop.  */
   id = emit_16 (current_cpu, pc, insn >> 16, sc + 1, 0, 1);
-  sc[1].argbuf.trace_p = trace_p;
-  sc[1].argbuf.profile_p = profile_p;
+  @cpu@_fill_argbuf_tp (current_cpu, &sc[1].argbuf, trace_p, profile_p);
 
   @cpu@_emit_before (current_cpu, sc + 2, pc, 0);
 
   /* Note that this can never be a cti.  No cti's go in the S pipeline.  */
   id2 = emit_16 (current_cpu, pc + 2, insn & 0x7fff, sc + 3, 0, 0);
-  sc[3].argbuf.trace_p = trace_p;
-  sc[3].argbuf.profile_p = profile_p;
+  @cpu@_fill_argbuf_tp (current_cpu, &sc[3].argbuf, trace_p, profile_p);
 
   /* Set sc/snc insns notion of where to skip to.  */
   if (IDESC_SKIP_P (id))
@@ -184,8 +182,7 @@ emit_full32 (SIM_CPU *current_cpu, PCADDR pc, CGEN_INSN_INT insn, SCACHE *sc,
   @cpu@_emit_before (current_cpu, sc, pc, 1);
   id = emit_32 (current_cpu, pc, insn, sc + 1, 0);
   @cpu@_emit_after (current_cpu, sc + 2, pc);
-  sc[1].argbuf.trace_p = trace_p;
-  sc[1].argbuf.profile_p = profile_p;
+  @cpu@_fill_argbuf_tp (current_cpu, &sc[1].argbuf, trace_p, profile_p);
   return id;
 }
 
@@ -210,6 +207,7 @@ xextract-pbb)
 # SET_INSN_COUNT(n) must be called to record number of real insns.
 
 cat <<EOF
+#line $LINENO "$0"
 {
   const IDESC *idesc;
   int icount = 0;
@@ -521,6 +519,7 @@ xfull-exec-pbb)
 # vpc is the virtual program counter.
 
 cat <<EOF
+#line $LINENO "$0"
 #define DEFINE_SWITCH
 #include "sem2-switch.c"
 EOF

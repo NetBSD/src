@@ -1,4 +1,4 @@
-# Copyright 1997-2023 Free Software Foundation, Inc.
+# Copyright 1997-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,4 +39,3 @@ if {[runto middle]} {
     # or main -> middle.
     gdb_test "backtrace" "#0.*middle.*#\[12\].*main.*"
 }
-return 0

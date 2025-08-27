@@ -1,3 +1,425 @@
+2024-01-15  Nick Clifton  <nickc@redhat.com>
+
+	* 2.42 branch point.
+
+2023-12-05  Nick Clifton  <nickc@redhat.com>
+
+	PR 31106
+	* elfcode.h (elf_write_relocs): Do not convert a relocation
+	against a zero-value absolute symbol into a relocation without a
+	symbol if the symbol is being used for a complex relocation.
+
+2023-11-21  Nick Clifton  <nickc@redhat.com>
+
+	PR 31067
+	linker.c (_bfd_generic_link_add_one_symbol): When issuing a
+	warning message, also display a message about the warning not
+	being affected by garbage colleciton.
+
+2023-11-15  Arsen Arsenović  <arsen@aarsen.me>
+
+	* aclocal.m4: Regenerate.
+	* configure.ac (SHARED_LIBADD): Use LTLIBINTL rather than
+	LIBINTL.
+	* configure: Regenerate.
+	* po/Make-in ($(srcdir)/$(PACKAGE).pot): Output to a .pot
+	temporary file, to suppress xgettext checking charset names.
+
+2023-11-10  Simon Marchi  <simon.marchi@efficios.com>
+
+	* archures.c (bfd_mach_amdgcn_gfx1100, bfd_mach_amdgcn_gfx1101,
+	bfd_mach_amdgcn_gfx1102): New.
+	* bfd-in2.h (bfd_mach_amdgcn_gfx1100, bfd_mach_amdgcn_gfx1101,
+	bfd_mach_amdgcn_gfx1102): New.
+	* cpu-amdgcn.c (arch_info_struct): Add entries for
+	bfd_mach_amdgcn_gfx1100, bfd_mach_amdgcn_gfx1101,
+	bfd_mach_amdgcn_gfx1102.
+
+2023-11-10  Nick Clifton  <nickc@redhat.com>
+
+	* elf.c (assign_file_positions_except_relocs): Turn warnings about
+	executable segments into errors if so requested.
+	* elflink.c (bfd_elf_size_dynamic_sections): Turn warnings about
+	executable stacks into errors if so requested.
+
+2023-10-30  Nick Clifton  <nickc@redhat.com>
+
+	* bpf-reloc.def (R_BPF_64_NODLD32): Add entry.
+
+2023-10-16  Nick Clifton  <nickc@redhat.com>
+
+	PR 28910
+	* elf32-arm.c (elf32_arm_merge_private_bfd_data): Do not set
+	output flags if the input flags have not been set.
+
+2023-10-09  Nick Clifton  <nickc@redhat.com>
+
+	PR 30950
+	* elf32-i386.c (elf_i386_convert_load_reloc): Check for
+	elf_x86_hash_table returning a NULL pointer.
+
+	PR 30949
+	* elflink.c (elf_gc_mark_debug_section): Check for
+	bfd_section_from_elf_index returning a NULL pointer.
+
+2023-10-06  Nick Clifton  <nickc@redhat.com>
+
+	PR 30940
+	* elf64-alpha.c (elf64_alpha_check_relocs): Correct error message.
+
+2023-10-05  Nick Clifton  <nickc@redhat.com>
+
+	PR 30904
+	* elf.c (_bfd_elf_get_dynamic_symbols): Fix typo when checking to
+	see if the gnuchains array has been successfully created.
+
+2023-10-02  Nick Clifton  <nickc@redhat.com>
+
+	* peXXigen.c (_bfd_XXi_only_swap_filehdr_out): Use
+	bfd_get_current_time when filing in the timestamp.
+
+2023-09-29  Nick Clifton  <nickc@redhat.com>
+
+	PR 30906
+	* elf.c (_bfd_elf_slurp_version_tables): Test that the verref
+	section header has been initialised before using it.
+
+2023-09-28  Nick Clifton  <nickc@redhat.com>
+
+	PR 30886
+	* elf-bfd.h (struct elf_obj_tdata): Add dt_strsz field.
+	* elf.c (_bfd_elf_get_dynamic_symbols): Add a NUL byte at the end
+	of the string table.
+	Initialise the dt_strsz field.
+	(_bfd_elf_slurp_version_tables): Only free the contents if they
+	were malloc'ed.
+	Add checks before setting string pointers in the dt_strtab buffer.
+
+2023-09-27  Nick Clifton  <nickc@redhat.com>
+
+	PR 30885
+	* elfcode.h (elf_slurp_symbol_table): Compute the symcount for non
+	dynamic symbols in the same way as _bfd_elf_get_symtab_upper_bound.
+
+2023-09-13  Jacob Navia  <jacob@jacob.remcomp.fr>
+
+	* elf.c (_bfd_elf_init_reloc_shdr): Don't segfault on alloc fail.
+
+2023-09-13  Alan Modra  <amodra@gmail.com>
+
+	* elf-strtab.c (_bfd_elf_strtab_init): In the event of memory
+	allocation failure, make sure that the hash table is freed.
+
+2023-08-30  Tom Tromey  <tom@tromey.com>
+
+	PR binutils/30703
+	* doc/webassembly.texi, doc/bfd.texi: Revert 8bb23cdb, adding
+	parameters back to @node.
+
+2023-08-04  Nick Clifton  <nickc@redhat.com>
+
+	PR 15545
+	* cache.c (bfd_cache_close_all): Extend description to note that
+	all files will be closed, even those that are not cacheable.
+	Add code to prevent a possible infinite loop.
+
+2023-08-02  Tom Tromey  <tromey@adacore.com>
+
+	* pei-x86_64.c (PEI_HEADERS): Do not define.
+	* pei-loongarch64.c (PEI_HEADERS): Do not define.
+	* pei-aarch64.c (PEI_HEADERS): Do not define.
+	* pe-x86_64.c (PEI_HEADERS): Do not define.
+	* pe-aarch64.c (PEI_HEADERS): Do not define.
+	* libpei.h (_LIBPEI_H): Add include guard.
+	* coff-x86_64.c (PEI_HEADERS): Do not check.
+	* coff-loongarch64.c (PEI_HEADERS): Do not check.
+	* coff-aarch64.c (PEI_HEADERS): Do not check.
+
+2023-07-24  Johannes Schauer Marin Rodrigues  <josch@debian.org>
+
+	* peXXigen.c (_bfd_XXi_only_swap_filehdr_out): If inserting a
+	timestamp, use the value held in the SOURCE_DATE_EPOCH environment
+	variable, if it is defined.
+
+2023-07-24  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* reloc.c: New reloc BFD_RELOC_BPF_DISPCALL32.
+	* elf64-bpf.c (bpf_reloc_type_lookup): Handle the new reloc.
+	* libbfd.h (bfd_reloc_code_real_names): Regenerate.
+
+2023-07-09  Fangrui Song  <maskray@google.com>
+
+	PR 30592
+	* section.c: Define SEC_ELF_LARGE.
+	* bfd-in2.h: Regenerate.
+	* elf64-x86-64.c (elf_x86_64_section_flags, elf_x86_64_fake_sections,
+	elf_x86_64_copy_private_section_data): New.
+
+2023-07-03  Nick Clifton  <nickc@redhat.com>
+
+	* version.m4: Update version number to 2.41.50.
+	* configure: Regenerate.
+	* bfd/po/bfd.pot: Regenerate.
+
+2023-07-03  Nick Clifton  <nickc@redhat.com>
+
+	2.41 Branch Point.
+
+2023-06-19  Nick Clifton  <nickc@redhat.com>
+
+	PR 30560
+	* elf64-x86-64.c (elf_x86_64_relocate_section): Add more checks
+	for a valid relocation offset.
+
+2023-06-07  Nick Clifton  <nickc@redhat.com>
+
+	PR 30499
+	* elflink.c (elf_link_add_object_symbols): Add a message
+	indicating that alignment and size discrepancies between the
+	definition of common symbols and normal symbols are serious and
+	should be investigated.
+
+2023-05-31  Tristan Gingold  <tgingold@free.fr>
+
+	PR 30444
+	* coffcode.h (coff_write_object_contents): Handle base64 encoding
+	on PE.  Also check for too large string table.
+	* coffgen.c (extract_long_section_name): New function extracted
+	from ...
+	(make_a_section_from_file): ... here.  Add support for base64
+	long section names.
+	(decode_base64): New function.
+
+2023-05-17  Luca Bacci  <luca.bacci@outlook.com>
+
+	PR 30421
+	* cofflink.c (_decoration_hash_newfunc): New function.
+	(_bfd_coff_link_hash_table_init): Call it.
+	* libcoff-in.h (struct coff_link_hash_table): Add decoration_hash
+	field.
+	(struct decoration_hash_entry): Declare.
+	(_decoration_hash_newfunc): Prototype.
+	* libcoff.h: Regenerate.
+
+2023-05-16  Oleg Tolmatcev  <oleg.tolmatcev@gmail.com>
+
+	* libcoff-in.h (struct coff_tdata): Add section_by_index and
+	section_by_target_index hash tables.
+	* libcoff.h: Regenerate.
+	* coffcode.h (htab_hash_section_index): New function.
+	(htab_eq_section_index): New function.
+	(htab_hash_section_target_index): New function.
+	(htab_eq_section_target_index): New function.
+	(coff_mkobject_hool): Create the hash tables.
+	* peicode.h: Add the same new functions.
+	(pe_mkobject_hook): Create the hash tables.
+	* coff-x86_64.c (coff_amd64_rtype_to_howto): Use the new tables to
+	speed up lookups.
+	* coffgen.c (coff_section_from_bfd_index): Likewise.
+	(_bfd_coff_close_and_cleanup): Delete the hash tables.
+
+2023-05-10  Luca Bonissi  <gcc@scarsita.it>
+
+	PR 30422
+	* elf32-or1k.c (or1k_elf_relocate_section): Prescan for
+	R_OR1K_GOT_AHI16 relocs as they may occur after R_OR1K_GOT16
+	relocs.
+
+2023-05-05  Nick Clifton  <nickc@redhat.com>
+
+	PR 30354
+	* elf32-arm.c (elf32_arm_gc_mark_extra_sections): If any debug
+	sections are marked then rerun the extra marking in order to pick
+	up any dependencies.
+
+2023-05-03  Oleg Tolmatcev  <oleg.tolmatcev@gmail.com>
+
+	* archive.c (_bfd_write_archive_contents): Use a larger buffer in
+	order to improve efficiency.
+
+2023-05-03  Oleg Tolmatcev  <oleg.tolmatcev@gmail.com>
+
+	* coffcode.h (coff_read_word_from_buffer): New function.
+	* coffcode.h (COFF_CHECKSUM_BUFFER_SIZE): New constant.
+	* coffcode.h (coff_compute_checksum): Improve speed by reducing
+	the number of seeks and reads used.
+
+2023-04-24  Nick Clifton  <nickc@redhat.com>
+
+	* po/la.po: New Georgian translation.
+
+2023-04-17  Nick Clifton  <nickc@redhat.com>
+
+	PR 30142
+	* peXXigen.c (_bfd_XXi_swap_scnhdr_out): Do not force the .rsrc
+	section to be writeable.
+
+2023-03-30  Nick Clifton  <nickc@redhat.com>
+
+	PR 30285
+	* elf.c (_bfd_elf_slurp_version_tables): Fail if no version
+	definitions are allocated.
+
+2023-02-27  Felix Willgerodt  <felix.willgerodt@intel.com>
+
+	* elf64-x86-64.c (elf_x86_64_grok_psinfo): Check for
+	elf_external_linux_prpsinfo32_ugid32.
+
+2023-02-23  Fangrui Song  <i@maskray.me>
+
+	* elfnn-riscv.c (struct riscv_elf_link_hash_table): Add params.
+	(riscv_elfNN_set_options): New.
+	(riscv_info_to_howto_rela): Check relax_gp.
+	(_bfd_riscv_relax_section): Likewise.
+	* elfxx-riscv.h (struct riscv_elf_params): New.
+	(riscv_elf32_set_options): New.
+	(riscv_elf64_set_options): New.
+
+2023-02-23  Nick Clifton  <nickc@redhat.com>
+            Alan Modra  <amodra@gmail.com>
+
+	PR 30150
+	* dwarf2.c (comp_unit_contains_address): Renamed to ...
+	(comp_unit_may_contain_address): this, and added code to return
+	true if the CU's ranges have not yet been computed.
+	(_bfd_dwarf2_find_nearest_line_with_alt): Use the renamed
+	function, simplifying code in the process.
+
+2023-02-21  Nick Clifton  <nickc@redhat.com>
+
+	* opncls.c (bfd_fill_in_gnu_debuglink_section): Update
+	description.
+
+2023-02-17  Tom Tromey  <tom@tromey.com>
+
+	* doc/doc.str (FUNCTION): Call func.
+
+2023-02-17  Tom Tromey  <tom@tromey.com>
+
+	* opncls.c: Hoist the SECTION comment.
+
+2023-02-17  Tom Tromey  <tom@tromey.com>
+
+	* opncls.c (bfd_get_debug_link_info_1, separate_debug_file_exists)
+	(separate_alt_debug_file_exists, find_separate_debug_file)
+	(get_build_id, get_build_id_name, check_build_id_file): Don't use
+	chew comments.
+
+2023-02-17  Tom Tromey  <tom@tromey.com>
+
+	* doc/doc.str (SYNOPSIS): Use collapse_whitespace.
+	* doc/chew.c (collapse_whitespace): New function.
+	(main): Register collapse_whitespace.
+
+2023-02-07  Tom Tromey  <tom@tromey.com>
+
+	* bfd.c, cache.c, compress.c, opncls.c: Remove RETURNS from
+	documentation comments.
+	* doc/doc.str, doc/proto.str (RETURNS): Remove.
+
+2023-02-07  Tom Tromey  <tom@tromey.com>
+
+	* syms.c (bfd_decode_symclass, bfd_is_undefined_symclass)
+	(bfd_symbol_info): Reorder documentation comment.
+	* doc/doc.str (synopsis_seen): New variable.
+	(SYNOPSIS): Set synopsis_seen.  Emit @deftypefn.
+	(DESCRIPTION): Use synopsis_seen.
+	* doc/chew.c (catstrif): New function.
+	(main): Add catstrif intrinsic.
+	(compile): Recognize "variable" command.
+
+2023-02-07  Tom Tromey  <tom@tromey.com>
+
+	* doc/proto.str (external, internal, ifinternal, ENUMEQ, ENUMDOC):
+	Update.
+	* doc/chew.c (internalmode): Remove.
+	(add_intrinsic_variable): New function.
+	(main): Add internalmode as intrinsic.
+	(internal_mode): Remove global.
+	(maybecatstr): Update.
+	(free_words): Free variables.
+
+2023-02-07  Tom Tromey  <tom@tromey.com>
+
+	* doc/chew.c (pcu) <l>: Now intptr_t.
+	(internal_mode, istack, isp): Likewise.
+	(bang, atsign): Use intptr_t.
+
+2023-02-07  Tom Tromey  <tom@tromey.com>
+
+	* doc/proto.str (SYNOPSIS): Don't use paramstuff.
+	* doc/chew.c (paramstuff): Remove.
+	(main): Don't add paramstuff intrinsic.
+
+2023-02-07  Tom Tromey  <tom@tromey.com>
+
+	* doc/doc.str, doc/proto.str: Add copyright header.
+
+2023-02-07  Tom Tromey  <tom@tromey.com>
+
+	* doc/webassembly.texi (File layout): Remove second argument from
+	@node.
+	* doc/bfd.texi: Use single-argument @node everywhere.
+
+2023-02-07  Tom Tromey  <tom@tromey.com>
+
+	* Makefile.in: Rebuild.
+	* doc/local.mk (%D%/chew.stamp): Don't use H_CFLAGS.
+
+2023-01-24  Nick Clifton  <nickc@redhat.com>
+
+	PR 29998
+	* cofflink.c (_bfd_coff_generic_relocate_section): Add an
+	assertion that the output section is set for defined, global
+	symbols.
+
+2023-01-17  Xianmiao Qu  <cooper.qu@linux.alibaba.com>
+
+	* elf32-csky.c (elf32_csky_merge_attributes): Don't save
+	and restore the ARCH attribute, it will actually clear
+	the ARCH attribute.
+	(csky_elf_merge_private_bfd_data): Store the machine flag
+	correctly.
+
+2023-01-13  Nick Clifton  <nickc@redhat.com>
+
+	* po/ro.po: Updated Romainian translation.
+
+2023-01-11  Nick Clifton  <nickc@redhat.com>
+
+	PR 29988
+	* dwarf2.c (read_indexed_address): Fix check for an out of range
+	offset.
+
+2023-01-06  Nick Clifton  <nickc@redhat.com>
+
+	* po/ru.po: Updated Russian translation.
+
+2023-01-03  Himal  <himalr@proton.me>
+
+	PR 29947
+	* bfdio.c (_bfd_real_fopen): Do not add a prefix to the Windows'
+	nul device filename.
+
+2023-01-03  Nick Clifton  <nickc@redhat.com>
+
+	* po/fr.po: Updated French trabslation.
+	* po/uk.po: Updated Ukrainian trabslation.
+
+2022-12-31  Nick Clifton  <nickc@redhat.com>
+
+	* 2.40 branch created.
+
+2022-12-23  Nick Clifton  <nickc@redhat.com>
+
+	PR 29936
+	* dwarf2.c (concat_filename): Fix check for a directory index off
+	the end of the directory table.
+
+2022-12-21  Nick Clifton  <nickc@redhat.com>
+
+	* po/ro.po: Updated Romanian translation.
+
 2022-12-06  Nick Clifton  <nickc@redhat.com>
 
 	PR 29852
@@ -2538,7 +2960,7 @@
 
 For older changes see ChangeLog-2020
 
-Copyright (C) 2021-2022 Free Software Foundation, Inc.
+Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
