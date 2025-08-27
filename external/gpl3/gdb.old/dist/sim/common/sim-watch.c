@@ -1,5 +1,5 @@
 /* Generic simulator watchpoint support.
-   Copyright (C) 1997-2023 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -169,8 +169,6 @@ static SIM_RC
 schedule_watchpoint (SIM_DESC sd,
 		     sim_watch_point *point)
 {
-  sim_watchpoints *watch = STATE_WATCHPOINTS (sd);
-
   switch (point->type)
     {
     case pc_watchpoint:

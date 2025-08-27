@@ -1,6 +1,6 @@
 /* mem.c --- memory for M32C simulator.
 
-Copyright (C) 2005-2023 Free Software Foundation, Inc.
+Copyright (C) 2005-2024 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -221,7 +221,7 @@ mem_put_byte (int address, unsigned char value)
 	static int old_led = -1;
 	static char *led_on[] =
 	  { "\033[31m O ", "\033[32m O ", "\033[34m O " };
-	static char *led_off[] = { "\033[0m · ", "\033[0m · ", "\033[0m · " };
+	static char *led_off[] = { "\033[0m Â· ", "\033[0m Â· ", "\033[0m Â· " };
 	int i;
 	if (old_led != value)
 	  {

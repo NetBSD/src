@@ -57,8 +57,8 @@
 
 
 /* Macro's to type cast 32bit constants to 64bits */
-#define SIGNED64(val)   ((int64_t)(int32_t)(val))
-#define UNSIGNED64(val) ((uint64_t)(uint32_t)(val))
+#define ALU_SIGNED64(val)   ((int64_t)(int32_t)(val))
+#define ALU_UNSIGNED64(val) ((uint64_t)(uint32_t)(val))
 
 
 /* Start a section of ALU code */
@@ -134,14 +134,14 @@ do { \
 #if (WITH_TARGET_WORD_BITSIZE == 64)
 #define ALU_ADD(val) \
 do { \
-  uint64_t alu_lo = (UNSIGNED64(alu_val) \
-		       + UNSIGNED64(val)); \
+  uint64_t alu_lo = (ALU_UNSIGNED64(alu_val) \
+		       + ALU_UNSIGNED64(val)); \
   signed alu_carry = ((alu_lo & BIT(31)) != 0); \
   alu_carry_val = (alu_carry_val \
-		   + UNSIGNED64(EXTRACTED(val, 0, 31)) \
+		   + ALU_UNSIGNED64(EXTRACTED(val, 0, 31)) \
 		   + alu_carry); \
   alu_overflow_val = (alu_overflow_val \
-		      + SIGNED64(EXTRACTED(val, 0, 31)) \
+		      + ALU_SIGNED64(EXTRACTED(val, 0, 31)) \
 		      + alu_carry); \
   alu_val = alu_val + val; \
 } while (0)

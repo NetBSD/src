@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2023 Free Software Foundation, Inc.
+   Copyright 2014-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -137,7 +137,7 @@ G<T>::mul (const T1 t1)
   return t1 * t;
 }
 
-}  // namespaxe dop
+}  // namespace dop
 
 using namespace dop;
 

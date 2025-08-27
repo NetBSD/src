@@ -45,7 +45,6 @@ generic_device_init_address(device *me)
     NULL
   };
   const char **reg_property_name;
-  int nr_valid_reg_properties = 0;
   for (reg_property_name = reg_property_names;
        *reg_property_name != NULL;
        reg_property_name++) {
@@ -73,7 +72,6 @@ generic_device_init_address(device *me)
 			      attach_space, attach_address, attach_size,
 			      access_read_write_exec,
 			      me);
-	nr_valid_reg_properties++;
       }
       /* if first option matches don't try for any others */
       if (reg_property_name == reg_property_names)

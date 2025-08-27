@@ -1,5 +1,5 @@
 /* s390.h -- Header file for S390 opcode table
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -48,19 +48,43 @@ enum s390_opcode_cpu_val
     S390_OPCODE_MAXCPU
   };
 
-/* Instruction specific flags.  */
+/* Values defined for the flags field of a struct s390_opcode.  */
+
+/* Last one or two instruction operands are optional.  */
 #define S390_INSTR_FLAG_OPTPARM 0x1
 #define S390_INSTR_FLAG_OPTPARM2 0x2
 
+/* Instruction requires a specific facility.  */
 #define S390_INSTR_FLAG_HTM 0x4
 #define S390_INSTR_FLAG_VX 0x8
 #define S390_INSTR_FLAG_FACILITY_MASK 0xc
+
+/* Instruction annotations for jump visualization.  */
+#define S390_INSTR_FLAG_CLASS_BRANCH 0x10
+#define S390_INSTR_FLAG_CLASS_RELATIVE 0x20
+#define S390_INSTR_FLAG_CLASS_CONDITIONAL 0x40
+#define S390_INSTR_FLAG_CLASS_SUBROUTINE 0x80
+#define S390_INSTR_FLAG_CLASS_MASK 0xf0
+
+#define S390_INSTR_FLAGS_CLASS_JUMP \
+  (S390_INSTR_FLAG_CLASS_BRANCH | S390_INSTR_FLAG_CLASS_RELATIVE)
+
+#define S390_INSTR_FLAGS_CLASS_CONDJUMP \
+  (S390_INSTR_FLAG_CLASS_BRANCH | S390_INSTR_FLAG_CLASS_RELATIVE \
+   | S390_INSTR_FLAG_CLASS_CONDITIONAL)
+
+#define S390_INSTR_FLAGS_CLASS_JUMPSR \
+  (S390_INSTR_FLAG_CLASS_BRANCH | S390_INSTR_FLAG_CLASS_RELATIVE \
+   | S390_INSTR_FLAG_CLASS_SUBROUTINE)
+
+/* Instruction is an .insn pseudo-mnemonic.  */
+#define S390_INSTR_FLAG_PSEUDO_MNEMONIC 0x100
 
 /* The opcode table is an array of struct s390_opcode.  */
 
 struct s390_opcode
   {
-    /* The opcode name.  */
+    /* The opcode name (mnemonic).  */
     const char * name;
 
     /* The opcode itself.  Those bits which will be filled in with
@@ -89,6 +113,9 @@ struct s390_opcode
 
     /* Instruction specific flags.  */
     unsigned int flags;
+
+    /* Instruction description.  */
+    const char * description;
   };
 
 /* The table itself is sorted by major opcode number, and is otherwise
@@ -100,8 +127,6 @@ extern const int                s390_num_opcodes;
 /* A opcode format table for the .insn pseudo mnemonic.  */
 extern const struct s390_opcode s390_opformats[];
 extern const int                s390_num_opformats;
-
-/* Values defined for the flags field of a struct s390_opcode.  */
 
 /* The operands table is an array of struct s390_operand.  */
 

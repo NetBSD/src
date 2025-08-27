@@ -1,5 +1,5 @@
 /* Header file for GDB CLI command implementation library.
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 #define CLI_CLI_CMDS_H
 
 #include "gdbsupport/filestuff.h"
-#include "gdbsupport/gdb_optional.h"
+#include <optional>
 #include "completer.h"
 
 /* Chain containing all defined commands.  */
@@ -179,7 +179,7 @@ struct open_script
   }
 };
 
-extern gdb::optional<open_script>
+extern std::optional<open_script>
     find_and_open_script (const char *file, int search_path);
 
 /* Command tracing state.  */

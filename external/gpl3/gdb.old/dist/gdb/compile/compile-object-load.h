@@ -1,5 +1,5 @@
 /* Header file to load module for 'compile' command.
-   Copyright (C) 2014-2023 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 #define COMPILE_COMPILE_OBJECT_LOAD_H
 
 #include "compile-internal.h"
+#include "compile.h"
 #include <list>
 
 struct munmap_list

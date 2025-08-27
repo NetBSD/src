@@ -1,4 +1,4 @@
-# Copyright 2002-2023 Free Software Foundation, Inc.
+# Copyright 2002-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -199,13 +199,64 @@ save_vars { env(TERM) } {
 	set env(GDBHISTFILE) "${srcdir}/${subdir}/gdb_history"
 	set env(GDBHISTSIZE) "10"
 
-	gdb_exit
-	gdb_start
-	gdb_reinitialize_dir $srcdir/$subdir
+	clean_restart
 
 	operate_and_get_next "Simple operate-and-get-next, two" \
 	    "p 7" ".* = 7" \
 	    "p 8" ".* = 8" \
 	    "p 9" ".* = 9"
+
+	# Test sending a long command to GDB, a command that requires
+	# multiple terminal lines.  Long ago there was a readline bug
+	# that would cause GDB to crash in this situation.  We force
+	# the bug by setting up a narrow terminal width, and then
+	# sending a long command.
+	clean_restart
+
+	# The number of characters to send in the command.  We
+	# actually send a few more than this; this total is really the
+	# extra characters we add on after sending the command name.
+	set char_total 4500
+	set char_sent 0
+
+	# Adjust the terminal width.  Detect horizontal scrolling, which
+	# happens with stub-termcap.c.
+	set horizontal_scrolling 0
+	set cmd "set width 7"
+	gdb_test_multiple $cmd "" {
+	    -re "^$cmd\r\n$gdb_prompt $" {
+		pass $gdb_test_name
+	    }
+	    -re "^$cmd\r\n<b\\) $" {
+		set horizontal_scrolling 1
+		pass $gdb_test_name
+	    }
+	}
+
+	if { !$horizontal_scrolling } {
+	    # Send the command prefix, then lots of additional characters
+	    # that create a really long command that wraps over multiple
+	    # lines.
+	    send_gdb "help X"
+	    gdb_test_multiple "" "send long command to GDB" {
+		-re "X" {
+		    incr char_sent
+		    if {$char_sent <= $char_total} {
+			send_gdb "X"
+			exp_continue
+		    }
+		}
+		-re "\[ \b\r\n\]" {
+		    exp_continue
+		}
+	    }
+
+	    # Send the final newline so that GDB will process the command.
+	    # Check GDB returns a suitable error.
+	    send_gdb "\n"
+	    gdb_test "" \
+		"Undefined command: \"X+\"\\.  Try \"help\"\\." \
+		"All the characters transferred"
+	}
     }
 }

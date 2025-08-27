@@ -1,6 +1,6 @@
 /* Support for printing Fortran types for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C version by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -20,7 +20,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "event-top.h"
 #include "gdbsupport/gdb_obstack.h"
 #include "bfd.h"
 #include "symtab.h"
@@ -176,11 +176,11 @@ f_language::f_type_print_varspec_suffix (struct type *type,
       else if (type_not_allocated (type))
 	print_rank_only = true;
       else if ((TYPE_ASSOCIATED_PROP (type)
-		&& PROP_CONST != TYPE_ASSOCIATED_PROP (type)->kind ())
+		&& !TYPE_ASSOCIATED_PROP (type)->is_constant ())
 	       || (TYPE_ALLOCATED_PROP (type)
-		   && PROP_CONST != TYPE_ALLOCATED_PROP (type)->kind ())
+		   && !TYPE_ALLOCATED_PROP (type)->is_constant ())
 	       || (TYPE_DATA_LOCATION (type)
-		   && PROP_CONST != TYPE_DATA_LOCATION (type)->kind ()))
+		   && !TYPE_DATA_LOCATION (type)->is_constant ()))
 	{
 	  /* This case exist when we ptype a typename which has the dynamic
 	     properties but cannot be resolved as there is no object.  */
@@ -321,7 +321,7 @@ f_language::f_type_print_base (struct type *type, struct ui_file *stream,
       if (type->code () == TYPE_CODE_UNION)
 	prefix = "Type, C_Union :: ";
       else if (type->code () == TYPE_CODE_STRUCT
-               || type->code () == TYPE_CODE_NAMELIST)
+	       || type->code () == TYPE_CODE_NAMELIST)
 	prefix = "Type ";
       gdb_printf (stream, "%*s%s%s", level, "", prefix, type->name ());
       return;
@@ -395,7 +395,7 @@ f_language::f_type_print_base (struct type *type, struct ui_file *stream,
 	 asked to print the type of a value with a dynamic type then the
 	 bounds will not have been resolved.  */
 
-      if (type->bounds ()->high.kind () == PROP_CONST)
+      if (type->bounds ()->high.is_constant ())
 	{
 	  LONGEST upper_bound = f77_get_upperbound (type);
 

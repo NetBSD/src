@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2023 Free Software Foundation, Inc.
+   Copyright 2008-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,5 +33,5 @@ int main ()
 {
   xyz = 0;	/* break in main */
   foo ();
-  return (xyz == 2 ? 0 : 1);
-}		/* end of main */
+  return (xyz == 2 ? 0 : 1);	/* end of main */
+}

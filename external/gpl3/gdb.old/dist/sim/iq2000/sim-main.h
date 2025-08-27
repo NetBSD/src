@@ -9,11 +9,9 @@
    one of -scache/-pbb. ???? */
 #define WITH_SCACHE_PBB 1
 
-#include "symcat.h"
 #include "sim-basics.h"
-#include "cgen-types.h"
-#include "iq2000-desc.h"
-#include "iq2000-opc.h"
+#include "opcodes/iq2000-desc.h"
+#include "opcodes/iq2000-opc.h"
 #include "arch.h"
 
 /* Pull in IQ2000_{DATA,INSN}_{MASK,VALUE}.  */
@@ -22,15 +20,7 @@
 #include "sim-base.h"
 #include "cgen-sim.h"
 
-/* The _sim_cpu struct.  */
-
-struct _sim_cpu {
-  /* sim/common cpu base.  */
-  sim_cpu_base base;
-
-  /* Static parts of cgen.  */
-  CGEN_CPU cgen_cpu;
-
+struct iq2000_sim_cpu {
   /* CPU specific parts go here.
      Note that in files that don't need to access these pieces WANT_CPU_FOO
      won't be defined and thus these parts won't appear.  This is ok in the
@@ -42,11 +32,12 @@ struct _sim_cpu {
   IQ2000BF_CPU_DATA cpu_data;
 #endif
 };
+#define IQ2000_SIM_CPU(cpu) ((struct iq2000_sim_cpu *) CPU_ARCH_DATA (cpu))
 
 /* Misc.  */
 
 /* Catch address exceptions.  */
-extern SIM_CORE_SIGNAL_FN iq2000_core_signal;
+extern SIM_CORE_SIGNAL_FN iq2000_core_signal ATTRIBUTE_NORETURN;
 #define SIM_CORE_SIGNAL(SD,CPU,CIA,MAP,NR_BYTES,ADDR,TRANSFER,ERROR) \
 iq2000_core_signal ((SD), (CPU), (CIA), (MAP), (NR_BYTES), (ADDR), \
 		  (TRANSFER), (ERROR))

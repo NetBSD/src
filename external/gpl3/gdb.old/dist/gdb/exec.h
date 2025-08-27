@@ -1,6 +1,6 @@
 /* Work with executable files, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,7 @@ struct objfile;
 
 /* Builds a section table, given args BFD.  */
 
-extern target_section_table build_section_table (struct bfd *);
+extern std::vector<target_section> build_section_table (struct bfd *);
 
 /* VFORK_CHILD is a child vforked and its program space is shared with its
    parent.  This pushes the exec target on that inferior's target stack if
@@ -75,7 +75,7 @@ extern enum target_xfer_status
   section_table_xfer_memory_partial (gdb_byte *,
 				     const gdb_byte *,
 				     ULONGEST, ULONGEST, ULONGEST *,
-				     const target_section_table &,
+				     const std::vector<target_section> &,
 				     gdb::function_view<bool
 				       (const struct target_section *)> match_cb
 					 = nullptr);
@@ -95,7 +95,7 @@ extern void exec_set_section_address (const char *, int, CORE_ADDR);
    special cased --- it's filename is omitted; if it is the executable
    file, its entry point is printed.  */
 
-extern void print_section_info (const target_section_table *table,
+extern void print_section_info (const std::vector<target_section> *table,
 				bfd *abfd);
 
 /* Helper function that attempts to open the symbol file at EXEC_FILE_HOST.

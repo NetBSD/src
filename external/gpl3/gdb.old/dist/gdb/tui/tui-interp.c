@@ -1,6 +1,6 @@
 /* TUI Interpreter definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "cli/cli-interp.h"
 #include "interps.h"
-#include "top.h"
+#include "ui.h"
 #include "event-top.h"
 #include "gdbsupport/event-loop.h"
 #include "ui-out.h"
@@ -49,8 +48,11 @@ public:
   void init (bool top_level) override;
   void resume () override;
   void suspend () override;
-  gdb_exception exec (const char *command_str) override;
+  void exec (const char *command_str) override;
   ui_out *interp_ui_out () override;
+
+  bool supports_new_ui () const override
+  { return false; }
 };
 
 /* Cleanup the tui before exiting.  */
@@ -149,7 +151,7 @@ tui_interp::interp_ui_out ()
     return tui_old_uiout;
 }
 
-gdb_exception
+void
 tui_interp::exec (const char *command_str)
 {
   internal_error (_("tui_exec called"));

@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2023 Free Software Foundation, Inc.
+Copyright (C) 1996-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -17,7 +17,8 @@ This file is part of the GNU simulators.
    License for more details.
 
    You should have received a copy of the GNU General Public License along
-   with this program; if not, see <http://www.gnu.org/licenses/>.
+   with this program; if not, write to the Free Software Foundation, Inc.,
+   51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
 
 */
 
@@ -621,7 +622,7 @@ frvbf_h_acc40S_set (SIM_CPU *current_cpu, UINT regno, DI newval)
 
 /* Get the value of h-acc40U.  */
 
-UDI
+DI
 frvbf_h_acc40U_get (SIM_CPU *current_cpu, UINT regno)
 {
   return GET_H_ACC40U (regno);
@@ -630,7 +631,7 @@ frvbf_h_acc40U_get (SIM_CPU *current_cpu, UINT regno)
 /* Set a value for h-acc40U.  */
 
 void
-frvbf_h_acc40U_set (SIM_CPU *current_cpu, UINT regno, UDI newval)
+frvbf_h_acc40U_set (SIM_CPU *current_cpu, UINT regno, DI newval)
 {
   SET_H_ACC40U (regno, newval);
 }

@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux UltraSPARC.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "dwarf2/frame.h"
@@ -52,7 +52,7 @@
 /* Signal trampoline support.  */
 
 static void sparc64_linux_sigframe_init (const struct tramp_frame *self,
-					 frame_info_ptr this_frame,
+					 const frame_info_ptr &this_frame,
 					 struct trad_frame_cache *this_cache,
 					 CORE_ADDR func);
 
@@ -73,7 +73,7 @@ static const struct tramp_frame sparc64_linux_rt_sigframe =
 
 static void
 sparc64_linux_sigframe_init (const struct tramp_frame *self,
-			     frame_info_ptr this_frame,
+			     const frame_info_ptr &this_frame,
 			     struct trad_frame_cache *this_cache,
 			     CORE_ADDR func)
 {
@@ -139,7 +139,7 @@ sparc64_linux_report_signal_info (struct gdbarch *gdbarch, struct ui_out *uiout,
       if (si_code >= SEGV_ACCADI && si_code <= SEGV_ADIPERR)
 	addr = parse_and_eval_long ("$_siginfo._sifields._sigfault.si_addr");
     }
-  catch (const gdb_exception &exception)
+  catch (const gdb_exception_error &exception)
     {
       return;
     }
@@ -176,7 +176,7 @@ sparc64_linux_report_signal_info (struct gdbarch *gdbarch, struct ui_out *uiout,
    address.  */
 
 static CORE_ADDR
-sparc64_linux_step_trap (frame_info_ptr frame, unsigned long insn)
+sparc64_linux_step_trap (const frame_info_ptr &frame, unsigned long insn)
 {
   /* __NR_rt_sigreturn is 101  */
   if ((insn == 0x91d0206d)
@@ -306,7 +306,7 @@ sparc64_linux_get_syscall_number (struct gdbarch *gdbarch,
 /* Implement the "get_longjmp_target" gdbarch method.  */
 
 static int
-sparc64_linux_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
+sparc64_linux_get_longjmp_target (const frame_info_ptr &frame, CORE_ADDR *pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   CORE_ADDR jb_addr;
