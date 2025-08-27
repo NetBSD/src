@@ -35,7 +35,7 @@ has_stepped (SIM_DESC sd,
 }
 
 
-/* Generic resume - assumes the existance of sim_engine_run */
+/* Generic resume - assumes the existence of sim_engine_run */
 
 void
 sim_resume (SIM_DESC sd,

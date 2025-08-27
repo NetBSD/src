@@ -582,7 +582,7 @@ typedef struct ctf_stype
     uint32_t ctt_size;
     uint32_t ctt_type;
   };
-} ctf_type_t;
+} ctf_stype_t;
 @end verbatim
 
 If @code{ctt_size} is the #define @code{CTF_LSIZE_SENT}, 0xffffffff, this type

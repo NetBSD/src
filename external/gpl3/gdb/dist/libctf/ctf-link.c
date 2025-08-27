@@ -336,6 +336,8 @@ ctf_create_per_cu (ctf_dict_t *fp, ctf_dict_t *input, const char *cu_name)
 	  return NULL;
 	}
 
+      /* The deduplicator is ready for strict enumerator value checking.  */
+      cu_fp->ctf_flags |= LCTF_STRICT_NO_DUP_ENUMERATORS;
       ctf_import_unref (cu_fp, fp);
 
       if ((dynname = ctf_new_per_cu_name (fp, ctf_name)) == NULL)
@@ -1221,7 +1223,7 @@ ctf_link_deduplicating_per_cu (ctf_dict_t *fp)
 							&parents)) == NULL)
 	{
 	  ctf_next_destroy (i);
-	  goto err_inputs;
+	  goto err_open_inputs;
 	}
 
       if ((out = ctf_create (&err)) == NULL)
@@ -1233,6 +1235,9 @@ ctf_link_deduplicating_per_cu (ctf_dict_t *fp)
 	  goto err_inputs;
 	}
 
+      /* The deduplicator is ready for strict enumerator value checking.  */
+      out->ctf_flags |= LCTF_STRICT_NO_DUP_ENUMERATORS;
+
       /* Share the atoms table to reduce memory usage.  */
       out->ctf_dedup_atoms = fp->ctf_dedup_atoms_alloc;
 
@@ -1242,7 +1247,7 @@ ctf_link_deduplicating_per_cu (ctf_dict_t *fp)
 	 dictionary.  */
       ctf_cuname_set (out, out_name);
 
-      if (ctf_dedup (out, inputs, ninputs, parents, 1) < 0)
+      if (ctf_dedup (out, inputs, ninputs, 1) < 0)
 	{
 	  ctf_set_errno (fp, ctf_errno (out));
 	  ctf_err_warn (fp, 0, 0, _("CU-mapped deduplication failed for %s"),
@@ -1401,7 +1406,7 @@ ctf_link_deduplicating (ctf_dict_t *fp)
   if (ninputs == 1 && ctf_cuname (inputs[0]) != NULL)
     ctf_cuname_set (fp, ctf_cuname (inputs[0]));
 
-  if (ctf_dedup (fp, inputs, ninputs, parents, 0) < 0)
+  if (ctf_dedup (fp, inputs, ninputs, 0) < 0)
     {
       ctf_err_warn (fp, 0, 0, _("deduplication failed for %s"),
 		    ctf_link_input_name (fp));
@@ -1498,6 +1503,7 @@ int
 ctf_link (ctf_dict_t *fp, int flags)
 {
   int err;
+  int oldflags = fp->ctf_flags;
 
   fp->ctf_link_flags = flags;
 
@@ -1515,9 +1521,9 @@ ctf_link (ctf_dict_t *fp, int flags)
   if (fp->ctf_link_outputs == NULL)
     return ctf_set_errno (fp, ENOMEM);
 
-  fp->ctf_flags |= LCTF_LINKING;
+  fp->ctf_flags |= LCTF_LINKING & LCTF_STRICT_NO_DUP_ENUMERATORS;
   ctf_link_deduplicating (fp);
-  fp->ctf_flags &= ~LCTF_LINKING;
+  fp->ctf_flags = oldflags;
 
   if ((ctf_errno (fp) != 0) && (ctf_errno (fp) != ECTF_NOCTFDATA))
     return -1;
@@ -1537,14 +1543,14 @@ ctf_link (ctf_dict_t *fp, int flags)
 	  const char *to = (const char *) k;
 	  if (ctf_create_per_cu (fp, NULL, to) == NULL)
 	    {
-	      fp->ctf_flags &= ~LCTF_LINKING;
+	      fp->ctf_flags = oldflags;
 	      ctf_next_destroy (i);
 	      return -1;			/* Errno is set for us.  */
 	    }
 	}
       if (err != ECTF_NEXT_END)
 	{
-	  fp->ctf_flags &= ~LCTF_LINKING;
+	  fp->ctf_flags = oldflags;
 	  ctf_err_warn (fp, 1, err, _("iteration error creating empty CUs"));
 	  return ctf_set_errno (fp, err);
 	}
@@ -2040,6 +2046,15 @@ ctf_link_write (ctf_dict_t *fp, size_t *size, size_t threshold)
 	goto err_no;
       }
 
+  /* Turn off the is-linking flag on all the dicts in this link: if the strict enum
+     checking flag is off on the parent, turn it off on all the children too.  */
+  for (i = 0; i < arg.i; i++)
+    {
+      arg.files[i]->ctf_flags &= ~LCTF_LINKING;
+      if (!(fp->ctf_flags & LCTF_STRICT_NO_DUP_ENUMERATORS))
+	arg.files[i]->ctf_flags &= ~LCTF_STRICT_NO_DUP_ENUMERATORS;
+    }
+
   *size = fsize;
   free (arg.names);
   free (arg.files);
@@ -2057,9 +2072,13 @@ ctf_link_write (ctf_dict_t *fp, size_t *size, size_t threshold)
  err_no:
   ctf_set_errno (fp, errno);
 
-  /* Turn off the is-linking flag on all the dicts in this link.  */
+  /* Turn off the is-linking flag on all the dicts in this link, as above.  */
   for (i = 0; i < arg.i; i++)
-    arg.files[i]->ctf_flags &= ~LCTF_LINKING;
+    {
+      arg.files[i]->ctf_flags &= ~LCTF_LINKING;
+      if (!(fp->ctf_flags & LCTF_STRICT_NO_DUP_ENUMERATORS))
+	arg.files[i]->ctf_flags &= ~LCTF_STRICT_NO_DUP_ENUMERATORS;
+    }
  err:
   free (buf);
   if (f)

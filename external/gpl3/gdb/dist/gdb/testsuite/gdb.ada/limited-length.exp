@@ -73,18 +73,15 @@ set elem_size [get_valueof "/d" "(Large_1d_Array(1)'Size + 7) / 8" "*unknown*"]
 gdb_test_no_output "set max-value-size [expr $elem_size * $elements]"
 
 with_test_prefix "with reduced max-value size" {
-    gdb_test "print Large_1d_Array" \
-	"value of type `.*' requires $decimal bytes,\
-	 which is more than max-value-size"
-    gdb_test "output Large_1d_Array" \
-	"value of type `.*' requires $decimal bytes,\
-	 which is more than max-value-size"
-    gdb_test "print Large_3d_Array" \
-	"value of type `.*' requires $decimal bytes,\
-	 which is more than max-value-size"
-    gdb_test "output Large_3d_Array" \
-	"value of type `.*' requires $decimal bytes,\
-	 which is more than max-value-size"
+    # GNAT historically named this type, but as the array type is
+    # nameless, this accepts both variants.
+    set response \
+	"value (of type `.*' )?requires $decimal bytes, which is more than max-value-size"
+
+    gdb_test "print Large_1d_Array" $response
+    gdb_test "output Large_1d_Array" $response
+    gdb_test "print Large_3d_Array" $response
+    gdb_test "output Large_3d_Array" $response
 }
 
 with_test_prefix "with reduced print -elements flag" {

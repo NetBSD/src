@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_FILE_H
-#define TUI_TUI_FILE_H
+#ifndef GDB_TUI_TUI_FILE_H
+#define GDB_TUI_TUI_FILE_H
 
 #include "ui-file.h"
 
@@ -41,4 +41,4 @@ private:
   bool m_buffered;
 };
 
-#endif /* TUI_TUI_FILE_H */
+#endif /* GDB_TUI_TUI_FILE_H */

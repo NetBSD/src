@@ -93,7 +93,7 @@ gdb_test_no_output "set var slow = 0"
 test_all_threads "fast" 0
 
 runto_main
-gdb_test "break thread_function" "Breakpoint \[0-9\]+ at 0x\[0-9a-f\]+: file .*print-threads.c, line \[0-9\]*\\." "break thread_function (2)"
+gdb_test "break thread_function" "Breakpoint \[0-9\]+ at 0x\[0-9a-f\]+: file .*print-threads.c, line \[0-9\]*\\." "break thread_function, 2"
 gdb_test_no_output "set var slow = 1"
 # Extend the timeout for slower tests.
 set timeout [expr $oldtimeout + 120]
@@ -101,8 +101,8 @@ test_all_threads "slow" 0
 set timeout $oldtimeout
 
 runto_main
-gdb_test "break thread_function" "Breakpoint \[0-9\]+ at 0x\[0-9a-f\]+: file .*print-threads.c, line \[0-9\]*\\." "break thread_function (3)"
-gdb_test_no_output "set var slow = 1" "set var slow = 1 (2)"
+gdb_test "break thread_function" "Breakpoint \[0-9\]+ at 0x\[0-9a-f\]+: file .*print-threads.c, line \[0-9\]*\\." "break thread_function, 3"
+gdb_test_no_output "set var slow = 1" "set var slow = 1, 2"
 gdb_breakpoint "kill"
 # Extend the timeout for slower tests.
 set timeout [expr $oldtimeout + 120]

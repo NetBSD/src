@@ -148,7 +148,7 @@ proc test_reconnect { } {
     }
 }
 
-# Test 'breakpoint-modified' notification is emited when pending tracepoints are
+# Test 'breakpoint-modified' notification is emitted when pending tracepoints are
 # resolved.
 
 proc test_pending_resolved { } {

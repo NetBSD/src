@@ -189,7 +189,7 @@ proc start_inferior { testname expect_reread } {
 	}
 
 	gdb_assert { $expect_reread == $saw_reread } \
-	    "check symbol re-read behaviour"
+	    "check symbol re-read behavior"
     }
 }
 

@@ -476,8 +476,7 @@ elf_vax_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (ret, abfd,
 				      elf_vax_link_hash_newfunc,
-				      sizeof (struct elf_vax_link_hash_entry),
-				      GENERIC_ELF_DATA))
+				      sizeof (struct elf_vax_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1849,6 +1848,7 @@ elf_vax_plt_sym_val (bfd_vma i, const asection *plt,
 
 #define TARGET_LITTLE_SYM		vax_elf32_vec
 #define TARGET_LITTLE_NAME		"elf32-vax"
+#define ELF_TARGET_ID			VAX_ELF_DATA
 #define ELF_MACHINE_CODE		EM_VAX
 #define ELF_MAXPAGESIZE			0x1000
 

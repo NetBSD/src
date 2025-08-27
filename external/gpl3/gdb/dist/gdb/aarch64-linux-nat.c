@@ -496,12 +496,11 @@ fetch_tlsregs_from_thread (struct regcache *regcache)
   gdb_assert (regno != -1);
   gdb_assert (tdep->tls_register_count > 0);
 
-  uint64_t tpidrs[tdep->tls_register_count];
-  memset(tpidrs, 0, sizeof(tpidrs));
+  std::vector<uint64_t> tpidrs (tdep->tls_register_count);
 
   struct iovec iovec;
-  iovec.iov_base = tpidrs;
-  iovec.iov_len = sizeof (tpidrs);
+  iovec.iov_base = tpidrs.data ();
+  iovec.iov_len = tpidrs.size () * sizeof (tpidrs[0]);
 
   int tid = get_ptrace_pid (regcache->ptid ());
   if (ptrace (PTRACE_GETREGSET, tid, NT_ARM_TLS, &iovec) != 0)
@@ -524,8 +523,7 @@ store_tlsregs_to_thread (struct regcache *regcache)
   gdb_assert (regno != -1);
   gdb_assert (tdep->tls_register_count > 0);
 
-  uint64_t tpidrs[tdep->tls_register_count];
-  memset(tpidrs, 0, sizeof(tpidrs));
+  std::vector<uint64_t> tpidrs (tdep->tls_register_count);
 
   for (int i = 0; i < tdep->tls_register_count; i++)
     {
@@ -536,8 +534,8 @@ store_tlsregs_to_thread (struct regcache *regcache)
     }
 
   struct iovec iovec;
-  iovec.iov_base = &tpidrs;
-  iovec.iov_len = sizeof (tpidrs);
+  iovec.iov_base = tpidrs.data ();
+  iovec.iov_len = tpidrs.size () * sizeof (tpidrs[0]);
 
   int tid = get_ptrace_pid (regcache->ptid ());
   if (ptrace (PTRACE_SETREGSET, tid, NT_ARM_TLS, &iovec) != 0)
@@ -945,7 +943,7 @@ aarch64_linux_nat_target::stopped_data_address (CORE_ADDR *addr_p)
      kernel can potentially be tagged addresses.  */
   struct gdbarch *gdbarch = thread_architecture (inferior_ptid);
   const CORE_ADDR addr_trap
-    = gdbarch_remove_non_address_bits (gdbarch, (CORE_ADDR) siginfo.si_addr);
+    = aarch64_remove_non_address_bits (gdbarch, (CORE_ADDR) siginfo.si_addr);
 
   /* Check if the address matches any watched address.  */
   state = aarch64_get_debug_reg_state (inferior_ptid.pid ());

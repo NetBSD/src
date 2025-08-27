@@ -341,7 +341,7 @@ ldc_reg_sbr:
 
 	mov	#0xaaaaaaaa, er0
 	ldc	er0, sbr	; set sbr to 0xaaaaaaaa
- 	stc	sbr, er1	; retreive and check sbr value
+ 	stc	sbr, er1	; retrieve and check sbr value
 
 	test_h_gr32 0xaaaaaaaa er1
 	test_h_gr32 0xaaaaaaaa er0 ; Register 0 modified by test procedure.
@@ -358,7 +358,7 @@ ldc_reg_vbr:
 
 	mov	#0xaaaaaaaa, er0
 	ldc	er0, vbr	; set sbr to 0xaaaaaaaa
-	stc	vbr, er1	; retreive and check sbr value
+	stc	vbr, er1	; retrieve and check sbr value
 
 	test_h_gr32 0xaaaaaaaa er1
 	test_h_gr32 0xaaaaaaaa er0 ; Register 0 modified by test procedure.

@@ -61,6 +61,12 @@ if {[gdb_spawn]} {
     return
 }
 
+gdb_test_multiple "" "initial prompt" {
+    -re "^$gdb_prompt $" {
+	pass $gdb_test_name
+    }
+}
+
 gdb_load $binfile
 gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport
 

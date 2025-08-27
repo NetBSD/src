@@ -26,10 +26,8 @@ if {[is_aarch64_target]} {
     }
 }
 
-foreach_with_prefix scenario {all minimal} {
-    set flags [list debug \
-		   optimize=-O2 \
-		   additional_flags=-fgnat-encodings=$scenario]
+foreach_gnat_encoding scenario flags {all minimal} {
+    lappend flags debug optimize=-O2
 
     if {[gdb_compile_ada "${srcfile}" "${binfile}-${scenario}" executable $flags] != ""} {
 	return -1

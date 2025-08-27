@@ -102,7 +102,7 @@ with_test_prefix "continue" {
     }
 }
 
-# Try stepping the program.  Stepping may go through diferent code
+# Try stepping the program.  Stepping may go through different code
 # paths in the target backends.
 with_test_prefix "stepi" {
     test {

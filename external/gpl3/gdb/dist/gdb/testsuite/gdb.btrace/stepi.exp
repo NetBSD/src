@@ -100,7 +100,7 @@ with_test_prefix "reverse-nexti.1" {
 # we can't reverse-nexti any further
 with_test_prefix "reverse-nexti.2" {
     gdb_test "reverse-nexti" \
-	"No more reverse-execution history\.\r\n.*main\.2.*" \
+	"Reached end of recorded history; stopping\.\r\n.*main\.2.*" \
 	"reverse-nexti.2"
     check_replay_at 1
 }
@@ -140,20 +140,20 @@ with_test_prefix "goto begin" {
 
     with_test_prefix "reverse-stepi" {
 	gdb_test "reverse-stepi" \
-	    "No more reverse-execution history\.\r\n.*main\.2.*" \
+	    "Reached end of recorded history; stopping\.\r\n.*main\.2.*" \
 	    "reverse-stepi.1"
 	gdb_test "reverse-stepi" \
-	    "No more reverse-execution history\.\r\n.*main\.2.*" \
+	    "Reached end of recorded history; stopping\.\r\n.*main\.2.*" \
 	    "reverse-stepi.2"
 	check_replay_at 1
     }
 
     with_test_prefix "reverse-nexti" {
 	gdb_test "reverse-nexti" \
-	    "No more reverse-execution history\.\r\n.*main\.2.*" \
+	    "Reached end of recorded history; stopping\.\r\n.*main\.2.*" \
 	    "reverse-nexti.1"
 	gdb_test "reverse-nexti" \
-	    "No more reverse-execution history\.\r\n.*main\.2.*" \
+	    "Reached end of recorded history; stopping\.\r\n.*main\.2.*" \
 	    "reverse-nexti.2"
 	check_replay_at 1
     }
@@ -169,10 +169,10 @@ with_test_prefix "goto begin" {
 with_test_prefix "reverse-stepi" {
     gdb_test "reverse-stepi" ".*main\.2.*" "reverse-stepi.1"
     gdb_test "reverse-stepi" \
-	"No more reverse-execution history\.\r\n.*main\.2.*" \
+	"Reached end of recorded history; stopping\.\r\n.*main\.2.*" \
 	"reverse-stepi.2"
     gdb_test "reverse-stepi" \
-	"No more reverse-execution history\.\r\n.*main\.2.*" \
+	"Reached end of recorded history; stopping\.\r\n.*main\.2.*" \
 	"reverse-stepi.3"
     check_replay_at 1
 }

@@ -138,7 +138,9 @@ gdb_test "p s2" \
 # This test verifies that GDB can print a pieced value casted to a
 # different type.
 gdb_test "p (int \[\]) s1" " = \\{1, <optimized out>\\}"
-gdb_test "p (short \[\]) s1" " = \\{1, 0, 0, <optimized out>\\}"
+set re_little [string_to_regexp "{1, 0, 0, <optimized out>}"]
+set re_big  [string_to_regexp "{0, 1, 0, <optimized out>}"]
+gdb_test {p (short []) s1} " = ($re_little|$re_big)"
 
 # Test for correct output if the size of the original object is not a
 # multiple of the array's element size.

@@ -110,7 +110,7 @@ struct cmdscm_completer
 static const struct cmdscm_completer cmdscm_completers[] =
 {
   { "COMPLETE_NONE", noop_completer },
-  { "COMPLETE_FILENAME", filename_completer },
+  { "COMPLETE_FILENAME", filename_maybe_quoted_completer },
   { "COMPLETE_LOCATION", location_completer },
   { "COMPLETE_COMMAND", command_completer },
   { "COMPLETE_SYMBOL", symbol_completer },

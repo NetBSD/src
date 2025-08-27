@@ -73,7 +73,6 @@ proc finish_test { pattern msg } {
 	    # don't gracefully fall back to single-stepping.
 	    setup_kfail gdb/8841 "i?86-*-linux*"
 	    setup_kfail gdb/8841 "*-*-openbsd*"
-	    setup_kfail gdb/8841 "nios2-*-linux*"
 	    fail "$msg (could not set breakpoint)"
 	}
 	-re "$pattern.*${gdb_prompt} $" {

@@ -1,0 +1,214 @@
+# Copyright 2023 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Setup two inferiors.  Select one inferior and create a pending
+# thread specific breakpoint in the other inferior.
+#
+# Delete the selected inferior (the one for which the thread specific
+# breakpoint doesn't apply), and check that the breakpoint still exists.
+#
+# Repeat this process, but this time, create an inferior specific
+# breakpoint.
+
+# The plain remote target can't do multiple inferiors.
+require !use_gdb_stub
+
+standard_testfile
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile]} {
+    return -1
+}
+
+# Setup for the tests.  Create two inferiors, both running the global
+# BINFILE, and proceed to main in both inferiors.  Delete all
+# breakpoints, and check that we do have two threads.
+#
+# Return true after a successful setup, otherwise, return false.
+proc test_setup {} {
+    clean_restart $::binfile
+
+    if {![runto_main]} {
+	return 0
+    }
+
+    gdb_test "add-inferior -exec ${::binfile}" "Added inferior 2.*" \
+	"add inferior 2"
+    gdb_test "inferior 2" "Switching to inferior 2 .*" \
+	"select inferior 2"
+
+    if {![runto_main]} {
+	return 0
+    }
+
+    delete_breakpoints
+
+    gdb_test "info threads" \
+	[multi_line \
+	     "  Id\\s+Target Id\\s+Frame\\s*" \
+	     "  1\\.1\\s+\[^\r\n\]+" \
+	     "\\* 2\\.1\\s+\[^\r\n\]+"] \
+	"check we have the expected threads"
+
+    return 1
+}
+
+# Assuming inferior 2 is already selected, kill the current inferior
+# (inferior 2), select inferior 1, and then remove inferior 2.
+proc kill_and_remove_inferior_2 {} {
+    gdb_test "kill" "" "kill inferior 2" \
+	"Kill the program being debugged.*y or n. $" "y"
+
+    gdb_test "inferior 1" "Switching to inferior 1 .*" \
+	"select inferior 1"
+
+    gdb_test_no_output "remove-inferiors 2"
+}
+
+# Setup two inferiors, then create a breakpoint.  If BP_PENDING is
+# true then the breakpoint will be pending, otherwise, the breakpoint
+# will be non-pending.
+#
+# BP_TYPE is either 'thread' or 'inferior', and indicates if the
+# created breakpoint should be thread or inferior specific.
+#
+# The breakpoint is created while inferior 2 is selected, and the
+# thread/inferior restriction always identifies inferior 1.
+#
+# Then inferior 2 is killed and removed.
+#
+# Finally, check that the breakpoint still exists and correctly refers
+# to inferior 1.
+proc do_bp_test { bp_type bp_pending } {
+    if {![test_setup]} {
+	return
+    }
+
+    if { $bp_pending } {
+	set bp_func "bar"
+    } else {
+	set bp_func "foo"
+    }
+
+    if { $bp_type eq "thread" } {
+	set bp_restriction "thread 1.1"
+    } else {
+	set bp_restriction "inferior 1"
+    }
+
+    gdb_breakpoint "$bp_func $bp_restriction" allow-pending
+    set bp_number [get_integer_valueof "\$bpnum" "INVALID" \
+		       "get b/p number for previous breakpoint"]
+
+    if { $bp_restriction eq "thread 1.1" } {
+	set bp_after_restriction "thread 1"
+    } else {
+	set bp_after_restriction $bp_restriction
+    }
+
+    if { $bp_pending } {
+	set bp_pattern_before \
+	    [multi_line \
+		 "$bp_number\\s+breakpoint\\s+keep\\s+y\\s+<PENDING>\\s+${bp_func}" \
+		 "\\s+stop only in [string_to_regexp $bp_restriction]"]
+	set bp_pattern_after \
+	    [multi_line \
+		 "$bp_number\\s+breakpoint\\s+keep\\s+y\\s+<PENDING>\\s+${bp_func}" \
+		 "\\s+stop only in [string_to_regexp $bp_after_restriction]"]
+    } else {
+	set bp_pattern_before \
+	    [multi_line \
+		 "$bp_number\\s+breakpoint\\s+keep\\s+y\\s+$::hex in $bp_func at \[^\r\n\]+ inf 1" \
+		 "\\s+stop only in [string_to_regexp $bp_restriction]"]
+
+	set bp_pattern_after \
+	    [multi_line \
+		 "$bp_number\\s+breakpoint\\s+keep\\s+y\\s+$::hex in $bp_func at \[^\r\n\]+" \
+		 "\\s+stop only in [string_to_regexp $bp_after_restriction]"]
+    }
+
+    gdb_test "info breakpoints" $bp_pattern_before \
+	"info breakpoints before inferior removal"
+
+    kill_and_remove_inferior_2
+
+    gdb_test "info breakpoints" $bp_pattern_after \
+	"info breakpoints after inferior removal"
+}
+
+# Setup two inferiors, then create a dprintf.  If BP_PENDING is
+# true then the dprintf will be pending, otherwise, the dprintf
+# will be non-pending.
+#
+# The dprintf is created while inferior 2 is selected.  Then inferior
+# 2 is killed and removed.
+#
+# Finally, check that the dprintf still exists.
+proc do_dprintf_test { bp_pending } {
+    if {![test_setup]} {
+	return
+    }
+
+    if { $bp_pending } {
+	set bp_func "bar"
+
+	gdb_test "dprintf $bp_func,\"in $bp_func\"" ".*" \
+	    "create dprintf breakpoint" \
+	    "Make dprintf pending on future shared library load\\? \\(y or .n.\\) $" "y"
+    } else {
+	set bp_func "foo"
+
+	gdb_test "dprintf $bp_func,\"in $bp_func\"" ".*" \
+	    "create dprintf breakpoint"
+    }
+
+    set bp_number [get_integer_valueof "\$bpnum" "INVALID" \
+		       "get b/p number for previous breakpoint"]
+
+    if { $bp_pending } {
+	set bp_pattern_before \
+	    [multi_line \
+		 "$bp_number\\s+dprintf\\s+keep\\s+y\\s+<PENDING>\\s+${bp_func}" \
+		 "\\s+printf \"in $bp_func\""]
+	set bp_pattern_after $bp_pattern_before
+    } else {
+	set bp_pattern_before \
+	    [multi_line \
+		 "$bp_number\\s+dprintf\\s+keep\\s+y\\s+<MULTIPLE>\\s*" \
+		 "\\s+printf \"in $bp_func\"" \
+		 "$bp_number\\.1\\s+y\\s+$::hex in $bp_func at \[^\r\n\]+ inf 1" \
+		 "$bp_number\\.2\\s+y\\s+$::hex in $bp_func at \[^\r\n\]+ inf 2"]
+
+	set bp_pattern_after \
+	    [multi_line \
+		 "$bp_number\\s+dprintf\\s+keep\\s+y\\s+$::hex in $bp_func at \[^\r\n\]+" \
+		 "\\s+printf \"in $bp_func\""]
+    }
+
+    gdb_test "info breakpoints" $bp_pattern_before \
+	"info breakpoints before inferior removal"
+
+    kill_and_remove_inferior_2
+
+    gdb_test "info breakpoints" $bp_pattern_after \
+	"info breakpoints after inferior removal"
+}
+
+foreach_with_prefix bp_pending { true false } {
+    foreach_with_prefix bp_type { thread inferior } {
+	do_bp_test $bp_type $bp_pending
+    }
+
+    do_dprintf_test $bp_pending
+}

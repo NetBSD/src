@@ -87,8 +87,9 @@ xmethods = []
 frame_filters = {}
 # Initial frame unwinders.
 frame_unwinders = []
-# Initial missing debug handlers.
-missing_debug_handlers = []
+# The missing file handlers.  Each item is a tuple with the form
+# (TYPE, HANDLER) where TYPE is a string either 'debug' or 'objfile'.
+missing_file_handlers = []
 
 
 def _execute_unwinders(pending_frame):
@@ -271,6 +272,61 @@ class Thread(threading.Thread):
             super().start()
 
 
+def _filter_missing_file_handlers(handlers, handler_type):
+    """Each list of missing file handlers is a list of tuples, the first
+    item in the tuple is a string either 'debug' or 'objfile' to
+    indicate what type of handler it is.  The second item in the tuple
+    is the actual handler object.
+
+    This function takes HANDLER_TYPE which is a string, either 'debug'
+    or 'objfile' and HANDLERS, a list of tuples.  The function returns
+    an iterable over all of the handler objects (extracted from the
+    tuples) which match HANDLER_TYPE.
+    """
+
+    return map(lambda t: t[1], filter(lambda t: t[0] == handler_type, handlers))
+
+
+def _handle_missing_files(pspace, handler_type, cb):
+    """Helper for _handle_missing_debuginfo and _handle_missing_objfile.
+
+    Arguments:
+        pspace: The gdb.Progspace in which we're operating.  Used to
+            lookup program space specific handlers.
+        handler_type: A string, either 'debug' or 'objfile', this is the
+            type of handler we're looking for.
+        cb: A callback which takes a handler and returns the result of
+            calling the handler.
+
+    Returns:
+        None: No suitable file could be found.
+        False: A handler has decided that the requested file cannot be
+                found, and no further searching should be done.
+        True: The file has been found and installed in a location
+                where GDB would normally look for it.  GDB should
+                repeat its lookup process, the file should now be in
+                place.
+        A string: This is the filename of where the missing file can
+                be found.
+    """
+
+    for handler in _filter_missing_file_handlers(
+        pspace.missing_file_handlers, handler_type
+    ):
+        if handler.enabled:
+            result = cb(handler)
+            if result is not None:
+                return result
+
+    for handler in _filter_missing_file_handlers(missing_file_handlers, handler_type):
+        if handler.enabled:
+            result = cb(handler)
+            if result is not None:
+                return result
+
+    return None
+
+
 def _handle_missing_debuginfo(objfile):
     """Internal function called from GDB to execute missing debug
     handlers.
@@ -293,18 +349,46 @@ def _handle_missing_debuginfo(objfile):
         A string: This is the filename of a file containing the
                   required debug information.
     """
+
     pspace = objfile.progspace
 
-    for handler in pspace.missing_debug_handlers:
-        if handler.enabled:
-            result = handler(objfile)
-            if result is not None:
-                return result
+    return _handle_missing_files(pspace, "debug", lambda h: h(objfile))
 
-    for handler in missing_debug_handlers:
-        if handler.enabled:
-            result = handler(objfile)
-            if result is not None:
-                return result
 
-    return None
+def _handle_missing_objfile(pspace, buildid, filename):
+    """Internal function called from GDB to execute missing objfile
+    handlers.
+
+    Run each of the currently registered, and enabled missing objfile
+    handler objects for the gdb.Progspace passed in as an argument,
+    and then from the global list.  Stop after the first handler that
+    returns a result other than None.
+
+    Arguments:
+        pspace: A gdb.Progspace for which the missing objfile handlers
+                should be run.  This is the program space in which an
+                objfile was found to be missing.
+        buildid: A string containing the build-id we're looking for.
+        filename: The filename of the file GDB tried to find but
+                  couldn't.  This is not where the file should be
+                  placed if found, in fact, this file might already
+                  exist on disk but have the wrong build-id.  This is
+                  mostly provided in order to be used in messages to
+                  the user.
+
+    Returns:
+        None: No objfile could be found for this build-id.
+        False: A handler has done all it can with for this build-id,
+               but no objfile could be found.
+        True: An objfile might have been installed by a handler, GDB
+              should check again.  The only place GDB checks is within
+              the .build-id sub-directory within the
+              debug-file-directory.  If the required file was not
+              installed there then GDB will not find it.
+        A string: This is the filename of a file containing the
+                  missing objfile.
+    """
+
+    return _handle_missing_files(
+        pspace, "objfile", lambda h: h(pspace, buildid, filename)
+    )

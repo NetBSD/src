@@ -231,6 +231,7 @@ optional arguments while skipping others.  Example:
 * TUI Windows In Python::       Implementing new TUI windows.
 * Disassembly In Python::       Instruction Disassembly In Python
 * Missing Debug Info In Python:: Handle missing debug info from Python.
+* Missing Objfiles In Python::  Handle objfiles from Python.
 @end menu
 
 @node Basic Python
@@ -1179,7 +1180,7 @@ refer to, @code{False} (the default) if they shouldn't.  Note that, unlike
 for the @code{print} command, references are not automatically expanded
 when using the @code{format_string} method or the @code{str}
 function.  There is no global @code{print} setting to change the default
-behaviour.
+behavior.
 
 @item actual_objects
 @code{True} if the representation of a pointer to an object should
@@ -1278,9 +1279,10 @@ fetched and converted to the given length.
 @end defun
 
 @defun Value.lazy_string (@r{[}encoding @r{[}, length@r{]]})
-If this @code{gdb.Value} represents a string, then this method
-converts the contents to a @code{gdb.LazyString} (@pxref{Lazy Strings
-In Python}).  Otherwise, this method will throw an exception.
+This method attempts to convert this @code{gdb.Value} to a
+@code{gdb.LazyString} (@pxref{Lazy Strings In Python}).  Values of
+array or pointer type can be converted; for other types, this method
+will throw an exception.
 
 If the optional @var{encoding} argument is given, it must be a string
 naming the encoding of the @code{gdb.LazyString}.  Some examples are:
@@ -4081,6 +4083,16 @@ The @code{gdb.Progspace} that is about to be removed from
 @value{GDBN}.
 @end defvar
 
+@item events.tui_enabled
+This is emitted when the TUI is enabled or disabled.  The event is of
+type @code{gdb.TuiEnabledEvent}, which has a single read-only
+attribute:
+
+@defvar TuiEnabledEvent.enabled
+If the TUI has just been enabled, this is @code{True}; otherwise it is
+@code{False}.
+@end defvar
+
 @end table
 
 @node Threads In Python
@@ -4314,6 +4326,11 @@ A @code{gdb.Record} object has the following methods:
 Move the replay position to the given @var{instruction}.
 @end defun
 
+@defun Record.clear ()
+Clear the trace data of the current recording.  This forces re-decoding of the
+trace for successive commands.
+@end defun
+
 The common @code{gdb.Instruction} class that recording method specific
 instruction objects inherit from, has the following attributes:
 
@@ -4367,6 +4384,19 @@ the current recording method.
 
 @defvar RecordGap.error_string
 A human readable string with the reason for the gap.
+@end defvar
+
+Some @value{GDBN} features write auxiliary information into the execution
+history.  This information is represented by a @code{gdb.RecordAuxiliary} object
+in the instruction list.  It has the following attributes:
+
+@defvar RecordAuxiliary.@var{number}
+An integer identifying this auxiliary.  @var{number} corresponds to the numbers
+seen in @code{record instruction-history} (@pxref{Process Record and Replay}).
+@end defvar
+
+@defvar RecordAuxiliary.data
+A string representation of the auxiliary data.
 @end defvar
 
 A @code{gdb.RecordFunctionSegment} object has the following attributes:
@@ -5370,10 +5400,11 @@ The @code{frame_filters} attribute is a dictionary of frame filter
 objects.  @xref{Frame Filter API}, for more information.
 @end defvar
 
-@defvar Progspace.missing_debug_handlers
-The @code{missing_debug_handlers} attribute is a list of the missing
-debug handler objects for this program space.  @xref{Missing Debug
-Info In Python}, for more information.
+@defvar Progspace.missing_file_handlers
+The @code{missing_file_handlers} attribute is a list of tuples.  Each
+tuple holds a missing-file handler object for this program space.  For
+more information, @pxref{Missing Debug Info In Python}, and
+@ref{Missing Objfiles In Python}.
 @end defvar
 
 A program space has the following methods:
@@ -5549,6 +5580,7 @@ Separate debug info objfiles are added with the
 @code{gdb.Objfile.add_separate_debug_file} method, described below.
 @end defvar
 
+@anchor{Objfile.build_id}
 @defvar Objfile.build_id
 The build ID of the objfile as a string.
 If the objfile does not have a build ID then the value is @code{None}.
@@ -6174,6 +6206,11 @@ local variables will require a frame, but other symbols will not.
 
 @defvar Symbol.is_argument
 @code{True} if the symbol is an argument of a function.
+@end defvar
+
+@defvar Symbol.is_artificial
+@code{True} if the symbol is artificial.  An artificial symbol is one
+that is introduced by the compiler.
 @end defvar
 
 @defvar Symbol.is_constant
@@ -6940,10 +6977,12 @@ A @code{gdb.LazyString} is represented in @value{GDBN} as an
 that will be used to encode that region of memory, and a @code{length}
 to delimit the region of memory that represents the string.  The
 difference between a @code{gdb.LazyString} and a string wrapped within
-a @code{gdb.Value} is that a @code{gdb.LazyString} will be treated
-differently by @value{GDBN} when printing.  A @code{gdb.LazyString} is
+a @code{gdb.Value} is that a @code{gdb.LazyString} will only be
 retrieved and encoded during printing, while a @code{gdb.Value}
 wrapping a string is immediately retrieved and encoded on creation.
+
+A @code{gdb.LazyString} can be created using the
+@code{gdb.Value.lazy_string} method (@pxref{Values From Inferior}).
 
 A @code{gdb.LazyString} object has the following functions:
 
@@ -7309,7 +7348,7 @@ contains the full contents of the window.  This is similar to calling
 @end defun
 
 The factory function that you supply should return an object
-conforming to the TUI window protocol.  These are the method that can
+conforming to the TUI window protocol.  These are the methods that can
 be called on this object, which is referred to below as the ``window
 object''.  The methods documented below are optional; if the object
 does not implement one of these methods, @value{GDBN} will not attempt
@@ -8137,6 +8176,189 @@ returns a value other than @code{None}, no further handlers are called
 for this objfile.
 @end defun
 
+@node Missing Objfiles In Python
+@subsubsection Missing Objfiles In Python
+@cindex python, handle missing objfiles
+
+When @value{GDBN} opens a core file, for example with the
+@kbd{core-file} command (@pxref{core-file command}), @value{GDBN} will
+attempt to load the corresponding executable and shared libraries.
+Often these files can be found on the local machine, but sometimes
+these files cannot be found, in which case the debugging experience
+will be restricted.
+
+If @value{GDBN} fails to locate a particular file then there is an
+opportunity for a Python extension to step in.  A Python extension can
+potentially locate the missing file using some platform- or
+project-specific steps, and inform @value{GDBN} of its location.  Or a
+Python extension might provide some platform- or project-specific
+advice to the user about how to obtain the missing file.
+
+A missing-objfile Python extension consists of a handler object which
+has the @code{name} and @code{enabled} attributes, and implements the
+@code{__call__} method.  When @value{GDBN} encounters a situation
+where a file cannot be found, but the build-id (@pxref{build ID}) for
+the missing file is known, then the @code{__call__} method is invoked
+to try and find the file.  Full details of how handlers are written
+can be found below.
+
+@subheading The @code{gdb.missing_objfile} Module
+
+@value{GDBN} comes with a @code{gdb.missing_objfile} module which
+contains the following class and global function:
+
+@deftp{class} gdb.missing_objfile.MissingObjfileHandler
+
+@code{MissingObjfileHandler} is a base class from which user-created
+handlers can derive, though it is not required that handlers derive
+from this class, so long as any user created handler has the
+@code{name} and @code{enabled} attributes, and implements the
+@code{__call__} method.
+
+@defun MissingObjfileHandler.__init__ (name)
+The @var{name} is a string used to reference this missing-objfile
+handler within some @value{GDBN} commands.  Valid names consist of the
+characters @samp{[-_a-zA-Z0-9]}, creating a handler with an invalid
+name raises a @code{ValueError} exception.
+@end defun
+
+@defun MissingObjfileHandler.__call__ (pspace, build_id, filename)
+
+Sub-classes must override the @code{__call__} method.  The
+@var{pspace} argument will be a @code{gdb.Progspace}
+(@pxref{Progspaces In Python}), this is the program space in which
+@value{GDBN} is looking for the missing file.
+
+The @var{build_id} argument is a string containing the build-id of the
+file that is missing, this will be in the same format as returned by
+@code{Objfile.build_id} (@pxref{Objfile.build_id}).
+
+The @var{filename} argument contains the name of the file that
+@value{GDBN} is looking for.  This information is provided to allow
+handlers to generate informative messages for the user.  A handler is
+not required to place the missing file at this location.  There might
+already be a file present at this location, but it might not match the
+required build-id, in which case @value{GDBN} will have ignored it.
+In some limited cases @value{GDBN} might not be able to establish the
+@var{filename} of the file it is searching for, in this case
+@value{GDBN} will use a string @samp{with build-id @var{build_id}} as a
+replacement.
+
+The return value from the @code{__call__} method indicates what
+@value{GDBN} should do next.  The possible return values are:
+
+@itemize @bullet
+@item @code{None}
+
+This indicates that this handler could not locate the missing file and
+@value{GDBN} should call any other registered handlers.
+
+@item @code{True}
+
+This indicates that this handler has installed the missing file into a
+location where @value{GDBN} would normally expect to find it.  The
+only location in which @value{GDBN} will look is within the
+@file{.build-id} sub-directory within the @var{debug-file-directory}
+(@pxref{debug-file-directory}).
+
+@value{GDBN} will repeat the normal lookup process, which should now
+find the previously missing file.
+
+If @value{GDBN} still doesn't find file after this second attempt,
+then the Python missing-objfile handlers are not invoked a second
+time, this prevents a badly behaved handler causing @value{GDBN} to
+get stuck in a loop.  @value{GDBN} will continue without the missing
+file, though this will degrade the debugging experience.
+
+@item @code{False}
+
+This indicates that this handler has done everything that it intends
+to do but the missing file could not be found.  @value{GDBN} will not
+call any other registered handlers to look for the missing file.
+@value{GDBN} will continue without the missing file, though this will
+degrade the debugging experience.
+
+@item A string
+
+The returned string should contain a filename.  @value{GDBN} will not
+call any further registered handlers, and will instead use the
+returned filename as the missing file.
+@end itemize
+
+Invoking the @code{__call__} method from this base class will raise a
+@code{NotImplementedError} exception.
+@end defun
+
+@defvar MissingObjfileHandler.name
+A read-only attribute which is a string, the name of this handler
+passed to the @code{__init__} method.
+@end defvar
+
+@defvar MissingObjfileHandler.enabled
+A modifiable attribute containing a boolean; when @code{True}, the
+handler is enabled, and will be used by @value{GDBN}.  When
+@code{False}, the handler has been disabled, and will not be used.
+@end defvar
+@end deftp
+
+@defun gdb.missing_objfile.register_handler (locus, handler, replace=@code{False})
+Register a new missing-objfile handler with @value{GDBN}.
+
+@var{handler} is an instance of a sub-class of
+@code{MissingObjfileHandler}, or at least an instance of an object that
+has the same attributes and methods as @code{MissingObjfileHandler}.
+
+@var{locus} specifies to which handler list to prepend @var{handler}.
+It can be either a @code{gdb.Progspace} (@pxref{Progspaces In Python})
+or @code{None}, in which case the handler is registered globally.  The
+newly registered @var{handler} will be called before any other handler
+from the same locus.  Two handlers in the same locus cannot have the
+same name, an attempt to add a handler with an already existing name
+raises an exception unless @var{replace} is @code{True}, in which case
+the old handler is deleted and the new handler is prepended to the
+selected handler list.
+
+@value{GDBN} first calls the handlers for the current program space,
+and then the globally registered handlers.  As soon as a handler
+returns a value other than @code{None}, no further handlers are
+called.
+@end defun
+
+@subheading Managing Missing-Objfile Handlers
+
+@value{GDBN} defines the following commands to manage registered
+missing-objfile handlers:
+
+@table @code
+
+@kindex info missing-objfile-handlers
+@item info missing-objfile-handlers @r{[} @var{locus} @r{[} @var{name-regexp} @r{]} @r{]}
+Lists all registered missing-objfile handlers.  Arguments @var{locus}
+and @var{name-regexp} are both optional and can be used to filter
+which handlers are listed.
+
+The @var{locus} argument should be either @kbd{global},
+@kbd{progspace}, or the name of an object file.  Only handlers
+registered for the specified locus will be listed.
+
+The @var{name-regexp} is a regular expression used to match against
+handler names.
+
+@kindex disable missing-objfile-handler
+@item disable missing-objfile-handler @r{[} @var{locus} @r{[} @var{name-regexp} @r{]} @r{]}
+The @var{locus} and @var{name-regexp} are interpreted as in @kbd{info
+missing-objfile-handlers} above, but instead of listing the matching
+handlers, all of the matching handlers are disabled.  The
+@code{enabled} field of each matching handler is set to @code{False}.
+
+@kindex enable missing-objfile-handler
+@item enable missing-objfile-handler @r{[} @var{locus} @r{[} @var{name-regexp} @r{]} @r{]}
+The @var{locus} and @var{name-regexp} are interpreted as in @kbd{info
+missing-objfile-handlers} above, but instead of listing the matching
+handlers, all of the matching handlers are enabled.  The
+@code{enabled} field of each matching handler is set to @code{True}.
+@end table
+
 @node Python Auto-loading
 @subsection Python Auto-loading
 @cindex Python auto-loading
@@ -8206,6 +8428,7 @@ registering objfile-specific pretty-printers and frame-filters.
 * gdb.printing::       Building and registering pretty-printers.
 * gdb.types::          Utilities for working with types.
 * gdb.prompt::         Utilities for prompt value substitution.
+* gdb.ptwrite::        Utilities for PTWRITE filter registration.
 @end menu
 
 @node gdb.printing
@@ -8396,3 +8619,153 @@ substitute_prompt ("frame: \f, args: \p@{print frame-arguments@}")
 "frame: main, args: scalars"
 @end smallexample
 @end table
+
+@node gdb.ptwrite
+@subsubsection gdb.ptwrite
+@cindex gdb.ptwrite
+
+This module provides additional functionality for recording programs that
+make use of the @code{PTWRITE} instruction.  @code{PTWRITE} is a x86
+instruction that allows to write values into the Intel Processor Trace
+(@pxref{Process Record and Replay}).
+The @value{NGCC} intrinsics for it are:
+@smallexample
+void _ptwrite32 (unsigned int a)
+void _ptwrite64 (unsigned __int64 a)
+@end smallexample
+
+If an inferior uses the instruction, @value{GDBN} by default inserts the
+raw payload value as auxiliary information into the execution history.
+Auxiliary information is by default printed during
+@code{record instruction-history}, @code{record function-call-history},
+and all stepping commands, and is accessible in Python as a
+@code{RecordAuxiliary} object (@pxref{Recordings In Python}).
+
+@exdent Sample program:
+@smallexample
+@group
+#include <immintrin.h>
+
+void
+ptwrite64 (unsigned long long value)
+@{
+  _ptwrite64 (value);
+@}
+@end group
+
+@group
+int
+main (void)
+@{
+  ptwrite64 (0x42);
+  return 0; /* break here.  */
+@}
+@end group
+@end smallexample
+
+
+@exdent @value{GDBN} output after recording the sample program in pt format:
+@smallexample
+@group
+(gdb) record instruction-history 12,14
+12         0x0040074c <ptwrite64+16>:   ptwrite %rbx
+13           [0x42]
+14         0x00400751 <ptwrite64+21>:   mov -0x8(%rbp),%rbx
+(gdb) record function-call-history
+1       main
+2       ptwrite64
+          [0x42]
+3       main
+@end group
+@end smallexample
+
+The @code{gdb.ptwrite} module allows customizing the default output of
+@code{PTWRITE} auxiliary information.  A custom Python function can be
+registered as the @code{PTWRITE} filter function.  This function will be
+called with the @code{PTWRITE} payload and PC as arguments during trace
+decoding.  The function can return a string, which will be printed by
+@value{GDBN} during the aforementioned commands, or @code{None}, resulting
+in no output.  To register such a filter function, the user needs to
+provide a filter factory function, which returns a new filter function
+object to be called by @value{GDBN}.
+
+@findex gdb.ptwrite.register_filter_factory
+@defun register_filter_factory (filter_factory)
+Used to register the @code{PTWRITE} filter factory.  This filter factory can
+be any callable object that accepts one argument, the current thread as
+a @code{gdb.InferiorThread}.
+It can return None or a callable.  This callable is the @code{PTWRITE} filter
+function for the specified thread.  If @code{None} is returned by the factory
+function, the default auxiliary information will be printed.
+@end defun
+
+@findex gdb.ptwrite.get_filter
+@defun get_filter ()
+Return the currently active @code{PTWRITE} filter function.
+@end defun
+
+An example:
+
+@smallexample
+@group
+(gdb) python-interactive
+>>> class my_filter():
+...    def __init__(self):
+...        self.var = 0
+...    def __call__(self, payload, ip):
+...        self.var += 1
+...        return f"counter: @{self.var@}, ip: @{ip:#x@}"
+...
+>>> def my_filter_factory(thread):
+...    if thread.global_num == 1:
+...        return my_filter()
+...    else:
+...        return None
+...
+>>> import gdb.ptwrite
+>>> gdb.ptwrite.register_filter_factory(my_filter_factory)
+>>>
+@end group
+
+@group
+(gdb) record function-call-history 59,64
+59      pthread_create@@GLIBC_2.2.5
+60      job()
+61      task(void*)
+62      ptwrite64(unsigned long)
+          [counter: 1, ip: 0x401156]
+63      task(void*)
+64      ptwrite32(unsigned int)
+          [counter: 2, ip: 0x40116c]
+@end group
+
+@group
+(gdb) info threads
+* 1    Thread 0x7ffff7fd8740 (LWP 25796) "ptw_threads" task ()
+    at bin/ptwrite/ptw_threads.c:45
+  2    Thread 0x7ffff6eb8700 (LWP 25797) "ptw_threads" task ()
+    at bin/ptwrite/ptw_threads.c:45
+@end group
+
+@group
+(gdb) thread 2
+[Switching to thread 2 (Thread 0x7ffff6eb8700 (LWP 25797))]
+#0  task (arg=0x0) at ptwrite_threads.c:45
+45        return NULL;
+@end group
+
+@group
+(gdb) record function-call-history 10,14
+10    start_thread
+11    task(void*)
+12    ptwrite64(unsigned long)
+        [0x42]
+13    task(void*)
+14    ptwrite32(unsigned int)
+        [0x43]
+@end group
+@end smallexample
+
+This @value{GDBN} feature is dependent on hardware and operating system
+support and requires the Intel Processor Trace decoder library in version
+2.0.0 or newer.

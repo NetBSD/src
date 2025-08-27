@@ -34,9 +34,9 @@ gdb_test "break $bp_location" \
 gdb_test continue "Continuing\\..*Breakpoint \[0-9\]+, main \\(\\) at .*$srcfile:$bp_location.*set breakpoint here.*" \
     "run until breakpoint set at a line number"
 
-gdb_test "next 2" ".*place2.*" "next 2 (1)"
-gdb_test "next 2" ".*place3.*" "next 2 (2)"
-gdb_test "next 2" ".*place2.*" "next 2 (3)"
-gdb_test "next 2" ".*place3.*" "next 2 (4)"
-gdb_test "next 2" ".*place2.*" "next 2 (5)"
-gdb_test "next 2" ".*place3.*" "next 2 (6)"
+gdb_test "next 2" ".*place2.*" "next 2, 1"
+gdb_test "next 2" ".*place3.*" "next 2, 2"
+gdb_test "next 2" ".*place2.*" "next 2, 3"
+gdb_test "next 2" ".*place3.*" "next 2, 4"
+gdb_test "next 2" ".*place2.*" "next 2, 5"
+gdb_test "next 2" ".*place3.*" "next 2, 6"

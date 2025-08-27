@@ -37,7 +37,7 @@ proc run_tests {} {
 	gdb_test_no_output "record" "turn on process record"
 
 	# This regression test verifies the reverse-step and reverse-next
-	# commands work properly when executing backwards thru a source line
+	# commands work properly when executing backwards through a source line
 	# containing two function calls on the same source line, i.e.
 	# func1 (); func2 ();.  This test is compiled so the dwarf info
 	# does not contain the line table information.
@@ -100,7 +100,7 @@ proc run_tests {} {
 	#   the called function, stopping at the beginning of the last
 	#   statement in the called function (typically a return statement).
 	#   Also, as with the step command, if non-debuggable functions are
-	#   called, reverse-step will run thru them backward without
+	#   called, reverse-step will run through them backward without
 	#   stopping.
 
 	gdb_continue_to_breakpoint \

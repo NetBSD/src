@@ -1,0 +1,60 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+standard_testfile ".f90"
+load_lib "fortran.exp"
+
+require allow_fortran_tests
+
+if {[prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
+    {debug f90 quiet}]} {
+    return -1
+}
+
+if ![fortran_runto_main] {
+    untested "could not run to main"
+    return -1
+}
+
+# Try to access vla string / vla string array / string array values.
+gdb_breakpoint [gdb_get_line_number "arr_vla1-print"]
+gdb_continue_to_breakpoint "arr_vla1-print"
+
+# GFortran emits DW_TAG_structure_type for strings and it has only
+# DW_AT_declaration tag.  This results in <incomplete type> in gdb.
+if [test_compiler_info "gfortran*" f90] { setup_xfail *-*-* gcc/101826 }
+gdb_test "print arr_vla1"  \
+    " = \\\('vlaaryvlaary', 'vlaaryvlaary', 'vlaaryvlaary', 'vlaaryvlaary', 'vlaaryvlaary'\\\)"  \
+    "print vla string array"
+
+if [test_compiler_info "gfortran*" f90] { setup_xfail *-*-* gcc/101826 }
+gdb_test "ptype arr_vla1"  \
+    "type = character\\*12 \\(5\\)"  \
+    "print variable length string array type"
+gdb_test "print arr_vla2"  \
+    " = 'vlaary'"  \
+    "print variable length string"
+gdb_test "ptype arr_vla2"  \
+    "type = character\\*6"  \
+    "print variable length string type"
+gdb_test "print arr2"  \
+    " = \\\('vlaaryvla', 'vlaaryvla', 'vlaaryvla'\\\)"  \
+    "print string array"
+gdb_test "ptype arr2"  \
+    "type = character\\*9 \\(3\\)"  \
+    "print string array type"
+gdb_test "print rank(arr_vla1)"  \
+    "$decimal"  \
+    "print string array rank"

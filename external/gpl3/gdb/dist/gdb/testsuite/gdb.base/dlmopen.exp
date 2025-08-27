@@ -23,30 +23,58 @@
 
 require allow_dlmopen_tests
 
-standard_testfile
+# Don't use 'dlmopen.c' as the source file name, glibc also has a file
+# with that name.  Within our tests, we set the source directory search
+# path order to:
+#
+#    (1) the test source directory,
+#    (2) the compilation directory, and then
+#    (3) the current working directory.
+#
+# Because (1) is first when we try to place a breakpoint on
+# 'dlmopen.c', if the test source file has that name, then GDB will
+# find both the test source file, and the source file from glibc.
+#
+# We could work around this by making (2) first in the source
+# directory list, but that only works when the glibc source is
+# installed.  If it isn't then GDB will try the compilation directory,
+# fail to find the source, then try the test source directory, get a
+# hit, and so still confuse the two files.
+#
+# You might think the problem can be solved by specifying the absolute
+# path to the source file.  This doesn't work because the glibc file
+# has its filename recorded as just "dlmopen.c", as such GDB has to
+# figure out an absolute path to the file (if possible).  The absolute
+# path is figured out based on where GDB can find a matching file in
+# the source directory list, and because of the confusion above, GDB
+# will usually think the test 'dlmopen.c' and the glibc 'dlmopen.c'
+# are actually the same file.
+#
+# The conclusion is that it is just easier to rename the test source
+# file to avoid conflicts with glibc.
+
+standard_testfile -main.c -lib.c -lib-dep.c
 
 set basename_lib dlmopen-lib
-set srcfile_lib $srcdir/$subdir/$basename_lib.c
+set srcfile_lib $srcfile2
 set binfile_lib1 [standard_output_file $basename_lib.1.so]
 set binfile_lib2 [standard_output_file $basename_lib.2.so]
-set srcfile_lib_dep $srcdir/$subdir/$basename_lib-dep.c
+set srcfile_lib_dep $srcfile3
 set binfile_lib_dep [standard_output_file $basename_lib-dep.so]
 
-if { [gdb_compile_shlib $srcfile_lib_dep $binfile_lib_dep {debug}] != "" } {
-    untested "failed to prepare shlib"
-    return -1
+if { [build_executable "build shlib dep" $binfile_lib_dep $srcfile_lib_dep \
+	  {debug shlib}] == -1 } {
+    return
 }
 
-if { [gdb_compile_shlib $srcfile_lib $binfile_lib1 \
-	  [list debug shlib_load libs=$binfile_lib_dep]] != "" } {
-    untested "failed to prepare shlib"
-    return -1
+if { [build_executable "build shlib" $binfile_lib1 $srcfile_lib \
+	  [list debug shlib_load shlib libs=$binfile_lib_dep]] == -1 } {
+    return
 }
 
-if { [gdb_compile_shlib $srcfile_lib $binfile_lib2 \
-	  [list debug shlib_load libs=$binfile_lib_dep]] != "" } {
-    untested "failed to prepare shlib"
-    return -1
+if { [build_executable "build shlib" $binfile_lib2 $srcfile_lib \
+	  [list debug shlib_load shlib libs=$binfile_lib_dep]] == -1 } {
+    return
 }
 
 if { [prepare_for_testing "failed to prepare" $testfile $srcfile \

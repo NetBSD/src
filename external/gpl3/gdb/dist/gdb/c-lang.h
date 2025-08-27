@@ -18,8 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#if !defined (C_LANG_H)
-#define C_LANG_H 1
+#ifndef GDB_C_LANG_H
+#define GDB_C_LANG_H
 
 struct ui_file;
 struct language_arch_info;
@@ -174,4 +174,4 @@ extern std::string cplus_compute_program (compile_instance *inst,
 
 extern gdb::unique_xmalloc_ptr<char> c_canonicalize_name (const char *name);
 
-#endif /* !defined (C_LANG_H) */
+#endif /* GDB_C_LANG_H */

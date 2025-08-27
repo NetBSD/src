@@ -41,7 +41,7 @@ if {!$core_supported} {
   return -1
 }
 
-# Now taht the core file has been created, we can start the real
+# Now that the core file has been created, we can start the real
 # part of this testcase, which is to debug using that core file.
 # Restart GDB and load that core file.
 

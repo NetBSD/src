@@ -415,6 +415,59 @@ cpu_supports_bts (void)
     }
 }
 
+/* Return the Intel PT config bitmask from the linux sysfs for a FEATURE.
+   The bits can be used in the perf_event configuration when enabling PT.
+   Callers of this function are expected to check the availability of the
+   feature first via linux_supports_pt_feature.  */
+
+static uint64_t
+linux_read_pt_config_bitmask (const char *feature)
+{
+  uint64_t config_bitmask = 0;
+  std::string filename
+      = std::string ("/sys/bus/event_source/devices/intel_pt/format/")
+      + feature;
+
+  gdb_file_up file = gdb_fopen_cloexec (filename.c_str (), "r");
+  if (file.get () == nullptr)
+    error (_("Failed to determine config from %s."),  filename.c_str ());
+
+  uint8_t start, end;
+  int found = fscanf (file.get (), "config:%hhu-%hhu", &start, &end);
+  if (found == 1)
+    end = start;
+  else if (found != 2)
+    error (_("Failed to determine config from %s."), filename.c_str ());
+
+  for (uint8_t i = start; i <= end; ++i)
+    config_bitmask |= (1ULL << i);
+
+  return config_bitmask;
+}
+
+/* Check whether the linux target supports the Intel PT FEATURE.  */
+
+static bool
+linux_supports_pt_feature (const char *feature)
+{
+  std::string filename
+    = std::string ("/sys/bus/event_source/devices/intel_pt/caps/") + feature;
+
+  gdb_file_up file = gdb_fopen_cloexec (filename.c_str (), "r");
+  if (file.get () == nullptr)
+    return false;
+
+  int status, found = fscanf (file.get (), "%d", &status);
+  if (found != 1)
+    {
+      warning (_("Failed to determine %s support from %s."), feature,
+	       filename.c_str ());
+      return false;
+    }
+
+  return (status == 1);
+}
+
 /* The perf_event_open syscall failed.  Try to print a helpful error
    message.  */
 
@@ -626,6 +679,23 @@ linux_enable_pt (ptid_t ptid, const struct btrace_config_pt *conf)
   tinfo->attr.exclude_kernel = 1;
   tinfo->attr.exclude_hv = 1;
   tinfo->attr.exclude_idle = 1;
+
+  if (conf->ptwrite && linux_supports_pt_feature ("ptwrite"))
+    {
+      tinfo->attr.config |= linux_read_pt_config_bitmask ("ptw");
+      tinfo->conf.pt.ptwrite = true;
+    }
+
+  if (conf->event_tracing)
+    {
+      if (linux_supports_pt_feature ("event_trace"))
+	{
+	  tinfo->attr.config |= linux_read_pt_config_bitmask ("event");
+	  tinfo->conf.pt.event_tracing = true;
+	}
+      else
+	error (_("Event tracing for record btrace pt is not supported."));
+    }
 
   errno = 0;
   scoped_fd fd (syscall (SYS_perf_event_open, &tinfo->attr, pid, -1, -1, 0));
@@ -934,7 +1004,7 @@ linux_read_btrace (struct btrace_data *btrace,
       return linux_read_pt (&btrace->variant.pt, tinfo, type);
     }
 
-  internal_error (_("Unkown branch trace format."));
+  internal_error (_("Unknown branch trace format."));
 }
 
 /* See linux-btrace.h.  */

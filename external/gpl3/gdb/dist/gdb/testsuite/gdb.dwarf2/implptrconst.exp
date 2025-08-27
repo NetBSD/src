@@ -83,16 +83,9 @@ Dwarf::assemble $asm_file {
     }
 }
 
-if { [build_executable ${testfile}.exp ${testfile} \
+if { [prepare_for_testing "failed to prepare" ${testfile} \
 	  [list $srcfile $asm_file] {nodebug}] } {
     return -1
-}
-
-# We need --readnow because otherwise we never read in the CU we
-# created above.
-save_vars { GDBFLAGS } {
-    set GDBFLAGS "$GDBFLAGS -readnow"
-    clean_restart ${testfile}
 }
 
 if ![runto_main] {

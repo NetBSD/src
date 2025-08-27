@@ -17,8 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "exceptions.h"
 #include "extract-store-integer.h"
 #include "cli/cli-cmds.h"
+#include "gdbsupport/gdb_vecs.h"
 #include "regcache.h"
 #include "gdbthread.h"
 #include "inferior.h"
@@ -38,6 +40,7 @@
 #include "infrun.h"
 #include "gdbsupport/gdb_unlinker.h"
 #include "gdbsupport/byte-vector.h"
+#include "gdbsupport/scoped_signal_handler.h"
 #include "async-event.h"
 #include "top.h"
 #include "valprint.h"
@@ -369,6 +372,15 @@ record_full_is_used (void)
 	  || t == &record_full_core_ops);
 }
 
+/* see record-full.h.  */
+bool
+record_full_is_replaying ()
+{
+  auto target = dynamic_cast<record_full_target *>
+		  (current_inferior ()->target_at (record_stratum));
+  return target != nullptr && RECORD_FULL_IS_REPLAY;
+}
+
 
 /* Command lists for "set/show record full".  */
 static struct cmd_list_element *set_record_full_cmdlist;
@@ -622,7 +634,7 @@ record_full_arch_list_add_reg (struct regcache *regcache, int regnum)
 
   rec = record_full_reg_alloc (regcache, regnum);
 
-  regcache->raw_read (regnum, record_full_get_loc (rec));
+  regcache->cooked_read (regnum, record_full_get_loc (rec));
 
   record_full_arch_list_add (rec);
 
@@ -1149,6 +1161,7 @@ record_full_wait_1 (struct target_ops *ops,
 {
   scoped_restore restore_operation_disable
     = record_full_gdb_operation_disable_set ();
+  scoped_signal_handler<SIGINT> interrupt_handler (record_full_sig_handler);
 
   if (record_debug)
     gdb_printf (gdb_stdlog,
@@ -1169,7 +1182,6 @@ record_full_wait_1 (struct target_ops *ops,
     }
 
   record_full_get_sig = 0;
-  signal (SIGINT, record_full_sig_handler);
 
   record_full_stop_reason = TARGET_STOPPED_BY_NO_REASON;
 
@@ -1457,8 +1469,6 @@ record_full_wait_1 (struct target_ops *ops,
 	  throw;
 	}
     }
-
-  signal (SIGINT, handle_sigint);
 
   return inferior_ptid;
 }
@@ -2072,6 +2082,7 @@ record_full_core_target::resume (ptid_t ptid, int step,
 				 enum gdb_signal signal)
 {
   record_full_resume_step = step;
+  record_full_resume_ptid = ptid;
   record_full_resumed = 1;
   record_full_execution_dir = ::execution_direction;
 }
@@ -2890,12 +2901,12 @@ _initialize_record_full ()
 	       _("Restore the execution log from a file.\n\
 Argument is filename.  File must be created with 'record save'."),
 	       &record_full_cmdlist);
-  set_cmd_completer (record_full_restore_cmd, filename_completer);
+  set_cmd_completer (record_full_restore_cmd, deprecated_filename_completer);
 
   /* Deprecate the old version without "full" prefix.  */
   c = add_alias_cmd ("restore", record_full_restore_cmd, class_obscure, 1,
 		     &record_cmdlist);
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer (c, deprecated_filename_completer);
   deprecate_cmd (c, "record full restore");
 
   add_setshow_prefix_cmd ("full", class_support,
@@ -2976,8 +2987,8 @@ When ON, query if PREC cannot record memory change of next instruction."),
 	   _("\
 Print a recorded instruction.\n\
 If no argument is provided, print the last instruction recorded.\n\
-If a negative argument is given, prints how the nth previous \
+If a negative argument is given, prints how the nth previous\n\
 instruction will be undone.\n\
-If a positive argument is given, prints \
+If a positive argument is given, prints\n\
 how the nth following instruction will be redone."), &maintenanceprintlist);
 }

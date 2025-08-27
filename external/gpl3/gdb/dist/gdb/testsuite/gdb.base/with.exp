@@ -238,7 +238,7 @@ with_test_prefix "errors" {
 
     # Try ambiguous settings.
     gdb_test "with w" \
-	"Ambiguous set command \"w\": watchdog, width, write\\."
+	"Ambiguous set command \"w\": warn-language-frame-mismatch, watchdog, width, write\\."
     gdb_test "with print m" \
 	"Ambiguous set print command \"m\": max-depth, max-symbolic-offset, memory-tag-violations\\."
 

@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_DLFCN_H
-#define GDB_DLFCN_H
+#ifndef GDBSUPPORT_GDB_DLFCN_H
+#define GDBSUPPORT_GDB_DLFCN_H
 
 /* A deleter that closes an open dynamic library.  */
 
@@ -48,4 +48,4 @@ void *gdb_dlsym (const gdb_dlhandle_up &handle, const char *symbol);
 
 int is_dl_available(void);
 
-#endif /* GDB_DLFCN_H */
+#endif /* GDBSUPPORT_GDB_DLFCN_H */

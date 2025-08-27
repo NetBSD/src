@@ -111,14 +111,14 @@ proc test_cont {} {
     with_test_prefix "cont" {
         gdb_test "thread 1" ".*"
         with_test_prefix "thread 1" {
-            gdb_test "continue" "No more reverse-execution history.*"
+            gdb_test "continue" "Reached end of recorded history.*"
 
             check_not_replaying 1
             check_replay_insn 2 2
         }
         gdb_test "thread 2" ".*"
         with_test_prefix "thread 2" {
-            gdb_test "continue" "No more reverse-execution history.*"
+            gdb_test "continue" "Reached end of recorded history.*"
 
             check_not_replaying 1
             check_not_replaying 2
@@ -128,7 +128,7 @@ proc test_cont {} {
 
 proc test_cont_all {} {
     with_test_prefix "cont-all" {
-        gdb_test "continue" "No more reverse-execution history.*"
+        gdb_test "continue" "Reached end of recorded history.*"
 
         # this works because we're lock-stepping threads that executed exactly
         # the same code starting from the same instruction.

@@ -1049,7 +1049,7 @@
 {
   if (STATE & simDELAYSLOT)
     {
-      return DSPC; /* return saved address of preceeding jmp */
+      return DSPC; /* return saved address of preceding jmp */
     }
   else
     {

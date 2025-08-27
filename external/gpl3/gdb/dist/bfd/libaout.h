@@ -449,21 +449,6 @@ struct  aout_data_struct
    macro is only ever applied to an asymbol.  */
 #define aout_symbol(asymbol) ((aout_symbol_type *)(&(asymbol)->the_bfd))
 
-/* Information we keep for each a.out section.  This is currently only
-   used by the a.out backend linker.  */
-
-struct aout_section_data_struct
-{
-  /* The unswapped relocation entries for this section.  */
-  void * relocs;
-};
-
-#define aout_section_data(s) \
-  ((struct aout_section_data_struct *) (s)->used_by_bfd)
-
-#define set_aout_section_data(s,v) \
-  ((s)->used_by_bfd = (void *)&(v)->relocs)
-
 /* Prototype declarations for functions defined in aoutx.h.  */
 
 extern bool NAME (aout, squirt_out_relocs)

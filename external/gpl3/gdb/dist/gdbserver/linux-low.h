@@ -712,8 +712,11 @@ protected:
 
 extern linux_process_target *the_linux_target;
 
-#define get_thread_lwp(thr) ((struct lwp_info *) (thread_target_data (thr)))
-#define get_lwp_thread(lwp) ((lwp)->thread)
+static inline lwp_info *
+get_thread_lwp (thread_info *thr)
+{
+  return static_cast<lwp_info *> (thr->target_data ());
+}
 
 /* Information about a signal that is to be delivered to a thread.  */
 
@@ -796,7 +799,7 @@ struct lwp_info
   }
 
   /* Backlink to the parent object.  */
-  struct thread_info *thread = nullptr;
+  thread_info *thread = nullptr;
 
   /* If this flag is set, the next SIGSTOP will be ignored (the
      process will be immediately resumed).  This means that either we
@@ -939,7 +942,7 @@ int thread_db_init (void);
 void thread_db_detach (struct process_info *);
 void thread_db_mourn (struct process_info *);
 int thread_db_handle_monitor_command (char *);
-int thread_db_get_tls_address (struct thread_info *thread, CORE_ADDR offset,
+int thread_db_get_tls_address (thread_info *thread, CORE_ADDR offset,
 			       CORE_ADDR load_module, CORE_ADDR *address);
 int thread_db_look_up_one_symbol (const char *name, CORE_ADDR *addrp);
 
@@ -947,11 +950,9 @@ int thread_db_look_up_one_symbol (const char *name, CORE_ADDR *addrp);
    both the clone and the parent should be stopped.  This function does
    whatever is required have the clone under thread_db's control.  */
 
-void thread_db_notice_clone (struct thread_info *parent_thr, ptid_t child_ptid);
+void thread_db_notice_clone (thread_info *parent_thr, ptid_t child_ptid);
 
 bool thread_db_thread_handle (ptid_t ptid, gdb_byte **handle, int *handle_len);
-
-extern enum tribool have_ptrace_getregset;
 
 /* Search for the value with type MATCH in the auxv vector, with entries of
    length WORDSIZE bytes, of process with pid PID.  If found, store the

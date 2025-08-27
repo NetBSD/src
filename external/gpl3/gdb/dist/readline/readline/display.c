@@ -1,6 +1,6 @@
 /* display.c -- readline redisplay facility. */
 
-/* Copyright (C) 1987-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library    
    for reading lines of text with interactive input and history editing.
@@ -63,23 +63,23 @@
 extern char *strchr (), *strrchr ();
 #endif /* !strchr && !__STDC__ */
 
-static void putc_face PARAMS((int, int, char *));
-static void puts_face PARAMS((const char *, const char *, int));
-static void norm_face PARAMS((char *, int));
+static void putc_face (int, int, char *);
+static void puts_face (const char *, const char *, int);
+static void norm_face (char *, int);
 
-static void update_line PARAMS((char *, char *, char *, char *, int, int, int, int));
-static void space_to_eol PARAMS((int));
-static void delete_chars PARAMS((int));
-static void insert_some_chars PARAMS((char *, int, int));
-static void open_some_spaces PARAMS((int));
-static void cr PARAMS((void));
-static void redraw_prompt PARAMS((char *));
-static void _rl_move_cursor_relative PARAMS((int, const char *, const char *));
+static void update_line (char *, char *, char *, char *, int, int, int, int);
+static void space_to_eol (int);
+static void delete_chars (int);
+static void insert_some_chars (char *, int, int);
+static void open_some_spaces (int);
+static void cr (void);
+static void redraw_prompt (char *);
+static void _rl_move_cursor_relative (int, const char *, const char *);
 
 /* Values for FLAGS */
 #define PMT_MULTILINE	0x01
 
-static char *expand_prompt PARAMS((char *, int, int *, int *, int *, int *));
+static char *expand_prompt (char *, int, int *, int *, int *, int *);
 
 #define DEFAULT_LINE_BUFFER_SIZE	1024
 
@@ -115,7 +115,7 @@ static int line_structures_initialized = 0;
 #define inv_face	(line_state_invisible->lface)
 
 #if defined (HANDLE_MULTIBYTE)
-static int _rl_col_width PARAMS((const char *, int, int, int));
+static int _rl_col_width (const char *, int, int, int);
 #else
 #  define _rl_col_width(l, s, e, f)	(((e) <= (s)) ? 0 : (e) - (s))
 #endif
@@ -356,7 +356,7 @@ expand_prompt (char *pmt, int flags, int *lp, int *lip, int *niflp, int *vlp)
 {
   char *r, *ret, *p, *igstart, *nprompt, *ms;
   int l, rl, last, ignoring, ninvis, invfl, invflset, ind, pind, physchars;
-  int mlen, newlines, newlines_guess, bound;
+  int mlen, newlines, newlines_guess, bound, can_add_invis;
   int mb_cur_max;
 
   /* We only expand the mode string for the last line of a multiline prompt
@@ -372,6 +372,7 @@ expand_prompt (char *pmt, int flags, int *lp, int *lip, int *niflp, int *vlp)
   else
     nprompt = pmt;
 
+  can_add_invis = 0;
   mb_cur_max = MB_CUR_MAX;
 
   if (_rl_screenwidth == 0)
@@ -434,6 +435,19 @@ expand_prompt (char *pmt, int flags, int *lp, int *lip, int *niflp, int *vlp)
       else if (ignoring && *p == RL_PROMPT_END_IGNORE)
 	{
 	  ignoring = 0;
+	  /* If we have a run of invisible characters, adjust local_prompt_newlines
+	     to add them, since update_line expects them to be counted before
+	     wrapping the line. */
+	  if (can_add_invis)
+	    {
+	      local_prompt_newlines[newlines] = r - ret;
+	      /* If we're adding to the number of invisible characters on the
+		 first line of the prompt, but we've already set the number of
+		 invisible characters on that line, we need to adjust the
+		 counter. */
+	      if (invflset && newlines == 1)
+		invfl = ninvis;
+	    }
 	  if (p != (igstart + 1))
 	    last = r - ret - 1;
 	  continue;
@@ -498,10 +512,17 @@ expand_prompt (char *pmt, int flags, int *lp, int *lip, int *niflp, int *vlp)
 	        new = r - ret;
 	      local_prompt_newlines[++newlines] = new;
 	    }
+
+	  /* What if a physical character of width >= 2 is split? There is
+	     code that wraps before the physical screen width if the character
+	     width would exceed it, but it needs to be checked against this
+	     code and local_prompt_newlines[]. */
+	  if (ignoring == 0)
+	    can_add_invis = (physchars == bound); 
 	}
     }
 
-  if (rl < _rl_screenwidth)
+  if (rl <= _rl_screenwidth)
     invfl = ninvis;
 
   *r = '\0';
@@ -515,7 +536,7 @@ expand_prompt (char *pmt, int flags, int *lp, int *lip, int *niflp, int *vlp)
     *vlp = physchars;
 
   if (nprompt != pmt)
-    free (nprompt);
+    xfree (nprompt);
 
   return ret;
 }
@@ -749,7 +770,7 @@ rl_redisplay (void)
   int hl_begin, hl_end;
   int mb_cur_max = MB_CUR_MAX;
 #if defined (HANDLE_MULTIBYTE)
-  wchar_t wc;
+  WCHAR_T wc;
   size_t wc_bytes;
   int wc_width;
   mbstate_t ps;
@@ -983,11 +1004,11 @@ rl_redisplay (void)
       memset (&ps, 0, sizeof (mbstate_t));
       if (_rl_utf8locale && UTF8_SINGLEBYTE(rl_line_buffer[0]))
 	{
-	  wc = (wchar_t)rl_line_buffer[0];
+	  wc = (WCHAR_T)rl_line_buffer[0];
 	  wc_bytes = 1;
 	}
       else
-	wc_bytes = mbrtowc (&wc, rl_line_buffer, rl_end, &ps);
+	wc_bytes = MBRTOWC (&wc, rl_line_buffer, rl_end, &ps);
     }
   else
     wc_bytes = 1;
@@ -1158,12 +1179,12 @@ rl_redisplay (void)
 	  in += wc_bytes;
 	  if (_rl_utf8locale && UTF8_SINGLEBYTE(rl_line_buffer[in]))
 	    {
-	      wc = (wchar_t)rl_line_buffer[in];
+	      wc = (WCHAR_T)rl_line_buffer[in];
 	      wc_bytes = 1;
 	      memset (&ps, 0, sizeof (mbstate_t));	/* re-init state */
 	    }
 	  else
-	    wc_bytes = mbrtowc (&wc, rl_line_buffer + in, rl_end - in, &ps);
+	    wc_bytes = MBRTOWC (&wc, rl_line_buffer + in, rl_end - in, &ps);
 	}
       else
         in++;
@@ -1582,9 +1603,9 @@ putc_face (int c, int face, char *cur_face)
       if (face != FACE_NORMAL && face != FACE_STANDOUT)
 	return;
       if (face == FACE_STANDOUT && cf == FACE_NORMAL)
-        _rl_standout_on ();
+	_rl_region_color_on ();
       if (face == FACE_NORMAL && cf == FACE_STANDOUT)
-        _rl_standout_off ();
+	_rl_region_color_off ();
       *cur_face = face;
     }
   if (c != EOF)
@@ -1598,7 +1619,7 @@ puts_face (const char *str, const char *face, int n)
   char cur_face;
 
   for (cur_face = FACE_NORMAL, i = 0; i < n; i++)
-    putc_face (str[i], face[i], &cur_face);
+    putc_face ((unsigned char) str[i], face[i], &cur_face);
   putc_face (EOF, FACE_NORMAL, &cur_face);
 }
 
@@ -1662,7 +1683,7 @@ update_line (char *old, char *old_face, char *new, char *new_face, int current_l
 #if defined (HANDLE_MULTIBYTE)
       if (mb_cur_max > 1 && rl_byte_oriented == 0)
 	{
-	  wchar_t wc;
+	  WCHAR_T wc;
 	  mbstate_t ps;
 	  int oldwidth, newwidth;
 	  int oldbytes, newbytes;
@@ -1681,7 +1702,7 @@ update_line (char *old, char *old_face, char *new, char *new_face, int current_l
 
 	  /* 1. how many screen positions does first char in old consume? */
 	  memset (&ps, 0, sizeof (mbstate_t));
-	  ret = mbrtowc (&wc, old, mb_cur_max, &ps);
+	  ret = MBRTOWC (&wc, old, mb_cur_max, &ps);
 	  oldbytes = ret;
 	  if (MB_INVALIDCH (ret))
 	    {
@@ -1697,7 +1718,7 @@ update_line (char *old, char *old_face, char *new, char *new_face, int current_l
 
 	  /* 2. how many screen positions does the first char in new consume? */
 	  memset (&ps, 0, sizeof (mbstate_t));
-	  ret = mbrtowc (&wc, new, mb_cur_max, &ps);
+	  ret = MBRTOWC (&wc, new, mb_cur_max, &ps);
 	  newbytes = ret;
 	  if (MB_INVALIDCH (ret))
 	    {
@@ -1718,7 +1739,7 @@ update_line (char *old, char *old_face, char *new, char *new_face, int current_l
 	    {
 	      int t;
 
-	      ret = mbrtowc (&wc, new+newbytes, mb_cur_max, &ps);
+	      ret = MBRTOWC (&wc, new+newbytes, mb_cur_max, &ps);
 	      if (MB_INVALIDCH (ret))
 		{
 		  newwidth += 1;
@@ -1740,7 +1761,7 @@ update_line (char *old, char *old_face, char *new, char *new_face, int current_l
 	    {
 	      int t;
 
-	      ret = mbrtowc (&wc, old+oldbytes, mb_cur_max, &ps);
+	      ret = MBRTOWC (&wc, old+oldbytes, mb_cur_max, &ps);
 	      if (MB_INVALIDCH (ret))
 		{
 		  oldwidth += 1;
@@ -1952,14 +1973,14 @@ update_line (char *old, char *old_face, char *new, char *new_face, int current_l
 #if defined (HANDLE_MULTIBYTE)
   if (mb_cur_max > 1 && rl_byte_oriented == 0 && _rl_utf8locale)
     {
-      wchar_t wc;
+      WCHAR_T wc;
       mbstate_t ps = { 0 };
       int t;
 
       /* If the first character in the difference is a zero-width character,
 	 assume it's a combining character and back one up so the two base
 	 characters no longer compare equivalently. */
-      t = mbrtowc (&wc, ofd, mb_cur_max, &ps);
+      t = MBRTOWC (&wc, ofd, mb_cur_max, &ps);
       if (t > 0 && UNICODE_COMBINING_CHAR (wc) && WCWIDTH (wc) == 0)
 	{
 	  old_offset = _rl_find_prev_mbchar (old, ofd - old, MB_FIND_ANY);
@@ -2421,9 +2442,24 @@ dumb_update:
 		((nfd-new) < (prompt_last_invisible-(current_line*_rl_screenwidth+prompt_invis_chars_first_line))))
 	    ADJUST_CPOS (wrap_offset - prompt_invis_chars_first_line);
 
-	  /* XXX - what happens if wrap_offset == prompt_invis_chars_first_line
-	     and we are drawing the first line (current_line == 0)? We should
-	     adjust by _rl_last_c_pos -= prompt_invis_chars_first_line */
+	  /* What happens if wrap_offset == prompt_invis_chars_first_line
+	     and we are drawing the first line (current_line == 0), or if we
+	     are drawing the first line and changing the number of invisible
+	     characters in the line? If we're starting to draw before the last
+	     invisible character in the prompt, we need to adjust by
+	     _rl_last_c_pos -= prompt_invis_chars_first_line. This can happen
+	     when we finish reading a digit argument (with the "(arg: N)"
+	     prompt) and are switching back to displaying a line with a prompt
+	     containing invisible characters, since we have to redraw the
+	     entire prompt string. */
+	  if ((mb_cur_max > 1 && rl_byte_oriented == 0) &&
+		current_line == 0 && wrap_offset &&
+		displaying_prompt_first_line &&
+		wrap_offset == prompt_invis_chars_first_line &&
+		visible_wrap_offset != current_invis_chars &&
+		visible_wrap_offset != prompt_invis_chars_first_line &&
+		((nfd-new) < prompt_last_invisible))
+	    ADJUST_CPOS (prompt_invis_chars_first_line);
 	}
     }
   else				/* Delete characters from line. */
@@ -2573,7 +2609,8 @@ rl_clear_visible_line (void)
   for (curr_line = _rl_last_v_pos; curr_line >= 0; curr_line--)
     {
       _rl_move_vert (curr_line);
-      _rl_clear_to_eol (0);
+      _rl_clear_to_eol (_rl_screenwidth);
+      _rl_cr ();		/* in case we use space_to_eol() */
     }
 
   return 0;
@@ -2646,11 +2683,8 @@ rl_forced_update_display (void)
   register char *temp;
 
   if (visible_line)
-    {
-      temp = visible_line;
-      while (*temp)
-	*temp++ = '\0';
-    }
+    memset (visible_line, 0, line_size);
+
   rl_on_new_line ();
   forced_display++;
   (*rl_redisplay_function) ();
@@ -3304,9 +3338,9 @@ _rl_update_final (void)
       puts_face (&last_line[_rl_screenwidth - 1 + woff],
 		 &last_face[_rl_screenwidth - 1 + woff], 1);
     }
-  _rl_vis_botlin = 0;
-  if (botline_length > 0 || _rl_last_c_pos > 0)
+  if ((_rl_vis_botlin == 0 && botline_length == 0) || botline_length > 0 || _rl_last_c_pos > 0)
     rl_crlf ();
+  _rl_vis_botlin = 0;
   fflush (rl_outstream);
   rl_display_fixed++;
 }
@@ -3357,26 +3391,15 @@ _rl_redisplay_after_sigwinch (void)
      screen line. */
   if (_rl_term_cr)
     {
-      _rl_move_vert (_rl_vis_botlin);
-
-      _rl_cr ();
-      _rl_last_c_pos = 0;
-
-#if !defined (__MSDOS__)
-      if (_rl_term_clreol)
-	tputs (_rl_term_clreol, 1, _rl_output_character_function);
-      else
-#endif
-	{
-	  space_to_eol (_rl_screenwidth);
-	  _rl_cr ();
-	}
-
+      rl_clear_visible_line ();
       if (_rl_last_v_pos > 0)
 	_rl_move_vert (0);
     }
   else
     rl_crlf ();
+
+  if (_rl_screenwidth < prompt_visible_length)
+    _rl_reset_prompt ();		/* update local_prompt_newlines array */
 
   /* Redraw only the last line of a multi-line prompt. */
   t = strrchr (rl_display_prompt, '\n');
@@ -3451,7 +3474,7 @@ _rl_refresh_line (void)
 static int
 _rl_col_width (const char *str, int start, int end, int flags)
 {
-  wchar_t wc;
+  WCHAR_T wc;
   mbstate_t ps;
   int tmp, point, width, max;
 
@@ -3520,10 +3543,10 @@ _rl_col_width (const char *str, int start, int end, int flags)
       if (_rl_utf8locale && UTF8_SINGLEBYTE(str[point]))
 	{
 	  tmp = 1;
-	  wc = (wchar_t) str[point];
+	  wc = (WCHAR_T) str[point];
 	}
       else
-	tmp = mbrtowc (&wc, str + point, max, &ps);
+	tmp = MBRTOWC (&wc, str + point, max, &ps);
       if (MB_INVALIDCH ((size_t)tmp))
 	{
 	  /* In this case, the bytes are invalid or too short to compose a

@@ -252,7 +252,7 @@ class MemoryErrorEarlyDisassembler(TestDisassembler):
     def disassemble(self, info):
         tag = "## FAIL"
         try:
-            info.read_memory(1, -info.address + 2)
+            info.read_memory(1, -info.address - 1)
         except gdb.MemoryError:
             tag = "## AFTER ERROR"
         result = builtin_disassemble_wrapper(info)
@@ -267,7 +267,7 @@ class MemoryErrorLateDisassembler(TestDisassembler):
     def disassemble(self, info):
         result = builtin_disassemble_wrapper(info)
         # The following read will throw an error.
-        info.read_memory(1, -info.address + 2)
+        info.read_memory(1, -info.address - 1)
         return DisassemblerResult(1, "BAD")
 
 
@@ -276,9 +276,9 @@ class RethrowMemoryErrorDisassembler(TestDisassembler):
 
     def disassemble(self, info):
         try:
-            info.read_memory(1, -info.address + 2)
+            info.read_memory(1, -info.address - 1)
         except gdb.MemoryError as e:
-            raise gdb.MemoryError("cannot read code at address 0x2")
+            raise gdb.MemoryError("cannot read code at address -1")
         return DisassemblerResult(1, "BAD")
 
 

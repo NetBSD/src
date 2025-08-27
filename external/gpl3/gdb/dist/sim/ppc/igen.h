@@ -41,7 +41,7 @@ typedef enum {
 
   generate_calls = 0x100,
 
-  /* In addition, when refering to fields access them directly instead
+  /* In addition, when referring to fields access them directly instead
      of via variables */
 
   generate_calls_with_direct_access
@@ -116,7 +116,7 @@ extern int icache_size;
 
 /* Instruction expansion?
 
-   Should the semantic code for each instruction, when the oportunity
+   Should the semantic code for each instruction, when the opportunity
    arrises, be expanded according to the variable opcode files that
    the instruction decode process renders constant */
 

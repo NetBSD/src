@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef VALPRINT_H
-#define VALPRINT_H
+#ifndef GDB_VALPRINT_H
+#define GDB_VALPRINT_H
 
 #include "cli/cli-option.h"
 
@@ -337,4 +337,4 @@ extern void common_val_print_checked
    const struct value_print_options *options,
    const struct language_defn *language);
 
-#endif
+#endif /* GDB_VALPRINT_H */

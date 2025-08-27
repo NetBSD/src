@@ -77,9 +77,12 @@ dwarf2_cu::start_compunit_symtab (const char *name, const char *comp_dir,
       name_for_id = name_for_id_holder.c_str ();
     }
 
-  m_builder.reset (new struct buildsym_compunit
-		   (this->per_objfile->objfile,
-		    name, comp_dir, name_for_id, lang (), low_pc));
+  m_builder = std::make_unique<buildsym_compunit> (this->per_objfile->objfile,
+						   name,
+						   comp_dir,
+						   name_for_id,
+						   lang (),
+						   low_pc);
 
   list_in_scope = get_builder ()->get_file_symbols ();
 
@@ -119,54 +122,29 @@ dwarf2_cu::addr_type () const
   return addr_type;
 }
 
-/* A hashtab traversal function that marks the dependent CUs.  */
-
-static int
-dwarf2_mark_helper (void **slot, void *data)
-{
-  dwarf2_per_cu_data *per_cu = (dwarf2_per_cu_data *) *slot;
-  dwarf2_per_objfile *per_objfile = (dwarf2_per_objfile *) data;
-  dwarf2_cu *cu = per_objfile->get_cu (per_cu);
-
-  /* cu->m_dependencies references may not yet have been ever read if
-     QUIT aborts reading of the chain.  As such dependencies remain
-     valid it is not much useful to track and undo them during QUIT
-     cleanups.  */
-  if (cu != nullptr)
-    cu->mark ();
-  return 1;
-}
-
 /* See dwarf2/cu.h.  */
 
 void
 dwarf2_cu::mark ()
 {
-  if (!m_mark)
+  if (m_mark)
+    return;
+
+  m_mark = true;
+
+  for (dwarf2_per_cu_data *per_cu : m_dependencies)
     {
-      m_mark = true;
-      if (m_dependencies != nullptr)
-	htab_traverse (m_dependencies, dwarf2_mark_helper, per_objfile);
+      /* cu->m_dependencies references may not yet have been ever
+	 read if QUIT aborts reading of the chain.  As such
+	 dependencies remain valid it is not much useful to track
+	 and undo them during QUIT cleanups.  */
+      dwarf2_cu *cu = per_objfile->get_cu (per_cu);
+
+      if (cu == nullptr)
+	continue;
+
+      cu->mark ();
     }
-}
-
-/* See dwarf2/cu.h.  */
-
-void
-dwarf2_cu::add_dependence (struct dwarf2_per_cu_data *ref_per_cu)
-{
-  void **slot;
-
-  if (m_dependencies == nullptr)
-    m_dependencies
-      = htab_create_alloc_ex (5, htab_hash_pointer, htab_eq_pointer,
-			      NULL, &comp_unit_obstack,
-			      hashtab_obstack_allocate,
-			      dummy_obstack_deallocate);
-
-  slot = htab_find_slot (m_dependencies, ref_per_cu, INSERT);
-  if (*slot == nullptr)
-    *slot = ref_per_cu;
 }
 
 /* See dwarf2/cu.h.  */

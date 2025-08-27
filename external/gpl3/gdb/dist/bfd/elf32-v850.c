@@ -1933,8 +1933,11 @@ v850_elf_info_to_howto_rela (bfd *abfd,
 static bool
 v850_elf_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED, const char *name)
 {
-  return (   (name[0] == '.' && (name[1] == 'L' || name[1] == '.'))
-	  || (name[0] == '_' &&  name[1] == '.' && name[2] == 'L' && name[3] == '_'));
+  if (name[0] == '.' && (name[1] == 'L' || name[1] == '.'))
+    return true;
+  if (name[0] == '_' && name[1] == '.' && name[2] == 'L' && name[3] == '_')
+    return true;
+  return false;
 }
 
 static bool

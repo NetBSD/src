@@ -4618,8 +4618,7 @@ elf32_mn10300_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->static_hash_table->root, abfd,
 				      elf32_mn10300_link_hash_newfunc,
-				      sizeof (struct elf32_mn10300_link_hash_entry),
-				      MN10300_ELF_DATA))
+				      sizeof (struct elf32_mn10300_link_hash_entry)))
     {
       free (ret->static_hash_table);
       free (ret);
@@ -4630,8 +4629,7 @@ elf32_mn10300_link_hash_table_create (bfd *abfd)
   abfd->link.hash = NULL;
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      elf32_mn10300_link_hash_newfunc,
-				      sizeof (struct elf32_mn10300_link_hash_entry),
-				      MN10300_ELF_DATA))
+				      sizeof (struct elf32_mn10300_link_hash_entry)))
     {
       abfd->is_linker_output = true;
       abfd->link.hash = &ret->static_hash_table->root.root;
@@ -5466,8 +5464,7 @@ _bfd_mn10300_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UN
 static bool
 mn10300_elf_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct elf_mn10300_obj_tdata),
-				  MN10300_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct elf_mn10300_obj_tdata));
 }
 
 #define bfd_elf32_mkobject	mn10300_elf_mkobject

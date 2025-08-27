@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_BFD_H
-#define GDB_BFD_H
+#ifndef GDB_GDB_BFD_H
+#define GDB_GDB_BFD_H
 
 #include "registry.h"
 #include "gdbsupport/byte-vector.h"
@@ -251,6 +251,17 @@ gdb_bfd_sections (const gdb_bfd_ref_ptr &abfd)
   return gdb_bfd_section_range (abfd->sections);
 };
 
+/* A wrapper for bfd_stat that acquires the per-BFD lock on ABFD.  */
+
+extern int gdb_bfd_stat (bfd *abfd, struct stat *sbuf)
+  ATTRIBUTE_WARN_UNUSED_RESULT;
+
+/* A wrapper for bfd_get_mtime that acquires the per-BFD lock on
+   ABFD.  */
+
+extern long gdb_bfd_get_mtime (bfd *abfd)
+  ATTRIBUTE_WARN_UNUSED_RESULT;
+
 /* A wrapper for bfd_errmsg to produce a more helpful error message
    in the case of bfd_error_file_ambiguously recognized.
    MATCHING, if non-NULL, is the corresponding argument to
@@ -263,4 +274,4 @@ extern std::string gdb_bfd_errmsg (bfd_error_type error_tag, char **matching);
 
 extern void gdb_bfd_init ();
 
-#endif /* GDB_BFD_H */
+#endif /* GDB_GDB_BFD_H */

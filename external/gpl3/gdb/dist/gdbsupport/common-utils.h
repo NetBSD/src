@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_COMMON_UTILS_H
-#define COMMON_COMMON_UTILS_H
+#ifndef GDBSUPPORT_COMMON_UTILS_H
+#define GDBSUPPORT_COMMON_UTILS_H
 
 #include <string>
 #include <vector>
@@ -84,6 +84,11 @@ char *savestring (const char *ptr, size_t len);
 
 std::string extract_string_maybe_quoted (const char **arg);
 
+/* Return a copy of STR, but with any white space, single quote, or
+   double quote characters escaped with a backslash.  */
+
+std::string make_quoted_string (const char *str);
+
 /* The strerror() function can return NULL for errno values that are
    out of range.  Provide a "safe" version that always returns a
    printable string.  This version is also thread-safe.  */
@@ -98,6 +103,16 @@ startswith (std::string_view string, std::string_view pattern)
 {
   return (string.length () >= pattern.length ()
 	  && strncmp (string.data (), pattern.data (), pattern.length ()) == 0);
+}
+
+/* Version of startswith that takes a string_view for only one of its
+   arguments.  Return true if STR starts with PREFIX, otherwise return
+   false.  */
+
+static inline bool
+startswith (const char *str, const std::string_view &prefix)
+{
+  return strncmp (str, prefix.data (), prefix.length ()) == 0;
 }
 
 /* Return true if the strings are equal.  */
@@ -242,4 +257,4 @@ struct string_view_hash
 
 } /* namespace gdb */
 
-#endif /* COMMON_COMMON_UTILS_H */
+#endif /* GDBSUPPORT_COMMON_UTILS_H */

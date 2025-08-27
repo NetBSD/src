@@ -5313,7 +5313,7 @@ coff_slurp_reloc_table (bfd * abfd, sec_ptr asect, asymbol ** symbols)
 		/* xgettext:c-format */
 		(_("%pB: warning: illegal symbol index %ld in relocs"),
 		 abfd, dst.r_symndx);
-	      cache_ptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	      cache_ptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	      ptr = NULL;
 	    }
 	  else
@@ -5325,7 +5325,7 @@ coff_slurp_reloc_table (bfd * abfd, sec_ptr asect, asymbol ** symbols)
 	}
       else
 	{
-	  cache_ptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  cache_ptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	  ptr = NULL;
 	}
 

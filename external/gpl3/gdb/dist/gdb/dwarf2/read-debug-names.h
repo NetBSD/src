@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF2_READ_DEBUG_NAMES_H
-#define DWARF2_READ_DEBUG_NAMES_H
+#ifndef GDB_DWARF2_READ_DEBUG_NAMES_H
+#define GDB_DWARF2_READ_DEBUG_NAMES_H
 
 struct dwarf2_per_objfile;
 
@@ -29,4 +29,4 @@ extern const gdb_byte dwarf5_augmentation[8];
 
 bool dwarf2_read_debug_names (dwarf2_per_objfile *per_objfile);
 
-#endif /* DWARF2_READ_DEBUG_NAMES_H */
+#endif /* GDB_DWARF2_READ_DEBUG_NAMES_H */

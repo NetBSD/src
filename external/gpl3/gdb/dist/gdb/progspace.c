@@ -115,7 +115,7 @@ program_space::~program_space ()
   set_current_program_space (this);
 
   breakpoint_program_space_exit (this);
-  no_shared_libraries (NULL, 0);
+  no_shared_libraries (this);
   free_all_objfiles ();
   /* Defer breakpoint re-set because we don't want to create new
      locations for this pspace which we're tearing down.  */
@@ -124,15 +124,24 @@ program_space::~program_space ()
 
 /* See progspace.h.  */
 
+bool
+program_space::multi_objfile_p () const
+{
+  return (!m_objfiles_list.empty ()
+	  && std::next (m_objfiles_list.begin ()) != m_objfiles_list.end ());
+}
+
+/* See progspace.h.  */
+
 void
 program_space::free_all_objfiles ()
 {
   /* Any objfile reference would become stale.  */
-  for (const solib &so : current_program_space->solibs ())
+  for (const solib &so : this->solibs ())
     gdb_assert (so.objfile == NULL);
 
-  while (!objfiles_list.empty ())
-    objfiles_list.front ()->unlink ();
+  while (!m_objfiles_list.empty ())
+    this->remove_objfile (&m_objfiles_list.front ());
 }
 
 /* See progspace.h.  */
@@ -142,16 +151,12 @@ program_space::add_objfile (std::unique_ptr<objfile> &&objfile,
 			    struct objfile *before)
 {
   if (before == nullptr)
-    objfiles_list.push_back (std::move (objfile));
+    m_objfiles_list.push_back (std::move (objfile));
   else
     {
-      auto iter = std::find_if (objfiles_list.begin (), objfiles_list.end (),
-				[=] (const std::unique_ptr<::objfile> &objf)
-				{
-				  return objf.get () == before;
-				});
-      gdb_assert (iter != objfiles_list.end ());
-      objfiles_list.insert (iter, std::move (objfile));
+      gdb_assert (before->is_linked ());
+      m_objfiles_list.insert (m_objfiles_list.iterator_to (*before),
+			      std::move (objfile));
     }
 }
 
@@ -166,16 +171,11 @@ program_space::remove_objfile (struct objfile *objfile)
      reference stale info.  */
   reinit_frame_cache ();
 
-  auto iter = std::find_if (objfiles_list.begin (), objfiles_list.end (),
-			    [=] (const std::unique_ptr<::objfile> &objf)
-			    {
-			      return objf.get () == objfile;
-			    });
-  gdb_assert (iter != objfiles_list.end ());
-  objfiles_list.erase (iter);
-
   if (objfile == symfile_object_file)
     symfile_object_file = NULL;
+
+  gdb_assert (objfile->is_linked ());
+  m_objfiles_list.erase (m_objfiles_list.iterator_to (*objfile));
 }
 
 /* See progspace.h.  */
@@ -209,7 +209,7 @@ program_space::exec_close ()
 
       remove_target_sections (saved_ebfd);
 
-      exec_filename.reset (nullptr);
+      m_exec_filename.reset ();
     }
 }
 
@@ -223,8 +223,8 @@ clone_program_space (struct program_space *dest, struct program_space *src)
 
   set_current_program_space (dest);
 
-  if (src->exec_filename != NULL)
-    exec_file_attach (src->exec_filename.get (), 0);
+  if (src->exec_filename () != nullptr)
+    exec_file_attach (src->exec_filename (), 0);
 
   if (src->symfile_object_file != NULL)
     symbol_file_add_main (objfile_name (src->symfile_object_file),
@@ -277,8 +277,8 @@ print_program_space (struct ui_out *uiout, int requested)
       if (requested != -1 && pspace->num != requested)
 	continue;
 
-      if (pspace->exec_filename != nullptr)
-	longest_exec_name = std::max (strlen (pspace->exec_filename.get ()),
+      if (pspace->exec_filename () != nullptr)
+	longest_exec_name = std::max (strlen (pspace->exec_filename ()),
 				      longest_exec_name);
 
       ++count;
@@ -310,8 +310,8 @@ print_program_space (struct ui_out *uiout, int requested)
 
       uiout->field_signed ("id", pspace->num);
 
-      if (pspace->exec_filename != nullptr)
-	uiout->field_string ("exec", pspace->exec_filename.get (),
+      if (pspace->exec_filename () != nullptr)
+	uiout->field_string ("exec", pspace->exec_filename (),
 			     file_name_style.style ());
       else
 	uiout->field_skip ("exec");

@@ -42,12 +42,18 @@
 #include "arch/amd64.h"
 #include "target-descriptions.h"
 #include "expop.h"
+#include "arch/amd64-linux-tdesc.h"
+#include "inferior.h"
 
 /* The syscall's XML filename for i386.  */
 #define XML_SYSCALL_FILENAME_AMD64 "syscalls/amd64-linux.xml"
 
 #include "record-full.h"
 #include "linux-record.h"
+
+#include <string_view>
+
+#define DEFAULT_TAG_MASK 0xffffffffffffffffULL
 
 /* Mapping between the general-purpose registers in `struct user'
    format and GDB's register cache layout.  */
@@ -85,6 +91,8 @@ int amd64_linux_gregset_reg_offset[] =
   -1, -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1,
+  /* MPX is deprecated.  Yet we keep this to not give the registers below
+     a new number.  That could break older gdbservers.  */
   -1, -1, -1, -1,		/* MPX registers BND0 ... BND3.  */
   -1, -1,			/* MPX registers BNDCFGU and BNDSTATUS.  */
   -1, -1, -1, -1, -1, -1, -1, -1,     /* xmm16 ... xmm31 (AVX512)  */
@@ -1577,37 +1585,6 @@ amd64_linux_record_signal (struct gdbarch *gdbarch,
   return 0;
 }
 
-const target_desc *
-amd64_linux_read_description (uint64_t xcr0_features_bit, bool is_x32)
-{
-  static target_desc *amd64_linux_tdescs \
-    [2/*AVX*/][2/*MPX*/][2/*AVX512*/][2/*PKRU*/] = {};
-  static target_desc *x32_linux_tdescs \
-    [2/*AVX*/][2/*AVX512*/][2/*PKRU*/] = {};
-
-  target_desc **tdesc;
-
-  if (is_x32)
-    {
-      tdesc = &x32_linux_tdescs[(xcr0_features_bit & X86_XSTATE_AVX) ? 1 : 0 ]
-	[(xcr0_features_bit & X86_XSTATE_AVX512) ? 1 : 0]
-	[(xcr0_features_bit & X86_XSTATE_PKRU) ? 1 : 0];
-    }
-  else
-    {
-      tdesc = &amd64_linux_tdescs[(xcr0_features_bit & X86_XSTATE_AVX) ? 1 : 0]
-	[(xcr0_features_bit & X86_XSTATE_MPX) ? 1 : 0]
-	[(xcr0_features_bit & X86_XSTATE_AVX512) ? 1 : 0]
-	[(xcr0_features_bit & X86_XSTATE_PKRU) ? 1 : 0];
-    }
-
-  if (*tdesc == NULL)
-    *tdesc = amd64_create_target_description (xcr0_features_bit, is_x32,
-					      true, true);
-
-  return *tdesc;
-}
-
 /* Get Linux/x86 target description from core dump.  */
 
 static const struct target_desc *
@@ -1795,6 +1772,62 @@ amd64_dtrace_parse_probe_argument (struct gdbarch *gdbarch,
     }
 }
 
+/* Extract the untagging mask based on the currently active linear address
+   masking (LAM) mode, which is stored in the /proc/<pid>/status file.
+   If we cannot extract the untag mask (for example, if we don't have
+   execution), we assume address tagging is not enabled and return the
+   DEFAULT_TAG_MASK.  */
+
+static CORE_ADDR
+amd64_linux_lam_untag_mask ()
+{
+  if (!target_has_execution ())
+    return DEFAULT_TAG_MASK;
+
+  inferior *inf = current_inferior ();
+  if (inf->fake_pid_p)
+    return DEFAULT_TAG_MASK;
+
+  const std::string filename = string_printf ("/proc/%d/status", inf->pid);
+  gdb::unique_xmalloc_ptr<char> status_file
+    = target_fileio_read_stralloc (nullptr, filename.c_str ());
+
+  if (status_file == nullptr)
+    return DEFAULT_TAG_MASK;
+
+  std::string_view status_file_view (status_file.get ());
+  constexpr std::string_view untag_mask_str = "untag_mask:\t";
+  const size_t found = status_file_view.find (untag_mask_str);
+  if (found != std::string::npos)
+    {
+      const char* start = status_file_view.data() + found
+			  + untag_mask_str.length ();
+      char* endptr;
+      errno = 0;
+      unsigned long long result = std::strtoul (start, &endptr, 0);
+      if (errno != 0 || endptr == start)
+	error (_("Failed to parse untag_mask from file %s."),
+	       std::string (filename).c_str ());
+
+      return result;
+    }
+
+   return DEFAULT_TAG_MASK;
+}
+
+/* Adjust watchpoint address based on the currently active linear address
+   masking (LAM) mode using the untag mask.  Check each time for a new
+   mask, as LAM is enabled at runtime.  */
+
+static CORE_ADDR
+amd64_linux_remove_non_address_bits_watchpoint (gdbarch *gdbarch,
+						CORE_ADDR addr)
+{
+  /* Clear insignificant bits of a target address using the untag
+     mask.  */
+  return (addr & amd64_linux_lam_untag_mask ());
+}
+
 static void
 amd64_linux_init_abi_common(struct gdbarch_info info, struct gdbarch *gdbarch,
 			    int num_disp_step_buffers)
@@ -1847,8 +1880,8 @@ amd64_linux_init_abi_common(struct gdbarch_info info, struct gdbarch *gdbarch,
   set_gdbarch_process_record (gdbarch, i386_process_record);
   set_gdbarch_process_record_signal (gdbarch, amd64_linux_record_signal);
 
-  set_gdbarch_get_siginfo_type (gdbarch, x86_linux_get_siginfo_type);
-  set_gdbarch_report_signal_info (gdbarch, i386_linux_report_signal_info);
+  set_gdbarch_remove_non_address_bits_watchpoint
+    (gdbarch, amd64_linux_remove_non_address_bits_watchpoint);
 }
 
 static void

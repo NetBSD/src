@@ -19,6 +19,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "elf-none-tdep.h"
+#include "exceptions.h"
 #include "regset.h"
 #include "elf-bfd.h"
 #include "inferior.h"
@@ -42,9 +43,9 @@ elf_none_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd,
   std::string psargs;
   static const size_t fname_len = 16;
   static const size_t psargs_len = 80;
-  if (get_exec_file (0))
+  if (current_program_space->exec_filename () != nullptr)
     {
-      const char *exe = get_exec_file (0);
+      const char *exe = current_program_space->exec_filename ();
       fname = lbasename (exe);
       psargs = std::string (exe);
 

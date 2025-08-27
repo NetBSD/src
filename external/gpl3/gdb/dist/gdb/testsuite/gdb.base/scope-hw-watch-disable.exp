@@ -29,12 +29,30 @@ if {![runto_main]} {
     return -1
 }
 
+gdb_test_multiple "maint info break" "maint info break before" {
+    -re -wrap "watchpoint.*" {
+	fail $gdb_test_name
+    }
+    -re -wrap "" {
+	pass $gdb_test_name
+    }
+}
+
 gdb_test "awatch a" \
     "Can't set read/access watchpoint when hardware watchpoints are disabled." \
     "unsuccessful attempt to create an access watchpoint"
 gdb_test "rwatch b" \
     "Can't set read/access watchpoint when hardware watchpoints are disabled." \
     "unsuccessful attempt to create a read watchpoint"
+
+gdb_test_multiple "maint info break" "maint info break after" {
+    -re -wrap "watchpoint.*" {
+	fail $gdb_test_name
+    }
+    -re -wrap "" {
+	pass $gdb_test_name
+    }
+}
 
 # The program continues until termination.
 gdb_continue_to_end

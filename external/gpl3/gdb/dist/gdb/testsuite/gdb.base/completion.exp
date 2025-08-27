@@ -145,7 +145,7 @@ append regs_output "\n"
 append regs_output [capture_command_output "mt print user-registers" \
 		     ".*Name.*Nr\[^\n]*\n"]
 set all_regs {}
-foreach {- reg} [regexp -all -inline -line {^\s+(\w+)} $regs_output] {
+foreach {- reg} [regexp -all -inline -line {^(\w+)} $regs_output] {
     lappend all_regs $reg
 }
 
@@ -543,10 +543,10 @@ gdb_test_multiple "" "$test" {
 		# Eat the prompt
 		gdb_expect {
 		    -re "$gdb_prompt " {
-			pass "$test (eat prompt)"
+			pass "$test, eat prompt"
 		    }
 		    timeout {
-			fail "(timeout) $test (eat prompt)"
+			fail "$test, eat prompt (timeout)"
 		    }
 		}
 
@@ -572,10 +572,10 @@ gdb_test_multiple "" "$test" {
 		# Eat the prompt
 		gdb_expect {
 		    -re "$gdb_prompt " {
-			pass "$test (eat prompt)"
+			pass "$test, eat prompt"
 		    }
 		    timeout {
-			fail "(timeout) $test (eat prompt)"
+			fail "$test, eat prompt (timeout)"
 		    }
 		}
 

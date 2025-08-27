@@ -80,7 +80,7 @@ mi_gdb_test "-var-update linteger" \
 
 mi_gdb_test "-var-info-type linteger" \
 	"\\^done,type=\"\"" \
-	"no type for invalid variable linteger (1)"
+	"no type for invalid variable linteger, 1"
 
 # Check global variable is still correct.
 mi_gdb_test "-var-update global_simple" \
@@ -105,7 +105,7 @@ mi_gdb_test "-var-update linteger" \
 
 mi_gdb_test "-var-info-type linteger" \
 	"\\^done,type=\"\"" \
-	"no type for invalid variable linteger (2)"
+	"no type for invalid variable linteger, 2"
 
 # Check global variable are still correct.
 mi_gdb_test "-var-update global_simple" \

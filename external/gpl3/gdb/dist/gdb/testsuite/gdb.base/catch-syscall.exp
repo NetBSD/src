@@ -19,37 +19,16 @@
 # It was written by Sergio Durigan Junior <sergiodj@linux.vnet.ibm.com>
 # on September/2008.
 
+require supports_catch_syscall
+
 standard_testfile
 
 if  { [prepare_for_testing "failed to prepare" $testfile ${testfile}.c] } {
      return -1
 }
 
-# Check target supports catch syscall or not.
 if {![runto_main]} {
     return
-}
-
-set test "catch syscall"
-gdb_test_multiple $test $test {
-    -re "The feature \'catch syscall\' is not supported.*\r\n$gdb_prompt $" {
-	unsupported "catch syscall isn't supported"
-	return -1
-    }
-    -re ".*$gdb_prompt $" {
-	pass $test
-    }
-}
-
-set test "check catch syscall"
-gdb_test_multiple "continue" $test {
-    -re ".*Your system does not support this type\r\nof catchpoint.*$gdb_prompt $" {
-	unsupported "catch syscall isn't supported"
-	return -1
-    }
-    -re ".*Catchpoint.*$gdb_prompt $" {
-      pass $test
-    }
 }
 
 # Test-case for PR27313.  Verify that negative syscall numbers are refused.
@@ -171,7 +150,7 @@ proc insert_catch_syscall_with_arg { syscall } {
     global decimal
 
     # Trying to set the catchpoint
-    set thistest "catch syscall with arguments ($syscall)"
+    set thistest "catch syscall with arguments, $syscall"
     gdb_test "catch syscall $syscall" "Catchpoint $decimal \\(syscall \'?${syscall}\'?( \[${decimal}\])?\\)" $thistest
 
     check_info_bp_specific_syscall $syscall

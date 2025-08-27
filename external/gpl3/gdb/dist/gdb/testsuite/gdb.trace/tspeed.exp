@@ -43,6 +43,7 @@ if ![gdb_target_supports_trace] {
 }
 
 # Compile the test case with the in-process agent library.
+require allow_in_proc_agent
 set ipalib [get_in_proc_agent]
 
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \

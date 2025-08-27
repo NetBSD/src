@@ -30,7 +30,7 @@ proc test_continue {non-stop} {
 
     proc set_break {inf} {
 	gdb_test "break function${inf} thread ${inf}.1" \
-	"Breakpoint .* function${inf}\\..*"
+	    "Breakpoint ${::decimal} at ${::hex}: file .*, line ${::decimal}\\."
     }
 
     # Select inferior INF, and then run to a breakpoint on inferior

@@ -132,7 +132,7 @@ netbsd_process_target::resume (struct thread_resume *resume_info, size_t n)
   const bool step = resume_info[0].kind == resume_step;
 
   if (resume_ptid == minus_one_ptid)
-    resume_ptid = ptid_of (current_thread);
+    resume_ptid = current_thread->id;
 
   const pid_t pid = resume_ptid.pid ();
   const lwpid_t lwp = resume_ptid.lwp ();
@@ -222,7 +222,7 @@ netbsd_waitpid (ptid_t ptid, struct target_waitstatus *ourstatus,
   int options = (target_options & TARGET_WNOHANG) ? WNOHANG : 0;
 
   pid_t pid
-    = gdb::handle_eintr (-1, ::waitpid, ptid.pid (), &status, options);
+    = gdb::waitpid (ptid.pid (), &status, options);
 
   if (pid == -1)
     perror_with_name (_("Child process unexpectedly missing"));
@@ -303,7 +303,7 @@ netbsd_wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	  /* NetBSD does not store an LWP exit status.  */
 	  ourstatus->set_thread_exited (0);
 
-	  remove_thread (thr);
+	  thr->process ()->remove_thread (thr);
 	}
       return wptid;
     }
@@ -321,7 +321,7 @@ netbsd_wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	ourstatus->set_spurious ();
       else
 	{
-	  add_thread (wptid, NULL);
+	  find_process_pid (wptid.pid ())->add_thread (wptid, nullptr);
 	  ourstatus->set_thread_created ();
 	}
       return wptid;
@@ -391,7 +391,7 @@ netbsd_process_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	 that was not fully initialized during the attach stage.  */
       if (wptid.lwp () != 0 && !find_thread_ptid (wptid)
 	  && ourstatus->kind () != TARGET_WAITKIND_THREAD_EXITED)
-	add_thread (wptid, nullptr);
+	find_process_pid (wptid.pid ())->add_thread (wptid, nullptr);
 
       switch (ourstatus->kind ())
 	{
@@ -432,7 +432,7 @@ netbsd_process_target::kill (process_info *process)
     return -1;
 
   int status;
-  if (gdb::handle_eintr (-1, ::waitpid, pid, &status, 0) == -1)
+  if (gdb::waitpid (pid, &status, 0) == -1)
     return -1;
   mourn (process);
   return 0;
@@ -455,7 +455,7 @@ netbsd_process_target::detach (process_info *process)
 void
 netbsd_process_target::mourn (struct process_info *proc)
 {
-  for_each_thread (proc->pid, remove_thread);
+  proc->for_each_thread (remove_thread);
 
   remove_process (proc);
 }
@@ -483,7 +483,7 @@ void
 netbsd_process_target::fetch_registers (struct regcache *regcache, int regno)
 {
   const netbsd_regset_info *regset = get_regs_info ();
-  ptid_t inferior_ptid = ptid_of (current_thread);
+  ptid_t inferior_ptid = current_thread->id;
 
   while (regset->size >= 0)
     {
@@ -504,7 +504,7 @@ void
 netbsd_process_target::store_registers (struct regcache *regcache, int regno)
 {
   const netbsd_regset_info *regset = get_regs_info ();
-  ptid_t inferior_ptid = ptid_of (current_thread);
+  ptid_t inferior_ptid = current_thread->id;
 
   while (regset->size >= 0)
     {
@@ -551,7 +551,7 @@ netbsd_process_target::write_memory (CORE_ADDR memaddr,
 void
 netbsd_process_target::request_interrupt ()
 {
-  ptid_t inferior_ptid = ptid_of (get_first_thread ());
+  ptid_t inferior_ptid = get_first_thread ()->id;
 
   ::kill (inferior_ptid.pid (), SIGINT);
 }
@@ -1123,15 +1123,15 @@ netbsd_qxfer_libraries_svr4 (const pid_t pid, const char *annex,
 static bool
 elf_64_file_p (const char *file)
 {
-  int fd = gdb::handle_eintr (-1, ::open, file, O_RDONLY);
+  int fd = gdb::open (file, O_RDONLY);
   if (fd < 0)
     perror_with_name (("open"));
 
   Elf64_Ehdr header;
-  ssize_t ret = gdb::handle_eintr (-1, ::read, fd, &header, sizeof (header));
+  ssize_t ret = gdb::read (fd, &header, sizeof (header));
   if (ret == -1)
     perror_with_name (("read"));
-  gdb::handle_eintr (-1, ::close, fd);
+  gdb::close (fd);
   if (ret != sizeof (header))
     error ("Cannot read ELF file header: %s", file);
 

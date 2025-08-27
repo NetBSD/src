@@ -1,0 +1,48 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that GDB can load a CU with an empty name properly.
+
+load_lib dwarf.exp
+
+# This test can only be run on targets which support DWARF-2 and use gas.
+require dwarf2_support
+
+standard_testfile .c .S
+
+# Make some DWARF for the test.
+set asm_file [standard_output_file $srcfile2]
+Dwarf::assemble $asm_file {
+    cu {} {
+	DW_TAG_compile_unit {
+	    {DW_AT_producer "Tsetsuite"}
+	    {DW_AT_language @DW_LANG_C}
+	    {DW_AT_name     ""}
+	    {DW_AT_comp_dir /tmp}
+	} {
+	}
+    }
+}
+
+if { [prepare_for_testing "failed to prepare" ${testfile} \
+	  [list $srcfile $asm_file] {nodebug}] } {
+    return -1
+}
+
+if { ![runto_main] } {
+    return -1
+}
+
+gdb_continue_to_end

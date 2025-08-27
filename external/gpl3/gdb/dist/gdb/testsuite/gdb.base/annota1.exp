@@ -21,25 +21,22 @@
 #
 require target_can_use_run_cmd
 
+# This test checks the full path to the binary in the output of some
+# tests, as a result this test will not work for remote host boards
+# where we have to first copy the binary to the remote host.
+require {!is_remote host}
+
 set breakpoints_invalid "\r\n\032\032breakpoints-invalid\r\n"
 
 #
 # test running programs
 #
 
-standard_testfile .c
+standard_testfile
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
-    untested "failed to compile"
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
     return -1
 }
-
-
-clean_restart ${binfile}
-
-# The commands we test here produce many lines of output; disable "press 
-# <return> to continue" prompts.
-gdb_test_no_output "set height 0"
 
 #
 # break in main
@@ -54,10 +51,10 @@ gdb_test "break ${srcfile}:${main_line}" \
 
 #
 # NOTE: this prompt is OK only when the annotation level is > 1
-# NOTE: When this prompt is in use the gdb_test procedure cannot be used because
-# it assumes that the last char after the gdb_prompt is a white space. This is not
-# true with this annotated prompt. So we must use send_gdb and gdb_expect.
-#
+# NOTE: When this prompt is in use the gdb_test procedure must be
+#       called with '-prompt "$gdb_prompt$"' otherwise it assumes the
+#       last char after the gdb_prompt is a white space. This is not
+#       true with this annotated prompt.
 
 set old_gdb_prompt $gdb_prompt
 set gdb_prompt "\r\n\032\032pre-prompt\r\n$gdb_prompt \r\n\032\032prompt\r\n"
@@ -77,13 +74,8 @@ set escapedsrcfile [string_to_regexp ${srcdir}/${subdir}/${srcfile}]
 # annotate-prompt
 # annotate-post-prompt (in the next block)
 #
-send_gdb "set annotate 2\n" 
-gdb_expect {
-    -re "set annotate 2\r\n$gdb_prompt$" { pass "annotation set at level 2" }
-    -re ".*$gdb_prompt$"       { fail "annotation set at level 2" }
-    timeout	            { fail "annotation set at level 2 (timeout)" }
-  }
-
+gdb_test_no_output -prompt "$gdb_prompt$" "set annotate 2" \
+    "annotation set at level 2"
 
 #
 # info break will test:
@@ -122,7 +114,7 @@ gdb_test_multiple "info break" "breakpoint info" {
 # annotate-frame-end
 # annotate-stopped
 #
-#exp_internal 1
+
 set binexp [string_to_regexp $binfile]
 
 set warning_slow_re \
@@ -136,7 +128,7 @@ set reading_re \
     "Reading \[^\r\n\]+\r\n"
 set libthread_db_re \
     [multi_line \
-	 "\\\[Thread debugging using libthread_db enabled\\\]" \
+	 [string_to_regexp {[Thread debugging using libthread_db enabled]}] \
 	 "Using host libthread_db library \[^\r\n\]+\r\n"]
 
 set optional_re \
@@ -157,7 +149,9 @@ set run_re \
 	 "\r\n\032\032post-prompt\r\n" \
 	 "Starting program: $binexp \r\n" \
 	 $optional_re \
-	 "\(\r\n\032\032breakpoints-invalid\r\n\)?" \
+	 "(\r\n\032\032breakpoints-invalid\r\n)?" \
+	 $optional_re \
+	 "(\r\n\032\032frames-invalid\r\n)?" \
 	 $optional_re \
 	 "\r\n\032\032starting\r\n" \
 	 $optional_re \
@@ -172,7 +166,7 @@ set run_re \
 	 "\r\n\032\032frame-function-name\r\n" \
 	 "main" \
 	 "\r\n\032\032frame-args\r\n" \
-	 " \\(\\)" \
+	 [string_to_regexp " ()"] \
 	 "\r\n\032\032frame-source-begin\r\n" \
 	 " at " \
 	 "\r\n\032\032frame-source-file\r\n" \
@@ -194,8 +188,6 @@ gdb_test_multiple "run" "run until main breakpoint" {
 	pass $gdb_test_name
     }
 }
-#exp_internal 0
-#exit 0
 
 #
 # Let's do a next, to get to a point where the array is initialized
@@ -234,7 +226,6 @@ gdb_test_multiple "print my_array" "print array" {
 # FIXME: annotate-error not tested
 #
 
-#exp_internal 1
 gdb_test_multiple "print non_existent_value" "print non_existent_value" {
     -re "\r\n\032\032post-prompt\r\n\r\n\032\032error-begin\r\nNo symbol \"non_existent_value\" in current context.\r\n\r\n\032\032error\r\n$gdb_prompt$" {
 	pass $gdb_test_name
@@ -278,6 +269,8 @@ gdb_test_multiple "continue" "continue to printf" {
     -re ".*$gdb_prompt$"     { fail $gdb_test_name }
 }
 
+set pac [string_to_regexp {[PAC]}]
+
 #
 # test:
 # annotate-frame-where
@@ -291,7 +284,7 @@ set pat_begin \
 	 ".0  \r\n" \
 	 "(" \
 	 "\032\032frame-address\r\n" \
-	 "${hex}( \\\[PAC\\\])?" \
+	 "${hex}( $pac)?" \
 	 "\r\n\032\032frame-address-end\r\n" \
 	 " in \r\n" \
 	 ")*" \
@@ -302,13 +295,13 @@ set pat_begin \
 	 "\r\n\032\032frame-begin 1 $hex\r\n" \
 	 ".1  " \
 	 "\r\n\032\032frame-address\r\n" \
-	 "${hex}( \\\[PAC\\\])?" \
+	 "${hex}( $pac)?" \
 	 "\r\n\032\032frame-address-end\r\n" \
 	 " in " \
 	 "\r\n\032\032frame-function-name\r\n" \
 	 "main" \
 	 "\r\n\032\032frame-args\r\n" \
-	 " \\(\\)" \
+	 [string_to_regexp " ()"] \
 	 "\r\n\032\032frame-source-begin\r\n" \
 	 " at " \
 	 "\r\n\032\032frame-source-file\r\n"]
@@ -433,12 +426,14 @@ if {![is_remote host]} {
 	"set inferior cwd to test directory"
 }
 
+set y_or_n [string_to_regexp "(y or n)"]
+
 # should ask query. Test annotate-query.
 # we don't care about anything else here, only the query.
 
 send_gdb "run\n"
 gdb_expect {
-  -re "pre-query.*already.*\\(y or n\\).*query\r\n" {
+  -re "pre-query.*already.*$y_or_n.*query\r\n" {
          send_gdb "y\n"
          gdb_expect {
 	     -re ".*post-query.*$gdb_prompt$" \

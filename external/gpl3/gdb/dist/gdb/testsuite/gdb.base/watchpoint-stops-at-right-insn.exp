@@ -62,7 +62,7 @@
 #
 # If the target has non-continuable watchpoints, while GDB thinks it
 # has continuable watchpoints, GDB will see a watchpoint trigger,
-# notice no value changed, and immediatly continue the target.  Now,
+# notice no value changed, and immediately continue the target.  Now,
 # either the target manages to step-over the watchpoint transparently,
 # and GDB thus fails to present to value change to the user, or, the
 # watchpoint will keep re-triggering, with the program never making

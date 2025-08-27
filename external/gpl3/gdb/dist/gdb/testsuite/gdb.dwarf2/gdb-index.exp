@@ -95,7 +95,13 @@ proc local_add_gdb_index { program } {
 # building an index from a program already using one.
 
 set test "check if index present"
-gdb_test_multiple "mt print objfiles ${testfile}" $test {
+set filter "gdb_index|debug_names|Psymtabs|Cooked"
+set cmd "pipe mt print objfiles ${testfile} | grep -E \"$filter\""
+set cmd_re [string_to_regexp $cmd]
+gdb_test_multiple $cmd $test {
+    -re ^$cmd_re {
+	exp_continue
+    }
     -re "gdb_index.*${gdb_prompt} $" {
 	set binfile_with_index $binfile
 	set host_binfile_with_index [gdb_remote_download host $binfile]

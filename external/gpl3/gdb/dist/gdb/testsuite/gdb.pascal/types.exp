@@ -59,7 +59,7 @@ proc test_float_literal_types_accepted {} {
     # Test various floating point formats
 
     # this used to guess whether to look for "real*4" or
-    # "real*8" based on a target config variable, but noone
+    # "real*8" based on a target config variable, but no one
     # maintained it properly.
 
     gdb_test "pt .44" "type = double"

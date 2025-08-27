@@ -19,6 +19,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "gdbsupport/gdb_vecs.h"
 #include "record.h"
 #include "record-btrace.h"
 #include "gdbthread.h"
@@ -733,7 +734,7 @@ btrace_find_line_range (CORE_ADDR pc)
     {
       /* The test of is_stmt here was added when the is_stmt field was
 	 introduced to the 'struct linetable_entry' structure.  This
-	 ensured that this loop maintained the same behaviour as before we
+	 ensured that this loop maintained the same behavior as before we
 	 introduced is_stmt.  That said, it might be that we would be
 	 better off not checking is_stmt here, this would lead to us
 	 possibly adding more line numbers to the range.  At the time this
@@ -826,6 +827,22 @@ btrace_insn_history (struct ui_out *uiout,
 
 	  btrace_ui_out_decode_error (uiout, btrace_insn_get_error (&it),
 				      conf->format);
+	}
+      else if (insn->iclass == BTRACE_INSN_AUX)
+	{
+	  if ((flags & DISASSEMBLY_OMIT_AUX_INSN) != 0)
+	    continue;
+
+	  uiout->field_fmt ("insn-number", "%u", btrace_insn_number (&it));
+	  uiout->text ("\t");
+	  /* Add 3 spaces to match the instructions and 2 to indent the aux
+	     string to make it more visible.  */
+	  uiout->spaces (5);
+	  uiout->text ("[");
+	  uiout->field_fmt ("aux-data", "%s",
+			    it.btinfo->aux_data.at
+			     (insn->aux_data_index).c_str ());
+	  uiout->text ("]\n");
 	}
       else
 	{
@@ -1145,6 +1162,31 @@ btrace_get_bfun_name (const struct btrace_function *bfun)
     return "??";
 }
 
+static void
+btrace_print_aux_insn (struct ui_out *uiout,
+		       const struct btrace_function *bfun,
+		       const struct btrace_thread_info *btinfo,
+		       int level)
+{
+  for (const btrace_insn &insn : bfun->insn)
+    {
+      if (insn.iclass == BTRACE_INSN_AUX)
+	{
+	  /* Indent to the function level.  */
+	  uiout->text ("\t");
+	  /* Adjust for RECORD_PRINT_INDENT_CALLS and indent one
+	     additional level.  */
+	  for (int i = 0; i <= level; ++i)
+	    uiout->text ("  ");
+
+	  uiout->text ("[");
+	  uiout->field_fmt ("aux-data", "%s",
+			    btinfo->aux_data.at (insn.aux_data_index).c_str ());
+	  uiout->text ("]\n");
+	}
+    }
+}
+
 /* Disassemble a section of the recorded function trace.  */
 
 static void
@@ -1165,6 +1207,7 @@ btrace_call_history (struct ui_out *uiout,
       const struct btrace_function *bfun;
       struct minimal_symbol *msym;
       struct symbol *sym;
+      int level = 0;
 
       bfun = btrace_call_get (&it);
       sym = bfun->sym;
@@ -1191,9 +1234,9 @@ btrace_call_history (struct ui_out *uiout,
 
       if ((flags & RECORD_PRINT_INDENT_CALLS) != 0)
 	{
-	  int level = bfun->level + btinfo->level, i;
+	  level = bfun->level + btinfo->level;
 
-	  for (i = 0; i < level; ++i)
+	  for (int i = 0; i < level; ++i)
 	    uiout->text ("  ");
 	}
 
@@ -1220,6 +1263,10 @@ btrace_call_history (struct ui_out *uiout,
 	}
 
       uiout->text ("\n");
+
+      if (((flags & RECORD_DONT_PRINT_AUX) == 0)
+	  && ((bfun->flags & BFUN_CONTAINS_AUX) != 0))
+	btrace_print_aux_insn (uiout, bfun, btinfo, level);
     }
 }
 
@@ -2345,9 +2392,13 @@ record_btrace_single_step_forward (struct thread_info *tp)
     return btrace_step_stopped ();
 
   /* Skip gaps during replay.  If we end up at a gap (at the end of the trace),
-     jump back to the instruction at which we started.  */
+     jump back to the instruction at which we started.  If we're stepping a
+     BTRACE_INSN_AUX instruction, print the auxiliary data and skip the
+     instruction.  */
+
   start = *replay;
-  do
+
+  for (;;)
     {
       unsigned int steps;
 
@@ -2359,8 +2410,23 @@ record_btrace_single_step_forward (struct thread_info *tp)
 	  *replay = start;
 	  return btrace_step_no_history ();
 	}
+
+      const struct btrace_insn *insn = btrace_insn_get (replay);
+      if (insn == nullptr)
+	continue;
+
+      /* If we're stepping a BTRACE_INSN_AUX instruction, print the auxiliary
+	 data and skip the instruction.  */
+      if (insn->iclass == BTRACE_INSN_AUX)
+	{
+	  gdb_printf ("[%s]\n",
+		      btinfo->aux_data.at (insn->aux_data_index).c_str ());
+	  continue;
+	}
+
+      /* We have an instruction, we are done.  */
+      break;
     }
-  while (btrace_insn_get (replay) == NULL);
 
   /* Determine the end of the instruction trace.  */
   btrace_insn_end (&end, btinfo);
@@ -2391,9 +2457,12 @@ record_btrace_single_step_backward (struct thread_info *tp)
 
   /* If we can't step any further, we reached the end of the history.
      Skip gaps during replay.  If we end up at a gap (at the beginning of
-     the trace), jump back to the instruction at which we started.  */
+     the trace), jump back to the instruction at which we started.
+     If we're stepping a BTRACE_INSN_AUX instruction, print the auxiliary
+     data and skip the instruction.  */
   start = *replay;
-  do
+
+  for (;;)
     {
       unsigned int steps;
 
@@ -2403,8 +2472,22 @@ record_btrace_single_step_backward (struct thread_info *tp)
 	  *replay = start;
 	  return btrace_step_no_history ();
 	}
+
+      const struct btrace_insn *insn = btrace_insn_get (replay);
+      if (insn == nullptr)
+	continue;
+
+      /* Check if we're stepping a BTRACE_INSN_AUX instruction and skip it.  */
+      if (insn->iclass == BTRACE_INSN_AUX)
+	{
+	  gdb_printf ("[%s]\n",
+		      btinfo->aux_data.at (insn->aux_data_index).c_str ());
+	  continue;
+	}
+
+      /* We have an instruction, we are done.  */
+      break;
     }
-  while (btrace_insn_get (replay) == NULL);
 
   /* Check if we're stepping a breakpoint.
 
@@ -2826,26 +2909,33 @@ record_btrace_target::goto_record_end ()
 /* The goto_record method of target record-btrace.  */
 
 void
-record_btrace_target::goto_record (ULONGEST insn)
+record_btrace_target::goto_record (ULONGEST insn_number)
 {
   struct thread_info *tp;
   struct btrace_insn_iterator it;
   unsigned int number;
   int found;
 
-  number = insn;
+  number = insn_number;
 
   /* Check for wrap-arounds.  */
-  if (number != insn)
+  if (number != insn_number)
     error (_("Instruction number out of range."));
 
   tp = require_btrace_thread ();
 
   found = btrace_find_insn_by_number (&it, &tp->btrace, number);
 
-  /* Check if the instruction could not be found or is a gap.  */
-  if (found == 0 || btrace_insn_get (&it) == NULL)
+  /* Check if the instruction could not be found or is a gap or an
+     auxiliary instruction.  */
+  if (found == 0)
     error (_("No such instruction."));
+
+  const struct btrace_insn *insn = btrace_insn_get (&it);
+  if (insn == NULL)
+    error (_("No such instruction."));
+  if (insn->iclass == BTRACE_INSN_AUX)
+    error (_("Can't go to an auxiliary instruction."));
 
   record_btrace_set_replay (tp, &it);
 }
@@ -3091,6 +3181,36 @@ show_record_pt_buffer_size_value (struct ui_file *file, int from_tty,
 	      value);
 }
 
+
+static bool event_tracing = false;
+
+/* The "record pt event-tracing" show value function.  */
+
+static void
+show_record_pt_event_tracing_value (struct ui_file *file, int from_tty,
+				    struct cmd_list_element *c,
+				    const char *value)
+{
+#if (LIBIPT_VERSION >= 0x201)
+  gdb_printf (file, _("record pt event-tracing is %s.\n"), value);
+#else
+  gdb_printf (_("Event-tracing is not supported by GDB.\n"));
+#endif /* defined (LIBIPT_VERSION >= 0x201) */
+}
+
+/* The "record pt event-tracing" set value function.  */
+
+static void
+set_record_pt_event_tracing_value (const char *args, int from_tty,
+				   cmd_list_element *c)
+{
+#if (LIBIPT_VERSION >= 0x201)
+  record_btrace_conf.pt.event_tracing = event_tracing;
+#else
+  gdb_printf (_("Event-tracing is not supported by GDB.\n"));
+#endif /* defined (LIBIPT_VERSION >= 0x201) */
+}
+
 /* Initialize btrace commands.  */
 
 void _initialize_record_btrace ();
@@ -3134,10 +3254,10 @@ Set what memory accesses are allowed during replay."), _("\
 Show what memory accesses are allowed during replay."),
 			   _("Default is READ-ONLY.\n\n\
 The btrace record target does not trace data.\n\
-The memory therefore corresponds to the live target and not \
+The memory therefore corresponds to the live target and not\n\
 to the current replay position.\n\n\
 When READ-ONLY, allow accesses to read-only memory during replay.\n\
-When READ-WRITE, allow accesses to read-only and read-write memory during \
+When READ-WRITE, allow accesses to read-only and read-write memory during\n\
 replay."),
 			   NULL, cmd_show_replay_memory_access,
 			   &set_record_btrace_cmdlist,
@@ -3181,10 +3301,10 @@ Show the cpu to be used for trace decode."),
 			    &record_btrace_conf.bts.size,
 			    _("Set the record/replay bts buffer size."),
 			    _("Show the record/replay bts buffer size."), _("\
-When starting recording request a trace buffer of this size.  \
-The actual buffer size may differ from the requested size.  \
+When starting recording request a trace buffer of this size.\n\
+The actual buffer size may differ from the requested size.\n\
 Use \"info record\" to see the actual buffer size.\n\n\
-Bigger buffers allow longer recording but also take more time to process \
+Bigger buffers allow longer recording but also take more time to process\n\
 the recorded execution trace.\n\n\
 The trace buffer size may not be changed while recording."), NULL,
 			    show_record_bts_buffer_size_value,
@@ -3203,12 +3323,25 @@ The trace buffer size may not be changed while recording."), NULL,
 			    &record_btrace_conf.pt.size,
 			    _("Set the record/replay pt buffer size."),
 			    _("Show the record/replay pt buffer size."), _("\
-Bigger buffers allow longer recording but also take more time to process \
+Bigger buffers allow longer recording but also take more time to process\n\
 the recorded execution.\n\
-The actual buffer size may differ from the requested size.  Use \"info record\" \
+The actual buffer size may differ from the requested size.  Use \"info record\"\n\
 to see the actual buffer size."), NULL, show_record_pt_buffer_size_value,
 			    &set_record_btrace_pt_cmdlist,
 			    &show_record_btrace_pt_cmdlist);
+
+  add_setshow_boolean_cmd ("event-tracing", no_class, &event_tracing,
+			   _("Set event-tracing for record pt."),
+			   _("Show event-tracing for record pt."),
+			   _("\
+Use \"on\" to enable event tracing for recordings with Intel Processor Trace,\n\
+and \"off\" to disable it.\n\
+Without an argument, event tracing is enabled.  Changing this setting has no\n\
+effect on an active recording."),
+			   set_record_pt_event_tracing_value,
+			   show_record_pt_event_tracing_value,
+			   &set_record_btrace_pt_cmdlist,
+			   &show_record_btrace_pt_cmdlist);
 
   add_target (record_btrace_target_info, record_btrace_target_open);
 
@@ -3217,4 +3350,10 @@ to see the actual buffer size."), NULL, show_record_pt_buffer_size_value,
 
   record_btrace_conf.bts.size = 64 * 1024;
   record_btrace_conf.pt.size = 16 * 1024;
+#if (LIBIPT_VERSION >= 0x200)
+  record_btrace_conf.pt.ptwrite = true;
+#else
+  record_btrace_conf.pt.ptwrite = false;
+#endif
+  record_btrace_conf.pt.event_tracing = false;
 }

@@ -19,10 +19,10 @@ require allow_ada_tests
 
 standard_ada_testfile foo_ra24_010
 
-set old_gcc [expr [test_compiler_info {gcc-[0-8]-*}]]
+set old_gcc [gnat_version_compare < 9]
 
-foreach_with_prefix scenario {all minimal} {
-    set flags [list debug additional_flags=-fgnat-encodings=$scenario]
+foreach_gnat_encoding scenario flags {all minimal} {
+    lappend flags debug
 
     if {[gdb_compile_ada "${srcfile}" "${binfile}-${scenario}" executable $flags] != ""} {
 	return -1

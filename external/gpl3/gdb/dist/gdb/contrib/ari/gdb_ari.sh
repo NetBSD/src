@@ -243,7 +243,7 @@ END {
 	if (seen[file] && (skipped[bug_n_file] < skip[bug_n_file])) {
 	    # ari.*.bug: <FILE>:<LINE>: <CATEGORY>: <BUG>: <DOC>
 	    b = file " missing " bug
-	    print_bug(file, 0, "", "internal", file " missing " bug, "Expecting " skip[bug_n_file] " occurances of bug " bug " in file " file ", only found " skipped[bug_n_file])
+	    print_bug(file, 0, "", "internal", file " missing " bug, "Expecting " skip[bug_n_file] " occurrences of bug " bug " in file " file ", only found " skipped[bug_n_file])
 	}
     }
 }

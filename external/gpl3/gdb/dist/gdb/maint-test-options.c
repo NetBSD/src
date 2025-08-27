@@ -57,12 +57,13 @@
    readline, for proper testing of TAB completion.
 
    These maintenance commands support options of all the different
-   available kinds of commands (boolean, enum, flag, string, uinteger):
+   available kinds of commands (boolean, enum, flag, string, filename,
+   uinteger):
 
     (gdb) maint test-options require-delimiter -[TAB]
-    -bool                -pinteger-unlimited  -xx1
-    -enum                -string              -xx2
-    -flag                -uinteger-unlimited
+    -bool                -flag                      -uinteger-unlimited
+    -enum                -pinteger-unlimited        -xx1
+    -filename            -string                    -xx2
 
     (gdb) maint test-options require-delimiter -bool o[TAB]
     off  on
@@ -77,14 +78,14 @@
   Invoking the commands makes them print out the options parsed:
 
    (gdb) maint test-options unknown-is-error -flag -enum yyy cmdarg
-   -flag 1 -xx1 0 -xx2 0 -bool 0 -enum yyy -uint-unl 0 -pint-unl 0 -string '' -- cmdarg
+   -flag 1 -xx1 0 -xx2 0 -bool 0 -enum yyy -uint-unl 0 -pint-unl 0 -string '' -filename '' -- cmdarg
 
    (gdb) maint test-options require-delimiter -flag -enum yyy cmdarg
-   -flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl 0 -pint-unl 0 -string '' -- -flag -enum yyy cmdarg
+   -flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl 0 -pint-unl 0 -string '' -filename '' -- -flag -enum yyy cmdarg
    (gdb) maint test-options require-delimiter -flag -enum yyy cmdarg --
    Unrecognized option at: cmdarg --
    (gdb) maint test-options require-delimiter -flag -enum yyy -- cmdarg
-   -flag 1 -xx1 0 -xx2 0 -bool 0 -enum yyy -uint-unl 0 -pint-unl 0 -string '' -- cmdarg
+   -flag 1 -xx1 0 -xx2 0 -bool 0 -enum yyy -uint-unl 0 -pint-unl 0 -string '' -filename '' -- cmdarg
 
   The "maint show test-options-completion-result" command exists in
   order to do something similar for completion:
@@ -135,6 +136,7 @@ struct test_options_opts
   unsigned int uint_unl_opt = 0;
   int pint_unl_opt = 0;
   std::string string_opt;
+  std::string filename_opt;
 
   test_options_opts () = default;
 
@@ -146,7 +148,8 @@ struct test_options_opts
   {
     gdb_printf (file,
 		_("-flag %d -xx1 %d -xx2 %d -bool %d "
-		  "-enum %s -uint-unl %s -pint-unl %s -string '%s' -- %s\n"),
+		  "-enum %s -uint-unl %s -pint-unl %s -string '%s' "
+		  "-filename '%s' -- %s\n"),
 		flag_opt,
 		xx1_opt,
 		xx2_opt,
@@ -159,6 +162,7 @@ struct test_options_opts
 		 ? "unlimited"
 		 : plongest (pint_unl_opt)),
 		string_opt.c_str (),
+		filename_opt.c_str (),
 		args);
   }
 };
@@ -232,6 +236,14 @@ static const gdb::option::option_def test_options_option_defs[] = {
     [] (test_options_opts *opts) { return &opts->string_opt; },
     nullptr, /* show_cmd_cb */
     N_("A string option."),
+  },
+
+  /* A filename option.  */
+  gdb::option::filename_option_def<test_options_opts> {
+    "filename",
+    [] (test_options_opts *opts) { return &opts->filename_opt; },
+    nullptr, /* show_cmd_cb */
+    N_("A filename option."),
   },
 };
 

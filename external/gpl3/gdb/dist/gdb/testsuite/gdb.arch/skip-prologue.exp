@@ -1,0 +1,76 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test-case that checks architecture-specific prologue analyzers.
+
+standard_testfile
+
+if { [prepare_for_testing "failed to prepare"  $testfile $srcfile \
+	  {nodebug}] } {
+    return -1
+}
+
+proc do_test { f } {
+    set bp_addr ""
+    gdb_test_multiple "break $f" "" {
+	-re -wrap "Breakpoint $::decimal at ($::hex)" {
+	    set bp_addr $expect_out(1,string)
+	    pass $gdb_test_name
+	}
+    }
+
+    if { $bp_addr == "" } {
+	return
+    }
+
+    set prologue_end_addr ""
+    gdb_test_multiple "p /x &${f}_prologue_end" "" {
+	-re -wrap " = ($::hex)" {
+	    set prologue_end_addr $expect_out(1,string)
+	    pass $gdb_test_name
+	}
+    }
+
+    if { $prologue_end_addr == "" } {
+	return
+    }
+
+    set test {$bp_addr == $prologue_end_addr}
+    if { [expr $test] } {
+	pass $test
+    } elseif { $bp_addr < $prologue_end_addr } {
+	# We'll allow this.  For instance, amd64 has a prologue
+	# analyzer that doesn't skip the 3rd instruction here, which saves an
+	# argument register to stack:
+	#
+	#   00000000004004ae <f2>:
+	#   4004ae:       55                      push   %rbp
+	#   4004af:       48 89 e5                mov    %rsp,%rbp
+	#   4004b2:       89 7d fc                mov    %edi,-0x4(%rbp)
+	#   00000000004004b5 <f2_prologue_end>:
+	#
+	pass "$test (skipped less than possible)"
+    } elseif { $bp_addr > $prologue_end_addr } {
+	fail "$test (skipped too much)"
+    } else {
+	fail "$test"
+    }
+}
+
+foreach f { f1 f2 f3 f4 } {
+    with_test_prefix $f {
+	do_test $f
+    }
+}

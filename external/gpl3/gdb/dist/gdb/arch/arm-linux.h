@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_ARM_LINUX_H
-#define ARCH_ARM_LINUX_H
+#ifndef GDB_ARCH_ARM_LINUX_H
+#define GDB_ARCH_ARM_LINUX_H
 
 /* The index to access CSPR in user_regs defined in GLIBC.  */
 #define ARM_CPSR_GREGNUM 16
@@ -79,4 +79,4 @@ struct arm_get_next_pcs;
 CORE_ADDR arm_linux_get_next_pcs_fixup (struct arm_get_next_pcs *self,
 					CORE_ADDR pc);
 
-#endif /* ARCH_ARM_LINUX_H */
+#endif /* GDB_ARCH_ARM_LINUX_H */

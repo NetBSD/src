@@ -39,7 +39,7 @@ typedef struct _trace_option_descriptor {
 
 static trace_option_descriptor trace_description[] = {
   { trace_gdb, "gdb", "calls made by gdb to the sim_calls.c file" },
-  { trace_os_emul, "os-emul", "VEA mode sytem calls - like strace" },
+  { trace_os_emul, "os-emul", "VEA mode system calls - like strace" },
   { trace_events, "events", "event queue handling" },
   /* decode/issue */
   { trace_semantics, "semantics", "Instruction execution (issue)" },

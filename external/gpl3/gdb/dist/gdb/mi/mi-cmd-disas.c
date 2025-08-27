@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "arch-utils.h"
+#include "progspace.h"
 #include "target.h"
 #include "value.h"
 #include "mi-cmds.h"
@@ -245,7 +246,7 @@ mi_cmd_disassemble (const char *command, const char *const *argv, int argc)
 
   if (line_seen && file_seen)
     {
-      s = lookup_symtab (file_string);
+      s = lookup_symtab (current_program_space, file_string);
       if (s == NULL)
 	error (_("-data-disassemble: Invalid filename."));
       if (!find_line_pc (s, line_num, &start))

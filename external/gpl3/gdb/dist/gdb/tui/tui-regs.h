@@ -19,9 +19,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_REGS_H
-#define TUI_TUI_REGS_H
+#ifndef GDB_TUI_TUI_REGS_H
+#define GDB_TUI_TUI_REGS_H
 
+#include "gdbsupport/gdb-checked-static-cast.h"
 #include "tui/tui-data.h"
 #include "reggroups.h"
 
@@ -33,7 +34,6 @@ struct tui_register_info
     : m_regno (regno)
   {
     update (frame);
-    highlight = false;
   }
 
   DISABLE_COPY_AND_ASSIGN (tui_register_info);
@@ -47,13 +47,18 @@ struct tui_register_info
   bool visible () const
   { return y > 0; }
 
+  bool highlighted () const
+  { return m_highlight; }
+
   /* Location.  */
   int x = 0;
   int y = 0;
-  bool highlight = false;
   std::string content;
 
 private:
+
+  /* True if currently highlighted.  */
+  bool m_highlight = false;
 
   /* The register number.  */
   const int m_regno;
@@ -76,6 +81,8 @@ struct tui_data_window : public tui_win_info
 
   void check_register_values (const frame_info_ptr &frame);
 
+  /* Set the current register and redisplay the window.  If GROUP is
+     NULL, the general register group will be used.  */
   void set_register_group (const reggroup *group);
 
   const reggroup *get_current_group () const
@@ -145,4 +152,12 @@ private:
   gdbarch *m_gdbarch = nullptr;
 };
 
-#endif /* TUI_TUI_REGS_H */
+/* Return the instance of the registers window.  */
+
+inline tui_data_window *
+tui_data_win ()
+{
+  return gdb::checked_static_cast<tui_data_window *> (tui_win_list[DATA_WIN]);
+}
+
+#endif /* GDB_TUI_TUI_REGS_H */

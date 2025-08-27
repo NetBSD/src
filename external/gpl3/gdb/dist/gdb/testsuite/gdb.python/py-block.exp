@@ -119,8 +119,12 @@ gdb_test "python print (block.is_valid())" "True" \
          "Check block validity"
 gdb_test "python print (block_iter.is_valid())" "True" \
          "Check block_iter validity"
+gdb_test_no_output "python x = hash(block)" "block is hashable"
+gdb_test "python print (type (x))" "<class 'int'>" "block hash is integer"
 gdb_unload
 gdb_test "python print (block.is_valid())" "False" \
          "Check block validity after unload"
 gdb_test "python print (block_iter.is_valid())" "False" \
          "Check block_iter validity after unload"
+gdb_test "python print (hash (block) == x)" "True" \
+    "block hash did not change"

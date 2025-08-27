@@ -35,6 +35,7 @@
 #include "location.h"
 #include "run-on-main-thread.h"
 #include "observable.h"
+#include "build-id.h"
 
 #if GDB_SELF_TEST
 #include "gdbsupport/selftest.h"
@@ -128,8 +129,11 @@ static std::optional<std::string> gdbpy_colorize
   (const std::string &filename, const std::string &contents);
 static std::optional<std::string> gdbpy_colorize_disasm
 (const std::string &content, gdbarch *gdbarch);
-static ext_lang_missing_debuginfo_result gdbpy_handle_missing_debuginfo
+static ext_lang_missing_file_result gdbpy_handle_missing_debuginfo
   (const struct extension_language_defn *extlang, struct objfile *objfile);
+static ext_lang_missing_file_result gdbpy_find_objfile_from_buildid
+  (const struct extension_language_defn *extlang, program_space *pspace,
+   const struct bfd_build_id *build_id, const char *missing_filename);
 
 /* The interface between gdb proper and loading of python scripts.  */
 
@@ -159,6 +163,8 @@ static const struct extension_language_ops python_extension_ops =
 
   gdbpy_apply_frame_filter,
 
+  gdbpy_load_ptwrite_filter,
+
   gdbpy_preserve_values,
 
   gdbpy_breakpoint_has_cond,
@@ -177,7 +183,8 @@ static const struct extension_language_ops python_extension_ops =
 
   gdbpy_print_insn,
 
-  gdbpy_handle_missing_debuginfo
+  gdbpy_handle_missing_debuginfo,
+  gdbpy_find_objfile_from_buildid
 };
 
 #endif /* HAVE_PYTHON */
@@ -591,7 +598,7 @@ gdbpy_parameter (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &ex)
     {
-      GDB_PY_HANDLE_EXCEPTION (ex);
+      return gdbpy_handle_gdb_exception (nullptr, ex);
     }
 
   if (cmd == CMD_LIST_AMBIGUOUS)
@@ -754,7 +761,7 @@ execute_gdb_command (PyObject *self, PyObject *args, PyObject *kw)
 	 convert the exception and continue back in Python, we should
 	 re-enable stdin here.  */
       async_enable_stdin ();
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (to_string)
@@ -804,10 +811,6 @@ gdbpy_rbreak (PyObject *self, PyObject *args, PyObject *kw)
     }
 
   global_symbol_searcher spec (SEARCH_FUNCTION_DOMAIN, regex);
-  SCOPE_EXIT {
-    for (const char *elem : spec.filenames)
-      xfree ((void *) elem);
-  };
 
   /* The "symtabs" keyword is any Python iterable object that returns
      a gdb.Symtab on each iteration.  If specified, iterate through
@@ -852,10 +855,7 @@ gdbpy_rbreak (PyObject *self, PyObject *args, PyObject *kw)
 	  if (filename == NULL)
 	    return NULL;
 
-	  /* Make sure there is a definite place to store the value of
-	     filename before it is released.  */
-	  spec.filenames.push_back (nullptr);
-	  spec.filenames.back () = filename.release ();
+	  spec.add_filename (std::move (filename));
 	}
     }
 
@@ -970,15 +970,14 @@ gdbpy_decode_line (PyObject *self, PyObject *args)
       else
 	{
 	  set_default_source_symtab_and_line ();
-	  def_sal = get_current_source_symtab_and_line ();
+	  def_sal = get_current_source_symtab_and_line (current_program_space);
 	  sals = def_sal;
 	}
     }
   catch (const gdb_exception &ex)
     {
       /* We know this will always throw.  */
-      gdbpy_convert_exception (ex);
-      return NULL;
+      return gdbpy_handle_gdb_exception (nullptr, ex);
     }
 
   if (!sals.empty ())
@@ -1059,7 +1058,7 @@ gdbpy_parse_and_eval (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -1544,7 +1543,7 @@ gdbpy_write (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   Py_RETURN_NONE;
@@ -1761,10 +1760,10 @@ gdbpy_get_current_objfile (PyObject *unused1, PyObject *unused2)
 /* Implement the 'handle_missing_debuginfo' hook for Python.  GDB has
    failed to find any debug information for OBJFILE.  The extension has a
    chance to record this, or even install the required debug information.
-   See the description of ext_lang_missing_debuginfo_result in
-   extension-priv.h for details of the return value.  */
+   See the description of ext_lang_missing_file_result in extension-priv.h
+   for details of the return value.  */
 
-static ext_lang_missing_debuginfo_result
+static ext_lang_missing_file_result
 gdbpy_handle_missing_debuginfo (const struct extension_language_defn *extlang,
 				struct objfile *objfile)
 {
@@ -1811,8 +1810,10 @@ gdbpy_handle_missing_debuginfo (const struct extension_language_defn *extlang,
 
   if (PyBool_Check (pyo_execute_ret.get ()))
     {
-      bool try_again = PyObject_IsTrue (pyo_execute_ret.get ());
-      return ext_lang_missing_debuginfo_result (try_again);
+      /* We know the value is a bool, so it must be either Py_True or
+	 Py_False.  Anything else would not get past the above check.  */
+      bool try_again = pyo_execute_ret.get () == Py_True;
+      return ext_lang_missing_file_result (try_again);
     }
 
   if (!gdbpy_is_string (pyo_execute_ret.get ()))
@@ -1832,7 +1833,108 @@ gdbpy_handle_missing_debuginfo (const struct extension_language_defn *extlang,
       return {};
     }
 
-  return ext_lang_missing_debuginfo_result (std::string (filename.get ()));
+  return ext_lang_missing_file_result (std::string (filename.get ()));
+}
+
+/* Implement the find_objfile_from_buildid hook for Python.  PSPACE is the
+   program space in which GDB is trying to find an objfile, BUILD_ID is the
+   build-id for the missing objfile, and EXPECTED_FILENAME is a non-NULL
+   string which can be used (if needed) in messages to the user, and
+   represents the file GDB is looking for.  */
+
+static ext_lang_missing_file_result
+gdbpy_find_objfile_from_buildid (const struct extension_language_defn *extlang,
+				 program_space *pspace,
+				 const struct bfd_build_id *build_id,
+				 const char *missing_filename)
+{
+  gdb_assert (pspace != nullptr);
+  gdb_assert (build_id != nullptr);
+  gdb_assert (missing_filename != nullptr);
+
+  /* Early exit if Python is not initialised.  */
+  if (!gdb_python_initialized || gdb_python_module == nullptr)
+    return {};
+
+  gdbpy_enter enter_py;
+
+  /* Convert BUILD_ID into a Python object.  */
+  std::string hex_form = bin2hex (build_id->data, build_id->size);
+  gdbpy_ref<> pyo_buildid = host_string_to_python_string (hex_form.c_str ());
+  if (pyo_buildid == nullptr)
+    {
+      gdbpy_print_stack ();
+      return {};
+    }
+
+  /* Convert MISSING_FILENAME to a Python object.  */
+  gdbpy_ref<> pyo_filename = host_string_to_python_string (missing_filename);
+  if (pyo_filename == nullptr)
+    {
+      gdbpy_print_stack ();
+      return {};
+    }
+
+  /* Convert PSPACE to a Python object.  */
+  gdbpy_ref<> pyo_pspace = pspace_to_pspace_object (pspace);
+  if (pyo_pspace == nullptr)
+    {
+      gdbpy_print_stack ();
+      return {};
+    }
+
+  /* Lookup the helper function within the GDB module.  */
+  gdbpy_ref<> pyo_handler
+    (PyObject_GetAttrString (gdb_python_module, "_handle_missing_objfile"));
+  if (pyo_handler == nullptr)
+    {
+      gdbpy_print_stack ();
+      return {};
+    }
+
+  /* Call the function, passing in the Python objfile object.  */
+  gdbpy_ref<> pyo_execute_ret
+    (PyObject_CallFunctionObjArgs (pyo_handler.get (), pyo_pspace.get (),
+				   pyo_buildid.get (), pyo_filename.get (),
+				   nullptr));
+  if (pyo_execute_ret == nullptr)
+    {
+      /* If the handler is cancelled due to a Ctrl-C, then propagate
+	 the Ctrl-C as a GDB exception instead of swallowing it.  */
+      gdbpy_print_stack_or_quit ();
+      return {};
+    }
+
+  /* Parse the result, and convert it back to the C++ object.  */
+  if (pyo_execute_ret == Py_None)
+    return {};
+
+  if (PyBool_Check (pyo_execute_ret.get ()))
+    {
+      /* We know the value is a bool, so it must be either Py_True or
+	 Py_False.  Anything else would not get past the above check.  */
+      bool try_again = pyo_execute_ret.get () == Py_True;
+      return ext_lang_missing_file_result (try_again);
+    }
+
+  if (!gdbpy_is_string (pyo_execute_ret.get ()))
+    {
+      PyErr_SetString (PyExc_ValueError,
+		       "return value from _find_objfile_by_buildid should "
+		       "be None, a bool, or a str");
+      gdbpy_print_stack ();
+      return {};
+    }
+
+  gdb::unique_xmalloc_ptr<char> filename
+    = python_string_to_host_string (pyo_execute_ret.get ());
+  if (filename == nullptr)
+    {
+      gdbpy_print_stack ();
+      return {};
+    }
+
+  return ext_lang_missing_file_result (std::string (filename.get ()));
 }
 
 /* Compute the list of active python type printers and store them in
@@ -1989,6 +2091,17 @@ python_command (const char *arg, int from_tty)
 
 #endif /* HAVE_PYTHON */
 
+/* Stand-in for Py_IsInitialized ().  To be used because after a python fatal
+   error, no calls into Python are allowed.  */
+
+static bool py_isinitialized = false;
+
+/* Variables to hold the effective values of "python ignore-environment" and
+   "python dont-write-bytecode" at Python initialization.  */
+
+static bool python_ignore_environment_at_python_initialization;
+static bool python_dont_write_bytecode_at_python_initialization;
+
 /* When this is turned on before Python is initialised then Python will
    ignore any environment variables related to Python.  This is equivalent
    to passing `-E' to the python program.  */
@@ -2013,20 +2126,31 @@ static void
 set_python_ignore_environment (const char *args, int from_tty,
 			       struct cmd_list_element *c)
 {
-#ifdef HAVE_PYTHON
-  /* Py_IgnoreEnvironmentFlag is deprecated in Python 3.12.  Disable
-     its usage in Python 3.10 and above since the PyConfig mechanism
-     is now (also) used in 3.10 and higher.  See do_start_initialization()
-     in this file.  */
-#if PY_VERSION_HEX < 0x030a0000
-  Py_IgnoreEnvironmentFlag = python_ignore_environment ? 1 : 0;
-#endif
-#endif
+  if (py_isinitialized)
+    {
+      python_ignore_environment
+	= python_ignore_environment_at_python_initialization;
+
+      warning (_("Setting python ignore-environment after Python"
+		 " initialization has no effect, try setting this during"
+		 " early initialization"));
+    }
 }
 
 /* When this is turned on before Python is initialised then Python will
    not write `.pyc' files on import of a module.  */
 static enum auto_boolean python_dont_write_bytecode = AUTO_BOOLEAN_AUTO;
+
+
+/* Return true if environment variable PYTHONDONTWRITEBYTECODE is set to a
+   non-empty string.  */
+
+static bool
+env_python_dont_write_bytecode ()
+{
+  const char *envvar = getenv ("PYTHONDONTWRITEBYTECODE");
+  return envvar != nullptr && envvar[0] != '\0';
+}
 
 /* Implement 'show python dont-write-bytecode'.  */
 
@@ -2037,8 +2161,10 @@ show_python_dont_write_bytecode (struct ui_file *file, int from_tty,
   if (python_dont_write_bytecode == AUTO_BOOLEAN_AUTO)
     {
       const char *auto_string
-	= (python_ignore_environment
-	   || getenv ("PYTHONDONTWRITEBYTECODE") == nullptr) ? "off" : "on";
+	= ((python_ignore_environment
+	    || !env_python_dont_write_bytecode ())
+	   ? "off"
+	   : "on");
 
       gdb_printf (file,
 		  _("Python's dont-write-bytecode setting is %s (currently %s).\n"),
@@ -2064,10 +2190,7 @@ python_write_bytecode ()
       if (python_ignore_environment)
 	wbc = 1;
       else
-	{
-	  const char *pdwbc = getenv ("PYTHONDONTWRITEBYTECODE");
-	  wbc = (pdwbc == nullptr || pdwbc[0] == '\0') ? 1 : 0;
-	}
+	wbc = env_python_dont_write_bytecode () ? 0 : 1;
     }
   else
     wbc = python_dont_write_bytecode == AUTO_BOOLEAN_TRUE ? 0 : 1;
@@ -2085,15 +2208,18 @@ static void
 set_python_dont_write_bytecode (const char *args, int from_tty,
 				struct cmd_list_element *c)
 {
-#ifdef HAVE_PYTHON
-  /* Py_DontWriteBytecodeFlag is deprecated in Python 3.12.  Disable
-     its usage in Python 3.10 and above since the PyConfig mechanism
-     is now (also) used in 3.10 and higher.  See do_start_initialization()
-     in this file.  */
-#if PY_VERSION_HEX < 0x030a0000
-  Py_DontWriteBytecodeFlag = !python_write_bytecode ();
-#endif
-#endif /* HAVE_PYTHON */
+  if (py_isinitialized)
+    {
+      python_dont_write_bytecode
+	= (python_dont_write_bytecode_at_python_initialization
+	   ? AUTO_BOOLEAN_TRUE
+	   : AUTO_BOOLEAN_FALSE);
+
+      warning (_("Setting python dont-write-bytecode after Python"
+		 " initialization has no effect, try setting this during"
+		 " early initialization, or try setting"
+		 " sys.dont_write_bytecode"));
+    }
 }
 
 
@@ -2113,6 +2239,9 @@ static struct cmd_list_element *user_show_python_list;
 static void
 finalize_python (const struct extension_language_defn *ignore)
 {
+  if (!gdb_python_initialized)
+    return;
+
   struct active_ext_lang_state *previous_active;
 
   /* We don't use ensure_python_env here because if we ever ran the
@@ -2195,6 +2324,151 @@ gdbpy_gdb_exiting (int exit_code)
     gdbpy_print_stack ();
 }
 
+#if PY_VERSION_HEX < 0x030a0000
+/* Signal handler to convert a SIGABRT into an exception.  */
+
+static void
+catch_python_fatal (int signum)
+{
+  signal (SIGABRT, catch_python_fatal);
+
+  throw_exception_sjlj (gdb_exception {RETURN_ERROR, GENERIC_ERROR});
+}
+
+/* Call Py_Initialize (), and return true if successful.   */
+
+static bool
+py_initialize_catch_abort ()
+{
+  auto prev_handler = signal (SIGABRT, catch_python_fatal);
+  SCOPE_EXIT { signal (SIGABRT, prev_handler); };
+
+  TRY_SJLJ
+    {
+      Py_Initialize ();
+      py_isinitialized = true;
+    }
+  CATCH_SJLJ (e, RETURN_MASK_ERROR)
+    {
+    }
+  END_CATCH_SJLJ;
+
+  return py_isinitialized;
+}
+#endif
+
+/* Initialize python, either by calling Py_Initialize or
+   Py_InitializeFromConfig, and return true if successful.  */
+
+static bool
+py_initialize ()
+{
+  /* Sample values at Python initialization.  */
+  python_dont_write_bytecode_at_python_initialization
+    = !python_write_bytecode ();
+  python_ignore_environment_at_python_initialization
+    =  python_ignore_environment;
+
+  /* Don't show "python dont-write-bytecode auto" after Python
+     initialization.  */
+  python_dont_write_bytecode
+    = (python_dont_write_bytecode_at_python_initialization
+       ? AUTO_BOOLEAN_TRUE
+       : AUTO_BOOLEAN_FALSE);
+
+#if PY_VERSION_HEX < 0x030a0000
+  /* Python documentation indicates that the memory given
+     to Py_SetProgramName cannot be freed.  However, it seems that
+     at least Python 3.7.4 Py_SetProgramName takes a copy of the
+     given program_name.  Making progname_copy static and not release
+     the memory avoids a leak report for Python versions that duplicate
+     program_name, and respect the requirement of Py_SetProgramName
+     for Python versions that do not duplicate program_name.  */
+  static wchar_t *progname_copy = nullptr;
+#else
+  wchar_t *progname_copy = nullptr;
+  SCOPE_EXIT { XDELETEVEC (progname_copy); };
+#endif
+
+#ifdef WITH_PYTHON_PATH
+  /* Work around problem where python gets confused about where it is,
+     and then can't find its libraries, etc.
+     NOTE: Python assumes the following layout:
+     /foo/bin/python
+     /foo/lib/pythonX.Y/...
+     This must be done before calling Py_Initialize.  */
+  gdb::unique_xmalloc_ptr<char> progname
+    (concat (ldirname (python_libdir.c_str ()).c_str (), SLASH_STRING, "bin",
+	      SLASH_STRING, "python", (char *) NULL));
+
+  {
+    std::string oldloc = setlocale (LC_ALL, NULL);
+    SCOPE_EXIT { setlocale (LC_ALL, oldloc.c_str ()); };
+
+    setlocale (LC_ALL, "");
+    size_t progsize = strlen (progname.get ());
+    progname_copy = XNEWVEC (wchar_t, progsize + 1);
+    size_t count = mbstowcs (progname_copy, progname.get (), progsize + 1);
+    if (count == (size_t) -1)
+      {
+	fprintf (stderr, "Could not convert python path to string\n");
+	return false;
+      }
+  }
+#endif
+
+  /* Py_SetProgramName was deprecated in Python 3.11.  Use PyConfig
+     mechanisms for Python 3.10 and newer.  */
+#if PY_VERSION_HEX < 0x030a0000
+  /* Note that Py_SetProgramName expects the string it is passed to
+     remain alive for the duration of the program's execution, so
+     it is not freed after this call.  */
+  if (progname_copy != nullptr)
+    Py_SetProgramName (progname_copy);
+  Py_DontWriteBytecodeFlag
+    = python_dont_write_bytecode_at_python_initialization;
+  Py_IgnoreEnvironmentFlag
+    = python_ignore_environment_at_python_initialization ? 1 : 0;
+  return py_initialize_catch_abort ();
+#else
+  PyConfig config;
+
+  PyConfig_InitPythonConfig (&config);
+  PyStatus status;
+  if (progname_copy != nullptr)
+    {
+      status = PyConfig_SetString (&config, &config.program_name,
+				   progname_copy);
+      if (PyStatus_Exception (status))
+	goto init_done;
+    }
+
+  config.write_bytecode = !python_dont_write_bytecode_at_python_initialization;
+  config.use_environment = !python_ignore_environment_at_python_initialization;
+
+  status = PyConfig_Read (&config);
+  if (PyStatus_Exception (status))
+    goto init_done;
+
+  status = Py_InitializeFromConfig (&config);
+
+init_done:
+  PyConfig_Clear (&config);
+  if (PyStatus_Exception (status))
+    {
+      if (PyStatus_IsError (status))
+	gdb_printf (_("Python initialization failed: %s\n"), status.err_msg);
+      else
+	gdb_printf (_("Python initialization failed with exit status: %d\n"),
+		    status.exitcode);
+      return false;
+    }
+
+  py_isinitialized = true;
+  return true;
+#endif
+}
+
 static bool
 do_start_initialization ()
 {
@@ -2210,71 +2484,8 @@ do_start_initialization ()
   if (PyImport_ExtendInittab (mods) < 0)
     return false;
 
-#ifdef WITH_PYTHON_PATH
-  /* Work around problem where python gets confused about where it is,
-     and then can't find its libraries, etc.
-     NOTE: Python assumes the following layout:
-     /foo/bin/python
-     /foo/lib/pythonX.Y/...
-     This must be done before calling Py_Initialize.  */
-  gdb::unique_xmalloc_ptr<char> progname
-    (concat (ldirname (python_libdir.c_str ()).c_str (), SLASH_STRING, "bin",
-	      SLASH_STRING, "python", (char *) NULL));
-  /* Python documentation indicates that the memory given
-     to Py_SetProgramName cannot be freed.  However, it seems that
-     at least Python 3.7.4 Py_SetProgramName takes a copy of the
-     given program_name.  Making progname_copy static and not release
-     the memory avoids a leak report for Python versions that duplicate
-     program_name, and respect the requirement of Py_SetProgramName
-     for Python versions that do not duplicate program_name.  */
-  static wchar_t *progname_copy;
-
-  std::string oldloc = setlocale (LC_ALL, NULL);
-  setlocale (LC_ALL, "");
-  size_t progsize = strlen (progname.get ());
-  progname_copy = XNEWVEC (wchar_t, progsize + 1);
-  size_t count = mbstowcs (progname_copy, progname.get (), progsize + 1);
-  if (count == (size_t) -1)
-    {
-      fprintf (stderr, "Could not convert python path to string\n");
-      return false;
-    }
-  setlocale (LC_ALL, oldloc.c_str ());
-
-  /* Py_SetProgramName was deprecated in Python 3.11.  Use PyConfig
-     mechanisms for Python 3.10 and newer.  */
-#if PY_VERSION_HEX < 0x030a0000
-  /* Note that Py_SetProgramName expects the string it is passed to
-     remain alive for the duration of the program's execution, so
-     it is not freed after this call.  */
-  Py_SetProgramName (progname_copy);
-  Py_Initialize ();
-#else
-  PyConfig config;
-
-  PyConfig_InitPythonConfig (&config);
-  PyStatus status = PyConfig_SetString (&config, &config.program_name,
-					progname_copy);
-  if (PyStatus_Exception (status))
-    goto init_done;
-
-  config.write_bytecode = python_write_bytecode ();
-  config.use_environment = !python_ignore_environment;
-
-  status = PyConfig_Read (&config);
-  if (PyStatus_Exception (status))
-    goto init_done;
-
-  status = Py_InitializeFromConfig (&config);
-
-init_done:
-  PyConfig_Clear (&config);
-  if (PyStatus_Exception (status))
+  if (!py_initialize ())
     return false;
-#endif
-#else
-  Py_Initialize ();
-#endif
 
 #if PY_VERSION_HEX < 0x03090000
   /* PyEval_InitThreads became deprecated in Python 3.9 and will
@@ -2322,7 +2533,7 @@ init_done:
     return false;
 
 #define GDB_PY_DEFINE_EVENT_TYPE(name, py_name, doc, base)	\
-  if (gdbpy_initialize_event_generic (&name##_event_object_type, py_name) < 0) \
+  if (gdbpy_type_ready (&name##_event_object_type) < 0) \
     return false;
 #include "py-event-types.def"
 #undef GDB_PY_DEFINE_EVENT_TYPE
@@ -2608,6 +2819,39 @@ do_initialize (const struct extension_language_defn *extlang)
   return gdb_pymodule_addobject (m, "gdb", gdb_python_module) >= 0;
 }
 
+/* Emit warnings in case python initialization has failed.  */
+
+static void
+python_initialization_failed_warnings ()
+{
+  const char *pythonhome = nullptr;
+  const char *pythonpath = nullptr;
+
+  if (!python_ignore_environment)
+    {
+      pythonhome = getenv ("PYTHONHOME");
+      pythonpath = getenv ("PYTHONPATH");
+    }
+
+  bool have_pythonhome
+    = pythonhome != nullptr && pythonhome[0] != '\0';
+  bool have_pythonpath
+    = pythonpath != nullptr && pythonpath[0] != '\0';
+
+  if (have_pythonhome)
+    warning (_("Python failed to initialize with PYTHONHOME set.  Maybe"
+	       " because it is set incorrectly? Maybe because it points to"
+	       " incompatible standard libraries? Consider changing or"
+	       " unsetting it, or ignoring it using \"set python"
+	       " ignore-environment on\" at early initialization."));
+
+  if (have_pythonpath)
+    warning (_("Python failed to initialize with PYTHONPATH set.  Maybe because"
+	       " it points to incompatible modules? Consider changing or"
+	       " unsetting it, or ignoring it using \"set python"
+	       " ignore-environment on\" at early initialization."));
+}
+
 /* Perform Python initialization.  This will be called after GDB has
    performed all of its own initialization.  This is the
    extension_language_ops.initialize "method".  */
@@ -2615,8 +2859,23 @@ do_initialize (const struct extension_language_defn *extlang)
 static void
 gdbpy_initialize (const struct extension_language_defn *extlang)
 {
-  if (!do_start_initialization () && PyErr_Occurred ())
-    gdbpy_print_stack ();
+  if (!do_start_initialization ())
+    {
+      if (py_isinitialized)
+	{
+	  if (PyErr_Occurred ())
+	    gdbpy_print_stack ();
+
+	  /* We got no use for the Python interpreter anymore.  Finalize it
+	     ASAP.  */
+	  Py_Finalize ();
+	}
+      else
+	python_initialization_failed_warnings ();
+
+      /* Continue with python disabled.  */
+      return;
+    }
 
   gdbpy_enter enter_py;
 

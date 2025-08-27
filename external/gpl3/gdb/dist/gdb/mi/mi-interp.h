@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MI_MI_INTERP_H
-#define MI_MI_INTERP_H
+#ifndef GDB_MI_MI_INTERP_H
+#define GDB_MI_MI_INTERP_H
 
 #include "interps.h"
 
@@ -119,4 +119,4 @@ as_mi_interp (struct interp *interp)
   return dynamic_cast<mi_interp *> (interp);
 }
 
-#endif /* MI_MI_INTERP_H */
+#endif /* GDB_MI_MI_INTERP_H */

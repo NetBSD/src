@@ -3,6 +3,7 @@
 name:powerpc_32
 xmltarget:powerpc-32.xml
 expedite:r1,pc
+osabi:unknown
 32:r0
 32:r1
 32:r2

@@ -282,20 +282,22 @@ typedef struct sframe_fre_info
      S is the size of the stack frame offset for the FRE, and
      N is the number of stack frame offsets in the FRE
 
-   The offsets are interpreted in order as follows:
+   The interpretation of FRE stack offsets is ABI-specific:
 
-    offset1 (interpreted as CFA = BASE_REG + offset1)
-
-    if RA is being tracked
-      offset2 (interpreted as RA = CFA + offset2)
-      if FP is being tracked
-	offset3 (intrepreted as FP = CFA + offset2)
-      fi
-    else
+   AMD64:
+     offset1 (interpreted as CFA = BASE_REG + offset1)
       if FP is being tracked
 	offset2 (intrepreted as FP = CFA + offset2)
       fi
-    fi
+
+    AARCH64:
+     offset1 (interpreted as CFA = BASE_REG + offset1)
+     if FP is being tracked (in other words, if frame record created)
+       offset2 (interpreted as RA = CFA + offset2)
+       offset3 (intrepreted as FP = CFA + offset3)
+     fi
+     Note that in AAPCS64, a frame record, if created, will save both FP and
+     LR on stack.
 */
 
 /* Used when SFRAME_FRE_TYPE_ADDR1 is specified as FRE type.  */

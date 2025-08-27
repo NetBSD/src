@@ -488,7 +488,7 @@ get_function_name (CORE_ADDR funaddr, char *buf, int buf_size)
 
   {
     /* Try the minimal symbols.  */
-    struct bound_minimal_symbol msymbol = lookup_minimal_symbol_by_pc (funaddr);
+    bound_minimal_symbol msymbol = lookup_minimal_symbol_by_pc (funaddr);
 
     if (msymbol.minsym)
       return msymbol.minsym->print_name ();
@@ -1271,7 +1271,7 @@ call_function_by_hand_dummy (struct value *function,
 	CORE_ADDR dummy_addr;
 
 	real_pc = funaddr;
-	dummy_addr = entry_point_address ();
+	dummy_addr = entry_point_address (current_program_space);
 
 	/* A call dummy always consists of just a single breakpoint, so
 	   its address is the same as the address of the dummy.
@@ -1834,7 +1834,7 @@ The program being debugged entered a std::terminate call, most likely\n\
 caused by an unhandled C++ exception.  GDB blocked this call in order\n\
 to prevent the program from being terminated, and has restored the\n\
 context to its original state before the call.\n\
-To change this behaviour use \"set unwind-on-terminating-exception off\".\n\
+To change this behavior use \"set unwind-on-terminating-exception off\".\n\
 Evaluation of the expression containing the function (%s)\n\
 will be abandoned."),
 		 name.c_str ());

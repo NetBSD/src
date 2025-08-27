@@ -87,9 +87,20 @@ if {[lsearch -exact $show_charset $show_host_charset] >= 0} {
 }
 
 # Try a malformed `set charset'.
-gdb_test "set charset" \
-         "Requires an argument. Valid arguments are.*" \
-         "try malformed `set charset'"
+set cmd "set charset"
+set ok 0
+gdb_test_multiple $cmd "try malformed `set charset'" {
+    -re "^$cmd\r\nRequires an argument. Valid arguments are " {
+	set ok 1
+	exp_continue
+    }
+    -re ", " {
+	exp_continue
+    }
+    -re -wrap "" {
+	gdb_assert { $ok } $gdb_test_name
+    }
+}
 
 # Try using `set host-charset' on an invalid character set.
 gdb_test "set host-charset my_grandma_bonnie" \

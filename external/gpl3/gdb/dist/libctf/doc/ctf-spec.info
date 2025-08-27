@@ -467,7 +467,7 @@ typedef struct ctf_stype
     uint32_t ctt_size;
     uint32_t ctt_type;
   };
-} ctf_type_t;
+} ctf_stype_t;
 
    If 'ctt_size' is the #define 'CTF_LSIZE_SENT', 0xffffffff, this type
 is described by a 'ctf_type_t': otherwise, a 'ctf_stype_t'.
@@ -1727,25 +1727,25 @@ Node: CTF Preamble9208
 Node: CTF file-wide flags11818
 Node: CTF header13276
 Node: The type section19200
-Node: The info word23865
-Node: Type indexes and type IDs26395
-Node: Type kinds29763
-Node: Integer types33056
-Node: Floating-point types36604
-Node: Slices40629
-Node: Pointers typedefs and cvr-quals44133
-Node: Arrays45304
-Node: Function pointers47035
-Node: Enums47700
-Node: Structs and unions48982
-Node: Forward declarations52839
-Node: The symtypetab sections54418
-Node: The variable section57496
-Node: The label section58634
-Node: The string section59609
-Node: Data models60871
-Node: Limits of CTF61540
-Node: Index62585
+Node: The info word23866
+Node: Type indexes and type IDs26396
+Node: Type kinds29764
+Node: Integer types33057
+Node: Floating-point types36605
+Node: Slices40630
+Node: Pointers typedefs and cvr-quals44134
+Node: Arrays45305
+Node: Function pointers47036
+Node: Enums47701
+Node: Structs and unions48983
+Node: Forward declarations52840
+Node: The symtypetab sections54419
+Node: The variable section57497
+Node: The label section58635
+Node: The string section59610
+Node: Data models60872
+Node: Limits of CTF61541
+Node: Index62586
 
 End Tag Table
 

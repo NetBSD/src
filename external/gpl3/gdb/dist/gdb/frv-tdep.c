@@ -1062,14 +1062,13 @@ frv_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
     {
       LONGEST displ;
       CORE_ADDR call_dest;
-      struct bound_minimal_symbol s;
 
       displ = ((op & 0xfe000000) >> 7) | (op & 0x0003ffff);
       if ((displ & 0x00800000) != 0)
 	displ |= ~((LONGEST) 0x00ffffff);
 
       call_dest = pc + 4 * displ;
-      s = lookup_minimal_symbol_by_pc (call_dest);
+      bound_minimal_symbol s = lookup_minimal_symbol_by_pc (call_dest);
 
       if (s.minsym != NULL
 	  && s.minsym->linkage_name () != NULL
@@ -1374,14 +1373,14 @@ frv_frame_this_id (const frame_info_ptr &this_frame,
     = frv_frame_unwind_cache (this_frame, this_prologue_cache);
   CORE_ADDR base;
   CORE_ADDR func;
-  struct bound_minimal_symbol msym_stack;
   struct frame_id id;
 
   /* The FUNC is easy.  */
   func = get_frame_func (this_frame);
 
   /* Check if the stack is empty.  */
-  msym_stack = lookup_minimal_symbol ("_stack", NULL, NULL);
+  bound_minimal_symbol msym_stack
+    = lookup_minimal_symbol (current_program_space, "_stack");
   if (msym_stack.minsym && info->base == msym_stack.value_address ())
     return;
 

@@ -27,7 +27,6 @@
 #include <pthread.h>
 
 #include <asm/unistd.h>
-#include <unistd.h>
 #define gettid() syscall (__NR_gettid)
 
 /* Non-atomic `var++' should not hurt as we synchronize the threads by the STEP

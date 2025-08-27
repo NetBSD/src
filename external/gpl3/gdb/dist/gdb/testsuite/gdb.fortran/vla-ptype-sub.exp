@@ -33,7 +33,7 @@ set real [fortran_real4]
 
 # Pass fixed array to function and handle them as vla in function.
 gdb_breakpoint [gdb_get_line_number "not-filled"]
-gdb_continue_to_breakpoint "not-filled (1st)"
+gdb_continue_to_breakpoint "not-filled, 1st"
 gdb_test "ptype array1" "type = $int \\\(42,42\\\)" \
   "ptype array1 (passed fixed)"
 gdb_test "ptype array2" "type = $real \\\(42,42,42\\\)" \
@@ -44,15 +44,15 @@ gdb_test "ptype array2(13, 11, 5)" "type = $real" \
   "ptype array2(13, 11, 5) (passed fixed)"
 
 # Pass sub arrays to function and handle them as vla in function.
-gdb_continue_to_breakpoint "not-filled (2nd)"
+gdb_continue_to_breakpoint "not-filled, 2nd"
 gdb_test "ptype array1" "type = $int \\\(6,6\\\)" \
-  "ptype array1 (passed sub-array)"
+  "ptype array1, passed sub-array"
 gdb_test "ptype array2" "type = $real \\\(6,6,6\\\)" \
-  "ptype array2 (passed sub-array)"
+  "ptype array2, passed sub-array"
 gdb_test "ptype array1(3, 3)" "type = $int" \
-  "ptype array1(3, 3) (passed sub-array)"
+  "ptype array1(3, 3), passed sub-array"
 gdb_test "ptype array2(4, 4, 4)" "type = $real" \
-  "ptype array2(4, 4, 4) (passed sub-array)"
+  "ptype array2(4, 4, 4), passed sub-array"
 
 # Check ptype outside of bounds.  This should not crash GDB.
 gdb_test "ptype array1(100, 100)" "no such vector element" \
@@ -61,15 +61,15 @@ gdb_test "ptype array2(100, 100, 100)" "no such vector element" \
   "ptype array2(100, 100, 100) subarray do not crash (passed sub-array)"
 
 # Pass vla to function.
-gdb_continue_to_breakpoint "not-filled (3rd)"
+gdb_continue_to_breakpoint "not-filled, 3rd"
 gdb_test "ptype array1" "type = $int \\\(20,20\\\)" \
-  "ptype array1 (passed vla)"
+  "ptype array1, passed vla"
 gdb_test "ptype array2" "type = $real \\\(10,10,10\\\)" \
-  "ptype array2 (passed vla)"
+  "ptype array2, passed vla"
 gdb_test "ptype array1(3, 3)" "type = $int" \
-  "ptype array1(3, 3) (passed vla)"
+  "ptype array1(3, 3), passed vla"
 gdb_test "ptype array2(4, 4, 4)" "type = $real" \
-  "ptype array2(4, 4, 4) (passed vla)"
+  "ptype array2(4, 4, 4), passed vla"
 
 # Check ptype outside of bounds.  This should not crash GDB.
 gdb_test "ptype array1(100, 100)" "no such vector element" \
@@ -83,11 +83,11 @@ gdb_breakpoint [gdb_get_line_number "end-of-bar"]
 gdb_continue_to_breakpoint "end-of-bar"
 gdb_test "ptype array1" \
   "type = (PTR TO -> \\( )?$int \\(\\*\\)\\)?" \
-  "ptype array1 (arbitrary length)"
+  "ptype array1, arbitrary length"
 gdb_test "ptype array2" \
   "type = (PTR TO -> \\( )?$int \\(4:9,10:\\*\\)\\)?" \
-  "ptype array2 (arbitrary length)"
+  "ptype array2, arbitrary length"
 gdb_test "ptype array1(100)" "type = $int" \
-  "ptype array1(100) (arbitrary length)"
+  "ptype array1(100), arbitrary length"
 gdb_test "ptype array2(4,100)" "type = $int" \
-  "ptype array2(4,100) (arbitrary length)"
+  "ptype array2(4,100), arbitrary length"

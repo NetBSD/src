@@ -85,7 +85,6 @@ CORE_ADDR
 get_pc_function_start (CORE_ADDR pc)
 {
   const struct block *bl;
-  struct bound_minimal_symbol msymbol;
 
   bl = block_for_pc (pc);
   if (bl)
@@ -99,7 +98,7 @@ get_pc_function_start (CORE_ADDR pc)
 	}
     }
 
-  msymbol = lookup_minimal_symbol_by_pc (pc);
+  bound_minimal_symbol msymbol = lookup_minimal_symbol_by_pc (pc);
   if (msymbol.minsym)
     {
       CORE_ADDR fstart = msymbol.value_address ();
@@ -216,9 +215,9 @@ find_pc_partial_function_sym (CORE_ADDR pc,
 {
   struct obj_section *section;
   struct symbol *f;
-  struct bound_minimal_symbol msymbol;
   struct compunit_symtab *compunit_symtab = NULL;
   CORE_ADDR mapped_pc;
+  bound_minimal_symbol msymbol;
 
   /* To ensure that the symbol returned belongs to the correct section
      (and that the last [random] symbol from the previous section

@@ -134,7 +134,7 @@ check_cp15_access (ARMul_State * state,
 	return ARMul_CANT;
       break;
     case 7:
-      /* Permissable combinations:
+      /* Permissible combinations:
 	   Opcode_2  CRm
 	      0       5
 	      0       6
@@ -157,7 +157,7 @@ check_cp15_access (ARMul_State * state,
       break;
 
     case 8:
-      /* Permissable combinations:
+      /* Permissible combinations:
 	   Opcode_2  CRm
 	      0       5
 	      0       6
@@ -232,7 +232,7 @@ write_cp15_reg (ARMul_State * state,
 	  /* Writes are not allowed.  */
 	  return;
 
-	case 1: /* Auxillary Control.  */
+	case 1: /* Auxiliary Control.  */
 	  /* Only BITS (5, 4) and BITS (1, 0) can be written.  */
 	  value &= 0x33;
 	  break;

@@ -74,7 +74,7 @@
 # range.  It is only when GDB exits the loop that we leave the stepping
 # range, and the stepping finishes at address 0x114.
 #
-# This test checks this behaviour using the DWARF assembler.
+# This test checks this behavior using the DWARF assembler.
 
 load_lib dwarf.exp
 

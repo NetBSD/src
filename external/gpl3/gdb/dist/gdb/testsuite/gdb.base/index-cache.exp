@@ -19,7 +19,7 @@
 standard_testfile .c -2.c
 
 if { [build_executable "failed to prepare" $testfile [list $srcfile $srcfile2] \
-	  {debug ldflags=-Wl,--build-id}] } {
+	  {debug build-id}] } {
     return
 }
 
@@ -86,7 +86,11 @@ proc run_test_with_flags { cache_dir cache_enabled code } {
 	set GDBFLAGS "$GDBFLAGS -iex \"set index-cache directory $cache_dir\""
 	set GDBFLAGS "$GDBFLAGS -iex \"set index-cache enabled $cache_enabled\""
 
-	clean_restart ${testfile}
+	clean_restart
+
+	gdb_test_no_output "maint set dwarf synchronous on"
+
+	gdb_load $::binfile
 
 	uplevel 1 $code
     }

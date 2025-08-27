@@ -492,7 +492,7 @@ _bfd_XXi_swap_aouthdr_in (bfd * abfd,
   a->MinorImageVersion = H_GET_16 (abfd, src->MinorImageVersion);
   a->MajorSubsystemVersion = H_GET_16 (abfd, src->MajorSubsystemVersion);
   a->MinorSubsystemVersion = H_GET_16 (abfd, src->MinorSubsystemVersion);
-  a->Reserved1 = H_GET_32 (abfd, src->Reserved1);
+  a->Win32Version = H_GET_32 (abfd, src->Win32Version);
   a->SizeOfImage = H_GET_32 (abfd, src->SizeOfImage);
   a->SizeOfHeaders = H_GET_32 (abfd, src->SizeOfHeaders);
   a->CheckSum = H_GET_32 (abfd, src->CheckSum);
@@ -699,8 +699,8 @@ _bfd_XXi_swap_aouthdr_out (bfd * abfd, void * in, void * out)
 	   for the image size.  */
 	if (coff_section_data (abfd, sec) != NULL
 	    && pei_section_data (abfd, sec) != NULL)
-	  isize = (sec->vma - extra->ImageBase
-		   + SA (FA (pei_section_data (abfd, sec)->virt_size)));
+	  isize = SA (sec->vma - extra->ImageBase
+		      + FA (pei_section_data (abfd, sec)->virt_size));
       }
 
     aouthdr_in->dsize = dsize;
@@ -755,7 +755,7 @@ _bfd_XXi_swap_aouthdr_out (bfd * abfd, void * in, void * out)
 	    aouthdr_out->MajorSubsystemVersion);
   H_PUT_16 (abfd, extra->MinorSubsystemVersion,
 	    aouthdr_out->MinorSubsystemVersion);
-  H_PUT_32 (abfd, extra->Reserved1, aouthdr_out->Reserved1);
+  H_PUT_32 (abfd, extra->Win32Version, aouthdr_out->Win32Version);
   H_PUT_32 (abfd, extra->SizeOfImage, aouthdr_out->SizeOfImage);
   H_PUT_32 (abfd, extra->SizeOfHeaders, aouthdr_out->SizeOfHeaders);
   H_PUT_32 (abfd, extra->CheckSum, aouthdr_out->CheckSum);
@@ -995,11 +995,12 @@ _bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out)
 
     pe_required_section_flags known_sections [] =
       {
+	{ ".CRT",   IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
 	{ ".arch",  IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_DISCARDABLE | IMAGE_SCN_ALIGN_8BYTES },
 	{ ".bss",   IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_MEM_WRITE },
 	{ ".data",  IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_WRITE },
 	{ ".edata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
-	{ ".idata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_WRITE },
+	{ ".idata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
 	{ ".pdata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
 	{ ".rdata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
 	{ ".reloc", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_DISCARDABLE },
@@ -2849,7 +2850,7 @@ _bfd_XX_print_private_bfd_data_common (bfd * abfd, void * vfile)
   fprintf (file, "MinorImageVersion\t%d\n", i->MinorImageVersion);
   fprintf (file, "MajorSubsystemVersion\t%d\n", i->MajorSubsystemVersion);
   fprintf (file, "MinorSubsystemVersion\t%d\n", i->MinorSubsystemVersion);
-  fprintf (file, "Win32Version\t\t%08x\n", i->Reserved1);
+  fprintf (file, "Win32Version\t\t%08x\n", i->Win32Version);
   fprintf (file, "SizeOfImage\t\t%08x\n", i->SizeOfImage);
   fprintf (file, "SizeOfHeaders\t\t%08x\n", i->SizeOfHeaders);
   fprintf (file, "CheckSum\t\t%08x\n", i->CheckSum);

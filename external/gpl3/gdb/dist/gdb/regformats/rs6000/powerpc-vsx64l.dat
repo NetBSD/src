@@ -3,6 +3,7 @@
 name:powerpc_vsx64l
 xmltarget:powerpc-vsx64l.xml
 expedite:r1,pc
+osabi:unknown
 64:r0
 64:r1
 64:r2

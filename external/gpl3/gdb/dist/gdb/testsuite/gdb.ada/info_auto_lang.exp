@@ -153,7 +153,8 @@ foreach_with_prefix language_choice { "auto" "ada" "c" } {
 		     "Breakpoint.*file .*proc_in_ada.adb,.*" \
 		     $rbreak_func_in_ada($ada_match) \
 		     "Breakpoint.*file .*some_c.c,.*" \
-		     $rbreak_func_in_c($c_match)
+		     $rbreak_func_in_c($c_match) \
+		     "Successfully created breakpoints $decimal-$decimal."
 		]
 	    delete_breakpoints
 	}

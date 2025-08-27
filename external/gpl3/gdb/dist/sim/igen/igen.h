@@ -138,7 +138,7 @@ struct _igen_decode_options
   int combine;
 
   /* Instruction expansion? Should the semantic code for each
-     instruction, when the oportunity arrises, be expanded according
+     instruction, when the opportunity arrises, be expanded according
      to the variable opcode files that the instruction decode process
      renders constant */
   int duplicate;

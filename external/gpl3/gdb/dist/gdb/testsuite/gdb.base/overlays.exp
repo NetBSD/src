@@ -150,7 +150,7 @@ if {$data_overlays} {
 }
 
 # Verify that early-mapped overlays have been bumped out 
-# by later-mapped overlays layed over in the same VMA range.
+# by later-mapped overlays laid over in the same VMA range.
 
 send_gdb "overlay list\n"
 gdb_expect {

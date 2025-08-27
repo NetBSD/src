@@ -60,7 +60,7 @@
 /* A quick recap for GDB hackers not familiar with the whole Toshiba
    Media Processor story:
 
-   The MeP media engine is a configureable processor: users can design
+   The MeP media engine is a configurable processor: users can design
    their own coprocessors, implement custom instructions, adjust cache
    sizes, select optional standard facilities like add-and-saturate
    instructions, and so on.  Then, they can build custom versions of

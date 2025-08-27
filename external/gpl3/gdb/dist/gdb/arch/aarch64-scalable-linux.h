@@ -18,8 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_AARCH64_SCALABLE_LINUX_H
-#define ARCH_AARCH64_SCALABLE_LINUX_H
+#ifndef GDB_ARCH_AARCH64_SCALABLE_LINUX_H
+#define GDB_ARCH_AARCH64_SCALABLE_LINUX_H
 
 #include "gdbsupport/common-regcache.h"
 
@@ -55,4 +55,4 @@
    is empty (zero).  Return FALSE otherwise.  */
 extern bool sve_state_is_empty (const struct reg_buffer_common *reg_buf);
 
-#endif /* ARCH_AARCH64_SCALABLE_LINUX_H */
+#endif /* GDB_ARCH_AARCH64_SCALABLE_LINUX_H */

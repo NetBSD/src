@@ -258,10 +258,10 @@ ctf_dtd_delete (ctf_dict_t *fp, ctf_dtdef_t *dtd)
   dtd->dtd_vlen_alloc = 0;
 
   if (dtd->dtd_data.ctt_name
-      && (name = ctf_strraw (fp, dtd->dtd_data.ctt_name)) != NULL
-      && LCTF_INFO_ISROOT (fp, dtd->dtd_data.ctt_info))
+      && (name = ctf_strraw (fp, dtd->dtd_data.ctt_name)) != NULL)
     {
-      ctf_dynhash_remove (ctf_name_table (fp, name_kind), name);
+      if (LCTF_INFO_ISROOT (fp, dtd->dtd_data.ctt_info))
+	ctf_dynhash_remove (ctf_name_table (fp, name_kind), name);
       ctf_str_remove_ref (fp, name, &dtd->dtd_data.ctt_name);
     }
 
@@ -1048,7 +1048,6 @@ ctf_add_enumerator (ctf_dict_t *fp, ctf_id_t enid, const char *name,
   ctf_dtdef_t *dtd = ctf_dtd_lookup (fp, enid);
   unsigned char *old_vlen;
   ctf_enum_t *en;
-  size_t i;
 
   uint32_t kind, vlen, root;
 
@@ -1068,6 +1067,18 @@ ctf_add_enumerator (ctf_dict_t *fp, ctf_id_t enid, const char *name,
   root = LCTF_INFO_ISROOT (fp, dtd->dtd_data.ctt_info);
   vlen = LCTF_INFO_VLEN (fp, dtd->dtd_data.ctt_info);
 
+  /* Enumeration constant names are only added, and only checked for duplicates,
+     if the enum they are part of is a root-visible type.  */
+
+  if (root == CTF_ADD_ROOT && ctf_dynhash_lookup (fp->ctf_names, name))
+    {
+      if (fp->ctf_flags & LCTF_STRICT_NO_DUP_ENUMERATORS)
+	return (ctf_set_errno (ofp, ECTF_DUPLICATE));
+
+      if (ctf_track_enumerator (fp, enid, name) < 0)
+	return (ctf_set_errno (ofp, ctf_errno (fp)));
+    }
+
   if (kind != CTF_K_ENUM)
     return (ctf_set_errno (ofp, ECTF_NOTENUM));
 
@@ -1075,23 +1086,45 @@ ctf_add_enumerator (ctf_dict_t *fp, ctf_id_t enid, const char *name,
     return (ctf_set_errno (ofp, ECTF_DTFULL));
 
   old_vlen = dtd->dtd_vlen;
+
   if (ctf_grow_vlen (fp, dtd, sizeof (ctf_enum_t) * (vlen + 1)) < 0)
     return -1;					/* errno is set for us.  */
+
   en = (ctf_enum_t *) dtd->dtd_vlen;
 
   /* Remove refs in the old vlen region and reapply them.  */
 
   ctf_str_move_refs (fp, old_vlen, sizeof (ctf_enum_t) * vlen, dtd->dtd_vlen);
 
-  for (i = 0; i < vlen; i++)
-    if (strcmp (ctf_strptr (fp, en[i].cte_name), name) == 0)
-      return (ctf_set_errno (ofp, ECTF_DUPLICATE));
+  /* Check for constant duplication within any given enum: only needed for
+     non-root-visible types, since the duplicate detection above does the job
+     for root-visible types just fine.  */
 
-  en[i].cte_name = ctf_str_add_movable_ref (fp, name, &en[i].cte_name);
-  en[i].cte_value = value;
+  if (root == CTF_ADD_NONROOT && (fp->ctf_flags & LCTF_STRICT_NO_DUP_ENUMERATORS))
+    {
+      size_t i;
 
-  if (en[i].cte_name == 0 && name != NULL && name[0] != '\0')
+      for (i = 0; i < vlen; i++)
+	if (strcmp (ctf_strptr (fp, en[i].cte_name), name) == 0)
+	  return (ctf_set_errno (ofp, ECTF_DUPLICATE));
+    }
+
+  en[vlen].cte_name = ctf_str_add_movable_ref (fp, name, &en[vlen].cte_name);
+  en[vlen].cte_value = value;
+
+  if (en[vlen].cte_name == 0 && name != NULL && name[0] != '\0')
     return (ctf_set_errno (ofp, ctf_errno (fp)));
+
+  /* Put the newly-added enumerator name into the name table if this type is
+     root-visible.  */
+
+  if (root == CTF_ADD_ROOT)
+    {
+      if (ctf_dynhash_insert (fp->ctf_names,
+			      (char *) ctf_strptr (fp, en[vlen].cte_name),
+			      (void *) (uintptr_t) enid) < 0)
+	return ctf_set_errno (fp, ENOMEM);
+    }
 
   dtd->dtd_data.ctt_info = CTF_TYPE_INFO (kind, root, vlen + 1);
 
@@ -1400,6 +1433,42 @@ int
 ctf_add_func_sym (ctf_dict_t *fp, const char *name, ctf_id_t id)
 {
   return (ctf_add_funcobjt_sym (fp, 1, name, id));
+}
+
+/* Add an enumeration constant observed in a given enum type as an identifier.
+   They appear as names that cite the enum type.
+
+   Constants that appear in more than one enum, or which are already the names
+   of types, appear in ctf_conflicting_enums as well.
+
+   This is done for all enumeration types at open time, and for newly-added ones
+   as well: if the strict-enum flag is turned on, this table must be kept up to
+   date with enums added in the interim.  */
+
+int
+ctf_track_enumerator (ctf_dict_t *fp, ctf_id_t type, const char *cte_name)
+{
+  int err;
+
+  if (ctf_dynhash_lookup_type (fp->ctf_names, cte_name) == 0)
+    {
+      uint32_t name = ctf_str_add (fp, cte_name);
+
+      if (name == 0)
+	return -1;				/* errno is set for us.  */
+
+      err = ctf_dynhash_insert_type (fp, fp->ctf_names, type, name);
+    }
+  else
+    {
+      err = ctf_dynset_insert (fp->ctf_conflicting_enums, (void *)
+			       cte_name);
+      if (err != 0)
+	ctf_set_errno (fp, err * -1);
+    }
+  if (err != 0)
+    return -1;					/* errno is set for us.  */
+  return 0;
 }
 
 typedef struct ctf_bundle
@@ -1944,10 +2013,15 @@ ctf_add_type_internal (ctf_dict_t *dst_fp, ctf_dict_t *src_fp, ctf_id_t src_type
 	}
       else
 	{
+	  ctf_snapshot_id_t snap = ctf_snapshot (dst_fp);
+
 	  dst_type = ctf_add_enum (dst_fp, flag, name);
 	  if ((dst.ctb_type = dst_type) == CTF_ERR
 	      || ctf_enum_iter (src_fp, src_type, enumadd, &dst))
-	    return CTF_ERR;			/* errno is set for us */
+	    {
+	      ctf_rollback (dst_fp, snap);
+	      return CTF_ERR;			/* errno is set for us */
+	    }
 	}
       break;
 

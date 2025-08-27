@@ -31,10 +31,6 @@ struct block_object {
      between a block and an object file.  When a block is created also
      store a pointer to the object file for later use.  */
   struct objfile *objfile;
-  /* Keep track of all blocks with a doubly-linked list.  Needed for
-     block invalidation if the source object file has been freed.  */
-  block_object *prev;
-  block_object *next;
 };
 
 struct block_syms_iterator_object {
@@ -76,32 +72,9 @@ struct block_syms_iterator_object {
       }									\
   } while (0)
 
-/* This is called when an objfile is about to be freed.
-   Invalidate the block as further actions on the block would result
-   in bad data.  All access to obj->symbol should be gated by
-   BLPY_REQUIRE_VALID which will raise an exception on invalid
-   blocks.  */
-struct blpy_deleter
-{
-  void operator() (block_object *obj)
-  {
-    while (obj)
-      {
-	block_object *next = obj->next;
-
-	obj->block = NULL;
-	obj->objfile = NULL;
-	obj->next = NULL;
-	obj->prev = NULL;
-
-	obj = next;
-      }
-  }
-};
-
 extern PyTypeObject block_syms_iterator_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("block_syms_iterator_object");
-static const registry<objfile>::key<block_object, blpy_deleter>
+static const registry<objfile>::key<htab, htab_deleter>
      blpy_objfile_data_key;
 
 static PyObject *
@@ -278,42 +251,54 @@ blpy_getitem (PyObject *self, PyObject *key)
   return nullptr;
 }
 
+/* Deleter function for the hash table.  */
+
+static void
+block_object_del (void *obj)
+{
+  block_object *block = (block_object *) obj;
+  block->block = nullptr;
+  block->objfile = nullptr;
+}
+
+/* Hash function for the hash table.  */
+
+static hashval_t
+block_object_hash (const void *obj)
+{
+  const block_object *block = (const block_object *) obj;
+  return htab_hash_pointer (block->block);
+}
+
+/* Equality function for the hash table.  Note that searches must be
+   done with a plain block.  */
+
+static int
+block_object_eq (const void *a, const void *b)
+{
+  const block_object *blocka = (const block_object *) a;
+  const block *blockb = (const block *) b;
+  return blocka->block == blockb;
+}
+
+/* Called when a gdb.Block is destroyed.  This removes it from the
+   hash.  */
+
 static void
 blpy_dealloc (PyObject *obj)
 {
   block_object *block = (block_object *) obj;
 
-  if (block->prev)
-    block->prev->next = block->next;
-  else if (block->objfile)
-    blpy_objfile_data_key.set (block->objfile, block->next);
-  if (block->next)
-    block->next->prev = block->prev;
-  block->block = NULL;
-  Py_TYPE (obj)->tp_free (obj);
-}
-
-/* Given a block, and a block_object that has previously been
-   allocated and initialized, populate the block_object with the
-   struct block data.  Also, register the block_object life-cycle
-   with the life-cycle of the object file associated with this
-   block, if needed.  */
-static void
-set_block (block_object *obj, const struct block *block,
-	   struct objfile *objfile)
-{
-  obj->block = block;
-  obj->prev = NULL;
-  if (objfile)
+  if (block->objfile != nullptr)
     {
-      obj->objfile = objfile;
-      obj->next = blpy_objfile_data_key.get (objfile);
-      if (obj->next)
-	obj->next->prev = obj;
-      blpy_objfile_data_key.set (objfile, obj);
+      htab_t table = blpy_objfile_data_key.get (block->objfile);
+      hashval_t hash = block_object_hash (block);
+      /* This will clear the contents of the block as a side
+	 effect.  */
+      htab_remove_elt_with_hash (table, block->block, hash);
     }
-  else
-    obj->next = NULL;
+
+  Py_TYPE (obj)->tp_free (obj);
 }
 
 /* Create a new block object (gdb.Block) that encapsulates the struct
@@ -321,13 +306,32 @@ set_block (block_object *obj, const struct block *block,
 PyObject *
 block_to_block_object (const struct block *block, struct objfile *objfile)
 {
-  block_object *block_obj;
+  htab_t table = blpy_objfile_data_key.get (objfile);
+  if (table == nullptr)
+    {
+      table = htab_create_alloc (10, block_object_hash, block_object_eq,
+				 block_object_del, xcalloc, xfree);
+      blpy_objfile_data_key.set (objfile, table);
+    }
 
-  block_obj = PyObject_New (block_object, &block_object_type);
-  if (block_obj)
-    set_block (block_obj, block, objfile);
+  hashval_t hash = htab_hash_pointer (block);
+  block_object *result = (block_object *) htab_find_with_hash (table, block,
+							       hash);
+  if (result != nullptr)
+    {
+      PyObject *py_result = (PyObject *) result;
+      Py_INCREF (py_result);
+      return py_result;
+    }
 
-  return (PyObject *) block_obj;
+  result = PyObject_New (block_object, &block_object_type);
+  result->block = block;
+  result->objfile = objfile;
+
+  void **slot = htab_find_slot_with_hash (table, block, hash, INSERT);
+  *slot = result;
+
+  return (PyObject *) result;
 }
 
 /* Return struct block reference that is wrapped by this object.  */
@@ -452,6 +456,20 @@ blpy_repr (PyObject *self)
 			       name, str.c_str ());
 }
 
+/* Hash function for block objects.  */
+
+static Py_hash_t
+blpy_hash (PyObject *self)
+{
+  /* Python doesn't really expose its pointer hash function, so we use
+     our own.  */
+  Py_hash_t result = (Py_hash_t) htab_hash_pointer (self);
+  /* -1 has a special meaning for Python.  */
+  if (result == -1)
+    result = -2;
+  return result;
+}
+
 /* Implements the equality comparison for Block objects.  All other
    comparison operators will throw NotImplemented, as they aren't
    valid for blocks.  */
@@ -466,10 +484,7 @@ blpy_richcompare (PyObject *self, PyObject *other, int op)
       return Py_NotImplemented;
     }
 
-  block_object *self_block = (block_object *) self;
-  block_object *other_block = (block_object *) other;
-
-  bool expected = self_block->block == other_block->block;
+  bool expected = self == other;
   bool equal = op == Py_EQ;
   return PyBool_FromLong (equal == expected);
 }
@@ -478,19 +493,14 @@ static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_blocks (void)
 {
   block_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&block_object_type) < 0)
+  if (gdbpy_type_ready (&block_object_type) < 0)
     return -1;
 
   block_syms_iterator_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&block_syms_iterator_object_type) < 0)
+  if (gdbpy_type_ready (&block_syms_iterator_object_type) < 0)
     return -1;
 
-  if (gdb_pymodule_addobject (gdb_module, "Block",
-			      (PyObject *) &block_object_type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, "BlockIterator",
-				 (PyObject *) &block_syms_iterator_object_type);
+  return 0;
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_blocks);
@@ -542,7 +552,7 @@ PyTypeObject block_object_type = {
   0,				  /*tp_as_number*/
   0,				  /*tp_as_sequence*/
   &block_object_as_mapping,	  /*tp_as_mapping*/
-  0,				  /*tp_hash */
+  blpy_hash,			  /*tp_hash */
   0,				  /*tp_call*/
   0,				  /*tp_str*/
   0,				  /*tp_getattro*/

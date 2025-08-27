@@ -20,8 +20,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (PARSER_DEFS_H)
-#define PARSER_DEFS_H 1
+#ifndef GDB_PARSER_DEFS_H
+#define GDB_PARSER_DEFS_H
 
 #include "expression.h"
 #include "symtab.h"
@@ -389,5 +389,4 @@ extern bool fits_in_type (int n_sign, const gdb_mpz &n, int type_bits,
 
 extern void parser_fprintf (FILE *, const char *, ...) ATTRIBUTE_PRINTF (2, 3);
 
-#endif /* PARSER_DEFS_H */
-
+#endif /* GDB_PARSER_DEFS_H */

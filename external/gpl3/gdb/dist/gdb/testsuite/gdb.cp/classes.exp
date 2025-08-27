@@ -502,7 +502,7 @@ proc test_enums {} {
 
     gdb_test "print obj_with_enum" \
 	"\\$\[0-9\]+ = \{priv_enum = (ClassWithEnum::)?green, x = 0\}" \
-	"print obj_with_enum (2)"
+	"print obj_with_enum, 2"
 
     # print the enum member
 

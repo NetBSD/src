@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CGEN_REMAP_H
-#define CGEN_REMAP_H
+#ifndef GDB_CGEN_REMAP_H
+#define GDB_CGEN_REMAP_H
 
 /* Remap cgen interface names, so we can have multiple cgen generated include
    files in gdb without violating c++ ODR.  */
@@ -50,4 +50,4 @@
 #define CGEN_OPERAND		GDB_CGEN_REMAP (CGEN_OPERAND)
 #define CGEN_MAYBE_MULTI_IFLD	GDB_CGEN_REMAP (CGEN_MAYBE_MULTI_IFLD)
 
-#endif /* CGEN_REMAP_H */
+#endif /* GDB_CGEN_REMAP_H */

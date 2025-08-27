@@ -42,7 +42,7 @@ bool
 x86_in_indirect_branch_thunk (CORE_ADDR pc, const char * const *register_names,
 			      int lo, int hi)
 {
-  struct bound_minimal_symbol bmfun = lookup_minimal_symbol_by_pc (pc);
+  bound_minimal_symbol bmfun = lookup_minimal_symbol_by_pc (pc);
   if (bmfun.minsym == nullptr)
     return false;
 

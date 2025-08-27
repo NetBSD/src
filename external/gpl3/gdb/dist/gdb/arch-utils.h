@@ -17,10 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_UTILS_H
-#define ARCH_UTILS_H
+#ifndef GDB_ARCH_UTILS_H
+#define GDB_ARCH_UTILS_H
 
 #include "gdbarch.h"
+#include "gdbsupport/environ.h"
+#include "filenames.h"
 
 class frame_info_ptr;
 struct minimal_symbol;
@@ -73,6 +75,88 @@ struct bp_manipulation_endian
 #define BP_MANIPULATION_ENDIAN(BREAK_INSN_LITTLE, BREAK_INSN_BIG) \
   bp_manipulation_endian<sizeof (BREAK_INSN_LITTLE),		  \
   BREAK_INSN_LITTLE, BREAK_INSN_BIG>
+
+/* Structure returned from gdbarch core_parse_exec_context method.  Wraps
+   the execfn string and a vector containing the inferior argument.  If a
+   gdbarch is unable to parse this information then an empty structure is
+   returned, check the execfn as an indication, if this is nullptr then no
+   other fields should be considered valid.  */
+
+struct core_file_exec_context
+{
+  /* Constructor, just move everything into place.  The EXEC_NAME should
+     never be nullptr.  Only call this constructor if all the arguments
+     have been collected successfully, i.e. if the EXEC_NAME could be
+     found but not ARGV then use the no-argument constructor to create an
+     empty context object.
+
+     The EXEC_FILENAME must be the absolute filename of the executable
+     that generated this core file, or nullptr if the absolute filename
+     is not known.  */
+  core_file_exec_context (gdb::unique_xmalloc_ptr<char> exec_name,
+			  gdb::unique_xmalloc_ptr<char> exec_filename,
+			  std::vector<gdb::unique_xmalloc_ptr<char>> argv,
+			  std::vector<gdb::unique_xmalloc_ptr<char>> envp)
+    : m_exec_name (std::move (exec_name)),
+      m_exec_filename (std::move (exec_filename)),
+      m_arguments (std::move (argv)),
+      m_environment (std::move (envp))
+  {
+    gdb_assert (m_exec_name != nullptr);
+    gdb_assert (exec_filename == nullptr
+		|| IS_ABSOLUTE_PATH (exec_filename.get ()));
+  }
+
+  /* Create a default context object.  In its default state a context
+     object holds no useful information, and will return false from its
+     valid() method.  */
+  core_file_exec_context () = default;
+
+  /* Return true if this object contains valid context information.  */
+  bool valid () const
+  { return m_exec_name != nullptr; }
+
+  /* Return the execfn string (executable name) as extracted from the core
+     file.  Will always return non-nullptr if valid() returns true.  */
+  const char *execfn () const
+  { return m_exec_name.get (); }
+
+  /* Return the absolute path to the executable if known.  This might
+     return nullptr even when execfn() returns a non-nullptr value.
+     Additionally, the file referenced here might have a different name
+     than the file returned by execfn if execfn is a symbolic link.  */
+  const char *exec_filename () const
+  { return m_exec_filename.get (); }
+
+  /* Return the vector of inferior arguments as extracted from the core
+     file.  This does not include argv[0] (the executable name) for that
+     see the execfn() function.  */
+  const std::vector<gdb::unique_xmalloc_ptr<char>> &args () const
+  { return m_arguments; }
+
+  /* Return the environment variables from this context.  */
+  gdb_environ environment () const;
+
+private:
+
+  /* The executable filename as reported in the core file.  Can be nullptr
+     if no executable name is found.  */
+  gdb::unique_xmalloc_ptr<char> m_exec_name;
+
+  /* Full filename to the executable that was actually executed.  The name
+     within EXEC_FILENAME might not match what the user typed, e.g. if the
+     user typed ./symlinked_name which is a symlink to /tmp/real_name then
+     this is going to contain '/tmp/realname' while EXEC_NAME above will
+     contain './symlinkedname'.  */
+  gdb::unique_xmalloc_ptr<char> m_exec_filename;
+
+  /* List of arguments.  Doesn't include argv[0] which is the executable
+     name, for this look at m_exec_name field.  */
+  std::vector<gdb::unique_xmalloc_ptr<char>> m_arguments;
+
+  /* List of environment strings.  */
+  std::vector<gdb::unique_xmalloc_ptr<char>> m_environment;
+};
 
 /* Default implementation of gdbarch_displaced_hw_singlestep.  */
 extern bool default_displaced_step_hw_singlestep (struct gdbarch *);
@@ -305,6 +389,11 @@ extern void default_read_core_file_mappings
    read_core_file_mappings_pre_loop_ftype pre_loop_cb,
    read_core_file_mappings_loop_ftype loop_cb);
 
+/* Default implementation of gdbarch_core_parse_exec_context.  Returns
+   an empty core_file_exec_context.  */
+extern core_file_exec_context default_core_parse_exec_context
+  (struct gdbarch *gdbarch, bfd *cbfd);
+
 /* Default implementation of gdbarch
    use_target_description_from_corefile_notes.  */
 extern bool default_use_target_description_from_corefile_notes
@@ -325,4 +414,4 @@ extern enum return_value_convention default_gdbarch_return_value
       struct regcache *regcache, struct value **read_value,
       const gdb_byte *writebuf);
 
-#endif /* ARCH_UTILS_H */
+#endif /* GDB_ARCH_UTILS_H */

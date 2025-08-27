@@ -154,16 +154,7 @@ objfile::forget_cached_source_info ()
 		objfile_debug_name (this));
 
   for (compunit_symtab *cu : compunits ())
-    {
-      for (symtab *s : cu->filetabs ())
-	{
-	  if (s->fullname != NULL)
-	    {
-	      xfree (s->fullname);
-	      s->fullname = NULL;
-	    }
-	}
-    }
+    cu->forget_cached_source_info ();
 
   for (const auto &iter : qf)
     iter->forget_cached_source_info (this);
@@ -385,7 +376,8 @@ objfile::expand_symtabs_matching
    gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
    gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
    block_search_flags search_flags,
-   domain_search_flags domain)
+   domain_search_flags domain,
+   gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher)
 {
   /* This invariant is documented in quick-functions.h.  */
   gdb_assert (lookup_name != nullptr || symbol_matcher == nullptr);
@@ -402,13 +394,14 @@ objfile::expand_symtabs_matching
   for (const auto &iter : qf)
     if (!iter->expand_symtabs_matching (this, file_matcher, lookup_name,
 					symbol_matcher, expansion_notify,
-					search_flags, domain))
+					search_flags, domain,
+					lang_matcher))
       return false;
   return true;
 }
 
 struct compunit_symtab *
-objfile::find_pc_sect_compunit_symtab (struct bound_minimal_symbol msymbol,
+objfile::find_pc_sect_compunit_symtab (bound_minimal_symbol msymbol,
 				       CORE_ADDR pc,
 				       struct obj_section *section,
 				       int warn_if_readin)
@@ -637,7 +630,7 @@ objfile::find_and_add_separate_symbol_file (symfile_add_flags symfile_flags)
 	     the user a system specific message that guides them to finding
 	     the missing debug info.  */
 
-	  ext_lang_missing_debuginfo_result ext_result
+	  ext_lang_missing_file_result ext_result
 	    = ext_lang_handle_missing_debuginfo (this);
 	  if (!ext_result.filename ().empty ())
 	    {

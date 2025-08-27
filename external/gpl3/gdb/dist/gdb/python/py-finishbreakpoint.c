@@ -217,8 +217,7 @@ bpfinishpy_init (PyObject *self, PyObject *args, PyObject *kwargs)
     }
   catch (const gdb_exception &except)
     {
-      gdbpy_convert_exception (except);
-      return -1;
+      return gdbpy_handle_gdb_exception (-1, except);
     }
 
   if (PyErr_Occurred ())
@@ -318,7 +317,7 @@ bpfinishpy_init (PyObject *self, PyObject *args, PyObject *kwargs)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_SET_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (-1, except);
     }
 
   self_bpfinish->py_bp.bp->frame_id = frame_id;
@@ -344,8 +343,7 @@ bpfinishpy_out_of_scope (struct finish_breakpoint_object *bpfinish_obj)
   if (bpfinish_obj->py_bp.bp->enable_state == bp_enabled
       && PyObject_HasAttrString (py_obj, outofscope_func))
     {
-      gdbpy_ref<> meth_result (PyObject_CallMethod (py_obj, outofscope_func,
-						    NULL));
+      gdbpy_ref<> meth_result = gdbpy_call_method (py_obj, outofscope_func);
       if (meth_result == NULL)
 	gdbpy_print_stack ();
     }
@@ -441,11 +439,7 @@ gdbpy_initialize_finishbreakpoints (void)
   if (!gdbpy_breakpoint_init_breakpoint_type ())
     return -1;
 
-  if (PyType_Ready (&finish_breakpoint_object_type) < 0)
-    return -1;
-
-  if (gdb_pymodule_addobject (gdb_module, "FinishBreakpoint",
-			      (PyObject *) &finish_breakpoint_object_type) < 0)
+  if (gdbpy_type_ready (&finish_breakpoint_object_type) < 0)
     return -1;
 
   gdb::observers::normal_stop.attach (bpfinishpy_handle_stop,

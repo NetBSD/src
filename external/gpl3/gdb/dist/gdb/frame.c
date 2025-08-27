@@ -2325,7 +2325,22 @@ get_prev_frame_always_1 (const frame_info_ptr &this_frame)
      until we have unwound all the way down to the previous non-inline
      frame.  */
   if (get_frame_type (this_frame) == INLINE_FRAME)
-    return get_prev_frame_maybe_check_cycle (this_frame);
+    {
+      frame_info_ptr fi = get_prev_frame_maybe_check_cycle (this_frame);
+
+      /* If this_frame is the current frame, then compute and stash its frame
+	 id so that the cycle check in get_prev_frame_maybe_check_cycle works
+	 correctly in the case where inline frame 0 has been duplicated.
+
+	 The this_id.p check is required to avoid recursion as computing the
+	 frame id results in a call to inline_frame_this_id which calls back
+	 into get_prev_frame_always.  */
+      if (this_frame->level == 0
+	  && this_frame->this_id.p != frame_id_status::COMPUTING)
+	get_frame_id (this_frame);
+
+      return fi;
+    }
 
   /* If this_frame is the current frame, then compute and stash its
      frame id prior to fetching and computing the frame id of the
@@ -2584,7 +2599,7 @@ inside_main_func (const frame_info_ptr &this_frame)
   CORE_ADDR sym_addr = 0;
   const char *name = main_name ();
   bound_minimal_symbol msymbol
-    = lookup_minimal_symbol (name, NULL,
+    = lookup_minimal_symbol (current_program_space, name,
 			     current_program_space->symfile_object_file);
 
   if (msymbol.minsym != nullptr)
@@ -2628,7 +2643,7 @@ inside_entry_func (const frame_info_ptr &this_frame)
 {
   CORE_ADDR entry_point;
 
-  if (!entry_point_address_query (&entry_point))
+  if (!entry_point_address_query (current_program_space, &entry_point))
     return false;
 
   return get_frame_func (this_frame) == entry_point;
@@ -2859,7 +2874,7 @@ find_frame_sal (const frame_info_ptr &frame)
 
   if (frame_inlined_callees (frame) > 0)
     {
-      struct symbol *sym;
+      const symbol *sym;
 
       /* If the current frame has some inlined callees, and we have a next
 	 frame, then that frame must be an inlined frame.  In this case

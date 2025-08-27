@@ -205,6 +205,18 @@ sympy_is_variable (PyObject *self, void *closure)
 			      || theclass == LOC_OPTIMIZED_OUT));
 }
 
+/* Implementation of Symbol.is_artificial.  */
+
+static PyObject *
+sympy_is_artificial (PyObject *self, void *closure)
+{
+  struct symbol *symbol = nullptr;
+
+  SYMPY_REQUIRE_VALID (self, symbol);
+
+  return PyBool_FromLong (symbol->is_artificial ());
+}
+
 /* Implementation of gdb.Symbol.needs_frame -> Boolean.
    Returns true iff the symbol needs a frame for evaluation.  */
 
@@ -222,7 +234,7 @@ sympy_needs_frame (PyObject *self, void *closure)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (result)
@@ -307,7 +319,7 @@ sympy_value (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -425,7 +437,7 @@ gdbpy_lookup_symbol (PyObject *self, PyObject *args, PyObject *kw)
 	}
       catch (const gdb_exception &except)
 	{
-	  GDB_PY_HANDLE_EXCEPTION (except);
+	  return gdbpy_handle_gdb_exception (nullptr, except);
 	}
     }
 
@@ -436,7 +448,7 @@ gdbpy_lookup_symbol (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   gdbpy_ref<> ret_tuple (PyTuple_New (2));
@@ -485,7 +497,7 @@ gdbpy_lookup_global_symbol (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (symbol)
@@ -553,7 +565,7 @@ gdbpy_lookup_static_symbol (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (symbol)
@@ -620,10 +632,11 @@ gdbpy_lookup_static_symbols (PyObject *self, PyObject *args, PyObject *kw)
 
 		  if (symbol != nullptr)
 		    {
-		      PyObject *sym_obj
-			= symbol_to_symbol_object (symbol);
+		      PyObject *sym_obj = symbol_to_symbol_object (symbol);
+		      if (sym_obj == nullptr)
+			return nullptr;
 		      if (PyList_Append (return_list.get (), sym_obj) == -1)
-			return NULL;
+			return nullptr;
 		    }
 		}
 	    }
@@ -631,7 +644,7 @@ gdbpy_lookup_static_symbols (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return return_list.release ();
@@ -640,7 +653,7 @@ gdbpy_lookup_static_symbols (PyObject *self, PyObject *args, PyObject *kw)
 static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_symbols (void)
 {
-  if (PyType_Ready (&symbol_object_type) < 0)
+  if (gdbpy_type_ready (&symbol_object_type) < 0)
     return -1;
 
   if (PyModule_AddIntConstant (gdb_module, "SYMBOL_LOC_UNDEF", LOC_UNDEF) < 0
@@ -685,8 +698,7 @@ gdbpy_initialize_symbols (void)
 #include "sym-domains.def"
 #undef SYM_DOMAIN
 
-  return gdb_pymodule_addobject (gdb_module, "Symbol",
-				 (PyObject *) &symbol_object_type);
+  return 0;
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_symbols);
@@ -710,6 +722,8 @@ to display demangled or mangled names.", NULL },
   { "addr_class", sympy_get_addr_class, NULL, "Address class of the symbol." },
   { "is_argument", sympy_is_argument, NULL,
     "True if the symbol is an argument of a function." },
+  { "is_artificial", sympy_is_artificial, nullptr,
+    "True if the symbol is marked artificial." },
   { "is_constant", sympy_is_constant, NULL,
     "True if the symbol is a constant." },
   { "is_function", sympy_is_function, NULL,

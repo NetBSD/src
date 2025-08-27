@@ -47,18 +47,9 @@ gdb_load_shlib $libobj
 gdb_test "break foo" "Breakpoint $decimal at $hex"
 gdb_test "info breakpoints" "<foo\\(\\)@plt>"
 
-# This is used as an override for delete_breakpoints when we don't
-# want functions in gdb.exp to delete breakpoints behind the scenes
-# for us.
-proc do_not_delete_breakpoints {} {
-    # Just do nothing.
-}
-
 # Runto main, but don't delete all the breakpoints.
-with_override delete_breakpoints do_not_delete_breakpoints {
-    if {![runto_main]} {
-	return -1
-    }
+if {![runto_main no-delete-breakpoints]} {
+    return -1
 }
 
 # The breakpoint should now be showing in `foo` for real.

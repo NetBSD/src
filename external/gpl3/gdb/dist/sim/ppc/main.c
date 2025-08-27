@@ -289,7 +289,7 @@ main(int argc, char * const *argv)
   psim_stack(simulation, argv, environ);
 
   {
-    RETSIGTYPE (*prev) ();
+    RETSIGTYPE (*prev) (int);
     prev = signal(SIGINT, cntrl_c);
     psim_run(simulation);
     signal(SIGINT, prev);

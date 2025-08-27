@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (FRAME_BASE_H)
-#define FRAME_BASE_H 1
+#ifndef GDB_FRAME_BASE_H
+#define GDB_FRAME_BASE_H
 
 class frame_info_ptr;
 struct frame_id;
@@ -88,4 +88,4 @@ extern void frame_base_set_default (struct gdbarch *gdbarch,
 
 extern const struct frame_base *frame_base_find_by_frame (const frame_info_ptr &this_frame);
 
-#endif
+#endif /* GDB_FRAME_BASE_H */
