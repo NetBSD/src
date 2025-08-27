@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <walfred.tedeschi@intel.com>,
 #                            <mircea.gherzan@intel.com>
@@ -16,21 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { ![istarget i?86-*-*] && ![istarget x86_64-*-* ] } {
-    verbose "Skipping x86 MPX tests."
-    return
-}
+require {is_any_target i?86-*-* x86_64-*-*}
 
 standard_testfile
 
-if { ![supports_mpx_check_pointer_bounds] } {
-    return -1
-}
-
-if { ![have_mpx] } {
-    unsupported "processor does not support MPX"
-    return -1
-}
+require supports_mpx_check_pointer_bounds have_mpx
 
 set comp_flags "-mmpx -fcheck-pointer-bounds -I${srcdir}/../nat/"
 

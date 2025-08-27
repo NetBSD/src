@@ -1,4 +1,4 @@
-# Copyright 2004-2023 Free Software Foundation, Inc.
+# Copyright 2004-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,11 +18,7 @@
 
 # This file is part of the gdb testsuite.
 
-
-if { ![istarget s390-*-*] && ![istarget s390x-*-* ] } {
-    verbose "Skipping s390 TDB register tests."
-    return
-}
+require {is_any_target s390-*-* s390x-*-*}
 
 standard_testfile .c
 

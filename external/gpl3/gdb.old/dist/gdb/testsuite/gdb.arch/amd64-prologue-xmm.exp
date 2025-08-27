@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,9 +24,8 @@ if [info exists COMPILE] {
     # make check RUNTESTFLAGS='gdb.arch/amd64-prologue-xmm.exp COMPILE=1'
     set srcfile ${csrcfile}
     lappend opts debug optimize=-O0
-} elseif { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
-    verbose "Skipping amd64-prologue-xmm test."
-    return 0
+} else {
+    require is_x86_64_m64_target
 }
 
 if {[prepare_for_testing "failed to prepare" ${binfile} $srcfile $opts]} {

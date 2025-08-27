@@ -1,5 +1,5 @@
 /* Low level interface to ptrace, for GDB when running under Unix.
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "frame.h"
 #include "inferior.h"
 #include "command.h"
@@ -29,7 +28,7 @@
 #include <fcntl.h>
 #include "gdbsupport/gdb_select.h"
 
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
@@ -38,6 +37,10 @@
 
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
+#endif
+
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>
 #endif
 
 #ifndef O_NOCTTY
@@ -113,9 +116,9 @@ static struct terminal_info *get_inflow_inferior_data (struct inferior *);
    we save our handlers in these two variables and set SIGINT and SIGQUIT
    to SIG_IGN.  */
 
-static gdb::optional<sighandler_t> sigint_ours;
+static std::optional<sighandler_t> sigint_ours;
 #ifdef SIGQUIT
-static gdb::optional<sighandler_t> sigquit_ours;
+static std::optional<sighandler_t> sigquit_ours;
 #endif
 
 /* The name of the tty (from the `tty' command) that we're giving to
@@ -345,11 +348,25 @@ child_terminal_inferior (struct target_ops *self)
 	     then restore whatever was the foreground pgrp the last
 	     time the inferior was running.  See also comments
 	     describing terminal_state::process_group.  */
-#ifdef HAVE_GETPGID
-	  result = tcsetpgrp (0, getpgid (inf->pid));
-#else
-	  result = tcsetpgrp (0, tinfo->process_group);
+	  pid_t pgrp = tinfo->process_group;
+#ifdef __CYGWIN__
+	  /* The Windows native target uses Win32 routines to run or
+	     attach to processes (CreateProcess / DebugActiveProcess),
+	     so a Cygwin inferior has a Windows PID, rather than a
+	     Cygwin PID.  We want to pass the Cygwin PID to Cygwin
+	     tcsetpgrp if we have a Cygwin inferior, so try to convert
+	     first.  If we have a non-Cygwin inferior, we'll end up
+	     passing down the WINPID to tcsetpgrp, stored in
+	     terminal_state::process_group.  tcsetpgrp still succeeds
+	     in that case, and it seems preferable to switch the
+	     foreground pgrp away from GDB, for consistency.  */
+	  pid_t cygpid = cygwin_internal (CW_WINPID_TO_CYGWIN_PID, inf->pid);
+	  if (cygpid <= cygwin_internal (CW_MAX_CYGWIN_PID))
+	    pgrp = getpgid (cygpid);
+#elif defined (HAVE_GETPGID)
+	  pgrp = getpgid (inf->pid);
 #endif
+	  result = tcsetpgrp (0, pgrp);
 	  if (result == -1)
 	    {
 #if 0
@@ -766,7 +783,8 @@ check_syscall (const char *msg, int result)
 {
   if (result < 0)
     {
-      print_sys_errmsg (msg, errno);
+      gdb_printf (gdb_stderr, "%s:%s.\n", msg,
+		  safe_strerror (errno));
       _exit (1);
     }
 }

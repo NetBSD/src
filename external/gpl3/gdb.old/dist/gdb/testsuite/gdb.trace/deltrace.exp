@@ -1,4 +1,4 @@
-#   Copyright 1998-2023 Free Software Foundation, Inc.
+#   Copyright 1998-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,27 +17,17 @@
 
 load_lib "trace-support.exp"
 
-
-gdb_exit
-gdb_start
-
 standard_testfile actions.c
 
-if ![gdb_trace_common_supports_arch] {
-    unsupported "no trace-common.h support for arch"
-    return -1
-}
+require gdb_trace_common_supports_arch
 
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 	  executable {debug nowarnings}] != "" } {
     untested "failed to compile"
     return -1
 }
-gdb_reinitialize_dir $srcdir/$subdir
 
-# If testing on a remote host, download the source file.
-# remote_download host $srcdir/$subdir/$srcfile
-
+clean_restart
 gdb_file_cmd $binfile
 
 # define relative source line numbers:
@@ -60,14 +50,15 @@ gdb_test "trace gdb_asm_test" "Tracepoint \[0-9\]+ at .*" "set tracepoint 2"
 gdb_test "trace $testline1"   "Tracepoint \[0-9\]+ at .*" "set tracepoint 3"
 
 gdb_test "info tracepoints" \
-    "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target.
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target.
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target." \
-			"3.1a: set three tracepoints"
+    [multi_line \
+	 "Num     Type\[ \]+Disp Enb Address\[ \]+What\\s*" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+" \
+	 "\[\t \]+not installed on target" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+" \
+	 "\[\t \]+not installed on target" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+" \
+	 "\[\t \]+not installed on target"] \
+    "3.1a: set three tracepoints"
 
 gdb_test "delete tracepoints" \
     "" \
@@ -87,14 +78,15 @@ if {$trcpt1 <= 0 || $trcpt2 <= 0 || $trcpt3 <= 0} {
 }
 
 gdb_test "info tracepoints" \
-    "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target.
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target.
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target." \
-			"3.2a: set three tracepoints"
+    [multi_line \
+	 "Num     Type\[ \]+Disp Enb Address\[ \]+What\\s*" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+" \
+	 "\[\t \]+not installed on target" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+" \
+	 "\[\t \]+not installed on target" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+" \
+	 "\[\t \]+not installed on target"] \
+    "3.2a: set three tracepoints"
 
 #gdb_test_no_output "delete tracepoint $trcpt1" ""
 gdb_test_multiple "delete tracepoint $trcpt1" "3.2b: delete first tracepoint" {
@@ -110,12 +102,13 @@ gdb_test_multiple "delete tracepoint $trcpt1" "3.2b: delete first tracepoint" {
 }
 
 gdb_test "info tracepoints" \
-    "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target.
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target." \
-			"3.2c: verify delete first tracepoint"
+    [multi_line \
+	 "Num     Type\[ \]+Disp Enb Address\[ \]+What\\s*" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+" \
+	 "\[\t \]+not installed on target" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+" \
+	 "\[\t \]+not installed on target"] \
+    "3.2c: verify delete first tracepoint"
 
 #gdb_test_no_output "delete tracepoint $trcpt2" ""
 gdb_test_multiple "delete tracepoint $trcpt2" "3.2d: delete second tracepoint" {
@@ -131,10 +124,11 @@ gdb_test_multiple "delete tracepoint $trcpt2" "3.2d: delete second tracepoint" {
 }
 
 gdb_test "info tracepoints" \
-    "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target." \
-			"3.2e: verify delete second tracepoint"
+    [multi_line \
+	 "Num     Type\[ \]+Disp Enb Address\[ \]+What\\s*" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+" \
+	 "\[\t \]+not installed on target"] \
+    "3.2e: verify delete second tracepoint"
 
 #gdb_test_no_output "delete tracepoint $trcpt3" ""
 gdb_test_multiple "delete tracepoint $trcpt3" "3.2f: delete third tracepoint" {
@@ -165,14 +159,15 @@ if {$trcpt1 <= 0 || $trcpt2 <= 0 || $trcpt3 <= 0} {
 }
 
 gdb_test "info tracepoints" \
-    "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target.
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target.
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target." \
-			"3.3a: set three tracepoints"
+    [multi_line \
+	 "Num     Type\[ \]+Disp Enb Address\[ \]+What\\s*" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+" \
+	 "\[\t \]+not installed on target" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+" \
+	 "\[\t \]+not installed on target" \
+	 "\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+" \
+	 "\[\t \]+not installed on target"] \
+    "3.3a: set three tracepoints"
 
 #gdb_test_no_output "delete tracepoint $trcpt1 $trcpt2 $trcpt3" ""
 gdb_test_multiple "delete tracepoint $trcpt1 $trcpt2 $trcpt3" \

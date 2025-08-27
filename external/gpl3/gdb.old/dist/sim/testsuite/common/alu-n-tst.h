@@ -27,7 +27,7 @@
 #define do_op_N      XCONCAT2(do_op_,N)
 
 
-void
+static void
 do_op_N (const alu_test *tst)
 {
   const alu_op *op;
@@ -120,7 +120,7 @@ do_op_N (const alu_test *tst)
 }
 
 
-const alu_test alu_N_tests[] = {
+static const alu_test alu_N_tests[] = {
 
   /* 0 + 0; 0 + 1; 1 + 0; 1 + 1 */
   { 0, { { "ADDC", 0 }, }, 0, 0, 0, },

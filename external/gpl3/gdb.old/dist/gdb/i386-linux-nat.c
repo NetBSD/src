@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux i386.
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "inferior.h"
 #include "gdbcore.h"
 #include "regcache.h"
@@ -330,7 +329,9 @@ store_fpregs (const struct regcache *regcache, int tid, int regno)
 static int
 fetch_xstateregs (struct regcache *regcache, int tid)
 {
-  char xstateregs[X86_XSTATE_MAX_SIZE];
+  struct gdbarch *gdbarch = regcache->arch ();
+  const i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
+  char xstateregs[tdep->xsave_layout.sizeof_xsave];
   struct iovec iov;
 
   if (have_ptrace_getregset != TRIBOOL_TRUE)
@@ -353,7 +354,9 @@ fetch_xstateregs (struct regcache *regcache, int tid)
 static int
 store_xstateregs (const struct regcache *regcache, int tid, int regno)
 {
-  char xstateregs[X86_XSTATE_MAX_SIZE];
+  struct gdbarch *gdbarch = regcache->arch ();
+  const i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
+  char xstateregs[tdep->xsave_layout.sizeof_xsave];
   struct iovec iov;
 
   if (have_ptrace_getregset != TRIBOOL_TRUE)
@@ -648,7 +651,7 @@ i386_linux_nat_target::low_resume (ptid_t ptid, int step, enum gdb_signal signal
   int pid = ptid.lwp ();
   int request;
 
-  if (catch_syscall_enabled () > 0)
+  if (catch_syscall_enabled ())
    request = PTRACE_SYSCALL;
   else
     request = PTRACE_CONT;

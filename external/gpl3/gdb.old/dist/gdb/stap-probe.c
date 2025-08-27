@@ -1,6 +1,6 @@
 /* SystemTap probe support for GDB.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,14 +17,14 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "stap-probe.h"
+#include "extract-store-integer.h"
 #include "probe.h"
 #include "ui-out.h"
 #include "objfiles.h"
 #include "arch-utils.h"
 #include "command.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "filenames.h"
 #include "value.h"
 #include "ax.h"
@@ -151,7 +151,7 @@ public:
 
   /* See probe.h.  */
   struct value *evaluate_argument (unsigned n,
-				   frame_info_ptr frame) override;
+				   const frame_info_ptr &frame) override;
 
   /* See probe.h.  */
   void compile_to_ax (struct agent_expr *aexpr,
@@ -577,14 +577,14 @@ stap_is_integer_prefix (struct gdbarch *gdbarch, const char *s,
       if (r != NULL)
 	*r = "";
 
-      return isdigit (*s) > 0;
+      return isdigit ((unsigned char)*s) > 0;
     }
 
   for (p = t; *p != NULL; ++p)
     {
       size_t len = strlen (*p);
 
-      if ((len == 0 && isdigit (*s))
+      if ((len == 0 && isdigit ((unsigned char)*s))
 	  || (len > 0 && strncasecmp (s, *p, len) == 0))
 	{
 	  /* Integers may or may not have a prefix.  The "len == 0"
@@ -734,7 +734,7 @@ stap_parse_register_operand (struct stap_parse_info *p)
 
   struct type *long_type = builtin_type (gdbarch)->builtin_long;
   operation_up disp_op;
-  if (isdigit (*p->arg))
+  if (isdigit ((unsigned char)*p->arg))
     {
       /* The value of the displacement.  */
       long displacement;
@@ -769,14 +769,14 @@ stap_parse_register_operand (struct stap_parse_info *p)
   start = p->arg;
 
   /* We assume the register name is composed by letters and numbers.  */
-  while (isalnum (*p->arg))
+  while (isalnum ((unsigned char)*p->arg))
     ++p->arg;
 
   std::string regname (start, p->arg - start);
 
   /* We only add the GDB's register prefix/suffix if we are dealing with
      a numeric register.  */
-  if (isdigit (*start))
+  if (isdigit ((unsigned char)*start))
     {
       if (gdb_reg_prefix != NULL)
 	regname = gdb_reg_prefix + regname;
@@ -923,7 +923,7 @@ stap_parse_single_operand (struct stap_parse_info *p)
       if (p->inside_paren_p)
 	tmp = skip_spaces (tmp);
 
-      while (isdigit (*tmp))
+      while (isdigit ((unsigned char)*tmp))
 	{
 	  /* We skip the digit here because we are only interested in
 	     knowing what kind of unary operation this is.  The digit
@@ -961,7 +961,7 @@ stap_parse_single_operand (struct stap_parse_info *p)
 		      (std::move (result)));
 	}
     }
-  else if (isdigit (*p->arg))
+  else if (isdigit ((unsigned char)*p->arg))
     {
       /* A temporary variable, needed for lookahead.  */
       const char *tmp = p->arg;
@@ -1044,7 +1044,7 @@ stap_parse_argument_conditionally (struct stap_parse_info *p)
 
   expr::operation_up result;
   if (*p->arg == '-' || *p->arg == '~' || *p->arg == '+' || *p->arg == '!'
-      || isdigit (*p->arg)
+      || isdigit ((unsigned char)*p->arg)
       || gdbarch_stap_is_single_operand (p->gdbarch, p->arg))
     result = stap_parse_single_operand (p);
   else if (*p->arg == '(')
@@ -1113,7 +1113,7 @@ stap_parse_argument_1 (struct stap_parse_info *p,
      This loop shall continue until we run out of characters in the input,
      or until we find a close-parenthesis, which means that we've reached
      the end of a sub-expression.  */
-  while (*p->arg != '\0' && *p->arg != ')' && !isspace (*p->arg))
+  while (*p->arg != '\0' && *p->arg != ')' && !isspace ((unsigned char)*p->arg))
     {
       const char *tmp_exp_buf;
       enum exp_opcode opcode;
@@ -1272,8 +1272,8 @@ stap_probe::parse_arguments (struct gdbarch *gdbarch)
 	 Where `N' can be [+,-][1,2,4,8].  This is not mandatory, so
 	 we check it here.  If we don't find it, go to the next
 	 state.  */
-      if ((cur[0] == '-' && isdigit (cur[1]) && cur[2] == '@')
-	  || (isdigit (cur[0]) && cur[1] == '@'))
+      if ((cur[0] == '-' && isdigit ((unsigned char)cur[1]) && cur[2] == '@')
+	  || (isdigit ((unsigned char)cur[0]) && cur[1] == '@'))
 	{
 	  if (*cur == '-')
 	    {
@@ -1438,13 +1438,13 @@ stap_probe::can_evaluate_arguments () const
    corresponding to it.  Assertion is thrown if N does not exist.  */
 
 struct value *
-stap_probe::evaluate_argument (unsigned n, frame_info_ptr frame)
+stap_probe::evaluate_argument (unsigned n, const frame_info_ptr &frame)
 {
   struct stap_probe_arg *arg;
   struct gdbarch *gdbarch = get_frame_arch (frame);
 
   arg = this->get_arg_by_number (n, gdbarch);
-  return evaluate_expression (arg->aexpr.get (), arg->atype);
+  return arg->aexpr->evaluate (arg->atype);
 }
 
 /* Compile the probe's argument N (indexed from 0) to agent expression.
@@ -1618,6 +1618,9 @@ handle_stap_probe (struct objfile *objfile, struct sdt_note *el,
 	 it.  So we return.  */
       return;
     }
+
+  if (ignore_probe_p (provider, name, objfile_name (objfile), "SystemTap"))
+    return;
 
   stap_probe *ret = new stap_probe (std::string (name), std::string (provider),
 				    address, gdbarch, sem_addr, probe_args);

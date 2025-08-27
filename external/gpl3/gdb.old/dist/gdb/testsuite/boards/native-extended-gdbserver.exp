@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -95,8 +95,8 @@ proc extended_gdbserver_load_last_file {} {
 if { [info procs extended_gdbserver_gdb_file_cmd] == "" } {
     rename gdb_file_cmd extended_gdbserver_gdb_file_cmd
 }
-proc gdb_file_cmd { arg } {
-    if [extended_gdbserver_gdb_file_cmd $arg] {
+proc gdb_file_cmd { arg {kill_flag 1} } {
+    if [extended_gdbserver_gdb_file_cmd $arg $kill_flag] {
 	return -1
     }
     return [extended_gdbserver_load_last_file]

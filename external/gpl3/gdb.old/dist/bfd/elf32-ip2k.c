@@ -1,5 +1,5 @@
 /* Ubicom IP2xxx specific support for 32-bit ELF
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -623,7 +623,7 @@ adjust_all_relocations (bfd *abfd,
 
   /* Now fix the stab relocations.  */
   stab = bfd_get_section_by_name (abfd, ".stab");
-  if (stab)
+  if (stab && stab->reloc_count != 0)
     {
       bfd_byte *stabcontents, *stabend, *stabp;
       bfd_size_type stab_size = stab->rawsize ? stab->rawsize : stab->size;
@@ -1096,8 +1096,9 @@ ip2k_elf_relax_section (bfd *abfd,
      if this section does not have relocs, or if this is
      not a code section.  */
   if (bfd_link_relocatable (link_info)
-      || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
+      || (sec->flags & SEC_RELOC) == 0
+      || (sec->flags & SEC_HAS_CONTENTS) == 0
       || (sec->flags & SEC_CODE) == 0)
     return true;
 

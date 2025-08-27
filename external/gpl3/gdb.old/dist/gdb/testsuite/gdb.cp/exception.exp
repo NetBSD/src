@@ -1,4 +1,4 @@
-# Copyright 1997-2023 Free Software Foundation, Inc.
+# Copyright 1997-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,13 +27,10 @@
 # Static-linked executables use a different mechanism to get the
 # address of the notification hook in the C++ support library.
 
-# TODO: this file has many absolute line numbers.
-# Replace them with gdb_get_line_number.
-
 set ws	"\[\r\n\t \]+"
 set nl	"\[\r\n\]+"
 
-if { [skip_stl_tests] } { return }
+require allow_stl_tests
 
 standard_testfile .cc
  
@@ -105,22 +102,16 @@ gdb_test "break catcher" "Breakpoint \[0-9\]+ at.*"
 
 # Get the first exception thrown
        
-set name "continue to first throw"
-gdb_test_multiple "continue" $name {
-    -re "Continuing.${ws}Catchpoint \[0-9\]+ \\(exception thrown\\), throw location.*${srcfile}:30, catch location .*${srcfile}:50\r\n$gdb_prompt $" {
-	pass $name
-    }
-    -re "Continuing.${ws}Catchpoint \[0-9\]+ \\(exception thrown\\).*\r\n$gdb_prompt $" {
-	pass $name
-    }
-}
+gdb_test "continue"  \
+    "Continuing.${ws}Catchpoint \[0-9\]+ \\(exception thrown\\).*" \
+    "continue to first throw"
 
 # Backtrace from the throw point.
 # This should get to user code.
 
 set name "backtrace after first throw"
 gdb_test_multiple "backtrace" $name {
-    -re ".*#\[0-9\]+.*\[\[:<:\]\]__cxa_throw\[\[:>:\]\].*#\[0-9\]+${ws}$hex in foo \\(i=20\\) at .*${srcfile}:\[0-9\]+\r\n#\[0-9\]+${ws}$hex in main \\(.*\\) at .*${srcfile}:\[0-9\]+\r\n$gdb_prompt $" {
+    -re ".*#\[0-9\]+.*\[\[:<:\]\]__cxa_throw\[\[:>:\]\].*#\[0-9\]+${ws}$hex (\\\[PAC\\\] )?in foo \\(i=20\\) at .*${srcfile}:\[0-9\]+\r\n#\[0-9\]+${ws}$hex in main \\(.*\\) at .*${srcfile}:\[0-9\]+\r\n$gdb_prompt $" {
 	# Either __cxxabiv1::__cxa_throw or __cxa_throw can be printed
 	# depending on debug info presence.
 	pass $name
@@ -129,22 +120,16 @@ gdb_test_multiple "backtrace" $name {
 
 # Continue to the catch.
 
-set name "continue to first catch"
-gdb_test_multiple "continue" $name {
-    -re "Continuing.${ws}Catchpoint \[0-9\]+ \\(exception caught\\), throw location.*${srcfile}:30, catch location .*${srcfile}:50\r\n$gdb_prompt $" {
-	pass $name
-    }
-    -re "Continuing.${ws}Catchpoint \[0-9\]+ \\(exception caught\\).*\r\n$gdb_prompt $" {
-	pass $name
-    }
-}
+gdb_test "continue" \
+    "Continuing.${ws}Catchpoint \[0-9\]+ \\(exception caught\\).*" \
+    "continue to first catch"
 
 # Backtrace from the catch point.
 # This should get to user code.
 
 set name "backtrace after first catch"
 gdb_test_multiple "backtrace" $name {
-    -re ".*#\[0-9\]+.*\[\[:<:\]\]__cxa_begin_catch\[\[:>:\]\].*#\[0-9\]+${ws}$hex in main \\(.*\\) at .*$srcfile:\[0-9\]+\r\n$gdb_prompt $" {
+    -re ".*#\[0-9\]+.*\[\[:<:\]\]__cxa_begin_catch\[\[:>:\]\].*#\[0-9\]+${ws}$hex (\\\[PAC\\\] )?in main \\(.*\\) at .*$srcfile:\[0-9\]+\r\n$gdb_prompt $" {
 	pass $name
     }
 }
@@ -154,44 +139,32 @@ gdb_test "continue" ".*catcher \\(x=13\\).*" "continue to catcher for the first 
 
 # Continue to second throw.
 
-set name "continue to second throw"
-gdb_test_multiple "continue" $name {
-    -re "Continuing.${ws}Catchpoint \[0-9\]+ \\(exception thrown\\), throw location.*${srcfile}:30, catch location .*${srcfile}:58\r\n$gdb_prompt $" {
-	pass $name
-    }
-    -re "Continuing.${ws}Catchpoint \[0-9\]+ \\(exception thrown\\).*\r\n$gdb_prompt $" {
-	pass $name
-    }
-}
+gdb_test "continue" \
+    "Continuing.${ws}Catchpoint \[0-9\]+ \\(exception thrown\\).*" \
+    "continue to second throw"
 
 # Backtrace from the throw point.
 # This should get to user code.
 
 set name "backtrace after second throw"
 gdb_test_multiple "backtrace" $name {
-    -re ".*#\[0-9\]+.*\[\[:<:\]\]__cxa_throw\[\[:>:\]\].*#\[0-9\]+${ws}$hex in foo \\(i=20\\) at .*${srcfile}:\[0-9\]+\r\n#\[0-9\]+${ws}$hex in main \\(.*\\) at .*${srcfile}:\[0-9\]+\r\n$gdb_prompt $" {
+    -re ".*#\[0-9\]+.*\[\[:<:\]\]__cxa_throw\[\[:>:\]\].*#\[0-9\]+${ws}$hex (\\\[PAC\\\] )?in foo \\(i=20\\) at .*${srcfile}:\[0-9\]+\r\n#\[0-9\]+${ws}$hex in main \\(.*\\) at .*${srcfile}:\[0-9\]+\r\n$gdb_prompt $" {
 	pass $name
     }
 }
 
 # Continue to second catch.
 
-set name "continue to second catch"
-gdb_test_multiple "continue" $name {
-    -re "Continuing.${ws}Catchpoint \[0-9\]+ \\(exception caught\\), throw location.*${srcfile}:30, catch location .*${srcfile}:58\r\n$gdb_prompt $" {
-	pass $name
-    }
-    -re "Continuing.${ws}Catchpoint \[0-9\]+ \\(exception caught\\).*\r\n$gdb_prompt $" {
-	pass $name
-    }
-}
+gdb_test "continue" \
+    "Continuing.${ws}Catchpoint \[0-9\]+ \\(exception caught\\).*" \
+    "continue to second catch"
 
 # Backtrace from the catch point.
 # This should get to user code.
 
 set name "backtrace after second catch"
 gdb_test_multiple "backtrace" $name {
-    -re ".*#\[0-9\]+.*\[\[:<:\]\]__cxa_begin_catch\[\[:>:\]\].*#\[0-9\]+${ws}$hex in main \\(.*\\) at .*$srcfile:\[0-9\]+\r\n$gdb_prompt $" {
+    -re ".*#\[0-9\]+.*\[\[:<:\]\]__cxa_begin_catch\[\[:>:\]\].*#\[0-9\]+${ws}$hex (\\\[PAC\\\] )?in main \\(.*\\) at .*$srcfile:\[0-9\]+\r\n$gdb_prompt $" {
 	pass $name
     }
 }

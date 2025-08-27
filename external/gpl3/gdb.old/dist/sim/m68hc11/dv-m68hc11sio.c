@@ -1,5 +1,5 @@
 /*  dv-m68hc11sio.c -- Simulation of the 68HC11 serial device.
-    Copyright (C) 1999-2023 Free Software Foundation, Inc.
+    Copyright (C) 1999-2024 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@worldnet.fr)
     (From a driver model Contributed by Cygnus Solutions.)
 
@@ -28,6 +28,7 @@
 #include "dv-sockser.h"
 #include "sim-assert.h"
 
+#include "m68hc11-sim.h"
 
 /* DEVICE
 
@@ -184,11 +185,13 @@ m68hc11sio_port_event (struct hw *me,
   SIM_DESC sd;
   struct m68hc11sio *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   uint8_t val;
   
   controller = hw_data (me);
   sd         = hw_system (me);
   cpu        = STATE_CPU (sd, 0);  
+  m68hc11_cpu  = M68HC11_SIM_CPU (cpu);
   switch (my_port)
     {
     case RESET_PORT:
@@ -204,7 +207,7 @@ m68hc11sio_port_event (struct hw *me,
         m68hc11sio_io_write_buffer (me, &val, io_map,
                                     (unsigned_word) M6811_SCCR2, 1);
         
-        cpu->ios[M6811_SCSR]    = M6811_TC | M6811_TDRE;
+        m68hc11_cpu->ios[M6811_SCSR]    = M6811_TC | M6811_TDRE;
         controller->rx_char     = 0;
         controller->tx_char     = 0;
         controller->tx_has_char = 0;
@@ -222,9 +225,9 @@ m68hc11sio_port_event (struct hw *me,
 
         /* In bootstrap mode, initialize the SCI to 1200 bauds to
            simulate some initial setup by the internal rom.  */
-        if (((cpu->ios[M6811_HPRIO]) & (M6811_SMOD | M6811_MDA)) == M6811_SMOD)
+        if (((m68hc11_cpu->ios[M6811_HPRIO]) & (M6811_SMOD | M6811_MDA)) == M6811_SMOD)
           {
-            unsigned char val = 0x33;
+            val = 0x33;
             
             m68hc11sio_io_write_buffer (me, &val, io_map,
                                         (unsigned_word) M6811_BAUD, 1);
@@ -248,6 +251,7 @@ m68hc11sio_rx_poll (struct hw *me, void *data)
   SIM_DESC sd;
   struct m68hc11sio *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   char cc;
   int cnt;
   int check_interrupt = 0;
@@ -255,6 +259,7 @@ m68hc11sio_rx_poll (struct hw *me, void *data)
   controller = hw_data (me);
   sd         = hw_system (me);
   cpu        = STATE_CPU (sd, 0);
+  m68hc11_cpu  = M68HC11_SIM_CPU (cpu);
   switch (controller->backend)
     {
     case sio_tcp:
@@ -278,10 +283,10 @@ m68hc11sio_rx_poll (struct hw *me, void *data)
   if (cnt == 1)
     {
       /* Raise the overrun flag if the previous character was not read.  */
-      if (cpu->ios[M6811_SCSR] & M6811_RDRF)
-        cpu->ios[M6811_SCSR] |= M6811_OR;
+      if (m68hc11_cpu->ios[M6811_SCSR] & M6811_RDRF)
+        m68hc11_cpu->ios[M6811_SCSR] |= M6811_OR;
 
-      cpu->ios[M6811_SCSR]     |= M6811_RDRF;
+      m68hc11_cpu->ios[M6811_SCSR]     |= M6811_RDRF;
       controller->rx_char       = cc;
       controller->rx_clear_scsr = 0;
       check_interrupt = 1;
@@ -298,7 +303,7 @@ m68hc11sio_rx_poll (struct hw *me, void *data)
       controller->rx_poll_event = 0;
     }
 
-  if (cpu->ios[M6811_SCCR2] & M6811_RE)
+  if (m68hc11_cpu->ios[M6811_SCCR2] & M6811_RE)
     {
       unsigned long clock_cycle;
 
@@ -311,7 +316,7 @@ m68hc11sio_rx_poll (struct hw *me, void *data)
     }
 
   if (check_interrupt)
-      interrupts_update_pending (&cpu->cpu_interrupts);
+      interrupts_update_pending (&m68hc11_cpu->cpu_interrupts);
 }
 
 
@@ -321,19 +326,21 @@ m68hc11sio_tx_poll (struct hw *me, void *data)
   SIM_DESC sd;
   struct m68hc11sio *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   
   controller = hw_data (me);
   sd         = hw_system (me);
   cpu        = STATE_CPU (sd, 0);
+  m68hc11_cpu  = M68HC11_SIM_CPU (cpu);
 
-  cpu->ios[M6811_SCSR] |= M6811_TDRE;
-  cpu->ios[M6811_SCSR] |= M6811_TC;
+  m68hc11_cpu->ios[M6811_SCSR] |= M6811_TDRE;
+  m68hc11_cpu->ios[M6811_SCSR] |= M6811_TC;
   
   /* Transmitter is enabled and we have something to send.  */
-  if ((cpu->ios[M6811_SCCR2] & M6811_TE) && controller->tx_has_char)
+  if ((m68hc11_cpu->ios[M6811_SCCR2] & M6811_TE) && controller->tx_has_char)
     {
-      cpu->ios[M6811_SCSR] &= ~M6811_TDRE;
-      cpu->ios[M6811_SCSR] &= ~M6811_TC;
+      m68hc11_cpu->ios[M6811_SCSR] &= ~M6811_TDRE;
+      m68hc11_cpu->ios[M6811_SCSR] &= ~M6811_TC;
       controller->tx_has_char = 0;
       switch (controller->backend)
         {
@@ -357,8 +364,8 @@ m68hc11sio_tx_poll (struct hw *me, void *data)
       controller->tx_poll_event = 0;
     }
   
-  if ((cpu->ios[M6811_SCCR2] & M6811_TE)
-      && ((cpu->ios[M6811_SCSR] & M6811_TC) == 0))
+  if ((m68hc11_cpu->ios[M6811_SCCR2] & M6811_TE)
+      && ((m68hc11_cpu->ios[M6811_SCSR] & M6811_TC) == 0))
     {
       unsigned long clock_cycle;
       
@@ -370,7 +377,7 @@ m68hc11sio_tx_poll (struct hw *me, void *data)
                                                            NULL);
     }
 
-  interrupts_update_pending (&cpu->cpu_interrupts);
+  interrupts_update_pending (&m68hc11_cpu->cpu_interrupts);
 }
 
 /* Descriptions of the SIO I/O ports.  These descriptions are only used to
@@ -423,33 +430,35 @@ m68hc11sio_info (struct hw *me)
   SIM_DESC sd;
   uint16_t base = 0;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   struct m68hc11sio *controller;
   uint8_t val;
   long clock_cycle;
   
   sd = hw_system (me);
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   controller = hw_data (me);
   
   sim_io_printf (sd, "M68HC11 SIO:\n");
 
   base = cpu_get_io_base (cpu);
 
-  val  = cpu->ios[M6811_BAUD];
+  val  = m68hc11_cpu->ios[M6811_BAUD];
   print_io_byte (sd, "BAUD ", baud_desc, val, base + M6811_BAUD);
   sim_io_printf (sd, " (%ld baud)\n",
-                 (cpu->cpu_frequency / 4) / controller->baud_cycle);
+                 (m68hc11_cpu->cpu_frequency / 4) / controller->baud_cycle);
 
-  val = cpu->ios[M6811_SCCR1];
+  val = m68hc11_cpu->ios[M6811_SCCR1];
   print_io_byte (sd, "SCCR1", sccr1_desc, val, base + M6811_SCCR1);
   sim_io_printf (sd, "  (%d bits) (%dN1)\n",
                  controller->data_length, controller->data_length - 2);
 
-  val = cpu->ios[M6811_SCCR2];
+  val = m68hc11_cpu->ios[M6811_SCCR2];
   print_io_byte (sd, "SCCR2", sccr2_desc, val, base + M6811_SCCR2);
   sim_io_printf (sd, "\n");
 
-  val = cpu->ios[M6811_SCSR];
+  val = m68hc11_cpu->ios[M6811_SCSR];
   print_io_byte (sd, "SCSR ", scsr_desc, val, base + M6811_SCSR);
   sim_io_printf (sd, "\n");
 
@@ -499,30 +508,33 @@ m68hc11sio_io_read_buffer (struct hw *me,
   SIM_DESC sd;
   struct m68hc11sio *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   uint8_t val;
   
   HW_TRACE ((me, "read 0x%08lx %d", (long) base, (int) nr_bytes));
 
   sd  = hw_system (me);
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   controller = hw_data (me);
 
   switch (base)
     {
     case M6811_SCSR:
-      controller->rx_clear_scsr = cpu->ios[M6811_SCSR]
+      controller->rx_clear_scsr = m68hc11_cpu->ios[M6811_SCSR]
         & (M6811_RDRF | M6811_IDLE | M6811_OR | M6811_NF | M6811_FE);
+      ATTRIBUTE_FALLTHROUGH;
       
     case M6811_BAUD:
     case M6811_SCCR1:
     case M6811_SCCR2:
-      val = cpu->ios[base];
+      val = m68hc11_cpu->ios[base];
       break;
       
     case M6811_SCDR:
       if (controller->rx_clear_scsr)
         {
-          cpu->ios[M6811_SCSR] &= ~controller->rx_clear_scsr;
+          m68hc11_cpu->ios[M6811_SCSR] &= ~controller->rx_clear_scsr;
         }
       val = controller->rx_char;
       break;
@@ -544,12 +556,14 @@ m68hc11sio_io_write_buffer (struct hw *me,
   SIM_DESC sd;
   struct m68hc11sio *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   uint8_t val;
 
   HW_TRACE ((me, "write 0x%08lx %d", (long) base, (int) nr_bytes));
 
   sd  = hw_system (me);
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   controller = hw_data (me);
   
   val = *((const uint8_t*) source);
@@ -560,7 +574,7 @@ m68hc11sio_io_write_buffer (struct hw *me,
         long divisor;
         long baud;
 
-        cpu->ios[M6811_BAUD] = val;        
+        m68hc11_cpu->ios[M6811_BAUD] = val;
         switch (val & (M6811_SCP1|M6811_SCP0))
           {
           case M6811_BAUD_DIV_1:
@@ -583,7 +597,7 @@ m68hc11sio_io_write_buffer (struct hw *me,
         val &= (M6811_SCR2|M6811_SCR1|M6811_SCR0);
         divisor *= (1 << val);
 
-        baud = (cpu->cpu_frequency / 4) / divisor;
+        baud = (m68hc11_cpu->cpu_frequency / 4) / divisor;
 
         HW_TRACE ((me, "divide rate %ld, baud rate %ld",
                    divisor, baud));
@@ -599,7 +613,7 @@ m68hc11sio_io_write_buffer (struct hw *me,
         else
           controller->data_length = 10;
 
-        cpu->ios[M6811_SCCR1] = val;
+        m68hc11_cpu->ios[M6811_SCCR1] = val;
       }
       break;
       
@@ -607,9 +621,9 @@ m68hc11sio_io_write_buffer (struct hw *me,
       if ((val & M6811_RE) == 0)
         {
           val &= ~(M6811_RDRF|M6811_IDLE|M6811_OR|M6811_NF|M6811_NF);
-          val |= (cpu->ios[M6811_SCCR2]
+          val |= (m68hc11_cpu->ios[M6811_SCCR2]
                   & (M6811_RDRF|M6811_IDLE|M6811_OR|M6811_NF|M6811_NF));
-          cpu->ios[M6811_SCCR2] = val;
+          m68hc11_cpu->ios[M6811_SCCR2] = val;
           break;
         }
 
@@ -625,8 +639,8 @@ m68hc11sio_io_write_buffer (struct hw *me,
                                                                m68hc11sio_rx_poll,
                                                                NULL);
         }      
-      cpu->ios[M6811_SCCR2] = val;
-      interrupts_update_pending (&cpu->cpu_interrupts);
+      m68hc11_cpu->ios[M6811_SCCR2] = val;
+      interrupts_update_pending (&m68hc11_cpu->cpu_interrupts);
       break;
 
       /* No effect.  */
@@ -634,14 +648,14 @@ m68hc11sio_io_write_buffer (struct hw *me,
       return 1;
       
     case M6811_SCDR:
-      if (!(cpu->ios[M6811_SCSR] & M6811_TDRE))
+      if (!(m68hc11_cpu->ios[M6811_SCSR] & M6811_TDRE))
         {
           return 0;
         }
 
       controller->tx_char     = val;
       controller->tx_has_char = 1;
-      if ((cpu->ios[M6811_SCCR2] & M6811_TE)
+      if ((m68hc11_cpu->ios[M6811_SCCR2] & M6811_TE)
           && controller->tx_poll_event == 0)
         {
           m68hc11sio_tx_poll (me, NULL);

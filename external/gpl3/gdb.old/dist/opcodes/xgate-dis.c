@@ -1,5 +1,5 @@
 /* xgate-dis.c -- Freescale XGATE disassembly
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Written by Sean Keys (skeys@ipdatasys.com)
 
    This file is part of the GNU opcodes library.
