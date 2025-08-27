@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_LOONGARCH_H
-#define ARCH_LOONGARCH_H
+#ifndef GDB_ARCH_LOONGARCH_H
+#define GDB_ARCH_LOONGARCH_H
 
 #include "gdbsupport/tdesc.h"
 
@@ -128,4 +128,4 @@ const target_desc *loongarch_lookup_target_description
 
 #endif /* GDBSERVER */
 
-#endif /* ARCH_LOONGARCH_H  */
+#endif /* GDB_ARCH_LOONGARCH_H */

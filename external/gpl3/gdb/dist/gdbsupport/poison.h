@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_POISON_H
-#define COMMON_POISON_H
+#ifndef GDBSUPPORT_POISON_H
+#define GDBSUPPORT_POISON_H
 
 #include "traits.h"
 #include "obstack.h"
@@ -237,4 +237,4 @@ non-POD data type.");
 #undef XOBNEWVEC
 #define XOBNEWVEC(O, T, N) xobnewvec<T> (O, N)
 
-#endif /* COMMON_POISON_H */
+#endif /* GDBSUPPORT_POISON_H */

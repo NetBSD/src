@@ -593,6 +593,12 @@ to work on different BFD objects at the same time.
 @example
 typedef bool (*bfd_lock_unlock_fn_type) (void *);
 @end example
+@findex _bfd_threading_enabled
+@subsubsection @code{_bfd_threading_enabled}
+@deftypefn {Function} bool _bfd_threading_enabled (void); 
+Return true if threading is enabled, false if not.
+
+@end deftypefn
 @findex bfd_thread_init
 @subsubsection @code{bfd_thread_init}
 @deftypefn {Function} bool bfd_thread_init (bfd_lock_unlock_fn_type lock, bfd_lock_unlock_fn_type unlock, void *data); 
@@ -602,7 +608,9 @@ be called a single time in a given process.  Returns true on
 success and false on error.  DATA is passed verbatim to the
 lock and unlock functions.  The lock and unlock functions
 should return true on success, or set the BFD error and return
-false on failure.
+false on failure.  Note also that the lock must be a recursive
+lock: BFD may attempt to acquire the lock when it is already
+held by the current thread.
 
 @end deftypefn
 @findex bfd_thread_cleanup

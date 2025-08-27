@@ -203,7 +203,8 @@ irix_core_core_file_p (bfd *abfd)
   if (!core_hdr (abfd))
     return NULL;
 
-  strncpy (core_command (abfd), coreout.c_name, CORE_NAMESIZE);
+  strncpy (core_command (abfd), coreout.c_name, CORE_NAMESIZE - 1);
+  core_command (abfd)[CORE_NAMESIZE - 1] = 0;
   core_signal (abfd) = coreout.c_sigcause;
 
   if (bfd_seek (abfd, coreout.c_vmapoffset, SEEK_SET) != 0)

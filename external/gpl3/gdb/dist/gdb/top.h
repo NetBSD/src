@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TOP_H
-#define TOP_H
+#ifndef GDB_TOP_H
+#define GDB_TOP_H
 
 #include "gdbsupport/event-loop.h"
 #include "gdbsupport/next-iterator.h"
@@ -42,14 +42,14 @@ extern void read_command_file (FILE *);
 extern void init_history (void);
 extern void command_loop (void);
 extern int quit_confirm (void);
-extern void quit_force (int *, int) ATTRIBUTE_NORETURN;
+[[noreturn]] extern void quit_force (int *, int);
 extern void quit_command (const char *, int);
 extern void quit_cover (void);
 extern void execute_command (const char *, int);
 
 /* Run FN.  Capture its output into the returned string, do not display it
    to the screen.  The global BATCH_FLAG will temporarily be set to true.
-   When TERM_OUT is true the output is collected with terminal behaviour
+   When TERM_OUT is true the output is collected with terminal behavior
    (e.g. with styling).  When TERM_OUT is false raw output will be collected
    (e.g. no styling).  */
 
@@ -133,4 +133,4 @@ extern bool check_quiet_mode ();
 
 extern void unbuffer_stream (FILE *stream);
 
-#endif
+#endif /* GDB_TOP_H */

@@ -14,8 +14,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (LINESPEC_H)
-#define LINESPEC_H 1
+#ifndef GDB_LINESPEC_H
+#define GDB_LINESPEC_H
 
 struct symtab;
 
@@ -201,4 +201,4 @@ extern void linespec_complete_label (completion_tracker &tracker,
    advancing EXP_PTR past any parsed text.  */
 
 extern CORE_ADDR linespec_expression_to_pc (const char **exp_ptr);
-#endif /* defined (LINESPEC_H) */
+#endif /* GDB_LINESPEC_H */

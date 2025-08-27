@@ -74,7 +74,20 @@ run_events (int error, gdb_client_data client_data)
 	{
 	  item ();
 	}
-      catch (...)
+      catch (const gdb_exception_forced_quit &e)
+	{
+	  /* GDB is terminating, so:
+	     - make sure this is propagated, and
+	     - no need to keep running things, so propagate immediately.  */
+	  throw;
+	}
+      catch (const gdb_exception_quit &e)
+	{
+	  /* Should cancelation of a runnable event cancel the execution of
+	     the following one?  The answer is not clear, so keep doing what
+	     we've done so far: ignore this exception.  */
+	}
+      catch (const gdb_exception &)
 	{
 	  /* Ignore exceptions in the callback.  */
 	}

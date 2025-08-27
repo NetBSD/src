@@ -50,6 +50,8 @@ worker_a (void *pArg)
       waitpid (pid, NULL, 0);
       usleep (5);
     }
+
+  return NULL;
 }
 
 static void*
@@ -61,6 +63,8 @@ worker_b (void *pArg)
       usleep (5);  /* break here */
       usleep (5);  /* other line */
     }
+
+  return NULL;
 }
 
 int

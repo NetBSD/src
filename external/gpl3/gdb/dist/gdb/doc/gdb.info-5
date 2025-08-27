@@ -21,7 +21,7 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 15.1.
+Source-Level Debugger' for GDB (GDB) Version 16.3.
 
    Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
@@ -35,187 +35,6 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
-
-
-File: gdb.info,  Node: Writing an Xmethod,  Next: Inferiors In Python,  Prev: Xmethod API,  Up: Python API
-
-23.3.2.16 Writing an Xmethod
-............................
-
-Implementing xmethods in Python will require implementing xmethod
-matchers and xmethod workers (*note Xmethods In Python::).  Consider the
-following C++ class:
-
-     class MyClass
-     {
-     public:
-       MyClass (int a) : a_(a) { }
-
-       int geta (void) { return a_; }
-       int operator+ (int b);
-
-     private:
-       int a_;
-     };
-
-     int
-     MyClass::operator+ (int b)
-     {
-       return a_ + b;
-     }
-
-Let us define two xmethods for the class 'MyClass', one replacing the
-method 'geta', and another adding an overloaded flavor of 'operator+'
-which takes a 'MyClass' argument (the C++ code above already has an
-overloaded 'operator+' which takes an 'int' argument).  The xmethod
-matcher can be defined as follows:
-
-     class MyClass_geta(gdb.xmethod.XMethod):
-         def __init__(self):
-             gdb.xmethod.XMethod.__init__(self, 'geta')
-
-         def get_worker(self, method_name):
-             if method_name == 'geta':
-                 return MyClassWorker_geta()
-
-
-     class MyClass_sum(gdb.xmethod.XMethod):
-         def __init__(self):
-             gdb.xmethod.XMethod.__init__(self, 'sum')
-
-         def get_worker(self, method_name):
-             if method_name == 'operator+':
-                 return MyClassWorker_plus()
-
-
-     class MyClassMatcher(gdb.xmethod.XMethodMatcher):
-         def __init__(self):
-             gdb.xmethod.XMethodMatcher.__init__(self, 'MyClassMatcher')
-             # List of methods 'managed' by this matcher
-             self.methods = [MyClass_geta(), MyClass_sum()]
-
-         def match(self, class_type, method_name):
-             if class_type.tag != 'MyClass':
-                 return None
-             workers = []
-             for method in self.methods:
-                 if method.enabled:
-                     worker = method.get_worker(method_name)
-                     if worker:
-                         workers.append(worker)
-
-             return workers
-
-Notice that the 'match' method of 'MyClassMatcher' returns a worker
-object of type 'MyClassWorker_geta' for the 'geta' method, and a worker
-object of type 'MyClassWorker_plus' for the 'operator+' method.  This is
-done indirectly via helper classes derived from 'gdb.xmethod.XMethod'.
-One does not need to use the 'methods' attribute in a matcher as it is
-optional.  However, if a matcher manages more than one xmethod, it is a
-good practice to list the xmethods in the 'methods' attribute of the
-matcher.  This will then facilitate enabling and disabling individual
-xmethods via the 'enable/disable' commands.  Notice also that a worker
-object is returned only if the corresponding entry in the 'methods'
-attribute of the matcher is enabled.
-
-   The implementation of the worker classes returned by the matcher
-setup above is as follows:
-
-     class MyClassWorker_geta(gdb.xmethod.XMethodWorker):
-         def get_arg_types(self):
-             return None
-
-         def get_result_type(self, obj):
-             return gdb.lookup_type('int')
-
-         def __call__(self, obj):
-             return obj['a_']
-
-
-     class MyClassWorker_plus(gdb.xmethod.XMethodWorker):
-         def get_arg_types(self):
-             return gdb.lookup_type('MyClass')
-
-         def get_result_type(self, obj):
-             return gdb.lookup_type('int')
-
-         def __call__(self, obj, other):
-             return obj['a_'] + other['a_']
-
-   For GDB to actually lookup a xmethod, it has to be registered with
-it.  The matcher defined above is registered with GDB globally as
-follows:
-
-     gdb.xmethod.register_xmethod_matcher(None, MyClassMatcher())
-
-   If an object 'obj' of type 'MyClass' is initialized in C++ code as
-follows:
-
-     MyClass obj(5);
-
-then, after loading the Python script defining the xmethod matchers and
-workers into GDB, invoking the method 'geta' or using the operator '+'
-on 'obj' will invoke the xmethods defined above:
-
-     (gdb) p obj.geta()
-     $1 = 5
-
-     (gdb) p obj + obj
-     $2 = 10
-
-   Consider another example with a C++ template class:
-
-     template <class T>
-     class MyTemplate
-     {
-     public:
-       MyTemplate () : dsize_(10), data_ (new T [10]) { }
-       ~MyTemplate () { delete [] data_; }
-
-       int footprint (void)
-       {
-         return sizeof (T) * dsize_ + sizeof (MyTemplate<T>);
-       }
-
-     private:
-       int dsize_;
-       T *data_;
-     };
-
-   Let us implement an xmethod for the above class which serves as a
-replacement for the 'footprint' method.  The full code listing of the
-xmethod workers and xmethod matchers is as follows:
-
-     class MyTemplateWorker_footprint(gdb.xmethod.XMethodWorker):
-         def __init__(self, class_type):
-             self.class_type = class_type
-
-         def get_arg_types(self):
-             return None
-
-         def get_result_type(self):
-             return gdb.lookup_type('int')
-
-         def __call__(self, obj):
-             return (self.class_type.sizeof +
-                     obj['dsize_'] *
-                     self.class_type.template_argument(0).sizeof)
-
-
-     class MyTemplateMatcher_footprint(gdb.xmethod.XMethodMatcher):
-         def __init__(self):
-             gdb.xmethod.XMethodMatcher.__init__(self, 'MyTemplateMatcher')
-
-         def match(self, class_type, method_name):
-             if (re.match('MyTemplate<[ \t\n]*[_a-zA-Z][ _a-zA-Z0-9]*>',
-                          class_type.tag) and
-                 method_name == 'footprint'):
-                 return MyTemplateWorker_footprint(class_type)
-
-   Notice that, in this example, we have not used the 'methods'
-attribute of the matcher as the matcher manages only one xmethod.  The
-user can enable/disable this xmethod by enabling/disabling the matcher
-itself.
 
 
 File: gdb.info,  Node: Inferiors In Python,  Next: Events In Python,  Prev: Writing an Xmethod,  Up: Python API
@@ -724,6 +543,15 @@ and details of the events they emit:
       -- Variable: FreeProgspaceEvent.progspace
           The 'gdb.Progspace' that is about to be removed from GDB.
 
+'events.tui_enabled'
+     This is emitted when the TUI is enabled or disabled.  The event is
+     of type 'gdb.TuiEnabledEvent', which has a single read-only
+     attribute:
+
+      -- Variable: TuiEnabledEvent.enabled
+          If the TUI has just been enabled, this is 'True'; otherwise it
+          is 'False'.
+
 
 File: gdb.info,  Node: Threads In Python,  Next: Recordings In Python,  Prev: Events In Python,  Up: Python API
 
@@ -922,6 +750,10 @@ Replay::) are available in the 'gdb' module:
  -- Function: Record.goto (instruction)
      Move the replay position to the given INSTRUCTION.
 
+ -- Function: Record.clear ()
+     Clear the trace data of the current recording.  This forces
+     re-decoding of the trace for successive commands.
+
    The common 'gdb.Instruction' class that recording method specific
 instruction objects inherit from, has the following attributes:
 
@@ -968,6 +800,18 @@ list.  It has the following attributes:
 
  -- Variable: RecordGap.error_string
      A human readable string with the reason for the gap.
+
+   Some GDB features write auxiliary information into the execution
+history.  This information is represented by a 'gdb.RecordAuxiliary'
+object in the instruction list.  It has the following attributes:
+
+ -- Variable: RecordAuxiliary.NUMBER
+     An integer identifying this auxiliary.  NUMBER corresponds to the
+     numbers seen in 'record instruction-history' (*note Process Record
+     and Replay::).
+
+ -- Variable: RecordAuxiliary.data
+     A string representation of the auxiliary data.
 
    A 'gdb.RecordFunctionSegment' object has the following attributes:
 
@@ -1817,10 +1661,11 @@ class.
      The 'frame_filters' attribute is a dictionary of frame filter
      objects.  *Note Frame Filter API::, for more information.
 
- -- Variable: Progspace.missing_debug_handlers
-     The 'missing_debug_handlers' attribute is a list of the missing
-     debug handler objects for this program space.  *Note Missing Debug
-     Info In Python::, for more information.
+ -- Variable: Progspace.missing_file_handlers
+     The 'missing_file_handlers' attribute is a list of tuples.  Each
+     tuple holds a missing-file handler object for this program space.
+     For more information, *note Missing Debug Info In Python::, and
+     *note Missing Objfiles In Python::.
 
    A program space has the following methods:
 
@@ -2520,6 +2365,10 @@ module:
  -- Variable: Symbol.is_argument
      'True' if the symbol is an argument of a function.
 
+ -- Variable: Symbol.is_artificial
+     'True' if the symbol is artificial.  An artificial symbol is one
+     that is introduced by the compiler.
+
  -- Variable: Symbol.is_constant
      'True' if the symbol is a constant.
 
@@ -3170,10 +3019,12 @@ until it is needed.
 to a region of memory, an 'encoding' that will be used to encode that
 region of memory, and a 'length' to delimit the region of memory that
 represents the string.  The difference between a 'gdb.LazyString' and a
-string wrapped within a 'gdb.Value' is that a 'gdb.LazyString' will be
-treated differently by GDB when printing.  A 'gdb.LazyString' is
-retrieved and encoded during printing, while a 'gdb.Value' wrapping a
+string wrapped within a 'gdb.Value' is that a 'gdb.LazyString' will only
+be retrieved and encoded during printing, while a 'gdb.Value' wrapping a
 string is immediately retrieved and encoded on creation.
+
+   A 'gdb.LazyString' can be created using the 'gdb.Value.lazy_string'
+method (*note Values From Inferior::).
 
    A 'gdb.LazyString' object has the following functions:
 
@@ -3506,8 +3357,8 @@ attributes:
      before 'write', but avoids the flickering.
 
    The factory function that you supply should return an object
-conforming to the TUI window protocol.  These are the method that can be
-called on this object, which is referred to below as the "window
+conforming to the TUI window protocol.  These are the methods that can
+be called on this object, which is referred to below as the "window
 object".  The methods documented below are optional; if the object does
 not implement one of these methods, GDB will not attempt to call it.
 Additional new methods may be added to the window protocol in the
@@ -4134,7 +3985,7 @@ isn't a very useful adjustment, but serves as an example.
      gdb.disassembler.register_disassembler(NibbleSwapDisassembler())
 
 
-File: gdb.info,  Node: Missing Debug Info In Python,  Prev: Disassembly In Python,  Up: Python API
+File: gdb.info,  Node: Missing Debug Info In Python,  Next: Missing Objfiles In Python,  Prev: Disassembly In Python,  Up: Python API
 
 23.3.2.41 Missing Debug Info In Python
 ......................................
@@ -4262,6 +4113,180 @@ class and global function:
      for this objfile.
 
 
+File: gdb.info,  Node: Missing Objfiles In Python,  Prev: Missing Debug Info In Python,  Up: Python API
+
+23.3.2.42 Missing Objfiles In Python
+....................................
+
+When GDB opens a core file, for example with the 'core-file' command
+(*note core-file command::), GDB will attempt to load the corresponding
+executable and shared libraries.  Often these files can be found on the
+local machine, but sometimes these files cannot be found, in which case
+the debugging experience will be restricted.
+
+   If GDB fails to locate a particular file then there is an opportunity
+for a Python extension to step in.  A Python extension can potentially
+locate the missing file using some platform- or project-specific steps,
+and inform GDB of its location.  Or a Python extension might provide
+some platform- or project-specific advice to the user about how to
+obtain the missing file.
+
+   A missing-objfile Python extension consists of a handler object which
+has the 'name' and 'enabled' attributes, and implements the '__call__'
+method.  When GDB encounters a situation where a file cannot be found,
+but the build-id (*note build ID::) for the missing file is known, then
+the '__call__' method is invoked to try and find the file.  Full details
+of how handlers are written can be found below.
+
+The 'gdb.missing_objfile' Module
+--------------------------------
+
+GDB comes with a 'gdb.missing_objfile' module which contains the
+following class and global function:
+
+ -- class: gdb.missing_objfile.MissingObjfileHandler
+
+     'MissingObjfileHandler' is a base class from which user-created
+     handlers can derive, though it is not required that handlers derive
+     from this class, so long as any user created handler has the 'name'
+     and 'enabled' attributes, and implements the '__call__' method.
+
+      -- Function: MissingObjfileHandler.__init__ (name)
+          The NAME is a string used to reference this missing-objfile
+          handler within some GDB commands.  Valid names consist of the
+          characters '[-_a-zA-Z0-9]', creating a handler with an invalid
+          name raises a 'ValueError' exception.
+
+      -- Function: MissingObjfileHandler.__call__ (pspace, build_id,
+               filename)
+
+          Sub-classes must override the '__call__' method.  The PSPACE
+          argument will be a 'gdb.Progspace' (*note Progspaces In
+          Python::), this is the program space in which GDB is looking
+          for the missing file.
+
+          The BUILD_ID argument is a string containing the build-id of
+          the file that is missing, this will be in the same format as
+          returned by 'Objfile.build_id' (*note Objfile.build_id::).
+
+          The FILENAME argument contains the name of the file that GDB
+          is looking for.  This information is provided to allow
+          handlers to generate informative messages for the user.  A
+          handler is not required to place the missing file at this
+          location.  There might already be a file present at this
+          location, but it might not match the required build-id, in
+          which case GDB will have ignored it.  In some limited cases
+          GDB might not be able to establish the FILENAME of the file it
+          is searching for, in this case GDB will use a string 'with
+          build-id BUILD_ID' as a replacement.
+
+          The return value from the '__call__' method indicates what GDB
+          should do next.  The possible return values are:
+
+             * 'None'
+
+               This indicates that this handler could not locate the
+               missing file and GDB should call any other registered
+               handlers.
+
+             * 'True'
+
+               This indicates that this handler has installed the
+               missing file into a location where GDB would normally
+               expect to find it.  The only location in which GDB will
+               look is within the '.build-id' sub-directory within the
+               DEBUG-FILE-DIRECTORY (*note debug-file-directory::).
+
+               GDB will repeat the normal lookup process, which should
+               now find the previously missing file.
+
+               If GDB still doesn't find file after this second attempt,
+               then the Python missing-objfile handlers are not invoked
+               a second time, this prevents a badly behaved handler
+               causing GDB to get stuck in a loop.  GDB will continue
+               without the missing file, though this will degrade the
+               debugging experience.
+
+             * 'False'
+
+               This indicates that this handler has done everything that
+               it intends to do but the missing file could not be found.
+               GDB will not call any other registered handlers to look
+               for the missing file.  GDB will continue without the
+               missing file, though this will degrade the debugging
+               experience.
+
+             * A string
+
+               The returned string should contain a filename.  GDB will
+               not call any further registered handlers, and will
+               instead use the returned filename as the missing file.
+
+          Invoking the '__call__' method from this base class will raise
+          a 'NotImplementedError' exception.
+
+      -- Variable: MissingObjfileHandler.name
+          A read-only attribute which is a string, the name of this
+          handler passed to the '__init__' method.
+
+      -- Variable: MissingObjfileHandler.enabled
+          A modifiable attribute containing a boolean; when 'True', the
+          handler is enabled, and will be used by GDB.  When 'False',
+          the handler has been disabled, and will not be used.
+
+ -- Function: gdb.missing_objfile.register_handler (locus, handler,
+          replace=False)
+     Register a new missing-objfile handler with GDB.
+
+     HANDLER is an instance of a sub-class of 'MissingObjfileHandler',
+     or at least an instance of an object that has the same attributes
+     and methods as 'MissingObjfileHandler'.
+
+     LOCUS specifies to which handler list to prepend HANDLER.  It can
+     be either a 'gdb.Progspace' (*note Progspaces In Python::) or
+     'None', in which case the handler is registered globally.  The
+     newly registered HANDLER will be called before any other handler
+     from the same locus.  Two handlers in the same locus cannot have
+     the same name, an attempt to add a handler with an already existing
+     name raises an exception unless REPLACE is 'True', in which case
+     the old handler is deleted and the new handler is prepended to the
+     selected handler list.
+
+     GDB first calls the handlers for the current program space, and
+     then the globally registered handlers.  As soon as a handler
+     returns a value other than 'None', no further handlers are called.
+
+Managing Missing-Objfile Handlers
+---------------------------------
+
+GDB defines the following commands to manage registered missing-objfile
+handlers:
+
+'info missing-objfile-handlers [ LOCUS [ NAME-REGEXP ] ]'
+     Lists all registered missing-objfile handlers.  Arguments LOCUS and
+     NAME-REGEXP are both optional and can be used to filter which
+     handlers are listed.
+
+     The LOCUS argument should be either 'global', 'progspace', or the
+     name of an object file.  Only handlers registered for the specified
+     locus will be listed.
+
+     The NAME-REGEXP is a regular expression used to match against
+     handler names.
+
+'disable missing-objfile-handler [ LOCUS [ NAME-REGEXP ] ]'
+     The LOCUS and NAME-REGEXP are interpreted as in 'info
+     missing-objfile-handlers' above, but instead of listing the
+     matching handlers, all of the matching handlers are disabled.  The
+     'enabled' field of each matching handler is set to 'False'.
+
+'enable missing-objfile-handler [ LOCUS [ NAME-REGEXP ] ]'
+     The LOCUS and NAME-REGEXP are interpreted as in 'info
+     missing-objfile-handlers' above, but instead of listing the
+     matching handlers, all of the matching handlers are enabled.  The
+     'enabled' field of each matching handler is set to 'True'.
+
+
 File: gdb.info,  Node: Python Auto-loading,  Next: Python modules,  Prev: Python API,  Up: Python
 
 23.3.3 Python Auto-loading
@@ -4324,6 +4349,7 @@ GDB comes with several modules to assist writing Python code.
 * gdb.printing::       Building and registering pretty-printers.
 * gdb.types::          Utilities for working with types.
 * gdb.prompt::         Utilities for prompt value substitution.
+* gdb.ptwrite::        Utilities for PTWRITE filter registration.
 
 
 File: gdb.info,  Node: gdb.printing,  Next: gdb.types,  Up: Python modules
@@ -4448,7 +4474,7 @@ This module provides a collection of utilities for working with
           printer starts in the enabled state.
 
 
-File: gdb.info,  Node: gdb.prompt,  Prev: gdb.types,  Up: Python modules
+File: gdb.info,  Node: gdb.prompt,  Next: gdb.ptwrite,  Prev: gdb.types,  Up: Python modules
 
 23.3.4.3 gdb.prompt
 ...................
@@ -4499,6 +4525,128 @@ This module provides a method for prompt value-substitution.
 will return the string:
 
           "frame: main, args: scalars"
+
+
+File: gdb.info,  Node: gdb.ptwrite,  Prev: gdb.prompt,  Up: Python modules
+
+23.3.4.4 gdb.ptwrite
+....................
+
+This module provides additional functionality for recording programs
+that make use of the 'PTWRITE' instruction.  'PTWRITE' is a x86
+instruction that allows to write values into the Intel Processor Trace
+(*note Process Record and Replay::).  The GCC intrinsics for it are:
+     void _ptwrite32 (unsigned int a)
+     void _ptwrite64 (unsigned __int64 a)
+
+   If an inferior uses the instruction, GDB by default inserts the raw
+payload value as auxiliary information into the execution history.
+Auxiliary information is by default printed during 'record
+instruction-history', 'record function-call-history', and all stepping
+commands, and is accessible in Python as a 'RecordAuxiliary' object
+(*note Recordings In Python::).
+
+Sample program:
+     #include <immintrin.h>
+
+     void
+     ptwrite64 (unsigned long long value)
+     {
+       _ptwrite64 (value);
+     }
+
+     int
+     main (void)
+     {
+       ptwrite64 (0x42);
+       return 0; /* break here.  */
+     }
+
+GDB output after recording the sample program in pt format:
+     (gdb) record instruction-history 12,14
+     12         0x0040074c <ptwrite64+16>:   ptwrite %rbx
+     13           [0x42]
+     14         0x00400751 <ptwrite64+21>:   mov -0x8(%rbp),%rbx
+     (gdb) record function-call-history
+     1       main
+     2       ptwrite64
+               [0x42]
+     3       main
+
+   The 'gdb.ptwrite' module allows customizing the default output of
+'PTWRITE' auxiliary information.  A custom Python function can be
+registered as the 'PTWRITE' filter function.  This function will be
+called with the 'PTWRITE' payload and PC as arguments during trace
+decoding.  The function can return a string, which will be printed by
+GDB during the aforementioned commands, or 'None', resulting in no
+output.  To register such a filter function, the user needs to provide a
+filter factory function, which returns a new filter function object to
+be called by GDB.
+
+ -- Function: register_filter_factory (filter_factory)
+     Used to register the 'PTWRITE' filter factory.  This filter factory
+     can be any callable object that accepts one argument, the current
+     thread as a 'gdb.InferiorThread'.  It can return None or a
+     callable.  This callable is the 'PTWRITE' filter function for the
+     specified thread.  If 'None' is returned by the factory function,
+     the default auxiliary information will be printed.
+
+ -- Function: get_filter ()
+     Return the currently active 'PTWRITE' filter function.
+
+   An example:
+
+     (gdb) python-interactive
+     >>> class my_filter():
+     ...    def __init__(self):
+     ...        self.var = 0
+     ...    def __call__(self, payload, ip):
+     ...        self.var += 1
+     ...        return f"counter: {self.var}, ip: {ip:#x}"
+     ...
+     >>> def my_filter_factory(thread):
+     ...    if thread.global_num == 1:
+     ...        return my_filter()
+     ...    else:
+     ...        return None
+     ...
+     >>> import gdb.ptwrite
+     >>> gdb.ptwrite.register_filter_factory(my_filter_factory)
+     >>>
+
+     (gdb) record function-call-history 59,64
+     59      pthread_create@GLIBC_2.2.5
+     60      job()
+     61      task(void*)
+     62      ptwrite64(unsigned long)
+               [counter: 1, ip: 0x401156]
+     63      task(void*)
+     64      ptwrite32(unsigned int)
+               [counter: 2, ip: 0x40116c]
+
+     (gdb) info threads
+     * 1    Thread 0x7ffff7fd8740 (LWP 25796) "ptw_threads" task ()
+         at bin/ptwrite/ptw_threads.c:45
+       2    Thread 0x7ffff6eb8700 (LWP 25797) "ptw_threads" task ()
+         at bin/ptwrite/ptw_threads.c:45
+
+     (gdb) thread 2
+     [Switching to thread 2 (Thread 0x7ffff6eb8700 (LWP 25797))]
+     #0  task (arg=0x0) at ptwrite_threads.c:45
+     45        return NULL;
+
+     (gdb) record function-call-history 10,14
+     10    start_thread
+     11    task(void*)
+     12    ptwrite64(unsigned long)
+             [0x42]
+     13    task(void*)
+     14    ptwrite32(unsigned int)
+             [0x43]
+
+   This GDB feature is dependent on hardware and operating system
+support and requires the Intel Processor Trace decoder library in
+version 2.0.0 or newer.
 
 
 File: gdb.info,  Node: Guile,  Next: Auto-loading extensions,  Prev: Python,  Up: Extending GDB
@@ -7050,339 +7198,4 @@ constant.
 
 'SYMBOL_LOC_COMPUTED'
      The value's address is a computed location.
-
-
-File: gdb.info,  Node: Symbol Tables In Guile,  Next: Breakpoints In Guile,  Prev: Symbols In Guile,  Up: Guile API
-
-23.4.3.18 Symbol table representation in Guile.
-...............................................
-
-Access to symbol table data maintained by GDB on the inferior is exposed
-to Guile via two objects: '<gdb:sal>' (symtab-and-line) and
-'<gdb:symtab>'.  Symbol table and line data for a frame is returned from
-the 'frame-find-sal' '<gdb:frame>' procedure.  *Note Frames In Guile::.
-
-   For more information on GDB's symbol table management, see *note
-Examining the Symbol Table: Symbols.
-
-   The following symtab-related procedures are provided by the '(gdb)'
-module:
-
- -- Scheme Procedure: symtab? object
-     Return '#t' if OBJECT is an object of type '<gdb:symtab>'.
-     Otherwise return '#f'.
-
- -- Scheme Procedure: symtab-valid? symtab
-     Return '#t' if the '<gdb:symtab>' object is valid, '#f' if not.  A
-     '<gdb:symtab>' object becomes invalid when the symbol table it
-     refers to no longer exists in GDB.  All other '<gdb:symtab>'
-     procedures will throw an exception if it is invalid at the time the
-     procedure is called.
-
- -- Scheme Procedure: symtab-filename symtab
-     Return the symbol table's source filename.
-
- -- Scheme Procedure: symtab-fullname symtab
-     Return the symbol table's source absolute file name.
-
- -- Scheme Procedure: symtab-objfile symtab
-     Return the symbol table's backing object file.  *Note Objfiles In
-     Guile::.
-
- -- Scheme Procedure: symtab-global-block symtab
-     Return the global block of the underlying symbol table.  *Note
-     Blocks In Guile::.
-
- -- Scheme Procedure: symtab-static-block symtab
-     Return the static block of the underlying symbol table.  *Note
-     Blocks In Guile::.
-
-   The following symtab-and-line-related procedures are provided by the
-'(gdb)' module:
-
- -- Scheme Procedure: sal? object
-     Return '#t' if OBJECT is an object of type '<gdb:sal>'.  Otherwise
-     return '#f'.
-
- -- Scheme Procedure: sal-valid? sal
-     Return '#t' if SAL is valid, '#f' if not.  A '<gdb:sal>' object
-     becomes invalid when the Symbol table object it refers to no longer
-     exists in GDB.  All other '<gdb:sal>' procedures will throw an
-     exception if it is invalid at the time the procedure is called.
-
- -- Scheme Procedure: sal-symtab sal
-     Return the symbol table object ('<gdb:symtab>') for SAL.
-
- -- Scheme Procedure: sal-line sal
-     Return the line number for SAL.
-
- -- Scheme Procedure: sal-pc sal
-     Return the start of the address range occupied by code for SAL.
-
- -- Scheme Procedure: sal-last sal
-     Return the end of the address range occupied by code for SAL.
-
- -- Scheme Procedure: find-pc-line pc
-     Return the '<gdb:sal>' object corresponding to the PC value.  If an
-     invalid value of PC is passed as an argument, then the 'symtab' and
-     'line' attributes of the returned '<gdb:sal>' object will be '#f'
-     and 0 respectively.
-
-
-File: gdb.info,  Node: Breakpoints In Guile,  Next: Lazy Strings In Guile,  Prev: Symbol Tables In Guile,  Up: Guile API
-
-23.4.3.19 Manipulating breakpoints using Guile
-..............................................
-
-Breakpoints in Guile are represented by objects of type
-'<gdb:breakpoint>'.  New breakpoints can be created with the
-'make-breakpoint' Guile function, and then added to GDB with the
-'register-breakpoint!' Guile function.  This two-step approach is taken
-to separate out the side-effect of adding the breakpoint to GDB from
-'make-breakpoint'.
-
-   Support is also provided to view and manipulate breakpoints created
-outside of Guile.
-
-   The following breakpoint-related procedures are provided by the
-'(gdb)' module:
-
- -- Scheme Procedure: make-breakpoint location [#:type type]
-          [#:wp-class wp-class] [#:internal internal]
-          [#:temporary temporary]
-     Create a new breakpoint at LOCATION, a string naming the location
-     of the breakpoint, or an expression that defines a watchpoint.  The
-     contents can be any location recognized by the 'break' command, or
-     in the case of a watchpoint, by the 'watch' command.
-
-     The breakpoint is initially marked as 'invalid'.  The breakpoint is
-     not usable until it has been registered with GDB with
-     'register-breakpoint!', at which point it becomes 'valid'.  The
-     result is the '<gdb:breakpoint>' object representing the
-     breakpoint.
-
-     The optional TYPE denotes the breakpoint to create.  This argument
-     can be either 'BP_BREAKPOINT' or 'BP_WATCHPOINT', and defaults to
-     'BP_BREAKPOINT'.
-
-     The optional WP-CLASS argument defines the class of watchpoint to
-     create, if TYPE is 'BP_WATCHPOINT'.  If a watchpoint class is not
-     provided, it is assumed to be a 'WP_WRITE' class.
-
-     The optional INTERNAL argument allows the breakpoint to become
-     invisible to the user.  The breakpoint will neither be reported
-     when registered, nor will it be listed in the output from 'info
-     breakpoints' (but will be listed with the 'maint info breakpoints'
-     command).  If an internal flag is not provided, the breakpoint is
-     visible (non-internal).
-
-     The optional TEMPORARY argument makes the breakpoint a temporary
-     breakpoint.  Temporary breakpoints are deleted after they have been
-     hit, after which the Guile breakpoint is no longer usable (although
-     it may be re-registered with 'register-breakpoint!').
-
-     When a watchpoint is created, GDB will try to create a hardware
-     assisted watchpoint.  If successful, the type of the watchpoint is
-     changed from 'BP_WATCHPOINT' to 'BP_HARDWARE_WATCHPOINT' for
-     'WP_WRITE', 'BP_READ_WATCHPOINT' for 'WP_READ', and
-     'BP_ACCESS_WATCHPOINT' for 'WP_ACCESS'.  If not successful, the
-     type of the watchpoint is left as 'WP_WATCHPOINT'.
-
-     The available types are represented by constants defined in the
-     'gdb' module:
-
-     'BP_BREAKPOINT'
-          Normal code breakpoint.
-
-     'BP_WATCHPOINT'
-          Watchpoint breakpoint.
-
-     'BP_HARDWARE_WATCHPOINT'
-          Hardware assisted watchpoint.  This value cannot be specified
-          when creating the breakpoint.
-
-     'BP_READ_WATCHPOINT'
-          Hardware assisted read watchpoint.  This value cannot be
-          specified when creating the breakpoint.
-
-     'BP_ACCESS_WATCHPOINT'
-          Hardware assisted access watchpoint.  This value cannot be
-          specified when creating the breakpoint.
-
-     'BP_CATCHPOINT'
-          Catchpoint.  This value cannot be specified when creating the
-          breakpoint.
-
-     The available watchpoint types are represented by constants defined
-     in the '(gdb)' module:
-
-     'WP_READ'
-          Read only watchpoint.
-
-     'WP_WRITE'
-          Write only watchpoint.
-
-     'WP_ACCESS'
-          Read/Write watchpoint.
-
- -- Scheme Procedure: register-breakpoint! breakpoint
-     Add BREAKPOINT, a '<gdb:breakpoint>' object, to GDB's list of
-     breakpoints.  The breakpoint must have been created with
-     'make-breakpoint'.  One cannot register breakpoints that have been
-     created outside of Guile.  Once a breakpoint is registered it
-     becomes 'valid'.  It is an error to register an already registered
-     breakpoint.  The result is unspecified.
-
- -- Scheme Procedure: delete-breakpoint! breakpoint
-     Remove BREAKPOINT from GDB's list of breakpoints.  This also
-     invalidates the Guile BREAKPOINT object.  Any further attempt to
-     access the object will throw an exception.
-
-     If BREAKPOINT was created from Guile with 'make-breakpoint' it may
-     be re-registered with GDB, in which case the breakpoint becomes
-     valid again.
-
- -- Scheme Procedure: breakpoints
-     Return a list of all breakpoints.  Each element of the list is a
-     '<gdb:breakpoint>' object.
-
- -- Scheme Procedure: breakpoint? object
-     Return '#t' if OBJECT is a '<gdb:breakpoint>' object, and '#f'
-     otherwise.
-
- -- Scheme Procedure: breakpoint-valid? breakpoint
-     Return '#t' if BREAKPOINT is valid, '#f' otherwise.  Breakpoints
-     created with 'make-breakpoint' are marked as invalid until they are
-     registered with GDB with 'register-breakpoint!'.  A
-     '<gdb:breakpoint>' object can become invalid if the user deletes
-     the breakpoint.  In this case, the object still exists, but the
-     underlying breakpoint does not.  In the cases of watchpoint scope,
-     the watchpoint remains valid even if execution of the inferior
-     leaves the scope of that watchpoint.
-
- -- Scheme Procedure: breakpoint-number breakpoint
-     Return the breakpoint's number -- the identifier used by the user
-     to manipulate the breakpoint.
-
- -- Scheme Procedure: breakpoint-temporary? breakpoint
-     Return '#t' if the breakpoint was created as a temporary
-     breakpoint.  Temporary breakpoints are automatically deleted after
-     they've been hit.  Calling this procedure, and all other procedures
-     other than 'breakpoint-valid?' and 'register-breakpoint!', will
-     result in an error after the breakpoint has been hit (since it has
-     been automatically deleted).
-
- -- Scheme Procedure: breakpoint-type breakpoint
-     Return the breakpoint's type -- the identifier used to determine
-     the actual breakpoint type or use-case.
-
- -- Scheme Procedure: breakpoint-visible? breakpoint
-     Return '#t' if the breakpoint is visible to the user when hit, or
-     when the 'info breakpoints' command is run.  Otherwise return '#f'.
-
- -- Scheme Procedure: breakpoint-location breakpoint
-     Return the location of the breakpoint, as specified by the user.
-     It is a string.  If the breakpoint does not have a location (that
-     is, it is a watchpoint) return '#f'.
-
- -- Scheme Procedure: breakpoint-expression breakpoint
-     Return the breakpoint expression, as specified by the user.  It is
-     a string.  If the breakpoint does not have an expression (the
-     breakpoint is not a watchpoint) return '#f'.
-
- -- Scheme Procedure: breakpoint-enabled? breakpoint
-     Return '#t' if the breakpoint is enabled, and '#f' otherwise.
-
- -- Scheme Procedure: set-breakpoint-enabled! breakpoint flag
-     Set the enabled state of BREAKPOINT to FLAG.  If flag is '#f' it is
-     disabled, otherwise it is enabled.
-
- -- Scheme Procedure: breakpoint-silent? breakpoint
-     Return '#t' if the breakpoint is silent, and '#f' otherwise.
-
-     Note that a breakpoint can also be silent if it has commands and
-     the first command is 'silent'.  This is not reported by the
-     'silent' attribute.
-
- -- Scheme Procedure: set-breakpoint-silent! breakpoint flag
-     Set the silent state of BREAKPOINT to FLAG.  If flag is '#f' the
-     breakpoint is made silent, otherwise it is made non-silent (or
-     noisy).
-
- -- Scheme Procedure: breakpoint-ignore-count breakpoint
-     Return the ignore count for BREAKPOINT.
-
- -- Scheme Procedure: set-breakpoint-ignore-count! breakpoint count
-     Set the ignore count for BREAKPOINT to COUNT.
-
- -- Scheme Procedure: breakpoint-hit-count breakpoint
-     Return hit count of BREAKPOINT.
-
- -- Scheme Procedure: set-breakpoint-hit-count! breakpoint count
-     Set the hit count of BREAKPOINT to COUNT.  At present, COUNT must
-     be zero.
-
- -- Scheme Procedure: breakpoint-thread breakpoint
-     Return the global-thread-id for thread-specific breakpoint
-     BREAKPOINT.  Return #f if BREAKPOINT is not thread-specific.
-
- -- Scheme Procedure: set-breakpoint-thread! breakpoint
-          global-thread-id|#f
-     Set the thread-id for BREAKPOINT to GLOBAL-THREAD-ID If set to
-     '#f', the breakpoint is no longer thread-specific.
-
- -- Scheme Procedure: breakpoint-task breakpoint
-     If the breakpoint is Ada task-specific, return the Ada task id.  If
-     the breakpoint is not task-specific (or the underlying language is
-     not Ada), return '#f'.
-
- -- Scheme Procedure: set-breakpoint-task! breakpoint task
-     Set the Ada task of BREAKPOINT to TASK.  If set to '#f', the
-     breakpoint is no longer task-specific.
-
- -- Scheme Procedure: breakpoint-condition breakpoint
-     Return the condition of BREAKPOINT, as specified by the user.  It
-     is a string.  If there is no condition, return '#f'.
-
- -- Scheme Procedure: set-breakpoint-condition! breakpoint condition
-     Set the condition of BREAKPOINT to CONDITION, which must be a
-     string.  If set to '#f' then the breakpoint becomes unconditional.
-
- -- Scheme Procedure: breakpoint-stop breakpoint
-     Return the stop predicate of BREAKPOINT.  See
-     'set-breakpoint-stop!' below in this section.
-
- -- Scheme Procedure: set-breakpoint-stop! breakpoint procedure|#f
-     Set the stop predicate of BREAKPOINT.  The predicate PROCEDURE
-     takes one argument: the <gdb:breakpoint> object.  If this predicate
-     is set to a procedure then it is invoked whenever the inferior
-     reaches this breakpoint.  If it returns '#t', or any non-'#f'
-     value, then the inferior is stopped, otherwise the inferior will
-     continue.
-
-     If there are multiple breakpoints at the same location with a
-     'stop' predicate, each one will be called regardless of the return
-     status of the previous.  This ensures that all 'stop' predicates
-     have a chance to execute at that location.  In this scenario if one
-     of the methods returns '#t' but the others return '#f', the
-     inferior will still be stopped.
-
-     You should not alter the execution state of the inferior (i.e.,
-     step, next, etc.), alter the current frame context (i.e., change
-     the current active frame), or alter, add or delete any breakpoint.
-     As a general rule, you should not alter any data within GDB or the
-     inferior at this time.
-
-     Example 'stop' implementation:
-
-          (define (my-stop? bkpt)
-            (let ((int-val (parse-and-eval "foo")))
-              (value=? int-val 3)))
-          (define bkpt (make-breakpoint "main.c:42"))
-          (register-breakpoint! bkpt)
-          (set-breakpoint-stop! bkpt my-stop?)
-
- -- Scheme Procedure: breakpoint-commands breakpoint
-     Return the commands attached to BREAKPOINT as a string, or '#f' if
-     there are none.
 

@@ -20,7 +20,9 @@
 #ifndef GDB_DWARF2_PARENT_MAP_H
 #define GDB_DWARF2_PARENT_MAP_H
 
-#include <algorithm>
+#include "addrmap.h"
+#include "dwarf2/types.h"
+#include "gdbsupport/gdb_obstack.h"
 
 class cooked_index_entry;
 
@@ -30,9 +32,31 @@ class cooked_index_entry;
    The generated DWARF can sometimes have the declaration for a method
    in a class (or perhaps namespace) scope, with the definition
    appearing outside this scope... just one of the many bad things
-   about DWARF.  In order to handle this situation, we defer certain
-   entries until the end of scanning, at which point we'll know the
-   containing context of all the DIEs that we might have scanned.  */
+   about DWARF.
+
+   For example, a program like this:
+
+   struct X { int method (); };
+   int X::method () { return 23; }
+
+   ... ends up with DWARF like:
+
+    <1><2e>: Abbrev Number: 2 (DW_TAG_structure_type)
+       <2f>   DW_AT_name        : X
+    ...
+    <2><39>: Abbrev Number: 3 (DW_TAG_subprogram)
+       <3a>   DW_AT_external    : 1
+       <3a>   DW_AT_name        : (indirect string, offset: 0xf): method
+    ...
+    <1><66>: Abbrev Number: 8 (DW_TAG_subprogram)
+       <67>   DW_AT_specification: <0x39>
+
+    Here, the name of DIE 0x66 can't be determined without knowing the
+    parent of DIE 0x39.
+
+    In order to handle this situation, we defer certain entries until
+    the end of scanning, at which point we'll know the containing
+    context of all the DIEs that we might have scanned.  */
 class parent_map
 {
 public:
@@ -45,18 +69,15 @@ public:
   parent_map (parent_map &&) = default;
   parent_map &operator= (parent_map &&) = default;
 
-  /* A reasonably opaque type that is used here to combine a section
-     offset and the 'dwz' flag into a single value.  */
+  /* A reasonably opaque type that is used as part of a DIE range.  */
   enum addr_type : CORE_ADDR { };
 
   /* Turn a section offset into a value that can be used in a parent
      map.  */
-  static addr_type form_addr (sect_offset offset, bool is_dwz)
+  static addr_type form_addr (const gdb_byte *info_ptr)
   {
-    CORE_ADDR value = to_underlying (offset);
-    if (is_dwz)
-      value |= ((CORE_ADDR) 1) << (8 * sizeof (CORE_ADDR) - 1);
-    return addr_type (value);
+    static_assert (sizeof (addr_type) >= sizeof (uintptr_t));
+    return (addr_type) (uintptr_t) info_ptr;
   }
 
   /* Add a new entry to this map.  DIEs from START to END, inclusive,
@@ -80,6 +101,9 @@ public:
     return new (obstack) addrmap_fixed (obstack, &m_map);
   }
 
+  /* Dump a human-readable form of this map.  */
+  void dump (dwarf2_per_bfd *per_bfd) const;
+
 private:
 
   /* An addrmap that maps from section offsets to cooked_index_entry *.  */
@@ -97,7 +121,8 @@ public:
 
   DISABLE_COPY_AND_ASSIGN (parent_map_map);
 
-  /* Add a parent_map to this map.  */
+  /* Add a parent_map to this map.  Note that a copy of MAP is made --
+     modifications to MAP after this call will have no effect.  */
   void add_map (const parent_map &map)
   {
     m_maps.push_back (map.to_fixed (&m_storage));
@@ -115,6 +140,9 @@ public:
       }
     return nullptr;
   }
+
+  /* Dump a human-readable form of this collection of parent_maps.  */
+  void dump (dwarf2_per_bfd *per_bfd) const;
 
 private:
 

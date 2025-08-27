@@ -831,7 +831,7 @@ proc_with_prefix template-class-with-method {} {
 	}
 }
 
-# Test completion of a const-overloaded funtion (const-overload).
+# Test completion of a const-overloaded function (const-overload).
 # Note that "const" appears after the function/method parameters.
 
 proc_with_prefix const-overload {} {

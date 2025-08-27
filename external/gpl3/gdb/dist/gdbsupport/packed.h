@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PACKED_H
-#define PACKED_H
+#ifndef GDBSUPPORT_PACKED_H
+#define GDBSUPPORT_PACKED_H
 
 #include "traits.h"
 #include <atomic>
@@ -163,4 +163,4 @@ PACKED_ATOMIC_OP (<=)
 
 #undef PACKED_ATOMIC_OP
 
-#endif
+#endif /* GDBSUPPORT_PACKED_H */

@@ -115,7 +115,7 @@ frapy_is_valid (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (frame == NULL)
@@ -143,7 +143,7 @@ frapy_name (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (name)
@@ -177,7 +177,7 @@ frapy_type (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return gdb_py_object_from_longest (type).release ();
@@ -198,7 +198,7 @@ frapy_arch (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return gdbarch_to_arch_object (obj->gdbarch);
@@ -219,7 +219,7 @@ frapy_unwind_stop_reason (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   stop_reason = get_frame_unwind_stop_reason (frame);
@@ -244,7 +244,7 @@ frapy_pc (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return gdb_py_object_from_ulongest (pc).release ();
@@ -286,7 +286,7 @@ frapy_read_register (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -308,7 +308,7 @@ frapy_block (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   for (fn_block = block;
@@ -347,7 +347,7 @@ frapy_function (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (sym)
@@ -389,8 +389,7 @@ frame_info_to_frame_object (const frame_info_ptr &frame)
     }
   catch (const gdb_exception &except)
     {
-      gdbpy_convert_exception (except);
-      return NULL;
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return (PyObject *) frame_obj.release ();
@@ -414,7 +413,7 @@ frapy_older (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (prev)
@@ -446,7 +445,7 @@ frapy_newer (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (next)
@@ -478,7 +477,7 @@ frapy_find_sal (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return sal_obj;
@@ -538,8 +537,7 @@ frapy_read_var (PyObject *self, PyObject *args, PyObject *kw)
 	}
       catch (const gdb_exception &except)
 	{
-	  gdbpy_convert_exception (except);
-	  return NULL;
+	  return gdbpy_handle_gdb_exception (nullptr, except);
 	}
 
       if (!var)
@@ -569,7 +567,7 @@ frapy_read_var (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -590,7 +588,7 @@ frapy_select (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   Py_RETURN_NONE;
@@ -611,7 +609,7 @@ frapy_level (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   Py_RETURN_NONE;
@@ -634,7 +632,7 @@ frapy_language (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   Py_RETURN_NONE;
@@ -655,7 +653,7 @@ frapy_static_link (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (link == nullptr)
@@ -678,7 +676,7 @@ gdbpy_newest_frame (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return frame_info_to_frame_object (frame);
@@ -698,7 +696,7 @@ gdbpy_selected_frame (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return frame_info_to_frame_object (frame);
@@ -763,7 +761,7 @@ static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_frames (void)
 {
   frame_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&frame_object_type) < 0)
+  if (gdbpy_type_ready (&frame_object_type) < 0)
     return -1;
 
   /* Note: These would probably be best exposed as class attributes of
@@ -787,8 +785,7 @@ gdbpy_initialize_frames (void)
 #include "unwind_stop_reasons.def"
 #undef SET
 
-  return gdb_pymodule_addobject (gdb_module, "Frame",
-				 (PyObject *) &frame_object_type);
+  return 0;
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_frames);

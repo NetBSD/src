@@ -212,7 +212,7 @@ open_symbol_file_object (int from_tty)
 
 /* Build a list of currently loaded shared objects.  See solib-svr4.c.  */
 
-static intrusive_list<solib>
+static owning_intrusive_list<solib>
 darwin_current_sos ()
 {
   type *ptr_type
@@ -230,7 +230,7 @@ darwin_current_sos ()
 
   image_info_size = ptr_len * 3;
 
-  intrusive_list<solib> sos;
+  owning_intrusive_list<solib> sos;
 
   /* Read infos for each solib.
      The first entry was rumored to be the executable itself, but this is not
@@ -239,18 +239,18 @@ darwin_current_sos ()
   for (int i = 0; i < info->all_image.count; i++)
     {
       CORE_ADDR iinfo = info->all_image.info + i * image_info_size;
-      gdb_byte buf[image_info_size];
+      gdb::byte_vector buf (image_info_size);
       CORE_ADDR load_addr;
       CORE_ADDR path_addr;
       struct mach_o_header_external hdr;
       unsigned long hdr_val;
 
       /* Read image info from inferior.  */
-      if (target_read_memory (iinfo, buf, image_info_size))
+      if (target_read_memory (iinfo, buf.data (), image_info_size))
 	break;
 
-      load_addr = extract_typed_address (buf, ptr_type);
-      path_addr = extract_typed_address (buf + ptr_len, ptr_type);
+      load_addr = extract_typed_address (buf.data (), ptr_type);
+      path_addr = extract_typed_address (buf.data () + ptr_len, ptr_type);
 
       /* Read Mach-O header from memory.  */
       if (target_read_memory (load_addr, (gdb_byte *) &hdr, sizeof (hdr) - 4))
@@ -272,16 +272,15 @@ darwin_current_sos ()
 	break;
 
       /* Create and fill the new struct solib element.  */
-      solib *newobj = new solib;
+      auto &newobj = sos.emplace_back ();
 
       auto li = std::make_unique<lm_info_darwin> ();
 
-      newobj->so_name = file_path.get ();
-      newobj->so_original_name = newobj->so_name;
+      newobj.so_name = file_path.get ();
+      newobj.so_original_name = newobj.so_name;
       li->lm_addr = load_addr;
 
-      newobj->lm_info = std::move (li);
-      sos.push_back (*newobj);
+      newobj.lm_info = std::move (li);
     }
 
   return sos;
@@ -333,14 +332,14 @@ darwin_read_exec_load_addr_from_dyld (struct darwin_info *info)
   for (i = 0; i < info->all_image.count; i++)
     {
       CORE_ADDR iinfo = info->all_image.info + i * image_info_size;
-      gdb_byte buf[image_info_size];
+      gdb::byte_vector buf (image_info_size);
       CORE_ADDR load_addr;
 
       /* Read image info from inferior.  */
-      if (target_read_memory (iinfo, buf, image_info_size))
+      if (target_read_memory (iinfo, buf.data (), image_info_size))
 	break;
 
-      load_addr = extract_typed_address (buf, ptr_type);
+      load_addr = extract_typed_address (buf.data (), ptr_type);
       if (darwin_validate_exec_header (load_addr) == load_addr)
 	return load_addr;
     }
@@ -665,4 +664,9 @@ const solib_ops darwin_so_ops =
   open_symbol_file_object,
   darwin_in_dynsym_resolve_code,
   darwin_bfd_open,
+  nullptr,
+  nullptr,
+  nullptr,
+  nullptr,
+  default_find_solib_addr,
 };

@@ -20,8 +20,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (LANGUAGE_H)
-#define LANGUAGE_H 1
+#ifndef GDB_LANGUAGE_H
+#define GDB_LANGUAGE_H
 
 #include "symtab.h"
 #include "gdbsupport/function-view.h"
@@ -507,6 +507,23 @@ struct language_defn
       (tracker, mode, name_match_type, text, word, "", code);
   }
 
+  /* This is called by lookup_local_symbol after checking a block.  It
+     can be used by a language to augment the local lookup, for
+     instance for searching imported namespaces.  SCOPE is the current
+     scope (from block::scope), NAME is the name being searched for,
+     BLOCK is the block being searched, and DOMAIN is the search
+     domain.  Returns a block symbol, or an empty block symbol if not
+     found.  */
+
+  virtual struct block_symbol lookup_symbol_local
+       (const char *scope,
+	const char *name,
+	const struct block *block,
+	const domain_search_flags domain) const
+  {
+    return {};
+  }
+
   /* This is a function that lookup_symbol will call when it gets to
      the part of symbol lookup where C looks up static and global
      variables.  This default implements the basic C lookup rules.  */
@@ -714,6 +731,10 @@ extern const struct language_defn *expected_language;
 
 extern const char lang_frame_mismatch_warn[];
 
+/* Controls whether to warn on a frame language mismatch.  */
+
+extern bool warn_frame_lang_mismatch;
+
 /* language_mode == 
    language_mode_auto:   current_language automatically set upon selection
    of scope (e.g. stack frame)
@@ -767,7 +788,7 @@ struct symbol *
 					    const char *name);
 
 
-/* These macros define the behaviour of the expression 
+/* These macros define the behavior of the expression 
    evaluator.  */
 
 /* Should we range check values against the domain of their type?  */
@@ -843,6 +864,10 @@ class scoped_restore_current_language
 public:
 
   scoped_restore_current_language ();
+
+  /* Set the current language as well.  */
+  explicit scoped_restore_current_language (enum language lang);
+
   ~scoped_restore_current_language ();
 
   scoped_restore_current_language (scoped_restore_current_language &&other)
@@ -911,4 +936,4 @@ private:
   enum language m_lang;
 };
 
-#endif /* defined (LANGUAGE_H) */
+#endif /* GDB_LANGUAGE_H */

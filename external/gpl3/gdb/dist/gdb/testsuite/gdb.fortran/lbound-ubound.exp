@@ -25,9 +25,6 @@ if {[prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} \
     return -1
 }
 
-# Avoid shared lib symbols.
-gdb_test_no_output "set auto-solib-add off"
-
 if ![fortran_runto_main] {
     return -1
 }

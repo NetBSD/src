@@ -16,11 +16,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DISASM_H
-#define DISASM_H
+#ifndef GDB_DISASM_H
+#define GDB_DISASM_H
 
 #include "dis-asm.h"
 #include "disasm-flags.h"
+#include "ui-out.h"
 
 struct gdbarch;
 struct ui_out;
@@ -391,4 +392,4 @@ extern const char *get_disassembler_options (struct gdbarch *gdbarch);
 
 extern void set_disassembler_options (const char *options);
 
-#endif
+#endif /* GDB_DISASM_H */

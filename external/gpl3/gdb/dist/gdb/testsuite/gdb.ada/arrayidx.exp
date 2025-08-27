@@ -23,8 +23,7 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable {debug}] != ""} {
     return -1
 }
 
-set old_gcc [expr [test_compiler_info {gcc-[0-3]-*}] \
-	     || [test_compiler_info {gcc-4-[0-6]-*}]]
+set old_gcc [gnat_version_compare <= {4 6}]
 
 clean_restart ${testfile}
 

@@ -66,8 +66,8 @@ mi_create_breakpoint_pending "-f pendfunc1" \
 mi_gdb_test "-break-commands 1 \"print 1\" \"print 2\" \"print 3\""\
     "\\^done" \
     "set breakpoint commands on pending breakpoint"
-set bp [mi_make_breakpoint_pending -number 1 -disp keep -func pendfunc1 \
-	    -disp keep -enabled y -original-location pendfunc1 \
+set bp [mi_make_breakpoint_pending -number 1 -disp keep \
+	    -enabled y -original-location pendfunc1 \
 	    -script {\["print 1","print 2","print 3"\]}]
 mi_gdb_test "-break-info 1" \
     "\\^done,[mi_make_breakpoint_table [list $bp]]" \

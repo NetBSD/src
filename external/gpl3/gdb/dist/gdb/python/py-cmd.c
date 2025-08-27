@@ -39,7 +39,7 @@ struct cmdpy_completer
 static const struct cmdpy_completer completers[] =
 {
   { "COMPLETE_NONE", noop_completer },
-  { "COMPLETE_FILENAME", filename_completer },
+  { "COMPLETE_FILENAME", filename_maybe_quoted_completer },
   { "COMPLETE_LOCATION", location_completer },
   { "COMPLETE_COMMAND", command_completer },
   { "COMPLETE_SYMBOL", symbol_completer },
@@ -541,8 +541,7 @@ cmdpy_init (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      gdbpy_convert_exception (except);
-      return -1;
+      return gdbpy_handle_gdb_exception (-1, except);
     }
 
   return 0;
@@ -558,7 +557,7 @@ gdbpy_initialize_commands (void)
   int i;
 
   cmdpy_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&cmdpy_object_type) < 0)
+  if (gdbpy_type_ready (&cmdpy_object_type) < 0)
     return -1;
 
   /* Note: alias and user are special.  */
@@ -587,10 +586,6 @@ gdbpy_initialize_commands (void)
       if (PyModule_AddIntConstant (gdb_module, completers[i].name, i) < 0)
 	return -1;
     }
-
-  if (gdb_pymodule_addobject (gdb_module, "Command",
-			      (PyObject *) &cmdpy_object_type) < 0)
-    return -1;
 
   invoke_cst = PyUnicode_FromString ("invoke");
   if (invoke_cst == NULL)

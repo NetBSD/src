@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "event-top.h"
+#include "exceptions.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "bfd.h"
@@ -365,8 +366,7 @@ dump_symtab (struct symtab *symtab, struct ui_file *outfile)
      But use only real languages, not placeholders.  */
   if (symtab->language () != language_unknown)
     {
-      scoped_restore_current_language save_lang;
-      set_language (symtab->language ());
+      scoped_restore_current_language save_lang (symtab->language ());
       dump_symtab_1 (symtab, outfile);
     }
   else
@@ -377,7 +377,9 @@ static void
 maintenance_print_symbols (const char *args, int from_tty)
 {
   struct ui_file *outfile = gdb_stdout;
-  char *address_arg = NULL, *source_arg = NULL, *objfile_arg = NULL;
+  const char *address_arg = nullptr;
+  const char *source_arg = nullptr;
+  const char *objfile_arg = nullptr;
   int i, outfile_idx;
 
   dont_repeat ();
@@ -655,7 +657,7 @@ static void
 maintenance_print_msymbols (const char *args, int from_tty)
 {
   struct ui_file *outfile = gdb_stdout;
-  char *objfile_arg = NULL;
+  const char *objfile_arg = nullptr;
   int i, outfile_idx;
 
   dont_repeat ();
@@ -810,8 +812,8 @@ maintenance_info_symtabs (const char *regexp, int from_tty)
 		    gdb_printf ("((struct symtab *) %s)\n",
 				host_address_to_string (symtab));
 		    gdb_printf ("\t  fullname %s\n",
-				symtab->fullname != NULL
-				? symtab->fullname
+				symtab->fullname () != nullptr
+				? symtab->fullname ()
 				: "(null)");
 		    gdb_printf ("\t  "
 				"linetable ((struct linetable *) %s)\n",
@@ -887,7 +889,7 @@ maintenance_check_symtabs (const char *ignore, int from_tty)
 static void
 maintenance_expand_symtabs (const char *args, int from_tty)
 {
-  char *regexp = NULL;
+  const char *regexp = nullptr;
 
   /* We use buildargv here so that we handle spaces in the regexp
      in a way that allows adding more arguments later.  */
@@ -903,18 +905,25 @@ maintenance_expand_symtabs (const char *args, int from_tty)
 	}
     }
 
-  if (regexp)
-    re_comp (regexp);
+  if (regexp == nullptr)
+    {
+      for (struct program_space *pspace : program_spaces)
+	for (objfile *objfile : pspace->objfiles ())
+	  objfile->expand_all_symtabs ();
+
+      return;
+    }
+
+  re_comp (regexp);
 
   for (struct program_space *pspace : program_spaces)
     for (objfile *objfile : pspace->objfiles ())
       objfile->expand_symtabs_matching
 	([&] (const char *filename, bool basenames)
-	 {
-	   /* KISS: Only apply the regexp to the complete file name.  */
-	   return (!basenames
-		   && (regexp == NULL || re_exec (filename)));
-	 },
+	   {
+	     /* KISS: Only apply the regexp to the complete file name.  */
+	     return !basenames && re_exec (filename);
+	   },
 	 NULL,
 	 NULL,
 	 NULL,
@@ -990,7 +999,8 @@ maintenance_print_one_line_table (struct symtab *symtab, void *data)
 	  ui_out_emit_tuple tuple_emitter (uiout, nullptr);
 	  uiout->field_signed ("index", i);
 	  if (item->line > 0)
-	    uiout->field_signed ("line", item->line);
+	    uiout->field_signed ("line", item->line,
+				 line_number_style.style ());
 	  else
 	    uiout->field_string ("line", _("END"));
 	  uiout->field_core_addr ("rel-address", objfile->arch (),
@@ -1051,7 +1061,8 @@ Usage: mt print symbols [-pc ADDRESS] [--] [OUTFILE]\n\
        mt print symbols [-objfile OBJFILE] [-source SOURCE] [--] [OUTFILE]\n\
 Entries in the full symbol table are dumped to file OUTFILE,\n\
 or the terminal if OUTFILE is unspecified.\n\
-If ADDRESS is provided, dump only the symbols for the file with code at that address.\n\
+If ADDRESS is provided, dump only the symbols for the file\n\
+with code at that address.\n\
 If SOURCE is provided, dump only that file's symbols.\n\
 If OBJFILE is provided, dump only that object file's symbols."),
 	   &maintenanceprintlist);

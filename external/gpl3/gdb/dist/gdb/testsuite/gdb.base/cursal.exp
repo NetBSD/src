@@ -25,9 +25,9 @@ clean_restart
 gdb_file_cmd ${binfile}
 gdb_test_no_output "set listsize 1"
 
-# initial sal should be first statement in main
+# initial sal should be main's prologue.
 gdb_test "list" \
-    "v0 = 0;" \
+    "{ /\\* main prologue \\*/" \
     "list before run"
 
 gdb_load ${binfile}

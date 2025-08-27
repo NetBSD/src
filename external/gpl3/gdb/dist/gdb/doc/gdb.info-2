@@ -21,7 +21,7 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 15.1.
+Source-Level Debugger' for GDB (GDB) Version 16.3.
 
    Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
@@ -4731,7 +4731,7 @@ about volatile variables or memory mapped device registers.
 GDB can be instructed to refuse accesses to memory that is not
 explicitly described.  This can be useful if accessing such regions has
 undesired effects for a specific target, or to provide better error
-checking.  The following commands control this behaviour.
+checking.  The following commands control this behavior.
 
 'set mem inaccessible-by-default [on|off]'
      If 'on' is specified, make GDB treat memory not explicitly
@@ -6838,6 +6838,9 @@ data, via the 'target tfile' command.
      the moment the data was saved, as well as the current trace frame
      you are examining.  Both FILENAME and DIRNAME must be on a
      filesystem accessible to the host.
+
+     The FILENAME and DIRNAME arguments supports escaping and quoting,
+     see *note Filenames As Command Arguments: Filename Arguments.
 
           (gdb) target ctf ctf.ctf
           (gdb) tfind

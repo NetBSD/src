@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AARCH64_NAT_H
-#define AARCH64_NAT_H
+#ifndef GDB_AARCH64_NAT_H
+#define GDB_AARCH64_NAT_H
 
 #include "breakpoint.h"
 #include "nat/aarch64-hw-point.h"
@@ -98,4 +98,4 @@ struct aarch64_nat_target : public BaseTarget
   { return start <= addr && start + length - 1 >= addr; }
 };
 
-#endif /* AARCH64_NAT_H */
+#endif /* GDB_AARCH64_NAT_H */

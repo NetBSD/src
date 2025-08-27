@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_GDB_VECS_H
-#define COMMON_GDB_VECS_H
+#ifndef GDBSUPPORT_GDB_VECS_H
+#define GDBSUPPORT_GDB_VECS_H
 
 /* Split STR, a list of DELIMITER-separated fields, into a char pointer vector.
 
@@ -85,4 +85,4 @@ ordered_remove (std::vector<T> &vec, typename std::vector<T>::size_type ix)
   return removed;
 }
 
-#endif /* COMMON_GDB_VECS_H */
+#endif /* GDBSUPPORT_GDB_VECS_H */

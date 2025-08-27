@@ -832,8 +832,8 @@ static const yytype_int16 yyrline[] =
      640,   643,   644,   696,   698,   700,   702,   704,   707,   709,
      711,   713,   715,   719,   721,   726,   728,   730,   732,   734,
      736,   738,   740,   742,   744,   746,   748,   750,   752,   754,
-     756,   758,   760,   762,   764,   766,   768,   770,   772,   777,
-     782,   790,   792,   796
+     756,   762,   764,   766,   768,   774,   776,   778,   780,   785,
+     790,   798,   800,   804
 };
 #endif
 
@@ -2413,90 +2413,98 @@ yyreduce:
 
   case 100: /* typebase: REAL_S16_KEYWORD  */
 #line 757 "f-exp.y"
-                        { (yyval.tval) = parse_f_type (pstate)->builtin_real_s16; }
-#line 2419 "f-exp.c.tmp"
+                        { (yyval.tval) = parse_f_type (pstate)->builtin_real_s16;
+			  if ((yyval.tval)->code () == TYPE_CODE_ERROR)
+			    error (_("unsupported type %s"),
+				   TYPE_SAFE_NAME ((yyval.tval)));
+			}
+#line 2423 "f-exp.c.tmp"
     break;
 
   case 101: /* typebase: COMPLEX_KEYWORD  */
-#line 759 "f-exp.y"
+#line 763 "f-exp.y"
                         { (yyval.tval) = parse_f_type (pstate)->builtin_complex; }
-#line 2425 "f-exp.c.tmp"
+#line 2429 "f-exp.c.tmp"
     break;
 
   case 102: /* typebase: COMPLEX_S4_KEYWORD  */
-#line 761 "f-exp.y"
+#line 765 "f-exp.y"
                         { (yyval.tval) = parse_f_type (pstate)->builtin_complex; }
-#line 2431 "f-exp.c.tmp"
+#line 2435 "f-exp.c.tmp"
     break;
 
   case 103: /* typebase: COMPLEX_S8_KEYWORD  */
-#line 763 "f-exp.y"
+#line 767 "f-exp.y"
                         { (yyval.tval) = parse_f_type (pstate)->builtin_complex_s8; }
-#line 2437 "f-exp.c.tmp"
+#line 2441 "f-exp.c.tmp"
     break;
 
   case 104: /* typebase: COMPLEX_S16_KEYWORD  */
-#line 765 "f-exp.y"
-                        { (yyval.tval) = parse_f_type (pstate)->builtin_complex_s16; }
-#line 2443 "f-exp.c.tmp"
+#line 769 "f-exp.y"
+                        { (yyval.tval) = parse_f_type (pstate)->builtin_complex_s16;
+			  if ((yyval.tval)->code () == TYPE_CODE_ERROR)
+			    error (_("unsupported type %s"),
+				   TYPE_SAFE_NAME ((yyval.tval)));
+			}
+#line 2451 "f-exp.c.tmp"
     break;
 
   case 105: /* typebase: SINGLE PRECISION  */
-#line 767 "f-exp.y"
+#line 775 "f-exp.y"
                         { (yyval.tval) = parse_f_type (pstate)->builtin_real;}
-#line 2449 "f-exp.c.tmp"
+#line 2457 "f-exp.c.tmp"
     break;
 
   case 106: /* typebase: DOUBLE PRECISION  */
-#line 769 "f-exp.y"
+#line 777 "f-exp.y"
                         { (yyval.tval) = parse_f_type (pstate)->builtin_real_s8;}
-#line 2455 "f-exp.c.tmp"
+#line 2463 "f-exp.c.tmp"
     break;
 
   case 107: /* typebase: SINGLE COMPLEX_KEYWORD  */
-#line 771 "f-exp.y"
+#line 779 "f-exp.y"
                         { (yyval.tval) = parse_f_type (pstate)->builtin_complex;}
-#line 2461 "f-exp.c.tmp"
+#line 2469 "f-exp.c.tmp"
     break;
 
   case 108: /* typebase: DOUBLE COMPLEX_KEYWORD  */
-#line 773 "f-exp.y"
+#line 781 "f-exp.y"
                         { (yyval.tval) = parse_f_type (pstate)->builtin_complex_s8;}
-#line 2467 "f-exp.c.tmp"
+#line 2475 "f-exp.c.tmp"
     break;
 
   case 109: /* nonempty_typelist: type  */
-#line 778 "f-exp.y"
+#line 786 "f-exp.y"
                 { (yyval.tvec) = (struct type **) xmalloc (sizeof (struct type *) * 2);
 		  (yyval.ivec)[0] = 1;	/* Number of types in vector */
 		  (yyval.tvec)[1] = (yyvsp[0].tval);
 		}
-#line 2476 "f-exp.c.tmp"
+#line 2484 "f-exp.c.tmp"
     break;
 
   case 110: /* nonempty_typelist: nonempty_typelist ',' type  */
-#line 783 "f-exp.y"
+#line 791 "f-exp.y"
                 { int len = sizeof (struct type *) * (++((yyvsp[-2].ivec)[0]) + 1);
 		  (yyval.tvec) = (struct type **) xrealloc ((char *) (yyvsp[-2].tvec), len);
 		  (yyval.tvec)[(yyval.ivec)[0]] = (yyvsp[0].tval);
 		}
-#line 2485 "f-exp.c.tmp"
+#line 2493 "f-exp.c.tmp"
     break;
 
   case 111: /* name: NAME  */
-#line 791 "f-exp.y"
+#line 799 "f-exp.y"
                 { (yyval.sval) = (yyvsp[0].ssym).stoken; }
-#line 2491 "f-exp.c.tmp"
+#line 2499 "f-exp.c.tmp"
     break;
 
   case 112: /* name: TYPENAME  */
-#line 793 "f-exp.y"
+#line 801 "f-exp.y"
                 { (yyval.sval) = (yyvsp[0].tsym).stoken; }
-#line 2497 "f-exp.c.tmp"
+#line 2505 "f-exp.c.tmp"
     break;
 
 
-#line 2501 "f-exp.c.tmp"
+#line 2509 "f-exp.c.tmp"
 
       default: break;
     }
@@ -2689,7 +2697,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 806 "f-exp.y"
+#line 814 "f-exp.y"
 
 
 /* Called to match intrinsic function calls with one argument to their
@@ -3043,12 +3051,9 @@ push_kind_type (LONGEST val, struct type *type)
   type_stack->push (tp_kind);
 }
 
-/* Called when a type has a '(kind=N)' modifier after it, for example
-   'character(kind=1)'.  The BASETYPE is the type described by 'character'
-   in our example, and KIND is the integer '1'.  This function returns a
-   new type that represents the basetype of a specific kind.  */
+/* Helper function for convert_to_kind_type.  */
 static struct type *
-convert_to_kind_type (struct type *basetype, int kind)
+convert_to_kind_type_1 (struct type *basetype, int kind)
 {
   if (basetype == parse_f_type (pstate)->builtin_character)
     {
@@ -3098,11 +3103,23 @@ convert_to_kind_type (struct type *basetype, int kind)
 	return parse_f_type (pstate)->builtin_integer_s8;
     }
 
-  error (_("unsupported kind %d for type %s"),
-	 kind, TYPE_SAFE_NAME (basetype));
-
-  /* Should never get here.  */
   return nullptr;
+}
+
+/* Called when a type has a '(kind=N)' modifier after it, for example
+   'character(kind=1)'.  The BASETYPE is the type described by 'character'
+   in our example, and KIND is the integer '1'.  This function returns a
+   new type that represents the basetype of a specific kind.  */
+static struct type *
+convert_to_kind_type (struct type *basetype, int kind)
+{
+  struct type *res = convert_to_kind_type_1 (basetype, kind);
+
+  if (res == nullptr || res->code () == TYPE_CODE_ERROR)
+    error (_("unsupported kind %d for type %s"),
+	   kind, TYPE_SAFE_NAME (basetype));
+
+  return res;
 }
 
 struct f_token

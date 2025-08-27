@@ -1897,7 +1897,7 @@ s390_handle_arg (struct s390_arg_state *as, struct value *arg,
    for S/390 ELF Application Binary Interface Supplement".
 
    SP is the current stack pointer.  We must put arguments, links,
-   padding, etc. whereever they belong, and return the new stack
+   padding, etc. wherever they belong, and return the new stack
    pointer value.
 
    If STRUCT_RETURN is non-zero, then the function we're calling is
@@ -4014,6 +4014,13 @@ ex:
 	/* 0xb330-0xb335 undefined */
 
 	case 0xb33a: /* MAYR - multiply and add unnormalized */
+	  /* float pair destination [RRD]; R1 may designate lower- or
+	     higher-numbered register of pair */
+	  if (record_full_arch_list_add_reg (regcache, S390_F0_REGNUM + (inib[4] & 13)))
+	    return -1;
+	  if (record_full_arch_list_add_reg (regcache, S390_F0_REGNUM + (inib[4] | 2)))
+	    return -1;
+	  break;
 	case 0xb33b: /* MYR - multiply unnormalized */
 	  /* float pair destination [RRD] */
 	  if (record_full_arch_list_add_reg (regcache, S390_F0_REGNUM + inib[4]))
@@ -4245,6 +4252,10 @@ ex:
 	case 0xb917: /* LLGTR - load logical thirty one bits */
 	case 0xb91c: /* MSGFR - multiply single 64<32 */
 	case 0xb946: /* BCTGR - branch on count */
+	case 0xb968: /* CLZG - count leading zeros */
+	case 0xb969: /* CTZG - count trailing zeros */
+	case 0xb96c: /* BEXTG - bit extract */
+	case 0xb96d: /* BDEPG - bit deposit */
 	case 0xb984: /* LLGCR - load logical character */
 	case 0xb985: /* LLGHR - load logical halfword */
 	case 0xb9e2: /* LOCGR - load on condition */
@@ -5125,7 +5136,14 @@ ex:
 	    return -1;
 	  break;
 
-	/* 0xc86-0xc8f undefined */
+	case 0xc86: /* CAL - compare and load 32 */
+	case 0xc87: /* CALG - compare and load 64 */
+	case 0xc8f: /* CALGF - compare and load 64<32 */
+	  if (s390_record_gpr_g (gdbarch, regcache, inib[2]))
+	    return -1;
+	  if (record_full_arch_list_add_reg (regcache, S390_PSWM_REGNUM))
+	    return -1;
+	  break;
 
 	default:
 	  goto UNKNOWN_OP;
@@ -5336,6 +5354,16 @@ ex:
 	case 0xe33b: /* LZRF - load and zero rightmost byte */
 	case 0xe351: /* MSY - multiply single */
 	case 0xe358: /* LY - load */
+	case 0xe360: /* LXAB - load indexed address (shift 0) */
+	case 0xe361: /* LLXAB - load logical indexed address (shift 0) */
+	case 0xe362: /* LXAH - load indexed address (shift 1) */
+	case 0xe363: /* LLXAH - load logical indexed address (shift 1) */
+	case 0xe364: /* LXAF - load indexed address (shift 2) */
+	case 0xe365: /* LLXAF - load logical indexed address (shift 2) */
+	case 0xe366: /* LXAG - load indexed address (shift 3) */
+	case 0xe367: /* LLXAG - load logical indexed address (shift 3) */
+	case 0xe368: /* LXAQ - load indexed address (shift 4) */
+	case 0xe369: /* LLXAQ - load logical indexed address (shift 4) */
 	case 0xe371: /* LAY - load address */
 	case 0xe373: /* ICY - insert character */
 	case 0xe376: /* LB - load byte */
@@ -5448,7 +5476,7 @@ ex:
 	  break;
 
 	/* 0xe35d undefined */
-	/* 0xe360-0xe36f undefined */
+	/* 0xe36a-0xe36f undefined */
 
 	case 0xe372: /* STCY - store character */
 	case 0xe3c3: /* STCH - store character high */
@@ -5569,6 +5597,7 @@ ex:
 	case 0xe750: /* VPOPCT - vector population count */
 	case 0xe752: /* VCTZ - vector count trailing zeros */
 	case 0xe753: /* VCLZ - vector count leading zeros */
+	case 0xe754: /* VGEM - vector generate element masks */
 	case 0xe756: /* VLR - vector load */
 	case 0xe75f: /* VSEG -vector sign extend to doubleword */
 	case 0xe760: /* VMRL - vector merge low */
@@ -5602,6 +5631,8 @@ ex:
 	case 0xe785: /* VBPERM - vector bit permute */
 	case 0xe786: /* VSLD - vector shift left double by bit */
 	case 0xe787: /* VSRD - vector shift right double by bit */
+	case 0xe788: /* VEVAL - vector evaluate */
+	case 0xe789: /* VBLEND - vector blend */
 	case 0xe78b: /* VSTRS - vector string search */
 	case 0xe78c: /* VPERM - vector permute */
 	case 0xe78d: /* VSEL - vector select */
@@ -5624,6 +5655,10 @@ ex:
 	case 0xe7ad: /* VMALO - vector multiply and add logical odd */
 	case 0xe7ae: /* VMAE - vector multiply and add even */
 	case 0xe7af: /* VMAO - vector multiply and add odd */
+	case 0xe7b0: /* VDL - vector divide logical */
+	case 0xe7b1: /* VRL - vector remainder logical */
+	case 0xe7b2: /* VD - vector divide */
+	case 0xe7b3: /* VR - vector remainder */
 	case 0xe7b4: /* VGFM - vector Galois field multiply sum */
 	case 0xe7b8: /* VMSL - vector multiply sum logical */
 	case 0xe7b9: /* VACCC - vector add with carry compute carry */
@@ -5799,6 +5834,8 @@ ex:
 
 	/* 0xe747-0xe749 undefined */
 
+	case 0xe64a: /* VCVDQ - vector convert to decimal 128 bits */
+	case 0xe64e: /* VCVBQ - vector convert to binary 128 bits */
 	case 0xe651: /* VCLZDP - vector count leading zero digits */
 	case 0xe654: /* VUPKZH - vector unpack zoned high */
 	case 0xe658: /* VCVD - vector convert to decimal 32 bit */
@@ -5839,6 +5876,7 @@ ex:
 	  break;
 
 	case 0xe65f: /* VTP - vector test decimal */
+	case 0xe67f: /* VTZ - vector test zoned */
 	  /* flags + FPC */
 	  if (record_full_arch_list_add_reg (regcache, S390_PSWM_REGNUM))
 	    return -1;
@@ -5932,7 +5970,48 @@ ex:
 	    return -1;
 	  break;
 
-	/* 0xeb15-0xeb1b undefined */
+	case 0xeb16: /* PFCR - perform functions with concurrent results */
+	  if (record_full_arch_list_add_reg (regcache, S390_PSWM_REGNUM))
+	    return -1;
+	  regcache_raw_read_unsigned (regcache, S390_R0_REGNUM, &tmp);
+	  oaddr = s390_record_calc_disp (gdbarch, regcache, 0, insn[1],
+					 ibyte[4]);
+	  {
+	    uint8_t fc = tmp & 0xff;
+	    if (fc == 0) /* PFCR-QAF */
+	      {
+		if (record_full_arch_list_add_mem (oaddr, 16))
+		  return -1;
+	      }
+	    else if (fc >= 1 && fc <= 4)
+	      {
+		/* Compare and swap and double/triple store.  */
+		int bytesize = fc & 1 ? 4 : 8;
+		int startbit = fc >= 3 ? 16 : 32;
+		if (record_full_arch_list_add_reg (regcache,
+						   S390_R0_REGNUM + inib[2]))
+		  return -1;
+		regcache_raw_read_unsigned (regcache,
+					    S390_R0_REGNUM + inib[3], &tmp);
+		for (i = startbit; i < 64; i += 16)
+		  {
+		    oaddr = s390_record_calc_disp (gdbarch, regcache, 0,
+						   (tmp >> i) & 0xffff, 0);
+		    if (record_full_arch_list_add_mem (oaddr, bytesize))
+		      return -1;
+		  }
+	      }
+	    else
+	      {
+		gdb_printf (gdb_stdlog,
+			    "Warning: Unknown PFCR FC %02x at %s.\n",
+			    fc, paddress (gdbarch, addr));
+		return -1;
+	      }
+	  }
+          break;
+
+	/* 0xeb17-0xeb1b undefined */
 	/* 0xeb1e-0xeb1f undefined */
 	/* 0xeb22 undefined */
 
@@ -6261,6 +6340,13 @@ ex:
 	/* 0xed36 undefined */
 
 	case 0xed3a: /* MAY - multiply and add unnormalized */
+	  /* float pair destination [RXF]; R1 may designate lower- or
+	     higher-numbered register of pair */
+	  if (record_full_arch_list_add_reg (regcache, S390_F0_REGNUM + (inib[8] & 13)))
+	    return -1;
+	  if (record_full_arch_list_add_reg (regcache, S390_F0_REGNUM + (inib[8] | 2)))
+	    return -1;
+	  break;
 	case 0xed3b: /* MY - multiply unnormalized */
 	  /* float pair destination [RXF] */
 	  if (record_full_arch_list_add_reg (regcache, S390_F0_REGNUM + inib[8]))

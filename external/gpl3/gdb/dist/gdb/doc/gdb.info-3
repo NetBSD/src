@@ -21,7 +21,7 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 15.1.
+Source-Level Debugger' for GDB (GDB) Version 16.3.
 
    Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
@@ -243,6 +243,16 @@ entirely in one source language.  However, program modules and libraries
 written in one source language can be used by a main program written in
 a different source language.  Using 'set language auto' in this case
 frees you from having to set the working language manually.
+
+   The warning is enabled by default, but it can be controlled via a
+setting:
+
+'set warn-language-frame-mismatch [on|off]'
+     Enable or disable the warning that is issued when the current
+     language is set to a value that does not match the current frame.
+
+'show warn-language-frame-mismatch'
+     Show whether the frame-mismatch warning will be issued.
 
 
 File: gdb.info,  Node: Show,  Next: Checks,  Prev: Setting,  Up: Languages
@@ -940,7 +950,7 @@ for the configured target.
 manipulate decimal floating point numbers, it is not possible to convert
 (using a cast, for example) integers wider than 32-bit to decimal float.
 
-   In addition, in order to imitate GDB's behaviour with binary floating
+   In addition, in order to imitate GDB's behavior with binary floating
 point computations, error checking in decimal float operations ignores
 underflow, overflow and divide by zero exceptions.
 
@@ -1603,6 +1613,9 @@ below.
 'ABS(N)'
      Returns the absolute value of N.
 
+'ADR(N)'
+     Returns the memory address of N.
+
 'CAP(C)'
      If C is a lower case letter, it returns its upper case equivalent,
      otherwise it returns its argument.
@@ -2042,6 +2055,10 @@ Here are the notable omissions from the subset:
           extension).
 
         - 'Address.
+
+        - 'Size is available for objects (not types).
+
+        - 'Object_Size is available, but not for indefinite types.
 
    * The names in 'Characters.Latin_1' are not available.
 
@@ -3944,7 +3961,7 @@ will interrupt the program.
 
    If a function called from GDB is interrupted by a timeout, then by
 default the inferior is left in the frame where the timeout occurred,
-this behaviour can be adjusted with 'set unwind-on-timeout' (*note set
+this behavior can be adjusted with 'set unwind-on-timeout' (*note set
 unwind-on-timeout::).
 
    For targets that don't support asynchronous execution (*note
@@ -4137,6 +4154,9 @@ implemented with the following commands.
      Like 'compile code', but take the source code from FILENAME.
 
           compile file /home/user/example.c
+
+     The FILENAME argument supports escaping and quoting, see *note
+     Filenames As Command Arguments: Filename Arguments.
 
 'compile print [[OPTIONS] --] EXPR'
 'compile print [[OPTIONS] --] /F EXPR'
@@ -4610,6 +4630,8 @@ files are useful.
           Remove symbol table from file "/home/user/gdb/mylib.so"? (y or n) y
           (gdb)
 
+     The ADDRESS can be any expression which evaluates to an address.
+
      'remove-symbol-file' does not repeat if you press <RET> after using
      it.
 
@@ -4721,8 +4743,7 @@ names as arguments.  GDB always converts the file name to an absolute
 file name and remembers it that way.
 
    GDB supports GNU/Linux, MS-Windows, SunOS, Darwin/Mach-O, SVr4, IBM
-RS/6000 AIX, QNX Neutrino, FDPIC (FR-V), and DSBT (TIC6X) shared
-libraries.
+RS/6000 AIX, FDPIC (FR-V), and DSBT (TIC6X) shared libraries.
 
    On MS-Windows GDB must be linked with the Expat library to support
 shared libraries.  *Note Expat::.
@@ -5342,6 +5363,9 @@ the index to a file, then you can put it into the symbol file using
      'SYMBOL-FILE.debug_names' and 'SYMBOL-FILE.debug_str'.  The files
      are created in the given DIRECTORY.
 
+     The DIRECTORY argument supports escaping and quoting, see *note
+     Filenames As Command Arguments: Filename Arguments.
+
    Once you have created an index file you can merge it into your symbol
 file, here named 'symfile', using 'objcopy':
 
@@ -5405,6 +5429,19 @@ index cache.
 
 'show index-cache stats'
      Print the number of cache hits and misses since the launch of GDB.
+
+18.5.2 Building the index with GNU 'gold'
+-----------------------------------------
+
+The GNU 'gold' linker can write the index at link time into the
+resulting ELF file, by passing the '--gdb-index' flag to 'gold'.
+
+   This is especially helpful if you intend to build a program and
+immediately run it under GDB.  You may find that it is faster overall
+for the linker to write the index while it has the relevant information
+in memory anyways, rather than re-reloading the data from disk with
+'gdb-add-index', or debugging the program without an index at all,
+especially for large programs.
 
 
 File: gdb.info,  Node: Debug Names,  Next: Symbol Errors,  Prev: Index Files,  Up: GDB Files
@@ -5670,9 +5707,15 @@ configuration):
      An executable file.  'target exec PROGRAM' is the same as
      'exec-file PROGRAM'.
 
+     The PROGRAM argument supports escaping and quoting, see *note
+     Filenames As Command Arguments: Filename Arguments.
+
 'target core FILENAME'
      A core dump file.  'target core FILENAME' is the same as 'core-file
      FILENAME'.
+
+     The FILENAME argument supports escaping and quoting, see *note
+     Filenames As Command Arguments: Filename Arguments.
 
 'target remote MEDIUM'
      A remote system connected to GDB via a serial line or network
@@ -6801,6 +6844,8 @@ storage-address'                             '__thread'
                                              
 'hostio-fstat-packet''vFile:fstat'           Host I/O
                                              
+'hostio-stat-packet' 'vFile:stat'            Host I/O
+                                             
 'hostio-setfs-packet''vFile:setfs'           Host I/O
                                              
 'noack-packet'       'QStartNoAckMode'       Packet
@@ -7095,55 +7140,4 @@ You must also make sure this library routine is available:
 library subroutines as well; this varies from one stub to another, but
 in general the stubs are likely to use any of the common library
 subroutines which 'GCC' generates as inline code.
-
-
-File: gdb.info,  Node: Debug Session,  Prev: Bootstrapping,  Up: Remote Stub
-
-20.5.3 Putting it All Together
-------------------------------
-
-In summary, when your program is ready to debug, you must follow these
-steps.
-
-  1. Make sure you have defined the supporting low-level routines (*note
-     What You Must Do for the Stub: Bootstrapping.):
-          'getDebugChar', 'putDebugChar',
-          'flush_i_cache', 'memset', 'exceptionHandler'.
-
-  2. Insert these lines in your program's startup code, before the main
-     procedure is called:
-
-          set_debug_traps();
-          breakpoint();
-
-     On some machines, when a breakpoint trap is raised, the hardware
-     automatically makes the PC point to the instruction after the
-     breakpoint.  If your machine doesn't do that, you may need to
-     adjust 'handle_exception' to arrange for it to return to the
-     instruction after the breakpoint on this first invocation, so that
-     your program doesn't keep hitting the initial breakpoint instead of
-     making progress.
-
-  3. For the 680x0 stub only, you need to provide a variable called
-     'exceptionHook'.  Normally you just use:
-
-          void (*exceptionHook)() = 0;
-
-     but if before calling 'set_debug_traps', you set it to point to a
-     function in your program, that function is called when 'GDB'
-     continues after stopping on a trap (for example, bus error).  The
-     function indicated by 'exceptionHook' is called with one parameter:
-     an 'int' which is the exception number.
-
-  4. Compile and link together: your program, the GDB debugging stub for
-     your target architecture, and the supporting subroutines.
-
-  5. Make sure you have a serial connection between your target machine
-     and the GDB host, and identify the serial port on the host.
-
-  6. Download your program to your target machine (or get it there by
-     whatever means the manufacturer provides), and start it.
-
-  7. Start GDB on the host, and connect to the target (*note Connecting
-     to a Remote Target: Connecting.).
 

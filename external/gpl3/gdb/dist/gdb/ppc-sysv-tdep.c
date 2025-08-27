@@ -1044,12 +1044,10 @@ static int
 convert_code_addr_to_desc_addr (CORE_ADDR code_addr, CORE_ADDR *desc_addr)
 {
   struct obj_section *dot_fn_section;
-  struct bound_minimal_symbol dot_fn;
-  struct bound_minimal_symbol fn;
 
   /* Find the minimal symbol that corresponds to CODE_ADDR (should
      have a name of the form ".FN").  */
-  dot_fn = lookup_minimal_symbol_by_pc (code_addr);
+  bound_minimal_symbol dot_fn = lookup_minimal_symbol_by_pc (code_addr);
   if (dot_fn.minsym == NULL || dot_fn.minsym->linkage_name ()[0] != '.')
     return 0;
   /* Get the section that contains CODE_ADDR.  Need this for the
@@ -1061,8 +1059,10 @@ convert_code_addr_to_desc_addr (CORE_ADDR code_addr, CORE_ADDR *desc_addr)
      address.  Only look for the minimal symbol in ".FN"'s object file
      - avoids problems when two object files (i.e., shared libraries)
      contain a minimal symbol with the same name.  */
-  fn = lookup_minimal_symbol (dot_fn.minsym->linkage_name () + 1, NULL,
-			      dot_fn_section->objfile);
+  bound_minimal_symbol fn
+    = lookup_minimal_symbol (current_program_space,
+			     dot_fn.minsym->linkage_name () + 1,
+			     dot_fn_section->objfile);
   if (fn.minsym == NULL)
     return 0;
   /* Found a descriptor.  */

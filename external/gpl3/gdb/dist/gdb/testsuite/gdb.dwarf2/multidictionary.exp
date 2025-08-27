@@ -23,7 +23,7 @@ require dwarf2_support
 standard_testfile main.c .S
 
 # Create the DWARF.  This is derived from the reproducer in the bug
-# mentioned above.  This DIE tree is typical of compilations wtih
+# mentioned above.  This DIE tree is typical of compilations with
 # LTO enabled.
 
 set asm_file [standard_output_file $srcfile2]

@@ -37,8 +37,10 @@ lappend opts f90
 set compilation_succeeded 0
 for { set size [expr $max] } { $size >= $min } { set size [expr $size / 2] } {
     set try_opts [concat $opts [list additional_flags=-DCRASH_GDB=$size]]
-    if { [build_executable $testfile.exp $testfile $srcfile $try_opts] == -1 } {
-	continue
+    with_test_prefix CRASH_GDB=$size {
+	if { [build_executable $testfile.exp $testfile $srcfile $try_opts] == -1 } {
+	    continue
+	}
     }
 
     set compilation_succeeded 1

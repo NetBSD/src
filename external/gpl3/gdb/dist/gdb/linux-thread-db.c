@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <dlfcn.h>
+#include "exceptions.h"
 #include "gdb_proc_service.h"
 #include "nat/gdb_thread_db.h"
 #include "gdbsupport/gdb_vecs.h"
@@ -466,11 +467,11 @@ verbose_dlsym (void *handle, const char *name)
 static int
 inferior_has_bug (const char *ver_symbol, int ver_major_min, int ver_minor_min)
 {
-  struct bound_minimal_symbol version_msym;
   CORE_ADDR version_addr;
   int got, retval = 0;
 
-  version_msym = lookup_minimal_symbol (ver_symbol, NULL, NULL);
+  bound_minimal_symbol version_msym
+    = lookup_minimal_symbol (current_program_space, ver_symbol);
   if (version_msym.minsym == NULL)
     return 0;
 
@@ -809,9 +810,8 @@ static bool
 libpthread_objfile_p (objfile *obj)
 {
   return (libpthread_name_p (objfile_name (obj))
-	  && lookup_minimal_symbol ("pthread_create",
-				    NULL,
-				    obj).minsym != NULL);
+	  && lookup_minimal_symbol (current_program_space,
+				    "pthread_create", obj).minsym != nullptr);
 }
 
 /* Attempt to initialize dlopen()ed libthread_db, described by INFO.

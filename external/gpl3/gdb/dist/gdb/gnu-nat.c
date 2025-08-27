@@ -133,7 +133,8 @@ static struct inf *make_inf ();
 struct exc_state
   {
     int exception;		/* The exception code.  */
-    int code, subcode;
+    int code;
+    long subcode;
     mach_port_t handler;	/* The real exception port to handle this.  */
     mach_port_t reply;		/* The reply port from the exception call.  */
   };
@@ -388,7 +389,7 @@ gnu_nat_target::proc_get_exception_port (struct proc * proc, mach_port_t * port)
 kern_return_t
 gnu_nat_target::proc_set_exception_port (struct proc * proc, mach_port_t port)
 {
-  proc_debug (proc, "setting exception port: %lu", port);
+  proc_debug (proc, "setting exception port: %u", port);
   if (proc_is_task (proc))
     return task_set_exception_port (proc->port, port);
   else
@@ -428,7 +429,7 @@ gnu_nat_target::proc_steal_exc_port (struct proc *proc, mach_port_t exc_port)
     {
       kern_return_t err = 0;
 
-      proc_debug (proc, "inserting exception port: %lu", exc_port);
+      proc_debug (proc, "inserting exception port: %u", exc_port);
 
       if (cur_exc_port != exc_port)
 	/* Put in our exception port.  */
@@ -449,7 +450,7 @@ gnu_nat_target::proc_steal_exc_port (struct proc *proc, mach_port_t exc_port)
 	  proc->saved_exc_port = cur_exc_port;
 	}
 
-      proc_debug (proc, "saved exception port: %lu", proc->saved_exc_port);
+      proc_debug (proc, "saved exception port: %u", proc->saved_exc_port);
 
       if (!err)
 	proc->exc_port = exc_port;
@@ -561,11 +562,11 @@ gnu_nat_target::make_proc (struct inf *inf, mach_port_t port, int tid)
 				    MACH_MSG_TYPE_MAKE_SEND_ONCE,
 				    &prev_port);
   if (err)
-    warning (_("Couldn't request notification for port %lu: %s"),
+    warning (_("Couldn't request notification for port %u: %s"),
 	     port, safe_strerror (err));
   else
     {
-      proc_debug (proc, "notifications to: %lu", inf->event_port);
+      proc_debug (proc, "notifications to: %u", inf->event_port);
       if (prev_port != MACH_PORT_NULL)
 	mach_port_deallocate (mach_task_self (), prev_port);
     }
@@ -740,7 +741,7 @@ gnu_nat_target::inf_set_pid (struct inf *inf, pid_t pid)
 	       pid, safe_strerror (err));
     }
 
-  inf_debug (inf, "setting task: %lu", task_port);
+  inf_debug (inf, "setting task: %u", task_port);
 
   if (inf->pause_sc)
     task_suspend (task_port);
@@ -1015,14 +1016,15 @@ gnu_nat_target::inf_validate_procs (struct inf *inf)
   {
     /* Make things normally linear.  */
     mach_msg_type_number_t search_start = 0;
-    /* Which thread in PROCS corresponds to each task thread, & the task.  */
-    struct proc *matched[num_threads + 1];
+
+    /* Which thread in PROCS corresponds to each task thread.  */
+    std::vector<struct proc *> matched (num_threads);
+
     /* The last thread in INF->threads, so we can add to the end.  */
     struct proc *last = 0;
+
     /* The current thread we're considering.  */
     struct proc *thread = inf->threads;
-
-    memset (matched, 0, sizeof (matched));
 
     while (thread)
       {
@@ -1071,7 +1073,7 @@ gnu_nat_target::inf_validate_procs (struct inf *inf)
 	    else
 	      inf->threads = thread;
 	    last = thread;
-	    proc_debug (thread, "new thread: %lu", threads[i]);
+	    proc_debug (thread, "new thread: %u", threads[i]);
 
 	    ptid = ptid_t (inf->pid, thread->tid, 0);
 
@@ -1220,7 +1222,7 @@ inf_update_signal_thread (struct inf *inf)
 }
 
 
-/* Detachs from INF's inferior task, letting it run once again...  */
+/* Detach from INF's inferior task, letting it run once again...  */
 void
 gnu_nat_target::inf_detach (struct inf *inf)
 {
@@ -1336,8 +1338,8 @@ gnu_nat_target::inf_signal (struct inf *inf, enum gdb_signal sig)
 	  struct exc_state *e = &w->exc;
 
 	  inf_debug (inf, "passing through exception:"
-		     " task = %lu, thread = %lu, exc = %d"
-		     ", code = %d, subcode = %d",
+		     " task = %u, thread = %u, exc = %d"
+		     ", code = %d, subcode = %ld",
 		     w->thread->port, inf->task->port,
 		     e->exception, e->code, e->subcode);
 	  err =
@@ -1630,13 +1632,13 @@ rewait:
 kern_return_t
 S_exception_raise_request (mach_port_t port, mach_port_t reply_port,
 			   thread_t thread_port, task_t task_port,
-			   int exception, int code, int subcode)
+			   int exception, int code, long subcode)
 {
   struct inf *inf = waiting_inf;
   struct proc *thread = inf_port_to_thread (inf, thread_port);
 
   inf_debug (waiting_inf,
-	     "thread = %lu, task = %lu, exc = %d, code = %d, subcode = %d",
+	     "thread = %u, task = %u, exc = %d, code = %d, subcode = %ld",
 	     thread_port, task_port, exception, code, subcode);
 
   if (!thread)
@@ -1670,13 +1672,13 @@ S_exception_raise_request (mach_port_t port, mach_port_t reply_port,
 	{
 	  if (thread->exc_port == port)
 	    {
-	      inf_debug (waiting_inf, "Handler is thread exception port <%lu>",
+	      inf_debug (waiting_inf, "Handler is thread exception port <%u>",
 			 thread->saved_exc_port);
 	      inf->wait.exc.handler = thread->saved_exc_port;
 	    }
 	  else
 	    {
-	      inf_debug (waiting_inf, "Handler is task exception port <%lu>",
+	      inf_debug (waiting_inf, "Handler is task exception port <%u>",
 			 inf->task->saved_exc_port);
 	      inf->wait.exc.handler = inf->task->saved_exc_port;
 	      gdb_assert (inf->task->exc_port == port);
@@ -1726,7 +1728,7 @@ do_mach_notify_dead_name (mach_port_t notify, mach_port_t dead_port)
 {
   struct inf *inf = waiting_inf;
 
-  inf_debug (waiting_inf, "port = %lu", dead_port);
+  inf_debug (waiting_inf, "port = %u", dead_port);
 
   if (inf->task && inf->task->port == dead_port)
     {
@@ -2103,6 +2105,9 @@ gnu_nat_target::create_inferior (const char *exec_file,
 				 char **env,
 				 int from_tty)
 {
+  if (exec_file == nullptr)
+    no_executable_specified_error ();
+
   struct inf *inf = cur_inf ();
   inferior *inferior = current_inferior ();
   int pid;
@@ -2168,7 +2173,7 @@ gnu_nat_target::attach (const char *args, int from_tty)
 
   pid = parse_pid_to_attach (args);
 
-  if (pid == getpid ())		/* Trying to masturbate?  */
+  if (pid == getpid ())
     error (_("I refuse to debug myself!"));
 
   target_announce_attach (from_tty, pid);
@@ -2356,7 +2361,7 @@ gnu_write_inferior (task_t task, CORE_ADDR addr,
 	/* Check for holes in memory.  */
 	if (old_address != region_address)
 	  {
-	    warning (_("No memory at 0x%lx. Nothing written"),
+	    warning (_("No memory at 0x%zx. Nothing written"),
 		     old_address);
 	    err = KERN_SUCCESS;
 	    length = 0;
@@ -2365,7 +2370,7 @@ gnu_write_inferior (task_t task, CORE_ADDR addr,
 
 	if (!(max_protection & VM_PROT_WRITE))
 	  {
-	    warning (_("Memory at address 0x%lx is unwritable. "
+	    warning (_("Memory at address 0x%zx is unwritable. "
 		       "Nothing written"),
 		     old_address);
 	    err = KERN_SUCCESS;
@@ -2869,7 +2874,7 @@ gnu_nat_target::steal_exc_port (struct proc *proc, mach_port_t name)
 				 name, MACH_MSG_TYPE_COPY_SEND,
 				 &port, &port_type);
   if (err)
-    error (_("Couldn't extract send right %lu from inferior: %s"),
+    error (_("Couldn't extract send right %u from inferior: %s"),
 	   name, safe_strerror (err));
 
   if (proc->saved_exc_port)

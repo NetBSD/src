@@ -120,7 +120,7 @@ proc run_info_sources { extra_args args } {
 	    }
 	}
 
-	# Now check ARGS agaisnt the values held in INFO_SOURCES map.
+	# Now check ARGS against the values held in INFO_SOURCES map.
 	foreach {objfile sourcefile} $args {
 	    # First, figure out if we're expecting SOURCEFILE to be present,
 	    # or not.

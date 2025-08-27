@@ -132,4 +132,14 @@ gdb_test "ptype &*c" "type = (struct|class) Member {(\[\r\n \]+public:)?\[\r\n \
 gdb_test "print operator== (mem1, mem2)" " = false"
 gdb_test "print operator== (mem1, mem1)" " = true"
 
+gdb_test "print mem1()" " = 5"
+gdb_test "print mem1(10)" " = 50"
+gdb_test "print (*&mem1)(2)" " = 10"
+gdb_test "print (c.*mptr)(3)" " = 24"
+gdb_test "print (&c)->m(4)" " = 32"
+gdb_test "print c.m(5)" " = 40"
+gdb_test "print sizeof(mem1(0))/sizeof(int)" " = 1"
+gdb_test "ptype mem1(0)" "type = int"
+gdb_test "print one()" "Couldn't find method A1::operator\\(\\)"
+
 gdb_exit

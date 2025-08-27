@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TEST_TARGET_H
-#define TEST_TARGET_H
+#ifndef GDB_TEST_TARGET_H
+#define GDB_TEST_TARGET_H
 
 #include "process-stratum-target.h"
 
@@ -62,4 +62,4 @@ public:
 } // namespace selftests
 #endif /* GDB_SELF_TEST */
 
-#endif /* !defined (TEST_TARGET_H) */
+#endif /* GDB_TEST_TARGET_H */

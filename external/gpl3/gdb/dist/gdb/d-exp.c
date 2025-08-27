@@ -810,9 +810,9 @@ static const yytype_int16 yyrline[] =
      322,   324,   326,   328,   330,   331,   335,   339,   344,   345,
      350,   351,   358,   363,   370,   372,   374,   376,   377,   378,
      382,   384,   390,   391,   396,   395,   407,   421,   423,   435,
-     437,   476,   510,   512,   517,   521,   523,   525,   527,   534,
-     539,   545,   552,   557,   562,   566,   581,   599,   601,   603,
-     610,   612,   614,   617,   623
+     437,   478,   512,   514,   519,   523,   525,   527,   529,   536,
+     541,   547,   554,   559,   564,   568,   583,   601,   603,   605,
+     612,   614,   616,   619,   625
 };
 #endif
 
@@ -1862,7 +1862,7 @@ yyreduce:
 
   case 80: /* PrimaryExpression: IdentifierExp  */
 #line 438 "d-exp.y"
-                { struct bound_minimal_symbol msymbol;
+                {
 		  std::string copy = copy_name ((yyvsp[0].sval));
 		  struct field_of_this_result is_a_field_of_this;
 		  struct block_symbol sym;
@@ -1890,21 +1890,23 @@ yyreduce:
 		  else
 		    {
 		      /* Lookup foreign name in global static symbols.  */
-		      msymbol = lookup_bound_minimal_symbol (copy.c_str ());
+		      bound_minimal_symbol msymbol
+			= lookup_minimal_symbol (current_program_space, copy.c_str ());
 		      if (msymbol.minsym != NULL)
 			pstate->push_new<var_msym_value_operation> (msymbol);
-		      else if (!have_full_symbols () && !have_partial_symbols ())
+		      else if (!have_full_symbols (current_program_space)
+			       && !have_partial_symbols (current_program_space))
 			error (_("No symbol table is loaded.  Use the \"file\" command"));
 		      else
 			error (_("No symbol \"%s\" in current context."),
 			       copy.c_str ());
 		    }
 		  }
-#line 1905 "d-exp.c.tmp"
+#line 1907 "d-exp.c.tmp"
     break;
 
   case 81: /* PrimaryExpression: TypeExp '.' IdentifierExp  */
-#line 477 "d-exp.y"
+#line 479 "d-exp.y"
                         { struct type *type = check_typedef ((yyvsp[-2].tval));
 
 			  /* Check if the qualified name is in the global
@@ -1938,105 +1940,105 @@ yyreduce:
 				(type, copy_name ((yyvsp[0].sval)));
 			    }
 			}
-#line 1943 "d-exp.c.tmp"
+#line 1945 "d-exp.c.tmp"
     break;
 
   case 82: /* PrimaryExpression: DOLLAR_VARIABLE  */
-#line 511 "d-exp.y"
+#line 513 "d-exp.y"
                 { pstate->push_dollar ((yyvsp[0].sval)); }
-#line 1949 "d-exp.c.tmp"
+#line 1951 "d-exp.c.tmp"
     break;
 
   case 83: /* PrimaryExpression: NAME_OR_INT  */
-#line 513 "d-exp.y"
+#line 515 "d-exp.y"
                 { d_exp_YYSTYPE val;
 		  parse_number (pstate, (yyvsp[0].sval).ptr, (yyvsp[0].sval).length, 0, &val);
 		  pstate->push_new<long_const_operation>
 		    (val.typed_val_int.type, val.typed_val_int.val); }
-#line 1958 "d-exp.c.tmp"
+#line 1960 "d-exp.c.tmp"
     break;
 
   case 84: /* PrimaryExpression: NULL_KEYWORD  */
-#line 518 "d-exp.y"
+#line 520 "d-exp.y"
                 { struct type *type = parse_d_type (pstate)->builtin_void;
 		  type = lookup_pointer_type (type);
 		  pstate->push_new<long_const_operation> (type, 0); }
-#line 1966 "d-exp.c.tmp"
+#line 1968 "d-exp.c.tmp"
     break;
 
   case 85: /* PrimaryExpression: TRUE_KEYWORD  */
-#line 522 "d-exp.y"
+#line 524 "d-exp.y"
                 { pstate->push_new<bool_operation> (true); }
-#line 1972 "d-exp.c.tmp"
+#line 1974 "d-exp.c.tmp"
     break;
 
   case 86: /* PrimaryExpression: FALSE_KEYWORD  */
-#line 524 "d-exp.y"
+#line 526 "d-exp.y"
                 { pstate->push_new<bool_operation> (false); }
-#line 1978 "d-exp.c.tmp"
+#line 1980 "d-exp.c.tmp"
     break;
 
   case 87: /* PrimaryExpression: INTEGER_LITERAL  */
-#line 526 "d-exp.y"
+#line 528 "d-exp.y"
                 { pstate->push_new<long_const_operation> ((yyvsp[0].typed_val_int).type, (yyvsp[0].typed_val_int).val); }
-#line 1984 "d-exp.c.tmp"
+#line 1986 "d-exp.c.tmp"
     break;
 
   case 88: /* PrimaryExpression: FLOAT_LITERAL  */
-#line 528 "d-exp.y"
+#line 530 "d-exp.y"
                 {
 		  float_data data;
 		  std::copy (std::begin ((yyvsp[0].typed_val_float).val), std::end ((yyvsp[0].typed_val_float).val),
 			     std::begin (data));
 		  pstate->push_new<float_const_operation> ((yyvsp[0].typed_val_float).type, data);
 		}
-#line 1995 "d-exp.c.tmp"
+#line 1997 "d-exp.c.tmp"
     break;
 
   case 89: /* PrimaryExpression: CHARACTER_LITERAL  */
-#line 535 "d-exp.y"
+#line 537 "d-exp.y"
                 { struct stoken_vector vec;
 		  vec.len = 1;
 		  vec.tokens = &(yyvsp[0].tsval);
 		  pstate->push_c_string (0, &vec); }
-#line 2004 "d-exp.c.tmp"
+#line 2006 "d-exp.c.tmp"
     break;
 
   case 90: /* PrimaryExpression: StringExp  */
-#line 540 "d-exp.y"
+#line 542 "d-exp.y"
                 { int i;
 		  pstate->push_c_string (0, &(yyvsp[0].svec));
 		  for (i = 0; i < (yyvsp[0].svec).len; ++i)
 		    xfree ((yyvsp[0].svec).tokens[i].ptr);
 		  xfree ((yyvsp[0].svec).tokens); }
-#line 2014 "d-exp.c.tmp"
+#line 2016 "d-exp.c.tmp"
     break;
 
   case 91: /* PrimaryExpression: ArrayLiteral  */
-#line 546 "d-exp.y"
+#line 548 "d-exp.y"
                 {
 		  std::vector<operation_up> args
 		    = pstate->pop_vector ((yyvsp[0].ival));
 		  pstate->push_new<array_operation>
 		    (0, (yyvsp[0].ival) - 1, std::move (args));
 		}
-#line 2025 "d-exp.c.tmp"
+#line 2027 "d-exp.c.tmp"
     break;
 
   case 92: /* PrimaryExpression: TYPEOF_KEYWORD '(' Expression ')'  */
-#line 553 "d-exp.y"
+#line 555 "d-exp.y"
                 { pstate->wrap<typeof_operation> (); }
-#line 2031 "d-exp.c.tmp"
+#line 2033 "d-exp.c.tmp"
     break;
 
   case 93: /* ArrayLiteral: '[' ArgumentList_opt ']'  */
-#line 558 "d-exp.y"
+#line 560 "d-exp.y"
                 { (yyval.ival) = pstate->arglist_len; }
-#line 2037 "d-exp.c.tmp"
+#line 2039 "d-exp.c.tmp"
     break;
 
   case 95: /* StringExp: STRING_LITERAL  */
-#line 567 "d-exp.y"
+#line 569 "d-exp.y"
                 { /* We copy the string here, and not in the
 		     lexer, to guarantee that we do not leak a
 		     string.  Note that we follow the
@@ -2051,11 +2053,11 @@ yyreduce:
 		  vec->ptr = (char *) xmalloc ((yyvsp[0].tsval).length + 1);
 		  memcpy (vec->ptr, (yyvsp[0].tsval).ptr, (yyvsp[0].tsval).length + 1);
 		}
-#line 2056 "d-exp.c.tmp"
+#line 2058 "d-exp.c.tmp"
     break;
 
   case 96: /* StringExp: StringExp STRING_LITERAL  */
-#line 582 "d-exp.y"
+#line 584 "d-exp.y"
                 { /* Note that we NUL-terminate here, but just
 		     for convenience.  */
 		  char *p;
@@ -2070,63 +2072,63 @@ yyreduce:
 		  (yyval.svec).tokens[(yyval.svec).len - 1].length = (yyvsp[0].tsval).length;
 		  (yyval.svec).tokens[(yyval.svec).len - 1].ptr = p;
 		}
-#line 2075 "d-exp.c.tmp"
+#line 2077 "d-exp.c.tmp"
     break;
 
   case 97: /* TypeExp: '(' TypeExp ')'  */
-#line 600 "d-exp.y"
+#line 602 "d-exp.y"
                 { /* Do nothing.  */ }
-#line 2081 "d-exp.c.tmp"
+#line 2083 "d-exp.c.tmp"
     break;
 
   case 98: /* TypeExp: BasicType  */
-#line 602 "d-exp.y"
+#line 604 "d-exp.y"
                 { pstate->push_new<type_operation> ((yyvsp[0].tval)); }
-#line 2087 "d-exp.c.tmp"
+#line 2089 "d-exp.c.tmp"
     break;
 
   case 99: /* TypeExp: BasicType BasicType2  */
-#line 604 "d-exp.y"
+#line 606 "d-exp.y"
                 { (yyval.tval) = type_stack->follow_types ((yyvsp[-1].tval));
 		  pstate->push_new<type_operation> ((yyval.tval));
 		}
-#line 2095 "d-exp.c.tmp"
+#line 2097 "d-exp.c.tmp"
     break;
 
   case 100: /* BasicType2: '*'  */
-#line 611 "d-exp.y"
+#line 613 "d-exp.y"
                 { type_stack->push (tp_pointer); }
-#line 2101 "d-exp.c.tmp"
+#line 2103 "d-exp.c.tmp"
     break;
 
   case 101: /* BasicType2: '*' BasicType2  */
-#line 613 "d-exp.y"
+#line 615 "d-exp.y"
                 { type_stack->push (tp_pointer); }
-#line 2107 "d-exp.c.tmp"
+#line 2109 "d-exp.c.tmp"
     break;
 
   case 102: /* BasicType2: '[' INTEGER_LITERAL ']'  */
-#line 615 "d-exp.y"
+#line 617 "d-exp.y"
                 { type_stack->push ((yyvsp[-1].typed_val_int).val);
 		  type_stack->push (tp_array); }
-#line 2114 "d-exp.c.tmp"
+#line 2116 "d-exp.c.tmp"
     break;
 
   case 103: /* BasicType2: '[' INTEGER_LITERAL ']' BasicType2  */
-#line 618 "d-exp.y"
+#line 620 "d-exp.y"
                 { type_stack->push ((yyvsp[-2].typed_val_int).val);
 		  type_stack->push (tp_array); }
-#line 2121 "d-exp.c.tmp"
+#line 2123 "d-exp.c.tmp"
     break;
 
   case 104: /* BasicType: TYPENAME  */
-#line 624 "d-exp.y"
+#line 626 "d-exp.y"
                 { (yyval.tval) = (yyvsp[0].tsym).type; }
-#line 2127 "d-exp.c.tmp"
+#line 2129 "d-exp.c.tmp"
     break;
 
 
-#line 2131 "d-exp.c.tmp"
+#line 2133 "d-exp.c.tmp"
 
       default: break;
     }
@@ -2319,7 +2321,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 627 "d-exp.y"
+#line 629 "d-exp.y"
 
 
 /* Return true if the type is aggregate-like.  */

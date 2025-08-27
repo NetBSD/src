@@ -42,6 +42,8 @@ if {[dap_initialize] == ""} {
     return
 }
 
+set launch_id [dap_launch $testfile]
+
 set obj [dap_check_request_and_response "set breakpoint on stop function" \
 	     setFunctionBreakpoints \
 	     {o breakpoints [a [o name [s stop]]]}]
@@ -49,9 +51,8 @@ set fn_bpno [dap_get_breakpoint_number $obj]
 
 dap_check_request_and_response "configurationDone" configurationDone
 
-if {[dap_launch $testfile] == ""} {
-    return
-}
+dap_check_response "launch response" launch $launch_id
+
 dap_wait_for_event_and_check "stopped at function breakpoint" stopped \
     "body reason" breakpoint \
     "body hitBreakpointIds" $fn_bpno

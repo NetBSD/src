@@ -18,8 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#ifndef GDBARCH_H
-#define GDBARCH_H
+#ifndef GDB_GDBARCH_H
+#define GDB_GDBARCH_H
 
 #include <vector>
 #include "frame.h"
@@ -59,6 +59,7 @@ struct ui_out;
 struct inferior;
 struct x86_xsave_layout;
 struct solib_ops;
+struct core_file_exec_context;
 
 #include "regcache.h"
 
@@ -316,7 +317,7 @@ extern obstack *gdbarch_obstack (gdbarch *arch);
 
 extern char *gdbarch_obstack_strdup (struct gdbarch *arch, const char *string);
 
-/* Helper function.  Force an update of the current architecture.
+/* Helper function.  Force an update of INF's architecture.
 
    The actual architecture selected is determined by INFO, ``(gdb) set
    architecture'' et.al., the existing architecture and BFD's default
@@ -325,8 +326,7 @@ extern char *gdbarch_obstack_strdup (struct gdbarch *arch, const char *string);
 
    Returns non-zero if the update succeeds.  */
 
-extern int gdbarch_update_p (struct gdbarch_info info);
-
+extern int gdbarch_update_p (inferior *inf, gdbarch_info info);
 
 /* Helper function.  Find an architecture matching info.
 
@@ -370,7 +370,7 @@ gdbarch_num_cooked_regs (gdbarch *arch)
   return gdbarch_num_regs (arch) + gdbarch_num_pseudo_regs (arch);
 }
 
-/* Return true if stacks for ARCH grow down, otherwise return true.  */
+/* Return true if stacks for ARCH grow down, otherwise return false.  */
 
 static inline bool
 gdbarch_stack_grows_down (gdbarch *arch)
@@ -378,4 +378,4 @@ gdbarch_stack_grows_down (gdbarch *arch)
   return gdbarch_inner_than (arch, 1, 2);
 }
 
-#endif
+#endif /* GDB_GDBARCH_H */

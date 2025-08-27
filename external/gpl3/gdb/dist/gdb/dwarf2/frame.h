@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF2_FRAME_H
-#define DWARF2_FRAME_H 1
+#ifndef GDB_DWARF2_FRAME_H
+#define GDB_DWARF2_FRAME_H
 
 struct gdbarch;
 class frame_info_ptr;
@@ -294,4 +294,4 @@ extern void *dwarf2_frame_get_fn_data (const frame_info_ptr &this_frame,
 				       void **this_cache,
 				       fn_prev_register cookie);
 
-#endif /* dwarf2-frame.h */
+#endif /* GDB_DWARF2_FRAME_H */

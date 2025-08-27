@@ -59,3 +59,8 @@ gdb_test "guile (define bad-enum-htab (make-enum-hashtable #f))" \
 gdb_test "guile (define bad-enum-htab (make-enum-hashtable (lookup-type \"int\")))" \
     "Wrong type argument in position 1 \\(expecting enum\\): #<gdb:type int>.*" \
     "make-enum-hashtable from int"
+
+gdb_test_no_output "guile (define foo-ref (parse-and-eval \"foo_ref\"))" \
+    "get foo-ref value"
+gdb_test "guile (get-basic-type (value-type foo-ref))" "#<gdb:type int>" \
+    "check get-basic-type"

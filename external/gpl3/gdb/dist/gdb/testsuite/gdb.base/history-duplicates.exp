@@ -46,7 +46,7 @@ proc run_print_on_each_thing { things } {
     set index 0
 
     foreach thing $things {
-	gdb_test "print $thing" "" "printing $thing (item #$index)"
+	gdb_test "print $thing" "" "printing $thing, item #$index"
 	incr index
     }
 }
@@ -90,8 +90,8 @@ with_test_prefix "remove-duplicates=1" {
     check_prev_history_entry "print 1"
     check_prev_history_entry "print 2"
     check_prev_history_entry "print 0"
-    check_prev_history_entry "print 1" "(again)"
-    check_prev_history_entry "print 0" "(again)"
+    check_prev_history_entry "print 1" ", again"
+    check_prev_history_entry "print 0" ", again"
 }
 
 
@@ -104,9 +104,9 @@ with_test_prefix "remove-duplicates=0" {
     run_print_on_each_thing { 0 0 1 1 }
 
     check_prev_history_entry "print 1"
-    check_prev_history_entry "print 1" "(again)"
+    check_prev_history_entry "print 1" ", again"
     check_prev_history_entry "print 0"
-    check_prev_history_entry "print 0" "(again)"
+    check_prev_history_entry "print 0" ", again"
 }
 
 

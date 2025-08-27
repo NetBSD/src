@@ -19,7 +19,8 @@ require allow_python_tests
 
 standard_testfile
 
-if {[build_executable "failed to prepare" ${testfile} ${srcfile}]} {
+if {[build_executable "failed to prepare" ${testfile} ${srcfile} \
+    {debug build-id}]} {
     return -1
 }
 

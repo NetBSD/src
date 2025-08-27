@@ -28,7 +28,7 @@
 
 #include "bfin-sim.h"
 
-/* We keep the same inital structure layout with DMA enabled devices.  */
+/* We keep the same initial structure layout with DMA enabled devices.  */
 struct dv_bfin {
   bu32 base;
   struct hw *dma_master;

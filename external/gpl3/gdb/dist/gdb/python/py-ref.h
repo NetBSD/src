@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PYTHON_PY_REF_H
-#define PYTHON_PY_REF_H
+#ifndef GDB_PYTHON_PY_REF_H
+#define GDB_PYTHON_PY_REF_H
 
 #include "gdbsupport/gdb_ref_ptr.h"
 
@@ -42,4 +42,4 @@ struct gdbpy_ref_policy
 template<typename T = PyObject> using gdbpy_ref
   = gdb::ref_ptr<T, gdbpy_ref_policy<T>>;
 
-#endif /* PYTHON_PY_REF_H */
+#endif /* GDB_PYTHON_PY_REF_H */

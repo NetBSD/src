@@ -67,7 +67,7 @@ print_run_body (lf *file, const gen_entry *table)
 {
   /* Output the function to execute real code:
 
-     Unfortunatly, there are multiple cases to consider vis:
+     Unfortunately, there are multiple cases to consider vis:
 
      <icache> X <smp>
 

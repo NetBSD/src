@@ -73,7 +73,7 @@ foreach_mi_ui_mode mode {
     # UI.
     if {$mode eq "separate"} {
 	with_spawn_id $gdb_main_spawn_id {
-	    gdb_test_multiple "" "drain CLI output upto breakpoint" {
+	    gdb_test_multiple "" "drain CLI output up to breakpoint" {
 		-re "Thread 1 \[^\r\n\]+ hit Breakpoint $decimal,\
 		      breakpt \\(\\) at\
 		      \[^\r\n\]+\r\n$decimal\\s+\[^\r\n\]+\r\n" {

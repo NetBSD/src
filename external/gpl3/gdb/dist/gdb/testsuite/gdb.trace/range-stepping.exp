@@ -67,6 +67,7 @@ range_stepping_with_tracepoint "trace"
 
 require allow_shlib_tests
 
+require allow_in_proc_agent
 set libipa [get_in_proc_agent]
 set remote_libipa [gdb_load_shlib $libipa]
 

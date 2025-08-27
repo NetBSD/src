@@ -373,131 +373,136 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
 
 /* Section contains the set of dynamic shared objects used when
    statically linking.  */
-#define SHT_MIPS_LIBLIST	0x70000000
+#define SHT_MIPS_LIBLIST	(SHT_LOPROC + 0)
 
 /* I'm not sure what this is, but it's used on Irix 5.  */
-#define SHT_MIPS_MSYM		0x70000001
+#define SHT_MIPS_MSYM		(SHT_LOPROC + 1)
 
 /* Section contains list of symbols whose definitions conflict with
    symbols defined in shared objects.  */
-#define SHT_MIPS_CONFLICT	0x70000002
+#define SHT_MIPS_CONFLICT	(SHT_LOPROC + 2)
 
 /* Section contains the global pointer table.  */
-#define SHT_MIPS_GPTAB		0x70000003
+#define SHT_MIPS_GPTAB		(SHT_LOPROC + 3)
 
 /* Section contains microcode information.  The exact format is
    unspecified.  */
-#define SHT_MIPS_UCODE		0x70000004
+#define SHT_MIPS_UCODE		(SHT_LOPROC + 4)
 
 /* Section contains some sort of debugging information.  The exact
    format is unspecified.  It's probably ECOFF symbols.  */
-#define SHT_MIPS_DEBUG		0x70000005
+#define SHT_MIPS_DEBUG		(SHT_LOPROC + 5)
 
 /* Section contains register usage information.  */
-#define SHT_MIPS_REGINFO	0x70000006
+#define SHT_MIPS_REGINFO	(SHT_LOPROC + 6)
 
 /* ??? */
-#define SHT_MIPS_PACKAGE	0x70000007
+#define SHT_MIPS_PACKAGE	(SHT_LOPROC + 7)
 
 /* ??? */
-#define SHT_MIPS_PACKSYM	0x70000008
+#define SHT_MIPS_PACKSYM	(SHT_LOPROC + 8)
 
 /* ??? */
-#define SHT_MIPS_RELD		0x70000009
+#define SHT_MIPS_RELD		(SHT_LOPROC + 9)
 
+/* Note: SHT_LOPROC + 0xa is missing...  */
+  
 /* Section contains interface information.  */
-#define SHT_MIPS_IFACE		0x7000000b
+#define SHT_MIPS_IFACE		(SHT_LOPROC + 0xb)
 
 /* Section contains description of contents of another section.  */
-#define SHT_MIPS_CONTENT	0x7000000c
+#define SHT_MIPS_CONTENT	(SHT_LOPROC + 0xc)
 
 /* Section contains miscellaneous options.  */
-#define SHT_MIPS_OPTIONS	0x7000000d
+#define SHT_MIPS_OPTIONS	(SHT_LOPROC + 0xd)
+
+/* Note: SHT_LOPROC + 0xe is missing...  */
+/* Note: SHT_LOPROC + 0xf is missing...  */
 
 /* ??? */
-#define SHT_MIPS_SHDR		0x70000010
+#define SHT_MIPS_SHDR		(SHT_LOPROC + 0x10)
 
 /* ??? */
-#define SHT_MIPS_FDESC		0x70000011
+#define SHT_MIPS_FDESC		(SHT_LOPROC + 0x11)
 
 /* ??? */
-#define SHT_MIPS_EXTSYM		0x70000012
+#define SHT_MIPS_EXTSYM		(SHT_LOPROC + 0x12)
 
 /* ??? */
-#define SHT_MIPS_DENSE		0x70000013
+#define SHT_MIPS_DENSE		(SHT_LOPROC + 0x13)
 
 /* ??? */
-#define SHT_MIPS_PDESC		0x70000014
+#define SHT_MIPS_PDESC		(SHT_LOPROC + 0x14)
 
 /* ??? */
-#define SHT_MIPS_LOCSYM		0x70000015
+#define SHT_MIPS_LOCSYM		(SHT_LOPROC + 0x15)
 
 /* ??? */
-#define SHT_MIPS_AUXSYM		0x70000016
+#define SHT_MIPS_AUXSYM		(SHT_LOPROC + 0x16)
 
 /* ??? */
-#define SHT_MIPS_OPTSYM		0x70000017
+#define SHT_MIPS_OPTSYM		(SHT_LOPROC + 0x17)
 
 /* ??? */
-#define SHT_MIPS_LOCSTR		0x70000018
+#define SHT_MIPS_LOCSTR		(SHT_LOPROC + 0x18)
 
 /* ??? */
-#define SHT_MIPS_LINE		0x70000019
+#define SHT_MIPS_LINE		(SHT_LOPROC + 0x19)
 
 /* ??? */
-#define SHT_MIPS_RFDESC		0x7000001a
+#define SHT_MIPS_RFDESC		(SHT_LOPROC + 0x1a)
 
 /* Delta C++: symbol table */
-#define SHT_MIPS_DELTASYM	0x7000001b
+#define SHT_MIPS_DELTASYM	(SHT_LOPROC + 0x1b)
 
 /* Delta C++: instance table */
-#define SHT_MIPS_DELTAINST	0x7000001c
+#define SHT_MIPS_DELTAINST	(SHT_LOPROC + 0x1c)
 
 /* Delta C++: class table */
-#define SHT_MIPS_DELTACLASS	0x7000001d
+#define SHT_MIPS_DELTACLASS	(SHT_LOPROC + 0x1d)
 
 /* DWARF debugging section.  */
-#define SHT_MIPS_DWARF		0x7000001e
+#define SHT_MIPS_DWARF		(SHT_LOPROC + 0x1e)
 
 /* Delta C++: declarations */
-#define SHT_MIPS_DELTADECL	0x7000001f
+#define SHT_MIPS_DELTADECL	(SHT_LOPROC + 0x1f)
 
 /* List of libraries the binary depends on.  Includes a time stamp, version
    number.  */
-#define SHT_MIPS_SYMBOL_LIB	0x70000020
+#define SHT_MIPS_SYMBOL_LIB	(SHT_LOPROC + 0x20)
 
 /* Events section.  */
-#define SHT_MIPS_EVENTS		0x70000021
+#define SHT_MIPS_EVENTS		(SHT_LOPROC + 0x21)
 
 /* ??? */
-#define SHT_MIPS_TRANSLATE	0x70000022
+#define SHT_MIPS_TRANSLATE	(SHT_LOPROC + 0x22)
 
 /* Special pixie sections */
-#define SHT_MIPS_PIXIE		0x70000023
+#define SHT_MIPS_PIXIE		(SHT_LOPROC + 0x23)
 
 /* Address translation table (for debug info) */
-#define SHT_MIPS_XLATE		0x70000024
+#define SHT_MIPS_XLATE		(SHT_LOPROC + 0x24)
 
 /* SGI internal address translation table (for debug info) */
-#define SHT_MIPS_XLATE_DEBUG	0x70000025
+#define SHT_MIPS_XLATE_DEBUG	(SHT_LOPROC + 0x25)
 
 /* Intermediate code */
-#define SHT_MIPS_WHIRL		0x70000026
+#define SHT_MIPS_WHIRL		(SHT_LOPROC + 0x26)
 
 /* C++ exception handling region info */
-#define SHT_MIPS_EH_REGION	0x70000027
+#define SHT_MIPS_EH_REGION	(SHT_LOPROC + 0x27)
 
 /* Obsolete address translation table (for debug info) */
-#define SHT_MIPS_XLATE_OLD	0x70000028
+#define SHT_MIPS_XLATE_OLD	(SHT_LOPROC + 0x28)
 
 /* Runtime procedure descriptor table exception information (ucode) ??? */
-#define SHT_MIPS_PDR_EXCEPTION	0x70000029
+#define SHT_MIPS_PDR_EXCEPTION	(SHT_LOPROC + 0x29)
 
 /* ABI related flags section.  */
-#define SHT_MIPS_ABIFLAGS	0x7000002a
+#define SHT_MIPS_ABIFLAGS	(SHT_LOPROC + 0x2a)
 
 /* GNU style symbol hash table with xlat.  */
-#define SHT_MIPS_XHASH		0x7000002b
+#define SHT_MIPS_XHASH		(SHT_LOPROC + 0x2b)
 
 /* A section of type SHT_MIPS_LIBLIST contains an array of the
    following structure.  The sh_link field is the section index of the

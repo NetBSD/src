@@ -47,6 +47,11 @@ typedef bool (expand_symtabs_file_matcher_ftype) (const char *filename,
 typedef bool (expand_symtabs_symbol_matcher_ftype) (const char *name);
 
 /* Callback for quick_symbol_functions->expand_symtabs_matching
+   to match a language.  */
+
+typedef bool (expand_symtabs_lang_matcher_ftype) (enum language lang);
+
+/* Callback for quick_symbol_functions->expand_symtabs_matching
    to be called after a symtab has been expanded.  If this returns
    true, more symtabs are checked; if it returns false, iteration
    stops.  */
@@ -122,6 +127,10 @@ struct quick_symbol_functions
 
   /* Expand all symbol tables in OBJFILE matching some criteria.
 
+     If LANG_MATCHER returns false, expansion of the symbol table may be
+     skipped.  It may also not be skipped, which the caller needs to take into
+     account.
+
      FILE_MATCHER is called for each file in OBJFILE.  The file name
      is passed to it.  If the matcher returns false, the file is
      skipped.  If FILE_MATCHER is NULL the file is not skipped.  If
@@ -154,7 +163,9 @@ struct quick_symbol_functions
      gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
      gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
      block_search_flags search_flags,
-     domain_search_flags domain) = 0;
+     domain_search_flags domain,
+     gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher
+       = nullptr) = 0;
 
   /* Return the comp unit from OBJFILE that contains PC and
      SECTION.  Return NULL if there is no such compunit.  This
@@ -163,8 +174,8 @@ struct quick_symbol_functions
      compunit that contains a symbol whose address is closest to
      PC.  */
   virtual struct compunit_symtab *find_pc_sect_compunit_symtab
-    (struct objfile *objfile, struct bound_minimal_symbol msymbol,
-     CORE_ADDR pc, struct obj_section *section, int warn_if_readin) = 0;
+    (struct objfile *objfile, bound_minimal_symbol msymbol, CORE_ADDR pc,
+     struct obj_section *section, int warn_if_readin) = 0;
 
   /* Return the comp unit from OBJFILE that contains a symbol at
      ADDRESS.  Return NULL if there is no such comp unit.  Unlike

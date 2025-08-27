@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_LINUX_WAITPID_H
-#define NAT_LINUX_WAITPID_H
+#ifndef GDB_NAT_LINUX_WAITPID_H
+#define GDB_NAT_LINUX_WAITPID_H
 
 /* Wrapper function for waitpid which handles EINTR.  */
 extern int my_waitpid (int pid, int *status, int flags);
@@ -27,4 +27,4 @@ extern int my_waitpid (int pid, int *status, int flags);
    messages only.  */
 extern std::string status_to_str (int status);
 
-#endif /* NAT_LINUX_WAITPID_H */
+#endif /* GDB_NAT_LINUX_WAITPID_H */

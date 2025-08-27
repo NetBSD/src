@@ -85,7 +85,7 @@ gdb_test_multiple "continue" "go to end of main forward" {
     -re ".*Breakpoint $decimal,.*$srcfile:$endmain.*$gdb_prompt $"  {
 	pass "go to end of main forward"
     }
-    -re "No more reverse-execution history.* end main .*$gdb_prompt $" {
+    -re -wrap "Reached end of recorded history.*Following forward.*" {
 	pass "go to end of main forward"
     }
 }

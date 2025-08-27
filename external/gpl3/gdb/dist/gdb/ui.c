@@ -106,7 +106,7 @@ ui::input_interactive_p () const
 
 
 /* When there is an event ready on the stdin file descriptor, instead
-   of calling readline directly throught the callback function, or
+   of calling readline directly through the callback function, or
    instead of calling gdb_readline_no_editing_callback, give gdb a
    chance to detect errors and do something.  */
 

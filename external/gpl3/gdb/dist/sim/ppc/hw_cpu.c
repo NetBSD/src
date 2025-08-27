@@ -118,7 +118,7 @@ hw_cpu_init_address(device *me)
 
 /* Take the interrupt and synchronize its delivery with the clock.  If
    we've not yet scheduled an interrupt for the next clock tick, take
-   the oportunity to do it now */
+   the opportunity to do it now */
 
 static void
 hw_cpu_interrupt_event(device *me,

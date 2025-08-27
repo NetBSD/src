@@ -114,7 +114,7 @@ struct pstate {
     uint64_t          pwdtime;	/* Cycles in power-down mode */
     uint64_t          nstore;	/* Number of load instructions */
     uint64_t          nload;	/* Number of store instructions */
-    uint64_t          nannul;	/* Number of annuled instructions */
+    uint64_t          nannul;	/* Number of annulled instructions */
     uint64_t          nbranch;	/* Number of branch instructions */
     uint32_t          ildreg;	/* Destination of last load instruction */
     uint64_t          ildtime;	/* Last time point for load dependency */

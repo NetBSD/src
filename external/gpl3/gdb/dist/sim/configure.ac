@@ -37,7 +37,7 @@ yes | no) ;;
 esac])
 
 AC_ARG_ENABLE([example-sims],
-	      [AC_HELP_STRING([--enable-example-sims],
+	      [AS_HELP_STRING([--enable-example-sims],
 			      [enable example GNU simulators])])
 
 AC_ARG_ENABLE(targets,

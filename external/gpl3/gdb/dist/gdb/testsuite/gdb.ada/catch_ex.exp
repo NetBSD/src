@@ -55,13 +55,13 @@ gdb_test "info break" \
 set catchpoint_msg \
   "Catchpoint $any_nb, CONSTRAINT_ERROR (\\\(ignore C_E\\\) )?at $any_addr in foo \\\(\\\).*at .*foo.adb:$any_nb"
 gdb_test "continue" \
-	 "Continuing\.$eol$eol$catchpoint_msg$eol.*SPOT1" \
+	 "Continuing\\.$eol$eol$catchpoint_msg$eol.*SPOT1" \
          "continuing to first exception"
 
 set catchpoint_msg \
   "Catchpoint $any_nb, PROGRAM_ERROR (\\\(foo\\.adb:$decimal explicit raise\\\) )?at $any_addr in foo \\\(\\\).*at .*foo.adb:$any_nb"
 gdb_test "continue" \
-	 "Continuing\.$eol$eol$catchpoint_msg$eol.*SPOT2" \
+	 "Continuing\\.$eol$eol$catchpoint_msg$eol.*SPOT2" \
          "continuing to second exception"
 
 ################################################
@@ -108,23 +108,23 @@ gdb_test "info break" \
 set catchpoint_msg \
   "Catchpoint $any_nb, PROGRAM_ERROR (\\\(foo.adb:$decimal explicit raise\\\) )?at $any_addr in foo \\\(\\\).*at .*foo.adb:$any_nb"
 gdb_test "continue" \
-	 "Continuing\.$eol$eol$catchpoint_msg$eol.*SPOT2" \
+	 "Continuing\\.$eol$eol$catchpoint_msg$eol.*SPOT2" \
          "continuing to Program_Error exception"
 
 set catchpoint_msg \
   "Catchpoint $any_nb, failed assertion at $any_addr in foo \\\(\\\).*at .*foo.adb:$any_nb"
 gdb_test "continue" \
-	 "Continuing\.$eol$eol$catchpoint_msg$eol.*SPOT3" \
+	 "Continuing\\.$eol$eol$catchpoint_msg$eol.*SPOT3" \
          "continuing to failed assertion"
 
 set catchpoint_msg \
   "Catchpoint $any_nb, unhandled CONSTRAINT_ERROR at $any_addr in foo \\\(\\\).*at .*foo.adb:$any_nb"
 gdb_test "continue" \
-	 "Continuing\.$eol$eol$catchpoint_msg$eol.*SPOT4" \
+	 "Continuing\\.$eol$eol$catchpoint_msg$eol.*SPOT4" \
          "continuing to unhandled exception"
 
 gdb_test "continue" \
-         "Continuing\..*$inferior_exited_re.*" \
+         "Continuing\\..*$inferior_exited_re.*" \
          "continuing to program completion"
 
 #################################
@@ -148,12 +148,12 @@ gdb_test "tcatch exception" \
 set temp_catchpoint_msg \
   "Temporary catchpoint $any_nb, CONSTRAINT_ERROR (\\\(.*\\\) )?at $any_addr in foo \\\(\\\).*at .*foo.adb:$any_nb"
 gdb_test "continue" \
-	 "Continuing\.$eol$eol$temp_catchpoint_msg$eol.*SPOT1" \
+	 "Continuing\\.$eol$eol$temp_catchpoint_msg$eol.*SPOT1" \
          "continuing to temporary catchpoint"
 
 with_test_prefix "temporary catchpoint" {
     gdb_test "continue" \
-	"Continuing\..*$inferior_exited_re.*" \
+	"Continuing\\..*$inferior_exited_re.*" \
 	"continuing to program completion"
 }
 

@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (SKIP_H)
-#define SKIP_H
+#ifndef GDB_SKIP_H
+#define GDB_SKIP_H
 
 struct symtab_and_line;
 
@@ -25,4 +25,4 @@ struct symtab_and_line;
 bool function_name_is_marked_for_skip (const char *function_name,
 				       const symtab_and_line &function_sal);
 
-#endif /* !defined (SKIP_H) */
+#endif /* GDB_SKIP_H */

@@ -36,5 +36,19 @@ gdb_test "show cp-abi" {The currently selected C\+\+ ABI is "gnu-v3".*}
 
 gdb_load $binfile
 
+set re_address_class "@\[^\r\n\]+"
+
+set re_class_ptr_const \
+    [string cat \
+	 [string_to_regexp "class {...} * const"] "( $re_address_class)?"]
+
 gdb_test "ptype crash" \
-    "type = class crash {\[\r\n \t\]*public:\[\r\n \t\]*crash\\(int \\(class {\\.\\.\\.}::\\*\\)\\(class {\\.\\.\\.} \\* const\\)\\);\[\r\n \t\]*}"
+    [multi_line \
+	 "type = class crash {" \
+	 "" \
+	 "  public:" \
+	 [string cat \
+	      [string_to_regexp "    crash(int (class {...}::*)("] \
+	      $re_class_ptr_const \
+	      [string_to_regexp "));"]] \
+	 "}"]

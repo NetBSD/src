@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (GO_LANG_H)
-#define GO_LANG_H 1
+#ifndef GDB_GO_LANG_H
+#define GDB_GO_LANG_H
 
 struct type_print_options;
 
@@ -144,4 +144,4 @@ public:
   { return true; }
 };
 
-#endif /* !defined (GO_LANG_H) */
+#endif /* GDB_GO_LANG_H */

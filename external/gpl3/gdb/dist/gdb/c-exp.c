@@ -962,23 +962,23 @@ static const yytype_int16 yyrline[] =
      785,   801,   817,   834,   844,   853,   860,   873,   882,   893,
      902,   925,   928,   934,   941,   960,   964,   968,   972,   979,
      996,  1014,  1046,  1056,  1062,  1070,  1078,  1084,  1098,  1111,
-    1128,  1139,  1155,  1164,  1165,  1176,  1248,  1249,  1253,  1255,
-    1257,  1259,  1261,  1266,  1274,  1275,  1279,  1280,  1285,  1284,
-    1288,  1287,  1290,  1292,  1294,  1296,  1300,  1307,  1309,  1310,
-    1313,  1315,  1323,  1331,  1338,  1346,  1348,  1350,  1352,  1356,
-    1361,  1373,  1380,  1383,  1386,  1389,  1392,  1395,  1398,  1401,
-    1404,  1407,  1410,  1413,  1416,  1419,  1422,  1425,  1428,  1431,
-    1434,  1437,  1440,  1443,  1446,  1449,  1452,  1455,  1458,  1463,
-    1468,  1473,  1476,  1479,  1482,  1498,  1500,  1502,  1506,  1511,
-    1517,  1523,  1528,  1534,  1540,  1545,  1551,  1557,  1561,  1566,
-    1575,  1580,  1582,  1586,  1587,  1594,  1601,  1611,  1613,  1622,
-    1631,  1638,  1639,  1646,  1650,  1651,  1654,  1655,  1658,  1662,
-    1664,  1668,  1670,  1672,  1674,  1676,  1678,  1680,  1682,  1684,
-    1686,  1688,  1690,  1692,  1694,  1696,  1698,  1700,  1702,  1704,
-    1706,  1746,  1748,  1750,  1752,  1754,  1756,  1758,  1760,  1762,
-    1764,  1766,  1768,  1770,  1772,  1774,  1776,  1778,  1801,  1802,
-    1803,  1804,  1805,  1806,  1807,  1808,  1811,  1812,  1813,  1814,
-    1815,  1816,  1819,  1820,  1828,  1841
+    1128,  1139,  1155,  1164,  1165,  1176,  1249,  1250,  1254,  1256,
+    1258,  1260,  1262,  1267,  1275,  1276,  1280,  1281,  1286,  1285,
+    1289,  1288,  1291,  1293,  1295,  1297,  1301,  1308,  1310,  1311,
+    1314,  1316,  1324,  1332,  1339,  1347,  1349,  1351,  1353,  1357,
+    1362,  1374,  1381,  1384,  1387,  1390,  1393,  1396,  1399,  1402,
+    1405,  1408,  1411,  1414,  1417,  1420,  1423,  1426,  1429,  1432,
+    1435,  1438,  1441,  1444,  1447,  1450,  1453,  1456,  1459,  1464,
+    1469,  1474,  1477,  1480,  1483,  1499,  1501,  1503,  1507,  1512,
+    1518,  1524,  1529,  1535,  1541,  1546,  1552,  1558,  1562,  1567,
+    1576,  1581,  1583,  1587,  1588,  1595,  1602,  1612,  1614,  1623,
+    1632,  1639,  1640,  1647,  1651,  1652,  1655,  1656,  1659,  1663,
+    1665,  1669,  1671,  1673,  1675,  1677,  1679,  1681,  1683,  1685,
+    1687,  1689,  1691,  1693,  1695,  1697,  1699,  1701,  1703,  1705,
+    1707,  1747,  1749,  1751,  1753,  1755,  1757,  1759,  1761,  1763,
+    1765,  1767,  1769,  1771,  1773,  1775,  1777,  1779,  1802,  1803,
+    1804,  1805,  1806,  1807,  1808,  1809,  1812,  1813,  1814,  1815,
+    1816,  1817,  1820,  1821,  1829,  1842
 };
 #endif
 
@@ -3241,10 +3241,11 @@ yyreduce:
 			      std::string arg = copy_name ((yyvsp[0].ssym).stoken);
 
 			      bound_minimal_symbol msymbol
-				= lookup_bound_minimal_symbol (arg.c_str ());
+				= lookup_minimal_symbol (current_program_space, arg.c_str ());
 			      if (msymbol.minsym == NULL)
 				{
-				  if (!have_full_symbols () && !have_partial_symbols ())
+				  if (!have_full_symbols (current_program_space)
+				      && !have_partial_symbols (current_program_space))
 				    error (_("No symbol table is loaded.  Use the \"file\" command."));
 				  else
 				    error (_("No symbol \"%s\" in current context."),
@@ -3274,110 +3275,110 @@ yyreduce:
 				  (msymbol);
 			    }
 			}
-#line 3279 "c-exp.c.tmp"
+#line 3280 "c-exp.c.tmp"
     break;
 
   case 128: /* single_qualifier: CONST_KEYWORD  */
-#line 1254 "c-exp.y"
+#line 1255 "c-exp.y"
                         { cpstate->type_stack.insert (tp_const); }
-#line 3285 "c-exp.c.tmp"
+#line 3286 "c-exp.c.tmp"
     break;
 
   case 129: /* single_qualifier: VOLATILE_KEYWORD  */
-#line 1256 "c-exp.y"
+#line 1257 "c-exp.y"
                         { cpstate->type_stack.insert (tp_volatile); }
-#line 3291 "c-exp.c.tmp"
+#line 3292 "c-exp.c.tmp"
     break;
 
   case 130: /* single_qualifier: ATOMIC  */
-#line 1258 "c-exp.y"
+#line 1259 "c-exp.y"
                         { cpstate->type_stack.insert (tp_atomic); }
-#line 3297 "c-exp.c.tmp"
+#line 3298 "c-exp.c.tmp"
     break;
 
   case 131: /* single_qualifier: RESTRICT  */
-#line 1260 "c-exp.y"
+#line 1261 "c-exp.y"
                         { cpstate->type_stack.insert (tp_restrict); }
-#line 3303 "c-exp.c.tmp"
+#line 3304 "c-exp.c.tmp"
     break;
 
   case 132: /* single_qualifier: '@' NAME  */
-#line 1262 "c-exp.y"
+#line 1263 "c-exp.y"
                 {
 		  cpstate->type_stack.insert (pstate,
 					      copy_name ((yyvsp[0].ssym).stoken).c_str ());
 		}
-#line 3312 "c-exp.c.tmp"
+#line 3313 "c-exp.c.tmp"
     break;
 
   case 133: /* single_qualifier: '@' UNKNOWN_CPP_NAME  */
-#line 1267 "c-exp.y"
+#line 1268 "c-exp.y"
                 {
 		  cpstate->type_stack.insert (pstate,
 					      copy_name ((yyvsp[0].ssym).stoken).c_str ());
 		}
-#line 3321 "c-exp.c.tmp"
+#line 3322 "c-exp.c.tmp"
     break;
 
   case 138: /* $@6: %empty  */
-#line 1285 "c-exp.y"
+#line 1286 "c-exp.y"
                         { cpstate->type_stack.insert (tp_pointer); }
-#line 3327 "c-exp.c.tmp"
+#line 3328 "c-exp.c.tmp"
     break;
 
   case 140: /* $@7: %empty  */
-#line 1288 "c-exp.y"
+#line 1289 "c-exp.y"
                         { cpstate->type_stack.insert (tp_pointer); }
-#line 3333 "c-exp.c.tmp"
+#line 3334 "c-exp.c.tmp"
     break;
 
   case 142: /* ptr_operator: '&'  */
-#line 1291 "c-exp.y"
+#line 1292 "c-exp.y"
                         { cpstate->type_stack.insert (tp_reference); }
-#line 3339 "c-exp.c.tmp"
+#line 3340 "c-exp.c.tmp"
     break;
 
   case 143: /* ptr_operator: '&' ptr_operator  */
-#line 1293 "c-exp.y"
+#line 1294 "c-exp.y"
                         { cpstate->type_stack.insert (tp_reference); }
-#line 3345 "c-exp.c.tmp"
+#line 3346 "c-exp.c.tmp"
     break;
 
   case 144: /* ptr_operator: ANDAND  */
-#line 1295 "c-exp.y"
+#line 1296 "c-exp.y"
                         { cpstate->type_stack.insert (tp_rvalue_reference); }
-#line 3351 "c-exp.c.tmp"
+#line 3352 "c-exp.c.tmp"
     break;
 
   case 145: /* ptr_operator: ANDAND ptr_operator  */
-#line 1297 "c-exp.y"
+#line 1298 "c-exp.y"
                         { cpstate->type_stack.insert (tp_rvalue_reference); }
-#line 3357 "c-exp.c.tmp"
+#line 3358 "c-exp.c.tmp"
     break;
 
   case 146: /* ptr_operator_ts: ptr_operator  */
-#line 1301 "c-exp.y"
+#line 1302 "c-exp.y"
                         {
 			  (yyval.type_stack) = cpstate->type_stack.create ();
 			  cpstate->type_stacks.emplace_back ((yyval.type_stack));
 			}
-#line 3366 "c-exp.c.tmp"
+#line 3367 "c-exp.c.tmp"
     break;
 
   case 147: /* abs_decl: ptr_operator_ts direct_abs_decl  */
-#line 1308 "c-exp.y"
+#line 1309 "c-exp.y"
                         { (yyval.type_stack) = (yyvsp[0].type_stack)->append ((yyvsp[-1].type_stack)); }
-#line 3372 "c-exp.c.tmp"
+#line 3373 "c-exp.c.tmp"
     break;
 
   case 150: /* direct_abs_decl: '(' abs_decl ')'  */
-#line 1314 "c-exp.y"
+#line 1315 "c-exp.y"
                         { (yyval.type_stack) = (yyvsp[-1].type_stack); }
-#line 3378 "c-exp.c.tmp"
+#line 3379 "c-exp.c.tmp"
     break;
 
   case 151: /* direct_abs_decl: direct_abs_decl array_mod  */
-#line 1316 "c-exp.y"
+#line 1317 "c-exp.y"
                         {
 			  cpstate->type_stack.push ((yyvsp[-1].type_stack));
 			  cpstate->type_stack.push ((yyvsp[0].lval));
@@ -3385,523 +3386,523 @@ yyreduce:
 			  (yyval.type_stack) = cpstate->type_stack.create ();
 			  cpstate->type_stacks.emplace_back ((yyval.type_stack));
 			}
-#line 3390 "c-exp.c.tmp"
+#line 3391 "c-exp.c.tmp"
     break;
 
   case 152: /* direct_abs_decl: array_mod  */
-#line 1324 "c-exp.y"
+#line 1325 "c-exp.y"
                         {
 			  cpstate->type_stack.push ((yyvsp[0].lval));
 			  cpstate->type_stack.push (tp_array);
 			  (yyval.type_stack) = cpstate->type_stack.create ();
 			  cpstate->type_stacks.emplace_back ((yyval.type_stack));
 			}
-#line 3401 "c-exp.c.tmp"
+#line 3402 "c-exp.c.tmp"
     break;
 
   case 153: /* direct_abs_decl: direct_abs_decl func_mod  */
-#line 1332 "c-exp.y"
+#line 1333 "c-exp.y"
                         {
 			  cpstate->type_stack.push ((yyvsp[-1].type_stack));
 			  cpstate->type_stack.push ((yyvsp[0].tvec));
 			  (yyval.type_stack) = cpstate->type_stack.create ();
 			  cpstate->type_stacks.emplace_back ((yyval.type_stack));
 			}
-#line 3412 "c-exp.c.tmp"
+#line 3413 "c-exp.c.tmp"
     break;
 
   case 154: /* direct_abs_decl: func_mod  */
-#line 1339 "c-exp.y"
+#line 1340 "c-exp.y"
                         {
 			  cpstate->type_stack.push ((yyvsp[0].tvec));
 			  (yyval.type_stack) = cpstate->type_stack.create ();
 			  cpstate->type_stacks.emplace_back ((yyval.type_stack));
 			}
-#line 3422 "c-exp.c.tmp"
+#line 3423 "c-exp.c.tmp"
     break;
 
   case 155: /* array_mod: '[' ']'  */
-#line 1347 "c-exp.y"
+#line 1348 "c-exp.y"
                         { (yyval.lval) = -1; }
-#line 3428 "c-exp.c.tmp"
+#line 3429 "c-exp.c.tmp"
     break;
 
   case 156: /* array_mod: OBJC_LBRAC ']'  */
-#line 1349 "c-exp.y"
+#line 1350 "c-exp.y"
                         { (yyval.lval) = -1; }
-#line 3434 "c-exp.c.tmp"
+#line 3435 "c-exp.c.tmp"
     break;
 
   case 157: /* array_mod: '[' INT ']'  */
-#line 1351 "c-exp.y"
+#line 1352 "c-exp.y"
                         { (yyval.lval) = (yyvsp[-1].typed_val_int).val; }
-#line 3440 "c-exp.c.tmp"
+#line 3441 "c-exp.c.tmp"
     break;
 
   case 158: /* array_mod: OBJC_LBRAC INT ']'  */
-#line 1353 "c-exp.y"
+#line 1354 "c-exp.y"
                         { (yyval.lval) = (yyvsp[-1].typed_val_int).val; }
-#line 3446 "c-exp.c.tmp"
+#line 3447 "c-exp.c.tmp"
     break;
 
   case 159: /* func_mod: '(' ')'  */
-#line 1357 "c-exp.y"
+#line 1358 "c-exp.y"
                         {
 			  (yyval.tvec) = new std::vector<struct type *>;
 			  cpstate->type_lists.emplace_back ((yyval.tvec));
 			}
-#line 3455 "c-exp.c.tmp"
+#line 3456 "c-exp.c.tmp"
     break;
 
   case 160: /* func_mod: '(' parameter_typelist ')'  */
-#line 1362 "c-exp.y"
+#line 1363 "c-exp.y"
                         { (yyval.tvec) = (yyvsp[-1].tvec); }
-#line 3461 "c-exp.c.tmp"
+#line 3462 "c-exp.c.tmp"
     break;
 
   case 162: /* scalar_type: INT_KEYWORD  */
-#line 1381 "c-exp.y"
+#line 1382 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "int"); }
-#line 3468 "c-exp.c.tmp"
+#line 3469 "c-exp.c.tmp"
     break;
 
   case 163: /* scalar_type: LONG  */
-#line 1384 "c-exp.y"
+#line 1385 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long"); }
-#line 3475 "c-exp.c.tmp"
+#line 3476 "c-exp.c.tmp"
     break;
 
   case 164: /* scalar_type: SHORT  */
-#line 1387 "c-exp.y"
+#line 1388 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "short"); }
-#line 3482 "c-exp.c.tmp"
+#line 3483 "c-exp.c.tmp"
     break;
 
   case 165: /* scalar_type: LONG INT_KEYWORD  */
-#line 1390 "c-exp.y"
+#line 1391 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long"); }
-#line 3489 "c-exp.c.tmp"
+#line 3490 "c-exp.c.tmp"
     break;
 
   case 166: /* scalar_type: LONG SIGNED_KEYWORD INT_KEYWORD  */
-#line 1393 "c-exp.y"
+#line 1394 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long"); }
-#line 3496 "c-exp.c.tmp"
+#line 3497 "c-exp.c.tmp"
     break;
 
   case 167: /* scalar_type: LONG SIGNED_KEYWORD  */
-#line 1396 "c-exp.y"
+#line 1397 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long"); }
-#line 3503 "c-exp.c.tmp"
+#line 3504 "c-exp.c.tmp"
     break;
 
   case 168: /* scalar_type: SIGNED_KEYWORD LONG INT_KEYWORD  */
-#line 1399 "c-exp.y"
+#line 1400 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long"); }
-#line 3510 "c-exp.c.tmp"
+#line 3511 "c-exp.c.tmp"
     break;
 
   case 169: /* scalar_type: UNSIGNED LONG INT_KEYWORD  */
-#line 1402 "c-exp.y"
+#line 1403 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long"); }
-#line 3517 "c-exp.c.tmp"
+#line 3518 "c-exp.c.tmp"
     break;
 
   case 170: /* scalar_type: LONG UNSIGNED INT_KEYWORD  */
-#line 1405 "c-exp.y"
+#line 1406 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long"); }
-#line 3524 "c-exp.c.tmp"
+#line 3525 "c-exp.c.tmp"
     break;
 
   case 171: /* scalar_type: LONG UNSIGNED  */
-#line 1408 "c-exp.y"
+#line 1409 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long"); }
-#line 3531 "c-exp.c.tmp"
+#line 3532 "c-exp.c.tmp"
     break;
 
   case 172: /* scalar_type: LONG LONG  */
-#line 1411 "c-exp.y"
+#line 1412 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long long"); }
-#line 3538 "c-exp.c.tmp"
+#line 3539 "c-exp.c.tmp"
     break;
 
   case 173: /* scalar_type: LONG LONG INT_KEYWORD  */
-#line 1414 "c-exp.y"
+#line 1415 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long long"); }
-#line 3545 "c-exp.c.tmp"
+#line 3546 "c-exp.c.tmp"
     break;
 
   case 174: /* scalar_type: LONG LONG SIGNED_KEYWORD INT_KEYWORD  */
-#line 1417 "c-exp.y"
+#line 1418 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long long"); }
-#line 3552 "c-exp.c.tmp"
+#line 3553 "c-exp.c.tmp"
     break;
 
   case 175: /* scalar_type: LONG LONG SIGNED_KEYWORD  */
-#line 1420 "c-exp.y"
+#line 1421 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long long"); }
-#line 3559 "c-exp.c.tmp"
+#line 3560 "c-exp.c.tmp"
     break;
 
   case 176: /* scalar_type: SIGNED_KEYWORD LONG LONG  */
-#line 1423 "c-exp.y"
+#line 1424 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long long"); }
-#line 3566 "c-exp.c.tmp"
+#line 3567 "c-exp.c.tmp"
     break;
 
   case 177: /* scalar_type: SIGNED_KEYWORD LONG LONG INT_KEYWORD  */
-#line 1426 "c-exp.y"
+#line 1427 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "long long"); }
-#line 3573 "c-exp.c.tmp"
+#line 3574 "c-exp.c.tmp"
     break;
 
   case 178: /* scalar_type: UNSIGNED LONG LONG  */
-#line 1429 "c-exp.y"
+#line 1430 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long long"); }
-#line 3580 "c-exp.c.tmp"
+#line 3581 "c-exp.c.tmp"
     break;
 
   case 179: /* scalar_type: UNSIGNED LONG LONG INT_KEYWORD  */
-#line 1432 "c-exp.y"
+#line 1433 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long long"); }
-#line 3587 "c-exp.c.tmp"
+#line 3588 "c-exp.c.tmp"
     break;
 
   case 180: /* scalar_type: LONG LONG UNSIGNED  */
-#line 1435 "c-exp.y"
+#line 1436 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long long"); }
-#line 3594 "c-exp.c.tmp"
+#line 3595 "c-exp.c.tmp"
     break;
 
   case 181: /* scalar_type: LONG LONG UNSIGNED INT_KEYWORD  */
-#line 1438 "c-exp.y"
+#line 1439 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "long long"); }
-#line 3601 "c-exp.c.tmp"
+#line 3602 "c-exp.c.tmp"
     break;
 
   case 182: /* scalar_type: SHORT INT_KEYWORD  */
-#line 1441 "c-exp.y"
+#line 1442 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "short"); }
-#line 3608 "c-exp.c.tmp"
+#line 3609 "c-exp.c.tmp"
     break;
 
   case 183: /* scalar_type: SHORT SIGNED_KEYWORD INT_KEYWORD  */
-#line 1444 "c-exp.y"
+#line 1445 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "short"); }
-#line 3615 "c-exp.c.tmp"
+#line 3616 "c-exp.c.tmp"
     break;
 
   case 184: /* scalar_type: SHORT SIGNED_KEYWORD  */
-#line 1447 "c-exp.y"
+#line 1448 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "short"); }
-#line 3622 "c-exp.c.tmp"
+#line 3623 "c-exp.c.tmp"
     break;
 
   case 185: /* scalar_type: UNSIGNED SHORT INT_KEYWORD  */
-#line 1450 "c-exp.y"
+#line 1451 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "short"); }
-#line 3629 "c-exp.c.tmp"
+#line 3630 "c-exp.c.tmp"
     break;
 
   case 186: /* scalar_type: SHORT UNSIGNED  */
-#line 1453 "c-exp.y"
+#line 1454 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "short"); }
-#line 3636 "c-exp.c.tmp"
+#line 3637 "c-exp.c.tmp"
     break;
 
   case 187: /* scalar_type: SHORT UNSIGNED INT_KEYWORD  */
-#line 1456 "c-exp.y"
+#line 1457 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "short"); }
-#line 3643 "c-exp.c.tmp"
+#line 3644 "c-exp.c.tmp"
     break;
 
   case 188: /* scalar_type: DOUBLE_KEYWORD  */
-#line 1459 "c-exp.y"
+#line 1460 "c-exp.y"
                         { (yyval.tval) = lookup_typename (pstate->language (),
 						"double",
 						NULL,
 						0); }
-#line 3652 "c-exp.c.tmp"
+#line 3653 "c-exp.c.tmp"
     break;
 
   case 189: /* scalar_type: FLOAT_KEYWORD  */
-#line 1464 "c-exp.y"
+#line 1465 "c-exp.y"
                         { (yyval.tval) = lookup_typename (pstate->language (),
 						"float",
 						NULL,
 						0); }
-#line 3661 "c-exp.c.tmp"
+#line 3662 "c-exp.c.tmp"
     break;
 
   case 190: /* scalar_type: LONG DOUBLE_KEYWORD  */
-#line 1469 "c-exp.y"
+#line 1470 "c-exp.y"
                         { (yyval.tval) = lookup_typename (pstate->language (),
 						"long double",
 						NULL,
 						0); }
-#line 3670 "c-exp.c.tmp"
+#line 3671 "c-exp.c.tmp"
     break;
 
   case 191: /* scalar_type: UNSIGNED type_name  */
-#line 1474 "c-exp.y"
+#line 1475 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 (yyvsp[0].tsym).type->name ()); }
-#line 3677 "c-exp.c.tmp"
+#line 3678 "c-exp.c.tmp"
     break;
 
   case 192: /* scalar_type: UNSIGNED  */
-#line 1477 "c-exp.y"
+#line 1478 "c-exp.y"
                         { (yyval.tval) = lookup_unsigned_typename (pstate->language (),
 							 "int"); }
-#line 3684 "c-exp.c.tmp"
+#line 3685 "c-exp.c.tmp"
     break;
 
   case 193: /* scalar_type: SIGNED_KEYWORD type_name  */
-#line 1480 "c-exp.y"
+#line 1481 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       (yyvsp[0].tsym).type->name ()); }
-#line 3691 "c-exp.c.tmp"
+#line 3692 "c-exp.c.tmp"
     break;
 
   case 194: /* scalar_type: SIGNED_KEYWORD  */
-#line 1483 "c-exp.y"
+#line 1484 "c-exp.y"
                         { (yyval.tval) = lookup_signed_typename (pstate->language (),
 						       "int"); }
-#line 3698 "c-exp.c.tmp"
+#line 3699 "c-exp.c.tmp"
     break;
 
   case 195: /* typebase: TYPENAME  */
-#line 1499 "c-exp.y"
+#line 1500 "c-exp.y"
                         { (yyval.tval) = (yyvsp[0].tsym).type; }
-#line 3704 "c-exp.c.tmp"
+#line 3705 "c-exp.c.tmp"
     break;
 
   case 196: /* typebase: scalar_type  */
-#line 1501 "c-exp.y"
+#line 1502 "c-exp.y"
                         { (yyval.tval) = (yyvsp[0].tval); }
-#line 3710 "c-exp.c.tmp"
+#line 3711 "c-exp.c.tmp"
     break;
 
   case 197: /* typebase: COMPLEX scalar_type  */
-#line 1503 "c-exp.y"
+#line 1504 "c-exp.y"
                         {
 			  (yyval.tval) = init_complex_type (nullptr, (yyvsp[0].tval));
 			}
-#line 3718 "c-exp.c.tmp"
+#line 3719 "c-exp.c.tmp"
     break;
 
   case 198: /* typebase: STRUCT name  */
-#line 1507 "c-exp.y"
+#line 1508 "c-exp.y"
                         { (yyval.tval)
 			    = lookup_struct (copy_name ((yyvsp[0].sval)).c_str (),
 					     pstate->expression_context_block);
 			}
-#line 3727 "c-exp.c.tmp"
+#line 3728 "c-exp.c.tmp"
     break;
 
   case 199: /* typebase: STRUCT COMPLETE  */
-#line 1512 "c-exp.y"
+#line 1513 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_STRUCT,
 						       "", 0);
 			  (yyval.tval) = NULL;
 			}
-#line 3737 "c-exp.c.tmp"
+#line 3738 "c-exp.c.tmp"
     break;
 
   case 200: /* typebase: STRUCT name COMPLETE  */
-#line 1518 "c-exp.y"
+#line 1519 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_STRUCT,
 						       (yyvsp[-1].sval).ptr, (yyvsp[-1].sval).length);
 			  (yyval.tval) = NULL;
 			}
-#line 3747 "c-exp.c.tmp"
+#line 3748 "c-exp.c.tmp"
     break;
 
   case 201: /* typebase: CLASS name  */
-#line 1524 "c-exp.y"
+#line 1525 "c-exp.y"
                         { (yyval.tval) = lookup_struct
 			    (copy_name ((yyvsp[0].sval)).c_str (),
 			     pstate->expression_context_block);
 			}
-#line 3756 "c-exp.c.tmp"
+#line 3757 "c-exp.c.tmp"
     break;
 
   case 202: /* typebase: CLASS COMPLETE  */
-#line 1529 "c-exp.y"
+#line 1530 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_STRUCT,
 						       "", 0);
 			  (yyval.tval) = NULL;
 			}
-#line 3766 "c-exp.c.tmp"
+#line 3767 "c-exp.c.tmp"
     break;
 
   case 203: /* typebase: CLASS name COMPLETE  */
-#line 1535 "c-exp.y"
+#line 1536 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_STRUCT,
 						       (yyvsp[-1].sval).ptr, (yyvsp[-1].sval).length);
 			  (yyval.tval) = NULL;
 			}
-#line 3776 "c-exp.c.tmp"
+#line 3777 "c-exp.c.tmp"
     break;
 
   case 204: /* typebase: UNION name  */
-#line 1541 "c-exp.y"
+#line 1542 "c-exp.y"
                         { (yyval.tval)
 			    = lookup_union (copy_name ((yyvsp[0].sval)).c_str (),
 					    pstate->expression_context_block);
 			}
-#line 3785 "c-exp.c.tmp"
+#line 3786 "c-exp.c.tmp"
     break;
 
   case 205: /* typebase: UNION COMPLETE  */
-#line 1546 "c-exp.y"
+#line 1547 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_UNION,
 						       "", 0);
 			  (yyval.tval) = NULL;
 			}
-#line 3795 "c-exp.c.tmp"
+#line 3796 "c-exp.c.tmp"
     break;
 
   case 206: /* typebase: UNION name COMPLETE  */
-#line 1552 "c-exp.y"
+#line 1553 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_UNION,
 						       (yyvsp[-1].sval).ptr, (yyvsp[-1].sval).length);
 			  (yyval.tval) = NULL;
 			}
-#line 3805 "c-exp.c.tmp"
+#line 3806 "c-exp.c.tmp"
     break;
 
   case 207: /* typebase: ENUM name  */
-#line 1558 "c-exp.y"
+#line 1559 "c-exp.y"
                         { (yyval.tval) = lookup_enum (copy_name ((yyvsp[0].sval)).c_str (),
 					    pstate->expression_context_block);
 			}
-#line 3813 "c-exp.c.tmp"
+#line 3814 "c-exp.c.tmp"
     break;
 
   case 208: /* typebase: ENUM COMPLETE  */
-#line 1562 "c-exp.y"
+#line 1563 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_ENUM, "", 0);
 			  (yyval.tval) = NULL;
 			}
-#line 3822 "c-exp.c.tmp"
+#line 3823 "c-exp.c.tmp"
     break;
 
   case 209: /* typebase: ENUM name COMPLETE  */
-#line 1567 "c-exp.y"
+#line 1568 "c-exp.y"
                         {
 			  pstate->mark_completion_tag (TYPE_CODE_ENUM, (yyvsp[-1].sval).ptr,
 						       (yyvsp[-1].sval).length);
 			  (yyval.tval) = NULL;
 			}
-#line 3832 "c-exp.c.tmp"
+#line 3833 "c-exp.c.tmp"
     break;
 
   case 210: /* typebase: TEMPLATE name '<' type '>'  */
-#line 1576 "c-exp.y"
+#line 1577 "c-exp.y"
                         { (yyval.tval) = lookup_template_type
 			    (copy_name((yyvsp[-3].sval)).c_str (), (yyvsp[-1].tval),
 			     pstate->expression_context_block);
 			}
-#line 3841 "c-exp.c.tmp"
+#line 3842 "c-exp.c.tmp"
     break;
 
   case 211: /* typebase: qualifier_seq_noopt typebase  */
-#line 1581 "c-exp.y"
+#line 1582 "c-exp.y"
                         { (yyval.tval) = cpstate->type_stack.follow_types ((yyvsp[0].tval)); }
-#line 3847 "c-exp.c.tmp"
+#line 3848 "c-exp.c.tmp"
     break;
 
   case 212: /* typebase: typebase qualifier_seq_noopt  */
-#line 1583 "c-exp.y"
+#line 1584 "c-exp.y"
                         { (yyval.tval) = cpstate->type_stack.follow_types ((yyvsp[-1].tval)); }
-#line 3853 "c-exp.c.tmp"
+#line 3854 "c-exp.c.tmp"
     break;
 
   case 214: /* type_name: INT_KEYWORD  */
-#line 1588 "c-exp.y"
+#line 1589 "c-exp.y"
                 {
 		  (yyval.tsym).stoken.ptr = "int";
 		  (yyval.tsym).stoken.length = 3;
 		  (yyval.tsym).type = lookup_signed_typename (pstate->language (),
 						    "int");
 		}
-#line 3864 "c-exp.c.tmp"
+#line 3865 "c-exp.c.tmp"
     break;
 
   case 215: /* type_name: LONG  */
-#line 1595 "c-exp.y"
+#line 1596 "c-exp.y"
                 {
 		  (yyval.tsym).stoken.ptr = "long";
 		  (yyval.tsym).stoken.length = 4;
 		  (yyval.tsym).type = lookup_signed_typename (pstate->language (),
 						    "long");
 		}
-#line 3875 "c-exp.c.tmp"
+#line 3876 "c-exp.c.tmp"
     break;
 
   case 216: /* type_name: SHORT  */
-#line 1602 "c-exp.y"
+#line 1603 "c-exp.y"
                 {
 		  (yyval.tsym).stoken.ptr = "short";
 		  (yyval.tsym).stoken.length = 5;
 		  (yyval.tsym).type = lookup_signed_typename (pstate->language (),
 						    "short");
 		}
-#line 3886 "c-exp.c.tmp"
+#line 3887 "c-exp.c.tmp"
     break;
 
   case 217: /* parameter_typelist: nonempty_typelist  */
-#line 1612 "c-exp.y"
+#line 1613 "c-exp.y"
                         { check_parameter_typelist ((yyvsp[0].tvec)); }
-#line 3892 "c-exp.c.tmp"
+#line 3893 "c-exp.c.tmp"
     break;
 
   case 218: /* parameter_typelist: nonempty_typelist ',' DOTDOTDOT  */
-#line 1614 "c-exp.y"
+#line 1615 "c-exp.y"
                         {
 			  (yyvsp[-2].tvec)->push_back (NULL);
 			  check_parameter_typelist ((yyvsp[-2].tvec));
 			  (yyval.tvec) = (yyvsp[-2].tvec);
 			}
-#line 3902 "c-exp.c.tmp"
+#line 3903 "c-exp.c.tmp"
     break;
 
   case 219: /* nonempty_typelist: type  */
-#line 1623 "c-exp.y"
+#line 1624 "c-exp.y"
                 {
 		  std::vector<struct type *> *typelist
 		    = new std::vector<struct type *>;
@@ -3910,169 +3911,169 @@ yyreduce:
 		  typelist->push_back ((yyvsp[0].tval));
 		  (yyval.tvec) = typelist;
 		}
-#line 3915 "c-exp.c.tmp"
+#line 3916 "c-exp.c.tmp"
     break;
 
   case 220: /* nonempty_typelist: nonempty_typelist ',' type  */
-#line 1632 "c-exp.y"
+#line 1633 "c-exp.y"
                 {
 		  (yyvsp[-2].tvec)->push_back ((yyvsp[0].tval));
 		  (yyval.tvec) = (yyvsp[-2].tvec);
 		}
-#line 3924 "c-exp.c.tmp"
+#line 3925 "c-exp.c.tmp"
     break;
 
   case 222: /* ptype: ptype abs_decl  */
-#line 1640 "c-exp.y"
+#line 1641 "c-exp.y"
                 {
 		  cpstate->type_stack.push ((yyvsp[0].type_stack));
 		  (yyval.tval) = cpstate->type_stack.follow_types ((yyvsp[-1].tval));
 		}
-#line 3933 "c-exp.c.tmp"
+#line 3934 "c-exp.c.tmp"
     break;
 
   case 223: /* conversion_type_id: typebase conversion_declarator  */
-#line 1647 "c-exp.y"
+#line 1648 "c-exp.y"
                 { (yyval.tval) = cpstate->type_stack.follow_types ((yyvsp[-1].tval)); }
-#line 3939 "c-exp.c.tmp"
+#line 3940 "c-exp.c.tmp"
     break;
 
   case 228: /* const_or_volatile_noopt: const_and_volatile  */
-#line 1659 "c-exp.y"
+#line 1660 "c-exp.y"
                         { cpstate->type_stack.insert (tp_const);
 			  cpstate->type_stack.insert (tp_volatile);
 			}
-#line 3947 "c-exp.c.tmp"
+#line 3948 "c-exp.c.tmp"
     break;
 
   case 229: /* const_or_volatile_noopt: CONST_KEYWORD  */
-#line 1663 "c-exp.y"
+#line 1664 "c-exp.y"
                         { cpstate->type_stack.insert (tp_const); }
-#line 3953 "c-exp.c.tmp"
+#line 3954 "c-exp.c.tmp"
     break;
 
   case 230: /* const_or_volatile_noopt: VOLATILE_KEYWORD  */
-#line 1665 "c-exp.y"
+#line 1666 "c-exp.y"
                         { cpstate->type_stack.insert (tp_volatile); }
-#line 3959 "c-exp.c.tmp"
+#line 3960 "c-exp.c.tmp"
     break;
 
   case 231: /* oper: OPERATOR NEW  */
-#line 1669 "c-exp.y"
+#line 1670 "c-exp.y"
                         { (yyval.sval) = operator_stoken (" new"); }
-#line 3965 "c-exp.c.tmp"
+#line 3966 "c-exp.c.tmp"
     break;
 
   case 232: /* oper: OPERATOR DELETE  */
-#line 1671 "c-exp.y"
+#line 1672 "c-exp.y"
                         { (yyval.sval) = operator_stoken (" delete"); }
-#line 3971 "c-exp.c.tmp"
+#line 3972 "c-exp.c.tmp"
     break;
 
   case 233: /* oper: OPERATOR NEW '[' ']'  */
-#line 1673 "c-exp.y"
+#line 1674 "c-exp.y"
                         { (yyval.sval) = operator_stoken (" new[]"); }
-#line 3977 "c-exp.c.tmp"
+#line 3978 "c-exp.c.tmp"
     break;
 
   case 234: /* oper: OPERATOR DELETE '[' ']'  */
-#line 1675 "c-exp.y"
+#line 1676 "c-exp.y"
                         { (yyval.sval) = operator_stoken (" delete[]"); }
-#line 3983 "c-exp.c.tmp"
+#line 3984 "c-exp.c.tmp"
     break;
 
   case 235: /* oper: OPERATOR NEW OBJC_LBRAC ']'  */
-#line 1677 "c-exp.y"
+#line 1678 "c-exp.y"
                         { (yyval.sval) = operator_stoken (" new[]"); }
-#line 3989 "c-exp.c.tmp"
+#line 3990 "c-exp.c.tmp"
     break;
 
   case 236: /* oper: OPERATOR DELETE OBJC_LBRAC ']'  */
-#line 1679 "c-exp.y"
+#line 1680 "c-exp.y"
                         { (yyval.sval) = operator_stoken (" delete[]"); }
-#line 3995 "c-exp.c.tmp"
+#line 3996 "c-exp.c.tmp"
     break;
 
   case 237: /* oper: OPERATOR '+'  */
-#line 1681 "c-exp.y"
+#line 1682 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("+"); }
-#line 4001 "c-exp.c.tmp"
+#line 4002 "c-exp.c.tmp"
     break;
 
   case 238: /* oper: OPERATOR '-'  */
-#line 1683 "c-exp.y"
+#line 1684 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("-"); }
-#line 4007 "c-exp.c.tmp"
+#line 4008 "c-exp.c.tmp"
     break;
 
   case 239: /* oper: OPERATOR '*'  */
-#line 1685 "c-exp.y"
+#line 1686 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("*"); }
-#line 4013 "c-exp.c.tmp"
+#line 4014 "c-exp.c.tmp"
     break;
 
   case 240: /* oper: OPERATOR '/'  */
-#line 1687 "c-exp.y"
+#line 1688 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("/"); }
-#line 4019 "c-exp.c.tmp"
+#line 4020 "c-exp.c.tmp"
     break;
 
   case 241: /* oper: OPERATOR '%'  */
-#line 1689 "c-exp.y"
+#line 1690 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("%"); }
-#line 4025 "c-exp.c.tmp"
+#line 4026 "c-exp.c.tmp"
     break;
 
   case 242: /* oper: OPERATOR '^'  */
-#line 1691 "c-exp.y"
+#line 1692 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("^"); }
-#line 4031 "c-exp.c.tmp"
+#line 4032 "c-exp.c.tmp"
     break;
 
   case 243: /* oper: OPERATOR '&'  */
-#line 1693 "c-exp.y"
+#line 1694 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("&"); }
-#line 4037 "c-exp.c.tmp"
+#line 4038 "c-exp.c.tmp"
     break;
 
   case 244: /* oper: OPERATOR '|'  */
-#line 1695 "c-exp.y"
+#line 1696 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("|"); }
-#line 4043 "c-exp.c.tmp"
+#line 4044 "c-exp.c.tmp"
     break;
 
   case 245: /* oper: OPERATOR '~'  */
-#line 1697 "c-exp.y"
+#line 1698 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("~"); }
-#line 4049 "c-exp.c.tmp"
+#line 4050 "c-exp.c.tmp"
     break;
 
   case 246: /* oper: OPERATOR '!'  */
-#line 1699 "c-exp.y"
+#line 1700 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("!"); }
-#line 4055 "c-exp.c.tmp"
+#line 4056 "c-exp.c.tmp"
     break;
 
   case 247: /* oper: OPERATOR '='  */
-#line 1701 "c-exp.y"
+#line 1702 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("="); }
-#line 4061 "c-exp.c.tmp"
+#line 4062 "c-exp.c.tmp"
     break;
 
   case 248: /* oper: OPERATOR '<'  */
-#line 1703 "c-exp.y"
+#line 1704 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("<"); }
-#line 4067 "c-exp.c.tmp"
+#line 4068 "c-exp.c.tmp"
     break;
 
   case 249: /* oper: OPERATOR '>'  */
-#line 1705 "c-exp.y"
+#line 1706 "c-exp.y"
                         { (yyval.sval) = operator_stoken (">"); }
-#line 4073 "c-exp.c.tmp"
+#line 4074 "c-exp.c.tmp"
     break;
 
   case 250: /* oper: OPERATOR ASSIGN_MODIFY  */
-#line 1707 "c-exp.y"
+#line 1708 "c-exp.y"
                         { const char *op = " unknown";
 			  switch ((yyvsp[0].opcode))
 			    {
@@ -4112,107 +4113,107 @@ yyreduce:
 
 			  (yyval.sval) = operator_stoken (op);
 			}
-#line 4117 "c-exp.c.tmp"
+#line 4118 "c-exp.c.tmp"
     break;
 
   case 251: /* oper: OPERATOR LSH  */
-#line 1747 "c-exp.y"
+#line 1748 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("<<"); }
-#line 4123 "c-exp.c.tmp"
+#line 4124 "c-exp.c.tmp"
     break;
 
   case 252: /* oper: OPERATOR RSH  */
-#line 1749 "c-exp.y"
+#line 1750 "c-exp.y"
                         { (yyval.sval) = operator_stoken (">>"); }
-#line 4129 "c-exp.c.tmp"
+#line 4130 "c-exp.c.tmp"
     break;
 
   case 253: /* oper: OPERATOR EQUAL  */
-#line 1751 "c-exp.y"
+#line 1752 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("=="); }
-#line 4135 "c-exp.c.tmp"
+#line 4136 "c-exp.c.tmp"
     break;
 
   case 254: /* oper: OPERATOR NOTEQUAL  */
-#line 1753 "c-exp.y"
+#line 1754 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("!="); }
-#line 4141 "c-exp.c.tmp"
+#line 4142 "c-exp.c.tmp"
     break;
 
   case 255: /* oper: OPERATOR LEQ  */
-#line 1755 "c-exp.y"
+#line 1756 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("<="); }
-#line 4147 "c-exp.c.tmp"
+#line 4148 "c-exp.c.tmp"
     break;
 
   case 256: /* oper: OPERATOR GEQ  */
-#line 1757 "c-exp.y"
+#line 1758 "c-exp.y"
                         { (yyval.sval) = operator_stoken (">="); }
-#line 4153 "c-exp.c.tmp"
+#line 4154 "c-exp.c.tmp"
     break;
 
   case 257: /* oper: OPERATOR ANDAND  */
-#line 1759 "c-exp.y"
+#line 1760 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("&&"); }
-#line 4159 "c-exp.c.tmp"
+#line 4160 "c-exp.c.tmp"
     break;
 
   case 258: /* oper: OPERATOR OROR  */
-#line 1761 "c-exp.y"
+#line 1762 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("||"); }
-#line 4165 "c-exp.c.tmp"
+#line 4166 "c-exp.c.tmp"
     break;
 
   case 259: /* oper: OPERATOR INCREMENT  */
-#line 1763 "c-exp.y"
+#line 1764 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("++"); }
-#line 4171 "c-exp.c.tmp"
+#line 4172 "c-exp.c.tmp"
     break;
 
   case 260: /* oper: OPERATOR DECREMENT  */
-#line 1765 "c-exp.y"
+#line 1766 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("--"); }
-#line 4177 "c-exp.c.tmp"
+#line 4178 "c-exp.c.tmp"
     break;
 
   case 261: /* oper: OPERATOR ','  */
-#line 1767 "c-exp.y"
+#line 1768 "c-exp.y"
                         { (yyval.sval) = operator_stoken (","); }
-#line 4183 "c-exp.c.tmp"
+#line 4184 "c-exp.c.tmp"
     break;
 
   case 262: /* oper: OPERATOR ARROW_STAR  */
-#line 1769 "c-exp.y"
+#line 1770 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("->*"); }
-#line 4189 "c-exp.c.tmp"
+#line 4190 "c-exp.c.tmp"
     break;
 
   case 263: /* oper: OPERATOR ARROW  */
-#line 1771 "c-exp.y"
+#line 1772 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("->"); }
-#line 4195 "c-exp.c.tmp"
+#line 4196 "c-exp.c.tmp"
     break;
 
   case 264: /* oper: OPERATOR '(' ')'  */
-#line 1773 "c-exp.y"
+#line 1774 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("()"); }
-#line 4201 "c-exp.c.tmp"
+#line 4202 "c-exp.c.tmp"
     break;
 
   case 265: /* oper: OPERATOR '[' ']'  */
-#line 1775 "c-exp.y"
+#line 1776 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("[]"); }
-#line 4207 "c-exp.c.tmp"
+#line 4208 "c-exp.c.tmp"
     break;
 
   case 266: /* oper: OPERATOR OBJC_LBRAC ']'  */
-#line 1777 "c-exp.y"
+#line 1778 "c-exp.y"
                         { (yyval.sval) = operator_stoken ("[]"); }
-#line 4213 "c-exp.c.tmp"
+#line 4214 "c-exp.c.tmp"
     break;
 
   case 267: /* oper: OPERATOR conversion_type_id  */
-#line 1779 "c-exp.y"
+#line 1780 "c-exp.y"
                         {
 			  string_file buf;
 			  c_print_type ((yyvsp[0].tval), NULL, &buf, -1, 0,
@@ -4227,89 +4228,89 @@ yyreduce:
 			    name = canon.get ();
 			  (yyval.sval) = operator_stoken ((" " + name).c_str ());
 			}
-#line 4232 "c-exp.c.tmp"
+#line 4233 "c-exp.c.tmp"
     break;
 
   case 269: /* field_name: DOUBLE_KEYWORD  */
-#line 1802 "c-exp.y"
+#line 1803 "c-exp.y"
                                { (yyval.sval) = typename_stoken ("double"); }
-#line 4238 "c-exp.c.tmp"
+#line 4239 "c-exp.c.tmp"
     break;
 
   case 270: /* field_name: FLOAT_KEYWORD  */
-#line 1803 "c-exp.y"
+#line 1804 "c-exp.y"
                               { (yyval.sval) = typename_stoken ("float"); }
-#line 4244 "c-exp.c.tmp"
+#line 4245 "c-exp.c.tmp"
     break;
 
   case 271: /* field_name: INT_KEYWORD  */
-#line 1804 "c-exp.y"
+#line 1805 "c-exp.y"
                             { (yyval.sval) = typename_stoken ("int"); }
-#line 4250 "c-exp.c.tmp"
+#line 4251 "c-exp.c.tmp"
     break;
 
   case 272: /* field_name: LONG  */
-#line 1805 "c-exp.y"
+#line 1806 "c-exp.y"
                      { (yyval.sval) = typename_stoken ("long"); }
-#line 4256 "c-exp.c.tmp"
+#line 4257 "c-exp.c.tmp"
     break;
 
   case 273: /* field_name: SHORT  */
-#line 1806 "c-exp.y"
+#line 1807 "c-exp.y"
                       { (yyval.sval) = typename_stoken ("short"); }
-#line 4262 "c-exp.c.tmp"
+#line 4263 "c-exp.c.tmp"
     break;
 
   case 274: /* field_name: SIGNED_KEYWORD  */
-#line 1807 "c-exp.y"
+#line 1808 "c-exp.y"
                                { (yyval.sval) = typename_stoken ("signed"); }
-#line 4268 "c-exp.c.tmp"
+#line 4269 "c-exp.c.tmp"
     break;
 
   case 275: /* field_name: UNSIGNED  */
-#line 1808 "c-exp.y"
+#line 1809 "c-exp.y"
                          { (yyval.sval) = typename_stoken ("unsigned"); }
-#line 4274 "c-exp.c.tmp"
+#line 4275 "c-exp.c.tmp"
     break;
 
   case 276: /* name: NAME  */
-#line 1811 "c-exp.y"
+#line 1812 "c-exp.y"
                      { (yyval.sval) = (yyvsp[0].ssym).stoken; }
-#line 4280 "c-exp.c.tmp"
+#line 4281 "c-exp.c.tmp"
     break;
 
   case 277: /* name: BLOCKNAME  */
-#line 1812 "c-exp.y"
+#line 1813 "c-exp.y"
                           { (yyval.sval) = (yyvsp[0].ssym).stoken; }
-#line 4286 "c-exp.c.tmp"
+#line 4287 "c-exp.c.tmp"
     break;
 
   case 278: /* name: TYPENAME  */
-#line 1813 "c-exp.y"
+#line 1814 "c-exp.y"
                          { (yyval.sval) = (yyvsp[0].tsym).stoken; }
-#line 4292 "c-exp.c.tmp"
+#line 4293 "c-exp.c.tmp"
     break;
 
   case 279: /* name: NAME_OR_INT  */
-#line 1814 "c-exp.y"
+#line 1815 "c-exp.y"
                              { (yyval.sval) = (yyvsp[0].ssym).stoken; }
-#line 4298 "c-exp.c.tmp"
+#line 4299 "c-exp.c.tmp"
     break;
 
   case 280: /* name: UNKNOWN_CPP_NAME  */
-#line 1815 "c-exp.y"
+#line 1816 "c-exp.y"
                                   { (yyval.sval) = (yyvsp[0].ssym).stoken; }
-#line 4304 "c-exp.c.tmp"
+#line 4305 "c-exp.c.tmp"
     break;
 
   case 281: /* name: oper  */
-#line 1816 "c-exp.y"
+#line 1817 "c-exp.y"
                      { (yyval.sval) = (yyvsp[0].sval); }
-#line 4310 "c-exp.c.tmp"
+#line 4311 "c-exp.c.tmp"
     break;
 
   case 284: /* name_not_typename: oper  */
-#line 1829 "c-exp.y"
+#line 1830 "c-exp.y"
                         {
 			  struct field_of_this_result is_a_field_of_this;
 
@@ -4322,11 +4323,11 @@ yyreduce:
 			  (yyval.ssym).is_a_field_of_this
 			    = is_a_field_of_this.type != NULL;
 			}
-#line 4327 "c-exp.c.tmp"
+#line 4328 "c-exp.c.tmp"
     break;
 
 
-#line 4331 "c-exp.c.tmp"
+#line 4332 "c-exp.c.tmp"
 
       default: break;
     }
@@ -4519,7 +4520,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 1844 "c-exp.y"
+#line 1845 "c-exp.y"
 
 
 /* Returns a stoken of the operator name given by OP (which does not
@@ -5765,10 +5766,8 @@ classify_name (struct parser_state *par_state, const struct block *block,
 	  || is_quoted_name)
 	{
 	  /* See if it's a file name. */
-	  struct symtab *symtab;
-
-	  symtab = lookup_symtab (copy.c_str ());
-	  if (symtab)
+	  if (auto symtab = lookup_symtab (current_program_space, copy.c_str ());
+	      symtab != nullptr)
 	    {
 	      yylval.bval
 		= symtab->compunit ()->blockvector ()->static_block ();
@@ -5828,7 +5827,7 @@ classify_name (struct parser_state *par_state, const struct block *block,
   if (bsym.symbol == NULL
       && par_state->language ()->la_language == language_cplus
       && is_a_field_of_this.type == NULL
-      && lookup_minimal_symbol (copy.c_str (), NULL, NULL).minsym == NULL)
+      && lookup_minimal_symbol (current_program_space, copy.c_str ()).minsym == nullptr)
     return UNKNOWN_CPP_NAME;
 
   return NAME;

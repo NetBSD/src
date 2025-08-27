@@ -3288,60 +3288,6 @@ Morpho MT - 8 bit immediate relocation.
 @deffnx {} BFD_RELOC_MSP430_SUB_ULEB128
 msp430 specific relocation codes.
 @end deffn
-@deffn {} BFD_RELOC_NIOS2_S16
-@deffnx {} BFD_RELOC_NIOS2_U16
-@deffnx {} BFD_RELOC_NIOS2_CALL26
-@deffnx {} BFD_RELOC_NIOS2_IMM5
-@deffnx {} BFD_RELOC_NIOS2_CACHE_OPX
-@deffnx {} BFD_RELOC_NIOS2_IMM6
-@deffnx {} BFD_RELOC_NIOS2_IMM8
-@deffnx {} BFD_RELOC_NIOS2_HI16
-@deffnx {} BFD_RELOC_NIOS2_LO16
-@deffnx {} BFD_RELOC_NIOS2_HIADJ16
-@deffnx {} BFD_RELOC_NIOS2_GPREL
-@deffnx {} BFD_RELOC_NIOS2_UJMP
-@deffnx {} BFD_RELOC_NIOS2_CJMP
-@deffnx {} BFD_RELOC_NIOS2_CALLR
-@deffnx {} BFD_RELOC_NIOS2_ALIGN
-@deffnx {} BFD_RELOC_NIOS2_GOT16
-@deffnx {} BFD_RELOC_NIOS2_CALL16
-@deffnx {} BFD_RELOC_NIOS2_GOTOFF_LO
-@deffnx {} BFD_RELOC_NIOS2_GOTOFF_HA
-@deffnx {} BFD_RELOC_NIOS2_PCREL_LO
-@deffnx {} BFD_RELOC_NIOS2_PCREL_HA
-@deffnx {} BFD_RELOC_NIOS2_TLS_GD16
-@deffnx {} BFD_RELOC_NIOS2_TLS_LDM16
-@deffnx {} BFD_RELOC_NIOS2_TLS_LDO16
-@deffnx {} BFD_RELOC_NIOS2_TLS_IE16
-@deffnx {} BFD_RELOC_NIOS2_TLS_LE16
-@deffnx {} BFD_RELOC_NIOS2_TLS_DTPMOD
-@deffnx {} BFD_RELOC_NIOS2_TLS_DTPREL
-@deffnx {} BFD_RELOC_NIOS2_TLS_TPREL
-@deffnx {} BFD_RELOC_NIOS2_COPY
-@deffnx {} BFD_RELOC_NIOS2_GLOB_DAT
-@deffnx {} BFD_RELOC_NIOS2_JUMP_SLOT
-@deffnx {} BFD_RELOC_NIOS2_RELATIVE
-@deffnx {} BFD_RELOC_NIOS2_GOTOFF
-@deffnx {} BFD_RELOC_NIOS2_CALL26_NOAT
-@deffnx {} BFD_RELOC_NIOS2_GOT_LO
-@deffnx {} BFD_RELOC_NIOS2_GOT_HA
-@deffnx {} BFD_RELOC_NIOS2_CALL_LO
-@deffnx {} BFD_RELOC_NIOS2_CALL_HA
-@deffnx {} BFD_RELOC_NIOS2_R2_S12
-@deffnx {} BFD_RELOC_NIOS2_R2_I10_1_PCREL
-@deffnx {} BFD_RELOC_NIOS2_R2_T1I7_1_PCREL
-@deffnx {} BFD_RELOC_NIOS2_R2_T1I7_2
-@deffnx {} BFD_RELOC_NIOS2_R2_T2I4
-@deffnx {} BFD_RELOC_NIOS2_R2_T2I4_1
-@deffnx {} BFD_RELOC_NIOS2_R2_T2I4_2
-@deffnx {} BFD_RELOC_NIOS2_R2_X1I7_2
-@deffnx {} BFD_RELOC_NIOS2_R2_X2L5
-@deffnx {} BFD_RELOC_NIOS2_R2_F1I5_2
-@deffnx {} BFD_RELOC_NIOS2_R2_L5I4X1
-@deffnx {} BFD_RELOC_NIOS2_R2_T1X1I6
-@deffnx {} BFD_RELOC_NIOS2_R2_T1X1I6_2
-Relocations used by the Altera Nios II core.
-@end deffn
 @deffn {} BFD_RELOC_PRU_U16
 PRU LDI 16-bit unsigned data-memory relocation.
 @end deffn

@@ -295,30 +295,48 @@ clean_restart $binfile
 runto_main
 gdb_breakpoint $break1_loc
 
-gdb_test "commands\nsilent\nif (lines % 2)\ncheckpoint\nend\n  continue\nend" \
+set cmd \
+    [join \
+	 [list \
+	      "commands" \
+	      "if (lines % 2)" \
+	      "  checkpoint" \
+	      "else" \
+	      "  continue" \
+	      "end" \
+	      "end"] \
+	 "\n"]
+gdb_test $cmd \
     "" \
     "set checkpoint breakpoint"
 
-set prev_timeout $timeout
-set timeout [expr $timeout + 120]
-verbose "Timeout now $timeout sec."
-
-gdb_breakpoint $break2_loc
-gdb_test "continue" "breakpoint 2.*" "break2 with many checkpoints"
+set nr_ok 0
+for {set iter 0} {$iter < 600} {incr iter} {
+    set ok 0
+    gdb_test_multiple "continue" "" {
+	-re -wrap "breakpoint 1.*" {
+	    set ok 1
+	}
+	-re -wrap "" {
+	}
+    }
+    if { $ok } {
+	incr nr_ok
+    } else {
+	break
+    }
+}
+gdb_assert { $nr_ok == 600 } "break1 with many checkpoints"
 
 set count 0
 set msg "info checkpoints with at least 600 checkpoints"
 gdb_test_multiple "info checkpoints" $msg {
-    -re "  $decimal process \[^\r\]*\r\n" {
+    -re "\r\n  $decimal process \[^\r\]*" {
 	incr count
 	exp_continue
     }
-    -re "$gdb_prompt $" {
-	if { $count >= 600 } {
-	    pass $msg
-	} else {
-	    fail $msg
-	}
+    -re -wrap "" {
+	gdb_assert { $count == 600 } $gdb_test_name
     }
 }
 
@@ -328,10 +346,6 @@ gdb_test_multiple "info checkpoints" $msg {
 
 gdb_test "kill" "" "kill all one with many checkpoints" \
     "Kill the program being debugged.*y or n. $" "y"
-
-# Restore old timeout
-set timeout $prev_timeout
-verbose "Timeout now $timeout sec."
 
 #
 # Finished: cleanup

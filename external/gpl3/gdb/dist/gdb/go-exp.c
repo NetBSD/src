@@ -765,7 +765,7 @@ static const yytype_int16 yyrline[] =
      325,   329,   333,   337,   341,   345,   349,   353,   357,   361,
      365,   369,   373,   377,   381,   385,   389,   393,   397,   408,
      412,   421,   428,   437,   448,   457,   460,   466,   478,   485,
-     502,   520,   532,   536,   540,   554,   599,   601,   608,   621
+     502,   520,   532,   536,   540,   554,   598,   600,   607,   620
 };
 #endif
 
@@ -1955,16 +1955,15 @@ yyreduce:
 			    }
 			  else
 			    {
-			      struct bound_minimal_symbol msymbol;
 			      std::string arg = copy_name ((yyvsp[0].ssym).stoken);
 
-			      msymbol =
-				lookup_bound_minimal_symbol (arg.c_str ());
+			      bound_minimal_symbol msymbol =
+				lookup_minimal_symbol (current_program_space, arg.c_str ());
 			      if (msymbol.minsym != NULL)
 				pstate->push_new<var_msym_value_operation>
 				  (msymbol);
-			      else if (!have_full_symbols ()
-				       && !have_partial_symbols ())
+			      else if (!have_full_symbols (current_program_space)
+				       && !have_partial_symbols (current_program_space))
 				error (_("No symbol table is loaded.  "
 				       "Use the \"file\" command."));
 			      else
@@ -1972,30 +1971,30 @@ yyreduce:
 				       arg.c_str ());
 			    }
 			}
-#line 1977 "go-exp.c.tmp"
+#line 1976 "go-exp.c.tmp"
     break;
 
   case 66: /* type: '*' type  */
-#line 600 "go-exp.y"
+#line 599 "go-exp.y"
                         { (yyval.tval) = lookup_pointer_type ((yyvsp[0].tval)); }
-#line 1983 "go-exp.c.tmp"
+#line 1982 "go-exp.c.tmp"
     break;
 
   case 67: /* type: TYPENAME  */
-#line 602 "go-exp.y"
+#line 601 "go-exp.y"
                         { (yyval.tval) = (yyvsp[0].tsym).type; }
-#line 1989 "go-exp.c.tmp"
+#line 1988 "go-exp.c.tmp"
     break;
 
   case 68: /* type: BYTE_KEYWORD  */
-#line 609 "go-exp.y"
+#line 608 "go-exp.y"
                         { (yyval.tval) = builtin_go_type (pstate->gdbarch ())
 			    ->builtin_uint8; }
-#line 1996 "go-exp.c.tmp"
+#line 1995 "go-exp.c.tmp"
     break;
 
 
-#line 2000 "go-exp.c.tmp"
+#line 1999 "go-exp.c.tmp"
 
       default: break;
     }
@@ -2188,7 +2187,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 631 "go-exp.y"
+#line 630 "go-exp.y"
 
 
 /* Take care of parsing a number (anything that starts with a digit).

@@ -68,7 +68,7 @@ proc start_structs_test { types } {
 
     # Advance to main
     if {![runto_main]} {
-	return
+	return -1
     }
 
     # Get the debug format
@@ -296,7 +296,7 @@ proc test_struct_returns { n } {
     # known, both failed to print a final "source and line" and misplaced
     # the frame ("No frame").
 
-    # The test is writen so that it only reports one FAIL/PASS for the
+    # The test is written so that it only reports one FAIL/PASS for the
     # entire operation.  The value returned is checked further down.
     # "return_value_known", if non-zero, indicates that GDB knew where
     # the return value was located.
@@ -376,7 +376,7 @@ proc test_struct_returns { n } {
 	}
 	-re ".*${gdb_prompt} $" {
 	    if $return_value_unimplemented {
-		# What a suprize.  The architecture hasn't implemented
+		# What a surprise.  The architecture hasn't implemented
 		# return_value, and hence has to fail.
 		kfail "$test" gdb/1444
 	    } else {

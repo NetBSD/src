@@ -394,7 +394,6 @@ cp_lookup_symbol_via_imports (const char *scope,
 			      std::map<std::string,
 				       struct block_symbol>& found_symbols)
 {
-  struct using_direct *current;
   struct block_symbol sym = {};
   int len;
   int directive_match;
@@ -420,9 +419,7 @@ cp_lookup_symbol_via_imports (const char *scope,
   /* Go through the using directives.  If any of them add new names to
      the namespace we're searching in, see if we can find a match by
      applying them.  */
-  for (current = block->get_using ();
-       current != NULL;
-       current = current->next)
+  for (using_direct *current : block->get_using ())
     {
       const char **excludep;
 
@@ -539,61 +536,23 @@ cp_lookup_symbol_via_imports (const char *scope,
     return {};
 }
 
-/* Helper function that searches an array of symbols for one named NAME.  */
-
-static struct symbol *
-search_symbol_list (const char *name, int num,
-		    struct symbol **syms)
-{
-  int i;
-
-  /* Maybe we should store a dictionary in here instead.  */
-  for (i = 0; i < num; ++i)
-    {
-      if (strcmp (name, syms[i]->natural_name ()) == 0)
-	return syms[i];
-    }
-  return NULL;
-}
-
-/* Search for symbols whose name match NAME in the given SCOPE.
-   if BLOCK is a function, we'll search first through the template
-   parameters and function type. Afterwards (or if BLOCK is not a function)
-   search through imported directives using cp_lookup_symbol_via_imports.  */
+/* Search for symbols whose name match NAME in the given SCOPE.  */
 
 struct block_symbol
-cp_lookup_symbol_imports_or_template (const char *scope,
-				      const char *name,
-				      const struct block *block,
-				      const domain_search_flags domain)
+cp_lookup_symbol_imports (const char *scope,
+			  const char *name,
+			  const struct block *block,
+			  const domain_search_flags domain)
 {
   struct symbol *function = block->function ();
 
   symbol_lookup_debug_printf
-    ("cp_lookup_symbol_imports_or_template (%s, %s, %s, %s)",
+    ("cp_lookup_symbol_imports (%s, %s, %s, %s)",
      scope, name, host_address_to_string (block),
      domain_name (domain).c_str ());
 
   if (function != NULL && function->language () == language_cplus)
     {
-      /* Search the function's template parameters.  */
-      if (function->is_cplus_template_function ())
-	{
-	  struct template_symbol *templ
-	    = (struct template_symbol *) function;
-	  struct symbol *sym = search_symbol_list (name,
-						   templ->n_template_arguments,
-						   templ->template_arguments);
-
-	  if (sym != NULL)
-	    {
-	      symbol_lookup_debug_printf
-		("cp_lookup_symbol_imports_or_template (...) = %s",
-		 host_address_to_string (sym));
-	      return (struct block_symbol) {sym, block};
-	    }
-	}
-
       /* Search the template parameters of the function's defining
 	 context.  */
       if (function->natural_name ())
@@ -629,7 +588,7 @@ cp_lookup_symbol_imports_or_template (const char *scope,
 	      if (sym != NULL)
 		{
 		  symbol_lookup_debug_printf
-		    ("cp_lookup_symbol_imports_or_template (...) = %s",
+		    ("cp_lookup_symbol_imports (...) = %s",
 		     host_address_to_string (sym));
 		  return (struct block_symbol) {sym, parent};
 		}
@@ -639,7 +598,7 @@ cp_lookup_symbol_imports_or_template (const char *scope,
 
   struct block_symbol result
     = cp_lookup_symbol_via_imports (scope, name, block, domain, 1, 1);
-  symbol_lookup_debug_printf ("cp_lookup_symbol_imports_or_template (...) = %s\n",
+  symbol_lookup_debug_printf ("cp_lookup_symbol_imports (...) = %s\n",
 		  result.symbol != nullptr
 		  ? host_address_to_string (result.symbol) : "NULL");
   return result;

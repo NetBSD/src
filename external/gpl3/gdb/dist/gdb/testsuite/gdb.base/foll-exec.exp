@@ -139,23 +139,23 @@ proc do_exec_tests {} {
    send_gdb "print global_i\n"
    gdb_expect {
      -re ".* = 0.*$gdb_prompt $"\
-                     {pass "print execd-program/global_i (after execlp)"}
-     -re "$gdb_prompt $" {fail "print execd-program/global_i (after execlp)"}
-     timeout         {fail "(timeout) print execd-program/global_i (after execlp)"}
+		     {pass "print execd-program/global_i, after execlp"}
+     -re "$gdb_prompt $" {fail "print execd-program/global_i, after execlp"}
+     timeout         {fail "(timeout) print execd-program/global_i, after execlp"}
    }
    send_gdb "print local_j\n"
    gdb_expect {
      -re ".* = 2.*$gdb_prompt $"\
-                     {pass "print execd-program/local_j (after execlp)"}
-     -re "$gdb_prompt $" {fail "print execd-program/local_j (after execlp)"}
-     timeout         {fail "(timeout) print execd-program/local_j (after execlp)"}
+		     {pass "print execd-program/local_j, after execlp"}
+     -re "$gdb_prompt $" {fail "print execd-program/local_j, after execlp"}
+     timeout         {fail "(timeout) print execd-program/local_j, after execlp"}
    }
    send_gdb "print local_k\n"
    gdb_expect {
      -re "No symbol \"local_k\" in current context.*$gdb_prompt $"\
-                     {pass "print follow-exec/local_k (after execlp)"}
-     -re "$gdb_prompt $" {fail "print follow-exec/local_k (after execlp)"}
-     timeout         {fail "(timeout) print follow-exec/local_k (after execlp)"}
+		     {pass "print follow-exec/local_k, after execlp"}
+     -re "$gdb_prompt $" {fail "print follow-exec/local_k, after execlp"}
+     timeout         {fail "(timeout) print follow-exec/local_k, after execlp"}
    }
 
    # Explicitly kill this program, or a subsequent rerun actually runs
@@ -288,9 +288,9 @@ proc do_exec_tests {} {
    send_gdb "print local_j\n"
    gdb_expect {
      -re ".* = 3.*$gdb_prompt $"\
-                     {pass "print execd-program/local_j (after execl)"}
-     -re "$gdb_prompt $" {fail "print execd-program/local_j (after execl)"}
-     timeout         {fail "(timeout) print execd-program/local_j (after execl)"}
+		     {pass "print execd-program/local_j, after execl"}
+     -re "$gdb_prompt $" {fail "print execd-program/local_j, after execl"}
+     timeout         {fail "(timeout) print execd-program/local_j, after execl"}
    }
 
    # Explicitly kill this program, or a subsequent rerun actually runs
@@ -349,9 +349,9 @@ proc do_exec_tests {} {
    send_gdb "print local_j\n"
    gdb_expect {
      -re ".* = 2.*$gdb_prompt $"\
-                     {pass "print execd-program/local_j (after execv)"}
-     -re "$gdb_prompt $" {fail "print execd-program/local_j (after execv)"}
-     timeout         {fail "(timeout) print execd-program/local_j (after execv)"}
+		     {pass "print execd-program/local_j, after execv"}
+     -re "$gdb_prompt $" {fail "print execd-program/local_j, after execv"}
+     timeout         {fail "(timeout) print execd-program/local_j, after execv"}
    }
 
    # Explicitly kill this program, or a subsequent rerun actually runs

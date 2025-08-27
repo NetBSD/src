@@ -565,21 +565,16 @@ mmo_mkobject (bfd *abfd)
 {
   mmo_init ();
 
-  if (abfd->tdata.mmo_data == NULL)
-    {
-      time_t created;
+  /* All fields are zero-initialized, so we don't have to explicitly
+     initialize most.  */
+  tdata_type *tdata = bfd_zalloc (abfd, sizeof (tdata_type));
+  if (tdata == NULL)
+    return false;
 
-      /* All fields are zero-initialized, so we don't have to explicitly
-	 initialize most.  */
-      tdata_type *tdata = (tdata_type *) bfd_zalloc (abfd, sizeof (tdata_type));
-      if (tdata == NULL)
-	return false;
+  time_t created = time (NULL);
+  bfd_put_32 (abfd, created, tdata->created);
 
-      created = time (NULL);
-      bfd_put_32 (abfd, created, tdata->created);
-
-      abfd->tdata.mmo_data = tdata;
-    }
+  abfd->tdata.mmo_data = tdata;
 
   return true;
 }
@@ -2134,15 +2129,12 @@ mmo_scan (bfd *abfd)
 static bool
 mmo_new_section_hook (bfd *abfd, asection *newsect)
 {
+  /* We zero-fill all fields and assume NULL is represented by an all
+     zero-bit pattern.  */
+  newsect->used_by_bfd
+    = bfd_zalloc (abfd, sizeof (struct mmo_section_data_struct));
   if (!newsect->used_by_bfd)
-    {
-      /* We zero-fill all fields and assume NULL is represented by an all
-	 zero-bit pattern.  */
-      newsect->used_by_bfd
-	= bfd_zalloc (abfd, sizeof (struct mmo_section_data_struct));
-      if (!newsect->used_by_bfd)
-	return false;
-    }
+    return false;
 
   /* Always align to at least 32-bit words.  */
   newsect->alignment_power = 2;

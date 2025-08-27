@@ -27,11 +27,11 @@ if ![fortran_runto_main] {
     return -1
 }
 
-# Check VLA with arbitary length and check that elements outside of
+# Check VLA with arbitrary length and check that elements outside of
 # bounds of the passed VLA can be accessed correctly.
 gdb_breakpoint [gdb_get_line_number "end-of-bar"]
 gdb_continue_to_breakpoint "end-of-bar"
-gdb_test "p array1(42)" " = 3" "print arbitary array1(42)"
-gdb_test "p array1(100)" " = 100" "print arbitary array1(100)"
-gdb_test "p array2(4,10)" " = 1" "print arbitary array2(4,10)"
-gdb_test "p array2(4,100)" " = 1" "print arbitary array2(4,100)"
+gdb_test "p array1(42)" " = 3" "print arbitrary array1(42)"
+gdb_test "p array1(100)" " = 100" "print arbitrary array1(100)"
+gdb_test "p array2(4,10)" " = 1" "print arbitrary array2(4,10)"
+gdb_test "p array2(4,100)" " = 1" "print arbitrary array2(4,100)"

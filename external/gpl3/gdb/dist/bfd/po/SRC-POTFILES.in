@@ -92,7 +92,6 @@ cpu-msp430.c
 cpu-mt.c
 cpu-nds32.c
 cpu-nfp.c
-cpu-nios2.c
 cpu-ns32k.c
 cpu-or1k.c
 cpu-pdp11.c
@@ -199,8 +198,6 @@ elf32-msp430.c
 elf32-mt.c
 elf32-nds32.c
 elf32-nds32.h
-elf32-nios2.c
-elf32-nios2.h
 elf32-or1k.c
 elf32-pj.c
 elf32-ppc.c

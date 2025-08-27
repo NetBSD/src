@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GDBSERVER 1"
-.TH GDBSERVER 1 "2024-07-07" "gdb-15.1" "GNU Development Tools"
+.TH GDBSERVER 1 "2025-04-20" "gdb-16.3" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -362,6 +362,8 @@ By default, \fBgdbserver\fR keeps the listening \s-1TCP\s0 port open, so that
 additional connections are possible.  However, if you start \f(CW\*(C`gdbserver\*(C'\fR
 with the \fB\-\-once\fR option, it will stop listening for any further
 connection attempts after connecting to the first \s-1GDB\s0 session.
+.SH "ENVIRONMENT"
+.IX Header "ENVIRONMENT"
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 The full documentation for \s-1GDB\s0 is maintained as a Texinfo manual.

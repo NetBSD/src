@@ -32,10 +32,13 @@ if ![runto_main] {
 set groups {}
 set test "maint print reggroups"
 gdb_test_multiple $test $test {
-    -re ".*Group\[ \t\]+Type\[ \t\]+\r\n" {
+    -re "^$test\r\n" {
 	exp_continue
     }
-    -re "^ (\[^ \t\]+)\[ \t\]+\[^\r\n\]+\r\n" {
+    -re "Group\[ \t\]+Type\[ \t\]+\r\n" {
+	exp_continue
+    }
+    -re "^(\[^ \t\]+)\[ \t\]+\[^\r\n\]+\r\n" {
 	lappend groups $expect_out(1,string)
 	exp_continue
     }
@@ -74,7 +77,7 @@ gdb_test_multiple "python print (\"\\n\".join (groups))" \
 gdb_assert {[llength $py_groups] > 0} \
     "Found at least one register group from python"
 gdb_assert {[llength $py_groups] == [llength $groups]} \
-    "Same numnber of registers groups found"
+    "Same number of registers groups found"
 
 set found_non_match 0
 for { set i 0 } { $i < [llength $groups] } { incr i } {

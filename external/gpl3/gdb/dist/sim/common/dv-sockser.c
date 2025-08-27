@@ -175,7 +175,7 @@ dv_sockser_init (SIM_DESC sd)
      ??? Need a central signal management module.  */
 #ifdef SIGPIPE
   {
-    RETSIGTYPE (*orig) ();
+    RETSIGTYPE (*orig) (int);
     orig = signal (SIGPIPE, SIG_IGN);
     /* If a handler is already set up, don't mess with it.  */
     if (orig != SIG_DFL && orig != SIG_IGN)

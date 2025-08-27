@@ -782,13 +782,13 @@ handle_interrupt(device *me,
   else if (!src->is_level_triggered
 	   && src->is_positive_polarity
 	   && !asserted) {
-    DTRACE(opic, ("interrupt %d - ignore falling edge (positive edge trigered)\n",
+    DTRACE(opic, ("interrupt %d - ignore falling edge (positive edge triggered)\n",
 		  src->nr));
   }
   else if (!src->is_level_triggered
 	   && !src->is_positive_polarity
 	   && asserted) {
-    DTRACE(opic, ("interrupt %d - ignore rising edge (negative edge trigered)\n",
+    DTRACE(opic, ("interrupt %d - ignore rising edge (negative edge triggered)\n",
 		  src->nr));
   }
   else if (src->in_service != 0) {
@@ -879,7 +879,7 @@ do_end_of_interrupt_register_N_write(device *me,
     DTRACE(opic, ("eoi %d - ignoring nonzero value\n", dest->nr));
   }
 
-  /* user doing wierd things? */
+  /* user doing weird things? */
   if (dest->current_in_service == NULL) {
     DTRACE(opic, ("eoi %d - strange, no current interrupt\n", dest->nr));
     return;
@@ -1393,7 +1393,7 @@ timer_event(void *data)
   opic_timer *timer = data;
   device *me = timer->me;
   if (timer->inhibited)
-    device_error(timer->me, "internal-error - timer event occured when timer %d inhibited",
+    device_error(timer->me, "internal-error - timer event occurred when timer %d inhibited",
 		 timer->nr);
   handle_interrupt(timer->me, timer->opic, timer->interrupt_source, 1);
   timer->timeout_event = device_event_queue_schedule(me, timer->base_count,

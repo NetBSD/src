@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef INFRUN_H
-#define INFRUN_H 1
+#ifndef GDB_INFRUN_H
+#define GDB_INFRUN_H
 
 #include "gdbthread.h"
 #include "symtab.h"
@@ -418,4 +418,4 @@ private:
 };
 
 
-#endif /* INFRUN_H */
+#endif /* GDB_INFRUN_H */

@@ -19,7 +19,7 @@ set opts {}
 if [info exists COMPILE] {
     # make check RUNTESTFLAGS="gdb.arch/amd64-entry-value-param-dwarf5.exp COMPILE=1"
     standard_testfile .c .c
-    lappend opts optimize=-O2 additional_flags=-gdwarf-5
+    lappend opts optimize=-O2 dwarf5
 } else {
     require is_x86_64_m64_target
 }

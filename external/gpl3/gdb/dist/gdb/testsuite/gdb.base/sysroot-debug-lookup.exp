@@ -1,0 +1,184 @@
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test GDB's ability to find debug information by looking within the
+# sysroot.
+#
+# We compile a static binary (to reduce what we need to copy into the
+# sysroot), split the debug information from the binary, and setup a
+# sysroot.
+#
+# The debug-file-directory is set to just '/debug', but we're
+# expecting GDB to actually look in '$SYSROOT/debug'.
+#
+# There's a test for using .build-id based lookup, and a test for
+# gnu_debuglink based lookup.
+
+require {!is_remote host}
+
+standard_testfile main.c
+
+# Create a copy of BINFILE, split out the debug information, and then
+# setup a sysroot.  Hide (by moving) the actual debug information file
+# and create a symlink to the hidden debug information from within the
+# sysroot.
+#
+# Start GDB, set the sysroot, and then load the executable, ensure GDB
+# finds the debug information, which must have happened by lookin in
+# the sysroot.
+proc_with_prefix lookup_via_build_id {} {
+    set filename ${::binfile}_1
+    if { [build_executable "build exec" ${filename} $::srcfile \
+	      {additional_flags=-static debug build-id}] } {
+	return
+    }
+
+    # Split debug information into a .debug file, remove debug
+    # information from FILENAME.  Don't add a .gnu_debuglink to
+    # FILENAME, we rely on the build-id.
+    if {[gdb_gnu_strip_debug $filename { no-debuglink }] != 0} {
+	unsupported "cannot split debug information from executable"
+	return
+    }
+
+    set sysroot [standard_output_file "sysroot1"]
+    set debug_dir "/debug"
+
+    set debug_symlink \
+	${sysroot}${debug_dir}/[build_id_debug_filename_get $filename]
+
+    set build_id_dir [file dirname $debug_symlink]
+
+    set debug_filename ${filename}_hidden_debug
+
+    remote_exec build "mkdir -p $build_id_dir"
+    remote_exec build "mv $filename.debug $debug_filename"
+    remote_exec build "ln -sf $debug_filename $debug_symlink"
+
+    foreach_with_prefix sysroot_prefix { "" "target:" } {
+	clean_restart
+
+	gdb_test_no_output "set sysroot ${sysroot_prefix}$sysroot" "set sysroot"
+	gdb_test_no_output "set debug-file-directory $debug_dir"
+
+	gdb_file_cmd $filename
+
+	gdb_assert { $::gdb_file_cmd_debug_info eq "debug" } \
+	    "ensure debug information was found"
+
+	if { $sysroot_prefix eq "target:"
+	     && [target_info gdb_protocol] == "extended-remote"} {
+	    # Only when using the extended-remote board will we have
+	    # started a remote target by this point.  In this case GDB
+	    # will see the 'target:' prefix as remote, and so the
+	    # reported filename will include the 'target:' prefix.
+	    #
+	    # In all other cases we will still be using the default,
+	    # initial target, in which case GDB considers the
+	    # 'target:' prefix to indicate the local filesystem.
+	    set lookup_filename $sysroot_prefix$debug_symlink
+	} else {
+	    set lookup_filename $debug_filename
+	}
+	set re [string_to_regexp "Reading symbols from $lookup_filename..."]
+	gdb_assert {[regexp $re $::gdb_file_cmd_msg]} \
+	    "debug symbols read from correct file"
+    }
+}
+
+# Create a copy of BINFILE, split out the debug information, and then
+# setup a sysroot.  Hide (by moving) the actual debug information file
+# and create a symlink to the hidden debug information from within the
+# sysroot.
+#
+# Copy the executable into the sysroot and then start GDB, set the
+# sysroot, and load the executable.  Check that GDB finds the debug
+# information, which must have happened by lookin in the sysroot.
+proc_with_prefix lookup_via_debuglink {} {
+    set filename ${::binfile}_2
+    if { [build_executable "build exec" ${filename} $::srcfile \
+	      {additional_flags=-static debug no-build-id}] } {
+	return
+    }
+
+    # Split debug information into a .debug file, remove debug
+    # information from FILENAME.
+    if {[gdb_gnu_strip_debug $filename] != 0} {
+	unsupported "cannot split debug information from executable"
+	return
+    }
+
+    # We're going to setup the sysroot like this:
+    #
+    # sysroot2/
+    #    bin/
+    #      $FILENAME
+    #    debug/
+    #      bin/
+    #        $FILENAME.debug
+    #
+    # When looking up debug information via the debuglink, GDB will
+    # only search in the sysroot if the original objfile was in the
+    # sysroot.  And GDB will resolve symlinks, so if the objfile is
+    # symlinked to outside the sysroot, GDB will not search in the
+    # sysroot for the debug information.
+    #
+    # So we have to copy the executable into the sysroot.
+    #
+    # We are OK to symlink the debug information to a file outside the
+    # sysroot though.
+
+    set sysroot [standard_output_file "sysroot2"]
+
+    foreach path { bin debug/bin } {
+	remote_exec build "mkdir -p $sysroot/$path"
+    }
+
+    # Copy the executable into the sysroot.
+    set file_basename [file tail $filename]
+    set exec_in_sysroot ${sysroot}/bin/${file_basename}
+    remote_exec build "cp $filename $exec_in_sysroot"
+
+    # Rename the debug file outside of the sysroot, this should stop
+    # GDB finding this file "by accident".
+    set debug_filename ${filename}_hidden_debug
+    remote_exec build "mv $filename.debug $debug_filename"
+
+    # Symlink the debug information into the sysroot.
+    set debug_symlink \
+	${sysroot}/debug/bin/${file_basename}.debug
+    remote_exec build "ln -sf $debug_filename $debug_symlink"
+
+    foreach_with_prefix sysroot_prefix { "" "target:" } {
+	# Restart GDB and setup the sysroot and debug directory.
+	clean_restart
+	gdb_test_no_output "set sysroot ${sysroot_prefix}$sysroot" "set sysroot"
+	gdb_test_no_output "set debug-file-directory /debug"
+
+	# Load the executable, we expect GDB to find the debug information
+	# in the sysroot.
+	gdb_file_cmd ${sysroot_prefix}$exec_in_sysroot
+
+	gdb_assert { $::gdb_file_cmd_debug_info eq "debug" } \
+	    "ensure debug information was found"
+
+	set re [string_to_regexp "Reading symbols from ${sysroot_prefix}$debug_symlink..."]
+	gdb_assert {[regexp $re $::gdb_file_cmd_msg]} \
+	    "debug symbols read from correct file"
+    }
+}
+
+lookup_via_build_id
+lookup_via_debuglink

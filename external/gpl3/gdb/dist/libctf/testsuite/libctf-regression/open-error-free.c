@@ -1,12 +1,17 @@
 /* Make sure that, on error, an opened dict is properly freed.  */
 
 #define _GNU_SOURCE 1
+#include "config.h"
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctf-api.h>
 #include <ctf.h>
+
+#ifdef HAVE_VALGRIND_VALGRIND_H
+#include <valgrind/valgrind.h>
+#endif
 
 static unsigned long long malloc_count;
 static unsigned long long free_count;
@@ -111,6 +116,14 @@ int main (void)
   ctf_next_t *it = NULL;
   unsigned long long frozen_malloc_count, frozen_free_count;
 
+#ifdef HAVE_VALGRIND_VALGRIND_H
+  if (RUNNING_ON_VALGRIND)
+    {
+      printf ("UNSUPPORTED: valgrind interferes with malloc counting\n");
+      return 0;
+    }
+#endif
+
   if ((fp = ctf_create (&err)) == NULL)
     goto open_err;
 
@@ -130,7 +143,7 @@ int main (void)
      failure after we corrupt it: the leak is only observable if the dict gets
      malloced, which only happens after that point.)  */
 
-  if ((written = ctf_write_mem (fp, &written_size, (size_t) -1)) == NULL)
+  if ((written = (char *) ctf_write_mem (fp, &written_size, (size_t) -1)) == NULL)
     goto write_err;
 
   ctf_dict_close (fp);

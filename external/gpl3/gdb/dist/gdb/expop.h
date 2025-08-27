@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef EXPOP_H
-#define EXPOP_H
+#ifndef GDB_EXPOP_H
+#define GDB_EXPOP_H
 
 #include "c-lang.h"
 #include "cp-abi.h"
@@ -172,9 +172,6 @@ extern struct value *eval_op_ind (struct type *expect_type,
 				  struct expression *exp,
 				  enum noside noside,
 				  struct value *arg1);
-extern struct value *eval_op_type (struct type *expect_type,
-				   struct expression *exp,
-				   enum noside noside, struct type *type);
 extern struct value *eval_op_alignof (struct type *expect_type,
 				      struct expression *exp,
 				      enum noside noside,
@@ -1560,15 +1557,15 @@ public:
 
   value *evaluate (struct type *expect_type,
 		   struct expression *exp,
-		   enum noside noside) override
-  {
-    return eval_op_type (expect_type, exp, noside, std::get<0> (m_storage));
-  }
+		   enum noside noside) override;
 
   enum exp_opcode opcode () const override
   { return OP_TYPE; }
 
   bool constant_p () const override
+  { return true; }
+
+  bool type_p () const override
   { return true; }
 };
 
@@ -1593,6 +1590,9 @@ public:
 
   enum exp_opcode opcode () const override
   { return OP_TYPEOF; }
+
+  bool type_p () const override
+  { return true; }
 };
 
 /* Implement 'decltype'.  */
@@ -1638,6 +1638,9 @@ public:
 
   enum exp_opcode opcode () const override
   { return OP_DECLTYPE; }
+
+  bool type_p () const override
+  { return true; }
 };
 
 /* Implement 'typeid'.  */
@@ -1652,9 +1655,8 @@ public:
 		   struct expression *exp,
 		   enum noside noside) override
   {
-    enum exp_opcode sub_op = std::get<0> (m_storage)->opcode ();
     enum noside sub_noside
-      = ((sub_op == OP_TYPE || sub_op == OP_DECLTYPE || sub_op == OP_TYPEOF)
+      = (std::get<0> (m_storage)->type_p ()
 	 ? EVAL_AVOID_SIDE_EFFECTS
 	 : noside);
 
@@ -2214,4 +2216,4 @@ public:
 
 } /* namespace expr */
 
-#endif /* EXPOP_H */
+#endif /* GDB_EXPOP_H */

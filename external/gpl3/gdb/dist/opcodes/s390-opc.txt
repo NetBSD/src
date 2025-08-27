@@ -2061,7 +2061,7 @@ e60000000055 vcnf VRR_VV0UU2 "vector fp convert to nnp" arch14 zarch
 
 # Reset-DAT-Protection Facility
 
-b98B rdp RRF_RURR2 "reset dat protection" arch14 zarch optparm
+b98b rdp RRF_RURR2 "reset dat protection" arch14 zarch optparm
 
 # BEAR-Enhancement Facility
 
@@ -2072,3 +2072,129 @@ b201 stbear S_RD "store bear" arch14 zarch
 # Processor-Activity-Instrumentation Facility
 
 b28f qpaci S_RD "query processor activity counter information" arch14 zarch
+
+
+# arch15 instructions
+
+# Vector-Enhancements Facility 3
+
+e70000000089 vblend VRR_VVVU0V "vector blend" arch15 zarch
+e70000000089 vblendb VRR_VVV0V "vector blend byte" arch15 zarch
+e70001000089 vblendh VRR_VVV0V "vector blend halfword" arch15 zarch
+e70002000089 vblendf VRR_VVV0V "vector blend word" arch15 zarch
+e70003000089 vblendg VRR_VVV0V "vector blend doubleword" arch15 zarch
+e70004000089 vblendq VRR_VVV0V "vector blend quadword" arch15 zarch
+
+e70000000088 veval VRI_VVV0UV "vector evaluate" arch15 zarch
+
+e70000000054 vgem VRR_VV0U "vector generate element masks" arch15 zarch
+e70000000054 vgemb VRR_VV "vector generate element masks byte" arch15 zarch
+e70000001054 vgemh VRR_VV "vector generate element masks halfword" arch15 zarch
+e70000002054 vgemf VRR_VV "vector generate element masks word" arch15 zarch
+e70000003054 vgemg VRR_VV "vector generate element masks doubleword" arch15 zarch
+e70000004054 vgemq VRR_VV "vector generate element masks quadword" arch15 zarch
+
+e700000030d7 vuphg VRR_VV "vector unpack high doubleword" arch15 zarch
+e700000030d5 vuplhg VRR_VV "vector unpack logical high doubleword" arch15 zarch
+e700000030d6 vuplg VRR_VV "vector unpack low doubleword" arch15 zarch
+e700000030d4 vupllg VRR_VV "vector unpack logical low doubleword" arch15 zarch
+
+e700000040f2 vavgq VRR_VVV "vector average quadword" arch15 zarch
+e700000040f0 vavglq VRR_VVV "vector average logical quadword" arch15 zarch
+e700000040db vecq VRR_VV "vector element compare quadword" arch15 zarch
+e700000040d9 veclq VRR_VV "vector element compare logical quadword" arch15 zarch
+e700000040f8 vceqq VRR_VVV "vector compare equal quadword" arch15 zarch
+e700001040f8 vceqqs VRR_VVV "vector compare equal quadword" arch15 zarch
+e700000040fb vchq VRR_VVV "vector compare high quadword" arch15 zarch
+e700001040fb vchqs VRR_VVV "vector compare high quadword" arch15 zarch
+e700000040f9 vchlq VRR_VVV "vector compare high logical quadword" arch15 zarch
+e700001040f9 vchlqs VRR_VVV "vector compare high logical quadword" arch15 zarch
+e70000004053 vclzq VRR_VV "vector count leading zeros quadword" arch15 zarch
+e70000004052 vctzq VRR_VV "vector count trailing zeros quadword" arch15 zarch
+e700000040de vlcq VRR_VV "vector load complement quadword" arch15 zarch
+e700000040df vlpq VRR_VV "vector load positive quadword" arch15 zarch
+e700000040ff vmxq VRR_VVV "vector maximum quadword" arch15 zarch
+e700000040fd vmxlq VRR_VVV "vector maximum logical quadword" arch15 zarch
+e700000040fe vmnq VRR_VVV "vector minimum quadword" arch15 zarch
+e700000040fc vmnlq VRR_VVV "vector minimum logical quadword" arch15 zarch
+e700030000aa vmalg VRR_VVV0V "vector multiply and add low doubleword" arch15 zarch
+e700040000aa vmalq VRR_VVV0V "vector multiply and add low quadword" arch15 zarch
+e700030000ab vmahg VRR_VVV0V "vector multiply and add high doubleword" arch15 zarch
+e700040000ab vmahq VRR_VVV0V "vector multiply and add high quadword" arch15 zarch
+e700030000a9 vmalhg VRR_VVV0V "vector multiply and add logical high doubleword" arch15 zarch
+e700040000a9 vmalhq VRR_VVV0V "vector multiply and add logical high quadword" arch15 zarch
+e700030000ae vmaeg VRR_VVV0V "vector multiply and add even doubleword" arch15 zarch
+e700030000ac vmaleg VRR_VVV0V "vector multiply and add logical even doubleword" arch15 zarch
+e700030000af vmaog VRR_VVV0V "vector multiply and add odd doubleword" arch15 zarch
+e700030000ad vmalog VRR_VVV0V "vector multiply and add logical odd doubleword" arch15 zarch
+e700000030a3 vmhg VRR_VVV "vector multiply high doubleword" arch15 zarch
+e700000040a3 vmhq VRR_VVV "vector multiply high quadword" arch15 zarch
+e700000030a1 vmlhg VRR_VVV "vector multiply logical high doubleword" arch15 zarch
+e700000040a1 vmlhq VRR_VVV "vector multiply logical high quadword" arch15 zarch
+e700000030a2 vmlg VRR_VVV "vector multiply low doubleword" arch15 zarch
+e700000040a2 vmlq VRR_VVV "vector multiply low quadword" arch15 zarch
+e700000030a6 vmeg VRR_VVV "vector multiply even doubleword" arch15 zarch
+e700000030a4 vmleg VRR_VVV "vector multiply logical even doubleword" arch15 zarch
+e700000030a7 vmog VRR_VVV "vector multiply odd doubleword" arch15 zarch
+e700000030a5 vmlog VRR_VVV "vector multiply logical odd doubleword" arch15 zarch
+
+e700000000b2 vd VRR_VVV0UU "vector divide" arch15 zarch
+e700000020b2 vdf VRR_VVV0U02 "vector divide word" arch15 zarch
+e700000030b2 vdg VRR_VVV0U02 "vector divide doubleword" arch15 zarch
+e700000040b2 vdq VRR_VVV0U02 "vector divide quadword" arch15 zarch
+
+e700000000b0 vdl VRR_VVV0UU "vector divide logical" arch15 zarch
+e700000020b0 vdlf VRR_VVV0U02 "vector divide logical word" arch15 zarch
+e700000030b0 vdlg VRR_VVV0U02 "vector divide logical doubleword" arch15 zarch
+e700000040b0 vdlq VRR_VVV0U02 "vector divide logical quadword" arch15 zarch
+
+e700000000b3 vr VRR_VVV0UU "vector remainder" arch15 zarch
+e700000020b3 vrf VRR_VVV0U02 "vector remainder word" arch15 zarch
+e700000030b3 vrg VRR_VVV0U02 "vector remainder doubleword" arch15 zarch
+e700000040b3 vrq VRR_VVV0U02 "vector remainder quadword" arch15 zarch
+
+e700000000b1 vrl VRR_VVV0UU "vector remainder logical" arch15 zarch
+e700000020b1 vrlf VRR_VVV0U02 "vector remainder logical word" arch15 zarch
+e700000030b1 vrlg VRR_VVV0U02 "vector remainder logical doubleword" arch15 zarch
+e700000040b1 vrlq VRR_VVV0U02 "vector remainder logical quadword" arch15 zarch
+
+# Miscellaneous-Instruction-Extensions Facility 4
+
+b968 clzg RRE_RR "count leading zeros" arch15 zarch
+b969 ctzg RRE_RR "count trailing zeros" arch15 zarch
+
+e30000000060 lxab RXY_RRRD "load indexed address (shift left 0)" arch15 zarch
+e30000000062 lxah RXY_RRRD "load indexed address (shift left 1)" arch15 zarch
+e30000000064 lxaf RXY_RRRD "load indexed address (shift left 2)" arch15 zarch
+e30000000066 lxag RXY_RRRD "load indexed address (shift left 3)" arch15 zarch
+e30000000068 lxaq RXY_RRRD "load indexed address (shift left 4)" arch15 zarch
+
+e30000000061 llxab RXY_RRRD "load logical indexed address (shift left 0)" arch15 zarch
+e30000000063 llxah RXY_RRRD "load logical indexed address (shift left 1)" arch15 zarch
+e30000000065 llxaf RXY_RRRD "load logical indexed address (shift left 2)" arch15 zarch
+e30000000067 llxag RXY_RRRD "load logical indexed address (shift left 3)" arch15 zarch
+e30000000069 llxaq RXY_RRRD "load logical indexed address (shift left 4)" arch15 zarch
+
+b96c bextg RRF_R0RR2 "bit extract" arch15 zarch
+b96d bdepg RRF_R0RR2 "bit deposit" arch15 zarch
+
+# Message-Security-Assist Extension 12
+
+b93e kimd RRF_U0RR "compute intermediate message digest" arch15 zarch optparm
+b93f klmd RRF_U0RR "compute last message digest" arch15 zarch optparm
+
+# Vector-Packed-Decimal-Enhancement Facility 3
+
+e6000000004e vcvbq VRR_VV0U2 "vector convert to binary 128 bit" arch15 zarch
+e6000000004a vcvdq VRI_VV0UU "vector convert to decimal 128 bit" arch15 zarch
+
+e6000000005f vtp VRR_0V0U "vector test decimal" arch15 zarch optparm
+e6000000007f vtz VRR_0VVU "vector test zoned" arch15 zarch
+
+# Concurrent-Functions Facility
+
+c806 cal SSF_RRDRD2 "compare and load 32" arch15 zarch
+c807 calg SSF_RRDRD2 "compare and load 64" arch15 zarch
+c80f calgf SSF_RRDRD2 "compare and load 64<32" arch15 zarch
+
+eb0000000016 pfcr RSY_RRRD "perform functions with concurrent results" arch15 zarch

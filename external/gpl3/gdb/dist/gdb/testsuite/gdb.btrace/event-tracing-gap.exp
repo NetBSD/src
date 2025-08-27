@@ -1,0 +1,75 @@
+# This testcase is part of GDB, the GNU debugger.
+#
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test event tracing with gaps.
+
+require allow_btrace_pt_event_trace_tests
+
+standard_testfile
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile]} {
+    return -1
+}
+
+if {![runto_main]} {
+    return -1
+}
+
+gdb_test_no_output "set record btrace pt event-tracing on"
+gdb_test_no_output "record btrace pt"
+
+set bp_1 [gdb_get_line_number "bp1"]
+set bp_2 [gdb_get_line_number "bp2"]
+gdb_breakpoint $bp_1
+gdb_breakpoint $bp_2
+
+gdb_test "next"
+
+# Inferior calls and return commands will create gaps in the recording.
+gdb_test "call square (3)" [multi_line \
+    "" \
+    "Breakpoint $decimal, square \\(num=3\\) at \[^\r\n\]+:$bp_1" \
+    "$decimal.*bp1.*" \
+    "The program being debugged stopped while in a function called from GDB\\." \
+    "Evaluation of the expression containing the function" \
+    "\\(square\\) will be abandoned\\." \
+    "When the function is done executing, GDB will silently stop\\."]
+
+gdb_test "return 9" "0.*main.*" \
+    "return" \
+    "Make.*return now\\? \\(y or n\\) " "y"
+
+gdb_continue_to_breakpoint "break at bp_1" ".*$srcfile:$bp_1.*"
+gdb_continue_to_breakpoint "break at bp_2" ".*$srcfile:$bp_2.*"
+
+# We should have 2 gaps and events for each breakpoint we hit.
+# Note that due to the asynchronous nature of certain events, we use
+# gdb_test_sequence and check only for events that we can control.
+gdb_test_sequence "record function-call-history" "function-call-history" {
+    "\[0-9\]+\tmain"
+    "\\\[iret(: ip = $hex)?\\\]"
+    "\[0-9\]+\t\\\[non-contiguous\\\]"
+    "\[0-9\]+\tsquare"
+    "\\\[interrupt: vector = 0x3 \\\(#bp\\\)(, ip = 0x\[0-9a-fA-F\]+)?\\\]"
+    "\\\[iret(: ip = $hex)?\\\]"
+    "\[0-9\]+\t\\\[non-contiguous\\\]"
+    "\[0-9\]+\tmain"
+    "\[0-9\]+\tsquare"
+    "\\\[interrupt: vector = 0x3 \\\(#bp\\\)(, ip = 0x\[0-9a-fA-F\]+)?\\\]"
+    "\\\[iret(: ip = $hex)?\\\]"
+    "\[0-9\]+\tmain"
+}

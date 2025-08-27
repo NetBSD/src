@@ -206,7 +206,7 @@ lsscm_elt_type (lazy_string_smob *ls_smob)
     case TYPE_CODE_ARRAY:
       return realtype->target_type ();
     default:
-      /* This is done to preserve existing behaviour.  PR 20769.
+      /* This is done to preserve existing behavior.  PR 20769.
 	 E.g., gdb.parse_and_eval("my_int_variable").lazy_string().type.  */
       return realtype;
     }

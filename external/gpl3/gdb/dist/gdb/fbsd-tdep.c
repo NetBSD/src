@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "auxv.h"
+#include "exceptions.h"
 #include "extract-store-integer.h"
 #include "gdbcore.h"
 #include "inferior.h"
@@ -25,7 +26,6 @@
 #include "regcache.h"
 #include "regset.h"
 #include "gdbthread.h"
-#include "objfiles.h"
 #include "xml-syscall.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -33,6 +33,7 @@
 #include "elf-bfd.h"
 #include "fbsd-tdep.h"
 #include "gcore-elf.h"
+#include "arch-utils.h"
 
 /* This enum is derived from FreeBSD's <sys/signal.h>.  */
 
@@ -684,9 +685,9 @@ fbsd_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
 
   gdb_assert (gdbarch_iterate_over_regset_sections_p (gdbarch));
 
-  if (get_exec_file (0))
+  if (current_program_space->exec_filename () != nullptr)
     {
-      const char *fname = lbasename (get_exec_file (0));
+      const char *fname = lbasename (current_program_space->exec_filename ());
       std::string psargs = fname;
 
       const std::string &infargs = current_inferior ()->args ();
@@ -1942,7 +1943,8 @@ fbsd_get_syscall_number (struct gdbarch *gdbarch, thread_info *thread)
 static LONGEST
 fbsd_read_integer_by_name (struct gdbarch *gdbarch, const char *name)
 {
-  bound_minimal_symbol ms = lookup_minimal_symbol (name, NULL, NULL);
+  bound_minimal_symbol ms
+    = lookup_minimal_symbol (current_program_space, name);
   if (ms.minsym == NULL)
     error (_("Unable to resolve symbol '%s'"), name);
 
@@ -2033,21 +2035,23 @@ fbsd_get_thread_local_address (struct gdbarch *gdbarch, CORE_ADDR dtv_addr,
 {
   LONGEST tls_index = fbsd_get_tls_index (gdbarch, lm_addr);
 
-  gdb_byte buf[gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT];
-  if (target_read_memory (dtv_addr, buf, sizeof buf) != 0)
+  gdb::byte_vector buf (gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT);
+  if (target_read_memory (dtv_addr, buf.data (), buf.size ()) != 0)
     throw_error (TLS_GENERIC_ERROR,
 		 _("Cannot find thread-local variables on this target"));
 
   const struct builtin_type *builtin = builtin_type (gdbarch);
-  CORE_ADDR addr = gdbarch_pointer_to_address (gdbarch,
-					       builtin->builtin_data_ptr, buf);
+  CORE_ADDR addr
+    = gdbarch_pointer_to_address (gdbarch, builtin->builtin_data_ptr,
+				  buf.data ());
 
   addr += (tls_index + 1) * builtin->builtin_data_ptr->length ();
-  if (target_read_memory (addr, buf, sizeof buf) != 0)
+  if (target_read_memory (addr, buf.data (), buf.size ()) != 0)
     throw_error (TLS_GENERIC_ERROR,
 		 _("Cannot find thread-local variables on this target"));
 
-  addr = gdbarch_pointer_to_address (gdbarch, builtin->builtin_data_ptr, buf);
+  addr = gdbarch_pointer_to_address (gdbarch, builtin->builtin_data_ptr,
+				     buf.data ());
   return addr + offset;
 }
 
@@ -2056,7 +2060,8 @@ fbsd_get_thread_local_address (struct gdbarch *gdbarch, CORE_ADDR dtv_addr,
 CORE_ADDR
 fbsd_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
-  struct bound_minimal_symbol msym = lookup_bound_minimal_symbol ("_rtld_bind");
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol (current_program_space, "_rtld_bind");
   if (msym.minsym != nullptr && msym.value_address () == pc)
     return frame_unwind_caller_pc (get_current_frame ());
 
@@ -2357,6 +2362,137 @@ fbsd_vdso_range (struct gdbarch *gdbarch, struct mem_range *range)
   return range->length != 0;
 }
 
+/* Try to extract the inferior arguments, environment, and executable name
+   from CBFD.  */
+
+static core_file_exec_context
+fbsd_corefile_parse_exec_context_1 (struct gdbarch *gdbarch, bfd *cbfd)
+{
+  gdb_assert (gdbarch != nullptr);
+
+  /* If there's no core file loaded then we're done.  */
+  if (cbfd == nullptr)
+    return {};
+
+  int ptr_bytes = gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT;
+
+  /* Find the .auxv section in the core file. The BFD library creates this
+     for us from the AUXV note when the BFD is opened.  If the section
+     can't be found then there's nothing more we can do.  */
+  struct bfd_section * section = bfd_get_section_by_name (cbfd, ".auxv");
+  if (section == nullptr)
+    return {};
+
+  /* Grab the contents of the .auxv section.  If we can't get the contents
+     then there's nothing more we can do.  */
+  bfd_size_type size = bfd_section_size (section);
+  if (bfd_section_size_insane (cbfd, section))
+    return {};
+  gdb::byte_vector contents (size);
+  if (!bfd_get_section_contents (cbfd, section, contents.data (), 0, size))
+    return {};
+
+  /* Read AT_FREEBSD_ARGV, the address of the argument string vector.  */
+  CORE_ADDR argv_addr;
+  if (target_auxv_search (contents, current_inferior ()->top_target (),
+			  gdbarch, AT_FREEBSD_ARGV, &argv_addr) != 1)
+    return {};
+
+  /* Read AT_FREEBSD_ARGV, the address of the environment string vector.  */
+  CORE_ADDR envv_addr;
+  if (target_auxv_search (contents, current_inferior ()->top_target (),
+			  gdbarch, AT_FREEBSD_ENVV, &envv_addr) != 1)
+    return {};
+
+  /* Read the AT_EXECPATH string.  It's OK if we can't get this
+     information.  */
+  gdb::unique_xmalloc_ptr<char> execpath;
+  CORE_ADDR execpath_string_addr;
+  if (target_auxv_search (contents, current_inferior ()->top_target (),
+			  gdbarch, AT_FREEBSD_EXECPATH,
+			  &execpath_string_addr) == 1)
+    execpath = target_read_string (execpath_string_addr, INT_MAX);
+
+  /* The byte order.  */
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+
+  /* On FreeBSD the command the user ran is found in argv[0].  When we
+     read the first argument we place it into EXECFN.  */
+  gdb::unique_xmalloc_ptr<char> execfn;
+
+  /* Read strings from AT_FREEBSD_ARGV until we find a NULL marker.  The
+     first argument is placed into EXECFN as the command name.  */
+  std::vector<gdb::unique_xmalloc_ptr<char>> arguments;
+  CORE_ADDR str_addr;
+  while ((str_addr
+	  = (CORE_ADDR) read_memory_unsigned_integer (argv_addr, ptr_bytes,
+						      byte_order)) != 0)
+    {
+      gdb::unique_xmalloc_ptr<char> str
+	= target_read_string (str_addr, INT_MAX);
+      if (str == nullptr)
+	return {};
+
+      if (execfn == nullptr)
+	execfn = std::move (str);
+      else
+	arguments.emplace_back (std::move (str));
+
+      argv_addr += ptr_bytes;
+    }
+
+  /* Read strings from AT_FREEBSD_ENVV until we find a NULL marker.  */
+  std::vector<gdb::unique_xmalloc_ptr<char>> environment;
+  while ((str_addr
+	  = (uint64_t) read_memory_unsigned_integer (envv_addr, ptr_bytes,
+						     byte_order)) != 0)
+    {
+      gdb::unique_xmalloc_ptr<char> str
+	= target_read_string (str_addr, INT_MAX);
+      if (str == nullptr)
+	return {};
+
+      environment.emplace_back (std::move (str));
+      envv_addr += ptr_bytes;
+    }
+
+  return core_file_exec_context (std::move (execfn),
+				 std::move (execpath),
+				 std::move (arguments),
+				 std::move (environment));
+}
+
+/* See elf-corelow.h.  */
+
+static core_file_exec_context
+fbsd_corefile_parse_exec_context (struct gdbarch *gdbarch, bfd *cbfd)
+{
+  /* Catch and discard memory errors.
+
+     If the core file format is not as we expect then we can easily trigger
+     a memory error while parsing the core file.  We don't want this to
+     prevent the user from opening the core file; the information provided
+     by this function is helpful, but not critical, debugging can continue
+     without it.  Instead just give a warning and return an empty context
+     object.  */
+  try
+    {
+      return fbsd_corefile_parse_exec_context_1 (gdbarch, cbfd);
+    }
+  catch (const gdb_exception_error &ex)
+    {
+      if (ex.error == MEMORY_ERROR)
+	{
+	  warning
+	    (_("failed to parse execution context from corefile: %s"),
+	     ex.message->c_str ());
+	  return {};
+	}
+      else
+	throw;
+    }
+}
+
 /* Return the address range of the vDSO for the current inferior.  */
 
 static int
@@ -2400,4 +2536,6 @@ fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* `catch syscall' */
   set_xml_syscall_file_name (gdbarch, "syscalls/freebsd.xml");
   set_gdbarch_get_syscall_number (gdbarch, fbsd_get_syscall_number);
+  set_gdbarch_core_parse_exec_context (gdbarch,
+				       fbsd_corefile_parse_exec_context);
 }

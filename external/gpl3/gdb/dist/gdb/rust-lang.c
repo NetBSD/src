@@ -121,13 +121,11 @@ rust_tuple_type_p (struct type *type)
 static bool
 rust_underscore_fields (struct type *type)
 {
-  int i, field_number;
-
-  field_number = 0;
+  int field_number = 0;
 
   if (type->code () != TYPE_CODE_STRUCT)
     return false;
-  for (i = 0; i < type->num_fields (); ++i)
+  for (int i = 0; i < type->num_fields (); ++i)
     {
       if (!type->field (i).is_static ())
 	{
@@ -178,8 +176,6 @@ rust_slice_type_p (const struct type *type)
 static bool
 rust_range_type_p (struct type *type)
 {
-  int i;
-
   if (type->code () != TYPE_CODE_STRUCT
       || type->num_fields () > 2
       || type->name () == NULL
@@ -189,12 +185,12 @@ rust_range_type_p (struct type *type)
   if (type->num_fields () == 0)
     return true;
 
-  i = 0;
+  int field_num = 0;
   if (strcmp (type->field (0).name (), "start") == 0)
     {
       if (type->num_fields () == 1)
 	return true;
-      i = 1;
+      field_num = 1;
     }
   else if (type->num_fields () == 2)
     {
@@ -202,7 +198,7 @@ rust_range_type_p (struct type *type)
       return false;
     }
 
-  return strcmp (type->field (i).name (), "end") == 0;
+  return strcmp (type->field (field_num).name (), "end") == 0;
 }
 
 /* Return true if TYPE is an inclusive range type, otherwise false.
@@ -497,7 +493,6 @@ rust_language::val_print_struct
 	(struct value *val, struct ui_file *stream, int recurse,
 	 const struct value_print_options *options) const
 {
-  int i;
   int first_field;
   struct type *type = check_typedef (val->type ());
 
@@ -532,7 +527,7 @@ rust_language::val_print_struct
   opts.deref_ref = false;
 
   first_field = 1;
-  for (i = 0; i < type->num_fields (); ++i)
+  for (int i = 0; i < type->num_fields (); ++i)
     {
       if (type->field (i).is_static ())
 	continue;
@@ -1279,7 +1274,7 @@ rust_subscript (struct type *expect_type, struct expression *exp,
   /* Initialized to appease the compiler.  */
   range_flags kind = RANGE_LOW_BOUND_DEFAULT | RANGE_HIGH_BOUND_DEFAULT;
   LONGEST high = 0;
-  int want_slice = 0;
+  bool want_slice = false;
 
   rhstype = check_typedef (rhs->type ());
   if (rust_range_type_p (rhstype))
@@ -1287,7 +1282,7 @@ rust_subscript (struct type *expect_type, struct expression *exp,
       if (!for_addr)
 	error (_("Can't take slice of array without '&'"));
       rust_compute_range (rhstype, rhs, &low, &high, &kind);
-      want_slice = 1;
+      want_slice = true;
     }
   else
     low = value_as_long (rhs);

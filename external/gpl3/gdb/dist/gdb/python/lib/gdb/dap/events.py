@@ -17,7 +17,7 @@ import gdb
 
 from .modules import is_module, make_module
 from .scopes import set_finish_value
-from .server import send_event
+from .server import send_event, send_event_maybe_later
 from .startup import exec_and_log, in_gdb_thread, log
 
 # True when the inferior is thought to be running, False otherwise.
@@ -161,7 +161,7 @@ _expected_pause = False
 
 
 @in_gdb_thread
-def exec_and_expect_stop(cmd, expected_pause=False):
+def exec_and_expect_stop(cmd, expected_pause=False, propagate_exception=False):
     """A wrapper for exec_and_log that sets the continue-suppression flag.
 
     When EXPECTED_PAUSE is True, a stop that looks like a pause (e.g.,
@@ -174,7 +174,7 @@ def exec_and_expect_stop(cmd, expected_pause=False):
     # continuing.
     _suppress_cont = not expected_pause
     # FIXME if the call fails should we clear _suppress_cont?
-    exec_and_log(cmd)
+    exec_and_log(cmd, propagate_exception)
 
 
 # Map from gdb stop reasons to DAP stop reasons.  Some of these can't
@@ -241,7 +241,7 @@ def _on_stop(event):
         global stop_reason_map
         obj["reason"] = stop_reason_map[event.details["reason"]]
     _expected_pause = False
-    send_event("stopped", obj)
+    send_event_maybe_later("stopped", obj)
 
 
 # This keeps a bit of state between the start of an inferior call and

@@ -1,3 +1,27 @@
+2024-07-20  Nick Clifton  <nickc@redhat.com>
+
+	* 2.43 branch point.
+
+2024-07-15  Nick Clifton  <nickc@redhat.com>
+
+	Import the following upstream commits to the config files:
+	commit 948ae97ca5703224bd3eada06b7a69f40dd15a02
+	  Update copyright years
+	commit 471d8141d3a9fd845fe2ddd20b10569ab6437bc9
+	  config.sub: recognize nanoMIPS CPUs
+	commit ee6ea2f13ba4dc0836665d3c50099135bba36287
+	  config.guess: recognize ironclad OS
+	commit 5e2f254bcb505da063ba541b25df2c3f567b5517
+	  config.sub: recognize ironclad OS
+	commit 0e4a5b3a1ec551bf3cf4d432f4506ef02d1674c5
+	  config.sub: recognize *-*-uefi
+	commit d21518c6c819d285c6d9ec0c39c55615d0dde19c
+	  Recognize the VideoCore 4 processor
+	commit a9a369e97a39a49e675712aee4035ed662d24d71
+	  config.guess: detect LLVM-libc via features.h
+	commit 5b83c2ff5da15451cb566e1837253d0f60543dd7
+	  config.sub: add LLVM-libc support
+
 2024-03-20  Simon Marchi  <simon.marchi@efficios.com>
 
 	* .pre-commit-config.yaml: Bump black hook to 24.3.0

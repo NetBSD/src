@@ -21,7 +21,7 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 15.1.
+Source-Level Debugger' for GDB (GDB) Version 16.3.
 
    Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
@@ -35,6 +35,57 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Debug Session,  Prev: Bootstrapping,  Up: Remote Stub
+
+20.5.3 Putting it All Together
+------------------------------
+
+In summary, when your program is ready to debug, you must follow these
+steps.
+
+  1. Make sure you have defined the supporting low-level routines (*note
+     What You Must Do for the Stub: Bootstrapping.):
+          'getDebugChar', 'putDebugChar',
+          'flush_i_cache', 'memset', 'exceptionHandler'.
+
+  2. Insert these lines in your program's startup code, before the main
+     procedure is called:
+
+          set_debug_traps();
+          breakpoint();
+
+     On some machines, when a breakpoint trap is raised, the hardware
+     automatically makes the PC point to the instruction after the
+     breakpoint.  If your machine doesn't do that, you may need to
+     adjust 'handle_exception' to arrange for it to return to the
+     instruction after the breakpoint on this first invocation, so that
+     your program doesn't keep hitting the initial breakpoint instead of
+     making progress.
+
+  3. For the 680x0 stub only, you need to provide a variable called
+     'exceptionHook'.  Normally you just use:
+
+          void (*exceptionHook)() = 0;
+
+     but if before calling 'set_debug_traps', you set it to point to a
+     function in your program, that function is called when 'GDB'
+     continues after stopping on a trap (for example, bus error).  The
+     function indicated by 'exceptionHook' is called with one parameter:
+     an 'int' which is the exception number.
+
+  4. Compile and link together: your program, the GDB debugging stub for
+     your target architecture, and the supporting subroutines.
+
+  5. Make sure you have a serial connection between your target machine
+     and the GDB host, and identify the serial port on the host.
+
+  6. Download your program to your target machine (or get it there by
+     whatever means the manufacturer provides), and start it.
+
+  7. Start GDB on the host, and connect to the target (*note Connecting
+     to a Remote Target: Connecting.).
 
 
 File: gdb.info,  Node: Configurations,  Next: Controlling GDB,  Prev: Remote Debugging,  Up: Top
@@ -234,14 +285,6 @@ currently available from cores created on GNU/Linux and FreeBSD systems.
 'proc-untrace-exit'
      These commands enable and disable tracing of entries into and exits
      from the 'syscall' interface.
-
-'info pidlist'
-     For QNX Neutrino only, this command displays the list of all the
-     processes and all the threads within each process.
-
-'info meminfo'
-     For QNX Neutrino only, this command displays the list of all
-     mapinfos.
 
 
 File: gdb.info,  Node: DJGPP Native,  Next: Cygwin Native,  Prev: Process Information,  Up: Native
@@ -1243,7 +1286,6 @@ uses of GDB with the architecture, both native and cross.
 * MIPS::
 * HPPA::               HP PA architecture
 * PowerPC::
-* Nios II::
 * Sparc64::
 * S12Z::
 * AMD GPU::            AMD GPU architectures
@@ -1580,85 +1622,7 @@ File: gdb.info,  Node: x86,  Next: Alpha,  Prev: AArch64,  Up: Architectures
      Show the current setting of the convention to return 'struct's from
      functions.
 
-21.4.2.1 Intel "Memory Protection Extensions" (MPX).
-....................................................
-
-Memory Protection Extension (MPX) adds the bound registers 'BND0' (1)
-through 'BND3'.  Bound registers store a pair of 64-bit values which are
-the lower bound and upper bound.  Bounds are effective addresses or
-memory locations.  The upper bounds are architecturally represented in
-1's complement form.  A bound having lower bound = 0, and upper bound =
-0 (1's complement of all bits set) will allow access to the entire
-address space.
-
-   'BND0' through 'BND3' are represented in GDB as 'bnd0raw' through
-'bnd3raw'.  Pseudo registers 'bnd0' through 'bnd3' display the upper
-bound performing the complement of one operation on the upper bound
-value, i.e. when upper bound in 'bnd0raw' is 0 in the GDB 'bnd0' it will
-be '0xfff...'.  In this sense it can also be noted that the upper bounds
-are inclusive.
-
-   As an example, assume that the register BND0 holds bounds for a
-pointer having access allowed for the range between 0x32 and 0x71.  The
-values present on bnd0raw and bnd registers are presented as follows:
-
-     	bnd0raw = {0x32, 0xffffffff8e}
-     	bnd0 = {lbound = 0x32, ubound = 0x71} : size 64
-
-   This way the raw value can be accessed via bnd0raw...bnd3raw.  Any
-change on bnd0...bnd3 or bnd0raw...bnd3raw is reflect on its
-counterpart.  When the bnd0...bnd3 registers are displayed via Python,
-the display includes the memory size, in bits, accessible to the
-pointer.
-
-   Bounds can also be stored in bounds tables, which are stored in
-application memory.  These tables store bounds for pointers by
-specifying the bounds pointer's value along with its bounds.  Evaluating
-and changing bounds located in bound tables is therefore interesting
-while investigating bugs on MPX context.  GDB provides commands for this
-purpose:
-
-'show mpx bound POINTER'
-     Display bounds of the given POINTER.
-
-'set mpx bound POINTER, LBOUND, UBOUND'
-     Set the bounds of a pointer in the bound table.  This command takes
-     three parameters: POINTER is the pointers whose bounds are to be
-     changed, LBOUND and UBOUND are new values for lower and upper
-     bounds respectively.
-
-   Both commands are deprecated and will be removed in future versions
-of GDB.  MPX itself was listed as removed by Intel in 2019.
-
-   When you call an inferior function on an Intel MPX enabled program,
-GDB sets the inferior's bound registers to the init (disabled) state
-before calling the function.  As a consequence, bounds checks for the
-pointer arguments passed to the function will always pass.
-
-   This is necessary because when you call an inferior function, the
-program is usually in the middle of the execution of other function.
-Since at that point bound registers are in an arbitrary state, not
-clearing them would lead to random bound violations in the called
-function.
-
-   You can still examine the influence of the bound registers on the
-execution of the called function by stopping the execution of the called
-function at its prologue, setting bound registers, and continuing the
-execution.  For example:
-
-     	$ break *upper
-     	Breakpoint 2 at 0x4009de: file i386-mpx-call.c, line 47.
-     	$ print upper (a, b, c, d, 1)
-     	Breakpoint 2, upper (a=0x0, b=0x6e0000005b, c=0x0, d=0x0, len=48)....
-     	$ print $bnd0
-     	{lbound = 0x0, ubound = ffffffff} : size -1
-
-   At this last step the value of bnd0 can be changed for investigation
-of bound violations caused along the execution of the call.  In order to
-know how to set the bound registers or bound table for the call consult
-the ABI.
-
-21.4.2.2 x87 registers
+21.4.2.1 x87 registers
 ......................
 
 GDB provides access to the x87 state through the following registers:
@@ -1672,11 +1636,6 @@ GDB provides access to the x87 state through the following registers:
    * '$foseg': last data pointer segment
    * '$fooff': last data pointer
    * '$fop': last opcode
-
-   ---------- Footnotes ----------
-
-   (1) The register named with capital letters represent the
-architecture registers.
 
 
 File: gdb.info,  Node: Alpha,  Next: MIPS,  Prev: x86,  Up: Architectures
@@ -1813,7 +1772,7 @@ special commands:
      given ADDRESS.
 
 
-File: gdb.info,  Node: PowerPC,  Next: Nios II,  Prev: HPPA,  Up: Architectures
+File: gdb.info,  Node: PowerPC,  Next: Sparc64,  Prev: HPPA,  Up: Architectures
 
 21.4.6 PowerPC
 --------------
@@ -1832,28 +1791,12 @@ and 'f3' for '$dl1' and so on.
 64-bit wide Extended Floating Point Registers ('f32' through 'f63').
 
 
-File: gdb.info,  Node: Nios II,  Next: Sparc64,  Prev: PowerPC,  Up: Architectures
+File: gdb.info,  Node: Sparc64,  Next: S12Z,  Prev: PowerPC,  Up: Architectures
 
-21.4.7 Nios II
+21.4.7 Sparc64
 --------------
 
-When GDB is debugging the Nios II architecture, it provides the
-following special commands:
-
-'set debug nios2'
-     This command turns on and off debugging messages for the Nios II
-     target code in GDB.
-
-'show debug nios2'
-     Show the current setting of Nios II debugging messages.
-
-
-File: gdb.info,  Node: Sparc64,  Next: S12Z,  Prev: Nios II,  Up: Architectures
-
-21.4.8 Sparc64
---------------
-
-21.4.8.1 ADI Support
+21.4.7.1 ADI Support
 ....................
 
 The M7 processor supports an Application Data Integrity (ADI) feature
@@ -1916,7 +1859,7 @@ cacheline (64 bytes), can be viewed or modified.
 
 File: gdb.info,  Node: S12Z,  Next: AMD GPU,  Prev: Sparc64,  Up: Architectures
 
-21.4.9 S12Z
+21.4.8 S12Z
 -----------
 
 When GDB is debugging the S12Z architecture, it provides the following
@@ -1929,23 +1872,23 @@ special command:
 
 File: gdb.info,  Node: AMD GPU,  Prev: S12Z,  Up: Architectures
 
-21.4.10 AMD GPU
----------------
+21.4.9 AMD GPU
+--------------
 
 GDB supports debugging programs offloaded to AMD GPU devices using the
 AMD ROCm (https://docs.amd.com/) platform.  GDB presents host threads
 alongside GPU wavefronts, allowing debugging both the host and device
 parts of the program simultaneously.
 
-21.4.10.1 AMD GPU Architectures
-...............................
+21.4.9.1 AMD GPU Architectures
+..............................
 
 The list of AMD GPU architectures supported by GDB depends on the
 version of the AMD Debugger API library used.  See its documentation
 (https://docs.amd.com/bundle/ROCDebugger_User_and_API) for more details.
 
-21.4.10.2 AMD GPU Device Driver and AMD ROCm Runtime
-....................................................
+21.4.9.2 AMD GPU Device Driver and AMD ROCm Runtime
+...................................................
 
 GDB requires a compatible AMD GPU device driver to be installed.  A
 warning message is displayed if either the device driver version or the
@@ -1963,8 +1906,8 @@ displayed if an unsupported AMD ROCm runtime is detected, or there is an
 error or restriction that prevents debugging.  GDB will continue to
 function except no AMD GPU debugging will be possible.
 
-21.4.10.3 AMD GPU Wavefronts
-............................
+21.4.9.3 AMD GPU Wavefronts
+...........................
 
 An AMD GPU wavefront is represented in GDB as a thread.
 
@@ -1977,8 +1920,8 @@ Restrictions.).
 new wavefronts created by the resumed thread (either CPU thread or GPU
 wavefront) are held in the halt state.
 
-21.4.10.4 AMD GPU Code Objects
-..............................
+21.4.9.4 AMD GPU Code Objects
+.............................
 
 The 'info sharedlibrary' command will show the AMD GPU code objects as
 file or memory URIs, together with the host's shared libraries.  For
@@ -2012,8 +1955,8 @@ loaded multiple times.  As a consequence, setting a breakpoint in AMD
 GPU code will result in multiple breakpoint locations if there are
 multiple AMD GPU devices.
 
-21.4.10.5 AMD GPU Entity Target Identifiers and Convenience Variables
-.....................................................................
+21.4.9.5 AMD GPU Entity Target Identifiers and Convenience Variables
+....................................................................
 
 The AMD GPU entities have the following target identifier formats:
 
@@ -2023,8 +1966,8 @@ Thread Target ID
 
           AMDGPU Wave AGENT-ID:QUEUE-ID:DISPATCH-ID:WAVE-ID (WORK-GROUP-X,WORK-GROUP-Y,WORK-GROUP-Z)/WORK-GROUP-THREAD-INDEX
 
-21.4.10.6 AMD GPU Signals
-.........................
+21.4.9.6 AMD GPU Signals
+........................
 
 For AMD GPU wavefronts, GDB maps target conditions to stop signals in
 the following way:
@@ -2082,8 +2025,8 @@ the following way:
    If a single instruction raises more than one signal, they will be
 reported one at a time each time the wavefront is continued.
 
-21.4.10.7 AMD GPU Memory Violation Reporting
-............................................
+21.4.9.7 AMD GPU Memory Violation Reporting
+...........................................
 
 A wavefront can report memory violation events.  However, the program
 location at which they are reported may be after the machine instruction
@@ -2115,8 +2058,8 @@ behavior:
 'show amdgpu precise-memory'
      Displays the currently requested AMD GPU precise memory setting.
 
-21.4.10.8 AMD GPU Logging
-.........................
+21.4.9.8 AMD GPU Logging
+........................
 
 The 'set debug amd-dbgapi' command can be used to enable diagnostic
 messages in the 'amd-dbgapi' target.  The 'show debug amd-dbgapi'
@@ -2128,8 +2071,8 @@ under the hood).  The 'show debug amd-dbgapi-lib log-level' command
 displays the current 'amd-dbgapi' library log level.  *Note set debug
 amd-dbgapi-lib::.
 
-21.4.10.9 AMD GPU Restrictions
-..............................
+21.4.9.9 AMD GPU Restrictions
+.............................
 
   1. When in non-stop mode, wavefronts may not hit breakpoints inserted
      while not stopped, nor see memory updates made while not stopped,
@@ -2281,6 +2224,9 @@ conditions in '.inputrc'.
 This is bound to 'C-o' by default.  This command accepts the current
 line for execution and fetches the next line relative to the current
 line from the history for editing.  Any argument is ignored.
+
+   It is possible to discover which version of Readline GDB is using
+with the 'show configuration' command (*note show configuration::).
 
 
 File: gdb.info,  Node: Command History,  Next: Screen Size,  Prev: Editing,  Up: Controlling GDB
@@ -2554,6 +2500,10 @@ complete list of styles, their characteristics and the visual aspect of
 each style.
 
    The style-able objects are:
+'command'
+     Control the styling of any GDB commands that are displayed by GDB.
+     By default, this style's intensity is bold.
+
 'filename'
      Control the styling of file names and URLs.  By default, this
      style's foreground color is green.
@@ -2567,6 +2517,10 @@ each style.
      output if GDB is using its builtin disassembler library for styling
      (*note 'set style disassembler enabled':
      style_disassembler_enabled.).
+
+'line-number'
+     Control the styling of line numbers.  By default, this style's
+     intensity is dim.
 
 'variable'
      Control the styling of variable names.  These are managed with the
@@ -2595,10 +2549,9 @@ each style.
 'title'
      Control the styling of titles.  These are managed with the 'set
      style title' family of commands.  By default, this style's
-     intensity is bold.  Commands are using the title style to improve
-     the readability of large output.  For example, the commands
-     'apropos' and 'help' are using the title style for the command
-     names.
+     intensity is bold.  The title style is used when displaying the
+     header line of a list, for example the first line of the output of
+     'info breakpoints' (*note Set Breaks::).
 
 'highlight'
      Control the styling of highlightings.  These are managed with the
@@ -3675,9 +3628,20 @@ File: gdb.info,  Node: Define,  Next: Hooks,  Up: Sequences
 
 A "user-defined command" is a sequence of GDB commands to which you
 assign a new name as a command.  This is done with the 'define' command.
-User commands may accept an unlimited number of arguments separated by
-whitespace.  Arguments are accessed within the user command via
-'$arg0...$argN'.  A trivial example:
+
+   User commands may accept an unlimited number of arguments separated
+by whitespace.  Arguments are accessed within the user command via
+'$arg0...$argN'.  The arguments are text substitutions, so they may
+reference variables, use complex expressions, or even perform inferior
+functions calls.  Note, however, that this textual substitution means
+that working with certain arguments is difficult.  For example, there is
+no way for the user to pass an argument containing a space; and while
+stringifying an argument can be done using an expression like '"$arg1"',
+this will fail if the argument contains a quote.  For more complicated
+and robust commands, we recommend writing them in Python; see *note CLI
+Commands In Python::.
+
+   A trivial example:
 
      define adder
        print $arg0 + $arg1 + $arg2
@@ -3688,9 +3652,7 @@ To execute the command use:
      adder 1 2 3
 
 This defines the command 'adder', which prints the sum of its three
-arguments.  Note the arguments are text substitutions, so they may
-reference variables, use complex expressions, or even perform inferior
-functions calls.
+arguments.
 
    In addition, '$argc' may be used to find out how many arguments have
 been passed.
@@ -4550,6 +4512,7 @@ optional arguments while skipping others.  Example:
 * TUI Windows In Python::       Implementing new TUI windows.
 * Disassembly In Python::       Instruction Disassembly In Python
 * Missing Debug Info In Python:: Handle missing debug info from Python.
+* Missing Objfiles In Python::  Handle objfiles from Python.
 
 
 File: gdb.info,  Node: Basic Python,  Next: Threading in GDB,  Up: Python API
@@ -5353,7 +5316,7 @@ function, call it like so:
           unlike for the 'print' command, references are not
           automatically expanded when using the 'format_string' method
           or the 'str' function.  There is no global 'print' setting to
-          change the default behaviour.
+          change the default behavior.
 
      'actual_objects'
           'True' if the representation of a pointer to an object should
@@ -5451,9 +5414,10 @@ function, call it like so:
      fetched and converted to the given length.
 
  -- Function: Value.lazy_string ([encoding [, length]])
-     If this 'gdb.Value' represents a string, then this method converts
-     the contents to a 'gdb.LazyString' (*note Lazy Strings In
-     Python::).  Otherwise, this method will throw an exception.
+     This method attempts to convert this 'gdb.Value' to a
+     'gdb.LazyString' (*note Lazy Strings In Python::).  Values of array
+     or pointer type can be converted; for other types, this method will
+     throw an exception.
 
      If the optional ENCODING argument is given, it must be a string
      naming the encoding of the 'gdb.LazyString'.  Some examples are:
@@ -7272,4 +7236,185 @@ using the following function defined in the module 'gdb.xmethod':
      'locus' can be a 'gdb.Objfile' object (*note Objfiles In Python::),
      or a 'gdb.Progspace' object (*note Progspaces In Python::), or
      'None'.  If it is 'None', then 'matcher' is registered globally.
+
+
+File: gdb.info,  Node: Writing an Xmethod,  Next: Inferiors In Python,  Prev: Xmethod API,  Up: Python API
+
+23.3.2.16 Writing an Xmethod
+............................
+
+Implementing xmethods in Python will require implementing xmethod
+matchers and xmethod workers (*note Xmethods In Python::).  Consider the
+following C++ class:
+
+     class MyClass
+     {
+     public:
+       MyClass (int a) : a_(a) { }
+
+       int geta (void) { return a_; }
+       int operator+ (int b);
+
+     private:
+       int a_;
+     };
+
+     int
+     MyClass::operator+ (int b)
+     {
+       return a_ + b;
+     }
+
+Let us define two xmethods for the class 'MyClass', one replacing the
+method 'geta', and another adding an overloaded flavor of 'operator+'
+which takes a 'MyClass' argument (the C++ code above already has an
+overloaded 'operator+' which takes an 'int' argument).  The xmethod
+matcher can be defined as follows:
+
+     class MyClass_geta(gdb.xmethod.XMethod):
+         def __init__(self):
+             gdb.xmethod.XMethod.__init__(self, 'geta')
+
+         def get_worker(self, method_name):
+             if method_name == 'geta':
+                 return MyClassWorker_geta()
+
+
+     class MyClass_sum(gdb.xmethod.XMethod):
+         def __init__(self):
+             gdb.xmethod.XMethod.__init__(self, 'sum')
+
+         def get_worker(self, method_name):
+             if method_name == 'operator+':
+                 return MyClassWorker_plus()
+
+
+     class MyClassMatcher(gdb.xmethod.XMethodMatcher):
+         def __init__(self):
+             gdb.xmethod.XMethodMatcher.__init__(self, 'MyClassMatcher')
+             # List of methods 'managed' by this matcher
+             self.methods = [MyClass_geta(), MyClass_sum()]
+
+         def match(self, class_type, method_name):
+             if class_type.tag != 'MyClass':
+                 return None
+             workers = []
+             for method in self.methods:
+                 if method.enabled:
+                     worker = method.get_worker(method_name)
+                     if worker:
+                         workers.append(worker)
+
+             return workers
+
+Notice that the 'match' method of 'MyClassMatcher' returns a worker
+object of type 'MyClassWorker_geta' for the 'geta' method, and a worker
+object of type 'MyClassWorker_plus' for the 'operator+' method.  This is
+done indirectly via helper classes derived from 'gdb.xmethod.XMethod'.
+One does not need to use the 'methods' attribute in a matcher as it is
+optional.  However, if a matcher manages more than one xmethod, it is a
+good practice to list the xmethods in the 'methods' attribute of the
+matcher.  This will then facilitate enabling and disabling individual
+xmethods via the 'enable/disable' commands.  Notice also that a worker
+object is returned only if the corresponding entry in the 'methods'
+attribute of the matcher is enabled.
+
+   The implementation of the worker classes returned by the matcher
+setup above is as follows:
+
+     class MyClassWorker_geta(gdb.xmethod.XMethodWorker):
+         def get_arg_types(self):
+             return None
+
+         def get_result_type(self, obj):
+             return gdb.lookup_type('int')
+
+         def __call__(self, obj):
+             return obj['a_']
+
+
+     class MyClassWorker_plus(gdb.xmethod.XMethodWorker):
+         def get_arg_types(self):
+             return gdb.lookup_type('MyClass')
+
+         def get_result_type(self, obj):
+             return gdb.lookup_type('int')
+
+         def __call__(self, obj, other):
+             return obj['a_'] + other['a_']
+
+   For GDB to actually lookup a xmethod, it has to be registered with
+it.  The matcher defined above is registered with GDB globally as
+follows:
+
+     gdb.xmethod.register_xmethod_matcher(None, MyClassMatcher())
+
+   If an object 'obj' of type 'MyClass' is initialized in C++ code as
+follows:
+
+     MyClass obj(5);
+
+then, after loading the Python script defining the xmethod matchers and
+workers into GDB, invoking the method 'geta' or using the operator '+'
+on 'obj' will invoke the xmethods defined above:
+
+     (gdb) p obj.geta()
+     $1 = 5
+
+     (gdb) p obj + obj
+     $2 = 10
+
+   Consider another example with a C++ template class:
+
+     template <class T>
+     class MyTemplate
+     {
+     public:
+       MyTemplate () : dsize_(10), data_ (new T [10]) { }
+       ~MyTemplate () { delete [] data_; }
+
+       int footprint (void)
+       {
+         return sizeof (T) * dsize_ + sizeof (MyTemplate<T>);
+       }
+
+     private:
+       int dsize_;
+       T *data_;
+     };
+
+   Let us implement an xmethod for the above class which serves as a
+replacement for the 'footprint' method.  The full code listing of the
+xmethod workers and xmethod matchers is as follows:
+
+     class MyTemplateWorker_footprint(gdb.xmethod.XMethodWorker):
+         def __init__(self, class_type):
+             self.class_type = class_type
+
+         def get_arg_types(self):
+             return None
+
+         def get_result_type(self):
+             return gdb.lookup_type('int')
+
+         def __call__(self, obj):
+             return (self.class_type.sizeof +
+                     obj['dsize_'] *
+                     self.class_type.template_argument(0).sizeof)
+
+
+     class MyTemplateMatcher_footprint(gdb.xmethod.XMethodMatcher):
+         def __init__(self):
+             gdb.xmethod.XMethodMatcher.__init__(self, 'MyTemplateMatcher')
+
+         def match(self, class_type, method_name):
+             if (re.match('MyTemplate<[ \t\n]*[_a-zA-Z][ _a-zA-Z0-9]*>',
+                          class_type.tag) and
+                 method_name == 'footprint'):
+                 return MyTemplateWorker_footprint(class_type)
+
+   Notice that, in this example, we have not used the 'methods'
+attribute of the matcher as the matcher manages only one xmethod.  The
+user can enable/disable this xmethod by enabling/disabling the matcher
+itself.
 

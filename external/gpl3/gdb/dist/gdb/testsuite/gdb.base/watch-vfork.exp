@@ -37,11 +37,11 @@ proc test_watchpoint_across_vfork { hw teststr } {
 
     gdb_test "watch global" \
 	"atchpoint .*: global" \
-	"Watchpoint on global variable ($teststr)"
+	"Watchpoint on global variable, $teststr"
 
     gdb_test "continue" \
 	"atchpoint .*: global.*" \
-	"Watchpoint triggers after vfork ($teststr)"
+	"Watchpoint triggers after vfork, $teststr"
 }
 
 if { [allow_hw_watchpoint_tests] } {

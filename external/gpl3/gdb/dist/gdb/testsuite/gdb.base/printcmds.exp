@@ -1186,7 +1186,7 @@ gdb_test_no_output "complete p -source"
 
 gdb_file_cmd ${binfile}
 
-gdb_test "print \$pc" "No registers\\." "print \$pc (with file)"
+gdb_test {print $pc} [string_to_regexp "No registers."] {print $pc, with file}
 
 gdb_test_no_output "set print sevenbit-strings"
 gdb_test_no_output "set print address off"

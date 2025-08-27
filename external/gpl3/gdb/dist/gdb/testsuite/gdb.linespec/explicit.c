@@ -69,3 +69,9 @@ main (void)
 
   return myfunction2 (j);
 }
+
+void
+_start (void)
+{
+  main ();
+}

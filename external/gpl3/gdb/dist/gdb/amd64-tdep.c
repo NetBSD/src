@@ -110,11 +110,6 @@ static const char * const amd64_ymmh_avx512_names[] =
   "ymm28h", "ymm29h", "ymm30h", "ymm31h"
 };
 
-static const char * const amd64_mpx_names[] =
-{
-  "bnd0raw", "bnd1raw", "bnd2raw", "bnd3raw", "bndcfgu", "bndstatus"
-};
-
 static const char * const amd64_k_names[] =
 {
   "k0", "k1", "k2", "k3",
@@ -1039,13 +1034,6 @@ amd64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   gdb_byte buf[8];
 
-  /* BND registers can be in arbitrary values at the moment of the
-     inferior call.  This can cause boundary violations that are not
-     due to a real bug or even desired by the user.  The best to be done
-     is set the BND registers to allow access to the whole memory, INIT
-     state, before pushing the inferior call.   */
-  i387_reset_bnd_regs (gdbarch, regcache);
-
   /* Pass arguments.  */
   sp = amd64_push_arguments (regcache, nargs, args, sp, return_method);
 
@@ -1239,7 +1227,7 @@ amd64_get_unused_input_int_reg (const struct amd64_insn *details)
 
   /* Avoid RAX.  */
   used_regs_mask |= 1 << EAX_REG_NUM;
-  /* Similarily avoid RDX, implicit operand in divides.  */
+  /* Similarly avoid RDX, implicit operand in divides.  */
   used_regs_mask |= 1 << EDX_REG_NUM;
   /* Avoid RSP.  */
   used_regs_mask |= 1 << ESP_REG_NUM;
@@ -1726,7 +1714,7 @@ amd64_displaced_step_fixup (struct gdbarch *gdbarch,
 	  CORE_ADDR rip = pc - insn_offset;
 
 	  /* If we just stepped over a breakpoint insn, we don't backup
-	     the pc on purpose; this is to match behaviour without
+	     the pc on purpose; this is to match behavior without
 	     stepping.  */
 
 	  regcache_write_pc (regs, rip);
@@ -3134,7 +3122,8 @@ static const int amd64_record_regmap[] =
   AMD64_R8_REGNUM, AMD64_R9_REGNUM, AMD64_R10_REGNUM, AMD64_R11_REGNUM,
   AMD64_R12_REGNUM, AMD64_R13_REGNUM, AMD64_R14_REGNUM, AMD64_R15_REGNUM,
   AMD64_RIP_REGNUM, AMD64_EFLAGS_REGNUM, AMD64_CS_REGNUM, AMD64_SS_REGNUM,
-  AMD64_DS_REGNUM, AMD64_ES_REGNUM, AMD64_FS_REGNUM, AMD64_GS_REGNUM
+  AMD64_DS_REGNUM, AMD64_ES_REGNUM, AMD64_FS_REGNUM, AMD64_GS_REGNUM,
+  AMD64_XMM0_REGNUM
 };
 
 /* Implement the "in_indirect_branch_thunk" gdbarch function.  */
@@ -3194,13 +3183,6 @@ amd64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch,
       tdep->ymmh_register_names = amd64_ymmh_names;
       tdep->num_ymm_regs = 16;
       tdep->ymm0h_regnum = AMD64_YMM0H_REGNUM;
-    }
-
-  if (tdesc_find_feature (tdesc, "org.gnu.gdb.i386.mpx") != NULL)
-    {
-      tdep->mpx_register_names = amd64_mpx_names;
-      tdep->bndcfgu_regnum = AMD64_BNDCFGU_REGNUM;
-      tdep->bnd0r_regnum = AMD64_BND0R_REGNUM;
     }
 
   if (tdesc_find_feature (tdesc, "org.gnu.gdb.i386.segments") != NULL)
@@ -3377,11 +3359,10 @@ const struct target_desc *
 amd64_target_description (uint64_t xcr0, bool segments)
 {
   static target_desc *amd64_tdescs \
-    [2/*AVX*/][2/*MPX*/][2/*AVX512*/][2/*PKRU*/][2/*segments*/] = {};
+    [2/*AVX*/][2/*AVX512*/][2/*PKRU*/][2/*segments*/] = {};
   target_desc **tdesc;
 
   tdesc = &amd64_tdescs[(xcr0 & X86_XSTATE_AVX) ? 1 : 0]
-    [(xcr0 & X86_XSTATE_MPX) ? 1 : 0]
     [(xcr0 & X86_XSTATE_AVX512) ? 1 : 0]
     [(xcr0 & X86_XSTATE_PKRU) ? 1 : 0]
     [segments ? 1 : 0];

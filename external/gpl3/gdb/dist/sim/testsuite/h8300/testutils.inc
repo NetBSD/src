@@ -326,7 +326,7 @@ tccr\@:	.byte	0
 	mov.b	@tccr\@, r0l
 	.endm
 
-; Test that all (accessable) condition codes are clear
+; Test that all (accessible) condition codes are clear
 	.macro test_cc_clear
 	test_carry_clear
 	test_ovf_clear

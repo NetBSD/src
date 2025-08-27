@@ -27,7 +27,7 @@
 standard_testfile
 
 if { [prepare_for_testing "failed to prepare" ${binfile} "${srcfile}" \
-	  {debug}] == -1 } {
+	  {debug c++}] == -1 } {
     return
 }
 
@@ -44,7 +44,7 @@ if { [is_address_zero_readable] } {
     return
 }
 
-proc run_test { cond_eval access_type lineno nloc } {
+proc run_test { cond_eval access_type bpexpr nloc } {
     clean_restart ${::binfile}
 
     if { ![runto_main] } {
@@ -56,23 +56,37 @@ proc run_test { cond_eval access_type lineno nloc } {
     }
 
     # Setup the conditional breakpoint and record its number.
-    gdb_breakpoint "${::srcfile}:${lineno} if (*(${access_type} *) 0) == 0"
+    gdb_breakpoint "${bpexpr} if (*(${access_type} *) 0) == 0"
+
+    # This test aims to test that GDB displays the correct breakpoint number
+    # and location when there is an error testing a breakpoint condition,
+    # so it is important to hardcode the breakpoint number into the regex,
+    # along with the location, if applicable.
     set bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*"]
 
     if { $nloc > 1 } {
-	set bp_num_pattern "${bp_num}.1"
+	# We hardcode location 2 because, for some reason, Clang will always
+	# order the debug information so we hit the second location.  For
+	# simplicity the .c is ordered in such a way that GCC will also order
+	# the debug info to have us land on location 2.
+	gdb_test "continue" \
+	    [multi_line \
+		 "Continuing\\." \
+		 "Error in testing condition for breakpoint ${bp_num}.2:" \
+		 "Cannot access memory at address 0x0" \
+		 "" \
+		 "Breakpoint ${bp_num}.2, foo \\(c=49 ...\\) at \[^\r\n\]+:\[0-9\]+" \
+		 "${::decimal}\\s+\[^\r\n\]+ breakpoint here\\. \[^\r\n\]+"]
     } else {
-	set bp_num_pattern "${bp_num}"
+	gdb_test "continue" \
+	    [multi_line \
+		 "Continuing\\." \
+		 "Error in testing condition for breakpoint ${bp_num}:" \
+		 "Cannot access memory at address 0x0" \
+		 "" \
+		 "Breakpoint ${bp_num}, bar \\(\\) at \[^\r\n\]+:\[0-9\]+" \
+		 "${::decimal}\\s+\[^\r\n\]+ breakpoint here\\. \[^\r\n\]+"]
     }
-
-    gdb_test "continue" \
-	[multi_line \
-	     "Continuing\\." \
-	     "Error in testing condition for breakpoint ${bp_num_pattern}:" \
-	     "Cannot access memory at address 0x0" \
-	     "" \
-	     "Breakpoint ${bp_num_pattern}, \(foo\|bar\) \\(\\) at \[^\r\n\]+:${lineno}" \
-	     "${::decimal}\\s+\[^\r\n\]+ breakpoint here\\. \[^\r\n\]+"]
 }
 
 # If we're using a remote target then conditions could be evaulated
@@ -101,7 +115,7 @@ gdb_test_multiple "show breakpoint condition-evaluation" "" {
 }
 
 # Where the breakpoint will be placed.
-set bp_line_multi_loc [gdb_get_line_number "Multi-location breakpoint here"]
+set bp_line_multi_loc "foo"
 set bp_line_single_loc [gdb_get_line_number "Single-location breakpoint here"]
 
 foreach_with_prefix access_type { "char" "short" "int" "long long" } {
@@ -110,7 +124,7 @@ foreach_with_prefix access_type { "char" "short" "int" "long long" } {
 	    run_test $cond_eval $access_type $bp_line_multi_loc 2
 	}
 	with_test_prefix "single-loc" {
-	    run_test $cond_eval $access_type $bp_line_single_loc 1
+	    run_test $cond_eval $access_type "${srcfile}:${bp_line_single_loc}" 1
 	}
     }
 }

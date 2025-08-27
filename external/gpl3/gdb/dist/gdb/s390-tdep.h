@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef S390_TDEP_H
-#define S390_TDEP_H
+#ifndef GDB_S390_TDEP_H
+#define GDB_S390_TDEP_H
 
 #include "prologue-value.h"
 #include "gdbarch.h"
@@ -322,4 +322,4 @@ extern struct value *s390_trad_frame_prev_register
 extern const struct target_desc *tdesc_s390_linux32;
 extern const struct target_desc *tdesc_s390x_linux64;
 
-#endif /* S390_TDEP_H */
+#endif /* GDB_S390_TDEP_H */

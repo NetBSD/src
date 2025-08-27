@@ -74,10 +74,10 @@ void stop_tracing (void);
 int handle_tracepoint_general_set (char *own_buf);
 int handle_tracepoint_query (char *own_buf);
 
-int tracepoint_finished_step (struct thread_info *tinfo, CORE_ADDR stop_pc);
-int tracepoint_was_hit (struct thread_info *tinfo, CORE_ADDR stop_pc);
+int tracepoint_finished_step (thread_info *tinfo, CORE_ADDR stop_pc);
+int tracepoint_was_hit (thread_info *tinfo, CORE_ADDR stop_pc);
 
-void release_while_stepping_state_list (struct thread_info *tinfo);
+void release_while_stepping_state_list (thread_info *tinfo);
 
 int in_readonly_region (CORE_ADDR addr, ULONGEST length);
 int traceframe_read_mem (int tfnum, CORE_ADDR addr,
@@ -130,7 +130,7 @@ fast_tpoint_collect_result fast_tracepoint_collecting
 
 void force_unlock_trace_buffer (void);
 
-int handle_tracepoint_bkpts (struct thread_info *tinfo, CORE_ADDR stop_pc);
+int handle_tracepoint_bkpts (thread_info *tinfo, CORE_ADDR stop_pc);
 
 #ifdef IN_PROCESS_AGENT
 void initialize_low_tracepoint (void);

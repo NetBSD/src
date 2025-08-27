@@ -490,10 +490,10 @@ mips_make_symbol_special (struct symbol *sym, struct objfile *objfile)
       /* We are in symbol reading so it is OK to cast away constness.  */
       struct block *block = (struct block *) sym->value_block ();
       CORE_ADDR compact_block_start;
-      struct bound_minimal_symbol msym;
 
       compact_block_start = block->start () | 1;
-      msym = lookup_minimal_symbol_by_pc (compact_block_start);
+      bound_minimal_symbol msym
+	= lookup_minimal_symbol_by_pc (compact_block_start);
       if (msym.minsym && !msymbol_is_mips (msym.minsym))
 	{
 	  block->set_start (compact_block_start);
@@ -558,7 +558,7 @@ mips_xfer_register (struct gdbarch *gdbarch, struct regcache *regcache,
 }
 
 /* Determine if a MIPS3 or later cpu is operating in MIPS{1,2} FPU
-   compatiblity mode.  A return value of 1 means that we have
+   compatibility mode.  A return value of 1 means that we have
    physical 64-bit registers, but should treat them as 32-bit registers.  */
 
 static int
@@ -574,7 +574,7 @@ mips2_fp_compat (const frame_info_ptr &frame)
   /* FIXME drow 2002-03-10: This is disabled until we can do it consistently,
      in all the places we deal with FP registers.  PR gdb/413.  */
   /* Otherwise check the FR bit in the status register - it controls
-     the FP compatiblity mode.  If it is clear we are in compatibility
+     the FP compatibility mode.  If it is clear we are in compatibility
      mode.  */
   if ((get_frame_register_unsigned (frame, MIPS_PS_REGNUM) & ST0_FR) == 0)
     return 1;
@@ -592,7 +592,7 @@ static CORE_ADDR heuristic_proc_start (struct gdbarch *, CORE_ADDR);
 static struct cmd_list_element *setmipscmdlist = NULL;
 static struct cmd_list_element *showmipscmdlist = NULL;
 
-/* Integer registers 0 thru 31 are handled explicitly by
+/* Integer registers 0 through 31 are handled explicitly by
    mips_register_name().  Processor specific registers 32 and above
    are listed in the following tables.  */
 
@@ -896,7 +896,7 @@ set_mips64_transfers_32bit_regs (const char *args, int from_tty,
   /* FIXME: cagney/2003-11-15: Should be setting a field in "info"
      instead of relying on globals.  Doing that would let generic code
      handle the search for this specific architecture.  */
-  if (!gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     {
       mips64_transfers_32bit_regs_p = 0;
       error (_("32-bit compatibility mode not supported"));
@@ -920,7 +920,7 @@ mips_convert_register_float_case_p (struct gdbarch *gdbarch, int regnum,
 }
 
 /* This predicate tests for the case of a value of less than 8
-   bytes in width that is being transfered to or from an 8 byte
+   bytes in width that is being transferred to or from an 8 byte
    general purpose register.  */
 static int
 mips_convert_register_gpreg_case_p (struct gdbarch *gdbarch, int regnum,
@@ -1076,7 +1076,7 @@ mips_register_type (struct gdbarch *gdbarch, int regnum)
 	return builtin_type (gdbarch)->builtin_int32;
       else if (tdep->mips64_transfers_32bit_regs_p)
 	/* The target, while possibly using a 64-bit register buffer,
-	   is only transfering 32-bits of each integer register.
+	   is only transferring 32-bits of each integer register.
 	   Reflect this in the cooked/pseudo (ABI) register value.  */
 	return builtin_type (gdbarch)->builtin_int32;
       else if (mips_abi_regsize (gdbarch) == 4)
@@ -1212,13 +1212,12 @@ show_mask_address (struct ui_file *file, int from_tty,
 int
 mips_pc_is_mips (CORE_ADDR memaddr)
 {
-  struct bound_minimal_symbol sym;
-
   /* Flags indicating that this is a MIPS16 or microMIPS function is
      stored by elfread.c in the high bit of the info field.  Use this
      to decide if the function is standard MIPS.  Otherwise if bit 0
      of the address is clear, then this is a standard MIPS function.  */
-  sym = lookup_minimal_symbol_by_pc (make_compact_addr (memaddr));
+  bound_minimal_symbol sym
+    = lookup_minimal_symbol_by_pc (make_compact_addr (memaddr));
   if (sym.minsym)
     return msymbol_is_mips (sym.minsym);
   else
@@ -1230,13 +1229,12 @@ mips_pc_is_mips (CORE_ADDR memaddr)
 int
 mips_pc_is_mips16 (struct gdbarch *gdbarch, CORE_ADDR memaddr)
 {
-  struct bound_minimal_symbol sym;
-
   /* A flag indicating that this is a MIPS16 function is stored by
      elfread.c in the high bit of the info field.  Use this to decide
      if the function is MIPS16.  Otherwise if bit 0 of the address is
      set, then ELF file flags will tell if this is a MIPS16 function.  */
-  sym = lookup_minimal_symbol_by_pc (make_compact_addr (memaddr));
+  bound_minimal_symbol sym
+    = lookup_minimal_symbol_by_pc (make_compact_addr (memaddr));
   if (sym.minsym)
     return msymbol_is_mips16 (sym.minsym);
   else
@@ -1248,14 +1246,13 @@ mips_pc_is_mips16 (struct gdbarch *gdbarch, CORE_ADDR memaddr)
 int
 mips_pc_is_micromips (struct gdbarch *gdbarch, CORE_ADDR memaddr)
 {
-  struct bound_minimal_symbol sym;
-
   /* A flag indicating that this is a microMIPS function is stored by
      elfread.c in the high bit of the info field.  Use this to decide
      if the function is microMIPS.  Otherwise if bit 0 of the address
      is set, then ELF file flags will tell if this is a microMIPS
      function.  */
-  sym = lookup_minimal_symbol_by_pc (make_compact_addr (memaddr));
+  bound_minimal_symbol sym
+    = lookup_minimal_symbol_by_pc (make_compact_addr (memaddr));
   if (sym.minsym)
     return msymbol_is_micromips (sym.minsym);
   else
@@ -1268,14 +1265,13 @@ mips_pc_is_micromips (struct gdbarch *gdbarch, CORE_ADDR memaddr)
 static enum mips_isa
 mips_pc_isa (struct gdbarch *gdbarch, CORE_ADDR memaddr)
 {
-  struct bound_minimal_symbol sym;
-
   /* A flag indicating that this is a MIPS16 or a microMIPS function
      is stored by elfread.c in the high bit of the info field.  Use
      this to decide if the function is MIPS16 or microMIPS or normal
      MIPS.  Otherwise if bit 0 of the address is set, then ELF file
      flags will tell if this is a MIPS16 or a microMIPS function.  */
-  sym = lookup_minimal_symbol_by_pc (make_compact_addr (memaddr));
+  bound_minimal_symbol sym
+    = lookup_minimal_symbol_by_pc (make_compact_addr (memaddr));
   if (sym.minsym)
     {
       if (msymbol_is_micromips (sym.minsym))
@@ -2881,7 +2877,7 @@ mips_insn16_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
     find_pc_partial_function (pc, NULL, &start_addr, NULL);
     if (start_addr == 0)
       start_addr = heuristic_proc_start (gdbarch, pc);
-    /* We can't analyze the prologue if we couldn't find the begining
+    /* We can't analyze the prologue if we couldn't find the beginning
        of the function.  */
     if (start_addr == 0)
       return cache;
@@ -3316,7 +3312,7 @@ mips_micro_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
     find_pc_partial_function (pc, NULL, &start_addr, NULL);
     if (start_addr == 0)
       start_addr = heuristic_proc_start (get_frame_arch (this_frame), pc);
-    /* We can't analyze the prologue if we couldn't find the begining
+    /* We can't analyze the prologue if we couldn't find the beginning
        of the function.  */
     if (start_addr == 0)
       return cache;
@@ -3697,7 +3693,7 @@ mips_insn32_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
     find_pc_partial_function (pc, NULL, &start_addr, NULL);
     if (start_addr == 0)
       start_addr = heuristic_proc_start (gdbarch, pc);
-    /* We can't analyze the prologue if we couldn't find the begining
+    /* We can't analyze the prologue if we couldn't find the beginning
        of the function.  */
     if (start_addr == 0)
       return cache;
@@ -3841,7 +3837,6 @@ mips_stub_frame_sniffer (const struct frame_unwind *self,
 {
   gdb_byte dummy[4];
   CORE_ADDR pc = get_frame_address_in_block (this_frame);
-  struct bound_minimal_symbol msym;
 
   /* Use the stub unwinder for unreadable code.  */
   if (target_read_memory (get_frame_pc (this_frame), dummy, 4) != 0)
@@ -3852,7 +3847,7 @@ mips_stub_frame_sniffer (const struct frame_unwind *self,
 
   /* Calling a PIC function from a non-PIC function passes through a
      stub.  The stub for foo is named ".pic.foo".  */
-  msym = lookup_minimal_symbol_by_pc (pc);
+  bound_minimal_symbol msym = lookup_minimal_symbol_by_pc (pc);
   if (msym.minsym != NULL
       && msym.minsym->linkage_name () != NULL
       && startswith (msym.minsym->linkage_name (), ".pic."))
@@ -4510,7 +4505,7 @@ mips_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp,
      breakpoints inserted in a branch delay slot.  With enough
      bad luck, the 4 bytes located just before our breakpoint
      instruction could look like a branch instruction, and thus
-     trigger the adjustement, and break the function call entirely.
+     trigger the adjustment, and break the function call entirely.
      So, we reserve those 4 bytes and write a nop instruction
      to prevent that from happening.  */
   nop_addr = bp_slot - sizeof (nop_insn);
@@ -4586,7 +4581,7 @@ mips_eabi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Now load as many as possible of the first arguments into
-     registers, and push the rest onto the stack.  Loop thru args
+     registers, and push the rest onto the stack.  Loop through args
      from first to last.  */
   for (argnum = 0; argnum < nargs; argnum++)
     {
@@ -4759,7 +4754,7 @@ mips_eabi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		}
 
 	      /* Note!!! This is NOT an else clause.  Odd sized
-		 structs may go thru BOTH paths.  Floating point
+		 structs may go through BOTH paths.  Floating point
 		 arguments will not.  */
 	      /* Write this portion of the argument to a general
 		 purpose register.  */
@@ -4980,7 +4975,7 @@ mips_n32n64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Now load as many as possible of the first arguments into
-     registers, and push the rest onto the stack.  Loop thru args
+     registers, and push the rest onto the stack.  Loop through args
      from first to last.  */
   for (argnum = 0; argnum < nargs; argnum++)
     {
@@ -5111,7 +5106,7 @@ mips_n32n64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		}
 
 	      /* Note!!! This is NOT an else clause.  Odd sized
-		 structs may go thru BOTH paths.  */
+		 structs may go through BOTH paths.  */
 	      /* Write this portion of the argument to a general
 		 purpose register.  */
 	      if (argreg <= mips_last_arg_regnum (gdbarch))
@@ -5460,7 +5455,7 @@ mips_o32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Now load as many as possible of the first arguments into
-     registers, and push the rest onto the stack.  Loop thru args
+     registers, and push the rest onto the stack.  Loop through args
      from first to last.  */
   for (argnum = 0; argnum < nargs; argnum++)
     {
@@ -5623,7 +5618,7 @@ mips_o32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		}
 
 	      /* Note!!! This is NOT an else clause.  Odd sized
-		 structs may go thru BOTH paths.  */
+		 structs may go through BOTH paths.  */
 	      /* Write this portion of the argument to a general
 		 purpose register.  */
 	      if (argreg <= mips_last_arg_regnum (gdbarch))
@@ -5981,7 +5976,7 @@ mips_o64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     }
 
   /* Now load as many as possible of the first arguments into
-     registers, and push the rest onto the stack.  Loop thru args
+     registers, and push the rest onto the stack.  Loop through args
      from first to last.  */
   for (argnum = 0; argnum < nargs; argnum++)
     {
@@ -6085,7 +6080,7 @@ mips_o64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		}
 
 	      /* Note!!! This is NOT an else clause.  Odd sized
-		 structs may go thru BOTH paths.  */
+		 structs may go through BOTH paths.  */
 	      /* Write this portion of the argument to a general
 		 purpose register.  */
 	      if (argreg <= mips_last_arg_regnum (gdbarch))
@@ -6973,7 +6968,7 @@ set_mipsfpu_single_command (const char *args, int from_tty)
   /* FIXME: cagney/2003-11-15: Should be setting a field in "info"
      instead of relying on globals.  Doing that would let generic code
      handle the search for this specific architecture.  */
-  if (!gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error (_("set mipsfpu failed"));
 }
 
@@ -6986,7 +6981,7 @@ set_mipsfpu_double_command (const char *args, int from_tty)
   /* FIXME: cagney/2003-11-15: Should be setting a field in "info"
      instead of relying on globals.  Doing that would let generic code
      handle the search for this specific architecture.  */
-  if (!gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error (_("set mipsfpu failed"));
 }
 
@@ -6999,7 +6994,7 @@ set_mipsfpu_none_command (const char *args, int from_tty)
   /* FIXME: cagney/2003-11-15: Should be setting a field in "info"
      instead of relying on globals.  Doing that would let generic code
      handle the search for this specific architecture.  */
-  if (!gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error (_("set mipsfpu failed"));
 }
 
@@ -7824,7 +7819,6 @@ mips_skip_pic_trampoline_code (const frame_info_ptr &frame, CORE_ADDR pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct bound_minimal_symbol msym;
   int i;
   gdb_byte stub_code[16];
   int32_t stub_words[4];
@@ -7832,7 +7826,7 @@ mips_skip_pic_trampoline_code (const frame_info_ptr &frame, CORE_ADDR pc)
   /* The stub for foo is named ".pic.foo", and is either two
      instructions inserted before foo or a three instruction sequence
      which jumps to foo.  */
-  msym = lookup_minimal_symbol_by_pc (pc);
+  bound_minimal_symbol msym = lookup_minimal_symbol_by_pc (pc);
   if (msym.minsym == NULL
       || msym.value_address () != pc
       || msym.minsym->linkage_name () == NULL
@@ -8846,7 +8840,7 @@ mips_abi_update (const char *ignore_args,
 
   /* Force the architecture to update, and (if it's a MIPS architecture)
      mips_gdbarch_init will take care of the rest.  */
-  gdbarch_update_p (info);
+  gdbarch_update_p (current_inferior (), info);
 }
 
 /* Print out which MIPS ABI is in use.  */

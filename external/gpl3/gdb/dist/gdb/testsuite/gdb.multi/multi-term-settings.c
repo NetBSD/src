@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <termios.h>
-#include <unistd.h>
 #include <signal.h>
 
 int

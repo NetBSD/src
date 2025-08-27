@@ -1,0 +1,50 @@
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib "ada.exp"
+
+require allow_ada_tests
+
+standard_ada_testfile foo
+
+# The compiler used to emit an invalid DWARF expression for the record
+# size, so GDB could not 'print p_record' correctly: a direct 'print
+# p_record.i' worked, but iteration over the record fields was broken.
+#
+# Originally observed at -O2, and the bug was reproducible with just
+# -Og.  The DWARF fix covered both optimization levels; not worth
+# making guarantees beyond -Og though, so test that.
+
+if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug optimize=-Og]] != ""} {
+  return -1
+}
+
+clean_restart ${testfile}
+
+set bp_location [gdb_get_line_number "BREAK" ${srcfile}]
+runto "${testfile}.adb:${bp_location}"
+
+set test "print p_record"
+gdb_test_multiple "$test" "$test" {
+    -re "\\(kind => five, i => 1200\\)" {
+	pass $test
+    }
+    -re "\\(kind => five, i => <error reading variable: access outside bounds of object>" {
+	if { [gcc_major_version] <= 14 } {
+	    setup_xfail *-*-*
+	}
+	fail $test
+    }
+}

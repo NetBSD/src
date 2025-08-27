@@ -148,7 +148,7 @@ stpy_convert_to_value (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -182,14 +182,6 @@ gdbpy_create_lazy_string_object (CORE_ADDR address, long length,
       return NULL;
     }
 
-  if (address == 0 && length != 0)
-    {
-      PyErr_SetString (gdbpy_gdb_memory_error,
-		       _("Cannot create a lazy string with address 0x0, " \
-			 "and a non-zero length."));
-      return NULL;
-    }
-
   if (!type)
     {
       PyErr_SetString (PyExc_RuntimeError,
@@ -216,6 +208,23 @@ gdbpy_create_lazy_string_object (CORE_ADDR address, long length,
 	  }
 	break;
       }
+
+    case TYPE_CODE_PTR:
+      if (address == 0)
+	{
+	  if (length > 0)
+	    {
+	      PyErr_SetString (gdbpy_gdb_memory_error,
+			       _("Cannot create a lazy string with address 0x0, " \
+				 "and a non-zero length."));
+	      return nullptr;
+	    }
+	  length = 0;
+	}
+      break;
+
+    default:
+      gdb_assert_not_reached ("invalid type in gdbpy_create_lazy_string_object");
     }
 
   str_obj = PyObject_New (lazy_string_object, &lazy_string_object_type);
@@ -236,11 +245,7 @@ gdbpy_create_lazy_string_object (CORE_ADDR address, long length,
 static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_lazy_string (void)
 {
-  if (PyType_Ready (&lazy_string_object_type) < 0)
-    return -1;
-
-  Py_INCREF (&lazy_string_object_type);
-  return 0;
+  return gdbpy_type_ready (&lazy_string_object_type);
 }
 
 /* Determine whether the printer object pointed to by OBJ is a
@@ -268,9 +273,7 @@ stpy_lazy_string_elt_type (lazy_string_object *lazy)
     case TYPE_CODE_ARRAY:
       return check_typedef (realtype->target_type ());
     default:
-      /* This is done to preserve existing behaviour.  PR 20769.
-	 E.g., gdb.parse_and_eval("my_int_variable").lazy_string().type.  */
-      return realtype;
+      gdb_assert_not_reached ("invalid lazy string");
     }
 }
 
@@ -315,7 +318,7 @@ stpy_str (PyObject *self)
     }
   catch (const gdb_exception &exc)
     {
-      GDB_PY_HANDLE_EXCEPTION (exc);
+      return gdbpy_handle_gdb_exception (nullptr, exc);
     }
 
   return host_string_to_python_string (stream.c_str ()).release ();

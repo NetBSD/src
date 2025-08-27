@@ -1178,7 +1178,7 @@ namespace eval Term {
     }
 
     # Check the contents of a box on the screen.  This is a little
-    # like check_contents, but doens't check the whole screen
+    # like check_contents, but doesn't check the whole screen
     # contents, only the contents of a single box.  This procedure
     # includes (effectively) a call to check_box to ensure there is a
     # box where expected, if there is then the contents of the box are

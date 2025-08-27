@@ -248,10 +248,10 @@ proc dap_request_and_response {command {obj {}}} {
     return [dap_read_response $command $seq]
 }
 
-# Like dap_request_and_response, but also checks that the response
-# indicates success.  NAME is used to issue a test result.
-proc dap_check_request_and_response {name command {obj {}}} {
-    set response_and_events [dap_request_and_response $command $obj]
+# Wait for a response to the given request, and issue a pass/fail.
+# Returns the response and events like dap_request_and_response.
+proc dap_check_response {name cmd request} {
+    set response_and_events [dap_read_response $cmd $request]
     set response [lindex $response_and_events 0]
     if {[dict get $response success] != "true"} {
 	verbose "request failure: $response"
@@ -262,26 +262,35 @@ proc dap_check_request_and_response {name command {obj {}}} {
     return $response_and_events
 }
 
+# Like dap_request_and_response, but also checks that the response
+# indicates success.  NAME is used to issue a test result.
+proc dap_check_request_and_response {name command {obj {}}} {
+    set seq [dap_send_request $command $obj]
+    return [dap_check_response $name $command $seq]
+}
+
 # Start gdb, send a DAP initialization request and return the
 # response.  This approach lets the caller check the feature list, if
 # desired.  Returns the empty string on failure.  NAME is used as the
-# test name.
-proc dap_initialize {{name "initialize"}} {
+# test name.  EXTRA are other settings to pass via the "initialize"
+# request.
+proc dap_initialize {{name "initialize"} {extra ""}} {
     if {[dap_gdb_start]} {
 	return ""
     }
     return [dap_check_request_and_response $name initialize \
-		{o clientID [s "gdb testsuite"] \
-		     supportsVariableType [l true] \
-		     supportsVariablePaging [l true] \
-		     supportsMemoryReferences [l true]}]
+		[format {o clientID [s "gdb testsuite"] \
+			     supportsVariableType [l true] \
+			     supportsVariablePaging [l true] \
+			     supportsMemoryReferences [l true] \
+			     %s} \
+		     $extra]]
 }
 
 # Send a launch request specifying FILE as the program to use for the
-# inferior.  Returns the empty string on failure, or the response
-# object from the launch request.  If specified, ARGS is a dictionary
-# of key-value pairs, each passed to the launch request.  Valid keys
-# are:
+# inferior.  Returns the request ID.  If specified, ARGS is a
+# dictionary of key-value pairs, each passed to the launch request.
+# Valid keys are:
 #
 # * arguments - value is a list of strings passed as command-line
 #   arguments to the inferior
@@ -334,12 +343,12 @@ proc dap_launch {file {args {}}} {
 	}
     }
 
-    return [dap_check_request_and_response "startup - launch" launch $params]
+    return [dap_send_request launch $params]
 }
 
 # Start gdb, send a DAP initialize request, and then an attach request
 # specifying PID as the inferior process ID.  Returns the empty string
-# on failure, or the response object from the attach request.
+# on failure, or the attach request sequence ID.
 proc dap_attach {pid {prog ""}} {
     if {[dap_initialize "startup - initialize"] == ""} {
 	return ""
@@ -350,18 +359,17 @@ proc dap_attach {pid {prog ""}} {
 	append args [format { program [s %s]} $prog]
     }
 
-    return [dap_check_request_and_response "startup - attach" attach $args]
+    return [dap_send_request attach $args]
 }
 
 # Start gdb, send a DAP initialize request, and then an attach request
 # specifying TARGET as the remote target.  Returns the empty string on
-# failure, or the response object from the attach request.
+# failure, or the attach request sequence ID.
 proc dap_target_remote {target} {
     if {[dap_initialize "startup - initialize"] == ""} {
 	return ""
     }
-    return [dap_check_request_and_response "startup - target" attach \
-		[format {o target [s %s]} $target]]
+    return [dap_send_request attach [format {o target [s %s]} $target]]
 }
 
 # Read the most recent DAP log file and check it for exceptions.

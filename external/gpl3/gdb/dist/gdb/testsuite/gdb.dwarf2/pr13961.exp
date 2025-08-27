@@ -36,7 +36,8 @@ gdb_test "break -q main" "Breakpoint.*at.*"
 pass $testfile
 
 # Regression test for PR symtab/30739.
-gdb_test_multiple "maint print objfiles $binfile" "no foo::foo" {
+set cmd "pipe maint print objfiles $binfile | grep foo::foo"
+gdb_test_multiple $cmd "no foo::foo" {
     -re -wrap "\r\n *qualified: *foo::foo\r\n.*" {
 	fail $gdb_test_name
     }

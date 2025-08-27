@@ -175,12 +175,12 @@ BEGIN:
     .dw 0x10E ;
     .dw 0x124 ;
 .ifndef BFIN_HW
-	// XXX: hardware doesnt trigger illegal exception ?
+	// XXX: hardware doesn't trigger illegal exception ?
     .dw 0x125 ;
 .endif
     .dw 0x164 ;
 .ifndef BFIN_HW
-	// XXX: hardware doesnt trigger illegal exception ?
+	// XXX: hardware doesn't trigger illegal exception ?
     .dw 0x165 ;
 .endif
     .dw 0x128 ;

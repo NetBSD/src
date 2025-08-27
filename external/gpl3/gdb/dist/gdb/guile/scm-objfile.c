@@ -250,7 +250,7 @@ gdbscm_objfile_progspace (SCM self)
   objfile_smob *o_smob
     = ofscm_get_valid_objfile_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
 
-  return psscm_scm_from_pspace (o_smob->objfile->pspace);
+  return psscm_scm_from_pspace (o_smob->objfile->pspace ());
 }
 
 /* (objfile-pretty-printers <gdb:objfile>) -> list

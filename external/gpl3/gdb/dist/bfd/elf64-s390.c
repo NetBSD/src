@@ -638,8 +638,7 @@ struct elf_s390_obj_tdata
 static bool
 elf_s390_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct elf_s390_obj_tdata),
-				  S390_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct elf_s390_obj_tdata));
 }
 
 static bool
@@ -723,8 +722,7 @@ elf_s390_link_hash_table_create (bfd *abfd)
     return NULL;
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc,
-				      sizeof (struct elf_s390_link_hash_entry),
-				      S390_ELF_DATA))
+				      sizeof (struct elf_s390_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -2222,8 +2220,7 @@ elf_s390_relocate_section (bfd *output_bfd,
 	      else if (! WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn,
 							  bfd_link_pic (info),
 							  h)
-		       || (bfd_link_pic (info)
-			   && SYMBOL_REFERENCES_LOCAL (info, h))
+		       || SYMBOL_REFERENCES_LOCAL (info, h)
 		       || resolved_to_zero)
 		{
 		  Elf_Internal_Sym *isym;
@@ -2254,9 +2251,8 @@ elf_s390_relocate_section (bfd *output_bfd,
 		     reference using larl we have to make sure that
 		     the symbol is 1. properly aligned and 2. it is no
 		     ABS symbol or will become one.  */
-		  if ((h->def_regular
-		       && bfd_link_pic (info)
-		       && SYMBOL_REFERENCES_LOCAL (info, h))
+		  if (h->def_regular
+		      && SYMBOL_REFERENCES_LOCAL (info, h)
 		      /* lgrl rx,sym@GOTENT -> larl rx, sym */
 		      && ((r_type == R_390_GOTENT
 			   && (bfd_get_16 (input_bfd,
@@ -2401,6 +2397,43 @@ elf_s390_relocate_section (bfd *output_bfd,
 	      /* We didn't make a PLT entry for this symbol.  This
 		 happens when statically linking PIC code, or when
 		 using -Bsymbolic.  */
+
+	      /* Replace relative long addressing instructions of weak
+		 symbols, which will definitely resolve to zero, with
+		 either a load address of 0 or a trapping insn.
+		 This prevents the PLT32DBL relocation from overflowing in
+		 case the binary will be loaded at 4GB or more.  */
+	      if (h->root.type == bfd_link_hash_undefweak
+		  && !h->root.linker_def
+		  && (bfd_link_executable (info)
+		      || ELF_ST_VISIBILITY (h->other) != STV_DEFAULT)
+		  && r_type == R_390_PLT32DBL
+		  && rel->r_offset >= 2)
+		{
+		  void *insn_start = contents + rel->r_offset - 2;
+		  uint16_t op = bfd_get_16 (input_bfd, insn_start) & 0xff0f;
+		  uint8_t reg = bfd_get_8 (input_bfd, insn_start + 1) & 0xf0;
+
+		  /* NOTE: The order of the if's is important!  */
+		  /* Replace load address relative long (larl) with load
+		     address (lay) */
+		  if (op == 0xc000)
+		    {
+		      /* larl rX,<weak sym> -> lay rX,0(0)  */
+		      bfd_put_16 (output_bfd, 0xe300 | reg, insn_start);
+		      bfd_put_32 (output_bfd, 0x71, insn_start + 2);
+		      continue;
+		    }
+		  /* Replace branch relative and save long (brasl) with a trap.  */
+		  else if (op == 0xc005)
+		    {
+		      /* brasl rX,<weak sym> -> jg .+2 (6-byte trap)  */
+		      bfd_put_16 (output_bfd, 0xc0f4, insn_start);
+		      bfd_put_32 (output_bfd, 0x1, insn_start + 2);
+		      continue;
+		    }
+		}
+
 	      break;
 	    }
 	  if (s390_is_ifunc_symbol_p (h))
@@ -2519,10 +2552,9 @@ elf_s390_relocate_section (bfd *output_bfd,
 		 - store halfword relative long (sthrl)
 		 - execute relative long (exrl)
 		 - compare (logical) relative long (crl, clrl, cgrl, clgrl, cgfrl, clgfrl)
-		 - compare (logical) halfword relative long (chrl, cghrl, clhrl, clghrl)
-		 - branch relative on count high (brcth)  */
+		 - compare (logical) halfword relative long (chrl, cghrl, clhrl, clghrl)  */
 	      else if (op == 0xc005 || (op & 0xff00) == 0xc400
-		       || (op & 0xff00) == 0xc600 || op == 0xcc06)
+		       || (op & 0xff00) == 0xc600)
 		{
 		  /* Emit a 6-byte trap: jg .+2  */
 		  bfd_put_16 (output_bfd, 0xc0f4, insn_start);
@@ -3414,8 +3446,7 @@ elf_s390_finish_dynamic_symbol (bfd *output_bfd,
 	      return true;
 	    }
 	}
-      else if (bfd_link_pic (info)
-	       && SYMBOL_REFERENCES_LOCAL (info, h))
+      else if (SYMBOL_REFERENCES_LOCAL (info, h))
 	{
 	  if (UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
 	    return true;

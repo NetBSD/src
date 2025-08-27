@@ -158,7 +158,7 @@ aarch64_get_mem_ptr (sim_cpu *cpu, uint64_t address)
    an out-of-memory condition by noticing a stack/heap collision.
 
    The heap starts at the end of loaded memory and carries on up
-   to an arbitary 2Gb limit.  */
+   to an arbitrary 2Gb limit.  */
 
 uint64_t
 aarch64_get_heap_start (sim_cpu *cpu)

@@ -28,7 +28,6 @@
 
 #include "ppc-tdep.h"
 #include "netbsd-tdep.h"
-#include "ppc-tdep.h"
 #include "solib-svr4.h"
 
 /* Register offsets from <machine/reg.h>.  */

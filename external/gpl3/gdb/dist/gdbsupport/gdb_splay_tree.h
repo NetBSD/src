@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_GDB_SPLAY_TREE_H
-#define COMMON_GDB_SPLAY_TREE_H
+#ifndef GDBSUPPORT_GDB_SPLAY_TREE_H
+#define GDBSUPPORT_GDB_SPLAY_TREE_H
 
 #include "splay-tree.h"
 
@@ -39,4 +39,4 @@ struct splay_tree_deleter
 typedef std::unique_ptr<splay_tree_s, gdb::splay_tree_deleter>
     gdb_splay_tree_up;
 
-#endif /* COMMON_GDB_SPLAY_TREE_H */
+#endif /* GDBSUPPORT_GDB_SPLAY_TREE_H */

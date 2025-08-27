@@ -32,9 +32,6 @@ if {[mi_clean_restart $binfile]} {
     return
 }
 
-# Avoid shared lib symbols.
-mi_gdb_test "-gdb-set auto-solib-add off" "\\^done"
-
 mi_runto prog_array
 
 # Avoid libc symbols, in particular the 'array' type.

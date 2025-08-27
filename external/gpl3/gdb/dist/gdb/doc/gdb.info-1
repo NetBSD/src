@@ -21,7 +21,7 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 15.1.
+Source-Level Debugger' for GDB (GDB) Version 16.3.
 
    Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
@@ -44,7 +44,7 @@ Debugging with GDB
 
 This file describes GDB, the GNU symbolic debugger.
 
-   This is the Tenth Edition, for GDB (GDB) Version 15.1.
+   This is the Tenth Edition, for GDB (GDB) Version 16.3.
 
    Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
@@ -513,7 +513,7 @@ Let us use GDB to try to see what is going on.
      There is absolutely no warranty for GDB; type "show warranty"
       for details.
 
-     GDB 15.1, Copyright 1999 Free Software Foundation, Inc...
+     GDB 16.3, Copyright 1999 Free Software Foundation, Inc...
      (gdb)
 
 GDB reads only enough symbol data to know where to find the rest when
@@ -2030,6 +2030,12 @@ exceptional in lacking corresponding 'set' commands:
      Bugs::), it is important to include this information in your
      report.
 
+     This commands also displays the version number of the Readline
+     library that GDB is using.  After the version number will appear
+     either '(system)' indicating GDB is using the shared system
+     Readline library, or '(internal)' indicating GDB is using a
+     statically linked in version of the Readline library.
+
 
 File: gdb.info,  Node: Running,  Next: Stopping,  Prev: Commands,  Up: Top
 
@@ -2251,7 +2257,7 @@ breakpoints.
           (gdb) run
 
      This command is available when debugging locally on most targets,
-     excluding DJGPP, Cygwin, MS Windows, and QNX Neutrino.
+     excluding DJGPP, Cygwin, and MS Windows.
 
 'set startup-with-shell'
 'set startup-with-shell on'
@@ -3435,7 +3441,7 @@ cannot debug the child or parent until an 'exec' call completes.
 the new target restarts.  To restart the parent process, use the 'file'
 command with the parent executable name as its argument.  By default,
 after an 'exec' call executes, GDB discards the symbols of the previous
-executable image.  You can change this behaviour with the
+executable image.  You can change this behavior with the
 'set follow-exec-mode' command.
 
 'set follow-exec-mode MODE'
@@ -3507,11 +3513,11 @@ changes in memory, registers, and even (within some limits) system
 state.  Effectively, it is like going back in time to the moment when
 the checkpoint was saved.
 
-   Thus, if you're stepping thru a program and you think you're getting
-close to the point where things go wrong, you can save a checkpoint.
-Then, if you accidentally go too far and miss the critical statement,
-instead of having to restart your program from the beginning, you can
-just go back to the checkpoint and start again from there.
+   Thus, if you're stepping through a program and you think you're
+getting close to the point where things go wrong, you can save a
+checkpoint.  Then, if you accidentally go too far and miss the critical
+statement, instead of having to restart your program from the beginning,
+you can just go back to the checkpoint and start again from there.
 
    This can be especially useful if it takes a lot of time or steps to
 reach the point where you think the bug occurs.
@@ -4103,7 +4109,7 @@ with the 'break' command as well as to internal breakpoints set by
 commands like 'next' and 'finish'.  For breakpoints set with 'hbreak',
 GDB will always use hardware breakpoints.
 
-   You can control this automatic behaviour with the following commands:
+   You can control this automatic behavior with the following commands:
 
 'set breakpoint auto-hw on'
      This is the default behavior.  When GDB sets a breakpoint, it will
@@ -4119,7 +4125,7 @@ GDB will always use hardware breakpoints.
 the breakpoint address with a special instruction, which, when executed,
 given control to the debugger.  By default, the program code is so
 modified only when the program is resumed.  As soon as the program
-stops, GDB restores the original instructions.  This behaviour guards
+stops, GDB restores the original instructions.  This behavior guards
 against leaving breakpoints inserted in the target should gdb abrubptly
 disconnect.  However, with slow remote targets, inserting and removing
 breakpoint can reduce the performance.  This behavior can be controlled
@@ -5925,26 +5931,6 @@ referenced address that raised a segmentation fault.
 
    Depending on target support, '$_siginfo' may also be writable.
 
-   On some targets, a 'SIGSEGV' can be caused by a boundary violation,
-i.e., accessing an address outside of the allowed range.  In those cases
-GDB may displays additional information, depending on how GDB has been
-told to handle the signal.  With 'handle stop SIGSEGV', GDB displays the
-violation kind: "Upper" or "Lower", the memory address accessed and the
-bounds, while with 'handle nostop SIGSEGV' no additional information is
-displayed.
-
-   The usual output of a segfault is:
-     Program received signal SIGSEGV, Segmentation fault
-     0x0000000000400d7c in upper () at i386-mpx-sigsegv.c:68
-     68        value = *(p + len);
-
-   While a bound violation is presented as:
-     Program received signal SIGSEGV, Segmentation fault
-     Upper bound violation while accessing address 0x7fffffffc3b3
-     Bounds: [lower = 0x7fffffffc390, upper = 0x7fffffffc3a3]
-     0x0000000000400d7c in upper () at i386-mpx-sigsegv.c:68
-     68        value = *(p + len);
-
 
 File: gdb.info,  Node: Thread Stops,  Prev: Signals,  Up: Stopping
 
@@ -6436,7 +6422,7 @@ execution, GDB provides the following commands.
      statement in the called function (typically a return statement).
 
      Also, as with the 'step' command, if non-debuggable functions are
-     called, 'reverse-step' will run thru them backward without
+     called, 'reverse-step' will run through them backward without
      stopping.
 
 'reverse-stepi [COUNT]'
@@ -6533,9 +6519,12 @@ instruction; otherwise, it will work in record mode, if the platform
 supports reverse execution, or stop if not.
 
    Currently, process record and replay is supported on ARM, Aarch64,
-Moxie, PowerPC, PowerPC64, S/390, and x86 (i386/amd64) running
-GNU/Linux.  Process record and replay can be used both when native
-debugging, and when remote debugging via 'gdbserver'.
+LoongArch, Moxie, PowerPC, PowerPC64, S/390, and x86 (i386/amd64)
+running GNU/Linux.  Process record and replay can be used both when
+native debugging, and when remote debugging via 'gdbserver'.
+
+   When recording an inferior, GDB may print auxiliary information
+during stepping commands and commands displaying the execution history.
 
    For architecture environments that support process record and replay,
 GDB provides the following commands:
@@ -6820,6 +6809,17 @@ GDB provides the following commands:
      Show the current setting of the requested ring buffer size for
      branch tracing in Intel Processor Trace format.
 
+'set record btrace pt event-tracing'
+     Enable or disable event tracing for branch tracing in Intel
+     Processor Trace format.  When enabled, events are recorded during
+     execution as auxiliary information and will be printed during
+     stepping commands and commands displaying the execution history.
+     Changing this setting has no effect on an active recording.  The
+     default is off.
+
+'show record btrace pt event-tracing'
+     Show the current setting of Intel Processor Trace event tracing.
+
 'info record'
      Show various statistics about the recording depending on the
      recording method:
@@ -6869,7 +6869,7 @@ GDB provides the following commands:
      It can also print mixed source+disassembly if you specify the the
      '/m' or '/s' modifier, and print the raw instructions in hex as
      well as in symbolic form by specifying the '/r' or '/b' modifier.
-     The behaviour of the '/m', '/s', '/r', and '/b' modifiers are the
+     The behavior of the '/m', '/s', '/r', and '/b' modifiers are the
      same as for the 'disassemble' command (*note 'disassemble':
      disassemble.).
 
@@ -6882,6 +6882,9 @@ GDB provides the following commands:
      To better align the printed instructions when the trace contains
      instructions from more than one function, the function name may be
      omitted by specifying the '/f' modifier.
+
+     Printing auxiliary information is enabled by default and can be
+     omitted with the '/a' modifier.
 
      Speculatively executed instructions are prefixed with '?'.  This
      feature is not available for all recording formats.
@@ -6930,8 +6933,10 @@ GDB provides the following commands:
      instruction sequence (if the '/l' modifier is specified), and the
      instructions numbers that form the sequence (if the '/i' modifier
      is specified).  The function names are indented to reflect the call
-     stack depth if the '/c' modifier is specified.  The '/l', '/i', and
-     '/c' modifiers can be given together.
+     stack depth if the '/c' modifier is specified.  Printing auxiliary
+     information is enabled by default and can be omitted with the '/a'
+     modifier.  The '/l', '/i', '/a', and '/c' modifiers can be given
+     together.
 
           (gdb) list 1, 10
           1   void foo (void)

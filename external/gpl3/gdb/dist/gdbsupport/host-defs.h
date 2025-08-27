@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_HOST_DEFS_H
-#define COMMON_HOST_DEFS_H
+#ifndef GDBSUPPORT_HOST_DEFS_H
+#define GDBSUPPORT_HOST_DEFS_H
 
 #include <limits.h>
 
@@ -58,4 +58,4 @@
 #define SLASH_STRING "/"
 #endif
 
-#endif /* COMMON_HOST_DEFS_H */
+#endif /* GDBSUPPORT_HOST_DEFS_H */

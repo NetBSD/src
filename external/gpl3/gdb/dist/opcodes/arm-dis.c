@@ -405,16 +405,11 @@ struct opcode16
    %q			print shifter argument
    %u			print condition code (unconditional in ARM mode,
                           UNPREDICTABLE if not AL in Thumb)
-   %A			print address for ldc/stc/ldf/stf instruction
+   %A			print address for ldc/stc instruction
    %B			print vstm/vldm register list
    %C			print vscclrm register list
-   %I                   print cirrus signed shift immediate: bits 0..3|4..6
    %J			print register for VLDR instruction
    %K			print address for VLDR instruction
-   %F			print the COUNT field of a LFM/SFM instruction.
-   %P			print floating point precision in arithmetic insn
-   %Q			print floating point precision in ldf/stf insn
-   %R			print floating point rounding mode
 
    %<bitfield>c		print as a condition code (for vsel)
    %<bitfield>r		print as an ARM register
@@ -424,8 +419,6 @@ struct opcode16
    %<bitfield>k		print immediate for VFPv3 conversion instruction
    %<bitfield>x		print the bitfield in hex
    %<bitfield>X		print the bitfield as 1 hex digit without leading "0x"
-   %<bitfield>f		print a floating point constant if >7 else a
-			floating point register
    %<bitfield>w         print as an iWMMXt width field - [bhwd]ss/us
    %<bitfield>g         print as an iWMMXt 64-bit register
    %<bitfield>G         print as an iWMMXt general purpose or control register
@@ -706,94 +699,6 @@ static const struct sopcode32 coprocessor_opcodes[] =
     0x0e100000, 0x0ff00ff0, "wxor%c\t%12-15g, %16-19g, %0-3g"},
   {ANY, ARM_FEATURE_CORE_LOW (0),
     SENTINEL_IWMMXT_END, 0, "" },
-
-  /* Floating point coprocessor (FPA) instructions.  */
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e000100, 0x0ff08f10, "adf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e100100, 0x0ff08f10, "muf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e200100, 0x0ff08f10, "suf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e300100, 0x0ff08f10, "rsf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e400100, 0x0ff08f10, "dvf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e500100, 0x0ff08f10, "rdf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e600100, 0x0ff08f10, "pow%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e700100, 0x0ff08f10, "rpw%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e800100, 0x0ff08f10, "rmf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e900100, 0x0ff08f10, "fml%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ea00100, 0x0ff08f10, "fdv%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0eb00100, 0x0ff08f10, "frd%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ec00100, 0x0ff08f10, "pol%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e008100, 0x0ff08f10, "mvf%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e108100, 0x0ff08f10, "mnf%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e208100, 0x0ff08f10, "abs%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e308100, 0x0ff08f10, "rnd%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e408100, 0x0ff08f10, "sqt%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e508100, 0x0ff08f10, "log%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e608100, 0x0ff08f10, "lgn%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e708100, 0x0ff08f10, "exp%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e808100, 0x0ff08f10, "sin%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e908100, 0x0ff08f10, "cos%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ea08100, 0x0ff08f10, "tan%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0eb08100, 0x0ff08f10, "asn%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ec08100, 0x0ff08f10, "acs%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ed08100, 0x0ff08f10, "atn%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ee08100, 0x0ff08f10, "urd%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ef08100, 0x0ff08f10, "nrm%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e000110, 0x0ff00f1f, "flt%c%P%R\t%16-18f, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e100110, 0x0fff0f98, "fix%c%R\t%12-15r, %0-2f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e200110, 0x0fff0fff, "wfs%c\t%12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e300110, 0x0fff0fff, "rfs%c\t%12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e400110, 0x0fff0fff, "wfc%c\t%12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e500110, 0x0fff0fff, "rfc%c\t%12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e90f110, 0x0ff8fff0, "cmf%c\t%16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0eb0f110, 0x0ff8fff0, "cnf%c\t%16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ed0f110, 0x0ff8fff0, "cmfe%c\t%16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ef0f110, 0x0ff8fff0, "cnfe%c\t%16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0c000100, 0x0e100f00, "stf%c%Q\t%12-14f, %A"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0c100100, 0x0e100f00, "ldf%c%Q\t%12-14f, %A"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V2),
-    0x0c000200, 0x0e100f00, "sfm%c\t%12-14f, %F, %A"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V2),
-    0x0c100200, 0x0e100f00, "lfm%c\t%12-14f, %F, %A"},
 
   /* Armv8.1-M Mainline instructions.  */
   {T32, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
@@ -3454,11 +3359,13 @@ static const struct mopcode32 mve_opcodes[] =
    %m			print register mask for ldm/stm instruction
    %o			print operand2 (immediate or register + shift)
    %p			print 'p' iff bits 12-15 are 15
+   %O			print 'OBSOLETE' iff bits 12-15 are 15
    %t			print 't' iff bit 21 set and bit 24 clear
    %B			print arm BLX(1) destination
    %C			print the PSR sub type.
    %U			print barrier type.
    %P			print address for pli instruction.
+   %T			print 'from Armv4T onwards'
 
    %<bitfield>r		print as an ARM register
    %<bitfield>T		print as an ARM register + 1
@@ -3487,8 +3394,8 @@ static const struct opcode32 arm_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
     0xe7f000f0, 0xfff000f0, "udf\t%{I:#%e%}"},
 
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T | ARM_EXT_V5),
-    0x012FFF10, 0x0ffffff0, "bx%c\t%0-3r"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4),
+    0x012FFF10, 0x0ffffff0, "bx%c\t%0-3r%T"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
     0x00000090, 0x0fe000f0, "mul%20's%c\t%16-19R, %0-3R, %8-11R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
@@ -4063,32 +3970,32 @@ static const struct opcode32 arm_opcodes[] =
     0x01000000, 0x0fb00cff, "mrs%c\t%12-15R, %R"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x03000000, 0x0fe00000, "tst%p%c\t%16-19r, %o"},
+    0x03000000, 0x0fe00000, "tst%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01000000, 0x0fe00010, "tst%p%c\t%16-19r, %o"},
+    0x01000000, 0x0fe00010, "tst%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01000010, 0x0fe00090, "tst%p%c\t%16-19R, %o"},
+    0x01000010, 0x0fe00090, "tst%p%c\t%16-19R, %o%O"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x03300000, 0x0ff00000, "teq%p%c\t%16-19r, %o"},
+    0x03300000, 0x0ff00000, "teq%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01300000, 0x0ff00010, "teq%p%c\t%16-19r, %o"},
+    0x01300000, 0x0ff00010, "teq%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01300010, 0x0ff00010, "teq%p%c\t%16-19R, %o"},
+    0x01300010, 0x0ff00010, "teq%p%c\t%16-19R, %o%O"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x03400000, 0x0fe00000, "cmp%p%c\t%16-19r, %o"},
+    0x03400000, 0x0fe00000, "cmp%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01400000, 0x0fe00010, "cmp%p%c\t%16-19r, %o"},
+    0x01400000, 0x0fe00010, "cmp%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01400010, 0x0fe00090, "cmp%p%c\t%16-19R, %o"},
+    0x01400010, 0x0fe00090, "cmp%p%c\t%16-19R, %o%O"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x03600000, 0x0fe00000, "cmn%p%c\t%16-19r, %o"},
+    0x03600000, 0x0fe00000, "cmn%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01600000, 0x0fe00010, "cmn%p%c\t%16-19r, %o"},
+    0x01600000, 0x0fe00010, "cmn%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01600010, 0x0fe00090, "cmn%p%c\t%16-19R, %o"},
+    0x01600010, 0x0fe00090, "cmn%p%c\t%16-19R, %o%O"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
     0x03800000, 0x0fe00000, "orr%20's%c\t%12-15r, %16-19r, %o"},
@@ -5011,9 +4918,6 @@ static const char *const arm_conditional[] =
 {"eq", "ne", "cs", "cc", "mi", "pl", "vs", "vc",
  "hi", "ls", "ge", "lt", "gt", "le", "al", "<und>", ""};
 
-static const char *const arm_fp_const[] =
-{"0.0", "1.0", "2.0", "3.0", "4.0", "5.0", "0.5", "10.0"};
-
 static const char *const arm_shift[] =
 {"lsl", "lsr", "asr", "ror"};
 
@@ -5376,7 +5280,7 @@ is_mve_okay_in_it (enum mve_instructions matched_insn)
 }
 
 static bool
-is_mve_architecture (struct disassemble_info *info)
+is_v81m_architecture (struct disassemble_info *info)
 {
   struct arm_private_data *private_data = info->private_data;
   arm_feature_set allowed_arches = private_data->features;
@@ -8299,25 +8203,6 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 			arm_conditional[cond]);
 		  break;
 
-		case 'I':
-		  /* Print a Cirrus/DSP shift immediate.  */
-		  /* Immediates are 7bit signed ints with bits 0..3 in
-		     bits 0..3 of opcode and bits 4..6 in bits 5..7
-		     of opcode.  */
-		  {
-		    int imm;
-
-		    imm = (given & 0xf) | ((given & 0xe0) >> 1);
-
-		    /* Is ``imm'' a negative number?  */
-		    if (imm & 0x40)
-		      imm -= 0x80;
-
-		    func (stream, dis_style_immediate, "%d", imm);
-		  }
-
-		  break;
-
 		case 'J':
 		  {
 		    unsigned long regno
@@ -8349,76 +8234,6 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 			break;
 		      }
 		  }
-		  break;
-
-		case 'F':
-		  switch (given & 0x00408000)
-		    {
-		    case 0:
-		      func (stream, dis_style_immediate, "4");
-		      break;
-		    case 0x8000:
-		      func (stream, dis_style_immediate, "1");
-		      break;
-		    case 0x00400000:
-		      func (stream, dis_style_immediate, "2");
-		      break;
-		    default:
-		      func (stream, dis_style_immediate, "3");
-		    }
-		  break;
-
-		case 'P':
-		  switch (given & 0x00080080)
-		    {
-		    case 0:
-		      func (stream, dis_style_mnemonic, "s");
-		      break;
-		    case 0x80:
-		      func (stream, dis_style_mnemonic, "d");
-		      break;
-		    case 0x00080000:
-		      func (stream, dis_style_mnemonic, "e");
-		      break;
-		    default:
-		      func (stream, dis_style_text, _("<illegal precision>"));
-		      break;
-		    }
-		  break;
-
-		case 'Q':
-		  switch (given & 0x00408000)
-		    {
-		    case 0:
-		      func (stream, dis_style_mnemonic, "s");
-		      break;
-		    case 0x8000:
-		      func (stream, dis_style_mnemonic, "d");
-		      break;
-		    case 0x00400000:
-		      func (stream, dis_style_mnemonic, "e");
-		      break;
-		    default:
-		      func (stream, dis_style_mnemonic, "p");
-		      break;
-		    }
-		  break;
-
-		case 'R':
-		  switch (given & 0x60)
-		    {
-		    case 0:
-		      break;
-		    case 0x20:
-		      func (stream, dis_style_mnemonic, "p");
-		      break;
-		    case 0x40:
-		      func (stream, dis_style_mnemonic, "m");
-		      break;
-		    default:
-		      func (stream, dis_style_mnemonic, "z");
-		      break;
-		    }
 		  break;
 
 		case '0': case '1': case '2': case '3': case '4':
@@ -8515,14 +8330,6 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 			  func (stream, dis_style_immediate, "%ld",
 				from - value);
 			}
-			break;
-
-		      case 'f':
-			if (value > 7)
-			  func (stream, dis_style_immediate, "#%s",
-				arm_fp_const[value & 7]);
-			else
-			  func (stream, dis_style_register, "f%ld", value);
 			break;
 
 		      case 'w':
@@ -10082,23 +9889,8 @@ print_insn_mve (struct disassemble_info *info, long given)
 			    if (mve_shift_insn_p (insn->mve_op))
 			      print_mve_shift_n (info, given, insn->mve_op);
 			    else if (insn->mve_op == MVE_VSHLL_T2)
-			      {
-				switch (value)
-				  {
-				  case 0x00:
-				    func (stream, dis_style_immediate, "8");
-				    break;
-				  case 0x01:
-				    func (stream, dis_style_immediate, "16");
-				    break;
-				  case 0x10:
-				    print_mve_undefined (info, UNDEF_SIZE_0);
-				    break;
-				  default:
-				    assert (0);
-				    break;
-				  }
-			      }
+			      func (stream, dis_style_immediate, "%s",
+				    mve_vec_sizename[value]);
 			    else
 			      {
 				if (insn->mve_op == MVE_VSHLC && value == 0)
@@ -10313,6 +10105,18 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 		      value_in_comment = print_arm_address (pc, info, given | (1 << P_BIT));
 		      break;
 
+		    case 'T':
+		      /* Armv4 does not have a BX instruction, however, when
+			 assembled with the --fix-v4bx option GAS will accept
+			 and assemble a BX instruction when assembling for
+			 Armv4.  When disassembling we also disassemble it as a
+			 BX instruction, but do make the user aware that this
+			 instruction is only supported on HW from Armv4T
+			 onwards.  */
+		      if (info->mach == bfd_mach_arm_4)
+			func (stream, dis_style_text, "\t@ from Armv4T onwards");
+		      break;
+
 		    case 'S':
 		      allow_unpredictable = true;
 		      /* Fall through.  */
@@ -10524,19 +10328,12 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 
 		    case 'p':
 		      if ((given & 0x0000f000) == 0x0000f000)
-			{
-			  arm_feature_set arm_ext_v6 =
-			    ARM_FEATURE_CORE_LOW (ARM_EXT_V6);
-
-			  /* The p-variants of tst/cmp/cmn/teq are the pre-V6
-			     mechanism for setting PSR flag bits.  They are
-			     obsolete in V6 onwards.  */
-			  if (! ARM_CPU_HAS_FEATURE (private_data->features, \
-						     arm_ext_v6))
-			    func (stream, dis_style_mnemonic, "p");
-			  else
-			    is_unpredictable = true;
-			}
+			func (stream, dis_style_mnemonic, "p");
+		      break;
+		    case 'O':
+		      if ((given & 0x0000f000) == 0x0000f000)
+			func (stream, dis_style_text,
+			      "\t@ p-variant is OBSOLETE");
 		      break;
 
 		    case 't':
@@ -11202,6 +10999,14 @@ psr_name (int regno)
     case 0x12: return "BASEPRI_MAX";
     case 0x13: return "FAULTMASK";
     case 0x14: return "CONTROL";
+    case 0x20: return "PAC_KEY_P_0";
+    case 0x21: return "PAC_KEY_P_1";
+    case 0x22: return "PAC_KEY_P_2";
+    case 0x23: return "PAC_KEY_P_3";
+    case 0x24: return "PAC_KEY_U_0";
+    case 0x25: return "PAC_KEY_U_1";
+    case 0x26: return "PAC_KEY_U_2";
+    case 0x27: return "PAC_KEY_U_3";
     case 0x88: return "MSP_NS";
     case 0x89: return "PSP_NS";
     case 0x8a: return "MSPLIM_NS";
@@ -11211,6 +11016,14 @@ psr_name (int regno)
     case 0x93: return "FAULTMASK_NS";
     case 0x94: return "CONTROL_NS";
     case 0x98: return "SP_NS";
+    case 0xa0: return "PAC_KEY_P_0_NS";
+    case 0xa1: return "PAC_KEY_P_1_NS";
+    case 0xa2: return "PAC_KEY_P_2_NS";
+    case 0xa3: return "PAC_KEY_P_3_NS";
+    case 0xa4: return "PAC_KEY_U_0_NS";
+    case 0xa5: return "PAC_KEY_U_1_NS";
+    case 0xa6: return "PAC_KEY_U_2_NS";
+    case 0xa7: return "PAC_KEY_U_3_NS";
     default: return "<unknown>";
     }
 }
@@ -11223,7 +11036,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
   const struct opcode32 *insn;
   void *stream = info->stream;
   fprintf_styled_ftype func = info->fprintf_styled_func;
-  bool is_mve = is_mve_architecture (info);
+  bool is_mve = is_v81m_architecture (info);
   enum disassembler_style base_style = dis_style_mnemonic;
   enum disassembler_style old_base_style = base_style;
 
@@ -11874,6 +11687,10 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		    if (given & 0x100)
 		      func (stream, dis_style_register, "c");
 		  }
+		else if (is_v81m_architecture (info))
+		  func (stream, dis_style_register, "%s",
+			psr_name (given & 0xff));
+
 		else if ((given & 0x20) == 0x20)
 		  {
 		    char const* name;
@@ -11897,8 +11714,11 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		break;
 
 	      case 'D':
-		if (((given & 0xff) == 0)
-		    || ((given & 0x20) == 0x20))
+		if (is_v81m_architecture (info))
+		  func (stream, dis_style_register, "%s",
+			psr_name (given & 0xff));
+		else if (((given & 0xff) == 0)
+			 || ((given & 0x20) == 0x20))
 		  {
 		    char const* name;
 		    unsigned sm = (given & 0xf0000) >> 16;
@@ -12502,7 +12322,7 @@ select_arm_features (unsigned long mach,
 	  ARM_MERGE_FEATURE_SETS (arch_fset, arch_fset, armv8_6_ext_fset);
 	  break;
 	}
-    case bfd_mach_arm_8R:	 ARM_SET_FEATURES (ARM_ARCH_V8R); break;
+    case bfd_mach_arm_8R:	 ARM_SET_FEATURES (ARM_ARCH_V8R_CRC); break;
     case bfd_mach_arm_8M_BASE:	 ARM_SET_FEATURES (ARM_ARCH_V8M_BASE); break;
     case bfd_mach_arm_8M_MAIN:	 ARM_SET_FEATURES (ARM_ARCH_V8M_MAIN); break;
     case bfd_mach_arm_8_1M_MAIN:
@@ -12568,9 +12388,15 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bool little)
     {
       static struct arm_private_data private;
 
-      if ((info->flags & USER_SPECIFIED_MACHINE_TYPE) == 0)
+      if (info->flavour != bfd_target_elf_flavour
+	  && (info->flags & USER_SPECIFIED_MACHINE_TYPE) == 0)
 	/* If the user did not use the -m command line switch then default to
 	   disassembling all types of ARM instruction.
+
+	   If this is an arm elf target, build attributes will be used to
+	   determine info->mach, which enable us to be more accurate when
+	   disassembling since we know what the target architecture version is.
+	   For any other target see the comment below:
 
 	   The info->mach value has to be ignored as this will be based on
 	   the default archictecture for the target and/or hints in the notes

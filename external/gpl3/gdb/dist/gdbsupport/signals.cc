@@ -30,14 +30,12 @@ struct gdbarch;
    _available_ realtime signal, not the lowest supported; glibc takes
    several for its own use.  */
 
-#ifndef REALTIME_LO
-# if defined(__SIGRTMIN)
-#  define REALTIME_LO __SIGRTMIN
-#  define REALTIME_HI (__SIGRTMAX + 1)
-# elif defined(SIGRTMIN)
-#  define REALTIME_LO SIGRTMIN
-#  define REALTIME_HI (SIGRTMAX + 1)
-# endif
+#if defined(__SIGRTMIN)
+# define REALTIME_LO __SIGRTMIN
+# define REALTIME_HI (__SIGRTMAX + 1)
+#elif defined(SIGRTMIN)
+# define REALTIME_LO SIGRTMIN
+# define REALTIME_HI (SIGRTMAX + 1)
 #endif
 
 /* This table must match in order and size the signals in enum

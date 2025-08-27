@@ -29,11 +29,12 @@ if {[dap_initialize] == ""} {
     return
 }
 
+set launch_id [dap_launch $testfile stop_at_main 1]
+
 dap_check_request_and_response "start inferior" configurationDone
 
-if {[dap_launch $testfile stop_at_main 1] == ""} {
-    return
-}
+dap_check_response "launch response" launch $launch_id
+
 # We didn't explicitly set a breakpoint, so if we hit one, it worked.
 dap_wait_for_event_and_check "stopped at function breakpoint" stopped \
     "body reason" breakpoint

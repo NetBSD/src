@@ -192,15 +192,15 @@ desc)
 		-O ${tmp}-opc.h1
 
 	sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" \
-		-e "s/@prefix@/${prefix}/g" \
+		-e "s/@prefix@/${prefix}/g" -e 's/[ 	][ 	]*$//' \
 		< ${tmp}-desc.h1 > ${tmp}-desc.h
 	${rootdir}/move-if-change ${tmp}-desc.h ${srcdir}/${arch}-desc.h
 	sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" \
-		-e "s/@prefix@/${prefix}/g" \
+		-e "s/@prefix@/${prefix}/g" -e 's/[ 	][ 	]*$//' \
 		< ${tmp}-desc.c1 > ${tmp}-desc.c
 	${rootdir}/move-if-change ${tmp}-desc.c ${srcdir}/${arch}-desc.c
 	sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" \
-		-e "s/@prefix@/${prefix}/g" \
+		-e "s/@prefix@/${prefix}/g" -e 's/[ 	][ 	]*$//' \
 		< ${tmp}-opc.h1 > ${tmp}-opc.h
 	${rootdir}/move-if-change ${tmp}-opc.h ${srcdir}/${arch}-opc.h
 

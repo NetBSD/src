@@ -106,7 +106,7 @@ fill_gregset (const struct regcache *regcache, prgregset_t *gregs, int regnum)
     regcache->raw_collect (OR1K_NPC_REGNUM, regp + 32);
 }
 
-/* Transfering floating-point registers between GDB, inferiors and cores.
+/* Transferring floating-point registers between GDB, inferiors and cores.
    Since OpenRISC floating-point registers are the same as GPRs these do
    nothing.  */
 

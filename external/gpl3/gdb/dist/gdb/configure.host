@@ -110,7 +110,6 @@ i[34567]86-*-mingw32*)	gdb_host=mingw
 i[34567]86-*-msdosdjgpp*) gdb_host=go32 ;;
 i[34567]86-*-linux*)	gdb_host=linux ;;
 i[34567]86-*-gnu*)	gdb_host=i386gnu ;;
-i[3456]86-*-nto*) 	gdb_host=nto ;;
 i[34567]86-*-openbsd*)	gdb_host=obsd ;;
 i[34567]86-*-solaris2* | x86_64-*-solaris2*)
 			gdb_host=sol2 ;;

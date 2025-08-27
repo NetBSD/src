@@ -18,8 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#ifndef MEMORY_MAP_H
-#define MEMORY_MAP_H
+#ifndef GDB_MEMORY_MAP_H
+#define GDB_MEMORY_MAP_H
 
 #include "memattr.h"
 
@@ -28,4 +28,4 @@
    return an empty vector.  Does not throw.  */
 std::vector<mem_region> parse_memory_map (const char *memory_map);
 
-#endif
+#endif /* GDB_MEMORY_MAP_H */

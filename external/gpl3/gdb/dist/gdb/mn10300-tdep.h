@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MN10300_TDEP_H
-#define MN10300_TDEP_H
+#ifndef GDB_MN10300_TDEP_H
+#define GDB_MN10300_TDEP_H
 
 #include "gdbarch.h"
 
@@ -88,4 +88,4 @@ get_am33_mode (gdbarch *arch)
   return tdep->am33_mode;
 }
 
-#endif /* MN10300_TDEP_H */
+#endif /* GDB_MN10300_TDEP_H */

@@ -15,10 +15,8 @@
 
 import os
 
-import gdb
-
 from .server import capability, request
-from .startup import DAPException, in_gdb_thread
+from .startup import DAPException, exec_mi_and_log, in_gdb_thread
 
 # The next available source reference ID.  Must be greater than 0.
 _next_source = 1
@@ -83,7 +81,7 @@ def decode_source(source):
 @capability("supportsLoadedSourcesRequest")
 def loaded_sources(**extra):
     result = []
-    for elt in gdb.execute_mi("-file-list-exec-source-files")["files"]:
+    for elt in exec_mi_and_log("-file-list-exec-source-files")["files"]:
         result.append(make_source(elt["fullname"], elt["file"]))
     return {
         "sources": result,

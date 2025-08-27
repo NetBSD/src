@@ -1,0 +1,52 @@
+# This testcase is part of GDB, the GNU debugger.
+#
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test basic Intel PT event tracing
+
+require allow_btrace_pt_event_trace_tests
+
+standard_testfile null-deref.c
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile]} {
+    return -1
+}
+
+if {![runto_main]} {
+    return -1
+}
+
+gdb_test_no_output "set record btrace pt event-tracing on"
+gdb_test_no_output "record btrace pt"
+
+gdb_test "continue" "Program received signal SIGSEGV, Segmentation fault.*"
+
+# Test printing of at least one INTERRUPT and one IRET event.
+# This uses test_sequence to avoid random events failing the tests.
+gdb_test_sequence "record function-call-history" "function-call-history" {
+    "\[0-9\]+\tmain"
+    "\t  \\\[iret(: ip = $hex)?\\\]"
+    "\t  \\\[interrupt: vector = 0xe \\\(#pf\\\)(, cr2 = 0x0)?(, ip = 0x\[0-9a-fA-F\]+)?\\\]"
+}
+
+# Test the instruction-history.  Assembly can differ between compilers. To
+# avoid creating a .S file for this test we just check the event at the end.
+gdb_test "record instruction-history" \
+  "$decimal\t     \\\[interrupt: vector = 0xe \\\(#pf\\\)(, cr2 = 0x0)?(, ip = $hex)?\\\]"
+
+# Test reverse stepping and replay stepping
+gdb_test "reverse-stepi" "\\\[interrupt: vector = 0xe \\\(#pf\\\)(, cr2 = 0x0)?(, ip = $hex)?\\\].*"
+gdb_test "stepi" "\\\[interrupt: vector = 0xe \\\(#pf\\\)(, cr2 = 0x0)?(, ip = $hex)?\\\].*"

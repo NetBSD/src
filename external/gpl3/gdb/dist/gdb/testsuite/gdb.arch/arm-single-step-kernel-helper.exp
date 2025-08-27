@@ -26,10 +26,13 @@ if { ![runto_main] } {
     return -1
 }
 
+# Initialize kernel_user_helper_version.
+gdb_test "next" "for .*"
+
 # Check kernel helpers are supported or not.
 
 set kernel_helper_supported 0
-gdb_test_multiple "p *kernel_user_helper_version" \
+gdb_test_multiple "p kernel_user_helper_version" \
     "check kernel helper version" {
 	-re " = ($decimal)\r\n$gdb_prompt $" {
 	    if { $expect_out(1,string) >= 1 } {

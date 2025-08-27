@@ -18,8 +18,11 @@ dnl along with this program; see the file COPYING.  If not see
 dnl <http://www.gnu.org/licenses/>.
 dnl
 
-AC_INIT([libsframe], BFD_VERSION)
+AC_INIT([libsframe], [BFD_VERSION])
 AC_CONFIG_SRCDIR(sframe.c)
+
+AC_CANONICAL_TARGET
+
 AC_USE_SYSTEM_EXTENSIONS
 AM_INIT_AUTOMAKE
 AM_SILENT_RULES([yes])

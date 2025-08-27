@@ -148,7 +148,7 @@ run_async_handler_and_reschedule (struct serial *scb)
 /* FD_EVENT: This is scheduled when the input FIFO is empty (and there
    is no pending error).  As soon as data arrives, it is read into the
    input FIFO and the client notified.  The client should then drain
-   the FIFO using readchar().  If the FIFO isn't immediatly emptied,
+   the FIFO using readchar().  If the FIFO isn't immediately emptied,
    push_event() is used to nag the client until it is.  */
 
 static void
@@ -419,7 +419,7 @@ do_ser_base_readchar (struct serial *scb, int timeout)
    pre-reads the input into that FIFO.  Once that has been emptied,
    further data is obtained by polling the input FD using the device
    specific readchar() function.  Note: reschedule() is called after
-   every read.  This is because there is no guarentee that the lower
+   every read.  This is because there is no guarantee that the lower
    level fd_event() poll_event() code (which also calls reschedule())
    will be called.  */
 

@@ -348,9 +348,8 @@ nbsd_gdb_signal_to_target (struct gdbarch *gdbarch,
 static CORE_ADDR
 nbsd_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
-  struct bound_minimal_symbol msym;
-
-  msym = lookup_minimal_symbol ("_rtld_bind_start", NULL, NULL);
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol (current_program_space, "_rtld_bind_start");
   if (msym.minsym && msym.value_address () == pc)
     return frame_unwind_caller_pc (get_current_frame ());
   else

@@ -28,16 +28,16 @@
 	ldi r29, 4567
 	nop
 	xin 0, r26, 4
-	qbne32 2f, r26, 1001 * 4567
+	qbne32 2f, r26, (1001 * 4567)
 
 	# MUL: Test the pipeline emulation
 	ldi r28, 1002
 	ldi r29, 1003
 	ldi r29, 4004
 	xin 0, r26, 4
-	qbne32 2f, r26, 1002 * 1003
+	qbne32 2f, r26, (1002 * 1003)
 	xin 0, r26, 4
-	qbne32 2f, r26, 1002 * 4004
+	qbne32 2f, r26, (1002 * 4004)
 
 	# MUL: Test 64-bit result
 	ldi32 r28, 0x12345678
@@ -62,7 +62,7 @@
 	xout 0, r25, 1
 
 	xin 0, r26, 4
-	qbne32 2f, r26, (1001 * 2002) + (3003 * 4004)
+	qbne32 2f, r26, ((1001 * 2002) + (3003 * 4004))
 
 	# MAC: Test 64-bit result
 	ldi r25, 3

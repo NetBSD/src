@@ -37,7 +37,7 @@
    This device models the primary/secondary <<ide>> controller
    described in the [CHRPIO] document.
 
-   The controller has separate independant interrupt outputs for each
+   The controller has separate independent interrupt outputs for each
    <<ide>> bus.
 
 
@@ -91,7 +91,7 @@
    |        i0,0,1c,6 1 \
    |        i0,0,20,0 8' \
 
-   Note: the fouth and fifth reg entries specify that the register is
+   Note: the fourth and fifth reg entries specify that the register is
    at an offset into the address specified by the base register
    (<<assigned-addresses>>); Apart from restrictions placed by the
    <<pci>> specification, no restrictions are placed on the number of

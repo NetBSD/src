@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MI_MI_GETOPT_H
-#define MI_MI_GETOPT_H
+#ifndef GDB_MI_MI_GETOPT_H
+#define GDB_MI_MI_GETOPT_H
 
 /* The option list.  Terminated by NAME==NULL.  ARG_P that the option
    requires an argument.  INDEX is returned to identify the option.  */
@@ -78,4 +78,4 @@ extern int mi_getopt_allow_unknown (const char *prefix, int argc,
 extern int mi_valid_noargs (const char *prefix, int argc,
 			    const char *const *argv);
 
-#endif /* MI_MI_GETOPT_H */
+#endif /* GDB_MI_MI_GETOPT_H */

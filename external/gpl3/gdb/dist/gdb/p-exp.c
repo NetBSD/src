@@ -756,8 +756,8 @@ static const yytype_int16 yyrline[] =
      372,   372,   393,   397,   401,   405,   409,   413,   417,   424,
      431,   438,   445,   452,   459,   463,   467,   471,   475,   482,
      489,   497,   509,   518,   521,   547,   556,   560,   582,   609,
-     628,   642,   656,   670,   671,   682,   740,   751,   755,   757,
-     759,   764,   774,   775,   776,   777,   780,   781
+     628,   642,   656,   670,   671,   682,   739,   750,   754,   756,
+     758,   763,   773,   774,   775,   776,   779,   780
 };
 #endif
 
@@ -1971,7 +1971,7 @@ yyreduce:
 			    {
 			      std::string copy = copy_name ((yyvsp[0].ssym).stoken);
 			      struct symtab *tem =
-				  lookup_symtab (copy.c_str ());
+				  lookup_symtab (current_program_space, copy.c_str ());
 			      if (tem)
 				(yyval.bval) = (tem->compunit ()->blockvector ()
 				      ->static_block ());
@@ -2083,16 +2083,15 @@ yyreduce:
 			    }
 			  else
 			    {
-			      struct bound_minimal_symbol msymbol;
 			      std::string arg = copy_name ((yyvsp[0].ssym).stoken);
 
-			      msymbol =
-				lookup_bound_minimal_symbol (arg.c_str ());
+			      bound_minimal_symbol msymbol
+				= lookup_minimal_symbol (current_program_space, arg.c_str ());
 			      if (msymbol.minsym != NULL)
 				pstate->push_new<var_msym_value_operation>
 				  (msymbol);
-			      else if (!have_full_symbols ()
-				       && !have_partial_symbols ())
+			      else if (!have_full_symbols (current_program_space)
+				       && !have_partial_symbols (current_program_space))
 				error (_("No symbol table is loaded.  "
 				       "Use the \"file\" command."));
 			      else
@@ -2100,65 +2099,65 @@ yyreduce:
 				       arg.c_str ());
 			    }
 			}
-#line 2105 "p-exp.c.tmp"
+#line 2104 "p-exp.c.tmp"
     break;
 
   case 68: /* typebase: '^' typebase  */
-#line 756 "p-exp.y"
+#line 755 "p-exp.y"
                         { (yyval.tval) = lookup_pointer_type ((yyvsp[0].tval)); }
-#line 2111 "p-exp.c.tmp"
+#line 2110 "p-exp.c.tmp"
     break;
 
   case 69: /* typebase: TYPENAME  */
-#line 758 "p-exp.y"
+#line 757 "p-exp.y"
                         { (yyval.tval) = (yyvsp[0].tsym).type; }
-#line 2117 "p-exp.c.tmp"
+#line 2116 "p-exp.c.tmp"
     break;
 
   case 70: /* typebase: STRUCT name  */
-#line 760 "p-exp.y"
+#line 759 "p-exp.y"
                         { (yyval.tval)
 			    = lookup_struct (copy_name ((yyvsp[0].sval)).c_str (),
 					     pstate->expression_context_block);
 			}
-#line 2126 "p-exp.c.tmp"
+#line 2125 "p-exp.c.tmp"
     break;
 
   case 71: /* typebase: CLASS name  */
-#line 765 "p-exp.y"
+#line 764 "p-exp.y"
                         { (yyval.tval)
 			    = lookup_struct (copy_name ((yyvsp[0].sval)).c_str (),
 					     pstate->expression_context_block);
 			}
-#line 2135 "p-exp.c.tmp"
+#line 2134 "p-exp.c.tmp"
     break;
 
   case 72: /* name: NAME  */
-#line 774 "p-exp.y"
+#line 773 "p-exp.y"
                      { (yyval.sval) = (yyvsp[0].ssym).stoken; }
-#line 2141 "p-exp.c.tmp"
+#line 2140 "p-exp.c.tmp"
     break;
 
   case 73: /* name: BLOCKNAME  */
-#line 775 "p-exp.y"
+#line 774 "p-exp.y"
                           { (yyval.sval) = (yyvsp[0].ssym).stoken; }
-#line 2147 "p-exp.c.tmp"
+#line 2146 "p-exp.c.tmp"
     break;
 
   case 74: /* name: TYPENAME  */
-#line 776 "p-exp.y"
+#line 775 "p-exp.y"
                          { (yyval.sval) = (yyvsp[0].tsym).stoken; }
-#line 2153 "p-exp.c.tmp"
+#line 2152 "p-exp.c.tmp"
     break;
 
   case 75: /* name: NAME_OR_INT  */
-#line 777 "p-exp.y"
+#line 776 "p-exp.y"
                              { (yyval.sval) = (yyvsp[0].ssym).stoken; }
-#line 2159 "p-exp.c.tmp"
+#line 2158 "p-exp.c.tmp"
     break;
 
 
-#line 2163 "p-exp.c.tmp"
+#line 2162 "p-exp.c.tmp"
 
       default: break;
     }
@@ -2351,7 +2350,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 791 "p-exp.y"
+#line 790 "p-exp.y"
 
 
 /* Take care of parsing a number (anything that starts with a digit).
@@ -3085,7 +3084,7 @@ yylex (void)
        no psymtabs (coff, xcoff, or some future change to blow away the
        psymtabs once once symbols are read).  */
     if ((sym && sym->aclass () == LOC_BLOCK)
-	|| lookup_symtab (tmp.c_str ()))
+	|| lookup_symtab (current_program_space, tmp.c_str ()))
       {
 	yylval.ssym.sym.symbol = sym;
 	yylval.ssym.sym.block = NULL;

@@ -55,7 +55,7 @@ gdb_test_multiple "" $test {
 
 gdb_test "q" ".*"
 
-# Now the obstack is uninitialized.  Excercise it.
+# Now the obstack is uninitialized.  Exercise it.
 
 gdb_test_no_output "set pagination off"
 gdb_test "print c" ".*" "first print"

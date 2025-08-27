@@ -92,5 +92,5 @@ test_exit_status 1 "-batch -x $good_commands -ex \"set not-a-thing 4\"" \
 set test "No such file or directory"
 set no_such_re ": $test\\."
 test_exit_status 1 "-batch \"\"" "1x: $test" ^[multi_line $no_such_re ""]$
-test_exit_status 1 "-batch \"\" \"\"" "2x: $test" \
-    ^[multi_line $no_such_re $no_such_re ""]$
+test_exit_status 1 "-batch \"\" \"\"" "$test and No core file specified" \
+    ^[multi_line $no_such_re "No core file specified\\." ""]$
