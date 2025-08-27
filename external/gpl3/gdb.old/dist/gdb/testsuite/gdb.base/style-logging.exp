@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,22 +16,13 @@
 # Test that logging does not style.
 
 # Do not run if gdb debug is enabled as it will interfere with log redirect.
-if {[gdb_debug_enabled]} {
-    untested "debug is enabled"
-    return 0
-}
+require !gdb_debug_enabled
 
-if {[is_remote host]} {
-    untested "does not work on remote host"
-    return 0
-}
+require {!is_remote host}
 
 standard_testfile style.c
 
-save_vars { env(TERM) } {
-    # We need an ANSI-capable terminal to get the output.
-    setenv TERM ansi
-
+with_ansi_styling_terminal {
     if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
 	return -1
     }

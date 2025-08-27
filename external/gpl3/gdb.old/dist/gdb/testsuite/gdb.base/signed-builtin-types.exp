@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,15 +13,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if {[skip_shlib_tests]} {
-    return -1
-}
+require allow_shlib_tests
 
 standard_testfile .c -lib.c
 
 # Compile the shared library.
 set srcdso [file join $srcdir $subdir $srcfile2]
-set objdso [standard_output_file lib${gdb_test_file_name}.so]
+set libname "lib${gdb_test_file_name}.so"
+set objdso [standard_output_file $libname]
 if {[gdb_compile_shlib $srcdso $objdso {debug}] != ""} {
     untested "failed to compile dso"
     return -1
@@ -46,46 +45,10 @@ if {[readnow]} {
 # library has been fully expanded or not.  Return true if the debug
 # information has NOT been fully expanded (which is what we want for this
 # test).
-proc shared_library_debug_not_fully_expanded {} {
-    set library_expanded ""
-    gdb_test_multiple "info sources" "" {
-	-re "^info sources\r\n" {
-	    exp_continue
-	}
-	-re "^(\[^\r\n\]+):\r\n\\(Full debug information has not yet been read for this file\\.\\)\r\n\r\n" {
-	    set libname $expect_out(1,string)
-	    if {$libname == $::objdso} {
-		set library_expanded "no"
-	    }
-	    exp_continue
-	}
-	-re "^(\[^\r\n\]+):\r\n\\(Objfile has no debug information\\.\\)\r\n\r\n" {
-	    set libname $expect_out(1,string)
-	    if {$libname == $::objdso} {
-		# For some reason the shared library has no debug
-		# information, this is not expected.
-		set library_expanded "missing debug"
-	    }
-	    exp_continue
-	}
-	-re "^(\[^\r\n\]+):\r\n\r\n" {
-	    set libname $expect_out(1,string)
-	    if {$libname == $::objdso} {
-		set library_expanded "yes"
-	    }
-	    exp_continue
-	}
-	-re "^$::gdb_prompt $" {
-	    gdb_assert {[string equal $library_expanded "yes"] \
-			    || [string equal $library_expanded "no"]} \
-		$gdb_test_name
-	}
-	-re "^(\[^\r\n:\]*)\r\n" {
-	    exp_continue
-	}
-    }
-
-    return [expr $library_expanded == "no"]
+proc assert_shared_library_debug_not_fully_expanded {} {
+    gdb_test_lines "maint print objfiles $::libname" "" \
+	"Object file \[^\r\n\]*$::libname" \
+	-re-not "Symtabs:"
 }
 
 foreach_with_prefix type_name {"short" "int" "long" "char"} {
@@ -93,7 +56,7 @@ foreach_with_prefix type_name {"short" "int" "long" "char"} {
 	with_test_prefix "before sizeof expression" {
 	    # Check that the debug information for the shared library has
 	    # not yet been read in.
-	    gdb_assert { [shared_library_debug_not_fully_expanded] }
+	    assert_shared_library_debug_not_fully_expanded
 	}
 
 	# Evaluate a sizeof expression for a builtin type.  At one point GDB
@@ -106,7 +69,7 @@ foreach_with_prefix type_name {"short" "int" "long" "char"} {
 	with_test_prefix "after sizeof expression" {
 	    # Check that the debug information for the shared library has not
 	    # yet been read in.
-	    gdb_assert { [shared_library_debug_not_fully_expanded] }
+	    assert_shared_library_debug_not_fully_expanded
 	}
     }
 }

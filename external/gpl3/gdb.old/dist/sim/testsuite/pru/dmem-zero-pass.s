@@ -1,7 +1,7 @@
 # Check that DMEM zero address access works by default.
 # mach: pru
 
-# Copyright (C) 2016-2023 Free Software Foundation, Inc.
+# Copyright (C) 2016-2024 Free Software Foundation, Inc.
 # Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 #
 # This file is part of the GNU simulators.

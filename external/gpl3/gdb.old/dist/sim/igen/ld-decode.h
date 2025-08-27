@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -19,6 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef IGEN_LD_DECODE_H
+#define IGEN_LD_DECODE_H
 
 /* Instruction decode table:
 
@@ -242,3 +244,5 @@ extern int decode_table_max_word_nr (const decode_table *rule);
 
 extern void dump_decode_rule
   (lf *file, const char *prefix, const decode_table *rule, const char *suffix);
+
+#endif /* IGEN_LD_DECODE_H */

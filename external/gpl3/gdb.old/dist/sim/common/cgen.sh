@@ -61,7 +61,6 @@ arch)
 	rm -f ${tmp}-all.h1 ${tmp}-all.h
 
 	${cgen} ${cgendir}/cgen-sim.scm \
-		-s ${cgendir} \
 		${cgenflags} \
 		-f "${archflags}" \
 		-m ${mach} \
@@ -126,7 +125,6 @@ cpu | decode | cpu-decode)
 	esac
 
 	${cgen} ${cgendir}/cgen-sim.scm \
-		-s ${cgendir} \
 		${cgenflags} \
 		-f "${archflags}" \
 		-m ${mach} \
@@ -188,7 +186,6 @@ defs)
 	rm -f ${tmp}-defs.h1 ${tmp}-defs.h
 	
 	${cgen} ${cgendir}/cgen-sim.scm \
-		-s ${cgendir} \
 		${cgenflags} \
 		-f "${archflags}" \
 		-m ${mach} \
@@ -206,7 +203,6 @@ desc)
 	rm -f ${tmp}-opc.h1 ${tmp}-opc.h
 
 	${cgen} ${cgendir}/cgen-opc.scm \
-		-s ${cgendir} \
 		${cgenflags} \
 		-OPC ${opcfile} \
 		-f "${archflags}" \

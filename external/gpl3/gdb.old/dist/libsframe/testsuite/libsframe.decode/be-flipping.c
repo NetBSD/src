@@ -1,6 +1,6 @@
 /* be-flipping.c -- Test for handling different endianness in libsframe.
 
-   Copyright (C) 2022 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -104,6 +104,9 @@ main (void)
   err = sframe_decoder_get_funcdesc (dctx, 0, &nfres, &fsize, &fstart, &finfo);
   TEST ("be-flipping: Decoder get FDE", err == 0);
   TEST ("be-flipping: Decoder FRE count", nfres == 5);
+
+  free (sf_buf);
+  sf_buf = NULL;
       
   sframe_decoder_free (&dctx);
   return 0;

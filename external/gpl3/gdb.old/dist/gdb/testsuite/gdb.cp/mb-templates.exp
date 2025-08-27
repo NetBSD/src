@@ -1,4 +1,4 @@
-# Copyright 2007-2023 Free Software Foundation, Inc.
+# Copyright 2007-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # This test verifies that setting breakpoint on line in template
 # function will fire in all instantiations of that template.
 
-if { [skip_stl_tests] } { continue }
+require allow_stl_tests
 
 
 standard_testfile .cc

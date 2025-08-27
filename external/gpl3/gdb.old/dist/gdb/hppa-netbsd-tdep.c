@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/hppa
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "osabi.h"
 #include "regcache.h"
 #include "regset.h"
@@ -77,7 +76,7 @@ static int hppanbsd_mc_reg_offset[] =
 };
 
 static void hppanbsd_sigtramp_cache_init (const struct tramp_frame *,
-					 frame_info_ptr,
+					 const frame_info_ptr &,
 					 struct trad_frame_cache *,
 					 CORE_ADDR);
 
@@ -112,7 +111,7 @@ static const struct tramp_frame hppanbsd_sigtramp_si4 =
 
 static void
 hppanbsd_sigtramp_cache_init (const struct tramp_frame *self,
-			     frame_info_ptr this_frame,
+			     const frame_info_ptr &this_frame,
 			     struct trad_frame_cache *this_cache,
 			     CORE_ADDR func)
 {

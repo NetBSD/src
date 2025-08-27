@@ -1,6 +1,6 @@
 /* Linux-specific functions to retrieve OS data.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "linux-osdata.h"
 
 #include <sys/types.h>
@@ -33,11 +32,11 @@
 #include <arpa/inet.h>
 
 #include "gdbsupport/xml-utils.h"
-#include "gdbsupport/buffer.h"
 #include <dirent.h>
 #include <sys/stat.h>
 #include "gdbsupport/filestuff.h"
 #include <algorithm>
+#include "linux-procfs.h"
 
 #define NAMELEN(dirent) strlen ((dirent)->d_name)
 
@@ -54,46 +53,17 @@ typedef long long TIME_T;
 
 #define MAX_PID_T_STRLEN  (sizeof ("-9223372036854775808") - 1)
 
-/* Returns the CPU core that thread PTID is currently running on.  */
-
-/* Compute and return the processor core of a given thread.  */
+/* See linux-osdata.h.  */
 
 int
 linux_common_core_of_thread (ptid_t ptid)
 {
-  char filename[sizeof ("/proc//task//stat") + 2 * MAX_PID_T_STRLEN];
+  std::optional<std::string> field
+    = linux_proc_get_stat_field (ptid, LINUX_PROC_STAT_PROCESSOR);
   int core;
 
-  sprintf (filename, "/proc/%lld/task/%lld/stat",
-	   (PID_T) ptid.pid (), (PID_T) ptid.lwp ());
-
-  gdb::optional<std::string> content = read_text_file_to_string (filename);
-  if (!content.has_value ())
+  if (!field.has_value () || sscanf (field->c_str (), "%d", &core) == 0)
     return -1;
-
-  /* ps command also relies on no trailing fields ever contain ')'.  */
-  std::string::size_type pos = content->find_last_of (')');
-  if (pos == std::string::npos)
-    return -1;
-
-  /* If the first field after program name has index 0, then core number is
-     the field with index 36 (so, the 37th).  There's no constant for that
-     anywhere.  */
-  for (int i = 0; i < 37; ++i)
-    {
-      /* Find separator.  */
-      pos = content->find_first_of (' ', pos);
-      if (pos == std::string::npos)
-	return {};
-
-      /* Find beginning of field.  */
-      pos = content->find_first_not_of (' ', pos);
-      if (pos == std::string::npos)
-	return {};
-    }
-
-  if (sscanf (&(*content)[pos], "%d", &core) == 0)
-    core = -1;
 
   return core;
 }
@@ -134,55 +104,40 @@ command_from_pid (char *command, int maxlen, PID_T pid)
   command[maxlen - 1] = '\0'; /* Ensure string is null-terminated.  */
 }
 
-/* Returns the command-line of the process with the given PID. The
-   returned string needs to be freed using xfree after use.  */
+/* Returns the command-line of the process with the given PID.  */
 
-static char *
+static std::string
 commandline_from_pid (PID_T pid)
 {
   std::string pathname = string_printf ("/proc/%lld/cmdline", pid);
-  char *commandline = NULL;
+  std::string commandline;
   gdb_file_up f = gdb_fopen_cloexec (pathname, "r");
 
   if (f)
     {
-      size_t len = 0;
-
       while (!feof (f.get ()))
 	{
 	  char buf[1024];
 	  size_t read_bytes = fread (buf, 1, sizeof (buf), f.get ());
 
 	  if (read_bytes)
-	    {
-	      commandline = (char *) xrealloc (commandline, len + read_bytes + 1);
-	      memcpy (commandline + len, buf, read_bytes);
-	      len += read_bytes;
-	    }
+	    commandline.append (buf, read_bytes);
 	}
 
-      if (commandline)
+      if (!commandline.empty ())
 	{
-	  size_t i;
-
 	  /* Replace null characters with spaces.  */
-	  for (i = 0; i < len; ++i)
-	    if (commandline[i] == '\0')
-	      commandline[i] = ' ';
-
-	  commandline[len] = '\0';
+	  for (char &c : commandline)
+	    if (c == '\0')
+	      c = ' ';
 	}
       else
 	{
 	  /* Return the command in square brackets if the command-line
 	     is empty.  */
-	  commandline = (char *) xmalloc (32);
-	  commandline[0] = '[';
-	  command_from_pid (commandline + 1, 31, pid);
-
-	  len = strlen (commandline);
-	  if (len < 31)
-	    strcat (commandline, "]");
+	  char cmd[32];
+	  command_from_pid (cmd, 31, pid);
+	  commandline = std::string ("[") + cmd + "]";
 	}
     }
 
@@ -273,10 +228,10 @@ get_cores_used_by_process (PID_T pid, int *cores, const int num_cores)
 
 /* get_core_array_size helper that uses /sys/devices/system/cpu/possible.  */
 
-static gdb::optional<size_t>
+static std::optional<size_t>
 get_core_array_size_using_sys_possible ()
 {
-  gdb::optional<std::string> possible
+  std::optional<std::string> possible
     = read_text_file_to_string ("/sys/devices/system/cpu/possible");
 
   if (!possible.has_value ())
@@ -322,11 +277,11 @@ get_core_array_size_using_sys_possible ()
 static size_t
 get_core_array_size ()
 {
-  /* Using /sys/.../possible is prefered, because it handles the case where
+  /* Using /sys/.../possible is preferred, because it handles the case where
      we are in a container that has access to a subset of the host's cores.
      It will return a size that considers all the CPU cores available to the
-     host.  If that fials for some reason, fall back to sysconf.  */
-  gdb::optional<size_t> count = get_core_array_size_using_sys_possible ();
+     host.  If that fails for some reason, fall back to sysconf.  */
+  std::optional<size_t> count = get_core_array_size_using_sys_possible ();
   if (count.has_value ())
     return *count;
 
@@ -350,7 +305,6 @@ linux_xfer_osdata_processes ()
 	  PID_T pid;
 	  uid_t owner;
 	  char user[UT_NAMESIZE];
-	  char *command_line;
 	  int *cores;
 	  int task_count;
 	  std::string cores_str;
@@ -361,7 +315,7 @@ linux_xfer_osdata_processes ()
 	    continue;
 
 	  sscanf (dp->d_name, "%lld", &pid);
-	  command_line = commandline_from_pid (pid);
+	  std::string command_line = commandline_from_pid (pid);
 
 	  if (get_process_owner (&owner, pid) == 0)
 	    user_from_uid (user, sizeof (user), owner);
@@ -394,10 +348,8 @@ linux_xfer_osdata_processes ()
 	     "</item>",
 	     pid,
 	     user,
-	     command_line ? command_line : "",
+	     command_line.c_str (),
 	     cores_str.c_str());
-
-	  xfree (command_line);
 	}
 
       closedir (dirp);
@@ -488,10 +440,9 @@ linux_xfer_osdata_processgroups ()
 	  PID_T pid = entry.pid;
 	  PID_T pgid = entry.pgid;
 	  char leader_command[32];
-	  char *command_line;
 
 	  command_from_pid (leader_command, sizeof (leader_command), pgid);
-	  command_line = commandline_from_pid (pid);
+	  std::string command_line = commandline_from_pid (pid);
 
 	  string_xml_appendf
 	    (buffer,
@@ -504,9 +455,7 @@ linux_xfer_osdata_processgroups ()
 	     pgid,
 	     leader_command,
 	     pid,
-	     command_line ? command_line : "");
-
-	  xfree (command_line);
+	     command_line.c_str ());
 	}
     }
 

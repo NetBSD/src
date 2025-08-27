@@ -1,6 +1,6 @@
 /* This file is part of GDB, the GNU debugger.
 
-   Copyright 2021-2023 Free Software Foundation, Inc.
+   Copyright 2021-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 /* This file was generated from glibc's 2.31 _exit.c, by doing a glibc build
    on ppc64le-linux, copying the command line, adding -g0 -save-temps and
-   recuding the _exit.i file.  */
+   reducing the _exit.i file.  */
 
 void _exit (int status);
 

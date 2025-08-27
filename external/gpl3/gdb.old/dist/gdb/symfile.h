@@ -1,6 +1,6 @@
 /* Definitions for reading symbol files into GDB.
 
-   Copyright (C) 1990-2023 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -241,13 +241,23 @@ extern struct objfile *symbol_file_add_from_bfd (const gdb_bfd_ref_ptr &,
 extern void symbol_file_add_separate (const gdb_bfd_ref_ptr &, const char *,
 				      symfile_add_flags, struct objfile *);
 
-extern std::string find_separate_debug_file_by_debuglink (struct objfile *);
+/* Find separate debuginfo for OBJFILE (using .gnu_debuglink section).
+   Returns pathname, or an empty string.
+
+   Any warnings generated as part of this lookup are added to WARNINGS.  If
+   some other mechanism can be used to lookup the debug information then
+   the warning will not be shown, however, if GDB fails to find suitable
+   debug information using any approach, then any warnings will be
+   printed.  */
+
+extern std::string find_separate_debug_file_by_debuglink
+  (struct objfile *objfile, deferred_warnings *warnings);
 
 /* Build (allocate and populate) a section_addr_info struct from an
    existing section table.  */
 
 extern section_addr_info
-    build_section_addr_info_from_section_table (const target_section_table &table);
+    build_section_addr_info_from_section_table (const std::vector<target_section> &table);
 
 			/*   Variables   */
 
@@ -268,6 +278,11 @@ extern bool auto_solib_add;
 extern void set_initial_language (void);
 
 extern gdb_bfd_ref_ptr symfile_bfd_open (const char *);
+
+/* Like symfile_bfd_open, but will not throw an exception on error.
+   Instead, it issues a warning and returns nullptr.  */
+
+extern gdb_bfd_ref_ptr symfile_bfd_open_no_error (const char *) noexcept;
 
 extern int get_section_index (struct objfile *, const char *);
 
@@ -296,10 +311,10 @@ extern int section_is_overlay (struct obj_section *);
 extern int section_is_mapped (struct obj_section *);
 
 /* Return true if pc belongs to section's VMA.  */
-extern CORE_ADDR pc_in_mapped_range (CORE_ADDR, struct obj_section *);
+extern bool pc_in_mapped_range (CORE_ADDR, struct obj_section *);
 
 /* Return true if pc belongs to section's LMA.  */
-extern CORE_ADDR pc_in_unmapped_range (CORE_ADDR, struct obj_section *);
+extern bool pc_in_unmapped_range (CORE_ADDR, struct obj_section *);
 
 /* Map an address from a section's LMA to its VMA.  */
 extern CORE_ADDR overlay_mapped_address (CORE_ADDR, struct obj_section *);
@@ -337,7 +352,7 @@ bool expand_symtabs_matching
    gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
    gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
    block_search_flags search_flags,
-   enum search_domain kind);
+   domain_search_flags kind);
 
 void map_symbol_filenames (gdb::function_view<symbol_filename_ftype> fun,
 			   bool need_fullname);
@@ -363,5 +378,21 @@ extern int readnow_symbol_files;
 /* Never read full symbols.  */
 
 extern int readnever_symbol_files;
+
+/* This is the symbol-file command.  Read the file, analyze its
+   symbols, and add a struct symtab to a symtab list.  The syntax of
+   the command is rather bizarre:
+
+   1. The function buildargv implements various quoting conventions
+   which are undocumented and have little or nothing in common with
+   the way things are quoted (or not quoted) elsewhere in GDB.
+
+   2. Options are used, which are not generally used in GDB (perhaps
+   "set mapped on", "set readnow on" would be better)
+
+   3. The order of options matters, which is contrary to GNU
+   conventions (because it is confusing and inconvenient).  */
+
+extern void symbol_file_command (const char *, int);
 
 #endif /* !defined(SYMFILE_H) */

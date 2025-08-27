@@ -1,5 +1,5 @@
 /* CTF archive files.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -44,7 +44,8 @@ static void *arc_mmap_file (int fd, size_t size);
 static int arc_mmap_writeout (int fd, void *header, size_t headersz,
 			      const char **errmsg);
 static int arc_mmap_unmap (void *header, size_t headersz, const char **errmsg);
-static void ctf_arc_import_parent (const ctf_archive_t *arc, ctf_dict_t *fp);
+static int ctf_arc_import_parent (const ctf_archive_t *arc, ctf_dict_t *fp,
+				  int *errp);
 
 /* Flag to indicate "symbol not present" in ctf_archive_internal.ctfi_symdicts
    and ctfi_symnamedicts.  Never initialized.  */
@@ -253,21 +254,18 @@ ctf_arc_write (const char *file, ctf_dict_t **ctf_dicts, size_t ctf_dict_cnt,
   return err;
 }
 
-/* Write one CTF file out.  Return the file position of the written file (or
+/* Write one CTF dict out.  Return the file position of the written file (or
    rather, of the file-size uint64_t that precedes it): negative return is a
    negative errno or ctf_errno value.  On error, the file position may no longer
    be at the end of the file.  */
 static off_t
-arc_write_one_ctf (ctf_dict_t * f, int fd, size_t threshold)
+arc_write_one_ctf (ctf_dict_t *f, int fd, size_t threshold)
 {
   off_t off, end_off;
   uint64_t ctfsz = 0;
   char *ctfszp;
   size_t ctfsz_len;
   int (*writefn) (ctf_dict_t * fp, int fd);
-
-  if (ctf_serialize (f) < 0)
-    return f->ctf_errno * -1;
 
   if ((off = lseek (fd, 0, SEEK_CUR)) < 0)
     return errno * -1;
@@ -402,8 +400,9 @@ ctf_arc_symsect_endianness (ctf_archive_t *arc, int little_endian)
 const ctf_preamble_t *
 ctf_arc_bufpreamble (const ctf_sect_t *ctfsect)
 {
-  if (ctfsect->cts_size > sizeof (uint64_t) &&
-      (le64toh ((*(uint64_t *) ctfsect->cts_data)) == CTFA_MAGIC))
+  if (ctfsect->cts_data != NULL
+      && ctfsect->cts_size > sizeof (uint64_t)
+      && (le64toh ((*(uint64_t *) ctfsect->cts_data)) == CTFA_MAGIC))
     {
       struct ctf_archive *arc = (struct ctf_archive *) ctfsect->cts_data;
       return (const ctf_preamble_t *) ((char *) arc + le64toh (arc->ctfa_ctfs)
@@ -424,8 +423,9 @@ ctf_arc_bufopen (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
   int is_archive;
   ctf_dict_t *fp = NULL;
 
-  if (ctfsect->cts_size > sizeof (uint64_t) &&
-      (le64toh ((*(uint64_t *) ctfsect->cts_data)) == CTFA_MAGIC))
+  if (ctfsect->cts_data != NULL
+      && ctfsect->cts_size > sizeof (uint64_t)
+      && (le64toh ((*(uint64_t *) ctfsect->cts_data)) == CTFA_MAGIC))
     {
       /* The archive is mmappable, so this operation is trivial.
 
@@ -603,7 +603,11 @@ ctf_dict_open_sections (const ctf_archive_t *arc,
       if (ret)
 	{
 	  ret->ctf_archive = (ctf_archive_t *) arc;
-	  ctf_arc_import_parent (arc, ret);
+	  if (ctf_arc_import_parent (arc, ret, errp) < 0)
+	    {
+	      ctf_dict_close (ret);
+	      return NULL;
+	    }
 	}
       return ret;
     }
@@ -697,7 +701,7 @@ void
 ctf_arc_flush_caches (ctf_archive_t *wrapper)
 {
   free (wrapper->ctfi_symdicts);
-  free (wrapper->ctfi_symnamedicts);
+  ctf_dynhash_destroy (wrapper->ctfi_symnamedicts);
   ctf_dynhash_destroy (wrapper->ctfi_dicts);
   wrapper->ctfi_symdicts = NULL;
   wrapper->ctfi_symnamedicts = NULL;
@@ -758,19 +762,26 @@ ctf_arc_open_by_name_sections (const ctf_archive_t *arc,
    already set, and a suitable archive member exists.  No error is raised if
    this is not possible: this is just a best-effort helper operation to give
    people useful dicts to start with.  */
-static void
-ctf_arc_import_parent (const ctf_archive_t *arc, ctf_dict_t *fp)
+static int
+ctf_arc_import_parent (const ctf_archive_t *arc, ctf_dict_t *fp, int *errp)
 {
   if ((fp->ctf_flags & LCTF_CHILD) && fp->ctf_parname && !fp->ctf_parent)
     {
+      int err;
       ctf_dict_t *parent = ctf_dict_open_cached ((ctf_archive_t *) arc,
-						 fp->ctf_parname, NULL);
+						 fp->ctf_parname, &err);
+      if (errp)
+	*errp = err;
+
       if (parent)
 	{
 	  ctf_import (fp, parent);
 	  ctf_dict_close (parent);
 	}
+      else if (err != ECTF_ARNNAME)
+	return -1;				/* errno is set for us.  */
     }
+  return 0;
 }
 
 /* Return the number of members in an archive.  */
@@ -1052,7 +1063,7 @@ ctf_archive_iter (const ctf_archive_t *arc, ctf_archive_member_f *func,
   ctf_next_t *i = NULL;
   ctf_dict_t *fp;
   const char *name;
-  int err;
+  int err = 0;
 
   while ((fp = ctf_archive_next (arc, &i, &name, 0, &err)) != NULL)
     {
@@ -1065,6 +1076,11 @@ ctf_archive_iter (const ctf_archive_t *arc, ctf_archive_member_f *func,
 	  return rc;
 	}
       ctf_dict_close (fp);
+    }
+  if (err != ECTF_NEXT_END && err != 0)
+    {
+      ctf_next_destroy (i);
+      return -1;
     }
   return 0;
 }
@@ -1247,7 +1263,6 @@ static int arc_mmap_writeout (int fd, void *header, size_t headersz,
 			      const char **errmsg)
 {
   ssize_t len;
-  size_t acc = 0;
   char *data = (char *) header;
   ssize_t count = headersz;
 
@@ -1270,7 +1285,6 @@ static int arc_mmap_writeout (int fd, void *header, size_t headersz,
       if (len == EINTR)
 	continue;
 
-      acc += len;
       if (len == 0)				/* EOF.  */
 	break;
 

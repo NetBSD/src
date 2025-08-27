@@ -1,6 +1,6 @@
 /* Xilinx MicroBlaze support for BFD.
  
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -61,6 +61,7 @@ START_RELOC_NUMBERS (elf_microblaze_reloc_type)
   RELOC_NUMBER (R_MICROBLAZE_TEXTPCREL_64, 30)  /* PC-relative TEXT offset.  */
   RELOC_NUMBER (R_MICROBLAZE_TEXTREL_64, 31)    /* TEXT Entry offset 64-bit.  */
   RELOC_NUMBER (R_MICROBLAZE_TEXTREL_32_LO, 32) /* TEXT Entry offset 32-bit.  */
+  RELOC_NUMBER (R_MICROBLAZE_32_NONE, 33)
 END_RELOC_NUMBERS (R_MICROBLAZE_max)
 
 /* Global base address names.  */

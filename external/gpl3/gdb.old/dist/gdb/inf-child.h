@@ -1,6 +1,6 @@
 /* Base/prototype target for default child (native) targets.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -85,7 +85,7 @@ public:
   int fileio_unlink (struct inferior *inf,
 		     const char *filename,
 		     fileio_error *target_errno) override;
-  gdb::optional<std::string> fileio_readlink (struct inferior *inf,
+  std::optional<std::string> fileio_readlink (struct inferior *inf,
 					      const char *filename,
 					      fileio_error *target_errno) override;
   bool use_agent (bool use) override;

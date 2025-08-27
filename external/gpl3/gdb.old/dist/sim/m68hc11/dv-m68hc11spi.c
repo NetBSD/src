@@ -1,5 +1,5 @@
 /*  dv-m68hc11spi.c -- Simulation of the 68HC11 SPI
-    Copyright (C) 2000-2023 Free Software Foundation, Inc.
+    Copyright (C) 2000-2024 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@nerim.fr)
     (From a driver model Contributed by Cygnus Solutions.)
 
@@ -28,6 +28,7 @@
 #include "dv-sockser.h"
 #include "sim-assert.h"
 
+#include "m68hc11-sim.h"
 
 /* DEVICE
 
@@ -156,14 +157,10 @@ m68hc11spi_port_event (struct hw *me,
                        int source_port,
                        int level)
 {
-  SIM_DESC sd;
   struct m68hc11spi *controller;
-  sim_cpu *cpu;
   uint8_t val;
   
   controller = hw_data (me);
-  sd         = hw_system (me);
-  cpu        = STATE_CPU (sd, 0);  
   switch (my_port)
     {
     case RESET_PORT:
@@ -193,12 +190,13 @@ m68hc11spi_port_event (struct hw *me,
 static void
 set_bit_port (struct hw *me, sim_cpu *cpu, int port, int mask, int value)
 {
+  struct m68hc11_sim_cpu *m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   uint8_t val;
   
   if (value)
-    val = cpu->ios[port] | mask;
+    val = m68hc11_cpu->ios[port] | mask;
   else
-    val = cpu->ios[port] & ~mask;
+    val = m68hc11_cpu->ios[port] & ~mask;
 
   /* Set the new value and post an event to inform other devices
      that pin 'port' changed.  */
@@ -242,11 +240,13 @@ m68hc11spi_clock (struct hw *me, void *data)
   SIM_DESC sd;
   struct m68hc11spi* controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   int check_interrupt = 0;
   
   controller = hw_data (me);
   sd         = hw_system (me);
   cpu        = STATE_CPU (sd, 0);
+  m68hc11_cpu  = M68HC11_SIM_CPU (cpu);
 
   /* Cleanup current event.  */
   if (controller->spi_event)
@@ -289,8 +289,8 @@ m68hc11spi_clock (struct hw *me, void *data)
   if (controller->mode == SPI_START_BIT && controller->tx_bit < 0)
     {
       controller->rx_clear_scsr = 0;
-      cpu->ios[M6811_SPSR] |= M6811_SPIF;
-      if (cpu->ios[M6811_SPCR] & M6811_SPIE)
+      m68hc11_cpu->ios[M6811_SPSR] |= M6811_SPIF;
+      if (m68hc11_cpu->ios[M6811_SPCR] & M6811_SPIE)
         check_interrupt = 1;
     }
   else
@@ -301,7 +301,7 @@ m68hc11spi_clock (struct hw *me, void *data)
     }
 
   if (check_interrupt)
-    interrupts_update_pending (&cpu->cpu_interrupts);
+    interrupts_update_pending (&m68hc11_cpu->cpu_interrupts);
 }
 
 /* Flags of the SPCR register.  */
@@ -332,22 +332,24 @@ m68hc11spi_info (struct hw *me)
   SIM_DESC sd;
   uint16_t base = 0;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   struct m68hc11spi *controller;
   uint8_t val;
   
   sd = hw_system (me);
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   controller = hw_data (me);
   
   sim_io_printf (sd, "M68HC11 SPI:\n");
 
   base = cpu_get_io_base (cpu);
 
-  val = cpu->ios[M6811_SPCR];
+  val = m68hc11_cpu->ios[M6811_SPCR];
   print_io_byte (sd, "SPCR", spcr_desc, val, base + M6811_SPCR);
   sim_io_printf (sd, "\n");
 
-  val = cpu->ios[M6811_SPSR];
+  val = m68hc11_cpu->ios[M6811_SPSR];
   print_io_byte (sd, "SPSR", spsr_desc, val, base + M6811_SPSR);
   sim_io_printf (sd, "\n");
 
@@ -388,30 +390,33 @@ m68hc11spi_io_read_buffer (struct hw *me,
   SIM_DESC sd;
   struct m68hc11spi *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   uint8_t val;
   
   HW_TRACE ((me, "read 0x%08lx %d", (long) base, (int) nr_bytes));
 
   sd  = hw_system (me);
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   controller = hw_data (me);
 
   switch (base)
     {
     case M6811_SPSR:
-      controller->rx_clear_scsr = cpu->ios[M6811_SCSR]
+      controller->rx_clear_scsr = m68hc11_cpu->ios[M6811_SCSR]
         & (M6811_SPIF | M6811_WCOL | M6811_MODF);
+      ATTRIBUTE_FALLTHROUGH;
       
     case M6811_SPCR:
-      val = cpu->ios[base];
+      val = m68hc11_cpu->ios[base];
       break;
       
     case M6811_SPDR:
       if (controller->rx_clear_scsr)
         {
-          cpu->ios[M6811_SPSR] &= ~controller->rx_clear_scsr;
+          m68hc11_cpu->ios[M6811_SPSR] &= ~controller->rx_clear_scsr;
           controller->rx_clear_scsr = 0;
-          interrupts_update_pending (&cpu->cpu_interrupts);
+          interrupts_update_pending (&m68hc11_cpu->cpu_interrupts);
         }
       val = controller->rx_char;
       break;
@@ -433,19 +438,21 @@ m68hc11spi_io_write_buffer (struct hw *me,
   SIM_DESC sd;
   struct m68hc11spi *controller;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   uint8_t val;
 
   HW_TRACE ((me, "write 0x%08lx %d", (long) base, (int) nr_bytes));
 
   sd  = hw_system (me);
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   controller = hw_data (me);
   
   val = *((const uint8_t*) source);
   switch (base)
     {
     case M6811_SPCR:
-      cpu->ios[M6811_SPCR] = val;
+      m68hc11_cpu->ios[M6811_SPCR] = val;
 
       /* The SPI clock rate is 2, 4, 16, 32 of the internal CPU clock.
          We have to drive the clock pin and need a 2x faster clock.  */
@@ -484,23 +491,23 @@ m68hc11spi_io_write_buffer (struct hw *me,
       break;
       
     case M6811_SPDR:
-      if (!(cpu->ios[M6811_SPCR] & M6811_SPE))
+      if (!(m68hc11_cpu->ios[M6811_SPCR] & M6811_SPE))
         {
           return 0;
         }
 
       if (controller->rx_clear_scsr)
         {
-          cpu->ios[M6811_SPSR] &= ~controller->rx_clear_scsr;
+          m68hc11_cpu->ios[M6811_SPSR] &= ~controller->rx_clear_scsr;
           controller->rx_clear_scsr = 0;
-          interrupts_update_pending (&cpu->cpu_interrupts);
+          interrupts_update_pending (&m68hc11_cpu->cpu_interrupts);
         }
 
       /* If transfer is taking place, a write to SPDR
          generates a collision.  */
       if (controller->spi_event)
         {
-          cpu->ios[M6811_SPSR] |= M6811_WCOL;
+          m68hc11_cpu->ios[M6811_SPSR] |= M6811_WCOL;
           break;
         }
 
@@ -513,10 +520,10 @@ m68hc11spi_io_write_buffer (struct hw *me,
 
       /* Toggle clock pin internal value when CPHA is 0 so that
          it will really change in the middle of a bit.  */
-      if (!(cpu->ios[M6811_SPCR] & M6811_CPHA))
+      if (!(m68hc11_cpu->ios[M6811_SPCR] & M6811_CPHA))
         controller->clk_pin = ~controller->clk_pin;
 
-      cpu->ios[M6811_SPDR] = val;
+      m68hc11_cpu->ios[M6811_SPDR] = val;
 
       /* Activate transmission.  */
       m68hc11spi_clock (me, NULL);

@@ -1,5 +1,5 @@
 /* Target definitions for NN-bit ELF
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -28,10 +28,10 @@
    one for little-endian machines.   */
 
 #ifndef bfd_elfNN_close_and_cleanup
-#define	bfd_elfNN_close_and_cleanup _bfd_elf_close_and_cleanup
+#define	bfd_elfNN_close_and_cleanup _bfd_generic_close_and_cleanup
 #endif
 #ifndef bfd_elfNN_bfd_free_cached_info
-#define bfd_elfNN_bfd_free_cached_info _bfd_free_cached_info
+#define bfd_elfNN_bfd_free_cached_info _bfd_elf_free_cached_info
 #endif
 #ifndef bfd_elfNN_get_section_contents
 #define bfd_elfNN_get_section_contents _bfd_generic_get_section_contents
@@ -91,9 +91,6 @@
 #define bfd_elfNN_write_object_contents _bfd_elf_write_object_contents
 #define bfd_elfNN_write_corefile_contents _bfd_elf_write_corefile_contents
 
-#define bfd_elfNN_get_section_contents_in_window \
-  _bfd_generic_get_section_contents_in_window
-
 #ifndef elf_backend_can_refcount
 #define elf_backend_can_refcount 0
 #endif
@@ -147,6 +144,9 @@
 #endif
 #ifndef elf_backend_strtab_flags
 #define elf_backend_strtab_flags 0
+#endif
+#ifndef elf_backend_use_mmap
+#define elf_backend_use_mmap false
 #endif
 
 #define bfd_elfNN_bfd_debug_info_start		_bfd_void_bfd
@@ -230,6 +230,8 @@
   _bfd_elf_copy_private_symbol_data
 #endif
 
+#define bfd_elfNN_init_private_section_data \
+  _bfd_elf_init_private_section_data
 #ifndef bfd_elfNN_bfd_copy_private_section_data
 #define bfd_elfNN_bfd_copy_private_section_data \
   _bfd_elf_copy_private_section_data
@@ -487,11 +489,11 @@
 #ifndef elf_backend_adjust_dynamic_symbol
 #define elf_backend_adjust_dynamic_symbol 0
 #endif
-#ifndef elf_backend_always_size_sections
-#define elf_backend_always_size_sections 0
+#ifndef elf_backend_early_size_sections
+#define elf_backend_early_size_sections 0
 #endif
-#ifndef elf_backend_size_dynamic_sections
-#define elf_backend_size_dynamic_sections 0
+#ifndef elf_backend_late_size_sections
+#define elf_backend_late_size_sections 0
 #endif
 #ifndef elf_backend_strip_zero_sized_dynamic_sections
 #define elf_backend_strip_zero_sized_dynamic_sections 0
@@ -667,6 +669,10 @@
 #ifndef elf_backend_write_section
 #define elf_backend_write_section		NULL
 #endif
+#ifndef elf_backend_add_glibc_version_dependency
+#define elf_backend_add_glibc_version_dependency \
+  _bfd_elf_link_add_dt_relr_dependency
+#endif
 #ifndef elf_backend_elfsym_local_is_section
 #define elf_backend_elfsym_local_is_section	NULL
 #endif
@@ -701,6 +707,10 @@
 
 #ifndef elf_backend_rela_normal
 #define elf_backend_rela_normal 0
+#endif
+
+#ifndef elf_backend_is_rela_normal
+#define elf_backend_is_rela_normal NULL
 #endif
 
 #ifndef elf_backend_dtrel_excludes_plt
@@ -849,8 +859,8 @@ static const struct elf_backend_data elfNN_bed =
   elf_backend_check_directives,
   elf_backend_notice_as_needed,
   elf_backend_adjust_dynamic_symbol,
-  elf_backend_always_size_sections,
-  elf_backend_size_dynamic_sections,
+  elf_backend_early_size_sections,
+  elf_backend_late_size_sections,
   elf_backend_strip_zero_sized_dynamic_sections,
   elf_backend_init_index_section,
   elf_backend_relocate_section,
@@ -897,6 +907,7 @@ static const struct elf_backend_data elfNN_bed =
   elf_backend_can_make_multiple_eh_frame,
   elf_backend_encode_eh_address,
   elf_backend_write_section,
+  elf_backend_add_glibc_version_dependency,
   elf_backend_elfsym_local_is_section,
   elf_backend_mips_irix_compat,
   elf_backend_mips_rtype_to_howto,
@@ -948,6 +959,7 @@ static const struct elf_backend_data elfNN_bed =
   elf_backend_default_use_rela_p,
   elf_backend_rela_plts_and_copies_p,
   elf_backend_rela_normal,
+  elf_backend_is_rela_normal,
   elf_backend_dtrel_excludes_plt,
   elf_backend_sign_extend_vma,
   elf_backend_want_got_plt,
@@ -967,7 +979,8 @@ static const struct elf_backend_data elfNN_bed =
   elf_backend_extern_protected_data,
   elf_backend_always_renumber_dynsyms,
   elf_backend_linux_prpsinfo32_ugid16,
-  elf_backend_linux_prpsinfo64_ugid16
+  elf_backend_linux_prpsinfo64_ugid16,
+  elf_backend_use_mmap
 };
 
 /* Forward declaration for use when initialising alternative_target field.  */
@@ -994,7 +1007,7 @@ const bfd_target TARGET_BIG_SYM =
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
    | DYNAMIC | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS
    | BFD_COMPRESS_GABI | BFD_COMPRESS_ZSTD | BFD_CONVERT_ELF_COMMON
-   | BFD_USE_ELF_STT_COMMON),
+   | BFD_USE_ELF_STT_COMMON | BFD_NO_SECTION_HEADER),
 
   /* section_flags: mask of all section flags */
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY
@@ -1099,7 +1112,7 @@ const bfd_target TARGET_LITTLE_SYM =
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
    | DYNAMIC | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS
    | BFD_COMPRESS_GABI | BFD_COMPRESS_ZSTD | BFD_CONVERT_ELF_COMMON
-   | BFD_USE_ELF_STT_COMMON),
+   | BFD_USE_ELF_STT_COMMON | BFD_NO_SECTION_HEADER),
 
   /* section_flags: mask of all section flags */
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY

@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,15 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { [skip_cplus_tests] } { return }
+require allow_cplus_tests
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
-
-gdb_exit
-if [mi_gdb_start] {
-    return
-}
 
 standard_testfile .cc
 set opts {debug c++}
@@ -30,7 +25,9 @@ if [build_executable $testfile.exp $testfile $srcfile $opts] {
     return -1
 }
 
-mi_gdb_load ${binfile}
+if {[mi_clean_restart $binfile]} {
+    return
+}
 
 mi_prepare_inline_tests $srcfile
 
@@ -126,4 +123,3 @@ foreach_with_prefix inline_test $inline_tests {
 }
 
 mi_gdb_exit
-return 0

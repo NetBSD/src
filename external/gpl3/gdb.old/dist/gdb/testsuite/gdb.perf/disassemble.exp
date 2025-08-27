@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2023 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@
 # some large functions in GDB.
 load_lib perftest.exp
 
-if [skip_perf_tests] {
-    return 0
-}
+require allow_perf_tests
 
 global GDB
 
@@ -31,12 +29,9 @@ PerfTest::assemble {
     # Don't have compilation step.
     return 0
 } {
-    global srcdir subdir
     global binfile
 
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
+    clean_restart
 
     # When GDB is debugging GDB, the prompt is changed to "(top-gdb) ".
     # In order to avoid the confusion of pattern matching, set the

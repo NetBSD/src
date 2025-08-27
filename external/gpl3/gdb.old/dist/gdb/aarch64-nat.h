@@ -1,6 +1,6 @@
 /* Native-dependent code for AArch64.
 
-   Copyright (C) 2011-2023 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,14 +44,6 @@ struct aarch64_debug_reg_state *aarch64_get_debug_reg_state (pid_t pid);
 /* Remove any existing per-process debug state for process PID.  */
 
 void aarch64_remove_debug_reg_state (pid_t pid);
-
-/* Helper for the "stopped_data_address" target method.  Returns TRUE
-   if a hardware watchpoint trap at ADDR_TRAP matches a set
-   watchpoint.  The address of the matched watchpoint is returned in
-   *ADDR_P.  */
-
-bool aarch64_stopped_data_address (const struct aarch64_debug_reg_state *state,
-				   CORE_ADDR addr_trap, CORE_ADDR *addr_p);
 
 /* Helper functions used by aarch64_nat_target below.  See their
    definitions.  */

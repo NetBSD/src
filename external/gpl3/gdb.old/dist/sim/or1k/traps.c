@@ -1,5 +1,5 @@
 /* OpenRISC exception, interrupts, syscall and trap support
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -23,6 +23,7 @@
 #define WANT_CPU
 
 #include "sim-main.h"
+#include "sim-fpu.h"
 #include "sim-signal.h"
 #include "cgen-ops.h"
 
@@ -123,6 +124,7 @@ void
 or1k32bf_exception (sim_cpu *current_cpu, USI pc, USI exnum)
 {
   SIM_DESC sd = CPU_STATE (current_cpu);
+  struct or1k_sim_cpu *or1k_cpu = OR1K_SIM_CPU (current_cpu);
 
   if (exnum == EXCEPT_TRAP)
     {
@@ -142,14 +144,14 @@ or1k32bf_exception (sim_cpu *current_cpu, USI pc, USI exnum)
 
 	case EXCEPT_FPE:
 	case EXCEPT_SYSCALL:
-	  SET_H_SYS_EPCR0 (pc + 4 - (current_cpu->delay_slot ? 4 : 0));
+	  SET_H_SYS_EPCR0 (pc + 4 - (or1k_cpu->delay_slot ? 4 : 0));
 	  break;
 
 	case EXCEPT_BUSERR:
 	case EXCEPT_ALIGN:
 	case EXCEPT_ILLEGAL:
 	case EXCEPT_RANGE:
-	  SET_H_SYS_EPCR0 (pc - (current_cpu->delay_slot ? 4 : 0));
+	  SET_H_SYS_EPCR0 (pc - (or1k_cpu->delay_slot ? 4 : 0));
 	  break;
 
 	default:
@@ -162,9 +164,9 @@ or1k32bf_exception (sim_cpu *current_cpu, USI pc, USI exnum)
       SET_H_SYS_ESR0 (GET_H_SYS_SR ());
 
       /* Indicate in SR if the failed instruction is in delay slot or not.  */
-      SET_H_SYS_SR_DSX (current_cpu->delay_slot);
+      SET_H_SYS_SR_DSX (or1k_cpu->delay_slot);
 
-      current_cpu->next_delay_slot = 0;
+      or1k_cpu->next_delay_slot = 0;
 
       /* Jump program counter into handler.  */
       handler_pc =
@@ -180,10 +182,12 @@ or1k32bf_exception (sim_cpu *current_cpu, USI pc, USI exnum)
 void
 or1k32bf_rfe (sim_cpu *current_cpu)
 {
+  struct or1k_sim_cpu *or1k_cpu = OR1K_SIM_CPU (current_cpu);
+
   SET_H_SYS_SR (GET_H_SYS_ESR0 ());
   SET_H_SYS_SR_FO (1);
 
-  current_cpu->next_delay_slot = 0;
+  or1k_cpu->next_delay_slot = 0;
 
   sim_engine_restart (CPU_STATE (current_cpu), current_cpu, NULL,
 		      GET_H_SYS_EPCR0 ());
@@ -246,6 +250,7 @@ void
 or1k32bf_mtspr (sim_cpu *current_cpu, USI addr, USI val)
 {
   SIM_DESC sd = CPU_STATE (current_cpu);
+  struct or1k_sim_cpu *or1k_cpu = OR1K_SIM_CPU (current_cpu);
 
   if (!GET_H_SYS_SR_SM () && !GET_H_SYS_SR_SUMRA ())
     {
@@ -275,9 +280,9 @@ or1k32bf_mtspr (sim_cpu *current_cpu, USI addr, USI val)
       break;
 
     case SPR_ADDR (SYS, NPC):
-      current_cpu->next_delay_slot = 0;
+      or1k_cpu->next_delay_slot = 0;
 
-      sim_engine_restart (CPU_STATE (current_cpu), current_cpu, NULL, val);
+      sim_engine_restart (sd, current_cpu, NULL, val);
       break;
 
     case SPR_ADDR (TICK, TTMR):

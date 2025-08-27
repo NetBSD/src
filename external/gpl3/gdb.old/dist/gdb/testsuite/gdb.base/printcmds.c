@@ -75,6 +75,8 @@ char *teststring = (char*)"teststring contents";
 typedef char *charptr;
 charptr teststring2 = "more contents";
 
+const char *teststring3 = "this is a longer test string that we can use";
+
 /* Test printing of a struct containing character arrays. */
 
 struct some_arrays {
@@ -108,6 +110,7 @@ enum flag_enum
   FE_TWO_LEGACY = 0x02,
 };
 
+enum flag_enum one = FE_ONE;
 enum flag_enum three = (enum flag_enum) (FE_ONE | FE_TWO);
 
 /* Another enum considered as a "flag enum", but with no enumerator with value
@@ -150,6 +153,18 @@ struct some_struct
     0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
     0xaa, 0xaa, 0xaa, 0xaa, 0xaa
   }
+};
+
+/* This is used in the printf test.  */
+struct small_struct
+{
+  int a;
+  int b;
+  int c;
+} a_small_struct = {
+  1,
+  2,
+  3
 };
 
 /* The following variables are used for testing byte repeat sequences.

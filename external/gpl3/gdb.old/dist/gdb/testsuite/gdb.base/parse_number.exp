@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -108,9 +108,8 @@ proc parse_number { lang n } {
 	    return [list "i32" $n]
 	} elseif { [fits_in_type $n 64 s] } {
 	    return [list "i64" $n]
-	} elseif { [fits_in_type $n 64 u] } {
-	    # Note: Interprets MAX_U64 as -1.
-	    return [list "i64" $n]
+	} elseif { [fits_in_type $n 128 u] } {
+	    return [list "i128" $n]
 	} else {
 	    # Overflow.
 	    return [list $re_overflow $re_overflow]
@@ -144,6 +143,8 @@ proc parse_number { lang n } {
 	} elseif { [fits_in_type $n $long_long_bits u] } {
 	    # Note: Interprets ULLONG_MAX as -1.
 	    return [list "<$sizeof_long_long-byte integer>" $n]
+	} elseif { [fits_in_type $n 128 u] } {
+	    return [list "<16-byte integer>" $n]
 	} else {
 	    # Overflow.
 	    return [list $re_overflow $re_overflow]

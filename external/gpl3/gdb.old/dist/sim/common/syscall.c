@@ -1,5 +1,5 @@
 /* Remote target system call support.
-   Copyright 1997-2023 Free Software Foundation, Inc.
+   Copyright 1997-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GDB.
@@ -33,9 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -215,9 +213,7 @@ cb_syscall (host_callback *cb, CB_SYSCALL *sc)
 	/* Buffer size.  */
 	int bufsize = sc->arg2;
 	int written = 0;
-	/* Q is the target address of where all the strings go.  */
-	TADDR q;
-	int i, argc, envc, len, ret;
+	int argc, envc, len, ret;
 	char **argv = cb->argv;
 	char **envp = cb->envp;
 

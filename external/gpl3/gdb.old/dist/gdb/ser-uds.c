@@ -1,6 +1,6 @@
 /* Serial interface for local domain connections on Un*x like systems.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "serial.h"
 #include "ser-base.h"
 
@@ -30,36 +29,30 @@
 
 /* Open an AF_UNIX socket.  */
 
-static int
+static void
 uds_open (struct serial *scb, const char *name)
 {
   struct sockaddr_un addr;
 
   if (strlen (name) > UNIX_PATH_MAX - 1)
-    {
-      warning
-	(_("The socket name is too long.  It may be no longer than %s bytes."),
-	 pulongest (UNIX_PATH_MAX - 1L));
-      return -1;
-    }
+    error (_("The socket name is too long.  It may be no longer than %s bytes."),
+	   pulongest (UNIX_PATH_MAX - 1L));
 
   memset (&addr, 0, sizeof addr);
   addr.sun_family = AF_UNIX;
   strncpy (addr.sun_path, name, UNIX_PATH_MAX - 1);
 
-  int sock = socket (AF_UNIX, SOCK_STREAM, 0);
+  scb->fd = socket (AF_UNIX, SOCK_STREAM, 0);
+  if (scb->fd < 0)
+    perror_with_name (_("could not open socket"));
 
-  if (connect (sock, (struct sockaddr *) &addr,
+  if (connect (scb->fd, (struct sockaddr *) &addr,
 	       sizeof (struct sockaddr_un)) < 0)
     {
-      close (sock);
-      scb->fd = -1;
-      return -1;
+      int saved = errno;
+      close (scb->fd);
+      perror_with_name (_("could not connect to remote"), saved);
     }
-
-  scb->fd = sock;
-
-  return 0;
 }
 
 static void
@@ -75,13 +68,19 @@ uds_close (struct serial *scb)
 static int
 uds_read_prim (struct serial *scb, size_t count)
 {
-  return recv (scb->fd, scb->buf, count, 0);
+  int result = recv (scb->fd, scb->buf, count, 0);
+  if (result == -1 && errno != EINTR)
+    perror_with_name ("error while reading");
+  return result;
 }
 
 static int
 uds_write_prim (struct serial *scb, const void *buf, size_t count)
 {
-  return send (scb->fd, buf, count, 0);
+  int result = send (scb->fd, buf, count, 0);
+  if (result == -1 && errno != EINTR)
+    perror_with_name ("error while writing");
+  return result;
 }
 
 /* The local socket ops.  */

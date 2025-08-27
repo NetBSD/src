@@ -19,6 +19,7 @@ check-DEJAGNU: site.exp
 	else echo "WARNING: could not find \`runtest'" 1>&2; :;\
 	fi
 
-# libsframe encoder/decoder testsuite
+# libsframe encoder/decoder/find testsuite
 include %D%/libsframe.decode/local.mk
 include %D%/libsframe.encode/local.mk
+include %D%/libsframe.find/local.mk

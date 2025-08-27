@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/mips64.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbtypes.h"
 #include "osabi.h"
 #include "regcache.h"
@@ -77,7 +76,7 @@ mips64obsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
 static void
 mips64obsd_sigframe_init (const struct tramp_frame *self,
-			  frame_info_ptr this_frame,
+			  const frame_info_ptr &this_frame,
 			  struct trad_frame_cache *cache,
 			  CORE_ADDR func)
 {

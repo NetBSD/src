@@ -1,6 +1,6 @@
 /* Test linker script for OpenRISC.
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,8 +20,9 @@ MEMORY
     /* The exception vectors actually start at 0x100, but if you specify
        that address here, the "--output-target binary" step will start from
        address 0 with the contents meant for address 0x100.  */
-    exception_vectors : ORIGIN =  0 , LENGTH = 8K
-    ram               : ORIGIN =  8K, LENGTH = 2M - 8K
+    exception_vectors : ORIGIN =  0 , LENGTH =  8K
+    rom               : ORIGIN =  8K, LENGTH = 40K
+    ram               : ORIGIN = 40K, LENGTH =  2M - 40K
 }
 
 SECTIONS
@@ -37,7 +38,7 @@ SECTIONS
 	*(.text.*)
 	*(.rodata)
 	*(.rodata.*)
-    } > ram
+    } > rom
 
     .data :
     {

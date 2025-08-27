@@ -1,0 +1,45 @@
+# Copyright (C) 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This test script checks that a trailing newline is stripped from a
+# bracketed paste.
+
+save_vars { env(TERM) env(INPUTRC) } {
+    setenv TERM ansi
+
+    # Create an inputrc file that enables bracketed paste mode.
+    set inputrc [standard_output_file inputrc]
+    set fd [open "$inputrc" w]
+    puts $fd "set enable-bracketed-paste on"
+    close $fd
+
+    setenv INPUTRC "$inputrc"
+
+    clean_restart
+
+    send_gdb "\033\[200~echo hello\n\033\[201~\n"
+
+    gdb_test_multiple "" "newline removed from paste" {
+	-re ".*echo hello.*hello\[^\n\]*$gdb_prompt $" {
+	    # Some escape sequences are expected between echo's output
+	    # and the prompt (e.g. the paste-bracketing toggle
+	    # sequences) but _newlines_ are not.
+	    pass $gdb_test_name
+	}
+	-re ".*echo hello.*hello.*\r\n.*$gdb_prompt $" {
+	    fail $gdb_test_name
+	}
+    }
+}

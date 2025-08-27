@@ -1,6 +1,6 @@
 /* Obstack wrapper for GDB.
 
-   Copyright (C) 2013-2023 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
 #include "gdb_obstack.h"
 
 /* Concatenate NULL terminated variable argument list of `const char *'

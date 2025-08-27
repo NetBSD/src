@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -490,7 +490,6 @@ extern void
 table_print_code (lf *file, const table_entry *entry)
 {
   int field_nr;
-  int nr = 0;
   for (field_nr = 0; field_nr < entry->nr_fields; field_nr++)
     {
       char *chp = entry->field[field_nr];
@@ -502,20 +501,20 @@ table_print_code (lf *file, const table_entry *entry)
 	  if (chp[0] == '{' && !isspace (chp[1]) && chp[1] != '\0')
 	    {
 	      in_bit_field = 1;
-	      nr += lf_putchr (file, '_');
+	      lf_putchr (file, '_');
 	    }
 	  else if (in_bit_field && chp[0] == ':')
 	    {
-	      nr += lf_putchr (file, '_');
+	      lf_putchr (file, '_');
 	    }
 	  else if (in_bit_field && *chp == '}')
 	    {
-	      nr += lf_putchr (file, '_');
+	      lf_putchr (file, '_');
 	      in_bit_field = 0;
 	    }
 	  else
 	    {
-	      nr += lf_putchr (file, *chp);
+	      lf_putchr (file, *chp);
 	    }
 	  chp++;
 	}
@@ -525,7 +524,7 @@ table_print_code (lf *file, const table_entry *entry)
 	  line.line_nr += field_nr;
 	  error (&line, "Bit field brace miss match\n");
 	}
-      nr += lf_putchr (file, '\n');
+      lf_putchr (file, '\n');
     }
 }
 

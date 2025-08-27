@@ -1,20 +1,19 @@
 /* This must come before any other includes.  */
 #include "defs.h"
 
-#include <signal.h>
-
 #include "sim-main.h"
 #include "sim-options.h"
 #include "sim-hw.h"
 
 #include "bfd.h"
 #include "sim-assert.h"
+#include "sim-fpu.h"
 #include "sim-signal.h"
+
+#include "mn10300-sim.h"
 
 #include <stdlib.h>
 #include <string.h>
-
-#include "bfd.h"
 
 
 struct _state State;
@@ -36,7 +35,6 @@ mn10300_option_handler (SIM_DESC sd,
 			char *arg,
 			int is_command)
 {
-  int cpu_nr;
   switch (opt)
     {
     case OPTION_BOARD:
@@ -99,7 +97,7 @@ sim_open (SIM_OPEN_KIND kind,
   current_target_byte_order = BFD_ENDIAN_LITTLE;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all (sd, 0) != SIM_RC_OK)
     return 0;
 
   /* for compatibility */
@@ -393,8 +391,6 @@ program_interrupt (SIM_DESC sd,
 		   sim_cia cia,
 		   SIM_SIGNAL sig)
 {
-  int status;
-  struct hw *device;
   static int in_interrupt = 0;
 
 #ifdef SIM_CPU_EXCEPTION_TRIGGER

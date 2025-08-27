@@ -1,4 +1,4 @@
-# Copyright (C) 2020-2023 Free Software Foundation, Inc.
+# Copyright (C) 2020-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,7 +32,10 @@ class TestWindow:
         self.win.erase()
         w = self.win.width
         h = self.win.height
-        self.win.write("Test: " + str(self.count) + " " + str(w) + "x" + str(h))
+        self.win.write(
+            string="Test: " + str(self.count) + " " + str(w) + "x" + str(h),
+            full_window=False,
+        )
         self.count = self.count + 1
 
     # Tries to delete the title attribute.  GDB will throw an error.
@@ -42,6 +45,7 @@ class TestWindow:
 
 gdb.register_window_type("test", TestWindow)
 
+
 # Call REMOVE_TITLE on the global window object.
 def delete_window_title():
     the_window.remove_title()
@@ -50,6 +54,11 @@ def delete_window_title():
 # A TUI window "constructor" that always fails.
 def failwin(win):
     raise RuntimeError("Whoops")
+
+
+# Change the title of the window.
+def change_window_title():
+    the_window.win.title = "New Title"
 
 
 gdb.register_window_type("fail", failwin)

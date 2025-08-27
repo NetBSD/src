@@ -1,5 +1,5 @@
 /* Register support routines for the remote server for GDB.
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,11 +16,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "regdef.h"
 #include "gdbthread.h"
 #include "tdesc.h"
 #include "gdbsupport/rsp-low.h"
+#include "gdbsupport/gdb-checked-static-cast.h"
+
 #ifndef IN_PROCESS_AGENT
 
 struct regcache *
@@ -64,7 +65,7 @@ get_thread_regcache (struct thread_info *thread, int fetch)
 
 /* See gdbsupport/common-regcache.h.  */
 
-struct regcache *
+reg_buffer_common *
 get_thread_regcache_for_ptid (ptid_t ptid)
 {
   return get_thread_regcache (find_thread_ptid (ptid), 1);
@@ -199,6 +200,9 @@ regcache_cpy (struct regcache *dst, struct regcache *src)
 static const struct gdb::reg &
 find_register_by_number (const struct target_desc *tdesc, int n)
 {
+  gdb_assert (n >= 0);
+  gdb_assert (n < tdesc->reg_defs.size ());
+
   return tdesc->reg_defs[n];
 }
 
@@ -246,7 +250,7 @@ registers_from_string (struct regcache *regcache, char *buf)
 
 /* See regcache.h */
 
-gdb::optional<int>
+std::optional<int>
 find_regno_no_throw (const struct target_desc *tdesc, const char *name)
 {
   for (int i = 0; i < tdesc->reg_defs.size (); ++i)
@@ -260,7 +264,7 @@ find_regno_no_throw (const struct target_desc *tdesc, const char *name)
 int
 find_regno (const struct target_desc *tdesc, const char *name)
 {
-  gdb::optional<int> regnum = find_regno_no_throw (tdesc, name);
+  std::optional<int> regnum = find_regno_no_throw (tdesc, name);
 
   if (regnum.has_value ())
     return *regnum;
@@ -304,32 +308,38 @@ register_size (const struct target_desc *tdesc, int n)
 /* See gdbsupport/common-regcache.h.  */
 
 int
-regcache_register_size (const struct regcache *regcache, int n)
+regcache_register_size (const reg_buffer_common *regcache, int n)
 {
-  return register_size (regcache->tdesc, n);
+  return register_size
+    (gdb::checked_static_cast<const struct regcache *> (regcache)->tdesc, n);
 }
 
-static unsigned char *
+static gdb::array_view<gdb_byte>
 register_data (const struct regcache *regcache, int n)
 {
-  return (regcache->registers
-	  + find_register_by_number (regcache->tdesc, n).offset / 8);
+  const gdb::reg &reg = find_register_by_number (regcache->tdesc, n);
+  return gdb::make_array_view (regcache->registers + reg.offset / 8,
+			       reg.size / 8);
 }
 
 void
-supply_register (struct regcache *regcache, int n, const void *buf)
+supply_register (struct regcache *regcache, int n, const void *vbuf)
 {
-  return regcache->raw_supply (n, buf);
+  const gdb::reg &reg = find_register_by_number (regcache->tdesc, n);
+  const gdb_byte *buf = static_cast<const gdb_byte *> (vbuf);
+  return regcache->raw_supply (n, gdb::make_array_view (buf, reg.size / 8));
 }
 
 /* See gdbsupport/common-regcache.h.  */
 
 void
-regcache::raw_supply (int n, const void *buf)
+regcache::raw_supply (int n, gdb::array_view<const gdb_byte> src)
 {
-  if (buf)
+  auto dst = register_data (this, n);
+
+  if (src.data () != nullptr)
     {
-      memcpy (register_data (this, n), buf, register_size (tdesc, n));
+      copy (src, dst);
 #ifndef IN_PROCESS_AGENT
       if (register_status != NULL)
 	register_status[n] = REG_VALID;
@@ -337,7 +347,7 @@ regcache::raw_supply (int n, const void *buf)
     }
   else
     {
-      memset (register_data (this, n), 0, register_size (tdesc, n));
+      memset (dst.data (), 0, dst.size ());
 #ifndef IN_PROCESS_AGENT
       if (register_status != NULL)
 	register_status[n] = REG_UNAVAILABLE;
@@ -350,8 +360,8 @@ regcache::raw_supply (int n, const void *buf)
 void
 supply_register_zeroed (struct regcache *regcache, int n)
 {
-  memset (register_data (regcache, n), 0,
-	  register_size (regcache->tdesc, n));
+  auto dst = register_data (regcache, n);
+  memset (dst.data (), 0, dst.size ());
 #ifndef IN_PROCESS_AGENT
   if (regcache->register_status != NULL)
     regcache->register_status[n] = REG_VALID;
@@ -420,28 +430,30 @@ supply_register_by_name (struct regcache *regcache,
 #endif
 
 void
-collect_register (struct regcache *regcache, int n, void *buf)
+collect_register (struct regcache *regcache, int n, void *vbuf)
 {
-  regcache->raw_collect (n, buf);
+  const gdb::reg &reg = find_register_by_number (regcache->tdesc, n);
+  gdb_byte *buf = static_cast<gdb_byte *> (vbuf);
+  regcache->raw_collect (n, gdb::make_array_view (buf, reg.size / 8));
 }
 
 /* See gdbsupport/common-regcache.h.  */
 
 void
-regcache::raw_collect (int n, void *buf) const
+regcache::raw_collect (int n, gdb::array_view<gdb_byte> dst) const
 {
-  memcpy (buf, register_data (this, n), register_size (tdesc, n));
+  auto src = register_data (this, n);
+  copy (src, dst);
 }
 
 enum register_status
-regcache_raw_read_unsigned (struct regcache *regcache, int regnum,
+regcache_raw_read_unsigned (reg_buffer_common *reg_buf, int regnum,
 			    ULONGEST *val)
 {
   int size;
+  regcache *regcache = gdb::checked_static_cast<struct regcache *> (reg_buf);
 
   gdb_assert (regcache != NULL);
-  gdb_assert (regnum >= 0
-	      && regnum < regcache->tdesc->reg_defs.size ());
 
   size = register_size (regcache->tdesc, regnum);
 
@@ -471,8 +483,7 @@ regcache_raw_get_unsigned_by_name (struct regcache *regcache,
 void
 collect_register_as_string (struct regcache *regcache, int n, char *buf)
 {
-  bin2hex (register_data (regcache, n), buf,
-	   register_size (regcache->tdesc, n));
+  bin2hex (register_data (regcache, n), buf);
 }
 
 void
@@ -485,9 +496,10 @@ collect_register_by_name (struct regcache *regcache,
 /* Special handling for register PC.  */
 
 CORE_ADDR
-regcache_read_pc (struct regcache *regcache)
+regcache_read_pc (reg_buffer_common *regcache)
 {
-  return the_target->read_pc (regcache);
+  return the_target->read_pc
+    (gdb::checked_static_cast<struct regcache *> (regcache));
 }
 
 void
@@ -518,9 +530,9 @@ regcache::raw_compare (int regnum, const void *buf, int offset) const
 {
   gdb_assert (buf != NULL);
 
-  const unsigned char *regbuf = register_data (this, regnum);
-  int size = register_size (tdesc, regnum);
-  gdb_assert (size >= offset);
+  gdb::array_view<const gdb_byte> regbuf = register_data (this, regnum);
+  gdb_assert (offset < regbuf.size ());
+  regbuf = regbuf.slice (offset);
 
-  return (memcmp (buf, regbuf + offset, size - offset) == 0);
+  return memcmp (buf, regbuf.data (), regbuf.size ()) == 0;
 }

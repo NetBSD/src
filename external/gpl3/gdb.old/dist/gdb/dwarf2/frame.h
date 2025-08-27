@@ -1,6 +1,6 @@
 /* Frame unwinder for frames with DWARF Call Frame Information.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    Contributed by Mark Kettenis.
 
@@ -66,7 +66,7 @@ enum dwarf2_frame_reg_rule
 
 /* Register state.  */
 
-typedef struct value *(*fn_prev_register) (frame_info_ptr this_frame,
+typedef struct value *(*fn_prev_register) (const frame_info_ptr &this_frame,
 					   void **this_cache, int regnum);
 
 struct dwarf2_frame_state_reg
@@ -207,18 +207,17 @@ extern bool dwarf2_frame_unwinders_enabled_p;
 /* Set the architecture-specific register state initialization
    function for GDBARCH to INIT_REG.  */
 
-extern void dwarf2_frame_set_init_reg (struct gdbarch *gdbarch,
-				       void (*init_reg) (struct gdbarch *, int,
-					     struct dwarf2_frame_state_reg *,
-					     frame_info_ptr));
+extern void dwarf2_frame_set_init_reg (
+  gdbarch *gdbarch, void (*init_reg) (struct gdbarch *, int,
+				      dwarf2_frame_state_reg *,
+				      const frame_info_ptr &));
 
 /* Set the architecture-specific signal trampoline recognition
    function for GDBARCH to SIGNAL_FRAME_P.  */
 
-extern void
-  dwarf2_frame_set_signal_frame_p (struct gdbarch *gdbarch,
-				   int (*signal_frame_p) (struct gdbarch *,
-							  frame_info_ptr));
+extern void dwarf2_frame_set_signal_frame_p
+  (gdbarch *gdbarch, int (*signal_frame_p) (struct gdbarch *,
+			  const frame_info_ptr &));
 
 /* Set the architecture-specific adjustment of .eh_frame and .debug_frame
    register numbers.  */
@@ -236,11 +235,11 @@ void dwarf2_append_unwinders (struct gdbarch *gdbarch);
    NULL if it can't be handled by the DWARF CFI frame unwinder.  */
 
 extern const struct frame_base *
-  dwarf2_frame_base_sniffer (frame_info_ptr this_frame);
+  dwarf2_frame_base_sniffer (const frame_info_ptr &this_frame);
 
 /* Compute the DWARF CFA for a frame.  */
 
-CORE_ADDR dwarf2_frame_cfa (frame_info_ptr this_frame);
+CORE_ADDR dwarf2_frame_cfa (const frame_info_ptr &this_frame);
 
 /* Find the CFA information for PC.
 
@@ -276,7 +275,7 @@ extern int dwarf2_fetch_cfa_info (struct gdbarch *gdbarch, CORE_ADDR pc,
    COOKIE is the key for the prev_function implementation.
    SIZE is the size of the custom data object to allocate.  */
 
-extern void *dwarf2_frame_allocate_fn_data (frame_info_ptr this_frame,
+extern void *dwarf2_frame_allocate_fn_data (const frame_info_ptr &this_frame,
 					    void **this_cache,
 					    fn_prev_register cookie,
 					    unsigned long size);
@@ -291,7 +290,7 @@ extern void *dwarf2_frame_allocate_fn_data (frame_info_ptr this_frame,
    THIS_CACHE is the dwarf2 cache object to store the pointer on.
    COOKIE is the key for the prev_function implementation.  */
 
-extern void *dwarf2_frame_get_fn_data (frame_info_ptr this_frame,
+extern void *dwarf2_frame_get_fn_data (const frame_info_ptr &this_frame,
 				       void **this_cache,
 				       fn_prev_register cookie);
 

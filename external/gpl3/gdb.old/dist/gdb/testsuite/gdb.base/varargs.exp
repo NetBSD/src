@@ -1,4 +1,4 @@
-# Copyright 1997-2023 Free Software Foundation, Inc.
+# Copyright 1997-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,16 +31,18 @@
 
 standard_testfile .c
 
-set skip_float_test [gdb_skip_float_test]
+set allow_float_test [allow_float_test]
 
-set additional_flags {debug}
+set flags {}
+lappend flags debug
+lappend_include_file flags $srcdir/lib/unbuffer_output.c
 if [support_complex_tests] {
-    lappend additional_flags "additional_flags=-DTEST_COMPLEX"
+    lappend flags "additional_flags=-DTEST_COMPLEX"
 }
 
 # build the first test case
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
-	   executable ${additional_flags}] != "" } {
+	   executable $flags] != "" } {
      untested "failed to compile"
      return -1
 }
@@ -81,7 +83,7 @@ gdb_test_stdio "print find_max2(3,1,2,3)" \
     ".\[0-9\]+ = 3" \
     "print find_max2(3,1,2,3)"
 
-if {!$skip_float_test} {
+if {$allow_float_test} {
     gdb_test_stdio "print find_max_double(5,1.0,17.0,2.0,3.0,4.0)" \
 	"find_max\\(.*\\) returns 17\\.000000\[ \r\n\]+" \
 	".\[0-9\]+ = 17" \

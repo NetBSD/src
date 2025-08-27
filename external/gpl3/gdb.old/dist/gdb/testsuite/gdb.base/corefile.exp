@@ -1,4 +1,4 @@
-# Copyright 1992-2023 Free Software Foundation, Inc.
+# Copyright 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@
 
 
 # are we on a target board
-if {![isnative]} {
-    return
-}
+require isnative
 
 standard_testfile coremaker.c
 
@@ -153,7 +151,7 @@ gdb_test "print \$_exitcode" " = void" \
 # file correctly.  I don't think the other tests do this.
 
 gdb_test "bt" "abort.*func2.*func1.*main.*" "backtrace"
-gdb_test "up" "#\[0-9\]* *\[0-9xa-fH'\]* in .* \\(.*\\).*" "up"
+gdb_test "up" "#\[0-9\]* *(\[0-9xa-fH'\]* in)? .* \\(.*\\).*" "up"
 
 # Test ability to read mmap'd data
 
@@ -197,7 +195,7 @@ gdb_test "x/wx buf3" "$hex:\[ \t\]+0x00000000" \
 # test reinit_frame_cache
 
 gdb_load ${binfile}
-gdb_test "up" "#\[0-9\]* *\[0-9xa-fH'\]* in .* \\(.*\\).*" "up (reinit)"
+gdb_test "up" "#\[0-9\]* *(\[0-9xa-fH'\]* in)? .* \\(.*\\).*" "up (reinit)"
 
 gdb_test "core" "No core file now."
 

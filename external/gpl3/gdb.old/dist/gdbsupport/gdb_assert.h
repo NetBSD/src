@@ -1,5 +1,5 @@
 /* GDB-friendly replacement for <assert.h>.
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,11 +20,6 @@
 #define COMMON_GDB_ASSERT_H
 
 #include "errors.h"
-
-/* A static assertion.  This will cause a compile-time error if EXPR,
-   which must be a compile-time constant, is false.  */
-
-#define gdb_static_assert(expr) static_assert (expr, "")
 
 /* PRAGMATICS: "gdb_assert.h":gdb_assert() is a lower case (rather
    than upper case) macro since that provides the closest fit to the

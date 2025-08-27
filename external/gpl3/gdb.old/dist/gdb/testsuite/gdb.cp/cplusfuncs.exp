@@ -1,4 +1,4 @@
-# Copyright 1992-2023 Free Software Foundation, Inc.
+# Copyright 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # This file was written by Fred Fish. (fnf@cygnus.com)
 # Adapted for g++ 3.0 ABI by Michael Chastain. (chastain@redhat.com)
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests
 
 standard_testfile .cc
 
