@@ -458,7 +458,7 @@ refcard.pdf : sedref.tex
 # in either the source tree or the build tree as this file is
 # included, pre-built, as part of a release.
 GDBvn.texi : version.subst
-	@echo "NOT REBUILDING $@"
+#	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_GDBvn.texi:
 	echo "@set GDBVN `sed q version.subst`" > ./GDBvn.new
 	if [ -n "$(PKGVERSION)" ]; then \
@@ -517,6 +517,8 @@ gdb.pdf: ${GDB_DOC_FILES}
 
 # GDB MANUAL: info file
 gdb.info: ${GDB_DOC_FILES}
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_gdb.info:
 	$(ECHO_MAKEINFO) $(MAKEINFO_CMD) $(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) \
 		-o gdb.info $(srcdir)/gdb.texinfo
 

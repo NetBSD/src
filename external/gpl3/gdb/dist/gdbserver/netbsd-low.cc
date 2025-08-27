@@ -453,11 +453,14 @@ netbsd_process_target::detach (process_info *process)
 /* Implement the mourn target_ops method.  */
 
 void
-netbsd_process_target::mourn (struct process_info *proc)
+netbsd_process_target::mourn (struct process_info *process)
 {
-  proc->for_each_thread (remove_thread);
+  process->for_each_thread ([this] (thread_info *thread)
+    {
+      thread->process ()->remove_thread (thread);
+    });
 
-  remove_process (proc);
+  remove_process (process);
 }
 
 /* Implement the join target_ops method.  */

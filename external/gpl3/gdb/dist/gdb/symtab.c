@@ -5602,17 +5602,18 @@ rbreak_command (const char *regexp, int from_tty)
 
       if (colon && *(colon + 1) != ':')
 	{
+	  char *local_name;
 	  int colon_index = colon - regexp;
 	  while (colon_index > 0 && isspace (regexp[colon_index - 1]))
 	    --colon_index;
 
 	  colon_index = colon - regexp;
-	  local_name = (char *) alloca (colon_index + 1);
+	  local_name = (char *) xmalloc (colon_index + 1);
 	  memcpy (local_name, regexp, colon_index);
 	  local_name[colon_index--] = 0;
 	  while (isspace ((unsigned char)local_name[colon_index]))
 	    local_name[colon_index--] = 0;
-	  file_name = local_name;
+	  file_name.reset(local_name);
 	  regexp = skip_spaces (colon + 1);
 	}
     }
