@@ -8102,3 +8102,7 @@
 ./usr/tests/util/xlint/lint1/d_zero_sized_arrays.c		tests-obsolete		obsolete
 ./usr/tests/util/xlint/lint1/t_integration			tests-obsolete		obsolete
 ./var/db/obsolete/tests						base-sys-root		atf
+./usr/tests/lib/libc/sys/t_aio_cancel	tests
+./usr/tests/lib/libc/sys/t_aio_suspend	tests
+./usr/tests/lib/libc/sys/t_aio_rw	tests
+./usr/tests/lib/libc/sys/t_aio_lio	tests
