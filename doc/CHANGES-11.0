@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.9 2025/08/27 05:56:43 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.10 2025/08/27 12:56:40 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -112,4 +112,16 @@ etc/etc.i386/Makefile.inc			1.71
 	x86: distribute the MICROVM kernel.
 	See sys/arch/{amd64,i386}/conf/MICROVM for usage instructions.
 	[imil, ticket #18]
+
+sys/arch/virt68k/conf/GENERIC			1.11
+
+	virt68k: disable viogpu(4) in GENERIC kernel.
+	[isaki, ticket #19]
+
+sys/arch/m68k/m68k/mmu_subr.s			1.4
+
+	m68k: avoid a panic during boot on some machines.
+	The PMOVE <ea>,TTn instruction does not support (An)+ addressing mode
+	on 68030.
+	[isaki, ticket #20]
 
