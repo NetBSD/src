@@ -137,7 +137,6 @@ struct aiost;
 struct aiost_file_group {
 	RB_ENTRY(aiost_file_group) tree;
 	struct file *fp;
-	struct vnode *vp;
 	struct aiost *aiost;
 	TAILQ_HEAD(, aio_job) queue;
 	size_t queue_size;
