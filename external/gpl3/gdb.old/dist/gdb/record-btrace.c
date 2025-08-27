@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2023 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -19,16 +19,16 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "record.h"
 #include "record-btrace.h"
 #include "gdbthread.h"
 #include "target.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "disasm.h"
 #include "observable.h"
 #include "cli/cli-utils.h"
 #include "source.h"
+#include "top.h"
 #include "ui-out.h"
 #include "symtab.h"
 #include "filenames.h"
@@ -44,6 +44,8 @@
 #include "cli/cli-style.h"
 #include "async-event.h"
 #include <forward_list>
+#include "objfiles.h"
+#include "interps.h"
 
 static const target_info record_btrace_target_info = {
   "record-btrace",
@@ -229,7 +231,7 @@ record_btrace_get_cpu (void)
 
     case CS_NONE:
       record_btrace_cpu.vendor = CV_UNKNOWN;
-      /* Fall through.  */
+      [[fallthrough]];
     case CS_CPU:
       return &record_btrace_cpu;
     }
@@ -346,7 +348,7 @@ record_btrace_push_target (void)
   record_btrace_generating_corefile = 0;
 
   format = btrace_format_short_string (record_btrace_conf.format);
-  gdb::observers::record_changed.notify (current_inferior (), 1, "btrace", format);
+  interps_notify_record_changed (current_inferior (), 1, "btrace", format);
 }
 
 /* Disable btrace on a set of threads on scope exit.  */
@@ -704,8 +706,8 @@ static struct btrace_line_range
 btrace_find_line_range (CORE_ADDR pc)
 {
   struct btrace_line_range range;
-  struct linetable_entry *lines;
-  struct linetable *ltable;
+  const linetable_entry *lines;
+  const linetable *ltable;
   struct symtab *symtab;
   int nlines, i;
 
@@ -722,6 +724,10 @@ btrace_find_line_range (CORE_ADDR pc)
   if (nlines <= 0)
     return btrace_mk_line_range (symtab, 0, 0);
 
+  struct objfile *objfile = symtab->compunit ()->objfile ();
+  unrelocated_addr unrel_pc
+    = unrelocated_addr (pc - objfile->text_section_offset ());
+
   range = btrace_mk_line_range (symtab, 0, 0);
   for (i = 0; i < nlines - 1; i++)
     {
@@ -733,8 +739,8 @@ btrace_find_line_range (CORE_ADDR pc)
 	 possibly adding more line numbers to the range.  At the time this
 	 change was made I was unsure how to test this so chose to go with
 	 maintaining the existing experience.  */
-      if ((lines[i].pc == pc) && (lines[i].line != 0)
-	  && (lines[i].is_stmt == 1))
+      if (lines[i].unrelocated_pc () == unrel_pc && lines[i].line != 0
+	  && lines[i].is_stmt)
 	range = btrace_line_range_add (range, lines[i].line);
     }
 
@@ -752,8 +758,8 @@ btrace_find_line_range (CORE_ADDR pc)
 
 static void
 btrace_print_lines (struct btrace_line_range lines, struct ui_out *uiout,
-		    gdb::optional<ui_out_emit_tuple> *src_and_asm_tuple,
-		    gdb::optional<ui_out_emit_list> *asm_list,
+		    std::optional<ui_out_emit_tuple> *src_and_asm_tuple,
+		    std::optional<ui_out_emit_list> *asm_list,
 		    gdb_disassembly_flags flags)
 {
   print_source_lines_flags psl_flags;
@@ -787,13 +793,13 @@ btrace_insn_history (struct ui_out *uiout,
 
   flags |= DISASSEMBLY_SPECULATIVE;
 
-  struct gdbarch *gdbarch = target_gdbarch ();
+  gdbarch *gdbarch = current_inferior ()->arch ();
   btrace_line_range last_lines = btrace_mk_line_range (NULL, 0, 0);
 
   ui_out_emit_list list_emitter (uiout, "asm_insns");
 
-  gdb::optional<ui_out_emit_tuple> src_and_asm_tuple;
-  gdb::optional<ui_out_emit_list> asm_list;
+  std::optional<ui_out_emit_tuple> src_and_asm_tuple;
+  std::optional<ui_out_emit_list> asm_list;
 
   gdb_pretty_print_disassembler disasm (gdbarch, uiout);
 
@@ -1391,7 +1397,7 @@ enum record_method
 record_btrace_target::record_method (ptid_t ptid)
 {
   process_stratum_target *proc_target = current_inferior ()->process_target ();
-  thread_info *const tp = find_thread_ptid (proc_target, ptid);
+  thread_info *const tp = proc_target->find_thread (ptid);
 
   if (tp == NULL)
     error (_("No thread."));
@@ -1543,7 +1549,8 @@ record_btrace_target::fetch_registers (struct regcache *regcache, int regno)
   /* Thread-db may ask for a thread's registers before GDB knows about the
      thread.  We forward the request to the target beneath in this
      case.  */
-  thread_info *tp = find_thread_ptid (regcache->target (), regcache->ptid ());
+  thread_info *tp
+    = current_inferior ()->process_target ()->find_thread (regcache->ptid ());
   if (tp != nullptr)
     replay =  tp->btrace.replay;
 
@@ -1642,7 +1649,7 @@ bfcache_eq (const void *arg1, const void *arg2)
 /* Create a new btrace frame cache.  */
 
 static struct btrace_frame_cache *
-bfcache_new (frame_info_ptr frame)
+bfcache_new (const frame_info_ptr &frame)
 {
   struct btrace_frame_cache *cache;
   void **slot;
@@ -1660,7 +1667,7 @@ bfcache_new (frame_info_ptr frame)
 /* Extract the branch trace function from a branch trace frame.  */
 
 static const struct btrace_function *
-btrace_get_frame_function (frame_info_ptr frame)
+btrace_get_frame_function (const frame_info_ptr &frame)
 {
   const struct btrace_frame_cache *cache;
   struct btrace_frame_cache pattern;
@@ -1679,7 +1686,7 @@ btrace_get_frame_function (frame_info_ptr frame)
 /* Implement stop_reason method for record_btrace_frame_unwind.  */
 
 static enum unwind_stop_reason
-record_btrace_frame_unwind_stop_reason (frame_info_ptr this_frame,
+record_btrace_frame_unwind_stop_reason (const frame_info_ptr &this_frame,
 					void **this_cache)
 {
   const struct btrace_frame_cache *cache;
@@ -1698,7 +1705,7 @@ record_btrace_frame_unwind_stop_reason (frame_info_ptr this_frame,
 /* Implement this_id method for record_btrace_frame_unwind.  */
 
 static void
-record_btrace_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+record_btrace_frame_this_id (const frame_info_ptr &this_frame, void **this_cache,
 			     struct frame_id *this_id)
 {
   const struct btrace_frame_cache *cache;
@@ -1728,7 +1735,7 @@ record_btrace_frame_this_id (frame_info_ptr this_frame, void **this_cache,
 /* Implement prev_register method for record_btrace_frame_unwind.  */
 
 static struct value *
-record_btrace_frame_prev_register (frame_info_ptr this_frame,
+record_btrace_frame_prev_register (const frame_info_ptr &this_frame,
 				   void **this_cache,
 				   int regnum)
 {
@@ -1774,7 +1781,7 @@ record_btrace_frame_prev_register (frame_info_ptr this_frame,
 
 static int
 record_btrace_frame_sniffer (const struct frame_unwind *self,
-			     frame_info_ptr this_frame,
+			     const frame_info_ptr &this_frame,
 			     void **this_cache)
 {
   const struct btrace_function *bfun;
@@ -1829,7 +1836,7 @@ record_btrace_frame_sniffer (const struct frame_unwind *self,
 
 static int
 record_btrace_tailcall_frame_sniffer (const struct frame_unwind *self,
-				      frame_info_ptr this_frame,
+				      const frame_info_ptr &this_frame,
 				      void **this_cache)
 {
   const struct btrace_function *bfun, *callee;
@@ -2314,7 +2321,7 @@ record_btrace_replay_at_breakpoint (struct thread_info *tp)
   if (insn == NULL)
     return 0;
 
-  return record_check_stopped_by_breakpoint (tp->inf->aspace, insn->pc,
+  return record_check_stopped_by_breakpoint (tp->inf->aspace.get (), insn->pc,
 					     &btinfo->stop_reason);
 }
 
@@ -2775,7 +2782,7 @@ record_btrace_set_replay (struct thread_info *tp,
   /* Start anew from the new replay position.  */
   record_btrace_clear_histories (btinfo);
 
-  inferior_thread ()->set_stop_pc (regcache_read_pc (get_current_regcache ()));
+  tp->set_stop_pc (regcache_read_pc (get_thread_regcache (tp)));
   print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
 }
 
@@ -2932,7 +2939,7 @@ cmd_record_btrace_start (const char *args, int from_tty)
     {
       execute_command ("target record-btrace", from_tty);
     }
-  catch (const gdb_exception &exception)
+  catch (const gdb_exception_error &exception)
     {
       record_btrace_conf.format = BTRACE_FORMAT_BTS;
 

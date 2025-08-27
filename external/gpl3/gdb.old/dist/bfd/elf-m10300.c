@@ -1,5 +1,5 @@
 /* Matsushita 10300 specific support for 32-bit ELF
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -2694,7 +2694,8 @@ mn10300_elf_relax_section (bfd *abfd,
 	      if (! ((section->flags & SEC_RELOC) != 0
 		     && section->reloc_count != 0))
 		continue;
-	      if ((section->flags & SEC_ALLOC) == 0)
+	      if ((section->flags & SEC_ALLOC) == 0
+		  || (section->flags & SEC_HAS_CONTENTS) == 0)
 		continue;
 
 	      /* Get cached copy of section contents if it exists.  */
@@ -3034,7 +3035,9 @@ mn10300_elf_relax_section (bfd *abfd,
 	      unsigned int symcount;
 
 	      /* Skip non-code sections and empty sections.  */
-	      if ((section->flags & SEC_CODE) == 0 || section->size == 0)
+	      if ((section->flags & SEC_CODE) == 0
+		  || (section->flags & SEC_HAS_CONTENTS) == 0
+		  || section->size == 0)
 		continue;
 
 	      if (section->reloc_count != 0)
@@ -5012,8 +5015,8 @@ _bfd_mn10300_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-_bfd_mn10300_elf_size_dynamic_sections (bfd * output_bfd,
-					struct bfd_link_info * info)
+_bfd_mn10300_elf_late_size_sections (bfd * output_bfd,
+				     struct bfd_link_info * info)
 {
   struct elf32_mn10300_link_hash_table *htab = elf32_mn10300_hash_table (info);
   bfd * dynobj;
@@ -5021,7 +5024,8 @@ _bfd_mn10300_elf_size_dynamic_sections (bfd * output_bfd,
   bool relocs;
 
   dynobj = htab->root.dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -5508,8 +5512,8 @@ mn10300_elf_mkobject (bfd *abfd)
   _bfd_mn10300_elf_create_dynamic_sections
 #define elf_backend_adjust_dynamic_symbol \
   _bfd_mn10300_elf_adjust_dynamic_symbol
-#define elf_backend_size_dynamic_sections \
-  _bfd_mn10300_elf_size_dynamic_sections
+#define elf_backend_late_size_sections \
+  _bfd_mn10300_elf_late_size_sections
 #define elf_backend_omit_section_dynsym _bfd_elf_omit_section_dynsym_all
 #define elf_backend_finish_dynamic_symbol \
   _bfd_mn10300_elf_finish_dynamic_symbol

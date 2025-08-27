@@ -1,4 +1,4 @@
-# Copyright (C) 1992-2023 Free Software Foundation, Inc.
+# Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +15,7 @@
 
 # This file was written by Jeff Law. (law@cs.utah.edu)
 
-if ![istarget "sh3*-*-*"] {
-    verbose "Tests ignored for all but sh3 based targets."
-    return
-}
+require {istarget "sh3*-*-*"}
 
 
 set testfile "sh3"
@@ -103,10 +100,7 @@ proc all_fp_misc_tests { } {
     }
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load $binfile
+clean_restart $binfile
 
 all_fp_move_and_load_tests
 all_fp_arithmetic_tests

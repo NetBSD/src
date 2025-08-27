@@ -1,19 +1,21 @@
 /* This must come before any other includes.  */
 #include "defs.h"
 
-#include "sim-main.h"
-#include "sim-signal.h"
-#include "sim-syscall.h"
-
+#include <errno.h>
 #include <time.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include "sim/callback.h"
 
+#include "sim-main.h"
+#include "sim-fpu.h"
+#include "sim-signal.h"
+#include "sim-syscall.h"
+
+#include "mn10300-sim.h"
 
 #define REG0(X) ((X) & 0x3)
 #define REG1(X) (((X) & 0xc) >> 2)
@@ -153,7 +155,8 @@ do_syscall (SIM_DESC sd)
     {
       /* EXIT - caller can look in parm1 to work out the reason */
       sim_engine_halt (simulator, STATE_CPU (simulator, 0), NULL, PC,
-		       (parm1 == 0xdead ? SIM_SIGABRT : sim_exited), parm1);
+		       parm1 == 0xdead ? sim_stopped : sim_exited,
+		       parm1 == 0xdead ? SIM_SIGABRT : parm1);
     }
   else
     {

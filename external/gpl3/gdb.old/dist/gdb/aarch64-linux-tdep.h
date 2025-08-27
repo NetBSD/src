@@ -1,6 +1,6 @@
 /* GNU/Linux on AArch64 target support, prototypes.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.

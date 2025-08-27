@@ -1,6 +1,6 @@
 /* Simulator for the FT32 processor
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
    Contributed by FTDI <support@ftdichip.com>
 
    This file is part of simulators.
@@ -36,6 +36,8 @@
 #include "sim-signal.h"
 
 #include "opcode/ft32.h"
+
+#include "ft32-sim.h"
 
 /*
  * FT32 is a Harvard architecture: RAM and code occupy
@@ -114,8 +116,6 @@ ft32_read_item (SIM_DESC sd, int dw, uint32_t ea)
 {
   sim_cpu *cpu = STATE_CPU (sd, 0);
   address_word cia = CPU_PC_GET (cpu);
-  uint8_t byte[4];
-  uint32_t r;
 
   ea = ft32_align (dw, ea);
 
@@ -137,7 +137,6 @@ ft32_write_item (SIM_DESC sd, int dw, uint32_t ea, uint32_t v)
 {
   sim_cpu *cpu = STATE_CPU (sd, 0);
   address_word cia = CPU_PC_GET (cpu);
-  uint8_t byte[4];
 
   ea = ft32_align (dw, ea);
 
@@ -162,9 +161,8 @@ ft32_write_item (SIM_DESC sd, int dw, uint32_t ea, uint32_t v)
 static uint32_t cpu_mem_read (SIM_DESC sd, uint32_t dw, uint32_t ea)
 {
   sim_cpu *cpu = STATE_CPU (sd, 0);
-  uint32_t insnpc = cpu->state.pc;
-  uint32_t r;
-  uint8_t byte[4];
+  struct ft32_cpu_state *ft32_cpu = FT32_SIM_CPU (cpu);
+  uint32_t insnpc = ft32_cpu->pc;
 
   ea &= 0x1ffff;
   if (ea & ~0xffff)
@@ -176,7 +174,7 @@ static uint32_t cpu_mem_read (SIM_DESC sd, uint32_t dw, uint32_t ea)
 	  return getchar ();
 	case 0x1fff4:
 	  /* Read the simulator cycle timer.  */
-	  return cpu->state.cycles / 100;
+	  return ft32_cpu->cycles / 100;
 	default:
 	  sim_io_eprintf (sd, "Illegal IO read address %08x, pc %#x\n",
 			  ea, insnpc);
@@ -189,6 +187,7 @@ static uint32_t cpu_mem_read (SIM_DESC sd, uint32_t dw, uint32_t ea)
 static void cpu_mem_write (SIM_DESC sd, uint32_t dw, uint32_t ea, uint32_t d)
 {
   sim_cpu *cpu = STATE_CPU (sd, 0);
+  struct ft32_cpu_state *ft32_cpu = FT32_SIM_CPU (cpu);
   ea &= 0x1ffff;
   if (ea & 0x10000)
     {
@@ -201,23 +200,23 @@ static void cpu_mem_write (SIM_DESC sd, uint32_t dw, uint32_t ea, uint32_t d)
 	  break;
 	case 0x1fc80:
 	  /* Unlock the PM write port */
-	  cpu->state.pm_unlock = (d == 0x1337f7d1);
+	  ft32_cpu->pm_unlock = (d == 0x1337f7d1);
 	  break;
 	case 0x1fc84:
 	  /* Set the PM write address register */
-	  cpu->state.pm_addr = d;
+	  ft32_cpu->pm_addr = d;
 	  break;
 	case 0x1fc88:
-	  if (cpu->state.pm_unlock)
+	  if (ft32_cpu->pm_unlock)
 	    {
 	      /* Write to PM.  */
-	      ft32_write_item (sd, dw, cpu->state.pm_addr, d);
-	      cpu->state.pm_addr += 4;
+	      ft32_write_item (sd, dw, ft32_cpu->pm_addr, d);
+	      ft32_cpu->pm_addr += 4;
 	    }
 	  break;
 	case 0x1fffc:
 	  /* Normal exit.  */
-	  sim_engine_halt (sd, cpu, NULL, cpu->state.pc, sim_exited, cpu->state.regs[0]);
+	  sim_engine_halt (sd, cpu, NULL, ft32_cpu->pc, sim_exited, ft32_cpu->regs[0]);
 	  break;
 	case 0x1fff8:
 	  sim_io_printf (sd, "Debug write %08x\n", d);
@@ -239,17 +238,19 @@ static void cpu_mem_write (SIM_DESC sd, uint32_t dw, uint32_t ea, uint32_t d)
 static void ft32_push (SIM_DESC sd, uint32_t v)
 {
   sim_cpu *cpu = STATE_CPU (sd, 0);
-  cpu->state.regs[FT32_HARD_SP] -= 4;
-  cpu->state.regs[FT32_HARD_SP] &= 0xffff;
-  cpu_mem_write (sd, 2, cpu->state.regs[FT32_HARD_SP], v);
+  struct ft32_cpu_state *ft32_cpu = FT32_SIM_CPU (cpu);
+  ft32_cpu->regs[FT32_HARD_SP] -= 4;
+  ft32_cpu->regs[FT32_HARD_SP] &= 0xffff;
+  cpu_mem_write (sd, 2, ft32_cpu->regs[FT32_HARD_SP], v);
 }
 
 static uint32_t ft32_pop (SIM_DESC sd)
 {
   sim_cpu *cpu = STATE_CPU (sd, 0);
-  uint32_t r = cpu_mem_read (sd, 2, cpu->state.regs[FT32_HARD_SP]);
-  cpu->state.regs[FT32_HARD_SP] += 4;
-  cpu->state.regs[FT32_HARD_SP] &= 0xffff;
+  struct ft32_cpu_state *ft32_cpu = FT32_SIM_CPU (cpu);
+  uint32_t r = cpu_mem_read (sd, 2, ft32_cpu->regs[FT32_HARD_SP]);
+  ft32_cpu->regs[FT32_HARD_SP] += 4;
+  ft32_cpu->regs[FT32_HARD_SP] &= 0xffff;
   return r;
 }
 
@@ -320,7 +321,7 @@ static void
 step_once (SIM_DESC sd)
 {
   sim_cpu *cpu = STATE_CPU (sd, 0);
-  address_word cia = CPU_PC_GET (cpu);
+  struct ft32_cpu_state *ft32_cpu = FT32_SIM_CPU (cpu);
   uint32_t inst;
   uint32_t dw;
   uint32_t cb;
@@ -346,13 +347,13 @@ step_once (SIM_DESC sd)
   unsigned int sc[2];
   int isize;
 
-  inst = ft32_read_item (sd, 2, cpu->state.pc);
-  cpu->state.cycles += 1;
+  inst = ft32_read_item (sd, 2, ft32_cpu->pc);
+  ft32_cpu->cycles += 1;
 
   if ((STATE_ARCHITECTURE (sd)->mach == bfd_mach_ft32b)
-      && ft32_decode_shortcode (cpu->state.pc, inst, sc))
+      && ft32_decode_shortcode (ft32_cpu->pc, inst, sc))
     {
-      if ((cpu->state.pc & 3) == 0)
+      if ((ft32_cpu->pc & 3) == 0)
         inst = sc[0];
       else
         inst = sc[1];
@@ -365,7 +366,7 @@ step_once (SIM_DESC sd)
   if (inst == 0x00340002)
     {
       sim_engine_halt (sd, cpu, NULL,
-		       cpu->state.pc,
+		       ft32_cpu->pc,
 		       sim_stopped, SIM_SIGTRAP);
       goto escape;
     }
@@ -390,8 +391,8 @@ step_once (SIM_DESC sd)
     k15 -= 0x8000;
   al   =              (inst >> FT32_FLD_AL_BIT) & LSBS (FT32_FLD_AL_SIZ);
 
-  r_1v = cpu->state.regs[r_1];
-  rimmv = (rimm & 0x400) ? nsigned (10, rimm) : cpu->state.regs[rimm & 0x1f];
+  r_1v = ft32_cpu->regs[r_1];
+  rimmv = (rimm & 0x400) ? nsigned (10, rimm) : ft32_cpu->regs[rimm & 0x1f];
 
   bit_pos = rimmv & 31;
   bit_len = 0xf & (rimmv >> 5);
@@ -400,24 +401,24 @@ step_once (SIM_DESC sd)
 
   upper = (inst >> 27);
 
-  insnpc = cpu->state.pc;
-  cpu->state.pc += isize;
+  insnpc = ft32_cpu->pc;
+  ft32_cpu->pc += isize;
   switch (upper)
     {
     case FT32_PAT_TOC:
     case FT32_PAT_TOCI:
       {
-	int take = (cr == 3) || ((1 & (cpu->state.regs[28 + cr] >> cb)) == cv);
+	int take = (cr == 3) || ((1 & (ft32_cpu->regs[28 + cr] >> cb)) == cv);
 	if (take)
 	  {
-	    cpu->state.cycles += 1;
+	    ft32_cpu->cycles += 1;
 	    if (bt)
-	      ft32_push (sd, cpu->state.pc); /* this is a call.  */
+	      ft32_push (sd, ft32_cpu->pc); /* this is a call.  */
 	    if (upper == FT32_PAT_TOC)
-	      cpu->state.pc = pa << 2;
+	      ft32_cpu->pc = pa << 2;
 	    else
-	      cpu->state.pc = cpu->state.regs[r_2];
-	    if (cpu->state.pc == 0x8)
+	      ft32_cpu->pc = ft32_cpu->regs[r_2];
+	    if (ft32_cpu->pc == 0x8)
 		goto escape;
 	  }
       }
@@ -449,7 +450,7 @@ step_once (SIM_DESC sd)
 	    ILLEGAL ();
 	  }
 	if (upper == FT32_PAT_ALUOP)
-	  cpu->state.regs[r_d] = result;
+	  ft32_cpu->regs[r_d] = result;
 	else
 	  {
 	    uint32_t dwmask = 0;
@@ -492,7 +493,7 @@ step_once (SIM_DESC sd)
 	    greater = (sign == overflow) & !zero;
 	    greatereq = (sign == overflow);
 
-	    cpu->state.regs[r_d] = (
+	    ft32_cpu->regs[r_d] = (
 	      (above << 6) |
 	      (greater << 5) |
 	      (greatereq << 4) |
@@ -505,54 +506,54 @@ step_once (SIM_DESC sd)
       break;
 
     case FT32_PAT_LDK:
-      cpu->state.regs[r_d] = k20;
+      ft32_cpu->regs[r_d] = k20;
       break;
 
     case FT32_PAT_LPM:
-      cpu->state.regs[r_d] = ft32_read_item (sd, dw, pa << 2);
-      cpu->state.cycles += 1;
+      ft32_cpu->regs[r_d] = ft32_read_item (sd, dw, pa << 2);
+      ft32_cpu->cycles += 1;
       break;
 
     case FT32_PAT_LPMI:
-      cpu->state.regs[r_d] = ft32_read_item (sd, dw, cpu->state.regs[r_1] + k15);
-      cpu->state.cycles += 1;
+      ft32_cpu->regs[r_d] = ft32_read_item (sd, dw, ft32_cpu->regs[r_1] + k15);
+      ft32_cpu->cycles += 1;
       break;
 
     case FT32_PAT_STA:
-      cpu_mem_write (sd, dw, aa, cpu->state.regs[r_d]);
+      cpu_mem_write (sd, dw, aa, ft32_cpu->regs[r_d]);
       break;
 
     case FT32_PAT_STI:
-      cpu_mem_write (sd, dw, cpu->state.regs[r_d] + k15, cpu->state.regs[r_1]);
+      cpu_mem_write (sd, dw, ft32_cpu->regs[r_d] + k15, ft32_cpu->regs[r_1]);
       break;
 
     case FT32_PAT_LDA:
-      cpu->state.regs[r_d] = cpu_mem_read (sd, dw, aa);
-      cpu->state.cycles += 1;
+      ft32_cpu->regs[r_d] = cpu_mem_read (sd, dw, aa);
+      ft32_cpu->cycles += 1;
       break;
 
     case FT32_PAT_LDI:
-      cpu->state.regs[r_d] = cpu_mem_read (sd, dw, cpu->state.regs[r_1] + k15);
-      cpu->state.cycles += 1;
+      ft32_cpu->regs[r_d] = cpu_mem_read (sd, dw, ft32_cpu->regs[r_1] + k15);
+      ft32_cpu->cycles += 1;
       break;
 
     case FT32_PAT_EXA:
       {
 	uint32_t tmp;
 	tmp = cpu_mem_read (sd, dw, aa);
-	cpu_mem_write (sd, dw, aa, cpu->state.regs[r_d]);
-	cpu->state.regs[r_d] = tmp;
-	cpu->state.cycles += 1;
+	cpu_mem_write (sd, dw, aa, ft32_cpu->regs[r_d]);
+	ft32_cpu->regs[r_d] = tmp;
+	ft32_cpu->cycles += 1;
       }
       break;
 
     case FT32_PAT_EXI:
       {
 	uint32_t tmp;
-	tmp = cpu_mem_read (sd, dw, cpu->state.regs[r_1] + k15);
-	cpu_mem_write (sd, dw, cpu->state.regs[r_1] + k15, cpu->state.regs[r_d]);
-	cpu->state.regs[r_d] = tmp;
-	cpu->state.cycles += 1;
+	tmp = cpu_mem_read (sd, dw, ft32_cpu->regs[r_1] + k15);
+	cpu_mem_write (sd, dw, ft32_cpu->regs[r_1] + k15, ft32_cpu->regs[r_d]);
+	ft32_cpu->regs[r_d] = tmp;
+	ft32_cpu->cycles += 1;
       }
       break;
 
@@ -561,41 +562,41 @@ step_once (SIM_DESC sd)
       break;
 
     case FT32_PAT_LINK:
-      ft32_push (sd, cpu->state.regs[r_d]);
-      cpu->state.regs[r_d] = cpu->state.regs[FT32_HARD_SP];
-      cpu->state.regs[FT32_HARD_SP] -= k16;
-      cpu->state.regs[FT32_HARD_SP] &= 0xffff;
+      ft32_push (sd, ft32_cpu->regs[r_d]);
+      ft32_cpu->regs[r_d] = ft32_cpu->regs[FT32_HARD_SP];
+      ft32_cpu->regs[FT32_HARD_SP] -= k16;
+      ft32_cpu->regs[FT32_HARD_SP] &= 0xffff;
       break;
 
     case FT32_PAT_UNLINK:
-      cpu->state.regs[FT32_HARD_SP] = cpu->state.regs[r_d];
-      cpu->state.regs[FT32_HARD_SP] &= 0xffff;
-      cpu->state.regs[r_d] = ft32_pop (sd);
+      ft32_cpu->regs[FT32_HARD_SP] = ft32_cpu->regs[r_d];
+      ft32_cpu->regs[FT32_HARD_SP] &= 0xffff;
+      ft32_cpu->regs[r_d] = ft32_pop (sd);
       break;
 
     case FT32_PAT_POP:
-      cpu->state.cycles += 1;
-      cpu->state.regs[r_d] = ft32_pop (sd);
+      ft32_cpu->cycles += 1;
+      ft32_cpu->regs[r_d] = ft32_pop (sd);
       break;
 
     case FT32_PAT_RETURN:
-      cpu->state.pc = ft32_pop (sd);
+      ft32_cpu->pc = ft32_pop (sd);
       break;
 
     case FT32_PAT_FFUOP:
       switch (al)
 	{
 	case 0x0:
-	  cpu->state.regs[r_d] = r_1v / rimmv;
+	  ft32_cpu->regs[r_d] = r_1v / rimmv;
 	  break;
 	case 0x1:
-	  cpu->state.regs[r_d] = r_1v % rimmv;
+	  ft32_cpu->regs[r_d] = r_1v % rimmv;
 	  break;
 	case 0x2:
-	  cpu->state.regs[r_d] = ft32sdiv (r_1v, rimmv);
+	  ft32_cpu->regs[r_d] = ft32sdiv (r_1v, rimmv);
 	  break;
 	case 0x3:
-	  cpu->state.regs[r_d] = ft32smod (r_1v, rimmv);
+	  ft32_cpu->regs[r_d] = ft32smod (r_1v, rimmv);
 	  break;
 
 	case 0x4:
@@ -607,7 +608,7 @@ step_once (SIM_DESC sd)
 	    while ((GET_BYTE (a + i) != 0) &&
 		   (GET_BYTE (a + i) == GET_BYTE (b + i)))
 	      i++;
-	    cpu->state.regs[r_d] = GET_BYTE (a + i) - GET_BYTE (b + i);
+	    ft32_cpu->regs[r_d] = GET_BYTE (a + i) - GET_BYTE (b + i);
 	  }
 	  break;
 
@@ -615,7 +616,7 @@ step_once (SIM_DESC sd)
 	  {
 	    /* memcpy instruction.  */
 	    uint32_t src = r_1v;
-	    uint32_t dst = cpu->state.regs[r_d];
+	    uint32_t dst = ft32_cpu->regs[r_d];
 	    uint32_t i;
 	    for (i = 0; i < (rimmv & 0x7fff); i++)
 	      PUT_BYTE (dst + i, GET_BYTE (src + i));
@@ -628,46 +629,46 @@ step_once (SIM_DESC sd)
 	    uint32_t i;
 	    for (i = 0; GET_BYTE (src + i) != 0; i++)
 	      ;
-	    cpu->state.regs[r_d] = i;
+	    ft32_cpu->regs[r_d] = i;
 	  }
 	  break;
 	case 0x7:
 	  {
 	    /* memset instruction.  */
-	    uint32_t dst = cpu->state.regs[r_d];
+	    uint32_t dst = ft32_cpu->regs[r_d];
 	    uint32_t i;
 	    for (i = 0; i < (rimmv & 0x7fff); i++)
 	      PUT_BYTE (dst + i, r_1v);
 	  }
 	  break;
 	case 0x8:
-	  cpu->state.regs[r_d] = r_1v * rimmv;
+	  ft32_cpu->regs[r_d] = r_1v * rimmv;
 	  break;
 	case 0x9:
-	  cpu->state.regs[r_d] = ((uint64_t)r_1v * (uint64_t)rimmv) >> 32;
+	  ft32_cpu->regs[r_d] = ((uint64_t)r_1v * (uint64_t)rimmv) >> 32;
 	  break;
 	case 0xa:
 	  {
 	    /* stpcpy instruction.  */
 	    uint32_t src = r_1v;
-	    uint32_t dst = cpu->state.regs[r_d];
+	    uint32_t dst = ft32_cpu->regs[r_d];
 	    uint32_t i;
 	    for (i = 0; GET_BYTE (src + i) != 0; i++)
 	      PUT_BYTE (dst + i, GET_BYTE (src + i));
 	    PUT_BYTE (dst + i, 0);
-	    cpu->state.regs[r_d] = dst + i;
+	    ft32_cpu->regs[r_d] = dst + i;
 	  }
 	  break;
 	case 0xe:
 	  {
 	    /* streamout instruction.  */
 	    uint32_t i;
-	    uint32_t src = cpu->state.regs[r_1];
+	    uint32_t src = ft32_cpu->regs[r_1];
 	    for (i = 0; i < rimmv; i += (1 << dw))
 	      {
 		cpu_mem_write (sd,
 			       dw,
-			       cpu->state.regs[r_d],
+			       ft32_cpu->regs[r_d],
 			       cpu_mem_read (sd, dw, src));
 		src += (1 << dw);
 	      }
@@ -683,7 +684,7 @@ step_once (SIM_DESC sd)
       sim_io_eprintf (sd, "Unhandled pattern %d at %08x\n", upper, insnpc);
       ILLEGAL ();
     }
-  cpu->state.num_i++;
+  ft32_cpu->num_i++;
 
 escape:
   ;
@@ -695,11 +696,7 @@ sim_engine_run (SIM_DESC sd,
 		int nr_cpus,      /* ignore  */
 		int siggnal)      /* ignore  */
 {
-  sim_cpu *cpu;
-
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
-
-  cpu = STATE_CPU (sd, 0);
 
   while (1)
     {
@@ -721,6 +718,8 @@ ft32_lookup_register (SIM_CPU *cpu, int nr)
    * 31 - cc
    */
 
+  struct ft32_cpu_state *ft32_cpu = FT32_SIM_CPU (cpu);
+
   if ((nr < 0) || (nr > 32))
     {
       sim_io_eprintf (CPU_STATE (cpu), "unknown register %i\n", nr);
@@ -730,15 +729,15 @@ ft32_lookup_register (SIM_CPU *cpu, int nr)
   switch (nr)
     {
     case FT32_FP_REGNUM:
-      return &cpu->state.regs[FT32_HARD_FP];
+      return &ft32_cpu->regs[FT32_HARD_FP];
     case FT32_SP_REGNUM:
-      return &cpu->state.regs[FT32_HARD_SP];
+      return &ft32_cpu->regs[FT32_HARD_SP];
     case FT32_CC_REGNUM:
-      return &cpu->state.regs[FT32_HARD_CC];
+      return &ft32_cpu->regs[FT32_HARD_CC];
     case FT32_PC_REGNUM:
-      return &cpu->state.pc;
+      return &ft32_cpu->pc;
     default:
-      return &cpu->state.regs[nr - 2];
+      return &ft32_cpu->regs[nr - 2];
     }
 }
 
@@ -779,13 +778,13 @@ ft32_reg_fetch (SIM_CPU *cpu,
 static sim_cia
 ft32_pc_get (SIM_CPU *cpu)
 {
-  return cpu->state.pc;
+  return FT32_SIM_CPU (cpu)->pc;
 }
 
 static void
 ft32_pc_set (SIM_CPU *cpu, sim_cia newpc)
 {
-  cpu->state.pc = newpc;
+  FT32_SIM_CPU (cpu)->pc = newpc;
 }
 
 /* Cover function of sim_state_free to free the cpu buffers as well.  */
@@ -814,7 +813,8 @@ sim_open (SIM_OPEN_KIND kind,
   current_target_byte_order = BFD_ENDIAN_LITTLE;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct ft32_cpu_state))
+      != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -884,6 +884,7 @@ sim_create_inferior (SIM_DESC sd,
 {
   uint32_t addr;
   sim_cpu *cpu = STATE_CPU (sd, 0);
+  struct ft32_cpu_state *ft32_cpu = FT32_SIM_CPU (cpu);
   host_callback *cb = STATE_CALLBACK (sd);
 
   /* Set the PC.  */
@@ -911,10 +912,10 @@ sim_create_inferior (SIM_DESC sd,
   cb->argv = STATE_PROG_ARGV (sd);
   cb->envp = STATE_PROG_ENVP (sd);
 
-  cpu->state.regs[FT32_HARD_SP] = addr;
-  cpu->state.num_i = 0;
-  cpu->state.cycles = 0;
-  cpu->state.next_tick_cycle = 100000;
+  ft32_cpu->regs[FT32_HARD_SP] = addr;
+  ft32_cpu->num_i = 0;
+  ft32_cpu->cycles = 0;
+  ft32_cpu->next_tick_cycle = 100000;
 
   return SIM_RC_OK;
 }

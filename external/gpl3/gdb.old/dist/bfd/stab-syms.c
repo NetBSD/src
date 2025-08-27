@@ -1,5 +1,5 @@
 /* Table of stab names for the BFD library.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -43,6 +43,17 @@
   __define_name (N_SETV, "SETV")/* Pointer to set vector in data area.  */ \
   __define_name (N_INDR, "INDR") \
   __define_name (N_WARNING, "WARNING")
+
+/*
+FUNCTION
+	bfd_get_stab_name
+
+SYNOPSIS
+	const char *bfd_get_stab_name (int);
+
+DESCRIPTION
+	Get the name of a stabs type code.
+*/
 
 const char *
 bfd_get_stab_name (int code)

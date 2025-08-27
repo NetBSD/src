@@ -1,5 +1,5 @@
 /* Simulator for Atmel's AVR core.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Written by Tristan Gingold, AdaCore.
 
    This file is part of GDB, the GNU debugger.
@@ -30,6 +30,7 @@
 #include "sim-base.h"
 #include "sim-options.h"
 #include "sim-signal.h"
+#include "avr-sim.h"
 
 /* As AVR is a 8/16 bits processor, define handy types.  */
 typedef unsigned short int word;
@@ -729,19 +730,20 @@ static void
 do_call (SIM_CPU *cpu, unsigned int npc)
 {
   const struct avr_sim_state *state = AVR_SIM_STATE (CPU_STATE (cpu));
+  struct avr_sim_cpu *avr_cpu = AVR_SIM_CPU (cpu);
   unsigned int sp = read_word (REG_SP);
 
   /* Big endian!  */
-  sram[sp--] = cpu->pc;
-  sram[sp--] = cpu->pc >> 8;
+  sram[sp--] = avr_cpu->pc;
+  sram[sp--] = avr_cpu->pc >> 8;
   if (state->avr_pc22)
     {
-      sram[sp--] = cpu->pc >> 16;
-      cpu->cycles++;
+      sram[sp--] = avr_cpu->pc >> 16;
+      avr_cpu->cycles++;
     }
   write_word (REG_SP, sp);
-  cpu->pc = npc & PC_MASK;
-  cpu->cycles += 3;
+  avr_cpu->pc = npc & PC_MASK;
+  avr_cpu->cycles += 3;
 }
 
 static int
@@ -775,18 +777,21 @@ get_lpm (unsigned int addr)
 static void
 gen_mul (SIM_CPU *cpu, unsigned int res)
 {
+  struct avr_sim_cpu *avr_cpu = AVR_SIM_CPU (cpu);
+
   write_word (0, res);
   sram[SREG] &= ~(SREG_Z | SREG_C);
   if (res == 0)
     sram[SREG] |= SREG_Z;
   if (res & 0x8000)
     sram[SREG] |= SREG_C;
-  cpu->cycles++;
+  avr_cpu->cycles++;
 }
 
 static void
 step_once (SIM_CPU *cpu)
 {
+  struct avr_sim_cpu *avr_cpu = AVR_SIM_CPU (cpu);
   unsigned int ipc;
 
   int code;
@@ -795,8 +800,8 @@ step_once (SIM_CPU *cpu)
   byte r, d, vd;
 
  again:
-  code = flash[cpu->pc].code;
-  op = flash[cpu->pc].op;
+  code = flash[avr_cpu->pc].code;
+  op = flash[avr_cpu->pc].op;
 
 #if 0
       if (tracing && code != OP_unknown)
@@ -829,27 +834,27 @@ step_once (SIM_CPU *cpu)
 	  }
 
 	  if (!tracing)
-	    sim_cb_eprintf (callback, "%06x: %04x\n", 2 * cpu->pc, flash[cpu->pc].op);
+	    sim_cb_eprintf (callback, "%06x: %04x\n", 2 * avr_cpu->pc, flash[avr_cpu->pc].op);
 	  else
 	    {
 	      sim_cb_eprintf (callback, "pc=0x%06x insn=0x%04x code=%d r=%d\n",
-                              2 * cpu->pc, flash[cpu->pc].op, code, flash[cpu->pc].r);
-	      disassemble_insn (CPU_STATE (cpu), cpu->pc);
+                              2 * avr_cpu->pc, flash[avr_cpu->pc].op, code, flash[avr_cpu->pc].r);
+	      disassemble_insn (CPU_STATE (cpu), avr_cpu->pc);
 	      sim_cb_eprintf (callback, "\n");
 	    }
 	}
 #endif
 
-  ipc = cpu->pc;
-  cpu->pc = (cpu->pc + 1) & PC_MASK;
-  cpu->cycles++;
+  ipc = avr_cpu->pc;
+  avr_cpu->pc = (avr_cpu->pc + 1) & PC_MASK;
+  avr_cpu->cycles++;
 
   switch (code)
     {
       case OP_unknown:
 	flash[ipc].code = decode(ipc);
-	cpu->pc = ipc;
-	cpu->cycles--;
+	avr_cpu->pc = ipc;
+	avr_cpu->cycles--;
 	goto again;
 
       case OP_nop:
@@ -857,23 +862,23 @@ step_once (SIM_CPU *cpu)
 
       case OP_jmp:
 	/* 2 words instruction, but we don't care about the pc.  */
-	cpu->pc = ((flash[ipc].r << 16) | flash[ipc + 1].op) & PC_MASK;
-	cpu->cycles += 2;
+	avr_cpu->pc = ((flash[ipc].r << 16) | flash[ipc + 1].op) & PC_MASK;
+	avr_cpu->cycles += 2;
 	break;
 
       case OP_eijmp:
-	cpu->pc = ((sram[EIND] << 16) | read_word (REGZ)) & PC_MASK;
-	cpu->cycles += 2;
+	avr_cpu->pc = ((sram[EIND] << 16) | read_word (REGZ)) & PC_MASK;
+	avr_cpu->cycles += 2;
 	break;
 
       case OP_ijmp:
-	cpu->pc = read_word (REGZ) & PC_MASK;
-	cpu->cycles += 1;
+	avr_cpu->pc = read_word (REGZ) & PC_MASK;
+	avr_cpu->cycles += 1;
 	break;
 
       case OP_call:
 	/* 2 words instruction.  */
-	cpu->pc++;
+	avr_cpu->pc++;
 	do_call (cpu, (flash[ipc].r << 16) | flash[ipc + 1].op);
 	break;
 
@@ -886,28 +891,28 @@ step_once (SIM_CPU *cpu)
 	break;
 
       case OP_rcall:
-	do_call (cpu, cpu->pc + sign_ext (op & 0xfff, 12));
+	do_call (cpu, avr_cpu->pc + sign_ext (op & 0xfff, 12));
 	break;
 
       case OP_reti:
 	sram[SREG] |= SREG_I;
-	/* Fall through */
+	ATTRIBUTE_FALLTHROUGH;
       case OP_ret:
 	{
 	  const struct avr_sim_state *state = AVR_SIM_STATE (CPU_STATE (cpu));
 	  unsigned int sp = read_word (REG_SP);
 	  if (state->avr_pc22)
 	    {
-	      cpu->pc = sram[++sp] << 16;
-	      cpu->cycles++;
+	      avr_cpu->pc = sram[++sp] << 16;
+	      avr_cpu->cycles++;
 	    }
 	  else
-	    cpu->pc = 0;
-	  cpu->pc |= sram[++sp] << 8;
-	  cpu->pc |= sram[++sp];
+	    avr_cpu->pc = 0;
+	  avr_cpu->pc |= sram[++sp] << 8;
+	  avr_cpu->pc |= sram[++sp];
 	  write_word (REG_SP, sp);
 	}
-	cpu->cycles += 3;
+	avr_cpu->cycles += 3;
 	break;
 
       case OP_break:
@@ -935,9 +940,9 @@ step_once (SIM_CPU *cpu)
       case OP_sbrs:
 	if (((sram[get_d (op)] & flash[ipc].r) == 0) ^ ((op & 0x0200) != 0))
 	  {
-	    int l = get_insn_length (cpu->pc);
-	    cpu->pc += l;
-	    cpu->cycles += l;
+	    int l = get_insn_length (avr_cpu->pc);
+	    avr_cpu->pc += l;
+	    avr_cpu->cycles += l;
 	  }
 	break;
 
@@ -947,7 +952,7 @@ step_once (SIM_CPU *cpu)
 	  sram[sp--] = sram[get_d (op)];
 	  write_word (REG_SP, sp);
 	}
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_pop:
@@ -956,7 +961,7 @@ step_once (SIM_CPU *cpu)
 	  sram[get_d (op)] = sram[++sp];
 	  write_word (REG_SP, sp);
 	}
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_bclr:
@@ -968,8 +973,8 @@ step_once (SIM_CPU *cpu)
 	break;
 
       case OP_rjmp:
-	cpu->pc = (cpu->pc + sign_ext (op & 0xfff, 12)) & PC_MASK;
-	cpu->cycles++;
+	avr_cpu->pc = (avr_cpu->pc + sign_ext (op & 0xfff, 12)) & PC_MASK;
+	avr_cpu->cycles++;
 	break;
 
       case OP_eor:
@@ -1206,9 +1211,9 @@ step_once (SIM_CPU *cpu)
 	if (d == STDIO_PORT)
 	  putchar (res);
 	else if (d == EXIT_PORT)
-	  sim_engine_halt (CPU_STATE (cpu), cpu, NULL, cpu->pc, sim_exited, 0);
+	  sim_engine_halt (CPU_STATE (cpu), cpu, NULL, avr_cpu->pc, sim_exited, 0);
 	else if (d == ABORT_PORT)
-	  sim_engine_halt (CPU_STATE (cpu), cpu, NULL, cpu->pc, sim_exited, 1);
+	  sim_engine_halt (CPU_STATE (cpu), cpu, NULL, avr_cpu->pc, sim_exited, 1);
 	break;
 
       case OP_in:
@@ -1229,18 +1234,18 @@ step_once (SIM_CPU *cpu)
       case OP_sbic:
 	if (!(sram[get_biA (op) + 0x20] & 1 << get_b(op)))
 	  {
-	    int l = get_insn_length (cpu->pc);
-	    cpu->pc += l;
-	    cpu->cycles += l;
+	    int l = get_insn_length (avr_cpu->pc);
+	    avr_cpu->pc += l;
+	    avr_cpu->cycles += l;
 	  }
 	break;
 
       case OP_sbis:
 	if (sram[get_biA (op) + 0x20] & 1 << get_b(op))
 	  {
-	    int l = get_insn_length (cpu->pc);
-	    cpu->pc += l;
-	    cpu->cycles += l;
+	    int l = get_insn_length (avr_cpu->pc);
+	    avr_cpu->pc += l;
+	    avr_cpu->cycles += l;
 	  }
 	break;
 
@@ -1251,23 +1256,23 @@ step_once (SIM_CPU *cpu)
 	break;
 
       case OP_lds:
-	sram[get_d (op)] = sram[flash[cpu->pc].op];
-	cpu->pc++;
-	cpu->cycles++;
+	sram[get_d (op)] = sram[flash[avr_cpu->pc].op];
+	avr_cpu->pc++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_sts:
-	sram[flash[cpu->pc].op] = sram[get_d (op)];
-	cpu->pc++;
-	cpu->cycles++;
+	sram[flash[avr_cpu->pc].op] = sram[get_d (op)];
+	avr_cpu->pc++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_cpse:
 	if (sram[get_r (op)] == sram[get_d (op)])
 	  {
-	    int l = get_insn_length (cpu->pc);
-	    cpu->pc += l;
-	    cpu->cycles += l;
+	    int l = get_insn_length (avr_cpu->pc);
+	    avr_cpu->pc += l;
+	    avr_cpu->cycles += l;
 	  }
 	break;
 
@@ -1304,42 +1309,42 @@ step_once (SIM_CPU *cpu)
       case OP_brbc:
 	if (!(sram[SREG] & flash[ipc].r))
 	  {
-	    cpu->pc = (cpu->pc + get_k (op)) & PC_MASK;
-	    cpu->cycles++;
+	    avr_cpu->pc = (avr_cpu->pc + get_k (op)) & PC_MASK;
+	    avr_cpu->cycles++;
 	  }
 	break;
 
       case OP_brbs:
 	if (sram[SREG] & flash[ipc].r)
 	  {
-	    cpu->pc = (cpu->pc + get_k (op)) & PC_MASK;
-	    cpu->cycles++;
+	    avr_cpu->pc = (avr_cpu->pc + get_k (op)) & PC_MASK;
+	    avr_cpu->cycles++;
 	  }
 	break;
 
       case OP_lpm:
 	sram[0] = get_lpm (read_word (REGZ));
-	cpu->cycles += 2;
+	avr_cpu->cycles += 2;
 	break;
 
       case OP_lpm_Z:
 	sram[get_d (op)] = get_lpm (read_word (REGZ));
-	cpu->cycles += 2;
+	avr_cpu->cycles += 2;
 	break;
 
       case OP_lpm_inc_Z:
 	sram[get_d (op)] = get_lpm (read_word_post_inc (REGZ));
-	cpu->cycles += 2;
+	avr_cpu->cycles += 2;
 	break;
 
       case OP_elpm:
 	sram[0] = get_lpm (get_z ());
-	cpu->cycles += 2;
+	avr_cpu->cycles += 2;
 	break;
 
       case OP_elpm_Z:
 	sram[get_d (op)] = get_lpm (get_z ());
-	cpu->cycles += 2;
+	avr_cpu->cycles += 2;
 	break;
 
       case OP_elpm_inc_Z:
@@ -1352,97 +1357,97 @@ step_once (SIM_CPU *cpu)
 	  sram[REGZ_HI] = z >> 8;
 	  sram[RAMPZ] = z >> 16;
 	}
-	cpu->cycles += 2;
+	avr_cpu->cycles += 2;
 	break;
 
       case OP_ld_Z_inc:
 	sram[get_d (op)] = sram[read_word_post_inc (REGZ) & SRAM_MASK];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_ld_dec_Z:
 	sram[get_d (op)] = sram[read_word_pre_dec (REGZ) & SRAM_MASK];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_ld_X_inc:
 	sram[get_d (op)] = sram[read_word_post_inc (REGX) & SRAM_MASK];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_ld_dec_X:
 	sram[get_d (op)] = sram[read_word_pre_dec (REGX) & SRAM_MASK];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_ld_Y_inc:
 	sram[get_d (op)] = sram[read_word_post_inc (REGY) & SRAM_MASK];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_ld_dec_Y:
 	sram[get_d (op)] = sram[read_word_pre_dec (REGY) & SRAM_MASK];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_st_X:
 	sram[read_word (REGX) & SRAM_MASK] = sram[get_d (op)];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_st_X_inc:
 	sram[read_word_post_inc (REGX) & SRAM_MASK] = sram[get_d (op)];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_st_dec_X:
 	sram[read_word_pre_dec (REGX) & SRAM_MASK] = sram[get_d (op)];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_st_Z_inc:
 	sram[read_word_post_inc (REGZ) & SRAM_MASK] = sram[get_d (op)];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_st_dec_Z:
 	sram[read_word_pre_dec (REGZ) & SRAM_MASK] = sram[get_d (op)];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_st_Y_inc:
 	sram[read_word_post_inc (REGY) & SRAM_MASK] = sram[get_d (op)];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_st_dec_Y:
 	sram[read_word_pre_dec (REGY) & SRAM_MASK] = sram[get_d (op)];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_std_Y:
 	sram[read_word (REGY) + flash[ipc].r] = sram[get_d (op)];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_std_Z:
 	sram[read_word (REGZ) + flash[ipc].r] = sram[get_d (op)];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_ldd_Z:
 	sram[get_d (op)] = sram[read_word (REGZ) + flash[ipc].r];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_ldd_Y:
 	sram[get_d (op)] = sram[read_word (REGY) + flash[ipc].r];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_ld_X:
 	sram[get_d (op)] = sram[read_word (REGX) & SRAM_MASK];
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_sbiw:
@@ -1468,7 +1473,7 @@ step_once (SIM_CPU *cpu)
 	    sram[SREG] |= SREG_S;
 	  write_word (d, wres);
 	}
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_adiw:
@@ -1494,14 +1499,14 @@ step_once (SIM_CPU *cpu)
 	    sram[SREG] |= SREG_S;
 	  write_word (d, wres);
 	}
-	cpu->cycles++;
+	avr_cpu->cycles++;
 	break;
 
       case OP_bad:
-	sim_engine_halt (CPU_STATE (cpu), cpu, NULL, cpu->pc, sim_signalled, SIM_SIGILL);
+	sim_engine_halt (CPU_STATE (cpu), cpu, NULL, avr_cpu->pc, sim_signalled, SIM_SIGILL);
 
       default:
-	sim_engine_halt (CPU_STATE (cpu), cpu, NULL, cpu->pc, sim_signalled, SIM_SIGILL);
+	sim_engine_halt (CPU_STATE (cpu), cpu, NULL, avr_cpu->pc, sim_signalled, SIM_SIGILL);
       }
 }
 
@@ -1525,8 +1530,8 @@ sim_engine_run (SIM_DESC sd,
     }
 }
 
-int
-sim_write (SIM_DESC sd, SIM_ADDR addr, const void *buffer, int size)
+uint64_t
+sim_write (SIM_DESC sd, uint64_t addr, const void *buffer, uint64_t size)
 {
   int osize = size;
 
@@ -1562,8 +1567,8 @@ sim_write (SIM_DESC sd, SIM_ADDR addr, const void *buffer, int size)
     return 0;
 }
 
-int
-sim_read (SIM_DESC sd, SIM_ADDR addr, void *buffer, int size)
+uint64_t
+sim_read (SIM_DESC sd, uint64_t addr, void *buffer, uint64_t size)
 {
   int osize = size;
 
@@ -1602,6 +1607,7 @@ sim_read (SIM_DESC sd, SIM_ADDR addr, void *buffer, int size)
 static int
 avr_reg_store (SIM_CPU *cpu, int rn, const void *buf, int length)
 {
+  struct avr_sim_cpu *avr_cpu = AVR_SIM_CPU (cpu);
   const unsigned char *memory = buf;
 
   if (rn < 32 && length == 1)
@@ -1622,9 +1628,9 @@ avr_reg_store (SIM_CPU *cpu, int rn, const void *buf, int length)
     }
   if (rn == AVR_PC_REGNUM && length == 4)
     {
-      cpu->pc = (memory[0] >> 1) | (memory[1] << 7)
+      avr_cpu->pc = (memory[0] >> 1) | (memory[1] << 7)
 		| (memory[2] << 15) | (memory[3] << 23);
-      cpu->pc &= PC_MASK;
+      avr_cpu->pc &= PC_MASK;
       return 4;
     }
   return 0;
@@ -1633,6 +1639,7 @@ avr_reg_store (SIM_CPU *cpu, int rn, const void *buf, int length)
 static int
 avr_reg_fetch (SIM_CPU *cpu, int rn, void *buf, int length)
 {
+  struct avr_sim_cpu *avr_cpu = AVR_SIM_CPU (cpu);
   unsigned char *memory = buf;
 
   if (rn < 32 && length == 1)
@@ -1653,10 +1660,10 @@ avr_reg_fetch (SIM_CPU *cpu, int rn, void *buf, int length)
     }
   if (rn == AVR_PC_REGNUM && length == 4)
     {
-      memory[0] = cpu->pc << 1;
-      memory[1] = cpu->pc >> 7;
-      memory[2] = cpu->pc >> 15;
-      memory[3] = cpu->pc >> 23;
+      memory[0] = avr_cpu->pc << 1;
+      memory[1] = avr_cpu->pc >> 7;
+      memory[2] = avr_cpu->pc >> 15;
+      memory[3] = avr_cpu->pc >> 23;
       return 4;
     }
   return 0;
@@ -1665,13 +1672,13 @@ avr_reg_fetch (SIM_CPU *cpu, int rn, void *buf, int length)
 static sim_cia
 avr_pc_get (sim_cpu *cpu)
 {
-  return cpu->pc;
+  return AVR_SIM_CPU (cpu)->pc;
 }
 
 static void
 avr_pc_set (sim_cpu *cpu, sim_cia pc)
 {
-  cpu->pc = pc;
+  AVR_SIM_CPU (cpu)->pc = pc;
 }
 
 static void
@@ -1696,7 +1703,8 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
   current_target_byte_order = BFD_ENDIAN_LITTLE;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct avr_sim_cpu))
+      != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -1762,7 +1770,7 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
 {
   struct avr_sim_state *state = AVR_SIM_STATE (sd);
   SIM_CPU *cpu = STATE_CPU (sd, 0);
-  SIM_ADDR addr;
+  bfd_vma addr;
 
   /* Set the PC.  */
   if (abfd != NULL)

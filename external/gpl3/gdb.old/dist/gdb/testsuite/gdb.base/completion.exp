@@ -1,4 +1,4 @@
-# Copyright 1998-2023 Free Software Foundation, Inc.
+# Copyright 1998-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -159,7 +159,7 @@ foreach {-> reg} [regexp -all -inline -line {^info registers (\w+\S*)} $regs_out
     lappend completed_regs $reg
 }
 set completed_regs [join [lsort $completed_regs]]
-gdb_assert {{$all_regs eq $completed_regs}} "complete 'info registers '"
+gdb_assert {$all_regs eq $completed_regs} "complete 'info registers '"
 
 # Tests below are about tab-completion, which doesn't work if readline
 # library isn't used.  Check it first.
@@ -975,3 +975,33 @@ test_gdb_complete_unique "xxx_yyy_" "xxx_yyy_zzz"
 gdb_test_no_output "alias set aaa_bbb_ccc=set debug"
 gdb_test_no_output "maint deprecate set aaa_bbb_ccc"
 test_gdb_complete_unique "set aaa_bbb_" "set aaa_bbb_ccc"
+
+# Test command completion for the disassemble command.
+test_gdb_complete_unique \
+    "disassemble multi_line_if" \
+    "disassemble multi_line_if_conditional"
+
+test_gdb_complete_multiple "disassemble " \
+    "multi_li" "ne_" {
+	"multi_line_if_conditional"
+	"multi_line_while_conditional"
+    }
+
+foreach_with_prefix spc { " " "" } {
+    test_gdb_complete_none "disassemble${spc}/"
+
+    foreach_with_prefix flg { "r" "b" "rb" "s" "m" "ms" } {
+	test_gdb_complete_unique "disassemble${spc}/${flg}" \
+	    "disassemble${spc}/${flg}"
+
+	test_gdb_complete_unique \
+	    "disassemble${spc}/${flg} multi_line_if" \
+	    "disassemble${spc}/${flg} multi_line_if_conditional"
+
+	test_gdb_complete_multiple "disassemble${spc}/${flg} " \
+	    "multi_li" "ne_" {
+		"multi_line_if_conditional"
+		"multi_line_while_conditional"
+	    }
+    }
+}

@@ -1,6 +1,6 @@
 /* Header file for GDB command decoding library.
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -233,7 +233,7 @@ struct cmd_list_element
   void (*destroyer) (struct cmd_list_element *self, void *context) = nullptr;
 
   /* Setting affected by "set" and "show".  Not used if type is not_set_cmd.  */
-  gdb::optional<setting> var;
+  std::optional<setting> var;
 
   /* Pointer to NULL terminated list of enumerated values (like
      argv).  */
@@ -283,7 +283,7 @@ private:
 extern void help_cmd (const char *, struct ui_file *);
 
 extern void apropos_cmd (struct ui_file *, struct cmd_list_element *,
-			 bool verbose, compiled_regex &, const char *);
+			 bool verbose, compiled_regex &);
 
 /* Used to mark commands that don't do anything.  If we just leave the
    function field NULL, the command is interpreted as a help topic, or

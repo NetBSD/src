@@ -1,5 +1,5 @@
 # Simulator main loop for IQ2000. -*- C -*-
-# Copyright (C) 1998-2023 Free Software Foundation, Inc.
+# Copyright (C) 1998-2024 Free Software Foundation, Inc.
 # Contributed by Cygnus Solutions.
 #
 # This file is part of the GNU Simulators.
@@ -40,6 +40,7 @@ case "x$1" in
 xsupport)
 
 cat <<EOF
+#line $LINENO "$0"
 #include <stdlib.h>
 
 static INLINE const IDESC *
@@ -139,6 +140,7 @@ xextract-simple | xextract-scache)
 # Outputs: sc filled in
 
 cat <<EOF
+#line $LINENO "$0"
 {
   CGEN_INSN_INT insn = GETIMEMUSI (current_cpu, CPU2INSN(vpc));
   extract (current_cpu, vpc, insn, SEM_ARGBUF (sc), FAST_P);
@@ -159,6 +161,7 @@ xextract-pbb)
 # SET_INSN_COUNT(n) must be called to record number of real insns.
 
 cat <<EOF
+#line $LINENO "$0"
 {
   const IDESC *idesc;
   int icount = 0;
@@ -188,7 +191,7 @@ cat <<EOF
 
           if (CGEN_ATTR_VALUE (NULL, idesc->attrs, CGEN_INSN_DELAY_SLOT))
 	    {
-              USI insn = GETIMEMUSI (current_cpu, CPU2INSN(pc));
+              insn = GETIMEMUSI (current_cpu, CPU2INSN(pc));
 	      idesc = extract (current_cpu, pc, insn, &sc->argbuf, FAST_P);
 
               if (likely_cti && IDESC_CTI_P (idesc))
@@ -224,6 +227,7 @@ xfull-exec-* | xfast-exec-*)
 # vpc contains the address of the next insn to execute
 
 cat <<EOF
+#line $LINENO "$0"
 {
 #if (! FAST_P && WITH_SEM_SWITCH_FULL) || (FAST_P && WITH_SEM_SWITCH_FAST)
 #define DEFINE_SWITCH

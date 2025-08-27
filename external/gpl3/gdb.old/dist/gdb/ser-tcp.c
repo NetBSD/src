@@ -1,6 +1,6 @@
 /* Serial interface for raw TCP connections on Un*x like systems.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,11 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "serial.h"
 #include "ser-base.h"
 #include "ser-tcp.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "cli/cli-decode.h"
 #include "cli/cli-setshow.h"
 #include "gdbsupport/filestuff.h"
@@ -30,10 +29,10 @@
 #include <sys/types.h>
 
 #ifdef HAVE_SYS_FILIO_H
-#include <sys/filio.h>  /* For FIONBIO.  */
+#include <sys/filio.h>
 #endif
 #ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>  /* For FIONBIO.  */
+#include <sys/ioctl.h>
 #endif
 
 #include "gdbsupport/gdb_sys_time.h"
@@ -84,11 +83,11 @@ static unsigned int tcp_retry_limit = 15;
 
 /* Helper function to wait a while.  If SOCK is not -1, wait on its
    file descriptor.  Otherwise just wait on a timeout, updating
-   *POLLS.  Returns -1 on timeout or interrupt, otherwise the value of
-   select.  */
+   *POLLS.  Returns -1 on timeout or interrupt and set OUT_ERROR,
+   otherwise the value of select.  */
 
 static int
-wait_for_connect (int sock, unsigned int *polls)
+wait_for_connect (int sock, unsigned int *polls, ULONGEST *out_error)
 {
   struct timeval t;
   int n;
@@ -98,14 +97,14 @@ wait_for_connect (int sock, unsigned int *polls)
      interrupt.  */
   if (deprecated_ui_loop_hook && deprecated_ui_loop_hook (0))
     {
-      errno = EINTR;
+      *out_error = EINTR;
       return -1;
     }
 
   /* Check for timeout.  */
   if (*polls > tcp_retry_limit * POLL_INTERVAL)
     {
-      errno = ETIMEDOUT;
+      *out_error = ETIMEDOUT;
       return -1;
     }
 
@@ -155,19 +154,34 @@ wait_for_connect (int sock, unsigned int *polls)
   return n;
 }
 
+/* A helper to get the error number for either Windows or POSIX.  */
+static ULONGEST
+get_error ()
+{
+#ifdef USE_WIN32API
+  return WSAGetLastError ();
+#else
+  return errno;
+#endif
+}
+
 /* Try to connect to the host represented by AINFO.  If the connection
-   succeeds, return its socket.  Otherwise, return -1 and set ERRNO
+   succeeds, return its socket.  Otherwise, return -1 and set OUT_ERROR
    accordingly.  POLLS is used when 'connect' returns EINPROGRESS, and
    we need to invoke 'wait_for_connect' to obtain the status.  */
 
 static int
-try_connect (const struct addrinfo *ainfo, unsigned int *polls)
+try_connect (const struct addrinfo *ainfo, unsigned int *polls,
+	     ULONGEST *out_error)
 {
   int sock = gdb_socket_cloexec (ainfo->ai_family, ainfo->ai_socktype,
 				 ainfo->ai_protocol);
 
   if (sock < 0)
-    return -1;
+    {
+      *out_error = get_error ();
+      return -1;
+    }
 
   /* Set socket nonblocking.  */
 #ifdef USE_WIN32API
@@ -182,11 +196,7 @@ try_connect (const struct addrinfo *ainfo, unsigned int *polls)
      already.  */
   if (connect (sock, ainfo->ai_addr, ainfo->ai_addrlen) < 0)
     {
-#ifdef USE_WIN32API
-      int err = WSAGetLastError();
-#else
-      int err = errno;
-#endif
+      ULONGEST err = get_error ();
 
       /* If we've got a "connection refused" error, just return
 	 -1.  The caller will know what to do.  */
@@ -199,7 +209,7 @@ try_connect (const struct addrinfo *ainfo, unsigned int *polls)
 	  )
 	{
 	  close (sock);
-	  errno = err;
+	  *out_error = err;
 	  return -1;
 	}
 
@@ -218,7 +228,7 @@ try_connect (const struct addrinfo *ainfo, unsigned int *polls)
 	  )
 	{
 	  close (sock);
-	  errno = err;
+	  *out_error = err;
 	  return -1;
 	}
 
@@ -226,17 +236,15 @@ try_connect (const struct addrinfo *ainfo, unsigned int *polls)
       int n;
 
       do
-	n = wait_for_connect (sock, polls);
+	n = wait_for_connect (sock, polls, out_error);
       while (n == 0);
 
       if (n < 0)
 	{
-	  int saved_errno = errno;
-
 	  /* A negative value here means that we either timed out or
 	     got interrupted by the user.  Just return.  */
 	  close (sock);
-	  errno = saved_errno;
+	  /* OUT_ERROR was set by wait_for_connect, above.  */
 	  return -1;
 	}
     }
@@ -253,16 +261,14 @@ try_connect (const struct addrinfo *ainfo, unsigned int *polls)
 
   if (ret < 0)
     {
-      int saved_errno = errno;
-
+      *out_error = get_error ();
       close (sock);
-      errno = saved_errno;
       return -1;
     }
   else if (ret == 0 && err != 0)
     {
+      *out_error = err;
       close (sock);
-      errno = err;
       return -1;
     }
 
@@ -272,7 +278,7 @@ try_connect (const struct addrinfo *ainfo, unsigned int *polls)
 
 /* Open a tcp socket.  */
 
-int
+void
 net_open (struct serial *scb, const char *name)
 {
   struct addrinfo hint;
@@ -295,12 +301,7 @@ net_open (struct serial *scb, const char *name)
 		       &hint, &ainfo);
 
   if (r != 0)
-    {
-      gdb_printf (gdb_stderr, _("%s: cannot resolve name: %s\n"),
-		  name, gai_strerror (r));
-      errno = ENOENT;
-      return -1;
-    }
+    error (_("%s: cannot resolve name: %s\n"), name, gai_strerror (r));
 
   scoped_free_addrinfo free_ainfo (ainfo);
 
@@ -311,6 +312,7 @@ net_open (struct serial *scb, const char *name)
      'struct addrinfo' that succeed.  */
   struct addrinfo *success_ainfo = NULL;
   unsigned int polls = 0;
+  ULONGEST last_error = 0;
 
   /* Assume the worst.  */
   scb->fd = -1;
@@ -324,7 +326,7 @@ net_open (struct serial *scb, const char *name)
 	  /* Iterate over the list of possible addresses to connect
 	     to.  For each, we'll try to connect and see if it
 	     succeeds.  */
-	  int sock = try_connect (iter, &polls);
+	  int sock = try_connect (iter, &polls, &last_error);
 
 	  if (sock >= 0)
 	    {
@@ -336,9 +338,9 @@ net_open (struct serial *scb, const char *name)
 	    }
 	  else if (
 #ifdef USE_WIN32API
-	  errno == WSAECONNREFUSED
+		   last_error == WSAECONNREFUSED
 #else
-	  errno == ECONNREFUSED
+		   last_error == ECONNREFUSED
 #endif
 		   )
 	    got_connrefused = true;
@@ -353,12 +355,16 @@ net_open (struct serial *scb, const char *name)
   while (tcp_auto_retry
 	 && success_ainfo == NULL
 	 && got_connrefused
-	 && wait_for_connect (-1, &polls) >= 0);
+	 && wait_for_connect (-1, &polls, &last_error) >= 0);
 
   if (success_ainfo == NULL)
     {
       net_close (scb);
-      return -1;
+#ifdef USE_WIN32API
+      throw_winerror_with_name (_("could not connect"), last_error);
+#else
+      perror_with_name (_("could not connect"), last_error);
+#endif
     }
 
   /* Turn off nonblocking.  */
@@ -384,8 +390,6 @@ net_open (struct serial *scb, const char *name)
      when the remote side dies.  */
   signal (SIGPIPE, SIG_IGN);
 #endif
-
-  return 0;
 }
 
 void
@@ -404,7 +408,10 @@ net_read_prim (struct serial *scb, size_t count)
   /* Need to cast to silence -Wpointer-sign on MinGW, as Winsock's
      'recv' takes 'char *' as second argument, while 'scb->buf' is
      'unsigned char *'.  */
-  return recv (scb->fd, (char *) scb->buf, count, 0);
+  int result = recv (scb->fd, (char *) scb->buf, count, 0);
+  if (result == -1 && errno != EINTR)
+    perror_with_name ("error while reading");
+  return result;
 }
 
 int
@@ -414,14 +421,17 @@ net_write_prim (struct serial *scb, const void *buf, size_t count)
      UNIX systems it is generally "const void *".  The cast to "const
      char *" is OK everywhere, since in C++ any data pointer type can
      be implicitly converted to "const void *".  */
-  return send (scb->fd, (const char *) buf, count, 0);
+  int result = send (scb->fd, (const char *) buf, count, 0);
+  if (result == -1 && errno != EINTR)
+    perror_with_name ("error while writing");
+  return result;
 }
 
-int
+void
 ser_tcp_send_break (struct serial *scb)
 {
   /* Send telnet IAC and BREAK characters.  */
-  return (serial_write (scb, "\377\363", 2));
+  serial_write (scb, "\377\363", 2);
 }
 
 #ifndef USE_WIN32API

@@ -1,6 +1,6 @@
 /* TUI display source window.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -25,8 +25,6 @@
 #include "tui/tui-data.h"
 #include "tui-winsource.h"
 
-struct symtab;
-
 /* A TUI source window.  */
 
 struct tui_source_window : public tui_source_window_base
@@ -46,7 +44,7 @@ struct tui_source_window : public tui_source_window_base
 
   bool showing_source_p (const char *filename) const;
 
-  void maybe_update (frame_info_ptr fi, symtab_and_line sal) override;
+  void maybe_update (const frame_info_ptr &fi, symtab_and_line sal) override;
 
   void erase_source_content () override
   {

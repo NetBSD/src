@@ -1,5 +1,5 @@
 /* GDB-specific functions for operating on agent expressions
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 #ifndef AX_GDB_H
 #define AX_GDB_H
 
-#include "ax.h"  /* For agent_expr_up.  */
+#include "ax.h"
 
 struct expression;
 

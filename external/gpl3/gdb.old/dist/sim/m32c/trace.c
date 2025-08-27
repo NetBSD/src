@@ -1,6 +1,6 @@
 /* trace.c --- tracing output for the M32C simulator.
 
-Copyright (C) 2005-2023 Free Software Foundation, Inc.
+Copyright (C) 2005-2024 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "bfd.h"
 #include "dis-asm.h"
-#include "m32c-desc.h"
+#include "opcodes/m32c-desc.h"
 
 #include "cpu.h"
 #include "mem.h"

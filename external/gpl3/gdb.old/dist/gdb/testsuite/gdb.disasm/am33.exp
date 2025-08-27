@@ -1,5 +1,5 @@
 
-# Copyright 1997-2023 Free Software Foundation, Inc.
+# Copyright 1997-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,7 @@
 
 # This file was written by Jeff Law. (law@cygnus.com)
 
-if ![istarget "mn10300*-*-*"] {
-    verbose "Tests ignored for all but mn10300 based targets."
-    return
-}
+require {istarget "mn10300*-*-*"}
 
 global exec_output
 
@@ -798,12 +795,7 @@ proc dsp_autoincrement_tests { } {
     }
 }
 
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load $binfile
+clean_restart $binfile
 
 call_tests
 movm_tests
