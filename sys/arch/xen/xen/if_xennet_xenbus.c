@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.130 2024/01/09 18:39:53 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.131 2025/08/27 17:58:09 buhrow Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.130 2024/01/09 18:39:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.131 2025/08/27 17:58:09 buhrow Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.130 2024/01/09 18:39:53 jdole
 #include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/intr.h>
 #include <sys/rndsource.h>
@@ -210,6 +211,23 @@ struct xennet_xenbus_softc {
 	struct evcnt sc_cnt_rx_cksum_undefer;
 };
 
+
+/*
+ * infrastructure for the sysctl variable: hw.xennet.xnfrx_lowat
+ */
+
+	static struct sysctllog	*xennet_log;
+	static int xennet_xnfrx_nodenum;
+
+
+#ifndef XENNET_XNFRX_LOWAT
+#define XENNET_XNFRX_LOWAT 0 /* HOW FEW XNFRX BUFS SHOULD WE KEEP? */
+#endif
+
+#define IF_XNFRX_LOWAT_MAX 128 /* Maximum minum of xnfrx buffers */
+
+static int if_xnfrx_lowat = IF_XNFRX_LOWAT;
+
 static pool_cache_t if_xennetrxbuf_cache;
 static int if_xennetrxbuf_cache_inited = 0;
 
@@ -228,6 +246,8 @@ static bool xennet_talk_to_backend(struct xennet_xenbus_softc *);
 static void xennet_hex_dump(const unsigned char *, size_t, const char *, int);
 #endif
 
+static void xennet_sysctl_init(struct xennet_xenbus_softc *);
+static int xennet_sysctl_verify(SYSCTLFN_PROTO);
 static int  xennet_init(struct ifnet *);
 static void xennet_stop(struct ifnet *, int);
 static void xennet_start(struct ifnet *);
@@ -299,6 +319,10 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	if (if_xennetrxbuf_cache_inited == 0) {
 		if_xennetrxbuf_cache = pool_cache_init(PAGE_SIZE, 0, 0, 0,
 		    "xnfrx", NULL, IPL_NET, NULL, NULL, NULL);
+		if (if_xnfrx_lowat) {
+			pool_cache_setlowat(if_xennetrxbuf_cache, if_xnfrx_lowat);
+		}
+		xennet_sysctl_init(sc);
 		if_xennetrxbuf_cache_inited = 1;
 	}
 
@@ -1329,6 +1353,75 @@ xennet_stop(struct ifnet *ifp, int disable)
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	hypervisor_mask_event(sc->sc_evtchn);
+}
+
+/*
+ * Set up sysctl(3) MIB, hw.xennet.*.
+ */
+static void
+xennet_sysctl_init(struct xennet_xenbus_softc *sc)
+{
+	int rc, xennet_root_num;
+	const struct sysctlnode *node;
+
+	if ((rc = sysctl_createv(&xennet_log, 0, NULL, &node,
+	    0, CTLTYPE_NODE, "xennet",
+	    SYSCTL_DESCR("XENNET interface controls"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0) {
+		goto out;
+	}
+
+	xennet_root_num = node->sysctl_num;
+
+	/* xnfrx_lowat setting */
+	if ((rc = sysctl_createv(&xennet_log, 0, NULL, &node,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "xnfrx_lowat",
+	    SYSCTL_DESCR("xnfrx low water threshold"),
+	    xennet_sysctl_verify, 0,
+	    &if_xnfrx_lowat,
+	    0, CTL_HW, xennet_root_num, CTL_CREATE,
+	    CTL_EOL)) != 0) {
+		goto out;
+	}
+
+	xennet_xnfrx_nodenum = node->sysctl_num;
+
+	return;
+
+out:
+	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+
+static int
+xennet_sysctl_verify(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = *(int*)rnode->sysctl_data;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+#if 0
+	DPRINTF2(("%s: t = %d, nodenum = %d, rnodenum = %d\n", __func__, t,
+	    node.sysctl_num, rnode->sysctl_num));
+#endif
+
+	if (node.sysctl_num == xennet_xnfrx_nodenum) {
+		if (t < 0 || t >= IF_XNFRX_LOWAT_MAX)
+			return EINVAL;
+		if_xnfrx_lowat = t;
+		pool_cache_setlowat(if_xennetrxbuf_cache, if_xnfrx_lowat);
+	} else
+		return EINVAL;
+
+	*(int*)rnode->sysctl_data = t;
+
+	return 0;
 }
 
 #if defined(NFS_BOOT_BOOTSTATIC)

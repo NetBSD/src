@@ -1,4 +1,4 @@
-.\"	$NetBSD: xennet.4,v 1.5 2020/04/05 19:03:30 jdolecek Exp $
+.\"	$NetBSD: xennet.4,v 1.6 2025/08/27 17:58:10 buhrow Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,6 +64,15 @@ similar to two Ethernet cards connected via a crossover cable.
 .Pp
 .Nm xennet
 interfaces can pass VLAN tagged packets.
+.Pp
+The minimum number of RX buffers can be controlled with the 
+.Li hw.xennet.xnfrx_lowat
+using the
+.Xr sysctl 8
+utility.  The default is to reserve no minumum number of cached RX buffers.  A minimum number
+of reserved RX buffers can also be compiled into the kernel config using the
+.Em XENNET_XNFRX_LOWAT
+option.  
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "xennet%d: can't read mac address, err %d"
@@ -88,7 +97,8 @@ are copied from one domain's memory to another.
 .Xr ifmedia 4 ,
 .Xr xenbus 4 ,
 .Xr xvif 4 ,
-.Xr ifconfig 8
+.Xr ifconfig 8,
+.Xr options 4
 .Sh HISTORY
 The
 .Nm
