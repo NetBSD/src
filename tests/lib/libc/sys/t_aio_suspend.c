@@ -47,7 +47,7 @@ static void	fill_pattern(uint8_t *, size_t, uint8_t);
 static void	wait_cb(struct aiocb *);
 
 static int
-mktemp_file(char *path, size_t pathlen)
+mktemp_file (char *path, size_t pathlen)
 {
 	int fd, n;
 
@@ -61,7 +61,7 @@ mktemp_file(char *path, size_t pathlen)
 }
 
 static void
-fill_pattern(uint8_t *buf, size_t len, uint8_t seed)
+fill_pattern (uint8_t *buf, size_t len, uint8_t seed)
 {
 	size_t i;
 
@@ -71,7 +71,7 @@ fill_pattern(uint8_t *buf, size_t len, uint8_t seed)
 }
 
 static void
-wait_cb(struct aiocb *cb)
+wait_cb (struct aiocb *cb)
 {
 	const struct aiocb *one[1];
 	int rv;
