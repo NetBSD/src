@@ -1,4 +1,4 @@
-#   Copyright 2002-2023 Free Software Foundation, Inc.
+#   Copyright 2002-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,11 +15,7 @@
 
 # This file was written by Corinna Vinschen <vinschen@redhat.com>
 
-if [target_info exists gdb,nofileio] {
-    verbose "Skipping fileio.exp because of no fileio capabilities."
-    return
-}
-
+require {!target_info exists gdb,nofileio}
 
 standard_testfile
 
@@ -45,12 +41,7 @@ system "rm -rf [standard_output_file *.fileio.test]"
 set oldtimeout $timeout
 set timeout [expr "$timeout + 60"]
 
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart $binfile
 gdb_test_no_output "set print sevenbit-strings"
 gdb_test_no_output "set print address off"
 gdb_test_no_output "set width 0"
@@ -83,6 +74,10 @@ gdb_test "continue" ".*" ""
 
 catch "system \"chmod -f -w [standard_output_file nowrt.fileio.test]\""
 
+# If the user is root, we will always have write permission.
+if { [root_user] } {
+    setup_xfail *-*-*
+}
 gdb_test continue \
 "Continuing\\..*open 5:.*EACCES$stop_msg" \
 "Open for write but no write permission returns EACCES"
@@ -248,6 +243,10 @@ gdb_test continue \
 if [ishost *cygwin*] {
     setup_xfail "*-*-*"
 }
+# If the user is root, we will always have write permission.
+if { [root_user] } {
+    setup_xfail *-*-*
+}
 gdb_test continue \
 "Continuing\\..*unlink 2:.*EACCES$stop_msg" \
 "Unlinking a file in a directory w/o write access returns EACCES"
@@ -273,4 +272,3 @@ if {[file exists $dir2] && ![file writable $dir2]} {
 }
 
 set timeout $oldtimeout
-return 0

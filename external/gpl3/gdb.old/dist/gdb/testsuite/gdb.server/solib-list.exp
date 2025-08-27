@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,9 +23,7 @@
 load_lib gdbserver-support.exp
 load_lib prelink-support.exp
 
-if {[skip_gdbserver_tests] || [skip_shlib_tests]} {
-    return
-}
+require allow_gdbserver_tests allow_shlib_tests
 
 standard_testfile solib-list-main.c
 set srclibfile ${testfile}-lib.c
@@ -53,14 +51,15 @@ foreach nonstop { 0 1 } { with_test_prefix "non-stop $nonstop" {
 
     gdb_load_shlib ${binlibfile}
 
-    set remote_binfile [gdb_remote_download target $binfile]
+    set target_binfile [gdb_remote_download target $binfile]
+    set host_binfile [gdb_remote_download host $binfile]
 
     # When testing remote, the file path we receive may be only the file name,
     # "solib-list".  ld-linux doesn't seem to be able to find the file when
     # passing just the file name, it wants either the absolute path or a
     # relative path with at least one directory component.  Calling readlink on
     # the target to get the full path will make it happy.
-    set remote_binfile [lindex [remote_exec target "readlink -f $remote_binfile"] 1]
+    set target_binfile [lindex [remote_exec target "readlink -f $target_binfile"] 1]
 
     # Make sure we're disconnected, in case we're testing with an
     # extended-remote board, therefore already connected.
@@ -83,7 +82,7 @@ foreach nonstop { 0 1 } { with_test_prefix "non-stop $nonstop" {
     # argument here, instead of using gdb_load, because we don't want
     # to download the interpreter to the target (it's already there)
     # or to the test output directory.
-    set res [gdbserver_spawn "${interp_system} ${remote_binfile}"]
+    set res [gdbserver_spawn "${interp_system} ${target_binfile}"]
     set gdbserver_protocol [lindex $res 0]
     set gdbserver_gdbport [lindex $res 1]
 
@@ -91,7 +90,7 @@ foreach nonstop { 0 1 } { with_test_prefix "non-stop $nonstop" {
     # but before "target remote" below so that qSymbol data get already
     # initialized from BINFILE (and not from ld.so first needing a change to
     # BINFILE later).
-    gdb_test "file ${binfile}" {Reading symbols from .*\.\.\..*} "file binfile"
+    gdb_test "file ${host_binfile}" {Reading symbols from .*\.\.\..*} "file binfile"
 
     set test "target $gdbserver_protocol"
     set ok 0

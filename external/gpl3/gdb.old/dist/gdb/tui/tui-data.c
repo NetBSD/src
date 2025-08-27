@@ -1,6 +1,6 @@
 /* TUI data manipulation routines.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,13 +19,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "symtab.h"
 #include "tui/tui.h"
 #include "tui/tui-data.h"
 #include "tui/tui-win.h"
 #include "tui/tui-wingeneral.h"
 #include "tui/tui-winsource.h"
+#include "tui/tui-status.h"
 #include "gdb_curses.h"
 #include <algorithm>
 
@@ -69,6 +69,7 @@ tui_set_win_focus_to (struct tui_win_info *win_info)
       tui_unhighlight_win (win_with_focus);
       win_with_focus = win_info;
       tui_highlight_win (win_info);
+      tui_show_status_content ();
     }
 }
 
@@ -152,6 +153,57 @@ tui_prev_win (struct tui_win_info *cur_win)
   return *iter;
 }
 
+/* See tui-data.h.  */
+
+void
+tui_win_info::set_title (std::string &&new_title)
+{
+  if (m_title != new_title)
+    {
+      m_title = new_title;
+      check_and_display_highlight_if_needed ();
+    }
+}
+
+/* See tui-data.h.  */
+
+void
+tui_win_info::center_string (const char *str)
+{
+  werase (handle.get ());
+  check_and_display_highlight_if_needed ();
+
+  int avail_width = width - box_size ();
+  int len = strlen (str);
+
+  int x_pos = box_width ();
+  if (len < avail_width)
+    x_pos += (avail_width - len) / 2;
+
+  int n = avail_width - x_pos;
+  gdb_assert (n > 0);
+
+  mvwaddnstr (handle.get (), height / 2, x_pos, str, n);
+  refresh_window ();
+}
+
+/* See tui-data.h.  */
+
+void
+tui_win_info::display_string (const char *str) const
+{
+  int y, x;
+  getyx (handle.get (), y, x);
+
+  /* Avoid Wunused-but-set-variable.  */
+  (void) y;
+
+  int n = width - box_width () - x;
+  if (n <= 0)
+    return;
+
+  waddnstr (handle.get (), str, n);
+}
 
 void
 tui_win_info::rerender ()

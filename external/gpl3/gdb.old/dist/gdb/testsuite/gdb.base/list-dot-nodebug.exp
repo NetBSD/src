@@ -1,0 +1,60 @@
+# Copyright 2005-2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This test is here to confirm that the command "list ." will print the
+# same message if GDB detects no debug information at all, or detects some
+# but nothing for the current objfile.
+
+require !use_gdb_stub
+
+set linkflags [list additional_flags="-static"]
+
+if { ![gdb_can_simple_compile static-libc \
+	   {
+	       int main (void) { return 0; }
+	   } \
+	   executable $linkflags] } {
+    untested "Can't statically link"
+    return -1
+}
+
+standard_testfile .c -extra.c
+
+foreach_with_prefix debug {"none" "some"} {
+
+    set flags "nodebug"
+    if {$debug == "some"} {
+	set flags "debug"
+    }
+
+    if {[prepare_for_testing_full "failed to prepare" \
+	    [list ${testfile}-${debug} $linkflags \
+		$srcfile [list nodebug] \
+		$srcfile2 [list $debug]]]} {
+	return -1
+    }
+
+    gdb_test "list ." \
+	"^Insufficient debug info for showing source lines at default location" \
+	"print before start"
+
+    if { ![runto bar] } {
+	return -1
+    }
+
+    gdb_test "list ." \
+	"^Insufficient debug info for showing source lines at current PC \\($::hex\\)\\." \
+	"print after start"
+}

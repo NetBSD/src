@@ -1,4 +1,4 @@
-dnl Copyright (C) 1997-2023 Free Software Foundation, Inc.
+dnl Copyright (C) 1997-2024 Free Software Foundation, Inc.
 dnl
 dnl This program is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -20,6 +20,9 @@ cgen_maint=no
 dnl Default is to use one in build tree.
 cgen=guile
 cgendir='$(srcdir)/../../cgen'
+if test -r ${srcdir}/../cgen/iformat.scm; then
+    cgendir='$(srcdir)/../cgen'
+fi
 dnl Having --enable-maintainer-mode take arguments is another way to go.
 dnl ??? One can argue --with is more appropriate if one wants to specify
 dnl a directory name, but what we're doing here is an enable/disable kind

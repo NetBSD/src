@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,10 +24,7 @@
 # For completeness, also test when the JIT descriptor does not change
 # address between runs.
 
-if {[skip_shlib_tests]} {
-    untested "skipping shared library tests"
-    return -1
-}
+require allow_shlib_tests
 
 standard_testfile
 
@@ -117,7 +114,7 @@ proc jit_test_reread {standalone change_addr} {
 			     "get address of __jit_debug_descriptor"]
 
 	gdb_test "maint info breakpoints" \
-	    "jit events     keep y   $hex <__jit_debug_register_code>.*" \
+	    "jit events\[ \]+keep y   $hex <__jit_debug_register_code>.*" \
 	    "maint info breakpoints shows jit breakpoint"
     }
 
@@ -152,7 +149,7 @@ proc jit_test_reread {standalone change_addr} {
 	# This used to crash in the JIT-in-shared-library case:
 	# https://sourceware.org/bugzilla/show_bug.cgi?id=11094
 	gdb_test "maint info breakpoints" \
-	    "jit events     keep y   $hex <__jit_debug_register_code>.*" \
+	    "jit events\[ \]+keep y   $hex <__jit_debug_register_code>.*" \
 	    "maint info breakpoints shows jit breakpoint"
     }
 

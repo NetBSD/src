@@ -1133,18 +1133,17 @@
 
 :function:::void:do_pref:int hint, int insn_offset, int insn_base
 {
+  /*
   address_word base = GPR[insn_base];
   address_word offset = EXTEND16 (insn_offset);
-  {
-    address_word vaddr = loadstore_ea (SD_, base, offset);
-    address_word paddr = vaddr;
-    /* Prefetch (paddr, vaddr, isDATA, hint); */
-  }
+  address_word vaddr = loadstore_ea (SD_, base, offset);
+  address_word paddr = vaddr;
+  Prefetch (paddr, vaddr, isDATA, hint);
+  */
 }
 
 :function:::void:do_sc:int rt, int offsetarg, int basereg, address_word instruction_0, int store_ll_bit
 {
-  uint32_t instruction = instruction_0;
   address_word base = GPR[basereg];
   address_word offset = EXTEND16 (offsetarg);
   {
@@ -1684,13 +1683,13 @@
 
 :function:::void:do_prefx:int hint, int rindex, int rbase
 {
+  /*
   address_word base = GPR[rbase];
   address_word index = GPR[rindex];
-  {
-    address_word vaddr = loadstore_ea (SD_, base, index);
-    address_word paddr = vaddr;
-    /* Prefetch (paddr, vaddr, isDATA, hint); */
-  }
+  address_word vaddr = loadstore_ea (SD_, base, index);
+  address_word paddr = vaddr;
+  Prefetch (paddr, vaddr, isDATA, hint);
+  */
 }
 
 :function:::void:do_sdc1:int ft, int offset, int base

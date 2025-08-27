@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
 
 #include "gdbsupport/tdesc.h"
 #include "tic6x.h"
-#include "gdbsupport/common-defs.h"
 
 #include "../features/tic6x-core.c"
 #include "../features/tic6x-gp.c"

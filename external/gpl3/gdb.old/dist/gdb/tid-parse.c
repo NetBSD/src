@@ -1,6 +1,6 @@
 /* TID parsing for GDB, the GNU debugger.
 
-   Copyright (C) 2015-2023 Free Software Foundation, Inc.
+   Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "tid-parse.h"
 #include "inferior.h"
 #include "gdbthread.h"
@@ -143,7 +142,7 @@ tid_range_parser::finished () const
 	 or we are not in a range and not in front of an integer, negative
 	 integer, convenience var or negative convenience var.  */
       return (*m_cur_tok == '\0'
-	      || !(isdigit (*m_cur_tok)
+	      || !(isdigit ((unsigned char)*m_cur_tok)
 		   || *m_cur_tok == '$'
 		   || *m_cur_tok == '*'));
     case STATE_THREAD_RANGE:
@@ -220,7 +219,7 @@ tid_range_parser::get_tid_or_range (int *inf_num,
 	  m_qualified = true;
 	  p = dot + 1;
 
-	  if (isspace (*p))
+	  if (isspace ((unsigned char)*p))
 	    return false;
 	}
       else
@@ -231,7 +230,7 @@ tid_range_parser::get_tid_or_range (int *inf_num,
 	}
 
       m_range_parser.init (p);
-      if (p[0] == '*' && (p[1] == '\0' || isspace (p[1])))
+      if (p[0] == '*' && (p[1] == '\0' || isspace ((unsigned char)p[1])))
 	{
 	  /* Setup the number range parser to return numbers in the
 	     whole [1,INT_MAX] range.  */

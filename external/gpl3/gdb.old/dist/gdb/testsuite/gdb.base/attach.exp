@@ -1,4 +1,4 @@
-# Copyright 1997-2023 Free Software Foundation, Inc.
+# Copyright 1997-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,9 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-if {![can_spawn_for_attach]} {
-    return 0
-}
+require can_spawn_for_attach
 
 standard_testfile attach.c attach2.c attach3.c
 set binfile2 ${binfile}2
@@ -175,10 +173,6 @@ proc_with_prefix do_attach_failure_tests {} {
     gdb_test "add-inferior" "Added inferior 2.*" "add empty inferior 2"
     gdb_test "inferior 2" "Switching to inferior 2.*" "switch to inferior 2"
 
-    # Probe this before the failing attach: the failed attach against GDBserver
-    # currently leaves the extended-remote target in a bad state.
-    set do_kfail [target_is_gdbserver]
-
     set test "fail to attach again"
     gdb_test_multiple "attach $testpid" "$test" {
 	-re "Attaching to process $testpid.*warning: process .* is already traced by process .*$gdb_prompt $" {
@@ -195,14 +189,12 @@ proc_with_prefix do_attach_failure_tests {} {
     gdb_test_no_output "set confirm off"
     gdb_test "inferior 1" "Switching to inferior 1.*" "switch to inferior 1"
 
-    if { $do_kfail } { setup_kfail "gdb/19558" "*-*-*" }
     gdb_test "kill" "killed.*" "exit after attach failures"
 
     # This can probably be replaced with a call to runto or runto_main once
     # the kfail is removed.
     gdb_breakpoint "main"
     gdb_run_cmd
-    if { $do_kfail } { setup_kfail "gdb/19558" "*-*-*" }
     gdb_test_multiple "" "stop at main" {
 	-wrap -re "Breakpoint $::decimal, main .*" {
 	    pass $gdb_test_name
@@ -453,7 +445,9 @@ proc_with_prefix do_command_attach_tests {} {
     global gdb_prompt
     global binfile
 
-    if {![isnative]} {
+    # The --pid option is used to attach to a process using the native
+    # target.
+    if { ![gdb_protocol_is_native] } {
 	unsupported "command attach test"
 	return 0
     }
@@ -478,16 +472,9 @@ proc_with_prefix test_command_line_attach_run {} {
     global gdb_prompt
     global binfile
 
-    # The --pid option is used to attach to a process using the native target.
-    # Start GDB and run to main just to see what the execution target is, skip
-    # if it's not the native target.
-    clean_restart $binfile
-
-    if { ![runto_main] } {
-	return
-    }
-
-    if { ![gdb_is_target_native] } {
+    # The --pid option is used to attach to a process using the native
+    # target.
+    if { ![gdb_protocol_is_native] } {
 	unsupported "commandline attach run test"
 	return
     }
@@ -498,8 +485,7 @@ proc_with_prefix test_command_line_attach_run {} {
     set test "run to prompt"
     gdb_exit
 
-    set res [gdb_spawn_with_cmdline_opts \
-		 "-quiet -iex \"set height 0\" -iex \"set width 0\" --pid=$testpid -ex \"start\""]
+    set res [gdb_spawn_with_cmdline_opts "--pid=$testpid -ex \"start\""]
     if { $res != 0} {
 	fail $test
 	kill_wait_spawned_process $test_spawn_id
@@ -652,5 +638,3 @@ do_command_attach_tests
 
 
 test_command_line_attach_run
-
-return 0

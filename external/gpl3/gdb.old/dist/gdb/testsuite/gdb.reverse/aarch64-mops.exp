@@ -1,0 +1,186 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test instruction record for AArch64 FEAT_MOPS instructions.
+# Based on gdb.reverse/ppc_record_test_isa_3_1.exp
+#
+# The basic flow of the record tests are:
+#    1) Stop before executing the instructions of interest.  Record
+#       the initial value of the registers that the instruction will
+#       change, i.e. the destination register.
+#    2) Execute the instructions.  Record the new value of the
+#       registers that changed.
+#    3) Reverse the direction of the execution and execute back to
+#       just before the instructions of interest.  Record the final
+#       value of the registers of interest.
+#    4) Check that the initial and new values of the registers are
+#       different, i.e. the instruction changed the registers as expected.
+#    5) Check that the initial and final values of the registers are
+#       the same, i.e. GDB record restored the registers to their
+#       original values.
+
+require allow_aarch64_mops_tests
+
+standard_testfile
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
+	  [list debug additional_flags=-march=armv9.3-a]] } {
+    return -1
+}
+
+if ![runto_main] {
+    return -1
+}
+
+gdb_test_no_output "record full"
+
+foreach_with_prefix insn_prefix {"set" "cpy" "cpyf"} {
+    global decimal hex
+
+    set before_seq [gdb_get_line_number "Before ${insn_prefix}p"]
+    set after_seq [gdb_get_line_number "After ${insn_prefix}e"]
+
+    gdb_test "break $before_seq" \
+	"Breakpoint $decimal at $hex: file .*/aarch64-mops.c, line $decimal\\." \
+	"break before instruction sequence"
+    gdb_continue_to_breakpoint "about to execute instruction sequence" \
+	[multi_line ".*/aarch64-mops.c:$decimal" \
+	     "$decimal\[ \t\]+__asm__ volatile \\(\"${insn_prefix}p \[^\r\n\]+\""]
+
+    # Depending on the compiler, the line number information may put GDB a few
+    # instructions before the beginning of the asm statement.
+    arrive_at_instruction "${insn_prefix}p"
+    # Add a breakpoint that we're sure is at the prologue instruction.
+    gdb_test "break *\$pc" \
+	"Breakpoint $decimal at $hex: file .*/aarch64-mops.c, line $decimal\\." \
+	"break at prologue instruction"
+
+    # Record the initial memory and register values.
+    set dest_initial [get_valueof "/x" "dest" "unable to read initial" \
+			  "get dest initial value"]
+    set x19_initial [capture_command_output "info register x19" ""]
+    set x21_initial [capture_command_output "info register x21" ""]
+
+    # The set instructions use the ZERO variable, but not Q nor SOURCE,
+    # and the other instructions are the opposite.
+    if {[string compare $insn_prefix "set"] == 0} {
+	set x22_initial [capture_command_output "info register x22" ""]
+    } else {
+	set x20_initial [capture_command_output "info register x20" ""]
+	set source_initial [get_valueof "/x" "source" "unable to read initial" \
+				"get source initial value"]
+    }
+
+    gdb_test "break $after_seq" \
+	"Breakpoint $decimal at $hex: file .*/aarch64-mops.c, line $decimal\\." \
+	"break after instruction sequence"
+    gdb_continue_to_breakpoint "executed instruction sequence" \
+	[multi_line ".*/aarch64-mops.c:$decimal" "$decimal\[ \t\]+p = dest;"]
+
+    # Record the new memory and register values.
+    set dest_new [get_valueof "/x" "dest" "unable to read new" \
+			  "get dest new value"]
+    set x19_new [capture_command_output "info register x19" ""]
+    set x21_new [capture_command_output "info register x21" ""]
+
+    if {[string compare $insn_prefix "set"] == 0} {
+	set x22_new [capture_command_output "info register x22" ""]
+    } else {
+	set x20_new [capture_command_output "info register x20" ""]
+	set source_new [get_valueof "/x" "source" "unable to read new" \
+			    "get source new value"]
+    }
+
+    # Execute in reverse to before the instruction sequence.
+    gdb_test_no_output "set exec-direction reverse"
+
+    gdb_continue_to_breakpoint "reversed execution of instruction sequence" \
+	[multi_line ".*/aarch64-mops.c:$decimal" \
+	     "$decimal\[ \t\]+__asm__ volatile \\(\"${insn_prefix}p \[^\r\n\]+\""]
+
+    # Record the final memory and register values.
+    set dest_final [get_valueof "/x" "dest" "unable to read final" \
+			"get dest final value"]
+    set x19_final [capture_command_output "info register x19" ""]
+    set x21_final [capture_command_output "info register x21" ""]
+
+    if {[string compare $insn_prefix "set"] == 0} {
+	set x22_final [capture_command_output "info register x22" ""]
+    } else {
+	set x20_final [capture_command_output "info register x20" ""]
+	set source_final [get_valueof "/x" "source" "unable to read final" \
+			      "get source final value"]
+    }
+
+    # Check initial and new values of dest are different.
+    gdb_assert [string compare $dest_initial $dest_new] \
+	"check dest initial value versus dest new value"
+
+    # Check initial and new values of x19 are different.
+    gdb_assert [string compare $x19_initial $x19_new] \
+	"check x19 initial value versus x19 new value"
+
+    # Check initial and new values of x21 are different.
+    gdb_assert [string compare $x21_initial $x21_new] \
+	"check x21 initial value versus x21 new value"
+
+    if {[string compare $insn_prefix "set"] == 0} {
+	# Check initial and new values of x22 are the same.
+	# The register with the value to set shouldn't change.
+	gdb_assert ![string compare $x22_initial $x22_new] \
+	    "check x22 initial value versus x22 new value"
+    } else {
+	# Check initial and new values of x20 are different.
+	gdb_assert [string compare $x20_initial $x20_new] \
+	    "check x20 initial value versus x20 new value"
+	# Check initial and new values of source are the same.
+	gdb_assert ![string compare $source_initial $source_new] \
+	    "check source initial value versus source new value"
+    }
+
+    # Check initial and final values of dest are the same.
+    gdb_assert ![string compare $dest_initial $dest_final] \
+	"check dest initial value versus dest final value"
+
+    # Check initial and final values of x19 are the same.
+    gdb_assert ![string compare $x19_initial $x19_final] \
+	"check x19 initial value versus x19 final value"
+
+    # Check initial and final values of x21 are the same.
+    gdb_assert ![string compare $x21_initial $x21_final] \
+	"check x21 initial value versus x21 final value"
+
+    if {[string compare $insn_prefix "set"] == 0} {
+	# Check initial and final values of x22 are the same.
+	gdb_assert ![string compare $x22_initial $x22_final] \
+	    "check x22 initial value versus x22 final value"
+    } else {
+	# Check initial and final values of x20 are the same.
+	gdb_assert ![string compare $x20_initial $x20_final] \
+	    "check x20 initial value versus x20 final value"
+
+	# Check initial and final values of source are the same.
+	gdb_assert ![string compare $source_initial $source_final] \
+	    "check source initial value versus source final value"
+    }
+
+    # Restore forward execution and go to end of recording.
+    gdb_test_no_output "set exec-direction forward"
+    gdb_test "record goto end" \
+	[multi_line \
+	     "Go forward to insn number $decimal" \
+	     "#0  main \\(\\) at .*/aarch64-mops.c:$decimal" \
+	     "$decimal\[ \t\]+p = dest;"]
+}

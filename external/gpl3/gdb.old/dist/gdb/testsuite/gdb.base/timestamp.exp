@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,4 +21,4 @@ clean_restart
 gdb_test_no_output "set debug expression 1"
 gdb_test_no_output "set debug timestamp 1"
 
-gdb_test "print 23" "\[0-9\]+\\.\[0-9\]+ Operation: OP_LONG.* = 23"
+gdb_test "print 23" "$decimal\\.$decimal Operation: OP_LONG.* = 23"

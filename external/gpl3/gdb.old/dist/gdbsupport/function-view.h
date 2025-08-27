@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -192,7 +192,7 @@
   You can find unit tests covering the whole API in
   unittests/function-view-selftests.c.  */
 
-#include "invoke-result.h"
+#include <type_traits>
 namespace gdb {
 
 namespace fv_detail {
@@ -230,7 +230,7 @@ class function_view<Res (Args...)>
   /* True if Func can be called with Args, and either the result is
      Res, convertible to Res or Res is void.  */
   template<typename Callable,
-	   typename Res2 = typename gdb::invoke_result<Callable &, Args...>::type>
+	   typename Res2 = typename std::invoke_result<Callable &, Args...>::type>
   struct IsCompatibleCallable : CompatibleReturnType<Res2, Res>
   {};
 

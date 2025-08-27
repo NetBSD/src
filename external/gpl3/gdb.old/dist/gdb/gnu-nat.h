@@ -1,5 +1,5 @@
 /* Common things used by the various *gnu-nat.c files
-   Copyright (C) 1995-2023 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
 
    Written by Miles Bader <miles@gnu.ai.mit.edu>
 
@@ -18,8 +18,6 @@
 
 #ifndef GNU_NAT_H
 #define GNU_NAT_H
-
-#include "defs.h"
 
 /* Work around conflict between Mach's 'thread_info' function, and GDB's
    'thread_info' class.  Make the former available as 'mach_thread_info'.  */

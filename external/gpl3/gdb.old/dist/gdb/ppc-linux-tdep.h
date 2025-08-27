@@ -1,6 +1,6 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #ifndef PPC_LINUX_TDEP_H
 #define PPC_LINUX_TDEP_H
 
-#include "ppc-tdep.h"  /* For PPC_NUM_REGS.  */
+#include "ppc-tdep.h"
 
 struct regset;
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2020-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
 
 /* This file contain code that is specific for bare-metal RISC-V targets.  */
 
-#include "defs.h"
 #include "arch-utils.h"
 #include "regcache.h"
 #include "riscv-tdep.h"
@@ -134,7 +133,7 @@ riscv_iterate_over_regset_sections (struct gdbarch *gdbarch,
   if (tdesc != nullptr)
     {
       const struct tdesc_feature *feature_csr
-        = tdesc_find_feature (tdesc, riscv_feature_name_csr);
+	= tdesc_find_feature (tdesc, riscv_feature_name_csr);
       if (feature_csr != nullptr && feature_csr->registers.size () > 0)
 	{
 	  riscv_update_csrmap (gdbarch, feature_csr);

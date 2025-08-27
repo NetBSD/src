@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,14 +19,10 @@
 load_lib dwarf.exp
 
 # We run objcopy locally to split out the .dwo file.
-if [is_remote host] {
-    return 0
-}
+require {!is_remote host}
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if ![dwarf2_support] {
-    return 0
-}
+require dwarf2_support
 
 # We place the entire source code for the test into a single .c file,
 # but we generate the DWARF in two separate .S files.  Each .S is
@@ -97,8 +93,6 @@ Dwarf::assemble $asm_file_1 {
 	    DW_LNS_copy
 
 	    DW_LNE_set_address $func_end
-	    DW_LNS_advance_line 1
-	    DW_LNS_copy
 	    DW_LNE_end_sequence
 	}
     }
@@ -181,8 +175,6 @@ Dwarf::assemble $asm_file_2 {
 	    DW_LNS_copy
 
 	    DW_LNE_set_address $main_end
-	    DW_LNS_advance_line 2
-	    DW_LNS_copy
 	    DW_LNE_end_sequence
 	}
     }

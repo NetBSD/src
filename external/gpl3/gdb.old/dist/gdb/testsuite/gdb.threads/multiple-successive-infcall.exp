@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2023 Free Software Foundation, Inc.
+# Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,6 +39,9 @@ foreach_with_prefix thread {5 4 3}  {
   gdb_test_multiple "continue" "${after_new_thread_message}" {
     -re "\\\[New Thread ${hex} \\\(LWP \[0-9\]+\\\)\\\].*${gdb_prompt}" {
       pass "${after_new_thread_message}"
+    }
+    -re -wrap "\\\[New Thread $decimal\\.$decimal\\\]\r\n.*" {
+      pass $gdb_test_name
     }
   }
 }

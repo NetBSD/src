@@ -1,5 +1,5 @@
 /* BFD back-end for i386 a.out binaries under LynxOS.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -34,48 +34,47 @@
 #include "libbfd.h"
 
 #ifndef WRITE_HEADERS
-#define WRITE_HEADERS(abfd, execp)					      \
-      {									      \
-	if (adata(abfd).magic == undecided_magic)			      \
-	  NAME(aout,adjust_sizes_and_vmas) (abfd);			      \
-									      \
-	execp->a_syms = bfd_get_symcount (abfd) * EXTERNAL_NLIST_SIZE;	      \
-	execp->a_entry = bfd_get_start_address (abfd);			      \
-									      \
-	execp->a_trsize = ((obj_textsec (abfd)->reloc_count) *		      \
-			   obj_reloc_entry_size (abfd));		      \
-	execp->a_drsize = ((obj_datasec (abfd)->reloc_count) *		      \
-			   obj_reloc_entry_size (abfd));		      \
-	NAME(aout,swap_exec_header_out) (abfd, execp, &exec_bytes);	      \
-									      \
-	if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0		      \
-	    || bfd_bwrite (&exec_bytes, (bfd_size_type) EXEC_BYTES_SIZE, \
-			  abfd) != EXEC_BYTES_SIZE)			      \
-	  return false;							      \
-	/* Now write out reloc info, followed by syms and strings */	      \
-									      \
-	if (bfd_get_symcount (abfd) != 0)				      \
-	    {								      \
-	      if (bfd_seek (abfd, (file_ptr) (N_SYMOFF (execp)), SEEK_SET)    \
-		  != 0)							      \
-		return false;						      \
-									      \
-	      if (! NAME(aout,write_syms) (abfd)) return false;		      \
-									      \
-	      if (bfd_seek (abfd, (file_ptr) (N_TRELOFF (execp)), SEEK_SET)   \
-		  != 0)							      \
-		return false;						      \
-									      \
-	      if (!NAME(lynx,squirt_out_relocs) (abfd, obj_textsec (abfd)))   \
-		return false;						      \
-	      if (bfd_seek (abfd, (file_ptr) (N_DRELOFF (execp)), SEEK_SET)   \
-		  != 0)							      \
-		return 0;						      \
-									      \
-	      if (!NAME(lynx,squirt_out_relocs) (abfd, obj_datasec (abfd)))   \
-		return false;						      \
-	    }								      \
-      }
+#define WRITE_HEADERS(abfd, execp)					\
+  {									\
+    if (adata(abfd).magic == undecided_magic)				\
+      NAME (aout, adjust_sizes_and_vmas) (abfd);			\
+									\
+    execp->a_syms = bfd_get_symcount (abfd) * EXTERNAL_NLIST_SIZE;	\
+    execp->a_entry = bfd_get_start_address (abfd);			\
+									\
+    execp->a_trsize = ((obj_textsec (abfd)->reloc_count)		\
+		       * obj_reloc_entry_size (abfd));			\
+    execp->a_drsize = ((obj_datasec (abfd)->reloc_count)		\
+		       * obj_reloc_entry_size (abfd));			\
+    if (!NAME (aout, swap_exec_header_out) (abfd, execp, &exec_bytes))	\
+      return false;							\
+									\
+    if (bfd_seek (abfd, 0, SEEK_SET) != 0				\
+	|| bfd_write (&exec_bytes, EXEC_BYTES_SIZE,			\
+		      abfd) != EXEC_BYTES_SIZE)				\
+      return false;							\
+    /* Now write out reloc info, followed by syms and strings.  */	\
+									\
+    if (bfd_get_outsymbols (abfd) != NULL				\
+	&& bfd_get_symcount (abfd) != 0)				\
+      {									\
+	if (bfd_seek (abfd, N_SYMOFF (execp), SEEK_SET) != 0)		\
+	  return false;							\
+									\
+	if (! NAME (aout, write_syms) (abfd))				\
+	  return false;							\
+      }									\
+									\
+    if (bfd_seek (abfd, N_TRELOFF (execp), SEEK_SET) != 0)		\
+      return false;							\
+    if (!NAME (lynx, squirt_out_relocs) (abfd, obj_textsec (abfd)))	\
+      return false;							\
+									\
+    if (bfd_seek (abfd, N_DRELOFF (execp), SEEK_SET) != 0)		\
+      return false;							\
+    if (!NAME (lynx, squirt_out_relocs) (abfd, obj_datasec (abfd)))	\
+      return false;							\
+  }
 #endif
 
 #include "libaout.h"
@@ -494,7 +493,7 @@ NAME(lynx,squirt_out_relocs) (bfd *abfd, asection *section)
 	NAME(lynx,swap_std_reloc_out) (abfd, *generic, (struct reloc_std_external *) natptr);
     }
 
-  if (bfd_bwrite (native, natsize, abfd) != natsize)
+  if (bfd_write (native, natsize, abfd) != natsize)
     {
       bfd_release (abfd, native);
       return false;

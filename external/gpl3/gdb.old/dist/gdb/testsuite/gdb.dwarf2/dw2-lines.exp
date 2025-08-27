@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-require dwarf2_support 1
+require dwarf2_support
 
 standard_testfile .c
 
@@ -104,7 +104,7 @@ proc test_1 { _cv _cdw64 _lv _ldw64 {_string_form ""}} {
 		line [line_for bar_label_4]
 		DW_LNS_copy
 
-		DW_LNE_set_address bar_label_5
+		DW_LNE_set_address "$bar_start + $bar_len"
 		DW_LNE_end_sequence
 	    }
 	}

@@ -1,0 +1,117 @@
+# Copyright 2022-2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This test reprocuces bug gdb/28942, performing an inferior function
+# call from a breakpoint condition in a multi-threaded inferior.
+#
+# The important part of this test is that, when the conditional
+# breakpoint is hit, and the condition (which includes an inferior
+# function call) is evaluated, the other threads are running.
+
+standard_testfile
+
+if { [build_executable "failed to prepare" ${binfile} "${srcfile}" \
+	  {debug pthreads}] == -1 } {
+    return
+}
+
+set cond_bp_line [gdb_get_line_number "Conditional breakpoint here"]
+set final_bp_line [gdb_get_line_number "Stop marker"]
+
+# Start GDB based on TARGET_ASYNC and TARGET_NON_STOP, and then runto main.
+proc start_gdb_and_runto_main { target_async target_non_stop } {
+    save_vars { ::GDBFLAGS } {
+	append ::GDBFLAGS \
+	    " -ex \"maint set target-non-stop $target_non_stop\""
+	append ::GDBFLAGS \
+	    " -ex \"maintenance set target-async ${target_async}\""
+
+	clean_restart ${::binfile}
+    }
+
+    if { ![runto_main] } {
+	return -1
+    }
+
+    return 0
+}
+
+# Run a test of GDB's conditional breakpoints, where the conditions include
+# inferior function calls.
+#
+# TARGET_ASYNC and TARGET_NON_STOP are used when starting up GDB.
+#
+# When STOP_AT_COND is true the breakpoint condtion will evaluate to
+# true, and GDB will stop at the breakpoint.  Otherwise, the
+# breakpoint condition will evaluate to false and GDB will not stop at
+# the breakpoint.
+proc run_condition_test { stop_at_cond \
+			      target_async target_non_stop } {
+    if { [start_gdb_and_runto_main $target_async \
+	      $target_non_stop] == -1 } {
+	return
+    }
+
+    # Setup the conditional breakpoint.
+    if { $stop_at_cond } {
+	set cond_func "return_true"
+    } else {
+	set cond_func "return_false"
+    }
+    gdb_breakpoint \
+	"${::srcfile}:${::cond_bp_line} if (${cond_func} ())"
+    set cond_bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+			"get number for conditional breakpoint"]
+
+    # And a breakpoint that we hit when the test is over, this one is
+    # not conditional.
+    gdb_breakpoint "${::srcfile}:${::final_bp_line}"
+    set final_bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+			  "get number for final breakpoint"]
+
+    if { $stop_at_cond } {
+	# Continue.  The first breakpoint we hit should be the conditional
+	# breakpoint.  The other thread will have hit its breakpoint, but
+	# that will have been deferred until the conditional breakpoint is
+	# reported.
+	gdb_test "continue" \
+	    [multi_line \
+		 "Continuing\\." \
+		 ".*" \
+		 "" \
+		 "Thread ${::decimal} \"\[^\"\r\n\]+\" hit Breakpoint ${cond_bp_num}, worker_func \[^\r\n\]+:${::cond_bp_line}" \
+		 "${::decimal}\\s+\[^\r\n\]+Conditional breakpoint here\[^\r\n\]+"] \
+	    "hit the conditional breakpoint"
+    }
+
+    # Run to the stop marker.
+    gdb_test "continue" \
+	[multi_line \
+	     "Continuing\\." \
+	     ".*" \
+	     "" \
+	     "Thread ${::decimal} \"\[^\"\r\n\]+\" hit Breakpoint ${final_bp_num}, stop_marker \[^\r\n\]+:${::final_bp_line}" \
+	     "${::decimal}\\s+\[^\r\n\]+Stop marker\[^\r\n\]+"] \
+	"hit the final breakpoint"
+}
+
+foreach_with_prefix target_async { "on" "off" } {
+    foreach_with_prefix target_non_stop { "on" "off" } {
+	foreach_with_prefix stop_at_cond { true false } {
+	    run_condition_test $stop_at_cond \
+		$target_async $target_non_stop
+	}
+    }
+}

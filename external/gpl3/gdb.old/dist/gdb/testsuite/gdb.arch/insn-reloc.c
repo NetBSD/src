@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2015-2023 Free Software Foundation, Inc.
+   Copyright 2015-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -49,10 +49,9 @@ fail (void)
      JMP set_point0
    f:
      MOV $1, %[ok]
-     JMP end
+     RET
    set_point0:
      CALL f ; tracepoint here.
-   end:
 
    */
 
@@ -65,10 +64,9 @@ can_relocate_call (void)
        "  jmp " SYMBOL (set_point0) "\n"
        "0:\n"
        "  mov $1, %[ok]\n"
-       "  jmp 1f\n"
+       "  ret\n"
        SYMBOL (set_point0) ":\n"
        "  call 0b\n"
-       "1:\n"
        : [ok] "=r" (ok));
 
   if (ok == 1)

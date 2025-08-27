@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+#   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +20,23 @@
 AUTOMAKE_OPTIONS = no-dist foreign
 ACLOCAL_AMFLAGS = -I . -I ../config
 
-AM_CPPFLAGS = -I$(srcdir)/../include -I$(srcdir)/../gdb \
-    -I../gnulib/import -I$(srcdir)/../gnulib/import \
-    -I.. -I$(srcdir)/.. $(INCINTL) -I../bfd -I$(srcdir)/../bfd \
-    @LARGEFILE_CPPFLAGS@
+# Suppress 'configure.ac: error: AM_GNU_GETTEXT used but SUBDIRS not defined'
+# from Automake, as gdbsupport uses AM_GNU_GETTEXT through
+# ZW_GNU_GETTEXT_SISTER_DIR, but doesn't have any translations (currently).
+SUBDIRS =
+
+AM_CPPFLAGS = \
+	-I$(srcdir)/../include \
+	-I$(srcdir)/../gdb \
+	-I../gnulib/import \
+	-I$(srcdir)/../gnulib/import \
+	-I.. \
+	-I$(srcdir)/.. \
+	$(INCINTL) \
+	-I../bfd \
+	-I$(srcdir)/../bfd \
+	-include $(srcdir)/common-defs.h \
+	@LARGEFILE_CPPFLAGS@
 
 override CXX += $(CXX_DIALECT)
 
@@ -42,7 +55,6 @@ endif
 libgdbsupport_a_SOURCES = \
     agent.cc \
     btrace-common.cc \
-    buffer.cc \
     cleanups.cc \
     common-debug.cc \
     common-exceptions.cc \
@@ -75,6 +87,7 @@ libgdbsupport_a_SOURCES = \
     search.cc \
     signals.cc \
     signals-state-save-restore.cc \
+    task-group.cc \
     tdesc.cc \
     thread-pool.cc \
     xml-utils.cc \

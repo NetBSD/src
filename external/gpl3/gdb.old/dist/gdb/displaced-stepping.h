@@ -1,6 +1,6 @@
 /* Displaced stepping related things.
 
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -168,7 +168,7 @@ struct displaced_step_buffers
 					 CORE_ADDR &displaced_pc);
 
   displaced_step_finish_status finish (gdbarch *arch, thread_info *thread,
-				       gdb_signal sig);
+				       const target_waitstatus &status);
 
   const displaced_step_copy_insn_closure *
     copy_insn_closure_by_addr (CORE_ADDR addr);

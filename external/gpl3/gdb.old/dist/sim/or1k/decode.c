@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2023 Free Software Foundation, Inc.
+Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -27,6 +27,8 @@ This file is part of the GNU simulators.
 
 #include "sim-main.h"
 #include "sim-assert.h"
+#include "cgen-mem.h"
+#include "cgen-ops.h"
 
 /* The instruction descriptor array.
    This is computed at runtime.  Space for it is not malloc'd to save a
@@ -240,7 +242,7 @@ or1k32bf_init_idesc_table (SIM_CPU *cpu)
     init_idesc (cpu, id, t);
 
   /* Now fill in the values for the chosen cpu.  */
-  for (t = or1k32bf_insn_sem, tend = t + sizeof (or1k32bf_insn_sem) / sizeof (*t);
+  for (t = or1k32bf_insn_sem, tend = t + ARRAY_SIZE (or1k32bf_insn_sem);
        t != tend; ++t)
     {
       init_idesc (cpu, & table[t->index], t);
@@ -264,1634 +266,1634 @@ or1k32bf_decode (SIM_CPU *current_cpu, IADDR pc,
     CGEN_INSN_WORD insn = base_insn;
 
     {
-      unsigned int val = (((insn >> 21) & (63 << 5)) | ((insn >> 0) & (31 << 0)));
-      switch (val)
+      unsigned int val0 = (((insn >> 21) & (63 << 5)) | ((insn >> 0) & (31 << 0)));
+      switch (val0)
       {
-      case 0 : /* fall through */
-      case 1 : /* fall through */
-      case 2 : /* fall through */
-      case 3 : /* fall through */
-      case 4 : /* fall through */
-      case 5 : /* fall through */
-      case 6 : /* fall through */
-      case 7 : /* fall through */
-      case 8 : /* fall through */
-      case 9 : /* fall through */
-      case 10 : /* fall through */
-      case 11 : /* fall through */
-      case 12 : /* fall through */
-      case 13 : /* fall through */
-      case 14 : /* fall through */
-      case 15 : /* fall through */
-      case 16 : /* fall through */
-      case 17 : /* fall through */
-      case 18 : /* fall through */
-      case 19 : /* fall through */
-      case 20 : /* fall through */
-      case 21 : /* fall through */
-      case 22 : /* fall through */
-      case 23 : /* fall through */
-      case 24 : /* fall through */
-      case 25 : /* fall through */
-      case 26 : /* fall through */
-      case 27 : /* fall through */
-      case 28 : /* fall through */
-      case 29 : /* fall through */
-      case 30 : /* fall through */
-      case 31 : itype = OR1K32BF_INSN_L_J; goto extract_sfmt_l_j;
-      case 32 : /* fall through */
-      case 33 : /* fall through */
-      case 34 : /* fall through */
-      case 35 : /* fall through */
-      case 36 : /* fall through */
-      case 37 : /* fall through */
-      case 38 : /* fall through */
-      case 39 : /* fall through */
-      case 40 : /* fall through */
-      case 41 : /* fall through */
-      case 42 : /* fall through */
-      case 43 : /* fall through */
-      case 44 : /* fall through */
-      case 45 : /* fall through */
-      case 46 : /* fall through */
-      case 47 : /* fall through */
-      case 48 : /* fall through */
-      case 49 : /* fall through */
-      case 50 : /* fall through */
-      case 51 : /* fall through */
-      case 52 : /* fall through */
-      case 53 : /* fall through */
-      case 54 : /* fall through */
-      case 55 : /* fall through */
-      case 56 : /* fall through */
-      case 57 : /* fall through */
-      case 58 : /* fall through */
-      case 59 : /* fall through */
-      case 60 : /* fall through */
-      case 61 : /* fall through */
-      case 62 : /* fall through */
-      case 63 : itype = OR1K32BF_INSN_L_JAL; goto extract_sfmt_l_jal;
-      case 64 : /* fall through */
-      case 65 : /* fall through */
-      case 66 : /* fall through */
-      case 67 : /* fall through */
-      case 68 : /* fall through */
-      case 69 : /* fall through */
-      case 70 : /* fall through */
-      case 71 : /* fall through */
-      case 72 : /* fall through */
-      case 73 : /* fall through */
-      case 74 : /* fall through */
-      case 75 : /* fall through */
-      case 76 : /* fall through */
-      case 77 : /* fall through */
-      case 78 : /* fall through */
-      case 79 : /* fall through */
-      case 80 : /* fall through */
-      case 81 : /* fall through */
-      case 82 : /* fall through */
-      case 83 : /* fall through */
-      case 84 : /* fall through */
-      case 85 : /* fall through */
-      case 86 : /* fall through */
-      case 87 : /* fall through */
-      case 88 : /* fall through */
-      case 89 : /* fall through */
-      case 90 : /* fall through */
-      case 91 : /* fall through */
-      case 92 : /* fall through */
-      case 93 : /* fall through */
-      case 94 : /* fall through */
-      case 95 : itype = OR1K32BF_INSN_L_ADRP; goto extract_sfmt_l_adrp;
-      case 96 : /* fall through */
-      case 97 : /* fall through */
-      case 98 : /* fall through */
-      case 99 : /* fall through */
-      case 100 : /* fall through */
-      case 101 : /* fall through */
-      case 102 : /* fall through */
-      case 103 : /* fall through */
-      case 104 : /* fall through */
-      case 105 : /* fall through */
-      case 106 : /* fall through */
-      case 107 : /* fall through */
-      case 108 : /* fall through */
-      case 109 : /* fall through */
-      case 110 : /* fall through */
-      case 111 : /* fall through */
-      case 112 : /* fall through */
-      case 113 : /* fall through */
-      case 114 : /* fall through */
-      case 115 : /* fall through */
-      case 116 : /* fall through */
-      case 117 : /* fall through */
-      case 118 : /* fall through */
-      case 119 : /* fall through */
-      case 120 : /* fall through */
-      case 121 : /* fall through */
-      case 122 : /* fall through */
-      case 123 : /* fall through */
-      case 124 : /* fall through */
-      case 125 : /* fall through */
-      case 126 : /* fall through */
-      case 127 : itype = OR1K32BF_INSN_L_BNF; goto extract_sfmt_l_bnf;
-      case 128 : /* fall through */
-      case 129 : /* fall through */
-      case 130 : /* fall through */
-      case 131 : /* fall through */
-      case 132 : /* fall through */
-      case 133 : /* fall through */
-      case 134 : /* fall through */
-      case 135 : /* fall through */
-      case 136 : /* fall through */
-      case 137 : /* fall through */
-      case 138 : /* fall through */
-      case 139 : /* fall through */
-      case 140 : /* fall through */
-      case 141 : /* fall through */
-      case 142 : /* fall through */
-      case 143 : /* fall through */
-      case 144 : /* fall through */
-      case 145 : /* fall through */
-      case 146 : /* fall through */
-      case 147 : /* fall through */
-      case 148 : /* fall through */
-      case 149 : /* fall through */
-      case 150 : /* fall through */
-      case 151 : /* fall through */
-      case 152 : /* fall through */
-      case 153 : /* fall through */
-      case 154 : /* fall through */
-      case 155 : /* fall through */
-      case 156 : /* fall through */
-      case 157 : /* fall through */
-      case 158 : /* fall through */
-      case 159 : itype = OR1K32BF_INSN_L_BF; goto extract_sfmt_l_bnf;
-      case 160 : /* fall through */
-      case 161 : /* fall through */
-      case 162 : /* fall through */
-      case 163 : /* fall through */
-      case 164 : /* fall through */
-      case 165 : /* fall through */
-      case 166 : /* fall through */
-      case 167 : /* fall through */
-      case 168 : /* fall through */
-      case 169 : /* fall through */
-      case 170 : /* fall through */
-      case 171 : /* fall through */
-      case 172 : /* fall through */
-      case 173 : /* fall through */
-      case 174 : /* fall through */
-      case 175 : /* fall through */
-      case 176 : /* fall through */
-      case 177 : /* fall through */
-      case 178 : /* fall through */
-      case 179 : /* fall through */
-      case 180 : /* fall through */
-      case 181 : /* fall through */
-      case 182 : /* fall through */
-      case 183 : /* fall through */
-      case 184 : /* fall through */
-      case 185 : /* fall through */
-      case 186 : /* fall through */
-      case 187 : /* fall through */
-      case 188 : /* fall through */
-      case 189 : /* fall through */
-      case 190 : /* fall through */
-      case 191 :
+      case 0:
+      case 1:
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+      case 6:
+      case 7:
+      case 8:
+      case 9:
+      case 10:
+      case 11:
+      case 12:
+      case 13:
+      case 14:
+      case 15:
+      case 16:
+      case 17:
+      case 18:
+      case 19:
+      case 20:
+      case 21:
+      case 22:
+      case 23:
+      case 24:
+      case 25:
+      case 26:
+      case 27:
+      case 28:
+      case 29:
+      case 30:
+      case 31: itype = OR1K32BF_INSN_L_J; goto extract_sfmt_l_j;
+      case 32:
+      case 33:
+      case 34:
+      case 35:
+      case 36:
+      case 37:
+      case 38:
+      case 39:
+      case 40:
+      case 41:
+      case 42:
+      case 43:
+      case 44:
+      case 45:
+      case 46:
+      case 47:
+      case 48:
+      case 49:
+      case 50:
+      case 51:
+      case 52:
+      case 53:
+      case 54:
+      case 55:
+      case 56:
+      case 57:
+      case 58:
+      case 59:
+      case 60:
+      case 61:
+      case 62:
+      case 63: itype = OR1K32BF_INSN_L_JAL; goto extract_sfmt_l_jal;
+      case 64:
+      case 65:
+      case 66:
+      case 67:
+      case 68:
+      case 69:
+      case 70:
+      case 71:
+      case 72:
+      case 73:
+      case 74:
+      case 75:
+      case 76:
+      case 77:
+      case 78:
+      case 79:
+      case 80:
+      case 81:
+      case 82:
+      case 83:
+      case 84:
+      case 85:
+      case 86:
+      case 87:
+      case 88:
+      case 89:
+      case 90:
+      case 91:
+      case 92:
+      case 93:
+      case 94:
+      case 95: itype = OR1K32BF_INSN_L_ADRP; goto extract_sfmt_l_adrp;
+      case 96:
+      case 97:
+      case 98:
+      case 99:
+      case 100:
+      case 101:
+      case 102:
+      case 103:
+      case 104:
+      case 105:
+      case 106:
+      case 107:
+      case 108:
+      case 109:
+      case 110:
+      case 111:
+      case 112:
+      case 113:
+      case 114:
+      case 115:
+      case 116:
+      case 117:
+      case 118:
+      case 119:
+      case 120:
+      case 121:
+      case 122:
+      case 123:
+      case 124:
+      case 125:
+      case 126:
+      case 127: itype = OR1K32BF_INSN_L_BNF; goto extract_sfmt_l_bnf;
+      case 128:
+      case 129:
+      case 130:
+      case 131:
+      case 132:
+      case 133:
+      case 134:
+      case 135:
+      case 136:
+      case 137:
+      case 138:
+      case 139:
+      case 140:
+      case 141:
+      case 142:
+      case 143:
+      case 144:
+      case 145:
+      case 146:
+      case 147:
+      case 148:
+      case 149:
+      case 150:
+      case 151:
+      case 152:
+      case 153:
+      case 154:
+      case 155:
+      case 156:
+      case 157:
+      case 158:
+      case 159: itype = OR1K32BF_INSN_L_BF; goto extract_sfmt_l_bnf;
+      case 160:
+      case 161:
+      case 162:
+      case 163:
+      case 164:
+      case 165:
+      case 166:
+      case 167:
+      case 168:
+      case 169:
+      case 170:
+      case 171:
+      case 172:
+      case 173:
+      case 174:
+      case 175:
+      case 176:
+      case 177:
+      case 178:
+      case 179:
+      case 180:
+      case 181:
+      case 182:
+      case 183:
+      case 184:
+      case 185:
+      case 186:
+      case 187:
+      case 188:
+      case 189:
+      case 190:
+      case 191:
         if ((entire_insn & 0xffff0000) == 0x15000000)
           { itype = OR1K32BF_INSN_L_NOP_IMM; goto extract_sfmt_l_nop_imm; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 192 :
+      case 192:
         {
-          unsigned int val = (((insn >> 16) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 16) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xfc1f0000) == 0x18000000)
               { itype = OR1K32BF_INSN_L_MOVHI; goto extract_sfmt_l_movhi; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xfc1fffff) == 0x18010000)
               { itype = OR1K32BF_INSN_L_MACRC; goto extract_sfmt_l_macrc; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 193 : /* fall through */
-      case 194 : /* fall through */
-      case 195 : /* fall through */
-      case 196 : /* fall through */
-      case 197 : /* fall through */
-      case 198 : /* fall through */
-      case 199 : /* fall through */
-      case 200 : /* fall through */
-      case 201 : /* fall through */
-      case 202 : /* fall through */
-      case 203 : /* fall through */
-      case 204 : /* fall through */
-      case 205 : /* fall through */
-      case 206 : /* fall through */
-      case 207 : /* fall through */
-      case 208 : /* fall through */
-      case 209 : /* fall through */
-      case 210 : /* fall through */
-      case 211 : /* fall through */
-      case 212 : /* fall through */
-      case 213 : /* fall through */
-      case 214 : /* fall through */
-      case 215 : /* fall through */
-      case 216 : /* fall through */
-      case 217 : /* fall through */
-      case 218 : /* fall through */
-      case 219 : /* fall through */
-      case 220 : /* fall through */
-      case 221 : /* fall through */
-      case 222 : /* fall through */
-      case 223 :
+      case 193:
+      case 194:
+      case 195:
+      case 196:
+      case 197:
+      case 198:
+      case 199:
+      case 200:
+      case 201:
+      case 202:
+      case 203:
+      case 204:
+      case 205:
+      case 206:
+      case 207:
+      case 208:
+      case 209:
+      case 210:
+      case 211:
+      case 212:
+      case 213:
+      case 214:
+      case 215:
+      case 216:
+      case 217:
+      case 218:
+      case 219:
+      case 220:
+      case 221:
+      case 222:
+      case 223:
         if ((entire_insn & 0xfc1f0000) == 0x18000000)
           { itype = OR1K32BF_INSN_L_MOVHI; goto extract_sfmt_l_movhi; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 256 :
+      case 256:
         {
-          unsigned int val = (((insn >> 23) & (7 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 23) & (7 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffff0000) == 0x20000000)
               { itype = OR1K32BF_INSN_L_SYS; goto extract_sfmt_l_trap; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 2 :
+          case 2:
             if ((entire_insn & 0xffff0000) == 0x21000000)
               { itype = OR1K32BF_INSN_L_TRAP; goto extract_sfmt_l_trap; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 4 :
+          case 4:
             if ((entire_insn & 0xffffffff) == 0x22000000)
               { itype = OR1K32BF_INSN_L_MSYNC; goto extract_sfmt_l_msync; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 5 :
+          case 5:
             if ((entire_insn & 0xffffffff) == 0x22800000)
               { itype = OR1K32BF_INSN_L_PSYNC; goto extract_sfmt_l_msync; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 6 :
+          case 6:
             if ((entire_insn & 0xffffffff) == 0x23000000)
               { itype = OR1K32BF_INSN_L_CSYNC; goto extract_sfmt_l_msync; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 257 : /* fall through */
-      case 258 : /* fall through */
-      case 259 : /* fall through */
-      case 260 : /* fall through */
-      case 261 : /* fall through */
-      case 262 : /* fall through */
-      case 263 : /* fall through */
-      case 264 : /* fall through */
-      case 265 : /* fall through */
-      case 266 : /* fall through */
-      case 267 : /* fall through */
-      case 268 : /* fall through */
-      case 269 : /* fall through */
-      case 270 : /* fall through */
-      case 271 : /* fall through */
-      case 272 : /* fall through */
-      case 273 : /* fall through */
-      case 274 : /* fall through */
-      case 275 : /* fall through */
-      case 276 : /* fall through */
-      case 277 : /* fall through */
-      case 278 : /* fall through */
-      case 279 : /* fall through */
-      case 280 : /* fall through */
-      case 281 : /* fall through */
-      case 282 : /* fall through */
-      case 283 : /* fall through */
-      case 284 : /* fall through */
-      case 285 : /* fall through */
-      case 286 : /* fall through */
-      case 287 :
+      case 257:
+      case 258:
+      case 259:
+      case 260:
+      case 261:
+      case 262:
+      case 263:
+      case 264:
+      case 265:
+      case 266:
+      case 267:
+      case 268:
+      case 269:
+      case 270:
+      case 271:
+      case 272:
+      case 273:
+      case 274:
+      case 275:
+      case 276:
+      case 277:
+      case 278:
+      case 279:
+      case 280:
+      case 281:
+      case 282:
+      case 283:
+      case 284:
+      case 285:
+      case 286:
+      case 287:
         {
-          unsigned int val = (((insn >> 24) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 24) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffff0000) == 0x20000000)
               { itype = OR1K32BF_INSN_L_SYS; goto extract_sfmt_l_trap; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffff0000) == 0x21000000)
               { itype = OR1K32BF_INSN_L_TRAP; goto extract_sfmt_l_trap; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 288 :
+      case 288:
         if ((entire_insn & 0xffffffff) == 0x24000000)
           { itype = OR1K32BF_INSN_L_RFE; goto extract_sfmt_l_msync; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 544 :
+      case 544:
         if ((entire_insn & 0xffff07ff) == 0x44000000)
           { itype = OR1K32BF_INSN_L_JR; goto extract_sfmt_l_jr; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 576 :
+      case 576:
         if ((entire_insn & 0xffff07ff) == 0x48000000)
           { itype = OR1K32BF_INSN_L_JALR; goto extract_sfmt_l_jalr; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 608 : /* fall through */
-      case 609 : /* fall through */
-      case 610 : /* fall through */
-      case 611 : /* fall through */
-      case 612 : /* fall through */
-      case 613 : /* fall through */
-      case 614 : /* fall through */
-      case 615 : /* fall through */
-      case 616 : /* fall through */
-      case 617 : /* fall through */
-      case 618 : /* fall through */
-      case 619 : /* fall through */
-      case 620 : /* fall through */
-      case 621 : /* fall through */
-      case 622 : /* fall through */
-      case 623 : /* fall through */
-      case 624 : /* fall through */
-      case 625 : /* fall through */
-      case 626 : /* fall through */
-      case 627 : /* fall through */
-      case 628 : /* fall through */
-      case 629 : /* fall through */
-      case 630 : /* fall through */
-      case 631 : /* fall through */
-      case 632 : /* fall through */
-      case 633 : /* fall through */
-      case 634 : /* fall through */
-      case 635 : /* fall through */
-      case 636 : /* fall through */
-      case 637 : /* fall through */
-      case 638 : /* fall through */
-      case 639 :
+      case 608:
+      case 609:
+      case 610:
+      case 611:
+      case 612:
+      case 613:
+      case 614:
+      case 615:
+      case 616:
+      case 617:
+      case 618:
+      case 619:
+      case 620:
+      case 621:
+      case 622:
+      case 623:
+      case 624:
+      case 625:
+      case 626:
+      case 627:
+      case 628:
+      case 629:
+      case 630:
+      case 631:
+      case 632:
+      case 633:
+      case 634:
+      case 635:
+      case 636:
+      case 637:
+      case 638:
+      case 639:
         if ((entire_insn & 0xffe00000) == 0x4c000000)
           { itype = OR1K32BF_INSN_L_MACI; goto extract_sfmt_l_maci; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 864 : /* fall through */
-      case 865 : /* fall through */
-      case 866 : /* fall through */
-      case 867 : /* fall through */
-      case 868 : /* fall through */
-      case 869 : /* fall through */
-      case 870 : /* fall through */
-      case 871 : /* fall through */
-      case 872 : /* fall through */
-      case 873 : /* fall through */
-      case 874 : /* fall through */
-      case 875 : /* fall through */
-      case 876 : /* fall through */
-      case 877 : /* fall through */
-      case 878 : /* fall through */
-      case 879 : /* fall through */
-      case 880 : /* fall through */
-      case 881 : /* fall through */
-      case 882 : /* fall through */
-      case 883 : /* fall through */
-      case 884 : /* fall through */
-      case 885 : /* fall through */
-      case 886 : /* fall through */
-      case 887 : /* fall through */
-      case 888 : /* fall through */
-      case 889 : /* fall through */
-      case 890 : /* fall through */
-      case 891 : /* fall through */
-      case 892 : /* fall through */
-      case 893 : /* fall through */
-      case 894 : /* fall through */
-      case 895 : itype = OR1K32BF_INSN_L_LWA; goto extract_sfmt_l_lwa;
-      case 896 :
+      case 864:
+      case 865:
+      case 866:
+      case 867:
+      case 868:
+      case 869:
+      case 870:
+      case 871:
+      case 872:
+      case 873:
+      case 874:
+      case 875:
+      case 876:
+      case 877:
+      case 878:
+      case 879:
+      case 880:
+      case 881:
+      case 882:
+      case 883:
+      case 884:
+      case 885:
+      case 886:
+      case 887:
+      case 888:
+      case 889:
+      case 890:
+      case 891:
+      case 892:
+      case 893:
+      case 894:
+      case 895: itype = OR1K32BF_INSN_L_LWA; goto extract_sfmt_l_lwa;
+      case 896:
         if ((entire_insn & 0xffffffff) == 0x70000000)
           { itype = OR1K32BF_INSN_L_CUST1; goto extract_sfmt_l_msync; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 928 :
+      case 928:
         if ((entire_insn & 0xffffffff) == 0x74000000)
           { itype = OR1K32BF_INSN_L_CUST2; goto extract_sfmt_l_msync; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 960 :
+      case 960:
         if ((entire_insn & 0xffffffff) == 0x78000000)
           { itype = OR1K32BF_INSN_L_CUST3; goto extract_sfmt_l_msync; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 992 :
+      case 992:
         if ((entire_insn & 0xffffffff) == 0x7c000000)
           { itype = OR1K32BF_INSN_L_CUST4; goto extract_sfmt_l_msync; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1056 : /* fall through */
-      case 1057 : /* fall through */
-      case 1058 : /* fall through */
-      case 1059 : /* fall through */
-      case 1060 : /* fall through */
-      case 1061 : /* fall through */
-      case 1062 : /* fall through */
-      case 1063 : /* fall through */
-      case 1064 : /* fall through */
-      case 1065 : /* fall through */
-      case 1066 : /* fall through */
-      case 1067 : /* fall through */
-      case 1068 : /* fall through */
-      case 1069 : /* fall through */
-      case 1070 : /* fall through */
-      case 1071 : /* fall through */
-      case 1072 : /* fall through */
-      case 1073 : /* fall through */
-      case 1074 : /* fall through */
-      case 1075 : /* fall through */
-      case 1076 : /* fall through */
-      case 1077 : /* fall through */
-      case 1078 : /* fall through */
-      case 1079 : /* fall through */
-      case 1080 : /* fall through */
-      case 1081 : /* fall through */
-      case 1082 : /* fall through */
-      case 1083 : /* fall through */
-      case 1084 : /* fall through */
-      case 1085 : /* fall through */
-      case 1086 : /* fall through */
-      case 1087 : itype = OR1K32BF_INSN_L_LWZ; goto extract_sfmt_l_lwz;
-      case 1088 : /* fall through */
-      case 1089 : /* fall through */
-      case 1090 : /* fall through */
-      case 1091 : /* fall through */
-      case 1092 : /* fall through */
-      case 1093 : /* fall through */
-      case 1094 : /* fall through */
-      case 1095 : /* fall through */
-      case 1096 : /* fall through */
-      case 1097 : /* fall through */
-      case 1098 : /* fall through */
-      case 1099 : /* fall through */
-      case 1100 : /* fall through */
-      case 1101 : /* fall through */
-      case 1102 : /* fall through */
-      case 1103 : /* fall through */
-      case 1104 : /* fall through */
-      case 1105 : /* fall through */
-      case 1106 : /* fall through */
-      case 1107 : /* fall through */
-      case 1108 : /* fall through */
-      case 1109 : /* fall through */
-      case 1110 : /* fall through */
-      case 1111 : /* fall through */
-      case 1112 : /* fall through */
-      case 1113 : /* fall through */
-      case 1114 : /* fall through */
-      case 1115 : /* fall through */
-      case 1116 : /* fall through */
-      case 1117 : /* fall through */
-      case 1118 : /* fall through */
-      case 1119 : itype = OR1K32BF_INSN_L_LWS; goto extract_sfmt_l_lws;
-      case 1120 : /* fall through */
-      case 1121 : /* fall through */
-      case 1122 : /* fall through */
-      case 1123 : /* fall through */
-      case 1124 : /* fall through */
-      case 1125 : /* fall through */
-      case 1126 : /* fall through */
-      case 1127 : /* fall through */
-      case 1128 : /* fall through */
-      case 1129 : /* fall through */
-      case 1130 : /* fall through */
-      case 1131 : /* fall through */
-      case 1132 : /* fall through */
-      case 1133 : /* fall through */
-      case 1134 : /* fall through */
-      case 1135 : /* fall through */
-      case 1136 : /* fall through */
-      case 1137 : /* fall through */
-      case 1138 : /* fall through */
-      case 1139 : /* fall through */
-      case 1140 : /* fall through */
-      case 1141 : /* fall through */
-      case 1142 : /* fall through */
-      case 1143 : /* fall through */
-      case 1144 : /* fall through */
-      case 1145 : /* fall through */
-      case 1146 : /* fall through */
-      case 1147 : /* fall through */
-      case 1148 : /* fall through */
-      case 1149 : /* fall through */
-      case 1150 : /* fall through */
-      case 1151 : itype = OR1K32BF_INSN_L_LBZ; goto extract_sfmt_l_lbz;
-      case 1152 : /* fall through */
-      case 1153 : /* fall through */
-      case 1154 : /* fall through */
-      case 1155 : /* fall through */
-      case 1156 : /* fall through */
-      case 1157 : /* fall through */
-      case 1158 : /* fall through */
-      case 1159 : /* fall through */
-      case 1160 : /* fall through */
-      case 1161 : /* fall through */
-      case 1162 : /* fall through */
-      case 1163 : /* fall through */
-      case 1164 : /* fall through */
-      case 1165 : /* fall through */
-      case 1166 : /* fall through */
-      case 1167 : /* fall through */
-      case 1168 : /* fall through */
-      case 1169 : /* fall through */
-      case 1170 : /* fall through */
-      case 1171 : /* fall through */
-      case 1172 : /* fall through */
-      case 1173 : /* fall through */
-      case 1174 : /* fall through */
-      case 1175 : /* fall through */
-      case 1176 : /* fall through */
-      case 1177 : /* fall through */
-      case 1178 : /* fall through */
-      case 1179 : /* fall through */
-      case 1180 : /* fall through */
-      case 1181 : /* fall through */
-      case 1182 : /* fall through */
-      case 1183 : itype = OR1K32BF_INSN_L_LBS; goto extract_sfmt_l_lbs;
-      case 1184 : /* fall through */
-      case 1185 : /* fall through */
-      case 1186 : /* fall through */
-      case 1187 : /* fall through */
-      case 1188 : /* fall through */
-      case 1189 : /* fall through */
-      case 1190 : /* fall through */
-      case 1191 : /* fall through */
-      case 1192 : /* fall through */
-      case 1193 : /* fall through */
-      case 1194 : /* fall through */
-      case 1195 : /* fall through */
-      case 1196 : /* fall through */
-      case 1197 : /* fall through */
-      case 1198 : /* fall through */
-      case 1199 : /* fall through */
-      case 1200 : /* fall through */
-      case 1201 : /* fall through */
-      case 1202 : /* fall through */
-      case 1203 : /* fall through */
-      case 1204 : /* fall through */
-      case 1205 : /* fall through */
-      case 1206 : /* fall through */
-      case 1207 : /* fall through */
-      case 1208 : /* fall through */
-      case 1209 : /* fall through */
-      case 1210 : /* fall through */
-      case 1211 : /* fall through */
-      case 1212 : /* fall through */
-      case 1213 : /* fall through */
-      case 1214 : /* fall through */
-      case 1215 : itype = OR1K32BF_INSN_L_LHZ; goto extract_sfmt_l_lhz;
-      case 1216 : /* fall through */
-      case 1217 : /* fall through */
-      case 1218 : /* fall through */
-      case 1219 : /* fall through */
-      case 1220 : /* fall through */
-      case 1221 : /* fall through */
-      case 1222 : /* fall through */
-      case 1223 : /* fall through */
-      case 1224 : /* fall through */
-      case 1225 : /* fall through */
-      case 1226 : /* fall through */
-      case 1227 : /* fall through */
-      case 1228 : /* fall through */
-      case 1229 : /* fall through */
-      case 1230 : /* fall through */
-      case 1231 : /* fall through */
-      case 1232 : /* fall through */
-      case 1233 : /* fall through */
-      case 1234 : /* fall through */
-      case 1235 : /* fall through */
-      case 1236 : /* fall through */
-      case 1237 : /* fall through */
-      case 1238 : /* fall through */
-      case 1239 : /* fall through */
-      case 1240 : /* fall through */
-      case 1241 : /* fall through */
-      case 1242 : /* fall through */
-      case 1243 : /* fall through */
-      case 1244 : /* fall through */
-      case 1245 : /* fall through */
-      case 1246 : /* fall through */
-      case 1247 : itype = OR1K32BF_INSN_L_LHS; goto extract_sfmt_l_lhs;
-      case 1248 : /* fall through */
-      case 1249 : /* fall through */
-      case 1250 : /* fall through */
-      case 1251 : /* fall through */
-      case 1252 : /* fall through */
-      case 1253 : /* fall through */
-      case 1254 : /* fall through */
-      case 1255 : /* fall through */
-      case 1256 : /* fall through */
-      case 1257 : /* fall through */
-      case 1258 : /* fall through */
-      case 1259 : /* fall through */
-      case 1260 : /* fall through */
-      case 1261 : /* fall through */
-      case 1262 : /* fall through */
-      case 1263 : /* fall through */
-      case 1264 : /* fall through */
-      case 1265 : /* fall through */
-      case 1266 : /* fall through */
-      case 1267 : /* fall through */
-      case 1268 : /* fall through */
-      case 1269 : /* fall through */
-      case 1270 : /* fall through */
-      case 1271 : /* fall through */
-      case 1272 : /* fall through */
-      case 1273 : /* fall through */
-      case 1274 : /* fall through */
-      case 1275 : /* fall through */
-      case 1276 : /* fall through */
-      case 1277 : /* fall through */
-      case 1278 : /* fall through */
-      case 1279 : itype = OR1K32BF_INSN_L_ADDI; goto extract_sfmt_l_addi;
-      case 1280 : /* fall through */
-      case 1281 : /* fall through */
-      case 1282 : /* fall through */
-      case 1283 : /* fall through */
-      case 1284 : /* fall through */
-      case 1285 : /* fall through */
-      case 1286 : /* fall through */
-      case 1287 : /* fall through */
-      case 1288 : /* fall through */
-      case 1289 : /* fall through */
-      case 1290 : /* fall through */
-      case 1291 : /* fall through */
-      case 1292 : /* fall through */
-      case 1293 : /* fall through */
-      case 1294 : /* fall through */
-      case 1295 : /* fall through */
-      case 1296 : /* fall through */
-      case 1297 : /* fall through */
-      case 1298 : /* fall through */
-      case 1299 : /* fall through */
-      case 1300 : /* fall through */
-      case 1301 : /* fall through */
-      case 1302 : /* fall through */
-      case 1303 : /* fall through */
-      case 1304 : /* fall through */
-      case 1305 : /* fall through */
-      case 1306 : /* fall through */
-      case 1307 : /* fall through */
-      case 1308 : /* fall through */
-      case 1309 : /* fall through */
-      case 1310 : /* fall through */
-      case 1311 : itype = OR1K32BF_INSN_L_ADDIC; goto extract_sfmt_l_addic;
-      case 1312 : /* fall through */
-      case 1313 : /* fall through */
-      case 1314 : /* fall through */
-      case 1315 : /* fall through */
-      case 1316 : /* fall through */
-      case 1317 : /* fall through */
-      case 1318 : /* fall through */
-      case 1319 : /* fall through */
-      case 1320 : /* fall through */
-      case 1321 : /* fall through */
-      case 1322 : /* fall through */
-      case 1323 : /* fall through */
-      case 1324 : /* fall through */
-      case 1325 : /* fall through */
-      case 1326 : /* fall through */
-      case 1327 : /* fall through */
-      case 1328 : /* fall through */
-      case 1329 : /* fall through */
-      case 1330 : /* fall through */
-      case 1331 : /* fall through */
-      case 1332 : /* fall through */
-      case 1333 : /* fall through */
-      case 1334 : /* fall through */
-      case 1335 : /* fall through */
-      case 1336 : /* fall through */
-      case 1337 : /* fall through */
-      case 1338 : /* fall through */
-      case 1339 : /* fall through */
-      case 1340 : /* fall through */
-      case 1341 : /* fall through */
-      case 1342 : /* fall through */
-      case 1343 : itype = OR1K32BF_INSN_L_ANDI; goto extract_sfmt_l_mfspr;
-      case 1344 : /* fall through */
-      case 1345 : /* fall through */
-      case 1346 : /* fall through */
-      case 1347 : /* fall through */
-      case 1348 : /* fall through */
-      case 1349 : /* fall through */
-      case 1350 : /* fall through */
-      case 1351 : /* fall through */
-      case 1352 : /* fall through */
-      case 1353 : /* fall through */
-      case 1354 : /* fall through */
-      case 1355 : /* fall through */
-      case 1356 : /* fall through */
-      case 1357 : /* fall through */
-      case 1358 : /* fall through */
-      case 1359 : /* fall through */
-      case 1360 : /* fall through */
-      case 1361 : /* fall through */
-      case 1362 : /* fall through */
-      case 1363 : /* fall through */
-      case 1364 : /* fall through */
-      case 1365 : /* fall through */
-      case 1366 : /* fall through */
-      case 1367 : /* fall through */
-      case 1368 : /* fall through */
-      case 1369 : /* fall through */
-      case 1370 : /* fall through */
-      case 1371 : /* fall through */
-      case 1372 : /* fall through */
-      case 1373 : /* fall through */
-      case 1374 : /* fall through */
-      case 1375 : itype = OR1K32BF_INSN_L_ORI; goto extract_sfmt_l_mfspr;
-      case 1376 : /* fall through */
-      case 1377 : /* fall through */
-      case 1378 : /* fall through */
-      case 1379 : /* fall through */
-      case 1380 : /* fall through */
-      case 1381 : /* fall through */
-      case 1382 : /* fall through */
-      case 1383 : /* fall through */
-      case 1384 : /* fall through */
-      case 1385 : /* fall through */
-      case 1386 : /* fall through */
-      case 1387 : /* fall through */
-      case 1388 : /* fall through */
-      case 1389 : /* fall through */
-      case 1390 : /* fall through */
-      case 1391 : /* fall through */
-      case 1392 : /* fall through */
-      case 1393 : /* fall through */
-      case 1394 : /* fall through */
-      case 1395 : /* fall through */
-      case 1396 : /* fall through */
-      case 1397 : /* fall through */
-      case 1398 : /* fall through */
-      case 1399 : /* fall through */
-      case 1400 : /* fall through */
-      case 1401 : /* fall through */
-      case 1402 : /* fall through */
-      case 1403 : /* fall through */
-      case 1404 : /* fall through */
-      case 1405 : /* fall through */
-      case 1406 : /* fall through */
-      case 1407 : itype = OR1K32BF_INSN_L_XORI; goto extract_sfmt_l_xori;
-      case 1408 : /* fall through */
-      case 1409 : /* fall through */
-      case 1410 : /* fall through */
-      case 1411 : /* fall through */
-      case 1412 : /* fall through */
-      case 1413 : /* fall through */
-      case 1414 : /* fall through */
-      case 1415 : /* fall through */
-      case 1416 : /* fall through */
-      case 1417 : /* fall through */
-      case 1418 : /* fall through */
-      case 1419 : /* fall through */
-      case 1420 : /* fall through */
-      case 1421 : /* fall through */
-      case 1422 : /* fall through */
-      case 1423 : /* fall through */
-      case 1424 : /* fall through */
-      case 1425 : /* fall through */
-      case 1426 : /* fall through */
-      case 1427 : /* fall through */
-      case 1428 : /* fall through */
-      case 1429 : /* fall through */
-      case 1430 : /* fall through */
-      case 1431 : /* fall through */
-      case 1432 : /* fall through */
-      case 1433 : /* fall through */
-      case 1434 : /* fall through */
-      case 1435 : /* fall through */
-      case 1436 : /* fall through */
-      case 1437 : /* fall through */
-      case 1438 : /* fall through */
-      case 1439 : itype = OR1K32BF_INSN_L_MULI; goto extract_sfmt_l_muli;
-      case 1440 : /* fall through */
-      case 1441 : /* fall through */
-      case 1442 : /* fall through */
-      case 1443 : /* fall through */
-      case 1444 : /* fall through */
-      case 1445 : /* fall through */
-      case 1446 : /* fall through */
-      case 1447 : /* fall through */
-      case 1448 : /* fall through */
-      case 1449 : /* fall through */
-      case 1450 : /* fall through */
-      case 1451 : /* fall through */
-      case 1452 : /* fall through */
-      case 1453 : /* fall through */
-      case 1454 : /* fall through */
-      case 1455 : /* fall through */
-      case 1456 : /* fall through */
-      case 1457 : /* fall through */
-      case 1458 : /* fall through */
-      case 1459 : /* fall through */
-      case 1460 : /* fall through */
-      case 1461 : /* fall through */
-      case 1462 : /* fall through */
-      case 1463 : /* fall through */
-      case 1464 : /* fall through */
-      case 1465 : /* fall through */
-      case 1466 : /* fall through */
-      case 1467 : /* fall through */
-      case 1468 : /* fall through */
-      case 1469 : /* fall through */
-      case 1470 : /* fall through */
-      case 1471 : itype = OR1K32BF_INSN_L_MFSPR; goto extract_sfmt_l_mfspr;
-      case 1472 : /* fall through */
-      case 1473 : /* fall through */
-      case 1474 : /* fall through */
-      case 1475 : /* fall through */
-      case 1476 : /* fall through */
-      case 1477 : /* fall through */
-      case 1478 : /* fall through */
-      case 1479 : /* fall through */
-      case 1480 : /* fall through */
-      case 1481 : /* fall through */
-      case 1482 : /* fall through */
-      case 1483 : /* fall through */
-      case 1484 : /* fall through */
-      case 1485 : /* fall through */
-      case 1486 : /* fall through */
-      case 1487 : /* fall through */
-      case 1488 : /* fall through */
-      case 1489 : /* fall through */
-      case 1490 : /* fall through */
-      case 1491 : /* fall through */
-      case 1492 : /* fall through */
-      case 1493 : /* fall through */
-      case 1494 : /* fall through */
-      case 1495 : /* fall through */
-      case 1496 : /* fall through */
-      case 1497 : /* fall through */
-      case 1498 : /* fall through */
-      case 1499 : /* fall through */
-      case 1500 : /* fall through */
-      case 1501 : /* fall through */
-      case 1502 : /* fall through */
-      case 1503 :
+      case 1056:
+      case 1057:
+      case 1058:
+      case 1059:
+      case 1060:
+      case 1061:
+      case 1062:
+      case 1063:
+      case 1064:
+      case 1065:
+      case 1066:
+      case 1067:
+      case 1068:
+      case 1069:
+      case 1070:
+      case 1071:
+      case 1072:
+      case 1073:
+      case 1074:
+      case 1075:
+      case 1076:
+      case 1077:
+      case 1078:
+      case 1079:
+      case 1080:
+      case 1081:
+      case 1082:
+      case 1083:
+      case 1084:
+      case 1085:
+      case 1086:
+      case 1087: itype = OR1K32BF_INSN_L_LWZ; goto extract_sfmt_l_lwz;
+      case 1088:
+      case 1089:
+      case 1090:
+      case 1091:
+      case 1092:
+      case 1093:
+      case 1094:
+      case 1095:
+      case 1096:
+      case 1097:
+      case 1098:
+      case 1099:
+      case 1100:
+      case 1101:
+      case 1102:
+      case 1103:
+      case 1104:
+      case 1105:
+      case 1106:
+      case 1107:
+      case 1108:
+      case 1109:
+      case 1110:
+      case 1111:
+      case 1112:
+      case 1113:
+      case 1114:
+      case 1115:
+      case 1116:
+      case 1117:
+      case 1118:
+      case 1119: itype = OR1K32BF_INSN_L_LWS; goto extract_sfmt_l_lws;
+      case 1120:
+      case 1121:
+      case 1122:
+      case 1123:
+      case 1124:
+      case 1125:
+      case 1126:
+      case 1127:
+      case 1128:
+      case 1129:
+      case 1130:
+      case 1131:
+      case 1132:
+      case 1133:
+      case 1134:
+      case 1135:
+      case 1136:
+      case 1137:
+      case 1138:
+      case 1139:
+      case 1140:
+      case 1141:
+      case 1142:
+      case 1143:
+      case 1144:
+      case 1145:
+      case 1146:
+      case 1147:
+      case 1148:
+      case 1149:
+      case 1150:
+      case 1151: itype = OR1K32BF_INSN_L_LBZ; goto extract_sfmt_l_lbz;
+      case 1152:
+      case 1153:
+      case 1154:
+      case 1155:
+      case 1156:
+      case 1157:
+      case 1158:
+      case 1159:
+      case 1160:
+      case 1161:
+      case 1162:
+      case 1163:
+      case 1164:
+      case 1165:
+      case 1166:
+      case 1167:
+      case 1168:
+      case 1169:
+      case 1170:
+      case 1171:
+      case 1172:
+      case 1173:
+      case 1174:
+      case 1175:
+      case 1176:
+      case 1177:
+      case 1178:
+      case 1179:
+      case 1180:
+      case 1181:
+      case 1182:
+      case 1183: itype = OR1K32BF_INSN_L_LBS; goto extract_sfmt_l_lbs;
+      case 1184:
+      case 1185:
+      case 1186:
+      case 1187:
+      case 1188:
+      case 1189:
+      case 1190:
+      case 1191:
+      case 1192:
+      case 1193:
+      case 1194:
+      case 1195:
+      case 1196:
+      case 1197:
+      case 1198:
+      case 1199:
+      case 1200:
+      case 1201:
+      case 1202:
+      case 1203:
+      case 1204:
+      case 1205:
+      case 1206:
+      case 1207:
+      case 1208:
+      case 1209:
+      case 1210:
+      case 1211:
+      case 1212:
+      case 1213:
+      case 1214:
+      case 1215: itype = OR1K32BF_INSN_L_LHZ; goto extract_sfmt_l_lhz;
+      case 1216:
+      case 1217:
+      case 1218:
+      case 1219:
+      case 1220:
+      case 1221:
+      case 1222:
+      case 1223:
+      case 1224:
+      case 1225:
+      case 1226:
+      case 1227:
+      case 1228:
+      case 1229:
+      case 1230:
+      case 1231:
+      case 1232:
+      case 1233:
+      case 1234:
+      case 1235:
+      case 1236:
+      case 1237:
+      case 1238:
+      case 1239:
+      case 1240:
+      case 1241:
+      case 1242:
+      case 1243:
+      case 1244:
+      case 1245:
+      case 1246:
+      case 1247: itype = OR1K32BF_INSN_L_LHS; goto extract_sfmt_l_lhs;
+      case 1248:
+      case 1249:
+      case 1250:
+      case 1251:
+      case 1252:
+      case 1253:
+      case 1254:
+      case 1255:
+      case 1256:
+      case 1257:
+      case 1258:
+      case 1259:
+      case 1260:
+      case 1261:
+      case 1262:
+      case 1263:
+      case 1264:
+      case 1265:
+      case 1266:
+      case 1267:
+      case 1268:
+      case 1269:
+      case 1270:
+      case 1271:
+      case 1272:
+      case 1273:
+      case 1274:
+      case 1275:
+      case 1276:
+      case 1277:
+      case 1278:
+      case 1279: itype = OR1K32BF_INSN_L_ADDI; goto extract_sfmt_l_addi;
+      case 1280:
+      case 1281:
+      case 1282:
+      case 1283:
+      case 1284:
+      case 1285:
+      case 1286:
+      case 1287:
+      case 1288:
+      case 1289:
+      case 1290:
+      case 1291:
+      case 1292:
+      case 1293:
+      case 1294:
+      case 1295:
+      case 1296:
+      case 1297:
+      case 1298:
+      case 1299:
+      case 1300:
+      case 1301:
+      case 1302:
+      case 1303:
+      case 1304:
+      case 1305:
+      case 1306:
+      case 1307:
+      case 1308:
+      case 1309:
+      case 1310:
+      case 1311: itype = OR1K32BF_INSN_L_ADDIC; goto extract_sfmt_l_addic;
+      case 1312:
+      case 1313:
+      case 1314:
+      case 1315:
+      case 1316:
+      case 1317:
+      case 1318:
+      case 1319:
+      case 1320:
+      case 1321:
+      case 1322:
+      case 1323:
+      case 1324:
+      case 1325:
+      case 1326:
+      case 1327:
+      case 1328:
+      case 1329:
+      case 1330:
+      case 1331:
+      case 1332:
+      case 1333:
+      case 1334:
+      case 1335:
+      case 1336:
+      case 1337:
+      case 1338:
+      case 1339:
+      case 1340:
+      case 1341:
+      case 1342:
+      case 1343: itype = OR1K32BF_INSN_L_ANDI; goto extract_sfmt_l_mfspr;
+      case 1344:
+      case 1345:
+      case 1346:
+      case 1347:
+      case 1348:
+      case 1349:
+      case 1350:
+      case 1351:
+      case 1352:
+      case 1353:
+      case 1354:
+      case 1355:
+      case 1356:
+      case 1357:
+      case 1358:
+      case 1359:
+      case 1360:
+      case 1361:
+      case 1362:
+      case 1363:
+      case 1364:
+      case 1365:
+      case 1366:
+      case 1367:
+      case 1368:
+      case 1369:
+      case 1370:
+      case 1371:
+      case 1372:
+      case 1373:
+      case 1374:
+      case 1375: itype = OR1K32BF_INSN_L_ORI; goto extract_sfmt_l_mfspr;
+      case 1376:
+      case 1377:
+      case 1378:
+      case 1379:
+      case 1380:
+      case 1381:
+      case 1382:
+      case 1383:
+      case 1384:
+      case 1385:
+      case 1386:
+      case 1387:
+      case 1388:
+      case 1389:
+      case 1390:
+      case 1391:
+      case 1392:
+      case 1393:
+      case 1394:
+      case 1395:
+      case 1396:
+      case 1397:
+      case 1398:
+      case 1399:
+      case 1400:
+      case 1401:
+      case 1402:
+      case 1403:
+      case 1404:
+      case 1405:
+      case 1406:
+      case 1407: itype = OR1K32BF_INSN_L_XORI; goto extract_sfmt_l_xori;
+      case 1408:
+      case 1409:
+      case 1410:
+      case 1411:
+      case 1412:
+      case 1413:
+      case 1414:
+      case 1415:
+      case 1416:
+      case 1417:
+      case 1418:
+      case 1419:
+      case 1420:
+      case 1421:
+      case 1422:
+      case 1423:
+      case 1424:
+      case 1425:
+      case 1426:
+      case 1427:
+      case 1428:
+      case 1429:
+      case 1430:
+      case 1431:
+      case 1432:
+      case 1433:
+      case 1434:
+      case 1435:
+      case 1436:
+      case 1437:
+      case 1438:
+      case 1439: itype = OR1K32BF_INSN_L_MULI; goto extract_sfmt_l_muli;
+      case 1440:
+      case 1441:
+      case 1442:
+      case 1443:
+      case 1444:
+      case 1445:
+      case 1446:
+      case 1447:
+      case 1448:
+      case 1449:
+      case 1450:
+      case 1451:
+      case 1452:
+      case 1453:
+      case 1454:
+      case 1455:
+      case 1456:
+      case 1457:
+      case 1458:
+      case 1459:
+      case 1460:
+      case 1461:
+      case 1462:
+      case 1463:
+      case 1464:
+      case 1465:
+      case 1466:
+      case 1467:
+      case 1468:
+      case 1469:
+      case 1470:
+      case 1471: itype = OR1K32BF_INSN_L_MFSPR; goto extract_sfmt_l_mfspr;
+      case 1472:
+      case 1473:
+      case 1474:
+      case 1475:
+      case 1476:
+      case 1477:
+      case 1478:
+      case 1479:
+      case 1480:
+      case 1481:
+      case 1482:
+      case 1483:
+      case 1484:
+      case 1485:
+      case 1486:
+      case 1487:
+      case 1488:
+      case 1489:
+      case 1490:
+      case 1491:
+      case 1492:
+      case 1493:
+      case 1494:
+      case 1495:
+      case 1496:
+      case 1497:
+      case 1498:
+      case 1499:
+      case 1500:
+      case 1501:
+      case 1502:
+      case 1503:
         {
-          unsigned int val = (((insn >> 6) & (3 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 6) & (3 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xfc00ffc0) == 0xb8000000)
               { itype = OR1K32BF_INSN_L_SLLI; goto extract_sfmt_l_slli; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xfc00ffc0) == 0xb8000040)
               { itype = OR1K32BF_INSN_L_SRLI; goto extract_sfmt_l_slli; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 2 :
+          case 2:
             if ((entire_insn & 0xfc00ffc0) == 0xb8000080)
               { itype = OR1K32BF_INSN_L_SRAI; goto extract_sfmt_l_slli; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 3 :
+          case 3:
             if ((entire_insn & 0xfc00ffc0) == 0xb80000c0)
               { itype = OR1K32BF_INSN_L_RORI; goto extract_sfmt_l_slli; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1504 : /* fall through */
-      case 1505 : /* fall through */
-      case 1506 : /* fall through */
-      case 1507 : /* fall through */
-      case 1508 : /* fall through */
-      case 1509 : /* fall through */
-      case 1510 : /* fall through */
-      case 1511 : /* fall through */
-      case 1512 : /* fall through */
-      case 1513 : /* fall through */
-      case 1514 : /* fall through */
-      case 1515 : /* fall through */
-      case 1516 : /* fall through */
-      case 1517 : /* fall through */
-      case 1518 : /* fall through */
-      case 1519 : /* fall through */
-      case 1520 : /* fall through */
-      case 1521 : /* fall through */
-      case 1522 : /* fall through */
-      case 1523 : /* fall through */
-      case 1524 : /* fall through */
-      case 1525 : /* fall through */
-      case 1526 : /* fall through */
-      case 1527 : /* fall through */
-      case 1528 : /* fall through */
-      case 1529 : /* fall through */
-      case 1530 : /* fall through */
-      case 1531 : /* fall through */
-      case 1532 : /* fall through */
-      case 1533 : /* fall through */
-      case 1534 : /* fall through */
-      case 1535 :
+      case 1504:
+      case 1505:
+      case 1506:
+      case 1507:
+      case 1508:
+      case 1509:
+      case 1510:
+      case 1511:
+      case 1512:
+      case 1513:
+      case 1514:
+      case 1515:
+      case 1516:
+      case 1517:
+      case 1518:
+      case 1519:
+      case 1520:
+      case 1521:
+      case 1522:
+      case 1523:
+      case 1524:
+      case 1525:
+      case 1526:
+      case 1527:
+      case 1528:
+      case 1529:
+      case 1530:
+      case 1531:
+      case 1532:
+      case 1533:
+      case 1534:
+      case 1535:
         {
-          unsigned int val = (((insn >> 21) & (15 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 21) & (15 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe00000) == 0xbc000000)
               { itype = OR1K32BF_INSN_L_SFEQI; goto extract_sfmt_l_sfgtsi; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe00000) == 0xbc200000)
               { itype = OR1K32BF_INSN_L_SFNEI; goto extract_sfmt_l_sfgtsi; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 2 :
+          case 2:
             if ((entire_insn & 0xffe00000) == 0xbc400000)
               { itype = OR1K32BF_INSN_L_SFGTUI; goto extract_sfmt_l_sfgtsi; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 3 :
+          case 3:
             if ((entire_insn & 0xffe00000) == 0xbc600000)
               { itype = OR1K32BF_INSN_L_SFGEUI; goto extract_sfmt_l_sfgtsi; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 4 :
+          case 4:
             if ((entire_insn & 0xffe00000) == 0xbc800000)
               { itype = OR1K32BF_INSN_L_SFLTUI; goto extract_sfmt_l_sfgtsi; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 5 :
+          case 5:
             if ((entire_insn & 0xffe00000) == 0xbca00000)
               { itype = OR1K32BF_INSN_L_SFLEUI; goto extract_sfmt_l_sfgtsi; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 10 :
+          case 10:
             if ((entire_insn & 0xffe00000) == 0xbd400000)
               { itype = OR1K32BF_INSN_L_SFGTSI; goto extract_sfmt_l_sfgtsi; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 11 :
+          case 11:
             if ((entire_insn & 0xffe00000) == 0xbd600000)
               { itype = OR1K32BF_INSN_L_SFGESI; goto extract_sfmt_l_sfgtsi; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 12 :
+          case 12:
             if ((entire_insn & 0xffe00000) == 0xbd800000)
               { itype = OR1K32BF_INSN_L_SFLTSI; goto extract_sfmt_l_sfgtsi; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 13 :
+          case 13:
             if ((entire_insn & 0xffe00000) == 0xbda00000)
               { itype = OR1K32BF_INSN_L_SFLESI; goto extract_sfmt_l_sfgtsi; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1536 : /* fall through */
-      case 1537 : /* fall through */
-      case 1538 : /* fall through */
-      case 1539 : /* fall through */
-      case 1540 : /* fall through */
-      case 1541 : /* fall through */
-      case 1542 : /* fall through */
-      case 1543 : /* fall through */
-      case 1544 : /* fall through */
-      case 1545 : /* fall through */
-      case 1546 : /* fall through */
-      case 1547 : /* fall through */
-      case 1548 : /* fall through */
-      case 1549 : /* fall through */
-      case 1550 : /* fall through */
-      case 1551 : /* fall through */
-      case 1552 : /* fall through */
-      case 1553 : /* fall through */
-      case 1554 : /* fall through */
-      case 1555 : /* fall through */
-      case 1556 : /* fall through */
-      case 1557 : /* fall through */
-      case 1558 : /* fall through */
-      case 1559 : /* fall through */
-      case 1560 : /* fall through */
-      case 1561 : /* fall through */
-      case 1562 : /* fall through */
-      case 1563 : /* fall through */
-      case 1564 : /* fall through */
-      case 1565 : /* fall through */
-      case 1566 : /* fall through */
-      case 1567 : itype = OR1K32BF_INSN_L_MTSPR; goto extract_sfmt_l_mtspr;
-      case 1569 :
+      case 1536:
+      case 1537:
+      case 1538:
+      case 1539:
+      case 1540:
+      case 1541:
+      case 1542:
+      case 1543:
+      case 1544:
+      case 1545:
+      case 1546:
+      case 1547:
+      case 1548:
+      case 1549:
+      case 1550:
+      case 1551:
+      case 1552:
+      case 1553:
+      case 1554:
+      case 1555:
+      case 1556:
+      case 1557:
+      case 1558:
+      case 1559:
+      case 1560:
+      case 1561:
+      case 1562:
+      case 1563:
+      case 1564:
+      case 1565:
+      case 1566:
+      case 1567: itype = OR1K32BF_INSN_L_MTSPR; goto extract_sfmt_l_mtspr;
+      case 1569:
         if ((entire_insn & 0xffe007ff) == 0xc4000001)
           { itype = OR1K32BF_INSN_L_MAC; goto extract_sfmt_l_mac; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1570 :
+      case 1570:
         if ((entire_insn & 0xffe007ff) == 0xc4000002)
           { itype = OR1K32BF_INSN_L_MSB; goto extract_sfmt_l_mac; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1571 :
+      case 1571:
         if ((entire_insn & 0xffe007ff) == 0xc4000003)
           { itype = OR1K32BF_INSN_L_MACU; goto extract_sfmt_l_macu; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1572 :
+      case 1572:
         if ((entire_insn & 0xffe007ff) == 0xc4000004)
           { itype = OR1K32BF_INSN_L_MSBU; goto extract_sfmt_l_macu; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1600 :
+      case 1600:
         {
-          unsigned int val = (((insn >> 5) & (7 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 5) & (7 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xfc0007ff) == 0xc8000000)
               { itype = OR1K32BF_INSN_LF_ADD_S; goto extract_sfmt_lf_add_s; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 7 :
+          case 7:
             if ((entire_insn & 0xffe004ff) == 0xc80000e0)
               { itype = OR1K32BF_INSN_LF_CUST1_D32; goto extract_sfmt_l_msync; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1601 :
+      case 1601:
         if ((entire_insn & 0xfc0007ff) == 0xc8000001)
           { itype = OR1K32BF_INSN_LF_SUB_S; goto extract_sfmt_lf_add_s; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1602 :
+      case 1602:
         if ((entire_insn & 0xfc0007ff) == 0xc8000002)
           { itype = OR1K32BF_INSN_LF_MUL_S; goto extract_sfmt_lf_add_s; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1603 :
+      case 1603:
         if ((entire_insn & 0xfc0007ff) == 0xc8000003)
           { itype = OR1K32BF_INSN_LF_DIV_S; goto extract_sfmt_lf_add_s; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1604 :
+      case 1604:
         if ((entire_insn & 0xfc00ffff) == 0xc8000004)
           { itype = OR1K32BF_INSN_LF_ITOF_S; goto extract_sfmt_lf_itof_s; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1605 :
+      case 1605:
         if ((entire_insn & 0xfc00ffff) == 0xc8000005)
           { itype = OR1K32BF_INSN_LF_FTOI_S; goto extract_sfmt_lf_ftoi_s; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1606 :
+      case 1606:
         if ((entire_insn & 0xfc0007ff) == 0xc8000006)
           { itype = OR1K32BF_INSN_LF_REM_S; goto extract_sfmt_lf_add_s; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1607 :
+      case 1607:
         if ((entire_insn & 0xfc0007ff) == 0xc8000007)
           { itype = OR1K32BF_INSN_LF_MADD_S; goto extract_sfmt_lf_madd_s; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1608 :
+      case 1608:
         {
-          unsigned int val = (((insn >> 5) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 5) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe007ff) == 0xc8000008)
               { itype = OR1K32BF_INSN_LF_SFEQ_S; goto extract_sfmt_lf_sfeq_s; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe007ff) == 0xc8000028)
               { itype = OR1K32BF_INSN_LF_SFUEQ_S; goto extract_sfmt_lf_sfeq_s; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1609 :
+      case 1609:
         {
-          unsigned int val = (((insn >> 5) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 5) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe007ff) == 0xc8000009)
               { itype = OR1K32BF_INSN_LF_SFNE_S; goto extract_sfmt_lf_sfeq_s; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe007ff) == 0xc8000029)
               { itype = OR1K32BF_INSN_LF_SFUNE_S; goto extract_sfmt_lf_sfeq_s; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1610 :
+      case 1610:
         {
-          unsigned int val = (((insn >> 5) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 5) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe007ff) == 0xc800000a)
               { itype = OR1K32BF_INSN_LF_SFGT_S; goto extract_sfmt_lf_sfeq_s; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe007ff) == 0xc800002a)
               { itype = OR1K32BF_INSN_LF_SFUGT_S; goto extract_sfmt_lf_sfeq_s; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1611 :
+      case 1611:
         {
-          unsigned int val = (((insn >> 5) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 5) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe007ff) == 0xc800000b)
               { itype = OR1K32BF_INSN_LF_SFGE_S; goto extract_sfmt_lf_sfeq_s; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe007ff) == 0xc800002b)
               { itype = OR1K32BF_INSN_LF_SFUGE_S; goto extract_sfmt_lf_sfeq_s; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1612 :
+      case 1612:
         {
-          unsigned int val = (((insn >> 5) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 5) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe007ff) == 0xc800000c)
               { itype = OR1K32BF_INSN_LF_SFLT_S; goto extract_sfmt_lf_sfeq_s; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe007ff) == 0xc800002c)
               { itype = OR1K32BF_INSN_LF_SFULT_S; goto extract_sfmt_lf_sfeq_s; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1613 :
+      case 1613:
         {
-          unsigned int val = (((insn >> 5) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 5) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe007ff) == 0xc800000d)
               { itype = OR1K32BF_INSN_LF_SFLE_S; goto extract_sfmt_lf_sfeq_s; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe007ff) == 0xc800002d)
               { itype = OR1K32BF_INSN_LF_SFULE_S; goto extract_sfmt_lf_sfeq_s; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1614 :
+      case 1614:
         if ((entire_insn & 0xffe007ff) == 0xc800002e)
           { itype = OR1K32BF_INSN_LF_SFUN_S; goto extract_sfmt_lf_sfeq_s; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1616 :
+      case 1616:
         {
-          unsigned int val = (((insn >> 6) & (3 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 6) & (3 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xfc0000ff) == 0xc8000010)
               { itype = OR1K32BF_INSN_LF_ADD_D32; goto extract_sfmt_lf_add_d32; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 3 :
+          case 3:
             if ((entire_insn & 0xffe007ff) == 0xc80000d0)
               { itype = OR1K32BF_INSN_LF_CUST1_S; goto extract_sfmt_l_msync; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1617 :
+      case 1617:
         if ((entire_insn & 0xfc0000ff) == 0xc8000011)
           { itype = OR1K32BF_INSN_LF_SUB_D32; goto extract_sfmt_lf_add_d32; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1618 :
+      case 1618:
         if ((entire_insn & 0xfc0000ff) == 0xc8000012)
           { itype = OR1K32BF_INSN_LF_MUL_D32; goto extract_sfmt_lf_add_d32; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1619 :
+      case 1619:
         if ((entire_insn & 0xfc0000ff) == 0xc8000013)
           { itype = OR1K32BF_INSN_LF_DIV_D32; goto extract_sfmt_lf_add_d32; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1620 :
+      case 1620:
         if ((entire_insn & 0xfc00f9ff) == 0xc8000014)
           { itype = OR1K32BF_INSN_LF_ITOF_D32; goto extract_sfmt_lf_itof_d32; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1621 :
+      case 1621:
         if ((entire_insn & 0xfc00f9ff) == 0xc8000015)
           { itype = OR1K32BF_INSN_LF_FTOI_D32; goto extract_sfmt_lf_ftoi_d32; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1622 :
+      case 1622:
         if ((entire_insn & 0xfc0000ff) == 0xc8000016)
           { itype = OR1K32BF_INSN_LF_REM_D32; goto extract_sfmt_lf_add_d32; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1623 :
+      case 1623:
         if ((entire_insn & 0xfc0000ff) == 0xc8000017)
           { itype = OR1K32BF_INSN_LF_MADD_D32; goto extract_sfmt_lf_madd_d32; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1624 :
+      case 1624:
         {
-          unsigned int val = (((insn >> 5) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 5) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe004ff) == 0xc8000018)
               { itype = OR1K32BF_INSN_LF_SFEQ_D32; goto extract_sfmt_lf_sfeq_d32; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe004ff) == 0xc8000038)
               { itype = OR1K32BF_INSN_LF_SFUEQ_D32; goto extract_sfmt_lf_sfeq_d32; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1625 :
+      case 1625:
         {
-          unsigned int val = (((insn >> 5) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 5) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe004ff) == 0xc8000019)
               { itype = OR1K32BF_INSN_LF_SFNE_D32; goto extract_sfmt_lf_sfeq_d32; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe004ff) == 0xc8000039)
               { itype = OR1K32BF_INSN_LF_SFUNE_D32; goto extract_sfmt_lf_sfeq_d32; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1626 :
+      case 1626:
         {
-          unsigned int val = (((insn >> 5) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 5) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe004ff) == 0xc800001a)
               { itype = OR1K32BF_INSN_LF_SFGT_D32; goto extract_sfmt_lf_sfeq_d32; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe004ff) == 0xc800003a)
               { itype = OR1K32BF_INSN_LF_SFUGT_D32; goto extract_sfmt_lf_sfeq_d32; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1627 :
+      case 1627:
         {
-          unsigned int val = (((insn >> 5) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 5) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe004ff) == 0xc800001b)
               { itype = OR1K32BF_INSN_LF_SFGE_D32; goto extract_sfmt_lf_sfeq_d32; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe004ff) == 0xc800003b)
               { itype = OR1K32BF_INSN_LF_SFUGE_D32; goto extract_sfmt_lf_sfeq_d32; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1628 :
+      case 1628:
         {
-          unsigned int val = (((insn >> 5) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 5) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe004ff) == 0xc800001c)
               { itype = OR1K32BF_INSN_LF_SFLT_D32; goto extract_sfmt_lf_sfeq_d32; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe004ff) == 0xc800003c)
               { itype = OR1K32BF_INSN_LF_SFULT_D32; goto extract_sfmt_lf_sfeq_d32; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1629 :
+      case 1629:
         {
-          unsigned int val = (((insn >> 5) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 5) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe004ff) == 0xc800001d)
               { itype = OR1K32BF_INSN_LF_SFLE_D32; goto extract_sfmt_lf_sfeq_d32; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe004ff) == 0xc800003d)
               { itype = OR1K32BF_INSN_LF_SFULE_D32; goto extract_sfmt_lf_sfeq_d32; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1630 :
+      case 1630:
         if ((entire_insn & 0xffe004ff) == 0xc800003e)
           { itype = OR1K32BF_INSN_LF_SFUN_D32; goto extract_sfmt_lf_sfeq_d32; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1632 : /* fall through */
-      case 1633 : /* fall through */
-      case 1634 : /* fall through */
-      case 1635 : /* fall through */
-      case 1636 : /* fall through */
-      case 1637 : /* fall through */
-      case 1638 : /* fall through */
-      case 1639 : /* fall through */
-      case 1640 : /* fall through */
-      case 1641 : /* fall through */
-      case 1642 : /* fall through */
-      case 1643 : /* fall through */
-      case 1644 : /* fall through */
-      case 1645 : /* fall through */
-      case 1646 : /* fall through */
-      case 1647 : /* fall through */
-      case 1648 : /* fall through */
-      case 1649 : /* fall through */
-      case 1650 : /* fall through */
-      case 1651 : /* fall through */
-      case 1652 : /* fall through */
-      case 1653 : /* fall through */
-      case 1654 : /* fall through */
-      case 1655 : /* fall through */
-      case 1656 : /* fall through */
-      case 1657 : /* fall through */
-      case 1658 : /* fall through */
-      case 1659 : /* fall through */
-      case 1660 : /* fall through */
-      case 1661 : /* fall through */
-      case 1662 : /* fall through */
-      case 1663 : itype = OR1K32BF_INSN_L_SWA; goto extract_sfmt_l_swa;
-      case 1696 : /* fall through */
-      case 1697 : /* fall through */
-      case 1698 : /* fall through */
-      case 1699 : /* fall through */
-      case 1700 : /* fall through */
-      case 1701 : /* fall through */
-      case 1702 : /* fall through */
-      case 1703 : /* fall through */
-      case 1704 : /* fall through */
-      case 1705 : /* fall through */
-      case 1706 : /* fall through */
-      case 1707 : /* fall through */
-      case 1708 : /* fall through */
-      case 1709 : /* fall through */
-      case 1710 : /* fall through */
-      case 1711 : /* fall through */
-      case 1712 : /* fall through */
-      case 1713 : /* fall through */
-      case 1714 : /* fall through */
-      case 1715 : /* fall through */
-      case 1716 : /* fall through */
-      case 1717 : /* fall through */
-      case 1718 : /* fall through */
-      case 1719 : /* fall through */
-      case 1720 : /* fall through */
-      case 1721 : /* fall through */
-      case 1722 : /* fall through */
-      case 1723 : /* fall through */
-      case 1724 : /* fall through */
-      case 1725 : /* fall through */
-      case 1726 : /* fall through */
-      case 1727 : itype = OR1K32BF_INSN_L_SW; goto extract_sfmt_l_sw;
-      case 1728 : /* fall through */
-      case 1729 : /* fall through */
-      case 1730 : /* fall through */
-      case 1731 : /* fall through */
-      case 1732 : /* fall through */
-      case 1733 : /* fall through */
-      case 1734 : /* fall through */
-      case 1735 : /* fall through */
-      case 1736 : /* fall through */
-      case 1737 : /* fall through */
-      case 1738 : /* fall through */
-      case 1739 : /* fall through */
-      case 1740 : /* fall through */
-      case 1741 : /* fall through */
-      case 1742 : /* fall through */
-      case 1743 : /* fall through */
-      case 1744 : /* fall through */
-      case 1745 : /* fall through */
-      case 1746 : /* fall through */
-      case 1747 : /* fall through */
-      case 1748 : /* fall through */
-      case 1749 : /* fall through */
-      case 1750 : /* fall through */
-      case 1751 : /* fall through */
-      case 1752 : /* fall through */
-      case 1753 : /* fall through */
-      case 1754 : /* fall through */
-      case 1755 : /* fall through */
-      case 1756 : /* fall through */
-      case 1757 : /* fall through */
-      case 1758 : /* fall through */
-      case 1759 : itype = OR1K32BF_INSN_L_SB; goto extract_sfmt_l_sb;
-      case 1760 : /* fall through */
-      case 1761 : /* fall through */
-      case 1762 : /* fall through */
-      case 1763 : /* fall through */
-      case 1764 : /* fall through */
-      case 1765 : /* fall through */
-      case 1766 : /* fall through */
-      case 1767 : /* fall through */
-      case 1768 : /* fall through */
-      case 1769 : /* fall through */
-      case 1770 : /* fall through */
-      case 1771 : /* fall through */
-      case 1772 : /* fall through */
-      case 1773 : /* fall through */
-      case 1774 : /* fall through */
-      case 1775 : /* fall through */
-      case 1776 : /* fall through */
-      case 1777 : /* fall through */
-      case 1778 : /* fall through */
-      case 1779 : /* fall through */
-      case 1780 : /* fall through */
-      case 1781 : /* fall through */
-      case 1782 : /* fall through */
-      case 1783 : /* fall through */
-      case 1784 : /* fall through */
-      case 1785 : /* fall through */
-      case 1786 : /* fall through */
-      case 1787 : /* fall through */
-      case 1788 : /* fall through */
-      case 1789 : /* fall through */
-      case 1790 : /* fall through */
-      case 1791 : itype = OR1K32BF_INSN_L_SH; goto extract_sfmt_l_sh;
-      case 1792 :
+      case 1632:
+      case 1633:
+      case 1634:
+      case 1635:
+      case 1636:
+      case 1637:
+      case 1638:
+      case 1639:
+      case 1640:
+      case 1641:
+      case 1642:
+      case 1643:
+      case 1644:
+      case 1645:
+      case 1646:
+      case 1647:
+      case 1648:
+      case 1649:
+      case 1650:
+      case 1651:
+      case 1652:
+      case 1653:
+      case 1654:
+      case 1655:
+      case 1656:
+      case 1657:
+      case 1658:
+      case 1659:
+      case 1660:
+      case 1661:
+      case 1662:
+      case 1663: itype = OR1K32BF_INSN_L_SWA; goto extract_sfmt_l_swa;
+      case 1696:
+      case 1697:
+      case 1698:
+      case 1699:
+      case 1700:
+      case 1701:
+      case 1702:
+      case 1703:
+      case 1704:
+      case 1705:
+      case 1706:
+      case 1707:
+      case 1708:
+      case 1709:
+      case 1710:
+      case 1711:
+      case 1712:
+      case 1713:
+      case 1714:
+      case 1715:
+      case 1716:
+      case 1717:
+      case 1718:
+      case 1719:
+      case 1720:
+      case 1721:
+      case 1722:
+      case 1723:
+      case 1724:
+      case 1725:
+      case 1726:
+      case 1727: itype = OR1K32BF_INSN_L_SW; goto extract_sfmt_l_sw;
+      case 1728:
+      case 1729:
+      case 1730:
+      case 1731:
+      case 1732:
+      case 1733:
+      case 1734:
+      case 1735:
+      case 1736:
+      case 1737:
+      case 1738:
+      case 1739:
+      case 1740:
+      case 1741:
+      case 1742:
+      case 1743:
+      case 1744:
+      case 1745:
+      case 1746:
+      case 1747:
+      case 1748:
+      case 1749:
+      case 1750:
+      case 1751:
+      case 1752:
+      case 1753:
+      case 1754:
+      case 1755:
+      case 1756:
+      case 1757:
+      case 1758:
+      case 1759: itype = OR1K32BF_INSN_L_SB; goto extract_sfmt_l_sb;
+      case 1760:
+      case 1761:
+      case 1762:
+      case 1763:
+      case 1764:
+      case 1765:
+      case 1766:
+      case 1767:
+      case 1768:
+      case 1769:
+      case 1770:
+      case 1771:
+      case 1772:
+      case 1773:
+      case 1774:
+      case 1775:
+      case 1776:
+      case 1777:
+      case 1778:
+      case 1779:
+      case 1780:
+      case 1781:
+      case 1782:
+      case 1783:
+      case 1784:
+      case 1785:
+      case 1786:
+      case 1787:
+      case 1788:
+      case 1789:
+      case 1790:
+      case 1791: itype = OR1K32BF_INSN_L_SH; goto extract_sfmt_l_sh;
+      case 1792:
         if ((entire_insn & 0xfc0007ff) == 0xe0000000)
           { itype = OR1K32BF_INSN_L_ADD; goto extract_sfmt_l_add; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1793 :
+      case 1793:
         if ((entire_insn & 0xfc0007ff) == 0xe0000001)
           { itype = OR1K32BF_INSN_L_ADDC; goto extract_sfmt_l_addc; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1794 :
+      case 1794:
         if ((entire_insn & 0xfc0007ff) == 0xe0000002)
           { itype = OR1K32BF_INSN_L_SUB; goto extract_sfmt_l_add; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1795 :
+      case 1795:
         if ((entire_insn & 0xfc0007ff) == 0xe0000003)
           { itype = OR1K32BF_INSN_L_AND; goto extract_sfmt_l_and; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1796 :
+      case 1796:
         if ((entire_insn & 0xfc0007ff) == 0xe0000004)
           { itype = OR1K32BF_INSN_L_OR; goto extract_sfmt_l_and; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1797 :
+      case 1797:
         if ((entire_insn & 0xfc0007ff) == 0xe0000005)
           { itype = OR1K32BF_INSN_L_XOR; goto extract_sfmt_l_and; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1798 :
+      case 1798:
         if ((entire_insn & 0xfc0007ff) == 0xe0000306)
           { itype = OR1K32BF_INSN_L_MUL; goto extract_sfmt_l_mul; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1799 :
+      case 1799:
         if ((entire_insn & 0xffe007ff) == 0xe0000307)
           { itype = OR1K32BF_INSN_L_MULD; goto extract_sfmt_l_muld; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1800 :
+      case 1800:
         {
-          unsigned int val = (((insn >> 6) & (3 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 6) & (3 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xfc0007ff) == 0xe0000008)
               { itype = OR1K32BF_INSN_L_SLL; goto extract_sfmt_l_sll; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xfc0007ff) == 0xe0000048)
               { itype = OR1K32BF_INSN_L_SRL; goto extract_sfmt_l_sll; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 2 :
+          case 2:
             if ((entire_insn & 0xfc0007ff) == 0xe0000088)
               { itype = OR1K32BF_INSN_L_SRA; goto extract_sfmt_l_sll; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 3 :
+          case 3:
             if ((entire_insn & 0xfc0007ff) == 0xe00000c8)
               { itype = OR1K32BF_INSN_L_ROR; goto extract_sfmt_l_sll; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1801 :
+      case 1801:
         if ((entire_insn & 0xfc0007ff) == 0xe0000309)
           { itype = OR1K32BF_INSN_L_DIV; goto extract_sfmt_l_div; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1802 :
+      case 1802:
         if ((entire_insn & 0xfc0007ff) == 0xe000030a)
           { itype = OR1K32BF_INSN_L_DIVU; goto extract_sfmt_l_divu; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1803 :
+      case 1803:
         if ((entire_insn & 0xfc0007ff) == 0xe000030b)
           { itype = OR1K32BF_INSN_L_MULU; goto extract_sfmt_l_mulu; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1804 :
+      case 1804:
         {
-          unsigned int val = (((insn >> 6) & (3 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 6) & (3 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xfc00ffff) == 0xe000000c)
               { itype = OR1K32BF_INSN_L_EXTHS; goto extract_sfmt_l_exths; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xfc00ffff) == 0xe000004c)
               { itype = OR1K32BF_INSN_L_EXTBS; goto extract_sfmt_l_exths; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 2 :
+          case 2:
             if ((entire_insn & 0xfc00ffff) == 0xe000008c)
               { itype = OR1K32BF_INSN_L_EXTHZ; goto extract_sfmt_l_exths; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 3 :
+          case 3:
             if ((entire_insn & 0xfc00ffff) == 0xe00000cc)
               { itype = OR1K32BF_INSN_L_EXTBZ; goto extract_sfmt_l_exths; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1805 :
+      case 1805:
         {
-          unsigned int val = (((insn >> 7) & (3 << 1)) | ((insn >> 6) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 7) & (3 << 1)) | ((insn >> 6) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xfc00ffff) == 0xe000000d)
               { itype = OR1K32BF_INSN_L_EXTWS; goto extract_sfmt_l_exths; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xfc00ffff) == 0xe000004d)
               { itype = OR1K32BF_INSN_L_EXTWZ; goto extract_sfmt_l_exths; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 6 :
+          case 6:
             if ((entire_insn & 0xffe007ff) == 0xe000030d)
               { itype = OR1K32BF_INSN_L_MULDU; goto extract_sfmt_l_muld; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1806 :
+      case 1806:
         if ((entire_insn & 0xfc0007ff) == 0xe000000e)
           { itype = OR1K32BF_INSN_L_CMOV; goto extract_sfmt_l_cmov; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1807 :
+      case 1807:
         {
-          unsigned int val = (((insn >> 8) & (1 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 8) & (1 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xfc0007ff) == 0xe000000f)
               { itype = OR1K32BF_INSN_L_FF1; goto extract_sfmt_l_ff1; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xfc0007ff) == 0xe000010f)
               { itype = OR1K32BF_INSN_L_FL1; goto extract_sfmt_l_ff1; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1824 :
+      case 1824:
         {
-          unsigned int val = (((insn >> 21) & (15 << 0)));
-          switch (val)
+          unsigned int val1 = (((insn >> 21) & (15 << 0)));
+          switch (val1)
           {
-          case 0 :
+          case 0:
             if ((entire_insn & 0xffe007ff) == 0xe4000000)
               { itype = OR1K32BF_INSN_L_SFEQ; goto extract_sfmt_l_sfgts; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 1 :
+          case 1:
             if ((entire_insn & 0xffe007ff) == 0xe4200000)
               { itype = OR1K32BF_INSN_L_SFNE; goto extract_sfmt_l_sfgts; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 2 :
+          case 2:
             if ((entire_insn & 0xffe007ff) == 0xe4400000)
               { itype = OR1K32BF_INSN_L_SFGTU; goto extract_sfmt_l_sfgts; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 3 :
+          case 3:
             if ((entire_insn & 0xffe007ff) == 0xe4600000)
               { itype = OR1K32BF_INSN_L_SFGEU; goto extract_sfmt_l_sfgts; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 4 :
+          case 4:
             if ((entire_insn & 0xffe007ff) == 0xe4800000)
               { itype = OR1K32BF_INSN_L_SFLTU; goto extract_sfmt_l_sfgts; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 5 :
+          case 5:
             if ((entire_insn & 0xffe007ff) == 0xe4a00000)
               { itype = OR1K32BF_INSN_L_SFLEU; goto extract_sfmt_l_sfgts; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 10 :
+          case 10:
             if ((entire_insn & 0xffe007ff) == 0xe5400000)
               { itype = OR1K32BF_INSN_L_SFGTS; goto extract_sfmt_l_sfgts; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 11 :
+          case 11:
             if ((entire_insn & 0xffe007ff) == 0xe5600000)
               { itype = OR1K32BF_INSN_L_SFGES; goto extract_sfmt_l_sfgts; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 12 :
+          case 12:
             if ((entire_insn & 0xffe007ff) == 0xe5800000)
               { itype = OR1K32BF_INSN_L_SFLTS; goto extract_sfmt_l_sfgts; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          case 13 :
+          case 13:
             if ((entire_insn & 0xffe007ff) == 0xe5a00000)
               { itype = OR1K32BF_INSN_L_SFLES; goto extract_sfmt_l_sfgts; }
             itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-          default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+          default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
           }
         }
-      case 1920 :
+      case 1920:
         if ((entire_insn & 0xffffffff) == 0xf0000000)
           { itype = OR1K32BF_INSN_L_CUST5; goto extract_sfmt_l_msync; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1952 :
+      case 1952:
         if ((entire_insn & 0xffffffff) == 0xf4000000)
           { itype = OR1K32BF_INSN_L_CUST6; goto extract_sfmt_l_msync; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 1984 :
+      case 1984:
         if ((entire_insn & 0xffffffff) == 0xf8000000)
           { itype = OR1K32BF_INSN_L_CUST7; goto extract_sfmt_l_msync; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      case 2016 :
+      case 2016:
         if ((entire_insn & 0xffffffff) == 0xfc000000)
           { itype = OR1K32BF_INSN_L_CUST8; goto extract_sfmt_l_msync; }
         itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
-      default : itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
+      default: itype = OR1K32BF_INSN_X_INVALID; goto extract_sfmt_empty;
       }
     }
   }
@@ -1918,7 +1920,7 @@ or1k32bf_decode (SIM_CPU *current_cpu, IADDR pc,
 #define FLD(f) abuf->fields.sfmt_l_j.f
     USI f_disp26;
 
-    f_disp26 = ((((EXTRACT_LSB0_SINT (insn, 32, 25, 26)) << (2))) + (pc));
+    f_disp26 = ((((EXTRACT_LSB0_SINT (insn, 32, 25, 26)) * (4))) + (pc));
 
   /* Record the fields for the semantic handler.  */
   FLD (i_disp26) = f_disp26;
@@ -1937,7 +1939,7 @@ or1k32bf_decode (SIM_CPU *current_cpu, IADDR pc,
     USI f_disp21;
 
     f_r1 = EXTRACT_LSB0_UINT (insn, 32, 25, 5);
-    f_disp21 = ((((EXTRACT_LSB0_SINT (insn, 32, 20, 21)) + (((SI) (pc) >> (13))))) << (13));
+    f_disp21 = ((((EXTRACT_LSB0_SINT (insn, 32, 20, 21)) + (((SI) (pc) >> (13))))) * (8192));
 
   /* Record the fields for the semantic handler.  */
   FLD (f_r1) = f_r1;
@@ -1955,7 +1957,7 @@ or1k32bf_decode (SIM_CPU *current_cpu, IADDR pc,
 #define FLD(f) abuf->fields.sfmt_l_j.f
     USI f_disp26;
 
-    f_disp26 = ((((EXTRACT_LSB0_SINT (insn, 32, 25, 26)) << (2))) + (pc));
+    f_disp26 = ((((EXTRACT_LSB0_SINT (insn, 32, 25, 26)) * (4))) + (pc));
 
   /* Record the fields for the semantic handler.  */
   FLD (i_disp26) = f_disp26;
@@ -2006,7 +2008,7 @@ or1k32bf_decode (SIM_CPU *current_cpu, IADDR pc,
 #define FLD(f) abuf->fields.sfmt_l_j.f
     USI f_disp26;
 
-    f_disp26 = ((((EXTRACT_LSB0_SINT (insn, 32, 25, 26)) << (2))) + (pc));
+    f_disp26 = ((((EXTRACT_LSB0_SINT (insn, 32, 25, 26)) * (4))) + (pc));
 
   /* Record the fields for the semantic handler.  */
   FLD (i_disp26) = f_disp26;

@@ -1,4 +1,4 @@
-# Copyright (C) 2020-2023 Free Software Foundation, Inc.
+# Copyright (C) 2020-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 # Test a TUI window implemented in Python.
 
 load_lib gdb-python.exp
+require allow_python_tests allow_tui_tests
 tuiterm_env
 
 # This test doesn't care about the inferior.
@@ -26,14 +27,8 @@ if {[build_executable "failed to prepare" ${testfile} ${srcfile}] == -1} {
 }
 
 clean_restart
-if {[skip_tui_tests]} {
-    return
-}
 
 Term::clean_restart 24 80 $testfile
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 set remote_python_file [gdb_remote_download host \
 			    ${srcdir}/${subdir}/${testfile}.py]
@@ -45,6 +40,7 @@ gdb_test_no_output "tui new-layout fail fail 1 status 0 cmd 1"
 
 if {![Term::enter_tui]} {
     unsupported "TUI not supported"
+    return
 }
 
 Term::command "layout test"
@@ -54,9 +50,13 @@ Term::check_contents "Window display" "Test: 0"
 
 Term::command "python delete_window_title ()"
 Term::check_contents "error message after trying to delete title" \
-    "TypeError: Cannot delete \"title\" attribute\\."
+    "TypeError.*: Cannot delete \"title\" attribute\\."
 Term::check_contents "title is unchanged" \
     "This Is The Title"
+
+Term::command "python change_window_title ()"
+Term::check_contents "test new title" \
+    "New Title"
 
 Term::resize 51 51
 # Remember that a resize request actually does two resizes...

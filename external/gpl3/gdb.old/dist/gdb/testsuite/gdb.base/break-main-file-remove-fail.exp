@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,25 +35,25 @@ proc test_remove_bp { initial_load } {
 
 	gdb_exit
 
-	set saved_gdbflags $GDBFLAGS
+	save_vars { GDBFLAGS } {
 
-	# See "used to behave differently" further below.
-	if { $initial_load == "file" } {
-	    gdb_start
-	    gdb_file_cmd $binfile
-	} else {
-	    global last_loaded_file
+	    # See "used to behave differently" further below.
+	    if { $initial_load == "file" } {
+		gdb_start
+		gdb_file_cmd $binfile
+	    } else {
+		global last_loaded_file
 
-	    # gdb_file_cmd sets this.  This is what gdb_reload
-	    # implementations use as binary.
-	    set last_loaded_file $binfile
+		# gdb_file_cmd sets this.  This is what gdb_reload
+		# implementations use as binary.
+		set last_loaded_file $binfile
 
-	    set GDBFLAGS "$GDBFLAGS $binfile"
-	    gdb_start
+		set GDBFLAGS "$GDBFLAGS $binfile"
+		gdb_start
+	    }
+	    gdb_reinitialize_dir $srcdir/$subdir
+	    gdb_reload
 	}
-	gdb_reinitialize_dir $srcdir/$subdir
-	gdb_reload
-	set GDBFLAGS $saved_gdbflags
 
 	if ![runto start] {
 	    return
@@ -89,7 +89,22 @@ proc test_remove_bp { initial_load } {
 	set align_addr [expr $bp_addr - $bp_addr % $pagesize]
 	set munmap_prototype "int (*) (void *, size_t)"
 	set munmap_expr "(($munmap_prototype) munmap) ($align_addr, $pagesize)"
-	set munmap [get_integer_valueof $munmap_expr -1]
+
+	# Use gdb_test_multiple here rather than get_integer_valueof.
+	# Targets that use the AT_ENTRY_POINT strategy for inferior
+	# function calls will place a breakpoint near the entry point
+	# to catch the return from the inferior function call, and
+	# this is likely on the page we are about to unmap.  As a
+	# consequence we will see the warning about being unable to
+	# remove the breakpoint here, which throws off
+	# get_integer_valueof.
+	set munmap -1
+	gdb_test_multiple "print /d ${munmap_expr}" "get result of munmap call" {
+	    -re -wrap "^(?:warning: error removing breakpoint $::decimal at $::hex\r\n)?\\$\[0-9\]* = (\[-\]*\[0-9\]*).*" {
+		set munmap $expect_out(1,string)
+		pass $gdb_test_name
+	    }
+	}
 
 	if {$munmap != 0} {
 	    unsupported "can't munmap foo's page"
@@ -97,7 +112,7 @@ proc test_remove_bp { initial_load } {
 	}
 
 	gdb_test "delete \$bpnum" \
-	    "warning: Error removing breakpoint .*" \
+	    "^warning: error removing breakpoint $::decimal at $::hex" \
 	    "failure to remove breakpoint warns"
     }
 }

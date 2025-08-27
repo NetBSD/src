@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -35,9 +35,7 @@
 # or for non-ELF targets.  (We're not really testing or building
 # shared libraries here, but having a RTLD implies having shared
 # libraries on the target.)
-if { [skip_shlib_tests] || ![is_elf_target] } {
-    return 0
-}
+require allow_shlib_tests is_elf_target
 
 # (Pretend) RTLD file names and flags:
 set rtld_basename ${::gdb_test_file_name}-rtld
@@ -88,7 +86,10 @@ set rtld_flags [list debug additional_flags=[list -static-pie -fPIE \
 						  -nostdlib -static -lc]]
 
 if { ![gdb_can_simple_compile static-pie-static-libc \
-	   "void _start (void) { _exit (0); }" \
+	   {
+	       #include <unistd.h>
+	       void _start (void) { _exit (0); }
+	   } \
 	   executable $rtld_flags] } {
     set reason "-static-pie not supported or static libc missing"
     untested "failed to compile ($reason)"
@@ -142,7 +143,7 @@ gdb_test "step" {baz \(.*?\);} "step into foo 1"
 gdb_test "finish" {Run till exit.*bar \(\).*baz.*} "finish out of foo 1"
 gdb_test "next" {foo \(2\);} "next over baz in bar"
 gdb_test "step" {baz \(.*?\);} "step into foo 2"
-gdb_test "next" "\}\[\r\n\]+" "next over baz in foo"
-gdb_test "step" "bar \\(\\).*}\[\r\n\]+.*" "step out of foo back into bar"
+gdb_test "next" "\}" "next over baz in foo"
+gdb_test "step" "bar \\(\\).*}" "step out of foo back into bar"
 
 gdb_continue_to_end

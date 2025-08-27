@@ -1,5 +1,5 @@
 /* CTF string table management.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -17,12 +17,17 @@
    along with this program; see the file COPYING.  If not see
    <http://www.gnu.org/licenses/>.  */
 
+#include <assert.h>
 #include <ctf-impl.h>
 #include <string.h>
-#include <assert.h>
 
-/* Convert an encoded CTF string name into a pointer to a C string, using an
-  explicit internal strtab rather than the fp-based one.  */
+static ctf_str_atom_t *
+ctf_str_add_ref_internal (ctf_dict_t *fp, const char *str,
+			  int flags, uint32_t *ref);
+
+/* Convert an encoded CTF string name into a pointer to a C string, possibly
+  using an explicit internal provisional strtab rather than the fp-based
+  one.  */
 const char *
 ctf_strraw_explicit (ctf_dict_t *fp, uint32_t name, ctf_strs_t *strtab)
 {
@@ -31,18 +36,20 @@ ctf_strraw_explicit (ctf_dict_t *fp, uint32_t name, ctf_strs_t *strtab)
   if ((CTF_NAME_STID (name) == CTF_STRTAB_0) && (strtab != NULL))
     ctsp = strtab;
 
-  /* If this name is in the external strtab, and there is a synthetic strtab,
-     use it in preference.  */
+  /* If this name is in the external strtab, and there is a synthetic
+     strtab, use it in preference.  (This is used to add the set of strings
+     -- symbol names, etc -- the linker knows about before the strtab is
+     written out.)  */
 
   if (CTF_NAME_STID (name) == CTF_STRTAB_1
       && fp->ctf_syn_ext_strtab != NULL)
     return ctf_dynhash_lookup (fp->ctf_syn_ext_strtab,
 			       (void *) (uintptr_t) name);
 
-  /* If the name is in the internal strtab, and the offset is beyond the end of
-     the ctsp->cts_len but below the ctf_str_prov_offset, this is a provisional
-     string added by ctf_str_add*() but not yet built into a real strtab: get
-     the value out of the ctf_prov_strtab.  */
+  /* If the name is in the internal strtab, and the name offset is beyond
+     the end of the ctsp->cts_len but below the ctf_str_prov_offset, this is
+     a provisional string added by ctf_str_add*() but not yet built into a
+     real strtab: get the value out of the ctf_prov_strtab.  */
 
   if (CTF_NAME_STID (name) == CTF_STRTAB_0
       && name >= ctsp->cts_len && name < fp->ctf_str_prov_offset)
@@ -73,6 +80,30 @@ ctf_strptr (ctf_dict_t *fp, uint32_t name)
   return (s != NULL ? s : "(?)");
 }
 
+/* As above, but return info on what is wrong in more detail.
+   (Used for type lookups.) */
+
+const char *
+ctf_strptr_validate (ctf_dict_t *fp, uint32_t name)
+{
+  const char *str = ctf_strraw (fp, name);
+
+  if (str == NULL)
+    {
+      if (CTF_NAME_STID (name) == CTF_STRTAB_1
+	  && fp->ctf_syn_ext_strtab == NULL
+	  && fp->ctf_str[CTF_NAME_STID (name)].cts_strs == NULL)
+	{
+	  ctf_set_errno (fp, ECTF_STRTAB);
+	  return NULL;
+	}
+
+      ctf_set_errno (fp, ECTF_BADNAME);
+      return NULL;
+    }
+  return str;
+}
+
 /* Remove all refs to a given atom.  */
 static void
 ctf_str_purge_atom_refs (ctf_str_atom_t *atom)
@@ -83,27 +114,44 @@ ctf_str_purge_atom_refs (ctf_str_atom_t *atom)
     {
       next = ctf_list_next (ref);
       ctf_list_delete (&atom->csa_refs, ref);
+      if (atom->csa_flags & CTF_STR_ATOM_MOVABLE)
+	{
+	  ctf_str_atom_ref_movable_t *movref;
+	  movref = (ctf_str_atom_ref_movable_t *) ref;
+	  ctf_dynhash_remove (movref->caf_movable_refs, ref);
+	}
+
       free (ref);
     }
 }
 
-/* Free an atom (only called on ctf_close().)  */
+/* Free an atom.  */
 static void
 ctf_str_free_atom (void *a)
 {
   ctf_str_atom_t *atom = a;
 
   ctf_str_purge_atom_refs (atom);
+
+  if (atom->csa_flags & CTF_STR_ATOM_FREEABLE)
+    free (atom->csa_str);
+
   free (atom);
 }
 
 /* Create the atoms table.  There is always at least one atom in it, the null
-   string.  */
+   string: but also pull in atoms from the internal strtab.  (We rely on
+   calls to ctf_str_add_external to populate external strtab entries, since
+   these are often not quite the same as what appears in any external
+   strtab, and the external strtab is often huge and best not aggressively
+   pulled in.)  */
 int
 ctf_str_create_atoms (ctf_dict_t *fp)
 {
+  size_t i;
+
   fp->ctf_str_atoms = ctf_dynhash_create (ctf_hash_string, ctf_hash_eq_string,
-					  free, ctf_str_free_atom);
+					  NULL, ctf_str_free_atom);
   if (!fp->ctf_str_atoms)
     return -ENOMEM;
 
@@ -114,92 +162,192 @@ ctf_str_create_atoms (ctf_dict_t *fp)
   if (!fp->ctf_prov_strtab)
     goto oom_prov_strtab;
 
-  if (!fp->ctf_str_pending_ref)
-    fp->ctf_str_pending_ref = ctf_dynset_create (htab_hash_pointer,
-						 htab_eq_pointer,
-						 NULL);
-  if (!fp->ctf_str_pending_ref)
-    goto oom_str_pending_ref;
+  fp->ctf_str_movable_refs = ctf_dynhash_create (ctf_hash_integer,
+						 ctf_hash_eq_integer,
+						 NULL, NULL);
+  if (!fp->ctf_str_movable_refs)
+    goto oom_movable_refs;
 
   errno = 0;
   ctf_str_add (fp, "");
   if (errno == ENOMEM)
     goto oom_str_add;
 
+  /* Pull in all the strings in the strtab as new atoms.  The provisional
+     strtab must be empty at this point, so there is no need to populate
+     atoms from it as well.  Types in this subset are frozen and readonly,
+     so the refs list and movable refs list need not be populated.  */
+
+  for (i = 0; i < fp->ctf_str[CTF_STRTAB_0].cts_len;
+       i += strlen (&fp->ctf_str[CTF_STRTAB_0].cts_strs[i]) + 1)
+    {
+      ctf_str_atom_t *atom;
+
+      if (fp->ctf_str[CTF_STRTAB_0].cts_strs[i] == 0)
+	continue;
+
+      atom = ctf_str_add_ref_internal (fp, &fp->ctf_str[CTF_STRTAB_0].cts_strs[i],
+				       0, 0);
+
+      if (!atom)
+	goto oom_str_add;
+
+      atom->csa_offset = i;
+    }
+
   return 0;
 
  oom_str_add:
+  ctf_dynhash_destroy (fp->ctf_str_movable_refs);
+  fp->ctf_str_movable_refs = NULL;
+ oom_movable_refs:
   ctf_dynhash_destroy (fp->ctf_prov_strtab);
   fp->ctf_prov_strtab = NULL;
- oom_str_pending_ref:
-  ctf_dynset_destroy (fp->ctf_str_pending_ref);
-  fp->ctf_str_pending_ref = NULL;
  oom_prov_strtab:
   ctf_dynhash_destroy (fp->ctf_str_atoms);
   fp->ctf_str_atoms = NULL;
   return -ENOMEM;
 }
 
-/* Destroy the atoms table.  */
+/* Destroy the atoms table and associated refs.  */
 void
 ctf_str_free_atoms (ctf_dict_t *fp)
 {
   ctf_dynhash_destroy (fp->ctf_prov_strtab);
   ctf_dynhash_destroy (fp->ctf_str_atoms);
-  ctf_dynset_destroy (fp->ctf_str_pending_ref);
+  ctf_dynhash_destroy (fp->ctf_str_movable_refs);
+  if (fp->ctf_dynstrtab)
+    {
+      free (fp->ctf_dynstrtab->cts_strs);
+      free (fp->ctf_dynstrtab);
+    }
 }
 
 #define CTF_STR_ADD_REF 0x1
-#define CTF_STR_MAKE_PROVISIONAL 0x2
-#define CTF_STR_PENDING_REF 0x4
+#define CTF_STR_PROVISIONAL 0x2
+#define CTF_STR_MOVABLE 0x4
 
-/* Add a string to the atoms table, copying the passed-in string.  Return the
-   atom added. Return NULL only when out of memory (and do not touch the
-   passed-in string in that case).  Possibly augment the ref list with the
-   passed-in ref.  Possibly add a provisional entry for this string to the
-   provisional strtab.   */
+/* Allocate a ref and bind it into a ref list.  */
+
+static ctf_str_atom_ref_t *
+aref_create (ctf_dict_t *fp, ctf_str_atom_t *atom, uint32_t *ref, int flags)
+{
+  ctf_str_atom_ref_t *aref;
+  size_t s = sizeof (struct ctf_str_atom_ref);
+
+  if (flags & CTF_STR_MOVABLE)
+    s = sizeof (struct ctf_str_atom_ref_movable);
+
+  aref = malloc (s);
+
+  if (!aref)
+    return NULL;
+
+  aref->caf_ref = ref;
+
+  /* Movable refs get a backpointer to them in ctf_str_movable_refs, and a
+     pointer to ctf_str_movable_refs itself in the ref, for use when freeing
+     refs: they can be moved later in batches via a call to
+     ctf_str_move_refs.  */
+
+  if (flags & CTF_STR_MOVABLE)
+    {
+      ctf_str_atom_ref_movable_t *movref = (ctf_str_atom_ref_movable_t *) aref;
+
+      movref->caf_movable_refs = fp->ctf_str_movable_refs;
+
+      if (ctf_dynhash_insert (fp->ctf_str_movable_refs, ref, aref) < 0)
+	{
+	  free (aref);
+	  return NULL;
+	}
+    }
+
+  ctf_list_append (&atom->csa_refs, aref);
+
+  return aref;
+}
+
+/* Add a string to the atoms table, copying the passed-in string if
+   necessary.  Return the atom added. Return NULL only when out of memory
+   (and do not touch the passed-in string in that case).
+
+   Possibly add a provisional entry for this string to the provisional
+   strtab.  If the string is in the provisional strtab, update its ref list
+   with the passed-in ref, causing the ref to be updated when the strtab is
+   written out.  */
+
 static ctf_str_atom_t *
 ctf_str_add_ref_internal (ctf_dict_t *fp, const char *str,
 			  int flags, uint32_t *ref)
 {
   char *newstr = NULL;
   ctf_str_atom_t *atom = NULL;
-  ctf_str_atom_ref_t *aref = NULL;
+  int added = 0;
 
   atom = ctf_dynhash_lookup (fp->ctf_str_atoms, str);
 
-  if (flags & CTF_STR_ADD_REF)
-    {
-      if ((aref = malloc (sizeof (struct ctf_str_atom_ref))) == NULL)
-	return NULL;
-      aref->caf_ref = ref;
-    }
+  /* Existing atoms get refs added only if they are provisional:
+     non-provisional strings already have a fixed strtab offset, and just
+     get their ref updated immediately, since its value cannot change.  */
 
   if (atom)
     {
+      if (!ctf_dynhash_lookup (fp->ctf_prov_strtab, (void *) (uintptr_t)
+			       atom->csa_offset))
+	{
+	  if (flags & CTF_STR_ADD_REF)
+	    {
+	      if (atom->csa_external_offset)
+		*ref = atom->csa_external_offset;
+	      else
+		*ref = atom->csa_offset;
+	    }
+	  return atom;
+	}
+
       if (flags & CTF_STR_ADD_REF)
 	{
-	  ctf_dynset_remove (fp->ctf_str_pending_ref, (void *) ref);
-	  ctf_list_append (&atom->csa_refs, aref);
-	  fp->ctf_str_num_refs++;
+	  if (!aref_create (fp, atom, ref, flags))
+	    {
+	      ctf_set_errno (fp, ENOMEM);
+	      return NULL;
+	    }
 	}
+
       return atom;
     }
+
+  /* New atom.  */
 
   if ((atom = malloc (sizeof (struct ctf_str_atom))) == NULL)
     goto oom;
   memset (atom, 0, sizeof (struct ctf_str_atom));
 
-  if ((newstr = strdup (str)) == NULL)
-    goto oom;
+  /* Don't allocate new strings if this string is within an mmapped
+     strtab.  */
 
-  if (ctf_dynhash_insert (fp->ctf_str_atoms, newstr, atom) < 0)
-    goto oom;
+  if ((unsigned char *) str < (unsigned char *) fp->ctf_data_mmapped
+      || (unsigned char *) str > (unsigned char *) fp->ctf_data_mmapped + fp->ctf_data_mmapped_len)
+    {
+      if ((newstr = strdup (str)) == NULL)
+	goto oom;
+      atom->csa_flags |= CTF_STR_ATOM_FREEABLE;
+      atom->csa_str = newstr;
+    }
+  else
+    atom->csa_str = (char *) str;
 
-  atom->csa_str = newstr;
+  if (ctf_dynhash_insert (fp->ctf_str_atoms, atom->csa_str, atom) < 0)
+    goto oom;
+  added = 1;
+
   atom->csa_snapshot_id = fp->ctf_snapshots;
 
-  if (flags & CTF_STR_MAKE_PROVISIONAL)
+  /* New atoms marked provisional go into the provisional strtab, and get a
+     ref added.  */
+
+  if (flags & CTF_STR_PROVISIONAL)
     {
       atom->csa_offset = fp->ctf_str_prov_offset;
 
@@ -208,26 +356,20 @@ ctf_str_add_ref_internal (ctf_dict_t *fp, const char *str,
 	goto oom;
 
       fp->ctf_str_prov_offset += strlen (atom->csa_str) + 1;
+
+      if (flags & CTF_STR_ADD_REF)
+      {
+	if (!aref_create (fp, atom, ref, flags))
+	  goto oom;
+      }
     }
 
-  if (flags & CTF_STR_PENDING_REF)
-    {
-      if (ctf_dynset_insert (fp->ctf_str_pending_ref, (void *) ref) < 0)
-	goto oom;
-    }
-  else if (flags & CTF_STR_ADD_REF)
-    {
-      ctf_dynset_remove (fp->ctf_str_pending_ref, (void *) ref);
-      ctf_list_append (&atom->csa_refs, aref);
-      fp->ctf_str_num_refs++;
-    }
   return atom;
 
  oom:
-  if (newstr)
-    ctf_dynhash_remove (fp->ctf_str_atoms, newstr);
+  if (added)
+    ctf_dynhash_remove (fp->ctf_str_atoms, atom->csa_str);
   free (atom);
-  free (aref);
   free (newstr);
   ctf_set_errno (fp, ENOMEM);
   return NULL;
@@ -246,7 +388,7 @@ ctf_str_add (ctf_dict_t *fp, const char *str)
   if (!str)
     str = "";
 
-  atom = ctf_str_add_ref_internal (fp, str, CTF_STR_MAKE_PROVISIONAL, 0);
+  atom = ctf_str_add_ref_internal (fp, str, CTF_STR_PROVISIONAL, 0);
   if (!atom)
     return 0;
 
@@ -265,44 +407,29 @@ ctf_str_add_ref (ctf_dict_t *fp, const char *str, uint32_t *ref)
     str = "";
 
   atom = ctf_str_add_ref_internal (fp, str, CTF_STR_ADD_REF
-				   | CTF_STR_MAKE_PROVISIONAL, ref);
+				   | CTF_STR_PROVISIONAL, ref);
   if (!atom)
     return 0;
 
   return atom->csa_offset;
 }
 
-/* Like ctf_str_add_ref(), but notes that this memory location must be added as
-   a ref by a later serialization phase, rather than adding it itself.  */
+/* Like ctf_str_add_ref(), but note that the ref may be moved later on.  */
 uint32_t
-ctf_str_add_pending (ctf_dict_t *fp, const char *str, uint32_t *ref)
+ctf_str_add_movable_ref (ctf_dict_t *fp, const char *str, uint32_t *ref)
 {
   ctf_str_atom_t *atom;
 
   if (!str)
     str = "";
 
-  atom = ctf_str_add_ref_internal (fp, str, CTF_STR_PENDING_REF
-				   | CTF_STR_MAKE_PROVISIONAL, ref);
+  atom = ctf_str_add_ref_internal (fp, str, CTF_STR_ADD_REF
+				   | CTF_STR_PROVISIONAL
+				   | CTF_STR_MOVABLE, ref);
   if (!atom)
     return 0;
 
   return atom->csa_offset;
-}
-
-/* Note that a pending ref now located at NEW_REF has moved by BYTES bytes.  */
-int
-ctf_str_move_pending (ctf_dict_t *fp, uint32_t *new_ref, ptrdiff_t bytes)
-{
-  if (bytes == 0)
-    return 0;
-
-  if (ctf_dynset_insert (fp->ctf_str_pending_ref, (void *) new_ref) < 0)
-    return (ctf_set_errno (fp, ENOMEM));
-
-  ctf_dynset_remove (fp->ctf_str_pending_ref,
-		     (void *) ((signed char *) new_ref - bytes));
-  return 0;
 }
 
 /* Add an external strtab reference at OFFSET.  Returns zero if the addition
@@ -345,6 +472,41 @@ ctf_str_add_external (ctf_dict_t *fp, const char *str, uint32_t offset)
   return 1;
 }
 
+/* Note that refs have moved from (SRC, LEN) to DEST.  We use the movable
+   refs backpointer for this, because it is done an amortized-constant
+   number of times during structure member and enumerand addition, and if we
+   did a linear search this would turn such addition into an O(n^2)
+   operation.  Even this is not linear, but it's better than that.  */
+int
+ctf_str_move_refs (ctf_dict_t *fp, void *src, size_t len, void *dest)
+{
+  uintptr_t p;
+
+  if (src == dest)
+    return 0;
+
+  for (p = (uintptr_t) src; p - (uintptr_t) src < len; p++)
+    {
+      ctf_str_atom_ref_t *ref;
+
+      if ((ref = ctf_dynhash_lookup (fp->ctf_str_movable_refs,
+				     (ctf_str_atom_ref_t *) p)) != NULL)
+	{
+	  int out_of_memory;
+
+	  ref->caf_ref = (uint32_t *) (((uintptr_t) ref->caf_ref +
+					(uintptr_t) dest - (uintptr_t) src));
+	  ctf_dynhash_remove (fp->ctf_str_movable_refs,
+			      (ctf_str_atom_ref_t *) p);
+	  out_of_memory = ctf_dynhash_insert (fp->ctf_str_movable_refs,
+					      ref->caf_ref, ref);
+	  assert (out_of_memory == 0);
+	}
+    }
+
+  return 0;
+}
+
 /* Remove a single ref.  */
 void
 ctf_str_remove_ref (ctf_dict_t *fp, const char *str, uint32_t *ref)
@@ -365,8 +527,6 @@ ctf_str_remove_ref (ctf_dict_t *fp, const char *str, uint32_t *ref)
 	  free (aref);
 	}
     }
-
-  ctf_dynset_remove (fp->ctf_str_pending_ref, (void *) ref);
 }
 
 /* A ctf_dynhash_iter_remove() callback that removes atoms later than a given
@@ -403,9 +563,7 @@ ctf_str_purge_one_atom_refs (void *key _libctf_unused_, void *value,
 void
 ctf_str_purge_refs (ctf_dict_t *fp)
 {
-  if (fp->ctf_str_num_refs > 0)
-    ctf_dynhash_iter (fp->ctf_str_atoms, ctf_str_purge_one_atom_refs, NULL);
-  fp->ctf_str_num_refs = 0;
+  ctf_dynhash_iter (fp->ctf_str_atoms, ctf_str_purge_one_atom_refs, NULL);
 }
 
 /* Update a list of refs to the specified value. */
@@ -416,70 +574,7 @@ ctf_str_update_refs (ctf_str_atom_t *refs, uint32_t value)
 
   for (ref = ctf_list_next (&refs->csa_refs); ref != NULL;
        ref = ctf_list_next (ref))
-      *(ref->caf_ref) = value;
-}
-
-/* State shared across the strtab write process.  */
-typedef struct ctf_strtab_write_state
-{
-  /* Strtab we are writing, and the number of strings in it.  */
-  ctf_strs_writable_t *strtab;
-  size_t strtab_count;
-
-  /* Pointers to (existing) atoms in the atoms table, for qsorting.  */
-  ctf_str_atom_t **sorttab;
-
-  /* Loop counter for sorttab population.  */
-  size_t i;
-
-  /* The null-string atom (skipped during population).  */
-  ctf_str_atom_t *nullstr;
-} ctf_strtab_write_state_t;
-
-/* Count the number of entries in the strtab, and its length.  */
-static void
-ctf_str_count_strtab (void *key _libctf_unused_, void *value,
-	      void *arg)
-{
-  ctf_str_atom_t *atom = (ctf_str_atom_t *) value;
-  ctf_strtab_write_state_t *s = (ctf_strtab_write_state_t *) arg;
-
-  /* We only factor in the length of items that have no offset and have refs:
-     other items are in the external strtab, or will simply not be written out
-     at all.  They still contribute to the total count, though, because we still
-     have to sort them.  We add in the null string's length explicitly, outside
-     this function, since it is explicitly written out even if it has no refs at
-     all.  */
-
-  if (s->nullstr == atom)
-    {
-      s->strtab_count++;
-      return;
-    }
-
-  if (!ctf_list_empty_p (&atom->csa_refs))
-    {
-      if (!atom->csa_external_offset)
-	s->strtab->cts_len += strlen (atom->csa_str) + 1;
-      s->strtab_count++;
-    }
-}
-
-/* Populate the sorttab with pointers to the strtab atoms.  */
-static void
-ctf_str_populate_sorttab (void *key _libctf_unused_, void *value,
-		  void *arg)
-{
-  ctf_str_atom_t *atom = (ctf_str_atom_t *) value;
-  ctf_strtab_write_state_t *s = (ctf_strtab_write_state_t *) arg;
-
-  /* Skip the null string.  */
-  if (s->nullstr == atom)
-    return;
-
-  /* Skip atoms with no refs.  */
-  if (!ctf_list_empty_p (&atom->csa_refs))
-    s->sorttab[s->i++] = atom;
+    *(ref->caf_ref) = value;
 }
 
 /* Sort the strtab.  */
@@ -493,79 +588,182 @@ ctf_str_sort_strtab (const void *a, const void *b)
 }
 
 /* Write out and return a strtab containing all strings with recorded refs,
-   adjusting the refs to refer to the corresponding string.  The returned strtab
-   may be NULL on error.  Also populate the synthetic strtab with mappings from
-   external strtab offsets to names, so we can look them up with ctf_strptr().
-   Only external strtab offsets with references are added.  */
-ctf_strs_writable_t
+   adjusting the refs to refer to the corresponding string.  The returned
+   strtab is already assigned to strtab 0 in this dict, is owned by this
+   dict, and may be NULL on error.  Also populate the synthetic strtab with
+   mappings from external strtab offsets to names, so we can look them up
+   with ctf_strptr().  Only external strtab offsets with references are
+   added.
+
+   As a side effect, replaces the strtab of the current dict with the newly-
+   generated strtab.  This is an exception to the general rule that
+   serialization does not change the dict passed in, because the alternative
+   is to copy the entire atoms table on every reserialization just to avoid
+   modifying the original, which is excessively costly for minimal gain.
+
+   We use the lazy man's approach and double memory costs by always storing
+   atoms as individually allocated entities whenever they come from anywhere
+   but a freshly-opened, mmapped dict, even though after serialization there
+   is another copy in the strtab; this ensures that ctf_strptr()-returned
+   pointers to them remain valid for the lifetime of the dict.
+
+   This is all rendered more complex because if a dict is ctf_open()ed it
+   will have a bunch of strings in its strtab already, and their strtab
+   offsets can never change (without piles of complexity to rescan the
+   entire dict just to get all the offsets to all of them into the atoms
+   table).  Entries below the existing strtab limit are just copied into the
+   new dict: entries above it are new, and are are sorted first, then
+   appended to it.  The sorting is purely a compression-efficiency
+   improvement, and we get nearly as good an improvement from sorting big
+   chunks like this as we would from sorting the whole thing.  */
+
+const ctf_strs_writable_t *
 ctf_str_write_strtab (ctf_dict_t *fp)
 {
-  ctf_strs_writable_t strtab;
-  ctf_str_atom_t *nullstr;
+  ctf_strs_writable_t *strtab;
+  size_t strtab_count = 0;
   uint32_t cur_stroff = 0;
-  ctf_strtab_write_state_t s;
   ctf_str_atom_t **sorttab;
+  ctf_next_t *it = NULL;
   size_t i;
+  void *v;
+  int err;
+  int new_strtab = 0;
   int any_external = 0;
 
-  memset (&strtab, 0, sizeof (struct ctf_strs_writable));
-  memset (&s, 0, sizeof (struct ctf_strtab_write_state));
-  s.strtab = &strtab;
+  strtab = calloc (1, sizeof (ctf_strs_writable_t));
+  if (!strtab)
+    return NULL;
 
-  nullstr = ctf_dynhash_lookup (fp->ctf_str_atoms, "");
-  if (!nullstr)
+  /* The strtab contains the existing string table at its start: figure out
+     how many new strings we need to add.  We only need to add new strings
+     that have no external offset, that have refs, and that are found in the
+     provisional strtab.  If the existing strtab is empty we also need to
+     add the null string at its start.  */
+
+  strtab->cts_len = fp->ctf_str[CTF_STRTAB_0].cts_len;
+
+  if (strtab->cts_len == 0)
     {
-      ctf_err_warn (fp, 0, ECTF_INTERNAL, _("null string not found in strtab"));
-      strtab.cts_strs = NULL;
-      return strtab;
+      new_strtab = 1;
+      strtab->cts_len++; 			/* For the \0.  */
     }
 
-  s.nullstr = nullstr;
-  ctf_dynhash_iter (fp->ctf_str_atoms, ctf_str_count_strtab, &s);
-  strtab.cts_len++;				/* For the null string.  */
+  /* Count new entries in the strtab: i.e. entries in the provisional
+     strtab.  Ignore any entry for \0, entries which ended up in the
+     external strtab, and unreferenced entries.  */
 
-  ctf_dprintf ("%lu bytes of strings in strtab.\n",
-	       (unsigned long) strtab.cts_len);
+  while ((err = ctf_dynhash_next (fp->ctf_prov_strtab, &it, NULL, &v)) == 0)
+    {
+      const char *str = (const char *) v;
+      ctf_str_atom_t *atom;
 
-  /* Sort the strtab.  Force the null string to be first.  */
-  sorttab = calloc (s.strtab_count, sizeof (ctf_str_atom_t *));
+      atom = ctf_dynhash_lookup (fp->ctf_str_atoms, str);
+      if (!ctf_assert (fp, atom))
+	goto err_strtab;
+
+      if (atom->csa_str[0] == 0 || ctf_list_empty_p (&atom->csa_refs) ||
+	  atom->csa_external_offset)
+	continue;
+
+      strtab->cts_len += strlen (atom->csa_str) + 1;
+      strtab_count++;
+    }
+  if (err != ECTF_NEXT_END)
+    {
+      ctf_dprintf ("ctf_str_write_strtab: error counting strtab entries: %s\n",
+		   ctf_errmsg (err));
+      goto err_strtab;
+    }
+
+  ctf_dprintf ("%lu bytes of strings in strtab: %lu pre-existing.\n",
+	       (unsigned long) strtab->cts_len,
+	       (unsigned long) fp->ctf_str[CTF_STRTAB_0].cts_len);
+
+  /* Sort the new part of the strtab.  */
+
+  sorttab = calloc (strtab_count, sizeof (ctf_str_atom_t *));
   if (!sorttab)
-    goto oom;
+    {
+      ctf_set_errno (fp, ENOMEM);
+      goto err_strtab;
+    }
 
-  sorttab[0] = nullstr;
-  s.i = 1;
-  s.sorttab = sorttab;
-  ctf_dynhash_iter (fp->ctf_str_atoms, ctf_str_populate_sorttab, &s);
+  i = 0;
+  while ((err = ctf_dynhash_next (fp->ctf_prov_strtab, &it, NULL, &v)) == 0)
+    {
+      ctf_str_atom_t *atom;
 
-  qsort (&sorttab[1], s.strtab_count - 1, sizeof (ctf_str_atom_t *),
+      atom = ctf_dynhash_lookup (fp->ctf_str_atoms, v);
+      if (!ctf_assert (fp, atom))
+	goto err_sorttab;
+
+      if (atom->csa_str[0] == 0 || ctf_list_empty_p (&atom->csa_refs) ||
+	  atom->csa_external_offset)
+	continue;
+
+      sorttab[i++] = atom;
+    }
+
+  qsort (sorttab, strtab_count, sizeof (ctf_str_atom_t *),
 	 ctf_str_sort_strtab);
 
-  if ((strtab.cts_strs = malloc (strtab.cts_len)) == NULL)
-    goto oom_sorttab;
+  if ((strtab->cts_strs = malloc (strtab->cts_len)) == NULL)
+    goto err_sorttab;
 
-  /* Update all refs: also update the strtab appropriately.  */
-  for (i = 0; i < s.strtab_count; i++)
+  cur_stroff = fp->ctf_str[CTF_STRTAB_0].cts_len;
+
+  if (new_strtab)
     {
-      if (sorttab[i]->csa_external_offset)
-	{
-	  /* External strtab entry.  */
+      strtab->cts_strs[0] = 0;
+      cur_stroff++;
+    }
+  else
+    memcpy (strtab->cts_strs, fp->ctf_str[CTF_STRTAB_0].cts_strs,
+	    fp->ctf_str[CTF_STRTAB_0].cts_len);
 
-	  any_external = 1;
-	  ctf_str_update_refs (sorttab[i], sorttab[i]->csa_external_offset);
-	  sorttab[i]->csa_offset = sorttab[i]->csa_external_offset;
-	}
-      else
-	{
-	  /* Internal strtab entry with refs: actually add to the string
-	     table.  */
+  /* Work over the sorttab, add its strings to the strtab, and remember
+     where they are in the csa_offset for the appropriate atom.  No ref
+     updating is done at this point, because refs might well relate to
+     already-existing strings, or external strings, which do not need adding
+     to the strtab and may not be in the sorttab.  */
 
-	  ctf_str_update_refs (sorttab[i], cur_stroff);
-	  sorttab[i]->csa_offset = cur_stroff;
-	  strcpy (&strtab.cts_strs[cur_stroff], sorttab[i]->csa_str);
-	  cur_stroff += strlen (sorttab[i]->csa_str) + 1;
-	}
+  for (i = 0; i < strtab_count; i++)
+    {
+      sorttab[i]->csa_offset = cur_stroff;
+      strcpy (&strtab->cts_strs[cur_stroff], sorttab[i]->csa_str);
+      cur_stroff += strlen (sorttab[i]->csa_str) + 1;
     }
   free (sorttab);
+  sorttab = NULL;
+
+  /* Update all refs, then purge them as no longer necessary: also update
+     the strtab appropriately.  */
+
+  while ((err = ctf_dynhash_next (fp->ctf_str_atoms, &it, NULL, &v)) == 0)
+    {
+      ctf_str_atom_t *atom = (ctf_str_atom_t *) v;
+      uint32_t offset;
+
+      if (ctf_list_empty_p (&atom->csa_refs))
+	continue;
+
+      if (atom->csa_external_offset)
+	{
+	  any_external = 1;
+	  offset = atom->csa_external_offset;
+	}
+      else
+	offset = atom->csa_offset;
+      ctf_str_update_refs (atom, offset);
+    }
+  if (err != ECTF_NEXT_END)
+    {
+      ctf_dprintf ("ctf_str_write_strtab: error iterating over atoms while updating refs: %s\n",
+		   ctf_errmsg (err));
+      goto err_strtab;
+    }
+  ctf_str_purge_refs (fp);
 
   if (!any_external)
     {
@@ -573,16 +771,29 @@ ctf_str_write_strtab (ctf_dict_t *fp)
       fp->ctf_syn_ext_strtab = NULL;
     }
 
+  /* Replace the old strtab with the new one in this dict.  */
+
+  if (fp->ctf_dynstrtab)
+    {
+      free (fp->ctf_dynstrtab->cts_strs);
+      free (fp->ctf_dynstrtab);
+    }
+
+  fp->ctf_dynstrtab = strtab;
+  fp->ctf_str[CTF_STRTAB_0].cts_strs = strtab->cts_strs;
+  fp->ctf_str[CTF_STRTAB_0].cts_len = strtab->cts_len;
+
   /* All the provisional strtab entries are now real strtab entries, and
      ctf_strptr() will find them there.  The provisional offset now starts right
      beyond the new end of the strtab.  */
 
   ctf_dynhash_empty (fp->ctf_prov_strtab);
-  fp->ctf_str_prov_offset = strtab.cts_len + 1;
+  fp->ctf_str_prov_offset = strtab->cts_len + 1;
   return strtab;
 
- oom_sorttab:
+ err_sorttab:
   free (sorttab);
- oom:
-  return strtab;
+ err_strtab:
+  free (strtab);
+  return NULL;
 }

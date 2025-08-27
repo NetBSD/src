@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023 Free Software Foundation, Inc.
+# Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,16 +16,12 @@
 # Test raw identifiers.
 
 load_lib rust-support.exp
-if {[skip_rust_tests]} {
-    return
-}
+require allow_rust_tests
+require {can_compile rust}
+require {have_host_locale C.UTF-8}
 
 # Non-ASCII identifiers were allowed starting in 1.53.
-set v [split [rust_compiler_version] .]
-if {[lindex $v 0] == 1 && [lindex $v 1] < 53} {
-    untested "this test requires rust 1.53 or greater"
-    return -1
-}
+require {rust_at_least 1.53}
 
 # Enable basic use of UTF-8.  LC_ALL gets reset for each testfile.
 setenv LC_ALL C.UTF-8

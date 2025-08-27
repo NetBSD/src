@@ -1,6 +1,6 @@
 /* File-I/O functions for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -59,7 +59,7 @@
 #define FILEIO_S_IRWXO             07
 #define FILEIO_S_SUPPORTED         (FILEIO_S_IFREG|FILEIO_S_IFDIR|  \
 				    FILEIO_S_IRWXU|FILEIO_S_IRWXG|  \
-                                    FILEIO_S_IRWXO)
+				    FILEIO_S_IRWXO)
 
 /* lseek(2) flags */
 #define FILEIO_SEEK_SET             0

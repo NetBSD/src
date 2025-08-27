@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2023 Free Software Foundation, Inc.
+   Copyright 2014-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -99,6 +99,13 @@ int *intptr;
 int globalshadow = 10;
 static int staticshadow = 20;
 int externed = 7;
+
+struct struct_with_array
+{
+  char val[7];
+};
+
+static struct struct_with_array swa;
 
 int
 main (void)
