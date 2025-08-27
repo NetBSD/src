@@ -1,5 +1,5 @@
 /* Header file for GDB compile C-language support.
-   Copyright (C) 2014-2023 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 #ifndef COMPILE_COMPILE_C_H
 #define COMPILE_COMPILE_C_H
 
+#include "compile/compile.h"
 #include "gdbsupport/enum-flags.h"
 #include "gcc-c-plugin.h"
 

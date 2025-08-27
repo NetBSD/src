@@ -1,6 +1,6 @@
 /* BFD library -- caching of file descriptors.
 
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    Hacked by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
@@ -45,9 +45,7 @@ SUBSECTION
 #include "libbfd.h"
 #include "libiberty.h"
 
-#ifdef HAVE_MMAP
-#include <sys/mman.h>
-#endif
+static FILE *_bfd_open_file_unlocked (bfd *abfd);
 
 /* In some cases we can optimize cache operation when reopening files.
    For instance, a flush is entirely unnecessary if the file is already
@@ -67,11 +65,11 @@ enum cache_flag {
 /* The maximum number of files which the cache will keep open at
    one time.  When needed call bfd_cache_max_open to initialize.  */
 
-static int max_open_files = 0;
+static unsigned max_open_files = 0;
 
 /* Set max_open_files, if not already set, to 12.5% of the allowed open
    file descriptors, but at least 10, and return the value.  */
-static int
+static unsigned
 bfd_cache_max_open (void)
 {
   if (max_open_files == 0)
@@ -115,7 +113,7 @@ bfd_cache_max_open (void)
 
 /* The number of BFD files we have open.  */
 
-static int open_files;
+static unsigned open_files;
 
 /* Zero, or a pointer to the topmost BFD on the chain.  This is
    used by the <<bfd_cache_lookup>> macro in @file{libbfd.h} to
@@ -176,6 +174,7 @@ bfd_cache_delete (bfd *abfd)
   snip (abfd);
 
   abfd->iostream = NULL;
+  BFD_ASSERT (open_files > 0);
   --open_files;
   abfd->flags |= BFD_CLOSED_BY_CACHE;
 
@@ -227,6 +226,20 @@ close_one (void)
    ? (FILE *) (bfd_last_cache->iostream)	\
    : bfd_cache_lookup_worker (x, flag))
 
+/* A helper function that returns true if ABFD can possibly be cached
+   -- that is, whether bfd_cache_lookup_worker will accept it.  */
+
+static bool
+possibly_cached (bfd *abfd)
+{
+  if ((abfd->flags & BFD_IN_MEMORY) != 0)
+    return false;
+  if (abfd->my_archive != NULL
+      && !bfd_is_thin_archive (abfd->my_archive))
+    return false;
+  return true;
+}
+
 /* Called when the macro <<bfd_cache_lookup>> fails to find a
    quick answer.  Find a file descriptor for @var{abfd}.  If
    necessary, it open it.  If there are already more than
@@ -237,12 +250,17 @@ close_one (void)
 static FILE *
 bfd_cache_lookup_worker (bfd *abfd, enum cache_flag flag)
 {
-  if ((abfd->flags & BFD_IN_MEMORY) != 0)
+  if (!possibly_cached (abfd))
     abort ();
 
-  if (abfd->my_archive != NULL
-      && !bfd_is_thin_archive (abfd->my_archive))
-    abort ();
+  /* If the BFD is being processed by bfd_check_format_matches, it
+     must already be open and won't be on the list.  */
+  if (abfd->in_format_matches)
+    {
+      if (abfd->iostream == NULL)
+	abort ();
+      return (FILE *) abfd->iostream;
+    }
 
   if (abfd->iostream != NULL)
     {
@@ -258,7 +276,7 @@ bfd_cache_lookup_worker (bfd *abfd, enum cache_flag flag)
   if (flag & CACHE_NO_OPEN)
     return NULL;
 
-  if (bfd_open_file (abfd) == NULL)
+  if (_bfd_open_file_unlocked (abfd) == NULL)
     ;
   else if (!(flag & CACHE_NO_SEEK)
 	   && _bfd_real_fseek ((FILE *) abfd->iostream,
@@ -266,10 +284,7 @@ bfd_cache_lookup_worker (bfd *abfd, enum cache_flag flag)
 	   && !(flag & CACHE_NO_SEEK_ERROR))
     bfd_set_error (bfd_error_system_call);
   else
-    {
-      abfd->flags &= ~BFD_CLOSED_BY_CACHE;
-      return (FILE *) abfd->iostream;
-    }
+    return (FILE *) abfd->iostream;
 
   /* xgettext:c-format */
   _bfd_error_handler (_("reopening %pB: %s"),
@@ -280,19 +295,36 @@ bfd_cache_lookup_worker (bfd *abfd, enum cache_flag flag)
 static file_ptr
 cache_btell (struct bfd *abfd)
 {
+  if (!bfd_lock ())
+    return -1;
   FILE *f = bfd_cache_lookup (abfd, CACHE_NO_OPEN);
   if (f == NULL)
-    return abfd->where;
-  return _bfd_real_ftell (f);
+    {
+      if (!bfd_unlock ())
+	return -1;
+      return abfd->where;
+    }
+  file_ptr result = _bfd_real_ftell (f);
+  if (!bfd_unlock ())
+    return -1;
+  return result;
 }
 
 static int
 cache_bseek (struct bfd *abfd, file_ptr offset, int whence)
 {
+  if (!bfd_lock ())
+    return -1;
   FILE *f = bfd_cache_lookup (abfd, whence != SEEK_CUR ? CACHE_NO_SEEK : CACHE_NORMAL);
   if (f == NULL)
+    {
+      bfd_unlock ();
+      return -1;
+    }
+  int result = _bfd_real_fseek (f, offset, whence);
+  if (!bfd_unlock ())
     return -1;
-  return _bfd_real_fseek (f, offset, whence);
+  return result;
 }
 
 /* Note that archive entries don't have streams; they share their parent's.
@@ -340,12 +372,17 @@ cache_bread_1 (FILE *f, void *buf, file_ptr nbytes)
 static file_ptr
 cache_bread (struct bfd *abfd, void *buf, file_ptr nbytes)
 {
+  if (!bfd_lock ())
+    return -1;
   file_ptr nread = 0;
   FILE *f;
 
   f = bfd_cache_lookup (abfd, CACHE_NORMAL);
   if (f == NULL)
-    return -1;
+    {
+      bfd_unlock ();
+      return -1;
+    }
 
   /* Some filesystems are unable to handle reads that are too large
      (for instance, NetApp shares with oplocks turned off).  To avoid
@@ -376,95 +413,124 @@ cache_bread (struct bfd *abfd, void *buf, file_ptr nbytes)
 	break;
     }
 
+  if (!bfd_unlock ())
+    return -1;
   return nread;
 }
 
 static file_ptr
 cache_bwrite (struct bfd *abfd, const void *from, file_ptr nbytes)
 {
+  if (!bfd_lock ())
+    return -1;
   file_ptr nwrite;
   FILE *f = bfd_cache_lookup (abfd, CACHE_NORMAL);
 
   if (f == NULL)
-    return 0;
+    {
+      if (!bfd_unlock ())
+	return -1;
+      return 0;
+    }
   nwrite = fwrite (from, 1, nbytes, f);
   if (nwrite < nbytes && ferror (f))
     {
       bfd_set_error (bfd_error_system_call);
+      bfd_unlock ();
       return -1;
     }
+  if (!bfd_unlock ())
+    return -1;
   return nwrite;
 }
 
 static int
 cache_bclose (struct bfd *abfd)
 {
+  /* No locking needed here, it's handled by the callee.  */
   return bfd_cache_close (abfd) - 1;
 }
 
 static int
 cache_bflush (struct bfd *abfd)
 {
+  if (!bfd_lock ())
+    return -1;
   int sts;
   FILE *f = bfd_cache_lookup (abfd, CACHE_NO_OPEN);
 
   if (f == NULL)
-    return 0;
+    {
+      if (!bfd_unlock ())
+	return -1;
+      return 0;
+    }
   sts = fflush (f);
   if (sts < 0)
     bfd_set_error (bfd_error_system_call);
+  if (!bfd_unlock ())
+    return -1;
   return sts;
 }
 
 static int
 cache_bstat (struct bfd *abfd, struct stat *sb)
 {
+  if (!bfd_lock ())
+    return -1;
   int sts;
   FILE *f = bfd_cache_lookup (abfd, CACHE_NO_SEEK_ERROR);
 
   if (f == NULL)
-    return -1;
+    {
+      bfd_unlock ();
+      return -1;
+    }
   sts = fstat (fileno (f), sb);
   if (sts < 0)
     bfd_set_error (bfd_error_system_call);
+  if (!bfd_unlock ())
+    return -1;
   return sts;
 }
 
 static void *
 cache_bmmap (struct bfd *abfd ATTRIBUTE_UNUSED,
 	     void *addr ATTRIBUTE_UNUSED,
-	     bfd_size_type len ATTRIBUTE_UNUSED,
+	     size_t len ATTRIBUTE_UNUSED,
 	     int prot ATTRIBUTE_UNUSED,
 	     int flags ATTRIBUTE_UNUSED,
 	     file_ptr offset ATTRIBUTE_UNUSED,
 	     void **map_addr ATTRIBUTE_UNUSED,
-	     bfd_size_type *map_len ATTRIBUTE_UNUSED)
+	     size_t *map_len ATTRIBUTE_UNUSED)
 {
-  void *ret = (void *) -1;
+  void *ret = MAP_FAILED;
 
+  if (!bfd_lock ())
+    return ret;
   if ((abfd->flags & BFD_IN_MEMORY) != 0)
     abort ();
 #ifdef HAVE_MMAP
   else
     {
-      static uintptr_t pagesize_m1;
+      uintptr_t pagesize_m1 = _bfd_pagesize_m1;
       FILE *f;
       file_ptr pg_offset;
-      bfd_size_type pg_len;
+      size_t pg_len;
 
       f = bfd_cache_lookup (abfd, CACHE_NO_SEEK_ERROR);
       if (f == NULL)
-	return ret;
-
-      if (pagesize_m1 == 0)
-	pagesize_m1 = getpagesize () - 1;
+	{
+	  bfd_unlock ();
+	  return ret;
+	}
 
       /* Align.  */
       pg_offset = offset & ~pagesize_m1;
       pg_len = (len + (offset - pg_offset) + pagesize_m1) & ~pagesize_m1;
 
       ret = mmap (addr, pg_len, prot, flags, fileno (f), pg_offset);
-      if (ret == (void *) -1)
+      if (ret == MAP_FAILED)
 	bfd_set_error (bfd_error_system_call);
       else
 	{
@@ -475,6 +541,8 @@ cache_bmmap (struct bfd *abfd ATTRIBUTE_UNUSED,
     }
 #endif
 
+  if (!bfd_unlock ())
+    return MAP_FAILED;
   return ret;
 }
 
@@ -483,6 +551,22 @@ static const struct bfd_iovec cache_iovec =
   &cache_bread, &cache_bwrite, &cache_btell, &cache_bseek,
   &cache_bclose, &cache_bflush, &cache_bstat, &cache_bmmap
 };
+
+static bool
+_bfd_cache_init_unlocked (bfd *abfd)
+{
+  BFD_ASSERT (abfd->iostream != NULL);
+  if (open_files >= bfd_cache_max_open ())
+    {
+      if (! close_one ())
+	return false;
+    }
+  abfd->iovec = &cache_iovec;
+  insert (abfd);
+  abfd->flags &= ~BFD_CLOSED_BY_CACHE;
+  ++open_files;
+  return true;
+}
 
 /*
 INTERNAL_FUNCTION
@@ -498,20 +582,32 @@ DESCRIPTION
 bool
 bfd_cache_init (bfd *abfd)
 {
-  BFD_ASSERT (abfd->iostream != NULL);
-  if (open_files >= bfd_cache_max_open ())
-    {
-      if (! close_one ())
-	return false;
-    }
-  abfd->iovec = &cache_iovec;
-  insert (abfd);
-  ++open_files;
-  return true;
+  if (!bfd_lock ())
+    return false;
+  bool result = _bfd_cache_init_unlocked (abfd);
+  if (!bfd_unlock ())
+    return false;
+  return result;
+}
+
+static bool
+_bfd_cache_close_unlocked (bfd *abfd)
+{
+  /* Don't remove this test.  bfd_reinit depends on it.  */
+  if (abfd->iovec != &cache_iovec)
+    return true;
+
+  if (abfd->iostream == NULL)
+    /* Previously closed.  */
+    return true;
+
+  /* Note: no locking needed in this function, as it is handled by
+     bfd_cache_delete.  */
+  return bfd_cache_delete (abfd);
 }
 
 /*
-INTERNAL_FUNCTION
+FUNCTION
 	bfd_cache_close
 
 SYNOPSIS
@@ -521,7 +617,6 @@ DESCRIPTION
 	Remove the BFD @var{abfd} from the cache. If the attached file is open,
 	then close it too.
 
-RETURNS
 	<<FALSE>> is returned if closing the file fails, <<TRUE>> is
 	returned if all is well.
 */
@@ -529,14 +624,12 @@ RETURNS
 bool
 bfd_cache_close (bfd *abfd)
 {
-  if (abfd->iovec != &cache_iovec)
-    return true;
-
-  if (abfd->iostream == NULL)
-    /* Previously closed.  */
-    return true;
-
-  return bfd_cache_delete (abfd);
+  if (!bfd_lock ())
+    return false;
+  bool result = _bfd_cache_close_unlocked (abfd);
+  if (!bfd_unlock ())
+    return false;
+  return result;
 }
 
 /*
@@ -548,9 +641,10 @@ SYNOPSIS
 
 DESCRIPTION
 	Remove all BFDs from the cache. If the attached file is open,
-	then close it too.
+	then close it too.  Note - despite its name this function will
+	close a BFD even if it is not marked as being cacheable, ie
+	even if bfd_get_cacheable() returns false.
 
-RETURNS
 	<<FALSE>> is returned if closing one of the file fails, <<TRUE>> is
 	returned if all is well.
 */
@@ -560,29 +654,101 @@ bfd_cache_close_all (void)
 {
   bool ret = true;
 
+  if (!bfd_lock ())
+    return false;
   while (bfd_last_cache != NULL)
-    ret &= bfd_cache_close (bfd_last_cache);
+    {
+      bfd *prev_bfd_last_cache = bfd_last_cache;
 
+      ret &= _bfd_cache_close_unlocked (bfd_last_cache);
+
+      /* Stop a potential infinite loop should bfd_cache_close()
+	 not update bfd_last_cache.  */
+      if (bfd_last_cache == prev_bfd_last_cache)
+	break;
+    }
+
+  if (!bfd_unlock ())
+    return false;
   return ret;
 }
 
 /*
 INTERNAL_FUNCTION
-	bfd_open_file
+	bfd_cache_set_uncloseable
 
 SYNOPSIS
-	FILE* bfd_open_file (bfd *abfd);
+	bool bfd_cache_set_uncloseable (bfd *abfd, bool value, bool *old);
 
 DESCRIPTION
-	Call the OS to open a file for @var{abfd}.  Return the <<FILE *>>
-	(possibly <<NULL>>) that results from this operation.  Set up the
-	BFD so that future accesses know the file is open. If the <<FILE *>>
-	returned is <<NULL>>, then it won't have been put in the
-	cache, so it won't have to be removed from it.
+	Internal function to mark ABFD as either closeable or not.
+	This is used by bfd_check_format_matches to avoid races
+	where bfd_cache_close_all is called in another thread.
+	VALUE is true to mark the BFD as temporarily uncloseable
+	by the cache; false to mark it as closeable once again.
+	OLD, if non-NULL, is set to the previous value of the flag.
+	Returns false on error, true on success.
 */
 
-FILE *
-bfd_open_file (bfd *abfd)
+bool
+bfd_cache_set_uncloseable (bfd *abfd, bool value, bool *old)
+{
+  bool result = true;
+
+  if (!bfd_lock ())
+    return false;
+  if (old != NULL)
+    *old = abfd->in_format_matches;
+
+  /* Only perform any action when the state changes,and only when this
+     BFD is actually using the cache.  */
+  if (value != abfd->in_format_matches
+      && abfd->iovec == &cache_iovec
+      && possibly_cached (abfd))
+    {
+      if (value)
+	{
+	  /* Marking as uncloseable for the first time.  Ensure the
+	     file is open, and remove from the cache list.  */
+	  FILE *f = bfd_cache_lookup (abfd, CACHE_NORMAL);
+	  if (f == NULL)
+	    result = false;
+	  else
+	    snip (abfd);
+	}
+      else
+	{
+	  /* Mark as closeable again.  */
+	  insert (abfd);
+	}
+
+      abfd->in_format_matches = value;
+    }
+
+  if (!bfd_unlock ())
+    return false;
+  return result;
+}
+
+/*
+FUNCTION
+	bfd_cache_size
+
+SYNOPSIS
+	unsigned bfd_cache_size (void);
+
+DESCRIPTION
+	Return the number of open files in the cache.
+*/
+
+unsigned
+bfd_cache_size (void)
+{
+  return open_files;
+}
+
+static FILE *
+_bfd_open_file_unlocked (bfd *abfd)
 {
   abfd->cacheable = true;	/* Allow it to be closed later.  */
 
@@ -647,9 +813,35 @@ bfd_open_file (bfd *abfd)
     bfd_set_error (bfd_error_system_call);
   else
     {
-      if (! bfd_cache_init (abfd))
+      if (! _bfd_cache_init_unlocked (abfd))
 	return NULL;
     }
 
   return (FILE *) abfd->iostream;
+}
+
+/*
+INTERNAL_FUNCTION
+	bfd_open_file
+
+SYNOPSIS
+	FILE* bfd_open_file (bfd *abfd);
+
+DESCRIPTION
+	Call the OS to open a file for @var{abfd}.  Return the <<FILE *>>
+	(possibly <<NULL>>) that results from this operation.  Set up the
+	BFD so that future accesses know the file is open. If the <<FILE *>>
+	returned is <<NULL>>, then it won't have been put in the
+	cache, so it won't have to be removed from it.
+*/
+
+FILE *
+bfd_open_file (bfd *abfd)
+{
+  if (!bfd_lock ())
+    return NULL;
+  FILE *result = _bfd_open_file_unlocked (abfd);
+  if (!bfd_unlock ())
+    return NULL;
+  return result;
 }

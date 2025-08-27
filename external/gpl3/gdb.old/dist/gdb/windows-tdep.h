@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,8 @@
 #ifndef WINDOWS_TDEP_H
 #define WINDOWS_TDEP_H
 
-struct obstack;
+#include "frame-unwind.h"
+
 struct gdbarch;
 
 extern struct cmd_list_element *info_w32_cmdlist;
@@ -29,7 +30,7 @@ extern void windows_xfer_shared_library (const char* so_name,
 					 CORE_ADDR load_addr,
 					 CORE_ADDR *text_offset_cached,
 					 struct gdbarch *gdbarch,
-					 struct obstack *obstack);
+					 std::string &xml);
 
 extern ULONGEST windows_core_xfer_shared_libraries (struct gdbarch *gdbarch,
 						    gdb_byte *readbuf,
@@ -55,5 +56,23 @@ extern void cygwin_init_abi (struct gdbarch_info info,
    (cygwin1.dll).  */
 
 extern bool is_linked_with_cygwin_dll (bfd *abfd);
+
+/* Cygwin sigwapper unwinder.  Unwinds signal frames over
+   sigbe/sigdelayed.  */
+
+struct cygwin_sigwrapper_frame_unwind : public frame_unwind
+{
+  explicit cygwin_sigwrapper_frame_unwind
+    (gdb::array_view<const gdb::array_view<const gdb_byte>> patterns_list);
+
+  /* Architecture-specific list of instruction patterns to match.
+     It's a list of patterns instead of single pattern because some
+     architectures want to match more than one function
+     (sigbe/sigdelayed & friends).  Each potential instruction
+     sequence is assumed to be followed by 4 bytes for tls::stackptr.
+     If any pattern in the list matches, then the frame is assumed to
+     be a sigwrapper frame.  */
+  gdb::array_view<const gdb::array_view<const gdb_byte>> patterns_list;
+};
 
 #endif

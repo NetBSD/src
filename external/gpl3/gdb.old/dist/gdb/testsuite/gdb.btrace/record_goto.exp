@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -17,10 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { [skip_btrace_tests] } {
-    unsupported "target does not support record-btrace"
-    return -1
-}
+require allow_btrace_tests
 
 # The "record goto" command jumps to a specific instruction in the execution
 # trace.  To guarantee that we always get the same execution trace, we use
@@ -54,6 +51,11 @@ if ![runto_main] {
     return -1
 }
 
+# When GDB prints the file for a stop location, it may print the full path
+# depending on what information the compiler added.  This regexp allows for
+# that path to be present, but does not require it.
+set optional_filepath {[^\n]*}
+
 # we want a small context sizes to simplify the test
 gdb_test_no_output "set record instruction-history-size 3"
 gdb_test_no_output "set record function-call-history-size 3"
@@ -83,7 +85,7 @@ gdb_test "record function-call-history /ci 1, +20" [multi_line \
   ]
 
 # let's see if we can go back in history
-gdb_test "record goto 19" ".*fun4 \\(\\) at record_goto.c:43.*"
+gdb_test "record goto 19" ".*fun4 \\(\\) at ${optional_filepath}record_goto.c:43.*"
 
 # the function call history should start at the new location
 gdb_test "record function-call-history /ci" [multi_line \
@@ -100,19 +102,19 @@ gdb_test "record instruction-history" [multi_line \
   ] "instruction-history from 19 forwards"
 
 # let's go to another place in the history
-gdb_test "record goto 27" ".*fun3 \\(\\) at record_goto.c:35.*"
+gdb_test "record goto 27" ".*fun3 \\(\\) at ${optional_filepath}record_goto.c:35.*"
 
 # check the back trace at that location
 gdb_test "backtrace" [multi_line \
-  "#0.*fun3.*at record_goto.c:35.*" \
-  "#1.*fun4.*at record_goto.c:43.*" \
-  "#2.*main.*at record_goto.c:49.*" \
+  "#0.*fun3.*at ${optional_filepath}record_goto.c:35.*" \
+  "#1.*fun4.*at ${optional_filepath}record_goto.c:43.*" \
+  "#2.*main.*at ${optional_filepath}record_goto.c:49.*" \
   "Backtrace stopped: not enough registers or memory available to unwind further" \
   ]
 
 # walk the backtrace
-gdb_test "up" ".*fun4.*at record_goto.c:43.*" "up to fun4"
-gdb_test "up" ".*main.*at record_goto.c:49.*" "up to main"
+gdb_test "up" ".*fun4.*at ${optional_filepath}record_goto.c:43.*" "up to fun4"
+gdb_test "up" ".*main.*at ${optional_filepath}record_goto.c:49.*" "up to main"
 
 # the function call history should start at the new location
 gdb_test "record function-call-history /ci -" [multi_line \
@@ -129,7 +131,7 @@ gdb_test "record instruction-history -" [multi_line \
   ] "instruction-history from 27 backwards"
 
 # test that we can go to the begin of the trace
-gdb_test "record goto begin" ".*main \\(\\) at record_goto.c:49.*"
+gdb_test "record goto begin" ".*main \\(\\) at ${optional_filepath}record_goto.c:49.*"
 
 # check that we're filling up the context correctly
 gdb_test "record function-call-history /ci -" [multi_line \
@@ -146,13 +148,13 @@ gdb_test "record instruction-history -" [multi_line \
   ] "instruction-history from begin backwards"
 
 # we should get the exact same history from the first instruction
-gdb_test "record goto 2" ".*fun4 \\(\\) at record_goto.c:40.*"
+gdb_test "record goto 2" ".*fun4 \\(\\) at ${optional_filepath}record_goto.c:40.*"
 
 # check that we're filling up the context correctly
 gdb_test "record function-call-history /ci -" [multi_line \
   "1\tmain\tinst 1,1" \
   "2\t  fun4\tinst 2,4" \
-  "3\t    fun1\tinst 5,8\r" \
+  "3\t    fun1\tinst 5,8" \
   ] "function-call-history from 2 backwards"
 
 # check that we're filling up the context correctly
@@ -163,7 +165,7 @@ gdb_test "record instruction-history -" [multi_line \
   ] "instruction-history from 2 backwards"
 
 # check that we can go to the end of the trace
-gdb_test "record goto end" ".*main \\(\\) at record_goto.c:50.*"
+gdb_test "record goto end" ".*main \\(\\) at ${optional_filepath}record_goto.c:50.*"
 
 # check that we're filling up the context correctly
 gdb_test "record function-call-history /ci" [multi_line \
@@ -176,22 +178,22 @@ gdb_test "record function-call-history /ci" [multi_line \
 gdb_test "record instruction-history" [multi_line \
   "38.*" \
   "39.*" \
-  "40.*\r" \
+  "40.*" \
   ] "instruction-history from end forwards"
 
 # we should get the exact same history from the second to last instruction
-gdb_test "record goto 39" ".*fun4 \\(\\) at record_goto.c:44.*"
+gdb_test "record goto 39" ".*fun4 \\(\\) at ${optional_filepath}record_goto.c:44.*"
 
 # check that we're filling up the context correctly
 gdb_test "record function-call-history /ci" [multi_line \
   "14\t      fun2\tinst 35,36" \
   "15\t    fun3\tinst 37,38" \
-  "16\t  fun4\tinst 39,40\r" \
+  "16\t  fun4\tinst 39,40" \
   ] "function-call-history from 39 forwards"
 
 # check that we're filling up the context correctly
 gdb_test "record instruction-history" [multi_line \
   "38.*" \
   "39.*" \
-  "40.*\r" \
+  "40.*" \
   ] "instruction-history from 39 forwards"

@@ -1,5 +1,5 @@
 /* BFD back-end for MIPS Extended-Coff files.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -423,19 +423,8 @@ mips_generic_reloc (bfd *abfd ATTRIBUTE_UNUSED,
    reloc.  This extension permits gcc to output the HI and LO relocs
    itself.  */
 
-struct mips_hi
-{
-  struct mips_hi *next;
-  bfd_byte *addr;
-  bfd_vma addend;
-};
-
-/* FIXME: This should not be a static variable.  */
-
-static struct mips_hi *mips_refhi_list;
-
 static bfd_reloc_status_type
-mips_refhi_reloc (bfd *abfd ATTRIBUTE_UNUSED,
+mips_refhi_reloc (bfd *abfd,
 		  arelent *reloc_entry,
 		  asymbol *symbol,
 		  void * data,
@@ -480,8 +469,8 @@ mips_refhi_reloc (bfd *abfd ATTRIBUTE_UNUSED,
     return bfd_reloc_outofrange;
   n->addr = (bfd_byte *) data + reloc_entry->address;
   n->addend = relocation;
-  n->next = mips_refhi_list;
-  mips_refhi_list = n;
+  n->next = ecoff_data (abfd)->mips_refhi_list;
+  ecoff_data (abfd)->mips_refhi_list = n;
 
   if (output_bfd != (bfd *) NULL)
     reloc_entry->address += input_section->output_offset;
@@ -502,11 +491,11 @@ mips_reflo_reloc (bfd *abfd,
 		  bfd *output_bfd,
 		  char **error_message)
 {
-  if (mips_refhi_list != NULL)
+  if (ecoff_data (abfd)->mips_refhi_list != NULL)
     {
       struct mips_hi *l;
 
-      l = mips_refhi_list;
+      l = ecoff_data (abfd)->mips_refhi_list;
       while (l != NULL)
 	{
 	  unsigned long insn;
@@ -549,7 +538,7 @@ mips_reflo_reloc (bfd *abfd,
 	  l = next;
 	}
 
-      mips_refhi_list = NULL;
+      ecoff_data (abfd)->mips_refhi_list = NULL;
     }
 
   /* Now do the REFLO reloc in the usual way.  */
@@ -1406,10 +1395,6 @@ static const struct ecoff_backend_data mips_ecoff_backend_data =
 /* Getting relocated section contents is generic.  */
 #define _bfd_ecoff_bfd_get_relocated_section_contents \
   bfd_generic_get_relocated_section_contents
-
-/* Handling file windows is generic.  */
-#define _bfd_ecoff_get_section_contents_in_window \
-  _bfd_generic_get_section_contents_in_window
 
 /* Relaxing sections is MIPS specific.  */
 #define _bfd_ecoff_bfd_relax_section bfd_generic_relax_section

@@ -1,6 +1,6 @@
 /* Filename-seen cache for the GNU debugger, GDB.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,6 @@
 #ifndef FILENAME_SEEN_CACHE_H
 #define FILENAME_SEEN_CACHE_H
 
-#include "defs.h"
 #include "gdbsupport/function-view.h"
 #include "gdbsupport/gdb-hashtab.h"
 

@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -14,14 +14,9 @@
 
 load_lib "trace-support.exp"
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
-if ![gdb_trace_common_supports_arch] {
-    unsupported "no trace-common.h support for arch"
-    return -1
-}
+require gdb_trace_common_supports_arch
 
 standard_testfile
 set libfile1 "pendshr1"
@@ -71,9 +66,7 @@ proc pending_tracepoint_resolved { trace_type } {
 	global lib_sl1
 
 	# Start with a fresh gdb.
-	gdb_exit
-	gdb_start
-	gdb_reinitialize_dir $srcdir/$subdir
+	clean_restart
 
 	gdb_test_multiple "$trace_type set_point1" "set pending tracepoint" {
 	    -re ".*Make \(fast |\)tracepoint pending.*y or \\\[n\\\]. $" {
@@ -161,7 +154,7 @@ proc pending_tracepoint_works { trace_type } {
 	gdb_test "continue" "Continuing.\r\n\r\n(Thread .* hit )?Breakpoint.*marker.*at.*$srcfile.*" \
 	    "continue to marker"
 
-	gdb_test "tstop" "\[\r\n\]+" "stop trace experiment"
+	gdb_test_no_output "tstop" "stop trace experiment"
 
 	gdb_test "tfind start" "#0 .*" "tfind test frame 0"
 	gdb_test "tfind" "Found trace frame 1, tracepoint 1.*" \
@@ -229,7 +222,7 @@ proc pending_tracepoint_resolved_during_trace { trace_type } \
 	}
     }
 
-    gdb_test "tstop" "\[\r\n\]+" "stop trace experiment"
+    gdb_test_no_output "tstop" "stop trace experiment"
 
     # tracepoint should be resolved.
     gdb_test "info trace" \
@@ -301,7 +294,7 @@ proc pending_tracepoint_installed_during_trace { trace_type } \
        }
     }
 
-    gdb_test "tstop" "\[\r\n\]+" "stop trace experiment"
+    gdb_test_no_output "tstop" "stop trace experiment"
 
     # tracepoint should be resolved.
     gdb_test "info trace" \
@@ -473,7 +466,7 @@ proc pending_tracepoint_with_action_resolved { trace_type } \
 
     }
 
-    gdb_test "tstop" "\[\r\n\]+" "stop trace experiment"
+    gdb_test_no_output "tstop" "stop trace experiment"
 
     # tracepoint should be resolved.
     gdb_test "info trace" \

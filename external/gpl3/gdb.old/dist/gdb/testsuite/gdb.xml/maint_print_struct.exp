@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <walfred.tedeschi@intel.com>
 #
@@ -17,19 +17,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if {[gdb_skip_xml_test]} {
-    unsupported "maint_print_struct.exp"
-    return -1
-}
+require allow_xml_test
 
 gdb_start
 
+set xml_file "$srcdir/$subdir/maint_print_struct.xml"
+
 # Required registers are not present so it is expected a warning.
 #
-gdb_test "set tdesc filename $srcdir/$subdir/maint_print_struct.xml" "
+gdb_test "set tdesc filename $xml_file" "
 warning:.*" "setting a new tdesc having only a structure"
 
-gdb_test "maint print c-tdesc" "
+gdb_test "maint print c-tdesc" \
+    "There is no target description to print\\."
+
+gdb_test "maint print c-tdesc $xml_file" "
 .*tdesc_create_reg \\(feature, \"bad_reg1\", \[0-9\]+, 1, NULL, 128, \"two_fielded\"\\);\r
 .*tdesc_create_reg \\(feature, \"bad_reg2\", \[0-9\]+, 1, NULL, 64, \"bitfield\"\\);\r
 .*" "printing tdesc with a structure and a bitfield"

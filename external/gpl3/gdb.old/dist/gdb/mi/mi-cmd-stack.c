@@ -1,5 +1,5 @@
 /* MI Command Set - stack commands.
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "event-top.h"
 #include "target.h"
 #include "frame.h"
 #include "value.h"
@@ -34,8 +34,8 @@
 #include "extension.h"
 #include <ctype.h>
 #include "mi-parse.h"
-#include "gdbsupport/gdb_optional.h"
-#include "safe-ctype.h"
+#include <optional>
+#include "gdbsupport/gdb-safe-ctype.h"
 #include "inferior.h"
 #include "observable.h"
 
@@ -44,14 +44,15 @@ enum what_to_list { locals, arguments, all };
 static void list_args_or_locals (const frame_print_options &fp_opts,
 				 enum what_to_list what,
 				 enum print_values values,
-				 frame_info_ptr fi,
+				 const frame_info_ptr &fi,
 				 int skip_unavailable);
 
 /* True if we want to allow Python-based frame filters.  */
 static int frame_filters = 0;
 
 void
-mi_cmd_enable_frame_filters (const char *command, char **argv, int argc)
+mi_cmd_enable_frame_filters (const char *command, const char *const *argv,
+			     int argc)
 {
   if (argc != 0)
     error (_("-enable-frame-filters: no arguments allowed"));
@@ -61,7 +62,7 @@ mi_cmd_enable_frame_filters (const char *command, char **argv, int argc)
 /* Like apply_ext_lang_frame_filter, but take a print_values */
 
 static enum ext_lang_bt_status
-mi_apply_ext_lang_frame_filter (frame_info_ptr frame,
+mi_apply_ext_lang_frame_filter (const frame_info_ptr &frame,
 				frame_filter_flags flags,
 				enum print_values print_values,
 				struct ui_out *out,
@@ -82,7 +83,8 @@ mi_apply_ext_lang_frame_filter (frame_info_ptr frame,
    displayed.  */
 
 void
-mi_cmd_stack_list_frames (const char *command, char **argv, int argc)
+mi_cmd_stack_list_frames (const char *command, const char *const *argv,
+			  int argc)
 {
   int frame_low;
   int frame_high;
@@ -105,7 +107,7 @@ mi_cmd_stack_list_frames (const char *command, char **argv, int argc)
      --no-frame-filters.  */
   while (1)
     {
-      char *oarg;
+      const char *oarg;
       int opt = mi_getopt ("-stack-list-frames", argc, argv,
 			   opts, &oind, &oarg);
       if (opt < 0)
@@ -176,18 +178,17 @@ mi_cmd_stack_list_frames (const char *command, char **argv, int argc)
 	   i++, fi = get_prev_frame (fi))
 	{
 	  QUIT;
-	  fi.prepare_reinflate ();
 	  /* Print the location and the address always, even for level 0.
 	     If args is 0, don't print the arguments.  */
 	  print_frame_info (user_frame_print_options,
 			    fi, 1, LOC_AND_ADDRESS, 0 /* args */, 0);
-	  fi.reinflate ();
 	}
     }
 }
 
 void
-mi_cmd_stack_info_depth (const char *command, char **argv, int argc)
+mi_cmd_stack_info_depth (const char *command, const char *const *argv,
+			 int argc)
 {
   int frame_high;
   int i;
@@ -216,7 +217,8 @@ mi_cmd_stack_info_depth (const char *command, char **argv, int argc)
    values.  */
 
 void
-mi_cmd_stack_list_locals (const char *command, char **argv, int argc)
+mi_cmd_stack_list_locals (const char *command, const char *const *argv,
+			  int argc)
 {
   frame_info_ptr frame;
   int raw_arg = 0;
@@ -241,7 +243,7 @@ mi_cmd_stack_list_locals (const char *command, char **argv, int argc)
 
       while (1)
 	{
-	  char *oarg;
+	  const char *oarg;
 	  /* Don't parse 'print-values' as an option.  */
 	  int opt = mi_getopt ("-stack-list-locals", argc - 1, argv,
 			       opts, &oind, &oarg);
@@ -292,7 +294,7 @@ mi_cmd_stack_list_locals (const char *command, char **argv, int argc)
    values.  */
 
 void
-mi_cmd_stack_list_args (const char *command, char **argv, int argc)
+mi_cmd_stack_list_args (const char *command, const char *const *argv, int argc)
 {
   int frame_low;
   int frame_high;
@@ -318,7 +320,7 @@ mi_cmd_stack_list_args (const char *command, char **argv, int argc)
 
   while (1)
     {
-      char *oarg;
+      const char *oarg;
       int opt = mi_getopt_allow_unknown ("-stack-list-args", argc, argv,
 					 opts, &oind, &oarg);
 
@@ -370,6 +372,8 @@ mi_cmd_stack_list_args (const char *command, char **argv, int argc)
   if (! raw_arg && frame_filters)
     {
       frame_filter_flags flags = PRINT_LEVEL | PRINT_ARGS;
+      if (user_frame_print_options.print_raw_frame_arguments)
+	flags |= PRINT_RAW_FRAME_ARGUMENTS;
       int py_frame_low = frame_low;
 
       /* We cannot pass -1 to frame_low, as that would signify a
@@ -408,7 +412,8 @@ mi_cmd_stack_list_args (const char *command, char **argv, int argc)
    parse_print_value for possible values.  */
 
 void
-mi_cmd_stack_list_variables (const char *command, char **argv, int argc)
+mi_cmd_stack_list_variables (const char *command, const char *const *argv,
+			     int argc)
 {
   frame_info_ptr frame;
   int raw_arg = 0;
@@ -433,7 +438,7 @@ mi_cmd_stack_list_variables (const char *command, char **argv, int argc)
 
       while (1)
 	{
-	  char *oarg;
+	  const char *oarg;
 	  /* Don't parse 'print-values' as an option.  */
 	  int opt = mi_getopt ("-stack-list-variables", argc - 1,
 			       argv, opts, &oind, &oarg);
@@ -463,6 +468,8 @@ mi_cmd_stack_list_variables (const char *command, char **argv, int argc)
    if (! raw_arg && frame_filters)
      {
        frame_filter_flags flags = PRINT_LEVEL | PRINT_ARGS | PRINT_LOCALS;
+       if (user_frame_print_options.print_raw_frame_arguments)
+	 flags |= PRINT_RAW_FRAME_ARGUMENTS;
 
        result = mi_apply_ext_lang_frame_filter (frame, flags,
 						print_value,
@@ -488,7 +495,8 @@ mi_cmd_stack_list_variables (const char *command, char **argv, int argc)
 
 static void
 list_arg_or_local (const struct frame_arg *arg, enum what_to_list what,
-		   enum print_values values, int skip_unavailable)
+		   enum print_values values, int skip_unavailable,
+		   const frame_print_options &fp_opts)
 {
   struct ui_out *uiout = current_uiout;
 
@@ -503,17 +511,16 @@ list_arg_or_local (const struct frame_arg *arg, enum what_to_list what,
 		  && (arg->val || arg->error)));
 
   if (skip_unavailable && arg->val != NULL
-      && (value_entirely_unavailable (arg->val)
+      && (arg->val->entirely_unavailable ()
 	  /* A scalar object that does not have all bits available is
 	     also considered unavailable, because all bits contribute
 	     to its representation.  */
-	  || (val_print_scalar_type_p (value_type (arg->val))
-	      && !value_bytes_available (arg->val,
-					 value_embedded_offset (arg->val),
-					 value_type (arg->val)->length ()))))
+	  || (val_print_scalar_type_p (arg->val->type ())
+	      && !arg->val->bytes_available (arg->val->embedded_offset (),
+					     arg->val->type ()->length ()))))
     return;
 
-  gdb::optional<ui_out_emit_tuple> tuple_emitter;
+  std::optional<ui_out_emit_tuple> tuple_emitter;
   if (values != PRINT_NO_VALUES || what == all)
     tuple_emitter.emplace (uiout, nullptr);
 
@@ -545,7 +552,9 @@ list_arg_or_local (const struct frame_arg *arg, enum what_to_list what,
 	      struct value_print_options opts;
 
 	      get_no_prettyformat_print_options (&opts);
-	      opts.deref_ref = 1;
+	      opts.deref_ref = true;
+	      if (arg->sym->is_argument ())
+		opts.raw = fp_opts.print_raw_frame_arguments;
 	      common_val_print (arg->val, &stb, 0, &opts,
 				language_def (arg->sym->language ()));
 	    }
@@ -568,12 +577,9 @@ list_arg_or_local (const struct frame_arg *arg, enum what_to_list what,
 static void
 list_args_or_locals (const frame_print_options &fp_opts,
 		     enum what_to_list what, enum print_values values,
-		     frame_info_ptr fi, int skip_unavailable)
+		     const frame_info_ptr &fi, int skip_unavailable)
 {
   const struct block *block;
-  struct symbol *sym;
-  struct block_iterator iter;
-  struct type *type;
   const char *name_of_result;
   struct ui_out *uiout = current_uiout;
 
@@ -598,7 +604,7 @@ list_args_or_locals (const frame_print_options &fp_opts,
 
   while (block != 0)
     {
-      ALL_BLOCK_SYMBOLS (block, iter, sym)
+      for (struct symbol *sym : block_iterator_range (block))
 	{
 	  int print_me = 0;
 
@@ -637,8 +643,9 @@ list_args_or_locals (const frame_print_options &fp_opts,
 	      struct frame_arg arg, entryarg;
 
 	      if (sym->is_argument ())
-		sym2 = lookup_symbol_search_name (sym->search_name (),
-						  block, VAR_DOMAIN).symbol;
+		sym2 = (lookup_symbol_search_name
+			(sym->search_name (),
+			 block, SEARCH_VAR_DOMAIN).symbol);
 	      else
 		sym2 = sym;
 	      gdb_assert (sym2 != NULL);
@@ -651,24 +658,24 @@ list_args_or_locals (const frame_print_options &fp_opts,
 	      switch (values)
 		{
 		case PRINT_SIMPLE_VALUES:
-		  type = check_typedef (sym2->type ());
-		  if (type->code () != TYPE_CODE_ARRAY
-		      && type->code () != TYPE_CODE_STRUCT
-		      && type->code () != TYPE_CODE_UNION)
-		    {
+		  if (!mi_simple_type_p (sym2->type ()))
+		    break;
+		  [[fallthrough]];
+
 		case PRINT_ALL_VALUES:
 		  if (sym->is_argument ())
 		    read_frame_arg (fp_opts, sym2, fi, &arg, &entryarg);
 		  else
 		    read_frame_local (sym2, fi, &arg);
-		    }
 		  break;
 		}
 
 	      if (arg.entry_kind != print_entry_values_only)
-		list_arg_or_local (&arg, what, values, skip_unavailable);
+		list_arg_or_local (&arg, what, values, skip_unavailable,
+				   fp_opts);
 	      if (entryarg.entry_kind != print_entry_values_no)
-		list_arg_or_local (&entryarg, what, values, skip_unavailable);
+		list_arg_or_local (&entryarg, what, values, skip_unavailable,
+				   fp_opts);
 	    }
 	}
 
@@ -754,7 +761,8 @@ parse_frame_specification (const char *frame_exp)
 /* Implement the -stack-select-frame MI command.  */
 
 void
-mi_cmd_stack_select_frame (const char *command, char **argv, int argc)
+mi_cmd_stack_select_frame (const char *command, const char *const *argv,
+			   int argc)
 {
   if (argc == 0 || argc > 1)
     error (_("-stack-select-frame: Usage: FRAME_SPEC"));
@@ -762,7 +770,8 @@ mi_cmd_stack_select_frame (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_stack_info_frame (const char *command, char **argv, int argc)
+mi_cmd_stack_info_frame (const char *command, const char *const *argv,
+			 int argc)
 {
   if (argc > 0)
     error (_("-stack-info-frame: No arguments allowed"));

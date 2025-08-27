@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,7 @@
 # This test exercises set/show disassembler-options results are preserved
 # across multiple set architecture calls.
 
-if {![istarget "powerpc*-*-*"]} {
-    verbose "Skipping PowerPC disassembler options."
-    return
-}
+require {istarget "powerpc*-*-*"}
 
 gdb_exit
 gdb_start

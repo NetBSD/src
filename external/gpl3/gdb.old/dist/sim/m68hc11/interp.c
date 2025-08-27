@@ -1,5 +1,5 @@
 /* interp.c -- Simulator for Motorola 68HC11/68HC12
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, the GNU debugger.
@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 /* This must come before any other includes.  */
 #include "defs.h"
 
+#include "bfd.h"
+
 #include "sim-main.h"
 #include "sim-assert.h"
 #include "sim-hw.h"
@@ -27,7 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "hw-tree.h"
 #include "hw-device.h"
 #include "hw-ports.h"
-#include "elf32-m68hc1x.h"
+#include "bfd/elf32-m68hc1x.h"
+
+#include "m68hc11-sim.h"
 
 #ifndef MONITOR_BASE
 # define MONITOR_BASE (0x0C000)
@@ -114,7 +118,7 @@ sim_get_info (SIM_DESC sd, char *cmd)
     }
 
   cpu_info (sd, cpu);
-  interrupts_info (sd, &cpu->cpu_interrupts);
+  interrupts_info (sd, &M68HC11_SIM_CPU (cpu)->cpu_interrupts);
 }
 
 
@@ -123,21 +127,23 @@ sim_board_reset (SIM_DESC sd)
 {
   struct hw *hw_cpu;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   const struct bfd_arch_info *arch;
   const char *cpu_type;
 
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
   arch = STATE_ARCHITECTURE (sd);
 
   /*  hw_cpu = sim_hw_parse (sd, "/"); */
   if (arch->arch == bfd_arch_m68hc11)
     {
-      cpu->cpu_type = CPU_M6811;
+      m68hc11_cpu->cpu_type = CPU_M6811;
       cpu_type = "/m68hc11";
     }
   else
     {
-      cpu->cpu_type = CPU_M6812;
+      m68hc11_cpu->cpu_type = CPU_M6812;
       cpu_type = "/m68hc12";
     }
   
@@ -159,17 +165,19 @@ sim_hw_configure (SIM_DESC sd)
   const struct bfd_arch_info *arch;
   struct hw *device_tree;
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   
   arch = STATE_ARCHITECTURE (sd);
   if (arch == 0)
     return 0;
 
   cpu = STATE_CPU (sd, 0);
-  cpu->cpu_configured_arch = arch;
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
+  m68hc11_cpu->cpu_configured_arch = arch;
   device_tree = sim_hw_parse (sd, "/");
   if (arch->arch == bfd_arch_m68hc11)
     {
-      cpu->cpu_interpretor = cpu_interp_m6811;
+      m68hc11_cpu->cpu_interpretor = cpu_interp_m6811;
       if (hw_tree_find_property (device_tree, "/m68hc11/reg") == 0)
 	{
 	  /* Allocate core managed memory */
@@ -181,16 +189,16 @@ sim_hw_configure (SIM_DESC sd)
 	  sim_do_commandf (sd, "memory region 0x000@%d,0x8000",
 			   M6811_RAM_LEVEL);
 	  sim_hw_parse (sd, "/m68hc11/reg 0x1000 0x03F");
-          if (cpu->bank_start < cpu->bank_end)
+          if (m68hc11_cpu->bank_start < m68hc11_cpu->bank_end)
             {
               sim_do_commandf (sd, "memory region 0x%x@%d,0x100000",
-                               cpu->bank_virtual, M6811_RAM_LEVEL);
+                               m68hc11_cpu->bank_virtual, M6811_RAM_LEVEL);
               sim_hw_parse (sd, "/m68hc11/use_bank 1");
             }
 	}
-      if (cpu->cpu_start_mode)
+      if (m68hc11_cpu->cpu_start_mode)
         {
-          sim_hw_parse (sd, "/m68hc11/mode %s", cpu->cpu_start_mode);
+          sim_hw_parse (sd, "/m68hc11/mode %s", m68hc11_cpu->cpu_start_mode);
         }
       if (hw_tree_find_property (device_tree, "/m68hc11/m68hc11sio/reg") == 0)
 	{
@@ -229,11 +237,11 @@ sim_hw_configure (SIM_DESC sd)
       sim_hw_parse (sd, "/m68hc11 > port-b cpu-write-port /m68hc11");
       sim_hw_parse (sd, "/m68hc11 > port-c cpu-write-port /m68hc11");
       sim_hw_parse (sd, "/m68hc11 > port-d cpu-write-port /m68hc11");
-      cpu->hw_cpu = sim_hw_parse (sd, "/m68hc11");
+      m68hc11_cpu->hw_cpu = sim_hw_parse (sd, "/m68hc11");
     }
   else
     {
-      cpu->cpu_interpretor = cpu_interp_m6812;
+      m68hc11_cpu->cpu_interpretor = cpu_interp_m6812;
       if (hw_tree_find_property (device_tree, "/m68hc12/reg") == 0)
 	{
 	  /* Allocate core external memory.  */
@@ -241,10 +249,10 @@ sim_hw_configure (SIM_DESC sd)
 			   0x8000, M6811_RAM_LEVEL, 0x8000);
 	  sim_do_commandf (sd, "memory region 0x000@%d,0x8000",
 			   M6811_RAM_LEVEL);
-          if (cpu->bank_start < cpu->bank_end)
+          if (m68hc11_cpu->bank_start < m68hc11_cpu->bank_end)
             {
               sim_do_commandf (sd, "memory region 0x%x@%d,0x100000",
-                               cpu->bank_virtual, M6811_RAM_LEVEL);
+                               m68hc11_cpu->bank_virtual, M6811_RAM_LEVEL);
               sim_hw_parse (sd, "/m68hc12/use_bank 1");
             }
 	  sim_hw_parse (sd, "/m68hc12/reg 0x0 0x3FF");
@@ -287,7 +295,7 @@ sim_hw_configure (SIM_DESC sd)
       sim_hw_parse (sd, "/m68hc12 > port-b cpu-write-port /m68hc12");
       sim_hw_parse (sd, "/m68hc12 > port-c cpu-write-port /m68hc12");
       sim_hw_parse (sd, "/m68hc12 > port-d cpu-write-port /m68hc12");
-      cpu->hw_cpu = sim_hw_parse (sd, "/m68hc12");
+      m68hc11_cpu->hw_cpu = sim_hw_parse (sd, "/m68hc12");
     }
   return 1;
 }
@@ -298,14 +306,16 @@ static int
 sim_get_bank_parameters (SIM_DESC sd)
 {
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   unsigned size;
   bfd_vma addr;
 
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
 
   addr = trace_sym_value (sd, BFD_M68HC11_BANK_START_NAME);
   if (addr != -1)
-    cpu->bank_start = addr;
+    m68hc11_cpu->bank_start = addr;
 
   size = trace_sym_value (sd, BFD_M68HC11_BANK_SIZE_NAME);
   if (size == -1)
@@ -313,12 +323,12 @@ sim_get_bank_parameters (SIM_DESC sd)
 
   addr = trace_sym_value (sd, BFD_M68HC11_BANK_VIRTUAL_NAME);
   if (addr != -1)
-    cpu->bank_virtual = addr;
+    m68hc11_cpu->bank_virtual = addr;
 
-  cpu->bank_end = cpu->bank_start + size;
-  cpu->bank_shift = 0;
+  m68hc11_cpu->bank_end = m68hc11_cpu->bank_start + size;
+  m68hc11_cpu->bank_shift = 0;
   for (; size > 1; size >>= 1)
-    cpu->bank_shift++;
+    m68hc11_cpu->bank_shift++;
 
   return 0;
 }
@@ -327,9 +337,11 @@ static int
 sim_prepare_for_program (SIM_DESC sd, bfd* abfd)
 {
   sim_cpu *cpu;
+  struct m68hc11_sim_cpu *m68hc11_cpu;
   int elf_flags = 0;
 
   cpu = STATE_CPU (sd, 0);
+  m68hc11_cpu = M68HC11_SIM_CPU (cpu);
 
   if (abfd != NULL)
     {
@@ -338,10 +350,10 @@ sim_prepare_for_program (SIM_DESC sd, bfd* abfd)
       if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
         elf_flags = elf_elfheader (abfd)->e_flags;
 
-      cpu->cpu_elf_start = bfd_get_start_address (abfd);
+      m68hc11_cpu->cpu_elf_start = bfd_get_start_address (abfd);
       /* See if any section sets the reset address */
-      cpu->cpu_use_elf_start = 1;
-      for (s = abfd->sections; s && cpu->cpu_use_elf_start; s = s->next) 
+      m68hc11_cpu->cpu_use_elf_start = 1;
+      for (s = abfd->sections; s && m68hc11_cpu->cpu_use_elf_start; s = s->next)
         {
           if (s->flags & SEC_LOAD)
             {
@@ -358,7 +370,7 @@ sim_prepare_for_program (SIM_DESC sd, bfd* abfd)
 		    lma = bfd_section_vma (s);
 
                   if (lma <= 0xFFFE && lma+size >= 0x10000)
-                    cpu->cpu_use_elf_start = 0;
+                    m68hc11_cpu->cpu_use_elf_start = 0;
                 }
             }
         }
@@ -410,7 +422,8 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback,
   current_target_byte_order = BFD_ENDIAN_BIG;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct m68hc11_sim_cpu))
+      != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -465,7 +478,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback,
   /* CPU specific initialization.  */
   for (i = 0; i < MAX_NR_PROCESSORS; ++i)
     {
-      SIM_CPU *cpu = STATE_CPU (sd, i);
+      cpu = STATE_CPU (sd, i);
 
       CPU_REG_FETCH (cpu) = m68hc11_reg_fetch;
       CPU_REG_STORE (cpu) = m68hc11_reg_store;
@@ -494,7 +507,7 @@ sim_engine_run (SIM_DESC sd,
       cpu_single_step (cpu);
 
       /* process any events */
-      if (sim_events_tickn (sd, cpu->cpu_current_cycle))
+      if (sim_events_tickn (sd, M68HC11_SIM_CPU (cpu)->cpu_current_cycle))
 	{
 	  sim_events_process (sd);
 	}
@@ -502,7 +515,7 @@ sim_engine_run (SIM_DESC sd,
 }
 
 void
-sim_info (SIM_DESC sd, int verbose)
+sim_info (SIM_DESC sd, bool verbose)
 {
   const char *cpu_type;
   const struct bfd_arch_info *arch;

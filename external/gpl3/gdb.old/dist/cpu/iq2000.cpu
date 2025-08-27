@@ -1059,7 +1059,7 @@
 (dni syscall "system call" (YIELD-INSN)
      "syscall"
      (+ OP_SPECIAL execode (f-func 12))
-     (c-call VOID "do_syscall")
+     (c-call VOID "do_syscall" pc)
      ())
 
 ; Macro instructions, common to iq10 & iq2000

@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2023 Free Software Foundation, Inc.
+# Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,16 +34,14 @@ proc do_test { detach-on-fork } {
     global srcfile testfile
     global gdb_prompt
 
-    set saved_gdbflags $GDBFLAGS
-    set GDBFLAGS [concat $GDBFLAGS " -ex \"set non-stop on\""]
+    save_vars { GDBFLAGS } {
+	set GDBFLAGS [concat $GDBFLAGS " -ex \"set non-stop on\""]
 
-    if {[prepare_for_testing "failed to prepare" \
-	     $testfile $srcfile {debug pthreads}] == -1} {
-	set GDBFLAGS $saved_gdbflags
-	return -1
+	if {[prepare_for_testing "failed to prepare" \
+		 $testfile $srcfile {debug pthreads}] == -1} {
+	    return -1
+	}
     }
-
-    set GDBFLAGS $saved_gdbflags
 
     if {![runto_main]} {
 	return 0

@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,7 @@
 
 # Test the "print symbol-loading" option.
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
 standard_testfile print-symbol-loading-main.c
 set libfile print-symbol-loading-lib
@@ -51,9 +49,7 @@ if {![gdb_gcore_cmd $gcorefile "save a corefile"]} {
 proc test_load_core { print_symbol_loading } {
     global binfile binfile_lib gcorefile srcdir subdir
     with_test_prefix "core ${print_symbol_loading}" {
-	gdb_exit
-	gdb_start
-	gdb_reinitialize_dir $srcdir/$subdir
+	clean_restart
 	gdb_test_no_output "set print symbol-loading $print_symbol_loading"
 	if { ${print_symbol_loading} != "off" } {
 	    gdb_test "file $binfile" "Reading symbols from.*" "file"
@@ -105,6 +101,10 @@ proc test_load_shlib { print_symbol_loading } {
 	}
 	gdb_test_no_output "set print symbol-loading $print_symbol_loading"
 	set test_name "load shared-lib"
+	set libc_re \
+	    [multi_line \
+		 "Symbols already loaded for\[^\r\n\]*\\/libc\\.\[^\r\n\]*(" \
+		 "Symbols already loaded for\[^\r\n\]*\\/libpthread\\.\[^\r\n\]*)?"]
 	switch ${print_symbol_loading} {
 	    "off" {
 		set cmd "sharedlibrary .*"
@@ -113,7 +113,7 @@ proc test_load_shlib { print_symbol_loading } {
 		    -re "^$cmd_regex\r\n$gdb_prompt $" {
 			pass $test_name
 		    }
-		    -re "^$cmd_regex\r\nSymbols already loaded for\[^\r\n\]*\\/libc\\.\[^\r\n\]*\r\n$gdb_prompt $" {
+		    -re "^$cmd_regex\r\n$libc_re\r\n$gdb_prompt $" {
 			pass $test_name
 		    }
 		}

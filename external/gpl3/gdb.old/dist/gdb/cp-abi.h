@@ -3,7 +3,7 @@
 
    Contributed by Daniel Berlin <dberlin@redhat.com>
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -123,12 +123,12 @@ extern struct value *value_virtual_fn_field (struct value **valuep,
      - If *USING_ENC is zero, then *TOP is the offset from the start
        of the complete object to the start of the embedded subobject
        VALUE represents.  In other words, the enclosing object starts
-       at VALUE_ADDR (VALUE) + VALUE_OFFSET (VALUE) +
-       value_embedded_offset (VALUE) + *TOP
+       at VALUE_ADDR (VALUE) + VALUE->offset () +
+       VALUE->embedded_offset () + *TOP
      - If *USING_ENC is non-zero, then *TOP is the offset from the
        address of the complete object to the enclosing object stored
        in VALUE.  In other words, the enclosing object starts at
-       VALUE_ADDR (VALUE) + VALUE_OFFSET (VALUE) + *TOP.
+       VALUE_ADDR (VALUE) + VALUE->offset () + *TOP.
      If VALUE's type and enclosing type are the same, then these two
      cases are equivalent.
 
@@ -204,7 +204,7 @@ extern std::string cplus_typename_from_type_info (struct value *value);
    address of the routine we are thunking to and continue to there
    instead.  */
 
-CORE_ADDR cplus_skip_trampoline (frame_info_ptr frame,
+CORE_ADDR cplus_skip_trampoline (const frame_info_ptr &frame,
 				 CORE_ADDR stop_pc);
 
 /* Return a struct that provides pass-by-reference information
@@ -247,7 +247,7 @@ struct cp_abi_ops
   struct type *(*get_typeid_type) (struct gdbarch *gdbarch);
   struct type *(*get_type_from_type_info) (struct value *value);
   std::string (*get_typename_from_type_info) (struct value *value);
-  CORE_ADDR (*skip_trampoline) (frame_info_ptr, CORE_ADDR);
+  CORE_ADDR (*skip_trampoline) (const frame_info_ptr &, CORE_ADDR);
   struct language_pass_by_ref_info (*pass_by_reference) (struct type *type);
 };
 

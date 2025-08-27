@@ -1,6 +1,6 @@
 /*  This file is part of GDB.
 
-    Copyright 2004-2023 Free Software Foundation, Inc.
+    Copyright 2004-2024 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 #include "sim_callbacks.h"
 #include "sim/callback.h"
 #include "sim/sim.h"
-#include "gdb/sim-ppc.h"
+#include "sim/sim-ppc.h"
 
 /* Return the register name for the supplied SPR if any, or NULL if
    none.  */

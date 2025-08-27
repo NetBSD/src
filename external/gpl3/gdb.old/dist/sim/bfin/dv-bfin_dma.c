@@ -1,6 +1,6 @@
 /* Blackfin Direct Memory Access (DMA) Channel model.
 
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -173,6 +173,7 @@ bfin_dma_process_desc (struct hw *me, struct bfin_dma *dma)
 	  dma->ndph = _flows[1];
 	  --ndsize;
 	  ++flows;
+	  ATTRIBUTE_FALLTHROUGH;
 	case DMAFLOW_SMALL:
 	  dma->ndpl = _flows[0];
 	  --ndsize;

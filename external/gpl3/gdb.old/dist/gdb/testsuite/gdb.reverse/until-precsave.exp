@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@
 # 'advance' in precord logfile.
 
 # This test suitable only for process record-replay
-if ![supports_process_record] {
-    return
-}
+require supports_process_record
 
 standard_testfile until-reverse.c ur1.c
 set precsave [standard_output_file until.precsave]
@@ -38,10 +36,8 @@ set bp_location21 [gdb_get_line_number "set breakpoint 21 here"]
 
 runto_main
 
-if [supports_process_record] {
-    # Activate process record/replay
-    gdb_test_no_output "record" "turn on process record"
-}
+# Activate process record/replay
+gdb_test_no_output "record" "turn on process record"
 
 set end_of_main [gdb_get_line_number "set breakpoint 10a here" ]
 gdb_test "break $end_of_main" \

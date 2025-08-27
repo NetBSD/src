@@ -4,7 +4,6 @@ aarch64-asm.h
 aarch64-dis-2.c
 aarch64-dis.c
 aarch64-dis.h
-aarch64-gen.c
 aarch64-opc-2.c
 aarch64-opc.c
 aarch64-opc.h
@@ -17,13 +16,8 @@ arc-opc.c
 arm-dis.c
 avr-dis.c
 bfin-dis.c
-bpf-asm.c
-bpf-desc.c
-bpf-desc.h
 bpf-dis.c
-bpf-ibld.c
 bpf-opc.c
-bpf-opc.h
 cgen-asm.c
 cgen-bitset.c
 cgen-dis.c
@@ -72,19 +66,9 @@ ft32-opc.c
 h8300-dis.c
 hppa-dis.c
 i386-dis.c
-i386-gen.c
-i386-opc.c
 i386-opc.h
-ia64-asmtab.c
 ia64-asmtab.h
 ia64-dis.c
-ia64-gen.c
-ia64-opc-a.c
-ia64-opc-b.c
-ia64-opc-d.c
-ia64-opc-f.c
-ia64-opc-i.c
-ia64-opc-m.c
 ia64-opc.c
 ia64-opc.h
 ip2k-asm.c
@@ -101,6 +85,8 @@ iq2000-dis.c
 iq2000-ibld.c
 iq2000-opc.c
 iq2000-opc.h
+kvx-dis.c
+kvx-opc.c
 lm32-asm.c
 lm32-desc.c
 lm32-desc.h
@@ -192,7 +178,6 @@ rx-dis.c
 s12z-dis.c
 s12z-opc.c
 s390-dis.c
-s390-mkopc.c
 s390-opc.c
 score-dis.c
 score-opc.h
@@ -232,4 +217,3 @@ xtensa-dis.c
 z80-dis.c
 z8k-dis.c
 z8k-opc.h
-z8kgen.c
