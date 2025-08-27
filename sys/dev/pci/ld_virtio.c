@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.44 2025/07/05 11:41:13 mlelstv Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.45 2025/08/27 04:41:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.44 2025/07/05 11:41:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.45 2025/08/27 04:41:24 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -584,7 +584,7 @@ done:
 		if (id_data[0] == '\0')
 			r = ENOENT;
 		else
-			sc->sc_typename = kmem_strndup(id_data, sizeof(id_data), KM_NOSLEEP);
+			sc->sc_typename = kmem_strndup(id_data, id_len, KM_NOSLEEP);
 	}
 
 	kmem_free(id_data, id_len);
