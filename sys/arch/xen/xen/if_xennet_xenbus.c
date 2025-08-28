@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.131 2025/08/27 17:58:09 buhrow Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.132 2025/08/28 05:59:16 mrg Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.131 2025/08/27 17:58:09 buhrow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.132 2025/08/28 05:59:16 mrg Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -226,7 +226,7 @@ struct xennet_xenbus_softc {
 
 #define IF_XNFRX_LOWAT_MAX 128 /* Maximum minum of xnfrx buffers */
 
-static int if_xnfrx_lowat = IF_XNFRX_LOWAT;
+static int if_xnfrx_lowat = XENNET_XNFRX_LOWAT;
 
 static pool_cache_t if_xennetrxbuf_cache;
 static int if_xennetrxbuf_cache_inited = 0;
