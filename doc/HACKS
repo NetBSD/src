@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.253 2025/05/06 13:03:23 rin Exp $
+# $NetBSD: HACKS,v 1.254 2025/08/28 15:49:09 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1026,4 +1026,15 @@ descr
 	cacheline-aligned objects (typically >=64-byte).  To work
 	around this, allocate n + 63 bytes and pick whichever pointer
 	in that interval is aligned (PR lib/58349).
+kcah
+
+hack	ia64: work around bogus compiler warning
+cdate	Thu Aug 28 11:46:54 EDT 2025
+who	christos
+file	src/external/bsd/acpica/bin/iasl/Makefile : 1.28
+descr
+	after a pointer cast from with a member of size 4 to another
+	struct with a member of size 8, the compiler thinks still that
+	the size is 4 in the strncmp expression, but it also thinks
+	it is 8 everywhere else.
 kcah
