@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1809 2025/08/27 16:08:11 christos Exp $
+# $NetBSD: mi,v 1.1810 2025/08/28 17:25:53 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1248,6 +1248,7 @@
 ./usr/share/man/cat4/g760a.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gcscaudio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/gem.0			man-sys-catman		.cat
+./usr/share/man/cat4/genet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/genfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gentbi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/geodeide.0			man-sys-catman		.cat
@@ -4834,6 +4835,7 @@
 ./usr/share/man/man4/g760a.4			man-sys-man		.man
 ./usr/share/man/man4/gcscaudio.4		man-sys-man		.man
 ./usr/share/man/man4/gem.4			man-sys-man		.man
+./usr/share/man/man4/genet.4			man-sys-man		.man
 ./usr/share/man/man4/genfb.4			man-sys-man		.man
 ./usr/share/man/man4/gentbi.4			man-sys-man		.man
 ./usr/share/man/man4/geodeide.4			man-sys-man		.man

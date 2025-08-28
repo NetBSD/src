@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.30 2025/07/26 14:18:13 martin Exp $
+# $NetBSD: mi,v 1.31 2025/08/28 17:25:53 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1129,6 +1129,7 @@
 ./usr/share/man/html4/g760a.html		man-sys-htmlman		html
 ./usr/share/man/html4/gcscaudio.html		man-sys-htmlman		html
 ./usr/share/man/html4/gem.html			man-sys-htmlman		html
+./usr/share/man/html4/genet.html		man-sys-htmlman		html
 ./usr/share/man/html4/genfb.html		man-sys-htmlman		html
 ./usr/share/man/html4/gentbi.html		man-sys-htmlman		html
 ./usr/share/man/html4/geodeide.html		man-sys-htmlman		html
