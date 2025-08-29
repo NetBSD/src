@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.47 2025/08/26 10:37:35 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.48 2025/08/29 15:22:06 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1012,4 +1012,17 @@ share/man/man7/hier.7				1.145
 
 	hier(7): add entry for /var/shm.
 	[kim, ticket #1152]
+
+distrib/sets/lists/man/mi			1.1810 (adapted)
+share/man/man4/Makefile				1.748
+share/man/man4/genet.4				1.1,1.2
+
+	genet(4): add man page.
+	[wiz, ticket #1153]
+
+sys/net/nd.c					1.8
+tests/net/arp/t_arp.sh				1.49
+
+	nd: PR 59596: fix the number of requests for address resolution.
+	[ozaki-r, ticket #1154]
 
