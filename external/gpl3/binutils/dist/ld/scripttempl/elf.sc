@@ -157,6 +157,8 @@
 #   then set foo equal to bar, otherwise set foo equal to baz.
 # ------------------------------------------------------------------------
 
+test -z "$TEXT_START_SYMBOLS" && TEXT_START_SYMBOLS="PROVIDE_HIDDEN (__eprol = .);"
+test -z "$ENTRY" && ENTRY=_start
 if test -n "$NOP"; then
   FILL="=$NOP"
 else
