@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.24 2025/07/22 04:45:13 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.25 2025/08/29 09:51:08 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.24 2025/07/22 04:45:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.25 2025/08/29 09:51:08 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ struct gffb_softc {
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
 	struct vcons_data vd;
-	int sc_mode;
+	int sc_mode, sc_arch;
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
@@ -118,7 +118,7 @@ static void	gffb_restore_palette(struct gffb_softc *);
 static int 	gffb_putpalreg(struct gffb_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 
-static void	gffb_init(struct gffb_softc *);
+ void	gffb_init(struct gffb_softc *);
 
 static void	gffb_make_room(struct gffb_softc *, int);
 static void	gffb_sync(struct gffb_softc *);
@@ -135,8 +135,8 @@ static void	gffb_erasecols(void *, int, int, int, long);
 static void	gffb_copyrows(void *, int, int, int);
 static void	gffb_eraserows(void *, int, int, long);
 
-#define GFFB_READ_4(o) bus_space_read_4(sc->sc_memt, sc->sc_regh, (o))
-#define GFFB_WRITE_4(o, v) bus_space_write_4(sc->sc_memt, sc->sc_regh, (o), (v))
+#define GFFB_READ_4(o) bus_space_read_stream_4(sc->sc_memt, sc->sc_regh, (o))
+#define GFFB_WRITE_4(o, v) bus_space_write_stream_4(sc->sc_memt, sc->sc_regh, (o), (v))
 
 struct wsdisplay_accessops gffb_accessops = {
 	gffb_ioctl,
@@ -159,7 +159,7 @@ gffb_match(device_t parent, cfdata_t match, void *aux)
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_NVIDIA)
 		return 0;
 
-	/* only card tested on so far - likely need a list */
+	/* only cards tested on so far - likely needs a list */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NVIDIA_GEFORCE2MX)
 		return 100;
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NVIDIA_GEFORCE_6800U)
@@ -195,10 +195,27 @@ gffb_attach(device_t parent, device_t self, void *aux)
 
 	/* first, see what kind of chip we've got */
 	reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_ID_REG);
-	sc->sc_accel = PCI_PRODUCT(reg) == PCI_PRODUCT_NVIDIA_GEFORCE2MX;
+	switch (PCI_PRODUCT(reg)) {
+		case PCI_PRODUCT_NVIDIA_GEFORCE2MX:
+			sc->sc_accel = true;
+			sc->sc_arch = 10;
+			break;
+		case PCI_PRODUCT_NVIDIA_GEFORCE_6800U:
+			sc->sc_accel = false;
+			sc->sc_arch = 40;
+			break;
+		case PCI_PRODUCT_NVIDIA_GF_FXGO5200:
+		case PCI_PRODUCT_NVIDIA_GF_FX5200U:
+			sc->sc_accel = true;
+			sc->sc_arch = 30;
+			break;
+		default:
+			sc->sc_accel = false;
+			sc->sc_arch = 0;
+	}
 
 	pci_aprint_devinfo(pa, NULL);
-
+	DPRINTF("%s accel %d arch %d\n", __func__, sc->sc_accel, sc->sc_arch);
 	/* fill in parameters from properties */
 	dict = device_properties(self);
 	if (!prop_dictionary_get_uint32(dict, "width", &sc->sc_width)) {
@@ -233,7 +250,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	if (prop_dictionary_get_uint32(dict, "address", &addr)) {
 		sc->sc_fboffset = addr & 0x000fffff;	/* XXX */
 	}
-
+	DPRINTF("%s: fboffset %8x\n", __func__, sc->sc_fboffset);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
@@ -241,6 +258,16 @@ gffb_attach(device_t parent, device_t self, void *aux)
 		aprint_error("%s: failed to map registers.\n",
 		    device_xname(sc->sc_dev));
 	}
+	/*
+	 * first thing we need to make sure register access uses host byte order
+	 * so we can recycle as much of xf86-video-nv as possible
+	 */
+#if BYTE_ORDER == BIG_ENDIAN
+	uint32_t mreg = GFFB_READ_4(GFFB_PMC + 4);
+	if ((mreg & 0x01000001) == 0) {
+		GFFB_WRITE_4(GFFB_PMC + 4, 0x01000001);
+	}
+#endif
 	sc->sc_vramsize = GFFB_READ_4(GFFB_VRAM) & 0xfff00000;
 
 	/* don't map more VRAM than we actually have */
@@ -296,6 +323,10 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	/* init engine here */
 	gffb_init(sc);
 
+#ifdef GFFB_DEBUG
+	printf("put: %08x\n", GFFB_READ_4(GFFB_FIFO_PUT));
+	printf("get: %08x\n", GFFB_READ_4(GFFB_FIFO_GET));
+#endif
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &gffb_accessops);
 	sc->vd.init_screen = gffb_init_screen;
@@ -382,29 +413,6 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
-
-#ifdef GFFB_DEBUG
-	for (i = 0; i < 40; i++) {
-		for (j = 0; j < 40; j++) {
-			gffb_rectfill(sc, i * 20, j * 20, 20, 20,
-			    (i + j ) & 1 ? 0xe0e0e0e0 : 0x03030303);
-		}
-	}
-
-	gffb_rectfill(sc, 0, 800, 1280, 224, 0x92929292);
-	gffb_bitblt(sc, 0, 10, 10, 810, 200, 20, 0xcc);
-	gffb_bitblt(sc, 0, 10, 10, 840, 300, 20, 0xcc);
-	gffb_bitblt(sc, 0, 10, 10, 870, 400, 20, 0xcc);
-	gffb_bitblt(sc, 0, 10, 10, 900, 500, 20, 0xcc);
-	gffb_bitblt(sc, 0, 10, 10, 930, 600, 20, 0xcc);
-	gffb_bitblt(sc, 0, 10, 610, 810, 200, 20, 0xcc);
-	gffb_bitblt(sc, 0, 10, 610, 840, 300, 20, 0xcc);
-	gffb_bitblt(sc, 0, 10, 610, 870, 400, 20, 0xcc);
-	gffb_bitblt(sc, 0, 10, 610, 900, 500, 20, 0xcc);
-	gffb_bitblt(sc, 0, 10, 610, 930, 600, 20, 0xcc);
-	gffb_sync(sc);
-	printf("put %x current %x\n", sc->sc_put, sc->sc_current);
-#endif
 }
 
 static int
@@ -685,12 +693,13 @@ gffb_putpalreg(struct gffb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 static void
 gffb_dma_kickoff(struct gffb_softc *sc)
 {
-
+	volatile uint32_t junk;
 	if (sc->sc_current != sc->sc_put) {
 		sc->sc_put = sc->sc_current;
 		bus_space_barrier(sc->sc_memt, sc->sc_fbh, 0, 0x1000000,
 		    BUS_SPACE_BARRIER_WRITE);
-		(void)*sc->sc_fbaddr;
+		junk = *sc->sc_fbaddr;
+		__USE(junk);
 		GFFB_WRITE_4(GFFB_FIFO_PUT, sc->sc_put);
 		bus_space_barrier(sc->sc_memt, sc->sc_regh, GFFB_FIFO_PUT, 4,
 		    BUS_SPACE_BARRIER_WRITE);
@@ -773,7 +782,10 @@ gffb_sync(struct gffb_softc *sc)
 	while ((GFFB_READ_4(GFFB_FIFO_GET) != sc->sc_put) && (bail > 0)) {
 		bail--;
 	}
-	if (bail == 0) goto crap;
+	if (bail == 0) {
+		printf("FIFO isn't moving\n");
+		goto crap;
+	}
 
 	/* ... and for the engine to go idle */
 	bail = 100000000;
@@ -784,6 +796,7 @@ gffb_sync(struct gffb_softc *sc)
 	return;
 crap:
 	/* if we time out fill the buffer with NOPs and cross fingers */
+	DPRINTF("GET %08x\n", GFFB_READ_4(GFFB_FIFO_GET));
 	sc->sc_put = 0;
 	sc->sc_current = 0;
 	for (i = 0; i < 0x2000; i += 4)
@@ -791,21 +804,22 @@ crap:
 	aprint_error_dev(sc->sc_dev, "DMA lockup\n");
 }
 
-static void
+void
 gffb_init(struct gffb_softc *sc)
 {
 	int i;
 	uint32_t foo;
 
 	if (!sc->sc_accel) return;
+	DPRINTF("%s offset %08x %08x\n", __func__,
+	    GFFB_READ_4(GFFB_CRTC0 + GFFB_DISPLAYSTART),
+	    GFFB_READ_4(GFFB_CRTC1 + GFFB_DISPLAYSTART));
 
 	sc->sc_fboffset = 0x2000;
 
 	/* init display start */
 	GFFB_WRITE_4(GFFB_CRTC0 + GFFB_DISPLAYSTART, sc->sc_fboffset);
 	GFFB_WRITE_4(GFFB_CRTC1 + GFFB_DISPLAYSTART, sc->sc_fboffset);
-	GFFB_WRITE_4(GFFB_PDIO0 + GFFB_PEL_MASK, 0xff);
-	GFFB_WRITE_4(GFFB_PDIO1 + GFFB_PEL_MASK, 0xff);
 
 	/* DMA stuff. A whole lot of magic number voodoo from xf86-video-nv */
 	GFFB_WRITE_4(GFFB_PMC + 0x140, 0);
@@ -815,7 +829,6 @@ gffb_init(struct gffb_softc *sc)
 	GFFB_WRITE_4(GFFB_PTIMER + 0x840, 3);
 	GFFB_WRITE_4(GFFB_PTIMER + 0x500, 0);
 	GFFB_WRITE_4(GFFB_PTIMER + 0x400, 0xffffffff);
-
 	for (i = 0; i < 8; i++) {
 		GFFB_WRITE_4(GFFB_PFB + 0x0240 + (i * 0x10), 0);
 		GFFB_WRITE_4(GFFB_PFB + 0x0244 + (i * 0x10),
@@ -842,7 +855,7 @@ gffb_init(struct gffb_softc *sc)
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2004, sc->sc_vramsize - 1);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2008, 0x00000002);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x200c, 0x00000002);
-	GFFB_WRITE_4(GFFB_PRAMIN + 0x2010, 0x01008042);	/* different for nv40 */
+	GFFB_WRITE_4(GFFB_PRAMIN + 0x2010, 0x01008062);	/* nv10+ */
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2014, 0);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2018, 0x12001200);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x201c, 0);
@@ -863,7 +876,7 @@ gffb_init(struct gffb_softc *sc)
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2058, 0);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x205c, 0);
 	/* XXX 0x0100805f if !WaitVSynvPossible */
-	GFFB_WRITE_4(GFFB_PRAMIN + 0x2060, 0x0100809f);
+	GFFB_WRITE_4(GFFB_PRAMIN + 0x2060, 0x0100805f);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2064, 0);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2068, 0x12001200);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x206c, 0);
@@ -878,22 +891,99 @@ gffb_init(struct gffb_softc *sc)
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2090, 0x00003002);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2094, 0x00007fff);
 	/* command buffer start with some flag in the lower bits */
-	GFFB_WRITE_4(GFFB_PRAMIN + 0x2098, 0x00000002);
+	GFFB_WRITE_4(GFFB_PRAMIN + 0x2098, sc->sc_vramsize | 0x00000002);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x209c, 0x00000002);
 #if BYTE_ORDER == BIG_ENDIAN
-	GFFB_WRITE_4(GFFB_PRAMIN + 0x2010, 0x01088042);
+	GFFB_WRITE_4(GFFB_PRAMIN + 0x2010, 0x01088062);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2020, 0x01088043);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2030, 0x01088044);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2040, 0x01088019);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2050, 0x0108a05c);
-	GFFB_WRITE_4(GFFB_PRAMIN + 0x2060, 0x0108809f);
+	GFFB_WRITE_4(GFFB_PRAMIN + 0x2060, 0x0108805f);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2070, 0x0108804a);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2080, 0x01098077);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2034, 0x00000001);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2074, 0x00000001);
 #endif
-
 	/* PGRAPH setup */
+	GFFB_WRITE_4(GFFB_PGRAPH + 0x0080, 0xFFFFFFFF);
+	GFFB_WRITE_4(GFFB_PGRAPH + 0x0080, 0x00000000);
+
+	GFFB_WRITE_4(GFFB_PGRAPH + 0x0140, 0x00000000);
+	GFFB_WRITE_4(GFFB_PGRAPH + 0x0100, 0xFFFFFFFF);
+	GFFB_WRITE_4(GFFB_PGRAPH + 0x0144, 0x10010100);
+	GFFB_WRITE_4(GFFB_PGRAPH + 0x0714, 0xFFFFFFFF);
+	GFFB_WRITE_4(GFFB_PGRAPH + 0x0720, 0x00000001);
+	/*
+	 * xf86_video_nv does this in two writes,
+	 * not sure if they can be combined
+	 */
+	foo = GFFB_READ_4(GFFB_PGRAPH + 0x0710);
+	foo &= 0x0007ff00;
+	foo |= 0x00020100;
+	GFFB_WRITE_4(GFFB_PGRAPH + 0x0710, foo);
+
+	/* NV_ARCH_10 */
+	if(sc->sc_arch == 10) {
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0084, 0x00118700);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0088, 0x24E00810);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x008C, 0x55DE0030);
+
+		for(i = 0; i < 128; i += 4) {
+			GFFB_WRITE_4(GFFB_PGRAPH + 0x0B00 + i,
+			    GFFB_READ_4(GFFB_PFB + 0x0240 + i));
+		}
+
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x640, 0);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x644, 0);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x684, sc->sc_vramsize - 1);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x688, sc->sc_vramsize - 1);
+
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0810, 0x00000000);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0608, 0xFFFFFFFF);
+	} else {
+		/* nv30 */
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0084, 0x40108700);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0890, 0x00140000);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x008C, 0xf00e0431);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0090, 0x00008000);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0610, 0xf04b1f36);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0B80, 0x1002d888);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0B88, 0x62ff007f);
+
+		for (i = 0; i < 128; i += 4) {
+			GFFB_WRITE_4(GFFB_PGRAPH + 0x0900 + i,
+			    GFFB_READ_4(GFFB_PFB + 0x0240 + i));
+  			GFFB_WRITE_4(GFFB_PGRAPH + 0x6900 + i,
+			    GFFB_READ_4(GFFB_PFB + 0x0240 + i));
+		}
+		
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x09A4,
+			GFFB_READ_4(GFFB_PFB + 0x0200));
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x09A8,
+			GFFB_READ_4(GFFB_PFB + 0x0204));
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0750, 0x00EA0000);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0754,
+			GFFB_READ_4(GFFB_PFB + 0x0200));
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0750, 0x00EA0004);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0754,
+			GFFB_READ_4(GFFB_PFB + 0x0204));
+
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0820, 0);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0824, 0);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0864, sc->sc_vramsize - 1);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0868, sc->sc_vramsize - 1);
+
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0B20, 0x00000000);
+		GFFB_WRITE_4(GFFB_PGRAPH + 0x0B04, 0xFFFFFFFF);
+	}
+
+	/* PFIFO setup */
+	GFFB_WRITE_4(GFFB_PGRAPH + 0x053C, 0);
+	GFFB_WRITE_4(GFFB_PGRAPH + 0x0540, 0);
+	GFFB_WRITE_4(GFFB_PGRAPH + 0x0544, 0x00007FFF);
+	GFFB_WRITE_4(GFFB_PGRAPH + 0x0548, 0x00007FFF);
+
 	GFFB_WRITE_4(GFFB_PFIFO + 0x0500, 0);
 	GFFB_WRITE_4(GFFB_PFIFO + 0x0504, 0x00000001);
 	GFFB_WRITE_4(GFFB_PFIFO + 0x1200, 0);
@@ -924,49 +1014,18 @@ gffb_init(struct gffb_softc *sc)
 	GFFB_WRITE_4(GFFB_PFIFO + 0x1250, 0x00000001);
 	GFFB_WRITE_4(GFFB_PFIFO + 0x1254, 0x00000001);
 	GFFB_WRITE_4(GFFB_PFIFO + 0x0500, 0x00000001);
+	
+	GFFB_WRITE_4(GFFB_PMC + 0x8704, 1);
+	GFFB_WRITE_4(GFFB_PMC + 0x8140, 0);
+	GFFB_WRITE_4(GFFB_PMC + 0x8920, 0);
+	GFFB_WRITE_4(GFFB_PMC + 0x8924, 0);
+	GFFB_WRITE_4(GFFB_PMC + 0x8908, sc->sc_vramsize - 1);
+	GFFB_WRITE_4(GFFB_PMC + 0x890C, sc->sc_vramsize - 1);
+	GFFB_WRITE_4(GFFB_PMC + 0x1588, 0);
 
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0080, 0xFFFFFFFF);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0080, 0x00000000);
-
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0140, 0x00000000);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0100, 0xFFFFFFFF);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0144, 0x10010100);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0714, 0xFFFFFFFF);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0720, 0x00000001);
-	/*
-	 * xf86_video_nv does this in two writes,
-	 * not sure if they can be combined
-	 */
-	foo = GFFB_READ_4(GFFB_PGRAPH + 0x0710);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0710, foo & 0x0007ff00);
-	foo = GFFB_READ_4(GFFB_PGRAPH + 0x0710);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0710, foo | 0x00020100);
-
-	/* NV_ARCH_10 */
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0084, 0x00118700);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0088, 0x24E00810);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x008C, 0x55DE0030);
-
-	for(i = 0; i < 128; i += 4) {
-		GFFB_WRITE_4(GFFB_PGRAPH + 0x0B00 + i,
-		    GFFB_READ_4(GFFB_PFB + 0x0240 + i));
-	}
-
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x640, 0);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x644, 0);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x684, sc->sc_vramsize - 1);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x688, sc->sc_vramsize - 1);
-
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0810, 0x00000000);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0608, 0xFFFFFFFF);
-
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x053C, 0);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0540, 0);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0544, 0x00007FFF);
-	GFFB_WRITE_4(GFFB_PGRAPH + 0x0548, 0x00007FFF);
-
-	GFFB_WRITE_4(GFFB_CMDSTART, 0x00000002);
+	__asm("eieio; sync;");
 	GFFB_WRITE_4(GFFB_FIFO_GET, 0);
+	GFFB_WRITE_4(GFFB_CMDSTART, 0x00000002);
 	sc->sc_put = 0;
 	sc->sc_current = 0;
 	sc->sc_free = 0x2000;
@@ -995,8 +1054,8 @@ gffb_init(struct gffb_softc *sc)
 	gffb_dmastart(sc, SURFACE_FORMAT, 4);
 	gffb_dmanext(sc, SURFACE_FORMAT_DEPTH8);
 	gffb_dmanext(sc, sc->sc_stride | (sc->sc_stride << 16));
-	gffb_dmanext(sc, 0x2000);	/* src offset */
-	gffb_dmanext(sc, 0x2000);	/* dst offset */
+	gffb_dmanext(sc, sc->sc_fboffset);	/* src offset */
+	gffb_dmanext(sc, sc->sc_fboffset);	/* dst offset */
 
 	gffb_dmastart(sc, RECT_FORMAT, 1);
 	gffb_dmanext(sc, RECT_FORMAT_DEPTH8);
@@ -1013,11 +1072,16 @@ gffb_init(struct gffb_softc *sc)
 	gffb_dmastart(sc, ROP_SET, 1);
 	gffb_dmanext(sc, 0xcc);
 	sc->sc_rop = 0xcc;
-
-	gffb_dma_kickoff(sc);
-	gffb_sync(sc);
 	DPRINTF("put %x current %x\n", sc->sc_put, sc->sc_current);
 
+	gffb_dma_kickoff(sc);
+	DPRINTF("put %x current %x\n", sc->sc_put, sc->sc_current);
+#ifdef GFFB_DEBUG
+	printf("put: %08x\n", GFFB_READ_4(GFFB_FIFO_PUT));
+	printf("get: %08x\n", GFFB_READ_4(GFFB_FIFO_GET));
+#endif
+	gffb_sync(sc);
+	DPRINTF("put %x current %x\n", sc->sc_put, sc->sc_current);
 }
 
 static void
