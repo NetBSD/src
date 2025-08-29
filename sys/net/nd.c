@@ -1,4 +1,4 @@
-/*	$NetBSD: nd.c,v 1.7 2024/05/30 23:00:39 riastradh Exp $	*/
+/*	$NetBSD: nd.c,v 1.7.4.1 2025/08/29 15:19:39 martin Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.7 2024/05/30 23:00:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.7.4.1 2025/08/29 15:19:39 martin Exp $");
 
 #include <sys/callout.h>
 #include <sys/mbuf.h>
@@ -85,9 +85,11 @@ nd_timer(void *arg)
 		break;
 
 	case ND_LLINFO_INCOMPLETE:
-		send_ns = true;
-		if (ln->ln_asked++ < nd->nd_mmaxtries)
+		if (ln->ln_asked < nd->nd_mmaxtries) {
+			ln->ln_asked++;
+			send_ns = true;
 			break;
+		}
 
 		if (ln->ln_hold) {
 			struct mbuf *m0, *mnxt;
@@ -116,10 +118,8 @@ nd_timer(void *arg)
 		break;
 
 	case ND_LLINFO_REACHABLE:
-		if (!ND_IS_LLINFO_PERMANENT(ln)) {
+		if (!ND_IS_LLINFO_PERMANENT(ln))
 			ln->ln_state = ND_LLINFO_STALE;
-			nd_set_timer(ln, ND_TIMER_GC);
-		}
 		break;
 
 	case ND_LLINFO_PURGE: /* FALLTHROUGH */
@@ -137,10 +137,8 @@ nd_timer(void *arg)
 			ln->ln_state = ND_LLINFO_PROBE;
 			send_ns = true;
 			daddrp = &taddr;
-		} else {
+		} else
 			ln->ln_state = ND_LLINFO_STALE;
-			nd_set_timer(ln, ND_TIMER_GC);
-		}
 		break;
 
 	case ND_LLINFO_PROBE:
@@ -180,14 +178,18 @@ nd_timer(void *arg)
 		break;
 	}
 
+	if (ln != NULL) {
+		int type = ND_TIMER_RETRANS;
+		if (ln->ln_state == ND_LLINFO_WAITDELETE)
+			type = ND_TIMER_RETRANS_BACKOFF;
+		else if (ln->ln_state == ND_LLINFO_STALE)
+			type = ND_TIMER_GC;
+		nd_set_timer(ln, type);
+	}
 	if (send_ns) {
 		uint8_t lladdr[255], *lladdrp;
 		union l3addr src, *psrc;
 
-		if (ln->ln_state == ND_LLINFO_WAITDELETE)
-			nd_set_timer(ln, ND_TIMER_RETRANS_BACKOFF);
-		else
-			nd_set_timer(ln, ND_TIMER_RETRANS);
 		if (ln->ln_state > ND_LLINFO_INCOMPLETE &&
 		    ln->la_flags & LLE_VALID)
 		{
