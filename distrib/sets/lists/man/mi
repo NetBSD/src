@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1757.2.14 2024/10/09 13:25:11 martin Exp $
+# $NetBSD: mi,v 1.1757.2.15 2025/08/29 15:17:37 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1175,6 +1175,7 @@
 ./usr/share/man/cat4/g760a.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gcscaudio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/gem.0			man-sys-catman		.cat
+./usr/share/man/cat4/genet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/genfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gentbi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/geodeide.0			man-sys-catman		.cat
@@ -4589,6 +4590,7 @@
 ./usr/share/man/html4/g760a.html		man-sys-htmlman		html
 ./usr/share/man/html4/gcscaudio.html		man-sys-htmlman		html
 ./usr/share/man/html4/gem.html			man-sys-htmlman		html
+./usr/share/man/html4/genet.html		man-sys-htmlman		html
 ./usr/share/man/html4/genfb.html		man-sys-htmlman		html
 ./usr/share/man/html4/gentbi.html		man-sys-htmlman		html
 ./usr/share/man/html4/geodeide.html		man-sys-htmlman		html
@@ -7777,6 +7779,7 @@
 ./usr/share/man/man4/g760a.4			man-sys-man		.man
 ./usr/share/man/man4/gcscaudio.4		man-sys-man		.man
 ./usr/share/man/man4/gem.4			man-sys-man		.man
+./usr/share/man/man4/genet.4			man-sys-man		.man
 ./usr/share/man/man4/genfb.4			man-sys-man		.man
 ./usr/share/man/man4/gentbi.4			man-sys-man		.man
 ./usr/share/man/man4/geodeide.4			man-sys-man		.man
