@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.25 2025/08/29 09:51:08 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.26 2025/08/30 07:25:10 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.25 2025/08/29 09:51:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.26 2025/08/30 07:25:10 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,6 +137,7 @@ static void	gffb_eraserows(void *, int, int, long);
 
 #define GFFB_READ_4(o) bus_space_read_stream_4(sc->sc_memt, sc->sc_regh, (o))
 #define GFFB_WRITE_4(o, v) bus_space_write_stream_4(sc->sc_memt, sc->sc_regh, (o), (v))
+#define GFFB_WRITE_1(o, v) bus_space_write_1(sc->sc_memt, sc->sc_regh, (o), (v))
 
 struct wsdisplay_accessops gffb_accessops = {
 	gffb_ioctl,
@@ -667,24 +668,16 @@ gffb_putpalreg(struct gffb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
     uint8_t b)
 {
 	/* port 0 */
-	bus_space_write_1(sc->sc_memt, sc->sc_regh,
-	    GFFB_PDIO0 + GFFB_PEL_IW, idx);
-	bus_space_write_1(sc->sc_memt, sc->sc_regh,
-	    GFFB_PDIO0 + GFFB_PEL_D, r);
-	bus_space_write_1(sc->sc_memt, sc->sc_regh,
-	    GFFB_PDIO0 + GFFB_PEL_D, g);
-	bus_space_write_1(sc->sc_memt, sc->sc_regh,
-	    GFFB_PDIO0 + GFFB_PEL_D, b);
+	GFFB_WRITE_1(GFFB_PDIO0 + GFFB_PEL_IW, idx);
+	GFFB_WRITE_1(GFFB_PDIO0 + GFFB_PEL_D, r);
+	GFFB_WRITE_1(GFFB_PDIO0 + GFFB_PEL_D, g);
+	GFFB_WRITE_1(GFFB_PDIO0 + GFFB_PEL_D, b);
 
 	/* port 1 */
-	bus_space_write_1(sc->sc_memt, sc->sc_regh,
-	    GFFB_PDIO1 + GFFB_PEL_IW, idx);
-	bus_space_write_1(sc->sc_memt, sc->sc_regh,
-	    GFFB_PDIO1 + GFFB_PEL_D, r);
-	bus_space_write_1(sc->sc_memt, sc->sc_regh,
-	    GFFB_PDIO1 + GFFB_PEL_D, g);
-	bus_space_write_1(sc->sc_memt, sc->sc_regh,
-	    GFFB_PDIO1 + GFFB_PEL_D, b);
+	GFFB_WRITE_1(GFFB_PDIO1 + GFFB_PEL_IW, idx);
+	GFFB_WRITE_1(GFFB_PDIO1 + GFFB_PEL_D, r);
+	GFFB_WRITE_1(GFFB_PDIO1 + GFFB_PEL_D, g);
+	GFFB_WRITE_1(GFFB_PDIO1 + GFFB_PEL_D, b);
 
 	return 0;
 }
@@ -820,6 +813,10 @@ gffb_init(struct gffb_softc *sc)
 	/* init display start */
 	GFFB_WRITE_4(GFFB_CRTC0 + GFFB_DISPLAYSTART, sc->sc_fboffset);
 	GFFB_WRITE_4(GFFB_CRTC1 + GFFB_DISPLAYSTART, sc->sc_fboffset);
+
+	/* make sure we do 8bit per channel */
+	GFFB_WRITE_1(GFFB_PDIO0 + GFFB_PEL_MASK, 0xff);
+	GFFB_WRITE_1(GFFB_PDIO1 + GFFB_PEL_MASK, 0xff);
 
 	/* DMA stuff. A whole lot of magic number voodoo from xf86-video-nv */
 	GFFB_WRITE_4(GFFB_PMC + 0x140, 0);
