@@ -62,6 +62,7 @@
  * 
  * Implementation notes
  * io_read/io_write currently use fallback implementations
+ * lock ordering: aiosp -> aiost -> file_group -> job -> lk -> wg
  */
 
 #include <sys/cdefs.h>
@@ -510,7 +511,6 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 	wg = kmem_zalloc(sizeof(*wg), KM_SLEEP);
 	aiowaitgroup_init(wg);
 
-	mutex_enter(&wg->mtx);
 	for (int i = 0; i < nent; i++) {
 		if (aiocbp_list[i] == NULL) {
 			continue;
@@ -527,14 +527,18 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 		monitor++;
 
 		if (job->completed) {
+			mutex_enter(&wg->mtx);
 			wg->completed++;
 			wg->total++;
+			mutex_exit(&wg->mtx);
 			mutex_exit(&job->mtx);
 		} else {
 			aiowaitgroup_join(wg, &job->lk);
 			mutex_exit(&job->mtx);
 		}
 	}
+
+	mutex_enter(&wg->mtx);
 
 	if (!monitor) {
 		goto done;
@@ -1453,8 +1457,10 @@ int
 aiowaitgroup_wait(struct aiowaitgroup *wg, int timo)
 {
 	int error;
-	
-	error = cv_timedwait_sig(&wg->done_cv, &wg->mtx, timo);
+
+	error = (timo == 0) ?
+		cv_wait_sig(&wg->done_cv, &wg->mtx) :
+		cv_timedwait_sig(&wg->done_cv, &wg->mtx, timo);
 	if (error) {
 		if (error == EWOULDBLOCK) {
 			error = SET_ERROR(EAGAIN);
@@ -1474,7 +1480,7 @@ aiowaitgrouplk_init(struct aiowaitgrouplk *lk)
 	mutex_init(&lk->mtx, MUTEX_DEFAULT, IPL_NONE);
 	lk->n = 0;
 	lk->s = 2;
-	lk->wgs = kmem_alloc(sizeof(*lk->wgs) * lk->s, KM_SLEEP);
+	lk->wgs = kmem_zalloc(lk->s * sizeof(*lk->wgs), KM_SLEEP);
 }
 
 /*
@@ -1523,15 +1529,16 @@ aiowaitgrouplk_flush(struct aiowaitgrouplk *lk)
 	mutex_enter(&lk->mtx);
 	for (int i = 0; i < lk->n; i++) {
 		struct aiowaitgroup *wg = lk->wgs[i];
+
+		lk->wgs[i] = NULL; 
 		if (wg == NULL) {
 			continue;
 		}
 
 		mutex_enter(&wg->mtx);
-
 		if (wg->active) {
 			wg->completed++;
-			cv_signal(&wg->done_cv);
+			cv_broadcast(&wg->done_cv);
 		}
 
 		if (--wg->refcnt == 0) {
@@ -1572,10 +1579,12 @@ aiowaitgroup_join(struct aiowaitgroup *wg, struct aiowaitgrouplk *lk)
 		lk->s = new_size;
 		lk->wgs = new_wgs;
 	}
-	lk->wgs[lk->n] = wg;
-	lk->n++;
+	lk->wgs[lk->n++] = wg;
+
+	mutex_enter(&wg->mtx);
 	wg->total++;
 	wg->refcnt++;
+	mutex_exit(&wg->mtx);
 	mutex_exit(&lk->mtx);
 }
 
