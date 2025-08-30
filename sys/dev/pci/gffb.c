@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.26 2025/08/30 07:25:10 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.27 2025/08/30 09:29:14 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.26 2025/08/30 07:25:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.27 2025/08/30 09:29:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ struct gffb_softc {
 	uint32_t sc_fboffset;
 
 	int sc_width, sc_height, sc_depth, sc_stride;
-	int sc_locked, sc_accel;
+	int sc_locked, sc_accel, sc_mobile, sc_video;
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
@@ -117,8 +117,9 @@ static int 	gffb_getcmap(struct gffb_softc *, struct wsdisplay_cmap *);
 static void	gffb_restore_palette(struct gffb_softc *);
 static int 	gffb_putpalreg(struct gffb_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
+static void	gffb_setvideo(struct gffb_softc *, int);
 
- void	gffb_init(struct gffb_softc *);
+static void	gffb_init(struct gffb_softc *);
 
 static void	gffb_make_room(struct gffb_softc *, int);
 static void	gffb_sync(struct gffb_softc *);
@@ -136,6 +137,7 @@ static void	gffb_copyrows(void *, int, int, int);
 static void	gffb_eraserows(void *, int, int, long);
 
 #define GFFB_READ_4(o) bus_space_read_stream_4(sc->sc_memt, sc->sc_regh, (o))
+#define GFFB_READ_1(o) bus_space_read_1(sc->sc_memt, sc->sc_regh, (o))
 #define GFFB_WRITE_4(o, v) bus_space_write_stream_4(sc->sc_memt, sc->sc_regh, (o), (v))
 #define GFFB_WRITE_1(o, v) bus_space_write_1(sc->sc_memt, sc->sc_regh, (o), (v))
 
@@ -149,6 +151,30 @@ struct wsdisplay_accessops gffb_accessops = {
 	NULL,	/* pollc */
 	NULL	/* scroll */
 };
+
+static void
+gffb_write_crtc(struct gffb_softc *sc, int head, uint8_t reg, uint8_t val)
+{
+	if (head == 0) {
+		GFFB_WRITE_1(GFFB_PCIO0 + 0x3d4, reg);
+		GFFB_WRITE_1(GFFB_PCIO0 + 0x3d5, val);
+	} else {
+		GFFB_WRITE_1(GFFB_PCIO1 + 0x3d4, reg);
+		GFFB_WRITE_1(GFFB_PCIO1 + 0x3d5, val);
+	}
+}
+
+static uint8_t
+gffb_read_crtc(struct gffb_softc *sc, int head, uint8_t reg)
+{
+	if (head == 0) {
+		GFFB_WRITE_1(GFFB_PCIO0 + 0x3d4, reg);
+		return GFFB_READ_1(GFFB_PCIO0 + 0x3d5);
+	} else {
+		GFFB_WRITE_1(GFFB_PCIO1 + 0x3d4, reg);
+		return GFFB_READ_1(GFFB_PCIO1 + 0x3d5);
+	}
+}
 
 static int
 gffb_match(device_t parent, cfdata_t match, void *aux)
@@ -194,6 +220,9 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_dev = self;
 
+	sc->sc_mobile = 0;
+	sc->sc_video = 0;
+
 	/* first, see what kind of chip we've got */
 	reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_ID_REG);
 	switch (PCI_PRODUCT(reg)) {
@@ -206,6 +235,8 @@ gffb_attach(device_t parent, device_t self, void *aux)
 			sc->sc_arch = 40;
 			break;
 		case PCI_PRODUCT_NVIDIA_GF_FXGO5200:
+			sc->sc_mobile = 1;
+			/* FALLTHROUGH */
 		case PCI_PRODUCT_NVIDIA_GF_FX5200U:
 			sc->sc_accel = true;
 			sc->sc_arch = 30;
@@ -323,6 +354,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 
 	/* init engine here */
 	gffb_init(sc);
+	gffb_setvideo(sc, 1);
 
 #ifdef GFFB_DEBUG
 	printf("put: %08x\n", GFFB_READ_4(GFFB_FIFO_PUT));
@@ -423,6 +455,7 @@ gffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	struct gffb_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
+	struct wsdisplay_param  *param;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -494,6 +527,53 @@ gffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		struct wsdisplayio_fbinfo *fbi = data;
 		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 	}
+
+	case WSDISPLAYIO_GETPARAM:
+		param = (struct wsdisplay_param *)data;
+		if (sc->sc_mobile == 0)
+			return EPASSTHROUGH;
+		switch (param->param) {
+#if 0
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			param->min = 0;
+			param->max = 255;
+			param->curval = sc->sc_bl_level;
+			return 0;
+#endif
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			param->min = 0;
+			param->max = 1;
+			param->curval = sc->sc_video;
+			return 0;
+		}
+		return EPASSTHROUGH;
+
+	case WSDISPLAYIO_SETPARAM:
+		param = (struct wsdisplay_param *)data;
+		if (sc->sc_mobile == 0)
+			return EPASSTHROUGH;
+		switch (param->param) {
+#if 0
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			gffb_set_backlight(sc, param->curval);
+			return 0;
+#endif
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			gffb_setvideo(sc, param->curval);
+			return 0;
+		}
+		return EPASSTHROUGH;
+
+	case WSDISPLAYIO_GVIDEO:
+		if (sc->sc_video)
+			*(int *)data = WSDISPLAYIO_VIDEO_ON;
+		else
+			*(int *)data = WSDISPLAYIO_VIDEO_OFF;
+		return 0;
+
+	case WSDISPLAYIO_SVIDEO:
+		gffb_setvideo(sc, *(int *)data == WSDISPLAYIO_VIDEO_ON);
+		return 0;
 	}
 	return EPASSTHROUGH;
 }
@@ -682,6 +762,38 @@ gffb_putpalreg(struct gffb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 	return 0;
 }
 
+static void
+gffb_setvideo(struct gffb_softc *sc, int on)
+{
+	uint8_t reg0, reg1;
+
+	if (sc->sc_video == on)
+		return;
+
+	reg0 = gffb_read_crtc(sc, 0, 0x1a) & 0x3f;
+	reg1 = gffb_read_crtc(sc, 1, 0x1a) & 0x3f;
+
+	if (!on) {
+		reg0 |= 0xc0;
+		reg1 |= 0xc0;
+	}
+
+	gffb_write_crtc(sc, 0, 0x1a, reg0);
+	gffb_write_crtc(sc, 1, 0x1a, reg1);
+
+	if(sc->sc_mobile) {
+		uint32_t tmp_pmc, tmp_pcrt;
+		tmp_pmc = GFFB_READ_4(GFFB_PMC + 0x10F0) & 0x7FFFFFFF;
+		tmp_pcrt = GFFB_READ_4(GFFB_CRTC0 + 0x081C) & 0xFFFFFFFC;
+		if (on) {
+			tmp_pmc |= (1 << 31);
+			tmp_pcrt |= 0x1;
+		}
+		GFFB_WRITE_4(GFFB_PMC + 0x10F0, tmp_pmc);
+		GFFB_WRITE_4(GFFB_CRTC0 + 0x081C, tmp_pcrt);
+	}
+	sc->sc_video = on;
+}
 
 static void
 gffb_dma_kickoff(struct gffb_softc *sc)
