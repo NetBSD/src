@@ -3491,7 +3491,7 @@ vax_cons_fix_new (fragS *frag, int where, unsigned int nbytes, expressionS *exp,
       break;
     }
 
-  fix_new_exp (frag, where, nbytes, exp, 0, r);
+  fix_new_exp (frag, where, nbytes, exp, pcrel, r);
 }
 
 const char *
