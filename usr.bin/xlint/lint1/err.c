@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.274 2025/07/08 17:43:54 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.275 2025/08/31 20:43:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.274 2025/07/08 17:43:54 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.275 2025/08/31 20:43:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -441,6 +441,7 @@ static const char *const msgs[] = {
 	"passing '%s' as argument %d to '%s' discards '%s'",		// 383
 	"function definition for '%s' with identifier list is obsolete in C23", // 384
 	"do-while macro '%.*s' ends with semicolon",			// 385
+	"conversion '%.*s' does not mix with '%c'",			// 386
 };
 
 static bool is_suppressed[sizeof(msgs) / sizeof(msgs[0])];
