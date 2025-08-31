@@ -1,4 +1,4 @@
-/*	$NetBSD: pcfiic_ebus.c,v 1.7 2020/10/23 15:18:10 jdc Exp $	*/
+/*	$NetBSD: pcfiic_ebus.c,v 1.8 2025/08/31 18:13:59 thorpej Exp $	*/
 /*	$OpenBSD: pcfiic_ebus.c,v 1.13 2008/06/08 03:07:40 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.7 2020/10/23 15:18:10 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.8 2025/08/31 18:13:59 thorpej Exp $");
 
 /*
  * Device specific driver for the EBus i2c devices found on some sun4u
@@ -159,6 +159,8 @@ pcfiic_ebus_attach(device_t parent, device_t self, void *aux)
 
 	if (esc->esc_ih == NULL)
 		sc->sc_poll = 1;
+
+	printf("\n");
 
 	pcfiic_attach(sc, (i2c_addr_t)(addr >> 1), clock, swapregs);
 }
