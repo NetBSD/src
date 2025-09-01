@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.412 2025/07/23 21:31:27 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.413 2025/09/01 16:21:56 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -897,6 +897,7 @@ KVM	kernel virtual machine
 KVM	kernel virtual memory
 KVM	keyboard, video, [and] mouse
 L2CAP	link layer control and adaptation protocol
+L4S	Low Latency, Low Loss and Scalable Throughput (RFC9330)
 LAG	link aggregation group
 LAMP	Linux Apache MySQL {Perl,PHP,Python}
 LAN	local area network
