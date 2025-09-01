@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.rquotad.8,v 1.9 2003/12/10 12:06:25 agc Exp $
+.\"	$NetBSD: rpc.rquotad.8,v 1.10 2025/09/01 01:21:06 riastradh Exp $
 .\"
 .\" Copyright (c) 1994 Theo de Raadt
 .\" All rights reserved.
@@ -47,5 +47,14 @@ is normally invoked by
 .Nm
 uses an RPC protocol defined in
 .Pa /usr/include/rpcsvc/rquota.x .
+.Pp
+.Sy WARNING :
+.Nm
+has no access control and may leak information about any local file on
+the host, whether or not exported, to other hosts on the network.
 .Sh SEE ALSO
 .Xr quota 1
+.Sh BUGS
+Missing access control.
+See:
+.Lk "https://gnats.NetBSD.org/45005" "PR bin/45005: rpc.rquotad does no access checks"
