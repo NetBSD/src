@@ -138,6 +138,7 @@ struct aiost_file_group {
 	RB_ENTRY(aiost_file_group) tree;
 	struct file *fp;
 	struct aiost *aiost;
+	kmutex_t mtx;
 	TAILQ_HEAD(, aio_job) queue;
 	size_t queue_size;
 };

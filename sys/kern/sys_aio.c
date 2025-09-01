@@ -62,7 +62,6 @@
  * 
  * Implementation notes
  * io_read/io_write currently use fallback implementations
- * lock ordering: aiosp -> aiost -> file_group -> job -> lk -> wg
  */
 
 #include <sys/cdefs.h>
@@ -262,19 +261,19 @@ aio_procinit(struct proc *p)
 	int error;
 
 	/* Allocate and initialize AIO structure */
-	aio = kmem_zalloc(sizeof(struct aioproc), KM_SLEEP);
+	aio = kmem_zalloc(sizeof(*aio), KM_SLEEP);
 
 	/* Initialize the service pool */
 	error = aiosp_initialize(&aio->aiosp);
 	if (error) {
-		kmem_free(aio, sizeof(struct aioproc));
+		kmem_free(aio, sizeof(*aio));
 		return error;
 	}
 
 	error = aiocbp_init(&aio->aiosp, 256);
 	if (error) {
 		aiosp_destroy(&aio->aiosp, NULL);
-		kmem_free(aio, sizeof(struct aioproc));
+		kmem_free(aio, sizeof(*aio));
 		return error;
 	}
 
@@ -302,22 +301,23 @@ aio_exit(struct proc *p, void *cookie)
 {
 	struct aioproc *aio;
 
-	if (cookie != NULL)
+	if (cookie != NULL) {
 		aio = cookie;
-	else if ((aio = p->p_aio) == NULL)
+	} else if ((aio = p->p_aio) == NULL) {
 		return;
+	}
 
 	aiocbp_destroy(&aio->aiosp);
 	aiosp_destroy(&aio->aiosp, NULL);
 	mutex_destroy(&aio->aio_mtx);
-	kmem_free(aio, sizeof(struct aioproc));
+	kmem_free(aio, sizeof(*aio));
 }
 
 /*
  * Destroy job structure
  */
 static void
-aio_job_fini (struct aio_job *job)
+aio_job_fini(struct aio_job *job)
 {
 	mutex_enter(&job->mtx);
 	aiowaitgrouplk_fini(&job->lk);
@@ -329,7 +329,7 @@ aio_job_fini (struct aio_job *job)
  * Mark job as complete
  */
 static void
-aio_job_mark_complete (struct aio_job *job)
+aio_job_mark_complete(struct aio_job *job)
 {
 	mutex_enter(&job->mtx);
 	job->completed = true;
@@ -346,7 +346,7 @@ aio_job_mark_complete (struct aio_job *job)
  * Acquire a file reference for async ops
  */
 static void
-aio_file_hold (struct file *fp)
+aio_file_hold(struct file *fp)
 {
 	mutex_enter(&fp->f_lock);
 	fp->f_count++;
@@ -357,7 +357,7 @@ aio_file_hold (struct file *fp)
  * Release a file reference for async ops
  */
 static void
-aio_file_release (struct file *fp)
+aio_file_release(struct file *fp)
 {
 	mutex_enter(&fp->f_lock);
 	fp->f_count--;
@@ -367,6 +367,36 @@ aio_file_release (struct file *fp)
 		return;
 	}
 	mutex_exit(&fp->f_lock);
+}
+
+/*
+ * Release a job back to the pool
+ */
+static inline void
+aio_job_release(struct aio_job *job)
+{
+	if (job->fp) {
+		aio_file_release(job->fp);
+		job->fp = NULL;
+	}
+
+	aio_job_fini(job);
+	pool_put(&aio_job_pool, job);
+	atomic_dec_uint(&aio_jobs_count);
+}
+
+/*
+ * Cancel a job pending on aiosp->jobs
+ */
+static inline void
+aio_job_cancel(struct aiosp *aiosp, struct aio_job *job)
+{
+	mutex_enter(&job->mtx);
+	TAILQ_REMOVE(&aiosp->jobs, job, list);
+	aiosp->jobs_pending--;
+	job->on_queue = false;
+	job->aiocbp._errno = ECANCELED;
+	mutex_exit(&job->mtx);
 }
 
 /*
@@ -380,6 +410,7 @@ aiosp_fg_teardown_locked(struct aiosp *sp, struct aiost_file_group *fg)
 	}
 
 	RB_REMOVE(aiost_file_tree, sp->fg_root, fg);
+	mutex_destroy(&fg->mtx);
 	kmem_free(fg, sizeof(*fg));
 }
 
@@ -431,6 +462,7 @@ aiosp_distribute_jobs(struct aiosp *sp)
 				fg = kmem_zalloc(sizeof(*fg), KM_SLEEP);
 				fg->fp = fp;
 				fg->queue_size = 0;
+				mutex_init(&fg->mtx, MUTEX_DEFAULT, IPL_NONE);
 				TAILQ_INIT(&fg->queue);
 
 				error = aiosp_worker_extract(sp, &aiost);
@@ -462,8 +494,10 @@ aiosp_distribute_jobs(struct aiosp *sp)
 		job->on_queue = false;
 
 		if (fg) {
+			mutex_enter(&fg->mtx);
 			TAILQ_INSERT_TAIL(&fg->queue, job, list);
 			fg->queue_size++;
+			mutex_exit(&fg->mtx);
 		}
 
 		mutex_enter(&aiost->mtx);
@@ -490,22 +524,16 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 	struct timespec *ts, int flags)
 {
 	struct aio_job *job;
-	struct aiowaitgroup *wg = NULL;
+	struct aiowaitgroup *wg;
 	int error = 0, timo = 0;
-	size_t target = 0, monitor = 0;
+	size_t joined = 0;
 
 	if (ts) {
-		timo = mstohz((ts->tv_sec * 1000) + (ts->tv_nsec / 1000000));
-		if (timo == 0 && ts->tv_sec == 0 && ts->tv_nsec > 0) {
-			timo = 1;
-		}
-
+		timo = tstohz(ts);
 		if (timo <= 0) {
 			error = SET_ERROR(EAGAIN);
 			return error;
 		}
-	} else {
-		timo = 0;
 	}
 
 	wg = kmem_zalloc(sizeof(*wg), KM_SLEEP);
@@ -516,15 +544,13 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 			continue;
 		}
 
-		if ((error =
-			aiocbp_lookup_job_locked(aiosp, aiocbp_list[i], &job)) != 0) {
+		error = aiocbp_lookup_job_locked(aiosp, aiocbp_list[i], &job);
+		if (error) {
 			goto done;
 		}
 		if (job == NULL) {
 			continue;
 		}
-
-		monitor++;
 
 		if (job->completed) {
 			mutex_enter(&wg->mtx);
@@ -532,34 +558,31 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 			wg->total++;
 			mutex_exit(&wg->mtx);
 			mutex_exit(&job->mtx);
-		} else {
-			aiowaitgroup_join(wg, &job->lk);
-			mutex_exit(&job->mtx);
+			continue;
 		}
+
+		aiowaitgroup_join(wg, &job->lk);
+		joined++;
+		mutex_exit(&job->mtx);
 	}
 
-	mutex_enter(&wg->mtx);
-
-	if (!monitor) {
+	if (!joined) {
 		goto done;
 	}
 
-	if (flags & AIOSP_SUSPEND_ANY) {
-		target = 1;
-	} else if (flags & AIOSP_SUSPEND_ALL) {
-		target = monitor;
-	}
-
-	for (; wg->completed < target; ) {
+	mutex_enter(&wg->mtx);
+	const size_t target = (flags & AIOSP_SUSPEND_ANY) ? 1 : wg->total;
+	while (wg->completed < target) {
 		error = aiowaitgroup_wait(wg, timo);
 		if (error) {
-			goto done;
+			break;
 		}
 	}
+	mutex_exit(&wg->mtx);
 done:
+	mutex_enter(&wg->mtx);
 	wg->active = false;
-	wg->refcnt--;
-	if (wg->refcnt == 0) {
+	if (--wg->refcnt == 0) {
 		mutex_exit(&wg->mtx);
 		aiowaitgroup_fini(wg);
 	} else {
@@ -637,8 +660,9 @@ aiosp_destroy(struct aiosp *sp, int *cn)
 		 */
 		mutex_enter(&sp->mtx);
 		st = TAILQ_FIRST(&sp->freelist);
-		if (st == NULL)
+		if (st == NULL) {
 			st = TAILQ_FIRST(&sp->active);
+		}
 		mutex_exit(&sp->mtx);
 
 		if (st == NULL)
@@ -719,17 +743,16 @@ aiost_create(struct aiosp *sp, struct aiost **ret)
  * Process single job without coalescing.
  */
 static void 
-aiost_process_singleton (struct aio_job *job)
+aiost_process_singleton(struct aio_job *job)
 {
-	KASSERT(job);
-	if (job->aio_op & AIO_READ) {
-		io_read_fallback(job);
-	} else if (job->aio_op & AIO_WRITE) {
-		io_write_fallback(job);
-	} else if (job->aio_op & AIO_SYNC) {
+	if ((job->aio_op & AIO_READ) == AIO_READ) {
+		io_read(job);
+	} else if ((job->aio_op & AIO_WRITE) == AIO_WRITE) {
+		io_write(job);
+	} else if ((job->aio_op & AIO_SYNC) == AIO_SYNC) {
 		io_sync(job);
 	} else {
-		panic("aio_process: invalid operation code\n");
+		panic("%s: invalid operation code {%x}n", __func__, job->aio_op);
 	}
 
 	aio_job_mark_complete(job);
@@ -739,26 +762,21 @@ aiost_process_singleton (struct aio_job *job)
  * Process all jobs in a file group.
  */
 static void
-aiost_process_fg (struct aiosp *sp, struct aiost_file_group *fg)
+aiost_process_fg(struct aiosp *sp, struct aiost_file_group *fg)
 {
-	struct aio_job *job;
-	struct aio_job *tmp;
-
-	TAILQ_FOREACH_SAFE(job, &fg->queue, list, tmp) {
-		TAILQ_REMOVE(&fg->queue, job, list);
-		fg->queue_size--;
-
-		if ((job->aio_op & AIO_READ) == AIO_READ) {
-			io_read(job);
-		} else if ((job->aio_op & AIO_WRITE) == AIO_WRITE) {
-			io_write(job);
-		} else if ((job->aio_op & AIO_SYNC) == AIO_SYNC) {
-			io_sync(job);
-		} else {
-			panic("aio_process: invalid operation code\n");
+	for (struct aio_job *job;;) {
+		mutex_enter(&fg->mtx);
+		job = TAILQ_FIRST(&fg->queue);
+		if (job) {
+			TAILQ_REMOVE(&fg->queue, job, list);
+			fg->queue_size--;
+		}
+		mutex_exit(&fg->mtx);
+		if (job == NULL) {
+			break;
 		}
 
-		aio_job_mark_complete(job);
+		aiost_process_singleton(job);
 	}
 }
 
@@ -812,12 +830,14 @@ aiost_entry(void *arg)
 			mutex_enter(&st->mtx);
 
 			aiosp_fg_teardown(sp, fg);
-		} else {
+		} else if (st->job) {
 			struct aio_job *job = st->job;
 
 			mutex_exit(&st->mtx);
 			aiost_process_singleton(job);
 			mutex_enter(&st->mtx);
+		} else {
+			KASSERT(0);
 		}
 
 		/*
@@ -853,31 +873,24 @@ aiost_entry(void *arg)
 	}
 
 	if (st->job) {
-		if (st->job->fp) {
-			aio_file_release(st->job->fp);
-			st->job->fp = NULL;
-		}
-
-		aio_job_fini(st->job);
-		pool_put(&aio_job_pool, st->job);
-		atomic_dec_uint(&aio_jobs_count);
+		aio_job_release(st->job);
 	} else if (st->fg) {
 		struct aiost_file_group *fg = st->fg;
 		st->fg = NULL;
 
-		while (!TAILQ_EMPTY(&fg->queue)) {
-			struct aio_job *job = TAILQ_FIRST(&fg->queue);
-			TAILQ_REMOVE(&fg->queue, job, list);
-			fg->queue_size--;
-
-			if (job->fp) {
-				aio_file_release(job->fp);
-				job->fp = NULL;
+		for (struct aio_job *job;;) {
+			mutex_enter(&fg->mtx);
+			job = TAILQ_FIRST(&fg->queue);
+			if (job) {
+				TAILQ_REMOVE(&fg->queue, job, list);
+				fg->queue_size--;
+			}
+			mutex_exit(&fg->mtx);
+			if (job == NULL) {
+				break;
 			}
 
-			aio_job_fini(job);
-			pool_put(&aio_job_pool, job);
-			atomic_dec_uint(&aio_jobs_count);
+			aio_job_release(job);
 		}
 
 		aiosp_fg_teardown(sp, fg);
@@ -1122,12 +1135,15 @@ aiosp_validate_conflicts(struct aiosp *aiosp, const void *uptr)
 			mutex_exit(&aiosp->mtx);
 			return EINVAL;
 		} else if (st->fg) {
+			mutex_enter(&st->fg->mtx);
 			TAILQ_FOREACH(job, &st->fg->queue, list) {
 				if (job->aiocb_uptr == uptr) {
+					mutex_exit(&st->fg->mtx);
 					mutex_exit(&aiosp->mtx);
 					return EINVAL;
 				}
 			}
+			mutex_exit(&st->fg->mtx);
 		}
 	}
 
@@ -1140,7 +1156,8 @@ aiosp_validate_conflicts(struct aiosp *aiosp, const void *uptr)
 /*
  * Get error status of async I/O operation
  */
-int aiosp_error(struct aiosp *aiosp, const void *uptr, register_t *retval)
+int
+aiosp_error(struct aiosp *aiosp, const void *uptr, register_t *retval)
 {
 	struct aiocbp *aiocbp = NULL;
 	struct aio_job *job;
@@ -1457,10 +1474,8 @@ int
 aiowaitgroup_wait(struct aiowaitgroup *wg, int timo)
 {
 	int error;
-
-	error = (timo == 0) ?
-		cv_wait_sig(&wg->done_cv, &wg->mtx) :
-		cv_timedwait_sig(&wg->done_cv, &wg->mtx, timo);
+	
+	error = cv_timedwait_sig(&wg->done_cv, &wg->mtx, timo);
 	if (error) {
 		if (error == EWOULDBLOCK) {
 			error = SET_ERROR(EAGAIN);
@@ -1480,7 +1495,7 @@ aiowaitgrouplk_init(struct aiowaitgrouplk *lk)
 	mutex_init(&lk->mtx, MUTEX_DEFAULT, IPL_NONE);
 	lk->n = 0;
 	lk->s = 2;
-	lk->wgs = kmem_zalloc(lk->s * sizeof(*lk->wgs), KM_SLEEP);
+	lk->wgs = kmem_alloc(sizeof(*lk->wgs) * lk->s, KM_SLEEP);
 }
 
 /*
@@ -1529,16 +1544,15 @@ aiowaitgrouplk_flush(struct aiowaitgrouplk *lk)
 	mutex_enter(&lk->mtx);
 	for (int i = 0; i < lk->n; i++) {
 		struct aiowaitgroup *wg = lk->wgs[i];
-
-		lk->wgs[i] = NULL; 
 		if (wg == NULL) {
 			continue;
 		}
 
 		mutex_enter(&wg->mtx);
+
 		if (wg->active) {
 			wg->completed++;
-			cv_broadcast(&wg->done_cv);
+			cv_signal(&wg->done_cv);
 		}
 
 		if (--wg->refcnt == 0) {
@@ -1579,12 +1593,10 @@ aiowaitgroup_join(struct aiowaitgroup *wg, struct aiowaitgrouplk *lk)
 		lk->s = new_size;
 		lk->wgs = new_wgs;
 	}
-	lk->wgs[lk->n++] = wg;
-
-	mutex_enter(&wg->mtx);
+	lk->wgs[lk->n] = wg;
+	lk->n++;
 	wg->total++;
 	wg->refcnt++;
-	mutex_exit(&wg->mtx);
 	mutex_exit(&lk->mtx);
 }
 
@@ -1685,18 +1697,16 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	a_job->completed = false;
 	a_job->fp = NULL;
 
-	{
-		const int fd = aiocb.aio_fildes;
-		struct file *fp = fd_getfile2(p, fd);
-		if (fp == NULL) {
-			aio_job_fini(a_job);
-			pool_put(&aio_job_pool, a_job);
-			return SET_ERROR(EBADF);
-		}
-		
-		aio_file_hold(fp);
-		a_job->fp = fp;
+	const int fd = aiocb.aio_fildes;
+	struct file *fp = fd_getfile2(p, fd);
+	if (fp == NULL) {
+		aio_job_fini(a_job);
+		pool_put(&aio_job_pool, a_job);
+		return SET_ERROR(EBADF);
 	}
+	
+	aio_file_hold(fp);
+	a_job->fp = fp;
 
 	struct aiocbp *aiocbp = kmem_zalloc(sizeof(struct aiocbp), KM_SLEEP);
 	aiocbp->job = a_job;
@@ -1718,35 +1728,17 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	mutex_enter(&aio->aio_mtx);
 	if (atomic_inc_uint_nv(&aio_jobs_count) > aio_max ||
 		aio->jobs_count >= aio_listio_max) {
-		atomic_dec_uint(&aio_jobs_count);
-
 		mutex_exit(&aio->aio_mtx);
-		aiocbp_remove(&aio->aiosp, aiocb_uptr);
-		kmem_free(aiocbp, sizeof(*aiocbp));
-
-		aio_file_release(a_job->fp);
-		a_job->fp = NULL;
-
-		aio_job_fini(a_job);
-		pool_put(&aio_job_pool, a_job);
-
-		return SET_ERROR(EAGAIN);
+		error = SET_ERROR(EAGAIN);
+		goto error;
 	}
 
 	mutex_exit(&aio->aio_mtx);
 
 	error = aiosp_enqueue_job(&aio->aiosp, a_job);
 	if (error) {
-		aiocbp_remove(&aio->aiosp, aiocb_uptr);
-		kmem_free(aiocbp, sizeof(*aiocbp));
-
-		aio_file_release(a_job->fp);
-		a_job->fp = NULL;
-
-		aio_job_fini(a_job);
-		pool_put(&aio_job_pool, a_job);
-
-		return SET_ERROR(error);
+		error = SET_ERROR(EAGAIN);
+		goto error;
 	}
 
 	mutex_enter(&aio->aio_mtx);
@@ -1757,6 +1749,18 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	mutex_exit(&aio->aio_mtx);
 
 	return 0;
+error:
+	aiocbp_remove(&aio->aiosp, aiocb_uptr);
+	kmem_free(aiocbp, sizeof(*aiocbp));
+
+	aio_file_release(a_job->fp);
+	a_job->fp = NULL;
+
+	aio_job_fini(a_job);
+	atomic_dec_uint(&aio_jobs_count);
+	pool_put(&aio_job_pool, a_job);
+
+	return SET_ERROR(error);
 }
 
 /*
@@ -1812,6 +1816,11 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 		have_active = fg->queue_size ? true : false;
 	}
 
+	/*
+	 * if aiocbp_uptr != NULL, then just cancel the job associated with that
+	 * uptr.
+	 * if aiocbp_uptr == NULL, then cancel all jobs associated with fildes.
+	 */
 	if (aiocbp_uptr) {
 		struct aiocbp *aiocbp = NULL;
 		error = aiocbp_lookup(aiosp, &aiocbp, aiocbp_uptr);
@@ -1836,15 +1845,8 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 			 * beign processed.
 			 */
 			if (job->on_queue) {
-				mutex_enter(&job->mtx);
-				TAILQ_REMOVE(&aiosp->jobs, job, list);
-				aiosp->jobs_pending--;
-				job->on_queue = false;
-				job->aiocbp._errno = ECANCELED;
-				mutex_exit(&job->mtx);
-
+				aio_job_cancel(aiosp, job);
 				aio_job_mark_complete(job);
-
 				*retval = AIO_CANCELED;
 			}
 
@@ -1860,39 +1862,32 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 		mutex_exit(&aio->aio_mtx);
 
 		return 0;
-	}
-
-	/*
-	 * Cancel all queued jobs associated with this file descriptor
-	 */
-	struct aio_job *tmp;
-	TAILQ_FOREACH_SAFE(job, &aiosp->jobs, list, tmp) {
-		if (job->aiocbp.aio_fildes == (int)fildes) {
-			mutex_enter(&job->mtx);
-			TAILQ_REMOVE(&aiosp->jobs, job, list);
-			aiosp->jobs_pending--;
-			job->on_queue = false;
-			job->aiocbp._errno = ECANCELED;
-			mutex_exit(&job->mtx);
-
-			aio_job_mark_complete(job);
-
-			canceled++;
-		}
-	}
-
-	if (canceled && !have_active) {
-		*retval = AIO_CANCELED;
-	} else if (!canceled) {
-		*retval = have_active ? AIO_NOTCANCELED : AIO_ALLDONE;
 	} else {
-		*retval = AIO_NOTCANCELED;
+		/*
+		 * Cancel all queued jobs associated with this file descriptor
+		 */
+		struct aio_job *tmp;
+		TAILQ_FOREACH_SAFE(job, &aiosp->jobs, list, tmp) {
+			if (job->aiocbp.aio_fildes == (int)fildes) {
+				aio_job_cancel(aiosp, job);
+				aio_job_mark_complete(job);
+				canceled++;
+			}
+		}
+
+		if (canceled && !have_active) {
+			*retval = AIO_CANCELED;
+		} else if (!canceled) {
+			*retval = have_active ? AIO_NOTCANCELED : AIO_ALLDONE;
+		} else {
+			*retval = AIO_NOTCANCELED;
+		}
+
+		mutex_exit(&aiosp->mtx);
+		mutex_exit(&aio->aio_mtx);
+
+		return 0;
 	}
-
-	mutex_exit(&aiosp->mtx);
-	mutex_exit(&aio->aio_mtx);
-
-	return 0;
 }
 
 int
@@ -2245,7 +2240,8 @@ aio_print_jobs(void (*pr)(const char *, ...))
 	(*pr)("AIO: pid=%d\n", p->p_pid);
 	(*pr)("AIO: global jobs=%u, proc jobs=%u\n", aio_jobs_count,
 		aio->jobs_count);
-	(*pr)("AIO: sp{ total_threads=%zu active=%zu free=%zu pending=%zu processing=%lu hash_buckets=%zu mask=%#x }\n",
+	(*pr)("AIO: sp{ total_threads=%zu active=%zu free=%zu pending=%zu\n"
+		"         processing=%lu hash_buckets=%zu mask=%#x }\n",
 		sp->nthreads_total, sp->nthreads_active, sp->nthreads_free,
 		sp->jobs_pending, (u_long)sp->njobs_processing,
 		sp->aio_hash_size, sp->aio_hash_mask);
@@ -2275,8 +2271,8 @@ aio_print_jobs(void (*pr)(const char *, ...))
 			if (st->job) {
 				struct aio_job *j = st->job;
 				(*pr)("    job: op=%d err=%d state=%d uptr=%p\n",
-					j->aio_op, j->aiocbp._errno, j->aiocbp._state,
-					j->aiocb_uptr);
+					j->aio_op, j->aiocbp._errno,
+					j->aiocbp._state, j->aiocb_uptr);
 				(*pr)("      fd=%d off=%llu buf=%p nbytes=%zu\n",
 					j->aiocbp.aio_fildes,
 					(unsigned long long)j->aiocbp.aio_offset,
