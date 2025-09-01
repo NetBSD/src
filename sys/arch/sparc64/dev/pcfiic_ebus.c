@@ -1,4 +1,4 @@
-/*	$NetBSD: pcfiic_ebus.c,v 1.8 2025/08/31 18:13:59 thorpej Exp $	*/
+/*	$NetBSD: pcfiic_ebus.c,v 1.9 2025/09/01 04:47:03 thorpej Exp $	*/
 /*	$OpenBSD: pcfiic_ebus.c,v 1.13 2008/06/08 03:07:40 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.8 2025/08/31 18:13:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.9 2025/09/01 04:47:03 thorpej Exp $");
 
 /*
  * Device specific driver for the EBus i2c devices found on some sun4u
@@ -54,7 +54,7 @@ struct pcfiic_ebus_softc {
 	void			*esc_ih;
 };
 
-CFATTACH_DECL_NEW(pcfiic, sizeof(struct pcfiic_ebus_softc),
+CFATTACH_DECL_NEW(pcfiic_ebus, sizeof(struct pcfiic_ebus_softc),
 	pcfiic_ebus_match, pcfiic_ebus_attach, NULL, NULL);
 
 int
