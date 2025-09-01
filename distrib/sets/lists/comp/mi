@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2497 2025/07/28 03:01:47 roy Exp $
+#	$NetBSD: mi,v 1.2498 2025/09/01 18:38:31 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3214,6 +3214,7 @@
 ./usr/include/openssl/store.h			comp-c-include
 ./usr/include/openssl/storeerr.h		comp-c-include
 ./usr/include/openssl/symhacks.h		comp-c-include
+./usr/include/openssl/thread.h			comp-c-include
 ./usr/include/openssl/tls1.h			comp-c-include
 ./usr/include/openssl/tmdiff.h			comp-obsolete		obsolete
 ./usr/include/openssl/trace.h			comp-c-include		openssl=30
