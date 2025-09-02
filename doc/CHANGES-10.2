@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.48 2025/08/29 15:22:06 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.49 2025/09/02 17:45:46 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1025,4 +1025,10 @@ tests/net/arp/t_arp.sh				1.49
 
 	nd: PR 59596: fix the number of requests for address resolution.
 	[ozaki-r, ticket #1154]
+
+distrib/miniroot/install.sh			1.29
+
+	sun3: place a ptyfs instance into the newly-written /etc/fstab,
+	so that e.g. sshd works out of the box after installation.
+	[thorpej, ticket #1155]
 
