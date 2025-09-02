@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.73 2022/05/10 00:42:00 gutteridge Exp $	*/
+/*	$NetBSD: man.c,v 1.74 2025/09/02 16:59:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.73 2022/05/10 00:42:00 gutteridge Exp $");
+__RCSID("$NetBSD: man.c,v 1.74 2025/09/02 16:59:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,7 @@ struct manstate {
 	int cat;		/* -c: do not use a pager */
 	char *conffile;		/* -C: use alternate config file */
 	int how;		/* -h: show SYNOPSIS only */
+	int local;		/* -l: interpret arguments as filenames */
 	char *manpath;		/* -M: alternate MANPATH */
 	char *addpath;		/* -m: add these dirs to front of manpath */
 	char *pathsearch;	/* -S: path of man must contain this string */
@@ -146,7 +147,7 @@ main(int argc, char **argv)
 	/*
 	 * parse command line...
 	 */
-	while ((ch = getopt(argc, argv, "-aC:cfhkM:m:P:ps:S:w")) != -1)
+	while ((ch = getopt(argc, argv, "-aC:cfhklM:m:P:ps:S:w")) != -1)
 		switch (ch) {
 		case 'a':
 			m.all = 1;
@@ -160,6 +161,9 @@ main(int argc, char **argv)
 			break;
 		case 'h':
 			m.how = 1;
+			break;
+		case 'l':
+			m.local = 1;
 			break;
 		case 'm':
 			m.addpath = optarg;
@@ -585,7 +589,8 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 	 * or a relative path explicitly beginning with "./"
 	 * or "../", then interpret it as a file specification.
 	 */
-	if ((page[0] == '/')
+	if (mp->local
+	    || (page[0] == '/')
 	    || (page[0] == '.' && page[1] == '/')
 	    || (page[0] == '.' && page[1] == '.' && page[2] == '/')
 	    ) {
