@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.28 2022/05/03 20:52:30 andvar Exp $
+#	$NetBSD: install.sh,v 1.28.2.1 2025/09/02 17:44:55 martin Exp $
 #
 # Copyright (c) 1996,1997,1999,2000,2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -346,6 +346,12 @@ esac
 			echo /dev/$_dev $_mp ffs rw 1 2
 		fi
 	done
+	
+	#
+	# A PTYFS instance is required for programs that use
+	# pseudo-terminals (e.g. sshd).
+	#
+	echo ptyfs /dev/pts ptyfs rw 0 0
 ) < ${FILESYSTEMS} > /tmp/fstab
 
 echo	"The fstab is configured as follows:"
