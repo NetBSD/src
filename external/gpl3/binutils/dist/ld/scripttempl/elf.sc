@@ -731,19 +731,6 @@ cat <<EOF
 
   ${TEXT_PLT+${PLT_NEXT_DATA+${PLT} ${OTHER_PLT_SECTIONS}}}
 
-  /* Various note sections.  Placed here so that they are always included
-     in the read-only segment and not treated as orphan sections.  The
-     current orphan handling algorithm does place note sections after R/O
-     data, but this is not guaranteed to always be the case.  */
-  .note.build-id :      { *(.note.build-id) } ${RELOCATING+${REGION}}
-  .note.GNU-stack :     { *(.note.GNU-stack) } ${RELOCATING+${REGION}}
-  .note.gnu-property :  { *(.note.gnu-property) } ${RELOCATING+${REGION}}
-  .note.ABI-tag :       { *(.note.ABI-tag) } ${RELOCATING+${REGION}}
-  .note.package :       { *(.note.package) } ${RELOCATING+${REGION}}
-  .note.dlopen :        { *(.note.dlopen) } ${RELOCATING+${REGION}}
-  .note.netbsd.ident :  { *(.note.netbsd.ident) } ${RELOCATING+${REGION}}
-  .note.openbsd.ident : { *(.note.openbsd.ident) } ${RELOCATING+${REGION}}
-
   ${RELOCATING+${ETEXT_LAST_IN_RODATA_SEGMENT+PROVIDE (__${ETEXT_NAME} = .);}}
   ${RELOCATING+${ETEXT_LAST_IN_RODATA_SEGMENT+PROVIDE (_${ETEXT_NAME} = .);}}
   ${RELOCATING+${ETEXT_LAST_IN_RODATA_SEGMENT+PROVIDE (${ETEXT_NAME} = .);}}
