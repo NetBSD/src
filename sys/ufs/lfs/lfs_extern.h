@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.118 2020/02/23 08:49:46 riastradh Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.119 2025/09/02 00:24:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@
 
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
+#include <sys/workqueue.h>
 
 MALLOC_DECLARE(M_SEGMENT);
 #endif
@@ -201,6 +202,7 @@ int lfs_match_tindir(struct lfs *, struct buf *);
 void lfs_free_aiodone(struct buf *);
 void lfs_acquire_finfo(struct lfs *fs, ino_t, int);
 void lfs_release_finfo(struct lfs *fs);
+void lfs_cluster_wq(struct work *wk, void *arg);
 
 /* lfs_subr.c */
 void lfs_setup_resblks(struct lfs *);
