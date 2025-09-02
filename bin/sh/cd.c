@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.53 2022/01/31 16:54:28 kre Exp $	*/
+/*	$NetBSD: cd.c,v 1.53.6.1 2025/09/02 17:48:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.53 2022/01/31 16:54:28 kre Exp $");
+__RCSID("$NetBSD: cd.c,v 1.53.6.1 2025/09/02 17:48:16 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,9 +86,11 @@ cdcmd(int argc, char **argv)
 	char *p;
 	char *d;
 	struct stat statb;
-	char opt;
-	bool eopt = false;
 	int print = cdprint;	/* set -o cdprint to enable */
+	int err = ENOENT;
+	int err_set = -1;
+	bool eopt = false;
+	char opt;
 
 	while ((opt = nextopt("Pe")) != '\0')
 		if (opt == 'e')
@@ -110,7 +112,8 @@ cdcmd(int argc, char **argv)
 			error("PWD not set");
 		p = strstr(curdir, dest);
 		if (!p)
-			error("bad substitution");
+			error("bad substitution (no \"%s\" in \"%s\")",
+			    dest, curdir);
 		d = stalloc(strlen(curdir) + strlen(argptr[1]) + 1);
 		memcpy(d, curdir, p - curdir);
 		strcpy(d + (p - curdir), argptr[1]);
@@ -121,28 +124,55 @@ cdcmd(int argc, char **argv)
 		dest = prevdir ? prevdir : curdir;
 		print = 1;
 	}
+#if 0				/* POSIX 2024 says this must be an error */
 	if (*dest == '\0')
 	        dest = ".";
+#endif
 
 	cp = dest;
 	if (*cp == '.' && *++cp == '.')
 	    cp++;
 	if (*cp == 0 || *cp == '/' || (path = bltinlookup("CDPATH", 1)) == NULL)
 		path = nullstr;
+
+	cp = dest;
 	while ((p = padvance(&path, dest, 0)) != NULL) {
+		int dopr = print;
+		int x;
+
 		stunalloc(p);
-		if (stat(p, &statb) >= 0 && S_ISDIR(statb.st_mode)) {
-			int dopr = print;
-			int x;
+		/* until the next stack write, p remains valid */
 
-			if (!print)
-				dopr = strcmp(p, dest);
+		if (stat(p, &statb) < 0) {
+			if (err_set < 0 && errno != ENOENT) {
+				err = errno;
+				cp = stalloc((int)strlen(p) + 1);
+				err_set = 0;
+			}
+			continue;
+		}
+		if (!S_ISDIR(statb.st_mode)) {
+			if (err_set <= 0) {
+				err = ENOTDIR;
+				cp = stalloc((int)strlen(p) + 1);
+				err_set = 1;
+			}
+			continue;
+		}
 
-			if ((x = docd(p, dopr != 0, eopt)) >= 0)
-				return x;
+		if (!print)
+			dopr = strcmp(p, dest);
+
+		if ((x = docd(p, dopr != 0, eopt)) >= 0)
+			return x;
+
+		if (err_set <= 0 && errno != ENOENT) {
+			err = errno;
+			cp = stalloc(strlen(p) + 1);
+			err_set = 1;
 		}
 	}
-	error("can't cd to %s", dest);
+	error("Can't cd to \"%s\": %s", cp, strerror(err));
 	/* NOTREACHED */
 }
 
@@ -201,15 +231,18 @@ docd(const char *dest, bool print, bool eopt)
 	CTRACE(DBG_CMDS, ("docd(\"%s\", %s, %s) called\n", dest,
 	    print ? "true" : "false", eopt ? "true" : "false"));
 
+
 	INTOFF;
 	if (chdir(dest) < 0) {
-		INTON;
+		INTON;		/* If int was pending, this does not return */
 		return -1;
 	}
 	gotpwd = updatepwd(NULL);   /* only do cd -P, no "pretend" -L mode */
 	INTON;
-	if (print && (iflag || posix))
-		out1fmt("%s\n", gotpwd ? curdir : dest);
+	if (!gotpwd && eopt)
+		sh_warnx("Unable to determine new working directory");
+	else if (print && (iflag || posix))
+		out1fmt("%s\n", curdir);
 	return gotpwd || !eopt ? 0 : 1;
 }
 
