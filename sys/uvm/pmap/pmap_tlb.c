@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.62 2024/01/01 16:56:30 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.63 2025/09/02 07:54:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.62 2024/01/01 16:56:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.63 2025/09/02 07:54:25 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -214,17 +214,19 @@ pmap_tlb_intersecting_onproc_p(pmap_t pm, struct pmap_tlb_info *ti)
 static void
 pmap_tlb_pai_check(struct pmap_tlb_info *ti, bool locked_p)
 {
+#ifdef DIAGNOSTIC
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(maphist, "(ti=%#jx)", (uintptr_t)ti, 0, 0, 0);
 
-#ifdef DIAGNOSTIC
 	struct pmap_asid_info *pai;
 	if (!locked_p)
 		TLBINFO_LOCK(ti);
 	LIST_FOREACH(pai, &ti->ti_pais, pai_link) {
 		KASSERT(pai != NULL);
 		KASSERT(PAI_PMAP(pai, ti) != pmap_kernel());
-		KASSERT(pai->pai_asid > KERNEL_PID);
+		KASSERTMSG(pai->pai_asid > KERNEL_PID,
+		    "pm %p asid %#x (%d)", PAI_PMAP(pai, ti), pai->pai_asid,
+		    KERNEL_PID);
 		KASSERTMSG(pai->pai_asid <= ti->ti_asid_max,
 		    "pm %p asid %#x", PAI_PMAP(pai, ti), pai->pai_asid);
 		KASSERTMSG(TLBINFO_ASID_INUSE_P(ti, pai->pai_asid),
@@ -235,8 +237,8 @@ pmap_tlb_pai_check(struct pmap_tlb_info *ti, bool locked_p)
 	}
 	if (!locked_p)
 		TLBINFO_UNLOCK(ti);
-#endif
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
+#endif
 }
 
 static void
