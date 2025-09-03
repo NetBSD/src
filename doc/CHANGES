@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3183 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3184 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -33,4 +33,5 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		via sysctl. [macallan 20250812]
 	macppc: Added support for fan control on Xserve G4. [macallan 20250820]
 	acpi(4): Updated ACPICA to 20250807. [christos 20250824]
-	binutils: Import 2.45 and switch amd64 to it  [christos 20250926]
+	binutils: Import 2.45 and switch amd64 to it  [christos 20250826]
+	gdb: Import 16.3 and switch everyone to it [christos 20250902]
