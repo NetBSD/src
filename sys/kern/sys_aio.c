@@ -143,9 +143,12 @@ static void		aio_job_mark_complete(struct aio_job *);
 static void		aio_file_hold(struct file *);
 static void		aio_file_release(struct file *);
 
-static int		aiocbp_lookup_job_locked(struct aiosp *, const void *,
+static void		aiocbp_destroy(struct aiosp *);
+static int		aiocbp_init(struct aiosp *, u_int);
+static int		aiocbp_insert(struct aiosp *, struct aiocbp *);
+static int		aiocbp_lookup_job(struct aiosp *, const void *,
 				struct aio_job **);
-static int		aiocbp_remove_job_locked(struct aiosp *, const void *,
+static int		aiocbp_remove_job(struct aiosp *, const void *,
 				struct aio_job **, struct aiocbp **);
 
 static const struct syscall_package aio_syscalls[] = {
@@ -230,8 +233,9 @@ aio_init(void)
 	aio_ehook = exithook_establish(aio_exit, NULL);
 
 	error = syscall_establish(NULL, aio_syscalls);
-	if (error != 0)
+	if (error != 0) {
 		aio_fini(false);
+	}
 	return error;
 }
 
@@ -544,7 +548,7 @@ aiosp_suspend(struct aiosp *aiosp, struct aiocb **aiocbp_list, int nent,
 			continue;
 		}
 
-		error = aiocbp_lookup_job_locked(aiosp, aiocbp_list[i], &job);
+		error = aiocbp_lookup_job(aiosp, aiocbp_list[i], &job);
 		if (error) {
 			goto done;
 		}
@@ -1087,7 +1091,7 @@ done:
 	job->aiocbp._errno = error;
 	job->aiocbp._state = JOB_DONE;
 
-	copyout(&job->aiocbp, job->aiocb_uptr, sizeof(struct aiocb));
+	copyout(&job->aiocbp, job->aiocb_uptr, sizeof(job->aiocbp));
 
 	return 0;
 }
@@ -1159,24 +1163,21 @@ aiosp_validate_conflicts(struct aiosp *aiosp, const void *uptr)
 int
 aiosp_error(struct aiosp *aiosp, const void *uptr, register_t *retval)
 {
-	struct aiocbp *aiocbp = NULL;
 	struct aio_job *job;
 	int error = 0;
 
-	error = aiocbp_lookup(aiosp, &aiocbp, uptr);
-	if (error) {
+	error = aiocbp_lookup_job(aiosp, uptr, &job);
+	if (error || job == NULL) {
 		return error;
 	}
-	if (aiocbp == NULL) {
-		return SET_ERROR(ENOENT);
-	}
 
-	job = aiocbp->job;
 	if (job->aiocbp._state == JOB_NONE) {
+		mutex_exit(&job->mtx);
 		return SET_ERROR(EINVAL);
 	}
 
 	*retval = job->aiocbp._errno;
+	mutex_exit(&job->mtx);
 
 	return error;
 }
@@ -1191,7 +1192,7 @@ aiosp_return(struct aiosp *aiosp, const void *uptr, register_t *retval)
 	struct aio_job *job = NULL;
 	int error;
 
-	error = aiocbp_remove_job_locked(aiosp, uptr, &job, &handle);
+	error = aiocbp_remove_job(aiosp, uptr, &job, &handle);
 	if (error) {
 		return error;
 	}
@@ -1244,10 +1245,10 @@ aiocbp_hash(const void *uptr)
 }
 
 /*
- * Find aiocb entry by user pointer.
+ * Find aiocb entry by user pointer and locks.
  */
 static int
-aiocbp_lookup_job_locked(struct aiosp *aiosp, const void *uptr,
+aiocbp_lookup_job(struct aiosp *aiosp, const void *uptr,
 	struct aio_job **jobp)
 {
 	struct aiocbp *aiocbp;
@@ -1273,14 +1274,14 @@ aiocbp_lookup_job_locked(struct aiosp *aiosp, const void *uptr,
 	mutex_exit(&aiosp->aio_hash_mtx);
 
 	*jobp = NULL;
-	return 0;
+	return SET_ERROR(ENOENT);
 }
 
 /*
  * Detach job and return job with job->mtx held 
  */
 static int
-aiocbp_remove_job_locked(struct aiosp *aiosp, const void *uptr,
+aiocbp_remove_job(struct aiosp *aiosp, const void *uptr,
 	struct aio_job **jobp, struct aiocbp **handlep)
 {
 	struct aiocbp *aiocbp;
@@ -1288,7 +1289,9 @@ aiocbp_remove_job_locked(struct aiosp *aiosp, const void *uptr,
 	u_int hash;
 
 	*jobp = NULL;
-	*handlep = NULL;
+	if (handlep) {
+		*handlep = NULL;
+	}
 	hash = aiocbp_hash(uptr) & aiosp->aio_hash_mask;
 
 	mutex_enter(&aiosp->aio_hash_mtx);
@@ -1301,7 +1304,9 @@ aiocbp_remove_job_locked(struct aiosp *aiosp, const void *uptr,
 
 			TAILQ_REMOVE(&aiosp->aio_hash[hash], aiocbp, list);
 			mutex_exit(&aiosp->aio_hash_mtx);
-			*handlep = aiocbp;
+			if (handlep) {
+				*handlep = aiocbp;
+			}
 			*jobp = job;
 
 			return 0;
@@ -1309,53 +1314,6 @@ aiocbp_remove_job_locked(struct aiosp *aiosp, const void *uptr,
 	}
 	mutex_exit(&aiosp->aio_hash_mtx);
 
-	return SET_ERROR(ENOENT);
-}
-
-int
-aiocbp_lookup(struct aiosp *aiosp, struct aiocbp **aiocbpp, const void *uptr)
-{
-	struct aiocbp *aiocbp;
-	u_int hash;
-
-	hash = aiocbp_hash(uptr) & aiosp->aio_hash_mask;
-
-	mutex_enter(&aiosp->aio_hash_mtx);
-	TAILQ_FOREACH(aiocbp, &aiosp->aio_hash[hash], list) {
-		if (aiocbp->uptr == uptr) {
-			*aiocbpp = aiocbp;
-			mutex_exit(&aiosp->aio_hash_mtx);
-			return 0;
-		}
-	}
-	mutex_exit(&aiosp->aio_hash_mtx);
-
-	*aiocbpp = NULL;
-	return 0;
-}
-
-/*
- * Remove aiocb entry from hash table.
- */
-int
-aiocbp_remove(struct aiosp *aiosp, const void *uptr)
-{
-	struct aiocbp *aiocbp;
-	u_int hash;
-
-	hash = aiocbp_hash(uptr) & aiosp->aio_hash_mask;
-
-	struct aiocbp *tmp;
-	mutex_enter(&aiosp->aio_hash_mtx);
-	TAILQ_FOREACH_SAFE(aiocbp, &aiosp->aio_hash[hash], list, tmp) {
-		if (aiocbp->uptr == uptr) {
-			TAILQ_REMOVE(&aiosp->aio_hash[hash], aiocbp, list);
-			mutex_exit(&aiosp->aio_hash_mtx);
-			return 0;
-		}
-	}
-	mutex_exit(&aiosp->aio_hash_mtx);
-	
 	return SET_ERROR(ENOENT);
 }
 
@@ -1614,7 +1572,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	int error;
 
 	/* Get the data structure from user-space */
-	error = copyin(aiocb_uptr, &aiocb, sizeof(struct aiocb));
+	error = copyin(aiocb_uptr, &aiocb, sizeof(aiocb));
 	if (error) {
 		return error;
 	}
@@ -1678,7 +1636,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	aiocb._state = JOB_WIP;
 	aiocb._errno = SET_ERROR(EINPROGRESS);
 	aiocb._retval = -1;
-	error = copyout(&aiocb, aiocb_uptr, sizeof(struct aiocb));
+	error = copyout(&aiocb, aiocb_uptr, sizeof(aiocb));
 	if (error) {
 		return error;
 	}
@@ -1686,7 +1644,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	/* Allocate and initialize a new AIO job */
 	a_job = pool_get(&aio_job_pool, PR_WAITOK | PR_ZERO);
 
-	memcpy(&a_job->aiocbp, &aiocb, sizeof(struct aiocb));
+	memcpy(&a_job->aiocbp, &aiocb, sizeof(aiocb));
 	a_job->aiocb_uptr = aiocb_uptr;
 	a_job->aio_op |= op;
 	a_job->lio = lio;
@@ -1708,7 +1666,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	aio_file_hold(fp);
 	a_job->fp = fp;
 
-	struct aiocbp *aiocbp = kmem_zalloc(sizeof(struct aiocbp), KM_SLEEP);
+	struct aiocbp *aiocbp = kmem_zalloc(sizeof(*aiocbp), KM_SLEEP);
 	aiocbp->job = a_job;
 	aiocbp->uptr = aiocb_uptr;
 	error = aiocbp_insert(&aio->aiosp, aiocbp);
@@ -1750,7 +1708,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 
 	return 0;
 error:
-	aiocbp_remove(&aio->aiosp, aiocb_uptr);
+	aiocbp_remove_job(&aio->aiosp, aiocb_uptr, &a_job, NULL);
 	kmem_free(aiocbp, sizeof(*aiocbp));
 
 	aio_file_release(a_job->fp);
@@ -1781,7 +1739,7 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 	unsigned int fildes, canceled = 0;
 	bool have_active = false;
 	fdtab_t *dt;
-	int error;
+	int error = 0;
 
 	fildes = (unsigned int)SCARG(uap, fildes);
 	dt = atomic_load_consume(&fdp->fd_dt);
@@ -1822,46 +1780,31 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 	 * if aiocbp_uptr == NULL, then cancel all jobs associated with fildes.
 	 */
 	if (aiocbp_uptr) {
-		struct aiocbp *aiocbp = NULL;
-		error = aiocbp_lookup(aiosp, &aiocbp, aiocbp_uptr);
-		if (error) {
-			mutex_exit(&aiosp->mtx);
-			mutex_exit(&aio->aio_mtx);
-			return error;
-		}
-		if (aiocbp) {
-			job = aiocbp->job;
-
-			if (job->completed) {
-				*retval = AIO_ALLDONE;
-			} else {
-				*retval = AIO_NOTCANCELED;
-			}
-
-			/*
-			 * If the job is on sp->job (signified by job->on_queue)
-			 * that means that it has been distribtued yet. And if
-			 * it is not on the queue that means it is currently
-			 * beign processed.
-			 */
-			if (job->on_queue) {
-				aio_job_cancel(aiosp, job);
-				aio_job_mark_complete(job);
-				*retval = AIO_CANCELED;
-			}
-
-			mutex_exit(&aiosp->mtx);
-			mutex_exit(&aio->aio_mtx);
-			
-			return 0;
+		error = aiocbp_lookup_job(aiosp, aiocbp_uptr, &job);
+		if (error || job == NULL) {
+			*retval = AIO_ALLDONE;
+			goto finish;
 		}
 
-		*retval = AIO_ALLDONE;
+		if (job->completed) {
+			*retval = AIO_ALLDONE;
+		} else {
+			*retval = AIO_NOTCANCELED;
+		}
 
-		mutex_exit(&aiosp->mtx);
-		mutex_exit(&aio->aio_mtx);
+		/*
+		 * If the job is on sp->job (signified by job->on_queue)
+		 * that means that it has been distribtued yet. And if
+		 * it is not on the queue that means it is currently
+		 * beign processed.
+		 */
+		if (job->on_queue) {
+			aio_job_cancel(aiosp, job);
+			aio_job_mark_complete(job);
+			*retval = AIO_CANCELED;
+		}
 
-		return 0;
+		mutex_exit(&job->mtx);
 	} else {
 		/*
 		 * Cancel all queued jobs associated with this file descriptor
@@ -1882,12 +1825,12 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 		} else {
 			*retval = AIO_NOTCANCELED;
 		}
-
-		mutex_exit(&aiosp->mtx);
-		mutex_exit(&aio->aio_mtx);
-
-		return 0;
 	}
+finish:
+	mutex_exit(&aiosp->mtx);
+	mutex_exit(&aio->aio_mtx);
+	
+	return 0;
 }
 
 int
@@ -1974,7 +1917,7 @@ sys___aio_suspend50(struct lwp *l, const struct sys___aio_suspend50_args *uap,
 	if (SCARG(uap, timeout)) {
 		/* Convert timespec to ticks */
 		error = copyin(SCARG(uap, timeout), &ts,
-			sizeof(struct timespec));
+			sizeof(ts));
 		if (error)
 			return error;
 	}
@@ -2042,7 +1985,7 @@ sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap,
 
 	switch (mode) {
 	case LIO_WAIT:
-		memset(&lio->sig, 0, sizeof(struct sigevent));
+		memset(&lio->sig, 0, sizeof(lio->sig));
 		break;
 	case LIO_NOWAIT:
 		/* Check for signal, validate it */
@@ -2050,15 +1993,16 @@ sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap,
 			struct sigevent *sig = &lio->sig;
 
 			error = copyin(SCARG(uap, sig), &lio->sig,
-				sizeof(struct sigevent));
+				sizeof(lio->sig));
 			if (error == 0 &&
 				(sig->sigev_signo < 0 ||
 				sig->sigev_signo >= NSIG ||
 				sig->sigev_notify < SIGEV_NONE ||
 				sig->sigev_notify > SIGEV_SA))
 				error = SET_ERROR(EINVAL);
-		} else
-			memset(&lio->sig, 0, sizeof(struct sigevent));
+		} else {
+			memset(&lio->sig, 0, sizeof(lio->sig));
+		}
 		break;
 	default:
 		error = SET_ERROR(EINVAL);

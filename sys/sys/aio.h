@@ -214,14 +214,8 @@ int	aiosp_suspend(struct aiosp *, struct aiocb **, int, struct timespec *,
 		int);
 int	aiosp_flush(struct aiosp *);
 int	aiosp_validate_conflicts(struct aiosp *, const void *);
-int	aiosp_error (struct aiosp *, const void *, register_t *); 
-int	aiosp_return (struct aiosp *, const void *, register_t *); 
-
-void	aiocbp_destroy(struct aiosp *);
-int	aiocbp_init(struct aiosp *, u_int);
-int 	aiocbp_lookup(struct aiosp *, struct aiocbp **, const void *);
-int 	aiocbp_remove(struct aiosp *, const void *);
-int 	aiocbp_insert(struct aiosp *, struct aiocbp *);
+int	aiosp_error(struct aiosp *, const void *, register_t *); 
+int	aiosp_return(struct aiosp *, const void *, register_t *); 
 
 void	aiowaitgroup_init(struct aiowaitgroup *);
 void	aiowaitgroup_fini(struct aiowaitgroup *);
