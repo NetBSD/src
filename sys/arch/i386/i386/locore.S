@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.201 2025/06/30 05:38:30 imil Exp $	*/
+/*	$NetBSD: locore.S,v 1.202 2025/09/03 16:14:52 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.201 2025/06/30 05:38:30 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.202 2025/09/03 16:14:52 bouyer Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1273,83 +1273,132 @@ ENTRY(start_pvh)
 	/* We have been started by a VMM that is *not* Xen */
 
 .start_genpvh:
-
-	/* First, copy the hvm_start_info structure to __kernel_end */
+	/* announce ourself */
+	movl $VM_GUEST_GENPVH, RELOC(vm_guest)
 	pop %ebx
+
+	movl $RELOC(__kernel_end), %eax
+	movl __kernel_end, %ecx
+	movl $RELOC(esym),%ebp
+	movl %ecx,(%ebp)
+	jmp .copy_hvm_info
+
+.start_xen:
+	movl $VM_GUEST_XENPVH, RELOC(vm_guest)
+        /*
+	 * read the size of the symbol table, sanity-check and compute the end
+	 * we have:
+	 * |   kernel   |
+	 * -------------- kernel_end
+	 *     alignement
+	 * -------------- bsd_symtab
+	 * | size (int) |
+	 * | elf_header |
+	 *
+	 */
+	movl $RELOC(__kernel_end), %ebp
+	addl $3, %ebp
+	andl $~3, %ebp
+	movl 0(%ebp), %eax /* read size */
+	testl $~0x3fffffff, %eax /* more than 1MB ? */
+	jnz .bad_esym
+	addl %ebp, %eax /* compute esym */
+	/* check if start_info is within symbol table */
+	movl -4(%esp), %ebx
+	cmp %ebx, %ebp;
+	jl .save_esym /* %ebx < __kernel_end */
+	cmp %ebx, %eax
+	jg .save_esym /* %ebx > esym */
+	jz .save_esym /* %ebx == esym */
+
+.bad_esym:
+	movl $RELOC(__kernel_end), %eax
+.save_esym:
+	movl %eax, %ebx
+	addl $KERNBASE,%ebx
+	movl %ebx,RELOC(esym)
+	/* advance to next page boundary, this will be our hvm_start_info */
+	addl $PGOFSET,%eax
+	andl $~PGOFSET,%eax
+	pop %ebx
+
+.copy_hvm_info:
+	/*
+	 * save addr of the hvm_start_info structure.
+	 * %ebx points to physical address provided by Xen
+	 * %eax points to we want it to be copied to
+	 */
+	/* check if %ebx and %eax are in the same page */
 	movl %ebx, %esi
-	movl $RELOC(__kernel_end), %edi
+	addl $PGOFSET,%esi
+	andl $~PGOFSET,%esi
+        cmp %esi, %eax
+	je .same_hvm_info
+
+	/* First, copy the hvm_start_info structure to %eax */
+	movl %ebx, %esi
+	movl %eax, %edi
 	movl $HVM_START_INFO_SIZE, %ecx
 	shrl $2, %ecx
 	rep movsl
 
 	/* Copy cmdline_paddr after hvm_start_info */
 	movl CMDLINE_PADDR(%ebx), %esi
-	movl $RELOC(__kernel_end), %ecx
-	movl %edi, CMDLINE_PADDR(%ecx)	/* Set new cmdline_paddr in hvm_start_info */
-	.cmdline_copy:
-	movb (%esi), %al
+	movl %edi, CMDLINE_PADDR(%eax)	/* Set new cmdline_paddr in hvm_start_info */
+.cmdline_copy:
+	movb (%esi), %cl
 	movsb
-	cmp $0, %al
+	cmp $0, %cl
 	jne .cmdline_copy
 
 	/* Copy memmap_paddr after cmdline (only if hvm_start_info->version != 0) */
-	xorl %eax, %eax
-	cmpl START_INFO_VERSION(%ebx), %eax
-	je .reload_ebx
+	xorl %ecx, %ecx
+	cmpl START_INFO_VERSION(%ebx), %ecx
+	je .save_hvm_info
+	pushl %eax
 	movl MMAP_PADDR(%ebx), %esi
-	movl $RELOC(__kernel_end), %ecx
-	movl %edi, MMAP_PADDR(%ecx)	/* Set new memmap_paddr in hvm_start_info */
+	movl %edi, MMAP_PADDR(%eax)	/* Set new memmap_paddr in hvm_start_info */
 	movl MMAP_ENTRIES(%ebx), %eax	/* Get memmap_entries */
 	movl $MMAP_ENTRY_SIZE, %ebx
 	mull %ebx			/* eax * ebx => edx:eax */
 	movl %eax, %ecx
 	shrl $2, %ecx
 	rep movsl
+	popl %eax
 
-.reload_ebx:
-	movl $RELOC(__kernel_end), %ebx
-
-	/* announce ourself */
-	movl	$VM_GUEST_GENPVH, RELOC(vm_guest)
-
-	jmp .save_hvm_start_paddr
-
-.start_xen:
-	pop %ebx
-	movl	$VM_GUEST_XENPVH, RELOC(vm_guest)
-
-.save_hvm_start_paddr:
+.save_hvm_info:
 	/*
-	 * save addr of the hvm_start_info structure. This is also the end
-	 * of the symbol table
-	/*
-	 * save addr of the hvm_start_info structure. This is also the end
-	 * of the symbol table
+	 * %eax points to the start of hvm_start_info
+	 * %edi points to the end
 	 */
-	movl	%ebx, RELOC(hvm_start_paddr)
-	movl	%ebx, %eax
-	addl	$KERNBASE,%eax
-	movl	$RELOC(esym),%ebp
-	movl	%eax,(%ebp)
+	addl    $KERNBASE,%eax
+	movl	%eax,RELOC(hvm_start_info)
+
+	/* round end to next page boundary */
+	addl    $PGOFSET,%edi
+	andl    $~PGOFSET,%edi
+
 	/* get a page for HYPERVISOR_shared_info */
 	/* this is only needed if we are running on Xen */
 	cmpl	$VM_GUEST_XENPVH, RELOC(vm_guest)
-	jne	.add_hvm_start_info_page
-	addl	$PAGE_SIZE, %ebx
-	addl	$PGOFSET,%ebx
-	andl	$~PGOFSET,%ebx
+	jne	.save_eblob
 	movl	$RELOC(HYPERVISOR_shared_info_pa),%ebp
-	movl	%ebx,(%ebp)
-	/* XXX assume hvm_start_info+dependant structure fits in a single page */
-.add_hvm_start_info_page:
-	addl	$PAGE_SIZE, %ebx
-	addl	$PGOFSET,%ebx
-	andl	$~PGOFSET,%ebx
-	addl	$KERNBASE,%ebx
-	movl	$RELOC(eblob),%ebp
-	movl	%ebx,(%ebp)
+	movl	%edi,(%ebp)
+	addl	$PAGE_SIZE, %edi
 
+.save_eblob:
+	addl    $KERNBASE,%edi
+	movl	$RELOC(eblob),%ebp
+	movl	%edi,(%ebp)
 	jmp	.Lstart_common
+
+.same_hvm_info:
+	/* just use the provided %ebx */
+	/* XXX assume hvm_start_info+dependant structure fits in a single page */
+	movl %ebx, %eax
+	movl %ebx, %edi
+	addl    $PAGE_SIZE, %edi
+	jmp .save_hvm_info
 END(start_pvh)
 	.align 8
 gdtdesc_xenpvh:
