@@ -1352,7 +1352,7 @@ m68k_osabi_sniffer (bfd *abfd)
   /* XXX NetBSD uses ELFOSABI_NONE == ELFOSABI_SYSV. Therefore, do not
      fall back to EABI here.  */
 #ifdef __NetBSD__
-  rturn GDB_OSABI_UNKNOWN;
+  return GDB_OSABI_UNKNOWN;
 #else
   unsigned int elfosabi = elf_elfheader (abfd)->e_ident[EI_OSABI];
   enum gdb_osabi osabi = GDB_OSABI_UNKNOWN;
