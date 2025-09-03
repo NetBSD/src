@@ -1,4 +1,4 @@
-/*	$NetBSD: support.S,v 1.10 2020/06/30 16:20:01 maxv Exp $	*/
+/*	$NetBSD: support.S,v 1.11 2025/08/18 20:59:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -69,7 +69,7 @@
  *
  * Modifies:
  *	r15-r19	scratch
- *	ar.bsp	tranlated to new mode
+ *	ar.bsp	translated to new mode
  */
 ENTRY_NOPROFILE(ia64_change_mode, 0)
 	rsm	psr.i | psr.ic
@@ -118,7 +118,7 @@ END(ia64_change_mode)
  *
  * Modifies:
  *	r15-r18	scratch
- *	ar.bsp	tranlated to physical mode
+ *	ar.bsp	translated to physical mode
  *	psr.i	cleared
  */
 ENTRY(ia64_physical_mode, 0)

@@ -1,5 +1,5 @@
 /* bfd back-end for HP PA-RISC SOM objects.
-   Copyright (C) 1990-2022 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah.
@@ -2117,7 +2117,7 @@ setup_sections (bfd *abfd,
 		    SEEK_SET) != 0)
 	goto error_return;
       amt = sizeof ext_space;
-      if (bfd_bread (&ext_space, amt, abfd) != amt)
+      if (bfd_read (&ext_space, amt, abfd) != amt)
 	goto error_return;
 
       som_swap_space_dictionary_in (&ext_space, &space);
@@ -2159,7 +2159,7 @@ setup_sections (bfd *abfd,
 		    SEEK_SET) != 0)
 	goto error_return;
       amt = sizeof ext_subspace;
-      if (bfd_bread (&ext_subspace, amt, abfd) != amt)
+      if (bfd_read (&ext_subspace, amt, abfd) != amt)
 	goto error_return;
       /* Seek back to the start of the subspaces for loop below.  */
       if (bfd_seek (abfd,
@@ -2191,7 +2191,7 @@ setup_sections (bfd *abfd,
 
 	  /* Read in the next subspace.  */
 	  amt = sizeof ext_subspace;
-	  if (bfd_bread (&ext_subspace, amt, abfd) != amt)
+	  if (bfd_read (&ext_subspace, amt, abfd) != amt)
 	    goto error_return;
 
 	  som_swap_subspace_dictionary_in (&ext_subspace, &subspace);
@@ -2396,7 +2396,7 @@ som_object_p (bfd *abfd)
 #define ENTRY_SIZE sizeof (struct som_external_som_entry)
 
   amt = sizeof (struct som_external_header);
-  if (bfd_bread (&ext_file_hdr, amt, abfd) != amt)
+  if (bfd_read (&ext_file_hdr, amt, abfd) != amt)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_wrong_format);
@@ -2427,7 +2427,7 @@ som_object_p (bfd *abfd)
     case EXECLIBMAGIC:
       /* Read the lst header and determine where the SOM directory begins.  */
 
-      if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+      if (bfd_seek (abfd, 0, SEEK_SET) != 0)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -2435,7 +2435,7 @@ som_object_p (bfd *abfd)
 	}
 
       amt = sizeof (struct som_external_lst_header);
-      if (bfd_bread (&ext_lst_header, amt, abfd) != amt)
+      if (bfd_read (&ext_lst_header, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -2452,7 +2452,7 @@ som_object_p (bfd *abfd)
 	}
 
       amt = ENTRY_SIZE;
-      if (bfd_bread (&ext_som_entry, amt, abfd) != amt)
+      if (bfd_read (&ext_som_entry, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -2470,7 +2470,7 @@ som_object_p (bfd *abfd)
 
       /* And finally, re-read the som header.  */
       amt = sizeof (struct som_external_header);
-      if (bfd_bread (&ext_file_hdr, amt, abfd) != amt)
+      if (bfd_read (&ext_file_hdr, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -2505,7 +2505,7 @@ som_object_p (bfd *abfd)
       if (aux_hdr_ptr == NULL)
 	return NULL;
       amt = sizeof (struct som_external_exec_auxhdr);
-      if (bfd_bread (&ext_exec_auxhdr, amt, abfd) != amt)
+      if (bfd_read (&ext_exec_auxhdr, amt, abfd) != amt)
 	{
 	  if (bfd_get_error () != bfd_error_system_call)
 	    bfd_set_error (bfd_error_wrong_format);
@@ -3039,7 +3039,7 @@ som_write_fixups (bfd *abfd,
 	      if (p - tmp_space + 512 > SOM_TMP_BUFSIZE)
 		{
 		  amt = p - tmp_space;
-		  if (bfd_bwrite ((void *) tmp_space, amt, abfd) != amt)
+		  if (bfd_write (tmp_space, amt, abfd) != amt)
 		    return false;
 
 		  p = tmp_space;
@@ -3290,7 +3290,7 @@ som_write_fixups (bfd *abfd,
 
 	  /* Scribble out the relocations.  */
 	  amt = p - tmp_space;
-	  if (bfd_bwrite ((void *) tmp_space, amt, abfd) != amt)
+	  if (bfd_write (tmp_space, amt, abfd) != amt)
 	    return false;
 	  p = tmp_space;
 
@@ -3304,113 +3304,126 @@ som_write_fixups (bfd *abfd,
   return true;
 }
 
+/* Write the length of STR followed by STR to P which points into
+   *BUF, a buffer of *BUFLEN size.  Track total size in *STRINGS_SIZE,
+   setting *STRX to the current offset for STR.  When STR can't fit in
+   *BUF, flush the buffer to ABFD, possibly reallocating.  Return the
+   next available location in *BUF, or NULL on error.  */
+
+static char *
+add_string (char *p, const char *str, bfd *abfd, char **buf, size_t *buflen,
+	    unsigned int *strings_size, unsigned int *strx)
+{
+  size_t length = strlen (str) + 1;
+  /* Each entry will take 4 bytes to hold the string length + the
+     string itself + null terminator + padding to a 4 byte boundary.  */
+  size_t needed = (4 + length + 3) & ~3;
+
+  /* If there is not enough room for the next entry, then dump the
+     current buffer contents now and maybe allocate a larger buffer.  */
+  if (p - *buf + needed > *buflen)
+    {
+      /* Flush buffer before refilling or reallocating.  */
+      size_t amt = p - *buf;
+      if (bfd_write (*buf, amt, abfd) != amt)
+	return NULL;
+
+      /* Reallocate if now empty buffer still too small.  */
+      if (needed > *buflen)
+	{
+	  /* Ensure a minimum growth factor to avoid O(n**2) space
+	     consumption for n strings.  The optimal minimum factor
+	     seems to be 2.  */
+	  if (*buflen * 2 < needed)
+	    *buflen = needed;
+	  else
+	    *buflen = *buflen * 2;
+	  free (*buf);
+	  *buf = bfd_malloc (*buflen);
+	  if (*buf == NULL)
+	    return NULL;
+	}
+
+      /* Reset to beginning of the (possibly new) buffer space.  */
+      p = *buf;
+    }
+
+  /* First element in a string table entry is the length of
+     the string.  This must always be 4 byte aligned.  This is
+     also an appropriate time to fill in the string index
+     field in the symbol table entry.  */
+  bfd_put_32 (abfd, length - 1, p);
+  *strings_size += 4;
+  p += 4;
+
+  *strx = *strings_size;
+
+  /* Next comes the string itself + a null terminator.  */
+  memcpy (p, str, length);
+  p += length;
+  *strings_size += length;
+
+  /* Always align up to the next word boundary.  */
+  if (length & 3)
+    {
+      length = 4 - (length & 3);
+      memset (p, 0, length);
+      *strings_size += length;
+      p += length;
+    }
+  return p;
+}
+
 /* Write out the space/subspace string table.  */
 
 static bool
 som_write_space_strings (bfd *abfd,
 			 unsigned long current_offset,
-			 unsigned int *string_sizep)
+			 unsigned int *strings_size)
 {
   /* Chunk of memory that we can use as buffer space, then throw
      away.  */
   size_t tmp_space_size = SOM_TMP_BUFSIZE;
   char *tmp_space = bfd_malloc (tmp_space_size);
   char *p = tmp_space;
-  unsigned int strings_size = 0;
   asection *section;
-  size_t amt;
-  bfd_size_type res;
 
   if (tmp_space == NULL)
     return false;
 
   /* Seek to the start of the space strings in preparation for writing
      them out.  */
-  if (bfd_seek (abfd, (file_ptr) current_offset, SEEK_SET) != 0)
+  if (bfd_seek (abfd, current_offset, SEEK_SET) != 0)
     return false;
 
   /* Walk through all the spaces and subspaces (order is not important)
      building up and writing string table entries for their names.  */
+  *strings_size = 0;
   for (section = abfd->sections; section != NULL; section = section->next)
     {
-      size_t length;
+      unsigned int *strx;
 
       /* Only work with space/subspaces; avoid any other sections
 	 which might have been made (.text for example).  */
-      if (!som_is_space (section) && !som_is_subspace (section))
+      if (som_is_space (section))
+	strx = &som_section_data (section)->space_dict->name;
+      else if (som_is_subspace (section))
+	strx = &som_section_data (section)->subspace_dict->name;
+      else
 	continue;
 
-      /* Get the length of the space/subspace name.  */
-      length = strlen (section->name);
-
-      /* If there is not enough room for the next entry, then dump the
-	 current buffer contents now and maybe allocate a larger
-	 buffer.  Each entry will take 4 bytes to hold the string
-	 length + the string itself + null terminator.  */
-      if (p - tmp_space + 5 + length > tmp_space_size)
-	{
-	  /* Flush buffer before refilling or reallocating.  */
-	  amt = p - tmp_space;
-	  if (bfd_bwrite ((void *) &tmp_space[0], amt, abfd) != amt)
-	    return false;
-
-	  /* Reallocate if now empty buffer still too small.  */
-	  if (5 + length > tmp_space_size)
-	    {
-	      /* Ensure a minimum growth factor to avoid O(n**2) space
-		 consumption for n strings.  The optimal minimum
-		 factor seems to be 2, as no other value can guarantee
-		 wasting less than 50% space.  (Note that we cannot
-		 deallocate space allocated by `alloca' without
-		 returning from this function.)  The same technique is
-		 used a few more times below when a buffer is
-		 reallocated.  */
-	      if (2 * tmp_space_size < length + 5)
-		tmp_space_size = length + 5;
-	      else
-		tmp_space_size = 2 * tmp_space_size;
-	      tmp_space = xrealloc (tmp_space, tmp_space_size);
-	    }
-
-	  /* Reset to beginning of the (possibly new) buffer space.  */
-	  p = tmp_space;
-	}
-
-      /* First element in a string table entry is the length of the
-	 string.  Alignment issues are already handled.  */
-      bfd_put_32 (abfd, (bfd_vma) length, p);
-      p += 4;
-      strings_size += 4;
-
-      /* Record the index in the space/subspace records.  */
-      if (som_is_space (section))
-	som_section_data (section)->space_dict->name = strings_size;
-      else
-	som_section_data (section)->subspace_dict->name = strings_size;
-
-      /* Next comes the string itself + a null terminator.  */
-      strcpy (p, section->name);
-      p += length + 1;
-      strings_size += length + 1;
-
-      /* Always align up to the next word boundary.  */
-      while (strings_size % 4)
-	{
-	  bfd_put_8 (abfd, 0, p);
-	  p++;
-	  strings_size++;
-	}
+      p = add_string (p, section->name, abfd, &tmp_space, &tmp_space_size,
+		      strings_size, strx);
+      if (p == NULL)
+	return false;
     }
 
   /* Done with the space/subspace strings.  Write out any information
      contained in a partial block.  */
-  amt = p - tmp_space;
-  res = bfd_bwrite ((void *) &tmp_space[0], amt, abfd);
+  size_t amt = p - tmp_space;
+  bool ok = amt ? bfd_write (tmp_space, amt, abfd) == amt : true;
   free (tmp_space);
-  if (res != amt)
-    return false;
-  *string_sizep = strings_size;
-  return true;
+  return ok;
 }
 
 /* Write out the symbol string table.  */
@@ -3420,7 +3433,7 @@ som_write_symbol_strings (bfd *abfd,
 			  unsigned long current_offset,
 			  asymbol **syms,
 			  unsigned int num_syms,
-			  unsigned int *string_sizep,
+			  unsigned int *strings_size,
 			  struct som_compilation_unit *compilation_unit)
 {
   unsigned int i;
@@ -3429,9 +3442,6 @@ som_write_symbol_strings (bfd *abfd,
   size_t tmp_space_size = SOM_TMP_BUFSIZE;
   char *tmp_space = bfd_malloc (tmp_space_size);
   char *p = tmp_space;
-  unsigned int strings_size = 0;
-  size_t amt;
-  bfd_size_type res;
 
   if (tmp_space == NULL)
     return false;
@@ -3445,15 +3455,15 @@ som_write_symbol_strings (bfd *abfd,
 
   /* Seek to the start of the space strings in preparation for writing
      them out.  */
-  if (bfd_seek (abfd, (file_ptr) current_offset, SEEK_SET) != 0)
+  if (bfd_seek (abfd, current_offset, SEEK_SET) != 0)
     return false;
 
+  *strings_size = 0;
   if (compilation_unit)
     {
       for (i = 0; i < 4; i++)
 	{
 	  struct som_name_pt *name;
-	  size_t length;
 
 	  switch (i)
 	    {
@@ -3473,121 +3483,28 @@ som_write_symbol_strings (bfd *abfd,
 	      abort ();
 	    }
 
-	  length = strlen (name->name);
+	  p = add_string (p, name->name, abfd, &tmp_space, &tmp_space_size,
+			  strings_size, &name->strx);
 
-	  /* If there is not enough room for the next entry, then dump
-	     the current buffer contents now and maybe allocate a
-	     larger buffer.  */
-	  if (p - tmp_space + 5 + length > tmp_space_size)
-	    {
-	      /* Flush buffer before refilling or reallocating.  */
-	      amt = p - tmp_space;
-	      if (bfd_bwrite ((void *) &tmp_space[0], amt, abfd) != amt)
-		return false;
-
-	      /* Reallocate if now empty buffer still too small.  */
-	      if (5 + length > tmp_space_size)
-		{
-		  /* See alloca above for discussion of new size.  */
-		  if (2 * tmp_space_size < 5 + length)
-		    tmp_space_size = 5 + length;
-		  else
-		    tmp_space_size = 2 * tmp_space_size;
-		  tmp_space = xrealloc (tmp_space, tmp_space_size);
-		}
-
-	      /* Reset to beginning of the (possibly new) buffer
-		 space.  */
-	      p = tmp_space;
-	    }
-
-	  /* First element in a string table entry is the length of
-	     the string.  This must always be 4 byte aligned.  This is
-	     also an appropriate time to fill in the string index
-	     field in the symbol table entry.  */
-	  bfd_put_32 (abfd, (bfd_vma) length, p);
-	  strings_size += 4;
-	  p += 4;
-
-	  /* Next comes the string itself + a null terminator.  */
-	  strcpy (p, name->name);
-
-	  name->strx = strings_size;
-
-	  p += length + 1;
-	  strings_size += length + 1;
-
-	  /* Always align up to the next word boundary.  */
-	  while (strings_size % 4)
-	    {
-	      bfd_put_8 (abfd, 0, p);
-	      strings_size++;
-	      p++;
-	    }
+	  if (p == NULL)
+	    return false;
 	}
     }
 
   for (i = 0; i < num_syms; i++)
     {
-      size_t length = strlen (syms[i]->name);
-
-      /* If there is not enough room for the next entry, then dump the
-	 current buffer contents now and maybe allocate a larger buffer.  */
-     if (p - tmp_space + 5 + length > tmp_space_size)
-	{
-	  /* Flush buffer before refilling or reallocating.  */
-	  amt = p - tmp_space;
-	  if (bfd_bwrite ((void *) &tmp_space[0], amt, abfd) != amt)
-	    return false;
-
-	  /* Reallocate if now empty buffer still too small.  */
-	  if (5 + length > tmp_space_size)
-	    {
-	      /* See alloca above for discussion of new size.  */
-	      if (2 * tmp_space_size < 5 + length)
-		tmp_space_size = 5 + length;
-	      else
-		tmp_space_size = 2 * tmp_space_size;
-	      tmp_space = xrealloc (tmp_space, tmp_space_size);
-	    }
-
-	  /* Reset to beginning of the (possibly new) buffer space.  */
-	  p = tmp_space;
-	}
-
-      /* First element in a string table entry is the length of the
-	 string.  This must always be 4 byte aligned.  This is also
-	 an appropriate time to fill in the string index field in the
-	 symbol table entry.  */
-      bfd_put_32 (abfd, (bfd_vma) length, p);
-      strings_size += 4;
-      p += 4;
-
-      /* Next comes the string itself + a null terminator.  */
-      strcpy (p, syms[i]->name);
-
-      som_symbol_data (syms[i])->stringtab_offset = strings_size;
-      p += length + 1;
-      strings_size += length + 1;
-
-      /* Always align up to the next word boundary.  */
-      while (strings_size % 4)
-	{
-	  bfd_put_8 (abfd, 0, p);
-	  strings_size++;
-	  p++;
-	}
+      p = add_string (p, syms[i]->name, abfd, &tmp_space, &tmp_space_size,
+		      strings_size,
+		      &som_symbol_data (syms[i])->stringtab_offset);
+      if (p == NULL)
+	return false;
     }
 
   /* Scribble out any partial block.  */
-  amt = p - tmp_space;
-  res = bfd_bwrite ((void *) &tmp_space[0], amt, abfd);
+  size_t amt = p - tmp_space;
+  bool ok = amt ? bfd_write (tmp_space, amt, abfd) == amt : true;
   free (tmp_space);
-  if (res != amt)
-    return false;
-
-  *string_sizep = strings_size;
-  return true;
+  return ok;
 }
 
 /* Compute variable information to be placed in the SOM headers,
@@ -3639,7 +3556,7 @@ som_begin_writing (bfd *abfd)
       struct som_external_string_auxhdr ext_string_auxhdr;
       bfd_size_type len;
 
-      if (bfd_seek (abfd, (file_ptr) current_offset, SEEK_SET) != 0)
+      if (bfd_seek (abfd, current_offset, SEEK_SET) != 0)
 	return false;
 
       /* Write the aux_id structure and the string length.  */
@@ -3648,15 +3565,14 @@ som_begin_writing (bfd *abfd)
       current_offset += len;
       som_swap_string_auxhdr_out
 	(obj_som_version_hdr (abfd), &ext_string_auxhdr);
-      if (bfd_bwrite (&ext_string_auxhdr, len, abfd) != len)
+      if (bfd_write (&ext_string_auxhdr, len, abfd) != len)
 	return false;
 
       /* Write the version string.  */
       len = obj_som_version_hdr (abfd)->header_id.length - 4;
       obj_som_file_hdr (abfd)->aux_header_size += len;
       current_offset += len;
-      if (bfd_bwrite ((void *) obj_som_version_hdr (abfd)->string, len, abfd)
-	  != len)
+      if (bfd_write (obj_som_version_hdr (abfd)->string, len, abfd) != len)
 	return false;
     }
 
@@ -3665,7 +3581,7 @@ som_begin_writing (bfd *abfd)
       struct som_external_string_auxhdr ext_string_auxhdr;
       bfd_size_type len;
 
-      if (bfd_seek (abfd, (file_ptr) current_offset, SEEK_SET) != 0)
+      if (bfd_seek (abfd, current_offset, SEEK_SET) != 0)
 	return false;
 
       /* Write the aux_id structure and the string length.  */
@@ -3674,15 +3590,14 @@ som_begin_writing (bfd *abfd)
       current_offset += len;
       som_swap_string_auxhdr_out
 	(obj_som_copyright_hdr (abfd), &ext_string_auxhdr);
-      if (bfd_bwrite (&ext_string_auxhdr, len, abfd) != len)
+      if (bfd_write (&ext_string_auxhdr, len, abfd) != len)
 	return false;
 
       /* Write the copyright string.  */
       len = obj_som_copyright_hdr (abfd)->header_id.length - 4;
       obj_som_file_hdr (abfd)->aux_header_size += len;
       current_offset += len;
-      if (bfd_bwrite ((void *) obj_som_copyright_hdr (abfd)->string, len, abfd)
-	  != len)
+      if (bfd_write (obj_som_copyright_hdr (abfd)->string, len, abfd) != len)
 	return false;
     }
 
@@ -3929,9 +3844,9 @@ som_begin_writing (bfd *abfd)
      zeros are filled in.  Ugh.  */
   if (abfd->flags & (EXEC_P | DYNAMIC))
     current_offset = SOM_ALIGN (current_offset, PA_PAGESIZE);
-  if (bfd_seek (abfd, (file_ptr) current_offset - 1, SEEK_SET) != 0)
+  if (bfd_seek (abfd, current_offset - 1, SEEK_SET) != 0)
     return false;
-  if (bfd_bwrite ((void *) "", (bfd_size_type) 1, abfd) != 1)
+  if (bfd_write ("", 1, abfd) != 1)
     return false;
 
   obj_som_file_hdr (abfd)->unloadable_sp_size
@@ -4098,7 +4013,7 @@ som_finish_writing (bfd *abfd)
 	  som_swap_subspace_dictionary_record_out
 	    (som_section_data (subsection)->subspace_dict, &ext_subspace_dict);
 	  amt = sizeof (struct som_subspace_dictionary_record);
-	  if (bfd_bwrite (&ext_subspace_dict, amt, abfd) != amt)
+	  if (bfd_write (&ext_subspace_dict, amt, abfd) != amt)
 	    return false;
 	}
       /* Goto the next section.  */
@@ -4156,7 +4071,7 @@ som_finish_writing (bfd *abfd)
 	  som_swap_subspace_dictionary_record_out
 	    (som_section_data (subsection)->subspace_dict, &ext_subspace_dict);
 	  amt = sizeof (struct som_subspace_dictionary_record);
-	  if (bfd_bwrite (&ext_subspace_dict, amt, abfd) != amt)
+	  if (bfd_write (&ext_subspace_dict, amt, abfd) != amt)
 	    return false;
 	}
       /* Goto the next section.  */
@@ -4185,7 +4100,7 @@ som_finish_writing (bfd *abfd)
       som_swap_space_dictionary_out (som_section_data (section)->space_dict,
 				     &ext_space_dict);
       amt = sizeof (struct som_external_space_dictionary_record);
-      if (bfd_bwrite (&ext_space_dict, amt, abfd) != amt)
+      if (bfd_write (&ext_space_dict, amt, abfd) != amt)
 	return false;
 
       /* Goto the next section.  */
@@ -4205,7 +4120,7 @@ som_finish_writing (bfd *abfd)
 	(obj_som_compilation_unit (abfd), &ext_comp_unit);
 
       amt = sizeof (struct som_external_compilation_unit);
-      if (bfd_bwrite (&ext_comp_unit, amt, abfd) != amt)
+      if (bfd_write (&ext_comp_unit, amt, abfd) != amt)
 	return false;
     }
 
@@ -4227,10 +4142,10 @@ som_finish_writing (bfd *abfd)
 
   /* Only thing left to do is write out the file header.  It is always
      at location zero.  Seek there and write it.  */
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     return false;
   amt = sizeof (struct som_external_header);
-  if (bfd_bwrite (&ext_header, amt, abfd) != amt)
+  if (bfd_write (&ext_header, amt, abfd) != amt)
     return false;
 
   /* Now write the exec header.  */
@@ -4272,7 +4187,7 @@ som_finish_writing (bfd *abfd)
 	return false;
 
       amt = sizeof (ext_exec_header);
-      if (bfd_bwrite (&ext_exec_header, amt, abfd) != amt)
+      if (bfd_write (&ext_exec_header, amt, abfd) != amt)
 	return false;
     }
   return true;
@@ -4518,7 +4433,7 @@ som_build_and_write_symbol_table (bfd *abfd)
 
   symtab_size = num_syms;
   symtab_size *= sizeof (struct som_external_symbol_dictionary_record);
-  if (bfd_bwrite ((void *) som_symtab, symtab_size, abfd) != symtab_size)
+  if (bfd_write (som_symtab, symtab_size, abfd) != symtab_size)
     goto error_return;
 
   free (som_symtab);
@@ -5231,28 +5146,30 @@ som_set_reloc_info (unsigned char *fixup,
 		     section contents.  */
 		  rptr->addend = var ('V');
 
-		  if (rptr->addend == 0 && !section->contents)
-		    {
-		      /* Got to read the damn contents first.  We don't
-			 bother saving the contents (yet).  Add it one
-			 day if the need arises.  */
-		      bfd_byte *contents;
-		      if (!bfd_malloc_and_get_section (section->owner, section,
-						       &contents))
-			{
-			  free (contents);
-			  return (unsigned) -1;
-			}
-		      section->contents = contents;
-		      deallocate_contents = 1;
-		    }
 		  if (rptr->addend == 0
-		      && offset - var ('L') <= section->size
-		      && section->size - (offset - var ('L')) >= 4)
-		    rptr->addend = bfd_get_32 (section->owner,
-					       (section->contents
-						+ offset - var ('L')));
-
+		      && (section->flags & SEC_HAS_CONTENTS) != 0)
+		    {
+		      if (!section->contents)
+			{
+			  /* Got to read the damn contents first.  We don't
+			     bother saving the contents (yet).  Add it one
+			     day if the need arises.  */
+			  bfd_byte *contents;
+			  if (!bfd_malloc_and_get_section (section->owner,
+							   section, &contents))
+			    {
+			      free (contents);
+			      return (unsigned) -1;
+			    }
+			  section->contents = contents;
+			  deallocate_contents = 1;
+			}
+		      if (offset - var ('L') <= section->size
+			  && section->size - (offset - var ('L')) >= 4)
+			rptr->addend = bfd_get_32 (section->owner,
+						   (section->contents
+						    + offset - var ('L')));
+		    }
 		}
 	      else
 		rptr->addend = var ('V');
@@ -5727,9 +5644,9 @@ som_get_section_contents (bfd *abfd,
 {
   if (count == 0 || ((section->flags & SEC_HAS_CONTENTS) == 0))
     return true;
-  if ((bfd_size_type) (offset+count) > section->size
-      || bfd_seek (abfd, (file_ptr) (section->filepos + offset), SEEK_SET) != 0
-      || bfd_bread (location, count, abfd) != count)
+  if ((bfd_size_type) (offset + count) > section->size
+      || bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
+      || bfd_read (location, count, abfd) != count)
     return false; /* On error.  */
   return true;
 }
@@ -5764,7 +5681,7 @@ som_set_section_contents (bfd *abfd,
   if (bfd_seek (abfd, offset, SEEK_SET) != 0)
     return false;
 
-  if (bfd_bwrite (location, count, abfd) != count)
+  if (bfd_write (location, count, abfd) != count)
     return false;
   return true;
 }
@@ -5973,7 +5890,7 @@ som_bfd_count_ar_symbols (bfd *abfd,
 
       /* Read in this symbol and update the counter.  */
       amt = sizeof (ext_lst_symbol);
-      if (bfd_bread ((void *) &ext_lst_symbol, amt, abfd) != amt)
+      if (bfd_read (&ext_lst_symbol, amt, abfd) != amt)
 	goto error_return;
 
       (*count)++;
@@ -6001,7 +5918,7 @@ som_bfd_count_ar_symbols (bfd *abfd,
 
 	  /* Read the symbol in and update the counter.  */
 	  amt = sizeof (ext_lst_symbol);
-	  if (bfd_bread ((void *) &ext_lst_symbol, amt, abfd) != amt)
+	  if (bfd_read (&ext_lst_symbol, amt, abfd) != amt)
 	    goto error_return;
 
 	  (*count)++;
@@ -6082,7 +5999,7 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
 	goto error_return;
 
       amt = sizeof (lst_symbol);
-      if (bfd_bread ((void *) &lst_symbol, amt, abfd) != amt)
+      if (bfd_read (&lst_symbol, amt, abfd) != amt)
 	goto error_return;
 
       /* Get the name of the symbol, first get the length which is stored
@@ -6096,7 +6013,7 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
 			   + bfd_getb32 (lst_symbol.name) - 4), SEEK_SET) != 0)
 	goto error_return;
 
-      if (bfd_bread (&ext_len, (bfd_size_type) 4, abfd) != 4)
+      if (bfd_read (&ext_len, 4, abfd) != 4)
 	goto error_return;
       len = bfd_getb32 (ext_len);
 
@@ -6139,7 +6056,7 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
 	    goto error_return;
 
 	  amt = sizeof (lst_symbol);
-	  if (bfd_bread ((void *) &lst_symbol, amt, abfd) != amt)
+	  if (bfd_read (&lst_symbol, amt, abfd) != amt)
 	    goto error_return;
 
 	  /* Seek to the name length & string and read them in.  */
@@ -6147,7 +6064,7 @@ som_bfd_fill_in_ar_symbols (bfd *abfd,
 			+ bfd_getb32 (lst_symbol.name) - 4, SEEK_SET) != 0)
 	    goto error_return;
 
-	  if (bfd_bread (&ext_len, (bfd_size_type) 4, abfd) != 4)
+	  if (bfd_read (&ext_len, 4, abfd) != 4)
 	    goto error_return;
 	  len = bfd_getb32 (ext_len);
 
@@ -6202,7 +6119,7 @@ som_slurp_armap (bfd *abfd)
   struct artdata *ardata = bfd_ardata (abfd);
   char nextname[17];
   size_t amt = 16;
-  int i = bfd_bread ((void *) nextname, amt, abfd);
+  int i = bfd_read (nextname, amt, abfd);
 
   /* Special cases.  */
   if (i == 0)
@@ -6210,7 +6127,7 @@ som_slurp_armap (bfd *abfd)
   if (i != 16)
     return false;
 
-  if (bfd_seek (abfd, (file_ptr) -16, SEEK_CUR) != 0)
+  if (bfd_seek (abfd, -16, SEEK_CUR) != 0)
     return false;
 
   /* For archives without .o files there is no symbol table.  */
@@ -6222,7 +6139,7 @@ som_slurp_armap (bfd *abfd)
 
   /* Read in and sanity check the archive header.  */
   amt = sizeof (struct ar_hdr);
-  if (bfd_bread ((void *) &ar_header, amt, abfd) != amt)
+  if (bfd_read (&ar_header, amt, abfd) != amt)
     return false;
 
   if (strncmp (ar_header.ar_fmag, ARFMAG, 2))
@@ -6246,7 +6163,7 @@ som_slurp_armap (bfd *abfd)
   /* Read in the library symbol table.  We'll make heavy use of this
      in just a minute.  */
   amt = sizeof (struct som_external_lst_header);
-  if (bfd_bread ((void *) &ext_lst_header, amt, abfd) != amt)
+  if (bfd_read (&ext_lst_header, amt, abfd) != amt)
     return false;
 
   som_swap_lst_header_in (&ext_lst_header, &lst_header);
@@ -6617,22 +6534,22 @@ som_bfd_ar_write_symbol_stuff (bfd *abfd,
 
   /* Now scribble out the hash table.  */
   amt = (size_t) hash_size * 4;
-  if (bfd_bwrite ((void *) hash_table, amt, abfd) != amt)
+  if (bfd_write (hash_table, amt, abfd) != amt)
     goto error_return;
 
   /* Then the SOM dictionary.  */
   amt = (size_t) module_count * sizeof (struct som_external_som_entry);
-  if (bfd_bwrite ((void *) som_dict, amt, abfd) != amt)
+  if (bfd_write (som_dict, amt, abfd) != amt)
     goto error_return;
 
   /* The library symbols.  */
   amt = (size_t) nsyms * sizeof (struct som_external_lst_symbol_record);
-  if (bfd_bwrite ((void *) lst_syms, amt, abfd) != amt)
+  if (bfd_write (lst_syms, amt, abfd) != amt)
     goto error_return;
 
   /* And finally the strings.  */
   amt = string_size;
-  if (bfd_bwrite ((void *) strings, amt, abfd) != amt)
+  if (bfd_write (strings, amt, abfd) != amt)
     goto error_return;
 
   free (hash_table);
@@ -6773,12 +6690,12 @@ som_write_armap (bfd *abfd,
 
   /* Scribble out the ar header.  */
   amt = sizeof (struct ar_hdr);
-  if (bfd_bwrite ((void *) &hdr, amt, abfd) != amt)
+  if (bfd_write (&hdr, amt, abfd) != amt)
     return false;
 
   /* Now scribble out the lst header.  */
   amt = sizeof (struct som_external_lst_header);
-  if (bfd_bwrite ((void *) &lst, amt, abfd) != amt)
+  if (bfd_write (&lst, amt, abfd) != amt)
     return false;
 
   /* Build and write the armap.  */
@@ -6789,13 +6706,13 @@ som_write_armap (bfd *abfd,
   return true;
 }
 
-/* Free all information we have cached for this BFD.  We can always
-   read it again later if we need it.  */
+/* Throw away some malloc'd information for this BFD.  */
 
 static bool
 som_bfd_free_cached_info (bfd *abfd)
 {
-  if (bfd_get_format (abfd) == bfd_object)
+  if (bfd_get_format (abfd) == bfd_object
+      || bfd_get_format (abfd) == bfd_core)
     {
       asection *o;
 
@@ -6813,7 +6730,9 @@ som_bfd_free_cached_info (bfd *abfd)
 #undef FREE
     }
 
-  return _bfd_generic_close_and_cleanup (abfd);
+  /* Do not call _bfd_generic_bfd_free_cached_info here.
+     som_write_armap needs to access the bfd objalloc memory.  */
+  return true;
 }
 
 /* End of miscellaneous support functions.  */
@@ -6828,7 +6747,7 @@ som_bfd_link_split_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
 
 #define som_find_line				_bfd_nosymbols_find_line
 #define som_get_symbol_version_string		_bfd_nosymbols_get_symbol_version_string
-#define	som_close_and_cleanup			som_bfd_free_cached_info
+#define som_close_and_cleanup			_bfd_generic_close_and_cleanup
 #define som_read_ar_hdr				_bfd_generic_read_ar_hdr
 #define som_write_ar_hdr			_bfd_generic_write_ar_hdr
 #define som_openr_next_archived_file		bfd_generic_openr_next_archived_file
@@ -6843,7 +6762,6 @@ som_bfd_link_split_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
 #define som_bfd_make_debug_symbol		_bfd_nosymbols_bfd_make_debug_symbol
 #define som_read_minisymbols			_bfd_generic_read_minisymbols
 #define som_minisymbol_to_symbol		_bfd_generic_minisymbol_to_symbol
-#define som_get_section_contents_in_window	_bfd_generic_get_section_contents_in_window
 #define som_bfd_get_relocated_section_contents	bfd_generic_get_relocated_section_contents
 #define som_bfd_relax_section			bfd_generic_relax_section
 #define som_bfd_link_hash_table_create		_bfd_generic_link_hash_table_create
@@ -6863,6 +6781,7 @@ som_bfd_link_split_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
 #define som_bfd_link_hide_symbol		_bfd_generic_link_hide_symbol
 #define som_bfd_define_start_stop		bfd_generic_define_start_stop
 #define som_bfd_merge_private_bfd_data		_bfd_generic_bfd_merge_private_bfd_data
+#define som_init_private_section_data		_bfd_generic_init_private_section_data
 #define som_bfd_copy_private_header_data	_bfd_generic_bfd_copy_private_header_data
 #define som_bfd_set_private_flags		_bfd_generic_bfd_set_private_flags
 #define som_find_inliner_info			_bfd_nosymbols_find_inliner_info

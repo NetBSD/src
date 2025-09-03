@@ -1,5 +1,5 @@
 /* Matsushita AM33/2.0 support for 32-bit GNU/Linux ELF
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -28,6 +28,7 @@
 #define TARGET_LITTLE_SYM	am33_elf32_linux_vec
 #define TARGET_LITTLE_NAME	"elf32-am33lin"
 #define ELF_ARCH		bfd_arch_mn10300
+#define ELF_TARGET_ID		MN10300_ELF_DATA
 #define ELF_MACHINE_CODE	EM_MN10300
 #define ELF_MACHINE_ALT1	EM_CYGNUS_MN10300
 #define ELF_MAXPAGESIZE		0x1000

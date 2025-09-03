@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.27 2023/11/20 03:05:48 simonb Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.28 2025/08/12 23:23:59 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,9 +80,6 @@
 /* We have machine-dependent process tracing needs. */
 #define	__HAVE_PTRACE_MACHDEP
 
-/* We have machine-dependent procfs nodes. */
-#define	__HAVE_PROCFS_MACHDEP
-
 /* The machine-dependent ptrace(2) requests. */
 #define	PT_GETXMMREGS		(PT_FIRSTMACH + 5)
 #define	PT_SETXMMREGS		(PT_FIRSTMACH + 6)
@@ -132,6 +129,9 @@
 	case PT_SETXMMREGS:						\
 	case PT_GETXSTATE:						\
 	case PT_SETXSTATE:
+
+/* We have machine-dependent procfs nodes. */
+#define	__HAVE_PROCFS_MACHDEP
 
 /*
  * These are used to define machine-dependent procfs node types.

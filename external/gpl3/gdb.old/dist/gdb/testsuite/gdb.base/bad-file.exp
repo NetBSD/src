@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,9 @@
 # thus perhaps making the test host specific, if your host
 # print different text then the plan is to update the expected text
 # instead of making this test linux-only or some such.
+
+# The pathnames and shell commands in this test don't work on Windows host.
+require {!ishost *-*-mingw*}
 
 # There is no such file, but we still use the normal mechanism to pick
 # its name and path.

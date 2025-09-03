@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -51,6 +51,7 @@ typedef uint32_t Size_type;     /* size_t for 32 bit apps */
 #define SP_FAILED_UNWIND_MARKER ((uint64_t)(-3))
 
 #define PROFILE_BUFFER_CHUNK    16384
+#define fld_sizeof(t, f) (sizeof (((t *)0)->f))
 
 typedef enum
 {

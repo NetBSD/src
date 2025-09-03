@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.4 2014/08/06 15:23:07 joerg Exp $	*/
+/*	$NetBSD: srt0.s,v 1.5 2025/08/30 09:27:06 rin Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -64,9 +64,9 @@ _start:
 	mtctr	5
 	subi	3,3,4			/* Set up for loop */
 	subi	4,4,4
-00:	lwzu	5,4(3)
+0:	lwzu	5,4(3)
 	stwu	5,4(4)
-	bdnz	00b
+	bdnz	0b
 	lis	3,start_ldr@h
 	ori	3,3,start_ldr@l
 	mtlr	3			/* Easiest way to do an absolute jump */

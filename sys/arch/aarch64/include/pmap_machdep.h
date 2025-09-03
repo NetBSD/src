@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.8 2023/07/26 07:00:31 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.9 2025/07/26 13:58:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -439,6 +439,7 @@ pte_make_kenter_pa(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 }
 
 
+#if defined(EFI_RUNTIME)
 static inline pt_entry_t
 pte_make_enter_efirt(paddr_t pa, vm_prot_t prot, u_int flags)
 {
@@ -463,6 +464,7 @@ pte_make_enter_efirt(paddr_t pa, vm_prot_t prot, u_int flags)
 
 	return npte;
 }
+#endif
 
 
 static inline pt_entry_t

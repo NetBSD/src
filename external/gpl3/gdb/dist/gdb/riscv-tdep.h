@@ -18,8 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef RISCV_TDEP_H
-#define RISCV_TDEP_H
+#ifndef GDB_RISCV_TDEP_H
+#define GDB_RISCV_TDEP_H
 
 #include "arch/riscv.h"
 #include "gdbarch.h"
@@ -180,4 +180,4 @@ extern void riscv_supply_regset (const struct regset *regset,
 /* The names of the RISC-V target description features.  */
 extern const char *riscv_feature_name_csr;
 
-#endif /* RISCV_TDEP_H */
+#endif /* GDB_RISCV_TDEP_H */

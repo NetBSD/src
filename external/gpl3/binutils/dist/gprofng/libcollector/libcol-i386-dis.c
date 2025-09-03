@@ -1,4 +1,4 @@
-/* Copyright (C) 2022-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2022-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -18,7 +18,7 @@
    Foundation, 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#if defined(__i386__) || defined(__x86_64)
+#if defined(__i386__) || defined(__x86_64__)
 #include "opcodes/i386-dis.c"
 
 #undef _

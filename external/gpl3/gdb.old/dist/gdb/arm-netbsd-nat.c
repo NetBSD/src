@@ -1,6 +1,6 @@
 /* Native-dependent code for BSD Unix running on ARM's, for GDB.
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* We define this to get types like register_t.  */
-#include "defs.h"
 #include "gdbcore.h"
 #include "inferior.h"
 #include "regcache.h"
@@ -421,7 +419,7 @@ arm_netbsd_nat_target::read_description ()
 
   len = sizeof(flag);
   if (sysctlbyname("machdep.neon_present", &flag, &len, NULL, 0) == 0 && flag)
-    return aarch32_read_description ();
+    return aarch32_read_description (false);
 
   return arm_read_description (ARM_FP_TYPE_VFPV3, false);
 }

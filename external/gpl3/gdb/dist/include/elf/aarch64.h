@@ -31,7 +31,15 @@
 #define PT_AARCH64_MEMTAG_MTE     (PT_LOPROC + 0x2)
 
 /* Additional section types.  */
-#define SHT_AARCH64_ATTRIBUTES	0x70000003  /* Section holds attributes.  */
+/* Section holds attributes.  */
+#define SHT_AARCH64_ATTRIBUTES	(SHT_LOPROC + 3)
+/* Special aarch64-specific section for MTE support, as described in:
+   https://github.com/ARM-software/abi-aa/blob/main/pauthabielf64/pauthabielf64.rst#section-types  */
+#define SHT_AARCH64_AUTH_RELR   (SHT_LOPROC + 4)
+/* Special aarch64-specific sections for MTE support, as described in:
+   https://github.com/ARM-software/abi-aa/blob/main/memtagabielf64/memtagabielf64.rst#7section-types  */
+#define SHT_AARCH64_MEMTAG_GLOBALS_STATIC  (SHT_LOPROC + 7)
+#define SHT_AARCH64_MEMTAG_GLOBALS_DYNAMIC (SHT_LOPROC + 8)
 
 /* AArch64-specific values for sh_flags.  */
 #define SHF_ENTRYSECT		0x10000000   /* Section contains an

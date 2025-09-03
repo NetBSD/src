@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF2READ_H
-#define DWARF2READ_H
+#ifndef GDB_DWARF2_READ_H
+#define GDB_DWARF2_READ_H
 
 #include <queue>
 #include <unordered_map>
@@ -28,9 +28,7 @@
 #include "dwarf2/mapped-index.h"
 #include "dwarf2/section.h"
 #include "dwarf2/cu.h"
-#include "filename-seen-cache.h"
 #include "gdbsupport/gdb_obstack.h"
-#include "gdbsupport/hash_enum.h"
 #include "gdbsupport/function-view.h"
 #include "gdbsupport/packed.h"
 
@@ -103,6 +101,7 @@ struct dwarf2_per_cu_data
       is_dwz (false),
       reading_dwo_directly (false),
       tu_read (false),
+      lto_artificial (false),
       queued (false),
       m_header_read_in (false),
       mark (false),
@@ -120,9 +119,6 @@ struct dwarf2_per_cu_data
 
 private:
   unsigned int m_length = 0;
-
-  /* DWARF standard version this data has been read from (such as 4 or 5).  */
-  unsigned char m_dwarf_version = 0;
 
 public:
   /* Non-zero if this CU is from .debug_types.
@@ -148,6 +144,11 @@ public:
      "midflight").
      This flag is only valid if is_debug_types is true.  */
   unsigned int tu_read : 1;
+
+  /* Non-zero if the CU is produced by GCC and has name "<artificial>".  GCC
+     uses this to indicate that the CU does not correspond to a single source
+     file.  GCC produces this type of CU during LTO.  */
+  unsigned int lto_artificial : 1;
 
   /* Wrap the following in struct packed instead of bitfields to avoid
      data races when the bitfields end up on the same memory location
@@ -277,24 +278,6 @@ public:
       gdb_assert (m_length == length);
   }
 
-  /* Return DWARF version number of this CU.  */
-  short version () const
-  {
-    /* Make sure it's set already.  */
-    gdb_assert (m_dwarf_version != 0);
-    return m_dwarf_version;
-  }
-
-  void set_version (short version)
-  {
-    if (m_dwarf_version == 0)
-      /* Set if not set already.  */
-      m_dwarf_version = version;
-    else
-      /* If already set, verify that it's the same value.  */
-      gdb_assert (m_dwarf_version == version);
-  }
-
   dwarf_unit_type unit_type (bool strict_p = true) const
   {
     dwarf_unit_type ut = m_unit_type.load ();
@@ -325,6 +308,9 @@ public:
     return l;
   }
 
+  /* Make sure that m_lang != language_unknown.  */
+  void ensure_lang (dwarf2_per_objfile *per_objfile);
+
   /* Return the language of this CU, as a DWARF DW_LANG_* value.  This
      may be 0 in some situations.  */
   dwarf_source_language dw_lang () const
@@ -335,6 +321,22 @@ public:
      differ, as DW_LANG can be 0 for included units, whereas in this
      situation LANG would be set by the importing CU.  */
   void set_lang (enum language lang, dwarf_source_language dw_lang);
+
+  /* Return true if the CU may be a multi-language CU.  */
+
+  bool maybe_multi_language () const
+  {
+    enum language lang = this->lang ();
+
+    if (!lto_artificial)
+      /* Assume multi-language CUs are generated only by GCC LTO.  */
+      return false;
+
+    /* If GCC mixes different languages in an artificial LTO CU, it labels it C.
+       The exception to this is when it mixes C and C++, which it labels it C++.
+       For now, we don't consider the latter a multi-language CU.  */
+    return lang == language_c;
+  }
 
   /* Free any cached file names.  */
   void free_cached_file_names ();
@@ -444,7 +446,7 @@ public:
      the objfile obstack.  */
   auto_obstack obstack;
 
-  dwarf2_section_info info {};
+  std::vector<dwarf2_section_info> infos;
   dwarf2_section_info abbrev {};
   dwarf2_section_info line {};
   dwarf2_section_info loc {};
@@ -531,12 +533,14 @@ public:
 
   /* Mapping from abstract origin DIE to concrete DIEs that reference it as
      DW_AT_abstract_origin.  */
-  std::unordered_map<sect_offset, std::vector<sect_offset>,
-		     gdb::hash_enum<sect_offset>>
+  std::unordered_map<sect_offset, std::vector<sect_offset>>
     abstract_to_concrete;
 
-  /* The address map that is used by the DWARF index code.  */
-  addrmap_fixed *index_addrmap = nullptr;
+  /* Current directory, captured at the moment that object this was
+     created.  */
+  std::string captured_cwd;
+  /* Captured copy of debug_file_directory.  */
+  std::string captured_debug_dir;
 };
 
 /* An iterator for all_units that is based on index.  This
@@ -630,6 +634,26 @@ struct type_unit_group_unshareable
   struct symtab **symtabs = nullptr;
 };
 
+struct per_cu_and_offset
+{
+  dwarf2_per_cu_data *per_cu;
+  sect_offset offset;
+
+  bool operator== (const per_cu_and_offset &other) const noexcept
+  {
+    return this->per_cu == other.per_cu && this->offset == other.offset;
+  }
+};
+
+struct per_cu_and_offset_hash
+{
+  std::uint64_t operator() (const per_cu_and_offset &key) const noexcept
+  {
+    return (std::hash<dwarf2_per_cu_data *> () (key.per_cu)
+	    + std::hash<sect_offset> () (key.offset));
+  }
+};
+
 /* Collection of data recorded per objfile.
    This hangs off of dwarf2_objfile_data_key.
 
@@ -704,10 +728,22 @@ struct dwarf2_per_objfile
      other objfiles backed by the same BFD.  */
   struct dwarf2_per_bfd *per_bfd;
 
-  /* Table mapping type DIEs to their struct type *.
-     This is nullptr if not allocated yet.
-     The mapping is done via (CU/TU + DIE offset) -> type.  */
-  htab_up die_type_hash;
+  /* A mapping of (CU "per_cu" pointer, DIE offset) to GDB type pointer.
+
+     We store these in a hash table separate from the DIEs, and preserve them
+     when the DIEs are flushed out of cache.
+
+     The CU "per_cu" pointer is needed because offset alone is not enough to
+     uniquely identify the type.  A file may have multiple .debug_types sections,
+     or the type may come from a DWO file.  Furthermore, while it's more logical
+     to use per_cu->section+offset, with Fission the section with the data is in
+     the DWO file but we don't know that section at the point we need it.
+     We have to use something in dwarf2_per_cu_data (or the pointer to it)
+     because we can enter the lookup routine, get_die_type_at_offset, from
+     outside this file, and thus won't necessarily have PER_CU->cu.
+     Fortunately, PER_CU is stable for the life of the objfile.  */
+  gdb::unordered_map<per_cu_and_offset, type *, per_cu_and_offset_hash>
+    die_type_hash;
 
   /* Table containing line_header indexed by offset and offset_in_dwz.  */
   htab_up line_header_hash;
@@ -846,13 +882,8 @@ struct dwarf2_base_index_functions : public quick_symbol_functions
 
   void expand_all_symtabs (struct objfile *objfile) override;
 
-  /* A helper function that finds the per-cu object from an "adjusted"
-     PC -- a PC with the base text offset removed.  */
-  virtual dwarf2_per_cu_data *find_per_cu (dwarf2_per_bfd *per_bfd,
-					   unrelocated_addr adjusted_pc);
-
   struct compunit_symtab *find_pc_sect_compunit_symtab
-    (struct objfile *objfile, struct bound_minimal_symbol msymbol,
+    (struct objfile *objfile, bound_minimal_symbol msymbol,
      CORE_ADDR pc, struct obj_section *section, int warn_if_readin)
        override;
 
@@ -876,7 +907,8 @@ extern bool dw2_expand_symtabs_matching_one
   (dwarf2_per_cu_data *per_cu,
    dwarf2_per_objfile *per_objfile,
    gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
-   gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify);
+   gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
+   gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher);
 
 /* Helper for dw2_expand_symtabs_matching that works with a
    mapped_index_base instead of the containing objfile.  This is split
@@ -890,7 +922,8 @@ extern bool dw2_expand_symtabs_matching_symbol
    const lookup_name_info &lookup_name_in,
    gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
    gdb::function_view<bool (offset_type)> match_callback,
-   dwarf2_per_objfile *per_objfile);
+   dwarf2_per_objfile *per_objfile,
+   gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher);
 
 /* If FILE_MATCHER is non-NULL, set all the
    dwarf2_per_cu_quick_data::MARK of the current DWARF2_PER_OBJFILE
@@ -928,4 +961,4 @@ extern void create_all_units (dwarf2_per_objfile *per_objfile);
 
 extern htab_up create_quick_file_names_table (unsigned int nr_initial_entries);
 
-#endif /* DWARF2READ_H */
+#endif /* GDB_DWARF2_READ_H */

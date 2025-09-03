@@ -1050,6 +1050,12 @@ i386/elf relocations.
 @deffnx {} BFD_RELOC_X86_64_CODE_4_GOTPCRELX
 @deffnx {} BFD_RELOC_X86_64_CODE_4_GOTTPOFF
 @deffnx {} BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC
+@deffnx {} BFD_RELOC_X86_64_CODE_5_GOTPCRELX
+@deffnx {} BFD_RELOC_X86_64_CODE_5_GOTTPOFF
+@deffnx {} BFD_RELOC_X86_64_CODE_5_GOTPC32_TLSDESC
+@deffnx {} BFD_RELOC_X86_64_CODE_6_GOTPCRELX
+@deffnx {} BFD_RELOC_X86_64_CODE_6_GOTTPOFF
+@deffnx {} BFD_RELOC_X86_64_CODE_6_GOTPC32_TLSDESC
 x86-64/elf relocations.
 @end deffn
 @deffn {} BFD_RELOC_NS32K_IMM_8
@@ -2566,6 +2572,10 @@ number for the SBIC, SBIS, SBI and CBI instructions.
 @deffnx {} BFD_RELOC_RISCV_TLS_DTPREL64
 @deffnx {} BFD_RELOC_RISCV_TLS_TPREL32
 @deffnx {} BFD_RELOC_RISCV_TLS_TPREL64
+@deffnx {} BFD_RELOC_RISCV_TLSDESC_HI20
+@deffnx {} BFD_RELOC_RISCV_TLSDESC_LOAD_LO12
+@deffnx {} BFD_RELOC_RISCV_TLSDESC_ADD_LO12
+@deffnx {} BFD_RELOC_RISCV_TLSDESC_CALL
 @deffnx {} BFD_RELOC_RISCV_ALIGN
 @deffnx {} BFD_RELOC_RISCV_RVC_BRANCH
 @deffnx {} BFD_RELOC_RISCV_RVC_JUMP
@@ -3283,60 +3293,6 @@ Morpho MT - 8 bit immediate relocation.
 @deffnx {} BFD_RELOC_MSP430_SET_ULEB128
 @deffnx {} BFD_RELOC_MSP430_SUB_ULEB128
 msp430 specific relocation codes.
-@end deffn
-@deffn {} BFD_RELOC_NIOS2_S16
-@deffnx {} BFD_RELOC_NIOS2_U16
-@deffnx {} BFD_RELOC_NIOS2_CALL26
-@deffnx {} BFD_RELOC_NIOS2_IMM5
-@deffnx {} BFD_RELOC_NIOS2_CACHE_OPX
-@deffnx {} BFD_RELOC_NIOS2_IMM6
-@deffnx {} BFD_RELOC_NIOS2_IMM8
-@deffnx {} BFD_RELOC_NIOS2_HI16
-@deffnx {} BFD_RELOC_NIOS2_LO16
-@deffnx {} BFD_RELOC_NIOS2_HIADJ16
-@deffnx {} BFD_RELOC_NIOS2_GPREL
-@deffnx {} BFD_RELOC_NIOS2_UJMP
-@deffnx {} BFD_RELOC_NIOS2_CJMP
-@deffnx {} BFD_RELOC_NIOS2_CALLR
-@deffnx {} BFD_RELOC_NIOS2_ALIGN
-@deffnx {} BFD_RELOC_NIOS2_GOT16
-@deffnx {} BFD_RELOC_NIOS2_CALL16
-@deffnx {} BFD_RELOC_NIOS2_GOTOFF_LO
-@deffnx {} BFD_RELOC_NIOS2_GOTOFF_HA
-@deffnx {} BFD_RELOC_NIOS2_PCREL_LO
-@deffnx {} BFD_RELOC_NIOS2_PCREL_HA
-@deffnx {} BFD_RELOC_NIOS2_TLS_GD16
-@deffnx {} BFD_RELOC_NIOS2_TLS_LDM16
-@deffnx {} BFD_RELOC_NIOS2_TLS_LDO16
-@deffnx {} BFD_RELOC_NIOS2_TLS_IE16
-@deffnx {} BFD_RELOC_NIOS2_TLS_LE16
-@deffnx {} BFD_RELOC_NIOS2_TLS_DTPMOD
-@deffnx {} BFD_RELOC_NIOS2_TLS_DTPREL
-@deffnx {} BFD_RELOC_NIOS2_TLS_TPREL
-@deffnx {} BFD_RELOC_NIOS2_COPY
-@deffnx {} BFD_RELOC_NIOS2_GLOB_DAT
-@deffnx {} BFD_RELOC_NIOS2_JUMP_SLOT
-@deffnx {} BFD_RELOC_NIOS2_RELATIVE
-@deffnx {} BFD_RELOC_NIOS2_GOTOFF
-@deffnx {} BFD_RELOC_NIOS2_CALL26_NOAT
-@deffnx {} BFD_RELOC_NIOS2_GOT_LO
-@deffnx {} BFD_RELOC_NIOS2_GOT_HA
-@deffnx {} BFD_RELOC_NIOS2_CALL_LO
-@deffnx {} BFD_RELOC_NIOS2_CALL_HA
-@deffnx {} BFD_RELOC_NIOS2_R2_S12
-@deffnx {} BFD_RELOC_NIOS2_R2_I10_1_PCREL
-@deffnx {} BFD_RELOC_NIOS2_R2_T1I7_1_PCREL
-@deffnx {} BFD_RELOC_NIOS2_R2_T1I7_2
-@deffnx {} BFD_RELOC_NIOS2_R2_T2I4
-@deffnx {} BFD_RELOC_NIOS2_R2_T2I4_1
-@deffnx {} BFD_RELOC_NIOS2_R2_T2I4_2
-@deffnx {} BFD_RELOC_NIOS2_R2_X1I7_2
-@deffnx {} BFD_RELOC_NIOS2_R2_X2L5
-@deffnx {} BFD_RELOC_NIOS2_R2_F1I5_2
-@deffnx {} BFD_RELOC_NIOS2_R2_L5I4X1
-@deffnx {} BFD_RELOC_NIOS2_R2_T1X1I6
-@deffnx {} BFD_RELOC_NIOS2_R2_T1X1I6_2
-Relocations used by the Altera Nios II core.
 @end deffn
 @deffn {} BFD_RELOC_PRU_U16
 PRU LDI 16-bit unsigned data-memory relocation.
@@ -4218,6 +4174,11 @@ assembler and not (currently) written to any object files.
 @deffn {} BFD_RELOC_AARCH64_TLSDESC_LD_LO12_NC
 AArch64 pseudo relocation code to be used internally by the AArch64
 assembler and not (currently) written to any object files.
+@end deffn
+@deffn {} BFD_RELOC_AARCH64_BRANCH9
+AArch64 9 bit pc-relative conditional branch and compare & branch.
+The lowest two bits must be zero and are not stored in the
+instruction, giving an 11 bit signed byte offset.
 @end deffn
 @deffn {} BFD_RELOC_TILEPRO_COPY
 @deffnx {} BFD_RELOC_TILEPRO_GLOB_DAT

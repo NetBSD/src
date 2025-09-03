@@ -60,15 +60,15 @@ gdb_test "print repeat_p" \
 gdb_test_no_output "set print null on"
 
 gdb_test "print repeat" "= L\"A\", '$cent' <repeats 21 times>, \"B\"" \
-    "print repeat (print null on)"
+    "print repeat, print null on"
 
 gdb_test_no_output "set print elements 3"
 
 gdb_test "print repeat" "= L\"A$cent$cent\"\.\.\." \
-    "print repeat (print elements 3)"
+    "print repeat, print elements 3"
 
 gdb_test "print repeat_p" "= $hex L\"A$cent$cent\"\.\.\." \
-    "print repeat_p (print elements 3)"
+    "print repeat_p, print elements 3"
 
 # From PR cli/14977, but here because it requires wchar_t.
 gdb_test "printf \"%ls\\n\", 0" "\\(null\\)"

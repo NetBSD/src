@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <stdint.h>
 
+#include "libiberty.h"
 #include "gp-defs.h"
 #include "gp-time.h"
 #include "i18n.h"
@@ -105,7 +106,7 @@ get_basename (const char* name)
 inline char *
 dbe_strdup (const char *str)
 {
-  return str ? strdup (str) : NULL;
+  return str ? xstrdup (str) : NULL;
 }
 
 inline long
@@ -170,7 +171,6 @@ extern "C"
   char *canonical_path (char *path);
   char *get_relative_path (char *name);
   char *get_relative_link (const char *path_to, const char *path_from);
-  char *get_prog_name (int basename);
   char *dbe_strndup (const char *str, size_t len);
   int dbe_stat (const char *path, dbe_stat_t *sbuf);
   int dbe_stat_file (const char *path, dbe_stat_t *sbuf);

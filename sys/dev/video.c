@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.47 2025/04/12 07:48:16 mlelstv Exp $ */
+/* $NetBSD: video.c,v 1.48 2025/07/05 11:44:23 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.47 2025/04/12 07:48:16 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.48 2025/07/05 11:44:23 mlelstv Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -102,7 +102,7 @@ struct scatter_io {
 	size_t		sio_resid;
 };
 
-static void	scatter_buf_init(struct scatter_buf *);
+static void	scatter_buf_init(struct scatter_buf *, const char *);
 static void	scatter_buf_destroy(struct scatter_buf *);
 static int	scatter_buf_set_size(struct scatter_buf *, size_t);
 static paddr_t	scatter_buf_map(struct scatter_buf *, off_t);
@@ -302,7 +302,7 @@ static void			video_buffer_free(struct video_buffer *);
 
 
 /* functions for video_stream */
-static void	video_stream_init(struct video_stream *);
+static void	video_stream_init(struct video_stream *, const char *name);
 static void	video_stream_fini(struct video_stream *);
 
 static int	video_stream_setup_bufs(struct video_stream *,
@@ -359,7 +359,7 @@ video_attach(device_t parent, device_t self, void *aux)
 	sc->sc_opencnt = 0;
 	sc->sc_dying = false;
 
-	video_stream_init(&sc->sc_stream_in);
+	video_stream_init(&sc->sc_stream_in, device_xname(self));
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->hw_if->get_devname(sc->hw_softc));
@@ -2415,7 +2415,7 @@ videommap(dev_t dev, off_t off, int prot)
 /* Allocates buffers and initializes some fields.  The format field
  * must already have been initialized. */
 void
-video_stream_init(struct video_stream *vs)
+video_stream_init(struct video_stream *vs, const char *name)
 {
 	vs->vs_method = VIDEO_STREAM_METHOD_NONE;
 	vs->vs_flags = 0;
@@ -2432,10 +2432,10 @@ video_stream_init(struct video_stream *vs)
 	SIMPLEQ_INIT(&vs->vs_egress);
 
 	mutex_init(&vs->vs_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&vs->vs_sample_cv, "video");
+	cv_init(&vs->vs_sample_cv, name);
 	selinit(&vs->vs_sel);
 
-	scatter_buf_init(&vs->vs_data);
+	scatter_buf_init(&vs->vs_data, name);
 }
 
 void
@@ -2759,10 +2759,10 @@ video_stream_all_queued(struct video_stream *vs)
 
 
 static void
-scatter_buf_init(struct scatter_buf *sb)
+scatter_buf_init(struct scatter_buf *sb, const char *name)
 {
 	sb->sb_pool = pool_cache_init(PAGE_SIZE, 0, 0, 0,
-				      "video", NULL, IPL_VIDEO,
+				      name, NULL, IPL_VIDEO,
 				      NULL, NULL, NULL);
 	sb->sb_size = 0;
 	sb->sb_npages = 0;

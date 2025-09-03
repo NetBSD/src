@@ -229,8 +229,8 @@ class WatchLog(abc.ABC):
             raise WatchLogException("No file to watch")
         leftover = ""
         assert timeout, "Do not use this class unless you want to WAIT for something."
-        deadline = time.time() + timeout
-        while time.time() < deadline:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
             for line in self._fd.readlines():
                 if line[-1] != "\n":
                     # Line is not completely written yet, buffer and keep on waiting

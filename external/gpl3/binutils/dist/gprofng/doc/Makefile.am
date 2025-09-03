@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 
 AUTOMAKE_OPTIONS = info-in-builddir foreign no-texinfo.tex
 
+DVIS  = gprofng.dvi
 PDFS  = gprofng.pdf
 HTMLS = gprofng.html
 
@@ -34,26 +35,37 @@ gprofng_ug_TEXINFOS = fdl.texi gp-macros.texi
 TEXINFO_TEX         = .
 MAKEINFOHTML        = $(MAKEINFO) --html --no-split
 
-man_MANS = gprofng.1 gp-archive.1 gp-collect-app.1 gp-display-html.1 gp-display-src.1 gp-display-text.1
+man_MANS = gprofng.1 gprofng-archive.1 gprofng-collect-app.1 \
+	gprofng-display-html.1 gprofng-display-src.1 gprofng-display-text.1
 
 # Build the man page from the texinfo file
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
 $(man_MANS): $(srcdir)/gp-macros.texi
-	$(AM_V_GEN)touch $@
-	$(AM_V_at)-$(TEXI2POD) $(MANCONF) < $(srcdir)/`basename $@ .1`.texi > $@.pod
-	$(AM_V_at)-($(POD2MAN) $@.pod | sed -e '/^.if n .na/d' > $@.tmp && \
-	  mv -f $@.tmp $@) || (rm -f $@.tmp && exit 1)
-	$(AM_V_at)rm -f $@.pod
+	$(AM_V_at)( nm=`basename $@ .1` ; \
+	  $(TEXI2POD) $(MANCONF) < $(srcdir)/$$nm.texi > $$nm.pod ; \
+	  $(POD2MAN) $$nm.pod | sed -e '/^.if n .na/d' > $$nm.tmp || exit 1 ; \
+	  mv -f $$nm.tmp $@ ; \
+	  rm -f $$nm.pod )
 
 gprofng.1: $(srcdir)/gprofng.texi
-gp-archive.1: $(srcdir)/gp-archive.texi
-gp-collect-app.1: $(srcdir)/gp-collect-app.texi
-gp-display-html.1: $(srcdir)/gp-display-html.texi
-gp-display-src.1: $(srcdir)/gp-display-src.texi
-gp-display-text.1: $(srcdir)/gp-display-text.texi
+gprofng-archive.1: $(srcdir)/gprofng-archive.texi
+gprofng-collect-app.1: $(srcdir)/gprofng-collect-app.texi
+gprofng-display-html.1: $(srcdir)/gprofng-display-html.texi
+gprofng-display-src.1: $(srcdir)/gprofng-display-src.texi
+gprofng-display-text.1: $(srcdir)/gprofng-display-text.texi
 
 MAINTAINERCLEANFILES = gprofng.info $(man_MANS)
 EXTRA_DIST = $(man_MANS) version.texi
 
 info: $(man_MANS)
+
+examples.tar.gz:
+	$(AM_V_at)( tar czf $@ $(srcdir)/../examples )
+
+.PHONY: install-data-local
+
+install-data-local:  examples.tar.gz
+	$(mkinstalldirs) $(DESTDIR)$(docdir)/gprofng
+	$(INSTALL_DATA) examples.tar.gz $(DESTDIR)$(docdir)/gprofng
+

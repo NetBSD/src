@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -75,6 +75,7 @@ static unsigned sync_key = COLLECTOR_TSD_INVALID_KEY;
 static long sync_threshold = -1; /* calibrate the value */
 static int init_thread_intf_started = 0;
 static int init_thread_intf_finished = 0;
+static Sync_packet spacket_0 = { .comm.tsize = sizeof ( Sync_packet) };
 
 #define CHCK_NREENTRANCE(x)     (!sync_native || !sync_mode || ((x) = collector_interface->getKey( sync_key )) == NULL || (*(x) != 0))
 #define RECHCK_NREENTRANCE(x)   (!sync_native || !sync_mode || ((x) = collector_interface->getKey( sync_key )) == NULL || (*(x) == 0))
@@ -136,15 +137,6 @@ static int (*__real_pthread_cond_timedwait_2_2_5) (pthread_cond_t *restrict cond
 static int (*__real_pthread_cond_timedwait_2_0) (pthread_cond_t *restrict cond,
 			pthread_mutex_t *restrict mutex,
 			const struct timespec *restrict abstime) = NULL;
-
-
-static void
-collector_memset (void *s, int c, size_t n)
-{
-  unsigned char *s1 = s;
-  while (n--)
-    *s1++ = (unsigned char) c;
-}
 
 void
 __collector_module_init (CollectorInterface *_collector_interface)
@@ -568,9 +560,7 @@ __collector_jsync_end (hrtime_t reqt, void *object)
   hrtime_t grnt = gethrtime ();
   if (grnt - reqt >= sync_threshold)
     {
-      Sync_packet spacket;
-      collector_memset (&spacket, 0, sizeof (Sync_packet));
-      spacket.comm.tsize = sizeof (Sync_packet);
+      Sync_packet spacket = spacket_0;
       spacket.comm.tstamp = grnt;
       spacket.requested = reqt;
       spacket.objp = (intptr_t) object;
@@ -600,9 +590,7 @@ gprofng_pthread_mutex_lock (int (real_func) (pthread_mutex_t *),
   hrtime_t grnt = gethrtime ();
   if (grnt - reqt >= sync_threshold)
     {
-      Sync_packet spacket;
-      collector_memset (&spacket, 0, sizeof (Sync_packet));
-      spacket.comm.tsize = sizeof (Sync_packet);
+      Sync_packet spacket = spacket_0;
       spacket.comm.tstamp = grnt;
       spacket.requested = reqt;
       spacket.objp = (intptr_t) mp;
@@ -647,9 +635,7 @@ gprofng_pthread_cond_wait (int(real_func) (pthread_cond_t *, pthread_mutex_t *),
   hrtime_t grnt = gethrtime ();
   if (grnt - reqt >= sync_threshold)
     {
-      Sync_packet spacket;
-      collector_memset (&spacket, 0, sizeof (Sync_packet));
-      spacket.comm.tsize = sizeof (Sync_packet);
+      Sync_packet spacket = spacket_0;
       spacket.comm.tstamp = grnt;
       spacket.requested = reqt;
       spacket.objp = (intptr_t) mutex;
@@ -697,9 +683,7 @@ gprofng_pthread_cond_timedwait (int(real_func) (pthread_cond_t *,
   hrtime_t grnt = gethrtime ();
   if (grnt - reqt >= sync_threshold)
     {
-      Sync_packet spacket;
-      collector_memset (&spacket, 0, sizeof (Sync_packet));
-      spacket.comm.tsize = sizeof (Sync_packet);
+      Sync_packet spacket = spacket_0;
       spacket.comm.tstamp = grnt;
       spacket.requested = reqt;
       spacket.objp = (intptr_t) mutex;
@@ -746,9 +730,7 @@ gprofng_pthread_join (int(real_func) (pthread_t, void **),
   hrtime_t grnt = gethrtime ();
   if (grnt - reqt >= sync_threshold)
     {
-      Sync_packet spacket;
-      collector_memset (&spacket, 0, sizeof (Sync_packet));
-      spacket.comm.tsize = sizeof (Sync_packet);
+      Sync_packet spacket = spacket_0;
       spacket.comm.tstamp = grnt;
       spacket.requested = reqt;
       spacket.objp = (Vaddr_type) target_thread;
@@ -793,9 +775,7 @@ gprofng_sem_wait (int (real_func) (sem_t *), sem_t *sp)
   hrtime_t grnt = gethrtime ();
   if (grnt - reqt >= sync_threshold)
     {
-      Sync_packet spacket;
-      collector_memset (&spacket, 0, sizeof (Sync_packet));
-      spacket.comm.tsize = sizeof (Sync_packet);
+      Sync_packet spacket = spacket_0;
       spacket.comm.tstamp = grnt;
       spacket.requested = reqt;
       spacket.objp = (intptr_t) sp;

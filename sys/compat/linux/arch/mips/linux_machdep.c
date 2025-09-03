@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.44 2021/09/07 11:43:04 riastradh Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.45 2025/08/10 09:17:59 andvar Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.44 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.45 2025/08/10 09:17:59 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,7 +469,7 @@ linux_sys_sysmips(struct lwp *l, const struct linux_sys_sysmips_args *uap, regis
 		s = splhigh();
 		/*
 		 * No error testing here. This is bad, but Linux does
-		 * it like this. The source aknowledge "This is broken"
+		 * it like this. The source acknowledge "This is broken"
 		 * in a comment...
 		 */
 		(void) copyin(addr, &value, 1);

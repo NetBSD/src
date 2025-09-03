@@ -1,0 +1,263 @@
+# Copyright 2024 Free Software Foundation, Inc.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# Check that errno can be accessed by GDB under a variety of
+# circumstances.
+#
+# The challenge with GDB accessing errno is that, on modern systems,
+# errno is a variable in thread-local storage.  So, if GDB's access to
+# thread local storage is broken or unavailable, some of these tests
+# could fail.  On Linux, this is/was known to happen on systems with
+# older versions of glibc as well as when debugging statically linked
+# binaries.
+#
+# Another possibility is that the environment lacks sufficient
+# type information to print errno.  This can happen for the errno
+# variable itself or when the debuginfo contains a macro for errno
+# which refers to a function lacking type information.
+#
+# When debugging core files, access to errno might not be possible
+# both due to the situations described earlier along with the fact
+# that inferior function calls are not possible (for the cases in
+# which errno is a macro which calls a function returning errno's
+# address).
+#
+# It's also possible for a program to declare errno in an inner scope
+# causing the thread-local errno to be shadowed.  GDB should still
+# correctly print the masking errno for this case.
+#
+# At the time that this test was written, on GNU/Linux and on FreeBSD,
+# there were always scenarios in which printing errno was problematic.
+# This test attempts to identify the problem cases and set up xfails
+# for them.  So, hopefully, there should be no actual failures.  But
+# the "expected" failures encountered by running this test do
+# genuinely illustrate problems that a user might encounter while
+# attempting to print errno.
+
+standard_testfile
+
+proc do_tests {{do_xfail_cast 0} {do_xfail 0} {do_xfail_core_test 0}} {
+    clean_restart $::binfile
+    if ![runto_main] {
+	return
+    }
+
+    gdb_breakpoint [gdb_get_line_number "main-breakpoint"]
+    gdb_continue_to_breakpoint "main-breakpoint"
+
+    # Whether or not "print errno" will work often depends on the
+    # debuginfo available.  We can make some inferences about whether
+    # some of the tests should have xfail set-up by looking at the
+    # output of "ptype errno".  This test is set up to always pass
+    # even for less than ideal outputs, because the point is to set up
+    # the xfail(s).
+    gdb_test_multiple "ptype errno" "check errno type availability" {
+	-re -wrap "type = int" {
+	    pass $gdb_test_name
+	}
+	-re -wrap "type = .*no debug info.*" {
+	    pass $gdb_test_name
+	    set do_xfail 1
+	    set do_xfail_core_test 1
+	}
+	-re -wrap "Cannot find thread-local variables on this target.*" {
+	    pass $gdb_test_name
+	    set do_xfail 1
+	    set do_xfail_core_test 1
+	    set do_xfail_cast 1
+	}
+	-re -wrap "Cannot find thread-local storage.*" {
+	    pass $gdb_test_name
+	    set do_xfail 1
+	    set do_xfail_core_test 1
+	    set do_xfail_cast 1
+	}
+	-re -wrap "has unknown return type; cast the call to its declared return type.*" {
+
+	    # On systems which glibc as the C library, using -g3,
+	    # which causes macro information to be included in the
+	    # debuginfo, errno might be defined as follows:
+	    #
+	    #   #define errno (*__errno_location ())
+	    #
+	    # So, when we do "ptype errno", due to macro expansion,
+	    # this ends up being "ptype (*__errno_location ())".  So
+	    # the call to __errno_location (or something similar on
+	    # other OSes) is the call mentioned in the error message.
+
+	    pass $gdb_test_name
+	    set do_xfail 1
+	    set do_xfail_core_test 1
+	    set do_xfail_cast 1
+	}
+    }
+
+    # If errno is defined as a macro that contains an obvious function
+    # call, it won't work when debugging a core file.
+    gdb_test_multiple "info macro errno" "check if errno is a macro" {
+	-re -wrap "Defined at.*\[\r\n\]#define.*\\\(\\\).*" {
+	    set do_xfail_core_test 1
+	    pass $gdb_test_name
+	}
+	-re -wrap "Defined at.*\[\r\n\]#define.*" {
+	    pass $gdb_test_name
+	}
+	-re -wrap "The symbol .errno. has no definition.*" {
+	    pass $gdb_test_name
+	}
+    }
+
+    # Sometimes, "ptype errno" will ferret out that thread local
+    # variables aren't accessible, but sometimes it won't.  Dig deeper
+    # by trying to access memory using the "x/d" command.  Again, the
+    # point here is to set up an xfail for the later tests, so we pass
+    # this test for other known outputs.
+    gdb_test_multiple "x/d &errno" "attempt to access errno memory" {
+	-re -wrap "Cannot find thread-local variables on this target.*" {
+	    pass $gdb_test_name
+	    set do_xfail 1
+	    set do_xfail_core_test 1
+	    set do_xfail_cast 1
+	}
+	-re -wrap "Cannot find thread-local storage.*" {
+	    pass $gdb_test_name
+	    set do_xfail 1
+	    set do_xfail_core_test 1
+	    set do_xfail_cast 1
+	}
+	-re -wrap "has unknown return type; cast the call to its declared return type.*" {
+	    set do_xfail 1
+	    set do_xfail_core_test 1
+	    set do_xfail_cast 1
+	    pass $gdb_test_name
+	}
+	-re -wrap "$::hex.*?:\[\t \]$::decimal" {
+	    pass $gdb_test_name
+	}
+    }
+
+    if $do_xfail {
+	setup_xfail *-*-*
+    }
+    gdb_test "print errno" ".* = 42"
+
+    if $do_xfail_cast {
+	setup_xfail *-*-*
+    }
+    gdb_test "print (int) errno" ".* = 42"
+
+    set corefile ${::binfile}.core
+    set core_supported 0
+    if { ![is_remote host] } {
+	set core_supported [gdb_gcore_cmd $corefile "save corefile"]
+    }
+    # Normally, we'd check core_supported here and return if it's
+    # not, but we'll defer that until after the shadow test.
+
+    gdb_breakpoint [gdb_get_line_number "shadow_errno-breakpoint"]
+    gdb_continue_to_breakpoint "shadow_errno-breakpoint"
+
+    # This test demonstrates why a simple hack to GDB for printing
+    # errno is a bad idea.  (The hack was to intercept the string
+    # "errno" in process_print_command_args() and replace it with
+    # "*(*(int *(*)(void)) __errno_location) ()".)
+    gdb_test "print errno" ".* = 36" "print masking errno"
+
+    # Finish test early if no core file was made.
+    if !$core_supported {
+	return
+    }
+
+    clean_restart $::binfile
+
+    set core_loaded [gdb_core_cmd $corefile "load corefile"]
+    if { $core_loaded == -1 } {
+	return
+    }
+    if $do_xfail_core_test {
+	setup_xfail *-*-*
+    }
+    gdb_test "print errno" ".* = 42" "check errno value from corefile"
+}
+
+set binprefix $binfile
+
+with_test_prefix "default" {
+    set binfile $binprefix-default
+    if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+	untested "failed to compile"
+    } else {
+	do_tests
+    }
+}
+
+with_test_prefix "macros" {
+    set binfile $binprefix-macros
+    if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug macros}] != "" } {
+	untested "failed to compile"
+    } else {
+	do_tests
+    }
+}
+
+with_test_prefix "static" {
+    set binfile $binprefix-static
+    if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug "additional_flags=-static"}] != "" } {
+	untested "failed to compile"
+    } else {
+	do_tests
+    }
+}
+
+with_test_prefix "static-macros" {
+    set binfile $binprefix-static-macros
+    if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug macros "additional_flags=-static"}] != "" } {
+	untested "failed to compile"
+    } else {
+	do_tests
+    }
+}
+
+with_test_prefix "pthreads" {
+    set binfile $binprefix-pthreads
+    if  { [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+	untested "failed to compile"
+    } else {
+	do_tests
+    }
+}
+
+with_test_prefix "pthreads-macros" {
+    set binfile $binprefix-pthreads-macros
+    if  { [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug macros}] != "" } {
+	untested "failed to compile"
+    } else {
+	do_tests
+    }
+}
+
+with_test_prefix "pthreads-static" {
+    set binfile $binprefix-pthreads-static
+    if  { [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug "additional_flags=-static"}] != "" } {
+	untested "failed to compile"
+    } else {
+	do_tests
+    }
+}
+
+with_test_prefix "pthreads-static-macros" {
+    set binfile $binprefix-pthreads-static-macros
+    if  { [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug macros "additional_flags=-static"}] != "" } {
+	untested "failed to compile"
+    } else {
+	do_tests
+    }
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.46 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.47 2025/08/05 23:56:21 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.46 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.47 2025/08/05 23:56:21 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -208,6 +208,7 @@ retry:
 
 	VOP_UNLOCK(vp);
 	fd_set_exclose(l, *fd, (flags & O_CLOEXEC) != 0);
+	fd_set_foclose(l, *fd, (flags & O_CLOFORK) != 0);
 	fd_affix(curproc, fp, *fd);
 	return 0;
 bad:

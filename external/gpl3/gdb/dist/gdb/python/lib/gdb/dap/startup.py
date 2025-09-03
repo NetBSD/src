@@ -204,7 +204,7 @@ def log_stack(level=LogLevel.DEFAULT):
 
 
 @in_gdb_thread
-def exec_and_log(cmd):
+def exec_and_log(cmd, propagate_exception=False):
     """Execute the gdb command CMD.
     If logging is enabled, log the command and its output."""
     log("+++ " + cmd)
@@ -212,5 +212,15 @@ def exec_and_log(cmd):
         output = gdb.execute(cmd, from_tty=True, to_string=True)
         if output != "":
             log(">>> " + output)
-    except gdb.error:
-        log_stack()
+    except gdb.error as e:
+        if propagate_exception:
+            raise DAPException(str(e)) from e
+        else:
+            log_stack()
+
+
+@in_gdb_thread
+def exec_mi_and_log(*args):
+    """Wrap gdb.execute_mi, logging the command."""
+    log("+++ " + str(args))
+    return gdb.execute_mi(*args)

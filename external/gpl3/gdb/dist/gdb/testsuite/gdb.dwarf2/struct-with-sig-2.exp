@@ -128,5 +128,5 @@ save_vars { GDBFLAGS } {
     }
 }
 
-set re "Dwarf Error: .debug_types section not supported in dwz file"
+set re "DWARF Error: .debug_types section not supported in dwz file"
 gdb_assert { [regexp $re $gdb_file_cmd_msg] } "Dwarf Error message"

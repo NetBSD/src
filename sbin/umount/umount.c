@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.55 2025/03/25 21:51:51 christos Exp $	*/
+/*	$NetBSD: umount.c,v 1.56 2025/07/01 20:11:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.55 2025/03/25 21:51:51 christos Exp $");
+__RCSID("$NetBSD: umount.c,v 1.56 2025/07/01 20:11:13 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 			typelist = makevfslist(optarg);
 			break;
 		case 'v':
-			verbose = 1;
+			verbose++;
 			break;
 #endif /* !SMALL */
 		default:
@@ -282,11 +282,18 @@ umountfs(const char *name, const char **typelist, int raw)
 
 #ifndef SMALL
 	if (verbose) {
-		(void)printf("%s: unmount from %s\n", name, mntpt);
+		(void)printf("%s: %sunmount from %s\n",
+		    name, fake ? "fake " : "", mntpt);
 		/* put this before the test of FAKE */ 
-		if (!raw) {
-			(void)printf("Trying unmount program %s\n",
-			    umountprog);
+		if (!raw && verbose > 1) {
+			int OK = 1;
+			if (fake) {
+				OK = faccessat(AT_FDCWD, umountprog,
+				    X_OK, AT_EACCESS);
+			}
+			(void)printf("Trying unmount program %s%s\n",
+			    umountprog,
+			    (fake && OK < 0) ? ": would fail" : "");
 		}
 	}
 	if (fake)
@@ -317,7 +324,7 @@ umountfs(const char *name, const char **typelist, int raw)
 	}
 
 #ifndef SMALL
-	if (verbose)
+	if (verbose > 1)
 		(void)printf("(No separate unmount program.)\n");
 
 	if (dflag && statvfs(mntpt, &sfs) == -1) {

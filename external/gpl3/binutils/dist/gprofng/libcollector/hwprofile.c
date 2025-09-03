@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -32,7 +32,6 @@
 #include <signal.h>
 
 #include "gp-defs.h"
-#define _STRING_H 1  /* XXX MEZ: temporary workaround */
 #include "hwcdrv.h"
 #include "collector_module.h"
 #include "gp-experiment.h"
@@ -40,14 +39,6 @@
 #include "hwprofile.h"
 #include "ABS.h"
 #include "tsd.h"
-
-/* TprintfT(<level>,...) definitions.  Adjust per module as needed */
-#define DBG_LT0 0 // for high-level configuration, unexpected errors/warnings
-#define DBG_LT1 1 // for configuration details, warnings
-#define DBG_LT2 2
-#define DBG_LT3 3
-#define DBG_LT4 4
-#define DBG_LT5 5
 
 #define  SD_OFF 0       /* before start or after close she shut down process */
 #define  SD_PENDING 1   /* before running real_detach_experiment() */
@@ -225,13 +216,13 @@ open_experiment (const char *exp)
 	  params += 2;
 	  break;
 	}
-      params = CALL_UTIL (strchr)(params, ';');
+      params = __collector_strchr (params, ';');
       if (params)
 	params++;
     }
   if (params == NULL)  /* HWC profiling not specified */
     return COL_ERROR_HWCINIT;
-  char *s = CALL_UTIL (strchr)(params, (int) ';');
+  char *s = __collector_strchr (params, (int) ';');
   int sz = s ? s - params : CALL_UTIL (strlen)(params);
   char *defstring = (char*) alloca (sz + 1);
   CALL_UTIL (strlcpy)(defstring, params, sz + 1);
@@ -417,8 +408,8 @@ hwc_initialize_handlers (void)
   else
     {
       /* set our signal handler */
-      struct sigaction c_act;
-      CALL_UTIL (memset)(&c_act, 0, sizeof c_act);
+      static struct sigaction c_act_0 = {.sa_flags = SA_RESTART | SA_SIGINFO};
+      struct sigaction c_act = c_act_0;
       sigemptyset (&c_act.sa_mask);
       sigaddset (&c_act.sa_mask, SIGPROF); /* block SIGPROF delivery in handler */
       /* XXXX should probably also block sample_sig & pause_sig */
@@ -539,8 +530,9 @@ collector_record_counter_internal (ucontext_t *ucp, int timecvt,
 				   uint64_t va, uint64_t latency,
 				   uint64_t data_source)
 {
-  MHwcntr_packet pckt;
-  CALL_UTIL (memset)(&pckt, 0, sizeof ( MHwcntr_packet));
+  static MHwcntr_packet hwc_packet_0 = {.comm.type = HW_PCKT,
+					.comm.tsize = sizeof (Hwcntr_packet)};
+  MHwcntr_packet pckt = hwc_packet_0;
   pckt.comm.tstamp = time;
   pckt.tag = tag;
   if (timecvt > 1)
@@ -555,8 +547,6 @@ collector_record_counter_internal (ucontext_t *ucp, int timecvt,
 	value *= timecvt;
     }
   pckt.interval = value;
-  pckt.comm.type = HW_PCKT;
-  pckt.comm.tsize = sizeof (Hwcntr_packet);
   TprintfT (DBG_LT4, "hwprofile: %llu sample %lld tag %u recorded\n",
 	    (unsigned long long) time, (long long) value, tag);
   if (ABS_memop == ABST_NOPC)

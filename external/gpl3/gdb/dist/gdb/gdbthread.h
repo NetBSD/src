@@ -18,8 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDBTHREAD_H
-#define GDBTHREAD_H
+#ifndef GDB_GDBTHREAD_H
+#define GDB_GDBTHREAD_H
 
 struct symtab;
 
@@ -216,7 +216,7 @@ struct thread_suspend_state
      - If the thread is running, then this field has its value removed by
        calling stop_pc.reset() (see thread_info::set_executing()).
        Attempting to read a std::optional with no value is undefined
-       behaviour and will trigger an assertion error when _GLIBCXX_DEBUG is
+       behavior and will trigger an assertion error when _GLIBCXX_DEBUG is
        defined, which should make error easier to track down.  */
   std::optional<CORE_ADDR> stop_pc;
 };
@@ -1071,4 +1071,4 @@ extern void thread_try_catch_cmd (thread_info *thr,
 
 extern const char *thread_state_string (enum thread_state state);
 
-#endif /* GDBTHREAD_H */
+#endif /* GDB_GDBTHREAD_H */

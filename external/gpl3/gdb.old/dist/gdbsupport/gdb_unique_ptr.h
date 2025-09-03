@@ -1,6 +1,6 @@
 /* std::unique_ptr specializations for GDB.
 
-   Copyright (C) 2016-2023 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -75,7 +75,7 @@ make_unique_xstrndup (const char *str, size_t n)
   return gdb::unique_xmalloc_ptr<char> (xstrndup (str, n));
 }
 
-/* An overload of operator+= fo adding gdb::unique_xmalloc_ptr<char> to a
+/* An overload of operator+= for adding gdb::unique_xmalloc_ptr<char> to a
    std::string.  */
 
 static inline std::string &

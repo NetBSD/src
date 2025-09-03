@@ -37,6 +37,7 @@
 #define EF_ARM_VFP_FLOAT   0x400
 /* Removed, was EF_ARM_MAVERICK_FLOAT 0x800  */
 
+#define PT_ARM_ARCHEXT (PT_LOPROC + 0)
 /* Frame unwind information */
 #define PT_ARM_EXIDX (PT_LOPROC + 1)
 
@@ -76,11 +77,11 @@
 #define STT_ARM_16BIT      STT_HIPROC   /* A Thumb label.  */
 
 /* Additional section types.  */
-#define SHT_ARM_EXIDX	       0x70000001	/* Section holds ARM unwind info.  */
-#define SHT_ARM_PREEMPTMAP     0x70000002	/* Section pre-emption details.  */
-#define SHT_ARM_ATTRIBUTES     0x70000003	/* Section holds attributes.  */
-#define SHT_ARM_DEBUGOVERLAY   0x70000004	/* Section holds overlay debug info.  */
-#define SHT_ARM_OVERLAYSECTION 0x70000005	/* Section holds GDB and overlay integration info.  */
+#define SHT_ARM_EXIDX	       (SHT_LOPROC + 1)	/* Section holds ARM unwind info.  */
+#define SHT_ARM_PREEMPTMAP     (SHT_LOPROC + 2)	/* Section pre-emption details.  */
+#define SHT_ARM_ATTRIBUTES     (SHT_LOPROC + 3) /* Section holds attributes.  */
+#define SHT_ARM_DEBUGOVERLAY   (SHT_LOPROC + 4)	/* Section holds overlay debug info.  */
+#define SHT_ARM_OVERLAYSECTION (SHT_LOPROC + 5)	/* Section holds GDB and overlay integration info.  */
 
 /* ARM-specific values for sh_flags.  */
 #define SHF_ENTRYSECT      0x10000000   /* Section contains an entry point.  */

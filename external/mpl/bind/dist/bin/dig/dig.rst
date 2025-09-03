@@ -298,6 +298,13 @@ abbreviation is unambiguous; for example, :option:`+cd` is equivalent to
    always has a global effect; it cannot be set globally and then overridden on a
    per-lookup basis. The default is to print this comment.
 
+.. option:: +coflag, +co, +nocoflag, +noco
+
+   This option sets [or does not set] the CO (Compact denial of
+   existence Ok) EDNS bit in the query.  If set, it tells servers
+   that Compact Denial of Existence responses are acceptable when
+   replying to queries.  The default is ``+nocoflag``.
+
 .. option:: +comments, +nocomments
 
    This option toggles the display of some comment lines in the output, with
@@ -358,7 +365,7 @@ abbreviation is unambiguous; for example, :option:`+cd` is equivalent to
 
    This option sets the must-be-zero EDNS flags bits (Z bits) to the specified value.
    Decimal, hex, and octal encodings are accepted. Setting a named flag
-   (e.g., DO) is silently ignored. By default, no Z bits are set.
+   (e.g. DO, CO) is silently ignored. By default, no Z bits are set.
 
 .. option:: +ednsnegotiation, +noednsnegotiation
 

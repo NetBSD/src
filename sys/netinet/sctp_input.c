@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.18 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.19 2025/07/11 22:19:54 andvar Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.18 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.19 2025/07/11 22:19:54 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1760,7 +1760,7 @@ sctp_handle_cookie_echo(struct mbuf *m, int iphlen, int offset,
 		 * invalid ports or bad tag.  Note that we always leave
 		 * the v_tag in the header in network order and when we
 		 * stored it in the my_vtag slot we also left it in network
-		 * order. This maintians the match even though it may be in
+		 * order. This maintains the match even though it may be in
 		 * the opposite byte order of the machine :->
 		 */
 		return (NULL);

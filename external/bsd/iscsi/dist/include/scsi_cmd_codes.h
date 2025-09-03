@@ -1,4 +1,4 @@
-/* $NetBSD: scsi_cmd_codes.h,v 1.3 2009/06/30 02:44:52 agc Exp $ */
+/* $NetBSD: scsi_cmd_codes.h,v 1.4 2025/07/05 06:50:12 mlelstv Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -43,9 +43,13 @@ enum {
 	MODE_SENSE_6 = 0x1a,
 	STOP_START_UNIT = 0x1b,
 	READ_CAPACITY = 0x25,
+	READ_CAPACITY_16 = 0x9e,
 	READ_10 = 0x28,
 	WRITE_10 = 0x2a,
 	WRITE_VERIFY = 0x2e,
+	READ_16 = 0x88,
+	WRITE_16 = 0x8a,
+	WRITE_VERIFY_16 = 0x8e,
 	VERIFY = 0x2f,
 	SYNC_CACHE = 0x35,
 	LOG_SENSE = 0x4d,

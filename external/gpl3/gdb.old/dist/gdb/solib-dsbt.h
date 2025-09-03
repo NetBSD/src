@@ -1,6 +1,6 @@
 /* Handle shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +20,8 @@
 #ifndef SOLIB_DSBT_H
 #define SOLIB_DSBT_H
 
-struct objfile;
-struct target_so_ops;
+struct solib_ops;
 
-extern const struct target_so_ops dsbt_so_ops;
+extern const solib_ops dsbt_so_ops;
 
 #endif /* solib-dsbt.h */

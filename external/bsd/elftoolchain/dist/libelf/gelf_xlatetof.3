@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_xlatetof.3,v 1.6 2024/03/03 17:37:34 christos Exp $
+.\"	$NetBSD: gelf_xlatetof.3,v 1.7 2025/07/17 11:18:27 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008,2018 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,15 +23,18 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_xlatetof.3 3958 2022-03-12 14:31:32Z jkoshy
+.\" Id: gelf_xlatetof.3 4192 2025-07-15 16:39:34Z jkoshy
 .\"
-.Dd October 11, 2018
+.Dd July 15, 2025
 .Dt GELF_XLATETOF 3
 .Os
 .Sh NAME
-.Nm elf32_xlate ,
-.Nm elf64_xlate ,
-.Nm gelf_xlate
+.Nm elf32_xlatetof ,
+.Nm elf32_xlatetom ,
+.Nm elf64_xlatetof ,
+.Nm elf64_xlatetom ,
+.Nm gelf_xlatetof ,
+.Nm gelf_xlatetom
 .Nd translate data between files and memory
 .Sh LIBRARY
 .Lb libelf

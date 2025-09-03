@@ -16,7 +16,7 @@
 # This test triggers the "separate debug info file has no debug info" warning by replacing
 # the build-id based .debug file with the stripped binary and then loading it to gdb.
 # It then also sets up local debuginfod server with the correct debug file to download
-# to make sure no warnings are emmitted.
+# to make sure no warnings are emitted.
 
 
 standard_testfile
@@ -30,14 +30,11 @@ if {[build_executable "build executable" ${testfile} ${srcfile} \
     return -1
 }
 
-# Split BINFILE into BINFILE.stripped and BINFILE.debug, the first is
-# the executable with the debug information removed, and the second is
-# the debug information.
+# Split debug information from BINFILE into BINFILE.debug.
 #
-# However, by passing the "no-debuglink" flag we prevent this proc
-# from adding a .gnu_debuglink section to the executable.  Any lookup
-# of the debug information by GDB will need to be done based on the
-# build-id.
+# By passing the "no-debuglink" flag we prevent this proc from adding
+# a .gnu_debuglink section to BINFILE.  Any lookup of the debug
+# information by GDB will need to be done based on the build-id.
 if {[gdb_gnu_strip_debug $binfile no-debuglink]} {
     unsupported "cannot produce separate debug info files"
     return -1
@@ -59,12 +56,6 @@ set debuginfod_debugdir [standard_output_file "debug"]
 remote_exec build "mkdir $debuginfod_debugdir"
 remote_exec build "mv $debugfile $debuginfod_debugdir"
 
-# This is BINFILE with the debug information removed.  We are going to
-# place this in the BUILD_ID_DEBUG_FILE location, this would usually
-# represent a mistake by the user, and will trigger a warning from
-# GDB, this is the warning we are checking for.
-set stripped_binfile [standard_output_file "${binfile}.stripped"]
-
 # Create the .build-id/PREFIX directory name from
 # .build-id/PREFIX/SUFFIX.debug filename.
 set debugdir [file dirname ${build_id_debug_file}]
@@ -76,7 +67,7 @@ remote_exec build "mkdir -p $debugdir"
 # information, which will point back at this file, which also doesn't
 # have debug information, which could cause a loop.  But GDB will spot
 # this and give a warning.
-remote_exec build "mv ${stripped_binfile} ${build_id_debug_file}"
+remote_exec build "mv ${binfile} ${build_id_debug_file}"
 
 # Now start GDB.
 clean_restart
@@ -148,7 +139,7 @@ proc_with_prefix local_debuginfod { } {
     gdb_test "file ${build_id_debug_file}" \
 	[multi_line \
 	     "Reading symbols from ${build_id_debug_file}\\.\\.\\." \
-	     "Downloading separate debug info for ${build_id_debug_file}\\.\\.\\." \
+	     "Downloading\[^\r\n\]*separate debug info for ${build_id_debug_file}\\.\\.\\." \
 	     "Reading symbols from ${cache}/\[^\r\n\]+\\.\\.\\.(?:\r\nExpanding full symbols from \[^\r\n\]+)*"] \
 	"debuginfod running, info downloaded, no warnings"
 }

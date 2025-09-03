@@ -1,5 +1,5 @@
 /* BFD back-end for HP PA-RISC ELF files.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Original code by
 	Center for Software Science
@@ -418,8 +418,7 @@ elf32_hppa_link_hash_table_create (bfd *abfd)
     return NULL;
 
   if (!_bfd_elf_link_hash_table_init (&htab->etab, abfd, hppa_link_hash_newfunc,
-				      sizeof (struct elf32_hppa_link_hash_entry),
-				      HPPA32_ELF_DATA))
+				      sizeof (struct elf32_hppa_link_hash_entry)))
     {
       free (htab);
       return NULL;
@@ -729,7 +728,7 @@ hppa_build_one_stub (struct bfd_hash_entry *bh, void *in_arg)
 	 section.  The user should fix his linker script.  */
       if (hsh->target_section->output_section == NULL
 	  && info->non_contiguous_regions)
-	info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output "
+	info->callbacks->fatal (_("%P: Could not assign `%pA' to an output "
 				  "section. Retry without "
 				  "--enable-non-contiguous-regions.\n"),
 				hsh->target_section);
@@ -758,7 +757,7 @@ hppa_build_one_stub (struct bfd_hash_entry *bh, void *in_arg)
 	 section.  The user should fix his linker script.  */
       if (hsh->target_section->output_section == NULL
 	  && info->non_contiguous_regions)
-	info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output "
+	info->callbacks->fatal (_("%P: Could not assign `%pA' to an output "
 				  "section. Retry without "
 				  "--enable-non-contiguous-regions.\n"),
 				hsh->target_section);
@@ -839,7 +838,7 @@ hppa_build_one_stub (struct bfd_hash_entry *bh, void *in_arg)
 	 section.  The user should fix his linker script.  */
       if (hsh->target_section->output_section == NULL
 	  && info->non_contiguous_regions)
-	info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output "
+	info->callbacks->fatal (_("%P: Could not assign `%pA' to an output "
 				  "section. Retry without "
 				  "--enable-non-contiguous-regions.\n"),
 				hsh->target_section);
@@ -2042,8 +2041,8 @@ clobber_millicode_symbols (struct elf_link_hash_entry *eh,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf32_hppa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				  struct bfd_link_info *info)
+elf32_hppa_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			       struct bfd_link_info *info)
 {
   struct elf32_hppa_link_hash_table *htab;
   bfd *dynobj;
@@ -2057,7 +2056,7 @@ elf32_hppa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   dynobj = htab->etab.dynobj;
   if (dynobj == NULL)
-    abort ();
+    return true;
 
   if (htab->etab.dynamic_sections_created)
     {
@@ -2069,6 +2068,7 @@ elf32_hppa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    abort ();
 	  sec->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  sec->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  sec->alloced = 1;
 	}
 
       /* Force millicode symbols local.  */
@@ -2216,12 +2216,10 @@ elf32_hppa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 		 section.  We want this stub right at the end, up
 		 against the .got section.  */
 	      int gotalign = bfd_section_alignment (htab->etab.sgot);
-	      int pltalign = bfd_section_alignment (sec);
 	      int align = gotalign > 3 ? gotalign : 3;
 	      bfd_size_type mask;
 
-	      if (align > pltalign)
-		bfd_set_section_alignment (sec, align);
+	      (void) bfd_link_align_section (sec, align);
 	      mask = ((bfd_size_type) 1 << gotalign) - 1;
 	      sec->size = (sec->size + sizeof (plt_stub) + mask) & ~mask;
 	    }
@@ -2273,6 +2271,7 @@ elf32_hppa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       sec->contents = bfd_zalloc (dynobj, sec->size);
       if (sec->contents == NULL)
 	return false;
+      sec->alloced = 1;
     }
 
   return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
@@ -2996,6 +2995,7 @@ elf32_hppa_build_stubs (struct bfd_link_info *info)
 	stub_sec->contents = bfd_zalloc (htab->stub_bfd, stub_sec->size);
 	if (stub_sec->contents == NULL)
 	  return false;
+	stub_sec->alloced = 1;
 	stub_sec->size = 0;
       }
 
@@ -3110,7 +3110,7 @@ final_link_relocate (asection *input_section,
   unsigned int r_type = ELF32_R_TYPE (rela->r_info);
   unsigned int orig_r_type = r_type;
   reloc_howto_type *howto = elf_hppa_howto_table + r_type;
-  int r_format = howto->bitsize;
+  int r_format;
   enum hppa_reloc_field_selector_type_alt r_field;
   bfd *input_bfd = input_section->owner;
   bfd_vma offset = rela->r_offset;
@@ -3432,6 +3432,64 @@ final_link_relocate (asection *input_section,
       break;
     }
 
+  switch (r_type)
+    {
+    case R_PARISC_DIR32:
+    case R_PARISC_SECREL32:
+    case R_PARISC_SEGBASE:
+    case R_PARISC_SEGREL32:
+    case R_PARISC_PLABEL32:
+      /* These relocations apply to data.  */
+      r_format = howto->bitsize;
+      break;
+
+    default:
+      r_format = bfd_hppa_insn2fmt (input_bfd, insn);
+      switch (r_format)
+	{
+	case 10:
+	case -10:
+	  if (val & 7)
+	    {
+	      _bfd_error_handler
+		/* xgettext:c-format */
+		(_("%pB(%pA+%#" PRIx64 "): displacement %#x for insn %#x "
+		   "is not a multiple of 8 (gp %#x)"),
+		 input_bfd,
+		 input_section,
+		 (uint64_t) offset,
+		 val,
+		 insn,
+		 (unsigned int) elf_gp (input_section->output_section->owner));
+	      bfd_set_error (bfd_error_bad_value);
+	      return bfd_reloc_notsupported;
+	    }
+	  break;
+
+	case -11:
+	case -16:
+	  if (val & 3)
+	    {
+	      _bfd_error_handler
+		/* xgettext:c-format */
+		(_("%pB(%pA+%#" PRIx64 "): displacement %#x for insn %#x "
+		   "is not a multiple of 4 (gp %#x)"),
+		 input_bfd,
+		 input_section,
+		 (uint64_t) offset,
+		 val,
+		 insn,
+		 (unsigned int) elf_gp (input_section->output_section->owner));
+	      bfd_set_error (bfd_error_bad_value);
+	      return bfd_reloc_notsupported;
+	    }
+	  break;
+
+	default:
+	  break;
+        }
+      break;
+    }
   insn = hppa_rebuild_insn (insn, val, r_format);
 
   /* Update the instruction word.  */
@@ -4139,8 +4197,6 @@ elf32_hppa_finish_dynamic_symbol (bfd *output_bfd,
   bfd_byte *loc;
 
   htab = hppa_link_hash_table (info);
-  if (htab == NULL)
-    return false;
 
   if (eh->plt.offset != (bfd_vma) -1)
     {
@@ -4452,7 +4508,7 @@ elf32_hppa_elf_get_symbol_type (Elf_Internal_Sym *elf_sym, int type)
 #define elf_backend_hide_symbol		     elf32_hppa_hide_symbol
 #define elf_backend_finish_dynamic_symbol    elf32_hppa_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_sections  elf32_hppa_finish_dynamic_sections
-#define elf_backend_size_dynamic_sections    elf32_hppa_size_dynamic_sections
+#define elf_backend_late_size_sections	     elf32_hppa_late_size_sections
 #define elf_backend_init_index_section	     _bfd_elf_init_1_index_section
 #define elf_backend_gc_mark_hook	     elf32_hppa_gc_mark_hook
 #define elf_backend_grok_prstatus	     elf32_hppa_grok_prstatus

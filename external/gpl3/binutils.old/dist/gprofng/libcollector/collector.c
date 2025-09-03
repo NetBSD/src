@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -36,12 +36,6 @@
 #include "memmgr.h"
 #include "cc_libcollector.h"
 #include "tsd.h"
-
-/* TprintfT(<level>,...) definitions.  Adjust per module as needed */
-#define DBG_LT0 0 // for high-level configuration, unexpected errors/warnings
-#define DBG_LT1 1 // for configuration details, warnings
-#define DBG_LT2 2
-#define DBG_LT3 3
 
 typedef unsigned long ulong_t;
 
@@ -913,8 +907,10 @@ __collector_open_experiment (const char *exp, const char *params, sp_origin_t or
   __collector_ext_unwind_key_init (1, NULL);
 
   /* start java attach if suitable */
+#if defined(GPROFNG_JAVA_PROFILING)
   if (exp_origin == SP_ORIGIN_DBX_ATTACH)
     __collector_jprofile_start_attach ();
+#endif
   start_sec_time = CALL_UTIL (time)(NULL);
   __collector_start_time = collector_interface.getHiResTime ();
   TprintfT (DBG_LT0, "\t__collector_open_experiment; resetting start_time\n");
@@ -2153,7 +2149,7 @@ log_header_write (sp_origin_t origin)
   ucontext_t ucp;
   ucp.uc_stack.ss_sp = NULL;
   ucp.uc_stack.ss_size = 0;
-  if (getcontext (&ucp) == 0)
+  if (CALL_UTIL (getcontext) (&ucp) == 0)
     {
       (void) __collector_log_write ("<process stackbase=\"0x%lx\"></process>\n",
 				    (unsigned long) ucp.uc_stack.ss_sp + ucp.uc_stack.ss_size);
@@ -2411,10 +2407,9 @@ __collector_dlog (int tflag, int level, char *format, ...)
   int left = bufsz;
   if ((tflag & SP_DUMP_NOHEADER) == 0)
     {
-      p += CALL_UTIL (snprintf)(p, left, "P%d,L%02u,t%02lu",
-				(int) getpid (),
-				(unsigned int) __collector_lwp_self (),
-				__collector_no_threads ? 0 : __collector_thr_self ());
+      p += CALL_UTIL (snprintf) (p, left, "P%ld,L%02lu,t%02lu",
+	 (long) getpid (), (unsigned long) __collector_lwp_self (),
+	 (unsigned long) (__collector_no_threads ? 0 : __collector_thr_self ()));
       left = bufsz - (p - buf);
       if (tflag)
 	{
@@ -2454,11 +2449,8 @@ __collector_dlog (int tflag, int level, char *format, ...)
  */
 /*------------------------------------------------------------- _exit */
 
-#define CALL_REAL(x) (*(int(*)())__real_##x)
-#define NULL_PTR(x) ( __real_##x == NULL )
-
-static void *__real__exit = NULL; /* libc only: _exit */
-static void *__real__Exit = NULL; /* libc only: _Exit */
+static void (*__real__exit) (int status) = NULL; /* libc only: _exit */
+static void (*__real__Exit) (int status) = NULL; /* libc only: _Exit */
 void _exit () __attribute__ ((weak, alias ("__collector_exit")));
 void _Exit () __attribute__ ((weak, alias ("__collector_Exit")));
 

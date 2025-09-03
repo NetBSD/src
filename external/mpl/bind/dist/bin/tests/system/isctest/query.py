@@ -32,6 +32,8 @@ def generic_query(
     attempts: int = 10,
     expected_rcode: dns_rcode = None,
     verify: bool = False,
+    log_query: bool = True,
+    log_response: bool = True,
 ) -> Any:
     if port is None:
         if query_func.__name__ == "tls":
@@ -51,15 +53,25 @@ def generic_query(
 
     res = None
     for attempt in range(attempts):
-        isctest.log.debug(
-            f"{query_func.__name__}(): ip={ip}, port={port}, source={source}, "
+        log_msg = (
+            f"isc.query.{query_func.__name__}(): ip={ip}, port={port}, source={source}, "
             f"timeout={timeout}, attempts left={attempts-attempt}"
         )
+        if log_query:
+            log_msg += f"\n{message.to_text()}"
+            log_query = False  # only log query on first attempt
+        isctest.log.debug(log_msg)
         try:
             res = query_func(**query_args)
         except (dns.exception.Timeout, ConnectionRefusedError) as e:
-            isctest.log.debug(f"{query_func.__name__}(): the '{e}' exception raised")
+            isctest.log.debug(
+                f"isc.query.{query_func.__name__}(): the '{e}' exception raised"
+            )
         else:
+            if log_response:
+                isctest.log.debug(
+                    f"isc.query.{query_func.__name__}(): response\n{res.to_text()}"
+                )
             if res.rcode() == expected_rcode or expected_rcode is None:
                 return res
         time.sleep(1)
@@ -67,7 +79,7 @@ def generic_query(
     if expected_rcode is not None:
         last_rcode = dns_rcode.to_text(res.rcode()) if res else None
         isctest.log.debug(
-            f"{query_func.__name__}(): expected rcode={dns_rcode.to_text(expected_rcode)}, last rcode={last_rcode}"
+            f"isc.query.{query_func.__name__}(): expected rcode={dns_rcode.to_text(expected_rcode)}, last rcode={last_rcode}"
         )
     raise dns.exception.Timeout
 

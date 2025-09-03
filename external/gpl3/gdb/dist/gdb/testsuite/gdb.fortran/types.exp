@@ -60,7 +60,7 @@ proc test_float_literal_types_accepted {} {
     # Test various floating point formats
 
     # this used to guess whether to look for "real*4" or
-    # "real*8" based on a target config variable, but noone
+    # "real*8" based on a target config variable, but no one
     # maintained it properly.
 
     gdb_test "pt .44" "type = real\\*\[0-9\]+"
@@ -94,7 +94,24 @@ proc test_primitive_types_known {} {
 	# While TYPE_KIND is allowed as input, GDB will always return the
 	# Fortran notation TYPE*KIND
 	regsub -all "_" $type "\*" type_res
-	gdb_test "ptype $type" [string_to_regexp "type = $type_res"]
+	set re [string_to_regexp "type = $type_res"]
+	switch $type {
+	    real*16 - complex*16 {
+		regexp {^[^*_]*} $type base
+		set re_unsupported \
+		    [string_to_regexp \
+			 "unsupported kind 16 for type $base*4"]
+		set re ($re|$re_unsupported)
+	    }
+	    real_16 - complex_16 {
+		set re_unsupported \
+		    [string_to_regexp \
+			 "unsupported type $type_res"]
+		set re ($re|$re_unsupported)
+	    }
+	}
+
+	gdb_test "ptype $type" $re
     }
 }
 

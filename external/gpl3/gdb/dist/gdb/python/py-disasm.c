@@ -308,7 +308,7 @@ disasm_info_dealloc (PyObject *self)
      NEXT is nullptr.  */
   Py_XDECREF ((PyObject *) obj->next);
 
-  /* Now core deallocation behaviour.  */
+  /* Now core deallocation behavior.  */
   Py_TYPE (self)->tp_free (self);
 }
 
@@ -595,7 +595,7 @@ disasmpy_builtin_disassemble (PyObject *self, PyObject *args, PyObject *kw)
 	    }
 	  catch (const gdb_exception &except)
 	    {
-	      GDB_PY_HANDLE_EXCEPTION (except);
+	      return gdbpy_handle_gdb_exception (nullptr, except);
 	    }
 	  if (!str.empty ())
 	    PyErr_SetString (gdbpy_gdberror_exc, str.c_str ());
@@ -650,7 +650,7 @@ disasmpy_set_enabled (PyObject *self, PyObject *args, PyObject *kw)
       return nullptr;
     }
 
-  python_print_insn_enabled = PyObject_IsTrue (newstate);
+  python_print_insn_enabled = newstate == Py_True;
   Py_RETURN_NONE;
 }
 
@@ -740,7 +740,7 @@ disasmpy_info_progspace (PyObject *self, void *closure)
    part in the gdbpy_disassembler is a text part in the same STYLE, then
    the new string is appended to the previous part.
 
-   The merging behaviour make the Python API a little more user friendly,
+   The merging behavior make the Python API a little more user friendly,
    some disassemblers produce their output character at a time, there's no
    particular reason for this, it's just how they are implemented.  By
    merging parts with the same style we make it easier for the user to
@@ -855,9 +855,8 @@ gdbpy_disassembler::read_memory_func (bfd_vma memaddr, gdb_byte *buff,
 
   /* Now call the DisassembleInfo.read_memory method.  This might have been
      overridden by the user.  */
-  gdbpy_ref<> result_obj (PyObject_CallMethod ((PyObject *) obj,
-					       "read_memory",
-					       "I" GDB_PY_LL_ARG, len, offset));
+  gdbpy_ref<> result_obj = gdbpy_call_method ((PyObject *) obj, "read_memory",
+					      len, offset);
 
   /* Handle any exceptions.  */
   if (result_obj == nullptr)
@@ -934,7 +933,7 @@ disasmpy_result_str (PyObject *self)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return PyUnicode_Decode (str.c_str (), str.size (),
@@ -1307,7 +1306,7 @@ gdbpy_print_insn (struct gdbarch *gdbarch, CORE_ADDR memaddr,
 	}
       else
 	{
-	  gdbpy_print_stack ();
+	  gdbpy_print_stack_or_quit ();
 	  return std::optional<int> (-1);
 	}
 
@@ -1513,7 +1512,7 @@ disasmpy_addr_part_str (PyObject *self)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return PyUnicode_Decode (str.c_str (), str.size (),
@@ -1666,45 +1665,23 @@ gdbpy_initialize_disasm ()
     }
 
   disasm_info_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&disasm_info_object_type) < 0)
-    return -1;
-
-  if (gdb_pymodule_addobject (gdb_disassembler_module, "DisassembleInfo",
-			      (PyObject *) &disasm_info_object_type) < 0)
+  if (gdbpy_type_ready (&disasm_info_object_type, gdb_disassembler_module) < 0)
     return -1;
 
   disasm_result_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&disasm_result_object_type) < 0)
-    return -1;
-
-  if (gdb_pymodule_addobject (gdb_disassembler_module, "DisassemblerResult",
-			      (PyObject *) &disasm_result_object_type) < 0)
+  if (gdbpy_type_ready (&disasm_result_object_type, gdb_disassembler_module) < 0)
     return -1;
 
   disasm_part_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&disasm_part_object_type) < 0)
-    return -1;
-
-  if (gdb_pymodule_addobject (gdb_disassembler_module, "DisassemblerPart",
-			      (PyObject *) &disasm_part_object_type) < 0)
+  if (gdbpy_type_ready (&disasm_part_object_type, gdb_disassembler_module) < 0)
     return -1;
 
   disasm_addr_part_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&disasm_addr_part_object_type) < 0)
-    return -1;
-
-  if (gdb_pymodule_addobject (gdb_disassembler_module,
-			      "DisassemblerAddressPart",
-			      (PyObject *) &disasm_addr_part_object_type) < 0)
+  if (gdbpy_type_ready (&disasm_addr_part_object_type, gdb_disassembler_module) < 0)
     return -1;
 
   disasm_text_part_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&disasm_text_part_object_type) < 0)
-    return -1;
-
-  if (gdb_pymodule_addobject (gdb_disassembler_module,
-			      "DisassemblerTextPart",
-			      (PyObject *) &disasm_text_part_object_type) < 0)
+  if (gdbpy_type_ready (&disasm_text_part_object_type, gdb_disassembler_module) < 0)
     return -1;
 
   return 0;

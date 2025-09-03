@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GDB-ADD-INDEX 1"
-.TH GDB-ADD-INDEX 1 "2024-07-07" "gdb-15.1" "GNU Development Tools"
+.TH GDB-ADD-INDEX 1 "2025-04-20" "gdb-16.3" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -142,7 +142,7 @@
 gdb\-add\-index \- Add index files to speed up GDB
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-gdb-add-index \fIfilename\fR
+gdb-add-index [\-dwarf\-5] \fIfilename\fR
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 When \s-1GDB\s0 finds a symbol file, it scans the symbols in the
@@ -153,20 +153,49 @@ provides a way to build an index, which speeds up startup.
 .PP
 To determine whether a file contains such an index, use the command
 \&\f(CW\*(C`readelf \-S filename\*(C'\fR: the index is stored in a section named
-\&\f(CW\*(C`.gdb_index\*(C'\fR.  The index file can only be produced on systems
+\&\f(CW\*(C`.gdb_index\*(C'\fR (pre-DWARF 5) or \f(CW\*(C`.debug_names\*(C'\fR and
+\&\f(CW\*(C`.debug_str\*(C'\fR (\s-1DWARF 5\s0).  Indexes can only be produced on systems
 which use \s-1ELF\s0 binaries and \s-1DWARF\s0 debug information (i.e., sections
 named \f(CW\*(C`.debug_*\*(C'\fR).
 .PP
-\&\fBgdb-add-index\fR uses \s-1GDB\s0 and \fBobjdump\fR found
-in the \fB\s-1PATH\s0\fR environment variable.  If you want to use different
-versions of these programs, you can specify them through the
-\&\fB\s-1GDB\s0\fR and \fB\s-1OBJDUMP\s0\fR environment variables.
+By default \fBgdb-add-index\fR will add a pre-DWARF 5
+\&\f(CW\*(C`.gdb_index\*(C'\fR section to \fIfilename\fR.  With \fB\-dwarf\-5\fR
+\&\s-1DWARF 5\s0 sections are added instead.
+.PP
+\&\fIfilename\fR must be writable.
+.PP
+\&\fBgdb-add-index\fR uses \s-1GDB,\s0 \fBobjcopy\fR, and
+\&\fBreadelf\fR found in the \fB\s-1PATH\s0\fR environment variable.  If
+you want to use different versions of these programs, you can specify
+them through the appropriate environment variables (see below).
+.PP
+\&\fBgdb-add-index\fR exits with status 0 if it succeeds in creating
+the index for \fIfilename\fR or greater than 0 if an error occurs.
 .PP
 See more in
 the \s-1GDB\s0 manual in node \f(CW\*(C`Index Files\*(C'\fR
 \&\*(-- shell command \f(CW\*(C`info \-f gdb \-n "Index Files"\*(C'\fR.
 .SH "OPTIONS"
 .IX Header "OPTIONS"
+.IP "\fB\-dwarf\-5\fR" 4
+.IX Item "-dwarf-5"
+Add \s-1DWARF 5\s0 sections instead of previous \f(CW\*(C`.debug_index\*(C'\fR section.
+.SH "ENVIRONMENT"
+.IX Header "ENVIRONMENT"
+.IP "\fB\s-1GDB\s0\fR" 4
+.IX Item "GDB"
+Full file name of the \f(CW\*(C`gdb\*(C'\fR program to use for index generation.
+If not set, the \fB\s-1PATH\s0\fR will be searched for a \f(CW\*(C`gdb\*(C'\fR program.
+.IP "\fB\s-1OBJCOPY\s0\fR" 4
+.IX Item "OBJCOPY"
+Full file name of the \f(CW\*(C`objcopy\*(C'\fR program to use to copy section
+information into the given file.  If not set, the \fB\s-1PATH\s0\fR will be searched
+for a \f(CW\*(C`objcopy\*(C'\fR program.
+.IP "\fB\s-1READELF\s0\fR" 4
+.IX Item "READELF"
+Full file name of the \f(CW\*(C`readelf\*(C'\fR program to use to inspect
+properties of the given file.  If not set, the \fB\s-1PATH\s0\fR will be searched
+for a \f(CW\*(C`readelf\*(C'\fR program.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 The full documentation for \s-1GDB\s0 is maintained as a Texinfo manual.

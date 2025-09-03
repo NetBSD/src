@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,24 +24,24 @@
 #            const pointers to const vars
 # with mixed types.
 
-if [skip_ctf_tests] {
-    unsupported "no CTF debug format support, or CTF disabled in GDB"
-    return 0
-}
+require allow_ctf_tests
 
 standard_testfile .c
 
 # Using `-gctf` generates full-fledged CTF debug information.
 set opts {}
 lappend opts additional_flags=-gctf
-lappend opts ldflags=-Wl,--strip-debug
 lappend opts ldflags=-Wl,--ctf-variables
 lappend opts nowarnings
 
-if { [prepare_for_testing "failed to prepare" ${testfile} \
+if { [build_executable "failed to prepare" ${testfile} \
 	  [list $srcfile] $opts] } {
     return 0
 }
+
+clean_restart
+gdb_test_no_output "set always-read-ctf on"
+gdb_load $binfile
 
 #
 # set it up at a breakpoint so we can play with the variable values

@@ -337,7 +337,7 @@ tic54x_reloc_processing (arelent *relent,
 	    /* xgettext: c-format */
 	    (_("%pB: warning: illegal symbol index %ld in relocs"),
 	     abfd, reloc->r_symndx);
-	  relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  relent->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	  ptr = NULL;
 	}
       else
@@ -349,7 +349,7 @@ tic54x_reloc_processing (arelent *relent,
     }
   else
     {
-      relent->sym_ptr_ptr = section->symbol_ptr_ptr;
+      relent->sym_ptr_ptr = &section->symbol;
       ptr = *(relent->sym_ptr_ptr);
     }
 

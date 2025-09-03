@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_bt.c,v 1.8 2025/06/11 13:45:02 macallan Exp $ */
+/*	$NetBSD: adb_bt.c,v 1.10 2025/06/16 08:00:50 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,16 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.8 2025/06/11 13:45:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.10 2025/06/16 08:00:50 macallan Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
 #include <machine/autoconf.h>
-#include <machine/keyboard.h>
 
 #include <dev/adb/adbvar.h>
 
@@ -67,9 +63,6 @@ struct adbbt_softc {
 	device_t sc_dev;
 	struct adb_device *sc_adbdev;
 	struct adb_bus_accessops *sc_ops;
-	int sc_msg_len;
-	int sc_event;
-	uint8_t sc_buffer[16];
 	uint8_t sc_us;
 };	
 
@@ -103,8 +96,6 @@ adbbt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_adbdev->cookie = sc;
 	sc->sc_adbdev->handler = adbbt_handler;
 	sc->sc_us = ADBTALK(sc->sc_adbdev->current_addr, 0);
-
-	sc->sc_msg_len = 0;
 
 	printf(" addr %d: button device\n", sc->sc_adbdev->current_addr);
 }

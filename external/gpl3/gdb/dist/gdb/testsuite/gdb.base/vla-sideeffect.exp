@@ -52,30 +52,30 @@ gdb_test "print vla1\[0\]" " = 10" \
 
 gdb_test "print sizeof (vla2\[i++\])" " = ${sizeof_vla}"
 gdb_test "print i" " = 1" \
-         "print i - sizeof with side effects (1)"
+	 "print i - sizeof with side effects, 1"
 
 gdb_test "print sizeof (vla2\[i++ + sizeof(j++)\])" " = ${sizeof_vla}"
 gdb_test "print i" " = 2" \
-         "print i - sizeof with side effects (2)"
+	 "print i - sizeof with side effects, 2"
 gdb_test "print j" " = 0" \
          "print j - sizeof with no side effects"
 
 gdb_test "ptype vla2\[i++\]" "type = int \\\[10\\\]"
 gdb_test "print i" " = 2" \
-         "print i - ptype with side effects (1)"
+	 "print i - ptype with side effects, 1"
 
 gdb_test "ptype vla2\[i++ + sizeof(j++)\]" "type = int \\\[10\\\]"
 gdb_test "print i" " = 2" \
-         "print i - ptype with side effects (2)"
+	 "print i - ptype with side effects, 2"
 gdb_test "print j" " = 0" \
          "print j - ptype with no side effects"
 
 gdb_test "whatis vla2\[i++\]" "type = int \\\[10\\\]"
 gdb_test "print i" " = 2" \
-         "print i - whatis with side effects (1)"
+	 "print i - whatis with side effects, 1"
 
 gdb_test "whatis vla2\[i++ + sizeof(j++)\]" "type = int \\\[10\\\]"
 gdb_test "print i" " = 2" \
-         "print i - whatis with side effects (2)"
+	 "print i - whatis with side effects, 2"
 gdb_test "print j" " = 0" \
          "print j - whatis with no side effects"

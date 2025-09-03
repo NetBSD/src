@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.32 2021/08/07 16:19:12 thorpej Exp $ */
+/* $NetBSD: ega.c,v 1.33 2025/07/14 06:15:55 andvar Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.32 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.33 2025/07/14 06:15:55 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -715,7 +715,7 @@ ega_doswitch(struct ega_config *vc)
 	}
 
 	ega_setfont(vc, scr);
-	/* XXX swich colours! */
+	/* XXX switch colours! */
 
 	scr->pcs.dispoffset = scr->mindispoffset;
 	if (!oldscr || (scr->pcs.dispoffset != oldscr->pcs.dispoffset)) {

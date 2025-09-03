@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.383 2024/12/30 09:01:35 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.384 2025/09/02 00:24:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.383 2024/12/30 09:01:35 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.384 2025/09/02 00:24:10 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -131,6 +131,8 @@ extern const struct vnodeopv_desc lfs_fifoop_opv_desc;
 
 struct lwp * lfs_writer_daemon = NULL;
 kcondvar_t lfs_writerd_cv;
+
+struct workqueue *lfs_wq = NULL;
 
 int lfs_do_flush = 0;
 #ifdef LFS_KERNEL_RFW
@@ -550,6 +552,8 @@ lfs_init(void)
 	cv_init(&lfs_writerd_cv, "lfswrite");
 	cv_init(&locked_queue_cv, "lfsbuf");
 	cv_init(&lfs_writing_cv, "lfsflush");
+	workqueue_create(&lfs_wq, "lfsiowq", lfs_cluster_wq, NULL,
+					PRI_BIO, IPL_BIO, WQ_MPSAFE);
 }
 
 void
@@ -566,6 +570,7 @@ lfs_done(void)
 	cv_destroy(&lfs_writerd_cv);
 	cv_destroy(&locked_queue_cv);
 	cv_destroy(&lfs_writing_cv);
+	workqueue_destroy(lfs_wq);
 	pool_destroy(&lfs_inode_pool);
 	pool_destroy(&lfs_dinode_pool);
 	pool_destroy(&lfs_inoext_pool);

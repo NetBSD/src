@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_41.c,v 1.13 2025/01/26 16:25:33 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.14 2025/07/17 19:01:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -46,7 +46,7 @@ fromtext_opt(ARGS_FROMTEXT) {
 static isc_result_t
 totext_opt(ARGS_TOTEXT) {
 	isc_region_t r;
-	isc_region_t or ;
+	isc_region_t or;
 	uint16_t option;
 	uint16_t length;
 	char buf[sizeof("64000 64000")];

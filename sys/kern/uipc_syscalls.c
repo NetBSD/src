@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.214 2024/12/06 18:44:00 riastradh Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.215 2025/07/16 19:14:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define MBUFTYPES
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.214 2024/12/06 18:44:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.215 2025/07/16 19:14:13 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -258,6 +258,7 @@ do_sys_accept(struct lwp *l, int sock, struct sockaddr *name,
 		fd_abort(curproc, NULL, fd);
 	} else {
 		fd_set_exclose(l, fd, (flags & SOCK_CLOEXEC) != 0);
+		fd_set_foclose(l, fd, (flags & SOCK_CLOFORK) != 0);
 		fd_affix(curproc, fp2, fd);
 	}
 	fd_putfile(sock);
@@ -1274,10 +1275,12 @@ pipe1(struct lwp *l, int *fildes, int flags)
 	unsigned	rfd, wfd;
 	proc_t		*p = l->l_proc;
 
-	if (flags & ~(O_CLOEXEC|O_NONBLOCK|O_NOSIGPIPE))
+	if (flags & ~(O_CLOEXEC|O_CLOFORK|O_NONBLOCK|O_NOSIGPIPE))
 		return SET_ERROR(EINVAL);
 	if (flags & O_CLOEXEC)
 		soflags |= SOCK_CLOEXEC;
+	if (flags & O_CLOFORK)
+		soflags |= SOCK_CLOFORK;
 	if (flags & O_NONBLOCK)
 		soflags |= SOCK_NONBLOCK;
 	if (flags & O_NOSIGPIPE)

@@ -22,6 +22,7 @@
 #include "bfd.h"
 #include "elf-bfd.h"
 #include "elfxx-aarch64.h"
+#include "libbfd.h"
 #include <stdarg.h>
 #include <string.h>
 
@@ -697,102 +698,183 @@ _bfd_aarch64_elf_write_core_note (bfd *abfd, char *buf, int *bufsiz, int note_ty
     }
 }
 
+/* Find the first input bfd with GNU properties.
+   If such an input is found, set found to true and return the relevant input.
+   Otherwise, return the last input of bfd inputs.  */
+static bfd *
+_bfd_aarch64_elf_find_1st_bfd_input_with_gnu_property (
+  struct bfd_link_info *info,
+  bool *has_gnu_property)
+{
+  BFD_ASSERT (has_gnu_property);
+  const struct elf_backend_data *obfd = get_elf_backend_data (info->output_bfd);
+  bfd *pbfd = info->input_bfds;
+  bfd *prev = NULL;
+  for (; pbfd != NULL; pbfd = pbfd->link.next)
+    if (bfd_get_flavour (pbfd) == bfd_target_elf_flavour
+	&& bfd_count_sections (pbfd) != 0
+	&& (pbfd->flags & (DYNAMIC | BFD_PLUGIN | BFD_LINKER_CREATED)) == 0
+	&& (obfd->elf_machine_code
+	    == get_elf_backend_data (pbfd)->elf_machine_code)
+	&& (obfd->s->elfclass == get_elf_backend_data (pbfd)->s->elfclass))
+      {
+	/* Does the input have a list of GNU properties ? */
+	if (elf_properties (pbfd) != NULL)
+	  {
+	    *has_gnu_property = true;
+	    return pbfd;
+	  }
+	prev = pbfd;
+      }
+  return prev;
+}
+
+/* Create a GNU property section for the given bfd input.  */
+static void
+_bfd_aarch64_elf_create_gnu_property_section (struct bfd_link_info *info,
+					      bfd *ebfd)
+{
+  asection *sec;
+  sec = bfd_make_section_with_flags (ebfd,
+				     NOTE_GNU_PROPERTY_SECTION_NAME,
+				     (SEC_ALLOC
+				      | SEC_LOAD
+				      | SEC_IN_MEMORY
+				      | SEC_READONLY
+				      | SEC_HAS_CONTENTS
+				      | SEC_DATA));
+  if (sec == NULL)
+    info->callbacks->einfo (
+      _("%F%P: failed to create GNU property section\n"));
+
+  unsigned align = (bfd_get_mach (ebfd) & bfd_mach_aarch64_ilp32) ? 2 : 3;
+  if (!bfd_set_section_alignment (sec, align))
+    info->callbacks->einfo (_("%F%pA: failed to align section\n"),
+			    sec);
+
+  elf_section_type (sec) = SHT_NOTE;
+}
+
+static const int GNU_PROPERTY_ISSUES_MAX = 20;
+
+/* Report a summary of the issues met during the merge of the GNU properties, if
+   the number of issues goes above GNU_PROPERTY_ISSUES_MAX.  */
+static void
+_bfd_aarch64_report_summary_merge_issues (struct bfd_link_info *info)
+{
+  const struct elf_aarch64_obj_tdata * tdata
+    = elf_aarch64_tdata (info->output_bfd);
+  aarch64_feature_marking_report bti_report = tdata->sw_protections.bti_report;
+  aarch64_feature_marking_report gcs_report = tdata->sw_protections.gcs_report;
+
+  if (tdata->n_bti_issues > GNU_PROPERTY_ISSUES_MAX
+      && bti_report != MARKING_NONE)
+    {
+      const char *msg
+	= (tdata->sw_protections.bti_report == MARKING_ERROR)
+	? _("%Xerror: found a total of %d inputs incompatible with "
+	    "BTI requirements.\n")
+	: _("warning: found a total of %d inputs incompatible with "
+	    "BTI requirements.\n");
+      info->callbacks->einfo (msg, tdata->n_bti_issues);
+    }
+
+  if (tdata->n_gcs_issues > GNU_PROPERTY_ISSUES_MAX
+      && gcs_report != MARKING_NONE)
+    {
+      const char *msg
+	= (tdata->sw_protections.gcs_report == MARKING_ERROR)
+	? _("%Xerror: found a total of %d inputs incompatible with "
+	    "GCS requirements.\n")
+	: _("warning: found a total of %d inputs incompatible with "
+	    "GCS requirements.\n");
+      info->callbacks->einfo (msg, tdata->n_gcs_issues);
+    }
+}
+
 /* Find the first input bfd with GNU property and merge it with GPROP.  If no
    such input is found, add it to a new section at the last input.  Update
    GPROP accordingly.  */
 bfd *
-_bfd_aarch64_elf_link_setup_gnu_properties (struct bfd_link_info *info,
-					    uint32_t *gprop)
+_bfd_aarch64_elf_link_setup_gnu_properties (struct bfd_link_info *info)
 {
-  asection *sec;
-  bfd *pbfd;
-  bfd *ebfd = NULL;
-  elf_property *prop;
-  unsigned align;
+  struct elf_aarch64_obj_tdata *tdata = elf_aarch64_tdata (info->output_bfd);
+  uint32_t outprop = tdata->gnu_property_aarch64_feature_1_and;
 
-  uint32_t gnu_prop = *gprop;
+  bool has_gnu_property = false;
+  bfd *ebfd =
+    _bfd_aarch64_elf_find_1st_bfd_input_with_gnu_property (info,
+							   &has_gnu_property);
 
-  /* Find a normal input file with GNU property note.  */
-  for (pbfd = info->input_bfds;
-       pbfd != NULL;
-       pbfd = pbfd->link.next)
-    if (bfd_get_flavour (pbfd) == bfd_target_elf_flavour
-	&& bfd_count_sections (pbfd) != 0)
-      {
-	ebfd = pbfd;
-
-	if (elf_properties (pbfd) != NULL)
-	  break;
-      }
-
-  /* If ebfd != NULL it is either an input with property note or the last
-     input.  Either way if we have gnu_prop, we should add it (by creating
-     a section if needed).  */
-  if (ebfd != NULL && gnu_prop)
+  /* If ebfd != NULL it is either an input with property note or the last input.
+     Either way if we have an output GNU property that was provided, we should
+     add it (by creating a section if needed).  */
+  if (ebfd != NULL)
     {
-      prop = _bfd_elf_get_property (ebfd,
-				    GNU_PROPERTY_AARCH64_FEATURE_1_AND,
-				    4);
-      if (gnu_prop & GNU_PROPERTY_AARCH64_FEATURE_1_BTI
-	  && !(prop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_BTI))
-	    _bfd_error_handler (_("%pB: warning: BTI turned on by -z force-bti "
-				  "when all inputs do not have BTI in NOTE "
-				  "section."), ebfd);
-      prop->u.number |= gnu_prop;
-      prop->pr_kind = property_number;
+      /* If no GNU property node was found, create the GNU property note
+	 section.  */
+      if (!has_gnu_property)
+	_bfd_aarch64_elf_create_gnu_property_section (info, ebfd);
 
-      /* pbfd being NULL implies ebfd is the last input.  Create the GNU
-	 property note section.  */
-      if (pbfd == NULL)
-	{
-	  sec = bfd_make_section_with_flags (ebfd,
-					     NOTE_GNU_PROPERTY_SECTION_NAME,
-					     (SEC_ALLOC
-					      | SEC_LOAD
-					      | SEC_IN_MEMORY
-					      | SEC_READONLY
-					      | SEC_HAS_CONTENTS
-					      | SEC_DATA));
-	  if (sec == NULL)
-	    info->callbacks->einfo (
-	      _("%F%P: failed to create GNU property section\n"));
+      /* Merge the found input property with output properties. Note: if no
+	 property was found, _bfd_elf_get_property will create one.  */
+      elf_property *prop =
+	_bfd_elf_get_property (ebfd,
+			       GNU_PROPERTY_AARCH64_FEATURE_1_AND,
+			       4);
 
-          align = (bfd_get_mach (ebfd) & bfd_mach_aarch64_ilp32) ? 2 : 3;
-	  if (!bfd_set_section_alignment (sec, align))
-	    info->callbacks->einfo (_("%F%pA: failed to align section\n"),
-				    sec);
+      /* Check for a feature mismatch and report issue (if any) before this
+	 information get lost as the value of ebfd will be overriden with
+	 outprop.  */
+      if ((outprop & GNU_PROPERTY_AARCH64_FEATURE_1_BTI)
+	   && !(prop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_BTI))
+	_bfd_aarch64_elf_check_bti_report (info, ebfd);
 
-	  elf_section_type (sec) = SHT_NOTE;
-	}
+      if (tdata->sw_protections.gcs_type == GCS_NEVER)
+	prop->u.number &= ~GNU_PROPERTY_AARCH64_FEATURE_1_GCS;
+      else if ((outprop & GNU_PROPERTY_AARCH64_FEATURE_1_GCS)
+	       && !(prop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_GCS))
+	_bfd_aarch64_elf_check_gcs_report (info, ebfd);
+
+      prop->u.number |= outprop;
+      if (prop->u.number == 0)
+	prop->pr_kind = property_remove;
+      else
+	prop->pr_kind = property_number;
     }
 
-  pbfd = _bfd_elf_link_setup_gnu_properties (info);
-
-  if (bfd_link_relocatable (info))
-    return pbfd;
+  /* Set up generic GNU properties, and merge them with the backend-specific
+     ones (if any). pbfd points to the first relocatable ELF input with
+     GNU properties (if found).  */
+  bfd *pbfd = _bfd_elf_link_setup_gnu_properties (info);
 
   /* If pbfd has any GNU_PROPERTY_AARCH64_FEATURE_1_AND properties, update
-     gnu_prop accordingly.  */
+     outprop accordingly.  */
   if (pbfd != NULL)
     {
-      elf_property_list *p;
-
       /* The property list is sorted in order of type.  */
-      for (p = elf_properties (pbfd); p; p = p->next)
+      for (elf_property_list *p = elf_properties (pbfd);
+	   (p != NULL)
+	     && (GNU_PROPERTY_AARCH64_FEATURE_1_AND <= p->property.pr_type);
+	   p = p->next)
 	{
-	  /* Check for all GNU_PROPERTY_AARCH64_FEATURE_1_AND.  */
-	  if (GNU_PROPERTY_AARCH64_FEATURE_1_AND == p->property.pr_type)
+	  /* This merge of features should happen only once as all the identical
+	     properties are supposed to have been merged at this stage by
+	     _bfd_elf_link_setup_gnu_properties().  */
+	  if (p->property.pr_type == GNU_PROPERTY_AARCH64_FEATURE_1_AND)
 	    {
-	      gnu_prop = (p->property.u.number
-			  & (GNU_PROPERTY_AARCH64_FEATURE_1_PAC
-			      | GNU_PROPERTY_AARCH64_FEATURE_1_BTI));
+	      outprop = (p->property.u.number
+			 & (GNU_PROPERTY_AARCH64_FEATURE_1_BTI
+			  | GNU_PROPERTY_AARCH64_FEATURE_1_PAC
+			  | GNU_PROPERTY_AARCH64_FEATURE_1_GCS));
 	      break;
 	    }
-	  else if (GNU_PROPERTY_AARCH64_FEATURE_1_AND < p->property.pr_type)
-	    break;
 	}
     }
-  *gprop = gnu_prop;
+
+  _bfd_aarch64_report_summary_merge_issues (info);
+
+  tdata->gnu_property_aarch64_feature_1_and = outprop;
   return pbfd;
 }
 
@@ -814,7 +896,8 @@ _bfd_aarch64_elf_parse_gnu_properties (bfd *abfd, unsigned int type,
 	  return property_corrupt;
 	}
       prop = _bfd_elf_get_property (abfd, type, datasz);
-      /* Combine properties of the same type.  */
+      /* Merge AArch64 feature properties together if they are declared in
+	 different AARCH64_FEATURE_1_AND properties.  */
       prop->u.number |= bfd_h_get_32 (abfd, ptr);
       prop->pr_kind = property_number;
       break;
@@ -826,8 +909,8 @@ _bfd_aarch64_elf_parse_gnu_properties (bfd *abfd, unsigned int type,
   return property_number;
 }
 
-/* Merge AArch64 GNU property BPROP with APROP also accounting for PROP.
-   If APROP isn't NULL, merge it with BPROP and/or PROP.  Vice-versa if BROP
+/* Merge AArch64 GNU property BPROP with APROP also accounting for OUTPROP.
+   If APROP isn't NULL, merge it with BPROP and/or OUTPROP.  Vice-versa if BROP
    isn't NULL.  Return TRUE if there is any update to APROP or if BPROP should
    be merge with ABFD.  */
 bool
@@ -836,7 +919,7 @@ _bfd_aarch64_elf_merge_gnu_properties (struct bfd_link_info *info
 				       bfd *abfd ATTRIBUTE_UNUSED,
 				       elf_property *aprop,
 				       elf_property *bprop,
-				       uint32_t prop)
+				       uint32_t outprop)
 {
   unsigned int orig_number;
   bool updated = false;
@@ -846,10 +929,23 @@ _bfd_aarch64_elf_merge_gnu_properties (struct bfd_link_info *info
     {
     case GNU_PROPERTY_AARCH64_FEATURE_1_AND:
       {
+	aarch64_gcs_type gcs_type
+	  = elf_aarch64_tdata (info->output_bfd)->sw_protections.gcs_type;
+	/* OUTPROP does not contain GCS for GCS_NEVER. We only need to make sure
+	 that APROP does not contain GCS as well.
+	 Notes:
+	  - if BPROP contains GCS and APROP is not null, it is zeroed by the
+	    AND with APROP.
+	  - if BPROP contains GCS and APROP is null, it is overwritten with
+	    OUTPROP as the AND with APROP would have been equivalent to zeroing
+	    BPROP.  */
+	if (gcs_type == GCS_NEVER && aprop != NULL)
+	  aprop->u.number &= ~GNU_PROPERTY_AARCH64_FEATURE_1_GCS;
+
 	if (aprop != NULL && bprop != NULL)
 	  {
 	    orig_number = aprop->u.number;
-	    aprop->u.number = (orig_number & bprop->u.number) | prop;
+	    aprop->u.number = (orig_number & bprop->u.number) | outprop;
 	    updated = orig_number != aprop->u.number;
 	    /* Remove the property if all feature bits are cleared.  */
 	    if (aprop->u.number == 0)
@@ -857,22 +953,22 @@ _bfd_aarch64_elf_merge_gnu_properties (struct bfd_link_info *info
 	    break;
 	  }
 	/* If either is NULL, the AND would be 0 so, if there is
-	   any PROP, asign it to the input that is not NULL.  */
-	if (prop)
+	   any OUTPROP, assign it to the input that is not NULL.  */
+	if (outprop)
 	  {
 	    if (aprop != NULL)
 	      {
 		orig_number = aprop->u.number;
-		aprop->u.number = prop;
+		aprop->u.number = outprop;
 		updated = orig_number != aprop->u.number;
 	      }
 	    else
 	      {
-		bprop->u.number = prop;
+		bprop->u.number = outprop;
 		updated = true;
 	      }
 	  }
-	/* No PROP and BPROP is NULL, so remove APROP.  */
+	/* No OUTPROP and BPROP is NULL, so remove APROP.  */
 	else if (aprop != NULL)
 	  {
 	    aprop->pr_kind = property_remove;
@@ -921,4 +1017,51 @@ _bfd_aarch64_elf_link_fixup_gnu_properties
 	  break;
 	}
     }
+}
+
+/* Check AArch64 BTI report.  */
+void
+_bfd_aarch64_elf_check_bti_report (struct bfd_link_info *info, bfd *ebfd)
+{
+  struct elf_aarch64_obj_tdata *tdata = elf_aarch64_tdata (info->output_bfd);
+
+  if (tdata->sw_protections.bti_report == MARKING_NONE)
+    return;
+
+  ++tdata->n_bti_issues;
+
+  if (tdata->n_bti_issues > GNU_PROPERTY_ISSUES_MAX)
+    return;
+
+  const char *msg
+    = (tdata->sw_protections.bti_report == MARKING_WARN)
+    ? _("%pB: warning: BTI is required by -z force-bti, but this input object "
+	"file lacks the necessary property note.\n")
+    : _("%X%pB: error: BTI is required by -z force-bti, but this input object "
+	"file lacks the necessary property note.\n");
+
+  info->callbacks->einfo (msg, ebfd);
+}
+
+void
+_bfd_aarch64_elf_check_gcs_report (struct bfd_link_info *info, bfd *ebfd)
+{
+  struct elf_aarch64_obj_tdata *tdata = elf_aarch64_tdata (info->output_bfd);
+
+  if (tdata->sw_protections.gcs_report == MARKING_NONE)
+    return;
+
+  ++tdata->n_gcs_issues;
+
+  if (tdata->n_gcs_issues > GNU_PROPERTY_ISSUES_MAX)
+    return;
+
+  const char *msg
+    = (tdata->sw_protections.gcs_report == MARKING_WARN)
+    ? _("%pB: warning: GCS is required by -z gcs, but this input object file "
+	"lacks the necessary property note.\n")
+    : _("%X%pB: error: GCS is required by -z gcs, but this input object file "
+	"lacks the necessary property note.\n");
+
+  info->callbacks->einfo (msg, ebfd);
 }

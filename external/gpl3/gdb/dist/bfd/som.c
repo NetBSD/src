@@ -4914,7 +4914,7 @@ som_set_reloc_info (unsigned char *fixup,
 	  rptr->address = offset;
 	  rptr->howto = &som_hppa_howto_table[op];
 	  rptr->addend = 0;
-	  rptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  rptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	}
 
       /* Set default input length to 0.  Get the opcode class index
@@ -5328,14 +5328,12 @@ extern const bfd_target hppa_som_vec;
 static bool
 som_new_section_hook (bfd *abfd, asection *newsect)
 {
-  if (!newsect->used_by_bfd)
-    {
-      size_t amt = sizeof (struct som_section_data_struct);
+  size_t amt = sizeof (struct som_section_data_struct);
 
-      newsect->used_by_bfd = bfd_zalloc (abfd, amt);
-      if (!newsect->used_by_bfd)
-	return false;
-    }
+  newsect->used_by_bfd = bfd_zalloc (abfd, amt);
+  if (!newsect->used_by_bfd)
+    return false;
+
   newsect->alignment_power = 3;
 
   /* We allow more than three sections internally.  */

@@ -28,8 +28,6 @@
 #include "gdbsupport/selftest.h"
 #include "gdbtypes.h"
 #include "inferior.h"
-#include "objfiles.h"
-#include "observable.h"
 #include "producer.h"
 #include "reggroups.h"
 

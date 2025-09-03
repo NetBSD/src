@@ -14,6 +14,7 @@ import os
 import re
 import shutil
 import signal
+import time
 
 import dns.message
 import pytest
@@ -33,7 +34,8 @@ pytestmark = pytest.mark.extra_artifacts(
 
 
 def test_xferquota(named_port, servers):
-    # Changing test zone
+    # Changing test zone ensuring that the time stamp changes
+    time.sleep(1)
     shutil.copyfile("ns1/changing2.db", "ns1/changing.db")
     with open("ns1/named.pid", "r", encoding="utf-8") as pidfile:
         pid = int(pidfile.read())

@@ -34,7 +34,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.55 2025/06/01 00:54:36 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.56 2025/07/01 18:42:37 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -924,6 +924,11 @@ npf_ruleset_inspect(npf_cache_t *npc, const npf_ruleset_t *rlset,
 		npf_rule_t *rl = rlset->rs_rules[n];
 		const unsigned skip_to = rl->r_skip_to & SKIPTO_MASK;
 		const uint32_t attr = rl->r_attr;
+
+		if ((attr & layer) == 0) {
+			n = skip_to;
+			continue;
+		}
 
 		KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 		KASSERT(n < skip_to);

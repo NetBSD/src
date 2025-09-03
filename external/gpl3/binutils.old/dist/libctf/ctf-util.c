@@ -1,5 +1,5 @@
 /* Miscellaneous utilities.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -253,16 +253,6 @@ ctf_set_open_errno (int *errp, int error)
   if (errp != NULL)
     *errp = error;
   return NULL;
-}
-
-/* Store the specified error code into the CTF dict, and then return CTF_ERR /
-   -1 for the benefit of the caller. */
-
-unsigned long
-ctf_set_errno (ctf_dict_t *fp, int err)
-{
-  fp->ctf_errno = err;
-  return CTF_ERR;
 }
 
 /* Create a ctf_next_t.  */

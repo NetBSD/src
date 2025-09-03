@@ -1,5 +1,5 @@
 /* SOM object file format.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -79,7 +79,7 @@ obj_som_compiler (int unused ATTRIBUTE_UNUSED)
      quote.  */
   filename = buf + 1;
   p = filename;
-  while (*p != ' ' && *p != '\000')
+  while (!is_whitespace (*p) && *p != '\000')
     p++;
   if (*p == '\000')
     {
@@ -89,7 +89,7 @@ obj_som_compiler (int unused ATTRIBUTE_UNUSED)
   *p = '\000';
 
   language_name = ++p;
-  while (*p != ' ' && *p != '\000')
+  while (!is_whitespace (*p) && *p != '\000')
     p++;
   if (*p == '\000')
     {
@@ -246,7 +246,7 @@ obj_som_init_stab_section (segT stab, segT stabstr)
      the call to get_stab_string_offset.  */
   p = frag_more (12);
   memset (p, 0, 12);
-  file = as_where ((unsigned int *) NULL);
+  file = as_where (NULL);
   stroff = get_stab_string_offset (file, stabstr);
   know (stroff == 1);
   md_number_to_chars (p, stroff, 4);
@@ -284,8 +284,8 @@ adjust_stab_sections (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
   p = seg_info (sec)->stabu.p;
   gas_assert (p != 0);
 
-  bfd_h_put_16 (abfd, (bfd_vma) nsyms, (bfd_byte *) p + 6);
-  bfd_h_put_32 (abfd, (bfd_vma) strsz, (bfd_byte *) p + 8);
+  bfd_h_put_16 (abfd, nsyms, p + 6);
+  bfd_h_put_32 (abfd, strsz, p + 8);
 }
 
 /* Called late in the assembly phase to adjust the special
@@ -294,7 +294,7 @@ adjust_stab_sections (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
 void
 som_frob_file (void)
 {
-  bfd_map_over_sections (stdoutput, adjust_stab_sections, (void *) 0);
+  bfd_map_over_sections (stdoutput, adjust_stab_sections, NULL);
 }
 
 static void
@@ -308,8 +308,8 @@ obj_som_weak (int ignore ATTRIBUTE_UNUSED)
     {
       c = get_symbol_name (&name);
       symbolP = symbol_find_or_make (name);
-      *input_line_pointer = c;
-      SKIP_WHITESPACE_AFTER_NAME ();
+      restore_line_pointer (c);
+      SKIP_WHITESPACE ();
       S_SET_WEAK (symbolP);
       if (c == ',')
 	{

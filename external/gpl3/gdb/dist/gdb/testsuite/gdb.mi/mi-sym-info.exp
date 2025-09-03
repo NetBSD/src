@@ -35,7 +35,8 @@ if {[build_executable "failed to prepare" ${testfile} \
 
 mi_clean_restart $binfile
 
-mi_runto_main
+# Don't run to main to avoid increasing the search scope to include
+# debug info of shared libraries like libc, libgcc, etc.
 
 set qstr "\"\[^\"\]+\""
 set fun_re \

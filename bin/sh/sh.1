@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.271 2025/04/09 11:44:32 kre Exp $
+.\"	$NetBSD: sh.1,v 1.272 2025/06/24 11:17:09 andvar Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -4300,7 +4300,7 @@ argument is to be treated as a process group identifier,
 or if no targets are given, the current process group of the shell,
 and that process group will be suspended, instead of just
 the process identified.
-This option is implied, for the one agument only, by use of a
+This option is implied, for the one argument only, by use of a
 .Ar job
 specifier.
 Note that, unlike other built-in commands, use of a
@@ -4327,7 +4327,7 @@ Note that except when
 is sent, the target process can arrange to catch or
 ignore the signal, and perhaps not become suspended,
 if it so desires.
-Interactive processes that suport job control
+Interactive processes that support job control
 (eg: shells)
 generally ignore those signals.
 .Pp
@@ -4341,7 +4341,7 @@ permitted and without the
 .Fl f
 option;
 a target process or job not existing;
-insufficient prvileges to signal the target process or job;
+insufficient privileges to signal the target process or job;
 and more.
 It is not an error if the target process decides not to comply
 with a request to suspend itself.

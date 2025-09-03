@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2024/02/21 20:31:57 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2025/07/25 17:28:50 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -208,7 +208,7 @@ init_lang(void)
 int
 main(int argc, char **argv)
 {
-	int ch;
+	int ch, no_https = 0;
 	const char *msg_cat_dir = NULL;
 
 	init();
@@ -266,8 +266,10 @@ main(int argc, char **argv)
 	partitions_init();
 
 	/* do we need to tell ftp(1) to avoid checking certificate chains? */
-	if (no_openssl_trust_anchors_available())
+	if (no_openssl_trust_anchors_available()) {
 		setenv("FTPSSLNOVERIFY", "1", 1);
+		no_https = 1;
+	}
 
 	/* initialize message window */
 	if (menu_init()) {
@@ -311,6 +313,8 @@ main(int argc, char **argv)
 	/* remove some invalid menu entries */
 	if (!has_colors())
 		remove_color_options();
+	if (no_https)
+		remove_https_options();
 
 	/* Menu processing */
 	if (partman_go)

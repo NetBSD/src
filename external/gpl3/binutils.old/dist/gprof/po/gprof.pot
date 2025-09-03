@@ -8,11 +8,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: https://sourceware.org/bugzilla/\n"
-"POT-Creation-Date: 2022-07-08 11:05+0100\n"
+"POT-Creation-Date: 2024-01-15 14:58+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -26,12 +25,12 @@ msgstr ""
 msgid "[find_call] %s: 0x%lx to 0x%lx\n"
 msgstr ""
 
-#: alpha.c:129
+#: alpha.c:131
 #, c-format
 msgid "[find_call] 0x%lx: jsr%s <indirect_child>\n"
 msgstr ""
 
-#: alpha.c:139
+#: alpha.c:141
 #, c-format
 msgid "[find_call] 0x%lx: bsr"
 msgstr ""
@@ -56,7 +55,7 @@ msgstr ""
 msgid "<unknown>"
 msgstr ""
 
-#: basic_blocks.c:543
+#: basic_blocks.c:539
 #, c-format
 msgid ""
 "\n"
@@ -67,7 +66,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: basic_blocks.c:567
+#: basic_blocks.c:563
 #, c-format
 msgid ""
 "\n"
@@ -75,29 +74,29 @@ msgid ""
 "\n"
 msgstr ""
 
-#: basic_blocks.c:568
+#: basic_blocks.c:564
 #, c-format
 msgid "%9ld   Executable lines in this file\n"
 msgstr ""
 
-#: basic_blocks.c:570
+#: basic_blocks.c:566
 #, c-format
 msgid "%9ld   Lines executed\n"
 msgstr ""
 
-#: basic_blocks.c:571
+#: basic_blocks.c:567
 #, c-format
 msgid "%9.2f   Percent of the file executed\n"
 msgstr ""
 
-#: basic_blocks.c:575
+#: basic_blocks.c:571
 #, c-format
 msgid ""
 "\n"
 "%9lu   Total number of line executions\n"
 msgstr ""
 
-#: basic_blocks.c:577
+#: basic_blocks.c:573
 #, c-format
 msgid "%9.2f   Average executions per line\n"
 msgstr ""
@@ -246,7 +245,7 @@ msgstr ""
 msgid "%s: -c not supported on architecture %s\n"
 msgstr ""
 
-#: corefile.c:533 corefile.c:638
+#: corefile.c:533 corefile.c:640
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr ""
@@ -256,7 +255,7 @@ msgstr ""
 msgid "%s: file `%s' has too many symbols\n"
 msgstr ""
 
-#: corefile.c:905
+#: corefile.c:907
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr ""
@@ -354,7 +353,7 @@ msgstr ""
 #: gprof.c:162
 #, c-format
 msgid ""
-"Usage: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][name]] [-I dirs]\n"
+"Usage: %s [-[abcDhilLrsTvwxyz]] [-[ABCeEfFJnNOpPqQRStZ][name]] [-I dirs]\n"
 "\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
@@ -525,12 +524,12 @@ msgstr ""
 msgid "%s: found a symbol that covers several histogram records"
 msgstr ""
 
-#: mips.c:71
+#: mips.c:73
 #, c-format
 msgid "[find_call] 0x%lx: jal"
 msgstr ""
 
-#: mips.c:99
+#: mips.c:101
 #, c-format
 msgid "[find_call] 0x%lx: jalr\n"
 msgstr ""

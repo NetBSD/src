@@ -48,6 +48,7 @@
 #define	NPFVAR_ICMP		10
 #define	NPFVAR_INTERFACE	11
 #define	NPFVAR_PROTO		12
+#define	NPFVAR_MAC		13
 
 #ifdef _NPFVAR_PRIVATE
 static const char *npfvar_types[ ] = {
@@ -64,6 +65,7 @@ static const char *npfvar_types[ ] = {
 	[NPFVAR_ICMP]		= "icmp",
 	[NPFVAR_INTERFACE]	= "interface-address",
 	[NPFVAR_PROTO]		= "proto",
+	[NPFVAR_MAC]		= "mac-address",
 };
 #endif
 
@@ -84,6 +86,8 @@ void		npfvar_destroy(npfvar_t *);
 char *		npfvar_expand_string(const npfvar_t *);
 size_t		npfvar_get_count(const npfvar_t *);
 uint32_t	npfvar_expand_number(const npfvar_t *);
+void *		npfvar_getfilt_data(const npfvar_t *, unsigned, size_t);
+int		npfvar_getfilt_type(const npfvar_t *, size_t);
 int		npfvar_get_type(const npfvar_t *, size_t);
 void *		npfvar_get_data(const npfvar_t *, unsigned, size_t);
 void		npf_var_rid(char *, rid_parser, uint32_t *, const char *);

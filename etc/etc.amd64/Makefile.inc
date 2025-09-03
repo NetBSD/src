@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2024/03/20 13:51:35 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2025/08/26 05:08:57 imil Exp $
 #
 #	etc.amd64/Makefile.inc -- amd64-specific etc Makefile targets
 #
@@ -9,6 +9,7 @@
 KERNEL_SETS=		GENERIC
 KERNEL_SETS+=		GENERIC_KASLR
 KERNEL_SETS+=		XEN3_DOM0 XEN3_DOMU
+KERNEL_SETS+=		MICROVM
 # KERNEL_SETS+=		GENERIC_USERMODE
 
 BUILD_KERNELS=		INSTALL INSTALL_XEN3_DOMU

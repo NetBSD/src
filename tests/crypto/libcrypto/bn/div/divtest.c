@@ -29,8 +29,8 @@ main(int argc, char *argv[])
     int i = 0;
 
     for (i = 0; i < 10000; i++) {
-        BN_pseudo_rand(a, Rand(), 0, 0);
-        BN_pseudo_rand(b, Rand(), 0, 0);
+        BN_rand(a, Rand(), 0, 0);
+        BN_rand(b, Rand(), 0, 0);
         if (BN_is_zero(b))
             continue;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: request.c,v 1.11 2025/01/26 16:25:24 christos Exp $	*/
+/*	$NetBSD: request.c,v 1.12 2025/07/17 19:01:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -145,7 +145,7 @@ dns_requestmgr_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr,
 	for (size_t i = 0; i < nloops; i++) {
 		ISC_LIST_INIT(requestmgr->requests[i]);
 
-		/* unreferenced in requests_shutdown() */
+		/* unreferenced in requests_cancel() */
 		isc_loop_ref(isc_loop_get(requestmgr->loopmgr, i));
 	}
 
@@ -171,7 +171,7 @@ dns_requestmgr_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr,
 }
 
 static void
-requests_shutdown(void *arg) {
+requests_cancel(void *arg) {
 	dns_requestmgr_t *requestmgr = arg;
 	dns_request_t *request = NULL, *next = NULL;
 	uint32_t tid = isc_tid();
@@ -183,7 +183,7 @@ requests_shutdown(void *arg) {
 			/* The callback has been already scheduled */
 			continue;
 		}
-		req_sendevent(request, ISC_R_SHUTTINGDOWN);
+		req_sendevent(request, ISC_R_CANCELED);
 	}
 
 	isc_loop_unref(isc_loop_get(requestmgr->loopmgr, tid));
@@ -219,12 +219,12 @@ dns_requestmgr_shutdown(dns_requestmgr_t *requestmgr) {
 
 		if (i == tid) {
 			/* Run the current loop synchronously */
-			requests_shutdown(requestmgr);
+			requests_cancel(requestmgr);
 			continue;
 		}
 
 		isc_loop_t *loop = isc_loop_get(requestmgr->loopmgr, i);
-		isc_async_run(loop, requests_shutdown, requestmgr);
+		isc_async_run(loop, requests_cancel, requestmgr);
 	}
 }
 

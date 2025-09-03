@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_el2.S,v 1.10 2025/01/30 08:58:07 jmcneill Exp $	*/
+/*	$NetBSD: locore_el2.S,v 1.11 2025/08/11 12:31:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -32,7 +32,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore_el2.S,v 1.10 2025/01/30 08:58:07 jmcneill Exp $")
+RCSID("$NetBSD: locore_el2.S,v 1.11 2025/08/11 12:31:57 skrll Exp $")
 
 /*
  * For use in #include "locore_el2.S".
@@ -124,16 +124,11 @@ no_el2_host_mode:
 	/* GIC[3:0] == 0001 - GIC CPU interface via special regs. supported */
 	cmp	x2, #ID_AA64PFR0_EL1_GIC_CPUIF_EN
 	b.ne	2f
-#ifdef __clang__
-#define ICC_SRE_EL2 icc_sre_el2
-#else
-#define ICC_SRE_EL2 S3_4_C12_C9_5
-#endif
 
-	mrs	x2, ICC_SRE_EL2
+	mrs	x2, icc_sre_el2
 	orr	x2, x2, #ICC_SRE_EL2_EN	/* Enable access from insecure EL1 */
 	orr	x2, x2, #ICC_SRE_EL2_SRE	/* Enable system registers */
-	msr	ICC_SRE_EL2, x2
+	msr	icc_sre_el2, x2
 2:
 
 	/* Keep the stack pointer. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.10 2025/01/26 16:25:25 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.11 2025/07/17 19:01:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -198,7 +198,7 @@ dns_rdatatypestats_create(isc_mem_t *mctx, dns_stats_t **statsp) {
 	 * Create rdtype statistics for the first 255 RRtypes,
 	 * plus one additional for other RRtypes.
 	 */
-	create_stats(mctx, dns_statstype_rdtype, (RDTYPECOUNTER_MAXTYPE + 1),
+	create_stats(mctx, dns_statstype_rdtype, RDTYPECOUNTER_MAXTYPE + 1,
 		     statsp);
 }
 
@@ -206,7 +206,7 @@ void
 dns_rdatasetstats_create(isc_mem_t *mctx, dns_stats_t **statsp) {
 	REQUIRE(statsp != NULL && *statsp == NULL);
 
-	create_stats(mctx, dns_statstype_rdataset, (RDTYPECOUNTER_MAXVAL + 1),
+	create_stats(mctx, dns_statstype_rdataset, RDTYPECOUNTER_MAXVAL + 1,
 		     statsp);
 }
 
@@ -368,7 +368,7 @@ dns_dnssecsignstats_increment(dns_stats_t *stats, dns_keytag_t id, uint8_t alg,
 		uint32_t counter = isc_stats_get_counter(stats->counters, idx);
 		if (counter == kval) {
 			/* Match */
-			isc_stats_increment(stats->counters, (idx + operation));
+			isc_stats_increment(stats->counters, idx + operation);
 			return;
 		}
 	}
@@ -379,23 +379,23 @@ dns_dnssecsignstats_increment(dns_stats_t *stats, dns_keytag_t id, uint8_t alg,
 		uint32_t counter = isc_stats_get_counter(stats->counters, idx);
 		if (counter == 0) {
 			isc_stats_set(stats->counters, kval, idx);
-			isc_stats_increment(stats->counters, (idx + operation));
+			isc_stats_increment(stats->counters, idx + operation);
 			return;
 		}
 	}
 
 	/* No room, grow stats storage. */
 	isc_stats_resize(&stats->counters,
-			 (num_keys * dnssecsign_block_size * 2));
+			 num_keys * dnssecsign_block_size * 2);
 
 	/* Reset counters for new key (new index, nidx). */
 	int nidx = num_keys * dnssecsign_block_size;
 	isc_stats_set(stats->counters, kval, nidx);
-	isc_stats_set(stats->counters, 0, (nidx + dns_dnssecsignstats_sign));
-	isc_stats_set(stats->counters, 0, (nidx + dns_dnssecsignstats_refresh));
+	isc_stats_set(stats->counters, 0, nidx + dns_dnssecsignstats_sign);
+	isc_stats_set(stats->counters, 0, nidx + dns_dnssecsignstats_refresh);
 
 	/* And increment the counter for the given operation. */
-	isc_stats_increment(stats->counters, (nidx + operation));
+	isc_stats_increment(stats->counters, nidx + operation);
 }
 
 void
@@ -418,9 +418,9 @@ dns_dnssecsignstats_clear(dns_stats_t *stats, dns_keytag_t id, uint8_t alg) {
 			/* Match */
 			isc_stats_set(stats->counters, 0, idx);
 			isc_stats_set(stats->counters, 0,
-				      (idx + dns_dnssecsignstats_sign));
+				      idx + dns_dnssecsignstats_sign);
 			isc_stats_set(stats->counters, 0,
-				      (idx + dns_dnssecsignstats_refresh));
+				      idx + dns_dnssecsignstats_refresh);
 			return;
 		}
 	}
@@ -547,7 +547,7 @@ dnssec_statsdump(isc_stats_t *stats, dnssecsignstats_type_t operation,
 			continue;
 		}
 
-		val = isc_stats_get_counter(stats, (idx + operation));
+		val = isc_stats_get_counter(stats, idx + operation);
 		if ((options & ISC_STATSDUMP_VERBOSE) == 0 && val == 0) {
 			continue;
 		}

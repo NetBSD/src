@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75reg.h,v 1.5 2016/01/03 17:28:33 jdc Exp $	*/
+/*	$NetBSD: lm75reg.h,v 1.6 2025/08/25 04:31:18 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -82,6 +82,11 @@
 #define	LM75_CONFIG_FAULT_QUEUE_2	(1 << 3)
 #define	LM75_CONFIG_FAULT_QUEUE_4	(2 << 3)
 #define	LM75_CONFIG_FAULT_QUEUE_6	(3 << 3)
+
+#define DS75_CONFIG_RES_9BIT		(0 << 5)
+#define DS75_CONFIG_RES_10BIT		(1 << 5)
+#define DS75_CONFIG_RES_11BIT		(2 << 5)
+#define DS75_CONFIG_RES_12BIT		(3 << 5)
 
 #define	LM77_CONFIG_TCRITAPOLARITY	0x04
 #define	LM77_CONFIG_INTPOLARITY		0x08

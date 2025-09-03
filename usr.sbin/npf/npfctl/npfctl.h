@@ -73,13 +73,27 @@ typedef struct addr_port {
 	npfvar_t *	ap_portrange;
 } addr_port_t;
 
-typedef struct filt_opts {
+typedef struct l3 {
 	addr_port_t	fo_from;
 	addr_port_t	fo_to;
-	bool		fo_finvert;
-	bool		fo_tinvert;
+} opt3;
+
+typedef struct l2 {
+	npfvar_t *	from_mac;
+	npfvar_t *	to_mac;
+	uint16_t	ether_type;
+} opt2;
+
+typedef struct filt_opts {
+	union {
+		opt3 opt3;
+		opt2 opt2;
+	} filt;
 	struct r_id	uid;
 	struct r_id	gid;
+	uint32_t layer;
+	bool		fo_finvert;
+	bool		fo_tinvert;
 } filt_opts_t;
 
 typedef struct opt_proto {
@@ -148,6 +162,12 @@ void		npfctl_init_rid(rid_t *, uint32_t, uint32_t, uint8_t);
 bool		npfctl_parse_cidr(char *, fam_addr_mask_t *, int *);
 uint16_t	npfctl_npt66_calcadj(npf_netmask_t, const npf_addr_t *,
 		    const npf_addr_t *);
+filt_opts_t	npfctl_parse_l3filt_opt(npfvar_t *, npfvar_t *, bool,
+            npfvar_t *, npfvar_t *, bool, rid_t, rid_t);
+filt_opts_t	npfctl_parse_l2filt_opt(npfvar_t *, bool, npfvar_t *,
+            bool, uint16_t);
+	npfvar_t *	npfctl_parse_mac_addr(const char *);
+	uint16_t	npfctl_parse_ether_type(const char *str);
 int		npfctl_nat_ruleset_p(const char *, bool *);
 
 void		usage(void);
@@ -184,6 +204,10 @@ enum {
 	BM_COUNT // total number of the marks
 };
 
+enum { /* book marks for L2 */
+	BM_ETHER_TYPE, BM_SRC_ETHER, BM_DST_ETHER, BM_SRC_ENEG, BM_DST_ENEG,
+};
+
 npf_bpf_t *	npfctl_bpf_create(void);
 struct bpf_program *npfctl_bpf_complete(npf_bpf_t *);
 const void *	npfctl_bpf_bmarks(npf_bpf_t *, size_t *);
@@ -200,6 +224,9 @@ void		npfctl_bpf_ports(npf_bpf_t *, u_int, in_port_t, in_port_t);
 void		npfctl_bpf_tcpfl(npf_bpf_t *, uint8_t, uint8_t);
 void		npfctl_bpf_icmp(npf_bpf_t *, int, int);
 void		npfctl_bpf_table(npf_bpf_t *, u_int, u_int);
+
+void		npfctl_bpf_ether(npf_bpf_t *, unsigned, struct ether_addr *);
+void		fetch_ether_type(npf_bpf_t *, uint16_t);
 
 /*
  * Configuration building interface.

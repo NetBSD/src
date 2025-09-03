@@ -1,0 +1,53 @@
+# Copyright (C) 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Attach to a process, the executable for which has been deleted.  On
+# GNU/Linux GDB will spot the missing executable and fallback to use
+# /proc/PID/exe instead.
+
+require can_spawn_for_attach
+require {istarget *-linux*}
+
+standard_testfile
+
+if { [build_executable "failed to prepare" $testfile $srcfile] } {
+    return -1
+}
+
+set test_spawn_id [spawn_wait_for_attach $binfile]
+set testpid [spawn_id_get_pid $test_spawn_id]
+
+# Move the executable rather than deleting it.  This just to aid with
+# debugging if someone needs to reproduce this test.
+set binfile_moved ${binfile}_moved
+
+# Don't move BINFILE as the kernel will just assign a new name to the
+# same inode; and the /proc/PID/exe link will continue to point to the
+# renamed inode.
+remote_exec host "cp $binfile $binfile_moved"
+remote_exec host "rm $binfile"
+
+# Don't pass the executable when GDB starts.  Instead rely on GDB
+# finding the executable from the PID we attach too.
+clean_restart
+
+# Attach.  GDB should spot that the executable is gone and fallback to
+# use /proc/PID/exe.
+gdb_test "attach $testpid" \
+    "Attaching to process $decimal\r\nReading symbols from /proc/${testpid}/exe\\.\\.\\..*" \
+    "attach to process with deleted executable"
+
+# Cleanup.
+kill_wait_spawned_process $test_spawn_id

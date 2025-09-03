@@ -38,7 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.57 2020/05/30 14:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.58 2025/07/01 18:42:37 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -576,6 +576,26 @@ npf_cache_tcp(npf_cache_t *npc, nbuf_t *nbuf, unsigned hlen)
 	}
 	npc->npc_l4.tcp = th;
 	return NPC_LAYER4 | NPC_TCP;
+}
+
+int
+npf_cache_ether(npf_cache_t *npc)
+{
+	struct mbuf *m = npc->npc_nbuf->nb_mbuf0;
+	struct ether_header *ether;
+
+	nbuf_unset_flag(npc->npc_nbuf, NBUF_DATAREF_RESET);
+	/*
+	 * we are so sure ether header will be in the first mbuf
+	 * and we are also sure 14 bytes ether_header will be fully accessible
+	 */
+	ether = mtod(m, struct ether_header *);
+	if (__predict_false(ether == NULL))
+		return NPC_FMTERR;
+	memcpy(&npc->ether, ether, sizeof(npc->ether));
+
+	KASSERT(nbuf_flag_p(npc->npc_nbuf, NBUF_DATAREF_RESET) == 0);
+	return NPC_LAYER2;
 }
 
 /*

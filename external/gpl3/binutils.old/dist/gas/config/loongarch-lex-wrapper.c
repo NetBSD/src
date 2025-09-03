@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -16,5 +16,5 @@
    along with this program; see the file COPYING3.  If not,
    see <http://www.gnu.org/licenses/>.  */
 
-#include "sysdep.h"
+#include "config.h"
 #include "config/loongarch-lex.c"

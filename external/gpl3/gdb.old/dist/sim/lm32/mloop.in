@@ -32,6 +32,7 @@ case "x$1" in
 xsupport)
 
 cat <<EOF
+#line $LINENO "$0"
 #include <stdlib.h>
 
 static INLINE const IDESC *
@@ -130,6 +131,7 @@ xinit)
 xextract-simple | xextract-scache)
 
 cat <<EOF
+#line $LINENO "$0"
 {
   CGEN_INSN_INT insn = GETIMEMUSI (current_cpu, vpc);
   extract (current_cpu, vpc, insn, SEM_ARGBUF (sc), FAST_P);
@@ -149,6 +151,7 @@ xextract-pbb)
 # SET_INSN_COUNT(n) must be called to record number of real insns.
 
 cat <<EOF
+#line $LINENO "$0"
 {
   const IDESC *idesc;
   int icount = 0;
@@ -183,6 +186,7 @@ xfull-exec-* | xfast-exec-*)
 # Outputs: vpc
 
 cat <<EOF
+#line $LINENO "$0"
   /* Update cycle counter */
   SET_H_CSR (LM32_CSR_CC, GET_H_CSR (LM32_CSR_CC) + 1);
 #if (! FAST_P && WITH_SEM_SWITCH_FULL) || (FAST_P && WITH_SEM_SWITCH_FAST)

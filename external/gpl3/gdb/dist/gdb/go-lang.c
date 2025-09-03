@@ -54,9 +54,8 @@ static const char GO_MAIN_MAIN[] = "main.main";
 const char *
 go_main_name (void)
 {
-  struct bound_minimal_symbol msym;
-
-  msym = lookup_minimal_symbol (GO_MAIN_MAIN, NULL, NULL);
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol (current_program_space, GO_MAIN_MAIN);
   if (msym.minsym != NULL)
     return GO_MAIN_MAIN;
 
@@ -293,7 +292,7 @@ unpack_mangled_go_symbol (const char *mangled_name,
   while (p > buf)
     {
       int current = *(const unsigned char *) --p;
-      int current_is_digit = isdigit (current);
+      int current_is_digit = isdigit ((unsigned char)current);
 
       if (saw_digit)
 	{

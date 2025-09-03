@@ -1,4 +1,4 @@
-.\" $NetBSD: scmd.4,v 1.2 2022/01/01 09:53:32 msaitoh Exp $
+.\" $NetBSD: scmd.4,v 1.3 2025/07/08 18:01:11 gutteridge Exp $
 .\"
 .\" Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -40,8 +40,9 @@ behaviors of the motors attached to the board.
 Each SCMD board can handle two motors,
 and up to 16 SCMD boards may be chained together allowing for 34 motors to be controlled
 from a single master instance.
-The secondary boards are accessed by set of view port registers
-from the main board.  The
+The secondary boards are accessed by set of view port registers 
+from the main board.
+The
 .Xr scmd 4
 driver and its associated frontends flatten the main SCMD board and all chained boards into
 a linear register space that can be opened, seeked, read from and written to like any other
@@ -49,7 +50,7 @@ file or device without having to worry about the view port.
 .Pp
 A command line utility
 .Xr scmdctl 1
-is provided that allows convient command line commands for most of the functions provided by the
+is provided that allows convenient command line commands for most of the functions provided by the
 SCMD board.
 .Sh SYSCTL VARIABLES
 The following

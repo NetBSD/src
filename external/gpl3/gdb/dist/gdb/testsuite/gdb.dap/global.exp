@@ -1,0 +1,73 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+require allow_dap_tests
+
+load_lib dap-support.exp
+
+standard_testfile
+
+if {[build_executable ${testfile}.exp $testfile $srcfile] == -1} {
+    return
+}
+
+if {[dap_initialize] == ""} {
+    return
+}
+
+set launch_id [dap_launch $testfile]
+
+set line [gdb_get_line_number "BREAK"]
+set obj [dap_check_request_and_response "set breakpoint by line number" \
+	     setBreakpoints \
+	     [format {o source [o path [%s]] breakpoints [a [o line [i %d]]]} \
+		  [list s $srcfile] $line]]
+set line_bpno [dap_get_breakpoint_number $obj]
+
+dap_check_request_and_response "configurationDone" configurationDone
+
+dap_check_response "launch response" launch $launch_id
+
+dap_wait_for_event_and_check "inferior started" thread "body reason" started
+
+dap_wait_for_event_and_check "stopped at line breakpoint" stopped \
+    "body reason" breakpoint \
+    "body hitBreakpointIds" $line_bpno
+
+set bt [lindex [dap_check_request_and_response "backtrace" stackTrace \
+		    {o threadId [i 1]}] \
+	    0]
+set frame_id [dict get [lindex [dict get $bt body stackFrames] 0] id]
+
+set scopes [dap_check_request_and_response "get scopes" scopes \
+		[format {o frameId [i %d]} $frame_id]]
+set scopes [dict get [lindex $scopes 0] body scopes]
+
+gdb_assert {[llength $scopes] == 2} "two scopes"
+
+lassign $scopes reg_scope global_scope
+
+gdb_assert {[dict get $global_scope name] == "Globals"} "scope is globals"
+
+gdb_assert {[dict get $global_scope namedVariables] == 1} "one var in globals"
+
+set num [dict get $global_scope variablesReference]
+set refs [lindex [dap_check_request_and_response "fetch variables" \
+		      "variables" \
+		      [format {o variablesReference [i %d] count [i 1]} \
+			   $num]] \
+	      0]
+
+dap_shutdown

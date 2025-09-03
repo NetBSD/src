@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.20 2024/01/01 17:18:02 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.21 2025/07/13 21:09:45 andvar Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.20 2024/01/01 17:18:02 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.21 2025/07/13 21:09:45 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -221,7 +221,7 @@ pmap_md_pdetab_init(struct pmap *pmap)
 		 * XXXSB where/when do new entries in pmap_kernel()->pm_pdetab
 		 * XXXSB get added to existing pmaps?
 		 *
-		 * pmap_growkernal doesn't have support for fixing up exiting
+		 * pmap_growkernel doesn't have support for fixing up exiting
 		 * pmaps. (yet)
 		 *
 		 * Various options:

@@ -341,6 +341,7 @@ void		npf_ifaddr_syncall(npf_t *);
 /* Protocol helpers. */
 int		npf_cache_all(npf_cache_t *);
 void		npf_recache(npf_cache_t *);
+int		npf_cache_ether(npf_cache_t *);
 
 bool		npf_rwrip(const npf_cache_t *, u_int, const npf_addr_t *);
 bool		npf_rwrport(const npf_cache_t *, u_int, const in_port_t);

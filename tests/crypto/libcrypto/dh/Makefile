@@ -1,7 +1,9 @@
-# $NetBSD: Makefile,v 1.2 2023/05/08 17:46:06 christos Exp $
+# $NetBSD: Makefile,v 1.3 2025/07/17 14:43:01 christos Exp $
 
 PROGDPLIBSSTATIC=yes
 HELPER_NAME=	dhtest
 HELPER_DIR=	dh
+DPADD+= ${LIBPTHREAD}
+LDADD+= -lpthread
 
 .include <bsd.init.mk>

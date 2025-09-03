@@ -308,7 +308,6 @@ def logger(request, system_test_name):
 @pytest.fixture(scope="module")
 def expected_artifacts(request):
     common_artifacts = [
-        "*/.hypothesis",  # drop after Ubuntu 20.04 Focal Fossa gets removed from CI
         ".libs/*",  # possible build artifacts, see GL #5055
         "ns*/named.conf",
         "ns*/named.memstats",
@@ -332,7 +331,7 @@ def expected_artifacts(request):
     if test_specific_artifacts:
         return common_artifacts + test_specific_artifacts.args[0]
 
-    return common_artifacts
+    return None
 
 
 @pytest.fixture(scope="module")
@@ -361,12 +360,13 @@ def system_test_dir(request, system_test_name, expected_artifacts):
             if node.nodeid in all_test_results
         }
         assert len(test_results)
-        messages = []
         for node, result in test_results.items():
-            isctest.log.debug("%s %s", result.outcome.upper(), node)
-            messages.extend(result.messages.values())
-        for message in messages:
-            isctest.log.debug("\n" + message)
+            message = f"{result.outcome.upper()} {node}"
+            nonempty_extra = [msg for msg in result.messages.values() if msg.strip()]
+            if nonempty_extra:
+                message += "\n"
+                message += "\n\n".join(nonempty_extra)
+            isctest.log.debug(message)
         failed = any(res.outcome == "failed" for res in test_results.values())
         skipped = any(res.outcome == "skipped" for res in test_results.values())
         if failed:

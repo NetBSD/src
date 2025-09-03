@@ -66,9 +66,9 @@ producer_is_gcc (const char *producer, int *major, int *minor)
 	 "GNU Fortran 4.8.2 20140120 (Red Hat 4.8.2-16) -mtune=generic ..."
 	 "GNU C++14 5.0.0 20150123 (experimental)"
       */
-      while (*cs && !isspace (*cs))
+      while (*cs && !isspace ((unsigned char)*cs))
 	cs++;
-      if (*cs && isspace (*cs))
+      if (*cs && isspace ((unsigned char)*cs))
 	cs++;
       if (sscanf (cs, "%d.%d", major, minor) == 2)
 	return 1;

@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.51 2024/02/18 09:03:44 andvar Exp $ */
+/* $NetBSD: trap.c,v 1.53 2025/07/21 08:46:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2023 The NetBSD Foundation, Inc.
@@ -31,26 +31,27 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.51 2024/02/18 09:03:44 andvar Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.53 2025/07/21 08:46:17 skrll Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_dtrace.h"
 
 #include <sys/param.h>
-#include <sys/kauth.h>
 #include <sys/types.h>
+
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/evcnt.h>
+#include <sys/kauth.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
 #include <sys/proc.h>
-#include <sys/systm.h>
+#include <sys/siginfo.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/siginfo.h>
+#include <sys/systm.h>
 #include <sys/xcall.h>
 
 #ifdef ARM_INTR_IMPL
@@ -71,8 +72,6 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.51 2024/02/18 09:03:44 andvar Exp $");
 #include <aarch64/armreg.h>
 #include <aarch64/locore.h>
 
-#include <arm/cpufunc.h>
-
 #ifdef KGDB
 #include <machine/db_machdep.h>
 #endif
@@ -80,6 +79,7 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.51 2024/02/18 09:03:44 andvar Exp $");
 #include <ddb/db_output.h>
 #include <machine/db_machdep.h>
 #endif
+
 #ifdef KDTRACE_HOOKS
 #include <sys/dtrace_bsd.h>
 #endif

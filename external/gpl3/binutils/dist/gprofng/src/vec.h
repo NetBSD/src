@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -25,6 +25,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
+#include "libiberty.h"
 
 // This package implements a vector of items.
 
@@ -109,6 +110,13 @@ public:
   get (long index)
   {
     return data[index];
+  }
+
+  void
+  truncate (long ncount)
+  {
+    if (count > ncount && ncount >= 0)
+      count = ncount;
   }
 
   // Return the first index in "this" that equals "item".
@@ -222,7 +230,7 @@ Vector<ITEM>::Vector (long sz)
 {
   count = 0;
   limit = sz > 0 ? sz : KILOCHUNK; // was 0;
-  data = limit ? (ITEM *) malloc (sizeof (ITEM) * limit) : NULL;
+  data = limit ? (ITEM *) xmalloc (sizeof (ITEM) * limit) : NULL;
   sorted = false;
 }
 
@@ -241,7 +249,7 @@ Vector<ITEM>
       else
 	limit = limit * 2;
     }
-  data = (ITEM *) realloc (data, limit * sizeof (ITEM));
+  data = (ITEM *) xrealloc (data, limit * sizeof (ITEM));
 }
 
 template <typename ITEM> void
@@ -269,7 +277,7 @@ Vector<ITEM>::copy ()
   vector = new Vector<ITEM>;
   vector->count = count;
   vector->limit = limit;
-  vector->data = (ITEM *) malloc (sizeof (ITEM) * limit);
+  vector->data = (ITEM *) xmalloc (sizeof (ITEM) * limit);
   (void) memcpy ((char *) vector->data, (char *) data, sizeof (ITEM) * count);
   return vector;
 }

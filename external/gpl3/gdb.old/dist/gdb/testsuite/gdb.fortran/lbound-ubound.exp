@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # Testing GDB's implementation of LBOUND and UBOUND.
 
-if {[skip_fortran_tests]} { return -1 }
+require allow_fortran_tests
 
 standard_testfile ".F90"
 load_lib fortran.exp
@@ -30,11 +30,6 @@ gdb_test_no_output "set auto-solib-add off"
 
 if ![fortran_runto_main] {
     return -1
-}
-
-# This test relies on output from the inferior.
-if [target_info exists gdb,noinferiorio] {
-   return 0
 }
 
 # Avoid libc symbols, in particular the 'array' type.
@@ -57,45 +52,31 @@ while { $test_count < 500 } {
 	set expected_ubound ""
 	set found_prompt false
 	gdb_test_multiple "continue" "continue" {
-	    -i $::inferior_spawn_id
-
-	    -re ".*LBOUND = (\[^\r\n\]+)\r\n" {
-		set expected_lbound $expect_out(1,string)
-		if {!$found_prompt} {
-		    exp_continue
-		}
-	    }
-	    -re ".*UBOUND = (\[^\r\n\]+)\r\n" {
-		set expected_ubound $expect_out(1,string)
-		if {!$found_prompt} {
-		    exp_continue
-		}
+	    -re -wrap "! Test Breakpoint.*" {
+		# We stopped at the next test case.
+		pass $gdb_test_name
 	    }
 
-	    -i $::gdb_spawn_id
-
-	    -re "! Test Breakpoint" {
-		set func_name "show_elem"
-		exp_continue
-	    }
-	    -re "! Breakpoint before deallocate" {
+	    -re -wrap "! Breakpoint before deallocate.*" {
+		# There are no more test cases.
+		pass $gdb_test_name
 		set found_dealloc_breakpoint true
-		exp_continue
-	    }
-	    -re "$gdb_prompt $" {
-		set found_prompt true
-
-		if {$found_dealloc_breakpoint
-		    || ($expected_lbound != "" && $expected_ubound != "")} {
-		    # We're done.
-		} else {
-		    exp_continue
-		}
 	    }
 	}
 
 	if ($found_dealloc_breakpoint) {
 	    break
+	}
+
+	set expected_lbound [get_valueof "" "lb" "" "get expected lbound"]
+	set expected_ubound [get_valueof "" "ub" "" "get expected ubound"]
+
+	if { $expected_lbound == "" } {
+	    error "failed to extract expected results for lbound"
+	}
+
+	if { $expected_ubound == "" } {
+	    error "failed to extract expected results for ubound"
 	}
 
 	verbose -log "APB: Run a test here"
@@ -118,19 +99,8 @@ while { $test_count < 500 } {
 	    }
 	}
 
-	# Check we have all the information we need to successfully run one
-	# of these tests.
-	if { $expected_lbound == "" } {
-	    perror "failed to extract expected results for lbound"
-	    return 0
-	}
-	if { $expected_ubound == "" } {
-	    perror "failed to extract expected results for ubound"
-	    return 0
-	}
 	if { $array_name == "" } {
-	    perror "failed to extract array name"
-	    return 0
+	    error "failed to extract array name"
 	}
 
 	# Check GDB can correctly print complete set of upper and

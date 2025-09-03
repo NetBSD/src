@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2024/06/29 16:35:54 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2025/08/24 17:57:04 christos Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -28,7 +28,7 @@ BINDIR=/usr/lib
 .if exists(${DEFS_MK})
 .include "${DEFS_MK}"
 
-SHLIB_MAJOR=	18
+SHLIB_MAJOR=	19
 SHLIB_MINOR=	0
 
 LIBDPLIBS+=	z	${.CURDIR}/../../../../../lib/libz
@@ -127,3 +127,8 @@ pex64igen.c: peXXigen.c
 pe-aarch64igen.c: peXXigen.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/XX/peAArch64/g < $> > $@
+
+pe-riscv64igen.c: peXXigen.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/XX/peRiscV64/g < $> > $@
+

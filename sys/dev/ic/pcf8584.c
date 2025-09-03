@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.20 2022/09/25 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.21 2025/08/31 18:13:59 thorpej Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -86,8 +86,6 @@ pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, u_int8_t clock,
 	sc->sc_addr = addr;
 
 	pcfiic_init(sc);
-
-	printf("\n");
 
 	if (sc->sc_master)
 		pcfiic_choose_bus(sc, 0);

@@ -1820,6 +1820,12 @@ Do you want to stop the program?"),
 	return -1;
       break;
 
+    case gdb_sys_clock_gettime64:
+      /* Size of struct __timespec64 is 16.  */
+      if (record_mem_at_reg (regcache, tdep->arg2, 16))
+	return -1;
+      break;
+
     case gdb_sys_clock_getres:
       if (record_mem_at_reg (regcache, tdep->arg2, tdep->size_timespec))
 	return -1;

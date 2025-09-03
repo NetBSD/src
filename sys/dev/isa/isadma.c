@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.67 2018/05/29 06:14:33 jdolecek Exp $	*/
+/*	$NetBSD: isadma.c,v 1.68 2025/06/27 21:36:25 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.67 2018/05/29 06:14:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.68 2025/06/27 21:36:25 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -765,7 +765,7 @@ _isa_free(void *addr, struct malloc_type *pool)
 		;
 	m = *mp;
 	if (!m) {
-		printf("_isa_free: freeing unallocted memory\n");
+		printf("_isa_free: freeing unallocated memory\n");
 		return;
 	}
 	*mp = m->next;
@@ -782,7 +782,7 @@ _isa_mappage(void *mem, off_t off, int prot)
 	for(m = isa_mem_head; m && m->kva != (void *)mem; m = m->next)
 		;
 	if (!m) {
-		printf("_isa_mappage: mapping unallocted memory\n");
+		printf("_isa_mappage: mapping unallocated memory\n");
 		return -1;
 	}
 	return _isa_dmamem_mmap(m->ids, m->chan, m->addr,

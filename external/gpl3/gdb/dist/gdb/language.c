@@ -82,6 +82,9 @@ static const struct language_defn *global_current_language;
 static lazily_set_language_ftype *lazy_language_setter;
 enum language_mode language_mode = language_mode_auto;
 
+/* Whether to warn on language changes.  */
+bool warn_frame_lang_mismatch = true;
+
 /* See language.h.  */
 
 const struct language_defn *
@@ -108,6 +111,13 @@ scoped_restore_current_language::scoped_restore_current_language ()
   : m_lang (global_current_language),
     m_fun (lazy_language_setter)
 {
+}
+
+scoped_restore_current_language::scoped_restore_current_language
+    (enum language lang)
+  : scoped_restore_current_language ()
+{
+  set_language (lang);
 }
 
 scoped_restore_current_language::~scoped_restore_current_language ()
@@ -161,7 +171,7 @@ show_language_command (struct ui_file *file, int from_tty,
 		_("The current source language is \"%s\".\n"),
 		current_language->name ());
 
-  if (has_stack_frames ())
+  if (warn_frame_lang_mismatch && has_stack_frames ())
     {
       frame_info_ptr frame;
 
@@ -1136,6 +1146,16 @@ For Fortran the default is off; for other languages the default is on."),
 			set_case_command,
 			show_case_command,
 			&setlist, &showlist);
+
+  add_setshow_boolean_cmd ("warn-language-frame-mismatch", class_obscure,
+			   &warn_frame_lang_mismatch, _("\
+Enable or disable the frame language-mismatch warning."),
+			   _("\
+Show the current setting of the frame language-mismatch warning."),
+			   _("\
+The frame-language-mismatch warning is issued when the current language\n\
+does not match the selected frame's language."), nullptr, nullptr,
+			   &setlist, &showlist);
 
   add_set_language_command ();
 }

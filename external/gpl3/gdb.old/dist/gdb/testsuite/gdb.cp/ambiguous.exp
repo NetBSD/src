@@ -1,4 +1,4 @@
-# Copyright 1998-2023 Free Software Foundation, Inc.
+# Copyright 1998-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # about the field or baseclass being ambiguous is emitted at the right
 # times.
 
-if { [skip_cplus_tests] } {  return }
+require allow_cplus_tests
 
 standard_testfile .cc
 
@@ -123,6 +123,7 @@ with_test_prefix "all fields" {
     gdb_test "print n.A1::y" " = 2"
     gdb_test "print n.A2::x" " = 3"
     gdb_test "print n.A2::y" " = 4"
+    gdb_test "print n->A2::y" " = 4"
     gdb_test "print n.w" " = 5"
     gdb_test "print n.r" " = 6"
     gdb_test "print n.z" " = 7"

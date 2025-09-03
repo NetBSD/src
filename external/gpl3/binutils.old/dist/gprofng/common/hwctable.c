@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -23,9 +23,9 @@
 #include <errno.h>
 #include <string.h>
 #include <limits.h>
+#include <linux/perf_event.h>
 
 #include "hwcdrv.h"
-#include "hwcfuncs.h"
 
 /* TprintfT(<level>,...) definitions.  Adjust per module as needed */
 #define DBG_LT0 0 // for high-level configuration, unexpected errors/warnings
@@ -2367,52 +2367,87 @@ static Hwcentry amd_15h[] = {
   {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
 };
 
-#define USE_ARM_REF_CYCLES \
-    {"usr_time","cycles",                 REGNO_ANY, STXT("User CPU"),   PRELOADS_85, 1, ABST_NONE}, \
-    {"sys_time","cycles~system=1~user=0", REGNO_ANY, STXT("System CPU"), PRELOADS_85, 1, ABST_NONE}, \
+#define INIT_HWC(nm, mtr, cfg, ty) .name = (nm), .metric = (mtr), \
+    .config = (cfg), .type = ty, .use_perf_event_type = 1, \
+    .val = PRELOAD_DEF, .reg_num = REGNO_ANY
+#define HWE(nm, mtr, cfg) INIT_HWC(nm, mtr, cfg, PERF_TYPE_HARDWARE)
+#define SWE(nm, mtr, cfg) INIT_HWC(nm, mtr, cfg, PERF_TYPE_SOFTWARE)
+#define HWCE(nm, mtr, id, op, res) \
+    INIT_HWC(nm, mtr, (id) | ((op) << 8) | ((res) << 16), PERF_TYPE_HW_CACHE)
 
-static Hwcentry	armlist[] = {
-  USE_ARM_REF_CYCLES
+static Hwcentry	generic_list[] = {
 // Hardware event:
-  {"branch-instructions",     NULL, REGNO_ANY, STXT("Branch-instructions"), PRELOADS_35, 0, ABST_NONE},
-  {"branch-misses",           NULL, REGNO_ANY, STXT("Branch-misses"), PRELOADS_35, 0, ABST_NONE},
-  {"bus-cycles",              NULL, REGNO_ANY, STXT("Bus Cycles"), PRELOADS_35, 1, ABST_NONE},
-  {"cache-misses",            NULL, REGNO_ANY, STXT("Cache-misses"), PRELOADS_35, 0, ABST_NONE},
-  {"cache-references",        NULL, REGNO_ANY, STXT("Cache-references"), PRELOADS_35, 0, ABST_NONE},
-  {"cycles",                  NULL, REGNO_ANY, STXT("CPU Cycles"), PRELOADS_85, 1, ABST_NONE},
-  {"insts",         "instructions", REGNO_ANY, STXT("Instructions Executed"), PRELOADS_75, 0, ABST_NONE},
-  {"ref-cycles",              NULL, REGNO_ANY, STXT("Total Cycles"), PRELOADS_85, 1, ABST_NONE},
-  {"stalled-cycles-backend",  NULL, REGNO_ANY, STXT("Stalled Cycles during issue."), PRELOADS_85, 1, ABST_NONE},
-  {"stalled-cycles-frontend", NULL, REGNO_ANY, STXT("Stalled Cycles during retirement."), PRELOADS_85, 1, ABST_NONE},
-
+  { HWE("usr_time", STXT("User CPU"), PERF_COUNT_HW_CPU_CYCLES), .timecvt = 1,
+    .int_name = "cycles" },
+  { HWE("sys_time", STXT("System CPU"), PERF_COUNT_HW_CPU_CYCLES), .timecvt = 1,
+    .int_name = "cycles~system=1~user=0" },
+  { HWE("branch-instructions", STXT("Branch-instructions"),
+	PERF_COUNT_HW_BRANCH_INSTRUCTIONS) },
+  { HWE("branch-misses", STXT("Branch-misses"), PERF_COUNT_HW_BRANCH_MISSES) },
+  { HWE("bus-cycles", STXT("Bus Cycles"), PERF_COUNT_HW_BUS_CYCLES),
+	  .timecvt = 1 },
+  { HWE("cache-misses", STXT("Cache-misses"), PERF_COUNT_HW_CACHE_MISSES) },
+  { HWE("cache-references", STXT("Cache-references"),
+	PERF_COUNT_HW_CACHE_REFERENCES) },
+  { HWE("cycles", STXT("CPU Cycles"), PERF_COUNT_HW_CPU_CYCLES), .timecvt = 1 },
+  { HWE("insts", STXT("Instructions Executed"), PERF_COUNT_HW_INSTRUCTIONS),
+	  .int_name = "instructions" },
+  { HWE("ref-cycles", STXT("Total Cycles"), PERF_COUNT_HW_REF_CPU_CYCLES),
+	  .timecvt = 1 },
+  { HWE("stalled-cycles-backend", STXT("Stalled Cycles during issue."),
+	PERF_COUNT_HW_STALLED_CYCLES_BACKEND), .timecvt = 1 },
+  { HWE("stalled-cycles-frontend", STXT("Stalled Cycles during retirement."),
+	PERF_COUNT_HW_STALLED_CYCLES_FRONTEND), .timecvt = 1 },
 // Software event:
-  {"alignment-faults",        NULL, REGNO_ANY, STXT("Alignment Faults"), PRELOADS_85, 0, ABST_NONE},
-  {"context-switches",        NULL, REGNO_ANY, STXT("Context Switches"), PRELOADS_85, 0, ABST_NONE},
-  {"cpu-clock",               NULL, REGNO_ANY, STXT("CPU Clock"), PRELOADS_85, 1, ABST_NONE},
-  {"cpu-migrations",          NULL, REGNO_ANY, STXT("CPU Migrations"), PRELOADS_85, 0, ABST_NONE},
-  {"emulation-faults",        NULL, REGNO_ANY, STXT("Emulation Faults"), PRELOADS_85, 0, ABST_NONE},
-  {"major-faults",            NULL, REGNO_ANY, STXT("Major Page Faults"), PRELOADS_85, 0, ABST_NONE},
-  {"minor-faults",            NULL, REGNO_ANY, STXT("Minor Page Faults"), PRELOADS_85, 0, ABST_NONE},
-  {"page-faults",             NULL, REGNO_ANY, STXT("Page Faults"), PRELOADS_85, 0, ABST_NONE},
-  {"task-clock",              NULL, REGNO_ANY, STXT("Clock Count Specific"), PRELOADS_85, 1, ABST_NONE},
-
+  { SWE("alignment-faults", STXT("Alignment Faults"),
+	PERF_COUNT_SW_ALIGNMENT_FAULTS) },
+  { SWE("context-switches", STXT("Context Switches"),
+	PERF_COUNT_SW_CONTEXT_SWITCHES) },
+  { SWE("cpu-clock", STXT("CPU Clock"), PERF_COUNT_SW_CPU_CLOCK),
+	  .timecvt = 1 },
+  { SWE("cpu-migrations", STXT("CPU Migrations"),
+	PERF_COUNT_SW_CPU_MIGRATIONS) },
+  { SWE("emulation-faults", STXT("Emulation Faults"),
+	PERF_COUNT_SW_EMULATION_FAULTS) },
+  { SWE("major-faults", STXT("Major Page Faults"),
+	PERF_COUNT_SW_PAGE_FAULTS_MAJ) },
+  { SWE("minor-faults", STXT("Minor Page Faults"),
+	PERF_COUNT_SW_PAGE_FAULTS_MIN) },
+  { SWE("page-faults", STXT("Page Faults"), PERF_COUNT_SW_PAGE_FAULTS) },
+  { SWE("task-clock", STXT("Clock Count Specific"), PERF_COUNT_SW_TASK_CLOCK),
+	  .timecvt = 1 },
 // Hardware cache event
-  {"L1-dcache-load-misses",   NULL, REGNO_ANY, STXT("L1 D-cache Load Misses"), PRELOADS_35, 0, ABST_NONE},
-  {"L1-dcache-loads",         NULL, REGNO_ANY, STXT("L1 D-cache Loads"), PRELOADS_35, 0, ABST_NONE},
-  {"L1-dcache-store-misses",  NULL, REGNO_ANY, STXT("L1 D-cache Store Misses"), PRELOADS_35, 0, ABST_NONE},
-  {"L1-dcache-stores",        NULL, REGNO_ANY, STXT("L1 D-cache Store Stores"), PRELOADS_35, 0, ABST_NONE},
-  {"L1-icache-load-misses",   NULL, REGNO_ANY, STXT("L1 Instructions Load Misses"), PRELOADS_35, 0, ABST_NONE},
-  {"L1-icache-load-misses",   NULL, REGNO_ANY, STXT("L1 Instructions Loads"), PRELOADS_35, 0, ABST_NONE},
-  {"dTLB-load-misses",        NULL, REGNO_ANY, STXT("D-TLB Load Misses"), PRELOADS_35, 0, ABST_NONE},
-  {"dTLB-loads",              NULL, REGNO_ANY, STXT("D-TLB Loads"), PRELOADS_35, 0, ABST_NONE},
-  {"iTLB-load-misses",        NULL, REGNO_ANY, STXT("The Instruction TLB Load Misses"), PRELOADS_35, 0, ABST_NONE},
-  {"iTLB-loads",              NULL, REGNO_ANY, STXT("The Instruction TLB Loads"), PRELOADS_35, 0, ABST_NONE},
+  { HWCE("L1-dcache-load-misses", STXT("L1 D-cache Load Misses"),
+	 PERF_COUNT_HW_CACHE_L1D,
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_MISS) },
+  { HWCE("L1-dcache-loads", STXT("L1 D-cache Loads"),
+	 PERF_COUNT_HW_CACHE_L1D,
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },
+  { HWCE("L1-dcache-store-misses", STXT("L1 D-cache Store Misses"),
+	 PERF_COUNT_HW_CACHE_L1D,
+	 PERF_COUNT_HW_CACHE_RESULT_MISS, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },
+  { HWCE("L1-dcache-stores", STXT("L1 D-cache Store Stores"),
+	 PERF_COUNT_HW_CACHE_L1D,
+	 PERF_COUNT_HW_CACHE_OP_WRITE, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },
+  { HWCE("L1-icache-load-misses", STXT("L1 Instructions Load Misses"),
+	 PERF_COUNT_HW_CACHE_L1I,
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_MISS) },
+  { HWCE("L1-icache-load-misses", STXT("L1 Instructions Loads"),
+	 PERF_COUNT_HW_CACHE_L1I,
+	 PERF_COUNT_HW_CACHE_OP_READ,  PERF_COUNT_HW_CACHE_RESULT_ACCESS) },
+  { HWCE("dTLB-load-misses", STXT("D-TLB Load Misses"),
+	 PERF_COUNT_HW_CACHE_DTLB,
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_MISS) },
+  { HWCE("dTLB-loads", STXT("D-TLB Loads"),
+	 PERF_COUNT_HW_CACHE_DTLB,
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },
+  { HWCE("iTLB-load-misses", STXT("The Instruction TLB Load Misses"),
+	 PERF_COUNT_HW_CACHE_ITLB,
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_MISS) },
+  { HWCE("iTLB-loads", STXT("The Instruction TLB Loads"),
+	 PERF_COUNT_HW_CACHE_ITLB,
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },
 
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
-static Hwcentry unknownlist[] =
-	/*  used for unrecognized CPU type */{
   {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
 };
 
@@ -2485,8 +2520,9 @@ static cpu_list_t cputabs[] = {
   {CPC_SPARC64_X, usfuji_X_list, {"insts,,cycles,,dcstall", 0}},
   {CPC_SPARC64_XII, usfuji_XII_list, {"insts,,cycles,,dcstall", 0}},
   {CPC_KPROF, kproflist, {NULL}}, // OBSOLETE (To support 12.3 and earlier, TBR)
-  {ARM_CPU_IMP_APM, armlist, {"insts,,cycles", 0}},
-  {0, unknownlist, {NULL}} /* processor is unknown, but experiment is allowed */
+  {ARM_CPU_IMP_APM, generic_list, {"insts,,cycles", 0}},
+  {CPC_AMD_Authentic, generic_list, {"insts,,cycles", 0}},
+  {0, generic_list, {"insts,,cycles", 0}},
 };
 
 /*---------------------------------------------------------------------------*/

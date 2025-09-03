@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.229 2025/05/06 04:34:58 imil Exp $	*/
+/*	$NetBSD: locore.S,v 1.230 2025/06/30 05:38:30 imil Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -468,8 +468,9 @@ tmpstk:
 ENTRY(start)
 #ifndef XENPV
 	.code32
-
+#ifdef BOOT_DURATION
 	getstarttsc
+#endif
 
 #ifdef SELFRELOC
 	call	next
@@ -1050,7 +1051,9 @@ END(start)
 /* entry point for Xen PVH */
 	.code32
 ENTRY(start_pvh)
+#ifdef BOOT_DURATION
 	getstarttsc
+#endif
 	/* Xen doesn't start us with a valid gdt */
 	movl    $RELOC(gdtdesc32), %eax
 	lgdt    (%eax)

@@ -1,10 +1,16 @@
 /* common/config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define if building universal (internal helper macro) */
+#undef AC_APPLE_UNIVERSAL_BUILD
+
 /* Enable debugging output. */
 #undef DEBUG
 
 /* Enable java profiling */
 #undef GPROFNG_JAVA_PROFILING
+
+/* Define to 1 if you have the <asm/hwprobe.h> header file. */
+#undef HAVE_ASM_HWPROBE_H
 
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
@@ -108,6 +114,18 @@
 
 /* Version number of package */
 #undef VERSION
+
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+#  undef WORDS_BIGENDIAN
+# endif
+#endif
 
 /* Define to 1 if on MINIX. */
 #undef _MINIX

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#   Copyright (C) 1990-2020 Free Software Foundation
+#   Copyright (C) 1990-2024 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ BZIPPROG=bzip2
 GZIPPROG=gzip
 LZIPPROG=lzip
 XZPROG=xz
+ZSTDPROG=zstd
 SHA256PROG=sha256sum
 MAKE=make
 CC=gcc
@@ -39,19 +40,21 @@ MAKEINFOFLAGS=--split-size=5000000
 # Support for building net releases
 
 # Files in root used in any net release.
-DEVO_SUPPORT="ar-lib ChangeLog ChangeLog.git compile config config-ml.in config.guess \
+DEVO_SUPPORT="ar-lib ChangeLog compile config config-ml.in config.guess \
 	config.rpath config.sub configure configure.ac COPYING COPYING.LIB \
 	COPYING3 COPYING3.LIB depcomp install-sh libtool.m4 ltgcc.m4 \
 	ltmain.sh ltoptions.m4 ltsugar.m4 ltversion.m4 lt~obsolete.m4 \
 	MAINTAINERS Makefile.def Makefile.in Makefile.tpl missing mkdep \
 	mkinstalldirs move-if-change README README-maintainer-mode \
 	SECURITY.txt src-release.sh symlink-tree test-driver ylwrap \
-        multilib.am"
+        multilib.am ChangeLog.git"
 
 # Files in devo/etc used in any net release.
-ETC_SUPPORT="Makefile.in configure configure.in standards.texi \
-	make-stds.texi standards.info* configure.texi configure.info* \
-	ChangeLog configbuild.* configdev.* fdl.texi texi2pod.pl gnu-oids.texi"
+ETC_SUPPORT="ChangeLog Makefile.am Makefile.in aclocal.m4 add-log.el \
+	add-log.vi configbuild.* configdev.* configure configure.ac \
+	configure.in configure.info* configure.texi fdl.texi gnu-oids.texi \
+	make-stds.texi standards.info* standards.texi texi2pod.pl \
+	update-copyright.py"
 
 # Get the version number of a given tool
 getver()
@@ -74,6 +77,52 @@ getver()
     fi
 }
 
+clean_sources()
+{
+    # Check that neither staged nor unstaged changes of any tracked file remains.
+    if [ -n "$(git status --porcelain -uno)" ]; then
+        echo "There are uncommitted changes. Please commit or stash them."
+        exit 1
+    fi
+
+    echo "==> Cleaning sources."
+
+    # Remove all untracked files.
+    git clean -fdx
+
+    # Umask for any new file created by this script.
+    umask 0022
+
+    # Fix permissions of all tracked files and directories according to the previously set umask.
+    echo "==> Fixing permissions."
+    permreg=$(printf "%o" $((0666 & ~$(umask))))
+    permexe=$(printf "%o" $((0777 & ~$(umask))))
+    git ls-tree -rt --format "objectmode=%(objectmode) path=%(path)" HEAD | while read -r objectprop; do
+        eval $objectprop
+        case $objectmode in
+            100644)
+                # regular file
+                chmod $permreg $path
+                ;;
+            100755|040000)
+                # executable file or directory
+                chmod $permexe $path
+                ;;
+            120000)
+                # symlink, do nothing, always lrwxrwxrwx.
+                ;;
+            160000)
+                # submodule, currently do nothing
+                ;;
+            *)
+                # unlikely, might be a future version of Git
+                echo unsupported object at $path
+                exit 1
+                ;;
+        esac
+    done
+}
+
 # Setup build directory for building release tarball
 do_proto_toplev()
 {
@@ -82,8 +131,7 @@ do_proto_toplev()
     tool=$3
     support_files=$4
 
-    echo "==> Cleaning sources."
-    find \( -name "*.orig" -o  -name "*.rej" -o -name "*~" -o -name ".#*" -o -name "*~$bkpat" \) -exec rm {} \;
+    clean_sources
     
     echo "==> Making $package-$ver/"
     # Take out texinfo from a few places.
@@ -155,7 +203,6 @@ do_proto_toplev()
 	mkdir proto-toplev/texinfo/util && \
 	    ln -s ../../../texinfo/util/tex3patch proto-toplev/texinfo/util
     fi
-    chmod -R og=u . || chmod og=u `find . -print`
     #
     # Create .gmo files from .po files.
     for f in `find . -name '*.po' -type f -print`; do
@@ -236,7 +283,17 @@ do_xz()
     ver=$2
     echo "==> Xzipping $package-$ver.tar.xz"
     rm -f $package-$ver.tar.xz
-    $XZPROG -k -v -9 $package-$ver.tar
+    $XZPROG -k -v -9 -T0 $package-$ver.tar
+}
+
+# Compress the output with zstd
+do_zstd()
+{
+    package=$1
+    ver=$2
+    echo "==> Zzipping $package-$ver.tar.zst"
+    rm -f $package-$ver.tar.zst
+    $ZSTDPROG -k -v -19 -T0 $package-$ver.tar
 }
 
 # Compress the output with all selected compresion methods
@@ -255,6 +312,8 @@ do_compress()
 		do_lz $package $ver;;
 	    xz)
 		do_xz $package $ver;;
+	    zstd)
+		do_zstd $package $ver;;
 	    *)
 		echo "Unknown compression method: $comp" && exit 1;;
 	esac
@@ -304,23 +363,43 @@ gdb_tar_compress()
     do_compress $package $ver "$compressors"
 }
 
-# The FSF "binutils" release includes gprof and ld.
-BINUTILS_SUPPORT_DIRS="libsframe bfd gas include libiberty libctf opcodes ld elfcpp gold gprof gprofng setup.com makefile.vms cpu zlib"
-binutils_release()
-{
-    compressors=$1
-    package=binutils
-    tool=binutils
-    tar_compress $package $tool "$BINUTILS_SUPPORT_DIRS" "$compressors"
-}
-
-GAS_SUPPORT_DIRS="bfd include libiberty opcodes setup.com makefile.vms zlib"
+GAS_DIRS="bfd gas include libiberty opcodes setup.com makefile.vms zlib"
 gas_release()
 {
     compressors=$1
     package=gas
     tool=gas
-    tar_compress $package $tool "$GAS_SUPPORT_DIRS" "$compressors"
+    tar_compress $package $tool "$GAS_DIRS" "$compressors"
+}
+
+BINUTILS_DIRS="$GAS_DIRS binutils cpu gprof gprofng ld libsframe libctf"
+binutils_release()
+{
+    compressors=$1
+    package=binutils
+    tool=binutils
+    tar_compress $package $tool "$BINUTILS_DIRS" "$compressors"
+}
+
+BINUTILS_GOLD_DIRS="$BINUTILS_DIRS elfcpp gold"
+binutils_gold_release()
+{
+    compressors=$1
+    package=binutils-with-gold
+    tool=binutils
+    tar_compress $package $tool "$BINUTILS_GOLD_DIRS" "$compressors"
+}
+
+GOLD_DIRS="gold elfcpp include"
+# These extra directories whilst not directly related to
+# gold are needed in order to be able to build and test it.
+GOLD_DIRS="$GOLD_DIRS bfd libsframe libctf libiberty binutils opcodes gas"
+gold_release()
+{
+    compressors=$1
+    package=gold
+    tool=binutils
+    tar_compress $package $tool "$GOLD_DIRS" "$compressors"
 }
 
 GDB_SUPPORT_DIRS="libsframe bfd include libiberty libctf opcodes readline sim libdecnumber cpu zlib contrib gnulib gdbsupport gdbserver libbacktrace"
@@ -350,7 +429,15 @@ usage()
     echo "  -g: Compress with gzip"
     echo "  -l: Compress with lzip"
     echo "  -x: Compress with xz"
+    echo "  -z: Compress with zstd"
     echo "  -r <date>: Create a reproducible tarball using <date> as the mtime"
+    echo "release:"
+    echo "  binutils:     All the binutils except gold"
+    echo "  binutils_with_gold:  All the binutils including gold"
+    echo "  gas:          Just the assembler"
+    echo "  gdb:          All of GDB"
+    echo "  gold:         Just the gold linker"
+    echo "  sim:          Just the simulator"
     exit 1
 }
 
@@ -361,10 +448,14 @@ build_release()
     case $release in
 	binutils)
 	    binutils_release "$compressors";;
+	binutils_with_gold)
+	    binutils_gold_release "$compressors";;
 	gas)
 	    gas_release "$compressors";;
 	gdb)
 	    gdb_release "$compressors";;
+	gold)
+	    gold_release "$compressors";;
 	sim)
 	    sim_release "$compressors";;
 	*)
@@ -374,7 +465,7 @@ build_release()
 
 compressors=""
 
-while getopts ":bglr:x" opt; do
+while getopts ":bglr:xz" opt; do
     case $opt in
 	b)
 	    compressors="$compressors bz2";;
@@ -386,9 +477,11 @@ while getopts ":bglr:x" opt; do
 	    release_date=$OPTARG;;
 	x)
 	    compressors="$compressors xz";;
+	z)
+	    compressors="$compressors zstd";;
 	\?)
 	    echo "Invalid option: -$OPTARG" && usage;;
-  esac
+    esac
 done
 shift $((OPTIND -1))
 release=$1

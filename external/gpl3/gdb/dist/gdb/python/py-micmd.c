@@ -447,12 +447,7 @@ static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_micommands ()
 {
   micmdpy_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&micmdpy_object_type) < 0)
-    return -1;
-
-  if (gdb_pymodule_addobject (gdb_module, "MICommand",
-			      (PyObject *) &micmdpy_object_type)
-      < 0)
+  if (gdbpy_type_ready (&micmdpy_object_type) < 0)
     return -1;
 
   invoke_cst = PyUnicode_FromString ("invoke");
@@ -514,7 +509,16 @@ micmdpy_set_installed (PyObject *self, PyObject *newvalue, void *closure)
 {
   struct micmdpy_object *micmd_obj = (struct micmdpy_object *) self;
 
-  bool installed_p = PyObject_IsTrue (newvalue);
+  if (!PyBool_Check (newvalue))
+    {
+      PyErr_Format (PyExc_TypeError,
+		    _("gdb.MICommand.installed must be set to a bool, not %s"),
+		    newvalue == Py_None ? "None" : Py_TYPE(newvalue)->tp_name);
+      return -1;
+    }
+
+  bool installed_p = newvalue == Py_True;
+
   if (installed_p == (micmd_obj->mi_command != nullptr))
     return 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.h,v 1.13 2015/09/06 06:01:02 dholland Exp $	*/
+/*	$NetBSD: chio.h,v 1.14 2025/07/01 21:07:30 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ struct changer_element_status {
 	char	ces_xname[16];	/* external name of drive device */
 
 	/*
-	 * The following fieds indicate the element the medium was
+	 * The following fields indicate the element the medium was
 	 * moved from in order to arrive in this element.
 	 */
 	int	ces_from_type;	/* type of element */

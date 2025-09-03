@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2115 2025/06/02 14:04:07 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2128 2025/08/26 13:51:28 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -44,11 +44,11 @@
 
 Package:	acpica
 Version:	20241212
-Current Vers:	20241212
+Current Vers:	20250807
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
-Date:		2025-02-24
+Date:		2025-08-24
 Mailing List:	devel@acpica.org
 License:	BSD-like
 Responsible:	jruoho,christos
@@ -123,12 +123,12 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.20.9/MPL
-Current Vers:	9.20.9/MPL
+Version:	9.20.11/MPL
+Current Vers:	9.20.11/MPL
 Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
-Date:		2025-05-21
+Date:		2025-07-17
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-announce
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-users
 Responsible:	christos
@@ -149,7 +149,7 @@ Archive Site:	https://github.com/zoulasc/blocklist
 Home Page:	https://github.com/zoulasc/blocklist
 Date:		2020-06-13
 Responsible:	christos
-License:	BSD-like (2-clause) 
+License:	BSD-like (2-clause)
 Location:	external/bsd/blocklist
 Notes:
 
@@ -168,11 +168,11 @@ Notes:
 
 Package:	unbound
 Version:	1.19.1
-Current Vers:	1.19.1
+Current Vers:	1.23.1
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
-Date:		2024-02-17
+Date:		2025-07-29
 Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like
@@ -459,12 +459,12 @@ Notes:
 There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
-Version:	10.5.0/12.4.0
-Current Vers:	10.5.0/12.4.0/13.3.0/14.2.0
+Version:	10.5.0/12.5.0
+Current Vers:	10.5.0/12.5.0/13.3.0/14.2.0/15.1.0
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	https://www.gnu.org/software/gcc/
-Date:		2024-06-30
+Date:		2025-07-21
 Mailing List:	gcc-bugs@gnu.org
 Responsible:	mrg, christos, skrll
 License:	GPLv3, LGPLv3.1
@@ -491,7 +491,7 @@ Before importing a new version of external/gpl3/gcc:
 
 Package:	gdb
 Version:	15.1
-Current Vers:	16.1
+Current Vers:	16.3
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
@@ -507,12 +507,12 @@ When updating GDB, it is imperative to test that:
 	  ("options KGDB") works correctly.
 
 Package:	binutils
-Version:	2.42
-Current Vers:	2.44
+Version:	2.45
+Current Vers:	2.45
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	https://www.gnu.org/software/binutils/
-Date:		2024-09-09
+Date:		2025-08-26
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	thorpej, mrg
 License:	GPLv3, LGPLv3, GPLv2, LGPLv2, BSD
@@ -627,7 +627,7 @@ Maintainer:	Jason Evans
 Archive Site:	https://github.com/jemalloc/jemalloc
 Home Page:	https://jemalloc.net
 Date:		2024-09-23
-Mailing List:	
+Mailing List:
 Responsible:	christos
 License:	BSD
 Location:	external/bsd/jemalloc
@@ -705,7 +705,7 @@ directory.
 
 Package:	less
 Version:	less-643
-Current Vers:	less-668
+Current Vers:	less-679
 Maintainer:	Mark Nudelman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
@@ -722,11 +722,11 @@ Talk to mrg before importing any new version.
 
 Package:	libarchive
 Version:	3.7.7
-Current Vers:	3.8.0
+Current Vers:	3.8.1
 Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
 Archive Site:	https://github.com/libarchive/libarchive/releases
 Home Page: 	http://www.libarchive.org
-Date:		2024-10-17
+Date:		2025-07-01
 Responsible:	joerg
 License:	BSD (2-clause)
 Location:	external/bsd/libarchive/dist
@@ -946,11 +946,11 @@ Notes:
 
 Package:	MesaLib
 Version:	19.1.7
-Current Vers:	20.1.1
+Current Vers:	25.1.4
 Maintainer:	mesa-git@?
 Archive Site:	ftp://ftp.freedesktop.org/pub/mesa/
 Home Page:	http://www.mesa3d.org/
-Date:		2020-06-13
+Date:		2025-07-29
 Mailing List:
 Responsible:	riastradh, mrg
 License:	ISC
@@ -1131,36 +1131,37 @@ markus is very cooperative about it):
 - LIBWRAP support is maintained (now in sshd-session.c)
 
 Package:	OpenSSL
-Version:	1.0.2o/1.1.1t/3.0.16
-Current Vers:	1.0.2u/1.1.1w/3.0.16/3.2.4/3.3.3/3.4.1/3.5.0
+Version:	1.0.2o/1.1.1t/3.0.16/3.5.1
+Current Vers:	1.0.2u/1.1.1w/3.0.16/3.2.4/3.3.3/3.4.1/3.5.1
 Maintainer:	The OpenSSL Project
 Archive Site:	https://github.com/openssl/openssl/releases
 Home Page:	http://www.openssl.org/
-Date:		2025-04-16
+Date:		2025-07-16
 Mailing List:	openssl-announce@openssl.org
 Responsible:	christos, mjf, tls, riastradh, spz
 License:	Apache2
-Location:	crypto/external/bsd/openssl/dist
+Location:	crypto/external/apache2/openssl/dist
 Vendor tag:	OPENSSL
 Release tag:	openssl-x-y-z (openssl-x-y-zw in past with lettered releases)
-Current tag:	openssl-3-0-16
+Current tag:	openssl-3-5-1
 Notes:
-- Next update to be in crypto/external/apache2/openssl/dist, since
-  OpenSSL 3.0 was relicensed as Apache2. We might consider reverting
-  patches for idea, rc2, rc5 to retain binary compatibility with stock
-  openssl and bump major.
 - Run openssl2netbsd to get rid of the RCSID identifiers
 - import
 - configure and build after importing in the import directory
-- check the generated files against the ones in the include directory
-  and merge changes
+- check the generated files against the ones in the include and source
+  directories and merge changes
 - copy the toplevel libFOO.ld files to our FOO.map linker files (the legacy.ld
   is in providers/), and sync the FOO.expsym files if there were changes
+  remember to add the extra sha symbol renaming stuff to libcrypto.
 - run make in /usr/src/crypto/external/bsd/openssl/lib/libcrypto/man
   to regen man pages.
 - run make in /usr/src/crypto/external/bsd/openssl/lib/libcrypto/arch/*
   to regen assembly files
-- run openssl speed -evp aes-256-cbc and compare the results with the 
+- make sure that the lib/libcrypto/gen script is up to date with
+  util/perl/OpenSSL/stackhash.pm
+- compare the list of files in each of the libraries with the one from
+  the openssl build with ar t | sed -e 's/lib[a-z]*-lib-//' | sort -u
+- run openssl speed -evp aes-256-cbc and compare the results with the
   autoconf build
 
 Package:	pcc
@@ -1257,11 +1258,11 @@ now to do a new import.
 
 Package:	Postfix
 Version:	3.10.1
-Current Vers:	3.10.2
+Current Vers:	3.10.3
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:
 Home Page:	http://www.postfix.org/
-Date: 		2025-05-19
+Date: 		2025-07-26
 Mailing List:	postfix-users@postfix.org
 Responsible:	christos
 License:	IBM Public License. See also src/external/ibm-public/postfix/dist.
@@ -1355,10 +1356,10 @@ original.
 
 Package:	sqlite
 Version:	3.45.1
-Current Vers:	3.45.1
+Current Vers:	3.50.3
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
-Date: 		2024-03-01
+Date: 		2025-07-29
 Responsible:	joerg
 License:	Public domain
 Location:	external/public-domain/sqlite/dist
@@ -1564,11 +1565,11 @@ Notes:
 
 Package:	xz
 Version:	5.2.4
-Current Vers:	5.6.0
+Current Vers:	5.8.1
 Maintainer:	Lasse Collin <lasse.collin@tukanni.org>
 Archive Site:	http://tukaani.org/xz/
 Home Page:	http://tukaani.org/xz/
-Date: 		2024-02-24
+Date: 		2025-07-29
 Responsible:	joerg
 License:	public-domain
 Location:	external/public-domain/xz/dist
@@ -2153,10 +2154,11 @@ we use BSD-licensed implementation from Citrus project (see entry for
 
 Package:	grep
 Version:	2.5.1a (last GPLv2+ version)
-Current Vers:	3.7
+Current Vers:	3.12
 Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/grep/
+Archive Site:	https://ftp.gnu.org/gnu/grep/
 Home Page:	http://www.gnu.org/software/grep/
+Date:		2025-07-29
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	simonb
 License:	GPLv2+ (2.5.1a), GPLv3+ (2.5.3 and later)
@@ -2421,14 +2423,14 @@ License:	MIT
 Responsible:	mrg
 Location:	external/mit/isl
 Vendor tag:	isl
-Release tag:	isl-	
+Release tag:	isl-
 Notes:
 Integer Set Library
 Prerequisite for gcc to enable additional optimizations
 
 Package:	ctftools
-Version:	
-Current Vers:	
+Version:
+Current Vers:
 Maintainer:	Illumos
 Archive Site:	https://github.com/illumos/illumos-gate/blob/master
 		    /usr/src/cmd/ctfconvert
@@ -2436,9 +2438,9 @@ Archive Site:	https://github.com/illumos/illumos-gate/blob/master
 		    /usr/src/cmd/ctfdump
 		    /usr/src/cmd/ctfmerge
 		    /usr/src/lib/libctf
-Home Page:	
+Home Page:
 Date:		2025-04-26
-Mailing List:	
+Mailing List:
 License:	CDDL
 Responsible:	christos
 Location:	external/cddl/osnet/dist/

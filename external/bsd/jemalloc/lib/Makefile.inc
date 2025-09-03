@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2025/04/10 20:22:17 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2025/07/07 20:05:05 rillig Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -94,7 +94,7 @@ jemalloc.d jemalloc.pico jemalloc.o jemalloc.ln jemalloc.po jemalloc.go: \
 
 # jemalloc
 .for i in ${JEMALLOC_SRCS}
-LINTFLAGS.${i} += -X 86,89,117,132,191,193,207,217,226,261
+LINTFLAGS.${i} += -X 86,89,117,132,191,193,217,226,261
 .endfor
 
 LINTFLAGS.arena.c += -X 298

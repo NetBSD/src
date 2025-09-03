@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2005\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: seq.c,v 1.14 2024/05/04 13:29:41 mlelstv Exp $");
+__RCSID("$NetBSD: seq.c,v 1.15 2025/07/09 12:20:31 uwe Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -102,6 +102,7 @@ main(int argc, char *argv[])
 	int c = 0, errflg = 0;
 	int equalize = 0;
 	unsigned prec;
+	unsigned maxprec = 0;
 	double first = 1.0;
 	double last = 0.0;
 	double incr = 0.0;
@@ -162,16 +163,20 @@ main(int argc, char *argv[])
 	}
 
 	last = e_atof(argv[argc - 1]);
-	prec = get_precision(argv[argc - 1], 0);
+	maxprec = prec = get_precision(argv[argc - 1], 0);
 
 	if (argc > 1) {
 		first = e_atof(argv[0]);
 		prec = get_precision(argv[0], prec);
+		if (prec > maxprec)
+			maxprec = prec;
 	}
-	
+
 	if (argc > 2) {
 		incr = e_atof(argv[1]);
 		prec = get_precision(argv[1], prec);
+		if (prec > maxprec)
+			maxprec = prec;
 		/* Plan 9/GNU don't do zero */
 		if (incr == 0.0)
 			errx(1, "zero %screment", (first < last)? "in" : "de");
@@ -198,10 +203,10 @@ main(int argc, char *argv[])
 		 * newline if none found at the end of the format string.
 		 */
 	} else {
-		if (prec == 0)
+		if (maxprec == 0)
 			fmt = default_format;
 		else {
-			sprintf(buf, default_format_fmt, prec);
+			sprintf(buf, default_format_fmt, maxprec);
 			fmt = buf;
 		}
 		fmt = generate_format(first, incr, last, equalize, pad, fmt);

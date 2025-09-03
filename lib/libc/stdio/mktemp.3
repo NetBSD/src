@@ -1,4 +1,4 @@
-.\"	$NetBSD: mktemp.3,v 1.35 2024/11/02 11:06:15 nia Exp $
+.\"	$NetBSD: mktemp.3,v 1.36 2025/08/06 23:52:06 kre Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -109,9 +109,10 @@ The permitted flags are
 .Dv O_DIRECT ,
 .Dv O_SHLOCK ,
 .Dv O_EXLOCK ,
-.Dv O_SYNC
+.Dv O_SYNC ,
+.Dv O_CLOEXEC
 and
-.Dv O_CLOEXEC .
+.Dv O_CLOFORK .
 .Pp
 The
 .Fn mkstemps

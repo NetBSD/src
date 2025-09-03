@@ -1,5 +1,5 @@
 /* tc-mt.c -- Assembler for the Morpho Technologies mt .
-   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -68,7 +68,7 @@ const pseudo_typeS md_pseudo_table[] =
 
 static int no_scheduling_restrictions = 0;
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
 #define OPTION_NO_SCHED_REST	(OPTION_MD_BASE)
   { "nosched",	   no_argument, NULL, OPTION_NO_SCHED_REST },
@@ -76,9 +76,9 @@ struct option md_longopts[] =
   { "march", required_argument, NULL, OPTION_MARCH},
   { NULL,	   no_argument, NULL, 0 },
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
-const char * md_shortopts = "";
+const char md_shortopts[] = "";
 
 /* Mach selected from command line.  */
 static int mt_mach = bfd_mach_ms1;
@@ -335,7 +335,7 @@ md_section_align (segT segment, valueT size)
 {
   int align = bfd_section_alignment (segment);
 
-  return ((size + (1 << align) - 1) & -(1 << align));
+  return (size + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }
 
 symbolS *
@@ -372,7 +372,7 @@ md_convert_frag (bfd   * abfd  ATTRIBUTE_UNUSED,
 long
 md_pcrel_from_section (fixS *fixP, segT sec)
 {
-  if (fixP->fx_addsy != (symbolS *) NULL
+  if (fixP->fx_addsy != NULL
       && (!S_IS_DEFINED (fixP->fx_addsy)
 	  || S_GET_SEGMENT (fixP->fx_addsy) != sec))
     /* The symbol is undefined (or is defined but not in this section).
@@ -461,10 +461,10 @@ mt_apply_fix (fixS *fixP, valueT *valueP, segT seg)
 bool
 mt_fix_adjustable (fixS * fixP)
 {
-  if ((int) fixP->fx_r_type >= (int) BFD_RELOC_UNUSED)
+  if (fixP->fx_r_type >= BFD_RELOC_UNUSED)
     {
       const CGEN_INSN *insn = NULL;
-      int opindex = (int) fixP->fx_r_type - (int) BFD_RELOC_UNUSED;
+      int opindex = fixP->fx_r_type - BFD_RELOC_UNUSED;
       const CGEN_OPERAND *operand;
 
       operand = cgen_operand_lookup_by_num(gas_cgen_cpu_desc, opindex);

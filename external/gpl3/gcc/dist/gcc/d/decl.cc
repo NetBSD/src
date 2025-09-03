@@ -162,16 +162,6 @@ get_fndecl_arguments (FuncDeclaration *decl)
 	  tree parm_decl = get_symbol_decl (decl->vthis);
 	  DECL_ARTIFICIAL (parm_decl) = 1;
 	  TREE_READONLY (parm_decl) = 1;
-
-	  if (decl->vthis->type == Type::tvoidptr)
-	    {
-	      /* Replace generic pointer with back-end closure type
-		 (this wins for gdb).  */
-	      tree frame_type = FRAMEINFO_TYPE (get_frameinfo (decl));
-	      gcc_assert (frame_type != NULL_TREE);
-	      TREE_TYPE (parm_decl) = build_pointer_type (frame_type);
-	    }
-
 	  param_list = chainon (param_list, parm_decl);
 	}
 
@@ -1047,6 +1037,16 @@ public:
     /* May change cfun->static_chain.  */
     build_closure (d);
 
+    /* Replace generic pointer with back-end closure type
+       (this wins for gdb).  */
+    if (d->vthis && d->vthis->type == Type::tvoidptr)
+      {
+	tree frame_type = FRAMEINFO_TYPE (get_frameinfo (d));
+	gcc_assert (frame_type != NULL_TREE);
+	tree parm_decl = get_symbol_decl (d->vthis);
+	TREE_TYPE (parm_decl) = build_pointer_type (frame_type);
+      }
+
     if (d->vresult)
       declare_local_var (d->vresult);
 
@@ -1300,7 +1300,7 @@ get_symbol_decl (Declaration *decl)
       /* `const` applies to data that cannot be changed by the const reference
 	 to that data. It may, however, be changed by another reference to that
 	 same data.  */
-      if (vd->isConst () && !vd->isDataseg ())
+      if (vd->isConst () && !vd->isResult () && !vd->isDataseg ())
 	TREE_READONLY (decl->csym) = 1;
     }
 

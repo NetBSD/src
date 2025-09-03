@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.29 2023/04/19 00:23:45 yamaguchi Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.30 2025/07/26 14:18:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -243,6 +243,7 @@ bus_dma_tag_t	virtio_dmat(struct virtio_softc *);
 device_t	virtio_child(struct virtio_softc *);
 int		virtio_intrhand(struct virtio_softc *);
 uint64_t	virtio_features(struct virtio_softc *);
+bool		virtio_version_1(struct virtio_softc *);
 
 /* autoconf(9) common */
 void virtio_set_status(struct virtio_softc *, int);

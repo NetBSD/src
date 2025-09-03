@@ -1,5 +1,5 @@
 /* tc-loongarch.h -- Header file for tc-loongarch.c.
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of GAS.
@@ -21,8 +21,6 @@
 #ifndef TC_LOONGARCH
 #define TC_LOONGARCH
 
-#include "opcode/loongarch.h"
-
 #define TARGET_BYTES_BIG_ENDIAN 0
 #define TARGET_ARCH bfd_arch_loongarch
 
@@ -31,6 +29,9 @@ extern unsigned long loongarch_mach (void);
 
 #define WORKING_DOT_WORD 1
 #define REPEAT_CONS_EXPRESSIONS
+
+#define md_end loongarch_md_end
+extern void loongarch_md_end (void);
 
 /* Early than md_begin.  */
 #define md_after_parse_args loongarch_after_parse_args
@@ -71,56 +72,57 @@ extern bool loongarch_frag_align_code (int, int);
    relaxation, so do not resolve such expressions in the assembler.  */
 #define md_allow_local_subtract(l,r,s) 0
 
+#define TC_FORCE_RELOCATION(FIX) loongarch_force_relocation (FIX)
+extern int loongarch_force_relocation (struct fix *);
+
 /* If subsy of BFD_RELOC32/64 and PC in same segment, and without relax
    or PC at start of subsy or with relax but sub_symbol_segment not in
    SEC_CODE, we generate 32/64_PCREL.  */
-#define TC_FORCE_RELOCATION_SUB_LOCAL(FIX, SEG) \
-  (!(LARCH_opts.thin_add_sub \
-     && (BFD_RELOC_32 || BFD_RELOC_64) \
-     && (!LARCH_opts.relax \
-	|| S_GET_VALUE (FIX->fx_subsy) \
-	   == FIX->fx_frag->fr_address + FIX->fx_where \
-	|| (LARCH_opts.relax \
-	   && ((S_GET_SEGMENT (FIX->fx_subsy)->flags & SEC_CODE) == 0)))))
+extern bool loongarch_force_relocation_sub_local (struct fix *, asection *);
+#define TC_FORCE_RELOCATION_SUB_LOCAL(FIX, SEC) \
+  loongarch_force_relocation_sub_local (FIX, SEC)
 
 #define TC_VALIDATE_FIX_SUB(FIX, SEG) 1
 #define DIFF_EXPR_OK 1
 
 /* Postpone text-section label subtraction calculation until linking, since
    linker relaxations might change the deltas.  */
+extern bool loongarch_force_relocation_sub_same(struct fix *, asection *);
 #define TC_FORCE_RELOCATION_SUB_SAME(FIX, SEC)	\
-  (LARCH_opts.relax ?  \
-    (GENERIC_FORCE_RELOCATION_SUB_SAME (FIX, SEC)	\
-      || ((SEC)->flags & SEC_CODE) != 0		\
-      || ((SEC)->flags & SEC_DEBUGGING) != 0	\
-      || TC_FORCE_RELOCATION (FIX)) \
-    : (GENERIC_FORCE_RELOCATION_SUB_SAME (FIX, SEC))) \
+  (loongarch_force_relocation_sub_same (FIX, SEC) \
+   || GENERIC_FORCE_RELOCATION_SUB_SAME (FIX, SEC))
 
 #define TC_LINKRELAX_FIXUP(seg) ((seg->flags & SEC_CODE)  \
 				    || (seg->flags & SEC_DEBUGGING))
 
 #define TC_FORCE_RELOCATION_LOCAL(FIX) 1
 
-/* Adjust debug_line after relaxation.  */
-#define DWARF2_USE_FIXED_ADVANCE_PC 1
-
 /* Values passed to md_apply_fix don't include symbol values.  */
 #define MD_APPLY_SYM_VALUE(FIX) 0
 
 #define TARGET_USE_CFIPOP 1
-#define DWARF2_DEFAULT_RETURN_COLUMN 1 /* $ra.  */
-#define DWARF2_CIE_DATA_ALIGNMENT -4
+/* Adjust debug_line after relaxation.  */
+#define DWARF2_USE_FIXED_ADVANCE_PC   1
+
+/* FDE Data Alignment Factor.
+   FDE Code Alignment Factor (DWARF2_LINE_MIN_INSN_LENGTH) should be 1
+   because DW_CFA_advance_loc need to be relocated in bytes
+   when linker relaxation.  */
+#define DWARF2_CIE_DATA_ALIGNMENT     (-8)
+#define DWARF2_DEFAULT_RETURN_COLUMN  1	    /* FDE Return Address Register.  */
 
 #define tc_cfi_frame_initial_instructions	\
   loongarch_cfi_frame_initial_instructions
 extern void loongarch_cfi_frame_initial_instructions (void);
 
+#define tc_parse_to_dw2regnum tc_loongarch_parse_to_dw2regnum
+extern void tc_loongarch_parse_to_dw2regnum (expressionS *);
+
+extern int tc_loongarch_regname_to_dw2regnum (char *);
+
 #define tc_symbol_new_hook(sym) \
   if (0 == strcmp (sym->bsym->name, FAKE_LABEL_NAME)) \
     S_SET_OTHER (sym, STV_HIDDEN);
-
-#define tc_parse_to_dw2regnum tc_loongarch_parse_to_dw2regnum
-extern void tc_loongarch_parse_to_dw2regnum (expressionS *);
 
 extern void loongarch_pre_output_hook (void);
 #define md_pre_output_hook loongarch_pre_output_hook ()
@@ -128,9 +130,9 @@ extern void loongarch_pre_output_hook (void);
 
 #define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 0
 
-#define HANDLE_ALIGN(fragp) loongarch_handle_align (fragp)
+#define HANDLE_ALIGN(sec, fragp) loongarch_handle_align (fragp)
 extern void loongarch_handle_align (struct frag *);
-#define MAX_MEM_FOR_RS_ALIGN_CODE (3 + 4)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (3 + 4)
 
 #define elf_tc_final_processing loongarch_elf_final_processing
 extern void loongarch_elf_final_processing (void);

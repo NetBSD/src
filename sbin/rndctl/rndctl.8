@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndctl.8,v 1.29 2021/04/06 22:02:40 riastradh Exp $
+.\"	$NetBSD: rndctl.8,v 1.30 2025/06/25 00:16:10 gutteridge Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 2, 2021
+.Dd June 25, 2025
 .Dt RNDCTL 8
 .Os
 .Sh NAME
@@ -109,11 +109,21 @@ List all sources, or, if the
 .Fl t
 or
 .Fl d
-flags are specified, only those specified by the
+options are supplied, only those specified by the
 .Ar devtype
 or
-.Ar devname
-specified.
+.Ar devname .
+Details the source, source type, estimated bits, sample count, and
+associated source flags.
+Source flags
+.Dq t
+and/or
+.Dq v
+may be associated, and indicate time vs. value samples, respectively.
+The
+.Fl v
+option expands this output to include individual details about sample
+counts and bits per source.
 .It Fl S
 Generate a seed from the system entropy pool and save it to
 .Ar save-file
@@ -154,7 +164,9 @@ Terminal, mouse, or other user input devices.
 Hardware random number generators.
 .El
 .It Fl v
-Verbose output.
+Verbose output, increases the detail provided by the
+.Fl l
+option. 
 .El
 .Sh SEE ALSO
 .Xr rnd 4 ,

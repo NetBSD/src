@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -305,7 +305,6 @@ Stabs::Stabs (char *_path, char *_lo_name)
 
 Stabs::~Stabs ()
 {
-  delete pltSym;
   delete SymLstByName;
   Destroy (SymLst);
   Destroy (RelLst);
@@ -1618,9 +1617,9 @@ Stabs::createFunction (LoadObject *lo, Module *module, Symbol *sym)
   Function *func = dbeSession->createFunction ();
   func->module = module;
   func->img_fname = path;
-  func->img_offset = (off_t) sym->img_offset;
+  func->img_offset = sym->img_offset;
   func->save_addr = sym->save;
-  func->size = (uint32_t) sym->size;
+  func->size = sym->size;
   func->set_name (sym->name);
   func->elfSym = sym;
   module->functions->append (func);
@@ -1691,12 +1690,12 @@ Stabs::check_Symtab ()
   Elf *elf = openElf (true);
   if (elf == NULL)
     return;
-  if (elfDis->plt != 0)
+  if (elf->plt != 0)
     {
-      Elf_Internal_Shdr *shdr = elfDis->get_shdr (elfDis->plt);
+      Elf_Internal_Shdr *shdr = elf->get_shdr (elf->plt);
       if (shdr)
 	{
-	  pltSym = new Symbol ();
+	  pltSym = new Symbol (SymLst);
 	  pltSym->value = shdr->sh_addr;
 	  pltSym->size = shdr->sh_size;
 	  pltSym->img_offset = shdr->sh_offset;
@@ -1744,7 +1743,8 @@ Stabs::readSymSec (unsigned int sec, Elf *elf)
       switch (GELF_ST_TYPE (Sym.st_info))
 	{
 	case STT_FUNC:
-	  // Skip UNDEF symbols (bug 4817083)
+	  if (Sym.st_size == 0)
+	    break;
 	  if (Sym.st_shndx == 0)
 	    {
 	      if (Sym.st_value == 0)
@@ -1752,8 +1752,8 @@ Stabs::readSymSec (unsigned int sec, Elf *elf)
 	      sitem = new Symbol (SymLst);
 	      sitem->flags |= SYM_UNDEF;
 	      if (pltSym)
-		sitem->img_offset = (uint32_t) (pltSym->img_offset +
-						Sym.st_value - pltSym->value);
+		sitem->img_offset = pltSym->img_offset +
+		      Sym.st_value - pltSym->value;
 	    }
 	  else
 	    {
@@ -1761,8 +1761,8 @@ Stabs::readSymSec (unsigned int sec, Elf *elf)
 	      if (shdrp == NULL)
 		break;
 	      sitem = new Symbol (SymLst);
-	      sitem->img_offset = (uint32_t) (shdrp->sh_offset +
-					      Sym.st_value - shdrp->sh_addr);
+	      sitem->img_offset = shdrp->sh_offset +
+		      Sym.st_value - shdrp->sh_addr;
 	    }
 	  sitem->size = Sym.st_size;
 	  sitem->name = dbe_strdup (st_name);
@@ -1882,7 +1882,7 @@ Stabs::check_Relocs ()
       if (shdr_txt == NULL)
 	continue;
       if (!(shdr_txt->sh_flags & SHF_EXECINSTR))
-	continue;
+	    continue;
 
       // Get corresponding symbol table section
       Elf_Internal_Shdr *shdr_sym = elf->get_shdr (shdr->sh_link);
@@ -2305,9 +2305,9 @@ Stabs::append_local_funcs (Module *module, int first_ind)
       Function *func = dbeSession->createFunction ();
       sitem->func = func;
       func->img_fname = path;
-      func->img_offset = (off_t) sitem->img_offset;
-      func->save_addr = (uint32_t) sitem->save;
-      func->size = (uint32_t) sitem->size;
+      func->img_offset = sitem->img_offset;
+      func->save_addr = sitem->save;
+      func->size = sitem->size;
       func->module = module;
       func->set_name (sitem->name);
       module->functions->append (func);
@@ -2381,9 +2381,9 @@ Stabs::append_Function (Module *module, char *fname)
 	return sitem->func;
       sitem->func = func = dbeSession->createFunction ();
       func->img_fname = path;
-      func->img_offset = (off_t) sitem->img_offset;
-      func->save_addr = (uint32_t) sitem->save;
-      func->size = (uint32_t) sitem->size;
+      func->img_offset = sitem->img_offset;
+      func->save_addr = sitem->save;
+      func->size = sitem->size;
     }
   else
     func = dbeSession->createFunction ();
@@ -2436,9 +2436,9 @@ Stabs::append_Function (Module *module, char *linkerName, uint64_t pc)
 
   sitem->func = func = dbeSession->createFunction ();
   func->img_fname = path;
-  func->img_offset = (off_t) sitem->img_offset;
-  func->save_addr = (uint32_t) sitem->save;
-  func->size = (uint32_t) sitem->size;
+  func->img_offset = sitem->img_offset;
+  func->save_addr = sitem->save;
+  func->size = sitem->size;
   func->module = module;
   func->set_name (sitem->name); //XXXX ?? Now call it to set obj->name
   module->functions->append (func);

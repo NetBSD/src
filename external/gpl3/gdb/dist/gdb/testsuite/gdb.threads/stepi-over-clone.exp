@@ -48,9 +48,9 @@ gdb_test_multiple "catch syscall group:process" "catch process syscalls" {
     }
 }
 
-set re_loc1 "$hex in clone\[23\]? \\(\\)"
+set re_loc1 "$hex in (__)?clone\[23\]? \\(\\)"
 set re_loc2 "$decimal\[ \t\]+in \[^\r\n\]+"
-set re_loc3 "clone\[23\]? \\(\\) at \[^:\]+:$decimal"
+set re_loc3 "(__)?clone\[23\]? \\(\\) at \[^:\]+:$decimal"
 
 gdb_test "continue" \
     "Catchpoint $decimal \\(call to syscall clone\[23\]?\\), ($re_loc1|$re_loc3).*"

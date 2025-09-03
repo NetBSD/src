@@ -59,11 +59,23 @@ gdb_test_multiple "tui disable" "" {
     }
 }
 
-# Resize with TUI disabled, so don't wait for the resize message.
+# Resize with TUI disabled, so don't wait for the resize message.  Instead,
+# do it in two steps, and wait for a prompt redisplay for each.  If we do
+# this in one step, it's unpredictable how may prompt redisplays we'll get.
+Term::resize 24 90 0
+set screen_dim { 0 0 90 24 }
+
+gdb_test_multiple "" "prompt redisplays after first resize" {
+    -re "\r.*$gdb_prompt $" {
+	pass $gdb_test_name
+    }
+}
+
 Term::resize 24 80 0
 set screen_dim { 0 0 80 24 }
-gdb_test_multiple "" "two prompt redisplays after resize" {
-    -re "\r.*$gdb_prompt \r.*$gdb_prompt $" {
+
+gdb_test_multiple "" "prompt redisplays after second resize" {
+    -re "\r.*$gdb_prompt $" {
 	pass $gdb_test_name
     }
 }

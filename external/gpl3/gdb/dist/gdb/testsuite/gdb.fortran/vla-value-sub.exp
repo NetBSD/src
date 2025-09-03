@@ -45,7 +45,7 @@ gdb_test "print array1(1, 1)" " = 30" \
   "print array1(1, 1) after filled in foo (passed fixed array)"
 
 gdb_breakpoint [gdb_get_line_number "array2-almost-filled"]
-gdb_continue_to_breakpoint "array2-almost-filled (1st)"
+gdb_continue_to_breakpoint "array2-almost-filled, 1st"
 # array2 size is 296352 bytes.
 gdb_test_no_output "set max-value-size 1024*1024"
 gdb_test "print array2" " = \\( *\\( *\\( *30, *3, *3,\[()3, .\]*\\)" \
@@ -57,40 +57,40 @@ gdb_test "print array2" " = \\( *\\( *\\( *30, *20, *3,\[()3, .\]*\\)" \
 
 
 # Try to access values from a fixed sub-array handled as VLA in subroutine.
-gdb_continue_to_breakpoint "not-filled (2nd)"
+gdb_continue_to_breakpoint "not-filled, 2nd"
 gdb_test "print array1" " = \\(\[()5, .\]*\\)" \
-  "print passed array1 in foo (passed sub-array)"
+  "print passed array1 in foo, passed sub-array"
 
-gdb_continue_to_breakpoint "array1-filled (2nd)"
+gdb_continue_to_breakpoint "array1-filled, 2nd"
 gdb_test "print array1(5, 5)" " = 5" \
-  "print array1(5, 5) after filled in foo (passed sub-array)"
+  "print array1(5, 5) after filled in foo, passed sub-array"
 gdb_test "print array1(1, 1)" " = 30" \
-  "print array1(1, 1) after filled in foo (passed sub-array)"
+  "print array1(1, 1) after filled in foo, passed sub-array"
 
-gdb_continue_to_breakpoint "array2-almost-filled (2nd)"
+gdb_continue_to_breakpoint "array2-almost-filled, 2nd"
 gdb_test "print array2" " = \\( *\\( *\\( *30, *3, *3,\[()3, .\]*\\)" \
-  "print array2 in foo after it was filled (passed sub-array)"
+  "print array2 in foo after it was filled, passed sub-array"
 gdb_test "print array2(2,1,1)=20" " = 20" \
-  "set array(2,2,2) to 20 in subroutine (passed sub-array)"
+  "set array(2,2,2) to 20 in subroutine, passed sub-array"
 gdb_test "print array2" " = \\( *\\( *\\( *30, *20, *3,\[()3, .\]*\\)" \
-  "print array2 in foo after it was mofified in debugger (passed sub-array)"
+  "print array2 in foo after it was mofified in debugger, passed sub-array"
 
 
 # Try to access values from a VLA passed to subroutine.
-gdb_continue_to_breakpoint "not-filled (3rd)"
+gdb_continue_to_breakpoint "not-filled, 3rd"
 gdb_test "print array1" " = \\(\[()42, .\]*\\)" \
-  "print passed array1 in foo (passed vla)"
+  "print passed array1 in foo, passed vla"
 
-gdb_continue_to_breakpoint "array1-filled (3rd)"
+gdb_continue_to_breakpoint "array1-filled, 3rd"
 gdb_test "print array1(5, 5)" " = 5" \
-  "print array1(5, 5) after filled in foo (passed vla)"
+  "print array1(5, 5) after filled in foo, passed vla"
 gdb_test "print array1(1, 1)" " = 30" \
-  "print array1(1, 1) after filled in foo (passed vla)"
+  "print array1(1, 1) after filled in foo, passed vla"
 
-gdb_continue_to_breakpoint "array2-almost-filled (3rd)"
+gdb_continue_to_breakpoint "array2-almost-filled, 3rd"
 gdb_test "print array2" " = \\( *\\( *\\( *30, *3, *3,\[()3, .\]*\\)" \
-  "print array2 in foo after it was filled (passed vla)"
+  "print array2 in foo after it was filled, passed vla"
 gdb_test "print array2(2,1,1)=20" " = 20" \
-  "set array(2,2,2) to 20 in subroutine (passed vla)"
+  "set array(2,2,2) to 20 in subroutine, passed vla"
 gdb_test "print array2" " = \\( *\\( *\\( *30, *20, *3,\[()3, .\]*\\)" \
-  "print array2 in foo after it was mofified in debugger (passed vla)"
+  "print array2 in foo after it was mofified in debugger, passed vla"

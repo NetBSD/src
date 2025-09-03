@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.192 2025/01/08 08:24:07 andvar Exp $	*/
+/*	$NetBSD: ccd.c,v 1.193 2025/08/17 22:04:34 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.192 2025/01/08 08:24:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.193 2025/08/17 22:04:34 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1172,6 +1172,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	if (error != EPASSTHROUGH)
 		return error;
 
+	error = 0;
 	switch (cmd) {
 	case DIOCGSTRATEGY:
 	    {

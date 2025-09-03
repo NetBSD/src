@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obiovar.h,v 1.5 2020/04/16 23:29:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obiovar.h,v 1.6 2025/08/20 07:00:31 macallan Exp $");
 
 #ifndef OBIOVAR_H
 #define OBIOVAR_H
@@ -46,5 +46,22 @@ int obio_space_map(bus_addr_t, bus_size_t, bus_space_handle_t *);
 /* some common offsets */
 #define HEATHROW_FCR	0x38
 #define KEYLARGO_FCR1	0x3c
+
+#define GPIO_OUTSEL	0xf0	/* Output select */
+		/*	0x00	GPIO bit0 is output
+			0x10	media-bay power
+			0x20	reserved
+			0x30	MPIC */
+
+#define GPIO_ALTOE	0x08	/* Alternate output enable */
+		/*	0x00	Use DDR
+			0x08	Use output select */
+#define GPIO_DDR	0x04	/* Data direction */
+#define GPIO_DDR_OUTPUT	0x04	/* Output */
+#define GPIO_DDR_INPUT	0x00	/* Input */
+
+#define GPIO_LEVEL	0x02	/* Pin level (RO) */
+
+#define	GPIO_DATA	0x01	/* Data */
 
 #endif /* OBIOVAR_H */

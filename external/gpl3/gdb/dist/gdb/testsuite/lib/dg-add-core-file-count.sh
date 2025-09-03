@@ -26,7 +26,7 @@
 # find, wc, etc.  Spawning a subshell isn't strictly needed, but it's
 # clearer.  The "*core*" pattern is this lax in order to find all of
 # "core", "core.PID", "core.<program>.PID", "<program>.core", etc.
-cores=$(set -- *core*; [ $# -eq 1 -a ! -e "$1" ] && shift; echo $#)
+cores=$(set -- *core*; [ $# -eq 1 ] && [ ! -e "$1" ] && shift; echo $#)
 
 # If no cores found, then don't add our summary line.
 if [ "$cores" -eq "0" ]; then

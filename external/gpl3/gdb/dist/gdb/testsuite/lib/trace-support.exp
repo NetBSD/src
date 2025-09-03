@@ -366,6 +366,20 @@ proc gdb_find_recursion_test_baseline { filename } {
     return $baseline
 }
 
+# Return 1 if the IPA library is available and 0 otherwise.
+
+proc allow_in_proc_agent {} {
+    global objdir
+
+    if [target_info exists in_proc_agent] {
+	return 1
+    } elseif [file exists "$objdir/../../gdbserver/libinproctrace.so"] {
+	return 1
+    } else {
+	return 0
+    }
+}
+
 # Return the location of the IPA library.
 
 proc get_in_proc_agent {} {

@@ -1,5 +1,5 @@
 /* tc-csky.c -- Assembler for C-SKY
-   Copyright (C) 1989-2022 Free Software Foundation, Inc.
+   Copyright (C) 1989-2024 Free Software Foundation, Inc.
    Created by Lifang Xia (lifang_xia@c-sky.com)
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
@@ -1541,79 +1541,95 @@ md_show_usage (FILE *fp)
   -mvdsp			enable vector DSP instructions\n"));
 }
 
-static void set_csky_attribute (void)
+static bool
+set_csky_attribute (void)
 {
   if (mach_flag & CSKY_ARCH_DSP)
     {
       if (dsp_flag & CSKY_DSP_FLAG_V2)
 	{
 	  /* Set DSPV2.  */
-	  bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
-				    Tag_CSKY_DSP_VERSION,
-				    VAL_CSKY_DSP_VERSION_2);
+	  if (!bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
+					 Tag_CSKY_DSP_VERSION,
+					 VAL_CSKY_DSP_VERSION_2))
+	    return false;
 	}
       else if (isa_flag & CSKY_ISA_DSP)
 	{
 	  /* Set DSP extension.  */
-	  bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
-				    Tag_CSKY_DSP_VERSION,
-				    VAL_CSKY_DSP_VERSION_EXTENSION);
+	  if (!bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
+					 Tag_CSKY_DSP_VERSION,
+					 VAL_CSKY_DSP_VERSION_EXTENSION))
+	    return false;
 	}
       /* Set VDSP attribute.  */
       if (isa_flag & CSKY_ISA_VDSP)
-	bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
-				  Tag_CSKY_VDSP_VERSION,
-				  VAL_CSKY_VDSP_VERSION_1);
-
+	{
+	  if (!bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
+					 Tag_CSKY_VDSP_VERSION,
+					 VAL_CSKY_VDSP_VERSION_1))
+	    return false;
+	}
       else if (isa_flag & CSKY_ISA_VDSP_2)
-	bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
-				  Tag_CSKY_VDSP_VERSION,
-				  VAL_CSKY_VDSP_VERSION_2);
-
+	{
+	  if (!bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
+					 Tag_CSKY_VDSP_VERSION,
+					 VAL_CSKY_VDSP_VERSION_2))
+	    return false;
+	}
     }
 
   if (mach_flag & CSKY_ARCH_FLOAT)
     {
       unsigned int val = VAL_CSKY_FPU_HARDFP_SINGLE;
-      if (IS_CSKY_ARCH_V1 (mach_flag)) {
-	bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
-				  Tag_CSKY_FPU_VERSION,
-				  VAL_CSKY_FPU_VERSION_1);
-      }
+      if (IS_CSKY_ARCH_V1 (mach_flag))
+	{
+	  if (!bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
+					 Tag_CSKY_FPU_VERSION,
+					 VAL_CSKY_FPU_VERSION_1))
+	    return false;
+	}
       else
 	{
 	  if (isa_flag & CSKY_ISA_FLOAT_3E4)
 	    {
-	      bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
-					Tag_CSKY_FPU_VERSION,
-					VAL_CSKY_FPU_VERSION_2);
+	      if (!bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
+					     Tag_CSKY_FPU_VERSION,
+					     VAL_CSKY_FPU_VERSION_2))
+		return false;
 	      val |= VAL_CSKY_FPU_HARDFP_DOUBLE;
 	    }
 	  else
 	    {
-	      bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
-					Tag_CSKY_FPU_VERSION,
-					VAL_CSKY_FPU_VERSION_2);
+	      if (!bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
+					     Tag_CSKY_FPU_VERSION,
+					     VAL_CSKY_FPU_VERSION_2))
+		return false;
 	    }
 
-	  bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
-				    Tag_CSKY_FPU_HARDFP,
-				    val);
-	  bfd_elf_add_obj_attr_string (stdoutput, OBJ_ATTR_PROC,
-				    Tag_CSKY_FPU_NUMBER_MODULE,
-				    "IEEE 754");
-	  bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
-				    Tag_CSKY_FPU_ABI,
-				    float_abi);
+	  if (!bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
+					 Tag_CSKY_FPU_HARDFP, val))
+	    return false;
+	  if (!bfd_elf_add_obj_attr_string (stdoutput, OBJ_ATTR_PROC,
+					    Tag_CSKY_FPU_NUMBER_MODULE,
+					    "IEEE 754"))
+	    return false;
+	  if (!bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
+					 Tag_CSKY_FPU_ABI,
+					 float_abi))
+	    return false;
 	}
     }
 
+  if (!bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
+				 Tag_CSKY_ISA_FLAGS, isa_flag))
+    return false;
 
-  bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
-			    Tag_CSKY_ISA_FLAGS, isa_flag);
+  if (!bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
+				 Tag_CSKY_ISA_EXT_FLAGS, (isa_flag >> 32)))
+    return false;
 
-  bfd_elf_add_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
-			    Tag_CSKY_ISA_EXT_FLAGS, (isa_flag >> 32));
+  return true;
 }
 
 /* Target-specific initialization and option handling.  */
@@ -1676,8 +1692,10 @@ md_begin (void)
   for (p_arch = csky_archs; p_arch->arch_flag != 0; p_arch++)
     if ((mach_flag & CSKY_ARCH_MASK) == (p_arch->arch_flag & CSKY_ARCH_MASK))
       {
-	bfd_elf_add_obj_attr_string (stdoutput, OBJ_ATTR_PROC,
-				     Tag_CSKY_ARCH_NAME, p_arch->name);
+	if (!bfd_elf_add_obj_attr_string (stdoutput, OBJ_ATTR_PROC,
+					  Tag_CSKY_ARCH_NAME, p_arch->name))
+	  as_fatal (_("error adding attribute: %s"),
+		    bfd_errmsg (bfd_get_error ()));
 	bfd_mach_flag =  p_arch->bfd_mach_flag;
 	break;
       }
@@ -1686,8 +1704,10 @@ md_begin (void)
   for (p_cpu = csky_cpus; p_cpu->arch_flag != 0; p_cpu++)
     if ((mach_flag & CPU_ARCH_MASK) == p_cpu->arch_flag)
       {
-	bfd_elf_add_obj_attr_string (stdoutput, OBJ_ATTR_PROC,
-				     Tag_CSKY_CPU_NAME, p_cpu->name);
+	if (!bfd_elf_add_obj_attr_string (stdoutput, OBJ_ATTR_PROC,
+					  Tag_CSKY_CPU_NAME, p_cpu->name))
+	  as_fatal (_("error adding attribute: %s"),
+		    bfd_errmsg (bfd_get_error ()));
 	isa_flag |= p_cpu->isa_flag;
 	break;
       }
@@ -1856,7 +1876,9 @@ md_begin (void)
   /* Set bfd_mach to bfd backend data.  */
   bfd_set_arch_mach (stdoutput, bfd_arch_csky, bfd_mach_flag);
 
-  set_csky_attribute ();
+  if (!set_csky_attribute ())
+    as_fatal (_("error adding attribute: %s"),
+	      bfd_errmsg (bfd_get_error ()));
 }
 
 /* The C-SKY assembler emits mapping symbols $t and $d to mark the
@@ -5216,7 +5238,7 @@ md_section_align (segT segment ATTRIBUTE_UNUSED,
 
 /* MD interface: Symbol and relocation handling.  */
 
-void md_csky_end (void)
+void csky_md_finish (void)
 {
   dump_literals (0);
 }

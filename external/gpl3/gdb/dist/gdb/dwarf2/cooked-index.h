@@ -24,22 +24,16 @@
 #include "dwarf2/types.h"
 #include "symtab.h"
 #include "hashtab.h"
-#include "dwarf2/index-common.h"
-#include <string_view>
 #include "quick-symbol.h"
 #include "gdbsupport/gdb_obstack.h"
 #include "addrmap.h"
 #include "gdbsupport/iterator-range.h"
-#include "gdbsupport/thread-pool.h"
 #include "dwarf2/mapped-index.h"
 #include "dwarf2/read.h"
-#include "dwarf2/tag.h"
-#include "dwarf2/abbrev-cache.h"
+#include "dwarf2/abbrev-table-cache.h"
 #include "dwarf2/parent-map.h"
 #include "gdbsupport/range-chain.h"
-#include "gdbsupport/task-group.h"
 #include "complaints.h"
-#include "run-on-main-thread.h"
 
 #if CXX_STD_THREAD
 #include <mutex>
@@ -146,8 +140,11 @@ struct cooked_index_entry : public allocate_on_obstack<cooked_index_entry>
      STORAGE.  FOR_MAIN is true if we are computing the name of the
      "main" entry -- one marked DW_AT_main_subprogram.  This matters
      for avoiding name canonicalization and also a related race (if
-     "main" computation is done during finalization).  */
-  const char *full_name (struct obstack *storage, bool for_main = false) const;
+     "main" computation is done during finalization).  If the language
+     doesn't prescribe a separator, one can be specified using
+     DEFAULT_SEP.  */
+  const char *full_name (struct obstack *storage, bool for_main = false,
+			 const char *default_sep = nullptr) const;
 
   /* Comparison modes for the 'compare' function.  See the function
      for a description.  */
@@ -233,8 +230,7 @@ struct cooked_index_entry : public allocate_on_obstack<cooked_index_entry>
      linkage name -- two entries are created for DIEs which have both
      attributes.  */
   const char *name;
-  /* The canonical name.  For C++ names, this may differ from NAME.
-     In all other cases, this is equal to NAME.  */
+  /* The canonical name.  This may be equal to NAME.  */
   const char *canonical = nullptr;
   /* The DWARF tag.  */
   enum dwarf_tag tag;
@@ -251,9 +247,10 @@ private:
 
   /* A helper method for full_name.  Emits the full scope of this
      object, followed by the separator, to STORAGE.  If this entry has
-     a parent, its write_scope method is called first.  */
+     a parent, its write_scope method is called first.  FOR_MAIN is
+     true when computing the name of 'main'; see full_name.  */
   void write_scope (struct obstack *storage, const char *sep,
-		    bool for_name) const;
+		    bool for_main) const;
 
   /* The parent entry.  This is NULL for top-level entries.
      Otherwise, it points to the parent entry, such as a namespace or
@@ -344,9 +341,8 @@ private:
   /* GNAT only emits mangled ("encoded") names in the DWARF, and does
      not emit the module structure.  However, we need this structure
      to do lookups.  This function recreates that structure for an
-     existing entry.  It returns the base name (last element) of the
-     full decoded name.  */
-  gdb::unique_xmalloc_ptr<char> handle_gnat_encoded_entry
+     existing entry, modifying ENTRY as appropriate.  */
+  void handle_gnat_encoded_entry
        (cooked_index_entry *entry, htab_t gnat_entries);
 
   /* Finalize the index.  This should be called a single time, when
@@ -380,11 +376,9 @@ public:
   cooked_index_storage ();
   DISABLE_COPY_AND_ASSIGN (cooked_index_storage);
 
-  /* Return the current abbrev cache.  */
-  abbrev_cache *get_abbrev_cache ()
-  {
-    return &m_abbrev_cache;
-  }
+  /* Return the current abbrev table_cache.  */
+  const abbrev_table_cache &get_abbrev_table_cache () const
+  { return m_abbrev_table_cache; }
 
   /* Return the DIE reader corresponding to PER_CU.  If no such reader
      has been registered, return NULL.  */
@@ -440,8 +434,9 @@ private:
   /* Equality function for cutu_reader.  */
   static int eq_cutu_reader (const void *a, const void *b);
 
-  /* The abbrev cache used by this indexer.  */
-  abbrev_cache m_abbrev_cache;
+  /* The abbrev table cache used by this indexer.  */
+  abbrev_table_cache m_abbrev_table_cache;
+
   /* A hash table of cutu_reader objects.  */
   htab_up m_reader_hash;
   /* The index shard that is being constructed.  */
@@ -671,7 +666,7 @@ public:
   /* Look up ADDR in the address map, and return either the
      corresponding CU, or nullptr if the address could not be
      found.  */
-  dwarf2_per_cu_data *lookup (unrelocated_addr addr);
+  dwarf2_per_cu_data *lookup (unrelocated_addr addr) override;
 
   /* Return a new vector of all the addrmaps used by all the indexes
      held by this object.  */
@@ -737,9 +732,6 @@ struct cooked_index_functions : public dwarf2_base_index_functions
     return table;
   }
 
-  dwarf2_per_cu_data *find_per_cu (dwarf2_per_bfd *per_bfd,
-				   unrelocated_addr adjusted_pc) override;
-
   struct compunit_symtab *find_compunit_symtab_by_address
     (struct objfile *objfile, CORE_ADDR address) override;
 
@@ -788,10 +780,12 @@ struct cooked_index_functions : public dwarf2_base_index_functions
      gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
      gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
      block_search_flags search_flags,
-     domain_search_flags domain) override;
+     domain_search_flags domain,
+     gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher)
+       override;
 
   struct compunit_symtab *find_pc_sect_compunit_symtab
-    (struct objfile *objfile, struct bound_minimal_symbol msymbol,
+    (struct objfile *objfile, bound_minimal_symbol msymbol,
      CORE_ADDR pc, struct obj_section *section, int warn_if_readin) override
   {
     wait (objfile, true);

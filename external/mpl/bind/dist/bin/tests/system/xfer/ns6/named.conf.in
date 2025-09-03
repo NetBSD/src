@@ -104,3 +104,10 @@ zone "ixfr-too-big" {
 	primaries { 10.53.0.1; };
 	file "ixfr-too-big.bk";
 };
+
+zone "xfr-and-reconfig" {
+	type secondary;
+	primaries { 10.53.0.9; };
+	file "xfr-and-reconfig.bk";
+	request-ixfr no; # ans9 supports only axfr
+};

@@ -47,6 +47,7 @@ sparc_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
   bfd_vma pc, dest_pc;
   unsigned int insn;
   Sym *child;
+  Sym_Table *symtab = get_symtab ();
 
   DBG (CALLDEBUG, printf ("[find_call] %s: 0x%lx to 0x%lx\n",
 			  parent->name, (unsigned long) p_lowpc,
@@ -69,7 +70,7 @@ sparc_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
 			   ^ 0x20000000) - 0x20000000);
 	  if (hist_check_address (dest_pc))
 	    {
-	      child = sym_lookup (&symtab, dest_pc);
+	      child = sym_lookup (symtab, dest_pc);
 	      if (child)
 		{
 	          DBG (CALLDEBUG,

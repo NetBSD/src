@@ -1,5 +1,5 @@
 /* elfcomm.c -- common code for ELF format file.
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    Originally developed by Eric Youngdale <eric@andante.jic.com>
    Modifications by Nick Clifton <nickc@redhat.com>
@@ -63,12 +63,12 @@ warn (const char *message, ...)
   va_end (args);
 }
 
-void (*byte_put) (unsigned char *, elf_vma, unsigned int);
+void (*byte_put) (unsigned char *, uint64_t, unsigned int);
 
 void
-byte_put_little_endian (unsigned char * field, elf_vma value, unsigned int size)
+byte_put_little_endian (unsigned char *field, uint64_t value, unsigned int size)
 {
-  if (size > sizeof (elf_vma))
+  if (size > sizeof (uint64_t))
     {
       error (_("Unhandled data length: %d\n"), size);
       abort ();
@@ -81,9 +81,9 @@ byte_put_little_endian (unsigned char * field, elf_vma value, unsigned int size)
 }
 
 void
-byte_put_big_endian (unsigned char * field, elf_vma value, unsigned int size)
+byte_put_big_endian (unsigned char *field, uint64_t value, unsigned int size)
 {
-  if (size > sizeof (elf_vma))
+  if (size > sizeof (uint64_t))
     {
       error (_("Unhandled data length: %d\n"), size);
       abort ();
@@ -95,9 +95,9 @@ byte_put_big_endian (unsigned char * field, elf_vma value, unsigned int size)
     }
 }
 
-elf_vma (*byte_get) (const unsigned char *, unsigned int);
+uint64_t (*byte_get) (const unsigned char *, unsigned int);
 
-elf_vma
+uint64_t
 byte_get_little_endian (const unsigned char *field, unsigned int size)
 {
   switch (size)
@@ -106,61 +106,53 @@ byte_get_little_endian (const unsigned char *field, unsigned int size)
       return *field;
 
     case 2:
-      return  ((unsigned int) (field[0]))
-	|    (((unsigned int) (field[1])) << 8);
+      return ((uint64_t) field[0]
+	      | ((uint64_t) field[1] << 8));
 
     case 3:
-      return  ((unsigned long) (field[0]))
-	|    (((unsigned long) (field[1])) << 8)
-	|    (((unsigned long) (field[2])) << 16);
+      return ((uint64_t) field[0]
+	      | ((uint64_t) field[1] << 8)
+	      | ((uint64_t) field[2] << 16));
 
     case 4:
-      return  ((unsigned long) (field[0]))
-	|    (((unsigned long) (field[1])) << 8)
-	|    (((unsigned long) (field[2])) << 16)
-	|    (((unsigned long) (field[3])) << 24);
+      return ((uint64_t) field[0]
+	      | ((uint64_t) field[1] << 8)
+	      | ((uint64_t) field[2] << 16)
+	      | ((uint64_t) field[3] << 24));
 
     case 5:
-      if (sizeof (elf_vma) >= 8)
-	return  ((elf_vma) (field[0]))
-	  |    (((elf_vma) (field[1])) << 8)
-	  |    (((elf_vma) (field[2])) << 16)
-	  |    (((elf_vma) (field[3])) << 24)
-	  |    (((elf_vma) (field[4])) << 32);
-      /* Fall through.  */
+      return ((uint64_t) field[0]
+	      | ((uint64_t) field[1] << 8)
+	      | ((uint64_t) field[2] << 16)
+	      | ((uint64_t) field[3] << 24)
+	      | ((uint64_t) field[4] << 32));
 
     case 6:
-      if (sizeof (elf_vma) >= 8)
-	return  ((elf_vma) (field[0]))
-	  |    (((elf_vma) (field[1])) << 8)
-	  |    (((elf_vma) (field[2])) << 16)
-	  |    (((elf_vma) (field[3])) << 24)
-	  |    (((elf_vma) (field[4])) << 32)
-	  |    (((elf_vma) (field[5])) << 40);
-      /* Fall through.  */
+      return ((uint64_t) field[0]
+	      | ((uint64_t) field[1] << 8)
+	      | ((uint64_t) field[2] << 16)
+	      | ((uint64_t) field[3] << 24)
+	      | ((uint64_t) field[4] << 32)
+	      | ((uint64_t) field[5] << 40));
 
     case 7:
-      if (sizeof (elf_vma) >= 8)
-	return  ((elf_vma) (field[0]))
-	  |    (((elf_vma) (field[1])) << 8)
-	  |    (((elf_vma) (field[2])) << 16)
-	  |    (((elf_vma) (field[3])) << 24)
-	  |    (((elf_vma) (field[4])) << 32)
-	  |    (((elf_vma) (field[5])) << 40)
-	  |    (((elf_vma) (field[6])) << 48);
-      /* Fall through.  */
+      return ((uint64_t) field[0]
+	      | ((uint64_t) field[1] << 8)
+	      | ((uint64_t) field[2] << 16)
+	      | ((uint64_t) field[3] << 24)
+	      | ((uint64_t) field[4] << 32)
+	      | ((uint64_t) field[5] << 40)
+	      | ((uint64_t) field[6] << 48));
 
     case 8:
-      if (sizeof (elf_vma) >= 8)
-	return  ((elf_vma) (field[0]))
-	  |    (((elf_vma) (field[1])) << 8)
-	  |    (((elf_vma) (field[2])) << 16)
-	  |    (((elf_vma) (field[3])) << 24)
-	  |    (((elf_vma) (field[4])) << 32)
-	  |    (((elf_vma) (field[5])) << 40)
-	  |    (((elf_vma) (field[6])) << 48)
-	  |    (((elf_vma) (field[7])) << 56);
-      /* Fall through.  */
+      return ((uint64_t) field[0]
+	      | ((uint64_t) field[1] << 8)
+	      | ((uint64_t) field[2] << 16)
+	      | ((uint64_t) field[3] << 24)
+	      | ((uint64_t) field[4] << 32)
+	      | ((uint64_t) field[5] << 40)
+	      | ((uint64_t) field[6] << 48)
+	      | ((uint64_t) field[7] << 56));
 
     default:
       error (_("Unhandled data length: %d\n"), size);
@@ -168,7 +160,7 @@ byte_get_little_endian (const unsigned char *field, unsigned int size)
     }
 }
 
-elf_vma
+uint64_t
 byte_get_big_endian (const unsigned char *field, unsigned int size)
 {
   switch (size)
@@ -177,60 +169,53 @@ byte_get_big_endian (const unsigned char *field, unsigned int size)
       return *field;
 
     case 2:
-      return ((unsigned int) (field[1])) | (((int) (field[0])) << 8);
+      return ((uint64_t) field[1]
+	      | ((uint64_t) field[0] << 8));
 
     case 3:
-      return ((unsigned long) (field[2]))
-	|   (((unsigned long) (field[1])) << 8)
-	|   (((unsigned long) (field[0])) << 16);
+      return ((uint64_t) field[2]
+	      | ((uint64_t) field[1] << 8)
+	      | ((uint64_t) field[0] << 16));
 
     case 4:
-      return ((unsigned long) (field[3]))
-	|   (((unsigned long) (field[2])) << 8)
-	|   (((unsigned long) (field[1])) << 16)
-	|   (((unsigned long) (field[0])) << 24);
+      return ((uint64_t) field[3]
+	      | ((uint64_t) field[2] << 8)
+	      | ((uint64_t) field[1] << 16)
+	      | ((uint64_t) field[0] << 24));
 
     case 5:
-      if (sizeof (elf_vma) >= 8)
-	return ((elf_vma) (field[4]))
-	  |   (((elf_vma) (field[3])) << 8)
-	  |   (((elf_vma) (field[2])) << 16)
-	  |   (((elf_vma) (field[1])) << 24)
-	  |   (((elf_vma) (field[0])) << 32);
-      /* Fall through.  */
+      return ((uint64_t) field[4]
+	      | ((uint64_t) field[3] << 8)
+	      | ((uint64_t) field[2] << 16)
+	      | ((uint64_t) field[1] << 24)
+	      | ((uint64_t) field[0] << 32));
 
     case 6:
-      if (sizeof (elf_vma) >= 8)
-	return ((elf_vma) (field[5]))
-	  |   (((elf_vma) (field[4])) << 8)
-	  |   (((elf_vma) (field[3])) << 16)
-	  |   (((elf_vma) (field[2])) << 24)
-	  |   (((elf_vma) (field[1])) << 32)
-	  |   (((elf_vma) (field[0])) << 40);
-      /* Fall through.  */
+      return ((uint64_t) field[5]
+	      | ((uint64_t) field[4] << 8)
+	      | ((uint64_t) field[3] << 16)
+	      | ((uint64_t) field[2] << 24)
+	      | ((uint64_t) field[1] << 32)
+	      | ((uint64_t) field[0] << 40));
 
     case 7:
-      if (sizeof (elf_vma) >= 8)
-	return ((elf_vma) (field[6]))
-	  |   (((elf_vma) (field[5])) << 8)
-	  |   (((elf_vma) (field[4])) << 16)
-	  |   (((elf_vma) (field[3])) << 24)
-	  |   (((elf_vma) (field[2])) << 32)
-	  |   (((elf_vma) (field[1])) << 40)
-	  |   (((elf_vma) (field[0])) << 48);
-      /* Fall through.  */
+      return ((uint64_t) field[6]
+	      | ((uint64_t) field[5] << 8)
+	      | ((uint64_t) field[4] << 16)
+	      | ((uint64_t) field[3] << 24)
+	      | ((uint64_t) field[2] << 32)
+	      | ((uint64_t) field[1] << 40)
+	      | ((uint64_t) field[0] << 48));
 
     case 8:
-      if (sizeof (elf_vma) >= 8)
-	return ((elf_vma) (field[7]))
-	  |   (((elf_vma) (field[6])) << 8)
-	  |   (((elf_vma) (field[5])) << 16)
-	  |   (((elf_vma) (field[4])) << 24)
-	  |   (((elf_vma) (field[3])) << 32)
-	  |   (((elf_vma) (field[2])) << 40)
-	  |   (((elf_vma) (field[1])) << 48)
-	  |   (((elf_vma) (field[0])) << 56);
-      /* Fall through.  */
+      return ((uint64_t) field[7]
+	      | ((uint64_t) field[6] << 8)
+	      | ((uint64_t) field[5] << 16)
+	      | ((uint64_t) field[4] << 24)
+	      | ((uint64_t) field[3] << 32)
+	      | ((uint64_t) field[2] << 40)
+	      | ((uint64_t) field[1] << 48)
+	      | ((uint64_t) field[0] << 56));
 
     default:
       error (_("Unhandled data length: %d\n"), size);
@@ -238,10 +223,10 @@ byte_get_big_endian (const unsigned char *field, unsigned int size)
     }
 }
 
-elf_vma
+uint64_t
 byte_get_signed (const unsigned char *field, unsigned int size)
 {
-  elf_vma x = byte_get (field, size);
+  uint64_t x = byte_get (field, size);
 
   switch (size)
     {
@@ -430,8 +415,8 @@ process_archive_index_and_symbols (struct archive_info *arch,
       size -= arch->index_num * sizeof_ar_index;
 
       /* Convert the index numbers into the host's numeric format.  */
-      arch->index_array = (elf_vma *)
-	malloc (arch->index_num * sizeof (* arch->index_array));
+      arch->index_array = (uint64_t *)
+	malloc (arch->index_num * sizeof (*arch->index_array));
       if (arch->index_array == NULL)
 	{
 	  free (index_buffer);
@@ -545,7 +530,7 @@ setup_archive (struct archive_info *arch, const char *file_name,
       /* PR 17531: file: 01068045.  */
       if (arch->longnames_size < 8)
 	{
-	  error (_("%s: long name table is too small, (size = %ld)\n"),
+	  error (_("%s: long name table is too small, (size = %" PRId64 ")\n"),
 		 file_name, arch->longnames_size);
 	  return 1;
 	}
@@ -553,7 +538,7 @@ setup_archive (struct archive_info *arch, const char *file_name,
       if ((off_t) arch->longnames_size > file_size
 	  || (signed long) arch->longnames_size < 0)
 	{
-	  error (_("%s: long name table is too big, (size = 0x%lx)\n"),
+	  error (_("%s: long name table is too big, (size = %#" PRIx64 ")\n"),
 		 file_name, arch->longnames_size);
 	  return 1;
 	}

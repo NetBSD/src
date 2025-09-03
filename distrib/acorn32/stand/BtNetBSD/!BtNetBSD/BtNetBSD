@@ -1,5 +1,5 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.6 2006/12/25 18:45:35 wiz Exp $
+REM $NetBSD: BtNetBSD,v 1.7 2025/08/18 20:59:54 andvar Exp $
 REM
 REM Copyright (c) 2000, 2001, 2002 Reinoud Zandijk
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -1153,7 +1153,7 @@ DEF PROCget_memory_configuration
   IF INSTR(args$, "kinetic")>0 THEN
     REM The Kinetic card has SDRAM on the processor module ... first fix is to only use this memory
     REM for VRAM emulation and only pass it through as buffer memory for the DRAM is the only one
-    REM wich DMA capabilities.
+    REM with DMA capabilities.
  
     PRINT ''"Kinetic support asked ... ";
  

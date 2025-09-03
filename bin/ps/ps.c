@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.97 2021/09/14 22:01:17 christos Exp $	*/
+/*	$NetBSD: ps.c,v 1.98 2025/07/13 13:29:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.97 2021/09/14 22:01:17 christos Exp $");
+__RCSID("$NetBSD: ps.c,v 1.98 2025/07/13 13:29:25 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -599,7 +599,6 @@ pick_representative_lwp(struct kinfo_proc2 *ki, struct kinfo_lwp *kl, int nlwps)
 	case SZOMB:
 		/* First will do */
 		return kl;
-		break;
 	}
 	/* Error condition! */
 	warnx("Inconsistent LWP state for process %d", ki->p_pid);
@@ -923,7 +922,7 @@ descendant_sort(struct pinfo *ki, int items)
 			ki[src].prefix[n * 2] =
 			    path[n / 8] & 1 << (n % 8) ? '|' : ' ';
 			ki[src].prefix[n * 2 + 1] = ' ';
-				
+
 		}
 		if (n == lvl - 2) {
 			/* Have I any more siblings? */
@@ -957,5 +956,4 @@ usage(void)
 	    "[-O fmt] [-o fmt] [-p pid] [-t tty] [-U user] [-W swap]",
 	    "ps -L");
 	exit(1);
-	/* NOTREACHED */
 }

@@ -42,10 +42,10 @@
 
 /* Section contains some sort of debugging information.  The exact
    format is unspecified.  It's probably ECOFF symbols.  */
-#define SHT_ALPHA_DEBUG		0x70000001
+#define SHT_ALPHA_DEBUG		(SHT_LOPROC + 1)
 
 /* Section contains register usage information.  */
-#define SHT_ALPHA_REGINFO	0x70000002
+#define SHT_ALPHA_REGINFO	(SHT_LOPROC + 2)
 
 /* A section of type SHT_MIPS_REGINFO contains the following
    structure.  */

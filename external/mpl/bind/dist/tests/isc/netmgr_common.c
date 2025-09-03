@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr_common.c,v 1.3 2025/05/21 14:48:08 christos Exp $	*/
+/*	$NetBSD: netmgr_common.c,v 1.4 2025/07/17 19:01:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -391,9 +391,9 @@ connect_connect_cb(isc_nmhandle_t *handle, isc_result_t eresult, void *cbarg) {
 		do_cconnects_shutdown(loopmgr);
 	} else if (do_send) {
 		isc_async_current(stream_recv_send_connect,
-				  (cbarg == NULL
-					   ? get_stream_connect_function()
-					   : (stream_connect_function)cbarg));
+				  cbarg == NULL
+					  ? get_stream_connect_function()
+					  : (stream_connect_function)cbarg);
 	}
 
 	isc_refcount_increment0(&active_creads);

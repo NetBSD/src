@@ -4296,7 +4296,7 @@ handle_tracepoint_query (char *packet)
    action covering the whole range.  */
 
 static void
-add_while_stepping_state (struct thread_info *tinfo,
+add_while_stepping_state (thread_info *tinfo,
 			  int tp_number, CORE_ADDR tp_address)
 {
   struct wstep_state *wstep = XNEW (struct wstep_state);
@@ -4322,7 +4322,7 @@ release_while_stepping_state (struct wstep_state *wstep)
    with thread TINFO.  */
 
 void
-release_while_stepping_state_list (struct thread_info *tinfo)
+release_while_stepping_state_list (thread_info *tinfo)
 {
   struct wstep_state *head;
 
@@ -4340,7 +4340,7 @@ release_while_stepping_state_list (struct thread_info *tinfo)
    collecting tracepoint data, false otherwise.  */
 
 int
-tracepoint_finished_step (struct thread_info *tinfo, CORE_ADDR stop_pc)
+tracepoint_finished_step (thread_info *tinfo, CORE_ADDR stop_pc)
 {
   struct tracepoint *tpoint;
   struct wstep_state *wstep;
@@ -4376,7 +4376,7 @@ tracepoint_finished_step (struct thread_info *tinfo, CORE_ADDR stop_pc)
 	       wstep->tp_number, paddress (wstep->tp_address));
 
   ctx.base.type = trap_tracepoint;
-  ctx.regcache = get_thread_regcache (tinfo, 1);
+  ctx.regcache = get_thread_regcache (tinfo);
 
   while (wstep != NULL)
     {
@@ -4445,7 +4445,7 @@ tracepoint_finished_step (struct thread_info *tinfo, CORE_ADDR stop_pc)
    tracing agents when the IPA's tracing stops for some reason.  */
 
 int
-handle_tracepoint_bkpts (struct thread_info *tinfo, CORE_ADDR stop_pc)
+handle_tracepoint_bkpts (thread_info *tinfo, CORE_ADDR stop_pc)
 {
   /* Pull in fast tracepoint trace frames from the inferior in-process
      agent's buffer into our buffer.  */
@@ -4526,7 +4526,7 @@ handle_tracepoint_bkpts (struct thread_info *tinfo, CORE_ADDR stop_pc)
    so.  */
 
 int
-tracepoint_was_hit (struct thread_info *tinfo, CORE_ADDR stop_pc)
+tracepoint_was_hit (thread_info *tinfo, CORE_ADDR stop_pc)
 {
   struct tracepoint *tpoint;
   int ret = 0;
@@ -4537,7 +4537,7 @@ tracepoint_was_hit (struct thread_info *tinfo, CORE_ADDR stop_pc)
     return 0;
 
   ctx.base.type = trap_tracepoint;
-  ctx.regcache = get_thread_regcache (tinfo, 1);
+  ctx.regcache = get_thread_regcache (tinfo);
 
   for (tpoint = tracepoints; tpoint; tpoint = tpoint->next)
     {
@@ -4797,7 +4797,7 @@ do_action_at_tracepoint (struct tracepoint_hit_ctx *ctx,
 			     regspace + 1);
 
 	/* Copy the register data to the regblock.  */
-	regcache_cpy (&tregcache, context_regcache);
+	tregcache.copy_from (context_regcache);
 
 #ifndef IN_PROCESS_AGENT
 	/* On some platforms, trap-based tracepoints will have the PC
@@ -6804,7 +6804,7 @@ static int
 run_inferior_command (char *cmd, int len)
 {
   int err = -1;
-  int pid = current_ptid.pid ();
+  int pid = current_thread->id.pid ();
 
   trace_debug ("run_inferior_command: running: %s", cmd);
 

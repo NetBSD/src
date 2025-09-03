@@ -1,5 +1,5 @@
 /* Object file "section" support for the BFD library.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -422,6 +422,12 @@ CODE_FRAGMENT
 .  {* Nonzero if this section uses RELA relocations, rather than REL.  *}
 .  unsigned int use_rela_p:1;
 .
+.  {* Nonzero if section contents are mmapped.  *}
+.  unsigned int mmapped_p:1;
+.
+.  {* Nonzero if section contents should not be freed.  *}
+.  unsigned int alloced:1;
+.
 .  {* Bits used by various backends.  The generic code doesn't touch
 .     these fields.  *}
 .
@@ -542,7 +548,6 @@ CODE_FRAGMENT
 .
 .  {* A symbol which points at this section only.  *}
 .  struct bfd_symbol *symbol;
-.  struct bfd_symbol **symbol_ptr_ptr;
 .
 .  {* Early in the link process, map_head and map_tail are used to build
 .     a list of input sections attached to an output section.  Later,
@@ -659,6 +664,9 @@ EXTERNAL
 .#define BFD_COM_SECTION_NAME "*COM*"
 .#define BFD_IND_SECTION_NAME "*IND*"
 .
+.{* GNU object-only section name.  *}
+.#define GNU_OBJECT_ONLY_SECTION_NAME ".gnu_object_only"
+.
 .{* Pointer to the common section.  *}
 .#define bfd_com_section_ptr (&_bfd_std_section[0])
 .{* Pointer to the undefined section.  *}
@@ -704,6 +712,7 @@ EXTERNAL
 .          && sec->sec_info_type != SEC_INFO_TYPE_JUST_SYMS);
 .}
 .
+INTERNAL
 .#define BFD_FAKE_SECTION(SEC, SYM, NAME, IDX, FLAGS)			\
 .  {* name, next, prev, id,  section_id, index, flags, user_set_vma, *}	\
 .  {  NAME, NULL, NULL, IDX, 0,          0,     FLAGS, 0,		\
@@ -711,8 +720,8 @@ EXTERNAL
 .  {* linker_mark, linker_has_input, gc_mark, decompress_status,     *}	\
 .     0,           0,                1,       0,			\
 .									\
-.  {* segment_mark, sec_info_type, use_rela_p,                       *}	\
-.     0,            0,             0,					\
+.  {* segment_mark, sec_info_type, use_rela_p, mmapped_p, alloced,   *}	\
+.     0,            0,             0,          0,         0,		\
 .									\
 .  {* sec_flg0, sec_flg1, sec_flg2, sec_flg3, sec_flg4, sec_flg5,    *}	\
 .     0,        0,        0,        0,        0,        0,		\
@@ -735,25 +744,17 @@ EXTERNAL
 .  {* target_index, used_by_bfd, constructor_chain, owner,           *}	\
 .     0,            NULL,        NULL,              NULL,		\
 .									\
-.  {* symbol,                    symbol_ptr_ptr,                     *}	\
-.     (struct bfd_symbol *) SYM, &SEC.symbol,				\
+.  {* symbol,                                                        *}	\
+.     (struct bfd_symbol *) SYM,					\
 .									\
 .  {* map_head, map_tail, already_assigned, type                     *}	\
 .     { NULL }, { NULL }, NULL,             0				\
 .									\
-.    }
+.  }
 .
-.{* We use a macro to initialize the static asymbol structures because
-.   traditional C does not permit us to initialize a union member while
-.   gcc warns if we don't initialize it.
-.   the_bfd, name, value, attr, section [, udata]  *}
-.#ifdef __STDC__
-.#define GLOBAL_SYM_INIT(NAME, SECTION) \
-.  { 0, NAME, 0, BSF_SECTION_SYM, SECTION, { 0 }}
-.#else
-.#define GLOBAL_SYM_INIT(NAME, SECTION) \
-.  { 0, NAME, 0, BSF_SECTION_SYM, SECTION }
-.#endif
+.#define GLOBAL_SYM_INIT(NAME, SECTION)					\
+.  {* the_bfd, name, value, attr,            section, udata  *}		\
+.  {  0,       NAME, 0,     BSF_SECTION_SYM, SECTION, { 0 } }
 .
 */
 
@@ -825,7 +826,6 @@ _bfd_generic_new_section_hook (bfd *abfd, asection *newsect)
   newsect->symbol->section = newsect;
   newsect->symbol->flags = BSF_SECTION_SYM;
 
-  newsect->symbol_ptr_ptr = &newsect->symbol;
   return true;
 }
 
@@ -836,6 +836,10 @@ unsigned int _bfd_section_id = 0x10;  /* id 0 to 3 used by STD_SECTION.  */
 static asection *
 bfd_section_init (bfd *abfd, asection *newsect)
 {
+  /* Locking needed for the _bfd_section_id access.  */
+  if (!bfd_lock ())
+    return NULL;
+
   newsect->id = _bfd_section_id;
   newsect->index = abfd->section_count;
   newsect->owner = abfd;
@@ -846,6 +850,10 @@ bfd_section_init (bfd *abfd, asection *newsect)
   _bfd_section_id++;
   abfd->section_count++;
   bfd_section_list_append (abfd, newsect);
+
+  if (!bfd_unlock ())
+    return NULL;
+
   return newsect;
 }
 
@@ -1051,7 +1059,7 @@ bfd_get_unique_section_name (bfd *abfd, const char *templat, int *count)
   char *sname;
 
   len = strlen (templat);
-  sname = (char *) bfd_malloc (len + 8);
+  sname = bfd_alloc (abfd, len + 8);
   if (sname == NULL)
     return NULL;
   memcpy (sname, templat, len);
@@ -1136,11 +1144,6 @@ bfd_make_section_old_way (bfd *abfd, const char *name)
       return bfd_section_init (abfd, newsect);
     }
 
-  /* Call new_section_hook when "creating" the standard abs, com, und
-     and ind sections to tack on format specific section data.
-     Also, create a proper section symbol.  */
-  if (! BFD_SEND (abfd, _new_section_hook, (abfd, newsect)))
-    return NULL;
   return newsect;
 }
 
@@ -1562,11 +1565,45 @@ bfd_get_section_contents (bfd *abfd,
 {
   bfd_size_type sz;
 
+  if (count == 0)
+    /* Don't bother.  */
+    return true;
+
+  if (section == NULL)
+    {
+      bfd_set_error (bfd_error_bad_value);
+      return false;
+    }
+
+  if (location == NULL)
+    {
+      if (section->mmapped_p)
+	{
+	  /* Pass this request straight on to the target's function.
+	     All of the code below assumes that location != NULL.
+	     FIXME: Should we still check that count is sane ?  */
+	  return BFD_SEND (abfd, _bfd_get_section_contents,
+			   (abfd, section, location, offset, count));
+	}
+
+      bfd_set_error (bfd_error_bad_value);
+      return false;
+    }
+
   if (section->flags & SEC_CONSTRUCTOR)
     {
       memset (location, 0, (size_t) count);
       return true;
     }
+
+  if ((section->flags & SEC_HAS_CONTENTS) == 0)
+    {
+      memset (location, 0, (size_t) count);
+      return true;
+    }
+
+  if (abfd == NULL)
+    return false;
 
   sz = bfd_get_section_limit_octets (abfd, section);
   if ((bfd_size_type) offset > sz
@@ -1575,16 +1612,6 @@ bfd_get_section_contents (bfd *abfd,
     {
       bfd_set_error (bfd_error_bad_value);
       return false;
-    }
-
-  if (count == 0)
-    /* Don't bother.  */
-    return true;
-
-  if ((section->flags & SEC_HAS_CONTENTS) == 0)
-    {
-      memset (location, 0, (size_t) count);
-      return true;
     }
 
   if ((section->flags & SEC_IN_MEMORY) != 0)
@@ -1625,6 +1652,12 @@ DESCRIPTION
 bool
 bfd_malloc_and_get_section (bfd *abfd, sec_ptr sec, bfd_byte **buf)
 {
+  /* FIXME: We sometimes get here when sec->alloced is set.
+     arm, aarch64, and xtensa targets all abort on some ld tests
+     if we also test sec->alloced here.  We really should not ever be
+     mallocing a buffer if we already have an alloced one.  */
+  if (sec->mmapped_p)
+    abort ();
   *buf = NULL;
   return bfd_get_full_section_contents (abfd, sec, buf);
 }
@@ -1634,7 +1667,8 @@ FUNCTION
 
 SYNOPSIS
 	bool bfd_copy_private_section_data
-	  (bfd *ibfd, asection *isec, bfd *obfd, asection *osec);
+	  (bfd *ibfd, asection *isec, bfd *obfd, asection *osec,
+	   struct bfd_link_info *link_info);
 
 DESCRIPTION
 	Copy private section information from @var{isec} in the BFD
@@ -1645,9 +1679,9 @@ DESCRIPTION
 	o <<bfd_error_no_memory>> -
 	Not enough memory exists to create private data for @var{osec}.
 
-.#define bfd_copy_private_section_data(ibfd, isection, obfd, osection) \
+.#define bfd_copy_private_section_data(ibfd, isec, obfd, osec, link_info) \
 .	BFD_SEND (obfd, _bfd_copy_private_section_data, \
-.		  (ibfd, isection, obfd, osection))
+.		  (ibfd, isec, obfd, osec, link_info))
 */
 
 /*
@@ -1715,11 +1749,11 @@ _bfd_nowrite_set_section_contents (bfd *abfd,
 }
 
 /*
-INTERNAL_FUNCTION
-	_bfd_section_size_insane
+FUNCTION
+	bfd_section_size_insane
 
 SYNOPSIS
-	bool _bfd_section_size_insane (bfd *abfd, asection *sec);
+	bool bfd_section_size_insane (bfd *abfd, asection *sec);
 
 DESCRIPTION
 	Returns true if the given section has a size that indicates
@@ -1729,7 +1763,7 @@ DESCRIPTION
 */
 
 bool
-_bfd_section_size_insane (bfd *abfd, asection *sec)
+bfd_section_size_insane (bfd *abfd, asection *sec)
 {
   bfd_size_type size = bfd_get_section_limit_octets (abfd, sec);
   if (size == 0)

@@ -36,4 +36,4 @@ ATTRS_SECTIONS='.ARM.attributes 0 : { KEEP (*(.ARM.attributes)) KEEP (*(.gnu.att
 # Ensure each PLT entry is aligned to a cache line.
 PLT=".plt          ${RELOCATING-0} : ALIGN(16) { *(.plt)${RELOCATING+${IREL_IN_PLT+ *(.iplt)}} }"
 
-. ${srcdir}/emulparams/elf_haiku.sh
+source_sh ${srcdir}/emulparams/elf_haiku.sh

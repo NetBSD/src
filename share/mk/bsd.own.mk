@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1422 2025/06/10 14:30:44 christos Exp $
+#      $NetBSD: bsd.own.mk,v 1.1435 2025/09/02 16:50:28 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -102,19 +102,23 @@ MKGCCCMDS?=	no
 #
 # Build GCC with the "isl" library enabled.
 # The alpha port does not work with it, see GCC PR's 84204 and 84353.
+# Other ports don't have vector units GCC can target.
 #
-.if ${MACHINE} == "alpha"
+.if ${MACHINE} == "alpha" || \
+    ${MACHINE} == "vax" || \
+    ${MACHINE_CPU} == "m68k" || \
+    ${MACHINE_CPU} == "sh3"
 NOGCCISL=	# defined
 .endif
 
 #
 # What binutils is used?
 #
-HAVE_BINUTILS?= 242
+HAVE_BINUTILS?= 245
 
-.if ${HAVE_BINUTILS} == 242
+.if ${HAVE_BINUTILS} == 245
 EXTERNAL_BINUTILS_SUBDIR=	binutils
-.elif ${HAVE_BINUTILS} == 239
+.elif ${HAVE_BINUTILS} == 242
 EXTERNAL_BINUTILS_SUBDIR=	binutils.old
 .else
 EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
@@ -123,11 +127,11 @@ EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
 #
 # What GDB is used?
 #
-HAVE_GDB?=	1510
+HAVE_GDB?=	1630
 
-.if ${HAVE_GDB} == 1510
+.if ${HAVE_GDB} == 1630
 EXTERNAL_GDB_SUBDIR=		gdb
-.elif ${HAVE_GDB} == 1320
+.elif ${HAVE_GDB} == 1510
 EXTERNAL_GDB_SUBDIR=		gdb.old
 .else
 EXTERNAL_GDB_SUBDIR=		/does/not/exist
@@ -141,12 +145,14 @@ MKGDBSERVER?=	no
 #
 # What OpenSSL is used?
 #
-HAVE_OPENSSL?=	30
+HAVE_OPENSSL?=	35
 
-.if ${HAVE_OPENSSL} == 30
-EXTERNAL_OPENSSL_SUBDIR=openssl
+.if ${HAVE_OPENSSL} == 35
+EXTERNAL_OPENSSL_SUBDIR=apache2/openssl
+.elif ${HAVE_OPENSSL} == 30
+EXTERNAL_OPENSSL_SUBDIR=bsd/openssl
 .elif ${HAVE_OPENSSL} == 11
-EXTERNAL_OPENSSL_SUBDIR=openssl.old
+EXTERNAL_OPENSSL_SUBDIR=bsd/openssl.old
 .else
 EXTERNAL_OPENSSL_SUBDIR=/does/not/exist
 .endif
@@ -1190,6 +1196,7 @@ MKCTF?=		yes
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH:Maarch64*} || \
     ${MACHINE_CPU} == "arm" || \
+    ${MACHINE} == "macppc" || \
     ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_CPU} == "mips" || \
     ${MACHINE_CPU} == "sh3" || \

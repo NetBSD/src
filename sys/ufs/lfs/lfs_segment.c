@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.288 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.289 2025/09/02 00:24:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.288 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.289 2025/09/02 00:24:10 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.288 2020/09/05 16:30:13 riastradh 
 #include <sys/mount.h>
 #include <sys/kauth.h>
 #include <sys/syslog.h>
+#include <sys/workqueue.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
@@ -145,6 +146,8 @@ kcondvar_t	lfs_allclean_wakeup;	/* Cleaner wakeup address. */
 int	lfs_writeindir = 1;		/* whether to flush indir on non-ckp */
 int	lfs_clean_vnhead = 0;		/* Allow freeing to head of vn list */
 int	lfs_dirvcount = 0;		/* # active dirops */
+
+extern struct workqueue *lfs_wq;
 
 /* Statistics Counters */
 int lfs_dostats = 1;
@@ -2545,14 +2548,19 @@ lfs_super_aiodone(struct buf *bp)
 static void
 lfs_cluster_aiodone(struct buf *bp)
 {
+	workqueue_enqueue(lfs_wq, (struct work *)bp, NULL);
+}
+
+void
+lfs_cluster_wq(struct work *wk, void *arg)
+{
+	struct buf *bp = (struct buf *)wk;
 	struct lfs_cluster *cl;
 	struct lfs *fs;
 	struct buf *tbp, *fbp;
 	struct vnode *vp, *devvp, *ovp;
 	struct inode *ip;
 	int error;
-
-	KERNEL_LOCK(1, curlwp);
 
 	error = bp->b_error;
 	cl = bp->b_private;
@@ -2671,8 +2679,6 @@ lfs_cluster_aiodone(struct buf *bp)
 	if (--fs->lfs_iocount <= 1)
 		wakeup(&fs->lfs_iocount);
 	mutex_exit(&lfs_lock);
-
-	KERNEL_UNLOCK_ONE(curlwp);
 
 	pool_put(&fs->lfs_bpppool, cl->bpp);
 	cl->bpp = NULL;

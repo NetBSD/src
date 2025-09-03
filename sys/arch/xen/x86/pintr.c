@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.24 2022/05/26 11:06:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.25 2025/08/18 20:59:54 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -151,7 +151,7 @@ struct intrstub x2apic_level_stubs[MAX_INTR_SOURCES] = {{0,0,0}};
 #endif /* NIOAPIC */
 
 // XXX NR_EVENT_CHANNELS is 2048, use some sparse structure?
-short irq2port[NR_EVENT_CHANNELS] = {0}; /* actually port + 1, so that 0 is invaid */
+short irq2port[NR_EVENT_CHANNELS] = {0}; /* actually port + 1, so that 0 is invalid */
 
 #if NACPICA > 0
 #include <machine/mpconfig.h>

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -39,12 +39,6 @@
 #include "Emsgnum.h"
 #include "memmgr.h"  // __collector_allocCSize, __collector_freeCSize
 #include "tsd.h"
-
-/* TprintfT(<level>,...) definitions.  Adjust per module as needed */
-#define DBG_LT0 0 // for high-level configuration, unexpected errors/warnings
-#define DBG_LT1 1 // for configuration details, warnings
-#define DBG_LT2 2
-#define DBG_LT3 3
 
 /*
  *    This file is intended for collector's own implementation of
@@ -137,7 +131,7 @@ atomic_swap (volatile int * p, int v)
 int
 __collector_mutex_lock (collector_mutex_t *lock_var)
 {
-  volatile unsigned int i; /* xxxx volatile may not be honored on amd64 -x04 */
+  volatile unsigned int i = 0; /* xxxx volatile may not be honored on amd64 -x04 */
 
   if (!(*lock_var) && !atomic_swap (lock_var, 1))
     return 0;
@@ -1116,9 +1110,9 @@ __collector_util_init ()
   /*    internal calls for mapping in libcollector call mmap64 */
   ptr = dlsym (libc, "mmap64");
   if (ptr)
-    __collector_util_funcs.mmap64 = (void*(*)(void *, size_t, int, int, int, off_t))ptr;
+    __collector_util_funcs.mmap64_ = (void*(*)(void *, size_t, int, int, int, off_t))ptr;
   else
-    __collector_util_funcs.mmap64 = __collector_util_funcs.mmap;
+    __collector_util_funcs.mmap64_ = __collector_util_funcs.mmap;
 
   ptr = dlsym (libc, "munmap");
   if (ptr)
@@ -1214,16 +1208,16 @@ __collector_util_init ()
 #if ARCH(Intel) && WSIZE(32)
   ptr = dlvsym (libc, "pwrite64", "GLIBC_2.2"); // it is in /lib/libpthread.so.0
   if (ptr)
-    __collector_util_funcs.pwrite64 = (ssize_t (*)())ptr;
+    __collector_util_funcs.pwrite64_ = (ssize_t (*)())ptr;
   else
     {
       Tprintf (DBG_LT0, "libcol_util: WARNING: dlvsym for %s@%s failed. Using dlsym() instead.", "pwrite64", "GLIBC_2.2");
 #endif /* ARCH(Intel) && WSIZE(32) */
       ptr = dlsym (libc, "pwrite64");
       if (ptr)
-	__collector_util_funcs.pwrite64 = (ssize_t (*)())ptr;
+	__collector_util_funcs.pwrite64_ = (ssize_t (*)())ptr;
       else
-	__collector_util_funcs.pwrite64 = __collector_util_funcs.pwrite;
+	__collector_util_funcs.pwrite64_ = __collector_util_funcs.pwrite;
 #if ARCH(Intel) && WSIZE(32)
     }
 #endif /* ARCH(Intel) && WSIZE(32) */
@@ -1318,6 +1312,15 @@ __collector_util_init ()
 #endif
   __collector_util_funcs.getcpuid = __collector_getcpuid;
   __collector_util_funcs.memset = collector_memset;
+
+  ptr = dlsym (libc, "getcontext");
+  if (ptr)
+    __collector_util_funcs.getcontext = (int(*)())ptr;
+  else
+    {
+      CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT getcontext: %s\n", dlerror ());
+      err = COL_ERROR_UTIL_INIT;
+    }
 
   ptr = dlsym (libc, "malloc");
   if (ptr)
@@ -1447,54 +1450,53 @@ __collector_util_init ()
       /* don't treat this as fatal, so that S10 could work */
     }
 
-#if ARCH(Intel) && WSIZE(32)
-  ptr = dlvsym (libc, "fopen", "GLIBC_2.1");
-  if (ptr)
-    __collector_util_funcs.fopen = (FILE * (*)())ptr;
+  if ((ptr = dlvsym (libc, "fopen", "GLIBC_2.17")) != NULL)
+    __collector_util_funcs.fopen = ptr;
+  else if ((ptr = dlvsym (libc, "fopen", "GLIBC_2.2.5")) != NULL)
+    __collector_util_funcs.fopen = ptr;
+  else if ((ptr = dlvsym (libc, "fopen", "GLIBC_2.1")) != NULL)
+    __collector_util_funcs.fopen = ptr;
+  else if ((ptr = dlvsym (libc, "fopen", "GLIBC_2.0")) != NULL)
+    __collector_util_funcs.fopen = ptr;
   else
+    ptr = dlsym (libc, "fopen");
+  if (__collector_util_funcs.fopen == NULL)
     {
-      Tprintf (DBG_LT0, "libcol_util: WARNING: dlvsym for %s@%s failed. Using dlsym() instead.", "fopen", "GLIBC_2.1");
-#endif /* ARCH(Intel) && WSIZE(32) */
-      ptr = dlsym (libc, "fopen");
-      if (ptr)
-	__collector_util_funcs.fopen = (FILE * (*)())ptr;
-      else
-	{
-	  CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT fopen: %s\n", dlerror ());
-	  err = COL_ERROR_UTIL_INIT;
-	}
-#if ARCH(Intel) && WSIZE(32)
-    }
-#endif
-
-  ptr = dlsym (libc, "popen");
-  if (ptr)
-    __collector_util_funcs.popen = (FILE * (*)())ptr;
-  else
-    {
-      CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT popen: %s\n", dlerror ());
+      CALL_UTIL (fprintf)(stderr, "COL_ERROR_UTIL_INIT fopen: %s\n", dlerror ());
       err = COL_ERROR_UTIL_INIT;
     }
 
-#if ARCH(Intel) && WSIZE(32)
-  ptr = dlvsym (libc, "fclose", "GLIBC_2.1");
-  if (ptr)
-    __collector_util_funcs.fclose = (int(*)())ptr;
+  if ((ptr = dlvsym (libc, "popen", "GLIBC_2.17")) != NULL)
+    __collector_util_funcs.popen = ptr;
+  else if ((ptr = dlvsym (libc, "popen", "GLIBC_2.2.5")) != NULL)
+    __collector_util_funcs.popen = ptr;
+  else if ((ptr = dlvsym (libc, "popen", "GLIBC_2.1")) != NULL)
+    __collector_util_funcs.popen = ptr;
+  else if ((ptr = dlvsym (libc, "popen", "GLIBC_2.0")) != NULL)
+    __collector_util_funcs.popen = ptr;
   else
+    ptr = dlsym (libc, "popen");
+  if (__collector_util_funcs.popen == NULL)
     {
-      Tprintf (DBG_LT0, "libcol_util: WARNING: dlvsym for %s@%s failed. Using dlsym() instead.", "fclose", "GLIBC_2.1");
-#endif /* ARCH(Intel) && WSIZE(32) */
-      ptr = dlsym (libc, "fclose");
-      if (ptr)
-	__collector_util_funcs.fclose = (int(*)())ptr;
-      else
-	{
-	  CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT fclose: %s\n", dlerror ());
-	  err = COL_ERROR_UTIL_INIT;
-	}
-#if ARCH(Intel) && WSIZE(32)
+      CALL_UTIL (fprintf)(stderr, "COL_ERROR_UTIL_INIT popen: %s\n", dlerror ());
+      err = COL_ERROR_UTIL_INIT;
     }
-#endif
+
+  if ((ptr = dlvsym (libc, "fclose", "GLIBC_2.17")) != NULL)
+    __collector_util_funcs.fclose = ptr;
+  else if ((ptr = dlvsym (libc, "fclose", "GLIBC_2.2.5")) != NULL)
+    __collector_util_funcs.fclose = ptr;
+  else if ((ptr = dlvsym (libc, "fclose", "GLIBC_2.1")) != NULL)
+    __collector_util_funcs.fclose = ptr;
+  else if ((ptr = dlvsym (libc, "fclose", "GLIBC_2.0")) != NULL)
+    __collector_util_funcs.fclose = ptr;
+  else
+    ptr = dlsym (libc, "fclose");
+  if (__collector_util_funcs.fclose == NULL)
+    {
+      CALL_UTIL (fprintf)(stderr, "COL_ERROR_UTIL_INIT fclose: %s\n", dlerror ());
+      err = COL_ERROR_UTIL_INIT;
+    }
 
   ptr = dlsym (libc, "pclose");
   if (ptr)

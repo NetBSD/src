@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -65,7 +65,7 @@ template <class ITEM> class Vector;
 // operate on the next stage
 typedef struct
 {
-  Vector<DbeInstr*> *natpcs;
+  Vector<Histable*> *natpcs;
   Vector<Histable*> *jpcs;
   long idx;
   FramePacket *frp;
@@ -135,6 +135,7 @@ public:
 			// for current experiment, i.e. 8 for 32bit addresses
   int broken;           // If SP_JCMD_RUN line not seen
   int obsolete;         // If pointer file experiment detected
+  bool bigendian;       // the experiment was created on a big_endian machine
   bool hwc_default;     // True if HW counters were enabled by default
   int hwc_bogus;        // Count of bogus HWC packets
   int hwc_lost_int;     // Count of packets reflecting lost interrupt
@@ -266,8 +267,8 @@ public:
   static int copy_file_to_archive (const char *name, const char *aname, int hide_msg);
   static int copy_file_to_common_archive (const char *name, const char *aname,
 	       int hide_msg, const char *common_archive, int relative_path = 0);
-  static int copy_file (char *name, char *aname, int hide_msg,
-			char *common_archive = NULL, int relative_path = 0);
+  static int copy_file (const char *name, const char *aname, int hide_msg,
+		      const char *common_archive = NULL, int relative_path = 0);
 
   // get_raw_events()
   // action: get unfiltered packets, loading them if required

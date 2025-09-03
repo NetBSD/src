@@ -1,3 +1,10 @@
+* gold and dwp now support zstd compressed debug sections.
+
+* The new option --compress-debug-sections=zstd compresses debug sections with
+  zstd.
+
+* Remove support for -z bndplt (MPX prefix instructions).
+
 Changes in 1.16:
 
 * Improve warning messages for relocations that refer to discarded sections.
@@ -94,7 +101,7 @@ Changes in 1.3:
 
 * gold added to GNU binutils.
 
-Copyright (C) 2012-2022 Free Software Foundation, Inc.
+Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

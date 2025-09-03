@@ -885,8 +885,7 @@ parmpy_init (PyObject *self, PyObject *args, PyObject *kwds)
   catch (const gdb_exception &except)
     {
       Py_DECREF (self);
-      gdbpy_convert_exception (except);
-      return -1;
+      return gdbpy_handle_gdb_exception (-1, except);
     }
 
   return 0;
@@ -910,7 +909,7 @@ gdbpy_initialize_parameters (void)
   int i;
 
   parmpy_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&parmpy_object_type) < 0)
+  if (gdbpy_type_ready (&parmpy_object_type) < 0)
     return -1;
 
   set_doc_cst = PyUnicode_FromString ("set_doc");
@@ -928,8 +927,7 @@ gdbpy_initialize_parameters (void)
 	return -1;
     }
 
-  return gdb_pymodule_addobject (gdb_module, "Parameter",
-				 (PyObject *) &parmpy_object_type);
+  return 0;
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_parameters);

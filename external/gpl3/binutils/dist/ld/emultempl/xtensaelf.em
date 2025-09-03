@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -39,6 +39,9 @@ static void xtensa_colocate_output_literals (lang_statement_union_type *);
 static void xtensa_strip_inconsistent_linkonce_sections
   (lang_statement_list_type *);
 
+extern int elf32xtensa_size_opt;
+extern int elf32xtensa_no_literal_movement;
+extern int elf32xtensa_abi;
 
 /* This number is irrelevant until we turn on use_literal_pages */
 static bfd_vma xtensa_page_power = 12; /* 4K pages.  */
@@ -228,7 +231,6 @@ replace_insn_sec_with_prop_sec (bfd *abfd,
   if (prop_sec && prop_sec->owner)
     remove_section (abfd, prop_sec);
   free (insn_contents);
-  free (internal_relocs);
 
   return false;
 }
@@ -388,7 +390,7 @@ check_xtensa_info (bfd *abfd, asection *info_sec)
 
   data = xmalloc (info_sec->size);
   if (! bfd_get_section_contents (abfd, info_sec, data, 0, info_sec->size))
-    einfo (_("%F%P: %pB: cannot read contents of section %pA\n"), abfd, info_sec);
+    fatal (_("%P: %pB: cannot read contents of section %pA\n"), abfd, info_sec);
 
   if (info_sec->size > 24
       && info_sec->size >= 24 + bfd_get_32 (abfd, data + 4)
@@ -429,13 +431,13 @@ elf_xtensa_before_allocation (void)
   if (is_big_endian
       && link_info.output_bfd->xvec->byteorder == BFD_ENDIAN_LITTLE)
     {
-      einfo (_("%F%P: little endian output does not match "
+      fatal (_("%P: little endian output does not match "
 	       "Xtensa configuration\n"));
     }
   if (!is_big_endian
       && link_info.output_bfd->xvec->byteorder == BFD_ENDIAN_BIG)
     {
-      einfo (_("%F%P: big endian output does not match "
+      fatal (_("%P: big endian output does not match "
 	       "Xtensa configuration\n"));
     }
 
@@ -454,7 +456,7 @@ elf_xtensa_before_allocation (void)
 	 cannot go any further if there are any mismatches.  */
       if ((is_big_endian && f->the_bfd->xvec->byteorder == BFD_ENDIAN_LITTLE)
 	  || (!is_big_endian && f->the_bfd->xvec->byteorder == BFD_ENDIAN_BIG))
-	einfo (_("%F%P: cross-endian linking for %pB not supported\n"),
+	fatal (_("%P: cross-endian linking for %pB not supported\n"),
 	       f->the_bfd);
 
       if (! first_bfd)
@@ -485,7 +487,7 @@ elf_xtensa_before_allocation (void)
       info_sec = bfd_make_section_with_flags (first_bfd, ".xtensa.info",
 					      SEC_HAS_CONTENTS | SEC_READONLY);
       if (! info_sec)
-	einfo (_("%F%P: failed to create .xtensa.info section\n"));
+	fatal (_("%P: failed to create .xtensa.info section\n"));
     }
   if (info_sec)
     {
@@ -1224,7 +1226,7 @@ ld_build_required_section_dependence (lang_statement_union_type *s)
       lang_statement_union_type *l = iter_stack_current (&stack);
 
       if (l == NULL && link_info.non_contiguous_regions)
-	einfo (_("%F%P: Relaxation not supported with "
+	fatal (_("%P: Relaxation not supported with "
 		 "--enable-non-contiguous-regions.\n"));
 
       if (l->header.type == lang_input_section_enum)
@@ -1922,17 +1924,6 @@ EOF
 # Define some shell vars to insert bits of code into the standard ELF
 # parse_args and list_options functions.
 #
-PARSE_AND_LIST_PROLOGUE='
-#define OPTION_OPT_SIZEOPT              (300)
-#define OPTION_LITERAL_MOVEMENT		(OPTION_OPT_SIZEOPT + 1)
-#define OPTION_NO_LITERAL_MOVEMENT	(OPTION_LITERAL_MOVEMENT + 1)
-#define OPTION_ABI_WINDOWED		(OPTION_NO_LITERAL_MOVEMENT + 1)
-#define OPTION_ABI_CALL0		(OPTION_ABI_WINDOWED + 1)
-extern int elf32xtensa_size_opt;
-extern int elf32xtensa_no_literal_movement;
-extern int elf32xtensa_abi;
-'
-
 PARSE_AND_LIST_LONGOPTS='
   { "size-opt", no_argument, NULL, OPTION_OPT_SIZEOPT},
   { "literal-movement", no_argument, NULL, OPTION_LITERAL_MOVEMENT},

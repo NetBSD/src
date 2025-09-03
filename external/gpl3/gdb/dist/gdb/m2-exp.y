@@ -117,7 +117,7 @@ using namespace expr;
 %token <sval> TYPENAME
 
 %token SIZE CAP ORD HIGH ABS MIN_FUNC MAX_FUNC FLOAT_FUNC VAL CHR ODD TRUNC
-%token TSIZE
+%token TSIZE ADR
 %token INC DEC INCL EXCL
 
 /* The GDB scope operator */
@@ -189,6 +189,10 @@ exp	:	ORD '(' exp ')'
 
 exp	:	ABS '(' exp ')'
 			{ error (_("ABS function is not implemented")); }
+	;
+
+exp	:	ADR '(' exp ')'
+			{ pstate->wrap<unop_addr_operation> (); }
 	;
 
 exp	: 	HIGH '(' exp ')'
@@ -699,6 +703,7 @@ static struct keyword keytab[] =
     {"IN",    IN         },/* Note space after IN */
     {"AND",   LOGICAL_AND},
     {"ABS",   ABS	 },
+    {"ADR",   ADR	 },
     {"CHR",   CHR	 },
     {"DEC",   DEC	 },
     {"NOT",   NOT	 },
@@ -918,8 +923,9 @@ yylex (void)
     std::string tmp = copy_name (yylval.sval);
     struct symbol *sym;
 
-    if (lookup_symtab (tmp.c_str ()))
+    if (lookup_symtab (current_program_space, tmp.c_str ()) != nullptr)
       return BLOCKNAME;
+
     sym = lookup_symbol (tmp.c_str (), pstate->expression_context_block,
 			 SEARCH_VFT, 0).symbol;
     if (sym && sym->aclass () == LOC_BLOCK)
@@ -955,7 +961,7 @@ yylex (void)
 
        case LOC_LABEL:
        case LOC_UNRESOLVED:
-	  error (_("internal:  Unforseen case in m2lex()"));
+	  error (_("internal:  Unforeseen case in m2lex()"));
 
        default:
 	  error (_("unhandled token in m2lex()"));

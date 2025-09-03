@@ -1,4 +1,4 @@
-# Copyright 2002-2023 Free Software Foundation, Inc.
+# Copyright 2002-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,11 +25,16 @@
 #
 
 
-if { [skip_cplus_tests] } { return }
+require allow_cplus_tests
 
 standard_testfile .cc casts03.cc
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
+set opts {}
+lappend opts debug
+lappend opts c++
+lappend opts additional_flags=-std=c++11
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile $opts]} {
     return -1
 }
 
@@ -174,6 +179,39 @@ gdb_test "print (unsigned long long) (LeftRight *) (Right *) &gd == gd_value" \
     " = true"
 gdb_test "print (unsigned long long) (LeftRight *) (Right *) r_value == gd_value" \
     " = true"
+
+gdb_test "print (const int &) gd.left" \
+    " = \\(const int \\&\\) @$nonzero_hex: 23"
+
+gdb_test "print reinterpret_cast<LeftRight *>(l) == lr_l" " = true"
+gdb_test "print reinterpret_cast<LeftRight *>(r) == lr_r" " = true"
+gdb_test "print reinterpret_cast<Left *>(lr) == l_lr" " = true"
+gdb_test "print reinterpret_cast<Right *>(lr) == r_lr" " = true"
+
+gdb_test "print &reinterpret_cast<LeftRight &>(*l) == lr_l" " = true"
+gdb_test "print &reinterpret_cast<LeftRight &>(*r) == lr_r" " = true"
+gdb_test "print &reinterpret_cast<Left &>(*lr) == l_lr" " = true"
+gdb_test "print &reinterpret_cast<Right &>(*lr) == r_lr" " = true"
+
+gdb_test "print dynamic_cast<VirtualLeftRight *> (vlr) == vlr" " = true"
+gdb_test "print dynamic_cast<VirtualLeftRight *> (vl) == vlr" " = true"
+gdb_test "print dynamic_cast<VirtualLeftRight *> (vr) == vlr" " = true"
+gdb_test "print dynamic_cast<VirtualLeft *> (vlr) == vl" " = true"
+gdb_test "print dynamic_cast<VirtualLeft *> (vl) == vl" " = true"
+gdb_test "print dynamic_cast<VirtualLeft *> (vr) == vl" " = true"
+gdb_test "print dynamic_cast<VirtualRight *> (vlr) == vr" " = true"
+gdb_test "print dynamic_cast<VirtualRight *> (vl) == vr" " = true"
+gdb_test "print dynamic_cast<VirtualRight *> (vr) == vr" " = true"
+
+gdb_test "print &dynamic_cast<VirtualLeftRight &> (*vlr) == vlr" " = true"
+gdb_test "print &dynamic_cast<VirtualLeftRight &> (*vl) == vlr" " = true"
+gdb_test "print &dynamic_cast<VirtualLeftRight &> (*vr) == vlr" " = true"
+gdb_test "print &dynamic_cast<VirtualLeft &> (*vlr) == vl" " = true"
+gdb_test "print &dynamic_cast<VirtualLeft &> (*vl) == vl" " = true"
+gdb_test "print &dynamic_cast<VirtualLeft &> (*vr) == vl" " = true"
+gdb_test "print &dynamic_cast<VirtualRight &> (*vlr) == vr" " = true"
+gdb_test "print &dynamic_cast<VirtualRight &> (*vl) == vr" " = true"
+gdb_test "print &dynamic_cast<VirtualRight &> (*vr) == vr" " = true"
 
 if {[prepare_for_testing "failed to prepare" ${testfile}03 $srcfile2 \
 			 {debug c++ additional_flags=-std=c++03}]} {

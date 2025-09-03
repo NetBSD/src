@@ -1,5 +1,5 @@
 /* This is the Assembler Pre-Processor
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -45,6 +45,8 @@ static int scrub_m68k_mri;
 /* The pseudo-op which switches in and out of MRI mode.  See the
    comment in do_scrub_chars.  */
 static const char mri_pseudo[] = ".mri 0";
+static const char *mri_state;
+static char mri_last_ch;
 #else
 #define scrub_m68k_mri 0
 #endif
@@ -56,11 +58,16 @@ static const char   symver_pseudo[] = ".symver";
 static const char * symver_state;
 #endif
 
-static char last_char;
+/* The pseudo-op (without leading dot) at which we want to (perhaps just
+   temporarily) stop processing.  See the comments in do_scrub_chars().  */
+static const char   end_pseudo[] = "end ";
+static const char * end_state;
 
-static char lex[256];
-static const char symbol_chars[] =
-"$._ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+/* Whether, considering the state at start of assembly, NO_PSEUDO_DOT is
+   active.  */
+static bool no_pseudo_dot;
+
+static char last_char;
 
 #define LEX_IS_SYMBOL_COMPONENT		1
 #define LEX_IS_WHITESPACE		2
@@ -75,9 +82,6 @@ static const char symbol_chars[] =
 #ifdef TC_V850
 #define LEX_IS_DOUBLEDASH_1ST		12
 #endif
-#ifdef TC_M32R
-#define DOUBLEBAR_PARALLEL
-#endif
 #ifdef DOUBLEBAR_PARALLEL
 #define LEX_IS_DOUBLEBAR_1ST		13
 #endif
@@ -91,25 +95,86 @@ static const char symbol_chars[] =
 #define IS_PARALLEL_SEPARATOR(c)	(lex[c] == LEX_IS_PARALLEL_SEPARATOR)
 #define IS_COMMENT(c)			(lex[c] == LEX_IS_COMMENT_START)
 #define IS_LINE_COMMENT(c)		(lex[c] == LEX_IS_LINE_COMMENT_START)
+#define IS_TWOCHAR_COMMENT_1ST(c)	(lex[c] == LEX_IS_TWOCHAR_COMMENT_1ST)
 #define	IS_NEWLINE(c)			(lex[c] == LEX_IS_NEWLINE)
 
-static int process_escape (int);
-
-/* FIXME-soon: The entire lexer/parser thingy should be
-   built statically at compile time rather than dynamically
-   each and every time the assembler is run.  xoxorich.  */
+static char lex[256] = {
+  [' ']  = LEX_IS_WHITESPACE,
+  ['\t'] = LEX_IS_WHITESPACE,
+#ifdef CR_EOL
+  ['\r'] = LEX_IS_LINE_SEPARATOR,
+#else
+  ['\r'] = LEX_IS_WHITESPACE,
+#endif
+  ['\n'] = LEX_IS_NEWLINE,
+  [':'] = LEX_IS_COLON,
+  ['$'] = LEX_IS_SYMBOL_COMPONENT,
+  ['.'] = LEX_IS_SYMBOL_COMPONENT,
+  ['_'] = LEX_IS_SYMBOL_COMPONENT,
+  ['A'] = LEX_IS_SYMBOL_COMPONENT, ['a'] = LEX_IS_SYMBOL_COMPONENT,
+  ['B'] = LEX_IS_SYMBOL_COMPONENT, ['b'] = LEX_IS_SYMBOL_COMPONENT,
+  ['C'] = LEX_IS_SYMBOL_COMPONENT, ['c'] = LEX_IS_SYMBOL_COMPONENT,
+  ['D'] = LEX_IS_SYMBOL_COMPONENT, ['d'] = LEX_IS_SYMBOL_COMPONENT,
+  ['E'] = LEX_IS_SYMBOL_COMPONENT, ['e'] = LEX_IS_SYMBOL_COMPONENT,
+  ['F'] = LEX_IS_SYMBOL_COMPONENT, ['f'] = LEX_IS_SYMBOL_COMPONENT,
+  ['G'] = LEX_IS_SYMBOL_COMPONENT, ['g'] = LEX_IS_SYMBOL_COMPONENT,
+  ['H'] = LEX_IS_SYMBOL_COMPONENT, ['h'] = LEX_IS_SYMBOL_COMPONENT,
+  ['I'] = LEX_IS_SYMBOL_COMPONENT, ['i'] = LEX_IS_SYMBOL_COMPONENT,
+  ['J'] = LEX_IS_SYMBOL_COMPONENT, ['j'] = LEX_IS_SYMBOL_COMPONENT,
+  ['K'] = LEX_IS_SYMBOL_COMPONENT, ['k'] = LEX_IS_SYMBOL_COMPONENT,
+  ['L'] = LEX_IS_SYMBOL_COMPONENT, ['l'] = LEX_IS_SYMBOL_COMPONENT,
+  ['M'] = LEX_IS_SYMBOL_COMPONENT, ['m'] = LEX_IS_SYMBOL_COMPONENT,
+  ['N'] = LEX_IS_SYMBOL_COMPONENT, ['n'] = LEX_IS_SYMBOL_COMPONENT,
+  ['O'] = LEX_IS_SYMBOL_COMPONENT, ['o'] = LEX_IS_SYMBOL_COMPONENT,
+  ['P'] = LEX_IS_SYMBOL_COMPONENT, ['p'] = LEX_IS_SYMBOL_COMPONENT,
+  ['Q'] = LEX_IS_SYMBOL_COMPONENT, ['q'] = LEX_IS_SYMBOL_COMPONENT,
+  ['R'] = LEX_IS_SYMBOL_COMPONENT, ['r'] = LEX_IS_SYMBOL_COMPONENT,
+  ['S'] = LEX_IS_SYMBOL_COMPONENT, ['s'] = LEX_IS_SYMBOL_COMPONENT,
+  ['T'] = LEX_IS_SYMBOL_COMPONENT, ['t'] = LEX_IS_SYMBOL_COMPONENT,
+  ['U'] = LEX_IS_SYMBOL_COMPONENT, ['u'] = LEX_IS_SYMBOL_COMPONENT,
+  ['V'] = LEX_IS_SYMBOL_COMPONENT, ['v'] = LEX_IS_SYMBOL_COMPONENT,
+  ['W'] = LEX_IS_SYMBOL_COMPONENT, ['w'] = LEX_IS_SYMBOL_COMPONENT,
+  ['X'] = LEX_IS_SYMBOL_COMPONENT, ['x'] = LEX_IS_SYMBOL_COMPONENT,
+  ['Y'] = LEX_IS_SYMBOL_COMPONENT, ['y'] = LEX_IS_SYMBOL_COMPONENT,
+  ['Z'] = LEX_IS_SYMBOL_COMPONENT, ['z'] = LEX_IS_SYMBOL_COMPONENT,
+  ['0'] = LEX_IS_SYMBOL_COMPONENT,
+  ['1'] = LEX_IS_SYMBOL_COMPONENT,
+  ['2'] = LEX_IS_SYMBOL_COMPONENT,
+  ['3'] = LEX_IS_SYMBOL_COMPONENT,
+  ['4'] = LEX_IS_SYMBOL_COMPONENT,
+  ['5'] = LEX_IS_SYMBOL_COMPONENT,
+  ['6'] = LEX_IS_SYMBOL_COMPONENT,
+  ['7'] = LEX_IS_SYMBOL_COMPONENT,
+  ['8'] = LEX_IS_SYMBOL_COMPONENT,
+  ['9'] = LEX_IS_SYMBOL_COMPONENT,
+#define INIT2(n) [n] = LEX_IS_SYMBOL_COMPONENT, \
+		 [(n) + 1] = LEX_IS_SYMBOL_COMPONENT
+#define INIT4(n)    INIT2 (n),  INIT2 ((n) +  2)
+#define INIT8(n)    INIT4 (n),  INIT4 ((n) +  4)
+#define INIT16(n)   INIT8 (n),  INIT8 ((n) +  8)
+#define INIT32(n)  INIT16 (n), INIT16 ((n) + 16)
+#define INIT64(n)  INIT32 (n), INIT32 ((n) + 32)
+#define INIT128(n) INIT64 (n), INIT64 ((n) + 64)
+  INIT128 (128),
+#undef INIT128
+#undef INIT64
+#undef INIT32
+#undef INIT16
+#undef INIT8
+#undef INIT4
+#undef INIT2
+};
 
 void
 do_scrub_begin (int m68k_mri ATTRIBUTE_UNUSED)
 {
   const char *p;
-  int c;
 
-  lex[' '] = LEX_IS_WHITESPACE;
-  lex['\t'] = LEX_IS_WHITESPACE;
-  lex['\r'] = LEX_IS_WHITESPACE;
-  lex['\n'] = LEX_IS_NEWLINE;
-  lex[':'] = LEX_IS_COLON;
+  /* Latch this once at start.  xtensa uses a hook function, yet context isn't
+     meaningful for scrubbing (or else we'd need to sync scrubber behavior as
+     state changes).  */
+  if (lex['/'] == 0)
+    no_pseudo_dot = NO_PSEUDO_DOT;
 
 #ifdef TC_M68K
   scrub_m68k_mri = m68k_mri;
@@ -133,11 +198,6 @@ do_scrub_begin (int m68k_mri ATTRIBUTE_UNUSED)
 
   /* Note that these override the previous defaults, e.g. if ';' is a
      comment char, then it isn't a line separator.  */
-  for (p = symbol_chars; *p; ++p)
-    lex[(unsigned char) *p] = LEX_IS_SYMBOL_COMPONENT;
-
-  for (c = 128; c < 256; ++c)
-    lex[c] = LEX_IS_SYMBOL_COMPONENT;
 
 #ifdef tc_symbol_chars
   /* This macro permits the processor to specify all characters which
@@ -156,6 +216,9 @@ do_scrub_begin (int m68k_mri ATTRIBUTE_UNUSED)
   for (p = tc_comment_chars; *p; p++)
     lex[(unsigned char) *p] = LEX_IS_COMMENT_START;
 
+  /* While counter intuitive to have more special purpose line comment chars
+     override more general purpose ordinary ones, logic in do_scrub_chars()
+     depends on this ordering.   */
   for (p = line_comment_chars; *p; p++)
     lex[(unsigned char) *p] = LEX_IS_LINE_COMMENT_START;
 
@@ -172,7 +235,8 @@ do_scrub_begin (int m68k_mri ATTRIBUTE_UNUSED)
     lex[(unsigned char) *p] = LEX_IS_PARALLEL_SEPARATOR;
 #endif
 
-  /* Only allow slash-star comments if slash is not in use.
+  /* Only allow slash-star comments if slash is not in use.  Certain
+     other cases are dealt with in LEX_IS_LINE_COMMENT_START handling.
      FIXME: This isn't right.  We should always permit them.  */
   if (lex['/'] == 0)
     lex['/'] = LEX_IS_TWOCHAR_COMMENT_1ST;
@@ -218,8 +282,6 @@ static int add_newlines;
 static char *saved_input;
 static size_t saved_input_len;
 static char input_buffer[32 * 1024];
-static const char *mri_state;
-static char mri_last_ch;
 
 /* Data structure for saving the state of app across #include's.  Note that
    app is called asynchronously to the parsing of the .include's, so our
@@ -235,11 +297,12 @@ struct app_save
   int          add_newlines;
   char *       saved_input;
   size_t       saved_input_len;
+  const char * end_state;
 #ifdef TC_M68K
   int          scrub_m68k_mri;
-#endif
   const char * mri_state;
   char         mri_last_ch;
+#endif
 #if defined TC_ARM && defined OBJ_ELF
   const char * symver_state;
 #endif
@@ -265,11 +328,12 @@ app_push (void)
       memcpy (saved->saved_input, saved_input, saved_input_len);
       saved->saved_input_len = saved_input_len;
     }
+  saved->end_state = end_state;
 #ifdef TC_M68K
   saved->scrub_m68k_mri = scrub_m68k_mri;
-#endif
   saved->mri_state = mri_state;
   saved->mri_last_ch = mri_last_ch;
+#endif
 #if defined TC_ARM && defined OBJ_ELF
   saved->symver_state = symver_state;
 #endif
@@ -305,11 +369,12 @@ app_pop (char *arg)
       saved_input_len = saved->saved_input_len;
       free (saved->saved_input);
     }
+  end_state = saved->end_state;
 #ifdef TC_M68K
   scrub_m68k_mri = saved->scrub_m68k_mri;
-#endif
   mri_state = saved->mri_state;
   mri_last_ch = saved->mri_last_ch;
+#endif
 #if defined TC_ARM && defined OBJ_ELF
   symver_state = saved->symver_state;
 #endif
@@ -406,7 +471,8 @@ scan_for_multibyte_characters (const unsigned char *  start,
    This is the way the old code used to work.  */
 
 size_t
-do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
+do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen,
+		bool check_multibyte)
 {
   char *to = tostart;
   char *toend = tostart + tolen;
@@ -430,11 +496,7 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	 10: After seeing whitespace in state 9 (keep white before symchar)
 	 11: After seeing a symbol character in state 0 (eg a label definition)
 	 -1: output string in out_string and go to the state in old_state
-	 -2: flush text until a '*' '/' is seen, then go to state old_state
-#ifdef TC_V850
-	 12: After seeing a dash, looking for a second dash as a start
-	     of comment.
-#endif
+	 12: no longer used
 #ifdef DOUBLEBAR_PARALLEL
 	 13: After seeing a vertical bar, looking for a second
 	     vertical bar as a parallel expression separator.
@@ -513,9 +575,9 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
       from = input_buffer;
       fromend = from + fromlen;
 
-      if (multibyte_handling == multibyte_warn)
+      if (check_multibyte)
 	(void) scan_for_multibyte_characters ((const unsigned char *) from,
-					      (const unsigned char* ) fromend,
+					      (const unsigned char *) fromend,
 					      true /* Generate warnings.  */);
     }
 
@@ -534,43 +596,6 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	      old_state = 3;
 	    }
 	  PUT (ch);
-	  continue;
-
-	case -2:
-	  for (;;)
-	    {
-	      do
-		{
-		  ch = GET ();
-
-		  if (ch == EOF)
-		    {
-		      as_warn (_("end of file in comment"));
-		      goto fromeof;
-		    }
-
-		  if (ch == '\n')
-		    PUT ('\n');
-		}
-	      while (ch != '*');
-
-	      while ((ch = GET ()) == '*')
-		;
-
-	      if (ch == EOF)
-		{
-		  as_warn (_("end of file in comment"));
-		  goto fromeof;
-		}
-
-	      if (ch == '/')
-		break;
-
-	      UNGET (ch);
-	    }
-
-	  state = old_state;
-	  UNGET (' ');
 	  continue;
 
 	case 4:
@@ -686,6 +711,11 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	      PUT (quotechar);
 	      continue;
 
+	      /* These two are used inside macros.  */
+	    case '@':
+	    case '+':
+	      break;
+
 	    case '"':
 	    case '\\':
 	    case 'b':
@@ -725,16 +755,6 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	     line from just after the first white space.  */
 	  state = 1;
 	  PUT ('|');
-#ifdef TC_TIC6X
-	  /* "||^" is used for SPMASKed instructions.  */
-	  ch = GET ();
-	  if (ch == EOF)
-	    goto fromeof;
-	  else if (ch == '^')
-	    PUT ('^');
-	  else
-	    UNGET (ch);
-#endif
 	  continue;
 #endif
 #ifdef TC_Z80
@@ -798,12 +818,55 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 
     recycle:
 
+      /* We need to watch out for .end directives: We should in particular not
+	 issue diagnostics for anything after an active one.  */
+      if (ch == EOF)
+	end_state = NULL;
+      else if (end_state == NULL)
+	{
+	  if ((state == 0 || state == 1)
+	      && (ch == '.'
+		  || (no_pseudo_dot && ch == end_pseudo[0])))
+	    end_state = end_pseudo + (ch != '.');
+	}
+      else if (ch != '\0'
+	       && (*end_state == ch
+		   /* Avoid triggering on directives like .endif or .endr.  */
+		   || (*end_state == ' ' && !IS_SYMBOL_COMPONENT (ch))))
+	{
+ 	  if (IS_NEWLINE (ch) || IS_LINE_SEPARATOR (ch))
+ 	    goto end_end;
+	  ++end_state;
+	}
+      else if (*end_state != '\0')
+	/* We did not get the expected character, or we didn't
+	   get a valid terminating character after seeing the
+	   entire pseudo-op, so we must go back to the beginning.  */
+	end_state = NULL;
+      else if (IS_NEWLINE (ch) || IS_LINE_SEPARATOR (ch))
+	{
+	end_end:
+	  /* We've read the entire pseudo-op.  If this is the end of the line,
+	     bail out now by (ab)using the output-full path.  This allows the
+	     caller to process input up to here and terminate processing if this
+	     directive is actually active (not on the false branch of a
+	     conditional and not in a macro definition).  */
+	  end_state = NULL;
+	  state = 0;
+	  PUT (ch);
+	  goto tofull;
+	}
+
 #if defined TC_ARM && defined OBJ_ELF
       /* We need to watch out for .symver directives.  See the comment later
 	 in this function.  */
-      if (symver_state == NULL)
+      if (ch == EOF)
+	symver_state = NULL;
+      else if (symver_state == NULL)
 	{
-	  if ((state == 0 || state == 1) && ch == symver_pseudo[0])
+	  if ((state == 0 || state == 1)
+	      && strchr (tc_comment_chars, '@') != NULL
+	      && ch == symver_pseudo[0])
 	    symver_state = symver_pseudo + 1;
 	}
       else
@@ -821,7 +884,7 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	    {
 	      /* We've read the entire pseudo-op.  If this is the end
 		 of the line, go back to the beginning.  */
-	      if (IS_NEWLINE (ch))
+	      if (IS_NEWLINE (ch) || IS_LINE_SEPARATOR (ch))
 		symver_state = NULL;
 	    }
 	}
@@ -832,7 +895,9 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	 MRI mode or not.  Unfortunately, since m68k MRI mode affects
 	 the scrubber, that means that we need a special purpose
 	 recognizer here.  */
-      if (mri_state == NULL)
+      if (ch == EOF)
+	mri_state = NULL;
+      else if (mri_state == NULL)
 	{
 	  if ((state == 0 || state == 1)
 	      && ch == mri_pseudo[0])
@@ -848,7 +913,7 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	  if (ch != '\0'
 	      && (*mri_state == ch
 		  || (*mri_state == ' '
-		      && lex[ch] == LEX_IS_WHITESPACE)
+		      && IS_WHITESPACE (ch))
 		  || (*mri_state == '0'
 		      && ch == '1')))
 	    {
@@ -856,8 +921,9 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	      ++mri_state;
 	    }
 	  else if (*mri_state != '\0'
-		   || (lex[ch] != LEX_IS_WHITESPACE
-		       && lex[ch] != LEX_IS_NEWLINE))
+		   || (!IS_WHITESPACE (ch)
+		       && !IS_LINE_SEPARATOR (ch)
+		       && !IS_NEWLINE (ch)))
 	    {
 	      /* We did not get the expected character, or we didn't
 		 get a valid terminating character after seeing the
@@ -867,7 +933,7 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	    }
 	  else
 	    {
-	      /* We've read the entire pseudo-op.  mips_last_ch is
+	      /* We've read the entire pseudo-op.  mri_last_ch is
 		 either '0' or '1' indicating whether to enter or
 		 leave MRI mode.  */
 	      do_scrub_begin (mri_last_ch == '1');
@@ -929,7 +995,12 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 		}
 	    }
 #endif
+
+	  /* Prune trailing whitespace.  */
 	  if (IS_COMMENT (ch)
+	      || (IS_LINE_COMMENT (ch)
+	          && (state < 1 || strchr (tc_comment_chars, ch)))
+	      || IS_NEWLINE (ch)
 	      || IS_LINE_SEPARATOR (ch)
 	      || IS_PARALLEL_SEPARATOR (ch))
 	    {
@@ -942,6 +1013,16 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 		}
 	      goto recycle;
 	    }
+#ifdef DOUBLESLASH_LINE_COMMENTS
+	  if (IS_TWOCHAR_COMMENT_1ST (ch))
+	    {
+	      ch2 = GET ();
+	      if (ch2 != EOF)
+	        UNGET (ch2);
+	      if (ch2 == '/')
+		goto recycle;
+	    }
+#endif
 
 	  /* If we're in state 2 or 11, we've seen a non-white
 	     character followed by whitespace.  If the next character
@@ -1024,6 +1105,7 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	  ch2 = GET ();
 	  if (ch2 == '*')
 	    {
+	twochar_comment:
 	      for (;;)
 		{
 		  do
@@ -1092,6 +1174,8 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	    }
 	  else if (state == 3)
 	    old_state = 9;
+	  else if (state == 0)
+	    old_state = 11; /* Now seeing label definition.  */
 	  else
 	    old_state = state;
 	  state = 5;
@@ -1134,7 +1218,7 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	      else
 		ch = process_escape (ch);
 	    }
-	  sprintf (out_buf, "%d", (int) (unsigned char) ch);
+	  sprintf (out_buf, "%d", ch & 0xff);
 
 	  /* None of these 'x constants for us.  We want 'x'.  */
 	  if ((ch = GET ()) != '\'')
@@ -1238,15 +1322,9 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	    {
 	      ch2 = GET ();
 	      if (ch2 == '*')
-		{
-		  old_state = 3;
-		  state = -2;
-		  break;
-		}
-	      else if (ch2 != EOF)
-		{
-		  UNGET (ch2);
-		}
+		goto twochar_comment;
+	      if (ch2 != EOF)
+		UNGET (ch2);
 	    }
 
 	  if (state == 0 || state == 1)	/* Only comment at start of line.  */
@@ -1316,14 +1394,10 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	     start of a line.  If this is also a normal comment
 	     character, fall through.  Otherwise treat it as a default
 	     character.  */
-	  if (strchr (tc_comment_chars, ch) == NULL
-	      && (! scrub_m68k_mri
-		  || (ch != '!' && ch != '*')))
+	  if (strchr (tc_comment_chars, ch) == NULL)
 	    goto de_fault;
 	  if (scrub_m68k_mri
-	      && (ch == '!' || ch == '*' || ch == '#')
-	      && state != 1
-	      && state != 10)
+	      && (ch == '!' || ch == '*' || ch == '#'))
 	    goto de_fault;
 	  /* Fall through.  */
 	case LEX_IS_COMMENT_START:
@@ -1421,11 +1495,13 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	  /* This is a common case.  Quickly copy CH and all the
 	     following symbol component or normal characters.  */
 	  if (to + 1 < toend
+#ifdef TC_M68K
 	      && mri_state == NULL
+#endif
 #if defined TC_ARM && defined OBJ_ELF
 	      && symver_state == NULL
 #endif
-	      )
+	      && end_state == NULL)
 	    {
 	      char *s;
 	      ptrdiff_t len;

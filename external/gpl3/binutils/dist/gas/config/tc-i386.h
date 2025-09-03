@@ -1,5 +1,5 @@
 /* tc-i386.h -- Header file for tc-i386.c
-   Copyright (C) 1989-2024 Free Software Foundation, Inc.
+   Copyright (C) 1989-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -84,9 +84,7 @@ extern unsigned long i386_mach (void);
 #define ELF_TARGET_IAMCU_FORMAT	"elf32-iamcu"
 #endif
 
-#if ((defined (OBJ_MAYBE_COFF) && defined (OBJ_MAYBE_AOUT)) \
-     || defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF) \
-     || defined (TE_PE) || defined (TE_PEP) || defined (OBJ_MACH_O))
+#if (defined (OBJ_ELF) || defined (TE_PE) || defined (OBJ_MACH_O))
 extern const char *i386_target_format (void);
 #define TARGET_FORMAT i386_target_format ()
 #else
@@ -141,11 +139,12 @@ int i386_validate_fix (struct fix *);
     if (!i386_validate_fix(FIX)) goto SKIP;      \
   } while (0)
 
-#if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
+#ifdef OBJ_ELF
 #define tc_fix_adjustable(X)  tc_i386_fix_adjustable(X)
 extern int tc_i386_fix_adjustable (struct fix *);
 #else
 #define tc_fix_adjustable(X)  ((void)(X), 1)
+#define md_undefined_symbol(N) ((void)(N), NULL)
 #endif
 
 /* Values passed to md_apply_fix don't include the symbol value.  */
@@ -172,7 +171,9 @@ extern int tc_i386_fix_adjustable (struct fix *);
    || (FIX)->fx_r_type == BFD_RELOC_X86_64_GOTPCREL		\
    || (FIX)->fx_r_type == BFD_RELOC_X86_64_GOTPCRELX		\
    || (FIX)->fx_r_type == BFD_RELOC_X86_64_REX_GOTPCRELX	\
-   || (FIX)->fx_r_type == BFD_RELOC_X86_64_CODE_4_GOTPCRELX)
+   || (FIX)->fx_r_type == BFD_RELOC_X86_64_CODE_4_GOTPCRELX	\
+   || (FIX)->fx_r_type == BFD_RELOC_X86_64_CODE_5_GOTPCRELX	\
+   || (FIX)->fx_r_type == BFD_RELOC_X86_64_CODE_6_GOTPCRELX)
 
 #define TC_FORCE_RELOCATION_ABS(FIX)				\
   (TC_FORCE_RELOCATION (FIX)					\
@@ -181,10 +182,22 @@ extern int tc_i386_fix_adjustable (struct fix *);
    || (FIX)->fx_r_type == BFD_RELOC_X86_64_GOTPCREL		\
    || (FIX)->fx_r_type == BFD_RELOC_X86_64_GOTPCRELX		\
    || (FIX)->fx_r_type == BFD_RELOC_X86_64_REX_GOTPCRELX	\
-   || (FIX)->fx_r_type == BFD_RELOC_X86_64_CODE_4_GOTPCRELX)
+   || (FIX)->fx_r_type == BFD_RELOC_X86_64_CODE_4_GOTPCRELX	\
+   || (FIX)->fx_r_type == BFD_RELOC_X86_64_CODE_5_GOTPCRELX	\
+   || (FIX)->fx_r_type == BFD_RELOC_X86_64_CODE_6_GOTPCRELX)
 
-extern int i386_parse_name (char *, expressionS *, char *);
-#define md_parse_name(s, e, m, c) i386_parse_name (s, e, c)
+extern void i386_start_line (void);
+#define md_start_line_hook i386_start_line
+
+extern bool i386_check_label (void);
+#define TC_START_LABEL(STR, NUL_CHAR, NEXT_CHAR) \
+  (NEXT_CHAR == ':' && i386_check_label ())
+
+extern int i386_unrecognized_line (int);
+#define tc_unrecognized_line i386_unrecognized_line
+
+extern int i386_parse_name (char *, expressionS *, enum expr_mode, char *);
+#define md_parse_name(s, e, m, c) i386_parse_name (s, e, m, c)
 
 extern operatorT i386_operator (const char *name, unsigned int operands, char *);
 #define md_operator i386_operator
@@ -217,13 +230,10 @@ if ((n)									\
     goto around;							\
   }
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE \
-  (alignment ? ((size_t) 1 << alignment) - 1 : (size_t) 1)
-
 extern void i386_cons_align (int);
 #define md_cons_align(nbytes) i386_cons_align (nbytes)
 
-#if !defined (OBJ_AOUT) && !defined (OBJ_MAYBE_AOUT)
+#ifndef OBJ_AOUT
 #define md_section_align(seg, value) ((void)(seg), (value))
 #endif
 
@@ -366,17 +376,43 @@ extern void i386_generate_nops (fragS *, char *, offsetT, int);
 #define md_generate_nops(frag, where, amount, control) \
   i386_generate_nops ((frag), (where), (amount), (control))
 
-#define HANDLE_ALIGN(fragP)						\
+#define HANDLE_ALIGN(sec, fragP) \
 if (fragP->fr_type == rs_align_code) 					\
   {									\
     offsetT __count = (fragP->fr_next->fr_address			\
 		       - fragP->fr_address				\
 		       - fragP->fr_fix);				\
-    if (__count > 0							\
-	&& (unsigned int) __count <= fragP->tc_frag_data.max_bytes)	\
-      md_generate_nops (fragP, fragP->fr_literal + fragP->fr_fix,	\
-			__count, 0);					\
+    if (__count > 0)							\
+      {									\
+	know (fragP->tc_frag_data.max_bytes >= (valueT) __count		\
+	      || (fragP->tc_frag_data.max_bytes				\
+		  >= MAX_MEM_FOR_RS_ALIGN_CODE (fragP->fr_offset,	\
+						fragP->fr_subtype)));	\
+	md_generate_nops (fragP, fragP->fr_literal + fragP->fr_fix,	\
+			  __count, 0);					\
+      }									\
   }
+/* Possible plain nop, branch, twice largest nop less 1.
+   Yes, the branch might be one byte longer in CODE_16BIT but then the
+   largest nop is smaller.  */
+#define MAX_MEM_FOR_RS_SPACE_NOP (1 + 5 + 2 * 15 - 1)
+
+static inline unsigned int
+max_mem_for_rs_align_code (unsigned int p2align, unsigned int max)
+{
+  unsigned int bytes = 1;
+  if (p2align != 0)
+    {
+      bytes = MAX_MEM_FOR_RS_SPACE_NOP;
+      if (bytes > (1ull << p2align) - 1)
+	bytes = (1ull << p2align) - 1;
+      if (max != 0 && bytes > max)
+	bytes = max;
+    }
+  return bytes;
+}
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) \
+  max_mem_for_rs_align_code (p2align, max)
 
 /* We want .cfi_* pseudo-ops for generating unwind info.  */
 #define TARGET_USE_CFIPOP 1
@@ -396,6 +432,14 @@ extern void tc_x86_parse_to_dw2regnum (expressionS *);
 #define tc_cfi_frame_initial_instructions tc_x86_frame_initial_instructions
 extern void tc_x86_frame_initial_instructions (void);
 
+/* DWARF register number of the frame-pointer register in 64-bit mode.  */
+#define REG_FP 6
+/* DWARF register number of the stack-pointer register in 64-bit mode.  */
+#define REG_SP 7
+/* DWARF register number of the (pseudo) return address register in 64-bit
+   mode.  This is the same as reg RIP in i386-reg.tbl.  */
+#define REG_RA 16
+
 #define md_elf_section_type(str,len) i386_elf_section_type (str, len)
 extern int i386_elf_section_type (const char *, size_t);
 
@@ -411,7 +455,7 @@ extern void i386_solaris_fix_up_eh_frame (segT);
 extern bfd_vma x86_64_section_letter (int, const char **);
 #define md_elf_section_letter(LETTER, PTR_MSG)	x86_64_section_letter (LETTER, PTR_MSG)
 
-#if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
+#ifdef OBJ_ELF
 extern void x86_cleanup (void);
 #define md_cleanup() x86_cleanup ()
 
@@ -425,10 +469,6 @@ extern void x86_cleanup (void);
    R15 (15).  Use SCFI_CALLEE_SAVED_REG_P to identify which registers
    are callee-saved from this set.  */
 #define SCFI_MAX_REG_ID 15
-/* Identify the DWARF register number of the frame-pointer register.  */
-#define REG_FP 6
-/* Identify the DWARF register number of the stack-pointer register.  */
-#define REG_SP 7
 /* Some ABIs, like AMD64, use stack for call instruction.  For such an ABI,
    identify the initial (CFA) offset from RSP at the entry of function.  */
 #define SCFI_INIT_CFA_OFFSET 8
@@ -440,24 +480,30 @@ extern bool x86_scfi_callee_saved_p (uint32_t dw2reg_num);
 extern bool x86_support_sframe_p (void);
 #define support_sframe_p x86_support_sframe_p
 
-/* The stack-pointer register number for SFrame stack trace info.  */
-extern unsigned int x86_sframe_cfa_sp_reg;
+/* The stack pointer DWARF register number for SFrame CFA tracking.  */
+extern const unsigned int x86_sframe_cfa_sp_reg;
 #define SFRAME_CFA_SP_REG x86_sframe_cfa_sp_reg
 
-/* The frame-pointer register number for SFrame stack trace info.  */
-extern unsigned int x86_sframe_cfa_fp_reg;
+/* The frame pointer DWARF register number for SFrame CFA and FP tracking.  */
+extern const unsigned int x86_sframe_cfa_fp_reg;
 #define SFRAME_CFA_FP_REG x86_sframe_cfa_fp_reg
 
-/* Specify if RA tracking is needed.  */
+/* The return address DWARF register number for SFrame purposes.  Although for
+   AMD64, RA tracking is disabled, specific constructs, like for indicating
+   the _start function, may use it.  */
+extern const unsigned int x86_sframe_cfa_ra_reg;
+#define SFRAME_CFA_RA_REG x86_sframe_cfa_ra_reg
+
+/* Whether SFrame return address tracking is needed.  */
 extern bool x86_sframe_ra_tracking_p (void);
 #define sframe_ra_tracking_p x86_sframe_ra_tracking_p
 
-/* Specify the fixed offset to recover RA from CFA.
-   (useful only when RA tracking is not needed).  */
+/* The fixed offset from CFA for SFrame to recover the return address.
+   (useful only when SFrame RA tracking is not needed).  */
 extern offsetT x86_sframe_cfa_ra_offset (void);
 #define sframe_cfa_ra_offset x86_sframe_cfa_ra_offset
 
-/* The abi/arch indentifier for SFrame.  */
+/* The abi/arch identifier for SFrame.  */
 extern unsigned char x86_sframe_get_abi_arch (void);
 #define sframe_get_abi_arch x86_sframe_get_abi_arch
 

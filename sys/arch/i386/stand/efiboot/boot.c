@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.32 2025/05/20 12:26:03 pgoyette Exp $	*/
+/*	$NetBSD: boot.c,v 1.33 2025/07/31 02:59:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -52,12 +52,12 @@ extern struct x86_boot_params boot_params;
 extern char twiddle_toggle;
 
 static const char * const names[][2] = {
-	{ "netbsd/kernel", "netbsd/kernel.gz" },
-	{ "onetbsd/kernel", "onetbsd/kernel.gz" },
-	{ "netbsd.old/kernel", "netbsd.old/kernel.gz" },
 	{ "netbsd", "netbsd.gz" },
 	{ "onetbsd", "onetbsd.gz" },
 	{ "netbsd.old", "netbsd.old.gz" },
+	{ "netbsd/kernel", "netbsd/kernel.gz" },
+	{ "onetbsd/kernel", "onetbsd/kernel.gz" },
+	{ "netbsd.old/kernel", "netbsd.old/kernel.gz" },
 };
 
 #define NUMNAMES	__arraycount(names)

@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 #   Contributed by Kalray Inc.
 #
 # This file is part of the GNU Binutils.
@@ -35,9 +35,8 @@ elf${ELFSIZE}_kvx_before_allocation (void)
 EOF
 if test x"${EMULATION_NAME}" != x"elf64kvx_linux"; then
 fragment <<EOF
-  if (bfd_link_pie (&link_info)) {
-          einfo (_("%F:%P: -pie not supported\n"));
-  }
+  if (bfd_link_pie (&link_info))
+    fatal (_(":%P: -pie not supported\n"));
 EOF
 fi
 fragment <<EOF
@@ -174,7 +173,7 @@ elf${ELFSIZE}_kvx_add_stub_section (const char *stub_sec_name,
     return stub_sec;
 
  err_ret:
-  einfo ("%X%P: can not make stub section: %E\n");
+  einfo (_("%X%P: can not make stub section: %E\n"));
   return NULL;
 }
 
@@ -217,7 +216,7 @@ gld${EMULATION_NAME}_after_allocation (void)
   ret = bfd_elf_discard_info (link_info.output_bfd, & link_info);
   if (ret < 0)
     {
-      einfo ("%X%P: .eh_frame/.stab edit: %E\n");
+      einfo (_("%X%P: .eh_frame/.stab edit: %E\n"));
       return;
     }
   else if (ret > 0)
@@ -233,7 +232,7 @@ gld${EMULATION_NAME}_after_allocation (void)
 	{
 	  if (ret < 0)
 	    {
-	      einfo ("%X%P: could not compute sections lists for stub generation: %E\n");
+	      einfo (_("%X%P: could not compute sections lists for stub generation: %E\n"));
 	      return;
 	    }
 
@@ -247,7 +246,7 @@ gld${EMULATION_NAME}_after_allocation (void)
 					  & elf${ELFSIZE}_kvx_add_stub_section,
 					  & gldkvx_layout_sections_again))
 	    {
-	      einfo ("%X%P: cannot size stub section: %E\n");
+	      einfo (_("%X%P: cannot size stub section: %E\n"));
 	      return;
 	    }
 	}
@@ -267,7 +266,7 @@ gld${EMULATION_NAME}_finish (void)
 	  && stub_file->the_bfd->sections != NULL)
 	{
 	  if (! elf${ELFSIZE}_kvx_build_stubs (& link_info))
-	    einfo ("%X%P: can not build stubs: %E\n");
+	    einfo (_("%X%P: can not build stubs: %E\n"));
 	}
     }
 
@@ -292,7 +291,7 @@ kvx_elf_create_output_section_statements (void)
 			      bfd_get_arch (link_info.output_bfd),
 			      bfd_get_mach (link_info.output_bfd)))
     {
-      einfo ("%X%P: can not create BFD %E\n");
+      fatal (_("%P: can not create BFD %E\n"));
       return;
     }
 
@@ -300,7 +299,7 @@ kvx_elf_create_output_section_statements (void)
   ldlang_add_file (stub_file);
 
   if (!kvx_elf${ELFSIZE}_init_stub_bfd (&link_info, stub_file->the_bfd))
-    einfo ("%F%P: can not init BFD: %E\n");
+    fatal (_("%P: can not init BFD: %E\n"));
 }
 
 

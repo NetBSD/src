@@ -75,7 +75,7 @@ proc run_test { unwind_on_exception } {
 		 "&\"caused by an unhandled C\\+\\+ exception.  GDB blocked this call in order\\\\n\"" \
 		 "&\"to prevent the program from being terminated, and has restored the\\\\n\"" \
 		 "&\"context to its original state before the call.\\\\n\"" \
-		 "&\"To change this behaviour use \\\\\"set unwind-on-terminating-exception off\\\\\"\\.\\\\n\"" \
+		 "&\"To change this behavior use \\\\\"set unwind-on-terminating-exception off\\\\\"\\.\\\\n\"" \
 		 "&\"Evaluation of the expression containing the function \\(cond_throw\\(\\)\\)\\\\n\"" \
 		 "&\"will be abandoned.\\\\n\"" \
 		 "=breakpoint-modified,bkpt={number=\"$bpnum\",type=\"breakpoint\",\[^\r\n\]+times=\"1\",\[^\r\n\]+}" \

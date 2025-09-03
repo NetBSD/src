@@ -64,6 +64,16 @@ namespace eval ::CheckTestNames {
     proc _check_duplicates { message } {
 	variable all_test_names
 
+	# Remove test-case prefix, including the space separator.
+	set prefix [string_to_regexp "$::subdir/$::gdb_test_file_name.exp: "]
+	set message [regsub ^$prefix $message ""]
+
+	# Remove the "extra information" part.
+	set message [regsub { \([^()]*\)$} $message ""]
+
+	# Add back the test-case prefix.
+	set message "${prefix}$message"
+
 	# Initialise a count, or increment the count for this test name.
 	if {![info exists all_test_names($message)]} {
 	    set all_test_names($message) 0

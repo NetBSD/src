@@ -792,7 +792,7 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "./config/bfin-lex.l"
 /* bfin-lex.l  ADI Blackfin lexer
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

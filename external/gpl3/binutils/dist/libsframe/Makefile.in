@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -107,6 +107,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+target_triplet = @target@
 @BUILD_INFO_TRUE@am__append_1 = doc/sframe-spec.texi
 @BUILD_INFO_TRUE@am__append_2 = texput.log
 @BUILD_INFO_TRUE@am__append_3 = doc/sframe-spec.info
@@ -117,7 +118,8 @@ check_PROGRAMS = $(am__EXEEXT_1)
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.encode/encode-1 \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/findfre-1 \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/findfunc-1 \
-@HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/plt-findfre-1
+@HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/plt-findfre-1 \
+@HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/plt-findfre-2
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
@@ -126,6 +128,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
 	$(top_srcdir)/../config/depstand.m4 \
 	$(top_srcdir)/../config/jobserver.m4 \
 	$(top_srcdir)/../config/lead-dot.m4 \
+	$(top_srcdir)/../config/mmap.m4 \
 	$(top_srcdir)/../config/override.m4 \
 	$(top_srcdir)/../config/warnings.m4 \
 	$(top_srcdir)/../libtool.m4 $(top_srcdir)/../ltoptions.m4 \
@@ -191,7 +194,8 @@ libsframe_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.encode/encode-1$(EXEEXT) \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/findfre-1$(EXEEXT) \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/findfunc-1$(EXEEXT) \
-@HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/plt-findfre-1$(EXEEXT)
+@HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/plt-findfre-1$(EXEEXT) \
+@HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/plt-findfre-2$(EXEEXT)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_testsuite_libsframe_decode_be_flipping_OBJECTS = testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping-be-flipping.$(OBJEXT)
 testsuite_libsframe_decode_be_flipping_OBJECTS =  \
@@ -227,6 +231,11 @@ am_testsuite_libsframe_find_plt_findfre_1_OBJECTS = testsuite/libsframe.find/tes
 testsuite_libsframe_find_plt_findfre_1_OBJECTS =  \
 	$(am_testsuite_libsframe_find_plt_findfre_1_OBJECTS)
 testsuite_libsframe_find_plt_findfre_1_DEPENDENCIES =  \
+	${top_builddir}/libsframe.la
+am_testsuite_libsframe_find_plt_findfre_2_OBJECTS = testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.$(OBJEXT)
+testsuite_libsframe_find_plt_findfre_2_OBJECTS =  \
+	$(am_testsuite_libsframe_find_plt_findfre_2_OBJECTS)
+testsuite_libsframe_find_plt_findfre_2_DEPENDENCIES =  \
 	${top_builddir}/libsframe.la
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -269,7 +278,8 @@ SOURCES = $(libsframe_la_SOURCES) \
 	$(testsuite_libsframe_encode_encode_1_SOURCES) \
 	$(testsuite_libsframe_find_findfre_1_SOURCES) \
 	$(testsuite_libsframe_find_findfunc_1_SOURCES) \
-	$(testsuite_libsframe_find_plt_findfre_1_SOURCES)
+	$(testsuite_libsframe_find_plt_findfre_1_SOURCES) \
+	$(testsuite_libsframe_find_plt_findfre_2_SOURCES)
 DIST_SOURCES = $(libsframe_la_SOURCES) \
 	$(testsuite_libsframe_decode_be_flipping_SOURCES) \
 	$(testsuite_libsframe_decode_frecnt_1_SOURCES) \
@@ -277,7 +287,8 @@ DIST_SOURCES = $(libsframe_la_SOURCES) \
 	$(testsuite_libsframe_encode_encode_1_SOURCES) \
 	$(testsuite_libsframe_find_findfre_1_SOURCES) \
 	$(testsuite_libsframe_find_findfunc_1_SOURCES) \
-	$(testsuite_libsframe_find_plt_findfre_1_SOURCES)
+	$(testsuite_libsframe_find_plt_findfre_1_SOURCES) \
+	$(testsuite_libsframe_find_plt_findfre_2_SOURCES)
 AM_V_DVIPS = $(am__v_DVIPS_@AM_V@)
 am__v_DVIPS_ = $(am__v_DVIPS_@AM_DEFAULT_V@)
 am__v_DVIPS_0 = @echo "  DVIPS   " $@;
@@ -488,14 +499,18 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
 target_noncanonical = @target_noncanonical@
+target_os = @target_os@
+target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
 #
-#   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -563,6 +578,9 @@ testsuite_libsframe_find_findfunc_1_CPPFLAGS = -I${top_srcdir}/../include -Wall
 testsuite_libsframe_find_plt_findfre_1_SOURCES = testsuite/libsframe.find/plt-findfre-1.c
 testsuite_libsframe_find_plt_findfre_1_LDADD = ${top_builddir}/libsframe.la
 testsuite_libsframe_find_plt_findfre_1_CPPFLAGS = -I${top_srcdir}/../include -Wall
+testsuite_libsframe_find_plt_findfre_2_SOURCES = testsuite/libsframe.find/plt-findfre-2.c
+testsuite_libsframe_find_plt_findfre_2_LDADD = ${top_builddir}/libsframe.la
+testsuite_libsframe_find_plt_findfre_2_CPPFLAGS = -I${top_srcdir}/../include -Wall
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -742,6 +760,13 @@ testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_1-plt-findfre-1.$(
 testsuite/libsframe.find/plt-findfre-1$(EXEEXT): $(testsuite_libsframe_find_plt_findfre_1_OBJECTS) $(testsuite_libsframe_find_plt_findfre_1_DEPENDENCIES) $(EXTRA_testsuite_libsframe_find_plt_findfre_1_DEPENDENCIES) testsuite/libsframe.find/$(am__dirstamp)
 	@rm -f testsuite/libsframe.find/plt-findfre-1$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(testsuite_libsframe_find_plt_findfre_1_OBJECTS) $(testsuite_libsframe_find_plt_findfre_1_LDADD) $(LIBS)
+testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.$(OBJEXT):  \
+	testsuite/libsframe.find/$(am__dirstamp) \
+	testsuite/libsframe.find/$(DEPDIR)/$(am__dirstamp)
+
+testsuite/libsframe.find/plt-findfre-2$(EXEEXT): $(testsuite_libsframe_find_plt_findfre_2_OBJECTS) $(testsuite_libsframe_find_plt_findfre_2_DEPENDENCIES) $(EXTRA_testsuite_libsframe_find_plt_findfre_2_DEPENDENCIES) testsuite/libsframe.find/$(am__dirstamp)
+	@rm -f testsuite/libsframe.find/plt-findfre-2$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(testsuite_libsframe_find_plt_findfre_2_OBJECTS) $(testsuite_libsframe_find_plt_findfre_2_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -762,6 +787,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_findfre_1-findfre-1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_findfunc_1-findfunc-1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_plt_findfre_1-plt-findfre-1.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -905,6 +931,20 @@ testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_1-plt-findfre-1.ob
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/libsframe.find/plt-findfre-1.c' object='testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_1-plt-findfre-1.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_find_plt_findfre_1_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_1-plt-findfre-1.obj `if test -f 'testsuite/libsframe.find/plt-findfre-1.c'; then $(CYGPATH_W) 'testsuite/libsframe.find/plt-findfre-1.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/libsframe.find/plt-findfre-1.c'; fi`
+
+testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.o: testsuite/libsframe.find/plt-findfre-2.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_find_plt_findfre_2_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.o -MD -MP -MF testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.Tpo -c -o testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.o `test -f 'testsuite/libsframe.find/plt-findfre-2.c' || echo '$(srcdir)/'`testsuite/libsframe.find/plt-findfre-2.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.Tpo testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/libsframe.find/plt-findfre-2.c' object='testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_find_plt_findfre_2_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.o `test -f 'testsuite/libsframe.find/plt-findfre-2.c' || echo '$(srcdir)/'`testsuite/libsframe.find/plt-findfre-2.c
+
+testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.obj: testsuite/libsframe.find/plt-findfre-2.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_find_plt_findfre_2_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.obj -MD -MP -MF testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.Tpo -c -o testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.obj `if test -f 'testsuite/libsframe.find/plt-findfre-2.c'; then $(CYGPATH_W) 'testsuite/libsframe.find/plt-findfre-2.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/libsframe.find/plt-findfre-2.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.Tpo testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/libsframe.find/plt-findfre-2.c' object='testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_find_plt_findfre_2_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.obj `if test -f 'testsuite/libsframe.find/plt-findfre-2.c'; then $(CYGPATH_W) 'testsuite/libsframe.find/plt-findfre-2.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/libsframe.find/plt-findfre-2.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -1147,6 +1187,8 @@ site.exp: Makefile $(EXTRA_DEJAGNU_SITE_CONFIG)
 	@echo 'set build_triplet $(build_triplet)' >>site.tmp
 	@echo 'set host_alias "$(host_alias)"' >>site.tmp
 	@echo 'set host_triplet $(host_triplet)' >>site.tmp
+	@echo 'set target_alias "$(target_alias)"' >>site.tmp
+	@echo 'set target_triplet $(target_triplet)' >>site.tmp
 	@list='$(EXTRA_DEJAGNU_SITE_CONFIG)'; for f in $$list; do \
 	  echo "## Begin content included from file $$f.  Do not modify. ##" \
 	   && cat `test -f "$$f" || echo '$(srcdir)/'`$$f \

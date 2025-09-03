@@ -29,6 +29,7 @@ zone <string> [ <class> ] {
 	min-transfer-rate-in <integer> <integer>;
 	multi-master <boolean>;
 	notify ( explicit | master-only | primary-only | <boolean> );
+	notify-defer <integer>;
 	notify-delay <integer>;
 	notify-source ( <ipv4_address> | * );
 	notify-source-v6 ( <ipv6_address> | * );

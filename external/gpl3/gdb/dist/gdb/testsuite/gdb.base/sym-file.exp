@@ -67,134 +67,156 @@ if {[prepare_for_testing "failed to prepare"  $binfile "$srcfile $srcfile2" $exe
 
 gdb_load_shlib ${lib_so}
 
-if {![runto_main]} {
-    return
-}
+proc do_test { remove_expr } {
+    global lib_basename lib_syms srcfile srcfile3
 
-# 1) Run to gdb_add_symbol_file in $srcfile for adding the library's
-#    symbols.
-gdb_breakpoint gdb_add_symbol_file
-gdb_continue_to_breakpoint gdb_add_symbol_file
+    clean_restart $::binfile
 
-# 2) Set a pending breakpoint at bar in $srcfile3.
-set result [gdb_breakpoint bar allow-pending]
-if {!$result} {
-   return
-}
+    if {![runto_main]} {
+	return
+    }
 
-# 3) Add the library's symbols using 'add-symbol-file'.
-set result [gdb_test "add-symbol-file ${lib_syms} addr" \
-		     "Reading symbols from .*${lib_syms}\\.\\.\\." \
-		     "add-symbol-file ${lib_basename}.so addr" \
-		     "add symbol table from file \".*${lib_basename}\\.so\"\
- at.*\\(y or n\\) " \
-		     "y"]
-if {$result != 0} {
-   return
-}
-
-# 4) 'info files' must display $srcfile3.
-gdb_test "info files" \
-	 "^(?=(.*${lib_basename})).*" \
-	 "info files must display ${lib_basename}"
-
-# 5) Continue to bar in $srcfile3 to ensure that the breakpoint
-#    was bound correctly after adding $shilb_name.
-set lnum_bar [gdb_get_line_number "break at bar" $srcfile3]
-gdb_continue_to_breakpoint bar ".*${lib_basename}\\.c:$lnum_bar.*"
-
-# 6) Set a breakpoint at foo in $srcfile3.
-set result [gdb_breakpoint foo]
-if {!$result} {
-    return
-}
-
-# 7) Continue to foo in $srcfile3 to ensure that the breakpoint
-#    was bound correctly.
-set lnum_foo [gdb_get_line_number "break at foo" $srcfile3]
-gdb_continue_to_breakpoint foo ".*${lib_basename}\\.c:$lnum_foo.*"
-
-# 8) Set a breakpoint at gdb_remove_symbol_file in $srcfile for
-#    removing the library's symbols.
-set result [gdb_breakpoint gdb_remove_symbol_file]
-if {!$result} {
-    return
-}
-
-# 9) Continue to gdb_remove_symbol_file in $srcfile.
-gdb_continue_to_breakpoint gdb_remove_symbol_file
-
-# 10) Remove the library's symbols using 'remove-symbol-file'.
-set result [gdb_test "remove-symbol-file -a addr" \
-		     ""\
-		     "remove-symbol-file -a addr" \
-		     "Remove symbol table from file \".*${lib_basename}\\.so\"\\?\
-.*\\(y or n\\) " \
-		     "y"]
-if {$result != 0} {
-    return
-}
-
-# 11) 'info files' must not display ${lib_basename}, anymore.
-gdb_test "info files" \
-	 "^(?!(.*${lib_basename})).*" \
-	 "info files must not display ${lib_basename}"
-
-# 12) Check that the breakpoints at foo and bar are pending after
-#     removing the library's symbols.
-gdb_test "info breakpoints 3" \
-	 ".*PENDING.*" \
-	 "breakpoint at foo is pending"
-
-gdb_test "info breakpoints 4" \
-	 ".*PENDING.*" \
-	 "breakpoint at bar is pending"
-
-# 13) Check that the execution can continue without error.
-set lnum_reload [gdb_get_line_number "reload lib here"]
-gdb_breakpoint $lnum_reload
-gdb_continue_to_breakpoint reload ".*${srcfile}:$lnum_reload.*"
-
-# 14) Regression test for a stale breakpoints bug.  Check whether
-# unloading symbols manually without the program actually unloading
-# the library, when breakpoints are inserted doesn't leave stale
-# breakpoints behind.
-with_test_prefix "stale bkpts" {
-    # Force breakpoints always inserted.
-    gdb_test_no_output "set breakpoint always-inserted on"
-
-    # Get past the library reload.
+    # 1) Run to gdb_add_symbol_file in $srcfile for adding the library's
+    #    symbols.
+    gdb_breakpoint gdb_add_symbol_file
     gdb_continue_to_breakpoint gdb_add_symbol_file
 
-    # Load the library's symbols.
-    gdb_test "add-symbol-file ${lib_syms} addr" \
-	"Reading symbols from .*${lib_syms}\\.\\.\\." \
-	"add-symbol-file ${lib_basename}.so addr" \
-	"add symbol table from file \".*${lib_syms}\"\
-at.*\\(y or n\\) " \
-	"y"
+    # 2) Set a pending breakpoint at bar in $srcfile3.
+    set result [gdb_breakpoint bar allow-pending]
+    if {!$result} {
+	return
+    }
 
-    # Set a breakpoint at baz, in the library.
-    gdb_breakpoint baz
+    # 3) Add the library's symbols using 'add-symbol-file'.
+    set result [gdb_test "add-symbol-file ${lib_syms} addr" \
+		    "Reading symbols from .*${lib_syms}\\.\\.\\." \
+		    "add-symbol-file ${lib_basename}.so addr" \
+		    "add symbol table from file \".*${lib_basename}\\.so\"\
+ at.*\\(y or n\\) " \
+		    "y"]
+    if {$result != 0} {
+	return
+    }
 
-    gdb_test "info breakpoints 7" ".*y.*0x.*in baz.*" \
-	"breakpoint at baz is resolved"
+    # 4) 'info files' must display $srcfile3.
+    gdb_test "info files" \
+	"^(?=(.*${lib_basename})).*" \
+	"info files must display ${lib_basename}"
 
-    # Unload symbols manually without the program actually unloading
-    # the library.
-    gdb_test "remove-symbol-file -a addr" \
-	"" \
-	"remove-symbol-file -a addr" \
-	"Remove symbol table from file \".*${lib_basename}\\.so\"\\?\
+    # 5) Continue to bar in $srcfile3 to ensure that the breakpoint
+    #    was bound correctly after adding $shilb_name.
+    set lnum_bar [gdb_get_line_number "break at bar" $srcfile3]
+    gdb_continue_to_breakpoint bar ".*${lib_basename}\\.c:$lnum_bar.*"
+
+    # 6) Set a breakpoint at foo in $srcfile3.
+    set result [gdb_breakpoint foo]
+    if {!$result} {
+	return
+    }
+
+    # 7) Continue to foo in $srcfile3 to ensure that the breakpoint
+    #    was bound correctly.
+    set lnum_foo [gdb_get_line_number "break at foo" $srcfile3]
+    gdb_continue_to_breakpoint foo ".*${lib_basename}\\.c:$lnum_foo.*"
+
+    # 8) Set a breakpoint at gdb_remove_symbol_file in $srcfile for
+    #    removing the library's symbols.
+    set result [gdb_breakpoint gdb_remove_symbol_file]
+    if {!$result} {
+	return
+    }
+
+    # 9) Continue to gdb_remove_symbol_file in $srcfile.
+    gdb_continue_to_breakpoint gdb_remove_symbol_file
+
+    # 10) Remove the library's symbols using 'remove-symbol-file'.
+    set result [gdb_test "remove-symbol-file ${remove_expr}" \
+		    ""\
+		    "remove-symbol-file" \
+		    "Remove symbol table from file \".*${lib_basename}\\.so\"\\?\
 .*\\(y or n\\) " \
-	"y"
+		    "y"]
+    if {$result != 0} {
+	return
+    }
 
-    gdb_test "info breakpoints 7" ".*PENDING.*" \
-	"breakpoint at baz is pending"
+    # 11) 'info files' must not display ${lib_basename}, anymore.
+    gdb_test "info files" \
+	"^(?!(.*${lib_basename})).*" \
+	"info files must not display ${lib_basename}"
 
-    # Check that execution can continue without error.  If GDB leaves
-    # breakpoints behind, we'll get back a spurious SIGTRAP.
-    set lnum_end [gdb_get_line_number "end here"]
-    gdb_breakpoint $lnum_end
-    gdb_continue_to_breakpoint "end here" ".*end here.*"
+    # 12) Check that the breakpoints at foo and bar are pending after
+    #     removing the library's symbols.
+    gdb_test "info breakpoints 3" \
+	".*PENDING.*" \
+	"breakpoint at foo is pending"
+
+    gdb_test "info breakpoints 4" \
+	".*PENDING.*" \
+	"breakpoint at bar is pending"
+
+    # 13) Check that the execution can continue without error.
+    set lnum_reload [gdb_get_line_number "reload lib here"]
+    gdb_breakpoint $lnum_reload
+    gdb_continue_to_breakpoint reload ".*${srcfile}:$lnum_reload.*"
+
+    # 14) Regression test for a stale breakpoints bug.  Check whether
+    # unloading symbols manually without the program actually unloading
+    # the library, when breakpoints are inserted doesn't leave stale
+    # breakpoints behind.
+    with_test_prefix "stale bkpts" {
+	# Force breakpoints always inserted.
+	gdb_test_no_output "set breakpoint always-inserted on"
+
+	# Get past the library reload.
+	gdb_continue_to_breakpoint gdb_add_symbol_file
+
+	# Load the library's symbols.
+	gdb_test "add-symbol-file ${lib_syms} addr" \
+	    "Reading symbols from .*${lib_syms}\\.\\.\\." \
+	    "add-symbol-file ${lib_basename}.so addr" \
+	    "add symbol table from file \".*${lib_syms}\"\
+at.*\\(y or n\\) " \
+	    "y"
+
+	# Set a breakpoint at baz, in the library.
+	gdb_breakpoint baz
+
+	gdb_test "info breakpoints 7" ".*y.*0x.*in baz.*" \
+	    "breakpoint at baz is resolved"
+
+	# Unload symbols manually without the program actually unloading
+	# the library.
+	gdb_test "remove-symbol-file ${remove_expr}" \
+	    "" \
+	    "remove-symbol-file" \
+	    "Remove symbol table from file \".*${lib_basename}\\.so\"\\?\
+.*\\(y or n\\) " \
+	    "y"
+
+	gdb_test "info breakpoints 7" ".*PENDING.*" \
+	    "breakpoint at baz is pending"
+
+	# Check that execution can continue without error.  If GDB leaves
+	# breakpoints behind, we'll get back a spurious SIGTRAP.
+	set lnum_end [gdb_get_line_number "end here"]
+	gdb_breakpoint $lnum_end
+	gdb_continue_to_breakpoint "end here" ".*end here.*"
+    }
+}
+
+foreach remove_expr [list addr bar "bar + 0x10" "${lib_syms}" ] {
+    # Don't use full filenames in the test prefix.  Also, add '-a' to
+    # all the REMOVE_EXPR values which are addresses rather than
+    # filenames.
+    set prefix $remove_expr
+    if { $prefix == $lib_syms } {
+	set prefix [file tail $prefix]
+    } else {
+	set remove_expr "-a $remove_expr"
+    }
+
+    with_test_prefix "remove_expr=$prefix" {
+	do_test $remove_expr
+    }
 }

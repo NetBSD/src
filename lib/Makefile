@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.307 2025/01/18 20:54:52 christos Exp $
+#	$NetBSD: Makefile,v 1.308 2025/07/13 20:15:15 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -147,7 +147,7 @@ SUBDIR+=	librumpuser	# depends on libpthread
 SUBDIR+=	libnpf		# depends on libnv
 .endif
 
-OSSL=../crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/
+OSSL=../crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/
 .include "${.CURDIR}/${OSSL}Makefile.subdir" # depends on libcrypt
 
 .if (${MKISCSI} != "no")

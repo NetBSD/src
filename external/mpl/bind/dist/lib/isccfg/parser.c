@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.15 2025/01/26 16:25:45 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.16 2025/07/17 19:01:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -541,9 +541,9 @@ cfg_parser_create(isc_mem_t *mctx, isc_log_t *lctx, cfg_parser_t **ret) {
 	isc_lex_create(pctx->mctx, 1024, &pctx->lexer);
 
 	isc_lex_setspecials(pctx->lexer, specials);
-	isc_lex_setcomments(pctx->lexer,
-			    (ISC_LEXCOMMENT_C | ISC_LEXCOMMENT_CPLUSPLUS |
-			     ISC_LEXCOMMENT_SHELL));
+	isc_lex_setcomments(pctx->lexer, ISC_LEXCOMMENT_C |
+						 ISC_LEXCOMMENT_CPLUSPLUS |
+						 ISC_LEXCOMMENT_SHELL);
 
 	CHECK(cfg_create_list(pctx, &cfg_type_filelist, &pctx->open_files));
 	CHECK(cfg_create_list(pctx, &cfg_type_filelist, &pctx->closed_files));

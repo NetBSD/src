@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2017/05/21 15:28:42 riastradh Exp $
+# $NetBSD: Makefile,v 1.5 2025/07/19 12:03:35 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,8 +6,8 @@ TESTSDIR=	${TESTSBASE}/lib/libc/hash
 
 TESTS_C+=	t_sha2
 TESTS_C+=	t_hmac
-LDADD.t_hmac+=	-lcrypto
-DDADD.t_hmac+=	${LIBCRYPTO}
+LDADD.t_hmac+=	-lcrypto -lpthread
+DDADD.t_hmac+=	${LIBCRYPTO} ${LIBPTHREAD}
 
 TESTS_SH+=	t_hash
 

@@ -1,5 +1,5 @@
 \input texinfo
-@c  Copyright (C) 1991-2022 Free Software Foundation, Inc.
+@c  Copyright (C) 1991-2024 Free Software Foundation, Inc.
 @setfilename internals.info
 @node Top
 @top Assembler Internals
@@ -1034,12 +1034,26 @@ Predefined symbols with fixed values, such as register names or condition
 codes, are typically entered directly into the symbol table when @code{md_begin}
 is called.  One argument is passed, a @code{char *} for the symbol.
 
+@item md_resolve_symbol
+@cindex md_resolve_symbol
+If this macro is defined, GAS will call it upon resolving machine-dependent
+symbols (that is, for any symbol with operation O_md1..O_md32 inclusively).
+If this functions returns zero, then the symbol could not be resolved.
+
 @item md_operand
 @cindex md_operand
 GAS will call this function with one argument, an @code{expressionS}
 pointer, for any expression that can not be recognized.  When the function
 is called, @code{input_line_pointer} will point to the start of the
 expression.
+
+@item md_optimize_expr
+@cindex md_optimize_expr
+GAS will call this function before trying to carry out certain operations,
+like the adding of two constants.  The function is passed the left-hand
+operand, an @code{expressionS} pointer, the operator, an @code{operatorT}
+value, and the right-hand operand, again an @code{expressionS} pointer.  For
+unary expressions NULL is passed as first argument.
 
 @item md_register_arithmetic
 @cindex md_register_arithmetic
@@ -1551,7 +1565,7 @@ information.
 @item md_emit_single_noop_insn
 @itemx md_single_noop_insn
 These macro facilitate the @var{.nop} directive.  If defined the
-@var{md_emit_single_noop_insn) macro provides code to insert a single no-op
+@var{md_emit_single_noop_insn} macro provides code to insert a single no-op
 instruction into the output stream.  If this involves calling @var{md_assemble}
 with a fixed string then the alternative macro @var{md_single_noop_insn} can be
 defined, specifying the string to pass.  If neither of these macros are defined
@@ -1575,6 +1589,10 @@ If defined, GAS will check this macro before performing any optimizations on
 the DWARF call frame debug information that is emitted.  Targets which
 implement link time relaxation may need to define this macro and set it to zero
 if it is possible to change the size of a function's prologue.
+
+@item TARGET_MULTIPLE_EH_FRAME_SECTIONS
+If defined, GAS will create multiple .eh_frame.* sections according to
+the name of owner's function sections.
 @end table
 
 @node Object format backend
@@ -1814,9 +1832,11 @@ opcode field from the relaxable frag.  It is not guaranteed to be the same frag.
 If you need to emit fixups for the opcode field from inspection of the
 relaxable frag, then you need to generate a common frag for both the basic
 opcode and relaxable fields, or you need to provide the frag for the opcode to
-pass to @code{fix_new}.  The latter can be done for example by defining
-@code{TC_FRAG_TYPE} to include a pointer to it and defining @code{TC_FRAG_INIT}
-to set the pointer.
+pass to @code{fix_new}.  The latter can be done by passing a pointer to the
+opcode in the call to @code{frag_var} or @code{frag_variant}, and accessing
+it via @code{fr_opcode}.  See the @file{tc-vax.c}  and @file{tc-m68k.c} for
+examples.  It is also possible for  @code{TC_FRAG_TYPE} to include a pointer to
+the opcode and defining @code{TC_FRAG_INIT} to set the pointer.
 
 Sometimes @code{fr_var} is increased instead, and @code{frag_wane} is not
 called.  I'm not sure, but I think this is to keep @code{fr_fix} referring to
@@ -1884,7 +1904,6 @@ This section describes basic internal functions used by GAS.
 
 @menu
 * Warning and error messages::  Warning and error messages
-* Hash tables::                 Hash tables
 @end menu
 
 @node Warning and error messages

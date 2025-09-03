@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.244 2024/12/07 02:27:38 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.246 2025/07/09 07:39:39 bad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.244 2024/12/07 02:27:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.246 2025/07/09 07:39:39 bad Exp $");
 
 #include "veriexec.h"
 
@@ -670,7 +670,7 @@ vn_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	uio->uio_offset = *offset;
 	if (__predict_false(vp->v_type == VDIR) &&
 	    offset == &fp->f_offset && (flags & FOF_UPDATE_OFFSET) == 0)
-		mutex_enter(&fp->f_lock);
+		mutex_exit(&fp->f_lock);
 	count = uio->uio_resid;
 	error = VOP_READ(vp, uio, ioflag, cred);
 	if (flags & FOF_UPDATE_OFFSET)
@@ -1556,8 +1556,9 @@ vn_bdev_openpath(struct pathbuf *pb, struct vnode **vpp, struct lwp *l)
 	if (error != 0)
 		return error;
 
-	dev = vp->v_rdev;
 	vt = vp->v_type;
+	if (vt == VBLK)
+		dev = vp->v_rdev;
 
 	VOP_UNLOCK(vp);
 	(void) vn_close(vp, FREAD | FWRITE, l->l_cred);

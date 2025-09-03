@@ -1,4 +1,4 @@
-.\"	$NetBSD: yacc.1,v 1.10 2024/09/14 22:13:34 christos Exp $
+.\"	$NetBSD: yacc.1,v 1.11 2025/08/24 19:07:51 rillig Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -31,10 +31,12 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)yacc.1	5.7 (Berkeley) 7/30/91
-.\"	from: Id: yacc.1,v 1.24 2014/10/06 00:03:48 tom Exp
-.\"	$NetBSD: yacc.1,v 1.10 2024/09/14 22:13:34 christos Exp $
+.\"	from: Id: yacc.1,v 1.43 2024/01/10 00:30:34 tom Exp
+.\"	$NetBSD: yacc.1,v 1.11 2025/08/24 19:07:51 rillig Exp $
 .\"
-.Dd September 14, 2024
+.\" Keep in sync with ../dist/yacc.1.
+.\"
+.Dd August 24, 2025
 .Dt YACC 1
 .Os
 .Sh NAME
@@ -44,7 +46,7 @@
 parser generator
 .Sh SYNOPSIS
 .Nm
-.Op Fl BdhgilLPrtvVy
+.Op Fl BdghilLPrtvVy
 .Op Fl b Ar file_prefix
 .Op Fl H Ar defines_file
 .Op Fl o Ar output_file
@@ -76,7 +78,7 @@ the string denoted by
 The default prefix is the character
 .Ql y .
 .It Fl B
-Create a backtracking parser (compile-type configuration for
+Create a backtracking parser (compile-time configuration for
 .Nm ) .
 .It Fl d
 causes the header file
@@ -91,10 +93,10 @@ print a usage message to the standard error.
 causes
 .No #define Ns 's
 for the token identifiers
-to be written to the given 
+to be written to the given
 .Ar defines_file
 rather
-than the 
+than the
 .Pa y.tab.h
 file used by the
 .Fl d
@@ -129,7 +131,8 @@ is modified to
 .No #include
 this file as well as the
 .Pa y.tab.h
-file, enforcing consistent usage of the symbols defined in those files.
+file, enforcing consistent usage of the
+symbols defined in those files.
 The supplementary header file makes it simpler to separate compilation
 of lex- and yacc-files.
 .It Fl l
@@ -154,9 +157,10 @@ directives.
 .No #line
 directives specified by the user will be retained.
 .It Fl L
-Enable position processing, e.g.,
+Enable position processing,
+e.g.,
 .Ql %locations
-(compile-type configuration for
+(compile-time configuration for
 .Nm ) .
 .It Fl o Ar output_file
 specify the filename for the parser file.
@@ -236,9 +240,7 @@ documents only names and numbers for
 .Ql %token ,
 though the original
 .Nm
-and
-.Xr bison 1
-also accept string literals.
+and bison also accept string literals.
 .It Fl t
 The
 .Fl t
@@ -252,35 +254,34 @@ option causes a human-readable description of the generated parser to
 be written to the file
 .Pa y.output .
 .It Fl V
-The
-.Fl V
 print the version number to the standard output.
 .It Fl y
 .Nm
 ignores this option,
-which
-.Xr bison 1
-supports for ostensible POSIX compatibility.
+which bison supports for ostensible POSIX compatibility.
 .El
 .Pp
-The filename parameter is not optional.
-However, 
+The
+.Ar filename
+parameter is not optional.
+However,
 .Nm
 accepts a single
 .Dq \&-
 to read the grammar from the standard input.
-A double 
+A double
 .Dq \&--
 marker denotes the end of options.
-A single filename  parameter  is  expected after a
+A single
+.Ar filename
+parameter is expected after a
 .Dq \&--
 marker.
+.\" The DIAGNOSTICS section occurs later.
 .Sh EXTENSIONS
 .Nm
 provides some extensions for
-compatibility with
-.Xr bison 1
-and other implementations of yacc.
+compatibility with bison and other implementations of yacc.
 It accepts several
 .Ql long options
 which have equivalents in
@@ -291,47 +292,50 @@ and
 .Ql %locations
 features are available only if
 .Nm yacc
-has been configured and compiled to support the back-tracking 
+has been configured and compiled to support the back-tracking
 .Aq ( btyacc )
 functionality.
 The remaining features are always available:
 .Bl -tag -width Fl
 .It Ic %code Ar keyword { Ar code Ic }
-Adds the indicated source code at a given point in the output
-file.
+Adds the indicated source
+.Ar code
+at a given point in the output file.
 The optional
 .Ar keyword
-tells yacc where to insert the
+tells
+.Nm
+where to insert the
 .Ar code :
 .Bl -tag -width Fl
 .It Ic top
-just after the version-definition in  the  generated  code-file.
+just after the version-definition in the generated code-file.
 .It Ic requires
 just after the declaration of public parser variables.
-If the 
+If the
 .Fl d
-option is given, the code is inserted at the beginning of the 
+option is given, the code is inserted at the beginning of the
 .Ar defines_file .
 .It Ic provides
 just after the declaration of private parser variables.
 If the
 .Fl d
-option is given, the code is inserted at the end  of the
+option is given, the code is inserted at the end of the
 .Ar defines_file .
 .El
 .Pp
-If no 
+If no
 .Ar keyword
-is given, the code is inserted at the beginning of
-the section of code copied verbatim from the source file.
+is given, the code is inserted at the
+beginning of the section of code copied verbatim from the source file.
 Multiple
 .Ar %code
 directives may be given;
 .Nm
-inserts those into the corresponding code- or defines_file in the order that
-they appear in the source file.
+inserts those into the corresponding code_file or defines_file
+in the order that they appear in the source file.
 .It Ic %debug
-This has the same effect as the 
+This has the same effect as the
 .Fl t
 command-line option.
 .It Ic %destructor { Ar code Ic } Ar symbol Ns +
@@ -348,7 +352,8 @@ that will allow parsing to continue.
 This error recovery approach results in a memory leak
 if the
 .Vt YYSTYPE
-value is, or contains, pointers to dynamically allocated memory.
+value is, or contains,
+pointers to dynamically allocated memory.
 .Pp
 The bracketed
 .Ar code
@@ -366,14 +371,15 @@ directive).
 A per-symbol destructor is defined by listing a grammar symbol
 in
 .Ar symbol Ns + .
-A per-type destructor is defined  by listing a semantic type tag (e.g.,
+A per-type destructor is defined by listing a semantic type tag (e.g.,
 .Sq Li \*[Lt] Ns Ar some_tag Ns Li \*[Gt] )
 in
 .Ar symbol Ns + ;
 in this case, the parser will invoke
 .Ar code
-whenever it discards any grammar symbol that has that semantic type tag,
-unless that symbol has its own per-symbol destructor.
+whenever it discards any grammar
+symbol that has that semantic type tag, unless that symbol has its own
+per-symbol destructor.
 .Pp
 Two categories of default destructor are supported that are
 invoked when discarding any grammar symbol that has no per-symbol and no
@@ -389,7 +395,8 @@ for grammar symbols that have an explicitly declared semantic type tag
 .It
 The code for
 .Sq Li \*[Lt]\*[Gt]
-is used for grammar symbols that have no declared semantic type tag.
+is used
+for grammar symbols that have no declared semantic type tag.
 .El
 .It Ic %empty
 ignored by
@@ -404,16 +411,14 @@ tell
 .Nm
 the expected number of reduce/reduce conflicts.
 That makes it only report the number if it differs.
-This is, unlike
-.Xr bison 1 ,
-allowable in
+This is (unlike bison) allowable in
 .Tn LALR Ns (1)
 parsers.
 .It Ic %locations
 Tell
 .Nm
-to enable  management of position information associated with each token,
-provided by the lexer in the global variable
+to enable management of position information associated
+with each token, provided by the lexer in the global variable
 .Va yylloc ,
 similar to management of semantic value information provided in
 .Va yylval .
@@ -428,8 +433,9 @@ symbols.
 Also as for semantic values, when a rule is matched, a default
 action is used the compute the location represented by
 .Sq Li @$
-as the beginning of the first symbol and the end of the last symbol
-in the right hand side of the rule.
+as the
+beginning of the first symbol and the end of the last symbol in the right
+hand side of the rule.
 This default computation can be overridden by
 explicit assignment to
 .Sq Li @$
@@ -454,13 +460,12 @@ can be redefined by the user
 .Dv ( YYLTYPE_IS_DEFINED
 must be defined, to inhibit the default)
 in the declarations section of the specification file.
-As in
-.Xr bison 1 ,
-the macro
+As in bison, the macro
 .Dv YYLLOC_DEFAULT
-is invoked each time a rule is matched to calculate a position for the
-left hand side of the rule, before the associated action is executed;
-this macro can be redefined by the user.
+is invoked
+each time a rule is matched to calculate a position for the left hand side of
+the rule, before the associated action is executed; this macro can be
+redefined by the user.
 .Pp
 This directive adds a
 .Vt YYLTYPE
@@ -496,7 +501,6 @@ Make the parser's names for tokens available in the
 array.
 However,
 .Nm
-yacc
 does not predefine
 .Dq $end ,
 .Dq $error
@@ -531,8 +535,7 @@ That said, you may be interested in reusing grammar files with some
 other implementation which is not strictly compatible with
 .Tn AT\*[Am]T
 yacc.
-For instance, there is
-.Xr bison 1 .
+For instance, there is bison.
 Here are a few differences:
 .Bl -bullet
 .It
@@ -548,10 +551,7 @@ of an action (as in the original grammar file
 .Ed
 .It
 .Nm
-and
-.Xr bison 1
-emit code in different order, and in particular
-.Xr bison 1
+and bison emit code in different order, and in particular bison
 makes forward reference to common functions such as
 .Fn yylex ,
 .Fn yyparse
@@ -559,20 +559,17 @@ and
 .Fn yyerror
 without providing prototypes.
 .It
-.Xr bison 1
-support for
+Bison's support for
 .Ql %expect
 is broken in more than one release.
-For best results using
-.Xr bison 1 ,
-delete that directive.
+For best results using bison, delete that directive.
 .It
-.Xr bison 1
-has no equivalent for some of
+Bison has no equivalent for some of
 .Nm Ns 's
-command-line options, relying on directives embedded in the grammar file.
+command-line options,
+relying on directives embedded in the grammar file.
 .It
-.Xr bison 1
+Bison's
 .Fl y
 option does not affect bison's lack of support for
 features of AT\*[Am]T yacc which were deemed obsolescent.
@@ -588,12 +585,10 @@ in two forms
 {type1 name1,  type2 name2 ...}
 .Ed
 .Pp
-.Xr bison 1
-accepts the latter (though undocumented), but depending on the
+Bison accepts the latter (though undocumented), but depending on the
 release may generate bad code.
 .It
-Like
-.Xr bison 1 ,
+Like bison,
 .Nm
 will add parameters specified via
 .Ql %parse-param
@@ -604,8 +599,7 @@ and (if configured for back-tracking)
 to the destructor declared using
 .Ql %destructor .
 .Pp
-.Xr bison 1
-puts the additional parameters
+Bison puts the additional parameters
 .Em first
 for
 .Fn yyparse

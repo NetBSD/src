@@ -1399,8 +1399,7 @@ tilegx_elf_link_hash_table_create (bfd *abfd)
     }
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc,
-				      sizeof (struct tilegx_elf_link_hash_entry),
-				      TILEGX_ELF_DATA))
+				      sizeof (struct tilegx_elf_link_hash_entry)))
     {
       free (ret);
       return NULL;

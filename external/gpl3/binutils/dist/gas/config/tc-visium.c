@@ -1,6 +1,6 @@
 /* This is the machine dependent code of the Visium Assembler.
 
-   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -53,9 +53,8 @@
 
 
 /* This string holds the chars that always start a comment. If the
-   pre-processor is disabled, these aren't very useful. The macro
-   tc_comment_chars points to this.  */
-const char *visium_comment_chars = "!;";
+   pre-processor is disabled, these aren't very useful.  */
+const char comment_chars[] = "!;";
 
 /* This array holds the chars that only start a comment at the beginning
    of a line.  If the line seems to have the form '# 123 filename' .line
@@ -112,9 +111,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
   arelent *reloc;
   bfd_reloc_code_real_type code;
 
-  reloc = XNEW (arelent);
-
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
@@ -203,7 +201,7 @@ md_section_align (asection *seg, valueT addr)
 {
   int align = bfd_section_alignment (seg);
 
-  return ((addr + (1 << align) - 1) & -(1 << align));
+  return (addr + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }
 
 void
@@ -219,14 +217,14 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 }
 
 /* The parse options.  */
-const char *md_shortopts = "m:";
+const char md_shortopts[] = "m:";
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   {NULL, no_argument, NULL, 0}
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 struct visium_option_table
 {
@@ -414,10 +412,9 @@ relaxed_symbol_addr (fragS *fragp, long stretch)
 	  if (f->fr_type == rs_align || f->fr_type == rs_align_code)
 	    {
 	      if (stretch < 0)
-		stretch = - ((- stretch)
-			     & ~ ((1 << (int) f->fr_offset) - 1));
+		stretch = -(-stretch & ~((1ul << f->fr_offset) - 1));
 	      else
-		stretch &= ~ ((1 << (int) f->fr_offset) - 1);
+		stretch &= ~((1ul << f->fr_offset) - 1);
 	      if (stretch == 0)
 		break;
 	    }
@@ -495,7 +492,7 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED, segT sec ATTRIBUTE_UNUSED,
 long
 visium_pcrel_from_section (fixS *fixP, segT sec)
 {
-  if (fixP->fx_addsy != (symbolS *) NULL
+  if (fixP->fx_addsy != NULL
       && (!S_IS_DEFINED (fixP->fx_addsy)
 	  || S_GET_SEGMENT (fixP->fx_addsy) != sec))
     {
@@ -557,30 +554,16 @@ visium_handle_align (fragS *fragP)
   if (count == 0)
     return;
 
-  fragP->fr_var = 4;
-
   if (count > 4 * nop_limit && count <= 131068)
     {
-      struct frag *rest;
-
-      /* Make a branch, then follow with nops.  Insert another
-         frag to handle the nops.  */
+      /* Make a branch, then follow with nops.  */
       md_number_to_chars (p, 0x78000000 + (count >> 2), 4);
       visium_update_parity_bit (p);
-
-      rest = xmalloc (SIZEOF_STRUCT_FRAG + 4);
-      memcpy (rest, fragP, SIZEOF_STRUCT_FRAG);
-      fragP->fr_next = rest;
-      rest->fr_address += rest->fr_fix + 4;
-      rest->fr_fix = 0;
-      /* If we leave the next frag as rs_align_code we'll come here
-	 again, resulting in a bunch of branches rather than a
-	 branch followed by nops.  */
-      rest->fr_type = rs_align;
-      p = rest->fr_literal;
+      p += 4;
+      fragP->fr_fix += 4;
     }
 
-  memset (p, 0, 4);
+  *p = 0;
 }
 
 /* Apply a fixS to the frags, now that we know the value it ought to
@@ -650,7 +633,7 @@ md_apply_fix (fixS * fixP, valueT * value, segT segment)
       break;
     default:
       /* It's a relocation against an instruction.  */
-      insn = bfd_getb32 ((unsigned char *) buf);
+      insn = bfd_getb32 (buf);
 
       switch (fixP->fx_r_type)
 	{
@@ -699,11 +682,11 @@ md_apply_fix (fixS * fixP, valueT * value, segT segment)
 	default:
 	  as_bad_where (fixP->fx_file, fixP->fx_line,
 			"bad or unhandled relocation type: 0x%02x",
-			fixP->fx_r_type);
+			(unsigned int) fixP->fx_r_type);
 	  break;
 	}
 
-      bfd_putb32 (insn, (unsigned char *) buf);
+      bfd_putb32 (insn, buf);
       visium_update_parity_bit (buf);
       break;
     }
@@ -847,8 +830,7 @@ md_atof (int type, char *litP, int *sizeP)
     {
       for (i = 0; i < prec; i++)
 	{
-	  md_number_to_chars (litP, (valueT) words[i],
-			      sizeof (LITTLENUM_TYPE));
+	  md_number_to_chars (litP, words[i], sizeof (LITTLENUM_TYPE));
 	  litP += sizeof (LITTLENUM_TYPE);
 	}
     }
@@ -856,8 +838,7 @@ md_atof (int type, char *litP, int *sizeP)
     {
       for (i = prec - 1; i >= 0; i--)
 	{
-	  md_number_to_chars (litP, (valueT) words[i],
-			      sizeof (LITTLENUM_TYPE));
+	  md_number_to_chars (litP, words[i], sizeof (LITTLENUM_TYPE));
 	  litP += sizeof (LITTLENUM_TYPE);
 	}
     }
@@ -868,7 +849,7 @@ md_atof (int type, char *litP, int *sizeP)
 static inline char *
 skip_space (char *s)
 {
-  while (*s == ' ' || *s == '\t')
+  while (is_whitespace (*s))
     ++s;
 
   return s;
@@ -1031,7 +1012,7 @@ md_assemble (char *str0)
   this_dest = 0;
 
   /* Drop leading whitespace (probably not required).  */
-  while (*str == ' ')
+  while (is_whitespace (*str))
     str++;
 
   /* Get opcode mnemonic and make sure it's in lower case.  */
@@ -1391,9 +1372,8 @@ md_assemble (char *str0)
 		      if (imm < 0 || imm > 31)
 			as_bad ("immediate value out of range");
 
-		      opcode |=
-			(r1 << 10) | (r2 << 16) | (1 << 9) | ((imm & 0x1f) <<
-							      4);
+		      opcode |= ((r1 << 10) | (r2 << 16) | (1 << 9)
+				 | ((imm & 0x1f) << 4));
 		    }
 		  else
 		    {
@@ -1907,9 +1887,8 @@ md_assemble (char *str0)
 		  if (finst < 0 || finst > 15)
 		    as_bad ("finst out of range");
 
-		  opcode |=
-		    ((finst & 0xf) << 27) | (r1 << 10) | (r2 << 16) | (r3 <<
-								       4);
+		  opcode |= (((finst & 0xf) << 27)
+			     | (r1 << 10) | (r2 << 16) | (r3 << 4));
 		}
 	      else
 		{
@@ -1973,9 +1952,8 @@ md_assemble (char *str0)
 		  if (finst < 0 || finst > 15)
 		    as_bad ("finst out of range");
 
-		  opcode |=
-		    ((finst & 0xf) << 27) | (r1 << 10) | (r2 << 16) | (r3 <<
-								       4);
+		  opcode |= (((finst & 0xf) << 27)
+			     | (r1 << 10) | (r2 << 16) | (r3 << 4));
 		}
 	      else
 		{

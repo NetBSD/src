@@ -1,5 +1,5 @@
 /* TILEPro-specific support for 32-bit ELF.
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -2182,11 +2182,9 @@ tilepro_elf_omit_section_dynsym (bfd *output_bfd,
 #define ELF32_DYNAMIC_INTERPRETER "/lib/ld.so.1"
 
 static bool
-tilepro_elf_size_dynamic_sections (bfd *output_bfd,
-				      struct bfd_link_info *info)
+tilepro_elf_late_size_sections (bfd *output_bfd,
+				struct bfd_link_info *info)
 {
-  (void)output_bfd;
-
   struct elf_link_hash_table *htab;
   bfd *dynobj;
   asection *s;
@@ -2195,7 +2193,8 @@ tilepro_elf_size_dynamic_sections (bfd *output_bfd,
   htab = tilepro_elf_hash_table (info);
   BFD_ASSERT (htab != NULL);
   dynobj = htab->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -3739,7 +3738,7 @@ tilepro_additional_program_headers (bfd *abfd,
 #define elf_backend_check_relocs	     tilepro_elf_check_relocs
 #define elf_backend_adjust_dynamic_symbol    tilepro_elf_adjust_dynamic_symbol
 #define elf_backend_omit_section_dynsym	     tilepro_elf_omit_section_dynsym
-#define elf_backend_size_dynamic_sections    tilepro_elf_size_dynamic_sections
+#define elf_backend_late_size_sections	     tilepro_elf_late_size_sections
 #define elf_backend_relocate_section	     tilepro_elf_relocate_section
 #define elf_backend_finish_dynamic_symbol    tilepro_elf_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_sections  tilepro_elf_finish_dynamic_sections

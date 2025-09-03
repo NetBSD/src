@@ -1,0 +1,122 @@
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib "ada.exp"
+
+require allow_ada_tests
+
+standard_ada_testfile parse
+
+if {[gdb_compile_ada "${srcfile}" "${binfile}" executable {debug}] != "" } {
+  return -1
+}
+
+clean_restart ${testfile}
+
+set bp_location [gdb_get_line_number "START" ${testdir}/parse.adb]
+runto "parse.adb:$bp_location"
+
+# Check that we have the expected value for variable y2.
+
+gdb_test "p y2" [string_to_regexp " = (a => false, c => 1.0, d => 2)"]
+
+# Shorthand.
+
+proc set_lang { lang } {
+    gdb_test_multiple "set language $lang" "" {
+	-re -wrap "" {
+	}
+    }
+}
+
+# Calculate the offset of y2.d.
+
+set re_cast [string_to_regexp "(access integer)"]
+gdb_test_multiple "print &y2.d - &y2" "" {
+    -re -wrap " = $re_cast ($hex)" {
+	set offset_d $expect_out(1,string)
+	pass $gdb_test_name
+    }
+}
+
+# Try to find a interesting discriminator value, such that at the same time:
+# - the d field is part of the variable, and
+# - the type size is too small to contain d.
+
+set interesting_discriminator -1
+set_lang c
+for { set i 0 } { $i < 256 } { incr i } {
+    with_test_prefix $i {
+
+	# Patch in the discriminator value.
+	gdb_test_multiple "set var *(unsigned char *)(&y2.a)=$i" "" {
+	    -re -wrap "" {
+	    }
+	}
+
+	# Check that we have the variant with fields c+d instead of b.
+	set have_b 0
+	gdb_test_multiple "with language ada -- print y2.b" "" {
+	    -re -wrap " = $decimal" {
+		set have_b 1
+	    }
+	    -re -wrap "" {
+	    }
+	}
+	if { $have_b } {
+	    # This is the variant with field b.
+	    continue
+	}
+
+	set size 0
+	gdb_test_multiple "print sizeof (y2)" "" {
+	    -re -wrap " = (.*)" {
+		set size $expect_out(1,string)
+	    }
+	}
+
+	if { ! $size } {
+	    continue
+	}
+
+	if { [expr $size > $offset_d] } {
+	    # Field d fits in the size.
+	    continue
+	}
+
+	set interesting_discriminator $i
+	break
+    }
+}
+
+require {expr $interesting_discriminator != -1}
+
+foreach lang [gdb_supported_languages] {
+    with_test_prefix $lang {
+	set_lang $lang
+
+	gdb_test_multiple "print y2" "" {
+	    -re -wrap ", d => $decimal.*" {
+		fail $gdb_test_name
+	    }
+	    -re -wrap ", d = $decimal.*" {
+		fail $gdb_test_name
+	    }
+	    -re -wrap "" {
+		pass $gdb_test_name
+	    }
+	}
+    }
+}

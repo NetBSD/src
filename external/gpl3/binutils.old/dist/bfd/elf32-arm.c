@@ -1,5 +1,5 @@
 /* 32-bit ELF support for ARM
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -5055,7 +5055,7 @@ arm_build_one_stub (struct bfd_hash_entry *gen_entry,
      section.  The user should fix his linker script.  */
   if (stub_entry->target_section->output_section == NULL
       && info->non_contiguous_regions)
-    info->callbacks->einfo (_("%F%P: Could not assign '%pA' to an output section. "
+    info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output section. "
 			      "Retry without --enable-non-contiguous-regions.\n"),
 			    stub_entry->target_section);
 
@@ -6010,6 +6010,9 @@ cmse_scan (bfd *input_bfd, struct elf32_arm_link_hash_table *htab,
       else
 	{
 	  cmse_hash = elf32_arm_hash_entry (sym_hashes[i - ext_start]);
+	  if (cmse_hash == NULL)
+	    continue;
+
 	  sym_name = (char *) cmse_hash->root.root.root.string;
 	  if (!startswith (sym_name, CMSE_PREFIX))
 	    continue;
@@ -7112,10 +7115,13 @@ find_thumb_glue (struct bfd_link_info *link_info,
   hash = elf_link_hash_lookup
     (&(hash_table)->root, tmp_name, false, false, true);
 
-  if (hash == NULL
-      && asprintf (error_message, _("unable to find %s glue '%s' for '%s'"),
-		   "Thumb", tmp_name, name) == -1)
-    *error_message = (char *) bfd_errmsg (bfd_error_system_call);
+  if (hash == NULL)
+    {
+      *error_message = bfd_asprintf (_("unable to find %s glue '%s' for '%s'"),
+				     "Thumb", tmp_name, name);
+      if (*error_message == NULL)
+	*error_message = (char *) bfd_errmsg (bfd_error_system_call);
+    }
 
   free (tmp_name);
 
@@ -7147,11 +7153,13 @@ find_arm_glue (struct bfd_link_info *link_info,
   myh = elf_link_hash_lookup
     (&(hash_table)->root, tmp_name, false, false, true);
 
-  if (myh == NULL
-      && asprintf (error_message, _("unable to find %s glue '%s' for '%s'"),
-		   "ARM", tmp_name, name) == -1)
-    *error_message = (char *) bfd_errmsg (bfd_error_system_call);
-
+  if (myh == NULL)
+    {
+      *error_message = bfd_asprintf (_("unable to find %s glue '%s' for '%s'"),
+				     "ARM", tmp_name, name);
+      if (*error_message == NULL)
+	*error_message = (char *) bfd_errmsg (bfd_error_system_call);
+    }
   free (tmp_name);
 
   return myh;
@@ -7881,7 +7889,8 @@ bfd_elf32_arm_process_before_allocation (bfd *abfd,
       if (sec->reloc_count == 0)
 	continue;
 
-      if ((sec->flags & SEC_EXCLUDE) != 0)
+      if ((sec->flags & SEC_EXCLUDE) != 0
+	  || (sec->flags & SEC_HAS_CONTENTS) == 0)
 	continue;
 
       symtab_hdr = & elf_symtab_hdr (abfd);
@@ -14112,7 +14121,7 @@ set_secondary_compatible_arch (bfd *abfd, int arch)
 
 static int
 tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
-		      int newtag, int secondary_compat)
+		      int newtag, int secondary_compat, const char* name_table[])
 {
 #define T(X) TAG_CPU_ARCH_##X
   int tagl, tagh, result;
@@ -14429,8 +14438,8 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
 
   if (result == -1)
     {
-      _bfd_error_handler (_("error: %pB: conflicting CPU architectures %d/%d"),
-			  ibfd, oldtag, newtag);
+      _bfd_error_handler (_("error: conflicting CPU architectures %s vs %s in %pB"),
+			  name_table[oldtag], name_table[newtag], ibfd);
       return -1;
     }
 
@@ -14625,7 +14634,8 @@ elf32_arm_merge_eabi_attributes (bfd *ibfd, struct bfd_link_info *info)
 	    arch_attr = tag_cpu_arch_combine (ibfd, out_attr[i].i,
 					      &secondary_compat_out,
 					      in_attr[i].i,
-					      secondary_compat);
+					      secondary_compat,
+					      name_table);
 
 	    /* Return with error if failed to merge.  */
 	    if (arch_attr == -1)
@@ -15935,7 +15945,7 @@ elf32_arm_gc_mark_extra_sections (struct bfd_link_info *info,
   struct elf_link_hash_entry **sym_hashes;
   struct elf32_arm_link_hash_entry *cmse_hash;
   bool again, is_v8m, first_bfd_browse = true;
-  bool debug_sec_need_to_be_marked = false;
+  bool extra_marks_added = false;
   asection *isec;
 
   _bfd_elf_gc_mark_extra_sections (info, gc_mark_hook);
@@ -15979,6 +15989,8 @@ elf32_arm_gc_mark_extra_sections (struct bfd_link_info *info,
 	     of them so no need for a second browsing.  */
 	  if (is_v8m && first_bfd_browse)
 	    {
+	      bool debug_sec_need_to_be_marked = false;
+
 	      sym_hashes = elf_sym_hashes (sub);
 	      bed = get_elf_backend_data (sub);
 	      symtab_hdr = &elf_tdata (sub)->symtab_hdr;
@@ -15989,11 +16001,13 @@ elf32_arm_gc_mark_extra_sections (struct bfd_link_info *info,
 	      for (i = ext_start; i < sym_count; i++)
 		{
 		  cmse_hash = elf32_arm_hash_entry (sym_hashes[i - ext_start]);
+		  if (cmse_hash == NULL)
+		    continue;
 
 		  /* Assume it is a special symbol.  If not, cmse_scan will
 		     warn about it and user can do something about it.  */
 		  if (startswith (cmse_hash->root.root.root.string,
-				    CMSE_PREFIX))
+				  CMSE_PREFIX))
 		    {
 		      cmse_sec = cmse_hash->root.root.u.def.section;
 		      if (!cmse_sec->gc_mark
@@ -16014,14 +16028,23 @@ elf32_arm_gc_mark_extra_sections (struct bfd_link_info *info,
 		    {
 		      /* If not a debug sections, skip it.  */
 		      if (!isec->gc_mark && (isec->flags & SEC_DEBUGGING))
-			isec->gc_mark = 1 ;
+			{
+			  isec->gc_mark = 1;
+			  extra_marks_added = true;
+			}
 		    }
 		  debug_sec_need_to_be_marked = false;
 		}
 	    }
 	}
+
       first_bfd_browse = false;
     }
+
+  /* PR 30354: If we have added extra marks then make sure that any
+     dependencies of the newly marked sections are also marked.  */
+  if (extra_marks_added)
+    _bfd_elf_gc_mark_extra_sections (info, gc_mark_hook);
 
   return true;
 }
@@ -17688,6 +17711,35 @@ elf32_arm_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
 			    const asection *rel_sec ATTRIBUTE_UNUSED,
 			    const Elf_Internal_Rela *rela)
 {
+  struct elf32_arm_link_hash_table *htab = elf32_arm_hash_table (info);
+
+  if (htab->root.dynsym != NULL
+      && htab->root.dynsym->contents != NULL)
+    {
+      /* Check relocation against STT_GNU_IFUNC symbol if there are
+	 dynamic symbols.  */
+      bfd *abfd = info->output_bfd;
+      const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+      unsigned long r_symndx = ELF32_R_SYM (rela->r_info);
+      if (r_symndx != STN_UNDEF)
+	{
+	  Elf_Internal_Sym sym;
+	  if (!bed->s->swap_symbol_in (abfd,
+				       (htab->root.dynsym->contents
+					+ r_symndx * bed->s->sizeof_sym),
+				       0, &sym))
+	    {
+	      /* xgettext:c-format */
+	      _bfd_error_handler (_("%pB symbol number %lu references"
+				    " nonexistent SHT_SYMTAB_SHNDX section"),
+				  abfd, r_symndx);
+	      /* Ideally an error class should be returned here.  */
+	    }
+	  else if (ELF_ST_TYPE (sym.st_info) == STT_GNU_IFUNC)
+	    return reloc_class_ifunc;
+	}
+    }
+
   switch ((int) ELF32_R_TYPE (rela->r_info))
     {
     case R_ARM_RELATIVE:
@@ -18111,6 +18163,11 @@ elf32_arm_output_arch_local_syms (bfd *output_bfd,
   bfd_vma offset;
   bfd_size_type size;
   bfd *input_bfd;
+
+  if (info->strip == strip_all
+      && !info->emitrelocations
+      && !bfd_link_relocatable (info))
+    return true;
 
   htab = elf32_arm_hash_table (info);
   if (htab == NULL)
@@ -19916,10 +19973,14 @@ read_code16 (const bfd *abfd, const bfd_byte *addr)
    or (bfd_vma) -1 if size can not be determined.  */
 
 static bfd_vma
-elf32_arm_plt0_size (const bfd *abfd, const bfd_byte *addr)
+elf32_arm_plt0_size (const bfd *abfd, const bfd_byte *addr,
+		     bfd_size_type data_size)
 {
   bfd_vma first_word;
   bfd_vma plt0_size;
+
+  if (data_size < 4)
+    return (bfd_vma) -1;
 
   first_word = read_code32 (abfd, addr);
 
@@ -19939,24 +20000,28 @@ elf32_arm_plt0_size (const bfd *abfd, const bfd_byte *addr)
    or (bfd_vma) -1 if size can not be determined.  */
 
 static bfd_vma
-elf32_arm_plt_size (const bfd *abfd, const bfd_byte *start, bfd_vma offset)
+elf32_arm_plt_size (const bfd *abfd, const bfd_byte *start, bfd_vma offset,
+		    bfd_size_type data_size)
 {
   bfd_vma first_insn;
   bfd_vma plt_size = 0;
-  const bfd_byte *addr = start + offset;
 
   /* PLT entry size if fixed on Thumb-only platforms.  */
   if (read_code32 (abfd, start) == elf32_thumb2_plt0_entry[0])
-      return 4 * ARRAY_SIZE (elf32_thumb2_plt_entry);
+    return 4 * ARRAY_SIZE (elf32_thumb2_plt_entry);
 
   /* Respect Thumb stub if necessary.  */
-  if (read_code16 (abfd, addr) == elf32_arm_plt_thumb_stub[0])
+  if (offset + 2 > data_size)
+    return (bfd_vma) -1;
+  if (read_code16 (abfd, start + offset) == elf32_arm_plt_thumb_stub[0])
     {
       plt_size += 2 * ARRAY_SIZE (elf32_arm_plt_thumb_stub);
     }
 
   /* Strip immediate from first add.  */
-  first_insn = read_code32 (abfd, addr + plt_size) & 0xffffff00;
+  if (offset + plt_size + 4 > data_size)
+    return (bfd_vma) -1;
+  first_insn = read_code32 (abfd, start + offset + plt_size) & 0xffffff00;
 
 #ifdef FOUR_WORD_PLT
   if (first_insn == elf32_arm_plt_entry[0])
@@ -20019,15 +20084,11 @@ elf32_arm_get_synthetic_symtab (bfd *abfd,
   if (!elf32_arm_size_info.slurp_reloc_table (abfd, relplt, dynsyms, true))
     return -1;
 
-  data = plt->contents;
-  if (data == NULL)
-    {
-      if (!bfd_get_full_section_contents (abfd, (asection *) plt, &data) || data == NULL)
-	return -1;
-      bfd_cache_section_contents ((asection *) plt, data);
-    }
+  data = NULL;
+  if (!bfd_get_full_section_contents (abfd, plt, &data))
+    return -1;
 
-  count = relplt->size / hdr->sh_entsize;
+  count = NUM_SHDR_ENTRIES (hdr);
   size = count * sizeof (asymbol);
   p = relplt->relocation;
   for (i = 0; i < count; i++, p += elf32_arm_size_info.int_rels_per_ext_rel)
@@ -20037,13 +20098,13 @@ elf32_arm_get_synthetic_symtab (bfd *abfd,
 	size += sizeof ("+0x") - 1 + 8;
     }
 
-  s = *ret = (asymbol *) bfd_malloc (size);
-  if (s == NULL)
-    return -1;
-
-  offset = elf32_arm_plt0_size (abfd, data);
-  if (offset == (bfd_vma) -1)
-    return -1;
+  offset = elf32_arm_plt0_size (abfd, data, plt->size);
+  if (offset == (bfd_vma) -1
+      || (s = *ret = (asymbol *) bfd_malloc (size)) == NULL)
+    {
+      free (data);
+      return -1;
+    }
 
   names = (char *) (s + count);
   p = relplt->relocation;
@@ -20052,7 +20113,7 @@ elf32_arm_get_synthetic_symtab (bfd *abfd,
     {
       size_t len;
 
-      bfd_vma plt_size = elf32_arm_plt_size (abfd, data, offset);
+      bfd_vma plt_size = elf32_arm_plt_size (abfd, data, offset, plt->size);
       if (plt_size == (bfd_vma) -1)
 	break;
 
@@ -20088,6 +20149,7 @@ elf32_arm_get_synthetic_symtab (bfd *abfd,
       offset += plt_size;
     }
 
+  free (data);
   return n;
 }
 
@@ -20251,11 +20313,7 @@ elf32_arm_backend_symbol_processing (bfd *abfd, asymbol *sym)
 #define ELF_ARCH			bfd_arch_arm
 #define ELF_TARGET_ID			ARM_ELF_DATA
 #define ELF_MACHINE_CODE		EM_ARM
-#ifdef __QNXTARGET__
 #define ELF_MAXPAGESIZE			0x1000
-#else
-#define ELF_MAXPAGESIZE			0x10000
-#endif
 #define ELF_COMMONPAGESIZE		0x1000
 
 #define bfd_elf32_mkobject			elf32_arm_mkobject
@@ -20616,16 +20674,17 @@ elf32_arm_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 
   if (!elf_flags_init (obfd))
     {
-      /* If the input is the default architecture and had the default
-	 flags then do not bother setting the flags for the output
-	 architecture, instead allow future merges to do this.  If no
-	 future merges ever set these flags then they will retain their
-	 uninitialised values, which surprise surprise, correspond
-	 to the default values.  */
-      if (bfd_get_arch_info (ibfd)->the_default
-	  && elf_elfheader (ibfd)->e_flags == 0)
-	return true;
+      /* If the input has no flags set, then do not set the output flags.
+	 This will allow future bfds to determine the desired output flags.
+	 If no input bfds have any flags set, then neither will the output bfd.
 
+	 Note - we used to restrict this test to when the input architecture
+	 variant was the default variant, but this does not allow for
+	 linker scripts which override the default.  See PR 28910 for an
+	 example.  */
+      if (in_flags == 0)
+	return true;
+      
       elf_flags_init (obfd) = true;
       elf_elfheader (obfd)->e_flags = in_flags;
 

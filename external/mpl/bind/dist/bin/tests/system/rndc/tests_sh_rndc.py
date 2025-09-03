@@ -18,7 +18,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "rndc.out.*",
         "ns2/*.jnl",
         "ns2/named.stats",
-        "ns2/named_dump.db.*",
+        "ns2/named_dump.db*",
         "ns2/nil.db",
         "ns2/other.db",
         "ns2/secondkey.conf",
@@ -37,3 +37,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns7/test.db.jnl",
     ]
 )
+
+
+def test_rndc(run_tests_sh):
+    run_tests_sh()

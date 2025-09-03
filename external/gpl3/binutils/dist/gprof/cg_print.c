@@ -1,6 +1,6 @@
 /* cg_print.c -  Print routines for displaying call graphs.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -18,7 +18,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
-
+
 #include "gprof.h"
 #include "libiberty.h"
 #include "filenames.h"
@@ -504,13 +504,14 @@ cg_print (Sym ** timesortsym)
 {
   unsigned int sym_index;
   Sym *parent;
+  Sym_Table *symtab = get_symtab ();
 
   if (print_descriptions && bsd_style_output)
     bsd_callg_blurb (stdout);
 
   print_header ();
 
-  for (sym_index = 0; sym_index < symtab.len + num_cycles; ++sym_index)
+  for (sym_index = 0; sym_index < symtab->len + num_cycles; ++sym_index)
     {
       parent = timesortsym[sym_index];
 
@@ -570,18 +571,19 @@ cg_print_index (void)
   const char *filename;
   char buf[20];
   int column_width = (output_width - 1) / 3;	/* Don't write in last col!  */
+  Sym_Table *symtab = get_symtab ();
 
   /* Now, sort regular function name
      alphabetically to create an index.  */
-  name_sorted_syms = (Sym **) xmalloc ((symtab.len + num_cycles) * sizeof (Sym *));
+  name_sorted_syms = (Sym **) xmalloc ((symtab->len + num_cycles) * sizeof (Sym *));
 
-  for (sym_index = 0, nnames = 0; sym_index < symtab.len; sym_index++)
+  for (sym_index = 0, nnames = 0; sym_index < symtab->len; sym_index++)
     {
-      if (ignore_zeros && symtab.base[sym_index].ncalls == 0
-	  && symtab.base[sym_index].hist.time == 0)
+      if (ignore_zeros && symtab->base[sym_index].ncalls == 0
+	  && symtab->base[sym_index].hist.time == 0)
 	continue;
 
-      name_sorted_syms[nnames++] = &symtab.base[sym_index];
+      name_sorted_syms[nnames++] = &symtab->base[sym_index];
     }
 
   qsort (name_sorted_syms, nnames, sizeof (Sym *), cmp_name);
@@ -787,6 +789,7 @@ cg_print_function_ordering (void)
 #endif
   Sym **unused_syms, **used_syms, **scratch_syms;
   Arc **unplaced_arcs, **high_arcs, **scratch_arcs;
+  Sym_Table *symtab = get_symtab ();
 
   sym_index = 0;
   used = 0;
@@ -797,29 +800,29 @@ cg_print_function_ordering (void)
   scratch_arc_count = 0;
 
   /* First group all the unused functions together.  */
-  unused_syms = (Sym **) xmalloc (symtab.len * sizeof (Sym *));
-  used_syms = (Sym **) xmalloc (symtab.len * sizeof (Sym *));
-  scratch_syms = (Sym **) xmalloc (symtab.len * sizeof (Sym *));
+  unused_syms = (Sym **) xmalloc (symtab->len * sizeof (Sym *));
+  used_syms = (Sym **) xmalloc (symtab->len * sizeof (Sym *));
+  scratch_syms = (Sym **) xmalloc (symtab->len * sizeof (Sym *));
   high_arcs = (Arc **) xmalloc (numarcs * sizeof (Arc *));
   scratch_arcs = (Arc **) xmalloc (numarcs * sizeof (Arc *));
   unplaced_arcs = (Arc **) xmalloc (numarcs * sizeof (Arc *));
 
   /* Walk through all the functions; mark those which are never
      called as placed (we'll emit them as a group later).  */
-  for (sym_index = 0, used = 0, unused = 0; sym_index < symtab.len; sym_index++)
+  for (sym_index = 0, used = 0, unused = 0; sym_index < symtab->len; sym_index++)
     {
-      if (symtab.base[sym_index].ncalls == 0)
+      if (symtab->base[sym_index].ncalls == 0)
 	{
-	  unused_syms[unused++] = &symtab.base[sym_index];
-	  symtab.base[sym_index].has_been_placed = 1;
+	  unused_syms[unused++] = &symtab->base[sym_index];
+	  symtab->base[sym_index].has_been_placed = 1;
 	}
       else
 	{
-	  used_syms[used++] = &symtab.base[sym_index];
-	  symtab.base[sym_index].has_been_placed = 0;
-	  symtab.base[sym_index].next = 0;
-	  symtab.base[sym_index].prev = 0;
-	  symtab.base[sym_index].nuses = 0;
+	  used_syms[used++] = &symtab->base[sym_index];
+	  symtab->base[sym_index].has_been_placed = 0;
+	  symtab->base[sym_index].next = 0;
+	  symtab->base[sym_index].prev = 0;
+	  symtab->base[sym_index].nuses = 0;
 	}
     }
 
@@ -961,9 +964,9 @@ cg_print_function_ordering (void)
   for (sym_index = 0; sym_index < unused; sym_index++)
     printf("%s\n", unused_syms[sym_index]->name);
 
-  unused_syms = (Sym **) xmalloc (symtab.len * sizeof (Sym *));
-  used_syms = (Sym **) xmalloc (symtab.len * sizeof (Sym *));
-  scratch_syms = (Sym **) xmalloc (symtab.len * sizeof (Sym *));
+  unused_syms = (Sym **) xmalloc (symtab->len * sizeof (Sym *));
+  used_syms = (Sym **) xmalloc (symtab->len * sizeof (Sym *));
+  scratch_syms = (Sym **) xmalloc (symtab->len * sizeof (Sym *));
   high_arcs = (Arc **) xmalloc (numarcs * sizeof (Arc *));
   scratch_arcs = (Arc **) xmalloc (numarcs * sizeof (Arc *));
   unplaced_arcs = (Arc **) xmalloc (numarcs * sizeof (Arc *));
@@ -1236,6 +1239,7 @@ cg_print_file_ordering (void)
   unsigned long sym_index;
   Arc **scratch_arcs;
   char *last;
+  Sym_Table *symtab = get_symtab ();
 
   scratch_arc_count = 0;
 
@@ -1251,11 +1255,11 @@ cg_print_file_ordering (void)
 				    scratch_arcs, &scratch_arc_count);
 
   /* Output .o's not handled by the main placement algorithm.  */
-  for (sym_index = 0; sym_index < symtab.len; sym_index++)
+  for (sym_index = 0; sym_index < symtab->len; sym_index++)
     {
-      if (symtab.base[sym_index].mapped
-	  && ! symtab.base[sym_index].has_been_placed)
-	printf ("%s\n", symtab.base[sym_index].name);
+      if (symtab->base[sym_index].mapped
+	  && ! symtab->base[sym_index].has_been_placed)
+	printf ("%s\n", symtab->base[sym_index].name);
     }
 
   qsort (symbol_map, symbol_map_count, sizeof (struct function_map), cmp_symbol_map);
@@ -1271,19 +1275,19 @@ cg_print_file_ordering (void)
       if (last && !filename_cmp (last, symbol_map[sym_index].file_name))
 	continue;
 
-      for (index2 = 0; index2 < symtab.len; index2++)
+      for (index2 = 0; index2 < symtab->len; index2++)
 	{
-	  if (! symtab.base[index2].mapped)
+	  if (! symtab->base[index2].mapped)
 	    continue;
 
-	  if (!filename_cmp (symtab.base[index2].name,
+	  if (!filename_cmp (symtab->base[index2].name,
 			     symbol_map[sym_index].file_name))
 	    break;
 	}
 
       /* If we didn't find it in the symbol table, then it must
 	 be a .o with no text symbols.  Output it last.  */
-      if (index2 == symtab.len)
+      if (index2 == symtab->len)
 	printf ("%s\n", symbol_map[sym_index].file_name);
       last = symbol_map[sym_index].file_name;
     }

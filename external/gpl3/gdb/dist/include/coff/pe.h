@@ -264,7 +264,7 @@ typedef struct
   char  MinorImageVersion[2];
   char  MajorSubsystemVersion[2];
   char  MinorSubsystemVersion[2];
-  char  Reserved1[4];
+  char  Win32Version[4];
   char  SizeOfImage[4];
   char  SizeOfHeaders[4];
   char  CheckSum[4];
@@ -303,7 +303,7 @@ typedef struct
   char  MinorImageVersion[2];
   char  MajorSubsystemVersion[2];
   char  MinorSubsystemVersion[2];
-  char  Reserved1[4];
+  char  Win32Version[4];
   char  SizeOfImage[4];
   char  SizeOfHeaders[4];
   char  CheckSum[4];
@@ -338,6 +338,7 @@ typedef struct
 #define IMPORT_NAME		1
 #define IMPORT_NAME_NOPREFIX	2
 #define IMPORT_NAME_UNDECORATE	3
+#define IMPORT_NAME_EXPORTAS	4
 
 /* Weak external characteristics.  */
 #define IMAGE_WEAK_EXTERN_SEARCH_NOLIBRARY	1

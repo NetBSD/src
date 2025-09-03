@@ -1,5 +1,5 @@
 /* BFD ECOFF object file private structure.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -80,6 +80,13 @@ struct ecoff_backend_data
   members of the embedded bfd_coff_backend_data struct.  */
 #define ECOFF_NO_LONG_SECTION_NAMES (false), _bfd_ecoff_no_long_sections
 
+struct mips_hi
+{
+  struct mips_hi *next;
+  bfd_byte *addr;
+  bfd_vma addend;
+};
+
 /* This is the target specific information kept for ECOFF files.  */
 
 #define ecoff_data(abfd) ((abfd)->tdata.ecoff_obj_data)
@@ -117,9 +124,6 @@ typedef struct ecoff_tdata
   /* The ECOFF symbolic debugging information.  */
   struct ecoff_debug_info debug_info;
 
-  /* The unswapped ECOFF symbolic information.  */
-  void * raw_syments;
-
   /* The canonical BFD symbols.  */
   struct ecoff_symbol_struct *canonical_symbols;
 
@@ -148,6 +152,8 @@ typedef struct ecoff_tdata
      ecoff_compute_section_file_positions is called.  */
   bool rdata_in_text;
 
+  /* Used by coff-mips.c to track REFHI relocs for pairing with REFLO.  */
+  struct mips_hi *mips_refhi_list;
 } ecoff_data_type;
 
 /* Each canonical asymbol really looks like this.  */
@@ -234,8 +240,8 @@ extern bool _bfd_ecoff_slurp_symbolic_info
 
 extern bool _bfd_ecoff_write_object_contents (bfd *);
 
-#define	_bfd_ecoff_close_and_cleanup _bfd_generic_close_and_cleanup
-#define _bfd_ecoff_bfd_free_cached_info _bfd_generic_bfd_free_cached_info
+#define _bfd_ecoff_close_and_cleanup _bfd_generic_close_and_cleanup
+extern bool _bfd_ecoff_bfd_free_cached_info (bfd *);
 extern bool _bfd_ecoff_new_section_hook
   (bfd *, asection *);
 extern bool _bfd_ecoff_get_section_contents
@@ -293,6 +299,8 @@ extern bool _bfd_ecoff_bfd_is_local_label_name
 extern bool _bfd_ecoff_find_nearest_line
   (bfd *, asymbol **, asection *, bfd_vma,
    const char **, const char **, unsigned int *, unsigned int *);
+#define _bfd_ecoff_find_nearest_line_with_alt \
+  _bfd_nosymbols_find_nearest_line_with_alt
 #define _bfd_ecoff_find_line _bfd_nosymbols_find_line
 #define _bfd_ecoff_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol
 #define _bfd_ecoff_read_minisymbols _bfd_generic_read_minisymbols

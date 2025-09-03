@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.73 2025/04/25 21:07:20 andvar Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.74 2025/07/30 02:16:54 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.73 2025/04/25 21:07:20 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.74 2025/07/30 02:16:54 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2837,9 +2837,9 @@ lagg_linkstate_changed(void *xifp)
 	}
 	pserialize_read_exit(s);
 
-	IFNET_LOCK(lp->lp_ifp);
+	KASSERT(IFNET_LOCKED(lp->lp_ifp));
+
 	lagg_proto_linkstate(lp->lp_softc, lp);
-	IFNET_UNLOCK(lp->lp_ifp);
 
 	lagg_port_putref(lp, &psref);
 	curlwp_bindx(bound);

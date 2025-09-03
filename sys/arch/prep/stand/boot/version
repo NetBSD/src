@@ -1,10 +1,10 @@
-$NetBSD: version,v 1.13 2012/05/19 14:40:13 kiyohara Exp $
+$NetBSD: version,v 1.14 2025/08/18 18:46:24 andvar Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
 is taken as the current.
 
-1.1:		Boot program for IBM Power Serise 830; initial revision
+1.1:		Boot program for IBM Power Series 830; initial revision
 1.2:		Support verbose/quiet boot.
 1.3:		loadfile() update:  ELF symbols no longer need backward seeks.
 1.4:		loadfile() update to avoid backwards seeks for ELF Program

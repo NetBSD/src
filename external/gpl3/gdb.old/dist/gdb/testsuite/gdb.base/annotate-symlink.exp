@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2023 Free Software Foundation, Inc.
+# Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +15,9 @@
 
 standard_testfile realname-expand.c realname-expand-real.c
 
-if [is_remote host] {
-    unsupported "compiling on a remote host does not support a filename with directory."
-    return 0
-}
+# Compiling on a remote host does not support a filename with
+# directory.
+require {!is_remote host}
 
 set srcdirabs [file join [pwd] $srcdir]
 set srcfilelink [standard_output_file realname-expand-link.c]

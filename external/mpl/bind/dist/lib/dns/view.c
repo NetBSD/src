@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.18 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.19 2025/07/17 19:01:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -786,6 +786,8 @@ dns_view_delzone(dns_view_t *view, dns_zone_t *zone) {
 	dns_zt_t *zonetable = NULL;
 
 	REQUIRE(DNS_VIEW_VALID(view));
+
+	dns_zone_prepare_shutdown(zone);
 
 	rcu_read_lock();
 	zonetable = rcu_dereference(view->zonetable);

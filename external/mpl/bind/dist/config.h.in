@@ -248,9 +248,6 @@
 /* Build with DNS-over-HTTPS support */
 #undef HAVE_LIBNGHTTP2
 
-/* Use libsystemd library */
-#undef HAVE_LIBSYSTEMD
-
 /* Use libxml2 library */
 #undef HAVE_LIBXML2
 

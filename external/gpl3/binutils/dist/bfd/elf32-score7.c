@@ -1,5 +1,5 @@
 /* 32-bit ELF support for S+core.
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -975,7 +975,7 @@ score_elf_got_info (bfd *abfd, asection **sgotp)
    appear towards the end.  This reduces the amount of GOT space
    required.  MAX_LOCAL is used to set the number of local symbols
    known to be in the dynamic symbol table.  During
-   s7_bfd_score_elf_size_dynamic_sections, this value is 1.  Afterward, the
+   s7_bfd_score_elf_late_size_sections, this value is 1.  Afterward, the
    section symbols are added and the count is higher.  */
 
 static bool
@@ -1147,7 +1147,7 @@ score_elf_create_dynamic_relocation (bfd *output_bfd,
 				     bfd_vma symbol,
 				     bfd_vma *addendp, asection *input_section)
 {
-  Elf_Internal_Rela outrel[3];
+  Elf_Internal_Rela outrel;
   asection *sreloc;
   bfd *dynobj;
   int r_type;
@@ -1161,18 +1161,14 @@ score_elf_create_dynamic_relocation (bfd *output_bfd,
   BFD_ASSERT (sreloc->contents != NULL);
   BFD_ASSERT (sreloc->reloc_count * SCORE_ELF_REL_SIZE (output_bfd) < sreloc->size);
 
-  outrel[0].r_offset =
-    _bfd_elf_section_offset (output_bfd, info, input_section, rel[0].r_offset);
-  outrel[1].r_offset =
-    _bfd_elf_section_offset (output_bfd, info, input_section, rel[1].r_offset);
-  outrel[2].r_offset =
-    _bfd_elf_section_offset (output_bfd, info, input_section, rel[2].r_offset);
+  outrel.r_offset =
+    _bfd_elf_section_offset (output_bfd, info, input_section, rel->r_offset);
 
-  if (outrel[0].r_offset == MINUS_ONE)
+  if (outrel.r_offset == MINUS_ONE)
     /* The relocation field has been deleted.  */
     return true;
 
-  if (outrel[0].r_offset == MINUS_TWO)
+  if (outrel.r_offset == MINUS_TWO)
     {
       /* The relocation field has been converted into a relative value of
 	 some sort.  Functions like _bfd_elf_write_section_eh_frame expect
@@ -1211,7 +1207,7 @@ score_elf_create_dynamic_relocation (bfd *output_bfd,
 
   /* The relocation is always an REL32 relocation because we don't
      know where the shared library will wind up at load-time.  */
-  outrel[0].r_info = ELF32_R_INFO ((unsigned long) indx, R_SCORE_REL32);
+  outrel.r_info = ELF32_R_INFO ((unsigned long) indx, R_SCORE_REL32);
 
   /* For strict adherence to the ABI specification, we should
      generate a R_SCORE_64 relocation record by itself before the
@@ -1225,24 +1221,18 @@ score_elf_create_dynamic_relocation (bfd *output_bfd,
      invocation if ABI_64_P, and here we should generate an
      additional relocation record with R_SCORE_64 by itself for a
      NULL symbol before this relocation record.  */
-  outrel[1].r_info = ELF32_R_INFO (0, R_SCORE_NONE);
-  outrel[2].r_info = ELF32_R_INFO (0, R_SCORE_NONE);
 
   /* Adjust the output offset of the relocation to reference the
      correct location in the output file.  */
-  outrel[0].r_offset += (input_section->output_section->vma
-			 + input_section->output_offset);
-  outrel[1].r_offset += (input_section->output_section->vma
-			 + input_section->output_offset);
-  outrel[2].r_offset += (input_section->output_section->vma
-			 + input_section->output_offset);
+  outrel.r_offset += (input_section->output_section->vma
+		      + input_section->output_offset);
 
   /* Put the relocation back out.  We have to use the special
      relocation outputter in the 64-bit case since the 64-bit
      relocation format is non-standard.  */
   bfd_elf32_swap_reloc_out
-      (output_bfd, &outrel[0],
-       (sreloc->contents + sreloc->reloc_count * sizeof (Elf32_External_Rel)));
+    (output_bfd, &outrel,
+     sreloc->contents + sreloc->reloc_count * sizeof (Elf32_External_Rel));
 
   /* We've now added another relocation.  */
   ++sreloc->reloc_count;
@@ -2969,8 +2959,8 @@ s7_bfd_score_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
    and the input sections have been assigned to output sections.  */
 
 bool
-s7_bfd_score_elf_always_size_sections (bfd *output_bfd,
-				       struct bfd_link_info *info)
+s7_bfd_score_elf_early_size_sections (bfd *output_bfd,
+				      struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
@@ -3047,14 +3037,15 @@ s7_bfd_score_elf_always_size_sections (bfd *output_bfd,
 /* Set the sizes of the dynamic sections.  */
 
 bool
-s7_bfd_score_elf_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
+s7_bfd_score_elf_late_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
   bool reltext;
 
   dynobj = elf_hash_table (info)->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -3065,6 +3056,7 @@ s7_bfd_score_elf_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
 	  BFD_ASSERT (s != NULL);
 	  s->size = strlen (ELF_DYNAMIC_INTERPRETER) + 1;
 	  s->contents = (bfd_byte *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -3123,7 +3115,7 @@ s7_bfd_score_elf_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
 	}
       else if (startswith (name, ".got"))
 	{
-	  /* s7_bfd_score_elf_always_size_sections() has already done
+	  /* s7_bfd_score_elf_early_size_sections() has already done
 	     most of the work, but some symbols may have been mapped
 	     to versions that we must now resolve in the got_entries
 	     hash tables.  */
@@ -3147,6 +3139,7 @@ s7_bfd_score_elf_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
 	  bfd_set_error (bfd_error_no_memory);
 	  return false;
 	}
+      s->alloced = 1;
     }
 
   if (elf_hash_table (info)->dynamic_sections_created)
@@ -3296,7 +3289,13 @@ s7_bfd_score_elf_finish_dynamic_symbol (bfd *output_bfd,
 
       /* FIXME: Can h->dynindex be more than 64K?  */
       if (h->dynindx & 0xffff0000)
-	return false;
+	{
+	  _bfd_error_handler
+	    (_("%pB: cannot handle more than %d dynamic symbols"),
+	     output_bfd, 0xffff);
+	  bfd_set_error (bfd_error_bad_value);
+	  return false;
+	}
 
       /* Fill the stub.  */
       bfd_put_32 (output_bfd, STUB_LW, stub);
@@ -3856,9 +3855,8 @@ bool
 s7_elf32_score_new_section_hook (bfd *abfd, asection *sec)
 {
   struct _score_elf_section_data *sdata;
-  size_t amt = sizeof (*sdata);
 
-  sdata = bfd_zalloc (abfd, amt);
+  sdata = bfd_zalloc (abfd, sizeof (*sdata));
   if (sdata == NULL)
     return false;
   sec->used_by_bfd = sdata;

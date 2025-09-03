@@ -16,14 +16,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "bfd.h"
 #include "event-top.h"
 #include "gdbtypes.h"
 #include "value.h"
 #include "c-lang.h"
 #include "cli/cli-style.h"
 #include "typeprint.h"
-#include "target-float.h"
 #include "ada-lang.h"
 #include <ctype.h>
 
@@ -72,7 +70,7 @@ decoded_type_name (struct type *type)
       if (s == name_buffer)
 	return name_buffer;
 
-      if (!islower (s[1]))
+      if (!islower ((unsigned char)s[1]))
 	return NULL;
 
       for (s = q = name_buffer; *s != '\0'; q += 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.33 2022/06/29 17:59:40 mlelstv Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.39 2025/08/20 07:55:19 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -34,6 +34,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <machine/autoconf.h>
+#include <powerpc/pic/picvar.h>
 
 #include "opt_ki2c.h"
 #include <macppc/dev/ki2cvar.h>
@@ -55,7 +56,7 @@ u_int ki2c_getmode(struct ki2c_softc *);
 void ki2c_setmode(struct ki2c_softc *, u_int);
 u_int ki2c_getspeed(struct ki2c_softc *);
 void ki2c_setspeed(struct ki2c_softc *, u_int);
-int ki2c_intr(struct ki2c_softc *);
+int ki2c_intr(void *);
 int ki2c_poll(struct ki2c_softc *, int);
 int ki2c_start(struct ki2c_softc *, int, int, void *, int);
 int ki2c_read(struct ki2c_softc *, int, int, void *, int);
@@ -85,22 +86,27 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 {
 	struct ki2c_softc *sc = device_private(self);
 	struct confargs *ca = aux;
-	int node = ca->ca_node;
-	uint32_t addr, channel, reg;
+	int node = ca->ca_node, root;
+	uint32_t addr, channel, reg, intr[2];
 	int rate, child, /*namelen,*/ i2cbus[2] = {0, 0};
 	struct i2cbus_attach_args iba;
 	prop_dictionary_t dict = device_properties(self);
 	prop_array_t cfg;
-	int devs, devc;
+	int devs, devc, intrparent;;
 	char compat[256], num[8], descr[32];
 	prop_dictionary_t dev;
 	prop_data_t data;
-	char name[32];
+	char name[32], intr_xname[32], model[32];
+	uint32_t picbase;
 
 	sc->sc_dev = self;
 	sc->sc_tag = ca->ca_tag;
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
+	root = OF_finddevice("/");
+	model[0] = 0;
+	OF_getprop(root, "model", model, 32);
+	DPRINTF("model %s\n", model);
 	if (OF_getprop(node, "AAPL,i2c-rate", &rate, 4) != 4) {
 		aprint_error(": cannot get i2c-rate\n");
 		return;
@@ -118,6 +124,46 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": unable to find i2c address step\n");
 		return;
 	}
+
+	if(OF_getprop(node, "interrupts", intr, 8) != 8) {
+		aprint_error(": can't find interrupt\n");
+		return;
+	}
+
+	/*
+	 * on some G5 we have two openpics, one in mac-io, one in /u3
+	 * in order to get interrupts we need to know which one we're
+	 * connected to
+	 */
+	sc->sc_poll = 0;
+
+	if(OF_getprop(node, "interrupt-parent", &intrparent, 4) == 4) {
+		uint32_t preg[8];
+		struct pic_ops *pic;
+		
+		sc->sc_poll = 1;
+		if(OF_getprop(intrparent, "reg", preg, 8) > 4) {
+			/* now look for a pic with that base... */
+			picbase = preg[0];
+			if ((picbase & 0x80000000) == 0) {
+				/* some OF versions have the openpic's reg as
+				 * an offset into mac-io just to be annoying */
+				int mio = OF_parent(intrparent);
+				if (OF_getprop(mio, "ranges", preg, 20) == 20)
+					picbase += preg[3];
+			}
+			DPRINTF("PIC base %08x\n", picbase);
+			pic = find_pic_by_cookie((void *)picbase);
+			if (pic != NULL) {
+				sc->sc_poll = 0;
+				intr[0] += pic->pic_intrbase;
+			}
+		}
+	}
+
+	if (sc->sc_poll) {
+		aprint_normal(" polling");
+	} else aprint_normal(" irq %d", intr[0]);
 
 	printf("\n");
 
@@ -184,21 +230,61 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 			prop_dictionary_set_uint64(dev, "cookie", devs);
 			/* look for location info for sensors */
 			devc = OF_child(devs);
-			while (devc != 0) {
-				if (OF_getprop(devc, "reg", &reg, 4) < 4) goto nope;
-				if (OF_getprop(devc, "location", descr, 32) <= 0)
-					goto nope;
-				DPRINTF("found '%s' at %02x\n", descr, reg);
-				snprintf(num, 7, "s%02x", reg);
-				prop_dictionary_set_string(dev, num, descr);
-			nope:
-				devc = OF_peer(devc);
+			if (devc == 0) {
+				/* old style name info */
+				uint32_t ids[4];
+				int len = OF_getprop(devs, "hwsensor-id", ids, 16);
+				int i = 0, idx = 0;
+				char buffer[256];
+				memset(buffer, 0, 256);
+				if (len <= 0) {
+					/* no info, fill in what we may know */
+					if ((strcmp(name, "temp-monitor") == 0) &&
+					    (strcmp(model, "RackMac1,2") == 0)) {
+						prop_dictionary_set_string(dev, "s00", "CASE");   	
+					}
+				} else {
+					OF_getprop(devs, "hwsensor-location", buffer, 256);
+					while (len > 0) {
+						reg = ids[i];
+						strcpy(descr, &buffer[idx]);
+						idx += strlen(descr) + 1;
+						DPRINTF("found '%s' at %02x\n", descr, reg);
+						snprintf(num, 7, "s%02x", i);
+						prop_dictionary_set_string(dev, num, descr);
+						i++;
+						len -= 4;
+					}
+				}
+			} else {
+				while (devc != 0) {
+					if (OF_getprop(devc, "reg", &reg, 4) < 4) goto nope;
+					if (OF_getprop(devc, "location", descr, 32) <= 0)
+						goto nope;
+					DPRINTF("found '%s' at %02x\n", descr, reg);
+					snprintf(num, 7, "s%02x", reg);
+					prop_dictionary_set_string(dev, num, descr);
+				nope:
+					devc = OF_peer(devc);
+				}
 			}
+						
 			prop_array_add(cfg, dev);
 			prop_object_release(dev);
 		skip:
 			devs = OF_peer(devs);
 		}
+	}
+
+	cv_init(&sc->sc_todev, device_xname(self));
+	mutex_init(&sc->sc_todevmtx, MUTEX_DEFAULT, IPL_NONE);
+
+	if(sc->sc_poll == 0) {
+		snprintf(intr_xname, sizeof(intr_xname), "%s intr", device_xname(self));
+		intr_establish_xname(intr[0], (intr[1] & 1) ? IST_LEVEL : IST_EDGE,
+		    IPL_BIO, ki2c_intr, sc, intr_xname);
+
+		ki2c_writereg(sc, IER, I2C_INT_DATA | I2C_INT_ADDR| I2C_INT_STOP);
 	}
 
 	/* fill in the i2c tag */
@@ -258,10 +344,10 @@ ki2c_setspeed(struct ki2c_softc *sc, u_int speed)
 }
 
 int
-ki2c_intr(struct ki2c_softc *sc)
+ki2c_intr(void *cookie)
 {
+	struct ki2c_softc *sc = cookie;
 	u_int isr, x;
-
 	isr = ki2c_readreg(sc, ISR);
 	if (isr & I2C_INT_ADDR) {
 #if 0
@@ -316,6 +402,7 @@ out:
 	if (isr & I2C_INT_STOP) {
 		ki2c_writereg(sc, CONTROL, 0);
 		sc->sc_flags &= ~I2C_BUSY;
+		cv_signal(&sc->sc_todev);
 	}
 
 	ki2c_writereg(sc, ISR, isr);
@@ -326,15 +413,23 @@ out:
 int
 ki2c_poll(struct ki2c_softc *sc, int timo)
 {
+	int bail = 0;
 	while (sc->sc_flags & I2C_BUSY) {
-		if (ki2c_readreg(sc, ISR))
-			ki2c_intr(sc);
-		timo -= 100;
-		if (timo < 0) {
-			DPRINTF("i2c_poll: timeout\n");
-			return -1;
+		if ((cold) || (bail > 10) || (sc->sc_poll)) {
+			if (ki2c_readreg(sc, ISR))
+				ki2c_intr(sc);
+			timo -= 10;
+			if (timo < 0) {
+				DPRINTF("i2c_poll: timeout\n");
+				return -1;
+			}
+			delay(10);
+		} else {
+			mutex_enter(&sc->sc_todevmtx);
+			cv_timedwait_sig(&sc->sc_todev, &sc->sc_todevmtx, hz/10);
+			mutex_exit(&sc->sc_todevmtx);
+			bail++;
 		}
-		delay(100);
 	}
 	return 0;
 }

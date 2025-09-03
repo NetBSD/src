@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2025/05/21 14:47:35 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2025/07/17 19:01:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -643,6 +643,7 @@ printversion(bool verbose) {
 	printf("threads support is enabled\n");
 
 	isc_mem_create(&mctx);
+	isc_mem_setname(mctx, "main");
 	result = dst_lib_init(mctx, named_g_engine);
 	if (result == ISC_R_SUCCESS) {
 		isc_buffer_init(&b, buf, sizeof(buf));

@@ -1,4 +1,4 @@
-/*	$NetBSD: obiofan.c,v 1.2 2021/09/11 16:29:18 macallan Exp $	*/
+/*	$NetBSD: obiofan.c,v 1.3 2025/07/01 06:36:35 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2021 Michael Lorenz
@@ -53,8 +53,9 @@ struct obiofan_softc {
 	callout_t		sc_callout;
 	time_t			sc_stamp;
 	int 			sc_node;
-	int 			sc_reg, sc_shift;
-	int			sc_count, sc_rpm;
+	int 			sc_reg[4], sc_shift[4];
+	int			sc_count[4], sc_rpm[4];
+	int			sc_fans;
 };
 
 int obiofan_match(device_t, cfdata_t, void *);
@@ -82,8 +83,8 @@ obiofan_attach(device_t parent, device_t self, void *aux)
 	struct obiofan_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 	char descr[32] = "fan";
-	int node = ca->ca_node, tc_node;
-	int regs[8], tc_regs[32];
+	int node = ca->ca_node, tc_node, f, cnt;
+	uint32_t regs[8], tc_regs[32];
 
 	printf("\n");
 
@@ -100,7 +101,7 @@ obiofan_attach(device_t parent, device_t self, void *aux)
 
 	tc_node = OF_parent(node);
 
-	if (OF_getprop(tc_node, "platform-do-getTACHCount", tc_regs, 32) <= 0) {
+	if (OF_getprop(tc_node, "platform-do-getTACHCount", tc_regs, 128) <= 0) {
 		aprint_error("no platform-do-getTACHCount\n");
 		return;
 	}
@@ -116,30 +117,41 @@ obiofan_attach(device_t parent, device_t self, void *aux)
 	 * reg[4] - bitmask in the register
 	 * reg[5] - unknown
 	 * reg[6] - unknown
-	 *
-	 * for now only get the parameters for the 1st fan since that's all we
-	 * have on my 7,3
 	 */
 
-	sc->sc_reg = tc_regs[3];
-	sc->sc_shift = ffs(tc_regs[4]) - 1;
-
-	OF_getprop(tc_regs[0], "location", descr, 32);
-	DPRINTF("%s: %02x %d\n", descr, sc->sc_reg, sc->sc_shift);
-
-	sc->sc_stamp = time_second;
-	sc->sc_count = obio_read_4(sc->sc_reg) >> sc->sc_shift;
-	sc->sc_rpm = -1;
-	
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = obiofan_refresh;
 
-	sc->sc_sensors[0].units = ENVSYS_SFANRPM;
-	sc->sc_sensors[0].state = ENVSYS_SINVALID;
-	strcpy(sc->sc_sensors[0].desc, descr);
-	sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensors[0]);
+	/* now look for which fan register(s) we can use */
+	f = OF_child(node);
+	cnt = 0;
+	while (f != 0) {
+		int num = -1;
+		OF_getprop(f, "reg", &num, 4);
+		if (OF_getprop(f, "hwctrl-location", descr, 32) <= 0)
+			goto skip;
+		sc->sc_reg[cnt] = tc_regs[num * 7 + 3];
+		sc->sc_shift[cnt] = ffs(tc_regs[num * 7 + 4]) - 1;
+
+		DPRINTF("%s: %d %02x %d\n", descr, num, sc->sc_reg[cnt], sc->sc_shift[cnt]);
+
+		sc->sc_stamp = time_second;
+		sc->sc_count[cnt] = 
+		    obio_read_4(sc->sc_reg[cnt]) >> sc->sc_shift[cnt];
+		sc->sc_rpm[cnt] = -1;
+	
+		sc->sc_sensors[cnt].units = ENVSYS_SFANRPM;
+		sc->sc_sensors[cnt].state = ENVSYS_SINVALID;
+		sc->sc_sensors[cnt].private = cnt;
+		strcpy(sc->sc_sensors[cnt].desc, descr);
+		sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensors[cnt]);
+		cnt++;
+skip:
+		f = OF_peer(f);
+	}
+	sc->sc_fans = cnt;
 	sysmon_envsys_register(sc->sc_sme);
 
 	callout_init(&sc->sc_callout, 0);
@@ -152,15 +164,17 @@ obiofan_update(void *cookie)
 {
 	struct obiofan_softc *sc = cookie;
 	time_t now = time_second, diff;
-	int spin, spins;
-	diff = now - sc->sc_stamp;
-	if (diff < 5) return;
-	spin = obio_read_4(sc->sc_reg) >> sc->sc_shift;
-	spins = (spin - sc->sc_count) & 0xffff;
-	sc->sc_rpm = spins * 60 / diff;
-	sc->sc_count = spin;
+	int spin, spins, i;
+	for (i = 0; i < sc->sc_fans; i++) {
+		diff = now - sc->sc_stamp;
+		if (diff < 5) return;
+		spin = obio_read_4(sc->sc_reg[i]) >> sc->sc_shift[i];
+		spins = (spin - sc->sc_count[i]) & 0xffff;
+		sc->sc_rpm[i] = spins * 60 / diff;
+		sc->sc_count[i] = spin;
+		DPRINTF("%s %lld %d\n", __func__, diff, spins);
+	}
 	sc->sc_stamp = now;
-	DPRINTF("%s %lld %d\n", __func__, diff, spins);
 	callout_schedule(&sc->sc_callout, mstohz(5000));
 }
 
@@ -168,8 +182,10 @@ static void
 obiofan_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct obiofan_softc *sc = sme->sme_cookie;
-	if (sc->sc_rpm >= 0) {
+	int i = edata->private;
+
+	if (sc->sc_rpm[i] >= 0) {
 		edata->state = ENVSYS_SVALID;
-		edata->value_cur = sc->sc_rpm;
+		edata->value_cur = sc->sc_rpm[i];
 	}
 }

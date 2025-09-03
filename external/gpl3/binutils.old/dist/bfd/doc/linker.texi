@@ -346,11 +346,7 @@ file at the end of @code{NAME(aout,final_link)}.
 
 @findex bfd_link_split_section
 @subsubsection @code{bfd_link_split_section}
-@strong{Synopsis}
-@example
-bool bfd_link_split_section (bfd *abfd, asection *sec);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_link_split_section (bfd *abfd, asection *sec); 
 Return nonzero if @var{sec} should be split during a
 reloceatable or final link.
 @example
@@ -359,15 +355,10 @@ reloceatable or final link.
 
 @end example
 
+@end deftypefn
 @findex bfd_section_already_linked
 @subsubsection @code{bfd_section_already_linked}
-@strong{Synopsis}
-@example
-bool bfd_section_already_linked (bfd *abfd,
-    asection *sec,
-    struct bfd_link_info *info);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_section_already_linked (bfd *abfd, asection *sec, struct bfd_link_info *info); 
 Check if @var{data} has been already linked during a reloceatable
 or final link.  Return TRUE if it has.
 @example
@@ -376,15 +367,10 @@ or final link.  Return TRUE if it has.
 
 @end example
 
+@end deftypefn
 @findex bfd_generic_define_common_symbol
 @subsubsection @code{bfd_generic_define_common_symbol}
-@strong{Synopsis}
-@example
-bool bfd_generic_define_common_symbol
-   (bfd *output_bfd, struct bfd_link_info *info,
-    struct bfd_link_hash_entry *h);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_generic_define_common_symbol (bfd *output_bfd, struct bfd_link_info *info, struct bfd_link_hash_entry *h); 
 Convert common symbol @var{h} into a defined symbol.
 Return TRUE on success and FALSE on failure.
 @example
@@ -393,15 +379,10 @@ Return TRUE on success and FALSE on failure.
 
 @end example
 
+@end deftypefn
 @findex _bfd_generic_link_hide_symbol
 @subsubsection @code{_bfd_generic_link_hide_symbol}
-@strong{Synopsis}
-@example
-void _bfd_generic_link_hide_symbol
-   (bfd *output_bfd, struct bfd_link_info *info,
-    struct bfd_link_hash_entry *h);
-@end example
-@strong{Description}@*
+@deftypefn {Function} void _bfd_generic_link_hide_symbol (bfd *output_bfd, struct bfd_link_info *info, struct bfd_link_hash_entry *h); 
 Hide symbol @var{h}.
 This is an internal function.  It should not be called from
 outside the BFD library.
@@ -411,15 +392,10 @@ outside the BFD library.
 
 @end example
 
+@end deftypefn
 @findex bfd_generic_define_start_stop
 @subsubsection @code{bfd_generic_define_start_stop}
-@strong{Synopsis}
-@example
-struct bfd_link_hash_entry *bfd_generic_define_start_stop
-   (struct bfd_link_info *info,
-    const char *symbol, asection *sec);
-@end example
-@strong{Description}@*
+@deftypefn {Function} struct bfd_link_hash_entry *bfd_generic_define_start_stop (struct bfd_link_info *info, const char *symbol, asection *sec); 
 Define a __start, __stop, .startof. or .sizeof. symbol.
 Return the symbol or NULL if no such undefined symbol exists.
 @example
@@ -428,65 +404,44 @@ Return the symbol or NULL if no such undefined symbol exists.
 
 @end example
 
+@end deftypefn
 @findex bfd_find_version_for_sym
 @subsubsection @code{bfd_find_version_for_sym}
-@strong{Synopsis}
-@example
-struct bfd_elf_version_tree * bfd_find_version_for_sym
-   (struct bfd_elf_version_tree *verdefs,
-    const char *sym_name, bool *hide);
-@end example
-@strong{Description}@*
+@deftypefn {Function} struct bfd_elf_version_tree * bfd_find_version_for_sym (struct bfd_elf_version_tree *verdefs, const char *sym_name, bool *hide); 
 Search an elf version script tree for symbol versioning
 info and export / don't-export status for a given symbol.
 Return non-NULL on success and NULL on failure; also sets
 the output @samp{hide} boolean parameter.
 
+@end deftypefn
 @findex bfd_hide_sym_by_version
 @subsubsection @code{bfd_hide_sym_by_version}
-@strong{Synopsis}
-@example
-bool bfd_hide_sym_by_version
-   (struct bfd_elf_version_tree *verdefs, const char *sym_name);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_hide_sym_by_version (struct bfd_elf_version_tree *verdefs, const char *sym_name); 
 Search an elf version script tree for symbol versioning
 info for a given symbol.  Return TRUE if the symbol is hidden.
 
+@end deftypefn
 @findex bfd_link_check_relocs
 @subsubsection @code{bfd_link_check_relocs}
-@strong{Synopsis}
-@example
-bool bfd_link_check_relocs
-   (bfd *abfd, struct bfd_link_info *info);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_link_check_relocs (bfd *abfd, struct bfd_link_info *info); 
 Checks the relocs in ABFD for validity.
 Does not execute the relocs.
 Return TRUE if everything is OK, FALSE otherwise.
 This is the external entry point to this code.
 
+@end deftypefn
 @findex _bfd_generic_link_check_relocs
 @subsubsection @code{_bfd_generic_link_check_relocs}
-@strong{Synopsis}
-@example
-bool _bfd_generic_link_check_relocs
-   (bfd *abfd, struct bfd_link_info *info);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool _bfd_generic_link_check_relocs (bfd *abfd, struct bfd_link_info *info); 
 Stub function for targets that do not implement reloc checking.
 Return TRUE.
 This is an internal function.  It should not be called from
 outside the BFD library.
 
+@end deftypefn
 @findex bfd_merge_private_bfd_data
 @subsubsection @code{bfd_merge_private_bfd_data}
-@strong{Synopsis}
-@example
-bool bfd_merge_private_bfd_data
-   (bfd *ibfd, struct bfd_link_info *info);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info); 
 Merge private BFD information from the BFD @var{ibfd} to the
 the output file BFD when linking.  Return @code{TRUE} on success,
 @code{FALSE} on error.  Possible error returns are:
@@ -501,17 +456,15 @@ Not enough memory exists to create private data for @var{obfd}.
 #define bfd_merge_private_bfd_data(ibfd, info) \
        BFD_SEND ((info)->output_bfd, _bfd_merge_private_bfd_data, \
                  (ibfd, info))
+
 @end example
 
+@end deftypefn
 @findex _bfd_generic_verify_endian_match
 @subsubsection @code{_bfd_generic_verify_endian_match}
-@strong{Synopsis}
-@example
-bool _bfd_generic_verify_endian_match
-   (bfd *ibfd, struct bfd_link_info *info);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool _bfd_generic_verify_endian_match (bfd *ibfd, struct bfd_link_info *info); 
 Can be used from / for bfd_merge_private_bfd_data to check that
 endianness matches between input and output file.  Returns
 TRUE for a match, otherwise returns FALSE and emits an error.
 
+@end deftypefn

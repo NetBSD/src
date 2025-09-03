@@ -1,5 +1,5 @@
 /* tc-arc.h - Macros and type defines for the ARC.
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -106,12 +106,12 @@ extern const char *arc_target_format;
 /* [ ] is index operator.  */
 #define NEED_INDEX_OPERATOR
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE (1+2)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (1 + 2)
 
 /* HANDLE_ALIGN called after all the assembly has been done,
    so we can fill in all the rs_align_code type frags with
    nop instructions.  */
-#define HANDLE_ALIGN(FRAGP)	 arc_handle_align (FRAGP)
+#define HANDLE_ALIGN(SEC, FRAGP) arc_handle_align (FRAGP)
 
 /* Values passed to md_apply_fix3 don't include the symbol value.  */
 #define MD_APPLY_SYM_VALUE(FIX) 0

@@ -41,6 +41,8 @@ int large_2d_array[][10] = {
   {90, 91, 92, 93, 94, 95, 96, 97, 98, 99}
 };
 
+char large_empty_string[100000] = "";
+
 int
 main ()
 {

@@ -1,0 +1,63 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test doing a "run" that fails, and then another "run".
+
+require target_can_use_run_cmd
+
+standard_testfile
+
+if {[build_executable "failed to build" $testfile $srcfile {debug}]} {
+    return -1
+}
+
+proc test_run {testname} {
+    gdb_test_multiple "run" $testname {
+	-re -wrap "During startup program exited with code 126\\." {
+	    # What we get on GNU/Linux.
+	    pass $gdb_test_name
+	}
+	-re -wrap "Error creating process.*" {
+	    # What we get on Windows.
+	    pass $gdb_test_name
+	}
+	-re -wrap "Running .* on the remote target failed" {
+	    # What we get with remote targets.
+	    pass $gdb_test_name
+	}
+    }
+}
+
+proc_with_prefix test {} {
+    global gdb_prompt binfile
+
+    clean_restart $binfile
+
+    gdb_test_no_output "set confirm off"
+
+    gdb_remote_download host $binfile $binfile.nox
+    remote_exec target "chmod \"a-x\" $binfile.nox"
+    gdb_test_no_output \
+	"exec-file $binfile.nox" \
+	"exec-file \$binfile.nox"
+    gdb_test_no_output \
+	"set remote exec-file $binfile.nox" \
+	"set remote exec-file \$binfile.nox"
+
+    test_run "bad run 1"
+    test_run "bad run 2"
+}
+
+test

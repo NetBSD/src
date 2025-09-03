@@ -1,4 +1,4 @@
-# Copyright 2006-2023 Free Software Foundation, Inc.
+# Copyright 2006-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,12 +19,7 @@ load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 load_lib "fortran.exp"
 
-if { [skip_fortran_tests] } { return -1 }
-
-gdb_exit
-if [mi_gdb_start] {
-    return
-}
+require allow_fortran_tests
 
 standard_testfile array.f90
 
@@ -33,8 +28,9 @@ if {[gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
     return -1
 }
 
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load ${binfile}
+if {[mi_clean_restart $binfile]} {
+    return
+}
 
 # Avoid shared lib symbols.
 mi_gdb_test "-gdb-set auto-solib-add off" "\\^done"

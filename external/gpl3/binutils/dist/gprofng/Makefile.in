@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -238,6 +238,7 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BASH = @BASH@
 BISON = @BISON@
 BUILD_SUBDIRS = @BUILD_SUBDIRS@
 CC = @CC@
@@ -932,6 +933,7 @@ check-small check-extra check-install: site.exp development.exp
 @TCL_TRY_TRUE@		CLOCK_GETTIME_LINK="$(CLOCK_GETTIME_LINK)" \
 @TCL_TRY_TRUE@		CHECK_TARGET=$@ \
 @TCL_TRY_TRUE@		PREFIX="$(prefix)" \
+@TCL_TRY_TRUE@		BASH="$(BASH)" \
 @TCL_TRY_TRUE@		GPROFNG_BROKEN_JAVAC="$(GPROFNG_BROKEN_JAVAC)" \
 @TCL_TRY_TRUE@		MAKE="$(MAKE)" CC="$(CC)" CFLAGS="$(CFLAGS) $(PTHREAD_CFLAGS)" \
 @TCL_TRY_TRUE@		LDFLAGS="$(LDFLAGS)" LIBS="$(PTHREAD_LIBS) $(LIBS)" \

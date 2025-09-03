@@ -1,5 +1,5 @@
 /* Native debugging support for Intel x86 running DJGPP.
-   Copyright (C) 1997-2023 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
    Written by Robert Hoehne.
 
    This file is part of GDB.
@@ -81,7 +81,6 @@
    GDB does not use those as of this writing, and will never need
    to.  */
 
-#include "defs.h"
 
 #include <fcntl.h>
 
@@ -92,7 +91,7 @@
 #include "gdbsupport/gdb_wait.h"
 #include "gdbcore.h"
 #include "command.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "floatformat.h"
 #include "buildsym-legacy.h"
 #include "i387-tdep.h"
@@ -154,7 +153,6 @@ static void load_npx (void);	/* Restore the FPU of the debugged program.  */
 
 /* ------------------------------------------------------------------------- */
 /* Store the contents of the NPX in the global variable `npx'.  */
-/* *INDENT-OFF* */
 
 static void
 save_npx (void)
@@ -175,7 +173,6 @@ save_npx (void)
 :     "%eax");
 }
 
-/* *INDENT-ON* */
 
 
 /* ------------------------------------------------------------------------- */

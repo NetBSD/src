@@ -66,7 +66,7 @@ gdb_test "print i + k" " = 4"
 gdb_test "print j + k" " = 5"
 gdb_test "print i + j + k" " = 6"
 
-# Test substraction
+# Test subtraction
 gdb_test "print j - i" " = 1"
 gdb_test "print i - j" "= -1"
 gdb_test "print k -i -j" " = 0"

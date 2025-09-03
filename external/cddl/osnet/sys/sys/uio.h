@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.12 2018/11/30 09:53:40 hannken Exp $	*/
+/*	$NetBSD: uio.h,v 1.13 2025/07/24 09:04:56 hans Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,6 +61,8 @@
 #define	_OPENSOLARIS_SYS_UIO_H_
 
 #include_next <sys/uio.h>
+
+#ifndef __sun
 #include <sys/debug.h>
 
 #ifndef _KERNEL
@@ -163,5 +165,7 @@ zfs_uioskip(uio_t *uiop, size_t n)
 #define	uiomove(cp, n, dir, uio)	zfs_uiomove((cp), (n), (dir), (uio))
 #define uiocopy(cp, n, dir, uio, cbytes) 	zfs_uiocopy((cp), (n), (dir), (uio), (cbytes))
 #define uioskip(uio, size) 		zfs_uioskip((uio), (size))
+
+#endif	/* __sun */
 
 #endif	/* !_OPENSOLARIS_SYS_UIO_H_ */

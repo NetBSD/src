@@ -1,5 +1,5 @@
 /* input_file.c - Deal with Input Files -
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -58,7 +58,7 @@ struct saved_file
 void
 input_file_begin (void)
 {
-  f_in = (FILE *) 0;
+  f_in = NULL;
 }
 
 void
@@ -164,34 +164,38 @@ input_file_open (const char *filename,
     }
   gas_assert (c != EOF);
 
-  if (c == '#')
+  if (strchr (line_comment_chars, '#')
+      ? c == '#'
+      : c && strchr (line_comment_chars, c))
     {
       /* Begins with comment, may not want to preprocess.  */
+      int lead = c;
+
       c = getc (f_in);
       if (c == 'N')
 	{
 	  char *p = fgets (buf, sizeof (buf), f_in);
-	  if (p && startswith (p, "O_APP") && ISSPACE (p[5]))
+	  if (p && startswith (p, "O_APP") && is_end_of_line (p[5]))
 	    preprocess = 0;
 	  if (!p || !strchr (p, '\n'))
-	    ungetc ('#', f_in);
+	    ungetc (lead, f_in);
 	  else
 	    ungetc ('\n', f_in);
 	}
       else if (c == 'A')
 	{
 	  char *p = fgets (buf, sizeof (buf), f_in);
-	  if (p && startswith (p, "PP") && ISSPACE (p[2]))
+	  if (p && startswith (p, "PP") && is_end_of_line (p[2]))
 	    preprocess = 1;
 	  if (!p || !strchr (p, '\n'))
-	    ungetc ('#', f_in);
+	    ungetc (lead, f_in);
 	  else
 	    ungetc ('\n', f_in);
 	}
       else if (c == '\n')
 	ungetc ('\n', f_in);
       else
-	ungetc ('#', f_in);
+	ungetc (lead, f_in);
     }
   else
     ungetc (c, f_in);
@@ -233,16 +237,27 @@ input_file_give_next_buffer (char *where /* Where to place 1st character of new 
   char *return_value;		/* -> Last char of what we read, + 1.  */
   size_t size;
 
-  if (f_in == (FILE *) 0)
+  if (f_in == NULL)
     return 0;
   /* fflush (stdin); could be done here if you want to synchronise
      stdin and stdout, for the case where our input file is stdin.
      Since the assembler shouldn't do any output to stdout, we
      don't bother to synch output and input.  */
   if (preprocess)
-    size = do_scrub_chars (input_file_get, where, BUFFER_SIZE);
+    size = do_scrub_chars (input_file_get, where, BUFFER_SIZE,
+                           multibyte_handling == multibyte_warn);
   else
-    size = input_file_get (where, BUFFER_SIZE);
+    {
+      size = input_file_get (where, BUFFER_SIZE);
+
+      if (multibyte_handling == multibyte_warn)
+	{
+	  const unsigned char *start = (const unsigned char *) where;
+
+	  (void) scan_for_multibyte_characters (start, start + size,
+						true /* Generate warnings */);
+	}
+    }
 
   if (size)
     return_value = where + size;
@@ -251,7 +266,7 @@ input_file_give_next_buffer (char *where /* Where to place 1st character of new 
       if (fclose (f_in))
 	as_warn (_("can't close %s: %s"), file_name, xstrerror (errno));
 
-      f_in = (FILE *) 0;
+      f_in = NULL;
       return_value = 0;
     }
 

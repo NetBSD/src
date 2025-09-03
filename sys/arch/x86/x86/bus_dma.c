@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.91 2024/06/04 21:42:58 riastradh Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.92 2025/08/04 11:53:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.91 2024/06/04 21:42:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.92 2025/08/04 11:53:52 skrll Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -990,7 +990,7 @@ end:
 	 *    barrier is needed for prior loads.
 	 *
 	 * BUS_DMASYNC_PREWRITE: The caller has just written to a DMA
-	 * memory buffer, or we just wrote to to the bounce buffer,
+	 * memory buffer, or we just wrote to the bounce buffer,
 	 * data that the device needs to use, and the caller is about
 	 * to trigger DMA by writing to a register or DMA descriptor.
 	 *

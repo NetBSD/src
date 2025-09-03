@@ -31,7 +31,7 @@
    the filesystem of small embedded targets with core files.  If in
    development mode however, abort, producing core files to help with
    debugging GDBserver.  */
-static void ATTRIBUTE_NORETURN
+[[noreturn]] static void
 abort_or_exit ()
 {
 #ifdef DEVELOPMENT

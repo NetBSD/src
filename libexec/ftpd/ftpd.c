@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.210 2025/05/19 06:16:24 andvar Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.211 2025/06/27 21:36:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997-2023 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.210 2025/05/19 06:16:24 andvar Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.211 2025/06/27 21:36:23 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -2374,7 +2374,7 @@ send_data(FILE *instr, FILE *outstr, const struct stat *st, int isdata)
 }
 
 /*
- * Transfer data from peer to "outstr" using the appropriate encapulation of
+ * Transfer data from peer to "outstr" using the appropriate encapsulation of
  * the data subject to Mode, Structure, and Type.
  *
  * N.B.: Form isn't handled.

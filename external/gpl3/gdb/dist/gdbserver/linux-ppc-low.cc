@@ -879,8 +879,7 @@ ppc_target::low_arch_setup ()
   const struct target_desc *tdesc;
   struct regset_info *regset;
   struct ppc_linux_features features = ppc_linux_no_features;
-
-  int tid = lwpid_of (current_thread);
+  int tid = current_thread->id.lwp ();
 
   features.wordsize = ppc_linux_target_wordsize (tid);
 
@@ -1053,8 +1052,8 @@ int
 ppc_target::low_get_thread_area (int lwpid, CORE_ADDR *addr)
 {
   struct lwp_info *lwp = find_lwp_pid (ptid_t (lwpid));
-  struct thread_info *thr = get_lwp_thread (lwp);
-  struct regcache *regcache = get_thread_regcache (thr, 1);
+  thread_info *thr = lwp->thread;
+  regcache *regcache = get_thread_regcache (thr);
   ULONGEST tp = 0;
 
 #ifdef __powerpc64__
@@ -1608,8 +1607,7 @@ ppc_target::install_fast_tracepoint_jump_pad (CORE_ADDR tpoint,
   const CORE_ADDR entryaddr = *jump_entry;
   int rsz, min_frame, frame_size, tp_reg;
 #ifdef __powerpc64__
-  struct regcache *regcache = get_thread_regcache (current_thread, 0);
-  int is_64 = register_size (regcache->tdesc, 0) == 8;
+  int is_64 = register_size (current_process ()->tdesc, 0) == 8;
   int is_opd = is_64 && !is_elfv2_inferior ();
 #else
   int is_64 = 0, is_opd = 0;
@@ -3380,9 +3378,7 @@ emit_ops *
 ppc_target::emit_ops ()
 {
 #ifdef __powerpc64__
-  struct regcache *regcache = get_thread_regcache (current_thread, 0);
-
-  if (register_size (regcache->tdesc, 0) == 8)
+  if (register_size (current_process ()->tdesc, 0) == 8)
     {
       if (is_elfv2_inferior ())
 	return &ppc64v2_emit_ops_impl;
@@ -3398,8 +3394,7 @@ ppc_target::emit_ops ()
 int
 ppc_target::get_ipa_tdesc_idx ()
 {
-  struct regcache *regcache = get_thread_regcache (current_thread, 0);
-  const struct target_desc *tdesc = regcache->tdesc;
+  const target_desc *tdesc = current_process ()->tdesc;
 
 #ifdef __powerpc64__
   if (tdesc == tdesc_powerpc_64l)

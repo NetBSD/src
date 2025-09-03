@@ -10,7 +10,7 @@
 
 @copying
 @c man begin COPYRIGHT
-Copyright @copyright{} 1991-2024 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2025 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -457,7 +457,7 @@ Specify dependencies of this library.  The dependencies must immediately
 follow this option character, must use the same syntax as the linker
 command line, and must be specified within a single argument.  I.e., if
 multiple items are needed, they must be quoted to form a single command
-line argument.  For example @samp{L "-L/usr/local/lib -lmydep1 -lmydep2"}
+line argument.  For example @samp{l "-L/usr/local/lib -lmydep1 -lmydep2"}
 
 @item N
 Uses the @var{count} parameter.  This is used if there are multiple
@@ -879,7 +879,7 @@ symbol is defined anywhere, the common symbols are treated as undefined
 references.
 @ifclear man
 For more details on common symbols, see the discussion of
---warn-common in @ref{Options,,Linker options,ld.info,The GNU linker}.
+--warn-common in @ref{Options,,Linker options,ld,The GNU linker}.
 @end ifclear
 The lower case @var{c} character is used when the symbol is in a
 special section for small commons.
@@ -1362,7 +1362,7 @@ between any two formats may not work as expected.
 deletes them afterward.  @command{objcopy} uses @sc{bfd} to do all its
 translation work; it has access to all the formats described in @sc{bfd}
 and thus is able to recognize most formats without being told
-explicitly.  @xref{BFD,,BFD,ld.info,Using LD}.
+explicitly.  @xref{BFD,,BFD,ld,Using LD}.
 
 @command{objcopy} can be used to generate S-records by using an output
 target of @samp{srec} (e.g., use @samp{-O srec}).
@@ -1737,6 +1737,10 @@ above.  If @var{sectionpattern} does not match any sections in the
 input file, a warning will be issued, unless
 @option{--no-change-warnings} is used.
 
+Note - changing the VMA of sections in a fully linked binary can be
+dangerous since there may be code that expects the sections to be
+located at their old address.
+
 @item --change-warnings
 @itemx --adjust-warnings
 If @option{--change-section-address} or @option{--change-section-lma} or
@@ -1766,7 +1770,14 @@ SHF_X86_64_LARGE.
 @item --set-section-alignment @var{sectionpattern}=@var{align}
 Set the alignment for any sections matching @var{sectionpattern}.
 @var{align} specifies the alignment in bytes and must be a power of
-two, i.e. 1, 2, 4, 8@dots{}. 
+two, i.e. 1, 2, 4, 8@dots{}.
+
+Note - setting a section's alignment will not automatically align its
+LMA or VMA addresses.  If those need to be changed as well then the
+@option{--change-section-lma} and/or @option{--change-section-vma}
+options should be used.  Also note that changing VMAs can cause
+problems in fully linked binaries where there may be code that expects
+the contents of the sections to be located at their old address.
 
 @item --add-section @var{sectionname}=@var{filename}
 Add a new section named @var{sectionname} while copying the file.  The
@@ -2031,7 +2042,7 @@ As long as the debug info file has been installed into one of these
 locations before the debugger is run everything should work
 correctly.
 
-@item --keep-section-symbils
+@item --keep-section-symbols
 When stripping a file, perhaps with @option{--strip-debug} or
 @option{--strip-unneeded}, retain any symbols specifying section names,
 which would otherwise get stripped.
@@ -2129,10 +2140,17 @@ for dlls.
 [This option is specific to PE targets.]
 
 @item --section-alignment @var{num}
-Sets the section alignment field in the PE header.  Sections in memory
-will always begin at addresses which are a multiple of this number.
-Defaults to 0x1000.
 [This option is specific to PE targets.]
+
+Sets the section alignment field in the PE header - if one is present
+in the binary.  Sections in memory will always begin at addresses
+which are a multiple of this number.  Defaults to 0x1000.
+
+Note - if a section's LMA or VMA addresses are no longer aligned, and
+those addresses have not been set via the @option{--set-section-lma} or
+@option{--set-section-vma} options, and the file has been fully
+relocated then a warning message will be issued.  It will then be up
+to the user to decide if the LMA and VMA need updating.
 
 @item --stack @var{reserve}
 @itemx --stack @var{reserve},@var{commit}
@@ -2411,11 +2429,11 @@ with ctags tool.
 Display the assembler mnemonics for the machine instructions from the
 input file.  This option only disassembles those sections which are 
 expected to contain instructions.  If the optional @var{symbol}
-argument is given, then display the assembler mnemonics starting at
-@var{symbol}.  If @var{symbol} is a function name then disassembly
-will stop at the end of the function, otherwise it will stop when the
-next symbol is encountered.  If there are no matches for @var{symbol}
-then nothing will be displayed.
+argument is given (perhaps multiple times), then display the assembler
+mnemonics starting at (all the) @var{symbol}.  If @var{symbol} is a
+function name then disassembly will stop at the end of the function,
+otherwise it will stop when the next symbol is encountered.  If there
+are no matches for any @var{symbol} then nothing will be displayed.
 
 Note if the @option{--dwarf=follow-links} option is enabled
 then any symbol tables in linked debug info files will be read in and
@@ -2662,11 +2680,12 @@ rather than @code{li}.  All of the @option{-m} arguments for
 @option{e300}, @option{e500}, @option{e500mc}, @option{e500mc64},
 @option{e500x2}, @option{e5500}, @option{e6500}, @option{efs},
 @option{power4}, @option{power5}, @option{power6}, @option{power7},
-@option{power8}, @option{power9}, @option{power10}, @option{ppc},
-@option{ppc32}, @option{ppc64}, @option{ppc64bridge}, @option{ppcps},
-@option{pwr}, @option{pwr2}, @option{pwr4}, @option{pwr5}, @option{pwr5x},
-@option{pwr6}, @option{pwr7}, @option{pwr8}, @option{pwr9}, @option{pwr10},
-@option{pwrx}, @option{titan}, @option{vle}, and @option{future}.
+@option{power8}, @option{power9}, @option{power10}, @option{power11},
+@option{ppc}, @option{ppc32}, @option{ppc64}, @option{ppc64bridge},
+@option{ppcps}, @option{pwr}, @option{pwr2}, @option{pwr4}, @option{pwr5},
+@option{pwr5x}, @option{pwr6}, @option{pwr7}, @option{pwr8}, @option{pwr9},
+@option{pwr10}, @option{pwr11}, @option{pwrx}, @option{titan}, @option{vle},
+and @option{future}.
 @option{32} and @option{64} modify the default or a prior CPU
 selection, disabling and enabling 64-bit insns respectively.  In
 addition, @option{altivec}, @option{any}, @option{lsp}, @option{htm},
@@ -2678,6 +2697,31 @@ different arguments, you may not see the disassembly you expect.
 If you disassemble without giving a CPU selection, a default will be
 chosen from information gleaned by BFD from the object files headers,
 but the result again may not be as you expect.
+
+For RISC-V, the following options are supported:
+
+@table @code
+@item max
+Disassemble without checking architecture string. This is a best effort mode, so
+for overlapping ISA extensions the first match (possibly incorrect in a given
+context) will be used to decode the instruction. It's useful, if the ELF file
+doesn't expose ISA string, preventing automatic ISA subset deduction, and the
+default fallback ISA string (@code{rv64gc}) doesn't cover all instructions in
+the binary.
+
+@item numeric
+Print numeric register names, rather than ABI names (e.g., print @code{x2}
+instead of @code{sp}).
+
+@item no-aliases
+Disassemble only into canonical instructions. For example, compressed
+instructions will be represented as such (@code{addi sp,sp,-128} will be
+@code{c.addi16sp sp,-128}).
+
+@item priv-spec=@var{SPEC}
+Print the CSR according to the chosen privilege spec version (e.g.,
+@code{1.10}, @code{1.11}, @code{1.12}, @code{1.13}).
+@end table
 
 For MIPS, this option controls the printing of instruction mnemonic
 names and register names in disassembled instructions.  Multiple
@@ -2795,6 +2839,9 @@ libraries.  As for @option{-r}, if used with @option{-d} or
 @option{-D}, the relocations are printed interspersed with the
 disassembly.
 
+Note: @command{objdump} does not support displaying RELR type
+relocations.  These can be displayed by the @command{readelf} program.
+
 @item -s
 @itemx --full-contents
 @cindex sections, full contents
@@ -2864,7 +2911,7 @@ after it has previously been enabled then use
 @item --disassembler-color=off
 @itemx --disassembler-color=terminal
 @itemx --disassembler-color=on|color|colour
-@itemx --disassembler-color=extened|extended-color|extened-colour
+@itemx --disassembler-color=extended|extended-color|extended-colour
 Enables or disables the use of colored syntax highlighting in
 disassembly output.  The default behaviour is determined via a
 configure time option.  Note, not all architectures support colored
@@ -3519,6 +3566,7 @@ strip [@option{-F} @var{bfdname} |@option{--target=}@var{bfdname}]
       [@option{--keep-section-symbols}]
       [@option{--keep-file-symbols}]
       [@option{--only-keep-debug}]
+      [@option{--plugin} @var{name}]
       [@option{-v} |@option{--verbose}] [@option{-V}|@option{--version}]
       [@option{--help}] [@option{--info}]
       @var{objfile}@dots{}
@@ -3777,6 +3825,26 @@ information may be incomplete.  Besides the gnu_debuglink feature
 currently only supports the presence of one filename containing
 debugging information, not multiple filenames on a one-per-object-file
 basis.
+
+@item --plugin @var{name}
+@cindex plugins
+Load the plugin called @var{name} to add support for extra target
+types.  This option is only available if the toolchain has been built
+with plugin support enabled.
+
+If @option{--plugin} is not provided, but plugin support has been
+enabled then @command{strip} iterates over the files in
+@file{$@{libdir@}/bfd-plugins} in alphabetic order and the first
+plugin that claims the object in question is used.
+
+Please note that this plugin search directory is @emph{not} the one
+used by @command{ld}'s @option{-plugin} option.  In order to make
+@command{strip} use the  linker plugin it must be copied into the
+@file{$@{libdir@}/bfd-plugins} directory.  For GCC based compilations
+the linker plugin is called @file{liblto_plugin.so.0.0.0}.  For Clang
+based compilations it is called @file{LLVMgold.so}.  The GCC plugin
+is always backwards compatible with earlier versions, so it is
+sufficient to just copy the newest one.
 
 @item -V
 @itemx --version
@@ -4990,6 +5058,7 @@ readelf [@option{-a}|@option{--all}]
         [@option{-x} <number or name>|@option{--hex-dump=}<number or name>]
         [@option{-p} <number or name>|@option{--string-dump=}<number or name>]
         [@option{-R} <number or name>|@option{--relocated-dump=}<number or name>]
+        [@option{-j} <number or name>|@option{--display-section=}<number or name>]
         [@option{-z}|@option{--decompress}]
         [@option{-c}|@option{--archive-index}]
         [@option{-w[lLiaprmfFsoORtUuTgAck]}|
@@ -5248,6 +5317,8 @@ displayed.
 Displays the contents of the indicated section as a hexadecimal bytes.
 A number identifies a particular section by index in the section table;
 any other string identifies all sections with that name in the object file.
+This option can be repeated multiple times on the command line in
+order to request multiple hex dumps.
 
 @item -R <number or name>
 @itemx --relocated-dump=<number or name>
@@ -5256,12 +5327,31 @@ bytes.  A number identifies a particular section by index in the
 section table; any other string identifies all sections with that name
 in the object file.  The contents of the section will be relocated
 before they are displayed.
+This option can be repeated multiple times on the command line in
+order to request multiple relocated dumps.
 
 @item -p <number or name>
 @itemx --string-dump=<number or name>
 Displays the contents of the indicated section as printable strings.
 A number identifies a particular section by index in the section table;
 any other string identifies all sections with that name in the object file.
+This option can be repeated multiple times on the command line in
+order to request multiple string dumps.
+
+@item -j <number or name>
+@itemx --display-section
+Displays the contents of the indicated section according to its
+section header type.  Sections containing relocations will be
+displayed as if the @option{--relocations} option had been used,
+sections contains symbols will be displayed as if the @option{--syms}
+option had been used and so on.
+
+A number identifies a particular section by index in the section
+table; any other string identifies all sections with that name in the
+input file(s).
+
+This option can be repeated multiple times on the command line in
+order to request multiple section dumps.
 
 @item -z
 @itemx --decompress

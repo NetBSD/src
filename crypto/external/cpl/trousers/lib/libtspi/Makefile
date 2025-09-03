@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2023/09/04 18:12:46 riastradh Exp $
+# $NetBSD: Makefile,v 1.6 2025/07/14 10:25:51 kre Exp $
 .include "../Makefile.inc"
 
 CPPFLAGS+=-DAPPID=\"TSPI\" -DVAR_PREFIX=\"/var\" -DETC_PREFIX=\"/etc\"
@@ -22,12 +22,12 @@ COPTS.rsa.c+=	-Wno-error=deprecated-declarations # openssl3 RSA_*
 
 TSPI=${DIST}/src/tspi 
 TRSPI=${DIST}/src/trspi 
-.PATH.c: ${TSPI} ${TSPI}/rpc ${TSPI}/rpc/tcstp ${TSPI}/ps ${TRSPI} ${TRSPI}/crypto/${EXTERNAL_OPENSSL_SUBDIR}
+.PATH.c: ${TSPI} ${TSPI}/rpc ${TSPI}/rpc/tcstp ${TSPI}/ps ${TRSPI} ${TRSPI}/crypto/openssl
 
 SHLIB_MAJOR=4
 SHLIB_MINOR=0
 
-LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
+LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 LIB=tspi
 SRCS=\
 hosttable.c \

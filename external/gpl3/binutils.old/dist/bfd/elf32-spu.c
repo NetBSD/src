@@ -1,6 +1,6 @@
 /* SPU specific support for 32-bit ELF
 
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -286,7 +286,8 @@ spu_elf_object_p (bfd *abfd)
 	      {
 		Elf_Internal_Shdr *shdr = elf_elfsections (abfd)[j];
 
-		if (ELF_SECTION_SIZE (shdr, phdr) != 0
+		if (shdr->bfd_section != NULL
+		    && ELF_SECTION_SIZE (shdr, phdr) != 0
 		    && ELF_SECTION_IN_SEGMENT (shdr, phdr))
 		  {
 		    asection *sec = shdr->bfd_section;

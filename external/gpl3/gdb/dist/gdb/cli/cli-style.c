@@ -91,6 +91,10 @@ cli_style_option title_style ("title", ui_file_style::BOLD);
 
 /* See cli-style.h.  */
 
+cli_style_option command_style ("command", ui_file_style::BOLD);
+
+/* See cli-style.h.  */
+
 cli_style_option tui_border_style ("tui-border", ui_file_style::CYAN);
 
 /* See cli-style.h.  */
@@ -123,6 +127,10 @@ cli_style_option disasm_immediate_style ("immediate", ui_file_style::BLUE);
 
 cli_style_option disasm_comment_style ("comment", ui_file_style::WHITE,
 				       ui_file_style::DIM);
+
+/* See cli-style.h.  */
+
+cli_style_option line_number_style ("line-number", ui_file_style::DIM);
 
 /* See cli-style.h.  */
 
@@ -435,6 +443,13 @@ readability."),
 				    &style_set_list, &style_show_list,
 				    false);
 
+  command_style.add_setshow_commands (no_class, _("\
+Command display styling.\n\
+Configure the colors and display intensity for GDB commands mentioned\n\
+in the output."),
+				      &style_set_list, &style_show_list,
+				      false);
+
   highlight_style.add_setshow_commands (no_class, _("\
 Highlight display styling.\n\
 Configure highlight colors and display intensity\n\
@@ -528,6 +543,14 @@ then this style has no effect."),
 					     &style_disasm_set_list,
 					     &style_disasm_show_list,
 					     false);
+
+  line_number_style.add_setshow_commands (no_class, _("\
+Line number display styling.\n\
+Configure colors and display intensity for line numbers\n\
+The \"line-number\" style is used when GDB displays line numbers\n\
+coming from your source code."),
+				       &style_set_list, &style_show_list,
+				       false);
 
   /* Setup 'disassembler address' style and 'disassembler symbol' style,
      these are aliases for 'address' and 'function' styles respectively.  */

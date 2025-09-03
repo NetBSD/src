@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179 2024/12/20 23:49:32 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.180 2025/06/27 21:36:25 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179 2024/12/20 23:49:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180 2025/06/27 21:36:25 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1562,7 +1562,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * and either reserve them or clear them out.
 	 * -- but first, init PMEG management.
 	 * This puts all PMEGs in the free list.
-	 * We will allocte the in-use ones.
+	 * We will allocate the in-use ones.
 	 */
 	pmeg_init();
 

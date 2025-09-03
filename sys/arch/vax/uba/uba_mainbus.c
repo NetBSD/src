@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_mainbus.c,v 1.14 2017/05/22 17:15:45 ragge Exp $	   */
+/*	$NetBSD: uba_mainbus.c,v 1.15 2025/07/14 12:38:11 hans Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.14 2017/05/22 17:15:45 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.15 2025/07/14 12:38:11 hans Exp $");
 
 #define _VAX_BUS_DMA_PRIVATE
 
@@ -119,7 +119,7 @@ qba_attach(device_t parent, device_t self, void *aux)
 	vaddr_t vaddr;
 	int *mapp;
 	int pgnum;
-	//int val;
+	int val;
 	int start;
 
 	aprint_normal(": Q22\n");
@@ -142,30 +142,30 @@ qba_attach(device_t parent, device_t self, void *aux)
 	uba_dma_init(sc);
 
 	mapp = (int *)vax_map_physmem(QBAMAP, QBASIZE/VAX_NBPG);
-	//val = 0;
-	
+	val = 0;
+
 	for (paddr = QBAMEM, pgnum = 0, start = -1;
 	     paddr < QBAMEM + QBASIZE - 8192;
 	     paddr += VAX_NBPG, pgnum += 1) {
-		//val = mapp[pgnum];
+		val = mapp[pgnum];
 		mapp[pgnum] = 0;
 		vaddr = vax_map_physmem(paddr, 1);
 		if (badaddr((void *)vaddr, 2) == 0) {
 			if (start < 0)
 				start = pgnum;
 		} else if (start >= 0) {
-			aprint_normal("sgmap exclusion at %#x - %#x\n", 
+			aprint_normal("sgmap exclusion at %#x - %#x\n",
 			    start*VAX_NBPG, pgnum*VAX_NBPG - 1);
 			vax_sgmap_reserve(start*VAX_NBPG,
 			    (pgnum - start)*VAX_NBPG, &sc->uv_sgmap);
 			start = -1;
 		}
 		vax_unmap_physmem(vaddr, 1);
-		//mapp[pgnum] = val;
+		mapp[pgnum] = val;
 	}
 	vax_unmap_physmem((vaddr_t)mapp, QBASIZE/VAX_NBPG);
 	if (start >= 0) {
-		aprint_normal("sgmap exclusion at %#x - %#x\n", 
+		aprint_normal("sgmap exclusion at %#x - %#x\n",
 		    start*VAX_NBPG, pgnum*VAX_NBPG - 1);
 		vax_sgmap_reserve(start*VAX_NBPG, (pgnum - start)*VAX_NBPG,
 		    &sc->uv_sgmap);

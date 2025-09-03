@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.14 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.15 2025/07/17 19:01:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1377,9 +1377,10 @@ dns_zone_getredirecttype(dns_zone_t *zone);
  */
 
 void
-dns_zone_notify(dns_zone_t *zone);
+dns_zone_notify(dns_zone_t *zone, bool nodefer);
 /*%<
- * Generate notify events for this zone.
+ * Generate notify events for this zone. If 'nodefer' is true, the
+ * 'notify-defer' configuration option is ingored.
  *
  * Requires:
  *\li	'zone' to be a valid zone.
@@ -1756,6 +1757,20 @@ dns_zone_findkeys(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver,
  * Returns:
  *\li	#ISC_R_SUCCESS
  *\li	Error
+ */
+
+void
+dns_zone_prepare_shutdown(dns_zone_t *zone);
+/*%<
+ * Prepare a zone for shutdown by setting the DNS_ZONEFLG_EXITING flag even
+ * before the final reference is detached. Useful, because the zone object can
+ * be kept around with a valid reference from the zonetable until qp garbage
+ * collector runs, and we don't want, for example, zone maintenance to happen
+ * while waiting for it. Note that the zone can not be used normally again after
+ * this function is called.
+ *
+ * Requires:
+ *\li	'zone' to be a valid initialised zone.
  */
 
 void
@@ -2236,18 +2251,19 @@ dns_zone_setcheckns(dns_zone_t *zone, dns_checknsfunc_t checkns);
  */
 
 void
-dns_zone_setnotifydelay(dns_zone_t *zone, uint32_t delay);
+dns_zone_setnotifydefer(dns_zone_t *zone, uint32_t defer);
 /*%<
- * Set the minimum delay between sets of notify messages.
+ * Set the wait/defer time (in seconds) before notify messages are sent when
+ * they are ready.
  *
  * Requires:
  *	'zone' to be valid.
  */
 
-uint32_t
-dns_zone_getnotifydelay(dns_zone_t *zone);
+void
+dns_zone_setnotifydelay(dns_zone_t *zone, uint32_t delay);
 /*%<
- * Get the minimum delay between sets of notify messages.
+ * Set the minimum delay (in seconds) between sets of notify messages.
  *
  * Requires:
  *	'zone' to be valid.

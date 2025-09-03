@@ -447,7 +447,7 @@ rndc_dumpdb() {
   __ret=0
   __dump_complete=0
   __server="${1}"
-  __ip="10.53.0.$(echo "${__server}" | tr -c -d "0-9")"
+  __ip="10.53.0.$(echo "${__server}" | tr -c -d '[:digit:]')"
 
   shift
   ${RNDC} -c ../_common/rndc.conf -p "${CONTROLPORT}" -s "${__ip}" dumpdb "$@" >"rndc.out.test${n}" 2>&1 || __ret=1

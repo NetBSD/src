@@ -16,6 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "gdbsupport/tdesc.h"
+#include "gdbsupport/osabi.h"
 #include "tic6x.h"
 
 #include "../features/tic6x-core.c"
@@ -30,7 +31,7 @@ tic6x_create_target_description (enum c6x_feature feature)
   target_desc_up tdesc = allocate_target_description ();
 
   set_tdesc_architecture (tdesc.get (), "tic6x");
-  set_tdesc_osabi (tdesc.get (), "GNU/Linux");
+  set_tdesc_osabi (tdesc.get (), GDB_OSABI_LINUX);
 
   long regnum = 0;
 

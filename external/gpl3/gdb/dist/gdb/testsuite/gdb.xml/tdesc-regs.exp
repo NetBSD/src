@@ -45,9 +45,6 @@ switch -glob -- [istarget] {
     "nds32*-*-*" {
 	set core-regs {nds32-core.xml}
     }
-    "nios2-*-*" {
-	set core-regs {nios2-cpu.xml}
-    }
     "or1k-*-*" {
 	set core-regs {or1k-core.xml}
     }
@@ -80,21 +77,38 @@ switch -glob -- [istarget] {
 	set regdir "i386/"
         set core-regs {64bit-core.xml 64bit-sse.xml}
     }
+    "riscv64*-*-*" {
+       set architecture "riscv:rv64"
+       set regdir "riscv/"
+       set core-regs 64bit-cpu.xml
+    }
 }
-
-# If no core registers were specified, assume this target does not
-# support target-defined registers.  Verify that we get a warning if
-# we try to use them.  This not only tests the warning, but also
-# reminds maintainers to add test support when they add the feature.
 
 set single_reg_xml [gdb_remote_download host  \
 			"$srcdir/$subdir/single-reg.xml"]
 
 if {[string equal ${core-regs} ""]} {
-    gdb_test "set tdesc file $single_reg_xml" \
-	"warning: Target-supplied registers are not supported.*" \
-	"set tdesc file single-reg.xml"
-    unsupported "register tests"
+    set test "set tdesc file single-reg.xml"
+    set feature_unsupported 0
+    set feature_test_unsupported 0
+    gdb_test_multiple "set tdesc file $single_reg_xml" $test {
+	-re -wrap "warning: Target-supplied registers are not supported" {
+	    set feature_unsupported 1
+	    pass $gdb_test_name
+	}
+	-re -wrap "warning: Architecture rejected target-supplied description" {
+	    set feature_test_unsupported 1
+	    pass $gdb_test_name
+	}
+    }
+
+    if { $feature_unsupported } {
+	unsupported "register tests"
+    } elseif { $feature_test_unsupported } {
+	# Remind maintainers to add test support.
+	unsupported "register tests (missing architecture-specific core-regs setting)"
+    }
+
     return 0
 }
 
@@ -178,7 +192,7 @@ gdb_test "ptype \$mixed_flags" \
     "type = flag mixed_flags {\r\n *bool A @0;\r\n *uint32_t B @1-3;\r\n *bool C @4;\r\n *uint32_t D @5;\r\n *uint32_t @6-7;\r\n *enum Z_values {yes = 1, no = 0, maybe = 2, so} Z @8-9;\r\n}"
 # Reggroups should have at least general and the extra foo group
 gdb_test "maintenance print reggroups" \
-    " Group\[ \t\]+Type\[ \t\]+\r\n.* general\[ \t\]+user\[ \t\]+\r\n.* foo\[ \t\]+user\[ \t\]+"
+    "Group\[ \t\]+Type\[ \t\]+\r\n.*general\[ \t\]+user\[ \t\]+\r\n.*foo\[ \t\]+user\[ \t\]+"
 
 with_test_prefix "core-only.xml" {
     load_description "core-only.xml" "" "test-regs.xml"

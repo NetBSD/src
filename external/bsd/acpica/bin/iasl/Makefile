@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2022/12/10 17:41:05 christos Exp $
+# $NetBSD: Makefile,v 1.29 2025/08/28 15:46:22 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -355,3 +355,15 @@ CLEANFILES+=	aslcompilerparse.y  aslcompilerparse.c			\
 
 ${__DPSRCS.d} ${OBJS}: prparser.y.h dtparser.y.h aslcompiler.y.h \
 	dtcompilerparser.y.h
+
+# ia64 compiler bug. acpi_table_header pointer is casted to ACPI_TABLE_RSDP
+# both structures have a Signature member,
+# sizeof(acpi_table_header->Signature) == 4
+# sizeof(ACPI_TABLE_RSDP->Signature) == 8
+# the compiler knows that it is 8 after the cast because a 
+# __CTASSERT(sizeof(ACPI_CAST_PTR (ACPI_TABLE_RSDP, Table)->Signature) == 8);
+# works, but then gets confused and thinks that we are trying to copy into 4.
+.if ${MACHINE} == "ia64"
+COPTS.dmtable.c += -Wno-error=stringop-overread
+COPTS.tbprint.c += -Wno-error=stringop-overread
+.endif

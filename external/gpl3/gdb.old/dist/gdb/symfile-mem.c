@@ -1,6 +1,6 @@
 /* Reading symbol files from memory.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,11 +41,10 @@
    entry point.  */
 
 
-#include "defs.h"
 #include "symtab.h"
 #include "gdbcore.h"
 #include "objfiles.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "target.h"
 #include "value.h"
 #include "symfile.h"
@@ -58,9 +57,9 @@
 /* Verify parameters of target_read_memory_bfd and target_read_memory are
    compatible.  */
 
-gdb_static_assert (sizeof (CORE_ADDR) >= sizeof (bfd_vma));
-gdb_static_assert (sizeof (gdb_byte) == sizeof (bfd_byte));
-gdb_static_assert (sizeof (ssize_t) <= sizeof (bfd_size_type));
+static_assert (sizeof (CORE_ADDR) >= sizeof (bfd_vma));
+static_assert (sizeof (gdb_byte) == sizeof (bfd_byte));
+static_assert (sizeof (ssize_t) <= sizeof (bfd_size_type));
 
 /* Provide bfd/ compatible prototype for target_read_memory.  Casting would not
    be enough as LEN width may differ.  */
@@ -162,13 +161,13 @@ add_vsyscall_page (inferior *inf)
 {
   struct mem_range vsyscall_range;
 
-  if (gdbarch_vsyscall_range (inf->gdbarch, &vsyscall_range))
+  if (gdbarch_vsyscall_range (inf->arch (), &vsyscall_range))
     {
       struct bfd *bfd;
 
-      if (core_bfd != NULL)
-	bfd = core_bfd;
-      else if (current_program_space->exec_bfd () != NULL)
+      if (current_program_space->core_bfd () != nullptr)
+	bfd = current_program_space->core_bfd ();
+      else if (current_program_space->exec_bfd () != nullptr)
 	bfd = current_program_space->exec_bfd ();
       else
        /* FIXME: cagney/2004-05-06: Should not require an existing
@@ -184,7 +183,7 @@ add_vsyscall_page (inferior *inf)
 	}
 
       std::string name = string_printf ("system-supplied DSO at %s",
-					paddress (target_gdbarch (),
+					paddress (current_inferior ()->arch (),
 						  vsyscall_range.start));
       try
 	{
@@ -197,7 +196,7 @@ add_vsyscall_page (inferior *inf)
 				       name.c_str (),
 				       0 /* from_tty */);
 	}
-      catch (const gdb_exception &ex)
+      catch (const gdb_exception_error &ex)
 	{
 	  exception_print (gdb_stderr, ex);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_test.c,v 1.3 2025/01/26 16:25:47 christos Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.4 2025/07/17 19:01:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -79,7 +79,7 @@ sig_fromfile(const char *path, isc_buffer_t *buf) {
 	result = isc_file_getsizefd(fileno(fp), &size);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	data = isc_mem_get(mctx, (size + 1));
+	data = isc_mem_get(mctx, size + 1);
 	assert_non_null(data);
 
 	len = (size_t)size;
@@ -160,7 +160,7 @@ check_sig(const char *datapath, const char *sigpath, const char *keyname,
 	result = isc_file_getsizefd(fileno(fp), &size);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	data = isc_mem_get(mctx, (size + 1));
+	data = isc_mem_get(mctx, size + 1);
 	assert_non_null(data);
 
 	p = data;

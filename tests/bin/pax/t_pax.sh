@@ -1,4 +1,4 @@
-# $NetBSD: t_pax.sh,v 1.7 2024/08/05 06:03:54 riastradh Exp $
+# $NetBSD: t_pax.sh,v 1.9 2025/08/19 13:44:24 christos Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.

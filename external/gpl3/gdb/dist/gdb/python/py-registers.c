@@ -430,35 +430,22 @@ static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_registers ()
 {
   register_descriptor_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&register_descriptor_object_type) < 0)
-    return -1;
-  if (gdb_pymodule_addobject
-      (gdb_module, "RegisterDescriptor",
-       (PyObject *) &register_descriptor_object_type) < 0)
+  if (gdbpy_type_ready (&register_descriptor_object_type) < 0)
     return -1;
 
   reggroup_iterator_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&reggroup_iterator_object_type) < 0)
-    return -1;
-  if (gdb_pymodule_addobject
-      (gdb_module, "RegisterGroupsIterator",
-       (PyObject *) &reggroup_iterator_object_type) < 0)
+  if (gdbpy_type_ready (&reggroup_iterator_object_type) < 0)
     return -1;
 
   reggroup_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&reggroup_object_type) < 0)
-    return -1;
-  if (gdb_pymodule_addobject
-      (gdb_module, "RegisterGroup",
-       (PyObject *) &reggroup_object_type) < 0)
+  if (gdbpy_type_ready (&reggroup_object_type) < 0)
     return -1;
 
   register_descriptor_iterator_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&register_descriptor_iterator_object_type) < 0)
+  if (gdbpy_type_ready (&register_descriptor_iterator_object_type) < 0)
     return -1;
-  return (gdb_pymodule_addobject
-	  (gdb_module, "RegisterDescriptorIterator",
-	   (PyObject *) &register_descriptor_iterator_object_type));
+
+  return 0;
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_registers);

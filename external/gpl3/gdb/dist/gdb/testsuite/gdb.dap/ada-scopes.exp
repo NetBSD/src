@@ -29,6 +29,8 @@ if {[dap_initialize] == ""} {
     return
 }
 
+set launch_id [dap_launch $testfile]
+
 set line [gdb_get_line_number "STOP"]
 set obj [dap_check_request_and_response "set breakpoint" \
 	     setBreakpoints \
@@ -39,9 +41,8 @@ set fn_bpno [dap_get_breakpoint_number $obj]
 
 dap_check_request_and_response "configurationDone" configurationDone
 
-if {[dap_launch $binfile] == ""} {
-    return
-}
+dap_check_response "launch response" launch $launch_id
+
 dap_wait_for_event_and_check "stopped at breakpoint" stopped \
     "body reason" breakpoint \
     "body hitBreakpointIds" $fn_bpno
@@ -59,6 +60,7 @@ set scopes [dict get [lindex $scopes 0] body scopes]
 # just in case something changes.
 lassign $scopes scope _ignore
 gdb_assert {[dict get $scope name] == "Locals"} "scope is locals"
+gdb_assert {[dict get $scope source name] == "prog.adb"} "scope has source"
 
 gdb_assert {[dict get $scope namedVariables] == 2} "two vars in scope"
 

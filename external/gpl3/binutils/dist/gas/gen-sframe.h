@@ -1,5 +1,5 @@
 /* gen-sframe.h - Support for generating SFrame.
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -23,6 +23,8 @@
 
 #define SFRAME_FRE_ELEM_LOC_REG		0
 #define SFRAME_FRE_ELEM_LOC_STACK	1
+
+#define SFRAME_FRE_BASE_REG_INVAL	((unsigned int)-1)
 
 /* SFrame Frame Row Entry (FRE).
 
@@ -132,10 +134,6 @@ enum sframe_xlate_err
 unsigned char
 sframe_get_abi_arch_callback (const char *target_arch,
 			      int big_endian_p);
-
-/* The list of all FDEs with data in SFrame internal representation.  */
-
-extern struct sframe_func_entry *all_sframe_fdes;
 
 /* SFrame version specific operations structure.  */
 

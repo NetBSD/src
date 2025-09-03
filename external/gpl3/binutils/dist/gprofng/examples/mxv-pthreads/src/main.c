@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -28,9 +28,10 @@
 
 #include "mydefs.h"
 
+bool verbose;
+
 int main (int argc, char **argv)
 {
-  bool verbose = false;
 
   thread_data *thread_data_arguments;
   pthread_t   *pthread_ids;
@@ -62,8 +63,7 @@ int main (int argc, char **argv)
 			&number_of_rows,
 			&number_of_columns,
 			&repeat_count,
-			&number_of_threads,
-			&verbose);
+			&number_of_threads);
 
   if (verbose) printf ("Verbose mode enabled\n");
 
@@ -191,11 +191,16 @@ int main (int argc, char **argv)
 * Release the allocated memory and end execution.
 * -----------------------------------------------------------------------------
 */
+  for (int64_t i=0; i<number_of_rows; i++)
+    {
+      free (A[i]);
+    }
   free (A);
   free (b);
   free (c);
   free (ref);
   free (pthread_ids);
+  free (thread_data_arguments);
 
   return (0);
 }
@@ -211,8 +216,7 @@ int get_user_options (int argc, char *argv[],
 		      int64_t *number_of_rows,
 		      int64_t *number_of_columns,
 		      int64_t *repeat_count,
-		      int64_t *number_of_threads,
-		      bool    *verbose)
+		      int64_t *number_of_threads)
 {
   int      opt;
   int      errors		     = 0;
@@ -226,7 +230,7 @@ int get_user_options (int argc, char *argv[],
   *number_of_columns = default_columns;
   *number_of_threads = default_number_of_threads;
   *repeat_count      = default_repeat_count;
-  *verbose	     = default_verbose;
+  verbose	     = default_verbose;
 
   while ((opt = getopt (argc, argv, "m:n:r:t:vh")) != -1)
     {
@@ -245,7 +249,7 @@ int get_user_options (int argc, char *argv[],
 	    *number_of_threads = atol (optarg);
 	    break;
 	  case 'v':
-	    *verbose = true;
+	    verbose = true;
 	    break;
 	  case 'h':
 	  default:
@@ -369,6 +373,8 @@ int64_t check_results (int64_t m, int64_t n, double *c, double *ref)
     for (int64_t i=0; i<m; i++)
       printf ("  %c c[%ld] = %f ref[%ld] = %f\n",marker[i],i,c[i],i,ref[i]);
   }
+
+  free (marker);
 
   return (errors);
 }

@@ -95,7 +95,6 @@ extern int in_queued_stop_replies (ptid_t ptid);
 
 #include "utils.h"
 #include "debug.h"
-#include "gdbsupport/gdb_vecs.h"
 
 /* Maximum number of bytes to read/write at once.  The value here
    is chosen to fill up a packet (the headers account for the 32).  */
@@ -192,6 +191,11 @@ struct client_state
   /* If true, memory tagging features are supported.  */
   bool memory_tagging_feature = false;
 
+  /* If true then E.errtext style errors are supported everywhere,
+     including for the qRcmd and m packet.  When false E.errtext errors
+     are not supported with qRcmd and m packets, but are still supported
+     everywhere else.  This is for backward compatibility reasons.  */
+  bool error_message_supported = false;
 };
 
 client_state &get_client_state ();

@@ -42,7 +42,7 @@ func1 (void *ptr)
 
 /* Finds and returns an invalid pointer, mmaps in a page, grabs a pointer
    to it then unmaps the page again.  This is almost certainly "undefined"
-   behaviour, but should be good enough for this small test program.  */
+   behavior, but should be good enough for this small test program.  */
 
 static void *
 make_invalid_ptr (void)

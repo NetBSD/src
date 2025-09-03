@@ -1,5 +1,5 @@
 /* hash.h -- header file for gas hash table routines
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -24,7 +24,7 @@
 struct string_tuple
 {
   const char *key;
-  const void *value;
+  intptr_t value;
 };
 
 typedef struct string_tuple string_tuple_t;
@@ -50,7 +50,7 @@ extern void htab_print_statistics (FILE *f, const char *name, htab_t table);
 /* Inline string hash table functions.  */
 
 static inline string_tuple_t *
-string_tuple_alloc (htab_t table, const char *key, const void *value)
+string_tuple_alloc (htab_t table, const char *key, intptr_t value)
 {
   string_tuple_t *tuple = table->alloc_f (1, sizeof (*tuple));
   tuple->key = key;
@@ -61,9 +61,17 @@ string_tuple_alloc (htab_t table, const char *key, const void *value)
 static inline void *
 str_hash_find (htab_t table, const char *key)
 {
-  string_tuple_t needle = { key, NULL };
+  string_tuple_t needle = { key, 0 };
   string_tuple_t *tuple = htab_find (table, &needle);
   return tuple != NULL ? (void *) tuple->value : NULL;
+}
+
+static inline intptr_t
+str_hash_find_int (htab_t table, const char *key)
+{
+  string_tuple_t needle = { key, 0 };
+  string_tuple_t *tuple = htab_find (table, &needle);
+  return tuple != NULL ? tuple->value : -1;
 }
 
 static inline void *
@@ -72,7 +80,7 @@ str_hash_find_n (htab_t table, const char *key, size_t n)
   char *tmp = XNEWVEC (char, n + 1);
   memcpy (tmp, key, n);
   tmp[n] = '\0';
-  string_tuple_t needle = { tmp, NULL };
+  string_tuple_t needle = { tmp, 0 };
   string_tuple_t *tuple = htab_find (table, &needle);
   free (tmp);
   return tuple != NULL ? (void *) tuple->value : NULL;
@@ -81,18 +89,24 @@ str_hash_find_n (htab_t table, const char *key, size_t n)
 static inline void
 str_hash_delete (htab_t table, const char *key)
 {
-  string_tuple_t needle = { key, NULL };
+  string_tuple_t needle = { key, 0 };
   htab_remove_elt (table, &needle);
 }
 
 static inline void **
-str_hash_insert (htab_t table, const char *key, const void *value, int replace)
+str_hash_insert_int (htab_t table, const char *key, intptr_t value, int replace)
 {
   string_tuple_t *elt = string_tuple_alloc (table, key, value);
   void **slot = htab_insert (table, elt, replace);
   if (slot && !replace && table->free_f)
     table->free_f (elt);
   return slot;
+}
+
+static inline void **
+str_hash_insert (htab_t table, const char *key, const void *value, int replace)
+{
+  return str_hash_insert_int (table, key, (intptr_t) value, replace);
 }
 
 static inline htab_t

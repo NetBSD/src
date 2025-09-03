@@ -1,19 +1,19 @@
-This is gprof.info, produced by makeinfo version 7.0.2 from gprof.texi.
+This is gprof.info, produced by makeinfo version 7.1.1 from gprof.texi.
 
 This file documents the gprof profiler of the GNU system.
 
-   Copyright © 1988-2024 Free Software Foundation, Inc.
+   Copyright © 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
-Texts.  A copy of the license is included in the section entitled “GNU
-Free Documentation License”.
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
 
 INFO-DIR-SECTION Software development
 START-INFO-DIR-ENTRY
-* gprof: (gprof).                Profiling your program’s execution
+* gprof: (gprof).                Profiling your program's execution
 END-INFO-DIR-ENTRY
 
 
@@ -27,11 +27,11 @@ to determine which parts of a program are taking most of the execution
 time.  We assume that you know how to write, compile, and execute
 programs.  GNU ‘gprof’ was written by Jay Fenlason.
 
-   This manual is for ‘gprof’ (GNU Binutils) version 2.42.
+   This manual is for ‘gprof’ (GNU Binutils) version 2.45.
 
    This document is distributed under the terms of the GNU Free
 Documentation License version 1.3.  A copy of the license is included in
-the section entitled “GNU Free Documentation License”.
+the section entitled "GNU Free Documentation License".
 
 * Menu:
 
@@ -41,7 +41,7 @@ the section entitled “GNU Free Documentation License”.
 * Executing::           Executing your program to generate profile data
 * Invoking::            How to run ‘gprof’, and its options
 
-* Output::              Interpreting ‘gprof’’s output
+* Output::              Interpreting ‘gprof’'s output
 
 * Inaccuracy::          Potential problems you should be aware of
 * How do I?::           Answers to common questions
@@ -67,7 +67,7 @@ bugs that had otherwise been unnoticed.
 execution of your program, it can be used on programs that are too large
 or too complex to analyze by reading the source.  However, how your
 program is run will affect the information that shows up in the profile
-data.  If you don’t use some feature of your program while it is being
+data.  If you don't use some feature of your program while it is being
 profiled, no profile information will be generated for that feature.
 
    Profiling has several steps:
@@ -96,7 +96,7 @@ estimate of how much time was spent in the subroutines of each function.
 This can suggest places where you might try to eliminate function calls
 that use a lot of time.  *Note The Call Graph: Call Graph.
 
-   The “annotated source” listing is a copy of the program’s source
+   The “annotated source” listing is a copy of the program's source
 code, labeled with the number of times each line of the program was
 executed.  *Note The Annotated Source Listing: Annotated Source.
 
@@ -172,7 +172,7 @@ code, which for ‘gcc’ users can be done via the ‘-static’ or
      gcc -g -pg -static-libgcc myprog.c utils.c -o myprog
 
    If you compile only some of the modules of the program with ‘-pg’,
-you can still profile the program, but you won’t get complete
+you can still profile the program, but you won't get complete
 information about the modules that were compiled without ‘-pg’.  The
 only information you get for the functions in those modules is the total
 time spent in them; there is no record of how many times they were
@@ -181,7 +181,7 @@ that the ‘calls’ field for the functions will be blank), but will
 greatly reduce the usefulness of the call graph.
 
    If you wish to perform line-by-line profiling you should use the
-‘gcov’ tool instead of ‘gprof’.  See that tool’s manual or info pages
+‘gcov’ tool instead of ‘gprof’.  See that tool's manual or info pages
 for more details of how to do this.
 
    Note, older versions of ‘gcc’ produce line-by-line profiling
@@ -208,8 +208,8 @@ run normally, producing the same output as usual.  It will, however, run
 somewhat slower than normal because of the time spent collecting and
 writing the profile data.
 
-   The way you run the program—the arguments and input that you give
-it—may have a dramatic effect on what the profile information shows.
+   The way you run the program--the arguments and input that you give
+it--may have a dramatic effect on what the profile information shows.
 The profile data will describe the parts of the program that were
 activated for the particular input you use.  For example, if the first
 command you give to your program is to quit, the profile data will show
@@ -228,17 +228,17 @@ exit normally: by returning from ‘main’ or by calling ‘exit’.  Calling
 the low-level function ‘_exit’ does not write the profile data, and
 neither does abnormal termination due to an unhandled signal.
 
-   The ‘gmon.out’ file is written in the program’s _current working
+   The ‘gmon.out’ file is written in the program's _current working
 directory_ at the time it exits.  This means that if your program calls
 ‘chdir’, the ‘gmon.out’ file will be left in the last directory your
-program ‘chdir’’d to.  If you don’t have permission to write in this
+program ‘chdir’'d to.  If you don't have permission to write in this
 directory, the file is not written, and you will get an error message.
 
    Older versions of the GNU profiling library may also write a file
 called ‘bb.out’.  This file, if present, contains an human-readable
 listing of the basic-block execution counts.  Unfortunately, the
 appearance of a human-readable ‘bb.out’ means the basic-block counts
-didn’t get written into ‘gmon.out’.  The Perl script ‘bbconv.pl’,
+didn't get written into ‘gmon.out’.  The Perl script ‘bbconv.pl’,
 included with the ‘gprof’ source distribution, will convert a ‘bb.out’
 file into a format readable by ‘gprof’.  Invoke it like this:
 
@@ -281,7 +281,7 @@ data files are summed together.
 
 * Menu:
 
-* Output Options::      Controlling ‘gprof’’s output style
+* Output Options::      Controlling ‘gprof’'s output style
 * Analysis Options::    Controlling how ‘gprof’ analyzes its data
 * Miscellaneous Options::
 * Deprecated Options::  Options you no longer need to use, but which
@@ -313,7 +313,7 @@ which prints a flat profile and call graph analysis for all functions.
 
 ‘-b’
 ‘--brief’
-     If the ‘-b’ option is given, ‘gprof’ doesn’t print the verbose
+     If the ‘-b’ option is given, ‘gprof’ doesn't print the verbose
      blurbs that try to explain the meaning of all of the fields in the
      tables.  This is useful if you intend to print out the output, or
      are tired of seeing the blurbs.
@@ -446,7 +446,7 @@ which prints a flat profile and call graph analysis for all functions.
 
 ‘-T’
 ‘--traditional’
-     The ‘-T’ option causes ‘gprof’ to print its output in “traditional”
+     The ‘-T’ option causes ‘gprof’ to print its output in "traditional"
      BSD style.
 
 ‘-w WIDTH’
@@ -460,7 +460,7 @@ which prints a flat profile and call graph analysis for all functions.
      the lines at the beginning of a basic-block are annotated.  If this
      option is specified, every line in a basic-block is annotated by
      repeating the annotation for the first line.  This behavior is
-     similar to ‘tcov’’s ‘-a’.
+     similar to ‘tcov’'s ‘-a’.
 
 ‘--demangle[=STYLE]’
 ‘--no-demangle’
@@ -666,7 +666,7 @@ syntax:
    Here are some sample symspecs:
 
 ‘main.c’
-     Selects everything in file ‘main.c’—the dot in the string tells
+     Selects everything in file ‘main.c’--the dot in the string tells
      ‘gprof’ to interpret the string as a filename, rather than as a
      function name.  To select a file whose name does not contain a dot,
      a trailing colon should be specified.  For example, ‘odd:’ is
@@ -701,7 +701,7 @@ syntax:
 
 File: gprof.info,  Node: Output,  Next: Inaccuracy,  Prev: Invoking,  Up: Top
 
-5 Interpreting ‘gprof’’s Output
+5 Interpreting ‘gprof’'s Output
 *******************************
 
 ‘gprof’ can produce several different output styles, the most important
@@ -731,7 +731,7 @@ The “flat profile” shows the total amount of time your program spent
 executing each function.  Unless the ‘-z’ option is given, functions
 with no apparent time spent in them, and no apparent calls to them, are
 not mentioned.  Note that if a function was not compiled for profiling,
-and didn’t run long enough to show up on the program counter histogram,
+and didn't run long enough to show up on the program counter histogram,
 it will be indistinguishable from a function that was never called.
 
    This is part of a flat profile for a small program:
@@ -768,7 +768,7 @@ much time each sample counted as.  This “sampling period” estimates the
 margin of error in each of the time figures.  A time figure that is not
 much larger than this is not reliable.  In this example, each sample
 counted as 0.01 seconds, suggesting a 100 Hz sampling rate.  The
-program’s total execution time was 0.06 seconds, as indicated by the
+program's total execution time was 0.06 seconds, as indicated by the
 ‘cumulative seconds’ field.  Since each sample counted for 0.01 seconds,
 this means only six samples were taken during the run.  Two of the
 samples occurred while the program was in the ‘open’ function, as
@@ -780,7 +780,7 @@ particularly reliable.  In another run, the ‘self seconds’ field for
 Error: Sampling Error, for a complete discussion.
 
    The remaining functions in the listing (those whose ‘self seconds’
-field is ‘0.00’) didn’t appear in the histogram samples at all.
+field is ‘0.00’) didn't appear in the histogram samples at all.
 However, the call graph indicated that they were called, so therefore
 they are listed, sorted in decreasing order by the ‘calls’ field.
 Clearly some time was spent executing these functions, but the paucity
@@ -885,9 +885,9 @@ Flat Profile.) is never mentioned in the call graph.
 
 * Menu:
 
-* Primary::       Details of the primary line’s contents.
-* Callers::       Details of caller-lines’ contents.
-* Subroutines::   Details of subroutine-lines’ contents.
+* Primary::       Details of the primary line's contents.
+* Callers::       Details of caller-lines' contents.
+* Subroutines::   Details of subroutine-lines' contents.
 * Cycles::        When there are cycles of recursion,
                    such as ‘a’ calls ‘b’ calls ‘a’...
 
@@ -956,7 +956,7 @@ the names of the fields:
      repeated after it.
 
      If the function is part of a cycle of recursion, the cycle number
-     is printed between the function’s name and the index number (*note
+     is printed between the function's name and the index number (*note
      How Mutually Recursive Functions Are Described: Cycles.).  For
      example, if function ‘gnurr’ is part of cycle number one, and has
      index number twelve, its primary line would be end like this:
@@ -966,11 +966,11 @@ the names of the fields:
 
 File: gprof.info,  Node: Callers,  Next: Subroutines,  Prev: Primary,  Up: Call Graph
 
-5.2.2 Lines for a Function’s Callers
+5.2.2 Lines for a Function's Callers
 ------------------------------------
 
-A function’s entry has a line for each function it was called by.  These
-lines’ fields correspond to the fields of the primary line, but their
+A function's entry has a line for each function it was called by.  These
+lines' fields correspond to the fields of the primary line, but their
 meanings are different because of the difference in context.
 
    For reference, we repeat two lines from the entry for the function
@@ -1003,7 +1003,7 @@ called from ‘main’:
 
 ‘name and index number’
      The name of the caller of ‘report’ to which this line applies,
-     followed by the caller’s index number.
+     followed by the caller's index number.
 
      Not all functions have entries in the call graph; some options to
      ‘gprof’ request the omission of certain functions.  When a caller
@@ -1014,17 +1014,17 @@ called from ‘main’:
      printed between the name and the index number.
 
    If the identity of the callers of a function cannot be determined, a
-dummy caller-line is printed which has ‘<spontaneous>’ as the “caller’s
-name” and all other fields blank.  This can happen for signal handlers.
+dummy caller-line is printed which has ‘<spontaneous>’ as the "caller's
+name" and all other fields blank.  This can happen for signal handlers.
 
 
 File: gprof.info,  Node: Subroutines,  Next: Cycles,  Prev: Callers,  Up: Call Graph
 
-5.2.3 Lines for a Function’s Subroutines
+5.2.3 Lines for a Function's Subroutines
 ----------------------------------------
 
-A function’s entry has a line for each of its subroutines—in other
-words, a line for each other function that it called.  These lines’
+A function's entry has a line for each of its subroutines--in other
+words, a line for each other function that it called.  These lines'
 fields correspond to the fields of the primary line, but their meanings
 are different because of the difference in context.
 
@@ -1054,13 +1054,13 @@ calling ‘report’:
 ‘called’
      Two numbers, the number of calls to ‘report’ from ‘main’ followed
      by the total number of non-recursive calls to ‘report’.  This ratio
-     is used to determine how much of ‘report’’s ‘self’ and ‘children’
+     is used to determine how much of ‘report’'s ‘self’ and ‘children’
      time gets credited to ‘main’.  *Note Estimating ‘children’ Times:
      Assumptions.
 
 ‘name’
      The name of the subroutine of ‘main’ to which this line applies,
-     followed by the subroutine’s index number.
+     followed by the subroutine's index number.
 
      If the caller is part of a recursion cycle, the cycle number is
      printed between the name and the index number.
@@ -1088,18 +1088,18 @@ belongs to a cycle, each time the function name appears in the call
 graph it is followed by ‘<cycle NUMBER>’.
 
    The reason cycles matter is that they make the time values in the
-call graph paradoxical.  The “time spent in children” of ‘a’ should
-include the time spent in its subroutine ‘b’ and in ‘b’’s
-subroutines—but one of ‘b’’s subroutines is ‘a’!  How much of ‘a’’s time
-should be included in the children of ‘a’, when ‘a’ is indirectly
+call graph paradoxical.  The "time spent in children" of ‘a’ should
+include the time spent in its subroutine ‘b’ and in ‘b’'s
+subroutines--but one of ‘b’'s subroutines is ‘a’!  How much of ‘a’'s
+time should be included in the children of ‘a’, when ‘a’ is indirectly
 recursive?
 
    The way ‘gprof’ resolves this paradox is by creating a single entry
 for the cycle as a whole.  The primary line of this entry describes the
 total time spent directly in the functions of the cycle.  The
-“subroutines” of the cycle are the individual functions of the cycle,
+"subroutines" of the cycle are the individual functions of the cycle,
 and all other functions that were called directly by them.  The
-“callers” of the cycle are the functions, outside the cycle, that called
+"callers" of the cycle are the functions, outside the cycle, that called
 functions in the cycle.
 
    Here is an example portion of a call graph which shows a cycle
@@ -1160,19 +1160,19 @@ for ‘main’, which calls ‘a’, and an entry for ‘c’, with callers ‘a
      [6]      0.00       0        0    6      c [6]
      ----------------------------------------
 
-   The ‘self’ field of the cycle’s primary line is the total time spent
+   The ‘self’ field of the cycle's primary line is the total time spent
 in all the functions of the cycle.  It equals the sum of the ‘self’
 fields for the individual functions in the cycle, found in the entry in
 the subroutine lines for these functions.
 
-   The ‘children’ fields of the cycle’s primary line and subroutine
+   The ‘children’ fields of the cycle's primary line and subroutine
 lines count only subroutines outside the cycle.  Even though ‘a’ calls
-‘b’, the time spent in those calls to ‘b’ is not counted in ‘a’’s
+‘b’, the time spent in those calls to ‘b’ is not counted in ‘a’'s
 ‘children’ time.  Thus, we do not encounter the problem of what to do
 when the time in those calls to ‘b’ includes indirect recursive calls
 back to ‘a’.
 
-   The ‘children’ field of a caller-line in the cycle’s entry estimates
+   The ‘children’ field of a caller-line in the cycle's entry estimates
 the amount of time spent _in the whole cycle_, and its other
 subroutines, on the times when that caller called a function in the
 cycle.
@@ -1185,9 +1185,9 @@ cycle calls itself).  This is a generalization of the usual split into
 non-recursive and recursive calls.
 
    The ‘called’ field of a subroutine-line for a cycle member in the
-cycle’s entry says how many time that function was called from functions
+cycle's entry says how many time that function was called from functions
 in the cycle.  The total of all these is the second number in the
-primary line’s ‘called’ field.
+primary line's ‘called’ field.
 
    In the individual entry for a function in a cycle, the other
 functions in the same cycle can appear as subroutines and as callers.
@@ -1202,7 +1202,7 @@ File: gprof.info,  Node: Line-by-line,  Next: Annotated Source,  Prev: Call Grap
 5.3 Line-by-line Profiling
 ==========================
 
-‘gprof’’s ‘-l’ option causes the program to perform “line-by-line”
+‘gprof’'s ‘-l’ option causes the program to perform “line-by-line”
 profiling.  In this mode, histogram samples are assigned not to
 functions, but to individual lines of source code.  This only works with
 programs compiled with older versions of the ‘gcc’ compiler.  Newer
@@ -1216,12 +1216,12 @@ versions of ‘gcc’ the program had to be compiled with the ‘-a’
 command-line option as well.
 
    The flat profile is the most useful output table in line-by-line
-mode.  The call graph isn’t as useful as normal, since the current
+mode.  The call graph isn't as useful as normal, since the current
 version of ‘gprof’ does not propagate call graph arcs from source code
 lines to the enclosing function.  The call graph does, however, show
 each line of code that called each function, along with a count.
 
-   Here is a section of ‘gprof’’s output, without line-by-line
+   Here is a section of ‘gprof’'s output, without line-by-line
 profiling.  Note that ‘ct_init’ accounted for four histogram hits, and
 13327 calls to ‘init_block’.
 
@@ -1247,11 +1247,11 @@ profiling.  Note that ‘ct_init’ accounted for four histogram hits, and
      [7]      0.0    0.00    0.00   13496         init_block
 
 
-   Now let’s look at some of ‘gprof’’s output from the same program run,
-this time with line-by-line profiling enabled.  Note that ‘ct_init’’s
-four histogram hits are broken down into four lines of source code—one
+   Now let's look at some of ‘gprof’'s output from the same program run,
+this time with line-by-line profiling enabled.  Note that ‘ct_init’'s
+four histogram hits are broken down into four lines of source code--one
 hit occurred on each of lines 349, 351, 382 and 385.  In the call graph,
-note how ‘ct_init’’s 13327 calls to ‘init_block’ are broken down into
+note how ‘ct_init’'s 13327 calls to ‘init_block’ are broken down into
 one call from line 396, 3071 calls from line 384, 3730 calls from line
 385, and 6525 calls from 387.
 
@@ -1294,10 +1294,10 @@ File: gprof.info,  Node: Annotated Source,  Prev: Line-by-line,  Up: Output
 5.4 The Annotated Source Listing
 ================================
 
-‘gprof’’s ‘-A’ option triggers an annotated source listing, which lists
-the program’s source code, each function labeled with the number of
+‘gprof’'s ‘-A’ option triggers an annotated source listing, which lists
+the program's source code, each function labeled with the number of
 times it was called.  You may also need to specify the ‘-I’ option, if
-‘gprof’ can’t find the source code files.
+‘gprof’ can't find the source code files.
 
    With older versions of ‘gcc’ compiling with ‘gcc ... -g -pg -a’
 augments your program with basic-block counting code, in addition to
@@ -1339,7 +1339,7 @@ special cases.
 
    A program augmented for basic-block counting can be analyzed with
 ‘gprof -l -A’.  The ‘-x’ option is also helpful, to ensure that each
-line of code is labeled at least once.  Here is ‘updcrc’’s annotated
+line of code is labeled at least once.  Here is ‘updcrc’'s annotated
 source listing for a sample ‘gzip’ run:
 
                      ulg updcrc(s, n)
@@ -1409,20 +1409,20 @@ sampling period.
 
    The actual amount of error can be predicted.  For N samples, the
 _expected_ error is the square-root of N.  For example, if the sampling
-period is 0.01 seconds and ‘foo’’s run-time is 1 second, N is 100
+period is 0.01 seconds and ‘foo’'s run-time is 1 second, N is 100
 samples (1 second/0.01 seconds), sqrt(N) is 10 samples, so the expected
-error in ‘foo’’s run-time is 0.1 seconds (10*0.01 seconds), or ten
+error in ‘foo’'s run-time is 0.1 seconds (10*0.01 seconds), or ten
 percent of the observed value.  Again, if the sampling period is 0.01
-seconds and ‘bar’’s run-time is 100 seconds, N is 10000 samples, sqrt(N)
-is 100 samples, so the expected error in ‘bar’’s run-time is 1 second,
+seconds and ‘bar’'s run-time is 100 seconds, N is 10000 samples, sqrt(N)
+is 100 samples, so the expected error in ‘bar’'s run-time is 1 second,
 or one percent of the observed value.  It is likely to vary this much
 _on the average_ from one profiling run to the next.  (_Sometimes_ it
 will vary more.)
 
    This does not mean that a small run-time figure is devoid of
-information.  If the program’s _total_ run-time is large, a small
+information.  If the program's _total_ run-time is large, a small
 run-time for one function does tell you that that function used an
-insignificant fraction of the whole program’s time.  Usually this means
+insignificant fraction of the whole program's time.  Usually this means
 it is not worth optimizing.
 
    One way to get more accuracy is to give your program more (but
@@ -1452,7 +1452,7 @@ File: gprof.info,  Node: Assumptions,  Prev: Sampling Error,  Up: Inaccuracy
 6.2 Estimating ‘children’ Times
 ===============================
 
-Some of the figures in the call graph are estimates—for example, the
+Some of the figures in the call graph are estimates--for example, the
 ‘children’ time values and all the time figures in caller and subroutine
 lines.
 
@@ -1463,7 +1463,7 @@ assumption about your program that might or might not be true.
    The assumption made is that the average time spent in each call to
 any function ‘foo’ is not correlated with who called ‘foo’.  If ‘foo’
 used 5 seconds in all, and 2/5 of the calls to ‘foo’ came from ‘a’, then
-‘foo’ contributes 2 seconds to ‘a’’s ‘children’ time, by assumption.
+‘foo’ contributes 2 seconds to ‘a’'s ‘children’ time, by assumption.
 
    This assumption is usually true enough, but for some programs it is
 far from true.  Suppose that ‘foo’ returns very quickly when its
@@ -1565,8 +1565,8 @@ File: gprof.info,  Node: Details,  Next: GNU Free Documentation License,  Prev: 
 
 * Implementation::      How a program collects profiling information
 * File Format::         Format of ‘gmon.out’ files
-* Internals::           ‘gprof’’s internal operation
-* Debugging::           Using ‘gprof’’s ‘-d’ option
+* Internals::           ‘gprof’'s internal operation
+* Debugging::           Using ‘gprof’'s ‘-d’ option
 
 
 File: gprof.info,  Node: Implementation,  Next: File Format,  Up: Details
@@ -1585,15 +1585,15 @@ its first operations.
 
    The ‘mcount’ routine, included in the profiling library, is
 responsible for recording in an in-memory call graph table both its
-parent routine (the child) and its parent’s parent.  This is typically
+parent routine (the child) and its parent's parent.  This is typically
 done by examining the stack frame to find both the address of the child,
 and the return address in the original parent.  Since this is a very
 machine-dependent operation, ‘mcount’ itself is typically a short
 assembly-language stub routine that extracts the required information,
 and then calls ‘__mcount_internal’ (a normal C function) with two
-arguments—‘frompc’ and ‘selfpc’.  ‘__mcount_internal’ is responsible for
-maintaining the in-memory call graph, which records ‘frompc’, ‘selfpc’,
-and the number of times each of these call arcs was traversed.
+arguments--‘frompc’ and ‘selfpc’.  ‘__mcount_internal’ is responsible
+for maintaining the in-memory call graph, which records ‘frompc’,
+‘selfpc’, and the number of times each of these call arcs was traversed.
 
    GCC Version 2 provides a magical function
 (‘__builtin_return_address’), which allows a generic ‘mcount’ function
@@ -1616,7 +1616,7 @@ system.
 
    This is done is one of two ways.  Most UNIX-like operating systems
 provide a ‘profil()’ system call, which registers a memory array with
-the kernel, along with a scale factor that determines how the program’s
+the kernel, along with a scale factor that determines how the program's
 address space maps into the array.  Typical scaling values cause every 2
 to 8 bytes of address space to map into a single array slot.  On every
 tick of the system clock (assuming the profiled program is running), the
@@ -1645,7 +1645,7 @@ link.  On SPARC systems, no special startup files are used.  Rather, the
 ‘mcount’ routine, when it is invoked for the first time (typically when
 ‘main’ is called), calls ‘monstartup’.
 
-   If the compiler’s ‘-a’ option was used, basic-block counting is also
+   If the compiler's ‘-a’ option was used, basic-block counting is also
 enabled.  Each object file is then compiled with a static array of
 counts, initially zero.  In the executable code, every time a new
 basic-block begins (i.e., when an ‘if’ statement appears), an extra
@@ -1663,13 +1663,13 @@ by the call-graph arcs and the basic-block counts.
 
    The output from ‘gprof’ gives no indication of parts of your program
 that are limited by I/O or swapping bandwidth.  This is because samples
-of the program counter are taken at fixed intervals of the program’s run
+of the program counter are taken at fixed intervals of the program's run
 time.  Therefore, the time measurements in ‘gprof’ output say nothing
 about time that your program was not running.  For example, a part of
 the program that creates so much data that it cannot all fit in physical
 memory at once may run very slowly due to thrashing, but ‘gprof’ will
 say it uses little time.  On the other hand, sampling by run time has
-the advantage that the amount of load due to other users won’t directly
+the advantage that the amount of load due to other users won't directly
 affect the output you get.
 
 
@@ -1715,13 +1715,13 @@ clock, and the physical dimension that the bin counts represent after
 being scaled by the profiling clock rate.  The physical dimension is
 specified in two parts: a long name of up to 15 characters and a single
 character abbreviation.  For example, a histogram representing real-time
-would specify the long name as “seconds” and the abbreviation as “s”.
+would specify the long name as "seconds" and the abbreviation as "s".
 This feature is useful for architectures that support performance
 monitor hardware (which, fortunately, is becoming increasingly common).
-For example, under DEC OSF/1, the “uprofile” command can be used to
+For example, under DEC OSF/1, the "uprofile" command can be used to
 produce a histogram of, say, instruction cache misses.  In this case,
-the dimension in the histogram header could be set to “i-cache misses”
-and the abbreviation could be set to “1” (because it is simply a count,
+the dimension in the histogram header could be set to "i-cache misses"
+and the abbreviation could be set to "1" (because it is simply a count,
 not a physical dimension).  Also, the profiling rate would have to be
 set to 1 in this case.
 
@@ -1737,8 +1737,8 @@ Call-graph records have a format that is identical to the one used in
 the BSD-derived file format.  It consists of an arc in the call graph
 and a count indicating the number of times the arc was traversed during
 program execution.  Arcs are specified by a pair of addresses: the first
-must be within caller’s function and the second must be within the
-callee’s function.  When performing profiling at the function level,
+must be within caller's function and the second must be within the
+callee's function.  When performing profiling at the function level,
 these addresses can point anywhere within the respective function.
 However, when profiling at the line-level, it is better if the addresses
 are as close to the call-site/entry-point as possible.  This will ensure
@@ -1757,14 +1757,14 @@ was executed.  Any address within the basic-address can be used.
 
 File: gprof.info,  Node: Internals,  Next: Debugging,  Prev: File Format,  Up: Details
 
-9.3 ‘gprof’’s Internal Operation
+9.3 ‘gprof’'s Internal Operation
 ================================
 
 Like most programs, ‘gprof’ begins by processing its options.  During
 this stage, it may building its symspec list (‘sym_ids.c:sym_id_add’),
 if options are specified which use symspecs.  ‘gprof’ maintains a single
 linked list of symspecs, which will eventually get turned into 12 symbol
-tables, organized into six include/exclude pairs—one pair each for the
+tables, organized into six include/exclude pairs--one pair each for the
 flat profile (INCL_FLAT/EXCL_FLAT), the call graph arcs
 (INCL_ARCS/EXCL_ARCS), printing in the call graph
 (INCL_GRAPH/EXCL_GRAPH), timing propagation in the call graph
@@ -1785,13 +1785,13 @@ array of symbols.  At this point, function mappings are read (if the
 ‘--file-ordering’ option has been specified), and the core text space is
 read into memory (if the ‘-c’ option was given).
 
-   ‘gprof’’s own symbol table, an array of Sym structures, is now built.
+   ‘gprof’'s own symbol table, an array of Sym structures, is now built.
 This is done in one of two ways, by one of two routines, depending on
 whether line-by-line profiling (‘-l’ option) has been enabled.  For
 normal profiling, the BFD canonical symbol table is scanned.  For
 line-by-line profiling, every text space address is examined, and a new
 symbol table entry gets created every time the line number changes.  In
-either case, two passes are made through the symbol table—one to count
+either case, two passes are made through the symbol table--one to count
 the size of the symbol table required, and the other to actually read
 the symbols.  In between the two passes, a single array of type ‘Sym’ is
 created of the appropriate length.  Finally, ‘symtab.c:symtab_finalize’
@@ -1839,14 +1839,14 @@ histograms for the same memory range are merged.
 parent and child addresses are matched to symbol table entries, and a
 call graph arc is created by ‘cg_arcs.c:arc_add’, unless the arc fails a
 symspec check against INCL_ARCS/EXCL_ARCS. As each arc is added, a
-linked list is maintained of the parent’s child arcs, and of the child’s
-parent arcs.  Both the child’s call count and the arc’s call count are
-incremented by the record’s call count.
+linked list is maintained of the parent's child arcs, and of the child's
+parent arcs.  Both the child's call count and the arc's call count are
+incremented by the record's call count.
 
    Basic-block records are read (‘basic_blocks.c:bb_read_rec’), but only
 if line-by-line profiling has been selected.  Each basic-block address
 is matched to a corresponding line symbol in the symbol table, and an
-entry made in the symbol’s bb_addr and bb_calls arrays.  Again, if
+entry made in the symbol's bb_addr and bb_calls arrays.  Again, if
 multiple basic-block records are present for the same address, the call
 counts are cumulative.
 
@@ -1866,7 +1866,7 @@ each of two adjacent lines to be credited with half a hit, for example.
 
    If call graph data is present, ‘cg_arcs.c:cg_assemble’ is called.
 First, if ‘-c’ was specified, a machine-dependent routine (‘find_call’)
-scans through each symbol’s machine code, looking for subroutine call
+scans through each symbol's machine code, looking for subroutine call
 instructions, and adding them to the call graph with a zero call count.
 A topological sort is performed by depth-first numbering all the symbols
 (‘cg_dfn.c:cg_dfn’), so that children are always numbered less than
@@ -1878,7 +1878,7 @@ Two passes are now made through this sorted array of symbol pointers.
 The first pass, from end to beginning (parents to children), computes
 the fraction of child time to propagate to each parent and a print flag.
 The print flag reflects symspec handling of INCL_GRAPH/EXCL_GRAPH, with
-a parent’s include or exclude (print or no print) property being
+a parent's include or exclude (print or no print) property being
 propagated to its children, unless they themselves explicitly appear in
 INCL_GRAPH or EXCL_GRAPH. A second pass, from beginning to end (children
 to parents) actually propagates the timings along the call graph,
@@ -1967,7 +1967,7 @@ Appendix A GNU Free Documentation License
      author and publisher a way to get credit for their work, while not
      being considered responsible for modifications made by others.
 
-     This License is a kind of “copyleft”, which means that derivative
+     This License is a kind of "copyleft", which means that derivative
      works of the document must themselves be free in the same sense.
      It complements the GNU General Public License, which is a copyleft
      license designed for free software.
@@ -1988,18 +1988,18 @@ Appendix A GNU Free Documentation License
      be distributed under the terms of this License.  Such a notice
      grants a world-wide, royalty-free license, unlimited in duration,
      to use that work under the conditions stated herein.  The
-     “Document”, below, refers to any such manual or work.  Any member
-     of the public is a licensee, and is addressed as “you”.  You accept
+     "Document", below, refers to any such manual or work.  Any member
+     of the public is a licensee, and is addressed as "you".  You accept
      the license if you copy, modify or distribute the work in a way
      requiring permission under copyright law.
 
-     A “Modified Version” of the Document means any work containing the
+     A "Modified Version" of the Document means any work containing the
      Document or a portion of it, either copied verbatim, or with
      modifications and/or translated into another language.
 
-     A “Secondary Section” is a named appendix or a front-matter section
+     A "Secondary Section" is a named appendix or a front-matter section
      of the Document that deals exclusively with the relationship of the
-     publishers or authors of the Document to the Document’s overall
+     publishers or authors of the Document to the Document's overall
      subject (or to related matters) and contains nothing that could
      fall directly within that overall subject.  (Thus, if the Document
      is in part a textbook of mathematics, a Secondary Section may not
@@ -2008,7 +2008,7 @@ Appendix A GNU Free Documentation License
      of legal, commercial, philosophical, ethical or political position
      regarding them.
 
-     The “Invariant Sections” are certain Secondary Sections whose
+     The "Invariant Sections" are certain Secondary Sections whose
      titles are designated, as being those of Invariant Sections, in the
      notice that says that the Document is released under this License.
      If a section does not fit the above definition of Secondary then it
@@ -2016,13 +2016,13 @@ Appendix A GNU Free Documentation License
      contain zero Invariant Sections.  If the Document does not identify
      any Invariant Sections then there are none.
 
-     The “Cover Texts” are certain short passages of text that are
+     The "Cover Texts" are certain short passages of text that are
      listed, as Front-Cover Texts or Back-Cover Texts, in the notice
      that says that the Document is released under this License.  A
      Front-Cover Text may be at most 5 words, and a Back-Cover Text may
      be at most 25 words.
 
-     A “Transparent” copy of the Document means a machine-readable copy,
+     A "Transparent" copy of the Document means a machine-readable copy,
      represented in a format whose specification is available to the
      general public, that is suitable for revising the document
      straightforwardly with generic text editors or (for images composed
@@ -2034,7 +2034,7 @@ Appendix A GNU Free Documentation License
      been arranged to thwart or discourage subsequent modification by
      readers is not Transparent.  An image format is not Transparent if
      used for any substantial amount of text.  A copy that is not
-     “Transparent” is called “Opaque”.
+     "Transparent" is called "Opaque".
 
      Examples of suitable formats for Transparent copies include plain
      ASCII without markup, Texinfo input format, LaTeX input format,
@@ -2047,23 +2047,23 @@ Appendix A GNU Free Documentation License
      the machine-generated HTML, PostScript or PDF produced by some word
      processors for output purposes only.
 
-     The “Title Page” means, for a printed book, the title page itself,
+     The "Title Page" means, for a printed book, the title page itself,
      plus such following pages as are needed to hold, legibly, the
      material this License requires to appear in the title page.  For
-     works in formats which do not have any title page as such, “Title
-     Page” means the text near the most prominent appearance of the
-     work’s title, preceding the beginning of the body of the text.
+     works in formats which do not have any title page as such, "Title
+     Page" means the text near the most prominent appearance of the
+     work's title, preceding the beginning of the body of the text.
 
-     The “publisher” means any person or entity that distributes copies
+     The "publisher" means any person or entity that distributes copies
      of the Document to the public.
 
-     A section “Entitled XYZ” means a named subunit of the Document
+     A section "Entitled XYZ" means a named subunit of the Document
      whose title either is precisely XYZ or contains XYZ in parentheses
      following text that translates XYZ in another language.  (Here XYZ
      stands for a specific section name mentioned below, such as
-     “Acknowledgements”, “Dedications”, “Endorsements”, or “History”.)
-     To “Preserve the Title” of such a section when you modify the
-     Document means that it remains a section “Entitled XYZ” according
+     "Acknowledgements", "Dedications", "Endorsements", or "History".)
+     To "Preserve the Title" of such a section when you modify the
+     Document means that it remains a section "Entitled XYZ" according
      to this definition.
 
      The Document may include Warranty Disclaimers next to the notice
@@ -2093,7 +2093,7 @@ Appendix A GNU Free Documentation License
 
      If you publish printed copies (or copies in media that commonly
      have printed covers) of the Document, numbering more than 100, and
-     the Document’s license notice requires Cover Texts, you must
+     the Document's license notice requires Cover Texts, you must
      enclose the copies in covers that carry, clearly and legibly, all
      these Cover Texts: Front-Cover Texts on the front cover, and
      Back-Cover Texts on the back cover.  Both covers must also clearly
@@ -2165,15 +2165,15 @@ Appendix A GNU Free Documentation License
           the Addendum below.
 
        G. Preserve in that license notice the full lists of Invariant
-          Sections and required Cover Texts given in the Document’s
+          Sections and required Cover Texts given in the Document's
           license notice.
 
        H. Include an unaltered copy of this License.
 
-       I. Preserve the section Entitled “History”, Preserve its Title,
+       I. Preserve the section Entitled "History", Preserve its Title,
           and add to it an item stating at least the title, year, new
           authors, and publisher of the Modified Version as given on the
-          Title Page.  If there is no section Entitled “History” in the
+          Title Page.  If there is no section Entitled "History" in the
           Document, create one stating the title, year, authors, and
           publisher of the Document as given on its Title Page, then add
           an item describing the Modified Version as stated in the
@@ -2183,12 +2183,12 @@ Appendix A GNU Free Documentation License
           for public access to a Transparent copy of the Document, and
           likewise the network locations given in the Document for
           previous versions it was based on.  These may be placed in the
-          “History” section.  You may omit a network location for a work
+          "History" section.  You may omit a network location for a work
           that was published at least four years before the Document
           itself, or if the original publisher of the version it refers
           to gives permission.
 
-       K. For any section Entitled “Acknowledgements” or “Dedications”,
+       K. For any section Entitled "Acknowledgements" or "Dedications",
           Preserve the Title of the section, and preserve in the section
           all the substance and tone of each of the contributor
           acknowledgements and/or dedications given therein.
@@ -2197,11 +2197,11 @@ Appendix A GNU Free Documentation License
           in their text and in their titles.  Section numbers or the
           equivalent are not considered part of the section titles.
 
-       M. Delete any section Entitled “Endorsements”.  Such a section
+       M. Delete any section Entitled "Endorsements".  Such a section
           may not be included in the Modified Version.
 
        N. Do not retitle any existing section to be Entitled
-          “Endorsements” or to conflict in title with any Invariant
+          "Endorsements" or to conflict in title with any Invariant
           Section.
 
        O. Preserve any Warranty Disclaimers.
@@ -2210,15 +2210,15 @@ Appendix A GNU Free Documentation License
      appendices that qualify as Secondary Sections and contain no
      material copied from the Document, you may at your option designate
      some or all of these sections as invariant.  To do this, add their
-     titles to the list of Invariant Sections in the Modified Version’s
+     titles to the list of Invariant Sections in the Modified Version's
      license notice.  These titles must be distinct from any other
      section titles.
 
-     You may add a section Entitled “Endorsements”, provided it contains
+     You may add a section Entitled "Endorsements", provided it contains
      nothing but endorsements of your Modified Version by various
-     parties—for example, statements of peer review or that the text has
-     been approved by an organization as the authoritative definition of
-     a standard.
+     parties--for example, statements of peer review or that the text
+     has been approved by an organization as the authoritative
+     definition of a standard.
 
      You may add a passage of up to five words as a Front-Cover Text,
      and a passage of up to 25 words as a Back-Cover Text, to the end of
@@ -2256,10 +2256,10 @@ Appendix A GNU Free Documentation License
      combined work.
 
      In the combination, you must combine any sections Entitled
-     “History” in the various original documents, forming one section
-     Entitled “History”; likewise combine any sections Entitled
-     “Acknowledgements”, and any sections Entitled “Dedications”.  You
-     must delete all sections Entitled “Endorsements.”
+     "History" in the various original documents, forming one section
+     Entitled "History"; likewise combine any sections Entitled
+     "Acknowledgements", and any sections Entitled "Dedications".  You
+     must delete all sections Entitled "Endorsements."
 
   6. COLLECTIONS OF DOCUMENTS
 
@@ -2280,16 +2280,16 @@ Appendix A GNU Free Documentation License
 
      A compilation of the Document or its derivatives with other
      separate and independent documents or works, in or on a volume of a
-     storage or distribution medium, is called an “aggregate” if the
+     storage or distribution medium, is called an "aggregate" if the
      copyright resulting from the compilation is not used to limit the
-     legal rights of the compilation’s users beyond what the individual
+     legal rights of the compilation's users beyond what the individual
      works permit.  When the Document is included in an aggregate, this
      License does not apply to the other works in the aggregate which
      are not themselves derivative works of the Document.
 
      If the Cover Text requirement of section 3 is applicable to these
      copies of the Document, then if the Document is less than one half
-     of the entire aggregate, the Document’s Cover Texts may be placed
+     of the entire aggregate, the Document's Cover Texts may be placed
      on covers that bracket the Document within the aggregate, or the
      electronic equivalent of covers if the Document is in electronic
      form.  Otherwise they must appear on printed covers that bracket
@@ -2311,8 +2311,8 @@ Appendix A GNU Free Documentation License
      this License or a notice or disclaimer, the original version will
      prevail.
 
-     If a section in the Document is Entitled “Acknowledgements”,
-     “Dedications”, or “History”, the requirement (section 4) to
+     If a section in the Document is Entitled "Acknowledgements",
+     "Dedications", or "History", the requirement (section 4) to
      Preserve its Title (section 1) will typically require changing the
      actual title.
 
@@ -2353,7 +2353,7 @@ Appendix A GNU Free Documentation License
 
      Each version of the License is given a distinguishing version
      number.  If the Document specifies that a particular numbered
-     version of this License “or any later version” applies to it, you
+     version of this License "or any later version" applies to it, you
      have the option of following the terms and conditions either of
      that specified version or of any later version that has been
      published (not as a draft) by the Free Software Foundation.  If the
@@ -2361,29 +2361,29 @@ Appendix A GNU Free Documentation License
      choose any version ever published (not as a draft) by the Free
      Software Foundation.  If the Document specifies that a proxy can
      decide which future versions of this License can be used, that
-     proxy’s public statement of acceptance of a version permanently
+     proxy's public statement of acceptance of a version permanently
      authorizes you to choose that version for the Document.
 
   11. RELICENSING
 
-     “Massive Multiauthor Collaboration Site” (or “MMC Site”) means any
+     "Massive Multiauthor Collaboration Site" (or "MMC Site") means any
      World Wide Web server that publishes copyrightable works and also
      provides prominent facilities for anybody to edit those works.  A
      public wiki that anybody can edit is an example of such a server.
-     A “Massive Multiauthor Collaboration” (or “MMC”) contained in the
+     A "Massive Multiauthor Collaboration" (or "MMC") contained in the
      site means any set of copyrightable works thus published on the MMC
      site.
 
-     “CC-BY-SA” means the Creative Commons Attribution-Share Alike 3.0
+     "CC-BY-SA" means the Creative Commons Attribution-Share Alike 3.0
      license published by Creative Commons Corporation, a not-for-profit
      corporation with a principal place of business in San Francisco,
      California, as well as future copyleft versions of that license
      published by that same organization.
 
-     “Incorporate” means to publish or republish a Document, in whole or
+     "Incorporate" means to publish or republish a Document, in whole or
      in part, as part of another Document.
 
-     An MMC is “eligible for relicensing” if it is licensed under this
+     An MMC is "eligible for relicensing" if it is licensed under this
      License, and if all works that were first published under this
      License somewhere other than this MMC, and subsequently
      incorporated in whole or in part into the MMC, (1) had no cover
@@ -2410,7 +2410,7 @@ notices just after the title page:
        Free Documentation License''.
 
    If you have Invariant Sections, Front-Cover Texts and Back-Cover
-Texts, replace the “with...Texts.” line with this:
+Texts, replace the "with...Texts."  line with this:
 
          with the Invariant Sections being LIST THEIR TITLES, with
          the Front-Cover Texts being LIST, and with the Back-Cover Texts
@@ -2428,36 +2428,36 @@ their use in free software.
 
 
 Tag Table:
-Node: Top726
-Node: Introduction2083
-Node: Compiling4604
-Node: Executing8788
-Node: Invoking11783
-Node: Output Options13244
-Node: Analysis Options20804
-Node: Miscellaneous Options24904
-Node: Deprecated Options26274
-Node: Symspecs28457
-Node: Output30372
-Node: Flat Profile31426
-Node: Call Graph36501
-Node: Primary39771
-Node: Callers42421
-Node: Subroutines44641
-Node: Cycles46597
-Node: Line-by-line53625
-Node: Annotated Source57792
-Node: Inaccuracy60882
-Node: Sampling Error61144
-Node: Assumptions64104
-Node: How do I?65657
-Node: Incompatibilities67230
-Node: Details68804
-Node: Implementation69217
-Node: File Format75279
-Node: Internals79619
-Node: Debugging88287
-Node: GNU Free Documentation License89905
+Node: Top720
+Node: Introduction2071
+Node: Compiling4588
+Node: Executing8768
+Node: Invoking11753
+Node: Output Options13212
+Node: Analysis Options20764
+Node: Miscellaneous Options24864
+Node: Deprecated Options26234
+Node: Symspecs28417
+Node: Output30331
+Node: Flat Profile31383
+Node: Call Graph36452
+Node: Primary39716
+Node: Callers42364
+Node: Subroutines44570
+Node: Cycles46515
+Node: Line-by-line53512
+Node: Annotated Source57664
+Node: Inaccuracy60746
+Node: Sampling Error61008
+Node: Assumptions63956
+Node: How do I?65506
+Node: Incompatibilities67079
+Node: Details68653
+Node: Implementation69062
+Node: File Format75113
+Node: Internals79429
+Node: Debugging88075
+Node: GNU Free Documentation License89693
 
 End Tag Table
 

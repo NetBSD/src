@@ -1,5 +1,5 @@
 /* deffile.h - header for .DEF file parser
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Written by DJ Delorie dj@cygnus.com
 
    This file is part of the GNU Binutils.
@@ -61,6 +61,10 @@ typedef struct def_file_aligncomm {
   unsigned int alignment;	/* log-2 alignment.        */
 } def_file_aligncomm;
 
+typedef struct def_file_exclude_symbol {
+  char *symbol_name;		/* Name of excluded symbol.  */
+} def_file_exclude_symbol;
+
 typedef struct def_file {
   /* From the NAME or LIBRARY command.  */
   char *name;
@@ -80,6 +84,7 @@ typedef struct def_file {
 
   /* From the EXPORTS commands.  */
   int num_exports;
+  unsigned int max_exports;
   def_file_export *exports;
 
   /* Used by imports for module names.  */
@@ -87,6 +92,7 @@ typedef struct def_file {
 
   /* From the IMPORTS commands.  */
   int num_imports;
+  unsigned int max_imports;
   def_file_import *imports;
 
   /* From the VERSION command, -1 if not specified.  */
@@ -94,6 +100,10 @@ typedef struct def_file {
 
   /* Only expected from .drectve sections, not .DEF files.  */
   def_file_aligncomm *aligncomms;
+
+  /* From EXCLUDE_SYMBOLS or embedded directives. */
+  unsigned int num_exclude_symbols, max_exclude_symbols;
+  def_file_exclude_symbol *exclude_symbols;
 
 } def_file;
 
@@ -104,10 +114,10 @@ extern def_file *def_file_parse (const char *, def_file *);
 extern void def_file_free (def_file *);
 extern def_file_export *def_file_add_export (def_file *, const char *,
 					     const char *, int,
-					     const char *, int *);
+					     const char *, bool *);
 extern def_file_import *def_file_add_import (def_file *, const char *,
 					     const char *, int, const char *,
-					     const char *, int *);
+					     const char *, bool *);
 extern int def_file_add_import_from (def_file *fdef,
 				     int num_imports,
 				     const char *name,

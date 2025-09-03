@@ -140,8 +140,12 @@ DEF_TUNE (X86_TUNE_FUSE_CMP_AND_BRANCH_SOFLAGS, "fuse_cmp_and_branch_soflags",
    jump instruction when the alu instruction produces the CCFLAG consumed by
    the conditional jump instruction. */
 DEF_TUNE (X86_TUNE_FUSE_ALU_AND_BRANCH, "fuse_alu_and_branch",
-          m_SANDYBRIDGE | m_CORE_AVX2 | m_GENERIC)
+          m_SANDYBRIDGE | m_CORE_AVX2 | m_GENERIC | m_ZNVER5)
 
+/* X86_TUNE_FUSE_MOV_AND_ALU: mov and alu in case mov is reg-reg mov
+   and the destination is used by alu.  alu must be one of
+   ADD, ADC, AND, XOR, OR, SUB, SBB, INC, DEC, NOT, SAL, SHL, SHR, SAR.  */
+DEF_TUNE (X86_TUNE_FUSE_MOV_AND_ALU, "fuse_mov_and_alu", m_ZNVER5)
 
 /*****************************************************************************/
 /* Function prologue, epilogue and function calling sequences.               */
@@ -467,48 +471,45 @@ DEF_TUNE (X86_TUNE_AVOID_4BYTE_PREFIXES, "avoid_4byte_prefixes",
 /* X86_TUNE_USE_GATHER_2PARTS: Use gather instructions for vectors with 2
    elements.  */
 DEF_TUNE (X86_TUNE_USE_GATHER_2PARTS, "use_gather_2parts",
-	  ~(m_ZNVER1 | m_ZNVER2 | m_ZNVER3 | m_ZNVER4 | m_ALDERLAKE
-	    | m_GENERIC | m_GDS))
+	  ~(m_ZNVER | m_ALDERLAKE | m_GENERIC | m_GDS))
 
 /* X86_TUNE_USE_SCATTER_2PARTS: Use scater instructions for vectors with 2
    elements.  */
 DEF_TUNE (X86_TUNE_USE_SCATTER_2PARTS, "use_scatter_2parts",
-	  ~(m_ZNVER4))
+	  ~(m_ZNVER4 | m_ZNVER5))
 
 /* X86_TUNE_USE_GATHER_4PARTS: Use gather instructions for vectors with 4
    elements.  */
 DEF_TUNE (X86_TUNE_USE_GATHER_4PARTS, "use_gather_4parts",
-	  ~(m_ZNVER1 | m_ZNVER2 | m_ZNVER3 | m_ZNVER4 | m_ALDERLAKE
-	    | m_GENERIC | m_GDS))
+	  ~(m_ZNVER | m_ALDERLAKE | m_GENERIC | m_GDS))
 
 /* X86_TUNE_USE_SCATTER_4PARTS: Use scater instructions for vectors with 4
    elements.  */
 DEF_TUNE (X86_TUNE_USE_SCATTER_4PARTS, "use_scatter_4parts",
-	  ~(m_ZNVER4))
+	  ~(m_ZNVER4 | m_ZNVER5))
 
 /* X86_TUNE_USE_GATHER: Use gather instructions for vectors with 8 or more
    elements.  */
 DEF_TUNE (X86_TUNE_USE_GATHER_8PARTS, "use_gather_8parts",
-	  ~(m_ZNVER1 | m_ZNVER2 | m_ZNVER4 | m_ALDERLAKE
-	    | m_GENERIC | m_GDS))
+	  ~(m_ZNVER | m_ALDERLAKE | m_GENERIC | m_GDS))
 
 /* X86_TUNE_USE_SCATTER: Use scater instructions for vectors with 8 or more
    elements.  */
 DEF_TUNE (X86_TUNE_USE_SCATTER_8PARTS, "use_scatter_8parts",
-	  ~(m_ZNVER4))
+	  ~(m_ZNVER4 | m_ZNVER5))
 
 /* X86_TUNE_AVOID_128FMA_CHAINS: Avoid creating loops with tight 128bit or
    smaller FMA chain.  */
-DEF_TUNE (X86_TUNE_AVOID_128FMA_CHAINS, "avoid_fma_chains", m_ZNVER1 | m_ZNVER2 | m_ZNVER3)
+DEF_TUNE (X86_TUNE_AVOID_128FMA_CHAINS, "avoid_fma_chains", m_ZNVER)
 
 /* X86_TUNE_AVOID_256FMA_CHAINS: Avoid creating loops with tight 256bit or
    smaller FMA chain.  */
 DEF_TUNE (X86_TUNE_AVOID_256FMA_CHAINS, "avoid_fma256_chains", m_ZNVER2 | m_ZNVER3
-	  | m_ALDERLAKE | m_SAPPHIRERAPIDS | m_GENERIC | m_ZNVER4)
+	  | m_ALDERLAKE | m_SAPPHIRERAPIDS | m_GENERIC | m_ZNVER4 | m_ZNVER5)
 
 /* X86_TUNE_AVOID_512FMA_CHAINS: Avoid creating loops with tight 512bit or
    smaller FMA chain.  */
-DEF_TUNE (X86_TUNE_AVOID_512FMA_CHAINS, "avoid_fma512_chains", m_NONE)
+DEF_TUNE (X86_TUNE_AVOID_512FMA_CHAINS, "avoid_fma512_chains", m_ZNVER5)
 
 /* X86_TUNE_V2DF_REDUCTION_PREFER_PHADDPD: Prefer haddpd
    for v2df vector reduction.  */
@@ -558,12 +559,12 @@ DEF_TUNE (X86_TUNE_AVX256_STORE_BY_PIECES, "avx256_store_by_pieces",
 /* X86_TUNE_AVX512_MOVE_BY_PIECES: Optimize move_by_pieces with 512-bit
    AVX instructions.  */
 DEF_TUNE (X86_TUNE_AVX512_MOVE_BY_PIECES, "avx512_move_by_pieces",
-	  m_SAPPHIRERAPIDS | m_ZNVER4)
+	  m_SAPPHIRERAPIDS | m_ZNVER4 | m_ZNVER5)
 
 /* X86_TUNE_AVX512_STORE_BY_PIECES: Optimize store_by_pieces with 512-bit
    AVX instructions.  */
 DEF_TUNE (X86_TUNE_AVX512_STORE_BY_PIECES, "avx512_store_by_pieces",
-	  m_SAPPHIRERAPIDS | m_ZNVER4)
+	  m_SAPPHIRERAPIDS | m_ZNVER4 | m_ZNVER5)
 
 /*****************************************************************************/
 /*****************************************************************************/

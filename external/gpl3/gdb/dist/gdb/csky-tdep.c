@@ -2097,7 +2097,7 @@ csky_frame_unwind_cache (const frame_info_ptr &this_frame)
     func_size = bl->end () - bl->start ();
   else
     {
-      struct bound_minimal_symbol msymbol
+      bound_minimal_symbol msymbol
 	= lookup_minimal_symbol_by_pc (prologue_start);
       if (msymbol.minsym != NULL)
 	func_size = msymbol.minsym->size ();

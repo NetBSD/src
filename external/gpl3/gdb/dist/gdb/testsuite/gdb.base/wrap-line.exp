@@ -19,8 +19,10 @@
 # build == host.
 require {!is_remote host}
 
-# Test both ansi (no auto-wrap) and xterm (auto-wrap).
-set terms {ansi xterm}
+# Test both ansi (no auto-wrap) and xterm (auto-wrap).  Also test dumb, which
+# shows the effective behavior on stub-termcap systems, regardless of the
+# TERM setting.
+set terms {ansi xterm dumb}
 
 # Fill line, assuming we start after the gdb prompt.
 proc fill_line { width } {
@@ -44,9 +46,11 @@ proc get_screen_width { } {
     upvar gdb_width gdb_width
     upvar readline_width readline_width
     upvar env_width env_width
+    upvar wrap_mode wrap_mode
     set gdb_width 0
     set readline_width 0
     set env_width 0
+    set wrap_mode ""
     set re1 "Number of characters gdb thinks are in a line is ($::decimal)\[^\r\n\]*\\."
     set re2 \
 	"Number of characters readline reports are in a line is ($::decimal)\[^\r\n\]*\\."
@@ -54,6 +58,7 @@ proc get_screen_width { } {
 	"Number of characters curses thinks are in a line is $::decimal\\."
     set re4 \
 	"Number of characters environment thinks are in a line is ($::decimal) \\(COLUMNS\\)."
+    set re5 [string cat "Readline wrapping mode: (\[^\r\n]*\)\\."]
     set cmd "maint info screen"
     set re \
 	[multi_line \
@@ -61,12 +66,14 @@ proc get_screen_width { } {
 	     $re2 \
 	     "(?:$re3" \
 	     ")?$re4" \
-	     .*]
+	     .* \
+	     $re5]
     gdb_test_multiple $cmd  "" {
 	-re -wrap $re {
 	    set gdb_width $expect_out(1,string)
 	    set readline_width $expect_out(2,string)
 	    set env_width $expect_out(3,string)
+	    set wrap_mode $expect_out(4,string)
 	    pass $gdb_test_name
 	}
     }
@@ -79,10 +86,16 @@ proc test_wrap { width_auto_detected } {
 
     get_screen_width
 
-    if { $::term == "xterm" } {
+    set wrap_mode_terminal "terminal (terminal is auto wrap capable)"
+    set wrap_mode_readline \
+	"readline (terminal is not auto wrap capable, last column reserved)"
+    set have_wrap 1
+    if { $wrap_mode == $wrap_mode_terminal } {
 	gdb_assert { $gdb_width == $readline_width }
-    } else {
+    } elseif { $wrap_mode == $wrap_mode_readline } {
 	gdb_assert { $gdb_width == [expr $readline_width + 1] }
+    } else {
+	set have_wrap 0
     }
 
     gdb_assert { $gdb_width == $env_width } "width"
@@ -113,7 +126,10 @@ proc test_wrap { width_auto_detected } {
 
     gdb_test_multiple "" "wrap" {
 	-re $re {
-	    pass $gdb_test_name
+	    gdb_assert {$have_wrap} $gdb_test_name
+	}
+	-re "\r<.*" {
+	    gdb_assert {!$have_wrap} $gdb_test_name
 	}
     }
 

@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_STATUS_H
-#define TUI_TUI_STATUS_H
+#ifndef GDB_TUI_TUI_STATUS_H
+#define GDB_TUI_TUI_STATUS_H
 
 #include "tui/tui-data.h"
 
@@ -50,7 +50,15 @@ private:
   std::string make_status_line () const;
 };
 
+/* Return the instance of the status window.  */
+
+inline tui_status_window *
+tui_status_win ()
+{
+  return dynamic_cast<tui_status_window *> (tui_win_list[STATUS_WIN]);
+}
+
 extern void tui_show_status_content (void);
 extern void tui_show_frame_info (const frame_info_ptr &);
 
-#endif /* TUI_TUI_STATUS_H */
+#endif /* GDB_TUI_TUI_STATUS_H */

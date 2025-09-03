@@ -1,5 +1,5 @@
 /* elfedit.c -- Update the ELF header of an ELF format file
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -105,7 +105,18 @@ update_gnu_property (const char *file_name, FILE *file)
   if (map == MAP_FAILED)
     {
       error (_("%s: mmap () failed\n"), file_name);
-      return 0;
+      return 1;
+    }
+
+  if ((elf_header.e_ident[EI_CLASS] == ELFCLASS32
+       ? sizeof (Elf32_External_Phdr)
+       : sizeof (Elf64_External_Phdr)) != elf_header.e_phentsize
+      || elf_header.e_phoff > (size_t) st_buf.st_size
+      || (elf_header.e_phnum * (size_t) elf_header.e_phentsize
+	  > st_buf.st_size - elf_header.e_phoff))
+    {
+      error (_("%s: can't read program headers\n"), file_name);
+      return 1;
     }
 
   phdrs = xmalloc (elf_header.e_phnum * sizeof (*phdrs));

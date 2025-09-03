@@ -1,4 +1,4 @@
-# $NetBSD: t_npf.sh,v 1.8 2025/04/18 20:06:39 riastradh Exp $
+# $NetBSD: t_npf.sh,v 1.9 2025/07/20 12:25:54 joe Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,7 +29,12 @@ run_test()
 {
 	local name="${1}"
 
-	atf_check -o ignore -e ignore npfctl debug -c "$(atf_get_srcdir)/npftest.conf" -o ./npf.plist
+	if [ "$name" = "l2defpass" ]; then
+		atf_check -o ignore -e ignore npfctl debug -c "$(atf_get_srcdir)/npftestl3.conf" -o ./npf.plist
+	else
+		atf_check -o ignore -e ignore npfctl debug -c "$(atf_get_srcdir)/npftest.conf" -o ./npf.plist
+	fi
+
 	atf_check -o ignore npftest -c npf.plist -T "${name}"
 }
 

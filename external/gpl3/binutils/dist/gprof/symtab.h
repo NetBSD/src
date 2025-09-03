@@ -1,6 +1,6 @@
 /* symtab.h
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -18,7 +18,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
-
+
 #ifndef symtab_h
 #define symtab_h
 
@@ -110,7 +110,9 @@ typedef struct
   }
 Sym_Table;
 
-extern Sym_Table symtab;	/* The symbol table.  */
+extern Sym_Table *get_symtab (void);
+extern Sym_Table *get_symtab_direct (void);
+extern void set_symtab       (Sym_Table *);
 
 extern void sym_init        (Sym *);
 extern void symtab_finalize (Sym_Table *);

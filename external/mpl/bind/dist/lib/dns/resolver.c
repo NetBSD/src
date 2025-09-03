@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.22 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.23 2025/07/17 19:01:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -7719,7 +7719,7 @@ resquery_response_continue(void *arg, isc_result_t result) {
 	/*
 	 * Clear cache bits.
 	 */
-	FCTX_ATTR_CLR(fctx, (FCTX_ATTR_WANTNCACHE | FCTX_ATTR_WANTCACHE));
+	FCTX_ATTR_CLR(fctx, FCTX_ATTR_WANTNCACHE | FCTX_ATTR_WANTCACHE);
 
 	/*
 	 * Did we get any answers?

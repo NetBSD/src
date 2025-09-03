@@ -116,7 +116,7 @@ serial_logchar (struct ui_file *stream, int ch_type, int ch, int timeout)
 	    break;
 	  default:
 	    gdb_printf (stream,
-			isprint (ch) ? "%c" : "\\x%02x", ch & 0xFF);
+			isprint ((unsigned char)ch) ? "%c" : "\\x%02x", ch & 0xFF);
 	    break;
 	  }
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.13 2025/05/21 14:47:35 christos Exp $	*/
+/*	$NetBSD: dig.c,v 1.14 2025/07/17 19:01:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -190,6 +190,9 @@ help(void) {
 	       "                 +[no]cmd            (Control display of "
 	       "command line -\n"
 	       "                                      global option)\n"
+	       "                 +[no]coflag         (Set compact denial of "
+	       "existence ok flag)\n"
+	       "                                      in query)\n"
 	       "                 +[no]comments       (Control display of "
 	       "packet "
 	       "header\n"
@@ -207,7 +210,8 @@ help(void) {
 	       "                 +[no]dnssec         (Request DNSSEC records)\n"
 	       "                 +domain=###         (Set default domainname)\n"
 	       "                 +[no]edns[=###]     (Set EDNS version) [0]\n"
-	       "                 +ednsflags=###      (Set EDNS flag bits)\n"
+	       "                 +ednsflags=###      (Set undefined EDNS flag "
+	       "bits)\n"
 	       "                 +[no]ednsnegotiation (Set EDNS version "
 	       "negotiation)\n"
 	       "                 +ednsopt=###[:value] (Send specified EDNS "
@@ -223,12 +227,14 @@ help(void) {
 	       "                 +[no]https[=###]    (DNS-over-HTTPS mode) "
 	       "[/]\n"
 	       "                 +[no]https-get      (Use GET instead of "
-	       "default POST method while using HTTPS)\n"
-	       "                 +[no]http-plain[=###]    (DNS over plain HTTP "
-	       "mode) "
-	       "[/]\n"
-	       "                 +[no]http-plain-get      (Use GET instead of "
-	       "default POST method while using plain HTTP)\n"
+	       "default POST method\n"
+	       "                                      while using HTTPS)\n"
+	       "                 +[no]http-plain[=###] (DNS over plain HTTP "
+	       "mode) [/]\n"
+	       "                 +[no]http-plain-get (Use GET instead of "
+	       "default POST "
+	       "method\n"
+	       "                                      while using plain HTTP)\n"
 	       "                 +[no]identify       (ID responders in short "
 	       "answers)\n"
 #ifdef HAVE_LIBIDN2
@@ -255,15 +261,23 @@ help(void) {
 	       "                 +padding=###        (Set padding block size "
 	       "[0])\n"
 	       "                 "
-	       "+[no]proxy[=src_addr[#src_port]-dst_addr[#dst_port]]        "
-	       "(Add PROXYv2 headers to the queries. If addresses are omitted, "
-	       "LOCAL PROXYv2 headers are added)\n"
+	       "+[no]proxy[=src_addr[#src_port]-dst_addr[#dst_port]]\n"
+	       "                                     (Add PROXYv2 headers to "
+	       "the queries. If\n"
+	       "                                      addresses are omitted, "
+	       "LOCAL PROXYv2\n"
+	       "                                      headers are added)\n"
 	       "                 "
-	       "+[no]proxy-plain[=src_addr[#src_port]-dst_addr[#dst_port]]  "
-	       "(The same as '+[no]proxy', but send PROXYv2 headers ahead of "
-	       "any encryption if an encrypted transport is used)\n"
+	       "+[no]proxy-plain[=src_addr[#src_port]-dst_addr[#dst_port]]\n"
+	       "                                     (The same as'+[no]proxy', "
+	       "but send PROXYv2\n"
+	       "                                      headers ahead of any "
+	       "encryption if an\n"
+	       "                                      encrypted transport is "
+	       "used)\n"
 	       "                 +qid=###            (Specify the query ID to "
-	       "use when sending queries)\n"
+	       "use when sending\n"
+	       "                                      queries)\n"
 	       "                 +[no]qr             (Print question before "
 	       "sending)\n"
 	       "                 +[no]question       (Control display of "
@@ -301,15 +315,19 @@ help(void) {
 	       "                 +timeout=###        (Set query timeout) [5]\n"
 	       "                 +[no]tls            (DNS-over-TLS mode)\n"
 	       "                 +[no]tls-ca[=file]  (Enable remote server's "
-	       "TLS certificate validation)\n"
+	       "TLS certificate\n"
+	       "                                      validation)\n"
 	       "                 +[no]tls-hostname=hostname (Explicitly set "
-	       "the expected TLS hostname)\n"
+	       "the expected TLS\n"
+	       "                                      hostname)\n"
 	       "                 +[no]tls-certfile=file (Load client TLS "
-	       "certificate chain from file)\n"
+	       "certificate chain from\n"
+	       "                                      file)\n"
 	       "                 +[no]tls-keyfile=file (Load client TLS "
 	       "private key from file)\n"
 	       "                 +[no]trace          (Trace delegation down "
-	       "from root [implies +dnssec])\n"
+	       "from root [implies\n"
+	       "                                      +dnssec])\n"
 	       "                 +tries=###          (Set number of UDP "
 	       "attempts) [3]\n"
 	       "                 +[no]ttlid          (Control display of ttls "
@@ -1636,6 +1654,11 @@ plus_option(char *option, bool is_batchfile, bool *need_clone,
 			break;
 		case 'o': /* comments */
 			switch (cmd[2]) {
+			case 'f':
+			case '\0': /* +co is a synonym for +coflag */
+				FULLCHECK("coflag");
+				lookup->coflag = state;
+				break;
 			case 'm':
 				FULLCHECK("comments");
 				lookup->comments = state;
@@ -2766,7 +2789,7 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 				printgreeting(argc, argv, *lookup);
 				*firstarg = false;
 			}
-			ISC_LIST_APPEND(lookup_list, (*lookup), link);
+			ISC_LIST_APPEND(lookup_list, *lookup, link);
 			debug("looking up %s", (*lookup)->textname);
 		}
 		return value_from_next;

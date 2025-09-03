@@ -1,5 +1,5 @@
 /* dwarf.h - DWARF support header file
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -20,44 +20,41 @@
 
 #include "dwarf2.h" /* for enum dwarf_unit_type */
 
-typedef unsigned HOST_WIDEST_INT  dwarf_vma;
-typedef HOST_WIDEST_INT           dwarf_signed_vma;
-typedef unsigned HOST_WIDEST_INT  dwarf_size_type;
-
 /* Structure found in the .debug_line section.  */
 typedef struct
 {
-  dwarf_vma	 li_length;
-  unsigned short li_version;
-  unsigned char  li_address_size;
-  unsigned char  li_segment_size;
-  dwarf_vma      li_prologue_length;
-  unsigned char  li_min_insn_length;
-  unsigned char  li_max_ops_per_insn;
-  unsigned char  li_default_is_stmt;
-  int            li_line_base;
-  unsigned char  li_line_range;
-  unsigned char  li_opcode_base;
-  unsigned int   li_offset_size;
+  uint64_t li_length;
+  uint16_t li_version;
+  uint8_t  li_address_size;
+  uint8_t  li_segment_size;
+  uint64_t li_prologue_length;
+  uint8_t  li_min_insn_length;
+  uint8_t  li_max_ops_per_insn;
+  uint8_t  li_default_is_stmt;
+  int8_t   li_line_base;
+  uint8_t  li_line_range;
+  uint8_t  li_opcode_base;
+  /* Not part of the header.  4 for 32-bit dwarf, 8 for 64-bit.  */
+  unsigned int li_offset_size;
 }
 DWARF2_Internal_LineInfo;
 
 /* Structure found in .debug_pubnames section.  */
 typedef struct
 {
-  dwarf_vma	 pn_length;
+  uint64_t	 pn_length;
   unsigned short pn_version;
-  dwarf_vma	 pn_offset;
-  dwarf_vma	 pn_size;
+  uint64_t	 pn_offset;
+  uint64_t	 pn_size;
 }
 DWARF2_Internal_PubNames;
 
 /* Structure found in .debug_info section.  */
 typedef struct
 {
-  dwarf_vma	 cu_length;
+  uint64_t	 cu_length;
   unsigned short cu_version;
-  dwarf_vma	 cu_abbrev_offset;
+  uint64_t	 cu_abbrev_offset;
   unsigned char  cu_pointer_size;
   enum dwarf_unit_type cu_unit_type;
 }
@@ -66,9 +63,9 @@ DWARF2_Internal_CompUnit;
 /* Structure found in .debug_aranges section.  */
 typedef struct
 {
-  dwarf_vma	 ar_length;
+  uint64_t	 ar_length;
   unsigned short ar_version;
-  dwarf_vma	 ar_info_offset;
+  uint64_t	 ar_info_offset;
   unsigned char  ar_pointer_size;
   unsigned char  ar_segment_size;
 }
@@ -143,12 +140,12 @@ struct dwarf_section
      file containing the section.  */
   const char *                     filename;
   unsigned char *                  start;
-  dwarf_vma                        address;
-  dwarf_size_type                  size;
+  uint64_t                         address;
+  uint64_t                         size;
   enum dwarf_section_display_enum  abbrev_sec;
   /* Used by clients to help them implement the reloc_at callback.  */
   void *                           reloc_info;
-  unsigned long                    num_relocs;
+  uint64_t                         num_relocs;
 };
 
 /* A structure containing the name of a debug section
@@ -170,32 +167,32 @@ typedef struct
   unsigned int   pointer_size;
   unsigned int   offset_size;
   int            dwarf_version;
-  dwarf_vma	 cu_offset;
-  dwarf_vma	 base_address;
+  uint64_t	 cu_offset;
+  uint64_t	 base_address;
   /* This field is filled in when reading the attribute DW_AT_GNU_addr_base and
      is used with the form DW_FORM_GNU_addr_index.  */
-  dwarf_vma	 addr_base;
+  uint64_t	 addr_base;
   /* This field is filled in when reading the attribute DW_AT_GNU_ranges_base and
      is used when calculating ranges.  */
-  dwarf_vma	 ranges_base;
+  uint64_t	 ranges_base;
   /* This is an array of offsets to the location list table.  */
-  dwarf_vma *    loc_offsets;
+  uint64_t *	 loc_offsets;
   /* This is an array of offsets to the location view table.  */
-  dwarf_vma *    loc_views;
+  uint64_t *	 loc_views;
   int *          have_frame_base;
 
   /* Information for associating location lists with CUs.  */
   unsigned int   num_loc_offsets;
   unsigned int   max_loc_offsets;
   unsigned int   num_loc_views;
-  dwarf_vma      loclists_base;
+  uint64_t	 loclists_base;
 
   /* List of .debug_ranges offsets seen in this .debug_info.  */
-  dwarf_vma *    range_lists;
+  uint64_t *	 range_lists;
   unsigned int   num_range_lists;
   unsigned int   max_range_lists;
-  dwarf_vma      rnglists_base;
-  dwarf_vma      str_offsets_base;
+  uint64_t	 rnglists_base;
+  uint64_t	 str_offsets_base;
 }
 debug_info;
 
@@ -260,18 +257,18 @@ extern void dwarf_select_sections_all (void);
 
 extern unsigned int * find_cu_tu_set (void *, unsigned int);
 
-extern void * cmalloc (size_t, size_t);
-extern void * xcalloc2 (size_t, size_t);
-extern void * xcmalloc (size_t, size_t);
-extern void * xcrealloc (void *, size_t, size_t);
+extern void * cmalloc (uint64_t, size_t);
+extern void * xcalloc2 (uint64_t, size_t);
+extern void * xcmalloc (uint64_t, size_t);
+extern void * xcrealloc (void *, uint64_t, size_t);
 
 /* A callback into the client.  Returns TRUE if there is a
    relocation against the given debug section at the given
    offset.  */
-extern bool reloc_at (struct dwarf_section *, dwarf_vma);
+extern bool reloc_at (struct dwarf_section *, uint64_t);
 
-extern dwarf_vma read_leb128 (unsigned char *, const unsigned char *const,
-			      bool, unsigned int *, int *);
+extern uint64_t read_leb128 (unsigned char *, const unsigned char *const,
+			     bool, unsigned int *, int *);
 
 #if HAVE_LIBDEBUGINFOD
 extern unsigned char * get_build_id (void *);
@@ -307,7 +304,7 @@ report_leb_status (int status)
 #define READ_ULEB(var, start, end)				\
   do								\
     {								\
-      dwarf_vma _val;						\
+      uint64_t _val;						\
       unsigned int _len;					\
       int _status;						\
 								\
@@ -323,7 +320,7 @@ report_leb_status (int status)
 #define READ_SLEB(var, start, end)				\
   do								\
     {								\
-      dwarf_signed_vma _val;					\
+      int64_t _val;						\
       unsigned int _len;					\
       int _status;						\
 								\

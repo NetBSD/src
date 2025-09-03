@@ -33,6 +33,7 @@
 #include "cli/cli-style.h"
 #include "dwarf2/loc.h"
 #include "inferior.h"
+#include "gdbsupport/unordered_map.h"
 
 static struct cp_abi_ops gnu_v3_abi_ops;
 
@@ -791,51 +792,32 @@ gnuv3_method_ptr_to_value (struct value **this_p, struct value *method_ptr)
     return value_from_pointer (lookup_pointer_type (method_type), ptr_value);
 }
 
-/* Objects of this type are stored in a hash table and a vector when
-   printing the vtables for a class.  */
-
-struct value_and_voffset
+struct vtable_value_hash_t
 {
-  /* The value representing the object.  */
-  struct value *value;
-
-  /* The maximum vtable offset we've found for any object at this
-     offset in the outermost object.  */
-  int max_voffset;
+  std::size_t operator() (value *val) const noexcept
+  { return val->address () + val->embedded_offset (); }
 };
 
-/* Hash function for value_and_voffset.  */
-
-static hashval_t
-hash_value_and_voffset (const void *p)
+struct vtable_value_eq_t
 {
-  const struct value_and_voffset *o = (const struct value_and_voffset *) p;
+  bool operator() (value *lhs, value *rhs) const noexcept
+  {
+    return (lhs->address () + lhs->embedded_offset ()
+	    == rhs->address () + rhs->embedded_offset ());
+  }
+};
 
-  return o->value->address () + o->value->embedded_offset ();
-}
+using vtable_hash_t
+  = gdb::unordered_map<value *, int, vtable_value_hash_t, vtable_value_eq_t>;
 
-/* Equality function for value_and_voffset.  */
-
-static int
-eq_value_and_voffset (const void *a, const void *b)
-{
-  const struct value_and_voffset *ova = (const struct value_and_voffset *) a;
-  const struct value_and_voffset *ovb = (const struct value_and_voffset *) b;
-
-  return (ova->value->address () + ova->value->embedded_offset ()
-	  == ovb->value->address () + ovb->value->embedded_offset ());
-}
-
-/* Comparison function for value_and_voffset.  */
+/* Comparison function used for sorting the vtable entries.  */
 
 static bool
-compare_value_and_voffset (const struct value_and_voffset *va,
-			   const struct value_and_voffset *vb)
+compare_value_and_voffset (const std::pair<value *, int> &va,
+			   const std::pair<value *, int> &vb)
 {
-  CORE_ADDR addra = (va->value->address ()
-		     + va->value->embedded_offset ());
-  CORE_ADDR addrb = (vb->value->address ()
-		     + vb->value->embedded_offset ());
+  CORE_ADDR addra = va.first->address () + va.first->embedded_offset ();
+  CORE_ADDR addrb = vb.first->address () + vb.first->embedded_offset ();
 
   return addra < addrb;
 }
@@ -843,18 +825,14 @@ compare_value_and_voffset (const struct value_and_voffset *va,
 /* A helper function used when printing vtables.  This determines the
    key (most derived) sub-object at each address and also computes the
    maximum vtable offset seen for the corresponding vtable.  Updates
-   OFFSET_HASH and OFFSET_VEC with a new value_and_voffset object, if
-   needed.  VALUE is the object to examine.  */
+   OFFSET_HASH with a new value_and_voffset object, if needed.  VALUE
+   is the object to examine.  */
 
 static void
-compute_vtable_size (htab_t offset_hash,
-		     std::vector<value_and_voffset *> *offset_vec,
-		     struct value *value)
+compute_vtable_size (vtable_hash_t &offset_hash, struct value *value)
 {
   int i;
   struct type *type = check_typedef (value->type ());
-  void **slot;
-  struct value_and_voffset search_vo, *current_vo;
 
   gdb_assert (type->code () == TYPE_CODE_STRUCT);
 
@@ -864,18 +842,7 @@ compute_vtable_size (htab_t offset_hash,
     return;
 
   /* Update the hash and the vec, if needed.  */
-  search_vo.value = value;
-  slot = htab_find_slot (offset_hash, &search_vo, INSERT);
-  if (*slot)
-    current_vo = (struct value_and_voffset *) *slot;
-  else
-    {
-      current_vo = XNEW (struct value_and_voffset);
-      current_vo->value = value;
-      current_vo->max_voffset = -1;
-      *slot = current_vo;
-      offset_vec->push_back (current_vo);
-    }
+  int &current_max_voffset = offset_hash.emplace (value, -1).first->second;
 
   /* Update the value_and_voffset object with the highest vtable
      offset from this class.  */
@@ -890,15 +857,15 @@ compute_vtable_size (htab_t offset_hash,
 	    {
 	      int voffset = TYPE_FN_FIELD_VOFFSET (fn, j);
 
-	      if (voffset > current_vo->max_voffset)
-		current_vo->max_voffset = voffset;
+	      if (voffset > current_max_voffset)
+		current_max_voffset = voffset;
 	    }
 	}
     }
 
   /* Recurse into base classes.  */
   for (i = 0; i < TYPE_N_BASECLASSES (type); ++i)
-    compute_vtable_size (offset_hash, offset_vec, value_field (value, i));
+    compute_vtable_size (offset_hash, value_field (value, i));
 }
 
 /* Helper for gnuv3_print_vtable that prints a single vtable.  */
@@ -999,23 +966,22 @@ gnuv3_print_vtable (struct value *value)
       return;
     }
 
-  htab_up offset_hash (htab_create_alloc (1, hash_value_and_voffset,
-					  eq_value_and_voffset,
-					  xfree, xcalloc, xfree));
-  std::vector<value_and_voffset *> result_vec;
+  vtable_hash_t offset_hash;
+  compute_vtable_size (offset_hash, value);
 
-  compute_vtable_size (offset_hash.get (), &result_vec, value);
+  std::vector<std::pair<struct value *, int>> result_vec (offset_hash.begin (),
+							  offset_hash.end ());
   std::sort (result_vec.begin (), result_vec.end (),
 	     compare_value_and_voffset);
 
   count = 0;
-  for (value_and_voffset *iter : result_vec)
+  for (auto &item : result_vec)
     {
-      if (iter->max_voffset >= 0)
+      if (item.second >= 0)
 	{
 	  if (count > 0)
 	    gdb_printf ("\n");
-	  print_one_vtable (gdbarch, iter->value, iter->max_voffset, &opts);
+	  print_one_vtable (gdbarch, item.first, item.second, &opts);
 	  ++count;
 	}
     }
@@ -1161,7 +1127,7 @@ gnuv3_get_typeid (struct value *value)
     {
       std::string sym_name = std::string ("typeinfo for ") + name;
       bound_minimal_symbol minsym
-	= lookup_minimal_symbol (sym_name.c_str (), NULL, NULL);
+	= lookup_minimal_symbol (current_program_space, sym_name.c_str ());
 
       if (minsym.minsym == NULL)
 	error (_("could not find typeinfo symbol for '%s'"), name);
@@ -1178,14 +1144,13 @@ static std::string
 gnuv3_get_typename_from_type_info (struct value *type_info_ptr)
 {
   struct gdbarch *gdbarch = type_info_ptr->type ()->arch ();
-  struct bound_minimal_symbol typeinfo_sym;
   CORE_ADDR addr;
   const char *symname;
   const char *class_name;
   const char *atsign;
 
   addr = value_as_address (type_info_ptr);
-  typeinfo_sym = lookup_minimal_symbol_by_pc (addr);
+  bound_minimal_symbol typeinfo_sym = lookup_minimal_symbol_by_pc (addr);
   if (typeinfo_sym.minsym == NULL)
     error (_("could not find minimal symbol for typeinfo address %s"),
 	   paddress (gdbarch, addr));
@@ -1229,7 +1194,6 @@ gnuv3_skip_trampoline (const frame_info_ptr &frame, CORE_ADDR stop_pc)
 {
   CORE_ADDR real_stop_pc, method_stop_pc, func_addr;
   struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct bound_minimal_symbol thunk_sym, fn_sym;
   struct obj_section *section;
   const char *thunk_name, *fn_name;
   
@@ -1238,7 +1202,7 @@ gnuv3_skip_trampoline (const frame_info_ptr &frame, CORE_ADDR stop_pc)
     real_stop_pc = stop_pc;
 
   /* Find the linker symbol for this potential thunk.  */
-  thunk_sym = lookup_minimal_symbol_by_pc (real_stop_pc);
+  bound_minimal_symbol thunk_sym = lookup_minimal_symbol_by_pc (real_stop_pc);
   section = find_pc_section (real_stop_pc);
   if (thunk_sym.minsym == NULL || section == NULL)
     return 0;
@@ -1251,7 +1215,8 @@ gnuv3_skip_trampoline (const frame_info_ptr &frame, CORE_ADDR stop_pc)
     return 0;
 
   fn_name = strstr (thunk_name, " thunk to ") + strlen (" thunk to ");
-  fn_sym = lookup_minimal_symbol (fn_name, NULL, section->objfile);
+  bound_minimal_symbol fn_sym
+    = lookup_minimal_symbol (current_program_space, fn_name, section->objfile);
   if (fn_sym.minsym == NULL)
     return 0;
 

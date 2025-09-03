@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.83 2022/03/19 13:48:04 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.84 2025/09/02 21:46:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.83 2022/03/19 13:48:04 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.84 2025/09/02 21:46:54 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1264,6 +1264,20 @@ union_link(void *v)
 			if (droplock)
 				VOP_UNLOCK(dun->un_uppervp);
 			error = union_copyup(un, 1, cnp->cn_cred, curlwp);
+			/*
+			 * Unlock the target vnode again immediately
+			 * to avoid deadlocking while relocking or in
+			 * relookup. In particular it's common for a
+			 * link operation to be entirely in one dir,
+			 * where ap->a_dvp and/or dun->un_uppervp are
+			 * the parent of ap->a_vp; locking the former
+			 * while holding the latter is an order
+			 * reversal. It's also possible for the
+			 * relookup call to find and lock the same
+			 * vnode if another process just did the same
+			 * link operation.
+			 */
+			VOP_UNLOCK(ap->a_vp);
 			if (droplock) {
 				vn_lock(dun->un_uppervp,
 				    LK_EXCLUSIVE | LK_RETRY);
@@ -1282,21 +1296,18 @@ union_link(void *v)
 					 panic("union: null upperdvp?");
 				error = relookup(ap->a_dvp, &vp, ap->a_cnp, 0);
 				if (error) {
-					VOP_UNLOCK(ap->a_vp);
 					return EROFS;	/* ? */
 				}
 				if (vp != NULLVP) {
 					/*
-					 * The name we want to create has
-					 * mysteriously appeared (a race?)
+					 * The name we wanted to
+					 * create has been created by
+					 * another process.
 					 */
-					error = EEXIST;
-					VOP_UNLOCK(ap->a_vp);
 					vput(vp);
-					return (error);
+					return EEXIST;
 				}
 			}
-			VOP_UNLOCK(ap->a_vp);
 		}
 		vp = un->un_uppervp;
 	}

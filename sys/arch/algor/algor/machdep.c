@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2024/03/05 14:15:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2025/07/23 19:06:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2024/03/05 14:15:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2025/07/23 19:06:02 andvar Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -411,7 +411,7 @@ mach_init(int argc, char *argv[], char *envp[])
 				break;
 
 			default:
-				printf("Unrecognized boto flag '%c'.\n", *cp);
+				printf("Unrecognized boot flag '%c'.\n", *cp);
 				break;
 			}
 		}

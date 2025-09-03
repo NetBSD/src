@@ -1,4 +1,4 @@
-/*	$NetBSD: crc64_test.c,v 1.3 2025/01/26 16:25:49 christos Exp $	*/
+/*	$NetBSD: crc64_test.c,v 1.4 2025/07/17 19:01:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -57,7 +57,7 @@ _crc64(const char *buf, size_t buflen, const char *result, const int repeats) {
 	char hex[16 + 1];
 	snprintf(hex, sizeof(hex), "%016" PRIX64, crc);
 
-	assert_memory_equal(hex, result, (result ? strlen(result) : 0));
+	assert_memory_equal(hex, result, result ? strlen(result) : 0);
 }
 
 /* 64-bit cyclic redundancy check */

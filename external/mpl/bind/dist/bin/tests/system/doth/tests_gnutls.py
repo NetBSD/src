@@ -72,11 +72,11 @@ def test_gnutls_cli_query(gnutls_cli_executable, named_tlsport):
         # upon receiving a DNS response.
         selector = selectors.DefaultSelector()
         selector.register(gnutls_cli.stdout, selectors.EVENT_READ)
-        deadline = time.time() + 10
+        deadline = time.monotonic() + 10
         gnutls_cli_output = b""
         response = b""
         while not response and not gnutls_cli.poll():
-            if not selector.select(timeout=deadline - time.time()):
+            if not selector.select(timeout=deadline - time.monotonic()):
                 break
             gnutls_cli_output += gnutls_cli.stdout.read(512)
             try:

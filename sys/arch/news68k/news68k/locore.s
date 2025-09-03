@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.86 2024/01/19 18:18:55 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.87 2025/07/08 11:45:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -344,14 +344,17 @@ Lmotommu1:
 	pmove	%a0@,%srp		| load the supervisor root pointer
 #endif /* M68030 */
 Lstploaddone:
+#ifdef M68040
 	RELOC(mmutype, %a0)
 	cmpl	#MMU_68040,%a0@		| 68040?
 	jne	Lmotommu2		| no, skip
-	moveq	#0,%d0			| ensure TT regs are disabled
-	.long	0x4e7b0004		| movc %d0,%itt0
-	.long	0x4e7b0005		| movc %d0,%itt1
-	.long	0x4e7b0006		| movc %d0,%dtt0
-	.long	0x4e7b0007		| movc %d0,%dtt1
+
+	RELOC(mmu_tt40, %a0)		| pointer to TT reg values
+	movl	%a0,%sp@-
+	RELOC(mmu_load_tt40,%a0)	| pass it to mmu_load_tt40()
+	jbsr	%a0@
+	addql	#4,%sp
+
 	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha
 	movl	#MMU40_TCR_BITS,%d0
@@ -360,12 +363,12 @@ Lstploaddone:
 	movc	%d0,%cacr		| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
-	/* Use %tt0 register to map I/O space */
-	RELOC(protott0, %a0)
-	.long	0xf0100800		| pmove %a0@,%tt0
-	/* Use %tt1 register to map RAM to use PROM calls */
-	RELOC(protott1, %a0)
-	.long	0xf0100c00		| pmove %a0@,%tt1
+#endif /* M68040 */
+	RELOC(mmu_tt30, %a0)		| pointer to TT reg values
+	movl	%a0,%sp@-
+	RELOC(mmu_load_tt30,%a0)	| pass it to mmu_load_tt30()
+	jbsr	%a0@
+	addql	#4,%sp
 
 	pflusha
 	RELOC(prototc, %a2)
@@ -902,12 +905,6 @@ GLOBAL(ectype)
 
 GLOBAL(prototc)
 	.long	MMU51_TCR_BITS	| prototype translation control
-
-GLOBAL(protott0)
-	.long	NEWS68K_TT_IO	| prototype transparent translation register 0
-
-GLOBAL(protott1)
-	.long	NEWS68K_TT_PROM	| prototype transparent translation register 1
 
 /*
  * Information from first stage boot program

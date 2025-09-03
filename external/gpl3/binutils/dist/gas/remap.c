@@ -1,5 +1,5 @@
 /* Remap file names for debug info for GNU assembler.
-   Copyright (C) 2007-2024 Free Software Foundation, Inc.
+   Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -78,7 +78,7 @@ remap_debug_filename (const char *filename)
     if (filename_ncmp (filename, map->old_prefix, map->old_len) == 0)
       {
 	const char *name = filename + map->old_len;
-	return concat (map->new_prefix, name, NULL);
+	return concat (map->new_prefix, name, (const char *) NULL);
       }
 	
   return xstrdup (filename);

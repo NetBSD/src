@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2023/07/31 17:02:08 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2025/08/27 23:52:31 christos Exp $
 
 NOCTF=
 #HOSTPROG_CXX=   1
@@ -14,7 +14,7 @@ GDBARCHDIR=	${.CURDIR}/arch/${GDB_MACHINE_ARCH}
 .include "${GDBARCHDIR}/defs.mk"
 
 SRCS=		${G_OBJECTS:.o=.c}
-GCPPFLAGS=	${G_INTERNAL_CFLAGS}
+GCPPFLAGS=	${G_INTERNAL_CFLAGS} -Dctf_qsort_r=qsort_r
 CPPFLAGS+=	-I${.CURDIR} \
 		-I. \
 		-I${DIST} \

@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.9 2014/09/30 15:25:18 mlelstv Exp $ */
+/* $NetBSD: disk.c,v 1.10 2025/07/05 06:50:12 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -180,9 +180,9 @@ disk/extent code
  * Private Interface
  */
 static int      disk_read(target_session_t *, iscsi_scsi_cmd_args_t *,
-				uint32_t, uint16_t, uint8_t);
+				uint64_t, uint32_t, uint8_t);
 static int      disk_write(target_session_t *, iscsi_scsi_cmd_args_t *,
-				uint8_t, uint32_t, uint32_t);
+				uint8_t, uint64_t, uint32_t);
 
 /* return the de index and offset within the device for RAID0 */
 static int
@@ -897,27 +897,15 @@ device_init(iscsi_target_t *tgt, targv_t *tvp, disc_target_t *tp)
 static void
 cdb2lba(uint32_t *lba, uint16_t *len, uint8_t *cdb)
 {
-	/* Some platforms (like strongarm) aligns on */
-	/* word boundaries.  So HTONL and NTOHL won't */
-	/* work here. */
-	int	little_endian = 1;
+	*lba = be32dec(&cdb[2]);
+	*len = be16dec(&cdb[7]);
+}
 
-	if (*(char *) (void *) &little_endian) {
-		/* little endian */
-		((uint8_t *) (void *) lba)[0] = cdb[5];
-		((uint8_t *) (void *) lba)[1] = cdb[4];
-		((uint8_t *) (void *) lba)[2] = cdb[3];
-		((uint8_t *) (void *) lba)[3] = cdb[2];
-		((uint8_t *) (void *) len)[0] = cdb[8];
-		((uint8_t *) (void *) len)[1] = cdb[7];
-	} else {
-		((uint8_t *) (void *) lba)[0] = cdb[2];
-		((uint8_t *) (void *) lba)[1] = cdb[3];
-		((uint8_t *) (void *) lba)[2] = cdb[4];
-		((uint8_t *) (void *) lba)[3] = cdb[5];
-		((uint8_t *) (void *) len)[0] = cdb[7];
-		((uint8_t *) (void *) len)[1] = cdb[8];
-	}
+static void
+cdb2lba64(uint64_t *lba64, uint32_t *len32, uint8_t *cdb)
+{
+	*lba64 = be64dec(&cdb[2]);
+	*len32 = be32dec(&cdb[10]);
 }
 
 /* handle MODE_SENSE_6 and MODE_SENSE_10 commands */
@@ -1095,7 +1083,9 @@ device_command(target_session_t *sess, target_cmd_t *cmd)
 	iscsi_scsi_cmd_args_t  *args = cmd->scsi_cmd;
 	uint32_t        	status;
 	uint32_t		lba;
+	uint64_t		lba64;
 	uint16_t		len;
+	uint32_t		len32;
 	uint8_t			*cdbsize;
 	uint8_t			*rspc;
 	uint8_t			*data;
@@ -1209,14 +1199,24 @@ device_command(target_session_t *sess, target_cmd_t *cmd)
 	case READ_CAPACITY:
 		iscsi_trace(TRACE_SCSI_CMD, "READ_CAPACITY\n");
 		data = args->send_data;
-		*((uint32_t *)(void *)data) = (uint32_t) ISCSI_HTONL(
-				(uint32_t) disks.v[sess->d].blockc - 1);
-				/* Max LBA */
-		*((uint32_t *)(void *)(data + 4)) = (uint32_t) ISCSI_HTONL(
-				(uint32_t) disks.v[sess->d].blocklen);
-				/* Block len */
+		/* Max LBA */
+		be32enc(data, disks.v[sess->d].blockc - 1);
+		/* Block len */
+		be32enc(data + 4, disks.v[sess->d].blocklen);
 		args->input = 8;
 		args->length = 8;
+		args->status = SCSI_SUCCESS;
+		break;
+
+	case READ_CAPACITY_16:
+		iscsi_trace(TRACE_SCSI_CMD, "READ_CAPACITY_16\n");
+		data = args->send_data;
+		/* Max LBA */
+		be64enc(data, disks.v[sess->d].blockc - 1);
+		/* Block len */
+		be32enc(data + 8, disks.v[sess->d].blocklen);
+		args->input = 12;
+		args->length = 12;
 		args->status = SCSI_SUCCESS;
 		break;
 
@@ -1275,6 +1275,34 @@ device_command(target_session_t *sess, target_cmd_t *cmd)
 		iscsi_trace(TRACE_SCSI_CMD,
 				"READ_10(lba %u, len %u blocks)\n", lba, len);
 		if (disk_read(sess, args, lba, len, lun) != 0) {
+			iscsi_err(__FILE__, __LINE__,
+				"disk_read() failed\n");
+			args->status = SCSI_CHECK_CONDITION;
+		}
+		args->input = 1;
+		break;
+
+	case WRITE_16:
+	case WRITE_VERIFY_16:
+		cdb2lba64(&lba64, &len32, cdb);
+
+		iscsi_trace(TRACE_SCSI_CMD,
+			"WRITE_16 | WRITE_VERIFY_16(lba %" PRIu64 ", len %u blocks)\n",
+			lba64, len32);
+		if (disk_write(sess, args, lun, lba64, (unsigned) len32) != 0) {
+			iscsi_err(__FILE__, __LINE__,
+					"disk_write() failed\n");
+			args->status = SCSI_CHECK_CONDITION;
+		}
+		args->length = 0;
+		break;
+
+	case READ_16:
+		cdb2lba64(&lba64, &len32, cdb);
+		iscsi_trace(TRACE_SCSI_CMD,
+			"READ_16(lba %" PRIu64 ", len %u blocks)\n",
+			lba64, len32);
+		if (disk_read(sess, args, lba64, len32, lun) != 0) {
 			iscsi_err(__FILE__, __LINE__,
 				"disk_read() failed\n");
 			args->status = SCSI_CHECK_CONDITION;
@@ -1385,7 +1413,7 @@ device_shutdown(target_session_t *sess)
 
 static int 
 disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun,
-		uint32_t lba, uint32_t len)
+		uint64_t lba, uint32_t len)
 {
 	struct iovec    sg;
 	uint64_t        byte_offset;
@@ -1456,8 +1484,8 @@ out:
 }
 
 static int 
-disk_read(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint32_t lba,
-		uint16_t len, uint8_t lun)
+disk_read(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint64_t lba,
+		uint32_t len, uint8_t lun)
 {
 	uint64_t        byte_offset;
 	uint64_t        bytec;
@@ -1480,7 +1508,7 @@ disk_read(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint32_t lba,
 	    (lba + len) > disks.v[sess->d].blockc) {
 		iscsi_err(__FILE__, __LINE__,
 			"attempt to read beyond end of media\n"
-			"max_lba = %" PRIu64 ", requested lba = %u, len = %u\n",
+			"max_lba = %" PRIu64 ", requested lba = %" PRIu64 ", len = %u\n",
 			disks.v[sess->d].blockc - 1, lba, len);
 		return -1;
 	}

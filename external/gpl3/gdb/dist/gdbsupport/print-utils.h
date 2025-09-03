@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_PRINT_UTILS_H
-#define COMMON_PRINT_UTILS_H
+#ifndef GDBSUPPORT_PRINT_UTILS_H
+#define GDBSUPPORT_PRINT_UTILS_H
 
 /* How many characters (including the terminating null byte) fit in a
    cell.  */
@@ -82,4 +82,4 @@ extern const char *host_address_to_string_1 (const void *addr);
 
 extern char *get_print_cell (void);
 
-#endif /* COMMON_PRINT_UTILS_H */
+#endif /* GDBSUPPORT_PRINT_UTILS_H */

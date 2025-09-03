@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.4 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: dirent.h,v 1.5 2025/07/24 09:04:56 hans Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -35,6 +35,7 @@
 
 #include_next <sys/dirent.h>
 
+#ifndef __sun
 typedef	struct dirent	dirent64_t;
 typedef ino_t		ino64_t;
 
@@ -46,4 +47,5 @@ typedef ino_t		ino64_t;
 #define	DIRENT64_RECLEN(len)	\
 	roundup2(__DIRENT64_NAMEOFF + (len) + 1, sizeof(ino_t))
 
+#endif	/* __sun */
 #endif	/* !_OPENSOLARIS_SYS_DIRENT_H_ */

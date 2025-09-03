@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2023 Free Software Foundation, Inc.
+# Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,13 @@
 
 load_lib gdb-python.exp
 
+require allow_python_tests
+
 standard_testfile
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
     return -1
 }
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 # The following tests require execution.
 
@@ -37,6 +36,10 @@ gdb_breakpoint [gdb_get_line_number "Block break here."]
 gdb_continue_to_breakpoint "Block break here."
 gdb_py_test_silent_cmd "python bf1 = gdb.selected_frame ()" "get frame" 0
 
+# Test Frame.__repr__() method for a valid Frame object.
+gdb_test "python print (repr(bf1))" "<gdb\\.Frame level=0 frame-id=\\{\[^\r\n\]+\\}>" \
+    "test __repr__ for gdb.Frame on a valid frame"
+
 # Test Frame.architecture() method.
 gdb_py_test_silent_cmd "python show_arch_str = gdb.execute(\"show architecture\", to_string=True)" "show arch" 0
 gdb_test "python print (bf1.architecture().name() in show_arch_str)" "True" "test Frame.architecture()"
@@ -45,6 +48,10 @@ gdb_test "python print (bf1.architecture().name() in show_arch_str)" "True" "tes
 gdb_test "python print (bf1.read_var(\"i\"))" "\"stuff\"" "test i"
 gdb_test "python print (bf1.read_var(\"f\"))" "\"foo\"" "test f"
 gdb_test "python print (bf1.read_var(\"b\"))" "\"bar\"" "test b"
+
+# Check we can use a single named argument with read_var.
+gdb_test "python print (bf1.read_var(variable = \"b\"))" "\"bar\"" \
+    "test b using named arguments"
 
 # Test the read_var function in another block other than the current
 # block (in this case, the super block). Test thar read_var is reading
@@ -55,17 +62,51 @@ gdb_test "python print (bf1.read_var(\"i\", sb).type)" "double" "test double i"
 gdb_test "python print (bf1.read_var(\"f\", sb))" "2.2.*" "test f = 2.2"
 gdb_test "python print (bf1.read_var(\"f\", sb).type)" "double" "test double f"
 
+# Now test read_var with a variable and block using named arguments.
+gdb_test "python print (bf1.read_var(block = sb, variable = \"i\"))" "1.1.*" \
+    "test i = 1.1 usign named arguments"
+gdb_test "python print (bf1.read_var(block = sb, variable = \"f\"))" "2.2.*" \
+    "test f = 2.2 using named arguments"
+
 # And again test another outerblock, this time testing "i" is the
 # correct value and type.
 gdb_py_test_silent_cmd "python sb = sb.superblock" "get superblock" 0
 gdb_test "python print (bf1.read_var(\"i\", sb))" "99" "test i = 99"
 gdb_test "python print (bf1.read_var(\"i\", sb).type)" "int" "test int i"
 
+# Test what happens when we provide a block of the wrong type.
+gdb_test "python print (bf1.read_var(\"i\", \"some_block\"))" \
+    [multi_line \
+	 "TypeError.*: argument 2 must be gdb\\.Block, not str" \
+	 "Error occurred in Python.*"] \
+    "check invalid block type error"
+gdb_test "python print (bf1.read_var(block = \"some_block\", variable = \"i\"))" \
+    [multi_line \
+	 "TypeError.*: argument 2 must be gdb\\.Block, not str" \
+	 "Error occurred in Python.*"] \
+    "check invalid block type error when named args are used"
+
+# Test what happens when we provide a variable of the wrong type.
+gdb_test "python print (bf1.read_var(None))" \
+    [multi_line \
+	 "TypeError.*: argument 1 must be gdb\\.Symbol or str, not NoneType" \
+	 "Error occurred in Python.*"] \
+    "check read_var error when variable is None"
+gdb_test "python print (bf1.read_var(sb))" \
+    [multi_line \
+	 "TypeError.*: argument 1 must be gdb\\.Symbol or str, not gdb\\.Block" \
+	 "Error occurred in Python.*"] \
+    "check read_var error when variable is a gdb.Block"
+
 gdb_breakpoint "f2"
 gdb_continue_to_breakpoint "breakpoint at f2"
 gdb_py_test_silent_cmd "python bframe = gdb.selected_frame()" \
     "get bottommost frame" 0
 gdb_test "up" ".*" ""
+
+# Test Frame.__repr__() method for an invalid Frame object.
+gdb_test "python print (repr(bf1))" "<gdb\\.Frame \\(invalid\\)>" \
+    "test __repr__ for gdb.Frame on an invalid frame"
 
 gdb_py_test_silent_cmd "python f1 = gdb.selected_frame ()" "get second frame" 0
 gdb_py_test_silent_cmd "python f0 = f1.newer ()" "get first frame" 0
@@ -100,7 +141,7 @@ gdb_test "python print ('result = %s' % f0.pc ())" " = \[0-9\]+" "test Frame.pc"
 gdb_test "python print ('result = %s' % (f0.older () == f1))" " = True" "test Frame.older"
 gdb_test "python print ('result = %s' % (f1.newer () == f0))" " = True" "test Frame.newer"
 gdb_test "python print ('result = %s' % f0.read_var ('variable_which_surely_doesnt_exist'))" \
-  "ValueError: Variable 'variable_which_surely_doesnt_exist' not found.*Error while executing Python code." \
+  "ValueError.*: Variable 'variable_which_surely_doesnt_exist' not found.*Error occurred in Python.*" \
   "test Frame.read_var - error"
 gdb_test "python print ('result = %s' % f0.read_var ('a'))" " = 1" "test Frame.read_var - success"
 
@@ -115,6 +156,12 @@ gdb_test "python print ('result = %s' % (gdb.selected_frame ().read_register ('s
 gdb_test "python print ('result = %s' % (f0.read_register('pc') == f0.pc()))" \
   " = True" \
   "test Frame.read_register(pc)"
+
+# Repeat the previous test, but this time use named arguments for the
+# read_register method call.
+gdb_test "python print ('result = %s' % (f0.read_register(register = 'pc') == f0.pc()))" \
+  " = True" \
+  "test Frame.read_register() using named arguments"
 
 # Test arch-specific register name.
 set pc ""
@@ -140,3 +187,17 @@ gdb_test "python print(gdb.selected_frame().language())" "c" \
 gdb_test "python print(gdb.selected_frame().read_register(list()))" \
     ".*Invalid type for register.*" \
     "test Frame.read_register with list"
+
+# Compile again without debug info.
+gdb_exit
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} {}] } {
+    return -1
+}
+
+if {![runto_main]} {
+    return 0
+}
+
+# Test if Frame.static_link works for a frame without debug info.
+gdb_test "python print(gdb.selected_frame().static_link())" "None" \
+    "test Frame.static_link for a frame without debug info"

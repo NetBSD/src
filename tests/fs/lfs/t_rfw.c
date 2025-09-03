@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rfw.c,v 1.3 2020/08/23 22:34:29 riastradh Exp $	*/
+/*	$NetBSD: t_rfw.c,v 1.4 2025/08/27 00:28:20 perseant Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -25,6 +25,7 @@
 
 /* Debugging conditions */
 /* #define FORCE_SUCCESS */ /* Don't actually revert, everything worked */
+/* #define USE_DUMPLFS */ /* Dump the filesystem at certain steps */
 
 /* Write a well-known byte pattern into a file, appending if it exists */
 int write_file(const char *, int);
@@ -35,14 +36,25 @@ int check_file(const char *, int);
 /* Check the file system for consistency */
 int fsck(void);
 
-/* Actually run the test, differentiating the orphaned delete problem */
+/* Run dumplfs; for debugging */
+void dumplfs(void);
+
+/* Actually run the test */
 void test(int);
 
-ATF_TC(rfw);
-ATF_TC_HEAD(rfw, tc)
+ATF_TC(rfw32);
+ATF_TC_HEAD(rfw32, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-		"LFS roll-forward creates an inconsistent filesystem");
+		"LFS32 roll-forward creates an inconsistent filesystem");
+	atf_tc_set_md_var(tc, "timeout", "20");
+}
+
+ATF_TC(rfw64);
+ATF_TC_HEAD(rfw64, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"LFS64 roll-forward creates an inconsistent filesystem");
 	atf_tc_set_md_var(tc, "timeout", "20");
 }
 
@@ -64,11 +76,22 @@ ATF_TC_HEAD(rfw, tc)
 long long sbaddr[2] = { -1, -1 };
 const char *sblock[2] = { SBLOCK0_COPY, SBLOCK1_COPY };
 
-ATF_TC_BODY(rfw, tc)
+ATF_TC_BODY(rfw32, tc)
+{
+	test(32);
+}
+
+ATF_TC_BODY(rfw64, tc)
+{
+	test(64);
+}
+
+void test(int width)
 {
 	struct ufs_args args;
 	FILE *pipe;
 	char buf[MAXLINE];
+	char cmd[MAXLINE];
 	int i;
 
 	setvbuf(stdout, NULL, _IONBF, 0);
@@ -76,11 +99,17 @@ ATF_TC_BODY(rfw, tc)
 	/*
 	 * Initialize.
 	 */
+	if (width > 32) {
+		atf_tc_skip("fsck_lfs does not yet understand LFS64");
+		return;
+	}
 	atf_tc_expect_fail("roll-forward not yet implemented");
 
 	/* Create filesystem, note superblock locations */
 	fprintf(stderr, "* Create file system\n");
-	if (system("newfs_lfs -D -F -s 10000 ./" IMGNAME " > " LOGFILE) == -1)
+	sprintf(cmd, "newfs_lfs -D -F -s 10000 -w%d ./%s > %s",
+		width, IMGNAME, LOGFILE);
+	if (system(cmd) == -1)
 		atf_tc_fail_errno("newfs failed");
 	pipe = fopen(LOGFILE, "r");
 	if (pipe == NULL)
@@ -133,6 +162,8 @@ ATF_TC_BODY(rfw, tc)
 
 	/* Unmount */
 	rump_sys_unmount(MP, 0);
+	if (fsck())
+		atf_tc_fail_errno("fsck found errors after first unmount");
 
 	/*
 	 * Make changes which we will attempt to roll forward.
@@ -142,6 +173,8 @@ ATF_TC_BODY(rfw, tc)
 	fprintf(stderr, "* Mount fs [2, after changes]\n");
 	if (rump_sys_mount(MOUNT_LFS, MP, 0, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("rump_sys_mount failed [2]");
+
+	fprintf(stderr, "* Update payload\n");
 
 	/* Add new file */
 	write_file(NEWLY_CREATED, CHUNKSIZE);
@@ -154,8 +187,11 @@ ATF_TC_BODY(rfw, tc)
 
 	/* Done with payload, unmount fs */
 	rump_sys_unmount(MP, 0);
+	if (fsck())
+		atf_tc_fail_errno("fsck found errors after second unmount");
 
 #ifndef FORCE_SUCCESS
+	fprintf(stderr, "* Revert superblocks\n");
 	/*
 	 * Copy back old superblocks, reverting FS to old state
 	 */
@@ -168,6 +204,7 @@ ATF_TC_BODY(rfw, tc)
 	if (fsck())
 		atf_tc_fail_errno("fsck found errors with old superblocks");
 #endif
+	dumplfs();
 
 	/*
 	 * Roll forward.
@@ -186,10 +223,12 @@ ATF_TC_BODY(rfw, tc)
 	 * Use fsck_lfs to look for consistency errors.
 	 */
 
+	fprintf(stderr, "* Fsck after roll-forward\n");
 	if (fsck()) {
 		fprintf(stderr, "*** FAILED FSCK ***\n");
 		atf_tc_fail("fsck found errors after roll forward");
 	}
+	dumplfs();
 
 	/*
 	 * Check file system contents
@@ -203,6 +242,11 @@ ATF_TC_BODY(rfw, tc)
 	if (check_file(UNCHANGED_CONTROL, CHUNKSIZE) != 0)
 		atf_tc_fail("Unchanged control file differs(!)");
 
+	if (rump_sys_access(TO_BE_DELETED, F_OK) == 0)
+		atf_tc_fail("Removed file still present");
+	else 
+		fprintf(stderr, "%s: no problem\n", TO_BE_DELETED);
+
 	if (check_file(TO_BE_APPENDED, 2 * CHUNKSIZE) != 0)
 		atf_tc_fail("Appended file differs");
 
@@ -212,13 +256,11 @@ ATF_TC_BODY(rfw, tc)
 	if (check_file(NEWLY_CREATED, CHUNKSIZE) != 0)
 		atf_tc_fail("Newly added file differs");
 
-	if (rump_sys_access(TO_BE_DELETED, F_OK) == 0)
-		atf_tc_fail("Removed file still present");
-
 	/* Umount filesystem */
 	rump_sys_unmount(MP, 0);
 
 	/* Final fsck to double check */
+	fprintf(stderr, "* Fsck after final unmount\n");
 	if (fsck()) {
 		fprintf(stderr, "*** FAILED FSCK ***\n");
 		atf_tc_fail("fsck found errors after final unmount");
@@ -228,7 +270,8 @@ ATF_TC_BODY(rfw, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, rfw);
+	ATF_TP_ADD_TC(tp, rfw32);
+	ATF_TP_ADD_TC(tp, rfw64);
 	return atf_no_error();
 }
 
@@ -321,4 +364,18 @@ int fsck(void)
 	}
 
 	return errors;
+}
+
+/* Run dumplfs */
+void dumplfs(void)
+{
+#ifdef USE_DUMPLFS
+	char s[MAXLINE];
+	FILE *pipe;
+
+	pipe = popen("dumplfs -S -s 2 -s 1 -s 0 " IMGNAME, "r");
+	while (fgets(s, MAXLINE, pipe) != NULL)
+		fprintf(stderr, "DUMPLFS: %s", s);
+	pclose(pipe);
+#endif /* USE_DUMPLFS */
 }

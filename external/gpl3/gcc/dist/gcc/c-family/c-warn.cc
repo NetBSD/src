@@ -943,8 +943,9 @@ sizeof_pointer_memaccess_warning (location_t *sizeof_arg_loc, tree callee,
 			"argument to %<sizeof%> in %qD call is the same "
 			"expression as the destination; did you mean to "
 			"remove the addressof?", callee);
-	  else if ((TYPE_PRECISION (TREE_TYPE (type))
-		    == TYPE_PRECISION (char_type_node))
+	  else if ((INTEGRAL_TYPE_P (TREE_TYPE (type))
+		    && (TYPE_PRECISION (TREE_TYPE (type))
+			== TYPE_PRECISION (char_type_node)))
 		   || strop)
 	    warning_at (loc, OPT_Wsizeof_pointer_memaccess,
 			"argument to %<sizeof%> in %qD call is the same "
@@ -983,8 +984,9 @@ sizeof_pointer_memaccess_warning (location_t *sizeof_arg_loc, tree callee,
 			"argument to %<sizeof%> in %qD call is the same "
 			"expression as the source; did you mean to "
 			"remove the addressof?", callee);
-	  else if ((TYPE_PRECISION (TREE_TYPE (type))
-		    == TYPE_PRECISION (char_type_node))
+	  else if ((INTEGRAL_TYPE_P (TREE_TYPE (type))
+		    && (TYPE_PRECISION (TREE_TYPE (type))
+			== TYPE_PRECISION (char_type_node)))
 		   || strop)
 	    warning_at (loc, OPT_Wsizeof_pointer_memaccess,
 			"argument to %<sizeof%> in %qD call is the same "
@@ -1023,8 +1025,9 @@ sizeof_pointer_memaccess_warning (location_t *sizeof_arg_loc, tree callee,
 			"argument to %<sizeof%> in %qD call is the same "
 			"expression as the first source; did you mean to "
 			"remove the addressof?", callee);
-	  else if ((TYPE_PRECISION (TREE_TYPE (type))
-		    == TYPE_PRECISION (char_type_node))
+	  else if ((INTEGRAL_TYPE_P (TREE_TYPE (type))
+		    && (TYPE_PRECISION (TREE_TYPE (type))
+			== TYPE_PRECISION (char_type_node)))
 		   || strop)
 	    warning_at (loc, OPT_Wsizeof_pointer_memaccess,
 			"argument to %<sizeof%> in %qD call is the same "
@@ -1063,8 +1066,9 @@ sizeof_pointer_memaccess_warning (location_t *sizeof_arg_loc, tree callee,
 			"argument to %<sizeof%> in %qD call is the same "
 			"expression as the second source; did you mean to "
 			"remove the addressof?", callee);
-	  else if ((TYPE_PRECISION (TREE_TYPE (type))
-		    == TYPE_PRECISION (char_type_node))
+	  else if ((INTEGRAL_TYPE_P (TREE_TYPE (type))
+		    && (TYPE_PRECISION (TREE_TYPE (type))
+			== TYPE_PRECISION (char_type_node)))
 		   || strop)
 	    warning_at (loc, OPT_Wsizeof_pointer_memaccess,
 			"argument to %<sizeof%> in %qD call is the same "
@@ -3806,10 +3810,15 @@ do_warn_array_compare (location_t location, tree_code code, tree op0, tree op1)
       /* C doesn't allow +arr.  */
       if (c_dialect_cxx ())
 	inform (location, "use unary %<+%> which decays operands to pointers "
-		"or %<&%D[0] %s &%D[0]%> to compare the addresses",
-		op0, op_symbol_code (code), op1);
+		"or %<&%s%E%s[0] %s &%s%E%s[0]%> to compare the addresses",
+		DECL_P (op0) ? "" : "(", op0, DECL_P (op0) ? "" : ")",
+		op_symbol_code (code),
+		DECL_P (op1) ? "" : "(", op1, DECL_P (op1) ? "" : ")");
       else
-	inform (location, "use %<&%D[0] %s &%D[0]%> to compare the addresses",
-		op0, op_symbol_code (code), op1);
+	inform (location,
+		"use %<&%s%E%s[0] %s &%s%E%s[0]%> to compare the addresses",
+		DECL_P (op0) ? "" : "(", op0, DECL_P (op0) ? "" : ")",
+		op_symbol_code (code),
+		DECL_P (op1) ? "" : "(", op1, DECL_P (op1) ? "" : ")");
     }
 }

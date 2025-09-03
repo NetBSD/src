@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -19,8 +19,6 @@
    MA 02110-1301, USA.  */
 
 #include "mydefs.h"
-
-bool verbose;
 
 /*
 * -----------------------------------------------------------------------------
@@ -65,6 +63,10 @@ void allocate_data (int active_threads,
       printf ("Error: allocation of vector ref failed\n");
       perror ("vector ref");
       exit (-1);
+    }
+  else
+    {
+      if (verbose) printf ("Vector ref allocated\n");
     }
 
   if ((*A = (double **) malloc (number_of_rows * sizeof (double))) == NULL)

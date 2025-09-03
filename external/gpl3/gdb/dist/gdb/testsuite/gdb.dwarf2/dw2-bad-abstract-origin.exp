@@ -1,0 +1,274 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# There was a bug in GCC, which appears to be fixed in version 9 and
+# later, where GCC would, in some case, create an invalid
+# DW_AT_abstract_origin value.
+#
+# The bug was that there existed a function which could be inlined,
+# and so the DWARF contained a DW_TAG_subprogram describing the
+# abstract instance of the function.
+#
+# For whatever reason, the compiler generated a non-inline instance of
+# the function, and so we had a DW_TAG_subprogram with a
+# DW_AT_abstract_origin that referenced the abstract instance.
+#
+# Additionally there was an inlined instance of the function, and so
+# we had a DW_TAG_inlined_subroutine with a DW_AT_abstract_origin that
+# referenced the abstract instance.
+#
+# Within the function there was a DW_TAG_lexical_block, which also
+# appeared in the abstract instance, and both concrete instances.  The
+# lexical block also has DW_AT_abstract_origin that should link back
+# to the lexical block within the abstract instance.
+#
+# The bug was that the DW_AT_abstract_origin for the lexical block
+# within the inlined instance instead referenced the lexical block
+# within the non-inline instance, not within the abstract instance.
+#
+# The problem this caused is that the non-inline instance defined the
+# extents of the lexical block using DW_AT_ranges, while the inline
+# instance defined the extend using DW_AT_low_pc and DW_AT_high_pc.
+#
+# When GDB tried to parse the block ranges for the lexical block for
+# the inline function GDB would then find both the DW_AT_ranges and
+# the DW_AT_low_pc/DW_AT_high_pc values.  This alone is unexpected.
+#
+# What is worse though, is that the DW_AT_ranges were not within the
+# low-pc/high-pc bounds, and this really confused GDB.
+#
+# The solution is that, when GDB finds blocks with both ranges AND
+# low-pc/high-pc information, GDB should only accept the
+# low-pc/high-pc information.
+#
+# Of course, there's no guarantee which of the information is correct,
+# but if GDB tries to hold both piece of information, then we end up
+# in a non-consistent state, and this triggers assertions.
+
+load_lib dwarf.exp
+
+require dwarf2_support
+
+standard_testfile
+
+# This compiles the source file and starts and stops GDB, so run it
+# before calling prepare_for_testing otherwise GDB will have exited.
+get_func_info func_a
+get_func_info func_b
+
+# Some line numbers needed in the generated DWARF.
+set func_a_decl_line [gdb_get_line_number "func_a decl line"]
+set func_b_decl_line [gdb_get_line_number "func_b decl line"]
+set call_line [gdb_get_line_number "inline func_a call line"]
+
+# See the problem description at the head of this file.
+#
+# Create the test program, use DWARF_VERSION to decide which format of
+# ranges table to generate.
+#
+# Then run the test program and check that GDB doesn't crash, and
+# check that the block structure is as we expect.
+proc run_test { dwarf_version } {
+    set dw_testname "${::testfile}-${dwarf_version}"
+
+    set asm_file [standard_output_file "${dw_testname}.S"]
+    Dwarf::assemble $asm_file {
+	upvar dwarf_version dwarf_version
+	upvar entry_label entry_label
+
+	declare_labels lines_table foo_func foo_block block_ranges bad_block \
+	    value_label int_label
+
+	cu { version $dwarf_version } {
+	    compile_unit {
+		{producer "GNU C 14.1.0"}
+		{language @DW_LANG_C}
+		{name $::srcfile}
+		{comp_dir /tmp}
+		{stmt_list $lines_table DW_FORM_sec_offset}
+		{low_pc 0 addr}
+	    } {
+		int_label: base_type {
+		    {name "int"}
+		    {byte_size 4 sdata}
+		    {encoding @DW_ATE_signed}
+		}
+		foo_func: subprogram {
+		    {name foo}
+		    {inline @DW_INL_declared_inlined}
+		    {decl_file 1 data1}
+		    {decl_line $::func_a_decl_line data1}
+		} {
+		    foo_block: lexical_block {
+		    } {
+			value_label: DW_TAG_variable {
+			    {name value}
+			    {type :$int_label}
+			}
+		    }
+		}
+		subprogram {
+		    {abstract_origin %$foo_func}
+		    {low_pc func_a_0 addr}
+		    {high_pc func_a_6 addr}
+		    {external 1 flag}
+		} {
+		    bad_block: lexical_block {
+			{abstract_origin %$foo_block}
+			{ranges $block_ranges DW_FORM_sec_offset}
+		    } {
+			DW_TAG_variable {
+			    {abstract_origin %$value_label}
+			    {DW_AT_location {
+				DW_OP_const1u 23
+				DW_OP_stack_value
+			    } SPECIAL_expr}
+			}
+		    }
+		}
+		subprogram {
+		    {name baz}
+		    {low_pc func_b_0 addr}
+		    {high_pc func_b_5 addr}
+		    {external 1 flag}
+		} {
+		    inlined_subroutine {
+			{abstract_origin %$foo_func}
+			{call_file 1 data1}
+			{call_line $::call_line data1}
+			{low_pc func_b_1 addr}
+			{high_pc func_b_4 addr}
+		    } {
+			lexical_block {
+			    {abstract_origin %$bad_block}
+			    {low_pc func_b_2 addr}
+			    {high_pc func_b_3 addr}
+			} {
+			    DW_TAG_variable {
+				{abstract_origin %$value_label}
+				{DW_AT_location {
+				    DW_OP_const1u 99
+				    DW_OP_stack_value
+				} SPECIAL_expr}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+
+	lines {version 2} lines_table {
+	    include_dir "$::srcdir/$::subdir"
+	    file_name "$::srcfile" 1
+	}
+
+	if { $dwarf_version == 5 } {
+	    rnglists {} {
+		table {} {
+		    block_ranges: list_ {
+			start_end func_a_1 func_a_2
+			start_end func_a_4 func_a_5
+		    }
+		}
+	    }
+	} else {
+	    ranges { } {
+		block_ranges: sequence {
+		    range func_a_1 func_a_2
+		    range func_a_4 func_a_5
+		}
+	    }
+	}
+    }
+
+    if {[prepare_for_testing "failed to prepare" "${dw_testname}" \
+	     [list $::srcfile $asm_file] {nodebug}]} {
+	return false
+    }
+
+    if {![runto_main]} {
+	return false
+    }
+
+    # Breakpoint on the inline function `foo'.
+    gdb_breakpoint foo
+
+    # Breakpoint within the lexical block inside of `foo'.
+    gdb_breakpoint func_a_1
+    gdb_breakpoint func_b_2
+
+    gdb_continue_to_breakpoint "continue to first foo breakpoint"
+    gdb_continue_to_breakpoint "continue to func_b_2 breakpoint"
+
+    gdb_test "print value" " = 99" "print value at func_b_2"
+
+    # Some addresses we need to look for in the 'maint info blocks'
+    # output.
+    set func_b_0 [get_hexadecimal_valueof "&func_b_0" "*UNKNOWN*"]
+    set func_b_1 [get_hexadecimal_valueof "&func_b_1" "*UNKNOWN*"]
+    set func_b_2 [get_hexadecimal_valueof "&func_b_2" "*UNKNOWN*"]
+    set func_b_3 [get_hexadecimal_valueof "&func_b_3" "*UNKNOWN*"]
+    set func_b_4 [get_hexadecimal_valueof "&func_b_4" "*UNKNOWN*"]
+    set func_b_5 [get_hexadecimal_valueof "&func_b_5" "*UNKNOWN*"]
+
+    gdb_test "maint info blocks" \
+	[multi_line \
+	     "\\\[\\(block \\*\\) $::hex\\\] $func_b_0\\.\\.$func_b_5" \
+	     "  entry pc: $func_b_0" \
+	     "  function: baz" \
+	     "  is contiguous" \
+	     "\\\[\\(block \\*\\) $::hex\\\] $func_b_1\\.\\.$func_b_4" \
+	     "  entry pc: $func_b_1" \
+	     "  inline function: foo" \
+	     "  symbol count: $::decimal" \
+	     "  is contiguous" \
+	     "\\\[\\(block \\*\\) $::hex\\\] $func_b_2\\.\\.$func_b_3" \
+	     "  entry pc: $func_b_2" \
+	     "  symbol count: $::decimal" \
+	     "  is contiguous"] \
+	"check block structure at func_b_2"
+
+    gdb_continue_to_breakpoint "continue to second foo breakpoint"
+    gdb_continue_to_breakpoint "continue to func_a_1 breakpoint"
+
+    gdb_test "print value" " = 23" "print value at func_a_1"
+
+    # Some addresses we need to look for in the 'maint info blocks'
+    # output.
+    set func_a_0 [get_hexadecimal_valueof "&func_a_0" "*UNKNOWN*"]
+    set func_a_1 [get_hexadecimal_valueof "&func_a_1" "*UNKNOWN*"]
+    set func_a_2 [get_hexadecimal_valueof "&func_a_2" "*UNKNOWN*"]
+    set func_a_4 [get_hexadecimal_valueof "&func_a_4" "*UNKNOWN*"]
+    set func_a_5 [get_hexadecimal_valueof "&func_a_5" "*UNKNOWN*"]
+    set func_a_6 [get_hexadecimal_valueof "&func_a_6" "*UNKNOWN*"]
+
+    gdb_test "maint info blocks" \
+	[multi_line \
+	     "\\\[\\(block \\*\\) $::hex\\\] $func_a_0\\.\\.$func_a_6" \
+	     "  entry pc: $func_a_0" \
+	     "  function: foo" \
+	     "  is contiguous" \
+	     "\\\[\\(block \\*\\) $::hex\\\] $func_a_1\\.\\.$func_a_5" \
+	     "  entry pc: $func_a_1" \
+	     "  symbol count: $::decimal" \
+	     "  address ranges:" \
+	     "    $func_a_1\\.\\.$func_a_2" \
+	     "    $func_a_4\\.\\.$func_a_5"] \
+	"check block structure at func_a_1"
+}
+
+foreach_with_prefix dwarf_version { 4 5 } {
+    run_test $dwarf_version
+}

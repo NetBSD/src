@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef LINUX_TDEP_H
-#define LINUX_TDEP_H
+#ifndef GDB_LINUX_TDEP_H
+#define GDB_LINUX_TDEP_H
 
 #include "bfd.h"
 #include "displaced-stepping.h"
@@ -117,4 +117,4 @@ extern CORE_ADDR linux_get_hwcap2 ();
 extern struct link_map_offsets *linux_ilp32_fetch_link_map_offsets ();
 extern struct link_map_offsets *linux_lp64_fetch_link_map_offsets ();
 
-#endif /* linux-tdep.h */
+#endif /* GDB_LINUX_TDEP_H */

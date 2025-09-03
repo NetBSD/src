@@ -1,4 +1,4 @@
-/*	$NetBSD: skr_test.c,v 1.2 2025/01/26 16:25:48 christos Exp $	*/
+/*	$NetBSD: skr_test.c,v 1.3 2025/07/17 19:01:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -238,7 +238,7 @@ create_bundle(FILE *fp, isc_stdtime_t btime, int bnum) {
 	ISC_LIST_APPEND(dnskeylist->rdata, &test_bundles[bnum].ksk, link);
 	dns_rdatalist_tordataset(dnskeylist, dnskeyset);
 	dns_rdata_init(&test_bundles[bnum].dnskey_rrsig);
-	sign_rrset(fp, btime, (btime + LIFETIME), dnskeyset,
+	sign_rrset(fp, btime, btime + LIFETIME, dnskeyset,
 		   test_bundles[bnum].rrsig1buf,
 		   &test_bundles[bnum].dnskey_rrsig);
 	for (dns_rdata_t *rd = ISC_LIST_HEAD(dnskeylist->rdata); rd != NULL;
@@ -265,7 +265,7 @@ create_bundle(FILE *fp, isc_stdtime_t btime, int bnum) {
 	ISC_LIST_APPEND(cdnskeylist->rdata, &test_bundles[bnum].cdnskey, link);
 	dns_rdatalist_tordataset(cdnskeylist, cdnskeyset);
 	dns_rdata_init(&test_bundles[bnum].cdnskey_rrsig);
-	sign_rrset(fp, btime, (btime + LIFETIME), cdnskeyset,
+	sign_rrset(fp, btime, btime + LIFETIME, cdnskeyset,
 		   test_bundles[bnum].rrsig2buf,
 		   &test_bundles[bnum].cdnskey_rrsig);
 	for (dns_rdata_t *rd = ISC_LIST_HEAD(cdnskeylist->rdata); rd != NULL;
@@ -291,7 +291,7 @@ create_bundle(FILE *fp, isc_stdtime_t btime, int bnum) {
 	ISC_LIST_APPEND(cdslist->rdata, &test_bundles[bnum].cds, link);
 	dns_rdatalist_tordataset(cdslist, cdsset);
 	dns_rdata_init(&test_bundles[bnum].cds_rrsig);
-	sign_rrset(fp, btime, (btime + LIFETIME), cdsset,
+	sign_rrset(fp, btime, btime + LIFETIME, cdsset,
 		   test_bundles[bnum].rrsig3buf, &test_bundles[bnum].cds_rrsig);
 	for (dns_rdata_t *rd = ISC_LIST_HEAD(cdslist->rdata); rd != NULL;
 	     rd = ISC_LIST_HEAD(cdslist->rdata))

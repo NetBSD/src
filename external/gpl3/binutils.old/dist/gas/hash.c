@@ -1,5 +1,5 @@
 /* hash.c -- gas hash table code
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,6 +19,26 @@
    02110-1301, USA.  */
 
 #include "as.h"
+
+/* Hash function for a string_tuple.  */
+
+hashval_t
+hash_string_tuple (const void *e)
+{
+  string_tuple_t *tuple = (string_tuple_t *) e;
+  return htab_hash_string (tuple->key);
+}
+
+/* Equality function for a string_tuple.  */
+
+int
+eq_string_tuple (const void *a, const void *b)
+{
+  const string_tuple_t *ea = (const string_tuple_t *) a;
+  const string_tuple_t *eb = (const string_tuple_t *) b;
+
+  return strcmp (ea->key, eb->key) == 0;
+}
 
 /* Insert ELEMENT into HTAB.  If REPLACE is non-zero existing elements
    are overwritten.  If ELEMENT already exists, a pointer to the slot

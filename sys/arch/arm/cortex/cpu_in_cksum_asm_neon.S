@@ -1,3 +1,5 @@
+/*	$NetBSD: cpu_in_cksum_asm_neon.S,v 1.5 2025/06/19 22:00:54 andvar Exp $	*/	
+
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +31,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: cpu_in_cksum_asm_neon.S,v 1.4 2021/10/02 20:52:09 skrll Exp $")
+RCSID("$NetBSD: cpu_in_cksum_asm_neon.S,v 1.5 2025/06/19 22:00:54 andvar Exp $")
 
 /*
  * uint32_t
@@ -41,7 +43,7 @@ RCSID("$NetBSD: cpu_in_cksum_asm_neon.S,v 1.4 2021/10/02 20:52:09 skrll Exp $")
 ENTRY(cpu_in_cksum_neon)
 	mov		ip, r0		/* leave r0 as temp */
 	add		r3, r1, ip	/* get end pointer */
-	and		r1, ip, #7	/* get start offset (leading btyes) */
+	and		r1, ip, #7	/* get start offset (leading bytes) */
 	and		r2, r3, #7	/* get end offset (trailing bytes) */
 	bic		ip, ip, #7	/* start on a dword boundary */
 	add		r3, r3, #7	/* round up to a dword boundary */

@@ -1,5 +1,5 @@
 /* RISC-V 64-bit COFF support for BFD.
-   Copyright (C) 2023-2024 Free Software Foundation, Inc.
+   Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -60,5 +60,7 @@ struct external_reloc
 
 #define RELOC struct external_reloc
 #define RELSZ 14
+#define SWAP_IN_RELOC_OFFSET	H_GET_32
+#define SWAP_OUT_RELOC_OFFSET	H_PUT_32
 
 #endif /* COFF_RISCV64_H */

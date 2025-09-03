@@ -1,9 +1,193 @@
 -*- text -*-
 
+Changes in 2.42:
+
+* Add support for the AArch64 Scalable Vector Extension version 2.1 (SVE2.1).
+
+* Add support for the AArch64 Scalable Matrix Extension version 2.1 (SME2.1).
+
+* Add support for the AArch64 BFloat16 to BFloat16 arithmetic for SVE2 and SME2
+  (B16B16).
+
+* Add support for the AArch64 Reliability, Availability and Serviceability
+  extension v2 (RASv2).
+
+* Add support for the AArch64 128-bit Atomic Instructions (LSE128).
+
+* Add support for the AArch64 Guarded Control Stack (GCS).
+
+* Add support for the AArch64 Check Feature Status Extension (CHK).
+
+* Add support for the AArch64 Enhanced Speculation Restriction Instructions
+  (SPECRES2).
+
+* Add support for the AArch64 Load-Acquire RCpc instructions version 3 (LRCPC3).
+
+* Add support for the AArch64 Translation Hardening Extension (THE).
+
+* Add support for the AArch64 Instruction Trace Extension (ITE).
+
+* Add support for the AArch64 Translation Hardening Extension (THE).
+
+* Add support for the AArch64 128-bit page table descriptors (D128).
+
+* Add support for the AArch64 XS memory attribute (XS).
+
+* Add support for '+fcma', '+jscvt', '+frintts', '+flagm2', '+rcpc2' and
+  '+wfxt' flags to enable existing AArch64 instructions.
+
+* Add support for 'armv8.9-a' and 'armv9.4-a' for -march in AArch64 GAS.
+
+* Add support for 'armv8.9-a' and 'armv9.4-a' for -march in Arm GAS.
+
+* Add support for Cortex-A520, Cortex-A720, Cortex-X3 and Cortex-X4 for
+  AArch64.
+
+* Experimental support in GAS to synthesize CFI for ABI-conformant,
+  hand-written asm using the new command line option --scfi=experimental on
+  x86-64.  Only System V AMD64 ABI is supported.
+
+* Initial support for Intel APX: 32 GPRs, NDD, PUSH2/POP2 and PUSHP/POPP.
+
+* Add support for Intel USER_MSR instructions.
+
+* Add support for Intel AVX10.1.
+
+* Add support for Intel PBNDKB instructions.
+
+* Add support for Intel SM4 instructions.
+
+* Add support for Intel SM3 instructions.
+
+* Add support for Intel SHA512 instructions.
+
+* Add support for Intel AVX-VNNI-INT16 instructions.
+
+* On RISC-V macro instructions expanding to AUIPC and a load, store, or branch
+  no longer accept x0 as an intermediate and/or destination register.
+
+* Add support for RISC-V T-Head extensions (XTheadVector, XTheadZvlsseg
+  and XTheadZvamo) from version 2.3.0 of the T-Head ISA manual.
+
+* Add support for RISC-V CORE-V extensions (XCVmac, XCValu) with version 1.0.
+
+* Add support for RISC-V SiFive VCIX extension (XSfVcp) with version 1.0.
+
+* The BPF assembler now uses semi-colon (;) to separate statements, and
+  therefore they cannot longer be used to begin line comments. This matches the
+  behavior of the clang/LLVM BPF assembler.
+
+* The BPF assembler now allows using both hash (#) and double slash (//) to
+  begin line comments.
+
+* Add support for LoongArch v1.10 new instructions: estimated reciprocal
+  instructions, sub-word atomic instructions, atomic CAS instructions,
+  16-byte store-conditional instruction, load-linked instructions with
+  acquire semantics, and store-conditional instructions with release
+  semantics.
+
+* The %call36 relocation operator, along with the pseudo-instructions
+  call36 and tail36, are now usable with the LoongArch "medium" code
+  model, allowing text sections up to 128 GiB.
+
+* TLS descriptors (TLSDESC) are now supported on LoongArch. This includes
+  the following new relocation operators: %desc_pc_hi20, %desc_pc_lo12,
+  %desc_ld, and %desc_call, and the la.tls.desc pseudo-instruction.
+
+* TLS LE relaxation is now supported on LoongArch. New relocation
+  operators %le_hi20_r, %le_lo12r, and %le_add_r are now available.
+
+* Add support for LoongArch branch relaxation: a conditional branch with
+  destination out of its immediate operand range, but still within
+  a "b"'s range, is now assembled as an inverted branch and a "b". This
+  works around the unreliable branch offset estimation of the compiler
+  when .align directive is encoded into a long NOP sequence with an
+  R_LARCH_RELAX by the assembler.
+
+* Symbol or label names in LoongArch assembly can now be spelled with
+  double-quotes.
+
+Changes in 2.41:
+
+* Add support for the KVX instruction set.
+
+* Add support for Intel FRED instructions.
+
+* Add support for Intel LKGS instructions.
+
+* Add support for Intel AMX-COMPLEX instructions.
+
+* Add SME2 support to the AArch64 port.
+
+* A new .insn directive is recognized by x86 gas.
+
+* Add support for LoongArch LSX instructions.
+
+* Add support for LoongArch LASX instructions.
+
+* Add support for LoongArch LVZ instructions.
+
+* Add support for LoongArch LBT instructions.
+
+* Initial LoongArch support for linker relaxation has been added.
+
+* Deprecate the LoongArch register aliases $v0, $v1, $x, $fv0 and $fv1.
+
+Changes in 2.40:
+
+* Add support for Intel RAO-INT instructions.
+
+* Add support for Intel AVX-NE-CONVERT instructions.
+
+* Add support for Intel MSRLIST instructions.
+
+* Add support for Intel WRMSRNS instructions.
+
+* Add support for Intel CMPccXADD instructions.
+
+* Add support for Intel AVX-VNNI-INT8 instructions.
+
+* Add support for Intel AVX-IFMA instructions.
+
+* Add support for Intel PREFETCHI instructions.
+
+* Add support for Intel AMX-FP16 instructions.
+
+* gas now supports --compress-debug-sections=zstd to compress
+  debug sections with zstd.
+
+* Add --enable-default-compressed-debug-sections-algorithm={zlib,zstd}
+  that selects the default compression algorithm
+  for --enable-compressed-debug-sections.
+
+* Add support for various T-Head extensions (XTheadBa, XTheadBb, XTheadBs,
+  XTheadCmo, XTheadCondMov, XTheadFMemIdx, XTheadFmv, XTheadInt, XTheadMemIdx,
+  XTheadMemPair, XTheadMac, and XTheadSync) from version 2.0 of the T-Head
+  ISA manual, which are implemented in the Allwinner D1.
+
+* Add support for the RISC-V Zawrs extension, version 1.0-rc4.
+
+* Add support for Cortex-X1C for Arm.
+
+* New command line option --gsframe to generate SFrame unwind information
+  on x86_64 and aarch64 targets.
+
 Changes in 2.39:
 
 * Remove (rudimentary) support for the x86-64 sub-architectures Intel L1OM and
   Intel K1OM.
+
+* Add support for the RISC-V Zicbop, Zicbom, and Zicboz extensions, version
+  1.0-fd39d01.
+
+* Add support for the RISC-V Zfh extension, version 1.0.
+
+* Add support for the Zhinx extension, version 1.0.0-rc.
+
+* Add support for the RISC-V H extension.
+
+* Add support for the RISC-V Zfhmin extension, version 1.0, and Zhinxmin
+  extension, version 1.0.0-rc.
 
 Changes in 2.38:
 
@@ -43,11 +227,25 @@ Changes in 2.38:
 
 * Add support for Intel AVX512_FP16 instructions.
 
+* Add support for the RISC-V scalar crypto extension, version 1.0.0.
+
+* Add support for the RISC-V vector extension, version 1.0.
+
+* Add support for the Z{f,d,q}inx extensions, version 1.0.0-rc.
+
+* Add support for the RISC-V svinval extension, version 1.0.
+
+* Add support for the RISC-V hypervisor extension, as defined by Privileged
+  Specification 1.12.
+
 Changes in 2.37:
 
 * arm-symbianelf support removed.
 
 * Add support for Realm Management Extension (RME) for AArch64.
+
+* Add support for the Zba, Zbb, Zbc, and Zbs subsets of the RISC-V
+  bit manipulation extension, version 0.93.
 
 Changes in 2.36:
 
@@ -105,6 +303,8 @@ Changes in 2.36:
   SHF_GNU_RETAIN specifies that the section should not be garbage
   collected by the linker.  It requires the GNU or FreeBSD ELF OSABIs.
 
+* Add support for the RISC-V Zihintpause extension.
+
 Changes in 2.35:
 
 * X86 NaCl target support is removed.
@@ -123,6 +323,11 @@ Changes in 2.35:
   version 5 .debug_line sections.
 
 * Add -mbig-obj support to i386 MingW targets.
+
+* Add support for the -mriscv-isa-version argument, to select the version of
+  the RISC-V ISA specification used when assembling.
+
+* Remove support for the RISC-V privileged specification, version 1.9.
 
 Changes in 2.34:
 
@@ -217,6 +422,8 @@ Changes in 2.31:
 
 * Add support for .nops directive.  It is currently supported only for
   x86 targets.
+
+* Add support for the .insn directive on RISC-V targets.
 
 Changes in 2.30:
 
@@ -938,7 +1145,7 @@ Changes in 1.93.01:
   of new CPUs and formats, lots of bugs fixed.
 
 
-Copyright (C) 2012-2022 Free Software Foundation, Inc.
+Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

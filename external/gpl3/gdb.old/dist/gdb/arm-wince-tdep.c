@@ -1,7 +1,7 @@
 /* Target-dependent code for Windows CE running on ARM processors,
    for GDB.
 
-   Copyright (C) 2007-2023 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "osabi.h"
 #include "gdbcore.h"
 #include "target.h"
@@ -36,7 +35,7 @@ static const gdb_byte arm_wince_thumb_le_breakpoint[] = { 0xfe, 0xdf };
 #define ARM_WINCE_JB_PC			10
 
 static CORE_ADDR
-arm_pe_skip_trampoline_code (frame_info_ptr frame, CORE_ADDR pc)
+arm_pe_skip_trampoline_code (const frame_info_ptr &frame, CORE_ADDR pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);

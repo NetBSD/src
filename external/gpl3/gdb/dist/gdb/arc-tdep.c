@@ -861,7 +861,7 @@ arc_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp, CORE_ADDR funaddr,
 		     struct regcache *regcache)
 {
   *real_pc = funaddr;
-  *bp_addr = entry_point_address ();
+  *bp_addr = entry_point_address (current_program_space);
   return sp;
 }
 
@@ -1438,7 +1438,7 @@ arc_analyze_prologue (struct gdbarch *gdbarch, const CORE_ADDR entrypoint,
    1) Store instruction for each callee-saved register (R25 - R13 + 1)
    2) Two instructions for FP
    3) One for BLINK
-   4) Three substract instructions for SP (for variadic args, for
+   4) Three subtract instructions for SP (for variadic args, for
    callee saved regs and for local vars) and assuming that those SUB use
    long-immediate (hence double length).
    5) Stores of arguments registers are considered part of prologue too
@@ -2117,7 +2117,7 @@ arc_check_tdesc_feature (struct tdesc_arch_data *tdesc_data,
   return true;
 }
 
-/* Check for the existance of "lp_start" and "lp_end" in target description.
+/* Check for the existence of "lp_start" and "lp_end" in target description.
    If both are present, assume there is hardware loop support in the target.
    This can be improved by looking into "lpc_size" field of "isa_config"
    auxiliary register.  */

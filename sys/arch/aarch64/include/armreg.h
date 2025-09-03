@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.67 2025/02/27 08:39:54 andvar Exp $ */
+/* $NetBSD: armreg.h,v 1.71 2025/08/23 06:44:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -512,6 +512,7 @@ AARCH64REG_READ_INLINE(mpidr_el1)
 #define	MIDR_EL1_REVISION	__BITS(3,0)		// Revision
 
 #define	MPIDR_AFF3		__BITS(32,39)
+#define	MPIDR_RES1		__BIT(31)
 #define	MPIDR_U	 		__BIT(30)		// 1 = Uni-Processor System
 #define	MPIDR_MT		__BIT(24)		// 1 = SMT(AFF0 is logical)
 #define	MPIDR_AFF2		__BITS(16,23)
@@ -668,7 +669,7 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 #define	 ESR_EC_FP_ACCESS	 0x07	// AXX: Access to SIMD/FP Registers
 #define	 ESR_EC_FPID		 0x08	// A32: MCR/MRC access to CP10 !EC=7
 #define	 ESR_EC_PAUTH		 0x09	// A64: Pointer auth trap (FEAT_PAUTH)
-#define	 ESR_EC_LS64		 0x0a	// AXX: LD64B/ST64B instruction (FEAT_LS64)		// XXXNH
+#define	 ESR_EC_LS64		 0x0a	// A64: LD64B/ST64B instruction (FEAT_LS64)
 #define	 ESR_EC_CP14_RRT	 0x0c	// A32: MRRC access to CP14
 #define	 ESR_EC_BTE_A64		 0x0d	// A64: Branch Target Exception (V8.5)
 #define	 ESR_EC_ILL_STATE	 0x0e	// AXX: Illegal Execution State
@@ -887,6 +888,34 @@ AARCH64REG_WRITE_INLINE(hstr_el2)
 #define	HSTR_EL2_T1	__BIT(1)
 #define	HSTR_EL2_T0	__BIT(0)
 
+AARCH64REG_READ_INLINE(mdcr_el2)	// Monitor Debug Configuration Register
+AARCH64REG_WRITE_INLINE(mdcr_el2)
+
+//			__BITS(63, 37)	Res0
+#define	MDCR_EL2_HPMFZS	__BIT(36)		// Hyp Performance Monitors Freeze-on-SPE event (FEAT_SPEv1p2)
+//			__BITS(35, 30)	Res0
+#define	MDCR_EL2_HPMFZO	__BIT(29)		// Hyp Performance Monitors Freeze-on-overflow (FEAT_PMUv3p7)
+#define	MDCR_EL2_MTPME	__BIT(28)		// Multi-threaded PMU Enable (FEAT_MTPMU and not EL3)
+#define	MDCR_EL2_TDCC	__BIT(27)		// Trap DCC. (FEAT_FGT)
+#define	MDCR_EL2_HLP	__BIT(26)		// Hypervisor Long event counter enable. (FEAT_PMUv3p5)
+#define	MDCR_EL2_E2TB	__BITS(25, 24)		// EL2 Trace Buffer. (FEAT_TRBE)
+#define	MDCR_EL2_HCCD	__BIT(23)		// Hypervisor Cycle Counter Disable. (FEAT_PMUv3p5)
+//			__BITS(22, 20)	Res0
+#define	MDCR_EL2_TTRF	__BIT(19)		// Trap Trace Filter Control. (FEAT_TRF)
+//			__BIT(18)	Res0
+#define	MDCR_EL2_HPMD	__BIT(17)		// Guest Performance Monitor Disable. (FEAT_PMUv3p1 and FEAT_Debugv8p2)
+//			__BITS(16, 15)	Res0
+#define	MDCR_EL2_TPMS	__BIT(14)		// Trap Performance Monitor Sampling. (FEAT_SPE)
+#define	MDCR_EL2_E2PM	__BITS(13, 12)		// EL2 Profiling Buffer. (FEAT_SPE)
+#define	MDCR_EL2_TDRA	__BIT(11)		// Trap Debug ROM Address register access.
+#define	MDCR_EL2_TDOSA	__BIT(10)		// Trap debug OS-related register access. (FEAT_DoubleLock)
+#define	MDCR_EL2_TDA	__BIT(9)		// Trap Debug Access.
+#define	MDCR_EL2_TDE	__BIT(8)		// Trap Debug Exceptions.
+#define	MDCR_EL2_HPME	__BIT(7)		// Enable [MDCR_EL2.HPMN .. (N-1)] event counters.
+#define	MDCR_EL2_TPM	__BIT(6)		// Trap Performance Monitor accesses. (FEAT_PMUv3)
+#define	MDCR_EL2_TPMCR	__BIT(5)		// Trap PMCR{_EL0,} access. (FEAT_PMUv3)
+#define	MDCR_EL2_HPMN	__BIT(4, 0)		// Event counters range split. (FEAT_PMUv3)
+
 AARCH64REG_READ_INLINE2(l2ctlr_el1, s3_1_c11_c0_2)  // Cortex-A53,57,72,73
 AARCH64REG_WRITE_INLINE2(l2ctlr_el1, s3_1_c11_c0_2) // Cortex-A53,57,72,73
 
@@ -1012,6 +1041,8 @@ AARCH64REG_READ_INLINE(sp_el0)		// EL0 Stack Pointer
 AARCH64REG_WRITE_INLINE(sp_el0)
 AARCH64REG_READ_INLINE(sp_el1)		// EL1 Stack Pointer
 AARCH64REG_WRITE_INLINE(sp_el1)
+AARCH64REG_READ_INLINE(sp_el2)		// EL2 Stack Pointer
+AARCH64REG_WRITE_INLINE(sp_el2)
 
 AARCH64REG_READ_INLINE(spsel)		// Stack Pointer Select
 AARCH64REG_WRITE_INLINE(spsel)

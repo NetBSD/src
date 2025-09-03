@@ -238,6 +238,7 @@ vax_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
   operandenum firstmode;
   bfd_vma pc, destpc;
   static bool inited = false;
+  Sym_Table *symtab = get_symtab ();
 
   if (!inited)
     {
@@ -321,7 +322,7 @@ vax_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
 	      destpc = pc + vax_offset (operand);
 	      if (hist_check_address (destpc))
 		{
-		  child = sym_lookup (&symtab, destpc);
+		  child = sym_lookup (symtab, destpc);
 		  if (child)
 		    {
 		      DBG (CALLDEBUG,

@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/mips.
 
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -19,7 +19,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "gdbcore.h"
 #include "regcache.h"
 #include "regset.h"
@@ -258,7 +258,7 @@ static const unsigned char sigtramp_retcode_mipseb[RETCODE_SIZE] =
 					 NBSD_MIPS_JB_ELEMENT_SIZE (gdbarch))
 
 static int
-mipsnbsd_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
+mipsnbsd_get_longjmp_target (const frame_info_ptr &frame, CORE_ADDR *pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);

@@ -1,0 +1,244 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test complex types, and their parts.  Dwarf assembly counterpart of
+# gdb.base/complex-parts.exp.
+#
+# In dwarf, base types are not allowed to have references to other types.  And
+# because complex types are modeled as base types, gdb has to figure out what
+# the part type is.
+#
+# It would be easier for gdb if compilers would add a dwarf extension and
+# supply this information, but that may or may not happen
+# ( https://gcc.gnu.org/bugzilla/show_bug.cgi?id=115272 ).
+
+load_lib dwarf.exp
+
+# This test can only be run on targets which support DWARF-2 and use gas.
+require dwarf2_support
+
+standard_testfile main.c -debug.S
+
+if [prepare_for_testing "failed to prepare" $testfile \
+	"${srcfile}" {}] {
+    return -1
+}
+
+set float_size [get_sizeof float 0]
+set double_size [get_sizeof double 0]
+set long_double_size [get_sizeof "long double" 0]
+
+set int_size [get_sizeof int 0]
+
+# Create the DWARF.
+set asm_file [standard_output_file $srcfile2]
+Dwarf::assemble $asm_file {
+    cu { version 2 } {
+	compile_unit {} {
+	    # Main.
+
+	    declare_labels int_type
+
+	    int_type: DW_TAG_base_type {
+		{DW_AT_byte_size $::int_size DW_FORM_sdata}
+		{DW_AT_encoding	 @DW_ATE_signed}
+		{DW_AT_name int}
+	    }
+
+	    DW_TAG_subprogram {
+		{MACRO_AT_func {main}}
+		{type :$int_type}
+	    }
+
+	    # GCC complex float.
+
+	    declare_labels cf_type cd_type cld_type
+
+	    cf_type: DW_TAG_base_type {
+		{DW_AT_byte_size [expr 2 * $::float_size] DW_FORM_sdata}
+		{DW_AT_encoding	 @DW_ATE_complex_float}
+		{DW_AT_name	 "complex float"}
+	    }
+
+	    cd_type: DW_TAG_base_type {
+		{DW_AT_byte_size [expr 2 * $::double_size] DW_FORM_sdata}
+		{DW_AT_encoding	 @DW_ATE_complex_float}
+		{DW_AT_name	 "complex double"}
+	    }
+
+	    cld_type: DW_TAG_base_type {
+		{DW_AT_byte_size [expr 2 * $::long_double_size] DW_FORM_sdata}
+		{DW_AT_encoding	 @DW_ATE_complex_float}
+		{DW_AT_name	 "complex long double"}
+	    }
+
+	    DW_TAG_variable {
+		{name var_complex_float}
+		{DW_AT_type :$cf_type}
+	    }
+
+	    DW_TAG_variable {
+		{name var_complex_double}
+		{DW_AT_type :$cd_type}
+	    }
+
+	    DW_TAG_variable {
+		{name var_complex_long_double}
+		{DW_AT_type :$cld_type}
+	    }
+
+	    # GCC complex int.
+	    # This is what gcc currently generates, see gcc PR debug/93988.
+
+	    declare_labels ci_type
+
+	    ci_type: DW_TAG_base_type {
+		{DW_AT_byte_size [expr 2 * $::int_size] DW_FORM_sdata}
+		{DW_AT_encoding	 @DW_ATE_lo_user}
+		{DW_AT_name	 "complex int"}
+	    }
+
+	    DW_TAG_variable {
+		{name var_complex_int}
+		{DW_AT_type :$ci_type}
+	    }
+
+	    # Clang complex float.
+	    # This is what clang currently generates, see this issue (
+	    # https://github.com/llvm/llvm-project/issues/52996 ).
+
+	    declare_labels clang_cf_type clang_cd_type clang_cld_type
+
+	    clang_cf_type: DW_TAG_base_type {
+		{DW_AT_byte_size [expr 2 * $::float_size] DW_FORM_sdata}
+		{DW_AT_encoding	 @DW_ATE_complex_float}
+		{DW_AT_name	 "complex"}
+	    }
+
+	    DW_TAG_variable {
+		{name var_complex_clang_float}
+		{DW_AT_type :$clang_cf_type}
+	    }
+
+	    clang_cd_type: DW_TAG_base_type {
+		{DW_AT_byte_size [expr 2 * $::double_size] DW_FORM_sdata}
+		{DW_AT_encoding	 @DW_ATE_complex_float}
+		{DW_AT_name	 "complex"}
+	    }
+
+	    DW_TAG_variable {
+		{name var_complex_clang_double}
+		{DW_AT_type :$clang_cd_type}
+	    }
+
+	    clang_cld_type: DW_TAG_base_type {
+		{DW_AT_byte_size [expr 2 * $::long_double_size] DW_FORM_sdata}
+		{DW_AT_encoding	 @DW_ATE_complex_float}
+		{DW_AT_name	 "complex"}
+	    }
+
+	    DW_TAG_variable {
+		{name var_complex_clang_long_double}
+		{DW_AT_type :$clang_cld_type}
+	    }
+	}
+    }
+}
+
+if [prepare_for_testing "failed to prepare" $testfile \
+	"${asm_file} ${srcfile}" {}] {
+    return -1
+}
+
+if ![runto_main] {
+    return -1
+}
+
+proc do_test { type {clang 0}} {
+    with_test_prefix $type {
+	with_test_prefix clang=$clang {
+
+	    if { $clang } {
+		set type_id [regsub -all " " $type _]
+		set var "var_complex_clang_$type_id"
+
+		# Gdb could try to synthesize better names, see enhancement
+		# PR symtab/31858.
+		set ctype "complex"
+		set ctype_id "complex"
+	    } else {
+		set ctype "complex $type"
+		set type_id [regsub -all " " $type _]
+		set ctype_id [regsub -all " " $ctype _]
+		set var "var_$ctype_id"
+	    }
+
+	    gdb_test "ptype '$type'" \
+		"type = $type"
+
+	    gdb_test "ptype '$ctype'" \
+		"type = $ctype"
+
+	    eval set type_size \$::${type_id}_size
+
+	    gdb_test "p sizeof ('$type')" \
+		" = $type_size"
+
+	    if { ! $clang } {
+		# With clang, the ctype name does not uniquely map to a type,
+		# so the size is unpredictable.
+		gdb_test "p sizeof ('$ctype')" \
+		    " = [expr 2 * $type_size]"
+	    }
+
+	    set re_kfail \
+		[string_to_regexp \
+		     "'var_complex_int' has unknown type; cast it to its declared type"]
+
+	    foreach f { {$_cimag} {$_creal} } {
+		gdb_test_multiple "p $f ($var)" "" {
+		    -re -wrap " = <optimized out>" {
+			pass $gdb_test_name
+		    }
+		    -re -wrap $re_kfail {
+			kfail gdb/31857 $gdb_test_name
+		    }
+		}
+
+		if { $clang } {
+		    # Without a specific complex type name, it's
+		    # unpredictable which type name the part will have.
+		    gdb_test {ptype $} \
+			"type = (float|double|long double)" \
+			"ptype $f"
+		} else {
+		    gdb_test {ptype $} \
+			"type = $type" \
+			"ptype $f"
+		}
+	    }
+	}
+    }
+}
+
+do_test "float"
+do_test "double"
+do_test "long double"
+
+do_test "int"
+
+do_test "float" 1
+do_test "double" 1
+do_test "long double" 1

@@ -47,6 +47,8 @@ dump_sframe_header (sframe_decoder_ctx *sfd_ctx)
   uint8_t flags;
   char *flags_str;
   const char *ver_str = NULL;
+  int8_t cfa_fixed_fp_offset;
+  int8_t cfa_fixed_ra_offset;
   const sframe_header *header = &(sfd_ctx->sfd_header);
 
   /* Prepare SFrame section version string.  */
@@ -82,12 +84,20 @@ dump_sframe_header (sframe_decoder_ctx *sfd_ctx)
   else
     strcpy (flags_str, "NONE");
 
+  /* CFA fixed FP and RA offsets.  */
+  cfa_fixed_fp_offset = header->sfh_cfa_fixed_fp_offset;
+  cfa_fixed_ra_offset = header->sfh_cfa_fixed_ra_offset;
+
   const char* subsec_name = "Header";
   printf ("\n");
   printf ("  %s :\n", subsec_name);
   printf ("\n");
   printf ("    Version: %s\n", ver_str);
   printf ("    Flags: %s\n", flags_str);
+  if (cfa_fixed_fp_offset != SFRAME_CFA_FIXED_FP_INVALID)
+    printf ("    CFA fixed FP offset: %d\n", cfa_fixed_fp_offset);
+  if (cfa_fixed_ra_offset != SFRAME_CFA_FIXED_RA_INVALID)
+    printf ("    CFA fixed RA offset: %d\n", cfa_fixed_ra_offset);
   printf ("    Num FDEs: %d\n", sframe_decoder_get_num_fidx (sfd_ctx));
   printf ("    Num FREs: %d\n", header->sfh_num_fres);
 
@@ -171,13 +181,15 @@ dump_sframe_func_with_fres (sframe_decoder_ctx *sfd_ctx,
       printf ("%-10s", temp);
 
       /* Dump RA info.
-	 If an ABI does not track RA offset, e.g., AMD64, display a 'u',
+	 If an ABI does not track RA offset, e.g., AMD64, display 'f',
 	 else display the offset d as 'c+-d'.  */
-      if (sframe_decoder_get_fixed_ra_offset(sfd_ctx)
+      if (sframe_decoder_get_fixed_ra_offset (sfd_ctx)
 	  != SFRAME_CFA_FIXED_RA_INVALID)
-	strcpy (temp, "u");
+	strcpy (temp, "f");
       else if (err[2] == 0)
 	sprintf (temp, "c%+d", ra_offset);
+      else
+	strcpy (temp, "u");
 
       /* Mark SFrame FRE's RA information with "[s]" if the RA is mangled
 	 with signature bits.  */

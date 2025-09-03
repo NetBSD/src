@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.14 2025/02/17 11:14:49 jmcneill Exp $ */
+/*	$NetBSD: picvar.h,v 1.15 2025/07/05 15:11:05 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.14 2025/02/17 11:14:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.15 2025/07/05 15:11:05 macallan Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -117,6 +117,7 @@ struct pic_ops *setup_prepivr(int);
 struct pic_ops *setup_i8259(void);
 struct pic_ops *setup_mpcpic(void *);
 void mpcpic_reserv16(void);
+struct pic_ops *find_pic_by_cookie(void *);
 
 /* i8259 common decls */
 void i8259_initialize(void);  

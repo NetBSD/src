@@ -1,6 +1,6 @@
-$NetBSD: README,v 1.1 2010/04/01 14:13:25 reed Exp $
+$NetBSD: README,v 1.2 2025/08/25 05:30:39 rin Exp $
 
-The code within the src/external/gplv3 directories may have serious
+The code within the src/external/gpl3 directories may have serious
 legal impacts if you are a company and redistributing or changing
 this code (as a company holding patents). We recommend you contact
 your lawyer before using it.

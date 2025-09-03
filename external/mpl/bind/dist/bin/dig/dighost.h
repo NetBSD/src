@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.h,v 1.4 2025/05/21 14:47:35 christos Exp $	*/
+/*	$NetBSD: dighost.h,v 1.5 2025/07/17 19:01:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -107,11 +107,10 @@ typedef struct dig_searchlist dig_searchlist_t;
 struct dig_lookup {
 	unsigned int magic;
 	isc_refcount_t references;
-	bool aaonly, adflag, badcookie, besteffort, cdflag, cleared, comments,
-		dns64prefix, dnssec, doing_xfr, done_as_is, ednsneg, expandaaaa,
-		expire, fuzzing, header_only, identify, /*%< Append an "on
-							   server <foo>" message
-							 */
+	bool aaonly, adflag, badcookie, besteffort, cdflag, cleared, coflag,
+		comments, dns64prefix, dnssec, doing_xfr, done_as_is, ednsneg,
+		expandaaaa, expire, fuzzing, header_only,
+		identify, /*%< Append an "on server <foo>" message */
 		identify_previous_line, /*% Prepend a "Nameserver <foo>:"
 					   message, with newline and tab */
 		idnin, idnout, ignore, multiline, need_search, new_search,

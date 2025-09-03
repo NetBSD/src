@@ -50,7 +50,7 @@ proc fill_line { width } {
 }
 
 # Test wrapping.
-proc test_wrap { wrap_width } {
+proc test_wrap { wrap_width tui } {
     # Generate a prompt and parse it.
     send_gdb "\003"
     gdb_assert { [Term::wait_for "(^|$::gdb_prompt )$::re_control_c"] } "start line"
@@ -65,12 +65,31 @@ proc test_wrap { wrap_width } {
     send_gdb "W"
 
     # Check that the wrap occurred at the expected location.
-    gdb_assert { [Term::wait_for_region_contents 0 0 $::cols $::lines \
-		      "$::gdb_prompt $str$space\r\nW"] } "wrap"
+    set re_wrap \
+	[multi_line \
+	     "$::gdb_prompt $str$space" \
+	     "W"]
+    set re_no_wrap \
+	[multi_line \
+	     "" \
+	     "<.*W"]
+    if { $tui } {
+	set re $re_wrap
+    } else {
+	set re ($re_wrap|$re_no_wrap)
+    }
+    gdb_assert { [Term::wait_for_region_contents 0 0 $::cols $::lines $re] } "wrap"
 
     # Generate a prompt and parse it.
     send_gdb "\003"
-    gdb_assert { [Term::wait_for "^W$::re_control_c"] } "prompt after wrap"
+    set re_wrap W$::re_control_c
+    set re_no_wrap <.*W$::re_control_c
+    if { $tui } {
+	set re $re_wrap
+    } else {
+	set re ($re_wrap|$re_no_wrap)
+    }
+    gdb_assert { [Term::wait_for ^$re] } "prompt after wrap"
 }
 
 # Test wrapping in both CLI and TUI.
@@ -107,7 +126,7 @@ proc test_wrap_cli_tui { auto_detected_width } {
     with_test_prefix cli {
 	set wrap_width $readline_width
 
-	test_wrap $wrap_width
+	test_wrap $wrap_width 0
     }
 
     with_test_prefix tui {
@@ -126,7 +145,7 @@ proc test_wrap_cli_tui { auto_detected_width } {
 	# for wrapping from curses.
 	set wrap_width $::cols
 
-	test_wrap $wrap_width
+	test_wrap $wrap_width 1
     }
 }
 

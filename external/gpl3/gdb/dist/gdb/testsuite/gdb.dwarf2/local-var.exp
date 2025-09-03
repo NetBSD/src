@@ -1,0 +1,30 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that local variables do not occur in the cooked index.
+
+standard_testfile .f90
+
+if { [prepare_for_testing "failed to prepare" ${testfile} $srcfile {debug f90}] } {
+    return -1
+}
+
+# Regression test for PR32276.
+gdb_test_lines "maint print objfiles" "local var not in index" "" -re-not "local_var"
+
+# Check that we still can find the type of the local variable, even when not
+# in the function.
+set hs \[^\r\n\]+
+gdb_test "ptype test::local_var" " = $hs"

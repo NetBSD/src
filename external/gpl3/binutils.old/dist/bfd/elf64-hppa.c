@@ -1,5 +1,5 @@
 /* Support for HPPA 64-bit ELF
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -2720,7 +2720,7 @@ elf64_hppa_section_from_phdr (bfd *abfd, Elf_Internal_Phdr *hdr, int sec_index,
 
       if (bfd_seek (abfd, hdr->p_offset, SEEK_SET) != 0)
 	return false;
-      if (bfd_bread (&sig, 4, abfd) != 4)
+      if (bfd_read (&sig, 4, abfd) != 4)
 	return false;
 
       elf_tdata (abfd)->core->signal = sig;

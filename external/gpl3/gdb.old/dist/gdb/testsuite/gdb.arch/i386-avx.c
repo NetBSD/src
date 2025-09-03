@@ -1,6 +1,6 @@
 /* Test program for AVX registers.
 
-   Copyright 2010-2023 Free Software Foundation, Inc.
+   Copyright 2010-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -50,7 +50,7 @@ v8sf_t data_orig[] =
 #endif
   };
 
-#include "../lib/precise-aligned-alloc.c"
+#include "precise-aligned-alloc.c"
 
 int
 main (int argc, char **argv)

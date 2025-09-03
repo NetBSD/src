@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (INLINE_FRAME_H)
-#define INLINE_FRAME_H 1
+#ifndef GDB_INLINE_FRAME_H
+#define GDB_INLINE_FRAME_H
 
 class frame_info_ptr;
 struct frame_unwind;
@@ -62,7 +62,7 @@ int inline_skipped_frames (thread_info *thread);
 /* If one or more inlined functions are hidden, return the symbol for
    the function inlined into the current frame.  */
 
-struct symbol *inline_skipped_symbol (thread_info *thread);
+const symbol *inline_skipped_symbol (thread_info *thread);
 
 /* Return the number of functions inlined into THIS_FRAME.  Some of
    the callees may not have associated frames (see
@@ -70,4 +70,4 @@ struct symbol *inline_skipped_symbol (thread_info *thread);
 
 int frame_inlined_callees (const frame_info_ptr &this_frame);
 
-#endif /* !defined (INLINE_FRAME_H) */
+#endif /* GDB_INLINE_FRAME_H */

@@ -43,6 +43,7 @@ zone <string> [ <class> ] {
 	max-types-per-name <integer>;
 	max-zone-ttl ( unlimited | <duration> ); // deprecated
 	notify ( explicit | master-only | primary-only | <boolean> );
+	notify-defer <integer>;
 	notify-delay <integer>;
 	notify-source ( <ipv4_address> | * );
 	notify-source-v6 ( <ipv6_address> | * );

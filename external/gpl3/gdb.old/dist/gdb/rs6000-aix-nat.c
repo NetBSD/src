@@ -1,6 +1,6 @@
 /* IBM RS/6000 native-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "inferior.h"
 #include "target.h"
 #include "gdbcore.h"
@@ -58,6 +57,9 @@
 #include <procinfo.h>
 #include <sys/types.h>
 
+/* Header files for alti-vec reg.  */
+#include <sys/context.h>
+
 /* On AIX4.3+, sys/ldr.h provides different versions of struct ld_info for
    debugging 32-bit and 64-bit processes.  Define a typedef and macros for
    accessing fields in the appropriate structures.  */
@@ -74,7 +76,7 @@
 #ifndef ARCH3264
 # define ARCH64() 0
 #else
-# define ARCH64() (register_size (target_gdbarch (), 0) == 8)
+# define ARCH64() (register_size (current_inferior ()->arch (), 0) == 8)
 #endif
 
 class rs6000_nat_target final : public inf_ptrace_target
@@ -98,6 +100,11 @@ public:
   /* Fork detection related functions, For adding multi process debugging
      support.  */
   void follow_fork (inferior *, ptid_t, target_waitkind, bool, bool) override;
+
+  const struct target_desc *read_description ()  override;
+
+  int insert_fork_catchpoint (int) override;
+  int remove_fork_catchpoint (int) override;
 
 protected:
 
@@ -272,6 +279,165 @@ rs6000_ptrace64 (int req, int id, long long addr, int data, void *buf)
   return ret;
 }
 
+/* Store the vsx registers.  */
+
+static void
+store_vsx_register_aix (struct regcache *regcache, int regno)
+{
+  int ret;
+  struct gdbarch *gdbarch = regcache->arch ();
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
+  struct thrdentry64 thrdentry;
+  __vsx_context_t vsx;
+  pid_t pid = inferior_ptid.pid ();
+  tid64_t thrd_i = 0;
+
+  if (getthrds64(pid, &thrdentry, sizeof(struct thrdentry64),
+		 &thrd_i, 1) == 1)
+    thrd_i = thrdentry.ti_tid;
+
+  memset(&vsx, 0, sizeof(__vsx_context_t));
+  if (__power_vsx() && thrd_i > 0)
+    {
+      if (ARCH64 ())
+	ret = rs6000_ptrace64 (PTT_READ_VSX, thrd_i, (long long) &vsx, 0, 0);
+      else
+	ret = rs6000_ptrace32 (PTT_READ_VSX, thrd_i, (int *)&vsx, 0, 0);
+      if (ret < 0)
+	return;
+
+      regcache->raw_collect (regno, &(vsx.__vsr_dw1[0])+
+			     regno - tdep->ppc_vsr0_upper_regnum);
+
+      if (ARCH64 ())
+	ret = rs6000_ptrace64 (PTT_WRITE_VSX, thrd_i, (long long) &vsx, 0, 0);
+      else
+	ret = rs6000_ptrace32 (PTT_WRITE_VSX, thrd_i, (int *) &vsx, 0, 0);
+
+      if (ret < 0)
+	perror_with_name (_("Unable to write VSX registers after reading it"));
+    }
+}
+
+/* Store Altivec registers.  */
+
+static void
+store_altivec_register_aix (struct regcache *regcache, int regno)
+{
+  int ret;
+  struct gdbarch *gdbarch = regcache->arch ();
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
+  struct thrdentry64 thrdentry;
+  __vmx_context_t vmx;
+  pid_t pid = inferior_ptid.pid ();
+  tid64_t  thrd_i = 0;
+
+  if (getthrds64(pid, &thrdentry, sizeof(struct thrdentry64),
+		 &thrd_i, 1) == 1)
+    thrd_i = thrdentry.ti_tid;
+
+  memset(&vmx, 0, sizeof(__vmx_context_t));
+  if (__power_vmx() && thrd_i > 0)
+    {
+      if (ARCH64 ())
+	ret = rs6000_ptrace64 (PTT_READ_VEC, thrd_i, (long long) &vmx, 0, 0);
+      else
+	ret = rs6000_ptrace32 (PTT_READ_VEC, thrd_i, (int *) &vmx, 0, 0);
+      if (ret < 0)
+	return;
+
+      regcache->raw_collect (regno, &(vmx.__vr[0]) + regno
+			     - tdep->ppc_vr0_regnum);
+
+      if (ARCH64 ())
+	ret = rs6000_ptrace64 (PTT_WRITE_VEC, thrd_i, (long long) &vmx, 0, 0);
+      else
+	ret = rs6000_ptrace32 (PTT_WRITE_VEC, thrd_i, (int *) &vmx, 0, 0);
+      if (ret < 0)
+	perror_with_name (_("Unable to store AltiVec register after reading it"));
+    }
+}
+
+/* Supply altivec registers.  */
+
+static void
+supply_vrregset_aix (struct regcache *regcache, __vmx_context_t *vmx)
+{
+  int i;
+  struct gdbarch *gdbarch = regcache->arch ();
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
+  int num_of_vrregs = tdep->ppc_vrsave_regnum - tdep->ppc_vr0_regnum + 1;
+
+  for (i = 0; i < num_of_vrregs; i++)
+    regcache->raw_supply (tdep->ppc_vr0_regnum + i,
+			  &(vmx->__vr[i]));
+  regcache->raw_supply (tdep->ppc_vrsave_regnum, &(vmx->__vrsave));
+  regcache->raw_supply (tdep->ppc_vrsave_regnum - 1, &(vmx->__vscr));
+}
+
+/* Fetch altivec register.  */
+
+static void
+fetch_altivec_registers_aix (struct regcache *regcache)
+{
+  struct thrdentry64 thrdentry;
+  __vmx_context_t vmx;
+  pid_t pid = current_inferior ()->pid;
+  tid64_t  thrd_i = 0;
+
+  if (getthrds64(pid, &thrdentry, sizeof(struct thrdentry64),
+		 &thrd_i, 1) == 1)
+    thrd_i = thrdentry.ti_tid;
+
+  memset(&vmx, 0, sizeof(__vmx_context_t));
+  if (__power_vmx() && thrd_i > 0)
+    {
+      if (ARCH64 ())
+	rs6000_ptrace64 (PTT_READ_VEC, thrd_i, (long long) &vmx, 0, 0);
+      else
+	rs6000_ptrace32 (PTT_READ_VEC, thrd_i, (int *) &vmx, 0, 0);
+      supply_vrregset_aix (regcache, &vmx);
+    }
+}
+
+/* supply vsx register.  */
+
+static void
+supply_vsxregset_aix (struct regcache *regcache, __vsx_context_t *vsx)
+{
+  int i;
+  struct gdbarch *gdbarch = regcache->arch ();
+  ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
+
+  for (i = 0; i < ppc_num_vshrs; i++)
+   regcache->raw_supply (tdep->ppc_vsr0_upper_regnum + i,
+			 &(vsx->__vsr_dw1[i]));
+}
+
+/* Fetch vsx registers.  */
+static void
+fetch_vsx_registers_aix (struct regcache *regcache)
+{
+  struct thrdentry64 thrdentry;
+  __vsx_context_t vsx;
+  pid_t pid = current_inferior ()->pid;
+  tid64_t  thrd_i = 0;
+
+  if (getthrds64(pid, &thrdentry, sizeof(struct thrdentry64),
+		 &thrd_i, 1) == 1)
+    thrd_i = thrdentry.ti_tid;
+
+  memset(&vsx, 0, sizeof(__vsx_context_t));
+  if (__power_vsx() && thrd_i > 0)
+    {
+      if (ARCH64 ())
+	rs6000_ptrace64 (PTT_READ_VSX, thrd_i, (long long) &vsx, 0, 0);
+      else
+	rs6000_ptrace32 (PTT_READ_VSX, thrd_i, (int *) &vsx, 0, 0);
+      supply_vsxregset_aix (regcache, &vsx);
+    }
+}
+
 void rs6000_nat_target::post_startup_inferior (ptid_t ptid)
 {
 
@@ -301,7 +467,7 @@ rs6000_nat_target::follow_fork (inferior *child_inf, ptid_t child_ptid,
 				  follow_child, detach_fork);
 
   /* If we detach fork and follow child we do not want the child
-     process to geneate events that ptrace can trace.  Hence we
+     process to generate events that ptrace can trace.  Hence we
      detach it.  */
 
   if (detach_fork && !follow_child)
@@ -311,6 +477,19 @@ rs6000_nat_target::follow_fork (inferior *child_inf, ptid_t child_ptid,
     else
       rs6000_ptrace32 (PT_DETACH, child_ptid.pid (), 0, 0, 0);
   }
+}
+
+/* Functions for catchpoint in AIX.  */
+int
+rs6000_nat_target::insert_fork_catchpoint (int pid)
+{
+  return 0;
+}
+
+int
+rs6000_nat_target::remove_fork_catchpoint (int pid)
+{
+  return 0;
 }
 
 /* Fetch register REGNO from the inferior.  */
@@ -325,6 +504,20 @@ fetch_register (struct regcache *regcache, int regno)
 
   /* Retrieved values may be -1, so infer errors from errno.  */
   errno = 0;
+
+  /* Alti-vec register.  */
+  if (altivec_register_p (gdbarch, regno))
+    {
+      fetch_altivec_registers_aix (regcache);
+      return;
+    }
+
+  /* VSX register.  */
+  if (vsx_register_p (gdbarch, regno))
+    {
+      fetch_vsx_registers_aix (regcache);
+      return;
+    }
 
   nr = regmap (gdbarch, regno, &isfloat);
 
@@ -387,6 +580,18 @@ store_register (struct regcache *regcache, int regno)
 
   /* -1 can be a successful return value, so infer errors from errno.  */
   errno = 0;
+
+  if (altivec_register_p (gdbarch, regno))
+    {
+      store_altivec_register_aix (regcache, regno);
+      return;
+    }
+
+  if (vsx_register_p (gdbarch, regno))
+    {
+      store_vsx_register_aix (regcache, regno);
+      return;
+    }
 
   nr = regmap (gdbarch, regno, &isfloat);
 
@@ -458,6 +663,12 @@ rs6000_nat_target::fetch_registers (struct regcache *regcache, int regno)
 	for (regno = 0; regno < ppc_num_fprs; regno++)
 	  fetch_register (regcache, tdep->ppc_fp0_regnum + regno);
 
+      if (tdep->ppc_vr0_regnum != -1 && tdep->ppc_vrsave_regnum != -1)
+	fetch_altivec_registers_aix (regcache);
+
+      if (tdep->ppc_vsr0_upper_regnum != -1)
+	fetch_vsx_registers_aix (regcache);
+
       /* Read special registers.  */
       fetch_register (regcache, gdbarch_pc_regnum (gdbarch));
       fetch_register (regcache, tdep->ppc_ps_regnum);
@@ -470,6 +681,26 @@ rs6000_nat_target::fetch_registers (struct regcache *regcache, int regno)
       if (tdep->ppc_mq_regnum >= 0)
 	fetch_register (regcache, tdep->ppc_mq_regnum);
     }
+}
+
+const struct target_desc *
+rs6000_nat_target::read_description ()
+{
+   if (ARCH64())
+     {
+       if (__power_vsx ())
+	 return tdesc_powerpc_vsx64;
+       else if (__power_vmx ())
+	 return tdesc_powerpc_altivec64;
+     }
+   else
+     {
+       if (__power_vsx ())
+	 return tdesc_powerpc_vsx32;
+       else if (__power_vmx ())
+	 return tdesc_powerpc_altivec32;
+     }
+   return NULL;
 }
 
 /* Store our register values back into the inferior.
@@ -702,11 +933,8 @@ rs6000_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
   /* stop after load" status.  */
   if (status == 0x57c)
     ourstatus->set_loaded ();
-  /* 0x7f is signal 0.  0x17f and 0x137f are status returned
-     if we follow parent, a switch is made to a child post parent
-     execution and child continues its execution [user switches
-     to child and presses continue].  */
-  else if (status == 0x7f || status == 0x17f || status == 0x137f)
+  /* 0x7f is signal 0.  */
+  else if (status == 0x7f)
     ourstatus->set_spurious ();
   /* A normal waitstatus.  Let the usual macros deal with it.  */
   else
@@ -824,7 +1052,8 @@ rs6000_nat_target::xfer_shared_libraries
     return TARGET_XFER_E_IO;
 
   gdb::byte_vector ldi_buf = rs6000_ptrace_ldinfo (inferior_ptid);
-  result = rs6000_aix_ld_info_to_xml (target_gdbarch (), ldi_buf.data (),
+  result = rs6000_aix_ld_info_to_xml (current_inferior ()->arch (),
+				      ldi_buf.data (),
 				      readbuf, offset, len, 1);
 
   if (result == 0)

@@ -256,8 +256,7 @@ struct elf_nds32_obj_tdata
 static bool
 nds32_elf_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct elf_nds32_obj_tdata),
-				  NDS32_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct elf_nds32_obj_tdata));
 }
 
 /* Relocations used for relocation.  */
@@ -3738,8 +3737,7 @@ nds32_elf_link_hash_table_create (bfd *abfd)
   /* Patch tag.  */
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      nds32_elf_link_hash_newfunc,
-				      sizeof (struct elf_nds32_link_hash_entry),
-				      NDS32_ELF_DATA))
+				      sizeof (struct elf_nds32_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -13138,7 +13136,7 @@ nds32_elf_get_relocated_section_contents (bfd *abfd,
 							  input_section);
 	      _bfd_clear_contents ((*parent)->howto, input_bfd,
 				   input_section, data, off);
-	      (*parent)->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	      (*parent)->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	      (*parent)->addend = 0;
 	      (*parent)->howto = &none_howto;
 	      r = bfd_reloc_ok;

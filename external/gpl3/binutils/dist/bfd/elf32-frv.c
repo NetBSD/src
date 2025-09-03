@@ -1,5 +1,5 @@
 /* FRV-specific support for 32-bit ELF.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -951,8 +951,7 @@ frvfdpic_elf_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd,
 				      _bfd_elf_link_hash_newfunc,
-				      sizeof (struct elf_link_hash_entry),
-				      FRV_ELF_DATA))
+				      sizeof (struct elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -5314,6 +5313,7 @@ _frvfdpic_size_got_plt (bfd *output_bfd,
 				 frvfdpic_got_section (info)->size);
       if (frvfdpic_got_section (info)->contents == NULL)
 	return false;
+      frvfdpic_got_section (info)->alloced = 1;
     }
 
   if (frvfdpic_gotrel_section (info))
@@ -5333,6 +5333,7 @@ _frvfdpic_size_got_plt (bfd *output_bfd,
 				 frvfdpic_gotrel_section (info)->size);
       if (frvfdpic_gotrel_section (info)->contents == NULL)
 	return false;
+      frvfdpic_gotrel_section (info)->alloced = 1;
     }
 
   frvfdpic_gotfixup_section (info)->size = (gpinfop->g.fixups + 1) * 4;
@@ -5345,6 +5346,7 @@ _frvfdpic_size_got_plt (bfd *output_bfd,
 				 frvfdpic_gotfixup_section (info)->size);
       if (frvfdpic_gotfixup_section (info)->contents == NULL)
 	return false;
+      frvfdpic_gotfixup_section (info)->alloced = 1;
     }
 
   if (frvfdpic_pltrel_section (info))
@@ -5361,6 +5363,7 @@ _frvfdpic_size_got_plt (bfd *output_bfd,
 				     frvfdpic_pltrel_section (info)->size);
 	  if (frvfdpic_pltrel_section (info)->contents == NULL)
 	    return false;
+	  frvfdpic_pltrel_section (info)->alloced = 1;
 	}
     }
 
@@ -5414,6 +5417,7 @@ _frvfdpic_size_got_plt (bfd *output_bfd,
 				     frvfdpic_plt_section (info)->size);
 	  if (frvfdpic_plt_section (info)->contents == NULL)
 	    return false;
+	  frvfdpic_plt_section (info)->alloced = 1;
 	}
     }
 
@@ -5423,15 +5427,16 @@ _frvfdpic_size_got_plt (bfd *output_bfd,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf32_frvfdpic_size_dynamic_sections (bfd *output_bfd,
-				      struct bfd_link_info *info)
+elf32_frvfdpic_late_size_sections (bfd *output_bfd,
+				   struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
   struct _frvfdpic_dynamic_got_plt_info gpinfo;
 
   dynobj = elf_hash_table (info)->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -5442,6 +5447,7 @@ elf32_frvfdpic_size_dynamic_sections (bfd *output_bfd,
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (bfd_byte *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -5472,8 +5478,8 @@ elf32_frvfdpic_size_dynamic_sections (bfd *output_bfd,
 }
 
 static bool
-elf32_frvfdpic_always_size_sections (bfd *output_bfd,
-				     struct bfd_link_info *info)
+elf32_frvfdpic_early_size_sections (bfd *output_bfd,
+				    struct bfd_link_info *info)
 {
   if (!bfd_link_relocatable (info)
       && !bfd_elf_stack_segment_size (output_bfd, info,
@@ -5617,8 +5623,8 @@ elf32_frvfdpic_relax_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec,
   struct _frvfdpic_dynamic_got_plt_info gpinfo;
 
   if (bfd_link_relocatable (info))
-    (*info->callbacks->einfo)
-      (_("%P%F: --relax and -r may not be used together\n"));
+    info->callbacks->fatal
+      (_("%P: --relax and -r may not be used together\n"));
 
   /* If we return early, we didn't change anything.  */
   *again = false;
@@ -6817,9 +6823,9 @@ elf32_frv_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #undef bfd_elf32_bfd_link_hash_table_create
 #define bfd_elf32_bfd_link_hash_table_create \
 		frvfdpic_elf_link_hash_table_create
-#undef elf_backend_always_size_sections
-#define elf_backend_always_size_sections \
-		elf32_frvfdpic_always_size_sections
+#undef elf_backend_early_size_sections
+#define elf_backend_early_size_sections \
+		elf32_frvfdpic_early_size_sections
 
 #undef elf_backend_create_dynamic_sections
 #define elf_backend_create_dynamic_sections \
@@ -6827,9 +6833,9 @@ elf32_frv_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #undef elf_backend_adjust_dynamic_symbol
 #define elf_backend_adjust_dynamic_symbol \
 		elf32_frvfdpic_adjust_dynamic_symbol
-#undef elf_backend_size_dynamic_sections
-#define elf_backend_size_dynamic_sections \
-		elf32_frvfdpic_size_dynamic_sections
+#undef elf_backend_late_size_sections
+#define elf_backend_late_size_sections \
+		elf32_frvfdpic_late_size_sections
 #undef bfd_elf32_bfd_relax_section
 #define bfd_elf32_bfd_relax_section \
   elf32_frvfdpic_relax_section

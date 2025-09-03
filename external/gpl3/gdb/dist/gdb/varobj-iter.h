@@ -14,8 +14,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef VAROBJ_ITER_H
-#define VAROBJ_ITER_H
+#ifndef GDB_VAROBJ_ITER_H
+#define GDB_VAROBJ_ITER_H
 
 /* A node or item of varobj, composed of the name and the value.  */
 
@@ -39,4 +39,4 @@ public:
   virtual std::unique_ptr<varobj_item> next () = 0;
 };
 
-#endif /* VAROBJ_ITER_H */
+#endif /* GDB_VAROBJ_ITER_H */

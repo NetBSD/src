@@ -1,3 +1,4 @@
+source_sh ${srcdir}/emulparams/plt_unwind.sh
 SCRIPT_NAME=elf
 ELFSIZE=64
 OUTPUT_FORMAT="elf64-s390"

@@ -29,17 +29,14 @@ set test_spawn_id [spawn_wait_for_attach $binfile]
 set testpid [spawn_id_get_pid $test_spawn_id]
 
 # Test that attaching works at all.
-set result [dap_attach $testpid $binfile]
+set attach_id [dap_attach $testpid $binfile]
 
-set found 0
-foreach ev [lindex $result 1] {
-    if {[dict get $ev type] == "event"
-	&& [dict get $ev event] == "stopped"
-	&& [dict get $ev body reason] == "attach"} {
-	set found 1
-    }
-}
-gdb_assert {$found} "saw stopped event for attach"
+dap_check_request_and_response "configurationDone" configurationDone
+
+dap_wait_for_event_and_check "stopped" stopped \
+    "body reason" attach
+
+dap_check_response "attach response" attach $attach_id
 
 dap_shutdown true
 

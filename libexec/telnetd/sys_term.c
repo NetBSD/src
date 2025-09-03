@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.50 2024/10/29 13:10:10 kre Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.51 2025/06/27 21:36:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.50 2024/10/29 13:10:10 kre Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.51 2025/06/27 21:36:23 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -436,7 +436,7 @@ getptyslave(void)
 #endif
 	struct winsize ws;
 	/*
-	 * Opening the slave side may cause initilization of the
+	 * Opening the slave side may cause initialization of the
 	 * kernel tty structure.  We need remember the state of
 	 * 	if linemode was turned on
 	 *	terminal window size

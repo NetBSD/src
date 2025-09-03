@@ -1,5 +1,5 @@
 /* BFD support for the TI PRU microprocessor.
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of BFD, the Binary File Descriptor library.

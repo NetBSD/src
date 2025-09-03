@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.82 2024/08/05 19:26:43 riastradh Exp $	*/
+/*	$NetBSD: virtio.c,v 1.83 2025/07/26 14:18:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.82 2024/08/05 19:26:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.83 2025/07/26 14:18:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,13 @@ static const char *virtio_device_name[] = {
 	"remote processor messaging",	/*  7 */
 	"SCSI",				/*  8 */
 	"9P transport",			/*  9 */
+	NULL,				/* 10 */
+	NULL,				/* 11 */
+	NULL,				/* 12 */
+	NULL,				/* 13 */
+	NULL,				/* 14 */
+	NULL,				/* 15 */
+	"GPU",				/* 16 */
 };
 #define NDEVNAMES	__arraycount(virtio_device_name)
 
@@ -1485,6 +1492,12 @@ uint64_t
 virtio_features(struct virtio_softc *sc)
 {
 	return sc->sc_active_features;
+}
+
+bool
+virtio_version_1(struct virtio_softc *sc)
+{
+	return sc->sc_version_1;
 }
 
 int

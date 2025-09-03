@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.329 2025/06/11 02:45:41 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.330 2025/07/17 06:48:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.329 2025/06/11 02:45:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.330 2025/07/17 06:48:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -253,6 +253,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	int bound;
 	bool bind_need_restore = false;
 	const struct sockaddr *sa;
+	bool need_ia4_release = false;
 
 	len = 0;
 
@@ -330,6 +331,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		}
 		/* ia is already referenced by psref_ia */
 		ia = ifatoia(ifa);
+		need_ia4_release = true;
 
 		/* Need a reference to keep ifp after ia4_release(ia). */
 		ifp = mifp = if_get_byindex(ia->ia_ifp->if_index, &psref);
@@ -353,6 +355,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		}
 		mtu = ifp->if_mtu;
 		ia = in_get_ia_from_ifp_psref(ifp, &psref_ia);
+		need_ia4_release = true;
 		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 		    ip->ip_dst.s_addr == INADDR_BROADCAST) {
 			isbroadcast = 0;
@@ -386,14 +389,10 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			error = EHOSTUNREACH;
 			goto bad;
 		}
-		if (ifa_is_destroying(rt->rt_ifa)) {
-			rtcache_unref(rt, ro);
-			rt = NULL;
-			IP_STATINC(IP_STAT_NOROUTE);
-			error = EHOSTUNREACH;
-			goto bad;
-		}
-		ifa_acquire(rt->rt_ifa, &psref_ia);
+		/*
+		 * Taking a psref of ifa via rt_ifa is racy, so use it as is, which
+		 * is safe because rt_ifa is not freed during rt is held.
+		 */
 		ia = ifatoia(rt->rt_ifa);
 		ifp = rt->rt_ifp;
 		if ((mtu = rt->rt_rmx.rmx_mtu) == 0)
@@ -533,7 +532,10 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 
 		ifa = &ia->ia_ifa;
 		if (ifa->ifa_getifa != NULL) {
-			ia4_release(ia, &psref_ia);
+			if (need_ia4_release) {
+				ia4_release(ia, &psref_ia);
+				need_ia4_release = false;
+			}
 			/* FIXME ifa_getifa is NOMPSAFE */
 			ia = ifatoia((*ifa->ifa_getifa)(ifa, rdst));
 			if (ia == NULL) {
@@ -541,6 +543,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 				goto bad;
 			}
 			ia4_acquire(ia, &psref_ia);
+			need_ia4_release = true;
 		}
 		ip->ip_src = ia->ia_addr.sin_addr;
 	}
@@ -605,7 +608,10 @@ sendit:
 		}
 	}
 	if (ia != NULL) {
-		ia4_release(ia, &psref_ia);
+		if (need_ia4_release) {
+			ia4_release(ia, &psref_ia);
+			need_ia4_release = false;
+		}
 		ia = NULL;
 	}
 
@@ -657,6 +663,8 @@ sendit:
 	KASSERT(ia == NULL);
 	sockaddr_in_init(&usrc.sin, &ip->ip_src, 0);
 	ia = ifatoia(ifaof_ifpforaddr_psref(&usrc.sa, ifp, &psref_ia));
+	if (ia != NULL)
+		need_ia4_release = true;
 
 	/*
 	 * Ensure we only send from a valid address.
@@ -807,7 +815,8 @@ fragment:
 	}
 
 done:
-	ia4_release(ia, &psref_ia);
+	if (need_ia4_release)
+		ia4_release(ia, &psref_ia);
 	rtcache_unref(rt, ro);
 	if (ro == &iproute) {
 		rtcache_free(&iproute);

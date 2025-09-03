@@ -39,7 +39,7 @@ typedef id_t		ctid_t;
 #ifndef _KERNEL
 #if defined(__APPLE__)
 #include <mach/boolean.h>
-#else
+#elif !defined(__sun)
 typedef int		boolean_t;
 #endif
 #endif
@@ -54,10 +54,12 @@ typedef uint32_t	t_uscalar_t;
 typedef vsize_t		pgcnt_t;
 #endif
 typedef u_longlong_t	len_t;
+#ifndef __sun
 typedef int		major_t;
 typedef int		minor_t;
 typedef int		o_uid_t;
 typedef int		o_gid_t;
+#endif
 typedef struct kauth_cred cred_t;
 typedef uintptr_t	pc_t;
 typedef struct vm_page	page_t;

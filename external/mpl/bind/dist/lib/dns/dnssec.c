@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.17 2025/05/21 14:48:02 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.18 2025/07/17 19:01:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1574,7 +1574,7 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, dns_kasp_t *kasp,
 
 		/* Try to read the public key. */
 		result = keyfromfile(kasp, directory, dnskey,
-				     (DST_TYPE_PUBLIC | DST_TYPE_STATE), mctx,
+				     DST_TYPE_PUBLIC | DST_TYPE_STATE, mctx,
 				     &pubkey);
 		if (result == ISC_R_FILENOTFOUND || result == ISC_R_NOPERM) {
 			result = ISC_R_SUCCESS;
@@ -1589,10 +1589,10 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, dns_kasp_t *kasp,
 		}
 
 		/* Now read the private key. */
-		result = keyfromfile(
-			kasp, directory, dnskey,
-			(DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_STATE),
-			mctx, &privkey);
+		result = keyfromfile(kasp, directory, dnskey,
+				     DST_TYPE_PUBLIC | DST_TYPE_PRIVATE |
+					     DST_TYPE_STATE,
+				     mctx, &privkey);
 
 		/*
 		 * If the key was revoked and the private file
@@ -1606,9 +1606,9 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, dns_kasp_t *kasp,
 				dst_key_setflags(dnskey,
 						 flags & ~DNS_KEYFLAG_REVOKE);
 				result = keyfromfile(kasp, directory, dnskey,
-						     (DST_TYPE_PUBLIC |
-						      DST_TYPE_PRIVATE |
-						      DST_TYPE_STATE),
+						     DST_TYPE_PUBLIC |
+							     DST_TYPE_PRIVATE |
+							     DST_TYPE_STATE,
 						     mctx, &privkey);
 				if (result == ISC_R_SUCCESS &&
 				    dst_key_pubcompare(dnskey, privkey, false))
@@ -1630,8 +1630,8 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, dns_kasp_t *kasp,
 			result2 = dst_key_getfilename(
 				dst_key_name(dnskey), dst_key_id(dnskey),
 				dst_key_alg(dnskey),
-				(DST_TYPE_PUBLIC | DST_TYPE_PRIVATE |
-				 DST_TYPE_STATE),
+				DST_TYPE_PUBLIC | DST_TYPE_PRIVATE |
+					DST_TYPE_STATE,
 				NULL, mctx, &buf);
 			if (result2 != ISC_R_SUCCESS) {
 				char namebuf[DNS_NAME_FORMATSIZE];

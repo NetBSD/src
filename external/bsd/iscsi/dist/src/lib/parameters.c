@@ -1292,8 +1292,8 @@ set_session_parameters(iscsi_parameter_t * head,
 	sess_params->first_burst_length = param_atoi(head, "FirstBurstLength");
 	sess_params->max_dataseg_len =
 		param_atoi(head, "MaxRecvDataSegmentLength");
-	sess_params->header_digest = (param_equiv(head, "HeaderDigest", "Yes")) ? 1 : 0;
-	sess_params->data_digest = (param_equiv(head, "DataDigest", "Yes")) ? 1 : 0;
+	sess_params->header_digest = (param_equiv(head, "HeaderDigest", "CRC32C")) ? 1 : 0;
+	sess_params->data_digest = (param_equiv(head, "DataDigest", "CRC32C")) ? 1 : 0;
 	sess_params->initial_r2t = (param_equiv(head, "InitialR2T", "Yes"));
 	sess_params->immediate_data = (param_equiv(head, "ImmediateData", "Yes"));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.114 2025/02/14 16:42:13 joe Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.115 2025/07/15 05:09:28 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.114 2025/02/14 16:42:13 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.115 2025/07/15 05:09:28 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -271,6 +271,7 @@ struct vioif_tx_context {
 	void			*txc_deferred_transmit;
 
 	struct evcnt		 txc_defrag_failed;
+	struct evcnt		 txc_pcq_full;
 };
 
 struct vioif_rx_context {
@@ -840,6 +841,7 @@ vioif_transmit(struct ifnet *ifp, struct mbuf *m)
 	txc = netq->netq_ctx;
 
 	if (__predict_false(!pcq_put(txc->txc_intrq, m))) {
+		txc->txc_pcq_full.ev_count++;
 		m_freem(m);
 		return ENOBUFS;
 	}
@@ -1057,6 +1059,9 @@ vioif_setup_stats(struct vioif_softc *sc)
 			evcnt_attach_dynamic(&txc->txc_defrag_failed,
 			    EVCNT_TYPE_MISC, NULL, netq->netq_evgroup,
 			    "m_defrag() failed");
+			evcnt_attach_dynamic(&txc->txc_pcq_full,
+			    EVCNT_TYPE_MISC, NULL, netq->netq_evgroup,
+			    "pcq full");
 			break;
 		}
 	}

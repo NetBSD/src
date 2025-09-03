@@ -52,12 +52,12 @@ proc test_ping_pong_next {} {
     gdb_test "thread 1.1" "Switching to thread 1.1 .*"
 
     gdb_test "break $srcfile:$line1 thread 1.1" \
-	"Breakpoint .*$srcfile:$line1\\..*"
+	"Breakpoint .*$srcfile, line $line1\\."
 
     gdb_test "continue" "hit Breakpoint .*"
 
     gdb_test "break $srcfile:$line2 thread 2.1" \
-	"Breakpoint .*$srcfile:$line2\\..*"
+	"Breakpoint .*$srcfile, line $line2\\."
 
     # Now block inferior 1 and issue "next".  We should stop at the
     # breakpoint for inferior 2, given schedlock off.

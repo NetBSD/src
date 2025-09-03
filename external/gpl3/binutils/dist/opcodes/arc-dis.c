@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARC.
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -76,6 +76,23 @@ struct arc_disassemble_info
   unsigned operands_count;
 
   struct arc_insn_operand operands[MAX_INSN_ARGS];
+
+  /* Classes of extension instructions to be considered.  */
+#define MAX_DECODES 25
+  struct
+  {
+    insn_class_t insn_class;
+    insn_subclass_t subclass;
+  } decode[MAX_DECODES];
+
+  /* Current size of the above array.  */
+  unsigned decode_count;
+
+  /* ISA mask value via disassembler info options, or bfd.  */
+  unsigned isa_mask;
+
+  /* True if we want to print using only hex numbers.  */
+  bool print_hex;
 };
 
 /* Globals variables.  */
@@ -99,32 +116,6 @@ static const char * const addrtypenames[ARC_NUM_ADDRTYPES] =
   "cd", "cbd", "cjid", "clbd", "cm", "csd", "cxa", "cxd"
 };
 
-static int addrtypenames_max = ARC_NUM_ADDRTYPES - 1;
-
-static const char * const addrtypeunknown = "unknown";
-
-/* This structure keeps track which instruction class(es)
-   should be ignored durring disassembling.  */
-
-typedef struct skipclass
-{
-  insn_class_t     insn_class;
-  insn_subclass_t  subclass;
-  struct skipclass *nxt;
-} skipclass_t, *linkclass;
-
-/* Intial classes of instructions to be consider first when
-   disassembling.  */
-static linkclass decodelist = NULL;
-
-/* ISA mask value enforced via disassembler info options.  ARC_OPCODE_NONE
-   value means that no CPU is enforced.  */
-
-static unsigned enforced_isa_mask = ARC_OPCODE_NONE;
-
-/* True if we want to print using only hex numbers.  */
-static bool print_hex = false;
-
 /* Macros section.  */
 
 #ifdef DEBUG
@@ -146,38 +137,37 @@ static bool print_hex = false;
 static bool
 init_arc_disasm_info (struct disassemble_info *info)
 {
-  struct arc_disassemble_info *arc_infop
-    = calloc (1, sizeof (*arc_infop));
-
-  if (arc_infop == NULL)
-    return false;
+  struct arc_disassemble_info *arc_infop = calloc (1, sizeof (*arc_infop));
 
   info->private_data = arc_infop;
-  return true;
+  return arc_infop != NULL;
 }
 
 /* Add a new element to the decode list.  */
 
 static void
-add_to_decodelist (insn_class_t     insn_class,
-		   insn_subclass_t  subclass)
+add_to_decode (struct arc_disassemble_info *arc_infop,
+	       insn_class_t insn_class,
+	       insn_subclass_t subclass)
 {
-  linkclass t = (linkclass) xmalloc (sizeof (skipclass_t));
+  unsigned int i;
+  for (i = 0; i < arc_infop->decode_count; i++)
+    if (arc_infop->decode[i].insn_class == insn_class
+	&& arc_infop->decode[i].subclass == subclass)
+      return;
 
-  t->insn_class = insn_class;
-  t->subclass = subclass;
-  t->nxt = decodelist;
-  decodelist = t;
+  assert (i < MAX_DECODES);
+  arc_infop->decode[i].insn_class = insn_class;
+  arc_infop->decode[i].subclass = subclass;
+  arc_infop->decode_count = i + 1;
 }
 
 /* Return TRUE if we need to skip the opcode from being
    disassembled.  */
 
 static bool
-skip_this_opcode (const struct arc_opcode *opcode)
+skip_this_opcode (struct disassemble_info *info, const struct arc_opcode *opcode)
 {
-  linkclass t = decodelist;
-
   /* Check opcode for major 0x06, return if it is not in.  */
   if (arc_opcode_len (opcode) == 4
       && (OPCODE_32BIT_INSN (opcode->opcode) != 0x06
@@ -197,13 +187,11 @@ skip_this_opcode (const struct arc_opcode *opcode)
       return false;
     }
 
-  while (t != NULL)
-    {
-      if ((t->insn_class == opcode->insn_class)
-	  && (t->subclass == opcode->subclass))
-	return false;
-      t = t->nxt;
-    }
+  struct arc_disassemble_info *arc_infop = info->private_data;
+  for (unsigned int i = 0; i < arc_infop->decode_count; i++)
+    if (arc_infop->decode[i].insn_class == opcode->insn_class
+	&& arc_infop->decode[i].subclass == opcode->subclass)
+      return false;
 
   return true;
 }
@@ -364,7 +352,7 @@ find_format_from_table (struct disassemble_info *info,
 	{
 	  warn_p = true;
 	  t_op = opcode;
-	  if (skip_this_opcode (opcode))
+	  if (skip_this_opcode (info, opcode))
 	    continue;
 	}
 
@@ -625,10 +613,10 @@ get_auxreg (const struct arc_opcode *opcode,
    the address type in assembly code.  */
 
 static const char *
-get_addrtype (int value)
+get_addrtype (unsigned int value)
 {
-  if (value < 0 || value > addrtypenames_max)
-    return addrtypeunknown;
+  if (value >= ARC_NUM_ADDRTYPES)
+    return "unknown";
 
   return addrtypenames[value];
 }
@@ -750,58 +738,58 @@ operand_iterator_next (struct arc_operand_iterator *iter,
 /* Helper for parsing the options.  */
 
 static void
-parse_option (const char *option)
+parse_option (struct arc_disassemble_info *arc_infop, const char *option)
 {
   if (disassembler_options_cmp (option, "dsp") == 0)
-    add_to_decodelist (DSP, NONE);
+    add_to_decode (arc_infop, DSP, NONE);
 
   else if (disassembler_options_cmp (option, "spfp") == 0)
-    add_to_decodelist (FLOAT, SPX);
+    add_to_decode (arc_infop, FLOAT, SPX);
 
   else if (disassembler_options_cmp (option, "dpfp") == 0)
-    add_to_decodelist (FLOAT, DPX);
+    add_to_decode (arc_infop, FLOAT, DPX);
 
   else if (disassembler_options_cmp (option, "quarkse_em") == 0)
     {
-      add_to_decodelist (FLOAT, DPX);
-      add_to_decodelist (FLOAT, SPX);
-      add_to_decodelist (FLOAT, QUARKSE1);
-      add_to_decodelist (FLOAT, QUARKSE2);
+      add_to_decode (arc_infop, FLOAT, DPX);
+      add_to_decode (arc_infop, FLOAT, SPX);
+      add_to_decode (arc_infop, FLOAT, QUARKSE1);
+      add_to_decode (arc_infop, FLOAT, QUARKSE2);
     }
 
   else if (disassembler_options_cmp (option, "fpuda") == 0)
-    add_to_decodelist (FLOAT, DPA);
+    add_to_decode (arc_infop, FLOAT, DPA);
 
   else if (disassembler_options_cmp (option, "nps400") == 0)
     {
-      add_to_decodelist (ACL, NPS400);
-      add_to_decodelist (ARITH, NPS400);
-      add_to_decodelist (BITOP, NPS400);
-      add_to_decodelist (BMU, NPS400);
-      add_to_decodelist (CONTROL, NPS400);
-      add_to_decodelist (DMA, NPS400);
-      add_to_decodelist (DPI, NPS400);
-      add_to_decodelist (MEMORY, NPS400);
-      add_to_decodelist (MISC, NPS400);
-      add_to_decodelist (NET, NPS400);
-      add_to_decodelist (PMU, NPS400);
-      add_to_decodelist (PROTOCOL_DECODE, NPS400);
-      add_to_decodelist (ULTRAIP, NPS400);
+      add_to_decode (arc_infop, ACL, NPS400);
+      add_to_decode (arc_infop, ARITH, NPS400);
+      add_to_decode (arc_infop, BITOP, NPS400);
+      add_to_decode (arc_infop, BMU, NPS400);
+      add_to_decode (arc_infop, CONTROL, NPS400);
+      add_to_decode (arc_infop, DMA, NPS400);
+      add_to_decode (arc_infop, DPI, NPS400);
+      add_to_decode (arc_infop, MEMORY, NPS400);
+      add_to_decode (arc_infop, MISC, NPS400);
+      add_to_decode (arc_infop, NET, NPS400);
+      add_to_decode (arc_infop, PMU, NPS400);
+      add_to_decode (arc_infop, PROTOCOL_DECODE, NPS400);
+      add_to_decode (arc_infop, ULTRAIP, NPS400);
     }
 
   else if (disassembler_options_cmp (option, "fpus") == 0)
     {
-      add_to_decodelist (FLOAT, SP);
-      add_to_decodelist (FLOAT, CVT);
+      add_to_decode (arc_infop, FLOAT, SP);
+      add_to_decode (arc_infop, FLOAT, CVT);
     }
 
   else if (disassembler_options_cmp (option, "fpud") == 0)
     {
-      add_to_decodelist (FLOAT, DP);
-      add_to_decodelist (FLOAT, CVT);
+      add_to_decode (arc_infop, FLOAT, DP);
+      add_to_decode (arc_infop, FLOAT, CVT);
     }
   else if (startswith (option, "hex"))
-    print_hex = true;
+    arc_infop->print_hex = true;
   else
     /* xgettext:c-format */
     opcodes_error_handler (_("unrecognised disassembler option: %s"), option);
@@ -854,28 +842,59 @@ parse_cpu_option (const char *option)
 /* Go over the options list and parse it.  */
 
 static void
-parse_disassembler_options (const char *options)
+parse_disassembler_options (struct disassemble_info *info)
 {
+  struct arc_disassemble_info *arc_infop = info->private_data;
   const char *option;
 
-  if (options == NULL)
-    return;
+  arc_infop->isa_mask = ARC_OPCODE_NONE;
 
-  /* Disassembler might be reused for difference CPU's, and cpu option set for
-     the first one shouldn't be applied to second (which might not have
-     explicit cpu in its options.  Therefore it is required to reset enforced
-     CPU when new options are being parsed.  */
-  enforced_isa_mask = ARC_OPCODE_NONE;
-
-  FOR_EACH_DISASSEMBLER_OPTION (option, options)
+  FOR_EACH_DISASSEMBLER_OPTION (option, info->disassembler_options)
     {
       /* A CPU option?  Cannot use STRING_COMMA_LEN because strncmp is also a
 	 preprocessor macro.  */
       if (strncmp (option, "cpu=", 4) == 0)
 	/* Strip leading `cpu=`.  */
-	enforced_isa_mask = parse_cpu_option (option + 4);
+	arc_infop->isa_mask = parse_cpu_option (option + 4);
       else
-	parse_option (option);
+	parse_option (arc_infop, option);
+    }
+
+  /* Figure out CPU type, unless it was enforced via disassembler options.  */
+  if (arc_infop->isa_mask == ARC_OPCODE_NONE)
+    {
+      switch (info->mach)
+	{
+	case bfd_mach_arc_arc700:
+	  arc_infop->isa_mask = ARC_OPCODE_ARC700;
+	  break;
+
+	case bfd_mach_arc_arc600:
+	  arc_infop->isa_mask = ARC_OPCODE_ARC600;
+	  break;
+
+	case bfd_mach_arc_arcv2:
+	default:
+	  {
+	    Elf_Internal_Ehdr *header = NULL;
+
+	    if (info->section && info->section->owner)
+	      header = elf_elfheader (info->section->owner);
+	    arc_infop->isa_mask = ARC_OPCODE_ARCv2EM;
+	    if (header != NULL
+		&& (header->e_flags & EF_ARC_MACH_MSK) == EF_ARC_CPU_ARCV2HS)
+	      arc_infop->isa_mask = ARC_OPCODE_ARCv2HS;
+	  }
+	  break;
+	}
+    }
+
+  if (arc_infop->isa_mask == ARC_OPCODE_ARCv2HS)
+    {
+      /* FPU instructions are not extensions for HS.  */
+      add_to_decode (arc_infop, FLOAT, SP);
+      add_to_decode (arc_infop, FLOAT, DP);
+      add_to_decode (arc_infop, FLOAT, CVT);
     }
 }
 
@@ -894,6 +913,7 @@ arc_opcode_to_insn_type (const struct arc_opcode *opcode)
     case BI:
     case BIH:
     case BRCC:
+    case DBNZ:
     case EI:
     case JLI:
     case JUMP:
@@ -944,7 +964,6 @@ print_insn_arc (bfd_vma memaddr,
   int status;
   unsigned int insn_len;
   unsigned long long insn = 0;
-  unsigned isa_mask = ARC_OPCODE_NONE;
   const struct arc_opcode *opcode;
   bool need_comma;
   bool open_braket;
@@ -955,60 +974,17 @@ print_insn_arc (bfd_vma memaddr,
   struct arc_disassemble_info *arc_infop;
   bool rpcl = false, rset = false;
 
-  if (info->disassembler_options)
+  if (info->private_data == NULL)
     {
-      parse_disassembler_options (info->disassembler_options);
+      if (!init_arc_disasm_info (info))
+	return -1;
 
-      /* Avoid repeated parsing of the options.  */
-      info->disassembler_options = NULL;
+      parse_disassembler_options (info);
     }
-
-  if (info->private_data == NULL && !init_arc_disasm_info (info))
-    return -1;
 
   memset (&iter, 0, sizeof (iter));
-  highbyte  = ((info->endian == BFD_ENDIAN_LITTLE) ? 1 : 0);
-  lowbyte = ((info->endian == BFD_ENDIAN_LITTLE) ? 0 : 1);
-
-  /* Figure out CPU type, unless it was enforced via disassembler options.  */
-  if (enforced_isa_mask == ARC_OPCODE_NONE)
-    {
-      Elf_Internal_Ehdr *header = NULL;
-
-      if (info->section && info->section->owner)
-	header = elf_elfheader (info->section->owner);
-
-      switch (info->mach)
-	{
-	case bfd_mach_arc_arc700:
-	  isa_mask = ARC_OPCODE_ARC700;
-	  break;
-
-	case bfd_mach_arc_arc600:
-	  isa_mask = ARC_OPCODE_ARC600;
-	  break;
-
-	case bfd_mach_arc_arcv2:
-	default:
-	  isa_mask = ARC_OPCODE_ARCv2EM;
-	  /* TODO: Perhaps remove definition of header since it is only used at
-	     this location.  */
-	  if (header != NULL
-	      && (header->e_flags & EF_ARC_MACH_MSK) == EF_ARC_CPU_ARCV2HS)
-	    isa_mask = ARC_OPCODE_ARCv2HS;
-	  break;
-	}
-    }
-  else
-    isa_mask = enforced_isa_mask;
-
-  if (isa_mask == ARC_OPCODE_ARCv2HS)
-    {
-      /* FPU instructions are not extensions for HS.  */
-      add_to_decodelist (FLOAT, SP);
-      add_to_decodelist (FLOAT, DP);
-      add_to_decodelist (FLOAT, CVT);
-    }
+  highbyte = info->endian == BFD_ENDIAN_LITTLE ? 1 : 0;
+  lowbyte = info->endian == BFD_ENDIAN_LITTLE ? 0 : 1;
 
   /* This variable may be set by the instruction decoder.  It suggests
      the number of bytes objdump should display on a single line.  If
@@ -1169,7 +1145,8 @@ print_insn_arc (bfd_vma memaddr,
   info->disassembler_needs_relocs = true;
 
   /* Find the first match in the opcode table.  */
-  if (!find_format (memaddr, insn, &insn_len, isa_mask, info, &opcode, &iter))
+  if (!find_format (memaddr, insn, &insn_len, arc_infop->isa_mask, info,
+		    &opcode, &iter))
     return -1;
 
   if (!opcode)
@@ -1332,7 +1309,7 @@ print_insn_arc (bfd_vma memaddr,
 	}
       else if (operand->flags & ARC_OPERAND_LIMM)
 	{
-	  const char *rname = get_auxreg (opcode, value, isa_mask);
+	  const char *rname = get_auxreg (opcode, value, arc_infop->isa_mask);
 
 	  if (rname && open_braket)
 	    (*info->fprintf_styled_func) (info->stream, dis_style_register,
@@ -1348,13 +1325,13 @@ print_insn_arc (bfd_vma memaddr,
 	}
       else if (operand->flags & ARC_OPERAND_SIGNED)
 	{
-	  const char *rname = get_auxreg (opcode, value, isa_mask);
+	  const char *rname = get_auxreg (opcode, value, arc_infop->isa_mask);
 	  if (rname && open_braket)
 	    (*info->fprintf_styled_func) (info->stream, dis_style_register,
 					  "%s", rname);
 	  else
 	    {
-	      if (print_hex)
+	      if (arc_infop->print_hex)
 		(*info->fprintf_styled_func) (info->stream, dis_style_immediate,
 					      "%#x", value);
 	      else
@@ -1402,7 +1379,8 @@ print_insn_arc (bfd_vma memaddr,
 	    }
 	  else
 	    {
-	      const char *rname = get_auxreg (opcode, value, isa_mask);
+	      const char *rname = get_auxreg (opcode, value,
+					      arc_infop->isa_mask);
 	      if (rname && open_braket)
 		(*info->fprintf_styled_func) (info->stream, dis_style_register,
 					      "%s", rname);

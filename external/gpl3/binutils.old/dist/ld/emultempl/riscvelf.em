@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2004-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -25,6 +25,55 @@ fragment <<EOF
 #include "elf/riscv.h"
 #include "elfxx-riscv.h"
 
+static struct riscv_elf_params params = { .relax_gp = 1,
+					  .check_uleb128 = 0};
+EOF
+
+# Define some shell vars to insert bits of code into the standard elf
+# parse_args and list_options functions.  */
+PARSE_AND_LIST_PROLOGUE=${PARSE_AND_LIST_PROLOGUE}'
+enum risccv_opt
+{
+  OPTION_RELAX_GP = 321,
+  OPTION_NO_RELAX_GP,
+  OPTION_CHECK_ULEB128,
+  OPTION_NO_CHECK_ULEB128,
+};
+'
+
+PARSE_AND_LIST_LONGOPTS=${PARSE_AND_LIST_LONGOPTS}'
+    { "relax-gp", no_argument, NULL, OPTION_RELAX_GP },
+    { "no-relax-gp", no_argument, NULL, OPTION_NO_RELAX_GP },
+    { "check-uleb128", no_argument, NULL, OPTION_CHECK_ULEB128 },
+    { "no-check-uleb128", no_argument, NULL, OPTION_NO_CHECK_ULEB128 },
+'
+
+PARSE_AND_LIST_OPTIONS=${PARSE_AND_LIST_OPTIONS}'
+  fprintf (file, _("  --relax-gp                  Perform GP relaxation\n"));
+  fprintf (file, _("  --no-relax-gp               Don'\''t perform GP relaxation\n"));
+  fprintf (file, _("  --check-uleb128             Check if SUB_ULEB128 has non-zero addend\n"));
+  fprintf (file, _("  --no-check-uleb128          Don'\''t check if SUB_ULEB128 has non-zero addend\n"));
+'
+
+PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
+    case OPTION_RELAX_GP:
+      params.relax_gp = 1;
+      break;
+
+    case OPTION_NO_RELAX_GP:
+      params.relax_gp = 0;
+      break;
+
+    case OPTION_CHECK_ULEB128:
+      params.check_uleb128 = 1;
+      break;
+
+    case OPTION_NO_CHECK_ULEB128:
+      params.check_uleb128 = 0;
+      break;
+'
+
+fragment <<EOF
 static void
 riscv_elf_before_allocation (void)
 {
@@ -42,7 +91,7 @@ riscv_elf_before_allocation (void)
 	ENABLE_RELAXATION;
     }
 
-  link_info.relax_pass = 3;
+  link_info.relax_pass = 2;
 }
 
 static void
@@ -96,6 +145,8 @@ riscv_create_output_section_statements (void)
 	       " whilst linking %s binaries\n"), "RISC-V");
       return;
     }
+
+  riscv_elf${ELFSIZE}_set_options (&link_info, &params);
 }
 
 EOF

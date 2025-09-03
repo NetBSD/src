@@ -1,5 +1,5 @@
 /* IA-64 support for OpenVMS
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -361,8 +361,8 @@ elf64_ia64_relax_section (bfd *abfd, asection *sec,
   *again = false;
 
   if (bfd_link_relocatable (link_info))
-    (*link_info->callbacks->einfo)
-      (_("%P%F: --relax and -r may not be used together\n"));
+    link_info->callbacks->fatal
+      (_("%P: --relax and -r may not be used together\n"));
 
   /* Don't even try to relax for non-ELF outputs.  */
   if (!is_elf_hash_table (link_info->hash))
@@ -1062,8 +1062,7 @@ elf64_ia64_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      elf64_ia64_new_elf_hash_entry,
-				      sizeof (struct elf64_ia64_link_hash_entry),
-				      IA64_ELF_DATA))
+				      sizeof (struct elf64_ia64_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1249,6 +1248,7 @@ create_ia64_vms_notes (bfd *abfd, struct bfd_link_info *info,
     }
 
   ia64_info->note_sec->contents = note_contents;
+  ia64_info->note_sec->alloced = 1;
   ia64_info->note_sec->size = note_size;
 
   free (module_name);
@@ -2591,8 +2591,8 @@ elf64_ia64_adjust_dynamic_symbol (struct bfd_link_info *info ATTRIBUTE_UNUSED,
 }
 
 static bool
-elf64_ia64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				  struct bfd_link_info *info)
+elf64_ia64_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			       struct bfd_link_info *info)
 {
   struct elf64_ia64_allocate_data data;
   struct elf64_ia64_link_hash_table *ia64_info;
@@ -2601,11 +2601,12 @@ elf64_ia64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   struct elf_link_hash_table *hash_table;
 
   hash_table = elf_hash_table (info);
-  dynobj = hash_table->dynobj;
   ia64_info = elf64_ia64_hash_table (info);
   if (ia64_info == NULL)
     return false;
-  BFD_ASSERT(dynobj != NULL);
+  dynobj = hash_table->dynobj;
+  if (dynobj == NULL)
+    return true;
   data.info = info;
 
   /* Allocate the GOT entries.  */
@@ -2761,6 +2762,7 @@ elf64_ia64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  sec->contents = (bfd_byte *) bfd_zalloc (dynobj, sec->size);
 	  if (sec->contents == NULL && sec->size != 0)
 	    return false;
+	  sec->alloced = 1;
 	}
     }
 
@@ -4003,8 +4005,6 @@ elf64_ia64_finish_dynamic_symbol (bfd *output_bfd,
   struct elf64_ia64_dyn_sym_info *dyn_i;
 
   ia64_info = elf64_ia64_hash_table (info);
-  if (ia64_info == NULL)
-    return false;
 
   dyn_i = get_dyn_sym_info (ia64_info, h, NULL, NULL, false);
 
@@ -5414,8 +5414,8 @@ elf64_vms_bfd_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 static bool
 elf64_ia64_vms_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object
-    (abfd, sizeof (struct elf64_ia64_vms_obj_tdata), IA64_ELF_DATA);
+  return bfd_elf_allocate_object (abfd,
+				  sizeof (struct elf64_ia64_vms_obj_tdata));
 }
 
 
@@ -5450,6 +5450,7 @@ static const struct elf_size_info elf64_ia64_vms_size_info = {
 };
 
 #define ELF_ARCH			bfd_arch_ia64
+#define ELF_TARGET_ID			IA64_ELF_DATA
 #define ELF_MACHINE_CODE		EM_IA_64
 #define ELF_MAXPAGESIZE			0x10000	/* 64KB */
 #define ELF_COMMONPAGESIZE		0x200	/* 16KB */
@@ -5488,8 +5489,8 @@ static const struct elf_size_info elf64_ia64_vms_size_info = {
 	elf64_ia64_check_relocs
 #define elf_backend_adjust_dynamic_symbol \
 	elf64_ia64_adjust_dynamic_symbol
-#define elf_backend_size_dynamic_sections \
-	elf64_ia64_size_dynamic_sections
+#define elf_backend_late_size_sections \
+	elf64_ia64_late_size_sections
 #define elf_backend_omit_section_dynsym \
 	_bfd_elf_omit_section_dynsym_all
 #define elf_backend_relocate_section \

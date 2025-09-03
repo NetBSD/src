@@ -1,6 +1,6 @@
 /* Disassemble Xilinx microblaze instructions.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -302,7 +302,7 @@ print_insn_microblaze (bfd_vma memaddr, struct disassemble_info * info)
 		{
 		  immval = get_int_field_imm (inst);
 		  if (immval & 0x8000)
-		    immval |= 0xFFFF0000;
+		    immval |= (~0xFFFF);
 		}
 	      if (immval > 0 && info->symbol_at_address_func (immval, info))
 		{
@@ -353,7 +353,7 @@ print_insn_microblaze (bfd_vma memaddr, struct disassemble_info * info)
 		{
 		  immval = get_int_field_imm (inst);
 		  if (immval & 0x8000)
-		    immval |= 0xFFFF0000;
+		    immval |= (~0xFFFF);
 		}
 	      immval += memaddr;
 	      if (immval > 0 && info->symbol_at_address_func (immval, info))
@@ -379,7 +379,7 @@ print_insn_microblaze (bfd_vma memaddr, struct disassemble_info * info)
 		{
 		  immval = get_int_field_imm (inst);
 		  if (immval & 0x8000)
-		    immval |= 0xFFFF0000;
+		    immval |= (~0xFFFF);
 		}
 	      if (op->inst_offset_type == INST_PC_OFFSET)
 		immval += (int) memaddr;
@@ -401,7 +401,7 @@ print_insn_microblaze (bfd_vma memaddr, struct disassemble_info * info)
 		{
 		  immval = get_int_field_imm (inst);
 		  if (immval & 0x8000)
-		    immval |= 0xFFFF0000;
+		    immval |= (~0xFFFF);
 		}
 	      if (op->inst_offset_type == INST_PC_OFFSET)
 		immval += (int) memaddr;
@@ -551,14 +551,14 @@ microblaze_get_target_address (long inst, bool immfound, int immval,
         case INST_TYPE_R1_IMM:
           if (immfound)
 	    {
-	      targetaddr = (immval << 16) & 0xffff0000;
+	      targetaddr = (immval << 16) & (~0xffff);
 	      targetaddr |= (get_int_field_imm (inst) & 0x0000ffff);
 	    }
 	  else
 	    {
 	      targetaddr = get_int_field_imm (inst);
 	      if (targetaddr & 0x8000)
-	        targetaddr |= 0xFFFF0000;
+		targetaddr |= (~0xFFFF);
             }
           if (op->inst_offset_type == INST_PC_OFFSET)
 	    targetaddr += pcval;
@@ -573,14 +573,14 @@ microblaze_get_target_address (long inst, bool immfound, int immval,
     {
       if (immfound)
 	{
-	  targetaddr = (immval << 16) & 0xffff0000;
+	  targetaddr = (immval << 16) & (~0xffff);
 	  targetaddr |= (get_int_field_imm (inst) & 0x0000ffff);
 	}
       else
 	{
 	  targetaddr = get_int_field_imm (inst);
 	  if (targetaddr & 0x8000)
-	    targetaddr |= 0xFFFF0000;
+	    targetaddr |= (~0xFFFF);
 	}
       targetaddr += r1val;
       *targetvalid = true;

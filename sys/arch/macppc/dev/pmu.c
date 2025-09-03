@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.41 2023/08/30 07:42:41 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.42 2025/08/12 05:37:30 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.41 2023/08/30 07:42:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.42 2025/08/12 05:37:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,7 @@ struct pmu_softc {
 	int sc_brightness, sc_brightness_wanted;
 	int sc_volume, sc_volume_wanted;
 	int sc_lid_closed;
+	int sc_is_rackmac;
 	int sc_button;
 	uint8_t sc_env_old;
 	uint8_t sc_env_mask;
@@ -297,6 +298,7 @@ pmu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_lid_closed = 0;
 	sc->sc_button = 0;
 	sc->sc_env_mask = 0xff;
+	sc->sc_is_rackmac = 0;
 
 	cv_init(&sc->sc_event, "pmu_event");
 	mutex_init(&sc->sc_evmtx, MUTEX_DEFAULT, IPL_NONE);
@@ -310,6 +312,9 @@ pmu_attach(device_t parent, device_t self, void *aux)
 	if (OF_getprop(root_node, "model", model, 32) != 0) {
 		if (strncmp(model, "PowerMac", 8) == 0) {
 			sc->sc_env_mask = PMU_ENV_POWER_BUTTON;
+		}
+		if (strncmp(model, "RackMac1", 8) == 0) {
+			sc->sc_is_rackmac = 1;
 		}
 	}
 
@@ -346,7 +351,7 @@ pmu_attach(device_t parent, device_t self, void *aux)
 
 		if (strncmp(name, "pmu-i2c", 8) == 0) {
 			int devs, sensors;
-			uint32_t addr;
+			uint32_t addr, reg;
 			char compat[256];
 			prop_array_t cfg;
 			prop_dictionary_t dev;
@@ -361,10 +366,11 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			/* look for i2c devices */
 			devs = OF_child(node);
 			while (devs != 0) {
+				int clen;
 				if (OF_getprop(devs, "name", name, 256) <= 0)
 					goto skip;
-				if (OF_getprop(devs, "compatible",
-				    compat, 256) <= 0)
+				if ((clen = OF_getprop(devs, "compatible",
+				    compat, 256)) <= 0)
 					goto skip;
 				if (OF_getprop(devs, "reg", &addr, 4) <= 0)
 					goto skip;
@@ -372,14 +378,16 @@ pmu_attach(device_t parent, device_t self, void *aux)
 				DPRINTF("-> %s@%x\n", name, addr);
 				dev = prop_dictionary_create();
 				prop_dictionary_set_string(dev, "name", name);
-				data = prop_data_create_copy(compat, strlen(compat)+1);
+				data = prop_data_create_copy(compat, clen);
 				prop_dictionary_set(dev, "compatible", data);
 				prop_object_release(data);
 				prop_dictionary_set_uint32(dev, "addr", addr);
 				prop_dictionary_set_uint64(dev, "cookie", devs);
+				if (OF_getprop(devs, "config-reg", &reg, 4) == 4) {
+					prop_dictionary_set_uint32(dev, "config-reg", reg);
+				}
 				sensors = OF_child(devs);
 				while (sensors != 0) {
-					int reg;
 					char loc[64];
 					char pname[8];
 					if (OF_getprop(sensors, "reg", &reg, 4) != 4)
@@ -544,8 +552,10 @@ pmu_send_byte(struct pmu_softc *sc, uint8_t data)
 static inline int
 pmu_read_byte(struct pmu_softc *sc, uint8_t *data)
 {
+	volatile uint8_t junk;
 	pmu_in(sc);
-	(void)pmu_read_reg(sc, vSR);
+	junk = pmu_read_reg(sc, vSR);
+	__USE(junk);
 	pmu_ack_off(sc);
 	/* wait for intr to come up */
 	do {} while (pmu_intr_state(sc) == 0);
@@ -629,7 +639,7 @@ pmu_adb_poll(void *cookie)
 static void
 pmu_in(struct pmu_softc *sc)
 {
-	uint8_t reg;
+	volatile uint8_t reg;
 
 	reg = pmu_read_reg(sc, vACR);
 	reg &= ~vSR_OUT;
@@ -640,7 +650,7 @@ pmu_in(struct pmu_softc *sc)
 static void
 pmu_out(struct pmu_softc *sc)
 {
-	uint8_t reg;
+	volatile uint8_t reg;
 
 	reg = pmu_read_reg(sc, vACR);
 	reg |= vSR_OUT;
@@ -651,7 +661,7 @@ pmu_out(struct pmu_softc *sc)
 static void
 pmu_ack_off(struct pmu_softc *sc)
 {
-	uint8_t reg;
+	volatile uint8_t reg;
 
 	reg = pmu_read_reg(sc, vBufB);
 	reg &= ~vPB4;
@@ -661,7 +671,7 @@ pmu_ack_off(struct pmu_softc *sc)
 static void
 pmu_ack_on(struct pmu_softc *sc)
 {
-	uint8_t reg;
+	volatile uint8_t reg;
 
 	reg = pmu_read_reg(sc, vBufB);
 	reg |= vPB4;
@@ -926,7 +936,8 @@ pmu_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *_send,
 {
 	struct pmu_softc *sc = cookie;
 	const uint8_t *send = _send;
-	uint8_t command[32] = {1,	/* bus number */
+	const uint8_t *recv = _recv;
+	uint8_t command[64] = {1,	/* bus number */
 				PMU_I2C_MODE_SIMPLE,
 				0,	/* bus2 */
 				addr,
@@ -938,33 +949,64 @@ pmu_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *_send,
 	uint8_t resp[16];
 	int len, rw;
 
-	rw = addr << 1;
+	rw = (addr & 0x7f) << 1;
 	command[3] = rw;
-	if (send_len > 0) {
-		command[6] = send_len;
-		memcpy(&command[7], send, send_len);
-		len = send_len + 7;
-		DPRINTF("pmu_i2c_exec(%02x, %d)\n", addr, send_len);
-
-		len = pmu_send(sc, PMU_I2C_CMD, len, command, 16, resp);
-		DPRINTF("resp(%d): %2x %2x\n", len, resp[0], resp[1]);
-
-		if (resp[1] != PMU_I2C_STATUS_OK) {
-			DPRINTF("%s: iic error %d\n", __func__, resp[1]);
-			return -1;
-		}
-	}
 	/* see if we're supposed to read */
 	if (I2C_OP_READ_P(op)) {
-		rw |= 1;
-		command[3] = rw;
-		command[6] = recv_len;
-		len = pmu_send(sc, PMU_I2C_CMD, 7, command, 16, resp);
-		DPRINTF("resp2(%d): %2x %2x\n", len, resp[0], resp[1]);
-		
-		command[0] = 0;
-		len = pmu_send(sc, PMU_I2C_CMD, 1, command, 16, resp);
-		DPRINTF("resp3(%d): %2x %2x %2x\n", len, resp[0], resp[1],
+		if (send_len == 1) {
+			command[1] = PMU_I2C_MODE_COMBINED;
+			command[4] = *send;
+			command[5] = rw | 1;
+			command[6] = recv_len;
+			if (sc->sc_is_rackmac) delay(20000);
+			len = pmu_send(sc, PMU_I2C_CMD, 7, command, 16, resp);
+			DPRINTF("resp1(%d): %2x %2x ", len, resp[0], resp[1]);	
+			command[0] = 0;
+			int ok = 0;
+			int bail = 10;
+			while ((!ok) && (bail > 0)) {
+				len = pmu_send(sc, PMU_I2C_CMD, 1, command, 16, resp);
+				if (resp[1] != 0xfe) {
+					ok = 1;
+				} else delay(10000);
+				bail--;
+			}
+#ifdef PMU_DEBUG
+			if (bail < 9) printf("bail %d\n", bail);
+#endif
+		} else {
+			command[6] = send_len;
+			memcpy(&command[7], send, send_len);
+			/*
+			 * Xserve G4's PMU needs these, if we send i2c commands back to
+			 * back we get busy responses.
+			 * No such problem on Minis, which have temperature sensors
+			 * here.
+			 */
+			if (sc->sc_is_rackmac) delay(20000);
+			len = pmu_send(sc, PMU_I2C_CMD, send_len + 7, command, 16, resp);
+			DPRINTF("resp1(%d): %2x %2x ", len, resp[0], resp[1]);	
+			rw |= 1;
+			command[3] = rw;
+			command[6] = recv_len;
+			if (sc->sc_is_rackmac) delay(20000);
+			len = pmu_send(sc, PMU_I2C_CMD, 7, command, 16, resp);
+			DPRINTF("resp2(%d): %2x %2x ", len, resp[0], resp[1]);	
+			command[0] = 0;
+			int ok = 0;
+			int bail = 10;
+			while ((!ok) && (bail > 0)) {
+				len = pmu_send(sc, PMU_I2C_CMD, 1, command, 16, resp);
+				if (resp[1] != 0xfe) {
+					ok = 1;
+				} else delay(10000);
+				bail--;
+			}
+#ifdef PMU_DEBUG
+			if (bail < 9) printf("bail %d\n", bail);
+#endif
+		}
+		DPRINTF("resp3(%d): %2x %2x %2x ", len, resp[0], resp[1],
 			resp[2]);
 		if ((len - 2) != recv_len) {
 			DPRINTF("%s: %s(%d) - got %d\n",
@@ -974,7 +1016,28 @@ pmu_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *_send,
 		}
 		memcpy(_recv, &resp[2], len - 2);
 		return 0;
-	};
+	} else {
+		int clen = send_len + recv_len;
+		uint8_t *dptr = &command[7];
+		if (clen > 57) return -1;
+		command[6] = clen;
+		memcpy(dptr, send, send_len);
+		if (recv_len > 0) {
+			dptr += send_len;
+			memcpy(dptr, recv, recv_len);
+		}	
+		len = clen + 7;
+		DPRINTF("pmu_i2c_exec(%02x, %d)\n", addr, send_len);
+
+		if (sc->sc_is_rackmac) delay(20000);
+		len = pmu_send(sc, PMU_I2C_CMD, len, command, 16, resp);
+		DPRINTF("resp(%d): %2x %2x\n", len, resp[0], resp[1]);
+
+		if (resp[1] != PMU_I2C_STATUS_OK) {
+			DPRINTF("%s: iic error %d\n", __func__, resp[1]);
+			return -1;
+		}
+	}
 	return 0;
 }
 

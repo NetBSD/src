@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 2008/04/06 08:03:36 skrll Exp $	*/
+/*	$NetBSD: md.h,v 1.5 2025/07/09 21:55:44 andvar Exp $	*/
 
 /*	$OpenBSD: md.h,v 1.4 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -45,7 +45,7 @@
 #include <sys/types.h>
 
 /*****************************************************************
- * Muliply/Divide SFU Internal State                             *
+ * Multiply/Divide SFU Internal State                             *
  *****************************************************************/
 struct mdsfu_register {
     int rslt_hi,

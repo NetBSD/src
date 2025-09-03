@@ -1,5 +1,5 @@
 /* tc-rl78.h - header file for Renesas RL78
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -75,8 +75,8 @@ extern void rl78_cons_fix_new (fragS *, int, int, expressionS *);
 #define RELOC_EXPANSION_POSSIBLE 1
 #define MAX_RELOC_EXPANSION      8
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE 8
-#define HANDLE_ALIGN(FRAG) rl78_handle_align (FRAG)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) 8
+#define HANDLE_ALIGN(SEC, FRAG) rl78_handle_align (FRAG)
 extern void rl78_handle_align (fragS *);
 
 #define elf_tc_final_processing	rl78_elf_final_processing

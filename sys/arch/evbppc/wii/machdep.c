@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.9 2025/02/13 00:25:30 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.10 2025/09/02 22:35:53 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2025/02/13 00:25:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2025/09/02 22:35:53 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -132,6 +132,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2025/02/13 00:25:30 jmcneill Exp $")
 						 */
 
 #define MINI_MEM2_START		0x13f00000	/* Start of reserved MEM2 for MINI */
+
+#define PI_INTERRUPT_CAUSE	0x0c003000
+#define  RESET_SWITCH_STATE	__BIT(16)
 
 extern u_int l2cr_config;
 
@@ -416,11 +419,16 @@ cpu_reboot(int howto, char *what)
 		printf("power off failed!\n\n");
 	}
 	if (howto & RB_HALT) {
-		printf("halted\n\n");
-		while (1);
+		printf("The operating system has halted.\n");
+		printf("Please press the RESET button to reboot.\n");
+		while (1) {
+			if ((in32(PI_INTERRUPT_CAUSE) & RESET_SWITCH_STATE) == 0) {
+				break;
+			}
+		}
 	}
 
-	printf("rebooting\n\n");
+	printf("rebooting...\n\n");
 	out32(HW_RESETS, in32(HW_RESETS) & ~RSTBINB);
 	while (1);
 }

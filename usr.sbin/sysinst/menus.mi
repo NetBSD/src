@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.29 2023/12/17 18:46:42 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.30 2025/07/25 17:28:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -142,7 +142,6 @@ remove_sub_menu(int menuID)
 	}
 }
 
-#ifndef NO_PARTMAN
 static void
 remove_menu_option(int menuID, const char *option)
 {
@@ -160,7 +159,6 @@ remove_menu_option(int menuID, const char *option)
 		}
 	}
 }
-#endif
 
 void
 remove_color_options()
@@ -171,6 +169,16 @@ remove_color_options()
 	 * make any sense in this case.
 	 */
 	remove_sub_menu(MENU_colors);
+}
+
+void
+remove_https_options()
+{
+	/*
+	 * If we can not validate certificates, do not pretend
+	 * to do https
+	 */
+	remove_menu_option(MENU_distmedium, MSG_https);
 }
 
 #ifndef NO_PARTMAN
@@ -342,6 +350,7 @@ menu ptnsize_replace_existing_partition, sub menu, y=0,
 
 menu distmedium, title MSG_Select_medium, y=-5;
 	option MSG_cdrom,     exit, action { *(int *)arg = get_via_cdrom(); };
+	option MSG_https,     exit, action { *(int *)arg = get_via_ftp(XFER_HTTPS); };
 	option MSG_http,      exit, action { *(int *)arg = get_via_ftp(XFER_HTTP); };
 	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp(XFER_FTP); };
 	option MSG_nfs,	      exit, action { *(int *)arg = get_via_nfs(); };

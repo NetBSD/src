@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.528 2025/04/27 17:40:55 riastradh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.531 2025/07/16 19:14:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.528 2025/04/27 17:40:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.531 2025/07/16 19:14:13 kre Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1261,7 +1261,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	pax_aslr_init_vm(l, vm, epp);
 
 	cwdexec(p);
-	fd_closeexec();		/* handle close on exec */
+	fd_closeexec();		/* handle close on exec & close on fork */
 
 	if (__predict_false(ktrace_on))
 		fd_ktrexecfd();
@@ -2154,7 +2154,7 @@ handle_posix_spawn_file_actions(struct posix_spawn_file_actions *actions)
 {
 	struct lwp *l = curlwp;
 	register_t retval;
-	int error, newfd;
+	int error = 0, newfd;
 
 	if (actions == NULL)
 		return 0;
@@ -2185,10 +2185,14 @@ handle_posix_spawn_file_actions(struct posix_spawn_file_actions *actions)
 			    fae->fae_newfildes, 0, &retval);
 			break;
 		case FAE_CLOSE:
-			if (fd_getfile(fae->fae_fildes) == NULL) {
-				return SET_ERROR(EBADF);
-			}
-			error = fd_close(fae->fae_fildes);
+			/*
+			 * posix specifies failures from close() due to
+			 * already closed file descriptors should be ignored.
+			 * out of range filedescriptors would have been
+			 * caught earlier already.
+			 */
+			if (fd_getfile(fae->fae_fildes) != NULL)
+				fd_close(fae->fae_fildes);
 			break;
 		case FAE_CHDIR:
 			error = do_sys_chdir(l, fae->fae_chdir_path,

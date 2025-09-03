@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,7 @@
 # This test relies on being able to set 4 hardware watchpoints.  Since
 # that is not a valid assumption across most targets, and we're
 # testing a x86 specific bug, skip everywhere else.
-if {![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"]} {
-    return 0
-}
+require {is_any_target "i?86-*-*" "x86_64-*-*"}
 
 standard_testfile
 
@@ -78,7 +76,7 @@ gdb_test_multiple "watch gap1" "$test" {
 gdb_test "delete" \
     "" \
     "delete all watchpoints" \
-    {Delete all breakpoints\? \(y or n\) $} \
+    {Delete all breakpoints, watchpoints, tracepoints, and catchpoints\? \(y or n\) $} \
     "y"
 
 # If debug registers were left occupied by mistake, we'll fail to set

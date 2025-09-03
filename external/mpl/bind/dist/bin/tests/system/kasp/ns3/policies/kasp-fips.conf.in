@@ -23,25 +23,6 @@ dnssec-policy "default-dynamic" {
 	inline-signing no;
 };
 
-dnssec-policy "manual-rollover" {
-	dnskey-ttl 3600;
-
-	keys {
-		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
-		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
-	};
-};
-
-dnssec-policy "multisigner-model2" {
-	dnskey-ttl 3600;
-	inline-signing no;
-
-	keys {
-		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@ tag-range 32768 65535;
-		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@ tag-range 32768 65535;
-	};
-};
-
 dnssec-policy "migrate-to-dnssec-policy" {
 	dnskey-ttl 1234;
 

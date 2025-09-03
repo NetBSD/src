@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.75 2024/02/09 22:08:35 andvar Exp $
+ * $Id: ahc_pci.c,v 1.76 2025/06/27 21:36:22 andvar Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.75 2024/02/09 22:08:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.76 2025/06/27 21:36:22 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ ahc_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 	 : ((id) & 0x1000) >> 12)
 /*
  * Informational only. Should use chip register to be
- * certain, but may be use in identification strings.
+ * certain, but may be used in identification strings.
  */
 #define SUBID_9005_CARD_SCSIWIDTH_MASK	0x2000
 #define SUBID_9005_CARD_PCIWIDTH_MASK	0x4000

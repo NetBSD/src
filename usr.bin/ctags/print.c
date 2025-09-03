@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.10 2009/07/13 19:05:40 roy Exp $	*/
+/*	$NetBSD: print.c,v 1.11 2025/08/02 05:58:42 kre Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.3 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: print.c,v 1.10 2009/07/13 19:05:40 roy Exp $");
+__RCSID("$NetBSD: print.c,v 1.11 2025/08/02 05:58:42 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ put_entries(NODE *node)
 		printf("%s %s %d\n",
 		    node->entry, node->file, (node->lno + 63) / 64);
 	else if (xflag)
-		printf("%-16s%4d %-16s %s\n",
+		printf("%-16s %4d %-16s %s\n",
 		    node->entry, node->lno, node->file, node->pat);
 	else
 		fprintf(outf, "%s\t%s\t%c^%s%c\n",

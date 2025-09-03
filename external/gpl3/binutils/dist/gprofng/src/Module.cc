@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -131,7 +131,7 @@ Stabs *
 Module::openDebugInfo ()
 {
   setFile ();
-  objStabs = loadobject->openDebugInfo (disPath);
+  objStabs = loadobject->openDebugInfo ();
   return objStabs;
 }
 
@@ -368,7 +368,7 @@ Module::read_ar (int ar, int obj, char *obj_base)
   if (!strncmp (hdr.ar_name, NTXT ("//"), 2))
     {
       longnames_size = get_ar_size (hdr.ar_size, sizeof (hdr.ar_size));
-      longnames = (char *) malloc (longnames_size + 1);
+      longnames = (char *) xmalloc (longnames_size + 1);
       int64_t cnt = read_from_file (ar, longnames, longnames_size);
       if (cnt != (int64_t) longnames_size)
 	{
@@ -519,8 +519,8 @@ Module::setFile ()
       char *path = loadobject->dbeFile->get_location ();
       if (path)
 	{
-	  disPath = strdup (path);
-	  disName = strdup (path);
+	  disPath = xstrdup (path);
+	  disName = xstrdup (path);
 	  disMTime = loadobject->dbeFile->sbuf.st_mtime;
 	}
 
@@ -535,7 +535,7 @@ Module::setFile ()
 	  size_t last = strlen (base) - 1;
 	  base[last] = '\0';
 	  stabsTmp = dbeSession->get_tmp_file_name (base, false);
-	  dbeSession->tmp_files->append (strdup (stabsTmp));
+	  dbeSession->tmp_files->append (xstrdup (stabsTmp));
 
 	  DbeFile *dbf = dbeSession->getDbeFile (namebuf,
 					DbeFile::F_DOT_A_LIB | DbeFile::F_FILE);
@@ -553,8 +553,8 @@ Module::setFile ()
 	      dbeFile->check_access (stabsTmp); // init 'sbuf'
 	      dbeFile->sbuf.st_mtime = 0; // Don't check timestamps
 	      dbeFile->container = dbf;
-	      stabsPath = strdup (stabsTmp);
-	      stabsName = strdup (path);
+	      stabsPath = xstrdup (stabsTmp);
+	      stabsName = xstrdup (path);
 	      stabsMTime = dbeFile->sbuf.st_mtime;
 	    }
 	  else
@@ -573,8 +573,8 @@ Module::setFile ()
 	  path = dbeFile->get_location ();
 	  if (path != NULL)
 	    {
-	      stabsPath = strdup (path);
-	      stabsName = strdup (path);
+	      stabsPath = xstrdup (path);
+	      stabsName = xstrdup (path);
 	      stabsMTime = hasDwarf ? 0 : dbeFile->sbuf.st_mtime;
 	    }
 	}
@@ -585,14 +585,14 @@ Module::setFile ()
 	{
 	  if (disPath == NULL)
 	    return false;
-	  stabsPath = strdup (disPath);
-	  stabsName = strdup (disName);
+	  stabsPath = xstrdup (disPath);
+	  stabsName = xstrdup (disName);
 	  stabsMTime = disMTime;
 	}
       else if (disPath == NULL)
 	{
-	  disPath = strdup (stabsPath);
-	  disName = strdup (stabsName);
+	  disPath = xstrdup (stabsPath);
+	  disName = xstrdup (stabsName);
 	  disMTime = stabsMTime;
 	}
     }
@@ -1278,7 +1278,7 @@ Module::set_src_data (Function *func, int vis_bits, int cmpline_visible,
     {
       Hist_data::HistItem *item = src_items->new_hist_item (NULL, AT_EMPTY,
 							    empty);
-      item->value[name_idx].l = strdup (NTXT (""));
+      item->value[name_idx].l = xstrdup (NTXT (""));
       data_items->append_hist_item (item);
       item = src_items->new_hist_item (NULL, AT_COM, empty);
       item->value[name_idx].l = dbe_sprintf (GTXT ("Compile flags: %s"),

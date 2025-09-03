@@ -1,5 +1,5 @@
 /* tc-metag.c -- Assembler for the Imagination Technologies Meta.
-   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+   Copyright (C) 2013-2025 Free Software Foundation, Inc.
    Contributed by Imagination Technologies Ltd.
 
    This file is part of GAS, the GNU Assembler.
@@ -41,7 +41,6 @@ static char mnemonic_chars[256];
 
 #define is_register_char(x) (register_chars[(unsigned char) x])
 #define is_mnemonic_char(x) (mnemonic_chars[(unsigned char) x])
-#define is_whitespace_char(x) (((x) == ' ') || ((x) == '\t'))
 #define is_space_char(x) ((x) == ' ')
 
 #define FPU_PREFIX_CHAR 'f'
@@ -81,13 +80,13 @@ static unsigned int mcpu_opt = CoreMeta12;
 static unsigned int mfpu_opt = 0;
 static unsigned int mdsp_opt = 0;
 
-const char * md_shortopts = "m:";
+const char md_shortopts[] = "m:";
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 /* Parser hash tables.  */
 static htab_t mnemonic_htab;
@@ -221,7 +220,7 @@ skip_whitespace (const char *line)
 {
   const char *l = line;
 
-  if (is_whitespace_char (*l))
+  if (is_whitespace (*l))
     {
       l++;
     }
@@ -268,7 +267,7 @@ parse_gp_reg (const char *name)
 
   entry.name = name;
 
-  reg = (const metag_reg *) htab_find (reg_htab, &entry);
+  reg = htab_find (reg_htab, &entry);
 
   return reg;
 }
@@ -4113,7 +4112,7 @@ __parse_dsp_reg (const char *line, const metag_reg **reg, htab_t dsp_regtab)
   name[len] = '\0';
   entry.name = name;
 
-  _reg = (const metag_reg *) htab_find (dsp_regtab, &entry);
+  _reg = htab_find (dsp_regtab, &entry);
   if (!_reg)
     return NULL;
 
@@ -4381,11 +4380,10 @@ parse_dsp_addr (const char *line, metag_addr *addr, unsigned int size,
 
   l = parse_dsp_regs_list (l, regs, 1, &regs_read, true, true, load, false);
 
-  if (l == NULL)
+  if (l == NULL || regs_read == 0)
     return NULL;
 
-  if (!is_addr_unit (regs[0]->unit) &&
-      !is_dspram_reg (regs[0]))
+  if (!is_addr_unit (regs[0]->unit) && !is_dspram_reg (regs[0]))
     {
       as_bad (_("invalid register for memory access"));
       return NULL;
@@ -4435,7 +4433,7 @@ parse_dsp_addr (const char *line, metag_addr *addr, unsigned int size,
 
   l = parse_dsp_regs_list (l, regs, 1, &regs_read, true, true, load, false);
 
-  if (l == NULL)
+  if (l == NULL || regs_read == 0)
     return NULL;
 
   if (regs[0]->unit != addr->base_reg->unit)
@@ -4523,7 +4521,7 @@ parse_dget_set (const char *line, metag_insn *insn,
 			       false, false);
     }
 
-  if (l == NULL)
+  if (l == NULL || regs_read == 0)
     return NULL;
 
   /* The first register dictates the unit.  */
@@ -6005,7 +6003,7 @@ parse_split_condition (const char *line, metag_insn *insn)
 
   entry.name = buf;
 
-  scond = (const split_condition *) htab_find (scond_htab, &entry);
+  scond = htab_find (scond_htab, &entry);
 
   if (!scond)
     return NULL;
@@ -6052,7 +6050,7 @@ parse_prefix (const char *line, metag_insn *insn)
 	      /* Check this isn't a split condition beginning with L.  */
 	      l2 = parse_split_condition (l2, insn);
 
-	      if (l2 && is_whitespace_char (*l2))
+	      if (l2 && is_whitespace (*l2))
 		{
 		  l = l2;
 		}
@@ -6090,7 +6088,7 @@ parse_prefix (const char *line, metag_insn *insn)
 	      l++;
 	    }
 
-	  if (! is_whitespace_char (*l))
+	  if (! is_whitespace (*l))
 	    {
 	      l = parse_split_condition (l, insn);
 
@@ -6116,7 +6114,7 @@ parse_prefix (const char *line, metag_insn *insn)
 
 	  insn->dsp_width = DSP_WIDTH_SINGLE;
 
-	  while (!is_whitespace_char (*l))
+	  while (!is_whitespace (*l))
 	    {
 	      /* We have to check for split condition codes first
 		 because they are the longest strings to match,
@@ -6265,10 +6263,9 @@ find_insn_templates (const char *mnemonic)
   insn_templates *slot;
 
   entry.template = &template;
+  template.name = mnemonic;
 
-  memcpy ((void *)&entry.template->name, &mnemonic, sizeof (char *));
-
-  slot = (insn_templates *) htab_find (mnemonic_htab, &entry);
+  slot = htab_find (mnemonic_htab, &entry);
 
   if (slot)
     return slot;
@@ -6309,8 +6306,8 @@ hash_templates (const void *p)
 static int
 eq_templates (const void *a, const void *b)
 {
-  insn_templates *ta = (insn_templates *)a;
-  insn_templates *tb = (insn_templates *)b;
+  const insn_templates *ta = a;
+  const insn_templates *tb = b;
   return strcasecmp (ta->template->name, tb->template->name) == 0;
 }
 
@@ -6326,7 +6323,7 @@ create_mnemonic_htab (void)
   for (i = 0; i < num_templates; i++)
     {
       const insn_template *template = &metag_optab[i];
-      insn_templates **slot = NULL;
+      void **slot;
       insn_templates *new_entry;
 
       new_entry = XNEW (insn_templates);
@@ -6334,8 +6331,7 @@ create_mnemonic_htab (void)
       new_entry->template = template;
       new_entry->next = NULL;
 
-      slot = (insn_templates **) htab_find_slot (mnemonic_htab, new_entry,
-						 INSERT);
+      slot = htab_find_slot (mnemonic_htab, new_entry, INSERT);
 
       if (*slot)
 	{
@@ -6357,7 +6353,7 @@ create_mnemonic_htab (void)
 static hashval_t
 hash_regs (const void *p)
 {
-  metag_reg *rp = (metag_reg *)p;
+  const metag_reg *rp = p;
   char buf[MAX_REG_LEN];
 
   strupper (buf, rp->name);
@@ -6369,8 +6365,8 @@ hash_regs (const void *p)
 static int
 eq_regs (const void *a, const void *b)
 {
-  metag_reg *ra = (metag_reg *)a;
-  metag_reg *rb = (metag_reg *)b;
+  const metag_reg *ra = a;
+  const metag_reg *rb = b;
   return strcasecmp (ra->name, rb->name) == 0;
 }
 
@@ -6459,8 +6455,8 @@ hash_scond (const void *p)
 static int
 eq_scond (const void *a, const void *b)
 {
-  split_condition *ra = (split_condition *)a;
-  split_condition *rb = (split_condition *)b;
+  const split_condition *ra = a;
+  const split_condition *rb = b;
 
   return strcasecmp (ra->name, rb->name) == 0;
 }
@@ -6740,8 +6736,7 @@ md_atof (int type, char * litP, int * sizeP)
 
   for (i = 0; i < prec; i++)
     {
-      md_number_to_chars (litP, (valueT) words[i],
-			  sizeof (LITTLENUM_TYPE));
+      md_number_to_chars (litP, words[i], sizeof (LITTLENUM_TYPE));
       litP += sizeof (LITTLENUM_TYPE);
     }
 
@@ -6843,34 +6838,26 @@ void
 metag_handle_align (fragS * fragP)
 {
   static unsigned char const noop[4] = { 0xfe, 0xff, 0xff, 0xa0 };
-  int bytes, fix;
-  char *p;
 
   if (fragP->fr_type != rs_align_code)
     return;
 
-  bytes = fragP->fr_next->fr_address - fragP->fr_address - fragP->fr_fix;
-  p = fragP->fr_literal + fragP->fr_fix;
-  fix = 0;
-
-  if (bytes & 3)
+  int bytes = fragP->fr_next->fr_address - fragP->fr_address - fragP->fr_fix;
+  char *p = fragP->fr_literal + fragP->fr_fix;
+  int fix = bytes & 3;
+  if (fix != 0)
     {
-      fix = bytes & 3;
       memset (p, 0, fix);
       p += fix;
       bytes -= fix;
+      fragP->fr_fix += fix;
     }
 
-  while (bytes >= 4)
+  if (bytes != 0)
     {
+      fragP->fr_var = 4;
       memcpy (p, noop, 4);
-      p += 4;
-      bytes -= 4;
-      fix += 4;
     }
-
-  fragP->fr_fix += fix;
-  fragP->fr_var = 4;
 }
 
 static char *
@@ -6908,13 +6895,13 @@ metag_parse_name (char const * name, expressionS * exprP, enum expr_mode mode,
       /* If we have an absolute symbol or a
 	 reg, then we know its value now.  */
       segment = S_GET_SEGMENT (exprP->X_add_symbol);
-      if (mode != expr_defer && segment == absolute_section)
+      if (!expr_defer_p (mode) && segment == absolute_section)
 	{
 	  exprP->X_op = O_constant;
 	  exprP->X_add_number = S_GET_VALUE (exprP->X_add_symbol);
 	  exprP->X_add_symbol = NULL;
 	}
-      else if (mode != expr_defer && segment == reg_section)
+      else if (!expr_defer_p (mode) && segment == reg_section)
 	{
 	  exprP->X_op = O_register;
 	  exprP->X_add_number = S_GET_VALUE (exprP->X_add_symbol);
@@ -7001,10 +6988,10 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
 
-  reloc		      = XNEW (arelent);
-  reloc->sym_ptr_ptr  = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
-  reloc->address      = fixp->fx_frag->fr_address + fixp->fx_where;
+  reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
   reloc->addend = fixp->fx_offset;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
@@ -7015,9 +7002,6 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 		    /* xgettext:c-format.  */
 		    _("reloc %d not supported by object file format"),
 		    (int) fixp->fx_r_type);
-
-      xfree (reloc);
-
       return NULL;
     }
 
@@ -7042,7 +7026,7 @@ void
 md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 {
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
-  int value = (int)*valP;
+  int value = *valP;
 
   switch (fixP->fx_r_type)
     {

@@ -1,5 +1,5 @@
 /* Or1k-specific support for 32-bit ELF.
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
    Contributed for OR32 by Johan Rydberg, jrydberg@opencores.org
 
    PIC parts added by Stefan Kristiansson, stefan.kristiansson@saunalahti.fi,
@@ -1341,6 +1341,17 @@ or1k_elf_relocate_section (bfd *output_bfd,
   sym_hashes = elf_sym_hashes (input_bfd);
   relend = relocs + input_section->reloc_count;
 
+  /* Make a full scan for R_OR1K_GOT_AHI16, since it could be AFTER R_OR1K_GOT16.  */
+  for (rel = relocs; rel < relend; rel++)
+    {
+      int r_type = ELF32_R_TYPE (rel->r_info);
+      if (r_type==R_OR1K_GOT_AHI16)
+        {
+	  saw_gotha = true;
+	  break;
+        }
+    }
+
   for (rel = relocs; rel < relend; rel++)
     {
       reloc_howto_type *howto;
@@ -1519,9 +1530,6 @@ or1k_elf_relocate_section (bfd *output_bfd,
 	    if (r_type == R_OR1K_GOT16
 		|| r_type == R_OR1K_GOT_AHI16)
 	      relocation -= got_sym_value;
-
-	    if (r_type == R_OR1K_GOT_AHI16)
-	      saw_gotha = true;
 
 	    /* If we have a R_OR1K_GOT16 following a R_OR1K_GOT_AHI16
 	       relocation we assume the code is doing the right thing to avoid

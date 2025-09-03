@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.14 2025/05/21 14:48:02 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.15 2025/07/17 19:01:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2672,11 +2672,11 @@ dbfind_name(dns_adbname_t *adbname, isc_stdtime_t now, dns_rdatatype_t rdtype) {
 	 * any matching static-stub zone without looking into the cache to honor
 	 * the configuration on which server we should send queries to.
 	 */
-	result =
-		dns_view_find(adb->view, adbname->name, rdtype, now,
-			      DNS_DBFIND_GLUEOK | DNS_DBFIND_ADDITIONALOK, true,
-			      ((adbname->flags & DNS_ADBFIND_STARTATZONE) != 0),
-			      NULL, NULL, fname, &rdataset, NULL);
+	result = dns_view_find(adb->view, adbname->name, rdtype, now,
+			       DNS_DBFIND_GLUEOK | DNS_DBFIND_ADDITIONALOK,
+			       true,
+			       (adbname->flags & DNS_ADBFIND_STARTATZONE) != 0,
+			       NULL, NULL, fname, &rdataset, NULL);
 
 	switch (result) {
 	case DNS_R_GLUE:

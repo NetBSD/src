@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF2_PUBLIC_H
-#define DWARF2_PUBLIC_H
+#ifndef GDB_DWARF2_PUBLIC_H
+#define GDB_DWARF2_PUBLIC_H
 
 /* A DWARF names index variant.  */
 enum class dw_index_kind
@@ -44,4 +44,4 @@ extern bool dwarf2_initialize_objfile
 
 extern void dwarf2_build_frame_info (struct objfile *);
 
-#endif /* DWARF2_PUBLIC_H */
+#endif /* GDB_DWARF2_PUBLIC_H */

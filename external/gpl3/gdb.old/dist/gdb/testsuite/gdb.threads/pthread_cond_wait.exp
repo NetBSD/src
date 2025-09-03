@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2023 Free Software Foundation, Inc.
+# Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ global decimal
 #
 # This is a "backtrace break" ("btb"):
 #
-set btb "\[^\r\n\]+\[\r\n\]+\#${decimal}\[ \t\]+${hex} in "
+set btb "\[^\r\n\]+\[\r\n\]+\#${decimal}\[ \t\]+${hex} (\\\[PAC\\\] )?in "
 
 # One of the threads is blocked on a call to pthread_cond_wait, and
 # we want to verify that we are able to get a sensible backtrace for

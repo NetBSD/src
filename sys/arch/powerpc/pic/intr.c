@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.37 2025/02/17 11:14:49 jmcneill Exp $ */
+/*	$NetBSD: intr.c,v 1.38 2025/07/05 15:11:05 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37 2025/02/17 11:14:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.38 2025/07/05 15:11:05 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_interrupt.h"
@@ -89,6 +89,18 @@ void
 pic_init(void)
 {
 	/* everything is in bss, no reason to zero it. */
+}
+
+struct pic_ops *
+find_pic_by_cookie(void *c)
+{
+	int i = 0;
+	while (i < num_pics) {
+		if (pics[i]->pic_cookie == c)
+			return pics[i];
+		i++;
+	}
+	return NULL;
 }
 
 int

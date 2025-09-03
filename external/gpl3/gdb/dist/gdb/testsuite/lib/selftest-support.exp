@@ -100,7 +100,7 @@ proc selftest_setup { executable function } {
 # self-test, then return an empty string.
 proc selftest_prepare {} {
     # Are we testing with a remote board?  In that case, the target
-    # won't have access to the GDB's auxilliary data files
+    # won't have access to the GDB's auxiliary data files
     # (data-directory, etc.).  It's simpler to just skip.
     if { [is_remote target]  || [is_remote host] } {
 	return

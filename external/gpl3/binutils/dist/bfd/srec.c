@@ -1,5 +1,5 @@
 /* BFD back-end for s-record objects.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -642,7 +642,6 @@ srec_scan (bfd *abfd)
 static bfd_cleanup
 srec_object_p (bfd *abfd)
 {
-  void * tdata_save;
   bfd_byte b[4];
 
   srec_init ();
@@ -657,12 +656,12 @@ srec_object_p (bfd *abfd)
       return NULL;
     }
 
-  tdata_save = abfd->tdata.any;
-  if (! srec_mkobject (abfd) || ! srec_scan (abfd))
+  if (!srec_mkobject (abfd))
+    return NULL;
+
+  if (!srec_scan (abfd))
     {
-      if (abfd->tdata.any != tdata_save && abfd->tdata.any != NULL)
-	bfd_release (abfd, abfd->tdata.any);
-      abfd->tdata.any = tdata_save;
+      bfd_release (abfd, abfd->tdata.any);
       return NULL;
     }
 
@@ -677,7 +676,6 @@ srec_object_p (bfd *abfd)
 static bfd_cleanup
 symbolsrec_object_p (bfd *abfd)
 {
-  void * tdata_save;
   char b[2];
 
   srec_init ();
@@ -692,12 +690,12 @@ symbolsrec_object_p (bfd *abfd)
       return NULL;
     }
 
-  tdata_save = abfd->tdata.any;
-  if (! srec_mkobject (abfd) || ! srec_scan (abfd))
+  if (!srec_mkobject (abfd))
+    return NULL;
+
+  if (!srec_scan (abfd))
     {
-      if (abfd->tdata.any != tdata_save && abfd->tdata.any != NULL)
-	bfd_release (abfd, abfd->tdata.any);
-      abfd->tdata.any = tdata_save;
+      bfd_release (abfd, abfd->tdata.any);
       return NULL;
     }
 
@@ -1084,7 +1082,7 @@ srec_write_symbols (bfd *abfd)
       if (bfd_write ("$$ ", 3, abfd) != 3
 	  || bfd_write (bfd_get_filename (abfd), len, abfd) != len
 	  || bfd_write ("\r\n", 2, abfd) != 2)
-	return false;
+	goto fail;
 
       for (i = 0; i < count; i++)
 	{
@@ -1101,7 +1099,7 @@ srec_write_symbols (bfd *abfd)
 	      len = strlen (s->name);
 	      if (bfd_write ("  ", 2, abfd) != 2
 		  || bfd_write (s->name, len, abfd) != len)
-		return false;
+		goto fail;
 
 	      sprintf (buf, " $%" PRIx64 "\r\n",
 		       (uint64_t) (s->value
@@ -1109,14 +1107,17 @@ srec_write_symbols (bfd *abfd)
 				   + s->section->output_offset));
 	      len = strlen (buf);
 	      if (bfd_write (buf, len, abfd) != len)
-		return false;
+		goto fail;
 	    }
 	}
       if (bfd_write ("$$ \r\n", 5, abfd) != 5)
-	return false;
+	goto fail;
     }
 
   return true;
+
+ fail:
+  return false;
 }
 
 static bool
@@ -1257,7 +1258,6 @@ srec_print_symbol (bfd *abfd,
 #define srec_bfd_make_debug_symbol		  _bfd_nosymbols_bfd_make_debug_symbol
 #define srec_read_minisymbols			  _bfd_generic_read_minisymbols
 #define srec_minisymbol_to_symbol		  _bfd_generic_minisymbol_to_symbol
-#define srec_get_section_contents_in_window	  _bfd_generic_get_section_contents_in_window
 #define srec_bfd_get_relocated_section_contents	  bfd_generic_get_relocated_section_contents
 #define srec_bfd_relax_section			  bfd_generic_relax_section
 #define srec_bfd_gc_sections			  bfd_generic_gc_sections
@@ -1284,11 +1284,9 @@ const bfd_target srec_vec =
   bfd_target_srec_flavour,
   BFD_ENDIAN_UNKNOWN,		/* Target byte order.  */
   BFD_ENDIAN_UNKNOWN,		/* Target headers byte order.  */
-  (HAS_RELOC | EXEC_P |		/* Object flags.  */
-   HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
+  EXEC_P,			/* Object flags.  */
   (SEC_CODE | SEC_DATA | SEC_ROM | SEC_HAS_CONTENTS
-   | SEC_ALLOC | SEC_LOAD | SEC_RELOC),	/* Section flags.  */
+   | SEC_ALLOC | SEC_LOAD),	/* Section flags.  */
   0,				/* Leading underscore.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
@@ -1310,13 +1308,13 @@ const bfd_target srec_vec =
   {
     _bfd_bool_bfd_false_error,
     srec_mkobject,
-    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents.  */
     _bfd_bool_bfd_false_error,
     srec_write_object_contents,
-    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
   },
 
@@ -1341,11 +1339,9 @@ const bfd_target symbolsrec_vec =
   bfd_target_srec_flavour,
   BFD_ENDIAN_UNKNOWN,		/* Target byte order.  */
   BFD_ENDIAN_UNKNOWN,		/* Target headers byte order.  */
-  (HAS_RELOC | EXEC_P |		/* Object flags.  */
-   HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
+  EXEC_P | HAS_SYMS,		/* Object flags.  */
   (SEC_CODE | SEC_DATA | SEC_ROM | SEC_HAS_CONTENTS
-   | SEC_ALLOC | SEC_LOAD | SEC_RELOC),	/* Section flags.  */
+   | SEC_ALLOC | SEC_LOAD),	/* Section flags.  */
   0,				/* Leading underscore.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
@@ -1367,13 +1363,13 @@ const bfd_target symbolsrec_vec =
   {
     _bfd_bool_bfd_false_error,
     srec_mkobject,
-    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents.  */
     _bfd_bool_bfd_false_error,
     symbolsrec_write_object_contents,
-    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
   },
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.4 2025/01/26 16:24:33 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.5 2025/07/17 19:01:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,6 +38,7 @@
 #include <unistd.h>
 
 #include <isc/buffer.h>
+#include <isc/errno.h>
 #include <isc/file.h>
 #include <isc/result.h>
 #include <isc/strerr.h>
@@ -62,6 +63,7 @@ static int devnullfd = -1;
 static struct passwd *runas_pw = NULL;
 static bool done_setuid = false;
 static int dfd[2] = { -1, -1 };
+static int notify_fd = -1;
 
 static uid_t saved_uid = (uid_t)-1;
 static gid_t saved_gid = (gid_t)-1;
@@ -275,6 +277,74 @@ setperms(uid_t uid, gid_t gid) {
 	}
 }
 
+#ifdef __linux__
+static isc_result_t
+connect_systemd_notify_unix(char *path) {
+	struct sockaddr_un addr;
+	isc_result_t result = ISC_R_SUCCESS;
+	size_t len;
+
+	addr.sun_family = AF_UNIX;
+
+	len = strlcpy(addr.sun_path, path, sizeof(addr.sun_path));
+	if (len >= sizeof(addr.sun_path)) {
+		return ISC_R_NOSPACE;
+	}
+
+	/* Convert abstract unix sockets */
+	if (addr.sun_path[0] == '@') {
+		addr.sun_path[0] = '\0';
+	}
+
+	notify_fd = socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+	if (notify_fd < 0) {
+		return isc_errno_toresult(errno);
+	}
+
+	if (connect(notify_fd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
+		result = isc_errno_toresult(errno);
+		close(notify_fd);
+		notify_fd = -1;
+	}
+
+	return result;
+}
+
+static void
+setup_systemd_notify(void) {
+	isc_result_t result;
+	char *path;
+
+	REQUIRE(notify_fd == -1);
+
+	path = getenv("NOTIFY_SOCKET");
+
+	/* systemd notification is not set, oh well. */
+	if (path == NULL) {
+		return;
+	}
+
+	if (path[0] == '/' || path[0] == '@') {
+		result = connect_systemd_notify_unix(path);
+	} else if (strncmp(path, "vsock", 5) == 0) {
+		result = ISC_R_FAMILYNOSUPPORT;
+	} else {
+		result = ISC_R_INVALIDPROTO;
+	}
+
+	if (result != ISC_R_SUCCESS) {
+		RUNTIME_CHECK(notify_fd == -1);
+		named_main_earlywarning(
+			"failed to connect to notification socket '%s': %s",
+			path, isc_result_totext(result));
+	} else {
+		RUNTIME_CHECK(notify_fd != -1);
+	}
+}
+#else /* __linux__ */
+#define setup_systemd_notify(...)
+#endif /* __linux__ */
+
 static void
 setup_syslog(const char *progname) {
 	int options;
@@ -289,6 +359,7 @@ setup_syslog(const char *progname) {
 void
 named_os_init(const char *progname) {
 	setup_syslog(progname);
+	setup_systemd_notify();
 #if HAVE_LIBCAP
 	linux_initialprivs();
 #endif /* HAVE_LIBCAP */
@@ -364,6 +435,13 @@ named_os_daemonize(void) {
 			(void)dup2(devnullfd, STDERR_FILENO);
 		}
 	}
+
+	/*
+	 * Will be closed from SOCK_CLOEXEC but should be set to -1 again before
+	 * reconnecting to the notification socket.
+	 */
+	notify_fd = -1;
+	setup_systemd_notify();
 }
 
 void
@@ -867,3 +945,38 @@ named_os_uname(void) {
 	}
 	return unamep;
 }
+
+#ifdef __linux__
+void
+named_os_notify_systemd(const char *restrict format, ...) {
+	char buffer[512];
+	va_list ap;
+	int len;
+
+	if (notify_fd == -1 || format == NULL) {
+		return;
+	}
+
+	va_start(ap, format);
+	len = vsnprintf(buffer, sizeof(buffer), format, ap);
+	va_end(ap);
+
+	/* Be very loud if notification is too long */
+	RUNTIME_CHECK(len > 0 && len < (int)sizeof(buffer));
+
+	if (write(notify_fd, buffer, len) != len) {
+		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+			      NAMED_LOGMODULE_MAIN, ISC_LOG_ERROR,
+			      "failed writing to notification socket '%s'",
+			      isc_result_totext(isc_errno_toresult(errno)));
+	}
+}
+
+void
+named_os_notify_close(void) {
+	if (notify_fd != -1) {
+		close(notify_fd);
+		notify_fd = -1;
+	}
+}
+#endif /* __linux__ */

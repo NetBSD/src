@@ -1,4 +1,4 @@
-/*	$NetBSD: c_test.c,v 1.10 2021/09/16 19:44:01 christos Exp $	*/
+/*	$NetBSD: c_test.c,v 1.11 2025/06/14 18:14:58 christos Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -11,7 +11,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_test.c,v 1.10 2021/09/16 19:44:01 christos Exp $");
+__RCSID("$NetBSD: c_test.c,v 1.11 2025/06/14 18:14:58 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -401,8 +401,9 @@ test_eval(te, op, opnd1, opnd2, do_eval)
 			 * (subtly different from `does not exist').
 			 */
 			return stat(opnd1, &b1) == 0
-				&& (((s2 = stat(opnd2, &b2)) == 0
-				      && b1.st_mtime > b2.st_mtime) || s2 < 0);
+			    && (((s2 = stat(opnd2, &b2)) == 0
+			    && timespeccmp(&b1.st_mtim, &b2.st_mtim, >))
+			    || s2 == -1);
 		}
 	  case TO_FILOT: /* -ot */
 		{
@@ -411,11 +412,12 @@ test_eval(te, op, opnd1, opnd2, do_eval)
 			 * (subtly different from `does not exist').
 			 */
 			return stat(opnd2, &b2) == 0
-				&& (((s1 = stat(opnd1, &b1)) == 0
-				      && b1.st_mtime < b2.st_mtime) || s1 < 0);
+			    && (((s1 = stat(opnd1, &b1)) == 0
+			    && timespeccmp(&b1.st_mtim, &b2.st_mtim, <))
+			    || s1 == -1);
 		}
 	  case TO_FILEQ: /* -ef */
-		return stat (opnd1, &b1) == 0 && stat (opnd2, &b2) == 0
+		return stat(opnd1, &b1) == 0 && stat(opnd2, &b2) == 0
 		       && b1.st_dev == b2.st_dev
 		       && b1.st_ino == b2.st_ino;
 	}

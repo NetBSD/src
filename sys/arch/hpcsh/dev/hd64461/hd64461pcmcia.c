@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.56 2024/06/02 13:28:45 andvar Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.57 2025/08/06 11:11:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.56 2024/06/02 13:28:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.57 2025/08/06 11:11:34 andvar Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -397,7 +397,7 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	/*
 	 * Continuous 16-MB Area Mode
 	 */
-	/* Attibute/Common memory extent */
+	/* Attribute/Common memory extent */
 	membase = (channel == CHANNEL_0)
 	    ? HD64461_PCC0_MEMBASE : HD64461_PCC1_MEMBASE;
 

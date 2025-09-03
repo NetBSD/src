@@ -1,5 +1,5 @@
 /* atof_generic.c - turn a string of digits into a Flonum
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -303,7 +303,7 @@ atof_generic (/* return pointer to just AFTER number we read.  */
 	    {
 	      if (decimal_exponent > LONG_MAX / 10
 		  || (decimal_exponent == LONG_MAX / 10
-		      && c > '0' + (char) (LONG_MAX - LONG_MAX / 10 * 10)))
+		      && c > '0' + (LONG_MAX - LONG_MAX / 10 * 10)))
 		return_value = ERROR_EXPONENT_OVERFLOW;
 	      decimal_exponent = decimal_exponent * 10 + c - '0';
 	    }
@@ -351,7 +351,6 @@ atof_generic (/* return pointer to just AFTER number we read.  */
       unsigned int more_than_enough_bits_for_digits;
       unsigned int more_than_enough_littlenums_for_digits;
       unsigned int size_of_digits_in_littlenums;
-      unsigned int size_of_digits_in_chars;
       FLONUM_TYPE power_of_10_flonum;
       FLONUM_TYPE digits_flonum;
 
@@ -375,11 +374,8 @@ atof_generic (/* return pointer to just AFTER number we read.  */
 	  number_of_digits_to_use = number_of_digits_available;
 	}
 
-      /* Cast these to SIGNED LONG first, otherwise, on systems with
-	 LONG wider than INT (such as Alpha OSF/1), unsignedness may
-	 cause unexpected results.  */
-      decimal_exponent += ((long) number_of_digits_before_decimal
-			   - (long) number_of_digits_to_use);
+      decimal_exponent += number_of_digits_before_decimal;
+      decimal_exponent -= number_of_digits_to_use;
 
       more_than_enough_bits_for_digits
 	= (number_of_digits_to_use * 3321928 / 1000000 + 1);
@@ -398,13 +394,9 @@ atof_generic (/* return pointer to just AFTER number we read.  */
 	 object).  */
 
       size_of_digits_in_littlenums = more_than_enough_littlenums_for_digits;
-      size_of_digits_in_chars = size_of_digits_in_littlenums
-	* sizeof (LITTLENUM_TYPE);
 
-      digits_binary_low = (LITTLENUM_TYPE *)
-	xmalloc (size_of_digits_in_chars);
-
-      memset ((char *) digits_binary_low, '\0', size_of_digits_in_chars);
+      digits_binary_low = xcalloc (size_of_digits_in_littlenums,
+				   sizeof (LITTLENUM_TYPE));
 
       /* Digits_binary_low[] is allocated and zeroed.  */
 
@@ -514,13 +506,13 @@ atof_generic (/* return pointer to just AFTER number we read.  */
 
 	/* From now on: the decimal exponent is > 0. Its sign is separate.  */
 
-	size_of_power_in_chars = size_of_power_in_littlenums
-	  * sizeof (LITTLENUM_TYPE) + 2;
+	size_of_power_in_chars = (size_of_power_in_littlenums
+				  * sizeof (LITTLENUM_TYPE)) + 2;
 
-	power_binary_low = (LITTLENUM_TYPE *) xmalloc (size_of_power_in_chars);
-	temporary_binary_low = (LITTLENUM_TYPE *) xmalloc (size_of_power_in_chars);
+	power_binary_low = xmalloc (size_of_power_in_chars);
+	temporary_binary_low = xmalloc (size_of_power_in_chars);
 
-	memset ((char *) power_binary_low, '\0', size_of_power_in_chars);
+	memset (power_binary_low, '\0', size_of_power_in_chars);
 	*power_binary_low = 1;
 	power_of_10_flonum.exponent = 0;
 	power_of_10_flonum.low = power_binary_low;
@@ -632,8 +624,7 @@ atof_generic (/* return pointer to just AFTER number we read.  */
 
 #ifdef TRACE
 static void
-flonum_print (f)
-     const FLONUM_TYPE *f;
+flonum_print (const FLONUM_TYPE *f)
 {
   LITTLENUM_TYPE *lp;
   char littlenum_format[10];

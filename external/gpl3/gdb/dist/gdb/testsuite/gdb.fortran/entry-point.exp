@@ -72,12 +72,12 @@ set entry_point_name "mod::mod_foo"
 
 # GCC moves subroutines with entry points out of the module scope into the
 # compile unit scope.
-if {[test_compiler_info {gcc-*}]} {
+if {[test_compiler_info {gcc-*}] || [test_compiler_info {clang-*}]} {
     setup_xfail "gcc/105272" "*-*-*"
 }
 gdb_breakpoint $entry_point_name
 
-if {[test_compiler_info {gcc-*}]} {
+if {[test_compiler_info {gcc-*}] || [test_compiler_info {clang-*}]} {
     setup_xfail "gcc/105272" "*-*-*"
 }
 gdb_continue_to_breakpoint "continue to breakpoint: $entry_point_name" \

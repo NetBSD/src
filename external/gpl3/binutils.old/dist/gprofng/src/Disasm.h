@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -48,7 +48,10 @@ public:
   char *get_disasm (uint64_t inst_address, uint64_t end_address,
 		 uint64_t start_address, uint64_t f_offset, int64_t &inst_size);
   void set_img_name (char *fname);  // Only for dynfunc
+  Function *map_PC_to_func(uint64_t pc);
+  const char *get_funcname_in_plt (uint64_t pc);
 
+  uint64_t inst_addr;	// address of current instruction
   StringBuilder *dis_str;
 
 private:

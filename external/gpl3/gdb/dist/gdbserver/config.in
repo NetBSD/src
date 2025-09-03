@@ -312,6 +312,9 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if `variant.ptwrite' is a member of `struct pt_event'. */
+#undef HAVE_STRUCT_PT_EVENT_VARIANT_PTWRITE
+
 /* Define to 1 if `enabled' is a member of `struct pt_insn'. */
 #undef HAVE_STRUCT_PT_INSN_ENABLED
 

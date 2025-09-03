@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.134 2023/07/25 16:15:50 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.135 2025/07/29 19:07:53 andvar Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.134 2023/07/25 16:15:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.135 2025/07/29 19:07:53 andvar Exp $");
 
 #include "opt_xen.h"
 
@@ -854,7 +854,7 @@ again:
 				    req_next);
 
 			if (!req_parent->req_parent_done) {
-				/* Finished before parent, nothig else to do */
+				/* Finished before parent, nothing else to do */
 				continue;
 			}
 

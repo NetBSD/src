@@ -1,7 +1,6 @@
 @section Archives
 
 
-@strong{Description}@*
 An archive (or library) is just another BFD.  It has a symbol
 table, although there's not much a user program will do with it.
 
@@ -61,12 +60,7 @@ Archives are supported in BFD in @code{archive.c}.
 
 @findex bfd_get_next_mapent
 @subsubsection @code{bfd_get_next_mapent}
-@strong{Synopsis}
-@example
-symindex bfd_get_next_mapent
-   (bfd *abfd, symindex previous, carsym **sym);
-@end example
-@strong{Description}@*
+@deftypefn {Function} symindex bfd_get_next_mapent (bfd *abfd, symindex previous, carsym **sym); 
 Step through archive @var{abfd}'s symbol table (if it
 has one).  Successively update @var{sym} with the next symbol's
 information, returning that symbol's (internal) index into the
@@ -79,23 +73,17 @@ got the last one.
 A @code{carsym} is a canonical archive symbol.  The only
 user-visible element is its name, a null-terminated string.
 
+@end deftypefn
 @findex bfd_set_archive_head
 @subsubsection @code{bfd_set_archive_head}
-@strong{Synopsis}
-@example
-bool bfd_set_archive_head (bfd *output, bfd *new_head);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_set_archive_head (bfd *output, bfd *new_head); 
 Set the head of the chain of
 BFDs contained in the archive @var{output} to @var{new_head}.
 
+@end deftypefn
 @findex bfd_openr_next_archived_file
 @subsubsection @code{bfd_openr_next_archived_file}
-@strong{Synopsis}
-@example
-bfd *bfd_openr_next_archived_file (bfd *archive, bfd *previous);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bfd *bfd_openr_next_archived_file (bfd *archive, bfd *previous); 
 Provided a BFD, @var{archive}, containing an archive and NULL, open
 an input BFD on the first contained element and returns that.
 Subsequent calls should pass the archive and the previous return
@@ -104,3 +92,4 @@ is returned when there are no more.
 Note - if you want to process the bfd returned by this call be
 sure to call bfd_check_format() on it first.
 
+@end deftypefn

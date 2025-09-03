@@ -29,6 +29,8 @@ if {[dap_initialize] == ""} {
     return
 }
 
+set launch_id [dap_launch $testfile]
+
 set line [gdb_get_line_number "BREAK"]
 set obj [dap_check_request_and_response "set breakpoint by line number" \
 	     setBreakpoints \
@@ -38,9 +40,8 @@ set line_bpno [dap_get_breakpoint_number $obj]
 
 dap_check_request_and_response "configurationDone" configurationDone
 
-if {[dap_launch $testfile] == ""} {
-    return
-}
+dap_check_response "launch response" launch $launch_id
+
 dap_wait_for_event_and_check "inferior started" thread "body reason" started
 
 dap_wait_for_event_and_check "stopped at line breakpoint" stopped \
@@ -133,23 +134,14 @@ set val [dap_check_request_and_response "fetch first register" \
 	     "variables" \
 	     [format {o variablesReference [i %d] count [i 1]} $num]]
 
-# Try setting the value to something else.
-set val [dict get [lindex $val 0] body variables]
-set name [dict get [lindex $val 0] name]
-set val [dict get [lindex $val 0] value]
-# Just make sure it is different from the original value.
-set val [expr {$val ^ 7}]
-
-# setVariable isn't implemented yet, so use the register name.  Note
-# that we sneak the "$" into the name, written in a slightly funny way
-# to work around apparent TON limitations.
-set response [dap_check_request_and_response "set first register" \
-		  setExpression \
-		  [format {o expression [s \$%s] value [s %d] frameId [i %d]} \
-		       $name $val $frame_id]]
-set response [lindex $response 0]
-
-gdb_assert {[dict get $response body value] == $val} \
-    "setting register yields updated value"
+set num [dict get $scope variablesReference]
+set refs [lindex [dap_check_request_and_response "set variable scalar" \
+		      "setVariable" \
+		      [format {o variablesReference [i %d] name [s scalar] \
+				   value [s 32]} \
+			   $num]] \
+	      0]
+gdb_assert { [dict get $refs body value] == 32 } \
+    "setting variable yields updated value"
 
 dap_shutdown

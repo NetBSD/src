@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.18 2024/05/13 00:25:23 msaitoh Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.19 2025/07/09 16:59:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.18 2024/05/13 00:25:23 msaitoh Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.19 2025/07/09 16:59:54 rillig Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -231,16 +231,16 @@ get_content(struct mime_info *mip)
 	char *mime_type_field;
 	char *filename;
 	struct message *mp;
-	char *cp;
+	char *cp, *mime_type;
 
 	mp = mip->mp;
 	mip->mi_version  = cparam(NULL, hfield(MIME_HDR_VERSION,  mp), 0);
 	mip->mi_encoding = cparam(NULL, hfield(MIME_HDR_ENCODING, mp), 1);
 
 	mime_type_field = hfield(MIME_HDR_TYPE, mp);
-	mip->mi_type = cparam(NULL, mime_type_field, 1);
+	mip->mi_type = mime_type = cparam(NULL, mime_type_field, 1);
 	if (mip->mi_type) {
-		cp = strchr(mip->mi_type, '/');
+		cp = strchr(mime_type, '/');
 		if (cp)
 			*cp++ = '\0';
 		mip->mi_subtype = cp;

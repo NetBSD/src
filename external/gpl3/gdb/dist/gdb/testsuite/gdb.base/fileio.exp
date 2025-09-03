@@ -149,23 +149,23 @@ gdb_test continue \
 
 gdb_test continue \
 "Continuing\\..*isatty 1:.*OK$stop_msg" \
-"Isatty (stdin)"
+"Isatty, stdin"
 
 gdb_test continue \
 "Continuing\\..*isatty 2:.*OK$stop_msg" \
-"Isatty (stdout)"
+"Isatty, stdout"
 
 gdb_test continue \
 "Continuing\\..*isatty 3:.*OK$stop_msg" \
-"Isatty (stderr)"
+"Isatty, stderr"
 
 gdb_test continue \
 "Continuing\\..*isatty 4:.*OK$stop_msg" \
-"Isatty (invalid fd)"
+"Isatty, invalid fd"
 
 gdb_test continue \
 "Continuing\\..*isatty 5:.*OK$stop_msg" \
-"Isatty (open file)"
+"Isatty, open file"
 
 gdb_test_no_output "set debug remote 1"
 set msg "System says shell is not available"

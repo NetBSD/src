@@ -8632,14 +8632,16 @@ fold_builtin_frexp (location_t loc, tree arg0, tree arg1, tree rettype)
       switch (value->cl)
       {
       case rvc_zero:
+      case rvc_nan:
+      case rvc_inf:
 	/* For +-0, return (*exp = 0, +-0).  */
+	/* For +-NaN or +-Inf, *exp is unspecified, but something should
+	   be stored there so that it isn't read from uninitialized object.
+	   As glibc and newlib store *exp = 0 for +-Inf/NaN, storing
+	   0 here as well is easiest.  */
 	exp = integer_zero_node;
 	frac = arg0;
 	break;
-      case rvc_nan:
-      case rvc_inf:
-	/* For +-NaN or +-Inf, *exp is unspecified, return arg0.  */
-	return omit_one_operand_loc (loc, rettype, arg0, arg1);
       case rvc_normal:
 	{
 	  /* Since the frexp function always expects base 2, and in
@@ -8762,7 +8764,7 @@ fold_builtin_interclass_mathfn (location_t loc, tree fndecl, tree arg)
 	    arg = fold_build1_loc (loc, NOP_EXPR, type, arg);
 	  }
 	get_max_float (REAL_MODE_FORMAT (mode), buf, sizeof (buf), false);
-	real_from_string (&r, buf);
+	real_from_string3 (&r, buf, mode);
 	result = build_call_expr (isgr_fn, 2,
 				  fold_build1_loc (loc, ABS_EXPR, type, arg),
 				  build_real (type, r));
@@ -8786,7 +8788,7 @@ fold_builtin_interclass_mathfn (location_t loc, tree fndecl, tree arg)
 	    arg = fold_build1_loc (loc, NOP_EXPR, type, arg);
 	  }
 	get_max_float (REAL_MODE_FORMAT (mode), buf, sizeof (buf), false);
-	real_from_string (&r, buf);
+	real_from_string3 (&r, buf, mode);
 	result = build_call_expr (isle_fn, 2,
 				  fold_build1_loc (loc, ABS_EXPR, type, arg),
 				  build_real (type, r));
@@ -8825,9 +8827,12 @@ fold_builtin_interclass_mathfn (location_t loc, tree fndecl, tree arg)
 	arg = fold_build1_loc (loc, ABS_EXPR, type, arg);
 
 	get_max_float (REAL_MODE_FORMAT (mode), buf, sizeof (buf), false);
-	real_from_string (&rmax, buf);
-	sprintf (buf, "0x1p%d", REAL_MODE_FORMAT (orig_mode)->emin - 1);
-	real_from_string (&rmin, buf);
+	real_from_string3 (&rmax, buf, mode);
+	if (DECIMAL_FLOAT_MODE_P (mode))
+	  sprintf (buf, "1E%d", REAL_MODE_FORMAT (orig_mode)->emin - 1);
+	else
+	  sprintf (buf, "0x1p%d", REAL_MODE_FORMAT (orig_mode)->emin - 1);
+	real_from_string3 (&rmin, buf, orig_mode);
 	max_exp = build_real (type, rmax);
 	min_exp = build_real (type, rmin);
 
@@ -9005,29 +9010,34 @@ fold_builtin_fpclassify (location_t loc, tree *args, int nargs)
 	     (x == 0 ? FP_ZERO : FP_SUBNORMAL))).  */
 
   tmp = fold_build2_loc (loc, EQ_EXPR, integer_type_node, arg,
-		     build_real (type, dconst0));
+			 build_real (type, dconst0));
   res = fold_build3_loc (loc, COND_EXPR, integer_type_node,
-		     tmp, fp_zero, fp_subnormal);
+			 tmp, fp_zero, fp_subnormal);
 
-  sprintf (buf, "0x1p%d", REAL_MODE_FORMAT (mode)->emin - 1);
-  real_from_string (&r, buf);
+  if (DECIMAL_FLOAT_MODE_P (mode))
+    sprintf (buf, "1E%d", REAL_MODE_FORMAT (mode)->emin - 1);
+  else
+    sprintf (buf, "0x1p%d", REAL_MODE_FORMAT (mode)->emin - 1);
+  real_from_string3 (&r, buf, mode);
   tmp = fold_build2_loc (loc, GE_EXPR, integer_type_node,
-		     arg, build_real (type, r));
-  res = fold_build3_loc (loc, COND_EXPR, integer_type_node, tmp, fp_normal, res);
+			 arg, build_real (type, r));
+  res = fold_build3_loc (loc, COND_EXPR, integer_type_node, tmp,
+			 fp_normal, res);
 
   if (tree_expr_maybe_infinite_p (arg))
     {
       real_inf (&r);
       tmp = fold_build2_loc (loc, EQ_EXPR, integer_type_node, arg,
-			 build_real (type, r));
+			     build_real (type, r));
       res = fold_build3_loc (loc, COND_EXPR, integer_type_node, tmp,
-			 fp_infinite, res);
+			     fp_infinite, res);
     }
 
   if (tree_expr_maybe_nan_p (arg))
     {
       tmp = fold_build2_loc (loc, ORDERED_EXPR, integer_type_node, arg, arg);
-      res = fold_build3_loc (loc, COND_EXPR, integer_type_node, tmp, res, fp_nan);
+      res = fold_build3_loc (loc, COND_EXPR, integer_type_node, tmp,
+			     res, fp_nan);
     }
 
   return res;

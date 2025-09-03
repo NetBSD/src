@@ -887,6 +887,10 @@ namespace eval Dwarf {
 	    DW_AT_GNU_addr_base {
 		return DW_FORM_sec_offset
 	    }
+	    DW_AT_decl_file -
+	    DW_AT_decl_line {
+		return DW_FORM_udata
+	    }
 	}
 	return ""
     }
@@ -2755,8 +2759,11 @@ namespace eval Dwarf {
 	    set addr_op .4byte
 	}
 
-	_op $addr_op $arange_start "Address range start$comment"
-	_op $addr_op $arange_length "Address range length$comment"
+	# Do not emit address ranges when the Address size is set to 0.
+	if { $_addr_size > 0 } {
+	    _op $addr_op $arange_start "Address range start$comment"
+	    _op $addr_op $arange_length "Address range length$comment"
+	}
     }
 
     # Emit a DWARF .debug_aranges unit.
@@ -2771,7 +2778,7 @@ namespace eval Dwarf {
     # section_version n
     #                - section version number to emit
     #                default = 2
-    # seg_size n   - the size of the adress selector in bytes: 0, 4, or 8
+    # seg_size n   - the size of the address selector in bytes: 0, 4, or 8
     #                default = 0
     #
     # LABEL is the label of the corresponding CU.
@@ -2793,6 +2800,7 @@ namespace eval Dwarf {
 	    { cu_is_64 0 }
 	    { section_version 2 }
 	    { seg_size 0 }
+	    { addr_zero false }
 	}
 	set _seg_size $seg_size
 
@@ -2800,6 +2808,10 @@ namespace eval Dwarf {
 	    set _addr_size 8
 	} else {
 	    set _addr_size 4
+	}
+
+	if { $addr_zero } {
+	    set _addr_size 0
 	}
 
 	# Switch to .debug_aranges section.
@@ -2849,6 +2861,9 @@ namespace eval Dwarf {
 
 	# Padding.
 	set tuple_size [expr 2 * $_addr_size + $_seg_size]
+	if {$tuple_size == 0} {
+	    set tuple_size 1
+	}
 	while { 1 } {
 	    if { [expr $offset % $tuple_size] == 0 } {
 		break
@@ -2993,24 +3008,31 @@ namespace eval Dwarf {
 
     proc _note {type name hexdata} {
 	set namelen [expr [string length $name] + 1]
+	set datalen [expr [string length $hexdata] / 2]
 
 	# Name size.
 	_op .4byte $namelen
 	# Data size.
-	_op .4byte [expr [string length $hexdata] / 2]
+	_op .4byte $datalen
 	# Type.
 	_op .4byte $type
 	# The name.
 	_op .ascii [_quote $name]
-	# Alignment.
+	# Alignment (to 4-byte boundary).
 	set align 2
 	set total [expr {($namelen + (1 << $align) - 1) & -(1 << $align)}]
 	for {set i $namelen} {$i < $total} {incr i} {
-	    _op .byte 0
+	    _op .byte 0 padding
 	}
 	# The data.
 	foreach {a b} [split $hexdata {}] {
 	    _op .byte 0x$a$b
+	}
+	# Alignment (to 4-byte boundary).
+	set align 2
+	set total [expr {($datalen + (1 << $align) - 1) & -(1 << $align)}]
+	for {set i $datalen} {$i < $total} {incr i} {
+	    _op .byte 0 padding
 	}
     }
 

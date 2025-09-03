@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_AARCH64_H
-#define ARCH_AARCH64_H
+#ifndef GDB_ARCH_AARCH64_H
+#define GDB_ARCH_AARCH64_H
 
 #include "gdbsupport/tdesc.h"
 
@@ -230,4 +230,4 @@ enum aarch64_regnum
 /* Size of the SME2 ZT0 register in bytes.  */
 #define AARCH64_SME2_ZT0_SIZE 64
 
-#endif /* ARCH_AARCH64_H */
+#endif /* GDB_ARCH_AARCH64_H */

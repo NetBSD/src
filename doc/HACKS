@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.253 2025/05/06 13:03:23 rin Exp $
+# $NetBSD: HACKS,v 1.255 2025/09/02 08:15:33 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1026,4 +1026,34 @@ descr
 	cacheline-aligned objects (typically >=64-byte).  To work
 	around this, allocate n + 63 bytes and pick whichever pointer
 	in that interval is aligned (PR lib/58349).
+kcah
+
+hack	ia64: work around bogus compiler warning
+cdate	Thu Aug 28 11:46:54 EDT 2025
+who	christos
+file	src/external/bsd/acpica/bin/iasl/Makefile : 1.28
+descr
+	after a pointer cast from with a member of size 4 to another
+	struct with a member of size 8, the compiler thinks still that
+	the size is 4 in the strncmp expression, but it also thinks
+	it is 8 everywhere else.
+kcah
+
+hack	ld 2.45: Put back .note sections to segment same as .interp
+cdate	Tue Sep  2 08:11:49 UTC 2025
+who	rin
+file	src/external/gpl3/binutils/dist/ld/scripttempl/elf.sc : 1.15
+descr
+	Effectively reverts the following upstream commits:
+
+	(1) https://sourceware.org/git/?p=binutils-gdb.git;a=commit;h=7ecf0250f7f
+	(2) https://sourceware.org/git/?p=binutils-gdb.git;a=commit;h=023e60ced0c
+
+	Otherwise, .note lies behind .eh_frame section, and the latter
+	cannot be removed by strip(1). This results in regression for
+	sizes of crunched binaries.
+
+	The problem has been reported to upstream:
+
+	https://sourceware.org/bugzilla/show_bug.cgi?id=33344
 kcah

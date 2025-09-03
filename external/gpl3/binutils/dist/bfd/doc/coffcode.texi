@@ -439,11 +439,6 @@ typedef struct
     (bfd *, struct bfd_link_info *, bfd *, asection *,
      struct internal_reloc *, bool *);
 
-  bool (*_bfd_coff_link_add_one_symbol)
-    (struct bfd_link_info *, bfd *, const char *, flagword,
-     asection *, bfd_vma, const char *, bool, bool,
-     struct bfd_link_hash_entry **);
-
   bool (*_bfd_coff_link_output_has_begun)
     (bfd *, struct coff_final_link_info *);
 

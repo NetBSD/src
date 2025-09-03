@@ -1,12 +1,12 @@
-# $NetBSD: Makefile.inc,v 1.5 2022/12/21 17:24:08 wiz Exp $
+# $NetBSD: Makefile.inc,v 1.6 2025/07/14 10:25:52 kre Exp $
 
 USE_FORT?= yes  # network client/server
 UNBOUND:=${.PARSEDIR}/dist
 
 .PATH: ${UNBOUND}/doc
 
-DPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
-DPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
+DPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
+DPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 DPLIBS+= crypt ${NETBSDSRCDIR}/lib/libcrypt
 DPLIBS+= util ${NETBSDSRCDIR}/lib/libutil
 DPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread

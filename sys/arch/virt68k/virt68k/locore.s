@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.15 2024/01/19 05:46:36 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.16 2025/07/08 11:46:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,6 +110,11 @@ ASENTRY_NOPROFILE(start)
 1:	clrl	%a0@+
 	dbra	%d0,1b
 
+	/* XXX XXX XXX */
+	movl	#CACHE_OFF,%d0
+	movc	%d0,%cacr		| clear and disable on-chip cache(s)
+	/* XXX XXX XXX */
+
 	/*
 	 * Qemu does not pass us the symbols, so leave esym alone.
 	 * The bootinfo immediately follows the kernel.  Go parse
@@ -120,16 +125,6 @@ ASENTRY_NOPROFILE(start)
 	movl	#_C_LABEL(end),%sp@-
 	jbsr	%a0@			| bootinfo_start(end)
 	addql	#4,%sp
-
-	/* XXX XXX XXX */
-	movl	#CACHE_OFF,%d0
-	movc	%d0,%cacr		| clear and disable on-chip cache(s)
-	/* XXX XXX XXX */
-
-/* initialize source/destination control registers for movs */
-	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc		|   as source
-	movc	%d0,%dfc		|   and destination of transfers
 
 	/*
 	 * bootinfo_start() recorded the first PA following the
@@ -149,35 +144,28 @@ ASENTRY_NOPROFILE(start)
 	jbsr	%a0@			| pmap_bootstrap(firstpa, nextpa)
 	addql	#8,%sp
 
+/* initialize source/destination control registers for movs */
+	moveq	#FC_USERD,%d0		| user space
+	movc	%d0,%sfc		|   as source
+	movc	%d0,%dfc		|   and destination of transfers
+
 /*
  * Enable the MMU.
  * Since the kernel is mapped logical == physical, we just turn it on.
  */
 	RELOC(Sysseg_pa, %a0)		| system segment table addr
 	movl	%a0@,%d1		| read value (a PA)
+#if defined(M68040) || defined(M68060)
 	RELOC(mmutype, %a0)
 	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lmotommu1		| no, skip
+	jne	Lnot040mmu		| no, skip
 	.long	0x4e7b1807		| movc d1,srp
-	jra	Lstploaddone
-Lmotommu1:
-#ifdef M68030
-	RELOC(protorp, %a0)
-	movl	%d1,%a0@(4)		| segtable address
-	pmove	%a0@,%srp		| load the supervisor root pointer
-#endif /* M68030 */
-Lstploaddone:
-	RELOC(mmutype, %a0)
-	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lmotommu2		| no, skip
 
-	movl	#VIRT68K_TT40_IO,%d0	| DTT0 maps the I/O space
-	.long	0x4e7b0006		| movc d0,dtt0
-
-	moveq	#0,%d0			| ensure the other TT regs are disabled
-	.long	0x4e7b0004		| movc d0,itt0
-	.long	0x4e7b0005		| movc d0,itt1
-	.long	0x4e7b0007		| movc d0,dtt1
+	RELOC(mmu_tt40, %a0)		| pointer to TT reg values
+	movl	%a0,%sp@-
+	RELOC(mmu_load_tt40,%a0)	| pass it to mmu_load_tt40()
+	jbsr	%a0@
+	addql	#4,%sp
 
 	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha
@@ -191,27 +179,39 @@ Lstploaddone:
 	.long	0x4e7b0808		| movcl d0,pcr
 	movl	#0xa0808000,%d0
 	movc	%d0,%cacr		| enable store buffer, both caches
-	jmp	Lenab1
+	jmp	Lmmuenabled
 Lnot060cache:
 #endif
 	movl	#0x80008000,%d0
 	movc	%d0,%cacr		| turn on both caches
-	jmp	Lenab1
+	jmp	Lmmuenabled
+Lnot040mmu:
+#endif /* M68040 || M68060 */
 
-Lmotommu2:
-	movl	#VIRT68K_TT30_IO,%sp@-	| TT0 maps the I/O space
-	.long	0xf0170800		| pmove %sp@,%tt0
-	clrl	%sp@			| ensure TT1 is disabled
-	.long	0xf0170c00		| pmove %sp@,%tt1
-
+#if defined(M68020) || defined(M68030)
+	RELOC(protorp, %a0)
+	movl	%d1,%a0@(4)		| segtable address
+	pmove	%a0@,%srp		| load the supervisor root pointer
+#ifdef M68030
+	RELOC(mmutype, %a0)
+	cmpl	#MMU_68030,%a0@		| 68030?
+	jne	Lno030ttr		| no, skip
+	RELOC(mmu_tt30, %a0)		| pointer to TT reg values
+	movl	%a0,%sp@-
+	RELOC(mmu_load_tt30,%a0)	| pass it to mmu_load_tt30()
+	jbsr	%a0@ 
+	addql	#4,%sp
+Lno030ttr:
+#endif /* M68030 */
 	pflusha
 	movl	#MMU51_TCR_BITS,%sp@	| value to load TC with
 	pmove	%sp@,%tc		| load it
+#endif /* M68020 || M68030 */
+Lmmuenabled:
 
 /*
  * Should be running mapped from this point on
  */
-Lenab1:
 	lea	_ASM_LABEL(tmpstk),%sp	| re-load the temporary stack
 	jbsr	_C_LABEL(vec_init)	| initialize the vector table
 /* call final pmap setup */

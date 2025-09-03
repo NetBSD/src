@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.28 2025/06/01 00:48:41 joe Exp $	*/
+/*	$NetBSD: npftest.c,v 1.31 2025/08/10 09:01:28 mlelstv Exp $	*/
 
 /*
  * NPF testing framework.
@@ -40,19 +40,21 @@ usage(const char *progname)
 {
 	printf("usage:\n"
 	    "  %s [ -q | -v ] [ -c <config> ] "
-	        "[ -i <interface> ] < -b | -t | -s file >\n"
+	        "[ -i <interface> -s <file> ] -b <benchmark> -p <ncpu>\n"
+	    "  %s [ -q | -v ] [ -i <interface> -s <file> ] -t\n"
 	    "  %s -T <testname> -c <config>\n"
 	    "  %s -L\n"
 	    "where:\n"
-	    "\t-b: benchmark\n"
-	    "\t-t: regression test\n"
+	    "\t-b benchmark\n"
+	    "\t-t regression test\n"
 	    "\t-T <testname>: specific test\n"
 	    "\t-s <file>: pcap stream\n"
 	    "\t-c <config>: NPF configuration file\n"
 	    "\t-i <interface>: primary interface\n"
-	    "\t-L: list testnames and description for -T\n"
-	    "\t-q: quiet mode\n"
-	    "\t-v: verbose mode\n",
+	    "\t-L list testnames and description for -T\n"
+	    "\t-q quiet mode\n"
+	    "\t-v verbose mode\n",
+	    "\t-p set RUMP_NCPU\n",
 	    progname, progname, progname);
 	exit(EXIT_FAILURE);
 }
@@ -67,7 +69,9 @@ describe_tests(void)
 		"gc\tconnection G/C\n"
 		"rule\trule processing\n"
 		"nat\tNAT rule processing\n"
-		"guid\tUser/group filtering\n");
+		"guid\tUser/group filtering\n"
+		"ether\tlayer 2 rule processing\n"
+		"l2defpass\tlayer 2 default pass on layer 3 rules\n");
 	exit(EXIT_SUCCESS);
 }
 
@@ -320,7 +324,19 @@ main(int argc, char **argv)
 	if (test && config) {
 		if (!testname || strcmp("rule", testname) == 0) {
 			ok = rumpns_npf_rule_test(verbose);
-			fail |= result("rule", ok);
+			fail |= result("rules - layer 3", ok);
+			tname_matched = true;
+		}
+
+		if (!testname || strcmp("ether", testname) == 0) {
+			ok = rumpns_npf_layer2_rule_test(verbose);
+			fail |= result("rules - layer 2", ok);
+			tname_matched = true;
+		}
+
+		if (!testname || strcmp("l2defpass", testname) == 0) {
+			ok = rumpns_npf_layer2only_test(verbose);
+			fail |= result(" layer 2 default pass", ok);
 			tname_matched = true;
 		}
 

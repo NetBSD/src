@@ -1,6 +1,6 @@
-| $NetBSD: !Help,v 1.2 2022/10/26 22:13:09 andvar Exp $
+| $NetBSD: !Help,v 1.3 2025/07/15 22:15:03 andvar Exp $
 |
 | This is run when the user asks for help on !BtNetBSD in the Filer.
-| We just open a directory full of documenatation.
+| We just open a directory full of documentation.
 
 Filer_OpenDir <Obey$Dir>.Docs

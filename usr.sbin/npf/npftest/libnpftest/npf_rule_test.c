@@ -51,6 +51,31 @@ static const struct test_case {
 		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
 	},
+		/* PR bin/59511 */
+	{
+		.af = AF_INET,
+		.src = "192.168.100.5",		.dst = "10.1.1.5",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{
+		.af = AF_INET,
+		.src = "192.168.100.8",		.dst = "10.1.1.5",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{
+		.af = AF_INET,
+		.src = "192.168.64.3",		.dst = "10.1.1.5",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{
+		.af = AF_INET,
+		.src = "192.168.64.9",		.dst = "10.1.1.5",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
 
 	/*
 	 * Pass in from any of the { fe80::1, fe80:1000:0:0/95,
@@ -190,6 +215,10 @@ static const struct test_case {
 		.ifname = IFNAME_INT,		.di = PFIL_OUT,
 		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
 	},
+	{	.src = "10.1.1.3",		.dst = "10.1.1.1",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
 
 };
 
@@ -204,10 +233,10 @@ run_raw_testcase(unsigned i)
 	int slock, error;
 
 	m = mbuf_get_pkt(t->af, IPPROTO_UDP, t->src, t->dst, 9000, 9000);
-	npc = get_cached_pkt(m, t->ifname);
+	npc = get_cached_pkt(m, t->ifname, NPF_RULE_LAYER_3);
 
 	slock = npf_config_read_enter(npf);
-	rl = npf_ruleset_inspect(npc, npf_config_ruleset(npf), t->di, NPF_LAYER_3);
+	rl = npf_ruleset_inspect(npc, npf_config_ruleset(npf), t->di, NPF_RULE_LAYER_3);
 	if (rl) {
 		npf_match_info_t mi;
 		error = npf_rule_conclude(rl, &mi);

@@ -1,0 +1,97 @@
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test dbnz instruction. It decrements its source register operand, and if
+# the result is non-zero it branches to the location defined by a signed
+# half-word displacement operand.
+#
+# It's necessary to verify these cases:
+#
+#     1. Check that dbnz does not branch and falls through if its source
+#        register is 0 after decrementing. GDB must successfully break
+#        on the following instruction after stepping over.
+#     2. Check that dbnz branches to the target correctly if its source register
+#        is not 0 after decrementing - GDB must successfully break on the target
+#        instruction if a forward branch is performed after stepping over.
+#     3. The same as point 2 but for a backward branching case.
+
+require {istarget "arc*-*-*"}
+
+standard_testfile .S
+
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
+    return -1
+}
+
+if ![runto_main] {
+    return 0
+}
+
+gdb_test "break dbnz1" \
+	 "Breakpoint $decimal at .*" \
+	 "set breakpoint on the 1st dbnz"
+
+gdb_test "break dbnz2" \
+	 "Breakpoint $decimal at .*" \
+	 "set breakpoint on the 2nd dbnz"
+
+gdb_test "break dbnz3" \
+	 "Breakpoint $decimal at .*" \
+	 "set breakpoint on the 3rd dbnz"
+
+gdb_test "break dbnz4" \
+	 "Breakpoint $decimal at .*" \
+	 "set breakpoint on the 4th dbnz"
+
+gdb_test "break end" \
+	 "Breakpoint $decimal at .*" \
+	 "set breakpoint at the end"
+
+gdb_test "continue" \
+	 "Breakpoint $decimal, dbnz1.*dbnz r0,@end" \
+	 "continue to the 1st dbnz"
+
+gdb_test "x /i \$pc" \
+	 "$hex <.*>:\[ \t\]+dbnz\[ \t\]+r0,24.*" \
+	 "stayng on the 1st dbnz instruction"
+
+gdb_test "stepi" \
+	 "mov r0,5" \
+	 "step over the 1st dbnz, branch is not taken"
+
+gdb_test "stepi" \
+	 "Breakpoint $decimal, dbnz2.*dbnz\\.d r0,@dbnz3" \
+	 "step over r0 initialization, staying on the 2nd dbnz"
+
+# Linux steps over delay slot after "stepi", but stubs with hardware stepping
+# like nSIM's stub may step right on delay slot. Thus use "continue" instead of
+# "stepi" to make this test work for all platforms.
+gdb_test "continue" \
+	 "Breakpoint $decimal, dbnz3.*dbnz r0,@dbnz4" \
+	 "step over the 2nd dbnz, branch is taken, staying on the 3rd dbnz"
+
+gdb_test "stepi" \
+	 "Breakpoint $decimal, dbnz4.*dbnz r0,@end" \
+	 "step over the 3rd dbnz, branch is taken, staying on the 4th dbnz"
+
+gdb_test "stepi" \
+	 "Breakpoint $decimal, end.*mov r0,0" \
+	 "step over the 4th dbnz, branch is taken, staying on the epilogue"
+
+gdb_test "info register r0" \
+	 "r0\[ \t\]+0x1\[ \t\]+1" \
+	 "r0 contains 1 after all dbnz instructions"

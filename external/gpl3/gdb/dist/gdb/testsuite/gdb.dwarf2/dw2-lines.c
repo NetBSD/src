@@ -22,7 +22,7 @@ foo (int x)
 
 void
 bar (void)
-{
+{ /* bar: */
   asm ("bar_label: .globl bar_label");
   foo (1);
   asm ("bar_label_2: .globl bar_label_2");

@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.57 2024/10/31 17:06:17 kre Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.58 2025/07/24 09:26:14 hans Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -906,6 +906,30 @@
 
 /* Define for NetBSD headers. */
 #undef _XOPEN_SOURCE
+
+/* Define if you have int16_t, but not __int16_t. */
+#undef __int16_t
+
+/* Define if you have int32_t, but not __int32_t. */
+#undef __int32_t
+
+/* Define if you have int64_t, but not __int64_t. */
+#undef __int64_t
+
+/* Define if you have int8_t, but not __int8_t. */
+#undef __int8_t
+
+/* Define if you have uint16_t, but not __uint16_t. */
+#undef __uint16_t
+
+/* Define if you have uint32_t, but not __uint32_t. */
+#undef __uint32_t
+
+/* Define if you have uint64_t, but not __uint64_t. */
+#undef __uint64_t
+
+/* Define if you have uint8_t, but not __uint8_t. */
+#undef __uint8_t
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t

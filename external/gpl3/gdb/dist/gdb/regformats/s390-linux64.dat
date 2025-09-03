@@ -3,6 +3,7 @@
 name:s390_linux64
 xmltarget:s390-linux64.xml
 expedite:r14l,r15l,pswa
+osabi:GNU/Linux
 32:pswm
 32:pswa
 32:r0h

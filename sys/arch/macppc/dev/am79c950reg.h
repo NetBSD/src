@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950reg.h,v 1.2 2022/10/31 20:30:23 andvar Exp $	*/
+/*	$NetBSD: am79c950reg.h,v 1.3 2025/06/25 08:03:14 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -43,7 +43,7 @@
 #define	MACE_FIFOCC	12  /* FIFO Configuration Control (read/write) */
 #define	MACE_MACCC	13  /* MAC Configuration Control (read/write) */
 #define	MACE_PLSCC	14  /* PLS Configuration Control (read/write) */
-#define	MACE_PHYCC	15  /* PHY Confiuration Control (read/write) */
+#define	MACE_PHYCC	15  /* PHY Configuration Control (read/write) */
 #define	MACE_CHIPIDL	16  /* Chip ID Register [07-00] (read only) */
 #define	MACE_CHIPIDH	17  /* Chip ID Register [15-08] (read only) */
 #define	MACE_IAC	18  /* Internal Address Configuration (read/write) */

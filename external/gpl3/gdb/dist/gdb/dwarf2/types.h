@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF2_TYPES_H
-#define DWARF2_TYPES_H
+#ifndef GDB_DWARF2_TYPES_H
+#define GDB_DWARF2_TYPES_H
 
 #include "gdbsupport/offset-type.h"
 #include "gdbsupport/underlying.h"
@@ -37,4 +37,4 @@ sect_offset_str (sect_offset offset)
   return hex_string (to_underlying (offset));
 }
 
-#endif /* DWARF2_TYPES_H */
+#endif /* GDB_DWARF2_TYPES_H */

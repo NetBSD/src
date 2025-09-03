@@ -111,6 +111,16 @@ proc test_python_helper {} {
 	}
     }
 
+    # Add a second inferior, useful to the intrusive_list pretty-printer test
+    # below.
+    send_inferior "add-inferior\n"
+    gdb_test_multiple "" "add second inferior in inner GDB" {
+	-i "$inferior_spawn_id"
+	-re "Added inferior 2\r\n$gdb_prompt $" {
+	    pass $gdb_test_name
+	}
+    }
+
     # Send Ctrl-C to the inner GDB, this should kick us back to the
     # prompt of the outer GDB.
     send_inferior "\003"
@@ -251,7 +261,13 @@ proc test_python_helper {} {
     }
 
     # Test the htab_t pretty-printer.
-    gdb_test -prompt $outer_prompt_re "print all_bfds" "htab_t with ${::decimal} elements = \\{${::hex}.*\\}"
+    gdb_test -prompt $outer_prompt_re "print varobj_table" \
+	"htab_t with ${::decimal} elements"
+
+    # Test the intrusive_list pretty-printer.  A bug occurred in the
+    # pretty-printer for lists with more than one element.  Verify that
+    # we see both elements of the inferior_list list being printed.
+    gdb_test -prompt $outer_prompt_re "print inferior_list" "intrusive list of inferior = {.*, num = 1,.*, num = 2,.*}"
 
     return 0
 }

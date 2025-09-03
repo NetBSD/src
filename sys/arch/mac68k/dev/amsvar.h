@@ -1,4 +1,4 @@
-/*	$NetBSD: amsvar.h,v 1.10 2024/12/07 10:23:54 nat Exp $	*/
+/*	$NetBSD: amsvar.h,v 1.11 2025/06/27 21:36:24 andvar Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -47,7 +47,7 @@ struct ams_softc {
 	u_int8_t	sc_buttons;	/* number of buttons */
 	u_int8_t	sc_oldbuttons;	/* button state */
 	u_int32_t	sc_res;		/* mouse resolution (dpi) */
-	char		sc_devid[5];	/* device indentifier */
+	char		sc_devid[5];	/* device identifier */
 
 	int		sc_mb;		/* current button state */
 	device_t	sc_wsmousedev;

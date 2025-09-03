@@ -92,5 +92,8 @@ def pre_command_loop():
         # session.
         session_started = True
         startup.thread_log("starting DAP server")
+        # These are handy for bug reports.
+        startup.exec_and_log("show version")
+        startup.exec_and_log("show configuration")
         global server
         startup.start_dap(server.main_loop)

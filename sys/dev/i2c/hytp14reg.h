@@ -1,4 +1,4 @@
-/* $NetBSD: hytp14reg.h,v 1.3 2016/12/12 15:58:44 maya Exp $ */
+/* $NetBSD: hytp14reg.h,v 1.4 2025/08/06 11:16:19 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 #define HYTP14_CMD_START_NOM	0x80 /* end command mode (or power-off)  */
 #define HYTP14_CMD_START_CM	0xA0 /* start command mode (within 10ms after power-up) */
-#define HYTP14_CMD_GET_REV	0xB0 /* get revison */
+#define HYTP14_CMD_GET_REV	0xB0 /* get revision */
 
 #define HYTP14_NUM_WORDS	32
 #define HYTP14_READ_OFFSET	0x00 /* command offset to read EEPROM words */

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.25 2025/06/11 13:45:02 macallan Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.27 2025/06/27 21:36:24 andvar Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,18 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.25 2025/06/11 13:45:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.27 2025/06/27 21:36:24 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/fcntl.h>
-#include <sys/poll.h>
-#include <sys/select.h>
-#include <sys/proc.h>
-#include <sys/signalvar.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/sysctl.h>
+#include <sys/condvar.h>
 
 #include <machine/autoconf.h>
 
@@ -72,7 +66,7 @@ struct adbms_softc {
 	u_int8_t	sc_class;	/* mouse class (mouse, trackball) */
 	u_int8_t	sc_buttons;	/* number of buttons */
 	u_int32_t	sc_res;		/* mouse resolution (dpi) */
-	char		sc_devid[5];	/* device indentifier */
+	char		sc_devid[5];	/* device identifier */
 	uint8_t		sc_us;		/* cmd to watch for */
 	int		sc_mb;		/* current button state */
 	device_t	sc_wsmousedev;
@@ -90,7 +84,8 @@ struct adbms_softc {
 	/* buffers */
 	int		sc_poll;
 	int		sc_msg_len;
-	int		sc_event;
+	kcondvar_t 	sc_event;
+	kmutex_t 	sc_interlock;
 	uint8_t		sc_buffer[16];
 };
 
@@ -155,6 +150,8 @@ adbms_attach(device_t parent, device_t self, void *aux)
 	sc->sc_adbdev = aaa->dev;
 	sc->sc_adbdev->cookie = sc;
 	sc->sc_adbdev->handler = adbms_handler;
+	mutex_init(&sc->sc_interlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_event, "adbms");
 	sc->sc_us = ADBTALK(sc->sc_adbdev->current_addr, 0);
 	printf(" addr %d: ", sc->sc_adbdev->current_addr);
 
@@ -557,7 +554,7 @@ adbms_handler(void *cookie, int len, uint8_t *data)
 			adbms_process_event(sc, sc->sc_msg_len, sc->sc_buffer);
 			return;
 		}
-		wakeup(&sc->sc_event);
+		cv_signal(&sc->sc_event);
 	} else {
 		DPRINTF("bogus message\n");
 	}
@@ -862,10 +859,12 @@ adbms_wait(struct adbms_softc *sc, int timeout)
 			sc->sc_ops->poll(sc->sc_ops->cookie);
 		}
 	} else {
+		mutex_enter(&sc->sc_interlock);
 		while ((sc->sc_msg_len == -1) && (cnt < timeout)) {
-			tsleep(&sc->sc_event, 0, "adbmsio", hz);
+			cv_timedwait(&sc->sc_event, &sc->sc_interlock, hz);
 			cnt++;
 		}
+		mutex_exit(&sc->sc_interlock);
 	}
 	return (sc->sc_msg_len > 0);
 }

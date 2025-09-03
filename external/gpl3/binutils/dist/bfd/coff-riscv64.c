@@ -1,5 +1,5 @@
 /* BFD back-end for RISC-V 64-bit COFF files.
-   Copyright (C) 2023-2024 Free Software Foundation, Inc.
+   Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

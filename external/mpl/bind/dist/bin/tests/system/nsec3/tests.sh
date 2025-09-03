@@ -608,7 +608,8 @@ set_server "ns3" "10.53.0.3"
 # confirm the ENT name does not exist yet
 dig_with_opts +noquestion "@${SERVER}" x.y.z.$ZONE >"dig.out.$ZONE.test$n.1" || ret=1
 grep "status: NXDOMAIN" "dig.out.$ZONE.test$n.1" >/dev/null || ret=1
-# add a name with an ENT, bump the SOA, and reload
+# add a name with an ENT, bump the SOA, and reload ensuring the time stamp changes
+sleep 1
 sed -e 's/1 *; serial/3/' ns3/template.db.in >ns3/nsec3-ent.kasp.db
 echo "x.y.z A 10.0.0.4" >>ns3/nsec3-ent.kasp.db
 rndc_reload ns3 10.53.0.3

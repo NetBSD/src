@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.66 2025/06/01 00:54:36 joe Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.67 2025/07/01 19:55:16 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -139,11 +139,13 @@ npfctl_print_stats(int fd)
 		const char *	name;
 	} stats[] = {
 		{ -1, "Packets passed"					},
+		{ NPF_ETHER_STAT_PASS,		"ether pass"		},
 		{ NPF_STAT_PASS_DEFAULT,	"default pass"		},
 		{ NPF_STAT_PASS_RULESET,	"ruleset pass"		},
 		{ NPF_STAT_PASS_CONN,		"state pass"		},
 
 		{ -1, "Packets blocked"					},
+		{ NPF_ETHER_STAT_BLOCK,		"ether block"		},
 		{ NPF_STAT_BLOCK_DEFAULT,	"default block"		},
 		{ NPF_STAT_BLOCK_RULESET,	"ruleset block"		},
 

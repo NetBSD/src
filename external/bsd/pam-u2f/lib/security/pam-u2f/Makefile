@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2025/01/15 15:30:48 christos Exp $
+# $NetBSD: Makefile,v 1.8 2025/07/14 10:25:52 kre Exp $
 
 .include <bsd.own.mk>
 .include "${.PARSEDIR}/../../../Makefile.inc"
@@ -16,7 +16,7 @@ COPTS.util.c += -Wno-error=stack-protector -Wno-error=deprecated-declarations
 LIBDPLIBS+= \
 	fido2	${NETBSDSRCDIR}/external/bsd/libfido2/lib \
 	cbor	${NETBSDSRCDIR}/external/mit/libcbor/lib \
-	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
+	crypto	${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
 	m	${NETBSDSRCDIR}/lib/libm
 
 pam_u2f.8:

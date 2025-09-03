@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.231 2024/05/14 19:00:44 andvar Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.232 2025/07/16 19:14:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.231 2024/05/14 19:00:44 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.232 2025/07/16 19:14:13 kre Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -186,6 +186,18 @@ sys___clone(struct lwp *l, const struct sys___clone_args *uap,
 	sig = SCARG(uap, flags) & CLONE_CSIGNAL;
 	if (sig < 0 || sig >= _NSIG)
 		return EINVAL;
+
+	/*
+	 * Linux doesn't have close-on-fork yet, so we don't
+	 * know what they will do combining CLONE_FILES with
+	 * close-on-fork (which are not really compatible).
+	 * This might need to be changed in the future (another
+	 * option would be to just disable FORK_SHAREFILES)
+	 */
+	if ((flags & FORK_SHAREFILES) != 0) {
+		if (l->l_fd != NULL && l->l_fd->fd_foclose)
+			return EINVAL;
+	}
 
 	/*
 	 * Note that the Linux API does not provide a portable way of

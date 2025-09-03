@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.20 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.21 2025/07/11 22:19:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.20 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.21 2025/07/11 22:19:54 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1244,7 +1244,7 @@ sctp_timer_start(int t_type, struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 	case SCTP_TIMER_TYPE_COOKIE:
 		/*
 		 * Here we can use the RTO timer from the network since
-		 * one RTT was compelete. If a retran happened then we will
+		 * one RTT was complete. If a retran happened then we will
 		 * be using the RTO initial value.
 		 */
 		if ((stcb == NULL) || (net == NULL)) {

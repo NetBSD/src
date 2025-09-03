@@ -1911,7 +1911,7 @@ cat >confcache <<\_ACEOF
 # config.status only pays attention to the cache file if you give it
 # the --recheck option to rerun configure.
 #
-# `ac_cv_env_foo' variables (set or unset) will be overriden when
+# `ac_cv_env_foo' variables (set or unset) will be overridden when
 # loading this file, other *unset* `ac_cv_foo' will be assigned the
 # following values.
 

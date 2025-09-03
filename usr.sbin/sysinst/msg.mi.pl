@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.49 2024/04/25 11:25:08 hannken Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.50 2025/07/25 17:28:51 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1072,6 +1072,7 @@ message Sectors {Sektory}
 message Select_medium {Wybierz nosnik}
 message ftp {FTP}
 message http {HTTP}
+message https {HTTPS}
 message nfs {NFS}
 .if HAVE_INSTALL_IMAGE
 message cdrom {CD-ROM / DVD / nosnik instalacyjny}

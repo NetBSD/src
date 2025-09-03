@@ -57,6 +57,9 @@ i386_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
 			  parent->name, (unsigned long) p_lowpc,
 			  (unsigned long) p_highpc));
 
+  if (p_highpc < 5)
+    return;
+  p_highpc -= 5;
   for (pc = p_lowpc; pc < p_highpc; ++pc)
     {
       instructp = (unsigned char *) core_text_space + pc - core_text_sect->vma;

@@ -18,12 +18,16 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "arch-utils.h"
+#include "arch/loongarch-insn.h"
 #include "dwarf2/frame.h"
 #include "elf-bfd.h"
 #include "extract-store-integer.h"
 #include "frame-unwind.h"
 #include "gdbcore.h"
+#include "linux-record.h"
 #include "loongarch-tdep.h"
+#include "record.h"
+#include "record-full.h"
 #include "reggroups.h"
 #include "target.h"
 #include "target-descriptions.h"
@@ -36,14 +40,14 @@ static insn_t
 loongarch_fetch_instruction (CORE_ADDR pc)
 {
   size_t insn_len = loongarch_insn_length (0);
-  gdb_byte buf[insn_len];
+  gdb::byte_vector buf (insn_len);
   int err;
 
-  err = target_read_memory (pc, buf, insn_len);
+  err = target_read_memory (pc, buf.data (), insn_len);
   if (err)
     memory_error (TARGET_XFER_E_IO, pc);
 
-  return extract_unsigned_integer (buf, insn_len, BFD_ENDIAN_LITTLE);
+  return extract_unsigned_integer (buf.data (), insn_len, BFD_ENDIAN_LITTLE);
 }
 
 /* Return TRUE if INSN is a unconditional branch instruction, otherwise return FALSE.  */
@@ -1306,18 +1310,24 @@ loongarch_return_value (struct gdbarch *gdbarch, struct value *function,
 	   and the signed integer scalars are sign-extended.  */
 	if (writebuf)
 	  {
-	    gdb_byte buf[regsize];
+	    gdb::byte_vector buf (regsize);
 	    if (type->is_unsigned ())
 	      {
-		ULONGEST data = extract_unsigned_integer (writebuf, len, BFD_ENDIAN_LITTLE);
-		store_unsigned_integer (buf, regsize, BFD_ENDIAN_LITTLE, data);
+		ULONGEST data = extract_unsigned_integer (writebuf, len,
+							  BFD_ENDIAN_LITTLE);
+		store_unsigned_integer (buf.data (), regsize,
+					BFD_ENDIAN_LITTLE, data);
 	      }
 	    else
 	      {
-		LONGEST data = extract_signed_integer (writebuf, len, BFD_ENDIAN_LITTLE);
-		store_signed_integer (buf, regsize, BFD_ENDIAN_LITTLE, data);
+		LONGEST data
+		  = extract_signed_integer (writebuf, len, BFD_ENDIAN_LITTLE);
+		store_signed_integer (buf.data (), regsize, BFD_ENDIAN_LITTLE,
+				      data);
 	      }
-	    loongarch_xfer_reg (regcache, a0, regsize, nullptr, buf, 0);
+
+	    loongarch_xfer_reg (regcache, a0, regsize, nullptr, buf.data (),
+				0);
 	  }
 	else
 	  loongarch_xfer_reg (regcache, a0, len, readbuf, nullptr, 0);
@@ -1869,6 +1879,7 @@ loongarch_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_software_single_step (gdbarch, loongarch_software_single_step);
   set_gdbarch_breakpoint_kind_from_pc (gdbarch, loongarch_breakpoint::kind_from_pc);
   set_gdbarch_sw_breakpoint_from_kind (gdbarch, loongarch_breakpoint::bp_from_kind);
+  set_gdbarch_have_nonsteppable_watchpoint (gdbarch, 1);
 
   /* Frame unwinders. Use DWARF debug info if available, otherwise use our own unwinder.  */
   set_gdbarch_dwarf2_reg_to_regnum (gdbarch, loongarch_dwarf2_reg_to_regnum);
@@ -1880,6 +1891,515 @@ loongarch_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_register_reggroup_p (gdbarch, loongarch_register_reggroup_p);
 
   return gdbarch;
+}
+
+/* LoongArch record/replay enumerations and structures.  */
+
+enum loongarch_record_result
+{
+  LOONGARCH_RECORD_SUCCESS,
+  LOONGARCH_RECORD_UNSUPPORTED,
+  LOONGARCH_RECORD_UNKNOWN
+};
+
+struct loongarch_record_s
+{
+  struct gdbarch *gdbarch;
+  struct regcache *regcache;
+  CORE_ADDR this_addr;                 /* Addr of insn to be recorded.   */
+  uint32_t insn;                       /* Insn to be recorded.           */
+};
+
+/* Record handler for data processing instructions.  */
+
+static int
+loongarch_record_data_proc_insn (loongarch_record_s *loongarch_record)
+{
+  int rd_num;
+  rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for read time instructions.  */
+
+static int
+loongarch_record_read_time_insn (loongarch_record_s *loongarch_record)
+{
+  int rd_num, rj_num;
+  rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+    return -1;
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, rj_num))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for branch instructions.  */
+
+static int
+loongarch_record_branch_insn (loongarch_record_s *loongarch_record)
+{
+  if (is_jirl_insn (loongarch_record->insn))
+    {
+      int rd_num;
+      rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+      if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+	return -1;
+    }
+  else if (is_bl_insn (loongarch_record->insn))
+    {
+      if (record_full_arch_list_add_reg (loongarch_record->regcache,
+					 LOONGARCH_RA_REGNUM))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for float data processing instructions.  */
+
+static int
+loongarch_record_float_data_proc_insn (loongarch_record_s *loongarch_record)
+{
+  int fd_num;
+  fd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0)
+	   + LOONGARCH_FIRST_FP_REGNUM;
+
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, fd_num))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for move gr to fcsr instructions.  */
+
+static int
+loongarch_record_movgr2fcsr_insn (loongarch_record_s *loongarch_record)
+{
+  if (record_full_arch_list_add_reg (loongarch_record->regcache,
+				     LOONGARCH_FCSR_REGNUM))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for move gr/fr to fcc instructions.  */
+
+static int
+loongarch_record_mov2cf_insn (loongarch_record_s *loongarch_record)
+{
+  int cd;
+  cd = loongarch_decode_imm ("0:3", loongarch_record->insn, 0);
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, cd))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for float instructions.  */
+
+static unsigned int
+loongarch_record_float_insn (loongarch_record_s *loongarch_record)
+{
+  if (is_movgr2fcsr_insn (loongarch_record->insn))
+    return loongarch_record_movgr2fcsr_insn (loongarch_record);
+  else if (is_mov2cf_insn (loongarch_record->insn))
+    return loongarch_record_mov2cf_insn (loongarch_record);
+  else
+    return loongarch_record_float_data_proc_insn (loongarch_record);
+}
+
+/* Record handler for store instructions.  */
+
+static int
+loongarch_record_store_insn (loongarch_record_s *loongarch_record)
+{
+  enum store_types
+    {
+      STB, STH, STW, STD, STXB, STXH, STXW, STXD, STPTRW, STPTRD,
+      SCW, SCD, FSTS, FSTD, FSTXS, FSTXD, VST, XVST, NOT_STORE
+    };
+  int store_type, data_size, rj_num;
+  uint64_t address, rj_val;
+
+  store_type = is_st_b_insn (loongarch_record->insn)	   ? STB     :
+	       is_st_h_insn (loongarch_record->insn)       ? STH     :
+	       is_st_w_insn (loongarch_record->insn)       ? STW     :
+	       is_st_d_insn (loongarch_record->insn)       ? STD     :
+	       is_stx_b_insn (loongarch_record->insn)      ? STXB    :
+	       is_stx_h_insn (loongarch_record->insn)      ? STXH    :
+	       is_stx_w_insn (loongarch_record->insn)      ? STXW    :
+	       is_stx_d_insn (loongarch_record->insn)      ? STXD    :
+	       is_stptr_w_insn (loongarch_record->insn)    ? STPTRW  :
+	       is_stptr_d_insn (loongarch_record->insn)    ? STPTRD  :
+	       is_sc_w_insn (loongarch_record->insn)       ? SCW     :
+	       is_sc_d_insn (loongarch_record->insn)       ? SCD     :
+	       is_fst_s_insn (loongarch_record->insn)      ? FSTS    :
+	       is_fst_d_insn (loongarch_record->insn)      ? FSTD    :
+	       is_fstx_s_insn (loongarch_record->insn)     ? FSTXS   :
+	       is_fstx_d_insn (loongarch_record->insn)     ? FSTXD   :
+	       is_vst_insn (loongarch_record->insn)        ? VST     :
+	       is_xvst_insn (loongarch_record->insn)       ? XVST    :
+	       NOT_STORE;
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rj_num, &rj_val);
+
+  if (store_type == STB || store_type == STH || store_type == STW
+      || store_type == STD || store_type == FSTS || store_type == FSTD
+      || store_type == VST || store_type == XVST)
+    {
+      int imm;
+      imm = loongarch_decode_imm ("10:12", loongarch_record->insn, 1);
+      address = rj_val + imm;
+      switch (store_type)
+	{
+	case STB:
+	  data_size = 1;
+	  break;
+	case STH:
+	  data_size = 2;
+	  break;
+	case STW:
+	case FSTS:
+	  data_size = 4;
+	  break;
+	case STD:
+	case FSTD:
+	  data_size = 8;
+	  break;
+	case VST:
+	  data_size = 16;
+	  break;
+	case XVST:
+	  data_size = 32;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+  else if (store_type == STXB || store_type == STXH || store_type == STXW
+	   || store_type == STXD || store_type == FSTXS || store_type == FSTXD)
+    {
+      int rk_num;
+      uint64_t rk_val;
+      rk_num = loongarch_decode_imm ("10:5", loongarch_record->insn, 0);
+      regcache_raw_read_unsigned (loongarch_record->regcache, rk_num, &rk_val);
+      address = rj_val + rk_val;
+      switch (store_type)
+	{
+	case STXB:
+	  data_size = 1;
+	  break;
+	case STXH:
+	  data_size = 2;
+	  break;
+	case STXW:
+	case FSTXS:
+	  data_size = 4;
+	  break;
+	case STXD:
+	case FSTXD:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+  else if (store_type == STPTRW || store_type == STPTRD || store_type == SCW
+	   || store_type == SCD)
+    {
+      int imm;
+      imm = loongarch_decode_imm ("10:14<<2", loongarch_record->insn, 1);
+      address = rj_val + imm;
+      switch (store_type)
+	{
+	case STPTRW:
+	case SCW:
+	  data_size = 4;
+	  break;
+	case STPTRD:
+	case SCD:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for atomic memory access instructions.  */
+
+static int
+loongarch_record_atomic_access_insn (loongarch_record_s *loongarch_record)
+{
+  int rj_num, rd_num, rk_num, length;
+  int data_size;
+  uint64_t address;
+  rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  rk_num = loongarch_decode_imm ("10:5", loongarch_record->insn, 0);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rj_num, &address);
+  if (is_basic_am_w_d_insn (loongarch_record->insn))
+    {
+      length = loongarch_decode_imm ("15:1", loongarch_record->insn, 0);
+      data_size = length == 1 ? 8 : 4;
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+  if (is_am_b_h_insn (loongarch_record->insn))
+    {
+      length = loongarch_decode_imm ("15:1", loongarch_record->insn, 0);
+      data_size = length == 1 ? 2 : 1;
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+  if (is_amcas_insn (loongarch_record->insn))
+    {
+      length = loongarch_decode_imm ("15:2", loongarch_record->insn, 0);
+      switch (length)
+	{
+	case 0x0:
+	  data_size = 1;
+	  break;
+	case 0x1:
+	  data_size = 2;
+	  break;
+	case 0x2:
+	  data_size = 4;
+	  break;
+	case 0x3:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+    return -1;
+
+  if (is_amswap_insn (loongarch_record->insn))
+    {
+      if (record_full_arch_list_add_reg (loongarch_record->regcache, rk_num))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for bound check load instructions.  */
+
+static int
+loongarch_record_bound_check_load_insn (loongarch_record_s *loongarch_record)
+{
+  int rd_num, rj_num, rk_num, fd_num;
+  uint64_t rj_val, rk_val;
+  rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  fd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  rk_num = loongarch_decode_imm ("10:5", loongarch_record->insn, 0);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rj_num, &rj_val);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rk_num, &rk_val);
+
+  if ((is_ldgt_insn (loongarch_record->insn) && (rj_val > rk_val))
+      || (is_ldle_insn (loongarch_record->insn) && (rj_val <= rk_val)))
+    {
+      if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+	return -1;
+    }
+  else if ((is_fldgt_insn (loongarch_record->insn) && (rj_val > rk_val))
+	   || (is_fldle_insn (loongarch_record->insn) && (rj_val <= rk_val)))
+    {
+      if (record_full_arch_list_add_reg (loongarch_record->regcache, fd_num))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for bound check store instructions.  */
+
+static int
+loongarch_record_bound_check_store_insn (loongarch_record_s *loongarch_record)
+{
+  int rj_num, rk_num;
+  int data_size;
+  uint64_t rj_val, rk_val;
+  uint32_t length_opcode;
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  rk_num = loongarch_decode_imm ("10:5", loongarch_record->insn, 0);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rj_num, &rj_val);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rk_num, &rk_val);
+
+  if ((is_stgt_insn (loongarch_record->insn) && (rj_val > rk_val))
+      || (is_stle_insn (loongarch_record->insn) && (rj_val <= rk_val)))
+    {
+      length_opcode = loongarch_record->insn & 0x00018000;
+      switch (length_opcode)
+	{
+	case 0x00000000:
+	  data_size = 1;
+	  break;
+	case 0x00008000:
+	  data_size = 2;
+	  break;
+	case 0x00010000:
+	  data_size = 4;
+	  break;
+	case 0x00018000:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (rj_val, data_size))
+	return -1;
+    }
+  else if ((is_fstgt_insn (loongarch_record->insn) && (rj_val > rk_val))
+	    || (is_fstle_insn (loongarch_record->insn) && (rj_val <= rk_val)))
+    {
+      length_opcode = loongarch_record->insn & 0x00008000;
+      switch (length_opcode)
+	{
+	case 0x00000000:
+	  data_size = 4;
+	  break;
+	case 0x00008000:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (rj_val, data_size))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for special instructions like privilege instructions,
+   barrier instructions and cache related instructions etc.  */
+
+static int
+loongarch_record_special_insn (loongarch_record_s *loongarch_record)
+{
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for syscall instructions.  */
+
+static int
+loongarch_record_syscall_insn (loongarch_record_s *loongarch_record)
+{
+  uint64_t syscall_number;
+  struct loongarch_gdbarch_tdep *tdep
+	    = gdbarch_tdep<loongarch_gdbarch_tdep> (loongarch_record->gdbarch);
+
+  regcache_raw_read_unsigned (loongarch_record->regcache, LOONGARCH_A7_REGNUM,
+			      &syscall_number);
+
+  return tdep->loongarch_syscall_record (loongarch_record->regcache,
+					 syscall_number);
+}
+
+/* Decode insns type and invoke its record handler.  */
+
+static int
+loongarch_record_decode_insn_handler (loongarch_record_s *loongarch_record)
+{
+  if (is_data_process_insn (loongarch_record->insn))
+    return loongarch_record_data_proc_insn (loongarch_record);
+  else if (is_branch_insn (loongarch_record->insn))
+    return loongarch_record_branch_insn (loongarch_record);
+  else if (is_store_insn (loongarch_record->insn))
+    return loongarch_record_store_insn (loongarch_record);
+  else if (is_read_time_insn (loongarch_record->insn))
+    return loongarch_record_read_time_insn (loongarch_record);
+  else if (is_float_insn (loongarch_record->insn))
+    return loongarch_record_float_insn (loongarch_record);
+  else if (is_special_insn (loongarch_record->insn))
+    return loongarch_record_special_insn (loongarch_record);
+  else if (is_atomic_access_insn (loongarch_record->insn))
+    return loongarch_record_atomic_access_insn (loongarch_record);
+  else if (is_bound_check_load_insn (loongarch_record->insn))
+    return loongarch_record_bound_check_load_insn (loongarch_record);
+  else if (is_bound_check_store_insn (loongarch_record->insn))
+    return loongarch_record_bound_check_store_insn (loongarch_record);
+  else if (is_syscall_insn (loongarch_record->insn))
+    return loongarch_record_syscall_insn (loongarch_record);
+
+  return LOONGARCH_RECORD_UNSUPPORTED;
+}
+
+/* Parse the current instruction and record the values of the registers and
+   memory that will be changed in current instruction to record_arch_list
+   return -1 if something is wrong.  */
+
+int
+loongarch_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
+			  CORE_ADDR insn_addr)
+{
+  int ret = 0;
+  loongarch_record_s loongarch_record;
+
+  /* reset the content of loongarch_record */
+  memset (&loongarch_record, 0, sizeof (loongarch_record_s));
+
+  /* write the loongarch_record */
+  loongarch_record.gdbarch = gdbarch;
+  loongarch_record.regcache = regcache;
+  loongarch_record.this_addr = insn_addr;
+
+  /* Get the current instruction */
+  loongarch_record.insn = (uint32_t) loongarch_fetch_instruction (insn_addr);
+  ret = loongarch_record_decode_insn_handler (&loongarch_record);
+  if (ret == LOONGARCH_RECORD_UNSUPPORTED)
+    {
+      gdb_printf (gdb_stderr,
+		  _("Process record does not support instruction "
+		    "0x%0x at address %s.\n"),
+		  loongarch_record.insn,
+		  paddress (gdbarch, insn_addr));
+      return -1;
+    }
+  if (ret == LOONGARCH_RECORD_SUCCESS)
+    {
+      /* Record PC registers.  */
+      if (record_full_arch_list_add_reg (loongarch_record.regcache,
+					 LOONGARCH_PC_REGNUM))
+	return -1;
+
+      if (record_full_arch_list_add_end ())
+	return -1;
+    }
+
+  return ret;
 }
 
 void _initialize_loongarch_tdep ();

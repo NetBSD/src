@@ -1,5 +1,5 @@
 /* pdb.h - header file for generating PDB CodeView debugging files.
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -241,9 +241,12 @@ struct optional_dbg_header
 #define DEBUG_S_LINES			0xf2
 #define DEBUG_S_STRINGTABLE		0xf3
 #define DEBUG_S_FILECHKSMS		0xf4
+#define DEBUG_S_INLINEELINES		0xf6
 
 #define STRING_TABLE_SIGNATURE		0xeffeeffe
 #define STRING_TABLE_VERSION		1
+
+#define CV_INLINEE_SOURCE_LINE_SIGNATURE	0
 
 /* VHdr in nmt.h */
 struct string_table_header
@@ -303,6 +306,11 @@ struct lf_modifier
   uint16_t padding;
 } ATTRIBUTE_PACKED;
 
+/* enum CV_ptrmode_e in cvinfo.h, shifted by 5 for the lfPointerAttr bitfield */
+#define CV_PTR_MODE_MASK	0xe0
+#define CV_PTR_MODE_PMEM	0x40
+#define CV_PTR_MODE_PMFUNC	0x60
+
 /* lfPointer in cvinfo.h */
 struct lf_pointer
 {
@@ -310,6 +318,10 @@ struct lf_pointer
   uint16_t kind;
   uint32_t base_type;
   uint32_t attributes;
+  /* following only if CV_PTR_MODE_PMEM or CV_PTR_MODE_PMFUNC in attributes */
+  uint32_t containing_class;
+  uint16_t ptr_to_mem_type;
+  uint16_t padding;
 } ATTRIBUTE_PACKED;
 
 /* lfArgList in cvinfo.h (used for both LF_ARGLIST and LF_SUBSTR_LIST) */

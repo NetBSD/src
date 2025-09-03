@@ -1,15 +1,17 @@
-/*	$NetBSD: msg_309.c,v 1.8 2025/02/24 19:49:00 rillig Exp $	*/
+/*	$NetBSD: msg_309.c,v 1.9 2025/07/08 17:43:54 rillig Exp $	*/
 # 3 "msg_309.c"
 
-// Test for message: extra bits set to 0 in conversion of '%s' to '%s', op '%s' [309]
+// Test for message: '%s' converts '%s' with its most significant bit being set to '%s' [309]
 
 /* lint1-extra-flags: -X 351 */
 
 typedef unsigned char u8_t;
+typedef unsigned short u16_t;
 typedef unsigned int u32_t;
 typedef unsigned long long u64_t;
 
 u8_t u8;
+u16_t u16;
 u32_t u32;
 u64_t u64;
 
@@ -31,7 +33,7 @@ test(void)
 	 * bit mask here.  This situation may occur during migration from a
 	 * 32-bit to a 64-bit platform.
 	 */
-	/* expect+1: warning: extra bits set to 0 in conversion of 'unsigned int' to 'unsigned long long', op '&' [309] */
+	/* expect+1: warning: '&' converts 'unsigned int' with its most significant bit being set to 'unsigned long long' [309] */
 	u64 = u64 & 0xffff0000;
 
 	/*
@@ -40,7 +42,7 @@ test(void)
 	 * originally, and the intention may have been to clear the lower 16
 	 * bits.
 	 */
-	/* expect+1: warning: extra bits set to 0 in conversion of 'unsigned int' to 'unsigned long long', op '&' [309] */
+	/* expect+1: warning: '&' converts 'unsigned int' with its most significant bit being set to 'unsigned long long' [309] */
 	u64 = u64 & 0xffff0000U;
 
 	/*
@@ -49,14 +51,14 @@ test(void)
 	 * platform the integer constant stays at 32 bits, and when porting
 	 * the code to a 64-bit platform, the upper 32 bits are preserved.
 	 */
-	/* expect+1: warning: extra bits set to 0 in conversion of 'unsigned int' to 'unsigned long long', op '&' [309] */
+	/* expect+1: warning: '&' converts 'unsigned int' with its most significant bit being set to 'unsigned long long' [309] */
 	u64 = u64 & ~0xffffU;
 
 	/*
 	 * Casting the integer constant to the proper type removes all
 	 * ambiguities about the programmer's intention.
 	 */
-	u64 = u64 & (unsigned long long)~0xffffU;
+	u64 = u64 & (u64_t)~0xffffU;
 
 	/*
 	 * In the remaining cases, the constant does not have its most
@@ -71,8 +73,15 @@ test(void)
 	u8 = u8 & 0x7f;
 	u8 = u8 & 0x80;
 	u8 = u8 & -0x80;
-	/* expect+1: warning: extra bits set to 0 in conversion of 'unsigned char' to 'int', op '&' [309] */
+	/* expect+1: warning: '&' converts 'unsigned char' with its most significant bit being set to 'int' [309] */
 	u8 = u8 & (u8_t)-0x80;
-	/* expect+1: warning: extra bits set to 0 in conversion of 'unsigned char' to 'int', op '&' [309] */
+	/* expect+1: warning: '&' converts 'unsigned char' with its most significant bit being set to 'int' [309] */
 	u8 = u8 & (u8_t)-0x80U;
+
+	/* expect+1: warning: '&=' converts 'unsigned short' with its most significant bit being set to 'int' [309] */
+	u16 &= (u16_t)~0x0600;
+	/* expect+1: warning: '&' converts 'unsigned short' with its most significant bit being set to 'int' [309] */
+	u16 = u16 & (u16_t)~0x0600;
+	/* expect+1: warning: '&' converts 'unsigned short' with its most significant bit being set to 'int' [309] */
+	u16 = (u16_t)(u16 & (u16_t)~0x0600);
 }

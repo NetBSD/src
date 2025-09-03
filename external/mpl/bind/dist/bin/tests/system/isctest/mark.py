@@ -20,7 +20,12 @@ import pytest
 
 
 long_test = pytest.mark.skipif(
-    not os.environ.get("CI_ENABLE_ALL_TESTS"), reason="CI_ENABLE_ALL_TESTS not set"
+    not os.environ.get("CI_ENABLE_LONG_TESTS"), reason="CI_ENABLE_LONG_TESTS not set"
+)
+
+live_internet_test = pytest.mark.skipif(
+    not os.environ.get("CI_ENABLE_LIVE_INTERNET_TESTS"),
+    reason="CI_ENABLE_LIVE_INTERNET_TESTS not set",
 )
 
 
@@ -48,10 +53,6 @@ def is_dnsrps_available():
     return True
 
 
-def with_dnstap(*args):  # pylint: disable=unused-argument
-    return feature_test("--enable-dnstap")
-
-
 def with_tsan(*args):  # pylint: disable=unused-argument
     return feature_test("--tsan")
 
@@ -60,6 +61,11 @@ def with_algorithm(name: str):
     key = f"{name}_SUPPORTED"
     assert key in os.environ, f"{key} env variable undefined"
     return pytest.mark.skipif(os.getenv(key) != "1", reason=f"{name} is not supported")
+
+
+with_dnstap = pytest.mark.skipif(
+    not feature_test("--enable-dnstap"), reason="DNSTAP support disabled in the build"
+)
 
 
 without_fips = pytest.mark.skipif(

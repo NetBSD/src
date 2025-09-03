@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.55 2025/06/01 00:54:36 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.56 2025/07/01 19:55:15 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -1007,7 +1007,7 @@ npf_nat_create(int type, unsigned flags, const char *ifname)
 	nvlist_t *rule_dict;
 	uint32_t attr;
 
-	attr = NPF_RULE_PASS | NPF_RULE_FINAL |
+	attr = NPF_RULE_PASS | NPF_RULE_FINAL | NPF_RULE_LAYER_3 |
 	    (type == NPF_NATOUT ? NPF_RULE_OUT : NPF_RULE_IN);
 
 	/* Create a rule for NAT policy.  Next, will add NAT data. */

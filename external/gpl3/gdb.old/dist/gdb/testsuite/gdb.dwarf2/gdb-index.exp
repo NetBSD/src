@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,10 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
+
+# Can't save an index with readnow.
+require !readnow
 
 standard_testfile main.c
 
@@ -34,16 +35,17 @@ if { [prepare_for_testing "failed to prepare" "${testfile}" \
 # Use local prefix to prevent overriding add_gdb_index from lib/gdb.exp.
 
 proc local_add_gdb_index { program } {
-    set index_file ${program}.gdb-index
-    set dir [file dirname ${program}]
     set filename [file tail ${program}]
-    set dwz $dir/.tmp/${filename}.dwz
-    set dwz_index_file $program.dwz.gdb-index
+    set host_program [gdb_remote_download host $program]
+    set index_file [host_standard_output_file $filename.gdb-index]
+    set tmpdir [host_standard_output_file .tmp]
+    set dwz $tmpdir/$filename.dwz
+    set dwz_index_file [host_standard_output_file $filename.dwz.gdb-index]
     verbose -log "index_file: ${index_file}"
     remote_file host delete ${index_file}
     remote_file host delete ${dwz_index_file}
     gdb_test_no_output "save gdb-index [file dirname ${index_file}]" \
-	"save gdb-index for file [file tail ${program}]"
+	"save gdb-index for file $filename"
 
     # No point in continuing if generating the index failed.
     # N.B.: There are times when gdb won't create an index, and it's not a
@@ -57,8 +59,16 @@ proc local_add_gdb_index { program } {
 	return ""
     }
 
-    set program_with_index ${program}.with-index
-    if {[run_on_host "objcopy" [gdb_find_objcopy] "--remove-section .gdb_index --add-section .gdb_index=$index_file --set-section-flags .gdb_index=readonly ${program} ${program_with_index}"]} {
+    set host_program_with_index $host_program.with-index
+    set program_with_index $program.with-index
+    if {[run_on_host "objcopy" [gdb_find_objcopy] \
+	     [join \
+		  [list \
+		       "--remove-section .gdb_index" \
+		       "--add-section .gdb_index=$index_file" \
+		       "--set-section-flags .gdb_index=readonly" \
+		       "$host_program" \
+		       "$host_program_with_index"]]]} {
 	return ""
     }
 
@@ -75,7 +85,9 @@ proc local_add_gdb_index { program } {
 	}
     }
 
-    return ${program_with_index}
+    return [list \
+		[remote_upload host $host_program_with_index $program_with_index] \
+		$host_program_with_index]
 }
 
 # Build a copy of the program with an index (.gdb_index/.debug_names).
@@ -86,12 +98,14 @@ set test "check if index present"
 gdb_test_multiple "mt print objfiles ${testfile}" $test {
     -re "gdb_index.*${gdb_prompt} $" {
 	set binfile_with_index $binfile
+	set host_binfile_with_index [gdb_remote_download host $binfile]
     }
     -re "debug_names.*${gdb_prompt} $" {
 	set binfile_with_index $binfile
+	set host_binfile_with_index [gdb_remote_download host $binfile]
     }
     -re "(Psymtabs|Cooked).*${gdb_prompt} $" {
-	set binfile_with_index [local_add_gdb_index $binfile]
+	lassign [local_add_gdb_index $binfile] binfile_with_index host_binfile_with_index
 	if { ${binfile_with_index} == "" } {
 	    return -1
 	}
@@ -116,7 +130,7 @@ gdb_test "mt print objfiles ${testfile}" \
 # Is touch portable enough?
 # First make sure enough time has passed, file mtime resolution is seconds.
 gdb_test_no_output "shell sleep 1"
-if {[run_on_host "touch binary" touch ${binfile_with_index}]} {
+if {[run_on_host "touch binary" touch $host_binfile_with_index]} {
     return -1
 }
 

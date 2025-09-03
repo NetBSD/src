@@ -155,76 +155,75 @@ extern int yydebug;
     _AMPERSAND_ASSIGN = 356,       /* _AMPERSAND_ASSIGN  */
     _MINUS_ASSIGN = 357,           /* _MINUS_ASSIGN  */
     _PLUS_ASSIGN = 358,            /* _PLUS_ASSIGN  */
-    _ASSIGN_BANG = 359,            /* _ASSIGN_BANG  */
-    _LESS_THAN_ASSIGN = 360,       /* _LESS_THAN_ASSIGN  */
-    _ASSIGN_ASSIGN = 361,          /* _ASSIGN_ASSIGN  */
-    GE = 362,                      /* GE  */
-    LT = 363,                      /* LT  */
-    LE = 364,                      /* LE  */
-    GT = 365,                      /* GT  */
-    LESS_THAN = 366,               /* LESS_THAN  */
-    FLUSHINV = 367,                /* FLUSHINV  */
-    FLUSH = 368,                   /* FLUSH  */
-    IFLUSH = 369,                  /* IFLUSH  */
-    PREFETCH = 370,                /* PREFETCH  */
-    PRNT = 371,                    /* PRNT  */
-    OUTC = 372,                    /* OUTC  */
-    WHATREG = 373,                 /* WHATREG  */
-    TESTSET = 374,                 /* TESTSET  */
-    ASL = 375,                     /* ASL  */
-    ASR = 376,                     /* ASR  */
-    B = 377,                       /* B  */
-    W = 378,                       /* W  */
-    NS = 379,                      /* NS  */
-    S = 380,                       /* S  */
-    CO = 381,                      /* CO  */
-    SCO = 382,                     /* SCO  */
-    TH = 383,                      /* TH  */
-    TL = 384,                      /* TL  */
-    BP = 385,                      /* BP  */
-    BREV = 386,                    /* BREV  */
-    X = 387,                       /* X  */
-    Z = 388,                       /* Z  */
-    M = 389,                       /* M  */
-    MMOD = 390,                    /* MMOD  */
-    R = 391,                       /* R  */
-    RND = 392,                     /* RND  */
-    RNDL = 393,                    /* RNDL  */
-    RNDH = 394,                    /* RNDH  */
-    RND12 = 395,                   /* RND12  */
-    RND20 = 396,                   /* RND20  */
-    V = 397,                       /* V  */
-    LO = 398,                      /* LO  */
-    HI = 399,                      /* HI  */
-    BITTGL = 400,                  /* BITTGL  */
-    BITCLR = 401,                  /* BITCLR  */
-    BITSET = 402,                  /* BITSET  */
-    BITTST = 403,                  /* BITTST  */
-    BITMUX = 404,                  /* BITMUX  */
-    DBGAL = 405,                   /* DBGAL  */
-    DBGAH = 406,                   /* DBGAH  */
-    DBGHALT = 407,                 /* DBGHALT  */
-    DBG = 408,                     /* DBG  */
-    DBGA = 409,                    /* DBGA  */
-    DBGCMPLX = 410,                /* DBGCMPLX  */
-    IF = 411,                      /* IF  */
-    COMMA = 412,                   /* COMMA  */
-    BY = 413,                      /* BY  */
-    COLON = 414,                   /* COLON  */
-    SEMICOLON = 415,               /* SEMICOLON  */
-    RPAREN = 416,                  /* RPAREN  */
-    LPAREN = 417,                  /* LPAREN  */
-    LBRACK = 418,                  /* LBRACK  */
-    RBRACK = 419,                  /* RBRACK  */
-    STATUS_REG = 420,              /* STATUS_REG  */
-    MNOP = 421,                    /* MNOP  */
-    SYMBOL = 422,                  /* SYMBOL  */
-    NUMBER = 423,                  /* NUMBER  */
-    GOT = 424,                     /* GOT  */
-    GOT17M4 = 425,                 /* GOT17M4  */
-    FUNCDESC_GOT17M4 = 426,        /* FUNCDESC_GOT17M4  */
-    AT = 427,                      /* AT  */
-    PLTPC = 428                    /* PLTPC  */
+    _LESS_THAN_ASSIGN = 359,       /* _LESS_THAN_ASSIGN  */
+    _ASSIGN_ASSIGN = 360,          /* _ASSIGN_ASSIGN  */
+    GE = 361,                      /* GE  */
+    LT = 362,                      /* LT  */
+    LE = 363,                      /* LE  */
+    GT = 364,                      /* GT  */
+    LESS_THAN = 365,               /* LESS_THAN  */
+    FLUSHINV = 366,                /* FLUSHINV  */
+    FLUSH = 367,                   /* FLUSH  */
+    IFLUSH = 368,                  /* IFLUSH  */
+    PREFETCH = 369,                /* PREFETCH  */
+    PRNT = 370,                    /* PRNT  */
+    OUTC = 371,                    /* OUTC  */
+    WHATREG = 372,                 /* WHATREG  */
+    TESTSET = 373,                 /* TESTSET  */
+    ASL = 374,                     /* ASL  */
+    ASR = 375,                     /* ASR  */
+    B = 376,                       /* B  */
+    W = 377,                       /* W  */
+    NS = 378,                      /* NS  */
+    S = 379,                       /* S  */
+    CO = 380,                      /* CO  */
+    SCO = 381,                     /* SCO  */
+    TH = 382,                      /* TH  */
+    TL = 383,                      /* TL  */
+    BP = 384,                      /* BP  */
+    BREV = 385,                    /* BREV  */
+    X = 386,                       /* X  */
+    Z = 387,                       /* Z  */
+    M = 388,                       /* M  */
+    MMOD = 389,                    /* MMOD  */
+    R = 390,                       /* R  */
+    RND = 391,                     /* RND  */
+    RNDL = 392,                    /* RNDL  */
+    RNDH = 393,                    /* RNDH  */
+    RND12 = 394,                   /* RND12  */
+    RND20 = 395,                   /* RND20  */
+    V = 396,                       /* V  */
+    LO = 397,                      /* LO  */
+    HI = 398,                      /* HI  */
+    BITTGL = 399,                  /* BITTGL  */
+    BITCLR = 400,                  /* BITCLR  */
+    BITSET = 401,                  /* BITSET  */
+    BITTST = 402,                  /* BITTST  */
+    BITMUX = 403,                  /* BITMUX  */
+    DBGAL = 404,                   /* DBGAL  */
+    DBGAH = 405,                   /* DBGAH  */
+    DBGHALT = 406,                 /* DBGHALT  */
+    DBG = 407,                     /* DBG  */
+    DBGA = 408,                    /* DBGA  */
+    DBGCMPLX = 409,                /* DBGCMPLX  */
+    IF = 410,                      /* IF  */
+    COMMA = 411,                   /* COMMA  */
+    BY = 412,                      /* BY  */
+    COLON = 413,                   /* COLON  */
+    SEMICOLON = 414,               /* SEMICOLON  */
+    RPAREN = 415,                  /* RPAREN  */
+    LPAREN = 416,                  /* LPAREN  */
+    LBRACK = 417,                  /* LBRACK  */
+    RBRACK = 418,                  /* RBRACK  */
+    STATUS_REG = 419,              /* STATUS_REG  */
+    MNOP = 420,                    /* MNOP  */
+    SYMBOL = 421,                  /* SYMBOL  */
+    NUMBER = 422,                  /* NUMBER  */
+    GOT = 423,                     /* GOT  */
+    GOT17M4 = 424,                 /* GOT17M4  */
+    FUNCDESC_GOT17M4 = 425,        /* FUNCDESC_GOT17M4  */
+    AT = 426,                      /* AT  */
+    PLTPC = 427                    /* PLTPC  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -334,76 +333,75 @@ extern int yydebug;
 #define _AMPERSAND_ASSIGN 356
 #define _MINUS_ASSIGN 357
 #define _PLUS_ASSIGN 358
-#define _ASSIGN_BANG 359
-#define _LESS_THAN_ASSIGN 360
-#define _ASSIGN_ASSIGN 361
-#define GE 362
-#define LT 363
-#define LE 364
-#define GT 365
-#define LESS_THAN 366
-#define FLUSHINV 367
-#define FLUSH 368
-#define IFLUSH 369
-#define PREFETCH 370
-#define PRNT 371
-#define OUTC 372
-#define WHATREG 373
-#define TESTSET 374
-#define ASL 375
-#define ASR 376
-#define B 377
-#define W 378
-#define NS 379
-#define S 380
-#define CO 381
-#define SCO 382
-#define TH 383
-#define TL 384
-#define BP 385
-#define BREV 386
-#define X 387
-#define Z 388
-#define M 389
-#define MMOD 390
-#define R 391
-#define RND 392
-#define RNDL 393
-#define RNDH 394
-#define RND12 395
-#define RND20 396
-#define V 397
-#define LO 398
-#define HI 399
-#define BITTGL 400
-#define BITCLR 401
-#define BITSET 402
-#define BITTST 403
-#define BITMUX 404
-#define DBGAL 405
-#define DBGAH 406
-#define DBGHALT 407
-#define DBG 408
-#define DBGA 409
-#define DBGCMPLX 410
-#define IF 411
-#define COMMA 412
-#define BY 413
-#define COLON 414
-#define SEMICOLON 415
-#define RPAREN 416
-#define LPAREN 417
-#define LBRACK 418
-#define RBRACK 419
-#define STATUS_REG 420
-#define MNOP 421
-#define SYMBOL 422
-#define NUMBER 423
-#define GOT 424
-#define GOT17M4 425
-#define FUNCDESC_GOT17M4 426
-#define AT 427
-#define PLTPC 428
+#define _LESS_THAN_ASSIGN 359
+#define _ASSIGN_ASSIGN 360
+#define GE 361
+#define LT 362
+#define LE 363
+#define GT 364
+#define LESS_THAN 365
+#define FLUSHINV 366
+#define FLUSH 367
+#define IFLUSH 368
+#define PREFETCH 369
+#define PRNT 370
+#define OUTC 371
+#define WHATREG 372
+#define TESTSET 373
+#define ASL 374
+#define ASR 375
+#define B 376
+#define W 377
+#define NS 378
+#define S 379
+#define CO 380
+#define SCO 381
+#define TH 382
+#define TL 383
+#define BP 384
+#define BREV 385
+#define X 386
+#define Z 387
+#define M 388
+#define MMOD 389
+#define R 390
+#define RND 391
+#define RNDL 392
+#define RNDH 393
+#define RND12 394
+#define RND20 395
+#define V 396
+#define LO 397
+#define HI 398
+#define BITTGL 399
+#define BITCLR 400
+#define BITSET 401
+#define BITTST 402
+#define BITMUX 403
+#define DBGAL 404
+#define DBGAH 405
+#define DBGHALT 406
+#define DBG 407
+#define DBGA 408
+#define DBGCMPLX 409
+#define IF 410
+#define COMMA 411
+#define BY 412
+#define COLON 413
+#define SEMICOLON 414
+#define RPAREN 415
+#define LPAREN 416
+#define LBRACK 417
+#define RBRACK 418
+#define STATUS_REG 419
+#define MNOP 420
+#define SYMBOL 421
+#define NUMBER 422
+#define GOT 423
+#define GOT17M4 424
+#define FUNCDESC_GOT17M4 425
+#define AT 426
+#define PLTPC 427
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -421,7 +419,7 @@ union YYSTYPE
   struct { int r0; } r0;
   Opt_mode mod;
 
-#line 425 "config/bfin-parse.h"
+#line 423 "config/bfin-parse.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

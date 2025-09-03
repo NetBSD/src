@@ -1,5 +1,5 @@
 /* ld-emul.h - Linker emulation header file
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -115,9 +115,10 @@ extern void ldemul_acquire_strings_for_ctf
   (struct ctf_dict *, struct elf_strtab_hash *);
 extern void ldemul_new_dynsym_for_ctf
   (struct ctf_dict *, int symidx, struct elf_internal_sym *);
-
 extern bool ldemul_print_symbol
   (struct bfd_link_hash_entry *hash_entry, void *ptr);
+extern struct bfd_link_hash_entry * ldemul_find_alt_start_symbol
+  (struct bfd_sym_chain *);
 
 typedef struct ld_emulation_xfer_struct {
   /* Run before parsing the command line and script file.
@@ -258,6 +259,11 @@ typedef struct ld_emulation_xfer_struct {
      hook to flag gc'd symbols.  */
   bool (*print_symbol)
     (struct bfd_link_hash_entry *hash_entry, void *ptr);
+
+  /* Called when ENTRY->name cannot be found by a direct lookup in INFO->hash.
+     Allows emulations to try variations of the name.  */
+  struct bfd_link_hash_entry * (*find_alt_start_symbol)
+    (struct bfd_sym_chain *entry);
 
 } ld_emulation_xfer_type;
 

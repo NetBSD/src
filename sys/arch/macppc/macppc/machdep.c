@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.177 2024/06/11 04:47:04 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.178 2025/07/01 14:19:45 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2024/06/11 04:47:04 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 2025/07/01 14:19:45 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -138,14 +138,35 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	}
 
 	ofw_quiesce = strncmp(model_name, "PowerMac11,2", 12) == 0 ||
-		      strncmp(model_name, "PowerMac12,1", 12) == 0;
+		      strncmp(model_name, "PowerMac12,1", 12) == 0 ||
+		      strncmp(model_name, "PowerMac7,2", 10) == 0;
 
 	/* switch CPUs to full speed */
 	if  (strncmp(model_name, "PowerMac7,", 10) == 0) {
-		int clock_ih = OF_open("/u3/i2c/i2c-hwclock");
-		if (clock_ih != 0) {
-			OF_call_method_1("slew-high", clock_ih, 0);
-			OF_close(clock_ih);
+		/*
+		 * some G5 have two i2c-hwclock, we need to find the one that
+		 * generates the CPU clock
+		 */
+		int i2c = OF_finddevice("/u3/i2c");
+		int clock = 0, ch = OF_child(i2c);
+		char type[16], buffer[128];
+		while ((ch != 0) && (clock == 0)) {
+			if (OF_getprop(ch, "hwctrl-location", type, 16) > 0) {
+				if (strcmp(type, "CPU CLOCK") == 0) {
+					clock = ch;
+				}
+			}
+			ch = OF_peer(ch);
+		}
+		if (clock != 0) {
+			OF_package_to_path(clock, buffer, 128);
+			printf("clock %s\n", buffer);
+			
+			int clock_ih = OF_open(buffer);
+			if (clock_ih != 0) {
+				OF_call_method_1("slew-high", clock_ih, 0);
+				OF_close(clock_ih);
+			}
 		}
 	}
 	if  (strncmp(model_name, "PowerMac8,", 10) == 0) {

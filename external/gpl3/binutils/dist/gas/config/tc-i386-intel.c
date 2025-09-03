@@ -1,5 +1,5 @@
 /* tc-i386.c -- Assemble Intel syntax code for ix86/x86-64
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -186,7 +186,7 @@ operatorT i386_operator (const char *name, unsigned int operands, char *pc)
     if (strcasecmp (i386_types[j].name, name) == 0)
       break;
 
-  if (i386_types[j].name && *pc == ' ')
+  if (i386_types[j].name && is_whitespace (*pc))
     {
       const char *start = ++input_line_pointer;
       char *pname;
@@ -209,11 +209,18 @@ operatorT i386_operator (const char *name, unsigned int operands, char *pc)
 	      || i386_types[j].sz[0] > 8
 	      || (i386_types[j].sz[0] & (i386_types[j].sz[0] - 1)))
 	    return O_illegal;
-	  if (i.vec_encoding == vex_encoding_default)
-	    i.vec_encoding = vex_encoding_evex;
-	  else if (i.vec_encoding != vex_encoding_evex
-		   && i.vec_encoding != vex_encoding_evex512)
-	    return O_illegal;
+	  switch (pp.encoding)
+	    {
+	    case encoding_default:
+	    case encoding_egpr:
+	      pp.encoding = encoding_evex;
+	      break;
+	    case encoding_evex:
+	    case encoding_evex512:
+	      break;
+	    default:
+	      return O_illegal;
+	    }
 	  if (!i.broadcast.bytes && !i.broadcast.type)
 	    {
 	      i.broadcast.bytes = i386_types[j].sz[0];
@@ -229,13 +236,15 @@ operatorT i386_operator (const char *name, unsigned int operands, char *pc)
   return O_absent;
 }
 
-static int i386_intel_parse_name (const char *name, expressionS *e)
+static int i386_intel_parse_name (const char *name,
+				  expressionS *e,
+				  enum expr_mode mode)
 {
   unsigned int j;
 
   if (! strcmp (name, "$"))
     {
-      current_location (e);
+      current_location (e, mode);
       return 1;
     }
 
@@ -369,21 +378,25 @@ i386_intel_simplify_register (expressionS *e)
   return 2;
 }
 
-static int i386_intel_simplify (expressionS *);
-
-static INLINE int i386_intel_simplify_symbol(symbolS *sym)
+static int
+i386_intel_simplify_symbol (symbolS *sym)
 {
-  int ret = i386_intel_simplify (symbol_get_value_expression (sym));
+  if (symbol_resolving_p (sym))
+    return 1;
 
+  symbol_mark_resolving (sym);
+  int ret = i386_intel_simplify (symbol_get_value_expression (sym));
   if (ret == 2)
-  {
-    S_SET_SEGMENT(sym, absolute_section);
-    ret = 1;
-  }
+    {
+      S_SET_SEGMENT (sym, absolute_section);
+      ret = 1;
+    }
+  symbol_clear_resolving (sym);
   return ret;
 }
 
-static int i386_intel_simplify (expressionS *e)
+static int
+i386_intel_simplify (expressionS *e)
 {
   const reg_entry *the_reg = (this_operand >= 0
 			      ? i.op[this_operand].regs : NULL);
@@ -656,7 +669,7 @@ i386_intel_operand (char *operand_string, int got_a_float)
 	ret = 0;
     }
 
-  if (!is_end_of_line[(unsigned char) *input_line_pointer])
+  if (!is_end_of_stmt (*input_line_pointer))
     {
       if (ret)
 	as_bad (_("junk `%s' after expression"), input_line_pointer);
@@ -894,9 +907,8 @@ i386_intel_operand (char *operand_string, int got_a_float)
     }
 
   /* Operands for jump/call need special consideration.  */
-  if (current_templates.start->opcode_modifier.jump == JUMP
-      || current_templates.start->opcode_modifier.jump == JUMP_DWORD
-      || current_templates.start->opcode_modifier.jump == JUMP_INTERSEGMENT)
+  if (current_templates.start->opcode_modifier.jump
+      || current_templates.start->mnem_off == MN_jmpabs)
     {
       bool jumpabsolute = false;
 
@@ -1032,9 +1044,7 @@ i386_intel_operand (char *operand_string, int got_a_float)
 	     ljmp	0x9090,0x90909090
 	   */
 
-	  if ((current_templates.start->opcode_modifier.jump == JUMP_INTERSEGMENT
-	       || current_templates.start->opcode_modifier.jump == JUMP_DWORD
-	       || current_templates.start->opcode_modifier.jump == JUMP)
+	  if (current_templates.start->opcode_modifier.jump
 	      && this_operand == 1
 	      && intel_state.seg == NULL
 	      && i.mem_operands == 1
@@ -1115,7 +1125,7 @@ i386_intel_operand (char *operand_string, int got_a_float)
 	  else
 	    i.types[this_operand].bitfield.disp16 = 1;
 
-#if defined (OBJ_AOUT) || defined (OBJ_MAYBE_AOUT)
+#ifdef OBJ_AOUT
 	  /*
 	   * exp_seg is used only for verification in
 	   * i386_finalize_displacement, and we can end up seeing reg_section

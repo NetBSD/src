@@ -86,7 +86,7 @@ if { !$ok } {
     return
 }
 
-set name "info breakpoints (after inferior run)"
+set name "info breakpoints, after inferior run"
 gdb_test_multiple "info breakpoints" $name {
     -re "$re_head${ws}$re_2_bp${ws}$re_3_bp${ws}$re_4_bp\r\n$gdb_prompt $" {
 	pass $name

@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-file.mk,v 1.11 2024/06/30 15:21:24 rillig Exp $
+# $NetBSD: opt-debug-file.mk,v 1.13 2025/08/09 23:09:55 rillig Exp $
 #
 # Tests for the -dF command line option, which redirects the debug log
 # to a file instead of writing it to stderr.
@@ -27,11 +27,21 @@ DEBUG_OUTPUT:=	${:!cat opt-debug-file.debuglog!}
 .endif
 
 # To get the unexpanded text that was actually written to the debug log
-# file, the content of that log file must not be stored in a variable.
+# file, the content of that log file must not be stored in a variable
+# directly.  Instead, it can be processed in a single expression by a chain
+# of modifiers.
 #
 # XXX: In the :M modifier, a dollar is escaped using '$$', not '\$'.  This
 # escaping scheme unnecessarily differs from all other modifiers.
 .if !${:!cat opt-debug-file.debuglog!:tW:M*VAR = value $${:Uexpanded}*}
+.  error
+.endif
+
+# To get the unexpanded text that was actually written to the debug log
+# file, the content of that log file must not be stored in a variable
+# directly.  Instead, each dollar sign must be escaped first.
+DEBUG_OUTPUT:=	${:!cat opt-debug-file.debuglog!:S,\$,\$\$,g}
+.if ${DEBUG_OUTPUT:M*Uexpanded*} != "\${:Uexpanded}"
 .  error
 .endif
 
@@ -40,8 +50,8 @@ DEBUG_OUTPUT:=	${:!cat opt-debug-file.debuglog!}
 
 # See Parse_Error.
 .MAKEFLAGS: -dFstdout
-# expect+1: This goes to stderr only, once.
-.  info This goes to stderr only, once.
+# expect+1: This goes to stdout only, once.
+.  info This goes to stdout only, once.
 .MAKEFLAGS: -dFstderr
 # expect+1: This goes to stderr only, once.
 .  info This goes to stderr only, once.

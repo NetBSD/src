@@ -348,7 +348,7 @@ add_dump_command (const char *name,
   struct dump_context *d;
 
   c = add_cmd (name, all_commands, descr, &dump_cmdlist);
-  c->completer =  filename_completer;
+  set_cmd_completer (c, deprecated_filename_completer);
   d = XNEW (struct dump_context);
   d->func = func;
   d->mode = FOPEN_WB;
@@ -356,7 +356,7 @@ add_dump_command (const char *name,
   c->func = call_dump_func;
 
   c = add_cmd (name, all_commands, descr, &append_cmdlist);
-  c->completer =  filename_completer;
+  set_cmd_completer (c, deprecated_filename_completer);
   d = XNEW (struct dump_context);
   d->func = func;
   d->mode = FOPEN_AB;
@@ -705,6 +705,6 @@ Arguments are FILE OFFSET START END where all except FILE are optional.\n\
 OFFSET will be added to the base address of the file (default zero).\n\
 If START and END are given, only the file contents within that range\n\
 (file relative) will be restored to target memory."));
-  c->completer = filename_completer;
+  set_cmd_completer (c, deprecated_filename_completer);
   /* FIXME: completers for other commands.  */
 }

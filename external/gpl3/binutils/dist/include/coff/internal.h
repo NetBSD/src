@@ -1,7 +1,7 @@
 /* Internal format of COFF object file data structures, for GNU BFD.
    This file is part of BFD, the Binary File Descriptor library.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -215,7 +215,7 @@ struct internal_extra_pe_aouthdr
   short MinorImageVersion;	/*  exe or dll being created, default to 0.  */
   short MajorSubsystemVersion;	/* Minimum subsystem version required to */
   short MinorSubsystemVersion;	/*  run exe; default to 3.1.  */
-  uint32_t Reserved1;		/* Seems to be 0.  */
+  uint32_t Win32Version;	/* Set to 0.  */
   uint32_t SizeOfImage;		/* Size of memory to allocate for prog.  */
   uint32_t SizeOfHeaders;	/* Size of PE header and section table.  */
   uint32_t CheckSum;		/* Set to 0.  */

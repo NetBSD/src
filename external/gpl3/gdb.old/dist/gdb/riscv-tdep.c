@@ -1,6 +1,6 @@
 /* Target-dependent code for the RISC-V architecture, for GDB.
 
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "inferior.h"
 #include "symtab.h"
 #include "value.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "language.h"
 #include "gdbcore.h"
 #include "symfile.h"
@@ -33,7 +33,6 @@
 #include "regcache.h"
 #include "osabi.h"
 #include "riscv-tdep.h"
-#include "block.h"
 #include "reggroups.h"
 #include "opcode/riscv.h"
 #include "elf/riscv.h"
@@ -50,13 +49,13 @@
 #include "dwarf2/frame.h"
 #include "user-regs.h"
 #include "valprint.h"
-#include "gdbsupport/common-defs.h"
 #include "opcode/riscv-opc.h"
 #include "cli/cli-decode.h"
 #include "observable.h"
 #include "prologue-value.h"
 #include "arch/riscv.h"
 #include "riscv-ravenscar-thread.h"
+#include "gdbsupport/gdb-safe-ctype.h"
 
 /* The stack must be 16-byte aligned.  */
 #define SP_ALIGNMENT 16
@@ -74,25 +73,56 @@ static inline bool is_ ## INSN_NAME ## _insn (long insn) \
 #include "opcode/riscv-opc.h"
 #undef DECLARE_INSN
 
-/* When this is set to non-zero debugging information about breakpoint
-   kinds will be printed.  */
+/* When this is true debugging information about breakpoint kinds will be
+   printed.  */
 
-static unsigned int riscv_debug_breakpoints = 0;
+static bool riscv_debug_breakpoints = false;
 
-/* When this is set to non-zero debugging information about inferior calls
+/* Print a "riscv-breakpoints" debug statement.  */
+
+#define riscv_breakpoints_debug_printf(fmt, ...)	\
+  debug_prefixed_printf_cond (riscv_debug_breakpoints,	\
+			      "riscv-breakpoints",	\
+			      fmt, ##__VA_ARGS__)
+
+/* When this is true debugging information about inferior calls will be
+   printed.  */
+
+static bool riscv_debug_infcall = false;
+
+/* Print a "riscv-infcall" debug statement.  */
+
+#define riscv_infcall_debug_printf(fmt, ...)				\
+  debug_prefixed_printf_cond (riscv_debug_infcall, "riscv-infcall",	\
+			      fmt, ##__VA_ARGS__)
+
+/* Print "riscv-infcall" start/end debug statements.  */
+
+#define RISCV_INFCALL_SCOPED_DEBUG_START_END(fmt, ...)		\
+  scoped_debug_start_end (riscv_debug_infcall, "riscv-infcall", \
+			  fmt, ##__VA_ARGS__)
+
+/* When this is true debugging information about stack unwinding will be
+   printed.  */
+
+static bool riscv_debug_unwinder = false;
+
+/* Print a "riscv-unwinder" debug statement.  */
+
+#define riscv_unwinder_debug_printf(fmt, ...)				\
+  debug_prefixed_printf_cond (riscv_debug_unwinder, "riscv-unwinder",	\
+			      fmt, ##__VA_ARGS__)
+
+/* When this is true debugging information about gdbarch initialisation
    will be printed.  */
 
-static unsigned int riscv_debug_infcall = 0;
+static bool riscv_debug_gdbarch = false;
 
-/* When this is set to non-zero debugging information about stack unwinding
-   will be printed.  */
+/* Print a "riscv-gdbarch" debug statement.  */
 
-static unsigned int riscv_debug_unwinder = 0;
-
-/* When this is set to non-zero debugging information about gdbarch
-   initialisation will be printed.  */
-
-static unsigned int riscv_debug_gdbarch = 0;
+#define riscv_gdbarch_debug_printf(fmt, ...)				\
+  debug_prefixed_printf_cond (riscv_debug_gdbarch, "riscv-gdbarch",	\
+			      fmt, ##__VA_ARGS__)
 
 /* The names of the RISC-V target description features.  */
 const char *riscv_feature_name_csr = "org.gnu.gdb.riscv.csr";
@@ -102,7 +132,7 @@ static const char *riscv_feature_name_virtual = "org.gnu.gdb.riscv.virtual";
 static const char *riscv_feature_name_vector = "org.gnu.gdb.riscv.vector";
 
 /* The current set of options to be passed to the disassembler.  */
-static char *riscv_disassembler_options;
+static std::string riscv_disassembler_options;
 
 /* Cached information about a frame.  */
 
@@ -134,10 +164,10 @@ static const reggroup *csr_reggroup = nullptr;
 /* Callback function for user_reg_add.  */
 
 static struct value *
-value_of_riscv_user_reg (frame_info_ptr frame, const void *baton)
+value_of_riscv_user_reg (const frame_info_ptr &frame, const void *baton)
 {
   const int *reg_p = (const int *) baton;
-  return value_of_register (*reg_p, frame);
+  return value_of_register (*reg_p, get_next_frame_sentinel_okay (frame));
 }
 
 /* Information about a register alias that needs to be set up for this
@@ -410,7 +440,7 @@ struct riscv_freg_feature : public riscv_register_feature
      RISCV_LAST_FP_REGNUM.  */
   const char *register_name (int regnum) const
   {
-    gdb_static_assert (RISCV_LAST_FP_REGNUM == RISCV_FIRST_FP_REGNUM + 31);
+    static_assert (RISCV_LAST_FP_REGNUM == RISCV_FIRST_FP_REGNUM + 31);
     gdb_assert (regnum >= RISCV_FIRST_FP_REGNUM
 		&& regnum <= RISCV_LAST_FP_REGNUM);
     regnum -= RISCV_FIRST_FP_REGNUM;
@@ -832,13 +862,15 @@ riscv_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
 	  const char *bp = (unaligned_p || riscv_insn_length (buf[0]) == 2
 			    ? "C.EBREAK" : "EBREAK");
 
-	  gdb_printf (gdb_stdlog, "Using %s for breakpoint at %s ",
-		      bp, paddress (gdbarch, *pcptr));
+	  std::string suffix;
 	  if (unaligned_p)
-	    gdb_printf (gdb_stdlog, "(unaligned address)\n");
+	    suffix = "(unaligned address)";
 	  else
-	    gdb_printf (gdb_stdlog, "(instruction length %d)\n",
-			riscv_insn_length (buf[0]));
+	    suffix = string_printf ("(instruction length %d)",
+				    riscv_insn_length (buf[0]));
+	  riscv_breakpoints_debug_printf ("Using %s for breakpoint at %s %s",
+					  bp, paddress (gdbarch, *pcptr),
+					  suffix.c_str ());
 	}
       if (unaligned_p || riscv_insn_length (buf[0]) == 2)
 	return 2;
@@ -969,9 +1001,9 @@ riscv_pseudo_register_read (struct gdbarch *gdbarch,
   return REG_UNKNOWN;
 }
 
-/* Implement gdbarch_pseudo_register_write.  Write the contents of BUF into
-   pseudo-register REGNUM in REGCACHE.  BUF is sized based on the type of
-   register REGNUM.  */
+/* Implement gdbarch_deprecated_pseudo_register_write.  Write the contents of
+   BUF into pseudo-register REGNUM in REGCACHE.  BUF is sized based on the type
+   of register REGNUM.  */
 
 static void
 riscv_pseudo_register_write (struct gdbarch *gdbarch,
@@ -1102,7 +1134,7 @@ riscv_register_type (struct gdbarch *gdbarch, int regnum)
 static void
 riscv_print_one_register_info (struct gdbarch *gdbarch,
 			       struct ui_file *file,
-			       frame_info_ptr frame,
+			       const frame_info_ptr &frame,
 			       int regnum)
 {
   const char *name = gdbarch_register_name (gdbarch, regnum);
@@ -1112,12 +1144,12 @@ riscv_print_one_register_info (struct gdbarch *gdbarch,
   enum tab_stops { value_column_1 = 15 };
 
   gdb_puts (name, file);
-  print_spaces (value_column_1 - strlen (name), file);
+  print_spaces (std::max<int> (1, value_column_1 - strlen (name)), file);
 
   try
     {
-      val = value_of_register (regnum, frame);
-      regtype = value_type (val);
+      val = value_of_register (regnum, get_next_frame_sentinel_okay (frame));
+      regtype = val->type ();
     }
   catch (const gdb_exception_error &ex)
     {
@@ -1127,8 +1159,8 @@ riscv_print_one_register_info (struct gdbarch *gdbarch,
       return;
     }
 
-  print_raw_format = (value_entirely_available (val)
-		      && !value_optimized_out (val));
+  print_raw_format = (val->entirely_available ()
+		      && !val->optimized_out ());
 
   if (regtype->code () == TYPE_CODE_FLT
       || (regtype->code () == TYPE_CODE_UNION
@@ -1142,11 +1174,11 @@ riscv_print_one_register_info (struct gdbarch *gdbarch,
 	  && regtype->field (2).type ()->code () == TYPE_CODE_FLT))
     {
       struct value_print_options opts;
-      const gdb_byte *valaddr = value_contents_for_printing (val).data ();
+      const gdb_byte *valaddr = val->contents_for_printing ().data ();
       enum bfd_endian byte_order = type_byte_order (regtype);
 
       get_user_print_options (&opts);
-      opts.deref_ref = 1;
+      opts.deref_ref = true;
 
       common_val_print (val, file, 0, &opts, current_language);
 
@@ -1165,7 +1197,7 @@ riscv_print_one_register_info (struct gdbarch *gdbarch,
 
       /* Print the register in hex.  */
       get_formatted_print_options (&opts, 'x');
-      opts.deref_ref = 1;
+      opts.deref_ref = true;
       common_val_print (val, file, 0, &opts, current_language);
 
       if (print_raw_format)
@@ -1298,7 +1330,7 @@ riscv_print_one_register_info (struct gdbarch *gdbarch,
 	      if (regtype->is_vector () == 0)
 		{
 		  get_user_print_options (&opts);
-		  opts.deref_ref = 1;
+		  opts.deref_ref = true;
 		  gdb_printf (file, "\t");
 		  common_val_print (val, file, 0, &opts, current_language);
 		}
@@ -1471,7 +1503,7 @@ riscv_pseudo_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
 static void
 riscv_print_registers_info (struct gdbarch *gdbarch,
 			    struct ui_file *file,
-			    frame_info_ptr frame,
+			    const frame_info_ptr &frame,
 			    int regnum, int print_all)
 {
   if (regnum != -1)
@@ -1529,6 +1561,7 @@ public:
       ADDW,
       AUIPC,
       LUI,
+      LI,
       SD,
       SW,
       LD,
@@ -1544,8 +1577,34 @@ public:
       BLTU,
       BGEU,
       /* These are needed for stepping over atomic sequences.  */
-      LR,
-      SC,
+      SLTI,
+      SLTIU,
+      XORI,
+      ORI,
+      ANDI,
+      SLLI,
+      SLLIW,
+      SRLI,
+      SRLIW,
+      SRAI,
+      SRAIW,
+      SUB,
+      SUBW,
+      SLL,
+      SLLW,
+      SLT,
+      SLTU,
+      XOR,
+      SRL,
+      SRLW,
+      SRA,
+      SRAW,
+      OR,
+      AND,
+      LR_W,
+      LR_D,
+      SC_W,
+      SC_D,
       /* This instruction is used to do a syscall.  */
       ECALL,
 
@@ -1636,11 +1695,20 @@ private:
     m_imm.s = EXTRACT_ITYPE_IMM (ival);
   }
 
-  /* Helper for DECODE, decode 16-bit compressed I-type instruction.  */
-  void decode_ci_type_insn (enum opcode opcode, ULONGEST ival)
+  /* Helper for DECODE, decode 16-bit compressed I-type instruction.  Some
+     of the CI instruction have a hard-coded rs1 register, while others
+     just use rd for both the source and destination.  RS1_REGNUM, if
+     passed, is the value to place in rs1, otherwise rd is duplicated into
+     rs1.  */
+  void decode_ci_type_insn (enum opcode opcode, ULONGEST ival,
+			    std::optional<int> rs1_regnum = {})
   {
     m_opcode = opcode;
-    m_rd = m_rs1 = decode_register_index (ival, OP_SH_CRS1S);
+    m_rd = decode_register_index (ival, OP_SH_CRS1S);
+    if (rs1_regnum.has_value ())
+      m_rs1 = *rs1_regnum;
+    else
+      m_rs1 = m_rd;
     m_imm.s = EXTRACT_CITYPE_IMM (ival);
   }
 
@@ -1725,6 +1793,13 @@ private:
     m_imm.s = EXTRACT_CBTYPE_IMM (ival);
   }
 
+  void decode_ca_type_insn (enum opcode opcode, ULONGEST ival)
+  {
+    m_opcode = opcode;
+    m_rs1 = decode_register_index_short (ival, OP_SH_CRS1S);
+    m_rs2 = decode_register_index_short (ival, OP_SH_CRS2S);
+  }
+
   /* Fetch instruction from target memory at ADDR, return the content of
      the instruction, and update LEN with the instruction length.  */
   static ULONGEST fetch_instruction (struct gdbarch *gdbarch,
@@ -1769,7 +1844,6 @@ ULONGEST
 riscv_insn::fetch_instruction (struct gdbarch *gdbarch,
 			       CORE_ADDR addr, int *len)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order_for_code (gdbarch);
   gdb_byte buf[RISCV_MAX_INSN_LEN];
   int instlen, status;
 
@@ -1790,7 +1864,8 @@ riscv_insn::fetch_instruction (struct gdbarch *gdbarch,
 	memory_error (TARGET_XFER_E_IO, addr + 2);
     }
 
-  return extract_unsigned_integer (buf, instlen, byte_order);
+  /* RISC-V Specification states instructions are always little endian */
+  return extract_unsigned_integer (buf, instlen, BFD_ENDIAN_LITTLE);
 }
 
 /* Fetch from target memory an instruction at PC and decode it.  This can
@@ -1839,14 +1914,62 @@ riscv_insn::decode (struct gdbarch *gdbarch, CORE_ADDR pc)
 	decode_b_type_insn (BLTU, ival);
       else if (is_bgeu_insn (ival))
 	decode_b_type_insn (BGEU, ival);
+      else if (is_slti_insn(ival))
+	decode_i_type_insn (SLTI, ival);
+      else if (is_sltiu_insn(ival))
+	decode_i_type_insn (SLTIU, ival);
+      else if (is_xori_insn(ival))
+	decode_i_type_insn (XORI, ival);
+      else if (is_ori_insn(ival))
+	decode_i_type_insn (ORI, ival);
+      else if (is_andi_insn(ival))
+	decode_i_type_insn (ANDI, ival);
+      else if (is_slli_insn(ival))
+	decode_i_type_insn (SLLI, ival);
+      else if (is_slliw_insn(ival))
+	decode_i_type_insn (SLLIW, ival);
+      else if (is_srli_insn(ival))
+	decode_i_type_insn (SRLI, ival);
+      else if (is_srliw_insn(ival))
+	decode_i_type_insn (SRLIW, ival);
+      else if (is_srai_insn(ival))
+	decode_i_type_insn (SRAI, ival);
+      else if (is_sraiw_insn(ival))
+	decode_i_type_insn (SRAIW, ival);
+      else if (is_sub_insn(ival))
+	decode_r_type_insn (SUB, ival);
+      else if (is_subw_insn(ival))
+	decode_r_type_insn (SUBW, ival);
+      else if (is_sll_insn(ival))
+	decode_r_type_insn (SLL, ival);
+      else if (is_sllw_insn(ival))
+	decode_r_type_insn (SLLW, ival);
+      else if (is_slt_insn(ival))
+	decode_r_type_insn (SLT, ival);
+      else if (is_sltu_insn(ival))
+	decode_r_type_insn (SLTU, ival);
+      else if (is_xor_insn(ival))
+	decode_r_type_insn (XOR, ival);
+      else if (is_srl_insn(ival))
+	decode_r_type_insn (SRL, ival);
+      else if (is_srlw_insn(ival))
+	decode_r_type_insn (SRLW, ival);
+      else if (is_sra_insn(ival))
+	decode_r_type_insn (SRA, ival);
+      else if (is_sraw_insn(ival))
+	decode_r_type_insn (SRAW, ival);
+      else if (is_or_insn(ival))
+	decode_r_type_insn (OR, ival);
+      else if (is_and_insn(ival))
+	decode_r_type_insn (AND, ival);
       else if (is_lr_w_insn (ival))
-	decode_r_type_insn (LR, ival);
+	decode_r_type_insn (LR_W, ival);
       else if (is_lr_d_insn (ival))
-	decode_r_type_insn (LR, ival);
+	decode_r_type_insn (LR_D, ival);
       else if (is_sc_w_insn (ival))
-	decode_r_type_insn (SC, ival);
+	decode_r_type_insn (SC_W, ival);
       else if (is_sc_d_insn (ival))
-	decode_r_type_insn (SC, ival);
+	decode_r_type_insn (SC_D, ival);
       else if (is_ecall_insn (ival))
 	decode_i_type_insn (ECALL, ival);
       else if (is_ld_insn (ival))
@@ -1901,6 +2024,26 @@ riscv_insn::decode (struct gdbarch *gdbarch, CORE_ADDR pc)
 	  m_rd = decode_register_index (ival, OP_SH_CRS1S);
 	  m_imm.s = EXTRACT_CITYPE_LUI_IMM (ival);
 	}
+      else if (is_c_srli_insn (ival))
+	decode_cb_type_insn (SRLI, ival);
+      else if (is_c_srai_insn (ival))
+	decode_cb_type_insn (SRAI, ival);
+      else if (is_c_andi_insn (ival))
+	decode_cb_type_insn (ANDI, ival);
+      else if (is_c_sub_insn (ival))
+	decode_ca_type_insn (SUB, ival);
+      else if (is_c_xor_insn (ival))
+	decode_ca_type_insn (XOR, ival);
+      else if (is_c_or_insn (ival))
+	decode_ca_type_insn (OR, ival);
+      else if (is_c_and_insn (ival))
+	decode_ca_type_insn (AND, ival);
+      else if (is_c_subw_insn (ival))
+	decode_ca_type_insn (SUBW, ival);
+      else if (is_c_addw_insn (ival))
+	decode_ca_type_insn (ADDW, ival);
+      else if (is_c_li_insn (ival))
+	decode_ci_type_insn (LI, ival);
       /* C_SD and C_FSW have the same opcode.  C_SD is RV64 and RV128 only,
 	 and C_FSW is RV32 only.  */
       else if (xlen != 4 && is_c_sd_insn (ival))
@@ -1927,6 +2070,10 @@ riscv_insn::decode (struct gdbarch *gdbarch, CORE_ADDR pc)
 	decode_cl_type_insn (LD, ival);
       else if (is_c_lw_insn (ival))
 	decode_cl_type_insn (LW, ival);
+      else if (is_c_ldsp_insn (ival))
+	decode_ci_type_insn (LD, ival, RISCV_SP_REGNUM);
+      else if (is_c_lwsp_insn (ival))
+	decode_ci_type_insn (LW, ival, RISCV_SP_REGNUM);
       else
 	/* None of the other fields of INSN are valid in this case.  */
 	m_opcode = OTHER;
@@ -1939,6 +2086,214 @@ riscv_insn::decode (struct gdbarch *gdbarch, CORE_ADDR pc)
       gdb_assert (m_length > 0 && m_length % 2 == 0);
       m_opcode = OTHER;
     }
+}
+
+/* Return true if INSN represents an instruction something like:
+
+   ld fp,IMMEDIATE(sp)
+
+   That is, a load from stack-pointer plus some immediate offset, with the
+   result stored into the frame pointer.  We also accept 'lw' as well as
+   'ld'.  */
+
+static bool
+is_insn_load_of_fp_from_sp (const struct riscv_insn &insn)
+{
+  return ((insn.opcode () == riscv_insn::LD
+	   || insn.opcode () == riscv_insn::LW)
+	  && insn.rd () == RISCV_FP_REGNUM
+	  && insn.rs1 () == RISCV_SP_REGNUM);
+}
+
+/* Return true if INSN represents an instruction something like:
+
+   add sp,sp,IMMEDIATE
+
+   That is, an add of an immediate to the value in the stack pointer
+   register, with the result stored back to the stack pointer register.  */
+
+static bool
+is_insn_addi_of_sp_to_sp (const struct riscv_insn &insn)
+{
+  return ((insn.opcode () == riscv_insn::ADDI
+	   || insn.opcode () == riscv_insn::ADDIW)
+	  && insn.rd () == RISCV_SP_REGNUM
+	  && insn.rs1 () == RISCV_SP_REGNUM);
+}
+
+/* Is the instruction in code memory prior to address PC a load from stack
+   instruction?  Return true if it is, otherwise, return false.
+
+   This is a best effort that is used as part of the function prologue
+   scanning logic.  With compressed instructions and arbitrary control
+   flow in the inferior, we can never be certain what the instruction
+   prior to PC is.
+
+   This function first looks for a compressed instruction, then looks for
+   a 32-bit non-compressed instruction.  */
+
+static bool
+previous_insn_is_load_fp_from_stack (struct gdbarch *gdbarch, CORE_ADDR pc)
+{
+  struct riscv_insn insn;
+  insn.decode (gdbarch, pc - 2);
+  gdb_assert (insn.length () > 0);
+
+  if (insn.length () != 2 || !is_insn_load_of_fp_from_sp (insn))
+    {
+      insn.decode (gdbarch, pc - 4);
+      gdb_assert (insn.length () > 0);
+
+      if (insn.length () != 4 || !is_insn_load_of_fp_from_sp (insn))
+	return false;
+    }
+
+  riscv_unwinder_debug_printf
+    ("previous instruction at %s (length %d) was 'ld'",
+     core_addr_to_string (pc - insn.length ()), insn.length ());
+  return true;
+}
+
+/* Is the instruction in code memory prior to address PC an add of an
+   immediate to the stack pointer, with the result being written back into
+   the stack pointer?  Return true and set *PREV_PC to the address of the
+   previous instruction if we believe the previous instruction is such an
+   add, otherwise return false and *PREV_PC is undefined.
+
+   This is a best effort that is used as part of the function prologue
+   scanning logic.  With compressed instructions and arbitrary control
+   flow in the inferior, we can never be certain what the instruction
+   prior to PC is.
+
+   This function first looks for a compressed instruction, then looks for
+   a 32-bit non-compressed instruction.  */
+
+static bool
+previous_insn_is_add_imm_to_sp (struct gdbarch *gdbarch, CORE_ADDR pc,
+				CORE_ADDR *prev_pc)
+{
+  struct riscv_insn insn;
+  insn.decode (gdbarch, pc - 2);
+  gdb_assert (insn.length () > 0);
+
+  if (insn.length () != 2 || !is_insn_addi_of_sp_to_sp (insn))
+    {
+      insn.decode (gdbarch, pc - 4);
+      gdb_assert (insn.length () > 0);
+
+      if (insn.length () != 4 || !is_insn_addi_of_sp_to_sp (insn))
+	return false;
+    }
+
+  riscv_unwinder_debug_printf
+    ("previous instruction at %s (length %d) was 'add'",
+     core_addr_to_string (pc - insn.length ()), insn.length ());
+  *prev_pc = pc - insn.length ();
+  return true;
+}
+
+/* Try to spot when PC is located in an exit sequence for a particular
+   function.  Detecting an exit sequence involves a limited amount of
+   scanning backwards through the disassembly, and so, when considering
+   compressed instructions, we can never be certain that we have
+   disassembled the preceding instructions correctly.  On top of that, we
+   can't be certain that the inferior arrived at PC by passing through the
+   preceding instructions.
+
+   With all that said, we know that using prologue scanning to figure a
+   functions unwind information starts to fail when we consider returns
+   from an instruction -- we must pass through some instructions that
+   restore the previous state prior to the final return instruction, and
+   with state partially restored, our prologue derived unwind information
+   is no longer valid.
+
+   This function then, aims to spot instruction sequences like this:
+
+     ld     fp, IMM_1(sp)
+     add    sp, sp, IMM_2
+     ret
+
+   The first instruction restores the previous frame-pointer value, the
+   second restores the previous stack pointer value, and the final
+   instruction is the actual return.
+
+   We need to consider that some or all of these instructions might be
+   compressed.
+
+   This function makes the assumption that, when the inferior reaches the
+   'ret' instruction the stack pointer will have been restored to its value
+   on entry to this function.  This assumption will be true in most well
+   formed programs.
+
+   Return true if we detect that we are in such an instruction sequence,
+   that is PC points at one of the three instructions given above.  In this
+   case, set *OFFSET to IMM_2 if PC points to either of the first
+   two instructions (the 'ld' or 'add'), otherwise set *OFFSET to 0.
+
+   Otherwise, this function returns false, and the contents of *OFFSET are
+   undefined.  */
+
+static bool
+riscv_detect_end_of_function (struct gdbarch *gdbarch, CORE_ADDR pc,
+			      int *offset)
+{
+  *offset = 0;
+
+  /* We only want to scan a maximum of 3 instructions.  */
+  for (int i = 0; i < 3; ++i)
+    {
+      struct riscv_insn insn;
+      insn.decode (gdbarch, pc);
+      gdb_assert (insn.length () > 0);
+
+      if (is_insn_load_of_fp_from_sp (insn))
+	{
+	  riscv_unwinder_debug_printf ("found 'ld' instruction at %s",
+				       core_addr_to_string (pc));
+	  if (i > 0)
+	    return false;
+	  pc += insn.length ();
+	}
+      else if (is_insn_addi_of_sp_to_sp (insn))
+	{
+	  riscv_unwinder_debug_printf ("found 'add' instruction at %s",
+				       core_addr_to_string (pc));
+	  if (i > 1)
+	    return false;
+	  if (i == 0)
+	    {
+	      if (!previous_insn_is_load_fp_from_stack (gdbarch, pc))
+		return false;
+
+	      i = 1;
+	    }
+	  *offset = insn.imm_signed ();
+	  pc += insn.length ();
+	}
+      else if (insn.opcode () == riscv_insn::JALR
+	       && insn.rs1 () == RISCV_RA_REGNUM
+	       && insn.rs2 () == RISCV_ZERO_REGNUM)
+	{
+	  riscv_unwinder_debug_printf ("found 'ret' instruction at %s",
+				       core_addr_to_string (pc));
+	  gdb_assert (i != 1);
+	  if (i == 0)
+	    {
+	      CORE_ADDR prev_pc;
+	      if (!previous_insn_is_add_imm_to_sp (gdbarch, pc, &prev_pc))
+		return false;
+	      if (!previous_insn_is_load_fp_from_stack (gdbarch, prev_pc))
+		return false;
+	      i = 2;
+	    }
+
+	  pc += insn.length ();
+	}
+      else
+	return false;
+    }
+
+  return true;
 }
 
 /* The prologue scanner.  This is currently only used for skipping the
@@ -1955,6 +2310,7 @@ riscv_scan_prologue (struct gdbarch *gdbarch,
 		     struct riscv_unwind_cache *cache)
 {
   CORE_ADDR cur_pc, next_pc, after_prologue_pc;
+  CORE_ADDR original_end_pc = end_pc;
   CORE_ADDR end_prologue_addr = 0;
 
   /* Find an upper limit on the function prologue using the debug
@@ -1971,12 +2327,9 @@ riscv_scan_prologue (struct gdbarch *gdbarch,
     regs[regno] = pv_register (regno, 0);
   pv_area stack (RISCV_SP_REGNUM, gdbarch_addr_bit (gdbarch));
 
-  if (riscv_debug_unwinder)
-    gdb_printf
-      (gdb_stdlog,
-       "Prologue scan for function starting at %s (limit %s)\n",
-       core_addr_to_string (start_pc),
-       core_addr_to_string (end_pc));
+  riscv_unwinder_debug_printf ("function starting at %s (limit %s)",
+			       core_addr_to_string (start_pc),
+			       core_addr_to_string (end_pc));
 
   for (next_pc = cur_pc = start_pc; cur_pc < end_pc; cur_pc = next_pc)
     {
@@ -1989,10 +2342,7 @@ riscv_scan_prologue (struct gdbarch *gdbarch,
       next_pc = cur_pc + insn.length ();
 
       /* Look for common stack adjustment insns.  */
-      if ((insn.opcode () == riscv_insn::ADDI
-	   || insn.opcode () == riscv_insn::ADDIW)
-	  && insn.rd () == RISCV_SP_REGNUM
-	  && insn.rs1 () == RISCV_SP_REGNUM)
+      if (is_insn_addi_of_sp_to_sp (insn))
 	{
 	  /* Handle: addi sp, sp, -i
 	     or:     addiw sp, sp, -i  */
@@ -2053,10 +2403,11 @@ riscv_scan_prologue (struct gdbarch *gdbarch,
 	  gdb_assert (insn.rd () < RISCV_NUM_INTEGER_REGS);
 	  regs[insn.rd ()] = pv_constant (cur_pc + insn.imm_signed ());
 	}
-      else if (insn.opcode () == riscv_insn::LUI)
+      else if (insn.opcode () == riscv_insn::LUI
+	       || insn.opcode () == riscv_insn::LI)
 	{
 	  /* Handle: lui REG, n
-	     Where REG is not gp register.  */
+	     or:     li  REG, n  */
 	  gdb_assert (insn.rd () < RISCV_NUM_INTEGER_REGS);
 	  regs[insn.rd ()] = pv_constant (insn.imm_signed ());
 	}
@@ -2108,9 +2459,8 @@ riscv_scan_prologue (struct gdbarch *gdbarch,
   if (end_prologue_addr == 0)
     end_prologue_addr = cur_pc;
 
-  if (riscv_debug_unwinder)
-    gdb_printf (gdb_stdlog, "End of prologue at %s\n",
-		core_addr_to_string (end_prologue_addr));
+  riscv_unwinder_debug_printf ("end of prologue at %s",
+			       core_addr_to_string (end_prologue_addr));
 
   if (cache != NULL)
     {
@@ -2130,6 +2480,27 @@ riscv_scan_prologue (struct gdbarch *gdbarch,
 	  cache->frame_base_offset = -regs[RISCV_SP_REGNUM].k;
 	}
 
+      /* Check to see if we are located near to a return instruction in
+	 this function.  If we are then the one or both of the stack
+	 pointer and frame pointer may have been restored to their previous
+	 value.  If we can spot this situation then we can adjust which
+	 register and offset we use for the frame base.  */
+      if (cache->frame_base_reg != RISCV_SP_REGNUM
+	  || cache->frame_base_offset != 0)
+	{
+	  int sp_offset;
+
+	  if (riscv_detect_end_of_function (gdbarch, original_end_pc,
+					    &sp_offset))
+	    {
+	      riscv_unwinder_debug_printf
+		("in function epilogue at %s, stack offset is %d",
+		 core_addr_to_string (original_end_pc), sp_offset);
+	      cache->frame_base_reg= RISCV_SP_REGNUM;
+	      cache->frame_base_offset = sp_offset;
+	    }
+	}
+
       /* Assign offset from old SP to all saved registers.  As we don't
 	 have the previous value for the frame base register at this
 	 point, we store the offset as the address in the trad_frame, and
@@ -2139,17 +2510,13 @@ riscv_scan_prologue (struct gdbarch *gdbarch,
 	  CORE_ADDR offset;
 	  if (stack.find_reg (gdbarch, i, &offset))
 	    {
-	      if (riscv_debug_unwinder)
-		{
-		  /* Display OFFSET as a signed value, the offsets are from
-		     the frame base address to the registers location on
-		     the stack, with a descending stack this means the
-		     offsets are always negative.  */
-		  gdb_printf (gdb_stdlog,
-			      "Register $%s at stack offset %s\n",
-			      gdbarch_register_name (gdbarch, i),
-			      plongest ((LONGEST) offset));
-		}
+	      /* Display OFFSET as a signed value, the offsets are from the
+		 frame base address to the registers location on the stack,
+		 with a descending stack this means the offsets are always
+		 negative.  */
+	      riscv_unwinder_debug_printf ("register $%s at stack offset %s",
+					   gdbarch_register_name (gdbarch, i),
+					   plongest ((LONGEST) offset));
 	      cache->regs[i].set_addr (offset);
 	    }
 	}
@@ -2222,12 +2589,10 @@ riscv_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp,
      there will be no need to write to memory later.  */
   int status = target_write_memory (*bp_addr, nop_insn, sizeof (nop_insn));
 
-  if (riscv_debug_breakpoints || riscv_debug_infcall)
-    gdb_printf (gdb_stdlog,
-		"Writing %s-byte nop instruction to %s: %s\n",
-		plongest (sizeof (nop_insn)),
-		paddress (gdbarch, *bp_addr),
-		(status == 0 ? "success" : "failed"));
+  riscv_infcall_debug_printf ("writing %s-byte nop instruction to %s: %s",
+			      plongest (sizeof (nop_insn)),
+			      paddress (gdbarch, *bp_addr),
+			      (status == 0 ? "success" : "failed"));
 
   return sp;
 }
@@ -2492,7 +2857,8 @@ static void
 riscv_call_arg_scalar_int (struct riscv_arg_info *ainfo,
 			   struct riscv_call_info *cinfo)
 {
-  if (ainfo->length > (2 * cinfo->xlen))
+  if (TYPE_HAS_DYNAMIC_LENGTH (ainfo->type)
+      || ainfo->length > (2 * cinfo->xlen))
     {
       /* Argument is going to be passed by reference.  */
       ainfo->argloc[0].loc_type
@@ -2910,8 +3276,12 @@ riscv_arg_location (struct gdbarch *gdbarch,
       break;
 
     case TYPE_CODE_STRUCT:
-      riscv_call_arg_struct (ainfo, cinfo);
-      break;
+      if (!TYPE_HAS_DYNAMIC_LENGTH (ainfo->type))
+	{
+	  riscv_call_arg_struct (ainfo, cinfo);
+	  break;
+	}
+      [[fallthrough]];
 
     default:
       riscv_call_arg_scalar_int (ainfo, cinfo);
@@ -3043,7 +3413,7 @@ riscv_push_dummy_call (struct gdbarch *gdbarch,
 
   CORE_ADDR osp = sp;
 
-  struct type *ftype = check_typedef (value_type (function));
+  struct type *ftype = check_typedef (function->type ());
 
   if (ftype->code () == TYPE_CODE_PTR)
     ftype = check_typedef (ftype->target_type ());
@@ -3059,49 +3429,50 @@ riscv_push_dummy_call (struct gdbarch *gdbarch,
       struct riscv_arg_info *info = &arg_info[i];
 
       arg_value = args[i];
-      arg_type = check_typedef (value_type (arg_value));
+      arg_type = check_typedef (arg_value->type ());
 
       riscv_arg_location (gdbarch, info, &call_info, arg_type,
 			  ftype->has_varargs () && i >= ftype->num_fields ());
 
       if (info->type != arg_type)
 	arg_value = value_cast (info->type, arg_value);
-      info->contents = value_contents (arg_value).data ();
+      info->contents = arg_value->contents ().data ();
     }
 
   /* Adjust the stack pointer and align it.  */
   sp = sp_refs = align_down (sp - call_info.memory.ref_offset, SP_ALIGNMENT);
   sp = sp_args = align_down (sp - call_info.memory.arg_offset, SP_ALIGNMENT);
 
-  if (riscv_debug_infcall > 0)
+  if (riscv_debug_infcall)
     {
-      gdb_printf (gdb_stdlog, "dummy call args:\n");
-      gdb_printf (gdb_stdlog, ": floating point ABI %s in use\n",
-		  (riscv_has_fp_abi (gdbarch) ? "is" : "is not"));
-      gdb_printf (gdb_stdlog, ": xlen: %d\n: flen: %d\n",
-		  call_info.xlen, call_info.flen);
+      RISCV_INFCALL_SCOPED_DEBUG_START_END ("dummy call args");
+      riscv_infcall_debug_printf ("floating point ABI %s in use",
+				  (riscv_has_fp_abi (gdbarch)
+				   ? "is" : "is not"));
+      riscv_infcall_debug_printf ("xlen: %d", call_info.xlen);
+      riscv_infcall_debug_printf ("flen: %d", call_info.flen);
       if (return_method == return_method_struct)
-	gdb_printf (gdb_stdlog,
-		    "[*] struct return pointer in register $A0\n");
+	riscv_infcall_debug_printf
+	  ("[**] struct return pointer in register $A0");
       for (i = 0; i < nargs; ++i)
 	{
 	  struct riscv_arg_info *info = &arg_info [i];
+	  string_file tmp;
 
-	  gdb_printf (gdb_stdlog, "[%2d] ", i);
-	  riscv_print_arg_location (gdb_stdlog, gdbarch, info, sp_refs, sp_args);
-	  gdb_printf (gdb_stdlog, "\n");
+	  riscv_print_arg_location (&tmp, gdbarch, info, sp_refs, sp_args);
+	  riscv_infcall_debug_printf ("[%2d] %s", i, tmp.string ().c_str ());
 	}
       if (call_info.memory.arg_offset > 0
 	  || call_info.memory.ref_offset > 0)
 	{
-	  gdb_printf (gdb_stdlog, "              Original sp: %s\n",
-		      core_addr_to_string (osp));
-	  gdb_printf (gdb_stdlog, "Stack required (for args): 0x%x\n",
-		      call_info.memory.arg_offset);
-	  gdb_printf (gdb_stdlog, "Stack required (for refs): 0x%x\n",
-		      call_info.memory.ref_offset);
-	  gdb_printf (gdb_stdlog, "          Stack allocated: %s\n",
-		      core_addr_to_string_nz (osp - sp));
+	  riscv_infcall_debug_printf ("              Original sp: %s",
+				      core_addr_to_string (osp));
+	  riscv_infcall_debug_printf ("Stack required (for args): 0x%x",
+				      call_info.memory.arg_offset);
+	  riscv_infcall_debug_printf ("Stack required (for refs): 0x%x",
+				      call_info.memory.ref_offset);
+	  riscv_infcall_debug_printf ("          Stack allocated: %s",
+				      core_addr_to_string_nz (osp - sp));
 	}
     }
 
@@ -3199,16 +3570,13 @@ riscv_push_dummy_call (struct gdbarch *gdbarch,
   /* Set the dummy return value to bp_addr.
      A dummy breakpoint will be setup to execute the call.  */
 
-  if (riscv_debug_infcall > 0)
-    gdb_printf (gdb_stdlog, ": writing $ra = %s\n",
-		core_addr_to_string (bp_addr));
+  riscv_infcall_debug_printf ("writing $ra = %s",
+			      core_addr_to_string (bp_addr));
   regcache_cooked_write_unsigned (regcache, RISCV_RA_REGNUM, bp_addr);
 
   /* Finally, update the stack pointer.  */
 
-  if (riscv_debug_infcall > 0)
-    gdb_printf (gdb_stdlog, ": writing $sp = %s\n",
-		core_addr_to_string (sp));
+  riscv_infcall_debug_printf ("writing $sp = %s", core_addr_to_string (sp));
   regcache_cooked_write_unsigned (regcache, RISCV_SP_REGNUM, sp);
 
   return sp;
@@ -3221,7 +3589,7 @@ riscv_return_value (struct gdbarch  *gdbarch,
 		    struct value *function,
 		    struct type *type,
 		    struct regcache *regcache,
-		    gdb_byte *readbuf,
+		    struct value **read_value,
 		    const gdb_byte *writebuf)
 {
   struct riscv_call_info call_info (gdbarch);
@@ -3231,23 +3599,22 @@ riscv_return_value (struct gdbarch  *gdbarch,
   arg_type = check_typedef (type);
   riscv_arg_location (gdbarch, &info, &call_info, arg_type, false);
 
-  if (riscv_debug_infcall > 0)
+  if (riscv_debug_infcall)
     {
-      gdb_printf (gdb_stdlog, "riscv return value:\n");
-      gdb_printf (gdb_stdlog, "[R] ");
-      riscv_print_arg_location (gdb_stdlog, gdbarch, &info, 0, 0);
-      gdb_printf (gdb_stdlog, "\n");
+      string_file tmp;
+      riscv_print_arg_location (&tmp, gdbarch, &info, 0, 0);
+      riscv_infcall_debug_printf ("[R] %s", tmp.string ().c_str ());
     }
 
-  if (readbuf != nullptr || writebuf != nullptr)
+  if (read_value != nullptr || writebuf != nullptr)
     {
       unsigned int arg_len;
       struct value *abi_val;
-      gdb_byte *old_readbuf = nullptr;
+      gdb_byte *readbuf = nullptr;
       int regnum;
 
       /* We only do one thing at a time.  */
-      gdb_assert (readbuf == nullptr || writebuf == nullptr);
+      gdb_assert (read_value == nullptr || writebuf == nullptr);
 
       /* In some cases the argument is not returned as the declared type,
 	 and we need to cast to or from the ABI type in order to
@@ -3273,8 +3640,8 @@ riscv_return_value (struct gdbarch  *gdbarch,
 						   arg_type->length ()),
 			     type_byte_order (arg_type),
 			     arg_type->is_unsigned ());
-	      abi_val = allocate_value (info.type);
-	      unscaled.write (value_contents_raw (abi_val),
+	      abi_val = value::allocate (info.type);
+	      unscaled.write (abi_val->contents_raw (),
 			      type_byte_order (info.type),
 			      info.type->is_unsigned ());
 	    }
@@ -3283,13 +3650,12 @@ riscv_return_value (struct gdbarch  *gdbarch,
 	      arg_val = value_from_contents (arg_type, writebuf);
 	      abi_val = value_cast (info.type, arg_val);
 	    }
-	  writebuf = value_contents_raw (abi_val).data ();
+	  writebuf = abi_val->contents_raw ().data ();
 	}
       else
 	{
-	  abi_val = allocate_value (info.type);
-	  old_readbuf = readbuf;
-	  readbuf = value_contents_raw (abi_val).data ();
+	  abi_val = value::allocate (info.type);
+	  readbuf = abi_val->contents_raw ().data ();
 	}
       arg_len = info.type->length ();
 
@@ -3368,8 +3734,17 @@ riscv_return_value (struct gdbarch  *gdbarch,
 
 	    regcache_cooked_read_unsigned (regcache, RISCV_A0_REGNUM,
 					   &addr);
-	    if (readbuf != nullptr)
-	      read_memory (addr, readbuf, info.length);
+	    if (read_value != nullptr)
+	      {
+		abi_val = value_at_non_lval (type, addr);
+		/* Also reset the expected type, so that the cast
+		   later on is a no-op.  If the cast is not a no-op,
+		   and if the return type is variably-sized, then the
+		   type of ABI_VAL will differ from ARG_TYPE due to
+		   dynamic type resolution, and so will most likely
+		   fail.  */
+		arg_type = abi_val->type ();
+	      }
 	    if (writebuf != nullptr)
 	      write_memory (addr, writebuf, info.length);
 	  }
@@ -3384,10 +3759,8 @@ riscv_return_value (struct gdbarch  *gdbarch,
       /* This completes the cast from abi type back to the declared type
 	 in the case that we are reading from the machine.  See the
 	 comment at the head of this block for more details.  */
-      if (readbuf != nullptr)
+      if (read_value != nullptr)
 	{
-	  struct value *arg_val;
-
 	  if (is_fixed_point_type (arg_type))
 	    {
 	      /* Convert abi_val to the actual return type, but
@@ -3395,18 +3768,16 @@ riscv_return_value (struct gdbarch  *gdbarch,
 		 is unscaled.  */
 	      gdb_mpz unscaled;
 
-	      unscaled.read (value_contents (abi_val),
+	      unscaled.read (abi_val->contents (),
 			     type_byte_order (info.type),
 			     info.type->is_unsigned ());
-	      arg_val = allocate_value (arg_type);
-	      unscaled.write (value_contents_raw (arg_val),
+	      *read_value = value::allocate (arg_type);
+	      unscaled.write ((*read_value)->contents_raw (),
 			      type_byte_order (arg_type),
 			      arg_type->is_unsigned ());
 	    }
 	  else
-	    arg_val = value_cast (arg_type, abi_val);
-	  memcpy (old_readbuf, value_contents_raw (arg_val).data (),
-		  arg_type->length ());
+	    *read_value = value_cast (arg_type, abi_val);
 	}
     }
 
@@ -3434,7 +3805,7 @@ riscv_frame_align (struct gdbarch *gdbarch, CORE_ADDR addr)
    unwinder.  */
 
 static struct riscv_unwind_cache *
-riscv_frame_cache (frame_info_ptr this_frame, void **this_cache)
+riscv_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   CORE_ADDR pc, start_addr;
   struct riscv_unwind_cache *cache;
@@ -3457,12 +3828,11 @@ riscv_frame_cache (frame_info_ptr this_frame, void **this_cache)
   cache->frame_base
     = (get_frame_register_unsigned (this_frame, cache->frame_base_reg)
        + cache->frame_base_offset);
-  if (riscv_debug_unwinder)
-    gdb_printf (gdb_stdlog, "Frame base is %s ($%s + 0x%x)\n",
-		core_addr_to_string (cache->frame_base),
-		gdbarch_register_name (gdbarch,
-				       cache->frame_base_reg),
-		cache->frame_base_offset);
+  riscv_unwinder_debug_printf ("frame base is %s ($%s + 0x%x)",
+			       core_addr_to_string (cache->frame_base),
+			       gdbarch_register_name (gdbarch,
+						      cache->frame_base_reg),
+			       cache->frame_base_offset);
 
   /* The prologue scanner sets the address of registers stored to the stack
      as the offset of that register from the frame base.  The prologue
@@ -3495,7 +3865,7 @@ riscv_frame_cache (frame_info_ptr this_frame, void **this_cache)
 /* Implement the this_id callback for RiscV frame unwinder.  */
 
 static void
-riscv_frame_this_id (frame_info_ptr this_frame,
+riscv_frame_this_id (const frame_info_ptr &this_frame,
 		     void **prologue_cache,
 		     struct frame_id *this_id)
 {
@@ -3516,7 +3886,7 @@ riscv_frame_this_id (frame_info_ptr this_frame,
 /* Implement the prev_register callback for RiscV frame unwinder.  */
 
 static struct value *
-riscv_frame_prev_register (frame_info_ptr this_frame,
+riscv_frame_prev_register (const frame_info_ptr &this_frame,
 			   void **prologue_cache,
 			   int regnum)
 {
@@ -3772,6 +4142,33 @@ riscv_gnu_triplet_regexp (struct gdbarch *gdbarch)
   return "riscv(32|64)?";
 }
 
+/* Implementation of `gdbarch_stap_is_single_operand', as defined in
+   gdbarch.h.  */
+
+static int
+riscv_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
+{
+  return (ISDIGIT (*s) /* Literal number.  */
+	  || *s == '(' /* Register indirection.  */
+	  || ISALPHA (*s)); /* Register value.  */
+}
+
+/* String that appears before a register name in a SystemTap register
+   indirect expression.  */
+
+static const char *const stap_register_indirection_prefixes[] =
+{
+  "(", nullptr
+};
+
+/* String that appears after a register name in a SystemTap register
+   indirect expression.  */
+
+static const char *const stap_register_indirection_suffixes[] =
+{
+  ")", nullptr
+};
+
 /* Initialize the current architecture based on INFO.  If possible,
    re-use an architecture from ARCHES, which is a list of
    architectures already created during this debugging session.
@@ -3783,7 +4180,6 @@ static struct gdbarch *
 riscv_gdbarch_init (struct gdbarch_info info,
 		    struct gdbarch_list *arches)
 {
-  struct gdbarch *gdbarch;
   struct riscv_gdbarch_features features;
   const struct target_desc *tdesc = info.target_desc;
 
@@ -3792,8 +4188,7 @@ riscv_gdbarch_init (struct gdbarch_info info,
     tdesc = riscv_find_default_target_description (info);
   gdb_assert (tdesc != nullptr);
 
-  if (riscv_debug_gdbarch)
-    gdb_printf (gdb_stdlog, "Have got a target description\n");
+  riscv_gdbarch_debug_printf ("have got a target description");
 
   tdesc_arch_data_up tdesc_data = tdesc_data_alloc ();
   std::vector<riscv_pending_register_alias> pending_aliases;
@@ -3810,8 +4205,7 @@ riscv_gdbarch_init (struct gdbarch_info info,
 						 &pending_aliases, &features));
   if (!valid_p)
     {
-      if (riscv_debug_gdbarch)
-	gdb_printf (gdb_stdlog, "Target description is not valid\n");
+      riscv_gdbarch_debug_printf ("target description is not valid");
       return NULL;
     }
 
@@ -3869,8 +4263,10 @@ riscv_gdbarch_init (struct gdbarch_info info,
     return arches->gdbarch;
 
   /* None found, so create a new architecture from the information provided.  */
-  riscv_gdbarch_tdep *tdep = new riscv_gdbarch_tdep;
-  gdbarch = gdbarch_alloc (&info, tdep);
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info, gdbarch_tdep_up (new riscv_gdbarch_tdep));
+  riscv_gdbarch_tdep *tdep = gdbarch_tdep<riscv_gdbarch_tdep> (gdbarch);
+
   tdep->isa_features = features;
   tdep->abi_features = abi_features;
 
@@ -3888,7 +4284,7 @@ riscv_gdbarch_init (struct gdbarch_info info,
   set_gdbarch_type_align (gdbarch, riscv_type_align);
 
   /* Information about the target architecture.  */
-  set_gdbarch_return_value (gdbarch, riscv_return_value);
+  set_gdbarch_return_value_as_value (gdbarch, riscv_return_value);
   set_gdbarch_breakpoint_kind_from_pc (gdbarch, riscv_breakpoint_kind_from_pc);
   set_gdbarch_sw_breakpoint_from_kind (gdbarch, riscv_sw_breakpoint_from_kind);
   set_gdbarch_have_nonsteppable_watchpoint (gdbarch, 1);
@@ -3931,7 +4327,8 @@ riscv_gdbarch_init (struct gdbarch_info info,
   set_tdesc_pseudo_register_reggroup_p (gdbarch,
 					riscv_pseudo_register_reggroup_p);
   set_gdbarch_pseudo_register_read (gdbarch, riscv_pseudo_register_read);
-  set_gdbarch_pseudo_register_write (gdbarch, riscv_pseudo_register_write);
+  set_gdbarch_deprecated_pseudo_register_write (gdbarch,
+						riscv_pseudo_register_write);
 
   /* Finalise the target description registers.  */
   tdesc_use_registers (gdbarch, tdesc, std::move (tdesc_data),
@@ -4010,6 +4407,13 @@ riscv_gdbarch_init (struct gdbarch_info info,
   set_gdbarch_valid_disassembler_options (gdbarch,
 					  disassembler_options_riscv ());
   set_gdbarch_disassembler_options (gdbarch, &riscv_disassembler_options);
+
+  /* SystemTap Support.  */
+  set_gdbarch_stap_is_single_operand (gdbarch, riscv_stap_is_single_operand);
+  set_gdbarch_stap_register_indirection_prefixes
+    (gdbarch, stap_register_indirection_prefixes);
+  set_gdbarch_stap_register_indirection_suffixes
+    (gdbarch, stap_register_indirection_suffixes);
 
   /* Hook in OS ABI-specific overrides, if they have been registered.  */
   gdbarch_init_osabi (info, gdbarch);
@@ -4099,51 +4503,164 @@ riscv_next_pc (struct regcache *regcache, CORE_ADDR pc)
   return next_pc;
 }
 
+/* Return true if INSN is not a control transfer instruction and is allowed to
+   appear in the middle of the lr/sc sequence.  */
+
+static bool
+riscv_insn_is_non_cti_and_allowed_in_atomic_sequence
+  (const struct riscv_insn &insn)
+{
+  switch (insn.opcode ())
+    {
+    case riscv_insn::LUI:
+    case riscv_insn::AUIPC:
+    case riscv_insn::ADDI:
+    case riscv_insn::ADDIW:
+    case riscv_insn::SLTI:
+    case riscv_insn::SLTIU:
+    case riscv_insn::XORI:
+    case riscv_insn::ORI:
+    case riscv_insn::ANDI:
+    case riscv_insn::SLLI:
+    case riscv_insn::SLLIW:
+    case riscv_insn::SRLI:
+    case riscv_insn::SRLIW:
+    case riscv_insn::SRAI:
+    case riscv_insn::ADD:
+    case riscv_insn::ADDW:
+    case riscv_insn::SRAIW:
+    case riscv_insn::SUB:
+    case riscv_insn::SUBW:
+    case riscv_insn::SLL:
+    case riscv_insn::SLLW:
+    case riscv_insn::SLT:
+    case riscv_insn::SLTU:
+    case riscv_insn::XOR:
+    case riscv_insn::SRL:
+    case riscv_insn::SRLW:
+    case riscv_insn::SRA:
+    case riscv_insn::SRAW:
+    case riscv_insn::OR:
+    case riscv_insn::AND:
+      return true;
+    }
+
+    return false;
+}
+
+/* Return true if INSN is a direct branch instruction.  */
+
+static bool
+riscv_insn_is_direct_branch (const struct riscv_insn &insn)
+{
+  switch (insn.opcode ())
+    {
+    case riscv_insn::BEQ:
+    case riscv_insn::BNE:
+    case riscv_insn::BLT:
+    case riscv_insn::BGE:
+    case riscv_insn::BLTU:
+    case riscv_insn::BGEU:
+    case riscv_insn::JAL:
+      return true;
+    }
+
+    return false;
+}
+
 /* We can't put a breakpoint in the middle of a lr/sc atomic sequence, so look
    for the end of the sequence and put the breakpoint there.  */
 
-static bool
-riscv_next_pc_atomic_sequence (struct regcache *regcache, CORE_ADDR pc,
-			       CORE_ADDR *next_pc)
+static std::vector<CORE_ADDR>
+riscv_deal_with_atomic_sequence (struct regcache *regcache, CORE_ADDR pc)
 {
   struct gdbarch *gdbarch = regcache->arch ();
   struct riscv_insn insn;
-  CORE_ADDR cur_step_pc = pc;
-  CORE_ADDR last_addr = 0;
+  CORE_ADDR cur_step_pc = pc, next_pc;
+  std::vector<CORE_ADDR> next_pcs;
+  bool found_valid_atomic_sequence = false;
+  enum riscv_insn::opcode lr_opcode;
 
   /* First instruction has to be a load reserved.  */
   insn.decode (gdbarch, cur_step_pc);
-  if (insn.opcode () != riscv_insn::LR)
-    return false;
-  cur_step_pc = cur_step_pc + insn.length ();
+  lr_opcode = insn.opcode ();
+  if (lr_opcode != riscv_insn::LR_D && lr_opcode != riscv_insn::LR_W)
+    return {};
 
-  /* Next instruction should be branch to exit.  */
-  insn.decode (gdbarch, cur_step_pc);
-  if (insn.opcode () != riscv_insn::BNE)
-    return false;
-  last_addr = cur_step_pc + insn.imm_signed ();
-  cur_step_pc = cur_step_pc + insn.length ();
+  /* The loop comprises only an LR/SC sequence and code to retry the sequence in
+     the case of failure, and must comprise at most 16 instructions placed
+     sequentially in memory.  While our code tries to follow these restrictions,
+     it has the following limitations:
 
-  /* Next instruction should be store conditional.  */
-  insn.decode (gdbarch, cur_step_pc);
-  if (insn.opcode () != riscv_insn::SC)
-    return false;
-  cur_step_pc = cur_step_pc + insn.length ();
+       (a) We expect the loop to start with an LR and end with a BNE.
+	   Apparently this does not cover all cases for a valid sequence.
+       (b) The atomic limitations only apply to the code that is actually
+	   executed, so here again it's overly restrictive.
+       (c) The lr/sc are required to be for the same target address, but this
+	   information is only known at runtime.  Same as (b), in order to check
+	   this we will end up needing to simulate the sequence, which is more
+	   complicated than what we're doing right now.
+
+     Also note that we only expect a maximum of (16-2) instructions in the for
+     loop as we have assumed the presence of LR and BNE at the beginning and end
+     respectively.  */
+  for (int insn_count = 0; insn_count < 16 - 2; ++insn_count)
+    {
+      cur_step_pc += insn.length ();
+      insn.decode (gdbarch, cur_step_pc);
+
+      /* The dynamic code executed between lr/sc can only contain instructions
+	 from the base I instruction set, excluding loads, stores, backward
+	 jumps, taken backward branches, JALR, FENCE, FENCE.I, and SYSTEM
+	 instructions.  If the C extension is supported, then compressed forms
+	 of the aforementioned I instructions are also permitted.  */
+
+      if (riscv_insn_is_non_cti_and_allowed_in_atomic_sequence (insn))
+	continue;
+      /* Look for a conditional branch instruction, check if it's taken forward
+	 or not.  */
+      else if (riscv_insn_is_direct_branch (insn))
+	{
+	  if (insn.imm_signed () > 0)
+	    {
+	      next_pc = cur_step_pc + insn.imm_signed ();
+	      next_pcs.push_back (next_pc);
+	    }
+	  else
+	    break;
+	}
+      /* Look for a paired SC instruction which closes the atomic sequence.  */
+      else if ((insn.opcode () == riscv_insn::SC_D
+		&& lr_opcode == riscv_insn::LR_D)
+	       || (insn.opcode () == riscv_insn::SC_W
+		   && lr_opcode == riscv_insn::LR_W))
+	found_valid_atomic_sequence = true;
+      else
+	break;
+    }
+
+  if (!found_valid_atomic_sequence)
+    return {};
 
   /* Next instruction should be branch to start.  */
   insn.decode (gdbarch, cur_step_pc);
   if (insn.opcode () != riscv_insn::BNE)
-    return false;
+    return {};
   if (pc != (cur_step_pc + insn.imm_signed ()))
-    return false;
-  cur_step_pc = cur_step_pc + insn.length ();
+    return {};
+  cur_step_pc += insn.length ();
 
-  /* We should now be at the end of the sequence.  */
-  if (cur_step_pc != last_addr)
-    return false;
+  /* Remove all PCs that jump within the sequence.  */
+  auto matcher = [cur_step_pc] (const CORE_ADDR addr) -> bool
+    {
+      return addr < cur_step_pc;
+    };
+  auto it = std::remove_if (next_pcs.begin (), next_pcs.end (), matcher);
+  next_pcs.erase (it, next_pcs.end ());
 
-  *next_pc = cur_step_pc;
-  return true;
+  next_pc = cur_step_pc;
+  next_pcs.push_back (next_pc);
+  return next_pcs;
 }
 
 /* This is called just before we want to resume the inferior, if we want to
@@ -4153,14 +4670,14 @@ riscv_next_pc_atomic_sequence (struct regcache *regcache, CORE_ADDR pc,
 std::vector<CORE_ADDR>
 riscv_software_single_step (struct regcache *regcache)
 {
-  CORE_ADDR pc, next_pc;
+  CORE_ADDR cur_pc = regcache_read_pc (regcache), next_pc;
+  std::vector<CORE_ADDR> next_pcs
+    = riscv_deal_with_atomic_sequence (regcache, cur_pc);
 
-  pc = regcache_read_pc (regcache);
+  if (!next_pcs.empty ())
+    return next_pcs;
 
-  if (riscv_next_pc_atomic_sequence (regcache, pc, &next_pc))
-    return {next_pc};
-
-  next_pc = riscv_next_pc (regcache, pc);
+  next_pc = riscv_next_pc (regcache, cur_pc);
 
   return {next_pc};
 }
@@ -4253,45 +4770,45 @@ _initialize_riscv_tdep ()
 			  &setdebugriscvcmdlist, &showdebugriscvcmdlist,
 			  &setdebuglist, &showdebuglist);
 
-  add_setshow_zuinteger_cmd ("breakpoints", class_maintenance,
-			     &riscv_debug_breakpoints,  _("\
+  add_setshow_boolean_cmd ("breakpoints", class_maintenance,
+			   &riscv_debug_breakpoints,  _("\
 Set riscv breakpoint debugging."), _("\
 Show riscv breakpoint debugging."), _("\
 When non-zero, print debugging information for the riscv specific parts\n\
 of the breakpoint mechanism."),
-			     NULL,
-			     show_riscv_debug_variable,
-			     &setdebugriscvcmdlist, &showdebugriscvcmdlist);
+			   nullptr,
+			   show_riscv_debug_variable,
+			   &setdebugriscvcmdlist, &showdebugriscvcmdlist);
 
-  add_setshow_zuinteger_cmd ("infcall", class_maintenance,
-			     &riscv_debug_infcall,  _("\
+  add_setshow_boolean_cmd ("infcall", class_maintenance,
+			   &riscv_debug_infcall,  _("\
 Set riscv inferior call debugging."), _("\
 Show riscv inferior call debugging."), _("\
 When non-zero, print debugging information for the riscv specific parts\n\
 of the inferior call mechanism."),
-			     NULL,
-			     show_riscv_debug_variable,
-			     &setdebugriscvcmdlist, &showdebugriscvcmdlist);
+			   nullptr,
+			   show_riscv_debug_variable,
+			   &setdebugriscvcmdlist, &showdebugriscvcmdlist);
 
-  add_setshow_zuinteger_cmd ("unwinder", class_maintenance,
-			     &riscv_debug_unwinder,  _("\
+  add_setshow_boolean_cmd ("unwinder", class_maintenance,
+			   &riscv_debug_unwinder,  _("\
 Set riscv stack unwinding debugging."), _("\
 Show riscv stack unwinding debugging."), _("\
-When non-zero, print debugging information for the riscv specific parts\n\
+When on, print debugging information for the riscv specific parts\n\
 of the stack unwinding mechanism."),
-			     NULL,
-			     show_riscv_debug_variable,
-			     &setdebugriscvcmdlist, &showdebugriscvcmdlist);
+			   nullptr,
+			   show_riscv_debug_variable,
+			   &setdebugriscvcmdlist, &showdebugriscvcmdlist);
 
-  add_setshow_zuinteger_cmd ("gdbarch", class_maintenance,
-			     &riscv_debug_gdbarch,  _("\
+  add_setshow_boolean_cmd ("gdbarch", class_maintenance,
+			   &riscv_debug_gdbarch,  _("\
 Set riscv gdbarch initialisation debugging."), _("\
 Show riscv gdbarch initialisation debugging."), _("\
 When non-zero, print debugging information for the riscv gdbarch\n\
 initialisation process."),
-			     NULL,
-			     show_riscv_debug_variable,
-			     &setdebugriscvcmdlist, &showdebugriscvcmdlist);
+			   nullptr,
+			   show_riscv_debug_variable,
+			   &setdebugriscvcmdlist, &showdebugriscvcmdlist);
 
   /* Add root prefix command for all "set riscv" and "show riscv" commands.  */
   add_setshow_prefix_cmd ("riscv", no_class,
@@ -4305,7 +4822,7 @@ initialisation process."),
   add_setshow_auto_boolean_cmd ("use-compressed-breakpoints", no_class,
 				&use_compressed_breakpoints,
 				_("\
-Set debugger's use of compressed breakpoints."), _("	\
+Set debugger's use of compressed breakpoints."), _("\
 Show debugger's use of compressed breakpoints."), _("\
 Debugging compressed code requires compressed breakpoints to be used. If\n\
 left to 'auto' then gdb will use them if the existing instruction is a\n\

@@ -1,5 +1,5 @@
 /* IBM RS/6000 "XCOFF" back-end for BFD.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Metin G. Ozisik, Mimi Phuong-Thao Vo, and John Gilmore.
    Archive support from Damon A. Permezel.
    Contributed by IBM Corporation and Cygnus Support.
@@ -476,12 +476,15 @@ rs6000coff_core_p (bfd *abfd)
 #else
   size =  sizeof (core.new_dump);
 #endif
-  tmpptr = (char *) bfd_zalloc (abfd, (bfd_size_type) size);
+  tmpptr = bfd_alloc (abfd, size + 1);
   if (!tmpptr)
     return NULL;
 
   /* Copy core file header.  */
   memcpy (tmpptr, &core, size);
+  /* Ensure core_file_failing_command string is terminated.  This is
+     just to stop buffer overflows on fuzzed files.  */
+  tmpptr[size] = 0;
   set_tdata (abfd, tmpptr);
 
   /* Set architecture.  */

@@ -1,5 +1,5 @@
 /* Type handling functions.
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -187,10 +187,21 @@ ctf_member_next (ctf_dict_t *fp, ctf_id_t type, ctf_next_t **it,
 	*membtype = memb.ctlm_type;
       offset = (unsigned long) CTF_LMEM_OFFSET (&memb);
 
-      if (membname[0] == 0
-	  && (ctf_type_kind (fp, memb.ctlm_type) == CTF_K_STRUCT
-	      || ctf_type_kind (fp, memb.ctlm_type) == CTF_K_UNION))
-	i->ctn_type = memb.ctlm_type;
+      if (membname[0] == 0)
+	{
+	  ctf_id_t resolved;
+
+	  if ((resolved = ctf_type_resolve (fp, memb.ctlm_type)) == CTF_ERR)
+	    {
+	      if (ctf_errno (fp) != ECTF_NONREPRESENTABLE)
+		return -1;			/* errno is set for us.  */
+	      resolved = memb.ctlm_type;
+	    }
+
+	  if (ctf_type_kind (fp, resolved) == CTF_K_STRUCT
+	      || ctf_type_kind (fp, resolved) == CTF_K_UNION)
+	    i->ctn_type = resolved;
+	}
       i->ctn_n++;
 
       /* The callers might want automatic recursive sub-struct traversal.  */
@@ -492,6 +503,7 @@ ctf_id_t
 ctf_variable_next (ctf_dict_t *fp, ctf_next_t **it, const char **name)
 {
   ctf_next_t *i = *it;
+  ctf_id_t id;
 
   if ((fp->ctf_flags & LCTF_CHILD) && (fp->ctf_parent == NULL))
     return (ctf_set_typed_errno (fp, ECTF_NOPARENT));
@@ -503,8 +515,7 @@ ctf_variable_next (ctf_dict_t *fp, ctf_next_t **it, const char **name)
 
       i->cu.ctn_fp = fp;
       i->ctn_iter_fun = (void (*) (void)) ctf_variable_next;
-      if (fp->ctf_flags & LCTF_RDWR)
-	i->u.ctn_dvd = ctf_list_next (&fp->ctf_dvdefs);
+      i->u.ctn_dvd = ctf_list_next (&fp->ctf_dvdefs);
       *it = i;
     }
 
@@ -514,26 +525,20 @@ ctf_variable_next (ctf_dict_t *fp, ctf_next_t **it, const char **name)
   if (fp != i->cu.ctn_fp)
     return (ctf_set_typed_errno (fp, ECTF_NEXT_WRONGFP));
 
-  if (!(fp->ctf_flags & LCTF_RDWR))
+  if (i->ctn_n < fp->ctf_nvars)
     {
-      if (i->ctn_n >= fp->ctf_nvars)
-	goto end_iter;
-
       *name = ctf_strptr (fp, fp->ctf_vars[i->ctn_n].ctv_name);
       return fp->ctf_vars[i->ctn_n++].ctv_type;
-    }
-  else
-    {
-      ctf_id_t id;
 
-      if (i->u.ctn_dvd == NULL)
-	goto end_iter;
-
-      *name = i->u.ctn_dvd->dvd_name;
-      id = i->u.ctn_dvd->dvd_type;
-      i->u.ctn_dvd = ctf_list_next (i->u.ctn_dvd);
-      return id;
     }
+
+  if (i->u.ctn_dvd == NULL)
+    goto end_iter;
+
+  *name = i->u.ctn_dvd->dvd_name;
+  id = i->u.ctn_dvd->dvd_type;
+  i->u.ctn_dvd = ctf_list_next (i->u.ctn_dvd);
+  return id;
 
  end_iter:
   ctf_next_destroy (i);
@@ -600,21 +605,31 @@ ctf_type_resolve_unsliced (ctf_dict_t *fp, ctf_id_t type)
 {
   ctf_dict_t *ofp = fp;
   const ctf_type_t *tp;
+  ctf_id_t resolved_type;
 
   if ((type = ctf_type_resolve (fp, type)) == CTF_ERR)
     return CTF_ERR;
 
   if ((tp = ctf_lookup_by_id (&fp, type)) == NULL)
     return CTF_ERR;		/* errno is set for us.  */
+  resolved_type = type;
 
-  if ((LCTF_INFO_KIND (fp, tp->ctt_info)) == CTF_K_SLICE)
+  do
     {
-      ctf_id_t ret;
+      type = resolved_type;
 
-      if ((ret = ctf_type_reference (fp, type)) == CTF_ERR)
-	return (ctf_set_typed_errno (ofp, ctf_errno (fp)));
-      return ret;
+      if ((LCTF_INFO_KIND (fp, tp->ctt_info)) == CTF_K_SLICE)
+	if ((type = ctf_type_reference (fp, type)) == CTF_ERR)
+	  return (ctf_set_typed_errno (ofp, ctf_errno (fp)));
+
+      if ((resolved_type = ctf_type_resolve (fp, type)) == CTF_ERR)
+	return CTF_ERR;
+
+      if ((tp = ctf_lookup_by_id (&fp, resolved_type)) == NULL)
+	return CTF_ERR;		/* errno is set for us.  */
     }
+  while (LCTF_INFO_KIND (fp, tp->ctt_info) == CTF_K_SLICE);
+
   return type;
 }
 
@@ -635,22 +650,8 @@ ctf_get_dict (ctf_dict_t *fp, ctf_id_t type)
 
 ctf_id_t ctf_lookup_by_rawname (ctf_dict_t *fp, int kind, const char *name)
 {
-  return ctf_lookup_by_rawhash (fp, ctf_name_table (fp, kind), name);
-}
-
-/* Look up a name in the given name table, in the appropriate hash given the
-   readability state of the dictionary.  The name is a raw, undecorated
-   identifier.  */
-
-ctf_id_t ctf_lookup_by_rawhash (ctf_dict_t *fp, ctf_names_t *np, const char *name)
-{
-  ctf_id_t id;
-
-  if (fp->ctf_flags & LCTF_RDWR)
-    id = (ctf_id_t) (uintptr_t) ctf_dynhash_lookup (np->ctn_writable, name);
-  else
-    id = ctf_hash_lookup_type (np->ctn_readonly, fp, name);
-  return id;
+  return (ctf_id_t) (uintptr_t)
+    ctf_dynhash_lookup (ctf_name_table (fp, kind), name);
 }
 
 /* Lookup the given type ID and return its name as a new dynamically-allocated
@@ -1416,16 +1417,24 @@ ctf_member_info (ctf_dict_t *fp, ctf_id_t type, const char *name,
     {
       ctf_lmember_t memb;
       const char *membname;
+      ctf_id_t resolved;
 
       if (ctf_struct_member (fp, &memb, tp, vlen, vbytes, i) < 0)
         return (ctf_set_errno (ofp, ctf_errno (fp)));
 
       membname = ctf_strptr (fp, memb.ctlm_name);
 
+      if ((resolved = ctf_type_resolve (fp, memb.ctlm_type)) == CTF_ERR)
+	{
+	  if (ctf_errno (fp) != ECTF_NONREPRESENTABLE)
+	    return (ctf_set_errno (ofp, ctf_errno (fp)));
+	  resolved = memb.ctlm_type;
+	}
+
       if (membname[0] == 0
-	  && (ctf_type_kind (fp, memb.ctlm_type) == CTF_K_STRUCT
-	      || ctf_type_kind (fp, memb.ctlm_type) == CTF_K_UNION)
-	  && (ctf_member_info (fp, memb.ctlm_type, name, mip) == 0))
+	  && (ctf_type_kind (fp, resolved) == CTF_K_STRUCT
+	      || ctf_type_kind (fp, resolved) == CTF_K_UNION)
+	  && (ctf_member_info (fp, resolved, name, mip) == 0))
 	{
 	  mip->ctm_offset += (unsigned long) CTF_LMEM_OFFSET (&memb);
 	  return 0;
@@ -1646,7 +1655,7 @@ ctf_type_rvisit (ctf_dict_t *fp, ctf_id_t type, ctf_visit_f *func,
 {
   ctf_dict_t *ofp = fp;
   ctf_id_t otype = type;
-  const ctf_type_t *tp;
+  const ctf_type_t *tp = NULL;
   const ctf_dtdef_t *dtd;
   unsigned char *vlen;
   ssize_t size, increment, vbytes;

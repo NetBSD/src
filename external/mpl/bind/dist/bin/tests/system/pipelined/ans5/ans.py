@@ -84,7 +84,7 @@ class TCPDelayer(threading.Thread):
         while self.running:
             curr_timeout = 0.5
             try:
-                curr_timeout = self.queue[0][0] - time.time()
+                curr_timeout = self.queue[0][0] - time.monotonic()
             except StopIteration:
                 pass
             if curr_timeout > 0:
@@ -97,14 +97,14 @@ class TCPDelayer(threading.Thread):
                     data = self.conn.recv(65535)
                     if not data:
                         return
-                    self.queue.append((time.time() + DELAY, data))
+                    self.queue.append((time.monotonic() + DELAY, data))
                 if self.cconn in rfds:
                     data = self.cconn.recv(65535)
                     if not data == 0:
                         return
                     self.conn.send(data)
             try:
-                while self.queue[0][0] - time.time() < 0:
+                while self.queue[0][0] - time.monotonic() < 0:
                     _, data = self.queue.pop(0)
                     self.cconn.send(data)
             except StopIteration:
@@ -133,7 +133,7 @@ class UDPDelayer(threading.Thread):
         while self.running:
             curr_timeout = 0.5
             if self.queue:
-                curr_timeout = self.queue[0][0] - time.time()
+                curr_timeout = self.queue[0][0] - time.monotonic()
             if curr_timeout >= 0:
                 if curr_timeout == 0:
                     curr_timeout = 0.5
@@ -144,7 +144,7 @@ class UDPDelayer(threading.Thread):
                     data, addr = self.sock.recvfrom(65535)
                     if not data:
                         return
-                    self.queue.append((time.time() + DELAY, data))
+                    self.queue.append((time.monotonic() + DELAY, data))
                     qid = struct.unpack(">H", data[:2])[0]
                     log("Received a query from %s, queryid %d" % (str(addr), qid))
                     self.qid_mapping[qid] = addr
@@ -160,7 +160,7 @@ class UDPDelayer(threading.Thread):
                             "Received a response from %s, queryid %d, sending to %s"
                             % (str(addr), qid, str(dst))
                         )
-            while self.queue and self.queue[0][0] - time.time() < 0:
+            while self.queue and self.queue[0][0] - time.monotonic() < 0:
                 _, data = self.queue.pop(0)
                 qid = struct.unpack(">H", data[:2])[0]
                 log("Sending a query to %s, queryid %d" % (str(self.dst), qid))

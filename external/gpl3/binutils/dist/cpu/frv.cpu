@@ -2933,7 +2933,7 @@
   (name h-acc40U)
   (comment "40 bit unsigned accumulator")
   (attrs PROFILE VIRTUAL)
-  (type register UDI (64))
+  (type register DI (64))
   (indices extern-keyword acc-names)
   ; The accumlator is made up of two 32 bit registers, accgi/acci.
   ; We want to extract this as a combined 40 unsigned bits

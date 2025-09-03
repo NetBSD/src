@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -49,20 +49,6 @@ struct DisContext
 };
 
 static const int MAX_DISASM_STR     = 2048;
-static const int MAX_INSTR_SIZE     = 8;
-
-Disasm::Disasm (char *fname)
-{
-  dwin = NULL;
-  dis_str = NULL;
-  need_swap_endian = false;
-  my_stabs = Stabs::NewStabs (fname, fname);
-  if (my_stabs == NULL)
-    return;
-  stabs = my_stabs;
-  platform = stabs->get_platform ();
-  disasm_open ();
-}
 
 Disasm::Disasm (Platform_t _platform, Stabs *_stabs)
 {
@@ -71,7 +57,6 @@ Disasm::Disasm (Platform_t _platform, Stabs *_stabs)
   need_swap_endian = false;
   stabs = _stabs;
   platform = _platform;
-  my_stabs = NULL;
   disasm_open ();
 }
 
@@ -208,6 +193,7 @@ Disasm::disasm_open ()
     case Amd64:
       need_swap_endian = (DbeSession::platform == Sparc);
       break;
+    case RISCV:
     case Sparcv8plus:
     case Sparcv9:
     case Sparc:
@@ -246,6 +232,7 @@ Disasm::disasm_open ()
       dis_info.arch = bfd_arch_i386;
       dis_info.mach = bfd_mach_x86_64;
       break;
+    case RISCV:
     case Sparcv8plus:
     case Sparcv9:
     case Sparc:
@@ -262,7 +249,6 @@ Disasm::disasm_open ()
 
 Disasm::~Disasm ()
 {
-  delete my_stabs;
   delete dwin;
   delete dis_str;
 }
@@ -369,7 +355,7 @@ Disasm::get_funcname_in_plt (uint64_t pc)
 {
   if (stabs)
     {
-      Elf *elf = stabs->openElf (true);
+      Elf *elf = stabs->openElf (false);
       if (elf)
 	return elf->get_funcname_in_plt (pc);
     }

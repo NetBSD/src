@@ -1,4 +1,4 @@
-/*	$NetBSD: feature_tests.h,v 1.3 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: feature_tests.h,v 1.4 2025/07/24 09:04:56 hans Exp $	*/
 
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
@@ -32,6 +32,8 @@
 #ifndef _COMPAT_OPENSOLARIS_SYS_FEATURE_TESTS_H_
 #define _COMPAT_OPENSOLARIS_SYS_FEATURE_TESTS_H_
 
-/* Empty. */
+#ifdef __sun
+#include_next "sys/feature_tests.h"
+#endif
 
 #endif

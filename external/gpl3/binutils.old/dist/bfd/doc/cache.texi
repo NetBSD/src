@@ -15,51 +15,45 @@ handle.
 
 @findex bfd_cache_init
 @subsubsection @code{bfd_cache_init}
-@strong{Synopsis}
-@example
-bool bfd_cache_init (bfd *abfd);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_cache_init (bfd *abfd); 
 Add a newly opened BFD to the cache.
 
+@end deftypefn
 @findex bfd_cache_close
 @subsubsection @code{bfd_cache_close}
-@strong{Synopsis}
-@example
-bool bfd_cache_close (bfd *abfd);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_cache_close (bfd *abfd); 
 Remove the BFD @var{abfd} from the cache. If the attached file is open,
 then close it too.
 
-@strong{Returns}@*
 @code{FALSE} is returned if closing the file fails, @code{TRUE} is
 returned if all is well.
 
+@end deftypefn
 @findex bfd_cache_close_all
 @subsubsection @code{bfd_cache_close_all}
-@strong{Synopsis}
-@example
-bool bfd_cache_close_all (void);
-@end example
-@strong{Description}@*
+@deftypefn {Function} bool bfd_cache_close_all (void); 
 Remove all BFDs from the cache. If the attached file is open,
-then close it too.
+then close it too.  Note - despite its name this function will
+close a BFD even if it is not marked as being cacheable, ie
+even if bfd_get_cacheable() returns false.
 
-@strong{Returns}@*
 @code{FALSE} is returned if closing one of the file fails, @code{TRUE} is
 returned if all is well.
 
+@end deftypefn
+@findex bfd_cache_size
+@subsubsection @code{bfd_cache_size}
+@deftypefn {Function} unsigned bfd_cache_size (void); 
+Return the number of open files in the cache.
+
+@end deftypefn
 @findex bfd_open_file
 @subsubsection @code{bfd_open_file}
-@strong{Synopsis}
-@example
-FILE* bfd_open_file (bfd *abfd);
-@end example
-@strong{Description}@*
+@deftypefn {Function} FILE* bfd_open_file (bfd *abfd); 
 Call the OS to open a file for @var{abfd}.  Return the @code{FILE *}
 (possibly @code{NULL}) that results from this operation.  Set up the
 BFD so that future accesses know the file is open. If the @code{FILE *}
 returned is @code{NULL}, then it won't have been put in the
 cache, so it won't have to be removed from it.
 
+@end deftypefn

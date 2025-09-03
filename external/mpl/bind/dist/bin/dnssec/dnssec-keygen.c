@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.14 2025/05/21 14:47:35 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.15 2025/07/17 19:01:43 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -435,10 +435,10 @@ keygen(keygen_ctx_t *ctx, isc_mem_t *mctx, int argc, char **argv) {
 			fatal("-S and -G cannot be used together");
 		}
 
-		ret = dst_key_fromnamedfile(
-			ctx->predecessor, ctx->directory,
-			(DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_STATE),
-			mctx, &prevkey);
+		ret = dst_key_fromnamedfile(ctx->predecessor, ctx->directory,
+					    DST_TYPE_PUBLIC | DST_TYPE_PRIVATE |
+						    DST_TYPE_STATE,
+					    mctx, &prevkey);
 		if (ret != ISC_R_SUCCESS) {
 			fatal("Invalid keyfile %s: %s", ctx->predecessor,
 			      isc_result_totext(ret));

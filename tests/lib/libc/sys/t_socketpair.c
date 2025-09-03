@@ -1,4 +1,4 @@
-/* $NetBSD: t_socketpair.c,v 1.2 2017/01/13 20:04:52 christos Exp $ */
+/* $NetBSD: t_socketpair.c,v 1.3 2025/07/17 19:50:40 kre Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_socketpair.c,v 1.2 2017/01/13 20:04:52 christos Exp $");
+__RCSID("$NetBSD: t_socketpair.c,v 1.3 2025/07/17 19:50:40 kre Exp $");
 
 #include <atf-c.h>
 #include <fcntl.h>
@@ -45,6 +45,13 @@ __RCSID("$NetBSD: t_socketpair.c,v 1.2 2017/01/13 20:04:52 christos Exp $");
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
+
+#ifndef	SOCK_CLOFORK
+#define	SOCK_CLOFORK	0
+#endif
+#ifndef	FD_CLOFORK
+#define	FD_CLOFORK	0
+#endif
 
 static void
 connected(int fd)
@@ -79,6 +86,14 @@ run(int flags)
 	} else {
 		ATF_REQUIRE((fcntl(fd[0], F_GETFD) & FD_CLOEXEC) == 0);
 		ATF_REQUIRE((fcntl(fd[1], F_GETFD) & FD_CLOEXEC) == 0);
+	}
+
+	if (flags & SOCK_CLOFORK) {
+		ATF_REQUIRE((fcntl(fd[0], F_GETFD) & FD_CLOFORK) != 0);
+		ATF_REQUIRE((fcntl(fd[1], F_GETFD) & FD_CLOFORK) != 0);
+	} else {
+		ATF_REQUIRE((fcntl(fd[0], F_GETFD) & FD_CLOFORK) == 0);
+		ATF_REQUIRE((fcntl(fd[1], F_GETFD) & FD_CLOFORK) == 0);
 	}
 
 	if (flags & SOCK_NONBLOCK) {
@@ -126,12 +141,28 @@ ATF_TC_BODY(socketpair_cloexec, tc)
 	run(SOCK_CLOEXEC);
 }
 
+ATF_TC(socketpair_clofork);
+ATF_TC_HEAD(socketpair_clofork, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A close-on-fork of socketpair(2)");
+}
+
+ATF_TC_BODY(socketpair_clofork, tc)
+{
+#if defined(SOCK_CLOFORK) && SOCK_CLOFORK != 0
+	run(SOCK_CLOFORK);
+#else
+	atf_tc_skip("SOCK_CLOFORK not defined");
+#endif
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, socketpair_basic);
 	ATF_TP_ADD_TC(tp, socketpair_nonblock);
 	ATF_TP_ADD_TC(tp, socketpair_cloexec);
+	ATF_TP_ADD_TC(tp, socketpair_clofork);
 
 	return atf_no_error();
 }

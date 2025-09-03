@@ -174,8 +174,8 @@ ft32_analyze_prologue (CORE_ADDR start_addr, CORE_ADDR end_addr,
   ULONGEST inst;
   int isize = 0;
   int regnum, pushreg;
-  struct bound_minimal_symbol msymbol;
   const int first_saved_reg = 13;	/* The first saved register.  */
+
   /* PROLOGS are addresses of the subroutine prologs, PROLOGS[n]
      is the address of __prolog_$rN.
      __prolog_$rN pushes registers from 13 through n inclusive.
@@ -195,7 +195,8 @@ ft32_analyze_prologue (CORE_ADDR start_addr, CORE_ADDR end_addr,
 
       snprintf (prolog_symbol, sizeof (prolog_symbol), "__prolog_$r%02d",
 		regnum);
-      msymbol = lookup_minimal_symbol (prolog_symbol, NULL, NULL);
+      bound_minimal_symbol msymbol
+	= lookup_minimal_symbol (current_program_space, prolog_symbol);
       if (msymbol.minsym)
 	prologs[regnum] = msymbol.value_address ();
       else

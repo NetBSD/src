@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -27,18 +27,8 @@
 
 #include "hwcdrv.h"
 
-/* TprintfT(<level>,...) definitions.  Adjust per module as needed */
-#define DBG_LT0 0 // for high-level configuration, unexpected errors/warnings
-#define DBG_LT1 1 // for configuration details, warnings
-#define DBG_LT2 2
-#define DBG_LT3 3
-
 /*---------------------------------------------------------------------------*/
 /* compile options */
-
-#define DISALLOW_USI_USII_6357446
-/* Solaris 9/libcpc1 allows cpc_bind() to work on US-IIe processors, even
-   though this processor cannot generate profiling interrupts. */
 
 #define DISALLOW_PENTIUM_PRO_MMX_7007575
 /* Solaris/libcpc2 defaults to "Pentium Pro with MMX, Pentium II"
@@ -125,12 +115,6 @@ static const Hwcentry empty_ctr = {NULL, NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, 
     {"cycles1",	"cpu_clk_unhalted.ref_p",                   1,  NULL,   PRELOAD( 910,MHZ),  -(MHZ), ABST_NONE}, /*hidden*/ \
     /* end of list */
 
-#define SPARC_CYCLES \
-    {"usr_time","Cycles_user",                  SYSTIME_REGNOS, STXT("User CPU"),   PRELOADS_75,1, ABST_NONE}, \
-    {"sys_time","Cycles_user~system=1~user=0",  SYSTIME_REGNOS, STXT("System CPU"), PRELOADS_75,1, ABST_NONE}, \
-    /* end of list */
-
-
 /* --- PERF_EVENTS "software" definitions --- */
 #define PERF_EVENTS_SW_EVENT_ALIASES \
 // none supported for now
@@ -140,12 +124,7 @@ static const Hwcentry empty_ctr = {NULL, NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, 
     /* end of list */
 #endif
 
-#define PERF_EVENTS_SW_EVENT_DEFS \
-// none supported for now
-#if 0
-    {"PERF_COUNT_SW_TASK_CLOCK",					NULL, REGNO_ANY, NULL, PRELOADS_7, -(1000),ABST_NONE}, \
-    /* end of list */
-#endif
+#define PERF_EVENTS_SW_EVENT_DEFS
 
 /*
  * The PAPI descriptive strings used to be wrapped with STXT(),
@@ -264,1136 +243,7 @@ static Hwcentry papi_generic_list[] = {
   {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
 };
 
-static Hwcentry usIlist[] = {
-  {"cycles", "Cycle_cnt", REGNO_ANY, STXT ("CPU Cycles"), PRELOADS_7, 1, ABST_NONE},
-  {"insts", "Instr_cnt", REGNO_ANY, STXT ("Instructions Executed"), PRELOADS_7, 0, ABST_NONE},
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
-static Hwcentry usIIIlist[] = /* III, IIIi, IIIp.  Note that some counters are processor-specific */{
-  {"cycles", "Cycle_cnt", REGNO_ANY, STXT ("CPU Cycles"), PRELOADS_7, 1, ABST_NONE},
-  {"insts", "Instr_cnt", REGNO_ANY, STXT ("Instructions Executed"), PRELOADS_7, 0, ABST_NONE},
-  {"icm", "IC_miss", REGNO_ANY, STXT ("I$ Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"dcrm", "DC_rd_miss", REGNO_ANY, STXT ("D$ Read Misses"), PRELOADS_5, 0, ABST_LOAD},
-  {"dcwm", "DC_wr_miss", REGNO_ANY, STXT ("D$ Write Misses"), PRELOADS_5, 0, ABST_STORE},
-  {"dcr", "DC_rd", REGNO_ANY, STXT ("D$ Read Refs"), PRELOADS_6, 0, ABST_LOAD},
-  {"dcw", "DC_wr", REGNO_ANY, STXT ("D$ Write Refs"), PRELOADS_6, 0, ABST_STORE},
-  {"ecref", "EC_ref", REGNO_ANY, STXT ("E$ Refs"), PRELOADS_6, 0, ABST_LDST},
-  {"itlbm", "ITLB_miss", REGNO_ANY, STXT ("ITLB Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"dtlbm", "DTLB_miss", REGNO_ANY, STXT ("DTLB Misses"), PRELOADS_5, 0, ABST_US_DTLBM},
-  {"ecm", "EC_misses", REGNO_ANY, STXT ("E$ Misses"), PRELOADS_5, 0, ABST_LDST},
-  {"ecrm", "EC_rd_miss", REGNO_ANY, STXT ("E$ Read Misses"), PRELOADS_5, 0, ABST_LOAD},
-  {"ecml", "EC_miss_local", REGNO_ANY, STXT ("E$ Local Misses"), PRELOADS_5, 0, ABST_LDST},
-  {"ecmr", "EC_miss_remote", REGNO_ANY, STXT ("E$ Remote Misses"), PRELOADS_5, 0, ABST_LDST},
-  {"ecim", "EC_ic_miss", REGNO_ANY, STXT ("E$ Instr. Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"icstall", "Dispatch0_IC_miss", REGNO_ANY, STXT ("I$ Stall Cycles"), PRELOADS_6, 1, ABST_NONE},
-  {"dcstall", "Re_DC_miss", REGNO_ANY, STXT ("D$ and E$ Stall Cycles"), PRELOADS_6, 1, ABST_LOAD},
-  {"ecstall", "Re_EC_miss", REGNO_ANY, STXT ("E$ Stall Cycles"), PRELOADS_6, 1, ABST_LOAD},
-  {"sqstall", "Rstall_storeQ", REGNO_ANY, STXT ("StoreQ Stall Cycles"), PRELOADS_6, 1, ABST_STORE},
-  {"rawstall", "Re_RAW_miss", REGNO_ANY, STXT ("RAW Stall Cycles"), PRELOADS_6, 1, ABST_LOAD},
-  {"dcmissov", "Re_DC_missovhd", REGNO_ANY, STXT ("DC Miss Ovhd"), PRELOADS_6, 1, ABST_LOAD},
-  {"fpustall", "Re_FPU_bypass", REGNO_ANY, STXT ("FPU Stall Cycles"), PRELOADS_6, 1, ABST_NONE},
-  {"fpusestall", "Rstall_FP_use", REGNO_ANY, STXT ("FPU Use Stall Cycles"), PRELOADS_6, 1, ABST_NONE},
-  {"iustall", "Rstall_IU_use", REGNO_ANY, STXT ("IU Stall Cycles"), PRELOADS_6, 1, ABST_NONE},
-  {"fpadd", "FA_pipe_completion", REGNO_ANY, STXT ("FP Adds"), PRELOADS_6, 0, ABST_NONE},
-  {"fpmul", "FM_pipe_completion", REGNO_ANY, STXT ("FP Muls"), PRELOADS_6, 0, ABST_NONE},
-
-  /* explicit definitions of (hidden) entries for proper counters */
-  /*  Only counters that can be time converted, or are load-store need to be in this table */
-  {"Cycle_cnt", NULL, REGNO_ANY, NULL, PRELOADS_7, 1, ABST_NONE},
-  {"EC_miss_mtag_remote", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST},
-  {"DC_rd_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"DC_wr_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"DC_rd", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"DC_wr", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"EC_ref", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST},
-  {"EC_snoop_inv", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC /*?*/},
-  {"EC_wb", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"EC_wb_remote", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"DTLB_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_US_DTLBM},
-  {"EC_misses", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST},
-  {"EC_rd_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"PC_port0_rd", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"EC_miss_local", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST},
-  {"EC_miss_remote", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST},
-  {"EC_snoop_cb", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC /*?*/},
-  {"WC_snoop_cb", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC /*?*/},
-  {"WC_scrubbed", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"WC_wb_wo_read", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"PC_MS_misses", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"PC_soft_hit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"PC_hard_hit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"PC_port1_rd", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"PC_snoop_inv", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE /*?*/},
-  {"SW_count_0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_COUNT},
-  {"SW_count_1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_COUNT},
-  {"Dispatch0_IC_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Dispatch0_mispred", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Dispatch0_br_target", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Dispatch0_2nd_br", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Dispatch_rs_mispred", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Rstall_storeQ", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_STORE},
-  {"Rstall_FP_use", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Rstall_IU_use", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"EC_write_hit_RTO", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"Re_RAW_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_LOAD},
-  {"Re_DC_missovhd", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_LOAD},
-  {"Re_endian_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_LOAD},
-  {"Re_FPU_bypass", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Re_DC_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_LOAD},
-  {"Re_EC_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_LOAD},
-  {"Re_PC_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_LOAD},
-  {"SI_snoop", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"SI_ciq_flow", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"SI_owned", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_msl_busy_stall", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NOPC},
-  {"MC_mdb_overflow_stall", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NOPC},
-  {"MC_page_close_stall", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NOPC},
-  {"MC_reads_0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_reads_1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_reads_2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_reads_3", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_writes_0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_writes_1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_writes_2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_writes_3", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_stalls_0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NOPC},
-  {"MC_stalls_1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NOPC},
-  {"MC_stalls_2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NOPC},
-  {"MC_stalls_3", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NOPC},
-
-  /* additional (hidden) aliases, for convenience */
-  {"cycles0", "Cycle_cnt", 0, NULL, PRELOADS_75, 1, ABST_NONE},
-  {"cycles1", "Cycle_cnt", 1, NULL, PRELOADS_75, 1, ABST_NONE},
-  {"insts0", "Instr_cnt", 0, NULL, PRELOADS_75, 0, ABST_NONE},
-  {"insts1", "Instr_cnt", 1, NULL, PRELOADS_75, 0, ABST_NONE},
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
-static Hwcentry usIVplist[] = {
-  {"cycles", "Cycle_cnt", REGNO_ANY, STXT ("CPU Cycles"), PRELOADS_7, 1, ABST_NONE},
-  {"insts", "Instr_cnt", REGNO_ANY, STXT ("Instructions Executed"), PRELOADS_7, 0, ABST_NONE},
-  {"icm", "IC_fill", REGNO_ANY, STXT ("I$ Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"dcrm", "DC_rd_miss", REGNO_ANY, STXT ("D$ Read Misses"), PRELOADS_5, 0, ABST_LOAD},
-  {"dcwm", "DC_wr_miss", REGNO_ANY, STXT ("D$ Write Misses"), PRELOADS_5, 0, ABST_STORE},
-  {"dcr", "DC_rd", REGNO_ANY, STXT ("D$ Read Refs"), PRELOADS_6, 0, ABST_LOAD},
-  {"dcw", "DC_wr", REGNO_ANY, STXT ("D$ Write Refs"), PRELOADS_6, 0, ABST_STORE},
-  {"itlbm", "ITLB_miss", REGNO_ANY, STXT ("ITLB Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"dtlbm", "DTLB_miss", REGNO_ANY, STXT ("DTLB Misses"), PRELOADS_5, 0, ABST_US_DTLBM},
-  {"l2ref", "L2_ref", REGNO_ANY, STXT ("L2$ Refs"), PRELOADS_5, 0, ABST_LDST},
-  {"l2m", "L2_miss", REGNO_ANY, STXT ("L2$ Misses"), PRELOADS_5, 0, ABST_LDST},
-  {"l2rm", "L2_rd_miss", REGNO_ANY, STXT ("L2$ Read Misses"), PRELOADS_5, 0, ABST_LOAD},
-  {"l2im", "L2_IC_miss", REGNO_ANY, STXT ("L2$ Instr. Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"ecm", "L3_miss", REGNO_ANY, STXT ("E$ Misses"), PRELOADS_5, 0, ABST_LDST},
-  {"ecrm", "L3_rd_miss", REGNO_ANY, STXT ("E$ Read Misses"), PRELOADS_5, 0, ABST_LOAD},
-  {"ecml", "SSM_L3_miss_local", REGNO_ANY, STXT ("E$ Local Misses"), PRELOADS_5, 0, ABST_LDST},
-  {"ecmr", "SSM_L3_miss_remote", REGNO_ANY, STXT ("E$ Remote Misses"), PRELOADS_5, 0, ABST_LDST},
-  {"ecim", "L3_IC_miss", REGNO_ANY, STXT ("E$ Instr. Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"icstall", "Dispatch0_IC_miss", REGNO_ANY, STXT ("I$ Stall Cycles"), PRELOADS_6, 1, ABST_NONE},
-  {"dcstall", "Re_DC_miss", REGNO_ANY, STXT ("D$ and E$ Stall Cycles"), PRELOADS_6, 1, ABST_LOAD},
-  {"ecstall", "Re_L3_miss", REGNO_ANY, STXT ("E$ Stall Cycles"), PRELOADS_6, 1, ABST_LOAD},
-  {"sqstall", "Rstall_storeQ", REGNO_ANY, STXT ("StoreQ Stall Cycles"), PRELOADS_6, 1, ABST_STORE},
-  {"rawstall", "Re_RAW_miss", REGNO_ANY, STXT ("RAW Stall Cycles"), PRELOADS_6, 1, ABST_LOAD},
-  {"dcmissov", "Re_DC_missovhd", REGNO_ANY, STXT ("DC Miss Ovhd"), PRELOADS_6, 1, ABST_LOAD},
-  {"fpustall", "Re_FPU_bypass", REGNO_ANY, STXT ("FPU Stall Cycles"), PRELOADS_6, 1, ABST_NONE},
-  {"fpusestall", "Rstall_FP_use", REGNO_ANY, STXT ("FPU Use Stall Cycles"), PRELOADS_6, 1, ABST_NONE},
-  {"iustall", "Rstall_IU_use", REGNO_ANY, STXT ("IU Stall Cycles"), PRELOADS_6, 1, ABST_NONE},
-  {"fpadd", "FA_pipe_completion", REGNO_ANY, STXT ("FP Adds"), PRELOADS_6, 0, ABST_NONE},
-  {"fpmul", "FM_pipe_completion", REGNO_ANY, STXT ("FP Muls"), PRELOADS_6, 0, ABST_NONE},
-
-  /* explicit definitions of (hidden) entries for proper counters */
-  /*  Only counters that can be time converted, or are load-store need to be in this table */
-  {"Cycle_cnt", NULL, REGNO_ANY, NULL, PRELOADS_7, 1, ABST_NONE},
-  {"DC_rd", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"DC_rd_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"DC_wr", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"DC_wr_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"DTLB_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_US_DTLBM},
-  {"Dispatch0_2nd_br", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Dispatch0_IC_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Dispatch0_other", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2L3_snoop_cb_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC /*?*/},
-  {"L2L3_snoop_inv_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC /*?*/},
-  {"L2_hit_I_state_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST /*?*/},
-  {"L2_hit_other_half", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST},
-  {"L2_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST},
-  {"L2_rd_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"L2_ref", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST},
-  {"L2_snoop_cb_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC /*?*/},
-  {"L2_snoop_inv_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC /*?*/},
-  {"L2_wb", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"L2_wb_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"L2_write_hit_RTO", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"L2_write_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"L3_hit_I_state_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST},
-  {"L3_hit_other_half", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST},
-  {"L3_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST},
-  {"L3_rd_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"L3_wb", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"L3_wb_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"L3_write_hit_RTO", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"L3_write_miss_RTO", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE},
-  {"MC_reads_0_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_reads_1_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_reads_2_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_reads_3_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_stalls_0_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NOPC},
-  {"MC_stalls_1_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NOPC},
-  {"MC_stalls_2_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NOPC},
-  {"MC_stalls_3_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NOPC},
-  {"MC_writes_0_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_writes_1_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_writes_2_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"MC_writes_3_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  /*? {"PC_MS_misses",	NULL, REGNO_ANY, NULL, PRELOAD_DEF,     0, ABST_LOAD}, */
-  {"PC_hard_hit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"PC_inv", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE /*?*/},
-  {"PC_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"PC_rd", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"PC_soft_hit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LOAD},
-  {"Re_DC_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_LOAD},
-  {"Re_DC_missovhd", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_LOAD},
-  {"Re_FPU_bypass", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Re_L2_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_LOAD},
-  {"Re_L3_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_LOAD},
-  {"Re_PFQ_full", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Re_RAW_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_LOAD},
-  {"Rstall_FP_use", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Rstall_IU_use", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Rstall_storeQ", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_STORE},
-  {"SI_RTO_src_data", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"SI_RTS_src_data", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"SI_ciq_flow_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NOPC},
-  {"SI_owned_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"SI_snoop_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NOPC},
-  {"ecml", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST},
-  {"ecmr", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST},
-  {"SSM_L3_miss_local", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST /*?*/},
-  {"SSM_L3_miss_mtag_remote", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST /*?*/},
-  {"SSM_L3_miss_remote", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_LDST /*?*/},
-  {"SSM_L3_wb_remote", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_STORE /*?*/},
-  {"SSM_new_transaction_sh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_TBD /*?*/},
-
-  /* additional (hidden) aliases, for convenience */
-  {"cycles0", "Cycle_cnt", 0, NULL, PRELOADS_75, 1, ABST_NONE},
-  {"cycles1", "Cycle_cnt", 1, NULL, PRELOADS_75, 1, ABST_NONE},
-  {"insts0", "Instr_cnt", 0, NULL, PRELOADS_75, 0, ABST_NONE},
-  {"insts1", "Instr_cnt", 1, NULL, PRELOADS_75, 0, ABST_NONE},
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
-static Hwcentry niagara1[] =
-	/* CPC_ULTRA_T1              , "UltraSPARC T1" */{
-  {"insts", "Instr_cnt", REGNO_ANY, STXT ("Instructions Executed"), PRELOADS_7, 0, ABST_NONE},
-#ifndef WORKAROUND_6231196_NIAGARA1_NO_CTR_0 /* since register 0 counter don't work XXX */
-  {"icm", "IC_miss", REGNO_ANY, STXT ("I$ Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"itlbm", "ITLB_miss", REGNO_ANY, STXT ("ITLB Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"ecim", "L2_imiss", REGNO_ANY, STXT ("E$ Instr. Misses"), PRELOADS_4, 0, ABST_NONE},
-  {"dcm", "DC_miss", REGNO_ANY, STXT ("D$ Misses"), PRELOADS_5, 0, ABST_EXACT},
-  {"dtlbm", "DTLB_miss", REGNO_ANY, STXT ("DTLB Misses"), PRELOADS_5, 0, ABST_EXACT},
-  {"ecdm", "L2_dmiss_ld", REGNO_ANY, STXT ("E$ Data Misses"), PRELOADS_4, 0, ABST_EXACT},
-  {"flops", "FP_instr_cnt", REGNO_ANY, STXT ("Floating-point Ops"), PRELOADS_6, 0, ABST_NONE},
-
-  /* explicit definitions of (hidden) entries for proper counters */
-  /*  Only counters that can be time converted, or are load-store need to be in this table */
-  {"SB_full", NULL, REGNO_ANY, NULL, PRELOADS_6, 1, ABST_NONE},
-  {"DC_miss", NULL, REGNO_ANY, NULL, PRELOADS_6, 0, ABST_EXACT},
-  {"DTLB_miss", NULL, REGNO_ANY, NULL, PRELOADS_6, 0, ABST_EXACT},
-  {"L2_dmiss_ld", NULL, REGNO_ANY, NULL, PRELOADS_6, 0, ABST_EXACT},
-#endif
-
-  /* additional (hidden) aliases, for convenience */
-  {"insts1", "Instr_cnt", 1, NULL, PRELOADS_75, 0, ABST_NONE},
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
-static Hwcentry niagara2[] = {
-  /* CPC_ULTRA_T2              , "UltraSPARC T2" */
-  /* CPC_ULTRA_T2              , "UltraSPARC T2+" */
-  {"insts", "Instr_cnt", REGNO_ANY, STXT ("Instructions Executed"), PRELOADS_7, 0, ABST_NONE},
-  {"loads", "Instr_ld", REGNO_ANY, STXT ("Load Instructions"), PRELOADS_7, 0, ABST_EXACT},
-  {"stores", "Instr_st", REGNO_ANY, STXT ("Store Instructions"), PRELOADS_6, 0, ABST_EXACT},
-  {"dcm", "DC_miss", REGNO_ANY, STXT ("L1 D-cache Misses"), PRELOADS_6, 0, ABST_EXACT},
-  {"dtlbm", "DTLB_miss", REGNO_ANY, STXT ("DTLB Misses"), PRELOADS_6, 0, ABST_NONE},
-  {"l2drm", "L2_dmiss_ld", REGNO_ANY, STXT ("L2 D-cache Read Misses (See Bug 15664448)"), PRELOADS_5, 0, ABST_EXACT},
-  {"icm", "IC_miss", REGNO_ANY, STXT ("L1 I-cache Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"itlbm", "ITLB_miss", REGNO_ANY, STXT ("ITLB Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"l2im", "L2_imiss", REGNO_ANY, STXT ("L2 I-cache Misses"), PRELOADS_4, 0, ABST_NONE},
-
-  /* explicit definitions of (hidden) entries for proper counters */
-  /* Only counters that can be time converted, or are load-store need to be in this table */
-  {"Instr_ld", NULL, REGNO_ANY, NULL, PRELOADS_7, 0, ABST_EXACT},
-  {"Instr_st", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT},
-  {"Atomics", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT},
-  {"DC_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT},
-  {"L2_dmiss_ld", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT},
-  {"DTLB_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE},
-  {"DES_3DES_busy_cycle", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"AES_busy_cycle", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Kasumi_busy_cycle", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"MD5_SHA-1_SHA-256_busy_cycle", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"MA_busy_cycle", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  /* additional (hidden) aliases, for convenience */
-  {"insts1", "Instr_cnt", 1, NULL, PRELOADS_75, 0, ABST_NONE},
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
-static Hwcentry sparc_t4[] = {
-  // Identical to sparc_t5_m6 except for: l3m_spec
-  // when updating this table, also update sparc_t5_m6[]
-  // obsolete aliases marked with REGNO_INVALID (allows reading of older experiments)
-  {"l2l3dh", "DC_miss_L2_L3_hit_nospec", REGNO_INVALID, STXT ("L2 or L3 D-cache Hits"), PRELOADS_6, 0, ABST_EXACT}, // undercounts due to thread-hog issue
-  {"l3m", "DC_miss_remote_L3_hit_nospec~emask=0x6", REGNO_INVALID, STXT ("L3 D-cache Misses"), PRELOADS_5, 0, ABST_EXACT}, // undercounts due to thread-hog issue
-  {"lmh", "DC_miss_local_hit_nospec", REGNO_INVALID, STXT ("Local Mem. Hits"), PRELOADS_5, 0, ABST_EXACT}, // undercounts due to thread-hog issue
-  {"rmh", "DC_miss_remote_L3_hit_nospec", REGNO_INVALID, STXT ("Remote Mem. Hits"), PRELOADS_5, 0, ABST_EXACT}, // undercounts due to thread-hog issue
-  {"pqs", "PQ_tag_wait", REGNO_INVALID, STXT ("Pick Queue Stalls"), PRELOADS_7, 1, ABST_NONE}, // old alias name
-  {"raw_stb", "RAW_hit_st_buf", REGNO_INVALID, STXT ("RAW Hazard in Store Buffer"), PRELOADS_55, 0, ABST_NONE}, // 11@full hit, 60@partial hit (in future, combine w/st_q)
-  {"raw_stq", "RAW_hit_st_q", REGNO_INVALID, STXT ("RAW Hazard in Store Queue"), PRELOADS_55, 0, ABST_NONE}, // 11@full hit, 60@partial hit (in future, combine w/st_buf)
-  {"sel_stalls", "Sel_0_ready", REGNO_INVALID, STXT ("Stalls Another Thread Selected"), PRELOADS_7, 1, ABST_NONE},
-  {"icm", "IC_miss", REGNO_INVALID, STXT ("L1 I-Cache Misses"), PRELOADS_55, 0, ABST_NONE}, // 20@ l2/l3 hit (guess)
-  {"icm_stalls", "IC_miss", REGNO_INVALID, STXT ("L1 I-Cache Miss Est Stalls"), PRELOADS_55, 25, ABST_NONE}, // 25@ l2-20/l3-50
-
-  // current aliases
-  SPARC_CYCLES
-  {"cycles", "Cycles_user", REGNO_ANY, STXT ("CPU Cycles"), PRELOADS_75, 1, ABST_NONE},
-  {"insts", "Instr_all", REGNO_ANY, STXT ("Instructions Executed"), PRELOADS_75, 0, ABST_NONE},
-  {"c_stalls", "Commit_0", REGNO_ANY, STXT ("Stall Cycles"), PRELOADS_7, 1, ABST_NONE},
-  {"loads", "Instr_ld", REGNO_ANY, STXT ("Load Instructions"), PRELOADS_7, 0, ABST_EXACT},
-  {"stores", "Instr_st", REGNO_ANY, STXT ("Store Instructions"), PRELOADS_7, 0, ABST_EXACT},
-  {"dcm", "DC_miss_nospec", REGNO_ANY, STXT ("L1 D-cache Misses"), PRELOADS_65, 0, ABST_EXACT},
-  {"l3m_spec", "DC_miss_local_hit~emask=0x6", REGNO_ANY, STXT ("L3 D-cache Speculative Misses"), PRELOADS_5, 0, ABST_NONE, STXT ("Loads that speculatively missed local L3")}, // T4 encoding (430 lm, 690 rm) ~5 misses overlap on t5/pico_ile
-  //  {"l3m_spec",	"DC_miss_local_hit~emask=0x30",		REGNO_ANY, STXT("L3 D-cache Speculative Misses"),PRELOADS_5,0, ABST_NONE, STXT("Loads that speculatively missed local L3")}, // T5/M6 encoding (430 lm, 690 rm) ~5 misses overlap on t5/pico_ile
-  {"lmh_spec", "DC_miss_local_hit", REGNO_ANY, STXT ("Local Mem Speculative Hits"), PRELOADS_5, 0, ABST_NONE},
-  {"rmh_spec", "DC_miss_remote_L3_hit", REGNO_ANY, STXT ("Remote Mem Speculative Hits"), PRELOADS_5, 0, ABST_NONE},
-  //
-  {"dtlbm", "DTLB_miss_asynch", REGNO_ANY, STXT ("DTLB Misses"), PRELOADS_55, 0, ABST_NONE}, // 10@l1 hit, 24@l2 hit, 60@l3 hit, 500@l3 miss, 5000@trap  0.001 events/cycle
-  {"dtlb_hwtw_stalls", "DTLB_HWTW_all", REGNO_ANY, STXT ("DTLB HWTW Est Stalls"), PRELOADS_55, 25, ABST_NONE, STXT ("Estimated time stalled on a DTLB miss requiring a HW tablewalk")}, // l2-20, l3-50
-  {"dtlb_trap_stalls", "DTLB_fill_trap", REGNO_ANY, STXT ("DTLB Trap Est Stalls"), PRELOADS_35, 5000, ABST_NONE, STXT ("Estimated time stalled on a DTLB miss with HW tablewalk unsuccessful")}, // 5000@trap
-  {"rawhaz", "RAW_hit_st_q~emask=0xf", REGNO_ANY, STXT ("Read-after-write Hazards"), PRELOADS_55, 0, ABST_NONE, STXT ("Loads delayed by a previous store (read-after-write hazards)")},
-  {"br_msp_stalls", "Br_mispred", REGNO_ANY, STXT ("Branch Mispredict Stalls"), PRELOADS_6, 24, ABST_NONE, STXT ("Estimated time stalled on Branch mispredictions")}, // 24@miss, %5 of branches is bad
-  {"br_msp", "Br_mispred", REGNO_ANY, STXT ("Branch Mispredict"), PRELOADS_6, 0, ABST_NONE}, // 24@miss, %5 of branches is bad
-  {"br_tkn", "Br_taken", REGNO_ANY, STXT ("Branch Taken"), PRELOADS_7, 0, ABST_NONE}, // 2 cycles minimum
-  {"br_ins", "Branches", REGNO_ANY, STXT ("Branch Instructions"), PRELOADS_7, 0, ABST_NONE}, // 24@miss, %5 of branches is bad
-  {"fgu", "Instr_FGU_crypto", REGNO_ANY, STXT ("FP/VIS/Crypto Instructions"), PRELOADS_7, 0, ABST_NONE}, // 1 cycle/event
-
-  /* explicit definitions of (hidden) entries for proper counters */
-  /* Counters that can be time converted, support memspace, or have a short_desc need to be in this table */
-
-  {"Sel_pipe_drain_cycles", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread stalls at Select waiting with correct instructions when pipeline has to drain after branch misprediction")},
-  {"Sel_0_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread stalls at Select waiting for various conditions to be resolved")},
-  {"Sel_0_ready", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread was ready to have its instructions selected but another hardware thread was selected instead")},
-  {"Sel_1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles that only 1 instruction or uop was selected")},
-  {"Sel_2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles that 2 instructions or uops were selected")},
-
-  {"Pick_0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Pick_1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Pick_2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Pick_3", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Pick_any", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"Branches", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Control transfer instructions completed, excluding trap-related transfers")},
-  {"Instr_FGU_crypto", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("FP and VIS instructions completed by the Floating Point and Graphics Unit")},
-  {"Instr_ld", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("Load instructions completed")},
-  {"Instr_st", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("Store instructions completed")},
-  {"SPR_ring_ops", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("Specialized instructions that require internal use of SPR ring completed")},
-  {"Instr_other", NULL, REGNO_ANY, NULL, PRELOAD (2, 4), 0, ABST_NONE, STXT ("Basic arithmetic and logical instructions completed")},
-  {"Instr_all", NULL, REGNO_ANY, NULL, PRELOAD (1, 4), 0, ABST_NONE, STXT ("Total instructions completed")},
-
-  {"Br_taken", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Branch instructions taken and completed")},
-  {"Sw_count_intr", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("SW Count instructions completed")},
-  {"Atomics", NULL, REGNO_ANY, NULL, PRELOAD (20, 4), 0, ABST_EXACT, STXT ("Atomic instructions, including CASA/XA, completed")},
-  {"SW_prefetch", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("PREFETCH and PREFETCHA instructions completed")},
-  {"Block_ld_st", NULL, REGNO_ANY, NULL, PRELOAD (20, 4), 0, ABST_EXACT, STXT ("Block load/store instructions completed")},
-
-  {"BTC_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Branches delayed a few extra cycles because branch target not found in Branch Target Cache")},
-
-  {"ITLB_fill_8KB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 8K page")},
-  {"ITLB_fill_64KB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 64K page")},
-  {"ITLB_fill_4MB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 4M page")},
-  {"ITLB_fill_256MB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 256M page")},
-  {"ITLB_fill_2GB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 2G or 16G page")},
-  {"ITLB_fill_trap", NULL, REGNO_ANY, NULL, PRELOAD (1000, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk unsuccessful")},
-  {"ITLB_miss_asynch", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk search done")},
-
-  {"Fetch_0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_0_all", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"Instr_buffer_full", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"PQ_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"ROB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"ROB_LB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"SB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"ROB_SB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LB_SB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"ROB_LB_SB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"DTLB_miss_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"ITLB_HWTW_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk hit local L2D")},
-  {"ITLB_HWTW_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (80, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk hit local L3 or neighbor L2D")},
-  {"ITLB_HWTW_L3_miss", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk missed all local caches")},
-  {"DTLB_HWTW_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk hit local L2D")},
-  {"DTLB_HWTW_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (80, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk hit local L3 or neighbor L2D")},
-  {"DTLB_HWTW_L3_miss", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk missed all local caches")},
-  {"DTLB_HWTW_all", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss requiring HW tablewalk")},
-
-  {"DC_miss_L2_L3_hit_nospec", NULL, REGNO_ANY, NULL, PRELOAD (25, 4), 0, ABST_EXACT},
-  {"DC_miss_local_hit_nospec", NULL, REGNO_ANY, NULL, PRELOAD (500, 4), 0, ABST_EXACT},
-  {"DC_miss_remote_L3_hit_nospec", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_EXACT},
-  {"DC_miss_nospec", NULL, REGNO_ANY, NULL, PRELOAD (25, 4), 0, ABST_EXACT, STXT ("Loads that missed local L1D")},
-
-  {"DTLB_fill_8KB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 8K page")},
-  {"DTLB_fill_64KB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 64K page")},
-  {"DTLB_fill_4MB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 4M page")},
-  {"DTLB_fill_256MB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 256M page")},
-  {"DTLB_fill_2GB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 2G or 16G page")},
-  {"DTLB_fill_trap", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk unsuccessful")},
-  {"DTLB_miss_asynch", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk search done")},
-  {"RAW_hit_st_buf", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Loads delayed by a previous store (read-after-write) still in store buffer not yet committed")},
-  {"RAW_hit_st_q", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Loads delayed by a previous store (read-after-write) committed but in store queue not yet written to L2D")},
-
-  {"St_q_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"St_hit_L2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Stores whose cacheline being updated was in local L2D")},
-  {"St_hit_L3", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Stores whose cacheline being updated was in local L3")},
-
-  {"DC_miss_L2_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (20, 4), 0, ABST_NONE, STXT ("Loads that speculatively hit local L2D or L3")},
-  {"DC_miss_local_hit", NULL, REGNO_ANY, NULL, PRELOAD (500, 4), 0, ABST_NONE, STXT ("Loads that speculatively hit local memory")},
-  {"DC_miss_remote_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_NONE, STXT ("Loads that speculatively hit remote cache or remote memory")},
-  {"DC_miss", NULL, REGNO_ANY, NULL, PRELOAD (20, 4), 0, ABST_NONE, STXT ("Loads that speculatively missed L1D")},
-
-  {"L2_pipe_stall", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"Br_dir_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Branch instructions completed whose direction was mispredicted")},
-  {"Br_trg_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Branch instructions completed whose target was mispredicted")},
-  {"Br_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Branch instructions completed whose direction or target was mispredicted")},
-
-  {"Cycles_user", NULL, REGNO_ANY, NULL, PRELOAD (1, 4), 1, ABST_NONE, STXT ("Cycles hardware thread is active in specified mode(s)")},
-  //
-  {"Commit_0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles no uop commits from this hardware thread")},
-  {"Commit_0_all", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles no uop commits from any hardware thread on this core")},
-  {"Commit_1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles 1 uop commits from this hardware thread")},
-  {"Commit_2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles 2 uops commit from this hardware thread")},
-  {"Commit_1_or_2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles 1 or 2 uops commit from this hardware thread")},
-
-  /* additional (hidden) aliases, for convenience */
-  {"cycles0", "Cycles_user", 0, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"cycles1", "Cycles_user", 1, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"insts0", "Instr_all", 0, NULL, PRELOADS_8, 0, ABST_NONE},
-  {"insts1", "Instr_all", 1, NULL, PRELOADS_8, 0, ABST_NONE},
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
-static Hwcentry sparc_t5_m6[] = {
-  // Identical to sparc_t4 except for: l3m_spec
-  // when updating this table, also update sparc_t4[]
-  // obsolete aliases marked with REGNO_INVALID (allows reading of older experiments)
-  {"l2l3dh", "DC_miss_L2_L3_hit_nospec", REGNO_INVALID, STXT ("L2 or L3 D-cache Hits"), PRELOADS_6, 0, ABST_EXACT}, // undercounts due to thread-hog issue
-  {"l3m", "DC_miss_remote_L3_hit_nospec~emask=0x6", REGNO_INVALID, STXT ("L3 D-cache Misses"), PRELOADS_5, 0, ABST_EXACT}, // undercounts due to thread-hog issue
-  {"lmh", "DC_miss_local_hit_nospec", REGNO_INVALID, STXT ("Local Mem. Hits"), PRELOADS_5, 0, ABST_EXACT}, // undercounts due to thread-hog issue
-  {"rmh", "DC_miss_remote_L3_hit_nospec", REGNO_INVALID, STXT ("Remote Mem. Hits"), PRELOADS_5, 0, ABST_EXACT}, // undercounts due to thread-hog issue
-  {"pqs", "PQ_tag_wait", REGNO_INVALID, STXT ("Pick Queue Stalls"), PRELOADS_7, 1, ABST_NONE}, // old alias name
-  {"raw_stb", "RAW_hit_st_buf", REGNO_INVALID, STXT ("RAW Hazard in Store Buffer"), PRELOADS_55, 0, ABST_NONE}, // 11@full hit, 60@partial hit (in future, combine w/st_q)
-  {"raw_stq", "RAW_hit_st_q", REGNO_INVALID, STXT ("RAW Hazard in Store Queue"), PRELOADS_55, 0, ABST_NONE}, // 11@full hit, 60@partial hit (in future, combine w/st_buf)
-  {"sel_stalls", "Sel_0_ready", REGNO_INVALID, STXT ("Stalls Another Thread Selected"), PRELOADS_7, 1, ABST_NONE},
-  {"icm", "IC_miss", REGNO_INVALID, STXT ("L1 I-Cache Misses"), PRELOADS_55, 0, ABST_NONE}, // 20@ l2/l3 hit (guess)
-  {"icm_stalls", "IC_miss", REGNO_INVALID, STXT ("L1 I-Cache Miss Est Stalls"), PRELOADS_55, 25, ABST_NONE}, // 25@ l2-20/l3-50
-
-  // current aliases
-  SPARC_CYCLES
-  {"cycles", "Cycles_user", REGNO_ANY, STXT ("CPU Cycles"), PRELOADS_75, 1, ABST_NONE},
-  {"insts", "Instr_all", REGNO_ANY, STXT ("Instructions Executed"), PRELOADS_75, 0, ABST_NONE},
-  {"c_stalls", "Commit_0", REGNO_ANY, STXT ("Stall Cycles"), PRELOADS_7, 1, ABST_NONE},
-
-  {"loads", "Instr_ld", REGNO_ANY, STXT ("Load Instructions"), PRELOADS_7, 0, ABST_EXACT},
-  {"stores", "Instr_st", REGNO_ANY, STXT ("Store Instructions"), PRELOADS_7, 0, ABST_EXACT},
-  {"dcm", "DC_miss_nospec", REGNO_ANY, STXT ("L1 D-cache Misses"), PRELOADS_65, 0, ABST_EXACT},
-  //  {"l3m_spec",	"DC_miss_local_hit~emask=0x6",		REGNO_ANY, STXT("L3 D-cache Speculative Misses"),PRELOADS_5,0, ABST_NONE, STXT("Loads that speculatively missed local L3")}, // T4 encoding (430 lm, 690 rm) ~5 misses overlap on t5/pico_ile
-  {"l3m_spec", "DC_miss_local_hit~emask=0x30", REGNO_ANY, STXT ("L3 D-cache Speculative Misses"), PRELOADS_5, 0, ABST_NONE, STXT ("Loads that speculatively missed local L3")}, // T5/M6 encoding (430 lm, 690 rm) ~5 misses overlap on t5/pico_ile
-  {"lmh_spec", "DC_miss_local_hit", REGNO_ANY, STXT ("Local Mem Speculative Hits"), PRELOADS_5, 0, ABST_NONE},
-  {"rmh_spec", "DC_miss_remote_L3_hit", REGNO_ANY, STXT ("Remote Mem Speculative Hits"), PRELOADS_5, 0, ABST_NONE},
-  //
-  {"dtlbm", "DTLB_miss_asynch", REGNO_ANY, STXT ("DTLB Misses"), PRELOADS_55, 0, ABST_NONE}, // 10@l1 hit, 24@l2 hit, 60@l3 hit, 500@l3 miss, 5000@trap  0.001 events/cycle
-  {"dtlb_hwtw_stalls", "DTLB_HWTW_all", REGNO_ANY, STXT ("DTLB HWTW Est Stalls"), PRELOADS_55, 25, ABST_NONE, STXT ("Estimated time stalled on a DTLB miss requiring a HW tablewalk")}, // l2-20, l3-50
-  {"dtlb_trap_stalls", "DTLB_fill_trap", REGNO_ANY, STXT ("DTLB Trap Est Stalls"), PRELOADS_35, 5000, ABST_NONE, STXT ("Estimated time stalled on a DTLB miss with HW tablewalk unsuccessful")}, // 5000@trap
-  {"rawhaz", "RAW_hit_st_q~emask=0xf", REGNO_ANY, STXT ("Read-after-write Hazards"), PRELOADS_55, 0, ABST_NONE, STXT ("Loads delayed by a previous store (read-after-write hazards)")},
-  {"br_msp_stalls", "Br_mispred", REGNO_ANY, STXT ("Branch Mispredict Stalls"), PRELOADS_6, 24, ABST_NONE, STXT ("Estimated time stalled on Branch mispredictions")}, // 24@miss, %5 of branches is bad
-  {"br_msp", "Br_mispred", REGNO_ANY, STXT ("Branch Mispredict"), PRELOADS_6, 0, ABST_NONE}, // 24@miss, %5 of branches is bad
-  {"br_tkn", "Br_taken", REGNO_ANY, STXT ("Branch Taken"), PRELOADS_7, 0, ABST_NONE}, // 2 cycles minimum
-  {"br_ins", "Branches", REGNO_ANY, STXT ("Branch Instructions"), PRELOADS_7, 0, ABST_NONE}, // 24@miss, %5 of branches is bad
-  {"fgu", "Instr_FGU_crypto", REGNO_ANY, STXT ("FP/VIS/Crypto Instructions"), PRELOADS_7, 0, ABST_NONE}, // 1 cycle/event
-
-  /* explicit definitions of (hidden) entries for proper counters */
-  /* Counters that can be time converted, support memspace, or have a short_desc need to be in this table */
-
-  {"Sel_pipe_drain_cycles", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread stalls at Select waiting with correct instructions when pipeline has to drain after branch misprediction")},
-  {"Sel_0_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread stalls at Select waiting for various conditions to be resolved")},
-  {"Sel_0_ready", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread was ready to have its instructions selected but another hardware thread was selected instead")},
-  {"Sel_1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles that only 1 instruction or uop was selected")},
-  {"Sel_2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles that 2 instructions or uops were selected")},
-
-  {"Pick_0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Pick_1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Pick_2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Pick_3", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Pick_any", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"Branches", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Control transfer instructions completed, excluding trap-related transfers")},
-  {"Instr_FGU_crypto", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("FP and VIS instructions completed by the Floating Point and Graphics Unit")},
-  {"Instr_ld", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("Load instructions completed")},
-  {"Instr_st", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("Store instructions completed")},
-  {"SPR_ring_ops", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("Specialized instructions that require internal use of SPR ring completed")},
-  {"Instr_other", NULL, REGNO_ANY, NULL, PRELOAD (2, 4), 0, ABST_NONE, STXT ("Basic arithmetic and logical instructions completed")},
-  {"Instr_all", NULL, REGNO_ANY, NULL, PRELOAD (1, 4), 0, ABST_NONE, STXT ("Total instructions completed")},
-
-  {"Br_taken", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Branch instructions taken and completed")},
-  {"Sw_count_intr", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("SW Count instructions completed")},
-  {"Atomics", NULL, REGNO_ANY, NULL, PRELOAD (20, 4), 0, ABST_EXACT, STXT ("Atomic instructions, including CASA/XA, completed")},
-  {"SW_prefetch", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("PREFETCH and PREFETCHA instructions completed")},
-  {"Block_ld_st", NULL, REGNO_ANY, NULL, PRELOAD (20, 4), 0, ABST_EXACT, STXT ("Block load/store instructions completed")},
-
-  {"BTC_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Branches delayed a few extra cycles because branch target not found in Branch Target Cache")},
-
-  {"ITLB_fill_8KB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 8K page")},
-  {"ITLB_fill_64KB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 64K page")},
-  {"ITLB_fill_4MB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 4M page")},
-  {"ITLB_fill_256MB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 256M page")},
-  {"ITLB_fill_2GB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 2G or 16G page")},
-  {"ITLB_fill_trap", NULL, REGNO_ANY, NULL, PRELOAD (1000, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk unsuccessful")},
-  {"ITLB_miss_asynch", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk search done")},
-
-  {"Fetch_0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_0_all", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"Instr_buffer_full", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"PQ_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"ROB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"ROB_LB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"SB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"ROB_SB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LB_SB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"ROB_LB_SB_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"DTLB_miss_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"ITLB_HWTW_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk hit local L2D")},
-  {"ITLB_HWTW_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (80, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk hit local L3 or neighbor L2D")},
-  {"ITLB_HWTW_L3_miss", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk missed all local caches")},
-  {"DTLB_HWTW_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk hit local L2D")},
-  {"DTLB_HWTW_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (80, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk hit local L3 or neighbor L2D")},
-  {"DTLB_HWTW_L3_miss", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk missed all local caches")},
-  {"DTLB_HWTW_all", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss requiring HW tablewalk")},
-
-  {"DC_miss_L2_L3_hit_nospec", NULL, REGNO_ANY, NULL, PRELOAD (25, 4), 0, ABST_EXACT},
-  {"DC_miss_local_hit_nospec", NULL, REGNO_ANY, NULL, PRELOAD (500, 4), 0, ABST_EXACT},
-  {"DC_miss_remote_L3_hit_nospec", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_EXACT},
-  {"DC_miss_nospec", NULL, REGNO_ANY, NULL, PRELOAD (25, 4), 0, ABST_EXACT, STXT ("Loads that missed local L1D")},
-
-  {"DTLB_fill_8KB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 8K page")},
-  {"DTLB_fill_64KB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 64K page")},
-  {"DTLB_fill_4MB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 4M page")},
-  {"DTLB_fill_256MB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 256M page")},
-  {"DTLB_fill_2GB", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 2G or 16G page")},
-  {"DTLB_fill_trap", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk unsuccessful")},
-  {"DTLB_miss_asynch", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk search done")},
-  {"RAW_hit_st_buf", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Loads delayed by a previous store (read-after-write) still in store buffer not yet committed")},
-  {"RAW_hit_st_q", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Loads delayed by a previous store (read-after-write) committed but in store queue not yet written to L2D")},
-
-  {"St_q_tag_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"St_hit_L2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Stores whose cacheline being updated was in local L2D")},
-  {"St_hit_L3", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Stores whose cacheline being updated was in local L3")},
-
-  {"DC_miss_L2_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (20, 4), 0, ABST_NONE, STXT ("Loads that speculatively hit local L2D or L3")},
-  {"DC_miss_local_hit", NULL, REGNO_ANY, NULL, PRELOAD (500, 4), 0, ABST_NONE, STXT ("Loads that speculatively hit local memory")},
-  {"DC_miss_remote_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_NONE, STXT ("Loads that speculatively hit remote cache or remote memory")},
-  {"DC_miss", NULL, REGNO_ANY, NULL, PRELOAD (20, 4), 0, ABST_NONE, STXT ("Loads that speculatively missed L1D")},
-
-  {"L2_pipe_stall", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"Br_dir_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Branch instructions completed whose direction was mispredicted")},
-  {"Br_trg_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Branch instructions completed whose target was mispredicted")},
-  {"Br_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Branch instructions completed whose direction or target was mispredicted")},
-
-  {"Cycles_user", NULL, REGNO_ANY, NULL, PRELOAD (1, 4), 1, ABST_NONE, STXT ("Cycles hardware thread is active in specified mode(s)")},
-  //
-  {"Commit_0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles no uop commits from this hardware thread")},
-  {"Commit_0_all", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles no uop commits from any hardware thread on this core")},
-  {"Commit_1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles 1 uop commits from this hardware thread")},
-  {"Commit_2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles 2 uops commit from this hardware thread")},
-  {"Commit_1_or_2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles 1 or 2 uops commit from this hardware thread")},
-
-  /* additional (hidden) aliases, for convenience */
-  {"cycles0", "Cycles_user", 0, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"cycles1", "Cycles_user", 1, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"insts0", "Instr_all", 0, NULL, PRELOADS_8, 0, ABST_NONE},
-  {"insts1", "Instr_all", 1, NULL, PRELOADS_8, 0, ABST_NONE},
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
-static Hwcentry sparc_m7[] = {
-  // obsolete aliases marked with REGNO_INVALID (allows reading of older experiments)
-  {"icm", "IC_miss_commit", REGNO_INVALID, STXT ("L1 I-Cache Misses"), PRELOADS_6, 0, ABST_EXACT},
-  {"raw_stb", "RAW_hit_st_buf", REGNO_INVALID, STXT ("RAW Hazard in Store Buffer"), PRELOADS_55, 0, ABST_NONE},
-  {"raw_stq", "RAW_hit_st_q", REGNO_INVALID, STXT ("RAW Hazard in Store Queue"), PRELOADS_55, 0, ABST_NONE},
-  {"pqs", "PQ_tag_wait_cyc", REGNO_INVALID, STXT ("Pick Queue Stalls"), PRELOADS_7, 1, ABST_NONE},
-  {"sel_stalls", "Sel_0_ready_cyc", REGNO_INVALID, STXT ("Stalls Another Thread Selected"), PRELOADS_7, 1, ABST_NONE},
-
-  // current aliases
-  SPARC_CYCLES
-  {"cycles", "Cycles_user", REGNO_ANY, STXT ("CPU Cycles"), PRELOADS_75, 1, ABST_NONE},
-  {"insts", "Instr_all", REGNO_ANY, STXT ("Instructions Executed"), PRELOADS_75, 0, ABST_NONE},
-  {"c_stalls", "Commit_0_cyc", REGNO_ANY, STXT ("Stall Cycles"), PRELOADS_7, 1, ABST_NONE},
-
-  {"loads", "Instr_ld", REGNO_ANY, STXT ("Load Instructions"), PRELOADS_7, 0, ABST_EXACT},
-  {"stores", "Instr_st", REGNO_ANY, STXT ("Store Instructions"), PRELOADS_6, 0, ABST_EXACT},
-  {"dcm", "DC_miss_commit", REGNO_ANY, STXT ("L1 D-cache Misses"), PRELOADS_6, 0, ABST_EXACT},
-
-  {"l3m_spec", "DC_miss_L3_miss", REGNO_ANY, STXT ("L3 D-cache Speculative Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"lmh_spec", "DC_miss_local_mem_hit", REGNO_ANY, STXT ("Local Mem Speculative Hits"), PRELOADS_5, 0, ABST_NONE},
-  {"rmh_spec", "DC_miss_remote_mem_hit", REGNO_ANY, STXT ("Remote Mem Speculative Hits"), PRELOADS_5, 0, ABST_NONE},
-  //
-  {"dtlbm", "DTLB_HWTW_search", REGNO_ANY, STXT ("DTLB Misses"), PRELOADS_55, 0, ABST_NONE}, // 10@l1 hit, 24@l2 hit, 60@l3 hit, 500@l3 miss, 5000@trap  0.001 events/cycle
-  {"dtlb_hwtw_stalls", "DTLB_HWTW_ref", REGNO_ANY, STXT ("DTLB HWTW Est Stalls"), PRELOADS_55, 25, ABST_NONE, STXT ("Estimated time stalled on a DTLB miss requiring a HW tablewalk")}, // l2-20, l3-50
-  {"dtlb_trap_stalls", "DTLB_HWTW_miss_trap", REGNO_ANY, STXT ("DTLB Trap Est Stalls"), PRELOADS_35, 5000, ABST_NONE, STXT ("Estimated time stalled on a DTLB miss with HW tablewalk unsuccessful")}, // 5000@trap
-  {"rawhaz", "RAW_hit_st_q~emask=0xf", REGNO_ANY, STXT ("Read-after-write Hazards"), PRELOADS_55, 0, ABST_NONE, STXT ("Loads delayed by a previous store (read-after-write hazards)")},
-  {"br_msp_stalls", "Br_mispred", REGNO_ANY, STXT ("Branch Mispredict Stalls"), PRELOADS_6, 24, ABST_NONE, STXT ("Estimated time stalled on Branch mispredictions")}, // 24@miss, %5 of branches is bad
-  {"br_msp", "Br_mispred", REGNO_ANY, STXT ("Branch Mispredict"), PRELOADS_6, 0, ABST_NONE},
-  {"br_tkn", "Br_taken", REGNO_ANY, STXT ("Branch Taken"), PRELOADS_7, 0, ABST_NONE},
-  {"br_ins", "Branches", REGNO_ANY, STXT ("Branch Instructions"), PRELOADS_7, 0, ABST_NONE},
-  {"fgu", "Instr_FGU_crypto", REGNO_ANY, STXT ("FP/VIS/Crypto Instructions"), PRELOADS_7, 0, ABST_NONE},
-  {"spill_fill", "Flush_arch_exception", REGNO_ANY, STXT ("Reg Window Spill/Fill Est Stalls"), PRELOAD (100, 4), 80, ABST_NONE, STXT ("Estimated time stalled on flushing pipeline due to register window spill/fill")},
-
-  /* explicit definitions of (hidden) entries for proper counters */
-  /*  Counters that can be time converted, support memspace, or have a short_desc need to be in this table */
-  {"Sel_pipe_drain_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread stalls at Select waiting with correct instructions when pipeline has to drain after branch misprediction")},
-  {"Sel_0_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread stalls at Select waiting for various conditions to be resolved")},
-  {"Sel_0_ready_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread was ready to have its instructions selected but another hardware thread was selected instead")},
-  {"Sel_1_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles that only 1 instruction or uop was selected")},
-  {"Sel_2_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles that 2 instructions or uops were selected")},
-
-  {"Pick_0_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Pick_1_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Pick_2_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Pick_3_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Pick_any_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"Branches", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Control transfer instructions completed, excluding trap-related transfers")},
-  {"Instr_FGU_crypto", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("FP and VIS instructions completed by the Floating Point and Graphics Unit")},
-  {"Instr_ld", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("Load instructions completed")},
-  {"Instr_st", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("Store instructions completed")},
-  {"Instr_SPR_ring_ops", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("Specialized instructions that require internal use of SPR ring completed")},
-  {"Instr_other", NULL, REGNO_ANY, NULL, PRELOAD (2, 4), 0, ABST_NONE, STXT ("Basic arithmetic and logical instructions completed")},
-  {"Instr_all", NULL, REGNO_ANY, NULL, PRELOAD (1, 4), 0, ABST_NONE, STXT ("Total instructions completed")},
-
-  {"Br_taken", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Branch instructions taken and completed")},
-  {"Instr_SW_count", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("SW Count instructions completed")},
-  {"Instr_atomic", NULL, REGNO_ANY, NULL, PRELOAD (20, 4), 0, ABST_EXACT, STXT ("Atomic instructions, including CASA/XA, completed")},
-  {"Instr_SW_prefetch", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("PREFETCH and PREFETCHA instructions completed")},
-  {"Instr_block_ld_st", NULL, REGNO_ANY, NULL, PRELOAD (20, 4), 0, ABST_EXACT, STXT ("Block load/store instructions completed")},
-
-  {"Br_BTC_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Branches delayed a few extra cycles because branch target not found in Branch Target Cache")},
-
-  {"ITLB_HWTW_hit_8K", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 8K page")},
-  {"ITLB_HWTW_hit_64K", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 64K page")},
-  {"ITLB_HWTW_hit_4M", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 4M page")},
-  {"ITLB_HWTW_hit_256M", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 256M page")},
-  {"ITLB_HWTW_hit_2G_16G", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 2G or 16G page")},
-  {"ITLB_HWTW_miss_trap", NULL, REGNO_ANY, NULL, PRELOAD (1000, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk unsuccessful")},
-  {"ITLB_HWTW_search", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk search done")},
-
-  {"Fetch_0_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_0_all_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"Instr_buffer_full_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"PQ_tag_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"ROB_tag_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LB_tag_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"SB_tag_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"ROB_LB_tag_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"ROB_SB_tag_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LB_SB_tag_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"ROB_LB_SB_tag_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"DTLB_miss_tag_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"ITLB_HWTW_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk hit local L2D")},
-  {"ITLB_HWTW_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (80, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk hit local L3 or neighbor L2D")},
-  {"ITLB_HWTW_L3_miss", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk missed all local caches")},
-  {"DTLB_HWTW_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk hit local L2D")},
-  {"DTLB_HWTW_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (80, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk hit local L3 or neighbor L2D")},
-  {"DTLB_HWTW_L3_miss", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk missed all local caches")},
-  {"DTLB_HWTW_ref", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss requiring HW tablewalk")},
-
-  {"DC_miss_L2_L3_hit_commit", NULL, REGNO_ANY, NULL, PRELOAD (25, 4), 0, ABST_EXACT},
-  {"DC_miss_nbr_scc_hit_commit", NULL, REGNO_ANY, NULL, PRELOAD (500, 4), 0, ABST_EXACT},
-  {"DC_miss_nbr_scc_miss_commit", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_EXACT},
-  {"DC_miss_commit", NULL, REGNO_ANY, NULL, PRELOAD (25, 4), 0, ABST_EXACT, STXT ("Loads that missed local L1D")},
-
-  {"DTLB_HWTW_hit_8K", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 8K page")},
-  {"DTLB_HWTW_hit_64K", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 64K page")},
-  {"DTLB_HWTW_hit_4M", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 4M page")},
-  {"DTLB_HWTW_hit_256M", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 256M page")},
-  {"DTLB_HWTW_hit_2G_16G", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 2G or 16G page")},
-  {"DTLB_HWTW_miss_trap", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk unsuccessful")},
-  {"DTLB_HWTW_search", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk search done")},
-  {"RAW_hit_st_buf", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Loads delayed by a previous store (read-after-write) still in store buffer not yet committed")},
-  {"RAW_hit_st_q", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Loads delayed by a previous store (read-after-write) committed but in store queue not yet written to L2D")},
-
-  {"St_q_tag_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"St_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Stores whose cacheline being updated was in local L2D")},
-  {"St_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Stores whose cacheline being updated was in local L3")},
-
-  {"DC_hit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Loads that speculatively hit local L1D")},
-  {"DC_miss_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD (20, 4), 0, ABST_NONE, STXT ("Loads that speculatively hit local L2D")},
-  {"DC_miss_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Loads that speculatively hit local L3")},
-  {"DC_miss_nbr_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD (100, 4), 0, ABST_NONE, STXT ("Loads that speculatively hit neighbor L2D via local L3")},
-  {"DC_miss_nbr_scc_hit", NULL, REGNO_ANY, NULL, PRELOAD (100, 4), 0, ABST_NONE, STXT ("Loads that speculatively hit neighbor L3 on same socket")},
-  {"DC_miss_nbr_scc_miss", NULL, REGNO_ANY, NULL, PRELOAD (400, 4), 0, ABST_NONE, STXT ("Loads that speculatively missed all caches on same socket")},
-  {"DC_miss", NULL, REGNO_ANY, NULL, PRELOAD (10, 4), 0, ABST_NONE, STXT ("Loads that speculatively missed local L1D")},
-  {"DC_miss_L2_miss", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Loads that speculatively missed local L2D")},
-  {"DC_miss_L3_miss", NULL, REGNO_ANY, NULL, PRELOAD (200, 4), 0, ABST_NONE, STXT ("Loads that speculatively missed local L3")},
-
-  {"DC_miss_remote_scc_hit", NULL, REGNO_ANY, NULL, PRELOAD (800, 4), 0, ABST_NONE, STXT ("Loads that speculatively hit remote cache on different socket")},
-  {"DC_miss_local_mem_hit", NULL, REGNO_ANY, NULL, PRELOAD (500, 4), 0, ABST_NONE, STXT ("Loads that speculatively hit local memory")},
-  {"DC_miss_remote_mem_hit", NULL, REGNO_ANY, NULL, PRELOAD (1000, 4), 0, ABST_NONE, STXT ("Loads that speculatively hit remote memory")},
-  {"Br_dir_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Branch instructions completed whose direction was mispredicted")},
-  {"Br_tgt_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Branch instructions completed whose target was mispredicted")},
-  {"Br_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Branch instructions completed whose direction or target was mispredicted")},
-
-  {"Cycles_user", NULL, REGNO_ANY, NULL, PRELOAD (1, 4), 1, ABST_NONE, STXT ("Cycles hardware thread is active in specified mode(s)")},
-
-  {"Flush_L3_miss", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Pipeline flushes due to a load that misses L3 when more than 1 hardware thread is active on the core")},
-  {"Flush_br_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Pipeline flushes due to a branch misprediction")},
-  {"Flush_arch_exception", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Pipeline flushes due to SPARC architecture exceptions and trap entry/return")},
-  {"Flush_other", NULL, REGNO_ANY, NULL, PRELOAD (40, 4), 0, ABST_NONE, STXT ("Pipeline flushes due to hardware thread state change to/from halted/paused state")},
-  //
-  {"Commit_0_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles no uop commits from this hardware thread")},
-  {"Commit_0_all_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles no uop commits from any hardware thread on this core")},
-  {"Commit_1_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles 1 uop commits from this hardware thread")},
-  {"Commit_2_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles 2 uops commit from this hardware thread")},
-  {"Commit_1_or_2_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles 1 or 2 uops commit from this hardware thread")},
-
-
-  /* additional (hidden) aliases, for convenience */
-  {"cycles0", "Cycles_user", 0, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"cycles1", "Cycles_user", 1, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"insts0", "Instr_all", 0, NULL, PRELOADS_8, 0, ABST_NONE},
-  {"insts1", "Instr_all", 1, NULL, PRELOADS_8, 0, ABST_NONE},
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
-static Hwcentry sparc_m8[] = {
-  // current aliases
-  SPARC_CYCLES
-  {"cycles", "Cycles_user", REGNO_ANY, STXT ("CPU Cycles"), PRELOADS_75, 1, ABST_NONE},
-  {"insts", "Instr_all", REGNO_ANY, STXT ("Instructions Executed"), PRELOADS_75, 0, ABST_NONE},
-  {"c_stalls", "Commit_0_cyc", 3, STXT ("Stall Cycles"), PRELOADS_7, 1, ABST_NONE}, // 22825776: limit to reg 3
-  {"Sel_0_wait_cyc", "Sel_0_cyc~emask=0x3f", REGNO_ANY, STXT ("Select Stall Cycles"), PRELOADS_7, 1, ABST_NONE, STXT ("Cycles a hardware thread stalls at Select waiting for various conditions to be resolved that prevent it being selected")},
-
-  {"loads", "Instr_ld", REGNO_ANY, STXT ("Load Instructions"), PRELOADS_7, 0, ABST_EXACT},
-  {"stores", "Instr_st", REGNO_ANY, STXT ("Store Instructions"), PRELOADS_6, 0, ABST_EXACT},
-  {"dcm", "DC_miss_commit", REGNO_ANY, STXT ("L1 D-cache Misses"), PRELOADS_6, 0, ABST_EXACT},
-
-  {"lmh_spec", "DC_miss_local_mem_hit", REGNO_ANY, STXT ("Local Mem Speculative Hits"), PRELOADS_5, 0, ABST_NONE},
-  {"rmh_spec", "DC_miss_remote_mem_hit", REGNO_ANY, STXT ("Remote Mem Speculative Hits"), PRELOADS_5, 0, ABST_NONE},
-
-  {"dtlbm", "DTLB_HWTW", REGNO_ANY, STXT ("DTLB Misses"), PRELOAD (40, 5), 0, ABST_NONE}, // 10@l1 hit, 24@l2 hit, 60@l3 hit, 500@l3 miss, 5000@trap  0.001 events/cycle
-  {"dtlb_hwtw_stalls", "DTLB_HWTW", REGNO_ANY, STXT ("DTLB HWTW Est Stalls"), PRELOAD (40, 5), 25, ABST_NONE, STXT ("Estimated time stalled on a DTLB miss requiring a HW tablewalk")}, // l2-20, l3-50
-  {"dtlb_trap_stalls", "DTLB_HWTW_miss_trap", REGNO_ANY, STXT ("DTLB Trap Est Stalls"), PRELOAD (800, 5), 5000, ABST_NONE, STXT ("Estimated time stalled on a DTLB miss with HW tablewalk unsuccessful")}, // 5000@trap
-  {"rawhaz", "RAW_hit", REGNO_ANY, STXT ("Read-after-write Hazards"), PRELOAD (40, 5), 0, ABST_NONE},
-  {"br_msp_stalls", "Br_mispred", REGNO_ANY, STXT ("Branch Mispredict Stalls"), PRELOAD (40, 5), 24, ABST_NONE, STXT ("Estimated time stalled on Branch mispredictions")}, // 24@miss, %5 of branches is bad
-  {"br_msp", "Br_mispred", REGNO_ANY, STXT ("Branch Mispredict"), PRELOAD (40, 5), 0, ABST_NONE},
-  {"br_tkn", "Br_taken", REGNO_ANY, STXT ("Branch Taken"), PRELOADS_7, 0, ABST_NONE},
-  {"br_ins", "Branches", REGNO_ANY, STXT ("Branch Instructions"), PRELOADS_7, 0, ABST_NONE},
-  {"fgu", "Instr_FGU_crypto", REGNO_ANY, STXT ("FP/VIS/Crypto Instructions"), PRELOADS_7, 0, ABST_NONE},
-  {"spill_fill", "Flush_spill_fill", REGNO_ANY, STXT ("Reg Window Spill/Fill Est Stalls"), PRELOAD (100, 5), 80, ABST_NONE, STXT ("Estimated time stalled on flushing pipeline due to register window spill/fill")},
-
-  /* explicit definitions of (hidden) entries for proper counters */
-  /*  Counters that can be time converted, support memspace, or have a short_desc need to be in this table */
-  //0x01
-  {"Fetch_stall_IFU_reset_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_stall_IC_miss_MB_full_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_stall_IC_miss_MB_avail_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_stall_IC_miss_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_stall_ITLB_miss_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_stall_SEL_buf_full_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_ready_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_0_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_0_all_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  //0x02
-  {"Fetch_1_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_2_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_3_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_4_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_5_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_6_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_7_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_8_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  //0x07
-  {"ITLB_HWTW_hit_8K", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 8K page")},
-  {"ITLB_HWTW_hit_64K", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 64K page")},
-  {"ITLB_HWTW_hit_4M", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 4M page")},
-  {"ITLB_HWTW_hit_256M", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 256M page")},
-  {"ITLB_HWTW_hit_16G", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 16G page")},
-  {"ITLB_HWTW_hit_1T", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk successfully loaded translation for 1T page")},
-  //  { "ITLB_HWTW_miss_RA2PAC",		0x0740, 0xf07ff },
-  //  { "ITLB_HWTW_miss_not_RA2PAC",		0x0780, 0xf07ff },
-  {"ITLB_HWTW_miss_trap", NULL, REGNO_ANY, NULL, PRELOAD (1000, 5), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk unsuccessful")},
-  {"ITLB_HWTW", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk search done")},
-  //0x08
-  {"Br_BTC_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Branches delayed a few extra cycles because branch target not found in Branch Target Cache")},
-  //0x09
-  {"Sel_0_no_instr_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread stalls at Select because no instructions are available")},
-  {"Sel_0_pipe_drain_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread stalls at Select waiting with correct instructions when pipeline has to drain after branch misprediction")},
-  {"Sel_0_postsync_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread stalls at Select waiting for prior instructions to commit")},
-  {"Sel_0_presync_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread stalls at Select with instruction that cannot decode until prior instructions have committed")},
-  {"Sel_0_thread_hog_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread stalls at Select to prevent strand monopolizing resources")},
-  {"Sel_0_tag_stall_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread stalls at Select because no required tags are available")},
-  {"Sel_0_ready_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread was ready to have its instructions selected but another hardware thread was selected instead")},
-  {"Sel_0_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles a hardware thread is not selected")},
-  // No direct equivalent Sel_1/2_cyc. Nearest is Decode_uop, which increments by 0-4 each cycle according to how many uops were decoded.
-  //0x13
-  {"ITLB_HWTW_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk hit local L2D")},
-  {"ITLB_HWTW_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (80, 5), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk hit local L3 or neighbor L2D")},
-  {"ITLB_HWTW_L3_miss", NULL, REGNO_ANY, NULL, PRELOAD (800, 5), 0, ABST_NONE, STXT ("ITLB miss and HW tablewalk missed all local caches")},
-  {"DTLB_HWTW_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk hit local L2D")},
-  {"DTLB_HWTW_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (80, 5), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk hit local L3 or neighbor L2D")},
-  {"DTLB_HWTW_L3_miss", NULL, REGNO_ANY, NULL, PRELOAD (800, 5), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk missed all local caches")},
-  {"DTLB_HWTW_ref", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("DTLB miss requiring HW tablewalk")},
-  //0x0E
-  {"Instr_FGU_crypto", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("FP and VIS instructions completed by the Floating Point and Graphics Unit")},
-  {"Instr_ld", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("Load instructions completed")},
-  {"Instr_st", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("Store instructions completed")},
-  {"Instr_block_ld_st", NULL, REGNO_ANY, NULL, PRELOAD (20, 5), 0, ABST_EXACT, STXT ("Block load/store instructions completed")},
-  {"Instr_SPR_ring_ops", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("Specialized instructions that require internal use of SPR ring completed")},
-  {"Instr_atomic", NULL, REGNO_ANY, NULL, PRELOAD (20, 5), 0, ABST_EXACT, STXT ("Atomic instructions, including CASA/XA, completed")},
-  {"Instr_SW_prefetch", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT, STXT ("PREFETCH and PREFETCHA instructions completed")},
-  {"Instr_other", NULL, REGNO_ANY, NULL, PRELOAD (2, 5), 0, ABST_NONE, STXT ("Basic arithmetic and logical instructions completed")},
-  {"Instr_all", NULL, REGNO_ANY, NULL, PRELOAD (1, 5), 0, ABST_NONE, STXT ("Total instructions completed")},
-  //0x0F
-  {"Branches", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Control transfer instructions completed, excluding trap-related transfers")},
-  //0x10
-  {"Br_taken", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Branch instructions taken and completed")},
-  //0x11
-  {"Rename_tag_wait_PQ_1_EXU_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Rename_tag_wait_PQ_0_LSU_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Rename_wait_crypto_diag_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Sel_0_wait_ROB_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Sel_0_wait_WRF_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Sel_0_wait_LB_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Sel_0_wait_SB_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  //0x12
-  {"Fetch_stall_BDA_tag_unavail_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_stall_BTA_tag_unavail_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_stall_misc_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"Fetch_stall_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"MMU_TTE_buffer_tag_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"MMU_PRQ_pool_tag_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  //0x15
-  {"L2I_request_block_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2I_thread_hog_stall_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2I_MB_full_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2I_snoop_eviction", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2I_stall_no_request_credit_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2I_stall_no_response_credit_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  //0x16
-  {"Flush_thread_hog", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes to prevent thread from monopolizing resources")},
-  {"Flush_br_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes due to a branch misprediction")},
-  {"Flush_arch_exception", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes due to SPARC architecture exceptions and trap entry/return")},
-  {"Flush_evil_twin", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes due to detecting floating point evil twin condition")},
-  {"Flush_LSU_trap", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes to refetch Next-PC")},
-  {"Flush_mode_change", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes due to strand mode change")},
-  {"Flush_misalign", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes due to detecting misaligned load/store requiring transition to misaligned mitigation mode")},
-  {"Flush_other", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes due to hardware thread state change to/from halted/paused state")},
-  {"Flush_all", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes due to any reason")},
-  //0x17
-  {"Flush_spill_n_normal", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes due to spill_n_normal exception")},
-  {"Flush_spill_n_other", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes due to spill_n_other exception")},
-  {"Flush_fill_n_normal", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes due to fill_n_normal exception")},
-  {"Flush_fill_n_other", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes due to fill_n_other exception")},
-  {"Flush_spill_fill", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes due to spill/fill exceptions")},
-  {"Flush_lost_load", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Pipeline flushes due to speculatively executed load violating memory order")},
-  //0x21
-  {"Br_dir_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Branch instructions completed whose direction was mispredicted")},
-  {"Br_tgt_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Branch instructions completed whose target was mispredicted")},
-  {"Br_mispred", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Branch instructions completed whose direction or target was mispredicted")},
-  //0x23
-  {"LSU_st_q_tag_wait_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LSU_st_q_tag_wait_all_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2D_stall_no_request_credit_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2D_stall_no_response_credit_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  //0x27
-  {"DC_miss_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD (20, 5), 0, ABST_NONE, STXT ("Loads that speculatively hit local L2D")},
-  {"DC_miss_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Loads that speculatively hit local L3")},
-  {"DC_miss_L3_dirty_copyback", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Loads that speculatively hit local L3 but require copyback from L2D within same CPC")},
-  {"DC_miss_nbr_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (100, 5), 0, ABST_NONE, STXT ("Loads that speculatively hit neighbor L3 on same socket")},
-  {"DC_miss_remote_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (400, 5), 0, ABST_NONE, STXT ("Loads that speculatively hit remote cache on different socket")},
-  {"DC_miss_local_mem_hit", NULL, REGNO_ANY, NULL, PRELOAD (500, 5), 0, ABST_NONE, STXT ("Loads that speculatively hit local memory")},
-  {"DC_miss_remote_mem_hit", NULL, REGNO_ANY, NULL, PRELOAD (1000, 5), 0, ABST_NONE, STXT ("Loads that speculatively hit remote memory")},
-  {"DC_miss", NULL, REGNO_ANY, NULL, PRELOAD (10, 5), 0, ABST_NONE, STXT ("Loads that speculatively missed local L1D")},
-  //0x28
-  {"DC_sec_miss_L2_hit_commit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT},
-  {"DC_miss_L2_hit_commit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT},
-  {"DC_miss_L3_hit_commit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT},
-  {"DC_miss_L3_dirty_copyback_commit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT},
-  {"DC_miss_nbr_L3_hit_commit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT},
-  {"DC_miss_remote_L3_hit_commit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT},
-  {"DC_miss_local_mem_hit_commit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT},
-  {"DC_miss_remote_mem_hit_commit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_EXACT},
-  {"DC_miss_commit", NULL, REGNO_ANY, NULL, PRELOAD (25, 5), 0, ABST_EXACT, STXT ("Loads that missed local L1D")},
-  //0x29
-  //  {"Store_DC_sec_miss_L2_hit",	 NULL, REGNO_ANY, NULL, PRELOAD_DEF,     0, ABST_NONE,  STXT("")},
-  {"Store_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD (20, 5), 0, ABST_NONE, STXT ("Stores whose cacheline being updated was in local L2D")},
-  {"Store_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Stores whose cacheline being updated was in local L3")},
-  {"Store_nbr_L2_hit", NULL, REGNO_ANY, NULL, PRELOAD (100, 5), 0, ABST_NONE, STXT ("Stores whose cacheline being updated was in neighbor L2 on same socket")},
-  {"Store_nbr_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (100, 5), 0, ABST_NONE, STXT ("Stores whose cacheline being updated was in neighbor L3 on same socket")},
-  {"Store_remote_L3_hit", NULL, REGNO_ANY, NULL, PRELOAD (400, 5), 0, ABST_NONE, STXT ("Stores whose cacheline being updated was in remote cache on different socket")},
-  {"Store_local_mem_hit", NULL, REGNO_ANY, NULL, PRELOAD (500, 5), 0, ABST_NONE, STXT ("Stores whose cacheline being updated was in local memory")},
-  {"Store_remote_mem_hit", NULL, REGNO_ANY, NULL, PRELOAD (1000, 5), 0, ABST_NONE, STXT ("Stores whose cacheline being updated was in remote memory")},
-  {"Store_all", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE, STXT ("Stores whose cacheline being updated was observed to be somewhere in the memory hierarchy")},
-  //0x2d
-  {"RAW_hit_st_buf", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Loads delayed by a previous store (read-after-write) still in store buffer not yet committed")},
-  {"RAW_hit_st_q", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Loads delayed by a previous store (read-after-write) committed but in store queue not yet written to L2D")},
-  {"RAW_hit", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("Loads delayed by a previous store (read-after-write hazards)")},
-  //0x2f
-  {"Cycles_user_non_MLA", NULL, REGNO_ANY, NULL, PRELOADS_75, 1, ABST_NONE},
-  {"Cycles_user_MLA", NULL, REGNO_ANY, NULL, PRELOADS_75, 1, ABST_NONE},
-  {"Cycles_user", NULL, REGNO_ANY, NULL, PRELOAD (1, 5), 1, ABST_NONE, STXT ("Cycles hardware thread is active in specified mode(s)")},
-  //0x37
-  {"DTLB_HWTW_hit_8K", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 8K page")},
-  {"DTLB_HWTW_hit_64K", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 64K page")},
-  {"DTLB_HWTW_hit_4M", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 4M page")},
-  {"DTLB_HWTW_hit_256M", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 256M page")},
-  {"DTLB_HWTW_hit_16G", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 16G page")},
-  {"DTLB_HWTW_hit_1T", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk successfully loaded translation for 1T page")},
-  {"DTLB_HWTW_miss_trap", NULL, REGNO_ANY, NULL, PRELOAD (800, 5), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk unsuccessful")},
-  {"DTLB_HWTW", NULL, REGNO_ANY, NULL, PRELOAD (40, 5), 0, ABST_NONE, STXT ("DTLB miss and HW tablewalk search done")},
-  //0x3f
-  {"Commit_0_cyc", /*22825776*/ NULL, 3, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles no uop commits from this hardware thread")},
-  {"Commit_0_all_cyc", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE, STXT ("Cycles no uop commits from any hardware thread on this core")},
-  // Similar situation to Sel_1_cyc etc. No direct equivalent, nearest is Commit_uop, which increments by 0-4 each cycle according to how many uops were committed.
-
-  /* additional (hidden) aliases, for convenience */
-  {"cycles0", "Cycles_user", 0, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"cycles1", "Cycles_user", 1, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"insts0", "Instr_all", 0, NULL, PRELOADS_8, 0, ABST_NONE},
-  {"insts1", "Instr_all", 1, NULL, PRELOADS_8, 0, ABST_NONE},
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
-static Hwcentry usfuji_V_list[] = {
-  {"cycles", "cycle_counts", REGNO_ANY, STXT ("CPU Cycles"), PRELOADS_7, 1, ABST_NONE},
-  {"insts", "instruction_counts", REGNO_ANY, STXT ("Instructions Executed"), PRELOADS_7, 0, ABST_NONE},
-  {"flops", "floating_instructions", REGNO_ANY, STXT ("Floating-point Ops"), PRELOADS_6, 0, ABST_NONE},
-
-  /* explicit definitions of (hidden) entries for proper counters */
-  /*  Only counters that can be time converted, or are load-store need to be in this table */
-  {"cycle_counts", NULL, REGNO_ANY, NULL, PRELOADS_7, 1, ABST_NONE},
-  {"load_store_instructions", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE},
-
-  /* additional (hidden) aliases for convenience */
-  {"cycles0", "cycle_counts", 0, NULL, PRELOADS_75, 1, ABST_NONE},
-  {"cycles1", "cycle_counts", 1, NULL, PRELOADS_75, 1, ABST_NONE},
-  {"insts0", "instruction_counts", 0, NULL, PRELOADS_75, 0, ABST_NONE},
-  {"insts1", "instruction_counts", 1, NULL, PRELOADS_75, 0, ABST_NONE},
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
-static Hwcentry usfuji_VI_VII_list[] = {
-  {"cycles", "cycle_counts", REGNO_ANY, STXT ("CPU Cycles"), PRELOADS_75, 1, ABST_NONE},
-  {"insts", "instruction_counts", REGNO_ANY, STXT ("Instructions Executed"), PRELOADS_75, 0, ABST_NONE},
-  {"dcm", "op_r_iu_req_mi_go", REGNO_ANY, STXT ("L1 D-cache Misses"), PRELOADS_6, 0, ABST_NONE},
-  {"dcstall", "op_wait_all", REGNO_ANY, STXT ("L1 D-cache Stall Cycles"), PRELOADS_7, 1, ABST_NONE},
-  {"dtlbm", "write_op_uTLB", REGNO_ANY, STXT ("DTLB Misses"), PRELOADS_5, 0, ABST_NONE},
-  // l2m: mem_cache_load test shows undercount of 3x, however, we don't care too much about this chip, keeping the alias for now
-  {"l2m", "sx_miss_count_dm", REGNO_ANY, STXT ("L2 Cache Misses"), PRELOADS_5, 0, ABST_NONE}, /*YXXX undercounts?*/
-  {"l2wm", "dvp_count_dm", REGNO_ANY, STXT ("L2 Cache Writeback Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"l2ref", "sx_read_count_dm", REGNO_ANY, STXT ("L2 Cache Refs"), PRELOADS_6, 0, ABST_NONE},
-  {"l2stall", "sx_miss_wait_dm", REGNO_ANY, STXT ("L2 Cache Stall Cycles"), PRELOADS_7, 1, ABST_NONE},
-  {"icm", "if_r_iu_req_mi_go", REGNO_ANY, STXT ("L1 I-cache Misses"), PRELOADS_6, 0, ABST_NONE},
-  {"icstall", "if_wait_all", REGNO_ANY, STXT ("L1 I-cache Stall Cycles"), PRELOADS_7, 1, ABST_NONE},
-  {"itlbm", "write_if_uTLB", REGNO_ANY, STXT ("ITLB Misses"), PRELOADS_5, 0, ABST_NONE},
-  {"flops", "floating_instructions", REGNO_ANY, STXT ("Floating-point Ops"), PRELOADS_7, 0, ABST_NONE},
-
-  /* explicit definitions of (hidden) entries for proper counters */
-  /*  Only counters that can be time converted, or are load-store need to be in this table */
-  {"cycle_counts", NULL, REGNO_ANY, NULL, PRELOADS_75, 1, ABST_NONE},
-  {"op_stv_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"load_store_instructions", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE},
-  {"active_cycle_count", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_sxmiss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"branch_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"write_op_uTLB", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE},
-  {"sx_miss_wait_pf", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"sx_miss_wait_dm", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_nc_pend", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_sxmiss_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"eu_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"sx_miss_count_dm", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE},
-  {"fl_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_r_iu_req_mi_go", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE},
-  {"sx_miss_count_dm_if", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE},
-  {"op_stv_wait_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"swpf_lbs_hit", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE},
-  {"sx_read_count_dm", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE},
-  {"trap_DMMU_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE},
-  {"op_wait_all", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"sx_miss_count_dm_opex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE},
-  {"if_wait_all", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"dvp_count_dm", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE},
-  {"sx_miss_count_dm_opsh", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 0, ABST_NONE},
-
-  /* additional (hidden) aliases for convenience */
-  {"cycles0", "cycle_counts", 0, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"cycles1", "cycle_counts", 1, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"insts0", "instruction_counts", 0, NULL, PRELOADS_8, 0, ABST_NONE},
-  {"insts1", "instruction_counts", 1, NULL, PRELOADS_8, 0, ABST_NONE},
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
-
-static Hwcentry usfuji_X_list[] = {
-  {"cycles", "cycle_counts", REGNO_ANY, STXT ("CPU Cycles"), PRELOADS_75, 1, ABST_NONE},
-  {"insts", "instruction_counts", REGNO_ANY, STXT ("Instructions Executed"), PRELOADS_75, 0, ABST_NONE},
-  {"dcm", "L1D_miss", REGNO_ANY, STXT ("L1 D-cache Misses"), PRELOADS_65, 0, ABST_NONE},
-  {"dcstall", "L1D_wait_all", REGNO_ANY, STXT ("L1 D-cache Stall Cycles"), PRELOADS_7, 1, ABST_NONE},
-
-  /* explicit definitions of (hidden) entries for proper counters */
-  /*  Only counters that can be time converted, or are load-store need to be in this table */
-  {"cycle_counts", NULL, REGNO_ANY, NULL, PRELOADS_75, 1, ABST_NONE},
-  {"w_op_stv_wait_nc_pend", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"eu_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_pf_bank0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_pfp_busy_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_dm_bank0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_branch_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_sxmiss_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_nc_pend", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_pf_bank2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_eu_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_sxmiss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_sxmiss_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"branch_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_dm_bank2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"d_move_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_fl_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_pfp_busy", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"fl_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_pf_bank1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_dm_bank1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_sxmiss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_swpf", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L1D_wait_all", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_pf_bank3", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"cse_priority_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_pfp_busy_swpf", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L1I_wait_all", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_dm_bank3", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"single_mode_cycle_counts", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"suspend_cycle", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"sleep_cycle", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  /* additional (hidden) aliases for convenience */
-  {"cycles0", "cycle_counts", 0, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"cycles1", "cycle_counts", 1, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"insts0", "instruction_counts", 0, NULL, PRELOADS_8, 0, ABST_NONE},
-  {"insts1", "instruction_counts", 1, NULL, PRELOADS_8, 0, ABST_NONE},
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
-static Hwcentry usfuji_XII_list[] = {
-  {"cycles", "cycle_counts", REGNO_ANY, STXT ("CPU Cycles"), PRELOADS_75, 1, ABST_NONE},
-  {"insts", "instruction_counts", REGNO_ANY, STXT ("Instructions Executed"), PRELOADS_75, 0, ABST_NONE},
-  {"dcm", "L1D_miss", REGNO_ANY, STXT ("L1 D-cache Misses"), PRELOADS_65, 0, ABST_NONE},
-  {"dcstall", "L1D_wait_all", REGNO_ANY, STXT ("L1 D-cache Stall Cycles"), PRELOADS_7, 1, ABST_NONE},
-
-  /* explicit definitions of (hidden) entries for proper counters */
-  /*  Only counters that can be time converted, or are load-store need to be in this table */
-  {"cycle_counts", NULL, REGNO_ANY, NULL, PRELOADS_75, 1, ABST_NONE},
-  {"L1D_wait_all", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L1I_wait_all", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_dm_bank0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_dm_bank1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_dm_bank2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_dm_bank3", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_pf_bank0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_pf_bank1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_pf_bank2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"L2_miss_wait_pf_bank3", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LL_miss_wait_dm_bank0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LL_miss_wait_dm_bank1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LL_miss_wait_dm_bank2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LL_miss_wait_dm_bank3", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LL_miss_wait_pf_bank0", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LL_miss_wait_pf_bank1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LL_miss_wait_pf_bank2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"LL_miss_wait_pf_bank3", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"branch_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"cse_priority_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"d_move_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"eu_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"fl_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"l2_sy_miss_wait_dm_part1", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"l2_sy_miss_wait_dm_part2", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"msgr_reqp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"msgr_rtnp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"msgs_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_l1d_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_l1d_miss_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_l2_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_l2_miss_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_ll_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_ll_miss_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_nc_pend", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_pfp_busy", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_pfp_busy_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_pfp_busy_swpf", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_swpf", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_sxmiss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"op_stv_wait_sxmiss_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_branch_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_eu_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_fl_comp_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_l1d_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_l1d_miss_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_l2_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_l2_miss_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_ll_miss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_ll_miss_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_nc_pend", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_pfp_busy", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_pfp_busy_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_pfp_busy_swpf", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_sxmiss", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"w_op_stv_wait_sxmiss_ex", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  {"single_mode_cycle_counts", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"suspend_cycle", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-  {"sleep_cycle", NULL, REGNO_ANY, NULL, PRELOAD_DEF, 1, ABST_NONE},
-
-  /* additional (hidden) aliases for convenience */
-  {"cycles0", "cycle_counts", 0, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"cycles1", "cycle_counts", 1, NULL, PRELOADS_8, 1, ABST_NONE},
-  {"insts0", "instruction_counts", 0, NULL, PRELOADS_8, 0, ABST_NONE},
-  {"insts1", "instruction_counts", 1, NULL, PRELOADS_8, 0, ABST_NONE},
-  {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
-};
-
+#if defined(__i386__) || defined(__x86_64__)
 /* Kernel profiling pseudo-chip, OBSOLETE (To support 12.3 and earlier, TBR) */
 static Hwcentry kproflist[] = {
   {"kcycles", "kcycles", 0, STXT ("KCPU Cycles"), PRELOADS_5, 1, ABST_NONE},
@@ -2366,6 +1216,7 @@ static Hwcentry amd_15h[] = {
   {"insts1", "EX_retired_instr_w_excp_intr", 1, NULL, PRELOADS_8, 0, ABST_NONE},
   {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
 };
+#endif  /* __i386__ or __x86_64__ */
 
 #define INIT_HWC(nm, mtr, cfg, ty) .name = (nm), .metric = (mtr), \
     .config = (cfg), .type = ty, .use_perf_event_type = 1, \
@@ -2375,81 +1226,92 @@ static Hwcentry amd_15h[] = {
 #define HWCE(nm, mtr, id, op, res) \
     INIT_HWC(nm, mtr, (id) | ((op) << 8) | ((res) << 16), PERF_TYPE_HW_CACHE)
 
+#define HWC_GENERIC \
+  /* Hardware event: */\
+  { HWE("usr_time", STXT("User CPU"), PERF_COUNT_HW_CPU_CYCLES), .timecvt = 1,\
+    .int_name = "cycles" },\
+  { HWE("sys_time", STXT("System CPU"), PERF_COUNT_HW_CPU_CYCLES), .timecvt = 1,\
+    .int_name = "cycles~system=1~user=0" },\
+  { HWE("branch-instructions", STXT("Branch-instructions"),\
+	PERF_COUNT_HW_BRANCH_INSTRUCTIONS) },\
+  { HWE("branch-misses", STXT("Branch-misses"), PERF_COUNT_HW_BRANCH_MISSES) },\
+  { HWE("bus-cycles", STXT("Bus Cycles"), PERF_COUNT_HW_BUS_CYCLES),\
+	  .timecvt = 1 },\
+  { HWE("cache-misses", STXT("Cache-misses"), PERF_COUNT_HW_CACHE_MISSES) },\
+  { HWE("cache-references", STXT("Cache-references"),\
+	PERF_COUNT_HW_CACHE_REFERENCES) },\
+  { HWE("cycles", STXT("CPU Cycles"), PERF_COUNT_HW_CPU_CYCLES), .timecvt = 1 },\
+  { HWE("insts", STXT("Instructions Executed"), PERF_COUNT_HW_INSTRUCTIONS),\
+	  .int_name = "instructions" },\
+  { HWE("ref-cycles", STXT("Total Cycles"), PERF_COUNT_HW_REF_CPU_CYCLES),\
+	  .timecvt = 1 },\
+  { HWE("stalled-cycles-backend", STXT("Stalled Cycles during issue."),\
+	PERF_COUNT_HW_STALLED_CYCLES_BACKEND), .timecvt = 1 },\
+  { HWE("stalled-cycles-frontend", STXT("Stalled Cycles during retirement."),\
+	PERF_COUNT_HW_STALLED_CYCLES_FRONTEND), .timecvt = 1 },\
+  /* Software event: */\
+  { SWE("alignment-faults", STXT("Alignment Faults"),\
+	PERF_COUNT_SW_ALIGNMENT_FAULTS) },\
+  { SWE("context-switches", STXT("Context Switches"),\
+	PERF_COUNT_SW_CONTEXT_SWITCHES) },\
+  { SWE("cpu-clock", STXT("CPU Clock"), PERF_COUNT_SW_CPU_CLOCK),\
+	  .timecvt = 1 },\
+  { SWE("cpu-migrations", STXT("CPU Migrations"),\
+	PERF_COUNT_SW_CPU_MIGRATIONS) },\
+  { SWE("emulation-faults", STXT("Emulation Faults"),\
+	PERF_COUNT_SW_EMULATION_FAULTS) },\
+  { SWE("major-faults", STXT("Major Page Faults"),\
+	PERF_COUNT_SW_PAGE_FAULTS_MAJ) },\
+  { SWE("minor-faults", STXT("Minor Page Faults"),\
+	PERF_COUNT_SW_PAGE_FAULTS_MIN) },\
+  { SWE("page-faults", STXT("Page Faults"), PERF_COUNT_SW_PAGE_FAULTS) },\
+  { SWE("task-clock", STXT("Clock Count Specific"), PERF_COUNT_SW_TASK_CLOCK),\
+	  .timecvt = 1 },\
+  /* Hardware cache event: */\
+  { HWCE("L1-dcache-load-misses", STXT("L1 D-cache Load Misses"),\
+	 PERF_COUNT_HW_CACHE_L1D,\
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_MISS) },\
+  { HWCE("L1-dcache-loads", STXT("L1 D-cache Loads"),\
+	 PERF_COUNT_HW_CACHE_L1D,\
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },\
+  { HWCE("L1-dcache-store-misses", STXT("L1 D-cache Store Misses"),\
+	 PERF_COUNT_HW_CACHE_L1D,\
+	 PERF_COUNT_HW_CACHE_RESULT_MISS, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },\
+  { HWCE("L1-dcache-stores", STXT("L1 D-cache Store Stores"),\
+	 PERF_COUNT_HW_CACHE_L1D,\
+	 PERF_COUNT_HW_CACHE_OP_WRITE, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },\
+  { HWCE("L1-icache-load-misses", STXT("L1 Instructions Load Misses"),\
+	 PERF_COUNT_HW_CACHE_L1I,\
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_MISS) },\
+  { HWCE("L1-icache-load-misses", STXT("L1 Instructions Loads"),\
+	 PERF_COUNT_HW_CACHE_L1I,\
+	 PERF_COUNT_HW_CACHE_OP_READ,  PERF_COUNT_HW_CACHE_RESULT_ACCESS) },\
+  { HWCE("dTLB-load-misses", STXT("D-TLB Load Misses"),\
+	 PERF_COUNT_HW_CACHE_DTLB,\
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_MISS) },\
+  { HWCE("dTLB-loads", STXT("D-TLB Loads"),\
+	 PERF_COUNT_HW_CACHE_DTLB,\
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },\
+  { HWCE("iTLB-load-misses", STXT("The Instruction TLB Load Misses"),\
+	 PERF_COUNT_HW_CACHE_ITLB,\
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_MISS) },\
+  { HWCE("iTLB-loads", STXT("The Instruction TLB Loads"),\
+	 PERF_COUNT_HW_CACHE_ITLB,\
+	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },
 static Hwcentry	generic_list[] = {
-// Hardware event:
-  { HWE("usr_time", STXT("User CPU"), PERF_COUNT_HW_CPU_CYCLES), .timecvt = 1,
-    .int_name = "cycles" },
-  { HWE("sys_time", STXT("System CPU"), PERF_COUNT_HW_CPU_CYCLES), .timecvt = 1,
-    .int_name = "cycles~system=1~user=0" },
-  { HWE("branch-instructions", STXT("Branch-instructions"),
-	PERF_COUNT_HW_BRANCH_INSTRUCTIONS) },
-  { HWE("branch-misses", STXT("Branch-misses"), PERF_COUNT_HW_BRANCH_MISSES) },
-  { HWE("bus-cycles", STXT("Bus Cycles"), PERF_COUNT_HW_BUS_CYCLES),
-	  .timecvt = 1 },
-  { HWE("cache-misses", STXT("Cache-misses"), PERF_COUNT_HW_CACHE_MISSES) },
-  { HWE("cache-references", STXT("Cache-references"),
-	PERF_COUNT_HW_CACHE_REFERENCES) },
-  { HWE("cycles", STXT("CPU Cycles"), PERF_COUNT_HW_CPU_CYCLES), .timecvt = 1 },
-  { HWE("insts", STXT("Instructions Executed"), PERF_COUNT_HW_INSTRUCTIONS),
-	  .int_name = "instructions" },
-  { HWE("ref-cycles", STXT("Total Cycles"), PERF_COUNT_HW_REF_CPU_CYCLES),
-	  .timecvt = 1 },
-  { HWE("stalled-cycles-backend", STXT("Stalled Cycles during issue."),
-	PERF_COUNT_HW_STALLED_CYCLES_BACKEND), .timecvt = 1 },
-  { HWE("stalled-cycles-frontend", STXT("Stalled Cycles during retirement."),
-	PERF_COUNT_HW_STALLED_CYCLES_FRONTEND), .timecvt = 1 },
-// Software event:
-  { SWE("alignment-faults", STXT("Alignment Faults"),
-	PERF_COUNT_SW_ALIGNMENT_FAULTS) },
-  { SWE("context-switches", STXT("Context Switches"),
-	PERF_COUNT_SW_CONTEXT_SWITCHES) },
-  { SWE("cpu-clock", STXT("CPU Clock"), PERF_COUNT_SW_CPU_CLOCK),
-	  .timecvt = 1 },
-  { SWE("cpu-migrations", STXT("CPU Migrations"),
-	PERF_COUNT_SW_CPU_MIGRATIONS) },
-  { SWE("emulation-faults", STXT("Emulation Faults"),
-	PERF_COUNT_SW_EMULATION_FAULTS) },
-  { SWE("major-faults", STXT("Major Page Faults"),
-	PERF_COUNT_SW_PAGE_FAULTS_MAJ) },
-  { SWE("minor-faults", STXT("Minor Page Faults"),
-	PERF_COUNT_SW_PAGE_FAULTS_MIN) },
-  { SWE("page-faults", STXT("Page Faults"), PERF_COUNT_SW_PAGE_FAULTS) },
-  { SWE("task-clock", STXT("Clock Count Specific"), PERF_COUNT_SW_TASK_CLOCK),
-	  .timecvt = 1 },
-// Hardware cache event
-  { HWCE("L1-dcache-load-misses", STXT("L1 D-cache Load Misses"),
-	 PERF_COUNT_HW_CACHE_L1D,
-	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_MISS) },
-  { HWCE("L1-dcache-loads", STXT("L1 D-cache Loads"),
-	 PERF_COUNT_HW_CACHE_L1D,
-	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },
-  { HWCE("L1-dcache-store-misses", STXT("L1 D-cache Store Misses"),
-	 PERF_COUNT_HW_CACHE_L1D,
-	 PERF_COUNT_HW_CACHE_RESULT_MISS, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },
-  { HWCE("L1-dcache-stores", STXT("L1 D-cache Store Stores"),
-	 PERF_COUNT_HW_CACHE_L1D,
-	 PERF_COUNT_HW_CACHE_OP_WRITE, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },
-  { HWCE("L1-icache-load-misses", STXT("L1 Instructions Load Misses"),
-	 PERF_COUNT_HW_CACHE_L1I,
-	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_MISS) },
-  { HWCE("L1-icache-load-misses", STXT("L1 Instructions Loads"),
-	 PERF_COUNT_HW_CACHE_L1I,
-	 PERF_COUNT_HW_CACHE_OP_READ,  PERF_COUNT_HW_CACHE_RESULT_ACCESS) },
-  { HWCE("dTLB-load-misses", STXT("D-TLB Load Misses"),
-	 PERF_COUNT_HW_CACHE_DTLB,
-	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_MISS) },
-  { HWCE("dTLB-loads", STXT("D-TLB Loads"),
-	 PERF_COUNT_HW_CACHE_DTLB,
-	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },
-  { HWCE("iTLB-load-misses", STXT("The Instruction TLB Load Misses"),
-	 PERF_COUNT_HW_CACHE_ITLB,
-	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_MISS) },
-  { HWCE("iTLB-loads", STXT("The Instruction TLB Loads"),
-	 PERF_COUNT_HW_CACHE_ITLB,
-	 PERF_COUNT_HW_CACHE_OP_READ, PERF_COUNT_HW_CACHE_RESULT_ACCESS) },
-
+  HWC_GENERIC
   {NULL, NULL, 0, NULL, 0, 0, 0, 0, ABST_NONE}
 };
+
+#if defined(__i386__) || defined(__x86_64__)
+ #include "hwc_amd_zen3.h"
+ #include "hwc_amd_zen4.h"
+ #include "hwc_intel_icelake.h"
+#elif defined(__aarch64__)
+ #include "hwc_arm64_amcc.h"
+ #include "hwc_arm_neoverse_n1.h"
+ #include "hwc_arm_ampere_1.h"
+#endif
 
 /* structure defining the counters for a CPU type */
 typedef struct
@@ -2470,24 +1332,7 @@ typedef struct
  *  If the string is not formatted that way, -h hi and -h lo will fail
  */
 static cpu_list_t cputabs[] = {
-  {CPC_ULTRA1, usIlist, {NULL}}, /* bind will fail */
-  {CPC_ULTRA2, usIlist, {NULL}}, /* bind will fail */
-  {CPC_ULTRA3, usIIIlist, {"insts,,ecstall", 0}},
-  {CPC_ULTRA3_PLUS, usIIIlist, {"insts,,ecstall", 0}},
-  {CPC_ULTRA3_I, usIIIlist, {"insts,,ecstall", 0}},
-  {CPC_ULTRA4_PLUS, usIVplist, {"insts,,ecstall", 0}},
-  {CPC_ULTRA_T1, niagara1, {"insts", 0}},
-  {CPC_ULTRA_T2, niagara2, {"insts,,+l2drm", 0}},
-  {CPC_ULTRA_T2P, niagara2, {"insts,,+l2drm", 0}},
-  {CPC_ULTRA_T3, niagara2, {"insts,,+l2drm", 0}},
-  {CPC_SPARC_T4, sparc_t4, {"insts,,cycles,,c_stalls,,dcm", "c_stalls", 0}},
-  {CPC_SPARC_M4, sparc_t5_m6, {"insts,,cycles,,c_stalls,,dcm", "c_stalls", 0}}, // renamed to m5
-  {CPC_SPARC_T5, sparc_t5_m6, {"insts,,cycles,,c_stalls,,dcm", "c_stalls", 0}},
-  {CPC_SPARC_M5, sparc_t5_m6, {"insts,,cycles,,c_stalls,,dcm", "c_stalls", 0}},
-  {CPC_SPARC_T6, sparc_t5_m6, {"insts,,cycles,,c_stalls,,dcm", "c_stalls", 0}}, // no such processor
-  {CPC_SPARC_M6, sparc_t5_m6, {"insts,,cycles,,c_stalls,,dcm", "c_stalls", 0}},
-  {CPC_SPARC_M7, sparc_m7, {"insts,,cycles,,c_stalls,,dcm", "c_stalls", 0}}, // includes T7
-  {CPC_SPARC_M8, sparc_m8, {"insts,,cycles,,c_stalls,,dcm", "c_stalls", 0}},
+#if defined(__i386__) || defined(__x86_64__)
   {CPC_PENTIUM_PRO_MMX, pentiumIIlist, {"insts", 0}},
   {CPC_PENTIUM_PRO, pentiumIIIlist, {"insts", 0}},
   {CPC_PENTIUM_4, pentium4, {"insts", 0}},
@@ -2507,6 +1352,7 @@ static cpu_list_t cputabs[] = {
       "insts,,cycles,,l3m,,dtlbm", 0}},
   {CPC_INTEL_SKYLAKE, intelSkylakeList, {"insts,,cycles,,+l2m_latency,,dtlbm_stall",
       "insts,,cycles,,l2m_stall,,dtlbm_stall", 0}},
+  {CPC_INTEL_ICELAKE, intelIcelakeList, {"insts,,cycles,,dTLB-load-misses", 0}},
   {CPC_INTEL_UNKNOWN, intelLinuxUnknown, {"cycles,,insts,,llm",
       "user_time,,system_time,,cycles,,insts,,llm", 0}},
   {CPC_INTEL_ATOM, intelAtomList, {"insts", 0}},
@@ -2514,14 +1360,16 @@ static cpu_list_t cputabs[] = {
   {CPC_AMD_FAM_10H, amd_opteron_10h_11h, {"insts,,cycles,,l2dm,,l2dtlbm", 0}},
   {CPC_AMD_FAM_11H, amd_opteron_10h_11h, {"insts,,cycles,,l2dm,,l2dtlbm", 0}},
   {CPC_AMD_FAM_15H, amd_15h, {"insts,,cycles", 0}},
-  {CPC_SPARC64_V, usfuji_V_list, {"insts,,cycles", 0}},
-  {CPC_SPARC64_VI, usfuji_VI_VII_list, {"insts,,cycles,,dcstall", 0}},
-  {CPC_SPARC64_VII, usfuji_VI_VII_list, {"insts,,cycles,,dcstall", 0}},
-  {CPC_SPARC64_X, usfuji_X_list, {"insts,,cycles,,dcstall", 0}},
-  {CPC_SPARC64_XII, usfuji_XII_list, {"insts,,cycles,,dcstall", 0}},
   {CPC_KPROF, kproflist, {NULL}}, // OBSOLETE (To support 12.3 and earlier, TBR)
-  {ARM_CPU_IMP_APM, generic_list, {"insts,,cycles", 0}},
   {CPC_AMD_Authentic, generic_list, {"insts,,cycles", 0}},
+  {CPC_AMD_FAM_19H_ZEN3, amd_zen3_list, {"insts,,cycles", 0}},
+  {CPC_AMD_FAM_19H_ZEN4, amd_zen4_list, {"insts,,cycles", 0}},
+#elif defined(__aarch64__)
+  {CPC_ARM64_AMCC, arm64_amcc_list, {"insts,,cycles", 0}},
+  {CPC_ARM_NEOVERSE_N1, arm_neoverse_n1_list, {"insts,,cycles", 0}},
+  {CPC_ARM_AMPERE_1, arm_ampere_1_list, {"insts,,cycles", 0}},
+  {CPC_ARM_GENERIC, generic_list, {"insts,,cycles", 0}},
+#endif
   {0, generic_list, {"insts,,cycles", 0}},
 };
 
@@ -2665,145 +1513,6 @@ is_hidden_alias (Hwcentry* pctr)
   return 0;
 }
 
-static int
-is_numeric_alias (Hwcentry* pctr)
-{
-  int is_numeric_alias = 0;
-  regno_t regno;
-  char *nameOnly = NULL;
-  hwcfuncs_parse_ctr (pctr->int_name, NULL, &nameOnly, NULL, NULL, &regno);
-  if (is_numeric (nameOnly, NULL))
-    is_numeric_alias = 1;
-  free (nameOnly);
-  return is_numeric_alias;
-}
-
-/* print list of register to a buffer */
-/*
- *  style      e x a m p l e s
- *    0        NONE    2       {0|1|2|3}
- *    1        NONE    2       : 0, 1, 2, or 3
- *    2                        0 1 2 3     6
- */
-static char *
-get_regnolist (char *buf, size_t sz, const regno_t *reg_list, int style)
-{
-  if (!buf || !sz)
-    return "INTERNAL ERROR";
-  buf[0] = 0;
-  if (style == 2)
-    {
-      int ii;
-      // width should be consistent with that in format_columns()
-      // the format will accommodate cpcx_npics regs
-      if (cpcx_npics < 1)
-	return "INTERNAL ERROR";
-      // clear out the buffer
-      for (ii = 0; ii < sz; ii++)
-	buf[ii] = '_';
-      if (cpcx_npics <= 9)
-	{
-	  // one char per reg, plus terminating null char
-	  if (cpcx_npics + 1 > sz)
-	    return "INTERNAL ERROR";
-	  buf[cpcx_npics] = '\0';
-
-	  // fill buf with regnos
-	  for (ii = 0; ii < MAX_PICS; ii++)
-	    {
-	      regno_t regno = reg_list[ii];
-	      if (REG_LIST_EOL (regno))
-		break;
-	      if (regno < 0 || regno >= cpcx_npics)
-		return "INTERNAL ERROR";
-	      buf[regno] = '0' + regno;
-	    }
-	}
-      else
-	{
-	  /* space between regs, which may be 1 or 2 digits each
-	   *   1 char  for reg 0
-	   *   2 chars for regs 1-9 each
-	   *   3 chars for regs 10- each
-	   *   1 char  for terminating null char
-	   */
-	  int nchars = 17 + 3 * (cpcx_npics - 9);
-	  if (nchars > sz)
-	    return "INTERNAL ERROR";
-	  buf[nchars - 1] = '\0';
-
-	  // fill buf with regnos
-	  for (ii = 0; ii < MAX_PICS; ii++)
-	    {
-	      regno_t regno = reg_list[ii];
-	      if (REG_LIST_EOL (regno))
-		break;
-	      if (regno <= 9)
-		buf[2 * regno ] = '0' + regno;
-	      else
-		{
-		  buf[3 * (regno - 9) + 17] = '0' + (regno / 10);
-		  buf[3 * (regno - 9) + 18] = '0' + (regno % 10);
-		}
-	    }
-	}
-      return buf;
-    }
-  if (REG_LIST_IS_EMPTY (reg_list))
-    {
-      snprintf (buf, sz, GTXT ("NONE"));
-      return buf;
-    }
-  else if (REG_LIST_EOL (reg_list[1]))
-    {
-      /* 1 item in list */
-      snprintf (buf, sz, "%d", reg_list[0]);
-      return buf;
-    }
-  else
-    {
-      /* 2 more items in list */
-      int ii, num_regs;
-      for (ii = 0; ii < MAX_PICS; ii++)
-	{
-	  regno_t regno = reg_list[ii];
-	  if (REG_LIST_EOL (regno))
-	    break;
-	}
-      num_regs = ii;
-      buf[0] = 0;
-      for (ii = 0; ii < num_regs; ii++)
-	{
-	  regno_t regno = reg_list[ii];
-	  if (style == 0)
-	    snprintf (buf + strlen (buf), sz - strlen (buf),
-		      "%c%d", ii ? '|' : '{', regno);
-	  else
-	    {
-	      if (num_regs == 2)
-		snprintf (buf + strlen (buf), sz - strlen (buf),
-			  "%d%s", regno, !ii ? " or " : "");
-	      else
-		{
-		  /* 3 or more items in list */
-		  if (ii < num_regs - 2)
-		    snprintf (buf + strlen (buf), sz - strlen (buf),
-			      "%d, ", regno);
-		  else if (ii == num_regs - 2)
-		    snprintf (buf + strlen (buf), sz - strlen (buf),
-			      "%d, or ", regno);
-		  else
-		    snprintf (buf + strlen (buf), sz - strlen (buf),
-			      "%d", regno);
-		}
-	    }
-	}
-      if (style == 0)
-	snprintf (buf + strlen (buf), sz - strlen (buf), "}");
-    }
-  return buf;
-}
-
 #if !HWC_DEBUG
 #define hwcentry_print(lvl,x1,x2)
 #else
@@ -2812,8 +1521,7 @@ get_regnolist (char *buf, size_t sz, const regno_t *reg_list, int style)
 static void
 hwcentry_print (int lvl, const char * header, const Hwcentry *pentry)
 {
-  char buf[1024];
-  Tprintf (lvl, "%s '%s', '%s', %d, '%s', %d, %d, %d, %d, %d, %d, /",
+  Tprintf (lvl, "%s '%s', '%s', %d, '%s', %d, %d, %d, %d, %d, %d, /\n",
 	   header,
 	   pentry->name ? pentry->name : "NULL",
 	   pentry->int_name ? pentry->int_name : "NULL",
@@ -2825,66 +1533,8 @@ hwcentry_print (int lvl, const char * header, const Hwcentry *pentry)
 	   pentry->timecvt,
 	   pentry->memop, /* type of instruction that can trigger */
 	   pentry->sort_order);
-  get_regnolist (buf, sizeof (buf), pentry->reg_list, 0);
-  Tprintf (lvl, "%s\n", buf);
 }
 #endif
-
-/* add <regno> to a Hwcentry's list */
-static void
-regno_add (Hwcentry * pctr, regno_t regno)
-{
-  int jj;
-  regno_t *reg_list;
-  if (!pctr)
-    {
-      Tprintf (0, "hwctable: regno_add(): ERROR: pctr==NULL\n");
-      return;
-    }
-  reg_list = pctr->reg_list;
-  if (!reg_list)
-    {
-      /* create list */
-      reg_list = (regno_t*) malloc (sizeof (regno_t*) * MAX_PICS);
-      if (!reg_list)
-	{
-	  hwcentry_print (DBG_LT0, "hwctable: regno_add: ERROR:"
-			  " Out of memory: ", pctr);
-	  return;
-	}
-      /* initialize list */
-      for (jj = 0; jj < MAX_PICS; jj++)
-	reg_list[jj] = REGNO_ANY;
-      pctr->reg_list = reg_list;
-    }
-  if (regno == REGNO_ANY)
-    {
-      /* add all counters up to cpcx_npics */
-      for (jj = 0; jj < MAX_PICS && jj < cpcx_npics; jj++)
-	reg_list[jj] = jj;
-    }
-  else
-    {
-      /* add <regno> to list of registers */
-      for (jj = 0; jj < MAX_PICS; jj++)
-	{
-	  if (reg_list[jj] == regno)
-	    {
-	      hwcentry_print (DBG_LT0, "hwctable: regno_add: WARNING: "
-			      "Duplicate regno: ", pctr);
-	      break;
-	    }
-	  if (reg_list[jj] == REGNO_ANY)
-	    {
-	      reg_list[jj] = regno;
-	      break;
-	    }
-	}
-    }
-  if (jj == MAX_PICS)
-    hwcentry_print (DBG_LT0, "hwctable: regno_add: WARNING:"
-		    " regno list is full:", pctr);
-}
 
 /*---------------------------------------------------------------------------*/
 /* utilities for rawlist (list of raw counters with reglist[] filled in) */
@@ -2937,8 +1587,6 @@ list_add (ptr_list *list, uint_t regno, const char *name)
       tmpctr.name = (char *) name;
       praw = list_append_shallow_copy (list, &tmpctr);
     }
-  if (praw)
-    regno_add (praw, regno);
   return praw;
 }
 
@@ -2995,28 +1643,7 @@ ptrarray_find (const Hwcentry **array, const char *name, const char *int_name,
 	  if (NULL == strstr (int_name, pctr->int_name))
 	    continue;
 	}
-      if (!check_regno)
-	return pctr;
-      else
-	{
-	  /* duplicates aliases are allowed in table because of 6759307 */
-	  if (REG_LIST_IS_EMPTY (pctr->reg_list))
-	    {
-	      /* skip aliases that don't have a valid list of registers */
-	      hwcentry_print (1, "hwctable: stdlist_find_by_name:"
-			      " WARNING: alias found, but event not supported by HW:",
-			      pctr);
-	      continue;
-	    }
-	  if (!regno_is_valid (pctr, regno))
-	    {
-	      hwcentry_print (1, "hwctable: stdlist_find_by_name():"
-			      " WARNING: alias found, but regno doesn't match:",
-			      pctr);
-	      continue;
-	    }
-	  return pctr;
-	}
+      return pctr;
     }
   return NULL;
 }
@@ -3052,49 +1679,15 @@ static_table_find (const Hwcentry *table, const char *name, const char *int_name
 static void
 stdlist_print (int dbg_lvl, const Hwcentry* table)
 {
-  const Hwcentry *pctr;
   if (!table)
     {
       Tprintf (0, "hwctable: stdlist_print: ERROR: "
 	       "table is invalid.\n");
       return;
     }
-  for (pctr = table; pctr->name; pctr++)
+  for (const Hwcentry *pctr = table; pctr->name; pctr++)
     {
-      int ii;
       hwcentry_print (dbg_lvl, "hwctable: stdlist: ", pctr);
-      if (REG_LIST_IS_EMPTY (pctr->reg_list))
-	{
-	  if (pctr->int_name || !pctr->metric)
-	    hwcentry_print (DBG_LT1, "hwctable: stdlist_print: WARNING: "
-			    "no hardware event found for table entry", pctr);
-	  continue;
-	}
-      /* check if incorrect reg_num used in table */
-      if (!regno_is_valid (pctr, pctr->reg_num))
-	{
-	  hwcentry_print (DBG_LT0, "hwctable: stdlist_print: ERROR: "
-			  "reg_num is not in table. ", pctr);
-	  continue;
-	}
-      for (ii = 0; ii < MAX_PICS; ii++)
-	{
-	  regno_t regno = pctr->reg_list[ii];
-	  if (REG_LIST_EOL (regno))
-	    break;
-	}
-      if (ii > 1 && pctr->reg_num != REGNO_ANY)
-	{
-	  /* several regnos were valid, but only one can be specified */
-	  if (pctr->metric || !pctr->int_name)
-	    {
-	      /* pctr is standard or a raw definition */
-	      /* (pctr is not an alias like cycles0) */
-	      hwcentry_print (DBG_LT0, "hwctable: stdlist_print: ERROR: "
-			      "regno in table should have been REGNO_ANY. ",
-			      pctr);
-	    }
-	}
     }
 }
 #endif
@@ -3179,41 +1772,17 @@ check_tables ()
 	      if (pentry->metric)
 		Tprintf (DBG_LT0, "hwctable: check_tables: ERROR:"
 			 " internal && metric @%d, %s\n", cputag, pentry->name);
-	      if (pentry->reg_num != REGNO_ANY)
-		Tprintf (DBG_LT1, "hwctable: check_tables: WARNING:"
-			 " internal && reg_num!=REGNO_ANY @%d, %s\n",
-			 cputag, pentry->name);
 	      if (pentry->val != PRELOAD_DEF
 		  && pentry->memop != ABST_EXACT_PEBS_PLUS1)
 		Tprintf (DBG_LT2, "hwctable: check_tables: INFO:"
 			 " internal && custom val=%d @%d, %s\n",
 			 pentry->val, cputag, pentry->name);
-#if 0
-	      if (!pentry->timecvt && pentry->memop == ABST_NONE)
-		Tprintf (DBG_LT0, "hwctable: check_tables: ERROR:"
-			 " internal && not special! @%d, %s\n",
-			 cputag, pentry->name);
-#endif
 	    }
 	  if (pentry->metric)
 	    { /* aliased */
 	      if (!pentry->int_name)
 		Tprintf (DBG_LT0, "hwctable: check_tables: ERROR:"
 			 " aliased && !int_name @%d, %s\n", cputag, pentry->name);
-#if 0
-	      else if (!strcmp (pentry->name, pentry->int_name))
-		Tprintf (DBG_LT0, "hwctable: check_tables: ERROR:"
-			 " name==int_name @%d, %s\n",
-			 cputag, pentry->name);
-#endif
-	      if (pentry->reg_num != REGNO_ANY && pentry->reg_num != REGNO_INVALID)
-		Tprintf (DBG_LT1, "hwctable: check_tables: INFO:"
-			 " aliased && custom reg_num==%d @%d, %s\n",
-			 pentry->reg_num, cputag, pentry->name);
-	      if (pentry->reg_num == REGNO_INVALID)
-		Tprintf (DBG_LT2, "hwctable: check_tables: INFO:"
-			 " aliased && reg_num==REGNO_INVALID @%d, %s\n",
-			 cputag, pentry->name);
 	    }
 	  if (pentry->int_name && !pentry->metric)
 	    { /* convenience */
@@ -3221,17 +1790,13 @@ check_tables ()
 		  Tprintf (DBG_LT0, "hwctable: check_tables: ERROR:"
 			   " convenience && name==int_name @%d, %s\n",
 			   cputag, pentry->name);
-	      if (pentry->reg_num == REGNO_ANY)
-		  Tprintf (DBG_LT0, "hwctable: check_tables: ERROR:"
-			   " convenience && reg_num==REGNO_ANY @%d, %s\n",
-			   cputag, pentry->name);
 	    }
 	}
     }
 }
 #endif
 
-static int try_a_counter ();
+static int try_a_counter (int forKernel);
 static void hwc_process_raw_ctrs (int forKernel, Hwcentry ***pstd_out,
 				  Hwcentry ***praw_out, Hwcentry ***phidden_out,
 				  Hwcentry**static_tables,
@@ -3277,16 +1842,44 @@ setup_cpc_general (int skip_hwc_test)
   hwcdrv->hwcdrv_get_info (&cpcx_cpuver, &cpcx_cciname, &cpcx_npics,
 			   &cpcx_docref, &cpcx_support_bitmask);
 
-#ifdef DISALLOW_USI_USII_6357446
-  if (cpcx_cpuver == CPC_ULTRA1 || cpcx_cpuver == CPC_ULTRA2)
+  /* Fix cpcx_cpuver for new Zen and Intel machines */
+  cpu_info_t *cpu_p = read_cpuinfo ();
+  if (strcmp (cpu_p->cpu_vendorstr, "AuthenticAMD") == 0)
     {
-      Tprintf (0, "hwctable: WARNING: setup_cpc(): cpu=%d"
-	       " US-I/US-II cannot provide profile interrupts\n", cpcx_cpuver);
-      /* profiling interrupts don't work on US-I, US-II */
-      hwcfuncs_int_logerr (GTXT ("UltraSPARC I and II cannot provide overflow interrupts\n"));
-      goto setup_cpc_wrapup;
+      if (cpu_p->cpu_family == AMD_ZEN3_FAMILY)
+	switch (cpu_p->cpu_model)
+	  {
+	  case AMD_ZEN3_RYZEN:
+	  case AMD_ZEN3_RYZEN2:
+	  case AMD_ZEN3_RYZEN3:
+	  case AMD_ZEN3_EPYC_TRENTO:
+	    cpcx_cpuver = CPC_AMD_FAM_19H_ZEN3;
+	    break;
+	  case AMD_ZEN4_RYZEN:
+	  case AMD_ZEN4_EPYC:
+	    cpcx_cpuver = CPC_AMD_FAM_19H_ZEN4;
+	    break;
+	  }
     }
-#endif
+  else if (strcmp (cpu_p->cpu_vendorstr, "GenuineIntel") == 0)
+    {
+      if (cpu_p->cpu_family == 6)
+	{
+	  if (cpu_p->cpu_model == 106)
+	    cpcx_cpuver = CPC_INTEL_ICELAKE;
+	}
+    }
+  else if (strcmp (cpu_p->cpu_vendorstr, AARCH64_VENDORSTR_ARM) == 0)
+    {
+      if (cpu_p->cpu_family == 0x50)
+	cpcx_cpuver = CPC_ARM64_AMCC;
+      else if (cpu_p->cpu_family == 0x41)
+	cpcx_cpuver = CPC_ARM_NEOVERSE_N1;
+      else if (cpu_p->cpu_family == 0xc0)
+	cpcx_cpuver = CPC_ARM_AMPERE_1;
+      else
+	cpcx_cpuver = CPC_ARM_GENERIC;
+    }
 
 #ifdef DISALLOW_PENTIUM_PRO_MMX_7007575
   if (cpcx_cpuver == CPC_PENTIUM_PRO_MMX)
@@ -3322,7 +1915,7 @@ setup_cpc_general (int skip_hwc_test)
   valid_cpu_tables[1] = papi_generic_list;
   Tprintf (DBG_LT2, "hwctable: setup_cpc(): getting descriptions \n");
   // populate cpcx_raw and cpcx_attr
-  hwcdrv->hwcdrv_get_descriptions (hwc_cb, attrs_cb);
+  hwcdrv->hwcdrv_get_descriptions (hwc_cb, attrs_cb, cputabs_entry->stdlist_table);
   for (int kk = 0; kk < 2; kk++)
     { // collect and er_kernel
       hwc_process_raw_ctrs (kk, &cpcx_std[kk], &cpcx_raw[kk], &cpcx_hidden[kk],
@@ -3423,17 +2016,13 @@ try_a_counter (int forKernel)
       return 0; /* consider this an automatic PASS */
     }
   /* look for a valid table entry, only try valid_cpu_tables[0] */
-  {
-    testevent = cpcx_std[forKernel][0];
-    if (!testevent || !testevent->name)
-      {
-	Tprintf (0, "hwctable: WARNING: no test metric"
-		 " available to verify counters\n");
-	return 0; /* consider this an automatic PASS */
-      }
-    if (REG_LIST_IS_EMPTY (testevent->reg_list))
-      return 0; // weird
-  }
+  testevent = cpcx_std[forKernel][0];
+  if (!testevent || !testevent->name)
+    {
+      Tprintf (0, "hwctable: WARNING: no test metric"
+	       " available to verify counters\n");
+      return 0; /* consider this an automatic PASS */
+    }
   Hwcentry tmp_testevent;
   tmp_testevent = *testevent; /* shallow copy */
   if (tmp_testevent.int_name == NULL)
@@ -3442,9 +2031,6 @@ try_a_counter (int forKernel)
       tmp_testevent.int_name = strdup (tmp_testevent.name);
     }
   Hwcentry * test_array[1] = {&tmp_testevent};
-  rc = hwcfuncs_assign_regnos (test_array, 1); /* may modify test_array */
-  if (rc)
-    return rc;
   rc = test_hwcs ((const Hwcentry**) test_array, 1);
   if (rc == HWCFUNCS_ERROR_UNAVAIL)
     {
@@ -3683,7 +2269,6 @@ process_ctr_def (int forKernel, hrtime_t global_min_time_nsec,
 	  if (tmp)
 	    {
 	      tmp->name = strdup (nameOnly);
-	      regno_add (tmp, REGNO_ANY);
 	      pfound = tmp;
 	    }
 	}
@@ -3785,27 +2370,6 @@ process_ctr_def (int forKernel, hrtime_t global_min_time_nsec,
     snprintf (UWbuf + strlen (UWbuf), UWsz - strlen (UWbuf),
 	      GTXT ("Warning: HW counter `%s' is not program-related -- callstacks will be not be recorded for this counter\n"),
 	      uname);
-
-  /* update reg_num */
-  if (!regno_is_valid (pfound, regno))
-    {
-      char buf[1024];
-      snprintf (UEbuf + strlen (UEbuf), UEsz - strlen (UEbuf),
-		GTXT ("For counter `%s', %s is not a valid register; valid registers: %s\n"),
-		nameOnly, regstr ? regstr + 1 : "?",
-		get_regnolist (buf, sizeof (buf), pfound->reg_list, 1));
-      goto process_ctr_def_wrapup;
-    }
-  if (pret_ctr->reg_num == REGNO_ANY)
-    { /* table's regno is a wildcard */
-      if (REG_LIST_EOL (pfound->reg_list[1]))
-	{
-	  /* valid list only contains one regno, so use it */
-	  pret_ctr->reg_num = pfound->reg_list[0];
-	}
-      else
-	pret_ctr->reg_num = regno;  /* use user's selection */
-    }
 
   /* update name and int_name */
   {
@@ -4079,43 +2643,9 @@ hwc_validate_ctrs (int forKernel, Hwcentry *entries[], unsigned numctrs)
   char UEbuf[1024 * 5];
   UEbuf[0] = 0;
 
-  /* search for obvious duplicates*/
-  unsigned ii;
-  for (ii = 0; ii < numctrs; ii++)
-    {
-      regno_t reg_a = entries[ii]->reg_num;
-      if (reg_a != REGNO_ANY)
-	{
-	  unsigned jj;
-	  for (jj = ii + 1; jj < numctrs; jj++)
-	    {
-	      int reg_b = entries[jj]->reg_num;
-	      if (reg_a == reg_b)
-		{
-		  snprintf (UEbuf + strlen (UEbuf), sizeof (UEbuf) - strlen (UEbuf),
-			    GTXT ("Only one HW counter is allowed per register.  The following counters use register %d: \n"),
-			    reg_a);
-		  for (jj = 0; jj < numctrs; jj++)
-		    {
-		      char buf[256];
-		      int reg_b = entries[jj]->reg_num;
-		      if (reg_a == reg_b)
-			snprintf (UEbuf + strlen (UEbuf), sizeof (UEbuf) - strlen (UEbuf),
-				  GTXT ("  %d. %s\n"), jj + 1,
-				  hwc_hwcentry_specd_string (buf, sizeof (buf),
-							     entries[jj]));
-		    }
-		  return strdup (UEbuf);
-		}
-	    }
-	}
-    }
-
   /* test counters */
   hwcfuncs_errmsg_get (NULL, 0, 1); /* enable errmsg capture */
-  int hwc_rc = hwcfuncs_assign_regnos (entries, numctrs);
-  if (!hwc_rc)
-    hwc_rc = test_hwcs ((const Hwcentry**) entries, numctrs);
+  int hwc_rc = test_hwcs ((const Hwcentry**) entries, numctrs);
   if (hwc_rc)
     {
       if (cpcx_cpuver == CPC_PENTIUM_4_HT || cpcx_cpuver == CPC_PENTIUM_4)
@@ -4178,15 +2708,12 @@ hwc_post_lookup (Hwcentry * pret_ctr, char *counter, char * int_name, int cpuver
 	}
       else
 	pret_ctr->int_name = strdup (counter);
-      if (pret_ctr->reg_num == REGNO_ANY)
-	pret_ctr->reg_num = regno;  /* table's regno is a wildcard */
     }
   else
     {
       /* not a standard counter */
       *pret_ctr = empty_ctr;
       pret_ctr->int_name = strdup (counter);
-      pret_ctr->reg_num = regno;
     }
 
   /* update the name */
@@ -4321,17 +2848,6 @@ hwc_get_docref (char *buf, size_t buflen)
   return buf;
 }
 
-//TBR:
-
-extern char*
-hwc_get_default_cntrs ()
-{
-  setup_cpcx ();
-  if (cpcx_default_hwcs[0] != NULL)
-    return strdup (cpcx_default_hwcs[0]); // TBR deprecate this
-  return NULL;
-}
-
 extern char*
 hwc_get_default_cntrs2 (int forKernel, int style)
 {
@@ -4462,7 +2978,7 @@ int show_regs = 0;  // The register setting is available on Solaris only
  */
 static void
 format_columns (char *buf, int bufsiz, char *s1, char *s2, const char *s3,
-		const char *s4, char *s5, const char *s6)
+		const char *s4, const char *s6)
 {
   // NULL strings are blanks
   char *blank = NTXT ("");
@@ -4476,7 +2992,7 @@ format_columns (char *buf, int bufsiz, char *s1, char *s2, const char *s3,
   // get the lengths and target widths
   // (s6 can be as wide as it likes)
   int l1 = strlen (s1), n1 = 10, l2 = strlen (s2), n2 = 13;
-  int l3 = strlen (s3), n3 = 20, l4 = strlen (s4), n4 = 10, n5;
+  int l3 = strlen (s3), n3 = 20, l4 = strlen (s4), n4 = 10;
   char divide = ' ';
 
   // adjust widths, stealing from one column to help a neighbor
@@ -4524,26 +3040,8 @@ format_columns (char *buf, int bufsiz, char *s1, char *s2, const char *s3,
       n2 = 0;
     }
 
-  if (show_regs)
-    {
-      // fifth column should be wide enough for regnolist
-      //     see function get_regnolist()
-      if (cpcx_npics < 10)
-	n5 = cpcx_npics; // one char per regno
-      else
-	n5 = 16 + 3 * (cpcx_npics - 9); // spaces between regnos and some regnos are 2-char wide
-      // ... and be wide enough for header "regs"
-      if (n5 < 4)
-	n5 = 4;
-
-      // print to buffer
-      // (don't need a space before s4 since historical precedent to have a trailing space in s3)
-      snprintf (buf, bufsiz, "%-*s %-*s%c%*s%*s %-*s %s",
-		n1, s1, n2, s2, divide, n3, s3, n4, s4, n5, s5, s6);
-    }
-  else
-    snprintf (buf, bufsiz, "%-*s %-*s%c%*s%*s %s",
-	      n1, s1, n2, s2, divide, n3, s3, n4, s4, s6);
+  snprintf (buf, bufsiz, "%-*s %-*s%c%*s%*s %s",
+	    n1, s1, n2, s2, divide, n3, s3, n4, s4, s6);
   for (int i = strlen (buf); i > 0; i--)
     if (buf[i] == ' ' || buf[i] == '\t')
       buf[i] = 0;
@@ -4556,7 +3054,6 @@ static char *
 hwc_hwcentry_string_internal (char *buf, size_t buflen, const Hwcentry *ctr,
 			      int show_short_desc)
 {
-  char regnolist[256];
   if (!buf || !buflen)
     return buf;
   if (ctr == NULL)
@@ -4571,7 +3068,6 @@ hwc_hwcentry_string_internal (char *buf, size_t buflen, const Hwcentry *ctr,
     desc = ctr->metric ? hwc_i18n_metric (ctr) : NULL;
   format_columns (buf, buflen, ctr->name, ctr->int_name,
 		  hwc_memop_string (ctr->memop), timecvt_string (ctr->timecvt),
-		  get_regnolist (regnolist, sizeof (regnolist), ctr->reg_list, 2),
 		  desc);
   return buf;
 }
@@ -5163,7 +3659,7 @@ hwc_usage_internal (int forKernel, FILE *f_usage, const char *cmd, const char *d
   if (has_std_ctrs)
     {
       fprintf (f_usage, GTXT ("\nAliases for most useful HW counters:\n\n"));
-      format_columns (tmp, 1024, "alias", "raw name", "type ", "units", "regs", "description");
+      format_columns (tmp, 1024, "alias", "raw name", "type ", "units", "description");
       fprintf (f_usage, NTXT ("    %s\n\n"), tmp);
       for (Hwcentry **pctr = std_ctrs; *pctr; pctr++)
 	{
@@ -5176,7 +3672,7 @@ hwc_usage_internal (int forKernel, FILE *f_usage, const char *cmd, const char *d
     {
       fprintf (f_usage, GTXT ("\nRaw HW counters:\n\n"));
       hwc_usage_raw_overview_sparc (f_usage, cpuver);
-      format_columns (tmp, 1024, "name", NULL, "type ", "units", "regs", "description");
+      format_columns (tmp, 1024, "name", NULL, "type ", "units", "description");
       fprintf (f_usage, NTXT ("    %s\n\n"), tmp);
       for (Hwcentry **pctr = raw_ctrs; *pctr; pctr++)
 	{
@@ -5216,13 +3712,25 @@ static char* supported_pebs_counters[] = {
 };
 
 /* callback, (see setup_cpc()) called for each valid regno/name combo */
-
-/* builds rawlist,, creates and updates reg_list[] arrays in stdlist table */
 static void
 hwc_cb (uint_t cpc_regno, const char *name)
 {
   regno_t regno = cpc_regno; /* convert type */
   list_add (&unfiltered_raw, regno, name);
+}
+
+static int
+supported_hwc (Hwcentry *pctr)
+{
+  if (ABST_PLUS_BY_DEFAULT (pctr->memop) &&
+      (cpcx_support_bitmask & SUPPORT_MEMORYSPACE_PROFILING) == 0)
+    return 0;
+  // remove specific PEBs counters when back end doesn't support sampling
+  if ((cpcx_support_bitmask & HWCFUNCS_SUPPORT_PEBS_SAMPLING) == 0)
+    for (int ii = 0; supported_pebs_counters[ii]; ii++)
+      if (strcmp (supported_pebs_counters[ii], pctr->name) == 0)
+	return 0;
+  return 1;
 }
 
 /* input:
@@ -5254,57 +3762,29 @@ hwc_process_raw_ctrs (int forKernel, Hwcentry ***pstd_out,
   // copy records from std [0] and generic [1] static input tables into table_copy[0],[1],or[2]
   for (int tt = 0; tt < 2; tt++)
     for (Hwcentry *pctr = static_tables[tt]; pctr && pctr->name; pctr++)
-      if (is_hidden_alias (pctr))
-	list_append_shallow_copy (&table_copy[2], pctr); // hidden list
-      else
-	list_append_shallow_copy (&table_copy[tt], pctr);
+      {
+	if (!supported_hwc (pctr))
+	  continue;
+	if (is_hidden_alias (pctr))
+	  list_append_shallow_copy (&table_copy[2], pctr); // hidden list
+	else
+	  list_append_shallow_copy (&table_copy[tt], pctr);
+      }
 
   // copy raw_unfiltered_in to raw_out
   for (int ii = 0; raw_unfiltered_in && raw_unfiltered_in[ii]; ii++)
     {
       Hwcentry *pctr = raw_unfiltered_in[ii];
-      // filter out raw counters that don't work correctly
-
-#ifdef WORKAROUND_6231196_NIAGARA1_NO_CTR_0
-      if (cpcx_cpuver == CPC_ULTRA_T1)
-	if (!regno_is_valid (pctr, 1))
-	  continue;   /* Niagara can not profile on register zero; skip this */
-#endif
-      // remove specific PEBs counters when back end doesn't support sampling
-      const char *name = pctr->name;
-      if ((cpcx_support_bitmask & HWCFUNCS_SUPPORT_PEBS_SAMPLING) == 0 || forKernel)
-	{
-	  int skip = 0;
-	  for (int ii = 0; supported_pebs_counters[ii]; ii++)
-	    if (strcmp (supported_pebs_counters[ii], name) == 0)
-	      {
-		skip = 1;
-		break;
-	      }
-	  if (skip)
-	    continue;
-	}
-
-      Hwcentry *pnew = list_append_shallow_copy (raw_out, pctr);
-#ifdef WORKAROUND_6231196_NIAGARA1_NO_CTR_0
-      if (cpcx_cpuver == CPC_ULTRA_T1)
-	{
-	  free (pnew->reg_list);
-	  pnew->reg_list = NULL;
-	  regno_add (pnew, 1); // only allow register 1
-	}
-#endif
-    } // raw_unfiltered_in
+      if (supported_hwc (pctr))
+	list_append_shallow_copy (raw_out, pctr);
+    }
 
   // Scan raw counters to populate Hwcentry fields from matching static_tables entries
-  // Also populate reg_list for aliases found in table_copy[]
   for (int uu = 0; uu < raw_out->sz; uu++)
     {
       Hwcentry *praw = (Hwcentry*) raw_out->array[uu];
       Hwcentry *pstd = NULL; // set if non-alias entry from std table matches
       char *name = praw->name;
-      /* in the standard counter and generic lists,
-	 update reg_list for all matching items  */
       for (int tt = 0; tt < NUM_TABLES; tt++)
 	{ // std, generic, and hidden
 	  if (table_copy[tt].sz == 0)
@@ -5320,24 +3800,6 @@ hwc_process_raw_ctrs (int forKernel, Hwcentry ***pstd_out,
 		pname = pctr->name;
 	      if (!is_same (name, pname, '~'))
 		continue;
-
-	      /* truncated pname matches <name>... */
-	      // check to see if table entry applies only to specific register
-	      int specific_reg_num_only = 0;
-	      if (pctr->reg_num != REGNO_ANY)
-		{
-		  // table entry applies only to specific register
-		  if (!regno_is_valid (praw, pctr->reg_num))
-		    continue;
-		  specific_reg_num_only = 1;
-		}
-
-	      // Match!
-	      // Update cpu_table_copy's supported registers
-	      if (specific_reg_num_only)
-		regno_add (pctr, pctr->reg_num);
-	      else
-		pctr->reg_list = praw->reg_list;
 
 	      if (!is_visible_alias (pctr) && !is_hidden_alias (pctr))
 		{
@@ -5372,20 +3834,6 @@ hwc_process_raw_ctrs (int forKernel, Hwcentry ***pstd_out,
 	  // prune unsupported rows from std table
 	  if (!is_visible_alias (pctr) && !is_hidden_alias (pctr))
 	    continue; // only aliases
-	  if (REG_LIST_IS_EMPTY (pctr->reg_list))
-	    {
-	      if (is_numeric_alias (pctr))
-		{
-#if 1 //22844570 DTrace cpc provider does not accept numeric counter names
-		  if (forKernel)
-		    continue;
-#endif
-		  regno_add (pctr, REGNO_ANY); // hwcs specified by number allowed on any register
-		}
-	      else
-		continue;
-	    }
-
 	  ptr_list *dest = (tt == 0) ? std_out : hidden_out;
 	  Hwcentry *isInList;
 	  if (pctr->short_desc == NULL)

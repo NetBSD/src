@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.107 2021/12/07 14:31:13 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.108 2025/07/01 17:55:05 kre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.107 2021/12/07 14:31:13 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.108 2025/07/01 17:55:05 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: mount.c,v 1.107 2021/12/07 14:31:13 christos Exp $");
 #include "pathnames.h"
 #include "mountprog.h"
 
-static int	debug, verbose;
+static int	debug, verbose, noise;
 
 static void	catopt(char **, const char *);
 static const char *
@@ -169,6 +169,12 @@ main(int argc, char *argv[])
 #define	BADTYPE(type)							\
 	(strcmp(type, FSTAB_RO) &&					\
 	    strcmp(type, FSTAB_RW) && strcmp(type, FSTAB_RQ))
+
+	noise = 0;
+	if (argc > 0 && verbose) {
+		noise = 1;
+		verbose--;
+	}
 
 	rval = 0;
 	switch (argc) {
@@ -419,7 +425,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 			 */
 			if (strncmp(name, sfp[i].f_mntonname, MNAMELEN) == 0 &&
 			    strncmp(vfstype, mountedtype, cmplen) == 0) {
-				if (verbose)
+				if (noise || verbose)
 					(void)printf("%s on %s type %.*s: "
 					    "%s\n",
 					    sfp[i].f_mntfromname,
@@ -469,6 +475,15 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		for (i = 0; i < argc; i++)
 			(void)printf(" %s", argv[i]);
 		(void)printf("\n");
+		if (debug) {
+			/*
+			 * Don't proceed to attempt to
+			 * print fs data, nothing has been
+			 * mounted, anything printed would
+			 * be for some other filesystem.
+			 */
+			return 0;
+		}
 	}
 
 	if (buf) {
@@ -555,7 +570,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		}
 
 		if (buf == NULL) {
-			if (verbose) {
+			if (verbose || noise) {
 				if (statvfs(name, &sf) == -1) {
 					warn("statvfs %s", name);
 					return 1;

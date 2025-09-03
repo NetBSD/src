@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -29,6 +29,7 @@
 #include "LoadObject.h"
 #include "Module.h"
 #include "DefaultMap.h"
+#include "Symbol.h"
 
 static int
 datatypeCmp (const void *a, const void *b)
@@ -45,7 +46,6 @@ targetOffsetCmp (const void *a, const void *b)
   uint32_t o2 = ((target_info_t *) b)->offset;
   return o1 == o2 ? 0 : (o1 < o2 ? -1 : 1);
 }
-
 
 //////////////////////////////////////////////////////////
 //  class Dwr_type
@@ -368,6 +368,7 @@ Dwarf::Dwarf (Stabs *_stabs)
   debug_infoSec = NULL;
   debug_abbrevSec = NULL;
   debug_strSec = NULL;
+  debug_alt_strSec = NULL;
   debug_lineSec = NULL;
   debug_line_strSec = NULL;
   debug_rangesSec = NULL;
@@ -378,18 +379,14 @@ Dwarf::Dwarf (Stabs *_stabs)
       return;
     }
   debug_infoSec = dwrGetSec (NTXT (".debug_info"));
-  if (debug_infoSec)
-    {
-      debug_infoSec->reloc = ElfReloc::get_elf_reloc (elf, NTXT (".rela.debug_info"), NULL);
-      debug_infoSec->reloc = ElfReloc::get_elf_reloc (elf, NTXT (".rel.debug_info"), debug_infoSec->reloc);
-      if (debug_infoSec->reloc)
-	debug_infoSec->reloc->dump ();
-    }
   debug_abbrevSec = dwrGetSec (NTXT (".debug_abbrev"));
   debug_strSec = dwrGetSec (NTXT (".debug_str"));
   debug_lineSec = dwrGetSec (NTXT (".debug_line"));
   debug_rangesSec = dwrGetSec (NTXT (".debug_ranges"));
   debug_line_strSec = dwrGetSec (".debug_line_str");
+  debug_rnglists = NULL;
+  if (elf->gnu_debugalt_file)
+    debug_alt_strSec = elf->gnu_debugalt_file->get_dwr_section (".debug_str");
 
   if ((debug_infoSec == NULL) || (debug_abbrevSec == NULL) || (debug_lineSec == NULL))
     {
@@ -400,27 +397,16 @@ Dwarf::Dwarf (Stabs *_stabs)
 
 Dwarf::~Dwarf ()
 {
-  delete debug_infoSec;
-  delete debug_abbrevSec;
-  delete debug_strSec;
-  delete debug_lineSec;
-  delete debug_rangesSec;
   Destroy (dwrCUs);
 }
 
 DwrSec *
 Dwarf::dwrGetSec (const char *sec_name)
 {
-  int secN = elf->elf_get_sec_num (sec_name);
-  if (secN > 0)
-    {
-      Elf_Data *elfData = elf->elf_getdata (secN);
-      if (elfData)
-	return new DwrSec ((unsigned char *) elfData->d_buf, elfData->d_size,
-			   elf->need_swap_endian,
-			   elf->elf_getclass () == ELFCLASS32);
-    }
-  return NULL;
+  DwrSec *p = elf->get_dwr_section (sec_name);
+  if (p)
+    p->offset = 0;
+  return p;
 }
 
 uint64_t
@@ -441,7 +427,12 @@ DwrCU::get_linkage_name ()
   nm = Dwarf_string (DW_AT_SUN_link_name);
   if (nm != NULL)
     return nm;
-  return Dwarf_string (DW_AT_MIPS_linkage_name);
+  if (nm != NULL)
+    return nm;
+  nm = Dwarf_string (DW_AT_MIPS_linkage_name);
+  if (nm != NULL)
+    return nm;
+  return Dwarf_string (DW_AT_name);
 }
 
 void
@@ -454,7 +445,7 @@ DwrCU::parseChild (Dwarf_cnt *ctx)
   Dwarf_Die next_die;
   if (read_ref_attr (DW_AT_sibling, &next_die) == DW_DLV_OK)
     {
-      next_die_offset = next_die + cu_offset;
+      next_die_offset = next_die;
       if (next_die_offset <= debug_infoSec->offset)
 	{
 	  Dprintf (DEBUG_ERR_MSG, NTXT ("DwrCU::parseChild: next_die(0x%llx) <= debug_infoSec->offset(%llx)\n"),
@@ -490,8 +481,25 @@ DwrCU::parseChild (Dwarf_cnt *ctx)
 	    }
 	  break;
 	case DW_TAG_subprogram:
-	  if (dwrTag.get_attr (DW_AT_abstract_origin))
-	    break;
+	{
+	  Symbol *sym = NULL;
+	  Vector<Symbol *> *syms = NULL;
+	  Dwr_Attr *dwrAttr = dwrTag.get_attr (DW_AT_abstract_origin);
+	  if (dwrAttr)
+	    {
+	      // Set up functions from DW_AT_{ranges,low_pc,linkage_name}
+	      set_up_funcs (dwrAttr->u.offset);
+	      break;
+	    }
+
+	  dwrAttr = dwrTag.get_attr (DW_AT_specification);
+	  if (dwrAttr)
+	    {
+	      // Set up functions from DW_AT_{ranges,low_pc,linkage_name}
+	      set_up_funcs (dwrAttr->u.offset);
+	      break;
+	    }
+
 	  if (dwrTag.get_attr (DW_AT_declaration))
 	    {
 	      // Only declaration
@@ -499,26 +507,39 @@ DwrCU::parseChild (Dwarf_cnt *ctx)
 		{
 		  char *link_name = Dwarf_string (DW_AT_name);
 		  if (link_name && streq (link_name, NTXT ("MAIN")))
-		    ctx->fortranMAIN = Stabs::find_func (NTXT ("MAIN"), ctx->module->functions, true, true);
+		    ctx->fortranMAIN = Stabs::find_func (NTXT ("MAIN"),
+					    ctx->module->functions, true, true);
 		}
+	      sym = Symbol::get_symbol (symbols_sorted_by_name,
+				       get_linkage_name ());
+	      if (sym != NULL)
+		func = append_Function (sym, ctx->name);
 	      break;
 	    }
-	  func = append_Function (ctx);
-	  if (func)
+
+	  func = NULL;
+	  syms = get_symbols (tmp_syms);
+	  for (int i = 0, sz = VecSize (syms); i < sz; i++)
 	    {
+	      sym = syms->get (i);
+	      func = append_Function (sym, ctx->name);
 	      if (Stabs::is_fortran (ctx->module->lang_code) &&
-		  streq (func->get_match_name (), NTXT ("MAIN")))
+	      streq (func->get_match_name (), "MAIN"))
 		ctx->fortranMAIN = func;
-	      old_name = ctx->name;
-	      Function *old_func = ctx->func;
-	      ctx->name = func->get_match_name ();
-	      ctx->func = func;
-	      parseChild (ctx);
-	      hasChild = 0;
-	      ctx->name = old_name;
-	      ctx->func = old_func;
 	    }
+	  if (func == NULL)
+	    break;
+
+	  old_name = ctx->name;
+	  Function *old_func = ctx->func;
+	  ctx->name = func->get_match_name ();
+	  ctx->func = func;
+	  parseChild (ctx);
+	  hasChild = 0;
+	  ctx->name = old_name;
+	  ctx->func = old_func;
 	  break;
+	}
 	case DW_TAG_module:
 	  old_name = ctx->name;
 	  ctx->name = Dwarf_string (DW_AT_SUN_link_name);
@@ -631,6 +652,21 @@ Dwarf::archive_Dwarf (LoadObject *lo)
 			STR (lo_name), STR (mod->get_name ()));
 	      dwrCU->dwrInlinedSubrs->dump (msg);
 	    }
+	  for (int i = 0, sz = VecSize (dwrCU->symbols); i < sz; i++)
+	    {
+	      Symbol *sp = dwrCU->symbols->get (i);
+	      Function *f = sp->func;
+	      if (f == NULL)
+		{
+		  f = sp->createFunction (mod);
+		  if (sp->alias && sp->alias->func)
+		    {
+		      Function *func = sp->alias->func;
+		      f->setLineFirst (func->line_first);
+		      f->setDefSrc (func->def_source);
+		    }
+		}
+	    }
 	}
     }
   return true;
@@ -645,6 +681,29 @@ Dwarf::srcline_Dwarf (Module *module)
   dwrCU->map_dwarf_lines (module);
 }
 
+Vector<Range *> *
+Dwarf::get_ranges (uint64_t offset)
+{
+  if (debug_rangesSec == NULL)
+    return NULL;
+  if (offset >= debug_rangesSec->size)
+    {
+      Dprintf (DUMP_DWARFLIB, "ERROR: Dwarf::get_ranges(0x%llx). size=0x%llx\n",
+	       (long long) offset, (long long) debug_rangesSec->size);
+      return NULL;
+    }
+  Vector<Range*> *ranges = new Vector<Range*>();
+  debug_rangesSec->offset = offset;
+  for (;;)
+    {
+      uint64_t low_pc = debug_rangesSec->GetADDR ();
+      uint64_t high_pc = debug_rangesSec->GetADDR ();
+      if (low_pc == 0 || low_pc > high_pc)
+	break;
+      ranges->append (new Range (low_pc, high_pc));
+    }
+  return ranges;
+}
 
 // parse hwcprof info for given module in loadobject
 
@@ -723,7 +782,7 @@ DwrCU::read_hwcprof_info (Dwarf_cnt *ctx)
   Dwarf_Die next_die;
   if (read_ref_attr (DW_AT_sibling, &next_die) == DW_DLV_OK)
     {
-      next_die_offset = next_die + cu_offset;
+      next_die_offset = next_die;
       if (next_die_offset <= debug_infoSec->offset)
 	next_die_offset = 0;
       else if (debug_infoSec->size > next_die_offset)
@@ -797,11 +856,17 @@ DwrCU::read_hwcprof_info (Dwarf_cnt *ctx)
 	case DW_TAG_subprogram:
 	  {
 	    Function *old_func = ctx->func;
-	    if (dwrTag.get_attr (DW_AT_abstract_origin)
-				 || dwrTag.get_attr (DW_AT_declaration))
-	      ctx->func = NULL;
-	    else
-	      ctx->func = append_Function (ctx);
+	    ctx->func = NULL;
+	    if (dwrTag.get_attr (DW_AT_abstract_origin) == NULL
+				 && dwrTag.get_attr (DW_AT_declaration) == NULL)
+	      {
+		Symbol *sym = Symbol::get_symbol (symbols_sorted_by_name,
+						 get_linkage_name ());
+		if (sym == NULL)
+		  sym = Symbol::get_symbol (symbols, get_low_pc ());
+		if (sym != NULL)
+		  ctx->func = sym->func;
+	      }
 	    read_hwcprof_info (ctx);
 	    ctx->func = old_func;
 	    break;
@@ -955,49 +1020,31 @@ DwrCU::read_hwcprof_info (Dwarf_cnt *ctx)
 
 // Append function to module
 Function *
-DwrCU::append_Function (Dwarf_cnt *ctx)
+DwrCU::append_Function (Symbol *sym, const char *outerName)
 {
-  char *outerName = ctx->name, *name, tmpname[2048];
-  Function *func;
+  if (sym->func != NULL)
+    return sym->func;
+  Function *func = sym->createFunction (module);
+
   char *fname = Dwarf_string (DW_AT_name);
-  if (fname && outerName && !strchr (fname, '.'))
+  if (fname)
     {
-      size_t outerlen = strlen (outerName);
-      if (outerlen > 0 && outerName[outerlen - 1] == '_')
+      if (outerName && !strchr (fname, '.'))
 	{
-	  outerlen--;
-	  snprintf (tmpname, sizeof (tmpname), NTXT ("%s"), outerName);
-	  snprintf (tmpname + outerlen, sizeof (tmpname) - outerlen, NTXT (".%s_"), fname);
+	  char *tmpname;
+	  int outerlen = (int) strlen (outerName);
+	  if (outerlen > 0 && outerName[outerlen - 1] == '_')
+	    tmpname = dbe_sprintf ("%.*s.%s_", outerlen - 1, outerName, fname);
+	  else
+	    tmpname = dbe_sprintf ("%s.%s", outerName, fname);
+	  func->set_match_name (tmpname);
+	  Dprintf (DUMP_DWARFLIB, "Generated innerfunc name %s\n", tmpname);
+	  free(tmpname);
 	}
       else
-	snprintf (tmpname, sizeof (tmpname), NTXT ("%s.%s"), outerName, fname);
-      name = tmpname;
-      Dprintf (DUMP_DWARFLIB, NTXT ("Generated innerfunc name %s\n"), name);
+	func->set_match_name (fname);
     }
-  else
-    name = fname;
-
-  char *link_name = get_linkage_name ();
-  if (link_name == NULL)
-    link_name = name;
-
-  uint64_t pc = get_low_pc ();
-  func = dwarf->stabs->append_Function (module, link_name, pc);
-  if (func != NULL)
-    {
-      int lineno = (int) Dwarf_data (DW_AT_decl_line);
-      func->set_match_name (name);
-      if (lineno > 0)
-	{
-	  func->setLineFirst (lineno);
-	  int fileno = ((int) Dwarf_data (DW_AT_decl_file));
-	  SourceFile *sf = ((fileno >= 0) && (fileno < VecSize (srcFiles))) ? srcFiles->get (fileno)
-		  : module->getMainSrc ();
-	  func->setDefSrc (sf);
-	  func->pushSrcFile (func->def_source, 0);
-	  func->popSrcFile ();
-	}
-    }
+  set_source (func);
   return func;
 }
 
@@ -1039,4 +1086,94 @@ DwrCU::Dwarf_lang ()
     case DW_LANG_lo_user:
       return Sp_lang_unknown;
     }
+}
+
+Vector <Dwr_rng_entry *> *
+Dwarf::get_debug_rnglists ()
+{
+  if (debug_rnglists != NULL)
+    return debug_rnglists;
+  debug_rnglists = new Vector <Dwr_rng_entry *> ();
+
+  DwrSec *debug_rnglistsSec = dwrGetSec (".debug_rnglists");
+  if (debug_rnglistsSec == NULL)
+    {
+      Dprintf (1, "No section .debug_rnglists\n");
+      return debug_rnglists;
+    }
+  while (debug_rnglistsSec->offset < debug_rnglistsSec->sizeSec)
+    {
+      uint64_t base_address = 0;
+      uint64_t length = debug_rnglistsSec->ReadLength ();
+      Dwr_rng_entry *rng = new Dwr_rng_entry ();
+      debug_rnglists->append (rng);
+      rng->offset = debug_rnglistsSec->offset;
+      rng->length = length;
+      rng->fmt64 = debug_rnglistsSec->fmt64;
+      rng->version = debug_rnglistsSec->Get_16 ();
+      rng->address_size = debug_rnglistsSec->Get_8 ();
+      rng->segment_selector_size = debug_rnglistsSec->Get_8 ();
+      rng->offset_entry_count = debug_rnglistsSec->Get_32 ();
+      while (debug_rnglistsSec->offset < debug_rnglistsSec->size)
+	{
+	  uint64_t off = debug_rnglistsSec->offset;
+	  uint64_t low_pc;
+	  uint64_t high_pc;
+	  int re = debug_rnglistsSec->Get_8 ();
+	  switch (re)
+	    {
+	    case DW_RLE_end_of_list:
+	      low_pc = 0;
+	      high_pc = 0;
+	      break;
+	    case DW_RLE_base_address:
+	      base_address = debug_rnglistsSec->GetADDR ();
+	      low_pc = base_address;
+	      high_pc = 0;
+	      continue;
+	    case DW_RLE_start_length:
+	      low_pc = debug_rnglistsSec->GetADDR ();
+	      high_pc = low_pc + debug_rnglistsSec->GetULEB128 ();
+	      break;
+	    case DW_RLE_offset_pair:
+	      low_pc = base_address + debug_rnglistsSec->GetULEB128 ();
+	      high_pc = base_address + debug_rnglistsSec->GetULEB128 ();
+	      break;
+	    case DW_RLE_start_end:
+	      low_pc = debug_rnglistsSec->GetADDR ();
+	      high_pc = debug_rnglistsSec->GetADDR ();
+	      break;
+	    case DW_RLE_base_addressx:
+	      base_address = debug_rnglistsSec->GetULEB128 ();
+	      low_pc = base_address;
+	      high_pc = 0;
+	      continue;
+
+	      // TODO x-variants need .debug_addr support used for split-dwarf
+	    case DW_RLE_startx_endx:
+	      low_pc = debug_rnglistsSec->GetRef ();
+	      high_pc = debug_rnglistsSec->GetRef ();
+	      Dprintf (1, "DW_RLE_startx_endx is not implemented\n");
+	      continue;
+	    case DW_RLE_startx_length:
+	      low_pc = debug_rnglistsSec->GetRef ();
+	      high_pc = low_pc + debug_rnglistsSec->GetULEB128 ();
+	      Dprintf (1, "DW_RLE_startx_length is not implemented\n");
+	      continue;
+	    default:
+	      Dprintf (1, "Unknown tag DW_RLE: %d, offset=0x%llx\n", re,
+		       (long long) off);
+	      debug_rnglistsSec->offset = debug_rnglistsSec->size;
+	      continue;
+	    }
+	  Dprintf (DUMP_DWARFLIB, "0x%08llx %d-%-20s [0x%08llx - 0x%08llx)\n",
+		   (long long) off, re, Dwr_rng_entry::rng_entry2str (re),
+		   (long long) low_pc, (long long) high_pc);
+	  rng->ranges->append (new ExtRange (off, low_pc, high_pc));
+	}
+      debug_rnglistsSec->size = debug_rnglistsSec->sizeSec;
+      debug_rnglistsSec->offset = length;
+    }
+  debug_rnglists->dump ("Dwarf::get_debug_rnglists");
+  return debug_rnglists;
 }

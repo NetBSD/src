@@ -1,4 +1,4 @@
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -94,12 +94,15 @@ proc prepare_test_source_file { lang } {
 		puts $outfile "DEF_WITH_1_STATIC ($utype, $uinner);"
 		set joined "static_${utype}_x_${uinner}"
 		puts $outfile "struct align_pair_$joined item_${joined};"
+		puts $outfile "$utype align_pair_${joined}::one = 0;"
 		puts $outfile "unsigned a_${joined}"
 		puts $outfile "  = ${align_func} (struct align_pair_${joined});"
 
 		puts $outfile "DEF_WITH_2_STATIC ($utype, $uinner);"
 		set joined "static_${utype}_x_static_${uinner}"
 		puts $outfile "struct align_pair_$joined item_${joined};"
+		puts $outfile "$utype align_pair_${joined}::one = 0;"
+		puts $outfile "$uinner align_pair_${joined}::two = 0;"
 		puts $outfile "unsigned a_${joined}"
 		puts $outfile "  = ${align_func} (struct align_pair_${joined});"
 	    }
@@ -107,11 +110,52 @@ proc prepare_test_source_file { lang } {
     }
 
     # Epilogue.
-    puts $outfile {
+    puts $outfile "
 	int main() {
-	    return 0;
+    "
+
+    # Clang with LTO garbage collects unused global variables, even at
+    # -O0.  Likewise AIX GCC.  Add uses to all global variables to
+    # prevent it.
+
+    if { $lang == "c" } {
+	puts $outfile "a_void++;"
+    }
+
+    # First, add uses for single items.
+    foreach type $typelist {
+	set utype [join [split $type] _]
+	puts $outfile "item_$utype++;"
+	if { $lang == "c" } {
+	    puts $outfile "a_$utype++;"
 	}
     }
+
+    # Now add uses for all pairs.
+    foreach type $typelist {
+	set utype [join [split $type] _]
+	foreach inner $typelist {
+	    set uinner [join [split $inner] _]
+	    set joined "${utype}_x_${uinner}"
+	    puts $outfile "item_${joined}.one++;"
+	    puts $outfile "a_${joined}++;"
+
+	    if { $lang == "c++" } {
+		set joined "static_${utype}_x_${uinner}"
+		puts $outfile "item_${joined}.one++;"
+		puts $outfile "a_${joined}++;"
+
+		set joined "static_${utype}_x_static_${uinner}"
+		puts $outfile "item_${joined}.one++;"
+		puts $outfile "a_${joined}++;"
+	    }
+	}
+    }
+
+    puts $outfile "
+	    return 0;
+	}
+    "
 
     close $outfile
 
@@ -127,6 +171,7 @@ proc run_alignment_test { lang } {
 
     set flags {debug}
     if { "$lang" == "c++" } {
+	lappend flags "c++"
 	lappend flags "additional_flags=-std=c++11"
     }
     standard_testfile $filename

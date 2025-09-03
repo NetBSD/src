@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMPILE_GCC_C_PLUGIN_H
-#define COMPILE_GCC_C_PLUGIN_H
+#ifndef GDB_COMPILE_GCC_C_PLUGIN_H
+#define GDB_COMPILE_GCC_C_PLUGIN_H
 
 #include "compile-internal.h"
 
@@ -68,4 +68,4 @@ private:
   struct gcc_c_context *m_context;
 };
 
-#endif /* COMPILE_GCC_C_PLUGIN_H */
+#endif /* GDB_COMPILE_GCC_C_PLUGIN_H */

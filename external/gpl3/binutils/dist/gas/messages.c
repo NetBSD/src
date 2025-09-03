@@ -1,5 +1,5 @@
 /* messages.c - error reporter -
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
    This file is part of GAS, the GNU Assembler.
 
    GAS is free software; you can redistribute it and/or modify
@@ -138,6 +138,9 @@ void
 as_info_where (const char *file, unsigned int line, unsigned int indent,
 	       const char *format, ...)
 {
+  if (flag_no_information)
+    return;
+
   va_list args;
   char buffer[2000];
 
@@ -218,7 +221,7 @@ as_warn (const char *format, ...)
       va_start (args, format);
       vsnprintf (buffer, sizeof (buffer), format, args);
       va_end (args);
-      as_warn_internal ((char *) NULL, 0, buffer);
+      as_warn_internal (NULL, 0, buffer);
     }
 }
 
@@ -291,7 +294,7 @@ as_bad (const char *format, ...)
   vsnprintf (buffer, sizeof (buffer), format, args);
   va_end (args);
 
-  as_bad_internal ((char *) NULL, 0, buffer);
+  as_bad_internal (NULL, 0, buffer);
 }
 
 /* Like as_bad but the file name and line number are passed in.

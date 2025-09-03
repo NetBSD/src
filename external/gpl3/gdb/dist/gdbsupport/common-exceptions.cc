@@ -191,7 +191,7 @@ throw_exception (gdb_exception &&exception)
     gdb_assert_not_reached ("invalid return reason");
 }
 
-static void ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (3, 0)
+[[noreturn]] static void ATTRIBUTE_PRINTF (3, 0)
 throw_it (enum return_reason reason, enum errors error, const char *fmt,
 	  va_list ap)
 {

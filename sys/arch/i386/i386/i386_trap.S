@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.23 2022/09/07 00:40:18 knakahara Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.24 2025/07/14 21:34:48 bouyer Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.23 2022/09/07 00:40:18 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.24 2025/07/14 21:34:48 bouyer Exp $");
 #endif
 
 /*
@@ -402,6 +402,7 @@ ENTRY(alltraps)
 	INTRENTRY
 	STI(%eax)
 
+LABEL(i386_calltrap_start)
 calltrap:
 #ifdef DIAGNOSTIC
 	movzbl	CPUVAR(ILEVEL),%ebx
@@ -436,6 +437,7 @@ calltrap:
 
 	HANDLE_DEFERRED_FPU
 
+6:
 #ifdef XENPV
 	STIC(%eax)
 	jz	22f
@@ -458,14 +460,32 @@ calltrap:
 11:	movb	%bl,CPUVAR(ILEVEL)	/* restore cpl */
 	jmp	.Lalltraps_checkusr
 22:
-#endif /* XEN */
-
-6:
+#endif /* XENPV */
 #ifdef DIAGNOSTIC
 	cmpb	CPUVAR(ILEVEL),%bl
 	jne	.Lspl_error
 #endif
+#ifdef XENPV
+	/*
+	 * INTRFASTEXIT jumps to external code; as interrupts have
+	 * been re-enabled we can't call it.
+	 */
+	movw	TF_GS(%esp),%gs
+	movw	TF_FS(%esp),%fs
+	movw	TF_ES(%esp),%es
+	movw	TF_DS(%esp),%ds
+	movl	TF_EDI(%esp),%edi
+	movl	TF_ESI(%esp),%esi
+	movl	TF_EBP(%esp),%ebp
+	movl	TF_EBX(%esp),%ebx
+	movl	TF_EDX(%esp),%edx
+	movl	TF_ECX(%esp),%ecx
+	movl	TF_EAX(%esp),%eax
+	addl	$(TF_PUSHSIZE+8),%esp
+	iret
+#else
 	INTRFASTEXIT
+#endif
 
 9:	STI(%eax)
 	call	_C_LABEL(pmap_load)
@@ -484,3 +504,4 @@ calltrap:
 4:	.asciz	"SPL NOT LOWERED ON TRAP EXIT\n"
 #endif
 END(alltraps)
+LABEL(i386_calltrap_end)

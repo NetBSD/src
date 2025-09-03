@@ -1,4 +1,4 @@
-# Copyright 2017-2023 Free Software Foundation, Inc.
+# Copyright 2017-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,21 +23,19 @@ if {![multi_target_prepare]} {
     return
 }
 
-# Cache the result of calling skip_python_tests into a local variable.
-set run_python_tests [expr ! [skip_python_tests]]
+# Cache the result of calling allow_python_tests into a local variable.
+set run_python_tests [allow_python_tests]
 
 # Test "info inferiors" and "info connections".  MULTI_PROCESS
 # indicates whether the multi-process feature of remote targets is
 # turned off or on.
 proc test_info_inferiors {multi_process} {
-    setup "off"
+
+    setup "off" $multi_process
 
     if { $::run_python_tests } {
 	gdb_test_no_output "source ${::remote_python_file}" "load python file"
     }
-
-    gdb_test_no_output \
-	"set remote multiprocess-feature-packet $multi_process"
 
     # Get the description for inferior INF for when the current
     # inferior id is CURRENT.

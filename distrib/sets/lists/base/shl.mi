@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1005 2025/06/02 14:02:54 christos Exp $
+# $NetBSD: shl.mi,v 1.1009 2025/08/25 19:11:30 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -33,6 +33,9 @@
 ./lib/libcrypto.so.14.1				base-crypto-shlib	dynamicroot,openssl=11
 ./lib/libcrypto.so.15				base-crypto-shlib       dynamicroot,openssl=30
 ./lib/libcrypto.so.15.0				base-crypto-shlib       dynamicroot,openssl=30
+./lib/libcrypto.so.16				base-crypto-shlib       dynamicroot,openssl=35
+./lib/libcrypto.so.16.0				base-crypto-shlib       dynamicroot,openssl=35
+
 
 ./lib/libdevmapper.so				base-lvm-shlib		dynamicroot,lvm
 ./lib/libdevmapper.so.1				base-lvm-shlib		dynamicroot,lvm
@@ -233,6 +236,8 @@
 ./usr/lib/libbfd.so.18.0			base-sys-shlib		compatfile,binutils=239
 ./usr/lib/libbfd.so.19				base-sys-shlib		compatfile,binutils=242
 ./usr/lib/libbfd.so.19.0			base-sys-shlib		compatfile,binutils=242
+./usr/lib/libbfd.so.20				base-sys-shlib		compatfile,binutils=245
+./usr/lib/libbfd.so.20.0			base-sys-shlib		compatfile,binutils=245
 ./usr/lib/libbind9.so				base-obsolete		obsolete
 ./usr/lib/libbind9.so.22			base-obsolete		obsolete
 ./usr/lib/libbind9.so.22.0			base-obsolete		obsolete
@@ -275,6 +280,8 @@
 ./usr/lib/libcrypto.so.14.1			base-crypto-shlib	compatfile,openssl=11
 ./usr/lib/libcrypto.so.15			base-crypto-shlib	compatfile,openssl=30
 ./usr/lib/libcrypto.so.15.0			base-crypto-shlib	compatfile,openssl=30
+./usr/lib/libcrypto.so.16			base-crypto-shlib	compatfile,openssl=35
+./usr/lib/libcrypto.so.16.0			base-crypto-shlib	compatfile,openssl=35
 ./usr/lib/libcrypto_idea.so			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_mdc2.so			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_rc5.so			base-obsolete		compatfile,obsolete
@@ -291,6 +298,8 @@
 ./usr/lib/libdes.so.14.0				base-crypto-shlib	compatfile,openssl=11
 ./usr/lib/libdes.so.15				base-crypto-shlib	compatfile,openssl=30
 ./usr/lib/libdes.so.15.0			base-crypto-shlib	compatfile,openssl=30
+./usr/lib/libdes.so.16				base-crypto-shlib	compatfile,openssl=35
+./usr/lib/libdes.so.16.0			base-crypto-shlib	compatfile,openssl=35
 ./usr/lib/libdevmapper.so			base-lvm-shlib		compatfile,lvm
 ./usr/lib/libdevmapper.so.1			base-lvm-shlib		compatfile,lvm
 ./usr/lib/libdevmapper.so.1.0			base-lvm-shlib		compatfile,lvm
@@ -299,7 +308,7 @@
 ./usr/lib/libdm.so.0.0				base-sys-shlib		compatfile
 ./usr/lib/libdns.so				base-bind-shlib		compatfile
 ./usr/lib/libdns.so.23				base-bind-shlib		compatfile
-./usr/lib/libdns.so.23.1			base-bind-shlib		compatfile
+./usr/lib/libdns.so.23.2			base-bind-shlib		compatfile
 ./usr/lib/libdns_sd.so				base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdns_sd.so.0			base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		compatfile,mdns
@@ -887,6 +896,8 @@
 ./usr/lib/libssl.so.14.0			base-crypto-shlib	compatfile,openssl=11
 ./usr/lib/libssl.so.15				base-crypto-shlib	compatfile,openssl=30
 ./usr/lib/libssl.so.15.0			base-crypto-shlib	compatfile,openssl=30
+./usr/lib/libssl.so.16				base-crypto-shlib	compatfile,openssl=35
+./usr/lib/libssl.so.16.0			base-crypto-shlib	compatfile,openssl=35
 ./usr/lib/libstdc++.so				base-sys-shlib		compatfile,gcc,cxx,libstdcxx
 ./usr/lib/libstdc++.so.9			base-sys-shlib		compatfile,gcc,cxx,libstdcxx
 ./usr/lib/libstdc++.so.9.0			base-sys-shlib		compatfile,gcc,cxx,libstdcxx,gcc=10

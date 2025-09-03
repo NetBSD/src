@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef BUILDSYM_LEGACY_H
-#define BUILDSYM_LEGACY_H
+#ifndef GDB_BUILDSYM_LEGACY_H
+#define GDB_BUILDSYM_LEGACY_H
 
 #include "buildsym.h"
 
@@ -144,4 +144,4 @@ extern struct pending **get_global_symbols ();
 
 extern struct buildsym_compunit *get_buildsym_compunit ();
 
-#endif /* BUILDSYM_LEGACY_H */
+#endif /* GDB_BUILDSYM_LEGACY_H */

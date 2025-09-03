@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.55 2023/07/10 02:31:55 christos Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.57 2025/07/25 23:24:46 kre Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -123,6 +123,10 @@
 #define	O_REGULAR	0x02000000	/* fail if not a regular file */
 #define	O_EXEC		0x04000000	/* open for executing only */
 #endif
+#if (_POSIX_C_SOURCE - 0) >= 202405L || (_XOPEN_SOURCE - 0 >= 800) || \
+	defined(_NETBSD_SOURCE)
+#define	O_CLOFORK	0x08000000	/* set close on fork */
+#endif
 
 #ifdef _KERNEL
 /* convert from open() flags to/from fflags; convert O_RD/WR to FREAD/FWRITE */
@@ -133,7 +137,8 @@
 #define	O_MASK		(O_ACCMODE|O_NONBLOCK|O_APPEND|O_SHLOCK|O_EXLOCK|\
 			 O_ASYNC|O_SYNC|O_CREAT|O_TRUNC|O_EXCL|O_DSYNC|\
 			 O_RSYNC|O_NOCTTY|O_ALT_IO|O_NOFOLLOW|O_DIRECT|\
-			 O_DIRECTORY|O_CLOEXEC|O_NOSIGPIPE|O_REGULAR|O_EXEC)
+			 O_DIRECTORY|O_CLOEXEC|O_CLOFORK|O_NOSIGPIPE|\
+			 O_REGULAR|O_EXEC)
 
 #define	FEXEC		O_EXEC
 #define	FMARK		0x00001000	/* mark during gc() */
@@ -203,9 +208,17 @@
 #define	F_ADD_SEALS	16		/* set seals */
 #define	F_GET_SEALS	17		/* get seals */
 #endif
+#if (_POSIX_C_SOURCE - 0) >= 202405L || (_XOPEN_SOURCE - 0 >= 800) || \
+	defined(_NETBSD_SOURCE)
+#define	F_DUPFD_CLOFORK	18		/* close on fork duplicated fd */
+#endif
+#if defined(_NETBSD_SOURCE)
+#define	F_DUPFD_CLOBOTH	19		/* close on exec/fork duplicated fd */
+#endif
 
 /* file descriptor flags (F_GETFD, F_SETFD) */
 #define	FD_CLOEXEC	1		/* close-on-exec flag */
+#define	FD_CLOFORK	2		/* close-on-fork flag */
 
 /* record locking flags (F_GETLK, F_SETLK, F_SETLKW) */
 #define	F_RDLCK		1		/* shared or read lock */

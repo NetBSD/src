@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef I387_TDEP_H
-#define I387_TDEP_H
+#ifndef GDB_I387_TDEP_H
+#define GDB_I387_TDEP_H
 
 struct gdbarch;
 class frame_info_ptr;
@@ -37,13 +37,7 @@ struct x86_xsave_layout;
 #define I387_NUM_YMM_REGS(tdep) ((tdep)->num_ymm_regs)
 #define I387_YMM0H_REGNUM(tdep) ((tdep)->ymm0h_regnum)
 
-#define I387_BND0R_REGNUM(tdep) ((tdep)->bnd0r_regnum)
-#define I387_BNDCFGU_REGNUM(tdep) ((tdep)->bndcfgu_regnum)
-
 /* Set of constants used for 32 and 64-bit.  */
-#define I387_NUM_MPX_REGS 6
-#define I387_NUM_BND_REGS 4
-#define I387_NUM_MPX_CTRL_REGS 2
 #define I387_NUM_K_REGS 8
 #define I387_NUM_PKEYS_REGS 1
 
@@ -71,8 +65,6 @@ struct x86_xsave_layout;
 #define I387_YMMENDH_REGNUM(tdep) \
   (I387_YMM0H_REGNUM (tdep) + I387_NUM_YMM_REGS (tdep))
 
-#define I387_MPXEND_REGNUM(tdep) \
-  (I387_BND0R_REGNUM (tdep) + I387_NUM_MPX_REGS)
 
 #define I387_KEND_REGNUM(tdep) \
   (I387_K0_REGNUM (tdep) + I387_NUM_K_REGS)
@@ -181,8 +173,4 @@ extern ULONGEST i387_xsave_get_clear_bv (struct gdbarch *gdbarch,
 extern void i387_return_value (struct gdbarch *gdbarch,
 			       struct regcache *regcache);
 
-/* Set all bnd registers to the INIT state.  INIT state means
-   all memory range can be accessed.  */
-extern void i387_reset_bnd_regs (struct gdbarch *gdbarch,
-				 struct regcache *regcache);
-#endif /* i387-tdep.h */
+#endif /* GDB_I387_TDEP_H */

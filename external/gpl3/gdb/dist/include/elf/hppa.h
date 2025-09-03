@@ -63,27 +63,27 @@
 /* Processor specific section types.  */
 
 /* Section contains product specific extension bits.  */
-#define SHT_PARISC_EXT		0x70000000
+#define SHT_PARISC_EXT		(SHT_LOPROC + 0)
 
 /* Section contains unwind table entries.  */
-#define SHT_PARISC_UNWIND	0x70000001
+#define SHT_PARISC_UNWIND	(SHT_LOPROC + 1)
 
 /* Section contains debug information for optimized code.  */
-#define SHT_PARISC_DOC		0x70000002
+#define SHT_PARISC_DOC		(SHT_LOPROC + 2)
 
 /* Section contains code annotations.  */
-#define SHT_PARISC_ANNOT	0x70000003
+#define SHT_PARISC_ANNOT	(SHT_LOPROC + 3)
 
 /* DLKM special section.  */
-#define SHT_PARISC_DLKM		0x70000004
+#define SHT_PARISC_DLKM		(SHT_LOPROC + 4)
 
 /* These are strictly for compatibility with the older elf32-hppa
    implementation.  Hopefully we can eliminate them in the future.  */
 /* Optional section holding argument location/relocation info.  */
-#define SHT_PARISC_SYMEXTN    SHT_LOPROC + 8
+#define SHT_PARISC_SYMEXTN      (SHT_LOPROC + 8)
 
 /* Option section for linker stubs.  */
-#define SHT_PARISC_STUBS      SHT_LOPROC + 9
+#define SHT_PARISC_STUBS        (SHT_LOPROC + 9)
 
 /* Processor specific section flags.  */
 

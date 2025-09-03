@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ar7100.c,v 1.3 2015/06/09 22:50:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar7100.c,v 1.4 2025/07/03 19:09:48 andvar Exp $");
 
 #define	__INTR_PRIVATE
 #include "pci.h"
@@ -63,7 +63,7 @@ static const char * const ar7100_misc_intrnames[] = {
 	[AR7100_MISC_IRQ_UART0] =	"irq 3 (uart)",
 	[AR7100_MISC_IRQ_WDOG] =	"irq 4 (wdog)",
 	[AR7100_MISC_IRQ_PC] =	       	"irq 5 (pc)",
-	[AR7100_MISC_IRQ_OHCI] =	"irq 6 (ochi)",
+	[AR7100_MISC_IRQ_OHCI] =	"irq 6 (ohci)",
 	[AR7100_MISC_IRQ_DMA] =		"irq 7 (dma)",
 };
 

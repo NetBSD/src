@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.219 2025/04/28 13:01:27 riastradh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.220 2025/08/24 10:26:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -179,8 +179,7 @@
 	"b\021"		"TILECFG\0"					  \
 	"b\022"		"TILEDATA\0"					  \
 	"b\076"		"LWP\0"						  \
-	"b\077"		"X\0"						  \
-	"\0"
+	"b\077"		"X\0"
 
 /*
  * Known FPU bits, only these get enabled. The save area is sized for all the

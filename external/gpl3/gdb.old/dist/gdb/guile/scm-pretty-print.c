@@ -1,6 +1,6 @@
 /* GDB/Scheme pretty-printing.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +20,9 @@
 /* See README file in this directory for implementation notes, coding
    conventions, et.al.  */
 
-#include "defs.h"
+#include "top.h"
 #include "charset.h"
-#include "symtab.h" /* Needed by language.h.  */
+#include "symtab.h"
 #include "language.h"
 #include "objfiles.h"
 #include "value.h"
@@ -558,6 +558,10 @@ ppscm_pretty_print_one_value (SCM printer, struct value **out_value,
 	    (_("invalid result from pretty-printer to-string"), result);
 	}
     }
+  catch (const gdb_exception_forced_quit &except)
+    {
+      quit_force (NULL, 0);
+    }
   catch (const gdb_exception &except)
     {
     }
@@ -660,7 +664,7 @@ ppscm_print_string_repr (SCM printer, enum display_hint hint,
       struct value_print_options opts = *options;
 
       gdb_assert (replacement != NULL);
-      opts.addressprint = 0;
+      opts.addressprint = false;
       common_val_print (replacement, stream, recurse, &opts, language);
       result = STRING_REPR_OK;
     }
@@ -698,7 +702,7 @@ ppscm_print_string_repr (SCM printer, enum display_hint hint,
     {
       struct value_print_options local_opts = *options;
 
-      local_opts.addressprint = 0;
+      local_opts.addressprint = false;
       lsscm_val_print_lazy_string (str_scm, stream, &local_opts);
       result = STRING_REPR_OK;
     }
@@ -883,7 +887,7 @@ ppscm_print_children (SCM printer, enum display_hint hint,
 	{
 	  struct value_print_options local_opts = *options;
 
-	  local_opts.addressprint = 0;
+	  local_opts.addressprint = false;
 	  lsscm_val_print_lazy_string (v_scm, stream, &local_opts);
 	}
       else if (scm_is_string (v_scm))
@@ -956,7 +960,7 @@ gdbscm_apply_val_pretty_printer (const struct extension_language_defn *extlang,
 				 const struct value_print_options *options,
 				 const struct language_defn *language)
 {
-  struct type *type = value_type (value);
+  struct type *type = value->type ();
   struct gdbarch *gdbarch = type->arch ();
   SCM exception = SCM_BOOL_F;
   SCM printer = SCM_BOOL_F;
@@ -965,11 +969,11 @@ gdbscm_apply_val_pretty_printer (const struct extension_language_defn *extlang,
   enum ext_lang_rc result = EXT_LANG_RC_NOP;
   enum guile_string_repr_result print_result;
 
-  if (value_lazy (value))
-    value_fetch_lazy (value);
+  if (value->lazy ())
+    value->fetch_lazy ();
 
   /* No pretty-printer support for unavailable values.  */
-  if (!value_bytes_available (value, 0, type->length ()))
+  if (!value->bytes_available (0, type->length ()))
     return EXT_LANG_RC_NOP;
 
   if (!gdb_scheme_initialized)

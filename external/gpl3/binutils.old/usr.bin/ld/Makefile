@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2024/06/30 16:14:19 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2025/08/24 17:57:27 christos Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
@@ -24,6 +24,7 @@ COPTS.ldgram.c = -Wno-stack-protector
 
 PROGDPLIBS+=	gnuctf 	${TOP}/${BFDSUBDIR}/libgnuctf
 PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
+PROGDPLIBS+=	sframe	${TOP}/${BFDSUBDIR}/libsframe
 PROGDPLIBS+=	iberty 	${TOP}/${BFDSUBDIR}/libiberty
 
 TEXINFO=	${G_TEXINFOS}
@@ -35,7 +36,7 @@ FILESDIR=	${SCRIPTSDIR}/ldscripts
 .PATH: ${COMMONOBJDIR} ${DIST}/ld ${DIST}/ld/emulparams \
 	${DIST}/ld/emultempl ${DIST}/ld/scripttempl ldscripts
 
-BUILDSYMLINKS+=	${G_STRINGIFY} stringify.sed
+BUILDSYMLINKS+=	${DIST}/ld/emultempl/stringify.sed stringify.sed
 BUILDSYMLINKS+=	gen-doc.texi configdoc.texi
 
 ${PROG}.info: configdoc.texi bfdver.texi
@@ -68,6 +69,7 @@ CLEANFILES+=	.depend.${f} e${f}.c
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 	${_MKTARGET_CREATE}
 	unset MACHINE || true; \
+	mkdir -p ldscripts && \
 	NATIVE=yes ${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld \
 		${LIBDIR} "/usr" "/usr/bin" \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \

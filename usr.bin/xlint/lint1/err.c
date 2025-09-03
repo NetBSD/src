@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.272 2025/05/04 08:37:09 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.275 2025/08/31 20:43:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.272 2025/05/04 08:37:09 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.275 2025/08/31 20:43:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -262,7 +262,7 @@ static const char *const msgs[] = {
 	"controlling expressions must have scalar type",		// 204
 	"switch expression must have integral type",			// 205
 	"enumeration value(s) not handled in switch",			// 206
-	"loop not entered at top",					// 207
+	"",			/* no longer used */			// 207
 	"break outside loop or switch",					// 208
 	"continue outside loop",					// 209
 	"enum type mismatch between '%s' and '%s' in initialization",	// 210
@@ -364,7 +364,7 @@ static const char *const msgs[] = {
 	"constant %s truncated by conversion, op '%s'",			// 306
 	"static variable '%s' set but not used",			// 307
 	"invalid type for _Complex",					// 308
-	"extra bits set to 0 in conversion of '%s' to '%s', op '%s'",	// 309
+	"'%s' converts '%s' with its most significant bit being set to '%s'", // 309
 	"symbol renaming can't be used on function parameters",		// 310
 	"symbol renaming can't be used on automatic variables",		// 311
 	"%s does not support '//' comments",				// 312
@@ -441,6 +441,7 @@ static const char *const msgs[] = {
 	"passing '%s' as argument %d to '%s' discards '%s'",		// 383
 	"function definition for '%s' with identifier list is obsolete in C23", // 384
 	"do-while macro '%.*s' ends with semicolon",			// 385
+	"conversion '%.*s' does not mix with '%c'",			// 386
 };
 
 static bool is_suppressed[sizeof(msgs) / sizeof(msgs[0])];

@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.5 2022/04/08 10:17:53 andvar Exp $ */
+/* $NetBSD: fcu.c,v 1.6 2025/07/01 14:13:13 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.5 2022/04/08 10:17:53 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.6 2025/07/01 14:13:13 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.5 2022/04/08 10:17:53 andvar Exp $");
 
 #include <macppc/dev/fancontrolvar.h>
 
-//#define FCU_DEBUG
+#include "opt_fcu.h"
+
 #ifdef FCU_DEBUG
 #define DPRINTF printf
 #else
@@ -96,6 +97,7 @@ static int	fcu_match(device_t, cfdata_t, void *);
 static void	fcu_attach(device_t, device_t, void *);
 
 static void	fcu_sensors_refresh(struct sysmon_envsys *, envsys_data_t *);
+static void	fcu_configure_sensor(struct fcu_softc *, envsys_data_t *);
 
 static bool is_cpu(const envsys_data_t *);
 static bool is_case(const envsys_data_t *);
@@ -133,7 +135,7 @@ fcu_attach(device_t parent, device_t self, void *aux)
 {
 	struct fcu_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	int have_eeprom1 = 1, i;
+	int i;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
@@ -157,8 +159,6 @@ fcu_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "no EEPROM data for CPU 0\n");
 		return;
 	}
-	if (get_cpuid(1, sc->sc_eeprom1) < 160)
-		have_eeprom1 = 0;
 
 	/* init zones */
 	sc->sc_zones[FCU_ZONE_CPU].name = "CPUs";
@@ -200,128 +200,89 @@ fcu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_nsensors = 0;
 	ch = OF_child(ia->ia_cookie);
-	while (ch != 0) {
-		char type[32], descr[32];
-		uint32_t reg;
+	if (ch == 0) {
+		/* old style data, no individual nodes for fans, annoying */
+		char loc[256], tp[256], descr[32], type[32];
+		uint32_t reg_rpm = 0x10, reg_pwm = 0x32, reg;
+		uint32_t id[16];
+		int num, lidx = 0, tidx = 0;
 
-		envsys_data_t *s = &sc->sc_sensors[sc->sc_nsensors];
+		num = OF_getprop(ia->ia_cookie, "hwctrl-id", id, 64);
+		OF_getprop(ia->ia_cookie, "hwctrl-location", loc, 1024);
+		OF_getprop(ia->ia_cookie, "hwctrl-type", tp, 1024);
+		while (num > 0) {
+			envsys_data_t *s = &sc->sc_sensors[sc->sc_nsensors];
 
-		s->state = ENVSYS_SINVALID;
+			s->state = ENVSYS_SINVALID;
+			strcpy(descr, &loc[lidx]);
+			strcpy(type, &tp[tidx]);
+			if (strstr(type, "rpm") != NULL) {
+				s->units = ENVSYS_SFANRPM;
+				reg = reg_rpm;
+				reg_rpm += 2;
+			} else if (strstr(type, "pwm") != NULL) {
+				s->units = ENVSYS_SFANRPM;
+				reg = reg_pwm;
+				reg_pwm += 2;
+			} else goto skip;
 
-		if (OF_getprop(ch, "device_type", type, 32) <= 0)
-			goto next;
+			s->private = reg;
+			strcpy(s->desc, descr);
 
-		if (strcmp(type, "fan-rpm-control") == 0) {
-			s->units = ENVSYS_SFANRPM;
-		} else if (strcmp(type, "fan-pwm-control") == 0) {
-			/* XXX we get the type from the register number */
-			s->units = ENVSYS_SFANRPM;
+			fcu_configure_sensor(sc, s);
+
+			sysmon_envsys_sensor_attach(sc->sc_sme, s);
+			sc->sc_nsensors++;
+skip:
+			lidx += strlen(descr) + 1;
+			tidx += strlen(type) + 1;
+			num -= 4;
+		}
+	} else {
+		/* new style, with individual nodes */
+		while (ch != 0) {
+			char type[32], descr[32];
+			uint32_t reg;
+
+			envsys_data_t *s = &sc->sc_sensors[sc->sc_nsensors];
+
+			s->state = ENVSYS_SINVALID;
+
+			if (OF_getprop(ch, "device_type", type, 32) <= 0)
+				goto next;
+
+			if (strcmp(type, "fan-rpm-control") == 0) {
+				s->units = ENVSYS_SFANRPM;
+			} else if (strcmp(type, "fan-pwm-control") == 0) {
+				/* XXX we get the type from the register number */
+				s->units = ENVSYS_SFANRPM;
 /* skip those for now since we don't really know how to interpret them */
 #if 0
-		} else if (strcmp(type, "power-sensor") == 0) {
-			s->units = ENVSYS_SVOLTS_DC;
+			} else if (strcmp(type, "power-sensor") == 0) {
+				s->units = ENVSYS_SVOLTS_DC;
 #endif
-		} else if (strcmp(type, "gpi-sensor") == 0) {
-			s->units = ENVSYS_INDICATOR;
-		} else {
-			/* ignore other types for now */
-			goto next;
-		}
-
-		if (OF_getprop(ch, "reg", &reg, sizeof(reg)) <= 0)
-			goto next;
-		s->private = reg;
-
-		if (OF_getprop(ch, "location", descr, 32) <= 0)
-			goto next;
-		strcpy(s->desc, descr);
-
-		if (s->units == ENVSYS_SFANRPM) {
-			fcu_fan_t *fan = &sc->sc_fans[sc->sc_nfans];
-			uint8_t *eeprom = NULL;
-			uint16_t rmin, rmax;
-
-			if (strstr(descr, "CPU A") != NULL)
-				eeprom = sc->sc_eeprom0;
-			if (strstr(descr, "CPU B") != NULL) {
-				/*
-				 * XXX
-				 * this should never happen
-				 */
-				if (have_eeprom1 == 0) {
-					eeprom = sc->sc_eeprom0;
-				} else
-					eeprom = sc->sc_eeprom1;
-			}
-
-			fan->reg = reg;
-			fan->target = 0;
-			fan->duty = 0x80;
-
-			/* speed settings from EEPROM */
-			if (strstr(descr, "PUMP") != NULL) {
-				KASSERT(eeprom != NULL);
-				memcpy(&rmin, &eeprom[0x54], 2);
-				memcpy(&rmax, &eeprom[0x56], 2);
-				fan->base_rpm = rmin;
-				fan->max_rpm = rmax;
-				fan->step = (rmax - rmin) / 30;
-			} else if (strstr(descr, "INTAKE") != NULL) {
-				KASSERT(eeprom != NULL);
-				memcpy(&rmin, &eeprom[0x4c], 2);
-				memcpy(&rmax, &eeprom[0x4e], 2);
-				fan->base_rpm = rmin;
-				fan->max_rpm = rmax;
-				fan->step = (rmax - rmin) / 30;
-			} else if (strstr(descr, "EXHAUST") != NULL) {
-				KASSERT(eeprom != NULL);
-				memcpy(&rmin, &eeprom[0x50], 2);
-				memcpy(&rmax, &eeprom[0x52], 2);
-				fan->base_rpm = rmin;
-				fan->max_rpm = rmax;
-				fan->step = (rmax - rmin) / 30;
-			} else if (strstr(descr, "DRIVE") != NULL ) {
-				fan->base_rpm = 1000;
-				fan->max_rpm = 3000;
-				fan->step = 100;
+			} else if (strcmp(type, "gpi-sensor") == 0) {
+				s->units = ENVSYS_INDICATOR;
 			} else {
-				fan->base_rpm = 1000;
-				fan->max_rpm = 3000;
-				fan->step = 100;
+				/* ignore other types for now */
+				goto next;
 			}
-			DPRINTF("fan %s: %d - %d rpm, step %d\n",
-			   descr, fan->base_rpm, fan->max_rpm, fan->step);
 
-			/* now stuff them into zones */
-			if (strstr(descr, "CPU") != NULL) {
-				fancontrol_zone_t *z = &sc->sc_zones[FCU_ZONE_CPU];
-				z->fans[z->nfans].num = sc->sc_nfans;
-				z->fans[z->nfans].min_rpm = fan->base_rpm;
-				z->fans[z->nfans].max_rpm = fan->max_rpm;
-				z->fans[z->nfans].name = s->desc;
-				z->nfans++;
-			} else if ((strstr(descr, "BACKSIDE") != NULL) ||
-				   (strstr(descr, "SLOT") != NULL))  {
-				fancontrol_zone_t *z = &sc->sc_zones[FCU_ZONE_CASE];
-				z->fans[z->nfans].num = sc->sc_nfans;
-				z->fans[z->nfans].min_rpm = fan->base_rpm;
-				z->fans[z->nfans].max_rpm = fan->max_rpm;
-				z->fans[z->nfans].name = s->desc;
-				z->nfans++;
-			} else if (strstr(descr, "DRIVE") != NULL) {
-				fancontrol_zone_t *z = &sc->sc_zones[FCU_ZONE_DRIVEBAY];
-				z->fans[z->nfans].num = sc->sc_nfans;
-				z->fans[z->nfans].min_rpm = fan->base_rpm;
-				z->fans[z->nfans].max_rpm = fan->max_rpm;
-				z->fans[z->nfans].name = s->desc;
-				z->nfans++;
-			}
-			sc->sc_nfans++;
-		}
-		sysmon_envsys_sensor_attach(sc->sc_sme, s);
-		sc->sc_nsensors++;
+			if (OF_getprop(ch, "reg", &reg, sizeof(reg)) <= 0)
+				goto next;
+			s->private = reg;
+
+			if (OF_getprop(ch, "location", descr, 32) <= 0)
+				goto next;
+			strcpy(s->desc, descr);
+
+			fcu_configure_sensor(sc, s);
+
+			sysmon_envsys_sensor_attach(sc->sc_sme, s);
+			sc->sc_nsensors++;
 next:
-		ch = OF_peer(ch);
+			ch = OF_peer(ch);
+		}
 	}		
 	sysmon_envsys_register(sc->sc_sme);
 
@@ -336,11 +297,102 @@ next:
 }
 
 static void
+fcu_configure_sensor(struct fcu_softc *sc, envsys_data_t *s)
+{
+	int have_eeprom1 = 1;
+
+	if (get_cpuid(1, sc->sc_eeprom1) < 160)
+		have_eeprom1 = 0;
+
+	if (s->units == ENVSYS_SFANRPM) {
+		fcu_fan_t *fan = &sc->sc_fans[sc->sc_nfans];
+		uint8_t *eeprom = NULL;
+		uint16_t rmin, rmax;
+
+		if (strstr(s->desc, "CPU A") != NULL)
+			eeprom = sc->sc_eeprom0;
+		if (strstr(s->desc, "CPU B") != NULL) {
+			/*
+			 * XXX
+			 * this should never happen
+			 */
+			if (have_eeprom1 == 0) {
+				eeprom = sc->sc_eeprom0;
+			} else
+				eeprom = sc->sc_eeprom1;
+		}
+
+		fan->reg = s->private;
+		fan->target = 0;
+		fan->duty = 0x80;
+
+		/* speed settings from EEPROM */
+		if (strstr(s->desc, "PUMP") != NULL) {
+			KASSERT(eeprom != NULL);
+			memcpy(&rmin, &eeprom[0x54], 2);
+			memcpy(&rmax, &eeprom[0x56], 2);
+			fan->base_rpm = rmin;
+			fan->max_rpm = rmax;
+			fan->step = (rmax - rmin) / 30;
+		} else if (strstr(s->desc, "INTAKE") != NULL) {
+			KASSERT(eeprom != NULL);
+			memcpy(&rmin, &eeprom[0x4c], 2);
+			memcpy(&rmax, &eeprom[0x4e], 2);
+			fan->base_rpm = rmin;
+			fan->max_rpm = rmax;
+			fan->step = (rmax - rmin) / 30;
+		} else if (strstr(s->desc, "EXHAUST") != NULL) {
+			KASSERT(eeprom != NULL);
+			memcpy(&rmin, &eeprom[0x50], 2);
+			memcpy(&rmax, &eeprom[0x52], 2);
+			fan->base_rpm = rmin;
+			fan->max_rpm = rmax;
+			fan->step = (rmax - rmin) / 30;
+		} else if (strstr(s->desc, "DRIVE") != NULL ) {
+			fan->base_rpm = 1000;
+			fan->max_rpm = 3000;
+			fan->step = 100;
+		} else {
+			fan->base_rpm = 1000;
+			fan->max_rpm = 3000;
+			fan->step = 100;
+		}
+		DPRINTF("fan %s: %d - %d rpm, step %d\n",
+		   s->desc, fan->base_rpm, fan->max_rpm, fan->step);
+
+		/* now stuff them into zones */
+		if (strstr(s->desc, "CPU") != NULL) {
+			fancontrol_zone_t *z = &sc->sc_zones[FCU_ZONE_CPU];
+			z->fans[z->nfans].num = sc->sc_nfans;
+			z->fans[z->nfans].min_rpm = fan->base_rpm;
+			z->fans[z->nfans].max_rpm = fan->max_rpm;
+			z->fans[z->nfans].name = s->desc;
+			z->nfans++;
+		} else if ((strstr(s->desc, "BACKSIDE") != NULL) ||
+			   (strstr(s->desc, "SLOT") != NULL))  {
+			fancontrol_zone_t *z = &sc->sc_zones[FCU_ZONE_CASE];
+			z->fans[z->nfans].num = sc->sc_nfans;
+			z->fans[z->nfans].min_rpm = fan->base_rpm;
+			z->fans[z->nfans].max_rpm = fan->max_rpm;
+			z->fans[z->nfans].name = s->desc;
+			z->nfans++;
+		} else if (strstr(s->desc, "DRIVE") != NULL) {
+			fancontrol_zone_t *z = &sc->sc_zones[FCU_ZONE_DRIVEBAY];
+			z->fans[z->nfans].num = sc->sc_nfans;
+			z->fans[z->nfans].min_rpm = fan->base_rpm;
+			z->fans[z->nfans].max_rpm = fan->max_rpm;
+			z->fans[z->nfans].name = s->desc;
+			z->nfans++;
+		}
+		sc->sc_nfans++;
+	}
+}
+static void
 fcu_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct fcu_softc *sc = sme->sme_cookie;
 	uint8_t cmd;
-	uint16_t data = -1;
+	uint16_t data = 0;
 	int error;
 
 	if (edata->units == ENVSYS_SFANRPM) {
@@ -416,7 +468,7 @@ fcu_get_rpm(void *cookie, int which)
 	struct fcu_softc *sc = cookie;
 	fcu_fan_t *f = &sc->sc_fans[which];
 	int error;
-	uint16_t data;
+	uint16_t data = 0;
 	uint8_t cmd;
 
 	iic_acquire_bus(sc->sc_i2c, 0);
@@ -424,7 +476,7 @@ fcu_get_rpm(void *cookie, int which)
 	error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, 1, &data, 2, 0);
 	iic_release_bus(sc->sc_i2c, 0);
-	if (error != 0) return -1;
+	if (error != 0) return 0;
 	data = data >> 3;
 	return data;
 }

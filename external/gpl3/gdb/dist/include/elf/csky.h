@@ -95,7 +95,7 @@ START_RELOC_NUMBERS (elf_csky_reloc_type)
 END_RELOC_NUMBERS (R_CKCORE_MAX)
 
 /* Additional section types.  */
-#define SHT_CSKY_ATTRIBUTES       0x70000001 /* Section holds attributes.  */
+#define SHT_CSKY_ATTRIBUTES       (SHT_LOPROC + 1) /* Section holds attributes.  */
 
 /* Object attribute tags.  */
 enum

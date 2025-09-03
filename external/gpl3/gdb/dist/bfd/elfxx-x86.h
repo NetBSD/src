@@ -401,6 +401,10 @@ struct elf_x86_sframe_plt
   unsigned int sec_pltn_entry_size;
   unsigned int sec_pltn_num_fres;
   const sframe_frame_row_entry *sec_pltn_fres[SFRAME_PLTN_MAX_NUM_FRES];
+
+  unsigned int plt_got_entry_size;
+  unsigned int plt_got_num_fres;
+  const sframe_frame_row_entry *plt_got_fres[SFRAME_PLTN_MAX_NUM_FRES];
 };
 
 struct elf_x86_lazy_plt_layout
@@ -606,6 +610,8 @@ struct elf_x86_link_hash_table
   asection *plt_sframe;
   sframe_encoder_ctx *plt_second_cfe_ctx;
   asection *plt_second_sframe;
+  sframe_encoder_ctx *plt_got_cfe_ctx;
+  asection *plt_got_sframe;
 
   /* Parameters describing PLT generation, lazy or non-lazy.  */
   struct elf_x86_plt_layout plt;
@@ -687,6 +693,7 @@ struct elf_x86_link_hash_table
   const char *dynamic_interpreter;
   const char *tls_get_addr;
   const char *relative_r_name;
+  const char *ax_register;
   void (*elf_append_reloc) (bfd *, asection *, Elf_Internal_Rela *);
   void (*elf_write_addend) (bfd *, uint64_t, void *);
   void (*elf_write_addend_in_got) (bfd *, uint64_t, void *);
@@ -765,6 +772,17 @@ struct elf_x86_plt
   unsigned int plt_entry_size;
   unsigned int plt_got_insn_size;	/* Only used for x86-64.  */
   long count;
+};
+
+enum elf_x86_tls_error_type
+{
+  elf_x86_tls_error_none,
+  elf_x86_tls_error_add,
+  elf_x86_tls_error_add_mov,
+  elf_x86_tls_error_add_sub_mov,
+  elf_x86_tls_error_indirect_call,
+  elf_x86_tls_error_lea,
+  elf_x86_tls_error_yes
 };
 
 /* Set if a relocation is converted from a GOTPCREL relocation.  */
@@ -914,6 +932,12 @@ extern void _bfd_x86_elf_link_fixup_ifunc_symbol
 extern void _bfd_x86_elf_link_report_relative_reloc
   (struct bfd_link_info *, asection *, struct elf_link_hash_entry *,
    Elf_Internal_Sym *, const char *, const void *) ATTRIBUTE_HIDDEN;
+
+extern void _bfd_x86_elf_link_report_tls_transition_error
+  (struct bfd_link_info *, bfd *, asection *, Elf_Internal_Shdr *,
+   struct elf_link_hash_entry *, Elf_Internal_Sym *,
+   const Elf_Internal_Rela *, const char *, const char *,
+   enum elf_x86_tls_error_type);
 
 #define bfd_elf64_mkobject \
   _bfd_x86_elf_mkobject

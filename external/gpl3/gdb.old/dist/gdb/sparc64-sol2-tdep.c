@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris UltraSPARC.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "gdbarch.h"
@@ -99,7 +98,7 @@ static const struct regset sparc64_sol2_fpregset =
 
 
 static struct sparc_frame_cache *
-sparc64_sol2_sigtramp_frame_cache (frame_info_ptr this_frame,
+sparc64_sol2_sigtramp_frame_cache (const frame_info_ptr &this_frame,
 				   void **this_cache)
 {
   struct sparc_frame_cache *cache;
@@ -154,7 +153,7 @@ sparc64_sol2_sigtramp_frame_cache (frame_info_ptr this_frame,
 }
 
 static void
-sparc64_sol2_sigtramp_frame_this_id (frame_info_ptr this_frame,
+sparc64_sol2_sigtramp_frame_this_id (const frame_info_ptr &this_frame,
 				     void **this_cache,
 				     struct frame_id *this_id)
 {
@@ -165,7 +164,7 @@ sparc64_sol2_sigtramp_frame_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-sparc64_sol2_sigtramp_frame_prev_register (frame_info_ptr this_frame,
+sparc64_sol2_sigtramp_frame_prev_register (const frame_info_ptr &this_frame,
 					   void **this_cache,
 					   int regnum)
 {
@@ -177,7 +176,7 @@ sparc64_sol2_sigtramp_frame_prev_register (frame_info_ptr this_frame,
 
 static int
 sparc64_sol2_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				     frame_info_ptr this_frame,
+				     const frame_info_ptr &this_frame,
 				     void **this_cache)
 {
   return sol2_sigtramp_p (this_frame);

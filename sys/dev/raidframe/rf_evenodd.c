@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.23 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.24 2025/06/27 21:36:22 andvar Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.23 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.24 2025/06/27 21:36:22 andvar Exp $");
 
 #include "rf_archs.h"
 
@@ -261,7 +261,7 @@ rf_EODagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 		} else {	/* data missing. Do a P reconstruct write if
 				 * only a single data unit is lost in the
 				 * stripe, otherwise a reconstruct write which
-				 * employnig both P and E units. */
+				 * employing both P and E units. */
 			if (rf_NumFailedDataUnitsInStripe(raidPtr, asmap) == 2) {
 				if (asmap->numStripeUnitsAccessed == 1)
 					*createFunc = (RF_VoidFuncPtr) rf_EO_200_CreateWriteDAG;

@@ -1,5 +1,5 @@
 \input texinfo
-@c Copyright (C) 1988-2024 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2025 Free Software Foundation, Inc.
 @setfilename bfdint.info
 
 @settitle BFD Internals
@@ -14,7 +14,7 @@
 @copying
 This file documents the internals of the BFD library.
 
-Copyright @copyright{} 1988-2024 Free Software Foundation, Inc.
+Copyright @copyright{} 1988-2025 Free Software Foundation, Inc.
 Contributed by Cygnus Support.
 
 Permission is granted to copy, distribute and/or modify this document
@@ -527,15 +527,6 @@ based on the section's @samp{filepos} field and a @samp{bfd_read}.  The
 corresponding field in the target vector is named
 @samp{_bfd_get_section_contents}.
 
-@item _get_section_contents_in_window
-Set a @samp{bfd_window} to hold the contents of a section.  This is
-called from @samp{bfd_get_section_contents_in_window}.  The
-@samp{bfd_window} idea never really caught on, and I don't think this is
-ever called.  Pretty much all targets implement this as
-@samp{bfd_generic_get_section_contents_in_window}, which uses
-@samp{bfd_get_section_contents} to do the right thing.  The
-corresponding field in the target vector is named
-@samp{_bfd_get_section_contents_in_window}.
 @end table
 
 @node BFD target vector copy

@@ -1,6 +1,6 @@
 /* Main header file for the bfd library -- portable access to object files.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -36,6 +36,7 @@ extern "C" {
 #include "symcat.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include <time.h>
 #include "diagnostics.h"
 #include <stdarg.h>
 #include <string.h>

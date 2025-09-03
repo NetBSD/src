@@ -51,7 +51,7 @@
 
 /* Define to 1 if you have the declaration of `basename(char *)', and to 0 if
    you don't. */
-#define HAVE_DECL_BASENAME 0
+#define HAVE_DECL_BASENAME 1
 
 /* Define to 1 if you have the declaration of `calloc', and to 0 if you don't.
    */
@@ -158,6 +158,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the <libgen.h> header file. */
+#define HAVE_LIBGEN_H 1
+
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
 
@@ -187,6 +190,9 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* Define to 1 if you have the `memrchr' function. */
+#define HAVE_MEMRCHR 1
 
 /* Define to 1 if you have the `memset' function. */
 #define HAVE_MEMSET 1

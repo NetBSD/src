@@ -27,7 +27,9 @@ prefix=core
 # to ensure gdb dumps all mappings (OS dependent).
 dump_all_cmds=()
 
-while getopts :ao: opt; do
+data_directory_opt=()
+
+while getopts :ao:d: opt; do
     case "$opt" in
         a)
             case "$OSTYPE" in
@@ -40,8 +42,11 @@ while getopts :ao: opt; do
         o)
             prefix=$OPTARG
             ;;
+        d)
+            data_directory_opt=("--data-directory" "$OPTARG")
+            ;;
         *)
-            echo "usage:  @GCORE_TRANSFORM_NAME@ [-a] [-o prefix] pid1 [pid2...pidN]"
+            echo "usage:  @GCORE_TRANSFORM_NAME@ [-a] [-o prefix] [-d data-directory] pid1 [pid2...pidN]"
             exit 2
             ;;
     esac
@@ -51,7 +56,7 @@ shift $((OPTIND-1))
 
 if [ "$#" -eq "0" ]
 then
-    echo "usage:  @GCORE_TRANSFORM_NAME@ [-a] [-o prefix] pid1 [pid2...pidN]"
+    echo "usage:  @GCORE_TRANSFORM_NAME@ [-a] [-o prefix] [-d data-directory] pid1 [pid2...pidN]"
     exit 2
 fi
 
@@ -98,6 +103,7 @@ do
 	# `</dev/null' to avoid touching interactive terminal if it is
 	# available but not accessible as GDB would get stopped on SIGTTIN.
 	"$binary_path/@GDB_TRANSFORM_NAME@" </dev/null \
+            "${data_directory_opt[@]}" \
 	    --nx --batch --readnever -iex 'set debuginfod enabled off' \
 	    -ex "set pagination off" -ex "set height 0" -ex "set width 0" \
 	    "${dump_all_cmds[@]}" \

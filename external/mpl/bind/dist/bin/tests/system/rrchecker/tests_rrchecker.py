@@ -136,7 +136,10 @@ def run_rrchecker(option, rr_class, rr_type, rr_rest):
     return rrchecker_output.split()
 
 
-@pytest.mark.parametrize("option", ["-p", "-u"])
+@pytest.mark.parametrize(
+    "option",
+    ["-p", "-u", "multi-line at class", " multi-line at type", "multi-line at data"],
+)
 def test_rrchecker_conversions(option):
     tempzone_file = "tempzone"
     with open(tempzone_file, "w", encoding="utf-8") as file:
@@ -175,6 +178,15 @@ def test_rrchecker_conversions(option):
                 "-u", rr_class_orig, rr_type_orig, rr_rest_orig
             )
             rr_rest = " ".join(rr_rest)
+        elif option == "multi-line at class":
+            rr_class = "(" + rr_class
+            rr_rest = rr_rest + ")"
+        elif option == "multi-line at type":
+            rr_type = "(" + rr_type
+            rr_rest = rr_rest + ")"
+        elif option == "multi-line at data":
+            rr_rest = "(" + rr_rest
+            rr_rest = rr_rest + ")"
 
         rr_class, rr_type, *rr_rest = run_rrchecker("-p", rr_class, rr_type, rr_rest)
 

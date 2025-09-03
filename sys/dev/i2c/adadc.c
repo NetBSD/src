@@ -1,4 +1,4 @@
-/* $NetBSD: adadc.c,v 1.10 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: adadc.c,v 1.11 2025/06/30 10:16:01 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.10 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.11 2025/06/30 10:16:01 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,40 +152,83 @@ adadc_attach(device_t parent, device_t self, void *aux)
 	 */
 	which_cpu = 0;
 	ch = OF_child(ia->ia_cookie);
-	while (ch != 0) {
-		if (OF_getprop(ch, "location", loc, 32) > 0) {
-			int reg = 0;
-			OF_getprop(ch, "reg", &reg, sizeof(reg));
+	if (ch == 0) {
+		/* old style info */
+		int len, idx = 0, reg = 0;
+		uint32_t ids[16];
+		char buffer[256];
+		len = OF_getprop(ia->ia_cookie, "hwsensor-id", ids, 64);
+		OF_getprop(ia->ia_cookie, "hwsensor-location", buffer, 256);
+		while (len > 0) {
+			strcpy(loc, &buffer[idx]);
 			s = &sc->sc_sensors[sc->sc_nsensors];
 			s->state = ENVSYS_SINVALID;
 			/*
-			 * this setup matches my 2x 2.5GHz PCI-X G5, Linux and
+			 * this setup matches my 1.8GHz PCI-X G5, Linux and
 			 * FreeBSD hardcode these as well so we should be safe
 			 */
 			switch (reg) {
-			case 0:
-				if (strstr(loc, "CPU B") != NULL)
-					which_cpu = 1;
-				/* FALLTHROUGH */		
-			case 1:
-				s->units = ENVSYS_STEMP;
-				break;
-			case 2:
-			case 4:
-				s->units = ENVSYS_SAMPS;
-				break;
-			case 3:
-				s->units = ENVSYS_SVOLTS_DC;
-				break;
-			default:
-				s->units = ENVSYS_INTEGER;
+				case 0:
+					if (strstr(loc, "CPU B") != NULL)
+						which_cpu = 1;
+					/* FALLTHROUGH */		
+				case 1:
+					s->units = ENVSYS_STEMP;
+					break;
+				case 2:
+				case 4:
+					s->units = ENVSYS_SAMPS;
+					break;
+				case 3:
+					s->units = ENVSYS_SVOLTS_DC;
+					break;
+				default:
+					s->units = ENVSYS_INTEGER;
 			}
 			strncpy(s->desc, loc, sizeof(s->desc));
 			s->private = reg;
 			sysmon_envsys_sensor_attach(sc->sc_sme, s);
 			sc->sc_nsensors++;
+			len -= 4;
+			idx += strlen(loc) + 1;
+			reg++;
 		}
-		ch = OF_peer(ch);
+	} else {
+		while (ch != 0) {
+			if (OF_getprop(ch, "location", loc, 32) > 0) {
+				int reg = 0;
+				OF_getprop(ch, "reg", &reg, sizeof(reg));
+				s = &sc->sc_sensors[sc->sc_nsensors];
+				s->state = ENVSYS_SINVALID;
+				/*
+				 * this setup matches my 2x 2.5GHz PCI-X G5, Linux and
+				 * FreeBSD hardcode these as well so we should be safe
+				 */
+				switch (reg) {
+				case 0:
+					if (strstr(loc, "CPU B") != NULL)
+						which_cpu = 1;
+					/* FALLTHROUGH */		
+				case 1:
+					s->units = ENVSYS_STEMP;
+					break;
+				case 2:
+				case 4:
+					s->units = ENVSYS_SAMPS;
+					break;
+				case 3:
+					s->units = ENVSYS_SVOLTS_DC;
+					break;
+				default:
+					s->units = ENVSYS_INTEGER;
+				}
+				strncpy(s->desc, loc, sizeof(s->desc));
+				s->private = reg;
+				sysmon_envsys_sensor_attach(sc->sc_sme, s);
+				sc->sc_nsensors++;
+			}
+			ch = OF_peer(ch);
+		}
 	}
 	aprint_debug_dev(self, "monitoring CPU %d\n", which_cpu);
 	error = get_cpuid(which_cpu, (uint8_t *)eeprom);

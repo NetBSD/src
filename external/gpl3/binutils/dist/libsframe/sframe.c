@@ -1,6 +1,6 @@
 /* sframe.c - SFrame decoder/encoder.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of libsframe.
 
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stddef.h>
 #include "sframe-impl.h"
 #include "swap.h"
 
@@ -165,6 +166,7 @@ need_swapping (int endian)
       case SFRAME_ABI_AMD64_ENDIAN_LITTLE:
 	return !is_little;
       case SFRAME_ABI_AARCH64_ENDIAN_BIG:
+      case SFRAME_ABI_S390X_ENDIAN_BIG:
 	return is_little;
       default:
 	break;
@@ -204,12 +206,11 @@ flip_fde (sframe_func_desc_entry *fdep)
 static bool
 sframe_header_sanity_check_p (sframe_header *hp)
 {
-  unsigned char all_flags = SFRAME_F_FDE_SORTED | SFRAME_F_FRAME_POINTER;
   /* Check preamble is valid.  */
   if (hp->sfh_preamble.sfp_magic != SFRAME_MAGIC
       || (hp->sfh_preamble.sfp_version != SFRAME_VERSION_1
 	  && hp->sfh_preamble.sfp_version != SFRAME_VERSION_2)
-      || (hp->sfh_preamble.sfp_flags | all_flags) != all_flags)
+      || (hp->sfh_preamble.sfp_flags & ~SFRAME_V2_F_ALL_FLAGS))
     return false;
 
   /* Check offsets are valid.  */
@@ -363,49 +364,62 @@ sframe_decoder_get_funcdesc_at_index (sframe_decoder_ctx *ctx,
   return fdep;
 }
 
+/* Get the offset of the start PC of the SFrame FDE at FUNC_IDX from the start
+   of the SFrame section.  This section-relative offset is used within
+   libsframe for sorting the SFrame FDEs, and also information lookup routines
+   like sframe_find_fre.
+
+   If FUNC_IDX is not a valid index in the given decoder object, returns 0.  */
+
+static int32_t
+sframe_decoder_get_secrel_func_start_addr (sframe_decoder_ctx *dctx,
+					   uint32_t func_idx)
+{
+  int err = 0;
+  int32_t offsetof_fde_in_sec
+    = sframe_decoder_get_offsetof_fde_start_addr (dctx, func_idx, &err);
+  /* If func_idx is not a valid index, return 0.  */
+  if (err)
+    return 0;
+
+  int32_t func_start_addr = dctx->sfd_funcdesc[func_idx].sfde_func_start_address;
+
+  return func_start_addr + offsetof_fde_in_sec;
+}
+
 /* Check whether for the given FDEP, the SFrame Frame Row Entry identified via
    the START_IP_OFFSET and the END_IP_OFFSET, provides the stack trace
    information for the PC.  */
 
 static bool
-sframe_fre_check_range_p (sframe_func_desc_entry *fdep,
-			  int32_t start_ip_offset, int32_t end_ip_offset,
+sframe_fre_check_range_p (sframe_decoder_ctx *dctx, uint32_t func_idx,
+			  uint32_t start_ip_offset, uint32_t end_ip_offset,
 			  int32_t pc)
 {
-  int32_t start_ip, end_ip;
+  sframe_func_desc_entry *fdep;
   int32_t func_start_addr;
   uint8_t rep_block_size;
   uint32_t fde_type;
-  int32_t masked_pc;
+  uint32_t pc_offset;
   bool mask_p;
-  bool ret;
 
-  ret = false;
-
-  if (!fdep)
-    return ret;
-
-  func_start_addr = fdep->sfde_func_start_address;
+  fdep = &dctx->sfd_funcdesc[func_idx];
+  func_start_addr = sframe_decoder_get_secrel_func_start_addr (dctx, func_idx);
   fde_type = sframe_get_fde_type (fdep);
   mask_p = (fde_type == SFRAME_FDE_TYPE_PCMASK);
   rep_block_size = fdep->sfde_func_rep_size;
 
-  if (!mask_p)
-    {
-      start_ip = start_ip_offset + func_start_addr;
-      end_ip = end_ip_offset + func_start_addr;
-      ret = ((start_ip <= pc) && (end_ip >= pc));
-    }
-  else
-    {
-      /* For FDEs for repetitive pattern of insns, we need to return the FRE
-	 where pc % rep_block_size is between start_ip_offset and
-	 end_ip_offset.  */
-      masked_pc = pc % rep_block_size;
-      ret = ((start_ip_offset <= masked_pc) && (end_ip_offset >= masked_pc));
-    }
+  if (func_start_addr > pc)
+    return false;
 
-  return ret;
+  /* Given func_start_addr <= pc, pc - func_start_addr must be positive.  */
+  pc_offset = pc - func_start_addr;
+  /* For SFrame FDEs encoding information for repetitive pattern of insns,
+     masking with the rep_block_size is necessary to find the matching FRE.  */
+  if (mask_p)
+    pc_offset = pc_offset % rep_block_size;
+
+  return (start_ip_offset <= pc_offset) && (end_ip_offset >= pc_offset);
 }
 
 static int
@@ -507,7 +521,7 @@ flip_sframe (char *frame_buf, size_t buf_size, uint32_t to_foreign)
 	  fre_offset = fdep->sfde_func_start_fre_off;
 	}
 
-      fp = frame_buf + sframe_get_hdr_size (ihp) + ihp->sfh_freoff;
+      fp = frame_buf + hdrsz + ihp->sfh_freoff;
       fp += fre_offset;
       for (; j < prev_frep_index + num_fres; j++)
 	{
@@ -522,8 +536,12 @@ flip_sframe (char *frame_buf, size_t buf_size, uint32_t to_foreign)
       prev_frep_index = j;
     }
   /* All FDEs and FREs must have been endian flipped by now.  */
-  if ((j != ihp->sfh_num_fres) || (bytes_flipped != (buf_size - hdrsz)))
+  if ((j != ihp->sfh_num_fres) || (bytes_flipped > (buf_size - hdrsz)))
     goto bad;
+  /* Optional trailing section padding.  */
+  for (fp = frame_buf + hdrsz + bytes_flipped; fp < frame_buf + buf_size; fp++)
+    if (*fp != '\0')
+      goto bad;
 
   /* Success.  */
   return 0;
@@ -677,13 +695,22 @@ sframe_fre_get_base_reg_id (sframe_frame_row_entry *fre, int *errp)
 /* Get the CFA offset from the FRE.  If the offset is invalid, sets errp.  */
 
 int32_t
-sframe_fre_get_cfa_offset (sframe_decoder_ctx *dctx ATTRIBUTE_UNUSED,
+sframe_fre_get_cfa_offset (sframe_decoder_ctx *dctx,
 			   sframe_frame_row_entry *fre, int *errp)
 {
-  return sframe_get_fre_offset (fre, SFRAME_FRE_CFA_OFFSET_IDX, errp);
+  int32_t offset = sframe_get_fre_offset (fre, SFRAME_FRE_CFA_OFFSET_IDX, errp);
+
+  /* For s390x undo adjustment of CFA offset (to enable 8-bit offsets).  */
+  if (sframe_decoder_get_abi_arch (dctx) == SFRAME_ABI_S390X_ENDIAN_BIG)
+    offset = SFRAME_V2_S390X_CFA_OFFSET_DECODE (offset);
+
+  return offset;
 }
 
-/* Get the FP offset from the FRE.  If the offset is invalid, sets errp.  */
+/* Get the FP offset from the FRE.  If the offset is invalid, sets errp.
+
+   For s390x the offset may be an encoded register number, indicated by
+   LSB set to one, which is only valid in the topmost frame.  */
 
 int32_t
 sframe_fre_get_fp_offset (sframe_decoder_ctx *dctx,
@@ -710,7 +737,12 @@ sframe_fre_get_fp_offset (sframe_decoder_ctx *dctx,
   return sframe_get_fre_offset (fre, fp_offset_idx, errp);
 }
 
-/* Get the RA offset from the FRE.  If the offset is invalid, sets errp.  */
+/* Get the RA offset from the FRE.  If the offset is invalid, sets errp.
+
+   For s390x an RA offset value of SFRAME_FRE_RA_OFFSET_INVALID indicates
+   that the RA is not saved, which is only valid in the topmost frame.
+   For s390x the offset may be an encoded register number, indicated by
+   LSB set to one, which is only valid in the topmost frame.  */
 
 int32_t
 sframe_fre_get_ra_offset (sframe_decoder_ctx *dctx,
@@ -844,7 +876,7 @@ sframe_decode_fre (const char *fre_buf, sframe_frame_row_entry *fre,
   return 0;
 }
 
-/* Decode the specified SFrame buffer CF_BUF of size CF_SIZE and return the
+/* Decode the specified SFrame buffer SF_BUF of size SF_SIZE and return the
    new SFrame decoder context.
 
    Sets ERRP for the caller if any error.  Frees up the allocated memory in
@@ -922,7 +954,7 @@ sframe_decode (const char *sf_buf, size_t sf_size, int *errp)
   sfheaderp = &dctx->sfd_header;
   if (!sframe_header_sanity_check_p (sfheaderp))
     {
-      sframe_ret_set_errno (errp, SFRAME_ERR_NOMEM);
+      sframe_ret_set_errno (errp, SFRAME_ERR_BUF_INVAL);
       goto decode_fail_free;
     }
   hdrsz = sframe_get_hdr_size (sfheaderp);
@@ -997,6 +1029,15 @@ sframe_decoder_get_version (sframe_decoder_ctx *dctx)
   return dhp->sfh_preamble.sfp_version;
 }
 
+/* Get the section flags from the SFrame decoder context DCTX.  */
+
+uint8_t
+sframe_decoder_get_flags (sframe_decoder_ctx *dctx)
+{
+  const sframe_header *dhp = sframe_decoder_get_header (dctx);
+  return dhp->sfh_preamble.sfp_flags;
+}
+
 /* Get the SFrame's fixed FP offset given the decoder context CTX.  */
 int8_t
 sframe_decoder_get_fixed_fp_offset (sframe_decoder_ctx *ctx)
@@ -1015,16 +1056,27 @@ sframe_decoder_get_fixed_ra_offset (sframe_decoder_ctx *ctx)
   return dhp->sfh_cfa_fixed_ra_offset;
 }
 
-/* Find the function descriptor entry which contains the specified address
-   ADDR.
-   This function is deprecated and will be removed from libsframe.so.2.  */
+/* Get the offset of the sfde_func_start_address field (from the start of the
+   on-disk layout of the SFrame section) of the FDE at FUNC_IDX in the decoder
+   context DCTX.
 
-void *
-sframe_get_funcdesc_with_addr (sframe_decoder_ctx *ctx __attribute__ ((unused)),
-			       int32_t addr __attribute__ ((unused)),
-			       int *errp)
+   If FUNC_IDX is more than the number of SFrame FDEs in the section, sets
+   error code in ERRP, but returns the (hypothetical) offset.  This is useful
+   for the linker when arranging input FDEs into the output section to be
+   emitted.  */
+
+uint32_t
+sframe_decoder_get_offsetof_fde_start_addr (sframe_decoder_ctx *dctx,
+					    uint32_t func_idx, int *errp)
 {
-  return sframe_ret_set_errno (errp, SFRAME_ERR_INVAL);
+  if (func_idx >= sframe_decoder_get_num_fidx (dctx))
+    sframe_ret_set_errno (errp, SFRAME_ERR_FDE_NOTFOUND);
+  else if (errp)
+    *errp = 0;
+
+  return (sframe_decoder_get_hdr_size (dctx)
+	  + func_idx * sizeof (sframe_func_desc_entry)
+	  + offsetof (sframe_func_desc_entry, sfde_func_start_address));
 }
 
 /* Find the function descriptor entry starting which contains the specified
@@ -1032,11 +1084,11 @@ sframe_get_funcdesc_with_addr (sframe_decoder_ctx *ctx __attribute__ ((unused)),
 
 static sframe_func_desc_entry *
 sframe_get_funcdesc_with_addr_internal (sframe_decoder_ctx *ctx, int32_t addr,
-					int *errp)
+					int *errp, uint32_t *func_idx)
 {
   sframe_header *dhp;
   sframe_func_desc_entry *fdp;
-  int low, high, cnt;
+  int low, high;
 
   if (ctx == NULL)
     return sframe_ret_set_errno (errp, SFRAME_ERR_INVAL);
@@ -1047,29 +1099,30 @@ sframe_get_funcdesc_with_addr_internal (sframe_decoder_ctx *ctx, int32_t addr,
     return sframe_ret_set_errno (errp, SFRAME_ERR_DCTX_INVAL);
   /* If the FDE sub-section is not sorted on PCs, skip the lookup because
      binary search cannot be used.  */
-  if ((dhp->sfh_preamble.sfp_flags & SFRAME_F_FDE_SORTED) == 0)
+  if ((sframe_decoder_get_flags (ctx) & SFRAME_F_FDE_SORTED) == 0)
     return sframe_ret_set_errno (errp, SFRAME_ERR_FDE_NOTSORTED);
 
   /* Do the binary search.  */
   fdp = (sframe_func_desc_entry *) ctx->sfd_funcdesc;
   low = 0;
-  high = dhp->sfh_num_fdes;
-  cnt = high;
+  high = dhp->sfh_num_fdes - 1;
   while (low <= high)
     {
       int mid = low + (high - low) / 2;
 
-      if (fdp[mid].sfde_func_start_address == addr)
-	return fdp + mid;
-
-      if (fdp[mid].sfde_func_start_address < addr)
+      /* Given sfde_func_start_address <= addr,
+	 addr - sfde_func_start_address must be positive.  */
+      if (sframe_decoder_get_secrel_func_start_addr (ctx, mid) <= addr
+	  && ((uint32_t)(addr - sframe_decoder_get_secrel_func_start_addr (ctx,
+									   mid))
+	      < fdp[mid].sfde_func_size))
 	{
-	  if (mid == (cnt - 1)) 	/* Check if it's the last one.  */
-	    return fdp + (cnt - 1);
-	  else if (fdp[mid+1].sfde_func_start_address > addr)
-	    return fdp + mid;
-	  low = mid + 1;
+	  *func_idx = mid;
+	  return fdp + mid;
 	}
+
+      if (sframe_decoder_get_secrel_func_start_addr (ctx, mid) < addr)
+	low = mid + 1;
       else
 	high = mid - 1;
     }
@@ -1112,29 +1165,26 @@ sframe_find_fre (sframe_decoder_ctx *ctx, int32_t pc,
 {
   sframe_frame_row_entry cur_fre;
   sframe_func_desc_entry *fdep;
-  uint32_t fre_type, fde_type, i;
-  int32_t start_ip_offset;
+  uint32_t func_idx;
+  uint32_t fre_type, i;
   int32_t func_start_addr;
-  int32_t end_ip_offset;
+  uint32_t start_ip_offset, end_ip_offset;
   const char *fres;
   size_t size = 0;
   int err = 0;
-  bool mask_p;
 
   if ((ctx == NULL) || (frep == NULL))
     return sframe_set_errno (&err, SFRAME_ERR_INVAL);
 
   /* Find the FDE which contains the PC, then scan its fre entries.  */
-  fdep = sframe_get_funcdesc_with_addr_internal (ctx, pc, &err);
+  fdep = sframe_get_funcdesc_with_addr_internal (ctx, pc, &err, &func_idx);
   if (fdep == NULL || ctx->sfd_fres == NULL)
     return sframe_set_errno (&err, SFRAME_ERR_DCTX_INVAL);
 
   fre_type = sframe_get_fre_type (fdep);
-  fde_type = sframe_get_fde_type (fdep);
-  mask_p = (fde_type == SFRAME_FDE_TYPE_PCMASK);
 
   fres = ctx->sfd_fres + fdep->sfde_func_start_fre_off;
-  func_start_addr = fdep->sfde_func_start_address;
+  func_start_addr = sframe_decoder_get_secrel_func_start_addr (ctx, func_idx);
 
   for (i = 0; i < fdep->sfde_func_num_fres; i++)
    {
@@ -1145,11 +1195,13 @@ sframe_find_fre (sframe_decoder_ctx *ctx, int32_t pc,
      start_ip_offset = cur_fre.fre_start_addr;
      end_ip_offset = sframe_fre_get_end_ip_offset (fdep, i, fres + size);
 
-     /* First FRE's start_ip must be more than pc for regular SFrame FDEs.  */
-     if (i == 0 && !mask_p && (start_ip_offset + func_start_addr) > pc)
+     /* Stop search if FRE's start_ip is greater than pc.  Given
+	func_start_addr <= pc, pc - func_start_addr must be positive.  */
+     if (start_ip_offset > (uint32_t)(pc - func_start_addr))
        return sframe_set_errno (&err, SFRAME_ERR_FRE_INVAL);
 
-     if (sframe_fre_check_range_p (fdep, start_ip_offset, end_ip_offset, pc))
+     if (sframe_fre_check_range_p (ctx, func_idx, start_ip_offset,
+				   end_ip_offset, pc))
        {
 	 sframe_frame_row_entry_copy (frep, &cur_fre);
 	 return 0;
@@ -1276,13 +1328,14 @@ sframe_decoder_get_fre (sframe_decoder_ctx *ctx,
 	 if (!sframe_fre_sanity_check_p (&ifre))
 	   return sframe_set_errno (&err, SFRAME_ERR_FRE_INVAL);
 
-	 sframe_frame_row_entry_copy (fre, &ifre);
+	  /* Although a stricter sanity check on fre_start_addr like:
+	       if (fdep->sfde_func_size)
+		 sframe_assert (frep->fre_start_addr < fdep->sfde_func_size);
+	     is more suitable, some code has been seen to not abide by it.  See
+	     PR libsframe/33131.  */
+	  sframe_assert (ifre.fre_start_addr <= fdep->sfde_func_size);
 
-	 if (fdep->sfde_func_size)
-	   sframe_assert (fre->fre_start_addr < fdep->sfde_func_size);
-	 else
-	   /* A SFrame FDE with func size equal to zero is possible.  */
-	   sframe_assert (fre->fre_start_addr == fdep->sfde_func_size);
+	 sframe_frame_row_entry_copy (fre, &ifre);
 
 	 return 0;
        }
@@ -1344,6 +1397,12 @@ sframe_encode (uint8_t ver, uint8_t flags, uint8_t abi_arch,
   hp->sfh_preamble.sfp_version = ver;
   hp->sfh_preamble.sfp_magic = SFRAME_MAGIC;
   hp->sfh_preamble.sfp_flags = flags;
+
+  /* Implementation in the SFrame encoder APIs, e.g.,
+     sframe_encoder_write_sframe assume flag SFRAME_F_FDE_FUNC_START_PCREL
+     set.  */
+  if (!(flags & SFRAME_F_FDE_FUNC_START_PCREL))
+   return sframe_ret_set_errno (errp, SFRAME_ERR_ECTX_INVAL);
 
   hp->sfh_abi_arch = abi_arch;
   hp->sfh_cfa_fixed_fp_offset = fixed_fp_offset;
@@ -1417,6 +1476,15 @@ sframe_encoder_get_version (sframe_encoder_ctx *encoder)
   return ehp->sfh_preamble.sfp_version;
 }
 
+/* Get the section flags from the SFrame encoder context ENCODER.  */
+
+uint8_t
+sframe_encoder_get_flags (sframe_encoder_ctx *encoder)
+{
+  const sframe_header *ehp = sframe_encoder_get_header (encoder);
+  return ehp->sfh_preamble.sfp_flags;
+}
+
 /* Return the number of function descriptor entries in the SFrame encoder
    ENCODER.  */
 
@@ -1429,6 +1497,29 @@ sframe_encoder_get_num_fidx (sframe_encoder_ctx *encoder)
   if (ehp)
     num_fdes = ehp->sfh_num_fdes;
   return num_fdes;
+}
+
+/* Get the offset of the sfde_func_start_address field (from the start of the
+   on-disk layout of the SFrame section) of the FDE at FUNC_IDX in the encoder
+   context ENCODER.
+
+   If FUNC_IDX is more than the number of SFrame FDEs in the section, sets
+   error code in ERRP, but returns the (hypothetical) offset.  This is useful
+   for the linker when arranging input FDEs into the output section to be
+   emitted.  */
+
+uint32_t
+sframe_encoder_get_offsetof_fde_start_addr (sframe_encoder_ctx *encoder,
+					    uint32_t func_idx, int *errp)
+{
+  if (func_idx >= sframe_encoder_get_num_fidx (encoder))
+    sframe_ret_set_errno (errp, SFRAME_ERR_FDE_INVAL);
+  else if (errp)
+    *errp = 0;
+
+  return (sframe_encoder_get_hdr_size (encoder)
+	  + func_idx * sizeof (sframe_func_desc_entry)
+	  + offsetof (sframe_func_desc_entry, sfde_func_start_address));
 }
 
 /* Add an FRE to function at FUNC_IDX'th function descriptor entry in
@@ -1497,11 +1588,12 @@ sframe_encoder_add_fre (sframe_encoder_ctx *encoder,
     = frep->fre_start_addr;
   ectx_frep->fre_info = frep->fre_info;
 
-  if (fdep->sfde_func_size)
-    sframe_assert (frep->fre_start_addr < fdep->sfde_func_size);
-  else
-    /* A SFrame FDE with func size equal to zero is possible.  */
-    sframe_assert (frep->fre_start_addr == fdep->sfde_func_size);
+  /* Although a stricter sanity check on fre_start_addr like:
+       if (fdep->sfde_func_size)
+	 sframe_assert (frep->fre_start_addr < fdep->sfde_func_size);
+     is more suitable, some code has been seen to not abide by it.  See PR
+     libsframe/33131.  */
+  sframe_assert (frep->fre_start_addr <= fdep->sfde_func_size);
 
   /* frep has already been sanity check'd.  Get offsets size.  */
   offsets_sz = sframe_fre_offset_bytes_size (frep->fre_info);
@@ -1537,7 +1629,7 @@ sframe_encoder_add_funcdesc (sframe_encoder_ctx *encoder,
 			     int32_t start_addr,
 			     uint32_t func_size,
 			     unsigned char func_info,
-			     uint32_t num_fres __attribute__ ((unused)))
+			     uint32_t num_fres ATTRIBUTE_UNUSED)
 {
   sframe_header *ehp;
   sf_fde_tbl *fd_info;
@@ -1619,7 +1711,7 @@ sframe_encoder_add_funcdesc_v2 (sframe_encoder_ctx *encoder,
 				uint32_t func_size,
 				unsigned char func_info,
 				uint8_t rep_block_size,
-				uint32_t num_fres __attribute__ ((unused)))
+				uint32_t num_fres ATTRIBUTE_UNUSED)
 {
   sf_fde_tbl *fd_info;
   int err;
@@ -1642,15 +1734,28 @@ sframe_encoder_add_funcdesc_v2 (sframe_encoder_ctx *encoder,
 static int
 sframe_sort_funcdesc (sframe_encoder_ctx *encoder)
 {
-  sframe_header *ehp;
+  sframe_header *ehp = sframe_encoder_get_header (encoder);
 
-  ehp = sframe_encoder_get_header (encoder);
   /* Sort and write out the FDE table.  */
   sf_fde_tbl *fd_info = encoder->sfe_funcdesc;
   if (fd_info)
     {
+      /* The new encoding of sfde_func_start_address means the distances are
+	 not from the same anchor, so cannot be sorted directly.  At the moment
+	 we adress this by manual value adjustments before and after sorting.
+	 FIXME - qsort_r may be more optimal.  */
+
+      for (unsigned int i = 0; i < fd_info->count; i++)
+	fd_info->entry[i].sfde_func_start_address
+	  += sframe_encoder_get_offsetof_fde_start_addr (encoder, i, NULL);
+
       qsort (fd_info->entry, fd_info->count,
 	     sizeof (sframe_func_desc_entry), fde_func);
+
+      for (unsigned int i = 0; i < fd_info->count; i++)
+	fd_info->entry[i].sfde_func_start_address
+	  -= sframe_encoder_get_offsetof_fde_start_addr (encoder, i, NULL);
+
       /* Update preamble's flags.  */
       ehp->sfh_preamble.sfp_flags |= SFRAME_F_FDE_SORTED;
     }
@@ -1751,7 +1856,6 @@ sframe_encoder_write_sframe (sframe_encoder_ctx *encoder)
   size_t fre_size;
   size_t esz = 0;
   sframe_header *ehp;
-  unsigned char flags;
   sf_fde_tbl *fd_info;
   sf_fre_tbl *fr_info;
   uint32_t i, num_fdes;
@@ -1821,8 +1925,7 @@ sframe_encoder_write_sframe (sframe_encoder_ctx *encoder)
   /* Sanity checks:
      - the FDE section must have been sorted by now on the start address
      of each function.  */
-  flags = ehp->sfh_preamble.sfp_flags;
-  if (!(flags & SFRAME_F_FDE_SORTED)
+  if (!(sframe_encoder_get_flags (encoder) & SFRAME_F_FDE_SORTED)
       || (fd_info == NULL))
     return sframe_set_errno (&err, SFRAME_ERR_FDE_INVAL);
 

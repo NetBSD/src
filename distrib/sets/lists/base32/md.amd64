@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.15 2024/07/11 08:13:49 riastradh Exp $
+# $NetBSD: md.amd64,v 1.16 2025/07/17 13:38:01 christos Exp $
 #
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
 ./usr/lib/i386/libi386.so.2			base-compat-shlib	compat
@@ -6,4 +6,5 @@
 ./usr/lib/i386/libi386.so.2.0			base-compat-shlib	compat
 ./usr/lib/i386/libi386.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/openssl/engines/padlock.so	base-crypto-usr		compat,pic,openssl=30
+./usr/lib/i386/openssl/engines/padlock.so	base-crypto-usr		compat,pic,openssl=35
 ./usr/libexec/ld.elf_so-i386			base-sys-shlib		compat,pic

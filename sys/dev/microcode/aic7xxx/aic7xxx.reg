@@ -39,7 +39,7 @@
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.reg,v 1.43 2003/01/20 20:44:55 gibbs Exp $
  */
-VERSION = "$NetBSD: aic7xxx.reg,v 1.7 2024/02/02 22:39:10 andvar Exp $"
+VERSION = "$NetBSD: aic7xxx.reg,v 1.8 2025/08/18 20:59:56 andvar Exp $"
 
 /*
  * This file is processed by the aic7xxx_asm utility for use in assembling
@@ -284,7 +284,7 @@ register SSTAT0	{
 	field	SELDI		0x20	/* Board has been selected */
 	field	SELINGO		0x10	/* Selection In Progress */
 	field	SWRAP		0x08	/* 24bit counter wrap */
-	field	IOERR		0x08	/* LVD Tranceiver mode changed */
+	field	IOERR		0x08	/* LVD Transceiver mode changed */
 	field	SDONE		0x04	/* STCNT = 0x000000 */
 	field	SPIORDY		0x02	/* SCSI PIO Ready */
 	field	DMADONE		0x01	/* DMA transfer completed */
@@ -371,7 +371,7 @@ register SIMODE0 {
 	field	ENSELDI		0x20
 	field	ENSELINGO	0x10
 	field	ENSWRAP		0x08
-	field	ENIOERR		0x08	/* LVD Tranceiver mode changes */
+	field	ENIOERR		0x08	/* LVD Transceiver mode changes */
 	field	ENSDONE		0x04
 	field	ENSPIORDY	0x02
 	field	ENDMADONE	0x01

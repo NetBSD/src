@@ -3987,18 +3987,19 @@ try_combine (rtx_insn *i3, rtx_insn *i2, rtx_insn *i1, rtx_insn *i0,
       rtx set1 = XVECEXP (newpat, 0, 1);
 
       /* Normally, it doesn't matter which of the two is done first, but
-	 one which uses any regs/memory set in between i2 and i3 can't
-	 be first.  The PARALLEL might also have been pre-existing in i3,
-	 so we need to make sure that we won't wrongly hoist a SET to i2
-	 that would conflict with a death note present in there, or would
-	 have its dest modified between i2 and i3.  */
+	 one which uses any regs/memory set or used in between i2 and i3
+	 can't be first.  The PARALLEL might also have been pre-existing
+	 in i3, so we need to make sure that we won't wrongly hoist a SET
+	 to i2 that would conflict with a death note present in there, or
+	 would have its dest modified or used between i2 and i3.  */
       if (!modified_between_p (SET_SRC (set1), i2, i3)
 	  && !(REG_P (SET_DEST (set1))
 	       && find_reg_note (i2, REG_DEAD, SET_DEST (set1)))
 	  && !(GET_CODE (SET_DEST (set1)) == SUBREG
 	       && find_reg_note (i2, REG_DEAD,
 				 SUBREG_REG (SET_DEST (set1))))
-	  && !modified_between_p (SET_DEST (set1), i2, i3)
+	  && SET_DEST (set1) != pc_rtx
+	  && !reg_used_between_p (SET_DEST (set1), i2, i3)
 	  /* If I3 is a jump, ensure that set0 is a jump so that
 	     we do not create invalid RTL.  */
 	  && (!JUMP_P (i3) || SET_DEST (set0) == pc_rtx)
@@ -4013,7 +4014,8 @@ try_combine (rtx_insn *i3, rtx_insn *i2, rtx_insn *i1, rtx_insn *i0,
 	       && !(GET_CODE (SET_DEST (set0)) == SUBREG
 		    && find_reg_note (i2, REG_DEAD,
 				      SUBREG_REG (SET_DEST (set0))))
-	       && !modified_between_p (SET_DEST (set0), i2, i3)
+	       && SET_DEST (set0) != pc_rtx
+	       && !reg_used_between_p (SET_DEST (set0), i2, i3)
 	       /* If I3 is a jump, ensure that set1 is a jump so that
 		  we do not create invalid RTL.  */
 	       && (!JUMP_P (i3) || SET_DEST (set1) == pc_rtx)
@@ -14324,14 +14326,15 @@ distribute_notes (rtx notes, rtx_insn *from_insn, rtx_insn *i3, rtx_insn *i2,
 	  /* Otherwise, if this register is used by I3, then this register
 	     now dies here, so we must put a REG_DEAD note here unless there
 	     is one already.  */
-	  else if (reg_referenced_p (XEXP (note, 0), PATTERN (i3))
-		   && ! (REG_P (XEXP (note, 0))
-			 ? find_regno_note (i3, REG_DEAD,
-					    REGNO (XEXP (note, 0)))
-			 : find_reg_note (i3, REG_DEAD, XEXP (note, 0))))
+	  else if (reg_referenced_p (XEXP (note, 0), PATTERN (i3)))
 	    {
-	      PUT_REG_NOTE_KIND (note, REG_DEAD);
-	      place = i3;
+	      if (! (REG_P (XEXP (note, 0))
+		     ? find_regno_note (i3, REG_DEAD, REGNO (XEXP (note, 0)))
+		     : find_reg_note (i3, REG_DEAD, XEXP (note, 0))))
+		{
+		  PUT_REG_NOTE_KIND (note, REG_DEAD);
+		  place = i3;
+		}
 	    }
 
 	  /* A SET or CLOBBER of the REG_UNUSED reg has been removed,

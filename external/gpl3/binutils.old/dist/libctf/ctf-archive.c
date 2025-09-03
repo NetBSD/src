@@ -1,5 +1,5 @@
 /* CTF archive files.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -402,8 +402,9 @@ ctf_arc_symsect_endianness (ctf_archive_t *arc, int little_endian)
 const ctf_preamble_t *
 ctf_arc_bufpreamble (const ctf_sect_t *ctfsect)
 {
-  if (ctfsect->cts_size > sizeof (uint64_t) &&
-      (le64toh ((*(uint64_t *) ctfsect->cts_data)) == CTFA_MAGIC))
+  if (ctfsect->cts_data != NULL
+      && ctfsect->cts_size > sizeof (uint64_t)
+      && (le64toh ((*(uint64_t *) ctfsect->cts_data)) == CTFA_MAGIC))
     {
       struct ctf_archive *arc = (struct ctf_archive *) ctfsect->cts_data;
       return (const ctf_preamble_t *) ((char *) arc + le64toh (arc->ctfa_ctfs)
@@ -424,8 +425,9 @@ ctf_arc_bufopen (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
   int is_archive;
   ctf_dict_t *fp = NULL;
 
-  if (ctfsect->cts_size > sizeof (uint64_t) &&
-      (le64toh ((*(uint64_t *) ctfsect->cts_data)) == CTFA_MAGIC))
+  if (ctfsect->cts_data != NULL
+      && ctfsect->cts_size > sizeof (uint64_t)
+      && (le64toh ((*(uint64_t *) ctfsect->cts_data)) == CTFA_MAGIC))
     {
       /* The archive is mmappable, so this operation is trivial.
 
@@ -1247,7 +1249,6 @@ static int arc_mmap_writeout (int fd, void *header, size_t headersz,
 			      const char **errmsg)
 {
   ssize_t len;
-  size_t acc = 0;
   char *data = (char *) header;
   ssize_t count = headersz;
 
@@ -1270,7 +1271,6 @@ static int arc_mmap_writeout (int fd, void *header, size_t headersz,
       if (len == EINTR)
 	continue;
 
-      acc += len;
       if (len == 0)				/* EOF.  */
 	break;
 

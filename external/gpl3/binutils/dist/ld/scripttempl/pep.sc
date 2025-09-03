@@ -1,6 +1,6 @@
 # Linker script for PE.
 #
-# Copyright (C) 2014-2024 Free Software Foundation, Inc.
+# Copyright (C) 2014-2025 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -14,7 +14,7 @@ fi
 # substitution, so we do this instead.
 # Sorting of the .foo$* sections is required by the definition of
 # grouped sections in PE.
-# Sorting of the file names in R_IDATA is required by the
+# Sorting of the file names in R_IDATA and R_DIDAT is required by the
 # current implementation of dlltool (this could probably be changed to
 # use grouped sections instead).
 if test "${RELOCATING}"; then
@@ -40,11 +40,25 @@ if test "${RELOCATING}"; then
   R_IDATA67='
     KEEP (SORT(*)(.idata$6))
     KEEP (SORT(*)(.idata$7))'
+  R_DIDAT234='
+    __DELAY_IMPORT_DIRECTORY_start__ = .;
+    KEEP (SORT(*)(.didat$2))
+    KEEP (SORT(*)(.didat$3))
+    __DELAY_IMPORT_DIRECTORY_end__ = .;
+    /* These zeroes mark the end of the import list.  */
+    . += (__DELAY_IMPORT_DIRECTORY_end__ - __DELAY_IMPORT_DIRECTORY_start__) ? 8*4 : 0;
+    . = ALIGN(8);
+    KEEP (SORT(*)(.didat$4))'
+  R_DIDAT5='SORT(*)(.didat$5)'
+  R_DIDAT67='
+    KEEP (SORT(*)(.didat$6))
+    KEEP (SORT(*)(.didat$7))'
   R_CRT_XC='KEEP (*(SORT(.CRT$XC*)))  /* C initialization */'
   R_CRT_XI='KEEP (*(SORT(.CRT$XI*)))  /* C++ initialization */'
   R_CRT_XL='KEEP (*(SORT(.CRT$XL*)))  /* TLS callbacks */'
   R_CRT_XP='KEEP (*(SORT(.CRT$XP*)))  /* Pre-termination */'
   R_CRT_XT='KEEP (*(SORT(.CRT$XT*)))  /* Termination */'
+  R_CRT_XD='KEEP (*(SORT(.CRT$XD*)))  /* Dynamic TLS Initializer */'
   R_TLS='
     KEEP (*(.tls$AAA))
     KEEP (*(.tls))
@@ -61,17 +75,21 @@ else
   R_IDATA234=
   R_IDATA5=
   R_IDATA67=
+  R_DIDAT234=
+  R_DIDAT5=
+  R_DIDAT67=
   R_CRT_XC=
   R_CRT_XI=
   R_CRT_XL=
   R_CRT_XP=
   R_CRT_XT=
+  R_CRT_XD=
   R_TLS='*(.tls)'
   R_RSRC='*(.rsrc)'
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -98,6 +116,46 @@ SECTIONS
     ${RELOCATING+ *(.gnu.linkonce.t.*)}
     ${RELOCATING+*(.glue_7t)}
     ${RELOCATING+*(.glue_7)}
+    ${CONSTRUCTING+. = ALIGN(8);}
+    ${RELOCATING+KEEP (*(SORT_NONE(.fini)))}
+    ${RELOCATING+/* ??? Why is .gcc_exc here?  */}
+    ${RELOCATING+ *(.gcc_exc)}
+    ${RELOCATING+PROVIDE (etext = .);}
+    ${RELOCATING+ KEEP (*(.gcc_except_table))}
+  }
+
+  /* The Cygwin32 library uses a section to avoid copying certain data
+     on fork.  This used to be named ".data$nocopy".  The linker used
+     to include this between __data_start__ and __data_end__, but that
+     breaks building the cygwin32 dll.  Instead, we name the section
+     ".data_cygwin_nocopy" and explicitly include it after __data_end__. */
+
+  .data ${RELOCATING+BLOCK(__section_alignment__)} :
+  {
+    ${RELOCATING+__data_start__ = . ;}
+    *(.data)
+    ${RELOCATING+*(.data2)}
+    ${R_DATA}
+    KEEP(*(.jcr))
+    ${RELOCATING+__data_end__ = . ;}
+    ${RELOCATING+*(.data_cygwin_nocopy)}
+  }
+
+  .rdata ${RELOCATING+BLOCK(__section_alignment__)} :
+  {
+    ${R_RDATA}
+    . = ALIGN(4);
+    ${RELOCATING+__rt_psrelocs_start = .;}
+    ${RELOCATING+KEEP(*(.rdata_runtime_pseudo_reloc))}
+    ${RELOCATING+__rt_psrelocs_end = .;}
+    /* read-only parts of .didat */
+    /* This cannot currently be handled with grouped sections.
+	See pe.em:sort_sections.  */
+    ${RELOCATING+. = ALIGN(8);}
+    ${R_DIDAT234}
+    ${R_DIDAT67}
+
+    /* .ctors & .dtors */
     ${CONSTRUCTING+. = ALIGN(8);}
     ${CONSTRUCTING+
        /* Note: we always define __CTOR_LIST__ and ___CTOR_LIST__ here,
@@ -138,43 +196,32 @@ SECTIONS
        KEEP (*(SORT_BY_NAME(.dtors.*)));
        LONG (0); LONG (0);
      }
-    ${RELOCATING+KEEP (*(SORT_NONE(.fini)))}
-    ${RELOCATING+/* ??? Why is .gcc_exc here?  */}
-    ${RELOCATING+ *(.gcc_exc)}
-    ${RELOCATING+PROVIDE (etext = .);}
-    ${RELOCATING+ KEEP (*(.gcc_except_table))}
+
+    /* .CRT */
+    ${RELOCATING+___crt_xc_start__ = . ;}
+    ${R_CRT_XC}
+    ${RELOCATING+___crt_xc_end__ = . ;}
+    ${RELOCATING+___crt_xi_start__ = . ;}
+    ${R_CRT_XI}
+    ${RELOCATING+___crt_xi_end__ = . ;}
+    ${RELOCATING+___crt_xl_start__ = . ;}
+    ${R_CRT_XL}
+    /* ___crt_xl_end__ is defined in the TLS Directory support code */
+    ${RELOCATING+___crt_xp_start__ = . ;}
+    ${R_CRT_XP}
+    ${RELOCATING+___crt_xp_end__ = . ;}
+    ${RELOCATING+___crt_xt_start__ = . ;}
+    ${R_CRT_XT}
+    ${RELOCATING+___crt_xt_end__ = . ;}
+    ${RELOCATING+___crt_xd_start__ = . ;}
+    ${R_CRT_XD}
+    ${RELOCATING+___crt_xd_end__ = . ;}
   }
 
-  /* The Cygwin32 library uses a section to avoid copying certain data
-     on fork.  This used to be named ".data$nocopy".  The linker used
-     to include this between __data_start__ and __data_end__, but that
-     breaks building the cygwin32 dll.  Instead, we name the section
-     ".data_cygwin_nocopy" and explicitly include it after __data_end__. */
-
-  .data ${RELOCATING+BLOCK(__section_alignment__)} :
-  {
-    ${RELOCATING+__data_start__ = . ;}
-    *(.data)
-    ${RELOCATING+*(.data2)}
-    ${R_DATA}
-    KEEP(*(.jcr))
-    ${RELOCATING+__data_end__ = . ;}
-    ${RELOCATING+*(.data_cygwin_nocopy)}
-  }
-
-  .rdata ${RELOCATING+BLOCK(__section_alignment__)} :
-  {
-    ${R_RDATA}
-    . = ALIGN(4);
-    ${RELOCATING+__rt_psrelocs_start = .;}
-    ${RELOCATING+KEEP(*(.rdata_runtime_pseudo_reloc))}
-    ${RELOCATING+__rt_psrelocs_end = .;}
-  }
-  ${RELOCATING+__rt_psrelocs_size = __rt_psrelocs_end - __rt_psrelocs_start;}
-  ${RELOCATING+___RUNTIME_PSEUDO_RELOC_LIST_END__ = .;}
-  ${RELOCATING+__RUNTIME_PSEUDO_RELOC_LIST_END__ = .;}
-  ${RELOCATING+___RUNTIME_PSEUDO_RELOC_LIST__ = . - __rt_psrelocs_size;}
-  ${RELOCATING+__RUNTIME_PSEUDO_RELOC_LIST__ = . - __rt_psrelocs_size;}
+  ${RELOCATING+___RUNTIME_PSEUDO_RELOC_LIST_END__ = __rt_psrelocs_end;}
+  ${RELOCATING+__RUNTIME_PSEUDO_RELOC_LIST_END__ = __rt_psrelocs_end;}
+  ${RELOCATING+___RUNTIME_PSEUDO_RELOC_LIST__ = __rt_psrelocs_start;}
+  ${RELOCATING+__RUNTIME_PSEUDO_RELOC_LIST__ = __rt_psrelocs_start;}
 
   .eh_frame ${RELOCATING+BLOCK(__section_alignment__)} :
   {
@@ -212,6 +259,7 @@ SECTIONS
     ${RELOCATING+ *(.drectve)}
     ${RELOCATING+ *(.note.GNU-stack)}
     ${RELOCATING+ *(.gnu.lto_*)}
+    ${RELOCATING+ *(.gnu_object_only)}
   }
 
   .idata ${RELOCATING+BLOCK(__section_alignment__)} :
@@ -224,23 +272,12 @@ SECTIONS
     ${RELOCATING+__IAT_end__ = .;}
     ${R_IDATA67}
   }
-  .CRT ${RELOCATING+BLOCK(__section_alignment__)} :
+
+  .didat ${RELOCATING+BLOCK(__section_alignment__)} :
   {
-    ${RELOCATING+___crt_xc_start__ = . ;}
-    ${R_CRT_XC}
-    ${RELOCATING+___crt_xc_end__ = . ;}
-    ${RELOCATING+___crt_xi_start__ = . ;}
-    ${R_CRT_XI}
-    ${RELOCATING+___crt_xi_end__ = . ;}
-    ${RELOCATING+___crt_xl_start__ = . ;}
-    ${R_CRT_XL}
-    /* ___crt_xl_end__ is defined in the TLS Directory support code */
-    ${RELOCATING+___crt_xp_start__ = . ;}
-    ${R_CRT_XP}
-    ${RELOCATING+___crt_xp_end__ = . ;}
-    ${RELOCATING+___crt_xt_start__ = . ;}
-    ${R_CRT_XT}
-    ${RELOCATING+___crt_xt_end__ = . ;}
+    /* This cannot currently be handled with grouped sections.
+	See pep.em:sort_sections.  */
+    ${R_DIDAT5}
   }
 
   /* Windows TLS expects .tls\$AAA to be at the start and .tls\$ZZZ to be

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.58 2024/05/14 19:00:44 andvar Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.59 2025/06/27 19:55:38 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.58 2024/05/14 19:00:44 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.59 2025/06/27 19:55:38 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,13 +104,13 @@ static void	ext2fs_init_bb(struct m_ext2fs *, int, struct ext2_gd *,
  *   1) allocate the requested block.
  *   2) allocate a rotationally optimal block in the same cylinder.
  *   3) allocate a block in the same cylinder group.
- *   4) quadradically rehash into other cylinder groups, until an
+ *   4) quadratically rehash into other cylinder groups, until an
  *	  available block is located.
  * If no block preference is given the following hierarchy is used
  * to allocate a block:
  *   1) allocate a block in the cylinder group that contains the
  *	  inode for the file.
- *   2) quadradically rehash into other cylinder groups, until an
+ *   2) quadratically rehash into other cylinder groups, until an
  *	  available block is located.
  */
 int
@@ -160,12 +160,12 @@ nospace:
  * If allocating in a directory, the following hierarchy is followed:
  *   1) allocate the preferred inode.
  *   2) allocate an inode in the same cylinder group.
- *   3) quadradically rehash into other cylinder groups, until an
+ *   3) quadratically rehash into other cylinder groups, until an
  *	  available inode is located.
  * If no inode preference is given the following hierarchy is used
  * to allocate an inode:
  *   1) allocate an inode in cylinder group 0.
- *   2) quadradically rehash into other cylinder groups, until an
+ *   2) quadratically rehash into other cylinder groups, until an
  *	  available inode is located.
  */
 int
@@ -284,7 +284,7 @@ ext2fs_blkpref(struct inode *ip, daddr_t lbn, int indx,
  *
  * The policy implemented by this algorithm is:
  *   1) allocate the block in its requested cylinder group.
- *   2) quadradically rehash on the cylinder group number.
+ *   2) quadratically rehash on the cylinder group number.
  *   3) brute force search for a free block.
  */
 static u_long

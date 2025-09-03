@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_expf.c,v 1.7 2007/08/20 16:01:40 drochner Exp $");
+__RCSID("$NetBSD: w_expf.c,v 1.8 2025/08/24 21:37:31 nat Exp $");
 #endif
 
 /*
@@ -30,9 +30,11 @@ __RCSID("$NetBSD: w_expf.c,v 1.7 2007/08/20 16:01:40 drochner Exp $");
 __weak_alias(expf, _expf)
 #endif
 
+#ifndef _IEEE_LIBM
 static const float
 o_threshold=  8.8721679688e+01,  /* 0x42b17180 */
 u_threshold= -1.0397208405e+02;  /* 0xc2cff1b5 */
+#endif
 
 float
 expf(float x)		/* wrapper expf */

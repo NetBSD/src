@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup_mkdb.c,v 1.18 2009/10/21 01:07:47 snj Exp $	*/
+/*	$NetBSD: netgroup_mkdb.c,v 1.19 2025/07/13 12:34:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -27,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netgroup_mkdb.c,v 1.18 2009/10/21 01:07:47 snj Exp $");
+__RCSID("$NetBSD: netgroup_mkdb.c,v 1.19 2025/07/13 12:34:10 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -246,11 +246,9 @@ ng_load(const char *fname)
 
 				case -1:
 					err(1, "put");
-					break;
 
 				default:
 					abort();
-					break;
 				}
 				break;
 
@@ -287,11 +285,9 @@ ng_load(const char *fname)
 
 			case _NG_ERROR:
 				errx(1, "Fatal error at `%s'", p);
-				break;
-				
+
 			default:
 				abort();
-				break;
 			}
 		}
 	}
@@ -331,7 +327,6 @@ ng_insert(DB *db, const char *name)
 
 		case -1:
 			err(1, "db put `%s'", name);
-			break;
 
 		case 1:
 		default:
@@ -341,11 +336,9 @@ ng_insert(DB *db, const char *name)
 
 	case -1:
 		err(1, "db get `%s'", name);
-		break;
 
 	default:
 		abort();
-		break;
 	}
 
 	return xdb;
@@ -391,11 +384,9 @@ ng_reventry(DB *db, DB *udb, struct nentry *fe, char *name, size_t s,
 
 			case -1:
 				err(1, "db put `%s'", name);
-				return;
 
 			default:
 				abort();
-				break;
 			}
 			free(p);
 			break;
@@ -415,17 +406,14 @@ ng_reventry(DB *db, DB *udb, struct nentry *fe, char *name, size_t s,
 
 			case -1:
 				err(1, "db get `%s'", e->n_name);
-				return;
 
 			default:
 				abort();
-				return;
 			}
 			break;
 
 		default:
 			abort();
-			break;
 		}
 }
 
@@ -460,10 +448,7 @@ ng_reverse(DB *db, size_t s)
 
 		case -1:
 			err(1, "seq");
-			return udb;
 		}
-
-	return udb;
 }
 
 
@@ -497,7 +482,6 @@ ng_print(struct nentry *e, struct string *str)
 
 		default:
 			errx(1, "Internal error: Bad netgroup type");
-			break;
 		}
 		str_append(str, ptr, ' ');
 	}
@@ -525,7 +509,6 @@ ng_rprint(DB *db, struct string *str)
 
 		default:
 			err(1, "seq");
-			break;
 		}
 }
 
@@ -560,7 +543,6 @@ ng_dump(DB *db)
 
 		default:
 			err(1, "seq");
-			return;
 		}
 }
 
@@ -592,7 +574,6 @@ ng_rdump(DB *db)
 
 		default:
 			err(1, "seq");
-			return;
 		}
 }
 #endif /* DEBUG_NG */
@@ -630,12 +611,10 @@ ng_write(DB *odb, DB *idb, int k)
 
 			case -1:
 				err(1, "put");
-				break;
 
 			case 1:
 			default:
 				abort();
-				break;
 			}
 
 			str_free(&skey);
@@ -647,7 +626,6 @@ ng_write(DB *odb, DB *idb, int k)
 
 		default:
 			err(1, "seq");
-			return;
 		}
 }
 
@@ -683,12 +661,10 @@ ng_rwrite(DB *odb, DB *idb, int k)
 
 			case -1:
 				err(1, "put");
-				break;
 
 			case 1:
 			default:
 				abort();
-				break;
 			}
 
 			str_free(&skey);
@@ -700,7 +676,6 @@ ng_rwrite(DB *odb, DB *idb, int k)
 
 		default:
 			err(1, "seq");
-			return;
 		}
 }
 

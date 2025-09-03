@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.50 2024/08/12 10:46:40 nia Exp $
+$NetBSD: TODO.smpnet,v 1.51 2025/06/17 02:00:25 ozaki-r Exp $
 
 MP-safe components
 ==================
@@ -271,3 +271,19 @@ ether_ioctl takes care of presenting IFF_ALLMULTI according to the current state
 of ETHER_F_ALLMULTI when queried with SIOCGIFFLAGS.
 
 Also IFF_PROMISC is checked in ether_input and we should get rid of it somehow.
+
+Too many kpreempt_disable/kpreempt_enable
+-----------------------------------------
+
+Packet counters in the network stack such as if_statadd() and ip_statinc() are
+implemented with percpu(9) to avoid atomic operations.  The implementation seems
+good for scalability, however, it introduces another issue.  Since percpu(9)
+requires kpreempt_{dis,en}able() for each per-cpu operation, we have to call
+them for each packet counting.  An observation shows that
+kpreempt_{dis,en}able()s over 10 times are called for each packet on forwarding.
+For better performance on a single flow, we should reduce per-packet operations
+as much as possible.
+
+One possible solution for the issue is to make the whole network stack
+non-preemptive so that we don't need to kpreempt_{dis,en}able()s for each packet
+counting.

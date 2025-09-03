@@ -421,8 +421,7 @@ struct elf_kvx_obj_tdata
 static bool
 elfNN_kvx_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct elf_kvx_obj_tdata),
-				  KVX_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct elf_kvx_obj_tdata));
 }
 
 #define elf_kvx_hash_entry(ent) \
@@ -641,7 +640,7 @@ elfNN_kvx_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init
       (&ret->root, abfd, elfNN_kvx_link_hash_newfunc,
-       sizeof (struct elf_kvx_link_hash_entry), KVX_ELF_DATA))
+       sizeof (struct elf_kvx_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -3688,16 +3687,12 @@ elfNN_kvx_output_arch_local_syms (bfd *output_bfd,
 static bool
 elfNN_kvx_new_section_hook (bfd *abfd, asection *sec)
 {
-  if (!sec->used_by_bfd)
-    {
-      _kvx_elf_section_data *sdata;
-      bfd_size_type amt = sizeof (*sdata);
+  _kvx_elf_section_data *sdata;
 
-      sdata = bfd_zalloc (abfd, amt);
-      if (sdata == NULL)
-	return false;
-      sec->used_by_bfd = sdata;
-    }
+  sdata = bfd_zalloc (abfd, sizeof (*sdata));
+  if (sdata == NULL)
+    return false;
+  sec->used_by_bfd = sdata;
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
@@ -4680,6 +4675,7 @@ elfNN_kvx_plt_sym_val (bfd_vma i, const asection *plt,
 }
 
 #define ELF_ARCH			bfd_arch_kvx
+#define ELF_TARGET_ID			KVX_ELF_DATA
 #define ELF_MACHINE_CODE		EM_KVX
 #define ELF_MAXPAGESIZE			0x10000
 #define ELF_MINPAGESIZE			0x1000

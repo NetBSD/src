@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.38 2024/12/01 20:24:23 andvar Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.40 2025/07/09 21:25:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -366,7 +366,7 @@ dme_reset(struct dme_softc *sc)
 		dme_write(sc, DM9000_NCR, 0x0);
 	}
 
-	/* Select internal PHY, no wakeup event, no collosion mode,
+	/* Select internal PHY, no wakeup event, no collision mode,
 	 * normal loopback mode.
 	 */
 	dme_write(sc, DM9000_NCR, DM9000_NCR_LBK_NORMAL);
@@ -444,7 +444,7 @@ dme_set_rcvfilt(struct dme_softc *sc)
 			ec->ec_flags |= ETHER_F_ALLMULTI;
 			ETHER_UNLOCK(ec);
 			memset(mchash, 0xff, sizeof(mchash)); /* necessary? */
-			/* accept all mulicast frame */
+			/* accept all multicast frame */
 			rcr |= DM9000_RCR_ALL;
 			goto update;
 		}

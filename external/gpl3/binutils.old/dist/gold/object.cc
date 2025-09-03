@@ -1,6 +1,6 @@
 // object.cc -- support for an object file for linking in gold
 
-// Copyright (C) 2006-2022 Free Software Foundation, Inc.
+// Copyright (C) 2006-2024 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -3054,7 +3054,7 @@ Sized_relobj_file<size, big_endian>::find_kept_section_object(
 // Return the name of symbol SYMNDX.
 
 template<int size, bool big_endian>
-const char*
+std::string
 Sized_relobj_file<size, big_endian>::get_symbol_name(unsigned int symndx)
 {
   if (this->symtab_shndx_ == 0)
@@ -3065,6 +3065,24 @@ Sized_relobj_file<size, big_endian>::get_symbol_name(unsigned int symndx)
 							&symbols_size,
 							false);
 
+  const unsigned char* p = symbols + symndx * This::sym_size;
+  if (p >= symbols + symbols_size)
+    return NULL;
+
+  elfcpp::Sym<size, big_endian> sym(p);
+
+  if (sym.get_st_name() == 0 && sym.get_st_type() == elfcpp::STT_SECTION)
+    {
+      bool is_ordinary;
+      unsigned int sym_shndx = this->adjust_sym_shndx(symndx,
+						      sym.get_st_shndx(),
+						      &is_ordinary);
+      if (!is_ordinary || sym_shndx >= this->shnum())
+	return NULL;
+
+      return this->section_name(sym_shndx);
+    }
+
   unsigned int symbol_names_shndx =
     this->adjust_shndx(this->section_link(this->symtab_shndx_));
   section_size_type names_size;
@@ -3072,14 +3090,25 @@ Sized_relobj_file<size, big_endian>::get_symbol_name(unsigned int symndx)
     this->section_contents(symbol_names_shndx, &names_size, false);
   const char* symbol_names = reinterpret_cast<const char*>(symbol_names_u);
 
-  const unsigned char* p = symbols + symndx * This::sym_size;
-
-  if (p >= symbols + symbols_size)
+  unsigned int sym_name = sym.get_st_name();
+  if (sym_name >= names_size)
     return NULL;
+  const char* namep = symbol_names + sym_name;
+  const void* endp = memchr(namep, 0, names_size - sym_name);
+  if (!endp)
+    endp = symbol_names + names_size;
+  std::string name = std::string(namep, static_cast<const char*>(endp) - namep);
 
-  elfcpp::Sym<size, big_endian> sym(p);
+  if (!parameters->options().do_demangle())
+    return name;
 
-  return symbol_names + sym.get_st_name();
+  char* demangled_name = cplus_demangle(name.c_str(), DMGL_ANSI | DMGL_PARAMS);
+  if (!demangled_name)
+    return name;
+
+  name = demangled_name;
+  free(demangled_name);
+  return name;
 }
 
 // Get symbol counts.
@@ -3358,7 +3387,7 @@ Relocate_info<size, big_endian>::location(size_t, off_t offset) const
       if (info.enclosing_symbol_type == elfcpp::STT_FUNC)
 	ret += _("function ");
       ret += info.enclosing_symbol_name;
-      return ret;
+      ret += ":";
     }
 
   ret += "(";

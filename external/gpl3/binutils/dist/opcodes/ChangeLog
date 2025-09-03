@@ -1,3 +1,29 @@
+2025-07-13  Nick Clifton  <nickc@redhat.com>
+
+	* 2.45 Branch point.
+
+2025-01-19  Nick Clifton  <nickc@redhat.com>
+
+	* 2.44 Branch point.
+
+2024-07-20  Nick Clifton  <nickc@redhat.com>
+
+	* 2.43 branch point.
+
+2024-02-15 Will Hawkins  <hawkinsw@obs.cr>
+
+	* bpf-opc.c: Move callx into the v1 BPF CPU variant.
+
+2024-02-14  Yuriy Kolerov  <ykolerov@synopsys.com>
+
+	* arc-tbl.h (dbnz): Use "DBNZ" class.
+	* arc-dis.c (arc_opcode_to_insn_type): Handle "DBNZ" class.
+
+2024-01-29  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf-opc.c (bpf_opcodes): Remove BPF_INSN_LDINDDW and
+	BPF_INSN_LDABSDW instructions.
+
 2024-01-15  Nick Clifton  <nickc@redhat.com>
 
 	* configure: Regenerate.
@@ -1468,7 +1494,7 @@
 
 For older changes see ChangeLog-2020
 
-Copyright (C) 2021-2024 Free Software Foundation, Inc.
+Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

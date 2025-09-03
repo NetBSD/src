@@ -1,4 +1,4 @@
-/*	$NetBSD: delv.c,v 1.16 2025/05/21 14:47:35 christos Exp $	*/
+/*	$NetBSD: delv.c,v 1.17 2025/07/17 19:01:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -101,7 +101,8 @@ static isc_log_t *lctx = NULL;
 static dns_view_t *view = NULL;
 static ns_server_t *sctx = NULL;
 static ns_interface_t *ifp = NULL;
-static dns_dispatch_t *dispatch = NULL;
+static dns_dispatch_t *dispatch4 = NULL;
+static dns_dispatch_t *dispatch6 = NULL;
 static dns_db_t *roothints = NULL;
 static isc_stats_t *resstats = NULL;
 static dns_stats_t *resquerystats = NULL;
@@ -408,7 +409,7 @@ print_status(dns_rdataset_t *rdataset) {
 
 	if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0) {
 		strlcat(buf, "negative response", sizeof(buf));
-		strlcat(buf, (yaml ? "_" : ", "), sizeof(buf));
+		strlcat(buf, yaml ? "_" : ", ", sizeof(buf));
 	}
 
 	switch (rdataset->trust) {
@@ -2000,8 +2001,11 @@ shutdown_server(void) {
 		ns_interfacemgr_shutdown(interfacemgr);
 		ns_interfacemgr_detach(&interfacemgr);
 	}
-	if (dispatch != NULL) {
-		dns_dispatch_detach(&dispatch);
+	if (dispatch4 != NULL) {
+		dns_dispatch_detach(&dispatch4);
+	}
+	if (dispatch6 != NULL) {
+		dns_dispatch_detach(&dispatch6);
 	}
 	if (dispatchmgr != NULL) {
 		dns_dispatchmgr_detach(&dispatchmgr);
@@ -2206,7 +2210,7 @@ static void
 run_server(void *arg) {
 	isc_result_t result;
 	dns_cache_t *cache = NULL;
-	isc_sockaddr_t addr, any;
+	isc_sockaddr_t addr, any, any6;
 	struct in_addr in;
 
 	UNUSED(arg);
@@ -2217,8 +2221,19 @@ run_server(void *arg) {
 	ns_server_create(mctx, matchview, &sctx);
 
 	CHECK(dns_dispatchmgr_create(mctx, loopmgr, netmgr, &dispatchmgr));
-	isc_sockaddr_any(&any);
-	CHECK(dns_dispatch_createudp(dispatchmgr, &any, &dispatch));
+
+	if (use_ipv4) {
+		isc_sockaddr_any(&any);
+		isc_sockaddr_t *a = (srcaddr4 == NULL) ? &any : srcaddr4;
+		CHECK(dns_dispatch_createudp(dispatchmgr, a, &dispatch4));
+	}
+
+	if (use_ipv6) {
+		isc_sockaddr_any6(&any6);
+		isc_sockaddr_t *a = (srcaddr6 == NULL) ? &any6 : srcaddr6;
+		CHECK(dns_dispatch_createudp(dispatchmgr, a, &dispatch6));
+	}
+
 	CHECK(ns_interfacemgr_create(mctx, sctx, loopmgr, netmgr, dispatchmgr,
 				     NULL, &interfacemgr));
 
@@ -2242,7 +2257,7 @@ run_server(void *arg) {
 	CHECK(setup_dnsseckeys(NULL, view));
 
 	CHECK(dns_view_createresolver(view, netmgr, 0, tlsctx_client_cache,
-				      dispatch, NULL));
+				      dispatch4, dispatch6));
 	dns_resolver_setmaxqueries(view->resolver, maxqueries);
 
 	isc_stats_create(mctx, &resstats, dns_resstatscounter_max);

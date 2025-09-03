@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.95 2025/01/31 11:09:21 jmcneill Exp $	*/
+/*	$NetBSD: locore.S,v 1.99 2025/08/12 08:26:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.95 2025/01/31 11:09:21 jmcneill Exp $")
+RCSID("$NetBSD: locore.S,v 1.99 2025/08/12 08:26:52 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -331,10 +331,10 @@ locore_lock_exit:
 /* print "[CPU$x27] " (x27 for cpuindex) */
 printcpu:
 	stp	x0, lr, [sp, #-16]!
-	PRINT("[CPU");			\
-	mov	x0, x27;		\
-	bl	_printdec_x0;		\
-	PRINT("] ");			\
+	PRINT("[CPU")
+	mov	x0, x27
+	bl	_printdec_x0
+	PRINT("] ")
 	ldp	x0, lr, [sp], #16
 	ret
 
@@ -584,14 +584,14 @@ END(cpu_mpstart)
 
 
 /*
- * xprint - print strings pointed by $PC(LR)
- *          and return to the end of string.
- *          "\n" will be replaced "\r\n"
- * e.g.)
+ * xprint - print the string pointed to by $PC(LR), and return to the next
+ *          instruction after the end of the string.
+ *          "\n" is replaced with "\r\n"
+ * e.g.
  *    bl        xprint      <- call
- *    .ascii    "Hello\n\0" <- wouldn't return here
+ *    .ascii    "Hello\n\0" <- doesn't return here
  *    .align    2
- *    nop                   <- return to here
+ *    nop                   <- returns to here
  *
  */
 xprint:
@@ -696,9 +696,9 @@ print_x0:
 #ifdef VERBOSE_LOCORE
 /*
  * tinyprintf() supports only maximum 7 '%x', '%d' and '%s' formats.
- * width and any modifiers are ignored. '\n' will be replaced to '\r\n'.
+ * width and any modifiers are ignored. '\n' will be replaced with '\r\n'.
  *
- * '%x' will be always expanded 16 widths hexadicimal.
+ * '%x' implies hexadecimal with a field width of 16.
  * e.g., tinyprintf("Hello %s %x\n", "World", 0x12345)
  * outputs "Hello World 0000000000012345\r\n"
  */

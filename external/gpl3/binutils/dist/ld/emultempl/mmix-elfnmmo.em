@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -113,10 +113,7 @@ mmix_after_allocation (void)
     bfd_set_section_vma (sec, 0);
 
   if (!_bfd_mmix_after_linker_allocation (link_info.output_bfd, &link_info))
-    {
-      /* This is a fatal error; make einfo call not return.  */
-      einfo (_("%F%P: can't finalize linker-allocated global registers\n"));
-    }
+    fatal (_("%P: can't finalize linker-allocated global registers\n"));
 }
 EOF
 

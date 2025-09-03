@@ -112,10 +112,14 @@ gdb_test "ptype cmplx (4,4)" "= complex\\*4"
 gdb_test "p cmplx (-14,-4)" "= \\(-14,-4\\)"
 gdb_test "p cmplx (4,4,4)" "\\(4,4\\)"
 gdb_test "p cmplx (4,4,8)" "\\(4,4\\)"
-gdb_test "p cmplx (4,4,16)" "\\(4,4\\)"
+set re_unsupported_kind_16 \
+    [string_to_regexp "unsupported kind 16 for type complex*4"]
+gdb_test "p cmplx (4,4,16)" \
+    ([string_to_regexp " = (4,4)"]|$re_unsupported_kind_16)
 gdb_test "ptype cmplx (4,4,4)" "= complex\\*4"
 gdb_test "ptype cmplx (4,4,8)" "= complex\\*8"
-gdb_test "ptype cmplx (4,4,16)" "= complex\\*16"
+gdb_test "ptype cmplx (4,4,16)" \
+    ([string_to_regexp " = complex*16"]|$re_unsupported_kind_16)
 
 gdb_test "p cmplx (4,4,1)" "unsupported kind 1 for type complex\\*4"
 gdb_test "p cmplx (4,4,-1)" "unsupported kind -1 for type complex\\*4"

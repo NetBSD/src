@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.37 2024/06/02 13:28:45 andvar Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.38 2025/08/06 11:11:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.37 2024/06/02 13:28:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.38 2025/08/06 11:11:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,7 +335,7 @@ hd64465pcmcia_attach_channel(struct hd64465pcmcia_softc *sc, int channel)
 	r |= HD64461_PCCGCR_MMOD_16M;
 	hd64465_reg_write_1(HD64461_PCCGCR(channel), r);
 
-	/* Attibute/Common memory extent */
+	/* Attribute/Common memory extent */
 	baseaddr = (channel == 0) ? sc->sc_area6 : sc->sc_area5;
 
 	ch->ch_memt = bus_space_create(0, "PCMCIA attribute memory",

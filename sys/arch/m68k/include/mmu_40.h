@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_40.h,v 1.3 2024/02/09 22:08:32 andvar Exp $	*/
+/*	$NetBSD: mmu_40.h,v 1.4 2025/07/08 11:45:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -212,8 +212,21 @@
 #define	MMUSR40_R	PTE40_RESIDENT
 
 #ifdef _KERNEL
+/*
+ * TT register value indices in the mmu_ttregs[] array.  Note that asm
+ * code makes assumptions about these indices, to change them at your
+ * peril.
+ */
+extern uint32_t mmu_tt40[];
+#define	MMU_TTREG_ITT0	0	/* same order as CPU reg numbers */
+#define	MMU_TTREG_ITT1	1
+#define	MMU_TTREG_DTT0	2
+#define	MMU_TTREG_DTT1	3
+#define	MMU_NTTREGS40
+
 void	mmu_load_urp40(paddr_t);
 void	mmu_load_urp60(paddr_t);
+void	mmu_load_tt40(uint32_t *);
 #endif /* _KERNEL */
 
 #endif /* _M68K_MMU_40_H_ */

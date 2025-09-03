@@ -1,5 +1,5 @@
 /* s390.h -- Header file for S390 opcode table
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -45,6 +45,7 @@ enum s390_opcode_cpu_val
     S390_OPCODE_ARCH12,
     S390_OPCODE_ARCH13,
     S390_OPCODE_ARCH14,
+    S390_OPCODE_ARCH15,
     S390_OPCODE_MAXCPU
   };
 
@@ -76,6 +77,9 @@ enum s390_opcode_cpu_val
 #define S390_INSTR_FLAGS_CLASS_JUMPSR \
   (S390_INSTR_FLAG_CLASS_BRANCH | S390_INSTR_FLAG_CLASS_RELATIVE \
    | S390_INSTR_FLAG_CLASS_SUBROUTINE)
+
+/* Instruction is an .insn pseudo-mnemonic.  */
+#define S390_INSTR_FLAG_PSEUDO_MNEMONIC 0x100
 
 /* The opcode table is an array of struct s390_opcode.  */
 
@@ -189,9 +193,5 @@ extern const struct s390_operand s390_operands[];
 #define S390_OPERAND_VR 0x800
 
 #define S390_OPERAND_CP16 0x1000
-
-#define S390_OPERAND_OR1 0x2000
-#define S390_OPERAND_OR2 0x4000
-#define S390_OPERAND_OR8 0x8000
 
 #endif /* S390_H */

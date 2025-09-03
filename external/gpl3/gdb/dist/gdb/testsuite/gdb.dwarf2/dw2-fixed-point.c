@@ -46,11 +46,5 @@ int8_t pck__fp1_range_var = 16;
 int
 main (void)
 {
-  pck__fp1_var++;
-  pck__fp1_var2++;
-  pck__fp2_var++;
-  pck__fp3_var++;
-  pck__fp1_range_var++;
-
   return 0;
 }

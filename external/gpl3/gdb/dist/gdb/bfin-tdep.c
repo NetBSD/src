@@ -465,7 +465,7 @@ bfin_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 
    /* TODO:
       Dwarf2 uses entry point value AFTER some register initializations.
-      We should perhaps skip such asssignments as well (R6 = R1, ...).  */
+      We should perhaps skip such assignments as well (R6 = R1, ...).  */
 
   return pc;
 }

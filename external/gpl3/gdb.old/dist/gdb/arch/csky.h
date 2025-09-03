@@ -1,6 +1,6 @@
 /* Common target-dependent functionality for CSKY
 
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifndef ARCH_CSKY_H
-#define ARCH_CSKy_H
+#define ARCH_CSKY_H
 
 #include "gdbsupport/tdesc.h"
 

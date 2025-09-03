@@ -43,7 +43,7 @@ def test_max_rsa_exponent_size_good(exponent_size, templates):
 def test_max_rsa_exponent_size_bad(exponent_size, templates):
     templates.render("options.conf", {"max_rsa_exponent_size": exponent_size})
     with pytest.raises(subprocess.CalledProcessError):
-        isctest.run.cmd([CHECKCONF, "options.conf"], log_stdout=True)
+        isctest.run.cmd([CHECKCONF, "options.conf"])
 
 
 def test_rsa_big_exponent_keys_cant_load():

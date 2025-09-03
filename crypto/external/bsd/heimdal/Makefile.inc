@@ -1,9 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.11 2023/10/12 17:18:38 riastradh Exp $
+# $NetBSD: Makefile.inc,v 1.13 2025/07/20 16:47:16 christos Exp $
 
 HEIMBASE?=	${NETBSDSRCDIR}/crypto/external/bsd/heimdal
 HEIMDIST=	${HEIMBASE}/dist
 
-SSLBASE?=	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}
+SSLBASE?=	${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}
 
 DPLIBASN1=	asn1 ${HEIMBASE}/lib/libasn1
 DPLIBCOM_ERR=	com_err ${HEIMBASE}/lib/libcom_err
@@ -22,8 +22,8 @@ DPLIBROKEN=	roken ${HEIMBASE}/lib/libroken
 DPLIBSL=	sl ${HEIMBASE}/lib/libsl
 DPLIBVERS=	vers ${HEIMBASE}/lib/libvers
 DPLIBWIND=	wind ${HEIMBASE}/lib/libwind
-KRB5LDADD=	-lcrypto -lcrypt
-KRB5DPADD=	${LIBCRYPTO} ${LIBCRYPT}
+KRB5LDADD=	-lcrypto -lcrypt -lpthread
+KRB5DPADD=	${LIBCRYPTO} ${LIBCRYPT} ${LIBPTHREAD}
 HDBLDADD=	-lsqlite3 -lm
 HDBDPADD=	${LIBSQLITE3} ${LIBM}
 

@@ -1232,18 +1232,55 @@ possible it should be in TARGET_READ_PC instead).
 Method(
     comment="""
 On some architectures, not all bits of a pointer are significant.
-On AArch64, for example, the top bits of a pointer may carry a "tag", which
-can be ignored by the kernel and the hardware.  The "tag" can be regarded as
-additional data associated with the pointer, but it is not part of the address.
+On AArch64 and amd64, for example, the top bits of a pointer may carry a
+"tag", which can be ignored by the kernel and the hardware.  The "tag" can be
+regarded as additional data associated with the pointer, but it is not part
+of the address.
 
 Given a pointer for the architecture, this hook removes all the
-non-significant bits and sign-extends things as needed.  It gets used to remove
-non-address bits from data pointers (for example, removing the AArch64 MTE tag
-bits from a pointer) and from code pointers (removing the AArch64 PAC signature
-from a pointer containing the return address).
+non-significant bits and sign-extends things as needed.  It gets used to
+remove non-address bits from pointers used for watchpoints.
 """,
     type="CORE_ADDR",
-    name="remove_non_address_bits",
+    name="remove_non_address_bits_watchpoint",
+    params=[("CORE_ADDR", "pointer")],
+    predefault="default_remove_non_address_bits",
+    invalid=False,
+)
+
+Method(
+    comment="""
+On some architectures, not all bits of a pointer are significant.
+On AArch64 and amd64, for example, the top bits of a pointer may carry a
+"tag", which can be ignored by the kernel and the hardware.  The "tag" can be
+regarded as additional data associated with the pointer, but it is not part
+of the address.
+
+Given a pointer for the architecture, this hook removes all the
+non-significant bits and sign-extends things as needed.  It gets used to
+remove non-address bits from pointers used for breakpoints.
+""",
+    type="CORE_ADDR",
+    name="remove_non_address_bits_breakpoint",
+    params=[("CORE_ADDR", "pointer")],
+    predefault="default_remove_non_address_bits",
+    invalid=False,
+)
+
+Method(
+    comment="""
+On some architectures, not all bits of a pointer are significant.
+On AArch64 and amd64, for example, the top bits of a pointer may carry a
+"tag", which can be ignored by the kernel and the hardware.  The "tag" can be
+regarded as additional data associated with the pointer, but it is not part
+of the address.
+
+Given a pointer for the architecture, this hook removes all the
+non-significant bits and sign-extends things as needed.  It gets used to
+remove non-address bits from any pointer used to access memory.
+""",
+    type="CORE_ADDR",
+    name="remove_non_address_bits_memory",
     params=[("CORE_ADDR", "pointer")],
     predefault="default_remove_non_address_bits",
     invalid=False,
@@ -2776,5 +2813,25 @@ The corefile's bfd is passed through COREFILE_BFD.
     name="use_target_description_from_corefile_notes",
     params=[("struct bfd *", "corefile_bfd")],
     predefault="default_use_target_description_from_corefile_notes",
+    invalid=False,
+)
+
+Method(
+    comment="""
+Examine the core file bfd object CBFD and try to extract the name of
+the current executable and the argument list, which are return in a
+core_file_exec_context object.
+
+If for any reason the details can't be extracted from CBFD then an
+empty context is returned.
+
+It is required that the current inferior be the one associated with
+CBFD, strings are read from the current inferior using target methods
+which all assume current_inferior() is the one to read from.
+""",
+    type="core_file_exec_context",
+    name="core_parse_exec_context",
+    params=[("bfd *", "cbfd")],
+    predefault="default_core_parse_exec_context",
     invalid=False,
 )

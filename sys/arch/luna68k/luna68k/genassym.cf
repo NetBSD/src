@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.28 2024/01/15 20:10:34 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.29 2025/07/08 11:45:25 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -94,10 +94,13 @@ export	MMU51_TCR_BITS
 export	MMU40_TCR_BITS
 
 # Transparent translation register values (from pmap.h)
-export	LUNA68K_TT30_IO0
-export	LUNA68K_TT30_IO1
-export	LUNA68K_TT40_IO0
-export	LUNA68K_TT40_IO1
+# Used in mmu_subr.s
+define	MACHINE_TT0		LUNA68K_TT30_IO0
+define	MACHINE_TT1		LUNA68K_TT30_IO1
+define	MACHINE_ITT0		LUNA68K_TT40_IO0
+define	MACHINE_ITT1		LUNA68K_TT40_IO1
+define	MACHINE_DTT0		LUNA68K_TT40_IO0
+define	MACHINE_DTT1		LUNA68K_TT40_IO1
 
 # lwp & proc fields and values
 define	L_PCB			offsetof(struct lwp, l_addr)

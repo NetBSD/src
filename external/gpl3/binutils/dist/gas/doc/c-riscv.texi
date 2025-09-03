@@ -1,4 +1,4 @@
-@c Copyright (C) 2016-2024 Free Software Foundation, Inc.
+@c Copyright (C) 2016-2025 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo
 @c man end
@@ -41,9 +41,11 @@ Generate position-independent code
 @item -fno-pic
 Don't generate position-independent code (default)
 
-@cindex @samp{-march=ISA} option, RISC-V
-@item -march=ISA
-Select the base isa, as specified by ISA.  For example -march=rv32ima.
+@cindex @samp{-march=ISA|Profiles|Profiles_ISA} option, RISC-V
+@item -march=ISA|Profiles|Profiles_ISA
+Select the base isa, as specified by ISA or Profiles or Profies_ISA.
+For example @samp{-march=rv32ima} @samp{-march=RVI20U64}
+@samp{-march=RVI20U64_d}.
 If this option and the architecture attributes aren't set, then assembler
 will check the default configure setting --with-arch=ISA.
 
@@ -139,12 +141,13 @@ meant to be used by the compiler in shared libraries for DWARF debug info for
 thread local variables.
 
 @cindex LEB128 directives
-@item .uleb128 @var{value}
-@itemx .sleb128 @var{value}
-Emits a signed or unsigned LEB128 value at the current position.  This only
+@item .uleb128 @var{values}
+@itemx .sleb128 @var{values}
+Emits signed or unsigned LEB128 values at the current position.  This only
 accepts constant expressions, because symbol addresses can change with
 relaxation, and we don't support relocations to modify LEB128 values at link
-time.
+time.  An exception are differences between symbols, which may be used with
+@code{.uleb128}.
 
 @cindex Option directive
 @cindex @code{option} directive
@@ -178,7 +181,14 @@ instead of just
 It's not expected that options are changed in this manner during regular use,
 but there are a handful of esoteric cases like the one above where users need
 to disable particular features of the assembler for particular code sequences.
-The complete list of option arguments is shown below:
+However, it's also useful to enable and reset the extensions for some specific
+code regions by @samp{.option arch, +ext} and @samp{.option arch, ISA}.  Or
+use @samp{.option push} and @samp{.option pop} at the beginning and end of the
+code, so that we can indirectly turn on and off extensions in this range.  This
+is very common in the ifunc libraries.  We can support functions which are
+implemented by different extensions in the same library, but these should not
+affect any file-level settings, like the elf architecture attribute.  The
+complete list of option arguments is shown below:
 
 @table @code
 @item push
@@ -189,9 +199,11 @@ command-line options are respected for the bulk of the file being assembled.
 
 @item rvc
 @itemx norvc
-Enables or disables the generation of compressed instructions.  Instructions
-are opportunistically compressed by the RISC-V assembler when possible, but
-sometimes this behavior is not desirable, especially when handling alignments.
+Enable the generation of base compressed instructions (C extension), or
+disable the generation of all compressed instructions (C and all Zc*
+extensions).  Instructions are opportunistically compressed by the RISC-V
+assembler when possible, but sometimes this behavior is not desirable,
+especially when handling alignments.
 
 @item pic
 @itemx nopic
@@ -209,17 +221,11 @@ desirable.
 Enables or disables the CSR checking.
 
 @item arch, @var{+extension[version]} [,...,@var{+extension_n[version_n]}]
-@itemx arch, @var{-extension} [,...,@var{-extension_n}]
-@itemx arch, @var{=ISA}
-Enables or disables the extensions for specific code region.  For example,
-@samp{.option arch, +m2p0} means add m extension with version 2.0, and
-@samp{.option arch, -f, -d} means remove extensions, f and d, from the
-architecture string.  Note that, @samp{.option arch, +c, -c} have the same
-behavior as @samp{.option rvc, norvc}.  However, they are also undesirable
-sometimes.  Besides, @samp{.option arch, -i} is illegal, since we cannot
-remove the base i extension anytime.  If you want to reset the whole ISA
-string, you can also use @samp{.option arch, =rv32imac} to overwrite the
-previous settings.
+@itemx arch, @var{ISA}
+Enable or reset the extensions for specific code region.  For example,
+@samp{.option arch, +m2p0} means add m extension with version 2.0.
+@samp{.option arch, rv32imac} means reset and overwrite the previous settings
+by rv32imac.
 @end table
 
 @cindex INSN directives
@@ -249,6 +255,16 @@ The @var{tag} is either an attribute number, or one of the following:
 @code{Tag_RISCV_arch}, @code{Tag_RISCV_stack_align},
 @code{Tag_RISCV_unaligned_access}, @code{Tag_RISCV_priv_spec},
 @code{Tag_RISCV_priv_spec_minor}, @code{Tag_RISCV_priv_spec_revision}.
+
+@cindex @code{.bfloat16} directive, RISC-V
+@item .bfloat16 @var{value}
+Floating point constructors for the bfloat16 type, example usage:
+
+@smallexample
+	.bfloat16 12.0
+	.bfloat16 NaN
+	.bfloat16 0b:ffc1
+@end smallexample
 
 @end table
 
@@ -435,13 +451,13 @@ instruction formats:
 
 @display
 @multitable @columnfractions .15 .40
-@item opcode @tab Unsigned immediate or opcode name for 7-bits opcode.
+@item opcode7 @tab Unsigned immediate or opcode name for 7-bits opcode.
 @item opcode2 @tab Unsigned immediate or opcode name for 2-bits opcode.
-@item func7 @tab Unsigned immediate for 7-bits function code.
-@item func6 @tab Unsigned immediate for 6-bits function code.
-@item func4 @tab Unsigned immediate for 4-bits function code.
-@item func3 @tab Unsigned immediate for 3-bits function code.
-@item func2 @tab Unsigned immediate for 2-bits function code.
+@item funct7 @tab Unsigned immediate for 7-bits function code.
+@item funct6 @tab Unsigned immediate for 6-bits function code.
+@item funct4 @tab Unsigned immediate for 4-bits function code.
+@item funct3 @tab Unsigned immediate for 3-bits function code.
+@item funct2 @tab Unsigned immediate for 2-bits function code.
 @item rd @tab Destination register number for operand x, can be GPR or FPR.
 @item rd' @tab Destination register number for operand x,
 only accept s0-s1, a0-a5, fs0-fs1 and fa0-fa5.
@@ -532,6 +548,12 @@ Opcode space for misc instructions.
 @item SYSTEM
 Opcode space for system instructions.
 
+@item OP_V
+Opcode space for vector instructions.
+
+@item OP_VE
+Opcode space for crypto vector instructions.
+
 @item CUSTOM_0
 @item CUSTOM_1
 @item CUSTOM_2
@@ -549,136 +571,136 @@ The following table lists the RISC-V instruction formats that are available
 with the @samp{.insn} pseudo directive:
 
 @table @code
-@item R type: .insn r opcode6, func3, func7, rd, rs1, rs2
+@item R type: .insn r opcode7, funct3, funct7, rd, rs1, rs2
 @verbatim
-+-------+-----+-----+-------+----+---------+
-| func7 | rs2 | rs1 | func3 | rd | opcode6 |
-+-------+-----+-----+-------+----+---------+
-31      25    20    15      12   7        0
++--------+-----+-----+--------+----+---------+
+| funct7 | rs2 | rs1 | funct3 | rd | opcode7 |
++--------+-----+-----+--------+----+---------+
+31       25    20    15       12   7         0
 @end verbatim
 
-@item R type with 4 register operands: .insn r opcode6, func3, func2, rd, rs1, rs2, rs3
-@itemx R4 type: .insn r4 opcode6, func3, func2, rd, rs1, rs2, rs3
+@item R type with 4 register operands: .insn r opcode7, funct3, funct2, rd, rs1, rs2, rs3
+@itemx R4 type: .insn r4 opcode7, funct3, funct2, rd, rs1, rs2, rs3
 @verbatim
-+-----+-------+-----+-----+-------+----+---------+
-| rs3 | func2 | rs2 | rs1 | func3 | rd | opcode6 |
-+-----+-------+-----+-----+-------+----+---------+
-31    27      25    20    15      12   7         0
++-----+--------+-----+-----+--------+----+---------+
+| rs3 | funct2 | rs2 | rs1 | funct3 | rd | opcode7 |
++-----+--------+-----+-----+--------+----+---------+
+31    27       25    20    15       12   7         0
 @end verbatim
 
-@item I type: .insn i opcode6, func3, rd, rs1, simm12
-@itemx I type: .insn i opcode6, func3, rd, simm12(rs1)
+@item I type: .insn i opcode7, funct3, rd, rs1, simm12
+@itemx I type: .insn i opcode7, funct3, rd, simm12(rs1)
 @verbatim
-+--------------+-----+-------+----+---------+
-| simm12[11:0] | rs1 | func3 | rd | opcode6 |
-+--------------+-----+-------+----+---------+
-31             20    15      12   7         0
++--------------+-----+--------+----+---------+
+| simm12[11:0] | rs1 | funct3 | rd | opcode7 |
++--------------+-----+--------+----+---------+
+31             20    15       12   7         0
 @end verbatim
 
-@item S type: .insn s opcode6, func3, rs2, simm12(rs1)
+@item S type: .insn s opcode7, funct3, rs2, simm12(rs1)
 @verbatim
-+--------------+-----+-----+-------+-------------+---------+
-| simm12[11:5] | rs2 | rs1 | func3 | simm12[4:0] | opcode6 |
-+--------------+-----+-----+-------+-------------+---------+
-31             25    20    15      12            7         0
++--------------+-----+-----+--------+-------------+---------+
+| simm12[11:5] | rs2 | rs1 | funct3 | simm12[4:0] | opcode7 |
++--------------+-----+-----+--------+-------------+---------+
+31             25    20    15       12            7         0
 @end verbatim
 
-@item B type: .insn s opcode6, func3, rs1, rs2, symbol
-@itemx SB type: .insn sb opcode6, func3, rs1, rs2, symbol
+@item B type: .insn s opcode7, funct3, rs1, rs2, symbol
+@itemx SB type: .insn sb opcode7, funct3, rs1, rs2, symbol
 @verbatim
-+-----------------+-----+-----+-------+----------------+---------+
-| simm12[12|10:5] | rs2 | rs1 | func3 | simm12[4:1|11] | opcode6 |
-+-----------------+-----+-----+-------+----------------+---------+
-31                25    20    15      12               7         0
++-----------------+-----+-----+--------+----------------+---------+
+| simm12[12|10:5] | rs2 | rs1 | funct3 | simm12[4:1|11] | opcode7 |
++-----------------+-----+-----+--------+----------------+---------+
+31                25    20    15       12               7         0
 @end verbatim
 
-@item U type: .insn u opcode6, rd, simm20
+@item U type: .insn u opcode7, rd, simm20
 @verbatim
-+--------------------------+----+---------+
-| simm20[20|10:1|11|19:12] | rd | opcode6 |
-+--------------------------+----+---------+
-31                         12   7         0
++--------------+----+---------+
+| simm20[19:0] | rd | opcode7 |
++--------------+----+---------+
+31             12   7         0
 @end verbatim
 
-@item J type: .insn j opcode6, rd, symbol
-@itemx UJ type: .insn uj opcode6, rd, symbol
+@item J type: .insn j opcode7, rd, symbol
+@itemx UJ type: .insn uj opcode7, rd, symbol
 @verbatim
 +------------+--------------+------------+---------------+----+---------+
-| simm20[20] | simm20[10:1] | simm20[11] | simm20[19:12] | rd | opcode6 |
+| simm20[20] | simm20[10:1] | simm20[11] | simm20[19:12] | rd | opcode7 |
 +------------+--------------+------------+---------------+----+---------+
 31           30             21           20              12   7         0
 @end verbatim
 
-@item CR type: .insn cr opcode2, func4, rd, rs2
+@item CR type: .insn cr opcode2, funct4, rd, rs2
 @verbatim
-+-------+--------+-----+---------+
-| func4 | rd/rs1 | rs2 | opcode2 |
-+-------+--------+-----+---------+
-15      12       7     2        0
++--------+--------+-----+---------+
+| funct4 | rd/rs1 | rs2 | opcode2 |
++--------+--------+-----+---------+
+15       12       7     2        0
 @end verbatim
 
-@item CI type: .insn ci opcode2, func3, rd, simm6
+@item CI type: .insn ci opcode2, funct3, rd, simm6
 @verbatim
-+-------+----------+--------+------------+---------+
-| func3 | simm6[5] | rd/rs1 | simm6[4:0] | opcode2 |
-+-------+----------+--------+------------+---------+
-15      13         12       7            2         0
++--------+----------+--------+------------+---------+
+| funct3 | simm6[5] | rd/rs1 | simm6[4:0] | opcode2 |
++--------+----------+--------+------------+---------+
+15       13         12       7            2         0
 @end verbatim
 
-@item CIW type: .insn ciw opcode2, func3, rd', uimm8
+@item CIW type: .insn ciw opcode2, funct3, rd', uimm8
 @verbatim
-+-------+------------+-----+---------+
-| func3 | uimm8[7:0] | rd' | opcode2 |
-+-------+-------- ---+-----+---------+
-15      13           5     2         0
++--------+------------+-----+---------+
+| funct3 | uimm8[7:0] | rd' | opcode2 |
++--------+-------- ---+-----+---------+
+15       13           5     2         0
 @end verbatim
 
-@item CSS type: .insn css opcode2, func3, rd, uimm6
+@item CSS type: .insn css opcode2, funct3, rd, uimm6
 @verbatim
-+-------+------------+----+---------+
-| func3 | uimm6[5:0] | rd | opcode2 |
-+-------+------------+----+---------+
-15      13           7    2         0
++--------+------------+----+---------+
+| funct3 | uimm6[5:0] | rd | opcode2 |
++--------+------------+----+---------+
+15       13           7    2         0
 @end verbatim
 
-@item CL type: .insn cl opcode2, func3, rd', uimm5(rs1')
+@item CL type: .insn cl opcode2, funct3, rd', uimm5(rs1')
 @verbatim
-+-------+------------+------+------------+------+---------+
-| func3 | uimm5[4:2] | rs1' | uimm5[1:0] |  rd' | opcode2 |
-+-------+------------+------+------------+------+---------+
-15      13           10     7            5      2         0
++--------+------------+------+------------+------+---------+
+| funct3 | uimm5[4:2] | rs1' | uimm5[1:0] |  rd' | opcode2 |
++--------+------------+------+------------+------+---------+
+15       13           10     7            5      2         0
 @end verbatim
 
-@item CS type: .insn cs opcode2, func3, rs2', uimm5(rs1')
+@item CS type: .insn cs opcode2, funct3, rs2', uimm5(rs1')
 @verbatim
-+-------+------------+------+------------+------+---------+
-| func3 | uimm5[4:2] | rs1' | uimm5[1:0] | rs2' | opcode2 |
-+-------+------------+------+------------+------+---------+
-15      13           10     7            5      2         0
++--------+------------+------+------------+------+---------+
+| funct3 | uimm5[4:2] | rs1' | uimm5[1:0] | rs2' | opcode2 |
++--------+------------+------+------------+------+---------+
+15       13           10     7            5      2         0
 @end verbatim
 
-@item CA type: .insn ca opcode2, func6, func2, rd', rs2'
+@item CA type: .insn ca opcode2, funct6, funct2, rd', rs2'
 @verbatim
-+-- ----+----------+-------+------+---------+
-| func6 | rd'/rs1' | func2 | rs2' | opcode2 |
-+-------+----------+-------+------+---------+
-15      10         7       5      2         0
++--------+----------+--------+------+---------+
+| funct6 | rd'/rs1' | funct2 | rs2' | opcode2 |
++--------+----------+--------+------+---------+
+15       10         7        5      2         0
 @end verbatim
 
-@item CB type: .insn cb opcode2, func3, rs1', symbol
+@item CB type: .insn cb opcode2, funct3, rs1', symbol
 @verbatim
-+-------+--------------+------+------------------+---------+
-| func3 | simm8[8|4:3] | rs1' | simm8[7:6|2:1|5] | opcode2 |
-+-------+--------------+------+------------------+---------+
-15      13             10     7                  2         0
++--------+--------------+------+------------------+---------+
+| funct3 | simm8[8|4:3] | rs1' | simm8[7:6|2:1|5] | opcode2 |
++--------+--------------+------+------------------+---------+
+15       13             10     7                  2         0
 @end verbatim
 
-@item CJ type: .insn cj opcode2, symbol
+@item CJ type: .insn cj opcode2, funct3, symbol
 @verbatim
-+-------+-------------------------------+---------+
-| func3 | simm11[11|4|9:8|10|6|7|3:1|5] | opcode2 |
-+-------+-------------------------------+---------+
-15      13                              2         0
++--------+-------------------------------+---------+
+| funct3 | simm11[11|4|9:8|10|6|7|3:1|5] | opcode2 |
++--------+-------------------------------+---------+
+15       13                              2         0
 @end verbatim
 
 
@@ -715,7 +737,12 @@ to be recorded in the attribute as @code{RV32I2P0} in which @code{2P0} stands
 for the default version of its base ISA.  On the other hand, the architecture
 @code{RV32G} has to be presented as @code{RV32I2P0_M2P0_A2P0_F2P0_D2P0} in
 which the abbreviation @code{G} is expanded to the @code{IMAFD} combination
-with default versions of the standard extensions.
+with default versions of the standard extensions. All Profiles are expanded
+ to the mandatory extensions it includes then processing.  For example,
+@code{RVI20U32} is expanded to @code{RV32I2P0} for processing, which contains
+the mandatory extensions @code{I} as it defined.  And you can also combine
+Profiles with ISA use underline, like @code{RVI20U32_D} is expanded to the
+@code{RV32I2P0_F2P0_D2P0}.
 
 @item Tag_RISCV_unaligned_access (6)
 Tag_RISCV_unaligned_access is 0 for files that do not allow any unaligned
@@ -740,13 +767,38 @@ extensions supported and provides the location of their
 publicly-released documentation:
 
 @table @r
-@item Xcvmac
-The Xcvmac extension provides instructions for multiply-accumulate operations.
+@item XCvAlu
+The XCvAlu extension provides instructions for general ALU operations.
 
 It is documented in @url{https://docs.openhwgroup.org/projects/cv32e40p-user-manual/en/latest/instruction_set_extensions.html}
 
-@item Xcvalu
-The Xcvalu extension provides instructions for general ALU operations.
+@item XCvBi
+The XCvBi extension provides instructions for branch immediate operations.
+
+It is documented in @url{https://docs.openhwgroup.org/projects/cv32e40p-user-manual/en/latest/instruction_set_extensions.html}
+
+@item XCvBitmanip
+The XCvBitmanip extension provides instructions for bitmanip operations.
+
+It is documented in @url{https://docs.openhwgroup.org/projects/cv32e40p-user-manual/en/latest/instruction_set_extensions.html}
+
+@item XCvElw
+The XCvElw extension provides instructions for event load word operations.
+
+It is documented in @url{https://docs.openhwgroup.org/projects/cv32e40p-user-manual/en/latest/instruction_set_extensions.html}
+
+@item XCvMac
+The XCvMac extension provides instructions for multiply-accumulate operations.
+
+It is documented in @url{https://docs.openhwgroup.org/projects/cv32e40p-user-manual/en/latest/instruction_set_extensions.html}
+
+@item XCvMem
+The XCvMem extension provides instructions for post inc load/store operations.
+
+It is documented in @url{https://docs.openhwgroup.org/projects/cv32e40p-user-manual/en/latest/instruction_set_extensions.html}
+
+@item XcvSimd
+The XcvSimd extension provides instructions for SIMD operations.
 
 It is documented in @url{https://docs.openhwgroup.org/projects/cv32e40p-user-manual/en/latest/instruction_set_extensions.html}
 
@@ -815,6 +867,11 @@ The XTheadVector extension provides instructions for thead vector.
 
 It is documented in @url{https://github.com/T-head-Semi/thead-extension-spec/releases/download/2.3.0/xthead-2023-11-10-2.3.0.pdf}.
 
+@item XTheadVdot
+The XTheadVdot extension provides instructions for vector dot.
+
+It is documented in @url{https://github.com/T-head-Semi/thead-extension-spec/releases/download/2.3.0/xthead-2023-11-10-2.3.0.pdf}.
+
 @item XTheadZvamo
 The XTheadZvamo extension is a subextension of the XTheadVector extension,
 and it provides AMO instructions for the T-Head VECTOR vendor extension.
@@ -834,5 +891,31 @@ vector coprocessor.  To accelerate performance, system designers may use
 VCIX as a low-latency, high-throughput interface to a coprocessor.
 
 It is documented in @url{https://sifive.cdn.prismic.io/sifive/c3829e36-8552-41f0-a841-79945784241b_vcix-spec-software.pdf}.
+
+@item XSfCease
+XSfCease provides an instruction to instigates power-down sequence.
+
+It is documented in @url{https://sifive.cdn.prismic.io/sifive/767804da-53b2-4893-97d5-b7c030ae0a94_s76mc_core_complex_manual_21G3.pdf}.
+
+@item XMipsCbop
+The XMipsCbop extension provides instruction mips.pref.
+
+It is documented in @url{https://mips.com/wp-content/uploads/2025/03/P8700-F_Programmers_Reference_Manual_Rev1.82_3-19-2025.pdf}.
+
+@item XMipsCmov
+The XMipsCmov extension provides instruction mips.ccmov.
+
+It is documented in @url{https://mips.com/wp-content/uploads/2025/03/P8700-F_Programmers_Reference_Manual_Rev1.82_3-19-2025.pdf}.
+
+@item XMipsExectl
+The XMipsExectl extension provides instructions mips.ehb, mips.ihb and mips.pause.
+
+It is documented in @url{https://mips.com/wp-content/uploads/2025/03/P8700-F_Programmers_Reference_Manual_Rev1.82_3-19-2025.pdf}.
+
+@item XMipsSlsp
+
+The XMipsSlsp extension provides instructions mips.ldp, mips.lwp, mips.sdp and mips.swp.
+
+It is documented in @url{https://mips.com/wp-content/uploads/2025/03/P8700-F_Programmers_Reference_Manual_Rev1.82_3-19-2025.pdf}.
 
 @end table

@@ -21,16 +21,14 @@ require {!is_remote host}
 
 set all_env_vars { HOME XDG_CACHE_HOME LOCALAPPDATA XDG_CONFIG_HOME }
 
-# Record the initial value of the index-cache directory.
+set re_pre \
+    [string_to_regexp {The directory of the index cache is "}]
+set re_post \
+    [string_to_regexp {".}]
+
+# Show the initial value of the index-cache directory.
 clean_restart
-set index_cache_directory ""
-gdb_test_multiple "show index-cache directory" "" {
-    -re -wrap "The directory of the index cache is \"(.*)\"\\." {
-	set index_cache_directory $expect_out(1,string)
-	set index_cache_directory [string_to_regexp $index_cache_directory]
-	pass $gdb_test_name
-    }
-}
+gdb_test "show index-cache directory" $re_pre\[^\r\n\]*$re_post
 
 foreach_with_prefix env_var_name $all_env_vars {
     # Restore the original state of the environment variable.
@@ -38,18 +36,7 @@ foreach_with_prefix env_var_name $all_env_vars {
 	set env($env_var_name) {}
 	clean_restart
 
-	# Verify that the empty environment variable didn't affect the
-	# index-cache directory setting, that we still see the initial value.
-	# "HOME" is different, because if that  one is unset, GDB isn't even
-	# able to compute the default location.  In that case, we expect it to
-	# be empty.
-	if { $env_var_name == "HOME" } {
-	    gdb_test "show index-cache directory" \
-		"The directory of the index cache is \"\"\\."
-	} else {
-	    gdb_test "show index-cache directory" \
-		"The directory of the index cache is \"$index_cache_directory\"\\."
-	}
+	gdb_test "show index-cache directory" $re_pre\[^\r\n\]*$re_post
     }
 }
 
@@ -69,7 +56,6 @@ with_test_prefix "all env vars" {
 
 	clean_restart
 
-	gdb_test "show index-cache directory" \
-	    "The directory of the index cache is \"\"\\."
+	gdb_test "show index-cache directory" $re_pre$re_post
     }
 }

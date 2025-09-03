@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.24 2025/05/21 14:48:06 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.25 2025/07/17 19:01:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -4655,7 +4655,7 @@ cleanup:
 #ifdef USE_DNSRPS
 	if (st->popt.dnsrps_enabled && st->m.policy != DNS_RPZ_POLICY_ERROR &&
 	    !dnsrps_set_p(&emsg, client, st, qtype, &rdataset,
-			  (qresult_type != qresult_type_recurse)))
+			  qresult_type != qresult_type_recurse))
 	{
 		rpz_log_fail(client, DNS_RPZ_ERROR_LEVEL, NULL,
 			     DNS_RPZ_TYPE_BAD, emsg.c, DNS_R_SERVFAIL);
@@ -5922,16 +5922,14 @@ ns__query_start(query_ctx_t *qctx) {
 		}
 	}
 
-	if (!qctx->is_zone && qctx->view->staleanswerclienttimeout == 0 &&
-	    dns_view_staleanswerenabled(qctx->view))
-	{
-		/*
-		 * If stale answers are enabled and
-		 * stale-answer-client-timeout is zero, then we can promptly
-		 * answer with a stale RRset if one is available in cache.
-		 */
-		qctx->options.stalefirst = true;
-	}
+	/*
+	 * If stale answers are enabled and stale-answer-client-timeout is zero,
+	 * then we can promptly answer with a stale RRset if one is available in
+	 * cache.
+	 */
+	qctx->options.stalefirst = (!qctx->is_zone &&
+				    qctx->view->staleanswerclienttimeout == 0 &&
+				    dns_view_staleanswerenabled(qctx->view));
 
 	result = query_lookup(qctx);
 
@@ -6060,7 +6058,9 @@ query_lookup(query_ctx_t *qctx) {
 		rpzqname = qctx->client->query.qname;
 	}
 
-	if (qctx->options.stalefirst) {
+	qctx->client->query.dboptions &= ~DNS_DBFIND_STALETIMEOUT;
+
+	if (qctx->options.stalefirst && !qctx->is_zone) {
 		/*
 		 * If the 'stalefirst' flag is set, it means that a stale
 		 * RRset may be returned as part of this lookup. An attempt
@@ -6224,8 +6224,6 @@ query_lookup(query_ctx_t *qctx) {
 				qctx_freedata(qctx);
 				dns_db_attach(qctx->client->view->cachedb,
 					      &qctx->db);
-				qctx->client->query.dboptions &=
-					~DNS_DBFIND_STALETIMEOUT;
 				qctx->options.stalefirst = false;
 				if (FETCH_RECTYPE_NORMAL(qctx->client) != NULL)
 				{
@@ -8950,11 +8948,9 @@ query_zone_delegation(query_ctx_t *qctx) {
 		 * setting the 'stalefirst' option, which is usually set in
 		 * the beginning in ns__query_start().
 		 */
-		if (qctx->view->staleanswerclienttimeout == 0 &&
-		    dns_view_staleanswerenabled(qctx->view))
-		{
-			qctx->options.stalefirst = true;
-		}
+		qctx->options.stalefirst =
+			(qctx->view->staleanswerclienttimeout == 0 &&
+			 dns_view_staleanswerenabled(qctx->view));
 
 		result = query_lookup(qctx);
 

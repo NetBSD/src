@@ -1,4 +1,4 @@
-/*	$NetBSD: readhappy_mpsafe.c,v 1.2 2020/01/30 07:58:34 kamil Exp $    */
+/*	$NetBSD: readhappy_mpsafe.c,v 1.3 2025/06/27 21:36:22 andvar Exp $    */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: readhappy_mpsafe.c,v 1.2 2020/01/30 07:58:34 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: readhappy_mpsafe.c,v 1.3 2025/06/27 21:36:22 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: readhappy_mpsafe.c,v 1.2 2020/01/30 07:58:34 kamil E
  *
  *  1. Supports opening device by multiple processes but allows only one at a time.
  *  2. Supports multiple read() functions but allows only one at a time.
- *  3. Uses mutex for ensuring synchonization.
+ *  3. Uses mutex for ensuring synchronization.
  *
  * Create a device /dev/happy_mpsafe from which you can read sequential happy numbers.
  *

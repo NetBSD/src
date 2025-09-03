@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.194 2025/04/12 15:49:49 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.195 2025/07/07 19:57:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.194 2025/04/12 15:49:49 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.195 2025/07/07 19:57:17 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -711,8 +711,6 @@ void
 stmt_while_expr(tnode_t *tn)
 {
 	if (!reached) {
-		/* loop not entered at top */
-		warning(207);
 		/* FIXME: that's plain wrong. */
 		set_reached(true);
 	}
@@ -742,11 +740,8 @@ stmt_while_expr_stmt(void)
 void
 stmt_do(void)
 {
-	if (!reached) {
-		/* loop not entered at top */
-		warning(207);
+	if (!reached)
 		set_reached(true);
-	}
 
 	begin_control_statement(CS_DO_WHILE);
 	cstmt->c_loop = true;
@@ -785,11 +780,8 @@ stmt_for_exprs(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	 * If there is no initialization expression it is possible that it is
 	 * intended not to enter the loop at top.
 	 */
-	if (tn1 != NULL && !reached) {
-		/* loop not entered at top */
-		warning(207);
+	if (tn1 != NULL && !reached)
 		set_reached(true);
-	}
 
 	begin_control_statement(CS_FOR);
 	cstmt->c_loop = true;

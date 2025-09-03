@@ -1,6 +1,6 @@
 // x86-64.h -- ELF definitions specific to EM_X86_64  -*- C++ -*-
 
-// Copyright (C) 2006-2022 Free Software Foundation, Inc.
+// Copyright (C) 2006-2024 Free Software Foundation, Inc.
 // Written by Andrew Chatham.
 
 // This file is part of elfcpp.
@@ -95,9 +95,21 @@ enum
   R_X86_64_PC32_BND = 39,  // PC relative 32 bit signed with BND prefix
   R_X86_64_PLT32_BND = 40, // 32 bit PLT address with BND prefix
   R_X86_64_GOTPCRELX = 41, // 32 bit signed PC relative offset to GOT
-			   // without REX prefix, relaxable.
+			   // without REX nor REX2 prefixes, relaxable.
   R_X86_64_REX_GOTPCRELX = 42, // 32 bit signed PC relative offset to GOT
 			       // with REX prefix, relaxable.
+  R_X86_64_CODE_4_GOTPCRELX = 43, // 32 bit signed PC relative offset to
+				  // GOT if the instruction starts at 4
+				  // bytes before the relocation offset,
+				  // relaxable.
+  R_X86_64_CODE_4_GOTTPOFF = 44,  // 32 bit signed PC relative offset to
+				  // GOT entry for IE symbol if the
+				  // instruction starts at 4 bytes before
+				  // the relocation offset.
+  R_X86_64_CODE_4_GOTPC32_TLSDESC = 45, // 32-bit PC relative to TLS
+					// descriptor in GOT if the
+					// instruction starts at 4 bytes
+					// before the relocation offset.
   // GNU vtable garbage collection extensions.
   R_X86_64_GNU_VTINHERIT = 250,
   R_X86_64_GNU_VTENTRY = 251

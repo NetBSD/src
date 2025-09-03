@@ -364,15 +364,9 @@ proc test_continue_to_start { mode inf } {
 
 		# Consume MI output.
 		with_spawn_id $mi_spawn_id {
-		    if { $inf == 1} {
-			mi_expect_stop "breakpoint-hit" "child_sub_function" \
-			    "" "$srcfile" "$decimal" {"" "disp=\"del\""} \
-			    "thread $inf.2 stops MI"
-		    } else {
-			mi_expect_stop "breakpoint-hit" "child_sub_function" \
-			    "" "$srcfile" "$decimal" {"" "disp=\"del\"" "locno=\"[0-9]+\""} \
-			    "thread $inf.2 stops MI"
-		    }
+		    mi_expect_stop "breakpoint-hit" "child_sub_function" \
+			"" "$srcfile" "$decimal" {"" "disp=\"del\""} \
+			"thread $inf.2 stops MI"
 		}
 	    }
 	}
@@ -439,7 +433,7 @@ proc_with_prefix test_setup { mode } {
 
 	with_spawn_id $mi_spawn_id {
 	    mi_expect_stop "breakpoint-hit" "main" "" "$srcfile" "$decimal" \
-		{"" "disp=\"del\"" "locno=\"[0-9]+\""} "main stop"
+		{"" "disp=\"del\""} "main stop"
 	}
 
 	# Consume CLI output.

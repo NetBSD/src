@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -1257,7 +1257,7 @@ Settings::set_name_format (char *arg)
     return CMD_BAD_ARG;
 
   bool soname_fmt = false;
-  if (colon && (colon + 1))
+  if (colon)
     {
       colon++;
       if (!strcasecmp (colon, NTXT ("soname")))

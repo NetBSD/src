@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.200 2025/05/06 04:34:58 imil Exp $	*/
+/*	$NetBSD: locore.S,v 1.201 2025/06/30 05:38:30 imil Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.200 2025/05/06 04:34:58 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.201 2025/06/30 05:38:30 imil Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -356,7 +356,9 @@ END(tmpgdt)
 ENTRY(start)
 #ifndef XENPV
 
+#ifdef BOOT_DURATION
 	getstarttsc
+#endif
 
 	/* Warm boot */
 	movw	$0x1234,0x472
@@ -1208,7 +1210,9 @@ END(start)
 #ifndef XENPV
 /* entry point for Xen PVH */
 ENTRY(start_pvh)
+#ifdef BOOT_DURATION
 	getstarttsc
+#endif
 	/* Xen doesn't start us with a valid gdt */
 	movl    $RELOC(gdtdesc_xenpvh), %eax
 	lgdt    (%eax)

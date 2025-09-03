@@ -485,15 +485,15 @@ void do_at_tests ()
     :*/
   i++;
   /*:
-    mi_varobj_update F {F} "update F (1)"
-    mi_check_varobj_value F 11 "check F (1)"
+    mi_varobj_update F {F} "update F, 1"
+    mi_check_varobj_value F 11 "check F, 1"
     :*/
   i++;
   {
     double i = 15;
     /*:
-      mi_varobj_update_with_type_change F "double" "0" "update F (2)"
-      mi_check_varobj_value F 15 "check F (2)"
+      mi_varobj_update_with_type_change F "double" "0" "update F, 2"
+      mi_check_varobj_value F 15 "check F, 2"
       :*/
     i += 2.0;
   }
@@ -506,8 +506,8 @@ void do_at_tests ()
   }
   i++;
   /*:
-    mi_varobj_update_with_type_change F "int" "0" "update F (3)"
-    mi_check_varobj_value F 13 "check F (3)"
+    mi_varobj_update_with_type_change F "int" "0" "update F, 3"
+    mi_check_varobj_value F 13 "check F, 3"
     :*/
   i++;
   do_at_tests_callee ();

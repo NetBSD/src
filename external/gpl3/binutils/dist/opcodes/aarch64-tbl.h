@@ -1,6 +1,6 @@
 /* aarch64-tbl.h -- AArch64 opcode description table and instruction
    operand description table.
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -100,6 +100,11 @@
   QLF1(NIL),			\
 }
 
+#define QL_IMM_NIL_NIL		\
+{				\
+  QLF2(NIL, NIL),		\
+}
+
 /* e.g. B.<cond> <label>.  */
 #define QL_PCREL_NIL		\
 {				\
@@ -129,6 +134,19 @@
 {				\
   QLF2(W,NIL),			\
   QLF2(X,NIL),			\
+}
+
+/* e.g. CBBGT <Wt>, <Wm>, <label>.  */
+#define QL_W2NIL		\
+{				\
+  QLF3(W,W,NIL),		\
+}
+
+/* e.g. CBGT <Wt>, #<imm6>, <label>.  */
+#define QL_R_IMM_NIL		\
+{				\
+  QLF3(W,imm_0_63,NIL),		\
+  QLF3(X,imm_0_63,NIL),		\
 }
 
 /* e.g. LDR <Dt>, <label>.  */
@@ -240,6 +258,12 @@
   QLF4(X,X,X,X),		\
 }
 
+/* e.g. MADDPT <Xd>, <Xn>, <Xm>, <Xa>.  */
+#define QL_I4SAMEX		\
+{				\
+  QLF4(X,X,X,X),		\
+}
+
 /* e.g. SMADDL <Xd>, <Wn>, <Wm>, <Xa>.  */
 #define QL_I3SAMEL		\
 {				\
@@ -348,6 +372,15 @@
   QLF2 (S_H, X),			\
 }
 
+/* e.g. FCVTAS <Xd>, <Dn>.  */
+#define QL_INT2FP_FPRCVT	\
+{				\
+  QLF2(S_H,S_S),		\
+  QLF2(S_H,S_D),		\
+  QLF2(S_S,S_D),		\
+  QLF2(S_D,S_S),		\
+}
+
 /* e.g. FCVTNS <Xd>, <Dn>.  */
 #define QL_FP2INT		\
 {				\
@@ -355,6 +388,15 @@
   QLF2(W,S_S),			\
   QLF2(X,S_D),			\
   QLF2(X,S_S),			\
+}
+
+/* e.g. FCVTAS <Sd>, <Dn>.  */
+#define QL_FP2INT_FPRCVT	\
+{				\
+  QLF2(S_D,S_S),		\
+  QLF2(S_S,S_D),		\
+  QLF2(S_D,S_H),		\
+  QLF2(S_S,S_H),		\
 }
 
 /* e.g. FMOV <Xd>, <Dn>.  */
@@ -998,6 +1040,24 @@
   QLF3(V_16B, V_16B, V_16B),	\
 }
 
+/* e.g. luti2 <Vd>.16B, { <Vn>.16B }, <Vm>[index].  */
+/* The third operand is an AdvSIMD vector with a bit index
+   and without a type qualifier and is checked separately
+   based on operand enum.  */
+#define QL_VVUB			\
+{				\
+  QLF3(V_16B , V_16B , NIL),	\
+}
+
+/* e.g. luti2 <Vd>.8H, { <Vn>.8H }, <Vm>[index].  */
+/* The third operand is an AdvSIMD vector with a bit index
+   and without a type qualifier and is checked separately
+   based on operand enum.  */
+#define QL_VVUH			\
+{				\
+  QLF3(V_8H , V_8H , NIL),	\
+}
+
 /* e.g. EXT <Vd>.<T>, <Vn>.<T>, <Vm>.<T>, #<index>.  */
 #define QL_VEXT			\
 {					\
@@ -1182,6 +1242,20 @@
   QLF3(X, X, NIL),		\
 }
 
+/* e.g. LDBFADD <Fs>, <Ft>, [<Xn|SP>{,#0}].  */
+#define QL_FP2_H_0		\
+{				\
+  QLF3(S_H, S_H, NIL),		\
+}
+
+/* e.g. LDFADD <Fs>, <Ft>, [<Xn|SP>{,#0}].  */
+#define QL_FP2_HSD_0		\
+{				\
+  QLF3(S_H, S_H, NIL),		\
+  QLF3(S_S, S_S, NIL),		\
+  QLF3(S_D, S_D, NIL),		\
+}
+
 /* e.g. CASP <Xt1>, <Xt1+1>, <Xt2>, <Xt2+1>, [<Xn|SP>{,#0}].  */
 #define QL_R4NIL		\
 {				\
@@ -1282,11 +1356,23 @@
   QLF3(X, X, S_D),		\
 }
 
+/* e.g. LDTP <Xt1>, <Xt2>, [<Xn|SP>, #<imm>]!.  */
+#define QL_LDST_PAIR_X		\
+{				\
+  QLF3(X, X, S_D),		\
+}
+
 /* e.g. STNP <Qt1>, <Qt2>, [<Xn|SP>{, #<imm>}].  */
 #define QL_LDST_PAIR_FP		\
 {				\
   QLF3(S_S, S_S, S_S),		\
   QLF3(S_D, S_D, S_D),		\
+  QLF3(S_Q, S_Q, S_Q),		\
+}
+
+/* e.g. LDTP <Qt1>, <Qt2>, [<Xn|SP>{, #<imm>}].  */
+#define QL_LDST_PAIR_S_Q		\
+{				\
   QLF3(S_Q, S_Q, S_Q),		\
 }
 
@@ -1319,6 +1405,14 @@
 #define QL_SIMD_LDSTONE		\
 {				\
   QLF2(S_B, NIL),		\
+  QLF2(S_H, NIL),		\
+  QLF2(S_S, NIL),		\
+  QLF2(S_D, NIL),		\
+}
+
+/* e.g. STFADD <Fs>, [<Xn|SP>].  */
+#define QL_FP_HSD_0		\
+{				\
   QLF2(S_H, NIL),		\
   QLF2(S_S, NIL),		\
   QLF2(S_D, NIL),		\
@@ -1505,9 +1599,21 @@
 {							\
   QLF2(S_H,S_H),					\
 }
+/* e.g. luti2 <Zd>.B, { <Zn>.B }, <Zm>[index].  */
+/* The third operand is an index (e.g. immediate or bit)
+   without a type qualifier and is checked separately
+   based on operand enum.  */
 #define OP_SVE_BBU                                      \
 {                                                       \
-  QLF3(S_B,S_B,NIL),                                \
+  QLF3(S_B,S_B,NIL),					\
+}
+/* e.g. luti2 <Zd>.H, { <Zn>.H }, <Zm>[index].  */
+/* The third operand is an index (e.g. immediate or bit)
+   without a type qualifier and is checked separately
+   based on operand enum.  */
+#define OP_SVE_HHU                                      \
+{                                                       \
+  QLF3(S_H,S_H,NIL),					\
 }
 #define OP_SVE_BBB                                      \
 {                                                       \
@@ -1525,6 +1631,10 @@
 {                                                       \
   QLF3(S_B,P_Z,S_B),                                    \
   QLF3(S_B,P_M,S_B),                                    \
+}
+#define OP_SVE_BU                                       \
+{                                                       \
+  QLF2(S_B,NIL),					\
 }
 #define OP_SVE_BUB                                      \
 {                                                       \
@@ -1560,6 +1670,10 @@
 #define OP_SVE_BZU                                      \
 {                                                       \
   QLF3(S_B,P_Z,NIL),                                    \
+}
+#define OP_SVE_D					\
+{                                                       \
+  QLF1(S_D),						\
 }
 #define OP_SVE_DD                                       \
 {                                                       \
@@ -1630,6 +1744,14 @@
 {                                                       \
   QLF3(S_D,P_Z,S_D),                                    \
 }
+#define OP_SVE_DZH                                      \
+{                                                       \
+  QLF3(S_D,P_Z,S_H),                                    \
+}
+#define OP_SVE_DZS                                      \
+{                                                       \
+  QLF3(S_D,P_Z,S_S),                                    \
+}
 #define OP_SVE_DZU                                      \
 {                                                       \
   QLF3(S_D,P_Z,NIL),                                    \
@@ -1637,6 +1759,14 @@
 #define OP_SVE_HB                                       \
 {                                                       \
   QLF2(S_H,S_B),                                        \
+}
+#define OP_SVE_BH                                       \
+{                                                       \
+  QLF2(S_B,S_H),                                        \
+}
+#define OP_SVE_BS                                       \
+{                                                       \
+  QLF2(S_B,S_S),                                        \
 }
 #define OP_SVE_HHH                                      \
 {                                                       \
@@ -1653,6 +1783,14 @@
 #define OP_SVE_HMD                                      \
 {                                                       \
   QLF3(S_H,P_M,S_D),                                    \
+}
+#define OP_SVE_HMMBB                                    \
+{                                                       \
+  QLF5(S_H,P_M,P_M,S_B,S_B)                             \
+}
+#define OP_SVE_HMMHH				    \
+{						       \
+  QLF5(S_H,P_M,P_M,S_H,S_H)			     \
 }
 #define OP_SVE_HMS                                      \
 {                                                       \
@@ -1674,6 +1812,18 @@
 {                                                       \
   QLF3(S_H,NIL,NIL),                                    \
 }
+#define OP_SVE_HZD                                      \
+{                                                       \
+  QLF3(S_H,P_Z,S_D),                                    \
+}
+#define OP_SVE_HZH                                      \
+{                                                       \
+  QLF3(S_H,P_Z,S_H),                                    \
+}
+#define OP_SVE_HZS                                      \
+{                                                       \
+  QLF3(S_H,P_Z,S_S),                                    \
+}
 #define OP_SVE_HZU                                      \
 {                                                       \
   QLF3(S_H,P_Z,NIL),                                    \
@@ -1693,6 +1843,10 @@
 #define OP_SVE_QUU                                      \
 {                                                       \
   QLF3(S_Q,NIL,NIL),                                    \
+}
+#define OP_SVE_QZQ                                      \
+{                                                       \
+  QLF3(S_Q,P_Z,S_Q),                                    \
 }
 #define OP_SVE_QZU                                      \
 {                                                       \
@@ -1749,6 +1903,10 @@
 {                                                       \
   QLF3(S_S,P_M,S_H),                                    \
 }
+#define OP_SVE_SH					\
+{							\
+  QLF2(S_S,S_H),					\
+}
 #define OP_SVE_SHH                                      \
 {                                                       \
   QLF3(S_S,S_H,S_H),                                    \
@@ -1769,7 +1927,7 @@
 {                                                       \
   QLF3(S_S,NIL,S_S),                                    \
 }
-#define OP_SVE_SMSS				     \
+#define OP_SVE_HMHH				     \
 {						       \
   QLF4(S_H,P_M,S_H,S_H),				\
 }
@@ -1777,15 +1935,23 @@
 {                                                       \
   QLF3(S_S,NIL,NIL),                                    \
 }
+#define OP_SVE_SZD                                      \
+{                                                       \
+  QLF3(S_S,P_Z,S_D),                                    \
+}
+#define OP_SVE_SZH                                      \
+{                                                       \
+  QLF3(S_S,P_Z,S_H),                                    \
+}
 #define OP_SVE_SZS                                      \
 {                                                       \
   QLF3(S_S,P_Z,S_S),                                    \
 }
-#define OP_SVE_SZS_QD                                   \
+#define OP_SVE_QZD					\
 {                                                       \
   QLF3(S_Q,P_Z,S_D),                                    \
 }
-#define OP_SVE_SUS_QD                                   \
+#define OP_SVE_QUD					\
 {                                                       \
   QLF3(S_Q,NIL,S_D),                                    \
 }
@@ -1809,9 +1975,21 @@
 {                                                       \
   QLF3(S_S,P_Z,NIL),                                    \
 }
-#define OP_SVE_UB                                       \
-{                                                       \
-  QLF2(NIL,S_B),                                        \
+#define OP_SVE_UB				       \
+{						       \
+  QLF2(NIL,S_B),					\
+}
+#define OP_SVE_UD				       \
+{						       \
+  QLF2(NIL,S_D),					\
+}
+#define OP_SVE_UH				       \
+{						       \
+  QLF2(NIL,S_H),					\
+}
+#define OP_SVE_US				       \
+{						       \
+  QLF2(NIL,S_S),					\
 }
 #define OP_SVE_UUD                                      \
 {                                                       \
@@ -1877,6 +2055,10 @@
 #define OP_SVE_VMVV_SD                                  \
 {                                                       \
   QLF4(S_S,P_M,S_S,S_S),                                \
+  QLF4(S_D,P_M,S_D,S_D),                                \
+}
+#define OP_SVE_VMVV_D                                  	\
+{                                                       \
   QLF4(S_D,P_M,S_D,S_D),                                \
 }
 #define OP_SVE_VMVVU_HSD                                \
@@ -1997,6 +2179,11 @@
   QLF3(S_S,NIL,W),                                      \
   QLF3(S_D,NIL,X),                                      \
 }
+#define OP_SVE_VUU_BH					\
+{                                                       \
+  QLF3(S_B,NIL,NIL),                                    \
+  QLF3(S_H,NIL,NIL),                                    \
+}
 #define OP_SVE_VUU_BHS                                  \
 {                                                       \
   QLF3(S_B,NIL,NIL),                                    \
@@ -2027,6 +2214,11 @@
   QLF4(S_H,NIL,S_H,S_H),                                \
   QLF4(S_S,NIL,S_S,S_S),                                \
   QLF4(S_D,NIL,S_D,S_D),                                \
+}
+#define OP_SVE_VUV_BH                                   \
+{                                                       \
+  QLF3(S_B,NIL,S_B),                                    \
+  QLF3(S_H,NIL,S_H),                                    \
 }
 #define OP_SVE_VUV_BHSD                                 \
 {                                                       \
@@ -2120,6 +2312,10 @@
   QLF3(S_S,S_S,S_S),                                    \
   QLF3(S_D,S_D,S_D),                                    \
 }
+#define OP_SVE_BBQ                                  \
+{                                                       \
+  QLF3(S_B, S_B, S_Q)                                   \
+}
 #define OP_SVE_VVV_D                                    \
 {                                                       \
   QLF3(S_D,S_D,S_D),                                    \
@@ -2151,6 +2347,10 @@
 {                                                       \
   QLF3(S_S,S_B,S_B),                                    \
 }
+#define OP_SVE_VVV_H_B                                  \
+{                                                       \
+  QLF3(S_H,S_B,S_B),                                    \
+}
 #define OP_SVE_VVV_Q_D					\
 {                                                       \
   QLF3(S_Q,S_D,S_D),                                    \
@@ -2172,6 +2372,10 @@
   QLF3(S_B,S_H,S_H),                                    \
   QLF3(S_H,S_S,S_S),                                    \
   QLF3(S_S,S_D,S_D),                                    \
+}
+#define OP_SVE_VV_D					\
+{							\
+  QLF2(S_D, S_D)					\
 }
 #define OP_SVE_VV_BHS_HSD                               \
 {                                                       \
@@ -2252,6 +2456,13 @@
   QLF4(S_H,X,X,NIL),                                    \
   QLF4(S_S,X,X,NIL),                                    \
   QLF4(S_D,X,X,NIL),                                    \
+}
+#define OP_SVE_VZV_BHSD                                 \
+{                                                       \
+  QLF3(S_B,P_Z,S_B),                                    \
+  QLF3(S_H,P_Z,S_H),                                    \
+  QLF3(S_S,P_Z,S_S),                                    \
+  QLF3(S_D,P_Z,S_D),                                    \
 }
 #define OP_SVE_VZVD_BHS                                 \
 {                                                       \
@@ -2358,6 +2569,34 @@
   QLF3(X,X,NIL),                                        \
 }
 
+#define QL_V3_BSS_LOWER    \
+{			   \
+  QLF3(V_8B, V_4S, V_4S),  \
+}
+
+#define QL_V3_BSS_FULL	   \
+{			   \
+  QLF3(V_16B, V_4S, V_4S), \
+}
+
+#define QL_V3_BHH	   \
+{			   \
+  QLF3(V_8B, V_4H, V_4H),  \
+  QLF3(V_16B, V_8H, V_8H), \
+}
+
+/* e.g. BF1CVTL <Vd>.8H, <Vn>.8B.  */
+#define QL_V2_HB_LOWER	   \
+{			   \
+  QLF2(V_8H, V_8B),	   \
+}
+
+/* e.g. BF1CVTL2 <Vd>.8H, <Vn>.16B.  */
+#define QL_V2_HB_FULL	   \
+{			   \
+  QLF2(V_8H, V_16B),	   \
+}
+
 /* e.g. UDOT <Vd>.2S, <Vn>.8B, <Vm>.8B.  */
 #define QL_V3DOT	   \
 {			   \
@@ -2370,6 +2609,20 @@
 {			 \
   QLF3(V_2S, V_8B,  S_4B),\
   QLF3(V_4S, V_16B, S_4B),\
+}
+
+/* e.g. FDOT <Vd>.4H, <Vn>.8B, <Vm>.8B.  */
+#define QL_V3DOTH	   \
+{			   \
+  QLF3(V_4H, V_8B,  V_8B), \
+  QLF3(V_8H, V_16B, V_16B),\
+}
+
+/* e.g. FDOT <Vd>.4H, <Vn>.8B, <Vm>.2B[<index>].  */
+#define QL_V2DOTH	 \
+{			 \
+  QLF3(V_4H, V_8B,  S_2B),\
+  QLF3(V_8H, V_16B, S_2B),\
 }
 
 /* e.g. SHA512H <Qd>, <Qn>, <Vm>.2D.  */
@@ -2436,6 +2689,30 @@
 #define QL_V2FML4S \
 {		   \
   QLF3(V_4S, V_4H, S_H),\
+}
+
+/* e.g. FMLALB  <Vd>.8H, <Vn>.16B, <Vm>.16B.  */
+#define QL_V3FML8H \
+{		   \
+  QLF3(V_8H, V_16B, V_16B),\
+}
+
+/* e.g. FMLALB  <Vd>.8H, <Vn>.16B, <Vm>.B.  */
+#define QL_V2FML8H \
+{		   \
+  QLF3(V_8H, V_16B, S_B),\
+}
+
+/* e.g. FMLALLBB  <Vd>.4S, <Vn>.16B, <Vm>.16B.  */
+#define QL_V3FMLL4S \
+{		   \
+  QLF3(V_4S, V_16B, V_16B),\
+}
+
+/* e.g. FMLALLBB  <Vd>.4S, <Vn>.16B, <Vm>.B.  */
+#define QL_V2FMLL4S \
+{		   \
+  QLF3(V_4S, V_16B, S_B),\
 }
 
 /* e.g. RMIF <Xn>, #<shift>, #<mask>.  */
@@ -2512,12 +2789,7 @@
   QLF3(V_4S, V_8H, S_H),	\
 }
 
-/* Opcode table.
-
-  Any SVE or SVE2 feature must include AARCH64_FEATURE_{SVE|SVE2} in its
-  bitmask, even if this is implied by other selected feature bits.  This
-  allows verify_constraints to identify SVE instructions when selecting an
-  error message for MOVPRFX constraint violations.  */
+/* Opcode table.  */
 
 static const aarch64_feature_set aarch64_feature_v8 =
   AARCH64_FEATURE (V8);
@@ -2529,8 +2801,14 @@ static const aarch64_feature_set aarch64_feature_crc =
   AARCH64_FEATURE (CRC);
 static const aarch64_feature_set aarch64_feature_lse =
   AARCH64_FEATURE (LSE);
+static const aarch64_feature_set aarch64_feature_lsfe =
+  AARCH64_FEATURE (LSFE);
 static const aarch64_feature_set aarch64_feature_lse128 =
   AARCH64_FEATURES (2, LSE, LSE128);
+static const aarch64_feature_set aarch64_feature_lsui =
+    AARCH64_FEATURE (LSUI);
+static const aarch64_feature_set aarch64_feature_lsui_fp =
+    AARCH64_FEATURES (2, LSUI, FP);
 static const aarch64_feature_set aarch64_feature_lor =
   AARCH64_FEATURE (LOR);
 static const aarch64_feature_set aarch64_feature_rdma =
@@ -2539,10 +2817,12 @@ static const aarch64_feature_set aarch64_feature_fp_f16 =
   AARCH64_FEATURES (2, F16, FP);
 static const aarch64_feature_set aarch64_feature_simd_f16 =
   AARCH64_FEATURES (2, F16, SIMD);
+static const aarch64_feature_set aarch64_feature_fprcvt =
+  AARCH64_FEATURE (FPRCVT);
 static const aarch64_feature_set aarch64_feature_sve =
   AARCH64_FEATURE (SVE);
-static const aarch64_feature_set aarch64_feature_pac =
-  AARCH64_FEATURE (PAC);
+static const aarch64_feature_set aarch64_feature_pauth =
+  AARCH64_FEATURE (PAUTH);
 static const aarch64_feature_set aarch64_feature_compnum =
   AARCH64_FEATURE (COMPNUM);
 static const aarch64_feature_set aarch64_feature_jscvt =
@@ -2573,6 +2853,8 @@ static const aarch64_feature_set aarch64_feature_predres =
   AARCH64_FEATURE (PREDRES);
 static const aarch64_feature_set aarch64_feature_predres2 =
   AARCH64_FEATURES (2, PREDRES, PREDRES2);
+static const aarch64_feature_set aarch64_feature_cmpbr =
+  AARCH64_FEATURE (CMPBR);
 static const aarch64_feature_set aarch64_feature_memtag =
   AARCH64_FEATURE (MEMTAG);
 static const aarch64_feature_set aarch64_feature_bfloat16 =
@@ -2584,25 +2866,25 @@ static const aarch64_feature_set aarch64_feature_tme =
 static const aarch64_feature_set aarch64_feature_sve2 =
   AARCH64_FEATURE (SVE2);
 static const aarch64_feature_set aarch64_feature_sve2aes =
-  AARCH64_FEATURES (2, SVE2, SVE2_AES);
+  AARCH64_FEATURES (2, SVE_AES, SVE2_SSVE_AES);
 static const aarch64_feature_set aarch64_feature_sve2sha3 =
-  AARCH64_FEATURES (2, SVE2, SVE2_SHA3);
+  AARCH64_FEATURE (SVE2_SHA3);
 static const aarch64_feature_set aarch64_feature_sve2sm4 =
-  AARCH64_FEATURES (2, SVE2, SVE2_SM4);
+  AARCH64_FEATURE (SVE2_SM4);
 static const aarch64_feature_set aarch64_feature_sve2bitperm =
-  AARCH64_FEATURES (2, SVE2, SVE2_BITPERM);
+  AARCH64_FEATURE (SVE2_BITPERM);
 static const aarch64_feature_set aarch64_feature_sme =
-  AARCH64_FEATURES (2, SVE2, SME);
+  AARCH64_FEATURE (SME);
 static const aarch64_feature_set aarch64_feature_sme_f64f64 =
-  AARCH64_FEATURES (3, SVE2, SME, SME_F64F64);
+  AARCH64_FEATURE (SME_F64F64);
 static const aarch64_feature_set aarch64_feature_sme_i16i64 =
-  AARCH64_FEATURES (3, SVE2, SME, SME_I16I64);
+  AARCH64_FEATURE (SME_I16I64);
 static const aarch64_feature_set aarch64_feature_sme2 =
-  AARCH64_FEATURES (3, SVE2, SME, SME2);
+  AARCH64_FEATURE (SME2);
 static const aarch64_feature_set aarch64_feature_sme2_i16i64 =
-  AARCH64_FEATURES (2, SME2, SME_I16I64);
+  AARCH64_FEATURE (SME_I16I64);
 static const aarch64_feature_set aarch64_feature_sme2_f64f64 =
-  AARCH64_FEATURES (2, SME2, SME_F64F64);
+  AARCH64_FEATURE (SME_F64F64);
 static const aarch64_feature_set aarch64_feature_i8mm =
   AARCH64_FEATURE (I8MM);
 static const aarch64_feature_set aarch64_feature_i8mm_sve =
@@ -2641,28 +2923,109 @@ static const aarch64_feature_set aarch64_feature_the =
   AARCH64_FEATURE (THE);
 static const aarch64_feature_set aarch64_feature_d128_the =
   AARCH64_FEATURES (2, D128, THE);
-static const aarch64_feature_set aarch64_feature_b16b16 =
-  AARCH64_FEATURE (B16B16);
+static const aarch64_feature_set aarch64_feature_sve_b16b16_sve2 =
+  AARCH64_FEATURES (2, SVE_B16B16, SVE2_SME2);
+static const aarch64_feature_set aarch64_feature_sve_b16b16_sme2 =
+  AARCH64_FEATURES (2, SVE_B16B16, SME2);
+static const aarch64_feature_set aarch64_feature_sme_b16b16 =
+  AARCH64_FEATURES (2, SME_B16B16, SME2);
 static const aarch64_feature_set aarch64_feature_sme2p1 =
   AARCH64_FEATURE (SME2p1);
 static const aarch64_feature_set aarch64_feature_sve2p1 =
   AARCH64_FEATURE (SVE2p1);
+static const aarch64_feature_set aarch64_feature_sve_f16f32mm =
+  AARCH64_FEATURE (SVE_F16F32MM);
+static const aarch64_feature_set aarch64_feature_f8f32mm =
+  AARCH64_FEATURE (F8F32MM);
+static const aarch64_feature_set aarch64_feature_f8f32mm_sve2 =
+  AARCH64_FEATURES (2, SVE2, F8F32MM);
+static const aarch64_feature_set aarch64_feature_f8f16mm =
+  AARCH64_FEATURE (F8F16MM);
+static const aarch64_feature_set aarch64_feature_f8f16mm_sve2 =
+  AARCH64_FEATURES (2, SVE2, F8F16MM);
+static const aarch64_feature_set aarch64_feature_sve_aes2 =
+  AARCH64_FEATURES (2, SVE_AES2, SVE2_SSVE_AES);
 static const aarch64_feature_set aarch64_feature_rcpc3 =
   AARCH64_FEATURE (RCPC3);
-
+static const aarch64_feature_set aarch64_feature_cpa =
+  AARCH64_FEATURE (CPA);
+static const aarch64_feature_set aarch64_feature_cpa_sve =
+  AARCH64_FEATURES (2, CPA, SVE);
+static const aarch64_feature_set aarch64_feature_faminmax =
+  AARCH64_FEATURE (FAMINMAX);
+static const aarch64_feature_set aarch64_feature_faminmax_sve2 =
+  AARCH64_FEATURES (2, FAMINMAX, SVE2);
+static const aarch64_feature_set aarch64_feature_faminmax_sme2 =
+  AARCH64_FEATURES (2, FAMINMAX, SME2);
+static const aarch64_feature_set aarch64_feature_fp8 =
+  AARCH64_FEATURE (FP8);
+static const aarch64_feature_set aarch64_feature_fp8_sve2 =
+  AARCH64_FEATURES (2, FP8, SVE2);
+static const aarch64_feature_set aarch64_feature_fp8_sme2 =
+  AARCH64_FEATURES (2, FP8, SME2);
+static const aarch64_feature_set aarch64_feature_sve_bfscale =
+  AARCH64_FEATURES (2, SVE_BFSCALE, SVE2_SME2);
+static const aarch64_feature_set aarch64_feature_sve_bfscale_sme2 =
+  AARCH64_FEATURES (2, SVE_BFSCALE, SME2);
+static const aarch64_feature_set aarch64_feature_lut =
+  AARCH64_FEATURE (LUT);
+static const aarch64_feature_set aarch64_feature_lut_sve2 =
+  AARCH64_FEATURES (2, LUT, SVE2);
+static const aarch64_feature_set aarch64_feature_brbe =
+  AARCH64_FEATURE (BRBE);
+static const aarch64_feature_set aarch64_feature_lutv2_sme2 =
+  AARCH64_FEATURES (2, SME_LUTv2, SME2);
+static const aarch64_feature_set aarch64_feature_lutv2_sme2p1 =
+  AARCH64_FEATURES (2, SME_LUTv2, SME2p1);
+static const aarch64_feature_set aarch64_feature_fp8fma =
+  AARCH64_FEATURE (FP8FMA);
+static const aarch64_feature_set aarch64_feature_fp8dot4 =
+  AARCH64_FEATURE (FP8DOT4);
+static const aarch64_feature_set aarch64_feature_fp8dot2 =
+  AARCH64_FEATURE (FP8DOT2);
+static const aarch64_feature_set aarch64_feature_fp8fma_sve =
+  AARCH64_FEATURE (FP8FMA_SVE);
+static const aarch64_feature_set aarch64_feature_fp8dot4_sve =
+  AARCH64_FEATURE (FP8DOT4_SVE);
+static const aarch64_feature_set aarch64_feature_fp8dot2_sve =
+  AARCH64_FEATURE (FP8DOT2_SVE);
+static const aarch64_feature_set aarch64_feature_sme_f8f32 =
+  AARCH64_FEATURE (SME_F8F32);
+static const aarch64_feature_set aarch64_feature_sme_f8f16 =
+  AARCH64_FEATURE (SME_F8F16);
+static const aarch64_feature_set aarch64_feature_sme_f16f16_f8f16 =
+  AARCH64_FEATURE (SME_F16F16_F8F16);
+static const aarch64_feature_set aarch64_feature_sme_f16f16 =
+  AARCH64_FEATURE (SME_F16F16);
+static const aarch64_feature_set aarch64_feature_sve2p1_sme =
+  AARCH64_FEATURE (SVE2p1_SME);
+static const aarch64_feature_set aarch64_feature_sve2p1_sme2 =
+  AARCH64_FEATURE (SVE2p1_SME2);
+static const aarch64_feature_set aarch64_feature_sve2p1_sme2p1 =
+  AARCH64_FEATURE (SVE2p1_SME2p1);
+static const aarch64_feature_set aarch64_feature_sme2p2 =
+  AARCH64_FEATURE (SME2p2);
+static const aarch64_feature_set aarch64_feature_sve_sme2p2 =
+  AARCH64_FEATURE (SVE_SME2p2);
+static const aarch64_feature_set aarch64_feature_sve2p2_sme2p2 =
+  AARCH64_FEATURE (SVE2p2_SME2p2);
 
 #define CORE		&aarch64_feature_v8
 #define FP		&aarch64_feature_fp
 #define SIMD		&aarch64_feature_simd
 #define CRC		&aarch64_feature_crc
 #define LSE		&aarch64_feature_lse
+#define LSFE		&aarch64_feature_lsfe
 #define LSE128		&aarch64_feature_lse128
+#define LSUI		&aarch64_feature_lsui
+#define LSUI_FP		&aarch64_feature_lsui_fp
 #define LOR		&aarch64_feature_lor
 #define RDMA		&aarch64_feature_rdma
 #define FP_F16		&aarch64_feature_fp_f16
 #define SIMD_F16	&aarch64_feature_simd_f16
+#define FPRCVT		&aarch64_feature_fprcvt
 #define SVE		&aarch64_feature_sve
-#define PAC		&aarch64_feature_pac
+#define PAUTH		&aarch64_feature_pauth
 #define COMPNUM		&aarch64_feature_compnum
 #define JSCVT		&aarch64_feature_jscvt
 #define RCPC		&aarch64_feature_rcpc
@@ -2678,6 +3041,7 @@ static const aarch64_feature_set aarch64_feature_rcpc3 =
 #define SB		&aarch64_feature_sb
 #define PREDRES		&aarch64_feature_predres
 #define PREDRES2	&aarch64_feature_predres2
+#define CMPBR		&aarch64_feature_cmpbr
 #define MEMTAG		&aarch64_feature_memtag
 #define TME		&aarch64_feature_tme
 #define SVE2		&aarch64_feature_sve2
@@ -2712,43 +3076,90 @@ static const aarch64_feature_set aarch64_feature_rcpc3 =
 #define D128	  &aarch64_feature_d128
 #define THE	  &aarch64_feature_the
 #define D128_THE  &aarch64_feature_d128_the
-#define B16B16  &aarch64_feature_b16b16
+#define B16B16_SVE2  &aarch64_feature_sve_b16b16_sve2
+#define SVE_B16B16_SME  &aarch64_feature_sve_b16b16_sme2
+#define SME_B16B16  &aarch64_feature_sme_b16b16
 #define SME2p1  &aarch64_feature_sme2p1
 #define SVE2p1  &aarch64_feature_sve2p1
+#define SVE_F16F32MM &aarch64_feature_sve_f16f32mm
+#define F8F32MM  &aarch64_feature_f8f32mm
+#define F8F32MM_SVE2  &aarch64_feature_f8f32mm_sve2
+#define F8F16MM  &aarch64_feature_f8f16mm
+#define F8F16MM_SVE2  &aarch64_feature_f8f16mm_sve2
+#define SVE_AES2  &aarch64_feature_sve_aes2
 #define RCPC3	  &aarch64_feature_rcpc3
+#define CPA	  &aarch64_feature_cpa
+#define CPA_SVE   &aarch64_feature_cpa_sve
+#define FAMINMAX  &aarch64_feature_faminmax
+#define FAMINMAX_SVE2  &aarch64_feature_faminmax_sve2
+#define FAMINMAX_SME2  &aarch64_feature_faminmax_sme2
+#define FP8	  &aarch64_feature_fp8
+#define FP8_SVE2   &aarch64_feature_fp8_sve2
+#define FP8_SME2   &aarch64_feature_fp8_sme2
+#define SVE_BFSCALE   &aarch64_feature_sve_bfscale
+#define SVE_BFSCALE_SME2   &aarch64_feature_sve_bfscale_sme2
+#define LUT &aarch64_feature_lut
+#define LUT_SVE2 &aarch64_feature_lut_sve2
+#define BRBE		&aarch64_feature_brbe
+#define LUTv2_SME2	&aarch64_feature_lutv2_sme2
+#define LUTv2_SME2p1	&aarch64_feature_lutv2_sme2p1
+#define FP8FMA		&aarch64_feature_fp8fma
+#define FP8DOT4		&aarch64_feature_fp8dot4
+#define FP8DOT2		&aarch64_feature_fp8dot2
+#define FP8FMA_SVE	&aarch64_feature_fp8fma_sve
+#define FP8DOT4_SVE	&aarch64_feature_fp8dot4_sve
+#define FP8DOT2_SVE	&aarch64_feature_fp8dot2_sve
+#define SME_F8F32	&aarch64_feature_sme_f8f32
+#define SME_F8F16	&aarch64_feature_sme_f8f16
+#define SME_F16F16_F8F16 &aarch64_feature_sme_f16f16_f8f16
+#define SME_F16F16	&aarch64_feature_sme_f16f16
+#define SVE2p1_SME	&aarch64_feature_sve2p1_sme
+#define SVE2p1_SME2	&aarch64_feature_sve2p1_sme2
+#define SVE2p1_SME2p1	&aarch64_feature_sve2p1_sme2p1
+#define SME2p2		&aarch64_feature_sme2p2
+#define SVE_SME2p2	&aarch64_feature_sve_sme2p2
+#define SVE2p2_SME2p2	&aarch64_feature_sve2p2_sme2p2
 
 #define CORE_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, CLASS, OP, CORE, OPS, QUALS, FLAGS, 0, 0, NULL }
+  { NAME, OPCODE, MASK, CLASS, OP, CORE, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
 #define __FP_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, CLASS, OP, FP, OPS, QUALS, FLAGS, 0, 0, NULL }
+  { NAME, OPCODE, MASK, CLASS, OP, FP, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
 #define SIMD_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, CLASS, OP, SIMD, OPS, QUALS, FLAGS, 0, 0, NULL }
+  { NAME, OPCODE, MASK, CLASS, OP, SIMD, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
 #define _SIMD_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,VERIFIER) \
   { NAME, OPCODE, MASK, CLASS, OP, SIMD, OPS, QUALS, FLAGS, 0, 0, VERIFIER }
 #define _CRC_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, CRC, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define _LSE_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, LSE, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define _LSFE_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS, FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, 0, LSFE, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define _LSE128_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, LSE128, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define _LSUI_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, 0, LSUI, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define _LSUI_FP_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, 0, LSUI_FP, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define _LOR_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, LOR, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define RDMA_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, RDMA, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define FF16_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, CLASS, 0, FP_F16, OPS, QUALS, FLAGS, 0, 0, NULL }
+  { NAME, OPCODE, MASK, CLASS, 0, FP_F16, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
 #define SF16_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS)		\
-  { NAME, OPCODE, MASK, CLASS, 0, SIMD_F16, OPS, QUALS, FLAGS, 0, 0, NULL }
+  { NAME, OPCODE, MASK, CLASS, 0, SIMD_F16, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
+#define FPRCVT_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS)		\
+  { NAME, OPCODE, MASK, CLASS, 0, FPRCVT, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define _SVE_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
   { NAME, OPCODE, MASK, CLASS, OP, SVE, OPS, QUALS, \
-    FLAGS | F_STRICT, 0, TIED, NULL }
+    FLAGS | F_STRICT | F_INVALID_IMM_SYMS_2, 0, TIED, NULL }
 #define _SVE_INSNC(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,CONSTRAINTS,TIED) \
   { NAME, OPCODE, MASK, CLASS, OP, SVE, OPS, QUALS, \
-    FLAGS | F_STRICT, CONSTRAINTS, TIED, NULL }
-#define PAC_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, CLASS, 0, PAC, OPS, QUALS, FLAGS, 0, 0, NULL }
+    FLAGS | F_STRICT | F_INVALID_IMM_SYMS_2, CONSTRAINTS, TIED, NULL }
+#define PAUTH_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, 0, PAUTH, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define CNUM_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, CLASS, OP, COMPNUM, OPS, QUALS, FLAGS, 0, 0, NULL }
+  { NAME, OPCODE, MASK, CLASS, OP, COMPNUM, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
 #define JSCVT_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, JSCVT, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define RCPC_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
@@ -2760,7 +3171,7 @@ static const aarch64_feature_set aarch64_feature_rcpc3 =
 #define AES_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, AES, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define SHA3_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, CLASS, 0, SHA3, OPS, QUALS, FLAGS, 0, 0, NULL }
+  { NAME, OPCODE, MASK, CLASS, 0, SHA3, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
 #define SM4_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, SM4, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define FP16_V8_2A_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
@@ -2775,25 +3186,46 @@ static const aarch64_feature_set aarch64_feature_rcpc3 =
   { NAME, OPCODE, MASK, CLASS, 0, SB, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define PREDRES_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, PREDRES, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define CMPBR_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, 0, CMPBR, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
 #define MEMTAG_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, CLASS, 0, MEMTAG, OPS, QUALS, FLAGS, 0, 0, NULL }
+  { NAME, OPCODE, MASK, CLASS, 0, MEMTAG, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
 #define _TME_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, CLASS, OP, TME, OPS, QUALS, FLAGS, 0, 0, NULL }
+  { NAME, OPCODE, MASK, CLASS, OP, TME, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
 #define SVE2_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
   { NAME, OPCODE, MASK, CLASS, OP, SVE2, OPS, QUALS, \
-    FLAGS | F_STRICT, 0, TIED, NULL }
+    FLAGS | F_STRICT | F_INVALID_IMM_SYMS_2, 0, TIED, NULL }
 #define SME2p1_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
   { NAME, OPCODE, MASK, CLASS, OP, SME2p1, OPS, QUALS, \
     FLAGS | F_STRICT, 0, TIED, NULL }
+#define SVE_F16F32MM_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, OP, SVE_F16F32MM, OPS, QUALS, FLAGS | F_STRICT, 0, 0, NULL }
+#define F8F32MM_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, OP, F8F32MM, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define F8F32MM_SVE2_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, OP, F8F32MM_SVE2, OPS, QUALS, FLAGS | F_STRICT, 0, 0, NULL }
+#define F8F16MM_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, OP, F8F16MM, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define F8F16MM_SVE2_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, OP, F8F16MM_SVE2, OPS, QUALS, FLAGS | F_STRICT, 0, 0, NULL }
 #define SVE2_INSNC(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,CONSTRAINTS,TIED) \
   { NAME, OPCODE, MASK, CLASS, OP, SVE2, OPS, QUALS, \
-    FLAGS | F_STRICT, CONSTRAINTS, TIED, NULL }
-#define B16B16_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
-  { NAME, OPCODE, MASK, CLASS, OP, B16B16, OPS, QUALS, \
+    FLAGS | F_STRICT | F_INVALID_IMM_SYMS_2, CONSTRAINTS, TIED, NULL }
+#define B16B16_SVE2_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, B16B16_SVE2, OPS, QUALS, \
     FLAGS | F_STRICT, 0, TIED, NULL }
-#define B16B16_INSNC(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,CONSTRAINTS,TIED) \
-  { NAME, OPCODE, MASK, CLASS, OP, B16B16, OPS, QUALS, \
+#define B16B16_SVE2_INSNC(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,CONSTRAINTS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, B16B16_SVE2, OPS, QUALS, \
     FLAGS | F_STRICT, CONSTRAINTS, TIED, NULL }
+#define SVE_B16B16_SME_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, SVE_B16B16_SME, OPS, QUALS, \
+    FLAGS | F_STRICT, 0, TIED, NULL }
+#define SVE_B16B16_SME_INSNC(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,CONSTRAINTS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, SVE_B16B16_SME, OPS, QUALS, \
+    FLAGS | F_STRICT, CONSTRAINTS, TIED, NULL }
+#define SME_B16B16_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, SME_B16B16, OPS, QUALS, \
+    FLAGS | F_STRICT, 0, TIED, NULL }
 #define SVE2p1_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
   { NAME, OPCODE, MASK, CLASS, OP, SVE2p1, OPS, QUALS, \
     FLAGS | F_STRICT, 0, TIED, NULL }
@@ -2802,6 +3234,9 @@ static const aarch64_feature_set aarch64_feature_rcpc3 =
     FLAGS | F_STRICT, CONSTRAINTS, TIED, NULL }
 #define SVE2AES_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
   { NAME, OPCODE, MASK, CLASS, OP, SVE2_AES, OPS, QUALS, \
+    FLAGS | F_STRICT, 0, TIED, NULL }
+#define SVE_AES2_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, SVE_AES2, OPS, QUALS, \
     FLAGS | F_STRICT, 0, TIED, NULL }
 #define SVE2SHA3_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
   { NAME, OPCODE, MASK, CLASS, OP, SVE2_SHA3, OPS, QUALS, \
@@ -2814,7 +3249,7 @@ static const aarch64_feature_set aarch64_feature_rcpc3 =
     FLAGS | F_STRICT, CONSTRAINTS, TIED, NULL }
 #define SME_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
   { NAME, OPCODE, MASK, CLASS, OP, SME, OPS, QUALS, \
-    F_STRICT | FLAGS, 0, TIED, NULL }
+    F_STRICT | F_INVALID_IMM_SYMS_2 | FLAGS, 0, TIED, NULL }
 #define SME_F64F64_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
   { NAME, OPCODE, MASK, CLASS, OP, SME_F64F64, OPS, QUALS, \
     F_STRICT | FLAGS, 0, TIED, NULL }
@@ -2826,7 +3261,7 @@ static const aarch64_feature_set aarch64_feature_rcpc3 =
     F_STRICT | FLAGS, CONSTRAINTS, TIED, NULL }
 #define SME2_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
   { NAME, OPCODE, MASK, CLASS, OP, SME2, OPS, QUALS, \
-    F_STRICT | FLAGS, 0, TIED, NULL }
+    F_STRICT | F_INVALID_IMM_SYMS_3 | FLAGS, 0, TIED, NULL }
 #define SME2_INSNC(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,CONSTRAINTS,TIED) \
   { NAME, OPCODE, MASK, CLASS, OP, SME2, OPS, QUALS, \
     FLAGS | F_STRICT, CONSTRAINTS, TIED, NULL }
@@ -2839,33 +3274,35 @@ static const aarch64_feature_set aarch64_feature_rcpc3 =
 #define SVE2BITPERM_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
   { NAME, OPCODE, MASK, CLASS, OP, SVE2_BITPERM, OPS, QUALS, \
     FLAGS | F_STRICT, 0, TIED, NULL }
-#define BFLOAT16_SVE_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, CLASS, 0, BFLOAT16_SVE, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define SVE_BFSCALE_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, 0, SVE_BFSCALE, OPS, QUALS, FLAGS | F_STRICT, 0, TIED, NULL }
+#define SVE_BFSCALE_SME2_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, 0, SVE_BFSCALE_SME2, OPS, QUALS, FLAGS | F_STRICT, 0, TIED, NULL }
 #define BFLOAT16_SVE_INSNC(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS, CONSTRAINTS, TIED) \
   { NAME, OPCODE, MASK, CLASS, 0, BFLOAT16_SVE, OPS, QUALS, FLAGS | F_STRICT, \
     CONSTRAINTS, TIED, NULL }
 #define BFLOAT16_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, BFLOAT16, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define INT8MATMUL_SVE_INSNC(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS, CONSTRAINTS, TIED) \
-  { NAME, OPCODE, MASK, CLASS, 0, I8MM_SVE, OPS, QUALS, FLAGS, CONSTRAINTS, TIED, NULL }
+  { NAME, OPCODE, MASK, CLASS, 0, I8MM_SVE, OPS, QUALS, FLAGS | F_STRICT, CONSTRAINTS, TIED, NULL }
 #define INT8MATMUL_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, I8MM, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define F64MATMUL_SVE_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS,TIED) \
-  { NAME, OPCODE, MASK, CLASS, 0, F64MM_SVE, OPS, QUALS, FLAGS, 0, TIED, NULL }
+  { NAME, OPCODE, MASK, CLASS, 0, F64MM_SVE, OPS, QUALS, FLAGS | F_STRICT, 0, TIED, NULL }
 #define F64MATMUL_SVE_INSNC(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS, CONSTRAINTS, TIED) \
-  { NAME, OPCODE, MASK, CLASS, 0, F64MM_SVE, OPS, QUALS, FLAGS, CONSTRAINTS, TIED, NULL }
+  { NAME, OPCODE, MASK, CLASS, 0, F64MM_SVE, OPS, QUALS, FLAGS | F_STRICT, CONSTRAINTS, TIED, NULL }
 #define F32MATMUL_SVE_INSNC(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS, CONSTRAINTS, TIED) \
-  { NAME, OPCODE, MASK, CLASS, 0, F32MM_SVE, OPS, QUALS, FLAGS, CONSTRAINTS, TIED, NULL }
+  { NAME, OPCODE, MASK, CLASS, 0, F32MM_SVE, OPS, QUALS, FLAGS | F_STRICT, CONSTRAINTS, TIED, NULL }
 #define V8R_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, ARMV8R, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define XS_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, CLASS, 0, XS, OPS, QUALS, FLAGS, 0, 0, NULL }
+  { NAME, OPCODE, MASK, CLASS, 0, XS, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
 #define WFXT_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, WFXT, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define _LS64_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, LS64, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define FLAGM_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, CLASS, 0, FLAGM, OPS, QUALS, FLAGS, 0, 0, NULL }
+  { NAME, OPCODE, MASK, CLASS, 0, FLAGM, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
 #define MOPS_INSN(NAME, OPCODE, MASK, CLASS, OPS, QUALS, FLAGS, CONSTRAINTS, VERIFIER) \
   { NAME, OPCODE, MASK, CLASS, 0, MOPS, OPS, QUALS, FLAGS, CONSTRAINTS, \
     0, VERIFIER }
@@ -2875,19 +3312,101 @@ static const aarch64_feature_set aarch64_feature_rcpc3 =
 #define HBC_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, HBC, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define CSSC_INSN(NAME,OPCODE,MASK,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, cssc, 0, CSSC, OPS, QUALS, FLAGS, 0, 0, NULL }
+  { NAME, OPCODE, MASK, cssc, 0, CSSC, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
 #define CHK_INSN(NAME, OPCODE, MASK, OPS, QUALS, FLAGS) \
   { NAME, OPCODE, MASK, ic_system, 0, CHK, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define GCS_INSN(NAME, OPCODE, MASK, OPS, QUALS, FLAGS) \
   { NAME, OPCODE, MASK, gcs, 0, GCS, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define D128_INSN(NAME,OPCODE,MASK,OPS,QUALS,FLAGS) \
-  { NAME, OPCODE, MASK, ic_system, 0, D128, OPS, QUALS, FLAGS, 0, 0, NULL }
+  { NAME, OPCODE, MASK, ic_system, 0, D128, OPS, QUALS, FLAGS | F_INVALID_IMM_SYMS_1, 0, 0, NULL }
 #define THE_INSN(NAME,OPCODE,MASK,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, the, 0, THE, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define D128_THE_INSN(NAME,OPCODE,MASK,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, the, 0, D128_THE, OPS, QUALS, FLAGS, 0, 0, NULL }
 #define RCPC3_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
   { NAME, OPCODE, MASK, CLASS, 0, RCPC3, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define CPA_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS) \
+  { NAME, OPCODE, MASK, CLASS, 0, CPA, OPS, QUALS, 0, 0, 0, NULL }
+#define CPA_SVE_INSNC(NAME,OPCODE,MASK,CLASS,OPS,QUALS,CONSTRAINTS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, 0, CPA_SVE, OPS, QUALS, \
+    F_STRICT, CONSTRAINTS, TIED, NULL }
+#define FAMINMAX_INSN(NAME,OPCODE,MASK,OPS,QUALS,FLAGS)	\
+  { NAME, OPCODE, MASK, asimdsame, 0, FAMINMAX, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define FAMINMAX_SVE2_INSN(NAME,OPCODE,MASK,OPS,QUALS,CONSTRAINTS) \
+  { NAME, OPCODE, MASK, sve_size_hsd, 0, FAMINMAX_SVE2, OPS, QUALS, \
+    F_STRICT, CONSTRAINTS, 2, NULL }
+#define FAMINMAX_SME2_INSN(NAME,OPCODE,MASK,OPS,QUALS) \
+  { NAME, OPCODE, MASK, sme_size_22_hsd, 0, FAMINMAX_SME2, OPS, QUALS, \
+    F_STRICT, 0, 1, NULL }
+#define FP8_INSN(NAME, OPCODE, MASK, CLASS, OPS, QUALS, FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, 0, FP8, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define FP8_SVE2_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, FP8_SVE2, OPS, QUALS, \
+    FLAGS | F_STRICT, 0, TIED, NULL }
+#define FP8_SME2_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, FP8_SME2, OPS, QUALS,	      \
+    F_STRICT | FLAGS, 0, TIED, NULL }
+#define LUT_INSN(NAME,OPCODE,MASK,OPS,QUALS,FLAGS)		\
+  { NAME, OPCODE, MASK, lut, 0, LUT, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define LUT_SVE2_INSN(NAME,OPCODE,MASK,OPS,QUALS,FLAGS,CONSTRAINTS) \
+  { NAME, OPCODE, MASK, sve_misc, 0, LUT_SVE2, OPS, QUALS, \
+    FLAGS | F_STRICT, CONSTRAINTS, 0, NULL }
+#define BRBE_INSN(NAME,OPCODE,MASK,OPS,QUALS,FLAGS) \
+  { NAME, OPCODE, MASK, ic_system, 0, BRBE, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define LUTv2_SME2_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS)	\
+  { NAME, OPCODE, MASK, CLASS, 0, LUTv2_SME2, OPS, QUALS, \
+    FLAGS | F_STRICT, 0, 0, NULL }
+#define LUTv2_SME2p1_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS)	\
+  { NAME, OPCODE, MASK, CLASS, 0, LUTv2_SME2p1, OPS, QUALS, \
+    FLAGS | F_STRICT, 0, 0, NULL }
+#define FP8FMA_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, 0, FP8FMA, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define FP8DOT4_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, 0, FP8DOT4, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define FP8DOT2_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS) \
+  { NAME, OPCODE, MASK, CLASS, 0, FP8DOT2, OPS, QUALS, FLAGS, 0, 0, NULL }
+#define FP8FMA_SVE_INSNC(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS,CONSTRAINTS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, 0, FP8FMA_SVE, OPS, QUALS, F_STRICT | FLAGS, CONSTRAINTS, TIED, NULL }
+#define FP8DOT4_SVE_INSNC(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS,CONSTRAINTS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, 0, FP8DOT4_SVE, OPS, QUALS, F_STRICT | FLAGS, CONSTRAINTS, TIED, NULL }
+#define FP8DOT2_SVE_INSNC(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS,CONSTRAINTS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, 0, FP8DOT2_SVE, OPS, QUALS, F_STRICT | FLAGS, CONSTRAINTS, TIED, NULL }
+#define SME_F8F32_INSNC(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS,CONSTRAINTS) \
+  { NAME, OPCODE, MASK, CLASS, 0, SME_F8F32, OPS, QUALS, F_STRICT | FLAGS, CONSTRAINTS, 0, NULL }
+#define SME_F8F16_INSNC(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS,CONSTRAINTS) \
+  { NAME, OPCODE, MASK, CLASS, 0, SME_F8F16, OPS, QUALS, F_STRICT | FLAGS, CONSTRAINTS, 0, NULL }
+#define SME_F16F16_F8F16_INSNC(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS,CONSTRAINTS) \
+  { NAME, OPCODE, MASK, CLASS, 0, SME_F16F16_F8F16, OPS, QUALS, F_STRICT | FLAGS, CONSTRAINTS, 0, NULL }
+#define SME_F16F16_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, SME_F16F16, OPS, QUALS, \
+    FLAGS | F_STRICT, 0, TIED, NULL }
+#define SVE2p1_SME_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, SVE2p1_SME, OPS, QUALS, \
+    F_STRICT | FLAGS, 0, TIED, NULL }
+#define SVE2p1_SME_INSNC(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,CONSTRAINTS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, SVE2p1_SME, OPS, QUALS, \
+    F_STRICT | FLAGS, CONSTRAINTS, TIED, NULL }
+#define SVE2p1_SME2_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, SVE2p1_SME2, OPS, QUALS, \
+    F_STRICT | F_INVALID_IMM_SYMS_2 | FLAGS, 0, TIED, NULL }
+#define SVE2p1_SME2_INSNC(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,CONSTRAINTS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, SVE2p1_SME2, OPS, QUALS, \
+    F_STRICT | FLAGS, CONSTRAINTS, TIED, NULL }
+#define SVE2p1_SME2p1_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, SVE2p1_SME2p1, OPS, QUALS, \
+    F_STRICT | FLAGS, 0, TIED, NULL }
+#define SVE2p1_SME2p1_INSNC(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,CONSTRAINTS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, SVE2p1_SME2p1, OPS, QUALS, \
+    F_STRICT | F_INVALID_IMM_SYMS_2 | FLAGS, CONSTRAINTS, TIED, NULL }
+#define SVE_SME2p2_INSN(NAME,OPCODE,MASK,CLASS,OP,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, OP, SVE_SME2p2, OPS, QUALS, \
+    FLAGS | F_STRICT, 0, TIED, NULL }
+#define SVE2p2_SME2p2_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS,CONSTRAINTS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, 0, SVE2p2_SME2p2, OPS, QUALS, \
+    F_STRICT | FLAGS, CONSTRAINTS, TIED, NULL }
+#define SME2p2_INSN(NAME,OPCODE,MASK,CLASS,OPS,QUALS,FLAGS,TIED) \
+  { NAME, OPCODE, MASK, CLASS, 0, SME2p2, OPS, QUALS, \
+    F_STRICT | FLAGS, 0, TIED, NULL }
 
 #define MOPS_CPY_OP1_OP2_PME_INSN(NAME, OPCODE, MASK, FLAGS, CONSTRAINTS) \
   MOPS_INSN (NAME, OPCODE, MASK, 0, \
@@ -2953,22 +3472,22 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   CORE_INSN ("sbcs", 0x7a000000, 0x7fe0fc00, addsub_carry, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_HAS_ALIAS | F_SF),
   CORE_INSN ("ngcs", 0x7a0003e0, 0x7fe0ffe0, addsub_carry, 0, OP2 (Rd, Rm),     QL_I2SAME,  F_ALIAS | F_SF),
   /* Add/subtract (extended register).  */
-  CORE_INSN ("add",  0x0b200000, 0x7fe00000, addsub_ext, 0, OP3 (Rd_SP, Rn_SP, Rm_EXT), QL_I3_EXT, F_SF),
-  CORE_INSN ("adds", 0x2b200000, 0x7fe00000, addsub_ext, 0, OP3 (Rd, Rn_SP, Rm_EXT),    QL_I3_EXT, F_HAS_ALIAS | F_SF),
-  CORE_INSN ("cmn",  0x2b20001f, 0x7fe0001f, addsub_ext, 0, OP2 (Rn_SP, Rm_EXT),        QL_I2_EXT, F_ALIAS | F_SF),
-  CORE_INSN ("sub",  0x4b200000, 0x7fe00000, addsub_ext, 0, OP3 (Rd_SP, Rn_SP, Rm_EXT), QL_I3_EXT, F_SF),
-  CORE_INSN ("subs", 0x6b200000, 0x7fe00000, addsub_ext, 0, OP3 (Rd, Rn_SP, Rm_EXT),    QL_I3_EXT, F_HAS_ALIAS | F_SF),
-  CORE_INSN ("cmp",  0x6b20001f, 0x7fe0001f, addsub_ext, 0, OP2 (Rn_SP, Rm_EXT),        QL_I2_EXT, F_ALIAS | F_SF),
+  CORE_INSN ("add",  0x0b200000, 0x7fe00000, addsub_ext, 0, OP3 (Rd_SP, Rn_SP, Rm_EXT), QL_I3_EXT, F_ARITH_ADD | F_SF),
+  CORE_INSN ("adds", 0x2b200000, 0x7fe00000, addsub_ext, 0, OP3 (Rd, Rn_SP, Rm_EXT),    QL_I3_EXT, F_ARITH_ADD | F_HAS_ALIAS | F_SF),
+  CORE_INSN ("cmn",  0x2b20001f, 0x7fe0001f, addsub_ext, 0, OP2 (Rn_SP, Rm_EXT),        QL_I2_EXT, F_SUBCLASS_OTHER | F_ALIAS | F_SF),
+  CORE_INSN ("sub",  0x4b200000, 0x7fe00000, addsub_ext, 0, OP3 (Rd_SP, Rn_SP, Rm_EXT), QL_I3_EXT, F_ARITH_SUB | F_SF),
+  CORE_INSN ("subs", 0x6b200000, 0x7fe00000, addsub_ext, 0, OP3 (Rd, Rn_SP, Rm_EXT),    QL_I3_EXT, F_ARITH_SUB | F_HAS_ALIAS | F_SF),
+  CORE_INSN ("cmp",  0x6b20001f, 0x7fe0001f, addsub_ext, 0, OP2 (Rn_SP, Rm_EXT),        QL_I2_EXT, F_SUBCLASS_OTHER | F_ALIAS | F_SF),
   /* Add/subtract (immediate).  */
-  CORE_INSN ("add",  0x11000000, 0x7f000000, addsub_imm, OP_ADD, OP3 (Rd_SP, Rn_SP, AIMM), QL_R2NIL, F_HAS_ALIAS | F_SF),
-  CORE_INSN ("mov",  0x11000000, 0x7ffffc00, addsub_imm, 0, OP2 (Rd_SP, Rn_SP),       QL_I2SP, F_ALIAS | F_SF),
-  CORE_INSN ("adds", 0x31000000, 0x7f000000, addsub_imm, 0, OP3 (Rd, Rn_SP, AIMM),    QL_R2NIL, F_HAS_ALIAS | F_SF),
-  CORE_INSN ("cmn",  0x3100001f, 0x7f00001f, addsub_imm, 0, OP2 (Rn_SP, AIMM),        QL_R1NIL, F_ALIAS | F_SF),
-  CORE_INSN ("sub",  0x51000000, 0x7f000000, addsub_imm, 0, OP3 (Rd_SP, Rn_SP, AIMM), QL_R2NIL, F_SF),
-  CORE_INSN ("subs", 0x71000000, 0x7f000000, addsub_imm, 0, OP3 (Rd, Rn_SP, AIMM),    QL_R2NIL, F_HAS_ALIAS | F_SF),
-  CORE_INSN ("cmp",  0x7100001f, 0x7f00001f, addsub_imm, 0, OP2 (Rn_SP, AIMM),        QL_R1NIL, F_ALIAS | F_SF),
-  MEMTAG_INSN ("addg",  0x91800000, 0xffc0c000, addsub_imm, OP4 (Rd_SP, Rn_SP, UIMM10, UIMM4_ADDG), QL_ADDG, 0),
-  MEMTAG_INSN ("subg",  0xd1800000, 0xffc0c000, addsub_imm, OP4 (Rd_SP, Rn_SP, UIMM10, UIMM4_ADDG), QL_ADDG, 0),
+  CORE_INSN ("add",  0x11000000, 0x7f000000, addsub_imm, OP_ADD, OP3 (Rd_SP, Rn_SP, AIMM), QL_R2NIL, F_ARITH_ADD | F_HAS_ALIAS | F_SF),
+  CORE_INSN ("mov",  0x11000000, 0x7ffffc00, addsub_imm, 0, OP2 (Rd_SP, Rn_SP),       QL_I2SP, F_ARITH_MOV | F_ALIAS | F_SF),
+  CORE_INSN ("adds", 0x31000000, 0x7f000000, addsub_imm, 0, OP3 (Rd, Rn_SP, AIMM),    QL_R2NIL, F_ARITH_ADD | F_HAS_ALIAS | F_SF),
+  CORE_INSN ("cmn",  0x3100001f, 0x7f00001f, addsub_imm, 0, OP2 (Rn_SP, AIMM),        QL_R1NIL, F_SUBCLASS_OTHER | F_ALIAS | F_SF),
+  CORE_INSN ("sub",  0x51000000, 0x7f000000, addsub_imm, 0, OP3 (Rd_SP, Rn_SP, AIMM), QL_R2NIL, F_ARITH_SUB | F_SF),
+  CORE_INSN ("subs", 0x71000000, 0x7f000000, addsub_imm, 0, OP3 (Rd, Rn_SP, AIMM),    QL_R2NIL, F_ARITH_SUB | F_HAS_ALIAS | F_SF),
+  CORE_INSN ("cmp",  0x7100001f, 0x7f00001f, addsub_imm, 0, OP2 (Rn_SP, AIMM),        QL_R1NIL, F_SUBCLASS_OTHER | F_ALIAS | F_SF),
+  MEMTAG_INSN ("addg",  0x91800000, 0xffc0c000, addsub_imm, OP4 (Rd_SP, Rn_SP, UIMM10, UIMM4_ADDG), QL_ADDG, F_SUBCLASS_OTHER),
+  MEMTAG_INSN ("subg",  0xd1800000, 0xffc0c000, addsub_imm, OP4 (Rd_SP, Rn_SP, UIMM10, UIMM4_ADDG), QL_ADDG, F_SUBCLASS_OTHER),
   /* Add/subtract (shifted register).  */
   CORE_INSN ("add",  0x0b000000, 0x7f200000, addsub_shift, 0, OP3 (Rd, Rn, Rm_SFT), QL_I3SAMER, F_SF),
   CORE_INSN ("adds", 0x2b000000, 0x7f200000, addsub_shift, 0, OP3 (Rd, Rn, Rm_SFT), QL_I3SAMER, F_HAS_ALIAS | F_SF),
@@ -3132,7 +3651,7 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SIMD_INSN ("abs",   0x0e20b800, 0xbf3ffc00, asimdmisc, 0, OP2 (Vd, Vn), QL_V2SAME, F_SIZEQ),
   SIMD_INSN ("xtn",   0x0e212800, 0xff3ffc00, asimdmisc, 0, OP2 (Vd, Vn), QL_V2NARRBHS, F_SIZEQ),
   SIMD_INSN ("xtn2",  0x4e212800, 0xff3ffc00, asimdmisc, 0, OP2 (Vd, Vn), QL_V2NARRBHS2, F_SIZEQ),
-  SIMD_INSN ("sqxtn", 0xe214800, 0xff3ffc00, asimdmisc, 0, OP2 (Vd, Vn), QL_V2NARRBHS, F_SIZEQ),
+  SIMD_INSN ("sqxtn", 0x0e214800, 0xff3ffc00, asimdmisc, 0, OP2 (Vd, Vn), QL_V2NARRBHS, F_SIZEQ),
   SIMD_INSN ("sqxtn2",0x4e214800, 0xff3ffc00, asimdmisc, 0, OP2 (Vd, Vn), QL_V2NARRBHS2, F_SIZEQ),
   SIMD_INSN ("fcvtn",  0x0e216800, 0xffbffc00, asimdmisc, OP_FCVTN,  OP2 (Vd, Vn), QL_V2NARRHS,  F_MISC),
   SIMD_INSN ("fcvtn2", 0x4e216800, 0xffbffc00, asimdmisc, OP_FCVTN2, OP2 (Vd, Vn), QL_V2NARRHS2, F_MISC),
@@ -3219,65 +3738,65 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SIMD_INSN ("fsqrt",  0x2ea1f800, 0xbfbffc00, asimdmisc, 0, OP2 (Vd, Vn), QL_V2SAMESD, F_SIZEQ),
   SF16_INSN ("fsqrt",  0x2ef9f800, 0xbfbffc00, asimdmisc, OP2 (Vd, Vn), QL_V2SAMEH, F_SIZEQ),
   /* AdvSIMD ZIP/UZP/TRN.  */
-  SIMD_INSN ("uzp1", 0xe001800, 0xbf20fc00, asimdperm, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("trn1", 0xe002800, 0xbf20fc00, asimdperm, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("zip1", 0xe003800, 0xbf20fc00, asimdperm, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("uzp2", 0xe005800, 0xbf20fc00, asimdperm, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("trn2", 0xe006800, 0xbf20fc00, asimdperm, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("zip2", 0xe007800, 0xbf20fc00, asimdperm, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("uzp1", 0x0e001800, 0xbf20fc00, asimdperm, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("trn1", 0x0e002800, 0xbf20fc00, asimdperm, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("zip1", 0x0e003800, 0xbf20fc00, asimdperm, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("uzp2", 0x0e005800, 0xbf20fc00, asimdperm, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("trn2", 0x0e006800, 0xbf20fc00, asimdperm, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("zip2", 0x0e007800, 0xbf20fc00, asimdperm, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
   /* AdvSIMD three same.  */
-  SIMD_INSN ("shadd", 0xe200400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
-  SIMD_INSN ("sqadd", 0xe200c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("srhadd", 0xe201400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
-  SIMD_INSN ("shsub", 0xe202400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
-  SIMD_INSN ("sqsub", 0xe202c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("cmgt", 0xe203400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("cmge", 0xe203c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("sshl", 0xe204400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("sqshl", 0xe204c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("srshl", 0xe205400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("sqrshl", 0xe205c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("smax", 0xe206400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
-  SIMD_INSN ("smin", 0xe206c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
-  SIMD_INSN ("sabd", 0xe207400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
-  SIMD_INSN ("saba", 0xe207c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
-  SIMD_INSN ("add", 0xe208400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("cmtst", 0xe208c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("mla", 0xe209400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
-  SIMD_INSN ("mul", 0xe209c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
-  SIMD_INSN ("smaxp", 0xe20a400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
-  SIMD_INSN ("sminp", 0xe20ac00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
-  SIMD_INSN ("sqdmulh", 0xe20b400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEHS, F_SIZEQ),
-  SIMD_INSN ("addp", 0xe20bc00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
-  SIMD_INSN ("fmaxnm", 0xe20c400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
-  SF16_INSN ("fmaxnm", 0xe400400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
-  SIMD_INSN ("fmla", 0xe20cc00, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
-  SF16_INSN ("fmla", 0xe400c00, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
-  SIMD_INSN ("fadd", 0xe20d400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
-  SF16_INSN ("fadd", 0xe401400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
-  SIMD_INSN ("fmulx", 0xe20dc00, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
-  SF16_INSN ("fmulx", 0xe401c00, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
-  SIMD_INSN ("fcmeq", 0xe20e400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
-  SF16_INSN ("fcmeq", 0xe402400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
-  SIMD_INSN ("fmax", 0xe20f400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
-  SF16_INSN ("fmax", 0xe403400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
-  SIMD_INSN ("frecps", 0xe20fc00, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
-  SF16_INSN ("frecps", 0xe403c00, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
-  SIMD_INSN ("and", 0xe201c00, 0xbfe0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEB, F_SIZEQ),
-  SIMD_INSN ("bic", 0xe601c00, 0xbfe0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEB, F_SIZEQ),
-  SIMD_INSN ("fminnm", 0xea0c400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
-  SF16_INSN ("fminnm", 0xec00400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
-  SIMD_INSN ("fmls", 0xea0cc00, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
-  SF16_INSN ("fmls", 0xec00c00, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
-  SIMD_INSN ("fsub", 0xea0d400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
-  SF16_INSN ("fsub", 0xec01400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
-  SIMD_INSN ("fmin", 0xea0f400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
-  SF16_INSN ("fmin", 0xec03400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
-  SIMD_INSN ("frsqrts", 0xea0fc00, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
-  SF16_INSN ("frsqrts", 0xec03c00, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
-  SIMD_INSN ("orr", 0xea01c00, 0xbfe0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEB, F_HAS_ALIAS | F_SIZEQ),
-  SIMD_INSN ("mov", 0xea01c00, 0xbfe0fc00, asimdsame, OP_MOV_V, OP2 (Vd, Vn), QL_V2SAMEB, F_ALIAS | F_CONV),
-  SIMD_INSN ("orn", 0xee01c00, 0xbfe0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEB, F_SIZEQ),
+  SIMD_INSN ("shadd", 0x0e200400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
+  SIMD_INSN ("sqadd", 0x0e200c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("srhadd", 0x0e201400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
+  SIMD_INSN ("shsub", 0x0e202400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
+  SIMD_INSN ("sqsub", 0x0e202c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("cmgt", 0x0e203400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("cmge", 0x0e203c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("sshl", 0x0e204400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("sqshl", 0x0e204c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("srshl", 0x0e205400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("sqrshl", 0x0e205c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("smax", 0x0e206400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
+  SIMD_INSN ("smin", 0x0e206c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
+  SIMD_INSN ("sabd", 0x0e207400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
+  SIMD_INSN ("saba", 0x0e207c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
+  SIMD_INSN ("add", 0x0e208400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("cmtst", 0x0e208c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("mla", 0x0e209400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
+  SIMD_INSN ("mul", 0x0e209c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
+  SIMD_INSN ("smaxp", 0x0e20a400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
+  SIMD_INSN ("sminp", 0x0e20ac00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
+  SIMD_INSN ("sqdmulh", 0x0e20b400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEHS, F_SIZEQ),
+  SIMD_INSN ("addp", 0x0e20bc00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
+  SIMD_INSN ("fmaxnm", 0x0e20c400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  SF16_INSN ("fmaxnm", 0x0e400400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  SIMD_INSN ("fmla", 0x0e20cc00, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  SF16_INSN ("fmla", 0x0e400c00, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  SIMD_INSN ("fadd", 0x0e20d400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  SF16_INSN ("fadd", 0x0e401400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  SIMD_INSN ("fmulx", 0x0e20dc00, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  SF16_INSN ("fmulx", 0x0e401c00, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  SIMD_INSN ("fcmeq", 0x0e20e400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  SF16_INSN ("fcmeq", 0x0e402400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  SIMD_INSN ("fmax", 0x0e20f400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  SF16_INSN ("fmax", 0x0e403400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  SIMD_INSN ("frecps", 0x0e20fc00, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  SF16_INSN ("frecps", 0x0e403c00, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  SIMD_INSN ("and", 0x0e201c00, 0xbfe0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEB, F_SIZEQ),
+  SIMD_INSN ("bic", 0x0e601c00, 0xbfe0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEB, F_SIZEQ),
+  SIMD_INSN ("fminnm", 0x0ea0c400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  SF16_INSN ("fminnm", 0x0ec00400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  SIMD_INSN ("fmls", 0x0ea0cc00, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  SF16_INSN ("fmls", 0x0ec00c00, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  SIMD_INSN ("fsub", 0x0ea0d400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  SF16_INSN ("fsub", 0x0ec01400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  SIMD_INSN ("fmin", 0x0ea0f400, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  SF16_INSN ("fmin", 0x0ec03400, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  SIMD_INSN ("frsqrts", 0x0ea0fc00, 0xbfa0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  SF16_INSN ("frsqrts", 0x0ec03c00, 0xbfe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  SIMD_INSN ("orr", 0x0ea01c00, 0xbfe0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEB, F_HAS_ALIAS | F_SIZEQ),
+  SIMD_INSN ("mov", 0x0ea01c00, 0xbfe0fc00, asimdsame, OP_MOV_V, OP2 (Vd, Vn), QL_V2SAMEB, F_ALIAS | F_CONV),
+  SIMD_INSN ("orn", 0x0ee01c00, 0xbfe0fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEB, F_SIZEQ),
   SIMD_INSN ("uhadd", 0x2e200400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
   SIMD_INSN ("uqadd", 0x2e200c00, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAME, F_SIZEQ),
   SIMD_INSN ("urhadd", 0x2e201400, 0xbf20fc00, asimdsame, 0, OP3 (Vd, Vn, Vm), QL_V3SAMEBHS, F_SIZEQ),
@@ -3334,28 +3853,28 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   CNUM_INSN ("fcmla", 0x2e00c400, 0xbf20e400, asimdsame, 0, OP4 (Vd, Vn, Vm, IMM_ROT1), QL_V3SAMEHSD_ROT, F_SIZEQ),
   CNUM_INSN ("fcadd", 0x2e00e400, 0xbf20ec00, asimdsame, 0, OP4 (Vd, Vn, Vm, IMM_ROT3), QL_V3SAMEHSD_ROT, F_SIZEQ),
   /* AdvSIMD shift by immediate.  */
-  SIMD_INSN ("sshr", 0xf000400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT, 0),
-  SIMD_INSN ("ssra", 0xf001400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT, 0),
-  SIMD_INSN ("srshr", 0xf002400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT, 0),
-  SIMD_INSN ("srsra", 0xf003400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT, 0),
-  SIMD_INSN ("shl", 0xf005400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSL), QL_VSHIFT, 0),
-  SIMD_INSN ("sqshl", 0xf007400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSL), QL_VSHIFT, 0),
-  SIMD_INSN ("shrn", 0xf008400, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFTN, 0),
+  SIMD_INSN ("sshr", 0x0f000400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT, 0),
+  SIMD_INSN ("ssra", 0x0f001400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT, 0),
+  SIMD_INSN ("srshr", 0x0f002400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT, 0),
+  SIMD_INSN ("srsra", 0x0f003400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT, 0),
+  SIMD_INSN ("shl", 0x0f005400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSL), QL_VSHIFT, 0),
+  SIMD_INSN ("sqshl", 0x0f007400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSL), QL_VSHIFT, 0),
+  SIMD_INSN ("shrn", 0x0f008400, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFTN, 0),
   SIMD_INSN ("shrn2", 0x4f008400, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFTN2, 0),
-  SIMD_INSN ("rshrn", 0xf008c00, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFTN, 0),
+  SIMD_INSN ("rshrn", 0x0f008c00, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFTN, 0),
   SIMD_INSN ("rshrn2", 0x4f008c00, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFTN2, 0),
-  SIMD_INSN ("sqshrn", 0xf009400, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFTN, 0),
+  SIMD_INSN ("sqshrn", 0x0f009400, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFTN, 0),
   SIMD_INSN ("sqshrn2", 0x4f009400, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFTN2, 0),
-  SIMD_INSN ("sqrshrn", 0xf009c00, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFTN, 0),
+  SIMD_INSN ("sqrshrn", 0x0f009c00, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFTN, 0),
   SIMD_INSN ("sqrshrn2", 0x4f009c00, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFTN2, 0),
-  SIMD_INSN ("sshll", 0xf00a400, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSL), QL_VSHIFTL, F_HAS_ALIAS),
-  SIMD_INSN ("sxtl", 0xf00a400, 0xff87fc00, asimdshf, OP_SXTL, OP2 (Vd, Vn), QL_V2LONGBHS, F_ALIAS | F_CONV),
+  SIMD_INSN ("sshll", 0x0f00a400, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSL), QL_VSHIFTL, F_HAS_ALIAS),
+  SIMD_INSN ("sxtl", 0x0f00a400, 0xff87fc00, asimdshf, OP_SXTL, OP2 (Vd, Vn), QL_V2LONGBHS, F_ALIAS | F_CONV),
   SIMD_INSN ("sshll2", 0x4f00a400, 0xff80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSL), QL_VSHIFTL2, F_HAS_ALIAS),
   SIMD_INSN ("sxtl2", 0x4f00a400, 0xff87fc00, asimdshf, OP_SXTL2, OP2 (Vd, Vn), QL_V2LONGBHS2, F_ALIAS | F_CONV),
-  SIMD_INSN ("scvtf", 0xf00e400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT_SD, 0),
-  SF16_INSN ("scvtf", 0xf10e400, 0xbf80fc00, asimdshf, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT_H, 0),
-  SIMD_INSN ("fcvtzs", 0xf00fc00, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT_SD, 0),
-  SF16_INSN ("fcvtzs", 0xf10fc00, 0xbf80fc00, asimdshf, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT_H, 0),
+  SIMD_INSN ("scvtf", 0x0f00e400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT_SD, 0),
+  SF16_INSN ("scvtf", 0x0f10e400, 0xbf80fc00, asimdshf, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT_H, 0),
+  SIMD_INSN ("fcvtzs", 0x0f00fc00, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT_SD, 0),
+  SF16_INSN ("fcvtzs", 0x0f10fc00, 0xbf80fc00, asimdshf, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT_H, 0),
   SIMD_INSN ("ushr", 0x2f000400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT, 0),
   SIMD_INSN ("usra", 0x2f001400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT, 0),
   SIMD_INSN ("urshr", 0x2f002400, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT, 0),
@@ -3381,8 +3900,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SIMD_INSN ("fcvtzu", 0x2f00fc00, 0xbf80fc00, asimdshf, 0, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT_SD, 0),
   SF16_INSN ("fcvtzu", 0x2f10fc00, 0xbf80fc00, asimdshf, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT_H, 0),
   /* AdvSIMD TBL/TBX.  */
-  SIMD_INSN ("tbl", 0xe000000, 0xbfe09c00, asimdtbl, 0, OP3 (Vd, LVn, Vm), QL_TABLE, F_SIZEQ),
-  SIMD_INSN ("tbx", 0xe001000, 0xbfe09c00, asimdtbl, 0, OP3 (Vd, LVn, Vm), QL_TABLE, F_SIZEQ),
+  SIMD_INSN ("tbl", 0x0e000000, 0xbfe09c00, asimdtbl, 0, OP3 (Vd, LVn, Vm), QL_TABLE, F_SIZEQ),
+  SIMD_INSN ("tbx", 0x0e001000, 0xbfe09c00, asimdtbl, 0, OP3 (Vd, LVn, Vm), QL_TABLE, F_SIZEQ),
   /* AdvSIMD scalar three different.  */
   SIMD_INSN ("sqdmlal", 0x5e209000, 0xff20fc00, asisddiff, 0, OP3 (Sd, Sn, Sm), QL_SISDL_HS, F_SSIZE),
   SIMD_INSN ("sqdmlsl", 0x5e20b000, 0xff20fc00, asisddiff, 0, OP3 (Sd, Sn, Sm), QL_SISDL_HS, F_SSIZE),
@@ -3404,49 +3923,49 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   RDMA_INSN ("sqrdmlah", 0x7f00d000, 0xff00f400, asisdelem, OP3 (Sd, Sn, Em16), QL_SISD_HS, F_SSIZE),
   RDMA_INSN ("sqrdmlsh", 0x7f00f000, 0xff00f400, asisdelem, OP3 (Sd, Sn, Em16), QL_SISD_HS, F_SSIZE),
   /* AdvSIMD load/store multiple structures.  */
-  SIMD_INSN ("st4", 0xc000000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST, F_SIZEQ | F_OD(4)),
-  SIMD_INSN ("st1", 0xc000000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(1)),
-  SIMD_INSN ("st2", 0xc000000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST, F_SIZEQ | F_OD(2)),
-  SIMD_INSN ("st3", 0xc000000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST, F_SIZEQ | F_OD(3)),
-  SIMD_INSN ("ld4", 0xc400000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST, F_SIZEQ | F_OD(4)),
-  SIMD_INSN ("ld1", 0xc400000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(1)),
-  SIMD_INSN ("ld2", 0xc400000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST, F_SIZEQ | F_OD(2)),
-  SIMD_INSN ("ld3", 0xc400000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST, F_SIZEQ | F_OD(3)),
+  SIMD_INSN ("st4", 0x0c000000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST, F_SIZEQ | F_OD(4)),
+  SIMD_INSN ("st1", 0x0c000000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(1)),
+  SIMD_INSN ("st2", 0x0c000000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST, F_SIZEQ | F_OD(2)),
+  SIMD_INSN ("st3", 0x0c000000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST, F_SIZEQ | F_OD(3)),
+  SIMD_INSN ("ld4", 0x0c400000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST, F_SIZEQ | F_OD(4)),
+  SIMD_INSN ("ld1", 0x0c400000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(1)),
+  SIMD_INSN ("ld2", 0x0c400000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST, F_SIZEQ | F_OD(2)),
+  SIMD_INSN ("ld3", 0x0c400000, 0xbfff0000, asisdlse, 0, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST, F_SIZEQ | F_OD(3)),
   /* AdvSIMD load/store multiple structures (post-indexed).  */
-  SIMD_INSN ("st4", 0xc800000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST, F_SIZEQ | F_OD(4)),
-  SIMD_INSN ("st1", 0xc800000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(1)),
-  SIMD_INSN ("st2", 0xc800000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST, F_SIZEQ | F_OD(2)),
-  SIMD_INSN ("st3", 0xc800000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST, F_SIZEQ | F_OD(3)),
-  SIMD_INSN ("ld4", 0xcc00000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST, F_SIZEQ | F_OD(4)),
-  SIMD_INSN ("ld1", 0xcc00000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(1)),
-  SIMD_INSN ("ld2", 0xcc00000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST, F_SIZEQ | F_OD(2)),
-  SIMD_INSN ("ld3", 0xcc00000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST, F_SIZEQ | F_OD(3)),
+  SIMD_INSN ("st4", 0x0c800000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST, F_SIZEQ | F_OD(4)),
+  SIMD_INSN ("st1", 0x0c800000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(1)),
+  SIMD_INSN ("st2", 0x0c800000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST, F_SIZEQ | F_OD(2)),
+  SIMD_INSN ("st3", 0x0c800000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST, F_SIZEQ | F_OD(3)),
+  SIMD_INSN ("ld4", 0x0cc00000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST, F_SIZEQ | F_OD(4)),
+  SIMD_INSN ("ld1", 0x0cc00000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(1)),
+  SIMD_INSN ("ld2", 0x0cc00000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST, F_SIZEQ | F_OD(2)),
+  SIMD_INSN ("ld3", 0x0cc00000, 0xbfe00000, asisdlsep, 0, OP2 (LVt, SIMD_ADDR_POST), QL_SIMD_LDST, F_SIZEQ | F_OD(3)),
   /* AdvSIMD load/store single structure.  */
-  SIMD_INSN ("st1", 0xd000000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(1)),
-  SIMD_INSN ("st3", 0xd002000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(3)),
-  SIMD_INSN ("st2", 0xd200000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(2)),
-  SIMD_INSN ("st4", 0xd202000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(4)),
-  SIMD_INSN ("ld1", 0xd400000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(1)),
-  SIMD_INSN ("ld3", 0xd402000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(3)),
-  SIMD_INSN ("ld1r", 0xd40c000, 0xbffff000, asisdlso, 0, OP2 (LVt_AL, SIMD_ADDR_SIMPLE), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(1)),
-  SIMD_INSN ("ld3r", 0xd40e000, 0xbffff000, asisdlso, 0, OP2 (LVt_AL, SIMD_ADDR_SIMPLE), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(3)),
-  SIMD_INSN ("ld2", 0xd600000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(2)),
-  SIMD_INSN ("ld4", 0xd602000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(4)),
-  SIMD_INSN ("ld2r", 0xd60c000, 0xbffff000, asisdlso, 0, OP2 (LVt_AL, SIMD_ADDR_SIMPLE), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(2)),
-  SIMD_INSN ("ld4r", 0xd60e000, 0xbffff000, asisdlso, 0, OP2 (LVt_AL, SIMD_ADDR_SIMPLE), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(4)),
+  SIMD_INSN ("st1", 0x0d000000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(1)),
+  SIMD_INSN ("st3", 0x0d002000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(3)),
+  SIMD_INSN ("st2", 0x0d200000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(2)),
+  SIMD_INSN ("st4", 0x0d202000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(4)),
+  SIMD_INSN ("ld1", 0x0d400000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(1)),
+  SIMD_INSN ("ld3", 0x0d402000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(3)),
+  SIMD_INSN ("ld1r", 0x0d40c000, 0xbffff000, asisdlso, 0, OP2 (LVt_AL, SIMD_ADDR_SIMPLE), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(1)),
+  SIMD_INSN ("ld3r", 0x0d40e000, 0xbffff000, asisdlso, 0, OP2 (LVt_AL, SIMD_ADDR_SIMPLE), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(3)),
+  SIMD_INSN ("ld2", 0x0d600000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(2)),
+  SIMD_INSN ("ld4", 0x0d602000, 0xbfff2000, asisdlso, 0, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_LDSTONE, F_OD(4)),
+  SIMD_INSN ("ld2r", 0x0d60c000, 0xbffff000, asisdlso, 0, OP2 (LVt_AL, SIMD_ADDR_SIMPLE), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(2)),
+  SIMD_INSN ("ld4r", 0x0d60e000, 0xbffff000, asisdlso, 0, OP2 (LVt_AL, SIMD_ADDR_SIMPLE), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(4)),
   /* AdvSIMD load/store single structure (post-indexed).  */
-  SIMD_INSN ("st1", 0xd800000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(1)),
-  SIMD_INSN ("st3", 0xd802000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(3)),
-  SIMD_INSN ("st2", 0xda00000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(2)),
-  SIMD_INSN ("st4", 0xda02000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(4)),
-  SIMD_INSN ("ld1", 0xdc00000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(1)),
-  SIMD_INSN ("ld3", 0xdc02000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(3)),
-  SIMD_INSN ("ld1r", 0xdc0c000, 0xbfe0f000, asisdlsop, 0, OP2 (LVt_AL, SIMD_ADDR_POST), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(1)),
-  SIMD_INSN ("ld3r", 0xdc0e000, 0xbfe0f000, asisdlsop, 0, OP2 (LVt_AL, SIMD_ADDR_POST), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(3)),
-  SIMD_INSN ("ld2", 0xde00000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(2)),
-  SIMD_INSN ("ld4", 0xde02000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(4)),
-  SIMD_INSN ("ld2r", 0xde0c000, 0xbfe0f000, asisdlsop, 0, OP2 (LVt_AL, SIMD_ADDR_POST), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(2)),
-  SIMD_INSN ("ld4r", 0xde0e000, 0xbfe0f000, asisdlsop, 0, OP2 (LVt_AL, SIMD_ADDR_POST), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(4)),
+  SIMD_INSN ("st1", 0x0d800000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(1)),
+  SIMD_INSN ("st3", 0x0d802000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(3)),
+  SIMD_INSN ("st2", 0x0da00000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(2)),
+  SIMD_INSN ("st4", 0x0da02000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(4)),
+  SIMD_INSN ("ld1", 0x0dc00000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(1)),
+  SIMD_INSN ("ld3", 0x0dc02000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(3)),
+  SIMD_INSN ("ld1r", 0x0dc0c000, 0xbfe0f000, asisdlsop, 0, OP2 (LVt_AL, SIMD_ADDR_POST), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(1)),
+  SIMD_INSN ("ld3r", 0x0dc0e000, 0xbfe0f000, asisdlsop, 0, OP2 (LVt_AL, SIMD_ADDR_POST), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(3)),
+  SIMD_INSN ("ld2", 0x0de00000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(2)),
+  SIMD_INSN ("ld4", 0x0de02000, 0xbfe02000, asisdlsop, 0, OP2 (LEt, SIMD_ADDR_POST), QL_SIMD_LDSTONE, F_OD(4)),
+  SIMD_INSN ("ld2r", 0x0de0c000, 0xbfe0f000, asisdlsop, 0, OP2 (LVt_AL, SIMD_ADDR_POST), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(2)),
+  SIMD_INSN ("ld4r", 0x0de0e000, 0xbfe0f000, asisdlsop, 0, OP2 (LVt_AL, SIMD_ADDR_POST), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(4)),
   /* AdvSIMD scalar two-reg misc.  */
   SIMD_INSN ("suqadd", 0x5e203800, 0xff3ffc00, asisdmisc, 0, OP2 (Sd, Sn), QL_S_2SAME, F_SSIZE),
   SIMD_INSN ("sqabs", 0x5e207800, 0xff3ffc00, asisdmisc, 0, OP2 (Sd, Sn), QL_S_2SAME, F_SSIZE),
@@ -3611,31 +4130,75 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   CORE_INSN ("lsl", 0x53000000, 0x7f800000, bitfield, OP_LSL_IMM, OP3 (Rd, Rn, IMM), QL_SHIFT, F_ALIAS | F_P2 | F_CONV),
   CORE_INSN ("lsr", 0x53000000, 0x7f800000, bitfield, OP_LSR_IMM, OP3 (Rd, Rn, IMM), QL_SHIFT, F_ALIAS | F_P2 | F_CONV),
   /* Unconditional branch (immediate).  */
-  CORE_INSN ("b", 0x14000000, 0xfc000000, branch_imm, OP_B, OP1 (ADDR_PCREL26), QL_PCREL_26, 0),
-  CORE_INSN ("bl", 0x94000000, 0xfc000000, branch_imm, OP_BL, OP1 (ADDR_PCREL26), QL_PCREL_26, 0),
+  CORE_INSN ("b", 0x14000000, 0xfc000000, branch_imm, OP_B, OP1 (ADDR_PCREL26), QL_PCREL_26, F_SUBCLASS_OTHER),
+  CORE_INSN ("bl", 0x94000000, 0xfc000000, branch_imm, OP_BL, OP1 (ADDR_PCREL26), QL_PCREL_26, F_BRANCH_CALL),
   /* Unconditional branch (register).  */
-  CORE_INSN ("br", 0xd61f0000, 0xfffffc1f, branch_reg, 0, OP1 (Rn), QL_I1X, 0),
-  CORE_INSN ("blr", 0xd63f0000, 0xfffffc1f, branch_reg, 0, OP1 (Rn), QL_I1X, 0),
-  CORE_INSN ("ret", 0xd65f0000, 0xfffffc1f, branch_reg, 0, OP1 (Rn), QL_I1X, F_OPD0_OPT | F_DEFAULT (30)),
-  CORE_INSN ("eret", 0xd69f03e0, 0xffffffff, branch_reg, 0, OP0 (), {}, 0),
-  CORE_INSN ("drps", 0xd6bf03e0, 0xffffffff, branch_reg, 0, OP0 (), {}, 0),
-  PAC_INSN ("braa", 0xd71f0800, 0xfffffc00, branch_reg, OP2 (Rn, Rd_SP), QL_I2SAMEX, 0),
-  PAC_INSN ("brab", 0xd71f0c00, 0xfffffc00, branch_reg, OP2 (Rn, Rd_SP), QL_I2SAMEX, 0),
-  PAC_INSN ("blraa", 0xd73f0800, 0xfffffc00, branch_reg, OP2 (Rn, Rd_SP), QL_I2SAMEX, 0),
-  PAC_INSN ("blrab", 0xd73f0c00, 0xfffffc00, branch_reg, OP2 (Rn, Rd_SP), QL_I2SAMEX, 0),
-  PAC_INSN ("braaz", 0xd61f081f, 0xfffffc1f, branch_reg, OP1 (Rn), QL_I1X, 0),
-  PAC_INSN ("brabz", 0xd61f0c1f, 0xfffffc1f, branch_reg, OP1 (Rn), QL_I1X, 0),
-  PAC_INSN ("blraaz", 0xd63f081f, 0xfffffc1f, branch_reg, OP1 (Rn), QL_I1X, 0),
-  PAC_INSN ("blrabz", 0xd63f0c1f, 0xfffffc1f, branch_reg, OP1 (Rn), QL_I1X, 0),
-  PAC_INSN ("retaa", 0xd65f0bff, 0xffffffff, branch_reg, OP0 (), {}, 0),
-  PAC_INSN ("retab", 0xd65f0fff, 0xffffffff, branch_reg, OP0 (), {}, 0),
-  PAC_INSN ("eretaa", 0xd69f0bff, 0xffffffff, branch_reg, OP0 (), {}, 0),
-  PAC_INSN ("eretab", 0xd69f0fff, 0xffffffff, branch_reg, OP0 (), {}, 0),
+  CORE_INSN ("br", 0xd61f0000, 0xfffffc1f, branch_reg, 0, OP1 (Rn), QL_I1X, F_SUBCLASS_OTHER),
+  CORE_INSN ("blr", 0xd63f0000, 0xfffffc1f, branch_reg, 0, OP1 (Rn), QL_I1X, F_BRANCH_CALL),
+  CORE_INSN ("ret", 0xd65f0000, 0xfffffc1f, branch_reg, 0, OP1 (Rn), QL_I1X, F_BRANCH_RET | F_OPD0_OPT | F_DEFAULT (30)),
+  CORE_INSN ("eret", 0xd69f03e0, 0xffffffff, branch_reg, 0, OP0 (), {}, F_BRANCH_RET),
+  CORE_INSN ("drps", 0xd6bf03e0, 0xffffffff, branch_reg, 0, OP0 (), {}, F_SUBCLASS_OTHER),
+  PAUTH_INSN ("braa", 0xd71f0800, 0xfffffc00, branch_reg, OP2 (Rn, Rd_SP), QL_I2SAMEX, F_SUBCLASS_OTHER),
+  PAUTH_INSN ("brab", 0xd71f0c00, 0xfffffc00, branch_reg, OP2 (Rn, Rd_SP), QL_I2SAMEX, F_SUBCLASS_OTHER),
+  PAUTH_INSN ("blraa", 0xd73f0800, 0xfffffc00, branch_reg, OP2 (Rn, Rd_SP), QL_I2SAMEX, F_BRANCH_CALL),
+  PAUTH_INSN ("blrab", 0xd73f0c00, 0xfffffc00, branch_reg, OP2 (Rn, Rd_SP), QL_I2SAMEX, F_BRANCH_CALL),
+  PAUTH_INSN ("braaz", 0xd61f081f, 0xfffffc1f, branch_reg, OP1 (Rn), QL_I1X, F_SUBCLASS_OTHER),
+  PAUTH_INSN ("brabz", 0xd61f0c1f, 0xfffffc1f, branch_reg, OP1 (Rn), QL_I1X, F_SUBCLASS_OTHER),
+  PAUTH_INSN ("blraaz", 0xd63f081f, 0xfffffc1f, branch_reg, OP1 (Rn), QL_I1X, F_BRANCH_CALL),
+  PAUTH_INSN ("blrabz", 0xd63f0c1f, 0xfffffc1f, branch_reg, OP1 (Rn), QL_I1X, F_BRANCH_CALL),
+  PAUTH_INSN ("retaa", 0xd65f0bff, 0xffffffff, branch_reg, OP0 (), {}, F_BRANCH_RET),
+  PAUTH_INSN ("retab", 0xd65f0fff, 0xffffffff, branch_reg, OP0 (), {}, F_BRANCH_RET),
+  PAUTH_INSN ("eretaa", 0xd69f0bff, 0xffffffff, branch_reg, OP0 (), {}, F_BRANCH_RET),
+  PAUTH_INSN ("eretab", 0xd69f0fff, 0xffffffff, branch_reg, OP0 (), {}, F_BRANCH_RET),
   /* Compare & branch (immediate).  */
   CORE_INSN ("cbz", 0x34000000, 0x7f000000, compbranch, 0, OP2 (Rt, ADDR_PCREL19), QL_R_PCREL, F_SF),
   CORE_INSN ("cbnz", 0x35000000, 0x7f000000, compbranch, 0, OP2 (Rt, ADDR_PCREL19), QL_R_PCREL, F_SF),
   /* Conditional branch (immediate).  */
   CORE_INSN ("b.c", 0x54000000, 0xff000010, condbranch, 0, OP1 (ADDR_PCREL19), QL_PCREL_NIL, F_COND),
+  /* Compare registers and branch. */
+  CMPBR_INSN ("cbgt", 0x74000000, 0x7fe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_R2NIL, F_SF | F_HAS_ALIAS),
+  CMPBR_INSN ("cblt", 0x74000000, 0x7fe0c000, compbranch, OP3 (Rm, Rt, ADDR_PCREL9), QL_R2NIL, F_SF | F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbge", 0x74200000, 0x7fe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_R2NIL, F_SF | F_HAS_ALIAS),
+  CMPBR_INSN ("cble", 0x74200000, 0x7fe0c000, compbranch, OP3 (Rm, Rt, ADDR_PCREL9), QL_R2NIL, F_SF | F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbhi", 0x74400000, 0x7fe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_R2NIL, F_SF | F_HAS_ALIAS),
+  CMPBR_INSN ("cblo", 0x74400000, 0x7fe0c000, compbranch, OP3 (Rm, Rt, ADDR_PCREL9), QL_R2NIL, F_SF | F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbhs", 0x74600000, 0x7fe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_R2NIL, F_SF | F_HAS_ALIAS),
+  CMPBR_INSN ("cbls", 0x74600000, 0x7fe0c000, compbranch, OP3 (Rm, Rt, ADDR_PCREL9), QL_R2NIL, F_SF | F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbeq", 0x74c00000, 0x7fe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_R2NIL, F_SF),
+  CMPBR_INSN ("cbne", 0x74e00000, 0x7fe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_R2NIL, F_SF),
+  /* Compare register with immediate and branch.  */
+  CMPBR_INSN ("cbgt", 0x75000000, 0x7fe04000, compbranch, OP3 (Rt, IMM_2, ADDR_PCREL9), QL_R_IMM_NIL, F_SF | F_HAS_ALIAS),
+  CMPBR_INSN ("cbge", 0x75000000, 0x7fe04000, compbranch, OP3 (Rt, IMMP1_2, ADDR_PCREL9), QL_R_IMM_NIL, F_SF | F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cblt", 0x75200000, 0x7fe04000, compbranch, OP3 (Rt, IMM_2, ADDR_PCREL9), QL_R_IMM_NIL, F_SF | F_HAS_ALIAS),
+  CMPBR_INSN ("cble", 0x75200000, 0x7fe04000, compbranch, OP3 (Rt, IMMS1_2, ADDR_PCREL9), QL_R_IMM_NIL, F_SF | F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbhi", 0x75400000, 0x7fe04000, compbranch, OP3 (Rt, IMM_2, ADDR_PCREL9), QL_R_IMM_NIL, F_SF | F_HAS_ALIAS),
+  CMPBR_INSN ("cbhs", 0x75400000, 0x7fe04000, compbranch, OP3 (Rt, IMMP1_2, ADDR_PCREL9), QL_R_IMM_NIL, F_SF | F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cblo", 0x75600000, 0x7fe04000, compbranch, OP3 (Rt, IMM_2, ADDR_PCREL9), QL_R_IMM_NIL, F_SF | F_HAS_ALIAS),
+  CMPBR_INSN ("cbls", 0x75600000, 0x7fe04000, compbranch, OP3 (Rt, IMMS1_2, ADDR_PCREL9), QL_R_IMM_NIL, F_SF | F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbeq", 0x75c00000, 0x7fe04000, compbranch, OP3 (Rt, IMM_2, ADDR_PCREL9), QL_R_IMM_NIL, F_SF),
+  CMPBR_INSN ("cbne", 0x75e00000, 0x7fe04000, compbranch, OP3 (Rt, IMM_2, ADDR_PCREL9), QL_R_IMM_NIL, F_SF),
+  /* Compare bytes and branch.  */
+  CMPBR_INSN ("cbbgt", 0x74008000, 0xffe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_W2NIL, F_HAS_ALIAS),
+  CMPBR_INSN ("cbblt", 0x74008000, 0xffe0c000, compbranch, OP3 (Rm, Rt, ADDR_PCREL9), QL_W2NIL, F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbbge", 0x74208000, 0xffe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_W2NIL, F_HAS_ALIAS),
+  CMPBR_INSN ("cbble", 0x74208000, 0xffe0c000, compbranch, OP3 (Rm, Rt, ADDR_PCREL9), QL_W2NIL, F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbbhi", 0x74408000, 0xffe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_W2NIL, F_HAS_ALIAS),
+  CMPBR_INSN ("cbblo", 0x74408000, 0xffe0c000, compbranch, OP3 (Rm, Rt, ADDR_PCREL9), QL_W2NIL, F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbbhs", 0x74608000, 0xffe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_W2NIL, F_HAS_ALIAS),
+  CMPBR_INSN ("cbbls", 0x74608000, 0xffe0c000, compbranch, OP3 (Rm, Rt, ADDR_PCREL9), QL_W2NIL, F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbbeq", 0x74c08000, 0xffe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_W2NIL, 0),
+  CMPBR_INSN ("cbbne", 0x74e08000, 0xffe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_W2NIL, 0),
+  /* Compare halfwords and branch.  */
+  CMPBR_INSN ("cbhgt", 0x7400c000, 0xffe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_W2NIL, F_HAS_ALIAS),
+  CMPBR_INSN ("cbhlt", 0x7400c000, 0xffe0c000, compbranch, OP3 (Rm, Rt, ADDR_PCREL9), QL_W2NIL, F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbhge", 0x7420c000, 0xffe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_W2NIL, F_HAS_ALIAS),
+  CMPBR_INSN ("cbhle", 0x7420c000, 0xffe0c000, compbranch, OP3 (Rm, Rt, ADDR_PCREL9), QL_W2NIL, F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbhhi", 0x7440c000, 0xffe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_W2NIL, F_HAS_ALIAS),
+  CMPBR_INSN ("cbhlo", 0x7440c000, 0xffe0c000, compbranch, OP3 (Rm, Rt, ADDR_PCREL9), QL_W2NIL, F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbhhs", 0x7460c000, 0xffe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_W2NIL, F_HAS_ALIAS),
+  CMPBR_INSN ("cbhls", 0x7460c000, 0xffe0c000, compbranch, OP3 (Rm, Rt, ADDR_PCREL9), QL_W2NIL, F_ALIAS | F_PSEUDO),
+  CMPBR_INSN ("cbheq", 0x74c0c000, 0xffe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_W2NIL, 0),
+  CMPBR_INSN ("cbhne", 0x74e0c000, 0xffe0c000, compbranch, OP3 (Rt, Rm, ADDR_PCREL9), QL_W2NIL, 0),
   /* Conditional compare (immediate).  */
   CORE_INSN ("ccmn", 0x3a400800, 0x7fe00c10, condcmp_imm, 0, OP4 (Rn, CCMP_IMM, NZCV, COND), QL_CCMP_IMM, F_SF),
   CORE_INSN ("ccmp", 0x7a400800, 0x7fe00c10, condcmp_imm, 0, OP4 (Rn, CCMP_IMM, NZCV, COND), QL_CCMP_IMM, F_SF),
@@ -3673,55 +4236,55 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   CORE_INSN ("rbit",  0x5ac00000, 0x7ffffc00, dp_1src, 0, OP2 (Rd, Rn), QL_I2SAME, F_SF),
   CORE_INSN ("rev16", 0x5ac00400, 0x7ffffc00, dp_1src, 0, OP2 (Rd, Rn), QL_I2SAME, F_SF),
   CORE_INSN ("rev",   0x5ac00800, 0xfffffc00, dp_1src, 0, OP2 (Rd, Rn), QL_I2SAMEW, 0),
-  CORE_INSN ("rev",   0xdac00c00, 0xfffffc00, dp_1src, 0, OP2 (Rd, Rn), QL_I2SAMEX, F_SF | F_HAS_ALIAS | F_P1),
-  CORE_INSN ("rev64", 0xdac00c00, 0xfffffc00, dp_1src, 0, OP2 (Rd, Rn), QL_I2SAMEX, F_SF | F_ALIAS),
+  CORE_INSN ("rev",   0xdac00c00, 0xfffffc00, dp_1src, 0, OP2 (Rd, Rn), QL_I2SAMEX, F_SF | F_HAS_ALIAS),
+  CORE_INSN ("rev64", 0xdac00c00, 0xfffffc00, dp_1src, 0, OP2 (Rd, Rn), QL_I2SAMEX, F_SF | F_ALIAS | F_PSEUDO),
   CORE_INSN ("clz",   0x5ac01000, 0x7ffffc00, dp_1src, 0, OP2 (Rd, Rn), QL_I2SAME, F_SF),
   CORE_INSN ("cls",   0x5ac01400, 0x7ffffc00, dp_1src, 0, OP2 (Rd, Rn), QL_I2SAME, F_SF),
   CORE_INSN ("rev32", 0xdac00800, 0xfffffc00, dp_1src, 0, OP2 (Rd, Rn), QL_I2SAMEX, 0),
-  PAC_INSN ("pacia", 0xdac10000, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
-  PAC_INSN ("pacib", 0xdac10400, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
-  PAC_INSN ("pacda", 0xdac10800, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
-  PAC_INSN ("pacdb", 0xdac10c00, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
-  PAC_INSN ("autia", 0xdac11000, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
-  PAC_INSN ("autib", 0xdac11400, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
-  PAC_INSN ("autda", 0xdac11800, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
-  PAC_INSN ("autdb", 0xdac11c00, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
-  PAC_INSN ("paciza", 0xdac123e0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
-  PAC_INSN ("pacizb", 0xdac127e0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
-  PAC_INSN ("pacdza", 0xdac12be0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
-  PAC_INSN ("pacdzb", 0xdac12fe0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
-  PAC_INSN ("autiza", 0xdac133e0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
-  PAC_INSN ("autizb", 0xdac137e0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
-  PAC_INSN ("autdza", 0xdac13be0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
-  PAC_INSN ("autdzb", 0xdac13fe0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
-  PAC_INSN ("xpaci", 0xdac143e0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
-  PAC_INSN ("xpacd", 0xdac147e0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
+  PAUTH_INSN ("pacia", 0xdac10000, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
+  PAUTH_INSN ("pacib", 0xdac10400, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
+  PAUTH_INSN ("pacda", 0xdac10800, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
+  PAUTH_INSN ("pacdb", 0xdac10c00, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
+  PAUTH_INSN ("autia", 0xdac11000, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
+  PAUTH_INSN ("autib", 0xdac11400, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
+  PAUTH_INSN ("autda", 0xdac11800, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
+  PAUTH_INSN ("autdb", 0xdac11c00, 0xfffffc00, dp_1src, OP2 (Rd, Rn_SP), QL_I2SAMEX, 0),
+  PAUTH_INSN ("paciza", 0xdac123e0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
+  PAUTH_INSN ("pacizb", 0xdac127e0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
+  PAUTH_INSN ("pacdza", 0xdac12be0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
+  PAUTH_INSN ("pacdzb", 0xdac12fe0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
+  PAUTH_INSN ("autiza", 0xdac133e0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
+  PAUTH_INSN ("autizb", 0xdac137e0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
+  PAUTH_INSN ("autdza", 0xdac13be0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
+  PAUTH_INSN ("autdzb", 0xdac13fe0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
+  PAUTH_INSN ("xpaci", 0xdac143e0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
+  PAUTH_INSN ("xpacd", 0xdac147e0, 0xffffffe0, dp_1src, OP1 (Rd), QL_I1X, 0),
   /* Data-processing (2 source).  */
-  CORE_INSN ("udiv",  0x1ac00800, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF),
-  CORE_INSN ("sdiv",  0x1ac00c00, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF),
-  CORE_INSN ("lslv",  0x1ac02000, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_HAS_ALIAS),
-  CORE_INSN ("lsl",   0x1ac02000, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_ALIAS),
-  CORE_INSN ("lsrv",  0x1ac02400, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_HAS_ALIAS),
-  CORE_INSN ("lsr",   0x1ac02400, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_ALIAS),
-  CORE_INSN ("asrv",  0x1ac02800, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_HAS_ALIAS),
-  CORE_INSN ("asr",   0x1ac02800, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_ALIAS),
-  CORE_INSN ("rorv",  0x1ac02c00, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_HAS_ALIAS),
-  CORE_INSN ("ror",   0x1ac02c00, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_ALIAS),
-  MEMTAG_INSN ("subp",   0x9ac00000, 0xffe0fc00, dp_2src, OP3 (Rd, Rn_SP, Rm_SP), QL_I3SAMEX, 0),
-  MEMTAG_INSN ("subps",  0xbac00000, 0xffe0fc00, dp_2src, OP3 (Rd, Rn_SP, Rm_SP), QL_I3SAMEX, F_HAS_ALIAS),
-  MEMTAG_INSN ("cmpp",   0xbac0001f, 0xffe0fc1f, dp_2src, OP2 (Rn_SP, Rm_SP), QL_I2SAMEX, F_ALIAS),
-  MEMTAG_INSN ("irg",    0x9ac01000, 0xffe0fc00, dp_2src, OP3 (Rd_SP, Rn_SP, Rm), QL_I3SAMEX, F_OPD2_OPT | F_DEFAULT (0x1f)),
-  MEMTAG_INSN ("gmi",    0x9ac01400, 0xffe0fc00, dp_2src, OP3 (Rd, Rn_SP, Rm), QL_I3SAMEX, 0),
-  PAC_INSN ("pacga", 0x9ac03000, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm_SP), QL_I3SAMEX, 0),
+  CORE_INSN ("udiv",  0x1ac00800, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_SUBCLASS_OTHER),
+  CORE_INSN ("sdiv",  0x1ac00c00, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_SUBCLASS_OTHER),
+  CORE_INSN ("lslv",  0x1ac02000, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_HAS_ALIAS | F_SUBCLASS_OTHER),
+  CORE_INSN ("lsl",   0x1ac02000, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_ALIAS | F_SUBCLASS_OTHER),
+  CORE_INSN ("lsrv",  0x1ac02400, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_HAS_ALIAS | F_SUBCLASS_OTHER),
+  CORE_INSN ("lsr",   0x1ac02400, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_ALIAS | F_SUBCLASS_OTHER),
+  CORE_INSN ("asrv",  0x1ac02800, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_HAS_ALIAS | F_SUBCLASS_OTHER),
+  CORE_INSN ("asr",   0x1ac02800, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_ALIAS | F_SUBCLASS_OTHER),
+  CORE_INSN ("rorv",  0x1ac02c00, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_HAS_ALIAS | F_SUBCLASS_OTHER),
+  CORE_INSN ("ror",   0x1ac02c00, 0x7fe0fc00, dp_2src, 0, OP3 (Rd, Rn, Rm), QL_I3SAMER, F_SF | F_ALIAS | F_SUBCLASS_OTHER),
+  MEMTAG_INSN ("subp",   0x9ac00000, 0xffe0fc00, dp_2src, OP3 (Rd, Rn_SP, Rm_SP), QL_I3SAMEX, F_SUBCLASS_OTHER),
+  MEMTAG_INSN ("subps",  0xbac00000, 0xffe0fc00, dp_2src, OP3 (Rd, Rn_SP, Rm_SP), QL_I3SAMEX, F_HAS_ALIAS | F_SUBCLASS_OTHER),
+  MEMTAG_INSN ("cmpp",   0xbac0001f, 0xffe0fc1f, dp_2src, OP2 (Rn_SP, Rm_SP), QL_I2SAMEX, F_ALIAS | F_SUBCLASS_OTHER),
+  MEMTAG_INSN ("irg",    0x9ac01000, 0xffe0fc00, dp_2src, OP3 (Rd_SP, Rn_SP, Rm), QL_I3SAMEX, F_OPD2_OPT | F_DEFAULT (0x1f) | F_DP_TAG_ONLY),
+  MEMTAG_INSN ("gmi",    0x9ac01400, 0xffe0fc00, dp_2src, OP3 (Rd, Rn_SP, Rm), QL_I3SAMEX, F_SUBCLASS_OTHER),
+  PAUTH_INSN ("pacga", 0x9ac03000, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm_SP), QL_I3SAMEX, F_SUBCLASS_OTHER),
   /* CRC instructions.  */
-  _CRC_INSN ("crc32b", 0x1ac04000, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3SAMEW, 0),
-  _CRC_INSN ("crc32h", 0x1ac04400, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3SAMEW, 0),
-  _CRC_INSN ("crc32w", 0x1ac04800, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3SAMEW, 0),
-  _CRC_INSN ("crc32x", 0x9ac04c00, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3WWX,   0),
-  _CRC_INSN ("crc32cb",0x1ac05000, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3SAMEW, 0),
-  _CRC_INSN ("crc32ch",0x1ac05400, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3SAMEW, 0),
-  _CRC_INSN ("crc32cw",0x1ac05800, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3SAMEW, 0),
-  _CRC_INSN ("crc32cx",0x9ac05c00, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3WWX,   0),
+  _CRC_INSN ("crc32b", 0x1ac04000, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3SAMEW, F_SUBCLASS_OTHER),
+  _CRC_INSN ("crc32h", 0x1ac04400, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3SAMEW, F_SUBCLASS_OTHER),
+  _CRC_INSN ("crc32w", 0x1ac04800, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3SAMEW, F_SUBCLASS_OTHER),
+  _CRC_INSN ("crc32x", 0x9ac04c00, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3WWX,   F_SUBCLASS_OTHER),
+  _CRC_INSN ("crc32cb",0x1ac05000, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3SAMEW, F_SUBCLASS_OTHER),
+  _CRC_INSN ("crc32ch",0x1ac05400, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3SAMEW, F_SUBCLASS_OTHER),
+  _CRC_INSN ("crc32cw",0x1ac05800, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3SAMEW, F_SUBCLASS_OTHER),
+  _CRC_INSN ("crc32cx",0x9ac05c00, 0xffe0fc00, dp_2src, OP3 (Rd, Rn, Rm), QL_I3WWX,   F_SUBCLASS_OTHER),
   /* Data-processing (3 source).  */
   CORE_INSN ("madd",  0x1b000000, 0x7fe08000, dp_3src, 0, OP4 (Rd, Rn, Rm, Ra), QL_I4SAMER, F_HAS_ALIAS | F_SF),
   CORE_INSN ("mul",   0x1b007c00, 0x7fe0fc00, dp_3src, 0, OP3 (Rd, Rn, Rm),     QL_I3SAMER, F_ALIAS | F_SF),
@@ -3762,32 +4325,44 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   /* Floating-point<->integer conversions.  */
   __FP_INSN ("fcvtns",0x1e200000, 0x7f3ffc00, float2int, 0, OP2 (Rd, Fn), QL_FP2INT, F_FPTYPE | F_SF),
   FF16_INSN ("fcvtns",0x1ee00000, 0x7f3ffc00, float2int, OP2 (Rd, Fn), QL_FP2INT_H, F_FPTYPE | F_SF),
+  FPRCVT_INSN ("fcvtns",0x1e2a0000, 0x7f3ffc00, fprcvtfloat2int, OP2 (Fd, Fn), QL_FP2INT_FPRCVT, F_FPTYPE | F_SF),
   __FP_INSN ("fcvtnu",0x1e210000, 0x7f3ffc00, float2int, 0, OP2 (Rd, Fn), QL_FP2INT, F_FPTYPE | F_SF),
   FF16_INSN ("fcvtnu",0x1ee10000, 0x7f3ffc00, float2int, OP2 (Rd, Fn), QL_FP2INT_H, F_FPTYPE | F_SF),
+  FPRCVT_INSN ("fcvtnu",0x1e2b0000, 0x7f3ffc00, fprcvtfloat2int, OP2 (Fd, Fn), QL_FP2INT_FPRCVT, F_FPTYPE | F_SF),
   __FP_INSN ("scvtf", 0x1e220000, 0x7f3ffc00, float2int, 0, OP2 (Fd, Rn), QL_INT2FP, F_FPTYPE | F_SF),
   FF16_INSN ("scvtf", 0x1ee20000, 0x7f3ffc00, float2int, OP2 (Fd, Rn), QL_INT2FP_H, F_FPTYPE | F_SF),
+  FPRCVT_INSN ("scvtf",0x1e3c0000, 0x7f3ffc00, fprcvtint2float, OP2 (Fd, Fn), QL_INT2FP_FPRCVT, F_FPTYPE | F_SF),
   __FP_INSN ("ucvtf", 0x1e230000, 0x7f3ffc00, float2int, 0, OP2 (Fd, Rn), QL_INT2FP, F_FPTYPE | F_SF),
   FF16_INSN ("ucvtf", 0x1ee30000, 0x7f3ffc00, float2int, OP2 (Fd, Rn), QL_INT2FP_H, F_FPTYPE | F_SF),
+  FPRCVT_INSN ("ucvtf",0x1e3d0000, 0x7f3ffc00, fprcvtint2float, OP2 (Fd, Fn), QL_INT2FP_FPRCVT, F_FPTYPE | F_SF),
   __FP_INSN ("fcvtas",0x1e240000, 0x7f3ffc00, float2int, 0, OP2 (Rd, Fn), QL_FP2INT, F_FPTYPE | F_SF),
   FF16_INSN ("fcvtas",0x1ee40000, 0x7f3ffc00, float2int, OP2 (Rd, Fn), QL_FP2INT_H, F_FPTYPE | F_SF),
+  FPRCVT_INSN ("fcvtas",0x1e3a0000, 0x7f3ffc00, fprcvtfloat2int, OP2 (Fd, Fn), QL_FP2INT_FPRCVT, F_FPTYPE | F_SF),
   __FP_INSN ("fcvtau",0x1e250000, 0x7f3ffc00, float2int, 0, OP2 (Rd, Fn), QL_FP2INT, F_FPTYPE | F_SF),
   FF16_INSN ("fcvtau",0x1ee50000, 0x7f3ffc00, float2int, OP2 (Rd, Fn), QL_FP2INT_H, F_FPTYPE | F_SF),
+  FPRCVT_INSN ("fcvtau",0x1e3b0000, 0x7f3ffc00, fprcvtfloat2int, OP2 (Fd, Fn), QL_FP2INT_FPRCVT, F_FPTYPE | F_SF),
   __FP_INSN ("fmov",  0x1e260000, 0x7f3ffc00, float2int, 0, OP2 (Rd, Fn), QL_FP2INT_FMOV, F_FPTYPE | F_SF),
   FF16_INSN ("fmov",  0x1ee60000, 0x7f3ffc00, float2int, OP2 (Rd, Fn), QL_FP2INT_H, F_FPTYPE | F_SF),
   __FP_INSN ("fmov",  0x1e270000, 0x7f3ffc00, float2int, 0, OP2 (Fd, Rn), QL_INT2FP_FMOV, F_FPTYPE | F_SF),
   FF16_INSN ("fmov",  0x1ee70000, 0x7f3ffc00, float2int, OP2 (Fd, Rn), QL_INT2FP_H, F_FPTYPE | F_SF),
   __FP_INSN ("fcvtps",0x1e280000, 0x7f3ffc00, float2int, 0, OP2 (Rd, Fn), QL_FP2INT, F_FPTYPE | F_SF),
   FF16_INSN ("fcvtps",0x1ee80000, 0x7f3ffc00, float2int, OP2 (Rd, Fn), QL_FP2INT_H, F_FPTYPE | F_SF),
+  FPRCVT_INSN ("fcvtps",0x1e320000, 0x7f3ffc00, fprcvtfloat2int, OP2 (Fd, Fn), QL_FP2INT_FPRCVT, F_FPTYPE | F_SF),
   __FP_INSN ("fcvtpu",0x1e290000, 0x7f3ffc00, float2int, 0, OP2 (Rd, Fn), QL_FP2INT, F_FPTYPE | F_SF),
   FF16_INSN ("fcvtpu",0x1ee90000, 0x7f3ffc00, float2int, OP2 (Rd, Fn), QL_FP2INT_H, F_FPTYPE | F_SF),
+  FPRCVT_INSN ("fcvtpu",0x1e330000, 0x7f3ffc00, fprcvtfloat2int, OP2 (Fd, Fn), QL_FP2INT_FPRCVT, F_FPTYPE | F_SF),
   __FP_INSN ("fcvtms",0x1e300000, 0x7f3ffc00, float2int, 0, OP2 (Rd, Fn), QL_FP2INT, F_FPTYPE | F_SF),
   FF16_INSN ("fcvtms",0x1ef00000, 0x7f3ffc00, float2int, OP2 (Rd, Fn), QL_FP2INT_H, F_FPTYPE | F_SF),
+  FPRCVT_INSN ("fcvtms",0x1e340000, 0x7f3ffc00, fprcvtfloat2int, OP2 (Fd, Fn), QL_FP2INT_FPRCVT, F_FPTYPE | F_SF),
   __FP_INSN ("fcvtmu",0x1e310000, 0x7f3ffc00, float2int, 0, OP2 (Rd, Fn), QL_FP2INT, F_FPTYPE | F_SF),
   FF16_INSN ("fcvtmu",0x1ef10000, 0x7f3ffc00, float2int, OP2 (Rd, Fn), QL_FP2INT_H, F_FPTYPE | F_SF),
+  FPRCVT_INSN ("fcvtmu",0x1e350000, 0x7f3ffc00, fprcvtfloat2int, OP2 (Fd, Fn), QL_FP2INT_FPRCVT, F_FPTYPE | F_SF),
   __FP_INSN ("fcvtzs",0x1e380000, 0x7f3ffc00, float2int, 0, OP2 (Rd, Fn), QL_FP2INT, F_FPTYPE | F_SF),
   FF16_INSN ("fcvtzs",0x1ef80000, 0x7f3ffc00, float2int, OP2 (Rd, Fn), QL_FP2INT_H, F_FPTYPE | F_SF),
+  FPRCVT_INSN ("fcvtzs",0x1e360000, 0x7f3ffc00, fprcvtfloat2int, OP2 (Fd, Fn), QL_FP2INT_FPRCVT, F_FPTYPE | F_SF),
   __FP_INSN ("fcvtzu",0x1e390000, 0x7f3ffc00, float2int, 0, OP2 (Rd, Fn), QL_FP2INT, F_FPTYPE | F_SF),
   FF16_INSN ("fcvtzu",0x1ef90000, 0x7f3ffc00, float2int, OP2 (Rd, Fn), QL_FP2INT_H, F_FPTYPE | F_SF),
+  FPRCVT_INSN ("fcvtzu",0x1e370000, 0x7f3ffc00, fprcvtfloat2int, OP2 (Fd, Fn), QL_FP2INT_FPRCVT, F_FPTYPE | F_SF),
   __FP_INSN ("fmov",  0x9eae0000, 0xfffffc00, float2int, 0, OP2 (Rd, VnD1), QL_XVD1, 0),
   __FP_INSN ("fmov",  0x9eaf0000, 0xfffffc00, float2int, 0, OP2 (VdD1, Rn), QL_VD1X, 0),
   JSCVT_INSN ("fjcvtzs", 0x1e7e0000, 0xfffffc00, float2int, OP2 (Rd, Fn), QL_FP2INT_W_D, 0),
@@ -3871,39 +4446,39 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   __FP_INSN ("fcsel", 0x1e200c00, 0xff200c00, floatsel, 0, OP4 (Fd, Fn, Fm, COND), QL_FP_COND, F_FPTYPE),
   FF16_INSN ("fcsel", 0x1ee00c00, 0xff200c00, floatsel, OP4 (Fd, Fn, Fm, COND), QL_FP_COND_H, F_FPTYPE),
   /* Load/store register (immediate indexed).  */
-  CORE_INSN ("strb", 0x38000400, 0xffe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_W8, 0),
-  CORE_INSN ("ldrb", 0x38400400, 0xffe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_W8, 0),
-  CORE_INSN ("ldrsb", 0x38800400, 0xffa00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_R8, F_LDS_SIZE),
-  CORE_INSN ("str", 0x3c000400, 0x3f600400, ldst_imm9, 0, OP2 (Ft, ADDR_SIMM9), QL_LDST_FP, 0),
-  CORE_INSN ("ldr", 0x3c400400, 0x3f600400, ldst_imm9, 0, OP2 (Ft, ADDR_SIMM9), QL_LDST_FP, 0),
-  CORE_INSN ("strh", 0x78000400, 0xffe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_W16, 0),
-  CORE_INSN ("ldrh", 0x78400400, 0xffe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_W16, 0),
-  CORE_INSN ("ldrsh", 0x78800400, 0xffa00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_R16, F_LDS_SIZE),
-  CORE_INSN ("str", 0xb8000400, 0xbfe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_R, F_GPRSIZE_IN_Q),
-  CORE_INSN ("ldr", 0xb8400400, 0xbfe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_R, F_GPRSIZE_IN_Q),
-  CORE_INSN ("ldrsw", 0xb8800400, 0xffe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_X32, 0),
+  CORE_INSN ("strb", 0x38000400, 0xffe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_W8, F_SUBCLASS_OTHER),
+  CORE_INSN ("ldrb", 0x38400400, 0xffe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_W8, F_SUBCLASS_OTHER),
+  CORE_INSN ("ldrsb", 0x38800400, 0xffa00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_R8, F_SUBCLASS_OTHER | F_LDS_SIZE),
+  CORE_INSN ("str", 0x3c000400, 0x3f600400, ldst_imm9, 0, OP2 (Ft, ADDR_SIMM9), QL_LDST_FP, F_LDST_STORE),
+  CORE_INSN ("ldr", 0x3c400400, 0x3f600400, ldst_imm9, 0, OP2 (Ft, ADDR_SIMM9), QL_LDST_FP, F_LDST_LOAD),
+  CORE_INSN ("strh", 0x78000400, 0xffe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_W16, F_SUBCLASS_OTHER),
+  CORE_INSN ("ldrh", 0x78400400, 0xffe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_W16, F_SUBCLASS_OTHER),
+  CORE_INSN ("ldrsh", 0x78800400, 0xffa00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_R16, F_SUBCLASS_OTHER | F_LDS_SIZE),
+  CORE_INSN ("str", 0xb8000400, 0xbfe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_R, F_LDST_STORE | F_GPRSIZE_IN_Q),
+  CORE_INSN ("ldr", 0xb8400400, 0xbfe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_R, F_LDST_LOAD | F_GPRSIZE_IN_Q),
+  CORE_INSN ("ldrsw", 0xb8800400, 0xffe00400, ldst_imm9, 0, OP2 (Rt, ADDR_SIMM9), QL_LDST_X32, F_SUBCLASS_OTHER),
   /* Load/store Allocation Tag instructions.  */
   MEMTAG_INSN ("stg",  0xd9200800, 0xffe00c00, ldst_unscaled, OP2 (Rt_SP, ADDR_SIMM13), QL_LDST_AT, 0),
   MEMTAG_INSN ("stzg", 0xd9600800, 0xffe00c00, ldst_unscaled, OP2 (Rt_SP, ADDR_SIMM13), QL_LDST_AT, 0),
   MEMTAG_INSN ("st2g", 0xd9a00800, 0xffe00c00, ldst_unscaled, OP2 (Rt_SP, ADDR_SIMM13), QL_LDST_AT, 0),
   MEMTAG_INSN ("stz2g",0xd9e00800, 0xffe00c00, ldst_unscaled, OP2 (Rt_SP, ADDR_SIMM13), QL_LDST_AT, 0),
-  MEMTAG_INSN ("stg",  0xd9200400, 0xffe00400, ldst_imm9, OP2 (Rt_SP, ADDR_SIMM13), QL_LDST_AT, 0),
-  MEMTAG_INSN ("stzg", 0xd9600400, 0xffe00400, ldst_imm9, OP2 (Rt_SP, ADDR_SIMM13), QL_LDST_AT, 0),
-  MEMTAG_INSN ("st2g", 0xd9a00400, 0xffe00400, ldst_imm9, OP2 (Rt_SP, ADDR_SIMM13), QL_LDST_AT, 0),
-  MEMTAG_INSN ("stz2g",0xd9e00400, 0xffe00400, ldst_imm9, OP2 (Rt_SP, ADDR_SIMM13), QL_LDST_AT, 0),
+  MEMTAG_INSN ("stg",  0xd9200400, 0xffe00400, ldst_imm9, OP2 (Rt_SP, ADDR_SIMM13), QL_LDST_AT, F_SUBCLASS_OTHER),
+  MEMTAG_INSN ("stzg", 0xd9600400, 0xffe00400, ldst_imm9, OP2 (Rt_SP, ADDR_SIMM13), QL_LDST_AT, F_SUBCLASS_OTHER),
+  MEMTAG_INSN ("st2g", 0xd9a00400, 0xffe00400, ldst_imm9, OP2 (Rt_SP, ADDR_SIMM13), QL_LDST_AT, F_SUBCLASS_OTHER),
+  MEMTAG_INSN ("stz2g",0xd9e00400, 0xffe00400, ldst_imm9, OP2 (Rt_SP, ADDR_SIMM13), QL_LDST_AT, F_SUBCLASS_OTHER),
   /* Load/store register (unsigned immediate).  */
-  CORE_INSN ("strb", 0x39000000, 0xffc00000, ldst_pos, OP_STRB_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_W8, 0),
-  CORE_INSN ("ldrb", 0x39400000, 0xffc00000, ldst_pos, OP_LDRB_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_W8, 0),
-  CORE_INSN ("ldrsb", 0x39800000, 0xff800000, ldst_pos, OP_LDRSB_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_R8, F_LDS_SIZE),
-  CORE_INSN ("str", 0x3d000000, 0x3f400000, ldst_pos, OP_STRF_POS, OP2 (Ft, ADDR_UIMM12), QL_LDST_FP, 0),
-  CORE_INSN ("ldr", 0x3d400000, 0x3f400000, ldst_pos, OP_LDRF_POS, OP2 (Ft, ADDR_UIMM12), QL_LDST_FP, 0),
-  CORE_INSN ("strh", 0x79000000, 0xffc00000, ldst_pos, OP_STRH_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_W16, 0),
-  CORE_INSN ("ldrh", 0x79400000, 0xffc00000, ldst_pos, OP_LDRH_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_W16, 0),
-  CORE_INSN ("ldrsh", 0x79800000, 0xff800000, ldst_pos, OP_LDRSH_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_R16, F_LDS_SIZE),
-  CORE_INSN ("str", 0xb9000000, 0xbfc00000, ldst_pos, OP_STR_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_R, F_GPRSIZE_IN_Q),
-  CORE_INSN ("ldr", 0xb9400000, 0xbfc00000, ldst_pos, OP_LDR_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_R, F_GPRSIZE_IN_Q),
-  CORE_INSN ("ldrsw", 0xb9800000, 0xffc00000, ldst_pos, OP_LDRSW_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_X32, 0),
-  CORE_INSN ("prfm", 0xf9800000, 0xffc00000, ldst_pos, OP_PRFM_POS, OP2 (PRFOP, ADDR_UIMM12), QL_LDST_PRFM, 0),
+  CORE_INSN ("strb", 0x39000000, 0xffc00000, ldst_pos, OP_STRB_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_W8, F_SUBCLASS_OTHER),
+  CORE_INSN ("ldrb", 0x39400000, 0xffc00000, ldst_pos, OP_LDRB_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_W8, F_SUBCLASS_OTHER),
+  CORE_INSN ("ldrsb", 0x39800000, 0xff800000, ldst_pos, OP_LDRSB_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_R8, F_SUBCLASS_OTHER | F_LDS_SIZE),
+  CORE_INSN ("str", 0x3d000000, 0x3f400000, ldst_pos, OP_STRF_POS, OP2 (Ft, ADDR_UIMM12), QL_LDST_FP, F_LDST_STORE),
+  CORE_INSN ("ldr", 0x3d400000, 0x3f400000, ldst_pos, OP_LDRF_POS, OP2 (Ft, ADDR_UIMM12), QL_LDST_FP, F_LDST_LOAD),
+  CORE_INSN ("strh", 0x79000000, 0xffc00000, ldst_pos, OP_STRH_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_W16, F_SUBCLASS_OTHER),
+  CORE_INSN ("ldrh", 0x79400000, 0xffc00000, ldst_pos, OP_LDRH_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_W16, F_SUBCLASS_OTHER),
+  CORE_INSN ("ldrsh", 0x79800000, 0xff800000, ldst_pos, OP_LDRSH_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_R16, F_SUBCLASS_OTHER | F_LDS_SIZE),
+  CORE_INSN ("str", 0xb9000000, 0xbfc00000, ldst_pos, OP_STR_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_R, F_GPRSIZE_IN_Q | F_LDST_STORE),
+  CORE_INSN ("ldr", 0xb9400000, 0xbfc00000, ldst_pos, OP_LDR_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_R, F_GPRSIZE_IN_Q | F_LDST_LOAD),
+  CORE_INSN ("ldrsw", 0xb9800000, 0xffc00000, ldst_pos, OP_LDRSW_POS, OP2 (Rt, ADDR_UIMM12), QL_LDST_X32, F_SUBCLASS_OTHER),
+  CORE_INSN ("prfm", 0xf9800000, 0xffc00000, ldst_pos, OP_PRFM_POS, OP2 (PRFOP, ADDR_UIMM12), QL_LDST_PRFM, F_SUBCLASS_OTHER),
   /* Load/store register (register offset).  */
   CORE_INSN ("strb", 0x38200800, 0xffe00c00, ldst_regoff, 0, OP2 (Rt, ADDR_REGOFF), QL_LDST_W8, 0),
   CORE_INSN ("ldrb", 0x38600800, 0xffe00c00, ldst_regoff, 0, OP2 (Rt, ADDR_REGOFF), QL_LDST_W8, 0),
@@ -3942,15 +4517,15 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   CORE_INSN ("prfum", 0xf8800000, 0xffe00c00, ldst_unscaled, OP_PRFUM, OP2 (PRFOP, ADDR_SIMM9), QL_LDST_PRFM, 0),
   MEMTAG_INSN ("ldg",  0xd9600000, 0xffe00c00, ldst_unscaled, OP2 (Rt, ADDR_SIMM13), QL_LDG, 0),
   /* Load/store register (scaled signed immediate).  */
-  PAC_INSN ("ldraa", 0xf8200400, 0xffa00400, ldst_imm10, OP2 (Rt, ADDR_SIMM10), QL_X1NIL, 0),
-  PAC_INSN ("ldrab", 0xf8a00400, 0xffa00400, ldst_imm10, OP2 (Rt, ADDR_SIMM10), QL_X1NIL, 0),
+  PAUTH_INSN ("ldraa", 0xf8200400, 0xffa00400, ldst_imm10, OP2 (Rt, ADDR_SIMM10), QL_X1NIL, 0),
+  PAUTH_INSN ("ldrab", 0xf8a00400, 0xffa00400, ldst_imm10, OP2 (Rt, ADDR_SIMM10), QL_X1NIL, 0),
   /* Load/store exclusive.  */
-  CORE_INSN ("stxrb", 0x8007c00, 0xffe08000, ldstexcl, 0, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
-  CORE_INSN ("stlxrb", 0x800fc00, 0xffe08000, ldstexcl, 0, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
-  CORE_INSN ("ldxrb", 0x85f7c00, 0xffe08000, ldstexcl, 0, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0),
-  CORE_INSN ("ldaxrb", 0x85ffc00, 0xffe08000, ldstexcl, 0, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0),
-  CORE_INSN ("stlrb", 0x89ffc00, 0xffe08000, ldstexcl, 0, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0),
-  CORE_INSN ("ldarb", 0x8dffc00, 0xffeffc00, ldstexcl, 0, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0),
+  CORE_INSN ("stxrb", 0x08007c00, 0xffe08000, ldstexcl, 0, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
+  CORE_INSN ("stlxrb", 0x0800fc00, 0xffe08000, ldstexcl, 0, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
+  CORE_INSN ("ldxrb", 0x085f7c00, 0xffe08000, ldstexcl, 0, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0),
+  CORE_INSN ("ldaxrb", 0x085ffc00, 0xffe08000, ldstexcl, 0, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0),
+  CORE_INSN ("stlrb", 0x089ffc00, 0xffe08000, ldstexcl, 0, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0),
+  CORE_INSN ("ldarb", 0x08dffc00, 0xffeffc00, ldstexcl, 0, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0),
   CORE_INSN ("stxrh", 0x48007c00, 0xffe08000, ldstexcl, 0, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
   CORE_INSN ("stlxrh", 0x4800fc00, 0xffe08000, ldstexcl, 0, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
   CORE_INSN ("ldxrh", 0x485f7c00, 0xffe08000, ldstexcl, 0, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0),
@@ -3981,24 +4556,24 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   _LOR_INSN ("stllrb", 0x089f7c00, 0xffe08000, ldstexcl, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0),
   _LOR_INSN ("stllrh", 0x489f7c00, 0xbfe08000, ldstexcl, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0),
   /* Load/store no-allocate pair (offset).  */
-  CORE_INSN ("stnp", 0x28000000, 0x7fc00000, ldstnapair_offs, 0, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_SF),
-  CORE_INSN ("ldnp", 0x28400000, 0x7fc00000, ldstnapair_offs, 0, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_SF),
-  CORE_INSN ("stnp", 0x2c000000, 0x3fc00000, ldstnapair_offs, 0, OP3 (Ft, Ft2, ADDR_SIMM7), QL_LDST_PAIR_FP, 0),
-  CORE_INSN ("ldnp", 0x2c400000, 0x3fc00000, ldstnapair_offs, 0, OP3 (Ft, Ft2, ADDR_SIMM7), QL_LDST_PAIR_FP, 0),
+  CORE_INSN ("stnp", 0x28000000, 0x7fc00000, ldstnapair_offs, 0, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_LDST_STORE | F_SF),
+  CORE_INSN ("ldnp", 0x28400000, 0x7fc00000, ldstnapair_offs, 0, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_LDST_LOAD | F_SF),
+  CORE_INSN ("stnp", 0x2c000000, 0x3fc00000, ldstnapair_offs, 0, OP3 (Ft, Ft2, ADDR_SIMM7), QL_LDST_PAIR_FP, F_LDST_STORE),
+  CORE_INSN ("ldnp", 0x2c400000, 0x3fc00000, ldstnapair_offs, 0, OP3 (Ft, Ft2, ADDR_SIMM7), QL_LDST_PAIR_FP, F_LDST_LOAD),
   /* Load/store register pair (offset).  */
-  CORE_INSN ("stp", 0x29000000, 0x7ec00000, ldstpair_off, 0, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_SF),
-  CORE_INSN ("ldp", 0x29400000, 0x7ec00000, ldstpair_off, 0, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_SF),
-  CORE_INSN ("stp", 0x2d000000, 0x3fc00000, ldstpair_off, 0, OP3 (Ft, Ft2, ADDR_SIMM7), QL_LDST_PAIR_FP, 0),
-  CORE_INSN ("ldp", 0x2d400000, 0x3fc00000, ldstpair_off, 0, OP3 (Ft, Ft2, ADDR_SIMM7), QL_LDST_PAIR_FP, 0),
-  {"ldpsw", 0x69400000, 0xffc00000, ldstpair_off, 0, CORE, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_X32, 0, 0, 0, VERIFIER (ldpsw)},
-  MEMTAG_INSN ("stgp", 0x69000000, 0xffc00000, ldstpair_off, OP3 (Rt, Rt2, ADDR_SIMM11), QL_STGP, 0),
+  CORE_INSN ("stp", 0x29000000, 0x7ec00000, ldstpair_off, 0, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_LDST_STORE | F_SF),
+  CORE_INSN ("ldp", 0x29400000, 0x7ec00000, ldstpair_off, 0, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_LDST_LOAD | F_SF),
+  CORE_INSN ("stp", 0x2d000000, 0x3fc00000, ldstpair_off, 0, OP3 (Ft, Ft2, ADDR_SIMM7), QL_LDST_PAIR_FP, F_LDST_STORE | 0),
+  CORE_INSN ("ldp", 0x2d400000, 0x3fc00000, ldstpair_off, 0, OP3 (Ft, Ft2, ADDR_SIMM7), QL_LDST_PAIR_FP, F_LDST_LOAD),
+  {"ldpsw", 0x69400000, 0xffc00000, ldstpair_off, 0, CORE, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_X32, F_SUBCLASS_OTHER, 0, 0, VERIFIER (ldpsw)},
+  MEMTAG_INSN ("stgp", 0x69000000, 0xffc00000, ldstpair_off, OP3 (Rt, Rt2, ADDR_SIMM11), QL_STGP, F_SUBCLASS_OTHER),
   /* Load/store register pair (indexed).  */
-  CORE_INSN ("stp", 0x28800000, 0x7ec00000, ldstpair_indexed, 0, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_SF),
-  CORE_INSN ("ldp", 0x28c00000, 0x7ec00000, ldstpair_indexed, 0, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_SF),
-  CORE_INSN ("stp", 0x2c800000, 0x3ec00000, ldstpair_indexed, 0, OP3 (Ft, Ft2, ADDR_SIMM7), QL_LDST_PAIR_FP, 0),
-  CORE_INSN ("ldp", 0x2cc00000, 0x3ec00000, ldstpair_indexed, 0, OP3 (Ft, Ft2, ADDR_SIMM7), QL_LDST_PAIR_FP, 0),
-  {"ldpsw", 0x68c00000, 0xfec00000, ldstpair_indexed, 0, CORE, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_X32, 0, 0, 0, VERIFIER (ldpsw)},
-  MEMTAG_INSN ("stgp", 0x68800000, 0xfec00000, ldstpair_indexed, OP3 (Rt, Rt2, ADDR_SIMM11), QL_STGP, 0),
+  CORE_INSN ("stp", 0x28800000, 0x7ec00000, ldstpair_indexed, 0, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_LDST_STORE | F_SF),
+  CORE_INSN ("ldp", 0x28c00000, 0x7ec00000, ldstpair_indexed, 0, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_LDST_LOAD | F_SF),
+  CORE_INSN ("stp", 0x2c800000, 0x3ec00000, ldstpair_indexed, 0, OP3 (Ft, Ft2, ADDR_SIMM7), QL_LDST_PAIR_FP, F_LDST_STORE),
+  CORE_INSN ("ldp", 0x2cc00000, 0x3ec00000, ldstpair_indexed, 0, OP3 (Ft, Ft2, ADDR_SIMM7), QL_LDST_PAIR_FP, F_LDST_LOAD),
+  {"ldpsw", 0x68c00000, 0xfec00000, ldstpair_indexed, 0, CORE, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_X32, F_SUBCLASS_OTHER, 0, 0, VERIFIER (ldpsw)},
+  MEMTAG_INSN ("stgp", 0x68800000, 0xfec00000, ldstpair_indexed, OP3 (Rt, Rt2, ADDR_SIMM11), QL_STGP, F_SUBCLASS_OTHER),
   /* Load register (literal).  */
   CORE_INSN ("ldr",   0x18000000, 0xbf000000, loadlit, OP_LDR_LIT,   OP2 (Rt, ADDR_PCREL19),    QL_R_PCREL, F_GPRSIZE_IN_Q),
   CORE_INSN ("ldr",   0x1c000000, 0x3f000000, loadlit, OP_LDRV_LIT,  OP2 (Ft, ADDR_PCREL19),    QL_FP_PCREL, 0),
@@ -4018,8 +4593,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   CORE_INSN ("ands", 0x72000000, 0x7f800000, log_imm, 0, OP3 (Rd, Rn, LIMM), QL_R2NIL, F_HAS_ALIAS | F_SF),
   CORE_INSN ("tst", 0x7200001f, 0x7f80001f, log_imm, 0, OP2 (Rn, LIMM), QL_R1NIL, F_ALIAS | F_SF),
   /* Logical (shifted register).  */
-  CORE_INSN ("and", 0xa000000, 0x7f200000, log_shift, 0, OP3 (Rd, Rn, Rm_SFT), QL_I3SAMER, F_SF),
-  CORE_INSN ("bic", 0xa200000, 0x7f200000, log_shift, 0, OP3 (Rd, Rn, Rm_SFT), QL_I3SAMER, F_SF),
+  CORE_INSN ("and", 0x0a000000, 0x7f200000, log_shift, 0, OP3 (Rd, Rn, Rm_SFT), QL_I3SAMER, F_SF),
+  CORE_INSN ("bic", 0x0a200000, 0x7f200000, log_shift, 0, OP3 (Rd, Rn, Rm_SFT), QL_I3SAMER, F_SF),
   CORE_INSN ("orr", 0x2a000000, 0x7f200000, log_shift, 0, OP3 (Rd, Rn, Rm_SFT), QL_I3SAMER, F_HAS_ALIAS | F_SF),
   CORE_INSN ("mov", 0x2a0003e0, 0x7fe0ffe0, log_shift, 0, OP2 (Rd, Rm_SFT), QL_I2SAMER, F_ALIAS | F_SF),
   CORE_INSN ("uxtw", 0x2a0003e0, 0x7f2003e0, log_shift, OP_UXTW, OP2 (Rd, Rm), QL_I2SAMEW, F_ALIAS | F_PSEUDO),
@@ -4031,22 +4606,22 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   CORE_INSN ("tst", 0x6a00001f, 0x7f20001f, log_shift, 0, OP2 (Rn, Rm_SFT), QL_I2SAMER, F_ALIAS | F_SF),
   CORE_INSN ("bics", 0x6a200000, 0x7f200000, log_shift, 0, OP3 (Rd, Rn, Rm_SFT), QL_I3SAMER, F_SF),
   /* LSE extension (atomic).  */
-  _LSE_INSN ("casb", 0x8a07c00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
+  _LSE_INSN ("casb", 0x08a07c00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
   _LSE_INSN ("cash", 0x48a07c00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
   _LSE_INSN ("cas", 0x88a07c00, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
-  _LSE_INSN ("casab", 0x8e07c00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
-  _LSE_INSN ("caslb", 0x8a0fc00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
-  _LSE_INSN ("casalb", 0x8e0fc00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
+  _LSE_INSN ("casab", 0x08e07c00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
+  _LSE_INSN ("caslb", 0x08a0fc00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
+  _LSE_INSN ("casalb", 0x08e0fc00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
   _LSE_INSN ("casah", 0x48e07c00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
   _LSE_INSN ("caslh", 0x48a0fc00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
   _LSE_INSN ("casalh", 0x48e0fc00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
   _LSE_INSN ("casa", 0x88e07c00, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
   _LSE_INSN ("casl", 0x88a0fc00, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
   _LSE_INSN ("casal", 0x88e0fc00, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
-  _LSE_INSN ("casp", 0x8207c00, 0xbfe0fc00, lse_atomic, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_R4NIL, F_LSE_SZ),
-  _LSE_INSN ("caspa", 0x8607c00, 0xbfe0fc00, lse_atomic, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_R4NIL, F_LSE_SZ),
-  _LSE_INSN ("caspl", 0x820fc00, 0xbfe0fc00, lse_atomic, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_R4NIL, F_LSE_SZ),
-  _LSE_INSN ("caspal", 0x860fc00, 0xbfe0fc00, lse_atomic, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_R4NIL, F_LSE_SZ),
+  _LSE_INSN ("casp", 0x08207c00, 0xbfe0fc00, lse_atomic, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_R4NIL, F_LSE_SZ),
+  _LSE_INSN ("caspa", 0x08607c00, 0xbfe0fc00, lse_atomic, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_R4NIL, F_LSE_SZ),
+  _LSE_INSN ("caspl", 0x0820fc00, 0xbfe0fc00, lse_atomic, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_R4NIL, F_LSE_SZ),
+  _LSE_INSN ("caspal", 0x0860fc00, 0xbfe0fc00, lse_atomic, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_R4NIL, F_LSE_SZ),
   _LSE_INSN ("swpb", 0x38208000, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
   _LSE_INSN ("swph", 0x78208000, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0),
   _LSE_INSN ("swp", 0xb8208000, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
@@ -4216,6 +4791,55 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   _LSE128_INSN ("swppa", 0x19a08000, 0xffe0fc00, lse128_atomic, OP3 (LSE128_Rt, LSE128_Rt2, ADDR_SIMPLE), QL_X2NIL, 0),
   _LSE128_INSN ("swppal", 0x19e08000, 0xffe0fc00, lse128_atomic, OP3 (LSE128_Rt, LSE128_Rt2, ADDR_SIMPLE), QL_X2NIL, 0),
   _LSE128_INSN ("swppl", 0x19608000, 0xffe0fc00, lse128_atomic, OP3 (LSE128_Rt, LSE128_Rt2, ADDR_SIMPLE), QL_X2NIL, 0),
+
+  /* LSUI extension */
+  _LSUI_INSN ("ldtxr", 0x895f7c00, 0xbffffc00, ldstexcl, OP2 (Rt, ADDR_SIMPLE), QL_R1NIL, F_GPRSIZE_IN_Q),
+  _LSUI_INSN ("ldatxr", 0x895ffc00, 0xbffffc00, ldstexcl, OP2 (Rt, ADDR_SIMPLE), QL_R1NIL, F_GPRSIZE_IN_Q),
+  _LSUI_INSN ("sttxr", 0x89007c00, 0xbfe0fc00, ldstexcl, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2_LDST_EXC, F_GPRSIZE_IN_Q),
+  _LSUI_INSN ("stltxr", 0x8900fc00, 0xbfe0fc00, ldstexcl, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2_LDST_EXC, F_GPRSIZE_IN_Q),
+  _LSUI_INSN ("cast", 0xc9807c00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  _LSUI_INSN ("casat", 0xc9c07c00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  _LSUI_INSN ("casalt", 0xc9c0fc00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  _LSUI_INSN ("caslt", 0xc980fc00, 0xffe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  _LSUI_INSN ("caspt", 0x49807c00, 0xffe0fc00, lse_atomic, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
+  _LSUI_INSN ("caspat", 0x49c07c00, 0xffe0fc00, lse_atomic, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
+  _LSUI_INSN ("caspalt", 0x49c0fc00, 0xffe0fc00, lse_atomic, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
+  _LSUI_INSN ("casplt", 0x4980fc00, 0xffe0fc00, lse_atomic, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
+  _LSUI_INSN ("swpt", 0x19208400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
+  _LSUI_INSN ("swpta", 0x19a08400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
+  _LSUI_INSN ("swptal", 0x19e08400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
+  _LSUI_INSN ("swptl", 0x19608400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
+  _LSUI_INSN ("ldtadd", 0x19200400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ | F_HAS_ALIAS),
+  _LSUI_INSN ("sttadd", 0x1920041f, 0xbfe0fc1f, lse_atomic, OP2 (Rs, ADDR_SIMPLE), QL_R1NIL, F_LSE_SZ | F_ALIAS),
+  _LSUI_INSN ("ldtadda", 0x19a00400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
+  _LSUI_INSN ("ldtaddal", 0x19e00400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
+  _LSUI_INSN ("ldtaddl", 0x19600400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ | F_HAS_ALIAS),
+  _LSUI_INSN ("sttaddl", 0x1960041f, 0xbfe0fc1f, lse_atomic, OP2 (Rs, ADDR_SIMPLE), QL_R1NIL, F_LSE_SZ | F_ALIAS),
+  _LSUI_INSN ("ldtclr", 0x19201400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ | F_HAS_ALIAS),
+  _LSUI_INSN ("sttclr", 0x1920141f, 0xbfe0fc1f, lse_atomic, OP2 (Rs, ADDR_SIMPLE), QL_R1NIL, F_LSE_SZ | F_ALIAS),
+  _LSUI_INSN ("ldtclra", 0x19a01400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
+  _LSUI_INSN ("ldtclral", 0x19e01400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
+  _LSUI_INSN ("ldtclrl", 0x19601400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ | F_HAS_ALIAS),
+  _LSUI_INSN ("sttclrl", 0x1960141f, 0xbfe0fc1f, lse_atomic, OP2 (Rs, ADDR_SIMPLE), QL_R1NIL, F_LSE_SZ | F_ALIAS),
+  _LSUI_INSN ("ldtset", 0x19203400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ | F_HAS_ALIAS),
+  _LSUI_INSN ("sttset", 0x1920341f, 0xbfe0fc1f, lse_atomic, OP2 (Rs, ADDR_SIMPLE), QL_R1NIL, F_LSE_SZ | F_ALIAS),
+  _LSUI_INSN ("ldtseta", 0x19a03400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
+  _LSUI_INSN ("ldtsetal", 0x19e03400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ),
+  _LSUI_INSN ("ldtsetl", 0x19603400, 0xbfe0fc00, lse_atomic, OP3 (Rs, Rt, ADDR_SIMPLE), QL_R2NIL, F_LSE_SZ | F_HAS_ALIAS),
+  _LSUI_INSN ("sttsetl", 0x1960341f, 0xbfe0fc1f, lse_atomic, OP2 (Rs, ADDR_SIMPLE), QL_R1NIL, F_LSE_SZ | F_ALIAS),
+  _LSUI_INSN ("ldtnp", 0xe8400000, 0xffc00000, ldstnapair_offs, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_X, F_LDST_LOAD),
+  _LSUI_FP_INSN ("ldtnp", 0xec400000, 0xffc00000, ldstnapair_offs, OP3 (Fd, Fa, ADDR_SIMM7), QL_LDST_PAIR_S_Q, F_LDST_LOAD),
+  _LSUI_INSN ("sttnp", 0xe8000000, 0xffc00000, ldstnapair_offs, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_X, F_LDST_STORE),
+  _LSUI_FP_INSN ("sttnp", 0xec000000, 0xffc00000, ldstnapair_offs, OP3 (Fd, Fa, ADDR_SIMM7), QL_LDST_PAIR_S_Q, F_LDST_STORE),
+  _LSUI_INSN ("ldtp", 0xe9400000, 0xffc00000, ldstpair_off, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_X, F_LDST_LOAD),
+  _LSUI_FP_INSN ("ldtp", 0xed400000, 0xffc00000, ldstpair_off, OP3 (Fd, Fa, ADDR_SIMM7), QL_LDST_PAIR_S_Q, F_LDST_LOAD),
+  _LSUI_INSN ("sttp", 0xe9000000, 0xffc00000, ldstpair_off, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_X, F_LDST_STORE),
+  _LSUI_FP_INSN ("sttp", 0xed000000, 0xffc00000, ldstpair_off, OP3 (Fd, Fa, ADDR_SIMM7), QL_LDST_PAIR_S_Q, F_LDST_STORE),
+  _LSUI_INSN ("ldtp", 0xe8c00000, 0xfec00000, ldstpair_indexed, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_X, F_LDST_LOAD),
+  _LSUI_FP_INSN ("ldtp", 0xecc00000, 0xfec00000, ldstpair_indexed, OP3 (Fd, Fa, ADDR_SIMM7), QL_LDST_PAIR_S_Q, F_LDST_LOAD),
+  _LSUI_INSN ("sttp", 0xe8800000, 0xfec00000, ldstpair_indexed, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_X, F_LDST_STORE),
+  _LSUI_FP_INSN ("sttp", 0xec800000, 0xfec00000, ldstpair_indexed, OP3 (Fd, Fa, ADDR_SIMM7), QL_LDST_PAIR_S_Q, F_LDST_STORE),
+
   /* RCPC3 extension.  */
   RCPC3_INSN ("ldiapp", 0x19400800, 0x3fe0ec00, rcpc3, OP3 (Rt, Rs, RCPC3_ADDR_OPT_POSTIND), QL_R2NIL, F_RCPC3_SIZE),
   RCPC3_INSN ("stilp",  0x19000800, 0x3fe0ec00, rcpc3, OP3 (Rt, Rs, RCPC3_ADDR_OPT_PREIND_WB), QL_R2NIL, F_RCPC3_SIZE),
@@ -4223,8 +4847,21 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   RCPC3_INSN ("stlr", 0x19800800, 0x3ffffc00, rcpc3, OP2 (Rt, RCPC3_ADDR_PREIND_WB), QL_R1NIL, F_RCPC3_SIZE),
   RCPC3_INSN ("stl1", 0x0d018400, 0xbffffc00, rcpc3, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_IMM_D, F_OD(1)),
   RCPC3_INSN ("ldap1", 0x0d418400, 0xbffffc00, rcpc3, OP2 (LEt, SIMD_ADDR_SIMPLE), QL_SIMD_IMM_D, F_OD(1)),
-  RCPC3_INSN ("ldapur", 0x1d400800, 0x3f600C00, rcpc3, OP2 (Ft, RCPC3_ADDR_OFFSET), QL_LDST_FP, F_RCPC3_SIZE),
-  RCPC3_INSN ("stlur", 0x1d000800, 0x3f600C00, rcpc3, OP2 (Ft, RCPC3_ADDR_OFFSET), QL_LDST_FP, F_RCPC3_SIZE),
+  RCPC3_INSN ("ldapur", 0x1d400800, 0x3f600c00, rcpc3, OP2 (Ft, RCPC3_ADDR_OFFSET), QL_LDST_FP, F_RCPC3_SIZE),
+  RCPC3_INSN ("stlur", 0x1d000800, 0x3f600c00, rcpc3, OP2 (Ft, RCPC3_ADDR_OFFSET), QL_LDST_FP, F_RCPC3_SIZE),
+  /* AdvSIMD faminmax.  */
+  FAMINMAX_INSN ("famax", 0x0ec01c00, 0xbfe0fc00, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  FAMINMAX_INSN ("famax", 0x0ea0dc00, 0xbfa0fc00, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  FAMINMAX_INSN ("famin", 0x2ec01c00, 0xbfe0fc00, OP3 (Vd, Vn, Vm), QL_V3SAMEH, F_SIZEQ),
+  FAMINMAX_INSN ("famin", 0x2ea0dc00, 0xbfa0fc00, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  /* SVE2 faminmax.  */
+  FAMINMAX_SVE2_INSN ("famax", 0x650e8000, 0xff3fe000, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_VMVV_HSD, C_SCAN_MOVPRFX),
+  FAMINMAX_SVE2_INSN ("famin", 0x650f8000, 0xff3fe000, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_VMVV_HSD, C_SCAN_MOVPRFX),
+  /* SME2 faminmax.  */
+  FAMINMAX_SME2_INSN ("famax", 0xc120b140, 0xff21ffe1, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zmx2), OP_SVE_VVV_HSD),
+  FAMINMAX_SME2_INSN ("famax", 0xc120b940, 0xff23ffe3, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zmx4), OP_SVE_VVV_HSD),
+  FAMINMAX_SME2_INSN ("famin", 0xc120b141, 0xff21ffe1, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zmx2), OP_SVE_VVV_HSD),
+  FAMINMAX_SME2_INSN ("famin", 0xc120b941, 0xff23ffe3, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zmx4), OP_SVE_VVV_HSD),
   /* Move wide (immediate).  */
   CORE_INSN ("movn", 0x12800000, 0x7f800000, movewide, OP_MOVN, OP2 (Rd, HALF), QL_DST_R, F_SF | F_HAS_ALIAS),
   CORE_INSN ("mov",  0x12800000, 0x7f800000, movewide, OP_MOV_IMM_WIDEN, OP2 (Rd, IMM_MOV), QL_DST_R, F_SF | F_ALIAS | F_CONV),
@@ -4246,6 +4883,7 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SME_INSN ("smstop",  0xd503407f, 0xfffff1ff, sme_stop,  0, OP1 (SME_SM_ZA), {}, F_SYS_WRITE, 0),
   /* System.  */
   CHK_INSN ("chkfeat", 0xd503251f, 0xffffffff, OP1 (X16), QL_I1X, 0),
+  CORE_INSN ("stshh", 0xd503261f, 0xffffffdf, ic_system, 0, OP1 (STSHH_POLICY), {}, F_ALIAS),
   CORE_INSN ("msr", 0xd500401f, 0xfff8f01f, ic_system, 0, OP2 (PSTATEFIELD, UIMM4), {}, F_SYS_WRITE),
   CORE_INSN ("hint",0xd503201f, 0xfffff01f, ic_system, 0, OP1 (UIMM7), {}, F_HAS_ALIAS),
   CORE_INSN ("nop", 0xd503201f, 0xffffffff, ic_system, 0, OP0 (), {}, F_ALIAS),
@@ -4256,7 +4894,7 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   CORE_INSN ("wfi", 0xd503207f, 0xffffffff, ic_system, 0, OP0 (), {}, F_ALIAS),
   CORE_INSN ("sev", 0xd503209f, 0xffffffff, ic_system, 0, OP0 (), {}, F_ALIAS),
   CORE_INSN ("sevl",0xd50320bf, 0xffffffff, ic_system, 0, OP0 (), {}, F_ALIAS),
-  CORE_INSN ("dgh", 0xd50320df, 0xffffffff, ic_system, 0, OP0 (), {}, 0),
+  CORE_INSN ("dgh", 0xd50320df, 0xffffffff, ic_system, 0, OP0 (), {}, F_ALIAS),
   CORE_INSN ("xpaclri", 0xd50320ff, 0xffffffff, ic_system, 0, OP0 (), {}, F_ALIAS),
   CORE_INSN ("pacia1716", 0xd503211f, 0xffffffff, ic_system, 0, OP0 (), {}, F_ALIAS),
   CORE_INSN ("pacib1716", 0xd503215f, 0xffffffff, ic_system, 0, OP0 (), {}, F_ALIAS),
@@ -4265,7 +4903,7 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   CORE_INSN ("esb", 0xd503221f, 0xffffffff, ic_system, 0, OP0 (), {}, F_ALIAS),
   CORE_INSN ("psb", 0xd503223f, 0xffffffff, ic_system, 0, OP1 (BARRIER_PSB), {}, F_ALIAS),
   CORE_INSN ("tsb", 0xd503225f, 0xffffffff, ic_system, 0, OP1 (BARRIER_PSB), {}, F_ALIAS),
-  CORE_INSN ("clearbhb", 0xd50322df, 0xffffffff, ic_system, 0, OP0 (), {}, F_ALIAS),
+  CORE_INSN ("clearbhb", 0xd50322df, 0xffffffff, ic_system, 0, OP0 (), {}, F_ALIAS | F_PSEUDO),
   CORE_INSN ("clrex", 0xd503305f, 0xfffff0ff, ic_system, 0, OP1 (UIMM4), {}, F_OPD0_OPT | F_DEFAULT (0xF)),
   CORE_INSN ("dsb", 0xd503309f, 0xfffff0ff, ic_system, 0, OP1 (BARRIER), {}, F_HAS_ALIAS),
   XS_INSN ("dsb", 0xd503323f, 0xfffff3ff, ic_system, OP1 (BARRIER_DSB_NXS), {}, F_HAS_ALIAS),
@@ -4283,8 +4921,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   GCS_INSN ("gcsss2", 0xd52b7760, 0xffffffe0, OP1 (Rt), QL_I1X, 0),
   GCS_INSN ("gcspopm", 0xd52b773f, 0xffffffff, OP0 (), {}, 0),
   GCS_INSN ("gcspopm", 0xd52b7720, 0xffffffe0, OP1 (Rt), QL_I1X, 0),
-  GCS_INSN ("gcsstr", 0xd91f0c00, 0xfffffc00, OP2 (Rt, Rn_SP), QL_I2SAMEX, 0),
-  GCS_INSN ("gcssttr", 0xd91f1c00, 0xfffffc00, OP2 (Rt, Rn_SP), QL_I2SAMEX, 0),
+  GCS_INSN ("gcsstr", 0xd91f0c00, 0xfffffc00, OP2 (Rt, ADDR_SIMPLE), QL_DST_X, 0),
+  GCS_INSN ("gcssttr", 0xd91f1c00, 0xfffffc00, OP2 (Rt, ADDR_SIMPLE), QL_DST_X, 0),
   CORE_INSN ("gcsb", 0xd503227f, 0xffffffff, ic_system, 0, OP1 (BARRIER_GCSB), {}, F_ALIAS),
   CORE_INSN ("sys", 0xd5080000, 0xfff80000, ic_system, 0, OP5 (UIMM3_OP1, CRn, CRm, UIMM3_OP2, Rt), QL_SYS, F_HAS_ALIAS | F_OPD4_OPT | F_DEFAULT (0x1F)),
   D128_INSN ("sysp", 0xd5480000, 0xfff80000, OP6 (UIMM3_OP1, CRn, CRm, UIMM3_OP2, Rt, PAIRREG_OR_XZR), QL_SYSP, F_HAS_ALIAS | F_OPD_NARROW | F_OPD4_OPT | F_OPD_PAIR_OPT | F_DEFAULT (0x1f)),
@@ -4299,14 +4937,15 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   PREDRES_INSN ("dvp", 0xd50b73a0, 0xffffffe0, ic_system, OP2 (SYSREG_SR, Rt), QL_SRC_X, F_ALIAS),
   PREDRES_INSN ("cpp", 0xd50b73e0, 0xffffffe0, ic_system, OP2 (SYSREG_SR, Rt), QL_SRC_X, F_ALIAS),
   PREDRES2_INSN ("cosp", 0xd50b73c0, 0xffffffe0, ic_system, OP2 (SYSREG_SR, Rt), QL_SRC_X, F_ALIAS),
-  /* Armv8.4-a flag setting instruction, However this encoding has an encoding clash with the msr
-     below it.  Usually we can resolve this by setting an alias condition on the flags, however that
-     depends on the disassembly masks to be able to quickly find the alias.  The problem is the
-     cfinv instruction has no arguments, so all bits are set in the mask.  Which means it will
-     potentially alias with too many instructions and so the tree can't be constructed.   As a work
-     around we just place cfinv before msr.  This means the order between these two shouldn't be
-     changed.  */
+  BRBE_INSN ("brb", 0xd5097280, 0xffffffc0, OP2 (BRBOP, Rt_IN_SYS_ALIASES), QL_IMM_NIL_NIL, F_ALIAS | F_OPD1_OPT | F_DEFAULT (0x1F)),
   FLAGM_INSN ("cfinv",  0xd500401f, 0xffffffff, ic_system, OP0 (), {}, 0),
+  /* This msr entry has a lot of aliases, and some of these (such as "hint")
+     have their own (recursive) aliases.  We currently use a flat alias
+     structure, so to avoid creating an excessively long list of aliases for
+     the entire msr space we instead handle the top level of disambiguation
+     outside the alias infrastructure.  This requires that all of the top-level
+     aliases of msr must appear earlier in the opcode table, since normal
+     (non-alias) disassembly is done on a "first match" basis.  */
   CORE_INSN ("msr", 0xd5000000, 0xffe00000, ic_system, 0, OP2 (SYSREG, Rt), QL_SRC_X, F_SYS_WRITE),
   CORE_INSN ("sysl",0xd5280000, 0xfff80000, ic_system, 0, OP5 (Rt, UIMM3_OP1, CRn, CRm, UIMM3_OP2), QL_SYSL, 0),
   CORE_INSN ("mrs", 0xd5200000, 0xffe00000, ic_system, 0, OP2 (Rt, SYSREG), QL_DST_X, F_SYS_READ),
@@ -4347,7 +4986,7 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   _SVE_INSN ("mov", 0x05202000, 0xff20fc00, sve_index, OP_MOV_Z_V, OP2 (SVE_Zd, SVE_VZn), OP_SVE_VV_BHSDQ, F_ALIAS | F_MISC, 0),
   _SVE_INSN ("mov", 0x05203800, 0xff3ffc00, sve_size_bhsd, 0, OP2 (SVE_Zd, Rn_SP), OP_SVE_VR_BHSD, F_ALIAS, 0),
   _SVE_INSN ("mov", 0x25804000, 0xfff0c210, sve_misc, OP_MOV_P_P, OP2 (SVE_Pd, SVE_Pn), OP_SVE_BB, F_ALIAS | F_MISC, 0),
-  _SVE_INSN ("mov", 0x25804000, 0xfff0c210, sve_misc, OP_MOV_PN_PN, OP2 (SVE_PNd, SVE_PNn), OP_SVE_BB, F_ALIAS | F_MISC, 0),
+  _SVE_INSN ("mov", 0x25804000, 0xfff0c210, sve_misc, OP_MOV_PN_PN, OP2 (SVE_PNd, SVE_PNn), OP_SVE_BB, F_ALIAS | F_PSEUDO | F_MISC, 0),
   _SVE_INSN ("mov", 0x05202000, 0xff20fc00, sve_index, OP_MOV_Z_Zi, OP2 (SVE_Zd, SVE_Zn_INDEX), OP_SVE_VV_BHSDQ, F_ALIAS | F_MISC, 0),
   _SVE_INSN ("mov", 0x05c00000, 0xfffc0000, sve_limm, 0, OP2 (SVE_Zd, SVE_LIMM_MOV), OP_SVE_VU_BHSD, F_ALIAS, 0),
   _SVE_INSN ("mov", 0x2538c000, 0xff3fc000, sve_size_bhsd, 0, OP2 (SVE_Zd, SVE_ASIMM), OP_SVE_VU_BHSD, F_ALIAS, 0),
@@ -4438,7 +5077,7 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   _SVE_INSN ("cnth", 0x0460e000, 0xfff0fc00, sve_misc, 0, OP2 (Rd, SVE_PATTERN_SCALED), OP_SVE_XU, F_OPD1_OPT | F_DEFAULT(31), 0),
   _SVE_INSN ("cntp", 0x25208000, 0xff3fc200, sve_size_bhsd, 0, OP3 (Rd, SVE_Pg4_10, SVE_Pn), OP_SVE_XUV_BHSD, 0, 0),
   _SVE_INSN ("cntw", 0x04a0e000, 0xfff0fc00, sve_misc, 0, OP2 (Rd, SVE_PATTERN_SCALED), OP_SVE_XU, F_OPD1_OPT | F_DEFAULT(31), 0),
-  _SVE_INSN ("compact", 0x05a18000, 0xffbfe000, sve_size_sd, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VUV_SD, 0, 0),
+  SVE_SME2p2_INSN ("compact", 0x05a18000, 0xffbfe000, sve_size_sd, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VUV_SD, 0, 0),
   _SVE_INSNC ("cpy", 0x05208000, 0xff3fe000, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Vn), OP_SVE_VMV_BHSD, F_HAS_ALIAS, C_SCAN_MOVPRFX, 0),
   _SVE_INSNC ("cpy", 0x0528a000, 0xff3fe000, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Pg3, Rn_SP), OP_SVE_VMR_BHSD, F_HAS_ALIAS, C_SCAN_MOVPRFX, 0),
   _SVE_INSNC ("cpy", 0x05100000, 0xff308000, sve_cpy, 0, OP3 (SVE_Zd, SVE_Pg4_16, SVE_ASIMM), OP_SVE_VPU_BHSD, F_HAS_ALIAS, C_SCAN_MOVPRFX, 0),
@@ -4715,20 +5354,15 @@ const struct aarch64_opcode aarch64_opcode_table[] =
 
   _SVE_INSN ("ldff1b", 0x84006000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW_22), OP_SVE_SZS, F_OD(1), 0),
   _SVE_INSN ("ldff1b", 0xa4006000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR), OP_SVE_BZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1b", 0xa4006000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_BZU, F_OD(1), 0),
   _SVE_INSN ("ldff1b", 0xa4206000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR), OP_SVE_HZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1b", 0xa4206000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_HZU, F_OD(1), 0),
   _SVE_INSN ("ldff1b", 0xa4406000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR), OP_SVE_SZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1b", 0xa4406000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_SZU, F_OD(1), 0),
   _SVE_INSN ("ldff1b", 0xa4606000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR), OP_SVE_DZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1b", 0xa4606000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_DZU, F_OD(1), 0),
   _SVE_INSN ("ldff1b", 0xc4006000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW_22), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1b", 0xc440e000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1b", 0x8420e000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_ZI_U5), OP_SVE_SZS, F_OD(1), 0),
   _SVE_INSN ("ldff1b", 0xc420e000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_ZI_U5), OP_SVE_DZD, F_OD(1), 0),
 
   _SVE_INSN ("ldff1d", 0xa5e06000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR_LSL3), OP_SVE_DZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1d", 0xa5e06000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_DZU, F_OD(1), 0),
   _SVE_INSN ("ldff1d", 0xc5806000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW_22), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1d", 0xc5a06000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW3_22), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1d", 0xc5c0e000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ), OP_SVE_DZD, F_OD(1), 0),
@@ -4738,11 +5372,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   _SVE_INSN ("ldff1h", 0x84806000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW_22), OP_SVE_SZS, F_OD(1), 0),
   _SVE_INSN ("ldff1h", 0x84a06000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW1_22), OP_SVE_SZS, F_OD(1), 0),
   _SVE_INSN ("ldff1h", 0xa4a06000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR_LSL1), OP_SVE_HZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1h", 0xa4a06000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_HZU, F_OD(1), 0),
   _SVE_INSN ("ldff1h", 0xa4c06000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR_LSL1), OP_SVE_SZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1h", 0xa4c06000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_SZU, F_OD(1), 0),
   _SVE_INSN ("ldff1h", 0xa4e06000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR_LSL1), OP_SVE_DZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1h", 0xa4e06000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_DZU, F_OD(1), 0),
   _SVE_INSN ("ldff1h", 0xc4806000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW_22), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1h", 0xc4a06000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW1_22), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1h", 0xc4c0e000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ), OP_SVE_DZD, F_OD(1), 0),
@@ -4752,11 +5383,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
 
   _SVE_INSN ("ldff1sb", 0x84002000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW_22), OP_SVE_SZS, F_OD(1), 0),
   _SVE_INSN ("ldff1sb", 0xa5806000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR), OP_SVE_DZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1sb", 0xa5806000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_DZU, F_OD(1), 0),
   _SVE_INSN ("ldff1sb", 0xa5a06000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR), OP_SVE_SZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1sb", 0xa5a06000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_SZU, F_OD(1), 0),
   _SVE_INSN ("ldff1sb", 0xa5c06000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR), OP_SVE_HZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1sb", 0xa5c06000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_HZU, F_OD(1), 0),
   _SVE_INSN ("ldff1sb", 0xc4002000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW_22), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1sb", 0xc440a000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1sb", 0x8420a000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_ZI_U5), OP_SVE_SZS, F_OD(1), 0),
@@ -4765,9 +5393,7 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   _SVE_INSN ("ldff1sh", 0x84802000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW_22), OP_SVE_SZS, F_OD(1), 0),
   _SVE_INSN ("ldff1sh", 0x84a02000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW1_22), OP_SVE_SZS, F_OD(1), 0),
   _SVE_INSN ("ldff1sh", 0xa5006000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR_LSL1), OP_SVE_DZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1sh", 0xa5006000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_DZU, F_OD(1), 0),
   _SVE_INSN ("ldff1sh", 0xa5206000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR_LSL1), OP_SVE_SZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1sh", 0xa5206000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_SZU, F_OD(1), 0),
   _SVE_INSN ("ldff1sh", 0xc4802000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW_22), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1sh", 0xc4a02000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW1_22), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1sh", 0xc4c0a000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ), OP_SVE_DZD, F_OD(1), 0),
@@ -4776,7 +5402,6 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   _SVE_INSN ("ldff1sh", 0xc4a0a000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_ZI_U5x2), OP_SVE_DZD, F_OD(1), 0),
 
   _SVE_INSN ("ldff1sw", 0xa4806000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR_LSL2), OP_SVE_DZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1sw", 0xa4806000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_DZU, F_OD(1), 0),
   _SVE_INSN ("ldff1sw", 0xc5002000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW_22), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1sw", 0xc5202000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW2_22), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1sw", 0xc540a000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ), OP_SVE_DZD, F_OD(1), 0),
@@ -4786,9 +5411,7 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   _SVE_INSN ("ldff1w", 0x85006000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW_22), OP_SVE_SZS, F_OD(1), 0),
   _SVE_INSN ("ldff1w", 0x85206000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW2_22), OP_SVE_SZS, F_OD(1), 0),
   _SVE_INSN ("ldff1w", 0xa5406000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR_LSL2), OP_SVE_SZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1w", 0xa5406000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_SZU, F_OD(1), 0),
   _SVE_INSN ("ldff1w", 0xa5606000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RR_LSL2), OP_SVE_DZU, F_OD(1), 0),
-  _SVE_INSN ("ldff1w", 0xa5606000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_R), OP_SVE_DZU, F_OD(1), 0),
   _SVE_INSN ("ldff1w", 0xc5006000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW_22), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1w", 0xc5206000, 0xffa0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ_XTW2_22), OP_SVE_DZD, F_OD(1), 0),
   _SVE_INSN ("ldff1w", 0xc540e000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RZ), OP_SVE_DZD, F_OD(1), 0),
@@ -4820,8 +5443,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   _SVE_INSN ("ldnt1h", 0xa480e000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4xVL), OP_SVE_HZU, F_OD(1), 0),
   _SVE_INSN ("ldnt1w", 0xa500c000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RX_LSL2), OP_SVE_SZU, F_OD(1), 0),
   _SVE_INSN ("ldnt1w", 0xa500e000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4xVL), OP_SVE_SZU, F_OD(1), 0),
-  _SVE_INSN ("ldr", 0x85800000, 0xffc0e010, sve_misc, 0, OP2 (SVE_Pt, SVE_ADDR_RI_S9xVL), {}, 0, 0),
-  _SVE_INSN ("ldr", 0x85800000, 0xffc0e010, sve_misc, 0, OP2 (SVE_PNt, SVE_ADDR_RI_S9xVL), {}, 0, 0),
+  _SVE_INSN ("ldr", 0x85800000, 0xffc0e010, sve_misc, 0, OP2 (SVE_Pt, SVE_ADDR_RI_S9xVL), {}, F_HAS_ALIAS, 0),
+  _SVE_INSN ("ldr", 0x85800000, 0xffc0e010, sve_misc, 0, OP2 (SVE_PNt, SVE_ADDR_RI_S9xVL), {}, F_ALIAS | F_PSEUDO, 0),
   _SVE_INSN ("ldr", 0x85804000, 0xffc0e000, sve_misc, 0, OP2 (SVE_Zt, SVE_ADDR_RI_S9xVL), {}, 0, 0),
   _SVE_INSN ("lsl", 0x04208c00, 0xff20fc00, sve_size_bhs, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVD_BHS, 0, 0),
   _SVE_INSN ("lsl", 0x04209c00, 0xff20fc00, sve_shift_unpred, 0, OP3 (SVE_Zd, SVE_Zn, SVE_SHLIMM_UNPRED), OP_SVE_VVU_BHSD, 0, 0),
@@ -4857,8 +5480,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   _SVE_INSN ("orr", 0x25804000, 0xfff0c210, sve_misc, 0, OP4 (SVE_Pd, SVE_Pg4_10, SVE_Pn, SVE_Pm), OP_SVE_BZBB, F_HAS_ALIAS, 0),
   _SVE_INSN ("orrs", 0x25c04000, 0xfff0c210, sve_misc, 0, OP4 (SVE_Pd, SVE_Pg4_10, SVE_Pn, SVE_Pm), OP_SVE_BZBB, F_HAS_ALIAS, 0),
   _SVE_INSN ("orv", 0x04182000, 0xff3fe000, sve_size_bhsd, 0, OP3 (SVE_Vd, SVE_Pg3, SVE_Zn), OP_SVE_VUV_BHSD, 0, 0),
-  _SVE_INSN ("pfalse", 0x2518e400, 0xfffffff0, sve_misc, 0, OP1 (SVE_Pd), OP_SVE_B, 0, 0),
-  _SVE_INSN ("pfalse", 0x2518e400, 0xfffffff0, sve_misc, 0, OP1 (SVE_PNd), OP_SVE_B, 0, 0),
+  _SVE_INSN ("pfalse", 0x2518e400, 0xfffffff0, sve_misc, 0, OP1 (SVE_Pd), OP_SVE_B, F_HAS_ALIAS, 0),
+  _SVE_INSN ("pfalse", 0x2518e400, 0xfffffff0, sve_misc, 0, OP1 (SVE_PNd), OP_SVE_B, F_ALIAS | F_PSEUDO, 0),
   _SVE_INSN ("pfirst", 0x2558c000, 0xfffffe10, sve_misc, 0, OP3 (SVE_Pd, SVE_Pg4_5, SVE_Pd), OP_SVE_BUB, 0, 2),
   _SVE_INSN ("pnext", 0x2519c400, 0xff3ffe10, sve_size_bhsd, 0, OP3 (SVE_Pd, SVE_Pg4_5, SVE_Pd), OP_SVE_VUV_BHSD, 0, 2),
   _SVE_INSN ("prfb", 0x8400c000, 0xffe0e010, sve_misc, 0, OP3 (SVE_PRFOP, SVE_Pg3, SVE_ADDR_RX), {}, 0, 0),
@@ -5039,8 +5662,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   _SVE_INSN ("stnt1h", 0xe490e000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4xVL), OP_SVE_HUU, F_OD(1), 0),
   _SVE_INSN ("stnt1w", 0xe5006000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RX_LSL2), OP_SVE_SUU, F_OD(1), 0),
   _SVE_INSN ("stnt1w", 0xe510e000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4xVL), OP_SVE_SUU, F_OD(1), 0),
-  _SVE_INSN ("str", 0xe5800000, 0xffc0e010, sve_misc, 0, OP2 (SVE_Pt, SVE_ADDR_RI_S9xVL), {}, 0, 0),
-  _SVE_INSN ("str", 0xe5800000, 0xffc0e010, sve_misc, 0, OP2 (SVE_PNt, SVE_ADDR_RI_S9xVL), {}, 0, 0),
+  _SVE_INSN ("str", 0xe5800000, 0xffc0e010, sve_misc, 0, OP2 (SVE_Pt, SVE_ADDR_RI_S9xVL), {}, F_HAS_ALIAS, 0),
+  _SVE_INSN ("str", 0xe5800000, 0xffc0e010, sve_misc, 0, OP2 (SVE_PNt, SVE_ADDR_RI_S9xVL), {}, F_ALIAS | F_PSEUDO, 0),
   _SVE_INSN ("str", 0xe5804000, 0xffc0e000, sve_misc, 0, OP2 (SVE_Zt, SVE_ADDR_RI_S9xVL), {}, 0, 0),
   _SVE_INSN ("sub", 0x04200400, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, 0),
   _SVE_INSNC ("sub", 0x2521c000, 0xff3fc000, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zd, SVE_AIMM), OP_SVE_VVU_BHSD, 0, C_SCAN_MOVPRFX, 1),
@@ -5442,6 +6065,17 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SVE2BITPERM_INSN ("bdep", 0x4500b400, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, 0),
   SVE2BITPERM_INSN ("bext", 0x4500b000, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, 0),
   SVE2BITPERM_INSN ("bgrp", 0x4500b800, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, 0),
+  /* SVE_AES2 instructions */
+  SVE_AES2_INSN ("aesdimc", 0x4523ec00, 0xffe7fc01, sve_misc, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zn_INDEX2_19), OP_SVE_BBQ, 0, 1),
+  SVE_AES2_INSN ("aesdimc", 0x4527ec00, 0xffe7fc03, sve_misc, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zn_INDEX2_19), OP_SVE_BBQ, 0, 1),
+  SVE_AES2_INSN ("aesd", 0x4522ec00, 0xffe7fc01, sve_misc, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zn_INDEX2_19), OP_SVE_BBQ, 0, 1),
+  SVE_AES2_INSN ("aesd", 0x4526ec00, 0xffe7fc03, sve_misc, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zn_INDEX2_19), OP_SVE_BBQ, 0, 1),
+  SVE_AES2_INSN ("aesemc", 0x4523e800, 0xffe7fc01, sve_misc, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zn_INDEX2_19), OP_SVE_BBQ, 0, 1),
+  SVE_AES2_INSN ("aesemc", 0x4527e800, 0xffe7fc03, sve_misc, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zn_INDEX2_19), OP_SVE_BBQ, 0, 1),
+  SVE_AES2_INSN ("aese", 0x4522e800, 0xffe7fc01, sve_misc, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zn_INDEX2_19), OP_SVE_BBQ, 0, 1),
+  SVE_AES2_INSN ("aese", 0x4526e800, 0xffe7fc03, sve_misc, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zn_INDEX2_19), OP_SVE_BBQ, 0, 1),
+  SVE_AES2_INSN ("pmlal", 0x4520fc00, 0xffe0fc01, sve_misc, 0, OP3 (SME_Zdnx2, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_Q_D, 0, 0),
+  SVE_AES2_INSN ("pmull", 0x4520f800, 0xffe0fc01, sve_misc, 0, OP3 (SME_Zdnx2, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_Q_D, 0, 0),
   /* SME instructions.  */
   SME_INSN ("addha", 0xc0900000, 0xffff001c, sme_misc, 0, OP4 (SME_ZAda_2b, SVE_Pg3, SME_Pm, SVE_Zn), OP_SVE_SMMS, 0, 0),
   SME_I16I64_INSN ("addha", 0xc0d00000, 0xffff0018, sme_misc, 0, OP4 (SME_ZAda_3b, SVE_Pg3, SME_Pm, SVE_Zn), OP_SVE_DMMD, 0, 0),
@@ -5464,21 +6098,21 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SME_I16I64_INSN ("smops", 0xa0c00010, 0xffe00018, sme_misc, 0, OP5 (SME_ZAda_3b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_DMMHH, 0, 0),
   SME_INSN ("sumopa", 0xa0a00000, 0xffe0001c, sme_misc, 0, OP5 (SME_ZAda_2b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_SMMBB, 0, 0),
   SME_I16I64_INSN ("sumopa", 0xa0e00000, 0xffe00018, sme_misc, 0, OP5 (SME_ZAda_3b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_DMMHH, 0, 0),
-  SME_INSN ("sumops", 0xa0a00010 ,0xffe0001c, sme_misc, 0, OP5 (SME_ZAda_2b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_SMMBB, 0, 0),
-  SME_I16I64_INSN ("sumops", 0xa0e00010 ,0xffe00018, sme_misc, 0, OP5 (SME_ZAda_3b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_DMMHH, 0, 0),
+  SME_INSN ("sumops", 0xa0a00010, 0xffe0001c, sme_misc, 0, OP5 (SME_ZAda_2b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_SMMBB, 0, 0),
+  SME_I16I64_INSN ("sumops", 0xa0e00010, 0xffe00018, sme_misc, 0, OP5 (SME_ZAda_3b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_DMMHH, 0, 0),
   SME_INSN ("umopa", 0xa1a00000, 0xffe0001c, sme_misc, 0, OP5 (SME_ZAda_2b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_SMMBB, 0, 0),
   SME_I16I64_INSN ("umopa", 0xa1e00000, 0xffe00018, sme_misc, 0, OP5 (SME_ZAda_3b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_DMMHH, 0, 0),
-  SME_INSN ("umops", 0xa1a00010 ,0xffe0001c, sme_misc, 0, OP5 (SME_ZAda_2b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_SMMBB, 0, 0),
-  SME_I16I64_INSN ("umops", 0xa1e00010 ,0xffe00018, sme_misc, 0, OP5 (SME_ZAda_3b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_DMMHH, 0, 0),
+  SME_INSN ("umops", 0xa1a00010, 0xffe0001c, sme_misc, 0, OP5 (SME_ZAda_2b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_SMMBB, 0, 0),
+  SME_I16I64_INSN ("umops", 0xa1e00010, 0xffe00018, sme_misc, 0, OP5 (SME_ZAda_3b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_DMMHH, 0, 0),
   SME_INSN ("usmopa", 0xa1800000, 0xffe0001c, sme_misc, 0, OP5 (SME_ZAda_2b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_SMMBB, 0, 0),
   SME_I16I64_INSN ("usmopa", 0xa1c00000, 0xffe00018, sme_misc, 0, OP5 (SME_ZAda_3b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_DMMHH, 0, 0),
   SME_INSN ("usmops", 0xa1800010, 0xffe0001c, sme_misc, 0, OP5 (SME_ZAda_2b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_SMMBB, 0, 0),
   SME_I16I64_INSN ("usmops", 0xa1c00010, 0xffe00018, sme_misc, 0, OP5 (SME_ZAda_3b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_DMMHH, 0, 0),
 
-  SME_INSN ("mov", 0xc0020000, 0xff3e0200, sme_mov, 0, OP3 (SVE_Zd, SVE_Pg3, SME_ZA_HV_idx_src), OP_SVE_VMV_BHSDQ, 0, 0),
-  SME_INSN ("mov", 0xc0000000, 0xff3e0010, sme_mov, 0, OP3 (SME_ZA_HV_idx_dest, SVE_Pg3, SVE_Zn), OP_SVE_VMV_BHSDQ, 0, 0),
-  SME_INSN ("mova", 0xc0020000, 0xff3e0200, sme_mov, 0, OP3 (SVE_Zd, SVE_Pg3, SME_ZA_HV_idx_src), OP_SVE_VMV_BHSDQ, 0, 0),
-  SME_INSN ("mova", 0xc0000000, 0xff3e0010, sme_mov, 0, OP3 (SME_ZA_HV_idx_dest, SVE_Pg3, SVE_Zn), OP_SVE_VMV_BHSDQ, 0, 0),
+  SME_INSN ("mov", 0xc0020000, 0xff3e0200, sme_mov, 0, OP3 (SVE_Zd, SVE_Pg3, SME_ZA_HV_idx_src), OP_SVE_VMV_BHSDQ, F_ALIAS, 0),
+  SME_INSN ("mov", 0xc0000000, 0xff3e0010, sme_mov, 0, OP3 (SME_ZA_HV_idx_dest, SVE_Pg3, SVE_Zn), OP_SVE_VMV_BHSDQ, F_ALIAS, 0),
+  SME_INSN ("mova", 0xc0020000, 0xff3e0200, sme_mov, 0, OP3 (SVE_Zd, SVE_Pg3, SME_ZA_HV_idx_src), OP_SVE_VMV_BHSDQ, F_HAS_ALIAS, 0),
+  SME_INSN ("mova", 0xc0000000, 0xff3e0010, sme_mov, 0, OP3 (SME_ZA_HV_idx_dest, SVE_Pg3, SVE_Zn), OP_SVE_VMV_BHSDQ, F_HAS_ALIAS, 0),
 
   SME_INSN ("zero", 0xc0080000, 0xffffff00, sme_misc, 0, OP1 (SME_list_of_64bit_tiles), {}, 0, 0),
 
@@ -5488,63 +6122,51 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SME_INSN ("ld1d", 0xe0c00000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_RR_LSL3), OP_SVE_DZU, 0, 0),
   SME_INSN ("ld1q", 0xe1c00000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_RR_LSL4), OP_SVE_QZU, 0, 0),
 
-  SME_INSN ("ld1b", 0xe0000000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_R), OP_SVE_BZU, 0, 0),
-  SME_INSN ("ld1h", 0xe0400000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_R), OP_SVE_HZU, 0, 0),
-  SME_INSN ("ld1w", 0xe0800000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_R), OP_SVE_SZU, 0, 0),
-  SME_INSN ("ld1d", 0xe0c00000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_R), OP_SVE_DZU, 0, 0),
-  SME_INSN ("ld1q", 0xe1c00000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_R), OP_SVE_QZU, 0, 0),
-
   SME_INSN ("st1b", 0xe0200000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_RR), OP_SVE_BUU, 0, 0),
   SME_INSN ("st1h", 0xe0600000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_RR_LSL1), OP_SVE_HUU, 0, 0),
   SME_INSN ("st1w", 0xe0a00000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_RR_LSL2), OP_SVE_SUU, 0, 0),
   SME_INSN ("st1d", 0xe0e00000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_RR_LSL3), OP_SVE_DUU, 0, 0),
   SME_INSN ("st1q", 0xe1e00000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_RR_LSL4), OP_SVE_QUU, 0, 0),
 
-  SME_INSN ("st1b", 0xe0200000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_R), OP_SVE_BUU, 0, 0),
-  SME_INSN ("st1h", 0xe0600000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_R), OP_SVE_HUU, 0, 0),
-  SME_INSN ("st1w", 0xe0a00000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_R), OP_SVE_SUU, 0, 0),
-  SME_INSN ("st1d", 0xe0e00000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_R), OP_SVE_DUU, 0, 0),
-  SME_INSN ("st1q", 0xe1e00000, 0xffe00010, sve_misc, 0, OP3 (SME_ZA_HV_idx_ldstr, SVE_Pg3, SVE_ADDR_R), OP_SVE_QUU, 0, 0),
-
   SME_INSN ("ldr", 0xe1000000, 0xffff9c10, sme_ldr, 0, OP2 (SME_ZA_array_off4, SME_ADDR_RI_U4xVL), {}, 0, 1),
   SME_INSN ("str", 0xe1200000, 0xffff9c10, sme_str, 0, OP2 (SME_ZA_array_off4, SME_ADDR_RI_U4xVL), {}, 0, 1),
 
-  SME_INSNC ("revd", 0x52e8000, 0xffffe000, sme_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_QMQ, 0, C_SCAN_MOVPRFX, 0),
-  SME_INSNC ("sclamp", 0x4400c000, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, C_SCAN_MOVPRFX, 0),
-  SME_INSNC ("uclamp", 0x4400c400, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, C_SCAN_MOVPRFX, 0),
-  SME_INSN ("psel", 0x25204000, 0xff20c210, sme_psel, 0, OP3 (SVE_Pd, SVE_Pg4_10, SME_PnT_Wm_imm), OP_SVE_NN_BHSD, 0, 0),
-  SME_INSN ("psel", 0x25204000, 0xff20c210, sme_psel, 0, OP3 (SVE_PNd, SVE_PNg4_10, SME_PnT_Wm_imm), OP_SVE_NN_BHSD, 0, 0),
+  SVE2p1_SME_INSNC ("revd", 0x052e8000, 0xffffe000, sme_misc, 0, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_QMQ, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME_INSNC ("sclamp", 0x4400c000, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME_INSNC ("uclamp", 0x4400c400, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME_INSN ("psel", 0x25204000, 0xff20c210, sme_psel, 0, OP3 (SVE_Pd, SVE_Pg4_10, SME_PnT_Wm_imm), OP_SVE_NN_BHSD, F_HAS_ALIAS, 0),
+  SVE2p1_SME_INSN ("psel", 0x25204000, 0xff20c210, sme_psel, 0, OP3 (SVE_PNd, SVE_PNg4_10, SME_PnT_Wm_imm), OP_SVE_NN_BHSD, F_ALIAS | F_PSEUDO, 0),
 
   /* Added in SME2, but part of the prefetch hint space and available
      without special command-line flags.  */
   CORE_INSN ("rprfm", 0xf8a04818, 0xffe04c18, sme_misc, 0, OP3 (RPRFMOP, Rm, SIMD_ADDR_SIMPLE), OP_SVE_UXU, 0),
 
   /* SME2 extensions to SVE2.  */
-  SME2_INSNC ("bfmlslb", 0x64e06000, 0xffe0f400, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_11_INDEX), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
-  SME2_INSNC ("bfmlslb", 0x64e0a000, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
-  SME2_INSNC ("bfmlslt", 0x64e06400, 0xffe0f400, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_11_INDEX), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
-  SME2_INSNC ("bfmlslt", 0x64e0a400, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
-  SME2_INSNC ("fdot", 0x64204000, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_19_INDEX), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
-  SME2_INSNC ("fdot", 0x64208000, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
-  SME2_INSNC ("fclamp", 0x64202400, 0xff20fc00, sme_size_22_hsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_HSD, 0, C_SCAN_MOVPRFX, 0),
-  SME2_INSNC ("sdot", 0x4480c800, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_19_INDEX), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
-  SME2_INSNC ("sdot", 0x4400c800, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
-  SME2_INSN ("sqcvtn", 0x45314000, 0xfffffc20, sve_misc, 0, OP2 (SVE_Zd, SME_Znx2), OP_SVE_HS, 0, 0),
-  SME2_INSN ("sqcvtun", 0x45315000, 0xfffffc20, sve_misc, 0, OP2 (SVE_Zd, SME_Znx2), OP_SVE_HS, 0, 0),
-  SME2_INSN ("sqrshrn", 0x45b02800, 0xfff0fc20, sme_misc, 0, OP3 (SVE_Zd, SME_Znx2, SME_SHRIMM4), OP_SVE_HSU, 0, 0),
-  SME2_INSN ("sqrshrun", 0x45b00800, 0xfff0fc20, sme_misc, 0, OP3 (SVE_Zd, SME_Znx2, SME_SHRIMM4), OP_SVE_HSU, 0, 0),
-  SME2_INSNC ("udot", 0x4480cc00, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_19_INDEX), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
-  SME2_INSNC ("udot", 0x4400cc00, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
-  SME2_INSN ("uqcvtn", 0x45314800, 0xfffffc20, sve_misc, 0, OP2 (SVE_Zd, SME_Znx2), OP_SVE_HS, 0, 0),
-  SME2_INSN ("uqrshrn", 0x45b03800, 0xfff0fc20, sme_misc, 0, OP3 (SVE_Zd, SME_Znx2, SME_SHRIMM4), OP_SVE_HSU, 0, 0),
-  SME2_INSN ("whilege", 0x25205010, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
-  SME2_INSN ("whilegt", 0x25205011, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
-  SME2_INSN ("whilehi", 0x25205811, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
-  SME2_INSN ("whilehs", 0x25205810, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
-  SME2_INSN ("whilele", 0x25205411, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
-  SME2_INSN ("whilelo", 0x25205c10, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
-  SME2_INSN ("whilels", 0x25205c11, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
-  SME2_INSN ("whilelt", 0x25205410, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
+  SVE2p1_SME2_INSNC ("bfmlslb", 0x64e06000, 0xffe0f400, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_11_INDEX), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2_INSNC ("bfmlslb", 0x64e0a000, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2_INSNC ("bfmlslt", 0x64e06400, 0xffe0f400, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_11_INDEX), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2_INSNC ("bfmlslt", 0x64e0a400, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2_INSNC ("fdot", 0x64204000, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_19_INDEX), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2_INSNC ("fdot", 0x64208000, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2_INSNC ("fclamp", 0x64202400, 0xff20fc00, sme_size_22_hsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_HSD, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2_INSNC ("sdot", 0x4480c800, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_19_INDEX), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2_INSNC ("sdot", 0x4400c800, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2_INSN ("sqcvtn", 0x45314000, 0xfffffc20, sve_misc, 0, OP2 (SVE_Zd, SME_Znx2), OP_SVE_HS, 0, 0),
+  SVE2p1_SME2_INSN ("sqcvtun", 0x45315000, 0xfffffc20, sve_misc, 0, OP2 (SVE_Zd, SME_Znx2), OP_SVE_HS, 0, 0),
+  SVE2p1_SME2_INSN ("sqrshrn", 0x45b02800, 0xfff0fc20, sme_misc, 0, OP3 (SVE_Zd, SME_Znx2, SME_SHRIMM4), OP_SVE_HSU, 0, 0),
+  SVE2p1_SME2_INSN ("sqrshrun", 0x45b00800, 0xfff0fc20, sme_misc, 0, OP3 (SVE_Zd, SME_Znx2, SME_SHRIMM4), OP_SVE_HSU, 0, 0),
+  SVE2p1_SME2_INSNC ("udot", 0x4480cc00, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_19_INDEX), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2_INSNC ("udot", 0x4400cc00, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_SHH, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2_INSN ("uqcvtn", 0x45314800, 0xfffffc20, sve_misc, 0, OP2 (SVE_Zd, SME_Znx2), OP_SVE_HS, 0, 0),
+  SVE2p1_SME2_INSN ("uqrshrn", 0x45b03800, 0xfff0fc20, sme_misc, 0, OP3 (SVE_Zd, SME_Znx2, SME_SHRIMM4), OP_SVE_HSU, 0, 0),
+  SVE2p1_SME2_INSN ("whilege", 0x25205010, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilegt", 0x25205011, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilehi", 0x25205811, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilehs", 0x25205810, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilele", 0x25205411, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilelo", 0x25205c10, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilels", 0x25205c11, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilelt", 0x25205410, 0xff20fc11, sme_size_22, 0, OP3 (SME_Pdx2, Rn, Rm), OP_SVE_VXX_BHSD, 0, 0),
 
   /* SME2 extensions to SME.  */
   SME2_INSN ("add", 0xc1a01c10, 0xffbf9c38, sme_int_sd, 0, OP2 (SME_ZA_array_off3_0, SME_Znx2), OP_SVE_VVV_SD, F_OD (2), 0),
@@ -5582,7 +6204,7 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SME2_INSN ("bfvdot", 0xc1500018, 0xfff09038, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zm_INDEX2), OP_SVE_SHH, F_OD (2), 0),
   SME2_INSN ("bmopa", 0x80800008, 0xffe0001c, sme_misc, 0, OP5 (SME_ZAda_2b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_SMMSS, 0, 0),
   SME2_INSN ("bmops", 0x80800018, 0xffe0001c, sme_misc, 0, OP5 (SME_ZAda_2b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_SMMSS, 0, 0),
-  SME2_INSN ("cntp", 0x25208200, 0xff3ffa00, sme_size_22, 0, OP3 (Rd, SME_PNn, SME_VLxN_10), OP_SVE_XV_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("cntp", 0x25208200, 0xff3ffa00, sme_size_22, 0, OP3 (Rd, SME_PNn, SME_VLxN_10), OP_SVE_XV_BHSD, 0, 0),
   SME2_INSN ("fadd", 0xc1a01c00, 0xffbf9c38, sme_fp_sd, 0, OP2 (SME_ZA_array_off3_0, SME_Znx2), OP_SVE_VVV_SD, F_OD (2), 0),
   SME2_INSN ("fadd", 0xc1a11c00, 0xffbf9c78, sme_fp_sd, 0, OP2 (SME_ZA_array_off3_0, SME_Znx4), OP_SVE_VVV_SD, F_OD (4), 0),
   SME2_INSN ("fclamp", 0xc120c000, 0xff20fc01, sme_size_22_hsd, 0, OP3 (SME_Zdnx2, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_HSD, 0, 0),
@@ -5654,70 +6276,70 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SME2_INSN ("fsub", 0xc1a01c08, 0xffbf9c38, sme_fp_sd, 0, OP2 (SME_ZA_array_off3_0, SME_Znx2), OP_SVE_VVV_SD, F_OD (2), 0),
   SME2_INSN ("fsub", 0xc1a11c08, 0xffbf9c78, sme_fp_sd, 0, OP2 (SME_ZA_array_off3_0, SME_Znx4), OP_SVE_VVV_SD, F_OD (4), 0),
   SME2_INSN ("fvdot", 0xc1500008, 0xfff09038, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zm_INDEX2), OP_SVE_SHH, F_OD (2), 0),
-  SME2_INSN ("ld1b", 0xa0400000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_BZU, 0, 0),
-  SME2_INSN ("ld1b", 0xa0408000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_BZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1b", 0xa0400000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_BZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1b", 0xa0408000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_BZU, 0, 0),
   SME2_INSN ("ld1b", 0xa1400000, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_BZU, 0, 0),
   SME2_INSN ("ld1b", 0xa1408000, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_BZU, 0, 0),
-  SME2_INSN ("ld1b", 0xa0000000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR), OP_SVE_BZU, 0, 0),
-  SME2_INSN ("ld1b", 0xa0008000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR), OP_SVE_BZU, 0, 0),
-  SME2_INSN ("ld1b", 0xa1000000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR), OP_SVE_BZU, 0, 0),
-  SME2_INSN ("ld1b", 0xa1008000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR), OP_SVE_BZU, 0, 0),
-  SME2_INSN ("ld1d", 0xa0406000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_DZU, 0, 0),
-  SME2_INSN ("ld1d", 0xa040e000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_DZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1b", 0xa0000000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM), OP_SVE_BZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1b", 0xa0008000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM), OP_SVE_BZU, 0, 0),
+  SME2_INSN ("ld1b", 0xa1000000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM), OP_SVE_BZU, 0, 0),
+  SME2_INSN ("ld1b", 0xa1008000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM), OP_SVE_BZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1d", 0xa0406000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_DZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1d", 0xa040e000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_DZU, 0, 0),
   SME2_INSN ("ld1d", 0xa1406000, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_DZU, 0, 0),
   SME2_INSN ("ld1d", 0xa140e000, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_DZU, 0, 0),
-  SME2_INSN ("ld1d", 0xa0006000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DZU, 0, 0),
-  SME2_INSN ("ld1d", 0xa000e000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DZU, 0, 0),
-  SME2_INSN ("ld1d", 0xa1006000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DZU, 0, 0),
-  SME2_INSN ("ld1d", 0xa100e000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DZU, 0, 0),
-  SME2_INSN ("ld1h", 0xa0402000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_HZU, 0, 0),
-  SME2_INSN ("ld1h", 0xa040a000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_HZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1d", 0xa0006000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1d", 0xa000e000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DZU, 0, 0),
+  SME2_INSN ("ld1d", 0xa1006000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DZU, 0, 0),
+  SME2_INSN ("ld1d", 0xa100e000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1h", 0xa0402000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_HZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1h", 0xa040a000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_HZU, 0, 0),
   SME2_INSN ("ld1h", 0xa1402000, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_HZU, 0, 0),
   SME2_INSN ("ld1h", 0xa140a000, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_HZU, 0, 0),
-  SME2_INSN ("ld1h", 0xa0002000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HZU, 0, 0),
-  SME2_INSN ("ld1h", 0xa000a000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HZU, 0, 0),
-  SME2_INSN ("ld1h", 0xa1002000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HZU, 0, 0),
-  SME2_INSN ("ld1h", 0xa100a000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HZU, 0, 0),
-  SME2_INSN ("ld1w", 0xa0404000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_SZU, 0, 0),
-  SME2_INSN ("ld1w", 0xa040c000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_SZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1h", 0xa0002000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1h", 0xa000a000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HZU, 0, 0),
+  SME2_INSN ("ld1h", 0xa1002000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HZU, 0, 0),
+  SME2_INSN ("ld1h", 0xa100a000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1w", 0xa0404000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_SZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1w", 0xa040c000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_SZU, 0, 0),
   SME2_INSN ("ld1w", 0xa1404000, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_SZU, 0, 0),
   SME2_INSN ("ld1w", 0xa140c000, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_SZU, 0, 0),
-  SME2_INSN ("ld1w", 0xa0004000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SZU, 0, 0),
-  SME2_INSN ("ld1w", 0xa000c000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SZU, 0, 0),
-  SME2_INSN ("ld1w", 0xa1004000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SZU, 0, 0),
-  SME2_INSN ("ld1w", 0xa100c000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SZU, 0, 0),
-  SME2_INSN ("ldnt1b", 0xa0400001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_BZU, 0, 0),
-  SME2_INSN ("ldnt1b", 0xa0408001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_BZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1w", 0xa0004000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SZU, 0, 0),
+  SVE2p1_SME2_INSN ("ld1w", 0xa000c000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SZU, 0, 0),
+  SME2_INSN ("ld1w", 0xa1004000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SZU, 0, 0),
+  SME2_INSN ("ld1w", 0xa100c000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1b", 0xa0400001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_BZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1b", 0xa0408001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_BZU, 0, 0),
   SME2_INSN ("ldnt1b", 0xa1400008, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_BZU, 0, 0),
   SME2_INSN ("ldnt1b", 0xa1408008, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_BZU, 0, 0),
-  SME2_INSN ("ldnt1b", 0xa0000001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR), OP_SVE_BZU, 0, 0),
-  SME2_INSN ("ldnt1b", 0xa0008001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR), OP_SVE_BZU, 0, 0),
-  SME2_INSN ("ldnt1b", 0xa1000008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR), OP_SVE_BZU, 0, 0),
-  SME2_INSN ("ldnt1b", 0xa1008008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR), OP_SVE_BZU, 0, 0),
-  SME2_INSN ("ldnt1d", 0xa0406001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_DZU, 0, 0),
-  SME2_INSN ("ldnt1d", 0xa040e001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_DZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1b", 0xa0000001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM), OP_SVE_BZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1b", 0xa0008001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM), OP_SVE_BZU, 0, 0),
+  SME2_INSN ("ldnt1b", 0xa1000008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM), OP_SVE_BZU, 0, 0),
+  SME2_INSN ("ldnt1b", 0xa1008008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM), OP_SVE_BZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1d", 0xa0406001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_DZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1d", 0xa040e001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_DZU, 0, 0),
   SME2_INSN ("ldnt1d", 0xa1406008, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_DZU, 0, 0),
   SME2_INSN ("ldnt1d", 0xa140e008, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_DZU, 0, 0),
-  SME2_INSN ("ldnt1d", 0xa0006001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DZU, 0, 0),
-  SME2_INSN ("ldnt1d", 0xa000e001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DZU, 0, 0),
-  SME2_INSN ("ldnt1d", 0xa1006008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DZU, 0, 0),
-  SME2_INSN ("ldnt1d", 0xa100e008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DZU, 0, 0),
-  SME2_INSN ("ldnt1h", 0xa0402001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_HZU, 0, 0),
-  SME2_INSN ("ldnt1h", 0xa040a001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_HZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1d", 0xa0006001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1d", 0xa000e001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DZU, 0, 0),
+  SME2_INSN ("ldnt1d", 0xa1006008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DZU, 0, 0),
+  SME2_INSN ("ldnt1d", 0xa100e008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1h", 0xa0402001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_HZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1h", 0xa040a001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_HZU, 0, 0),
   SME2_INSN ("ldnt1h", 0xa1402008, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_HZU, 0, 0),
   SME2_INSN ("ldnt1h", 0xa140a008, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_HZU, 0, 0),
-  SME2_INSN ("ldnt1h", 0xa0002001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HZU, 0, 0),
-  SME2_INSN ("ldnt1h", 0xa000a001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HZU, 0, 0),
-  SME2_INSN ("ldnt1h", 0xa1002008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HZU, 0, 0),
-  SME2_INSN ("ldnt1h", 0xa100a008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HZU, 0, 0),
-  SME2_INSN ("ldnt1w", 0xa0404001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_SZU, 0, 0),
-  SME2_INSN ("ldnt1w", 0xa040c001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_SZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1h", 0xa0002001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1h", 0xa000a001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HZU, 0, 0),
+  SME2_INSN ("ldnt1h", 0xa1002008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HZU, 0, 0),
+  SME2_INSN ("ldnt1h", 0xa100a008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1w", 0xa0404001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_SZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1w", 0xa040c001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_SZU, 0, 0),
   SME2_INSN ("ldnt1w", 0xa1404008, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_SZU, 0, 0),
   SME2_INSN ("ldnt1w", 0xa140c008, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_SZU, 0, 0),
-  SME2_INSN ("ldnt1w", 0xa0004001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SZU, 0, 0),
-  SME2_INSN ("ldnt1w", 0xa000c001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SZU, 0, 0),
-  SME2_INSN ("ldnt1w", 0xa1004008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SZU, 0, 0),
-  SME2_INSN ("ldnt1w", 0xa100c008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1w", 0xa0004001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SZU, 0, 0),
+  SVE2p1_SME2_INSN ("ldnt1w", 0xa000c001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SZU, 0, 0),
+  SME2_INSN ("ldnt1w", 0xa1004008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SZU, 0, 0),
+  SME2_INSN ("ldnt1w", 0xa100c008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SZU, 0, 0),
   SME2_INSN ("ldr", 0xe11f8000, 0xfffffc1f, sme_misc, 0, OP2 (SME_ZT0, SIMD_ADDR_SIMPLE), {}, 0, 0),
   SME2_INSN ("luti2", 0xc0cc0000, 0xfffc0c00, sme_size_12_bhs, 0, OP3 (SVE_Zd, SME_ZT0, SME_Zn_INDEX4_14), OP_SVE_VUU_BHS, 0, 0),
   SME2_INSN ("luti2", 0xc08c4000, 0xfffc4c01, sme_size_12_bhs, 0, OP3 (SME_Zdnx2, SME_ZT0, SME_Zn_INDEX3_15), OP_SVE_VUU_BHS, 0, 0),
@@ -5725,27 +6347,27 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SME2_INSN ("luti4", 0xc0ca0000, 0xfffe0c00, sme_size_12_bhs, 0, OP3 (SVE_Zd, SME_ZT0, SME_Zn_INDEX3_14), OP_SVE_VUU_BHS, 0, 0),
   SME2_INSN ("luti4", 0xc08a4000, 0xfffe4c01, sme_size_12_bhs, 0, OP3 (SME_Zdnx2, SME_ZT0, SME_Zn_INDEX2_15), OP_SVE_VUU_BHS, 0, 0),
   SME2_INSN ("luti4", 0xc08a8000, 0xfffecc03, sme_size_12_hs, 0, OP3 (SME_Zdnx4, SME_ZT0, SME_Zn_INDEX1_16), OP_SVE_VUU_HS, 0, 0),
-  SME2_INSN ("mov", 0xc0060800, 0xffff9f01, sme2_mov, 0, OP2 (SME_Zdnx2, SME_ZA_array_off3_5), OP_SVE_VV_BHSD, F_OD (2), 0),
-  SME2_INSN ("mov", 0xc0060c00, 0xffff9f03, sme2_mov, 0, OP2 (SME_Zdnx4, SME_ZA_array_off3_5), OP_SVE_VV_BHSD, F_OD (4), 0),
-  SME2_INSN ("mov", 0xc0060000, 0xff3f1f01, sme_size_22, 0, OP2 (SME_Zdnx2, SME_ZA_HV_idx_srcxN), OP_SVE_VV_BHSDQ, F_OD (2), 0),
-  SME2_INSN ("mov", 0xc0060400, 0xff3f1f03, sme_size_22, 0, OP2 (SME_Zdnx4, SME_ZA_HV_idx_srcxN), OP_SVE_VV_BHSDQ, F_OD (4), 0),
-  SME2_INSN ("mov", 0xc0040800, 0xffff9c38, sme2_mov, 0, OP2 (SME_ZA_array_off3_0, SME_Znx2), OP_SVE_VV_BHSD, F_OD (2), 0),
-  SME2_INSN ("mov", 0xc0040c00, 0xffff9c78, sme2_mov, 0, OP2 (SME_ZA_array_off3_0, SME_Znx4), OP_SVE_VV_BHSD, F_OD (4), 0),
-  SME2_INSN ("mov", 0xc0040000, 0xff3f1c38, sme_size_22, 0, OP2 (SME_ZA_HV_idx_destxN, SME_Znx2), OP_SVE_VV_BHSDQ, F_OD (2), 0),
-  SME2_INSN ("mov", 0xc0040400, 0xff3f1c78, sme_size_22, 0, OP2 (SME_ZA_HV_idx_destxN, SME_Znx4), OP_SVE_VV_BHSDQ, F_OD (4), 0),
-  SME2_INSN ("mova", 0xc0060800, 0xffff9f01, sme2_mov, 0, OP2 (SME_Zdnx2, SME_ZA_array_off3_5), OP_SVE_VV_BHSD, F_OD (2), 0),
-  SME2_INSN ("mova", 0xc0060c00, 0xffff9f03, sme2_mov, 0, OP2 (SME_Zdnx4, SME_ZA_array_off3_5), OP_SVE_VV_BHSD, F_OD (4), 0),
-  SME2_INSN ("mova", 0xc0060000, 0xff3f1f01, sme_size_22, 0, OP2 (SME_Zdnx2, SME_ZA_HV_idx_srcxN), OP_SVE_VV_BHSDQ, F_OD (2), 0),
-  SME2_INSN ("mova", 0xc0060400, 0xff3f1f03, sme_size_22, 0, OP2 (SME_Zdnx4, SME_ZA_HV_idx_srcxN), OP_SVE_VV_BHSDQ, F_OD (4), 0),
-  SME2_INSN ("mova", 0xc0040800, 0xffff9c38, sme2_mov, 0, OP2 (SME_ZA_array_off3_0, SME_Znx2), OP_SVE_VV_BHSD, F_OD (2), 0),
-  SME2_INSN ("mova", 0xc0040c00, 0xffff9c78, sme2_mov, 0, OP2 (SME_ZA_array_off3_0, SME_Znx4), OP_SVE_VV_BHSD, F_OD (4), 0),
-  SME2_INSN ("mova", 0xc0040000, 0xff3f1c38, sme_size_22, 0, OP2 (SME_ZA_HV_idx_destxN, SME_Znx2), OP_SVE_VV_BHSDQ, F_OD (2), 0),
-  SME2_INSN ("mova", 0xc0040400, 0xff3f1c78, sme_size_22, 0, OP2 (SME_ZA_HV_idx_destxN, SME_Znx4), OP_SVE_VV_BHSDQ, F_OD (4), 0),
+  SME2_INSN ("mov", 0xc0060800, 0xffff9f01, sme2_mov, 0, OP2 (SME_Zdnx2, SME_ZA_array_off3_5), OP_SVE_VV_BHSD, F_OD (2) | F_ALIAS, 0),
+  SME2_INSN ("mov", 0xc0060c00, 0xffff9f03, sme2_mov, 0, OP2 (SME_Zdnx4, SME_ZA_array_off3_5), OP_SVE_VV_BHSD, F_OD (4) | F_ALIAS, 0),
+  SME2_INSN ("mov", 0xc0060000, 0xff3f1f01, sme_size_22, 0, OP2 (SME_Zdnx2, SME_ZA_HV_idx_srcxN), OP_SVE_VV_BHSDQ, F_OD (2) | F_ALIAS, 0),
+  SME2_INSN ("mov", 0xc0060400, 0xff3f1f03, sme_size_22, 0, OP2 (SME_Zdnx4, SME_ZA_HV_idx_srcxN), OP_SVE_VV_BHSDQ, F_OD (4) | F_ALIAS, 0),
+  SME2_INSN ("mov", 0xc0040800, 0xffff9c38, sme2_mov, 0, OP2 (SME_ZA_array_off3_0, SME_Znx2), OP_SVE_VV_BHSD, F_OD (2) | F_ALIAS, 0),
+  SME2_INSN ("mov", 0xc0040c00, 0xffff9c78, sme2_mov, 0, OP2 (SME_ZA_array_off3_0, SME_Znx4), OP_SVE_VV_BHSD, F_OD (4) | F_ALIAS, 0),
+  SME2_INSN ("mov", 0xc0040000, 0xff3f1c38, sme_size_22, 0, OP2 (SME_ZA_HV_idx_destxN, SME_Znx2), OP_SVE_VV_BHSDQ, F_OD (2) | F_ALIAS, 0),
+  SME2_INSN ("mov", 0xc0040400, 0xff3f1c78, sme_size_22, 0, OP2 (SME_ZA_HV_idx_destxN, SME_Znx4), OP_SVE_VV_BHSDQ, F_OD (4) | F_ALIAS, 0),
+  SME2_INSN ("mova", 0xc0060800, 0xffff9f01, sme2_mov, 0, OP2 (SME_Zdnx2, SME_ZA_array_off3_5), OP_SVE_VV_BHSD, F_OD (2) | F_HAS_ALIAS, 0),
+  SME2_INSN ("mova", 0xc0060c00, 0xffff9f03, sme2_mov, 0, OP2 (SME_Zdnx4, SME_ZA_array_off3_5), OP_SVE_VV_BHSD, F_OD (4) | F_HAS_ALIAS, 0),
+  SME2_INSN ("mova", 0xc0060000, 0xff3f1f01, sme_size_22, 0, OP2 (SME_Zdnx2, SME_ZA_HV_idx_srcxN), OP_SVE_VV_BHSDQ, F_OD (2) | F_HAS_ALIAS, 0),
+  SME2_INSN ("mova", 0xc0060400, 0xff3f1f03, sme_size_22, 0, OP2 (SME_Zdnx4, SME_ZA_HV_idx_srcxN), OP_SVE_VV_BHSDQ, F_OD (4) | F_HAS_ALIAS, 0),
+  SME2_INSN ("mova", 0xc0040800, 0xffff9c38, sme2_mov, 0, OP2 (SME_ZA_array_off3_0, SME_Znx2), OP_SVE_VV_BHSD, F_OD (2) | F_HAS_ALIAS, 0),
+  SME2_INSN ("mova", 0xc0040c00, 0xffff9c78, sme2_mov, 0, OP2 (SME_ZA_array_off3_0, SME_Znx4), OP_SVE_VV_BHSD, F_OD (4) | F_HAS_ALIAS, 0),
+  SME2_INSN ("mova", 0xc0040000, 0xff3f1c38, sme_size_22, 0, OP2 (SME_ZA_HV_idx_destxN, SME_Znx2), OP_SVE_VV_BHSDQ, F_OD (2) | F_HAS_ALIAS, 0),
+  SME2_INSN ("mova", 0xc0040400, 0xff3f1c78, sme_size_22, 0, OP2 (SME_ZA_HV_idx_destxN, SME_Znx4), OP_SVE_VV_BHSDQ, F_OD (4) | F_HAS_ALIAS, 0),
   SME2_INSN ("movt", 0xc04e03e0, 0xffff8fe0, sme_misc, 0, OP2 (SME_ZT0_INDEX, Rt), OP_SVE_UX, 0, 0),
   SME2_INSN ("movt", 0xc04c03e0, 0xffff8fe0, sme_misc, 0, OP2 (Rt, SME_ZT0_INDEX), OP_SVE_XU, 0, 0),
-  SME2_INSN ("pext", 0x25207010, 0xff3ffc10, sme_size_22, 0, OP2 (SVE_Pd, SME_PNn3_INDEX2), OP_SVE_VU_BHSD, 0, 0),
-  SME2_INSN ("pext", 0x25207410, 0xff3ffe10, sme_size_22, 0, OP2 (SME_PdxN, SME_PNn3_INDEX1), OP_SVE_VU_BHSD, F_OD (2), 0),
-  SME2_INSN ("ptrue", 0x25207810, 0xff3ffff8, sme_size_22, 0, OP1 (SME_PNd3), OP_SVE_V_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("pext", 0x25207010, 0xff3ffc10, sme_size_22, 0, OP2 (SVE_Pd, SME_PNn3_INDEX2), OP_SVE_VU_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("pext", 0x25207410, 0xff3ffe10, sme_size_22, 0, OP2 (SME_PdxN, SME_PNn3_INDEX1), OP_SVE_VU_BHSD, F_OD (2), 0),
+  SVE2p1_SME2_INSN ("ptrue", 0x25207810, 0xff3ffff8, sme_size_22, 0, OP1 (SME_PNd3), OP_SVE_V_BHSD, 0, 0),
   SME2_INSN ("sclamp", 0xc120c400, 0xff20fc01, sme_size_22, 0, OP3 (SME_Zdnx2, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, 0),
   SME2_INSN ("sclamp", 0xc120cc00, 0xff20fc03, sme_size_22, 0, OP3 (SME_Zdnx4, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, 0),
   SME2_INSN ("scvtf", 0xc122e000, 0xfffffc21, sve_misc, 0, OP2 (SME_Zdnx2, SME_Znx2), OP_SVE_SS, 0, 0),
@@ -5826,70 +6448,70 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SME2_INSN ("srshl", 0xc120aa20, 0xff30ffe3, sme_size_22, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zm), OP_SVE_VVV_BHSD, 0, 1),
   SME2_INSN ("srshl", 0xc120b220, 0xff21ffe1, sme_size_22, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zmx2), OP_SVE_VVV_BHSD, 0, 1),
   SME2_INSN ("srshl", 0xc120ba20, 0xff23ffe3, sme_size_22, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zmx4), OP_SVE_VVV_BHSD, 0, 1),
-  SME2_INSN ("st1b", 0xa0600000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_BUU, 0, 0),
-  SME2_INSN ("st1b", 0xa0608000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_BUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1b", 0xa0600000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_BUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1b", 0xa0608000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_BUU, 0, 0),
   SME2_INSN ("st1b", 0xa1600000, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_BUU, 0, 0),
   SME2_INSN ("st1b", 0xa1608000, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_BUU, 0, 0),
-  SME2_INSN ("st1b", 0xa0200000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR), OP_SVE_BUU, 0, 0),
-  SME2_INSN ("st1b", 0xa0208000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR), OP_SVE_BUU, 0, 0),
-  SME2_INSN ("st1b", 0xa1200000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR), OP_SVE_BUU, 0, 0),
-  SME2_INSN ("st1b", 0xa1208000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR), OP_SVE_BUU, 0, 0),
-  SME2_INSN ("st1d", 0xa0606000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_DUU, 0, 0),
-  SME2_INSN ("st1d", 0xa060e000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_DUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1b", 0xa0200000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM), OP_SVE_BUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1b", 0xa0208000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM), OP_SVE_BUU, 0, 0),
+  SME2_INSN ("st1b", 0xa1200000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM), OP_SVE_BUU, 0, 0),
+  SME2_INSN ("st1b", 0xa1208000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM), OP_SVE_BUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1d", 0xa0606000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_DUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1d", 0xa060e000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_DUU, 0, 0),
   SME2_INSN ("st1d", 0xa1606000, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_DUU, 0, 0),
   SME2_INSN ("st1d", 0xa160e000, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_DUU, 0, 0),
-  SME2_INSN ("st1d", 0xa0206000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DUU, 0, 0),
-  SME2_INSN ("st1d", 0xa020e000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DUU, 0, 0),
-  SME2_INSN ("st1d", 0xa1206000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DUU, 0, 0),
-  SME2_INSN ("st1d", 0xa120e000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DUU, 0, 0),
-  SME2_INSN ("st1h", 0xa0602000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_HUU, 0, 0),
-  SME2_INSN ("st1h", 0xa060a000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_HUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1d", 0xa0206000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1d", 0xa020e000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DUU, 0, 0),
+  SME2_INSN ("st1d", 0xa1206000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DUU, 0, 0),
+  SME2_INSN ("st1d", 0xa120e000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1h", 0xa0602000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_HUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1h", 0xa060a000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_HUU, 0, 0),
   SME2_INSN ("st1h", 0xa1602000, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_HUU, 0, 0),
   SME2_INSN ("st1h", 0xa160a000, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_HUU, 0, 0),
-  SME2_INSN ("st1h", 0xa0202000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HUU, 0, 0),
-  SME2_INSN ("st1h", 0xa020a000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HUU, 0, 0),
-  SME2_INSN ("st1h", 0xa1202000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HUU, 0, 0),
-  SME2_INSN ("st1h", 0xa120a000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HUU, 0, 0),
-  SME2_INSN ("st1w", 0xa0604000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_SUU, 0, 0),
-  SME2_INSN ("st1w", 0xa060c000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_SUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1h", 0xa0202000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1h", 0xa020a000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HUU, 0, 0),
+  SME2_INSN ("st1h", 0xa1202000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HUU, 0, 0),
+  SME2_INSN ("st1h", 0xa120a000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1w", 0xa0604000, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_SUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1w", 0xa060c000, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_SUU, 0, 0),
   SME2_INSN ("st1w", 0xa1604000, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_SUU, 0, 0),
   SME2_INSN ("st1w", 0xa160c000, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_SUU, 0, 0),
-  SME2_INSN ("st1w", 0xa0204000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SUU, 0, 0),
-  SME2_INSN ("st1w", 0xa020c000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SUU, 0, 0),
-  SME2_INSN ("st1w", 0xa1204000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SUU, 0, 0),
-  SME2_INSN ("st1w", 0xa120c000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SUU, 0, 0),
-  SME2_INSN ("stnt1b", 0xa0600001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_BUU, 0, 0),
-  SME2_INSN ("stnt1b", 0xa0608001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_BUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1w", 0xa0204000, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SUU, 0, 0),
+  SVE2p1_SME2_INSN ("st1w", 0xa020c000, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SUU, 0, 0),
+  SME2_INSN ("st1w", 0xa1204000, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SUU, 0, 0),
+  SME2_INSN ("st1w", 0xa120c000, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1b", 0xa0600001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_BUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1b", 0xa0608001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_BUU, 0, 0),
   SME2_INSN ("stnt1b", 0xa1600008, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_BUU, 0, 0),
   SME2_INSN ("stnt1b", 0xa1608008, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_BUU, 0, 0),
-  SME2_INSN ("stnt1b", 0xa0200001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR), OP_SVE_BUU, 0, 0),
-  SME2_INSN ("stnt1b", 0xa0208001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR), OP_SVE_BUU, 0, 0),
-  SME2_INSN ("stnt1b", 0xa1200008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR), OP_SVE_BUU, 0, 0),
-  SME2_INSN ("stnt1b", 0xa1208008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR), OP_SVE_BUU, 0, 0),
-  SME2_INSN ("stnt1d", 0xa0606001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_DUU, 0, 0),
-  SME2_INSN ("stnt1d", 0xa060e001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_DUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1b", 0xa0200001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM), OP_SVE_BUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1b", 0xa0208001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM), OP_SVE_BUU, 0, 0),
+  SME2_INSN ("stnt1b", 0xa1200008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM), OP_SVE_BUU, 0, 0),
+  SME2_INSN ("stnt1b", 0xa1208008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM), OP_SVE_BUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1d", 0xa0606001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_DUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1d", 0xa060e001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_DUU, 0, 0),
   SME2_INSN ("stnt1d", 0xa1606008, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_DUU, 0, 0),
   SME2_INSN ("stnt1d", 0xa160e008, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_DUU, 0, 0),
-  SME2_INSN ("stnt1d", 0xa0206001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DUU, 0, 0),
-  SME2_INSN ("stnt1d", 0xa020e001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DUU, 0, 0),
-  SME2_INSN ("stnt1d", 0xa1206008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DUU, 0, 0),
-  SME2_INSN ("stnt1d", 0xa120e008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL3), OP_SVE_DUU, 0, 0),
-  SME2_INSN ("stnt1h", 0xa0602001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_HUU, 0, 0),
-  SME2_INSN ("stnt1h", 0xa060a001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_HUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1d", 0xa0206001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1d", 0xa020e001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DUU, 0, 0),
+  SME2_INSN ("stnt1d", 0xa1206008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DUU, 0, 0),
+  SME2_INSN ("stnt1d", 0xa120e008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL3), OP_SVE_DUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1h", 0xa0602001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_HUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1h", 0xa060a001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_HUU, 0, 0),
   SME2_INSN ("stnt1h", 0xa1602008, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_HUU, 0, 0),
   SME2_INSN ("stnt1h", 0xa160a008, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_HUU, 0, 0),
-  SME2_INSN ("stnt1h", 0xa0202001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HUU, 0, 0),
-  SME2_INSN ("stnt1h", 0xa020a001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HUU, 0, 0),
-  SME2_INSN ("stnt1h", 0xa1202008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HUU, 0, 0),
-  SME2_INSN ("stnt1h", 0xa120a008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL1), OP_SVE_HUU, 0, 0),
-  SME2_INSN ("stnt1w", 0xa0604001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_SUU, 0, 0),
-  SME2_INSN ("stnt1w", 0xa060c001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_SUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1h", 0xa0202001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1h", 0xa020a001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HUU, 0, 0),
+  SME2_INSN ("stnt1h", 0xa1202008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HUU, 0, 0),
+  SME2_INSN ("stnt1h", 0xa120a008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL1), OP_SVE_HUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1w", 0xa0604001, 0xfff0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_SUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1w", 0xa060c001, 0xfff0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_SUU, 0, 0),
   SME2_INSN ("stnt1w", 0xa1604008, 0xfff0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_SUU, 0, 0),
   SME2_INSN ("stnt1w", 0xa160c008, 0xfff0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_SUU, 0, 0),
-  SME2_INSN ("stnt1w", 0xa0204001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SUU, 0, 0),
-  SME2_INSN ("stnt1w", 0xa020c001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SUU, 0, 0),
-  SME2_INSN ("stnt1w", 0xa1204008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SUU, 0, 0),
-  SME2_INSN ("stnt1w", 0xa120c008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RR_LSL2), OP_SVE_SUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1w", 0xa0204001, 0xffe0e001, sve_misc, 0, OP3 (SME_Zdnx2, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SUU, 0, 0),
+  SVE2p1_SME2_INSN ("stnt1w", 0xa020c001, 0xffe0e003, sve_misc, 0, OP3 (SME_Zdnx4, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SUU, 0, 0),
+  SME2_INSN ("stnt1w", 0xa1204008, 0xffe0e008, sve_misc, 0, OP3 (SME_Ztx2_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SUU, 0, 0),
+  SME2_INSN ("stnt1w", 0xa120c008, 0xffe0e00c, sve_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_PNg3, SVE_ADDR_RM_LSL2), OP_SVE_SUU, 0, 0),
   SME2_INSN ("str", 0xe13f8000, 0xfffffc1f, sme_misc, 0, OP2 (SME_ZT0, SIMD_ADDR_SIMPLE), {}, 0, 0),
   SME2_INSN ("sub", 0xc1a01c18, 0xffbf9c38, sme_int_sd, 0, OP2 (SME_ZA_array_off3_0, SME_Znx2), OP_SVE_VVV_SD, F_OD (2), 0),
   SME2_INSN ("sub", 0xc1a11c18, 0xffbf9c78, sme_int_sd, 0, OP2 (SME_ZA_array_off3_0, SME_Znx4), OP_SVE_VVV_SD, F_OD (4), 0),
@@ -6002,14 +6624,14 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SME2_INSN ("uzp", 0xc120d401, 0xffe0fc01, sme_misc, 0, OP3 (SME_Zdnx2, SVE_Zn, SVE_Zm_16), OP_SVE_QQQ, 0, 0),
   SME2_INSN ("uzp", 0xc136e002, 0xff3ffc63, sme_size_22, 0, OP2 (SME_Zdnx4, SME_Znx4), OP_SVE_VV_BHSD, 0, 0),
   SME2_INSN ("uzp", 0xc137e002, 0xfffffc63, sme_misc, 0, OP2 (SME_Zdnx4, SME_Znx4), OP_SVE_QQ, 0, 0),
-  SME2_INSN ("whilege", 0x25204010, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
-  SME2_INSN ("whilegt", 0x25204018, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
-  SME2_INSN ("whilehi", 0x25204818, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
-  SME2_INSN ("whilehs", 0x25204810, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
-  SME2_INSN ("whilele", 0x25204418, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
-  SME2_INSN ("whilelo", 0x25204c10, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
-  SME2_INSN ("whilels", 0x25204c18, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
-  SME2_INSN ("whilelt", 0x25204410, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilege", 0x25204010, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilegt", 0x25204018, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilehi", 0x25204818, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilehs", 0x25204810, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilele", 0x25204418, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilelo", 0x25204c10, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilels", 0x25204c18, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
+  SVE2p1_SME2_INSN ("whilelt", 0x25204410, 0xff20dc18, sme_size_22, 0, OP4 (SME_PNd3, Rn, Rm, SME_VLxN_13), OP_SVE_VXXU_BHSD, 0, 0),
   SME2_INSN ("zero", 0xc0480001, 0xffffffff, sme_misc, 0, OP1 (SME_ZT0_LIST), {}, 0, 0),
   SME2_INSN ("zip", 0xc120d000, 0xff20fc01, sme_size_22, 0, OP3 (SME_Zdnx2, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, 0),
   SME2_INSN ("zip", 0xc120d400, 0xffe0fc01, sme_misc, 0, OP3 (SME_Zdnx2, SVE_Zn, SVE_Zm_16), OP_SVE_QQQ, 0, 0),
@@ -6042,16 +6664,27 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SME2_F64F64_INSN ("fmls", 0xc1d00010, 0xfff09838, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zm_INDEX1), OP_SVE_DDD, F_OD (2), 0),
   SME2_F64F64_INSN ("fmls", 0xc1d08010, 0xfff09878, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx4, SME_Zm_INDEX1), OP_SVE_DDD, F_OD (4), 0),
 
+  /* SVE_BFSCALE instructions. */
+  SVE_BFSCALE_INSN ("bfscale", 0x65098000, 0xffffe000, sve_misc, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_HMHH, 0, 2),
+  SVE_BFSCALE_SME2_INSN ("bfscale", 0xc120a180, 0xfff0ffe1, sme_misc, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zm), OP_SVE_VVV_H, 0, 1),
+  SVE_BFSCALE_SME2_INSN ("bfscale", 0xc120a980, 0xfff0ffe3, sme_misc, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zm), OP_SVE_VVV_H, 0, 1),
+  SVE_BFSCALE_SME2_INSN ("bfscale", 0xc120b180, 0xffe1ffe1, sme_misc, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zmx2), OP_SVE_VVV_H, 0, 1),
+  SVE_BFSCALE_SME2_INSN ("bfscale", 0xc120b980, 0xffe3ffe3, sme_misc, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zmx4), OP_SVE_VVV_H, 0, 1),
+  SVE_BFSCALE_SME2_INSN ("bfmul", 0xc120e800, 0xffe1fc21, sme_misc, OP3 (SME_Zdnx2, SME_Znx2, SME_Zm_17), OP_SVE_VVV_H, 0, 0),
+  SVE_BFSCALE_SME2_INSN ("bfmul", 0xc121e800, 0xffe1fc63, sme_misc, OP3 (SME_Zdnx4, SME_Znx4, SME_Zm_17), OP_SVE_VVV_H, 0, 0),
+  SVE_BFSCALE_SME2_INSN ("bfmul", 0xc120e400, 0xffe1fc21, sme_misc, OP3 (SME_Zdnx2, SME_Znx2, SME_Zmx2), OP_SVE_VVV_H, 0, 0),
+  SVE_BFSCALE_SME2_INSN ("bfmul", 0xc121e400, 0xffe3fc63, sme_misc, OP3 (SME_Zdnx4, SME_Znx4, SME_Zmx4), OP_SVE_VVV_H, 0, 0),
+
   /* SIMD Dot Product (optional in v8.2-A).  */
   DOT_INSN ("udot", 0x2e009400, 0xbf20fc00, dotproduct, OP3 (Vd, Vn, Vm), QL_V3DOT, F_SIZEQ),
-  DOT_INSN ("sdot", 0xe009400,  0xbf20fc00, dotproduct, OP3 (Vd, Vn, Vm), QL_V3DOT, F_SIZEQ),
+  DOT_INSN ("sdot", 0x0e009400, 0xbf20fc00, dotproduct, OP3 (Vd, Vn, Vm), QL_V3DOT, F_SIZEQ),
   DOT_INSN ("udot", 0x2f00e000, 0xbf00f400, dotproduct, OP3 (Vd, Vn, Em), QL_V2DOT, F_SIZEQ),
-  DOT_INSN ("sdot", 0xf00e000,  0xbf00f400, dotproduct, OP3 (Vd, Vn, Em), QL_V2DOT, F_SIZEQ),
-/* Crypto SHA2 (optional in ARMv8.2-a).  */
-  SHA2_INSN ("sha512h",   0xce608000, 0xffe0fc00, cryptosha2, OP3 (Fd, Fn, Vm), QL_SHA512UPT, 0),
-  SHA2_INSN ("sha512h2",  0xce608400, 0xffe0fc00, cryptosha2, OP3 (Fd, Fn, Vm), QL_SHA512UPT, 0),
-  SHA2_INSN ("sha512su0", 0xcec08000, 0xfffffc00, cryptosha2, OP2 (Vd, Vn), QL_V2SAME2D, 0),
-  SHA2_INSN ("sha512su1", 0xce608800, 0xffe0fc00, cryptosha2, OP3 (Vd, Vn, Vm), QL_V3SAME2D, 0),
+  DOT_INSN ("sdot", 0x0f00e000, 0xbf00f400, dotproduct, OP3 (Vd, Vn, Em), QL_V2DOT, F_SIZEQ),
+/* Crypto SHA512 (optional in ARMv8.2-a).  */
+  SHA3_INSN ("sha512h",   0xce608000, 0xffe0fc00, cryptosha2, OP3 (Fd, Fn, Vm), QL_SHA512UPT, 0),
+  SHA3_INSN ("sha512h2",  0xce608400, 0xffe0fc00, cryptosha2, OP3 (Fd, Fn, Vm), QL_SHA512UPT, 0),
+  SHA3_INSN ("sha512su0", 0xcec08000, 0xfffffc00, cryptosha2, OP2 (Vd, Vn), QL_V2SAME2D, 0),
+  SHA3_INSN ("sha512su1", 0xce608800, 0xffe0fc00, cryptosha2, OP3 (Vd, Vn, Vm), QL_V3SAME2D, 0),
   /* Crypto SHA3 (optional in ARMv8.2-a).  */
   SHA3_INSN ("eor3",      0xce000000, 0xffe08000, cryptosha3, OP4 (Vd, Vn, Vm, Va), QL_V4SAME16B, 0),
   SHA3_INSN ("rax1",      0xce608c00, 0xffe0fc00, cryptosha3, OP3 (Vd, Vn, Vm), QL_V3SAME2D, 0),
@@ -6069,8 +6702,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SM4_INSN ("sm4e",    0xcec08400, 0xfffffc00, cryptosm4, OP2 (Vd, Vn), QL_V2SAME4S, 0),
   SM4_INSN ("sm4ekey", 0xce60c800, 0xffe0fc00, cryptosm4, OP3 (Vd, Vn, Vm), QL_V3SAME4S, 0),
   /* Crypto FP16 (optional in ARMv8.2-a).  */
-  FP16_V8_2A_INSN ("fmlal",  0xe20ec00,  0xffa0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FML2S, 0),
-  FP16_V8_2A_INSN ("fmlsl",  0xea0ec00,  0xffa0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FML2S, 0),
+  FP16_V8_2A_INSN ("fmlal",  0x0e20ec00, 0xffa0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FML2S, 0),
+  FP16_V8_2A_INSN ("fmlsl",  0x0ea0ec00, 0xffa0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FML2S, 0),
   FP16_V8_2A_INSN ("fmlal2", 0x2e20cc00, 0xffa0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FML2S, 0),
   FP16_V8_2A_INSN ("fmlsl2", 0x2ea0cc00, 0xffa0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FML2S, 0),
 
@@ -6079,8 +6712,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   FP16_V8_2A_INSN ("fmlal2", 0x6e20cc00, 0xffa0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FML4S, 0),
   FP16_V8_2A_INSN ("fmlsl2", 0x6ea0cc00, 0xffa0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FML4S, 0),
 
-  FP16_V8_2A_INSN ("fmlal",  0xf800000, 0xffc0f400, asimdelem, OP3 (Vd, Vn, Em16), QL_V2FML2S, 0),
-  FP16_V8_2A_INSN ("fmlsl",  0xf804000, 0xffc0f400, asimdelem, OP3 (Vd, Vn, Em16), QL_V2FML2S, 0),
+  FP16_V8_2A_INSN ("fmlal",  0x0f800000, 0xffc0f400, asimdelem, OP3 (Vd, Vn, Em16), QL_V2FML2S, 0),
+  FP16_V8_2A_INSN ("fmlsl",  0x0f804000, 0xffc0f400, asimdelem, OP3 (Vd, Vn, Em16), QL_V2FML2S, 0),
   FP16_V8_2A_INSN ("fmlal2", 0x2f808000, 0xffc0f400, asimdelem, OP3 (Vd, Vn, Em16), QL_V2FML2S, 0),
   FP16_V8_2A_INSN ("fmlsl2", 0x2f80c000, 0xffc0f400, asimdelem, OP3 (Vd, Vn, Em16), QL_V2FML2S, 0),
 
@@ -6106,6 +6739,87 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   RCPC2_INSN ("ldapursw", 0x99800000, 0xffe00c00, ldst_unscaled, OP2 (Rt, ADDR_OFFSET), QL_STLX, 0),
   RCPC2_INSN ("stlur",    0xd9000000, 0xffe00c00, ldst_unscaled, OP2 (Rt, ADDR_OFFSET), QL_STLX, 0),
   RCPC2_INSN ("ldapur",   0xd9400000, 0xffe00c00, ldst_unscaled, OP2 (Rt, ADDR_OFFSET), QL_STLX, 0),
+
+  /* Floating-point atomic add in memory. */
+  _LSFE_INSN ("ldfadd", 0x3c200000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfadda", 0x3ca00000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfaddal", 0x3ce00000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfaddl", 0x3c600000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  /* Floating-point atomic maximum in memory. */
+  _LSFE_INSN ("ldfmax", 0x3c204000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfmaxa", 0x3ca04000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfmaxal", 0x3ce04000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfmaxl", 0x3c604000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  /* Floating-point atomic maximum number in memory. */
+  _LSFE_INSN ("ldfmaxnm", 0x3c206000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfmaxnma", 0x3ca06000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfmaxnmal", 0x3ce06000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfmaxnml", 0x3c606000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  /* Floating-point atomic minimum in memory. */
+  _LSFE_INSN ("ldfmin", 0x3c205000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfmina", 0x3ca05000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfminal", 0x3ce05000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfminl", 0x3c605000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  /* Floating-point atomic minimum number in memory. */
+  _LSFE_INSN ("ldfminnm", 0x3c207000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfminnma", 0x3ca07000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfminnmal", 0x3ce07000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("ldfminnml", 0x3c607000, 0x3fe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_HSD_0, F_LSFE_SZ),
+  /* BFloat16 floating-point add in memory. */
+  _LSFE_INSN ("ldbfadd", 0x3c200000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfadda", 0x3ca00000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfaddal", 0x3ce00000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfaddl", 0x3c600000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  /* BFloat16 floating-point maximum in memory. */
+  _LSFE_INSN ("ldbfmax", 0x3c204000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfmaxa", 0x3ca04000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfmaxal", 0x3ce04000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfmaxl", 0x3c604000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  /* BFloat16 floating-point maximum number in memory. */
+  _LSFE_INSN ("ldbfmaxnm", 0x3c206000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfmaxnma", 0x3ca06000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfmaxnmal", 0x3ce06000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfmaxnml", 0x3c606000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  /* BFloat16 floating-point minimum in memory. */
+  _LSFE_INSN ("ldbfmin", 0x3c205000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfmina", 0x3ca05000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfminal", 0x3ce05000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfminl", 0x3c605000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  /* BFloat16 floating-point minimum number in memory. */
+  _LSFE_INSN ("ldbfminnm", 0x3c207000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfminnma", 0x3ca07000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfminnmal", 0x3ce07000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  _LSFE_INSN ("ldbfminnml", 0x3c607000, 0xffe0fc00, lse_atomic, OP3 (Fm, Fd, ADDR_SIMPLE), QL_FP2_H_0, 0),
+  /* Floating-point atomic add in memory, without return. */
+  _LSFE_INSN ("stfadd", 0x3c20801f, 0x3fe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_FP_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("stfaddl", 0x3c60801f, 0x3fe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_FP_HSD_0, F_LSFE_SZ),
+  /* Floating-point atomic maximum in memory, without return. */
+  _LSFE_INSN ("stfmax", 0x3c20c01f, 0x3fe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_FP_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("stfmaxl", 0x3c60c01f, 0x3fe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_FP_HSD_0, F_LSFE_SZ),
+  /* Floating-point atomic maximum number in memory, without return. */
+  _LSFE_INSN ("stfmaxnm", 0x3c20e01f, 0x3fe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_FP_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("stfmaxnml", 0x3c60e01f, 0x3fe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_FP_HSD_0, F_LSFE_SZ),
+  /* Floating-point atomic minimum in memory, without return. */
+  _LSFE_INSN ("stfmin", 0x3c20d01f, 0x3fe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_FP_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("stfminl", 0x3c60d01f, 0x3fe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_FP_HSD_0, F_LSFE_SZ),
+  /* Floating-point atomic minimum number in memory, without return. */
+  _LSFE_INSN ("stfminnm", 0x3c20f01f, 0x3fe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_FP_HSD_0, F_LSFE_SZ),
+  _LSFE_INSN ("stfminnml", 0x3c60f01f, 0x3fe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_FP_HSD_0, F_LSFE_SZ),
+  /* BFloat16 floating-point atomic add in memory, without return. */
+  _LSFE_INSN ("stbfadd", 0x3c20801f, 0xffe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_DST_H, 0),
+  _LSFE_INSN ("stbfaddl", 0x3c60801f, 0xffe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_DST_H, 0),
+  /* BFloat16 floating-point atomic maximum in memory, without return. */
+  _LSFE_INSN ("stbfmax", 0x3c20c01f, 0xffe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_DST_H, 0),
+  _LSFE_INSN ("stbfmaxl", 0x3c60c01f, 0xffe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_DST_H, 0),
+  /* BFloat16 floating-point atomic maximum number in memory, without return. */
+  _LSFE_INSN ("stbfmaxnm", 0x3c20e01f, 0xffe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_DST_H, 0),
+  _LSFE_INSN ("stbfmaxnml", 0x3c60e01f, 0xffe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_DST_H, 0),
+  /* BFloat16 floating-point atomic minumum in memory, without return. */
+  _LSFE_INSN ("stbfmin", 0x3c20d01f, 0xffe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_DST_H, 0),
+  _LSFE_INSN ("stbfminl", 0x3c60d01f, 0xffe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_DST_H, 0),
+  /* BFloat16 floating-point atomic minumum number in memory, without return. */
+  _LSFE_INSN ("stbfminnm", 0x3c20f01f, 0xffe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_DST_H, 0),
+  _LSFE_INSN ("stbfminnml", 0x3c60f01f, 0xffe0fc1f, lse_atomic, OP2 (Fm, ADDR_SIMPLE), QL_DST_H, 0),
 
   /* Matrix Multiply instructions.  */
   INT8MATMUL_SVE_INSNC ("smmla",  0x45009800, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_SBB, 0, C_SCAN_MOVPRFX, 0),
@@ -6160,6 +6874,15 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   BFLOAT16_INSN ("bfmlalb", 0x2ec0fc00, 0xffe0fc00, bfloat16, OP3 (Vd, Vn, Vm), QL_BFMMLA, 0),
   BFLOAT16_INSN ("bfmlalt", 0x4fc0f000, 0xffc0f400, bfloat16, OP3 (Vd, Vn, Em16), QL_V3BFML4S, 0),
   BFLOAT16_INSN ("bfmlalb", 0x0fc0f000, 0xffc0f400, bfloat16, OP3 (Vd, Vn, Em16), QL_V3BFML4S, 0),
+
+  /* SVE_F16F32 Matrix Multiply-Accumulate. */
+  SVE_F16F32MM_INSN ("fmmla", 0x6420e400, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_SHH, 0),
+  /* F8F32 Matrix Multiply-Accumulate. */
+  F8F32MM_INSN ("fmmla", 0x6e80ec00, 0xffe0fc00, asimdmisc, 0, OP3 (Vd, Vn, Vm), QL_V3FMLL4S, 0),
+  F8F32MM_SVE2_INSN ("fmmla", 0x6420e000, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_SBB, 0),
+  /* F8F16 Matrix Multiply-Accumulate. */
+  F8F16MM_INSN ("fmmla", 0x6e00ec00, 0xffe0fc00, asimdmisc, 0, OP3 (Vd, Vn, Vm), QL_V3FML8H, 0),
+  F8F16MM_SVE2_INSN ("fmmla", 0x6460e000, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_H_B, 0),
 
   /* cpyfp cpyfprn cpyfpwn cpyfpn
      cpyfm cpyfmrn cpyfmwn cpyfmn
@@ -6229,124 +6952,164 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   ITE_INSN ("trcit", 0xd50b72e0, 0xffffffe0, ic_system, OP1 (Rt), QL_I1X, F_ALIAS),
 
 /* Read check write compare and swap doubleword in memory instructions.  */
-  THE_INSN("rcwcas", 0x19200800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwcasa", 0x19a00800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwcasal", 0x19e00800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwcasl", 0x19600800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwcas", 0x19200800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwcasa", 0x19a00800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwcasal", 0x19e00800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwcasl", 0x19600800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
 
 /* Read check write compare and swap quadword in memory instructions.  */
-  D128_THE_INSN("rcwcasp", 0x19200c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
-  D128_THE_INSN("rcwcaspa", 0x19a00c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
-  D128_THE_INSN("rcwcaspal", 0x19e00c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
-  D128_THE_INSN("rcwcaspl", 0x19600c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
+  D128_THE_INSN ("rcwcasp", 0x19200c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
+  D128_THE_INSN ("rcwcaspa", 0x19a00c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
+  D128_THE_INSN ("rcwcaspal", 0x19e00c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
+  D128_THE_INSN ("rcwcaspl", 0x19600c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
 
 /* Read check write software compare and swap doubleword in memory
    instructions.  */
-  THE_INSN("rcwscas", 0x59200800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwscasa", 0x59a00800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwscasal", 0x59e00800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwscasl", 0x59600800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwscas", 0x59200800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwscasa", 0x59a00800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwscasal", 0x59e00800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwscasl", 0x59600800, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
 
 /* Read check write software compare and swap quadword in memory
    instructions.  */
-  D128_THE_INSN("rcwscasp", 0x59200c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
-  D128_THE_INSN("rcwscaspa", 0x59a00c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
-  D128_THE_INSN("rcwscaspal", 0x59e00c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
-  D128_THE_INSN("rcwscaspl", 0x59600c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
+  D128_THE_INSN ("rcwscasp", 0x59200c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
+  D128_THE_INSN ("rcwscaspa", 0x59a00c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
+  D128_THE_INSN ("rcwscaspal", 0x59e00c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
+  D128_THE_INSN ("rcwscaspl", 0x59600c00, 0xffe0fc00, OP5 (Rs, PAIRREG, Rt, PAIRREG, ADDR_SIMPLE), QL_X4NIL, 0),
 
 /* Read check write atomic bit clear on doubleword in memory instructions.  */
-  THE_INSN("rcwclr", 0x38209000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwclra", 0x38a09000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwclral", 0x38e09000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwclrl", 0x38609000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwclr", 0x38209000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwclra", 0x38a09000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwclral", 0x38e09000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwclrl", 0x38609000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
 
 /* Read check write atomic bit clear on quadword in memory instructions.  */
-  D128_THE_INSN("rcwclrp", 0x19209000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwclrpa", 0x19a09000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwclrpal", 0x19e09000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwclrpl", 0x19609000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwclrp", 0x19209000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwclrpa", 0x19a09000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwclrpal", 0x19e09000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwclrpl", 0x19609000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
 
 /* Read check write software atomic bit clear on doubleword in memory
    instructions.  */
-  THE_INSN("rcwsclr", 0x78209000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwsclra", 0x78a09000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwsclral", 0x78e09000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwsclrl", 0x78609000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwsclr", 0x78209000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwsclra", 0x78a09000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwsclral", 0x78e09000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwsclrl", 0x78609000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
 
 /* Read check write software atomic bit clear on quadword in memory
    instructions.  */
-  D128_THE_INSN("rcwsclrp", 0x59209000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwsclrpa", 0x59a09000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwsclrpal", 0x59e09000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwsclrpl", 0x59609000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwsclrp", 0x59209000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwsclrpa", 0x59a09000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwsclrpal", 0x59e09000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwsclrpl", 0x59609000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
 
 /* Read check write atomic bit set on doubleword in memory instructions.  */
-  THE_INSN("rcwset", 0x3820b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwseta", 0x38a0b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwsetal", 0x38e0b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwsetl", 0x3860b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwset", 0x3820b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwseta", 0x38a0b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwsetal", 0x38e0b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwsetl", 0x3860b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
 
 /* Read check write atomic bit set on quadword in memory instructions.  */
-  D128_THE_INSN("rcwsetp", 0x1920b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwsetpa", 0x19a0b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwsetpal", 0x19e0b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwsetpl", 0x1960b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwsetp", 0x1920b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwsetpa", 0x19a0b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwsetpal", 0x19e0b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwsetpl", 0x1960b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
 
 /* Read check write software atomic bit set on doubleword in memory
    instructions.  */
-  THE_INSN("rcwsset", 0x7820b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwsseta", 0x78a0b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwssetal", 0x78e0b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwssetl", 0x7860b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwsset", 0x7820b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwsseta", 0x78a0b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwssetal", 0x78e0b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwssetl", 0x7860b000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
 
 /* Read check write software atomic bit set on quadword in memory
    instructions.  */
-  D128_THE_INSN("rcwssetp", 0x5920b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwssetpa", 0x59a0b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwssetpal", 0x59e0b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwssetpl", 0x5960b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwssetp", 0x5920b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwssetpa", 0x59a0b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwssetpal", 0x59e0b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwssetpl", 0x5960b000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
 
 /* Read check write swap doubleword in memory instructions.  */
-  THE_INSN("rcwswp", 0x3820a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwswpa", 0x38a0a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwswpal", 0x38e0a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwswpl", 0x3860a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwswp", 0x3820a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwswpa", 0x38a0a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwswpal", 0x38e0a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwswpl", 0x3860a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
 
 /* Read check write swap quadword in memory instructions.  */
-  D128_THE_INSN("rcwswpp", 0x1920a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwswppa", 0x19a0a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwswppal", 0x19e0a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwswppl", 0x1960a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwswpp", 0x1920a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwswppa", 0x19a0a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwswppal", 0x19e0a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwswppl", 0x1960a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
 
 /* Read check write software swap doubleword in memory instructions.  */
-  THE_INSN("rcwsswp", 0x7820a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwsswpa", 0x78a0a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwsswpal", 0x78e0a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
-  THE_INSN("rcwsswpl", 0x7860a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwsswp", 0x7820a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwsswpa", 0x78a0a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwsswpal", 0x78e0a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
+  THE_INSN ("rcwsswpl", 0x7860a000, 0xffe0fc00, OP3 (Rs, Rt, ADDR_SIMPLE), QL_X2NIL, 0),
 
 /* Read check write software swap quadword in memory instructions.  */
-  D128_THE_INSN("rcwsswpp", 0x5920a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwsswppa", 0x59a0a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwsswppal", 0x59e0a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
-  D128_THE_INSN("rcwsswppl", 0x5960a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwsswpp", 0x5920a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwsswppa", 0x59a0a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwsswppal", 0x59e0a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
+  D128_THE_INSN ("rcwsswppl", 0x5960a000, 0xffe0fc00, OP3 (Rt, Rs, ADDR_SIMPLE), QL_X2NIL, 0),
 
-/* BFloat16 SVE Instructions.  */
-  B16B16_INSNC("bfadd", 0x65008000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_SMSS, 0, C_SCAN_MOVPRFX, 0),
-  B16B16_INSNC("bfmax", 0x65068000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_SMSS, 0, C_SCAN_MOVPRFX, 0),
-  B16B16_INSNC("bfmaxnm", 0x65048000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_SMSS, 0, C_SCAN_MOVPRFX, 0),
-  B16B16_INSNC("bfmin", 0x65078000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_SMSS, 0, C_SCAN_MOVPRFX, 0),
-  B16B16_INSNC("bfminnm", 0x65058000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_SMSS, 0, C_SCAN_MOVPRFX, 0),
-  B16B16_INSNC("bfmla", 0x65200000, 0xffe0e000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zn, SVE_Zm_16), OP_SVE_SMSS, 0, C_SCAN_MOVPRFX, 0),
-  B16B16_INSNC("bfmls", 0x65202000, 0xffe0e000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zn, SVE_Zm_16), OP_SVE_SMSS, 0, C_SCAN_MOVPRFX, 0),
-  B16B16_INSN("bfadd", 0x65000000, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_HHH, 0, 0),
-  B16B16_INSN("bfclamp", 0x64202400, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_HHH, 0, 0),
-  B16B16_INSNC("bfmul", 0x65028000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_SMSS, 0, C_SCAN_MOVPRFX, 0),
-  B16B16_INSN("bfmul", 0x65000800, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_HHH, 0, 0),
-  B16B16_INSNC("bfsub", 0x65018000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_SMSS, 0, C_SCAN_MOVPRFX, 0),
-  B16B16_INSN("bfsub", 0x65000400, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_HHH, 0, 0),
-  B16B16_INSN("bfmla", 0x64200800, 0xffa0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_11_INDEX), OP_SVE_VVV_H, 0, 0),
-  B16B16_INSN("bfmls", 0x64200c00, 0xffa0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_11_INDEX), OP_SVE_VVV_H, 0, 0),
-  B16B16_INSN("bfmul", 0x64202800, 0xffa0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_11_INDEX), OP_SVE_VVV_H, 0, 0),
+/* SVE Z-targeting non-widening BFloat16 instructions.  */
+  B16B16_SVE2_INSNC ("bfadd", 0x65008000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_HMHH, 0, C_SCAN_MOVPRFX, 2),
+  B16B16_SVE2_INSNC ("bfmax", 0x65068000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_HMHH, 0, C_SCAN_MOVPRFX, 2),
+  B16B16_SVE2_INSNC ("bfmaxnm", 0x65048000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_HMHH, 0, C_SCAN_MOVPRFX, 2),
+  B16B16_SVE2_INSNC ("bfmin", 0x65078000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_HMHH, 0, C_SCAN_MOVPRFX, 2),
+  B16B16_SVE2_INSNC ("bfminnm", 0x65058000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_HMHH, 0, C_SCAN_MOVPRFX, 2),
+  B16B16_SVE2_INSNC ("bfmla", 0x65200000, 0xffe0e000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zn, SVE_Zm_16), OP_SVE_HMHH, 0, C_SCAN_MOVPRFX, 0),
+  B16B16_SVE2_INSNC ("bfmls", 0x65202000, 0xffe0e000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zn, SVE_Zm_16), OP_SVE_HMHH, 0, C_SCAN_MOVPRFX, 0),
+  B16B16_SVE2_INSNC ("bfmul", 0x65028000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_HMHH, 0, C_SCAN_MOVPRFX, 2),
+  B16B16_SVE2_INSNC ("bfsub", 0x65018000, 0xffffe000, sve_misc, 0, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_HMHH, 0, C_SCAN_MOVPRFX, 2),
+  B16B16_SVE2_INSNC ("bfclamp", 0x64202400, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_HHH, 0, C_SCAN_MOVPRFX, 0),
+  B16B16_SVE2_INSNC ("bfmla", 0x64200800, 0xffa0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_22_INDEX), OP_SVE_VVV_H, 0, C_SCAN_MOVPRFX, 0),
+  B16B16_SVE2_INSNC ("bfmls", 0x64200c00, 0xffa0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_22_INDEX), OP_SVE_VVV_H, 0, C_SCAN_MOVPRFX, 0),
+  B16B16_SVE2_INSN ("bfadd", 0x65000000, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_HHH, 0, 0),
+  B16B16_SVE2_INSN ("bfmul", 0x65000800, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_HHH, 0, 0),
+  B16B16_SVE2_INSN ("bfsub", 0x65000400, 0xffe0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_HHH, 0, 0),
+  B16B16_SVE2_INSN ("bfmul", 0x64202800, 0xffa0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_22_INDEX), OP_SVE_VVV_H, 0, 0),
+
+/* SME Z-targeting multi-vector non-widening BFloat16 instructions.  */
+  SVE_B16B16_SME_INSN ("bfmax", 0xc120a100, 0xfff0ffe1, sme_misc, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zm), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfmax", 0xc120a900, 0xfff0ffe3, sme_misc, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zm), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfmax", 0xc120b100, 0xffe1ffe1, sme_misc, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zmx2), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfmax", 0xc120b900, 0xffe3ffe3, sme_misc, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zmx4), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfmaxnm", 0xc120a120, 0xfff0ffe1, sme_misc, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zm), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfmaxnm", 0xc120a920, 0xfff0ffe3, sme_misc, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zm), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfmaxnm", 0xc120b120, 0xffe1ffe1, sme_misc, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zmx2), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfmaxnm", 0xc120b920, 0xffe3ffe3, sme_misc, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zmx4), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfmin", 0xc120a101, 0xfff0ffe1, sme_misc, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zm), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfmin", 0xc120a901, 0xfff0ffe3, sme_misc, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zm), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfmin", 0xc120b101, 0xffe1ffe1, sme_misc, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zmx2), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfmin", 0xc120b901, 0xffe3ffe3, sme_misc, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zmx4), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfminnm", 0xc120a121, 0xfff0ffe1, sme_misc, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zm), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfminnm", 0xc120a921, 0xfff0ffe3, sme_misc, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zm), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfminnm", 0xc120b121, 0xffe1ffe1, sme_misc, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zmx2), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfminnm", 0xc120b921, 0xffe3ffe3, sme_misc, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zmx4), OP_SVE_HHH, 0, 1),
+  SVE_B16B16_SME_INSN ("bfclamp", 0xc120c000, 0xffe0fc01, sme_misc, 0, OP3 (SME_Zdnx2, SVE_Zn, SVE_Zm_16), OP_SVE_HHH, 0, 0),
+  SVE_B16B16_SME_INSN ("bfclamp", 0xc120c800, 0xffe0fc03, sme_misc, 0, OP3 (SME_Zdnx4, SVE_Zn, SVE_Zm_16), OP_SVE_HHH,0, 0),
+
+/* SME ZA-targeting non-widening BFloat16 instructions.  */
+  SME_B16B16_INSN ("bfadd", 0xc1e41c00, 0xffff9c38, sme_misc, 0, OP2 (SME_ZA_array_off3_0, SME_Znx2), OP_SVE_HH, F_OD(2), 0),
+  SME_B16B16_INSN ("bfadd", 0xc1e51c00, 0xffff9c78, sme_misc, 0, OP2 (SME_ZA_array_off3_0, SME_Znx4), OP_SVE_HH, F_OD(4), 0),
+  SME_B16B16_INSN ("bfsub", 0xc1e41c08, 0xffff9c38, sme_misc, 0, OP2 (SME_ZA_array_off3_0, SME_Znx2), OP_SVE_HH, F_OD(2), 0),
+  SME_B16B16_INSN ("bfsub", 0xc1e51c08, 0xffff9c78, sme_misc, 0, OP2 (SME_ZA_array_off3_0, SME_Znx4), OP_SVE_HH, F_OD(4), 0),
+  SME_B16B16_INSN ("bfmla", 0xc1101020, 0xfff09030, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zm_INDEX3_3), OP_SVE_HHH, F_OD(2), 0),
+  SME_B16B16_INSN ("bfmla", 0xc1109020, 0xfff09070, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx4, SME_Zm_INDEX3_3), OP_SVE_HHH, F_OD(4), 0),
+  SME_B16B16_INSN ("bfmla", 0xc1601c00, 0xfff09c18, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SVE_ZnxN, SME_Zm), OP_SVE_HHH, F_OD(2), 0),
+  SME_B16B16_INSN ("bfmla", 0xc1701c00, 0xfff09c18, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SVE_ZnxN, SME_Zm), OP_SVE_HHH, F_OD(4), 0),
+  SME_B16B16_INSN ("bfmla", 0xc1e01008, 0xffe19c38, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zmx2), OP_SVE_HHH, F_OD(2), 0),
+  SME_B16B16_INSN ("bfmla", 0xc1e11008, 0xffe39c78, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx4, SME_Zmx4), OP_SVE_HHH, F_OD(4), 0),
+  SME_B16B16_INSN ("bfmls", 0xc1101030, 0xfff09030, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zm_INDEX3_3), OP_SVE_HHH, F_OD(2), 0),
+  SME_B16B16_INSN ("bfmls", 0xc1109030, 0xfff09070, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx4, SME_Zm_INDEX3_3), OP_SVE_HHH, F_OD(4), 0),
+  SME_B16B16_INSN ("bfmls", 0xc1601c08, 0xfff09c18, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SVE_ZnxN, SME_Zm), OP_SVE_HHH, F_OD(2), 0),
+  SME_B16B16_INSN ("bfmls", 0xc1701c08, 0xfff09c18, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SVE_ZnxN, SME_Zm), OP_SVE_HHH, F_OD(4), 0),
+  SME_B16B16_INSN ("bfmls", 0xc1e01018, 0xffe19c38, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zmx2), OP_SVE_HHH, F_OD(2), 0),
+  SME_B16B16_INSN ("bfmls", 0xc1e11018, 0xffe39c78, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx4, SME_Zmx4), OP_SVE_HHH, F_OD(4), 0),
+  SME_B16B16_INSN ("bfmopa", 0x81a00008, 0xffe0001e, sme_misc, 0, OP5 (SME_ZAda_1b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_HMMHH, 0, 0),
+  SME_B16B16_INSN ("bfmops", 0x81a00018, 0xffe0001e, sme_misc, 0, OP5 (SME_ZAda_1b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_HMMHH, 0, 0),
 
 /* SME2.1 movaz instructions.  */
   SME2p1_INSN ("movaz", 0xc0060600, 0xffff1f83, sme2_movaz, 0, OP2 (SME_Zdnx4, SME_ZA_array_vrsb_2), OP_SVE_BB, 0, 0),
@@ -6359,38 +7122,360 @@ const struct aarch64_opcode aarch64_opcode_table[] =
   SME2p1_INSN ("movaz", 0xc0860200, 0xffff1f01, sme2_movaz, 0, OP2 (SME_Zdnx2, SME_ZA_array_vrss_1), OP_SVE_SS, 0, 0),
   SME2p1_INSN ("movaz", 0xc0c60200, 0xffff1f01, sme2_movaz, 0, OP2 (SME_Zdnx2, SME_ZA_array_vrsd_1), OP_SVE_DD, 0, 0),
 
+  SME2p1_INSN ("luti2", 0xc09c4000, 0xfffc4c08, sme_size_12_bh, 0, OP3 (SME_Ztx2_STRIDED, SME_ZT0, SME_Zn_INDEX3_15), OP_SVE_VUU_BH, 0, 0),
+  SME2p1_INSN ("luti2", 0xc09c8000, 0xfffccc0c, sme_size_12_bh, 0, OP3 (SME_Ztx4_STRIDED, SME_ZT0, SME_Zn_INDEX2_16), OP_SVE_VUU_BH, 0, 0),
+  SME2p1_INSN ("luti4", 0xc09a4000, 0xfffe4c08, sme_size_12_bh, 0, OP3 (SME_Ztx2_STRIDED, SME_ZT0, SME_Zn_INDEX2_15), OP_SVE_VUU_BH, 0, 0),
+  SME2p1_INSN ("luti4", 0xc09a9000, 0xfffefc0c, sme_misc, 0, OP3 (SME_Ztx4_STRIDED, SME_ZT0, SME_Zn_INDEX1_16), OP_SVE_HUU, 0, 0),
+
+  /* SME2.1 MOVAZ (array to vector, two registers).  */
+  SME2p1_INSN ("movaz", 0xc0060a00, 0xffff9f01, sme2_movaz, 0, OP2 (SME_Zdnx2, SME_ZA_array_off3_5), OP_SVE_VV_D, F_OD (2), 0),
+
+  /* SME2.1 MOVAZ (array to vector, four registers).  */
+  SME2p1_INSN ("movaz", 0xc0060e00, 0xffff9f03, sme2_movaz, 0, OP2 (SME_Zdnx4, SME_ZA_array_off3_5), OP_SVE_VV_D, F_OD (4), 0),
+
+  /* SME2.1 MOVAZ (tile to vector, single).  */
+  SME2p1_INSN ("movaz", 0xc0020200, 0xffff1e00, sme2_movaz, 0, OP2 (SVE_Zd, SME_ZA_ARRAY4), OP_SVE_BB, 0, 0),
+  SME2p1_INSN ("movaz", 0xc0420200, 0xffff1e00, sme2_movaz, 0, OP2 (SVE_Zd, SME_ZA_ARRAY4), OP_SVE_HH, 0, 0),
+  SME2p1_INSN ("movaz", 0xc0820200, 0xffff1e00, sme2_movaz, 0, OP2 (SVE_Zd, SME_ZA_ARRAY4), OP_SVE_SS, 0, 0),
+  SME2p1_INSN ("movaz", 0xc0c20200, 0xffff1e00, sme2_movaz, 0, OP2 (SVE_Zd, SME_ZA_ARRAY4), OP_SVE_DD, 0, 0),
+  SME2p1_INSN ("movaz", 0xc0c30200, 0xffff1e00, sme2_movaz, 0, OP2 (SVE_Zd, SME_ZA_ARRAY4), OP_SVE_QQ, 0, 0),
+
+  /* ZERO (single-vector).  */
+  SME2p1_INSN ("zero", 0xc00c0000, 0xffff9ff8, sme2_movaz, 0, OP1 (SME_ZA_array_off3_0), OP_SVE_D, F_OD (2) | F_VG_REQ, 0),
+  SME2p1_INSN ("zero", 0xc00e0000, 0xffff9ff8, sme2_movaz, 0, OP1 (SME_ZA_array_off3_0), OP_SVE_D, F_OD (4) | F_VG_REQ, 0),
+
+  /* ZERO (double-vector).  */
+  SME2p1_INSN ("zero", 0xc00c8000, 0xffff9ff8, sme2_movaz, 0, OP1 (SME_ZA_array_off3x2), OP_SVE_D, 0, 0),
+  SME2p1_INSN ("zero", 0xc00d0000, 0xffff9ffc, sme2_movaz, 0, OP1 (SME_ZA_array_off2x2), OP_SVE_D, F_OD (2) | F_VG_REQ, 0),
+  SME2p1_INSN ("zero", 0xc00d8000, 0xffff9ffc, sme2_movaz, 0, OP1 (SME_ZA_array_off2x2), OP_SVE_D, F_OD (4) | F_VG_REQ, 0),
+
+  /* ZERO (quad-vector).  */
+  SME2p1_INSN ("zero", 0xc00e8000, 0xffff9ffc, sme2_movaz, 0, OP1 (SME_ZA_array_off2x4), OP_SVE_D, 0, 0),
+  SME2p1_INSN ("zero", 0xc00f0000, 0xffff9ffe, sme2_movaz, 0, OP1 (SME_ZA_array_off1x4), OP_SVE_D, F_OD (2) | F_VG_REQ, 0),
+  SME2p1_INSN ("zero", 0xc00f8000, 0xffff9ffe, sme2_movaz, 0, OP1 (SME_ZA_array_off1x4), OP_SVE_D, F_OD (4) | F_VG_REQ, 0),
+
+/* SME2.1 half-precision floating-point instructions.  */
+  SME_F16F16_INSN ("fmopa", 0x81800008, 0xffe0001e, sme_misc, 0, OP5 (SME_ZAda_1b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_HMMHH, 0, 0),
+  SME_F16F16_INSN ("fmops", 0x81800018, 0xffe0001e, sme_misc, 0, OP5 (SME_ZAda_1b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_HMMHH, 0, 0),
+  SME_F16F16_INSN ("fmla", 0xc1101000, 0xfff09030, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zm_INDEX3_3), OP_SVE_HHH, F_OD(2), 0),
+  SME_F16F16_INSN ("fmla", 0xc1109000, 0xfff09070, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx4, SME_Zm_INDEX3_3), OP_SVE_HHH, F_OD(4), 0),
+  SME_F16F16_INSN ("fmla", 0xc1201c00, 0xfff09c18, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SVE_ZnxN, SME_Zm), OP_SVE_HHH, F_OD (2), 0),
+  SME_F16F16_INSN ("fmla", 0xc1301c00, 0xfff09c18, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SVE_ZnxN, SME_Zm), OP_SVE_HHH, F_OD (4), 0),
+  SME_F16F16_INSN ("fmla", 0xc1a01008, 0xffe19c38, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zmx2), OP_SVE_HHH, F_OD (2), 0),
+  SME_F16F16_INSN ("fmla", 0xc1a11008, 0xffe39c78, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx4, SME_Zmx4), OP_SVE_HHH, F_OD (4), 0),
+  SME_F16F16_INSN ("fmls", 0xc1101010, 0xfff09030, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zm_INDEX3_3), OP_SVE_HHH, F_OD(2), 0),
+  SME_F16F16_INSN ("fmls", 0xc1109010, 0xfff09070, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx4, SME_Zm_INDEX3_3), OP_SVE_HHH, F_OD(4), 0),
+  SME_F16F16_INSN ("fmls", 0xc1201c08, 0xfff09c18, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SVE_ZnxN, SME_Zm), OP_SVE_HHH, F_OD (2), 0),
+  SME_F16F16_INSN ("fmls", 0xc1301c08, 0xfff09c18, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SVE_ZnxN, SME_Zm), OP_SVE_HHH, F_OD (4), 0),
+  SME_F16F16_INSN ("fmls", 0xc1a01018, 0xffe19c38, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zmx2), OP_SVE_HHH, F_OD (2), 0),
+  SME_F16F16_INSN ("fmls", 0xc1a11018, 0xffe39c78, sme_misc, 0, OP3 (SME_ZA_array_off3_0, SME_Znx4, SME_Zmx4), OP_SVE_HHH, F_OD (4), 0),
+  SME_F16F16_INSN ("fcvt", 0xc1a0e000, 0xfffffc01, sme_misc, 0, OP2 (SME_Zdnx2, SVE_Zn), OP_SVE_SH, F_OD (2), 0),
+  SME_F16F16_INSN ("fcvtl", 0xc1a0e001, 0xfffffc01, sme_misc, 0, OP2 (SME_Zdnx2, SVE_Zn), OP_SVE_SH, F_OD (2), 0),
+
 /* SVE2p1 Instructions.  */
-  SVE2p1_INSNC("addqv",0x04052000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("andqv",0x041e2000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("smaxqv",0x040c2000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("sminqv",0x040e2000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("umaxqv",0x040d2000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("uminqv",0x040f2000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("eorqv",0x041d2000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2p1_INSN ("addqv",0x04052000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, 0),
+  SVE2p1_SME2p1_INSN ("andqv",0x041e2000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, 0),
+  SVE2p1_SME2p1_INSN ("smaxqv",0x040c2000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, 0),
+  SVE2p1_SME2p1_INSN ("sminqv",0x040e2000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, 0),
+  SVE2p1_SME2p1_INSN ("umaxqv",0x040d2000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, 0),
+  SVE2p1_SME2p1_INSN ("uminqv",0x040f2000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, 0),
+  SVE2p1_SME2p1_INSN ("eorqv",0x041d2000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, 0),
+  SVE2p1_SME2p1_INSN ("faddqv",0x6410a000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_HSD_HSD, F_OPD_SIZE, 0),
+  SVE2p1_SME2p1_INSN ("fmaxnmqv",0x6414a000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_HSD_HSD, F_OPD_SIZE, 0),
+  SVE2p1_SME2p1_INSN ("fmaxqv",0x6416a000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_HSD_HSD, F_OPD_SIZE, 0),
+  SVE2p1_SME2p1_INSN ("fminnmqv",0x6415a000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_HSD_HSD, F_OPD_SIZE, 0),
+  SVE2p1_SME2p1_INSN ("fminqv",0x6417a000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_HSD_HSD, F_OPD_SIZE, 0),
 
-  SVE2p1_INSNC("faddqv",0x6410a000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_HSD_HSD, F_OPD_SIZE, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("fmaxnmqv",0x6414a000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_HSD_HSD, F_OPD_SIZE, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("fmaxqv",0x6416a000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_HSD_HSD, F_OPD_SIZE, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("fminnmqv",0x6415a000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_HSD_HSD, F_OPD_SIZE, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("fminqv",0x6417a000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_HSD_HSD, F_OPD_SIZE, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2p1_INSN ("dupq",0x05202400, 0xffe0fc00, sve_index, 0, OP2 (SVE_Zd, SVE_Zn_5_INDEX), OP_SVE_VV_BHSD, 0, 0),
+  SVE2p1_SME2p1_INSN ("orqv",0x041c2000, 0xff3fe000, sve2_urqvs, 0, OP3 (Vd, SVE_Pg3, SVE_Zn), OP_SVE_vUS_BHSD_BHSD, F_OPD_SIZE, 0),
+  SVE2p1_SME2p1_INSN ("tblq",0x4400f800, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_ZnxN, SVE_Zm_16), OP_SVE_VVV_BHSD, F_OD(1), 0),
+  SVE2p1_SME2p1_INSN ("tbxq",0x05203400, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, 0),
+  SVE2p1_SME2p1_INSNC ("extq",0x05602400, 0xfff0fc00, sve_misc, 0, OP4 (SVE_Zd, SVE_Zd, SVE_Zm_5, SVE_UIMM4), OP_SVE_BBBU, 0, C_SCAN_MOVPRFX, 1),
+  SVE2p1_SME2p1_INSN ("uzpq1",0x4400e800, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, 0),
+  SVE2p1_SME2p1_INSN ("uzpq2",0x4400ec00, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, 0),
+  SVE2p1_SME2p1_INSN ("zipq1",0x4400e000, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, 0),
+  SVE2p1_SME2p1_INSN ("zipq2",0x4400e400, 0xff20fc00, sve_size_bhsd, 0, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_BHSD, 0, 0),
 
-  SVE2p1_INSN("dupq",0x05202400, 0xffe0fc00, sve_index1, 0, OP2 (SVE_Zd, SVE_Zn_5_INDEX), OP_SVE_VV_BHSD, 0, 0),
-  SVE2p1_INSN("extq",0x05602400, 0xfff0fc00, sve_misc, 0, OP3 (SVE_Zd, SVE_Zd, SVE_Zm_imm4), OP_SVE_BBB, 0, 0),
-  SVE2p1_INSNC("ld1q",0xc400a000, 0xffe0e000, sve_misc, 0, OP3 (SVE_Zt, SVE_Pg3, SVE_ADDR_ZX), OP_SVE_SZS_QD, 0, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("ld2q",0xa490e000, 0xfff0e000, sve_misc, 0, OP3 (SME_Zt2, SVE_Pg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_QZU, 0, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("ld3q",0xa510e000, 0xfff0e000, sve_misc, 0, OP3 (SME_Zt3, SVE_Pg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_QZU, 0, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("ld4q",0xa590e000, 0xfff0e000, sve_misc, 0, OP3 (SME_Zt4, SVE_Pg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_QZU, 0, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("ld2q",0xa4a0e000, 0xffe0e000, sve_misc, 0, OP3 (SME_Zt2, SVE_Pg3, SVE_ADDR_RR_LSL4), OP_SVE_QZU, 0, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("ld3q",0xa5208000, 0xffe0e000, sve_misc, 0, OP3 (SME_Zt3, SVE_Pg3, SVE_ADDR_RR_LSL4), OP_SVE_QZU, 0, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("ld4q",0xa5a08000, 0xffe0e000, sve_misc, 0, OP3 (SME_Zt4, SVE_Pg3, SVE_ADDR_RR_LSL4), OP_SVE_QZU, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2p1_INSN ("pmov",0x052a3800, 0xfffffc10, sve_misc, 0, OP2 (SVE_Pd, SVE_Zn0_INDEX), OP_SVE_BU, 0, 0),
+  SVE2p1_SME2p1_INSN ("pmov",0x052c3800, 0xfffdfc10, sve_misc, 0, OP2 (SVE_Pd, SVE_Zn1_17_INDEX), OP_SVE_HU, 0, 0),
+  SVE2p1_SME2p1_INSN ("pmov",0x05683800, 0xfff9fc10, sve_misc, 0, OP2 (SVE_Pd, SVE_Zn2_18_INDEX), OP_SVE_SU, 0, 0),
+  SVE2p1_SME2p1_INSN ("pmov",0x05a83800, 0xffb9fc10, sve_misc, 0, OP2 (SVE_Pd, SVE_Zn3_22_INDEX), OP_SVE_DU, 0, 0),
 
-  SVE2p1_INSNC("st1q",0xe4202000, 0xffe0e000, sve_misc, 0, OP3 (SVE_Zt, SVE_Pg3, SVE_ADDR_ZX), OP_SVE_SUS_QD, 0, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("st2q",0xe4400000, 0xfff0e000, sve_misc, 0, OP3 (SME_Zt2, SVE_Pg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_QUU, 0, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("st3q",0xe4800000, 0xfff0e000, sve_misc, 0, OP3 (SME_Zt3, SVE_Pg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_QUU, 0, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("st4q",0xe4c00000, 0xfff0e000, sve_misc, 0, OP3 (SME_Zt4, SVE_Pg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_QUU, 0, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("st2q",0xe4600000, 0xffe0e000, sve_misc, 0, OP3 (SME_Zt2, SVE_Pg3, SVE_ADDR_RR_LSL4), OP_SVE_QUU, 0, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("st3q",0xe4a00000, 0xffe0e000, sve_misc, 0, OP3 (SME_Zt3, SVE_Pg3, SVE_ADDR_RR_LSL4), OP_SVE_QUU, 0, C_SCAN_MOVPRFX, 0),
-  SVE2p1_INSNC("st4q",0xe4e00000, 0xffe0e000, sve_misc, 0, OP3 (SME_Zt4, SVE_Pg3, SVE_ADDR_RR_LSL4), OP_SVE_QUU, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p1_SME2p1_INSN ("pmov",0x052b3800, 0xfffffe00, sve_misc, 0, OP2 (SVE_Zd0_INDEX, SVE_Pg4_5), OP_SVE_UB, 0, 0),
+  SVE2p1_SME2p1_INSN ("pmov",0x052d3800, 0xfffdfe00, sve_misc, 0, OP2 (SVE_Zd1_17_INDEX, SVE_Pg4_5), OP_SVE_UH, 0, 0),
+  SVE2p1_SME2p1_INSN ("pmov",0x05693800, 0xfff9fe00, sve_misc, 0, OP2 (SVE_Zd2_18_INDEX, SVE_Pg4_5), OP_SVE_US, 0, 0),
+  SVE2p1_SME2p1_INSN ("pmov",0x05a93800, 0xffb9fe00, sve_misc, 0, OP2 (SVE_Zd3_22_INDEX, SVE_Pg4_5), OP_SVE_UD, 0, 0),
+
+  SVE2p1_INSN ("ld1d",0xa5902000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4xVL), OP_SVE_QZU, F_OD(1), 0),
+  SVE2p1_INSN ("ld1d",0xa5808000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RX_LSL3), OP_SVE_QZU, F_OD(1), 0),
+  SVE2p1_INSN ("ld1w",0xa5102000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4xVL), OP_SVE_QZU, F_OD(1), 0),
+  SVE2p1_INSN ("ld1w",0xa5008000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RX_LSL2), OP_SVE_QZU, F_OD(1), 0),
+  SVE2p1_INSN ("st1d",0xe5c0e000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4xVL), OP_SVE_QUU, F_OD(1), 0),
+  SVE2p1_INSN ("st1d",0xe5c04000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RX_LSL3), OP_SVE_QUU, F_OD(1), 0),
+  SVE2p1_INSN ("st1w",0xe500e000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4xVL), OP_SVE_QUU, F_OD(1), 0),
+  SVE2p1_INSN ("st1w",0xe5004000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RX_LSL2), OP_SVE_QUU, F_OD(1), 0),
+
+  SVE2p1_INSN ("ld1q",0xc400a000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_ZX), OP_SVE_QZD, F_OD (1), 0),
+  SVE2p1_SME2p1_INSN ("ld2q",0xa490e000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_QZU, F_OD (2), 0),
+  SVE2p1_SME2p1_INSN ("ld3q",0xa510e000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4x3xVL), OP_SVE_QZU, F_OD (3), 0),
+  SVE2p1_SME2p1_INSN ("ld4q",0xa590e000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_QZU, F_OD (4), 0),
+  SVE2p1_SME2p1_INSN ("ld2q",0xa4a08000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RX_LSL4), OP_SVE_QZU, F_OD (2), 0),
+  SVE2p1_SME2p1_INSN ("ld3q",0xa5208000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RX_LSL4), OP_SVE_QZU, F_OD (3), 0),
+  SVE2p1_SME2p1_INSN ("ld4q",0xa5a08000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RX_LSL4), OP_SVE_QZU, F_OD (4), 0),
+
+  SVE2p1_INSN ("st1q",0xe4202000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_ZX), OP_SVE_QUD, F_OD (1), 0),
+  SVE2p1_SME2p1_INSN ("st2q",0xe4400000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4x2xVL), OP_SVE_QUU, F_OD (2), 0),
+  SVE2p1_SME2p1_INSN ("st3q",0xe4800000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4x3xVL), OP_SVE_QUU, F_OD (3), 0),
+  SVE2p1_SME2p1_INSN ("st4q",0xe4c00000, 0xfff0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RI_S4x4xVL), OP_SVE_QUU, F_OD (4), 0),
+  SVE2p1_SME2p1_INSN ("st2q",0xe4600000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RX_LSL4), OP_SVE_QUU, F_OD (2), 0),
+  SVE2p1_SME2p1_INSN ("st3q",0xe4a00000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RX_LSL4), OP_SVE_QUU, F_OD (3), 0),
+  SVE2p1_SME2p1_INSN ("st4q",0xe4e00000, 0xffe0e000, sve_misc, 0, OP3 (SVE_ZtxN, SVE_Pg3, SVE_ADDR_RX_LSL4), OP_SVE_QUU, F_OD (4), 0),
+
+  FP8_INSN ("bf1cvtl", 0x2ea17800, 0xfffffc00, asimdmisc, OP2 (Vd, Vn), QL_V2_HB_LOWER, 0),
+  FP8_INSN ("bf1cvtl2", 0x6ea17800, 0xfffffc00, asimdmisc, OP2 (Vd, Vn), QL_V2_HB_FULL, 0),
+  FP8_INSN ("bf2cvtl", 0x2ee17800, 0xfffffc00, asimdmisc, OP2 (Vd, Vn), QL_V2_HB_LOWER, 0),
+  FP8_INSN ("bf2cvtl2", 0x6ee17800, 0xfffffc00, asimdmisc, OP2 (Vd, Vn), QL_V2_HB_FULL, 0),
+  FP8_INSN ("f1cvtl", 0x2e217800, 0xfffffc00, asimdmisc, OP2 (Vd, Vn), QL_V2_HB_LOWER, 0),
+  FP8_INSN ("f1cvtl2", 0x6e217800, 0xfffffc00, asimdmisc, OP2 (Vd, Vn), QL_V2_HB_FULL, 0),
+  FP8_INSN ("f2cvtl", 0x2e617800, 0xfffffc00, asimdmisc, OP2 (Vd, Vn), QL_V2_HB_LOWER, 0),
+  FP8_INSN ("f2cvtl2", 0x6e617800, 0xfffffc00, asimdmisc, OP2 (Vd, Vn), QL_V2_HB_FULL, 0),
+  FP8_INSN ("fcvtn",  0x0e00f400, 0xffe0fc00, asimdmisc, OP3 (Vd, Vn, Vm), QL_V3_BSS_LOWER, 0),
+  FP8_INSN ("fcvtn2", 0x4e00f400, 0xffe0fc00, asimdmisc, OP3 (Vd, Vn, Vm), QL_V3_BSS_FULL, 0),
+  FP8_INSN ("fcvtn", 0x0e40f400, 0xbfe0fc00, asimdmisc, OP3 (Vd, Vn, Vm), QL_V3_BHH, F_SIZEQ),
+  FP8_INSN ("fscale", 0x2ec03c00, 0xbfe0fc00, asimdmisc, OP3 (Vd, Vn, Vm), QL_VSHIFT_H, F_SIZEQ),
+  FP8_INSN ("fscale", 0x2ea0fc00, 0xbfa0fc00, asimdmisc, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ),
+  FP8_SVE2_INSN ("bf1cvt", 0x65083800, 0xfffffc00, sve_misc, 0, OP2 (SVE_Zd, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SVE2_INSN ("bf2cvt", 0x65083c00, 0xfffffc00, sve_misc, 0, OP2 (SVE_Zd, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SVE2_INSN ("bf1cvtlt", 0x65093800, 0xfffffc00, sve_misc, 0, OP2 (SVE_Zd, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SVE2_INSN ("bf2cvtlt", 0x65093c00, 0xfffffc00, sve_misc, 0, OP2 (SVE_Zd, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SVE2_INSN ("f1cvt", 0x65083000, 0xfffffc00, sve_misc, 0, OP2 (SVE_Zd, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SVE2_INSN ("f2cvt", 0x65083400, 0xfffffc00, sve_misc, 0, OP2 (SVE_Zd, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SVE2_INSN ("f1cvtlt", 0x65093000, 0xfffffc00, sve_misc, 0, OP2 (SVE_Zd, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SVE2_INSN ("f2cvtlt", 0x65093400, 0xfffffc00, sve_misc, 0, OP2 (SVE_Zd, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SVE2_INSN ("bfcvtn", 0x650a3800, 0xfffffc20, sve_misc, 0, OP2 (SVE_Zd, SME_Znx2), OP_SVE_BH, 0, 0),
+  FP8_SVE2_INSN ("fcvtn", 0x650a3000, 0xfffffc20, sve_misc, 0, OP2 (SVE_Zd, SME_Znx2), OP_SVE_BH, 0, 0),
+  FP8_SVE2_INSN ("fcvtnb", 0x650a3400, 0xfffffc20, sve_misc, 0, OP2 (SVE_Zd, SME_Znx2), OP_SVE_BS, 0, 0),
+  FP8_SVE2_INSN ("fcvtnt", 0x650a3c00, 0xfffffc20, sve_misc, 0, OP2 (SVE_Zd, SME_Znx2), OP_SVE_BS, 0, 0),
+  FP8_SME2_INSN ("bf1cvt", 0xc166e000, 0xfffffc01, sme_misc, 0, OP2 (SME_Zdnx2, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SME2_INSN ("bf2cvt", 0xc1e6e000, 0xfffffc01, sme_misc, 0, OP2 (SME_Zdnx2, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SME2_INSN ("bf1cvtl", 0xc166e001, 0xfffffc01, sme_misc, 0, OP2 (SME_Zdnx2, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SME2_INSN ("bf2cvtl", 0xc1e6e001, 0xfffffc01, sme_misc, 0, OP2 (SME_Zdnx2, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SME2_INSN ("bfcvt", 0xc164e000, 0xfffffc20, sme_misc, 0, OP2 (SVE_Zd, SME_Znx2), OP_SVE_BH, 0, 0),
+  FP8_SME2_INSN ("f1cvt", 0xc126e000, 0xfffffc01, sme_misc, 0, OP2 (SME_Zdnx2, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SME2_INSN ("f2cvt", 0xc1a6e000, 0xfffffc01, sme_misc, 0, OP2 (SME_Zdnx2, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SME2_INSN ("f1cvtl", 0xc126e001, 0xfffffc01, sme_misc, 0, OP2 (SME_Zdnx2, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SME2_INSN ("f2cvtl", 0xc1a6e001, 0xfffffc01, sme_misc, 0, OP2 (SME_Zdnx2, SVE_Zn), OP_SVE_HB, 0, 0),
+  FP8_SME2_INSN ("fcvt", 0xc124e000, 0xfffffc20, sme_misc, 0, OP2 (SVE_Zd, SME_Znx2), OP_SVE_BH, 0, 0),
+  FP8_SME2_INSN ("fcvt", 0xc134e000, 0xfffffc60, sme_misc, 0, OP2 (SVE_Zd, SME_Znx4), OP_SVE_BS, 0, 0),
+  FP8_SME2_INSN ("fcvtn", 0xc134e020, 0xfffffc60, sme_misc, 0, OP2 (SVE_Zd, SME_Znx4), OP_SVE_BS, 0, 0),
+  FP8_SME2_INSN ("fscale", 0xc120a180, 0xff30ffe1, sme_size_22_hsd, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zm), OP_SVE_VVV_HSD, 0, 1),
+  FP8_SME2_INSN ("fscale", 0xc120a980, 0xff30ffe3, sme_size_22_hsd, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zm), OP_SVE_VVV_HSD, 0, 1),
+  FP8_SME2_INSN ("fscale", 0xc120b180, 0xff21ffe1, sme_size_22_hsd, 0, OP3 (SME_Zdnx2, SME_Zdnx2, SME_Zmx2), OP_SVE_VVV_HSD, 0, 1),
+  FP8_SME2_INSN ("fscale", 0xc120b980, 0xff23ffe3, sme_size_22_hsd, 0, OP3 (SME_Zdnx4, SME_Zdnx4, SME_Zmx4), OP_SVE_VVV_HSD, 0, 1),
+
+/* Checked Pointer Arithmetic Instructions.  */
+  CPA_INSN ("addpt",  0x9a002000, 0xffe0e000, aarch64_misc, OP3 (Rd_SP, Rn_SP, Rm_LSL), QL_I3SAMEX),
+  CPA_INSN ("subpt",  0xda002000, 0xffe0e000, aarch64_misc, OP3 (Rd_SP, Rn_SP, Rm_LSL), QL_I3SAMEX),
+  CPA_INSN ("maddpt", 0x9b600000, 0xffe08000, aarch64_misc, OP4 (Rd, Rn, Rm, Ra), QL_I4SAMEX),
+  CPA_INSN ("msubpt", 0x9b608000, 0xffe08000, aarch64_misc, OP4 (Rd, Rn, Rm, Ra), QL_I4SAMEX),
+
+  CPA_SVE_INSNC ("addpt", 0x04c40000, 0xffffe000, sve_misc, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_VMVV_D, C_SCAN_MOVPRFX, 2),
+  CPA_SVE_INSNC ("addpt", 0x04e00800, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_D, 0, 0),
+  CPA_SVE_INSNC ("subpt", 0x04c50000, 0xffffe000, sve_misc, OP4 (SVE_Zd, SVE_Pg3, SVE_Zd, SVE_Zm_5), OP_SVE_VMVV_D, C_SCAN_MOVPRFX, 2),
+  CPA_SVE_INSNC ("subpt", 0x04e00c00, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_D, 0, 0),
+
+  CPA_SVE_INSNC ("madpt", 0x44c0d800, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zm_16, SVE_Za_5), OP_SVE_VVV_D, C_SCAN_MOVPRFX, 0),
+  CPA_SVE_INSNC ("mlapt", 0x44c0d000, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_D, C_SCAN_MOVPRFX, 0),
+
+  /* AdvSIMD lut.  */
+  LUT_INSN ("luti2", 0x4e801000, 0xffe09c00, OP3 (Vd, LVn_LUT, Em_INDEX2_13), QL_VVUB, F_OD(1)),
+  LUT_INSN ("luti2", 0x4ec00000, 0xffe08c00, OP3 (Vd, LVn_LUT, Em_INDEX3_12), QL_VVUH, F_OD(1)),
+  LUT_INSN ("luti4", 0x4e402000, 0xffe0bc00, OP3 (Vd, LVn_LUT, Em_INDEX1_14), QL_VVUB, F_OD(1)),
+  LUT_INSN ("luti4", 0x4e401000, 0xffe09c00, OP3 (Vd, LVn_LUT, Em_INDEX2_13), QL_VVUH, F_OD(2)),
+
+  /* SVE2 lut.  */
+  LUT_SVE2_INSN ("luti2", 0x4520b000, 0xff20fc00, OP3 (SVE_Zd, SVE_ZnxN, SVE_Zm2_22_INDEX), OP_SVE_BBU, F_OD(1), 0),
+  LUT_SVE2_INSN ("luti2", 0x4520a800, 0xff20ec00, OP3 (SVE_Zd, SVE_ZnxN, SVE_Zm3_12_INDEX), OP_SVE_HHU, F_OD(1), 0),
+  LUT_SVE2_INSN ("luti4", 0x4560a400, 0xff60fc00, OP3 (SVE_Zd, SVE_ZnxN, SVE_Zm1_23_INDEX), OP_SVE_BBU, F_OD(1), 0),
+  LUT_SVE2_INSN ("luti4", 0x4520b400, 0xff20fc00, OP3 (SVE_Zd, SVE_ZnxN, SVE_Zm2_22_INDEX), OP_SVE_HHU, F_OD(2), 0),
+  LUT_SVE2_INSN ("luti4", 0x4520bc00, 0xff20fc00, OP3 (SVE_Zd, SVE_ZnxN, SVE_Zm2_22_INDEX), OP_SVE_HHU, F_OD(1), 0),
+
+  /* SME2 lutv2.  */
+  LUTv2_SME2_INSN ("luti4", 0xc08b0000, 0xffffcc23, sme_size_12_b, OP3 (SME_Zdnx4, SME_ZT0, SME_Znx2_BIT_INDEX), OP_SVE_BUU, F_STRICT | 0),
+  LUTv2_SME2p1_INSN ("luti4", 0xc09b0000, 0xffffcc2c, sme_size_12_b, OP3 (SME_Ztx4_STRIDED, SME_ZT0, SME_Znx2_BIT_INDEX), OP_SVE_BUU, F_STRICT | 0),
+  LUTv2_SME2_INSN ("movt", 0xc04f03e0, 0xffffcfe0, sme_misc, OP2 (SME_ZT0_INDEX_MUL_VL, SVE_Zt), {}, 0),
+  /* SME FP16 ZA-targeting addition instructions.  */
+  SME_F16F16_F8F16_INSNC ("fadd", 0xc1a41c00, 0xffff9c38, sme_misc, OP2 (SME_ZA_array_off3_0, SME_Znx2), OP_SVE_HH, F_OD (2), 0),
+  SME_F16F16_F8F16_INSNC ("fadd", 0xc1a51c00, 0xffff9c78, sme_misc, OP2 (SME_ZA_array_off3_0, SME_Znx4), OP_SVE_HH, F_OD (4), 0),
+  SME_F16F16_F8F16_INSNC ("fsub", 0xc1a41c08, 0xffff9c38, sme_misc, OP2 (SME_ZA_array_off3_0, SME_Znx2), OP_SVE_HH, F_OD (2), 0),
+  SME_F16F16_F8F16_INSNC ("fsub", 0xc1a51c08, 0xffff9c78, sme_misc, OP2 (SME_ZA_array_off3_0, SME_Znx4), OP_SVE_HH, F_OD (4), 0),
+
+  /* FP8 multiplication AdvSIMD instructions.  */
+  FP8DOT4_INSN ("fdot", 0x0e00fc00, 0xbfe0fc00, dotproduct, OP3 (Vd, Vn, Vm), QL_V3DOT, F_SIZEQ),
+  FP8DOT4_INSN ("fdot", 0x0f000000, 0xbfc0f400, dotproduct, OP3 (Vd, Vn, Em), QL_V2DOT, F_SIZEQ),
+  FP8DOT2_INSN ("fdot", 0x0e40fc00, 0xbfe0fc00, dotproduct, OP3 (Vd, Vn, Vm), QL_V3DOTH, F_SIZEQ),
+  FP8DOT2_INSN ("fdot", 0x0f400000, 0xbfc0f400, dotproduct, OP3 (Vd, Vn, Em16), QL_V2DOTH, F_SIZEQ),
+  FP8FMA_INSN ("fmlalb", 0x0ec0fc00, 0xffe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FML8H, 0),
+  FP8FMA_INSN ("fmlalt", 0x4ec0fc00, 0xffe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FML8H, 0),
+  FP8FMA_INSN ("fmlalb", 0x0fc00000, 0xffc0f400, asimdsame, OP3 (Vd, Vn, Em8), QL_V2FML8H, 0),
+  FP8FMA_INSN ("fmlalt", 0x4fc00000, 0xffc0f400, asimdsame, OP3 (Vd, Vn, Em8), QL_V2FML8H, 0),
+  FP8FMA_INSN ("fmlallbb", 0x0e00c400, 0xffe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FMLL4S, 0),
+  FP8FMA_INSN ("fmlallbt", 0x0e40c400, 0xffe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FMLL4S, 0),
+  FP8FMA_INSN ("fmlalltb", 0x4e00c400, 0xffe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FMLL4S, 0),
+  FP8FMA_INSN ("fmlalltt", 0x4e40c400, 0xffe0fc00, asimdsame, OP3 (Vd, Vn, Vm), QL_V3FMLL4S, 0),
+  FP8FMA_INSN ("fmlallbb", 0x2f008000, 0xffc0f400, asimdsame, OP3 (Vd, Vn, Em8), QL_V2FMLL4S, 0),
+  FP8FMA_INSN ("fmlallbt", 0x2f408000, 0xffc0f400, asimdsame, OP3 (Vd, Vn, Em8), QL_V2FMLL4S, 0),
+  FP8FMA_INSN ("fmlalltb", 0x6f008000, 0xffc0f400, asimdsame, OP3 (Vd, Vn, Em8), QL_V2FMLL4S, 0),
+  FP8FMA_INSN ("fmlalltt", 0x6f408000, 0xffc0f400, asimdsame, OP3 (Vd, Vn, Em8), QL_V2FMLL4S, 0),
+
+  /* FP8 multiplication SVE instructions.  */
+  FP8DOT4_SVE_INSNC ("fdot", 0x64608400, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_S_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8DOT4_SVE_INSNC ("fdot", 0x64604400, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_INDEX), OP_SVE_VVV_S_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8DOT2_SVE_INSNC ("fdot", 0x64208400, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_H_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8DOT2_SVE_INSNC ("fdot", 0x64204400, 0xffe0f400, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_11_INDEX), OP_SVE_VVV_H_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8FMA_SVE_INSNC ("fmlalb", 0x64a08800, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_H_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8FMA_SVE_INSNC ("fmlalb", 0x64205000, 0xffe0f000, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_10_INDEX), OP_SVE_VVV_H_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8FMA_SVE_INSNC ("fmlallbb", 0x64208800, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_S_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8FMA_SVE_INSNC ("fmlallbb", 0x6420c000, 0xffe0f000, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_10_INDEX), OP_SVE_VVV_S_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8FMA_SVE_INSNC ("fmlallbt", 0x64209800, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_S_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8FMA_SVE_INSNC ("fmlallbt", 0x6460c000, 0xffe0f000, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_10_INDEX), OP_SVE_VVV_S_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8FMA_SVE_INSNC ("fmlalltb", 0x6420a800, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_S_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8FMA_SVE_INSNC ("fmlalltb", 0x64a0c000, 0xffe0f000, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_10_INDEX), OP_SVE_VVV_S_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8FMA_SVE_INSNC ("fmlalltt", 0x6420b800, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_S_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8FMA_SVE_INSNC ("fmlalltt", 0x64e0c000, 0xffe0f000, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_10_INDEX), OP_SVE_VVV_S_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8FMA_SVE_INSNC ("fmlalt", 0x64a09800, 0xffe0fc00, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm_16), OP_SVE_VVV_H_B, 0, C_SCAN_MOVPRFX, 0),
+  FP8FMA_SVE_INSNC ("fmlalt", 0x64a05000, 0xffe0f000, sve_misc, OP3 (SVE_Zd, SVE_Zn, SVE_Zm3_10_INDEX), OP_SVE_VVV_H_B, 0, C_SCAN_MOVPRFX, 0),
+
+  /* FP8 multiplication SME instructions.  */
+  SME_F8F32_INSNC ("fdot", 0xc1500038, 0xfff09038, sme_misc, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zm_INDEX2), OP_SVE_VVV_S_B, F_OD (2), 0),
+  SME_F8F32_INSNC ("fdot", 0xc1508008, 0xfff09078, sme_misc, OP3 (SME_ZA_array_off3_0, SME_Znx4, SME_Zm_INDEX2), OP_SVE_VVV_S_B, F_OD (4), 0),
+  SME_F8F32_INSNC ("fdot", 0xc1201018, 0xfff09c18, sme_misc, OP3 (SME_ZA_array_off3_0, SVE_ZnxN, SME_Zm), OP_SVE_VVV_S_B, F_OD (2), 0),
+  SME_F8F32_INSNC ("fdot", 0xc1301018, 0xfff09c18, sme_misc, OP3 (SME_ZA_array_off3_0, SVE_ZnxN, SME_Zm), OP_SVE_VVV_S_B, F_OD (4), 0),
+  SME_F8F32_INSNC ("fdot", 0xc1a01030, 0xffe19c38, sme_misc, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zmx2), OP_SVE_VVV_S_B, F_OD (2), 0),
+  SME_F8F32_INSNC ("fdot", 0xc1a11030, 0xffe39c78, sme_misc, OP3 (SME_ZA_array_off3_0, SME_Znx4, SME_Zmx4), OP_SVE_VVV_S_B, F_OD (4), 0),
+  SME_F8F16_INSNC ("fdot", 0xc1d00020, 0xfff09030, sme_misc, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zm_INDEX3_3), OP_SVE_VVV_H_B, F_OD (2), 0),
+  SME_F8F16_INSNC ("fdot", 0xc1109040, 0xfff09070, sme_misc, OP3 (SME_ZA_array_off3_0, SME_Znx4, SME_Zm_INDEX3_3), OP_SVE_VVV_H_B, F_OD (4), 0),
+  SME_F8F16_INSNC ("fdot", 0xc1201008, 0xfff09c18, sme_misc, OP3 (SME_ZA_array_off3_0, SVE_ZnxN, SME_Zm), OP_SVE_VVV_H_B, F_OD (2), 0),
+  SME_F8F16_INSNC ("fdot", 0xc1301008, 0xfff09c18, sme_misc, OP3 (SME_ZA_array_off3_0, SVE_ZnxN, SME_Zm), OP_SVE_VVV_H_B, F_OD (4), 0),
+  SME_F8F16_INSNC ("fdot", 0xc1a01020, 0xffe19c38, sme_misc, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zmx2), OP_SVE_VVV_H_B, F_OD (2), 0),
+  SME_F8F16_INSNC ("fdot", 0xc1a11020, 0xffe39c78, sme_misc, OP3 (SME_ZA_array_off3_0, SME_Znx4, SME_Zmx4), OP_SVE_VVV_H_B, F_OD (4), 0),
+  SME_F8F16_INSNC ("fmlal", 0xc1c00000, 0xfff01010, sme_misc, OP3 (SME_ZA_array_off3x2, SVE_Zn, SME_Zm_INDEX4_3), OP_SVE_VVV_H_B, 0, 0),
+  SME_F8F16_INSNC ("fmlal", 0xc1901030, 0xfff09030, sme_misc, OP3 (SME_ZA_array_off2x2, SME_Znx2, SME_Zm_INDEX4_2), OP_SVE_VVV_H_B, F_OD (2), 0),
+  SME_F8F16_INSNC ("fmlal", 0xc1909020, 0xfff09070, sme_misc, OP3 (SME_ZA_array_off2x2, SME_Znx4, SME_Zm_INDEX4_2), OP_SVE_VVV_H_B, F_OD (4), 0),
+  SME_F8F16_INSNC ("fmlal", 0xc1300c00, 0xfff09c18, sme_misc, OP3 (SME_ZA_array_off3x2, SVE_Zn, SME_Zm), OP_SVE_VVV_H_B, 0, 0),
+  SME_F8F16_INSNC ("fmlal", 0xc1200804, 0xfff09c1c, sme_misc, OP3 (SME_ZA_array_off2x2, SVE_ZnxN, SME_Zm), OP_SVE_VVV_H_B, F_OD (2), 0),
+  SME_F8F16_INSNC ("fmlal", 0xc1300804, 0xfff09c1c, sme_misc, OP3 (SME_ZA_array_off2x2, SVE_ZnxN, SME_Zm), OP_SVE_VVV_H_B, F_OD (4), 0),
+  SME_F8F16_INSNC ("fmlal", 0xc1a00820, 0xffe19c3c, sme_misc, OP3 (SME_ZA_array_off2x2, SME_Znx2, SME_Zmx2), OP_SVE_VVV_H_B, F_OD (2), 0),
+  SME_F8F16_INSNC ("fmlal", 0xc1a10820, 0xffe39c7c, sme_misc, OP3 (SME_ZA_array_off2x2, SME_Znx4, SME_Zmx4), OP_SVE_VVV_H_B, F_OD (4), 0),
+  SME_F8F32_INSNC ("fmlall", 0xc1400000, 0xfff0001c, sme_misc, OP3 (SME_ZA_array_off2x4, SVE_Zn, SME_Zm_INDEX4_10), OP_SVE_VVV_S_B, 0, 0),
+  SME_F8F32_INSNC ("fmlall", 0xc1900020, 0xfff09038, sme_misc, OP3 (SME_ZA_array_off1x4, SME_Znx2, SME_Zm_INDEX4_1), OP_SVE_VVV_S_B, F_OD (2), 0),
+  SME_F8F32_INSNC ("fmlall", 0xc1108040, 0xfff09078, sme_misc, OP3 (SME_ZA_array_off1x4, SME_Znx4, SME_Zm_INDEX4_1), OP_SVE_VVV_S_B, F_OD (4), 0),
+  SME_F8F32_INSNC ("fmlall", 0xc1300400, 0xfff09c1c, sme_misc, OP3 (SME_ZA_array_off2x4, SVE_Zn, SME_Zm), OP_SVE_VVV_S_B, 0, 0),
+  SME_F8F32_INSNC ("fmlall", 0xc1200002, 0xfff09c1e, sme_misc, OP3 (SME_ZA_array_off1x4, SVE_ZnxN, SME_Zm), OP_SVE_VVV_S_B, F_OD (2), 0),
+  SME_F8F32_INSNC ("fmlall", 0xc1300002, 0xfff09c1e, sme_misc, OP3 (SME_ZA_array_off1x4, SVE_ZnxN, SME_Zm), OP_SVE_VVV_S_B, F_OD (4), 0),
+  SME_F8F32_INSNC ("fmlall", 0xc1a00020, 0xffe19c3e, sme_misc, OP3 (SME_ZA_array_off1x4, SME_Znx2, SME_Zmx2), OP_SVE_VVV_S_B, F_OD (2), 0),
+  SME_F8F32_INSNC ("fmlall", 0xc1a10020, 0xffe39c7e, sme_misc, OP3 (SME_ZA_array_off1x4, SME_Znx4, SME_Zmx4), OP_SVE_VVV_S_B, F_OD (4), 0),
+  SME_F8F16_INSNC ("fmopa", 0x80a00008, 0xffe0001e, sme_misc, OP5 (SME_ZAda_1b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_HMMBB, 0, 0),
+  SME_F8F32_INSNC ("fmopa", 0x80a00000, 0xffe0001c, sme_misc, OP5 (SME_ZAda_2b, SVE_Pg3, SME_Pm, SVE_Zn, SVE_Zm_16), OP_SVE_SMMBB, 0, 0),
+  SME_F8F16_INSNC ("fvdot", 0xc1d01020, 0xfff09030, sme_misc, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zm_INDEX3_3), OP_SVE_VVV_H_B, F_OD (2), 0),
+  SME_F8F32_INSNC ("fvdotb", 0xc1d00800, 0xfff09830, sme_misc, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zm_INDEX2_3), OP_SVE_VVV_S_B, F_OD (4) | F_VG_REQ, 0),
+  SME_F8F32_INSNC ("fvdott", 0xc1d00810, 0xfff09830, sme_misc, OP3 (SME_ZA_array_off3_0, SME_Znx2, SME_Zm_INDEX2_3), OP_SVE_VVV_S_B, F_OD (4) | F_VG_REQ, 0),
+
+  /* SVE2p2 / SME2p2 instructions.  */
+  SVE2p2_SME2p2_INSN ("abs", 0x0406a000, 0xff3fe000, sve_size_bhsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_BHSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("bfcvt", 0x649ac000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("bfcvtnt", 0x6482a000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("cls", 0x0408a000, 0xff3fe000, sve_size_bhsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_BHSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("clz", 0x0409a000, 0xff3fe000, sve_size_bhsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_BHSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("cnot", 0x040ba000, 0xff3fe000, sve_size_bhsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_BHSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("cnt", 0x040aa000, 0xff3fe000, sve_size_bhsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_BHSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("compact", 0x05218000, 0xffbfe000, sve_size_bh, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VUV_BH, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("expand", 0x05318000, 0xff3fe000, sve_size_bhsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VUV_BHSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fabs", 0x040ca000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvt", 0x649aa000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZH, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvt", 0x64daa000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZH, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvt", 0x649a8000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvt", 0x64dae000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvt", 0x64da8000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvt", 0x64dac000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtlt", 0x6481a000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZH, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtlt", 0x64c3a000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtnt", 0x6480a000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtnt", 0x64c2a000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtx", 0x641ac000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtxnt", 0x6402a000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzs", 0x645ec000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HZH, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzs", 0x645f8000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZH, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzs", 0x645fc000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZH, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzs", 0x649f8000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzs", 0x64df8000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzs", 0x64de8000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzs", 0x64dfc000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzu", 0x645ee000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HZH, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzu", 0x645fa000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZH, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzu", 0x645fe000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZH, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzu", 0x649fa000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzu", 0x64dfa000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzu", 0x64dea000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fcvtzu", 0x64dfe000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("firstp", 0x25218000, 0xff3fc200, sve_size_bhsd, OP3 (Rd, SVE_Pg4_10, SVE_Pn), OP_SVE_XUV_BHSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("flogb", 0x641e8000, 0xffff8000, sve_size_hsd3, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fneg", 0x040da000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("frecpx", 0x641b8000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("frint32x", 0x6511a000, 0xfffde000, sve_size_sd3, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VMV_SD, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p2_SME2p2_INSN ("frint32x", 0x641ca000, 0xffffa000, sve_size_sd4, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_SD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("frint32z", 0x6510a000, 0xfffde000, sve_size_sd3, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VMV_SD, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p2_SME2p2_INSN ("frint32z", 0x641c8000, 0xffffa000, sve_size_sd4, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_SD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("frint64x", 0x6515a000, 0xfffde000, sve_size_sd3, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VMV_SD, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p2_SME2p2_INSN ("frint64x", 0x641da000, 0xffffa000, sve_size_sd4, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_SD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("frint64z", 0x6514a000, 0xfffde000, sve_size_sd3, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VMV_SD, 0, C_SCAN_MOVPRFX, 0),
+  SVE2p2_SME2p2_INSN ("frint64z", 0x641d8000, 0xffffa000, sve_size_sd4, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_SD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("frintx", 0x6419c000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("frinti", 0x6419e000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("frinta", 0x64198000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("frintn", 0x64188000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("frintz", 0x6418e000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("frintm", 0x6418c000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("frintp", 0x6418a000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("fsqrt", 0x641ba000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("lastp", 0x25228000, 0xff3fc200, sve_size_bhsd, OP3 (Rd, SVE_Pg4_10, SVE_Pn), OP_SVE_XUV_BHSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("neg", 0x0407a000, 0xff3fe000, sve_size_bhsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_BHSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("not", 0x040ea000, 0xff3fe000, sve_size_bhsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_BHSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("rbit", 0x0527a000, 0xff3fe000, sve_size_bhsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_BHSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("revb", 0x0524a000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("revh", 0x05a5a000, 0xffbfe000, sve_size_sd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_SD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("revw", 0x05e6a000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("revd", 0x052ea000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_QZQ, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("scvtf", 0x645cc000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HZH, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("scvtf", 0x645d8000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("scvtf", 0x649d8000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("scvtf", 0x64dc8000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("scvtf", 0x645dc000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("scvtf", 0x64dd8000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("scvtf", 0x64ddc000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("sqabs", 0x440aa000, 0xff3fe000, sve_size_bhsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_BHSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("sqneg", 0x440ba000, 0xff3fe000, sve_size_bhsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_BHSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("sxtb", 0x0400a000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("sxth", 0x0482a000, 0xffbfe000, sve_size_sd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_SD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("sxtw", 0x04c4a000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("ucvtf", 0x645ce000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HZH, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("ucvtf", 0x645da000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("ucvtf", 0x649da000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("ucvtf", 0x64dca000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("ucvtf", 0x645de000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_HZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("ucvtf", 0x64dda000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("ucvtf", 0x64dde000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("urecpe", 0x4482a000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("ursqrte", 0x4483a000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_SZS, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("uxtb", 0x0401a000, 0xff3fe000, sve_size_hsd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_HSD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("uxth", 0x0483a000, 0xffbfe000, sve_size_sd, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_VZV_SD, 0, 0, 0),
+  SVE2p2_SME2p2_INSN ("uxtw", 0x04c5a000, 0xffffe000, sve_misc, OP3 (SVE_Zd, SVE_Pg3, SVE_Zn), OP_SVE_DZD, 0, 0, 0),
+
+  /* SME2p2 instructions.  */
+  SME2p2_INSN ("fmul", 0xc120e800, 0xff21fc21, sme_size_22_hsd, OP3 (SME_Zdnx2, SME_Znx2, SME_Zm_17), OP_SVE_VVV_HSD, 0, 0),
+  SME2p2_INSN ("fmul", 0xc121e800, 0xff21fc63, sme_size_22_hsd, OP3 (SME_Zdnx4, SME_Znx4, SME_Zm_17), OP_SVE_VVV_HSD, 0, 0),
+  SME2p2_INSN ("fmul", 0xc120e400, 0xff21fc21, sme_size_22_hsd, OP3 (SME_Zdnx2, SME_Znx2, SME_Zmx2), OP_SVE_VVV_HSD, 0, 0),
+  SME2p2_INSN ("fmul", 0xc121e400, 0xff21fc63, sme_size_22_hsd, OP3 (SME_Zdnx4, SME_Znx4, SME_Zmx4), OP_SVE_VVV_HSD, 0, 0),
 
   {0, 0, 0, 0, 0, 0, {}, {}, 0, 0, 0, NULL},
 };
@@ -6440,6 +7525,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
       "an integer register with optional extension")			\
     Y(MODIFIED_REG, reg_shifted, "Rm_SFT", 0, F(),			\
       "an integer register with optional shift")			\
+    Y(MODIFIED_REG, reg_lsl_shifted, "Rm_LSL", 0, F(),			\
+      "an integer register with optional LSL shift")			\
     Y(FP_REG, regno, "Fd", 0, F(FLD_Rd), "a floating-point register")	\
     Y(FP_REG, regno, "Fn", 0, F(FLD_Rn), "a floating-point register")	\
     Y(FP_REG, regno, "Fm", 0, F(FLD_Rm), "a floating-point register")	\
@@ -6465,11 +7552,21 @@ const struct aarch64_opcode aarch64_opcode_table[] =
       "a SIMD vector element")						\
     Y(SIMD_ELEMENT, reglane, "Em16", 0, F(FLD_Rm),			\
       "a SIMD vector element limited to V0-V15")			\
+    Y(SIMD_ELEMENT, reglane, "Em8", 0, F(FLD_Rm),			\
+      "a SIMD vector element limited to V0-V7")				\
+    Y(SIMD_ELEMENT, simple_index, "Em_INDEX1_14", 0, F(FLD_Rm, FLD_imm1_14),	\
+      "a SIMD vector without a type qualifier encoding a bit index")	\
+    Y(SIMD_ELEMENT, simple_index, "Em_INDEX2_13", 0, F(FLD_Rm, FLD_imm2_13),	\
+      "a SIMD vector without a type qualifier encoding a bit index")	\
+    Y(SIMD_ELEMENT, simple_index, "Em_INDEX3_12", 0, F(FLD_Rm, FLD_imm3_12),	\
+      "a SIMD vector without a type qualifier encoding a bit index")	\
     Y(SIMD_REGLIST, reglist, "LVn", 0, F(FLD_Rn),			\
       "a SIMD vector register list")					\
     Y(SIMD_REGLIST, ldst_reglist, "LVt", 0, F(),			\
       "a SIMD vector register list")					\
     Y(SIMD_REGLIST, ldst_reglist_r, "LVt_AL", 0, F(),			\
+      "a SIMD vector register list")					\
+    Y(SIMD_REGLIST, lut_reglist, "LVn_LUT", 0, F(FLD_Rn),		\
       "a SIMD vector register list")					\
     Y(SIMD_REGLIST, ldst_elemlist, "LEt", 0, F(),			\
       "a SIMD vector element list")					\
@@ -6505,6 +7602,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
       "the width of the bit-field")					\
     Y(IMMEDIATE, imm, "IMM", 0, F(FLD_imm6_10), "an immediate")         \
     Y(IMMEDIATE, imm, "IMM_2", 0, F(FLD_imm6_15), "an immediate")       \
+    Y(IMMEDIATE, imm, "IMMP1_2", 0, F(FLD_imm6_15), "an immediate plus 1")       \
+    Y(IMMEDIATE, imm, "IMMS1_2", 0, F(FLD_imm6_15), "an immediate minus 1")       \
     Y(IMMEDIATE, imm, "UIMM3_OP1", 0, F(FLD_op1),			\
       "a 3-bit unsigned immediate")					\
     Y(IMMEDIATE, imm, "UIMM3_OP2", 0, F(FLD_op2),			\
@@ -6549,6 +7648,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
       "one of the standard conditions, excluding AL and NV.")		\
     X(ADDRESS, 0, ext_imm, "ADDR_ADRP", OPD_F_SEXT, F(FLD_immhi, FLD_immlo),\
       "21-bit PC-relative address of a 4KB page")			\
+    Y(ADDRESS, imm, "ADDR_PCREL9", OPD_F_SEXT | OPD_F_SHIFT_BY_2,	\
+      F(FLD_imm9_5), "9-bit PC-relative address")			\
     Y(ADDRESS, imm, "ADDR_PCREL14", OPD_F_SEXT | OPD_F_SHIFT_BY_2,	\
       F(FLD_imm14), "14-bit PC-relative address")			\
     Y(ADDRESS, imm, "ADDR_PCREL19", OPD_F_SEXT | OPD_F_SHIFT_BY_2,	\
@@ -6614,6 +7715,12 @@ const struct aarch64_opcode aarch64_opcode_table[] =
       "the GCSB option name DSYNC")					\
     Y(SYSTEM, hint, "BTI_TARGET", 0, F (),				\
       "BTI targets j/c/jc")						\
+    Y(SYSTEM, hint, "STSHH_POLICY", 0, F(),				\
+      "an STSHH policy (keep/strm)")					\
+    Y(SYSTEM, imm, "BRBOP", 0, F(FLD_brbop),				\
+      "Branch Record Buffer operation operand")				\
+    Y(INT_REG, regno, "Rt_IN_SYS_ALIASES", 0, F(FLD_Rt),		\
+      "Rt register with defaults for SYS aliases")			\
     Y(INT_REG, regno, "LSE128_Rt", 0, F(FLD_LSE128_Rt), "an integer register") \
     Y(INT_REG, regno, "LSE128_Rt2", 0, F(FLD_LSE128_Rt2), "an integer register") \
     Y(ADDRESS, sve_addr_ri_s4, "SVE_ADDR_RI_S4x16",			\
@@ -6651,8 +7758,6 @@ const struct aarch64_opcode aarch64_opcode_table[] =
     Y(ADDRESS, sve_addr_ri_u6, "SVE_ADDR_RI_U6x8", 3 << OPD_F_OD_LSB,	\
       F(FLD_Rn),							\
       "an address with a 6-bit unsigned offset, multiplied by 8")	\
-    Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_R", 0 << OPD_F_OD_LSB,	\
-      F(FLD_Rn,FLD_Rm), "an address with an optional scalar register offset")	\
     Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_RR", 0 << OPD_F_OD_LSB,	\
       F(FLD_Rn,FLD_Rm), "an address with a scalar register offset")	\
     Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_RR_LSL1", 1 << OPD_F_OD_LSB,	\
@@ -6662,6 +7767,16 @@ const struct aarch64_opcode aarch64_opcode_table[] =
     Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_RR_LSL3", 3 << OPD_F_OD_LSB,	\
       F(FLD_Rn,FLD_Rm), "an address with a scalar register offset")	\
     Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_RR_LSL4", 4 << OPD_F_OD_LSB,	\
+      F(FLD_Rn,FLD_Rm), "an address with a scalar register offset")	\
+    Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_RM", 0 << OPD_F_OD_LSB,	\
+      F(FLD_Rn,FLD_Rm), "an address with a scalar register offset")	\
+    Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_RM_LSL1", 1 << OPD_F_OD_LSB,	\
+      F(FLD_Rn,FLD_Rm), "an address with a scalar register offset")	\
+    Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_RM_LSL2", 2 << OPD_F_OD_LSB,	\
+      F(FLD_Rn,FLD_Rm), "an address with a scalar register offset")	\
+    Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_RM_LSL3", 3 << OPD_F_OD_LSB,	\
+      F(FLD_Rn,FLD_Rm), "an address with a scalar register offset")	\
+    Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_RM_LSL4", 4 << OPD_F_OD_LSB,	\
       F(FLD_Rn,FLD_Rm), "an address with a scalar register offset")	\
     Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_RX",				\
       (0 << OPD_F_OD_LSB) | OPD_F_NO_ZR, F(FLD_Rn,FLD_Rm),		\
@@ -6674,6 +7789,9 @@ const struct aarch64_opcode aarch64_opcode_table[] =
       "an address with a scalar register offset")			\
     Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_RX_LSL3",			\
       (3 << OPD_F_OD_LSB) | OPD_F_NO_ZR, F(FLD_Rn,FLD_Rm),		\
+      "an address with a scalar register offset")			\
+    Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_RX_LSL4",			\
+      (4 << OPD_F_OD_LSB) | OPD_F_NO_ZR, F(FLD_Rn,FLD_Rm),		\
       "an address with a scalar register offset")			\
     Y(ADDRESS, sve_addr_rr_lsl, "SVE_ADDR_ZX",				\
       0 << OPD_F_OD_LSB , F(FLD_SVE_Zn,FLD_Rm),				\
@@ -6825,6 +7943,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
       "an 8-bit unsigned immediate")					\
     Y(IMMEDIATE, imm, "SVE_UIMM8_53", 0, F(FLD_imm5,FLD_imm3_10),		\
       "an 8-bit unsigned immediate")					\
+    Y(IMMEDIATE, imm, "SVE_UIMM4", 0, F(FLD_SVE_imm4),			\
+      "a 4-bit unsigned immediate")					\
     Y(SIMD_REG, regno, "SVE_VZn", 0, F(FLD_SVE_Zn), "a SIMD register")	\
     Y(SIMD_REG, regno, "SVE_Vd", 0, F(FLD_SVE_Vd), "a SIMD register")	\
     Y(SIMD_REG, regno, "SVE_Vm", 0, F(FLD_SVE_Vm), "a SIMD register")	\
@@ -6845,6 +7965,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
       F(FLD_SME_V,FLD_SME_Rv,FLD_off2), "2 bit ZA tile")		\
     Y(ZA_ACCESS, sme_za_vrs2, "SME_ZA_array_vrsd_2", 0,			\
       F(FLD_SME_V,FLD_SME_Rv,FLD_ZAn_3), "3 bit ZA tile")		\
+    Y(ZA_ACCESS, sme_za_tile_to_vec, "SME_ZA_ARRAY4", 0,		\
+      F(FLD_SME_V,FLD_SME_Rv), "ZA tile to vector register")		\
     Y(SVE_REG, regno, "SVE_Za_5", 0, F(FLD_SVE_Za_5),			\
       "an SVE vector register")						\
     Y(SVE_REG, regno, "SVE_Za_16", 0, F(FLD_SVE_Za_16),			\
@@ -6855,11 +7977,20 @@ const struct aarch64_opcode aarch64_opcode_table[] =
       "an SVE vector register")						\
     Y(SVE_REG, regno, "SVE_Zm_16", 0, F(FLD_SVE_Zm_16),			\
       "an SVE vector register")						\
+    Y(SVE_REG, simple_index, "SVE_Zm1_23_INDEX",			\
+      0, F(FLD_SVE_Zm_16, FLD_SVE_i1_23),				\
+      "an indexed SVE vector register")					\
+    Y(SVE_REG, simple_index, "SVE_Zm2_22_INDEX",			\
+      0, F(FLD_SVE_Zm_16, FLD_SVE_i2),					\
+      "an indexed SVE vector register")					\
     Y(SVE_REG, sve_quad_index, "SVE_Zm3_INDEX",				\
       3 << OPD_F_OD_LSB, F(FLD_SVE_Zm_16),				\
       "an indexed SVE vector register")					\
     Y(SVE_REG, sve_quad_index, "SVE_Zm3_11_INDEX", 			\
       3 << OPD_F_OD_LSB, F(FLD_SVE_i3h2, FLD_SVE_i3l, FLD_SVE_imm3),    \
+      "an indexed SVE vector register")					\
+    Y(SVE_REG, simple_index, "SVE_Zm3_12_INDEX",			\
+      0, F(FLD_SVE_Zm_16, FLD_SVE_i3h3, FLD_SVE_i3l2),			\
       "an indexed SVE vector register")					\
     Y(SVE_REG, sve_quad_index, "SVE_Zm3_19_INDEX", 			\
       3 << OPD_F_OD_LSB, F(FLD_imm2_19, FLD_SVE_imm3),			\
@@ -6867,22 +7998,23 @@ const struct aarch64_opcode aarch64_opcode_table[] =
     Y(SVE_REG, sve_quad_index, "SVE_Zm3_22_INDEX", 			\
       3 << OPD_F_OD_LSB, F(FLD_SVE_i3h, FLD_SVE_Zm_16),			\
       "an indexed SVE vector register")					\
+    Y(SVE_REG, sve_quad_index, "SVE_Zm3_10_INDEX", 			\
+      3 << OPD_F_OD_LSB, F(FLD_SVE_i3h2, FLD_SVE_i4l2, FLD_SVE_imm3),	\
+      "an indexed SVE vector register")					\
     Y(SVE_REG, sve_quad_index, "SVE_Zm4_11_INDEX", 			\
       4 << OPD_F_OD_LSB, F(FLD_SVE_i2h, FLD_SVE_i3l, FLD_SVE_imm4),     \
       "an indexed SVE vector register")					\
-    Y(SVE_REG, sve_quad_index, "SVE_Zm_imm4",				\
-      5 << OPD_F_OD_LSB, F(FLD_SVE_Zm_5, FLD_SVE_imm4),			\
-      "an 4bit indexed SVE vector register")				\
     Y(SVE_REG, sve_quad_index, "SVE_Zm4_INDEX", 			\
       4 << OPD_F_OD_LSB, F(FLD_SVE_Zm_16),				\
       "an indexed SVE vector register")					\
     Y(SVE_REG, regno, "SVE_Zn", 0, F(FLD_SVE_Zn),			\
       "an SVE vector register")						\
-    Y(SVE_REG, sve_index_imm, "SVE_Zn_5_INDEX", 0,			\
-      F(FLD_SVE_Zn, FLD_SVE_i2h, FLD_SVE_tsz),				\
-      "a 5 bit idexed SVE vector register")				\
-    Y(SVE_REG, sve_index, "SVE_Zn_INDEX", 0, F(FLD_SVE_Zn),		\
+    Y(SVE_REG, sve_index, "SVE_Zn_INDEX", 0,				\
+      F(FLD_SVE_Zn, FLD_SVE_tszh, FLD_imm5),				\
       "an indexed SVE vector register")					\
+    Y(SVE_REG, sve_index, "SVE_Zn_5_INDEX", 0,				\
+      F(FLD_SVE_Zn, FLD_imm5),						\
+      "a 5 bit indexed SVE vector register")				\
     Y(SVE_REGLIST, sve_reglist, "SVE_ZnxN", 0, F(FLD_SVE_Zn),		\
       "a list of SVE vector registers")					\
     Y(SVE_REG, regno, "SVE_Zt", 0, F(FLD_SVE_Zt),			\
@@ -6895,12 +8027,17 @@ const struct aarch64_opcode aarch64_opcode_table[] =
       F(FLD_SME_Zdn4), "a list of SVE vector registers")		\
     Y(SVE_REG, regno, "SME_Zm", 0, F(FLD_SME_Zm),			\
       "an SVE vector register")						\
+    Y(SVE_REG, regno, "SME_Zm_17", 0, F(FLD_SME_Zm2),			\
+      "an SVE vector register")						\
     Y(SVE_REGLIST, sve_aligned_reglist, "SME_Zmx2", 2 << OPD_F_OD_LSB,	\
       F(FLD_SME_Zm2), "a list of SVE vector registers")			\
     Y(SVE_REGLIST, sve_aligned_reglist, "SME_Zmx4", 4 << OPD_F_OD_LSB,	\
       F(FLD_SME_Zm4), "a list of SVE vector registers")			\
     Y(SVE_REGLIST, sve_aligned_reglist, "SME_Znx2", 2 << OPD_F_OD_LSB,	\
       F(FLD_SME_Zn2), "a list of SVE vector registers")			\
+    Y(SVE_REGLIST, sve_aligned_reglist, "SME_Znx2_BIT_INDEX",		\
+      2 << OPD_F_OD_LSB, F(FLD_SME_Zn2),				\
+      "a list of SVE vector registers")					\
     Y(SVE_REGLIST, sve_aligned_reglist, "SME_Znx4", 4 << OPD_F_OD_LSB,	\
       F(FLD_SME_Zn4), "a list of SVE vector registers")			\
     Y(SVE_REGLIST, sve_strided_reglist, "SME_Ztx2_STRIDED",		\
@@ -6909,6 +8046,8 @@ const struct aarch64_opcode aarch64_opcode_table[] =
     Y(SVE_REGLIST, sve_strided_reglist, "SME_Ztx4_STRIDED",		\
       4 << OPD_F_OD_LSB, F(FLD_SME_ZtT, FLD_SME_Zt2),			\
       "a list of SVE vector registers")					\
+    Y(SVE_REG, regno, "SME_ZAda_1b", 0, F(FLD_SME_ZAda_1b),		\
+      "an SME ZA tile ZA0-ZA1")						\
     Y(SVE_REG, regno, "SME_ZAda_2b", 0, F(FLD_SME_ZAda_2b),		\
       "an SME ZA tile ZA0-ZA3")						\
     Y(SVE_REG, regno, "SME_ZAda_3b", 0, F(FLD_SME_ZAda_3b),		\
@@ -6977,17 +8116,29 @@ const struct aarch64_opcode aarch64_opcode_table[] =
       F(FLD_SME_Zm, FLD_imm1_10), "an indexed SVE vector register")	\
     Y(SVE_REG, simple_index, "SME_Zm_INDEX2", 0,			\
       F(FLD_SME_Zm, FLD_imm2_10), "an indexed SVE vector register")	\
+    Y(SVE_REG, simple_index, "SME_Zm_INDEX2_3", 0,			\
+      F(FLD_SME_Zm, FLD_imm1_10, FLD_imm1_3),				\
+      "an indexed SVE vector register")					\
     Y(SVE_REG, simple_index, "SME_Zm_INDEX3_1", 0,			\
       F(FLD_SME_Zm, FLD_imm1_10, FLD_imm2_1),				\
       "an indexed SVE vector register")					\
     Y(SVE_REG, simple_index, "SME_Zm_INDEX3_2", 0,			\
       F(FLD_SME_Zm, FLD_imm2_10, FLD_imm1_2),				\
       "an indexed SVE vector register")					\
+    Y(SVE_REG, simple_index, "SME_Zm_INDEX3_3", 0,			\
+      F(FLD_SME_Zm, FLD_imm2_10, FLD_imm1_3),				\
+      "an indexed SVE vector register")					\
     Y(SVE_REG, simple_index, "SME_Zm_INDEX3_10", 0,			\
       F(FLD_SME_Zm, FLD_imm1_15, FLD_imm2_10),				\
       "an indexed SVE vector register")					\
     Y(SVE_REG, simple_index, "SME_Zm_INDEX4_1", 0,			\
       F(FLD_SME_Zm, FLD_imm2_10, FLD_imm2_1),				\
+      "an indexed SVE vector register")					\
+    Y(SVE_REG, simple_index, "SME_Zm_INDEX4_2", 0,			\
+      F(FLD_SME_Zm, FLD_imm2_10, FLD_imm2_2),		\
+      "an indexed SVE vector register")					\
+    Y(SVE_REG, simple_index, "SME_Zm_INDEX4_3", 0,			\
+      F(FLD_SME_Zm, FLD_imm1_15, FLD_imm2_10, FLD_imm1_3),		\
       "an indexed SVE vector register")					\
     Y(SVE_REG, simple_index, "SME_Zm_INDEX4_10", 0,			\
       F(FLD_SME_Zm, FLD_imm1_15, FLD_imm3_10),				\
@@ -6998,18 +8149,44 @@ const struct aarch64_opcode aarch64_opcode_table[] =
       F(FLD_SVE_Zn, FLD_imm2_15), "an indexed SVE vector register")	\
     Y(SVE_REG, simple_index, "SME_Zn_INDEX2_16", 0,			\
       F(FLD_SVE_Zn, FLD_imm2_16), "an indexed SVE vector register")	\
+    Y(SVE_REG, simple_index, "SME_Zn_INDEX2_19", 0,			\
+      F(FLD_SVE_Zn, FLD_imm2_19), "an indexed SVE vector register")	\
     Y(SVE_REG, simple_index, "SME_Zn_INDEX3_14", 0,			\
       F(FLD_SVE_Zn, FLD_imm3_14), "an indexed SVE vector register")	\
     Y(SVE_REG, simple_index, "SME_Zn_INDEX3_15", 0,			\
       F(FLD_SVE_Zn, FLD_imm3_15), "an indexed SVE vector register")	\
     Y(SVE_REG, simple_index, "SME_Zn_INDEX4_14", 0,			\
       F(FLD_SVE_Zn, FLD_imm4_14), "an indexed SVE vector register")	\
+    Y(SVE_REG, regno, "SVE_Zn0_INDEX", 0, F(FLD_SVE_Zn),		\
+      "an SVE vector register with option zero index")			\
+    Y(SVE_REG, simple_index, "SVE_Zn1_17_INDEX", 0,			\
+      F(FLD_SVE_Zn, FLD_imm17_1),					\
+      "an SVE vector register with optional one bit index")		\
+    Y(SVE_REG, simple_index, "SVE_Zn2_18_INDEX", 0,			\
+      F(FLD_SVE_Zn, FLD_imm17_2),					\
+      "an SVE vector register with optional two bit index")		\
+    Y(SVE_REG, simple_index, "SVE_Zn3_22_INDEX", 0,			\
+      F(FLD_SVE_Zn, FLD_SVE_i3h, FLD_imm17_2),				\
+      "an SVE vector register with optional three bit index")		\
+    Y(SVE_REG, regno, "SVE_Zd0_INDEX", 0, F(FLD_SVE_Zd),		\
+      "an SVE vector register with option zero index")			\
+    Y(SVE_REG, simple_index, "SVE_Zd1_17_INDEX", 0,			\
+      F(FLD_SVE_Zd, FLD_imm17_1),					\
+      "an SVE vector register with optional one bit index")		\
+    Y(SVE_REG, simple_index, "SVE_Zd2_18_INDEX", 0,			\
+      F(FLD_SVE_Zd, FLD_imm17_2),					\
+      "an SVE vector register with optional two bit index")		\
+    Y(SVE_REG, simple_index, "SVE_Zd3_22_INDEX", 0,			\
+      F(FLD_SVE_Zd, FLD_SVE_i3h, FLD_imm17_2),				\
+      "an SVE vector register with optional three bit index")		\
     Y(IMMEDIATE, imm, "SME_VLxN_10", 0, F(FLD_SME_VL_10),		\
       "VLx2 or VLx4")							\
     Y(IMMEDIATE, imm, "SME_VLxN_13", 0, F(FLD_SME_VL_13),		\
       "VLx2 or VLx4")							\
     Y(SYSTEM, none, "SME_ZT0", 0, F (), "ZT0")				\
     Y(IMMEDIATE, imm, "SME_ZT0_INDEX", OPD_F_SHIFT_BY_3,		\
+      F (FLD_imm3_12), "a ZT0 index")					\
+    Y(IMMEDIATE, imm, "SME_ZT0_INDEX_MUL_VL", 0,				\
       F (FLD_imm3_12), "a ZT0 index")					\
     Y(SYSTEM, none, "SME_ZT0_LIST", 0, F (), "{ ZT0 }")			\
     Y(IMMEDIATE, imm, "TME_UIMM16", 0, F(FLD_imm16_5),			\
@@ -7028,15 +8205,6 @@ const struct aarch64_opcode aarch64_opcode_table[] =
       "an 8-bit signed immediate")					\
     Y(IMMEDIATE, imm, "CSSC_UIMM8", 0, F(FLD_CSSC_imm8),		\
       "an 8-bit unsigned immediate")					\
-    X(SVE_REGLIST, ins_sve_reglist, ext_sve_reglist_zt, "SME_Zt2",	\
-      2 << OPD_F_OD_LSB, F(FLD_SVE_Zt),					\
-      "a list of 2 SVE vector registers")				\
-    X(SVE_REGLIST, ins_sve_reglist, ext_sve_reglist_zt, "SME_Zt3",	\
-      3 << OPD_F_OD_LSB, F(FLD_SVE_Zt),					\
-      "a list of 3 SVE vector registers")				\
-    X(SVE_REGLIST, ins_sve_reglist, ext_sve_reglist_zt, "SME_Zt4",	\
-      4 << OPD_F_OD_LSB, F(FLD_SVE_Zt),					\
-      "a list of 4 SVE vector registers")				\
     X(ADDRESS, ins_rcpc3_addr_opt_offset, ext_rcpc3_addr_opt_offset,		\
       "RCPC3_ADDR_OPT_POSTIND", 0, F(FLD_opc2),				\
       "an address with post-incrementing by ammount of loaded bytes") \

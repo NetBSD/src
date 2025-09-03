@@ -42,7 +42,7 @@ gdb_py_test_silent_cmd "python progspace = gdb.current_progspace()" \
     "Get current progspace" 1
 
 gdb_test "python print (progspace.filename)" "py-progspace" \
-  "current progspace filename (py-progspace)"
+  "current progspace filename, py-progspace"
 
 gdb_test "python print (gdb.current_progspace().symbol_file)" \
     "<gdb.Objfile filename=.*/py-progspace>" \

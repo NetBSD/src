@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.19 2024/10/06 19:31:26 rillig Exp $	*/
+/*	$NetBSD: format.c,v 1.20 2025/07/09 16:59:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.19 2024/10/06 19:31:26 rillig Exp $");
+__RCSID("$NetBSD: format.c,v 1.20 2025/07/09 16:59:54 rillig Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -283,26 +283,11 @@ login_name(const char *addr)
 	return addr;
 }
 
-/*
- * A simple routine to get around a lint warning.
- */
-static inline const char *
-skip_fmt(const char **src, const char *p)
-{
-	*src = p;
-	return NULL;
-}
-
 static const char *
 subformat(const char **src, struct message *mp, const char *addr,
     const char *user, const char *subj, int tm_isdst)
 {
-#if 0
-/* XXX - lint doesn't like this, hence skip_fmt(). */
 #define MP(a)	mp ? a : (*src = (p + 1), NULL)
-#else
-#define MP(a)	mp ? a : skip_fmt(src, p + 1);
-#endif
 	const char *p;
 
 	p = *src;

@@ -1,3 +1,5 @@
+/*	$NetBSD: cpu_in_cksum_neon.c,v 1.2 2025/06/19 22:00:54 andvar Exp $	*/
+
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum_neon.c,v 1.1 2012/12/17 00:44:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum_neon.c,v 1.2 2025/06/19 22:00:54 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>

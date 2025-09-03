@@ -1,4 +1,4 @@
-/*	$NetBSD: virtioreg.h,v 1.13 2023/11/19 19:47:03 thorpej Exp $	*/
+/*	$NetBSD: virtioreg.h,v 1.14 2025/07/26 14:18:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -77,6 +77,7 @@
 #define VIRTIO_DEVICE_ID_RPMSG		 7
 #define VIRTIO_DEVICE_ID_SCSI		 8
 #define VIRTIO_DEVICE_ID_9P		 9
+#define VIRTIO_DEVICE_ID_GPU            16
 
 /* common device/guest features */
 #define  VIRTIO_F_NOTIFY_ON_EMPTY		__BIT(24)

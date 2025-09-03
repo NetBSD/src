@@ -1,5 +1,5 @@
 /* CTF archive files.
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -44,7 +44,8 @@ static void *arc_mmap_file (int fd, size_t size);
 static int arc_mmap_writeout (int fd, void *header, size_t headersz,
 			      const char **errmsg);
 static int arc_mmap_unmap (void *header, size_t headersz, const char **errmsg);
-static void ctf_arc_import_parent (const ctf_archive_t *arc, ctf_dict_t *fp);
+static int ctf_arc_import_parent (const ctf_archive_t *arc, ctf_dict_t *fp,
+				  int *errp);
 
 /* Flag to indicate "symbol not present" in ctf_archive_internal.ctfi_symdicts
    and ctfi_symnamedicts.  Never initialized.  */
@@ -253,29 +254,20 @@ ctf_arc_write (const char *file, ctf_dict_t **ctf_dicts, size_t ctf_dict_cnt,
   return err;
 }
 
-/* Write one CTF file out.  Return the file position of the written file (or
+/* Write one CTF dict out.  Return the file position of the written file (or
    rather, of the file-size uint64_t that precedes it): negative return is a
    negative errno or ctf_errno value.  On error, the file position may no longer
    be at the end of the file.  */
 static off_t
-arc_write_one_ctf (ctf_dict_t * f, int fd, size_t threshold)
+arc_write_one_ctf (ctf_dict_t *f, int fd, size_t threshold)
 {
   off_t off, end_off;
   uint64_t ctfsz = 0;
   char *ctfszp;
   size_t ctfsz_len;
-  int (*writefn) (ctf_dict_t * fp, int fd);
-
-  if (ctf_serialize (f) < 0)
-    return f->ctf_errno * -1;
 
   if ((off = lseek (fd, 0, SEEK_CUR)) < 0)
     return errno * -1;
-
-  if (f->ctf_size > threshold)
-    writefn = ctf_compress_write;
-  else
-    writefn = ctf_write;
 
   /* This zero-write turns into the size in a moment. */
   ctfsz_len = sizeof (ctfsz);
@@ -289,7 +281,7 @@ arc_write_one_ctf (ctf_dict_t * f, int fd, size_t threshold)
       ctfszp += writelen;
     }
 
-  if (writefn (f, fd) != 0)
+  if (ctf_write_thresholded (f, fd, threshold) != 0)
     return f->ctf_errno * -1;
 
   if ((end_off = lseek (fd, 0, SEEK_CUR)) < 0)
@@ -493,6 +485,10 @@ ctf_arc_open_internal (const char *filename, int *errp)
      is private.)  */
   arc->ctfa_magic = s.st_size;
   close (fd);
+
+  if (errp)
+    *errp = 0;
+
   return arc;
 
 err_unmap:
@@ -596,6 +592,9 @@ ctf_dict_open_sections (const ctf_archive_t *arc,
 			const char *name,
 			int *errp)
 {
+  if (errp)
+    *errp = 0;
+
   if (arc->ctfi_is_archive)
     {
       ctf_dict_t *ret;
@@ -605,7 +604,11 @@ ctf_dict_open_sections (const ctf_archive_t *arc,
       if (ret)
 	{
 	  ret->ctf_archive = (ctf_archive_t *) arc;
-	  ctf_arc_import_parent (arc, ret);
+	  if (ctf_arc_import_parent (arc, ret, errp) < 0)
+	    {
+	      ctf_dict_close (ret);
+	      return NULL;
+	    }
 	}
       return ret;
     }
@@ -699,7 +702,7 @@ void
 ctf_arc_flush_caches (ctf_archive_t *wrapper)
 {
   free (wrapper->ctfi_symdicts);
-  free (wrapper->ctfi_symnamedicts);
+  ctf_dynhash_destroy (wrapper->ctfi_symnamedicts);
   ctf_dynhash_destroy (wrapper->ctfi_dicts);
   wrapper->ctfi_symdicts = NULL;
   wrapper->ctfi_symnamedicts = NULL;
@@ -760,19 +763,26 @@ ctf_arc_open_by_name_sections (const ctf_archive_t *arc,
    already set, and a suitable archive member exists.  No error is raised if
    this is not possible: this is just a best-effort helper operation to give
    people useful dicts to start with.  */
-static void
-ctf_arc_import_parent (const ctf_archive_t *arc, ctf_dict_t *fp)
+static int
+ctf_arc_import_parent (const ctf_archive_t *arc, ctf_dict_t *fp, int *errp)
 {
   if ((fp->ctf_flags & LCTF_CHILD) && fp->ctf_parname && !fp->ctf_parent)
     {
+      int err = 0;
       ctf_dict_t *parent = ctf_dict_open_cached ((ctf_archive_t *) arc,
-						 fp->ctf_parname, NULL);
+						 fp->ctf_parname, &err);
+      if (errp)
+	*errp = err;
+
       if (parent)
 	{
 	  ctf_import (fp, parent);
 	  ctf_dict_close (parent);
 	}
+      else if (err != ECTF_ARNNAME)
+	return -1;				/* errno is set for us.  */
     }
+  return 0;
 }
 
 /* Return the number of members in an archive.  */
@@ -782,7 +792,7 @@ ctf_archive_count (const ctf_archive_t *wrapper)
   if (!wrapper->ctfi_is_archive)
     return 1;
 
-  return wrapper->ctfi_archive->ctfa_ndicts;
+  return le64toh (wrapper->ctfi_archive->ctfa_ndicts);
 }
 
 /* Look up a symbol in an archive by name or index (if the name is set, a lookup
@@ -948,6 +958,7 @@ ctf_arc_lookup_sym_or_name (ctf_archive_t *wrapper, unsigned long symidx,
 	{
 	  if (errp)
 	    *errp = ctf_errno (fp);
+	  ctf_dict_close (fp);
 	  ctf_next_destroy (i);
 	  return NULL;				/* errno is set for us.  */
 	}
@@ -999,6 +1010,113 @@ ctf_arc_lookup_symbol_name (ctf_archive_t *wrapper, const char *symname,
 			    ctf_id_t *typep, int *errp)
 {
   return ctf_arc_lookup_sym_or_name (wrapper, 0, symname, typep, errp);
+}
+
+/* Return all enumeration constants with a given NAME across all dicts in an
+   archive, similar to ctf_lookup_enumerator_next.  The DICT is cached, so
+   opening costs are paid only once, but (unlike ctf_arc_lookup_symbol*
+   above) the results of the iterations are not cached.  dict and errp are
+   not optional.  */
+
+ctf_id_t
+ctf_arc_lookup_enumerator_next (ctf_archive_t *arc, const char *name,
+				ctf_next_t **it, int64_t *enum_value,
+				ctf_dict_t **dict, int *errp)
+{
+  ctf_next_t *i = *it;
+  ctf_id_t type;
+  int opened_this_time = 0;
+  int err;
+
+  /* We have two nested iterators in here: ctn_next tracks archives, while
+     within it ctn_next_inner tracks enumerators within an archive.  We
+     keep track of the dict by simply reusing the passed-in arg: if it's
+     changed by the caller, the caller will get an ECTF_WRONGFP error,
+     so this is quite safe and means we don't have to track the arc and fp
+     simultaneously in the ctf_next_t.  */
+
+  if (!i)
+    {
+      if ((i = ctf_next_create ()) == NULL)
+	{
+	  err = ENOMEM;
+	  goto err;
+	}
+      i->ctn_iter_fun = (void (*) (void)) ctf_arc_lookup_enumerator_next;
+      i->cu.ctn_arc = arc;
+      *it = i;
+    }
+
+  if ((void (*) (void)) ctf_arc_lookup_enumerator_next != i->ctn_iter_fun)
+    {
+      err = ECTF_NEXT_WRONGFUN;
+      goto err;
+    }
+
+  if (arc != i->cu.ctn_arc)
+    {
+      err = ECTF_NEXT_WRONGFP;
+      goto err;
+    }
+
+  /* Prevent any earlier end-of-iteration on this dict from confusing the
+     test below.  */
+  if (i->ctn_next != NULL)
+    ctf_set_errno (*dict, 0);
+
+  do
+    {
+      /* At end of one dict, or not started any iterations yet?
+	 Traverse to next dict.  If we never returned this dict to the
+	 caller, close it ourselves: the caller will never see it and cannot
+	 do so.  */
+
+      if (i->ctn_next == NULL || ctf_errno (*dict) == ECTF_NEXT_END)
+	{
+	  if (opened_this_time)
+	    {
+	      ctf_dict_close (*dict);
+	      *dict = NULL;
+	      opened_this_time = 0;
+	    }
+
+	  *dict = ctf_archive_next (arc, &i->ctn_next, NULL, 0, &err);
+	  if (!*dict)
+	    goto err;
+	  opened_this_time = 1;
+	}
+
+      type = ctf_lookup_enumerator_next (*dict, name, &i->ctn_next_inner,
+					 enum_value);
+    }
+  while (type == CTF_ERR && ctf_errno (*dict) == ECTF_NEXT_END);
+
+  if (type == CTF_ERR)
+    {
+      err = ctf_errno (*dict);
+      goto err;
+    }
+
+  /* If this dict is being reused from the previous iteration, bump its
+     refcnt: the caller is going to close it and has no idea that we didn't
+     open it this time round.  */
+  if (!opened_this_time)
+    ctf_ref (*dict);
+
+  return type;
+
+ err:						/* Also ECTF_NEXT_END. */
+  if (opened_this_time)
+    {
+      ctf_dict_close (*dict);
+      *dict = NULL;
+    }
+
+  ctf_next_destroy (i);
+  *it = NULL;
+  if (errp)
+    *errp = err;
+  return CTF_ERR;
 }
 
 /* Raw iteration over all CTF files in an archive.  We pass the raw data for all
@@ -1054,7 +1172,7 @@ ctf_archive_iter (const ctf_archive_t *arc, ctf_archive_member_f *func,
   ctf_next_t *i = NULL;
   ctf_dict_t *fp;
   const char *name;
-  int err;
+  int err = 0;
 
   while ((fp = ctf_archive_next (arc, &i, &name, 0, &err)) != NULL)
     {
@@ -1067,6 +1185,11 @@ ctf_archive_iter (const ctf_archive_t *arc, ctf_archive_member_f *func,
 	  return rc;
 	}
       ctf_dict_close (fp);
+    }
+  if (err != ECTF_NEXT_END && err != 0)
+    {
+      ctf_next_destroy (i);
+      return -1;
     }
   return 0;
 }

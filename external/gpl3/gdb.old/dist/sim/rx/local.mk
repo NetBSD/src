@@ -1,6 +1,6 @@
 ## See sim/Makefile.am
 ##
-## Copyright (C) 2008-2023 Free Software Foundation, Inc.
+## Copyright (C) 2008-2024 Free Software Foundation, Inc.
 ## Contributed by Red Hat, Inc.
 ##
 ## This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,33 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+AM_CPPFLAGS_%C% = $(SIM_RX_CYCLE_ACCURATE_FLAGS)
+
+nodist_%C%_libsim_a_SOURCES = \
+	%D%/modules.c
+%C%_libsim_a_SOURCES = \
+	$(common_libcommon_a_SOURCES)
+%C%_libsim_a_LIBADD = \
+	%D%/fpu.o \
+	%D%/load.o \
+	%D%/mem.o \
+	%D%/misc.o \
+	%D%/reg.o \
+	%D%/rx.o \
+	%D%/syscalls.o \
+	%D%/trace.o \
+	%D%/gdb-if.o \
+	%D%/err.o
+$(%C%_libsim_a_OBJECTS) $(%C%_libsim_a_LIBADD): %D%/hw-config.h
+
+noinst_LIBRARIES += %D%/libsim.a
+
+## Override wildcards that trigger common/modules.c to be (incorrectly) used.
+%D%/modules.o: %D%/modules.c
+
+%D%/%.o: common/%.c ; $(SIM_COMPILE)
+-@am__include@ %D%/$(DEPDIR)/*.Po
+
 %C%_run_SOURCES =
 %C%_run_LDADD = \
 	%D%/main.o \
@@ -23,10 +50,6 @@
 	$(SIM_COMMON_LIBS)
 
 noinst_PROGRAMS += %D%/run
-
-## Helper targets for running make from the top-level due to run's main.o.
-%D%/%.o: %D%/%.c | %D%/libsim.a $(SIM_ALL_RECURSIVE_DEPS)
-	$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
 
 %C%docdir = $(docdir)/%C%
 %C%doc_DATA = %D%/README.txt

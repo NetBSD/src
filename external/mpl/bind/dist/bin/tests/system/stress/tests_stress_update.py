@@ -54,7 +54,9 @@ def update_zone(test_state, zone):
         update = dns.update.UpdateMessage(zone)
         update.add(f"dynamic-{i}.{zone}", 300, "TXT", f"txt-{i}")
         try:
-            response = isctest.query.udp(update, server)
+            response = isctest.query.udp(
+                update, server, log_query=False, log_response=False
+            )
             assert response.rcode() == dns.rcode.NOERROR
         except dns.exception.Timeout:
             isctest.log.info(f"error: query timeout for {zone}")

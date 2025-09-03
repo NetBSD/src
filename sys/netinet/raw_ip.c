@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.186 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.187 2025/06/20 15:15:35 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.186 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.187 2025/06/20 15:15:35 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -331,13 +331,13 @@ rip_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
 			goto release;
 		}
 		ip = mtod(m, struct ip *);
-		ip->ip_tos = 0;
+		ip->ip_tos = in4p_ip(inp).ip_tos;
 		ip->ip_off = htons(0);
 		ip->ip_p = in4p_ip(inp).ip_p;
 		ip->ip_len = htons(m->m_pkthdr.len);
 		ip->ip_src = pktopts.ippo_laddr.sin_addr;
 		ip->ip_dst = in4p_faddr(inp);
-		ip->ip_ttl = MAXTTL;
+		ip->ip_ttl = in4p_ip(inp).ip_ttl ? in4p_ip(inp).ip_ttl : MAXTTL;
 		opts = inp->inp_options;
 	} else {
 		if (m->m_pkthdr.len > IP_MAXPACKET) {

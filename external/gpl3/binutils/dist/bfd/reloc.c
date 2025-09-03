@@ -1,5 +1,5 @@
 /* BFD support for handling relocation entries.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -2492,6 +2492,18 @@ ENUMX
   BFD_RELOC_X86_64_CODE_4_GOTTPOFF
 ENUMX
   BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC
+ENUMX
+  BFD_RELOC_X86_64_CODE_5_GOTPCRELX
+ENUMX
+  BFD_RELOC_X86_64_CODE_5_GOTTPOFF
+ENUMX
+  BFD_RELOC_X86_64_CODE_5_GOTPC32_TLSDESC
+ENUMX
+  BFD_RELOC_X86_64_CODE_6_GOTPCRELX
+ENUMX
+  BFD_RELOC_X86_64_CODE_6_GOTTPOFF
+ENUMX
+  BFD_RELOC_X86_64_CODE_6_GOTPC32_TLSDESC
 ENUMDOC
   x86-64/elf relocations.
 
@@ -5002,6 +5014,14 @@ ENUMX
 ENUMX
   BFD_RELOC_RISCV_TLS_TPREL64
 ENUMX
+  BFD_RELOC_RISCV_TLSDESC_HI20
+ENUMX
+  BFD_RELOC_RISCV_TLSDESC_LOAD_LO12
+ENUMX
+  BFD_RELOC_RISCV_TLSDESC_ADD_LO12
+ENUMX
+  BFD_RELOC_RISCV_TLSDESC_CALL
+ENUMX
   BFD_RELOC_RISCV_ALIGN
 ENUMX
   BFD_RELOC_RISCV_RVC_BRANCH
@@ -6176,113 +6196,6 @@ ENUMX
   BFD_RELOC_MSP430_SUB_ULEB128
 ENUMDOC
   msp430 specific relocation codes.
-
-ENUM
-  BFD_RELOC_NIOS2_S16
-ENUMX
-  BFD_RELOC_NIOS2_U16
-ENUMX
-  BFD_RELOC_NIOS2_CALL26
-ENUMX
-  BFD_RELOC_NIOS2_IMM5
-ENUMX
-  BFD_RELOC_NIOS2_CACHE_OPX
-ENUMX
-  BFD_RELOC_NIOS2_IMM6
-ENUMX
-  BFD_RELOC_NIOS2_IMM8
-ENUMX
-  BFD_RELOC_NIOS2_HI16
-ENUMX
-  BFD_RELOC_NIOS2_LO16
-ENUMX
-  BFD_RELOC_NIOS2_HIADJ16
-ENUMX
-  BFD_RELOC_NIOS2_GPREL
-ENUMX
-  BFD_RELOC_NIOS2_UJMP
-ENUMX
-  BFD_RELOC_NIOS2_CJMP
-ENUMX
-  BFD_RELOC_NIOS2_CALLR
-ENUMX
-  BFD_RELOC_NIOS2_ALIGN
-ENUMX
-  BFD_RELOC_NIOS2_GOT16
-ENUMX
-  BFD_RELOC_NIOS2_CALL16
-ENUMX
-  BFD_RELOC_NIOS2_GOTOFF_LO
-ENUMX
-  BFD_RELOC_NIOS2_GOTOFF_HA
-ENUMX
-  BFD_RELOC_NIOS2_PCREL_LO
-ENUMX
-  BFD_RELOC_NIOS2_PCREL_HA
-ENUMX
-  BFD_RELOC_NIOS2_TLS_GD16
-ENUMX
-  BFD_RELOC_NIOS2_TLS_LDM16
-ENUMX
-  BFD_RELOC_NIOS2_TLS_LDO16
-ENUMX
-  BFD_RELOC_NIOS2_TLS_IE16
-ENUMX
-  BFD_RELOC_NIOS2_TLS_LE16
-ENUMX
-  BFD_RELOC_NIOS2_TLS_DTPMOD
-ENUMX
-  BFD_RELOC_NIOS2_TLS_DTPREL
-ENUMX
-  BFD_RELOC_NIOS2_TLS_TPREL
-ENUMX
-  BFD_RELOC_NIOS2_COPY
-ENUMX
-  BFD_RELOC_NIOS2_GLOB_DAT
-ENUMX
-  BFD_RELOC_NIOS2_JUMP_SLOT
-ENUMX
-  BFD_RELOC_NIOS2_RELATIVE
-ENUMX
-  BFD_RELOC_NIOS2_GOTOFF
-ENUMX
-  BFD_RELOC_NIOS2_CALL26_NOAT
-ENUMX
-  BFD_RELOC_NIOS2_GOT_LO
-ENUMX
-  BFD_RELOC_NIOS2_GOT_HA
-ENUMX
-  BFD_RELOC_NIOS2_CALL_LO
-ENUMX
-  BFD_RELOC_NIOS2_CALL_HA
-ENUMX
-  BFD_RELOC_NIOS2_R2_S12
-ENUMX
-  BFD_RELOC_NIOS2_R2_I10_1_PCREL
-ENUMX
-  BFD_RELOC_NIOS2_R2_T1I7_1_PCREL
-ENUMX
-  BFD_RELOC_NIOS2_R2_T1I7_2
-ENUMX
-  BFD_RELOC_NIOS2_R2_T2I4
-ENUMX
-  BFD_RELOC_NIOS2_R2_T2I4_1
-ENUMX
-  BFD_RELOC_NIOS2_R2_T2I4_2
-ENUMX
-  BFD_RELOC_NIOS2_R2_X1I7_2
-ENUMX
-  BFD_RELOC_NIOS2_R2_X2L5
-ENUMX
-  BFD_RELOC_NIOS2_R2_F1I5_2
-ENUMX
-  BFD_RELOC_NIOS2_R2_L5I4X1
-ENUMX
-  BFD_RELOC_NIOS2_R2_T1X1I6
-ENUMX
-  BFD_RELOC_NIOS2_R2_T1X1I6_2
-ENUMDOC
-  Relocations used by the Altera Nios II core.
 
 ENUM
   BFD_RELOC_PRU_U16
@@ -7517,6 +7430,12 @@ ENUMDOC
   AArch64 pseudo relocation code to be used internally by the AArch64
   assembler and not (currently) written to any object files.
 ENUM
+  BFD_RELOC_AARCH64_BRANCH9
+ENUMDOC
+  AArch64 9 bit pc-relative conditional branch and compare & branch.
+  The lowest two bits must be zero and are not stored in the
+  instruction, giving an 11 bit signed byte offset.
+ENUM
   BFD_RELOC_TILEPRO_COPY
 ENUMX
   BFD_RELOC_TILEPRO_GLOB_DAT
@@ -8464,8 +8383,8 @@ bfd_generic_relax_section (bfd *abfd ATTRIBUTE_UNUSED,
 			   bool *again)
 {
   if (bfd_link_relocatable (link_info))
-    (*link_info->callbacks->einfo)
-      (_("%P%F: --relax and -r may not be used together\n"));
+    link_info->callbacks->fatal
+      (_("%P: --relax and -r may not be used together\n"));
 
   *again = false;
   return true;
@@ -8640,7 +8559,7 @@ bfd_generic_get_relocated_section_contents (bfd *abfd,
 		     * bfd_octets_per_byte (input_bfd, input_section));
 	      _bfd_clear_contents ((*parent)->howto, input_bfd,
 				   input_section, data, off);
-	      (*parent)->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	      (*parent)->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	      (*parent)->addend = 0;
 	      (*parent)->howto = &none_howto;
 	      r = bfd_reloc_ok;

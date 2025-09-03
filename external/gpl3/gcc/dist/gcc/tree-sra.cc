@@ -1392,9 +1392,16 @@ scan_function (void)
 	      break;
 
 	    case GIMPLE_CALL:
-	      for (i = 0; i < gimple_call_num_args (stmt); i++)
-		ret |= build_access_from_expr (gimple_call_arg (stmt, i),
-					       stmt, false);
+	      if (gimple_call_flags (stmt) & ECF_RETURNS_TWICE)
+		{
+		  for (i = 0; i < gimple_call_num_args (stmt); i++)
+		    disqualify_base_of_expr (gimple_call_arg (stmt, i),
+					     "Passed to a returns_twice call.");
+		}
+	      else
+		for (i = 0; i < gimple_call_num_args (stmt); i++)
+		  ret |= build_access_from_expr (gimple_call_arg (stmt, i),
+						 stmt, false);
 
 	      t = gimple_call_lhs (stmt);
 	      if (t && !disqualify_if_bad_bb_terminating_stmt (stmt, t, NULL))
@@ -3123,7 +3130,7 @@ create_total_scalarization_access (struct access *parent, HOST_WIDE_INT pos,
   access->grp_write = parent->grp_write;
   access->grp_total_scalarization = 1;
   access->grp_hint = 1;
-  access->grp_same_access_path = path_comparable_for_same_access (expr);
+  access->grp_same_access_path = 0;
   access->reverse = reverse_storage_order_for_component_p (expr);
 
   access->next_sibling = next_sibling;
@@ -3864,8 +3871,10 @@ sra_modify_expr (tree *expr, gimple_stmt_iterator *gsi, bool write)
 	    }
 	  else
 	    {
-	      gassign *stmt;
+	      if (TREE_READONLY (access->base))
+		return false;
 
+	      gassign *stmt;
 	      if (access->grp_partial_lhs)
 		repl = force_gimple_operand_gsi (gsi, repl, true, NULL_TREE,
 						 true, GSI_SAME_STMT);

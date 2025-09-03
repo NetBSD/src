@@ -1,5 +1,5 @@
 /* tc-bfin.c -- Assembler for the ADI Blackfin.
-   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -52,7 +52,7 @@ FILE *errorf;
 #endif
 
 static flagword bfin_flags = DEFAULT_FLAGS | DEFAULT_FDPIC;
-static const char *bfin_pic_flag = DEFAULT_FDPIC ? "-mfdpic" : (const char *)0;
+static const char *bfin_pic_flag = DEFAULT_FDPIC ? "-mfdpic" : NULL;
 
 /* Blackfin specific function to handle FD-PIC pointer initializations.  */
 
@@ -314,13 +314,13 @@ struct bfin_cpu bfin_cpus[] =
 };
 
 /* Define bfin-specific command-line options (there are none). */
-const char *md_shortopts = "";
+const char md_shortopts[] = "";
 
 #define OPTION_FDPIC		(OPTION_MD_BASE)
 #define OPTION_NOPIC		(OPTION_MD_BASE + 1)
 #define OPTION_MCPU		(OPTION_MD_BASE + 2)
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   { "mcpu",		required_argument,	NULL, OPTION_MCPU	},
   { "mfdpic",		no_argument,		NULL, OPTION_FDPIC      },
@@ -329,7 +329,7 @@ struct option md_longopts[] =
   { NULL,		no_argument,		NULL, 0                 },
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 
 int
@@ -614,7 +614,7 @@ md_operand (expressionS * expressionP)
 symbolS *
 md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 {
-  return (symbolS *) 0;
+  return NULL;
 }
 
 int
@@ -798,23 +798,20 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
 
-  reloc		      = XNEW (arelent);
-  reloc->sym_ptr_ptr  = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
-  reloc->address      = fixp->fx_frag->fr_address + fixp->fx_where;
+  reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
   reloc->addend = fixp->fx_offset;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
 
-  if (reloc->howto == (reloc_howto_type *) NULL)
+  if (reloc->howto == NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
 		    /* xgettext:c-format.  */
 		    _("reloc %d not supported by object file format"),
 		    (int) fixp->fx_r_type);
-
-      xfree (reloc);
-
       return NULL;
     }
 
@@ -827,7 +824,7 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 long
 md_pcrel_from_section (fixS *fixP, segT sec)
 {
-  if (fixP->fx_addsy != (symbolS *) NULL
+  if (fixP->fx_addsy != NULL
       && (!S_IS_DEFINED (fixP->fx_addsy)
       || S_GET_SEGMENT (fixP->fx_addsy) != sec))
     {
@@ -940,7 +937,7 @@ Expr_Node_Create (Expr_Node_Type type,
 {
 
 
-  Expr_Node *node = (Expr_Node *) allocate (sizeof (Expr_Node));
+  Expr_Node *node = allocate (sizeof (Expr_Node));
   node->type = type;
   node->value = value;
   node->Left_Child = Left_Child;
@@ -1860,8 +1857,8 @@ bfin_gen_loop (Expr_Node *exp, REG_T reg, int rop, REG_T preg)
   symbolS *sym;
 
   loopsym = exp->value.s_value;
-  lbeginsym = (char *) xmalloc (strlen (loopsym) + strlen ("__BEGIN") + 5);
-  lendsym = (char *) xmalloc (strlen (loopsym) + strlen ("__END") + 5);
+  lbeginsym = xmalloc (strlen (loopsym) + strlen ("__BEGIN") + 5);
+  lendsym = xmalloc (strlen (loopsym) + strlen ("__END") + 5);
 
   lbeginsym[0] = 0;
   lendsym[0] = 0;
@@ -1905,7 +1902,7 @@ bfin_loop_beginend (Expr_Node *exp, int begin)
   const char *suffix = begin ? "__BEGIN" : "__END";
 
   loopsym = exp->value.s_value;
-  label_name = (char *) xmalloc (strlen (loopsym) + strlen (suffix) + 5);
+  label_name = xmalloc (strlen (loopsym) + strlen (suffix) + 5);
 
   label_name[0] = 0;
 
@@ -1919,6 +1916,8 @@ bfin_loop_beginend (Expr_Node *exp, int begin)
      Adjust label address.  */
   if (!begin)
     *symbol_X_add_number (linelabel) -= last_insn_size;
+
+  free (label_name);
 }
 
 bool
@@ -1940,7 +1939,8 @@ bfin_eol_in_insn (char *line)
 
   /* If the || is on the next line, there might be leading whitespace.  */
   temp++;
-  while (*temp == ' ' || *temp == '\t') temp++;
+  while (is_whitespace (*temp))
+    temp++;
 
   if (*temp == '|')
     return true;

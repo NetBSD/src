@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.107 2025/06/05 06:31:52 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.108 2025/06/27 21:36:23 andvar Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ struct in6_ifstat {
 	u_quad_t ifs6_out_forward;	/* # of datagrams forwarded */
 					/* NOTE: increment on outgoing if */
 	u_quad_t ifs6_out_request;	/* # of outgoing datagrams from ULP */
-					/* NOTE: does not include forwrads */
+					/* NOTE: does not include forwards */
 	u_quad_t ifs6_out_discard;	/* # of discarded datagrams */
 	u_quad_t ifs6_out_fragok;	/* # of datagrams fragmented */
 	u_quad_t ifs6_out_fragfail;	/* # of datagrams failed on fragment */

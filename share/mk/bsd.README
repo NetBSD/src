@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.454 2025/01/28 20:34:55 christos Exp $
+#	$NetBSD: bsd.README,v 1.455 2025/06/27 21:36:22 andvar Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -328,9 +328,9 @@ MANINSTALL	Manual installation type.  Space separated list:
 			catinstall, htmlinstall, maninstall
 		Default value derived from MKCATPAGES and MKHTML.
 
-MAKELINKLIB	Defaults to ${MKLINKLIB} but can be overriden by Makefiles
+MAKELINKLIB	Defaults to ${MKLINKLIB} but can be overridden by Makefiles
 
-MAKESTATICLIB	Defaults to ${MKSTATICLIB} but can be overriden by Makefiles
+MAKESTATICLIB	Defaults to ${MKSTATICLIB} but can be overridden by Makefiles
 
 LDSTATIC	Control program linking; if set blank, link everything
 		dynamically.  If set to "-static", link everything statically.

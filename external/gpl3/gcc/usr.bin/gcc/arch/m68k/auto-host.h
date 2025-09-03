@@ -640,8 +640,7 @@
 #endif
 
 
-/* Define if your Mac OS X assembler supports the -mmacos-version-min option.
-   */
+/* Define if your macOS assembler supports the -mmacos-version-min option. */
 #ifndef USED_FOR_TARGET
 /* #undef HAVE_AS_MMACOSX_VERSION_MIN_OPTION */
 #endif
@@ -2215,7 +2214,7 @@
 
 /* Define if isl is in use. */
 #ifndef USED_FOR_TARGET
-#define HAVE_isl 1
+/* #undef HAVE_isl */
 #endif
 
 
@@ -2234,6 +2233,13 @@
 /* Define if O_CLOEXEC supported by fcntl. */
 #ifndef USED_FOR_TARGET
 #define HOST_HAS_O_CLOEXEC 1
+#endif
+
+
+/* Define if personality and ADDR_NO_RANDOMIZE are declared in
+   sys/personality.h. */
+#ifndef USED_FOR_TARGET
+/* #undef HOST_HAS_PERSONALITY_ADDR_NO_RANDOMIZE */
 #endif
 
 
@@ -2258,6 +2264,12 @@
 /* Define to 1 if ld64 supports '-export_dynamic'. */
 #ifndef USED_FOR_TARGET
 /* #undef LD64_HAS_EXPORT_DYNAMIC */
+#endif
+
+
+/* Define to 1 if ld64 supports '-macos_version_min'. */
+#ifndef USED_FOR_TARGET
+/* #undef LD64_HAS_MACOS_VERSION_MIN */
 #endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.24 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.25 2025/07/17 19:01:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -143,14 +143,14 @@
 /*%
  * KASP flags
  */
-#define KASP_LOCK(k)                  \
-	if ((k) != NULL) {            \
-		LOCK((&((k)->lock))); \
+#define KASP_LOCK(k)                \
+	if ((k) != NULL) {          \
+		LOCK(&((k)->lock)); \
 	}
 
-#define KASP_UNLOCK(k)                  \
-	if ((k) != NULL) {              \
-		UNLOCK((&((k)->lock))); \
+#define KASP_UNLOCK(k)                \
+	if ((k) != NULL) {            \
+		UNLOCK(&((k)->lock)); \
 	}
 
 /*
@@ -218,7 +218,7 @@ typedef struct dns_include dns_include_t;
 	} while (0)
 #endif /* ifdef DNS_ZONE_CHECKLOCK */
 
-#define ZONEDB_INITLOCK(l)    isc_rwlock_init((l))
+#define ZONEDB_INITLOCK(l)    isc_rwlock_init(l)
 #define ZONEDB_DESTROYLOCK(l) isc_rwlock_destroy(l)
 #define ZONEDB_LOCK(l, t)     RWLOCK((l), (t))
 #define ZONEDB_UNLOCK(l, t)   RWUNLOCK((l), (t))
@@ -411,6 +411,7 @@ struct dns_zone {
 	dns_stats_t *rcvquerystats;
 	dns_stats_t *dnssecsignstats;
 	uint32_t notifydelay;
+	uint32_t notifydefer;
 	dns_isselffunc_t isself;
 	void *isselfarg;
 
@@ -610,7 +611,12 @@ typedef enum {
 						      * notify due to the zone
 						      * just being loaded for
 						      * the first time. */
-	DNS_ZONEFLG_FIRSTREFRESH = 0x100000000U, /*%< First refresh pending */
+	DNS_ZONEFLG_NOTIFYNODEFER = 0x100000000U,    /*%< ignore the
+						      * notify-defer option. */
+	DNS_ZONEFLG_NOTIFYDEFERRED = 0x200000000U,   /*%< notify was deferred
+						      * according to the
+						      * notify-defer option. */
+	DNS_ZONEFLG_FIRSTREFRESH = 0x400000000U, /*%< First refresh pending */
 	DNS_ZONEFLG___MAX = UINT64_MAX, /* trick to make the ENUM 64-bit wide */
 } dns_zoneflg_t;
 
@@ -1094,6 +1100,19 @@ static const char *dbargv_default[] = { ZONEDB_DEFAULT };
 				     #b);                                    \
 			isc_interval_set(&_i, (b) / 2, 0);                   \
 			(void)isc_time_add((a), &_i, (c));                   \
+		}                                                            \
+	} while (0)
+
+#define DNS_ZONE_TIME_SUBTRACT(a, b, c)                                      \
+	do {                                                                 \
+		isc_interval_t _i;                                           \
+		isc_interval_set(&_i, (b), 0);                               \
+		if (isc_time_subtract((a), &_i, (c)) != ISC_R_SUCCESS) {     \
+			dns_zone_log(zone, ISC_LOG_WARNING,                  \
+				     "epoch approaching: upgrade required: " \
+				     "isc_time_subtract() failed");          \
+			isc_interval_set(&_i, (b) / 2, 0);                   \
+			(void)isc_time_subtract((a), &_i, (c));              \
 		}                                                            \
 	} while (0)
 
@@ -1595,7 +1614,7 @@ dns_zone_getdbtype(dns_zone_t *zone, char ***argv, isc_mem_t *mctx) {
 	REQUIRE(argv != NULL && *argv == NULL);
 
 	LOCK_ZONE(zone);
-	size = ISC_CHECKED_MUL((zone->db_argc + 1), sizeof(char *));
+	size = ISC_CHECKED_MUL(zone->db_argc + 1, sizeof(char *));
 	for (i = 0; i < zone->db_argc; i++) {
 		size += strlen(zone->db_argv[i]) + 1;
 	}
@@ -1604,7 +1623,7 @@ dns_zone_getdbtype(dns_zone_t *zone, char ***argv, isc_mem_t *mctx) {
 		tmp = mem;
 		tmp2 = mem;
 		base = mem;
-		tmp2 += ISC_CHECKED_MUL((zone->db_argc + 1), sizeof(char *));
+		tmp2 += ISC_CHECKED_MUL(zone->db_argc + 1, sizeof(char *));
 		for (i = 0; i < zone->db_argc; i++) {
 			*tmp++ = tmp2;
 			strlcpy(tmp2, zone->db_argv[i], size - (tmp2 - base));
@@ -4297,7 +4316,7 @@ load_secroots(dns_zone_t *zone, dns_name_t *name, dns_rdataset_t *rdataset) {
 
 		/* Add to keytables. */
 		trusted++;
-		trust_key(zone, name, &dnskey, (keydata.addhd == 0));
+		trust_key(zone, name, &dnskey, keydata.addhd == 0);
 	}
 
 	if (trusted == 0 && pending != 0) {
@@ -4475,7 +4494,7 @@ add_soa(dns_zone_t *zone, dns_db_t *db) {
 failure:
 	dns_diff_clear(&diff);
 	if (ver != NULL) {
-		dns_db_closeversion(db, &ver, (result == ISC_R_SUCCESS));
+		dns_db_closeversion(db, &ver, result == ISC_R_SUCCESS);
 	}
 
 	INSIST(ver == NULL);
@@ -6212,7 +6231,7 @@ keyfromfile(dns_zone_t *zone, dst_key_t *pubkey, isc_mem_t *mctx,
 		result = dst_key_fromfile(
 			dst_key_name(pubkey), dst_key_id(pubkey),
 			dst_key_alg(pubkey),
-			(DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_STATE),
+			DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_STATE,
 			directory, mctx, &foundkey);
 	} else {
 		for (dns_kasp_key_t *kkey = ISC_LIST_HEAD(dns_kasp_keys(kasp));
@@ -6225,8 +6244,8 @@ keyfromfile(dns_zone_t *zone, dst_key_t *pubkey, isc_mem_t *mctx,
 			result = dst_key_fromfile(
 				dst_key_name(pubkey), dst_key_id(pubkey),
 				dst_key_alg(pubkey),
-				(DST_TYPE_PUBLIC | DST_TYPE_PRIVATE |
-				 DST_TYPE_STATE),
+				DST_TYPE_PUBLIC | DST_TYPE_PRIVATE |
+					DST_TYPE_STATE,
 				directory, mctx, &foundkey);
 			if (result == ISC_R_SUCCESS) {
 				break;
@@ -6308,8 +6327,8 @@ findzonekeys(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver,
 			result2 = dst_key_getfilename(
 				dst_key_name(pubkey), dst_key_id(pubkey),
 				dst_key_alg(pubkey),
-				(DST_TYPE_PUBLIC | DST_TYPE_PRIVATE |
-				 DST_TYPE_STATE),
+				DST_TYPE_PUBLIC | DST_TYPE_PRIVATE |
+					DST_TYPE_STATE,
 				NULL, mctx, &buf);
 			if (result2 != ISC_R_SUCCESS) {
 				char namebuf[DNS_NAME_FORMATSIZE];
@@ -6428,6 +6447,15 @@ failure:
 		dns_db_detachnode(db, &node);
 	}
 	return result;
+}
+
+void
+dns_zone_prepare_shutdown(dns_zone_t *zone) {
+	REQUIRE(DNS_ZONE_VALID(zone));
+
+	LOCK_ZONE(zone);
+	DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_EXITING);
+	UNLOCK_ZONE(zone);
 }
 
 /*%
@@ -6716,8 +6744,7 @@ del_sigs(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 
 		if (!dns_rdatatype_iskeymaterial(type)) {
 			bool warn = false, deleted = false;
-			if (delsig_ok(&rrsig, keys, nkeys, (kasp != NULL),
-				      &warn))
+			if (delsig_ok(&rrsig, keys, nkeys, kasp != NULL, &warn))
 			{
 				result = update_one_rr(db, ver, zonediff->diff,
 						       DNS_DIFFOP_DELRESIGN,
@@ -11215,6 +11242,17 @@ zone_maintenance(dns_zone_t *zone) {
 	 * primaries after.
 	 */
 	LOCK_ZONE(zone);
+	if (zone->notifydefer != 0 &&
+	    !DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NOTIFYNODEFER) &&
+	    !DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NOTIFYDEFERRED))
+	{
+		if (isc_time_compare(&now, &zone->notifytime) > 0) {
+			zone->notifytime = now;
+		}
+		DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_NOTIFYDEFERRED);
+		DNS_ZONE_TIME_ADD(&zone->notifytime, zone->notifydefer,
+				  &zone->notifytime);
+	}
 	notify = (zone->type == dns_zone_secondary ||
 		  zone->type == dns_zone_mirror) &&
 		 (DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NEEDNOTIFY) ||
@@ -12742,14 +12780,27 @@ cleanup:
 }
 
 void
-dns_zone_notify(dns_zone_t *zone) {
+dns_zone_notify(dns_zone_t *zone, bool nodefer) {
 	isc_time_t now;
 
 	REQUIRE(DNS_ZONE_VALID(zone));
 
 	LOCK_ZONE(zone);
 	DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_NEEDNOTIFY);
-
+	if (nodefer) {
+		if (DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NOTIFYDEFERRED)) {
+			/*
+			 * We have previously deferred the notify, but we have a
+			 * new request not to defer it. Reverse the deferring
+			 * operation.
+			 */
+			DNS_ZONE_CLRFLAG(zone, DNS_ZONEFLG_NOTIFYDEFERRED);
+			DNS_ZONE_TIME_SUBTRACT(&zone->notifytime,
+					       zone->notifydefer,
+					       &zone->notifytime);
+		}
+		DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_NOTIFYNODEFER);
+	}
 	now = isc_time_now();
 	zone_settimer(zone, &now);
 	UNLOCK_ZONE(zone);
@@ -12781,8 +12832,10 @@ zone_notify(dns_zone_t *zone, isc_time_t *now) {
 
 	LOCK_ZONE(zone);
 	startup = !DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NEEDNOTIFY);
-	DNS_ZONE_CLRFLAG(zone, DNS_ZONEFLG_NEEDNOTIFY);
-	DNS_ZONE_CLRFLAG(zone, DNS_ZONEFLG_NEEDSTARTUPNOTIFY);
+	DNS_ZONE_CLRFLAG(zone, DNS_ZONEFLG_NEEDNOTIFY |
+				       DNS_ZONEFLG_NEEDSTARTUPNOTIFY |
+				       DNS_ZONEFLG_NOTIFYNODEFER |
+				       DNS_ZONEFLG_NOTIFYDEFERRED);
 	notifytype = zone->notifytype;
 	DNS_ZONE_TIME_ADD(now, zone->notifydelay, &zone->notifytime);
 	UNLOCK_ZONE(zone);
@@ -13612,6 +13665,7 @@ stub_callback(void *arg) {
 	case ISC_R_SUCCESS:
 		break;
 	case ISC_R_SHUTTINGDOWN:
+	case ISC_R_CANCELED:
 		goto exiting;
 	case ISC_R_TIMEDOUT:
 		if (!DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NOEDNS)) {
@@ -13922,6 +13976,7 @@ refresh_callback(void *arg) {
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_soa_t soa;
 	isc_result_t result;
+	const isc_result_t eresult = dns_request_getresult(request);
 	isc_sockaddr_t curraddr;
 	uint32_t serial, oldserial = 0;
 	bool do_queue_xfrin = false;
@@ -13929,6 +13984,12 @@ refresh_callback(void *arg) {
 	INSIST(DNS_ZONE_VALID(zone));
 
 	ENTER;
+
+	if (isc_log_wouldlog(dns_lctx, ISC_LOG_DEBUG(3))) {
+		dns_zone_logc(zone, DNS_LOGCATEGORY_XFER_IN, ISC_LOG_DEBUG(3),
+			      "refresh: request result: %s",
+			      isc_result_totext(eresult));
+	}
 
 	now = isc_time_now();
 
@@ -13945,10 +14006,11 @@ refresh_callback(void *arg) {
 	isc_sockaddr_format(&curraddr, primary, sizeof(primary));
 	isc_sockaddr_format(&zone->sourceaddr, source, sizeof(source));
 
-	switch (dns_request_getresult(request)) {
+	switch (eresult) {
 	case ISC_R_SUCCESS:
 		break;
 	case ISC_R_SHUTTINGDOWN:
+	case ISC_R_CANCELED:
 		goto exiting;
 	case ISC_R_TIMEDOUT:
 		if (!DNS_ZONE_FLAG(zone, DNS_ZONEFLG_NOEDNS)) {
@@ -13991,7 +14053,7 @@ refresh_callback(void *arg) {
 		}
 		FALLTHROUGH;
 	default:
-		result = dns_request_getresult(request);
+		result = eresult;
 		dns_zone_logc(zone, DNS_LOGCATEGORY_XFER_IN, ISC_LOG_INFO,
 			      "refresh: failure trying primary "
 			      "%s (source %s): %s",
@@ -14311,6 +14373,17 @@ next_primary:
 	goto detach;
 
 exiting:
+	/*
+	 * We can get here not only during shutdown, but also when the refresh
+	 * is canceled during reconfiguration. In that case, make sure to clear
+	 * the DNS_ZONEFLG_REFRESH flag so that future zone refreshes don't get
+	 * stuck, and make sure a new refresh attempt is made again soon after
+	 * the reconfiguration is complete.
+	 */
+	DNS_ZONE_CLRFLAG(zone, DNS_ZONEFLG_REFRESH);
+	zone->refreshtime = now;
+	zone_settimer(zone, &now);
+
 	dns_request_destroy(&zone->request);
 	goto detach;
 
@@ -15973,8 +16046,8 @@ dns_zone_logv(dns_zone_t *zone, isc_logcategory_t *category, int level,
 	}
 
 	isc_log_write(dns_lctx, category, DNS_LOGMODULE_ZONE, level,
-		      "%s%s%s%s: %s", (prefix != NULL ? prefix : ""),
-		      (prefix != NULL ? ": " : ""), zstr, zone->strnamerd,
+		      "%s%s%s%s: %s", prefix != NULL ? prefix : "",
+		      prefix != NULL ? ": " : "", zstr, zone->strnamerd,
 		      message);
 }
 
@@ -16241,7 +16314,7 @@ fail:
 			   addrbuf, isc_result_totext(result));
 		notify->flags |= DNS_NOTIFY_TCP;
 		dns_request_destroy(&notify->request);
-		notify_send_queue(notify, (notify->flags & DNS_NOTIFY_STARTUP));
+		notify_send_queue(notify, notify->flags & DNS_NOTIFY_STARTUP);
 		return;
 	} else if (result == ISC_R_TIMEDOUT) {
 		notify_log(notify->zone, ISC_LOG_WARNING,
@@ -19881,7 +19954,7 @@ dns_zone_dialup(dns_zone_t *zone) {
 		      DNS_ZONE_FLAG(zone, DNS_ZONEFLG_DIALREFRESH));
 
 	if (DNS_ZONE_FLAG(zone, DNS_ZONEFLG_DIALNOTIFY)) {
-		dns_zone_notify(zone);
+		dns_zone_notify(zone, true);
 	}
 	if (zone->type != dns_zone_primary &&
 	    dns_remote_addresses(&zone->primaries) != NULL &&
@@ -19903,9 +19976,9 @@ dns_zone_setdialup(dns_zone_t *zone, dns_dialuptype_t dialup) {
 	case dns_dialuptype_no:
 		break;
 	case dns_dialuptype_yes:
-		DNS_ZONE_SETFLAG(zone, (DNS_ZONEFLG_DIALNOTIFY |
-					DNS_ZONEFLG_DIALREFRESH |
-					DNS_ZONEFLG_NOREFRESH));
+		DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_DIALNOTIFY |
+					       DNS_ZONEFLG_DIALREFRESH |
+					       DNS_ZONEFLG_NOREFRESH);
 		break;
 	case dns_dialuptype_notify:
 		DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_DIALNOTIFY);
@@ -20219,19 +20292,21 @@ dns_zone_setisself(dns_zone_t *zone, dns_isselffunc_t isself, void *arg) {
 }
 
 void
+dns_zone_setnotifydefer(dns_zone_t *zone, uint32_t defer) {
+	REQUIRE(DNS_ZONE_VALID(zone));
+
+	LOCK_ZONE(zone);
+	zone->notifydefer = defer;
+	UNLOCK_ZONE(zone);
+}
+
+void
 dns_zone_setnotifydelay(dns_zone_t *zone, uint32_t delay) {
 	REQUIRE(DNS_ZONE_VALID(zone));
 
 	LOCK_ZONE(zone);
 	zone->notifydelay = delay;
 	UNLOCK_ZONE(zone);
-}
-
-uint32_t
-dns_zone_getnotifydelay(dns_zone_t *zone) {
-	REQUIRE(DNS_ZONE_VALID(zone));
-
-	return zone->notifydelay;
 }
 
 isc_result_t
@@ -22122,7 +22197,8 @@ update_ttl(dns_rdataset_t *rdataset, dns_name_t *name, dns_ttl_t ttl,
 }
 
 static isc_result_t
-zone_verifykeys(dns_zone_t *zone, dns_dnsseckeylist_t *newkeys) {
+zone_verifykeys(dns_zone_t *zone, dns_dnsseckeylist_t *newkeys,
+		uint32_t purgeval, isc_stdtime_t now) {
 	dns_dnsseckey_t *key1, *key2, *next;
 
 	/*
@@ -22133,6 +22209,9 @@ zone_verifykeys(dns_zone_t *zone, dns_dnsseckeylist_t *newkeys) {
 		next = ISC_LIST_NEXT(key1, link);
 
 		if (dst_key_is_unused(key1->key)) {
+			continue;
+		}
+		if (dns_keymgr_key_may_be_purged(key1->key, purgeval, now)) {
 			continue;
 		}
 		if (key1->purge) {
@@ -22451,7 +22530,8 @@ zone_rekey(dns_zone_t *zone) {
 
 	if (kasp != NULL && !offlineksk) {
 		/* Verify new keys. */
-		isc_result_t ret = zone_verifykeys(zone, &keys);
+		isc_result_t ret = zone_verifykeys(
+			zone, &keys, dns_kasp_purgekeys(kasp), now);
 		if (ret != ISC_R_SUCCESS) {
 			dnssec_log(zone, ISC_LOG_ERROR,
 				   "zone_rekey:zone_verifykeys failed: "
@@ -22722,7 +22802,7 @@ zone_rekey(dns_zone_t *zone) {
 			CHECK(dns_diff_apply(&diff, db, ver));
 			CHECK(clean_nsec3param(zone, db, ver, &diff));
 			CHECK(add_signing_records(db, zone->privatetype, ver,
-						  &diff, (newalg || fullsign)));
+						  &diff, newalg || fullsign));
 			CHECK(update_soa_serial(zone, db, ver, &diff, mctx,
 						zone->updatemethod));
 			CHECK(add_chains(zone, db, ver, &diff));
@@ -23671,7 +23751,7 @@ dns_zone_keydone(dns_zone_t *zone, const char *keystr) {
 		isc_buffer_init(&b, kd->data, sizeof(kd->data));
 		isc_buffer_putuint8(&b, alg);
 		isc_buffer_putuint8(&b, (keyid & 0xff00) >> 8);
-		isc_buffer_putuint8(&b, (keyid & 0xff));
+		isc_buffer_putuint8(&b, keyid & 0xff);
 		isc_buffer_putuint8(&b, 0);
 		isc_buffer_putuint8(&b, 1);
 	}
@@ -24439,7 +24519,7 @@ setserial(void *arg) {
 				     "setserial: desired serial (%u) "
 				     "out of range (%u-%u)",
 				     desired, oldserial + 1,
-				     (oldserial + 0x7fffffff));
+				     oldserial + 0x7fffffff);
 		}
 		goto failure;
 	}

@@ -1,0 +1,8 @@
+version=5.4.6
+libdir=/usr/lib
+includedir=/usr/include
+
+Name: Lua
+Description: An Extensible Extension Language
+Version: ${version}
+Libs: -llua -lm

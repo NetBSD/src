@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -21,7 +21,6 @@
 #ifndef _COLLECTOR_H
 #define _COLLECTOR_H
 
-#include <ucontext.h>
 #include <signal.h>
 
 #include "gp-defs.h"
@@ -30,6 +29,29 @@
 #include "collector_module.h"
 
 #define GETRELTIME()    (__collector_gethrtime() - __collector_start_time)
+#define CALL_REAL(x)	(__real_##x)
+#define NULL_PTR(x)	(__real_##x == NULL)
+
+#define SYS_LIBC_NAME   "libc.so.6"
+
+#ifdef __has_attribute
+#if __has_attribute (__symver__)
+#define SYMVER_ATTRIBUTE(sym, symver)  __attribute__ ((__symver__ (#symver)))
+#endif
+#endif
+#ifndef SYMVER_ATTRIBUTE
+# define SYMVER_ATTRIBUTE(sym, symver)  __asm__(".symver " #sym "," #symver);
+#endif
+
+#if defined(__MUSL_LIBC)
+#define dlvsym(f, nm, v)  dlsym (f, nm)
+#define SIGEV_THREAD_ID   4
+#define DCL_FUNC_VER(REAL_DCL, sym, ver)
+#else
+#define DCL_FUNC_VER(REAL_DCL, sym, ver) \
+  SYMVER_ATTRIBUTE (__collector_ ## sym, ver) \
+  REAL_DCL (__collector_ ## sym)
+#endif
 
 extern hrtime_t __collector_start_time;
 
@@ -45,7 +67,8 @@ extern int __collector_write_packet (struct DataHandle*, CM_Packet*);
 extern int __collector_write_string (struct DataHandle*, char*, int);
 extern FrameInfo __collector_get_frame_info (hrtime_t, int, void *);
 extern FrameInfo __collector_getUID (CM_Array *arg, FrameInfo uid);
-extern int __collector_getStackTrace (void *buf, int size, void *bptr, void *eptr, void *arg);
+extern int __collector_getStackTrace (void *buf, int size, void *bptr,
+				      void *eptr, void *arg);
 extern void *__collector_ext_return_address (unsigned level);
 extern void __collector_mmap_fork_child_cleanup ();
 
@@ -77,10 +100,8 @@ extern void __collector_ext_dispatcher_restart ();
 extern void __collector_ext_dispatcher_deinstall ();
 extern void __collector_ext_usage_sample (Smpl_type type, char *name);
 extern void __collector_ext_profile_handler (siginfo_t *, ucontext_t *);
-extern int __collector_ext_clone_pthread (int (*fn)(void *), void *child_stack, int flags, void *arg,
-					  va_list va /* pid_t *ptid, struct user_desc *tlspid_t *" ctid" */);
-
-/* D-light related functions */
+extern int __collector_ext_clone_pthread (int (*fn)(void *), void *child_stack,
+					  int flags, void *arg, va_list va);
 extern int __collector_sigprof_install ();
 extern int __collector_ext_hwc_active ();
 extern void __collector_ext_hwc_check (siginfo_t *, ucontext_t *);
@@ -92,7 +113,8 @@ extern int (*__collector_VM_ReadByteInstruction)(unsigned char *);
 extern int (*__collector_omp_stack_trace)(char*, int, hrtime_t, void*);
 extern hrtime_t (*__collector_gethrtime)();
 extern int (*__collector_mpi_stack_trace)(char*, int, hrtime_t);
-extern int __collector_open_experiment (const char *exp, const char *par, sp_origin_t origin);
+extern int __collector_open_experiment (const char *exp, const char *par,
+					sp_origin_t origin);
 extern void __collector_suspend_experiment (char *why);
 extern void __collector_resume_experiment ();
 extern void __collector_clean_state ();
@@ -167,6 +189,17 @@ enum
   SP_DUMP_STACK     = 32,
 };
 
+/* TprintfT(<level>,...) definitions.  Adjust per module as needed */
+enum
+{
+  DBG_LT0 = 0, // for high-level configuration, unexpected errors/warnings
+  DBG_LTT = 0, // for interposition on GLIBC functions
+  DBG_LT1 = 1, // for configuration details, warnings
+  DBG_LT2 = 2,
+  DBG_LT3 = 3,
+  DBG_LT4 = 4
+};
+
 #ifndef DEBUG
 #define DprintfT(flag, ...)
 #define tprintf(...)
@@ -180,57 +213,5 @@ enum
 #define TprintfT(...) __collector_dlog( SP_DUMP_TIME, __VA_ARGS__ )
 
 #endif /* DEBUG */
-
-// To find the glibc version:
-//   objdump -T /lib*/*so /lib*/*/*.so | grep popen
-// IMPORTANT: The GLIBC_* versions below must match those in mapfile.<variant>
- #if ARCH(Aarch64)
-  #define SYS_LIBC_NAME                 "libc.so.6"
-  #define SYS_PTHREAD_CREATE_VERSION    "GLIBC_2.17"
-  #define SYS_DLOPEN_VERSION            "GLIBC_2.17"
-  #define SYS_POPEN_VERSION             "GLIBC_2.17"
-  #define SYS_FOPEN_X_VERSION           "GLIBC_2.17"
-  #define SYS_FGETPOS_X_VERSION         "GLIBC_2.17"
-
-#elif ARCH(Intel)
-  #define SYS_LIBC_NAME                 "libc.so.6"
-  #define SYS_POSIX_SPAWN_VERSION       "GLIBC_2.15"
-  #if WSIZE(32)
-   #define SYS_PTHREAD_CREATE_VERSION   "GLIBC_2.1"
-   #define SYS_DLOPEN_VERSION           "GLIBC_2.1"
-   #define SYS_POPEN_VERSION            "GLIBC_2.1"
-   #define SYS_TIMER_X_VERSION          "GLIBC_2.2"
-   #define SYS_FOPEN_X_VERSION          "GLIBC_2.1"
-   #define SYS_FGETPOS_X_VERSION        "GLIBC_2.2"
-   #define SYS_FGETPOS64_X_VERSION      "GLIBC_2.2"
-   #define SYS_OPEN64_X_VERSION         "GLIBC_2.2"
-   #define SYS_PREAD_X_VERSION          "GLIBC_2.2"
-   #define SYS_PWRITE_X_VERSION         "GLIBC_2.2"
-   #define SYS_PWRITE64_X_VERSION       "GLIBC_2.2"
-  #else /* WSIZE(64) */
-   #define SYS_PTHREAD_CREATE_VERSION   "GLIBC_2.2.5"
-   #define SYS_DLOPEN_VERSION           "GLIBC_2.2.5"
-   #define SYS_POPEN_VERSION            "GLIBC_2.2.5"
-   #define SYS_TIMER_X_VERSION          "GLIBC_2.3.3"
-   #define SYS_FOPEN_X_VERSION          "GLIBC_2.2.5"
-   #define SYS_FGETPOS_X_VERSION        "GLIBC_2.2.5"
-  #endif
-
- #elif ARCH(SPARC)
-  #define SYS_LIBC_NAME                 "libc.so.6"
-  #define SYS_DLOPEN_VERSION            "GLIBC_2.1"
-  #if WSIZE(32)
-   #define SYS_PTHREAD_CREATE_VERSION   "GLIBC_2.1"
-   #define SYS_POPEN_VERSION            "GLIBC_2.1"
-   #define SYS_FOPEN_X_VERSION          "GLIBC_2.1"
-   #define SYS_FGETPOS_X_VERSION        "GLIBC_2.2"
-  #else /* WSIZE(64) */
-   #define SYS_PTHREAD_CREATE_VERSION   "GLIBC_2.2"
-   #define SYS_POPEN_VERSION            "GLIBC_2.2"
-   #define SYS_TIMER_X_VERSION          "GLIBC_2.3.3"
-   #define SYS_FOPEN_X_VERSION          "GLIBC_2.2"
-   #define SYS_FGETPOS_X_VERSION        "GLIBC_2.2"
-  #endif
- #endif
 
 #endif

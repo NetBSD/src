@@ -1,5 +1,5 @@
 /* ARC instruction defintions.
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -3656,7 +3656,7 @@
 { "daddh22", 0x36F77F80, 0xFFFF7FE0, ARC_OPCODE_ARCv2EM, FLOAT, DPA, { ZA, LIMM, LIMMdup }, { C_F, C_CC }},
 
 /* dbnz<.d> b,s13 00100bbb1000110N0BBBssssssSSSSSS.  */
-{ "dbnz", 0x208C0000, 0xF8FE8000, ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, BRANCH, NONE, { RB, SIMM13_A16_20}, { C_DNZ_D }},
+{ "dbnz", 0x208C0000, 0xF8FE8000, ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, DBNZ, NONE, { RB, SIMM13_A16_20}, { C_DNZ_D }},
 
 /* dexcl1<.f> a,b,c 00110bbb00011000FBBBCCCCCCAAAAAA.  */
 { "dexcl1", 0x30180000, 0xF8FF0000, ARC_OPCODE_ARC700 | ARC_OPCODE_ARCv2EM, FLOAT, DPX, { RA, RB, RC }, { C_F }},

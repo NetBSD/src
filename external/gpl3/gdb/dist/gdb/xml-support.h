@@ -18,8 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#ifndef XML_SUPPORT_H
-#define XML_SUPPORT_H
+#ifndef GDB_XML_SUPPORT_H
+#define GDB_XML_SUPPORT_H
 
 #include "gdbsupport/gdb_obstack.h"
 #include "gdbsupport/xml-utils.h"
@@ -191,8 +191,9 @@ void gdb_xml_debug (struct gdb_xml_parser *parser, const char *format, ...)
 /* Issue an error message from one of PARSER's handlers, and stop
    parsing.  */
 
-void gdb_xml_error (struct gdb_xml_parser *parser, const char *format, ...)
-  ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 3);
+[[noreturn]] void gdb_xml_error (struct gdb_xml_parser *parser,
+				 const char *format, ...)
+  ATTRIBUTE_PRINTF (2, 3);
 
 /* Find the attribute named NAME in the set of parsed attributes
    ATTRIBUTES.  Returns NULL if not found.  */
@@ -233,4 +234,4 @@ ULONGEST gdb_xml_parse_ulongest (struct gdb_xml_parser *parser,
 extern std::optional<gdb::char_vector> xml_fetch_content_from_file
     (const char *filename, const char *dirname);
 
-#endif
+#endif /* GDB_XML_SUPPORT_H */

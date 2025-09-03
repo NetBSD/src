@@ -1,6 +1,6 @@
 /* sframe-dump.c - Textual dump of .sframe.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of libsframe.
 
@@ -23,8 +23,6 @@
 #include <inttypes.h>
 #include "sframe-impl.h"
 
-#define SFRAME_HEADER_FLAGS_STR_MAX_LEN 50
-
 /* Return TRUE if the SFrame section is associated with the aarch64 ABIs.  */
 
 static bool
@@ -40,13 +38,52 @@ is_sframe_abi_arch_aarch64 (sframe_decoder_ctx *sfd_ctx)
   return aarch64_p;
 }
 
+/* Return TRUE if the SFrame section is associated with the s390x ABI.  */
+
+static bool
+is_sframe_abi_arch_s390x (sframe_decoder_ctx *sfd_ctx)
+{
+  return sframe_decoder_get_abi_arch (sfd_ctx) == SFRAME_ABI_S390X_ENDIAN_BIG;
+}
+
+static void
+dump_sframe_header_flags (sframe_decoder_ctx *sfd_ctx)
+{
+  uint8_t flags;
+  const char *prefix = "Flags: ";
+
+  flags = sframe_decoder_get_flags (sfd_ctx);
+  if (!flags)
+    {
+      printf ("%11sNONE\n", prefix);
+      return;
+    }
+
+#define PRINT_FLAG(x) \
+  if (flags & (x)) \
+    { flags = (flags & ~(x)); \
+      printf ("%11s%s%s\n", prefix, #x, flags ? "," : ""); \
+      prefix = " "; \
+    }
+
+  PRINT_FLAG (SFRAME_F_FDE_SORTED);
+  PRINT_FLAG (SFRAME_F_FRAME_POINTER);
+  PRINT_FLAG (SFRAME_F_FDE_FUNC_START_PCREL);
+#undef PRINT_FLAG
+
+  /* Print any residual flags, should this implementation be out of sync when
+     new flags are added.  */
+  if (flags)
+    printf ("%11s%d\n", prefix, flags);
+}
+
 static void
 dump_sframe_header (sframe_decoder_ctx *sfd_ctx)
 {
   uint8_t ver;
-  uint8_t flags;
-  char *flags_str;
   const char *ver_str = NULL;
+  int8_t cfa_fixed_fp_offset;
+  int8_t cfa_fixed_ra_offset;
   const sframe_header *header = &(sfd_ctx->sfd_header);
 
   /* Prepare SFrame section version string.  */
@@ -55,43 +92,28 @@ dump_sframe_header (sframe_decoder_ctx *sfd_ctx)
 	"SFRAME_VERSION_1",
 	"SFRAME_VERSION_2" };
 
-  /* PS: Keep SFRAME_HEADER_FLAGS_STR_MAX_LEN in sync if adding more members to
-     this array.  */
-  const char *flag_names[]
-    = { "SFRAME_F_FDE_SORTED",
-	"SFRAME_F_FRAME_POINTER" };
-
   ver = sframe_decoder_get_version (sfd_ctx);
   if (ver <= SFRAME_VERSION)
     ver_str = version_names[ver];
 
-  /* Prepare SFrame section flags string.  */
-  flags = header->sfh_preamble.sfp_flags;
-  flags_str = (char*) calloc (sizeof (char), SFRAME_HEADER_FLAGS_STR_MAX_LEN);
-  if (flags)
-    {
-      if (flags & SFRAME_F_FDE_SORTED)
-	strcpy (flags_str, flag_names[0]);
-      if (flags & SFRAME_F_FRAME_POINTER)
-	{
-	  if (strlen (flags_str) > 0)
-	    strcpy (flags_str, ",");
-	  strcpy (flags_str, flag_names[1]);
-	}
-    }
-  else
-    strcpy (flags_str, "NONE");
+  /* CFA fixed FP and RA offsets.  */
+  cfa_fixed_fp_offset = header->sfh_cfa_fixed_fp_offset;
+  cfa_fixed_ra_offset = header->sfh_cfa_fixed_ra_offset;
 
   const char* subsec_name = "Header";
   printf ("\n");
   printf ("  %s :\n", subsec_name);
   printf ("\n");
   printf ("    Version: %s\n", ver_str);
-  printf ("    Flags: %s\n", flags_str);
+
+  dump_sframe_header_flags (sfd_ctx);
+
+  if (cfa_fixed_fp_offset != SFRAME_CFA_FIXED_FP_INVALID)
+    printf ("    CFA fixed FP offset: %d\n", cfa_fixed_fp_offset);
+  if (cfa_fixed_ra_offset != SFRAME_CFA_FIXED_RA_INVALID)
+    printf ("    CFA fixed RA offset: %d\n", cfa_fixed_ra_offset);
   printf ("    Num FDEs: %d\n", sframe_decoder_get_num_fidx (sfd_ctx));
   printf ("    Num FREs: %d\n", header->sfh_num_fres);
-
-  free (flags_str);
 }
 
 static void
@@ -119,8 +141,15 @@ dump_sframe_func_with_fres (sframe_decoder_ctx *sfd_ctx,
   /* Get the SFrame function descriptor.  */
   sframe_decoder_get_funcdesc (sfd_ctx, funcidx, &num_fres,
 			       &func_size, &func_start_address, &func_info);
-  /* Calculate the virtual memory address for function start pc.  */
+/* Calculate the virtual memory address for function start pc.  Some older
+   SFrame V2 sections in ET_DYN or ET_EXEC may still have the
+   SFRAME_F_FDE_FUNC_START_PCREL flag unset, and hence may be using the
+   old encoding.  Continue to support dumping the sections at least.  */
   func_start_pc_vma = func_start_address + sec_addr;
+  if (sframe_decoder_get_flags (sfd_ctx) & SFRAME_F_FDE_FUNC_START_PCREL)
+    func_start_pc_vma += sframe_decoder_get_offsetof_fde_start_addr (sfd_ctx,
+								     funcidx,
+								     NULL);
 
   /* Mark FDEs with [m] where the FRE start address is interpreted as a
      mask.  */
@@ -165,19 +194,37 @@ dump_sframe_func_with_fres (sframe_decoder_ctx *sfd_ctx,
 
       /* Dump SP/FP info.  */
       if (err[1] == 0)
-	sprintf (temp, "c%+d", fp_offset);
+	{
+	  if (is_sframe_abi_arch_s390x (sfd_ctx)
+	      && SFRAME_V2_S390X_OFFSET_IS_REGNUM (fp_offset))
+	    sprintf (temp, "r%d", SFRAME_V2_S390X_OFFSET_DECODE_REGNUM (fp_offset));
+	  else
+	    sprintf (temp, "c%+d", fp_offset);
+	}
       else
 	strcpy (temp, "u");
       printf ("%-10s", temp);
 
       /* Dump RA info.
-	 If an ABI does not track RA offset, e.g., AMD64, display a 'u',
+	 If an ABI does not track RA offset, e.g., AMD64, display 'f',
 	 else display the offset d as 'c+-d'.  */
-      if (sframe_decoder_get_fixed_ra_offset(sfd_ctx)
+      if (sframe_decoder_get_fixed_ra_offset (sfd_ctx)
 	  != SFRAME_CFA_FIXED_RA_INVALID)
-	strcpy (temp, "u");
+	strcpy (temp, "f");
+      /* If an ABI does track RA offset, e.g. s390x, it can be a padding
+	 to represent FP without RA being saved on stack.  */
+      else if (err[2] == 0 && ra_offset == SFRAME_FRE_RA_OFFSET_INVALID)
+	sprintf (temp, "U");
       else if (err[2] == 0)
-	sprintf (temp, "c%+d", ra_offset);
+	{
+	  if (is_sframe_abi_arch_s390x (sfd_ctx)
+	      && SFRAME_V2_S390X_OFFSET_IS_REGNUM (ra_offset))
+	    sprintf (temp, "r%d", SFRAME_V2_S390X_OFFSET_DECODE_REGNUM (ra_offset));
+	  else
+	    sprintf (temp, "c%+d", ra_offset);
+	}
+      else
+	strcpy (temp, "u");
 
       /* Mark SFrame FRE's RA information with "[s]" if the RA is mangled
 	 with signature bits.  */

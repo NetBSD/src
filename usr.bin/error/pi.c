@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.24 2023/08/26 15:18:27 rillig Exp $	*/
+/*	$NetBSD: pi.c,v 1.25 2025/07/11 22:19:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.24 2023/08/26 15:18:27 rillig Exp $");
+__RCSID("$NetBSD: pi.c,v 1.25 2025/07/11 22:19:54 andvar Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -409,7 +409,7 @@ pi(void)
 	}
 
 	/*
-	 * Attempt to match messages refering to a line number
+	 * Attempt to match messages referring to a line number
 	 *
 	 * Multiply defined label in case, lines %d and %d
 	 * Goto %s from line %d is into a structured statement

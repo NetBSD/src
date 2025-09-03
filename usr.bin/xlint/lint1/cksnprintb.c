@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.15 2024/05/12 18:49:36 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.16 2025/08/31 20:43:27 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.15 2024/05/12 18:49:36 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.16 2025/08/31 20:43:27 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -53,6 +53,7 @@ typedef struct {
 	uint64_t covered;
 	const char *covered_start[64];
 	int covered_len[64];
+	char field_kind;		/* 'f' or 'F' or '\0' */
 } checker;
 
 static int
@@ -216,6 +217,14 @@ check_conversion(checker *ck)
 	bool seen_descr = parse_description(ck, &dir);
 	bool seen_null = new_style
 	    && quoted_next(ck->fmt, &ck->it) && ck->it.value == 0;
+
+	if (has_bit)
+		ck->field_kind = (char)dir.value;
+	if (ck->field_kind != '\0'
+	    && ((dir.value == '=' && ck->field_kind != 'f')
+		|| (dir.value == ':' && ck->field_kind != 'F')))
+		/* conversion '%.*s' does not mix with '%c' */
+		warning(386, len(dir), start(dir, fmt), ck->field_kind);
 
 	if (has_bit)
 		check_hex_escape(fmt, bit);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.50 2023/07/10 02:31:54 christos Exp $
+.\"	$NetBSD: fcntl.2,v 1.51 2025/07/17 17:16:07 kre Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd July 5, 2023
+.Dd July 8, 2025
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -76,38 +76,57 @@ Same file status flags (i.e., both file descriptors
 share the same file status flags).
 .It
 The close-on-exec flag associated with the new file descriptor
-is cleared to remain open across
+is cleared to allow the file descriptor to remain open across
 .Xr execve 2
+system calls.
+.It
+The close-on-fork flag
+.Dv FD_CLOFORK
+associated with the new file descriptor is cleared,
+so the file descriptor will remain open across
+.Xr fork 2
 system calls.
 .El
 .It Dv F_DUPFD_CLOEXEC
 Same as
 .Dv F_DUPFD ,
 but sets the close-on-exec property on the file descriptor created.
+.It Dv F_DUPFD_CLOFORK
+Same as
+.Dv F_DUPFD ,
+but sets the close-on-fork property on the file descriptor created.
+.It Dv F_DUPFD_CLOBOTH
+Same as
+.Dv F_DUPFD ,
+but sets both the close-on-exec and close-on-fork properties on the file
+descriptor created.
 .It Dv F_GETFD
-Get the close-on-exec flag associated with the file descriptor
+Get the flags associated with the file descriptor
 .Fa fd
-as
-.Dv FD_CLOEXEC .
+.Fa ( arg
+is ignored).
 If the returned value ANDed with
 .Dv FD_CLOEXEC
 is 0,
 the file will remain open across
 .Fn exec ,
 otherwise the file will be closed upon execution of
-.Fn exec
-.Fa ( arg
-is ignored).
+.Fn exec .
+If the returned value ANDed with
+.Dv FD_CLOFORK
+is not 0,
+the file will be closed upon execution of the
+.Fn fork
+family of system calls.
 .It Dv F_SETFD
-Set the close-on-exec flag associated with
-.Fa fd
-to
-.Fa arg ,
-where
+Set flags associated with
+.Fa fd .
+The available flags, passed as
 .Fa arg
-is either 0 or
-.Dv FD_CLOEXEC ,
-as described above.
+(treated as an integer), are
+.Dv FD_CLOEXEC
+and
+.Dv FD_CLOFORK .
 .It Dv F_GETFL
 Get descriptor status flags, as described below
 .Fa ( arg
@@ -143,17 +162,25 @@ The argument
 is interpreted as an int.
 .It Dv F_CLOSEM
 Close all file descriptors greater than or equal to
-.Fa fd .
+.Fa fd ,
+.Fa ( arg
+is ignored).
 .It Dv F_MAXFD
 Return the maximum file descriptor number currently open by the process.
+.Fa ( arg
+is ignored).
 .It Dv F_GETNOSIGPIPE
-Return if the
+Return 1 if the
 .Dv O_NOSIGPIPE
-flag is set in the file descriptor.
+flag is set in the file descriptor, otherwise 0
+.Fa ( arg
+is ignored).
 .It Dv F_SETNOSIGPIPE
-Set or clear the
+If
+.Fa arg
+is 0, clear the
 .Dv O_NOSIGPIPE
-in the file descriptor.
+status in the file descriptor, otherwise set it.
 .It Dv F_GETPATH
 Place a pathname corresponding to
 .Fa fd
@@ -161,7 +188,8 @@ in the buffer pointed to by
 .Fa arg .
 .Fa arg
 should be pointing to a buffer of at least
-.Dv MAXPATHLEN .
+.Dv MAXPATHLEN
+bytes.
 .It Dv F_ADD_SEALS
 Add seals specified in
 .Fa arg
@@ -412,7 +440,10 @@ as follows:
 .It Dv F_DUPFD
 A new file descriptor.
 .It Dv F_GETFD
-Value of flag (only the low-order bit is defined).
+Value of flag (one or both of the bits
+.Dv FD_CLOEXEC
+and
+.Dv FD_CLOFORK ) .
 .It Dv F_GETFL
 Value of flags.
 .It Dv F_GETOWN
@@ -693,3 +724,7 @@ The
 .Fn fcntl
 function call appeared in
 .Bx 4.2 .
+The
+.Dv F_DUPFD_CLOBOTH
+operation first appeared in
+.Nx 11.0 .

@@ -70,19 +70,20 @@ def token_init_and_cleanup():
     isctest.run.cmd(
         token_cleanup_command,
         env=EMPTY_OPENSSL_CONF_ENV,
-        log_stderr=False,
         raise_on_exception=False,
     )
 
     try:
         output = isctest.run.cmd(
-            token_init_command, env=EMPTY_OPENSSL_CONF_ENV, log_stdout=True
+            token_init_command, env=EMPTY_OPENSSL_CONF_ENV
         ).stdout.decode("utf-8")
         assert "The token has been initialized and is reassigned to slot" in output
         yield
     finally:
         output = isctest.run.cmd(
-            token_cleanup_command, env=EMPTY_OPENSSL_CONF_ENV, log_stdout=True
+            token_cleanup_command,
+            env=EMPTY_OPENSSL_CONF_ENV,
+            raise_on_exception=False,
         ).stdout.decode("utf-8")
         assert re.search("Found token (.*) with matching token label", output)
         assert re.search("The token (.*) has been deleted", output)
@@ -126,7 +127,7 @@ def test_keyfromlabel(alg_name, alg_type, alg_bits):
         ]
 
         output = isctest.run.cmd(
-            pkcs11_command, env=EMPTY_OPENSSL_CONF_ENV, log_stdout=True
+            pkcs11_command, env=EMPTY_OPENSSL_CONF_ENV
         ).stdout.decode("utf-8")
 
         assert "Key pair generated" in output
@@ -145,7 +146,7 @@ def test_keyfromlabel(alg_name, alg_type, alg_bits):
             zone,
         ]
 
-        output = isctest.run.cmd(keyfrlab_command, log_stdout=True)
+        output = isctest.run.cmd(keyfrlab_command)
         output_decoded = output.stdout.decode("utf-8").rstrip() + ".key"
 
         assert os.path.exists(output_decoded)
@@ -185,6 +186,6 @@ def test_keyfromlabel(alg_name, alg_type, alg_bits):
         zone,
         zone_file,
     ]
-    isctest.run.cmd(signer_command, log_stdout=True)
+    isctest.run.cmd(signer_command)
 
     assert os.path.exists(f"{zone_file}.signed")

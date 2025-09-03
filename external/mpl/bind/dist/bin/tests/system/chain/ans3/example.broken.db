@@ -1,0 +1,29 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+@				60	SOA	. . 0 0 0 0 0
+
+@				60	NS	ns3
+ns3				60	A	10.53.0.3
+
+cname-to-synth2-then-dname	60	CNAME	name.synth2-then-dname
+
+name.synth-then-dname		60	CNAME	name.
+name.synth2-then-dname		60	CNAME	name.
+
+; isctest.asyncserver does no special handling of DNAME records (e.g. by
+; occluding names below them or synthesizing CNAMEs), so the following
+; DNAME records are only returned for certain trigger QNAMEs (see
+; CnameThenDnameHandler.get_responses() in ans3/ans.py) or if they are
+; queried for explicitly.
+
+synth-then-dname		60	DNAME	.
+synth2-then-dname		60	DNAME	.

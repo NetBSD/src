@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_process.c,v 1.5 2011/05/14 14:49:19 jakllsch Exp $	*/
+/*	$NetBSD: dmover_process.c,v 1.6 2025/08/18 20:59:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_process.c,v 1.5 2011/05/14 14:49:19 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_process.c,v 1.6 2025/08/18 20:59:54 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ dmover_process_initialize(void)
 /*
  * dmover_process:	[client interface function]
  *
- *	Submit a tranform request for processing.
+ *	Submit a transform request for processing.
  */
 void
 dmover_process(struct dmover_request *dreq)

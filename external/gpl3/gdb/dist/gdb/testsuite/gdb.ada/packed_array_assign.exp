@@ -54,7 +54,7 @@ set re \
 	 "packed_array_assign_y => 1\\)\\)"]
 
 # GNAT >= 12.0 has the needed fix here.
-set zeros_expected [expr {![test_compiler_info {gcc-1[2-9]-*}]}]
+set zeros_expected [gnat_version_compare < 12]
 set all_zeros \
     [string_to_regexp "((packed_array_assign_w => 0, packed_array_assign_x => 0, packed_array_assign_y => 0), (packed_array_assign_w => 0, packed_array_assign_x => 0, packed_array_assign_y => 0), (packed_array_assign_w => 0, packed_array_assign_x => 0, packed_array_assign_y => 0))"]
 

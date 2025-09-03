@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -1346,13 +1346,13 @@ Settings::proc_tabs (bool _rdtMode)
   if (_rdtMode == true)
     {
       if (str_rtabs == NULL)
-	str_rtabs = strdup ("header");
+	str_rtabs = xstrdup ("header");
       cmd = str_rtabs;
     }
   else
     {
       if (str_tabs == NULL)
-	str_tabs = strdup ("header");
+	str_tabs = xstrdup ("header");
       cmd = str_tabs;
     }
   if (strcmp (cmd, NTXT ("none")) == 0)

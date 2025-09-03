@@ -47,7 +47,7 @@ VERIFY = os.environ.get("VERIFY")
     ],
 )
 def test_verify_good_zone_files(zone):
-    isctest.run.cmd([VERIFY, "-z", "-o", zone, f"zones/{zone}.good"], log_stdout=True)
+    isctest.run.cmd([VERIFY, "-z", "-o", zone, f"zones/{zone}.good"])
 
 
 def test_verify_good_zone_nsec_next_name_case_mismatch():
@@ -58,7 +58,6 @@ def test_verify_good_zone_nsec_next_name_case_mismatch():
             "nsec-next-name-case-mismatch",
             "zones/nsec-next-name-case-mismatch.good",
         ],
-        log_stdout=True,
     )
 
 
@@ -67,7 +66,6 @@ def get_bad_zone_output(zone):
     output = isctest.run.cmd(
         [VERIFY, *only_opt, "-o", zone, f"zones/{zone}.bad"],
         raise_on_exception=False,
-        log_stdout=True,
     )
     stream = (output.stdout + output.stderr).decode("utf-8").replace("\n", "")
     return stream

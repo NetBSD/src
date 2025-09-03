@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.images,v 1.12 2019/06/22 23:42:44 christos Exp $
+#	$NetBSD: Makefile.images,v 1.13 2025/06/29 10:10:31 martin Exp $
 
 NOSSP=yes
 .include <bsd.own.mk>
@@ -22,12 +22,15 @@ IMAGEDEPENDS+=	${CRUNCHBIN} \
 
 IMAGE_RELEASEDIR=	installation/miniroot
 
+NOIEEE80211=1
 .if defined(USE_SYSINST)
 LISTS+=		${DISTRIBDIR}/common/list.sysinst.en
 .endif
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=${DISTRIBDIR}/utils/libhack
+HACK_CURSES=yes
+.MAKEFLAGS+=    USE_WIDECHAR=no 
 .include "${HACKSRC}/Makefile.inc"
 ${CRUNCHBIN}: libhack.o
 

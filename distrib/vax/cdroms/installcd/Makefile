@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2024/05/15 16:31:35 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2025/07/09 21:55:44 andvar Exp $
 CDBASE=		vaxcd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDDEV_POPULATE=	true			# populate /dev on the CD
@@ -13,7 +13,7 @@ SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRI
 
 SPEC_EXTRA:=${.PARSEDIR}/spec.in
 
-# prepare mutliuser install environment
+# prepare multiuser install environment
 image_md_pre:
 	${RM} -f cdrom/boot
 	${INSTALL} ${COPY} -m 0444 ${DESTDIR}/usr/mdec/boot cdrom/boot

@@ -1,4 +1,4 @@
-/*	$NetBSD: proxyudp.c,v 1.2 2025/01/26 16:25:43 christos Exp $	*/
+/*	$NetBSD: proxyudp.c,v 1.3 2025/07/17 19:01:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -871,7 +871,7 @@ isc__nm_proxyudp_send(isc_nmhandle_t *handle, isc_region_t *region,
 	}
 
 	send_req = proxyudp_get_send_req(sock->worker->mctx, sock, handle,
-					 (sock->client ? region : NULL), cb,
+					 sock->client ? region : NULL, cb,
 					 cbarg);
 	if (sock->client) {
 		isc_region_t send_data = { 0 };

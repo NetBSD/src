@@ -1,4 +1,4 @@
-# $NetBSD: MICROVM,v 1.3 2025/03/28 05:54:49 imil Exp $
+# $NetBSD: MICROVM,v 1.4 2025/08/23 08:48:13 imil Exp $
 #
 # MICROVM kernel configuration, for use with Qemu microvm machine type
 # or Firecracker.
@@ -10,7 +10,7 @@
 #
 # qemu-system-x86_64							\
 # 	-M microvm,x-option-roms=off,rtc=on,acpi=off,pic=off,accel=kvm	\
-# 	-m 256 -cpu host -kernel ${KERNEL} 				\
+# 	-m 256 -cpu host,+invtsc -kernel ${KERNEL} 			\
 # 	-append "root=ld0a console=com rw -z"				\
 # 	-display none -device virtio-blk-device,drive=hd0		\
 # 	-drive file=${IMG},format=raw,id=hd0				\

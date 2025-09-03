@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.33 2025/06/11 10:43:38 martin Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.34 2025/07/01 19:55:15 joe Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -673,6 +673,108 @@ npfctl_parse_icmp(int proto __unused, int type, int code)
 out:
 	npfvar_destroy(vp);
 	return NULL;
+}
+
+filt_opts_t
+npfctl_parse_l3filt_opt(npfvar_t *src_addr, npfvar_t *src_port, bool tnot,
+    npfvar_t *dst_addr, npfvar_t *dst_port, bool fnot, rid_t uid, rid_t gid)
+{
+	filt_opts_t fopts;
+
+	fopts.filt.opt3.fo_from.ap_netaddr = src_addr;
+	fopts.filt.opt3.fo_from.ap_portrange = src_port;
+	fopts.fo_finvert = tnot;
+	fopts.filt.opt3.fo_to.ap_netaddr = dst_addr;
+	fopts.filt.opt3.fo_to.ap_portrange = dst_port;
+	fopts.fo_tinvert = fnot;
+	fopts.uid = uid;
+	fopts.gid = gid;
+	fopts.layer = NPF_RULE_LAYER_3;
+
+	return fopts;
+}
+
+filt_opts_t
+npfctl_parse_l2filt_opt(npfvar_t *src_addr, bool fnot, npfvar_t *dst_addr,
+    bool tnot, uint16_t eth_type)
+{
+	filt_opts_t fopts;
+
+	fopts.filt.opt2.from_mac = src_addr;
+	fopts.fo_finvert = fnot;
+	fopts.filt.opt2.to_mac = dst_addr;
+	fopts.fo_tinvert = tnot;
+	fopts.filt.opt2.ether_type = eth_type;
+	fopts.layer = NPF_RULE_LAYER_2;
+
+	return fopts;
+}
+
+#define atox(c)	(((c) <= '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
+/*
+ * general function to parse ether type and mac address
+ */
+static void
+parse_ether_hex(uint8_t *dest, const char *str, int hexlength, const char *err)
+{
+	const uint8_t *cp = (const uint8_t *)str;
+	uint8_t *ep;
+
+	ep = dest + hexlength; /* check null terminated boundary */
+
+	while (*cp) {
+		if (!isxdigit(*cp))
+			yyerror("%s: %s", err, str);
+
+		*dest = atox(*cp);
+		cp++;
+		if (isxdigit(*cp)) {
+			*dest = (*dest << 4) | atox(*cp);
+			cp++;
+		}
+		dest++;
+
+		if (dest == ep) {
+			if (*cp == '\0')
+				return;
+			else
+				yyerror("%s: %s", err, str);
+		}
+
+		switch (*cp) {
+		case ':':
+		case '-':
+		case '.':
+			cp++;
+			break;
+		}
+	}
+}
+
+uint16_t
+npfctl_parse_ether_type(const char *str)
+{
+#define ETHER_LEN	4
+	const char *err = "invalid ether type format";
+	uint8_t etype[2];
+	parse_ether_hex(etype, str + 2, ETHER_LEN, err);
+
+	uint16_t *e_type = (uint16_t *)etype; /* fetch the whole two byte blocks */
+
+	return *e_type;
+}
+
+npfvar_t *
+npfctl_parse_mac_addr(const char *mac_addr)
+{
+	const char *err = "invalid mac address format";
+	struct ether_addr *ether;
+	uint8_t addr[ETHER_ADDR_LEN];
+
+	ether = (struct ether_addr *)addr;
+	parse_ether_hex(addr, mac_addr, ETHER_ADDR_LEN, err);
+
+	return npfvar_create_element(NPFVAR_MAC, ether, sizeof(*ether));
 }
 
 /*

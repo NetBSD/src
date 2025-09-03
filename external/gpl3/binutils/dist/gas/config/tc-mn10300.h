@@ -1,5 +1,5 @@
 /* tc-mn10300.h -- Header file for tc-mn10300.c.
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -125,7 +125,7 @@ extern bool mn10300_allow_local_subtract (expressionS *, expressionS *, segT);
 
 #define TC_FRAG_TYPE bool
 
-#define HANDLE_ALIGN(frag) mn10300_handle_align (frag)
+#define HANDLE_ALIGN(sec, frag) mn10300_handle_align (frag)
 extern void mn10300_handle_align (fragS *);
 
 /* Only allow call frame debug info optimization when linker relaxation is

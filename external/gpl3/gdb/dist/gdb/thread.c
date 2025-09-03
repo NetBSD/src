@@ -50,6 +50,7 @@
 #include "inline-frame.h"
 #include "stack.h"
 #include "interps.h"
+#include "record-full.h"
 
 /* See gdbthread.h.  */
 
@@ -998,7 +999,13 @@ validate_registers_access (void)
      reason, but is marked running from the user's perspective.  E.g.,
      the thread is waiting for its turn in the step-over queue.  */
   if (tp->executing ())
-    error (_("Selected thread is running."));
+    {
+      /* If we are replaying with the record-full subsystem, even though
+	 the thread is executing, it is always safe to read from it since
+	 replay execution is just GDB reading and writing to a regcache.  */
+      if (!record_full_is_replaying ())
+	error (_("Selected thread is running."));
+    }
 }
 
 /* See gdbthread.h.  */
@@ -1016,7 +1023,11 @@ can_access_registers_thread (thread_info *thread)
 
   /* ... or from a spinning thread.  FIXME: see validate_registers_access.  */
   if (thread->executing ())
-    return false;
+    {
+      /* See validate_registers_access.  */
+      if (!record_full_is_replaying ())
+	return false;
+    }
 
   return true;
 }
@@ -1774,7 +1785,7 @@ thread_apply_command_completer (cmd_list_element *ignore,
 
   /* Check if we're past a valid thread ID list already.  */
   if (parser.finished ()
-      && cmd > text && !isspace (cmd[-1]))
+      && cmd > text && !isspace ((unsigned char)cmd[-1]))
     return;
 
   /* We're past the thread ID list, advance word point.  */
@@ -1837,7 +1848,7 @@ thread_apply_command (const char *tidlist, int from_tty)
   if (*cmd == '\0')
     error (_("Please specify a command following the thread ID list"));
 
-  if (tidlist == cmd || isdigit (cmd[0]))
+  if (tidlist == cmd || isdigit ((unsigned char)cmd[0]))
     invalid_thread_id_error (cmd);
 
   scoped_restore_current_thread restore_thread;

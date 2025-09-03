@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2025/04/10 20:22:18 rillig Exp $
+#	$NetBSD: Makefile,v 1.36 2025/07/19 10:40:44 christos Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -52,8 +52,8 @@ CPPFLAGS+=	-DHAVE_NBUTIL_H
 LDADD+=		-lnbutil
 .endif
 
-LDADD+=	-lssl -lcrypto
-DPADD+=	${LIBSSL} ${LIBCRYPTO}
+LDADD+=	-lssl -lcrypto -lpthread
+DPADD+=	${LIBSSL} ${LIBCRYPTO} ${LIBPTHREAD}
 
 #
 # Build release things.

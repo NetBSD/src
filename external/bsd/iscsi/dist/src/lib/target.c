@@ -155,7 +155,7 @@ reject_t(target_session_t * sess, uint8_t *header, uint8_t reason)
 		return -1;
 	}
 	if (iscsi_sock_send_header_and_data(sess->sock, rsp_header,
-			ISCSI_HEADER_LEN, header, ISCSI_HEADER_LEN, 0) !=
+			ISCSI_HEADER_LEN, header, ISCSI_HEADER_LEN, 0, sess->sess_params.header_digest, sess->sess_params.data_digest) !=
 			2 * ISCSI_HEADER_LEN) {
 		iscsi_err(__FILE__, __LINE__,
 			"iscsi_sock_send_header_and_data() failed\n");
@@ -264,7 +264,7 @@ scsi_command_t(target_session_t *sess, uint8_t *header)
 			goto out;
 		}
 		if (iscsi_sock_msg(sess->sock, 0, (unsigned)scsi_cmd.ahs_len,
-				scsi_cmd.ahs, 0) != scsi_cmd.ahs_len) {
+				scsi_cmd.ahs, 0, sess->sess_params.header_digest) != scsi_cmd.ahs_len) {
 			iscsi_err(__FILE__, __LINE__,
 				"iscsi_sock_msg() failed\n");
 			result = -1;
@@ -421,8 +421,11 @@ scsi_command_t(target_session_t *sess, uint8_t *header)
 				result = -1;
 				goto out;
 			}
-			if ((uint32_t)iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN, sg, data.length, sg_len)
-			    != ISCSI_HEADER_LEN + data.length) {
+			if ((uint32_t)iscsi_sock_send_header_and_data(
+				sess->sock, rsp_header, ISCSI_HEADER_LEN,
+				sg, data.length, sg_len,
+				sess->sess_params.header_digest,
+				sess->sess_params.data_digest) != ISCSI_HEADER_LEN + data.length) {
 				iscsi_err(__FILE__, __LINE__, "iscsi_sock_send_header_and_data() failed\n");
 				result = -1;
 				goto out;
@@ -460,9 +463,11 @@ response:
 			result = -1;
 			goto out;
 		}
-		if ((uint32_t)iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN,
-		  scsi_cmd.send_data, scsi_rsp.length, scsi_cmd.send_sg_len)
-		    != ISCSI_HEADER_LEN + scsi_rsp.length) {
+		if ((uint32_t)iscsi_sock_send_header_and_data(sess->sock,
+			rsp_header, ISCSI_HEADER_LEN, scsi_cmd.send_data,
+			scsi_rsp.length, 0,
+			sess->sess_params.header_digest,
+			sess->sess_params.data_digest) != ISCSI_HEADER_LEN + scsi_rsp.length) {
 			iscsi_err(__FILE__, __LINE__,
 				"iscsi_sock_send_header_and_data() failed\n");
 			result = -1;
@@ -585,7 +590,7 @@ task_command_t(target_session_t * sess, uint8_t *header)
 		iscsi_err(__FILE__, __LINE__, "iscsi_task_cmd_decap() failed\n");
 		return -1;
 	}
-	if (iscsi_sock_msg(sess->sock, 1, ISCSI_HEADER_LEN, rsp_header, 0) != ISCSI_HEADER_LEN) {
+	if (iscsi_sock_msg(sess->sock, 1, ISCSI_HEADER_LEN, rsp_header, 0, sess->sess_params.header_digest) != ISCSI_HEADER_LEN) {
 		iscsi_err(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 		return -1;
 
@@ -618,7 +623,7 @@ nop_out_t(target_session_t * sess, uint8_t *header)
 			iscsi_err(__FILE__, __LINE__, "iscsi_malloc() failed\n");
 			return -1;
 		}
-		if ((uint32_t)iscsi_sock_msg(sess->sock, 0, nop_out.length, ping_data, 0) != nop_out.length) {
+		if ((uint32_t)iscsi_sock_msg(sess->sock, 0, nop_out.length, ping_data, 0, sess->sess_params.header_digest) != nop_out.length) {
 			iscsi_err(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 			if (ping_data) {
 				iscsi_free(ping_data);
@@ -649,8 +654,11 @@ nop_out_t(target_session_t * sess, uint8_t *header)
 			}
 			return -1;
 		}
-		if ((uint32_t)iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN,
-						    ping_data, nop_in.length, 0) != ISCSI_HEADER_LEN + nop_in.length) {
+		if ((uint32_t)iscsi_sock_send_header_and_data(
+			sess->sock, rsp_header, ISCSI_HEADER_LEN,
+			ping_data, nop_in.length, 0,
+			sess->sess_params.header_digest,
+			sess->sess_params.data_digest) != ISCSI_HEADER_LEN + nop_in.length) {
 			iscsi_err(__FILE__, __LINE__, "iscsi_sock_send_header_and_data() failed\n");
 			if (ping_data) {
 				iscsi_free(ping_data);
@@ -740,7 +748,7 @@ text_command_t(target_session_t * sess, uint8_t *header)
 		iscsi_trace(TRACE_ISCSI_DEBUG,
 			"reading %u bytes text parameters\n", len_in);
 		if ((unsigned)iscsi_sock_msg(sess->sock, 0, len_in, text_in,
-				0) != len_in) {
+				0, sess->sess_params.header_digest) != len_in) {
 			iscsi_err(__FILE__, __LINE__,
 				"iscsi_sock_msg() failed\n");
 			TC_CLEANUP;
@@ -832,7 +840,7 @@ text_command_t(target_session_t * sess, uint8_t *header)
 		TC_CLEANUP;
 		return -1;
 	}
-	if (iscsi_sock_msg(sess->sock, 1, ISCSI_HEADER_LEN, rsp_header, 0) !=
+	if (iscsi_sock_msg(sess->sock, 1, ISCSI_HEADER_LEN, rsp_header, 0, sess->sess_params.header_digest) !=
 			ISCSI_HEADER_LEN) {
 		iscsi_err(__FILE__, __LINE__,
 			"iscsi_sock_msg() failed\n");
@@ -840,7 +848,7 @@ text_command_t(target_session_t * sess, uint8_t *header)
 		return -1;
 	}
 	if (len_out && iscsi_sock_msg(sess->sock, 1, (unsigned) len_out,
-			text_out, 0) != len_out) {
+			text_out, 0, sess->sess_params.header_digest) != len_out) {
 		iscsi_err(__FILE__, __LINE__,
 			"iscsi_sock_msg() failed\n");
 		TC_CLEANUP;
@@ -971,7 +979,7 @@ login_command_t(target_session_t * sess, uint8_t *header)
 			return -1;
 		}
 		if (iscsi_sock_msg(sess->sock, 0, (unsigned) len_in, text_in,
-				0) != len_in) {
+				0, sess->sess_params.header_digest) != len_in) {
 			iscsi_err(__FILE__, __LINE__,
 				"iscsi_sock_msg() failed\n");
 			LC_CLEANUP;
@@ -1140,8 +1148,9 @@ response:
 	}
 	iscsi_trace(TRACE_ISCSI_DEBUG, "sending login response\n");
 	if ((uint32_t)iscsi_sock_send_header_and_data(sess->sock, rsp_header,
-			ISCSI_HEADER_LEN, text_out, rsp.length, 0) !=
-			ISCSI_HEADER_LEN + rsp.length) {
+			ISCSI_HEADER_LEN, text_out, rsp.length, 0,
+			sess->sess_params.header_digest,
+			sess->sess_params.data_digest) != ISCSI_HEADER_LEN + rsp.length) {
 		iscsi_err(__FILE__, __LINE__,
 			"iscsi_sock_send_header_and_data() failed\n");
 		LC_CLEANUP;
@@ -1240,7 +1249,7 @@ logout_command_t(target_session_t * sess, uint8_t *header)
 				"iscsi_logout_rsp_encap() failed\n");
 		return -1;
 	}
-	if (iscsi_sock_msg(sess->sock, 1, ISCSI_HEADER_LEN, rsp_header, 0) !=
+	if (iscsi_sock_msg(sess->sock, 1, ISCSI_HEADER_LEN, rsp_header, 0, sess->sess_params.header_digest) !=
 			ISCSI_HEADER_LEN) {
 		iscsi_err(__FILE__, __LINE__,
 			"iscsi_sock_msg() failed\n");
@@ -1317,7 +1326,9 @@ verify_cmd_t(target_session_t * sess, uint8_t *header)
 		}
 		iscsi_trace(TRACE_ISCSI_DEBUG, "sending login response\n");
 		if ((uint32_t)iscsi_sock_send_header_and_data(sess->sock,
-				rsp_header, ISCSI_HEADER_LEN, NULL, 0, 0) !=
+				rsp_header, ISCSI_HEADER_LEN, NULL, 0, 0,
+				sess->sess_params.header_digest,
+				sess->sess_params.data_digest) !=
 				ISCSI_HEADER_LEN + rsp.length) {
 			iscsi_err(__FILE__, __LINE__,
 				"iscsi_sock_send_header_and_data() failed\n");
@@ -1488,7 +1499,7 @@ worker_proc_t(void *arg)
 	while (sess->target->state != TARGET_SHUT_DOWN) {
 		iscsi_trace(TRACE_ISCSI_DEBUG,
 			"session %d: reading header\n", sess->id);
-		if (iscsi_sock_msg(sess->sock, 0, ISCSI_HEADER_LEN, header, 0)
+		if (iscsi_sock_msg(sess->sock, 0, ISCSI_HEADER_LEN, header, 0, sess->sess_params.header_digest)
 				!= ISCSI_HEADER_LEN) {
 			iscsi_trace(TRACE_ISCSI_DEBUG,
 				"session %d: iscsi_sock_msg() failed\n",
@@ -1552,7 +1563,7 @@ read_data_pdu(target_session_t * sess,
 	uint8_t   header[ISCSI_HEADER_LEN];
 	int             ret_val = -1;
 
-	if (iscsi_sock_msg(sess->sock, 0, ISCSI_HEADER_LEN, header, 0) !=
+	if (iscsi_sock_msg(sess->sock, 0, ISCSI_HEADER_LEN, header, 0, sess->sess_params.header_digest) !=
 			ISCSI_HEADER_LEN) {
 		iscsi_err(__FILE__, __LINE__,
 			"iscsi_sock_msg() failed\n");
@@ -1653,7 +1664,7 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args,
 			"reading %u bytes immediate write data\n",
 			args->length);
 		if ((uint32_t)iscsi_sock_msg(sess->sock, 0, args->length, iov,
-				iov_len) != args->length) {
+				iov_len, sess->sess_params.header_digest) != args->length) {
 			iscsi_err(__FILE__, __LINE__,
 				"iscsi_sock_msg() failed\n");
 			TTD_CLEANUP;
@@ -1718,7 +1729,7 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args,
 					r2t.tag, r2t.transfer_tag, r2t.length,
 					r2t.offset);
 				if (iscsi_sock_msg(sess->sock, 1,
-					ISCSI_HEADER_LEN, header, 0) !=
+					ISCSI_HEADER_LEN, header, 0, sess->sess_params.header_digest) !=
 					ISCSI_HEADER_LEN) {
 					iscsi_err(__FILE__, __LINE__,
 						"iscsi_sock_msg() failed\n");
@@ -1771,7 +1782,7 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args,
 
 			/* Scatter into destination buffers */
 			if ((uint32_t)iscsi_sock_msg(sess->sock, 0,
-				data.length, iov, iov_len) != data.length) {
+				data.length, iov, iov_len, sess->sess_params.header_digest) != data.length) {
 				iscsi_err(__FILE__, __LINE__,
 					"iscsi_sock_msg() failed\n");
 				TTD_CLEANUP;

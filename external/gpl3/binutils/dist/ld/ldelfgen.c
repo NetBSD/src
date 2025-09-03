@@ -1,5 +1,5 @@
 /* Emulation code used by all ELF targets.
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -282,7 +282,7 @@ ldelf_map_segments (bool need_layout)
 		  if (os_info->ordered != os_info->count
 		      && bfd_link_relocatable (&link_info))
 		    {
-		      einfo (_("%F%P: "
+		      fatal (_("%P: "
 			       "%pA has both ordered and unordered sections\n"),
 			     os->bfd_section);
 		      return;
@@ -307,7 +307,7 @@ ldelf_map_segments (bool need_layout)
 	  if (!_bfd_elf_map_sections_to_segments (link_info.output_bfd,
 						  &link_info,
 						  &need_layout))
-	    einfo (_("%F%P: map sections to segments failed: %E\n"));
+	    fatal (_("%P: map sections to segments failed: %E\n"));
 
 	  if (phdr_size != elf_program_header_size (link_info.output_bfd))
 	    {
@@ -327,7 +327,7 @@ ldelf_map_segments (bool need_layout)
   while (need_layout && --tries);
 
   if (tries == 0)
-    einfo (_("%F%P: looping in map_segments\n"));
+    fatal (_("%P: looping in map_segments\n"));
 
   if (bfd_get_flavour (link_info.output_bfd) == bfd_target_elf_flavour
       && lang_phdr_list == NULL)
@@ -337,9 +337,8 @@ ldelf_map_segments (bool need_layout)
       const struct elf_backend_data *bed
 	= get_elf_backend_data (link_info.output_bfd);
       if (bed->elf_backend_strip_zero_sized_dynamic_sections
-	  && !bed->elf_backend_strip_zero_sized_dynamic_sections
-		(&link_info))
-	  einfo (_("%F%P: failed to strip zero-sized dynamic sections\n"));
+	  && !bed->elf_backend_strip_zero_sized_dynamic_sections (&link_info))
+	fatal (_("%P: failed to strip zero-sized dynamic sections\n"));
     }
 }
 
@@ -417,7 +416,7 @@ ldelf_acquire_strings_for_ctf
     {
       if (ctf_link_add_strtab (ctf_output, ldelf_ctf_strtab_iter_cb,
 			       &args) < 0)
-	einfo (_("%F%P: warning: CTF strtab association failed; strings will "
+	fatal (_("%P: warning: CTF strtab association failed; strings will "
 		 "not be shared: %s\n"),
 	       ctf_errmsg (ctf_errno (ctf_output)));
     }
@@ -444,7 +443,7 @@ ldelf_new_dynsym_for_ctf (struct ctf_dict *ctf_output, int symidx,
       lsym.st_value = sym->st_value;
       if (ctf_link_add_linker_symbol (ctf_output, &lsym) < 0)
 	{
-	  einfo (_("%F%P: warning: CTF symbol addition failed; CTF will "
+	  fatal (_("%P: warning: CTF symbol addition failed; CTF will "
 		   "not be tied to symbols: %s\n"),
 		 ctf_errmsg (ctf_errno (ctf_output)));
 	}
@@ -454,7 +453,7 @@ ldelf_new_dynsym_for_ctf (struct ctf_dict *ctf_output, int symidx,
       /* Shuffle all the symbols.  */
 
       if (ctf_link_shuffle_syms (ctf_output) < 0)
-	einfo (_("%F%P: warning: CTF symbol shuffling failed; CTF will "
+	fatal (_("%P: warning: CTF symbol shuffling failed; CTF will "
 		 "not be tied to symbols: %s\n"),
 	       ctf_errmsg (ctf_errno (ctf_output)));
     }

@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2024, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2025, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -159,7 +159,7 @@
 /* Common info for tool signons */
 
 #define ACPICA_NAME                 "Intel ACPI Component Architecture"
-#define ACPICA_COPYRIGHT            "Copyright (c) 2000 - 2023 Intel Corporation"
+#define ACPICA_COPYRIGHT            "Copyright (c) 2000 - 2025 Intel Corporation"
 
 #if ACPI_MACHINE_WIDTH == 64
 #define ACPI_WIDTH          " (64-bit version)"
@@ -175,7 +175,7 @@
 
 /* Macros for signons and file headers */
 #ifdef ACPI_REPRO
-#define ACPI_DATE "12 Dec 2024"
+#define ACPI_DATE "7 Aug 2025"
 #define ACPI_TIME "00:00:00"
 #else
 #define ACPI_DATE __DATE__

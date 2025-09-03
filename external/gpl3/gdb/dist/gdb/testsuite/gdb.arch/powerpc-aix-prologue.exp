@@ -54,7 +54,7 @@ proc insert_breakpoint {function expected_location} {
     # If we managed to get the breakpoing address, then check that
     # we inserted it at the expected location by examining the
     # instruction at that address (we're not interested in the insn
-    # itself, but rather at the address printed at the begining of
+    # itself, but rather at the address printed at the beginning of
     # the instruction).
     if {$address != ""} {
        gdb_test "x /i $address" \

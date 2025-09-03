@@ -1,5 +1,5 @@
 /* Disassemble from a buffer, for GNU.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -61,13 +61,11 @@ perror_memory (int status,
     info->fprintf_func (info->stream, _("Unknown error %d\n"), status);
   else
     {
-      char buf[30];
-
       /* Actually, address between memaddr and memaddr + len was
 	 out of bounds.  */
-      sprintf_vma (buf, memaddr);
       info->fprintf_func (info->stream,
-			  _("Address 0x%s is out of bounds.\n"), buf);
+			  _("Address 0x%" PRIx64 " is out of bounds.\n"),
+			  (uint64_t) memaddr);
     }
 }
 
@@ -81,10 +79,7 @@ perror_memory (int status,
 void
 generic_print_address (bfd_vma addr, struct disassemble_info *info)
 {
-  char buf[30];
-
-  sprintf_vma (buf, addr);
-  (*info->fprintf_func) (info->stream, "0x%s", buf);
+  (*info->fprintf_func) (info->stream, "0x%08" PRIx64, (uint64_t) addr);
 }
 
 /* Just return NULL.  */

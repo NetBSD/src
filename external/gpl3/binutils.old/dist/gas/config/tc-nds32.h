@@ -1,5 +1,5 @@
 /* tc-nds32.h -- Header file for tc-nds32.c.
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of GAS.
@@ -133,7 +133,7 @@ extern void nds32_macro_info (void *);
 extern void nds32_start_line_hook (void);
 extern void nds32_elf_section_change_hook (void);
 extern void md_begin (void);
-extern void md_end (void);
+extern void md_finish (void);
 extern int nds32_start_label (int, int);
 extern void nds32_cleanup (void);
 extern void nds32_flush_pending_output (void);
@@ -150,7 +150,7 @@ extern void nds32_do_align (int);
   (NEXT_CHAR == ':' && nds32_start_label (0, 0))
 #define tc_check_label(label)			nds32_check_label (label)
 #define tc_frob_label(label)			nds32_frob_label (label)
-#define md_end					md_end
+#define md_finish					md_finish
 #define md_start_line_hook()			nds32_start_line_hook ()
 #define md_cons_align(n)			nds32_cons_align (n)
 /* COLE: TODO: Review md_do_align.  */

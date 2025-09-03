@@ -457,31 +457,6 @@ s390_return_addr_from_memory ()
   return cfun_gpr_save_slot(RETURN_REGNUM) == SAVE_SLOT_STACK;
 }
 
-/* Generate a SUBREG for the MODE lowpart of EXPR.
-
-   In contrast to gen_lowpart it will always return a SUBREG
-   expression.  This is useful to generate STRICT_LOW_PART
-   expressions.  */
-rtx
-s390_gen_lowpart_subreg (machine_mode mode, rtx expr)
-{
-  rtx lowpart = gen_lowpart (mode, expr);
-
-  /* There might be no SUBREG in case it could be applied to the hard
-     REG rtx or it could be folded with a paradoxical subreg.  Bring
-     it back.  */
-  if (!SUBREG_P (lowpart))
-    {
-      machine_mode reg_mode = TARGET_ZARCH ? DImode : SImode;
-      gcc_assert (REG_P (lowpart));
-      lowpart = gen_lowpart_SUBREG (mode,
-				    gen_rtx_REG (reg_mode,
-						 REGNO (lowpart)));
-    }
-
-  return lowpart;
-}
-
 /* Return nonzero if it's OK to use fused multiply-add for MODE.  */
 bool
 s390_fma_allowed_p (machine_mode mode)
@@ -3241,26 +3216,31 @@ s390_valid_shift_count (rtx op, HOST_WIDE_INT implicit_mask)
 
   /* Check for an and with proper constant.  */
   if (GET_CODE (op) == AND)
-  {
-    rtx op1 = XEXP (op, 0);
-    rtx imm = XEXP (op, 1);
+    {
+      rtx op1 = XEXP (op, 0);
+      rtx imm = XEXP (op, 1);
 
-    if (GET_CODE (op1) == SUBREG && subreg_lowpart_p (op1))
-      op1 = XEXP (op1, 0);
+      if (GET_CODE (op1) == SUBREG && subreg_lowpart_p (op1))
+	op1 = XEXP (op1, 0);
 
-    if (!(register_operand (op1, GET_MODE (op1)) || GET_CODE (op1) == PLUS))
-      return false;
+      if (!(register_operand (op1, GET_MODE (op1)) || GET_CODE (op1) == PLUS))
+	return false;
 
-    if (!immediate_operand (imm, GET_MODE (imm)))
-      return false;
+      /* Accept only CONST_INT as immediates, i.e., reject shift count operands
+	 which do not trivially fit the scheme of address operands.  Especially
+	 since strip_address_mutations() expects expressions of the form
+	 (and ... (const_int ...)) and fails for
+	 (and ... (const_wide_int ...)).  */
+      if (!const_int_operand (imm, GET_MODE (imm)))
+	return false;
 
-    HOST_WIDE_INT val = INTVAL (imm);
-    if (implicit_mask > 0
-	&& (val & implicit_mask) != implicit_mask)
-      return false;
+      HOST_WIDE_INT val = INTVAL (imm);
+      if (implicit_mask > 0
+	  && (val & implicit_mask) != implicit_mask)
+	return false;
 
-    op = op1;
-  }
+      op = op1;
+    }
 
   /* Check the rest.  */
   return s390_decompose_addrstyle_without_index (op, NULL, NULL);
@@ -3430,6 +3410,18 @@ s390_mem_constraint (const char *str, rtx op)
       if ((reload_completed || reload_in_progress)
 	  ? !offsettable_memref_p (op) : !offsettable_nonstrict_memref_p (op))
 	return 0;
+      /* offsettable_memref_p ensures only that any positive offset added to
+	 the address forms a valid general address.  For AQ and AR constraints
+	 we also have to verify that the resulting displacement after adding
+	 any positive offset less than the size of the object being referenced
+	 is still valid.  */
+      if (str[1] == 'Q' || str[1] == 'R')
+	{
+	  int o = GET_MODE_SIZE (GET_MODE (op)) - 1;
+	  rtx tmp = adjust_address (op, QImode, o);
+	  if (!s390_check_qrst_address (str[1], XEXP (tmp, 0), true))
+	    return 0;
+	}
       return s390_check_qrst_address (str[1], XEXP (op, 0), true);
     case 'B':
       /* Check for non-literal-pool variants of memory constraints.  */
@@ -6544,15 +6536,21 @@ s390_expand_insv (rtx dest, rtx op1, rtx op2, rtx src)
       /* Emit a strict_low_part pattern if possible.  */
       if (smode_bsize == bitsize && bitpos == mode_bsize - smode_bsize)
 	{
-	  rtx low_dest = s390_gen_lowpart_subreg (smode, dest);
-	  rtx low_src = gen_lowpart (smode, src);
-
-	  switch (smode)
+	  rtx low_dest = gen_lowpart (smode, dest);
+	  if (SUBREG_P (low_dest) && !paradoxical_subreg_p (low_dest))
 	    {
-	    case E_QImode: emit_insn (gen_movstrictqi (low_dest, low_src)); return true;
-	    case E_HImode: emit_insn (gen_movstricthi (low_dest, low_src)); return true;
-	    case E_SImode: emit_insn (gen_movstrictsi (low_dest, low_src)); return true;
-	    default: break;
+	      poly_int64 offset = GET_MODE_SIZE (mode) - GET_MODE_SIZE (smode);
+	      rtx low_src = adjust_address (src, smode, offset);
+	      switch (smode)
+		{
+		case E_QImode: emit_insn (gen_movstrictqi (low_dest, low_src));
+			       return true;
+		case E_HImode: emit_insn (gen_movstricthi (low_dest, low_src));
+			       return true;
+		case E_SImode: emit_insn (gen_movstrictsi (low_dest, low_src));
+			       return true;
+		default: break;
+		}
 	    }
 	}
 
@@ -8035,7 +8033,6 @@ print_operand_address (FILE *file, rtx addr)
 	 CONST_VECTOR: Generate a bitmask for vgbm instruction.
     'x': print integer X as if it's an unsigned halfword.
     'v': print register number as vector register (v1 instead of f1).
-    'V': print the second word of a TFmode operand as vector register.
 */
 
 void
@@ -8228,13 +8225,13 @@ print_operand (FILE *file, rtx x, int code)
     case REG:
       /* Print FP regs as fx instead of vx when they are accessed
 	 through non-vector mode.  */
-      if ((code == 'v' || code == 'V')
+      if (code == 'v'
 	  || VECTOR_NOFP_REG_P (x)
 	  || (FP_REG_P (x) && VECTOR_MODE_P (GET_MODE (x)))
 	  || (VECTOR_REG_P (x)
 	      && (GET_MODE_SIZE (GET_MODE (x)) /
 		  s390_class_max_nregs (FP_REGS, GET_MODE (x))) > 8))
-	fprintf (file, "%%v%s", reg_names[REGNO (x) + (code == 'V')] + 2);
+	fprintf (file, "%%v%s", reg_names[REGNO (x)] + 2);
       else
 	fprintf (file, "%s", reg_names[REGNO (x)]);
       break;
@@ -10477,8 +10474,8 @@ s390_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 	}
       break;
     case ADDR_REGS:
-      if (FRAME_REGNO_P (regno) && mode == Pmode)
-	return true;
+      if (FRAME_REGNO_P (regno))
+	return mode == Pmode;
 
       /* fallthrough */
     case GENERAL_REGS:

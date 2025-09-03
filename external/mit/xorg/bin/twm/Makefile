@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2022/07/11 09:16:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2025/07/15 04:20:42 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	twm
 SRCS=	gram.y lex.l deftwmrc.c add_window.c gc.c list.c twm.c \
-	parse.c menus.c events.c resize.c util.c version.c iconmgr.c \
+	parse.c menus.c events.c resize.c util.c iconmgr.c \
 	cursor.c icons.c session.c
 
 YHEADER=1
@@ -31,6 +31,8 @@ FILESDIR=	${TWMCONFIGDIR}
 
 DPSRCS+=	deftwmrc.c
 CLEANFILES+=	deftwmrc.c
+# XXX deftwmrc.sed deleted in twm 1.0.13.  copied here now.  consider
+# replaceing this with new gen_deftwmrc.sh.
 deftwmrc.c: system.twmrc deftwmrc.sed
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
@@ -39,7 +41,7 @@ deftwmrc.c: system.twmrc deftwmrc.sed
 	echo ' * twm bindings file system.twmrc by the twm Makefile.' >>$@
 	echo ' */' >>$@
 	echo 'const unsigned char *defTwmrc[] = {' >>$@
-	${TOOL_SED} -f ${TWMDIR}/src/deftwmrc.sed \
+	${TOOL_SED} -f ${.CURDIR}/deftwmrc.sed \
 	     < ${TWMDIR}/src/system.twmrc >>$@
 	echo '    (char *) 0 };' >>$@
 

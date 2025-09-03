@@ -1,5 +1,5 @@
 /* genlink.h -- interface to the BFD generic linker
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -80,31 +80,5 @@ struct generic_link_hash_table
 
 #define _bfd_generic_link_get_symbols(abfd)  ((abfd)->outsymbols)
 #define _bfd_generic_link_get_symcount(abfd) ((abfd)->symcount)
-
-/* Add the symbols of input_bfd to the symbols being built for
-   output_bfd.  */
-extern bool _bfd_generic_link_output_symbols
-  (bfd *, bfd *, struct bfd_link_info *, size_t *);
-
-/* This structure is used to pass information to
-   _bfd_generic_link_write_global_symbol, which may be called via
-   _bfd_generic_link_hash_traverse.  */
-
-struct generic_write_global_symbol_info
-{
-  struct bfd_link_info *info;
-  bfd *output_bfd;
-  size_t *psymalloc;
-};
-
-/* Write out a single global symbol.  This is expected to be called
-   via _bfd_generic_link_hash_traverse.  The second argument must
-   actually be a struct generic_write_global_symbol_info *.  */
-extern bool _bfd_generic_link_write_global_symbol
-  (struct generic_link_hash_entry *, void *);
-
-/* Generic link hash table entry creation routine.  */
-struct bfd_hash_entry *_bfd_generic_link_hash_newfunc
-  (struct bfd_hash_entry *, struct bfd_hash_table *, const char *);
 
 #endif

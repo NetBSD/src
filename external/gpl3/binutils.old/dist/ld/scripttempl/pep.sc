@@ -1,6 +1,6 @@
 # Linker script for PE.
 #
-# Copyright (C) 2014-2022 Free Software Foundation, Inc.
+# Copyright (C) 2014-2024 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -34,6 +34,7 @@ if test "${RELOCATING}"; then
     KEEP (SORT(*)(.idata$3))
     /* These zeroes mark the end of the import list.  */
     LONG (0); LONG (0); LONG (0); LONG (0); LONG (0);
+    . = ALIGN(8);
     KEEP (SORT(*)(.idata$4))'
   R_IDATA5='SORT(*)(.idata$5)'
   R_IDATA67='
@@ -70,7 +71,7 @@ else
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -208,7 +209,7 @@ SECTIONS
     *(.debug\$S)
     *(.debug\$T)
     *(.debug\$F)
-    *(.drectve)
+    ${RELOCATING+ *(.drectve)}
     ${RELOCATING+ *(.note.GNU-stack)}
     ${RELOCATING+ *(.gnu.lto_*)}
   }

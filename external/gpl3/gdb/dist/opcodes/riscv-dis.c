@@ -32,6 +32,11 @@
 #include <stdint.h>
 #include <ctype.h>
 
+/* The RISC-V disassembler produces styled output using
+   disassemble_info::fprintf_styled_func.  This define prevents use of
+   disassemble_info::fprintf_func which is for unstyled output.  */
+#define fprintf_func please_use_fprintf_styled_func_instead
+
 /* Current XLEN for the disassembler.  */
 static unsigned xlen = 0;
 
@@ -75,6 +80,9 @@ static const char (*riscv_fpr_names)[NRC];
 /* If set, disassemble as most general instruction.  */
 static bool no_aliases = false;
 
+/* If set, disassemble without checking architectire string, just like what
+   we did at the beginning.  */
+static bool all_ext = false;
 
 /* Set default RISC-V disassembler options.  */
 
@@ -98,6 +106,8 @@ parse_riscv_dis_option_without_args (const char *option)
       riscv_gpr_names = riscv_gpr_names_numeric;
       riscv_fpr_names = riscv_fpr_names_numeric;
     }
+  else if (strcmp (option, "max") == 0)
+    all_ext = true;
   else
     return false;
   return true;
@@ -223,26 +233,49 @@ print_reg_list (disassemble_info *info, insn_t l)
   bool numeric = riscv_gpr_names == riscv_gpr_names_numeric;
   unsigned reg_list = (int)EXTRACT_OPERAND (REG_LIST, l);
   unsigned r_start = numeric ? X_S2 : X_S0;
-  info->fprintf_func (info->stream, "%s", riscv_gpr_names[X_RA]);
+  info->fprintf_styled_func (info->stream, dis_style_register,
+			     "%s", riscv_gpr_names[X_RA]);
 
   if (reg_list == 5)
-    info->fprintf_func (info->stream, ",%s",
-			riscv_gpr_names[X_S0]);
+    {
+      info->fprintf_styled_func (info->stream, dis_style_text, ",");
+      info->fprintf_styled_func (info->stream, dis_style_register,
+				 "%s", riscv_gpr_names[X_S0]);
+    }
   else if (reg_list == 6 || (numeric && reg_list > 6))
-    info->fprintf_func (info->stream, ",%s-%s",
-			riscv_gpr_names[X_S0],
-			riscv_gpr_names[X_S1]);
+    {
+      info->fprintf_styled_func (info->stream, dis_style_text, ",");
+      info->fprintf_styled_func (info->stream, dis_style_register,
+				 "%s", riscv_gpr_names[X_S0]);
+      info->fprintf_styled_func (info->stream, dis_style_text, "-");
+      info->fprintf_styled_func (info->stream, dis_style_register,
+				 "%s", riscv_gpr_names[X_S1]);
+    }
+
   if (reg_list == 15)
-    info->fprintf_func (info->stream, ",%s-%s",
-			riscv_gpr_names[r_start],
-			riscv_gpr_names[X_S11]);
+    {
+      info->fprintf_styled_func (info->stream, dis_style_text, ",");
+      info->fprintf_styled_func (info->stream, dis_style_register,
+				 "%s", riscv_gpr_names[r_start]);
+      info->fprintf_styled_func (info->stream, dis_style_text, "-");
+      info->fprintf_styled_func (info->stream, dis_style_register,
+				 "%s", riscv_gpr_names[X_S11]);
+    }
   else if (reg_list == 7 && numeric)
-    info->fprintf_func (info->stream, ",%s",
-			riscv_gpr_names[X_S2]);
+    {
+      info->fprintf_styled_func (info->stream, dis_style_text, ",");
+      info->fprintf_styled_func (info->stream, dis_style_register,
+				 "%s", riscv_gpr_names[X_S2]);
+    }
   else if (reg_list > 6)
-    info->fprintf_func (info->stream, ",%s-%s",
-			riscv_gpr_names[r_start],
-			riscv_gpr_names[reg_list + 11]);
+    {
+      info->fprintf_styled_func (info->stream, dis_style_text, ",");
+      info->fprintf_styled_func (info->stream, dis_style_register,
+				 "%s", riscv_gpr_names[r_start]);
+      info->fprintf_styled_func (info->stream, dis_style_text, "-");
+      info->fprintf_styled_func (info->stream, dis_style_register,
+				 "%s", riscv_gpr_names[reg_list + 11]);
+    }
 }
 
 /* Get Zcmp sp adjustment immediate.  */
@@ -255,6 +288,17 @@ riscv_get_spimm (insn_t l)
   if (((l ^ MATCH_CM_PUSH) & MASK_CM_PUSH) == 0)
     spimm *= -1;
   return spimm;
+}
+
+/* Get s-register regno by using sreg number.
+   e.g. the regno of s0 is 8, so
+   riscv_zcmp_get_sregno (0) equals 8.  */
+
+static unsigned
+riscv_zcmp_get_sregno (unsigned sreg_idx)
+{
+  return sreg_idx > 1 ?
+      sreg_idx + 16 : sreg_idx + 8;
 }
 
 /* Print insn arguments for 32/64-bit code.  */
@@ -670,6 +714,14 @@ print_insn_args (const char *oparg, insn_t l, bfd_vma pc, disassemble_info *info
 	    case 'c': /* Zcb extension 16 bits length instruction fields. */
 	      switch (*++oparg)
 		{
+		case '1':
+		    print (info->stream, dis_style_register, "%s",
+		      riscv_gpr_names[riscv_zcmp_get_sregno (EXTRACT_OPERAND (SREG1, l))]);
+		    break;
+		case '2':
+		    print (info->stream, dis_style_register, "%s",
+		      riscv_gpr_names[riscv_zcmp_get_sregno (EXTRACT_OPERAND (SREG2, l))]);
+		    break;
 		case 'b':
 		  print (info->stream, dis_style_immediate, "%d",
 			 (int)EXTRACT_ZCB_BYTE_UIMM (l));
@@ -684,6 +736,11 @@ print_insn_args (const char *oparg, insn_t l, bfd_vma pc, disassemble_info *info
 		case 'p':
 		  print (info->stream, dis_style_immediate, "%d",
 			 riscv_get_spimm (l));
+		  break;
+		case 'i':
+		case 'I':
+		  print (info->stream, dis_style_address_offset,
+			 "%" PRIu64, EXTRACT_ZCMT_INDEX (l));
 		  break;
 		default:
 		  goto undefined_modifier;
@@ -770,6 +827,27 @@ print_insn_args (const char *oparg, insn_t l, bfd_vma pc, disassemble_info *info
 		  case '3':
 		    print (info->stream, dis_style_immediate, "%d",
 			((int) EXTRACT_CV_IS3_UIMM5 (l)));
+		    break;
+		  case '4':
+		    print (info->stream, dis_style_immediate, "%d",
+			   ((int) EXTRACT_CV_BI_IMM5 (l)));
+		    break;
+		  case '5':
+		    print (info->stream, dis_style_immediate, "%d",
+			   ((int) EXTRACT_CV_SIMD_IMM6 (l)));
+		    break;
+		  case '6':
+		    print (info->stream, dis_style_immediate, "%d",
+			   ((int) EXTRACT_CV_BITMANIP_UIMM5 (l)));
+		    break;
+		  case '7':
+		    print (info->stream, dis_style_immediate, "%d",
+			   ((int) EXTRACT_CV_BITMANIP_UIMM2 (l)));
+		    break;
+		  case '8':
+		    print (info->stream, dis_style_immediate, "%d",
+			   ((int) EXTRACT_CV_SIMD_UIMM6 (l)));
+		    ++oparg;
 		    break;
 		  default:
 		    goto undefined_modifier;
@@ -900,7 +978,8 @@ riscv_disassemble_insn (bfd_vma memaddr,
 	  if ((op->xlen_requirement != 0) && (op->xlen_requirement != xlen))
 	    continue;
 	  /* Is this instruction supported by the current architecture?  */
-	  if (!riscv_multi_subset_supports (&riscv_rps_dis, op->insn_class))
+	  if (!all_ext
+	      && !riscv_multi_subset_supports (&riscv_rps_dis, op->insn_class))
 	    continue;
 
 	  /* It's a match.  */
@@ -962,7 +1041,7 @@ riscv_disassemble_insn (bfd_vma memaddr,
     {
       i -= 2;
       word = bfd_get_bits (packet + i, 16, false);
-      if (!word && !printed)
+      if (!word && !printed && i)
 	continue;
 
       (*info->fprintf_styled_func) (info->stream, dis_style_immediate,

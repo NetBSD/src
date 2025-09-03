@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.96 2025/06/05 22:29:36 nia Exp $ */
+/*	$NetBSD: disks.c,v 1.97 2025/07/26 14:50:32 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1559,12 +1559,12 @@ make_fstab(struct install_partition_desc *install)
 		case FS_TMPFS:
 			if (ptn->size < 0)
 				scripting_fprintf(f,
-				    "tmpfs\t\t/tmp\ttmpfs\trw,-m=1777,"
-				    "-s=ram%%%" PRIu64 "\n", -ptn->size);
+				    "tmpfs\t\t/tmp\ttmpfs\trw,-m1777,"
+				    "-sram%%%" PRIu64 "\n", -ptn->size);
 			else
 				scripting_fprintf(f,
-				    "tmpfs\t\t/tmp\ttmpfs\trw,-m=1777,"
-				    "-s=%" PRIu64 "M\n", ptn->size);
+				    "tmpfs\t\t/tmp\ttmpfs\trw,-m1777,"
+				    "-s%" PRIu64 "M\n", ptn->size);
 			continue;
 #else
 		case FS_MFS:

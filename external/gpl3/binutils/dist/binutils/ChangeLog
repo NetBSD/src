@@ -1,7 +1,25 @@
-2024-01-15  Nick Clifton  <nickc@redhat.com>
+2025-07-13  Nick Clifton  <nickc@redhat.com>
 
-	* configure: Regenerate.
-	* po/binutils.pot: Regernate.
+	* 2.45 Branch point.
+
+2025-01-19  Nick Clifton  <nickc@redhat.com>
+
+	* 2.44 Branch point.
+
+2024-07-20  Nick Clifton  <nickc@redhat.com>
+
+	* 2.43 branch point.
+
+2024-02-12  Frederic Cambus  <fred@statdns.com>
+
+	* readelf.c (get_segment_type): Handle PT_OPENBSD_SYSCALLS segment
+	type.
+
+2024-01-26  Nick Clifton  <nickc@redhat.com>
+
+	PR 31250
+	* objcopy.c (copy_archive): Improve the handling of archives that
+	contain elements with invalid pathnames.
 
 2024-01-15  Nick Clifton  <nickc@redhat.com>
 
@@ -2356,7 +2374,7 @@
 
 For older changes see ChangeLog-2020
 
-Copyright (C) 2021-2024 Free Software Foundation, Inc.
+Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

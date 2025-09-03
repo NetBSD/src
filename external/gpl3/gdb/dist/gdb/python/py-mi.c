@@ -86,7 +86,8 @@ py_ui_out::do_end (ui_out_type type)
 
 void
 py_ui_out::do_field_signed (int fldno, int width, ui_align align,
-			    const char *fldname, LONGEST value)
+			    const char *fldname, LONGEST value,
+			    const ui_file_style &style)
 {
   if (m_error.has_value ())
     return;
@@ -142,6 +143,13 @@ gdbpy_execute_mi_command (PyObject *self, PyObject *args, PyObject *kw)
   if (n_args < 0)
     return nullptr;
 
+  if (n_args == 0)
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       _("gdb.execute_mi requires command argument"));
+      return nullptr;
+    }
+
   for (Py_ssize_t i = 0; i < n_args; ++i)
     {
       /* Note this returns a borrowed reference.  */
@@ -168,8 +176,7 @@ gdbpy_execute_mi_command (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      gdbpy_convert_exception (except);
-      return nullptr;
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return uiout.result ().release ();

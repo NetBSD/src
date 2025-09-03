@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -120,6 +120,7 @@ public:
   bool is_timeline_available ();
   bool is_ifreq_available ();
   bool is_omp_available ();
+  static bool is_bigendian ();
   bool has_java ();
   bool has_ompavail ();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.28 2023/05/23 10:22:42 andvar Exp $	*/
+/*	$NetBSD: nameser.h,v 1.29 2025/07/15 22:15:04 andvar Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -356,7 +356,7 @@ typedef enum __ns_type {
 	ns_t_maila = 254,	/*%< Transfer mail agent records. */
 	ns_t_any = 255,		/*%< Wildcard match. */
 	ns_t_zxfr = 256,	/*%< BIND-specific, nonstandard. */
-	ns_t_dlv = 32769,	/*%< DNSSEC look-aside validatation. */
+	ns_t_dlv = 32769,	/*%< DNSSEC look-aside validation. */
 	ns_t_max = 65536
 } ns_type;
 

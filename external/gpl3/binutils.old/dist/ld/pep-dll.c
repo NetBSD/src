@@ -1,5 +1,5 @@
 /* Routines to help build PEPI-format DLLs (Win64 etc)
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
    Written by Kai Tietz, OneVision Software GmbH&CoKg.
 
    This file is part of the GNU Binutils.
@@ -21,7 +21,6 @@
 
 #define COFF_IMAGE_WITH_PE
 #define COFF_WITH_PE
-#define COFF_WITH_pex64
 
 /* Local defined globals.  */
 #define pe_def_file	            pep_def_file
@@ -58,7 +57,7 @@
 #define pe_output_file_set_long_section_names \
 				    pep_output_file_set_long_section_names
 
-/* Uses x86_64 PE+.  */
-#define pe_use_x86_64
+/* Uses PE+.  */
+#define pe_use_plus
 
 #include "pe-dll.c"

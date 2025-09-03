@@ -1,4 +1,4 @@
-/* $NetBSD: lmu.c,v 1.9 2021/06/18 22:52:04 macallan Exp $ */
+/* $NetBSD: lmu.c,v 1.10 2025/07/06 23:56:38 macallan Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.9 2021/06/18 22:52:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.10 2025/07/06 23:56:38 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.9 2021/06/18 22:52:04 macallan Exp $");
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/time.h>
-#include <sys/callout.h>
+#include <sys/kthread.h>
 #include <sys/sysctl.h>
 
 #include <dev/i2c/i2cvar.h>
@@ -61,7 +61,9 @@ struct lmu_softc {
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t	sc_sensors[2];
-	callout_t	sc_adjust;
+	lwp_t		*sc_adjust;
+	kcondvar_t	sc_event;
+	kmutex_t	sc_evmtx;
 	int		sc_thresh, sc_hyst, sc_level, sc_target, sc_current;
 	int		sc_lux[2];
 	time_t		sc_last;
@@ -88,7 +90,7 @@ static const struct device_compatible_entry compat_data[] = {
 };
 
 /* time between polling the light sensors */
-#define LMU_POLL	(hz * 2)
+#define LMU_POLL	(hz)
 /* time between updates to keyboard brightness */
 #define LMU_FADE	(hz / 16)
 
@@ -131,7 +133,7 @@ lmu_kbd_brightness_up(device_t dev)
 
 	sc->sc_level = __MIN(16, sc->sc_level + 2);
 	sc->sc_target = sc->sc_level;
-	callout_schedule(&sc->sc_adjust, LMU_FADE);
+	cv_signal(&sc->sc_event);
 }
 
 static void
@@ -141,7 +143,7 @@ lmu_kbd_brightness_down(device_t dev)
 
 	sc->sc_level = __MAX(0, sc->sc_level - 2);
 	sc->sc_target = sc->sc_level;
-	callout_schedule(&sc->sc_adjust, LMU_FADE);
+	cv_signal(&sc->sc_event);
 }
 
 static int
@@ -192,10 +194,14 @@ lmu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = lmu_sensors_refresh;
+	sc->sc_sme->sme_class = 0;
+	sc->sc_sme->sme_flags = SME_INIT_REFRESH;;
+
 
 	s = &sc->sc_sensors[0];
 	s->state = ENVSYS_SINVALID;
 	s->units = ENVSYS_LUX;
+	s->flags = ENVSYS_FHAS_ENTROPY;
 	strcpy(s->desc, "right");
 	s->private = 0;
 	sysmon_envsys_sensor_attach(sc->sc_sme, s);
@@ -203,6 +209,7 @@ lmu_attach(device_t parent, device_t self, void *aux)
 	s = &sc->sc_sensors[1];
 	s->state = ENVSYS_SINVALID;
 	s->units = ENVSYS_LUX;
+	s->flags = ENVSYS_FHAS_ENTROPY;
 	strcpy(s->desc, "left");
 	s->private = 1;
 	sysmon_envsys_sensor_attach(sc->sc_sme, s);
@@ -236,9 +243,13 @@ lmu_attach(device_t parent, device_t self, void *aux)
 		lmu_sysctl_thresh, 1, (void *)sc, 0,
 		CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
 
-	callout_init(&sc->sc_adjust, 0);
-	callout_setfunc(&sc->sc_adjust, lmu_adjust, sc);
-	callout_schedule(&sc->sc_adjust, 0);
+	cv_init(&sc->sc_event, "lmu_event");
+	mutex_init(&sc->sc_evmtx, MUTEX_DEFAULT, IPL_NONE);
+
+	if (kthread_create(PRI_NONE, 0, NULL, lmu_adjust, sc, &sc->sc_adjust,
+	    "%s", "lmu") != 0) {
+		aprint_error_dev(self, "unable to create event kthread\n");
+	}
 }
 
 static void
@@ -247,6 +258,7 @@ lmu_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	struct lmu_softc *sc = sme->sme_cookie;
 	int ret;
 
+	edata->state = ENVSYS_SINVALID;
 	if ( edata->private < 3) {
 		ret = lmu_get_brightness(sc, edata->private);
 		if (ret == -1) return;
@@ -270,6 +282,7 @@ lmu_get_brightness(struct lmu_softc *sc, int reg)
 	error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
 		sc->sc_addr, &cmd, 1, buf, 4, 0);
 	iic_release_bus(sc->sc_i2c, 0);
+
 	if (error) return -1;
 	sc->sc_last = time_second;
 
@@ -301,43 +314,37 @@ static void
 lmu_adjust(void *cookie)
 {
 	struct lmu_softc *sc = cookie;
-	int left, right, b, offset;
+	int left, right, b, offset, ticks;
 
-	left = lmu_get_brightness(sc, 1);
-	right = lmu_get_brightness(sc, 0);
-	b = left > right ? left : right;
+	while (1) {
+		ticks = LMU_POLL;
+		left = lmu_get_brightness(sc, 1);
+		right = lmu_get_brightness(sc, 0);
+		b = left > right ? left : right;
 
-	if ((b > (sc->sc_thresh + sc->sc_hyst)) ||
-	   !(sc->sc_lid_state && sc->sc_video_state)) {
-		sc->sc_target = 0;
-	} else if (b < sc->sc_thresh) {
-		sc->sc_target = sc->sc_level;
+		if ((b > (sc->sc_thresh + sc->sc_hyst)) ||
+		   !(sc->sc_lid_state && sc->sc_video_state)) {
+			sc->sc_target = 0;
+		} else if (b < sc->sc_thresh) {
+			sc->sc_target = sc->sc_level;
+		}
+
+		if (sc->sc_target != sc->sc_current) {
+			offset = ((sc->sc_target - sc->sc_current) > 0) ? 2 : -2;
+			sc->sc_current += offset;
+			if (sc->sc_current > sc->sc_level) sc->sc_current = sc->sc_level;
+			if (sc->sc_current < 0) sc->sc_current = 0;
+
+			DPRINTF("[%d]", sc->sc_current);
+			lmu_set_brightness(sc, sc->sc_current);
+
+			if (sc->sc_target != sc->sc_current) ticks = LMU_FADE;
+		}
+
+		mutex_enter(&sc->sc_evmtx);
+		cv_timedwait(&sc->sc_event, &sc->sc_evmtx, ticks);
+		mutex_exit(&sc->sc_evmtx);
 	}
-
-	if (sc->sc_target == sc->sc_current) {
-		/* no update needed, check again later */
-		callout_schedule(&sc->sc_adjust, LMU_POLL);
-		return;
-	}	
-
-
-	offset = ((sc->sc_target - sc->sc_current) > 0) ? 2 : -2;
-	sc->sc_current += offset;
-	if (sc->sc_current > sc->sc_level) sc->sc_current = sc->sc_level;
-	if (sc->sc_current < 0) sc->sc_current = 0;
-
-	DPRINTF("[%d]", sc->sc_current);
-
-	lmu_set_brightness(sc, sc->sc_current);
-
-	if (sc->sc_target == sc->sc_current) {
-		/* no update needed, check again later */
-		callout_schedule(&sc->sc_adjust, LMU_POLL);
-		return;
-	}	
-
-	/* more updates upcoming */
-	callout_schedule(&sc->sc_adjust, LMU_FADE);
 }
 
 static int

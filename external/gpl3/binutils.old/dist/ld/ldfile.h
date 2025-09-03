@@ -1,5 +1,5 @@
 /* ldfile.h -
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -59,5 +59,16 @@ extern void ldfile_set_output_arch
 extern bool ldfile_open_file_search
   (const char *arch, struct lang_input_statement_struct *,
    const char *lib, const char *suffix);
+
+extern void ldfile_add_remap
+  (const char *, const char *);
+extern bool ldfile_add_remap_file
+  (const char *);
+extern void ldfile_remap_input_free
+  (void);
+extern const char * ldfile_possibly_remap_input
+  (const char *);
+extern void ldfile_print_input_remaps
+  (void);
 
 #endif

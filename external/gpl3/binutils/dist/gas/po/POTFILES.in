@@ -17,9 +17,6 @@ config/atof-vax.c
 config/bfin-lex-wrapper.c
 config/e-crisaout.c
 config/e-criself.c
-config/e-i386aout.c
-config/e-i386coff.c
-config/e-i386elf.c
 config/e-mipself.c
 config/kvx-parse.c
 config/kvx-parse.h
@@ -125,8 +122,6 @@ config/tc-mt.c
 config/tc-mt.h
 config/tc-nds32.c
 config/tc-nds32.h
-config/tc-nios2.c
-config/tc-nios2.h
 config/tc-ns32k.c
 config/tc-ns32k.h
 config/tc-or1k.c
@@ -204,7 +199,6 @@ config/te-go32.h
 config/te-hppa.h
 config/te-hppa64.h
 config/te-hppalinux64.h
-config/te-ia64aix.h
 config/te-interix.h
 config/te-lynx.h
 config/te-macos.h

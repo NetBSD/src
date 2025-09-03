@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.134 2022/04/10 09:50:46 andvar Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.135 2025/06/27 21:36:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -130,7 +130,7 @@ struct ip_pktopts {
 #define	IP_STAT_FORWARD		9	/* packets forwarded */
 #define	IP_STAT_FASTFORWARD	10	/* packets fast forwarded */
 #define	IP_STAT_CANTFORWARD	11	/* packets rcvd for unreachable dest */
-#define	IP_STAT_REDIRECTSENT	12	/* packets forwareded on same net */
+#define	IP_STAT_REDIRECTSENT	12	/* packets forwarded on same net */
 #define	IP_STAT_NOPROTO		13	/* unknown or unsupported protocol */
 #define	IP_STAT_DELIVERED	14	/* datagrams delivered to upper level */
 #define	IP_STAT_LOCALOUT	15	/* total ip packets generated here */

@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,23 +22,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
 
-# Whether this GDB is configured with a "native" target.
-set have_native 0
-
-set test "help target native"
-gdb_test_multiple $test $test {
-    -re "Undefined target command.*$gdb_prompt $" {
-	set have_native 0
-    }
-    -re "Native process.*$gdb_prompt $" {
-	set have_native 1
-    }
-}
-
-if { !$have_native } {
-    unsupported "no \"target native\" support."
-    return
-}
+require have_native_target
 
 # Returns the topmost target pushed on the target stack.  TEST is used
 # as test message.

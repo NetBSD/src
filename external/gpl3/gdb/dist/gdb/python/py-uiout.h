@@ -86,7 +86,8 @@ protected:
   void do_end (ui_out_type type) override;
 
   void do_field_signed (int fldno, int width, ui_align align,
-			const char *fldname, LONGEST value) override;
+			const char *fldname, LONGEST value,
+			const ui_file_style &style) override;
   void do_field_unsigned (int fldno, int width, ui_align align,
 			  const char *fldname, ULONGEST value) override;
 

@@ -46,7 +46,7 @@ static enum ctor_kinds
 gnuv2_is_constructor_name (const char *name)
 {
   if ((name[0] == '_' && name[1] == '_'
-       && (isdigit (name[2]) || strchr ("Qt", name[2])))
+       && (isdigit ((unsigned char)name[2]) || strchr ("Qt", name[2])))
       || startswith (name, "__ct__"))
     return complete_object_ctor;
   else
@@ -186,7 +186,6 @@ gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
   struct type *known_type;
   struct type *rtti_type;
   CORE_ADDR vtbl;
-  struct bound_minimal_symbol minsym;
   char *p;
   const char *linkage_name;
   struct type *btype;
@@ -239,7 +238,7 @@ gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
   vtbl = value_as_address (value_field (v, known_type_vptr_fieldno));
 
   /* Try to find a symbol that is the vtable.  */
-  minsym=lookup_minimal_symbol_by_pc(vtbl);
+  bound_minimal_symbol minsym = lookup_minimal_symbol_by_pc (vtbl);
   if (minsym.minsym==NULL
       || (linkage_name=minsym.minsym->linkage_name ())==NULL
       || !is_vtable_name (linkage_name))

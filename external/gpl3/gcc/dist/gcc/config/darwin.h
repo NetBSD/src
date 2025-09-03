@@ -217,8 +217,7 @@ extern GTY(()) int darwin_ms_struct;
   "%{image_base*:-Xlinker -image_base -Xlinker %*} %<image_base*",	\
   "%{init*:-Xlinker -init -Xlinker %*} %<init*",			\
   "%{multi_module:-Xlinker -multi_module} %<multi_module",		\
-  "%{multiply_defined*:-Xlinker -multiply_defined -Xlinker %*} \
-     %<multiply_defined* ",						\
+  "%{multiply_defined*:-Xlinker -multiply_defined -Xlinker %*} ",	\
   "%{multiplydefinedunused*:\
      -Xlinker -multiply_defined_unused -Xlinker %*} \
      %<multiplydefinedunused* ",					\
@@ -277,12 +276,17 @@ extern GTY(()) int darwin_ms_struct;
 #define DARWIN_RDYNAMIC "%{rdynamic:%nrdynamic is not supported}"
 #endif
 
-#if LD64_HAS_PLATFORM_VERSION
-#define DARWIN_PLATFORM_ID \
-  "%{mmacosx-version-min=*: -platform_version macos %* 0.0} "
+#if LD64_HAS_MACOS_VERSION_MIN
+# define DARWIN_PLATFORM_ID \
+  "%{mmacosx-version-min=*:-macos_version_min %*} "
 #else
-#define DARWIN_PLATFORM_ID \
+# if LD64_HAS_PLATFORM_VERSION
+#  define DARWIN_PLATFORM_ID \
+  "%{mmacosx-version-min=*: -platform_version macos %* 0.0} "
+# else
+#  define DARWIN_PLATFORM_ID \
   "%{mmacosx-version-min=*:-macosx_version_min %*} "
+# endif
 #endif
 
 /* Code built with mdynamic-no-pic does not support PIE/PIC, so  we disallow

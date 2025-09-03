@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2025/05/07 11:47:26 martin Exp $
+#	$NetBSD: Makefile,v 1.6 2025/06/25 15:33:34 martin Exp $
 CDBASE=		ia64cd		# gives ${CDBASE}.iso
 
 #CDINSTKERNEL=	../../instkernel/instkernel
-CDKERNELS=	${KERNELCOMPDIR}/netbsd netbsd
+CDKERNELS=	${KERNELCOMPDIR}/GENERIC/netbsd netbsd
 CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDRELEASE_NODEBUG=	true
 
@@ -11,7 +11,7 @@ CDRELEASE_NODEBUG=	true
 #	${TOOL_INSTALLBOOT} -m${MACHINE} ${CDIMAGE} bootxx.${MACHINE}
 
 .include <bsd.own.mk>
-KERNELCOMPDIR!= cd ${.CURDIR}/../../../../sys/arch/${MACHINE}/compile/GENERIC && ${PRINTOBJDIR}
+KERNELCOMPDIR!= cd ${.CURDIR}/../../../../sys/arch/${MACHINE}/compile && ${PRINTOBJDIR}
 
 .include "${.CURDIR}/../../../common/Makefile.bootcd"
 

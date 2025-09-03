@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.16 2019/10/01 18:00:07 chs Exp $	*/
+/*	$NetBSD: cpu.c,v 1.17 2025/08/31 19:10:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2019/10/01 18:00:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2025/08/31 19:10:00 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -193,7 +193,7 @@ identifycpu(struct cpu_softc *sc)
 
 #define IA64_FEATURES_BITMASK "\177\020"				\
     "b\0LB\0"	/* 'brl' instruction is implemented */			\
-    "b\1SD\0"	/* Processor implements sportaneous deferral */		\
+    "b\1SD\0"	/* Processor implements spontaneous deferral */		\
     "b\2AO\0"	/* Processor implements 16-byte atomic operations */	\
     "\0"
 	snprintb(bitbuf, sizeof(bitbuf), IA64_FEATURES_BITMASK, features);

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.109 2025/05/13 21:36:26 nia Exp $
+# $NetBSD: shl.mi,v 1.110 2025/07/22 19:23:52 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -187,7 +187,7 @@
 ./usr/X11R7/lib/libpciaccess.so.0.4		xbase-libpciaccess-lib		xorg,compatx11file
 ./usr/X11R7/lib/libpixman-1.so			xbase-pixman-lib		xorg,compatx11file
 ./usr/X11R7/lib/libpixman-1.so.2		xbase-pixman-lib		xorg,compatx11file
-./usr/X11R7/lib/libpixman-1.so.2.3		xbase-pixman-lib		xorg,compatx11file
+./usr/X11R7/lib/libpixman-1.so.2.4		xbase-pixman-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-atom.so			xbase-xcb-util-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-atom.so.1		xbase-xcb-util-lib		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-atom.so.1.0		xbase-xcb-util-lib		xorg,compatx11file

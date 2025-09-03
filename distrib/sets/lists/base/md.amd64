@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.302 2025/02/24 18:00:12 martin Exp $
+# $NetBSD: md.amd64,v 1.303 2025/07/17 13:38:01 christos Exp $
 #
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
@@ -13,6 +13,7 @@
 ./usr/lib/libx86_64.so.0			base-sys-shlib		pic
 ./usr/lib/libx86_64.so.0.0			base-sys-shlib		pic
 ./usr/lib/openssl/engines/padlock.so		base-crypto-usr		pic,openssl=30
+./usr/lib/openssl/engines/padlock.so		base-crypto-usr		pic,openssl=35
 ./usr/lkm/aps.o					base-obsolete		obsolete
 ./usr/lkm/compat_linux.o			base-obsolete		obsolete
 ./usr/lkm/exec_linux_elf.o			base-obsolete		obsolete

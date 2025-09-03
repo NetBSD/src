@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.59 2023/08/30 19:07:04 andvar Exp $	*/
+/*	$NetBSD: ser.c,v 1.60 2025/08/18 20:59:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.59 2023/08/30 19:07:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.60 2025/08/18 20:59:55 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -175,7 +175,7 @@ struct ser_softc {
 	uint8_t		 sc_imrb;
 	uint8_t		 sc_ucr;		/* Uart control		*/
 	uint8_t		 sc_msr;		/* Modem status		*/
-	uint8_t		 sc_tsr;		/* Tranceiver status	*/
+	uint8_t		 sc_tsr;		/* Transceiver status	*/
 	uint8_t		 sc_rsr;		/* Receiver status	*/
 	uint8_t		 sc_mcr;		/* (Pseudo) Modem ctrl. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2024/02/05 22:08:05 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 2025/07/13 21:07:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2024/02/05 22:08:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2025/07/13 21:07:04 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -521,7 +521,7 @@ LoadAndReset(const char *osimage)
 	printf("LoadAndReset: copy end[%lx,%lx]\n", csum, csum2);
 	printf("start XLoadAndReset\n");
 
-	/* mask all externel interrupt (XXX) */
+	/* mask all external interrupts (XXX) */
 
 	XLoadAndReset(buf_addr);
 }

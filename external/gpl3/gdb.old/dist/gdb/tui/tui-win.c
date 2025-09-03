@@ -1,6 +1,6 @@
 /* TUI window generic functions.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -24,7 +24,6 @@
 
    Author: Susan B. Macchia  */
 
-#include "defs.h"
 #include "command.h"
 #include "symtab.h"
 #include "breakpoint.h"
@@ -34,8 +33,8 @@
 #include "top.h"
 #include "source.h"
 #include "gdbsupport/event-loop.h"
-#include "gdbcmd.h"
 #include "async-event.h"
+#include "utils.h"
 
 #include "tui/tui.h"
 #include "tui/tui-io.h"
@@ -43,7 +42,7 @@
 #include "tui/tui-data.h"
 #include "tui/tui-layout.h"
 #include "tui/tui-wingeneral.h"
-#include "tui/tui-stack.h"
+#include "tui/tui-status.h"
 #include "tui/tui-regs.h"
 #include "tui/tui-disasm.h"
 #include "tui/tui-source.h"
@@ -53,7 +52,7 @@
 #include "gdb_curses.h"
 #include <ctype.h>
 #include "readline/readline.h"
-#include "gdbsupport/gdb_string_view.h"
+#include <string_view>
 
 #include <signal.h>
 
@@ -115,8 +114,7 @@ struct tui_translate
 };
 
 /* Translation table for border-mode variables.
-   The list of values must be terminated by a NULL.
-   After the NULL value, an entry defines the default.  */
+   The list of values must be terminated by a NULL.  */
 static struct tui_translate tui_border_mode_translate[] = {
   { "normal",		A_NORMAL },
   { "standout",		A_STANDOUT },
@@ -125,60 +123,27 @@ static struct tui_translate tui_border_mode_translate[] = {
   { "half-standout",	A_DIM | A_STANDOUT },
   { "bold",		A_BOLD },
   { "bold-standout",	A_BOLD | A_STANDOUT },
-  { 0, 0 },
-  { "normal",		A_NORMAL }
+  { 0, 0 }
 };
 
-/* Translation tables for border-kind, one for each border
-   character (see wborder, border curses operations).
-   -1 is used to indicate the ACS because ACS characters
-   are determined at run time by curses (depends on terminal).  */
+/* Translation tables for border-kind (acs excluded), one for vline, hline and
+   corners (see wborder, border curses operations).  */
 static struct tui_translate tui_border_kind_translate_vline[] = {
   { "space",    ' ' },
   { "ascii",    '|' },
-  { "acs",      -1 },
-  { 0, 0 },
-  { "ascii",    '|' }
+  { 0, 0 }
 };
 
 static struct tui_translate tui_border_kind_translate_hline[] = {
   { "space",    ' ' },
   { "ascii",    '-' },
-  { "acs",      -1 },
-  { 0, 0 },
-  { "ascii",    '-' }
+  { 0, 0 }
 };
 
-static struct tui_translate tui_border_kind_translate_ulcorner[] = {
+static struct tui_translate tui_border_kind_translate_corner[] = {
   { "space",    ' ' },
   { "ascii",    '+' },
-  { "acs",      -1 },
-  { 0, 0 },
-  { "ascii",    '+' }
-};
-
-static struct tui_translate tui_border_kind_translate_urcorner[] = {
-  { "space",    ' ' },
-  { "ascii",    '+' },
-  { "acs",      -1 },
-  { 0, 0 },
-  { "ascii",    '+' }
-};
-
-static struct tui_translate tui_border_kind_translate_llcorner[] = {
-  { "space",    ' ' },
-  { "ascii",    '+' },
-  { "acs",      -1 },
-  { 0, 0 },
-  { "ascii",    '+' }
-};
-
-static struct tui_translate tui_border_kind_translate_lrcorner[] = {
-  { "space",    ' ' },
-  { "ascii",    '+' },
-  { "acs",      -1 },
-  { 0, 0 },
-  { "ascii",    '+' }
+  { 0, 0 }
 };
 
 
@@ -256,21 +221,31 @@ chtype tui_border_lrcorner;
 int tui_border_attrs;
 int tui_active_border_attrs;
 
-/* Identify the item in the translation table.
-   When the item is not recognized, use the default entry.  */
-static struct tui_translate *
+/* Identify the item in the translation table, and return the corresponding value.  */
+static int
 translate (const char *name, struct tui_translate *table)
 {
   while (table->name)
     {
       if (name && strcmp (table->name, name) == 0)
-	return table;
+	return table->value;
       table++;
     }
 
-  /* Not found, return default entry.  */
-  table++;
-  return table;
+  gdb_assert_not_reached ("");
+}
+
+/* Translate NAME to a value.  If NAME is "acs", use ACS_CHAR.  Otherwise, use
+   translation table TABLE. */
+static int
+translate_acs (const char *name, struct tui_translate *table, int acs_char)
+{
+  /* The ACS characters are determined at run time by curses terminal
+     management.  */
+  if (strcmp (name, "acs") == 0)
+    return acs_char;
+
+  return translate (name, table);
 }
 
 /* Update the tui internal configuration according to gdb settings.
@@ -280,44 +255,39 @@ bool
 tui_update_variables ()
 {
   bool need_redraw = false;
-  struct tui_translate *entry;
+  int val;
 
-  entry = translate (tui_border_mode, tui_border_mode_translate);
-  if (tui_border_attrs != entry->value)
-    {
-      tui_border_attrs = entry->value;
-      need_redraw = true;
-    }
-  entry = translate (tui_active_border_mode, tui_border_mode_translate);
-  if (tui_active_border_attrs != entry->value)
-    {
-      tui_active_border_attrs = entry->value;
-      need_redraw = true;
-    }
+  val = translate (tui_border_mode, tui_border_mode_translate);
+  need_redraw |= assign_return_if_changed<int> (tui_border_attrs, val);
 
-  /* If one corner changes, all characters are changed.
-     Only check the first one.  The ACS characters are determined at
-     run time by curses terminal management.  */
-  entry = translate (tui_border_kind, tui_border_kind_translate_lrcorner);
-  if (tui_border_lrcorner != (chtype) entry->value)
-    {
-      tui_border_lrcorner = (entry->value < 0) ? ACS_LRCORNER : entry->value;
-      need_redraw = true;
-    }
-  entry = translate (tui_border_kind, tui_border_kind_translate_llcorner);
-  tui_border_llcorner = (entry->value < 0) ? ACS_LLCORNER : entry->value;
+  val = translate (tui_active_border_mode, tui_border_mode_translate);
+  need_redraw |= assign_return_if_changed<int> (tui_active_border_attrs, val);
 
-  entry = translate (tui_border_kind, tui_border_kind_translate_ulcorner);
-  tui_border_ulcorner = (entry->value < 0) ? ACS_ULCORNER : entry->value;
+  /* If one corner changes, all characters are changed.  Only check the first
+     one.  */
+  val = translate_acs (tui_border_kind, tui_border_kind_translate_corner,
+		       ACS_LRCORNER);
+  need_redraw |= assign_return_if_changed<chtype> (tui_border_lrcorner, val);
 
-  entry = translate (tui_border_kind, tui_border_kind_translate_urcorner);
-  tui_border_urcorner = (entry->value < 0) ? ACS_URCORNER : entry->value;
+  tui_border_llcorner
+    = translate_acs (tui_border_kind, tui_border_kind_translate_corner,
+		     ACS_LLCORNER);
 
-  entry = translate (tui_border_kind, tui_border_kind_translate_hline);
-  tui_border_hline = (entry->value < 0) ? ACS_HLINE : entry->value;
+  tui_border_ulcorner
+    = translate_acs (tui_border_kind, tui_border_kind_translate_corner,
+		     ACS_ULCORNER);
 
-  entry = translate (tui_border_kind, tui_border_kind_translate_vline);
-  tui_border_vline = (entry->value < 0) ? ACS_VLINE : entry->value;
+  tui_border_urcorner =
+    translate_acs (tui_border_kind, tui_border_kind_translate_corner,
+		   ACS_URCORNER);
+
+  tui_border_hline
+    = translate_acs (tui_border_kind, tui_border_kind_translate_hline,
+		     ACS_HLINE);
+
+  tui_border_vline
+    = translate_acs (tui_border_kind, tui_border_kind_translate_vline,
+		     ACS_VLINE);
 
   return need_redraw;
 }
@@ -362,13 +332,19 @@ show_tui_resize_message (struct ui_file *file, int from_tty,
 
 
 /* Generic window name completion function.  Complete window name pointed
-   to by TEXT and WORD.  If INCLUDE_NEXT_PREV_P is true then the special
-   window names 'next' and 'prev' will also be considered as possible
-   completions of the window name.  */
+   to by TEXT and WORD.
+
+   If EXCLUDE_CANNOT_FOCUS_P is true, then windows that can't take focus
+   will be excluded from the completions, otherwise they will be included.
+
+   If INCLUDE_NEXT_PREV_P is true then the special window names 'next' and
+   'prev' will also be considered as possible completions of the window
+   name.  This is independent of EXCLUDE_CANNOT_FOCUS_P.  */
 
 static void
 window_name_completer (completion_tracker &tracker,
-		       int include_next_prev_p,
+		       bool include_next_prev_p,
+		       bool exclude_cannot_focus_p,
 		       const char *text, const char *word)
 {
   std::vector<const char *> completion_name_vec;
@@ -377,8 +353,12 @@ window_name_completer (completion_tracker &tracker,
     {
       const char *completion_name = NULL;
 
-      /* We can't focus on an invisible window.  */
+      /* Don't include an invisible window.  */
       if (!win_info->is_visible ())
+	continue;
+
+      /* If requested, exclude windows that can't be focused.  */
+      if (exclude_cannot_focus_p && !win_info->can_focus ())
 	continue;
 
       completion_name = win_info->name ();
@@ -415,7 +395,7 @@ focus_completer (struct cmd_list_element *ignore,
 		 completion_tracker &tracker,
 		 const char *text, const char *word)
 {
-  window_name_completer (tracker, 1, text, word);
+  window_name_completer (tracker, true, true, text, word);
 }
 
 /* Complete possible window names for winheight command.  TEXT is the
@@ -432,7 +412,7 @@ winheight_completer (struct cmd_list_element *ignore,
   if (word != text)
     return;
 
-  window_name_completer (tracker, 0, text, word);
+  window_name_completer (tracker, false, false, text, word);
 }
 
 /* Update gdb's knowledge of the terminal size.  */
@@ -499,7 +479,11 @@ void
 tui_refresh_all_win (void)
 {
   clearok (curscr, TRUE);
-  tui_refresh_all ();
+  for (tui_win_info *win_info : all_tui_windows ())
+    {
+      if (win_info->is_visible ())
+	win_info->refresh_window ();
+    }
 }
 
 void
@@ -518,6 +502,8 @@ tui_resize_all (void)
   int screenheight, screenwidth;
 
   rl_get_screen_size (&screenheight, &screenwidth);
+  screenwidth += readline_hidden_cols;
+
   width_diff = screenwidth - tui_term_width ();
   height_diff = screenheight - tui_term_height ();
   if (height_diff || width_diff)
@@ -566,6 +552,7 @@ tui_async_resize_screen (gdb_client_data arg)
       int screen_height, screen_width;
 
       rl_get_screen_size (&screen_height, &screen_width);
+      screen_width += readline_hidden_cols;
       set_screen_width_and_height (screen_width, screen_height);
 
       /* win_resized is left set so that the next call to tui_enable()
@@ -678,7 +665,7 @@ tui_scroll_right_command (const char *arg, int from_tty)
 
 /* Answer the window represented by name.  */
 static struct tui_win_info *
-tui_partial_win_by_name (gdb::string_view name)
+tui_partial_win_by_name (std::string_view name)
 {
   struct tui_win_info *best = nullptr;
 
@@ -718,10 +705,52 @@ tui_set_focus_command (const char *arg, int from_tty)
   else
     win_info = tui_partial_win_by_name (arg);
 
-  if (win_info == NULL)
-    error (_("Unrecognized window name \"%s\""), arg);
-  if (!win_info->is_visible ())
-    error (_("Window \"%s\" is not visible"), arg);
+  if (win_info == nullptr)
+    {
+      /* When WIN_INFO is nullptr this can either mean that the window name
+	 is unknown to GDB, or that the window is not in the current
+	 layout.  To try and help the user, give a different error
+	 depending on which of these is the case.  */
+      std::string matching_window_name;
+      bool is_ambiguous = false;
+
+      for (const std::string &name : all_known_window_names ())
+	{
+	  /* Look through all windows in the current layout, if the window
+	     is in the current layout then we're not interested is it.  */
+	  for (tui_win_info *item : all_tui_windows ())
+	    if (item->name () == name)
+	      continue;
+
+	  if (startswith (name, arg))
+	    {
+	      if (matching_window_name.empty ())
+		matching_window_name = name;
+	      else
+		is_ambiguous = true;
+	    }
+	};
+
+      if (!matching_window_name.empty ())
+	{
+	  if (is_ambiguous)
+	    error (_("No windows matching \"%s\" in the current layout"),
+		   arg);
+	  else
+	    error (_("Window \"%s\" is not in the current layout"),
+		   matching_window_name.c_str ());
+	}
+      else
+	error (_("Unrecognized window name \"%s\""), arg);
+    }
+
+  /* If a window is part of the current layout then it will have a
+     tui_win_info associated with it and be visible, otherwise, there will
+     be no tui_win_info and the above error will have been raised.  */
+  gdb_assert (win_info->is_visible ());
+
+  if (!win_info->can_focus ())
+    error (_("Window \"%s\" cannot be focused"), arg);
 
   tui_set_win_focus_to (win_info);
   gdb_printf (_("Focus set to %s window.\n"),
@@ -845,6 +874,17 @@ tui_show_compact_source (struct ui_file *file, int from_tty,
   gdb_printf (file, _("TUI source window compactness is %s.\n"), value);
 }
 
+bool tui_enable_mouse = true;
+
+/* Implement 'show tui mouse-events'.  */
+
+static void
+show_tui_mouse_events (struct ui_file *file, int from_tty,
+		       struct cmd_list_element *c, const char *value)
+{
+  gdb_printf (file, _("TUI mouse events are %s.\n"), value);
+}
+
 /* Set the tab width of the specified window.  */
 static void
 tui_set_tab_width_command (const char *arg, int from_tty)
@@ -897,7 +937,7 @@ tui_set_win_size (const char *arg, bool set_width_p)
   buf_ptr = skip_to_space (buf_ptr);
 
   /* Validate the window name.  */
-  gdb::string_view wname (buf, buf_ptr - buf);
+  std::string_view wname (buf, buf_ptr - buf);
   win_info = tui_partial_win_by_name (wname);
 
   if (win_info == NULL)
@@ -1059,6 +1099,10 @@ tui_window_command (const char *args, int from_tty)
   help_list (tui_window_cmds, "tui window ", all_commands, gdb_stdout);
 }
 
+/* See tui-win.h.  */
+
+bool tui_left_margin_verbose = false;
+
 /* Function to initialize gdb commands, for tui window
    manipulation.  */
 
@@ -1159,34 +1203,39 @@ This variable controls the border of TUI windows:\n\
 			show_tui_border_kind,
 			&tui_setlist, &tui_showlist);
 
-  add_setshow_enum_cmd ("border-mode", no_class, tui_border_mode_enums,
-			&tui_border_mode, _("\
-Set the attribute mode to use for the TUI window borders."), _("\
-Show the attribute mode to use for the TUI window borders."), _("\
-This variable controls the attributes to use for the window borders:\n\
+  const std::string help_attribute_mode (_("\
    normal          normal display\n\
    standout        use highlight mode of terminal\n\
    reverse         use reverse video mode\n\
    half            use half bright\n\
    half-standout   use half bright and standout mode\n\
    bold            use extra bright or bold\n\
-   bold-standout   use extra bright or bold with standout mode"),
+   bold-standout   use extra bright or bold with standout mode"));
+
+  const std::string help_tui_border_mode
+    = (_("\
+This variable controls the attributes to use for the window borders:\n")
+       + help_attribute_mode);
+
+  add_setshow_enum_cmd ("border-mode", no_class, tui_border_mode_enums,
+			&tui_border_mode, _("\
+Set the attribute mode to use for the TUI window borders."), _("\
+Show the attribute mode to use for the TUI window borders."),
+			help_tui_border_mode.c_str (),
 			tui_set_var_cmd,
 			show_tui_border_mode,
 			&tui_setlist, &tui_showlist);
 
+  const std::string help_tui_active_border_mode
+    = (_("\
+This variable controls the attributes to use for the active window borders:\n")
+       + help_attribute_mode);
+
   add_setshow_enum_cmd ("active-border-mode", no_class, tui_border_mode_enums,
 			&tui_active_border_mode, _("\
 Set the attribute mode to use for the active TUI window border."), _("\
-Show the attribute mode to use for the active TUI window border."), _("\
-This variable controls the attributes to use for the active window border:\n\
-   normal          normal display\n\
-   standout        use highlight mode of terminal\n\
-   reverse         use reverse video mode\n\
-   half            use half bright\n\
-   half-standout   use half bright and standout mode\n\
-   bold            use extra bright or bold\n\
-   bold-standout   use extra bright or bold with standout mode"),
+Show the attribute mode to use for the active TUI window border."),
+			help_tui_active_border_mode.c_str (),
 			tui_set_var_cmd,
 			show_tui_active_border_mode,
 			&tui_setlist, &tui_showlist);
@@ -1194,7 +1243,7 @@ This variable controls the attributes to use for the active window border:\n\
   add_setshow_zuinteger_cmd ("tab-width", no_class,
 			     &internal_tab_width, _("\
 Set the tab width, in characters, for the TUI."), _("\
-Show the tab witdh, in characters, for the TUI."), _("\
+Show the tab width, in characters, for the TUI."), _("\
 This variable controls how many spaces are used to display a tab character."),
 			     tui_set_tab_width, tui_show_tab_width,
 			     &tui_setlist, &tui_showlist);
@@ -1214,9 +1263,19 @@ When enabled GDB will print a message when the terminal is resized."),
 Set whether the TUI source window is compact."), _("\
 Show whether the TUI source window is compact."), _("\
 This variable controls whether the TUI source window is shown\n\
-in a compact form.  The compact form puts the source closer to\n\
-the line numbers and uses less horizontal space."),
+in a compact form.  The compact form uses less horizontal space."),
 			   tui_set_compact_source, tui_show_compact_source,
+			   &tui_setlist, &tui_showlist);
+
+  add_setshow_boolean_cmd ("mouse-events", class_tui,
+			   &tui_enable_mouse, _("\
+Set whether TUI mode handles mouse clicks."), _("\
+Show whether TUI mode handles mouse clicks."), _("\
+When on (default), mouse clicks control the TUI and can be accessed by Python\n\
+extensions.  When off, mouse clicks are handled by the terminal, enabling\n\
+terminal-native text selection."),
+			   nullptr,
+			   show_tui_mouse_events,
 			   &tui_setlist, &tui_showlist);
 
   add_setshow_boolean_cmd ("tui-current-position", class_maintenance,
@@ -1231,6 +1290,18 @@ position indicator is styled."),
 			   show_style_tui_current_position,
 			   &style_set_list,
 			   &style_show_list);
+
+  add_setshow_boolean_cmd ("tui-left-margin-verbose", class_maintenance,
+			   &tui_left_margin_verbose, _("\
+Set whether the left margin should use '_' and '0' instead of spaces."),
+			   _("\
+Show whether the left margin should use '_' and '0' instead of spaces."),
+			   _("\
+When enabled, the left margin will use '_' and '0' instead of spaces."),
+			   nullptr,
+			   nullptr,
+			   &maintenance_set_cmdlist,
+			   &maintenance_show_cmdlist);
 
   tui_border_style.changed.attach (tui_rehighlight_all, "tui-win");
   tui_active_border_style.changed.attach (tui_rehighlight_all, "tui-win");

@@ -1,8 +1,33 @@
-2024-01-15  Nick Clifton  <nickc@redhat.com>
+2025-07-13  Nick Clifton  <nickc@redhat.com>
 
-	* version.m4: Change to 2.41.90.
-	* configure: Regenerate.
-	* po/bfd.pot: Regenerate.
+	* 2.45 Branch point.
+
+2025-02-08  Alexandre Oliva <oliva@adacore.com>
+
+	* elfxx-sparc.c (_bfd_sparc_elf_check_relocs): Check for
+	_GLOBAL_OFFSET_TABLE_ references early, then compare hashed
+	symbols instead of strings.
+	(_bfd_sparc_elf_relocate_section): Compare hashed symbols.
+
+2025-01-23  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* doc/local.mk (AM_MAKEINFOFLAGS): Prepend the build directory to
+	the @include search path.
+	* Makefile.in: Regenerate.
+
+2025-01-19  Nick Clifton  <nickc@redhat.com>
+
+	* 2.44 Branch point.
+
+2024-10-18  WANG Xuerui <git@xen0n.name>
+
+	* elfnn-loongarch.c (ELF_MAXPAGESIZE): Bump to 64KiB.
+	(ELF_MINPAGESIZE): Define as 4KiB.
+	(ELF_COMMONPAGESIZE): Define as 16KiB.
+
+2024-07-20  Nick Clifton  <nickc@redhat.com>
+
+	* 2.43 branch point.
 
 2024-01-15  Nick Clifton  <nickc@redhat.com>
 
@@ -2966,7 +2991,7 @@
 
 For older changes see ChangeLog-2020
 
-Copyright (C) 2021-2024 Free Software Foundation, Inc.
+Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

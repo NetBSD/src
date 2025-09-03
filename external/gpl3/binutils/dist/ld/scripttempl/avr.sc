@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2024 Free Software Foundation, Inc.
+# Copyright (C) 2014-2025 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -81,7 +81,7 @@
 #             emulation avrxmega* is used or avrxmega*_flmap.
 
 cat <<EOF
-/* Copyright (C) 2014-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -186,14 +186,21 @@ SECTIONS
   /* Internal text space or external memory.  */
   .text ${RELOCATING-0} :
   {
-    ${RELOCATING+*(.vectors)
+EOF
+test -z "${RELOCATING}" || cat <<EOF
+    *(.vectors)
     KEEP(*(.vectors))
 
-    /* For data that needs to reside in the lower 64k of progmem.  */
-    *(.progmem.gcc*)
+    /* For data that needs to reside in the lower 64k of progmem.
+       For data accessed with ELPM use .progmemx.* instead
+       so that no lower 64k .progmem addresses are wasted.  */
+    __progmem_start = . ;
+    *(.progmem)
+    *(.progmem.*)
+    __progmem_end = . ;
+    ASSERT (__progmem_start == __progmem_end || __progmem_end <= 0x10000,
+	    ".progmem section exceeds 0x10000");
 
-    /* PR 13812: Placing the trampolines here gives a better chance
-       that they will be in range of the code that uses them.  */
     . = ALIGN(2);
     __trampolines_start = . ;
     /* The jump trampolines for the 16-bit limited relocs will reside here.  */
@@ -201,18 +208,13 @@ SECTIONS
     *(.trampolines*)
     __trampolines_end = . ;
 
-    /* avr-libc expects these data to reside in lower 64K. */
-    *libprintf_flt.a:*(.progmem.data)
-    *libc.a:*(.progmem.data)
-
-    *(.progmem.*)
-
     . = ALIGN(2);
 
     /* For code that needs to reside in the lower 128k progmem.  */
     *(.lowtext)
-    *(.lowtext*)}
-
+    *(.lowtext*)
+EOF
+cat <<EOF
     ${CONSTRUCTING+ __ctors_start = . ; }
     ${CONSTRUCTING+ *(.ctors) }
     ${CONSTRUCTING+ __ctors_end = . ; }
@@ -273,6 +275,7 @@ SECTIONS
     *(.hightext)
     *(.hightext*)
 
+    *(.progmemx)
     *(.progmemx.*)
 
     . = ALIGN(2);
@@ -358,28 +361,27 @@ EOF
 if test -z "${HAVE_FLMAP}" && test -n "${RELOCATING}"; then
     cat <<EOF
 
-PROVIDE (__flmap_init_label = DEFINED(__flmap_noinit_start) ? __flmap_noinit_start : 0) ;
-PROVIDE (__flmap = DEFINED(__flmap) ? __flmap : 0) ;
+__flmap_init_label = DEFINED(__flmap_noinit_start) ? __flmap_noinit_start : 0 ;
+__flmap = DEFINED(__flmap) ? __flmap : 0 ;
 
 EOF
 fi
 
 if test -n "${HAVE_FLMAP}"; then
-    cat <<EOF
-
-${RELOCATING+
-PROVIDE (__flmap_init_label = DEFINED(__flmap_init_start) ? __flmap_init_start : 0) ;
+test -z "${RELOCATING}" || cat <<EOF
+__flmap_init_label = DEFINED(__flmap_init_start) ? __flmap_init_start : 0 ;
 /* User can specify position of .rodata in flash (LMA) by supplying
    __RODATA_FLASH_START__ or __flmap, where the former takes precedence. */
 __RODATA_FLASH_START__ = DEFINED(__RODATA_FLASH_START__)
    ? __RODATA_FLASH_START__
    : DEFINED(__flmap) ? __flmap * 32K : ${RODATA_FLASH_START};
-ASSERT (__RODATA_FLASH_START__ % 32K == 0, \"__RODATA_FLASH_START__ must be a multiple of 32 KiB\")
+ASSERT (__RODATA_FLASH_START__ % 32K == 0, "__RODATA_FLASH_START__ must be a multiple of 32 KiB")
 __flmap = ${FLMAP_MASK} & (__RODATA_FLASH_START__ >> 15);
 __RODATA_FLASH_START__ = __flmap << 15;
 __rodata_load_start = MAX (__data_load_end, __RODATA_FLASH_START__);
-__rodata_start = __RODATA_ORIGIN__ + __rodata_load_start - __RODATA_FLASH_START__;}
-
+__rodata_start = __RODATA_ORIGIN__ + __rodata_load_start - __RODATA_FLASH_START__;
+EOF
+cat << EOF
   .rodata ${RELOCATING+ __rodata_start} ${RELOCATING-0} : ${RELOCATING+ AT (__rodata_load_start)}
   {
     *(.rodata)

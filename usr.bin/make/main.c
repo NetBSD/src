@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.659 2025/06/13 05:41:36 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.662 2025/08/09 23:13:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.659 2025/06/13 05:41:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.662 2025/08/09 23:13:28 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -386,8 +386,8 @@ MainParseArgJobsInternal(const char *argvalue)
 		    progname, argvalue, curdir);
 		exit(2);
 	}
-	if ((fcntl(tokenPoolReader, F_GETFD, 0) < 0) ||
-	    (fcntl(tokenPoolWriter, F_GETFD, 0) < 0)) {
+	if (fcntl(tokenPoolReader, F_GETFD, 0) < 0 ||
+	    fcntl(tokenPoolWriter, F_GETFD, 0) < 0) {
 		tokenPoolReader = -1;
 		tokenPoolWriter = -1;
 		bogusJflag = true;
@@ -597,7 +597,7 @@ MainParseArgs(int argc, char **argv)
 	bool inOption, dashDash = false;
 
 	const char *optspecs = "BC:D:I:J:NST:V:WXd:ef:ij:km:nqrstv:w";
-/* Can't actually use getopt(3) because rescanning is not portable */
+	/* Can't actually use getopt(3) because rescanning is not portable */
 
 rearg:
 	inOption = false;
@@ -1203,23 +1203,8 @@ InitMaxJobs(void)
 	if (bogusJflag && !opts.compatMake) {
 		opts.compatMake = true;
 		Parse_Error(PARSE_WARNING,
-		    "internal option \"-J\" in \"%s\" "
-		    "refers to unopened file descriptors; "
-		    "falling back to compat mode.\n"
-		    "\t"
-		    "To run the target even in -n mode, "
-		    "add the .MAKE pseudo-source to the target.\n"
-		    "\t"
-		    "To run the target in default mode only, "
-		    "add a ${:D make} marker to a target's command. "
-		    "(This marker expression expands to an empty string.)\n"
-		    "\t"
-		    "To make the sub-make run in compat mode, add -B to "
-		    "its invocation.\n"
-		    "\t"
-		    "To make the sub-make independent from the parent make, "
-		    "unset the MAKEFLAGS environment variable in the "
-		    "target's commands.",
+		    "Invalid internal option \"-J\" in \"%s\"; "
+		    "see the manual page",
 		    curdir);
 		PrintStackTrace(true);
 		return;
@@ -1702,7 +1687,7 @@ ReadMakefile(const char *fname)
 		 * placement of the setting here means it gets set to the last
 		 * makefile specified, as it is set by SysV make.
 		 */
-found:
+	found:
 		if (!doing_depend)
 			Var_Set(SCOPE_INTERNAL, "MAKEFILE", fname);
 		Parse_File(fname, fd);
@@ -1712,11 +1697,10 @@ found:
 }
 
 /* populate av for Cmd_Exec and Compat_RunCommand */
-int
-Cmd_Argv(const char *cmd, size_t cmd_len, const char **av, size_t avsz,
+void
+Cmd_Argv(const char *cmd, size_t cmd_len, const char *av[5],
     char *cmd_file, size_t cmd_filesz, bool eflag, bool xflag)
 {
-	int ac = 0;
 	int cmd_fd = -1;
 
 	if (shellPath == NULL)
@@ -1742,23 +1726,19 @@ Cmd_Argv(const char *cmd, size_t cmd_len, const char **av, size_t avsz,
 			cmd_file[0] = '\0';
 	}
 
-	if (avsz < 4 || (eflag && avsz < 5))
-		return -1;
-
 	/* The following works for any of the builtin shell specs. */
-	av[ac++] = shellPath;
+	*av++ = shellPath;
 	if (eflag)
-		av[ac++] = shellErrFlag;
+		*av++ = shellErrFlag;
 	if (cmd_fd >= 0) {
 		if (xflag)
-			av[ac++] = "-x";
-		av[ac++] = cmd_file;
+			*av++ = "-x";
+		*av++ = cmd_file;
 	} else {
-		av[ac++] = xflag ? "-xc" : "-c";
-		av[ac++] = cmd;
+		*av++ = xflag ? "-xc" : "-c";
+		*av++ = cmd;
 	}
-	av[ac] = NULL;
-	return ac;
+	*av = NULL;
 }
 
 /*
@@ -1768,7 +1748,7 @@ Cmd_Argv(const char *cmd, size_t cmd_len, const char **av, size_t avsz,
 char *
 Cmd_Exec(const char *cmd, char **error)
 {
-	const char *args[4];	/* Arguments for invoking the shell */
+	const char *args[5];	/* Arguments for invoking the shell */
 	int pipefds[2];
 	int cpid;		/* Child PID */
 	int pid;		/* PID from wait() */
@@ -1782,8 +1762,8 @@ Cmd_Exec(const char *cmd, char **error)
 
 	DEBUG1(VAR, "Capturing the output of command \"%s\"\n", cmd);
 
-	if (Cmd_Argv(cmd, 0, args, 4, cmd_file, sizeof(cmd_file), false, false) < 0
-	    || pipe(pipefds) == -1) {
+	Cmd_Argv(cmd, 0, args, cmd_file, sizeof(cmd_file), false, false);
+	if (pipe(pipefds) == -1) {
 		*error = str_concat3(
 		    "Couldn't create pipe for \"", cmd, "\"");
 		return bmake_strdup("");
@@ -1800,7 +1780,6 @@ Cmd_Exec(const char *cmd, char **error)
 
 		(void)execv(shellPath, UNCONST(args));
 		_exit(1);
-		/* NOTREACHED */
 
 	case -1:
 		*error = str_concat3("Couldn't exec \"", cmd, "\"");
@@ -2061,7 +2040,7 @@ shouldDieQuietly(GNode *gn, int bf)
 		else if (bf >= 0)
 			quietly = bf;
 		else
-			quietly = (gn != NULL && (gn->type & OP_MAKE)) ? 1 : 0;
+			quietly = gn != NULL && gn->type & OP_MAKE ? 1 : 0;
 	}
 	return quietly != 0;
 }
